@@ -822,6 +822,8 @@ def evaluate_hybrid_augmented_solution(
     top_system: HybridLocalDtnSystem,
     coupling: HybridInternalModeCoupling,
     solution: HybridAugmentedDirectSolution,
+    *,
+    auxiliary_override: tuple[np.ndarray, np.ndarray] | None = None,
 ) -> dict:
     """Evaluate algebraic interface contracts and external modal R/T/A.
 
@@ -884,18 +886,26 @@ def evaluate_hybrid_augmented_solution(
         top_incident,
     )
 
-    bottom_aux = _gather_auxiliary_values(
-        solution.bottom,
-        bottom_system.n_fe,
-        bottom_system.n_external_aux,
-        bottom_system.local_mesh.mesh.comm,
-    )
-    top_aux = _gather_auxiliary_values(
-        solution.top,
-        top_system.n_fe,
-        top_system.n_external_aux,
-        top_system.local_mesh.mesh.comm,
-    )
+    if auxiliary_override is None:
+        bottom_aux = _gather_auxiliary_values(
+            solution.bottom,
+            bottom_system.n_fe,
+            bottom_system.n_external_aux,
+            bottom_system.local_mesh.mesh.comm,
+        )
+        top_aux = _gather_auxiliary_values(
+            solution.top,
+            top_system.n_fe,
+            top_system.n_external_aux,
+            top_system.local_mesh.mesh.comm,
+        )
+    else:
+        bottom_aux = np.asarray(auxiliary_override[0], dtype=np.complex128)
+        top_aux = np.asarray(auxiliary_override[1], dtype=np.complex128)
+        if bottom_aux.shape != (len(bottom_system.external_modes),):
+            raise ValueError("Bottom auxiliary override has the wrong shape.")
+        if top_aux.shape != (len(top_system.external_modes),):
+            raise ValueError("Top auxiliary override has the wrong shape.")
     port_power = _port_power_metrics(
         cfg,
         [*bottom_system.external_modes, *top_system.external_modes],

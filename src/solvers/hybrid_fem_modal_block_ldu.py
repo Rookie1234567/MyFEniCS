@@ -8,6 +8,7 @@ verify the exact right block-LDU algebra on a small oracle problem.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
 from petsc4py import PETSc
@@ -22,6 +23,8 @@ from .hybrid_fem_modal_schur_direct import (
 __all__ = (
     "HybridBlockLduPreconditioner",
     "HybridBlockLduSolveResult",
+    "HybridBlockActionSystem",
+    "HybridBlockLduPhysicalSolution",
     "create_exact_block_ldu_preconditioner",
     "solve_exact_block_ldu",
 )
@@ -259,6 +262,88 @@ class HybridBlockLduSolveResult:
         if not self._destroyed:
             self.solution.destroy()
             self._destroyed = True
+
+
+@dataclass
+class HybridBlockActionSystem:
+    """The H3 candidate global action and its explicit inventory contract."""
+
+    A: PETSc.Mat
+    b: PETSc.Vec
+    layout: HybridAugmentedLayout
+    context: Any
+    inventory: dict[str, Any]
+    matrix_stats: dict[str, Any]
+    block_shapes: dict[str, tuple[int, int]]
+    inserted_nnz_by_block: dict[str, Any]
+    dense_interface_square_formed: bool = False
+    _destroyed: bool = field(default=False, init=False, repr=False)
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self.A.destroy()
+        self.context.destroy()
+        self.b.destroy()
+        self._destroyed = True
+
+
+@dataclass
+class _HybridBlockLduOracleLocalSystem:
+    """One explicit-condensed local oracle view used only by the H3 factor."""
+
+    side: str
+    local_mesh: Any
+    A: PETSc.Mat
+    b: PETSc.Vec
+    global_size: int
+    static_condensation: Any = None
+    _destroyed: bool = field(default=False, init=False, repr=False)
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self.A.destroy()
+        self.b.destroy()
+        self._destroyed = True
+
+
+@dataclass
+class HybridBlockLduPhysicalSolution:
+    """Small H3 carrier for active solutions, recovery and lifecycle fields."""
+
+    bottom: PETSc.Vec
+    top: PETSc.Vec
+    modal_amplitudes: np.ndarray
+    bottom_auxiliary: np.ndarray
+    top_auxiliary: np.ndarray
+    bottom_recovered: Any
+    top_recovered: Any
+    factor_solver: str
+    converged_reason: int
+    reported_relative_residual: float
+    relative_residual: float
+    block_relative_residuals: dict[str, float]
+    iterations: int
+    setup_seconds: float = 0.0
+    solve_seconds: float = 0.0
+    recovery_seconds: float = 0.0
+    _destroyed: bool = field(default=False, init=False, repr=False)
+
+    @property
+    def bottom_physical(self):
+        return self.bottom_recovered.electric_field
+
+    @property
+    def top_physical(self):
+        return self.top_recovered.electric_field
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self.bottom.destroy()
+        self.top.destroy()
+        self._destroyed = True
 
 
 def create_exact_block_ldu_preconditioner(

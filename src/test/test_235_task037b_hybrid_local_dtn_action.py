@@ -19,6 +19,7 @@ from src.modes.cross_section_spaces import (
 )
 from src.solvers.condensed_dtn import (
     build_explicit_condensed_operator,
+    combine_petsc_augmented_solution,
     condensed_rhs,
     extract_petsc_condensed_blocks,
     recover_petsc_auxiliary,
@@ -27,7 +28,11 @@ from src.solvers.hybrid_fem_modal_iterative import (
     create_hybrid_assembled_block_action,
 )
 from src.solvers.hybrid_fem_modal_augmented_direct import (
+    evaluate_hybrid_augmented_solution,
     internal_modal_rhs_correction,
+)
+from src.solvers.hybrid_static_field_recovery import (
+    recover_hybrid_static_local_field,
 )
 from src.solvers.hybrid_local_dtn import assemble_hybrid_local_dtn_system
 from src.solvers.hybrid_local_dtn_action import (
@@ -161,6 +166,14 @@ class TestTask037bHybridLocalDtnAction:
             cls.action["bottom"],
             cls.action["top"],
         )
+        cls.direct_coupling = build_hybrid_internal_mode_coupling(
+            cls.cfg,
+            cls.spaces,
+            cls.positive,
+            cls.negative,
+            cls.direct["bottom"],
+            cls.direct["top"],
+        )
         cls.oracle_action, cls.oracle_context = create_hybrid_assembled_block_action(
             cls.oracle_systems["bottom"],
             cls.oracle_systems["top"],
@@ -179,6 +192,7 @@ class TestTask037bHybridLocalDtnAction:
         cls.oracle_action.destroy()
         cls.oracle_context.destroy()
         cls.action_coupling.destroy()
+        cls.direct_coupling.destroy()
         for side in ("bottom", "top"):
             cls.reference_rhs[side].destroy()
             cls.reference_matrices[side].destroy()
@@ -439,3 +453,230 @@ class TestTask037bHybridLocalDtnAction:
                 source.destroy()
                 bottom.destroy()
                 top.destroy()
+
+    def test_action_only_static_recovery_matches_direct_oracle(self):
+        action_modal = np.zeros(
+            self.action_coupling.internal_unknown_count,
+            dtype=np.complex128,
+        )
+        direct_modal = np.zeros(
+            self.direct_coupling.internal_unknown_count,
+            dtype=np.complex128,
+        )
+        for side in ("bottom", "top"):
+            action = self.action[side]
+            direct = self.direct[side]
+            reference = self.reference_matrices[side]
+            reference_rhs = self.reference_rhs[side]
+            ksp = PETSc.KSP().create(reference.getComm())
+            ksp.setType(PETSc.KSP.Type.PREONLY)
+            ksp.setErrorIfNotConverged(True)
+            ksp.getPC().setType(PETSc.PC.Type.LU)
+            ksp.getPC().setFactorSolverType("mumps")
+            ksp.setOperators(reference)
+            ksp.setUp()
+            active_solution = reference.createVecRight()
+            ksp.solve(reference_rhs, active_solution)
+            action_solution = action.A.createVecRight()
+            active_solution.copy(action_solution)
+            direct_solution = direct.A.createVecRight()
+            action_auxiliary = recover_petsc_auxiliary(
+                action.blocks,
+                action_solution,
+            )
+            combine_petsc_augmented_solution(
+                action.blocks,
+                active_solution,
+                action_auxiliary,
+                direct_solution,
+            )
+            comm = action_auxiliary.getComm().tompi4py()
+            owner = comm.size - 1
+            auxiliary_values = comm.bcast(
+                (
+                    np.asarray(
+                        action_auxiliary.getValues(
+                            np.arange(
+                                action_auxiliary.getSize(),
+                                dtype=PETSc.IntType,
+                            )
+                        ),
+                        dtype=np.complex128,
+                    )
+                    if comm.rank == owner
+                    else None
+                ),
+                root=owner,
+            )
+            try:
+                action_recovered = recover_hybrid_static_local_field(
+                    action,
+                    self.action_coupling,
+                    action_solution,
+                    action_modal,
+                    auxiliary_override=auxiliary_values,
+                )
+                direct_recovered = recover_hybrid_static_local_field(
+                    direct,
+                    self.direct_coupling,
+                    direct_solution,
+                    direct_modal,
+                )
+                action_metrics = action_recovered.full_operator_residual
+                direct_metrics = direct_recovered.full_operator_residual
+                residual_error = abs(
+                    float(action_metrics["linear_system_relative_residual"])
+                    - float(direct_metrics["linear_system_relative_residual"])
+                )
+                field_error = _relative_vector_error(
+                    action_recovered.electric_field.x.petsc_vec,
+                    direct_recovered.electric_field.x.petsc_vec,
+                )
+                metadata = action.static_condensation.metadata.to_dict()
+                assert metadata["full_global_matrix_allocated"] is False
+                assert metadata["full_trace_matrix_allocated"] is False
+                assert residual_error <= 1.0e-11
+                assert field_error <= 1.0e-11
+                if MPI.COMM_WORLD.rank == 0:
+                    print(
+                        f"H2b recovery {side} residual_delta={residual_error:.3e} "
+                        f"field={field_error:.3e}",
+                        flush=True,
+                    )
+            finally:
+                action_auxiliary.destroy()
+                active_solution.destroy()
+                action_solution.destroy()
+                direct_solution.destroy()
+                ksp.destroy()
+
+    def test_action_only_auxiliary_override_matches_direct_rta(self):
+        action_active = {}
+        direct_full = {}
+        action_auxiliary = {}
+        direct_auxiliary = {}
+
+        def replicated(vector):
+            comm = vector.getComm().tompi4py()
+            owner = comm.size - 1
+            values = (
+                np.asarray(
+                    vector.getValues(
+                        np.arange(vector.getSize(), dtype=PETSc.IntType)
+                    ),
+                    dtype=np.complex128,
+                )
+                if comm.rank == owner
+                else None
+            )
+            return comm.bcast(values, root=owner)
+
+        try:
+            for side in ("bottom", "top"):
+                reference = self.reference_matrices[side]
+                active_solution = reference.createVecRight()
+                _fill_global_vector(
+                    active_solution,
+                    101 if side == "bottom" else 103,
+                )
+                action_solution = self.action[side].A.createVecRight()
+                active_solution.copy(action_solution)
+                action_aux_vec = recover_petsc_auxiliary(
+                    self.action[side].blocks,
+                    action_solution,
+                )
+                direct_aux_vec = recover_petsc_auxiliary(
+                    self.reference_blocks[side],
+                    active_solution,
+                )
+                direct_full_solution = self.direct[side].A.createVecRight()
+                combine_petsc_augmented_solution(
+                    self.reference_blocks[side],
+                    active_solution,
+                    direct_aux_vec,
+                    direct_full_solution,
+                )
+                active_solution.destroy()
+                action_active[side] = action_solution
+                direct_full[side] = direct_full_solution
+                action_auxiliary[side] = replicated(action_aux_vec)
+                direct_auxiliary[side] = replicated(direct_aux_vec)
+                action_aux_vec.destroy()
+                direct_aux_vec.destroy()
+                assert np.linalg.norm(direct_auxiliary[side]) > 0.0
+
+            action_eval = evaluate_hybrid_augmented_solution(
+                self.cfg,
+                self.action["bottom"],
+                self.action["top"],
+                self.action_coupling,
+                SimpleNamespace(
+                    bottom=action_active["bottom"],
+                    top=action_active["top"],
+                    modal_amplitudes=np.zeros(
+                        self.action_coupling.internal_unknown_count,
+                        dtype=np.complex128,
+                    ),
+                ),
+                auxiliary_override=(
+                    action_auxiliary["bottom"],
+                    action_auxiliary["top"],
+                ),
+            )
+            direct_eval = evaluate_hybrid_augmented_solution(
+                self.cfg,
+                self.direct["bottom"],
+                self.direct["top"],
+                self.direct_coupling,
+                SimpleNamespace(
+                    bottom=direct_full["bottom"],
+                    top=direct_full["top"],
+                    modal_amplitudes=np.zeros(
+                        self.direct_coupling.internal_unknown_count,
+                        dtype=np.complex128,
+                    ),
+                ),
+            )
+            for key in ("R_total", "T_total", "A_balance", "R_plus_T"):
+                assert (
+                    abs(
+                        float(action_eval["port_power"][key])
+                        - float(direct_eval["port_power"][key])
+                    )
+                    <= 1.0e-11
+                )
+            for side in ("bottom", "top"):
+                auxiliary_error = np.linalg.norm(
+                    action_auxiliary[side] - direct_auxiliary[side]
+                ) / max(np.linalg.norm(direct_auxiliary[side]), 1.0e-30)
+                assert auxiliary_error <= 1.0e-11
+            action_rows = action_eval["external_diffraction_orders"]
+            direct_rows = direct_eval["external_diffraction_orders"]
+            assert len(action_rows) == len(direct_rows)
+            for action_row, direct_row in zip(action_rows, direct_rows):
+                assert (
+                    action_row["side"],
+                    action_row["m"],
+                    action_row["n"],
+                    action_row["polarization"],
+                ) == (
+                    direct_row["side"],
+                    direct_row["m"],
+                    direct_row["n"],
+                    direct_row["polarization"],
+                )
+                amplitude_error = abs(
+                    action_row["outgoing_amplitude_at_boundary"]
+                    - direct_row["outgoing_amplitude_at_boundary"]
+                )
+                amplitude_scale = max(
+                    abs(action_row["outgoing_amplitude_at_boundary"]),
+                    abs(direct_row["outgoing_amplitude_at_boundary"]),
+                    1.0,
+                )
+                assert amplitude_error <= 1.0e-11 * amplitude_scale
+        finally:
+            for vector in action_active.values():
+                vector.destroy()
+            for vector in direct_full.values():
+                vector.destroy()

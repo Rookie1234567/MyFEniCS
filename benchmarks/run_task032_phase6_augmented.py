@@ -68,16 +68,34 @@ from src.postprocessing.hybrid_field_reconstruction import (
     interface_field_continuity,
 )
 from src.solvers.hybrid_fem_modal_augmented_direct import (
+    HybridAugmentedLayout,
     build_hybrid_augmented_direct_system,
     evaluate_hybrid_augmented_solution,
+    internal_modal_rhs_correction,
     solve_hybrid_augmented_direct,
 )
+from src.solvers.hybrid_fem_modal_block_ldu import (
+    HybridBlockActionSystem,
+    HybridBlockLduPhysicalSolution,
+    _HybridBlockLduOracleLocalSystem,
+    create_exact_block_ldu_preconditioner,
+    solve_exact_block_ldu,
+)
+from src.solvers.hybrid_fem_modal_iterative import create_hybrid_assembled_block_action
 from src.solvers.hybrid_fem_modal_schur_direct import (
     build_hybrid_modal_schur_direct_system,
     build_hybrid_modal_schur_memory_minimal_system,
     solve_hybrid_modal_schur_direct,
 )
+from src.solvers.hybrid_local_dtn_action import assemble_hybrid_local_dtn_action_system
 from src.solvers.hybrid_local_dtn import assemble_hybrid_local_dtn_system
+from src.solvers.hybrid_static_field_recovery import recover_hybrid_static_local_field
+from src.solvers.condensed_dtn import (
+    build_explicit_condensed_operator,
+    condensed_rhs,
+    extract_petsc_condensed_blocks,
+    recover_petsc_auxiliary,
+)
 from src.solvers.hybrid_status import hybrid_p_disposition
 from src.solvers.common_3d_solve import (
     _petsc_factor_inventory,
@@ -337,6 +355,57 @@ def _relative_vector_error(actual: PETSc.Vec, expected: PETSc.Vec) -> float:
         )
     finally:
         difference.destroy()
+
+
+def _h3_oracle_local_system(local_system) -> _HybridBlockLduOracleLocalSystem:
+    """Extract one independent active condensed oracle and release temporaries."""
+
+    blocks = None
+    condensed = None
+    port = None
+    rhs = None
+    try:
+        blocks = extract_petsc_condensed_blocks(
+            local_system.A,
+            local_system.b,
+            n_fe=local_system.n_fe,
+            n_aux=local_system.n_external_aux,
+        )
+        condensed, port = build_explicit_condensed_operator(blocks)
+        rhs = condensed_rhs(blocks)
+        oracle = _HybridBlockLduOracleLocalSystem(
+            side=local_system.side,
+            local_mesh=local_system.local_mesh,
+            A=condensed,
+            b=rhs,
+            global_size=int(local_system.n_fe),
+        )
+        condensed = None
+        rhs = None
+        return oracle
+    finally:
+        if port is not None:
+            port.destroy()
+        if blocks is not None:
+            blocks.destroy()
+        if condensed is not None:
+            condensed.destroy()
+        if rhs is not None:
+            rhs.destroy()
+
+
+def _h3_replicated_vec_values(vector: PETSc.Vec) -> np.ndarray:
+    """Replicate a small owned auxiliary vector without gathering FE values."""
+
+    comm = vector.getComm().tompi4py()
+    owner = comm.size - 1
+    values = None
+    if comm.rank == owner:
+        values = np.asarray(
+            vector.getValues(np.arange(vector.getSize(), dtype=PETSc.IntType)),
+            dtype=np.complex128,
+        )
+    return np.asarray(comm.bcast(values, root=owner), dtype=np.complex128)
 
 
 def _global_active_column_count(matrix: PETSc.Mat) -> int:
@@ -793,6 +862,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Open only the frozen Task037b H1 augmented MPI8 path.",
     )
+    parser.add_argument(
+        "--task037b-h3-gate",
+        action="store_true",
+        help="Open only the frozen Task037b H3 exact block-LDU MPI8 path.",
+    )
     parser.add_argument("--task035c-p6-preflight-authority", type=Path)
     parser.add_argument("--task035c-p6-preflight-sha256")
     parser.add_argument("--bottom-interface-nm", type=float, default=10.0)
@@ -844,7 +918,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--solver-path",
-        choices=("augmented", "modal-schur-fast", "modal-schur-memory-minimal"),
+        choices=(
+            "augmented",
+            "modal-schur-fast",
+            "modal-schur-memory-minimal",
+            "block-ldu-exact",
+        ),
         default="augmented",
         help=(
             "Primary direct solve lifecycle. Non-augmented choices are standalone "
@@ -863,11 +942,20 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=os.environ.get("TASK032_HOST_ENVIRONMENT_ID", "SK-20260601OSDE"),
     )
     args = parser.parse_args(argv)
-    if args.task035c_p6_h10_gate and args.task037b_h1_gate:
-        parser.error("Task035c p6/h10 and Task037b H1 gates are mutually exclusive.")
-    if args.degree == 6 and not (args.task035c_p6_h10_gate or args.task037b_h1_gate):
+    selected_scoped_gates = (
+        args.task035c_p6_h10_gate,
+        args.task037b_h1_gate,
+        args.task037b_h3_gate,
+    )
+    if sum(bool(value) for value in selected_scoped_gates) > 1:
         parser.error(
-            "p6 is fail-closed; pass a fixed scoped Task035c or Task037b H1 gate."
+            "Task035c p6/h10, Task037b H1, and Task037b H3 gates are "
+            "mutually exclusive."
+        )
+    if args.degree == 6 and not any(selected_scoped_gates):
+        parser.error(
+            "p6 is fail-closed; pass a fixed scoped Task035c, Task037b H1, "
+            "or Task037b H3 gate."
         )
     if args.task035c_p6_h10_gate:
         scoped = bool(
@@ -939,6 +1027,41 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "10/110 nm, S-polarized, full3d/scalar-CG, M120+M120, "
                 "candidate240, augmented, static-condensed MPI8 path."
             )
+    elif args.task037b_h3_gate:
+        scoped = bool(
+            args.degree == 6
+            and math.isclose(args.h_nm, 10.0)
+            and args.modal_degree == 6
+            and args.modal_h_nm is not None
+            and math.isclose(args.modal_h_nm, 10.0)
+            and args.requested_modes == 120
+            and args.candidate_modes == 240
+            and args.solver_path == "block-ldu-exact"
+            and args.comparison_solver_path == "fast"
+            and not args.compare_modal_schur
+            and args.stage4_full3d_assembly_backend
+            == ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+            and math.isclose(args.bottom_interface_nm, 10.0)
+            and math.isclose(args.top_interface_nm, 110.0)
+            and args.graded_reference_h is None
+            and math.isclose(args.incident_grazing_deg, 10.0)
+            and args.polarization_kind == "s"
+            and args.internal_propagation_model == "full3d_uniform_cg"
+            and args.internal_traction_model == "scalar_cg_discrete_derivative"
+            and args.full3d_reference is not None
+            and valid_hex_digest(args.full3d_reference_sha256, 64)
+            and args.task035c_p6_preflight_authority is not None
+            and valid_hex_digest(args.task035c_p6_preflight_sha256, 64)
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and args.host_environment_id == "WSL2-Ubuntu-24.04"
+            and not args.allow_dirty_research
+        )
+        if not scoped:
+            parser.error(
+                "--task037b-h3-gate is restricted to the fixed WSL p6/h10, "
+                "10/110 nm, S-polarized, full3d/scalar-CG, M120+M120, "
+                "candidate240, block-ldu-exact, static-condensed MPI8 path."
+            )
     elif (
         args.task035c_p6_preflight_authority is not None
         or args.task035c_p6_preflight_sha256 is not None
@@ -954,7 +1077,11 @@ def _task035c_worker_authority_gate(
     current_source_sha: str | None,
     mpi_size: int,
 ) -> dict[str, Any] | None:
-    if not (args.task035c_p6_h10_gate or args.task037b_h1_gate):
+    if not (
+        args.task035c_p6_h10_gate
+        or args.task037b_h1_gate
+        or args.task037b_h3_gate
+    ):
         return None
 
     authority_path = args.task035c_p6_preflight_authority
@@ -1002,7 +1129,7 @@ def _task035c_worker_authority_gate(
             assembly_backend=args.stage4_full3d_assembly_backend,
             mpi_size=mpi_size,
         )
-        if args.task037b_h1_gate
+        if args.task037b_h1_gate or args.task037b_h3_gate
         else task035c_p6_h10_full3d_reference_gate(
             reference if isinstance(reference, dict) else None,
             expected_sha256=args.full3d_reference_sha256,
@@ -1013,7 +1140,11 @@ def _task035c_worker_authority_gate(
         )
     )
     gate = {
-        "schema_version": "task035c.p6-h10-worker-authority-gate.v1",
+        "schema_version": (
+            "task037b.h3-worker-authority-gate.v1"
+            if args.task037b_h3_gate
+            else "task035c.p6-h10-worker-authority-gate.v1"
+        ),
         "pass": bool(preflight_gate["pass"] and reference_gate["pass"]),
         "historical_preflight": {
             **preflight_gate,
@@ -1125,11 +1256,13 @@ def main() -> None:
         comm, args.verified_clean_sha, args.allow_dirty_research
     )
     if (
-        args.task035c_p6_h10_gate or args.task037b_h1_gate
+        args.task035c_p6_h10_gate
+        or args.task037b_h1_gate
+        or args.task037b_h3_gate
     ) and comm.size not in TASK035C_P6_H10_MPI_SIZES:
         raise SystemExit("Task035c p6/h10 Hybrid is restricted to MPI1/2/4/8.")
-    if args.task037b_h1_gate and comm.size != 8:
-        raise SystemExit("Task037b H1 Hybrid is restricted to MPI8.")
+    if (args.task037b_h1_gate or args.task037b_h3_gate) and comm.size != 8:
+        raise SystemExit("Task037b H1/H3 Hybrid is restricted to MPI8.")
     task035c_p6_gate = _task035c_worker_authority_gate(
         args,
         current_source_sha=provenance.get("commit_sha"),
@@ -1187,6 +1320,24 @@ def main() -> None:
     schur_system = None
     schur_solution = None
     primary_schur_system = None
+    h3_oracle_bottom = None
+    h3_oracle_top = None
+    h3_direct_bottom = None
+    h3_direct_top = None
+    h3_preconditioner = None
+    h3_solve_result = None
+    h3_direct_comparison_system = None
+    h3_direct_comparison_solution = None
+    h3_candidate_bottom = None
+    h3_candidate_top = None
+    h3_bottom_auxiliary_vec = None
+    h3_top_auxiliary_vec = None
+    h3_before_inventory = None
+    h3_after_inventory = None
+    h3_direct_factor_inventory = None
+    h3_solution_error = None
+    h3_modal_error = None
+    h3_telemetry = None
     record = None
     graded_plan = None
     graded_bottom_mesh = None
@@ -1503,81 +1654,315 @@ def main() -> None:
         )
         progress("Task32 Phase6: real positive/negative QEP bases complete")
 
-        mark_stage("local_fem_dtn_assembly")
-        started = time.perf_counter()
-        bottom = assemble_hybrid_local_dtn_system(
-            cfg,
-            "bottom",
-            bottom_interface_z_nm=args.bottom_interface_nm,
-            top_interface_z_nm=args.top_interface_nm,
-            local_mesh_override=graded_bottom_mesh,
-        )
-        top = assemble_hybrid_local_dtn_system(
-            cfg,
-            "top",
-            bottom_interface_z_nm=args.bottom_interface_nm,
-            top_interface_z_nm=args.top_interface_nm,
-            local_mesh_override=graded_top_mesh,
-        )
-        timings["two_local_fem_dtn_systems"] = _max_elapsed(comm, started)
-        progress("Task32 Phase6: bottom/top local FEM-DtN systems complete")
-
-        mark_stage("interface_projection_and_coupling")
-        started = time.perf_counter()
-        coupling = build_hybrid_internal_mode_coupling(
-            cfg,
-            spaces,
-            positive,
-            negative,
-            bottom,
-            top,
-            length_nm=args.top_interface_nm - args.bottom_interface_nm,
-            propagation_model=args.internal_propagation_model,
-            modal_traction_model=args.internal_traction_model,
-            log=progress,
-        )
-        timings["internal_modal_coupling"] = _max_elapsed(comm, started)
-
-        started = time.perf_counter()
-        if args.solver_path == "augmented":
-            mark_stage("augmented_matrix_and_factor")
-            system = build_hybrid_augmented_direct_system(bottom, top, coupling)
-            timings["primary_system_build"] = _max_elapsed(comm, started)
-            timings["monolithic_assembly"] = timings["primary_system_build"]
-            progress("Task32 Phase6: monolithic augmented AIJ complete")
-            solution = solve_hybrid_augmented_direct(
-                system,
+        if args.task037b_h3_gate:
+            mark_stage("oracle_local_matrix_build")
+            started = time.perf_counter()
+            h3_direct_bottom = assemble_hybrid_local_dtn_system(
+                cfg,
+                "bottom",
+                bottom_interface_z_nm=args.bottom_interface_nm,
+                top_interface_z_nm=args.top_interface_nm,
+                local_mesh_override=graded_bottom_mesh,
+            )
+            h3_oracle_bottom = _h3_oracle_local_system(h3_direct_bottom)
+            h3_direct_bottom.destroy()
+            h3_direct_bottom = None
+            h3_direct_top = assemble_hybrid_local_dtn_system(
+                cfg,
+                "top",
+                bottom_interface_z_nm=args.bottom_interface_nm,
+                top_interface_z_nm=args.top_interface_nm,
+                local_mesh_override=graded_top_mesh,
+            )
+            h3_oracle_top = _h3_oracle_local_system(h3_direct_top)
+            h3_direct_top.destroy()
+            h3_direct_top = None
+            timings["oracle_local_matrix_build"] = _max_elapsed(comm, started)
+            mark_stage("h2b_action_assembly")
+            started = time.perf_counter()
+            bottom = assemble_hybrid_local_dtn_action_system(
+                cfg,
+                "bottom",
+                bottom_interface_z_nm=args.bottom_interface_nm,
+                top_interface_z_nm=args.top_interface_nm,
+                local_mesh_override=h3_oracle_bottom.local_mesh,
+                log=progress,
+            )
+            top = assemble_hybrid_local_dtn_action_system(
+                cfg,
+                "top",
+                bottom_interface_z_nm=args.bottom_interface_nm,
+                top_interface_z_nm=args.top_interface_nm,
+                local_mesh_override=h3_oracle_top.local_mesh,
+                log=progress,
+            )
+            coupling = build_hybrid_internal_mode_coupling(
+                cfg,
+                spaces,
+                positive,
+                negative,
+                bottom,
+                top,
+                length_nm=args.top_interface_nm - args.bottom_interface_nm,
+                propagation_model=args.internal_propagation_model,
+                modal_traction_model=args.internal_traction_model,
+                log=progress,
+            )
+            layout = HybridAugmentedLayout.build(
+                bottom,
+                top,
+                coupling.internal_unknown_count,
+            )
+            action_matrix, action_context = create_hybrid_assembled_block_action(
                 bottom,
                 top,
                 coupling,
             )
+            action_inventory = dict(action_context.inventory)
+            system = HybridBlockActionSystem(
+                A=action_matrix,
+                b=layout.pack(
+                    bottom.b,
+                    top.b,
+                    internal_modal_rhs_correction(coupling),
+                ),
+                layout=layout,
+                context=action_context,
+                inventory=action_inventory,
+                matrix_stats=_petsc_matrix_stats(action_matrix, assemble=False),
+                block_shapes={
+                    "A_bottom": bottom.A.getSize(),
+                    "A_top": top.A.getSize(),
+                    "global_action": action_matrix.getSize(),
+                },
+                inserted_nnz_by_block={"action_only": None},
+            )
+            timings["h2b_action_assembly"] = _max_elapsed(comm, started)
+            mark_stage("h3_local_factor_setup")
+            started = time.perf_counter()
+            h3_preconditioner = create_exact_block_ldu_preconditioner(
+                layout,
+                h3_oracle_bottom,
+                h3_oracle_top,
+                coupling,
+            )
+            h3_before_inventory = {
+                **h3_preconditioner.inventory,
+                "factor_inventory": h3_preconditioner.modal_schur_system.factor_inventory,
+                "modal_schur_bytes": int(h3_preconditioner.modal_schur.nbytes),
+                "modal_schur_condition": float(
+                    h3_preconditioner.modal_schur_system.modal_schur_condition
+                ),
+            }
+            timings["h3_local_factor_setup"] = _max_elapsed(comm, started)
+            mark_stage("h3_outer_solve")
+            started = time.perf_counter()
+            h3_solve_result = solve_exact_block_ldu(
+                system.A,
+                system.b,
+                h3_preconditioner,
+            )
+            h3_after_inventory = {
+                **h3_preconditioner.inventory,
+                "modal_schur_bytes": int(h3_preconditioner.modal_schur.nbytes),
+                "modal_schur_condition": float(
+                    h3_preconditioner.modal_schur_system.modal_schur_condition
+                ),
+            }
+            if not h3_preconditioner.factors_released:
+                raise RuntimeError("H3 factors were not released after solve.")
+            timings["h3_outer_solve"] = _max_elapsed(comm, started)
+            mark_stage("h3_factors_released")
+            mark_stage("post_h3_direct_comparison")
+            started = time.perf_counter()
+            h3_direct_comparison_system = build_hybrid_augmented_direct_system(
+                h3_oracle_bottom,
+                h3_oracle_top,
+                coupling,
+            )
+            h3_direct_comparison_solution = solve_hybrid_augmented_direct(
+                h3_direct_comparison_system,
+                h3_oracle_bottom,
+                h3_oracle_top,
+                None,
+            )
+            h3_solution_error = _relative_vector_error(
+                h3_solve_result.solution,
+                h3_direct_comparison_solution.x,
+            )
+            candidate_bottom, candidate_top, candidate_modal = layout.split(
+                h3_solve_result.solution,
+                bottom.b,
+                top.b,
+            )
+            h3_candidate_bottom = candidate_bottom
+            h3_candidate_top = candidate_top
+            h3_modal_error = float(
+                np.linalg.norm(
+                    candidate_modal - h3_direct_comparison_solution.modal_amplitudes
+                )
+                / max(
+                    float(np.linalg.norm(candidate_modal)),
+                    float(
+                        np.linalg.norm(
+                            h3_direct_comparison_solution.modal_amplitudes
+                        )
+                    ),
+                    1.0e-30,
+                )
+            )
+            h3_direct_factor_inventory = _petsc_factor_inventory(
+                h3_direct_comparison_solution.ksp
+            )
+            h3_direct_comparison_solution.destroy()
+            h3_direct_comparison_solution = None
+            h3_direct_comparison_system.destroy()
+            h3_direct_comparison_system = None
+            h3_oracle_bottom.destroy()
+            h3_oracle_bottom = None
+            h3_oracle_top.destroy()
+            h3_oracle_top = None
+            timings["post_h3_direct_comparison"] = _max_elapsed(comm, started)
+            h3_bottom_auxiliary_vec = recover_petsc_auxiliary(
+                bottom.blocks,
+                candidate_bottom,
+            )
+            h3_top_auxiliary_vec = recover_petsc_auxiliary(top.blocks, candidate_top)
+            bottom_auxiliary = _h3_replicated_vec_values(h3_bottom_auxiliary_vec)
+            top_auxiliary = _h3_replicated_vec_values(h3_top_auxiliary_vec)
+            h3_bottom_auxiliary_vec.destroy()
+            h3_bottom_auxiliary_vec = None
+            h3_top_auxiliary_vec.destroy()
+            h3_top_auxiliary_vec = None
+            mark_stage("recovery_rta")
+            started = time.perf_counter()
+            bottom_recovered = recover_hybrid_static_local_field(
+                bottom,
+                coupling,
+                candidate_bottom,
+                candidate_modal,
+                auxiliary_override=bottom_auxiliary,
+            )
+            top_recovered = recover_hybrid_static_local_field(
+                top,
+                coupling,
+                candidate_top,
+                candidate_modal,
+                auxiliary_override=top_auxiliary,
+            )
+            timings["recovery_rta"] = _max_elapsed(comm, started)
+            solution = HybridBlockLduPhysicalSolution(
+                bottom=candidate_bottom,
+                top=candidate_top,
+                modal_amplitudes=np.asarray(candidate_modal, dtype=np.complex128),
+                bottom_auxiliary=bottom_auxiliary,
+                top_auxiliary=top_auxiliary,
+                bottom_recovered=bottom_recovered,
+                top_recovered=top_recovered,
+                factor_solver="exact_block_ldu",
+                converged_reason=h3_solve_result.converged_reason,
+                reported_relative_residual=h3_solve_result.reported_relative_residual,
+                relative_residual=h3_solve_result.true_relative_residual,
+                block_relative_residuals=h3_solve_result.block_relative_residuals,
+                iterations=h3_solve_result.iterations,
+                setup_seconds=timings["h3_local_factor_setup"],
+                solve_seconds=timings["h3_outer_solve"],
+                recovery_seconds=timings["recovery_rta"],
+            )
+            h3_candidate_bottom = None
+            h3_candidate_top = None
+            h3_solve_result.destroy()
+            h3_solve_result = None
+            timings["primary_system_build"] = timings["h2b_action_assembly"]
         else:
-            builder = (
-                build_hybrid_modal_schur_direct_system
-                if args.solver_path == "modal-schur-fast"
-                else build_hybrid_modal_schur_memory_minimal_system
+            mark_stage("local_fem_dtn_assembly")
+            started = time.perf_counter()
+            bottom = assemble_hybrid_local_dtn_system(
+                cfg,
+                "bottom",
+                bottom_interface_z_nm=args.bottom_interface_nm,
+                top_interface_z_nm=args.top_interface_nm,
+                local_mesh_override=graded_bottom_mesh,
             )
-            primary_schur_system = builder(
-                bottom, top, coupling, stage_callback=mark_stage
+            top = assemble_hybrid_local_dtn_system(
+                cfg,
+                "top",
+                bottom_interface_z_nm=args.bottom_interface_nm,
+                top_interface_z_nm=args.top_interface_nm,
+                local_mesh_override=graded_top_mesh,
             )
-            timings["primary_system_build"] = _max_elapsed(comm, started)
-            progress(
-                "Task32 Phase10: standalone "
-                f"{primary_schur_system.lifecycle_strategy} Schur system complete"
-            )
-            solution = solve_hybrid_modal_schur_direct(
-                primary_schur_system,
+            timings["two_local_fem_dtn_systems"] = _max_elapsed(comm, started)
+            progress("Task32 Phase6: bottom/top local FEM-DtN systems complete")
+
+            mark_stage("interface_projection_and_coupling")
+            started = time.perf_counter()
+            coupling = build_hybrid_internal_mode_coupling(
+                cfg,
+                spaces,
+                positive,
+                negative,
                 bottom,
                 top,
-                coupling,
-                stage_callback=mark_stage,
+                length_nm=args.top_interface_nm - args.bottom_interface_nm,
+                propagation_model=args.internal_propagation_model,
+                modal_traction_model=args.internal_traction_model,
+                log=progress,
             )
+            timings["internal_modal_coupling"] = _max_elapsed(comm, started)
+
+            started = time.perf_counter()
+            if args.solver_path == "augmented":
+                mark_stage("augmented_matrix_and_factor")
+                system = build_hybrid_augmented_direct_system(bottom, top, coupling)
+                timings["primary_system_build"] = _max_elapsed(comm, started)
+                timings["monolithic_assembly"] = timings["primary_system_build"]
+                progress("Task32 Phase6: monolithic augmented AIJ complete")
+                solution = solve_hybrid_augmented_direct(
+                    system,
+                    bottom,
+                    top,
+                    coupling,
+                )
+            else:
+                builder = (
+                    build_hybrid_modal_schur_direct_system
+                    if args.solver_path == "modal-schur-fast"
+                    else build_hybrid_modal_schur_memory_minimal_system
+                )
+                primary_schur_system = builder(
+                    bottom, top, coupling, stage_callback=mark_stage
+                )
+                timings["primary_system_build"] = _max_elapsed(comm, started)
+                progress(
+                    "Task32 Phase10: standalone "
+                    f"{primary_schur_system.lifecycle_strategy} Schur system complete"
+                )
+                solution = solve_hybrid_modal_schur_direct(
+                    primary_schur_system,
+                    bottom,
+                    top,
+                    coupling,
+                    stage_callback=mark_stage,
+                )
         mark_stage("official_rta")
         rta_started = time.perf_counter()
-        validation = evaluate_hybrid_augmented_solution(
-            cfg, bottom, top, coupling, solution
-        )
-        if args.task037b_h1_gate:
+        if args.task037b_h3_gate:
+            validation = evaluate_hybrid_augmented_solution(
+                cfg,
+                bottom,
+                top,
+                coupling,
+                solution,
+                auxiliary_override=(
+                    solution.bottom_auxiliary,
+                    solution.top_auxiliary,
+                ),
+            )
+        else:
+            validation = evaluate_hybrid_augmented_solution(
+                cfg, bottom, top, coupling, solution
+            )
+        if args.task037b_h1_gate or args.task037b_h3_gate:
             timings["rta_evaluation"] = _max_elapsed(comm, rta_started)
         port_power = validation["port_power"]
         modal_schur_comparison = None
@@ -1924,12 +2309,6 @@ def main() -> None:
                 )
                 <= 1.0 + 1.0e-12
             ),
-            "monolithic_true_relative_residual_le_1e-9": (
-                solution.relative_residual <= 1.0e-9
-            ),
-            "primary_direct_true_relative_residual_le_1e-9": (
-                solution.relative_residual <= 1.0e-9
-            ),
             "interface_e_projection_relative_residual_le_1e-8": (
                 validation["interface_e_projection"]["combined_relative_residual"]
                 <= 1.0e-8
@@ -1947,6 +2326,56 @@ def main() -> None:
             ),
             "external_port_rta_finite": finite_rta,
         }
+        if args.task037b_h3_gate:
+            gates.update(
+                {
+                    "h3_converged_reason_positive": solution.converged_reason > 0,
+                    "h3_outer_iterations_le_3": solution.iterations <= 3,
+                    "h3_true_global_residual_le_1e-10": (
+                        solution.relative_residual <= 1.0e-10
+                    ),
+                    "h3_true_bottom_residual_le_1e-10": (
+                        solution.block_relative_residuals["bottom"] <= 1.0e-10
+                    ),
+                    "h3_true_top_residual_le_1e-10": (
+                        solution.block_relative_residuals["top"] <= 1.0e-10
+                    ),
+                    "h3_true_modal_residual_le_1e-10": (
+                        solution.block_relative_residuals["modal"] <= 1.0e-10
+                    ),
+                    "h3_direct_solution_relative_error_le_1e-10": (
+                        h3_solution_error <= 1.0e-10
+                    ),
+                    "h3_direct_modal_relative_error_le_1e-10": (
+                        h3_modal_error <= 1.0e-10
+                    ),
+                    "h3_factors_released": bool(
+                        h3_after_inventory["oracle_local_direct_factor_count"] == 0
+                        and h3_preconditioner.factors_released
+                    ),
+                    "h3_candidate_global_A_not_materialized": (
+                        not system.inventory["global_A_materialized"]
+                    ),
+                    "h3_candidate_external_C_D_zero": (
+                        system.inventory["explicit_external_c_matrix_count"] == 0
+                        and system.inventory["explicit_external_d_matrix_count"] == 0
+                    ),
+                    "h3_candidate_p6_direct_factor_count_zero": (
+                        system.inventory["p6_direct_factor_count"] == 0
+                    ),
+                }
+            )
+        else:
+            gates.update(
+                {
+                    "monolithic_true_relative_residual_le_1e-9": (
+                        solution.relative_residual <= 1.0e-9
+                    ),
+                    "primary_direct_true_relative_residual_le_1e-9": (
+                        solution.relative_residual <= 1.0e-9
+                    ),
+                }
+            )
         if solution.bottom_recovered is not None:
             if solution.top_recovered is None:
                 raise RuntimeError(
@@ -2092,11 +2521,18 @@ def main() -> None:
             "bottom": _petsc_matrix_stats(coupling.bottom.projection, assemble=False),
             "top": _petsc_matrix_stats(coupling.top.projection, assemble=False),
         }
-        factor_inventory = (
-            {"augmented": _petsc_factor_inventory(solution.ksp)}
-            if system is not None
-            else primary_schur_system.factor_inventory
-        )
+        if args.task037b_h3_gate:
+            factor_inventory = {
+                "h3_preconditioner_before": h3_before_inventory,
+                "h3_preconditioner_after": h3_after_inventory,
+                "post_h3_direct_comparison": h3_direct_factor_inventory,
+            }
+        else:
+            factor_inventory = (
+                {"augmented": _petsc_factor_inventory(solution.ksp)}
+                if system is not None
+                else primary_schur_system.factor_inventory
+            )
         full_vector_size = int(positive.modes[0].right.right_full.getSize())
         reduced_vector_size = int(positive.modes[0].right.right_reduced.getSize())
         eigenvector_bytes = int(
@@ -2124,9 +2560,13 @@ def main() -> None:
             "retained_right_left_eigenvector_bytes": eigenvector_bytes,
             "projection_matrix": projection_stats,
             "modal_schur_bytes": (
-                0
-                if primary_schur_system is None
-                else int(primary_schur_system.modal_schur.nbytes)
+                int(h3_before_inventory["modal_schur_bytes"])
+                if args.task037b_h3_gate
+                else (
+                    0
+                    if primary_schur_system is None
+                    else int(primary_schur_system.modal_schur.nbytes)
+                )
             ),
             "local_or_augmented_factor_inventory": factor_inventory,
             "storage_complexity_contract": "O(N_interface*M)+O(M^2)",
@@ -2171,6 +2611,37 @@ def main() -> None:
                     "sequential_sum": (bottom_recovery_seconds + top_recovery_seconds),
                 },
             }
+        if args.task037b_h3_gate:
+            h3_telemetry = {
+                "task037b_h3_gate": True,
+                "operator_inventory": system.inventory,
+                "preconditioner_before": h3_before_inventory,
+                "preconditioner_after": h3_after_inventory,
+                "post_h3_direct_factor_inventory": h3_direct_factor_inventory,
+                "outer_iterations": int(solution.iterations),
+                "converged_reason": int(solution.converged_reason),
+                "reported_relative_residual": float(
+                    solution.reported_relative_residual
+                ),
+                "true_relative_residual": float(solution.relative_residual),
+                "block_relative_residuals": solution.block_relative_residuals,
+                "direct_solution_relative_error": float(h3_solution_error),
+                "direct_modal_relative_error": float(h3_modal_error),
+                "factorization_released": bool(h3_preconditioner.factors_released),
+                "timings": {
+                    key: timings[key]
+                    for key in (
+                        "oracle_local_matrix_build",
+                        "h2b_action_assembly",
+                        "h3_local_factor_setup",
+                        "h3_outer_solve",
+                        "post_h3_direct_comparison",
+                        "rta_evaluation",
+                        "recovery_rta",
+                    )
+                    if key in timings
+                },
+            }
         _verify_source_stable_at_end(
             comm,
             provenance,
@@ -2182,29 +2653,41 @@ def main() -> None:
         record = {
             "schema_version": 1,
             "benchmark_id": (
-                "task032_phase6_hybrid_augmented_direct"
-                if args.degree == 2
-                and args.bottom_interface_nm == 10.0
-                and args.top_interface_nm == 110.0
-                and args.solver_path == "augmented"
+                "task037b_h3_exact_block_ldu_iterative_oracle"
+                if args.task037b_h3_gate
                 else (
-                    "task032_phase10_hybrid_modal_schur_direct"
+                    "task032_phase6_hybrid_augmented_direct"
                     if args.degree == 2
                     and args.bottom_interface_nm == 10.0
                     and args.top_interface_nm == 110.0
-                    else "task033_high_order_or_buffer_hybrid_direct"
+                    and args.solver_path == "augmented"
+                    else (
+                        "task032_phase10_hybrid_modal_schur_direct"
+                        if args.degree == 2
+                        and args.bottom_interface_nm == 10.0
+                        and args.top_interface_nm == 110.0
+                        else "task033_high_order_or_buffer_hybrid_direct"
+                    )
                 )
             ),
             "timestamp_utc": timestamp,
             "status": (
-                "algebraic_smoke_pass_physical_truncation_not_qualified"
-                if task33_variant
-                and algebraic_chain_pass
-                and not task033_physical_truncation_allowed
+                "task037b_h3_runner_gate_pass_12_channel_pending"
+                if args.task037b_h3_gate and integration_pass
                 else (
-                    "physical_integration_pass_mode_convergence_pending"
-                    if integration_pass
-                    else "physical_integration_failed"
+                    "HYBRID_BLOCK_ITERATIVE_ALGEBRA_FAILED"
+                    if args.task037b_h3_gate
+                    else (
+                        "algebraic_smoke_pass_physical_truncation_not_qualified"
+                        if task33_variant
+                        and algebraic_chain_pass
+                        and not task033_physical_truncation_allowed
+                        else (
+                            "physical_integration_pass_mode_convergence_pending"
+                            if integration_pass
+                            else "physical_integration_failed"
+                        )
+                    )
                 )
             ),
             "metadata": {
@@ -2318,6 +2801,11 @@ def main() -> None:
             },
             "hybrid_system": {
                 "primary_solver_path": args.solver_path,
+                "operator_inventory": (
+                    system.inventory
+                    if args.task037b_h3_gate and system is not None
+                    else None
+                ),
                 "matrix_size": (
                     list(system.A.getSize()) if system is not None else None
                 ),
@@ -2580,18 +3068,39 @@ def main() -> None:
                 "volume_absorption_reconstructed": physical_fields is not None,
                 "selected_middle_planes_reconstructed": physical_fields is not None,
                 "official_record": False,
+                "h3_algebra_disposition": (
+                    (
+                        "runner_gate_pass_12_channel_pending"
+                        if integration_pass
+                        else "HYBRID_BLOCK_ITERATIVE_ALGEBRA_FAILED"
+                    )
+                )
+                if args.task037b_h3_gate
+                else None,
+                "h3_12_channel_comparator": (
+                    "offline_required_not_recomputed_in_runner"
+                    if args.task037b_h3_gate
+                    else None
+                ),
                 "hybrid_p_disposition": hybrid_p_status,
                 "boundary": (
                     (
-                        "real_QEP_internal_physical_chain; no pinned "
-                        "degree-compatible Case080 full3D reference is registered; "
-                        "requires an M funnel and a separate equal-accuracy comparison"
+                        "H3 in-run algebraic and field gates measured; "
+                        "12+12 channel comparator pending offline"
                     )
-                    if loaded_reference is None
+                    if args.task037b_h3_gate
                     else (
-                        "real_QEP_physical_field_chain with a degree-compatible "
-                        "full3D reference; requires a wider M funnel before "
-                        "official qualification"
+                        (
+                            "real_QEP_internal_physical_chain; no pinned "
+                            "degree-compatible Case080 full3D reference is registered; "
+                            "requires an M funnel and a separate equal-accuracy comparison"
+                        )
+                        if loaded_reference is None
+                        else (
+                            "real_QEP_physical_field_chain with a degree-compatible "
+                            "full3D reference; requires a wider M funnel before "
+                            "official qualification"
+                        )
                     )
                 ),
             },
@@ -2607,9 +3116,36 @@ def main() -> None:
         if args.task037b_h1_gate:
             record["h1_telemetry"] = h1_telemetry
             record["qualification"]["task037b_h1_gate"] = True
+        if args.task037b_h3_gate:
+            record["h3_telemetry"] = h3_telemetry
+            record["qualification"]["task037b_h3_gate"] = True
     except _ModalBasisCapacityStop:
         pass
     finally:
+        if h3_direct_comparison_solution is not None:
+            h3_direct_comparison_solution.destroy()
+        if h3_direct_comparison_system is not None:
+            h3_direct_comparison_system.destroy()
+        if h3_solve_result is not None:
+            h3_solve_result.destroy()
+        if h3_preconditioner is not None:
+            h3_preconditioner.destroy()
+        if h3_oracle_bottom is not None:
+            h3_oracle_bottom.destroy()
+        if h3_oracle_top is not None:
+            h3_oracle_top.destroy()
+        if h3_direct_bottom is not None:
+            h3_direct_bottom.destroy()
+        if h3_direct_top is not None:
+            h3_direct_top.destroy()
+        if h3_bottom_auxiliary_vec is not None:
+            h3_bottom_auxiliary_vec.destroy()
+        if h3_top_auxiliary_vec is not None:
+            h3_top_auxiliary_vec.destroy()
+        if h3_candidate_bottom is not None:
+            h3_candidate_bottom.destroy()
+        if h3_candidate_top is not None:
+            h3_candidate_top.destroy()
         if schur_solution is not None:
             schur_solution.destroy()
         if schur_system is not None:

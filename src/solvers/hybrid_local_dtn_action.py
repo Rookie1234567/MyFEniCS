@@ -53,7 +53,10 @@ from .hcurl_assembly_time_condensation import (
     build_unconstrained_assembly_time_condensation,
     cell_interior_schur_bilinear,
     condense_unconstrained_vector_to_active_trace,
-    project_mpc_vector_to_active_trace,
+)
+from .hybrid_local_static_condensation import (
+    HybridLocalStaticCondensation,
+    bind_hybrid_local_static_condensation,
 )
 from .static_local_schur_action import create_static_local_schur_action
 
@@ -66,8 +69,29 @@ __all__ = (
 class _HybridActionStaticCondensation:
     """Narrow coupling adapter over the retained action-only condensation."""
 
-    def __init__(self, condensed: AssemblyTimeCondensedSystem) -> None:
+    def __init__(
+        self,
+        condensed: AssemblyTimeCondensedSystem,
+        bilinear_form: Any,
+        floquet_data: Any,
+        reduced_operator: PETSc.Mat,
+    ) -> None:
         self.condensed = condensed
+        self._adapter: HybridLocalStaticCondensation = (
+            bind_hybrid_local_static_condensation(
+                condensed=condensed,
+                bilinear_form=bilinear_form,
+                floquet_data=floquet_data,
+                assembly_backend_requested=ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
+                assembly_backend_actual=ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
+                external_auxiliary_rows=0,
+                reduced_operator=reduced_operator,
+            )
+        )
+
+    @property
+    def metadata(self):
+        return self._adapter.metadata
 
     def reduce_tangential_surface_mpc_vector(
         self,
@@ -77,8 +101,7 @@ class _HybridActionStaticCondensation:
         eliminated_relative_tolerance: float = (1024.0 * np.finfo(np.float64).eps),
         audit: dict[str, object] | None = None,
     ) -> PETSc.Vec:
-        return project_mpc_vector_to_active_trace(
-            self.condensed,
+        return self._adapter.reduce_tangential_surface_mpc_vector(
             full_mpc_vector,
             eliminated_tolerance=eliminated_tolerance,
             eliminated_relative_tolerance=eliminated_relative_tolerance,
@@ -90,10 +113,21 @@ class _HybridActionStaticCondensation:
         left_full_vector: PETSc.Vec,
         right_full_vector: PETSc.Vec,
     ) -> complex:
-        return cell_interior_schur_bilinear(
-            self.condensed,
+        return self._adapter.interior_cross_bilinear(
             left_full_vector,
             right_full_vector,
+        )
+
+    def recover_and_audit(
+        self,
+        reduced_solution: PETSc.Vec,
+        reduced_effective_rhs: PETSc.Vec,
+        full_effective_rhs: PETSc.Vec,
+    ):
+        return self._adapter.recover_and_audit(
+            reduced_solution,
+            reduced_effective_rhs,
+            full_effective_rhs,
         )
 
     def destroy(self) -> None:
@@ -406,7 +440,12 @@ def assemble_hybrid_local_dtn_action_system(
         fine_operator=fine_action,
     )
     b = condensed_rhs(blocks)
-    static_adapter = _HybridActionStaticCondensation(condensed)
+    static_adapter = _HybridActionStaticCondensation(
+        condensed,
+        bilinear_form,
+        floquet_data,
+        A,
+    )
     comm4 = local_mesh.mesh.comm
     traction_rows_total = int(
         comm4.allreduce(

@@ -203,6 +203,13 @@ def _h1_hybrid_cli() -> list[str]:
     return cli
 
 
+def _h3_hybrid_cli() -> list[str]:
+    cli = _hybrid_cli("assembly_time_static_condensed")
+    cli[cli.index("--solver-path") + 1] = "block-ldu-exact"
+    cli[cli.index("--task035c-p6-h10-gate")] = "--task037b-h3-gate"
+    return cli
+
+
 class Task035cP6H10RunnerGateTests(unittest.TestCase):
     def test_ordinary_defaults_remain_unchanged(self) -> None:
         phase6 = parse_phase6_args([])
@@ -211,6 +218,7 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
         self.assertEqual(phase6.stage4_full3d_assembly_backend, "standard_full")
         self.assertFalse(phase6.task035c_p6_h10_gate)
         self.assertFalse(phase6.task037b_h1_gate)
+        self.assertFalse(phase6.task037b_h3_gate)
 
         full3d = parse_full3d_args(["--degree", "3"])
         self.assertEqual(full3d.stage4_full3d_assembly_backend, "standard_full")
@@ -325,6 +333,43 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
         worker = parse_phase6_args(phase6_cli)
         self.assertTrue(worker.task037b_h1_gate)
 
+    def test_task037b_h3_gate_and_worker_forwarding_are_scoped(self) -> None:
+        args = parse_memory_args(_h3_hybrid_cli())
+        self.assertTrue(args.task037b_h3_gate)
+        self.assertEqual(args.mpi_size, 8)
+        self.assertEqual(args.requested_modes, 120)
+        self.assertEqual(args.candidate_modes, 240)
+        self.assertEqual(args.solver_path, "block-ldu-exact")
+        command = _worker_command(args, Path("record.json"), Path("stages.jsonl"))
+        self.assertIn("--task037b-h3-gate", command)
+        self.assertNotIn("--task037b-h1-gate", command)
+        self.assertNotIn("--task035c-p6-h10-gate", command)
+        worker_cli = _h3_hybrid_cli()
+        remove_pairs = {"--target", "--case-label", "--mpi-size"}
+        phase6_cli: list[str] = []
+        index = 0
+        while index < len(worker_cli):
+            if worker_cli[index] in remove_pairs:
+                index += 2
+                continue
+            phase6_cli.append(worker_cli[index])
+            index += 1
+        worker = parse_phase6_args(phase6_cli)
+        self.assertTrue(worker.task037b_h3_gate)
+        self.assertEqual(worker.solver_path, "block-ldu-exact")
+
+    def test_task037b_h3_gate_rejects_wrong_solver(self) -> None:
+        cli = _h3_hybrid_cli()
+        cli[cli.index("--solver-path") + 1] = "augmented"
+        with self.assertRaises(SystemExit):
+            parse_memory_args(cli)
+
+    def test_task037b_h3_gate_rejects_h1_combination(self) -> None:
+        cli = _h3_hybrid_cli()
+        cli.append("--task037b-h1-gate")
+        with self.assertRaises(SystemExit):
+            parse_memory_args(cli)
+
     def test_task035c_rejects_augmented_and_h1_summary_forwards(self) -> None:
         old_augmented = _hybrid_cli("assembly_time_static_condensed")
         old_augmented[old_augmented.index("--solver-path") + 1] = "augmented"
@@ -334,9 +379,11 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
             {
                 "metadata": {"task037b_h1_gate": True},
                 "h1_telemetry": {"task037b_h1_gate": True},
+                "h3_telemetry": {"task037b_h3_gate": True},
                 "hybrid_system": {
                     "block_shapes": {"A": [1, 1]},
                     "inserted_nnz_by_block": {"A": 1},
+                    "operator_inventory": {"global_A_materialized": False},
                 },
                 "validation": {
                     "interface_e_projection": {"relative": 1.0e-12},
@@ -345,7 +392,11 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
             }
         )
         self.assertTrue(summary["h1_telemetry"]["task037b_h1_gate"])
+        self.assertTrue(summary["h3_telemetry"]["task037b_h3_gate"])
         self.assertEqual(summary["hybrid_system"]["block_shapes"], {"A": [1, 1]})
+        self.assertFalse(
+            summary["hybrid_system"]["operator_inventory"]["global_A_materialized"]
+        )
         self.assertEqual(
             summary["validation"]["fe_modal_traction_equilibrium"]["relative"],
             2.0e-12,
