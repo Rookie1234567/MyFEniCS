@@ -1,8 +1,8 @@
-"""Action-only assembled-block oracle for the Task037b Hybrid system.
+"""Action-only block oracle for the Task037b Hybrid system.
 
-The terminal FEM blocks remain assembled, while the global Hybrid operator is
-represented only by a PETSc MatPython action.  The monolithic AIJ reference is
-owned by the focused test, never by this production context.
+Terminal blocks may be borrowed assembled H2a blocks or exact action-only H2b
+local blocks.  The global Hybrid operator is always a PETSc MatPython action;
+this production context never forms a monolithic AIJ matrix.
 """
 
 from __future__ import annotations
@@ -37,11 +37,11 @@ def _gather_owned_small(vector: PETSc.Vec, expected_size: int) -> np.ndarray:
 
 
 class HybridBlockOperator:
-    """MatPython context for exact assembled-block Hybrid multiplication.
+    """MatPython context for exact Hybrid block multiplication.
 
-    ``bottom_system.A`` and ``top_system.A`` are borrowed assembled blocks.
-    Coupling matrices are also borrowed and applied as actions.  Only scratch
-    vectors are owned here; no global monolithic matrix is formed or retained.
+    Terminal ``A`` blocks are borrowed, either assembled for H2a or action-only
+    for H2b.  Coupling matrices are also borrowed and applied as actions. Only
+    scratch vectors are owned here; no global monolithic matrix is formed.
     """
 
     def __init__(
@@ -85,12 +85,59 @@ class HybridBlockOperator:
         self._bottom_projection_target = coupling.bottom.projection.createVecLeft()
         self._top_projection_target = coupling.top.projection.createVecLeft()
         self._destroyed = False
+        bottom_inventory = getattr(bottom_system, "inventory", {})
+        top_inventory = getattr(top_system, "inventory", {})
+        bottom_a_materialized = bool(
+            bottom_inventory.get("global_A_materialized", True)
+        )
+        top_a_materialized = bool(top_inventory.get("global_A_materialized", True))
+        bottom_f_materialized = bool(
+            bottom_inventory.get("global_F_materialized", bottom_a_materialized)
+        )
+        top_f_materialized = bool(
+            top_inventory.get("global_F_materialized", top_a_materialized)
+        )
+        side_c_counts = (
+            int(bottom_inventory.get("explicit_external_c_matrix_count", 1)),
+            int(top_inventory.get("explicit_external_c_matrix_count", 1)),
+        )
+        side_d_counts = (
+            int(bottom_inventory.get("explicit_external_d_matrix_count", 1)),
+            int(top_inventory.get("explicit_external_d_matrix_count", 1)),
+        )
+        factor_counts = (
+            bottom_inventory.get("direct_factor_count"),
+            top_inventory.get("direct_factor_count"),
+        )
         self.inventory = {
             "matrix_type": "python",
             "matrix_free": True,
             "global_A_materialized": False,
-            "bottom_A_assembled": True,
-            "top_A_assembled": True,
+            "bottom_A_assembled": bottom_a_materialized,
+            "top_A_assembled": top_a_materialized,
+            "bottom_global_F_materialized": bottom_f_materialized,
+            "top_global_F_materialized": top_f_materialized,
+            "bottom_explicit_external_c_matrix_count": int(
+                bottom_inventory.get("explicit_external_c_matrix_count", 1)
+            ),
+            "bottom_explicit_external_d_matrix_count": int(
+                bottom_inventory.get("explicit_external_d_matrix_count", 1)
+            ),
+            "top_explicit_external_c_matrix_count": int(
+                top_inventory.get("explicit_external_c_matrix_count", 1)
+            ),
+            "top_explicit_external_d_matrix_count": int(
+                top_inventory.get("explicit_external_d_matrix_count", 1)
+            ),
+            "bottom_direct_factor_count": bottom_inventory.get("direct_factor_count"),
+            "top_direct_factor_count": top_inventory.get("direct_factor_count"),
+            "explicit_external_c_matrix_count": sum(side_c_counts),
+            "explicit_external_d_matrix_count": sum(side_d_counts),
+            "p6_direct_factor_count": (
+                sum(int(value) for value in factor_counts)
+                if all(value is not None for value in factor_counts)
+                else None
+            ),
             "global_size": self.layout.global_size,
             "local_size": self.layout.local_size,
             "modal_count": self.layout.modal_count,
