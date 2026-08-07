@@ -84,6 +84,14 @@ class LORHcurlHX:
     def vector_operator(self) -> sp.csr_matrix:
         return self._vector_operator
 
+    @property
+    def auxiliary(self) -> LORHcurlAuxiliarySpace:
+        return self._auxiliary
+
+    @property
+    def edge_inverse_diagonal(self) -> np.ndarray:
+        return self._edge_inverse_diagonal
+
     def _jacobi(
         self,
         matrix: sp.csr_matrix,

@@ -158,11 +158,9 @@ def test_hx_operators_and_storage_are_readonly_and_length_is_checked(degree):
         assert matrix.data.flags.writeable is False
         assert matrix.indices.flags.writeable is False
         assert matrix.indptr.flags.writeable is False
-    for name in (
-        "_edge_inverse_diagonal",
-        "_scalar_inverse_diagonal",
-        "_vector_inverse_diagonal",
-    ):
+    assert hx.auxiliary is _auxiliary
+    assert hx.edge_inverse_diagonal.flags.writeable is False
+    for name in ("_scalar_inverse_diagonal", "_vector_inverse_diagonal"):
         assert getattr(hx, name).flags.writeable is False
     assert hx.matrix is proxy.matrix
     assert "_a_adjoint" not in vars(hx)
