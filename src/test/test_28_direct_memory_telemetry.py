@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -29,6 +30,7 @@ from benchmarks.run_direct_memory_forensics import (
 )
 from src.solvers.common_3d_solve import (
     DirectSolveFailure,
+    _log_matrix_stats,
     _petsc_factor_inventory,
     _petsc_matrix_stats,
 )
@@ -67,7 +69,14 @@ class DirectMemoryTelemetryTests(unittest.TestCase):
         ratios = enriched["derived_ratios"]
         self.assertEqual(ratios["factor_to_augmented_nnz_ratio"], 6.0)
         self.assertEqual(ratios["factor_to_augmented_estimated_storage_ratio"], 6.0)
-        self.assertIn("not inferred MUMPS", ratios["semantics"])
+        self.assertEqual(
+            ratios["factor_nnz_source"], "petsc_factor_matrix_nnz_used_raw"
+        )
+        self.assertEqual(
+            ratios["factor_estimated_storage_source"],
+            "petsc_factor_matrix_estimate_raw",
+        )
+        self.assertIn("otherwise PETSc-reported nnz", ratios["semantics"])
 
     def test_worker_forces_full_solve_not_assemble_only(self) -> None:
         args = _parse_args(["--h-nm", "5", "--profile", "default"])
@@ -82,12 +91,8 @@ class DirectMemoryTelemetryTests(unittest.TestCase):
             _parse_args(["--h-nm", "5", "--release-base-after-augmentation"])
         )
         self.assertFalse(ordinary.direct_release_base_after_augmentation)
-        self.assertFalse(
-            ordinary.stage4_assembly_time_cell_static_condensation
-        )
-        self.assertFalse(
-            ordinary.direct_release_solver_before_postprocess
-        )
+        self.assertFalse(ordinary.stage4_assembly_time_cell_static_condensation)
+        self.assertFalse(ordinary.direct_release_solver_before_postprocess)
         self.assertTrue(candidate.direct_release_base_after_augmentation)
 
     def test_ooc_scratch_usage_is_measured_recursively(self) -> None:
@@ -177,21 +182,26 @@ class DirectMemoryTelemetryTests(unittest.TestCase):
             20: process(20, 0, rank=None, rss_mb=6.0),
             21: process(21, 20, rank=1, rss_mb=900.0),
         }
-        with tempfile.TemporaryDirectory() as tmp, patch(
-            "benchmarks.run_direct_memory_forensics._read_processes",
-            return_value=processes,
-        ), patch(
-            "benchmarks.run_direct_memory_forensics._vmstat_swap_pages",
-            return_value=(0, 0),
-        ), patch(
-            "benchmarks.run_direct_memory_forensics._cgroup_snapshot",
-            return_value={
-                "container_cgroup_current_mb": 111.0,
-                "container_cgroup_peak_mb": 112.0,
-                "container_swap_current_mb": 0.0,
-                "job_cgroup_path": "/test",
-                "job_cgroup_dedicated": True,
-            },
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            patch(
+                "benchmarks.run_direct_memory_forensics._read_processes",
+                return_value=processes,
+            ),
+            patch(
+                "benchmarks.run_direct_memory_forensics._vmstat_swap_pages",
+                return_value=(0, 0),
+            ),
+            patch(
+                "benchmarks.run_direct_memory_forensics._cgroup_snapshot",
+                return_value={
+                    "container_cgroup_current_mb": 111.0,
+                    "container_cgroup_peak_mb": 112.0,
+                    "container_swap_current_mb": 0.0,
+                    "job_cgroup_path": "/test",
+                    "job_cgroup_dedicated": True,
+                },
+            ),
         ):
             row = _sample(10, Path(tmp) / "progress.jsonl", 0.0)
 
@@ -228,6 +238,50 @@ class DirectMemoryTelemetryTests(unittest.TestCase):
         finally:
             matrix.destroy()
 
+    def test_matrix_python_stats_are_metadata_only(self) -> None:
+        matrix = PETSc.Mat().createPython(
+            ((2, 2), (2, 2)),
+            context=SimpleNamespace(),
+            comm=PETSc.COMM_SELF,
+        )
+        matrix.setUp()
+        logs = []
+        try:
+            stats = _petsc_matrix_stats(matrix)
+            json.dumps(stats)
+            _log_matrix_stats(stats, logs.append)
+            self.assertEqual(stats["matrix_type"], PETSc.Mat.Type.PYTHON)
+            self.assertTrue(stats["matrix_free"])
+            self.assertEqual((stats["matrix_rows"], stats["matrix_cols"]), (2, 2))
+            self.assertEqual(
+                (stats["matrix_local_rows"], stats["matrix_local_cols"]),
+                (2, 2),
+            )
+            self.assertEqual(stats["matrix_row_ownership_range"], [0, 2])
+            self.assertEqual(stats["matrix_column_ownership_range"], [0, 2])
+            self.assertEqual(stats["matrix_row_block_size"], 1)
+            self.assertEqual(stats["matrix_column_block_size"], 1)
+            for key in (
+                "matrix_nnz_used",
+                "matrix_nnz_allocated",
+                "matrix_nnz_unneeded",
+                "matrix_mallocs",
+                "matrix_average_nnz_per_row",
+                "matrix_maximum_nnz_per_row",
+                "matrix_average_allocated_nnz_per_row",
+                "matrix_memory_bytes",
+                "matrix_memory_mb",
+                "matrix_memory_estimate_bytes",
+                "matrix_memory_estimate_mb",
+                "matrix_norm_frobenius",
+                "matrix_norm_infinity",
+                "matrix_petsc_info",
+                "matrix_petsc_info_global_sum",
+            ):
+                self.assertEqual(stats[key], "not_applicable")
+            self.assertIn("average nnz per row = not_applicable", logs)
+        finally:
+            matrix.destroy()
 
     def test_factorization_only_stops_after_ksp_setup(self) -> None:
         matrix = PETSc.Mat().createAIJ([2, 2], nnz=1, comm=PETSc.COMM_SELF)
@@ -387,12 +441,8 @@ class DirectMemoryTelemetryTests(unittest.TestCase):
                 self.assertEqual(record["qualification"]["numeric_gate"], "pass")
         h5 = json.loads((root / records[0]).read_text(encoding="utf-8"))
         h3 = json.loads((root / records[1]).read_text(encoding="utf-8"))
-        self.assertEqual(
-            h5["qualification"]["memory_reduction_20pct_gate"], "pass"
-        )
-        self.assertEqual(
-            h3["qualification"]["memory_reduction_20pct_gate"], "failed"
-        )
+        self.assertEqual(h5["qualification"]["memory_reduction_20pct_gate"], "pass")
+        self.assertEqual(h3["qualification"]["memory_reduction_20pct_gate"], "failed")
 
     def test_task29_required_outcomes_contract(self) -> None:
         root = (

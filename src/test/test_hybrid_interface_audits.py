@@ -9,6 +9,8 @@ from src.coupling.hybrid_internal_modes import (
 )
 from src.modes.mode_classification import (
     NearDegenerateBlockPartitionSplitError,
+    _joint_near_degenerate_groups,
+    _joint_subspace_inverse,
     _near_degenerate_partition_audit,
 )
 
@@ -101,6 +103,59 @@ class HybridInterfaceAuditTests(unittest.TestCase):
         ) as caught:
             raise NearDegenerateBlockPartitionSplitError(audit)
         self.assertEqual(caught.exception.audit, audit)
+
+    def test_joint_groups_rotate_coupled_near_degenerate_modes(self):
+        betas = (1.0 + 0.0j, 1.0 + 1.580086e-6j, 2.0 + 0.0j)
+        groups = ((0,), (1,), (2,))
+        overlap = np.eye(3, dtype=np.complex128)
+        overlap[0, 1] = 1.773428e-6
+        overlap[1, 0] = 0.7e-6
+
+        joint = _joint_near_degenerate_groups(
+            betas,
+            groups,
+            overlap,
+            near_degenerate_tolerance=1.0e-6,
+            block_rotation_tolerance=1.0e-6,
+        )
+        self.assertEqual(joint, ((0, 1), (2,)))
+        transform, condition = _joint_subspace_inverse(
+            overlap[np.ix_((0, 1), (0, 1))],
+            maximum_overlap_condition=1.0e12,
+        )
+        np.testing.assert_allclose(
+            transform.conj().T @ overlap[np.ix_((0, 1), (0, 1))],
+            np.eye(2),
+            rtol=0.0,
+            atol=1.0e-12,
+        )
+        self.assertTrue(np.isfinite(condition))
+
+    def test_joint_groups_do_not_merge_outside_candidate_envelope(self):
+        betas = (1.0 + 0.0j, 1.0 + 11.0e-6j)
+        groups = ((0,), (1,))
+        overlap = np.asarray(
+            [[1.0 + 0.0j, 2.0e-6], [2.0e-6, 1.0 + 0.0j]],
+            dtype=np.complex128,
+        )
+        joint = _joint_near_degenerate_groups(
+            betas,
+            groups,
+            overlap,
+            near_degenerate_tolerance=1.0e-6,
+            block_rotation_tolerance=1.0e-6,
+        )
+        self.assertEqual(joint, ((0,), (1,)))
+        audit = _near_degenerate_partition_audit(
+            betas,
+            joint,
+            overlap,
+            near_degenerate_tolerance=1.0e-6,
+            block_rotation_tolerance=1.0e-6,
+            directions=("forward", "forward"),
+        )
+        self.assertFalse(audit["pass"])
+        self.assertEqual(audit["status"], "cross_block_biorthogonality_failure")
 
 
 if __name__ == "__main__":
