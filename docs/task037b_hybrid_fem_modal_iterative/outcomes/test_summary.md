@@ -40,7 +40,9 @@ post-fix H1 只修复近简并分组与 partition audit 范数语义的窄回归
 | H1 | pass（post-fix；首次 failed_before_solve 历史保留） |
 | H2a | pass；assembled-block MatPython action identity |
 | H2b | pass；Matrix-free local endcap exact action identity |
-| H3-H10 | not_run_yet；按阶段顺序等待 H3 |
+| H3 | pass；exact block-LDU formal、offline 12+12 完成 |
+| H4 | pass；H4a exact Sₘ 与 H4b bounded diagnostic 完成 |
+| H5-H10 | not_run_by_order；H5 为下一阶段 |
 
 ## 运行边界
 
@@ -55,7 +57,7 @@ H1 recovery checkpoint 当时没有修改 H1 solver、没有放宽阈值、没�
 | existing direct minimal regression | 1 passed |
 | action Gate | global 与 bottom/top/modal block relative error 全部 `<=1e-11` |
 | layout / pack-split | missing/extra/duplicates `0/0/0`；三项 pack/split `0` |
-| H3 | not_run；H3 第一次 outer FGMRES / exact block-LDU iterative oracle尚未运行 |
+| H3 | 本 H2a checkpoint 当时未运行；随后已完成 exact block-LDU formal |
 
 完整 H2a 逐 probe 数值与 H2b 汇总见 [block identity](block_operator_identity.md)。
 
@@ -75,4 +77,15 @@ H2b-G 每个 MPI 的七 probes、global/bottom/top/modal 四块合计最大 rela
 超过该行总体最大值，且均低于 `1e-11`；MPI1/2/4 的 pack/split bottom/top/modal
 均为 `0`，mapping missing/extra/duplicates 均为 `0/0/0`。
 H2b production 从构造开始使用 matrix-free local-Schur 与 matrix-free DtN action；
-test-only oracle 才使用 explicit-condensed local blocks。H3 的 outer solve 尚未运行。
+test-only oracle 才使用 explicit-condensed local blocks。
+
+## H3/H4 formal evidence
+
+| 阶段 | formal/diagnostic | 关键结果 | 资源与额外边界 |
+|---|---|---|---|
+| H3 | `return=0`，formal/numeric/no-swap pass | outer=1；true residual global/bottom/top/modal=`2.892237294698294e-12 / 3.610918199454199e-12 / 2.0470485206121342e-12 / 9.879221339086588e-13`；offline 12+12=`12/12 + 12/12` | total `507.2017102949321 s`；peak `9.585384368896484 GiB`；factors released |
+| H4a | exact Sₘ pass | outer=1；true residual global/bottom/top/modal=`2.7239301070596716e-12 / 3.982460029685523e-12 / 1.7429945983458624e-12 / 1.001248228432052e-12` | total `540.3976704040542 s`；peak `9.802722930908203 GiB`；swap=0 |
+| H4b | `task037b_h4_diagnostic_complete` | outer=3、reason=-3、finite/evidence/lifecycle pass；solution/modal error=`0.004900532829746777 / 0.009905532844701982` | G-only 残差不作失败判定；H4 不要求 12+12 |
+
+H3/H4 的完整 residual、Sₘ/G feedback、operator inventory、factor before/after 与
+hash-bound artifact 见 [exact block-LDU oracle](exact_block_ldu_oracle.md)。

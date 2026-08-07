@@ -2,7 +2,7 @@
 
 ## 一句话结论
 
-H0 继承基线通过；首次 H1 direct Hybrid MPI8 formal 在生成 Hybrid 解以前因近简并模态分组检查退出，历史证据保留。post-fix source `2990f357f7dec23b1713bd0088bdc43c3ce6f5bc` 已完成同一冻结条件下的有效求解并通过 task.md §9 H1 contract；H2a 与 H2b 均已通过，H3 是下一阶段，H3-H10 尚未运行。
+H0 继承基线通过；首次 H1 direct Hybrid MPI8 formal 在生成 Hybrid 解以前因近简并模态分组检查退出，历史证据保留。post-fix source `2990f357f7dec23b1713bd0088bdc43c3ce6f5bc` 已完成同一冻结条件下的有效求解并通过 task.md §9 H1 contract；H2a、H2b、H3 与 H4 均已通过，H5 是下一阶段。
 
 ## H0-H10 矩阵
 
@@ -12,14 +12,14 @@ H0 继承基线通过；首次 H1 direct Hybrid MPI8 formal 在生成 Hybrid 解
 | H1 | pass（post-fix；首次 failed_before_solve 历史保留） | task.md §9 H1 numerical contract 通过 |
 | H2a | pass | assembled-block MatPython action identity |
 | H2b | pass | Matrix-free local endcap exact action identity |
-| H3 | not_run_yet | H2b Gate 已完成；H3 为下一阶段 |
-| H4 | not_run_yet | H3 尚未运行 |
-| H5 | not_run_yet | H3 尚未运行 |
-| H6 | not_run_yet | H3 尚未运行 |
-| H7 | not_run_yet | H3 尚未运行 |
-| H8 | not_run_yet | H3 尚未运行 |
-| H9 | not_run_yet | H3 尚未运行 |
-| H10 | not_run_yet | H3 尚未运行 |
+| H3 | pass | exact block-LDU iterative oracle；offline 12+12 已通过 |
+| H4 | pass | exact Sₘ + bounded G-only diagnostic；不要求 12+12 |
+| H5 | next | H4 已完成，按顺序进入 approximate local inverse |
+| H6 | not_run_by_order | H5 尚未完成 |
+| H7 | not_run_by_order | H5 尚未完成 |
+| H8 | not_run_by_order | H5 尚未完成 |
+| H9 | not_run_by_order | H5 尚未完成 |
+| H10 | not_run_by_order | H5 尚未完成 |
 
 ## H1 首次停止点（3f72ef3）
 
@@ -78,7 +78,7 @@ post-fix formal return code 为 `0`，`formal_pass=true`，true relative residua
 | swap | 0 |
 | ordinary defaults | unchanged；H1 explicit opt-in |
 
-runner 仍保留 `physical_qualified=false`、`official_record=false`、`mode_count_converged=false` 的 wider-M funnel 旧标签；它们不是 task.md §9 H1 Gate，也不改变本次 H1 task-specific contract pass。H3-H10 尚未运行。
+runner 仍保留 `physical_qualified=false`、`official_record=false`、`mode_count_converged=false` 的 wider-M funnel 旧标签；它们不是 task.md §9 H1 Gate，也不改变本次 H1 task-specific contract pass。随后 H3 与 H4 已按顺序完成；H5 为下一阶段。
 
 ## 资源
 
@@ -96,7 +96,7 @@ runner 仍保留 `physical_qualified=false`、`official_record=false`、`mode_co
 
 raw JSON 字段名虽含 max_*_mb，但本文按 bytes/1024^2 统一换算并显示为 MiB；authority 峰值显示为 GiB。
 
-## 统一验收与未运行边界
+## 统一验收与未运行边界（H1 停止点历史快照）
 
 | 能力/验收 | 状态 |
 |---|---|
@@ -115,7 +115,7 @@ raw JSON 字段名虽含 max_*_mb，但本文按 bytes/1024^2 统一换算并显
 
 ## 下一步边界
 
-首次失败阶段不修 solver、不放宽 1e-6、不扫描 M、角度或 p-h；post-fix 只实施已审查的最小 grouping/audit 修复并完成一次 H1 recovery。H2a 与 H2b 已通过；H3-H10 尚未运行。
+首次失败阶段不修 solver、不放宽 1e-6、不扫描 M、角度或 p-h；post-fix 只实施已审查的最小 grouping/audit 修复并完成一次 H1 recovery。H2a、H2b、H3 与 H4 已通过；H5 为下一阶段，H6-H10 按顺序未运行。
 
 ## H2a 当前边界
 
@@ -124,7 +124,7 @@ MPI1/2/4 的 deterministic probes、physical packed RHS、bottom-only/top-only/m
 probes、pack/split 和 ownership mapping 均通过。production global operator 是 MatPython，
 没有 materialize global AIJ。
 
-逐 probe relative error 与完整命令见 [block identity](block_operator_identity.md)。
+逐 probe relative error 与完整命令见 [block identity](block_operator_identity.md)。H3/H4 的 exact oracle 证据见 [exact block-LDU oracle](exact_block_ldu_oracle.md)。
 
 ## H2b Matrix-free local endcap exact action identity
 
@@ -142,4 +142,14 @@ local blocks。它证明的是 local endcap 的代数 action、ownership、pack/
 | 相关回归 | test224/test230/test231=`5 passed / 1 skipped`；import、Ruff、format、compileall、diff-check 全部 pass |
 
 H2b-G 的每行数值是该 MPI 七个 probes 和 global/bottom/top/modal 四个输出块的总体最大值；
-四块逐项均不超过对应 MPI 行的总体最大值。H3 尚未运行。
+四块逐项均不超过对应 MPI 行的总体最大值。H3 与 H4 已完成，H5 为下一阶段。
+
+## H3/H4 exact oracle checkpoint
+
+| 阶段 | formal/diagnostic 结果 | 核心数值 | 资源与边界 |
+|---|---|---|---|
+| H3 | formal、numeric、no-swap pass | outer=1；true global/bottom/top/modal=`2.892237294698294e-12 / 3.610918199454199e-12 / 2.0470485206121342e-12 / 9.879221339086588e-13`；offline 12+12=`12/12 + 12/12` | `507.2017102949321 s`；authority peak `9.585384368896484 GiB`；factors released |
+| H4a | exact Sₘ pass | outer=1；true global/bottom/top/modal=`2.7239301070596716e-12 / 3.982460029685523e-12 / 1.7429945983458624e-12 / 1.001248228432052e-12` | H4 whole-job oracle peak `9.802722930908203 GiB`；swap=0 |
+| H4b | bounded diagnostic complete | G-only outer=3、reason=-3；finite/evidence/factor lifecycle pass；不以残差大小判失败 | H4 不要求 12+12；H5 采用 approximate Sₘ 路径 |
+
+完整 residual、Sₘ/G feedback、operator inventory、factor before/after 和 hash-bound artifact 见 [exact block-LDU oracle](exact_block_ldu_oracle.md)。

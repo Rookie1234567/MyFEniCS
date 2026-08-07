@@ -87,3 +87,50 @@ raw JSON 字段名虽含 max_*_mb，但这些数值由 bytes/1024^2 换算，本
 | record/release | 7934.648 |
 
 post-fix summary 与 solver record 仍为 Git ignored artifact；tracked docs 只保存 hash-bound 引用：summary `e22aa1edfeab331d5a8be13ca085e029d5446a4fdf300a5787a00688ef700db2`，solver `290fc25c119bbf641b8f0277ed5f9a101bc11a4df898c9133509f53c56dd4a1c`，timeline `26aee5647d93d4d5e9657b6a00f63fed98ffb83347506fb7bc8ed82bbbbbb9a6`，stages `a30d7cd52385f5940ac23b90297e85bb7f23dab64e6964f640c3aed3e096dab5`。
+
+## H3 exact block-LDU oracle（e187275）
+
+| 指标 | 实测值 |
+|---|---:|
+| total wall | `507.2017102949321 s` |
+| authority peak | `9.585384368896484 GiB` |
+| swap | `0` |
+| outer / reason | `1 / 2 (CONVERGED_RTOL)` |
+| true global/bottom/top/modal residual | `2.892237294698294e-12 / 3.610918199454199e-12 / 2.0470485206121342e-12 / 9.879221339086588e-13` |
+| direct solution/modal relative error | `5.108471533338298e-13 / 6.960336394200873e-13` |
+| factors | before `2`，after `0`，released |
+
+H3 offline 12+12 已通过；H3 direct factors 是 oracle 生命周期的一部分，不是最终低内存候选的峰值声明。
+
+## H4 exact Sₘ 与 bounded G-only diagnostic（98046b7）
+
+| 指标 | 实测值 |
+|---|---:|
+| total wall | `540.3976704040542 s` |
+| authority peak | `9.802722930908203 GiB`，stage=`record_and_release` |
+| warning / termination | `12 / 16 GiB`，均未触发 |
+| swap | `0` |
+| H4b factor setup / solve | `31.84789529000409 / 0.5016900589689612 s` |
+| post-H3 direct comparison | `28.747818996896967 s` |
+| recovery/RTA / RTA evaluation | `7.698509941925295 / 0.02652613096870482 s` |
+
+H4 关键阶段 authority peak（MiB）如下；这是 whole-job allocator/process-tree 观测，必须与 factor lifecycle inventory 分开理解。
+
+| 阶段 | MiB |
+|---|---:|
+| oracle_local_matrix_build | `4170.0546875` |
+| h2b_action_assembly | `6077.83984375` |
+| h3_local_factor_setup | `8740.9453125` |
+| h4b_g_only_factor_setup | `9034.28125` |
+| post_h3_direct_comparison | `9351.921875` |
+| recovery_rta | `9684.859375` |
+| record_and_release | `10037.98828125` |
+
+H4a 与 H4b 两轮 factors 均 before=`2`、after=`0`，bottom/top released=`true`；H4b 的 G-only 差异是 bounded diagnostic，不是方法负结果。H4 不要求 12+12 comparator。
+
+| H4 证据 | SHA256 |
+|---|---|
+| `benchmarks/artifacts/task037b/h4_modal_block_98046b7_mpi8.json` | `bce01b0c24ffb8e09ba158b8784353ed6073648ea3c8d1dc57bd03c33b6c0b40` |
+| `benchmarks/artifacts/task037b/h4_modal_block_98046b7_mpi8/solver_record.json` | `9a6737d21c93d39310c70020785d0a4231f1d83296b858fa38c2a4bacf3d169f` |
+| `benchmarks/artifacts/task037b/h4_modal_block_98046b7_mpi8/memory_stages.jsonl` | `bb27debecbb0ac23c5d15c4c4fe3727b50574252449422243c8643b8cb6bf033` |
+| `benchmarks/artifacts/task037b/h4_modal_block_98046b7_mpi8/worker_stdout.txt` | `f13de07c6ccdf73d023606e5f7c8cc19b9926b647440f273b31b947a2690ef61` |

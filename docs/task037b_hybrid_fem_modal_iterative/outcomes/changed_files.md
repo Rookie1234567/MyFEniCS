@@ -35,7 +35,10 @@ H1-A 的六个实现/测试文件已包含在第三个提交中。首次 H1 form
 | master | 未合并 |
 | H2a | 已通过 assembled-block action identity |
 | H2b | 已通过 Matrix-free local endcap exact action identity |
-| H3-H10 | 未开始；下一阶段为 H3 |
+| H3 | 已通过 exact block-LDU formal 与 offline 12+12 |
+| H4 | 已通过 exact Sₘ；G-only 为 bounded diagnostic complete |
+| H5 | 下一阶段：approximate local inverse |
+| H6-H10 | 按顺序未开始 |
 | ignored raw artifacts | 不提交 |
 | tracked docs | 只保存 hash-bound evidence 引用 |
 
@@ -61,3 +64,17 @@ resource evidence 仍未创建。
 | tests | `src/test/test_234_task037b_hybrid_block_operator.py`：H2a inventory/action 回归；`src/test/test_235_task037b_hybrid_local_dtn_action.py`：H2b-L/G local/global action、ownership、pack/split、lifecycle |
 | inventory | global A=false、bottom/top F=false、explicit external C/D=0/0、p6 direct factor count=0；Krylov auxiliary rows=0 |
 | result boundary | H2b action identity pass；不是 solver convergence、资源资格化或 H3 完成证明 |
+
+## H2a-H4 后续准确提交链
+
+| SHA | subject | 角色 |
+|---|---|---|
+| `41f692d2a7a8fce81ac49859c0f52cbcfda542e6` | `feat(task037b): add assembled Hybrid block action oracle` | H2a assembled-block MatPython action 与 focused oracle |
+| `90fd03f5d39c3716703378e98b95081f70113568` | `docs(task037b): record H2a block action identity` | H2a evidence checkpoint |
+| `8b283f033e48e3ebee85f741c1a89a83315a6c6f` | `feat(task037b): add matrix-free Hybrid endcap action` | H2b local-Schur/DtN action-only carrier |
+| `384f164fd08587d3d8fc6bdfc8893cc37feb0df9` | `docs(task037b): record H2b endcap action identity` | H2b evidence checkpoint |
+| `cffcc825a9fa7499b12f4fa5b106e2e7c1006572` | `feat(task037b): add exact block-LDU iterative oracle` | H3 exact block-LDU core 与 focused test |
+| `e187275cd3d194dcedb9453d36e52bb035ad34dc` | `feat(task037b): wire H3 exact block-LDU authority` | H3 frozen runner/watchdog wiring与 formal source |
+| `98046b7297b5de23d121b60898afe9e9007abc6e` | `feat(task037b): add H4 modal-block diagnostic` | H4 exact Sₘ + bounded G-only diagnostic、operator/lifecycle Gate |
+
+上述 H3/H4 direct-factor oracle 只用于受控证据，不改变 ordinary defaults，也不等同于最终低内存候选。
