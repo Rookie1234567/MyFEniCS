@@ -456,6 +456,7 @@ def _task037_g2_lor_audit():
     return {
         "primary_slab": 14,
         "owner_active_row_count": 3,
+        "parent_count": 1,
         "full_rows": 8,
         "interior_rows": 5,
         "trace_rows": 3,
@@ -492,6 +493,53 @@ def _task037_g2_lor_audit():
     }
 
 
+def _task037_g2_lor_hx_audit(lor_audit):
+    return {
+        "primary_slab": 14,
+        "owner": 0,
+        "present_material_tags": [1],
+        "curl_coefficient": [1.0, 0.0],
+        "mass_coefficient_by_tag": {"1": [-2.0, 0.0]},
+        "volume_proxy_only": True,
+        "dtn_surface_in_proxy": False,
+        "literal_p6_shift_galerkin": False,
+        "full_rows": 8,
+        "interior_rows": 5,
+        "trace_rows": 3,
+        "active_lor_rows": 2,
+        "transfer_identity": {
+            "parent_id_hash": lor_audit["parent_id_hash"],
+            "physical_edge_keys_sha256": lor_audit[
+                "physical_edge_keys_sha256"
+            ],
+            "active_edge_keys_sha256": lor_audit["active_edge_keys_sha256"],
+            "parent_count": 1,
+            "active_edge_count": 2,
+        },
+        "transfer_retained_numeric_payload_lower_bound_bytes": lor_audit[
+            "retained_numeric_payload_lower_bound_bytes"
+        ],
+        "d2c_retained_numeric_payload_lower_bound_bytes": 40,
+        "retained_numeric_payload_lower_bound_bytes": 100,
+        "factor_count": 2,
+        "coarsest_factor_count": 2,
+        "fine_p6_trace_factor_count": 0,
+        "fine_p6_full_factor_count": 0,
+        "large_lor_factor_count": 0,
+        "fine_intermediate_factor_count": 0,
+        "coarsest_only": True,
+        "parent_topologies_retained": False,
+        "persistent_full_rhs": False,
+        "persistent_lor_rhs": False,
+        "global_dense": False,
+        "exact_outer_changed": False,
+        "contraction_not_evaluated": True,
+        "build_seconds": 1.0,
+        "gate_pass": True,
+        "status": "pass_build_only",
+    }
+
+
 def _task037_g2_qualification_case(
     *,
     identity_audit=None,
@@ -499,6 +547,8 @@ def _task037_g2_qualification_case(
     factor_enabled=False,
     lor_audit=None,
     lor_enabled=False,
+    hx_audit=None,
+    hx_enabled=False,
 ):
     args = SimpleNamespace(
         task037_f3_screen=20,
@@ -509,6 +559,7 @@ def _task037_g2_qualification_case(
         task037_extra_g2_slab14_identity=True,
         task037_extra_g2_slab14_factor_inventory=factor_enabled,
         task037_extra_g2_slab14_lor_transfer=lor_enabled,
+        task037_extra_g2_slab14_lor_hx_oracle=hx_enabled,
         task037_m4_p2_auxiliary=False,
         task037_m4_factor_free_slab=False,
         task037_m4_b2_long_full=False,
@@ -545,6 +596,15 @@ def _task037_g2_qualification_case(
     if lor_enabled:
         lor_audit = _task037_g2_lor_audit() if lor_audit is None else lor_audit
         audit["task037_extra_g2_slab14_lor_transfer"] = lor_audit
+    if hx_enabled:
+        if not lor_enabled:
+            raise AssertionError("HX fixture requires the LOR transfer fixture")
+        hx_audit = (
+            _task037_g2_lor_hx_audit(lor_audit)
+            if hx_audit is None
+            else hx_audit
+        )
+        audit["task037_extra_g2_slab14_lor_hx_oracle"] = hx_audit
     summary = {
         "matrix_stats": {"matrix_rows": 1, "matrix_nnz_used": None},
         "polarization_kind": "s",
@@ -586,7 +646,11 @@ def _task037_g2_qualification_case(
         {
             "stage": stage,
             "status": "end",
-            "task037_g2_lor_transfer_lifecycle": True,
+            "task037_g2_lor_transfer_lifecycle": stage
+            in {
+                "g2_lor_transfer_build_started",
+                "g2_lor_transfer_build_ready",
+            },
         }
         for stage in (
             "g2_lor_transfer_build_started",
@@ -596,11 +660,39 @@ def _task037_g2_qualification_case(
     lor_stage_peaks = [
         {"stage": "g2_lor_transfer_build_started"},
     ]
+    hx_events = [
+        {
+            "stage": stage,
+            "status": "end",
+            **(
+                {"task037_g2_lor_transfer_lifecycle": True}
+                if stage
+                in {
+                    "g2_lor_transfer_build_started",
+                    "g2_lor_transfer_build_ready",
+                }
+                else {}
+            ),
+            "task037_g2_lor_hx_lifecycle": True,
+        }
+        for stage in (
+            "g2_lor_transfer_build_started",
+            "g2_lor_transfer_build_ready",
+            "g2_lor_hx_build_started",
+            "g2_lor_hx_build_ready",
+        )
+    ]
+    hx_stage_peaks = [
+        {"stage": "g2_lor_transfer_build_started"},
+        {"stage": "g2_lor_hx_build_started"},
+    ]
     return args, {
         "args": args,
         "solver_summary": summary,
         "events": (
-            lor_events
+            hx_events
+            if hx_enabled
+            else lor_events
             if lor_enabled
             else factor_events
             if factor_enabled
@@ -615,7 +707,9 @@ def _task037_g2_qualification_case(
         "resource_summary": {
             "memory_authority_gib": 10.30,
             "stage_peaks": (
-                lor_stage_peaks
+                hx_stage_peaks
+                if hx_enabled
+                else lor_stage_peaks
                 if lor_enabled
                 else factor_stage_peaks
                 if factor_enabled
@@ -1913,6 +2007,32 @@ def test_task037_extra_g2_lor_transfer_qualification_without_factor():
     assert not failed["checks"]["task037_g2_lor_transfer_measurement"]
 
 
+def test_task037_extra_g2_lor_hx_build_only_qualification_and_raw_binding():
+    args, kwargs = _task037_g2_qualification_case(
+        lor_enabled=True,
+        hx_enabled=True,
+    )
+    qualification = watchdog._qualify(**kwargs)
+
+    assert qualification["pass"]
+    assert qualification["checks"]["task037_g2_lor_hx_payload_closure"]
+    assert qualification["checks"]["task037_g2_lor_hx_transfer_identity"]
+    assert watchdog._task037_extra_g2_status(args, qualification) == (
+        "task037_extra_g2_slab14_lor_hx_oracle_pass_build_only"
+    )
+
+    hx_audit = kwargs["task037_f3_core_audit"][
+        "task037_extra_g2_slab14_lor_hx_oracle"
+    ]
+    hx_audit["transfer_identity"]["active_edge_keys_sha256"] = "z" * 64
+    failed = watchdog._qualify(**kwargs)
+    assert not failed["pass"]
+    assert not failed["checks"]["task037_g2_lor_hx_transfer_identity"]
+    assert watchdog._task037_extra_g2_status(args, failed) == (
+        "task037_extra_g2_slab14_lor_hx_oracle_not_pass"
+    )
+
+
 def test_task037_extra_g2_factor_status_has_priority():
     args, kwargs = _task037_g2_qualification_case(factor_enabled=True)
     qualification = watchdog._qualify(**kwargs)
@@ -2435,6 +2555,74 @@ def test_task037_extra_g2_lor_lifecycle_uses_raw_progress_stages(
     )
 
 
+def test_task037_extra_g2_lor_hx_lifecycle_uses_g2_progress_stages(
+    tmp_path, monkeypatch
+):
+    class Comm:
+        rank = 0
+
+        def tompi4py(self):
+            return self
+
+        def gather(self, payload, root=0):
+            assert root == 0
+            return [payload]
+
+    request = SimpleNamespace(operator=SimpleNamespace(getComm=lambda: Comm()))
+    progress_events = []
+
+    def write_progress(_run_dir, _comm, **kwargs):
+        progress_events.append(kwargs)
+
+    def fake_m3a_core(_request, **kwargs):
+        observer = kwargs["lifecycle_observer"]
+        assert kwargs["task037_extra_g2_slab14_lor_hx_oracle"] is True
+        for event in (
+            "g2_lor_transfer_build_started",
+            "g2_lor_transfer_build_ready",
+            "g2_lor_hx_build_started",
+            "g2_lor_hx_build_ready",
+        ):
+            observer(event, {"event": event})
+        return object(), {
+            "solver_profile": "never_materialized_owner_local_overlap0125_partition"
+        }
+
+    monkeypatch.setattr(watchdog, "_write_progress_event", write_progress)
+    monkeypatch.setattr(
+        "src.solvers.static_condensed_iterative."
+        "solve_never_materialized_overlap0125_partition_fgmres",
+        fake_m3a_core,
+    )
+    solve = watchdog._task037_f3_assembled_fgmres_port(
+        tmp_path,
+        20,
+        never_materialized=True,
+        overlap0125_partition=True,
+        lifecycle_enabled=True,
+        task037_extra_g2_slab14_identity=True,
+        task037_extra_g2_slab14_factor_inventory=False,
+        task037_extra_g2_slab14_lor_transfer=True,
+        task037_extra_g2_slab14_lor_hx_oracle=True,
+        verified_clean_sha="b" * 40,
+    )
+    solve(request)
+
+    assert [item["stage"] for item in progress_events] == [
+        "g2_lor_transfer_build_started",
+        "g2_lor_transfer_build_ready",
+        "g2_lor_hx_build_started",
+        "g2_lor_hx_build_ready",
+    ]
+    assert all(
+        item["extra"]["task037_g2_lor_hx_lifecycle"] is True
+        and "task037_m0_lifecycle" not in item["extra"]
+        and "m0_event" not in item["extra"]
+        and "task037_m0_rank_ledgers_by_rank" not in item["extra"]
+        for item in progress_events
+    )
+
+
 def test_task037_extra_g2_parser_is_exact_screen20_mpi1_scope(tmp_path):
     authority = (
         "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/"
@@ -2520,6 +2708,39 @@ def test_task037_extra_g2_parser_is_exact_screen20_mpi1_scope(tmp_path):
     assert lor_contract["task037_extra_g2_slab14_identity"] is True
     assert lor_contract["task037_extra_g2_slab14_factor_inventory"] is False
     assert lor_contract["task037_extra_g2_slab14_lor_transfer"] is True
+
+    hx_args = watchdog._parse_args(
+        base
+        + [
+            "--task037-extra-g2-slab14-lor-transfer",
+            "--task037-extra-g2-slab14-lor-hx-oracle",
+        ]
+    )
+    assert hx_args.task037_extra_g2_slab14_lor_hx_oracle is True
+    hx_command = watchdog._worker_command(hx_args, tmp_path)
+    assert hx_command.count("--task037-extra-g2-slab14-lor-transfer") == 1
+    assert hx_command.count("--task037-extra-g2-slab14-lor-hx-oracle") == 1
+    hx_worker_args = watchdog._parse_args(
+        hx_command[hx_command.index("--worker") :]
+    )
+    assert hx_worker_args.task037_extra_g2_slab14_lor_hx_oracle is True
+    hx_contract = watchdog._worker_launch_contract(hx_args)
+    assert hx_contract["task037_extra_g2_slab14_lor_transfer"] is True
+    assert hx_contract["task037_extra_g2_slab14_lor_hx_oracle"] is True
+
+    with pytest.raises(SystemExit):
+        watchdog._parse_args(
+            base + ["--task037-extra-g2-slab14-lor-hx-oracle"]
+        )
+    with pytest.raises(SystemExit):
+        watchdog._parse_args(
+            base
+            + [
+                "--task037-extra-g2-slab14-factor-inventory",
+                "--task037-extra-g2-slab14-lor-transfer",
+                "--task037-extra-g2-slab14-lor-hx-oracle",
+            ]
+        )
 
     factor_only = [
         item

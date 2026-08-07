@@ -84,7 +84,7 @@ def test_owner_local_lor_transfer_is_partition_invariant(comm):
             slab,
         )
         floquet = _empty_floquet(2)
-        handle, audit = collect_owner_local_lor_transfer(
+        handle, topologies, audit = collect_owner_local_lor_transfer(
             condensed,
             plan,
             mesh,
@@ -107,6 +107,7 @@ def test_owner_local_lor_transfer_is_partition_invariant(comm):
         assert audit["descriptor_count"] == audit["parent_count"]
         assert audit["descriptor_numeric_payload_bytes"] > 0
         assert audit["retained_numeric_payload_lower_bound_bytes"] > 0
+        assert topologies is None
 
         owner = int(plan.slab_owners[slab])
         assert (handle is not None) == (comm.rank == owner)
@@ -127,7 +128,7 @@ def test_owner_local_lor_transfer_is_partition_invariant(comm):
             right = np.vdot(active_values, handle.apply_adjoint(adjoint_input))
             assert abs(left - right) / max(abs(left), abs(right), 1.0) <= 1.0e-11
 
-        second, second_audit = collect_owner_local_lor_transfer(
+        second, second_topologies, second_audit = collect_owner_local_lor_transfer(
             condensed,
             plan,
             mesh,
@@ -140,9 +141,36 @@ def test_owner_local_lor_transfer_is_partition_invariant(comm):
             coordinate_tolerance=mesh_coordinate_tolerance(mesh),
         )
         assert second_audit == audit
+        assert second_topologies is None
         assert (second is not None) == (comm.rank == owner)
         if comm.rank == owner:
             assert second is not None
             assert np.array_equal(full_values, second.apply(active_values))
+
+        third, third_topologies, third_audit = collect_owner_local_lor_transfer(
+            condensed,
+            plan,
+            mesh,
+            cell_tags,
+            slab,
+            degree=2,
+            floquet_topology=floquet,
+            phase_x=1.0 + 0.0j,
+            phase_y=1.0 + 0.0j,
+            coordinate_tolerance=mesh_coordinate_tolerance(mesh),
+            retain_parent_topologies=True,
+        )
+        assert third_audit["parent_topologies_returned"] is True
+        assert (third is not None) == (comm.rank == owner)
+        if comm.rank == owner:
+            assert third is not None
+            assert third_topologies is not None
+            parent_ids = tuple(
+                int(topology.canonical_cell_id) for topology in third_topologies
+            )
+            assert parent_ids == tuple(int(value) for value in third.audit["parent_ids"])
+            assert parent_ids == third.edge_space.parent_ids
+        else:
+            assert third_topologies is None
     finally:
         condensed.destroy()

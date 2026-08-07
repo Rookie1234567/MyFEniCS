@@ -1155,7 +1155,12 @@ def collect_owner_local_lor_transfer(
     phase_x: complex,
     phase_y: complex,
     coordinate_tolerance: float,
-) -> tuple[OwnerLocalLORTransfer | None, dict[str, Any]]:
+    retain_parent_topologies: bool = False,
+) -> tuple[
+    OwnerLocalLORTransfer | None,
+    tuple[AffineLORParentTopology, ...] | None,
+    dict[str, Any],
+]:
     """Build one owner-local LOR-to-full-space transfer from retained cells."""
 
     if slab < 0 or slab >= len(plan.slab_owners):
@@ -1201,6 +1206,7 @@ def collect_owner_local_lor_transfer(
     floquet_packets = comm.gather(physical_blocks, root=owner)
 
     transfer = None
+    owner_topologies = None
     audit = None
     owner_error = None
     if comm.rank == owner:
@@ -1420,14 +1426,17 @@ def collect_owner_local_lor_transfer(
                 "global_dense_T_retained": bool(
                     transfer_audit["global_dense_T_retained"]
                 ),
+                "parent_topologies_returned": bool(retain_parent_topologies),
             }
+            if retain_parent_topologies:
+                owner_topologies = tuple(topologies)
         except Exception as error:
             owner_error = f"{type(error).__name__}: {error}"
     owner_error = comm.bcast(owner_error, root=owner)
     if owner_error is not None:
         raise RuntimeError(owner_error)
     audit = comm.bcast(audit, root=owner)
-    return (transfer if comm.rank == owner else None), audit
+    return (transfer if comm.rank == owner else None), owner_topologies, audit
 
 
 def _route_owner_slab_cells(

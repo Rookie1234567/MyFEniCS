@@ -99,7 +99,7 @@ def test_real_p2_floquet_c_to_lor_identity_is_partition_invariant(comm):
             num_slabs=1,
             overlap_fraction=0.0,
         )
-        handle, audit = collect_owner_local_lor_transfer(
+        handle, topologies, audit = collect_owner_local_lor_transfer(
             condensed,
             plan,
             mesh_data.mesh,
@@ -141,6 +141,7 @@ def test_real_p2_floquet_c_to_lor_identity_is_partition_invariant(comm):
 
         if comm.rank == int(plan.slab_owners[0]):
             assert handle is not None
+            assert topologies is None
             rng = np.random.default_rng(2620)
             active_values = (
                 rng.normal(size=int(audit["active_edge_count"]))
@@ -156,7 +157,7 @@ def test_real_p2_floquet_c_to_lor_identity_is_partition_invariant(comm):
             right = np.vdot(active_values, handle.apply_adjoint(adjoint_input))
             assert abs(left - right) / max(abs(left), abs(right), 1.0) <= 1.0e-11
 
-        second, second_audit = collect_owner_local_lor_transfer(
+        second, second_topologies, second_audit = collect_owner_local_lor_transfer(
             condensed,
             plan,
             mesh_data.mesh,
@@ -169,6 +170,7 @@ def test_real_p2_floquet_c_to_lor_identity_is_partition_invariant(comm):
             coordinate_tolerance=floquet_geometry_tolerance(cfg),
         )
         assert second_audit == audit
+        assert second_topologies is None
         assert (second is not None) == (handle is not None)
         if comm.rank == int(plan.slab_owners[0]):
             assert second is not None

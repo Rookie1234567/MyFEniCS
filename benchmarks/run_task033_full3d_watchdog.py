@@ -659,6 +659,13 @@ def _task037_m3a_status(
 def _task037_extra_g2_status(
     args: argparse.Namespace, qualification: Mapping[str, Any]
 ) -> str | None:
+    if getattr(args, "task037_extra_g2_slab14_lor_hx_oracle", False):
+        result = "pass" if qualification["pass"] else "not_pass"
+        return (
+            "task037_extra_g2_slab14_lor_hx_oracle_pass_build_only"
+            if result == "pass"
+            else "task037_extra_g2_slab14_lor_hx_oracle_not_pass"
+        )
     if getattr(args, "task037_extra_g2_slab14_lor_transfer", False):
         result = "pass" if qualification["pass"] else "not_pass"
         return f"task037_extra_g2_slab14_lor_transfer_{result}"
@@ -764,6 +771,7 @@ def _task037_f3_assembled_fgmres_port(
     task037_extra_g2_slab14_identity: bool = False,
     task037_extra_g2_slab14_factor_inventory: bool = False,
     task037_extra_g2_slab14_lor_transfer: bool = False,
+    task037_extra_g2_slab14_lor_hx_oracle: bool = False,
     verified_clean_sha: str | None = None,
 ):
     from src.solvers.static_condensed_iterative import (
@@ -795,6 +803,7 @@ def _task037_f3_assembled_fgmres_port(
             ledgers_by_rank = comm.gather(payload, root=0)
             factor_lifecycle = task037_extra_g2_slab14_factor_inventory
             lor_lifecycle = task037_extra_g2_slab14_lor_transfer
+            lor_hx_lifecycle = task037_extra_g2_slab14_lor_hx_oracle
             if factor_lifecycle:
                 progress_extra = {
                     "task037_g2_factor_rank_ledgers_by_rank": (
@@ -803,6 +812,19 @@ def _task037_f3_assembled_fgmres_port(
                     **payload,
                     "task037_g2_factor_inventory_lifecycle": True,
                 }
+            elif lor_hx_lifecycle:
+                progress_extra = {
+                    "task037_g2_lor_hx_rank_ledgers_by_rank": (
+                        ledgers_by_rank if comm.rank == 0 else None
+                    ),
+                    **payload,
+                    "task037_g2_lor_hx_lifecycle": True,
+                }
+                if event in {
+                    "g2_lor_transfer_build_started",
+                    "g2_lor_transfer_build_ready",
+                }:
+                    progress_extra["task037_g2_lor_transfer_lifecycle"] = True
             elif lor_lifecycle:
                 progress_extra = {
                     "task037_g2_lor_transfer_rank_ledgers_by_rank": (
@@ -825,7 +847,7 @@ def _task037_f3_assembled_fgmres_port(
                 comm,
                 stage=(
                     event
-                    if factor_lifecycle or lor_lifecycle
+                    if factor_lifecycle or lor_lifecycle or lor_hx_lifecycle
                     else f"m0_{event}"
                 ),
                 status="end",
@@ -888,6 +910,9 @@ def _task037_f3_assembled_fgmres_port(
                 ),
                 task037_extra_g2_slab14_lor_transfer=(
                     task037_extra_g2_slab14_lor_transfer
+                ),
+                task037_extra_g2_slab14_lor_hx_oracle=(
+                    task037_extra_g2_slab14_lor_hx_oracle
                 ),
                 lifecycle_observer=(observe_lifecycle if lifecycle_enabled else None),
             )
@@ -1386,6 +1411,9 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
         "task037_extra_g2_slab14_lor_transfer": bool(
             getattr(args, "task037_extra_g2_slab14_lor_transfer", False)
         ),
+        "task037_extra_g2_slab14_lor_hx_oracle": bool(
+            getattr(args, "task037_extra_g2_slab14_lor_hx_oracle", False)
+        ),
         "task035d_case097_gate": bool(args.task035d_case097_gate),
         "task035d_candidate_id": str(args.task035d_candidate_id),
         "task035d_nested_p_dwr_phase": args.task035d_nested_p_dwr_phase,
@@ -1558,6 +1586,9 @@ def _worker(args: argparse.Namespace) -> int:
                 args.task037_m0_lifecycle_audit
                 or getattr(args, "task037_extra_g2_slab14_factor_inventory", False)
                 or getattr(args, "task037_extra_g2_slab14_lor_transfer", False)
+                or getattr(
+                    args, "task037_extra_g2_slab14_lor_hx_oracle", False
+                )
             ),
             never_materialized=args.task037_m2c_never_materialized,
             p2_auxiliary=args.task037_m4_p2_auxiliary,
@@ -1576,6 +1607,9 @@ def _worker(args: argparse.Namespace) -> int:
             ),
             task037_extra_g2_slab14_lor_transfer=getattr(
                 args, "task037_extra_g2_slab14_lor_transfer", False
+            ),
+            task037_extra_g2_slab14_lor_hx_oracle=getattr(
+                args, "task037_extra_g2_slab14_lor_hx_oracle", False
             ),
             verified_clean_sha=getattr(args, "verified_clean_sha", None),
         )
@@ -1678,6 +1712,9 @@ def _worker(args: argparse.Namespace) -> int:
         ),
         task037_extra_g2_slab14_lor_transfer=getattr(
             args, "task037_extra_g2_slab14_lor_transfer", False
+        ),
+        task037_extra_g2_slab14_lor_hx_oracle=getattr(
+            args, "task037_extra_g2_slab14_lor_hx_oracle", False
         ),
     )
     return 0
@@ -1798,6 +1835,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help=(
             "Run the opt-in Task037-extra G2 slab14 LOR transfer; "
             "requires the exact slab14 identity flag."
+        ),
+    )
+    parser.add_argument(
+        "--task037-extra-g2-slab14-lor-hx-oracle",
+        action="store_true",
+        help=(
+            "Build the opt-in Task037-extra G2 slab14 physical LOR-HX "
+            "oracle without applying it; requires identity and LOR transfer."
         ),
     )
     parser.add_argument(
@@ -2247,6 +2292,23 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "--task037-extra-g2-slab14-lor-transfer requires "
             "--task037-extra-g2-slab14-identity."
+        )
+    if args.task037_extra_g2_slab14_lor_hx_oracle and not (
+        args.task037_extra_g2_slab14_identity
+        and args.task037_extra_g2_slab14_lor_transfer
+    ):
+        parser.error(
+            "--task037-extra-g2-slab14-lor-hx-oracle requires "
+            "--task037-extra-g2-slab14-identity and "
+            "--task037-extra-g2-slab14-lor-transfer."
+        )
+    if (
+        args.task037_extra_g2_slab14_lor_hx_oracle
+        and args.task037_extra_g2_slab14_factor_inventory
+    ):
+        parser.error(
+            "--task037-extra-g2-slab14-lor-hx-oracle conflicts with "
+            "--task037-extra-g2-slab14-factor-inventory."
         )
     if (
         args.task037_m4_p2_auxiliary
@@ -3845,6 +3907,131 @@ def _task037_g2_lor_transfer_checks(
     }
 
 
+def _task037_g2_lor_hx_build_checks(
+    hx_audit: Any,
+    lor_audit: Any,
+    collector_row_count: Any,
+) -> dict[str, bool]:
+    audit = hx_audit if isinstance(hx_audit, Mapping) else {}
+    transfer = lor_audit if isinstance(lor_audit, Mapping) else {}
+    identity = audit.get("transfer_identity")
+    identity = identity if isinstance(identity, Mapping) else {}
+    tags = audit.get("present_material_tags")
+    coefficients = audit.get("mass_coefficient_by_tag")
+
+    def positive_integer(value: Any) -> bool:
+        return isinstance(value, int) and not isinstance(value, bool) and value > 0
+
+    def finite_pair(value: Any) -> bool:
+        return (
+            isinstance(value, list)
+            and len(value) == 2
+            and all(
+                isinstance(item, (int, float))
+                and not isinstance(item, bool)
+                and math.isfinite(float(item))
+                for item in value
+            )
+        )
+
+    row_gate = (
+        positive_integer(audit.get("full_rows"))
+        and positive_integer(audit.get("interior_rows"))
+        and positive_integer(audit.get("trace_rows"))
+        and audit.get("full_rows")
+        == audit.get("interior_rows") + audit.get("trace_rows")
+        and audit.get("full_rows") == transfer.get("full_rows")
+        and audit.get("interior_rows") == transfer.get("interior_rows")
+        and audit.get("trace_rows") == transfer.get("trace_rows")
+        and audit.get("trace_rows") == collector_row_count
+        and audit.get("active_lor_rows") == transfer.get("active_edge_count")
+    )
+    coefficient_gate = (
+        isinstance(tags, list)
+        and bool(tags)
+        and all(isinstance(tag, int) and not isinstance(tag, bool) for tag in tags)
+        and isinstance(coefficients, Mapping)
+        and set(coefficients) == {str(int(tag)) for tag in tags}
+        and finite_pair(audit.get("curl_coefficient"))
+        and all(finite_pair(value) for value in coefficients.values())
+    )
+    transfer_identity_gate = (
+        identity.get("parent_count") == transfer.get("parent_count")
+        and identity.get("active_edge_count")
+        == transfer.get("active_edge_count")
+        and valid_hex_digest(identity.get("parent_id_hash"), 64)
+        and identity.get("parent_id_hash") == transfer.get("parent_id_hash")
+        and valid_hex_digest(identity.get("physical_edge_keys_sha256"), 64)
+        and identity.get("physical_edge_keys_sha256")
+        == transfer.get("physical_edge_keys_sha256")
+        and valid_hex_digest(identity.get("active_edge_keys_sha256"), 64)
+        and identity.get("active_edge_keys_sha256")
+        == transfer.get("active_edge_keys_sha256")
+    )
+    transfer_payload = audit.get(
+        "transfer_retained_numeric_payload_lower_bound_bytes"
+    )
+    d2c_payload = audit.get("d2c_retained_numeric_payload_lower_bound_bytes")
+    total_payload = audit.get("retained_numeric_payload_lower_bound_bytes")
+    payload_gate = (
+        positive_integer(transfer_payload)
+        and positive_integer(d2c_payload)
+        and positive_integer(total_payload)
+        and transfer_payload
+        == transfer.get("retained_numeric_payload_lower_bound_bytes")
+        and total_payload == transfer_payload + d2c_payload
+    )
+    factor_gate = (
+        audit.get("factor_count") == 2
+        and audit.get("coarsest_factor_count") == 2
+        and audit.get("fine_p6_trace_factor_count") == 0
+        and audit.get("fine_p6_full_factor_count") == 0
+        and audit.get("large_lor_factor_count") == 0
+        and audit.get("fine_intermediate_factor_count") == 0
+        and audit.get("coarsest_only") is True
+    )
+    storage_gate = (
+        audit.get("volume_proxy_only") is True
+        and audit.get("dtn_surface_in_proxy") is False
+        and audit.get("literal_p6_shift_galerkin") is False
+        and audit.get("parent_topologies_retained") is False
+        and audit.get("persistent_full_rhs") is False
+        and audit.get("persistent_lor_rhs") is False
+        and audit.get("global_dense") is False
+        and audit.get("exact_outer_changed") is False
+        and audit.get("contraction_not_evaluated") is True
+    )
+    raw_gate = bool(
+        audit.get("primary_slab") == 14
+        and row_gate
+        and coefficient_gate
+        and transfer_identity_gate
+        and payload_gate
+        and factor_gate
+        and storage_gate
+        and _finite_number_le(audit.get("build_seconds"), math.inf)
+    )
+    return {
+        "task037_g2_lor_hx_present": isinstance(hx_audit, Mapping),
+        "task037_g2_lor_hx_primary_slab": audit.get("primary_slab") == 14,
+        "task037_g2_lor_hx_rows": row_gate,
+        "task037_g2_lor_hx_material_coefficients": coefficient_gate,
+        "task037_g2_lor_hx_transfer_identity": transfer_identity_gate,
+        "task037_g2_lor_hx_payload_closure": payload_gate,
+        "task037_g2_lor_hx_factor_scope": factor_gate,
+        "task037_g2_lor_hx_storage_scope": storage_gate,
+        "task037_g2_lor_hx_build_timing": _finite_number_le(
+            audit.get("build_seconds"), math.inf
+        ),
+        "task037_g2_lor_hx_gate_pass_raw": (
+            audit.get("gate_pass") is True and raw_gate
+        ),
+        "task037_g2_lor_hx_status": (
+            audit.get("status") == "pass_build_only" and raw_gate
+        ),
+    }
+
+
 def _task037_g2_factor_iter20_checks(
     factor_audit: Any,
     identity_audit: Any,
@@ -4566,6 +4753,76 @@ def _qualify(
                         }
                     )
                 if getattr(
+                    args, "task037_extra_g2_slab14_lor_hx_oracle", False
+                ):
+                    hx_audit = core_audit.get(
+                        "task037_extra_g2_slab14_lor_hx_oracle"
+                    )
+                    lor_audit = core_audit.get(
+                        "task037_extra_g2_slab14_lor_transfer"
+                    )
+                    checks.update(
+                        _task037_g2_lor_hx_build_checks(
+                            hx_audit,
+                            lor_audit,
+                            collector_row_count,
+                        )
+                    )
+                    required_hx_stages = {
+                        "g2_lor_transfer_build_started",
+                        "g2_lor_transfer_build_ready",
+                        "g2_lor_hx_build_started",
+                        "g2_lor_hx_build_ready",
+                    }
+                    hx_lifecycle_events = [
+                        event
+                        for event in events
+                        if isinstance(event, Mapping)
+                        and event.get("stage") in required_hx_stages
+                    ]
+                    m0_progress_keys = {
+                        "task037_m0_lifecycle",
+                        "m0_event",
+                        "task037_m0_rank_ledgers_by_rank",
+                    }
+                    hx_stage_peaks = (
+                        resource_summary.get("stage_peaks")
+                        if isinstance(resource_summary, Mapping)
+                        else None
+                    )
+                    hx_stage_peak_names = (
+                        {
+                            item.get("stage")
+                            for item in hx_stage_peaks
+                            if isinstance(item, Mapping)
+                        }
+                        if isinstance(hx_stage_peaks, list)
+                        else set()
+                    )
+                    checks.update(
+                        {
+                            "task037_g2_lor_hx_lifecycle_stages": (
+                                {
+                                    event.get("stage")
+                                    for event in hx_lifecycle_events
+                                }
+                                == required_hx_stages
+                            ),
+                            "task037_g2_lor_hx_lifecycle_fields": (
+                                len(hx_lifecycle_events) >= 4
+                                and all(
+                                    event.get("task037_g2_lor_hx_lifecycle")
+                                    is True
+                                    and not m0_progress_keys.intersection(event)
+                                    for event in hx_lifecycle_events
+                                )
+                            ),
+                            "task037_g2_lor_hx_resource_stage_peaks": (
+                                "g2_lor_hx_build_started" in hx_stage_peak_names
+                            ),
+                        }
+                    )
+                if getattr(
                     args, "task037_extra_g2_slab14_factor_inventory", False
                 ):
                     factor_audit = core_audit.get(
@@ -5100,6 +5357,8 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
         command.append("--task037-extra-g2-slab14-factor-inventory")
     if getattr(args, "task037_extra_g2_slab14_lor_transfer", False):
         command.append("--task037-extra-g2-slab14-lor-transfer")
+    if getattr(args, "task037_extra_g2_slab14_lor_hx_oracle", False):
+        command.append("--task037-extra-g2-slab14-lor-hx-oracle")
     if args.task037_m4_p2_auxiliary:
         command.append("--task037-m4-p2-auxiliary")
     if args.task037_m4_factor_free_slab:
@@ -5925,6 +6184,9 @@ def _run_parent(args: argparse.Namespace) -> int:
         ),
         "task037_extra_g2_slab14_lor_transfer": bool(
             getattr(args, "task037_extra_g2_slab14_lor_transfer", False)
+        ),
+        "task037_extra_g2_slab14_lor_hx_oracle": bool(
+            getattr(args, "task037_extra_g2_slab14_lor_hx_oracle", False)
         ),
         "task035d_candidate_id": (
             args.task035d_candidate_id if args.task035d_case097_gate else None

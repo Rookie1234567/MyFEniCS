@@ -39,6 +39,7 @@ from .static_fullspace_slab_oracle import (
     apply_fullspace_slab_schur_action,
     measure_fullspace_slab_identity,
 )
+from .static_lor_hcurl_slab_oracle import build_physical_lor_hcurl_slab_oracle
 from .static_local_schur_action import create_static_local_schur_action
 from .static_p2_auxiliary_pc import build_p2_auxiliary_setup
 
@@ -236,6 +237,7 @@ def _solve_static_condensed_fgmres_core(
     task037_extra_g2_slab14_identity: bool = False,
     task037_extra_g2_slab14_factor_inventory: bool = False,
     task037_extra_g2_slab14_lor_transfer: bool = False,
+    task037_extra_g2_slab14_lor_hx_oracle: bool = False,
     solver_profile: Literal[
         "assembled",
         "assembled_setup_then_static_local_schur_matrix_free_solve",
@@ -297,6 +299,26 @@ def _solve_static_condensed_fgmres_core(
     ):
         raise ValueError(
             "Task037-extra G2 slab14 LOR transfer requires slab14 identity"
+        )
+    if task037_extra_g2_slab14_lor_hx_oracle and not (
+        task037_extra_g2_slab14_identity
+        and task037_extra_g2_slab14_lor_transfer
+    ):
+        raise ValueError(
+            "Task037-extra G2 slab14 LOR-HX oracle requires identity and LOR transfer"
+        )
+    if task037_extra_g2_slab14_lor_hx_oracle and (
+        task037_extra_g2_slab14_factor_inventory
+        or task037_extra_g0_diagnostics
+    ):
+        raise ValueError(
+            "Task037-extra G2 slab14 LOR-HX oracle conflicts with factor inventory and G0"
+        )
+    if task037_extra_g2_slab14_lor_hx_oracle and (
+        not action_only or not m3a_profile
+    ):
+        raise ValueError(
+            "Task037-extra G2 slab14 LOR-HX oracle requires the M3a action-only profile"
         )
     if task037_extra_g2_slab14_identity and task037_extra_g0_diagnostics:
         raise ValueError(
@@ -400,6 +422,8 @@ def _solve_static_condensed_fgmres_core(
     g2_identity_state: dict[str, Any] | None = None
     g2_factor_state: dict[str, Any] | None = None
     g2_lor_transfer_audit: dict[str, Any] | None = None
+    g2_lor_hx_audit: dict[str, Any] | None = None
+    lor_hx_oracle = None
     try:
         if action_only:
             blocks = request.blocks
@@ -762,7 +786,7 @@ def _solve_static_condensed_fgmres_core(
                 owner_rank=slab_owner,
             )
             lor_started = perf_counter()
-            lor_transfer, lor_audit = collect_owner_local_lor_transfer(
+            lor_transfer, lor_topologies, lor_audit = collect_owner_local_lor_transfer(
                 request.static_condensed_system,
                 owner_plan,
                 request.function_space.mesh,
@@ -775,6 +799,7 @@ def _solve_static_condensed_fgmres_core(
                 coordinate_tolerance=floquet_geometry_tolerance(
                     request.config
                 ),
+                retain_parent_topologies=task037_extra_g2_slab14_lor_hx_oracle,
             )
             lor_build_seconds = comm.allreduce(
                 float(perf_counter() - lor_started),
@@ -885,6 +910,181 @@ def _solve_static_condensed_fgmres_core(
                 ),
                 build_seconds=float(lor_build_seconds),
             )
+            if task037_extra_g2_slab14_lor_hx_oracle:
+                if g2_lor_transfer_audit["gate_pass"] is not True:
+                    raise RuntimeError(
+                        "LOR-HX oracle requires a passing LOR transfer audit"
+                    )
+                owner_prerequisite_error = None
+                if comm.rank == slab_owner:
+                    if lor_transfer is None or lor_topologies is None:
+                        owner_prerequisite_error = (
+                            "LOR-HX oracle requires owner transfer and parent topologies"
+                        )
+                owner_prerequisite_error = comm.bcast(
+                    owner_prerequisite_error,
+                    root=slab_owner,
+                )
+                if owner_prerequisite_error is not None:
+                    raise RuntimeError(owner_prerequisite_error)
+                emit_lifecycle(
+                    "g2_lor_hx_build_started",
+                    slab=slab,
+                    owner_rank=slab_owner,
+                )
+                hx_started = perf_counter()
+                builder_error = None
+                if comm.rank == slab_owner:
+                    try:
+                        lor_hx_oracle = build_physical_lor_hcurl_slab_oracle(
+                            lor_transfer,
+                            lor_topologies,
+                            request.config,
+                        )
+                        local_hx_audit = dict(lor_hx_oracle.audit)
+                    except (
+                        ValueError,
+                        NotImplementedError,
+                        RuntimeError,
+                    ) as error:
+                        builder_error = f"{type(error).__name__}: {error}"
+                else:
+                    local_hx_audit = None
+                builder_error = comm.bcast(builder_error, root=slab_owner)
+                if builder_error is not None:
+                    raise RuntimeError(builder_error)
+                hx_build_seconds = comm.allreduce(
+                    float(perf_counter() - hx_started),
+                    op=MPI.MAX,
+                )
+                hx_audit = comm.bcast(local_hx_audit, root=slab_owner)
+                transfer_payload = int(
+                    g2_lor_transfer_audit[
+                        "retained_numeric_payload_lower_bound_bytes"
+                    ]
+                )
+                d2c_payload = int(
+                    hx_audit[
+                        "d2c_retained_numeric_payload_lower_bound_bytes"
+                    ]
+                )
+                total_payload = int(
+                    hx_audit["retained_numeric_payload_lower_bound_bytes"]
+                )
+                allowed_tags = {
+                    int(request.config.tags.air),
+                    int(request.config.tags.substrate),
+                    int(request.config.tags.grating),
+                }
+                present_tags = hx_audit.get("present_material_tags", ())
+                mass_coefficients = hx_audit.get(
+                    "mass_coefficient_by_tag", {}
+                )
+                coefficient_gate = (
+                    isinstance(present_tags, list)
+                    and bool(present_tags)
+                    and all(int(tag) in allowed_tags for tag in present_tags)
+                    and isinstance(mass_coefficients, dict)
+                    and set(mass_coefficients) == {
+                        str(int(tag)) for tag in present_tags
+                    }
+                    and isinstance(hx_audit.get("curl_coefficient"), list)
+                    and len(hx_audit["curl_coefficient"]) == 2
+                    and all(
+                        np.isfinite(float(value))
+                        for value in hx_audit["curl_coefficient"]
+                    )
+                    and all(
+                        isinstance(value, list)
+                        and len(value) == 2
+                        and all(np.isfinite(float(item)) for item in value)
+                        for value in mass_coefficients.values()
+                    )
+                )
+                row_gate = (
+                    hx_audit.get("full_rows")
+                    == hx_audit.get("interior_rows")
+                    + hx_audit.get("trace_rows")
+                    and hx_audit.get("trace_rows")
+                    == g2_lor_transfer_audit.get("trace_rows")
+                    == g2_lor_transfer_audit.get("owner_active_row_count")
+                    and hx_audit.get("active_lor_rows")
+                    == g2_lor_transfer_audit.get("active_edge_count")
+                )
+                storage_gate = (
+                    hx_audit.get("volume_proxy_only") is True
+                    and hx_audit.get("dtn_surface_in_proxy") is False
+                    and hx_audit.get("literal_p6_shift_galerkin") is False
+                    and total_payload
+                    == transfer_payload + d2c_payload
+                    and total_payload > 0
+                    and hx_audit.get("factor_count") == 2
+                    and hx_audit.get("coarsest_factor_count") == 2
+                    and hx_audit.get("fine_p6_trace_factor_count") == 0
+                    and hx_audit.get("fine_p6_full_factor_count") == 0
+                    and hx_audit.get("large_lor_factor_count") == 0
+                    and hx_audit.get("fine_intermediate_factor_count") == 0
+                    and hx_audit.get("coarsest_only") is True
+                    and hx_audit.get("parent_topologies_retained") is False
+                    and hx_audit.get("persistent_full_rhs") is False
+                    and hx_audit.get("persistent_lor_rhs") is False
+                    and hx_audit.get("global_dense") is False
+                    and hx_audit.get("exact_outer_changed") is False
+                    and hx_audit.get("contraction_not_evaluated") is True
+                )
+                g2_lor_hx_audit = {
+                    **hx_audit,
+                    "primary_slab": slab,
+                    "owner": slab_owner,
+                    "build_seconds": float(hx_build_seconds),
+                    "transfer_identity": {
+                        "parent_id_hash": g2_lor_transfer_audit[
+                            "parent_id_hash"
+                        ],
+                        "physical_edge_keys_sha256": g2_lor_transfer_audit[
+                            "physical_edge_keys_sha256"
+                        ],
+                        "active_edge_keys_sha256": g2_lor_transfer_audit[
+                            "active_edge_keys_sha256"
+                        ],
+                        "parent_count": g2_lor_transfer_audit[
+                            "parent_count"
+                        ],
+                        "active_edge_count": g2_lor_transfer_audit[
+                            "active_edge_count"
+                        ],
+                    },
+                    "transfer_retained_numeric_payload_lower_bound_bytes": (
+                        transfer_payload
+                    ),
+                    "d2c_retained_numeric_payload_lower_bound_bytes": (
+                        d2c_payload
+                    ),
+                    "retained_numeric_payload_lower_bound_bytes": total_payload,
+                    "gate_checks": {
+                        "rows": bool(row_gate),
+                        "coefficients": bool(coefficient_gate),
+                        "storage": bool(storage_gate),
+                    },
+                }
+                g2_lor_hx_audit["gate_pass"] = bool(
+                    row_gate and coefficient_gate and storage_gate
+                )
+                g2_lor_hx_audit["status"] = (
+                    "pass_build_only"
+                    if g2_lor_hx_audit["gate_pass"]
+                    else "build_gate_failed"
+                )
+                emit_lifecycle(
+                    "g2_lor_hx_build_ready",
+                    slab=slab,
+                    owner_rank=slab_owner,
+                    full_rows=int(hx_audit["full_rows"]),
+                    retained_numeric_payload_lower_bound_bytes=total_payload,
+                    factor_count=int(hx_audit["factor_count"]),
+                    build_seconds=float(hx_build_seconds),
+                )
+                del lor_topologies
         if not p2_auxiliary_profile:
             live_state["shift"] = True
             shifted_context = _ShiftedFineAction(fine_action, shift)
@@ -1576,6 +1776,8 @@ def _solve_static_condensed_fgmres_core(
             audit["task037_extra_g2_slab14_lor_transfer"] = (
                 g2_lor_transfer_audit
             )
+        if g2_lor_hx_audit is not None:
+            audit["task037_extra_g2_slab14_lor_hx_oracle"] = g2_lor_hx_audit
         if p2_auxiliary_profile:
             audit["p2_auxiliary_audit"] = p2_auxiliary_audit
         if task037_extra_g0_diagnostics:
@@ -1756,6 +1958,7 @@ def solve_never_materialized_overlap0125_partition_fgmres(
     task037_extra_g2_slab14_identity: bool = False,
     task037_extra_g2_slab14_factor_inventory: bool = False,
     task037_extra_g2_slab14_lor_transfer: bool = False,
+    task037_extra_g2_slab14_lor_hx_oracle: bool = False,
     lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> tuple[Stage4ExternalLinearSolverSnapshot, dict[str, Any]]:
     """Run the opt-in overlap-0.125 partition-weighted slab profile."""
@@ -1772,6 +1975,9 @@ def solve_never_materialized_overlap0125_partition_fgmres(
         ),
         task037_extra_g2_slab14_lor_transfer=(
             task037_extra_g2_slab14_lor_transfer
+        ),
+        task037_extra_g2_slab14_lor_hx_oracle=(
+            task037_extra_g2_slab14_lor_hx_oracle
         ),
         solver_profile="never_materialized_owner_local_overlap0125_partition",
         lifecycle_observer=lifecycle_observer,
