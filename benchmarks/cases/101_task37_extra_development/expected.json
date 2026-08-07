@@ -115,7 +115,52 @@
       "memory_peak_gib_lt": 14.0
     },
     "official_rta": false,
-    "not_run": ["G2.4", "G2.5", "G2.6"]
+    "not_run": ["G2.5", "G2.6", "G3"]
+  },
+  "g2_4_lor_transfer": {
+    "decision_contract": {
+      "required_identity_flag": true,
+      "factor_inventory_flag": false,
+      "status_on_qualified_transfer_audit": "pass_transfer_build_and_algebra_only",
+      "global_A_materialized": false,
+      "global_F_materialized": false,
+      "official_rta": false,
+      "does_not_claim": [
+        "G2_PASS",
+        "HX_or_V_cycle_effectiveness",
+        "outer_solver_or_physical_convergence",
+        "production_promotion"
+      ]
+    },
+    "scope": {
+      "degree": 6,
+      "h_nm": 10.0,
+      "polarization_kind": "s",
+      "mpi_size": 1,
+      "screen_iterations": 20,
+      "task037_m2c_never_materialized": true,
+      "task037_m3a_overlap0125_partition": true,
+      "task037_extra_g2_slab14_identity": true,
+      "task037_extra_g2_slab14_lor_transfer": true,
+      "task037_extra_g2_slab14_factor_inventory": false,
+      "task037_extra_g0_diagnostics": false,
+      "poll_interval_seconds": 0.25,
+      "warning_gib": 10.0,
+      "terminate_gib": 14.0,
+      "timeout_seconds": 1800.0,
+      "allow_swap": false
+    },
+    "required_audit": {
+      "primary_slab": 14,
+      "owner_local_transfer": true,
+      "periodic_identity_and_active_edge_closure": true,
+      "deterministic_forward_apply_count": 7,
+      "adjoint_apply_count": 1,
+      "relative_error_tolerance": 1.0e-11,
+      "global_dense_T_retained": false,
+      "raw_artifacts_ignored": true
+    },
+    "not_run": ["G2.5", "G2.6", "G3"]
   },
   "resource_gate": {
     "zero_swap": true,

@@ -70,6 +70,29 @@
         "gate_false_route_status": "close_fullspace_ilu_only_route",
         "gate_false_may_still_qualify_raw_checks": true
       }
+    },
+    "g2_4": {
+      "task037_extra_g2_slab14_identity": true,
+      "task037_extra_g2_slab14_lor_transfer": true,
+      "task037_extra_g2_slab14_factor_inventory": false,
+      "task037_extra_g0_diagnostics": false,
+      "primary_slab": 14,
+      "purpose": "real slab14 LOR edge-space and p6 transfer build/audit",
+      "status_contract": "pass_transfer_build_and_algebra_only",
+      "run_dir_template": "benchmarks/artifacts/101_task37_extra_development/g2_slab14_lor_transfer_mpi1_screen20_<IMPLEMENTATION_SHA8>",
+      "required_audit": [
+        "periodic_identity_and_active_edge_closure",
+        "owner_local_p6_transfer_build",
+        "deterministic_apply_and_adjoint",
+        "global_A_and_global_F_false",
+        "official_rta_false"
+      ],
+      "does_not_claim": [
+        "G2_PASS",
+        "HX_or_V_cycle_effectiveness",
+        "outer_solver_or_physical_convergence",
+        "production_promotion"
+      ]
     }
   }
 }

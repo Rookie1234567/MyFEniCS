@@ -12,12 +12,26 @@ global matrix。
 | G2.2 full-space/trace identity | `pass_algebraic_identity_only` | tiny fixture、真实 slab14 的 3 个 deterministic vectors 与 1 个 iter20 residual direction 均通过 `<=1e-10` |
 | G2.3 full-space p6 ILU inventory | `inventory_measurement_qualified` | raw 与 patched checker 合同闭合；不是预条件器有效性结论 |
 | plain full-space ILU route | `close_fullspace_ilu_only_route` | retained-payload 25% Gate 未达到，且 iter20 one-apply rho 更差 |
-| G2.4 LOR mesh/transfer | `pending_not_run` | 未实现、未运行 |
+| G2.4 LOR mesh/transfer | `pass_transfer_build_and_algebra_only` | 真实 slab14 的 LOR build、周期身份、重复 action 与伴随通过；不证明 HX/V-cycle 或收敛 |
 | G2.5 LOR-HX/V-cycle | `pending_not_run` | 未实现、未运行 |
 | G2.6 one/two V-cycle Gate | `pending_not_run` | 未运行 |
 
 因此不能把本 outcome 写成整体 G2 通过，也不能宣称 minimum contraction、
 full solve 或 production promotion。
+
+## G2.4 fixture foundation
+
+| focused fixture | 覆盖内容 | 阶段 commit |
+|---|---|---|
+| test258 | p2/p3 topology、edge orientation、constant/affine/curl-compatible field、`T/T^H` 与 cache | `d9ccb62` |
+| test259 | multi-parent child-edge 去重、periodic Floquet identity、独立 cochain 与伴随 | `c6c8765` |
+| test260 | owner-local full-space row packing、唯一 writer 与 `C` reconstruction | `9205ae1` |
+| test261 | owner-local collector 与 MPI partition invariance | `817d8bb` |
+| test262 | 真实 p2 Floquet `C` 与 LOR `E/T` crosscheck | `4d7bebe` |
+
+在最终 source SHA `579c1912177411d1d5036a08f04c11661bc51965`，主审记录的
+focused component tests 为：serial test258--262 `20 passed in 2.24s`；MPI2
+test261+262 两 rank 各 `2 passed in 1.30s`。这些是组件合同测试，不是新 PDE。
 
 ## 首次解释：两个研究指标
 
@@ -57,7 +71,7 @@ slab5；slab13 只作为最大正 ablation-damage comparator，不替换 primary
 | source / retained / dropped active columns | `23328 / 17064 / 6264` |
 | partial cells | `18` |
 | sparse `C` NNZ / bytes | `17064 / 434808` |
-| deterministic relative errors | `2.9248960201709676e-15`；`2.978578754981666e-15`；`2.6617554455542794e-15` |
+| G2.2 full-space/trace identity deterministic-vector relative errors | `2.9248960201709676e-15`；`2.978578754981666e-15`；`2.6617554455542794e-15` |
 | iter20 local residual norm | `0.42723143961943305` |
 | iter20 identity error | `1.7721399154913289e-15` |
 
@@ -178,9 +192,119 @@ full-space minus trace rho 为 `0.5457565152584054`，ratio 为
 | `parent_launch_descriptor.json` | `0b3340afa3c7e3d557080385860be9ed4e16603f5bee75209302487f32460438` |
 | `worker_stdout.txt` | `bb438d24852a755b11532411feebc2767e89b004b5236a4fac2ee25ffb8cf3bd` |
 
+## G2.4：真实 slab14 LOR transfer build 与 algebra-only audit
+
+LOR（lowest-order refinement）把每个 p6 hexa parent 细化成 lowest-order
+edge 网格；`T` 把独立 LOR edge cochain 连接到 p6 full-space stored
+coefficients，`T^H` 是其精确伴随。本轮只证明真实 slab14 的 LOR 拓扑、周期
+physical identity、可重复 action 与伴随关系能够构造并通过审计，不证明 HX 或
+V-cycle 预条件器有效，更不证明外层 FGMRES 或物理量收敛。
+
+### 运行身份与状态
+
+| 项目 | 正式 C2b 值 |
+|---|---|
+| source SHA | `579c1912177411d1d5036a08f04c11661bc51965` |
+| run directory | `benchmarks/artifacts/101_task37_extra_development/g2_slab14_lor_transfer_mpi1_screen20_579c1912` |
+| scope | p6/h10/S、MPI1、M2c never-materialized、M3a overlap0.125 partition、screen20 |
+| flags | identity + LOR；factor=false；G0 diagnostics=false |
+| watchdog | `task037_extra_g2_slab14_lor_transfer_pass`；return `0`；failures `[]` |
+| solver screen | 20 步，`DIVERGED_MAX_IT(-3)` |
+| official result / RTA | `false / false`；postprocess skipped |
+
+### identity 与 LOR audit
+
+| 字段 | 正式值 |
+|---|---:|
+| owner / parent cells / unique blocks | `0 / 54 / 6` |
+| full / interior / trace rows | `32724 / 24300 / 8424` |
+| source / retained / dropped active columns | `23328 / 17064 / 6264` |
+| partial / complete / incomplete trace rows | `18 / 17064 / 6264` |
+| sparse `C` NNZ / bytes | `17064 / 434808` |
+| physical / active / periodic-slave edges | `38304 / 36288 / 2016` |
+| periodic relations | `2016` |
+| matched / merged physical blocks | `93 / 401` |
+| gathered identity blocks / high-order transform gathered | `401 / false` |
+| unique parent transfer stencils | `2` |
+| missing writer | `0` |
+| shared trace / complete C max error | `1.7200665360018798e-15 / 9.56091885020216e-16` |
+
+Identity hashes：
+
+| identity | SHA256 |
+|---|---|
+| parent IDs | `ac7e3532a1ecf55826a25a99b1f5197fb7c9952a084bf88f4ca15bad79511023` |
+| physical edge keys | `69b351698907f0067b09cf14c0f889d1566a86d1bcfec78d7a48121659635054` |
+| active edge keys | `a359da92b3a781ff447f5bf81ce7dc845c1be022464948526ee489874c77010a` |
+| owner active rows | `6f7c32c5fef8058a9c3a36deeaa65bce5f726c57c0d426220c065f683b57dade` |
+
+G2.2 full-space/trace identity 的 3 个 deterministic vectors relative errors 为
+`2.9248960201709676e-15`、`2.978578754981666e-15`、
+`2.6617554455542794e-15`；均 finite、deterministic、gate pass。iter20 使用
+solver 内部真实 `r=b-Ax`，owner-local norm 为 `0.42723143961943305`，
+identity error 为 `1.7721399154913289e-15`，residual vector SHA256 为
+`3aa610ed9bbb63047188b64d21d5dcab04184ffc6316196458e99aab520bb195`。
+current local shift count/norm/hash 为 `8424 / 475.7236793796778 /
+986bfe37dbc54cabd71ac2fd83dbd10df7adc69fe53c3bd030935dfa7017fec9`。
+
+LOR measurement 使用 7 次 forward apply 和 1 次 adjoint apply；结果 finite、
+deterministic，adjoint relative error 为 `1.5008209190777043e-14`，build 用时
+`49.17991871200502 s`。global dense `T`、condensed trace matrix、global `A/F`
+均未物化。
+
+### residual 与 official 边界
+
+| iteration | true residual | reported residual |
+|---:|---:|---:|
+| 0 | `1.0` | `1.0` |
+| 10 | `0.14446444295860594` | `0.14446444295860714` |
+| 20 | `0.04474243612765` | `0.04474243612765121` |
+
+`DIVERGED_MAX_IT(-3)` 是 screen20 的固定步数边界，不是 LOR identity 失败。
+因此本轮没有 official field、official RTA 或物理后处理，也不能把 watchdog
+status 解读为 G2 overall pass。
+
+### 资源口径
+
+progress event 的 rank RSS 为：started `1060.25 MB`，ready
+`1166.61328125 MB`，差 `106.36328125 MB`。watchdog 的
+`stage_peaks[g2_lor_transfer_build_started]` 覆盖真实 LOR build 区间，
+process-tree max 为 `1180.4296875 MB = 1.1527633666992188 GiB`，worker max
+为 `1166.61328125 MB`。
+
+名称为 `stage_peaks[g2_lor_transfer_build_ready]` 的
+`4877.80078125 MB` 采样区间从 ready 事件延续到 `all_slab_factors_ready`，
+包含随后既有 16-slab trace-factor setup；它不是 LOR build/ready 峰值。
+
+whole-run authority 为 process-tree `4920.34765625 MB = 4.805027008056641
+GiB`；worker RSS/PSS/USS 为 `4906.53125 / 4855.1728515625 /
+4810.64453125 MB`，swap `0`。同机较旧 G2.2 identity authority 为
+`4655.9453125 MB = 4.546821594238281 GiB`，差 `264.40234375 MB`（约 5.68%）；
+由于 source SHA 不同，这只能作同机背景，不能归因成纯 LOR retained 增量。
+
+retained numeric payload lower bound 为 `18735740 B = 17.867794036865234
+MiB`，只包含 T/Tᴴ/E/Eᴴ/packing/reference CSR arrays，不是 RSS，也不含
+Python object 或 allocator 开销。
+
+### raw evidence
+
+compact record：[g2_slab14_lor_transfer.json](/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/cases/101_task37_extra_development/records/g2_slab14_lor_transfer.json)。raw 均保留在 ignored run directory：
+
+| raw 文件 | SHA256 |
+|---|---|
+| `watchdog_summary.json` | `41e148b957b3fcba3ebc06c27e6b11c9c7a5736e3b82b258a117b200a9b300ec` |
+| `run_summary.json` | `aefc2a7b3503b4e15114a1a7299e8fff02957c59aa2eaa3c3073d867dd394631` |
+| `task037_f3_core_audit.json` | `8bd07800ecaa5615937f7f74c546e66bf2e7a2f4256eb51f5d7dd49024585e85` |
+| `progress_3d.jsonl` | `dcc0ff8dd12862d4b17ec5806f71054d080d7c295388b27a825e2be2872e2aed` |
+| `memory_timeline.csv` | `8d8624ee3fbc0bd4dd5a02033728069fd1712e0fdbfdb07919df0f2e37257efb` |
+| `task037_f3_residual_history.jsonl` | `75f0bc3ebec3648b60fdfc55daa9afd036b81cf6d5fe0ef1f7051a83e0f24940` |
+| `parent_launch_descriptor.json` | `e4cf1db4daf1597eec562838cd32840b46dac436ab00673ae57195271e367423` |
+| `worker_stdout.txt` / `solver_log.txt` | `0ad5399df6b37c9643175c6cec172a330c62cbe31dc6b80c37344b82776dd979` |
+| `NO_OFFICIAL_FIELD_OUTPUT.txt` | `e11465d92e416af3e4321c581b7291b7d4df5c932b425541f9b0114e259d3f38` |
+
 ## Pending
 
-G2.4、G2.5、G2.6 均为 `pending_not_run`。本轮停止在 G2.3 inventory
-measurement qualified / plain full-space ILU route closed；没有启动新的
-PDE，也没有把本 compact evidence 解释为 global candidate、minimum
-contraction、full solve 或 production promotion。
+G2.5 HX/V-cycle、G2.6 contraction 与 G3 均为 `not_run`。原 G2.3
+`inventory_measurement_qualified / plain full-space ILU route closed` 结论
+保持不变。本 outcome 只允许 `pass_transfer_build_and_algebra_only`，不声称
+G2 overall pass、minimum contraction、full solve 或 production promotion。

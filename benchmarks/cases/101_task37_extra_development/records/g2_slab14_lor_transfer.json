@@ -1,0 +1,310 @@
+{
+  "record_kind": "task037-extra.g2.4-slab14-lor-transfer",
+  "record_version": "v1",
+  "status": "pass_transfer_build_and_algebra_only",
+  "source": {
+    "branch": "codex/20260806-task37-iterative-extra-development",
+    "commit_sha": "579c1912177411d1d5036a08f04c11661bc51965",
+    "verified_clean_sha": "579c1912177411d1d5036a08f04c11661bc51965",
+    "git_clean": true,
+    "preflight_authority": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json",
+    "preflight_authority_sha256": "96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8"
+  },
+  "scope": {
+    "degree": 6,
+    "h_nm": 10.0,
+    "polarization_kind": "s",
+    "run_kind": "full-solve",
+    "profile": "default",
+    "mpi_size": 1,
+    "screen_iterations": 20,
+    "stage4_full3d_assembly_backend": "assembly_time_static_condensed",
+    "task037_m2c_never_materialized": true,
+    "task037_m3a_overlap0125_partition": true,
+    "task037_extra_g2_slab14_identity": true,
+    "task037_extra_g2_slab14_lor_transfer": true,
+    "task037_extra_g2_slab14_factor_inventory": false,
+    "task037_extra_g0_diagnostics": false,
+    "poll_interval_seconds": 0.25,
+    "warning_gib": 10.0,
+    "terminate_gib": 14.0,
+    "timeout_seconds": 1800.0,
+    "allow_swap": false,
+    "run_directory": "benchmarks/artifacts/101_task37_extra_development/g2_slab14_lor_transfer_mpi1_screen20_579c1912",
+    "command": [
+      "python",
+      "-m",
+      "benchmarks.run_task033_full3d_watchdog",
+      "--degree",
+      "6",
+      "--h-nm",
+      "10",
+      "--polarization-kind",
+      "s",
+      "--run-kind",
+      "full-solve",
+      "--mpi-size",
+      "1",
+      "--profile",
+      "default",
+      "--stage4-full3d-assembly-backend",
+      "assembly_time_static_condensed",
+      "--task035c-p6-h10-gate",
+      "--task035c-p6-preflight-authority",
+      "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json",
+      "--task035c-p6-preflight-sha256",
+      "96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8",
+      "--verified-clean-sha",
+      "579c1912177411d1d5036a08f04c11661bc51965",
+      "--task037-f3-screen",
+      "20",
+      "--poll-interval",
+      "0.25",
+      "--warning-gib",
+      "10",
+      "--terminate-gib",
+      "14",
+      "--timeout-seconds",
+      "1800",
+      "--task037-m2c-never-materialized",
+      "--task037-m3a-overlap0125-partition",
+      "--task037-extra-g2-slab14-identity",
+      "--task037-extra-g2-slab14-lor-transfer",
+      "--run-dir",
+      "benchmarks/artifacts/101_task37_extra_development/g2_slab14_lor_transfer_mpi1_screen20_579c1912"
+    ]
+  },
+  "plain_language": {
+    "lor": "LOR 把每个 p6 hexa parent 细化成 lowest-order edge 网格；T/T^H 连接独立 LOR edge cochain 与 p6 full-space stored coefficients。",
+    "scope": "本轮只证明真实 slab14 的 LOR 拓扑、周期身份、可重复 action 与伴随关系可构造和审计，不证明 HX/V-cycle 有效或外层/物理收敛。"
+  },
+  "qualification": {
+    "watchdog_status": "task037_extra_g2_slab14_lor_transfer_pass",
+    "parent_return_code": 0,
+    "worker_return_code_field": "not_emitted_separately; worker completed under parent return_code=0",
+    "qualification_pass": true,
+    "qualification_failures": [],
+    "solver_case_status": "external_solver_not_converged",
+    "solver_iterations": 20,
+    "solver_ksp_reason": -3,
+    "solver_ksp_reason_name": "DIVERGED_MAX_IT",
+    "official_result": false,
+    "official_rta": false,
+    "postprocess_skipped": true,
+    "postprocess_skip_reason": "External solver did not converge; official RTA was not run.",
+    "global_A_materialized": false,
+    "global_F_materialized": false,
+    "warning_triggered": false,
+    "terminated_for_memory": false,
+    "terminated_for_timeout": false,
+    "terminated_for_authority_unreadable": false,
+    "no_swap": true
+  },
+  "selection": {
+    "primary_slab": 14,
+    "primary_basis": "G0 frozen largest iter20 local residual",
+    "control_slab": 5,
+    "control_basis": "lower-median residual among central repeated-factor slabs",
+    "ablation_comparator_slab": 13,
+    "ablation_comparator_basis": "largest positive ILU ablation damage; does not replace primary"
+  },
+  "identity": {
+    "owner": 0,
+    "global_cell_count": 54,
+    "unique_block_count": 6,
+    "full_rows": 32724,
+    "interior_rows": 24300,
+    "trace_rows": 8424,
+    "trace_offset": 24300,
+    "owner_active_row_count": 8424,
+    "owner_active_row_hash": "6f7c32c5fef8058a9c3a36deeaa65bce5f726c57c0d426220c065f683b57dade",
+    "parent_id_hash": "ac7e3532a1ecf55826a25a99b1f5197fb7c9952a084bf88f4ca15bad79511023",
+    "source_active_column_count": 23328,
+    "retained_active_column_count": 17064,
+    "dropped_outside_slab_column_count": 6264,
+    "partial_cell_count": 18,
+    "complete_trace_row_count": 17064,
+    "incomplete_trace_row_count": 6264,
+    "trace_expansion_nnz": 17064,
+    "trace_expansion_bytes": 434808,
+    "current_local_shift": {
+      "count": 8424,
+      "owner_row_count": 8424,
+      "finite": true,
+      "norm2": 475.7236793796778,
+      "sha256": "986bfe37dbc54cabd71ac2fd83dbd10df7adc69fe53c3bd030935dfa7017fec9"
+    },
+    "deterministic_vectors": {
+      "labels": [
+        "canonical_affine_phase",
+        "canonical_complex_affine_phase",
+        "canonical_sinusoidal_phase"
+      ],
+      "count": 3,
+      "finite": true,
+      "deterministic": true,
+      "gate_pass": true,
+      "relative_errors": [
+        2.9248960201709676e-15,
+        2.978578754981666e-15,
+        2.6617554455542794e-15
+      ],
+      "max_relative_error": 2.978578754981666e-15
+    },
+    "iter20_real_residual": {
+      "iteration": 20,
+      "source": "core_residual_work_b_minus_Ax",
+      "true_relative_residual": 0.04474243612765,
+      "owner_row_count": 8424,
+      "local_norm2": 0.42723143961943305,
+      "finite": true,
+      "deterministic": true,
+      "gate_pass": true,
+      "relative_error": 1.7721399154913289e-15,
+      "vector_sha256": "3aa610ed9bbb63047188b64d21d5dcab04184ffc6316196458e99aab520bb195"
+    },
+    "materialization": {
+      "condensed_trace_matrix_materialized": false,
+      "action_only_request": true,
+      "blocks_F_present": false,
+      "global_A_materialized": false,
+      "global_F_materialized": false
+    }
+  },
+  "lor_transfer": {
+    "slab": 14,
+    "owner": 0,
+    "parent_count": 54,
+    "physical_edge_count": 38304,
+    "active_edge_count": 36288,
+    "periodic_slave_edge_count": 2016,
+    "periodic_relation_count": 2016,
+    "active_plus_slave_equals_physical": true,
+    "parent_id_hash": "ac7e3532a1ecf55826a25a99b1f5197fb7c9952a084bf88f4ca15bad79511023",
+    "physical_edge_keys_sha256": "69b351698907f0067b09cf14c0f889d1566a86d1bcfec78d7a48121659635054",
+    "active_edge_keys_sha256": "a359da92b3a781ff447f5bf81ce7dc845c1be022464948526ee489874c77010a",
+    "matched_identity_block_count": 93,
+    "merged_periodic_block_count": 401,
+    "gathered_physical_identity_block_count": 401,
+    "gathered_physical_identity_payload_bytes": 84688,
+    "high_order_coefficient_transform_gathered": false,
+    "partial_cell_count": 18,
+    "complete_trace_row_count": 17064,
+    "incomplete_trace_row_count": 6264,
+    "missing_writer_count": 0,
+    "shared_trace_max_relative_error": 1.7200665360018798e-15,
+    "complete_trace_reconstruction_max_relative_error": 9.56091885020216e-16,
+    "unique_parent_transfer_stencil_count": 2,
+    "build_seconds": 49.17991871200502,
+    "measurement": {
+      "vector_count": 3,
+      "forward_apply_count": 7,
+      "adjoint_apply_count": 1,
+      "finite": true,
+      "deterministic": true,
+      "adjoint_relative_error": 1.5008209190777043e-14,
+      "output_sha256": [
+        "ea3735e4b2d8c9f5c31d474745820892f4a57c508bfdb426f823779081333b50",
+        "13b17f6dc31518e13b7c0ea51951857138377b60b2f06178a50ede273cc0e869",
+        "03bfb02d1d676f0cb144e66e79b3f41cac5143c05a1469fdb8ed856b63a15e1d"
+      ]
+    },
+    "global_dense_T_retained": false,
+    "condensed_trace_matrix_materialized": false,
+    "status": "pass"
+  },
+  "residual_trajectory": {
+    "samples": [
+      {"iteration": 0, "true": 1.0, "reported": 1.0},
+      {"iteration": 10, "true": 0.14446444295860594, "reported": 0.14446444295860714},
+      {"iteration": 20, "true": 0.04474243612765, "reported": 0.04474243612765121}
+    ],
+    "full_augmented_true_residual": 0.04474243612765
+  },
+  "resources": {
+    "wall_seconds": 277.6128281370038,
+    "whole_run_process_tree_rss_mb": 4920.34765625,
+    "whole_run_process_tree_rss_gib": 4.805027008056641,
+    "worker_rss_mb": 4906.53125,
+    "worker_pss_mb": 4855.1728515625,
+    "worker_uss_mb": 4810.64453125,
+    "swap_mb": 0.0,
+    "warning_gib": 10.0,
+    "terminate_gib": 14.0,
+    "cgroup_historical_peak_mb": 13279.546875,
+    "cgroup_historical_peak_is_authority": false,
+    "progress_event_rank_rss_mb": {
+      "g2_lor_transfer_build_started": 1060.25,
+      "g2_lor_transfer_build_ready": 1166.61328125,
+      "difference_mb": 106.36328125
+    },
+    "watchdog_stage_peaks_mb": {
+      "g2_lor_transfer_build_started": {
+        "process_tree_max_mb": 1180.4296875,
+        "process_tree_max_gib": 1.1527633666992188,
+        "worker_rank_max_mb": 1166.61328125,
+        "interpretation": "samples covering the actual LOR build interval"
+      },
+      "g2_lor_transfer_build_ready": {
+        "process_tree_max_mb": 4877.80078125,
+        "worker_rank_max_mb": 4863.984375,
+        "interpretation": "ready-event label sampled until all_slab_factors_ready; includes later existing 16-slab trace-factor setup and is not an LOR build peak"
+      }
+    },
+    "older_g2_2_identity_background": {
+      "source_sha": "44f5931c479eba86c9d12c57109e3b052e2962e4",
+      "process_tree_rss_mb": 4655.9453125,
+      "process_tree_rss_gib": 4.546821594238281,
+      "difference_mb": 264.40234375,
+      "relative_difference_note": "approximately 5.68%; source SHA differs, same-machine background only; not attributed as pure LOR retained increment"
+    },
+    "retained_numeric_payload_lower_bound": {
+      "bytes": 18735740,
+      "mib": 17.867794036865234,
+      "components": "T/T^H/E/E^H/packing/reference CSR arrays only",
+      "excludes": "RSS, Python objects, PETSc allocator overhead and other allocator overhead"
+    }
+  },
+  "lifecycle": {
+    "stages": [
+      "g2_lor_transfer_build_started",
+      "g2_lor_transfer_build_ready"
+    ],
+    "started_event_time": "2026-08-07 08:41:38",
+    "ready_event_time": "2026-08-07 08:42:33",
+    "build_seconds": 49.17991871200502
+  },
+  "prior_conclusions": {
+    "g2_2": "pass_algebraic_identity_only",
+    "g2_3": "inventory_measurement_qualified; plain full-space ILU route closed",
+    "g2_overall": "not_claimed"
+  },
+  "pending": {
+    "G2.5_HX_V_cycle": "not_run",
+    "G2.6_contraction": "not_run",
+    "G3": "not_run",
+    "official_field": "not_emitted",
+    "official_rta": "not_run"
+  },
+  "raw_evidence": {
+    "run_directory": "benchmarks/artifacts/101_task37_extra_development/g2_slab14_lor_transfer_mpi1_screen20_579c1912",
+    "sha256": {
+      "watchdog_summary.json": "41e148b957b3fcba3ebc06c27e6b11c9c7a5736e3b82b258a117b200a9b300ec",
+      "run_summary.json": "aefc2a7b3503b4e15114a1a7299e8fff02957c59aa2eaa3c3073d867dd394631",
+      "task037_f3_core_audit.json": "8bd07800ecaa5615937f7f74c546e66bf2e7a2f4256eb51f5d7dd49024585e85",
+      "progress_3d.jsonl": "dcc0ff8dd12862d4b17ec5806f71054d080d7c295388b27a825e2be2872e2aed",
+      "memory_timeline.csv": "8d8624ee3fbc0bd4dd5a02033728069fd1712e0fdbfdb07919df0f2e37257efb",
+      "task037_f3_residual_history.jsonl": "75f0bc3ebec3648b60fdfc55daa9afd036b81cf6d5fe0ef1f7051a83e0f24940",
+      "parent_launch_descriptor.json": "e4cf1db4daf1597eec562838cd32840b46dac436ab00673ae57195271e367423",
+      "worker_stdout.txt": "0ad5399df6b37c9643175c6cec172a330c62cbe31dc6b80c37344b82776dd979",
+      "solver_log.txt": "0ad5399df6b37c9643175c6cec172a330c62cbe31dc6b80c37344b82776dd979",
+      "NO_OFFICIAL_FIELD_OUTPUT.txt": "e11465d92e416af3e4321c581b7291b7d4df5c932b425541f9b0114e259d3f38",
+      "mesh_3d.h5": "49ba458658e65444b801bb3adcf82f190779045a2621d2b0f44a8605d516aa4f",
+      "mesh_3d.xdmf": "e40e1b05f3269101fe93e96416481f14bcaa64fb1df5f030381c747b484b9864"
+    },
+    "postprocess_not_emitted": [
+      "dtn_port_diffraction_orders_3d.json",
+      "fields_3d_for_paraview_rank0000.vtu"
+    ]
+  }
+}
