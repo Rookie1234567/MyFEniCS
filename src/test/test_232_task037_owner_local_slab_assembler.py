@@ -87,6 +87,8 @@ def test_owner_local_slab_matrix_and_diagonal_match_assembled():
         num_slabs=3,
         overlap_fraction=0.0,
     )
+    assert plan.coordinate_axis == 2
+    assert len(plan.coordinate_intervals) == 3
     assert all(count > 0 for count in plan.slab_row_counts)
     if comm.size == 1:
         assert action_only.trace_constraints.slave_rows > 0
