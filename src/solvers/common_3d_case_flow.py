@@ -779,6 +779,7 @@ def run_prepared_3d_case_flow(
     task037_extra_g2_slab14_factor_inventory: bool = False,
     task037_extra_g2_slab14_lor_transfer: bool = False,
     task037_extra_g2_slab14_lor_hx_oracle: bool = False,
+    task037_extra_g2_slab14_lor_hx_contraction: bool = False,
     mesh_data_override: AirBox3DMesh | None = None,
 ) -> dict[str, object]:
     """Run one explicit 3D Maxwell case after the stage file chooses the recipe.
@@ -813,6 +814,7 @@ def run_prepared_3d_case_flow(
             bool(task037_extra_g2_slab14_factor_inventory),
             bool(task037_extra_g2_slab14_lor_transfer),
             bool(task037_extra_g2_slab14_lor_hx_oracle),
+            bool(task037_extra_g2_slab14_lor_hx_contraction),
         )
     )
     if len(set(live_observer_flags)) != 1:
@@ -1318,6 +1320,9 @@ def run_prepared_3d_case_flow(
                 ),
                 task037_extra_g2_slab14_lor_hx_oracle=(
                     task037_extra_g2_slab14_lor_hx_oracle
+                ),
+                task037_extra_g2_slab14_lor_hx_contraction=(
+                    task037_extra_g2_slab14_lor_hx_contraction
                 ),
             )
         except DirectSolveFailure as failure:

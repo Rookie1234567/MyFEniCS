@@ -289,12 +289,12 @@ def _task037_g2_measure_lor_hx_source(
             "correction_sha256": _task037_g2_owner_vector_sha256(
                 owner_rows,
                 first,
-                domain=f"{domain_prefix}.first.v1",
+                domain=f"{domain_prefix}.correction.v1",
             ),
             "repeat_correction_sha256": _task037_g2_owner_vector_sha256(
                 owner_rows,
                 repeat,
-                domain=f"{domain_prefix}.repeat.v1",
+                domain=f"{domain_prefix}.correction.v1",
             ),
             "finite": bool(
                 first_contraction["finite"]

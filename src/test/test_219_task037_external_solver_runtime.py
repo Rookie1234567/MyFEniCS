@@ -25,6 +25,7 @@ def test_stage4b_wrapper_forwards_linear_solver_port(monkeypatch, tmp_path):
         assert kwargs["task037_extra_g2_slab14_factor_inventory"] is True
         assert kwargs["task037_extra_g2_slab14_lor_transfer"] is True
         assert kwargs["task037_extra_g2_slab14_lor_hx_oracle"] is True
+        assert kwargs["task037_extra_g2_slab14_lor_hx_contraction"] is True
         return {"stage4b": True}
 
     monkeypatch.setattr(stage4b, "run_prepared_3d_case_flow", flow)
@@ -39,6 +40,7 @@ def test_stage4b_wrapper_forwards_linear_solver_port(monkeypatch, tmp_path):
         task037_extra_g2_slab14_factor_inventory=True,
         task037_extra_g2_slab14_lor_transfer=True,
         task037_extra_g2_slab14_lor_hx_oracle=True,
+        task037_extra_g2_slab14_lor_hx_contraction=True,
     ) == {"stage4b": True}
 
 
@@ -55,6 +57,7 @@ def test_public_dtn_wrapper_forwards_linear_solver_port(monkeypatch, tmp_path):
         assert kwargs["task037_extra_g2_slab14_factor_inventory"] is True
         assert kwargs["task037_extra_g2_slab14_lor_transfer"] is True
         assert kwargs["task037_extra_g2_slab14_lor_hx_oracle"] is True
+        assert kwargs["task037_extra_g2_slab14_lor_hx_contraction"] is True
         return result
 
     monkeypatch.setattr(
@@ -80,6 +83,7 @@ def test_public_dtn_wrapper_forwards_linear_solver_port(monkeypatch, tmp_path):
         task037_extra_g2_slab14_factor_inventory=True,
         task037_extra_g2_slab14_lor_transfer=True,
         task037_extra_g2_slab14_lor_hx_oracle=True,
+        task037_extra_g2_slab14_lor_hx_contraction=True,
     )
     assert returned is result
 
@@ -94,6 +98,7 @@ def test_e0_matrix_free_dtn_flags_default_off(monkeypatch, tmp_path):
         assert kwargs["task037_extra_g2_slab14_factor_inventory"] is False
         assert kwargs["task037_extra_g2_slab14_lor_transfer"] is False
         assert kwargs["task037_extra_g2_slab14_lor_hx_oracle"] is False
+        assert kwargs["task037_extra_g2_slab14_lor_hx_contraction"] is False
         return {"default": True}
 
     monkeypatch.setattr(stage4b, "run_prepared_3d_case_flow", flow)
@@ -109,6 +114,7 @@ def test_e0_matrix_free_dtn_flags_default_off(monkeypatch, tmp_path):
         assert kwargs["task037_extra_g2_slab14_factor_inventory"] is False
         assert kwargs["task037_extra_g2_slab14_lor_transfer"] is False
         assert kwargs["task037_extra_g2_slab14_lor_hx_oracle"] is False
+        assert kwargs["task037_extra_g2_slab14_lor_hx_contraction"] is False
         return {"default": True}
 
     monkeypatch.setattr(

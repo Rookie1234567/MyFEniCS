@@ -25,6 +25,7 @@ def run_stage4b_block_grating_3d_case(
     task037_extra_g2_slab14_factor_inventory: bool = False,
     task037_extra_g2_slab14_lor_transfer: bool = False,
     task037_extra_g2_slab14_lor_hx_oracle: bool = False,
+    task037_extra_g2_slab14_lor_hx_contraction: bool = False,
     mesh_data_override=None,
 ) -> dict[str, object]:
     """Run Stage 4B: rectangular block grating with 3D DtN total-field ports.
@@ -73,6 +74,9 @@ def run_stage4b_block_grating_3d_case(
         ),
         task037_extra_g2_slab14_lor_hx_oracle=(
             task037_extra_g2_slab14_lor_hx_oracle
+        ),
+        task037_extra_g2_slab14_lor_hx_contraction=(
+            task037_extra_g2_slab14_lor_hx_contraction
         ),
         mesh_data_override=mesh_data_override,
     )

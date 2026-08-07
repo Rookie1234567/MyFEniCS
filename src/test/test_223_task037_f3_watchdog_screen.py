@@ -540,6 +540,139 @@ def _task037_g2_lor_hx_audit(lor_audit):
     }
 
 
+def _task037_g2_lor_hx_contraction_audit(identity_audit):
+    owner_row_hash = identity_audit["collector"]["owner_active_row_hash"]
+    source_specs = {
+        "real_m3a_iter0": (
+            "real_m3a_screen_residual",
+            0,
+            "fixed M3a screen residual at iteration 0",
+            1.0,
+            1.8,
+            0.5,
+            False,
+        ),
+        "real_m3a_iter20": (
+            "real_m3a_screen_residual",
+            20,
+            "fixed M3a screen residual at iteration 20",
+            1.0,
+            1.5,
+            0.5,
+            False,
+        ),
+        "manufactured_mixed_high": (
+            "deterministic_normalized_manufactured_mixed_high",
+            None,
+            "fixed normalized mixed/high source",
+            0.5,
+            0.75,
+            0.5,
+            True,
+        ),
+    }
+
+    def method_record(method, rho, first_seconds):
+        return {
+            "method": method,
+            "apply_count": 2,
+            "first_apply_seconds": first_seconds,
+            "repeat_apply_seconds": first_seconds,
+            "input_norm": 1.0,
+            "post_norm": rho,
+            "repeat_post_norm": rho,
+            "rho": rho,
+            "repeat_rho": rho,
+            "correction_norm2": 1.0,
+            "repeat_correction_norm2": 1.0,
+            "correction_sha256": "d" * 64,
+            "repeat_correction_sha256": "d" * 64,
+            "finite": True,
+            "deterministic": True,
+            **(
+                {"fixed_local_krylov_steps": 4}
+                if method == "b4_fixed_gmres4"
+                else {}
+            ),
+        }
+
+    sources = {}
+    for label, (kind, iteration, formula, best, b4, ilu, normalized) in (
+        source_specs.items()
+    ):
+        sources[label] = {
+            "source": {
+                "label": label,
+                "kind": kind,
+                "iteration": iteration,
+                "formula": formula,
+                "owner_row_count": 3,
+                "owner_row_hash": owner_row_hash,
+                "norm2": 1.0,
+                "normalized": normalized,
+                "finite": True,
+                "sha256": "e" * 64,
+            },
+            "current_trace_ilu": method_record("current_trace_ilu", ilu, 1.0),
+            "b4_fixed_gmres4": method_record("b4_fixed_gmres4", b4, 2.0),
+            "lor_hx_1v": method_record("lor_hx_1v", best, 10.0),
+            "lor_hx_2v": method_record("lor_hx_2v", best + 0.1, 12.0),
+            "best_lor_rho": best,
+            "best_lor_method": "lor_hx_1v",
+            "status": "measurement_complete",
+        }
+    return {
+        "primary_slab": 14,
+        "source_order": list(source_specs),
+        "sources": sources,
+        "b4_fixed_local_krylov_steps": 4,
+        "exact_schur_action": "apply_fullspace_slab_schur_action",
+        "proxy_self_score": False,
+        "global_matrix_materialized": False,
+        "missing_sources": [],
+        "missing_iterations": [],
+        "best_lor_rho": {
+            label: values["best_lor_rho"]
+            for label, values in sources.items()
+        },
+        "minimum_b4_comparison": {
+            "real_m3a_iter20": True,
+            "manufactured_mixed_high": True,
+        },
+        "minimum_b4_gate_pass": True,
+        "strong_ilu_comparison": {
+            "real_m3a_iter0": True,
+            "real_m3a_iter20": True,
+        },
+        "strong_ilu_gate_pass": True,
+        "apply_time_ratios": {
+            label: {
+                "lor_hx_1v_to_current_ilu": 10.0,
+                "lor_hx_2v_to_current_ilu": 12.0,
+            }
+            for label in source_specs
+        },
+        "apply_time_comparison": {
+            label: {
+                "lor_hx_1v_le_10x_current_ilu": True,
+                "lor_hx_2v_le_10x_current_ilu": False,
+                "at_least_one_lor_hx_pass": True,
+            }
+            for label in source_specs
+        },
+        "apply_time_gate_pass": True,
+        "gate_checks": {
+            "all_sources_present": True,
+            "all_actions_finite": True,
+            "all_actions_deterministic": True,
+        },
+        "measurement_gate_pass": True,
+        "status": "measurement_complete",
+        "contraction_not_evaluated": False,
+        "overall_g2_not_evaluated": True,
+    }
+
+
 def _task037_g2_qualification_case(
     *,
     identity_audit=None,
@@ -549,6 +682,8 @@ def _task037_g2_qualification_case(
     lor_enabled=False,
     hx_audit=None,
     hx_enabled=False,
+    contraction_audit=None,
+    contraction_enabled=False,
 ):
     args = SimpleNamespace(
         task037_f3_screen=20,
@@ -560,6 +695,7 @@ def _task037_g2_qualification_case(
         task037_extra_g2_slab14_factor_inventory=factor_enabled,
         task037_extra_g2_slab14_lor_transfer=lor_enabled,
         task037_extra_g2_slab14_lor_hx_oracle=hx_enabled,
+        task037_extra_g2_slab14_lor_hx_contraction=contraction_enabled,
         task037_m4_p2_auxiliary=False,
         task037_m4_factor_free_slab=False,
         task037_m4_b2_long_full=False,
@@ -605,6 +741,15 @@ def _task037_g2_qualification_case(
             else hx_audit
         )
         audit["task037_extra_g2_slab14_lor_hx_oracle"] = hx_audit
+    if contraction_enabled:
+        if not hx_enabled:
+            raise AssertionError("contraction fixture requires the HX oracle")
+        contraction_audit = (
+            _task037_g2_lor_hx_contraction_audit(identity_audit)
+            if contraction_audit is None
+            else contraction_audit
+        )
+        audit["task037_extra_g2_slab14_lor_hx_contraction"] = contraction_audit
     summary = {
         "matrix_stats": {"matrix_rows": 1, "matrix_nnz_used": None},
         "polarization_kind": "s",
@@ -2033,6 +2178,99 @@ def test_task037_extra_g2_lor_hx_build_only_qualification_and_raw_binding():
     )
 
 
+@pytest.mark.parametrize(
+    "tamper",
+    (
+        "rho",
+        "best_lor_rho",
+        "minimum_comparison",
+        "timing_ratio",
+        "correction_hash",
+        "measurement_status",
+        "negative_norm",
+    ),
+)
+def test_task037_extra_g2_lor_hx_contraction_raw_qualification_and_tamper(
+    tamper,
+):
+    args, kwargs = _task037_g2_qualification_case(
+        lor_enabled=True,
+        hx_enabled=True,
+        contraction_enabled=True,
+    )
+    qualification = watchdog._qualify(**kwargs)
+    assert qualification["pass"]
+    assert qualification["checks"][
+        "task037_g2_lor_hx_contraction_status"
+    ]
+    assert watchdog._task037_extra_g2_status(args, qualification) == (
+        "task037_extra_g2_slab14_lor_hx_contraction_measurement_qualified"
+    )
+
+    audit_key = "task037_extra_g2_slab14_lor_hx_contraction"
+    original_core = kwargs["task037_f3_core_audit"]
+    tampered_core = json.loads(json.dumps(original_core))
+    tampered_audit = tampered_core[audit_key]
+    if tamper == "rho":
+        tampered_audit["sources"]["real_m3a_iter20"]["lor_hx_1v"][
+            "rho"
+        ] = 0.25
+    elif tamper == "best_lor_rho":
+        tampered_audit["best_lor_rho"]["real_m3a_iter20"] = 9.0
+    elif tamper == "minimum_comparison":
+        tampered_audit["minimum_b4_comparison"]["real_m3a_iter20"] = False
+    elif tamper == "timing_ratio":
+        tampered_audit["apply_time_ratios"]["real_m3a_iter20"][
+            "lor_hx_1v_to_current_ilu"
+        ] = 9.0
+    elif tamper == "correction_hash":
+        tampered_audit["sources"]["real_m3a_iter20"]["lor_hx_1v"][
+            "correction_sha256"
+        ] = "f" * 64
+    elif tamper == "measurement_status":
+        tampered_audit["sources"]["real_m3a_iter20"]["status"] = "pending"
+    elif tamper == "negative_norm":
+        tampered_audit["sources"]["real_m3a_iter20"]["lor_hx_1v"][
+            "correction_norm2"
+        ] = -1.0
+    else:
+        raise AssertionError(tamper)
+    failed = watchdog._qualify(
+        **{**kwargs, "task037_f3_core_audit": tampered_core}
+    )
+    assert not failed["pass"], tamper
+
+
+def test_task037_extra_g2_lor_hx_performance_negative_still_qualifies():
+    args, kwargs = _task037_g2_qualification_case(
+        lor_enabled=True,
+        hx_enabled=True,
+        contraction_enabled=True,
+    )
+    audit = kwargs["task037_f3_core_audit"][
+        "task037_extra_g2_slab14_lor_hx_contraction"
+    ]
+    record = audit["sources"]["real_m3a_iter20"]["b4_fixed_gmres4"]
+    record["post_norm"] = 1.4
+    record["repeat_post_norm"] = 1.4
+    record["rho"] = 1.4
+    record["repeat_rho"] = 1.4
+    audit["minimum_b4_comparison"]["real_m3a_iter20"] = False
+    audit["minimum_b4_gate_pass"] = False
+
+    assert 1.0 > (2.0 / 3.0) * record["rho"]
+    assert audit["strong_ilu_gate_pass"] is True
+    qualification = watchdog._qualify(**kwargs)
+
+    assert qualification["pass"]
+    assert qualification["checks"][
+        "task037_g2_lor_hx_contraction_minimum_recorded"
+    ]
+    assert watchdog._task037_extra_g2_status(args, qualification) == (
+        "task037_extra_g2_slab14_lor_hx_contraction_measurement_qualified"
+    )
+
+
 def test_task037_extra_g2_factor_status_has_priority():
     args, kwargs = _task037_g2_qualification_case(factor_enabled=True)
     qualification = watchdog._qualify(**kwargs)
@@ -2728,9 +2966,48 @@ def test_task037_extra_g2_parser_is_exact_screen20_mpi1_scope(tmp_path):
     assert hx_contract["task037_extra_g2_slab14_lor_transfer"] is True
     assert hx_contract["task037_extra_g2_slab14_lor_hx_oracle"] is True
 
+    contraction_args = watchdog._parse_args(
+        base
+        + [
+            "--task037-extra-g2-slab14-lor-transfer",
+            "--task037-extra-g2-slab14-lor-hx-oracle",
+            "--task037-extra-g2-slab14-lor-hx-contraction",
+        ]
+    )
+    assert contraction_args.task037_extra_g2_slab14_identity is True
+    assert contraction_args.task037_extra_g2_slab14_lor_transfer is True
+    assert contraction_args.task037_extra_g2_slab14_lor_hx_oracle is True
+    assert contraction_args.task037_extra_g2_slab14_lor_hx_contraction is True
+    contraction_command = watchdog._worker_command(contraction_args, tmp_path)
+    assert contraction_command.count(
+        "--task037-extra-g2-slab14-lor-transfer"
+    ) == 1
+    assert contraction_command.count(
+        "--task037-extra-g2-slab14-lor-hx-oracle"
+    ) == 1
+    assert contraction_command.count(
+        "--task037-extra-g2-slab14-lor-hx-contraction"
+    ) == 1
+    contraction_worker_args = watchdog._parse_args(
+        contraction_command[contraction_command.index("--worker") :]
+    )
+    assert contraction_worker_args.task037_extra_g2_slab14_lor_hx_contraction is True
+    contraction_contract = watchdog._worker_launch_contract(contraction_args)
+    assert contraction_contract[
+        "task037_extra_g2_slab14_lor_hx_contraction"
+    ] is True
+
     with pytest.raises(SystemExit):
         watchdog._parse_args(
             base + ["--task037-extra-g2-slab14-lor-hx-oracle"]
+        )
+    with pytest.raises(SystemExit):
+        watchdog._parse_args(
+            base
+            + [
+                "--task037-extra-g2-slab14-lor-transfer",
+                "--task037-extra-g2-slab14-lor-hx-contraction",
+            ]
         )
     with pytest.raises(SystemExit):
         watchdog._parse_args(

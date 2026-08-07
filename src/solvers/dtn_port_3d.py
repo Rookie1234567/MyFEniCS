@@ -2974,6 +2974,7 @@ def _solve_stage4_dtn_port_total_field_impl(
     task037_extra_g2_slab14_factor_inventory: bool = False,
     task037_extra_g2_slab14_lor_transfer: bool = False,
     task037_extra_g2_slab14_lor_hx_oracle: bool = False,
+    task037_extra_g2_slab14_lor_hx_contraction: bool = False,
     _recovery_cleanup_sink: list[VariablePRecoveredSolution],
 ) -> dict[str, Any]:
     """Solve the Stage-4 total-field problem with 3D Fourier-DtN ports.
@@ -5500,6 +5501,7 @@ def solve_stage4_dtn_port_total_field(
     task037_extra_g2_slab14_factor_inventory: bool = False,
     task037_extra_g2_slab14_lor_transfer: bool = False,
     task037_extra_g2_slab14_lor_hx_oracle: bool = False,
+    task037_extra_g2_slab14_lor_hx_contraction: bool = False,
 ) -> dict[str, Any]:
     """Run the DtN solver with exception-safe recovered-vector ownership."""
 
@@ -5523,6 +5525,7 @@ def solve_stage4_dtn_port_total_field(
             bool(task037_extra_g2_slab14_factor_inventory),
             bool(task037_extra_g2_slab14_lor_transfer),
             bool(task037_extra_g2_slab14_lor_hx_oracle),
+            bool(task037_extra_g2_slab14_lor_hx_contraction),
         )
     )
     if len(set(observer_flags)) != 1:
@@ -5565,6 +5568,9 @@ def solve_stage4_dtn_port_total_field(
             ),
             task037_extra_g2_slab14_lor_hx_oracle=(
                 task037_extra_g2_slab14_lor_hx_oracle
+            ),
+            task037_extra_g2_slab14_lor_hx_contraction=(
+                task037_extra_g2_slab14_lor_hx_contraction
             ),
             _recovery_cleanup_sink=recovered_cleanup,
         )

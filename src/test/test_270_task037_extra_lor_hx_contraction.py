@@ -152,6 +152,10 @@ def test_contraction_helper_uses_exact_action_and_two_repeated_applies():
             assert record["apply_count"] == 2
             assert record["finite"] is True
             assert record["deterministic"] is True
+            assert (
+                record["correction_sha256"]
+                == record["repeat_correction_sha256"]
+            )
             assert record["input_norm"] == pytest.approx(np.linalg.norm(source))
             correction = (
                 np.linalg.solve(current_matrix, source)

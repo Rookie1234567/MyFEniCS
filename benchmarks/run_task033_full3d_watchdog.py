@@ -659,6 +659,14 @@ def _task037_m3a_status(
 def _task037_extra_g2_status(
     args: argparse.Namespace, qualification: Mapping[str, Any]
 ) -> str | None:
+    if getattr(args, "task037_extra_g2_slab14_lor_hx_contraction", False):
+        result = "pass" if qualification["pass"] else "not_pass"
+        return (
+            "task037_extra_g2_slab14_lor_hx_contraction_"
+            "measurement_qualified"
+            if result == "pass"
+            else "task037_extra_g2_slab14_lor_hx_contraction_not_pass"
+        )
     if getattr(args, "task037_extra_g2_slab14_lor_hx_oracle", False):
         result = "pass" if qualification["pass"] else "not_pass"
         return (
@@ -772,6 +780,7 @@ def _task037_f3_assembled_fgmres_port(
     task037_extra_g2_slab14_factor_inventory: bool = False,
     task037_extra_g2_slab14_lor_transfer: bool = False,
     task037_extra_g2_slab14_lor_hx_oracle: bool = False,
+    task037_extra_g2_slab14_lor_hx_contraction: bool = False,
     verified_clean_sha: str | None = None,
 ):
     from src.solvers.static_condensed_iterative import (
@@ -913,6 +922,9 @@ def _task037_f3_assembled_fgmres_port(
                 ),
                 task037_extra_g2_slab14_lor_hx_oracle=(
                     task037_extra_g2_slab14_lor_hx_oracle
+                ),
+                task037_extra_g2_slab14_lor_hx_contraction=(
+                    task037_extra_g2_slab14_lor_hx_contraction
                 ),
                 lifecycle_observer=(observe_lifecycle if lifecycle_enabled else None),
             )
@@ -1414,6 +1426,9 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
         "task037_extra_g2_slab14_lor_hx_oracle": bool(
             getattr(args, "task037_extra_g2_slab14_lor_hx_oracle", False)
         ),
+        "task037_extra_g2_slab14_lor_hx_contraction": bool(
+            getattr(args, "task037_extra_g2_slab14_lor_hx_contraction", False)
+        ),
         "task035d_case097_gate": bool(args.task035d_case097_gate),
         "task035d_candidate_id": str(args.task035d_candidate_id),
         "task035d_nested_p_dwr_phase": args.task035d_nested_p_dwr_phase,
@@ -1611,6 +1626,9 @@ def _worker(args: argparse.Namespace) -> int:
             task037_extra_g2_slab14_lor_hx_oracle=getattr(
                 args, "task037_extra_g2_slab14_lor_hx_oracle", False
             ),
+            task037_extra_g2_slab14_lor_hx_contraction=getattr(
+                args, "task037_extra_g2_slab14_lor_hx_contraction", False
+            ),
             verified_clean_sha=getattr(args, "verified_clean_sha", None),
         )
         if args.task037_m2c_never_materialized:
@@ -1715,6 +1733,9 @@ def _worker(args: argparse.Namespace) -> int:
         ),
         task037_extra_g2_slab14_lor_hx_oracle=getattr(
             args, "task037_extra_g2_slab14_lor_hx_oracle", False
+        ),
+        task037_extra_g2_slab14_lor_hx_contraction=getattr(
+            args, "task037_extra_g2_slab14_lor_hx_contraction", False
         ),
     )
     return 0
@@ -1843,6 +1864,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help=(
             "Build the opt-in Task037-extra G2 slab14 physical LOR-HX "
             "oracle without applying it; requires identity and LOR transfer."
+        ),
+    )
+    parser.add_argument(
+        "--task037-extra-g2-slab14-lor-hx-contraction",
+        action="store_true",
+        help=(
+            "Measure the opt-in Task037-extra G2 slab14 LOR-HX "
+            "contraction; requires the LOR-HX oracle."
         ),
     )
     parser.add_argument(
@@ -2309,6 +2338,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "--task037-extra-g2-slab14-lor-hx-oracle conflicts with "
             "--task037-extra-g2-slab14-factor-inventory."
+        )
+    if (
+        args.task037_extra_g2_slab14_lor_hx_contraction
+        and not args.task037_extra_g2_slab14_lor_hx_oracle
+    ):
+        parser.error(
+            "--task037-extra-g2-slab14-lor-hx-contraction requires "
+            "--task037-extra-g2-slab14-lor-hx-oracle."
         )
     if (
         args.task037_m4_p2_auxiliary
@@ -4032,6 +4069,366 @@ def _task037_g2_lor_hx_build_checks(
     }
 
 
+def _task037_g2_lor_hx_contraction_checks(
+    contraction_audit: Any,
+    identity_audit: Any,
+    collector_row_count: Any,
+) -> dict[str, bool]:
+    audit = contraction_audit if isinstance(contraction_audit, Mapping) else {}
+    source_order = (
+        "real_m3a_iter0",
+        "real_m3a_iter20",
+        "manufactured_mixed_high",
+    )
+    methods = (
+        "current_trace_ilu",
+        "b4_fixed_gmres4",
+        "lor_hx_1v",
+        "lor_hx_2v",
+    )
+    sources_raw = audit.get("sources")
+    sources = sources_raw if isinstance(sources_raw, Mapping) else {}
+    identity = identity_audit if isinstance(identity_audit, Mapping) else {}
+    identity_collector = identity.get("collector")
+    identity_collector = (
+        identity_collector if isinstance(identity_collector, Mapping) else {}
+    )
+    identity_row_hash = identity_collector.get("owner_active_row_hash")
+    source_keys_fixed = set(sources) == set(source_order)
+
+    def finite(value: Any) -> bool:
+        return _finite_number_le(value, math.inf)
+
+    def nonnegative(value: Any) -> bool:
+        return finite(value) and float(value) >= 0.0
+
+    def positive(value: Any) -> bool:
+        return finite(value) and float(value) > 0.0
+
+    def close(left: Any, right: Any) -> bool:
+        return (
+            finite(left)
+            and finite(right)
+            and math.isclose(
+                float(left), float(right), rel_tol=1.0e-12, abs_tol=1.0e-12
+            )
+        )
+
+    def positive_integer(value: Any) -> bool:
+        return isinstance(value, int) and not isinstance(value, bool) and value > 0
+
+    source_checks: dict[str, bool] = {}
+    method_checks: dict[str, bool] = {}
+    action_finite_checks: dict[str, bool] = {}
+    action_deterministic_checks: dict[str, bool] = {}
+    rho_checks: dict[str, bool] = {}
+    best_rhos: dict[str, float | None] = {}
+    minimum_b4: dict[str, bool] = {}
+    strong_ilu: dict[str, bool] = {}
+    timing_ratios: dict[str, dict[str, float | None]] = {}
+    timing_comparison: dict[str, dict[str, bool]] = {}
+
+    for label in source_order:
+        measurement = sources.get(label)
+        measurement = (
+            measurement if isinstance(measurement, Mapping) else {}
+        )
+        source = measurement.get("source")
+        source = source if isinstance(source, Mapping) else {}
+        expected_iteration = (
+            0
+            if label.endswith("iter0")
+            else 20
+            if label.endswith("iter20")
+            else None
+        )
+        expected_kind = (
+            "real_m3a_screen_residual"
+            if label.startswith("real_m3a_")
+            else "deterministic_normalized_manufactured_mixed_high"
+        )
+        source_ok = (
+            isinstance(source, Mapping)
+            and source.get("label") == label
+            and source.get("kind") == expected_kind
+            and "iteration" in source
+            and source.get("iteration") == expected_iteration
+            and isinstance(source.get("formula"), str)
+            and bool(source.get("formula"))
+            and positive_integer(source.get("owner_row_count"))
+            and source.get("owner_row_count") == collector_row_count
+            and source.get("owner_row_hash") == identity_row_hash
+            and valid_hex_digest(source.get("owner_row_hash"), 64)
+            and positive(source.get("norm2"))
+            and source.get("finite") is True
+            and valid_hex_digest(source.get("sha256"), 64)
+            and (label != "manufactured_mixed_high" or source.get("normalized") is True)
+            and measurement.get("status") == "measurement_complete"
+        )
+        source_checks[label] = source_ok
+        per_method_ok = source_ok
+        if source_ok:
+            source_norm = source["norm2"]
+            for method in methods:
+                record = measurement.get(method)
+                action_finite_checks[f"{label}.{method}"] = (
+                    isinstance(record, Mapping) and record.get("finite") is True
+                )
+                action_deterministic_checks[f"{label}.{method}"] = (
+                    isinstance(record, Mapping)
+                    and record.get("deterministic") is True
+                    and close(
+                        record.get("post_norm"), record.get("repeat_post_norm")
+                    )
+                    and close(record.get("rho"), record.get("repeat_rho"))
+                    and close(
+                        record.get("correction_norm2"),
+                        record.get("repeat_correction_norm2"),
+                    )
+                    and valid_hex_digest(record.get("correction_sha256"), 64)
+                    and record.get("correction_sha256")
+                    == record.get("repeat_correction_sha256")
+                )
+                method_ok = (
+                    isinstance(record, Mapping)
+                    and record.get("method") == method
+                    and record.get("apply_count") == 2
+                    and nonnegative(record.get("first_apply_seconds"))
+                    and nonnegative(record.get("repeat_apply_seconds"))
+                    and positive(record.get("input_norm"))
+                    and nonnegative(record.get("post_norm"))
+                    and nonnegative(record.get("repeat_post_norm"))
+                    and nonnegative(record.get("rho"))
+                    and nonnegative(record.get("repeat_rho"))
+                    and nonnegative(record.get("correction_norm2"))
+                    and nonnegative(record.get("repeat_correction_norm2"))
+                    and close(record.get("input_norm"), source_norm)
+                    and close(record.get("post_norm"), record.get("repeat_post_norm"))
+                    and close(record.get("rho"), record.get("repeat_rho"))
+                    and close(
+                        record.get("correction_norm2"),
+                        record.get("repeat_correction_norm2"),
+                    )
+                    and valid_hex_digest(record.get("correction_sha256"), 64)
+                    and valid_hex_digest(
+                        record.get("repeat_correction_sha256"), 64
+                    )
+                    and record.get("correction_sha256")
+                    == record.get("repeat_correction_sha256")
+                    and record.get("finite") is True
+                    and record.get("deterministic") is True
+                )
+                if method == "b4_fixed_gmres4":
+                    method_ok = method_ok and record.get(
+                        "fixed_local_krylov_steps"
+                    ) == 4
+                if method_ok:
+                    method_ok = close(
+                        record["rho"],
+                        float(record["post_norm"]) / float(record["input_norm"]),
+                    ) and close(
+                        record["repeat_rho"],
+                        float(record["repeat_post_norm"])
+                        / float(record["input_norm"]),
+                    )
+                method_checks[f"{label}.{method}"] = method_ok
+                per_method_ok = per_method_ok and method_ok
+            if per_method_ok:
+                one = measurement["lor_hx_1v"]
+                two = measurement["lor_hx_2v"]
+                best_rho = min(float(one["rho"]), float(two["rho"]))
+                best_method = (
+                    "lor_hx_1v" if one["rho"] <= two["rho"] else "lor_hx_2v"
+                )
+                best_rhos[label] = best_rho
+                rho_checks[label] = close(measurement.get("best_lor_rho"), best_rho)
+                rho_checks[f"{label}.method"] = (
+                    measurement.get("best_lor_method") == best_method
+                )
+            else:
+                best_rhos[label] = None
+                rho_checks[label] = False
+                rho_checks[f"{label}.method"] = False
+        else:
+            best_rhos[label] = None
+            rho_checks[label] = False
+            rho_checks[f"{label}.method"] = False
+
+        b4_rho = (
+            measurement["b4_fixed_gmres4"]["rho"]
+            if per_method_ok
+            else None
+        )
+        ilu_rho = (
+            measurement["current_trace_ilu"]["rho"]
+            if per_method_ok
+            else None
+        )
+        minimum_b4[label] = (
+            nonnegative(best_rhos[label])
+            and nonnegative(b4_rho)
+            and best_rhos[label] <= (2.0 / 3.0) * float(b4_rho)
+        )
+        strong_ilu[label] = (
+            nonnegative(best_rhos[label])
+            and nonnegative(ilu_rho)
+            and best_rhos[label] <= 2.0 * float(ilu_rho)
+        )
+
+        if per_method_ok and positive(
+            measurement["current_trace_ilu"]["first_apply_seconds"]
+        ):
+            ilu_seconds = float(
+                measurement["current_trace_ilu"]["first_apply_seconds"]
+            )
+            one_ratio = float(
+                measurement["lor_hx_1v"]["first_apply_seconds"]
+            ) / ilu_seconds
+            two_ratio = float(
+                measurement["lor_hx_2v"]["first_apply_seconds"]
+            ) / ilu_seconds
+        else:
+            one_ratio = None
+            two_ratio = None
+        timing_ratios[label] = {
+            "lor_hx_1v_to_current_ilu": one_ratio,
+            "lor_hx_2v_to_current_ilu": two_ratio,
+        }
+        one_pass = (
+            one_ratio is not None
+            and np.isfinite(one_ratio)
+            and one_ratio <= 10.0
+        )
+        two_pass = (
+            two_ratio is not None
+            and np.isfinite(two_ratio)
+            and two_ratio <= 10.0
+        )
+        timing_comparison[label] = {
+            "lor_hx_1v_le_10x_current_ilu": bool(one_pass),
+            "lor_hx_2v_le_10x_current_ilu": bool(two_pass),
+            "at_least_one_lor_hx_pass": bool(one_pass or two_pass),
+        }
+
+    recorded_ratios = audit.get("apply_time_ratios")
+    recorded_comparison = audit.get("apply_time_comparison")
+    recorded_ratios_ok = isinstance(recorded_ratios, Mapping)
+    recorded_comparison_ok = isinstance(recorded_comparison, Mapping)
+    for label in source_order:
+        raw_ratios = recorded_ratios.get(label) if recorded_ratios_ok else None
+        raw_comparison = (
+            recorded_comparison.get(label) if recorded_comparison_ok else None
+        )
+        recorded_ratios_ok = recorded_ratios_ok and isinstance(raw_ratios, Mapping)
+        recorded_comparison_ok = recorded_comparison_ok and isinstance(
+            raw_comparison, Mapping
+        )
+        if isinstance(raw_ratios, Mapping):
+            for name, expected in timing_ratios[label].items():
+                recorded_ratios_ok = recorded_ratios_ok and (
+                    expected is None
+                    and raw_ratios.get(name) is None
+                    or expected is not None
+                    and close(raw_ratios.get(name), expected)
+                )
+        if isinstance(raw_comparison, Mapping):
+            recorded_comparison_ok = recorded_comparison_ok and all(
+                raw_comparison.get(name) is value
+                for name, value in timing_comparison[label].items()
+            )
+
+    minimum_recorded = audit.get("minimum_b4_comparison")
+    strong_recorded = audit.get("strong_ilu_comparison")
+    recorded_best_rhos = audit.get("best_lor_rho")
+    best_rhos_recorded_ok = (
+        isinstance(recorded_best_rhos, Mapping)
+        and set(recorded_best_rhos) == set(source_order)
+        and all(
+            close(recorded_best_rhos.get(label), best_rhos[label])
+            for label in source_order
+        )
+    )
+    minimum_recorded_ok = isinstance(minimum_recorded, Mapping) and all(
+        minimum_recorded.get(label) is minimum_b4[label]
+        for label in ("real_m3a_iter20", "manufactured_mixed_high")
+    )
+    strong_recorded_ok = isinstance(strong_recorded, Mapping) and all(
+        strong_recorded.get(label) is strong_ilu[label]
+        for label in ("real_m3a_iter0", "real_m3a_iter20")
+    )
+    minimum_gate = all(
+        minimum_b4[label]
+        for label in ("real_m3a_iter20", "manufactured_mixed_high")
+    )
+    strong_gate = all(
+        strong_ilu[label] for label in ("real_m3a_iter0", "real_m3a_iter20")
+    )
+    time_gate = all(
+        timing_comparison[label]["at_least_one_lor_hx_pass"]
+        for label in source_order
+    )
+    all_sources_present = source_keys_fixed and audit.get("missing_sources") == []
+    all_actions_finite = all(action_finite_checks.values())
+    all_actions_deterministic = all(action_deterministic_checks.values())
+    measurement_gate = (
+        all_sources_present and all_actions_finite and all_actions_deterministic
+    )
+    recorded_gate_checks = audit.get("gate_checks")
+    recorded_gate_checks_ok = isinstance(recorded_gate_checks, Mapping) and (
+        recorded_gate_checks.get("all_sources_present") is all_sources_present
+        and recorded_gate_checks.get("all_actions_finite") is all_actions_finite
+        and recorded_gate_checks.get("all_actions_deterministic")
+        is all_actions_deterministic
+    )
+    return {
+        "task037_g2_lor_hx_contraction_present": isinstance(
+            contraction_audit, Mapping
+        ),
+        "task037_g2_lor_hx_contraction_identity": (
+            audit.get("primary_slab") == 14
+            and audit.get("b4_fixed_local_krylov_steps") == 4
+            and audit.get("source_order") == list(source_order)
+            and audit.get("exact_schur_action")
+            == "apply_fullspace_slab_schur_action"
+            and audit.get("proxy_self_score") is False
+            and audit.get("global_matrix_materialized") is False
+            and audit.get("contraction_not_evaluated") is False
+            and audit.get("overall_g2_not_evaluated") is True
+        ),
+        "task037_g2_lor_hx_contraction_sources": (
+            isinstance(sources_raw, Mapping)
+            and source_keys_fixed
+            and all_sources_present
+            and audit.get("missing_sources") == []
+            and audit.get("missing_iterations") == []
+        ),
+        "task037_g2_lor_hx_contraction_source_fields": all(
+            source_checks.values()
+        ),
+        "task037_g2_lor_hx_contraction_method_fields": all(
+            method_checks.values()
+        ),
+        "task037_g2_lor_hx_contraction_rho_recomputed": all(
+            rho_checks.values()
+        ) and best_rhos_recorded_ok,
+        "task037_g2_lor_hx_contraction_minimum_recorded": minimum_recorded_ok,
+        "task037_g2_lor_hx_contraction_strong_recorded": strong_recorded_ok,
+        "task037_g2_lor_hx_contraction_timing_recorded": (
+            recorded_ratios_ok and recorded_comparison_ok
+        ),
+        "task037_g2_lor_hx_contraction_gate_fields": (
+            audit.get("minimum_b4_gate_pass") is minimum_gate
+            and audit.get("strong_ilu_gate_pass") is strong_gate
+            and audit.get("apply_time_gate_pass") is time_gate
+        ),
+        "task037_g2_lor_hx_contraction_gate_checks": recorded_gate_checks_ok,
+        "task037_g2_lor_hx_contraction_status": (
+            audit.get("status") == "measurement_complete"
+            and audit.get("measurement_gate_pass") is measurement_gate
+        ),
+    }
+
+
 def _task037_g2_factor_iter20_checks(
     factor_audit: Any,
     identity_audit: Any,
@@ -4823,6 +5220,19 @@ def _qualify(
                         }
                     )
                 if getattr(
+                    args, "task037_extra_g2_slab14_lor_hx_contraction", False
+                ):
+                    contraction_audit = core_audit.get(
+                        "task037_extra_g2_slab14_lor_hx_contraction"
+                    )
+                    checks.update(
+                        _task037_g2_lor_hx_contraction_checks(
+                            contraction_audit,
+                            g2_identity,
+                            collector_row_count,
+                        )
+                    )
+                if getattr(
                     args, "task037_extra_g2_slab14_factor_inventory", False
                 ):
                     factor_audit = core_audit.get(
@@ -5359,6 +5769,8 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
         command.append("--task037-extra-g2-slab14-lor-transfer")
     if getattr(args, "task037_extra_g2_slab14_lor_hx_oracle", False):
         command.append("--task037-extra-g2-slab14-lor-hx-oracle")
+    if getattr(args, "task037_extra_g2_slab14_lor_hx_contraction", False):
+        command.append("--task037-extra-g2-slab14-lor-hx-contraction")
     if args.task037_m4_p2_auxiliary:
         command.append("--task037-m4-p2-auxiliary")
     if args.task037_m4_factor_free_slab:
@@ -6187,6 +6599,9 @@ def _run_parent(args: argparse.Namespace) -> int:
         ),
         "task037_extra_g2_slab14_lor_hx_oracle": bool(
             getattr(args, "task037_extra_g2_slab14_lor_hx_oracle", False)
+        ),
+        "task037_extra_g2_slab14_lor_hx_contraction": bool(
+            getattr(args, "task037_extra_g2_slab14_lor_hx_contraction", False)
         ),
         "task035d_candidate_id": (
             args.task035d_candidate_id if args.task035d_case097_gate else None
