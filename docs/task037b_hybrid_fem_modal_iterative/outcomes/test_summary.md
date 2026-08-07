@@ -38,8 +38,22 @@ post-fix H1 只修复近简并分组与 partition audit 范数语义的窄回归
 |---|---|
 | H0 | pass |
 | H1 | pass（post-fix；首次 failed_before_solve 历史保留） |
-| H2-H10 | not_run_yet |
+| H2a | pass；assembled-block MatPython action identity |
+| H2b-H10 | not_run_yet |
 
 ## 运行边界
 
-本轮没有修改 solver、没有放宽阈值、没有扫描 M/角度/p-h，也没有进入 H2-H10。ignored artifacts 保留在本地证据目录，tracked docs 只保存路径和 SHA 引用。
+H1 recovery checkpoint 当时没有修改 H1 solver、没有放宽阈值、没有扫描 M/角度/p-h；本轮随后完成 H2a 两文件 action checkpoint。H2b-H10 尚未运行。ignored artifacts 保留在本地证据目录，tracked docs 只保存路径和 SHA 引用。
+
+## H2a assembled-block action identity
+
+| 范围 | 结果 |
+|---|---|
+| focused test | `src/test/test_234_task037b_hybrid_block_operator.py` |
+| MPI1 / MPI2 / MPI4 | 3 passed / 每 rank 3 passed / 每 rank 3 passed |
+| existing direct minimal regression | 1 passed |
+| action Gate | global 与 bottom/top/modal block relative error 全部 `<=1e-11` |
+| layout / pack-split | missing/extra/duplicates `0/0/0`；三项 pack/split `0` |
+| H2b/H3 | not_run；H2b Matrix-free local endcap exact action identity与H3第一次 outer FGMRES / exact block-LDU iterative oracle均未运行 |
+
+完整逐 probe 数值见 [H2a block identity](block_operator_identity.md)。

@@ -65,6 +65,13 @@ Task035c 用低成本p2/h5定位Full3D–Hybrid弱衍射级误差，再以p6/h10
 compact authority见
 [`../benchmarks/cases/096_hybrid_channel_memory_closure/README.md`](../benchmarks/cases/096_hybrid_channel_memory_closure/README.md)。
 
+## 2026-08-07：Task037b H2a assembled-block action identity
+
+新增 MatPython assembled-block Hybrid action，并以 direct monolithic AIJ 作为 test-only
+oracle 完成 deterministic probes、physical RHS、三类 block probe、ownership mapping 和
+pack/split 对照。MPI1/2/4 均通过，global action 与各 block relative error 均低于 `1e-11`；
+该结果只证明 algebraic action identity，H2b Matrix-free local endcap action 与 H3 尚未开始。
+
 ## 2026-07-25：Task035b Review V2 setup、内存下限与最终通道续研
 
 Review V2 在同一 fixed rectangular block grating 和执行分支上并行推进

@@ -32,10 +32,18 @@ H1-A 的六个实现/测试文件已包含在第三个提交中。首次 H1 form
 | H1 flag | explicit opt-in，仅 task037b-h1-gate |
 | H1 §9 post-fix contract | pass；12+12 frozen-reference 与 Full3D pairwise 均通过 |
 | master | 未合并 |
-| H2-H10 | 未开始 |
+| H2a | 已通过 assembled-block action identity |
+| H2b-H10 | 未开始 |
 | ignored raw artifacts | 不提交 |
 | tracked docs | 只保存 hash-bound evidence 引用 |
 
-## 本轮文档文件
+## H2a assembled-block action checkpoint
 
-本次 recovery checkpoint 只修改上述五份 outcomes；不修改 inherited_baseline_audit.md，不创建 H2-H10 空壳记录，也不修改 solver、runner 或 JSON authority。
+| SHA | subject | 文件与职责 |
+|---|---|---|
+| `41f692d2a7a8fce81ac49859c0f52cbcfda542e6` | `feat(task037b): add assembled Hybrid block action oracle` | `src/solvers/hybrid_fem_modal_iterative.py`：MatPython assembled-block action；`src/test/test_234_task037b_hybrid_block_operator.py`：MPI1/2/4 direct oracle、probe、ownership、lifecycle tests |
+
+H2a 代码 checkpoint 只包含上述两个 Python 文件；没有修改 ordinary defaults、direct public
+API、H1 文件或 JSON。H2b Matrix-free local endcap exact action identity 与 H3 第一次 outer
+FGMRES / exact block-LDU iterative oracle 未开始；raw artifacts、iterative solve 和 resource
+evidence 仍未创建。

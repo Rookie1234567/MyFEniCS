@@ -2,7 +2,7 @@
 
 ## 一句话结论
 
-H0 继承基线通过；首次 H1 direct Hybrid MPI8 formal 在生成 Hybrid 解以前因近简并模态分组检查退出，历史证据保留。post-fix source `2990f357f7dec23b1713bd0088bdc43c3ce6f5bc` 已完成同一冻结条件下的有效求解并通过 task.md §9 H1 contract；H2-H10 仍为 not_run_yet，等待主审审查。
+H0 继承基线通过；首次 H1 direct Hybrid MPI8 formal 在生成 Hybrid 解以前因近简并模态分组检查退出，历史证据保留。post-fix source `2990f357f7dec23b1713bd0088bdc43c3ce6f5bc` 已完成同一冻结条件下的有效求解并通过 task.md §9 H1 contract；H2a 已通过，H2b-H10 未运行，H3 必须等待 H2b Gate。
 
 ## H0-H10 矩阵
 
@@ -10,8 +10,9 @@ H0 继承基线通过；首次 H1 direct Hybrid MPI8 formal 在生成 Hybrid 解
 |---|---|---|
 | H0 | pass | 继承基线和文档治理完成 |
 | H1 | pass（post-fix；首次 failed_before_solve 历史保留） | task.md §9 H1 numerical contract 通过 |
-| H2 | not_run_yet | H1 recovery 后等待 review |
-| H3 | not_run_yet | H1 recovery 后等待 review |
+| H2a | pass | assembled-block MatPython action identity；不等于 H2b Matrix-free local endcap exact action identity |
+| H2b | not_run_yet | H2a 后仍等待 review |
+| H3 | not_run_yet | H2b Gate 尚未完成 |
 | H4 | not_run_yet | H1 recovery 后等待 review |
 | H5 | not_run_yet | H1 recovery 后等待 review |
 | H6 | not_run_yet | H1 recovery 后等待 review |
@@ -77,7 +78,7 @@ post-fix formal return code 为 `0`，`formal_pass=true`，true relative residua
 | swap | 0 |
 | ordinary defaults | unchanged；H1 explicit opt-in |
 
-runner 仍保留 `physical_qualified=false`、`official_record=false`、`mode_count_converged=false` 的 wider-M funnel 旧标签；它们不是 task.md §9 H1 Gate，也不改变本次 H1 task-specific contract pass。H2-H10 尚未运行。
+runner 仍保留 `physical_qualified=false`、`official_record=false`、`mode_count_converged=false` 的 wider-M funnel 旧标签；它们不是 task.md §9 H1 Gate，也不改变本次 H1 task-specific contract pass。H2b-H10 尚未运行。
 
 ## 资源
 
@@ -114,4 +115,15 @@ raw JSON 字段名虽含 max_*_mb，但本文按 bytes/1024^2 统一换算并显
 
 ## 下一步边界
 
-首次失败阶段不修 solver、不放宽 1e-6、不扫描 M、角度或 p-h；post-fix 只实施已审查的最小 grouping/audit 修复并完成一次 H1 recovery。H2-H10 尚未运行，后续仍需主审决定。
+首次失败阶段不修 solver、不放宽 1e-6、不扫描 M、角度或 p-h；post-fix 只实施已审查的最小 grouping/audit 修复并完成一次 H1 recovery。H2a 已通过；H2b-H10 尚未运行，H3 必须等待 H2b Gate。
+
+## H2a 当前边界
+
+H2a 已完成 assembled bottom/top block 与 modal/coupling action 的 algebraic identity：
+MPI1/2/4 的 deterministic probes、physical packed RHS、bottom-only/top-only/modal-only
+probes、pack/split 和 ownership mapping 均通过。production global operator 是 MatPython，
+没有 materialize global AIJ；H2b 的 Matrix-free local endcap exact action identity、
+residual/resource authority 和 H3 的第一次 outer FGMRES / exact block-LDU iterative
+oracle 仍为 `not_run_yet`。
+
+逐 probe relative error 与完整命令见 [H2a block identity](block_operator_identity.md)。
