@@ -20,7 +20,7 @@
 10. solver 成功必须以 full explicit true residual 为准；official R/T/A 只能从通过 residual Gate 的场计算，probe/flux 近似量默认仅作 diagnostic。
 11. 从 Task029 起，每个新 Task 必须同时维护结构化 `outcomes/summary.md` 和 `docs/development_progress.md`；两者分别承担详细技术档案与项目级回顾，一句状态或纯链接不构成完成。完整框架见 [`docs/task_retrospective_standard.md`](docs/task_retrospective_standard.md)。
 12. 从 Task032 起，中型和大型算法、物理或性能任务的 `outcomes/summary.md` 必须以表格作为主要信息载体；至少包含最终状态/范围、实施或实验矩阵、关键数值结果、资源或性能结果、失败与未运行项、合并和下一步决策表。每张表必须标明单位、baseline、数据身份（`measured` / `derived` / `predicted` / `not_run`）和证据入口；叙述用于解释表格，不得替代表格。
-13. **Markdown 公式和表格的可渲染性属于交付 Gate。** 独立公式使用空行隔开的 `$$` block；不得把需要渲染的公式放进代码围栏；表格列数必须一致，单元格竖线必须转义或改写，多行公式不得放进表格。ChatGPT 与 Codex 提交前都必须检查 GitHub rendered view；原始 LaTeX、破损表格或错位列均视为文档 Gate 失败。详见 [`docs/markdown_rendering_standard.md`](docs/markdown_rendering_standard.md)。
+13. **Markdown 公式和表格的可渲染性属于交付 Gate。** 所有新建或修改的独立公式使用 GitHub fenced math block（开 fence 为三个反引号加 math，闭 fence 为三个反引号）；禁止新增多行 `$$` 或 `\[...\]`；行内公式规则保持现有标准。表格列数必须一致，单元格竖线必须转义或改写，多行公式不得放进表格。ChatGPT 与 Codex 提交前都必须检查 GitHub rendered view；原始 LaTeX、破损表格或错位列均视为文档 Gate 失败。详见 [`docs/markdown_rendering_standard.md`](docs/markdown_rendering_standard.md)。
 14. **同一任务分支协作。** 一个 Task 从创建执行分支到最终批准期间，ChatGPT 与 Codex 的全部任务材料都只能提交到同一个执行分支；ChatGPT 不得在活动任务期间向 `master` 写入 task、review 或规则修订，review 直接提交同一执行分支；Codex 从同一分支 fast-forward 拉取 review；未经最终 review approval 和用户授权，不得 merge master；最终 merge 由 Codex 执行并报告精确 master SHA、测试和工作树；`master` 只接受最终批准的合并，不作为 review 中转分支。
 
 <!-- REPOSITORY_WORK_PRINCIPLES_END -->

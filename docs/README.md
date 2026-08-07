@@ -20,7 +20,7 @@
 10. solver 成功使用 full explicit true residual 判断，official R/T/A 只能从通过 residual Gate 的场计算。
 11. 从 Task029 起，每个新 Task 必须同时维护结构化 `outcomes/summary.md` 和 `docs/development_progress.md`；详细档案与项目级回顾都不可省略，一句状态或纯链接不构成完成。完整框架见 [`task_retrospective_standard.md`](task_retrospective_standard.md)。
 12. 从 Task032 起，中型和大型算法、物理或性能任务的 `outcomes/summary.md` 必须以表格作为主要信息载体；至少包含最终状态/范围、实施或实验矩阵、关键数值结果、资源或性能结果、失败与未运行项、合并和下一步决策表。每张表必须标明单位、baseline、数据身份（`measured` / `derived` / `predicted` / `not_run`）和证据入口；叙述用于解释表格，不得替代表格。
-13. **Markdown 公式和表格的可渲染性属于交付 Gate。** 独立公式使用空行隔开的 `$$` block；不得把需要渲染的公式放进代码围栏；表格列数必须一致，单元格竖线必须转义或改写，多行公式不得放进表格。ChatGPT 与 Codex 提交前都必须检查 GitHub rendered view；原始 LaTeX、破损表格或错位列均视为文档 Gate 失败。详见 [`markdown_rendering_standard.md`](markdown_rendering_standard.md)。
+13. **Markdown 公式和表格的可渲染性属于交付 Gate。** 所有新建或修改的独立公式使用 GitHub fenced math block（开 fence 为三个反引号加 math，闭 fence 为三个反引号）；禁止新增多行 `$$` 或 `\[...\]`；行内公式规则保持现有标准。表格列数必须一致，单元格竖线必须转义或改写，多行公式不得放进表格。ChatGPT 与 Codex 提交前都必须检查 GitHub rendered view；原始 LaTeX、破损表格或错位列均视为文档 Gate 失败。详见 [`markdown_rendering_standard.md`](markdown_rendering_standard.md)。
 14. **同一任务分支协作。** 一个 Task 从创建执行分支到最终批准期间，ChatGPT 与 Codex 的全部任务材料都只能提交到同一个执行分支；ChatGPT 不得在活动任务期间向 `master` 写入 task、review 或规则修订，review 直接提交同一执行分支；Codex 从同一分支 fast-forward 拉取 review；未经最终 review approval 和用户授权，不得 merge master；最终 merge 由 Codex 执行并报告精确 master SHA、测试和工作树；`master` 只接受最终批准的合并，不作为 review 中转分支。
 
 <!-- REPOSITORY_WORK_PRINCIPLES_END -->
@@ -32,7 +32,7 @@
 | [`project_service_requirements_and_forward_model_roadmap.md`](project_service_requirements_and_forward_model_roadmap.md) | 参数反演服务需求、核心观测量、0.7 nm 资源约束、当前能力、Task031–Task035 与未冻结编号的后续前向模型路线；后续任务的上位需求基线 |
 | [`project_service_requirements_phase1_scope.md`](project_service_requirements_phase1_scope.md) | 第一阶段冻结范围：13.5 nm、固定 Si 光学常数、1–10° 掠入射角、S/P 偏振；后续前向模型资格化不得越界宣传 |
 | [`repository_work_principles.md`](repository_work_principles.md) | 不得删除的分支、任务、审查、合并、结果与数值可信度规则 |
-| [`markdown_rendering_standard.md`](markdown_rendering_standard.md) | `$$` 公式、表格列数、竖线转义、GitHub rendered view 与文档 Gate |
+| [`markdown_rendering_standard.md`](markdown_rendering_standard.md) | fenced math 公式、表格列数、竖线转义、GitHub rendered view 与文档 Gate |
 | [`task_retrospective_standard.md`](task_retrospective_standard.md) | 从 Task029 起适用于所有新 Task 的阶段回顾标准：背景、基线、方法、结果、解释、负结果、决策、局限、下一步与证据入口 |
 | [`development_progress.md`](development_progress.md) | Task000 起的项目发展时间线；每个新 Task 必须按阶段回顾标准留下可理解的结构化记录 |
 | [`capability_matrix.md`](capability_matrix.md) | 当前 2D/3D 功能状态，以及 Quick Start、Theory、Walkthrough、Benchmark 映射 |

@@ -32,7 +32,7 @@
 11. Git 中只提交必要的轻量 JSON、CSV、Markdown、配置、compact residual history 和可复现元数据；矩阵、因子、OOC scratch、VTU/XDMF/HDF5、完整场数组和大型缓存必须忽略。
 12. 从 Task029 起，每个新 Task 必须同时维护结构化 `outcomes/summary.md` 和 `docs/development_progress.md`。前者保存详细技术档案，后者在最终审查前保存项目级回顾；回顾必须包含背景、基线、方法、结果、解释、负结果、最终决策、局限、下一步和证据入口。一句状态或纯文件链接不构成完成，两层记录均不可省略；具体执行和审查框架见 [`task_retrospective_standard.md`](task_retrospective_standard.md)。
 13. 从 Task032 起，中型和大型算法、物理或性能任务的 `outcomes/summary.md` 必须以表格作为主要信息载体；至少包含最终状态/范围、实施或实验矩阵、关键数值结果、资源或性能结果、失败与未运行项、合并和下一步决策表。每张表必须标明单位、baseline、数据身份（`measured` / `derived` / `predicted` / `not_run`）和证据入口；叙述用于解释表格，不得替代表格。
-14. **Markdown 公式和表格的可渲染性属于交付 Gate。** 独立公式必须使用空行隔开的 `$$` block，不得把需要渲染的公式放入代码围栏；表格必须列数一致，单元格中的竖线必须转义或改写，多行公式不得塞入表格。ChatGPT 与 Codex 提交前都必须检查 GitHub rendered view；若页面显示原始 LaTeX、破损表格或错位列，则文档不得标记完成。完整规范见 [`markdown_rendering_standard.md`](markdown_rendering_standard.md)。
+14. **Markdown 公式和表格的可渲染性属于交付 Gate。** 所有新建或修改的独立公式使用 GitHub fenced math block（开 fence 为三个反引号加 math，闭 fence 为三个反引号）；禁止新增多行 `$$` 或 `\[...\]`；行内公式规则保持现有标准。表格必须列数一致，单元格中的竖线必须转义或改写，多行公式不得塞入表格。ChatGPT 与 Codex 提交前都必须检查 GitHub rendered view；若页面显示原始 LaTeX、破损表格或错位列，则文档不得标记完成。完整规范见 [`markdown_rendering_standard.md`](markdown_rendering_standard.md)。
 
 ## 4. 合并与生产边界
 
