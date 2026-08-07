@@ -167,6 +167,490 @@ def _task037_g2_local_schur_contraction(
     }
 
 
+def _task037_g2_measure_lor_hx_source(
+    *,
+    source_label: str,
+    source_kind: str,
+    source_iteration: int | None,
+    source_formula: str,
+    source_hash_domain: str,
+    source_values: np.ndarray | None,
+    owner_rows: np.ndarray,
+    owner_row_hash: str,
+    cells: Any,
+    active_size: int,
+    trace_shift: np.ndarray | None,
+    owner: int,
+    comm: Any,
+    current_ilu_apply: Callable[[], np.ndarray],
+    b4_apply: Callable[[], np.ndarray],
+    lor_hx_oracle: Any,
+    b4_step_count: int,
+) -> dict[str, Any]:
+    """Measure one owner-local source with exact full-space Schur post-actions."""
+
+    is_owner = int(comm.rank) == int(owner)
+    if is_owner:
+        residual = np.asarray(source_values, dtype=PETSc.ScalarType)
+        if residual.shape != (int(active_size),):
+            raise ValueError("contraction source does not match owner rows")
+        input_norm = float(np.linalg.norm(residual))
+        if input_norm == 0.0:
+            raise ValueError("contraction source must be nonzero")
+        source_record = {
+            "label": source_label,
+            "kind": source_kind,
+            "iteration": source_iteration,
+            "formula": source_formula,
+            "owner_row_count": int(owner_rows.size),
+            "owner_row_hash": owner_row_hash,
+            "norm2": input_norm,
+            "normalized": bool(np.isclose(input_norm, 1.0)),
+            "finite": bool(np.isfinite(residual).all()),
+            "sha256": _task037_g2_owner_vector_sha256(
+                owner_rows,
+                residual,
+                domain=source_hash_domain,
+            ),
+        }
+    else:
+        residual = np.empty(0, dtype=PETSc.ScalarType)
+        source_record = None
+    source_record = comm.bcast(source_record, root=owner)
+
+    def collective_pair(
+        apply_correction: Callable[[], np.ndarray],
+    ) -> tuple[np.ndarray, np.ndarray, float, float]:
+        first_started = perf_counter()
+        first = np.asarray(apply_correction(), dtype=PETSc.ScalarType)
+        first_seconds = float(
+            comm.allreduce(perf_counter() - first_started, op=MPI.MAX)
+        )
+        repeat_started = perf_counter()
+        repeat = np.asarray(apply_correction(), dtype=PETSc.ScalarType)
+        repeat_seconds = float(
+            comm.allreduce(perf_counter() - repeat_started, op=MPI.MAX)
+        )
+        return first, repeat, first_seconds, repeat_seconds
+
+    current_first, current_repeat, current_first_seconds, current_repeat_seconds = (
+        collective_pair(current_ilu_apply)
+    )
+    b4_first, b4_repeat, b4_first_seconds, b4_repeat_seconds = collective_pair(
+        b4_apply
+    )
+
+    def correction_record(
+        method: str,
+        first: np.ndarray,
+        repeat: np.ndarray,
+        first_seconds: float,
+        repeat_seconds: float,
+        domain_prefix: str,
+    ) -> dict[str, Any] | None:
+        if not is_owner:
+            return None
+        first = np.asarray(first, dtype=PETSc.ScalarType)
+        repeat = np.asarray(repeat, dtype=PETSc.ScalarType)
+        if first.shape != residual.shape or repeat.shape != residual.shape:
+            raise ValueError(f"{method} correction does not match owner rows")
+        first_action = apply_fullspace_slab_schur_action(
+            cells,
+            first,
+            active_size=int(active_size),
+            trace_shift=trace_shift,
+        )
+        repeat_action = apply_fullspace_slab_schur_action(
+            cells,
+            repeat,
+            active_size=int(active_size),
+            trace_shift=trace_shift,
+        )
+        first_contraction = _task037_g2_local_schur_contraction(
+            residual,
+            residual - first_action,
+        )
+        repeat_contraction = _task037_g2_local_schur_contraction(
+            residual,
+            residual - repeat_action,
+        )
+        return {
+            "method": method,
+            "apply_count": 2,
+            "first_apply_seconds": float(first_seconds),
+            "repeat_apply_seconds": float(repeat_seconds),
+            "input_norm": first_contraction["input_norm"],
+            "post_norm": first_contraction["post_norm"],
+            "repeat_post_norm": repeat_contraction["post_norm"],
+            "rho": first_contraction["rho"],
+            "repeat_rho": repeat_contraction["rho"],
+            "correction_norm2": float(np.linalg.norm(first)),
+            "repeat_correction_norm2": float(np.linalg.norm(repeat)),
+            "correction_sha256": _task037_g2_owner_vector_sha256(
+                owner_rows,
+                first,
+                domain=f"{domain_prefix}.first.v1",
+            ),
+            "repeat_correction_sha256": _task037_g2_owner_vector_sha256(
+                owner_rows,
+                repeat,
+                domain=f"{domain_prefix}.repeat.v1",
+            ),
+            "finite": bool(
+                first_contraction["finite"]
+                and repeat_contraction["finite"]
+                and np.isfinite(first).all()
+                and np.isfinite(repeat).all()
+                and np.isfinite(first_action).all()
+                and np.isfinite(repeat_action).all()
+            ),
+            "deterministic": bool(
+                np.array_equal(first, repeat)
+                and np.array_equal(first_action, repeat_action)
+            ),
+        }
+
+    owner_error = None
+    if is_owner:
+        try:
+            current_record = correction_record(
+                "current_trace_ilu",
+                current_first,
+                current_repeat,
+                current_first_seconds,
+                current_repeat_seconds,
+                f"task037.g2.contraction.{source_label}.current-trace-ilu",
+            )
+            b4_record = correction_record(
+                "b4_fixed_gmres4",
+                b4_first,
+                b4_repeat,
+                b4_first_seconds,
+                b4_repeat_seconds,
+                f"task037.g2.contraction.{source_label}.b4-gmres4",
+            )
+            b4_record["fixed_local_krylov_steps"] = int(b4_step_count)
+        except (ValueError, RuntimeError, NotImplementedError) as error:
+            owner_error = f"{type(error).__name__}: {error}"
+            current_record = None
+            b4_record = None
+    else:
+        current_record = None
+        b4_record = None
+    owner_error = comm.bcast(owner_error, root=owner)
+    current_record = comm.bcast(current_record, root=owner)
+    b4_record = comm.bcast(b4_record, root=owner)
+    if owner_error is not None:
+        failed_current = {
+            "method": "current_trace_ilu",
+            "status": "measurement_failed",
+            "error": owner_error,
+        }
+        failed_b4 = {
+            "method": "b4_fixed_gmres4",
+            "status": "measurement_failed",
+            "error": owner_error,
+            "fixed_local_krylov_steps": int(b4_step_count),
+        }
+        return {
+            "source": source_record,
+            "current_trace_ilu": failed_current,
+            "b4_fixed_gmres4": failed_b4,
+            "lor_hx_1v": {
+                "method": "lor_hx_1v",
+                "status": "measurement_failed",
+                "error": owner_error,
+            },
+            "lor_hx_2v": {
+                "method": "lor_hx_2v",
+                "status": "measurement_failed",
+                "error": owner_error,
+            },
+            "best_lor_rho": None,
+            "best_lor_method": None,
+            "status": "measurement_failed",
+        }
+
+    lor_error = None
+    lor_first = None
+    lor_repeat = None
+    lor_first_elapsed = 0.0
+    lor_repeat_elapsed = 0.0
+    lor_two_first_elapsed = 0.0
+    lor_two_repeat_elapsed = 0.0
+    if is_owner:
+        try:
+            lor_first_started = perf_counter()
+            lor_first = lor_hx_oracle.apply_one_trace(residual)
+            lor_first_elapsed = float(perf_counter() - lor_first_started)
+            lor_repeat_started = perf_counter()
+            lor_repeat = lor_hx_oracle.apply_one_trace(residual)
+            lor_repeat_elapsed = float(perf_counter() - lor_repeat_started)
+            lor_two_first_started = perf_counter()
+            lor_two_first = lor_hx_oracle.apply_two_trace(residual)
+            lor_two_first_elapsed = float(perf_counter() - lor_two_first_started)
+            lor_two_repeat_started = perf_counter()
+            lor_two_repeat = lor_hx_oracle.apply_two_trace(residual)
+            lor_two_repeat_elapsed = float(perf_counter() - lor_two_repeat_started)
+        except (ValueError, RuntimeError, NotImplementedError) as error:
+            lor_error = f"{type(error).__name__}: {error}"
+    lor_first_seconds = float(
+        comm.allreduce(lor_first_elapsed, op=MPI.MAX)
+    )
+    lor_repeat_seconds = float(
+        comm.allreduce(lor_repeat_elapsed, op=MPI.MAX)
+    )
+    lor_two_first_seconds = float(
+        comm.allreduce(lor_two_first_elapsed, op=MPI.MAX)
+    )
+    lor_two_repeat_seconds = float(
+        comm.allreduce(lor_two_repeat_elapsed, op=MPI.MAX)
+    )
+    lor_one_record = None
+    lor_two_record = None
+    if is_owner and lor_error is None:
+        try:
+            lor_one_record = correction_record(
+                "lor_hx_1v",
+                np.asarray(lor_first, dtype=PETSc.ScalarType),
+                np.asarray(lor_repeat, dtype=PETSc.ScalarType),
+                lor_first_seconds,
+                lor_repeat_seconds,
+                f"task037.g2.contraction.{source_label}.lor-hx-1v",
+            )
+            lor_two_record = correction_record(
+                "lor_hx_2v",
+                np.asarray(lor_two_first, dtype=PETSc.ScalarType),
+                np.asarray(lor_two_repeat, dtype=PETSc.ScalarType),
+                lor_two_first_seconds,
+                lor_two_repeat_seconds,
+                f"task037.g2.contraction.{source_label}.lor-hx-2v",
+            )
+        except (ValueError, RuntimeError, NotImplementedError) as error:
+            lor_error = f"{type(error).__name__}: {error}"
+    lor_error = comm.bcast(lor_error, root=owner)
+    if lor_error is not None:
+        lor_one_record = {
+            "method": "lor_hx_1v",
+            "status": "measurement_failed",
+            "error": lor_error,
+        }
+        lor_two_record = {
+            "method": "lor_hx_2v",
+            "status": "measurement_failed",
+            "error": lor_error,
+        }
+    lor_one_record = comm.bcast(lor_one_record, root=owner)
+    lor_two_record = comm.bcast(lor_two_record, root=owner)
+    lor_rhos = [
+        record["rho"]
+        for record in (lor_one_record, lor_two_record)
+        if record.get("status") != "measurement_failed"
+    ]
+    return {
+        "source": source_record,
+        "current_trace_ilu": current_record,
+        "b4_fixed_gmres4": b4_record,
+        "lor_hx_1v": lor_one_record,
+        "lor_hx_2v": lor_two_record,
+        "best_lor_rho": min(lor_rhos) if lor_rhos else None,
+        "best_lor_method": (
+            "lor_hx_1v"
+            if lor_one_record.get("status") != "measurement_failed"
+            and (
+                lor_two_record.get("status") == "measurement_failed"
+                or lor_one_record["rho"] <= lor_two_record["rho"]
+            )
+            else "lor_hx_2v"
+            if lor_two_record.get("status") != "measurement_failed"
+            else None
+        ),
+        "status": (
+            "measurement_failed"
+            if lor_error is not None
+            else "measurement_complete"
+        ),
+    }
+
+
+def _task037_g2_build_lor_hx_contraction_audit(
+    measurements: dict[str, Any],
+) -> dict[str, Any]:
+    """Aggregate the three fixed Task037 contraction measurements."""
+
+    source_order = (
+        "real_m3a_iter0",
+        "real_m3a_iter20",
+        "manufactured_mixed_high",
+    )
+    missing_sources = [
+        label for label in source_order if label not in measurements
+    ]
+    source_failed = any(
+        measurement.get("status") == "measurement_failed"
+        for measurement in measurements.values()
+    )
+    methods = (
+        "current_trace_ilu",
+        "b4_fixed_gmres4",
+        "lor_hx_1v",
+        "lor_hx_2v",
+    )
+    all_finite = not missing_sources and all(
+        measurements[label][method].get("finite") is True
+        for label in source_order
+        if label in measurements
+        for method in methods
+    )
+    all_deterministic = not missing_sources and all(
+        measurements[label][method].get("deterministic") is True
+        for label in source_order
+        if label in measurements
+        for method in methods
+    )
+    best_lor_rho = {
+        label: measurements[label]["best_lor_rho"]
+        if label in measurements
+        else None
+        for label in source_order
+    }
+    minimum_b4_comparison = {
+        label: bool(
+            label in measurements
+            and best_lor_rho[label] is not None
+            and measurements[label]["b4_fixed_gmres4"].get("rho") is not None
+            and best_lor_rho[label]
+            <= (2.0 / 3.0) * measurements[label]["b4_fixed_gmres4"]["rho"]
+        )
+        for label in ("real_m3a_iter20", "manufactured_mixed_high")
+    }
+    minimum_b4_gate_pass = bool(
+        all(
+            minimum_b4_comparison[label]
+            for label in ("real_m3a_iter20", "manufactured_mixed_high")
+        )
+    )
+    strong_ilu_comparison = {
+        label: bool(
+            label in measurements
+            and best_lor_rho[label] is not None
+            and measurements[label]["current_trace_ilu"].get("rho") is not None
+            and best_lor_rho[label]
+            <= 2.0 * measurements[label]["current_trace_ilu"]["rho"]
+        )
+        for label in ("real_m3a_iter0", "real_m3a_iter20")
+    }
+    strong_ilu_gate_pass = bool(
+        all(
+            strong_ilu_comparison[label]
+            for label in ("real_m3a_iter0", "real_m3a_iter20")
+        )
+    )
+    apply_time_ratios = {}
+    apply_time_comparison = {}
+    for label in source_order:
+        measurement = measurements.get(label)
+        if measurement is None:
+            apply_time_ratios[label] = {
+                "lor_hx_1v_to_current_ilu": None,
+                "lor_hx_2v_to_current_ilu": None,
+            }
+            apply_time_comparison[label] = {
+                "lor_hx_1v_le_10x_current_ilu": False,
+                "lor_hx_2v_le_10x_current_ilu": False,
+                "at_least_one_lor_hx_pass": False,
+            }
+            continue
+        ilu_seconds = measurement["current_trace_ilu"].get(
+            "first_apply_seconds"
+        )
+        if (
+            ilu_seconds is None
+            or not np.isfinite(ilu_seconds)
+            or ilu_seconds <= 0.0
+        ):
+            ilu_seconds = None
+        else:
+            ilu_seconds = float(ilu_seconds)
+        one_seconds = measurement["lor_hx_1v"].get("first_apply_seconds")
+        two_seconds = measurement["lor_hx_2v"].get("first_apply_seconds")
+        one_ratio = (
+            float(one_seconds) / float(ilu_seconds)
+            if ilu_seconds is not None and one_seconds is not None
+            else None
+        )
+        two_ratio = (
+            float(two_seconds) / float(ilu_seconds)
+            if ilu_seconds is not None and two_seconds is not None
+            else None
+        )
+        one_time_pass = bool(
+            one_ratio is not None
+            and np.isfinite(one_ratio)
+            and one_ratio <= 10.0
+        )
+        two_time_pass = bool(
+            two_ratio is not None
+            and np.isfinite(two_ratio)
+            and two_ratio <= 10.0
+        )
+        apply_time_ratios[label] = {
+            "lor_hx_1v_to_current_ilu": one_ratio,
+            "lor_hx_2v_to_current_ilu": two_ratio,
+        }
+        apply_time_comparison[label] = {
+            "lor_hx_1v_le_10x_current_ilu": one_time_pass,
+            "lor_hx_2v_le_10x_current_ilu": two_time_pass,
+            "at_least_one_lor_hx_pass": bool(one_time_pass or two_time_pass),
+        }
+    apply_time_gate_pass = bool(
+        all(
+            apply_time_comparison[label]["at_least_one_lor_hx_pass"]
+            for label in source_order
+        )
+    )
+    if source_failed:
+        contraction_status = "measurement_failed"
+    elif "real_m3a_iter20" in missing_sources:
+        contraction_status = "pending_iter20"
+    elif missing_sources or not all_finite or not all_deterministic:
+        contraction_status = "measurement_failed"
+    else:
+        contraction_status = "measurement_complete"
+    return {
+        "primary_slab": _TASK037_G2_SLAB,
+        "source_order": list(source_order),
+        "sources": measurements,
+        "b4_fixed_local_krylov_steps": 4,
+        "exact_schur_action": "apply_fullspace_slab_schur_action",
+        "proxy_self_score": False,
+        "global_matrix_materialized": False,
+        "missing_sources": missing_sources,
+        "missing_iterations": (
+            [20] if "real_m3a_iter20" in missing_sources else []
+        ),
+        "best_lor_rho": best_lor_rho,
+        "minimum_b4_comparison": minimum_b4_comparison,
+        "minimum_b4_gate_pass": minimum_b4_gate_pass,
+        "strong_ilu_comparison": strong_ilu_comparison,
+        "strong_ilu_gate_pass": strong_ilu_gate_pass,
+        "apply_time_ratios": apply_time_ratios,
+        "apply_time_comparison": apply_time_comparison,
+        "apply_time_gate_pass": apply_time_gate_pass,
+        "gate_checks": {
+            "all_sources_present": not missing_sources,
+            "all_actions_finite": bool(all_finite),
+            "all_actions_deterministic": bool(all_deterministic),
+        },
+        "measurement_gate_pass": bool(
+            not missing_sources and all_finite and all_deterministic
+        ),
+        "status": contraction_status,
+        "contraction_not_evaluated": False,
+        "overall_g2_not_evaluated": True,
+    }
+
+
 def _task037_g2_factor_payload_route(
     trace_inventory: dict[str, Any],
     fullspace_inventory: dict[str, Any],
@@ -238,6 +722,7 @@ def _solve_static_condensed_fgmres_core(
     task037_extra_g2_slab14_factor_inventory: bool = False,
     task037_extra_g2_slab14_lor_transfer: bool = False,
     task037_extra_g2_slab14_lor_hx_oracle: bool = False,
+    task037_extra_g2_slab14_lor_hx_contraction: bool = False,
     solver_profile: Literal[
         "assembled",
         "assembled_setup_then_static_local_schur_matrix_free_solve",
@@ -319,6 +804,12 @@ def _solve_static_condensed_fgmres_core(
     ):
         raise ValueError(
             "Task037-extra G2 slab14 LOR-HX oracle requires the M3a action-only profile"
+        )
+    if task037_extra_g2_slab14_lor_hx_contraction and not (
+        task037_extra_g2_slab14_lor_hx_oracle
+    ):
+        raise ValueError(
+            "Task037-extra G2 slab14 LOR-HX contraction requires the LOR-HX oracle"
         )
     if task037_extra_g2_slab14_identity and task037_extra_g0_diagnostics:
         raise ValueError(
@@ -423,7 +914,10 @@ def _solve_static_condensed_fgmres_core(
     g2_factor_state: dict[str, Any] | None = None
     g2_lor_transfer_audit: dict[str, Any] | None = None
     g2_lor_hx_audit: dict[str, Any] | None = None
+    g2_lor_hx_contraction_audit: dict[str, Any] | None = None
     lor_hx_oracle = None
+    g2_contraction_b4 = None
+    g2_contraction_measurements: dict[str, dict[str, Any]] = {}
     try:
         if action_only:
             blocks = request.blocks
@@ -1223,6 +1717,18 @@ def _solve_static_condensed_fgmres_core(
         )
         owned.append(coarse)
         live_state["coarse"] = True
+        if task037_extra_g2_slab14_lor_hx_contraction:
+            from .static_factor_free_slab_pc import FactorFreeLocalSlabKrylovPc
+
+            assert g2_identity_state is not None
+            g2_contraction_b4 = FactorFreeLocalSlabKrylovPc(
+                fine_action,
+                owner_plan,
+                shift,
+                local_krylov_steps=4,
+                variant="partition",
+            )
+            owned.append(g2_contraction_b4)
         emit_lifecycle(
             "coarse_operator_ready",
             global_coarse_dimension=len(basis),
@@ -1258,11 +1764,87 @@ def _solve_static_condensed_fgmres_core(
         if residual_observer is not None:
             residual_observer(0, 1.0, initial_condensed)
 
+        def measure_g2_contraction_source(
+            source_vec: PETSc.Vec,
+            source_local: np.ndarray | None,
+            *,
+            source_label: str,
+            source_kind: str,
+            source_iteration: int | None,
+            source_formula: str,
+            source_hash_domain: str,
+        ) -> dict[str, Any]:
+            assert g2_identity_state is not None
+            assert g2_contraction_b4 is not None
+            owner = int(g2_identity_state["owner"])
+
+            def current_ilu_apply() -> np.ndarray:
+                _rhs, correction = smoother._diagnostic_owner_local_ilu(
+                    source_vec,
+                    _TASK037_G2_SLAB,
+                )
+                return correction
+
+            def b4_apply() -> np.ndarray:
+                rhs = (
+                    source_local
+                    if comm.rank == owner and source_local is not None
+                    else np.empty(0, dtype=PETSc.ScalarType)
+                )
+                correction, _happy_breakdown = (
+                    g2_contraction_b4._fixed_step_gmres(
+                        _TASK037_G2_SLAB,
+                        rhs,
+                    )
+                )
+                return correction
+
+            return _task037_g2_measure_lor_hx_source(
+                source_label=source_label,
+                source_kind=source_kind,
+                source_iteration=source_iteration,
+                source_formula=source_formula,
+                source_hash_domain=source_hash_domain,
+                source_values=source_local,
+                owner_rows=g2_identity_state["owner_rows"],
+                owner_row_hash=g2_identity_state["audit"]["collector"][
+                    "owner_active_row_hash"
+                ],
+                cells=g2_identity_state["cells"],
+                active_size=int(g2_identity_state["owner_rows_size"]),
+                trace_shift=g2_identity_state["shift"],
+                owner=owner,
+                comm=comm,
+                current_ilu_apply=current_ilu_apply,
+                b4_apply=b4_apply,
+                lor_hx_oracle=lor_hx_oracle,
+                b4_step_count=4,
+            )
+
         def emit_residual_snapshot(
             iteration: int,
             reported_value: float,
             true_value: float,
         ) -> None:
+            residual_local = None
+            residual_route_audit = None
+            if (
+                (
+                    g2_identity_state is not None
+                    and int(iteration) == 20
+                )
+                or (
+                    task037_extra_g2_slab14_lor_hx_contraction
+                    and int(iteration) in (0, 20)
+                )
+            ):
+                residual_local, residual_route_audit = (
+                    extract_owner_local_slab_vector(
+                        residual_work,
+                        owner_plan,
+                        _TASK037_G2_SLAB,
+                    )
+                )
             if (
                 task037_extra_g0_diagnostics
                 and iteration in (0, 20)
@@ -1276,13 +1858,8 @@ def _solve_static_condensed_fgmres_core(
                 and g2_identity_state["audit"]["iter20_real_residual"] is None
             ):
                 owner = int(g2_identity_state["owner"])
-                residual_local, residual_route_audit = (
-                    extract_owner_local_slab_vector(
-                        residual_work,
-                        owner_plan,
-                        _TASK037_G2_SLAB,
-                    )
-                )
+                assert residual_local is not None
+                assert residual_route_audit is not None
                 trace_rhs = None
                 current_trace_correction = None
                 if task037_extra_g2_slab14_factor_inventory:
@@ -1456,6 +2033,29 @@ def _solve_static_condensed_fgmres_core(
                     if g2_identity_state["audit"]["gate_pass"]
                     else "identity_gate_failed"
                 )
+            if (
+                task037_extra_g2_slab14_lor_hx_contraction
+                and int(iteration) in (0, 20)
+                and f"real_m3a_iter{int(iteration)}"
+                not in g2_contraction_measurements
+            ):
+                assert residual_local is not None
+                g2_contraction_measurements[
+                    f"real_m3a_iter{int(iteration)}"
+                ] = measure_g2_contraction_source(
+                    residual_work,
+                    residual_local,
+                    source_label=f"real_m3a_iter{int(iteration)}",
+                    source_kind="real_m3a_screen_residual",
+                    source_iteration=int(iteration),
+                    source_formula=(
+                        "owner-local r=b-Ax from residual_work at the M3a "
+                        f"screen iteration {int(iteration)}"
+                    ),
+                    source_hash_domain=(
+                        f"task037.g2.contraction.real-m3a-iter{int(iteration)}.v1"
+                    ),
+                )
             if residual_snapshot_observer is None:
                 return
             residual_snapshot_observer(
@@ -1466,6 +2066,52 @@ def _solve_static_condensed_fgmres_core(
             )
 
         emit_residual_snapshot(0, 1.0, initial_condensed)
+        if task037_extra_g2_slab14_lor_hx_contraction:
+            assert g2_identity_state is not None
+            mixed_values = None
+            if comm.rank == int(g2_identity_state["owner"]):
+                deterministic_vectors = _task037_g2_deterministic_vectors(
+                    g2_identity_state["owner_rows"]
+                )
+                mixed_values = (
+                    deterministic_vectors[0]
+                    + (0.5 - 0.25j) * deterministic_vectors[1]
+                    - 0.125j * deterministic_vectors[2]
+                )
+                mixed_values = mixed_values / np.linalg.norm(mixed_values)
+            mixed_source = operator.createVecRight()
+            mixed_source.set(0.0)
+            if comm.rank == int(g2_identity_state["owner"]):
+                assert mixed_values is not None
+                mixed_source.setValues(
+                    g2_identity_state["owner_rows"],
+                    mixed_values,
+                )
+            mixed_source.assemble()
+            try:
+                g2_contraction_measurements["manufactured_mixed_high"] = (
+                    measure_g2_contraction_source(
+                        mixed_source,
+                        (
+                            mixed_values
+                            if comm.rank == int(g2_identity_state["owner"])
+                            else None
+                        ),
+                        source_label="manufactured_mixed_high",
+                        source_kind="deterministic_normalized_manufactured_mixed_high",
+                        source_iteration=None,
+                        source_formula=(
+                            "normalize(v0 + (0.5-0.25j)*v1 - 0.125j*v2), "
+                            "where v0,v1,v2 are the existing owner-row "
+                            "deterministic vectors"
+                        ),
+                        source_hash_domain=(
+                            "task037.g2.contraction.manufactured-mixed-high.v1"
+                        ),
+                    )
+                )
+            finally:
+                mixed_source.destroy()
         ksp = PETSc.KSP().create(comm)
         owned.append(ksp)
         live_state["outer_ksp"] = True
@@ -1674,6 +2320,12 @@ def _solve_static_condensed_fgmres_core(
                 "iter20": iter20_factor_measurement,
                 **factor_status,
             }
+        if task037_extra_g2_slab14_lor_hx_contraction:
+            g2_lor_hx_contraction_audit = (
+                _task037_g2_build_lor_hx_contraction_audit(
+                    g2_contraction_measurements
+                )
+            )
         candidate = {
             "outer_ksp": str(ksp.getType()),
             "pc_side": "right",
@@ -1778,6 +2430,10 @@ def _solve_static_condensed_fgmres_core(
             )
         if g2_lor_hx_audit is not None:
             audit["task037_extra_g2_slab14_lor_hx_oracle"] = g2_lor_hx_audit
+        if g2_lor_hx_contraction_audit is not None:
+            audit["task037_extra_g2_slab14_lor_hx_contraction"] = (
+                g2_lor_hx_contraction_audit
+            )
         if p2_auxiliary_profile:
             audit["p2_auxiliary_audit"] = p2_auxiliary_audit
         if task037_extra_g0_diagnostics:
@@ -1959,6 +2615,7 @@ def solve_never_materialized_overlap0125_partition_fgmres(
     task037_extra_g2_slab14_factor_inventory: bool = False,
     task037_extra_g2_slab14_lor_transfer: bool = False,
     task037_extra_g2_slab14_lor_hx_oracle: bool = False,
+    task037_extra_g2_slab14_lor_hx_contraction: bool = False,
     lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> tuple[Stage4ExternalLinearSolverSnapshot, dict[str, Any]]:
     """Run the opt-in overlap-0.125 partition-weighted slab profile."""
@@ -1978,6 +2635,9 @@ def solve_never_materialized_overlap0125_partition_fgmres(
         ),
         task037_extra_g2_slab14_lor_hx_oracle=(
             task037_extra_g2_slab14_lor_hx_oracle
+        ),
+        task037_extra_g2_slab14_lor_hx_contraction=(
+            task037_extra_g2_slab14_lor_hx_contraction
         ),
         solver_profile="never_materialized_owner_local_overlap0125_partition",
         lifecycle_observer=lifecycle_observer,
