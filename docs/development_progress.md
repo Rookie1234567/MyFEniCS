@@ -65,12 +65,23 @@ Task035c 用低成本p2/h5定位Full3D–Hybrid弱衍射级误差，再以p6/h10
 compact authority见
 [`../benchmarks/cases/096_hybrid_channel_memory_closure/README.md`](../benchmarks/cases/096_hybrid_channel_memory_closure/README.md)。
 
-## 2026-08-07：Task037b H2a assembled-block action identity
+## 2026-08-07：Task037b H2a/H2b block action identity
 
 新增 MatPython assembled-block Hybrid action，并以 direct monolithic AIJ 作为 test-only
 oracle 完成 deterministic probes、physical RHS、三类 block probe、ownership mapping 和
-pack/split 对照。MPI1/2/4 均通过，global action 与各 block relative error 均低于 `1e-11`；
-该结果只证明 algebraic action identity，H2b Matrix-free local endcap action 与 H3 尚未开始。
+pack/split 对照。MPI1/2/4 均通过，global action 与各 block relative error 均低于 `1e-11`。
+
+### H2b Matrix-free local endcap exact action
+
+H2b 把外部 auxiliary 从 Hybrid Krylov 向量中排除：通俗地说，求解器只处理真正的
+bottom/top active trace，外部模态通过一个不生成全局稠密/AIJ 大矩阵的 action 参与端口
+消元。production 从构造开始使用 local-Schur 与 matrix-free DtN action；只有测试 oracle
+才保留 explicit-condensed local blocks。MPI1/2/4 的 H2b-L/G identity、ownership 和
+pack/split 均通过，误差低于 `1e-11`、pack/split 为零。
+
+这证明了“给定一个向量时，新的端口 action 与显式参考产生同样结果”，也证明了分布式
+行归属和销毁顺序可用；它没有证明第一次 outer FGMRES 的收敛、全尺寸求解的内存资格或
+H3。下一阶段是 H3，当前没有改变 ordinary default。
 
 ## 2026-07-25：Task035b Review V2 setup、内存下限与最终通道续研
 

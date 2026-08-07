@@ -39,11 +39,12 @@ post-fix H1 只修复近简并分组与 partition audit 范数语义的窄回归
 | H0 | pass |
 | H1 | pass（post-fix；首次 failed_before_solve 历史保留） |
 | H2a | pass；assembled-block MatPython action identity |
-| H2b-H10 | not_run_yet |
+| H2b | pass；Matrix-free local endcap exact action identity |
+| H3-H10 | not_run_yet；按阶段顺序等待 H3 |
 
 ## 运行边界
 
-H1 recovery checkpoint 当时没有修改 H1 solver、没有放宽阈值、没有扫描 M/角度/p-h；本轮随后完成 H2a 两文件 action checkpoint。H2b-H10 尚未运行。ignored artifacts 保留在本地证据目录，tracked docs 只保存路径和 SHA 引用。
+H1 recovery checkpoint 当时没有修改 H1 solver、没有放宽阈值、没有扫描 M/角度/p-h；随后完成 H2a 与 H2b code checkpoint。ignored artifacts 保留在本地证据目录，tracked docs 只保存路径和 SHA 引用。
 
 ## H2a assembled-block action identity
 
@@ -54,6 +55,24 @@ H1 recovery checkpoint 当时没有修改 H1 solver、没有放宽阈值、没�
 | existing direct minimal regression | 1 passed |
 | action Gate | global 与 bottom/top/modal block relative error 全部 `<=1e-11` |
 | layout / pack-split | missing/extra/duplicates `0/0/0`；三项 pack/split `0` |
-| H2b/H3 | not_run；H2b Matrix-free local endcap exact action identity与H3第一次 outer FGMRES / exact block-LDU iterative oracle均未运行 |
+| H3 | not_run；H3 第一次 outer FGMRES / exact block-LDU iterative oracle尚未运行 |
 
-完整逐 probe 数值见 [H2a block identity](block_operator_identity.md)。
+完整 H2a 逐 probe 数值与 H2b 汇总见 [block identity](block_operator_identity.md)。
+
+## H2b Matrix-free local endcap exact action identity
+
+| 范围 | 结果 |
+|---|---|
+| H2b-L MPI1 | `1 passed`；bottom action/recovery/RHS `3.058e-16 / 4.352e-16 / 0`，top `3.730e-16 / 4.297e-16 / 6.993e-17`；均通过 `1e-11` |
+| H2a+H2b MPI1 | `5 passed`，6.04 s |
+| H2a+H2b MPI2 | 每 rank `5 passed`，4.52 s |
+| H2a+H2b MPI4 | 每 rank `5 passed`，9.11 s |
+| 相关回归 test224/test230/test231 | `5 passed / 1 skipped`，5.89 s |
+| static Gate | import、Ruff check/format-check、compileall、git diff --check 全部 pass |
+
+H2b-G 每个 MPI 的七 probes、global/bottom/top/modal 四块合计最大 relative error
+分别为 MPI1/MPI2/MPI4 的 `2.942e-16 / 2.988e-16 / 3.539e-16`，每行四块逐项均不
+超过该行总体最大值，且均低于 `1e-11`；MPI1/2/4 的 pack/split bottom/top/modal
+均为 `0`，mapping missing/extra/duplicates 均为 `0/0/0`。
+H2b production 从构造开始使用 matrix-free local-Schur 与 matrix-free DtN action；
+test-only oracle 才使用 explicit-condensed local blocks。H3 的 outer solve 尚未运行。

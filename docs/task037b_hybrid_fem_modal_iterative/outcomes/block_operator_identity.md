@@ -1,12 +1,13 @@
-# Task037b H2a assembled-block action identity
+# Task037b H2a/H2b block action identity
 
 ## 范围与边界
 
-H2a 只验证 assembled-block algebraic action identity：production 侧创建 PETSc
-MatPython action，不装配或保存 global monolithic AIJ；bottom/top terminal FEM
-块仍是 assembled A。测试侧才创建 `build_hybrid_augmented_direct_system(...).A`
-作为 exact oracle。H2b 的 Matrix-free local endcap exact action identity、资源资格化和
-H3 的第一次 outer FGMRES / exact block-LDU iterative oracle 均尚未开始。
+H2a 验证 assembled-block algebraic action identity；H2b 进一步验证从构造开始就采用
+matrix-free local endcap 的 exact action identity。两条 production 侧都创建 PETSc
+MatPython action，不装配或保存 global monolithic AIJ；H2a 的 bottom/top terminal FEM
+块仍是 assembled A，H2b 则从 local-Schur action 和 condensed DtN action 开始。
+测试侧才创建 `build_hybrid_augmented_direct_system(...).A` 或 explicit-condensed
+local oracle。H3 的第一次 outer FGMRES / exact block-LDU iterative oracle 尚未开始。
 
 | 项目 | 事实 |
 |---|---|
@@ -85,9 +86,9 @@ bottom、top、modal relative error `<=1e-13`。
 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
 
-以上 action、block component、ownership 和 pack/split 项逐项通过。它们是 algebraic
-identity evidence，不是 H3 的第一次 outer FGMRES / exact block-LDU iterative oracle、
-内存资格化或 solver convergence 证明，也不等于 H2b 已完成。
+以上 action、block component、ownership 和 pack/split 项逐项通过。它们是 H2a 的
+algebraic identity evidence，不是 H3 的第一次 outer FGMRES / exact block-LDU iterative
+oracle、内存资格化或 solver convergence 证明。
 
 ## 测试与静态 Gate
 
@@ -103,4 +104,77 @@ identity evidence，不是 H3 的第一次 outer FGMRES / exact block-LDU iterat
 | compileall | pass |
 | git diff --check | pass |
 
-测试命令均为本地 qualified 结果；没有运行 full pytest、H2b、H3 或 PDE authority。
+测试命令均为本地 qualified 结果；没有运行 full pytest、H3 或 PDE authority。
+
+## H2b Matrix-free local endcap exact action identity
+
+H2b 的 production 路径从构造开始即使用
+`materialize_global_matrix=False`、`retain_local_schur_for_matrix_free=True` 和
+`matrix_free_dtn=True`：先形成 fine local-Schur action，再形成
+`F_s-C_ext H_ext^{-1}D_ext` 的 condensed action 与 RHS。test-only oracle 才从 direct
+系统提取或建立 explicit-condensed local matrices；production candidate 不先装配再删除
+local augmented A/F/C/D。
+
+| H2b inventory | 实际合同 |
+|---|---|
+| global monolithic A | `false` |
+| bottom/top global F | `false / false` |
+| explicit external C/D | `0 / 0` |
+| p6 direct factor count | `0` |
+| external modes | 保留 `external_mode_count` 供恢复；不是 Krylov unknown |
+| external auxiliary rows in Krylov | `0` |
+| small H | 可显式保存；不冒充 p6 FE direct factor |
+
+carrier 的销毁顺序为 condensed A、RHS、fine action、C/D/H blocks、full-FE RHS，最后
+是 static-condensation owner；MatPython mult 复用已分配 scratch，不为每次 action 创建
+FE 大 Vec。H2a 的 assembled bottom/top A 仍保留其原有 assembled inventory。
+
+### H2b-L：单侧 local action
+
+在同一 tiny p2/h10 fixture 上，direct assembled side 只作为 test-only oracle；bottom/top
+各覆盖三个 deterministic active-vector probes、physical condensed RHS 和 recovered
+external auxiliary。
+
+| side | 3 probes action 最大 relative error | recovery 最大 relative error | RHS relative error | Gate |
+|---|---:|---:|---:|---:|
+| bottom | `3.058e-16` | `4.352e-16` | `0` | `<=1e-11` |
+| top | `3.730e-16` | `4.297e-16` | `6.993e-17` | `<=1e-11` |
+
+H2b-L 的显式 MPI1 focused test 为 `1 passed`。
+
+### H2b-G：global coupling action
+
+candidate bottom/top 使用 H2b action-only carriers；oracle 只替换为 test-only
+explicit-condensed local A/b，并复用同一个实际 coupling。七个 probes 包括三个
+deterministic random、physical packed RHS、bottom-only、top-only、modal-only；physical
+RHS 的 modal 部分来自 `internal_modal_rhs_correction`。
+
+| MPI | max over global/bottom/top/modal | Gate |
+|---:|---:|---:|
+| 1 | `2.942e-16` | `<=1e-11` |
+| 2 | `2.988e-16` | `<=1e-11` |
+| 4 | `3.539e-16` | `<=1e-11` |
+
+每个 MPI 行的最大值均覆盖该 MPI 的七个 probes 和 global、bottom、top、modal 四个
+输出块；四块逐项都不超过该行总体最大值。
+
+| MPI | pack/split bottom/top/modal | mapping missing/extra/duplicates | 结果 |
+|---:|---:|---:|---|
+| 1 | `0 / 0 / 0` | `0 / 0 / 0` | pass |
+| 2 | `0 / 0 / 0` | `0 / 0 / 0` | pass |
+| 4 | `0 / 0 / 0` | `0 / 0 / 0` | pass |
+
+### H2b 测试与边界
+
+| Gate | 结果 |
+|---|---|
+| H2b-L MPI1 | `1 passed`，2.94 s |
+| H2a+H2b MPI1 | `5 passed`，6.04 s |
+| H2a+H2b MPI2 | 每 rank `5 passed`，4.52 s |
+| H2a+H2b MPI4 | 每 rank `5 passed`，9.11 s |
+| test224/test230/test231 | `5 passed / 1 skipped`，5.89 s |
+| import、Ruff check/format-check、compileall、git diff --check | 全部 pass |
+
+H2b 证明的是 local endcap action 与 explicit-condensed local oracle 在 MPI1/2/4 上的
+代数恒等性、ownership 和生命周期路径；它不是第一次 outer FGMRES/solver convergence、
+资源资格化或 H3 完成的证明。H3 是下一阶段，尚未运行。
