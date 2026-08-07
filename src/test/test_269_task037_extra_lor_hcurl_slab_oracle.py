@@ -160,6 +160,23 @@ def test_physical_trace_oracle_matches_independent_lift_and_audit(real_case):
     assert oracle.audit["zero_interior_trace_lift"] is True
     assert oracle.audit["factor_count"] == 2
     assert oracle.audit["coarsest_factor_count"] == 2
+    hcurl_audit = oracle.hcurl_vcycle.audit
+    assert oracle.audit["retained_numeric_payload_components"] == (
+        hcurl_audit["retained_numeric_payload_components"]
+    )
+    assert oracle.audit["h1_level_count"] == hcurl_audit["h1_level_count"]
+    assert oracle.audit["h1_level_rows"] == (
+        oracle.hcurl_vcycle.h1_vcycle.audit["level_rows"]
+    )
+    assert oracle.audit["scalar_factor_inventory"] == (
+        hcurl_audit["scalar_factor_inventory"]
+    )
+    assert oracle.audit["vector_factor_inventory"] == (
+        hcurl_audit["vector_factor_inventory"]
+    )
+    assert sum(oracle.audit["retained_numeric_payload_components"].values()) == (
+        oracle.audit["d2c_retained_numeric_payload_lower_bound_bytes"]
+    )
     assert oracle.audit["fine_p6_trace_factor_count"] == 0
     assert oracle.audit["fine_p6_full_factor_count"] == 0
     assert oracle.audit["large_lor_factor_count"] == 0
@@ -168,6 +185,8 @@ def test_physical_trace_oracle_matches_independent_lift_and_audit(real_case):
     assert oracle.audit["global_dense"] is False
     assert oracle.audit["exact_outer_changed"] is False
     assert oracle.audit["contraction_not_evaluated"] is True
+    assert "hierarchy" not in vars(oracle)
+    assert "topologies" not in vars(oracle)
     assert oracle.audit["transfer_retained_numeric_payload_lower_bound_bytes"] == (
         transfer.audit["retained_numeric_payload_lower_bound_bytes"]
     )

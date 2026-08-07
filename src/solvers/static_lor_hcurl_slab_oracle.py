@@ -152,6 +152,8 @@ def build_physical_lor_hcurl_slab_oracle(
         str(tag): _complex_pair(value)
         for tag, value in spec.mass_coefficient_by_tag.items()
     }
+    hcurl_audit = hcurl_vcycle.audit
+    h1_audit = hcurl_vcycle.h1_vcycle.audit
     audit = {
         "definition": "physical affine volume proxy plus fixed D1b LOR shift",
         "present_material_tags": list(present_tags),
@@ -175,7 +177,21 @@ def build_physical_lor_hcurl_slab_oracle(
         "retained_numeric_payload_lower_bound_bytes": transfer_payload + hcurl_payload,
         "factor_count": int(hcurl_vcycle.audit["factor_count"]),
         "coarsest_factor_count": int(
-            hcurl_vcycle.audit["coarsest_factor_count"]
+            hcurl_audit["coarsest_factor_count"]
+        ),
+        "retained_numeric_payload_components": dict(
+            hcurl_audit["retained_numeric_payload_components"]
+        ),
+        "h1_level_count": int(hcurl_audit["h1_level_count"]),
+        "h1_level_rows": tuple(
+            tuple(int(value) for value in rows)
+            for rows in h1_audit["level_rows"]
+        ),
+        "scalar_factor_inventory": dict(
+            hcurl_audit["scalar_factor_inventory"]
+        ),
+        "vector_factor_inventory": dict(
+            hcurl_audit["vector_factor_inventory"]
         ),
         "fine_p6_trace_factor_count": 0,
         "fine_p6_full_factor_count": 0,
