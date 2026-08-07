@@ -13,12 +13,16 @@ global matrix。
 | G2.3 full-space p6 ILU inventory | `inventory_measurement_qualified` | raw 与 patched checker 合同闭合；不是预条件器有效性结论 |
 | plain full-space ILU route | `close_fullspace_ilu_only_route` | retained-payload 25% Gate 未达到，且 iter20 one-apply rho 更差 |
 | G2.4 LOR mesh/transfer | `pass_transfer_build_and_algebra_only` | 真实 slab14 的 LOR build、周期身份、重复 action 与伴随通过；不证明 HX/V-cycle 或收敛 |
-| G2.5 LOR-HX/V-cycle | `pass_build_only` | 真实 p6/slab14 hierarchy build-only 通过；未调用 1V/2V |
-| G2.6 one/two V-cycle Gate | `pending_not_run` | 未运行 |
-| G3 16-slab additive LOR-HX | `not_started_and_prohibited` | 本轮不进入 |
+| G2.5 LOR-HX/V-cycle | `pass_build_only` | 真实 p6/slab14 hierarchy build-only 通过；retained-payload memory signal 失败；未调用 1V/2V |
+| G2.6 one/two V-cycle Gate | `measurement_qualified` | raw 完整、自洽且 finite/deterministic；minimum、strong 失败，apply-time overall false |
+| G2 overall | `G2_FAIL` | minimum contraction 已失败；不是 `G2_PARTIAL`，不允许 rooted repair 或 G3 |
+| G3 16-slab additive LOR-HX | `not_started_and_prohibited_by_G2_FAIL` | G2_FAIL 后禁止启动 |
 
-因此不能把本 outcome 写成整体 G2 通过，也不能宣称 minimum contraction、
-full solve 或 production promotion。
+`measurement_qualified` 只表示 raw 证据结构和数值闭合，不表示性能通过。正式整体
+分类为 `G2_FAIL`：G2.6 的 iter20/mixed minimum contraction、iter0/iter20 strong
+contraction、apply-time overall 以及 D3b retained-payload memory signal 均未通过。按照
+任务书，G2_FAIL 不享有一次 rooted local repair，G3 标记为
+`not_started_and_prohibited_by_G2_FAIL`。
 
 ## G2.4 fixture foundation
 
@@ -303,7 +307,7 @@ compact record：[g2_slab14_lor_transfer.json](/home/shenjh/Projects/MyFEniCSx_t
 | `worker_stdout.txt` / `solver_log.txt` | `0ad5399df6b37c9643175c6cec172a330c62cbe31dc6b80c37344b82776dd979` |
 | `NO_OFFICIAL_FIELD_OUTPUT.txt` | `e11465d92e416af3e4321c581b7291b7d4df5c932b425541f9b0114e259d3f38` |
 
-## G2.5 D3b：真实 p6/slab14 LOR-HX build-only
+## G2.5 D3b：真实 p6/slab14 LOR-HX build-only（历史阶段记录）
 
 ### 这次 build-only 检查解决什么问题
 
@@ -364,8 +368,8 @@ edge hash 与 identity raw 完全一致。
 | memory signal | `FAIL` |
 | 含义 | build-only hierarchy 明显超过最低存储目标，不能称 memory positive |
 
-这是资源信号失败；不是整体 G2 分类。contraction 尚未运行，整体 G2 仍保持
-`not_claimed`。本数字是 retained numeric payload lower bound，
+这是 D3b 当时的资源信号失败；当时 contraction 尚未运行，故该阶段记录保持
+`not_claimed`，不改写历史阶段语境。本数字是 retained numeric payload lower bound，
 只包括 T/TH/E/EH、packing、reference CSR、H1 hierarchy、inverse diagonal 和最粗层因子
 的数组口径，不等同 RSS，也不包括 Python object/allocator/permutation overhead。
 
@@ -426,9 +430,92 @@ run directory，也未开始数值工作。这不是数值 retry；随后成功�
 | `mesh_3d.xdmf` | `e40e1b05f3269101fe93e96416481f14bcaa64fb1df5f030381c747b484b9864` |
 | `mesh_3d_partition_note.txt` | `0a3e481d76798fa867ac1151dee5b3899920e623606faf36f175ee670c9ed974` |
 
-## Pending
+## G2.6 D3c：真实 p6/slab14 LOR-HX contraction measurement
 
-G2.6 contraction 与 G3 均为 `not_run`。原 G2.3
-`inventory_measurement_qualified / plain full-space ILU route closed` 结论
-保持不变。本 outcome 允许 D3b 的 `pass_build_only`，但不声称
-G2 overall pass、minimum contraction、full solve 或 production promotion。
+### 这次 measurement 检查解决什么问题
+
+V-cycle 是一次固定的局部近似逆：1V 或 2V 依次做边缘 Jacobi、标量 H1 修正、向量
+H1 修正和最粗层小因子修正。这里的 `rho` 是 exact shifted full-space Schur action
+作用 correction 后的残差范数除以输入残差范数；`rho<1` 表示缩小该方向，`rho>1`
+表示放大。`measurement_qualified` 只说明这四种方法的 raw 作用、重复性和派生字段
+一致，不能把 finite/deterministic 当作预条件器有效。
+
+| source | current trace ILU rho | B4 GMRES(4) rho | LOR-HX 1V rho | LOR-HX 2V rho | best LOR-HX |
+|---|---:|---:|---:|---:|---:|
+| real M3a iter0 | 2.422027189163481 | 0.9440411915945912 | 5611759.4667701805 | 4885392465721929.0 | 5611759.4667701805 (1V) |
+| real M3a iter20 | 1.2604899530937386 | 0.755818683406265 | 3465823.613309288 | 1651097278181490.5 | 3465823.613309288 (1V) |
+| normalized manufactured mixed/high | 4.455510654442446 | 0.8584226047142137 | 61738549.74675689 | 1.4084260534619966e16 | 61738549.74675689 (1V) |
+
+iter0 与 iter20 是 M3a screen 的真实 `r=b-Ax`；它们不是 B4 i200 或 long-tail
+residual。B4 long-tail raw 本轮未单独测量。任务要求的 mixed/high source 已单独测得
+best rho `61738549.74675689`，远大于 `(2/3)*0.8584226047142137`，所以 task-level
+minimum signal 已确定失败，不依赖未测的 B4 long-tail source，也不为 hard stop 补跑。
+iter20 另有 G2.3 full-space p6 ILU 对照 `rho=1.806246468352144`，来自
+不同 run，但使用相同 residual hash `3aa610ed9bbb63047188b64d21d5dcab04184ffc6316196458e99aab520bb195`，不能伪装成当前 run 的同一 timing sample。
+
+| measured gate | threshold | result |
+|---|---|---|
+| minimum：iter20、mixed/high | `rho_LORHX <= (2/3) rho_B4` | `false / false` |
+| strong：iter0、iter20 | `rho_LORHX <= 2 rho_ILU` | `false / false` |
+| apply-time：每源至少一个 1V/2V <= 10x ILU | ratios `312.2772206993064/4.246395389906666`、`1842.4615404593533/81.26242051814305`、`1.272784014360302/1.4723523740894053` | `true / false / true`；overall `false` |
+
+1V best 仍约为 `5.61e6`、`3.47e6`、`6.17e7`，2V 更差；这不是边界误差。所有 rho
+由 `apply_fullspace_slab_schur_action` 得到，而不是 LOR proxy 自评。
+
+### build、storage 与资源闭合
+
+| 项目 | 正式值 |
+|---|---:|
+| source SHA / scope | `30e179799b8eb6dee1be1bb976002550424bb40d`；p6/h10/S、MPI1、screen20 |
+| watchdog / return / qualification | `task037_extra_g2_slab14_lor_hx_contraction_measurement_qualified` / `0` / `pass` |
+| full/interior/trace rows | `32724 / 24300 / 8424` |
+| cells / active LOR rows | `54 / 36288` |
+| transfer / D2c hierarchy / total retained payload | `18735740 / 3109473612 / 3128209352 B` |
+| factor inventory | `2`，coarsest-only；fine p6/full/trace/intermediate/large LOR 均 `0` |
+| build seconds | transfer `51.72637021099217`；HX `607.4379243750591` |
+| process-tree authority | `8333.12890625 MB = 8.137821197509766 GiB` |
+| worker RSS/PSS/USS | `8319.29296875 / 8267.7822265625 / 8223.19140625 MB` |
+| swap / warning / termination / timeout | `0 / false / false / false` |
+
+物理对象是 affine volume proxy：curl coefficient `(1,0)`，material tags 1/3 有
+complex mass coefficient；无 DtN surface proxy，非 literal p6 Galerkin，exact outer
+operator 未改变。global dense matrix、parent topologies、persistent full/LOR RHS 均未保留。
+
+同口径 trace-ILU baseline 是 `122023588 B`，`0.60` threshold 是 `73214152.8 B`；
+HX/trace=`25.63610366874313`，所以 retained-payload memory signal 为 `FAIL`。
+这是数组下界，不是 RSS，也不含 Python object/allocator/permutation overhead。
+`g2_lor_hx_build_started` 区间 process-tree peak 为 `5529.8125 MB`；
+`g2_lor_hx_build_ready` 的 `7924.58984375 MB` 还覆盖随后既有 trace-factor setup，
+不能称纯 HX build peak。whole-run authority 为 `8.137821197509766 GiB`，historical
+cgroup peak `13279.546875 MB` 不是本次 authority。
+
+### G2_FAIL 与停止边界
+
+本轮 raw status 是 `measurement_qualified`，但它不是性能 pass。minimum contraction
+失败已经触发任务书的科学 hard stop；同时 strong、apply-time 和 memory signal 也失败。
+因此最终分类是 `G2_FAIL`，不是 `G2_PARTIAL`，不提出 rooted local repair，不 sweep，
+不进入 G3。没有 official field、official RTA 或物理收敛结果。
+
+### D3c raw evidence
+
+compact record：[g2_slab14_lor_hx_contraction.json](/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/cases/101_task37_extra_development/records/g2_slab14_lor_hx_contraction.json)。run directory 为 `benchmarks/artifacts/101_task37_extra_development/g2_slab14_lor_hx_contraction_mpi1_screen20_30e17979`；关键 raw SHA256：
+
+| raw 文件 | SHA256 |
+|---|---|
+| `watchdog_summary.json` | `b52125f40f946da4bbf792174224beb4a1526c1d20eab04e3b3bc748da95b2f4` |
+| `run_summary.json` | `a6e53c655f896ddb26de3ef86fd39e147da3b74bfda558fd4998870e9ec32f65` |
+| `task037_f3_core_audit.json` | `a87537cc899d3ae6df8068a8f797fbd5da4061e32e7400c32d20f33e3595f9e4` |
+| `progress_3d.jsonl` | `db8c0f2e8de7f6924dc953b65026f74abfc304c1f0eda8d43fb0c49f2664227d` |
+| `memory_timeline.csv` | `ca7ff04921b5be4e8b1cb31f356f7baff9eda1203479f0ca666fe9b193759dad` |
+| `task037_f3_residual_history.jsonl` | `75f0bc3ebec3648b60fdfc55daa9afd036b81cf6d5fe0ef1f7051a83e0f24940` |
+| `parent_launch_descriptor.json` | `19854ce17d27bfe2fde1e6dfb4de280249fc4f49ddad4605c29542094c756b57` |
+| `worker_stdout.txt` / `solver_log.txt` | `a6a3509af15b95064729acfd1ba0c1904b44fb14826d4a4b6c9e6663b50a5dde` |
+| `NO_OFFICIAL_FIELD_OUTPUT.txt` | `e11465d92e416af3e4321c581b7291b7d4df5c932b425541f9b0114e259d3f38` |
+
+## Closed stop
+
+G2.5 的 build-only 结果、G2.6 的 measurement-qualified raw、G2.3 的
+`inventory_measurement_qualified / plain full-space ILU route closed` 以及 G2.4 的
+transfer/algebra-only 结果均保留。当前 overall 已闭合为 `G2_FAIL`；G2.5/G2.6 不再是
+当前 pending，G3 为 `not_started_and_prohibited_by_G2_FAIL`。本 outcome 不声称
+production promotion、full solve 或 G2 overall pass。

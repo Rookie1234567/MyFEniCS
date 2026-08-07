@@ -162,6 +162,56 @@
     },
     "not_run": ["G2.5", "G2.6", "G3"]
   },
+  "g2_5_lor_hx_build": {
+    "lane_contract": {
+      "task037_extra_g2_slab14_identity": true,
+      "task037_extra_g2_slab14_lor_transfer": true,
+      "task037_extra_g2_slab14_lor_hx_oracle": true,
+      "task037_extra_g2_slab14_lor_hx_contraction": false,
+      "factor_inventory": false,
+      "build_only": true,
+      "global_A_materialized": false,
+      "global_F_materialized": false,
+      "official_rta": false
+    },
+    "current_evidence": {
+      "status": "pass_build_only",
+      "memory_signal": "fail",
+      "contraction": "not_run_in_build_only"
+    }
+  },
+  "g2_6_lor_hx_contraction": {
+    "lane_contract": {
+      "task037_extra_g2_slab14_identity": true,
+      "task037_extra_g2_slab14_lor_transfer": true,
+      "task037_extra_g2_slab14_lor_hx_oracle": true,
+      "task037_extra_g2_slab14_lor_hx_contraction": true,
+      "factor_inventory": false,
+      "sources": ["real_m3a_iter0", "real_m3a_iter20", "manufactured_mixed_high"],
+      "methods": ["current_trace_ilu", "b4_fixed_gmres4", "lor_hx_1v", "lor_hx_2v"],
+      "rho_formula": "||r-S_j z||_2 / ||r||_2 using exact shifted full-space slab Schur action",
+      "b4_fixed_local_krylov_steps": 4,
+      "performance_gate_fields": ["minimum_b4", "strong_ilu", "apply_time", "retained_payload_memory"],
+      "raw_qualification_does_not_require_performance_gate_pass": true,
+      "official_rta": false
+    },
+    "current_evidence": {
+      "measurement_status": "measurement_qualified",
+      "minimum_b4_gate_pass": false,
+      "strong_ilu_gate_pass": false,
+      "apply_time_gate_pass": false,
+      "retained_payload_memory_gate_pass": false,
+      "overall_g2": "G2_FAIL",
+      "g3": "not_started_and_prohibited_by_G2_FAIL"
+    }
+  },
+  "current_result": {
+    "g2_status": "G2_FAIL",
+    "g2_partial_repair_allowed": false,
+    "g3_status": "not_started_and_prohibited_by_G2_FAIL",
+    "official_rta": false,
+    "production_promotion": false
+  },
   "resource_gate": {
     "zero_swap": true,
     "memory_peak_gib_lt": 14.0

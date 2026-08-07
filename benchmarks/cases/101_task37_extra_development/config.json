@@ -93,6 +93,45 @@
         "outer_solver_or_physical_convergence",
         "production_promotion"
       ]
+    },
+    "g2_5": {
+      "task037_extra_g2_slab14_identity": true,
+      "task037_extra_g2_slab14_lor_transfer": true,
+      "task037_extra_g2_slab14_lor_hx_oracle": true,
+      "task037_extra_g2_slab14_lor_hx_contraction": false,
+      "task037_extra_g2_slab14_factor_inventory": false,
+      "primary_slab": 14,
+      "purpose": "real slab14 LOR-HX hierarchy build-only",
+      "status_contract": "pass_build_only_or_build_gate_failed",
+      "current_status": "pass_build_only",
+      "memory_signal": "fail",
+      "contraction": "not_run_in_build_only",
+      "record": "benchmarks/cases/101_task37_extra_development/records/g2_slab14_lor_hx_build.json"
+    },
+    "g2_6": {
+      "task037_extra_g2_slab14_identity": true,
+      "task037_extra_g2_slab14_lor_transfer": true,
+      "task037_extra_g2_slab14_lor_hx_oracle": true,
+      "task037_extra_g2_slab14_lor_hx_contraction": true,
+      "task037_extra_g2_slab14_factor_inventory": false,
+      "primary_slab": 14,
+      "purpose": "exact shifted full-space Schur measurement of one/two LOR-HX V-cycles",
+      "status_contract": "measurement_qualified_or_not_pass",
+      "current_status": "measurement_qualified",
+      "performance_gates": {
+        "minimum_b4": false,
+        "strong_ilu": false,
+        "apply_time": false,
+        "retained_payload_memory": false
+      },
+      "current_overall_decision": "G2_FAIL",
+      "g3_status": "not_started_and_prohibited_by_G2_FAIL",
+      "record": "benchmarks/cases/101_task37_extra_development/records/g2_slab14_lor_hx_contraction.json"
+    },
+    "current_decision": {
+      "g2_status": "G2_FAIL",
+      "g3_status": "not_started_and_prohibited_by_G2_FAIL",
+      "official_rta": false
     }
   }
 }
