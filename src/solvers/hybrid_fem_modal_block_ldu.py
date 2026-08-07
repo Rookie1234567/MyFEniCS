@@ -26,6 +26,8 @@ __all__ = (
     "HybridBlockActionSystem",
     "HybridBlockLduPhysicalSolution",
     "create_exact_block_ldu_preconditioner",
+    "create_g_only_block_ldu_preconditioner",
+    "modal_block_diagnostic",
     "solve_exact_block_ldu",
 )
 
@@ -63,6 +65,8 @@ class HybridBlockLduPreconditioner:
     bottom_system: object
     top_system: object
     modal_schur_system: HybridModalSchurDirectSystem
+    modal_block_override: np.ndarray | None = None
+    modal_block_name: str = "exact_s_m"
     _destroyed: bool = field(default=False, init=False, repr=False)
 
     def __post_init__(self) -> None:
@@ -72,9 +76,13 @@ class HybridBlockLduPreconditioner:
             raise RuntimeError("H3 exact block-LDU requires both direct factors.")
         self.bottom_factor = bottom_factor
         self.top_factor = top_factor
-        self.modal_schur = np.asarray(
-            self.modal_schur_system.modal_schur, dtype=np.complex128
+        modal_block = (
+            self.modal_schur_system.modal_schur
+            if self.modal_block_override is None
+            else self.modal_block_override
         )
+        self.modal_schur = np.asarray(modal_block, dtype=np.complex128)
+        self._modal_block_condition = float(np.linalg.cond(self.modal_schur))
         self.mode_count = int(self.coupling.mode_count_per_direction)
         self._forward_factors = np.asarray(
             self.coupling.propagation.forward.factors, dtype=np.complex128
@@ -129,6 +137,8 @@ class HybridBlockLduPreconditioner:
             else 0,
             "bottom_factor_released": self._destroyed,
             "top_factor_released": self._destroyed,
+            "modal_block_name": self.modal_block_name,
+            "modal_block_condition": self._modal_block_condition,
             "modal_schur_condition": float(
                 self.modal_schur_system.modal_schur_condition
             ),
@@ -366,6 +376,65 @@ def create_exact_block_ldu_preconditioner(
         top_system=top_system,
         modal_schur_system=modal_schur,
     )
+
+
+def create_g_only_block_ldu_preconditioner(
+    layout: HybridAugmentedLayout,
+    bottom_system: object,
+    top_system: object,
+    coupling: HybridInternalModeCoupling,
+) -> HybridBlockLduPreconditioner:
+    """Create the bounded H4 diagnostic using the modal constraint block G."""
+
+    modal_schur = build_hybrid_modal_schur_direct_system(
+        bottom_system,
+        top_system,
+        coupling,
+    )
+    try:
+        modal_constraint = np.asarray(modal_schur.modal_constraint, dtype=np.complex128)
+        if not np.all(np.isfinite(modal_constraint)):
+            raise RuntimeError("H4 G-only modal block is non-finite.")
+        return HybridBlockLduPreconditioner(
+            layout=layout,
+            coupling=coupling,
+            bottom_system=bottom_system,
+            top_system=top_system,
+            modal_schur_system=modal_schur,
+            modal_block_override=modal_constraint,
+            modal_block_name="g_only",
+        )
+    except Exception:
+        modal_schur.destroy()
+        raise
+
+
+def modal_block_diagnostic(
+    modal_schur_system: HybridModalSchurDirectSystem,
+) -> dict[str, object]:
+    """Summarize exact S_m, G, and their feedback without a new candidate."""
+
+    exact = np.asarray(modal_schur_system.modal_schur, dtype=np.complex128)
+    constraint = np.asarray(modal_schur_system.modal_constraint, dtype=np.complex128)
+    if exact.shape != constraint.shape or exact.ndim != 2:
+        raise ValueError("H4 modal blocks have incompatible shapes.")
+    feedback = constraint - exact
+    exact_norm = float(np.linalg.norm(exact, ord="fro"))
+    constraint_norm = float(np.linalg.norm(constraint, ord="fro"))
+    feedback_norm = float(np.linalg.norm(feedback, ord="fro"))
+    tiny = np.finfo(float).tiny
+    return {
+        "shape": list(exact.shape),
+        "exact_s_m_shape": list(exact.shape),
+        "g_shape": list(constraint.shape),
+        "exact_s_m_dtype": str(exact.dtype),
+        "g_dtype": str(constraint.dtype),
+        "exact_s_m_condition": float(np.linalg.cond(exact)),
+        "g_condition": float(np.linalg.cond(constraint)),
+        "feedback_frobenius_norm": feedback_norm,
+        "feedback_relative_to_s_m": feedback_norm / max(exact_norm, tiny),
+        "feedback_relative_to_g": feedback_norm / max(constraint_norm, tiny),
+    }
 
 
 def _residual_metrics(

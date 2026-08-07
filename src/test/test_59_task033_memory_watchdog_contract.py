@@ -477,6 +477,65 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
             "scalar_cg_discrete_derivative",
         )
 
+    def test_h4_gate_forwards_only_bounded_modal_diagnostic(self) -> None:
+        args = _parse_args(
+            [
+                "--target",
+                "hybrid",
+                "--case-label",
+                "task037b_h4",
+                "--degree",
+                "6",
+                "--h-nm",
+                "10",
+                "--modal-degree",
+                "6",
+                "--modal-h-nm",
+                "10",
+                "--mpi-size",
+                "8",
+                "--requested-modes",
+                "120",
+                "--candidate-modes",
+                "240",
+                "--solver-path",
+                "block-ldu-exact",
+                "--stage4-full3d-assembly-backend",
+                "assembly_time_static_condensed",
+                "--bottom-interface-nm",
+                "10",
+                "--top-interface-nm",
+                "110",
+                "--incident-grazing-deg",
+                "10",
+                "--polarization-kind",
+                "s",
+                "--internal-propagation-model",
+                "full3d_uniform_cg",
+                "--internal-traction-model",
+                "scalar_cg_discrete_derivative",
+                "--full3d-reference",
+                "reference.json",
+                "--full3d-reference-sha256",
+                "b" * 64,
+                "--task037b-h4-gate",
+                "--task035c-p6-preflight-authority",
+                "authority.json",
+                "--task035c-p6-preflight-sha256",
+                "a" * 64,
+                "--verified-clean-sha",
+                SOURCE_SHA,
+                "--host-environment-id",
+                "WSL2-Ubuntu-24.04",
+            ]
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            command = _worker_command(args, root / "record.json", root / "stages.jsonl")
+        self.assertIn("--task037b-h4-gate", command)
+        self.assertNotIn("--task037b-h3-gate", command)
+        self.assertNotIn("--task037b-h1-gate", command)
+
     def test_twelve_gib_runtime_guard_fits_smaller_live_host_ceiling(self) -> None:
         matrix = json.loads(DEFAULT_RESOURCE_MATRIX.read_text(encoding="utf-8"))
         common = {

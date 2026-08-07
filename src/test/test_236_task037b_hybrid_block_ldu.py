@@ -10,7 +10,9 @@ from src.solvers.hybrid_fem_modal_augmented_direct import (
     solve_hybrid_augmented_direct,
 )
 from src.solvers.hybrid_fem_modal_block_ldu import (
+    create_g_only_block_ldu_preconditioner,
     create_exact_block_ldu_preconditioner,
+    modal_block_diagnostic,
     solve_exact_block_ldu,
 )
 from src.solvers.hybrid_fem_modal_augmented_direct import (
@@ -177,3 +179,45 @@ class TestTask037bHybridBlockLdu:
             result.destroy()
             direct_solution.destroy()
             direct_system.destroy()
+
+    def test_h4_modal_blocks_are_finite_and_release_sequential_factors(self):
+        exact = create_exact_block_ldu_preconditioner(
+            self.layout,
+            self.oracle_systems["bottom"],
+            self.oracle_systems["top"],
+            self.coupling,
+        )
+        try:
+            assert exact.inventory["oracle_local_direct_factor_count"] == 2
+            exact_diagnostic = modal_block_diagnostic(exact.modal_schur_system)
+            assert exact.modal_block_name == "exact_s_m"
+            assert np.allclose(exact.modal_schur, exact.modal_schur_system.modal_schur)
+            assert exact_diagnostic["exact_s_m_dtype"] == "complex128"
+            assert np.isfinite(exact_diagnostic["exact_s_m_condition"])
+        finally:
+            exact.destroy()
+        assert exact.factors_released
+
+        g_only = create_g_only_block_ldu_preconditioner(
+            self.layout,
+            self.oracle_systems["bottom"],
+            self.oracle_systems["top"],
+            self.coupling,
+        )
+        try:
+            assert g_only.inventory["oracle_local_direct_factor_count"] == 2
+            g_diagnostic = modal_block_diagnostic(g_only.modal_schur_system)
+            assert g_only.modal_block_name == "g_only"
+            assert exact_diagnostic["exact_s_m_shape"] == g_diagnostic["g_shape"]
+            assert g_diagnostic["g_dtype"] == "complex128"
+            assert np.isfinite(g_diagnostic["g_condition"])
+            assert np.isfinite(g_diagnostic["feedback_frobenius_norm"])
+            assert np.isfinite(g_diagnostic["feedback_relative_to_s_m"])
+            assert np.isfinite(g_diagnostic["feedback_relative_to_g"])
+            assert np.allclose(
+                g_only.modal_schur,
+                g_only.modal_schur_system.modal_constraint,
+            )
+        finally:
+            g_only.destroy()
+        assert g_only.factors_released

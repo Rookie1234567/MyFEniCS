@@ -79,6 +79,8 @@ from src.solvers.hybrid_fem_modal_block_ldu import (
     HybridBlockLduPhysicalSolution,
     _HybridBlockLduOracleLocalSystem,
     create_exact_block_ldu_preconditioner,
+    create_g_only_block_ldu_preconditioner,
+    modal_block_diagnostic,
     solve_exact_block_ldu,
 )
 from src.solvers.hybrid_fem_modal_iterative import create_hybrid_assembled_block_action
@@ -867,6 +869,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Open only the frozen Task037b H3 exact block-LDU MPI8 path.",
     )
+    parser.add_argument(
+        "--task037b-h4-gate",
+        action="store_true",
+        help="Open only the frozen Task037b H4 bounded modal-block diagnostic path.",
+    )
     parser.add_argument("--task035c-p6-preflight-authority", type=Path)
     parser.add_argument("--task035c-p6-preflight-sha256")
     parser.add_argument("--bottom-interface-nm", type=float, default=10.0)
@@ -946,16 +953,17 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         args.task035c_p6_h10_gate,
         args.task037b_h1_gate,
         args.task037b_h3_gate,
+        args.task037b_h4_gate,
     )
     if sum(bool(value) for value in selected_scoped_gates) > 1:
         parser.error(
-            "Task035c p6/h10, Task037b H1, and Task037b H3 gates are "
+            "Task035c p6/h10, Task037b H1, Task037b H3, and Task037b H4 gates are "
             "mutually exclusive."
         )
     if args.degree == 6 and not any(selected_scoped_gates):
         parser.error(
             "p6 is fail-closed; pass a fixed scoped Task035c, Task037b H1, "
-            "or Task037b H3 gate."
+            "or Task037b H3/H4 gate."
         )
     if args.task035c_p6_h10_gate:
         scoped = bool(
@@ -1027,7 +1035,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "10/110 nm, S-polarized, full3d/scalar-CG, M120+M120, "
                 "candidate240, augmented, static-condensed MPI8 path."
             )
-    elif args.task037b_h3_gate:
+    elif args.task037b_h3_gate or args.task037b_h4_gate:
         scoped = bool(
             args.degree == 6
             and math.isclose(args.h_nm, 10.0)
@@ -1058,7 +1066,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         )
         if not scoped:
             parser.error(
-                "--task037b-h3-gate is restricted to the fixed WSL p6/h10, "
+                "--task037b-h3-gate/--task037b-h4-gate is restricted to the fixed WSL p6/h10, "
                 "10/110 nm, S-polarized, full3d/scalar-CG, M120+M120, "
                 "candidate240, block-ldu-exact, static-condensed MPI8 path."
             )
@@ -1067,7 +1075,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         or args.task035c_p6_preflight_sha256 is not None
         or args.full3d_reference_sha256 is not None
     ):
-        parser.error("Task035c/H1 authority SHA arguments require a scoped gate.")
+        parser.error("Task035c/H1/H3/H4 authority SHA arguments require a scoped gate.")
     return args
 
 
@@ -1081,6 +1089,7 @@ def _task035c_worker_authority_gate(
         args.task035c_p6_h10_gate
         or args.task037b_h1_gate
         or args.task037b_h3_gate
+        or args.task037b_h4_gate
     ):
         return None
 
@@ -1129,7 +1138,7 @@ def _task035c_worker_authority_gate(
             assembly_backend=args.stage4_full3d_assembly_backend,
             mpi_size=mpi_size,
         )
-        if args.task037b_h1_gate or args.task037b_h3_gate
+        if args.task037b_h1_gate or args.task037b_h3_gate or args.task037b_h4_gate
         else task035c_p6_h10_full3d_reference_gate(
             reference if isinstance(reference, dict) else None,
             expected_sha256=args.full3d_reference_sha256,
@@ -1141,7 +1150,9 @@ def _task035c_worker_authority_gate(
     )
     gate = {
         "schema_version": (
-            "task037b.h3-worker-authority-gate.v1"
+            "task037b.h4-worker-authority-gate.v1"
+            if args.task037b_h4_gate
+            else "task037b.h3-worker-authority-gate.v1"
             if args.task037b_h3_gate
             else "task035c.p6-h10-worker-authority-gate.v1"
         ),
@@ -1259,10 +1270,15 @@ def main() -> None:
         args.task035c_p6_h10_gate
         or args.task037b_h1_gate
         or args.task037b_h3_gate
+        or args.task037b_h4_gate
     ) and comm.size not in TASK035C_P6_H10_MPI_SIZES:
         raise SystemExit("Task035c p6/h10 Hybrid is restricted to MPI1/2/4/8.")
-    if (args.task037b_h1_gate or args.task037b_h3_gate) and comm.size != 8:
-        raise SystemExit("Task037b H1/H3 Hybrid is restricted to MPI8.")
+    if (
+        args.task037b_h1_gate
+        or args.task037b_h3_gate
+        or args.task037b_h4_gate
+    ) and comm.size != 8:
+        raise SystemExit("Task037b H1/H3/H4 Hybrid is restricted to MPI8.")
     task035c_p6_gate = _task035c_worker_authority_gate(
         args,
         current_source_sha=provenance.get("commit_sha"),
@@ -1338,6 +1354,17 @@ def main() -> None:
     h3_solution_error = None
     h3_modal_error = None
     h3_telemetry = None
+    h4b_preconditioner = None
+    h4b_solve_result = None
+    h4_telemetry = None
+    h4a_modal_diagnostic = None
+    h4b_modal_diagnostic = None
+    h4b_before_inventory = None
+    h4b_after_inventory = None
+    h4b_solution_error = None
+    h4b_modal_error = None
+    h4b_finite = None
+    h4_diagnostic_finite = None
     record = None
     graded_plan = None
     graded_bottom_mesh = None
@@ -1654,7 +1681,7 @@ def main() -> None:
         )
         progress("Task32 Phase6: real positive/negative QEP bases complete")
 
-        if args.task037b_h3_gate:
+        if args.task037b_h3_gate or args.task037b_h4_gate:
             mark_stage("oracle_local_matrix_build")
             started = time.perf_counter()
             h3_direct_bottom = assemble_hybrid_local_dtn_system(
@@ -1773,6 +1800,163 @@ def main() -> None:
                 raise RuntimeError("H3 factors were not released after solve.")
             timings["h3_outer_solve"] = _max_elapsed(comm, started)
             mark_stage("h3_factors_released")
+            if args.task037b_h4_gate:
+                h4a_modal_diagnostic = modal_block_diagnostic(
+                    h3_preconditioner.modal_schur_system
+                )
+                mark_stage("h4b_g_only_factor_setup")
+                started = time.perf_counter()
+                h4b_preconditioner = create_g_only_block_ldu_preconditioner(
+                    layout,
+                    h3_oracle_bottom,
+                    h3_oracle_top,
+                    coupling,
+                )
+                h4b_modal_diagnostic = modal_block_diagnostic(
+                    h4b_preconditioner.modal_schur_system
+                )
+                h4b_before_inventory = {
+                    **h4b_preconditioner.inventory,
+                    "factor_inventory": (
+                        h4b_preconditioner.modal_schur_system.factor_inventory
+                    ),
+                    "modal_schur_bytes": int(h4b_preconditioner.modal_schur.nbytes),
+                    "modal_schur_condition": float(
+                        h4b_preconditioner.modal_schur_system.modal_schur_condition
+                    ),
+                }
+                timings["h4b_g_only_factor_setup"] = _max_elapsed(comm, started)
+                mark_stage("h4b_g_only_solve")
+                started = time.perf_counter()
+                h4b_solve_result = solve_exact_block_ldu(
+                    system.A,
+                    system.b,
+                    h4b_preconditioner,
+                )
+                h4b_after_inventory = {
+                    **h4b_preconditioner.inventory,
+                    "modal_schur_bytes": int(h4b_preconditioner.modal_schur.nbytes),
+                    "modal_schur_condition": float(
+                        h4b_preconditioner.modal_schur_system.modal_schur_condition
+                    ),
+                }
+                timings["h4b_g_only_solve"] = _max_elapsed(comm, started)
+                mark_stage("h4b_factors_released")
+                h4b_bottom, h4b_top, h4b_modal = layout.split(
+                    h4b_solve_result.solution,
+                    bottom.b,
+                    top.b,
+                )
+                h4a_bottom, h4a_top, h4a_modal = layout.split(
+                    h3_solve_result.solution,
+                    bottom.b,
+                    top.b,
+                )
+                try:
+                    h4b_solution_error = _relative_vector_error(
+                        h4b_solve_result.solution,
+                        h3_solve_result.solution,
+                    )
+                    h4b_modal_error = float(
+                        np.linalg.norm(h4b_modal - h4a_modal)
+                        / max(
+                            float(np.linalg.norm(h4a_modal)),
+                            float(np.linalg.norm(h4b_modal)),
+                            1.0e-30,
+                        )
+                    )
+                finally:
+                    h4b_bottom.destroy()
+                    h4b_top.destroy()
+                    h4a_bottom.destroy()
+                    h4a_top.destroy()
+                h4b_finite = bool(
+                    np.isfinite(h4b_solution_error)
+                    and np.isfinite(h4b_modal_error)
+                    and np.isfinite(h4b_solve_result.true_relative_residual)
+                    and all(
+                        np.isfinite(value)
+                        for value in h4b_solve_result.block_relative_residuals.values()
+                    )
+                    and np.isfinite(h4b_solve_result.solution.norm())
+                )
+                h4_diagnostic_finite = bool(
+                    all(
+                        np.isfinite(float(h4a_modal_diagnostic[key]))
+                        for key in (
+                            "exact_s_m_condition",
+                            "g_condition",
+                            "feedback_frobenius_norm",
+                            "feedback_relative_to_s_m",
+                            "feedback_relative_to_g",
+                        )
+                    )
+                    and all(
+                        np.isfinite(float(h4b_modal_diagnostic[key]))
+                        for key in (
+                            "exact_s_m_condition",
+                            "g_condition",
+                            "feedback_frobenius_norm",
+                            "feedback_relative_to_s_m",
+                            "feedback_relative_to_g",
+                        )
+                    )
+                    and np.isfinite(h3_solve_result.reported_relative_residual)
+                    and np.isfinite(h4b_solve_result.reported_relative_residual)
+                )
+                h4_telemetry = {
+                    "task037b_h4_gate": True,
+                    "h4a_exact_s_m": h4a_modal_diagnostic,
+                    "h4b_g_only": h4b_modal_diagnostic,
+                    "feedback": {
+                        "frobenius_norm": h4a_modal_diagnostic["feedback_frobenius_norm"],
+                        "relative_to_s_m": h4a_modal_diagnostic["feedback_relative_to_s_m"],
+                        "relative_to_g": h4a_modal_diagnostic["feedback_relative_to_g"],
+                    },
+                    "h4a": {
+                        "outer_iterations": int(h3_solve_result.iterations),
+                        "converged_reason": int(h3_solve_result.converged_reason),
+                        "reported_relative_residual": float(
+                            h3_solve_result.reported_relative_residual
+                        ),
+                        "true_relative_residual": float(
+                            h3_solve_result.true_relative_residual
+                        ),
+                        "block_relative_residuals": h3_solve_result.block_relative_residuals,
+                        "factors_released": bool(h3_preconditioner.factors_released),
+                        "preconditioner_before": h3_before_inventory,
+                        "preconditioner_after": h3_after_inventory,
+                    },
+                    "h4b": {
+                        "outer_iterations": int(h4b_solve_result.iterations),
+                        "converged_reason": int(h4b_solve_result.converged_reason),
+                        "reported_relative_residual": float(
+                            h4b_solve_result.reported_relative_residual
+                        ),
+                        "true_relative_residual": float(
+                            h4b_solve_result.true_relative_residual
+                        ),
+                        "block_relative_residuals": h4b_solve_result.block_relative_residuals,
+                        "solution_relative_error_to_h4a": float(h4b_solution_error),
+                        "modal_relative_error_to_h4a": float(h4b_modal_error),
+                        "finite": h4b_finite,
+                        "factors_released": bool(h4b_preconditioner.factors_released),
+                        "preconditioner_before": h4b_before_inventory,
+                        "preconditioner_after": h4b_after_inventory,
+                    },
+                    "diagnostic_finite": h4_diagnostic_finite,
+                    "timings": {
+                        key: timings[key]
+                        for key in (
+                            "h4b_g_only_factor_setup",
+                            "h4b_g_only_solve",
+                        )
+                        if key in timings
+                    },
+                }
+                h4b_solve_result.destroy()
+                h4b_solve_result = None
+                h4b_preconditioner = None
             mark_stage("post_h3_direct_comparison")
             started = time.perf_counter()
             h3_direct_comparison_system = build_hybrid_augmented_direct_system(
@@ -1946,7 +2130,7 @@ def main() -> None:
                 )
         mark_stage("official_rta")
         rta_started = time.perf_counter()
-        if args.task037b_h3_gate:
+        if args.task037b_h3_gate or args.task037b_h4_gate:
             validation = evaluate_hybrid_augmented_solution(
                 cfg,
                 bottom,
@@ -1962,7 +2146,7 @@ def main() -> None:
             validation = evaluate_hybrid_augmented_solution(
                 cfg, bottom, top, coupling, solution
             )
-        if args.task037b_h1_gate or args.task037b_h3_gate:
+        if args.task037b_h1_gate or args.task037b_h3_gate or args.task037b_h4_gate:
             timings["rta_evaluation"] = _max_elapsed(comm, rta_started)
         port_power = validation["port_power"]
         modal_schur_comparison = None
@@ -2365,6 +2549,74 @@ def main() -> None:
                     ),
                 }
             )
+        elif args.task037b_h4_gate:
+            gates.update(
+                {
+                    "h4a_converged_reason_positive": solution.converged_reason > 0,
+                    "h4a_outer_iterations_le_3": solution.iterations <= 3,
+                    "h4a_reported_residual_finite": bool(
+                        np.isfinite(solution.reported_relative_residual)
+                    ),
+                    "h4a_true_global_residual_le_1e-10": (
+                        solution.relative_residual <= 1.0e-10
+                    ),
+                    "h4a_true_bottom_residual_le_1e-10": (
+                        solution.block_relative_residuals["bottom"] <= 1.0e-10
+                    ),
+                    "h4a_true_top_residual_le_1e-10": (
+                        solution.block_relative_residuals["top"] <= 1.0e-10
+                    ),
+                    "h4a_true_modal_residual_le_1e-10": (
+                        solution.block_relative_residuals["modal"] <= 1.0e-10
+                    ),
+                    "h4a_direct_solution_relative_error_le_1e-10": (
+                        h3_solution_error <= 1.0e-10
+                    ),
+                    "h4a_direct_modal_relative_error_le_1e-10": (
+                        h3_modal_error <= 1.0e-10
+                    ),
+                    "h4a_factors_released": bool(
+                        h3_before_inventory["oracle_local_direct_factor_count"] == 2
+                        and h3_after_inventory["oracle_local_direct_factor_count"] == 0
+                        and h3_after_inventory["bottom_factor_released"] is True
+                        and h3_after_inventory["top_factor_released"] is True
+                        and h3_preconditioner.factors_released
+                    ),
+                    "h4b_diagnostic_finite": bool(
+                        h4b_finite and h4_diagnostic_finite
+                    ),
+                    "h4b_evidence_complete": bool(
+                        h4_telemetry is not None
+                        and h4b_before_inventory is not None
+                        and h4b_after_inventory is not None
+                    ),
+                    "h4b_factors_released": bool(
+                        h4b_after_inventory is not None
+                        and h4b_before_inventory is not None
+                        and h4b_before_inventory["oracle_local_direct_factor_count"] == 2
+                        and h4b_after_inventory["oracle_local_direct_factor_count"] == 0
+                        and h4b_after_inventory["bottom_factor_released"] is True
+                        and h4b_after_inventory["top_factor_released"] is True
+                    ),
+                    "h4_candidate_operator_contract": bool(
+                        system.inventory["matrix_type"] == "python"
+                        and system.inventory["matrix_free"] is True
+                        and system.inventory["global_A_materialized"] is False
+                        and system.inventory["bottom_global_F_materialized"] is False
+                        and system.inventory["top_global_F_materialized"] is False
+                    ),
+                    "h4_candidate_global_A_not_materialized": (
+                        not system.inventory["global_A_materialized"]
+                    ),
+                    "h4_candidate_external_C_D_zero": (
+                        system.inventory["explicit_external_c_matrix_count"] == 0
+                        and system.inventory["explicit_external_d_matrix_count"] == 0
+                    ),
+                    "h4_candidate_p6_direct_factor_count_zero": (
+                        system.inventory["p6_direct_factor_count"] == 0
+                    ),
+                }
+            )
         else:
             gates.update(
                 {
@@ -2521,7 +2773,15 @@ def main() -> None:
             "bottom": _petsc_matrix_stats(coupling.bottom.projection, assemble=False),
             "top": _petsc_matrix_stats(coupling.top.projection, assemble=False),
         }
-        if args.task037b_h3_gate:
+        if args.task037b_h4_gate:
+            factor_inventory = {
+                "h4a_preconditioner_before": h3_before_inventory,
+                "h4a_preconditioner_after": h3_after_inventory,
+                "h4b_preconditioner_before": h4b_before_inventory,
+                "h4b_preconditioner_after": h4b_after_inventory,
+                "post_h4_direct_comparison": h3_direct_factor_inventory,
+            }
+        elif args.task037b_h3_gate:
             factor_inventory = {
                 "h3_preconditioner_before": h3_before_inventory,
                 "h3_preconditioner_after": h3_after_inventory,
@@ -2561,7 +2821,7 @@ def main() -> None:
             "projection_matrix": projection_stats,
             "modal_schur_bytes": (
                 int(h3_before_inventory["modal_schur_bytes"])
-                if args.task037b_h3_gate
+                if args.task037b_h3_gate or args.task037b_h4_gate
                 else (
                     0
                     if primary_schur_system is None
@@ -2642,6 +2902,27 @@ def main() -> None:
                     if key in timings
                 },
             }
+        if args.task037b_h4_gate:
+            h4_telemetry["operator_inventory"] = system.inventory
+            h4_telemetry["post_h4_direct_factor_inventory"] = (
+                h3_direct_factor_inventory
+            )
+            h4_telemetry["timings"].update(
+                {
+                    key: timings[key]
+                    for key in (
+                        "oracle_local_matrix_build",
+                        "h2b_action_assembly",
+                        "h3_local_factor_setup",
+                        "h3_outer_solve",
+                        "h3_factors_released",
+                        "post_h3_direct_comparison",
+                        "rta_evaluation",
+                        "recovery_rta",
+                    )
+                    if key in timings
+                }
+            )
         _verify_source_stable_at_end(
             comm,
             provenance,
@@ -2653,39 +2934,51 @@ def main() -> None:
         record = {
             "schema_version": 1,
             "benchmark_id": (
-                "task037b_h3_exact_block_ldu_iterative_oracle"
-                if args.task037b_h3_gate
+                "task037b_h4_bounded_modal_block_diagnostic"
+                if args.task037b_h4_gate
                 else (
-                    "task032_phase6_hybrid_augmented_direct"
-                    if args.degree == 2
-                    and args.bottom_interface_nm == 10.0
-                    and args.top_interface_nm == 110.0
-                    and args.solver_path == "augmented"
+                    "task037b_h3_exact_block_ldu_iterative_oracle"
+                    if args.task037b_h3_gate
                     else (
-                        "task032_phase10_hybrid_modal_schur_direct"
+                        "task032_phase6_hybrid_augmented_direct"
                         if args.degree == 2
                         and args.bottom_interface_nm == 10.0
                         and args.top_interface_nm == 110.0
-                        else "task033_high_order_or_buffer_hybrid_direct"
+                        and args.solver_path == "augmented"
+                        else (
+                            "task032_phase10_hybrid_modal_schur_direct"
+                            if args.degree == 2
+                            and args.bottom_interface_nm == 10.0
+                            and args.top_interface_nm == 110.0
+                            else "task033_high_order_or_buffer_hybrid_direct"
+                        )
                     )
                 )
             ),
             "timestamp_utc": timestamp,
             "status": (
-                "task037b_h3_runner_gate_pass_12_channel_pending"
-                if args.task037b_h3_gate and integration_pass
+                "task037b_h4_diagnostic_complete"
+                if args.task037b_h4_gate and integration_pass
                 else (
-                    "HYBRID_BLOCK_ITERATIVE_ALGEBRA_FAILED"
-                    if args.task037b_h3_gate
+                    "task037b_h4_diagnostic_failed"
+                    if args.task037b_h4_gate
                     else (
-                        "algebraic_smoke_pass_physical_truncation_not_qualified"
-                        if task33_variant
-                        and algebraic_chain_pass
-                        and not task033_physical_truncation_allowed
+                        "task037b_h3_runner_gate_pass_12_channel_pending"
+                        if args.task037b_h3_gate and integration_pass
                         else (
-                            "physical_integration_pass_mode_convergence_pending"
-                            if integration_pass
-                            else "physical_integration_failed"
+                            "HYBRID_BLOCK_ITERATIVE_ALGEBRA_FAILED"
+                            if args.task037b_h3_gate
+                            else (
+                                "algebraic_smoke_pass_physical_truncation_not_qualified"
+                                if task33_variant
+                                and algebraic_chain_pass
+                                and not task033_physical_truncation_allowed
+                                else (
+                                    "physical_integration_pass_mode_convergence_pending"
+                                    if integration_pass
+                                    else "physical_integration_failed"
+                                )
+                            )
                         )
                     )
                 )
@@ -2803,7 +3096,9 @@ def main() -> None:
                 "primary_solver_path": args.solver_path,
                 "operator_inventory": (
                     system.inventory
-                    if args.task037b_h3_gate and system is not None
+                    if (
+                        args.task037b_h3_gate or args.task037b_h4_gate
+                    ) and system is not None
                     else None
                 ),
                 "matrix_size": (
@@ -3119,6 +3414,25 @@ def main() -> None:
         if args.task037b_h3_gate:
             record["h3_telemetry"] = h3_telemetry
             record["qualification"]["task037b_h3_gate"] = True
+        if args.task037b_h4_gate:
+            record["h4_telemetry"] = h4_telemetry
+            record["qualification"].update(
+                {
+                    "task037b_h4_gate": True,
+                    "h4_disposition": (
+                        "diagnostic_complete"
+                        if integration_pass
+                        else "diagnostic_failed"
+                    ),
+                    "h4_12_channel_comparator": (
+                        "not_required_for_h4_bounded_diagnostic"
+                    ),
+                    "boundary": (
+                        "H4a exact S_m algebra and H4b G-only bounded diagnostic "
+                        "measured; H4 does not require a 12+12 comparator"
+                    ),
+                }
+            )
     except _ModalBasisCapacityStop:
         pass
     finally:
@@ -3126,6 +3440,10 @@ def main() -> None:
             h3_direct_comparison_solution.destroy()
         if h3_direct_comparison_system is not None:
             h3_direct_comparison_system.destroy()
+        if h4b_solve_result is not None:
+            h4b_solve_result.destroy()
+        if h4b_preconditioner is not None:
+            h4b_preconditioner.destroy()
         if h3_solve_result is not None:
             h3_solve_result.destroy()
         if h3_preconditioner is not None:

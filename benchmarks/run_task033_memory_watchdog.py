@@ -883,6 +883,7 @@ def _worker_command(
         args.task035c_p6_h10_gate
         or args.task037b_h1_gate
         or args.task037b_h3_gate
+        or args.task037b_h4_gate
     ):
         command.extend(
             (
@@ -894,7 +895,11 @@ def _worker_command(
                     else (
                         "--task037b-h1-gate"
                         if args.task037b_h1_gate
-                        else "--task037b-h3-gate"
+                        else (
+                            "--task037b-h3-gate"
+                            if args.task037b_h3_gate
+                            else "--task037b-h4-gate"
+                        )
                     )
                 ),
                 "--task035c-p6-preflight-authority",
@@ -1071,6 +1076,7 @@ def _hybrid_measurements(record: dict[str, Any]) -> dict[str, Any]:
     return {
         "h1_telemetry": record.get("h1_telemetry"),
         "h3_telemetry": record.get("h3_telemetry"),
+        "h4_telemetry": record.get("h4_telemetry"),
         "status": record.get("status"),
         "case": record.get("case"),
         "qep": {
@@ -1423,6 +1429,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Open only the frozen Task037b H3 exact block-LDU MPI8 path.",
     )
+    parser.add_argument(
+        "--task037b-h4-gate",
+        action="store_true",
+        help="Open only the frozen Task037b H4 bounded modal-block diagnostic path.",
+    )
     parser.add_argument("--task035c-p6-preflight-authority", type=Path)
     parser.add_argument("--task035c-p6-preflight-sha256")
     parser.add_argument(
@@ -1472,24 +1483,26 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         args.task035c_p6_h10_gate,
         args.task037b_h1_gate,
         args.task037b_h3_gate,
+        args.task037b_h4_gate,
     )
     if sum(bool(value) for value in selected_scoped_gates) > 1:
         parser.error(
-            "Task035c p6/h10, Task037b H1, and Task037b H3 gates are "
+            "Task035c p6/h10, Task037b H1, Task037b H3, and Task037b H4 gates are "
             "mutually exclusive."
         )
     if args.degree == 6 and not any(selected_scoped_gates):
         parser.error(
             "p6 is fail-closed; pass a fixed scoped Task035c, Task037b H1, "
-            "or Task037b H3 gate."
+            "or Task037b H3/H4 gate."
         )
     if (
         args.task035c_p6_h10_gate
         or args.task037b_h1_gate
         or args.task037b_h3_gate
+        or args.task037b_h4_gate
     ) and args.task034_workstation_gate:
         parser.error(
-            "--task034-workstation-gate and the Task035c/H1/H3 scoped gates "
+            "--task034-workstation-gate and the Task035c/H1/H3/H4 scoped gates "
             "are mutually exclusive."
         )
     if (
@@ -1498,6 +1511,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         and not args.task035c_p6_h10_gate
         and not args.task037b_h1_gate
         and not args.task037b_h3_gate
+        and not args.task037b_h4_gate
     ):
         parser.error(
             "MPI8/16/32 require --task034-workstation-gate or the scoped "
@@ -1553,6 +1567,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         args.task035c_p6_h10_gate
         or args.task037b_h1_gate
         or args.task037b_h3_gate
+        or args.task037b_h4_gate
     ):
         parser.error(
             "--full3d-reference-sha256 is reserved for a scoped "
@@ -1661,7 +1676,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "10/110 nm, S-polarized, full3d/scalar-CG, M120+M120, "
                 "candidate240, augmented, static-condensed MPI8 path."
             )
-    elif args.task037b_h3_gate:
+    elif args.task037b_h3_gate or args.task037b_h4_gate:
         scoped = bool(
             args.target == "hybrid"
             and args.degree == 6
@@ -1693,7 +1708,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         )
         if not scoped:
             parser.error(
-                "--task037b-h3-gate is restricted to the fixed WSL p6/h10, "
+                "--task037b-h3-gate/--task037b-h4-gate is restricted to the fixed WSL p6/h10, "
                 "10/110 nm, S-polarized, full3d/scalar-CG, M120+M120, "
                 "candidate240, block-ldu-exact, static-condensed MPI8 path."
             )
@@ -1702,7 +1717,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         or args.task035c_p6_preflight_sha256 is not None
     ):
         parser.error(
-            "Task035c/H1/H3 preflight authority arguments require a scoped gate."
+            "Task035c/H1/H3/H4 preflight authority arguments require a scoped gate."
         )
     if args.task033_same_sha_anchor_requalification:
         scoped = bool(
@@ -1948,6 +1963,7 @@ def run(args: argparse.Namespace) -> int:
             args.task035c_p6_h10_gate
             or args.task037b_h1_gate
             or args.task037b_h3_gate
+            or args.task037b_h4_gate
         ):
             authority_path = args.task035c_p6_preflight_authority
             if authority_path is not None and not authority_path.is_absolute():
@@ -2003,7 +2019,11 @@ def run(args: argparse.Namespace) -> int:
                     assembly_backend=args.stage4_full3d_assembly_backend,
                     mpi_size=args.mpi_size,
                 )
-                if args.task037b_h1_gate or args.task037b_h3_gate
+                if (
+                    args.task037b_h1_gate
+                    or args.task037b_h3_gate
+                    or args.task037b_h4_gate
+                )
                 else task035c_p6_h10_full3d_reference_gate(
                     full3d_reference,
                     expected_sha256=args.full3d_reference_sha256,
@@ -2018,6 +2038,7 @@ def run(args: argparse.Namespace) -> int:
                     args.task035c_p6_h10_gate
                     or args.task037b_h1_gate
                     or args.task037b_h3_gate
+                    or args.task037b_h4_gate
                 ),
                 "historical_preflight_readable": (authority_read_error is None),
                 "historical_preflight_gate": preflight_authority_gate["pass"],
@@ -2033,7 +2054,9 @@ def run(args: argparse.Namespace) -> int:
             launch_gate = {
                 "schema_version": (
                     (
-                        "task037b.h3-hybrid-launch-gate.v1"
+                        "task037b.h4-hybrid-launch-gate.v1"
+                        if args.task037b_h4_gate
+                        else "task037b.h3-hybrid-launch-gate.v1"
                         if args.task037b_h3_gate
                         else "task037b.h1-hybrid-launch-gate.v1"
                         if args.task037b_h1_gate
@@ -2044,7 +2067,9 @@ def run(args: argparse.Namespace) -> int:
                 "launch_eligible_recomputed": not failures,
                 "scope": (
                     (
-                        "task037b_h3_fixed_block_ldu_p6_h10"
+                        "task037b_h4_fixed_block_ldu_p6_h10"
+                        if args.task037b_h4_gate
+                        else "task037b_h3_fixed_block_ldu_p6_h10"
                         if args.task037b_h3_gate
                         else "task037b_h1_fixed_augmented_p6_h10"
                         if args.task037b_h1_gate
@@ -2383,6 +2408,7 @@ def run(args: argparse.Namespace) -> int:
             args.task035c_p6_h10_gate
             or args.task037b_h1_gate
             or args.task037b_h3_gate
+            or args.task037b_h4_gate
         )
         and core_read_error is not None
     ):
@@ -2447,6 +2473,7 @@ def run(args: argparse.Namespace) -> int:
         args.task035c_p6_h10_gate
         or args.task037b_h1_gate
         or args.task037b_h3_gate
+        or args.task037b_h4_gate
     ):
         args.high_order_core_evidence_sha256 = core_gate.get("evidence_sha256")
     args._no_swap_verified = True
@@ -2540,6 +2567,7 @@ def run(args: argparse.Namespace) -> int:
                     or args.task035c_p6_h10_gate
                     or args.task037b_h1_gate
                     or args.task037b_h3_gate
+                    or args.task037b_h4_gate
                 )
                 and process_running
                 and not authority_readable
@@ -2563,6 +2591,7 @@ def run(args: argparse.Namespace) -> int:
                     or args.task035c_p6_h10_gate
                     or args.task037b_h1_gate
                     or args.task037b_h3_gate
+                    or args.task037b_h4_gate
                 ),
                 process_running=process_running,
                 authority_readable=authority_readable,
@@ -2576,6 +2605,7 @@ def run(args: argparse.Namespace) -> int:
                     or args.task035c_p6_h10_gate
                     or args.task037b_h1_gate
                     or args.task037b_h3_gate
+                    or args.task037b_h4_gate
                 ),
                 process_running=process_running,
                 terminal_worker_drain=terminal_worker_drain,
