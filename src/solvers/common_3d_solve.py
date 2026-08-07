@@ -104,7 +104,9 @@ def _available_parallel_lu_solver_type() -> str | None:
     return None
 
 
-def _apply_petsc_option_dict(options: dict[str, Any], extra_options: dict[str, Any]) -> None:
+def _apply_petsc_option_dict(
+    options: dict[str, Any], extra_options: dict[str, Any]
+) -> None:
     """Merge user/PETSc options without dropping falsey but meaningful values."""
 
     for key, value in extra_options.items():
@@ -116,7 +118,9 @@ def _apply_petsc_option_dict(options: dict[str, Any], extra_options: dict[str, A
         options[clean_key] = "" if value is None else value
 
 
-def _apply_global_petsc_options(cfg: SimulationConfig3D, petsc_options: dict[str, Any]) -> None:
+def _apply_global_petsc_options(
+    cfg: SimulationConfig3D, petsc_options: dict[str, Any]
+) -> None:
     """Set PETSc process-global options such as -log_view.
 
     KSP options are also copied into ``petsc_options`` because the actual KSPs
@@ -167,7 +171,9 @@ def _prepare_direct_lu_options_for_comm(
         return (
             petsc_options,
             None,
-            (f"Unsupported PETSc direct solver profile '{profile}'. Use 'default', 'mumps_ooc', or 'mumps_blr'."),
+            (
+                f"Unsupported PETSc direct solver profile '{profile}'. Use 'default', 'mumps_ooc', or 'mumps_blr'."
+            ),
         )
 
     if cfg is not None:
@@ -309,8 +315,12 @@ def _cleanup_mumps_ooc_directory_on_success(
     directory = os.fspath(ooc_info["mumps_ooc_tmpdir"])
     if comm.rank == 0:
         result["mumps_ooc_cleanup_attempted"] = True
-        result["mumps_ooc_cleanup_removed_file_count"] = before.get("mumps_ooc_residual_file_count") or 0
-        result["mumps_ooc_cleanup_removed_file_bytes"] = before.get("mumps_ooc_residual_file_bytes") or 0
+        result["mumps_ooc_cleanup_removed_file_count"] = (
+            before.get("mumps_ooc_residual_file_count") or 0
+        )
+        result["mumps_ooc_cleanup_removed_file_bytes"] = (
+            before.get("mumps_ooc_residual_file_bytes") or 0
+        )
         try:
             if os.path.isdir(directory):
                 for entry in os.scandir(directory):
@@ -320,7 +330,9 @@ def _cleanup_mumps_ooc_directory_on_success(
                         os.remove(entry.path)
             result["mumps_ooc_cleanup_success"] = True
             if log is not None and result["mumps_ooc_cleanup_removed_file_bytes"]:
-                removed_mb = result["mumps_ooc_cleanup_removed_file_bytes"] / (1024.0 * 1024.0)
+                removed_mb = result["mumps_ooc_cleanup_removed_file_bytes"] / (
+                    1024.0 * 1024.0
+                )
                 log(
                     "MUMPS OOC cleanup after successful run: "
                     f"removed {result['mumps_ooc_cleanup_removed_file_count']} files, "
@@ -352,11 +364,15 @@ def _retain_mumps_ooc_directory_on_failure(
         "mumps_ooc_cleanup_removed_file_bytes": 0,
         "mumps_ooc_cleanup_error": None,
         "mumps_ooc_retained_on_failure": bool(
-            ooc_info and ooc_info.get("mumps_ooc_tmpdir") and (status.get("mumps_ooc_residual_file_count") or 0) > 0
+            ooc_info
+            and ooc_info.get("mumps_ooc_tmpdir")
+            and (status.get("mumps_ooc_residual_file_count") or 0) > 0
         ),
     }
     if log is not None and result["mumps_ooc_retained_on_failure"]:
-        retained_mb = (status.get("mumps_ooc_residual_file_bytes") or 0) / (1024.0 * 1024.0)
+        retained_mb = (status.get("mumps_ooc_residual_file_bytes") or 0) / (
+            1024.0 * 1024.0
+        )
         log(
             "MUMPS OOC files retained because the run did not complete successfully: "
             f"{ooc_info.get('mumps_ooc_tmpdir')} "
@@ -385,14 +401,14 @@ def _ksp_reason_name(reason: int) -> str:
 
 
 def _petsc_matrix_stats(A, *, assemble: bool = True) -> dict[str, Any]:
-    if assemble:
+    matrix_type = A.getType()
+    matrix_free = matrix_type in (
+        PETSc.Mat.Type.PYTHON,
+        PETSc.Mat.Type.SHELL,
+    )
+    if assemble and not matrix_free:
         A.assemble()
     rows, cols = A.getSize()
-    info = A.getInfo()
-    try:
-        global_info = A.getInfo(PETSc.Mat.InfoType.GLOBAL_SUM)
-    except Exception:
-        global_info = {}
     try:
         local_rows, local_cols = A.getLocalSize()
     except Exception:
@@ -409,6 +425,51 @@ def _petsc_matrix_stats(A, *, assemble: bool = True) -> dict[str, Any]:
         row_block_size, column_block_size = A.getBlockSizes()
     except Exception:
         row_block_size = column_block_size = None
+    if matrix_free:
+        not_applicable = "not_applicable"
+        return {
+            "matrix_rows": int(rows),
+            "matrix_cols": int(cols),
+            "matrix_nnz_used": not_applicable,
+            "matrix_nnz_allocated": not_applicable,
+            "matrix_nnz_unneeded": not_applicable,
+            "matrix_mallocs": not_applicable,
+            "matrix_type": matrix_type,
+            "matrix_free": True,
+            "matrix_local_rows": None if local_rows is None else int(local_rows),
+            "matrix_local_cols": None if local_cols is None else int(local_cols),
+            "matrix_row_ownership_range": [
+                None if row_ownership[0] is None else int(row_ownership[0]),
+                None if row_ownership[1] is None else int(row_ownership[1]),
+            ],
+            "matrix_column_ownership_range": [
+                None if column_ownership[0] is None else int(column_ownership[0]),
+                None if column_ownership[1] is None else int(column_ownership[1]),
+            ],
+            "matrix_row_block_size": (
+                None if row_block_size is None else int(row_block_size)
+            ),
+            "matrix_column_block_size": (
+                None if column_block_size is None else int(column_block_size)
+            ),
+            "matrix_average_nnz_per_row": not_applicable,
+            "matrix_maximum_nnz_per_row": not_applicable,
+            "matrix_average_allocated_nnz_per_row": not_applicable,
+            "matrix_memory_bytes": not_applicable,
+            "matrix_memory_mb": not_applicable,
+            "matrix_memory_estimate_bytes": not_applicable,
+            "matrix_memory_estimate_mb": not_applicable,
+            "matrix_norm_frobenius": not_applicable,
+            "matrix_norm_infinity": not_applicable,
+            "matrix_petsc_info": not_applicable,
+            "matrix_petsc_info_global_sum": not_applicable,
+            "matrix_stats_measurement_status": "metadata_only_matrix_free",
+        }
+    info = A.getInfo()
+    try:
+        global_info = A.getInfo(PETSc.Mat.InfoType.GLOBAL_SUM)
+    except Exception:
+        global_info = {}
     matrix_norm_frobenius = _petsc_object_norm(A, ("NORM_FROBENIUS", "FROBENIUS"))
     matrix_norm_infinity = _petsc_object_norm(A, ("NORM_INFINITY", "INFINITY"))
     maximum_nnz_per_row = None
@@ -437,15 +498,23 @@ def _petsc_matrix_stats(A, *, assemble: bool = True) -> dict[str, Any]:
         memory_estimate_bytes = float(nnz_used) * (16.0 + 8.0) + float(rows + 1) * 8.0
     if nnz_allocated is not None and rows > 0:
         average_allocated_nnz_per_row = float(nnz_allocated) / float(rows)
-    matrix_memory_bytes = float(info.get("memory")) if info.get("memory") is not None else None
+    matrix_memory_bytes = (
+        float(info.get("memory")) if info.get("memory") is not None else None
+    )
     return {
         "matrix_rows": int(rows),
         "matrix_cols": int(cols),
         "matrix_nnz_used": float(nnz_used) if nnz_used is not None else None,
-        "matrix_nnz_allocated": float(nnz_allocated) if nnz_allocated is not None else None,
-        "matrix_nnz_unneeded": (float(info["nz_unneeded"]) if info.get("nz_unneeded") is not None else None),
-        "matrix_mallocs": (float(info["mallocs"]) if info.get("mallocs") is not None else None),
-        "matrix_type": A.getType(),
+        "matrix_nnz_allocated": float(nnz_allocated)
+        if nnz_allocated is not None
+        else None,
+        "matrix_nnz_unneeded": (
+            float(info["nz_unneeded"]) if info.get("nz_unneeded") is not None else None
+        ),
+        "matrix_mallocs": (
+            float(info["mallocs"]) if info.get("mallocs") is not None else None
+        ),
+        "matrix_type": matrix_type,
         "matrix_local_rows": None if local_rows is None else int(local_rows),
         "matrix_local_cols": None if local_cols is None else int(local_cols),
         "matrix_row_ownership_range": [
@@ -456,13 +525,19 @@ def _petsc_matrix_stats(A, *, assemble: bool = True) -> dict[str, Any]:
             None if column_ownership[0] is None else int(column_ownership[0]),
             None if column_ownership[1] is None else int(column_ownership[1]),
         ],
-        "matrix_row_block_size": (None if row_block_size is None else int(row_block_size)),
-        "matrix_column_block_size": (None if column_block_size is None else int(column_block_size)),
+        "matrix_row_block_size": (
+            None if row_block_size is None else int(row_block_size)
+        ),
+        "matrix_column_block_size": (
+            None if column_block_size is None else int(column_block_size)
+        ),
         "matrix_average_nnz_per_row": average_nnz_per_row,
         "matrix_maximum_nnz_per_row": maximum_nnz_per_row,
         "matrix_average_allocated_nnz_per_row": average_allocated_nnz_per_row,
         "matrix_memory_bytes": matrix_memory_bytes,
-        "matrix_memory_mb": None if matrix_memory_bytes is None else matrix_memory_bytes / (1024.0 * 1024.0),
+        "matrix_memory_mb": None
+        if matrix_memory_bytes is None
+        else matrix_memory_bytes / (1024.0 * 1024.0),
         "matrix_memory_estimate_bytes": memory_estimate_bytes,
         "matrix_memory_estimate_mb": None
         if memory_estimate_bytes is None
@@ -470,7 +545,9 @@ def _petsc_matrix_stats(A, *, assemble: bool = True) -> dict[str, Any]:
         "matrix_norm_frobenius": matrix_norm_frobenius,
         "matrix_norm_infinity": matrix_norm_infinity,
         "matrix_petsc_info": {str(key): float(value) for key, value in info.items()},
-        "matrix_petsc_info_global_sum": {str(key): float(value) for key, value in global_info.items()},
+        "matrix_petsc_info_global_sum": {
+            str(key): float(value) for key, value in global_info.items()
+        },
     }
 
 
@@ -507,13 +584,17 @@ def _petsc_factor_inventory(ksp) -> dict[str, Any]:
         inventory["factor_solver_type"] = pc.getFactorSolverType()
         factor = pc.getFactorMatrix()
     except Exception as exc:
-        inventory["limitations"].append(f"factor_matrix_unavailable:{type(exc).__name__}")
+        inventory["limitations"].append(
+            f"factor_matrix_unavailable:{type(exc).__name__}"
+        )
         return inventory
     try:
         inventory["matrix_stats"] = _petsc_matrix_stats(factor, assemble=False)
         inventory["available"] = True
     except Exception as exc:
-        inventory["limitations"].append(f"factor_matrix_stats_unavailable:{type(exc).__name__}")
+        inventory["limitations"].append(
+            f"factor_matrix_stats_unavailable:{type(exc).__name__}"
+        )
 
     if inventory["factor_solver_type"] != "mumps":
         inventory["limitations"].append(
@@ -531,7 +612,9 @@ def _petsc_factor_inventory(ksp) -> dict[str, Any]:
             continue
     for index in range(1, 21):
         try:
-            inventory["mumps_raw_rinfog"][str(index)] = float(factor.getMumpsRinfog(index))
+            inventory["mumps_raw_rinfog"][str(index)] = float(
+                factor.getMumpsRinfog(index)
+            )
         except Exception:
             continue
     corrected_factor_nnz = _corrected_mumps_factor_nnz(
@@ -540,9 +623,7 @@ def _petsc_factor_inventory(ksp) -> dict[str, Any]:
     )
     if corrected_factor_nnz is not None:
         inventory["factor_nnz_corrected"] = corrected_factor_nnz
-        inventory["factor_nnz_corrected_source"] = (
-            "mumps_infog_9_negative_millions"
-        )
+        inventory["factor_nnz_corrected_source"] = "mumps_infog_9_negative_millions"
     inventory["limitations"].append(
         "MUMPS INFOG/RINFOG values are stored by raw index; only negative "
         "INFOG(9) receives the documented million-entry correction."
@@ -601,7 +682,9 @@ def _assembled_rhs_norm(L) -> float | None:
 
     try:
         vec = fem_petsc.assemble_vector(fem.form(L))
-        vec.ghostUpdate(addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE)
+        vec.ghostUpdate(
+            addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE
+        )
         return _petsc_object_norm(vec, ("NORM_2",))
     except Exception:
         return None
@@ -637,13 +720,21 @@ def _log_matrix_stats(matrix_stats: dict[str, Any], log) -> None:
     log(f"matrix cols = {matrix_stats['matrix_cols']}")
     log(f"matrix nnz used = {matrix_stats['matrix_nnz_used']}")
     log(f"matrix nnz allocated = {matrix_stats['matrix_nnz_allocated']}")
-    if matrix_stats["matrix_average_nnz_per_row"] is not None:
-        log(f"average nnz per row = {matrix_stats['matrix_average_nnz_per_row']:.2f}")
-    if matrix_stats["matrix_average_allocated_nnz_per_row"] is not None:
-        log(f"average allocated nnz per row = {matrix_stats['matrix_average_allocated_nnz_per_row']:.2f}")
+    average_nnz = matrix_stats["matrix_average_nnz_per_row"]
+    if isinstance(average_nnz, (int, float, np.number)):
+        log(f"average nnz per row = {average_nnz:.2f}")
+    elif average_nnz is not None:
+        log(f"average nnz per row = {average_nnz}")
+    average_allocated_nnz = matrix_stats["matrix_average_allocated_nnz_per_row"]
+    if isinstance(average_allocated_nnz, (int, float, np.number)):
+        log(f"average allocated nnz per row = {average_allocated_nnz:.2f}")
+    elif average_allocated_nnz is not None:
+        log(f"average allocated nnz per row = {average_allocated_nnz}")
     log(f"PETSc matrix memory bytes = {matrix_stats['matrix_memory_bytes']}")
     log(f"PETSc matrix memory MB = {matrix_stats['matrix_memory_mb']}")
-    log(f"estimated AIJ matrix memory bytes = {matrix_stats['matrix_memory_estimate_bytes']}")
+    log(
+        f"estimated AIJ matrix memory bytes = {matrix_stats['matrix_memory_estimate_bytes']}"
+    )
     log(f"estimated AIJ matrix memory MB = {matrix_stats['matrix_memory_estimate_mb']}")
     log(f"matrix Frobenius norm = {matrix_stats['matrix_norm_frobenius']}")
     log(f"matrix infinity norm = {matrix_stats['matrix_norm_infinity']}")
@@ -653,8 +744,7 @@ def _create_nedelec_space(msh, cfg: SimulationConfig3D):
     if cfg.nedelec_fixed_trace_enabled:
         if "hexahedron" not in str(msh.basix_cell()).lower():
             raise NotImplementedError(
-                "the qualified fixed-trace H(curl) element supports "
-                "hexahedra only"
+                "the qualified fixed-trace H(curl) element supports hexahedra only"
             )
         # Accessing the contract fails closed for every pair except the
         # reviewed global p5-trace / p6-interior exact-sequence space.

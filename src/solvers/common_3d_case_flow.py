@@ -14,6 +14,7 @@ from dolfinx import default_scalar_type, fem
 from dolfinx.fem import petsc as fem_petsc
 
 from ..common.config_3d import (
+    ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
     ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND,
     SimulationConfig3D,
     resolve_stage4_full3d_assembly_backend,
@@ -86,7 +87,14 @@ from .dtn_port_3d import (
 from .solve_vector_maxwell import _json_default
 
 
-def _log_case_header(cfg: SimulationConfig3D, log, petsc_options, selected_parallel_lu, disabled_reason):
+def _log_case_header(
+    cfg: SimulationConfig3D,
+    log,
+    petsc_options,
+    selected_parallel_lu,
+    disabled_reason,
+    linear_solve_method: str = "direct_lu",
+):
     k = cfg.wavevector
     p = cfg.polarization_vector
     dot_k_p = np.dot(k, p)
@@ -115,18 +123,24 @@ def _log_case_header(cfg: SimulationConfig3D, log, petsc_options, selected_paral
         "Stage-4 Full3D assembly backend requested = "
         f"{cfg.stage4_full3d_assembly_backend}"
     )
-    log("linear solve method = direct_lu")
-    log(f"PETSc direct solver profile requested = {cfg.petsc_direct_solver_profile_requested}")
+    log(f"linear solve method = {linear_solve_method}")
+    if linear_solve_method == "direct_lu":
+        log(
+            f"PETSc direct solver profile requested = {cfg.petsc_direct_solver_profile_requested}"
+        )
     log(f"divergence penalty = {cfg.divergence_penalty}")
     if selected_parallel_lu is not None:
         log(f"MPI direct factor solver selected = {selected_parallel_lu}")
     if disabled_reason is not None:
         log(f"WARNING: {disabled_reason}")
-    log(f"PETSc direct LU options = {petsc_options}")
+    if linear_solve_method == "direct_lu":
+        log(f"PETSc direct LU options = {petsc_options}")
     return dot_k_p
 
 
-def _matrix_nnz_ratio(after: dict[str, Any] | None, before: dict[str, Any] | None) -> float | None:
+def _matrix_nnz_ratio(
+    after: dict[str, Any] | None, before: dict[str, Any] | None
+) -> float | None:
     if after is None or before is None:
         return None
     after_nnz = after.get("matrix_nnz_used")
@@ -136,7 +150,9 @@ def _matrix_nnz_ratio(after: dict[str, Any] | None, before: dict[str, Any] | Non
     return float(after_nnz) / float(before_nnz)
 
 
-def _matrix_row_ratio(after: dict[str, Any] | None, before: dict[str, Any] | None) -> float | None:
+def _matrix_row_ratio(
+    after: dict[str, Any] | None, before: dict[str, Any] | None
+) -> float | None:
     if after is None or before is None:
         return None
     after_rows = after.get("matrix_rows")
@@ -167,7 +183,9 @@ def _merge_volume_closure_into_dtn_port_outputs(
     fields = {
         "A_volume_total": A_volume_total,
         "R_plus_T_plus_A_volume": float(R_total + T_total + A_volume_total),
-        "R_plus_T_plus_A_volume_dtn_port_modal": float(R_total + T_total + A_volume_total),
+        "R_plus_T_plus_A_volume_dtn_port_modal": float(
+            R_total + T_total + A_volume_total
+        ),
         "energy_closure_error_dtn_port_modal_volume": closure,
         "energy_closure_error_port_volume": closure,
         "A_port_balance_minus_A_volume_total": float(
@@ -183,19 +201,31 @@ def _merge_volume_closure_into_dtn_port_outputs(
             payload = json.loads(path.read_text(encoding="utf-8"))
             payload.update(fields)
             if filename == "port_power.json":
-                payload["R_total_dtn_port_modal"] = port_metrics.get("R_total_dtn_port_modal", R_total)
-                payload["T_total_dtn_port_modal"] = port_metrics.get("T_total_dtn_port_modal", T_total)
-                payload["R_plus_T_dtn_port_modal"] = port_metrics.get("R_plus_T_dtn_port_modal", R_total + T_total)
-                payload["A_balance_dtn_port_modal"] = port_metrics.get("A_balance_dtn_port_modal")
+                payload["R_total_dtn_port_modal"] = port_metrics.get(
+                    "R_total_dtn_port_modal", R_total
+                )
+                payload["T_total_dtn_port_modal"] = port_metrics.get(
+                    "T_total_dtn_port_modal", T_total
+                )
+                payload["R_plus_T_dtn_port_modal"] = port_metrics.get(
+                    "R_plus_T_dtn_port_modal", R_total + T_total
+                )
+                payload["A_balance_dtn_port_modal"] = port_metrics.get(
+                    "A_balance_dtn_port_modal"
+                )
             path.write_text(
-                json.dumps(payload, ensure_ascii=False, indent=2, default=_json_default),
+                json.dumps(
+                    payload, ensure_ascii=False, indent=2, default=_json_default
+                ),
                 encoding="utf-8",
             )
     comm.barrier()
     return fields
 
 
-def _assemble_unconstrained_matrix_stats(a, bcs, comm: MPI.Intracomm, log) -> dict[str, Any] | None:
+def _assemble_unconstrained_matrix_stats(
+    a, bcs, comm: MPI.Intracomm, log
+) -> dict[str, Any] | None:
     """Optionally assemble the pre-MPC matrix for density diagnostics.
 
     This doubles peak matrix memory for the diagnostic run, so it is controlled
@@ -266,9 +296,7 @@ def _parallel_lu_failure_summary(
         "max_rss_mb": _global_max_rss_mb(comm),
         "total_peak_rss_mb": _global_total_peak_rss_mb(comm),
     }
-    summary["sum_rank_historical_peaks_mb_upper_bound"] = summary[
-        "total_peak_rss_mb"
-    ]
+    summary["sum_rank_historical_peaks_mb_upper_bound"] = summary["total_peak_rss_mb"]
     summary["total_peak_rss_semantics"] = (
         "sum_rank_historical_peaks_upper_bound_not_simultaneous"
     )
@@ -276,6 +304,7 @@ def _parallel_lu_failure_summary(
     log(f"elapsed seconds = {elapsed:.3f}")
     _write_case_outputs(out_dir, summary, log_lines, comm)
     return summary
+
 
 def _direct_solve_failure_summary(
     *,
@@ -315,7 +344,9 @@ def _direct_solve_failure_summary(
         except Exception as exc:
             matrix_stats = {"diagnostic_error": str(exc)}
     if failure.A is not None and failure.b is not None and failure.x is not None:
-        linear_system_diagnostics = _linear_system_diagnostics(failure.A, failure.b, failure.x)
+        linear_system_diagnostics = _linear_system_diagnostics(
+            failure.A, failure.b, failure.x
+        )
     error_diagnostics = _petsc_error_diagnostics(failure.petsc_error, failure.ksp)
     reason = None
     reason_name = None
@@ -364,30 +395,42 @@ def _direct_solve_failure_summary(
         "stage4_full3d_assembly_backend_audit"
     )
     dtn_base_matrix_stats = dtn_solver_info.get("dtn_base_matrix_stats")
-    dtn_augmented_matrix_stats = dtn_solver_info.get("dtn_augmented_matrix_stats_after_finalize")
+    dtn_augmented_matrix_stats = dtn_solver_info.get(
+        "dtn_augmented_matrix_stats_after_finalize"
+    )
     dtn_auxiliary_block_stats = dtn_solver_info.get("dtn_auxiliary_block_stats")
     constraint_matrix_transform = {
         "uses_floquet_mpc": bool(floquet_data is not None),
-        "mpc_backend": None if floquet_data is None else "dolfinx_mpc low-level topological constraints",
+        "mpc_backend": None
+        if floquet_data is None
+        else "dolfinx_mpc low-level topological constraints",
         "explicit_chac_constructed": False,
         "chac_matrix_stats_before": None,
         "chac_matrix_stats_after": None,
         "unconstrained_matrix_stats": unconstrained_matrix_stats,
         "constrained_matrix_stats": matrix_stats,
-        "constrained_to_unconstrained_nnz_ratio": _matrix_nnz_ratio(matrix_stats, unconstrained_matrix_stats)
+        "constrained_to_unconstrained_nnz_ratio": _matrix_nnz_ratio(
+            matrix_stats, unconstrained_matrix_stats
+        )
         if isinstance(matrix_stats, dict)
         else None,
-        "constrained_to_unconstrained_row_ratio": _matrix_row_ratio(matrix_stats, unconstrained_matrix_stats)
+        "constrained_to_unconstrained_row_ratio": _matrix_row_ratio(
+            matrix_stats, unconstrained_matrix_stats
+        )
         if isinstance(matrix_stats, dict)
         else None,
         "dtn_auxiliary_augmented_matrix": bool(solve_stage4_dtn_port),
         "dtn_base_matrix_stats": dtn_base_matrix_stats,
         "dtn_augmented_matrix_stats_after_finalize": dtn_augmented_matrix_stats,
         "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
-        "dtn_augmented_to_base_nnz_ratio": _matrix_nnz_ratio(matrix_stats, dtn_base_matrix_stats)
+        "dtn_augmented_to_base_nnz_ratio": _matrix_nnz_ratio(
+            matrix_stats, dtn_base_matrix_stats
+        )
         if isinstance(matrix_stats, dict)
         else None,
-        "dtn_augmented_to_base_row_ratio": _matrix_row_ratio(matrix_stats, dtn_base_matrix_stats)
+        "dtn_augmented_to_base_row_ratio": _matrix_row_ratio(
+            matrix_stats, dtn_base_matrix_stats
+        )
         if isinstance(matrix_stats, dict)
         else None,
     }
@@ -419,23 +462,19 @@ def _direct_solve_failure_summary(
         "dolfinx_default_scalar_type": str(default_scalar_type),
         "solver_backend": failure.solver_backend or "3D Maxwell direct LU path",
         "field_formulation": field_formulation,
-        "stage4_boundary_model": cfg.stage4_boundary_model.lower() if cfg.stage_case.startswith("stage4_") else None,
+        "stage4_boundary_model": cfg.stage4_boundary_model.lower()
+        if cfg.stage_case.startswith("stage4_")
+        else None,
         "stage4_dtn_port_enabled": bool(solve_stage4_dtn_port),
-        "stage4_full3d_assembly_backend_requested": (
-            dtn_assembly_backend_requested
-        ),
-        "stage4_full3d_assembly_backend_actual": (
-            dtn_assembly_backend_actual
-        ),
+        "stage4_full3d_assembly_backend_requested": (dtn_assembly_backend_requested),
+        "stage4_full3d_assembly_backend_actual": (dtn_assembly_backend_actual),
         "stage4_full3d_assembly_backend_selection_source": (
             dtn_assembly_backend_selection_source
         ),
         "stage4_full3d_assembly_backend_qualification": (
             dtn_assembly_backend_qualification
         ),
-        "stage4_full3d_assembly_backend_audit": (
-            dtn_assembly_backend_audit
-        ),
+        "stage4_full3d_assembly_backend_audit": (dtn_assembly_backend_audit),
         "stage4_dtn_num_auxiliary_dofs": dtn_solver_info.get("num_auxiliary_dofs"),
         "num_active_exact_sequence_fe_dofs": dtn_solver_info.get(
             "num_active_exact_sequence_fe_dofs"
@@ -443,9 +482,7 @@ def _direct_solve_failure_summary(
         "num_storage_carrier_fe_dofs": dtn_solver_info.get(
             "num_storage_carrier_fe_dofs"
         ),
-        "num_independent_trace_rows": dtn_solver_info.get(
-            "num_independent_trace_rows"
-        ),
+        "num_independent_trace_rows": dtn_solver_info.get("num_independent_trace_rows"),
         "num_augmented_rows": dtn_solver_info.get("num_augmented_rows"),
         "dof_row_semantics": dtn_solver_info.get("dof_row_semantics"),
         "stage4_dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
@@ -474,10 +511,18 @@ def _direct_solve_failure_summary(
         **linear_system_diagnostics,
         "use_floquet_xy": cfg.use_floquet_xy,
         "use_pml": cfg.use_pml,
-        "floquet_num_constraints": None if floquet_data is None else floquet_data.num_constraints,
-        "floquet_constraint_mode_resolved": None if floquet_data is None else floquet_data.constraint_mode_resolved,
-        "floquet_raw_map_nnz": None if floquet_data is None else floquet_data.raw_map_nnz,
-        "floquet_max_masters_per_slave": None if floquet_data is None else floquet_data.max_masters_per_slave,
+        "floquet_num_constraints": None
+        if floquet_data is None
+        else floquet_data.num_constraints,
+        "floquet_constraint_mode_resolved": None
+        if floquet_data is None
+        else floquet_data.constraint_mode_resolved,
+        "floquet_raw_map_nnz": None
+        if floquet_data is None
+        else floquet_data.raw_map_nnz,
+        "floquet_max_masters_per_slave": None
+        if floquet_data is None
+        else floquet_data.max_masters_per_slave,
         "floquet_estimated_constraint_memory_mb": None
         if floquet_data is None
         else floquet_data.estimated_constraint_memory_mb,
@@ -514,9 +559,7 @@ def _direct_solve_failure_summary(
         "max_rss_mb": _global_max_rss_mb(comm),
         "total_peak_rss_mb": _global_total_peak_rss_mb(comm),
     }
-    summary["sum_rank_historical_peaks_mb_upper_bound"] = summary[
-        "total_peak_rss_mb"
-    ]
+    summary["sum_rank_historical_peaks_mb_upper_bound"] = summary["total_peak_rss_mb"]
     summary["total_peak_rss_semantics"] = (
         "sum_rank_historical_peaks_upper_bound_not_simultaneous"
     )
@@ -539,9 +582,7 @@ def _direct_solve_failure_summary(
             "stage4_full3d_assembly_backend_requested": (
                 dtn_assembly_backend_requested
             ),
-            "stage4_full3d_assembly_backend_actual": (
-                dtn_assembly_backend_actual
-            ),
+            "stage4_full3d_assembly_backend_actual": (dtn_assembly_backend_actual),
             "stage4_full3d_assembly_backend_selection_source": (
                 dtn_assembly_backend_selection_source
             ),
@@ -577,17 +618,21 @@ def _build_floquet_and_boundary_conditions(
     if cfg.use_floquet_xy:
         floquet_data = build_double_floquet_mpc(V, mesh_data, cfg, log)
         timings.update(floquet_data.timings_seconds)
-    _finish_timed_stage(comm, timings, "floquet_constraint_setup_outer", stage_start, log)
+    _finish_timed_stage(
+        comm, timings, "floquet_constraint_setup_outer", stage_start, log
+    )
 
     stage_start = _start_timed_stage(comm)
     if cfg.use_floquet_xy:
         if apply_strong_boundary_bc:
             boundary_facets = _z_boundary_facets(mesh_data, cfg)
             raw_boundary_dofs = fem.locate_dofs_topological(V, fdim, boundary_facets)
-            boundary_dofs = np.setdiff1d(raw_boundary_dofs, floquet_data.local_slave_dofs, assume_unique=False).astype(
-                np.int32
+            boundary_dofs = np.setdiff1d(
+                raw_boundary_dofs, floquet_data.local_slave_dofs, assume_unique=False
+            ).astype(np.int32)
+            raw_boundary_dofs_global = int(
+                comm.allreduce(len(raw_boundary_dofs), op=MPI.SUM)
             )
-            raw_boundary_dofs_global = int(comm.allreduce(len(raw_boundary_dofs), op=MPI.SUM))
             boundary_dofs_global = int(comm.allreduce(len(boundary_dofs), op=MPI.SUM))
             log(
                 "Dirichlet H(curl) z-boundary dofs before slave removal "
@@ -603,7 +648,9 @@ def _build_floquet_and_boundary_conditions(
     bcs = [fem.dirichletbc(E_bc, boundary_dofs)] if apply_strong_boundary_bc else []
     _finish_timed_stage(comm, timings, "boundary_condition_setup", stage_start, log)
     log(f"strong Dirichlet H(curl) boundary enabled = {apply_strong_boundary_bc}")
-    log(f"Dirichlet H(curl) boundary dofs local/global = {len(boundary_dofs)} / {boundary_dofs_global}")
+    log(
+        f"Dirichlet H(curl) boundary dofs local/global = {len(boundary_dofs)} / {boundary_dofs_global}"
+    )
     return (
         floquet_data,
         bcs,
@@ -679,7 +726,9 @@ def _solve_standard_linear_problem(
     try:
         E = problem.solve()
     except PETSc.Error as exc:
-        _finish_timed_stage(comm, timings, "linear_problem_solve_failed", stage_start, log)
+        _finish_timed_stage(
+            comm, timings, "linear_problem_solve_failed", stage_start, log
+        )
         raise DirectSolveFailure(
             "PETSc direct LU failed during KSPSolve.",
             failure_stage="direct_lu_factorization_and_solve",
@@ -718,10 +767,12 @@ def run_prepared_3d_case_flow(
     apply_strong_boundary_bc: bool = True,
     run_diffraction_postprocess: bool = False,
     solution_observer: Callable[..., None] | None = None,
-    variable_p_live_observer: (
-        Callable[[Stage4VariablePLiveView], None] | None
-    ) = None,
+    linear_solver_port=None,
+    variable_p_live_observer: (Callable[[Stage4VariablePLiveView], None] | None) = None,
     variable_p_retain_local_schur_for_research: bool = False,
+    static_retain_local_schur_for_matrix_free: bool = False,
+    matrix_free_dtn: bool = False,
+    matrix_free_dtn_probe: bool = False,
     mesh_data_override: AirBox3DMesh | None = None,
 ) -> dict[str, object]:
     """Run one explicit 3D Maxwell case after the stage file chooses the recipe.
@@ -742,23 +793,27 @@ def run_prepared_3d_case_flow(
     """
 
     comm = (
-        MPI.COMM_WORLD
-        if mesh_data_override is None
-        else mesh_data_override.mesh.comm
+        MPI.COMM_WORLD if mesh_data_override is None else mesh_data_override.mesh.comm
     )
     live_observer_flags = comm.allgather(
         (
             variable_p_live_observer is not None,
             bool(variable_p_retain_local_schur_for_research),
+            linear_solver_port is not None,
+            bool(static_retain_local_schur_for_matrix_free),
+            bool(matrix_free_dtn),
+            bool(matrix_free_dtn_probe),
         )
     )
     if len(set(live_observer_flags)) != 1:
         raise ValueError(
-            "the variable-p live observer must be enabled on every MPI rank "
-            "and research Schur retention flags must match"
+            "variable-p observer, Schur retention, external solver port, "
+            "and matrix-free flags must match on every MPI rank"
         )
     if cfg.stage_case != expected_stage_case:
-        raise ValueError(f"This solver accepts only stage_case={expected_stage_case!r}.")
+        raise ValueError(
+            f"This solver accepts only stage_case={expected_stage_case!r}."
+        )
     if not np.issubdtype(default_scalar_type, np.complexfloating):
         raise RuntimeError("The 3D Maxwell solver requires complex-mode DOLFINx/PETSc.")
     if variable_p_live_observer is not None:
@@ -771,14 +826,10 @@ def run_prepared_3d_case_flow(
                 )
             if not solve_stage4_dtn_port:
                 raise ValueError(
-                    "the variable-p live observer requires the Stage-4 "
-                    "DtN flow"
+                    "the variable-p live observer requires the Stage-4 DtN flow"
                 )
             backend = resolve_stage4_full3d_assembly_backend(cfg)
-            if (
-                backend["actual"]
-                != ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND
-            ):
+            if backend["actual"] != ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND:
                 raise ValueError(
                     "the variable-p live observer requires the exact-"
                     "sequence assembly-time variable-p backend"
@@ -805,9 +856,7 @@ def run_prepared_3d_case_flow(
                 + "; ".join(collective_validation_errors)
             )
     elif variable_p_retain_local_schur_for_research:
-        raise ValueError(
-            "research Schur retention requires a variable-p live observer"
-        )
+        raise ValueError("research Schur retention requires a variable-p live observer")
 
     out_dir.mkdir(parents=True, exist_ok=True)
     log_lines: list[str] = []
@@ -829,15 +878,23 @@ def run_prepared_3d_case_flow(
     )
 
     stage_start = _start_timed_stage(comm)
-    if cfg.use_pml and (cfg.pml_top_thickness <= 0.0 or cfg.pml_bottom_thickness <= 0.0):
-        raise ValueError("3D PML cases require positive pml_top_thickness and pml_bottom_thickness.")
+    if cfg.use_pml and (
+        cfg.pml_top_thickness <= 0.0 or cfg.pml_bottom_thickness <= 0.0
+    ):
+        raise ValueError(
+            "3D PML cases require positive pml_top_thickness and pml_bottom_thickness."
+        )
     if solve_stage4_dtn_port:
         if cfg.use_pml:
             raise ValueError("stage4_boundary_model='dtn_port' requires use_pml=False.")
         if not cfg.use_floquet_xy:
-            raise ValueError("stage4_boundary_model='dtn_port' requires use_floquet_xy=True.")
+            raise ValueError(
+                "stage4_boundary_model='dtn_port' requires use_floquet_xy=True."
+            )
         if cfg.stage4_dtn_assembly.lower() != "auxiliary":
-            raise NotImplementedError("Stage-4 3D DtN v1 supports only stage4_dtn_assembly='auxiliary'.")
+            raise NotImplementedError(
+                "Stage-4 3D DtN v1 supports only stage4_dtn_assembly='auxiliary'."
+            )
     if (
         cfg.matrix_diagnostics_assemble_only
         and cfg.matrix_diagnostics_factorization_only
@@ -849,11 +906,49 @@ def run_prepared_3d_case_flow(
         raise NotImplementedError(
             "factorization-only diagnostics currently require the Stage-4 auxiliary DtN path."
         )
+    if linear_solver_port is not None and (
+        not solve_stage4_dtn_port
+        or cfg.matrix_diagnostics_assemble_only
+        or cfg.matrix_diagnostics_factorization_only
+        or resolve_stage4_full3d_assembly_backend(cfg)["actual"]
+        != ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+    ):
+        raise ValueError(
+            "external linear-solver port requires a complete "
+            "assembly_time_static_condensed Stage-4 DtN solve"
+        )
     _finish_timed_stage(comm, timings, "config_validation", stage_start, log)
-    _write_progress_event(out_dir, comm, stage="after_config", status="end", started=started)
+    _write_progress_event(
+        out_dir, comm, stage="after_config", status="end", started=started
+    )
 
-    petsc_options, selected_parallel_lu, disabled_reason = _prepare_direct_lu_options_for_comm(comm, cfg)
-    dot_k_p = _log_case_header(cfg, log, petsc_options, selected_parallel_lu, disabled_reason)
+    if linear_solver_port is None:
+        petsc_options, selected_parallel_lu, disabled_reason = (
+            _prepare_direct_lu_options_for_comm(comm, cfg)
+        )
+    else:
+        petsc_options = {}
+        selected_parallel_lu = None
+        disabled_reason = None
+    dot_k_p = _log_case_header(
+        cfg,
+        log,
+        petsc_options,
+        selected_parallel_lu,
+        disabled_reason,
+        linear_solve_method=(
+            "external_linear_solver_port"
+            if linear_solver_port is not None
+            else "direct_lu"
+        ),
+    )
+    if linear_solver_port is not None:
+        ooc_info = {
+            "mumps_ooc_enabled": False,
+            "mumps_ooc_tmpdir": None,
+            "mumps_ooc_prefix": None,
+            "status": "not_run_external_linear_solver_port",
+        }
     _write_progress_event(
         out_dir,
         comm,
@@ -867,7 +962,11 @@ def run_prepared_3d_case_flow(
             "stage4_full3d_assembly_backend_requested": (
                 cfg.stage4_full3d_assembly_backend
             ),
-            "solver_profile": cfg.petsc_direct_solver_profile_requested,
+            "solver_profile": (
+                None
+                if linear_solver_port is not None
+                else cfg.petsc_direct_solver_profile_requested
+            ),
             "matrix_diagnostics_assemble_only": cfg.matrix_diagnostics_assemble_only,
             "matrix_diagnostics_factorization_only": (
                 cfg.matrix_diagnostics_factorization_only
@@ -888,7 +987,8 @@ def run_prepared_3d_case_flow(
             disabled_reason,
             dot_k_p,
         )
-    ooc_info = _prepare_mumps_ooc_runtime(cfg, out_dir, petsc_options, comm, log)
+    if linear_solver_port is None:
+        ooc_info = _prepare_mumps_ooc_runtime(cfg, out_dir, petsc_options, comm, log)
     _write_progress_event(
         out_dir,
         comm,
@@ -933,17 +1033,11 @@ def run_prepared_3d_case_flow(
         mesh_data = mesh_data_override
         log("mesh source = explicit audited mesh_data_override")
     local_h_context = getattr(mesh_data, "local_h_context", None)
-    if (
-        cfg.stage4_local_h_refinement_plan is None
-        and local_h_context is not None
-    ):
+    if cfg.stage4_local_h_refinement_plan is None and local_h_context is not None:
         raise ValueError(
             "a local-h mesh override requires stage4_local_h_refinement_plan"
         )
-    if (
-        cfg.stage4_local_h_refinement_plan is not None
-        and local_h_context is None
-    ):
+    if cfg.stage4_local_h_refinement_plan is not None and local_h_context is None:
         raise ValueError(
             "stage4_local_h_refinement_plan did not produce a local-h context"
         )
@@ -971,7 +1065,9 @@ def run_prepared_3d_case_flow(
     if mesh_data.mesh_axis_cell_stats:
         log(f"mesh axis cell stats = {mesh_data.mesh_axis_cell_stats}")
     if mesh_data.material_plane_alignment.get("all_aligned") is False:
-        log(f"WARNING: mesh material plane alignment = {mesh_data.material_plane_alignment}")
+        log(
+            f"WARNING: mesh material plane alignment = {mesh_data.material_plane_alignment}"
+        )
     for warning in mesh_data.z_alignment_warnings:
         log(f"WARNING: {warning}")
 
@@ -980,18 +1076,13 @@ def run_prepared_3d_case_flow(
     num_cells = msh.topology.index_map(tdim).size_global
     domain_tag_volumes = _cell_tag_volumes(msh, mesh_data, cfg)
     variable_p_mesh_identity = None
-    if (
-        cfg.stage4_full3d_assembly_backend
-        == "assembly_time_variable_p_condensed"
-    ):
+    if cfg.stage4_full3d_assembly_backend == "assembly_time_variable_p_condensed":
         from ..adaptivity.high_order_resource_audit import (
             partition_independent_linear_mesh_identity,
         )
 
         stage_start = _start_timed_stage(comm)
-        variable_p_mesh_identity = (
-            partition_independent_linear_mesh_identity(mesh_data)
-        )
+        variable_p_mesh_identity = partition_independent_linear_mesh_identity(mesh_data)
         _finish_timed_stage(
             comm,
             timings,
@@ -1000,13 +1091,13 @@ def run_prepared_3d_case_flow(
             log,
         )
     local_h_mesh_audit = (
-        None
-        if local_h_context is None
-        else dict(local_h_context.audit)
+        None if local_h_context is None else dict(local_h_context.audit)
     )
 
     stage_start = _start_timed_stage(comm)
-    _write_progress_event(out_dir, comm, stage="function_space_setup", status="begin", started=started)
+    _write_progress_event(
+        out_dir, comm, stage="function_space_setup", status="begin", started=started
+    )
     V = _create_nedelec_space(msh, cfg)
     num_dofs = V.dofmap.index_map.size_global * V.dofmap.index_map_bs
     _finish_timed_stage(comm, timings, "function_space_setup", stage_start, log)
@@ -1042,13 +1133,20 @@ def run_prepared_3d_case_flow(
     rhs_source_norm = None
     if solve_incident_scattered:
         E_source_for_rhs = incident_air_plane_wave_field(V, cfg)
-        rhs_source_norm = _incident_scattered_rhs_source_norm(msh, mesh_data, cfg, E_source_for_rhs)
+        rhs_source_norm = _incident_scattered_rhs_source_norm(
+            msh, mesh_data, cfg, E_source_for_rhs
+        )
     elif solve_layered_scattered:
         E_source_for_rhs = stage4_layered_background_field(V, cfg)
-        rhs_source_norm = _layered_scattered_rhs_source_norm(msh, mesh_data, cfg, E_source_for_rhs)
+        rhs_source_norm = _layered_scattered_rhs_source_norm(
+            msh, mesh_data, cfg, E_source_for_rhs
+        )
 
     solve_with_zero_bc = (
-        solve_reference_correction or solve_incident_scattered or solve_layered_scattered or solve_stage4_dtn_port
+        solve_reference_correction
+        or solve_incident_scattered
+        or solve_layered_scattered
+        or solve_stage4_dtn_port
     )
     E_exact = None if solve_with_zero_bc else plane_wave_electric_field(V, cfg)
     E_bc = fem.Function(V, name="E_zero_bc") if solve_with_zero_bc else E_exact
@@ -1071,7 +1169,9 @@ def run_prepared_3d_case_flow(
         dofs=num_dofs,
     )
     floquet_data, bcs, raw_boundary_dofs_global, boundary_dofs_global, boundary_dofs = (
-        _build_floquet_and_boundary_conditions(cfg, mesh_data, V, E_bc, apply_strong_boundary_bc, timings, comm, log)
+        _build_floquet_and_boundary_conditions(
+            cfg, mesh_data, V, E_bc, apply_strong_boundary_bc, timings, comm, log
+        )
     )
     _write_progress_event(
         out_dir,
@@ -1096,19 +1196,27 @@ def run_prepared_3d_case_flow(
     if solve_incident_scattered:
         log("incident-scattered RHS sign = +k0^2*(eps_sub - eps_air)*inner(E_inc, v)")
         log("incident-scattered RHS source region = physical_substrate")
-        log(f"incident-scattered RHS source tag volumes = {{'substrate': {domain_tag_volumes['substrate']:.6e}}}")
+        log(
+            f"incident-scattered RHS source tag volumes = {{'substrate': {domain_tag_volumes['substrate']:.6e}}}"
+        )
         log(f"incident-scattered RHS source norm = {rhs_source_norm:.6e}")
     if solve_layered_scattered:
         log("layered-scattered RHS sign = +k0^2*(eps_true - eps_bg)*inner(E_bg, v)")
         log("layered-scattered RHS source region = physical_grating")
-        log(f"layered-scattered RHS source tag volumes = {{'grating': {domain_tag_volumes['grating']:.6e}}}")
-        log(f"layered-scattered RHS source contrast = {cfg.eps_grating - cfg.grating_background_eps!r}")
+        log(
+            f"layered-scattered RHS source tag volumes = {{'grating': {domain_tag_volumes['grating']:.6e}}}"
+        )
+        log(
+            f"layered-scattered RHS source contrast = {cfg.eps_grating - cfg.grating_background_eps!r}"
+        )
         log(f"layered-scattered RHS source norm = {rhs_source_norm:.6e}")
     if solve_stage4_dtn_port:
         log("stage4 boundary model = dtn_port")
         log(f"stage4 DtN order policy = {cfg.stage4_dtn_order_policy}")
         log(f"stage4 DtN assembly = {cfg.stage4_dtn_assembly}")
-        log("stage4 DtN field formulation = total field with top incident port and outgoing top/bottom modes")
+        log(
+            "stage4 DtN field formulation = total field with top incident port and outgoing top/bottom modes"
+        )
 
     stage_start = _start_timed_stage(comm)
     _write_progress_event(
@@ -1141,8 +1249,13 @@ def run_prepared_3d_case_flow(
     unconstrained_matrix_stats = None
     if cfg.matrix_diagnostics_assemble_unconstrained:
         log("assembling unconstrained matrix for diagnostic nnz comparison")
-        unconstrained_matrix_stats = _assemble_unconstrained_matrix_stats(a, problem_bcs, comm, log)
-        if unconstrained_matrix_stats is not None and "diagnostic_error" not in unconstrained_matrix_stats:
+        unconstrained_matrix_stats = _assemble_unconstrained_matrix_stats(
+            a, problem_bcs, comm, log
+        )
+        if (
+            unconstrained_matrix_stats is not None
+            and "diagnostic_error" not in unconstrained_matrix_stats
+        ):
             log("unconstrained matrix diagnostic stats:")
             _log_matrix_stats(unconstrained_matrix_stats, log)
     _finish_timed_stage(comm, timings, "variational_form_setup", stage_start, log)
@@ -1174,10 +1287,16 @@ def run_prepared_3d_case_flow(
                 out_dir=out_dir,
                 log=log,
                 started=started,
+                linear_solver_port=linear_solver_port,
                 variable_p_live_observer=variable_p_live_observer,
                 variable_p_retain_local_schur_for_research=(
                     variable_p_retain_local_schur_for_research
                 ),
+                static_retain_local_schur_for_matrix_free=(
+                    static_retain_local_schur_for_matrix_free
+                ),
+                matrix_free_dtn=matrix_free_dtn,
+                matrix_free_dtn_probe=matrix_free_dtn_probe,
             )
         except DirectSolveFailure as failure:
             _finish_timed_stage(
@@ -1212,7 +1331,9 @@ def run_prepared_3d_case_flow(
                 boundary_dofs_global=boundary_dofs_global,
                 ooc_info=ooc_info,
             )
-        _finish_timed_stage(comm, timings, "stage4_dtn_port_assembly_and_solve", stage_start, log)
+        _finish_timed_stage(
+            comm, timings, "stage4_dtn_port_assembly_and_solve", stage_start, log
+        )
         dtn_backend_progress = {
             key: dtn_result["solver_info"].get(key)
             for key in (
@@ -1281,19 +1402,31 @@ def run_prepared_3d_case_flow(
                 ooc_info=ooc_info,
             )
 
-    E_sca = E if (solve_incident_scattered or solve_layered_scattered) else None
+    dtn_component_only = bool(
+        dtn_result is not None
+        and (dtn_result.get("solver_info", {}) or {}).get(
+            "matrix_free_dtn_component_only"
+        )
+    )
+    E_sca = (
+        None
+        if dtn_component_only
+        else E
+        if (solve_incident_scattered or solve_layered_scattered)
+        else None
+    )
     E_incident_solution = None
     E_background_solution = None
-    E_total = E
-    if solve_reference_correction:
+    E_total = None if dtn_component_only else E
+    if not dtn_component_only and solve_reference_correction:
         _add_reference_field_to_solution(E, cfg)
-    elif solve_incident_scattered:
+    elif not dtn_component_only and solve_incident_scattered:
         E_incident_solution = incident_air_plane_wave_field(E.function_space, cfg)
         E_total = _combine_fields(E_sca, E_incident_solution, "E_total")
-    elif solve_layered_scattered:
+    elif not dtn_component_only and solve_layered_scattered:
         E_background_solution = stage4_layered_background_field(E.function_space, cfg)
         E_total = _combine_fields(E_sca, E_background_solution, "E_total")
-    elif solve_stage4_dtn_port:
+    elif not dtn_component_only and solve_stage4_dtn_port:
         E_incident_solution = incident_air_plane_wave_field(E.function_space, cfg)
 
     stage_start = _start_timed_stage(comm)
@@ -1303,25 +1436,34 @@ def run_prepared_3d_case_flow(
     system_ksp = dtn_result["ksp"] if solve_stage4_dtn_port else problem.solver
     assemble_only_result = bool(
         cfg.matrix_diagnostics_assemble_only
-        or (dtn_result is not None and (dtn_result.get("solver_info", {}) or {}).get("assemble_only"))
+        or (
+            dtn_result is not None
+            and (dtn_result.get("solver_info", {}) or {}).get("assemble_only")
+        )
     )
     factorization_only_result = bool(
         cfg.matrix_diagnostics_factorization_only
         or (
             dtn_result is not None
-            and (dtn_result.get("solver_info", {}) or {}).get(
-                "factorization_only"
-            )
+            and (dtn_result.get("solver_info", {}) or {}).get("factorization_only")
         )
     )
-    diagnostic_only_result = assemble_only_result or factorization_only_result
-    matrix_stats = _petsc_matrix_stats(system_A)
-    _finish_timed_stage(comm, timings, "matrix_stats", stage_start, log)
-    _log_matrix_stats(matrix_stats, log)
+    diagnostic_only_result = (
+        assemble_only_result or factorization_only_result or dtn_component_only
+    )
     dtn_solver_info = None if dtn_result is None else dtn_result.get("solver_info", {})
-    dtn_base_matrix_stats = None if dtn_solver_info is None else dtn_solver_info.get("dtn_base_matrix_stats")
+    external_solver_snapshot = bool(
+        dtn_solver_info and dtn_solver_info.get("external_linear_solver_port")
+    )
+    dtn_base_matrix_stats = (
+        None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("dtn_base_matrix_stats")
+    )
     dtn_augmented_matrix_stats = (
-        None if dtn_solver_info is None else dtn_solver_info.get("dtn_augmented_matrix_stats_after_finalize")
+        None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("dtn_augmented_matrix_stats_after_finalize")
     )
     dtn_condensed_matrix_stats = (
         None
@@ -1331,34 +1473,55 @@ def run_prepared_3d_case_flow(
     dtn_floquet_independent_matrix_stats = (
         None
         if dtn_solver_info is None
-        else dtn_solver_info.get(
-            "dtn_floquet_independent_matrix_stats"
-        )
+        else dtn_solver_info.get("dtn_floquet_independent_matrix_stats")
     )
-    dtn_auxiliary_block_stats = None if dtn_solver_info is None else dtn_solver_info.get("dtn_auxiliary_block_stats")
+    dtn_auxiliary_block_stats = (
+        None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("dtn_auxiliary_block_stats")
+    )
+    matrix_stats = (
+        dtn_augmented_matrix_stats
+        if system_A is None
+        or (
+            dtn_solver_info is not None
+            and dtn_solver_info.get("global_A_materialized") is False
+        )
+        else _petsc_matrix_stats(system_A)
+    )
+    _finish_timed_stage(comm, timings, "matrix_stats", stage_start, log)
+    _log_matrix_stats(matrix_stats, log)
     explicit_chac_constructed = False
     chac_before_stats = None
     chac_after_stats = None
     constraint_matrix_transform = {
         "uses_floquet_mpc": bool(floquet_data is not None),
-        "mpc_backend": None if floquet_data is None else "dolfinx_mpc low-level topological constraints",
+        "mpc_backend": None
+        if floquet_data is None
+        else "dolfinx_mpc low-level topological constraints",
         "explicit_chac_constructed": explicit_chac_constructed,
         "chac_matrix_stats_before": chac_before_stats,
         "chac_matrix_stats_after": chac_after_stats,
         "unconstrained_matrix_stats": unconstrained_matrix_stats,
         "constrained_matrix_stats": matrix_stats,
-        "constrained_to_unconstrained_nnz_ratio": _matrix_nnz_ratio(matrix_stats, unconstrained_matrix_stats),
-        "constrained_to_unconstrained_row_ratio": _matrix_row_ratio(matrix_stats, unconstrained_matrix_stats),
+        "constrained_to_unconstrained_nnz_ratio": _matrix_nnz_ratio(
+            matrix_stats, unconstrained_matrix_stats
+        ),
+        "constrained_to_unconstrained_row_ratio": _matrix_row_ratio(
+            matrix_stats, unconstrained_matrix_stats
+        ),
         "dtn_auxiliary_augmented_matrix": bool(solve_stage4_dtn_port),
         "dtn_base_matrix_stats": dtn_base_matrix_stats,
         "dtn_augmented_matrix_stats_after_finalize": dtn_augmented_matrix_stats,
         "dtn_condensed_matrix_stats": dtn_condensed_matrix_stats,
-        "dtn_floquet_independent_matrix_stats": (
-            dtn_floquet_independent_matrix_stats
-        ),
+        "dtn_floquet_independent_matrix_stats": (dtn_floquet_independent_matrix_stats),
         "dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
-        "dtn_augmented_to_base_nnz_ratio": _matrix_nnz_ratio(matrix_stats, dtn_base_matrix_stats),
-        "dtn_augmented_to_base_row_ratio": _matrix_row_ratio(matrix_stats, dtn_base_matrix_stats),
+        "dtn_augmented_to_base_nnz_ratio": _matrix_nnz_ratio(
+            matrix_stats, dtn_base_matrix_stats
+        ),
+        "dtn_augmented_to_base_row_ratio": _matrix_row_ratio(
+            matrix_stats, dtn_base_matrix_stats
+        ),
     }
     log(f"explicit C^H A C constructed = {explicit_chac_constructed}")
     if unconstrained_matrix_stats is None:
@@ -1368,7 +1531,9 @@ def run_prepared_3d_case_flow(
             f"constrained/unconstrained nnz ratio = {constraint_matrix_transform['constrained_to_unconstrained_nnz_ratio']}"
         )
     if dtn_base_matrix_stats is not None:
-        log(f"DtN augmented/base nnz ratio = {constraint_matrix_transform['dtn_augmented_to_base_nnz_ratio']}")
+        log(
+            f"DtN augmented/base nnz ratio = {constraint_matrix_transform['dtn_augmented_to_base_nnz_ratio']}"
+        )
 
     live_observer_primal_snapshot = bool(
         dtn_solver_info is not None
@@ -1384,24 +1549,29 @@ def run_prepared_3d_case_flow(
         reason_name = "FACTORIZATION_ONLY_SKIPPED_SOLVE"
         iterations = 0
         residual_norm = None
-    elif live_observer_primal_snapshot:
+    elif dtn_component_only:
+        reason = 0
+        reason_name = "MATRIX_FREE_DTN_COMPONENT_ONLY"
+        iterations = 0
+        residual_norm = None
+    elif external_solver_snapshot or live_observer_primal_snapshot:
         reason = int(dtn_solver_info["ksp_converged_reason"])
         reason_name = _ksp_reason_name(reason)
         iterations = int(dtn_solver_info["ksp_iterations"])
-        residual_norm = float(
-            dtn_solver_info["primal_ksp_residual_norm"]
+        residual_norm = (
+            None
+            if external_solver_snapshot
+            else float(dtn_solver_info["primal_ksp_residual_norm"])
         )
     else:
         reason = int(system_ksp.getConvergedReason())
         reason_name = _ksp_reason_name(reason)
         iterations = int(system_ksp.getIterationNumber())
         residual_norm = float(system_ksp.getResidualNorm())
-    if live_observer_primal_snapshot:
+    if external_solver_snapshot or live_observer_primal_snapshot:
         ksp_type = dtn_solver_info["actual_ksp_type"]
         pc_type = dtn_solver_info["actual_pc_type"]
-        pc_factor_solver_type = dtn_solver_info[
-            "actual_pc_factor_solver_type"
-        ]
+        pc_factor_solver_type = dtn_solver_info["actual_pc_factor_solver_type"]
     else:
         ksp_type = system_ksp.getType()
         pc = system_ksp.getPC()
@@ -1410,9 +1580,9 @@ def run_prepared_3d_case_flow(
     condensed_full_residual = (
         None
         if dtn_solver_info is None
-        else (
-            dtn_solver_info.get("cell_static_condensation") or {}
-        ).get("full_explicit_true_residual")
+        else (dtn_solver_info.get("cell_static_condensation") or {}).get(
+            "full_explicit_true_residual"
+        )
     )
     linear_system_diagnostics = (
         {
@@ -1426,16 +1596,35 @@ def run_prepared_3d_case_flow(
         if condensed_full_residual is not None
         else _linear_system_diagnostics(system_A, system_b, system_x)
     )
+    external_rta_gate_pass = (
+        None
+        if not external_solver_snapshot
+        else bool(dtn_solver_info["external_rta_gate_pass"])
+    )
+    solver_converged = (reason > 0) and not diagnostic_only_result
+    official_result = solver_converged and (
+        not external_solver_snapshot or external_rta_gate_pass is True
+    )
     log(f"solver converged reason = {reason}")
     log(f"solver converged reason name = {reason_name}")
     log(f"solver iterations = {iterations}")
-    log("solver residual norm = None" if residual_norm is None else f"solver residual norm = {residual_norm:.6e}")
+    log(
+        "solver residual norm = None"
+        if residual_norm is None
+        else f"solver residual norm = {residual_norm:.6e}"
+    )
     log(f"actual KSP type = {ksp_type}")
     log(f"actual PC type = {pc_type}")
     log(f"actual PC factor solver type = {pc_factor_solver_type}")
-    log(f"linear system RHS norm = {linear_system_diagnostics['linear_system_rhs_norm']}")
-    log(f"linear system solution norm = {linear_system_diagnostics['linear_system_solution_norm']}")
-    log(f"linear system true relative residual = {linear_system_diagnostics['linear_system_relative_residual']}")
+    log(
+        f"linear system RHS norm = {linear_system_diagnostics['linear_system_rhs_norm']}"
+    )
+    log(
+        f"linear system solution norm = {linear_system_diagnostics['linear_system_solution_norm']}"
+    )
+    log(
+        f"linear system true relative residual = {linear_system_diagnostics['linear_system_relative_residual']}"
+    )
     variable_p_live_observer_invoked = bool(
         dtn_solver_info is not None
         and dtn_solver_info.get("variable_p_live_observer_invoked")
@@ -1462,10 +1651,14 @@ def run_prepared_3d_case_flow(
         and solve_stage4_dtn_port
         and not diagnostic_only_result
         and reason > 0
+        and system_A is not None
     )
     solver_release_audit = None
     if solver_objects_released_before_postprocess:
-        system_ksp.destroy()
+        released_objects = ["system Mat", "RHS Vec", "solution Vec"]
+        if system_ksp is not None:
+            system_ksp.destroy()
+            released_objects.insert(0, "KSP/MUMPS factor")
         system_x.destroy()
         system_b.destroy()
         system_A.destroy()
@@ -1487,9 +1680,7 @@ def run_prepared_3d_case_flow(
         local_released_mb = local_heap_trim.get("rss_released_mb")
         before_by_rank = _gather_optional_rank_floats(comm, local_before_mb)
         after_by_rank = _gather_optional_rank_floats(comm, local_after_mb)
-        released_by_rank = _gather_optional_rank_floats(
-            comm, local_released_mb
-        )
+        released_by_rank = _gather_optional_rank_floats(comm, local_released_mb)
         solver_release_audit = {
             "petsc_garbage_cleanup_called": True,
             "process_heap_trim": {
@@ -1515,11 +1706,7 @@ def run_prepared_3d_case_flow(
                 "allocator_reported_pages_released_by_rank": [
                     bool(value)
                     for value in comm.allgather(
-                        bool(
-                            local_heap_trim[
-                                "allocator_reported_pages_released"
-                            ]
-                        )
+                        bool(local_heap_trim["allocator_reported_pages_released"])
                     )
                 ],
                 "return_codes_by_rank": [
@@ -1533,9 +1720,7 @@ def run_prepared_3d_case_flow(
                 "current_rss_released_mb_by_rank": released_by_rank,
                 "sum_rss_before_mb": _complete_rank_sum(before_by_rank),
                 "sum_rss_after_mb": _complete_rank_sum(after_by_rank),
-                "sum_rss_released_mb": _complete_rank_sum(
-                    released_by_rank
-                ),
+                "sum_rss_released_mb": _complete_rank_sum(released_by_rank),
                 "rss_measurement_semantics": (
                     "diagnostic in-process phase-local rank samples; not "
                     "external synchronized process-tree RSS/PSS/USS authority"
@@ -1551,19 +1736,12 @@ def run_prepared_3d_case_flow(
             started=started,
             dofs=num_dofs,
             constraints=(
-                None
-                if floquet_data is None
-                else floquet_data.num_constraints
+                None if floquet_data is None else floquet_data.num_constraints
             ),
             matrix_stats=matrix_stats,
             petsc_options=petsc_options,
             extra={
-                "released_objects": [
-                    "KSP/MUMPS factor",
-                    "system Mat",
-                    "RHS Vec",
-                    "solution Vec",
-                ],
+                "released_objects": released_objects,
                 "ordinary_default_changed": False,
                 **solver_release_audit,
             },
@@ -1577,9 +1755,7 @@ def run_prepared_3d_case_flow(
             started=started,
             dofs=num_dofs,
             constraints=(
-                None
-                if floquet_data is None
-                else floquet_data.num_constraints
+                None if floquet_data is None else floquet_data.num_constraints
             ),
             matrix_stats=matrix_stats,
             petsc_options=petsc_options,
@@ -1593,8 +1769,12 @@ def run_prepared_3d_case_flow(
         )
 
     elapsed = float(comm.allreduce(time.perf_counter() - started, op=MPI.MAX))
-    converged = (reason > 0) and not diagnostic_only_result
-    stage4_boundary_model = cfg.stage4_boundary_model.lower() if cfg.stage_case.startswith("stage4_") else None
+    converged = official_result
+    stage4_boundary_model = (
+        cfg.stage4_boundary_model.lower()
+        if cfg.stage_case.startswith("stage4_")
+        else None
+    )
     summary = {
         "case_name": cfg.case_name,
         "stage": _stage_label(cfg),
@@ -1606,16 +1786,24 @@ def run_prepared_3d_case_flow(
         if factorization_only_result
         else "completed"
         if converged
+        else "external_solver_not_converged"
+        if external_solver_snapshot and not solver_converged
+        else "external_residual_gate_failed"
+        if external_solver_snapshot and external_rta_gate_pass is False
         else "failed_not_converged",
-        "official_result": converged,
-        "diagnostic_only": not converged,
-        "postprocess_skipped": not converged,
+        "official_result": official_result,
+        "diagnostic_only": not official_result,
+        "postprocess_skipped": not official_result,
         "postprocess_skip_reason": None
-        if converged
+        if official_result
         else "Matrix diagnostics assemble-only mode skipped LU factorization/solve."
         if assemble_only_result
         else "Matrix diagnostics factorization-only mode stopped after KSPSetUp/LU; KSPSolve and postprocess were skipped."
         if factorization_only_result
+        else "External solver did not converge; official RTA was not run."
+        if external_solver_snapshot and not solver_converged
+        else "External solver residual/RTA gate failed; official RTA was not run."
+        if external_solver_snapshot and external_rta_gate_pass is False
         else "PETSc KSP did not converge.",
         "num_mesh_cells": int(num_cells),
         "variable_p_mesh_identity": variable_p_mesh_identity,
@@ -1645,36 +1833,44 @@ def run_prepared_3d_case_flow(
         "stage4_full3d_assembly_backend_actual": (
             None
             if dtn_solver_info is None
-            else dtn_solver_info.get(
-                "stage4_full3d_assembly_backend_actual"
-            )
+            else dtn_solver_info.get("stage4_full3d_assembly_backend_actual")
         ),
         "stage4_full3d_assembly_backend_selection_source": (
             None
             if dtn_solver_info is None
-            else dtn_solver_info.get(
-                "stage4_full3d_assembly_backend_selection_source"
-            )
+            else dtn_solver_info.get("stage4_full3d_assembly_backend_selection_source")
         ),
         "stage4_full3d_assembly_backend_qualification": (
             None
             if dtn_solver_info is None
-            else dtn_solver_info.get(
-                "stage4_full3d_assembly_backend_qualification"
-            )
+            else dtn_solver_info.get("stage4_full3d_assembly_backend_qualification")
         ),
         "stage4_full3d_assembly_backend_audit": (
             None
             if dtn_solver_info is None
-            else dtn_solver_info.get(
-                "stage4_full3d_assembly_backend_audit"
-            )
+            else dtn_solver_info.get("stage4_full3d_assembly_backend_audit")
         ),
-        "stage4_dtn_order_policy": cfg.stage4_dtn_order_policy if solve_stage4_dtn_port else None,
-        "stage4_dtn_assembly": cfg.stage4_dtn_assembly if solve_stage4_dtn_port else None,
+        "stage4_dtn_order_policy": cfg.stage4_dtn_order_policy
+        if solve_stage4_dtn_port
+        else None,
+        "stage4_dtn_assembly": cfg.stage4_dtn_assembly
+        if solve_stage4_dtn_port
+        else None,
         "stage4_dtn_num_auxiliary_dofs": None
         if dtn_result is None
         else dtn_result["solver_info"].get("num_auxiliary_dofs"),
+        "external_linear_solver_port": external_solver_snapshot,
+        "external_rta_gate_pass": external_rta_gate_pass,
+        "external_solver_profile": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("external_solver_profile"),
+        "global_A_materialized": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("global_A_materialized"),
+        "global_F_materialized": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("global_F_materialized"),
+        "matrix_free_dtn_component_only": dtn_component_only,
         "stage4_dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
         "stage4_dtn_factor_inventory": None
         if dtn_solver_info is None
@@ -1696,11 +1892,7 @@ def run_prepared_3d_case_flow(
         else bool(dtn_solver_info.get("stage4_cell_static_condensation")),
         "stage4_assembly_time_cell_static_condensation": False
         if dtn_solver_info is None
-        else bool(
-            dtn_solver_info.get(
-                "stage4_assembly_time_cell_static_condensation"
-            )
-        ),
+        else bool(dtn_solver_info.get("stage4_assembly_time_cell_static_condensation")),
         "stage4_variable_p_active": False
         if dtn_solver_info is None
         else bool(dtn_solver_info.get("stage4_variable_p_active")),
@@ -1716,9 +1908,7 @@ def run_prepared_3d_case_flow(
         else dtn_solver_info.get("stage4_local_h_constraint_audit"),
         "num_actual_conforming_active_fe_dofs": None
         if dtn_solver_info is None
-        else dtn_solver_info.get(
-            "num_actual_conforming_active_fe_dofs"
-        ),
+        else dtn_solver_info.get("num_actual_conforming_active_fe_dofs"),
         "num_raw_broken_active_fe_dofs": None
         if dtn_solver_info is None
         else dtn_solver_info.get("num_raw_broken_active_fe_dofs"),
@@ -1755,24 +1945,16 @@ def run_prepared_3d_case_flow(
         ),
         "stage4_dtn_variable_p_trace_functional_count": None
         if dtn_solver_info is None
-        else dtn_solver_info.get(
-            "stage4_dtn_variable_p_trace_functional_count"
-        ),
+        else dtn_solver_info.get("stage4_dtn_variable_p_trace_functional_count"),
         "stage4_dtn_variable_p_removed_interior_max_abs": None
         if dtn_solver_info is None
-        else dtn_solver_info.get(
-            "stage4_dtn_variable_p_removed_interior_max_abs"
-        ),
+        else dtn_solver_info.get("stage4_dtn_variable_p_removed_interior_max_abs"),
         "stage4_dtn_variable_p_trace_only_gate_pass": None
         if dtn_solver_info is None
-        else dtn_solver_info.get(
-            "stage4_dtn_variable_p_trace_only_gate_pass"
-        ),
+        else dtn_solver_info.get("stage4_dtn_variable_p_trace_only_gate_pass"),
         "stage4_floquet_slave_elimination": False
         if dtn_solver_info is None
-        else bool(
-            dtn_solver_info.get("stage4_floquet_slave_elimination")
-        ),
+        else bool(dtn_solver_info.get("stage4_floquet_slave_elimination")),
         "direct_release_solver_before_postprocess": bool(
             cfg.direct_release_solver_before_postprocess
         ),
@@ -1787,7 +1969,8 @@ def run_prepared_3d_case_flow(
         "strong_z_boundary_dirichlet_dofs": int(boundary_dofs_global),
         "strong_z_boundary_dirichlet_raw_dofs_global": int(raw_boundary_dofs_global),
         "strong_z_boundary_dirichlet_dofs_global": int(boundary_dofs_global),
-        "incident_added_to_solution": field_formulation in {"incident_correction", "incident_scattered"},
+        "incident_added_to_solution": field_formulation
+        in {"incident_correction", "incident_scattered"},
         "incident_port_used_for_solution": bool(solve_stage4_dtn_port),
         "background_added_to_solution": field_formulation == "layered_scattered",
         "background_zeroed_in_pml_for_stage4_output": bool(solve_layered_scattered),
@@ -1830,23 +2013,29 @@ def run_prepared_3d_case_flow(
             if solve_layered_scattered
             else {}
         ),
-        "rhs_source_excludes_air_and_pml": bool(solve_incident_scattered or solve_layered_scattered),
+        "rhs_source_excludes_air_and_pml": bool(
+            solve_incident_scattered or solve_layered_scattered
+        ),
         "rhs_source_norm": rhs_source_norm,
         "unconstrained_rhs_norm": unconstrained_rhs_norm,
         "domain_tag_volumes": domain_tag_volumes,
-        "linear_solve_method": "direct_lu",
-        "petsc_direct_solver_profile": cfg.petsc_direct_solver_profile_requested,
-        "matrix_diagnostics_assemble_only": bool(assemble_only_result),
-        "matrix_diagnostics_factorization_only": bool(
-            factorization_only_result
+        "linear_solve_method": (
+            "external_linear_solver_port" if external_solver_snapshot else "direct_lu"
         ),
+        "petsc_direct_solver_profile": (
+            None
+            if external_solver_snapshot
+            else cfg.petsc_direct_solver_profile_requested
+        ),
+        "matrix_diagnostics_assemble_only": bool(assemble_only_result),
+        "matrix_diagnostics_factorization_only": bool(factorization_only_result),
         "linear_solve_petsc_options": petsc_options,
         "linear_solve_disabled_reason": None,
         "actual_ksp_type": ksp_type,
         "actual_pc_type": pc_type,
         "actual_pc_factor_solver_type": pc_factor_solver_type,
         "selected_parallel_lu_solver_type": selected_parallel_lu,
-        "ksp_converged": converged,
+        "ksp_converged": solver_converged,
         "ksp_converged_reason": reason,
         "ksp_converged_reason_name": reason_name,
         "ksp_iterations": iterations,
@@ -1854,7 +2043,9 @@ def run_prepared_3d_case_flow(
         **linear_system_diagnostics,
         "use_floquet_xy": cfg.use_floquet_xy,
         "use_pml": cfg.use_pml,
-        "floquet_num_local_slaves": None if floquet_data is None else floquet_data.num_local_slaves,
+        "floquet_num_local_slaves": None
+        if floquet_data is None
+        else floquet_data.num_local_slaves,
         "floquet_num_local_slave_records_seen": None
         if floquet_data is None
         else floquet_data.num_local_slave_records_seen,
@@ -1870,9 +2061,15 @@ def run_prepared_3d_case_flow(
         "floquet_num_global_ghost_slave_records_skipped": None
         if floquet_data is None
         else floquet_data.num_global_ghost_slave_records_skipped,
-        "floquet_constraint_mode_resolved": None if floquet_data is None else floquet_data.constraint_mode_resolved,
-        "floquet_raw_map_nnz": None if floquet_data is None else floquet_data.raw_map_nnz,
-        "floquet_max_masters_per_slave": None if floquet_data is None else floquet_data.max_masters_per_slave,
+        "floquet_constraint_mode_resolved": None
+        if floquet_data is None
+        else floquet_data.constraint_mode_resolved,
+        "floquet_raw_map_nnz": None
+        if floquet_data is None
+        else floquet_data.raw_map_nnz,
+        "floquet_max_masters_per_slave": None
+        if floquet_data is None
+        else floquet_data.max_masters_per_slave,
         "floquet_estimated_constraint_memory_mb": None
         if floquet_data is None
         else floquet_data.estimated_constraint_memory_mb,
@@ -1897,14 +2094,30 @@ def run_prepared_3d_case_flow(
         "floquet_created_dense_boundary_square": None
         if floquet_data is None
         else floquet_data.created_dense_boundary_square,
-        "floquet_num_slave_edges": None if floquet_data is None else floquet_data.num_slave_edges,
-        "floquet_num_matched_master_edges": None if floquet_data is None else floquet_data.num_matched_master_edges,
-        "floquet_num_slave_faces": None if floquet_data is None else floquet_data.num_slave_faces,
-        "floquet_num_matched_master_faces": None if floquet_data is None else floquet_data.num_matched_master_faces,
-        "floquet_num_constraints": None if floquet_data is None else floquet_data.num_constraints,
-        "floquet_num_edge_constraints": None if floquet_data is None else floquet_data.num_edge_constraints,
-        "floquet_num_face_constraints": None if floquet_data is None else floquet_data.num_face_constraints,
-        "floquet_num_face_transform_fits": None if floquet_data is None else floquet_data.num_face_transform_fits,
+        "floquet_num_slave_edges": None
+        if floquet_data is None
+        else floquet_data.num_slave_edges,
+        "floquet_num_matched_master_edges": None
+        if floquet_data is None
+        else floquet_data.num_matched_master_edges,
+        "floquet_num_slave_faces": None
+        if floquet_data is None
+        else floquet_data.num_slave_faces,
+        "floquet_num_matched_master_faces": None
+        if floquet_data is None
+        else floquet_data.num_matched_master_faces,
+        "floquet_num_constraints": None
+        if floquet_data is None
+        else floquet_data.num_constraints,
+        "floquet_num_edge_constraints": None
+        if floquet_data is None
+        else floquet_data.num_edge_constraints,
+        "floquet_num_face_constraints": None
+        if floquet_data is None
+        else floquet_data.num_face_constraints,
+        "floquet_num_face_transform_fits": None
+        if floquet_data is None
+        else floquet_data.num_face_transform_fits,
         "floquet_max_face_transform_fit_residual": None
         if floquet_data is None
         else floquet_data.max_face_transform_fit_residual,
@@ -1914,9 +2127,15 @@ def run_prepared_3d_case_flow(
         "floquet_max_face_midpoint_pairing_error": None
         if floquet_data is None
         else floquet_data.max_face_midpoint_pairing_error,
-        "floquet_num_x_constraints": None if floquet_data is None else floquet_data.num_x_constraints,
-        "floquet_num_y_constraints": None if floquet_data is None else floquet_data.num_y_constraints,
-        "floquet_num_corner_constraints": None if floquet_data is None else floquet_data.num_corner_constraints,
+        "floquet_num_x_constraints": None
+        if floquet_data is None
+        else floquet_data.num_x_constraints,
+        "floquet_num_y_constraints": None
+        if floquet_data is None
+        else floquet_data.num_y_constraints,
+        "floquet_num_corner_constraints": None
+        if floquet_data is None
+        else floquet_data.num_corner_constraints,
         "mesh_cell_type_actual": mesh_data.mesh_cell_type_resolved,
         "mesh_cells_resolved": list(mesh_data.mesh_cells_resolved),
         "mesh_spacing_mode_resolved": mesh_data.mesh_spacing_mode_resolved,
@@ -1927,14 +2146,24 @@ def run_prepared_3d_case_flow(
         "max_face_pairing_coordinate_error": None
         if floquet_data is None
         else floquet_data.max_face_pairing_coordinate_error,
-        "nedelec_orientation_factor_stats": None if floquet_data is None else floquet_data.orientation_factor_stats,
-        "floquet_constraint_phase_x": None if floquet_data is None else floquet_data.phase_x,
-        "floquet_constraint_phase_y": None if floquet_data is None else floquet_data.phase_y,
-        "floquet_constraint_phase_corner": None if floquet_data is None else floquet_data.phase_corner,
+        "nedelec_orientation_factor_stats": None
+        if floquet_data is None
+        else floquet_data.orientation_factor_stats,
+        "floquet_constraint_phase_x": None
+        if floquet_data is None
+        else floquet_data.phase_x,
+        "floquet_constraint_phase_y": None
+        if floquet_data is None
+        else floquet_data.phase_y,
+        "floquet_constraint_phase_corner": None
+        if floquet_data is None
+        else floquet_data.phase_corner,
         "floquet_edge_corner_constraint_phase_mismatch": None
         if floquet_data is None
         else floquet_data.edge_corner_phase_mismatch,
-        "floquet_constraint_timings_seconds": None if floquet_data is None else floquet_data.timings_seconds,
+        "floquet_constraint_timings_seconds": None
+        if floquet_data is None
+        else floquet_data.timings_seconds,
         "pml_parameters": {
             "pml_alpha": cfg.pml_alpha,
             "pml_top_thickness": cfg.pml_top_thickness,
@@ -1954,9 +2183,7 @@ def run_prepared_3d_case_flow(
             **_retain_mumps_ooc_directory_on_failure(ooc_info),
         },
     }
-    summary["sum_rank_historical_peaks_mb_upper_bound"] = summary[
-        "total_peak_rss_mb"
-    ]
+    summary["sum_rank_historical_peaks_mb_upper_bound"] = summary["total_peak_rss_mb"]
     summary["total_peak_rss_semantics"] = (
         "sum_rank_historical_peaks_upper_bound_not_simultaneous"
     )
@@ -1964,9 +2191,7 @@ def run_prepared_3d_case_flow(
         summary.update(
             {
                 "variable_p_live_observer_requested": True,
-                "variable_p_live_observer_invoked": (
-                    variable_p_live_observer_invoked
-                ),
+                "variable_p_live_observer_invoked": (variable_p_live_observer_invoked),
                 "variable_p_live_observer_contract": (
                     "controlled_collective_callback_borrowed_objects"
                 ),
@@ -1976,9 +2201,7 @@ def run_prepared_3d_case_flow(
                 "variable_p_local_schur_release": (
                     None
                     if dtn_solver_info is None
-                    else dtn_solver_info.get(
-                        "variable_p_local_schur_release"
-                    )
+                    else dtn_solver_info.get("variable_p_local_schur_release")
                 ),
             }
         )
@@ -1990,7 +2213,9 @@ def run_prepared_3d_case_flow(
         }
         _clear_official_field_outputs(out_dir, comm)
         if assemble_only_result:
-            log("Matrix diagnostics assemble-only mode: LU factorization/solve and field postprocess were skipped.")
+            log(
+                "Matrix diagnostics assemble-only mode: LU factorization/solve and field postprocess were skipped."
+            )
         elif factorization_only_result:
             log(
                 "Matrix diagnostics factorization-only mode: KSPSetUp/LU completed; "
@@ -2015,13 +2240,19 @@ def run_prepared_3d_case_flow(
     )
     _finish_timed_stage(comm, timings, "postprocess", stage_start, log)
     summary["timings_seconds"] = timings
-    summary["elapsed_seconds"] = float(comm.allreduce(time.perf_counter() - started, op=MPI.MAX))
+    summary["elapsed_seconds"] = float(
+        comm.allreduce(time.perf_counter() - started, op=MPI.MAX)
+    )
     summary["max_rss_mb"] = _global_max_rss_mb(comm)
     summary["total_peak_rss_mb"] = _global_total_peak_rss_mb(comm)
     summary["sum_rank_historical_peaks_mb_upper_bound"] = summary["total_peak_rss_mb"]
-    summary["total_peak_rss_semantics"] = "sum_rank_historical_peaks_upper_bound_not_simultaneous"
+    summary["total_peak_rss_semantics"] = (
+        "sum_rank_historical_peaks_upper_bound_not_simultaneous"
+    )
     summary["total_peak_rss_gb"] = (
-        None if summary["total_peak_rss_mb"] is None else summary["total_peak_rss_mb"] / 1024.0
+        None
+        if summary["total_peak_rss_mb"] is None
+        else summary["total_peak_rss_mb"] / 1024.0
     )
     summary.update(field_metrics)
     _write_progress_event(
@@ -2047,7 +2278,11 @@ def run_prepared_3d_case_flow(
         summary["E_total_norm"] = _function_coefficient_norm(E_total)
     else:
         summary["E_sca_norm"] = None
-        summary["E_inc_norm"] = _function_coefficient_norm(E_incident_solution) if solve_stage4_dtn_port else None
+        summary["E_inc_norm"] = (
+            _function_coefficient_norm(E_incident_solution)
+            if solve_stage4_dtn_port
+            else None
+        )
         summary["E_bg_norm"] = None
         summary["E_total_norm"] = _function_coefficient_norm(E)
 
@@ -2086,8 +2321,12 @@ def run_prepared_3d_case_flow(
                 "probe_T_total": probe_T,
                 "probe_A_balance": probe_power_metrics.get("A_balance"),
                 "probe_power_file": probe_power_metrics.get("probe_power_file"),
-                "R_total_diagnostic_eh_fourier": probe_power_metrics.get("R_total_diagnostic_eh_fourier", probe_R),
-                "T_total_diagnostic_eh_fourier": probe_power_metrics.get("T_total_diagnostic_eh_fourier", probe_T),
+                "R_total_diagnostic_eh_fourier": probe_power_metrics.get(
+                    "R_total_diagnostic_eh_fourier", probe_R
+                ),
+                "T_total_diagnostic_eh_fourier": probe_power_metrics.get(
+                    "T_total_diagnostic_eh_fourier", probe_T
+                ),
                 "A_balance_diagnostic_eh_fourier": probe_power_metrics.get(
                     "A_balance_diagnostic_eh_fourier",
                     probe_power_metrics.get("A_balance"),
@@ -2096,13 +2335,23 @@ def run_prepared_3d_case_flow(
                     "R_plus_T_diagnostic_eh_fourier",
                     probe_power_metrics.get("R_plus_T"),
                 ),
-                "diagnostic_eh_fourier_probe_power_source": probe_power_metrics.get("power_source"),
+                "diagnostic_eh_fourier_probe_power_source": probe_power_metrics.get(
+                    "power_source"
+                ),
                 "probe_top_z": probe_power_metrics.get("diffraction_top_probe_z"),
                 "probe_bottom_z": probe_power_metrics.get("diffraction_bottom_probe_z"),
-                "diagnostic_eh_minus_dtn_R": None if probe_R is None else float(probe_R - summary["R_total"]),
-                "diagnostic_eh_minus_dtn_T": None if probe_T is None else float(probe_T - summary["T_total"]),
-                "diff_vs_dtn_R": None if probe_R is None else float(probe_R - summary["R_total"]),
-                "diff_vs_dtn_T": None if probe_T is None else float(probe_T - summary["T_total"]),
+                "diagnostic_eh_minus_dtn_R": None
+                if probe_R is None
+                else float(probe_R - summary["R_total"]),
+                "diagnostic_eh_minus_dtn_T": None
+                if probe_T is None
+                else float(probe_T - summary["T_total"]),
+                "diff_vs_dtn_R": None
+                if probe_R is None
+                else float(probe_R - summary["R_total"]),
+                "diff_vs_dtn_T": None
+                if probe_T is None
+                else float(probe_T - summary["T_total"]),
                 "flux_R_total": flux_R,
                 "flux_T_total": flux_T,
                 "flux_A_balance": probe_power_metrics.get("A_balance_from_net_flux"),
@@ -2137,10 +2386,14 @@ def run_prepared_3d_case_flow(
         summary["timings_seconds"] = timings
 
     incident_power_for_absorption = (
-        None if port_power_metrics is None else port_power_metrics.get("incident_power_code_units")
+        None
+        if port_power_metrics is None
+        else port_power_metrics.get("incident_power_code_units")
     )
     if incident_power_for_absorption is None and probe_power_metrics is not None:
-        incident_power_for_absorption = probe_power_metrics.get("incident_power_code_units")
+        incident_power_for_absorption = probe_power_metrics.get(
+            "incident_power_code_units"
+        )
     if (
         cfg.stage_case in {"stage4_flat_layer_sanity", "stage4_block_grating"}
         and incident_power_for_absorption is not None
@@ -2155,12 +2408,16 @@ def run_prepared_3d_case_flow(
             port_metrics=port_power_metrics,
             probe_metrics=probe_power_metrics,
         )
-        _finish_timed_stage(comm, timings, "volume_absorption_postprocess", stage_start, log)
+        _finish_timed_stage(
+            comm, timings, "volume_absorption_postprocess", stage_start, log
+        )
         summary.update(
             {
                 "volume_absorption_file": "volume_absorption.json",
                 "A_volume_grating": volume_absorption_metrics.get("A_volume_grating"),
-                "A_volume_substrate": volume_absorption_metrics.get("A_volume_substrate"),
+                "A_volume_substrate": volume_absorption_metrics.get(
+                    "A_volume_substrate"
+                ),
                 "A_volume_total": volume_absorption_metrics.get("A_volume_total"),
                 "A_port_balance_minus_A_volume_total": volume_absorption_metrics.get(
                     "A_port_balance_minus_A_volume_total"
@@ -2168,8 +2425,12 @@ def run_prepared_3d_case_flow(
                 "A_probe_balance_minus_A_volume_total": volume_absorption_metrics.get(
                     "A_probe_balance_minus_A_volume_total"
                 ),
-                "A_flux_minus_A_volume_total": volume_absorption_metrics.get("A_flux_minus_A_volume_total"),
-                "energy_closure_error_port_volume": volume_absorption_metrics.get("energy_closure_error_port_volume"),
+                "A_flux_minus_A_volume_total": volume_absorption_metrics.get(
+                    "A_flux_minus_A_volume_total"
+                ),
+                "energy_closure_error_port_volume": volume_absorption_metrics.get(
+                    "energy_closure_error_port_volume"
+                ),
             }
         )
         closure_fields = _merge_volume_closure_into_dtn_port_outputs(
@@ -2220,21 +2481,27 @@ def run_prepared_3d_case_flow(
         )
         summary.update(
             {
-                "flat_layer_reference_file": flat_reference_outputs["flat_layer_reference_file"],
-                "power_consistency_file": flat_reference_outputs["power_consistency_file"],
-                "flat_layer_reference_R_ref": flat_reference_outputs["flat_layer_reference"]["R_ref"],
-                "flat_layer_reference_T_ref": flat_reference_outputs["flat_layer_reference"][
-                    "T_ref_at_bottom_reference_plane"
+                "flat_layer_reference_file": flat_reference_outputs[
+                    "flat_layer_reference_file"
                 ],
-                "flat_layer_reference_A_ref": flat_reference_outputs["flat_layer_reference"][
-                    "A_ref_between_reference_planes"
+                "power_consistency_file": flat_reference_outputs[
+                    "power_consistency_file"
                 ],
-                "flat_layer_reference_T_ref_at_bottom_port_plane": flat_reference_outputs["flat_layer_reference"][
-                    "T_ref_at_bottom_port_plane"
-                ],
-                "flat_layer_reference_A_ref_between_port_planes": flat_reference_outputs["flat_layer_reference"][
-                    "A_ref_between_port_planes"
-                ],
+                "flat_layer_reference_R_ref": flat_reference_outputs[
+                    "flat_layer_reference"
+                ]["R_ref"],
+                "flat_layer_reference_T_ref": flat_reference_outputs[
+                    "flat_layer_reference"
+                ]["T_ref_at_bottom_reference_plane"],
+                "flat_layer_reference_A_ref": flat_reference_outputs[
+                    "flat_layer_reference"
+                ]["A_ref_between_reference_planes"],
+                "flat_layer_reference_T_ref_at_bottom_port_plane": flat_reference_outputs[
+                    "flat_layer_reference"
+                ]["T_ref_at_bottom_port_plane"],
+                "flat_layer_reference_A_ref_between_port_planes": flat_reference_outputs[
+                    "flat_layer_reference"
+                ]["A_ref_between_port_planes"],
                 "power_consistency": flat_reference_outputs["power_consistency"],
             }
         )
@@ -2279,7 +2546,11 @@ def run_prepared_3d_case_flow(
         and summary.get("T_total") is not None
         and summary.get("R_plus_T") is not None
     )
-    if comm.rank == 0 and has_power_metrics and cfg.geometry_kind != "rectangular_block_grating":
+    if (
+        comm.rank == 0
+        and has_power_metrics
+        and cfg.geometry_kind != "rectangular_block_grating"
+    ):
         (out_dir / "power_metrics_3d.json").write_text(
             json.dumps(
                 {
@@ -2308,16 +2579,22 @@ def run_prepared_3d_case_flow(
         f"{field_metrics['max_abs_Ex']:.6e} / {field_metrics['max_abs_Ey']:.6e} / {field_metrics['max_abs_Ez']:.6e}"
     )
     if field_metrics.get("exact_reference_available"):
-        log(f"plane-wave relative max error = {field_metrics['relative_max_abs_E_error']:.6e}")
+        log(
+            f"plane-wave relative max error = {field_metrics['relative_max_abs_E_error']:.6e}"
+        )
         log(f"H relative max error = {field_metrics['relative_max_abs_H_error']:.6e}")
     else:
-        log("exact reference unavailable for this case; E_exact/H_exact error fields are not written.")
+        log(
+            "exact reference unavailable for this case; E_exact/H_exact error fields are not written."
+        )
     log(f"max |H| = {field_metrics['max_abs_H']:.6e}")
     log(f"Poynting direction cosine = {field_metrics['poynting_direction_cosine']:.6e}")
     if floquet_data is not None:
         log(f"Floquet x-face mismatch = {summary['floquet_x_face_mismatch']:.6e}")
         log(f"Floquet y-face mismatch = {summary['floquet_y_face_mismatch']:.6e}")
-        log(f"Floquet edge/corner mismatch = {summary['floquet_edge_corner_mismatch']:.6e}")
+        log(
+            f"Floquet edge/corner mismatch = {summary['floquet_edge_corner_mismatch']:.6e}"
+        )
     if cfg.use_pml:
         if summary.get("pml_reflection_proxy") is not None:
             log(f"PML reflection proxy = {summary['pml_reflection_proxy']:.6e}")
@@ -2330,19 +2607,31 @@ def run_prepared_3d_case_flow(
         log(f"Fresnel R/T = {summary['fresnel_R']:.6e} / {summary['fresnel_T']:.6e}")
         log(f"R+T = {summary['R_plus_T']:.6e}")
     if cfg.geometry_kind == "rectangular_block_grating":
-        log(f"Stage-4 primary power source = {summary.get('diffraction_total_power_source')}")
-        log(f"Stage-4 primary R/T = {summary['R_total']:.6e} / {summary['T_total']:.6e}")
+        log(
+            f"Stage-4 primary power source = {summary.get('diffraction_total_power_source')}"
+        )
+        log(
+            f"Stage-4 primary R/T = {summary['R_total']:.6e} / {summary['T_total']:.6e}"
+        )
         log(f"Stage-4 primary R+T = {summary['R_plus_T']:.6e}")
         log(f"Stage-4 primary A_balance = {summary['A_balance']:.6e}")
         if summary.get("probe_R_total") is not None:
-            log(f"Stage-4 probe E/H Fourier R/T = {summary['probe_R_total']:.6e} / {summary['probe_T_total']:.6e}")
+            log(
+                f"Stage-4 probe E/H Fourier R/T = {summary['probe_R_total']:.6e} / {summary['probe_T_total']:.6e}"
+            )
         if summary.get("flux_R_total") is not None:
-            log(f"Stage-4 sampled net-flux R/T = {summary['flux_R_total']:.6e} / {summary['flux_T_total']:.6e}")
+            log(
+                f"Stage-4 sampled net-flux R/T = {summary['flux_R_total']:.6e} / {summary['flux_T_total']:.6e}"
+            )
         if summary.get("A_volume_total") is not None:
             log(f"Stage-4 material A_volume_total = {summary['A_volume_total']:.6e}")
-            log(f"Stage-4 port-volume closure error = {summary.get('energy_closure_error_port_volume')}")
+            log(
+                f"Stage-4 port-volume closure error = {summary.get('energy_closure_error_port_volume')}"
+            )
         if summary.get("stage4_material_absorption_present"):
-            log(f"3D diffraction absorption from balance = {summary.get('stage4_absorption_from_balance'):.6e}")
+            log(
+                f"3D diffraction absorption from balance = {summary.get('stage4_absorption_from_balance'):.6e}"
+            )
     log(f"ParaView file = {field_metrics['paraview_file']}")
     log("timing summary seconds:")
     for name, value in timings.items():

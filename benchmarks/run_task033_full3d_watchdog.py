@@ -77,6 +77,7 @@ from benchmarks.run_direct_memory_forensics import (
     _source_provenance,
     _stage_peaks,
 )
+from src.solvers.common_3d_utils import _write_progress_event
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -101,6 +102,8 @@ TASK035D_SELECTIVE_FACE_PHASES = {
     "coarse-snapshot",
     "enriched-evaluate",
 }
+TASK037_M3A_MAX_ITERATIONS = 3000
+TASK037_M3A_MPI_SIZES = (1, 2, 4, 8)
 
 
 def _read_int_or_max(path: Path) -> tuple[int | None, str]:
@@ -363,6 +366,201 @@ def _path_from_root(path: Path) -> str:
         return str(path.resolve())
 
 
+def _task037_m3a_write_canonical_artifacts(
+    run_dir: Path,
+    *,
+    field: Any,
+    mesh_data: Any,
+    floquet_data: Any,
+    linear_system: dict[str, Any],
+    dtn_result: dict[str, Any],
+) -> dict[str, Any]:
+    from petsc4py import PETSc
+
+    from benchmarks.canonical_vector_artifacts import (
+        MANIFEST_SCHEMA,
+        canonical_shard_manifest,
+        write_canonical_manifest,
+        write_canonical_packet_shard,
+    )
+    from src.solvers.hcurl_canonical_vector_dolfinx import (
+        extract_canonical_active_trace_packets,
+        extract_canonical_full_fe_packets,
+    )
+
+    comm = mesh_data.mesh.comm
+    context = dtn_result["canonical_vector_context"]
+    condensed = context["assembly_time_system"]
+    x = linear_system["x"]
+    start, end = map(int, x.getOwnershipRange())
+    active_rows = int(condensed.active_rows)
+    local_n = max(0, min(end, active_rows) - start)
+    active_is = PETSc.IS().createStride(
+        local_n,
+        first=start,
+        step=1,
+        comm=x.getComm(),
+    )
+    active_vec = x.getSubVector(active_is)
+    try:
+        active_packets, active_audit = extract_canonical_active_trace_packets(
+            condensed,
+            field.function_space,
+            floquet_data,
+            active_vec,
+        )
+    finally:
+        x.restoreSubVector(active_is, active_vec)
+        active_is.destroy()
+    full_packets, full_audit = extract_canonical_full_fe_packets(
+        field.function_space,
+        field.x.petsc_vec,
+        floquet_data,
+    )
+    exports: dict[str, Any] = {}
+    for packet_role, packets, audit in (
+        ("active_trace", active_packets, active_audit),
+        ("full_fe", full_packets, full_audit),
+    ):
+        shard_path = run_dir / (
+            f"task037_m3a_{packet_role}_canonical_rank{comm.rank:04d}.jsonl"
+        )
+        shard = write_canonical_packet_shard(shard_path, packets)
+        shard.update(
+            {
+                "rank": int(comm.rank),
+                "local_duplicate_count": int(audit["local_duplicate_count"]),
+                "extractor_audit": audit,
+            }
+        )
+        by_rank = comm.gather(shard, root=0)
+        if comm.rank == 0:
+            by_rank = sorted(by_rank, key=lambda item: int(item["rank"]))
+            manifest = canonical_shard_manifest(
+                role=packet_role,
+                mpi_size=comm.size,
+                shard_metadata=by_rank,
+                extractor_audit={
+                    "by_rank": [item["extractor_audit"] for item in by_rank]
+                },
+            )
+            manifest_path = run_dir / (
+                f"task037_m3a_{packet_role}_canonical_manifest.json"
+            )
+            manifest_sha256 = write_canonical_manifest(manifest_path, manifest)
+            exports[packet_role] = {
+                "manifest": _path_from_root(manifest_path),
+                "manifest_sha256": manifest_sha256,
+                "global_summed_packet_count": manifest["global_summed_packet_count"],
+                "schema_version": MANIFEST_SCHEMA,
+            }
+        exports = comm.bcast(exports if comm.rank == 0 else None, root=0)
+    return exports
+
+
+def _task037_m3a_solution_observer(run_dir: Path):
+    def observe(
+        *,
+        field: Any,
+        mesh_data: Any,
+        config: Any,
+        floquet_data: Any,
+        summary: dict[str, Any],
+        linear_system: dict[str, Any],
+        dtn_result: dict[str, Any],
+    ) -> None:
+        exports = _task037_m3a_write_canonical_artifacts(
+            run_dir,
+            field=field,
+            mesh_data=mesh_data,
+            floquet_data=floquet_data,
+            linear_system=linear_system,
+            dtn_result=dtn_result,
+        )
+        if mesh_data.mesh.comm.rank == 0:
+            summary["task037_m3a_canonical_export"] = {
+                "status": "completed",
+                "roles": exports,
+            }
+
+    return observe
+
+
+def _task037_m3a_solver_port(run_dir: Path):
+    from src.solvers.dtn_port_3d import Stage4NeverMaterializedLinearSolverPort
+    from src.solvers.static_condensed_iterative import (
+        solve_never_materialized_overlap0125_partition_fgmres,
+    )
+
+    def solve(request):
+        comm = request.operator.getComm().tompi4py()
+        residual_path = run_dir / "task037_m3a_residual_history.jsonl"
+
+        def observe(iteration: int, reported: float, condensed: float) -> None:
+            if comm.rank == 0:
+                with residual_path.open("a", encoding="utf-8") as stream:
+                    stream.write(
+                        json.dumps(
+                            {
+                                "iteration": int(iteration),
+                                "reported_relative_residual": float(reported),
+                                "condensed_true_residual": float(condensed),
+                            }
+                        )
+                        + "\n"
+                    )
+
+        def observe_lifecycle(event: str, payload: dict[str, Any]) -> None:
+            ledgers = comm.gather(payload, root=0)
+            _write_progress_event(
+                run_dir,
+                comm,
+                stage=f"m0_{event}",
+                status="end",
+                extra={
+                    "task037_m3a_lifecycle": True,
+                    "m0_event": event,
+                    "task037_m3a_rank_ledgers_by_rank": (
+                        ledgers if comm.rank == 0 else None
+                    ),
+                    **payload,
+                },
+            )
+
+        snapshot, audit = solve_never_materialized_overlap0125_partition_fgmres(
+            request,
+            screen_iterations=TASK037_M3A_MAX_ITERATIONS,
+            residual_observer=observe,
+            lifecycle_observer=observe_lifecycle,
+        )
+        if comm.rank == 0:
+            audit.update(
+                {
+                    "external_reported_relative_residual": snapshot.reported_relative_residual,
+                    "external_condensed_true_residual": snapshot.condensed_true_residual,
+                    "external_full_augmented_true_residual": snapshot.full_augmented_true_residual,
+                }
+            )
+        if comm.rank == 0:
+            (run_dir / "task037_m3a_core_audit.json").write_text(
+                json.dumps(audit, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+        comm.barrier()
+        return snapshot
+
+    return Stage4NeverMaterializedLinearSolverPort(solve)
+
+
+def _task037_e0_solver_port():
+    from src.solvers.dtn_port_3d import Stage4NeverMaterializedLinearSolverPort
+
+    def sentinel(_request):
+        raise RuntimeError("TASK037_MATRIX_FREE_DTN_COMPONENT_SENTINEL_INVOKED")
+
+    return Stage4NeverMaterializedLinearSolverPort(sentinel)
+
+
 def _full3d_config(args: argparse.Namespace):
     from src.common.config_3d import target_stage4_config
 
@@ -411,6 +609,10 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
         "profile": str(args.profile),
         "run_dir": str(Path(args.run_dir).resolve()),
         "stage4_full3d_assembly_backend": str(args.stage4_full3d_assembly_backend),
+        "task037_e0_matrix_free_dtn_gate": bool(args.task037_e0_matrix_free_dtn_gate),
+        "task037_m3a_overlap0125_partition": bool(
+            args.task037_m3a_overlap0125_partition
+        ),
         "task035d_case097_gate": bool(args.task035d_case097_gate),
         "task035d_candidate_id": str(args.task035d_candidate_id),
         "task035d_nested_p_dwr_phase": args.task035d_nested_p_dwr_phase,
@@ -536,12 +738,43 @@ def _revalidate_task035d_worker_inputs(args: argparse.Namespace) -> None:
         )
 
 
+def _revalidate_task037_m0_worker_source(args: argparse.Namespace) -> None:
+    if not (
+        args.task037_e0_matrix_free_dtn_gate or args.task037_m3a_overlap0125_partition
+    ):
+        return
+    head = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
+    ).strip()
+    status = subprocess.check_output(
+        ["git", "status", "--porcelain", "--untracked-files=all"],
+        cwd=ROOT,
+        text=True,
+    ).strip()
+    if head != args.verified_clean_sha or status:
+        raise SystemExit(
+            "Task037 M0 worker source identity is not the clean parent-qualified commit."
+        )
+
+
 def _worker(args: argparse.Namespace) -> int:
     from src.solvers.solve_maxwell_3d_stage_4b_block_grating import (
         run_stage4b_block_grating_3d_case,
     )
 
-    observer = None
+    e0_gate = bool(args.task037_e0_matrix_free_dtn_gate)
+    m3a_gate = bool(args.task037_m3a_overlap0125_partition)
+    solution_observer = (
+        _task037_m3a_solution_observer(args.run_dir) if m3a_gate else None
+    )
+    variable_observer = None
+    linear_solver_port = (
+        _task037_e0_solver_port()
+        if e0_gate
+        else _task037_m3a_solver_port(args.run_dir)
+        if m3a_gate
+        else None
+    )
     retain_local_schur = False
     if args.task035d_nested_p_dwr_phase is not None:
         from src.adaptivity.variable_p_nested_dwr import (
@@ -561,12 +794,12 @@ def _worker(args: argparse.Namespace) -> int:
             ),
         }
         if args.task035d_nested_p_dwr_phase == "coarse-snapshot":
-            observer = build_variable_p_nested_coarse_snapshot_observer(
+            variable_observer = build_variable_p_nested_coarse_snapshot_observer(
                 artifact_directory=(args.run_dir / "nested_p_snapshot"),
                 **common,
             )
         else:
-            observer = build_variable_p_nested_enriched_evaluator_observer(
+            variable_observer = build_variable_p_nested_enriched_evaluator_observer(
                 coarse_manifest_path=(args.task035d_coarse_snapshot_manifest),
                 coarse_manifest_sha256=(args.task035d_coarse_snapshot_manifest_sha256),
                 artifact_path=(args.run_dir / "nested_p_dwr_report.json"),
@@ -591,12 +824,12 @@ def _worker(args: argparse.Namespace) -> int:
             ),
         }
         if args.task035d_selective_face_dwr_phase == "coarse-snapshot":
-            observer = build_selective_face_coarse_snapshot_observer(
+            variable_observer = build_selective_face_coarse_snapshot_observer(
                 artifact_directory=(args.run_dir / "selective_face_snapshot"),
                 **common,
             )
         else:
-            observer = build_selective_face_enriched_evaluator_observer(
+            variable_observer = build_selective_face_enriched_evaluator_observer(
                 coarse_manifest_path=(args.task035d_selective_face_coarse_manifest),
                 coarse_manifest_sha256=(
                     args.task035d_selective_face_coarse_manifest_sha256
@@ -607,8 +840,14 @@ def _worker(args: argparse.Namespace) -> int:
     run_stage4b_block_grating_3d_case(
         _full3d_config(args),
         args.run_dir,
-        variable_p_live_observer=observer,
+        linear_solver_port=linear_solver_port,
+        solution_observer=solution_observer,
+        variable_p_live_observer=variable_observer,
         variable_p_retain_local_schur_for_research=(retain_local_schur),
+        static_retain_local_schur_for_matrix_free=(e0_gate or m3a_gate),
+        matrix_free_dtn=e0_gate,
+        matrix_free_dtn_probe=e0_gate,
+        canonical_vector_export=m3a_gate,
     )
     return 0
 
@@ -666,6 +905,16 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--task035c-p6-preflight-authority", type=Path)
     parser.add_argument("--task035c-p6-preflight-sha256")
+    parser.add_argument(
+        "--task037-e0-matrix-free-dtn-gate",
+        action="store_true",
+        help="Run the explicit 80-mode matrix-free DtN component gate.",
+    )
+    parser.add_argument(
+        "--task037-m3a-overlap0125-partition",
+        action="store_true",
+        help="Run the explicit p6/h10 full-solve M3a baseline.",
+    )
     parser.add_argument(
         "--task035d-case097-gate",
         action="store_true",
@@ -811,6 +1060,16 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         )
     if args.degree != 6 and selected_p6_gate_count:
         parser.error("Task035c/Task035d p6 gates require --degree 6.")
+    m0_lane_count = sum(
+        (
+            bool(args.task037_e0_matrix_free_dtn_gate),
+            bool(args.task037_m3a_overlap0125_partition),
+        )
+    )
+    if m0_lane_count > 1:
+        parser.error("Task037 M0 lanes are mutually exclusive.")
+    if m0_lane_count and not args.task035c_p6_h10_gate:
+        parser.error("Task037 M0 lanes require the Task035c p6/h10 gate.")
     if args.task035c_p6_h10_gate:
         scoped = bool(
             args.degree == 6
@@ -843,6 +1102,53 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "Task035c p6 preflight authority arguments require --task035c-p6-h10-gate."
         )
+    if args.task037_e0_matrix_free_dtn_gate:
+        e0_scope = bool(
+            args.degree == 6
+            and math.isclose(args.h_nm, 10.0)
+            and args.polarization_kind == "s"
+            and args.run_kind == "full-solve"
+            and args.mpi_size in (1, 2, 4)
+            and args.profile == "default"
+            and args.stage4_full3d_assembly_backend == "assembly_time_static_condensed"
+            and not args.allow_swap
+            and args.task035c_p6_preflight_authority is not None
+            and valid_hex_digest(args.task035c_p6_preflight_sha256, 64)
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and not args.task035d_case097_gate
+            and args.p3_gate_record is None
+            and args.p4_trace_record is None
+        )
+        if not e0_scope:
+            parser.error(
+                "--task037-e0-matrix-free-dtn-gate is restricted to "
+                "the no-swap Task035c p6/h10 S full-solve on the static "
+                "assembly backend and is exclusive of the M3a lane."
+            )
+    if args.task037_m3a_overlap0125_partition:
+        m3a_scope = bool(
+            args.degree == 6
+            and math.isclose(args.h_nm, 10.0)
+            and args.polarization_kind == "s"
+            and args.run_kind == "full-solve"
+            and args.mpi_size in TASK037_M3A_MPI_SIZES
+            and args.profile == "default"
+            and args.stage4_full3d_assembly_backend == "assembly_time_static_condensed"
+            and not args.allow_swap
+            and args.task035c_p6_preflight_authority is not None
+            and valid_hex_digest(args.task035c_p6_preflight_sha256, 64)
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and args.timeout_seconds == 7200.0
+            and not args.task035d_case097_gate
+            and args.p3_gate_record is None
+            and args.p4_trace_record is None
+        )
+        if not m3a_scope:
+            parser.error(
+                "--task037-m3a-overlap0125-partition is restricted to "
+                "the no-swap Task035c p6/h10 S full-solve on MPI1/2/4/8 "
+                "with the static assembly backend and fixed timeout."
+            )
     if args.task035d_case097_gate:
         local_h_candidate = args.task035d_candidate_id in TASK035D_LOCAL_H_CANDIDATES
         plan_scope = (
@@ -2081,6 +2387,245 @@ def _solve_stage_seen(events: list[dict[str, Any]]) -> bool:
     )
 
 
+def _task037_e0_qualification(
+    *,
+    solver_summary: dict[str, Any],
+    events: list[dict[str, Any]],
+    common: dict[str, bool],
+    no_swap: bool,
+) -> dict[str, Any]:
+    audit = solver_summary.get("matrix_free_dtn_probe_audit")
+    audit = audit if isinstance(audit, dict) else {}
+    mode_identity = audit.get("mode_identity")
+    materialization = audit.get("materialization")
+    materialization = materialization if isinstance(materialization, dict) else {}
+    primary = materialization.get("primary")
+    primary = primary if isinstance(primary, dict) else {}
+    oracle = materialization.get("oracle")
+    oracle = oracle if isinstance(oracle, dict) else {}
+    source_audits = audit.get("source_audits")
+    source_labels = (
+        [item.get("label") for item in source_audits]
+        if isinstance(source_audits, list)
+        else []
+    )
+    checks = {
+        **common,
+        "case_status": solver_summary.get("case_status") == "diagnostic_assemble_only",
+        "matrix_free_dtn_probe": solver_summary.get("matrix_free_dtn_probe") is True,
+        "ordinary_default_unchanged": solver_summary.get("ordinary_default_changed")
+        is False,
+        "matrix_diagnostics_assemble_only": solver_summary.get(
+            "matrix_diagnostics_assemble_only"
+        )
+        is True,
+        "component_only": solver_summary.get("matrix_free_dtn_component_only") is True,
+        "global_A_not_materialized": solver_summary.get("global_A_materialized")
+        is False,
+        "global_F_not_materialized": solver_summary.get("global_F_materialized")
+        is False,
+        "audit_gate_pass": audit.get("gate_pass") is True,
+        "mode_identity_80": (
+            isinstance(mode_identity, dict)
+            and mode_identity.get("count") == 80
+            and mode_identity.get("expected_count") == 80
+            and audit.get("n_aux") == 80
+            and mode_identity.get("primary_oracle_match") is True
+        ),
+        "deterministic_seed_identity": audit.get("deterministic_seeds")
+        == [17037, 27037, 37037],
+        "source_audit_identity": source_labels
+        == [
+            "seed_17037",
+            "seed_27037",
+            "seed_37037",
+            "physical_active_rhs",
+        ],
+        "forward_action_gate": _finite_number_le(
+            audit.get("forward_action_relative_error_max"), 1.0e-11
+        ),
+        "auxiliary_recovery_gate": _finite_number_le(
+            audit.get("auxiliary_recovery_relative_error_max"), 1.0e-11
+        ),
+        "physical_rhs_identity_gate": _finite_number_le(
+            audit.get("physical_rhs_identity_relative_error"), 1.0e-12
+        ),
+        "primary_C_D_not_materialized": (
+            primary.get("matrix_free_dtn") is True
+            and primary.get("explicit_c_matrix_count") == 0
+            and primary.get("explicit_d_matrix_count") == 0
+        ),
+        "oracle_C_D_materialized": (
+            oracle.get("matrix_free_dtn") is False
+            and oracle.get("explicit_c_matrix_count") == 1
+            and oracle.get("explicit_d_matrix_count") == 1
+        ),
+        "profiles_separate": materialization.get("profiles_separate") is True,
+        "no_factorization_or_solve_event": (
+            not _factorization_stage_seen(events) and not _solve_stage_seen(events)
+        ),
+        "ksp_iterations_zero": solver_summary.get("ksp_iterations") == 0,
+        "no_official_result": solver_summary.get("official_result") is False,
+        "postprocess_skipped": solver_summary.get("postprocess_skipped") is True,
+        "no_swap": no_swap,
+    }
+    failures = [name for name, passed in checks.items() if not passed]
+    return {
+        "pass": not failures,
+        "checks": checks,
+        "failures": failures,
+        "lane": "task037_matrix_free_dtn_component",
+    }
+
+
+def _task037_m3a_qualification(
+    *,
+    solver_summary: dict[str, Any],
+    core_audit: dict[str, Any],
+    common: dict[str, bool],
+    no_swap: bool,
+) -> dict[str, Any]:
+    candidate = core_audit.get("candidate")
+    candidate = candidate if isinstance(candidate, dict) else {}
+    final = core_audit.get("final")
+    final = final if isinstance(final, dict) else {}
+    coarse = core_audit.get("coarse")
+    coarse = coarse if isinstance(coarse, dict) else {}
+    partition = core_audit.get("partition_audit")
+    partition = partition if isinstance(partition, dict) else {}
+    smoother = core_audit.get("smoother_diagnostics")
+    smoother = smoother if isinstance(smoother, dict) else {}
+    inventory = core_audit.get("no_global_factor_inventory")
+    inventory = inventory if isinstance(inventory, dict) else {}
+    canonical = solver_summary.get("task037_m3a_canonical_export")
+    canonical = canonical if isinstance(canonical, dict) else {}
+    roles = canonical.get("roles")
+    roles = roles if isinstance(roles, dict) else {}
+    residuals = (
+        solver_summary.get("external_reported_relative_residual"),
+        solver_summary.get("external_condensed_true_residual"),
+        solver_summary.get("external_full_augmented_true_residual"),
+        solver_summary.get("linear_system_relative_residual"),
+    )
+    finite_residuals = all(
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(float(value))
+        and 0.0 <= float(value) <= 1.0e-6
+        for value in residuals
+    )
+    powers = (
+        solver_summary.get("R_total"),
+        solver_summary.get("T_total"),
+        solver_summary.get("A_balance"),
+        solver_summary.get("R_plus_T"),
+    )
+    power_values_finite = all(
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(float(value))
+        for value in powers
+    )
+    power_closure = power_values_finite and (
+        abs(float(powers[3]) - float(powers[0]) - float(powers[1])) <= 1.0e-10
+        and abs(float(powers[3]) + float(powers[2]) - 1.0) <= 1.0e-6
+    )
+    artifact_complete = True
+    for role in (roles.get("active_trace"), roles.get("full_fe")):
+        manifest = role.get("manifest") if isinstance(role, dict) else None
+        manifest_path = Path(manifest) if isinstance(manifest, str) else None
+        if manifest_path is not None and not manifest_path.is_absolute():
+            manifest_path = ROOT / manifest_path
+        artifact_complete = bool(
+            artifact_complete
+            and isinstance(role, dict)
+            and manifest_path is not None
+            and manifest_path.is_file()
+            and _sha256(manifest_path) == role.get("manifest_sha256")
+        )
+    checks = {
+        **common,
+        "external_solver_port": solver_summary.get("external_linear_solver_port")
+        is True,
+        "solver_profile": solver_summary.get("external_solver_profile")
+        == "never_materialized_owner_local_overlap0125_partition",
+        "global_A_not_materialized": solver_summary.get("global_A_materialized")
+        is False,
+        "global_F_not_materialized": solver_summary.get("global_F_materialized")
+        is False,
+        "core_candidate_frozen": (
+            candidate.get("outer_ksp") == "fgmres"
+            and candidate.get("pc_side") == "right"
+            and candidate.get("norm_type") == "unpreconditioned"
+            and candidate.get("max_it") == TASK037_M3A_MAX_ITERATIONS
+            and candidate.get("restart") == 90
+            and candidate.get("rtol") == 1.0e-6
+            and candidate.get("atol") == 0.0
+            and candidate.get("num_slabs") == 16
+            and candidate.get("overlap_fraction") == 0.125
+            and candidate.get("interpolation") == "partition"
+            and candidate.get("absorption_shift") == 0.1
+        ),
+        "core_final_residuals": finite_residuals
+        and all(
+            isinstance(final.get(name), (int, float)) and float(final[name]) <= 1.0e-6
+            for name in (
+                "reported_relative_residual",
+                "condensed_true_residual",
+                "full_augmented_true_residual",
+            )
+        ),
+        "case_status": solver_summary.get("case_status") == "completed",
+        "ksp_converged": solver_summary.get("ksp_converged") is True,
+        "postprocess_not_skipped": solver_summary.get("postprocess_skipped") is False,
+        "coarse_dimension_75": coarse.get("dimension") == 75,
+        "partition_weight_sum": (
+            isinstance(partition.get("partition_weight_sum_error"), (int, float))
+            and math.isfinite(float(partition["partition_weight_sum_error"]))
+            and float(partition["partition_weight_sum_error"]) <= 1.0e-12
+        ),
+        "two_color_gmres2_factor_only_ilu": (
+            smoother.get("assembly_order") == "two_color"
+            and smoother.get("local_ksp_type") == "gmres"
+            and smoother.get("local_ksp_iterations") == 1
+            and smoother.get("smoother_iterations") == 2
+            and smoother.get("smoother_ksp_type") == "gmres"
+            and smoother.get("factor_only_storage") is True
+            and bool(smoother.get("local_solver_types"))
+            and all(kind == "ilu" for kind in smoother["local_solver_types"])
+        ),
+        "external_residual_gate": solver_summary.get("external_rta_gate_pass") is True,
+        "official_result": solver_summary.get("official_result") is True,
+        "stage4_energy_balance": solver_summary.get("stage4_energy_balance_pass")
+        is True,
+        "A_volume_finite": (
+            isinstance(solver_summary.get("A_volume_total"), (int, float))
+            and math.isfinite(float(solver_summary["A_volume_total"]))
+        ),
+        "energy_closure": (
+            isinstance(
+                solver_summary.get("energy_closure_error_port_volume"), (int, float)
+            )
+            and math.isfinite(float(solver_summary["energy_closure_error_port_volume"]))
+            and abs(float(solver_summary["energy_closure_error_port_volume"])) <= 1.0e-6
+        ),
+        "R_T_A_closure": power_closure,
+        "no_global_factor": (
+            inventory.get("global_direct_factor_count") == 0
+            and inventory.get("global_schur_matrix_materialized") is False
+        ),
+        "canonical_artifacts_complete": artifact_complete,
+        "no_swap": no_swap,
+    }
+    failures = [name for name, passed in checks.items() if not passed]
+    return {
+        "pass": not failures,
+        "checks": checks,
+        "failures": failures,
+        "lane": "task037_m3a_full_solve",
+    }
+
+
 def _qualify(
     *,
     args: argparse.Namespace,
@@ -2093,8 +2638,12 @@ def _qualify(
     no_swap: bool,
     observed_worker_rank_count: int | None = None,
     resource_summary: dict[str, Any] | None = None,
+    task037_m3a_core_audit: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     matrix = solver_summary.get("matrix_stats") or {}
+    action_only_profile = bool(
+        args.task037_e0_matrix_free_dtn_gate or args.task037_m3a_overlap0125_partition
+    )
     common = {
         "process_completed": return_code == 0,
         "not_terminated_for_memory": not terminated_for_memory,
@@ -2109,13 +2658,34 @@ def _qualify(
             and float(matrix["matrix_rows"]) > 0.0
         ),
         "exact_positive_assembled_nnz": (
-            isinstance(matrix.get("matrix_nnz_used"), (int, float))
-            and float(matrix["matrix_nnz_used"]) > 0.0
+            action_only_profile
+            or (
+                isinstance(matrix.get("matrix_nnz_used"), (int, float))
+                and float(matrix["matrix_nnz_used"]) > 0.0
+            )
         ),
         "polarization_identity": (
             solver_summary.get("polarization_kind") == args.polarization_kind
         ),
     }
+    if args.task037_e0_matrix_free_dtn_gate:
+        return _task037_e0_qualification(
+            solver_summary=solver_summary,
+            events=events,
+            common=common,
+            no_swap=no_swap,
+        )
+    if args.task037_m3a_overlap0125_partition:
+        return _task037_m3a_qualification(
+            solver_summary=solver_summary,
+            core_audit=(
+                task037_m3a_core_audit
+                if isinstance(task037_m3a_core_audit, dict)
+                else {}
+            ),
+            common=common,
+            no_swap=no_swap,
+        )
     if args.run_kind == "assembly-only":
         checks = {
             **common,
@@ -2287,6 +2857,10 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
                 str(args.verified_clean_sha),
             )
         )
+    if args.task037_e0_matrix_free_dtn_gate:
+        command.append("--task037-e0-matrix-free-dtn-gate")
+    if args.task037_m3a_overlap0125_partition:
+        command.append("--task037-m3a-overlap0125-partition")
     if args.task035d_case097_gate:
         plan_options = (
             (
@@ -2402,7 +2976,11 @@ def _run_parent(args: argparse.Namespace) -> int:
     task035d_nested_p_gate = _validate_task035d_nested_p_inputs(args)
     task035d_selective_face_gate = _validate_task035d_selective_face_inputs(args)
     source_before = _source_provenance(args)
-    if args.task035d_case097_gate:
+    if (
+        args.task035d_case097_gate
+        or args.task037_e0_matrix_free_dtn_gate
+        or args.task037_m3a_overlap0125_partition
+    ):
         task035d_status_before = subprocess.check_output(
             ["git", "status", "--porcelain", "--untracked-files=all"],
             cwd=ROOT,
@@ -2410,7 +2988,7 @@ def _run_parent(args: argparse.Namespace) -> int:
         ).strip()
         if task035d_status_before:
             raise SystemExit(
-                "Task035d formal PDE requires an actually clean source tree; "
+                "formal opt-in requires an actually clean source tree; "
                 "commit the runner/checker and evidence before launch."
             )
     environment_before = _resource_snapshot()
@@ -2543,6 +3121,22 @@ def _run_parent(args: argparse.Namespace) -> int:
         if solver_path.is_file()
         else {}
     )
+    m3a_core_audit_path = run_dir / "task037_m3a_core_audit.json"
+    if args.task037_m3a_overlap0125_partition and m3a_core_audit_path.is_file():
+        try:
+            m3a_core_audit = json.loads(m3a_core_audit_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            m3a_core_audit = {}
+    else:
+        m3a_core_audit = {}
+    if args.task037_m3a_overlap0125_partition:
+        for key in (
+            "external_reported_relative_residual",
+            "external_condensed_true_residual",
+            "external_full_augmented_true_residual",
+        ):
+            if key in m3a_core_audit:
+                solver_summary[key] = m3a_core_audit[key]
     dtn_orders_path = run_dir / "dtn_port_diffraction_orders_3d.json"
     field_shard_paths = [
         run_dir / f"fields_3d_for_paraview_rank{rank:04d}.vtu"
@@ -2577,6 +3171,7 @@ def _run_parent(args: argparse.Namespace) -> int:
         no_swap=no_swap,
         observed_worker_rank_count=sampler["max_observed_worker_rank_count"],
         resource_summary=sampler,
+        task037_m3a_core_audit=m3a_core_audit,
     )
     task035d_nested_p_evidence = None
     task035d_selective_face_evidence = None
@@ -2953,7 +3548,15 @@ def _run_parent(args: argparse.Namespace) -> int:
         qualification["failures"].append("source_stable_and_clean_after")
         qualification["pass"] = False
     status = (
-        "assembly_calibration_pass"
+        "task037_matrix_free_dtn_component_pass"
+        if qualification["pass"] and args.task037_e0_matrix_free_dtn_gate
+        else "task037_matrix_free_dtn_component_not_pass"
+        if args.task037_e0_matrix_free_dtn_gate
+        else "task037_m3a_full_solve_pass"
+        if qualification["pass"] and args.task037_m3a_overlap0125_partition
+        else "task037_m3a_full_solve_not_pass"
+        if args.task037_m3a_overlap0125_partition
+        else "assembly_calibration_pass"
         if qualification["pass"] and args.run_kind == "assembly-only"
         else "factorization_calibration_pass"
         if qualification["pass"] and args.run_kind == "factorization-only"
@@ -3024,6 +3627,16 @@ def _run_parent(args: argparse.Namespace) -> int:
         },
         "p4_prerequisite_gate": p4_gate,
         "task035c_p6_h10_preflight_gate": task035c_p6_gate,
+        "task037_e0_matrix_free_dtn_gate": bool(args.task037_e0_matrix_free_dtn_gate),
+        "task037_m3a_overlap0125_partition": bool(
+            args.task037_m3a_overlap0125_partition
+        ),
+        "task037_m3a_core_audit": {
+            "path": _path_from_root(m3a_core_audit_path),
+            "sha256": _sha256(m3a_core_audit_path),
+        }
+        if args.task037_m3a_overlap0125_partition
+        else None,
         "task035d_case097_launch_gate": task035d_case097_gate,
         "task035d_nested_p_launch_gate": task035d_nested_p_gate,
         "task035d_selective_face_launch_gate": (task035d_selective_face_gate),
@@ -3152,6 +3765,7 @@ def main(argv: list[str] | None = None) -> int:
             raise SystemExit("--worker requires --run-dir.")
         _validate_worker_parent_launch(args)
         _revalidate_task035d_worker_inputs(args)
+        _revalidate_task037_m0_worker_source(args)
         return _worker(args)
     return _run_parent(args)
 
