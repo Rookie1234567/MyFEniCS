@@ -48,9 +48,7 @@ class Task033HighOrderHybridComponentTests(unittest.TestCase):
 
         for degree, h_nm in ((1, 5.0), (1, 3.0), (3, 3.0)):
             with self.subTest(degree=degree, h_nm=h_nm):
-                self.assertIsNone(
-                    phase6._load_case080_reference(degree, h_nm)
-                )
+                self.assertIsNone(phase6._load_case080_reference(degree, h_nm))
 
     def test_case080_reference_rejects_tampered_identity(self) -> None:
         loaded = phase6._load_case080_reference(2, 5.0)
@@ -79,10 +77,7 @@ class Task033HighOrderHybridComponentTests(unittest.TestCase):
                     cross_section, transverse_degree=degree
                 )
                 target = np.sqrt(
-                    (cfg.k0 * complex(cfg.n_air)) ** 2
-                    - cfg.kx**2
-                    - cfg.ky**2
-                    + 0.0j
+                    (cfg.k0 * complex(cfg.n_air)) ** 2 - cfg.kx**2 - cfg.ky**2 + 0.0j
                 )
                 vectors: list[PETSc.Vec] = []
 
@@ -91,9 +86,7 @@ class Task033HighOrderHybridComponentTests(unittest.TestCase):
 
                     def field(x):
                         phase = np.exp(1j * (cfg.kx * x[0] + cfg.ky * x[1]))
-                        values = np.zeros(
-                            (2, x.shape[1]), dtype=PETSc.ScalarType
-                        )
+                        values = np.zeros((2, x.shape[1]), dtype=PETSc.ScalarType)
                         values[component, :] = phase
                         return values
 
@@ -140,9 +133,7 @@ class Task033HighOrderHybridComponentTests(unittest.TestCase):
                     )
                     self.assertEqual(coupling.mode_count_per_direction, 2)
                     self.assertEqual(coupling.internal_unknown_count, 4)
-                    self.assertLess(
-                        coupling.positive_projection_identity_error, 1.0e-9
-                    )
+                    self.assertLess(coupling.positive_projection_identity_error, 1.0e-9)
                     self.assertEqual(
                         coupling.interface_quadrature_coefficient_degree,
                         degree,
@@ -156,16 +147,10 @@ class Task033HighOrderHybridComponentTests(unittest.TestCase):
                     )
                     self.assertFalse(coupling.full_field_or_mode_gathered)
                     self.assertFalse(coupling.dense_interface_square_formed)
-                    self.assertFalse(
-                        bottom.floquet_data.used_full_boundary_gather
-                    )
+                    self.assertFalse(bottom.floquet_data.used_full_boundary_gather)
                     self.assertFalse(top.floquet_data.used_full_boundary_gather)
-                    self.assertFalse(
-                        bottom.floquet_data.created_dense_boundary_square
-                    )
-                    self.assertFalse(
-                        top.floquet_data.created_dense_boundary_square
-                    )
+                    self.assertFalse(bottom.floquet_data.created_dense_boundary_square)
+                    self.assertFalse(top.floquet_data.created_dense_boundary_square)
                     self.assertEqual(
                         coupling.bottom.local_fem_outward_normal_sign,
                         -coupling.top.local_fem_outward_normal_sign,
