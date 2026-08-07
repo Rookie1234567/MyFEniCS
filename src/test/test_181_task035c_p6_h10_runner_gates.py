@@ -217,6 +217,13 @@ def _h4_hybrid_cli() -> list[str]:
     return cli
 
 
+def _h5_hybrid_cli() -> list[str]:
+    cli = _h4_hybrid_cli()
+    cli[cli.index("--solver-path") + 1] = "local-inverse-qualification"
+    cli[cli.index("--task037b-h4-gate")] = "--task037b-h5-gate"
+    return cli
+
+
 class Task035cP6H10RunnerGateTests(unittest.TestCase):
     def test_ordinary_defaults_remain_unchanged(self) -> None:
         phase6 = parse_phase6_args([])
@@ -227,6 +234,7 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
         self.assertFalse(phase6.task037b_h1_gate)
         self.assertFalse(phase6.task037b_h3_gate)
         self.assertFalse(phase6.task037b_h4_gate)
+        self.assertFalse(phase6.task037b_h5_gate)
 
         full3d = parse_full3d_args(["--degree", "3"])
         self.assertEqual(full3d.stage4_full3d_assembly_backend, "standard_full")
@@ -413,6 +421,73 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             parse_memory_args(combined)
 
+    def test_task037b_h5_gate_and_worker_forwarding_are_scoped(self) -> None:
+        args = parse_memory_args(_h5_hybrid_cli())
+        self.assertTrue(args.task037b_h5_gate)
+        self.assertEqual(args.mpi_size, 8)
+        self.assertEqual(args.requested_modes, 120)
+        self.assertEqual(args.candidate_modes, 240)
+        self.assertEqual(args.solver_path, "local-inverse-qualification")
+        command = _worker_command(args, Path("record.json"), Path("stages.jsonl"))
+        self.assertIn("--task037b-h5-gate", command)
+        self.assertIn("--solver-path", command)
+        self.assertEqual(
+            command[command.index("--solver-path") + 1],
+            "local-inverse-qualification",
+        )
+        self.assertNotIn("--task037b-h4-gate", command)
+        worker_cli = _h5_hybrid_cli()
+        remove_pairs = {"--target", "--case-label", "--mpi-size"}
+        phase6_cli: list[str] = []
+        index = 0
+        while index < len(worker_cli):
+            if worker_cli[index] in remove_pairs:
+                index += 2
+                continue
+            phase6_cli.append(worker_cli[index])
+            index += 1
+        worker = parse_phase6_args(phase6_cli)
+        self.assertTrue(worker.task037b_h5_gate)
+        self.assertEqual(worker.solver_path, "local-inverse-qualification")
+
+    def test_task037b_h5_gate_rejects_missing_wrong_solver_and_combination(self) -> None:
+        wrong_solver = _h5_hybrid_cli()
+        wrong_solver[wrong_solver.index("--solver-path") + 1] = "block-ldu-exact"
+        with self.assertRaises(SystemExit):
+            parse_memory_args(wrong_solver)
+        missing_flag = [
+            value for value in _h5_hybrid_cli() if value != "--task037b-h5-gate"
+        ]
+        with self.assertRaises(SystemExit):
+            parse_memory_args(missing_flag)
+        with self.assertRaises(SystemExit):
+            parse_memory_args(
+                [
+                    "--target",
+                    "hybrid",
+                    "--case-label",
+                    "ordinary_local_inverse",
+                    "--degree",
+                    "2",
+                    "--h-nm",
+                    "5",
+                    "--mpi-size",
+                    "1",
+                    "--requested-modes",
+                    "80",
+                    "--candidate-modes",
+                    "160",
+                    "--solver-path",
+                    "local-inverse-qualification",
+                    "--verified-clean-sha",
+                    SOURCE_SHA,
+                ]
+            )
+        combined = _h5_hybrid_cli()
+        combined.append("--task037b-h4-gate")
+        with self.assertRaises(SystemExit):
+            parse_memory_args(combined)
+
     def test_task035c_rejects_augmented_and_h1_summary_forwards(self) -> None:
         old_augmented = _hybrid_cli("assembly_time_static_condensed")
         old_augmented[old_augmented.index("--solver-path") + 1] = "augmented"
@@ -424,6 +499,7 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
                 "h1_telemetry": {"task037b_h1_gate": True},
                 "h3_telemetry": {"task037b_h3_gate": True},
                 "h4_telemetry": {"task037b_h4_gate": True},
+                "h5_telemetry": {"task037b_h5_gate": True},
                 "hybrid_system": {
                     "block_shapes": {"A": [1, 1]},
                     "inserted_nnz_by_block": {"A": 1},
@@ -438,6 +514,8 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
         self.assertTrue(summary["h1_telemetry"]["task037b_h1_gate"])
         self.assertTrue(summary["h3_telemetry"]["task037b_h3_gate"])
         self.assertTrue(summary["h4_telemetry"]["task037b_h4_gate"])
+        self.assertTrue(summary["h5_telemetry"]["task037b_h5_gate"])
+        self.assertNotIn("h5_memory_stages", summary)
         self.assertEqual(summary["hybrid_system"]["block_shapes"], {"A": [1, 1]})
         self.assertFalse(
             summary["hybrid_system"]["operator_inventory"]["global_A_materialized"]

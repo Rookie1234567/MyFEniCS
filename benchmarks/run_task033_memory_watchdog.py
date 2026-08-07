@@ -884,6 +884,7 @@ def _worker_command(
         or args.task037b_h1_gate
         or args.task037b_h3_gate
         or args.task037b_h4_gate
+        or args.task037b_h5_gate
     ):
         command.extend(
             (
@@ -898,7 +899,11 @@ def _worker_command(
                         else (
                             "--task037b-h3-gate"
                             if args.task037b_h3_gate
-                            else "--task037b-h4-gate"
+                            else (
+                                "--task037b-h4-gate"
+                                if args.task037b_h4_gate
+                                else "--task037b-h5-gate"
+                            )
                         )
                     )
                 ),
@@ -969,6 +974,7 @@ def _task034_terminal_worker_drain(
     stage: str | None,
     terminal_record_complete: bool,
     live_worker_count: int | None,
+    terminal_stage: str = "record_and_release",
 ) -> bool:
     """Recognize only the normal worker-before-launcher MPI exit window."""
 
@@ -976,7 +982,7 @@ def _task034_terminal_worker_drain(
         task034_workstation_gate
         and process_running
         and not authority_readable
-        and stage == "record_and_release"
+        and stage == terminal_stage
         and terminal_record_complete
         and live_worker_count == 0
     )
@@ -1077,6 +1083,7 @@ def _hybrid_measurements(record: dict[str, Any]) -> dict[str, Any]:
         "h1_telemetry": record.get("h1_telemetry"),
         "h3_telemetry": record.get("h3_telemetry"),
         "h4_telemetry": record.get("h4_telemetry"),
+        "h5_telemetry": record.get("h5_telemetry"),
         "status": record.get("status"),
         "case": record.get("case"),
         "qep": {
@@ -1166,6 +1173,91 @@ def _hybrid_measurements(record: dict[str, Any]) -> dict[str, Any]:
         "qualification": record.get("qualification"),
         "timing_seconds_max_rank": record.get("timing_seconds_max_rank"),
     }
+
+
+def _task037b_h5_numerical_pass(record: dict[str, Any]) -> bool:
+    """Use only the H5 worker qualification contract for H5 numerical status."""
+
+    qualification = record.get("qualification")
+    if not isinstance(qualification, dict):
+        return False
+    return bool(
+        qualification.get("task037b_h5_gate") is True
+        and qualification.get("worker_numerical_pass") is True
+        and qualification.get("integration_pass") is True
+    )
+
+
+def _h5_stage_memory_summary(
+    rows: list[dict[str, Any]], *, expected_mpi_size: int
+) -> dict[str, dict[str, Any]]:
+    """Summarize H5 RSS/PSS/USS without mixing direct and candidate stages."""
+
+    stage_groups = {
+        "common_action_coupling": {"h5_action_coupling_build"},
+        "h5a_direct_reference": {
+            "oracle_local_matrix_build",
+            "h5a_bottom_factor",
+            "h5a_bottom_solve",
+            "h5a_bottom_release",
+            "h5a_top_factor",
+            "h5a_top_solve",
+            "h5a_top_release",
+        },
+        "h5_post_direct_trim": {"h5_post_direct_heap_trim"},
+        "h5b_candidate": {
+            "h5b_simultaneous_inverse_setup",
+            "h5b_bottom_solves",
+            "h5b_top_solves",
+            "h5b_release_record",
+        },
+    }
+
+    def finite_values(group_rows: list[dict[str, Any]], key: str) -> list[float]:
+        values: list[float] = []
+        for row in group_rows:
+            value = row.get(key)
+            try:
+                value = float(value)
+            except (TypeError, ValueError):
+                continue
+            if math.isfinite(value):
+                values.append(value)
+        return values
+
+    summary: dict[str, dict[str, Any]] = {}
+    for name, stages in stage_groups.items():
+        group_rows = [row for row in rows if row.get("stage") in stages]
+        complete_rows: list[dict[str, Any]] = []
+        for row in group_rows:
+            try:
+                readable_count = int(row.get("worker_rank_smaps_readable_count"))
+            except (TypeError, ValueError):
+                continue
+            if readable_count == expected_mpi_size:
+                complete_rows.append(row)
+        pss_values = finite_values(complete_rows, "worker_rank_pss_sum_mb")
+        uss_values = finite_values(complete_rows, "worker_rank_uss_sum_mb")
+        rss_values = finite_values(group_rows, "worker_rank_rss_sum_mb")
+        tree_rss_values = finite_values(group_rows, "mpi_process_tree_rss_mb")
+        summary[name] = {
+            "stages": sorted(stages),
+            "sample_count": len(group_rows),
+            "complete_smaps_sample_count": len(complete_rows),
+            "peak_worker_rank_rss_sum_mb": (
+                max(rss_values) if rss_values else None
+            ),
+            "peak_worker_rank_pss_sum_mb": (
+                max(pss_values) if pss_values else None
+            ),
+            "peak_worker_rank_uss_sum_mb": (
+                max(uss_values) if uss_values else None
+            ),
+            "peak_mpi_process_tree_rss_mb": (
+                max(tree_rss_values) if tree_rss_values else None
+            ),
+        }
+    return summary
 
 
 def _external_resource_authority(
@@ -1348,6 +1440,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "modal-schur-fast",
             "modal-schur-memory-minimal",
             "block-ldu-exact",
+            "local-inverse-qualification",
         ),
         default="modal-schur-memory-minimal",
     )
@@ -1434,6 +1527,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Open only the frozen Task037b H4 bounded modal-block diagnostic path.",
     )
+    parser.add_argument(
+        "--task037b-h5-gate",
+        action="store_true",
+        help="Open only the frozen Task37b H5 local-inverse qualification path.",
+    )
     parser.add_argument("--task035c-p6-preflight-authority", type=Path)
     parser.add_argument("--task035c-p6-preflight-sha256")
     parser.add_argument(
@@ -1479,30 +1577,39 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--host-environment-id", default="windows-docker-desktop")
     args = parser.parse_args(argv)
+    if (
+        args.solver_path == "local-inverse-qualification"
+        and not args.task037b_h5_gate
+    ):
+        parser.error(
+            "local-inverse-qualification requires --task037b-h5-gate."
+        )
     selected_scoped_gates = (
         args.task035c_p6_h10_gate,
         args.task037b_h1_gate,
         args.task037b_h3_gate,
         args.task037b_h4_gate,
+        args.task037b_h5_gate,
     )
     if sum(bool(value) for value in selected_scoped_gates) > 1:
         parser.error(
-            "Task035c p6/h10, Task037b H1, Task037b H3, and Task037b H4 gates are "
+            "Task035c p6/h10, Task037b H1, Task037b H3, Task037b H4, and H5 gates are "
             "mutually exclusive."
         )
     if args.degree == 6 and not any(selected_scoped_gates):
         parser.error(
             "p6 is fail-closed; pass a fixed scoped Task035c, Task037b H1, "
-            "or Task037b H3/H4 gate."
+            "or Task037b H3/H4/H5 gate."
         )
     if (
         args.task035c_p6_h10_gate
         or args.task037b_h1_gate
         or args.task037b_h3_gate
         or args.task037b_h4_gate
+        or args.task037b_h5_gate
     ) and args.task034_workstation_gate:
         parser.error(
-            "--task034-workstation-gate and the Task035c/H1/H3/H4 scoped gates "
+            "--task034-workstation-gate and the Task035c/H1/H3/H4/H5 scoped gates "
             "are mutually exclusive."
         )
     if (
@@ -1512,6 +1619,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         and not args.task037b_h1_gate
         and not args.task037b_h3_gate
         and not args.task037b_h4_gate
+        and not args.task037b_h5_gate
     ):
         parser.error(
             "MPI8/16/32 require --task034-workstation-gate or the scoped "
@@ -1568,6 +1676,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         or args.task037b_h1_gate
         or args.task037b_h3_gate
         or args.task037b_h4_gate
+        or args.task037b_h5_gate
     ):
         parser.error(
             "--full3d-reference-sha256 is reserved for a scoped "
@@ -1712,12 +1821,49 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "10/110 nm, S-polarized, full3d/scalar-CG, M120+M120, "
                 "candidate240, block-ldu-exact, static-condensed MPI8 path."
             )
+    elif args.task037b_h5_gate:
+        scoped = bool(
+            args.target == "hybrid"
+            and args.degree == 6
+            and math.isclose(args.h_nm, 10.0)
+            and args.modal_degree == 6
+            and args.modal_h_nm is not None
+            and math.isclose(args.modal_h_nm, 10.0)
+            and args.mpi_size == 8
+            and args.requested_modes == 120
+            and args.candidate_modes == 240
+            and args.solver_path == "local-inverse-qualification"
+            and args.comparison_solver_path == "fast"
+            and not args.compare_modal_schur
+            and args.stage4_full3d_assembly_backend
+            == "assembly_time_static_condensed"
+            and math.isclose(args.bottom_interface_nm, 10.0)
+            and math.isclose(args.top_interface_nm, 110.0)
+            and args.graded_reference_h is None
+            and math.isclose(args.incident_grazing_deg, 10.0)
+            and args.polarization_kind == "s"
+            and args.internal_propagation_model == "full3d_uniform_cg"
+            and args.internal_traction_model == "scalar_cg_discrete_derivative"
+            and args.full3d_reference is not None
+            and valid_hex_digest(args.full3d_reference_sha256, 64)
+            and args.task035c_p6_preflight_authority is not None
+            and valid_hex_digest(args.task035c_p6_preflight_sha256, 64)
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and args.host_environment_id == "WSL2-Ubuntu-24.04"
+        )
+        if not scoped:
+            parser.error(
+                "--task037b-h5-gate is restricted to the fixed WSL p6/h10, "
+                "10/110 nm, S-polarized, full3d/scalar-CG, M120+M120, "
+                "candidate240, local-inverse-qualification, "
+                "static-condensed MPI8 path."
+            )
     elif (
         args.task035c_p6_preflight_authority is not None
         or args.task035c_p6_preflight_sha256 is not None
     ):
         parser.error(
-            "Task035c/H1/H3/H4 preflight authority arguments require a scoped gate."
+            "Task035c/H1/H3/H4/H5 preflight authority arguments require a scoped gate."
         )
     if args.task033_same_sha_anchor_requalification:
         scoped = bool(
@@ -1888,6 +2034,7 @@ def _formal_shard_pass(
     terminated_for_memory: bool,
     terminated_for_timeout: bool,
     terminated_for_authority_unreadable: bool,
+    no_swap_pass: bool = True,
 ) -> bool:
     """Centralize the fail-closed measured-shard promotion contract."""
 
@@ -1900,6 +2047,7 @@ def _formal_shard_pass(
         and not terminated_for_memory
         and not terminated_for_timeout
         and not terminated_for_authority_unreadable
+        and no_swap_pass
     )
 
 
@@ -1964,6 +2112,7 @@ def run(args: argparse.Namespace) -> int:
             or args.task037b_h1_gate
             or args.task037b_h3_gate
             or args.task037b_h4_gate
+            or args.task037b_h5_gate
         ):
             authority_path = args.task035c_p6_preflight_authority
             if authority_path is not None and not authority_path.is_absolute():
@@ -2023,6 +2172,7 @@ def run(args: argparse.Namespace) -> int:
                     args.task037b_h1_gate
                     or args.task037b_h3_gate
                     or args.task037b_h4_gate
+                    or args.task037b_h5_gate
                 )
                 else task035c_p6_h10_full3d_reference_gate(
                     full3d_reference,
@@ -2039,6 +2189,7 @@ def run(args: argparse.Namespace) -> int:
                     or args.task037b_h1_gate
                     or args.task037b_h3_gate
                     or args.task037b_h4_gate
+                    or args.task037b_h5_gate
                 ),
                 "historical_preflight_readable": (authority_read_error is None),
                 "historical_preflight_gate": preflight_authority_gate["pass"],
@@ -2060,7 +2211,11 @@ def run(args: argparse.Namespace) -> int:
                         if args.task037b_h3_gate
                         else "task037b.h1-hybrid-launch-gate.v1"
                         if args.task037b_h1_gate
-                        else "task035c.p6-h10-hybrid-launch-gate.v1"
+                        else (
+                            "task037b.h5-hybrid-launch-gate.v1"
+                            if args.task037b_h5_gate
+                            else "task035c.p6-h10-hybrid-launch-gate.v1"
+                        )
                     )
                 ),
                 "pass": not failures,
@@ -2073,7 +2228,11 @@ def run(args: argparse.Namespace) -> int:
                         if args.task037b_h3_gate
                         else "task037b_h1_fixed_augmented_p6_h10"
                         if args.task037b_h1_gate
-                        else "task035c_fixed_rectangular_p6_h10"
+                        else (
+                            "task037b_h5_fixed_local_inverse_p6_h10"
+                            if args.task037b_h5_gate
+                            else "task035c_fixed_rectangular_p6_h10"
+                        )
                     )
                 ),
                 "checks": checks,
@@ -2409,6 +2568,7 @@ def run(args: argparse.Namespace) -> int:
             or args.task037b_h1_gate
             or args.task037b_h3_gate
             or args.task037b_h4_gate
+            or args.task037b_h5_gate
         )
         and core_read_error is not None
     ):
@@ -2474,6 +2634,7 @@ def run(args: argparse.Namespace) -> int:
         or args.task037b_h1_gate
         or args.task037b_h3_gate
         or args.task037b_h4_gate
+        or args.task037b_h5_gate
     ):
         args.high_order_core_evidence_sha256 = core_gate.get("evidence_sha256")
     args._no_swap_verified = True
@@ -2482,6 +2643,17 @@ def run(args: argparse.Namespace) -> int:
     timeline_path = run_dir / "memory_timeline.csv"
     stdout_path = run_dir / "worker_stdout.txt"
     command = _worker_command(args, record_path, stage_path)
+    scoped_worker_gate = bool(
+        args.task034_workstation_gate
+        or args.task035c_p6_h10_gate
+        or args.task037b_h1_gate
+        or args.task037b_h3_gate
+        or args.task037b_h4_gate
+        or args.task037b_h5_gate
+    )
+    terminal_stage = (
+        "h5b_release_record" if args.task037b_h5_gate else "record_and_release"
+    )
     environment = os.environ.copy()
     environment.update(
         {
@@ -2527,10 +2699,11 @@ def run(args: argparse.Namespace) -> int:
             live_workers = [
                 {"pid": pid, "scope": "process_tree"} for pid in process_tree["pids"]
             ]
-            row["worker_rank_rss_sum_mb"] = live_worker_rss_mb
-            row["worker_rank_rss_mb_json"] = json.dumps(
-                live_workers, separators=(",", ":")
-            )
+            if not args.task037b_h5_gate:
+                row["worker_rank_rss_sum_mb"] = live_worker_rss_mb
+                row["worker_rank_rss_mb_json"] = json.dumps(
+                    live_workers, separators=(",", ":")
+                )
             row["mpi_process_tree_swap_mb"] = (
                 float(process_tree["swap_bytes"]) / 1024**2
             )
@@ -2562,16 +2735,10 @@ def run(args: argparse.Namespace) -> int:
             live_worker_count: int | None = None
             terminal_record_complete = False
             if (
-                (
-                    args.task034_workstation_gate
-                    or args.task035c_p6_h10_gate
-                    or args.task037b_h1_gate
-                    or args.task037b_h3_gate
-                    or args.task037b_h4_gate
-                )
+                scoped_worker_gate
                 and process_running
                 and not authority_readable
-                and row.get("stage") == "record_and_release"
+                and row.get("stage") == terminal_stage
             ):
                 terminal_record_complete = _task034_terminal_record_is_complete(
                     record_path
@@ -2586,27 +2753,16 @@ def run(args: argparse.Namespace) -> int:
                         for worker in discovered_workers
                     )
             terminal_worker_drain = _task034_terminal_worker_drain(
-                task034_workstation_gate=(
-                    args.task034_workstation_gate
-                    or args.task035c_p6_h10_gate
-                    or args.task037b_h1_gate
-                    or args.task037b_h3_gate
-                    or args.task037b_h4_gate
-                ),
+                task034_workstation_gate=scoped_worker_gate,
                 process_running=process_running,
                 authority_readable=authority_readable,
                 stage=row.get("stage"),
                 terminal_record_complete=terminal_record_complete,
                 live_worker_count=live_worker_count,
+                terminal_stage=terminal_stage,
             )
             readability_sample_is_formal = _resource_readability_sample_is_formal(
-                task034_workstation_gate=(
-                    args.task034_workstation_gate
-                    or args.task035c_p6_h10_gate
-                    or args.task037b_h1_gate
-                    or args.task037b_h3_gate
-                    or args.task037b_h4_gate
-                ),
+                task034_workstation_gate=scoped_worker_gate,
                 process_running=process_running,
                 terminal_worker_drain=terminal_worker_drain,
             )
@@ -2690,6 +2846,11 @@ def run(args: argparse.Namespace) -> int:
             ),
         }
     )
+    h5_memory_stages = (
+        _h5_stage_memory_summary(rows, expected_mpi_size=args.mpi_size)
+        if args.task037b_h5_gate
+        else None
+    )
     environment_after = _resource_environment_snapshot()
     environment_after["task034_effective_limit"] = effective_memory_limit()
     source = _watchdog_source_after(source_before)
@@ -2718,11 +2879,17 @@ def run(args: argparse.Namespace) -> int:
         measurements: dict[str, Any] = solver_record
     else:
         qualification = solver_record.get("qualification", {})
-        numerical_pass = bool(
-            qualification.get("integration_pass")
-            and qualification.get("task033_physical_truncation_allowed")
+        numerical_pass = (
+            _task037b_h5_numerical_pass(solver_record)
+            if args.task037b_h5_gate
+            else bool(
+                qualification.get("integration_pass")
+                and qualification.get("task033_physical_truncation_allowed")
+            )
         )
         measurements = _hybrid_measurements(solver_record)
+        if args.task037b_h5_gate:
+            measurements["h5_memory_stages"] = h5_memory_stages
     formal_pass = _formal_shard_pass(
         return_code=return_code,
         numerical_pass=numerical_pass,
@@ -2732,6 +2899,7 @@ def run(args: argparse.Namespace) -> int:
         terminated_for_memory=terminated_for_memory,
         terminated_for_timeout=terminated_for_timeout,
         terminated_for_authority_unreadable=(terminated_for_authority_unreadable),
+        no_swap_pass=no_swap if args.task037b_h5_gate else True,
     )
     summary = {
         "schema_version": "task033.memory-watchdog.v2",
@@ -2780,6 +2948,13 @@ def run(args: argparse.Namespace) -> int:
             "dedicated cgroup swap must be zero. WSL-global pswp is diagnostic only."
         ),
     }
+    if args.task037b_h5_gate:
+        summary.update(
+            {
+                "h5_memory_stages": h5_memory_stages,
+                "h5_external_no_swap_gate": no_swap,
+            }
+        )
     summary_path = run_dir / "memory_sampler_summary.json"
     rendered = json.dumps(summary, ensure_ascii=False, indent=2) + "\n"
     summary_path.write_text(rendered, encoding="utf-8")

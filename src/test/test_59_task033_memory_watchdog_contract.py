@@ -10,7 +10,11 @@ from unittest import mock
 
 from benchmarks.run_task033_memory_watchdog import (
     _case090_source_compatibility,
+    _formal_shard_pass,
+    _h5_stage_memory_summary,
     _parse_args,
+    _task034_terminal_worker_drain,
+    _task037b_h5_numerical_pass,
     _watchdog_source_after,
     _watchdog_source_before,
     _worker_command,
@@ -1102,6 +1106,157 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
                     "--verified-clean-sha", "f" * 40,
                 ]
             )
+
+    def test_h5_numerical_pass_does_not_require_physical_truncation(self) -> None:
+        record = {
+            "qualification": {
+                "task037b_h5_gate": True,
+                "worker_numerical_pass": True,
+                "integration_pass": True,
+                "task033_physical_truncation_allowed": False,
+            }
+        }
+        self.assertTrue(_task037b_h5_numerical_pass(record))
+        record["qualification"]["integration_pass"] = False
+        self.assertFalse(_task037b_h5_numerical_pass(record))
+        self.assertFalse(
+            _task037b_h5_numerical_pass(
+                {
+                    "qualification": {
+                        "worker_numerical_pass": True,
+                        "integration_pass": True,
+                    }
+                }
+            )
+        )
+
+    def test_h5_external_no_swap_is_a_formal_requirement(self) -> None:
+        kwargs = {
+            "return_code": 0,
+            "numerical_pass": True,
+            "resource_gate_pass": True,
+            "source_gate_pass": True,
+            "launch_gate_pass": True,
+            "terminated_for_memory": False,
+            "terminated_for_timeout": False,
+            "terminated_for_authority_unreadable": False,
+        }
+        self.assertTrue(_formal_shard_pass(**kwargs, no_swap_pass=True))
+        self.assertFalse(_formal_shard_pass(**kwargs, no_swap_pass=False))
+
+    def test_h5_terminal_stage_requires_complete_record_and_no_workers(self) -> None:
+        kwargs = {
+            "task034_workstation_gate": True,
+            "process_running": True,
+            "authority_readable": False,
+            "stage": "h5b_release_record",
+            "terminal_record_complete": True,
+            "live_worker_count": 0,
+            "terminal_stage": "h5b_release_record",
+        }
+        self.assertTrue(_task034_terminal_worker_drain(**kwargs))
+        self.assertFalse(
+            _task034_terminal_worker_drain(
+                **{**kwargs, "stage": "record_and_release"}
+            )
+        )
+        self.assertFalse(
+            _task034_terminal_worker_drain(
+                **{**kwargs, "terminal_record_complete": False}
+            )
+        )
+        self.assertFalse(
+            _task034_terminal_worker_drain(
+                **{**kwargs, "live_worker_count": 1}
+            )
+        )
+
+    def test_h5_stage_memory_summary_keeps_peaks_separate(self) -> None:
+        rows = [
+            {
+                "stage": "h5_action_coupling_build",
+                "worker_rank_rss_sum_mb": 10.0,
+                "worker_rank_pss_sum_mb": 4.0,
+                "worker_rank_uss_sum_mb": 3.0,
+                "mpi_process_tree_rss_mb": 20.0,
+                "worker_rank_smaps_readable_count": 2,
+            },
+            {
+                "stage": "h5a_bottom_factor",
+                "worker_rank_rss_sum_mb": 12.0,
+                "worker_rank_pss_sum_mb": 5.0,
+                "worker_rank_uss_sum_mb": 4.0,
+                "mpi_process_tree_rss_mb": 24.0,
+                "worker_rank_smaps_readable_count": 2,
+            },
+            {
+                "stage": "h5a_top_solve",
+                "worker_rank_rss_sum_mb": 15.0,
+                "worker_rank_pss_sum_mb": 6.0,
+                "worker_rank_uss_sum_mb": 5.0,
+                "mpi_process_tree_rss_mb": 30.0,
+                "worker_rank_smaps_readable_count": 1,
+            },
+            {
+                "stage": "h5_post_direct_heap_trim",
+                "worker_rank_rss_sum_mb": 8.0,
+                "worker_rank_pss_sum_mb": 3.0,
+                "worker_rank_uss_sum_mb": 2.0,
+                "mpi_process_tree_rss_mb": 16.0,
+                "worker_rank_smaps_readable_count": 2,
+            },
+            {
+                "stage": "h5b_bottom_solves",
+                "worker_rank_rss_sum_mb": 25.0,
+                "worker_rank_pss_sum_mb": 9.0,
+                "worker_rank_uss_sum_mb": 7.0,
+                "mpi_process_tree_rss_mb": 40.0,
+                "worker_rank_smaps_readable_count": 2,
+            },
+            {
+                "stage": "h5b_top_solves",
+                "worker_rank_rss_sum_mb": 30.0,
+                "worker_rank_pss_sum_mb": 10.0,
+                "worker_rank_uss_sum_mb": 8.0,
+                "mpi_process_tree_rss_mb": 50.0,
+                "worker_rank_smaps_readable_count": 2,
+            },
+        ]
+        summary = _h5_stage_memory_summary(rows, expected_mpi_size=2)
+        common = summary["common_action_coupling"]
+        h5a = summary["h5a_direct_reference"]
+        trim = summary["h5_post_direct_trim"]
+        h5b = summary["h5b_candidate"]
+        self.assertEqual(common["peak_worker_rank_rss_sum_mb"], 10.0)
+        self.assertEqual(common["peak_mpi_process_tree_rss_mb"], 20.0)
+        self.assertEqual(h5a["peak_worker_rank_rss_sum_mb"], 15.0)
+        self.assertEqual(h5a["peak_mpi_process_tree_rss_mb"], 30.0)
+        self.assertEqual(h5a["peak_worker_rank_pss_sum_mb"], 5.0)
+        self.assertEqual(h5a["peak_worker_rank_uss_sum_mb"], 4.0)
+        self.assertEqual(h5a["complete_smaps_sample_count"], 1)
+        self.assertEqual(trim["peak_worker_rank_rss_sum_mb"], 8.0)
+        self.assertEqual(h5b["peak_worker_rank_rss_sum_mb"], 30.0)
+        self.assertEqual(h5b["peak_mpi_process_tree_rss_mb"], 50.0)
+        self.assertEqual(h5b["peak_worker_rank_pss_sum_mb"], 10.0)
+        self.assertEqual(h5b["peak_worker_rank_uss_sum_mb"], 8.0)
+        incomplete = _h5_stage_memory_summary(
+            [
+                {
+                    "stage": "h5_post_direct_heap_trim",
+                    "worker_rank_rss_sum_mb": 18.0,
+                    "worker_rank_pss_sum_mb": 11.0,
+                    "worker_rank_uss_sum_mb": 9.0,
+                    "mpi_process_tree_rss_mb": 27.0,
+                    "worker_rank_smaps_readable_count": 1,
+                }
+            ],
+            expected_mpi_size=2,
+        )["h5_post_direct_trim"]
+        self.assertEqual(incomplete["complete_smaps_sample_count"], 0)
+        self.assertIsNone(incomplete["peak_worker_rank_pss_sum_mb"])
+        self.assertIsNone(incomplete["peak_worker_rank_uss_sum_mb"])
+        self.assertEqual(incomplete["peak_worker_rank_rss_sum_mb"], 18.0)
+        self.assertEqual(incomplete["peak_mpi_process_tree_rss_mb"], 27.0)
 
 
 if __name__ == "__main__":

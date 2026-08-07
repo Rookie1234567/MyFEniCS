@@ -85,9 +85,14 @@ from src.solvers.hybrid_fem_modal_block_ldu import (
 )
 from src.solvers.hybrid_fem_modal_iterative import create_hybrid_assembled_block_action
 from src.solvers.hybrid_fem_modal_schur_direct import (
+    _factor_local,
+    _local_factor_inventory,
     build_hybrid_modal_schur_direct_system,
     build_hybrid_modal_schur_memory_minimal_system,
     solve_hybrid_modal_schur_direct,
+)
+from src.solvers.hybrid_local_iterative_inverse import (
+    build_hybrid_local_iterative_inverse,
 )
 from src.solvers.hybrid_local_dtn_action import assemble_hybrid_local_dtn_action_system
 from src.solvers.hybrid_local_dtn import assemble_hybrid_local_dtn_system
@@ -103,6 +108,7 @@ from src.solvers.common_3d_solve import (
     _petsc_factor_inventory,
     _petsc_matrix_stats,
 )
+from src.solvers.common_3d_utils import _trim_process_heap
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -359,6 +365,242 @@ def _relative_vector_error(actual: PETSc.Vec, expected: PETSc.Vec) -> float:
         difference.destroy()
 
 
+H5_FROZEN_RANDOM_SEEDS = (3701, 3702, 3703, 3704)
+
+
+def _h5_frozen_mode_selection(positive, negative) -> list[dict[str, Any]]:
+    """Freeze the three H5 modal identities per propagation direction."""
+
+    positive_modes = list(positive.modes if hasattr(positive, "modes") else positive)
+    negative_modes = list(negative.modes if hasattr(negative, "modes") else negative)
+    if len(positive_modes) != 120 or len(negative_modes) != 120:
+        raise RuntimeError("H5 requires exactly 120 modes per direction.")
+
+    def select_direction(direction: str, basis) -> list[dict[str, Any]]:
+        modes = list(basis.modes if hasattr(basis, "modes") else basis)
+        mode_count = len(modes)
+        if mode_count != 120:
+            raise RuntimeError("H5 requires the frozen M120 modal ordering.")
+        selected: list[dict[str, Any]] = []
+        used: set[int] = set()
+
+        def append(index: int, criterion: str) -> None:
+            if index in used:
+                raise RuntimeError(f"H5 frozen mode identity repeats index {index}.")
+            mode = modes[index]
+            selected.append(
+                {
+                    "direction": direction,
+                    "local_mode_index": int(index),
+                    "global_modal_column": int(
+                        index if direction == "positive" else mode_count + index
+                    ),
+                    "beta": _complex_json(mode.beta),
+                    "kind": str(mode.kind),
+                    "criterion": criterion,
+                }
+            )
+            used.add(index)
+
+        low_index = next(
+            (
+                index
+                for index, mode in enumerate(modes)
+                if mode.kind in {"propagating", "lossy_propagating"}
+            ),
+            None,
+        )
+        if low_index is None:
+            raise RuntimeError(
+                f"H5 has no finite low-index propagating mode for {direction}."
+            )
+        append(low_index, "lowest_propagating_or_lossy")
+
+        evanescent_index = next(
+            (
+                index
+                for index, mode in enumerate(modes)
+                if (index not in used and index != 119 and mode.kind == "evanescent")
+            ),
+            None,
+        )
+        if evanescent_index is not None:
+            append(evanescent_index, "first_kind_evanescent")
+        else:
+            proxy_index = next(
+                (
+                    index
+                    for index, mode in enumerate(modes)
+                    if index not in used
+                    and index != 119
+                    and abs(complex(mode.beta).imag) > abs(complex(mode.beta).real)
+                ),
+                None,
+            )
+            if proxy_index is None:
+                raise RuntimeError(
+                    f"H5 has no exact evanescent or decay-dominant proxy for {direction}."
+                )
+            append(proxy_index, "proxy_abs_im_beta_gt_abs_re_beta")
+
+        append(119, "highest_retained_index")
+        return selected
+
+    return [
+        *select_direction("positive", positive_modes),
+        *select_direction("negative", negative_modes),
+    ]
+
+
+def _h5_indexed_random_values(global_ids, seed: int) -> np.ndarray:
+    """Return complex SplitMix64 values indexed only by global row identity."""
+
+    indices = np.asarray(global_ids, dtype=np.uint64)
+    mask = np.uint64(0xFFFFFFFFFFFFFFFF)
+    with np.errstate(over="ignore"):
+        state = indices + np.uint64(int(seed))
+
+        def splitmix(value: np.ndarray) -> np.ndarray:
+            value = (value + np.uint64(0x9E3779B97F4A7C15)) & mask
+            value = (value ^ (value >> np.uint64(30))) * np.uint64(
+                0xBF58476D1CE4E5B9
+            ) & mask
+            value = (value ^ (value >> np.uint64(27))) * np.uint64(
+                0x94D049BB133111EB
+            ) & mask
+            return value ^ (value >> np.uint64(31))
+
+        first = splitmix(state)
+        second = splitmix(state ^ np.uint64(0xD1B54A32D192ED03))
+    u1 = (first >> np.uint64(11)).astype(np.float64)
+    u2 = (second >> np.uint64(11)).astype(np.float64)
+    u1 = (u1 + 1.0) / 9007199254740993.0
+    u2 = (u2 + 1.0) / 9007199254740993.0
+    radius = np.sqrt(-2.0 * np.log(u1))
+    return np.asarray(
+        (radius * np.cos(2.0 * np.pi * u2)) + 1j * (radius * np.sin(2.0 * np.pi * u2)),
+        dtype=np.complex128,
+    ) / np.sqrt(2.0)
+
+
+def _h5_fill_partition_independent_random_rhs(
+    vector: PETSc.Vec,
+    seed: int,
+) -> None:
+    first, last = (int(value) for value in vector.getOwnershipRange())
+    owned = _h5_indexed_random_values(np.arange(first, last), seed)
+    if owned.size != last - first:
+        raise RuntimeError("H5 random RHS ownership slice has the wrong size.")
+    vector.getArray()[:] = owned
+    norm = float(vector.norm())
+    if not np.isfinite(norm) or norm <= 0.0:
+        raise RuntimeError("H5 random RHS has a non-finite or zero global norm.")
+    vector.scale(PETSc.ScalarType(1.0 / norm))
+
+
+def _h5_modal_traction_rhs(
+    block,
+    direction: str,
+    local_mode_index: int,
+    scale: complex = 1.0 + 0.0j,
+) -> PETSc.Vec:
+    """Apply one internal modal traction column without assembling a new block."""
+
+    if direction not in {"positive", "negative"}:
+        raise ValueError("H5 modal traction direction is invalid.")
+    traction_matrix = getattr(block, f"{direction}_traction")
+    source = traction_matrix.createVecRight()
+    result = traction_matrix.createVecLeft()
+    source.set(0.0)
+    first, last = (int(value) for value in source.getOwnershipRange())
+    if first <= int(local_mode_index) < last:
+        source.setValue(int(local_mode_index), PETSc.ScalarType(scale))
+    source.assemble()
+    traction_matrix.mult(source, result)
+    source.destroy()
+    return result
+
+
+def _h5_rhs_set(
+    action_system,
+    block,
+    selections: list[dict[str, Any]],
+    *,
+    side: str,
+    propagation,
+    random_seeds: tuple[int, ...] = H5_FROZEN_RANDOM_SEEDS,
+) -> list[tuple[str, PETSc.Vec, dict[str, Any]]]:
+    """Build the physical, four random, and six frozen modal RHS vectors."""
+
+    if side not in {"bottom", "top"}:
+        raise ValueError("H5 RHS side must be bottom or top.")
+    specs: list[tuple[str, PETSc.Vec, dict[str, Any]]] = []
+    try:
+        specs.append(
+            (
+                "physical",
+                action_system.b.copy(),
+                {"kind": "physical_action_rhs", "generator": "action_system.b"},
+            )
+        )
+        for seed in random_seeds:
+            vector = action_system.A.createVecRight()
+            _h5_fill_partition_independent_random_rhs(vector, seed)
+            specs.append(
+                (
+                    f"random_seed_{seed}",
+                    vector,
+                    {
+                        "kind": "partition_independent_complex_random",
+                        "generator": "indexed_splitmix64_box_muller",
+                        "seed": int(seed),
+                        "normalization": "distributed_global_l2",
+                    },
+                )
+            )
+        for identity in selections:
+            direction = str(identity["direction"])
+            if direction not in {"positive", "negative"}:
+                raise ValueError("H5 selection has an invalid direction.")
+            scale = 1.0 + 0.0j
+            if (side == "bottom" and direction == "negative") or (
+                side == "top" and direction == "positive"
+            ):
+                propagation_block = (
+                    propagation.forward
+                    if direction == "positive"
+                    else propagation.backward
+                )
+                scale = complex(
+                    propagation_block.factors[int(identity["local_mode_index"])]
+                )
+            vector = _h5_modal_traction_rhs(
+                block,
+                direction,
+                int(identity["local_mode_index"]),
+                scale=scale,
+            )
+            specs.append(
+                (
+                    f"modal_{direction}_{identity['criterion']}",
+                    vector,
+                    {
+                        "kind": "frozen_modal_traction",
+                        "generator": "coupling_internal_traction_column",
+                        "mode_identity": dict(identity),
+                        "propagation_factor": _complex_json(scale),
+                    },
+                )
+            )
+        if len(specs) != 11:
+            raise RuntimeError(f"H5 requires exactly 11 RHS, got {len(specs)}.")
+        return specs
+    except Exception:
+        for _name, vector, _metadata in specs:
+            vector.destroy()
+        raise
+
+
 def _h3_oracle_local_system(local_system) -> _HybridBlockLduOracleLocalSystem:
     """Extract one independent active condensed oracle and release temporaries."""
 
@@ -494,6 +736,14 @@ def _directional_selection_summary(report) -> dict[str, Any]:
 
 class _ModalBasisCapacityStop(RuntimeError):
     """Internal control flow after writing a structured finite-spectrum negative."""
+
+
+class _H5QualificationStop(RuntimeError):
+    """Internal control flow after writing the H5 local qualification record."""
+
+    def __init__(self, record: dict[str, Any]) -> None:
+        super().__init__(record.get("status", "H5 qualification complete"))
+        self.record = record
 
 
 NUMERICAL_INFINITY_BETA_H_CUTOFF = 1.0e4
@@ -874,6 +1124,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Open only the frozen Task037b H4 bounded modal-block diagnostic path.",
     )
+    parser.add_argument(
+        "--task037b-h5-gate",
+        action="store_true",
+        help="Open only the frozen Task037b H5 local-inverse qualification path.",
+    )
     parser.add_argument("--task035c-p6-preflight-authority", type=Path)
     parser.add_argument("--task035c-p6-preflight-sha256")
     parser.add_argument("--bottom-interface-nm", type=float, default=10.0)
@@ -930,6 +1185,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "modal-schur-fast",
             "modal-schur-memory-minimal",
             "block-ldu-exact",
+            "local-inverse-qualification",
         ),
         default="augmented",
         help=(
@@ -954,16 +1210,24 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         args.task037b_h1_gate,
         args.task037b_h3_gate,
         args.task037b_h4_gate,
+        args.task037b_h5_gate,
     )
     if sum(bool(value) for value in selected_scoped_gates) > 1:
         parser.error(
-            "Task035c p6/h10, Task037b H1, Task037b H3, and Task037b H4 gates are "
+            "Task035c p6/h10, Task037b H1, H3, H4, and H5 gates are "
             "mutually exclusive."
+        )
+    if (
+        args.solver_path == "local-inverse-qualification"
+        and not args.task037b_h5_gate
+    ):
+        parser.error(
+            "local-inverse-qualification requires --task037b-h5-gate."
         )
     if args.degree == 6 and not any(selected_scoped_gates):
         parser.error(
             "p6 is fail-closed; pass a fixed scoped Task035c, Task037b H1, "
-            "or Task037b H3/H4 gate."
+            "or Task037b H3/H4/H5 gate."
         )
     if args.task035c_p6_h10_gate:
         scoped = bool(
@@ -1070,12 +1334,48 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "10/110 nm, S-polarized, full3d/scalar-CG, M120+M120, "
                 "candidate240, block-ldu-exact, static-condensed MPI8 path."
             )
+    elif args.task037b_h5_gate:
+        scoped = bool(
+            args.degree == 6
+            and math.isclose(args.h_nm, 10.0)
+            and args.modal_degree == 6
+            and args.modal_h_nm is not None
+            and math.isclose(args.modal_h_nm, 10.0)
+            and args.requested_modes == 120
+            and args.candidate_modes == 240
+            and args.solver_path == "local-inverse-qualification"
+            and args.comparison_solver_path == "fast"
+            and not args.compare_modal_schur
+            and args.stage4_full3d_assembly_backend
+            == ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+            and math.isclose(args.bottom_interface_nm, 10.0)
+            and math.isclose(args.top_interface_nm, 110.0)
+            and args.graded_reference_h is None
+            and math.isclose(args.incident_grazing_deg, 10.0)
+            and args.polarization_kind == "s"
+            and args.internal_propagation_model == "full3d_uniform_cg"
+            and args.internal_traction_model == "scalar_cg_discrete_derivative"
+            and args.full3d_reference is not None
+            and valid_hex_digest(args.full3d_reference_sha256, 64)
+            and args.task035c_p6_preflight_authority is not None
+            and valid_hex_digest(args.task035c_p6_preflight_sha256, 64)
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and args.host_environment_id == "WSL2-Ubuntu-24.04"
+            and not args.allow_dirty_research
+        )
+        if not scoped:
+            parser.error(
+                "--task037b-h5-gate is restricted to the fixed WSL p6/h10, "
+                "10/110 nm, S-polarized, full3d/scalar-CG, M120+M120, "
+                "candidate240, local-inverse-qualification, "
+                "static-condensed MPI8 path."
+            )
     elif (
         args.task035c_p6_preflight_authority is not None
         or args.task035c_p6_preflight_sha256 is not None
         or args.full3d_reference_sha256 is not None
     ):
-        parser.error("Task035c/H1/H3/H4 authority SHA arguments require a scoped gate.")
+        parser.error("Task035c/H1/H3/H4/H5 authority SHA arguments require a scoped gate.")
     return args
 
 
@@ -1090,6 +1390,7 @@ def _task035c_worker_authority_gate(
         or args.task037b_h1_gate
         or args.task037b_h3_gate
         or args.task037b_h4_gate
+        or args.task037b_h5_gate
     ):
         return None
 
@@ -1138,7 +1439,12 @@ def _task035c_worker_authority_gate(
             assembly_backend=args.stage4_full3d_assembly_backend,
             mpi_size=mpi_size,
         )
-        if args.task037b_h1_gate or args.task037b_h3_gate or args.task037b_h4_gate
+        if (
+            args.task037b_h1_gate
+            or args.task037b_h3_gate
+            or args.task037b_h4_gate
+            or args.task037b_h5_gate
+        )
         else task035c_p6_h10_full3d_reference_gate(
             reference if isinstance(reference, dict) else None,
             expected_sha256=args.full3d_reference_sha256,
@@ -1154,6 +1460,8 @@ def _task035c_worker_authority_gate(
             if args.task037b_h4_gate
             else "task037b.h3-worker-authority-gate.v1"
             if args.task037b_h3_gate
+            else "task037b.h5-worker-authority-gate.v1"
+            if args.task037b_h5_gate
             else "task035c.p6-h10-worker-authority-gate.v1"
         ),
         "pass": bool(preflight_gate["pass"] and reference_gate["pass"]),
@@ -1187,6 +1495,576 @@ def _task035c_worker_authority_gate(
     if not gate["pass"]:
         raise SystemExit(f"Task035c p6/h10 worker authority failed: {gate['failures']}")
     return gate
+
+
+def _h5_true_relative_residual(
+    operator: PETSc.Mat,
+    rhs: PETSc.Vec,
+    solution: PETSc.Vec,
+) -> float:
+    residual = rhs.duplicate()
+    try:
+        operator.mult(solution, residual)
+        residual.scale(PETSc.ScalarType(-1.0))
+        residual.axpy(PETSc.ScalarType(1.0), rhs)
+        return float(residual.norm()) / max(float(rhs.norm()), 1.0e-30)
+    finally:
+        residual.destroy()
+
+
+def _run_h5_local_qualification(
+    *,
+    args: argparse.Namespace,
+    comm: MPI.Intracomm,
+    provenance: dict[str, Any],
+    authority_gate: dict[str, Any] | None,
+    cfg: Any,
+    positive: Any,
+    negative: Any,
+    bottom: Any,
+    top: Any,
+    coupling: Any,
+    oracle_bottom: _HybridBlockLduOracleLocalSystem,
+    oracle_top: _HybridBlockLduOracleLocalSystem,
+    timings: dict[str, float],
+    total_started: float,
+    mark_stage,
+    progress,
+) -> None:
+    """Run the bounded H5a/H5b local qualification and raise its stop record."""
+
+    selections = _h5_frozen_mode_selection(positive, negative)
+    propagation = coupling.propagation
+    rhs_sets = {
+        "bottom": _h5_rhs_set(
+            bottom,
+            coupling.bottom,
+            selections,
+            side="bottom",
+            propagation=propagation,
+        ),
+        "top": _h5_rhs_set(
+            top,
+            coupling.top,
+            selections,
+            side="top",
+            propagation=propagation,
+        ),
+    }
+    direct_references: dict[str, dict[str, PETSc.Vec]] = {
+        "bottom": {},
+        "top": {},
+    }
+    bottom_inverse = None
+    top_inverse = None
+    h5a_sides: dict[str, Any] = {}
+    h5b_sides: dict[str, Any] = {}
+    h5a_pass = True
+    h5b_pass = False
+
+    rhs_manifest: dict[str, list[dict[str, Any]]] = {"bottom": [], "top": []}
+    for side, rhs_list in rhs_sets.items():
+        for name, vector, metadata in rhs_list:
+            rhs_manifest[side].append(
+                {
+                    "name": name,
+                    "metadata": metadata,
+                    "digest": _h1_owned_vec_digest(vector),
+                }
+            )
+
+    try:
+        for side, oracle, action, rhs_list in (
+            ("bottom", oracle_bottom, bottom, rhs_sets["bottom"]),
+            ("top", oracle_top, top, rhs_sets["top"]),
+        ):
+            factor = None
+            side_record: dict[str, Any] = {
+                "rhs": [],
+                "factor_before": None,
+                "factor_after": None,
+            }
+            mark_stage(f"h5a_{side}_factor")
+            factor_started = time.perf_counter()
+            try:
+                factor, factor_setup = _factor_local(oracle.A)
+                side_record["factor_setup_seconds"] = float(factor_setup)
+                side_record["factor_before"] = {
+                    "factor_count": 1,
+                    "inventory": _local_factor_inventory(factor),
+                }
+                timings[f"h5a_{side}_factor"] = _max_elapsed(
+                    comm, factor_started
+                )
+                mark_stage(f"h5a_{side}_solve")
+                solve_started = time.perf_counter()
+                for name, rhs, metadata in rhs_list:
+                    candidate = rhs.duplicate()
+                    try:
+                        factor.solve(rhs, candidate)
+                        direct_residual = _h5_true_relative_residual(
+                            oracle.A, rhs, candidate
+                        )
+                        action_residual = _h5_true_relative_residual(
+                            action.A, rhs, candidate
+                        )
+                        reason = int(factor.getConvergedReason())
+                        iterations = int(factor.getIterationNumber())
+                        solution_digest = _h1_owned_vec_digest(candidate)
+                        direct_references[side][name] = candidate
+                        candidate = None
+                        row = {
+                            "name": name,
+                            "metadata": metadata,
+                            "converged_reason": reason,
+                            "iterations": iterations,
+                            "explicit_oracle_true_residual": float(direct_residual),
+                            "matrix_free_action_true_residual": float(action_residual),
+                            "solution_digest": solution_digest,
+                            "pass": bool(
+                                reason > 0
+                                and np.isfinite(direct_residual)
+                                and np.isfinite(action_residual)
+                                and direct_residual <= 1.0e-10
+                                and action_residual <= 1.0e-10
+                            ),
+                        }
+                        side_record["rhs"].append(row)
+                        progress(
+                            f"Task37b H5a {side}/{name}: reason={reason} "
+                            f"iterations={iterations} "
+                            f"direct_true={direct_residual:.6e} "
+                            f"action_true={action_residual:.6e}"
+                        )
+                    finally:
+                        if candidate is not None:
+                            candidate.destroy()
+                side_record["solve_seconds"] = _max_elapsed(
+                    comm, solve_started
+                )
+                timings[f"h5a_{side}_solve"] = side_record["solve_seconds"]
+            finally:
+                release_started = time.perf_counter()
+                if factor is not None:
+                    factor.destroy()
+            mark_stage(f"h5a_{side}_release")
+            side_record["factor_after"] = {
+                "factor_count": 0,
+                "released": True,
+            }
+            timings[f"h5a_{side}_release"] = _max_elapsed(
+                comm, release_started
+            )
+            side_record["pass"] = bool(
+                side_record["rhs"]
+                and all(row["pass"] for row in side_record["rhs"])
+            )
+            h5a_sides[side] = side_record
+            h5a_pass = bool(h5a_pass and side_record["pass"])
+
+        oracle_bottom.destroy()
+        oracle_top.destroy()
+        comm.barrier()
+        heap_trim_started = time.perf_counter()
+        mark_stage("h5_post_direct_heap_trim")
+        trim_local = _trim_process_heap()
+        trim_ranks = comm.allgather(trim_local)
+        comm.barrier()
+        timings["h5_post_direct_heap_trim"] = _max_elapsed(
+            comm, heap_trim_started
+        )
+        oracle_release = {
+            "bottom_A_b_destroyed": True,
+            "top_A_b_destroyed": True,
+            "heap_trim_by_rank": trim_ranks,
+        }
+
+        h5b_factor_count_before = None
+        h5b_bottom_release_factor_count = None
+        h5b_top_release_factor_count = None
+        h5b_disposition = "not_run_due_h5a_failure"
+        if h5a_pass:
+            h5b_disposition = "completed"
+            mark_stage("h5b_simultaneous_inverse_setup")
+            setup_started = time.perf_counter()
+            bottom_inverse = build_hybrid_local_iterative_inverse(bottom)
+            top_inverse = build_hybrid_local_iterative_inverse(top)
+            timings["h5b_simultaneous_inverse_setup"] = _max_elapsed(
+                comm, setup_started
+            )
+            inverse_by_side = {"bottom": bottom_inverse, "top": top_inverse}
+            for side, inverse in inverse_by_side.items():
+                h5b_sides[side] = {
+                    "configuration": inverse._diagnostics(),
+                    "rhs": [],
+                    "factor_count_before": int(
+                        inverse.smoother.diagnostics["global_subdomain_count"]
+                    ),
+                }
+            h5b_factor_count_before = sum(
+                h5b_sides[side]["factor_count_before"]
+                for side in ("bottom", "top")
+            )
+
+            for side, stage, inverse in (
+                ("bottom", "h5b_bottom_solves", bottom_inverse),
+                ("top", "h5b_top_solves", top_inverse),
+            ):
+                mark_stage(stage)
+                solve_started = time.perf_counter()
+                for name, rhs, metadata in rhs_sets[side]:
+                    first = None
+                    second = None
+                    try:
+                        first = inverse.solve(rhs)
+                        second = inverse.solve(rhs)
+                        direct = direct_references[side][name]
+                        repeat_error = _relative_vector_error(
+                            second.solution, first.solution
+                        )
+                        first_direct_error = _relative_vector_error(
+                            first.solution, direct
+                        )
+                        second_direct_error = _relative_vector_error(
+                            second.solution, direct
+                        )
+                        stationary_keys = {1, 2, 4, 8}
+                        first_stationary = first.stationary_correction_residuals
+                        second_stationary = second.stationary_correction_residuals
+                        row = {
+                            "name": name,
+                            "metadata": metadata,
+                            "first": {
+                                "converged_reason": int(first.converged_reason),
+                                "iterations": int(first.iterations),
+                                "reported_relative_residual": float(
+                                    first.reported_relative_residual
+                                ),
+                                "true_relative_residual": float(
+                                    first.true_relative_residual
+                                ),
+                                "setup_seconds": float(first.setup_seconds),
+                                "solve_seconds": float(first.solve_seconds),
+                                "apply_seconds": float(first.apply_seconds),
+                                "solution_digest": _h1_owned_vec_digest(
+                                    first.solution
+                                ),
+                                "direct_solution_relative_error": float(
+                                    first_direct_error
+                                ),
+                                "stationary_correction_residuals": (
+                                    first.stationary_correction_residuals
+                                ),
+                            },
+                            "second": {
+                                "converged_reason": int(second.converged_reason),
+                                "iterations": int(second.iterations),
+                                "reported_relative_residual": float(
+                                    second.reported_relative_residual
+                                ),
+                                "true_relative_residual": float(
+                                    second.true_relative_residual
+                                ),
+                                "setup_seconds": float(second.setup_seconds),
+                                "solve_seconds": float(second.solve_seconds),
+                                "apply_seconds": float(second.apply_seconds),
+                                "solution_digest": _h1_owned_vec_digest(
+                                    second.solution
+                                ),
+                                "direct_solution_relative_error": float(
+                                    second_direct_error
+                                ),
+                                "stationary_correction_residuals": (
+                                    second.stationary_correction_residuals
+                                ),
+                            },
+                            "repeat_solution_relative_error": float(repeat_error),
+                            "pass": bool(
+                                first.converged_reason > 0
+                                and second.converged_reason > 0
+                                and first.iterations <= 300
+                                and second.iterations <= 300
+                                and first.converged_reason
+                                == second.converged_reason
+                                and first.iterations == second.iterations
+                                and np.isfinite(first.reported_relative_residual)
+                                and np.isfinite(second.reported_relative_residual)
+                                and np.isfinite(first.true_relative_residual)
+                                and np.isfinite(second.true_relative_residual)
+                                and np.isfinite(first.setup_seconds)
+                                and np.isfinite(first.solve_seconds)
+                                and np.isfinite(first.apply_seconds)
+                                and np.isfinite(second.setup_seconds)
+                                and np.isfinite(second.solve_seconds)
+                                and np.isfinite(second.apply_seconds)
+                                and first.true_relative_residual <= 1.0e-8
+                                and second.true_relative_residual <= 1.0e-8
+                                and np.isfinite(repeat_error)
+                                and repeat_error <= 1.0e-10
+                                and np.isfinite(first_direct_error)
+                                and np.isfinite(second_direct_error)
+                                and set(first_stationary) == stationary_keys
+                                and set(second_stationary) == stationary_keys
+                                and all(
+                                    np.isfinite(value)
+                                    for value in first_stationary.values()
+                                )
+                                and all(
+                                    np.isfinite(value)
+                                    for value in second_stationary.values()
+                                )
+                                and first.diagnostics["no_direct_fallback"] is True
+                                and second.diagnostics["no_direct_fallback"] is True
+                            ),
+                        }
+                        h5b_sides[side]["rhs"].append(row)
+                        progress(
+                            f"Task37b H5b {side}/{name}: "
+                            f"first_reason={first.converged_reason} "
+                            f"first_iterations={first.iterations} "
+                            f"first_true={first.true_relative_residual:.6e} "
+                            f"second_reason={second.converged_reason} "
+                            f"second_iterations={second.iterations} "
+                            f"second_true={second.true_relative_residual:.6e}"
+                        )
+                    finally:
+                        if first is not None:
+                            first.destroy()
+                        if second is not None:
+                            second.destroy()
+                h5b_sides[side]["solve_seconds"] = _max_elapsed(
+                    comm, solve_started
+                )
+                timings[stage] = h5b_sides[side]["solve_seconds"]
+
+            h5b_pass = bool(
+                all(
+                    h5b_sides[side]["rhs"]
+                    and all(row["pass"] for row in h5b_sides[side]["rhs"])
+                    for side in ("bottom", "top")
+                )
+            )
+
+        h5_no_direct_fallback: bool | str = "not_run"
+        if h5a_pass:
+            h5_no_direct_fallback = bool(
+                all(
+                    h5b_sides[side]["configuration"]["no_direct_fallback"]
+                    is True
+                    for side in ("bottom", "top")
+                )
+            )
+
+        release_started = time.perf_counter()
+        mark_stage("h5b_release_record")
+        if bottom_inverse is not None:
+            bottom_inverse.destroy()
+            bottom_inverse = None
+            h5b_bottom_release_factor_count = int(
+                h5b_sides["top"]["factor_count_before"]
+            )
+            h5b_sides["bottom"]["factor_count_after_destroy"] = 0
+            h5b_sides["bottom"]["factors_released"] = True
+            h5b_sides["bottom"]["remaining_factor_count"] = (
+                h5b_bottom_release_factor_count
+            )
+        bottom_after_release: bool | str = "not_run"
+        if h5a_pass:
+            bottom_after_release = bool(
+                bottom.A.getType() == "python" and top.A.getType() == "python"
+            )
+        if top_inverse is not None:
+            top_inverse.destroy()
+            top_inverse = None
+            h5b_top_release_factor_count = 0
+            h5b_sides["top"]["factor_count_after_destroy"] = 0
+            h5b_sides["top"]["factors_released"] = True
+            h5b_sides["top"]["remaining_factor_count"] = 0
+        action_survives: bool | str = "not_run"
+        if h5a_pass:
+            action_survives = bool(
+                bottom.A.getType() == "python" and top.A.getType() == "python"
+            )
+        timings["h5b_release_record"] = _max_elapsed(
+            comm, release_started
+        )
+
+        _verify_source_stable_at_end(
+            comm,
+            provenance,
+            args.verified_clean_sha,
+            args.allow_dirty_research,
+        )
+        h5_pass = bool(h5a_pass and h5b_pass)
+        h5_telemetry = {
+            "task037b_h5_gate": True,
+            "frozen_modes": selections,
+            "rhs_manifest": rhs_manifest,
+            "h5a": {
+                "all_pass": h5a_pass,
+                "sides": h5a_sides,
+                "oracle_release": oracle_release,
+            },
+            "h5b": {
+                "all_pass": h5b_pass,
+                "disposition": h5b_disposition,
+                "sides": h5b_sides,
+                "simultaneous_factor_count_before": (
+                    h5b_factor_count_before
+                    if h5b_factor_count_before is not None
+                    else "not_run"
+                ),
+                "bottom_release_factor_count": (
+                    h5b_bottom_release_factor_count
+                    if h5b_bottom_release_factor_count is not None
+                    else "not_run"
+                ),
+                "top_release_factor_count": (
+                    h5b_top_release_factor_count
+                    if h5b_top_release_factor_count is not None
+                    else "not_run"
+                ),
+                "action_survives_after_bottom_release": bottom_after_release,
+                "action_survives_after_release": action_survives,
+            },
+            "operator_inventory": {
+                "bottom": dict(bottom.inventory),
+                "top": dict(top.inventory),
+                "global_block_action_constructed": False,
+                "global_A_materialized": False,
+                "external_C_D_materialized": False,
+            },
+            "timings": {
+                key: timings[key]
+                for key in (
+                    "h5_action_coupling_build",
+                    "h5a_bottom_factor",
+                    "h5a_bottom_solve",
+                    "h5a_bottom_release",
+                    "h5a_top_factor",
+                    "h5a_top_solve",
+                    "h5a_top_release",
+                    "h5_post_direct_heap_trim",
+                    "h5b_simultaneous_inverse_setup",
+                    "h5b_bottom_solves",
+                    "h5b_top_solves",
+                    "h5b_release_record",
+                )
+                if key in timings
+            },
+            "swap_status": "not_evaluated_external_watchdog",
+            "official_physics": {
+                "R": "not_run",
+                "T": "not_run",
+                "A": "not_run",
+                "A_volume": "not_run",
+                "field_reconstruction": "not_run",
+            },
+        }
+        record = {
+            "schema_version": 1,
+            "record_schema": "task037b.h5-local-inverse-qualification.v1",
+            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+            "benchmark_id": "task037b_h5_local_inverse_qualification",
+            "status": (
+                "task037b_h5_worker_gate_pass"
+                if h5_pass
+                else "task037b_h5_worker_gate_failed"
+            ),
+            "metadata": {
+                **provenance,
+                "command": "python -m benchmarks.run_task032_phase6_augmented "
+                + " ".join(shlex.quote(value) for value in sys.argv[1:]),
+                "mpi_size": int(comm.size),
+                "container_image": args.container_image,
+                "container_digest": args.container_digest,
+                "host_environment_id": args.host_environment_id,
+                "scalar_dtype": str(np.dtype(PETSc.ScalarType)),
+                "task035c_p6_h10_authority_gate": authority_gate,
+            },
+            "case": {
+                "degree": int(args.degree),
+                "h_nm": float(args.h_nm),
+                "modal_degree": int(args.modal_degree),
+                "modal_h_nm": float(args.modal_h_nm),
+                "requested_modes_per_direction": int(args.requested_modes),
+                "candidate_modes_per_direction": int(args.candidate_modes),
+                "polarization_kind": args.polarization_kind,
+                "incident_grazing_deg": float(args.incident_grazing_deg),
+                "bottom_interface_nm": float(args.bottom_interface_nm),
+                "top_interface_nm": float(args.top_interface_nm),
+                "stage4_full3d_assembly_backend": (
+                    args.stage4_full3d_assembly_backend
+                ),
+                "internal_propagation_model": args.internal_propagation_model,
+                "internal_traction_model": args.internal_traction_model,
+                "solver_path": args.solver_path,
+            },
+            "hybrid_system": {
+                "candidate_global_block_action": "not_constructed_early_path",
+                "global_A_materialized": False,
+                "bottom_global_F_materialized": False,
+                "top_global_F_materialized": False,
+                "external_C_D_materialized": False,
+                "external_auxiliary_in_krylov": False,
+            },
+            "solve": {
+                "h5a": h5a_sides,
+                "h5b": h5b_sides,
+                "reported_relative_residual": "see h5_telemetry",
+                "true_relative_residual": "see h5_telemetry",
+            },
+            "validation": {
+                "port_power": "not_run",
+                "external_diffraction_orders": "not_run",
+                "field_reconstruction": "not_run",
+            },
+            "official_record": False,
+            "h5_telemetry": h5_telemetry,
+            "gates": {
+                "h5a_all_22_direct_residuals_le_1e-10": h5a_pass,
+                "h5b_all_22_rhs_twice_pass": h5b_pass,
+                "h5_worker_numerical_pass": h5_pass,
+                "h5_swap": "not_evaluated_external_watchdog",
+                "h5_no_direct_fallback": (
+                    h5_no_direct_fallback
+                ),
+            },
+            "qualification": {
+                "task037b_h5_gate": True,
+                "integration_pass": h5_pass,
+                "worker_numerical_pass": h5_pass,
+                "swap_status": "not_evaluated_external_watchdog",
+                "official_record": False,
+                "boundary": (
+                    "H5 local inverse qualification only; R/T/A, field and "
+                    "12+12 physics are not run in this early path."
+                ),
+            },
+            "timing_seconds_max_rank": {
+                **timings,
+                "total": _max_elapsed(comm, total_started),
+            },
+            "historical_peak_rss_mb_by_rank": comm.gather(
+                _historical_peak_rss_mb(), root=0
+            ),
+            "memory_semantics": (
+                "H5a direct-reference and H5b candidate stages are separated; "
+                "swap is evaluated by the external watchdog."
+            ),
+        }
+        raise _H5QualificationStop(record)
+    finally:
+        if bottom_inverse is not None:
+            bottom_inverse.destroy()
+        if top_inverse is not None:
+            top_inverse.destroy()
+        for rhs_list in rhs_sets.values():
+            for _name, vector, _metadata in rhs_list:
+                vector.destroy()
+        for side_references in direct_references.values():
+            for vector in side_references.values():
+                vector.destroy()
 
 
 def main() -> None:
@@ -1271,14 +2149,16 @@ def main() -> None:
         or args.task037b_h1_gate
         or args.task037b_h3_gate
         or args.task037b_h4_gate
+        or args.task037b_h5_gate
     ) and comm.size not in TASK035C_P6_H10_MPI_SIZES:
         raise SystemExit("Task035c p6/h10 Hybrid is restricted to MPI1/2/4/8.")
     if (
         args.task037b_h1_gate
         or args.task037b_h3_gate
         or args.task037b_h4_gate
+        or args.task037b_h5_gate
     ) and comm.size != 8:
-        raise SystemExit("Task037b H1/H3/H4 Hybrid is restricted to MPI8.")
+        raise SystemExit("Task037b H1/H3/H4/H5 Hybrid is restricted to MPI8.")
     task035c_p6_gate = _task035c_worker_authority_gate(
         args,
         current_source_sha=provenance.get("commit_sha"),
@@ -1681,7 +2561,11 @@ def main() -> None:
         )
         progress("Task32 Phase6: real positive/negative QEP bases complete")
 
-        if args.task037b_h3_gate or args.task037b_h4_gate:
+        if (
+            args.task037b_h3_gate
+            or args.task037b_h4_gate
+            or args.task037b_h5_gate
+        ):
             mark_stage("oracle_local_matrix_build")
             started = time.perf_counter()
             h3_direct_bottom = assemble_hybrid_local_dtn_system(
@@ -1705,7 +2589,10 @@ def main() -> None:
             h3_direct_top.destroy()
             h3_direct_top = None
             timings["oracle_local_matrix_build"] = _max_elapsed(comm, started)
-            mark_stage("h2b_action_assembly")
+            if args.task037b_h5_gate:
+                mark_stage("h5_action_coupling_build")
+            else:
+                mark_stage("h2b_action_assembly")
             started = time.perf_counter()
             bottom = assemble_hybrid_local_dtn_action_system(
                 cfg,
@@ -1735,6 +2622,29 @@ def main() -> None:
                 modal_traction_model=args.internal_traction_model,
                 log=progress,
             )
+            if args.task037b_h5_gate:
+                timings["h5_action_coupling_build"] = _max_elapsed(
+                    comm, started
+                )
+            if args.task037b_h5_gate:
+                _run_h5_local_qualification(
+                    args=args,
+                    comm=comm,
+                    provenance=provenance,
+                    authority_gate=task035c_p6_gate,
+                    cfg=cfg,
+                    positive=positive,
+                    negative=negative,
+                    bottom=bottom,
+                    top=top,
+                    coupling=coupling,
+                    oracle_bottom=h3_oracle_bottom,
+                    oracle_top=h3_oracle_top,
+                    timings=timings,
+                    total_started=total_started,
+                    mark_stage=mark_stage,
+                    progress=progress,
+                )
             layout = HybridAugmentedLayout.build(
                 bottom,
                 top,
@@ -1764,7 +2674,8 @@ def main() -> None:
                 },
                 inserted_nnz_by_block={"action_only": None},
             )
-            timings["h2b_action_assembly"] = _max_elapsed(comm, started)
+            if not args.task037b_h5_gate:
+                timings["h2b_action_assembly"] = _max_elapsed(comm, started)
             mark_stage("h3_local_factor_setup")
             started = time.perf_counter()
             h3_preconditioner = create_exact_block_ldu_preconditioner(
@@ -3433,6 +4344,10 @@ def main() -> None:
                     ),
                 }
             )
+    except _H5QualificationStop as stop:
+        record = stop.record
+        h3_oracle_bottom = None
+        h3_oracle_top = None
     except _ModalBasisCapacityStop:
         pass
     finally:
