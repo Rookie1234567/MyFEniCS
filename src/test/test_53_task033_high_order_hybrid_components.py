@@ -22,6 +22,34 @@ from src.solvers.hybrid_local_dtn import assemble_hybrid_local_dtn_system
 
 
 class Task033HighOrderHybridComponentTests(unittest.TestCase):
+    def test_h1_vector_hashes_are_deterministic_and_owned_local(self) -> None:
+        vector = PETSc.Vec().createSeq(4, comm=PETSc.COMM_SELF)
+        try:
+            vector.setValues(
+                np.arange(4, dtype=PETSc.IntType),
+                np.asarray([1.0 + 2.0j, 3.0, 4.0j, 5.0], dtype=np.complex128),
+            )
+            vector.assemble()
+            first = phase6._h1_owned_vec_digest(vector)
+            second = phase6._h1_owned_vec_digest(vector)
+            self.assertEqual(first, second)
+            self.assertEqual(first["contract"], "mpi_layout_bound_owned_complex128")
+            self.assertFalse(first["gathered_full_vector"])
+            self.assertEqual(first["global_rows"], 4)
+            self.assertEqual(first["rank_digests"][0]["ownership_range"], [0, 4])
+            self.assertNotIn("values", first["rank_digests"][0])
+        finally:
+            vector.destroy()
+        amplitudes = np.asarray([1.0 + 2.0j, 3.0 - 4.0j], dtype=np.complex128)
+        self.assertEqual(
+            phase6._h1_replicated_array_digest(amplitudes),
+            phase6._h1_replicated_array_digest(amplitudes.copy()),
+        )
+        self.assertEqual(
+            phase6._h1_replicated_array_digest(amplitudes)["contract"],
+            "canonical_little_endian_complex128",
+        )
+
     def test_case080_reference_selection_is_degree_aware(self) -> None:
         for h_nm in (5.0, 3.0):
             with self.subTest(degree=2, h_nm=h_nm):

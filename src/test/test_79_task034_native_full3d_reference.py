@@ -1,27 +1,24 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 from pathlib import Path
 
 import pytest
 
 from benchmarks.run_task032_phase6_augmented import (
     _normalize_full3d_reference_record,
+    _reference_archive,
+    _reference_comparison,
     _validate_case080_reference_identity,
 )
 
 
 ROOT = Path(__file__).resolve().parents[2]
 REFERENCE_PATH = (
-    ROOT
-    / "benchmarks/artifacts/task034/phase_f/records/"
-    "fixture_full3d_watchdog.json"
+    ROOT / "benchmarks/artifacts/task034/phase_f/records/fixture_full3d_watchdog.json"
 )
-RUN_ROOT = (
-    ROOT
-    / "benchmarks/artifacts/task034/phase_f/full3d/"
-    "fixture_full_solve"
-)
+RUN_ROOT = ROOT / "benchmarks/artifacts/task034/phase_f/full3d/fixture_full_solve"
 
 
 def _native_watchdog_fixture() -> dict:
@@ -53,9 +50,7 @@ def _native_watchdog_fixture() -> dict:
             "A_volume_total": 0.4,
             "energy_closure_error_port_volume": 0.0,
             "full3d_reference_exported": True,
-            "full3d_reference_archive": str(
-                RUN_ROOT / "full3d_reference_samples.npz"
-            ),
+            "full3d_reference_archive": str(RUN_ROOT / "full3d_reference_samples.npz"),
             "full3d_reference_metadata": str(
                 RUN_ROOT / "full3d_reference_samples.json"
             ),
@@ -82,6 +77,36 @@ def test_native_watchdog_reference_normalizes_in_memory() -> None:
     assert normalized["artifacts"]["reference_npz_sha256"] == "b" * 64
     assert normalized["qualification"]["phase1_reference_pass"]
     assert not normalized["qualification"]["grid_converged"]
+
+
+def test_native_watchdog_external_absolute_archive_and_record_paths(
+    tmp_path: Path,
+) -> None:
+    fixture = _native_watchdog_fixture()
+    external_root = tmp_path / "pinned_case096"
+    external_root.mkdir()
+    archive = external_root / "full3d_reference_samples.npz"
+    archive.write_bytes(b"pinned-reference")
+    metadata = external_root / "full3d_reference_samples.json"
+    fixture["solver_summary"]["full3d_reference_archive"] = str(archive)
+    fixture["solver_summary"]["full3d_reference_metadata"] = str(metadata)
+    fixture["solver_summary"]["full3d_reference_archive_sha256"] = hashlib.sha256(
+        archive.read_bytes()
+    ).hexdigest()
+    normalized = _normalize_full3d_reference_record(
+        fixture,
+        path=REFERENCE_PATH,
+    )
+    assert normalized["artifacts"]["ignored_run_root"] == str(external_root)
+    record_path = external_root / "pinned_record.json"
+    resolved_archive, _, _ = _reference_archive((record_path, normalized))
+    assert resolved_archive == archive
+    comparison = _reference_comparison(
+        (record_path, normalized),
+        {"R_total": 0.1, "T_total": 0.5, "A_balance": 0.4},
+    )
+    assert comparison is not None
+    assert comparison["reference_file"] == str(record_path)
 
 
 @pytest.mark.parametrize(

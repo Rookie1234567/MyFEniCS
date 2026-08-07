@@ -40,6 +40,7 @@ from benchmarks.task035c_p6_h10_gates import (
     TASK035C_P6_H10_MPI_SIZES,
     task035c_p6_h10_full3d_reference_gate,
     task035c_p6_h10_preflight_authority_gate,
+    task037b_h1_pinned_full3d_reference_gate,
     valid_hex_digest,
 )
 from benchmarks.task033_watchdog_launch import (
@@ -253,16 +254,13 @@ def _case090_source_compatibility(
     rendered_paths = _git(
         "diff", "--name-only", f"{evidence_source_sha}..{current_source_sha}"
     )
-    changed_paths = (
-        [] if rendered_paths is None else rendered_paths.splitlines()
-    )
+    changed_paths = [] if rendered_paths is None else rendered_paths.splitlines()
 
     def allowed(path: str) -> bool:
         return bool(
             path in CASE090_CORE_COMPATIBLE_DESCENDANT_FILES
             or path.startswith(
-                "benchmarks/cases/092_workstation_wsl_adaptive_scalability/"
-                "records/"
+                "benchmarks/cases/092_workstation_wsl_adaptive_scalability/records/"
             )
             or path.startswith("docs/")
             or path.startswith("notes/")
@@ -365,8 +363,7 @@ def _task034_authority_source_compatibility(
             path in TASK034_AUTHORITY_COMPATIBLE_CHANGED_FILES
             or (
                 assembly_backend == "assembly_time_static_condensed"
-                and path
-                in TASK035B_STATIC_HYBRID_RESOURCE_COMPATIBLE_FILES
+                and path in TASK035B_STATIC_HYBRID_RESOURCE_COMPATIBLE_FILES
             )
             or path.startswith(
                 "benchmarks/cases/092_workstation_wsl_adaptive_scalability/"
@@ -408,9 +405,7 @@ def _task034_authority_source_compatibility(
         "changed_paths": changed_paths,
         "disallowed_changed_paths": disallowed,
         "component_disjoint_numerical_changed_paths": component_disjoint,
-        "static_hybrid_resource_compatible_changed_paths": (
-            static_resource_compatible
-        ),
+        "static_hybrid_resource_compatible_changed_paths": (static_resource_compatible),
         "assembly_backend": assembly_backend,
         "failures": failures,
     }
@@ -446,14 +441,10 @@ def _task035b_static_full3d_anchor_gate(
     source = payload.get("source")
     source = source if isinstance(source, Mapping) else {}
     qualification = payload.get("qualification")
-    qualification = (
-        qualification if isinstance(qualification, Mapping) else {}
-    )
+    qualification = qualification if isinstance(qualification, Mapping) else {}
     qualification_checks = qualification.get("checks")
     qualification_checks = (
-        qualification_checks
-        if isinstance(qualification_checks, Mapping)
-        else {}
+        qualification_checks if isinstance(qualification_checks, Mapping) else {}
     )
     calibration = payload.get("calibration")
     calibration = calibration if isinstance(calibration, Mapping) else {}
@@ -464,17 +455,11 @@ def _task035b_static_full3d_anchor_gate(
     matrix = summary.get("matrix_stats")
     matrix = matrix if isinstance(matrix, Mapping) else {}
     factor_inventory = summary.get("stage4_dtn_factor_inventory")
-    factor_inventory = (
-        factor_inventory if isinstance(factor_inventory, Mapping) else {}
-    )
+    factor_inventory = factor_inventory if isinstance(factor_inventory, Mapping) else {}
     factor_matrix = factor_inventory.get("matrix_stats")
-    factor_matrix = (
-        factor_matrix if isinstance(factor_matrix, Mapping) else {}
-    )
+    factor_matrix = factor_matrix if isinstance(factor_matrix, Mapping) else {}
     condensation = summary.get("cell_static_condensation")
-    condensation = (
-        condensation if isinstance(condensation, Mapping) else {}
-    )
+    condensation = condensation if isinstance(condensation, Mapping) else {}
     recovery = condensation.get("recovery")
     recovery = recovery if isinstance(recovery, Mapping) else {}
     residual = condensation.get("full_explicit_true_residual")
@@ -500,9 +485,7 @@ def _task035b_static_full3d_anchor_gate(
             "--name-only",
             f"{reference_source_sha}..{current_source_sha}",
         )
-        changed_paths = (
-            [] if rendered_paths is None else rendered_paths.splitlines()
-        )
+        changed_paths = [] if rendered_paths is None else rendered_paths.splitlines()
     else:
         merge_base = None
         rendered_paths = None
@@ -527,9 +510,7 @@ def _task035b_static_full3d_anchor_gate(
         ),
     }
     source_compatibility_failures = [
-        name
-        for name, passed in source_compatibility_checks.items()
-        if not passed
+        name for name, passed in source_compatibility_checks.items() if not passed
     ]
     source_compatibility = {
         "pass": not source_compatibility_failures,
@@ -545,18 +526,14 @@ def _task035b_static_full3d_anchor_gate(
     }
 
     relative_residual = residual.get("linear_system_relative_residual")
-    interior_residual = residual.get(
-        "eliminated_cell_interior_max_abs_residual"
-    )
+    interior_residual = residual.get("eliminated_cell_interior_max_abs_residual")
     rows = matrix.get("matrix_rows")
     assembled_nnz = matrix.get("matrix_nnz_used")
     factor_nnz = factor_matrix.get("matrix_nnz_used")
     peak_memory_gib = resource.get("memory_authority_gib")
     elapsed_seconds = summary.get("elapsed_seconds")
     reference_planes = config.get("full3d_reference_plane_z")
-    reference_planes = (
-        reference_planes if isinstance(reference_planes, list) else []
-    )
+    reference_planes = reference_planes if isinstance(reference_planes, list) else []
     checks = {
         "object_present": bool(payload),
         "schema_identity": bool(
@@ -565,14 +542,10 @@ def _task035b_static_full3d_anchor_gate(
         ),
         "record_hash_expected_valid": _valid_hex_digest(expected_sha256, 64),
         "record_hash_observed_valid": _valid_hex_digest(observed_sha256, 64),
-        "record_hash_matches_expected": bool(
-            expected_sha256 == observed_sha256
-        ),
+        "record_hash_matches_expected": bool(expected_sha256 == observed_sha256),
         "same_discretization_identity": bool(
             payload.get("degree") == degree
-            and math.isclose(
-                float(payload.get("h_nm", math.nan)), float(h_nm)
-            )
+            and math.isclose(float(payload.get("h_nm", math.nan)), float(h_nm))
             and payload.get("mpi_size") == mpi_size
             and payload.get("polarization_kind") == polarization_kind
             and config.get("nedelec_degree") == degree
@@ -584,29 +557,17 @@ def _task035b_static_full3d_anchor_gate(
             summary.get("stage_case") == "stage4_block_grating"
             and summary.get("geometry_kind") == "rectangular_block_grating"
             and math.isclose(float(config.get("lambda0", math.nan)), 13.5)
-            and math.isclose(
-                float(config.get("incident_theta_deg", math.nan)), 80.0
-            )
-            and math.isclose(
-                float(config.get("incident_phi_deg", math.nan)), 0.0
-            )
+            and math.isclose(float(config.get("incident_theta_deg", math.nan)), 80.0)
+            and math.isclose(float(config.get("incident_phi_deg", math.nan)), 0.0)
             and math.isclose(float(config.get("period_x", math.nan)), 50.0)
             and math.isclose(float(config.get("period_y", math.nan)), 25.0)
             and math.isclose(float(config.get("z_min", math.nan)), -10.0)
             and math.isclose(float(config.get("z_max", math.nan)), 130.0)
-            and math.isclose(
-                float(config.get("grating_height", math.nan)), 120.0
-            )
-            and math.isclose(
-                float(config.get("grating_width_x", math.nan)), 17.0
-            )
-            and math.isclose(
-                float(config.get("grating_width_y", math.nan)), 25.0
-            )
-            and config.get("n_substrate")
-            == [0.999002304859, 0.00182649365]
-            and config.get("n_grating")
-            == [0.999002304859, 0.00182649365]
+            and math.isclose(float(config.get("grating_height", math.nan)), 120.0)
+            and math.isclose(float(config.get("grating_width_x", math.nan)), 17.0)
+            and math.isclose(float(config.get("grating_width_y", math.nan)), 25.0)
+            and config.get("n_substrate") == [0.999002304859, 0.00182649365]
+            and config.get("n_grating") == [0.999002304859, 0.00182649365]
             and config.get("use_floquet_xy") is True
             and config.get("stage4_boundary_model") == "dtn_port"
             and config.get("stage4_dtn_assembly") == "auxiliary"
@@ -622,15 +583,13 @@ def _task035b_static_full3d_anchor_gate(
         "qualification_checks_complete": bool(
             qualification_checks.get("process_completed") is True
             and qualification_checks.get("live_authority_readable") is True
-            and qualification_checks.get("all_expected_mpi_ranks_observed")
-            is True
+            and qualification_checks.get("all_expected_mpi_ranks_observed") is True
             and qualification_checks.get("official_result") is True
             and qualification_checks.get("ksp_converged") is True
             and qualification_checks.get("true_residual_le_1e-9") is True
             and qualification_checks.get("reference_exported") is True
             and qualification_checks.get("swap_policy_satisfied") is True
-            and qualification_checks.get("source_stable_and_clean_after")
-            is True
+            and qualification_checks.get("source_stable_and_clean_after") is True
         ),
         "static_backend_identity": bool(
             payload.get("stage4_full3d_assembly_backend_requested")
@@ -646,10 +605,7 @@ def _task035b_static_full3d_anchor_gate(
             and summary.get("case_status") == "completed"
             and config.get("full3d_reference_export") is True
             and any(math.isclose(float(value), 10.0) for value in reference_planes)
-            and any(
-                math.isclose(float(value), 110.0)
-                for value in reference_planes
-            )
+            and any(math.isclose(float(value), 110.0) for value in reference_planes)
         ),
         "raw_artifact_hashes_present": bool(
             _valid_hex_digest(payload.get("solver_summary_sha256"), 64)
@@ -670,9 +626,7 @@ def _task035b_static_full3d_anchor_gate(
             and payload.get("terminated_for_authority_unreadable") is False
         ),
         "exact_positive_rows": bool(
-            type(rows) is int
-            and rows > 0
-            and calibration.get("exact_rows") == rows
+            type(rows) is int and rows > 0 and calibration.get("exact_rows") == rows
         ),
         "exact_positive_assembled_nnz": bool(
             isinstance(assembled_nnz, (int, float))
@@ -696,16 +650,13 @@ def _task035b_static_full3d_anchor_gate(
             and isinstance(interior_residual, (int, float))
             and math.isfinite(float(interior_residual))
             and 0.0 <= interior_residual <= 1.0e-9
-            and residual.get("full_global_matrix_allocated_for_residual")
-            is False
-            and residual.get("full_trace_matrix_allocated_for_residual")
-            is False
+            and residual.get("full_global_matrix_allocated_for_residual") is False
+            and residual.get("full_trace_matrix_allocated_for_residual") is False
         ),
         "physical_row_reduction_and_recovery": bool(
             condensation.get("full_global_matrix_allocated") is False
             and condensation.get("full_trace_matrix_allocated") is False
-            and condensation.get("inactive_max_p_rows_retained_in_matrix")
-            is False
+            and condensation.get("inactive_max_p_rows_retained_in_matrix") is False
             and recovery.get("status")
             == "full_field_recovered_without_full_global_matrix"
             and recovery.get("full_global_matrix_allocated") is False
@@ -737,9 +688,7 @@ def _task035b_static_full3d_anchor_gate(
         "h_nm": payload.get("h_nm"),
         "mpi_size": payload.get("mpi_size"),
         "polarization_kind": payload.get("polarization_kind"),
-        "assembly_backend": payload.get(
-            "stage4_full3d_assembly_backend_actual"
-        ),
+        "assembly_backend": payload.get("stage4_full3d_assembly_backend_actual"),
     }
     return {
         "pass": not failures,
@@ -754,9 +703,7 @@ def _watchdog_source_before(verified_clean_sha: str) -> dict[str, Any]:
     head = _git("rev-parse", "HEAD")
     worktree = _git("status", "--short", "--untracked-files=all")
     untracked = [
-        line[3:]
-        for line in (worktree or "").splitlines()
-        if line.startswith("?? ")
+        line[3:] for line in (worktree or "").splitlines() if line.startswith("?? ")
     ]
     return {
         "commit_sha": head,
@@ -775,9 +722,7 @@ def _watchdog_source_before(verified_clean_sha: str) -> dict[str, Any]:
             "git status including all nonignored untracked paths; ignored artifacts excluded"
         ),
         "source_stable_during_run": False,
-        "source_clean_verified": bool(
-            head == verified_clean_sha and worktree == ""
-        ),
+        "source_clean_verified": bool(head == verified_clean_sha and worktree == ""),
     }
 
 
@@ -785,9 +730,7 @@ def _watchdog_source_after(source: dict[str, Any]) -> dict[str, Any]:
     head = _git("rev-parse", "HEAD")
     worktree = _git("status", "--short", "--untracked-files=all")
     untracked = [
-        line[3:]
-        for line in (worktree or "").splitlines()
-        if line.startswith("?? ")
+        line[3:] for line in (worktree or "").splitlines() if line.startswith("?? ")
     ]
     updated = {
         **source,
@@ -862,9 +805,7 @@ def _worker_command(
             args.host_environment_id,
         ]
         if effective_limit_gib is not None:
-            command.extend(
-                ("--container-limit-gib", str(effective_limit_gib))
-            )
+            command.extend(("--container-limit-gib", str(effective_limit_gib)))
         if getattr(args, "_no_swap_verified", True):
             command.append("--no-swap-verified")
         if args.high_order_core_evidence_sha256 is not None:
@@ -937,15 +878,17 @@ def _worker_command(
             )
         )
     if args.full3d_reference is not None:
-        command.extend(
-            ("--full3d-reference", str(args.full3d_reference))
-        )
-    if args.task035c_p6_h10_gate:
+        command.extend(("--full3d-reference", str(args.full3d_reference)))
+    if args.task035c_p6_h10_gate or args.task037b_h1_gate:
         command.extend(
             (
                 "--full3d-reference-sha256",
                 str(args.full3d_reference_sha256),
-                "--task035c-p6-h10-gate",
+                (
+                    "--task035c-p6-h10-gate"
+                    if args.task035c_p6_h10_gate
+                    else "--task037b-h1-gate"
+                ),
                 "--task035c-p6-preflight-authority",
                 str(args.task035c_p6_preflight_authority),
                 "--task035c-p6-preflight-sha256",
@@ -1042,8 +985,7 @@ def _resource_readability_sample_is_formal(
     """
 
     return bool(
-        (process_running and not terminal_worker_drain)
-        or not task034_workstation_gate
+        (process_running and not terminal_worker_drain) or not task034_workstation_gate
     )
 
 
@@ -1056,9 +998,7 @@ def _authority_unreadable_requires_termination(
     """Terminate only when a formal live authority sample is unreadable."""
 
     return bool(
-        process_running
-        and readability_sample_is_formal
-        and not authority_readable
+        process_running and readability_sample_is_formal and not authority_readable
     )
 
 
@@ -1096,9 +1036,11 @@ def _live_task033_worker_rss(
             if marker not in cmdline or "mpiexec" in cmdline.lower():
                 continue
             rss_kib = None
-            for line in (entry / "status").read_text(
-                encoding="utf-8", errors="ignore"
-            ).splitlines():
+            for line in (
+                (entry / "status")
+                .read_text(encoding="utf-8", errors="ignore")
+                .splitlines()
+            ):
                 if line.startswith("VmRSS:"):
                     rss_kib = float(line.split()[1])
                     break
@@ -1119,6 +1061,7 @@ def _hybrid_measurements(record: dict[str, Any]) -> dict[str, Any]:
     physical = record.get("physical_field_reconstruction") or {}
     validation = record.get("validation") or {}
     return {
+        "h1_telemetry": record.get("h1_telemetry"),
         "status": record.get("status"),
         "case": record.get("case"),
         "qep": {
@@ -1139,6 +1082,8 @@ def _hybrid_measurements(record: dict[str, Any]) -> dict[str, Any]:
                 "primary_solver_path",
                 "matrix_size",
                 "matrix_stats",
+                "block_shapes",
+                "inserted_nnz_by_block",
                 "bottom_matrix_stats",
                 "top_matrix_stats",
                 "bottom_global_size",
@@ -1160,15 +1105,17 @@ def _hybrid_measurements(record: dict[str, Any]) -> dict[str, Any]:
         "solve": record.get("solve"),
         "validation": {
             "port_power": validation.get("port_power"),
+            "interface_e_projection": validation.get("interface_e_projection"),
+            "fe_modal_traction_equilibrium": validation.get(
+                "fe_modal_traction_equilibrium"
+            ),
             "external_diffraction_orders": validation.get(
                 "external_diffraction_orders"
             ),
         },
         "physical_field_reconstruction": {
             "interface_continuity": physical.get("interface_continuity"),
-            "full3d_trace_modal_oracle": physical.get(
-                "full3d_trace_modal_oracle"
-            ),
+            "full3d_trace_modal_oracle": physical.get("full3d_trace_modal_oracle"),
             "volume_absorption": physical.get("volume_absorption"),
             "selected_plane_full3d_comparison": physical.get(
                 "selected_plane_full3d_comparison"
@@ -1181,9 +1128,7 @@ def _hybrid_measurements(record: dict[str, Any]) -> dict[str, Any]:
                 "full_middle_volume_reconstructed"
             ),
         },
-        "full3d_reference_comparison": record.get(
-            "full3d_reference_comparison"
-        ),
+        "full3d_reference_comparison": record.get("full3d_reference_comparison"),
         "modal_schur_comparison": record.get("modal_schur_comparison"),
         "modal_basis_capacity": record.get("modal_basis_capacity"),
         "object_payload_ledger": {
@@ -1217,12 +1162,8 @@ def _external_resource_authority(
 ) -> dict[str, Any]:
     worker_gib = memory.get("max_simultaneous_worker_rss_gib")
     cgroup_gib = memory.get("max_container_cgroup_current_gib")
-    worker_bytes = (
-        None if worker_gib is None else int(float(worker_gib) * 1024**3)
-    )
-    cgroup_bytes = (
-        None if cgroup_gib is None else int(float(cgroup_gib) * 1024**3)
-    )
+    worker_bytes = None if worker_gib is None else int(float(worker_gib) * 1024**3)
+    cgroup_bytes = None if cgroup_gib is None else int(float(cgroup_gib) * 1024**3)
     dedicated_cgroup = memory.get("dedicated_job_cgroup_observed") is True
     authority = (
         None
@@ -1249,9 +1190,7 @@ def _external_resource_authority(
         "simultaneous_live_worker_rss_sum_bytes": worker_bytes,
         "container_cgroup_current_bytes": cgroup_bytes,
         "memory_authority_bytes": authority,
-        "memory_authority_gib": (
-            None if authority is None else authority / 1024**3
-        ),
+        "memory_authority_gib": (None if authority is None else authority / 1024**3),
         "memory_authority_semantics": (
             "max(simultaneous live MPI worker RSS sum, container cgroup current)"
         ),
@@ -1283,9 +1222,7 @@ def _external_resource_authority(
         "all_live_swap_samples_readable": sampled_swap_all_readable,
     }
     gate["checks"].update(extra_checks)
-    gate["failures"] = [
-        name for name, passed in gate["checks"].items() if not passed
-    ]
+    gate["failures"] = [name for name, passed in gate["checks"].items() if not passed]
     gate["pass"] = not gate["failures"]
     record["gate"] = gate
     return record
@@ -1315,10 +1252,7 @@ def _available_physical_core_count() -> int | None:
             continue
         try:
             cpu, core, socket, online = line.split(",")
-            if (
-                int(cpu) in allowed
-                and online.strip().lower() in {"y", "yes"}
-            ):
+            if int(cpu) in allowed and online.strip().lower() in {"y", "yes"}:
                 physical_cores.add((int(socket), int(core)))
         except (TypeError, ValueError):
             return None
@@ -1334,9 +1268,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--target", choices=("qep", "hybrid"), required=True)
     parser.add_argument("--case-label", required=True)
-    parser.add_argument(
-        "--degree", type=int, choices=(1, 2, 3, 4, 6), required=True
-    )
+    parser.add_argument("--degree", type=int, choices=(1, 2, 3, 4, 6), required=True)
     parser.add_argument("--h-nm", type=float, required=True)
     parser.add_argument(
         "--modal-h-nm",
@@ -1390,7 +1322,9 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--requested-modes", type=int, default=8)
     parser.add_argument("--candidate-modes", type=int, default=16)
-    parser.add_argument("--material-kind", choices=("air", "lossy_homogeneous", "stage4_xy"))
+    parser.add_argument(
+        "--material-kind", choices=("air", "lossy_homogeneous", "stage4_xy")
+    )
     parser.add_argument(
         "--solver-path",
         choices=("augmented", "modal-schur-fast", "modal-schur-memory-minimal"),
@@ -1434,9 +1368,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument("--incident-grazing-deg", type=float, default=10.0)
-    parser.add_argument(
-        "--polarization-kind", choices=("s", "p"), default="s"
-    )
+    parser.add_argument("--polarization-kind", choices=("s", "p"), default="s")
     parser.add_argument("--m160-funnel-evidence-file", type=Path)
     parser.add_argument("--m160-funnel-evidence-sha256")
     parser.add_argument("--high-order-core-evidence-sha256")
@@ -1465,6 +1397,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "Explicitly open only the fixed-rectangular Task035c p6/h10 "
             "M120/M160 Hybrid authority path. Ordinary defaults are unchanged."
         ),
+    )
+    parser.add_argument(
+        "--task037b-h1-gate",
+        action="store_true",
+        help="Open only the frozen Task037b H1 augmented MPI8 path.",
     )
     parser.add_argument("--task035c-p6-preflight-authority", type=Path)
     parser.add_argument("--task035c-p6-preflight-sha256")
@@ -1511,20 +1448,24 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--host-environment-id", default="windows-docker-desktop")
     args = parser.parse_args(argv)
-    if args.degree == 6 and not args.task035c_p6_h10_gate:
+    if args.task035c_p6_h10_gate and args.task037b_h1_gate:
+        parser.error("Task035c p6/h10 and Task037b H1 gates are mutually exclusive.")
+    if args.degree == 6 and not (args.task035c_p6_h10_gate or args.task037b_h1_gate):
         parser.error(
-            "p6 is fail-closed; pass --task035c-p6-h10-gate for the fixed "
-            "Task035c p6/h10 Hybrid authority only."
+            "p6 is fail-closed; pass a fixed scoped Task035c or Task037b H1 gate."
         )
-    if args.task035c_p6_h10_gate and args.task034_workstation_gate:
+    if (
+        args.task035c_p6_h10_gate or args.task037b_h1_gate
+    ) and args.task034_workstation_gate:
         parser.error(
-            "--task035c-p6-h10-gate and --task034-workstation-gate are "
-            "mutually exclusive."
+            "--task034-workstation-gate, --task035c-p6-h10-gate, and "
+            "--task037b-h1-gate are mutually exclusive."
         )
     if (
         args.mpi_size not in (1, 2, 4)
         and not args.task034_workstation_gate
         and not args.task035c_p6_h10_gate
+        and not args.task037b_h1_gate
     ):
         parser.error(
             "MPI8/16/32 require --task034-workstation-gate or the scoped "
@@ -1532,18 +1473,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         )
     if args.target == "qep" and args.material_kind is None:
         parser.error("--target qep requires --material-kind.")
-    if (
-        args.target != "hybrid"
-        and (
-            args.modal_h_nm is not None
-            or args.modal_degree is not None
-            or args.internal_propagation_model != "continuous_beta"
-            or args.internal_traction_model != "continuous_qep_beta"
-        )
+    if args.target != "hybrid" and (
+        args.modal_h_nm is not None
+        or args.modal_degree is not None
+        or args.internal_propagation_model != "continuous_beta"
+        or args.internal_traction_model != "continuous_qep_beta"
     ):
-        parser.error(
-            "Independent modal h/p and propagation options are Hybrid-only."
-        )
+        parser.error("Independent modal h/p and propagation options are Hybrid-only.")
     if args.modal_h_nm is not None and args.modal_h_nm <= 0.0:
         parser.error("--modal-h-nm must be positive.")
     if (
@@ -1554,9 +1490,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "scalar_cg_discrete_derivative traction requires "
             "--internal-propagation-model full3d_uniform_cg."
         )
-    if (
-        args.graded_reference_h is not None
-        and (args.modal_h_nm is not None or args.modal_degree is not None)
+    if args.graded_reference_h is not None and (
+        args.modal_h_nm is not None or args.modal_degree is not None
     ):
         parser.error(
             "Independent modal h/p is not combined with the Task034 graded path."
@@ -1564,8 +1499,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     if args.target == "hybrid" and args.requested_modes < 2:
         parser.error("Hybrid requested modes must be at least two.")
     static_backend = (
-        args.stage4_full3d_assembly_backend
-        == "assembly_time_static_condensed"
+        args.stage4_full3d_assembly_backend == "assembly_time_static_condensed"
     )
     if static_backend:
         if args.target != "hybrid":
@@ -1583,31 +1517,25 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "The static-condensed Hybrid backend requires an explicit "
                 "64-hex --full3d-reference-sha256."
             )
-    elif (
-        args.full3d_reference_sha256 is not None
-        and not args.task035c_p6_h10_gate
+    elif args.full3d_reference_sha256 is not None and not (
+        args.task035c_p6_h10_gate or args.task037b_h1_gate
     ):
         parser.error(
-            "--full3d-reference-sha256 is reserved for the opt-in "
-            "static-condensed Hybrid backend or Task035c p6/h10."
+            "--full3d-reference-sha256 is reserved for a scoped "
+            "static-condensed Hybrid gate."
         )
     if not 0.0 < args.incident_grazing_deg < 90.0:
         parser.error("--incident-grazing-deg must lie strictly between 0 and 90.")
     if args.candidate_modes < args.requested_modes:
         parser.error("--candidate-modes must be at least --requested-modes.")
-    if (
-        args.target == "hybrid"
-        and args.candidate_modes != 2 * args.requested_modes
-    ):
+    if args.target == "hybrid" and args.candidate_modes != 2 * args.requested_modes:
         parser.error(
             "Hybrid --candidate-modes must equal exactly twice "
             "--requested-modes so Task32 can retain M forward and M backward "
             "modes."
         )
-    if (
-        args.target == "qep"
-        and args.candidate_modes
-        < task033_left_candidate_pool_size(args.requested_modes)
+    if args.target == "qep" and args.candidate_modes < task033_left_candidate_pool_size(
+        args.requested_modes
     ):
         parser.error(
             "QEP --candidate-modes must satisfy the audited adjoint-pool "
@@ -1640,16 +1568,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and args.solver_path == "modal-schur-memory-minimal"
             and args.comparison_solver_path == "fast"
             and not args.compare_modal_schur
-            and args.stage4_full3d_assembly_backend
-            in TASK035C_P6_H10_BACKENDS
+            and args.stage4_full3d_assembly_backend in TASK035C_P6_H10_BACKENDS
             and math.isclose(args.bottom_interface_nm, 10.0)
             and math.isclose(args.top_interface_nm, 110.0)
             and args.graded_reference_h is None
             and math.isclose(args.incident_grazing_deg, 10.0)
             and args.polarization_kind == "s"
             and args.internal_propagation_model == "full3d_uniform_cg"
-            and args.internal_traction_model
-            == "scalar_cg_discrete_derivative"
+            and args.internal_traction_model == "scalar_cg_discrete_derivative"
             and args.full3d_reference is not None
             and valid_hex_digest(args.full3d_reference_sha256, 64)
             and args.task035c_p6_preflight_authority is not None
@@ -1666,14 +1592,46 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "10/110 nm interfaces, standard/static backend, and "
                 "hash-bound historical and matching Full3D authorities."
             )
+    elif args.task037b_h1_gate:
+        scoped = bool(
+            args.target == "hybrid"
+            and args.degree == 6
+            and math.isclose(args.h_nm, 10.0)
+            and args.modal_degree == 6
+            and args.modal_h_nm is not None
+            and math.isclose(args.modal_h_nm, 10.0)
+            and args.mpi_size == 8
+            and args.requested_modes == 120
+            and args.candidate_modes == 240
+            and args.solver_path == "augmented"
+            and args.comparison_solver_path == "fast"
+            and not args.compare_modal_schur
+            and args.stage4_full3d_assembly_backend == "assembly_time_static_condensed"
+            and math.isclose(args.bottom_interface_nm, 10.0)
+            and math.isclose(args.top_interface_nm, 110.0)
+            and args.graded_reference_h is None
+            and math.isclose(args.incident_grazing_deg, 10.0)
+            and args.polarization_kind == "s"
+            and args.internal_propagation_model == "full3d_uniform_cg"
+            and args.internal_traction_model == "scalar_cg_discrete_derivative"
+            and args.full3d_reference is not None
+            and valid_hex_digest(args.full3d_reference_sha256, 64)
+            and args.task035c_p6_preflight_authority is not None
+            and valid_hex_digest(args.task035c_p6_preflight_sha256, 64)
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and args.host_environment_id == "WSL2-Ubuntu-24.04"
+        )
+        if not scoped:
+            parser.error(
+                "--task037b-h1-gate is restricted to the fixed WSL p6/h10, "
+                "10/110 nm, S-polarized, full3d/scalar-CG, M120+M120, "
+                "candidate240, augmented, static-condensed MPI8 path."
+            )
     elif (
         args.task035c_p6_preflight_authority is not None
         or args.task035c_p6_preflight_sha256 is not None
     ):
-        parser.error(
-            "Task035c p6 preflight authority arguments require "
-            "--task035c-p6-h10-gate."
-        )
+        parser.error("Task035c/H1 preflight authority arguments require a scoped gate.")
     if args.task033_same_sha_anchor_requalification:
         scoped = bool(
             args.target == "hybrid"
@@ -1728,23 +1686,28 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and args.task034_workstation_resource_anchor is not None
         )
         phase_f_matrix = {
-            (2, 5.0), (2, 3.0), (2, 2.0), (2, 1.0),
-            (3, 10.0), (3, 7.5), (3, 5.0), (3, 3.0), (3, 2.0),
-            (4, 10.0), (4, 7.5), (4, 5.0), (4, 3.0),
+            (2, 5.0),
+            (2, 3.0),
+            (2, 2.0),
+            (2, 1.0),
+            (3, 10.0),
+            (3, 7.5),
+            (3, 5.0),
+            (3, 3.0),
+            (3, 2.0),
+            (4, 10.0),
+            (4, 7.5),
+            (4, 5.0),
+            (4, 3.0),
         }
         anchor_selection_valid = bool(
             (
                 (args.degree, args.h_nm) in phase_f_matrix
                 and not (
-                    args.degree == 2 and math.isclose(args.h_nm, 1.0)
-                    or (
-                        args.degree == 3
-                        and math.isclose(args.h_nm, 2.0)
-                    )
-                    or (
-                        args.degree == 4
-                        and math.isclose(args.h_nm, 3.0)
-                    )
+                    args.degree == 2
+                    and math.isclose(args.h_nm, 1.0)
+                    or (args.degree == 3 and math.isclose(args.h_nm, 2.0))
+                    or (args.degree == 4 and math.isclose(args.h_nm, 3.0))
                 )
                 and args.full3d_reference is not None
                 and args.task034_workstation_resource_anchor is None
@@ -1782,15 +1745,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and args.degree == 2
             and math.isclose(args.h_nm, 3.0)
             and math.isclose(args.graded_reference_h, 3.0)
-            and args.graded_profile
-            in {"conservative", "balanced", "aggressive"}
+            and args.graded_profile in {"conservative", "balanced", "aggressive"}
             and args.mpi_size == 8
             and args.requested_modes in (80, 120, 160)
             and args.polarization_kind == "s"
             and args.task034_adaptive_mechanism_evidence_file is not None
-            and isinstance(
-                args.task034_adaptive_mechanism_evidence_sha256, str
-            )
+            and isinstance(args.task034_adaptive_mechanism_evidence_sha256, str)
             and len(args.task034_adaptive_mechanism_evidence_sha256) == 64
         )
         scoped = bool(
@@ -1801,9 +1761,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and args.solver_path == "modal-schur-memory-minimal"
             and args.comparison_solver_path == "fast"
             and not args.compare_modal_schur
-            and (
-                args.graded_reference_h is None or graded_compression_scope
-            )
+            and (args.graded_reference_h is None or graded_compression_scope)
             and math.isclose(args.bottom_interface_nm, 10.0)
             and math.isclose(args.top_interface_nm, 110.0)
             and math.isclose(args.incident_grazing_deg, 10.0)
@@ -1813,9 +1771,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and approved_p4_h3_scope
             and anchor_selection_valid
             and args.host_environment_id == "WSL2-Ubuntu-24.04"
-            and isinstance(
-                args.task034_workstation_resource_authority_sha256, str
-            )
+            and isinstance(args.task034_workstation_resource_authority_sha256, str)
             and len(args.task034_workstation_resource_authority_sha256) == 64
         )
         if not scoped:
@@ -1883,10 +1839,7 @@ def run(args: argparse.Namespace) -> int:
     environment_before["task034_effective_limit"] = effective
     args._qep_effective_limit_gib = (
         None
-        if any(
-            not isinstance(value, int) or value <= 0
-            for value in finite_authorities
-        )
+        if any(not isinstance(value, int) or value <= 0 for value in finite_authorities)
         else min(int(value) for value in finite_authorities) / 1024**3
     )
     source_preflight_gate = {
@@ -1901,9 +1854,7 @@ def run(args: argparse.Namespace) -> int:
     if core_path is not None and not core_path.is_absolute():
         core_path = ROOT / core_path
     core_evidence, core_read_error = (
-        _read_json_object(core_path)
-        if args.degree >= 3
-        else (None, None)
+        _read_json_object(core_path) if args.degree >= 3 else (None, None)
     )
     core_source_compatibility = _case090_source_compatibility(
         core_evidence,
@@ -1918,12 +1869,10 @@ def run(args: argparse.Namespace) -> int:
         else (None, None)
     )
     observed_m160_funnel_sha256 = (
-        _sha256(m160_funnel_path)
-        if m160_funnel_path is not None
-        else None
+        _sha256(m160_funnel_path) if m160_funnel_path is not None else None
     )
     if args.target == "hybrid":
-        if args.task035c_p6_h10_gate:
+        if args.task035c_p6_h10_gate or args.task037b_h1_gate:
             authority_path = args.task035c_p6_preflight_authority
             if authority_path is not None and not authority_path.is_absolute():
                 authority_path = ROOT / authority_path
@@ -1952,77 +1901,80 @@ def run(args: argparse.Namespace) -> int:
                 )
                 is not None
             )
-            preflight_authority_gate = (
-                task035c_p6_h10_preflight_authority_gate(
-                    authority,
-                    expected_sha256=args.task035c_p6_preflight_sha256,
-                    observed_sha256=authority_observed_sha256,
-                    authority_is_tracked=authority_is_tracked,
-                )
+            preflight_authority_gate = task035c_p6_h10_preflight_authority_gate(
+                authority,
+                expected_sha256=args.task035c_p6_preflight_sha256,
+                observed_sha256=authority_observed_sha256,
+                authority_is_tracked=authority_is_tracked,
             )
 
             full3d_path = args.full3d_reference
             if full3d_path is not None and not full3d_path.is_absolute():
                 full3d_path = ROOT / full3d_path
-            full3d_path = (
-                None if full3d_path is None else full3d_path.resolve()
-            )
-            full3d_reference, full3d_reference_read_error = (
-                _read_json_object(full3d_path)
+            full3d_path = None if full3d_path is None else full3d_path.resolve()
+            full3d_reference, full3d_reference_read_error = _read_json_object(
+                full3d_path
             )
             full3d_reference_observed_sha256 = (
                 None if full3d_path is None else _sha256(full3d_path)
             )
-            full3d_reference_gate = task035c_p6_h10_full3d_reference_gate(
-                full3d_reference,
-                expected_sha256=args.full3d_reference_sha256,
-                observed_sha256=full3d_reference_observed_sha256,
-                current_source_sha=source_before.get("commit_sha"),
-                assembly_backend=args.stage4_full3d_assembly_backend,
-                mpi_size=args.mpi_size,
+            full3d_reference_gate = (
+                task037b_h1_pinned_full3d_reference_gate(
+                    full3d_reference,
+                    expected_sha256=args.full3d_reference_sha256,
+                    observed_sha256=full3d_reference_observed_sha256,
+                    current_source_sha=source_before.get("commit_sha"),
+                    assembly_backend=args.stage4_full3d_assembly_backend,
+                    mpi_size=args.mpi_size,
+                )
+                if args.task037b_h1_gate
+                else task035c_p6_h10_full3d_reference_gate(
+                    full3d_reference,
+                    expected_sha256=args.full3d_reference_sha256,
+                    observed_sha256=full3d_reference_observed_sha256,
+                    current_source_sha=source_before.get("commit_sha"),
+                    assembly_backend=args.stage4_full3d_assembly_backend,
+                    mpi_size=args.mpi_size,
+                )
             )
             checks = {
-                "task035c_scope_parser_passed": True,
-                "historical_preflight_readable": (
-                    authority_read_error is None
+                "scoped_gate_parser_passed": bool(
+                    args.task035c_p6_h10_gate or args.task037b_h1_gate
                 ),
+                "historical_preflight_readable": (authority_read_error is None),
                 "historical_preflight_gate": preflight_authority_gate["pass"],
                 "matching_full3d_reference_readable": (
                     full3d_reference_read_error is None
                 ),
-                "matching_full3d_reference_gate": (
-                    full3d_reference_gate["pass"]
-                ),
-                "source_clean_and_exact": source_before[
-                    "source_clean_verified"
-                ],
+                "matching_full3d_reference_gate": (full3d_reference_gate["pass"]),
+                "source_clean_and_exact": source_before["source_clean_verified"],
                 "environment_preflight": environment_preflight["pass"],
                 "external_watchdog_active": True,
             }
-            failures = [
-                name for name, passed in checks.items() if not passed
-            ]
+            failures = [name for name, passed in checks.items() if not passed]
             launch_gate = {
-                "schema_version": "task035c.p6-h10-hybrid-launch-gate.v1",
+                "schema_version": (
+                    "task037b.h1-hybrid-launch-gate.v1"
+                    if args.task037b_h1_gate
+                    else "task035c.p6-h10-hybrid-launch-gate.v1"
+                ),
                 "pass": not failures,
                 "launch_eligible_recomputed": not failures,
-                "scope": "task035c_fixed_rectangular_p6_h10",
+                "scope": (
+                    "task037b_h1_fixed_augmented_p6_h10"
+                    if args.task037b_h1_gate
+                    else "task035c_fixed_rectangular_p6_h10"
+                ),
                 "checks": checks,
                 "failures": failures,
                 "historical_preflight_authority": {
                     **preflight_authority_gate,
-                    "path": (
-                        None
-                        if authority_path is None
-                        else str(authority_path)
-                    ),
+                    "path": (None if authority_path is None else str(authority_path)),
                     "read_error": authority_read_error,
                 },
                 "matching_full3d_reference": {
                     **full3d_reference_gate,
-                    "path": (
-                        None if full3d_path is None else str(full3d_path)
-                    ),
+                    "path": (None if full3d_path is None else str(full3d_path)),
                     "read_error": full3d_reference_read_error,
                 },
                 "high_order_core_evidence": {},
@@ -2041,9 +1993,7 @@ def run(args: argparse.Namespace) -> int:
                 authority_relative = None
             authority_is_tracked = bool(
                 authority_relative is not None
-                and _git(
-                    "ls-files", "--error-unmatch", "--", authority_relative
-                )
+                and _git("ls-files", "--error-unmatch", "--", authority_relative)
                 is not None
             )
             authority, authority_read_error = _read_json_object(authority_path)
@@ -2055,9 +2005,7 @@ def run(args: argparse.Namespace) -> int:
                     h_nm=args.h_nm,
                     polarization_kind=args.polarization_kind,
                     current_source_sha=source_before.get("commit_sha"),
-                    assembly_backend=(
-                        args.stage4_full3d_assembly_backend
-                    ),
+                    assembly_backend=(args.stage4_full3d_assembly_backend),
                 )
             )
             full3d_path = args.full3d_reference
@@ -2100,18 +2048,12 @@ def run(args: argparse.Namespace) -> int:
             ):
                 resource_anchor_path = ROOT / resource_anchor_path
             resource_anchor_path = (
-                None
-                if resource_anchor_path is None
-                else resource_anchor_path.resolve()
+                None if resource_anchor_path is None else resource_anchor_path.resolve()
             )
             resource_anchor_sha256 = (
-                None
-                if resource_anchor_path is None
-                else _sha256(resource_anchor_path)
+                None if resource_anchor_path is None else _sha256(resource_anchor_path)
             )
-            adaptive_mechanism_path = (
-                args.task034_adaptive_mechanism_evidence_file
-            )
+            adaptive_mechanism_path = args.task034_adaptive_mechanism_evidence_file
             if (
                 adaptive_mechanism_path is not None
                 and not adaptive_mechanism_path.is_absolute()
@@ -2180,9 +2122,7 @@ def run(args: argparse.Namespace) -> int:
                 assembly_backend=args.stage4_full3d_assembly_backend,
                 measured_full3d_anchor=fresh_static_anchor_gate,
                 m160_funnel_evidence=m160_funnel_evidence,
-                expected_m160_funnel_sha256=(
-                    args.m160_funnel_evidence_sha256
-                ),
+                expected_m160_funnel_sha256=(args.m160_funnel_evidence_sha256),
                 observed_m160_funnel_sha256=observed_m160_funnel_sha256,
                 graded_reference_h=args.graded_reference_h,
                 graded_profile=args.graded_profile,
@@ -2192,21 +2132,13 @@ def run(args: argparse.Namespace) -> int:
                 {
                     "resource_authority_path": str(authority_path),
                     "resource_authority_read_error": authority_read_error,
-                    "resource_authority_observed_sha256": (
-                        authority_observed_sha256
-                    ),
+                    "resource_authority_observed_sha256": (authority_observed_sha256),
                     "full3d_reference_path": (
                         None if full3d_path is None else str(full3d_path)
                     ),
-                    "full3d_reference_observed_sha256": (
-                        full3d_reference_sha256
-                    ),
-                    "full3d_reference_expected_sha256": (
-                        args.full3d_reference_sha256
-                    ),
-                    "fresh_static_reference_read_error": (
-                        fresh_static_read_error
-                    ),
+                    "full3d_reference_observed_sha256": (full3d_reference_sha256),
+                    "full3d_reference_expected_sha256": (args.full3d_reference_sha256),
+                    "fresh_static_reference_read_error": (fresh_static_read_error),
                     "historical_authority_source_compatibility": (
                         historical_authority_source_compatibility
                     ),
@@ -2217,15 +2149,12 @@ def run(args: argparse.Namespace) -> int:
                     ),
                     "resource_anchor_observed_sha256": resource_anchor_sha256,
                     "m160_funnel_evidence_path": (
-                        None
-                        if m160_funnel_path is None
-                        else str(m160_funnel_path)
+                        None if m160_funnel_path is None else str(m160_funnel_path)
                     ),
-                    "m160_funnel_evidence_read_error": (
-                        m160_funnel_read_error
-                    ),
+                    "m160_funnel_evidence_read_error": (m160_funnel_read_error),
                     "adaptive_mechanism_evidence_path": (
-                        None if adaptive_mechanism_path is None
+                        None
+                        if adaptive_mechanism_path is None
                         else str(adaptive_mechanism_path)
                     ),
                     "adaptive_mechanism_evidence_read_error": (
@@ -2245,9 +2174,7 @@ def run(args: argparse.Namespace) -> int:
                 }
             )
             launch_gate["failures"] = [
-                name
-                for name, passed in launch_gate["checks"].items()
-                if not passed
+                name for name, passed in launch_gate["checks"].items() if not passed
             ]
             launch_gate["pass"] = not launch_gate["failures"]
             launch_gate["launch_eligible_recomputed"] = launch_gate["pass"]
@@ -2300,9 +2227,7 @@ def run(args: argparse.Namespace) -> int:
                 current_source_sha=source_before.get("commit_sha"),
                 source_compatibility=core_source_compatibility,
                 m160_funnel_evidence=m160_funnel_evidence,
-                expected_m160_funnel_sha256=(
-                    args.m160_funnel_evidence_sha256
-                ),
+                expected_m160_funnel_sha256=(args.m160_funnel_evidence_sha256),
                 observed_m160_funnel_sha256=observed_m160_funnel_sha256,
                 task033_same_sha_anchor_requalification=(
                     args.task033_same_sha_anchor_requalification
@@ -2317,9 +2242,7 @@ def run(args: argparse.Namespace) -> int:
             launch_gate["m160_funnel_evidence_path"] = (
                 None if m160_funnel_path is None else str(m160_funnel_path)
             )
-            launch_gate["m160_funnel_evidence_read_error"] = (
-                m160_funnel_read_error
-            )
+            launch_gate["m160_funnel_evidence_read_error"] = m160_funnel_read_error
             launch_gate["checks"].update(
                 {
                     "canonical_case091_resource_matrix_path": (
@@ -2331,9 +2254,7 @@ def run(args: argparse.Namespace) -> int:
                 }
             )
             launch_gate["failures"] = [
-                name
-                for name, passed in launch_gate["checks"].items()
-                if not passed
+                name for name, passed in launch_gate["checks"].items() if not passed
             ]
             launch_gate["pass"] = not launch_gate["failures"]
             launch_gate["launch_eligible_recomputed"] = launch_gate["pass"]
@@ -2347,12 +2268,10 @@ def run(args: argparse.Namespace) -> int:
         )
         launch_gate = {
             "pass": bool(
-                core_gate["pass"]
-                and args._qep_effective_limit_gib is not None
+                core_gate["pass"] and args._qep_effective_limit_gib is not None
             ),
             "launch_eligible_recomputed": bool(
-                core_gate["pass"]
-                and args._qep_effective_limit_gib is not None
+                core_gate["pass"] and args._qep_effective_limit_gib is not None
             ),
             "scope": "qep_component_uses_its_own_two_center_preflight",
             "qep_effective_limit_gib_forwarded_to_worker": (
@@ -2374,7 +2293,7 @@ def run(args: argparse.Namespace) -> int:
     launch_gate["high_order_core_evidence_read_error"] = core_read_error
     if (
         args.degree >= 3
-        and not args.task035c_p6_h10_gate
+        and not (args.task035c_p6_h10_gate or args.task037b_h1_gate)
         and core_read_error is not None
     ):
         launch_gate["pass"] = False
@@ -2421,9 +2340,7 @@ def run(args: argparse.Namespace) -> int:
             "measurements": None,
         }
         rendered = json.dumps(summary, ensure_ascii=False, indent=2) + "\n"
-        (run_dir / "memory_sampler_summary.json").write_text(
-            rendered, encoding="utf-8"
-        )
+        (run_dir / "memory_sampler_summary.json").write_text(rendered, encoding="utf-8")
         if args.summary_output is not None:
             promoted = (
                 args.summary_output
@@ -2436,7 +2353,7 @@ def run(args: argparse.Namespace) -> int:
         return 2
 
     core_gate = launch_gate.get("high_order_core_evidence", {})
-    if args.degree >= 3 and not args.task035c_p6_h10_gate:
+    if args.degree >= 3 and not (args.task035c_p6_h10_gate or args.task037b_h1_gate):
         args.high_order_core_evidence_sha256 = core_gate.get("evidence_sha256")
     args._no_swap_verified = True
     record_path = run_dir / "solver_record.json"
@@ -2487,8 +2404,7 @@ def run(args: argparse.Namespace) -> int:
             job_cgroup = job_sample["job_cgroup"]
             live_worker_rss_mb = float(process_tree["rss_bytes"]) / 1024**2
             live_workers = [
-                {"pid": pid, "scope": "process_tree"}
-                for pid in process_tree["pids"]
+                {"pid": pid, "scope": "process_tree"} for pid in process_tree["pids"]
             ]
             row["worker_rank_rss_sum_mb"] = live_worker_rss_mb
             row["worker_rank_rss_mb_json"] = json.dumps(
@@ -2501,11 +2417,13 @@ def run(args: argparse.Namespace) -> int:
             row["job_cgroup_dedicated"] = job_cgroup["dedicated_job_cgroup"]
             if job_cgroup["dedicated_job_cgroup"]:
                 row["container_cgroup_current_mb"] = (
-                    None if job_cgroup["memory_current_bytes"] is None
+                    None
+                    if job_cgroup["memory_current_bytes"] is None
                     else float(job_cgroup["memory_current_bytes"]) / 1024**2
                 )
                 row["container_swap_current_mb"] = (
-                    None if job_cgroup["swap_current_bytes"] is None
+                    None
+                    if job_cgroup["swap_current_bytes"] is None
                     else float(job_cgroup["swap_current_bytes"]) / 1024**2
                 )
             else:
@@ -2526,16 +2444,17 @@ def run(args: argparse.Namespace) -> int:
                 (
                     args.task034_workstation_gate
                     or args.task035c_p6_h10_gate
+                    or args.task037b_h1_gate
                 )
                 and process_running
                 and not authority_readable
                 and row.get("stage") == "record_and_release"
             ):
-                terminal_record_complete = (
-                    _task034_terminal_record_is_complete(record_path)
+                terminal_record_complete = _task034_terminal_record_is_complete(
+                    record_path
                 )
-                live_worker_rss, discovered_workers = (
-                    _live_task033_worker_rss(process.pid, args.target)
+                live_worker_rss, discovered_workers = _live_task033_worker_rss(
+                    process.pid, args.target
                 )
                 if live_worker_rss is not None:
                     process_tree_pids = set(process_tree["pids"])
@@ -2547,6 +2466,7 @@ def run(args: argparse.Namespace) -> int:
                 task034_workstation_gate=(
                     args.task034_workstation_gate
                     or args.task035c_p6_h10_gate
+                    or args.task037b_h1_gate
                 ),
                 process_running=process_running,
                 authority_readable=authority_readable,
@@ -2558,6 +2478,7 @@ def run(args: argparse.Namespace) -> int:
                 task034_workstation_gate=(
                     args.task034_workstation_gate
                     or args.task035c_p6_h10_gate
+                    or args.task037b_h1_gate
                 ),
                 process_running=process_running,
                 terminal_worker_drain=terminal_worker_drain,
@@ -2590,14 +2511,11 @@ def run(args: argparse.Namespace) -> int:
             live_authority_gib = (
                 None
                 if not readability_sample_is_formal or not authority_readable
-                else max(
-                    float(live_worker_rss_mb), float(cgroup_current_mb or 0.0)
-                ) / 1024.0
+                else max(float(live_worker_rss_mb), float(cgroup_current_mb or 0.0))
+                / 1024.0
             )
             if live_authority_gib is not None:
-                max_live_authority_gib = max(
-                    max_live_authority_gib, live_authority_gib
-                )
+                max_live_authority_gib = max(max_live_authority_gib, live_authority_gib)
                 warning_triggered |= live_authority_gib >= args.warning_gib
             if _authority_unreadable_requires_termination(
                 process_running=process_running,
@@ -2686,9 +2604,7 @@ def run(args: argparse.Namespace) -> int:
         launch_gate_pass=launch_gate["pass"],
         terminated_for_memory=terminated_for_memory,
         terminated_for_timeout=terminated_for_timeout,
-        terminated_for_authority_unreadable=(
-            terminated_for_authority_unreadable
-        ),
+        terminated_for_authority_unreadable=(terminated_for_authority_unreadable),
     )
     summary = {
         "schema_version": "task033.memory-watchdog.v2",
@@ -2715,9 +2631,7 @@ def run(args: argparse.Namespace) -> int:
         "warning_triggered": warning_triggered,
         "terminated_for_memory": terminated_for_memory,
         "terminated_for_timeout": terminated_for_timeout,
-        "terminated_for_authority_unreadable": (
-            terminated_for_authority_unreadable
-        ),
+        "terminated_for_authority_unreadable": (terminated_for_authority_unreadable),
         "memory": memory,
         "resource_authority": resource_authority,
         "launch_gate": launch_gate,

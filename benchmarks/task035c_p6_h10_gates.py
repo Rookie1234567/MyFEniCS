@@ -45,9 +45,7 @@ def task035c_p6_h10_preflight_authority_gate(
     qualification = qualification if isinstance(qualification, Mapping) else {}
     qualification_checks = qualification.get("checks")
     qualification_checks = (
-        qualification_checks
-        if isinstance(qualification_checks, Mapping)
-        else {}
+        qualification_checks if isinstance(qualification_checks, Mapping) else {}
     )
     target = payload.get("target_identity")
     target = target if isinstance(target, Mapping) else {}
@@ -62,15 +60,12 @@ def task035c_p6_h10_preflight_authority_gate(
     checks = {
         "object_present": bool(payload),
         "schema_identity": bool(
-            payload.get("schema_version")
-            == "task035.actual-global-r5-watchdog.v1"
+            payload.get("schema_version") == "task035.actual-global-r5-watchdog.v1"
             and payload.get("benchmark_id") == "task035_target_actual_global_r5"
         ),
         "record_hash_expected_valid": valid_hex_digest(expected_sha256, 64),
         "record_hash_observed_valid": valid_hex_digest(observed_sha256, 64),
-        "record_hash_matches_expected": bool(
-            expected_sha256 == observed_sha256
-        ),
+        "record_hash_matches_expected": bool(expected_sha256 == observed_sha256),
         "authority_is_git_tracked": authority_is_tracked,
         "historical_run_passed": bool(
             payload.get("status") == "actual_global_r5_pass"
@@ -90,14 +85,10 @@ def task035c_p6_h10_preflight_authority_gate(
         ),
         "fixed_rectangular_identity": bool(
             math.isclose(float(target.get("wavelength_nm", math.nan)), 13.5)
-            and math.isclose(
-                float(target.get("incidence_theta_deg", math.nan)), 80.0
-            )
+            and math.isclose(float(target.get("incidence_theta_deg", math.nan)), 80.0)
             and str(target.get("polarization", "")).upper() == "S"
-            and target.get("geometry")
-            == "Task034 fixed rectangular block grating"
-            and target.get("mesh_backend")
-            == "boundary-fitted conforming hexahedron"
+            and target.get("geometry") == "Task034 fixed rectangular block grating"
+            and target.get("mesh_backend") == "boundary-fitted conforming hexahedron"
         ),
         "p6_h10_mpi8_anchor": bool(
             enriched.get("degree") == TASK035C_P6_H10_DEGREE
@@ -153,9 +144,7 @@ def task035c_p6_h10_full3d_reference_gate(
     qualification = qualification if isinstance(qualification, Mapping) else {}
     qualification_checks = qualification.get("checks")
     qualification_checks = (
-        qualification_checks
-        if isinstance(qualification_checks, Mapping)
-        else {}
+        qualification_checks if isinstance(qualification_checks, Mapping) else {}
     )
     summary = payload.get("solver_summary")
     summary = summary if isinstance(summary, Mapping) else {}
@@ -163,9 +152,7 @@ def task035c_p6_h10_full3d_reference_gate(
     config = config if isinstance(config, Mapping) else {}
     residual = summary.get("linear_system_relative_residual")
     reference_planes = config.get("full3d_reference_plane_z")
-    reference_planes = (
-        reference_planes if isinstance(reference_planes, list) else []
-    )
+    reference_planes = reference_planes if isinstance(reference_planes, list) else []
 
     checks = {
         "object_present": bool(payload),
@@ -175,9 +162,7 @@ def task035c_p6_h10_full3d_reference_gate(
         ),
         "record_hash_expected_valid": valid_hex_digest(expected_sha256, 64),
         "record_hash_observed_valid": valid_hex_digest(observed_sha256, 64),
-        "record_hash_matches_expected": bool(
-            expected_sha256 == observed_sha256
-        ),
+        "record_hash_matches_expected": bool(expected_sha256 == observed_sha256),
         "exact_final_source_sha": bool(
             valid_hex_digest(current_source_sha, 40)
             and source.get("commit_sha") == current_source_sha
@@ -203,18 +188,14 @@ def task035c_p6_h10_full3d_reference_gate(
             assembly_backend in TASK035C_P6_H10_BACKENDS
             and payload.get("stage4_full3d_assembly_backend_requested")
             == assembly_backend
-            and payload.get("stage4_full3d_assembly_backend_actual")
-            == assembly_backend
-            and summary.get("stage4_full3d_assembly_backend_actual")
-            == assembly_backend
+            and payload.get("stage4_full3d_assembly_backend_actual") == assembly_backend
+            and summary.get("stage4_full3d_assembly_backend_actual") == assembly_backend
         ),
         "fixed_rectangular_physics": bool(
             summary.get("stage_case") == "stage4_block_grating"
             and summary.get("geometry_kind") == "rectangular_block_grating"
             and math.isclose(float(config.get("lambda0", math.nan)), 13.5)
-            and math.isclose(
-                float(config.get("incident_theta_deg", math.nan)), 80.0
-            )
+            and math.isclose(float(config.get("incident_theta_deg", math.nan)), 80.0)
             and math.isclose(float(config.get("incident_phi_deg", math.nan)), 0.0)
             and math.isclose(float(config.get("period_x", math.nan)), 50.0)
             and math.isclose(float(config.get("period_y", math.nan)), 25.0)
@@ -264,3 +245,51 @@ def task035c_p6_h10_full3d_reference_gate(
         "checks": checks,
         "failures": failures,
     }
+
+
+def task037b_h1_pinned_full3d_reference_gate(
+    record: Mapping[str, Any] | None,
+    *,
+    expected_sha256: str | None,
+    observed_sha256: str | None,
+    current_source_sha: str | None,
+    assembly_backend: str,
+    mpi_size: int,
+) -> dict[str, Any]:
+    """Apply the existing Full3D checks to H1's pinned Case096 record."""
+
+    source = record.get("source") if isinstance(record, Mapping) else None
+    source = source if isinstance(source, Mapping) else {}
+    pinned_source_sha = source.get("commit_sha")
+    gate = task035c_p6_h10_full3d_reference_gate(
+        record,
+        expected_sha256=expected_sha256,
+        observed_sha256=observed_sha256,
+        current_source_sha=pinned_source_sha,
+        assembly_backend=assembly_backend,
+        mpi_size=mpi_size,
+    )
+    checks = dict(gate["checks"])
+    pinned_identity = bool(checks.pop("exact_final_source_sha", False))
+    checks["pinned_historical_source_identity"] = pinned_identity
+    failures = [
+        (
+            "pinned_historical_source_identity"
+            if failure == "exact_final_source_sha"
+            else failure
+        )
+        for failure in gate["failures"]
+    ]
+    gate.update(
+        {
+            "schema_version": "task037b.h1-pinned-full3d-reference-gate.v1",
+            "pass": not failures,
+            "checks": checks,
+            "failures": failures,
+            "reference_role": "pinned_historical_case096",
+            "reference_source_sha": pinned_source_sha,
+            "current_hybrid_source_sha": current_source_sha,
+        }
+    )
+    gate.pop("current_source_sha", None)
+    return gate

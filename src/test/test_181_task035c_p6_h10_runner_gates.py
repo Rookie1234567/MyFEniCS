@@ -15,11 +15,13 @@ from benchmarks.run_task033_full3d_watchdog import (
 )
 from benchmarks.run_task033_memory_watchdog import (
     _parse_args as parse_memory_args,
+    _hybrid_measurements,
     _worker_command,
 )
 from benchmarks.task035c_p6_h10_gates import (
     task035c_p6_h10_full3d_reference_gate,
     task035c_p6_h10_preflight_authority_gate,
+    task037b_h1_pinned_full3d_reference_gate,
 )
 
 
@@ -194,20 +196,24 @@ def _phase6_cli(backend: str = "standard_full") -> list[str]:
     return result
 
 
+def _h1_hybrid_cli() -> list[str]:
+    cli = _hybrid_cli("assembly_time_static_condensed")
+    cli[cli.index("--solver-path") + 1] = "augmented"
+    cli[cli.index("--task035c-p6-h10-gate")] = "--task037b-h1-gate"
+    return cli
+
+
 class Task035cP6H10RunnerGateTests(unittest.TestCase):
     def test_ordinary_defaults_remain_unchanged(self) -> None:
         phase6 = parse_phase6_args([])
         self.assertEqual(phase6.degree, 2)
         self.assertEqual(phase6.solver_path, "augmented")
-        self.assertEqual(
-            phase6.stage4_full3d_assembly_backend, "standard_full"
-        )
+        self.assertEqual(phase6.stage4_full3d_assembly_backend, "standard_full")
         self.assertFalse(phase6.task035c_p6_h10_gate)
+        self.assertFalse(phase6.task037b_h1_gate)
 
         full3d = parse_full3d_args(["--degree", "3"])
-        self.assertEqual(
-            full3d.stage4_full3d_assembly_backend, "standard_full"
-        )
+        self.assertEqual(full3d.stage4_full3d_assembly_backend, "standard_full")
         self.assertFalse(full3d.task035c_p6_h10_gate)
 
     def test_discrete_axial_scope_is_user_visible_and_fail_closed(self) -> None:
@@ -296,6 +302,55 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
                     worker = parse_phase6_args(_phase6_cli(backend))
                     self.assertTrue(worker.task035c_p6_h10_gate)
 
+    def test_task037b_h1_gate_and_worker_forwarding_are_scoped(self) -> None:
+        args = parse_memory_args(_h1_hybrid_cli())
+        self.assertTrue(args.task037b_h1_gate)
+        self.assertEqual(args.mpi_size, 8)
+        self.assertEqual(args.requested_modes, 120)
+        self.assertEqual(args.candidate_modes, 240)
+        self.assertEqual(args.solver_path, "augmented")
+        command = _worker_command(args, Path("record.json"), Path("stages.jsonl"))
+        self.assertIn("--task037b-h1-gate", command)
+        self.assertNotIn("--task035c-p6-h10-gate", command)
+        worker_cli = _h1_hybrid_cli()
+        remove_pairs = {"--target", "--case-label", "--mpi-size"}
+        phase6_cli: list[str] = []
+        index = 0
+        while index < len(worker_cli):
+            if worker_cli[index] in remove_pairs:
+                index += 2
+                continue
+            phase6_cli.append(worker_cli[index])
+            index += 1
+        worker = parse_phase6_args(phase6_cli)
+        self.assertTrue(worker.task037b_h1_gate)
+
+    def test_task035c_rejects_augmented_and_h1_summary_forwards(self) -> None:
+        old_augmented = _hybrid_cli("assembly_time_static_condensed")
+        old_augmented[old_augmented.index("--solver-path") + 1] = "augmented"
+        with self.assertRaises(SystemExit):
+            parse_memory_args(old_augmented)
+        summary = _hybrid_measurements(
+            {
+                "metadata": {"task037b_h1_gate": True},
+                "h1_telemetry": {"task037b_h1_gate": True},
+                "hybrid_system": {
+                    "block_shapes": {"A": [1, 1]},
+                    "inserted_nnz_by_block": {"A": 1},
+                },
+                "validation": {
+                    "interface_e_projection": {"relative": 1.0e-12},
+                    "fe_modal_traction_equilibrium": {"relative": 2.0e-12},
+                },
+            }
+        )
+        self.assertTrue(summary["h1_telemetry"]["task037b_h1_gate"])
+        self.assertEqual(summary["hybrid_system"]["block_shapes"], {"A": [1, 1]})
+        self.assertEqual(
+            summary["validation"]["fe_modal_traction_equilibrium"]["relative"],
+            2.0e-12,
+        )
+
     def test_hybrid_gate_rejects_scope_drift(self) -> None:
         replacements = (
             ("--h-nm", "7.5"),
@@ -357,6 +412,19 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
             )
             self.assertFalse(stale["pass"])
             self.assertIn("exact_final_source_sha", stale["failures"])
+            pinned = task037b_h1_pinned_full3d_reference_gate(
+                reference,
+                expected_sha256=RECORD_SHA256,
+                observed_sha256=RECORD_SHA256,
+                current_source_sha="f" * 40,
+                assembly_backend=backend,
+                mpi_size=8,
+            )
+            self.assertTrue(pinned["pass"], pinned["failures"])
+            self.assertEqual(pinned["reference_role"], "pinned_historical_case096")
+            self.assertEqual(pinned["reference_source_sha"], SOURCE_SHA)
+            self.assertEqual(pinned["current_hybrid_source_sha"], "f" * 40)
+            self.assertNotIn("exact_final_source_sha", pinned["checks"])
 
 
 if __name__ == "__main__":
