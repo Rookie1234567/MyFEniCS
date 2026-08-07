@@ -488,27 +488,41 @@ Task036 先修复 Full3D/Hybrid 共用的投影、界面牵引、beta 身份、n
 
 选择性整合身份为 Group 1 `7735a2617d18fe5f869331a90d47ec16632fd8d3`、Group 2
 `a741ad1b5cfb579e2667600bcc6497ec5c4f23d9`，Group 3
-`4c9e1b9cedd4b04d65824698202c9fff96f3a0dc`。Task037 空分支已从已推送 master
-`b615a130d7c34060a3445c352c1f683bbf3aa23f` 创建并推送，但 task 未定义，因此本总账
-没有登记 iterative 或新的 0.7 nm 模型。
+`4c9e1b9cedd4b04d65824698202c9fff96f3a0dc`。在 Task036 结项时，Task037 空分支已从
+已推送 master `b615a130d7c34060a3445c352c1f683bbf3aa23f` 创建并推送；该历史占位
+现由下方 1.5 的 Task037 V7 当前结论替代，不应再解读为 Task037 未定义。
 
 ---
 
-## 1.5 静态凝聚法：迭代求解（待定）
+## 1.5 静态凝聚法：迭代求解（Task037 V7 已结项）
 
-当前没有成功模型。三条 Task035b MPI8 screen 均达到 200 步上限且残差几乎不下降，因此只能登记为探索负结果，详见第 2.9 节。
+Task037 证明了一个可复用但必须显式 opt-in 的 p6/h10 Full3D 迭代基线：
+matrix-free fine action、80-mode Matrix-free DtN component、owner-local
+static-Schur 与 M3a physical-slab/75D coarse 组合均有正式证据。它不是 ordinary
+default，也不是 `0.7 nm` resource-scalability qualification。
+
+| Model ID | 方法与规模 | 结果 | 状态 |
+|---|---|---|---|
+| `task037_e0_matrix_free_dtn` | 80-mode Matrix-free DtN；p6/h10；MPI1 | 80/80；primary C/D `0/0`；global A/F `false/false`；action/recovery 约 `1e-15` | component pass；ordinary unchanged |
+| `task037_m3a_opt_in` | owner-local static-Schur；75D coarse；16 slabs；overlap `.125`；MPI1/2/4/8 | MPI4 full residual四项均 `<=1e-6`；12/12 power、12/12 amplitude；official true | research baseline；不是 default |
+| `task037_canonical_active_full` | canonical active/full comparator | relative L2 `1.2553897989392794e-06` / `7.880394014572244e-07` | pass at `1e-5` |
+| `task037_A_B2_B4_C_D_R7_p4_F_E` | 已运行的候选与关闭路线 | negative、plateau、partial 或 capacity `6/6` fail | controlled negatives；不生产化 |
+
+证据绑定 reviewed source `d8b16c349f7726b4873ce1932668c12a1ba78926` 与 final
+numerical source `0fcf08a3f09e3beb137212d41f411823cb2e24e8`。详见
+[`Task037 summary`](task037_static_condensed_full3d_iterative/outcomes/summary.md)
+和 Case100 compact records。
 
 ### 1.5.1 Full 3D
 
-| 状态 | 说明 |
-|---|---|
-| `no_successful_model_yet` | 需要实质不同的 H(curl) 辅助空间、谱、block-Schur 或 Fourier/DtN harmonic 预条件器；简单 Jacobi、ASM/ILU 和 z-slab/DtN coarse 已被正式负结果关闭。 |
+M3a 是 explicit opt-in research baseline；约 `91.4M` p6 local factor NNZ，不能
+据此宣称 `0.7 nm` scalable solver。ordinary solver profile 与普通 defaults 不变。
 
-### 1.5.2 Hybrid
+### 1.5.2 Hybrid 与 Task37b
 
-| 状态 | 说明 |
-|---|---|
-| `not_run` | 需先有合格的静态凝聚 Full3D 候选和可收敛的 condensed-trace 预条件器。 |
+Task037 不产生 Hybrid iterative production model。Task37b 只保留 V7.1 的远程
+分支交接计划；本 docs commit 形成时尚未创建，只有 master push 后按 V7.1 只创建/push，
+且不开发。
 
 ---
 

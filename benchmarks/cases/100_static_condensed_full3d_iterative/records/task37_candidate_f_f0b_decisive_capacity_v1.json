@@ -1,0 +1,500 @@
+{
+  "schema": "task037.candidate_f.f0b_decisive_capacity",
+  "version": 1,
+  "task": "Task037",
+  "candidate": "F",
+  "stage": "V5-4",
+  "status": "controlled_scientific_negative",
+  "classification": "P6_P4_P2_FAMILY_CLOSED_ON_FROZEN_CAPACITY_ORACLE",
+  "scope_limit": "仅适用于冻结 p6/h10 局部 slab、exact-sequence p6->p4->p2 hierarchy 与 B4 四步 local family；不得泛化为所有 p-multigrid。",
+  "research_only": true,
+  "ordinary_defaults_changed": false,
+  "identity": {
+    "branch": "codex/20260803-task37-matrix-free-iterative-development",
+    "tested_source_sha": "6e7b0103e9192bbf9fed5113838572fbb842c2ab",
+    "tested_upstream": "6e7b0103e9192bbf9fed5113838572fbb842c2ab",
+    "worktree_at_test": "clean",
+    "ahead": 0,
+    "behind": 0
+  },
+  "run": {
+    "qualified_activation": 1,
+    "python": "/home/Projects/MyFEniCS/.venv/bin/python",
+    "petsc_scalar_type": "complex128",
+    "petsc_int_type": "int32",
+    "mpi_size": 1,
+    "abi_modules": {
+      "petsc4py": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/petsc4py/__init__.py",
+      "slepc4py": "/usr/lib/slepcdir/slepc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/slepc4py/__init__.py",
+      "dolfinx": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/dolfinx/__init__.py",
+      "mpi4py": "/usr/lib/python3/dist-packages/mpi4py/__init__.py"
+    },
+    "exact_command": "python -m pytest -q -s -x src/test/test_248_task037_candidate_f_f0b_capacity.py::test_f0b_decisive_capacity_oracle",
+    "measured_wrapper_command": "/usr/bin/time -v -o benchmarks/artifacts/task037/v5_f0b_6e7b0103/time_v.txt python -m pytest -q -s -x src/test/test_248_task037_candidate_f_f0b_capacity.py::test_f0b_decisive_capacity_oracle > benchmarks/artifacts/task037/v5_f0b_6e7b0103/stdout.log 2> benchmarks/artifacts/task037/v5_f0b_6e7b0103/stderr.log",
+    "pytest_run_count": 1,
+    "pytest_summary": "1 failed in 4.63s",
+    "exit_code": 1,
+    "exit_code_data_class": "derived_post_run_metadata",
+    "failure_kind": "deliberate_pytest_fail_scientific_sentinel",
+    "implementation_failure": false,
+    "data_class": "mixed"
+  },
+  "fixture": {
+    "rows": {
+      "p6": 432,
+      "p4": 192,
+      "p2": 48
+    },
+    "degrees": {
+      "p6": 6,
+      "p4": 4,
+      "p2": 2
+    },
+    "slab": 0,
+    "slabs": 2,
+    "overlap": 0.125,
+    "local_steps": 4,
+    "nx_ny_nz": [1, 1, 1],
+    "data_class": "measured"
+  },
+  "methods": {
+    "minimum_residual_solver": "scipy.linalg.lstsq",
+    "lapack_driver": "gelsd",
+    "rank_revealing_method": "SVD",
+    "normal_equations": false,
+    "b4_basis": "与 FactorFreeLocalSlabKrylovPc._fixed_step_gmres 同序的四步 Arnoldi/search basis",
+    "data_class": "measured"
+  },
+  "implementation_gates": {
+    "thresholds": {
+      "nested_p26_vs_p46_p24_relative": 1e-11,
+      "p24_adjoint_relative": 1e-11,
+      "p46_adjoint_relative": 1e-11,
+      "y4_action_relative": 1e-11,
+      "repeat_error": 1e-12,
+      "trace_interior_dependency_max": 1e-12
+    },
+    "measured": {
+      "nested_p26_vs_p46_p24": 5.557279606005943e-16,
+      "p24_adjoint": 4.945975109804328e-16,
+      "p46_adjoint": 3.441690023284426e-16,
+      "y4_action": 5.767608963170237e-16,
+      "all_solutions_finite": true,
+      "p6_matrix_factor_nnz": [0, 0, 0],
+      "p24_trace_interior_dependency_max": 5.8889452311529e-16,
+      "p46_trace_interior_dependency_max": 1.725758366989246e-14,
+      "p4_galerkin_repeat_error": {
+        "low": 0.0,
+        "high": 0.0,
+        "mixed": 0.0
+      }
+    },
+    "pass": true,
+    "data_class": "measured"
+  },
+  "corrections": {
+    "data_class": "measured",
+    "diagonal_only": "z_D = D6^-1 r",
+    "p4_galerkin_only": "z_G = P46 A4^-1 P46^H r",
+    "multiplicative_diagonal_to_p4_galerkin": "z_DG = z_D + P46 A4^-1 P46^H (r - A6 z_D)",
+    "p4_minimum_residual": "最小化 ||r - A6 P46 y||2 的完整 p4 trial-space 解",
+    "b4_plus_p4_augmented_minimum_residual": "最小化 ||r - A6 [VB4,P46] c||2 的 B4 与 p4 联合解",
+    "p4_minres_and_augmented_are_production_solver": false
+  },
+  "sources": {
+    "low": {
+      "data_class": "mixed",
+      "rho_B4": 0.24599945418880292,
+      "rho_diagonal": 0.8659810034369345,
+      "rho_p4_galerkin": 0.7064196292266616,
+      "rho_diagonal_to_p4_galerkin": 0.7046020895141476,
+      "rho_p4_minres": 0.5123881456570735,
+      "rho_augmented": 0.19288646052129424,
+      "p4_minres_improvement": 0.4801037187801047,
+      "augmented_minres_improvement": 1.2753588485369356,
+      "rho_D0_frozen": 0.2540230551088513,
+      "p4_galerkin_repeat_error": 0.0,
+      "b4_basis_alignment": {
+        "rho_basis": 0.2459994541888029,
+        "rho_actual": 0.24599945418880292,
+        "report": {
+          "rank": 4,
+          "repeat_rank": 4,
+          "condition": 10.893310885537534,
+          "singular_spectrum": {
+            "count": 4,
+            "max": 7.397928053004939,
+            "min_retained": 0.679125761739415
+          },
+          "ls_residual": 0.24599945418880273,
+          "normalized_ls_residual": 0.24599945418880267,
+          "raw_orthogonality_norm": 1.3927942683499392e-14,
+          "normalized_orthogonality": 6.070342204640527e-15,
+          "repeat_error": 0.0
+        }
+      },
+      "p4_minres_space": {
+        "rank": 192,
+        "repeat_rank": 192,
+        "condition": 11.868427740843005,
+        "singular_spectrum": {
+          "count": 192,
+          "max": 8.423805704445492,
+          "min_retained": 0.7097659343247731
+        },
+        "ls_residual": 0.5123881456570736,
+        "normalized_ls_residual": 0.5123881456570735,
+        "raw_orthogonality_norm": 1.675186561951292e-14,
+        "normalized_orthogonality": 6.389146178583111e-16,
+        "repeat_error": 0.0
+      },
+      "augmented_minres_space": {
+        "rank": 195,
+        "repeat_rank": 195,
+        "condition": 17.7082965505731,
+        "singular_spectrum": {
+          "count": 196,
+          "max": 10.287111905389262,
+          "min_retained": 0.5809204671951542
+        },
+        "ls_residual": 0.19288646052129427,
+        "normalized_ls_residual": 0.1928864605212942,
+        "raw_orthogonality_norm": 6.359420298421868e-14,
+        "normalized_orthogonality": 6.338660679418012e-15,
+        "repeat_error": 0.0
+      }
+    },
+    "high": {
+      "data_class": "mixed",
+      "rho_B4": 0.2465189643617165,
+      "rho_diagonal": 0.8828368769585927,
+      "rho_p4_galerkin": 0.8927483160663825,
+      "rho_diagonal_to_p4_galerkin": 0.6544183945365035,
+      "rho_p4_minres": 0.7468190953365038,
+      "rho_augmented": 0.18295415440920001,
+      "p4_minres_improvement": 0.3300919404727316,
+      "augmented_minres_improvement": 1.3474357286817646,
+      "rho_D0_frozen": 0.26531876351572775,
+      "p4_galerkin_repeat_error": 0.0,
+      "b4_basis_alignment": {
+        "rho_basis": 0.2465189643617165,
+        "rho_actual": 0.2465189643617165,
+        "report": {
+          "rank": 4,
+          "repeat_rank": 4,
+          "condition": 11.287274614379351,
+          "singular_spectrum": {
+            "count": 4,
+            "max": 7.307981364125713,
+            "min_retained": 0.647453137608237
+          },
+          "ls_residual": 0.24651896436171583,
+          "normalized_ls_residual": 0.24651896436171578,
+          "raw_orthogonality_norm": 1.6725082228576203e-14,
+          "normalized_orthogonality": 7.332483550849472e-15,
+          "repeat_error": 0.0
+        }
+      },
+      "p4_minres_space": {
+        "rank": 192,
+        "repeat_rank": 192,
+        "condition": 11.868427740843005,
+        "singular_spectrum": {
+          "count": 192,
+          "max": 8.423805704445492,
+          "min_retained": 0.7097659343247731
+        },
+        "ls_residual": 0.7468190953365039,
+        "normalized_ls_residual": 0.7468190953365038,
+        "raw_orthogonality_norm": 1.3150179966543857e-14,
+        "normalized_orthogonality": 3.441081828164496e-16,
+        "repeat_error": 0.0
+      },
+      "augmented_minres_space": {
+        "rank": 196,
+        "repeat_rank": 196,
+        "condition": 20.114548875872902,
+        "singular_spectrum": {
+          "count": 196,
+          "max": 10.197602474050766,
+          "min_retained": 0.506976444611325
+        },
+        "ls_residual": 0.18295415440920013,
+        "normalized_ls_residual": 0.1829541544092001,
+        "raw_orthogonality_norm": 6.516327906159103e-14,
+        "normalized_orthogonality": 6.849410270473222e-15,
+        "repeat_error": 0.0
+      }
+    },
+    "mixed": {
+      "data_class": "mixed",
+      "rho_B4": 0.2461297192181731,
+      "rho_diagonal": 0.8577324302601345,
+      "rho_p4_galerkin": 0.7992926346930095,
+      "rho_diagonal_to_p4_galerkin": 0.6549793370724306,
+      "rho_p4_minres": 0.6421941395092988,
+      "rho_augmented": 0.18991184302694836,
+      "p4_minres_improvement": 0.38326372676997805,
+      "augmented_minres_improvement": 1.2960209078864422,
+      "rho_D0_frozen": 0.2715867504171219,
+      "p4_galerkin_repeat_error": 0.0,
+      "b4_basis_alignment": {
+        "rho_basis": 0.24612971921817303,
+        "rho_actual": 0.2461297192181731,
+        "report": {
+          "rank": 4,
+          "repeat_rank": 4,
+          "condition": 11.046963515720538,
+          "singular_spectrum": {
+            "count": 4,
+            "max": 7.340782572876754,
+            "min_retained": 0.6645068178626958
+          },
+          "ls_residual": 0.2461297192181738,
+          "normalized_ls_residual": 0.2461297192181738,
+          "raw_orthogonality_norm": 1.718532553291746e-14,
+          "normalized_orthogonality": 7.538788936888509e-15,
+          "repeat_error": 0.0
+        }
+      },
+      "p4_minres_space": {
+        "rank": 192,
+        "repeat_rank": 192,
+        "condition": 11.868427740843005,
+        "singular_spectrum": {
+          "count": 192,
+          "max": 8.423805704445492,
+          "min_retained": 0.7097659343247731
+        },
+        "ls_residual": 0.6421941395092988,
+        "normalized_ls_residual": 0.6421941395092988,
+        "raw_orthogonality_norm": 1.4828941848038596e-14,
+        "normalized_orthogonality": 4.512555348052858e-16,
+        "repeat_error": 0.0
+      },
+      "augmented_minres_space": {
+        "rank": 196,
+        "repeat_rank": 196,
+        "condition": 20.42927580105611,
+        "singular_spectrum": {
+          "count": 196,
+          "max": 9.984037252691087,
+          "min_retained": 0.48871224559878684
+        },
+        "ls_residual": 0.1899118430269483,
+        "normalized_ls_residual": 0.1899118430269483,
+        "raw_orthogonality_norm": 4.794546511880221e-14,
+        "normalized_orthogonality": 4.854835689263319e-15,
+        "repeat_error": 0.0
+      }
+    },
+    "source_field_data_classes": {
+      "measured": [
+        "rho_B4",
+        "rho_diagonal",
+        "rho_p4_galerkin",
+        "rho_diagonal_to_p4_galerkin",
+        "rho_p4_minres",
+        "rho_augmented",
+        "b4_basis_alignment",
+        "p4_galerkin_repeat_error",
+        "rank",
+        "repeat_rank",
+        "condition",
+        "singular_spectrum",
+        "ls_residual",
+        "normalized_ls_residual",
+        "raw_orthogonality_norm",
+        "normalized_orthogonality",
+        "repeat_error"
+      ],
+      "derived": [
+        "p4_minres_improvement",
+        "augmented_minres_improvement"
+      ],
+      "measured_frozen_reference": [
+        "rho_D0_frozen"
+      ]
+    }
+  },
+  "inventory": {
+    "p6_slab_rows": 432,
+    "p4_trace_factor_rows": 192,
+    "p2_trace_factor_rows": 48,
+    "p4_matrix_shape": [192, 192],
+    "p4_matrix_nnz": 36864,
+    "p4_factor_nnz": 36864,
+    "p4_matrix_payload_bytes": 589824,
+    "p4_lu_payload_bytes": 590592,
+    "transfer_payload_bytes": 1474560,
+    "retained_oracle_payload_bytes": 2698752,
+    "construction_workspace_lower_bound_bytes": 147456,
+    "p6_slab_matrix_materialized": false,
+    "p6_slab_matrix_count": 0,
+    "p6_slab_matrix_nnz": 0,
+    "p6_factor_count": 0,
+    "p6_factor_nnz": 0,
+    "global_p6_matrix_materialized": false,
+    "global_p6_factor_materialized": false,
+    "data_class": "measured"
+  },
+  "transfer_inventory": {
+    "P24": {
+      "coarse_degree": 2,
+      "fine_degree": 4,
+      "nnz": 96,
+      "trace_interior_dependency_max": 5.8889452311529e-16
+    },
+    "P46": {
+      "coarse_degree": 4,
+      "fine_degree": 6,
+      "nnz": 291,
+      "trace_interior_dependency_max": 1.725758366989246e-14
+    },
+    "rows": {
+      "p6": 432,
+      "p4": 192,
+      "p2": 48
+    },
+    "data_class": "measured"
+  },
+  "science_gate": {
+    "thresholds": {
+      "I_aug_greater_equal": 1.5,
+      "rho_aug_less_than": 0.15
+    },
+    "measured": {
+      "high": {
+        "I_aug": 1.3474357286817646,
+        "rho_aug": 0.18295415440920001
+      },
+      "mixed": {
+        "I_aug": 1.2960209078864422,
+        "rho_aug": 0.18991184302694836
+      }
+    },
+    "derived": {
+      "high": {
+        "I_aug_lt_1_5": true,
+        "rho_aug_ge_0_15": true,
+        "family_closed_condition": true
+      },
+      "mixed": {
+        "I_aug_lt_1_5": true,
+        "rho_aug_ge_0_15": true,
+        "family_closed_condition": true
+      }
+    },
+    "status": "controlled_scientific_negative",
+    "classification": "P6_P4_P2_FAMILY_CLOSED_ON_FROZEN_CAPACITY_ORACLE",
+    "data_class": "derived"
+  },
+  "resources": {
+    "pytest_runs": 1,
+    "pytest_failed": true,
+    "pytest_summary": "1 failed in 4.63s",
+    "wall_seconds": 4.92,
+    "user_seconds": 3.97,
+    "system_seconds": 0.32,
+    "max_rss_kb": 217804,
+    "swap": 0,
+    "interpretation": "serial tiny F0b local oracle process; not a formal PDE solver memory peak",
+    "data_class": "measured"
+  },
+  "artifacts": {
+    "root": "benchmarks/artifacts/task037/v5_f0b_6e7b0103",
+    "files": [
+      {
+        "relative_path": "benchmarks/artifacts/task037/v5_f0b_6e7b0103/stdout.log",
+        "bytes": 19814,
+        "sha256": "7aaf7296a9b30c358830539631e2e0aaaa79326d5e34064a1a6bd7662956e892",
+        "data_class": "measured_raw"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task037/v5_f0b_6e7b0103/stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "data_class": "measured_raw"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task037/v5_f0b_6e7b0103/time_v.txt",
+        "bytes": 881,
+        "sha256": "cee1629b0da62ade0124116bc554d4979eed533111f8644c20445acc58dd286c",
+        "data_class": "measured_raw"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task037/v5_f0b_6e7b0103/exit_code.txt",
+        "bytes": 2,
+        "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+        "data_class": "derived_post_run_metadata",
+        "note": "wrapper set -e 未自动落盘；依据 pytest summary 与 time_v Exit status=1 补写"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task037/v5_f0b_6e7b0103/exact_command.txt",
+        "bytes": 308,
+        "sha256": "c78396d20570aec8f34ce6a3796b0d1e593c50a5c85cbadd2c884f3fc120022a",
+        "data_class": "provenance"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task037/v5_f0b_6e7b0103/preflight.stdout.log",
+        "bytes": 588,
+        "sha256": "b93c7a6497c8a1a9c6dc79bd5ee2f9bf8be28e90400515c1a09a3f19964a5448",
+        "data_class": "measured_raw"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task037/v5_f0b_6e7b0103/preflight.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "data_class": "measured_raw"
+      },
+      {
+        "relative_path": "benchmarks/artifacts/task037/v5_f0b_6e7b0103/preflight_exit_code.txt",
+        "bytes": 2,
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "data_class": "measured_raw"
+      }
+    ]
+  },
+  "stages": {
+    "V5-1": {
+      "status": "completed",
+      "data_class": "measured",
+      "note": "单文件实现与静态 Gate 完成"
+    },
+    "V5-2": {
+      "status": "completed",
+      "data_class": "measured",
+      "note": "唯一一次 clean serial F0b 已运行"
+    },
+    "V5-3": {
+      "status": "completed",
+      "data_class": "derived",
+      "note": "implementation PASS，science controlled negative"
+    },
+    "V5-4": {
+      "status": "completed_docs_only",
+      "data_class": "derived",
+      "note": "compact record 与 response_v5 草稿生成，待独立提交"
+    },
+    "Candidate_E": {
+      "status": "not_run",
+      "data_class": "not_run"
+    },
+    "heavy_PDE": {
+      "status": "not_run",
+      "data_class": "not_run"
+    },
+    "MPI_gt_1": {
+      "status": "not_run",
+      "data_class": "not_run"
+    },
+    "Hybrid": {
+      "status": "not_run",
+      "data_class": "not_run"
+    },
+    "0.7nm": {
+      "status": "not_run",
+      "data_class": "not_run"
+    }
+  }
+}

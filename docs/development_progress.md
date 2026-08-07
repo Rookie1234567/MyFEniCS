@@ -1,4 +1,22 @@
-# 项目开发进度：Task000–Task036
+# 项目开发进度：Task000–Task037
+
+## 2026-08-07：Task037 静态凝聚 Full3D 迭代正式结项
+
+Task037 在 reviewed source `d8b16c349f7726b4873ce1932668c12a1ba78926` 的选择性
+合入线上完成收口。最终数值 formal source 是
+`0fcf08a3f09e3beb137212d41f411823cb2e24e8`；后续 test53、格式和文档合同变化
+不改变数值结论。
+
+| 主线 | 实际结果 | 状态与边界 |
+|---|---|---|
+| E0 Matrix-free DtN | 80/80 modes；C/D `0/0`；action/recovery 约 `1e-15` | component Gate pass；ordinary default unchanged |
+| M3a iterative | p6/h10 MPI1/2/4/8 full solve 通过；MPI4 official true | explicit opt-in research baseline；不是 production default |
+| canonical | active/full relative L2 `1.2553897989392794e-06` / `7.880394014572244e-07` | `1e-5` comparator pass |
+| F/E | frozen ideal-capacity negative；E1 pass、E2 late residual `6/6` fail | controlled negatives；不生产化 |
+| Task37b | V7.1 handoff 计划保留 | docs closeout 时尚未创建；master push 后按 V7.1 只创建/push，不开发 |
+
+docs closeout 前的 10 个 code/test selective commits、5 个 Case100 compact records 和最终文档见
+[`task037_static_condensed_full3d_iterative/outcomes/summary.md`](task037_static_condensed_full3d_iterative/outcomes/summary.md)。
 
 ## 2026-08-03：Task036 direct Hybrid 受控结项与选择性整合
 
@@ -17,7 +35,7 @@ joint-Cauchy 界面信息；因此停止继续扩大 direct 端口，把通用�
 | 0.7 nm / 2 TiB | 未得到通过精度和资源合同的 solver | `not solved`；不得写成 conditional estimate 已兑现 |
 | selective commits | Group1 `7735a261...`；Group2 `a741ad1b...`；Group3 `4c9e1b9...` | Task036 final SHA `7a033400...`；完整历史留远程分支 |
 | 当前测试 | Group3 serial `7 passed`、MPI2 recursion 每 rank `1 passed`；最终 compact targeted `24 passed` + DtN/alias `14 passed`；p2 Full3D ordinary/static PDE smoke 各 `1 passed` | combined suite 在41 passed/107.99s后由用户中断；exit2/KeyboardInterrupt不是代码 failure；小时级 full pytest `cancelled/not_run` |
-| Task037 | 空分支已从 master `b615a130...` 创建并推送；upstream/0-0/clean 在创建时通过 | task not defined；未创建 task.md、未开始 iterative 或新 PDE |
+| Task037 | V7 selective master closeout 已完成；E0/M3a/canonical 证据与 A–F/E 关闭表已登记 | `closed`; M3a 仅 explicit opt-in；Task37b 尚未开始 |
 
 结项入口见
 [`task036_forward_solver_bugfix_hardening/outcomes/final_summary.md`](task036_forward_solver_bugfix_hardening/outcomes/final_summary.md)

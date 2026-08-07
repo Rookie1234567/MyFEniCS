@@ -72,6 +72,15 @@ ACTIVE_RESEARCH_CASES = {
     "096_hybrid_channel_memory_closure",
     "097_goal_oriented_exact_sequence_hp_adaptivity",
 }
+CLOSED_RESEARCH_RECORD_CASES = {
+    "100_static_condensed_full3d_iterative": (
+        "records/task37_direct_authority_v2.json",
+        "records/task37_m3a_mpi_scaling_v1.json",
+        "records/task37_v2_preconditioner_funnel_v1.json",
+        "records/task37_candidate_f_f0b_decisive_capacity_v1.json",
+        "records/task37_v6_e2_modal_capacity_closeout_v1.json",
+    ),
+}
 
 RECORDED_CASES = {
     "002_2d_tm_dtn_equivalence": (
@@ -179,16 +188,9 @@ class DocumentationContractTests(unittest.TestCase):
             self.assertIn(value, text)
 
     def test_task032_review_closeout_artifacts_are_machine_readable(self):
-        root = (
-            ROOT
-            / "docs"
-            / "task032_hybrid_fem_modal_direct_baseline"
-            / "outcomes"
-        )
+        root = ROOT / "docs" / "task032_hybrid_fem_modal_direct_baseline" / "outcomes"
         projection = _load(root / "task032_0p7nm_projection.json")
-        self.assertEqual(
-            projection["record_type"], "analytical_resource_projection"
-        )
+        self.assertEqual(projection["record_type"], "analytical_resource_projection")
         self.assertFalse(projection["identity"]["is_pde_run"])
         self.assertFalse(projection["identity"]["is_solver_pass"])
         self.assertNotIn("status", projection)
@@ -277,7 +279,8 @@ class DocumentationContractTests(unittest.TestCase):
             observed,
             QUALIFIED_OR_FROZEN_CASES
             | STAGING_OR_IN_PROGRESS_CASES
-            | ACTIVE_RESEARCH_CASES,
+            | ACTIVE_RESEARCH_CASES
+            | set(CLOSED_RESEARCH_RECORD_CASES),
         )
         required_sections = (
             "## 物理问题",
@@ -355,10 +358,7 @@ class DocumentationContractTests(unittest.TestCase):
                     )
                     self.assertEqual(
                         config["status"],
-                        (
-                            "accepted_research_infrastructure_with_"
-                            "controlled_negatives"
-                        ),
+                        ("accepted_research_infrastructure_with_controlled_negatives"),
                     )
                     self.assertFalse(config["canonical"])
                     self.assertFalse(config["production_qualified"])
@@ -495,15 +495,11 @@ class DocumentationContractTests(unittest.TestCase):
                         "closed_after_two_formal_accuracy_negatives",
                     )
                     self.assertEqual(
-                        expected["phase_c_true_local_h"][
-                            "power_and_amplitude_pass"
-                        ],
+                        expected["phase_c_true_local_h"]["power_and_amplitude_pass"],
                         [6, 6],
                     )
                     self.assertEqual(
-                        expected["phase_d_multigoal"][
-                            "nested_p_dwr_real_goals_pass"
-                        ],
+                        expected["phase_d_multigoal"]["nested_p_dwr_real_goals_pass"],
                         [36, 36],
                     )
                     self.assertEqual(
@@ -518,15 +514,11 @@ class DocumentationContractTests(unittest.TestCase):
                         ]
                     )
                     self.assertEqual(
-                        expected["phase_e_combined_hp"][
-                            "power_and_amplitude_pass"
-                        ],
+                        expected["phase_e_combined_hp"]["power_and_amplitude_pass"],
                         [4, 6],
                     )
                     self.assertFalse(
-                        expected["phase_e_combined_hp"][
-                            "production_qualified"
-                        ]
+                        expected["phase_e_combined_hp"]["production_qualified"]
                     )
                     self.assertEqual(
                         expected["remaining_actions"],
@@ -551,6 +543,19 @@ class DocumentationContractTests(unittest.TestCase):
                         readme,
                     )
                 self.assertIn("MPI8", readme)
+
+        for case, record_names in CLOSED_RESEARCH_RECORD_CASES.items():
+            folder = cases_root / case
+            with self.subTest(case=case):
+                self.assertTrue((folder / "README.md").is_file(), "README.md")
+                records = sorted(
+                    path.relative_to(folder).as_posix()
+                    for path in (folder / "records").glob("*.json")
+                )
+                self.assertEqual(records, sorted(record_names))
+                for name in record_names:
+                    with self.subTest(record=name):
+                        self.assertIsInstance(_load(folder / name), dict)
 
     def test_recorded_and_test_backed_case_files_are_explicit(self):
         cases_root = ROOT / "benchmarks" / "cases"
@@ -775,7 +780,9 @@ class DocumentationContractTests(unittest.TestCase):
         self.assertEqual(broken, [])
 
     def test_task035_planning_markdown_contract(self):
-        theory = ROOT / "notes/theory/hcurl_adaptive_error_estimators_and_hp_strategy.md"
+        theory = (
+            ROOT / "notes/theory/hcurl_adaptive_error_estimators_and_hp_strategy.md"
+        )
         text = _read(theory)
         self.assertIn(r"\nabla\times", text)
         self.assertNotIn("\nabla\times", text.replace(r"\nabla\times", ""))
@@ -783,7 +790,9 @@ class DocumentationContractTests(unittest.TestCase):
         self.assertIn("https://doi.org/", text)
         index = _read(ROOT / "notes/theory/README.md")
         self.assertIn(theory.name, index)
-        self.assertTrue((ROOT / "docs/task035_hcurl_goal_oriented_adaptivity/task.md").is_file())
+        self.assertTrue(
+            (ROOT / "docs/task035_hcurl_goal_oriented_adaptivity/task.md").is_file()
+        )
 
     def test_capability_status_does_not_overstate_stage2(self):
         text = _read(ROOT / "docs" / "capability_matrix.md")
