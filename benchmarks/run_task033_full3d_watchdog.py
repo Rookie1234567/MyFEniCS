@@ -659,6 +659,9 @@ def _task037_m3a_status(
 def _task037_extra_g2_status(
     args: argparse.Namespace, qualification: Mapping[str, Any]
 ) -> str | None:
+    if getattr(args, "task037_extra_g2_slab14_lor_transfer", False):
+        result = "pass" if qualification["pass"] else "not_pass"
+        return f"task037_extra_g2_slab14_lor_transfer_{result}"
     if getattr(args, "task037_extra_g2_slab14_factor_inventory", False):
         result = "pass" if qualification["pass"] else "not_pass"
         return f"task037_extra_g2_slab14_factor_inventory_{result}"
@@ -760,6 +763,7 @@ def _task037_f3_assembled_fgmres_port(
     task037_extra_g0_diagnostics: bool = False,
     task037_extra_g2_slab14_identity: bool = False,
     task037_extra_g2_slab14_factor_inventory: bool = False,
+    task037_extra_g2_slab14_lor_transfer: bool = False,
     verified_clean_sha: str | None = None,
 ):
     from src.solvers.static_condensed_iterative import (
@@ -790,6 +794,7 @@ def _task037_f3_assembled_fgmres_port(
         def observe_lifecycle(event, payload):
             ledgers_by_rank = comm.gather(payload, root=0)
             factor_lifecycle = task037_extra_g2_slab14_factor_inventory
+            lor_lifecycle = task037_extra_g2_slab14_lor_transfer
             if factor_lifecycle:
                 progress_extra = {
                     "task037_g2_factor_rank_ledgers_by_rank": (
@@ -797,6 +802,14 @@ def _task037_f3_assembled_fgmres_port(
                     ),
                     **payload,
                     "task037_g2_factor_inventory_lifecycle": True,
+                }
+            elif lor_lifecycle:
+                progress_extra = {
+                    "task037_g2_lor_transfer_rank_ledgers_by_rank": (
+                        ledgers_by_rank if comm.rank == 0 else None
+                    ),
+                    **payload,
+                    "task037_g2_lor_transfer_lifecycle": True,
                 }
             else:
                 progress_extra = {
@@ -810,7 +823,11 @@ def _task037_f3_assembled_fgmres_port(
             _write_progress_event(
                 run_dir,
                 comm,
-                stage=event if factor_lifecycle else f"m0_{event}",
+                stage=(
+                    event
+                    if factor_lifecycle or lor_lifecycle
+                    else f"m0_{event}"
+                ),
                 status="end",
                 extra=progress_extra,
             )
@@ -868,6 +885,9 @@ def _task037_f3_assembled_fgmres_port(
                 ),
                 task037_extra_g2_slab14_factor_inventory=(
                     task037_extra_g2_slab14_factor_inventory
+                ),
+                task037_extra_g2_slab14_lor_transfer=(
+                    task037_extra_g2_slab14_lor_transfer
                 ),
                 lifecycle_observer=(observe_lifecycle if lifecycle_enabled else None),
             )
@@ -1363,6 +1383,9 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
         "task037_extra_g2_slab14_factor_inventory": bool(
             getattr(args, "task037_extra_g2_slab14_factor_inventory", False)
         ),
+        "task037_extra_g2_slab14_lor_transfer": bool(
+            getattr(args, "task037_extra_g2_slab14_lor_transfer", False)
+        ),
         "task035d_case097_gate": bool(args.task035d_case097_gate),
         "task035d_candidate_id": str(args.task035d_candidate_id),
         "task035d_nested_p_dwr_phase": args.task035d_nested_p_dwr_phase,
@@ -1534,6 +1557,7 @@ def _worker(args: argparse.Namespace) -> int:
             lifecycle_enabled=(
                 args.task037_m0_lifecycle_audit
                 or getattr(args, "task037_extra_g2_slab14_factor_inventory", False)
+                or getattr(args, "task037_extra_g2_slab14_lor_transfer", False)
             ),
             never_materialized=args.task037_m2c_never_materialized,
             p2_auxiliary=args.task037_m4_p2_auxiliary,
@@ -1549,6 +1573,9 @@ def _worker(args: argparse.Namespace) -> int:
             ),
             task037_extra_g2_slab14_factor_inventory=getattr(
                 args, "task037_extra_g2_slab14_factor_inventory", False
+            ),
+            task037_extra_g2_slab14_lor_transfer=getattr(
+                args, "task037_extra_g2_slab14_lor_transfer", False
             ),
             verified_clean_sha=getattr(args, "verified_clean_sha", None),
         )
@@ -1648,6 +1675,9 @@ def _worker(args: argparse.Namespace) -> int:
         ),
         task037_extra_g2_slab14_factor_inventory=getattr(
             args, "task037_extra_g2_slab14_factor_inventory", False
+        ),
+        task037_extra_g2_slab14_lor_transfer=getattr(
+            args, "task037_extra_g2_slab14_lor_transfer", False
         ),
     )
     return 0
@@ -1759,6 +1789,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help=(
             "Run the opt-in Task037-extra G2 slab14 factor inventory; "
+            "requires the exact slab14 identity flag."
+        ),
+    )
+    parser.add_argument(
+        "--task037-extra-g2-slab14-lor-transfer",
+        action="store_true",
+        help=(
+            "Run the opt-in Task037-extra G2 slab14 LOR transfer; "
             "requires the exact slab14 identity flag."
         ),
     )
@@ -2201,6 +2239,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     ):
         parser.error(
             "--task037-extra-g2-slab14-factor-inventory requires "
+            "--task037-extra-g2-slab14-identity."
+        )
+    if args.task037_extra_g2_slab14_lor_transfer and not (
+        args.task037_extra_g2_slab14_identity
+    ):
+        parser.error(
+            "--task037-extra-g2-slab14-lor-transfer requires "
             "--task037-extra-g2-slab14-identity."
         )
     if (
@@ -3693,6 +3738,113 @@ def _task037_g2_factor_inventory_checks(
     }
 
 
+def _task037_g2_lor_transfer_checks(
+    lor_audit: Any,
+    collector_row_count: Any,
+) -> dict[str, bool]:
+    audit = lor_audit if isinstance(lor_audit, Mapping) else {}
+    measurement_raw = audit.get("measurement")
+    measurement = (
+        measurement_raw if isinstance(measurement_raw, Mapping) else {}
+    )
+
+    def positive_integer(value: Any) -> bool:
+        return isinstance(value, int) and not isinstance(value, bool) and value > 0
+
+    def nonnegative_integer(value: Any) -> bool:
+        return isinstance(value, int) and not isinstance(value, bool) and value >= 0
+
+    def finite_nonnegative(value: Any) -> bool:
+        return _finite_number_le(value, math.inf)
+
+    payload_names = (
+        "unique_T_forward_csr_payload_bytes",
+        "unique_T_adjoint_csr_payload_bytes",
+        "E_csr_payload_bytes",
+        "E_adjoint_csr_payload_bytes",
+        "retained_numpy_packing_index_bytes",
+        "reference_transfer_csr_cache_bytes",
+    )
+    payload_values = [audit.get(name) for name in payload_names]
+    payload_sum = (
+        sum(int(value) for value in payload_values)
+        if all(positive_integer(value) for value in payload_values)
+        else None
+    )
+    return {
+        "task037_g2_lor_transfer_present": isinstance(lor_audit, Mapping),
+        "task037_g2_lor_transfer_primary_slab": audit.get("primary_slab") == 14,
+        "task037_g2_lor_transfer_rows": (
+            positive_integer(audit.get("full_rows"))
+            and positive_integer(audit.get("interior_rows"))
+            and positive_integer(audit.get("trace_rows"))
+            and audit.get("full_rows")
+            == audit.get("interior_rows") + audit.get("trace_rows")
+            and audit.get("trace_offset") == audit.get("interior_rows")
+            and audit.get("trace_rows") == collector_row_count
+        ),
+        "task037_g2_lor_transfer_trace_contract": (
+            positive_integer(audit.get("complete_trace_row_count"))
+            and nonnegative_integer(audit.get("incomplete_trace_row_count"))
+            and audit.get("missing_writer_count") == 0
+            and finite_nonnegative(audit.get("shared_trace_max_relative_error"))
+            and audit.get("shared_trace_max_relative_error") <= 1.0e-11
+            and finite_nonnegative(
+                audit.get("complete_trace_reconstruction_max_relative_error")
+            )
+            and audit.get("complete_trace_reconstruction_max_relative_error")
+            <= 1.0e-11
+        ),
+        "task037_g2_lor_transfer_periodic_identity": (
+            positive_integer(audit.get("matched_identity_block_count"))
+            and positive_integer(audit.get("periodic_slave_edge_count"))
+            and positive_integer(audit.get("active_edge_count"))
+            and positive_integer(audit.get("physical_edge_count"))
+            and audit.get("active_edge_count") <= audit.get("physical_edge_count")
+            and audit.get("active_edge_count")
+            + audit.get("periodic_slave_edge_count")
+            == audit.get("physical_edge_count")
+            and audit.get("periodic_relation_count")
+            == audit.get("periodic_slave_edge_count")
+            and valid_hex_digest(audit.get("parent_id_hash"), 64)
+            and valid_hex_digest(
+                audit.get("physical_edge_keys_sha256"), 64
+            )
+            and valid_hex_digest(audit.get("active_edge_keys_sha256"), 64)
+        ),
+        "task037_g2_lor_transfer_no_dense_T": (
+            audit.get("global_dense_T_retained") is False
+            and audit.get("condensed_trace_matrix_materialized") is False
+        ),
+        "task037_g2_lor_transfer_payload": (
+            payload_sum is not None
+            and positive_integer(
+                audit.get("retained_numeric_payload_lower_bound_bytes")
+            )
+            and audit.get("retained_numeric_payload_lower_bound_bytes")
+            == payload_sum
+        ),
+        "task037_g2_lor_transfer_timing": finite_nonnegative(
+            audit.get("build_seconds")
+        ),
+        "task037_g2_lor_transfer_measurement": (
+            measurement.get("vector_count") == 3
+            and measurement.get("forward_apply_count") == 7
+            and measurement.get("adjoint_apply_count") == 1
+            and measurement.get("finite") is True
+            and measurement.get("deterministic") is True
+            and finite_nonnegative(measurement.get("adjoint_relative_error"))
+            and measurement.get("adjoint_relative_error") <= 1.0e-11
+            and isinstance(measurement.get("output_sha256"), list)
+            and len(measurement["output_sha256"]) == 3
+            and all(valid_hex_digest(value, 64) for value in measurement["output_sha256"])
+        ),
+        "task037_g2_lor_transfer_status": (
+            audit.get("status") == "pass" and audit.get("gate_pass") is True
+        ),
+    }
+
+
 def _task037_g2_factor_iter20_checks(
     factor_audit: Any,
     identity_audit: Any,
@@ -4347,6 +4499,73 @@ def _qualify(
                     }
                 )
                 if getattr(
+                    args, "task037_extra_g2_slab14_lor_transfer", False
+                ):
+                    lor_audit = core_audit.get(
+                        "task037_extra_g2_slab14_lor_transfer"
+                    )
+                    checks.update(
+                        _task037_g2_lor_transfer_checks(
+                            lor_audit,
+                            collector_row_count,
+                        )
+                    )
+                    required_lor_stages = {
+                        "g2_lor_transfer_build_started",
+                        "g2_lor_transfer_build_ready",
+                    }
+                    lor_lifecycle_events = [
+                        event
+                        for event in events
+                        if isinstance(event, Mapping)
+                        and event.get("stage") in required_lor_stages
+                    ]
+                    m0_progress_keys = {
+                        "task037_m0_lifecycle",
+                        "m0_event",
+                        "task037_m0_rank_ledgers_by_rank",
+                    }
+                    lor_stage_peaks = (
+                        resource_summary.get("stage_peaks")
+                        if isinstance(resource_summary, Mapping)
+                        else None
+                    )
+                    lor_stage_peak_names = (
+                        {
+                            item.get("stage")
+                            for item in lor_stage_peaks
+                            if isinstance(item, Mapping)
+                        }
+                        if isinstance(lor_stage_peaks, list)
+                        else set()
+                    )
+                    checks.update(
+                        {
+                            "task037_g2_lor_transfer_lifecycle_stages": (
+                                {
+                                    event.get("stage")
+                                    for event in lor_lifecycle_events
+                                }
+                                == required_lor_stages
+                            ),
+                            "task037_g2_lor_transfer_lifecycle_fields": (
+                                len(lor_lifecycle_events) >= 2
+                                and all(
+                                    event.get(
+                                        "task037_g2_lor_transfer_lifecycle"
+                                    )
+                                    is True
+                                    and not m0_progress_keys.intersection(event)
+                                    for event in lor_lifecycle_events
+                                )
+                            ),
+                            "task037_g2_lor_transfer_resource_stage_peaks": (
+                                "g2_lor_transfer_build_started"
+                                in lor_stage_peak_names
+                            ),
+                        }
+                    )
+                if getattr(
                     args, "task037_extra_g2_slab14_factor_inventory", False
                 ):
                     factor_audit = core_audit.get(
@@ -4879,6 +5098,8 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
         command.append("--task037-extra-g2-slab14-identity")
     if getattr(args, "task037_extra_g2_slab14_factor_inventory", False):
         command.append("--task037-extra-g2-slab14-factor-inventory")
+    if getattr(args, "task037_extra_g2_slab14_lor_transfer", False):
+        command.append("--task037-extra-g2-slab14-lor-transfer")
     if args.task037_m4_p2_auxiliary:
         command.append("--task037-m4-p2-auxiliary")
     if args.task037_m4_factor_free_slab:
@@ -5701,6 +5922,9 @@ def _run_parent(args: argparse.Namespace) -> int:
         ),
         "task037_extra_g2_slab14_factor_inventory": bool(
             getattr(args, "task037_extra_g2_slab14_factor_inventory", False)
+        ),
+        "task037_extra_g2_slab14_lor_transfer": bool(
+            getattr(args, "task037_extra_g2_slab14_lor_transfer", False)
         ),
         "task035d_candidate_id": (
             args.task035d_candidate_id if args.task035d_case097_gate else None

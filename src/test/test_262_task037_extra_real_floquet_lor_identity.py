@@ -133,6 +133,7 @@ def test_real_p2_floquet_c_to_lor_identity_is_partition_invariant(comm):
             "merged_periodic_block_count"
         ]
         assert audit["condensed_trace_matrix_materialized"] is False
+        assert audit["retained_numeric_payload_lower_bound_bytes"] > 0
         assert audit["high_order_coefficient_transform_gathered"] is False
         assert (handle is not None) == (
             comm.rank == int(plan.slab_owners[0])

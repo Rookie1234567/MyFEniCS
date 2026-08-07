@@ -106,6 +106,7 @@ def test_owner_local_lor_transfer_is_partition_invariant(comm):
         assert audit["high_order_coefficient_transform_gathered"] is False
         assert audit["descriptor_count"] == audit["parent_count"]
         assert audit["descriptor_numeric_payload_bytes"] > 0
+        assert audit["retained_numeric_payload_lower_bound_bytes"] > 0
 
         owner = int(plan.slab_owners[slab])
         assert (handle is not None) == (comm.rank == owner)

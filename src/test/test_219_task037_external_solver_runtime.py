@@ -23,6 +23,7 @@ def test_stage4b_wrapper_forwards_linear_solver_port(monkeypatch, tmp_path):
         assert kwargs["matrix_free_dtn_probe"] is True
         assert kwargs["task037_extra_g2_slab14_identity"] is True
         assert kwargs["task037_extra_g2_slab14_factor_inventory"] is True
+        assert kwargs["task037_extra_g2_slab14_lor_transfer"] is True
         return {"stage4b": True}
 
     monkeypatch.setattr(stage4b, "run_prepared_3d_case_flow", flow)
@@ -35,6 +36,7 @@ def test_stage4b_wrapper_forwards_linear_solver_port(monkeypatch, tmp_path):
         matrix_free_dtn_probe=True,
         task037_extra_g2_slab14_identity=True,
         task037_extra_g2_slab14_factor_inventory=True,
+        task037_extra_g2_slab14_lor_transfer=True,
     ) == {"stage4b": True}
 
 
@@ -49,6 +51,7 @@ def test_public_dtn_wrapper_forwards_linear_solver_port(monkeypatch, tmp_path):
         assert kwargs["matrix_free_dtn_probe"] is True
         assert kwargs["task037_extra_g2_slab14_identity"] is True
         assert kwargs["task037_extra_g2_slab14_factor_inventory"] is True
+        assert kwargs["task037_extra_g2_slab14_lor_transfer"] is True
         return result
 
     monkeypatch.setattr(
@@ -72,6 +75,7 @@ def test_public_dtn_wrapper_forwards_linear_solver_port(monkeypatch, tmp_path):
         matrix_free_dtn_probe=True,
         task037_extra_g2_slab14_identity=True,
         task037_extra_g2_slab14_factor_inventory=True,
+        task037_extra_g2_slab14_lor_transfer=True,
     )
     assert returned is result
 
@@ -84,6 +88,7 @@ def test_e0_matrix_free_dtn_flags_default_off(monkeypatch, tmp_path):
         assert kwargs["matrix_free_dtn_probe"] is False
         assert kwargs["task037_extra_g2_slab14_identity"] is False
         assert kwargs["task037_extra_g2_slab14_factor_inventory"] is False
+        assert kwargs["task037_extra_g2_slab14_lor_transfer"] is False
         return {"default": True}
 
     monkeypatch.setattr(stage4b, "run_prepared_3d_case_flow", flow)
@@ -97,6 +102,7 @@ def test_e0_matrix_free_dtn_flags_default_off(monkeypatch, tmp_path):
         assert kwargs["matrix_free_dtn_probe"] is False
         assert kwargs["task037_extra_g2_slab14_identity"] is False
         assert kwargs["task037_extra_g2_slab14_factor_inventory"] is False
+        assert kwargs["task037_extra_g2_slab14_lor_transfer"] is False
         return {"default": True}
 
     monkeypatch.setattr(

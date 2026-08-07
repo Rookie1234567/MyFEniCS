@@ -1290,6 +1290,40 @@ def build_owner_local_lor_transfer(
 
     del q_tail
 
+    unique_t_forward_payload_bytes = sum(
+        _csr_payload_bytes(transfer._forward)
+        for transfer in transfer_cache.values()
+    )
+    unique_t_adjoint_payload_bytes = sum(
+        _csr_payload_bytes(transfer._adjoint)
+        for transfer in transfer_cache.values()
+    )
+    e_forward_payload_bytes = sum(
+        _csr_payload_bytes(matrix)
+        for matrix in edge_space._parent_expansions
+    )
+    e_adjoint_payload_bytes = sum(
+        _csr_payload_bytes(matrix)
+        for matrix in edge_space._parent_adjoint
+    )
+    retained_numpy_packing_index_bytes = sum(
+        int(array.nbytes)
+        for arrays in (interior_positions, trace_positions)
+        for array in arrays
+    )
+    reference_csr, *_reference_metrics = _reference_transfer_data(
+        int(records[0].topology.degree)
+    )
+    reference_transfer_csr_cache_bytes = _csr_payload_bytes(reference_csr)
+    retained_numeric_payload_lower_bound_bytes = (
+        unique_t_forward_payload_bytes
+        + unique_t_adjoint_payload_bytes
+        + e_forward_payload_bytes
+        + e_adjoint_payload_bytes
+        + retained_numpy_packing_index_bytes
+        + reference_transfer_csr_cache_bytes
+    )
+
     audit = {
         "parent_ids": list(parent_ids),
         "parent_count": len(records),
@@ -1310,6 +1344,23 @@ def build_owner_local_lor_transfer(
         "incomplete_trace_row_count": int(incomplete_rows),
         "complete_trace_reconstruction_max_relative_error": float(
             complete_max_error
+        ),
+        "unique_T_forward_csr_payload_bytes": int(
+            unique_t_forward_payload_bytes
+        ),
+        "unique_T_adjoint_csr_payload_bytes": int(
+            unique_t_adjoint_payload_bytes
+        ),
+        "E_csr_payload_bytes": int(e_forward_payload_bytes),
+        "E_adjoint_csr_payload_bytes": int(e_adjoint_payload_bytes),
+        "retained_numpy_packing_index_bytes": int(
+            retained_numpy_packing_index_bytes
+        ),
+        "reference_transfer_csr_cache_bytes": int(
+            reference_transfer_csr_cache_bytes
+        ),
+        "retained_numeric_payload_lower_bound_bytes": int(
+            retained_numeric_payload_lower_bound_bytes
         ),
         "global_dense_T_retained": False,
         "row_order": "canonical_cell_id_interiors_then_owner_rows",

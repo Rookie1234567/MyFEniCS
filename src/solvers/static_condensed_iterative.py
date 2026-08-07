@@ -8,6 +8,8 @@ import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
 
+from src.constraints.floquet_3d_high_order import floquet_geometry_tolerance
+
 from .condensed_dtn import (
     combine_petsc_augmented_solution,
     condensed_rhs,
@@ -30,6 +32,7 @@ from .physical_slab_two_level import (
     build_owner_local_slab_plan,
     build_trace_aware_physical_slab_partition,
     collect_owner_local_fullspace_slab_cells,
+    collect_owner_local_lor_transfer,
     extract_owner_local_slab_vector,
 )
 from .static_fullspace_slab_oracle import (
@@ -86,6 +89,7 @@ def _relative_residual(
 
 _TASK037_G2_SLAB = 14
 _TASK037_G2_IDENTITY_TOLERANCE = 1.0e-10
+_TASK037_G2_LOR_TOLERANCE = 1.0e-11
 _TASK037_G2_DETERMINISTIC_VECTOR_LABELS = (
     "canonical_affine_phase",
     "canonical_complex_affine_phase",
@@ -124,6 +128,16 @@ def _task037_g2_owner_vector_sha256(
     digest.update(b"|owner_rows=<i8|values=<c16|order=C\0")
     digest.update(np.asarray([rows.size], dtype="<u8").tobytes())
     digest.update(rows.tobytes(order="C"))
+    digest.update(vector.tobytes(order="C"))
+    return digest.hexdigest()
+
+
+def _task037_g2_lor_vector_sha256(values: np.ndarray, *, domain: str) -> str:
+    vector = np.ascontiguousarray(values, dtype="<c16")
+    digest = hashlib.sha256()
+    digest.update(domain.encode("ascii"))
+    digest.update(b"|values=<c16|order=C\0")
+    digest.update(np.asarray([vector.size], dtype="<u8").tobytes())
     digest.update(vector.tobytes(order="C"))
     return digest.hexdigest()
 
@@ -221,6 +235,7 @@ def _solve_static_condensed_fgmres_core(
     task037_extra_g0_diagnostics: bool = False,
     task037_extra_g2_slab14_identity: bool = False,
     task037_extra_g2_slab14_factor_inventory: bool = False,
+    task037_extra_g2_slab14_lor_transfer: bool = False,
     solver_profile: Literal[
         "assembled",
         "assembled_setup_then_static_local_schur_matrix_free_solve",
@@ -276,6 +291,12 @@ def _solve_static_condensed_fgmres_core(
     ):
         raise ValueError(
             "Task037-extra G2 slab14 factor inventory requires the M3a action-only profile"
+        )
+    if task037_extra_g2_slab14_lor_transfer and not (
+        task037_extra_g2_slab14_identity
+    ):
+        raise ValueError(
+            "Task037-extra G2 slab14 LOR transfer requires slab14 identity"
         )
     if task037_extra_g2_slab14_identity and task037_extra_g0_diagnostics:
         raise ValueError(
@@ -378,6 +399,7 @@ def _solve_static_condensed_fgmres_core(
     g0_residual_snapshots: dict[int, PETSc.Vec] = {}
     g2_identity_state: dict[str, Any] | None = None
     g2_factor_state: dict[str, Any] | None = None
+    g2_lor_transfer_audit: dict[str, Any] | None = None
     try:
         if action_only:
             blocks = request.blocks
@@ -720,6 +742,149 @@ def _solve_static_condensed_fgmres_core(
                 "shift": local_shift,
                 "audit": g2_setup_audit,
             }
+        if task037_extra_g2_slab14_lor_transfer:
+            assert g2_identity_state is not None
+            if request.mesh_data is None:
+                raise RuntimeError(
+                    "Task037-extra G2 slab14 LOR transfer requires mesh data"
+                )
+            floquet_topology = request.floquet_data.phase_independent_topology
+            if floquet_topology is None:
+                raise RuntimeError(
+                    "Task037-extra G2 slab14 LOR transfer requires "
+                    "phase-independent Floquet topology"
+                )
+            slab = _TASK037_G2_SLAB
+            slab_owner = int(g2_identity_state["owner"])
+            emit_lifecycle(
+                "g2_lor_transfer_build_started",
+                slab=slab,
+                owner_rank=slab_owner,
+            )
+            lor_started = perf_counter()
+            lor_transfer, lor_audit = collect_owner_local_lor_transfer(
+                request.static_condensed_system,
+                owner_plan,
+                request.function_space.mesh,
+                request.mesh_data.cell_tags,
+                slab,
+                degree=int(request.config.nedelec_trace_degree_resolved),
+                floquet_topology=floquet_topology,
+                phase_x=request.floquet_data.phase_x,
+                phase_y=request.floquet_data.phase_y,
+                coordinate_tolerance=floquet_geometry_tolerance(
+                    request.config
+                ),
+            )
+            lor_build_seconds = comm.allreduce(
+                float(perf_counter() - lor_started),
+                op=MPI.MAX,
+            )
+            lor_measurement = None
+            if comm.rank == slab_owner:
+                assert lor_transfer is not None
+                active_count = int(lor_audit["active_edge_count"])
+                active_indices = np.arange(active_count, dtype=np.float64)
+                deterministic_vectors = _task037_g2_deterministic_vectors(
+                    active_indices
+                )
+                output_hashes = []
+                deterministic = True
+                finite = True
+                apply_count = 0
+                for vector in deterministic_vectors:
+                    first = lor_transfer.apply(vector)
+                    second = lor_transfer.apply(vector)
+                    apply_count += 2
+                    deterministic = deterministic and bool(
+                        np.array_equal(first, second)
+                    )
+                    finite = finite and bool(
+                        np.isfinite(first).all() and np.isfinite(second).all()
+                    )
+                    output_hashes.append(
+                        _task037_g2_lor_vector_sha256(
+                            first,
+                            domain="task037.g2.lor-transfer.full-output.v1",
+                        )
+                    )
+                full_probe = np.asarray(
+                    1.0 + 0.125j * np.arange(
+                        int(lor_audit["full_rows"]),
+                        dtype=np.float64,
+                    ),
+                    dtype=np.complex128,
+                )
+                active_probe = deterministic_vectors[0]
+                full_output = lor_transfer.apply(active_probe)
+                adjoint_output = lor_transfer.apply_adjoint(full_probe)
+                left = np.vdot(full_output, full_probe)
+                right = np.vdot(active_probe, adjoint_output)
+                adjoint_error = float(
+                    abs(left - right) / max(abs(left), abs(right), 1.0)
+                )
+                lor_measurement = {
+                    "vector_count": len(deterministic_vectors),
+                    "forward_apply_count": apply_count + 1,
+                    "adjoint_apply_count": 1,
+                    "deterministic": bool(deterministic),
+                    "finite": bool(
+                        finite
+                        and np.isfinite(full_probe).all()
+                        and np.isfinite(adjoint_output).all()
+                        and np.isfinite(adjoint_error)
+                    ),
+                    "output_sha256": output_hashes,
+                    "adjoint_relative_error": adjoint_error,
+                }
+            lor_measurement = comm.bcast(lor_measurement, root=slab_owner)
+            g2_lor_transfer_audit = dict(lor_audit)
+            g2_lor_transfer_audit.update(
+                {
+                    "primary_slab": slab,
+                    "build_seconds": float(lor_build_seconds),
+                    "measurement": lor_measurement,
+                    "gate_pass": bool(
+                        lor_measurement["finite"]
+                        and lor_measurement["deterministic"]
+                        and lor_measurement["adjoint_relative_error"]
+                        <= _TASK037_G2_LOR_TOLERANCE
+                        and lor_audit["missing_writer_count"] == 0
+                        and lor_audit["shared_trace_max_relative_error"]
+                        <= _TASK037_G2_LOR_TOLERANCE
+                        and lor_audit[
+                            "complete_trace_reconstruction_max_relative_error"
+                        ]
+                        <= _TASK037_G2_LOR_TOLERANCE
+                        and lor_audit["global_dense_T_retained"] is False
+                        and lor_audit["matched_identity_block_count"] > 0
+                        and lor_audit["periodic_slave_edge_count"] > 0
+                        and lor_audit["active_edge_count"]
+                        + lor_audit["periodic_slave_edge_count"]
+                        == lor_audit["physical_edge_count"]
+                        and lor_audit["periodic_relation_count"]
+                        == lor_audit["periodic_slave_edge_count"]
+                    ),
+                }
+            )
+            g2_lor_transfer_audit["status"] = (
+                "pass"
+                if g2_lor_transfer_audit["gate_pass"]
+                else "lor_transfer_gate_failed"
+            )
+            emit_lifecycle(
+                "g2_lor_transfer_build_ready",
+                slab=slab,
+                owner_rank=slab_owner,
+                parent_count=int(g2_lor_transfer_audit["parent_count"]),
+                full_rows=int(g2_lor_transfer_audit["full_rows"]),
+                retained_numeric_payload_lower_bound_bytes=int(
+                    g2_lor_transfer_audit[
+                        "retained_numeric_payload_lower_bound_bytes"
+                    ]
+                ),
+                build_seconds=float(lor_build_seconds),
+            )
         if not p2_auxiliary_profile:
             live_state["shift"] = True
             shifted_context = _ShiftedFineAction(fine_action, shift)
@@ -1407,6 +1572,10 @@ def _solve_static_condensed_fgmres_core(
             )
         if g2_factor_audit is not None:
             audit["task037_extra_g2_slab14_factor_inventory"] = g2_factor_audit
+        if g2_lor_transfer_audit is not None:
+            audit["task037_extra_g2_slab14_lor_transfer"] = (
+                g2_lor_transfer_audit
+            )
         if p2_auxiliary_profile:
             audit["p2_auxiliary_audit"] = p2_auxiliary_audit
         if task037_extra_g0_diagnostics:
@@ -1586,6 +1755,7 @@ def solve_never_materialized_overlap0125_partition_fgmres(
     task037_extra_g0_diagnostics: bool = False,
     task037_extra_g2_slab14_identity: bool = False,
     task037_extra_g2_slab14_factor_inventory: bool = False,
+    task037_extra_g2_slab14_lor_transfer: bool = False,
     lifecycle_observer: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> tuple[Stage4ExternalLinearSolverSnapshot, dict[str, Any]]:
     """Run the opt-in overlap-0.125 partition-weighted slab profile."""
@@ -1599,6 +1769,9 @@ def solve_never_materialized_overlap0125_partition_fgmres(
         task037_extra_g2_slab14_identity=task037_extra_g2_slab14_identity,
         task037_extra_g2_slab14_factor_inventory=(
             task037_extra_g2_slab14_factor_inventory
+        ),
+        task037_extra_g2_slab14_lor_transfer=(
+            task037_extra_g2_slab14_lor_transfer
         ),
         solver_profile="never_materialized_owner_local_overlap0125_partition",
         lifecycle_observer=lifecycle_observer,

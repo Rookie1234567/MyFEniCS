@@ -1389,6 +1389,29 @@ def collect_owner_local_lor_transfer(
                         "complete_trace_reconstruction_max_relative_error"
                     ]
                 ),
+                "unique_T_forward_csr_payload_bytes": int(
+                    transfer_audit["unique_T_forward_csr_payload_bytes"]
+                ),
+                "unique_T_adjoint_csr_payload_bytes": int(
+                    transfer_audit["unique_T_adjoint_csr_payload_bytes"]
+                ),
+                "E_csr_payload_bytes": int(
+                    transfer_audit["E_csr_payload_bytes"]
+                ),
+                "E_adjoint_csr_payload_bytes": int(
+                    transfer_audit["E_adjoint_csr_payload_bytes"]
+                ),
+                "retained_numpy_packing_index_bytes": int(
+                    transfer_audit["retained_numpy_packing_index_bytes"]
+                ),
+                "reference_transfer_csr_cache_bytes": int(
+                    transfer_audit["reference_transfer_csr_cache_bytes"]
+                ),
+                "retained_numeric_payload_lower_bound_bytes": int(
+                    transfer_audit[
+                        "retained_numeric_payload_lower_bound_bytes"
+                    ]
+                ),
                 "descriptor_count": len(descriptors),
                 "descriptor_numeric_payload_bytes": int(descriptor_numeric_bytes),
                 "condensed_trace_matrix_materialized": bool(

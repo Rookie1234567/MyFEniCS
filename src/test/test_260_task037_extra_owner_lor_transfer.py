@@ -23,6 +23,8 @@ from src.solvers.static_fullspace_slab_factor_oracle import (
 )
 from src.solvers.static_lor_hcurl_transfer import (
     LORSlabParentPackingRecord,
+    _csr_payload_bytes,
+    _reference_transfer_data,
     build_affine_lor_parent_topology,
     build_lor_slab_edge_space,
     build_owner_local_lor_transfer,
@@ -271,6 +273,61 @@ def test_owner_local_lor_transfer_packs_real_p2_fixture(field):
         assert transfer.audit["unique_parent_transfer_stencil_count"] < len(records)
         assert transfer.audit["global_dense_T_retained"] is False
         assert not hasattr(transfer, "_q_tail")
+        unique_transfers = {
+            id(value): value for value in transfer._parent_transfers
+        }.values()
+        unique_t_forward_bytes = sum(
+            _csr_payload_bytes(value._forward) for value in unique_transfers
+        )
+        unique_t_adjoint_bytes = sum(
+            _csr_payload_bytes(value._adjoint) for value in unique_transfers
+        )
+        e_forward_bytes = sum(
+            _csr_payload_bytes(value)
+            for value in transfer._edge_space._parent_expansions
+        )
+        e_adjoint_bytes = sum(
+            _csr_payload_bytes(value)
+            for value in transfer._edge_space._parent_adjoint
+        )
+        packing_index_bytes = sum(
+            int(value.nbytes)
+            for arrays in (
+                transfer._interior_positions,
+                transfer._trace_positions,
+            )
+            for value in arrays
+        )
+        reference_csr = _reference_transfer_data(2)[0]
+        assert transfer.audit["unique_T_forward_csr_payload_bytes"] == (
+            unique_t_forward_bytes
+        )
+        assert transfer.audit["unique_T_adjoint_csr_payload_bytes"] == (
+            unique_t_adjoint_bytes
+        )
+        assert transfer.audit["E_csr_payload_bytes"] == e_forward_bytes
+        assert transfer.audit["E_adjoint_csr_payload_bytes"] == e_adjoint_bytes
+        assert transfer.audit["retained_numpy_packing_index_bytes"] == (
+            packing_index_bytes
+        )
+        assert transfer.audit["reference_transfer_csr_cache_bytes"] == (
+            _csr_payload_bytes(reference_csr)
+        )
+        payload_components = (
+            unique_t_forward_bytes,
+            unique_t_adjoint_bytes,
+            e_forward_bytes,
+            e_adjoint_bytes,
+            packing_index_bytes,
+            _csr_payload_bytes(reference_csr),
+        )
+        assert transfer.audit["retained_numeric_payload_lower_bound_bytes"] == sum(
+            payload_components
+        )
+        assert unique_t_forward_bytes < sum(
+            _csr_payload_bytes(value._forward)
+            for value in transfer._parent_transfers
+        )
 
         matrix, matrix_audit = assemble_fullspace_slab_matrix(
             cells,

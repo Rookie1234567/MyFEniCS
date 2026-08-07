@@ -444,11 +444,61 @@ def _task037_g2_factor_audit(
     }
 
 
+def _task037_g2_lor_audit():
+    payload = {
+        "unique_T_forward_csr_payload_bytes": 10,
+        "unique_T_adjoint_csr_payload_bytes": 10,
+        "E_csr_payload_bytes": 10,
+        "E_adjoint_csr_payload_bytes": 10,
+        "retained_numpy_packing_index_bytes": 10,
+        "reference_transfer_csr_cache_bytes": 10,
+    }
+    return {
+        "primary_slab": 14,
+        "owner_active_row_count": 3,
+        "full_rows": 8,
+        "interior_rows": 5,
+        "trace_rows": 3,
+        "trace_offset": 5,
+        "complete_trace_row_count": 5,
+        "incomplete_trace_row_count": 2,
+        "missing_writer_count": 0,
+        "shared_trace_max_relative_error": 0.0,
+        "complete_trace_reconstruction_max_relative_error": 0.0,
+        "matched_identity_block_count": 1,
+        "periodic_slave_edge_count": 1,
+        "periodic_relation_count": 1,
+        "active_edge_count": 2,
+        "physical_edge_count": 3,
+        "parent_id_hash": "a" * 64,
+        "physical_edge_keys_sha256": "b" * 64,
+        "active_edge_keys_sha256": "c" * 64,
+        "global_dense_T_retained": False,
+        "condensed_trace_matrix_materialized": False,
+        **payload,
+        "retained_numeric_payload_lower_bound_bytes": 60,
+        "build_seconds": 1.0,
+        "measurement": {
+            "vector_count": 3,
+            "forward_apply_count": 7,
+            "adjoint_apply_count": 1,
+            "finite": True,
+            "deterministic": True,
+            "adjoint_relative_error": 0.0,
+            "output_sha256": ["1" * 64, "2" * 64, "3" * 64],
+        },
+        "gate_pass": True,
+        "status": "pass",
+    }
+
+
 def _task037_g2_qualification_case(
     *,
     identity_audit=None,
     factor_audit=None,
     factor_enabled=False,
+    lor_audit=None,
+    lor_enabled=False,
 ):
     args = SimpleNamespace(
         task037_f3_screen=20,
@@ -458,6 +508,7 @@ def _task037_g2_qualification_case(
         task037_m3a_overlap0125_partition=True,
         task037_extra_g2_slab14_identity=True,
         task037_extra_g2_slab14_factor_inventory=factor_enabled,
+        task037_extra_g2_slab14_lor_transfer=lor_enabled,
         task037_m4_p2_auxiliary=False,
         task037_m4_factor_free_slab=False,
         task037_m4_b2_long_full=False,
@@ -491,6 +542,9 @@ def _task037_g2_qualification_case(
                 json.dumps(factor_audit["iter20"])
             )
         audit["task037_extra_g2_slab14_factor_inventory"] = factor_audit
+    if lor_enabled:
+        lor_audit = _task037_g2_lor_audit() if lor_audit is None else lor_audit
+        audit["task037_extra_g2_slab14_lor_transfer"] = lor_audit
     summary = {
         "matrix_stats": {"matrix_rows": 1, "matrix_nnz_used": None},
         "polarization_kind": "s",
@@ -528,10 +582,30 @@ def _task037_g2_qualification_case(
             "g2_fullspace_factor_setup_started",
         )
     ]
+    lor_events = [
+        {
+            "stage": stage,
+            "status": "end",
+            "task037_g2_lor_transfer_lifecycle": True,
+        }
+        for stage in (
+            "g2_lor_transfer_build_started",
+            "g2_lor_transfer_build_ready",
+        )
+    ]
+    lor_stage_peaks = [
+        {"stage": "g2_lor_transfer_build_started"},
+    ]
     return args, {
         "args": args,
         "solver_summary": summary,
-        "events": factor_events if factor_enabled else [],
+        "events": (
+            lor_events
+            if lor_enabled
+            else factor_events
+            if factor_enabled
+            else []
+        ),
         "return_code": 0,
         "terminated_for_memory": False,
         "terminated_for_timeout": False,
@@ -540,7 +614,13 @@ def _task037_g2_qualification_case(
         "observed_worker_rank_count": 1,
         "resource_summary": {
             "memory_authority_gib": 10.30,
-            "stage_peaks": factor_stage_peaks if factor_enabled else [],
+            "stage_peaks": (
+                lor_stage_peaks
+                if lor_enabled
+                else factor_stage_peaks
+                if factor_enabled
+                else []
+            ),
         },
         "task037_f3_core_audit": audit,
     }
@@ -1795,6 +1875,44 @@ def test_task037_extra_g2_identity_qualification_positive():
     )
 
 
+def test_task037_extra_g2_lor_transfer_qualification_without_factor():
+    args, kwargs = _task037_g2_qualification_case(lor_enabled=True)
+    qualification = watchdog._qualify(**kwargs)
+
+    assert qualification["pass"]
+    assert qualification["checks"]["task037_g2_lor_transfer_present"]
+    assert qualification["checks"]["task037_g2_lor_transfer_trace_contract"]
+    assert watchdog._task037_extra_g2_status(args, qualification) == (
+        "task037_extra_g2_slab14_lor_transfer_pass"
+    )
+
+    lor_audit = kwargs["task037_f3_core_audit"][
+        "task037_extra_g2_slab14_lor_transfer"
+    ]
+    lor_audit["active_edge_count"] = 1
+    count_failed = watchdog._qualify(**kwargs)
+    assert not count_failed["pass"]
+    assert not count_failed["checks"][
+        "task037_g2_lor_transfer_periodic_identity"
+    ]
+    lor_audit["active_edge_count"] = 2
+    lor_audit["active_edge_keys_sha256"] = "not-a-sha256"
+    hash_failed = watchdog._qualify(**kwargs)
+    assert not hash_failed["pass"]
+    assert not hash_failed["checks"][
+        "task037_g2_lor_transfer_periodic_identity"
+    ]
+    lor_audit["active_edge_keys_sha256"] = "c" * 64
+
+    tampered = kwargs["task037_f3_core_audit"][
+        "task037_extra_g2_slab14_lor_transfer"
+    ]
+    tampered["measurement"]["adjoint_relative_error"] = 1.0e-8
+    failed = watchdog._qualify(**kwargs)
+    assert not failed["pass"]
+    assert not failed["checks"]["task037_g2_lor_transfer_measurement"]
+
+
 def test_task037_extra_g2_factor_status_has_priority():
     args, kwargs = _task037_g2_qualification_case(factor_enabled=True)
     qualification = watchdog._qualify(**kwargs)
@@ -2137,6 +2255,7 @@ def test_task037_extra_g2_flag_reaches_only_m3a_wrapper(tmp_path, monkeypatch):
             overlap0125_partition=True,
             task037_extra_g2_slab14_identity=enabled,
             task037_extra_g2_slab14_factor_inventory=enabled,
+            task037_extra_g2_slab14_lor_transfer=enabled,
             verified_clean_sha="b" * 40,
         )
         solve(request)
@@ -2148,6 +2267,9 @@ def test_task037_extra_g2_flag_reaches_only_m3a_wrapper(tmp_path, monkeypatch):
     assert [
         kwargs["task037_extra_g2_slab14_factor_inventory"] for kwargs in captured
     ] == [True, False]
+    assert [
+        kwargs["task037_extra_g2_slab14_lor_transfer"] for kwargs in captured
+    ] == [True, False]
     ordinary_solve = watchdog._task037_f3_assembled_fgmres_port(
         tmp_path,
         20,
@@ -2157,6 +2279,7 @@ def test_task037_extra_g2_flag_reaches_only_m3a_wrapper(tmp_path, monkeypatch):
     ordinary_solve(request)
     assert "task037_extra_g2_slab14_identity" not in ordinary_captured[0]
     assert "task037_extra_g2_slab14_factor_inventory" not in ordinary_captured[0]
+    assert "task037_extra_g2_slab14_lor_transfer" not in ordinary_captured[0]
 
 
 def test_task037_extra_g2_factor_lifecycle_uses_raw_progress_stages(
@@ -2249,6 +2372,69 @@ def test_task037_extra_g2_factor_lifecycle_uses_raw_progress_stages(
     ]
 
 
+def test_task037_extra_g2_lor_lifecycle_uses_raw_progress_stages(
+    tmp_path, monkeypatch
+):
+    class Comm:
+        rank = 0
+
+        def tompi4py(self):
+            return self
+
+        def gather(self, payload, root=0):
+            assert root == 0
+            return [payload]
+
+    request = SimpleNamespace(operator=SimpleNamespace(getComm=lambda: Comm()))
+    progress_events = []
+
+    def write_progress(_run_dir, _comm, **kwargs):
+        progress_events.append(kwargs)
+
+    def fake_m3a_core(_request, **kwargs):
+        observer = kwargs["lifecycle_observer"]
+        assert observer is not None
+        for event in (
+            "g2_lor_transfer_build_started",
+            "g2_lor_transfer_build_ready",
+        ):
+            observer(event, {"event": event})
+        return object(), {
+            "solver_profile": "never_materialized_owner_local_overlap0125_partition"
+        }
+
+    monkeypatch.setattr(watchdog, "_write_progress_event", write_progress)
+    monkeypatch.setattr(
+        "src.solvers.static_condensed_iterative."
+        "solve_never_materialized_overlap0125_partition_fgmres",
+        fake_m3a_core,
+    )
+    solve = watchdog._task037_f3_assembled_fgmres_port(
+        tmp_path,
+        20,
+        never_materialized=True,
+        overlap0125_partition=True,
+        lifecycle_enabled=True,
+        task037_extra_g2_slab14_identity=True,
+        task037_extra_g2_slab14_factor_inventory=False,
+        task037_extra_g2_slab14_lor_transfer=True,
+        verified_clean_sha="b" * 40,
+    )
+    solve(request)
+
+    assert [item["stage"] for item in progress_events] == [
+        "g2_lor_transfer_build_started",
+        "g2_lor_transfer_build_ready",
+    ]
+    assert all(
+        item["extra"]["task037_g2_lor_transfer_lifecycle"] is True
+        and "task037_m0_lifecycle" not in item["extra"]
+        and "m0_event" not in item["extra"]
+        and "task037_g2_factor_inventory_lifecycle" not in item["extra"]
+        for item in progress_events
+    )
+
+
 def test_task037_extra_g2_parser_is_exact_screen20_mpi1_scope(tmp_path):
     authority = (
         "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/"
@@ -2317,6 +2503,24 @@ def test_task037_extra_g2_parser_is_exact_screen20_mpi1_scope(tmp_path):
     factor_contract = watchdog._worker_launch_contract(factor_args)
     assert factor_contract["task037_extra_g2_slab14_factor_inventory"] is True
 
+    lor_args = watchdog._parse_args(
+        base + ["--task037-extra-g2-slab14-lor-transfer"]
+    )
+    assert lor_args.task037_extra_g2_slab14_identity is True
+    assert lor_args.task037_extra_g2_slab14_factor_inventory is False
+    assert lor_args.task037_extra_g2_slab14_lor_transfer is True
+    lor_command = watchdog._worker_command(lor_args, tmp_path)
+    assert lor_command.count("--task037-extra-g2-slab14-identity") == 1
+    assert lor_command.count("--task037-extra-g2-slab14-lor-transfer") == 1
+    lor_worker_args = watchdog._parse_args(
+        lor_command[lor_command.index("--worker") :]
+    )
+    assert lor_worker_args.task037_extra_g2_slab14_lor_transfer is True
+    lor_contract = watchdog._worker_launch_contract(lor_args)
+    assert lor_contract["task037_extra_g2_slab14_identity"] is True
+    assert lor_contract["task037_extra_g2_slab14_factor_inventory"] is False
+    assert lor_contract["task037_extra_g2_slab14_lor_transfer"] is True
+
     factor_only = [
         item
         for item in base
@@ -2324,6 +2528,14 @@ def test_task037_extra_g2_parser_is_exact_screen20_mpi1_scope(tmp_path):
     ] + ["--task037-extra-g2-slab14-factor-inventory"]
     with pytest.raises(SystemExit):
         watchdog._parse_args(factor_only)
+
+    lor_only = [
+        item
+        for item in base
+        if item != "--task037-extra-g2-slab14-identity"
+    ] + ["--task037-extra-g2-slab14-lor-transfer"]
+    with pytest.raises(SystemExit):
+        watchdog._parse_args(lor_only)
 
     for invalid in (
         base[: base.index("--mpi-size") + 1]
