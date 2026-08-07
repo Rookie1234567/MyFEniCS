@@ -236,6 +236,7 @@ def test_owner_local_lor_transfer_packs_real_p2_fixture(field):
             edge_space,
             owner_rows,
         )
+        assert transfer.edge_space is edge_space
 
         element = basix.ufl.element(
             "N1curl",

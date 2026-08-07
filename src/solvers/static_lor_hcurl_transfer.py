@@ -1045,6 +1045,10 @@ class OwnerLocalLORTransfer:
         object.__setattr__(self, "_trace_writers", tuple(self._trace_writers))
         object.__setattr__(self, "audit", dict(self.audit))
 
+    @property
+    def edge_space(self) -> LORSlabEdgeSpace:
+        return self._edge_space
+
     def apply(self, active_lor_values: np.ndarray) -> np.ndarray:
         """Apply E, then each parent T, and pack owner rows."""
 
