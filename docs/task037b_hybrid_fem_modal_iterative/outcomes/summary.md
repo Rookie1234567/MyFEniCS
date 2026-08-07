@@ -2,25 +2,25 @@
 
 ## 一句话结论
 
-H0 继承基线通过；H1 唯一一次 direct Hybrid MPI8 formal 在生成 Hybrid 解以前因近简并模态分组检查退出。它证明的是当前源码的 direct authority 尚未建立，不是 Hybrid 物理负结果，也不是 H1 residual 或 R/T/A Gate 失败。依停止规则，H2-H10 全部不运行。
+H0 继承基线通过；首次 H1 direct Hybrid MPI8 formal 在生成 Hybrid 解以前因近简并模态分组检查退出，历史证据保留。post-fix source `2990f357f7dec23b1713bd0088bdc43c3ce6f5bc` 已完成同一冻结条件下的有效求解并通过 task.md §9 H1 contract；H2-H10 仍为 not_run_yet，等待主审审查。
 
 ## H0-H10 矩阵
 
 | 阶段 | 状态 | 说明 |
 |---|---|---|
 | H0 | pass | 继承基线和文档治理完成 |
-| H1 | failed_before_solve / controlled_stop | mode classification 的 inherited correctness regression |
-| H2 | not_run_by_H1_gate | H1 停止规则 |
-| H3 | not_run_by_H1_gate | H1 停止规则 |
-| H4 | not_run_by_H1_gate | H1 停止规则 |
-| H5 | not_run_by_H1_gate | H1 停止规则 |
-| H6 | not_run_by_H1_gate | H1 停止规则 |
-| H7 | not_run_by_H1_gate | H1 停止规则 |
-| H8 | not_run_by_H1_gate | H1 停止规则 |
-| H9 | not_run_by_H1_gate | H1 停止规则 |
-| H10 | not_run_by_H1_gate | H1 停止规则 |
+| H1 | pass（post-fix；首次 failed_before_solve 历史保留） | task.md §9 H1 numerical contract 通过 |
+| H2 | not_run_yet | H1 recovery 后等待 review |
+| H3 | not_run_yet | H1 recovery 后等待 review |
+| H4 | not_run_yet | H1 recovery 后等待 review |
+| H5 | not_run_yet | H1 recovery 后等待 review |
+| H6 | not_run_yet | H1 recovery 后等待 review |
+| H7 | not_run_yet | H1 recovery 后等待 review |
+| H8 | not_run_yet | H1 recovery 后等待 review |
+| H9 | not_run_yet | H1 recovery 后等待 review |
+| H10 | not_run_yet | H1 recovery 后等待 review |
 
-## H1 停止点
+## H1 首次停止点（3f72ef3）
 
 mode classification 发生在横截面 QEP 求解之后、Hybrid block system 生成之前。它把传播常数接近的模态分成小组，并建立后续界面方程需要的双基底。当前检查发现索引 50 和 52 属于不同组，但误差量达到冻结分组检查的边界，于是 fail closed。
 
@@ -63,6 +63,22 @@ mode classification 发生在横截面 QEP 求解之后、Hybrid block system �
 | rows/block shapes/matrix NNZ/factor NNZ | not_observed |
 | official Hybrid result | not_run |
 
+## H1 post-fix recovery（2990f357）
+
+post-fix formal return code 为 `0`，`formal_pass=true`，true relative residual 为 `1.4476013948489319e-12`。rows、block shapes、matrix/factor inventory、interface/middle-plane fields、R/T/A、A_volume closure、资源和 hash-bound 原始证据详见 [direct authority](direct_hybrid_authority.md) 与 [resource ledger](resource_ledger.md)。
+
+| Gate | post-fix 结果 |
+|---|---|
+| true residual | `1.4476013948489319e-12`，pass |
+| frozen-reference powers / boundary amplitudes | `12/12` / `12/12`，pass |
+| Full3D pairwise relative-1e-3 powers / amplitudes | `12/12` / `12/12`，pass；最大相对误差分别 `6.51037642788911e-10` / `6.667955305244103e-10` |
+| interface/middle-plane E/H | pass |
+| R/T/A_volume closure | `1.0000000001554779`，error `1.5547785281455617e-10`，pass |
+| swap | 0 |
+| ordinary defaults | unchanged；H1 explicit opt-in |
+
+runner 仍保留 `physical_qualified=false`、`official_record=false`、`mode_count_converged=false` 的 wider-M funnel 旧标签；它们不是 task.md §9 H1 Gate，也不改变本次 H1 task-specific contract pass。H2-H10 尚未运行。
+
 ## 资源
 
 | 指标 | 实测值 |
@@ -98,4 +114,4 @@ raw JSON 字段名虽含 max_*_mb，但本文按 bytes/1024^2 统一换算并显
 
 ## 下一步边界
 
-本轮不修 solver、不放宽 1e-6、不扫描 M、角度或 p-h，不进入 H2-H10。若要恢复 Task037b，下一份 review 只能先授权对历史 Case096 source SHA 244b62e 与当前 mode-classification 实现做窄差分审计，再决定是否允许一个最小实现修复和一个新的 H1 run。
+首次失败阶段不修 solver、不放宽 1e-6、不扫描 M、角度或 p-h；post-fix 只实施已审查的最小 grouping/audit 修复并完成一次 H1 recovery。H2-H10 尚未运行，后续仍需主审决定。

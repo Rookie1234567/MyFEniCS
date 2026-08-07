@@ -7,8 +7,9 @@
 | 26e48e2767d200b6ec58b39d117c354afbdba30c | docs(task037b): adopt fenced-math documentation standard | H0 文档公式治理与最小合同 |
 | c1173a7d8de81b8bc80e0fca5e3eb28a912dc1d3 | test(task037b): freeze inherited Hybrid iterative baseline | H0 继承测试基线 |
 | 3f72ef3eb4f3002246802af30ef7bca6b0080888 | feat(task037b): qualify direct Hybrid H1 authority | H1 explicit opt-in telemetry、pinned reference opening 与 launch wiring |
+| 2990f357f7dec23b1713bd0088bdc43c3ce6f5bc | fix(task037b): align near-degenerate grouping with partition audit | H1 near-degenerate grouping 与最终 partition row-norm audit 对齐；只改 mode classification 与其现有测试 |
 
-H1-A 的六个实现/测试文件已包含在第三个提交中。H1 formal 使用的 clean source SHA 是 3f72ef3eb4f3002246802af30ef7bca6b0080888；本 docs-only 结项不改变该 SHA，也不修改 tracked code。
+H1-A 的六个实现/测试文件已包含在第三个提交中。首次 H1 formal 使用的 clean source SHA 是 3f72ef3eb4f3002246802af30ef7bca6b0080888；post-fix H1 formal 使用的 clean source SHA 是 2990f357f7dec23b1713bd0088bdc43c3ce6f5bc。本 docs-only checkpoint 不修改 tracked code。
 
 ## H1-A 六文件角色
 
@@ -29,6 +30,7 @@ H1-A 的六个实现/测试文件已包含在第三个提交中。H1 formal 使�
 |---|---|
 | ordinary defaults | unchanged |
 | H1 flag | explicit opt-in，仅 task037b-h1-gate |
+| H1 §9 post-fix contract | pass；12+12 frozen-reference 与 Full3D pairwise 均通过 |
 | master | 未合并 |
 | H2-H10 | 未开始 |
 | ignored raw artifacts | 不提交 |
@@ -36,4 +38,4 @@ H1-A 的六个实现/测试文件已包含在第三个提交中。H1 formal 使�
 
 ## 本轮文档文件
 
-本轮只新增以下五份 outcomes 与一份 response_v0；不修改 inherited_baseline_audit.md，不创建 H2-H10 空壳记录，也不修改 solver、runner 或 JSON authority。
+本次 recovery checkpoint 只修改上述五份 outcomes；不修改 inherited_baseline_audit.md，不创建 H2-H10 空壳记录，也不修改 solver、runner 或 JSON authority。
