@@ -19,9 +19,11 @@ the default elsewhere.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 import hashlib
 from time import perf_counter
+from types import MappingProxyType
 from typing import Any
 
 import numpy as np
@@ -61,9 +63,9 @@ class TraceConstraintMap:
 
 @dataclass
 class AssemblyTimeCondensedSystem:
-    """Physically reduced trace matrix and matrix-free recovery metadata."""
+    """Physically reduced trace system and matrix-free recovery metadata."""
 
-    matrix: PETSc.Mat
+    matrix: PETSc.Mat | None
     owned_trace_original_dofs: np.ndarray
     original_to_trace: dict[int, int]
     trace_constraints: TraceConstraintMap
@@ -81,12 +83,32 @@ class AssemblyTimeCondensedSystem:
     interior_rows: int
     active_interior_rows: int
     build_audit: dict[str, Any]
+    comm: MPI.Intracomm = field(repr=False)
+    owned_active_rows: int
+    owned_appended_rows: int
+    retained_local_schur_by_class: Mapping[tuple[Any, ...], np.ndarray] | None = None
     _destroyed: bool = field(default=False, init=False, repr=False)
+
+    def create_active_vector(self) -> PETSc.Vec:
+        return PETSc.Vec().createMPI(
+            (self.owned_active_rows, self.active_rows),
+            comm=self.comm,
+        )
+
+    def create_augmented_vector(self) -> PETSc.Vec:
+        return PETSc.Vec().createMPI(
+            (
+                self.owned_active_rows + self.owned_appended_rows,
+                self.active_rows + self.appended_rows,
+            ),
+            comm=self.comm,
+        )
 
     def destroy(self) -> None:
         if self._destroyed:
             return
-        self.matrix.destroy()
+        if self.matrix is not None:
+            self.matrix.destroy()
         self._destroyed = True
 
 
@@ -1073,6 +1095,8 @@ def build_unconstrained_assembly_time_condensation(
     appended_support_owned_cell_groups: tuple[np.ndarray, ...] = (),
     appended_support_group_by_row: tuple[int, ...] = (),
     defer_final_assembly: bool = False,
+    retain_local_schur_for_matrix_free: bool = False,
+    materialize_global_matrix: bool = True,
     geometry_tolerance: float = 1.0e-11,
 ) -> AssemblyTimeCondensedSystem:
     """Assemble only the independent H(curl) trace Schur matrix.
@@ -1080,12 +1104,20 @@ def build_unconstrained_assembly_time_condensation(
     When ``mpc`` is supplied, its trace constraints are applied to each local
     Schur tensor before insertion.  No full-trace matrix or embedded slave
     identity rows are allocated.
+
+    ``retain_local_schur_for_matrix_free`` retains one readonly Schur array
+    per local class for a later owner-computes action.
     """
 
     if np.dtype(compiled_form.dtype) != np.dtype(np.complex128):
         raise TypeError("assembly-time condensation requires complex128")
     if int(appended_global_rows) < 0:
         raise ValueError("appended_global_rows must be non-negative")
+    materialize_global_matrix = bool(materialize_global_matrix)
+    if not materialize_global_matrix and not retain_local_schur_for_matrix_free:
+        raise ValueError(
+            "action-only condensation requires retained local Schur classes"
+        )
     appended_global_rows = int(appended_global_rows)
     mesh = function_space.mesh
     comm = mesh.comm
@@ -1155,37 +1187,44 @@ def build_unconstrained_assembly_time_condensation(
                 trace_constraints,
             )
         )
-    preallocation_started = perf_counter()
-    diagonal_nnz, off_diagonal_nnz, preallocation_audit = (
-        _distributed_trace_preallocation(
-            comm,
-            tuple(data[0] for data in cell_trace_data),
-            active_counts=active_counts,
-            appended_global_rows=appended_global_rows,
-            appended_support_owned_cell_groups=(appended_support_owned_cell_groups),
-            appended_support_group_by_row=(appended_support_group_by_row),
+    if materialize_global_matrix:
+        preallocation_started = perf_counter()
+        diagonal_nnz, off_diagonal_nnz, preallocation_audit = (
+            _distributed_trace_preallocation(
+                comm,
+                tuple(data[0] for data in cell_trace_data),
+                active_counts=active_counts,
+                appended_global_rows=appended_global_rows,
+                appended_support_owned_cell_groups=(appended_support_owned_cell_groups),
+                appended_support_group_by_row=(appended_support_group_by_row),
+            )
         )
-    )
-    preallocation_audit["build_seconds"] = float(
-        comm.allreduce(
-            perf_counter() - preallocation_started,
-            op=MPI.MAX,
+        preallocation_audit["build_seconds"] = float(
+            comm.allreduce(
+                perf_counter() - preallocation_started,
+                op=MPI.MAX,
+            )
         )
-    )
-    condensed = PETSc.Mat().createAIJ(
-        size=(
-            (len(owned_active) + local_appended, matrix_rows),
-            (len(owned_active) + local_appended, matrix_rows),
-        ),
-        nnz=(diagonal_nnz if comm.size == 1 else (diagonal_nnz, off_diagonal_nnz)),
-        comm=comm,
-    )
-    if condensed.getOwnershipRange()[0] != active_start:
-        condensed.destroy()
-        raise RuntimeError(
-            "PETSc active-trace ownership disagrees with trace numbering"
+        condensed = PETSc.Mat().createAIJ(
+            size=(
+                (len(owned_active) + local_appended, matrix_rows),
+                (len(owned_active) + local_appended, matrix_rows),
+            ),
+            nnz=(diagonal_nnz if comm.size == 1 else (diagonal_nnz, off_diagonal_nnz)),
+            comm=comm,
         )
-    condensed.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR, True)
+        if condensed.getOwnershipRange()[0] != active_start:
+            condensed.destroy()
+            raise RuntimeError(
+                "PETSc active-trace ownership disagrees with trace numbering"
+            )
+        condensed.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR, True)
+    else:
+        condensed = None
+        preallocation_audit = {
+            "status": "not_run_action_only",
+            "build_seconds": None,
+        }
 
     mesh.topology.create_entity_permutations()
     cell_permutations = mesh.topology.get_cell_permutation_info()
@@ -1220,7 +1259,8 @@ def build_unconstrained_assembly_time_condensation(
         local_metadata_error = f"{type(error).__name__}: {error}"
     metadata_errors = comm.allgather(local_metadata_error)
     if any(error is not None for error in metadata_errors):
-        condensed.destroy()
+        if condensed is not None:
+            condensed.destroy()
         error_class = (
             ValueError
             if all(
@@ -1252,7 +1292,8 @@ def build_unconstrained_assembly_time_condensation(
             policy_forms,
         )
     except Exception:
-        condensed.destroy()
+        if condensed is not None:
+            condensed.destroy()
         raise
     schur_cache: dict[tuple[Any, ...], np.ndarray] = {}
     recovery_cache: dict[tuple[Any, ...], np.ndarray] = {}
@@ -1315,19 +1356,21 @@ def build_unconstrained_assembly_time_condensation(
             residual_projection_cache[class_key] = interior_identity
         trace_original = original_dofs[trace_positions]
         active_ids, local_expansion, identity_expansion = cell_trace_data[cell]
-        active_schur = _constrain_local_schur(
-            schur,
-            local_expansion,
-            identity_expansion,
-        )
-        insert_started = perf_counter()
-        condensed.setValues(
-            active_ids,
-            active_ids,
-            np.asarray(active_schur, dtype=PETSc.ScalarType),
-            addv=PETSc.InsertMode.ADD_VALUES,
-        )
-        local_insert_seconds += perf_counter() - insert_started
+        if materialize_global_matrix:
+            active_schur = _constrain_local_schur(
+                schur,
+                local_expansion,
+                identity_expansion,
+            )
+            insert_started = perf_counter()
+            assert condensed is not None
+            condensed.setValues(
+                active_ids,
+                active_ids,
+                np.asarray(active_schur, dtype=PETSc.ScalarType),
+                addv=PETSc.InsertMode.ADD_VALUES,
+            )
+            local_insert_seconds += perf_counter() - insert_started
         recovery_maps.append(
             CellRecoveryMap(
                 interior_original_dofs=original_dofs[interior_positions].copy(),
@@ -1335,30 +1378,49 @@ def build_unconstrained_assembly_time_condensation(
                 class_key=class_key,
             )
         )
-    preassembly_sync_started = perf_counter()
-    comm.Barrier()
-    preassembly_sync_seconds = float(
-        comm.allreduce(
-            perf_counter() - preassembly_sync_started,
-            op=MPI.MAX,
-        )
-    )
-    if defer_final_assembly:
-        final_assembly_seconds = 0.0
-    else:
-        assembly_started = perf_counter()
-        condensed.assemble()
-        final_assembly_seconds = float(
+    if materialize_global_matrix:
+        preassembly_sync_started = perf_counter()
+        comm.Barrier()
+        preassembly_sync_seconds = float(
             comm.allreduce(
-                perf_counter() - assembly_started,
+                perf_counter() - preassembly_sync_started,
                 op=MPI.MAX,
             )
         )
+        if defer_final_assembly:
+            final_assembly_seconds = 0.0
+        else:
+            assembly_started = perf_counter()
+            assert condensed is not None
+            condensed.assemble()
+            final_assembly_seconds = float(
+                comm.allreduce(
+                    perf_counter() - assembly_started,
+                    op=MPI.MAX,
+                )
+            )
+    else:
+        preassembly_sync_seconds = None
+        final_assembly_seconds = None
     interior_rows = full_rows - trace_rows
     global_cells = int(comm.allreduce(owned_cells, op=MPI.SUM))
     active_interior_rows = interior_rows
     raw_class_count = int(raw_cache_audit["raw_tensor_class_count_sum"])
     oriented_class_count = int(comm.allreduce(len(schur_cache), op=MPI.SUM))
+    if retain_local_schur_for_matrix_free:
+        for schur in schur_cache.values():
+            schur.setflags(write=False)
+        retained_class_count_local = len(schur_cache)
+        retained_bytes_local = sum(int(schur.nbytes) for schur in schur_cache.values())
+        retained_class_count_sum = int(
+            comm.allreduce(retained_class_count_local, op=MPI.SUM)
+        )
+        retained_bytes_sum = int(comm.allreduce(retained_bytes_local, op=MPI.SUM))
+    else:
+        retained_class_count_local = 0
+        retained_bytes_local = 0
+        retained_class_count_sum = 0
+        retained_bytes_sum = 0
     return AssemblyTimeCondensedSystem(
         matrix=condensed,
         owned_trace_original_dofs=owned_trace,
@@ -1377,6 +1439,14 @@ def build_unconstrained_assembly_time_condensation(
         appended_rows=appended_global_rows,
         interior_rows=interior_rows,
         active_interior_rows=active_interior_rows,
+        comm=comm,
+        owned_active_rows=len(owned_active),
+        owned_appended_rows=local_appended,
+        retained_local_schur_by_class=(
+            MappingProxyType(schur_cache)
+            if retain_local_schur_for_matrix_free
+            else None
+        ),
         build_audit={
             "schema_version": "task035b.assembly-time-cell-condensation.v1",
             "status": "unconstrained_trace_schur_built_without_full_matrix",
@@ -1385,6 +1455,21 @@ def build_unconstrained_assembly_time_condensation(
             "active_rows": active_rows,
             "appended_rows": appended_global_rows,
             "matrix_rows": matrix_rows,
+            "matrix_materialized": materialize_global_matrix,
+            "global_active_F_allocated": materialize_global_matrix,
+            "trace_preallocation_status": (
+                "executed" if materialize_global_matrix else "not_run_action_only"
+            ),
+            "trace_insertion_status": (
+                "executed" if materialize_global_matrix else "not_run_action_only"
+            ),
+            "final_assembly_status": (
+                "deferred"
+                if materialize_global_matrix and defer_final_assembly
+                else "executed"
+                if materialize_global_matrix
+                else "not_run_action_only"
+            ),
             "interior_rows": interior_rows,
             "owned_cell_count_global": global_cells,
             "local_tensor_dimension": dimension,
@@ -1399,9 +1484,14 @@ def build_unconstrained_assembly_time_condensation(
             "embedded_mpc_slave_identity_rows_allocated": False,
             "assembly_cost_avoided": True,
             "final_matrix_assembly_deferred_for_appended_rows": bool(
-                defer_final_assembly
+                materialize_global_matrix and defer_final_assembly
             ),
             "axis_aligned_affine_geometry_verified": True,
+            "retained_local_schur_enabled": bool(retain_local_schur_for_matrix_free),
+            "retained_local_schur_class_count_local": retained_class_count_local,
+            "retained_local_schur_class_count_sum": retained_class_count_sum,
+            "retained_local_schur_bytes_local": retained_bytes_local,
+            "retained_local_schur_bytes_sum": retained_bytes_sum,
             **raw_cache_audit,
             "oriented_schur_class_count_sum": oriented_class_count,
             "cell_kernel_evaluation_fraction": float(
@@ -1413,12 +1503,14 @@ def build_unconstrained_assembly_time_condensation(
             "local_schur_seconds_max": float(
                 comm.allreduce(local_schur_seconds, op=MPI.MAX)
             ),
-            "local_insert_seconds_max": float(
-                comm.allreduce(local_insert_seconds, op=MPI.MAX)
+            "local_insert_seconds_max": (
+                float(comm.allreduce(local_insert_seconds, op=MPI.MAX))
+                if materialize_global_matrix
+                else None
             ),
             "pre_final_assembly_sync_seconds_max": (preassembly_sync_seconds),
             "final_assembly_seconds": final_assembly_seconds,
-            "trace_preallocation_seconds": float(preallocation_audit["build_seconds"]),
+            "trace_preallocation_seconds": preallocation_audit["build_seconds"],
             "trace_preallocation": preallocation_audit,
             "trace_constraints": trace_constraints.build_audit,
             "total_build_seconds": float(
@@ -1489,7 +1581,7 @@ def condense_unconstrained_vector_to_active_trace(
         1.0e-30,
         float(relative_tolerance) * float(np.max(np.abs(owned_values), initial=0.0)),
     )
-    active = condensed.matrix.createVecRight()
+    active = condensed.create_augmented_vector()
     owned_trace = condensed.owned_trace_original_dofs
     if len(owned_trace):
         trace_values = owned_values[np.asarray(owned_trace, dtype=np.int64) - row_start]
@@ -1584,9 +1676,7 @@ def cell_interior_schur_bilinear(
             ),
         )
     return complex(
-        condensed.matrix.getComm()
-        .tompi4py()
-        .allreduce(
+        condensed.comm.allreduce(
             local,
             op=MPI.SUM,
         )
@@ -1711,7 +1801,7 @@ def project_mpc_vector_to_active_trace(
         or eliminated_relative_tolerance < 0.0
     ):
         raise ValueError("eliminated-vector tolerances must be finite and nonnegative")
-    comm = condensed.matrix.getComm().tompi4py()
+    comm = condensed.comm
     row_start, row_end = full_vector.getOwnershipRange()
     owned_original = np.arange(row_start, row_end, dtype=PETSc.IntType)
     owned_values = np.asarray(
@@ -1818,7 +1908,7 @@ def project_mpc_vector_to_active_trace(
             f"first_offending_dof={first_offending_dof}, "
             f"first_offending_entity={first_offending_entity}"
         )
-    active_vector = condensed.matrix.createVecRight()
+    active_vector = condensed.create_augmented_vector()
     active_original = condensed.trace_constraints.owned_active_original_dofs
     if len(active_original):
         active_vector.getArray()[: len(active_original)] = np.asarray(
