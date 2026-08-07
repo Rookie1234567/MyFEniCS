@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import hashlib
 import time
 from typing import Any, Callable, Sequence
@@ -8,8 +8,14 @@ from typing import Any, Callable, Sequence
 import numpy as np
 import scipy.linalg as sla
 import scipy.sparse as sp
+from dolfinx import fem
 from mpi4py import MPI
 from petsc4py import PETSc
+
+from src.geometry.tetra_mesh_audit import canonical_owned_cell_ids, owned_cell_geometry
+from src.solvers.static_local_schur_action import (
+    iter_owned_constrained_schur_contributions,
+)
 
 
 TINY = np.finfo(float).tiny
@@ -165,6 +171,66 @@ def compress_petsc_vector(
         eigenvalue=eigenvalue,
         eigenpair_residual=0.0,
     )
+
+
+def build_active_trace_floquet_basis(
+    condensed: Any,
+    function_space: Any,
+    config: Any,
+    floquet_data: Any,
+    fine_operator: PETSc.Mat,
+) -> tuple[SparseCoarseVector, ...]:
+    """Build the fixed 75D Floquet basis directly in active trace rows."""
+
+    active_original = np.asarray(
+        condensed.trace_constraints.owned_active_original_dofs,
+        dtype=PETSc.IntType,
+    )
+    active_ids = np.asarray(
+        [
+            condensed.trace_constraints.original_to_active[int(original)]
+            for original in active_original
+        ],
+        dtype=PETSc.IntType,
+    )
+    centers = np.linspace(float(config.domain_z_min), float(config.domain_z_max), 25)
+    spacing = float(centers[1] - centers[0])
+    field = fem.Function(function_space)
+    candidates: list[PETSc.Vec] = []
+    try:
+        for center in centers:
+            for component in range(3):
+
+                def value(x, center=center, component=component):
+                    envelope = np.maximum(1.0 - np.abs(x[2] - center) / spacing, 0.0)
+                    phase = np.exp(
+                        1j * (complex(config.kx) * x[0] + complex(config.ky) * x[1])
+                    )
+                    values = np.zeros((3, x.shape[1]), dtype=PETSc.ScalarType)
+                    values[component, :] = envelope * phase
+                    return values
+
+                field.interpolate(value)
+                floquet_data.mpc.homogenize(field)
+                vector = fine_operator.createVecRight()
+                vector.setValues(
+                    active_ids,
+                    field.x.petsc_vec.getValues(active_original),
+                )
+                vector.assemble()
+                for accepted in candidates:
+                    vector.axpy(-np.conjugate(accepted.dot(vector)), accepted)
+                norm = float(vector.norm())
+                if norm <= 1.0e-10:
+                    vector.destroy()
+                    raise RuntimeError("active Floquet coarse vector became singular")
+                vector.scale(1.0 / norm)
+                candidates.append(vector)
+        compressed = tuple(compress_petsc_vector(vector) for vector in candidates)
+    finally:
+        for vector in candidates:
+            vector.destroy()
+    return compressed
 
 
 class SparseGalerkinTwoLevelPc:
@@ -442,6 +508,529 @@ def gather_global_subdomain_indices(
     return tuple(result)
 
 
+def _trace_slab_rows_and_incidence(
+    canonical_ids: Sequence[int],
+    records: Sequence[Any],
+    recovery_maps: Sequence[Any],
+    constraints: Any,
+    slab_intervals: Sequence[tuple[float, float]],
+) -> tuple[list[np.ndarray], list[tuple[int, int]]]:
+    local_rows = [set() for _ in slab_intervals]
+    incidence: list[tuple[int, int]] = []
+    for canonical_id, record, recovery in zip(
+        canonical_ids, records, recovery_maps, strict=True
+    ):
+        cell_rows: set[int] = set()
+        for original in recovery.trace_original_dofs:
+            active_ids, coefficients = constraints.expansion_by_original[int(original)]
+            cell_rows.update(
+                int(active)
+                for active, coefficient in zip(active_ids, coefficients, strict=True)
+                if coefficient != 0
+            )
+        incidence.extend((active, int(canonical_id)) for active in cell_rows)
+        z_min = float(np.min(record.coordinates[:, 2]))
+        z_max = float(np.max(record.coordinates[:, 2]))
+        for slab, (low, high) in enumerate(slab_intervals):
+            if z_max >= low and z_min <= high:
+                local_rows[slab].update(cell_rows)
+    return [
+        np.asarray(sorted(rows), dtype=PETSc.IntType) for rows in local_rows
+    ], incidence
+
+
+def _support_multiset_sha256(supports: Sequence[tuple[int, ...]]) -> str:
+    ordered = sorted(
+        tuple(sorted(int(cell) for cell in support)) for support in supports
+    )
+    digest = hashlib.sha256()
+    digest.update(len(ordered).to_bytes(8, "little"))
+    for support in ordered:
+        payload = np.asarray(support, dtype="<i8").tobytes()
+        digest.update(len(payload).to_bytes(8, "little"))
+        digest.update(payload)
+    return digest.hexdigest()
+
+
+def build_trace_aware_physical_slab_partition(
+    condensed: Any,
+    mesh: Any,
+    *,
+    domain_z: tuple[float, float],
+    num_slabs: int,
+    overlap_fraction: float,
+) -> tuple[tuple[np.ndarray, ...], dict[str, Any]]:
+    """Build physical-z slabs from condensed trace support, excluding auxiliaries."""
+
+    z_min, z_max = (float(value) for value in domain_z)
+    if not z_min < z_max or num_slabs < 1 or overlap_fraction < 0.0:
+        raise ValueError("invalid physical slab domain, count, or overlap")
+    canonical_ids, records, _ = canonical_owned_cell_ids(mesh)
+    recovery_maps = condensed.cell_recovery_maps
+    comm = condensed.matrix.getComm().tompi4py()
+    if comm.allreduce(len(records) != len(recovery_maps), MPI.LOR):
+        raise RuntimeError("canonical cell geometry is not aligned with recovery maps")
+    active_rows = int(condensed.active_rows)
+    local_invalid = any(
+        int(active) < 0 or int(active) >= active_rows
+        for recovery in recovery_maps
+        for original in recovery.trace_original_dofs
+        for active in condensed.trace_constraints.expansion_by_original[int(original)][
+            0
+        ]
+    )
+    if comm.allreduce(local_invalid, MPI.LOR):
+        raise RuntimeError("trace expansion produced an out-of-range or auxiliary row")
+    width = (z_max - z_min) / num_slabs
+    slab_intervals = tuple(
+        (
+            z_min + slab * width - overlap_fraction * width,
+            z_min + (slab + 1) * width + overlap_fraction * width,
+        )
+        for slab in range(num_slabs)
+    )
+    local_subdomains, local_incidence = _trace_slab_rows_and_incidence(
+        canonical_ids,
+        records,
+        recovery_maps,
+        condensed.trace_constraints,
+        slab_intervals,
+    )
+    subdomains = gather_global_subdomain_indices(local_subdomains, comm=comm)
+    union = np.unique(np.concatenate(subdomains))
+    if not np.array_equal(union, np.arange(active_rows, dtype=PETSc.IntType)):
+        raise RuntimeError("physical slabs do not cover every active trace row")
+    packets = comm.gather(local_incidence, root=0)
+    audit = None
+    if comm.rank == 0:
+        supports_by_row = [set() for _ in range(active_rows)]
+        for packet in packets:
+            for row, canonical_id in packet:
+                supports_by_row[row].add(canonical_id)
+        multiplicity = np.zeros(active_rows, dtype=np.int64)
+        for subdomain in subdomains:
+            multiplicity[subdomain] += 1
+        supports = [tuple(sorted(support)) for support in supports_by_row]
+        audit = {
+            "active_rows": active_rows,
+            "appended_rows": int(condensed.appended_rows),
+            "auxiliary_rows_in_subdomains": 0,
+            "coverage_pass": True,
+            "union_rows": int(union.size),
+            "out_of_range_rows": 0,
+            "slab_row_counts": [int(rows.size) for rows in subdomains],
+            "multiplicity_histogram": {
+                str(value): int(np.count_nonzero(multiplicity == value))
+                for value in sorted(set(multiplicity.tolist()))
+            },
+            "max_multiplicity": int(np.max(multiplicity)),
+            "multiplicity_gt_one_rows": int(np.count_nonzero(multiplicity > 1)),
+            "multiplicity_eq_one_rows": int(np.count_nonzero(multiplicity == 1)),
+            "global_support_hash": _support_multiset_sha256(supports),
+            "per_slab_support_hashes": [
+                _support_multiset_sha256([supports[int(row)] for row in subdomain])
+                for subdomain in subdomains
+            ],
+        }
+    return subdomains, comm.bcast(audit, root=0)
+
+
+@dataclass(frozen=True)
+class OwnerLocalSlabPlan:
+    """Rank-local slab rows and owned-cell routing metadata for M2a."""
+
+    comm: MPI.Comm = field(repr=False)
+    active_rows: int
+    slab_owners: tuple[int, ...]
+    owner_rows: tuple[np.ndarray, ...]
+    local_cell_indices_by_slab: tuple[tuple[int, ...], ...]
+    slab_row_counts: tuple[int, ...]
+    partition_weights_by_slab: tuple[np.ndarray, ...]
+
+
+def _owner_from_scalar_row_counts(
+    row_counts: np.ndarray, comm_size: int
+) -> tuple[int, ...]:
+    loads = np.zeros(comm_size, dtype=np.int64)
+    owners = np.empty(len(row_counts), dtype=np.int32)
+    for slab in sorted(
+        range(len(row_counts)),
+        key=lambda index: (-int(row_counts[index]), index),
+    ):
+        owner = int(np.argmin(loads))
+        owners[slab] = owner
+        loads[owner] += int(row_counts[slab])
+    return tuple(int(value) for value in owners)
+
+
+def build_owner_local_slab_plan(
+    condensed: Any,
+    mesh: Any,
+    *,
+    domain_z: tuple[float, float],
+    num_slabs: int,
+    overlap_fraction: float,
+) -> OwnerLocalSlabPlan:
+    """Route complete slab row sets to owners without using ``condensed.matrix``."""
+
+    z_min, z_max = (float(value) for value in domain_z)
+    if not z_min < z_max or num_slabs < 1 or overlap_fraction < 0.0:
+        raise ValueError("invalid physical slab domain, count, or overlap")
+    records = owned_cell_geometry(mesh)
+    recovery_maps = condensed.cell_recovery_maps
+    comm = condensed.comm
+    local_alignment_error = len(records) != len(recovery_maps)
+    if comm.allreduce(local_alignment_error, op=MPI.LOR):
+        raise RuntimeError("owned cell geometry and recovery maps are not aligned")
+    layout = condensed.create_active_vector()
+    active_start, active_end = layout.getOwnershipRange()
+    ownership_ranges = tuple(comm.allgather((int(active_start), int(active_end))))
+    layout.destroy()
+    width = (z_max - z_min) / num_slabs
+    intervals = tuple(
+        (
+            z_min + slab * width - overlap_fraction * width,
+            z_min + (slab + 1) * width + overlap_fraction * width,
+        )
+        for slab in range(num_slabs)
+    )
+    local_seed_masks: dict[int, int] = {}
+    local_query_rows: set[int] = set()
+    for cell_index, (record, recovery) in enumerate(
+        zip(records, recovery_maps, strict=True)
+    ):
+        cell_rows = set()
+        for original in recovery.trace_original_dofs:
+            active_ids, coefficients = (
+                condensed.trace_constraints.expansion_by_original[int(original)]
+            )
+            cell_rows.update(
+                int(active)
+                for active, coefficient in zip(active_ids, coefficients, strict=True)
+                if coefficient != 0
+            )
+        local_query_rows.update(cell_rows)
+        z_cell_min = float(np.min(record.coordinates[:, 2]))
+        z_cell_max = float(np.max(record.coordinates[:, 2]))
+        cell_mask = 0
+        for slab, (low, high) in enumerate(intervals):
+            if cell_rows and z_cell_max >= low and z_cell_min <= high:
+                cell_mask |= 1 << slab
+        for row in cell_rows:
+            local_seed_masks[row] = local_seed_masks.get(row, 0) | cell_mask
+
+    def row_owner(row: int) -> int:
+        for rank, (_start, end) in enumerate(ownership_ranges):
+            if row < end:
+                return rank
+        raise RuntimeError("active row is outside its PETSc ownership ranges")
+
+    seed_packets: list[list[tuple[int, int]]] = [[] for _ in range(comm.size)]
+    for row in sorted(local_query_rows):
+        seed_packets[row_owner(row)].append((row, local_seed_masks.get(row, 0)))
+    received_seed_packets = comm.alltoall(seed_packets)
+    owned_row_masks: dict[int, int] = {}
+    query_sources = [set() for _ in range(comm.size)]
+    for source, packet in enumerate(received_seed_packets):
+        for row, seed_mask in packet:
+            owned_row_masks[row] = owned_row_masks.get(row, 0) | int(seed_mask)
+            query_sources[source].add(int(row))
+    row_counts_local = np.zeros(num_slabs, dtype=np.int64)
+    for mask in owned_row_masks.values():
+        for slab in range(num_slabs):
+            row_counts_local[slab] += (mask >> slab) & 1
+    covered_rows = int(
+        comm.allreduce(
+            sum(int(mask != 0) for mask in owned_row_masks.values()),
+            op=MPI.SUM,
+        )
+    )
+    if covered_rows != int(condensed.active_rows):
+        raise RuntimeError("owned row masks do not cover all active trace rows")
+    row_counts = np.asarray(comm.allreduce(row_counts_local, op=MPI.SUM))
+    owners = _owner_from_scalar_row_counts(row_counts, comm.size)
+    response_packets: list[list[tuple[int, int, int]]] = [[] for _ in range(comm.size)]
+    for source, rows in enumerate(query_sources):
+        for row in sorted(rows):
+            response_packets[source].append(
+                (
+                    int(row),
+                    int(owned_row_masks.get(row, 0)),
+                    int(owned_row_masks.get(row, 0)).bit_count(),
+                )
+            )
+    owner_slab_masks = [0 for _ in range(comm.size)]
+    for slab, owner in enumerate(owners):
+        owner_slab_masks[owner] |= 1 << slab
+    for owner, slab_mask in enumerate(owner_slab_masks):
+        for row, mask in owned_row_masks.items():
+            selected_mask = int(mask) & slab_mask
+            if selected_mask:
+                response_packets[owner].append(
+                    (int(row), selected_mask, int(mask).bit_count())
+                )
+    received_responses = comm.alltoall(response_packets)
+    local_row_masks: dict[int, int] = {}
+    local_row_multiplicities: dict[int, int] = {}
+    for packet in received_responses:
+        for row, mask, row_multiplicity in packet:
+            local_row_masks[int(row)] = local_row_masks.get(int(row), 0) | int(mask)
+            local_row_multiplicities[int(row)] = int(row_multiplicity)
+    local_cells_by_slab = [[] for _ in intervals]
+    for cell_index, recovery in enumerate(recovery_maps):
+        cell_rows = set()
+        for original in recovery.trace_original_dofs:
+            active_ids, coefficients = (
+                condensed.trace_constraints.expansion_by_original[int(original)]
+            )
+            cell_rows.update(
+                int(active)
+                for active, coefficient in zip(active_ids, coefficients, strict=True)
+                if coefficient != 0
+            )
+        cell_mask = 0
+        for row in cell_rows:
+            cell_mask |= local_row_masks.get(row, 0)
+        for slab in range(num_slabs):
+            if cell_mask & (1 << slab):
+                local_cells_by_slab[slab].append(cell_index)
+    empty = np.empty(0, dtype=PETSc.IntType)
+    owner_rows: list[np.ndarray] = []
+    for slab, owner in enumerate(owners):
+        if comm.rank == owner:
+            rows = np.asarray(
+                sorted(
+                    row for row, mask in local_row_masks.items() if mask & (1 << slab)
+                ),
+                dtype=PETSc.IntType,
+            )
+        else:
+            rows = empty.copy()
+        owner_rows.append(rows)
+    owned_invalid = any(
+        owners[slab] == comm.rank and int(rows.size) != int(row_counts[slab])
+        for slab, rows in enumerate(owner_rows)
+    )
+    if comm.allreduce(owned_invalid, op=MPI.LOR):
+        raise RuntimeError("slab owner did not receive its active row closure")
+    partition_weights_by_slab: list[np.ndarray] = []
+    for slab, owner in enumerate(owners):
+        if comm.rank != owner:
+            partition_weights_by_slab.append(empty.copy())
+            continue
+        rows = owner_rows[slab]
+        counts = np.asarray(
+            [local_row_multiplicities[int(row)] for row in rows],
+            dtype=np.int32,
+        )
+        partition_weights_by_slab.append(
+            np.asarray(1.0 / counts, dtype=PETSc.ScalarType)
+        )
+    return OwnerLocalSlabPlan(
+        comm=comm,
+        active_rows=int(condensed.active_rows),
+        slab_owners=owners,
+        owner_rows=tuple(owner_rows),
+        local_cell_indices_by_slab=tuple(
+            tuple(int(cell) for cell in cells) for cells in local_cells_by_slab
+        ),
+        slab_row_counts=tuple(int(value) for value in row_counts),
+        partition_weights_by_slab=tuple(partition_weights_by_slab),
+    )
+
+
+def _route_owner_slab_cells(
+    condensed: Any,
+    plan: OwnerLocalSlabPlan,
+    slab: int,
+    consume: Callable[[int, np.ndarray, np.ndarray], None],
+) -> dict[str, int]:
+    comm = plan.comm
+    owner = plan.slab_owners[slab]
+    cells = plan.local_cell_indices_by_slab[slab]
+    local_payload_max = 0
+    owner_payload_max = 0
+    rounds = 0
+    round_index = 0
+    while comm.allreduce(round_index < len(cells), op=MPI.LOR):
+        has_cell = round_index < len(cells)
+        payload = None
+        if has_cell:
+            cell_index, active_ids, block = next(
+                iter_owned_constrained_schur_contributions(
+                    condensed,
+                    (cells[round_index],),
+                )
+            )
+            payload_bytes = int(active_ids.nbytes + block.nbytes)
+            local_payload_max = max(local_payload_max, payload_bytes)
+            payload = (cell_index, active_ids, block)
+        packets = comm.gather(payload, root=owner)
+        if comm.rank == owner:
+            round_owner_bytes = 0
+            for packet in packets:
+                if packet is not None:
+                    cell_index, active_ids, block = packet
+                    round_owner_bytes += int(active_ids.nbytes + block.nbytes)
+                    consume(cell_index, active_ids, block)
+            owner_payload_max = max(owner_payload_max, round_owner_bytes)
+        rounds += 1
+        round_index += 1
+    return {
+        "communication_rounds": rounds,
+        "global_contribution_count": int(comm.allreduce(len(cells), op=MPI.SUM)),
+        "max_sender_payload_bytes": int(comm.allreduce(local_payload_max, op=MPI.MAX)),
+        "max_owner_payload_bytes": int(comm.allreduce(owner_payload_max, op=MPI.MAX)),
+    }
+
+
+def assemble_owner_local_slab_matrix(
+    condensed: Any,
+    plan: OwnerLocalSlabPlan,
+    slab: int,
+) -> tuple[PETSc.Mat | None, dict[str, Any]]:
+    """Route one slab's cell blocks and assemble only on its deterministic owner."""
+
+    if slab < 0 or slab >= len(plan.slab_owners):
+        raise ValueError("slab index is out of range")
+    owner = plan.slab_owners[slab]
+    owner_rows = plan.owner_rows[slab]
+    matrix = None
+    if plan.comm.rank == owner:
+        size = int(owner_rows.size)
+        matrix = PETSc.Mat().createAIJ(
+            size=(size, size),
+            comm=PETSc.COMM_SELF,
+        )
+        matrix.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR, False)
+
+        def consume(_cell_index, active_ids, block):
+            owner_positions = np.searchsorted(owner_rows, active_ids)
+            in_range = owner_positions < owner_rows.size
+            candidate = np.flatnonzero(in_range)
+            selected_cell_positions = candidate[
+                owner_rows[owner_positions[candidate]] == active_ids[candidate]
+            ]
+            if selected_cell_positions.size == 0:
+                raise RuntimeError("cell support is outside its slab owner rows")
+            selected_owner_positions = np.asarray(
+                owner_positions[selected_cell_positions], dtype=PETSc.IntType
+            )
+            local_block = np.ascontiguousarray(
+                block[np.ix_(selected_cell_positions, selected_cell_positions)]
+            )
+            matrix.setValues(
+                selected_owner_positions,
+                selected_owner_positions,
+                local_block,
+                addv=PETSc.InsertMode.ADD_VALUES,
+            )
+
+    else:
+
+        def consume(_cell_index, _active_ids, _block):
+            return None
+
+    route_audit = _route_owner_slab_cells(condensed, plan, slab, consume)
+    if plan.comm.rank == owner:
+        assert matrix is not None
+        matrix.assemble()
+        info = matrix.getInfo(PETSc.Mat.InfoType.LOCAL)
+        audit = {
+            "owner_rank": int(owner),
+            "owner_local_row_count": int(owner_rows.size),
+            "matrix_nnz_used": int(info["nz_used"]),
+            "matrix_nnz_allocated": int(info["nz_allocated"]),
+            "matrix_allocation_ratio": float(
+                info["nz_allocated"] / max(info["nz_used"], 1)
+            ),
+            "matrix_fingerprint": _exact_seqaij_fingerprint(matrix),
+            "dynamic_allocation": True,
+            **route_audit,
+        }
+    else:
+        audit = None
+    return matrix, plan.comm.bcast(audit, root=owner)
+
+
+def build_owner_local_slab_diagonal(
+    condensed: Any,
+) -> tuple[PETSc.Vec, dict[str, float | int]]:
+    """Build the exact distributed diagonal from the same cell contributions."""
+
+    diagonal = condensed.create_active_vector()
+    diagonal.set(0.0)
+    for _cell_index, active_ids, block in iter_owned_constrained_schur_contributions(
+        condensed
+    ):
+        values = np.diag(block)
+        diagonal.setValues(active_ids, values, addv=PETSc.InsertMode.ADD_VALUES)
+    diagonal.assemble()
+    values = diagonal.getArray(readonly=True)
+    local_max = float(np.max(np.abs(values))) if values.size else 0.0
+    return diagonal, {
+        "rank_local_diagonal_rows": int(diagonal.getLocalSize()),
+        "global_diagonal_max_abs": float(
+            condensed.comm.allreduce(local_max, op=MPI.MAX)
+        ),
+    }
+
+
+def extract_owner_local_slab_diagonal(
+    diagonal: PETSc.Vec,
+    plan: OwnerLocalSlabPlan,
+    slab: int,
+) -> tuple[np.ndarray | None, dict[str, int]]:
+    """Route only one slab owner's diagonal rows, never a full diagonal."""
+
+    comm = plan.comm
+    owner = plan.slab_owners[slab]
+    ranges = tuple(comm.allgather(tuple(map(int, diagonal.getOwnershipRange()))))
+    requests = [np.empty(0, dtype=PETSc.IntType) for _ in range(comm.size)]
+    if comm.rank == owner:
+        rows = plan.owner_rows[slab]
+        for rank, (start, end) in enumerate(ranges):
+            requests[rank] = rows[(rows >= start) & (rows < end)].copy()
+    incoming = comm.alltoall(requests)
+    local_start, _local_end = diagonal.getOwnershipRange()
+    local_values = diagonal.getArray(readonly=True)
+    responses = [np.empty(0, dtype=PETSc.ScalarType) for _ in range(comm.size)]
+    for source, request in enumerate(incoming):
+        if request.size:
+            responses[source] = np.asarray(
+                local_values[np.asarray(request, dtype=np.int64) - local_start],
+                dtype=PETSc.ScalarType,
+            ).copy()
+    returned = comm.alltoall(responses)
+    if comm.rank == owner:
+        rows = plan.owner_rows[slab]
+        values = np.empty(rows.size, dtype=PETSc.ScalarType)
+        for source, request in enumerate(requests):
+            if request.size:
+                positions = np.searchsorted(rows, request)
+                values[positions] = returned[source]
+    else:
+        values = None
+    return values, {
+        "owner_rank": int(owner),
+        "owner_local_row_count": int(plan.slab_row_counts[slab]),
+    }
+
+
+def owner_local_slab_diagonal_shift(
+    diagonal: PETSc.Vec,
+    plan: OwnerLocalSlabPlan,
+    slab: int,
+    global_scale: float,
+) -> tuple[np.ndarray | None, dict[str, int]]:
+    """Return the existing exact complex diagonal shift on one slab owner."""
+
+    values, audit = extract_owner_local_slab_diagonal(diagonal, plan, slab)
+    if values is not None:
+        values = -1j * 0.1 * np.maximum(np.abs(values), 1.0e-12 * float(global_scale))
+    return values, audit
+
+
 def balanced_subdomain_owners(
     subdomains: Sequence[np.ndarray], comm_size: int
 ) -> tuple[int, ...]:
@@ -500,6 +1089,272 @@ class DistributedPhysicalSlabSmoother:
     corrections back to the distributed vector.
     """
 
+    def _initialize_apply_state(
+        self,
+        local_indices: Sequence[np.ndarray],
+        template: PETSc.Vec,
+    ) -> None:
+        if local_indices:
+            self._union_indices = np.unique(np.concatenate(local_indices)).astype(
+                PETSc.IntType, copy=False
+            )
+        else:
+            self._union_indices = np.empty(0, dtype=PETSc.IntType)
+        self._gathered_source = PETSc.Vec().createSeq(
+            self._union_indices.size, comm=PETSc.COMM_SELF
+        )
+        target_count = 2 if self.assembly_order == "two_color" else 1
+        self._gathered_targets = [
+            self._gathered_source.duplicate() for _ in range(target_count)
+        ]
+        global_is = PETSc.IS().createGeneral(self._union_indices, comm=PETSc.COMM_SELF)
+        local_is = PETSc.IS().createStride(
+            self._union_indices.size, first=0, step=1, comm=PETSc.COMM_SELF
+        )
+        self._scatter = PETSc.Scatter().create(
+            template, global_is, self._gathered_source, local_is
+        )
+        local_is.destroy()
+        global_is.destroy()
+
+    def _build_owned_factor(
+        self,
+        subdomain: int,
+        indices: np.ndarray,
+        submatrix: PETSc.Mat,
+        *,
+        diagonal_shift: np.ndarray | None,
+        multiplicity: np.ndarray | None,
+        partition_weights: np.ndarray | None = None,
+    ) -> _OwnedSubdomainFactor:
+        if diagonal_shift is not None:
+            submatrix_diagonal = submatrix.createVecLeft()
+            submatrix.getDiagonal(submatrix_diagonal)
+            submatrix_diagonal.getArray()[:] += diagonal_shift
+            submatrix.setDiagonal(submatrix_diagonal)
+            submatrix.assemble()
+            submatrix_diagonal.destroy()
+        union_positions = np.searchsorted(self._union_indices, indices).astype(
+            PETSc.IntType, copy=False
+        )
+        if np.any(self._union_indices[union_positions] != indices):
+            raise RuntimeError("subdomain indices are absent from the rank union")
+        if self.interpolation == "partition":
+            if partition_weights is not None:
+                weights = np.asarray(partition_weights, dtype=PETSc.ScalarType)
+                if weights.size != indices.size:
+                    raise RuntimeError("partition weights are not owner-row aligned")
+            elif multiplicity is not None:
+                weights = np.asarray(
+                    1.0 / multiplicity[indices], dtype=PETSc.ScalarType
+                )
+            else:
+                raise RuntimeError("partition interpolation needs row weights")
+        else:
+            weights = np.ones(indices.size, dtype=PETSc.ScalarType)
+        rhs = submatrix.createVecRight()
+        solution = submatrix.createVecLeft()
+        exact_fingerprint = _exact_seqaij_fingerprint(submatrix)
+        local_solver_type = self.local_solver_types[subdomain]
+        matrix_nnz = int(submatrix.getInfo(PETSc.Mat.InfoType.LOCAL)["nz_used"])
+        factor_matrix: PETSc.Mat | None = None
+        retained_matrix: PETSc.Mat | None = None
+        retained_ksp: PETSc.KSP | None = None
+        diagonal_inverse: np.ndarray | None = None
+        if local_solver_type == "jacobi":
+            diagonal = submatrix.createVecLeft()
+            submatrix.getDiagonal(diagonal)
+            values = np.asarray(
+                diagonal.getArray(readonly=True), dtype=PETSc.ScalarType
+            )
+            scale = float(np.max(np.abs(values), initial=0.0))
+            if np.any(np.abs(values) <= max(scale, TINY) * 1.0e-14):
+                diagonal.destroy()
+                raise RuntimeError("selective Jacobi slab has a zero diagonal")
+            diagonal_inverse = np.asarray(1.0 / values, dtype=PETSc.ScalarType)
+            factor_nnz = int(values.size)
+            diagonal.destroy()
+            submatrix.destroy()
+        else:
+            ksp = PETSc.KSP().create(PETSc.COMM_SELF)
+            ksp.setOperators(submatrix)
+            if self.local_ksp_iterations == 1:
+                ksp.setType("preonly")
+            else:
+                ksp.setType(self.local_ksp_type)
+                if self.local_ksp_type == "gmres":
+                    ksp.setGMRESRestart(self.local_ksp_iterations)
+                ksp.setNormType(PETSc.KSP.NormType.NONE)
+                ksp.setTolerances(max_it=self.local_ksp_iterations)
+            pc = ksp.getPC()
+            pc.setType("ilu")
+            pc.setFactorLevels(int(self.ilu_levels))
+            pc.setFactorOrdering("rcm")
+            ksp.setUp()
+            factor_nnz = int(
+                pc.getFactorMatrix().getInfo(PETSc.Mat.InfoType.LOCAL)["nz_used"]
+            )
+            retained_matrix = submatrix
+            retained_ksp = ksp
+            if self.factor_only_storage:
+                factor_matrix = pc.getFactorMatrix()
+                factor_matrix.incRef()
+                ksp.destroy()
+                submatrix.destroy()
+                retained_ksp = None
+                retained_matrix = None
+        return _OwnedSubdomainFactor(
+            subdomain=subdomain,
+            local_solver_type=local_solver_type,
+            indices=indices,
+            union_positions=union_positions,
+            weights=weights,
+            matrix=retained_matrix,
+            ksp=retained_ksp,
+            factor_matrix=factor_matrix,
+            diagonal_inverse=diagonal_inverse,
+            matrix_nnz=matrix_nnz,
+            factor_nnz=factor_nnz,
+            exact_fingerprint=exact_fingerprint,
+            rhs=rhs,
+            solution=solution,
+        )
+
+    def _report_first_submatrix(
+        self,
+        setup_observer: Callable[[str, dict[str, Any]], None] | None,
+        submatrix: PETSc.Mat | None,
+        has_factor: bool,
+        cached_payload: dict[str, Any] | None = None,
+    ) -> None:
+        if setup_observer is None or self._first_submatrix_reported:
+            return
+        self._first_submatrix_reported = True
+        payload = {
+            "global_matrix_rows": self.global_size,
+            "global_subdomain_count": self._global_subdomain_count,
+            "rank_local_has_first_submatrix": has_factor,
+            "rank_local_first_submatrix_rows": None,
+            "rank_local_first_submatrix_cols": None,
+            "rank_local_first_submatrix_nnz": None,
+        }
+        if cached_payload is not None:
+            payload.update(cached_payload)
+        elif has_factor and submatrix is not None:
+            payload.update(
+                {
+                    "rank_local_first_submatrix_rows": int(submatrix.getSize()[0]),
+                    "rank_local_first_submatrix_cols": int(submatrix.getSize()[1]),
+                    "rank_local_first_submatrix_nnz": int(
+                        submatrix.getInfo(PETSc.Mat.InfoType.LOCAL)["nz_used"]
+                    ),
+                }
+            )
+        setup_observer("first_owned_slab_submatrix_allocated", payload)
+
+    def _report_first_factor(
+        self,
+        setup_observer: Callable[[str, dict[str, Any]], None] | None,
+        factor: _OwnedSubdomainFactor | None,
+        cached_payload: dict[str, Any] | None = None,
+    ) -> None:
+        if setup_observer is None or self._first_factor_reported:
+            return
+        self._first_factor_reported = True
+        payload = {
+            "rank_local_has_first_factor": factor is not None,
+            "rank_local_first_factor_subdomain": (
+                None if factor is None else int(factor.subdomain)
+            ),
+            "rank_local_first_factor_rows": (
+                None if factor is None else int(factor.indices.size)
+            ),
+            "rank_local_first_factor_matrix_nnz": (
+                None if factor is None else int(factor.matrix_nnz)
+            ),
+            "rank_local_first_factor_nnz": (
+                None if factor is None else int(factor.factor_nnz)
+            ),
+        }
+        if cached_payload is not None:
+            payload.update(cached_payload)
+        setup_observer(
+            "first_owned_slab_factor_ready",
+            payload,
+        )
+
+    def _finalize_factor_inventory(
+        self,
+        global_subdomain_count: int,
+        progress: Callable[[int, int], None] | None,
+        setup_observer: Callable[[str, dict[str, Any]], None] | None,
+    ) -> None:
+        self.comm.Barrier()
+        if progress is not None:
+            progress(global_subdomain_count, global_subdomain_count)
+        local_rows = sum(factor.indices.size for factor in self._factors)
+        local_nnz = sum(factor.matrix_nnz for factor in self._factors)
+        local_factor_nnz = sum(factor.factor_nnz for factor in self._factors)
+        self.global_factor_rows = int(self.comm.allreduce(local_rows, op=MPI.SUM))
+        self.global_factor_nnz = int(self.comm.allreduce(local_nnz, op=MPI.SUM))
+        self.global_stored_factor_nnz = int(
+            self.comm.allreduce(local_factor_nnz, op=MPI.SUM)
+        )
+        self.maximum_owner_rows = int(self.comm.allreduce(local_rows, op=MPI.MAX))
+        self.minimum_owner_rows = int(self.comm.allreduce(local_rows, op=MPI.MIN))
+        fingerprint_packets = self.comm.allgather(
+            [
+                (int(factor.subdomain), factor.exact_fingerprint)
+                for factor in self._factors
+            ]
+        )
+        self.factor_fingerprints = sorted(
+            (item for packet in fingerprint_packets for item in packet),
+            key=lambda item: item[0],
+        )
+        unique_fingerprints = {
+            fingerprint for _, fingerprint in self.factor_fingerprints
+        }
+        self.unique_factor_classes = len(unique_fingerprints)
+        self.exact_duplicate_factor_count = (
+            len(self.factor_fingerprints) - self.unique_factor_classes
+        )
+        if setup_observer is not None:
+            setup_observer(
+                "all_slab_factors_ready",
+                {
+                    "global_factor_rows": self.global_factor_rows,
+                    "global_factor_nnz": self.global_factor_nnz,
+                    "global_stored_factor_nnz": self.global_stored_factor_nnz,
+                    "global_unique_factor_classes": self.unique_factor_classes,
+                    "global_exact_duplicate_factor_count": (
+                        self.exact_duplicate_factor_count
+                    ),
+                    "rank_local_factor_count": len(self._factors),
+                    "rank_local_factor_rows": int(local_rows),
+                    "rank_local_factor_nnz": int(local_nnz),
+                    "rank_local_stored_factor_nnz": int(local_factor_nnz),
+                },
+            )
+
+    def _initialize_inner_ksp(self, action_operator: PETSc.Mat | None) -> None:
+        if self.smoother_iterations <= 1:
+            return
+        if action_operator is None:
+            raise ValueError("multiple smoothing steps require an action operator")
+        self._inner_pc_context = _DistributedPhysicalSlabPcContext(self)
+        self._inner_ksp = PETSc.KSP().create(action_operator.getComm())
+        self._inner_ksp.setOperators(action_operator)
+        self._inner_ksp.setType(self.smoother_ksp_type)
+        if self.smoother_ksp_type == "gmres":
+            self._inner_ksp.setGMRESRestart(self.smoother_iterations)
+        self._inner_ksp.setNormType(PETSc.KSP.NormType.NONE)
+        self._inner_ksp.setTolerances(max_it=self.smoother_iterations)
+        inner_pc = self._inner_ksp.getPC()
+        inner_pc.setType("python")
+        inner_pc.setPythonContext(self._inner_pc_context)
+        self._inner_ksp.setUp()
+
     def __init__(
         self,
         matrix: PETSc.Mat,
@@ -517,6 +1372,7 @@ class DistributedPhysicalSlabSmoother:
         interpolation: str = "basic",
         assembly_order: str = "combined",
         progress: Callable[[int, int], None] | None = None,
+        setup_observer: Callable[[str, dict[str, Any]], None] | None = None,
     ) -> None:
         if not subdomains:
             raise ValueError("distributed physical-slab smoother needs subdomains")
@@ -547,6 +1403,7 @@ class DistributedPhysicalSlabSmoother:
         self.rank = int(self.comm.rank)
         self.comm_size = int(self.comm.size)
         self.global_size = int(matrix.getSize()[0])
+        self.ilu_levels = int(ilu_levels)
         self.interpolation = interpolation
         self.assembly_order = assembly_order
         self.local_ksp_iterations = int(local_ksp_iterations)
@@ -560,6 +1417,9 @@ class DistributedPhysicalSlabSmoother:
         self._destroyed = False
         self._inner_ksp: PETSc.KSP | None = None
         self._inner_pc_context: _DistributedPhysicalSlabPcContext | None = None
+        self._first_submatrix_reported = False
+        self._first_factor_reported = False
+        self._global_subdomain_count = len(subdomains)
 
         global_diagonal_shift: np.ndarray | None = None
         self.subdomain_local_diagonal_shift = diagonal_shift is not None
@@ -601,30 +1461,8 @@ class DistributedPhysicalSlabSmoother:
             if owner == self.rank
         )
         local_indices = [normalized[index] for index in self.local_subdomains]
-        if local_indices:
-            self._union_indices = np.unique(np.concatenate(local_indices)).astype(
-                PETSc.IntType, copy=False
-            )
-        else:
-            self._union_indices = np.empty(0, dtype=PETSc.IntType)
-
         template = matrix.createVecRight()
-        self._gathered_source = PETSc.Vec().createSeq(
-            self._union_indices.size, comm=PETSc.COMM_SELF
-        )
-        target_count = 2 if assembly_order == "two_color" else 1
-        self._gathered_targets = [
-            self._gathered_source.duplicate() for _ in range(target_count)
-        ]
-        global_is = PETSc.IS().createGeneral(self._union_indices, comm=PETSc.COMM_SELF)
-        local_is = PETSc.IS().createStride(
-            self._union_indices.size, first=0, step=1, comm=PETSc.COMM_SELF
-        )
-        self._scatter = PETSc.Scatter().create(
-            template, global_is, self._gathered_source, local_is
-        )
-        local_is.destroy()
-        global_is.destroy()
+        self._initialize_apply_state(local_indices, template)
         template.destroy()
 
         self._factors: list[_OwnedSubdomainFactor] = []
@@ -632,88 +1470,16 @@ class DistributedPhysicalSlabSmoother:
         def build_factor(
             subdomain: int, indices: np.ndarray, submatrix: PETSc.Mat
         ) -> _OwnedSubdomainFactor:
-            if global_diagonal_shift is not None:
-                submatrix_diagonal = submatrix.createVecLeft()
-                submatrix.getDiagonal(submatrix_diagonal)
-                submatrix_diagonal.getArray()[:] += global_diagonal_shift[indices]
-                submatrix.setDiagonal(submatrix_diagonal)
-                submatrix.assemble()
-                submatrix_diagonal.destroy()
-            union_positions = np.searchsorted(self._union_indices, indices).astype(
-                PETSc.IntType, copy=False
-            )
-            if np.any(self._union_indices[union_positions] != indices):
-                raise RuntimeError("subdomain indices are absent from the rank union")
-            if interpolation == "partition":
-                weights = np.asarray(
-                    1.0 / multiplicity[indices], dtype=PETSc.ScalarType
-                )
-            else:
-                weights = np.ones(indices.size, dtype=PETSc.ScalarType)
-            rhs = submatrix.createVecRight()
-            solution = submatrix.createVecLeft()
-            exact_fingerprint = _exact_seqaij_fingerprint(submatrix)
-            local_solver_type = self.local_solver_types[subdomain]
-            matrix_nnz = int(submatrix.getInfo()["nz_used"])
-            factor_matrix: PETSc.Mat | None = None
-            retained_matrix: PETSc.Mat | None = None
-            retained_ksp: PETSc.KSP | None = None
-            diagonal_inverse: np.ndarray | None = None
-            if local_solver_type == "jacobi":
-                diagonal = submatrix.createVecLeft()
-                submatrix.getDiagonal(diagonal)
-                values = np.asarray(
-                    diagonal.getArray(readonly=True), dtype=PETSc.ScalarType
-                )
-                scale = float(np.max(np.abs(values), initial=0.0))
-                if np.any(np.abs(values) <= max(scale, TINY) * 1.0e-14):
-                    diagonal.destroy()
-                    raise RuntimeError("selective Jacobi slab has a zero diagonal")
-                diagonal_inverse = np.asarray(1.0 / values, dtype=PETSc.ScalarType)
-                factor_nnz = int(values.size)
-                diagonal.destroy()
-                submatrix.destroy()
-            else:
-                ksp = PETSc.KSP().create(PETSc.COMM_SELF)
-                ksp.setOperators(submatrix)
-                if self.local_ksp_iterations == 1:
-                    ksp.setType("preonly")
-                else:
-                    ksp.setType(self.local_ksp_type)
-                    if self.local_ksp_type == "gmres":
-                        ksp.setGMRESRestart(self.local_ksp_iterations)
-                    ksp.setNormType(PETSc.KSP.NormType.NONE)
-                    ksp.setTolerances(max_it=self.local_ksp_iterations)
-                pc = ksp.getPC()
-                pc.setType("ilu")
-                pc.setFactorLevels(int(ilu_levels))
-                pc.setFactorOrdering("rcm")
-                ksp.setUp()
-                factor_nnz = int(pc.getFactorMatrix().getInfo()["nz_used"])
-                retained_matrix = submatrix
-                retained_ksp = ksp
-                if self.factor_only_storage:
-                    factor_matrix = pc.getFactorMatrix()
-                    factor_matrix.incRef()
-                    ksp.destroy()
-                    submatrix.destroy()
-                    retained_ksp = None
-                    retained_matrix = None
-            return _OwnedSubdomainFactor(
-                subdomain=subdomain,
-                local_solver_type=local_solver_type,
-                indices=indices,
-                union_positions=union_positions,
-                weights=weights,
-                matrix=retained_matrix,
-                ksp=retained_ksp,
-                factor_matrix=factor_matrix,
-                diagonal_inverse=diagonal_inverse,
-                matrix_nnz=matrix_nnz,
-                factor_nnz=factor_nnz,
-                exact_fingerprint=exact_fingerprint,
-                rhs=rhs,
-                solution=solution,
+            return self._build_owned_factor(
+                subdomain,
+                indices,
+                submatrix,
+                diagonal_shift=(
+                    None
+                    if global_diagonal_shift is None
+                    else global_diagonal_shift[indices]
+                ),
+                multiplicity=multiplicity,
             )
 
         local_factor_count = len(local_indices)
@@ -729,19 +1495,32 @@ class DistributedPhysicalSlabSmoother:
                 submatrix = matrix.createSubMatrices([extraction_set])[0]
                 extraction_set.destroy()
                 if has_factor:
-                    self._factors.append(
-                        build_factor(self.local_subdomains[slot], indices, submatrix)
+                    if slot == 0:
+                        self._report_first_submatrix(setup_observer, submatrix, True)
+                    factor = build_factor(
+                        self.local_subdomains[slot], indices, submatrix
                     )
+                    if slot == 0:
+                        self._report_first_factor(setup_observer, factor)
+                    self._factors.append(factor)
                 else:
                     submatrix.destroy()
+                    if slot == 0:
+                        self._report_first_submatrix(setup_observer, None, False)
+                        self._report_first_factor(setup_observer, None)
         elif self.factor_only_storage:
-            for subdomain, indices in zip(
-                self.local_subdomains, local_indices, strict=True
+            for slot, (subdomain, indices) in enumerate(
+                zip(self.local_subdomains, local_indices, strict=True)
             ):
                 extraction_set = PETSc.IS().createGeneral(indices, comm=PETSc.COMM_SELF)
                 submatrix = matrix.createSubMatrices([extraction_set])[0]
                 extraction_set.destroy()
-                self._factors.append(build_factor(subdomain, indices, submatrix))
+                if slot == 0:
+                    self._report_first_submatrix(setup_observer, submatrix, True)
+                factor = build_factor(subdomain, indices, submatrix)
+                if slot == 0:
+                    self._report_first_factor(setup_observer, factor)
+                self._factors.append(factor)
         else:
             extraction_sets = [
                 PETSc.IS().createGeneral(indices, comm=PETSc.COMM_SELF)
@@ -750,56 +1529,245 @@ class DistributedPhysicalSlabSmoother:
             submatrices = matrix.createSubMatrices(extraction_sets)
             for index_set in extraction_sets:
                 index_set.destroy()
-            for subdomain, indices, submatrix in zip(
-                self.local_subdomains,
-                local_indices,
-                submatrices,
-                strict=True,
+            for slot, (subdomain, indices, submatrix) in enumerate(
+                zip(
+                    self.local_subdomains,
+                    local_indices,
+                    submatrices,
+                    strict=True,
+                )
             ):
-                self._factors.append(build_factor(subdomain, indices, submatrix))
-        self.comm.Barrier()
-        if progress is not None:
-            progress(len(normalized), len(normalized))
+                if slot == 0:
+                    self._report_first_submatrix(setup_observer, submatrix, True)
+                factor = build_factor(subdomain, indices, submatrix)
+                if slot == 0:
+                    self._report_first_factor(setup_observer, factor)
+                self._factors.append(factor)
+        if not self._first_submatrix_reported:
+            self._report_first_submatrix(setup_observer, None, False)
+        if not self._first_factor_reported:
+            self._report_first_factor(setup_observer, None)
+        self._finalize_factor_inventory(len(normalized), progress, setup_observer)
 
-        local_rows = sum(factor.indices.size for factor in self._factors)
-        local_nnz = sum(factor.matrix_nnz for factor in self._factors)
-        local_factor_nnz = sum(factor.factor_nnz for factor in self._factors)
-        self.global_factor_rows = int(self.comm.allreduce(local_rows, op=MPI.SUM))
-        self.global_factor_nnz = int(self.comm.allreduce(local_nnz, op=MPI.SUM))
-        self.global_stored_factor_nnz = int(
-            self.comm.allreduce(local_factor_nnz, op=MPI.SUM)
+        self._initialize_inner_ksp(action_operator)
+
+    @classmethod
+    def from_owner_local_plan(
+        cls,
+        condensed: Any,
+        plan: OwnerLocalSlabPlan,
+        *,
+        ilu_levels: int,
+        interpolation: str = "basic",
+        precomputed_diagonal_shift: PETSc.Vec | None = None,
+        two_step_action_operator: PETSc.Mat | None = None,
+        progress: Callable[[int, int], None] | None = None,
+        setup_observer: Callable[[str, dict[str, Any]], None] | None = None,
+    ) -> DistributedPhysicalSlabSmoother:
+        """Build the fixed M2b factor-only smoother without a global matrix."""
+
+        if int(ilu_levels) != 0:
+            raise ValueError("owner-local M2b setup requires ILU(0)")
+        smoother = cls.__new__(cls)
+        smoother._initialize_owner_local_plan(
+            condensed,
+            plan,
+            interpolation=interpolation,
+            precomputed_diagonal_shift=precomputed_diagonal_shift,
+            two_step_action_operator=two_step_action_operator,
+            progress=progress,
+            setup_observer=setup_observer,
         )
-        self.maximum_owner_rows = int(self.comm.allreduce(local_rows, op=MPI.MAX))
-        self.minimum_owner_rows = int(self.comm.allreduce(local_rows, op=MPI.MIN))
-        fingerprint_packets = self.comm.allgather(
-            [
-                (int(factor.subdomain), factor.exact_fingerprint)
-                for factor in self._factors
+        return smoother
+
+    def _initialize_owner_local_plan(
+        self,
+        condensed: Any,
+        plan: OwnerLocalSlabPlan,
+        *,
+        interpolation: str,
+        precomputed_diagonal_shift: PETSc.Vec | None,
+        two_step_action_operator: PETSc.Mat | None,
+        progress: Callable[[int, int], None] | None,
+        setup_observer: Callable[[str, dict[str, Any]], None] | None,
+    ) -> None:
+        if int(plan.active_rows) != int(condensed.active_rows):
+            raise ValueError("owner-local plan size does not match condensed system")
+        self.comm = plan.comm
+        self.rank = int(self.comm.rank)
+        self.comm_size = int(self.comm.size)
+        self.global_size = int(condensed.active_rows)
+        self.ilu_levels = 0
+        if interpolation not in {"basic", "partition"}:
+            raise ValueError("interpolation must be 'basic' or 'partition'")
+        self.interpolation = interpolation
+        self.assembly_order = (
+            "two_color" if two_step_action_operator is not None else "combined"
+        )
+        self.local_ksp_iterations = 1
+        self.local_ksp_type = "gmres"
+        self.smoother_iterations = 2 if two_step_action_operator is not None else 1
+        self.smoother_ksp_type = "gmres"
+        self.factor_only_storage = True
+        self.local_solver_types = ("ilu",) * len(plan.slab_owners)
+        self.apply_count = 0
+        self.apply_elapsed_s = 0.0
+        self._destroyed = False
+        self._inner_ksp = None
+        self._inner_pc_context = None
+        self._first_submatrix_reported = False
+        self._first_factor_reported = False
+        self._global_subdomain_count = len(plan.slab_owners)
+        self.partition_weight_sum_error: float | None = None
+        self.partition_weight_min: float | None = None
+        self.partition_weight_max: float | None = None
+        self.subdomain_local_diagonal_shift = True
+        self.subdomain_owners = tuple(plan.slab_owners)
+        self.local_subdomains = tuple(
+            slab for slab, owner in enumerate(plan.slab_owners) if owner == self.rank
+        )
+        local_indices = [plan.owner_rows[slab] for slab in self.local_subdomains]
+        template = condensed.create_active_vector()
+        self._initialize_apply_state(local_indices, template)
+        template.destroy()
+        self._factors = []
+        first_submatrix_payload = None
+        first_factor_payload = None
+
+        if precomputed_diagonal_shift is None:
+            diagonal, _diagonal_audit = build_owner_local_slab_diagonal(condensed)
+            diagonal_source = diagonal
+        else:
+            diagonal = None
+            diagonal_source = precomputed_diagonal_shift
+            if diagonal_source.getSize() != self.global_size:
+                raise ValueError("precomputed diagonal shift size does not match plan")
+        try:
+            for slab, owner in enumerate(plan.slab_owners):
+                slab_matrix, _slab_audit = assemble_owner_local_slab_matrix(
+                    condensed, plan, slab
+                )
+                if precomputed_diagonal_shift is None:
+                    slab_shift, _shift_audit = owner_local_slab_diagonal_shift(
+                        diagonal_source,
+                        plan,
+                        slab,
+                        _diagonal_audit["global_diagonal_max_abs"],
+                    )
+                else:
+                    slab_shift, _shift_audit = extract_owner_local_slab_diagonal(
+                        diagonal_source, plan, slab
+                    )
+                if self.rank == owner:
+                    if setup_observer is not None and first_submatrix_payload is None:
+                        first_submatrix_payload = {
+                            "rank_local_has_first_submatrix": True,
+                            "rank_local_first_submatrix_rows": int(
+                                slab_matrix.getSize()[0]
+                            ),
+                            "rank_local_first_submatrix_cols": int(
+                                slab_matrix.getSize()[1]
+                            ),
+                            "rank_local_first_submatrix_nnz": int(
+                                slab_matrix.getInfo(PETSc.Mat.InfoType.LOCAL)["nz_used"]
+                            ),
+                        }
+                    factor = self._build_owned_factor(
+                        slab,
+                        plan.owner_rows[slab],
+                        slab_matrix,
+                        diagonal_shift=slab_shift,
+                        multiplicity=None,
+                        partition_weights=(
+                            plan.partition_weights_by_slab[slab]
+                            if self.interpolation == "partition"
+                            else None
+                        ),
+                    )
+                    if setup_observer is not None and first_factor_payload is None:
+                        first_factor_payload = {
+                            "rank_local_has_first_factor": True,
+                            "rank_local_first_factor_subdomain": int(factor.subdomain),
+                            "rank_local_first_factor_rows": int(factor.indices.size),
+                            "rank_local_first_factor_matrix_nnz": int(
+                                factor.matrix_nnz
+                            ),
+                            "rank_local_first_factor_nnz": int(factor.factor_nnz),
+                        }
+                    self._factors.append(factor)
+        finally:
+            if diagonal is not None:
+                diagonal.destroy()
+        if self.interpolation == "partition":
+            local_weights = [
+                plan.partition_weights_by_slab[slab] for slab in self.local_subdomains
             ]
+            local_weight_values = (
+                np.concatenate(local_weights) if local_weights else np.empty(0)
+            )
+            local_invalid_weights = False
+            if local_weight_values.size:
+                real_weights = np.real(local_weight_values)
+                local_invalid_weights = bool(
+                    not np.all(np.isfinite(real_weights))
+                    or np.any(real_weights <= 0.0)
+                    or np.any(real_weights > 1.0)
+                )
+            if self.comm.allreduce(local_invalid_weights, op=MPI.LOR):
+                raise RuntimeError("partition weights are not finite in (0, 1]")
+            weight_sums = condensed.create_active_vector()
+            weight_sums.set(0.0)
+            for slab in self.local_subdomains:
+                weight_sums.setValues(
+                    plan.owner_rows[slab],
+                    plan.partition_weights_by_slab[slab],
+                    addv=PETSc.InsertMode.ADD_VALUES,
+                )
+            weight_sums.assemble()
+            local_weight_error = (
+                np.asarray(weight_sums.getArray(readonly=True), dtype=PETSc.ScalarType)
+                - 1.0
+            )
+            local_weight_error_max = (
+                float(np.max(np.abs(local_weight_error)))
+                if local_weight_error.size
+                else 0.0
+            )
+            self.partition_weight_sum_error = float(
+                self.comm.allreduce(local_weight_error_max, op=MPI.MAX)
+            )
+            weight_sums.destroy()
+            local_min = (
+                float(np.min(np.real(local_weight_values)))
+                if local_weight_values.size
+                else 1.0
+            )
+            local_max = (
+                float(np.max(np.real(local_weight_values)))
+                if local_weight_values.size
+                else 0.0
+            )
+            self.partition_weight_min = float(
+                self.comm.allreduce(local_min, op=MPI.MIN)
+            )
+            self.partition_weight_max = float(
+                self.comm.allreduce(local_max, op=MPI.MAX)
+            )
+            if self.partition_weight_sum_error > 1.0e-12:
+                raise RuntimeError("partition weights do not form a unity sum")
+        self._report_first_submatrix(
+            setup_observer,
+            None,
+            first_submatrix_payload is not None,
+            cached_payload=first_submatrix_payload,
         )
-        self.factor_fingerprints = sorted(
-            (item for packet in fingerprint_packets for item in packet),
-            key=lambda item: item[0],
+        self._report_first_factor(
+            setup_observer,
+            None,
+            cached_payload=first_factor_payload,
         )
-        unique_fingerprints = {fingerprint for _, fingerprint in self.factor_fingerprints}
-        self.unique_factor_classes = len(unique_fingerprints)
-        self.exact_duplicate_factor_count = (
-            len(self.factor_fingerprints) - self.unique_factor_classes
-        )
-
-        if self.smoother_iterations > 1:
-            self._inner_pc_context = _DistributedPhysicalSlabPcContext(self)
-            self._inner_ksp = PETSc.KSP().create(matrix.getComm())
-            self._inner_ksp.setOperators(action_operator)
-            self._inner_ksp.setType(self.smoother_ksp_type)
-            if self.smoother_ksp_type == "gmres":
-                self._inner_ksp.setGMRESRestart(self.smoother_iterations)
-            self._inner_ksp.setNormType(PETSc.KSP.NormType.NONE)
-            self._inner_ksp.setTolerances(max_it=self.smoother_iterations)
-            inner_pc = self._inner_ksp.getPC()
-            inner_pc.setType("python")
-            inner_pc.setPythonContext(self._inner_pc_context)
-            self._inner_ksp.setUp()
+        self._finalize_factor_inventory(len(plan.slab_owners), progress, setup_observer)
+        self._initialize_inner_ksp(two_step_action_operator)
 
     def _apply_once(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         started = time.perf_counter()
@@ -852,7 +1820,7 @@ class DistributedPhysicalSlabSmoother:
 
     @property
     def diagnostics(self) -> dict[str, Any]:
-        return {
+        diagnostics = {
             "subdomain_owners": list(self.subdomain_owners),
             "local_subdomains": list(self.local_subdomains),
             "interpolation": self.interpolation,
@@ -881,6 +1849,15 @@ class DistributedPhysicalSlabSmoother:
             "one_level_apply_count": self.apply_count,
             "one_level_mean_apply_s": self.apply_elapsed_s / max(self.apply_count, 1),
         }
+        if self.interpolation == "partition":
+            diagnostics.update(
+                {
+                    "partition_weight_sum_error": self.partition_weight_sum_error,
+                    "partition_weight_min": self.partition_weight_min,
+                    "partition_weight_max": self.partition_weight_max,
+                }
+            )
+        return diagnostics
 
     def destroy(self) -> None:
         if self._destroyed:

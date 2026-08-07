@@ -69,19 +69,11 @@ class AssemblyTimeCondensedSystem:
     trace_constraints: TraceConstraintMap
     cell_recovery_maps: tuple[CellRecoveryMap, ...]
     interior_from_trace_by_class: dict[tuple[Any, ...], np.ndarray]
-    interior_lu_by_class: dict[
-        tuple[Any, ...], tuple[np.ndarray, np.ndarray]
-    ]
-    interior_rhs_projection_by_class: dict[
-        tuple[Any, ...], np.ndarray
-    ]
-    interior_solution_embedding_by_class: dict[
-        tuple[Any, ...], np.ndarray
-    ]
+    interior_lu_by_class: dict[tuple[Any, ...], tuple[np.ndarray, np.ndarray]]
+    interior_rhs_projection_by_class: dict[tuple[Any, ...], np.ndarray]
+    interior_solution_embedding_by_class: dict[tuple[Any, ...], np.ndarray]
     trace_from_interior_rhs_by_class: dict[tuple[Any, ...], np.ndarray]
-    interior_residual_projection_by_class: dict[
-        tuple[Any, ...], np.ndarray
-    ]
+    interior_residual_projection_by_class: dict[tuple[Any, ...], np.ndarray]
     full_rows: int
     trace_rows: int
     active_rows: int
@@ -114,14 +106,11 @@ def _owned_trace_numbering(
     if len(np.unique(local_interior)) != len(local_interior):
         raise ValueError("cell-interior DoFs must be locally unique")
     if len(local_interior) and (
-        int(local_interior.min()) < full_start
-        or int(local_interior.max()) >= full_end
+        int(local_interior.min()) < full_start or int(local_interior.max()) >= full_end
     ):
         raise ValueError("owned cell-interior DoFs must be owned by the cell rank")
     owned_full = np.arange(full_start, full_end, dtype=PETSc.IntType)
-    owned_trace = owned_full[
-        ~np.isin(owned_full, local_interior, assume_unique=True)
-    ]
+    owned_trace = owned_full[~np.isin(owned_full, local_interior, assume_unique=True)]
     counts = comm.allgather(int(len(owned_trace)))
     trace_start = int(sum(counts[: comm.rank]))
     packets = comm.allgather(
@@ -269,9 +258,7 @@ def _trace_constraint_map(
             f"{non_trace_slaves[:8]}"
         )
     slave_packets = comm.allgather(owned_slave_original)
-    global_slave_original = {
-        int(value) for packet in slave_packets for value in packet
-    }
+    global_slave_original = {int(value) for packet in slave_packets for value in packet}
     owned_active = owned_trace[
         ~np.isin(
             owned_trace,
@@ -306,9 +293,7 @@ def _trace_constraint_map(
     coefficients, offsets = mpc.coefficients()
     coefficients = np.asarray(coefficients, dtype=np.complex128)
     offsets = np.asarray(offsets, dtype=np.int64)
-    owned_constraint_rows: list[
-        tuple[int, np.ndarray, np.ndarray]
-    ] = []
+    owned_constraint_rows: list[tuple[int, np.ndarray, np.ndarray]] = []
     for local_slave, original_slave in zip(
         owned_local_slaves,
         owned_slave_original,
@@ -358,12 +343,9 @@ def _trace_constraint_map(
             ]
             if missing_masters:
                 raise ValueError(
-                    "MPC trace row references non-trace masters: "
-                    f"{missing_masters[:8]}"
+                    f"MPC trace row references non-trace masters: {missing_masters[:8]}"
                 )
-            active_ids = _idx(
-                original_to_active[int(master)] for master in masters
-            )
+            active_ids = _idx(original_to_active[int(master)] for master in masters)
             expansion[int(slave)] = (
                 active_ids,
                 np.asarray(row_coefficients, dtype=np.complex128),
@@ -372,8 +354,7 @@ def _trace_constraint_map(
     missing_expansion = set(original_to_trace) - set(expansion)
     if missing_expansion:
         raise RuntimeError(
-            "trace constraint expansion is incomplete: "
-            f"{sorted(missing_expansion)[:8]}"
+            f"trace constraint expansion is incomplete: {sorted(missing_expansion)[:8]}"
         )
     return TraceConstraintMap(
         owned_active_original_dofs=owned_active,
@@ -402,17 +383,10 @@ def _cell_trace_expansion(
     """Return unique active columns and the sparse local expansion matrix."""
 
     active_blocks = [
-        constraints.expansion_by_original[int(original)]
-        for original in trace_original
+        constraints.expansion_by_original[int(original)] for original in trace_original
     ]
     unique_active = _idx(
-        sorted(
-            {
-                int(active)
-                for ids, _coefficients in active_blocks
-                for active in ids
-            }
-        )
+        sorted({int(active) for ids, _coefficients in active_blocks for active in ids})
     )
     local_column = {
         int(active): position for position, active in enumerate(unique_active)
@@ -452,15 +426,9 @@ def _collective_preallocation_error(
         return
     error_class = (
         ValueError
-        if all(
-            error is None or error.startswith("ValueError:")
-            for error in errors
-        )
+        if all(error is None or error.startswith("ValueError:") for error in errors)
         else TypeError
-        if all(
-            error is None or error.startswith("TypeError:")
-            for error in errors
-        )
+        if all(error is None or error.startswith("TypeError:") for error in errors)
         else RuntimeError
     )
     raise error_class(
@@ -487,17 +455,13 @@ def _distributed_trace_preallocation(
     local_validation_error = None
     local_contract = None
     try:
-        normalized_active_counts = tuple(
-            int(count) for count in active_counts
-        )
+        normalized_active_counts = tuple(int(count) for count in active_counts)
         normalized_appended_rows = int(appended_global_rows)
         normalized_group_by_row = tuple(
             int(group) for group in appended_support_group_by_row
         )
         if len(normalized_active_counts) != comm.size:
-            raise ValueError(
-                "active row counts do not match the MPI communicator"
-            )
+            raise ValueError("active row counts do not match the MPI communicator")
         if any(count < 0 for count in normalized_active_counts):
             raise ValueError("active row counts must be nonnegative")
         if normalized_appended_rows < 0:
@@ -506,31 +470,17 @@ def _distributed_trace_preallocation(
         for ids in cell_active_ids:
             active = np.asarray(ids, dtype=np.int64)
             if len(active) == 0:
-                raise ValueError(
-                    "a cell has no active constrained trace rows"
-                )
-            if (
-                int(active.min()) < 0
-                or int(active.max()) >= active_rows_for_validation
-            ):
-                raise ValueError(
-                    "a cell contains an out-of-range active trace row"
-                )
+                raise ValueError("a cell has no active constrained trace rows")
+            if int(active.min()) < 0 or int(active.max()) >= active_rows_for_validation:
+                raise ValueError("a cell contains an out-of-range active trace row")
         if normalized_appended_rows == 0:
-            if (
-                appended_support_owned_cell_groups
-                or normalized_group_by_row
-            ):
-                raise ValueError(
-                    "appended support was provided without appended rows"
-                )
+            if appended_support_owned_cell_groups or normalized_group_by_row:
+                raise ValueError("appended support was provided without appended rows")
         elif (
             len(normalized_group_by_row) != normalized_appended_rows
             or not appended_support_owned_cell_groups
         ):
-            raise ValueError(
-                "every appended row requires an explicit support group"
-            )
+            raise ValueError("every appended row requires an explicit support group")
         group_count = len(appended_support_owned_cell_groups)
         invalid_groups = [
             group
@@ -544,12 +494,9 @@ def _distributed_trace_preallocation(
         for local_cells in appended_support_owned_cell_groups:
             cells = np.asarray(local_cells, dtype=np.int64)
             if len(cells) and (
-                int(cells.min()) < 0
-                or int(cells.max()) >= len(cell_active_ids)
+                int(cells.min()) < 0 or int(cells.max()) >= len(cell_active_ids)
             ):
-                raise ValueError(
-                    "appended support group contains a non-owned cell"
-                )
+                raise ValueError("appended support group contains a non-owned cell")
         local_contract = (
             normalized_active_counts,
             normalized_appended_rows,
@@ -558,18 +505,14 @@ def _distributed_trace_preallocation(
         )
     except Exception as error:
         local_validation_error = f"{type(error).__name__}: {error}"
-    validation_packets = comm.allgather(
-        (local_validation_error, local_contract)
-    )
+    validation_packets = comm.allgather((local_validation_error, local_contract))
     _collective_preallocation_error(
         [packet[0] for packet in validation_packets],
         context="trace preallocation input validation failed",
     )
     contracts = [packet[1] for packet in validation_packets]
     if any(contract != contracts[0] for contract in contracts[1:]):
-        raise RuntimeError(
-            "trace preallocation contract differs across MPI ranks"
-        )
+        raise RuntimeError("trace preallocation contract differs across MPI ranks")
     assert local_contract is not None
     (
         normalized_active_counts,
@@ -580,24 +523,18 @@ def _distributed_trace_preallocation(
     active_offsets = np.concatenate(
         (
             np.asarray([0], dtype=np.int64),
-            np.cumsum(
-                np.asarray(normalized_active_counts, dtype=np.int64)
-            ),
+            np.cumsum(np.asarray(normalized_active_counts, dtype=np.int64)),
         )
     )
     active_rows = int(active_offsets[-1])
     local_active_start = int(active_offsets[comm.rank])
     local_active_end = int(active_offsets[comm.rank + 1])
     local_active_rows = local_active_end - local_active_start
-    local_appended_rows = (
-        normalized_appended_rows if comm.rank == comm.size - 1 else 0
-    )
+    local_appended_rows = normalized_appended_rows if comm.rank == comm.size - 1 else 0
     local_rows = local_active_rows + local_appended_rows
     local_end = local_active_start + local_rows
 
-    send_packets: list[list[np.ndarray]] = [
-        [] for _rank in range(comm.size)
-    ]
+    send_packets: list[list[np.ndarray]] = [[] for _rank in range(comm.size)]
     for ids in cell_active_ids:
         active = np.asarray(ids, dtype=PETSc.IntType)
         owners = np.searchsorted(
@@ -608,9 +545,7 @@ def _distributed_trace_preallocation(
         for owner in np.unique(owners):
             send_packets[int(owner)].append(active)
     received_packets = comm.alltoall(send_packets)
-    incident: list[list[np.ndarray]] = [
-        [] for _row in range(local_active_rows)
-    ]
+    incident: list[list[np.ndarray]] = [[] for _row in range(local_active_rows)]
     received_cell_graphs = 0
     local_receive_error = None
     try:
@@ -683,18 +618,15 @@ def _distributed_trace_preallocation(
     )
     for group_index, support in enumerate(support_groups):
         appended_indices = np.flatnonzero(row_groups == group_index)
-        appended_columns = (
-            active_rows + appended_indices
-        ).astype(PETSc.IntType)
+        appended_columns = (active_rows + appended_indices).astype(PETSc.IntType)
         group_rows.append(appended_columns)
         local_support = support[
-            (support >= local_active_start)
-            & (support < local_active_end)
+            (support >= local_active_start) & (support < local_active_end)
         ]
         for row in local_support:
-            appended_columns_by_local_active[
-                int(row) - local_active_start
-            ].append(appended_columns)
+            appended_columns_by_local_active[int(row) - local_active_start].append(
+                appended_columns
+            )
 
     diagonal_nnz = np.zeros(local_rows, dtype=PETSc.IntType)
     off_diagonal_nnz = np.zeros(local_rows, dtype=PETSc.IntType)
@@ -713,8 +645,7 @@ def _distributed_trace_preallocation(
             columns = np.unique(np.concatenate(parts))
             diagonal = int(
                 np.count_nonzero(
-                    (columns >= local_active_start)
-                    & (columns < local_end)
+                    (columns >= local_active_start) & (columns < local_end)
                 )
             )
             diagonal_nnz[local_row] = diagonal
@@ -738,8 +669,7 @@ def _distributed_trace_preallocation(
                 )
                 diagonal = int(
                     np.count_nonzero(
-                        (columns >= local_active_start)
-                        & (columns < local_end)
+                        (columns >= local_active_start) & (columns < local_end)
                     )
                 )
                 diagonal_nnz[local_row] = diagonal
@@ -752,48 +682,48 @@ def _distributed_trace_preallocation(
         context="trace preallocation row construction failed",
     )
 
-    preallocated_nnz = int(
-        comm.allreduce(structural_nnz_local, op=MPI.SUM)
+    preallocated_nnz = int(comm.allreduce(structural_nnz_local, op=MPI.SUM))
+    return (
+        diagonal_nnz,
+        off_diagonal_nnz,
+        {
+            "schema_version": "task035b.exact-trace-preallocation.v1",
+            "policy": (
+                "distributed_exact_constrained_cell_graph_plus_"
+                "support_safe_appended_upper_bound"
+            ),
+            "base_graph_preallocation": "exact",
+            "appended_graph_preallocation": (
+                "support_safe_upper_bound"
+                if normalized_appended_rows
+                else "not_applicable"
+            ),
+            "active_rows": active_rows,
+            "appended_rows": normalized_appended_rows,
+            "local_row_count": local_rows,
+            "received_cell_graph_count": received_cell_graphs,
+            "preallocated_structural_nnz": preallocated_nnz,
+            "maximum_diagonal_nnz": int(
+                comm.allreduce(
+                    int(diagonal_nnz.max(initial=0)),
+                    op=MPI.MAX,
+                )
+            ),
+            "maximum_off_diagonal_nnz": int(
+                comm.allreduce(
+                    int(off_diagonal_nnz.max(initial=0)),
+                    op=MPI.MAX,
+                )
+            ),
+            "appended_support_group_count": len(support_groups),
+            "appended_support_active_row_counts": [
+                int(len(support)) for support in support_groups
+            ],
+            "appended_rows_per_support_group": [int(len(rows)) for rows in group_rows],
+            "new_nonzero_allocation_error_enabled": True,
+            "ordinary_default_changed": False,
+        },
     )
-    return diagonal_nnz, off_diagonal_nnz, {
-        "schema_version": "task035b.exact-trace-preallocation.v1",
-        "policy": (
-            "distributed_exact_constrained_cell_graph_plus_"
-            "support_safe_appended_upper_bound"
-        ),
-        "base_graph_preallocation": "exact",
-        "appended_graph_preallocation": (
-            "support_safe_upper_bound"
-            if normalized_appended_rows
-            else "not_applicable"
-        ),
-        "active_rows": active_rows,
-        "appended_rows": normalized_appended_rows,
-        "local_row_count": local_rows,
-        "received_cell_graph_count": received_cell_graphs,
-        "preallocated_structural_nnz": preallocated_nnz,
-        "maximum_diagonal_nnz": int(
-            comm.allreduce(
-                int(diagonal_nnz.max(initial=0)),
-                op=MPI.MAX,
-            )
-        ),
-        "maximum_off_diagonal_nnz": int(
-            comm.allreduce(
-                int(off_diagonal_nnz.max(initial=0)),
-                op=MPI.MAX,
-            )
-        ),
-        "appended_support_group_count": len(support_groups),
-        "appended_support_active_row_counts": [
-            int(len(support)) for support in support_groups
-        ],
-        "appended_rows_per_support_group": [
-            int(len(rows)) for rows in group_rows
-        ],
-        "new_nonzero_allocation_error_enabled": True,
-        "ordinary_default_changed": False,
-    }
 
 
 def _constrain_local_schur(
@@ -806,9 +736,7 @@ def _constrain_local_schur(
     left = expansion.conjugate().transpose().dot(schur)
     # The final transpose is generally a non-contiguous view.  petsc4py's
     # dense setValues path requires a C-contiguous row-major buffer.
-    return np.ascontiguousarray(
-        expansion.transpose().dot(left.transpose()).transpose()
-    )
+    return np.ascontiguousarray(expansion.transpose().dot(left.transpose()).transpose())
 
 
 def _canonical_axis_aligned_coordinates(
@@ -901,9 +829,7 @@ def _tabulate_raw_tensor_class(
             dimension,
         )
     if default_kernel is None and tagged_kernel is None:
-        raise ValueError(
-            f"compiled form has no default or tagged kernel for tag {tag}"
-        )
+        raise ValueError(f"compiled form has no default or tagged kernel for tag {tag}")
     return tensor
 
 
@@ -931,20 +857,13 @@ def _global_raw_tensor_cache(
             ),
             "ufcx_form_signature": compiled_form.module.ffi.string(
                 compiled_form.ufcx_form.signature
-            ).decode(
-                "ascii"
-            ),
+            ).decode("ascii"),
         }
         for policy, (compiled_form, kernels, dimension) in policy_forms.items()
     }
     policy_signatures = comm.allgather(local_policy_signature)
-    if any(
-        signature != policy_signatures[0]
-        for signature in policy_signatures[1:]
-    ):
-        raise RuntimeError(
-            "raw tensor FFCx policy signatures differ across MPI ranks"
-        )
+    if any(signature != policy_signatures[0] for signature in policy_signatures[1:]):
+        raise RuntimeError("raw tensor FFCx policy signatures differ across MPI ranks")
     packets = comm.allgather(
         tuple(
             (key, np.asarray(coordinates, dtype=np.float64))
@@ -986,12 +905,9 @@ def _global_raw_tensor_cache(
     ):
         owner = min(range(comm.size), key=lambda rank: (owner_loads[rank], rank))
         owner_by_class[key] = int(owner)
-        owner_loads[owner] += (
-            int(policy_forms[str(key[0])][2]) ** 2
-            * (
-                int(-1 in policy_forms[str(key[0])][1])
-                + int(int(key[1]) in policy_forms[str(key[0])][1])
-            )
+        owner_loads[owner] += int(policy_forms[str(key[0])][2]) ** 2 * (
+            int(-1 in policy_forms[str(key[0])][1])
+            + int(int(key[1]) in policy_forms[str(key[0])][1])
         )
     cache: dict[tuple[Any, ...], np.ndarray] = {}
     local_kernel_seconds = 0.0
@@ -1054,12 +970,8 @@ def _global_raw_tensor_cache(
         if key in local_keys:
             cache[key] = tensor
 
-    evaluation_count = int(
-        comm.allreduce(local_evaluations, op=MPI.SUM)
-    )
-    use_count = int(
-        comm.allreduce(len(local_class_coordinates), op=MPI.SUM)
-    )
+    evaluation_count = int(comm.allreduce(local_evaluations, op=MPI.SUM))
+    use_count = int(comm.allreduce(len(local_class_coordinates), op=MPI.SUM))
     unique_count = len(global_coordinates)
     if evaluation_count != unique_count:
         raise RuntimeError(
@@ -1067,60 +979,64 @@ def _global_raw_tensor_cache(
         )
     if set(cache) != local_keys:
         raise RuntimeError("global raw tensor cache is incomplete on this rank")
-    return cache, {
-        "raw_tensor_class_count_sum": evaluation_count,
-        "raw_tensor_class_use_count_sum": use_count,
-        "raw_tensor_class_count_global_unique": unique_count,
-        "raw_tensor_global_owner_policy": (
-            "deterministic_dimension_squared_greedy_all_mpi_ranks"
-        ),
-        "raw_tensor_owner_cost_loads": owner_loads,
-        "raw_tensor_policy_signatures_identical": True,
-        "raw_tensor_owner_evaluation_sync_seconds_max": float(
-            comm.allreduce(owner_sync_seconds, op=MPI.MAX)
-        ),
-        "raw_tensor_cross_rank_dedup_active": bool(
-            comm.size > 1 and use_count > unique_count
-        ),
-        "raw_tensor_class_owner_ranks": {
-            repr(key): int(owner_by_class[key])
-            for key in sorted(global_coordinates)
+    return (
+        cache,
+        {
+            "raw_tensor_class_count_sum": evaluation_count,
+            "raw_tensor_class_use_count_sum": use_count,
+            "raw_tensor_class_count_global_unique": unique_count,
+            "raw_tensor_global_owner_policy": (
+                "deterministic_dimension_squared_greedy_all_mpi_ranks"
+            ),
+            "raw_tensor_owner_cost_loads": owner_loads,
+            "raw_tensor_policy_signatures_identical": True,
+            "raw_tensor_owner_evaluation_sync_seconds_max": float(
+                comm.allreduce(owner_sync_seconds, op=MPI.MAX)
+            ),
+            "raw_tensor_cross_rank_dedup_active": bool(
+                comm.size > 1 and use_count > unique_count
+            ),
+            "raw_tensor_class_owner_ranks": {
+                repr(key): int(owner_by_class[key])
+                for key in sorted(global_coordinates)
+            },
+            "raw_tensor_class_user_rank_counts": {
+                repr(key): len(ranks_by_class[key])
+                for key in sorted(global_coordinates)
+            },
+            "raw_tensor_classes": [
+                {
+                    "policy": str(key[0]),
+                    "material_tag": int(key[1]),
+                    "cell_widths": [float(value) for value in key[2:]],
+                    "dimension": int(policy_forms[str(key[0])][2]),
+                    "active_kernel_ids": [
+                        kernel_id
+                        for kernel_id in dict.fromkeys((-1, int(key[1])))
+                        if kernel_id in policy_forms[str(key[0])][1]
+                    ],
+                    "owner_rank": int(owner_by_class[key]),
+                    "consumer_rank_count": len(ranks_by_class[key]),
+                    "tensor_bytes": int(
+                        int(policy_forms[str(key[0])][2]) ** 2
+                        * np.dtype(np.complex128).itemsize
+                    ),
+                    "canonical_coordinates_sha256": hashlib.sha256(
+                        np.ascontiguousarray(
+                            global_coordinates[key],
+                            dtype=np.float64,
+                        ).tobytes()
+                    ).hexdigest(),
+                }
+                for key in ordered_keys
+            ],
+            "raw_tensor_logical_broadcast_bytes": logical_broadcast_bytes,
+            "raw_tensor_broadcast_seconds_max": float(
+                comm.allreduce(local_broadcast_seconds, op=MPI.MAX)
+            ),
         },
-        "raw_tensor_class_user_rank_counts": {
-            repr(key): len(ranks_by_class[key])
-            for key in sorted(global_coordinates)
-        },
-        "raw_tensor_classes": [
-            {
-                "policy": str(key[0]),
-                "material_tag": int(key[1]),
-                "cell_widths": [float(value) for value in key[2:]],
-                "dimension": int(policy_forms[str(key[0])][2]),
-                "active_kernel_ids": [
-                    kernel_id
-                    for kernel_id in dict.fromkeys((-1, int(key[1])))
-                    if kernel_id in policy_forms[str(key[0])][1]
-                ],
-                "owner_rank": int(owner_by_class[key]),
-                "consumer_rank_count": len(ranks_by_class[key]),
-                "tensor_bytes": int(
-                    int(policy_forms[str(key[0])][2]) ** 2
-                    * np.dtype(np.complex128).itemsize
-                ),
-                "canonical_coordinates_sha256": hashlib.sha256(
-                    np.ascontiguousarray(
-                        global_coordinates[key],
-                        dtype=np.float64,
-                    ).tobytes()
-                ).hexdigest(),
-            }
-            for key in ordered_keys
-        ],
-        "raw_tensor_logical_broadcast_bytes": logical_broadcast_bytes,
-        "raw_tensor_broadcast_seconds_max": float(
-            comm.allreduce(local_broadcast_seconds, op=MPI.MAX)
-        ),
-    }, local_kernel_seconds
+        local_kernel_seconds,
+    )
 
 
 def _orient_cell_tensor(element, tensor: np.ndarray, cell_info: np.ndarray) -> None:
@@ -1187,15 +1103,9 @@ def build_unconstrained_assembly_time_condensation(
     owned_cells = int(mesh.topology.index_map(tdim).size_local)
     tags = _cell_tag_array(cell_tags, owned_cells)
     kernels = _cell_integral_kernels(compiled_form)
-    unknown_tags = (
-        []
-        if -1 in kernels
-        else sorted(set(map(int, tags)) - set(kernels))
-    )
+    unknown_tags = [] if -1 in kernels else sorted(set(map(int, tags)) - set(kernels))
     if unknown_tags:
-        raise ValueError(
-            f"compiled form has no cell integral for tags {unknown_tags}"
-        )
+        raise ValueError(f"compiled form has no cell integral for tags {unknown_tags}")
 
     element = function_space.element
     basix_element = element.basix_element
@@ -1237,9 +1147,7 @@ def build_unconstrained_assembly_time_condensation(
     active_start = int(sum(active_counts[: comm.rank]))
     local_appended = appended_global_rows if comm.rank == comm.size - 1 else 0
     matrix_rows = active_rows + appended_global_rows
-    cell_trace_data: list[
-        tuple[np.ndarray, sparse.csr_matrix, bool]
-    ] = []
+    cell_trace_data: list[tuple[np.ndarray, sparse.csr_matrix, bool]] = []
     for original_dofs in local_cell_dofs:
         cell_trace_data.append(
             _cell_trace_expansion(
@@ -1254,12 +1162,8 @@ def build_unconstrained_assembly_time_condensation(
             tuple(data[0] for data in cell_trace_data),
             active_counts=active_counts,
             appended_global_rows=appended_global_rows,
-            appended_support_owned_cell_groups=(
-                appended_support_owned_cell_groups
-            ),
-            appended_support_group_by_row=(
-                appended_support_group_by_row
-            ),
+            appended_support_owned_cell_groups=(appended_support_owned_cell_groups),
+            appended_support_group_by_row=(appended_support_group_by_row),
         )
     )
     preallocation_audit["build_seconds"] = float(
@@ -1273,11 +1177,7 @@ def build_unconstrained_assembly_time_condensation(
             (len(owned_active) + local_appended, matrix_rows),
             (len(owned_active) + local_appended, matrix_rows),
         ),
-        nnz=(
-            diagonal_nnz
-            if comm.size == 1
-            else (diagonal_nnz, off_diagonal_nnz)
-        ),
+        nnz=(diagonal_nnz if comm.size == 1 else (diagonal_nnz, off_diagonal_nnz)),
         comm=comm,
     )
     if condensed.getOwnershipRange()[0] != active_start:
@@ -1290,18 +1190,14 @@ def build_unconstrained_assembly_time_condensation(
     mesh.topology.create_entity_permutations()
     cell_permutations = mesh.topology.get_cell_permutation_info()
     local_class_coordinates: dict[tuple[Any, ...], np.ndarray] = {}
-    cell_raw_metadata: list[
-        tuple[tuple[Any, ...], tuple[Any, ...]]
-    ] = []
+    cell_raw_metadata: list[tuple[tuple[Any, ...], tuple[Any, ...]]] = []
     local_metadata_error = None
     try:
         for cell in range(owned_cells):
-            canonical_coordinates, widths = (
-                _canonical_axis_aligned_coordinates(
-                    mesh,
-                    cell,
-                    tolerance=geometry_tolerance,
-                )
+            canonical_coordinates, widths = _canonical_axis_aligned_coordinates(
+                mesh,
+                cell,
+                tolerance=geometry_tolerance,
             )
             tag = int(tags[cell])
             raw_key = (tag, *widths)
@@ -1319,9 +1215,7 @@ def build_unconstrained_assembly_time_condensation(
                 policy_raw_key,
                 canonical_coordinates,
             )
-            cell_raw_metadata.append(
-                (raw_key, policy_raw_key)
-            )
+            cell_raw_metadata.append((raw_key, policy_raw_key))
     except Exception as error:
         local_metadata_error = f"{type(error).__name__}: {error}"
     metadata_errors = comm.allgather(local_metadata_error)
@@ -1352,12 +1246,10 @@ def build_unconstrained_assembly_time_condensation(
         "actual_space": (compiled_form, kernels, dimension),
     }
     try:
-        raw_cache, raw_cache_audit, local_kernel_seconds = (
-            _global_raw_tensor_cache(
-                comm,
-                local_class_coordinates,
-                policy_forms,
-            )
+        raw_cache, raw_cache_audit, local_kernel_seconds = _global_raw_tensor_cache(
+            comm,
+            local_class_coordinates,
+            policy_forms,
         )
     except Exception:
         condensed.destroy()
@@ -1393,15 +1285,9 @@ def build_unconstrained_assembly_time_condensation(
                     dtype=np.uint32,
                 ),
             )
-            A_ii = oriented[
-                np.ix_(interior_positions, interior_positions)
-            ]
-            A_it = oriented[
-                np.ix_(interior_positions, trace_positions)
-            ]
-            A_ti = oriented[
-                np.ix_(trace_positions, interior_positions)
-            ]
+            A_ii = oriented[np.ix_(interior_positions, interior_positions)]
+            A_it = oriented[np.ix_(interior_positions, trace_positions)]
+            A_ti = oriented[np.ix_(trace_positions, interior_positions)]
             A_tt = oriented[np.ix_(trace_positions, trace_positions)]
             interior_lu = lu_factor(A_ii)
             interior_from_trace = -lu_solve(
@@ -1505,9 +1391,7 @@ def build_unconstrained_assembly_time_condensation(
             "local_trace_dimension": int(len(trace_positions)),
             "local_interior_dimension": int(len(interior_positions)),
             "active_cell_interior_modes": int(active_interior_rows),
-            "active_full3d_equivalent_dofs": int(
-                trace_rows + active_interior_rows
-            ),
+            "active_full3d_equivalent_dofs": int(trace_rows + active_interior_rows),
             "storage_function_space_dofs": int(full_rows),
             "inactive_max_p_rows_retained_in_matrix": False,
             "full_global_matrix_allocated": False,
@@ -1532,13 +1416,9 @@ def build_unconstrained_assembly_time_condensation(
             "local_insert_seconds_max": float(
                 comm.allreduce(local_insert_seconds, op=MPI.MAX)
             ),
-            "pre_final_assembly_sync_seconds_max": (
-                preassembly_sync_seconds
-            ),
+            "pre_final_assembly_sync_seconds_max": (preassembly_sync_seconds),
             "final_assembly_seconds": final_assembly_seconds,
-            "trace_preallocation_seconds": float(
-                preallocation_audit["build_seconds"]
-            ),
+            "trace_preallocation_seconds": float(preallocation_audit["build_seconds"]),
             "trace_preallocation": preallocation_audit,
             "trace_constraints": trace_constraints.build_audit,
             "total_build_seconds": float(
@@ -1607,15 +1487,12 @@ def condense_unconstrained_vector_to_active_trace(
     )
     cutoff = max(
         1.0e-30,
-        float(relative_tolerance)
-        * float(np.max(np.abs(owned_values), initial=0.0)),
+        float(relative_tolerance) * float(np.max(np.abs(owned_values), initial=0.0)),
     )
     active = condensed.matrix.createVecRight()
     owned_trace = condensed.owned_trace_original_dofs
     if len(owned_trace):
-        trace_values = owned_values[
-            np.asarray(owned_trace, dtype=np.int64) - row_start
-        ]
+        trace_values = owned_values[np.asarray(owned_trace, dtype=np.int64) - row_start]
         nonzero = np.abs(trace_values) > cutoff
         _add_original_trace_values(
             active,
@@ -1630,8 +1507,7 @@ def condense_unconstrained_vector_to_active_trace(
             dtype=np.int64,
         )
         if len(interior_rows) and (
-            int(interior_rows.min()) < row_start
-            or int(interior_rows.max()) >= row_end
+            int(interior_rows.min()) < row_start or int(interior_rows.max()) >= row_end
         ):
             active.destroy()
             raise ValueError(
@@ -1647,9 +1523,7 @@ def condense_unconstrained_vector_to_active_trace(
             )
         else:
             correction = (
-                condensed.interior_from_trace_by_class[
-                    cell.class_key
-                ].conj().T
+                condensed.interior_from_trace_by_class[cell.class_key].conj().T
                 @ interior_values
             )
         nonzero = np.abs(correction) > cutoff
@@ -1690,23 +1564,16 @@ def cell_interior_schur_bilinear(
     local = 0.0 + 0.0j
     for cell in condensed.cell_recovery_maps:
         rows = np.asarray(cell.interior_original_dofs, dtype=np.int64)
-        if len(rows) and (
-            int(rows.min()) < left_start or int(rows.max()) >= left_end
-        ):
+        if len(rows) and (int(rows.min()) < left_start or int(rows.max()) >= left_end):
             raise ValueError(
                 "owned cell-interior bilinear rows are outside local ownership"
             )
         local_rows = rows - left_start
         left_values = left[local_rows]
         right_values = right[local_rows]
-        if (
-            not np.any(left_values)
-            or not np.any(right_values)
-        ):
+        if not np.any(left_values) or not np.any(right_values):
             continue
-        projection = condensed.interior_rhs_projection_by_class[
-            cell.class_key
-        ]
+        projection = condensed.interior_rhs_projection_by_class[cell.class_key]
         projected_left = projection @ left_values
         projected_right = projection @ right_values
         local += np.vdot(
@@ -1717,11 +1584,45 @@ def cell_interior_schur_bilinear(
             ),
         )
     return complex(
-        condensed.matrix.getComm().tompi4py().allreduce(
+        condensed.matrix.getComm()
+        .tompi4py()
+        .allreduce(
             local,
             op=MPI.SUM,
         )
     )
+
+
+def owned_active_support_groups(
+    condensed: AssemblyTimeCondensedSystem,
+    owned_cell_groups: tuple[np.ndarray, ...],
+) -> tuple[np.ndarray, ...]:
+    """Return owner-local active support for each group of owned cells."""
+
+    counts = condensed.comm.allgather(condensed.owned_active_rows)
+    active_start = int(sum(counts[: condensed.comm.rank]))
+    active_end = active_start + condensed.owned_active_rows
+    supports = []
+    for cell_group in owned_cell_groups:
+        active_ids: set[int] = set()
+        for cell_index in np.asarray(cell_group, dtype=np.int64):
+            original = condensed.cell_recovery_maps[int(cell_index)].trace_original_dofs
+            ids, _expansion, _identity = _cell_trace_expansion(
+                original,
+                condensed.trace_constraints,
+            )
+            active_ids.update(map(int, ids))
+        supports.append(
+            np.asarray(
+                [
+                    active
+                    for active in sorted(active_ids)
+                    if active_start <= active < active_end
+                ],
+                dtype=PETSc.IntType,
+            )
+        )
+    return tuple(supports)
 
 
 def recover_owned_cell_interiors(
@@ -1755,9 +1656,7 @@ def recover_owned_cell_interiors(
         )
         for row, original in enumerate(cell.trace_original_dofs):
             active_ids, coefficients = (
-                condensed.trace_constraints.expansion_by_original[
-                    int(original)
-                ]
+                condensed.trace_constraints.expansion_by_original[int(original)]
             )
             local_trace[row] = np.dot(
                 coefficients,
@@ -1770,21 +1669,14 @@ def recover_owned_cell_interiors(
                 int(rows.min()) < rhs_start or int(rows.max()) >= rhs_end
             ):
                 raise ValueError(
-                    "owned cell-interior recovery RHS rows are outside "
-                    "local ownership"
+                    "owned cell-interior recovery RHS rows are outside local ownership"
                 )
-            values = (
-                values
-                + condensed.interior_solution_embedding_by_class[
-                    cell.class_key
-                ]
-                @ lu_solve(
-                    condensed.interior_lu_by_class[cell.class_key],
-                    condensed.interior_rhs_projection_by_class[
-                        cell.class_key
-                    ]
-                    @ rhs_values[rows - rhs_start],
-                )
+            values = values + condensed.interior_solution_embedding_by_class[
+                cell.class_key
+            ] @ lu_solve(
+                condensed.interior_lu_by_class[cell.class_key],
+                condensed.interior_rhs_projection_by_class[cell.class_key]
+                @ rhs_values[rows - rhs_start],
             )
         result.append((cell.interior_original_dofs, values))
     return tuple(result)
@@ -1795,9 +1687,7 @@ def project_mpc_vector_to_active_trace(
     full_vector: PETSc.Vec,
     *,
     eliminated_tolerance: float = 1.0e-12,
-    eliminated_relative_tolerance: float = (
-        1024.0 * np.finfo(np.float64).eps
-    ),
+    eliminated_relative_tolerance: float = (1024.0 * np.finfo(np.float64).eps),
     audit: dict[str, object] | None = None,
 ) -> PETSc.Vec:
     """Project an already MPC-assembled full-space vector to active trace rows.
@@ -1840,12 +1730,9 @@ def project_mpc_vector_to_active_trace(
             f"global_count={nonfinite_count}"
         )
     active_set = set(
-        int(value)
-        for value in condensed.trace_constraints.owned_active_original_dofs
+        int(value) for value in condensed.trace_constraints.owned_active_original_dofs
     )
-    trace_set = set(
-        int(value) for value in condensed.owned_trace_original_dofs
-    )
+    trace_set = set(int(value) for value in condensed.owned_trace_original_dofs)
     active_mask = np.asarray(
         [int(row) in active_set for row in owned_original],
         dtype=bool,
@@ -1863,9 +1750,7 @@ def project_mpc_vector_to_active_trace(
     )
 
     def global_max(mask: np.ndarray) -> float:
-        local = float(
-            np.max(np.abs(owned_values[mask]), initial=0.0)
-        )
+        local = float(np.max(np.abs(owned_values[mask]), initial=0.0))
         return float(comm.allreduce(local, op=MPI.MAX))
 
     max_active = global_max(active_mask)
@@ -1881,9 +1766,8 @@ def project_mpc_vector_to_active_trace(
         if max_active > 0.0
         else float("inf")
     )
-    offending_mask = (
-        (slave_mask & (np.abs(owned_values) > slave_cutoff))
-        | (interior_mask & (np.abs(owned_values) > interior_cutoff))
+    offending_mask = (slave_mask & (np.abs(owned_values) > slave_cutoff)) | (
+        interior_mask & (np.abs(owned_values) > interior_cutoff)
     )
     local_first = int(
         np.min(owned_original[offending_mask], initial=condensed.full_rows)
@@ -1894,9 +1778,7 @@ def project_mpc_vector_to_active_trace(
         first_offending_entity = None
     else:
         local_entity_code = 0
-        local_match = np.flatnonzero(
-            owned_original == first_offending_dof
-        )
+        local_match = np.flatnonzero(owned_original == first_offending_dof)
         if len(local_match):
             first_index = int(local_match[0])
             if bool(slave_mask[first_index]):
@@ -1916,15 +1798,12 @@ def project_mpc_vector_to_active_trace(
                 "max_cell_interior": max_interior,
                 "slave_absolute_cutoff": slave_cutoff,
                 "cell_interior_cutoff": interior_cutoff,
-                "eliminated_relative_tolerance": float(
-                    eliminated_relative_tolerance
-                ),
+                "eliminated_relative_tolerance": float(eliminated_relative_tolerance),
                 "cell_interior_roundoff_units": interior_roundoff_units,
                 "first_offending_dof": first_offending_dof,
                 "first_offending_entity": first_offending_entity,
                 "pass": bool(
-                    max_slave <= slave_cutoff
-                    and max_interior <= interior_cutoff
+                    max_slave <= slave_cutoff and max_interior <= interior_cutoff
                 ),
             }
         )
@@ -1940,9 +1819,7 @@ def project_mpc_vector_to_active_trace(
             f"first_offending_entity={first_offending_entity}"
         )
     active_vector = condensed.matrix.createVecRight()
-    active_original = (
-        condensed.trace_constraints.owned_active_original_dofs
-    )
+    active_original = condensed.trace_constraints.owned_active_original_dofs
     if len(active_original):
         active_vector.getArray()[: len(active_original)] = np.asarray(
             full_vector.getValues(active_original),
@@ -1959,6 +1836,7 @@ __all__ = [
     "build_unconstrained_assembly_time_condensation",
     "cell_interior_schur_bilinear",
     "condense_unconstrained_vector_to_active_trace",
+    "owned_active_support_groups",
     "project_mpc_vector_to_active_trace",
     "recover_owned_cell_interiors",
 ]
