@@ -87,6 +87,14 @@ class HybridInterfaceAuditTests(unittest.TestCase):
             audit["biorthogonality_identity_max_entry"],
             4.0e-7,
         )
+        joint = _joint_near_degenerate_groups(
+            betas,
+            groups,
+            overlap,
+            near_degenerate_tolerance=1.0e-6,
+            block_rotation_tolerance=1.0e-6,
+        )
+        self.assertEqual(joint, ((0, 1), (2,), (3,), (4,)))
         self.assertTrue(audit["max_cross_block_overlap_within_tolerance"])
         self.assertFalse(audit["biorthogonality_identity_row_norm_within_tolerance"])
         self.assertEqual(audit["worst_cross_block_indices"], [0, 1])
