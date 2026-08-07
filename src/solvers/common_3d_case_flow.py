@@ -1873,6 +1873,15 @@ def run_prepared_3d_case_flow(
         if dtn_solver_info is None
         else dtn_solver_info.get("global_F_materialized"),
         "matrix_free_dtn_component_only": dtn_component_only,
+        "matrix_free_dtn_probe": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("matrix_free_dtn_probe"),
+        "matrix_free_dtn_probe_audit": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("matrix_free_dtn_probe_audit"),
+        "ordinary_default_changed": None
+        if dtn_solver_info is None
+        else dtn_solver_info.get("ordinary_default_changed"),
         "stage4_dtn_auxiliary_block_stats": dtn_auxiliary_block_stats,
         "stage4_dtn_factor_inventory": None
         if dtn_solver_info is None
