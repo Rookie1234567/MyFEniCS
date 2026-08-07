@@ -13,8 +13,9 @@ global matrix。
 | G2.3 full-space p6 ILU inventory | `inventory_measurement_qualified` | raw 与 patched checker 合同闭合；不是预条件器有效性结论 |
 | plain full-space ILU route | `close_fullspace_ilu_only_route` | retained-payload 25% Gate 未达到，且 iter20 one-apply rho 更差 |
 | G2.4 LOR mesh/transfer | `pass_transfer_build_and_algebra_only` | 真实 slab14 的 LOR build、周期身份、重复 action 与伴随通过；不证明 HX/V-cycle 或收敛 |
-| G2.5 LOR-HX/V-cycle | `pending_not_run` | 未实现、未运行 |
+| G2.5 LOR-HX/V-cycle | `pass_build_only` | 真实 p6/slab14 hierarchy build-only 通过；未调用 1V/2V |
 | G2.6 one/two V-cycle Gate | `pending_not_run` | 未运行 |
+| G3 16-slab additive LOR-HX | `not_started_and_prohibited` | 本轮不进入 |
 
 因此不能把本 outcome 写成整体 G2 通过，也不能宣称 minimum contraction、
 full solve 或 production promotion。
@@ -302,9 +303,132 @@ compact record：[g2_slab14_lor_transfer.json](/home/shenjh/Projects/MyFEniCSx_t
 | `worker_stdout.txt` / `solver_log.txt` | `0ad5399df6b37c9643175c6cec172a330c62cbe31dc6b80c37344b82776dd979` |
 | `NO_OFFICIAL_FIELD_OUTPUT.txt` | `e11465d92e416af3e4321c581b7291b7d4df5c932b425541f9b0114e259d3f38` |
 
+## G2.5 D3b：真实 p6/slab14 LOR-HX build-only
+
+### 这次 build-only 检查解决什么问题
+
+固定 low-storage V-cycle 是一种局部近似逆：它先用便宜的细层 Jacobi 修正，再用标量
+H1 梯度和向量 H1 辅助空间修正，最后只在很小的最粗层保留精确因子。这样做的目标是
+避免在 p6 trace 或大 LOR 层保存大 ILU；代价是要常驻转移矩阵、H1 层级和两个最粗层因子，
+并支付较长的 setup 时间。本轮只构建并盘点这些对象，没有执行任何 V-cycle，因此不能从
+本轮推断它是否能缩小真实残差。
+
+| 项目 | D3b 正式值 |
+|---|---|
+| source / scope | `c7c7a26c1946a9244845c6423872e5fe69095289`；p6/h10/S、MPI1、screen20 |
+| run directory | `benchmarks/artifacts/101_task37_extra_development/g2_slab14_lor_hx_build_mpi1_screen20_c7c7a26` |
+| watchdog | `task037_extra_g2_slab14_lor_hx_oracle_pass_build_only`；return `0`；failures `[]`；swap `0` |
+| flags | identity=true；LOR transfer=true；LOR-HX oracle=true；factor-inventory=false；G0=false |
+| solver boundary | 20 步 `DIVERGED_MAX_IT(-3)`；true residual `0.04474243612765`；reported `0.04474243612765121` |
+| official result / RTA | `false / false`；postprocess skipped；这不是 solver convergence |
+| global materialization | global A/F=false；exact outer unchanged |
+
+正式运行实际由 raw `watchdog_summary.command` 记录的 worker command 执行；该字段和
+`parent_launch_descriptor.json` 已分别 hash 绑定。独立 parent shell command 没有在 raw 中
+另存一份，因此本记录不伪造 parent command。
+
+### identity、material 与 storage
+
+| 字段 | 值 |
+|---|---:|
+| primary / owner / parent cells | `14 / 0 / 54` |
+| full / interior / trace rows | `32724 / 24300 / 8424` |
+| active LOR rows | `36288` |
+| parent ID hash | `ac7e3532a1ecf55826a25a99b1f5197fb7c9952a084bf88f4ca15bad79511023` |
+| physical edge hash | `69b351698907f0067b09cf14c0f889d1566a86d1bcfec78d7a48121659635054` |
+| active edge hash | `a359da92b3a781ff447f5bf81ce7dc845c1be022464948526ee489874c77010a` |
+| transfer retained payload | `18735740 B` |
+| D2c hierarchy payload | `3109473612 B` |
+| total retained numeric payload lower bound | `3128209352 B = 2983.2929153442383 MiB = 2.9133719876408577 GiB` |
+| factor inventory | total `2`；coarsest-only=true |
+| large/fine factors | fine p6 trace/full/intermediate/large LOR 全为 `0` |
+| object lifetime | HX 完成后 parent topologies、persistent full/LOR RHS、global dense 均为 `false` |
+| physical proxy | affine volume only；curl coefficient `(1, 0)`；material tags `1/3` 有 complex mass coefficient；no DtN surface proxy |
+| shift / p6 interpretation | `diag <- diag - 1j*0.1*max(abs(diag), 1e-12*max(abs(diag)))`；`literal_p6_shift_galerkin=false`；不是 coercivity 结论 |
+
+三类 identity 仍继承已审查的结果：真实 iter20 owner-local `r=b-Ax` 的 norm2 为
+`0.42723143961943305`，SHA256 为
+`3aa610ed9bbb63047188b64d21d5dcab04184ffc6316196458e99aab520bb195`；3 个 deterministic
+vectors 与 identity Gate 通过。transfer 的 `parent_id_hash`、physical edge hash、active
+edge hash 与 identity raw 完全一致。
+
+### memory signal：明确失败，但不作整体 G2 分类
+
+任务定义的同口径 trace-ILU baseline 是 `122023588 B`，其 `0.60` threshold 为
+`73214152.8 B`。D3b total hierarchy retained payload 为 `3128209352 B`：
+
+| 指标 | 实测/派生值 |
+|---|---:|
+| HX / trace baseline | `25.63610366874313` |
+| HX / 0.60 threshold | `42.72683944790521` |
+| memory signal | `FAIL` |
+| 含义 | build-only hierarchy 明显超过最低存储目标，不能称 memory positive |
+
+这是资源信号失败；不是整体 G2 分类。contraction 尚未运行，整体 G2 仍保持
+`not_claimed`。本数字是 retained numeric payload lower bound，
+只包括 T/TH/E/EH、packing、reference CSR、H1 hierarchy、inverse diagonal 和最粗层因子
+的数组口径，不等同 RSS，也不包括 Python object/allocator/permutation overhead。
+
+### build 时间、资源与 lifecycle
+
+| 阶段/指标 | raw authority |
+|---|---:|
+| transfer build | `43.800458488985896 s` |
+| HX build | `571.4551421470242 s` |
+| transfer interval process-tree max | `1186.52734375 MiB` |
+| HX build interval process-tree max | `5528.63671875 MiB` |
+| whole-run process-tree RSS | `7964.97265625 MiB = 7.778293609619141 GiB` |
+| worker RSS / PSS / USS | `7951.1875 / 7899.833984375 / 7855.32421875 MB` |
+| worker/process-tree swap | `0 / 0 MB` |
+| sample count / poll | `3250 / 0.25 s` |
+| run elapsed | `832.8251509650145 s` |
+| historical container cgroup peak | `13279.546875 MB`；不是本次 authority |
+
+`stage_peaks[g2_lor_hx_build_ready]` 的 raw process-tree max 为 `7923.4296875 MB`，
+但该区间继续覆盖后续 existing trace-factor setup，不能称 HX build/ready 峰值。有效的
+HX build 区间以 `g2_lor_hx_build_started` 为 authority。四个 lifecycle stage
+`g2_lor_transfer_build_started/ready` 和 `g2_lor_hx_build_started/ready` 均存在。
+
+### contraction 明确未运行
+
+| 量 | 1V | 2V |
+|---|---|---|
+| apply count | `not_run` | `not_run` |
+| rho | `not_run` | `not_run` |
+| apply time | `not_run` | `not_run` |
+
+因此没有 one/two-cycle contraction 结论，也没有进入 G2.6 或 G3。
+
+### 首次 launch 负证据
+
+第一次 launch 在 PDE 前使用了根目录空 `.git` 挂载，tracked-authority 检查失败，未创建
+run directory，也未开始数值工作。这不是数值 retry；随后成功运行在同一 shell 显式设置
+`GIT_DIR=.git-codex` 和 `GIT_WORK_TREE`。首次受控失败保留为 provenance 事实，不改写为普通调试。
+
+### D3b raw evidence
+
+以下 SHA 均由成功 run directory 中的原文件直接计算；网格和说明文件也列出 hash，但不把它们
+当作数值 Gate：
+
+| raw 文件 | SHA256 |
+|---|---|
+| `watchdog_summary.json` | `d1f470e42914752e490d363a7107f1bf1b2d593f94e10f4d81d80ccf88d3bb1a` |
+| `run_summary.json` | `4486e1fead530bcd5b859183269adb2dfde5353a6592f556b02ebc3c8134f6af` |
+| `task037_f3_core_audit.json` | `b6b12fa31c48d863431bb72e26a7a84a51f8c237d26ee2347b382cab30e7ba67` |
+| `progress_3d.jsonl` | `0a9b4345646ae3bf1cdc6681f4f6786a454b0f2f666394e9913d6b20e57ddd34` |
+| `task037_f3_residual_history.jsonl` | `75f0bc3ebec3648b60fdfc55daa9afd036b81cf6d5fe0ef1f7051a83e0f24940` |
+| `memory_timeline.csv` | `71be2609b821897d81f275786d00c08180c68b6a2202625cbf72d0e2810c2722` |
+| `parent_launch_descriptor.json` | `fcb9e4e6a18ddf9ca1c049c361b0fee393c4eb5eeb05f055c4cdb6d40d09daa7` |
+| `worker_stdout.txt` | `5a7b9cbe88dfef87a463a421d395a7e3e59f4d258f8172a32c49caee120d4bd8` |
+| `solver_log.txt` | `5a7b9cbe88dfef87a463a421d395a7e3e59f4d258f8172a32c49caee120d4bd8` |
+| `NO_OFFICIAL_FIELD_OUTPUT.txt` | `e11465d92e416af3e4321c581b7291b7d4df5c932b425541f9b0114e259d3f38` |
+| `mesh_3d.h5` | `71c17d7e60beb920922bcaabc178078959ec48d5ec257aaabe42d14c64102a3b` |
+| `mesh_3d.xdmf` | `e40e1b05f3269101fe93e96416481f14bcaa64fb1df5f030381c747b484b9864` |
+| `mesh_3d_partition_note.txt` | `0a3e481d76798fa867ac1151dee5b3899920e623606faf36f175ee670c9ed974` |
+
 ## Pending
 
-G2.5 HX/V-cycle、G2.6 contraction 与 G3 均为 `not_run`。原 G2.3
+G2.6 contraction 与 G3 均为 `not_run`。原 G2.3
 `inventory_measurement_qualified / plain full-space ILU route closed` 结论
-保持不变。本 outcome 只允许 `pass_transfer_build_and_algebra_only`，不声称
+保持不变。本 outcome 允许 D3b 的 `pass_build_only`，但不声称
 G2 overall pass、minimum contraction、full solve 或 production promotion。
