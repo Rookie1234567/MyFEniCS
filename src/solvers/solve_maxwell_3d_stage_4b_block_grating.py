@@ -20,6 +20,7 @@ def run_stage4b_block_grating_3d_case(
     static_retain_local_schur_for_matrix_free: bool = False,
     matrix_free_dtn: bool = False,
     matrix_free_dtn_probe: bool = False,
+    canonical_vector_export: bool = False,
     mesh_data_override=None,
 ) -> dict[str, object]:
     """Run Stage 4B: rectangular block grating with 3D DtN total-field ports.
@@ -58,6 +59,7 @@ def run_stage4b_block_grating_3d_case(
         ),
         matrix_free_dtn=matrix_free_dtn,
         matrix_free_dtn_probe=matrix_free_dtn_probe,
+        canonical_vector_export=canonical_vector_export,
         mesh_data_override=mesh_data_override,
     )
 

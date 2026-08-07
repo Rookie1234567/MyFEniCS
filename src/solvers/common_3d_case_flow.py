@@ -773,6 +773,7 @@ def run_prepared_3d_case_flow(
     static_retain_local_schur_for_matrix_free: bool = False,
     matrix_free_dtn: bool = False,
     matrix_free_dtn_probe: bool = False,
+    canonical_vector_export: bool = False,
     mesh_data_override: AirBox3DMesh | None = None,
 ) -> dict[str, object]:
     """Run one explicit 3D Maxwell case after the stage file chooses the recipe.
@@ -1297,6 +1298,7 @@ def run_prepared_3d_case_flow(
                 ),
                 matrix_free_dtn=matrix_free_dtn,
                 matrix_free_dtn_probe=matrix_free_dtn_probe,
+                canonical_vector_export=canonical_vector_export,
             )
         except DirectSolveFailure as failure:
             _finish_timed_stage(

@@ -190,23 +190,19 @@ class PoyntingFluxEvaluator:
     ) -> None:
         self._comm = cross_section.mesh.comm
         self._field = fem.Function(spaces.mixed, name="task032_cross_section_mode")
-        self._beta = fem.Constant(
-            cross_section.mesh, PETSc.ScalarType(0.0 + 0.0j)
-        )
+        self._beta = fem.Constant(cross_section.mesh, PETSc.ScalarType(0.0 + 0.0j))
         Et, Ez = ufl.split(self._field)
-        inverse_i_k_mu = 1.0 / (
-            1j * float(cfg.k0) * complex(cfg.mu_r)
-        )
+        inverse_i_k_mu = 1.0 / (1j * float(cfg.k0) * complex(cfg.mu_r))
         Hx = inverse_i_k_mu * (Ez.dx(1) - 1j * self._beta * Et[1])
         Hy = inverse_i_k_mu * (1j * self._beta * Et[0] - Ez.dx(0))
-        integrand = 0.5 * (
-            Et[0] * ufl.conj(Hy) - Et[1] * ufl.conj(Hx)
-        )
+        integrand = 0.5 * (Et[0] * ufl.conj(Hy) - Et[1] * ufl.conj(Hx))
         self._form = fem.form(integrand * ufl.dx)
 
     def evaluate(self, full_vector: PETSc.Vec, beta: complex) -> float:
         if int(full_vector.getSize()) != int(self._field.x.petsc_vec.getSize()):
-            raise ValueError("Mode vector and mixed function space have different sizes.")
+            raise ValueError(
+                "Mode vector and mixed function space have different sizes."
+            )
         full_vector.copy(self._field.x.petsc_vec)
         self._field.x.scatter_forward()
         self._beta.value = PETSc.ScalarType(beta)
@@ -253,14 +249,10 @@ def _batched_left_dots(
     while avoiding both local and cross-rank complex128 summation loss.
     """
 
-    action_local = np.asarray(
-        action.getArray(readonly=True), dtype=np.clongdouble
-    )
+    action_local = np.asarray(action.getArray(readonly=True), dtype=np.clongdouble)
     local_values = np.empty((len(left_vectors), 2), dtype=np.longdouble)
     for index, left in enumerate(left_vectors):
-        left_local = np.asarray(
-            left.getArray(readonly=True), dtype=np.clongdouble
-        )
+        left_local = np.asarray(left.getArray(readonly=True), dtype=np.clongdouble)
         if left_local.shape != action_local.shape:
             raise ValueError("Left and action vectors have different layouts.")
         value = np.sum(
@@ -271,9 +263,7 @@ def _batched_left_dots(
         local_values[index, 1] = value.imag
 
     global_values = np.empty_like(local_values)
-    action.getComm().tompi4py().Allreduce(
-        local_values, global_values, op=MPI.SUM
-    )
+    action.getComm().tompi4py().Allreduce(local_values, global_values, op=MPI.SUM)
     return np.asarray(
         global_values[:, 0] + 1j * global_values[:, 1],
         dtype=np.complex128,
@@ -301,12 +291,8 @@ def _qep_overlap_matrix(
         raise ValueError("Left beta and vector counts differ.")
     if len(right_betas) != len(right_vectors):
         raise ValueError("Right beta and vector counts differ.")
-    matrix = np.empty(
-        (len(left_vectors), len(right_vectors)), dtype=np.complex128
-    )
-    for column, (beta_right, right) in enumerate(
-        zip(right_betas, right_vectors)
-    ):
+    matrix = np.empty((len(left_vectors), len(right_vectors)), dtype=np.complex128)
+    for column, (beta_right, right) in enumerate(zip(right_betas, right_vectors)):
         k1_action = operators.K1.createVecLeft()
         k2_action = operators.K2.createVecLeft()
         try:
@@ -317,9 +303,7 @@ def _qep_overlap_matrix(
             beta_sums = np.asarray(left_betas, dtype=np.clongdouble)
             beta_sums += np.clongdouble(beta_right)
             values = np.asarray(k1_overlaps, dtype=np.clongdouble)
-            values += beta_sums * np.asarray(
-                k2_overlaps, dtype=np.clongdouble
-            )
+            values += beta_sums * np.asarray(k2_overlaps, dtype=np.clongdouble)
             matrix[:, column] = np.asarray(values, dtype=np.complex128)
         finally:
             k1_action.destroy()
@@ -342,12 +326,8 @@ def _normalized_mass_overlap(
     mass: PETSc.Mat, first: PETSc.Vec, second: PETSc.Vec
 ) -> float:
     cross = abs(_electric_mass_overlap(mass, first, second))
-    norm_first = max(
-        _electric_mass_overlap(mass, first, first).real, 0.0
-    )
-    norm_second = max(
-        _electric_mass_overlap(mass, second, second).real, 0.0
-    )
+    norm_first = max(_electric_mass_overlap(mass, first, first).real, 0.0)
+    norm_second = max(_electric_mass_overlap(mass, second, second).real, 0.0)
     return float(cross / max(np.sqrt(norm_first * norm_second), 1.0e-30))
 
 
@@ -389,9 +369,7 @@ def _require_admissible_left_pairs(
             "Maximum left/right beta pair relative error must be finite and "
             "non-negative."
         )
-    if any(
-        not np.isfinite(error) or float(error) > limit for error in errors
-    ):
+    if any(not np.isfinite(error) or float(error) > limit for error in errors):
         raise NoAdmissibleLeftPairError(
             errors,
             maximum_relative_error=limit,
@@ -432,6 +410,74 @@ def _near_degenerate_groups(
     return [tuple(indices) for indices in grouped.values()]
 
 
+def _joint_near_degenerate_groups(
+    betas: Sequence[complex],
+    groups: Sequence[Sequence[int]],
+    biorthogonality: np.ndarray,
+    *,
+    near_degenerate_tolerance: float,
+    block_rotation_tolerance: float,
+) -> tuple[tuple[int, ...], ...]:
+    """Merge beta-near groups whose normalized left/right blocks still couple."""
+
+    values = np.asarray(biorthogonality, dtype=np.complex128)
+    group_of = {
+        int(index): group_id
+        for group_id, indices in enumerate(groups)
+        for index in indices
+    }
+    parents = list(range(len(groups)))
+
+    def find(index: int) -> int:
+        while parents[index] != index:
+            parents[index] = parents[parents[index]]
+            index = parents[index]
+        return index
+
+    def union(first: int, second: int) -> None:
+        first_root = find(first)
+        second_root = find(second)
+        if first_root != second_root:
+            parents[second_root] = first_root
+
+    for first_group in range(len(groups)):
+        for second_group in range(first_group + 1, len(groups)):
+            joins = any(
+                _relative_beta_distance(betas[first], betas[second])
+                <= 10.0 * float(near_degenerate_tolerance)
+                and max(abs(values[first, second]), abs(values[second, first]))
+                > float(block_rotation_tolerance)
+                for first in groups[first_group]
+                for second in groups[second_group]
+            )
+            if joins:
+                union(first_group, second_group)
+
+    components: dict[int, list[int]] = {}
+    for index in range(len(betas)):
+        components.setdefault(find(group_of[index]), []).append(int(index))
+    return tuple(
+        sorted(
+            (tuple(indices) for indices in components.values()),
+            key=lambda indices: indices[0],
+        )
+    )
+
+
+def _joint_subspace_inverse(
+    overlap: np.ndarray, *, maximum_overlap_condition: float
+) -> tuple[np.ndarray, float]:
+    """Return the same direct overlap inverse used for one modal block."""
+
+    condition = float(np.linalg.cond(overlap))
+    if not np.isfinite(condition) or condition > maximum_overlap_condition:
+        raise RuntimeError(
+            "Near-degenerate joint overlap is singular or ill-conditioned: "
+            f"condition={condition:.6e}."
+        )
+    return np.linalg.inv(overlap).conj().T, condition
+
+
 def _linear_combination(
     vectors: Sequence[PETSc.Vec], coefficients: np.ndarray
 ) -> PETSc.Vec:
@@ -451,9 +497,7 @@ def _identity_error_metrics(matrix: np.ndarray) -> tuple[float, float]:
         raise ValueError("Biorthogonality matrix must be square.")
     difference = values - np.eye(values.shape[0], dtype=np.complex128)
     infinity_norm = float(np.linalg.norm(difference, ord=np.inf))
-    max_entry = (
-        float(np.max(np.abs(difference))) if difference.size else 0.0
-    )
+    max_entry = float(np.max(np.abs(difference))) if difference.size else 0.0
     return infinity_norm, max_entry
 
 
@@ -474,9 +518,7 @@ def _near_degenerate_partition_audit(
     if directions is not None and len(directions) != len(betas):
         raise ValueError("Mode directions and beta dimensions disagree.")
     identity_row_norm, identity_max_entry = _identity_error_metrics(values)
-    group_members = [
-        [int(index) for index in indices] for indices in groups
-    ]
+    group_members = [[int(index) for index in indices] for indices in groups]
     group_id = np.full(len(betas), -1, dtype=np.int64)
     for identifier, indices in enumerate(groups):
         for index in indices:
@@ -494,8 +536,7 @@ def _near_degenerate_partition_audit(
     if np.any(cross_mask):
         flat_index = int(np.argmax(cross_values))
         row, column = (
-            int(value)
-            for value in np.unravel_index(flat_index, cross_values.shape)
+            int(value) for value in np.unravel_index(flat_index, cross_values.shape)
         )
         maximum = float(cross_values[row, column])
     else:
@@ -507,9 +548,7 @@ def _near_degenerate_partition_audit(
         else 0.0
     )
     cross_overlap_pass = maximum <= float(block_rotation_tolerance)
-    identity_row_norm_pass = (
-        identity_row_norm <= float(block_rotation_tolerance)
-    )
+    identity_row_norm_pass = identity_row_norm <= float(block_rotation_tolerance)
     passed = cross_overlap_pass and identity_row_norm_pass
     near_degenerate_candidate = bool(
         row >= 0
@@ -529,17 +568,13 @@ def _near_degenerate_partition_audit(
     )
     return {
         "status": (
-            "near_degenerate_block_partition_pass"
-            if passed
-            else failure_status
+            "near_degenerate_block_partition_pass" if passed else failure_status
         ),
         "pass": passed,
         "block_rotation_tolerance": float(block_rotation_tolerance),
         "biorthogonality_identity_row_norm": identity_row_norm,
         "biorthogonality_identity_max_entry": identity_max_entry,
-        "biorthogonality_identity_row_norm_within_tolerance": (
-            identity_row_norm_pass
-        ),
+        "biorthogonality_identity_row_norm_within_tolerance": (identity_row_norm_pass),
         "max_cross_block_overlap": maximum,
         "max_cross_block_overlap_within_tolerance": cross_overlap_pass,
         "group_members": group_members,
@@ -560,9 +595,7 @@ def _near_degenerate_partition_audit(
         "worst_cross_block_relative_beta_distance": beta_distance,
         "near_degenerate_tolerance": float(near_degenerate_tolerance),
         "near_degenerate_candidate_factor": 10.0,
-        "worst_cross_block_is_near_degenerate_candidate": (
-            near_degenerate_candidate
-        ),
+        "worst_cross_block_is_near_degenerate_candidate": (near_degenerate_candidate),
         "worst_cross_block_betas": (
             [
                 [float(betas[row].real), float(betas[row].imag)],
@@ -573,9 +606,7 @@ def _near_degenerate_partition_audit(
         ),
         "worst_cross_block_directions": worst_directions,
         "remediation": (
-            None
-            if passed
-            else "DEFERRED_ARCHITECTURE_REQUIRED_joint_subspace_rotation"
+            None if passed else "DEFERRED_ARCHITECTURE_REQUIRED_joint_subspace_rotation"
         ),
     }
 
@@ -595,8 +626,7 @@ def classify_mode_branch(
         )
         direction_sign = 1.0 if direction == "forward" else -1.0
         passive = (
-            abs(beta.imag) <= beta_imag_tolerance
-            or direction_sign * beta.imag > 0.0
+            abs(beta.imag) <= beta_imag_tolerance or direction_sign * beta.imag > 0.0
         )
         return kind, direction, "poynting_flux", passive
 
@@ -654,8 +684,7 @@ def select_passive_direction_modes(
     ]
     finite_modes = [right_modes[index] for index in finite_indices]
     fluxes = [
-        poynting_evaluator.evaluate(mode.right_full, mode.beta)
-        for mode in finite_modes
+        poynting_evaluator.evaluate(mode.right_full, mode.beta) for mode in finite_modes
     ]
     flux_tolerance = max(
         float(absolute_flux_tolerance),
@@ -680,9 +709,7 @@ def select_passive_direction_modes(
     selected_ids = set(selected_indices)
     selected = [right_modes[index] for index in selected_indices]
     first_rejected_beta = (
-        None
-        if not rejected_indices
-        else complex(right_modes[rejected_indices[0]].beta)
+        None if not rejected_indices else complex(right_modes[rejected_indices[0]].beta)
     )
     for index, mode in enumerate(right_modes):
         if index not in selected_ids:
@@ -696,17 +723,15 @@ def select_passive_direction_modes(
         selected_modes=len(selected),
         desired_direction=desired_direction,
         direction_counts=counts,
-        passive_candidate_count=sum(1 for *_prefix, passive in classifications if passive),
+        passive_candidate_count=sum(
+            1 for *_prefix, passive in classifications if passive
+        ),
         selected_candidate_indices=selected_indices,
         flux_tolerance=flux_tolerance,
         finite_candidate_count=len(finite_modes),
         numerically_infinite_candidate_count=len(rejected_indices),
-        abs_beta_cutoff=(
-            None if maximum_abs_beta is None else float(maximum_abs_beta)
-        ),
-        first_rejected_numerical_infinity_beta=(
-            first_rejected_beta
-        ),
+        abs_beta_cutoff=(None if maximum_abs_beta is None else float(maximum_abs_beta)),
+        first_rejected_numerical_infinity_beta=(first_rejected_beta),
     )
     return selected, report
 
@@ -739,10 +764,7 @@ def build_biorthogonal_mode_basis(
 
     if not right_modes:
         raise ValueError("At least one right mode is required.")
-    if (
-        not np.isfinite(near_degenerate_tolerance)
-        or near_degenerate_tolerance <= 0.0
-    ):
+    if not np.isfinite(near_degenerate_tolerance) or near_degenerate_tolerance <= 0.0:
         raise ValueError("Near-degenerate tolerance must be finite and positive.")
     if (
         not np.isfinite(block_rotation_tolerance)
@@ -791,9 +813,7 @@ def build_biorthogonal_mode_basis(
                 "Adjoint QEP returned fewer left modes than the right-mode basis."
             )
 
-        candidate_left_betas = [
-            np.conj(complex(mode.beta)) for mode in left_candidates
-        ]
+        candidate_left_betas = [np.conj(complex(mode.beta)) for mode in left_candidates]
         pairing_overlaps = _qep_overlap_matrix(
             operators,
             candidate_left_betas,
@@ -806,17 +826,12 @@ def build_biorthogonal_mode_basis(
         )
         for row, right in enumerate(right_modes):
             for column, left in enumerate(left_candidates):
-                beta_error = _relative_beta_distance(
-                    np.conj(left.beta), right.beta
-                )
+                beta_error = _relative_beta_distance(np.conj(left.beta), right.beta)
                 overlap = abs(pairing_overlaps[column, row])
-                pairing_cost[row, column] = beta_error - 1.0e-8 * np.log1p(
-                    overlap
-                )
+                pairing_cost[row, column] = beta_error - 1.0e-8 * np.log1p(overlap)
         rows, columns = linear_sum_assignment(pairing_cost)
         selected_by_right = {
-            int(row): left_candidates[int(column)]
-            for row, column in zip(rows, columns)
+            int(row): left_candidates[int(column)] for row, column in zip(rows, columns)
         }
         if set(selected_by_right) != set(range(len(right_modes))):
             raise RuntimeError("Left/right assignment did not cover every right mode.")
@@ -842,8 +857,7 @@ def build_biorthogonal_mode_basis(
             cfg, cross_section, spaces
         )
         flux_before = [
-            flux_evaluator.evaluate(mode.right_full, mode.beta)
-            for mode in right_modes
+            flux_evaluator.evaluate(mode.right_full, mode.beta) for mode in right_modes
         ]
         if log is not None:
             log("Task32 mode basis: Poynting classification inputs complete")
@@ -895,9 +909,7 @@ def build_biorthogonal_mode_basis(
             left_reduced,
             [mode.right_reduced for mode in right_modes],
         )
-        group_payload: list[
-            tuple[tuple[int, ...], complex, float, float, str]
-        ] = []
+        group_payload: list[tuple[tuple[int, ...], complex, float, float, str]] = []
         for indices in group_indices:
             group_betas = np.asarray([betas[index] for index in indices])
             center = complex(np.mean(group_betas))
@@ -953,21 +965,83 @@ def build_biorthogonal_mode_basis(
             left_reduced,
             [mode.right_reduced for mode in right_modes],
         )
-        partition_audit = _near_degenerate_partition_audit(
+        joint_group_indices = _joint_near_degenerate_groups(
             betas,
             group_indices,
             biorthogonality,
             near_degenerate_tolerance=near_degenerate_tolerance,
             block_rotation_tolerance=block_rotation_tolerance,
-            directions=[
-                str(classification[1])
-                for classification in classifications
-            ],
+        )
+        joint_group_payload: list[
+            tuple[tuple[int, ...], complex, float, float, str]
+        ] = []
+        joint_rotation_applied = False
+        for joint_indices in joint_group_indices:
+            source_payload = [
+                payload
+                for payload in group_payload
+                if set(payload[0]).issubset(joint_indices)
+            ]
+            if len(source_payload) == 1:
+                joint_group_payload.append(source_payload[0])
+                continue
+
+            joint_rotation_applied = True
+            block = biorthogonality[np.ix_(joint_indices, joint_indices)]
+            transform, condition = _joint_subspace_inverse(
+                block,
+                maximum_overlap_condition=maximum_overlap_condition,
+            )
+            old_reduced = [left_reduced[index] for index in joint_indices]
+            old_full = [left_full[index] for index in joint_indices]
+            new_reduced = [
+                _linear_combination(old_reduced, transform[:, column])
+                for column in range(len(joint_indices))
+            ]
+            new_full = [
+                _linear_combination(old_full, transform[:, column])
+                for column in range(len(joint_indices))
+            ]
+            for vector in old_reduced + old_full:
+                vector.destroy()
+            for local_index, global_index in enumerate(joint_indices):
+                left_reduced[global_index] = new_reduced[local_index]
+                left_full[global_index] = new_full[local_index]
+            joint_betas = np.asarray([betas[index] for index in joint_indices])
+            center = complex(np.mean(joint_betas))
+            spread = max(
+                (_relative_beta_distance(beta, center) for beta in joint_betas),
+                default=0.0,
+            )
+            joint_group_payload.append(
+                (
+                    joint_indices,
+                    center,
+                    spread,
+                    condition,
+                    "near_degenerate_joint_subspace_inverse",
+                )
+            )
+        if joint_rotation_applied:
+            biorthogonality = _qep_overlap_matrix(
+                operators,
+                left_betas,
+                betas,
+                left_reduced,
+                [mode.right_reduced for mode in right_modes],
+            )
+        partition_audit = _near_degenerate_partition_audit(
+            betas,
+            joint_group_indices,
+            biorthogonality,
+            near_degenerate_tolerance=near_degenerate_tolerance,
+            block_rotation_tolerance=block_rotation_tolerance,
+            directions=[str(classification[1]) for classification in classifications],
         )
         if not partition_audit["pass"]:
             raise NearDegenerateBlockPartitionSplitError(partition_audit)
         groups: list[NearDegenerateGroup] = []
-        for indices, center, spread, condition, method in group_payload:
+        for indices, center, spread, condition, method in joint_group_payload:
             block = biorthogonality[np.ix_(indices, indices)]
             groups.append(
                 NearDegenerateGroup(
@@ -988,9 +1062,7 @@ def build_biorthogonal_mode_basis(
             left_candidate,
             poynting_before,
             classification,
-        ) in enumerate(
-            zip(right_modes, left_candidates, flux_before, classifications)
-        ):
+        ) in enumerate(zip(right_modes, left_candidates, flux_before, classifications)):
             kind, direction, classification_basis, passive = classification
             poynting_after = flux_evaluator.evaluate(right.right_full, right.beta)
             classified.append(
@@ -1018,8 +1090,8 @@ def build_biorthogonal_mode_basis(
         if log is not None:
             log("Task32 mode basis: classified mode records complete")
 
-        max_identity_error, max_entry_identity_error = (
-            _identity_error_metrics(biorthogonality)
+        max_identity_error, max_entry_identity_error = _identity_error_metrics(
+            biorthogonality
         )
         return BiorthogonalModeBasis(
             modes=classified,
@@ -1141,9 +1213,7 @@ def _subspace_report(
         @ cross
         @ _inverse_square_root_hermitian(gram_current)
     )
-    singular_values = np.clip(
-        np.linalg.svd(whitened, compute_uv=False), 0.0, 1.0
-    )
+    singular_values = np.clip(np.linalg.svd(whitened, compute_uv=False), 0.0, 1.0)
     angles = np.arccos(singular_values)
     return SubspaceTrackingReport(
         previous_indices=previous_indices,
@@ -1162,9 +1232,7 @@ def track_mode_bases(
 
     if operators.reduced_shape[0] == 0:
         raise ValueError("Cannot track an empty reduced space.")
-    overlap = np.empty(
-        (len(previous.modes), len(current.modes)), dtype=np.float64
-    )
+    overlap = np.empty((len(previous.modes), len(current.modes)), dtype=np.float64)
     for row, previous_mode in enumerate(previous.modes):
         for column, current_mode in enumerate(current.modes):
             overlap[row, column] = abs(
@@ -1218,9 +1286,7 @@ def track_mode_bases(
             if index not in matched_previous
         ),
         unmatched_current=tuple(
-            index
-            for index in range(len(current.modes))
-            if index not in matched_current
+            index for index in range(len(current.modes)) if index not in matched_current
         ),
         subspaces=tuple(subspaces),
         overlap_matrix=overlap,
