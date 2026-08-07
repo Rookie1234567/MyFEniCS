@@ -2,7 +2,7 @@
 
 ## 一句话结论
 
-H0 继承基线通过；首次 H1 direct Hybrid MPI8 formal 在生成 Hybrid 解以前因近简并模态分组检查退出，历史证据保留。post-fix source `2990f357f7dec23b1713bd0088bdc43c3ce6f5bc` 已完成同一冻结条件下的有效求解并通过 task.md §9 H1 contract；H2a、H2b、H3 与 H4 均已通过，H5 是下一阶段。
+H0 继承基线通过；首次 H1 direct Hybrid MPI8 formal 在生成 Hybrid 解以前因近简并模态分组检查退出，历史证据保留。post-fix source `2990f357f7dec23b1713bd0088bdc43c3ce6f5bc` 已完成同一冻结条件下的有效求解并通过 task.md §9 H1 contract；H2a、H2b、H3 与 H4 均已通过。H5a exact reference 通过，但冻结的 H5b local inverse 双侧资格化失败，按合同受控停止。
 
 ## H0-H10 矩阵
 
@@ -14,12 +14,14 @@ H0 继承基线通过；首次 H1 direct Hybrid MPI8 formal 在生成 Hybrid 解
 | H2b | pass | Matrix-free local endcap exact action identity |
 | H3 | pass | exact block-LDU iterative oracle；offline 12+12 已通过 |
 | H4 | pass | exact Sₘ + bounded G-only diagnostic；不要求 12+12 |
-| H5 | next | H4 已完成，按顺序进入 approximate local inverse |
-| H6 | not_run_by_order | H5 尚未完成 |
-| H7 | not_run_by_order | H5 尚未完成 |
-| H8 | not_run_by_order | H5 尚未完成 |
-| H9 | not_run_by_order | H5 尚未完成 |
-| H10 | not_run_by_order | H5 尚未完成 |
+| H5a | pass | bottom/top exact local reference 各 11/11；direct max=`2.107282966996484e-12 / 2.1971754846774315e-12`，action max=`2.0973803488508764e-12 / 2.1957548735380243e-12`；factors 顺序释放 |
+| H5b | controlled negative | bottom `1/11`、top `0/11`；分类 `LOCAL_INVERSE_FAMILY_NEGATIVE` |
+| H5c | not_run | H5b 数值 Gate 未过 |
+| H6 | not_run_by_order | H5 双侧 local inverse 失败触发停止 |
+| H7 | not_run_by_order | 同一 H5 stop |
+| H8 | not_run_by_order | 同一 H5 stop |
+| H9 | not_run_by_order | 同一 H5 stop |
+| H10 | not_run_by_order | 同一 H5 stop |
 
 ## H1 首次停止点（3f72ef3）
 
@@ -78,7 +80,7 @@ post-fix formal return code 为 `0`，`formal_pass=true`，true relative residua
 | swap | 0 |
 | ordinary defaults | unchanged；H1 explicit opt-in |
 
-runner 仍保留 `physical_qualified=false`、`official_record=false`、`mode_count_converged=false` 的 wider-M funnel 旧标签；它们不是 task.md §9 H1 Gate，也不改变本次 H1 task-specific contract pass。随后 H3 与 H4 已按顺序完成；H5 为下一阶段。
+runner 仍保留 `physical_qualified=false`、`official_record=false`、`mode_count_converged=false` 的 wider-M funnel 旧标签；它们不是 task.md §9 H1 Gate，也不改变本次 H1 task-specific contract pass。随后 H3 与 H4 已按顺序完成；H5 另行评估冻结 local inverse family。
 
 ## 资源
 
@@ -115,7 +117,7 @@ raw JSON 字段名虽含 max_*_mb，但本文按 bytes/1024^2 统一换算并显
 
 ## 下一步边界
 
-首次失败阶段不修 solver、不放宽 1e-6、不扫描 M、角度或 p-h；post-fix 只实施已审查的最小 grouping/audit 修复并完成一次 H1 recovery。H2a、H2b、H3 与 H4 已通过；H5 为下一阶段，H6-H10 按顺序未运行。
+首次失败阶段不修 solver、不放宽 1e-6、不扫描 M、角度或 p-h；post-fix 只实施已审查的最小 grouping/audit 修复并完成一次 H1 recovery。H2a、H2b、H3 与 H4 已通过；H5a/H5b 已完成，H5c、H6-H10 按停止规则未运行。
 
 ## H2a 当前边界
 
@@ -142,7 +144,7 @@ local blocks。它证明的是 local endcap 的代数 action、ownership、pack/
 | 相关回归 | test224/test230/test231=`5 passed / 1 skipped`；import、Ruff、format、compileall、diff-check 全部 pass |
 
 H2b-G 的每行数值是该 MPI 七个 probes 和 global/bottom/top/modal 四个输出块的总体最大值；
-四块逐项均不超过对应 MPI 行的总体最大值。H3 与 H4 已完成，H5 为下一阶段。
+四块逐项均不超过对应 MPI 行的总体最大值。H3 与 H4 已完成；H5 结果见下节。
 
 ## H3/H4 exact oracle checkpoint
 
@@ -151,5 +153,20 @@ H2b-G 的每行数值是该 MPI 七个 probes 和 global/bottom/top/modal 四个
 | H3 | formal、numeric、no-swap pass | outer=1；true global/bottom/top/modal=`2.892237294698294e-12 / 3.610918199454199e-12 / 2.0470485206121342e-12 / 9.879221339086588e-13`；offline 12+12=`12/12 + 12/12` | `507.2017102949321 s`；authority peak `9.585384368896484 GiB`；factors released |
 | H4a | exact Sₘ pass | outer=1；true global/bottom/top/modal=`2.7239301070596716e-12 / 3.982460029685523e-12 / 1.7429945983458624e-12 / 1.001248228432052e-12` | H4 whole-job oracle peak `9.802722930908203 GiB`；swap=0 |
 | H4b | bounded diagnostic complete | G-only outer=3、reason=-3；finite/evidence/factor lifecycle pass；不以残差大小判失败 | H4 不要求 12+12；H5 采用 approximate Sₘ 路径 |
+
+## H5 frozen local inverse qualification
+
+H5 评估的是冻结的双侧局部近似逆：把端部区域切成 x 方向 6 个有重叠的子块，用 partition-of-unity ASM 和 shifted ILU(0) 作为每次右 FGMRES 预条件器。它试图降低直接因子的内存，但必须用显式重新计算的 true residual 证明每个固定 RHS 真正被解到任务阈值。
+
+| 阶段 | 状态 | 关键事实 |
+|---|---|---|
+| H5a direct reference | pass | bottom/top 各 11/11；bottom/top direct max=`2.107282966996484e-12 / 2.1971754846774315e-12`，action max=`2.0973803488508764e-12 / 2.1957548735380243e-12`；两侧 factor 均释放 |
+| H5b local inverse | controlled negative | bottom `1/11`、top `0/11`；其余返回 `reason=-3`、`iterations=300`；最大 true residual `0.9422475005587448 / 0.9427702892133474` |
+| H5b repeat | deterministic only | 两次解的 repeat relative error 为 `0`；这不等于收敛 |
+| formal return | `2` | 22 个 RHS 完整记录后按数值 Gate 受控退出，不是 infrastructure failure |
+| H5 classification | `LOCAL_INVERSE_FAMILY_NEGATIVE` | 只否定本轮冻结 local inverse family，不否定 Hybrid 模型、direct authority 或未经授权的其他算法家族 |
+| H5 official R/T/A、field、12+12 | not_run | H5b 在这些后处理前已停止 |
+
+资源、逐 RHS residual、fixed-apply 诊断、factor NNZ/载荷估算和证据 hash 见 [H5 local endcap evidence](local_endcap_inverse_matrix.md)；H6 后续一侧替代与 H7-H10 funnel 均按停止规则未运行。
 
 完整 residual、Sₘ/G feedback、operator inventory、factor before/after 和 hash-bound artifact 见 [exact block-LDU oracle](exact_block_ldu_oracle.md)。

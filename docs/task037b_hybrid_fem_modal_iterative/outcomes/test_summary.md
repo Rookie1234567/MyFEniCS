@@ -42,7 +42,9 @@ post-fix H1 只修复近简并分组与 partition audit 范数语义的窄回归
 | H2b | pass；Matrix-free local endcap exact action identity |
 | H3 | pass；exact block-LDU formal、offline 12+12 完成 |
 | H4 | pass；H4a exact Sₘ 与 H4b bounded diagnostic 完成 |
-| H5-H10 | not_run_by_order；H5 为下一阶段 |
+| H5a | pass；direct local reference bottom/top 各 11/11 |
+| H5b | controlled negative；bottom `1/11`、top `0/11` |
+| H5c-H10 | not_run；H5b 数值 Gate 未过后按顺序停止 |
 
 ## 运行边界
 
@@ -78,6 +80,22 @@ H2b-G 每个 MPI 的七 probes、global/bottom/top/modal 四块合计最大 rela
 均为 `0`，mapping missing/extra/duplicates 均为 `0/0/0`。
 H2b production 从构造开始使用 matrix-free local-Schur 与 matrix-free DtN action；
 test-only oracle 才使用 explicit-condensed local blocks。
+
+## H5 formal local inverse
+
+| 项目 | 结果 |
+|---|---|
+| H5a exact/direct reference | bottom/top `11/11 + 11/11`；bottom/top direct max=`2.107282966996484e-12 / 2.1971754846774315e-12`，action max=`2.0973803488508764e-12 / 2.1957548735380243e-12`；factors 逐侧释放 |
+| H5b worker numerical Gate | bottom `1/11`、top `0/11`；其余 `reason=-3`、`max_it=300`；最大 true residual `0.9422475005587448 / 0.9427702892133474` |
+| H5 repeat | repeat solution relative error `0`；仅说明 deterministic，不说明 convergence |
+| H5 implementation closure | `40 passed`；Ruff check、compileall、git diff --check pass |
+| H5 formal | return `2`；`LOCAL_INVERSE_FAMILY_NEGATIVE`；完整 record 后受控停止 |
+| H5 official R/T/A、field、12+12 | not_run |
+| full pytest / CI | not_run；本地 docs closeout 不声称 CI |
+
+H5a/H5b 的阶段内存、逐 RHS 表、1/2/4/8 fixed-apply 诊断和 raw evidence hash 见
+[H5 local endcap evidence](local_endcap_inverse_matrix.md)。H5b 重复解一致不能抵消 true residual
+远高于 `1e-8` 的数值事实。
 
 ## H3/H4 formal evidence
 

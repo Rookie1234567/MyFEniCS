@@ -134,3 +134,28 @@ H4a 与 H4b 两轮 factors 均 before=`2`、after=`0`，bottom/top released=`tru
 | `benchmarks/artifacts/task037b/h4_modal_block_98046b7_mpi8/solver_record.json` | `9a6737d21c93d39310c70020785d0a4231f1d83296b858fa38c2a4bacf3d169f` |
 | `benchmarks/artifacts/task037b/h4_modal_block_98046b7_mpi8/memory_stages.jsonl` | `bb27debecbb0ac23c5d15c4c4fe3727b50574252449422243c8643b8cb6bf033` |
 | `benchmarks/artifacts/task037b/h4_modal_block_98046b7_mpi8/worker_stdout.txt` | `f13de07c6ccdf73d023606e5f7c8cc19b9926b647440f273b31b947a2690ef61` |
+
+## H5 frozen local inverse formal（216437c）
+
+H5a 是 direct local reference，H5b 是最终双侧同时驻留的 candidate stage。两种峰值不能混称；H5b 数值 Gate 失败，因此较低的 candidate 峰值不是资格化结果。
+
+| 阶段 | worker-rank RSS sum (MiB) | worker-rank PSS sum (MiB) | worker-rank USS sum (MiB) | process-tree RSS (MiB) |
+|---|---:|---:|---:|---:|
+| action/coupling | 6064.90625 | 4960.2822265625 | 4777.046875 | 6079.53125 |
+| H5a direct reference | 7705.8203125 | 6586.92578125 | 6401.30078125 | 7720.4453125 |
+| H5b candidate | 6910.75390625 | 5788.64453125 | 5602.4375 | 6925.37890625 |
+| post-direct heap trim | not_observed | not_observed | not_observed | not_observed |
+
+| 总时长 | swap | warning / termination | formal return | 分类 |
+|---:|---:|---|---:|---|
+| `795.0781892240047 s` | `0` | `false / false` | `2` | `LOCAL_INVERSE_FAMILY_NEGATIVE` |
+
+H5a direct 与 H5b candidate 的内存下降是实测阶段差异。H5b process-tree RSS=`6925.37890625 MiB`（约 `6.763 GiB`），高于 H9 后续定义的 eventual `MPI8 resource-positive <=6.0 GiB` 参考线；但 H5b 数值 Gate 未通过且 H9 未运行，不给出正式 resource qualification，也不能把 candidate 内存下降包装成 qualified solution。H5 official R/T/A、field 和 12+12 没有运行。
+
+| H5 evidence | SHA256 |
+|---|---|
+| `../../../benchmarks/artifacts/task037b/h5_local_inverse_216437c_mpi8/memory_sampler_summary.json` | `feb689c5faff607555f7ae894a7836020771145b30800d48eed4a595a3f8edb4` |
+| `../../../benchmarks/artifacts/task037b/h5_local_inverse_216437c_mpi8/solver_record.json` | `887be236f9edc0f3140e0124b82895f14761d22260d79477f8d7c0f00ee90d92` |
+| `../../../benchmarks/artifacts/task037b/h5_local_inverse_216437c_mpi8/memory_stages.jsonl` | `a27af6f56fb1028ec0174d1fd08c632279fc4af9258e06918d1166c1021aaabc` |
+| `../../../benchmarks/artifacts/task037b/h5_local_inverse_216437c_mpi8/memory_timeline.csv` | `8b060e61c04419abc19d4bee08bbafa572b9ca7ed484978e7d540eaf339e2f2f` |
+| `../../../benchmarks/artifacts/task037b/h5_local_inverse_216437c_mpi8/worker_stdout.txt` | `dcab0800a76be977f57d18b3b1fccdcb940b14a76cb4582e71f850b62d5c2178` |

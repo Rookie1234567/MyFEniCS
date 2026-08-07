@@ -78,3 +78,12 @@ resource evidence 仍未创建。
 | `98046b7297b5de23d121b60898afe9e9007abc6e` | `feat(task037b): add H4 modal-block diagnostic` | H4 exact Sₘ + bounded G-only diagnostic、operator/lifecycle Gate |
 
 上述 H3/H4 direct-factor oracle 只用于受控证据，不改变 ordinary defaults，也不等同于最终低内存候选。
+
+## H5 local inverse qualification
+
+| SHA | subject | 文件与职责 |
+|---|---|---|
+| `1990cd8ad287668774025e9789675ef53d6edd5e` | `feat(task037b): add local iterative inverse` | `src/solvers/physical_slab_two_level.py`：coordinate-axis 与 payload telemetry；`src/solvers/hybrid_local_iterative_inverse.py`：partition ASM、shifted ILU(0)、right FGMRES、true residual 与生命周期；`src/test/test_232_task037_owner_local_slab_assembler.py`、`src/test/test_233_task037_owner_local_slab_smoother.py`、`src/test/test_237_task037b_hybrid_local_iterative_inverse.py`：Stage A focused tests |
+| `216437c6f13b3a3bf46e74451f63779189453c6f` | `feat(task037b): wire H5 local inverse qualification` | `benchmarks/run_task032_phase6_augmented.py`：H5 frozen mode/RHS、H5a/H5b early qualification path；`benchmarks/run_task033_memory_watchdog.py`：H5 parser、launch、terminal drain、阶段内存摘要与 no-swap semantics；`src/test/test_181_task035c_p6_h10_runner_gates.py`、`src/test/test_59_task033_memory_watchdog_contract.py`、`src/test/test_238_task037b_h5_fixture_helpers.py`：H5 contracts |
+
+H5a exact reference 通过，H5b 冻结 local inverse family 为 `LOCAL_INVERSE_FAMILY_NEGATIVE`；H5c、H6-H10 按顺序未运行。上述代码保持 H5 explicit opt-in，ordinary defaults unchanged；没有把该 candidate、Hybrid-P 或低秩 direct Hybrid 提升为 production-qualified。H5 raw artifacts 为 ignored 文件，只由 docs 以路径和 SHA 引用。
