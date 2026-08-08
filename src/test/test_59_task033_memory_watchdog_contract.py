@@ -21,11 +21,14 @@ from benchmarks.run_task033_memory_watchdog import (
     _task037b_v1_r3_numerical_pass,
     _task037b_v1_r4_numerical_pass,
     _task037b_v1_r5_numerical_pass,
+    _task037b_v2_numerical_pass,
+    _task037b_v2_resource_classification,
     _task037b_r5_resource_gate,
     _watchdog_source_after,
     _watchdog_source_before,
     _worker_command,
 )
+from benchmarks.watchdog_process_control import worker_process_group_popen_kwargs
 from benchmarks.task033_watchdog_launch import (
     DEFAULT_RESOURCE_MATRIX,
     high_order_core_evidence_gate,
@@ -863,6 +866,295 @@ def _m160_nonconvergence_evidence() -> dict:
         ],
         source_descriptors=descriptors,
     )
+
+
+def _v2_raw_record(
+    *, profile: str = "bottom-approx", negative: bool = False, max_it: int = 20
+) -> dict:
+    expected = {
+        "bottom-approx": {"bottom": (0, 1), "top": (1, 0)},
+        "top-approx": {"bottom": (1, 0), "top": (0, 1)},
+        "double": {"bottom": (0, 1), "top": (0, 1)},
+    }[profile]
+    if max_it == 20:
+        iterations = [0, 5, 10, 15, 20]
+        residuals = [0.8, 0.6, 0.45, 0.3, 0.2 if not negative else 0.4]
+    elif max_it == 100:
+        iterations = [0, 25, 50, 75, 100]
+        residuals = [0.8, 0.5, 0.3, 0.16, 0.1]
+    else:
+        iterations = [0, 50, 100, 150, 200]
+        residuals = [0.8, 0.2, 0.05, 0.01, 0.001]
+    approximate = (
+        {"bottom"}
+        if profile == "bottom-approx"
+        else {"top"}
+        if profile == "top-approx"
+        else {"bottom", "top"}
+    )
+    one_apply_diagnostic_sides = (
+        {"bottom"}
+        if profile == "bottom-approx"
+        else {"top"}
+        if profile == "top-approx"
+        else set()
+    )
+
+    def certificate() -> dict:
+        return {
+            "pass": True,
+            "wrapper_vs_internal_woodbury_error": 1.0e-14,
+            "linearity_error": 1.0e-13,
+            "determinism_error": 1.0e-15,
+            "repeat_hash_equal": True,
+            "apply_count_before": 0,
+            "apply_count_after": 7,
+            "apply_count_increment": 7,
+            "base_factor_count": 1,
+            "local_direct_factor_count": 0,
+            "nested_ksp_created": False,
+            "woodbury": {
+                "K_rank": 40,
+                "K_condition_number": 2.0,
+                "arrays_finite": True,
+            },
+        }
+
+    def release_record(name: str) -> dict:
+        if name in approximate:
+            return {
+                "woodbury": {
+                    "before": {"destroyed": False},
+                    "after": {"destroyed": True},
+                },
+                "fixed_base": {
+                    "before": {"destroyed": False},
+                    "after": {"destroyed": True},
+                },
+                "components": {"destroyed": True},
+                "release_pass": True,
+            }
+        return {
+            "direct_action": {
+                "before": {"destroyed": False},
+                "after": {"destroyed": True},
+            },
+            "oracle": {"destroyed": True},
+            "release_pass": True,
+        }
+
+    def side(name: str) -> dict:
+        direct, ilu = expected[name]
+        row_list = []
+        side_release = release_record(name)
+        side_record = {
+            "factor_identity": {
+                "direct_factor_count": direct,
+                "ilu_factor_count": ilu,
+                "borrowed_local_factor_count": direct + ilu,
+                "expected_direct_factor_count": direct,
+                "expected_ilu_factor_count": ilu,
+                "pass": True,
+            },
+            "online_apply": {
+                "before": 0,
+                "after": 2,
+                "increment": 2,
+                "expected_increment": 2,
+                "pass": True,
+            },
+            "release_records": side_release,
+            "release_pass": True,
+            "borrowed_action_survives_after_screen": True,
+        }
+        if name in one_apply_diagnostic_sides:
+            count = 10 if name == "bottom" else 11
+            side_record["one_apply_diagnostic"] = {
+                "status": "pass",
+                "expected_nonzero_rhs_count": count,
+            }
+            row_list = [
+                {
+                    "apply_count_before": index,
+                    "apply_count_after": index + 1,
+                    "apply_count_increment": 1,
+                    "finite": True,
+                    "rho": 0.1,
+                }
+                for index in range(count)
+            ]
+        elif profile == "double":
+            side_record["one_apply_diagnostic"] = {
+                "status": "not_run_here",
+                "authority": "one-sided B/T required",
+            }
+        if name in one_apply_diagnostic_sides:
+            side_record["rho_records"] = row_list
+        return side_record
+
+    sides = {"bottom": side("bottom"), "top": side("top")}
+    factor_identity = {
+        name: sides[name]["factor_identity"] for name in ("bottom", "top")
+    }
+    release_records = {
+        "bottom": sides["bottom"]["release_records"],
+        "top": sides["top"]["release_records"],
+        "outer": {
+            "outer_rhs_destroy_call_completed": True,
+            "action_matrix_destroy_call_completed": True,
+            "action_context_destroyed": True,
+            "destroy_calls_complete": True,
+        },
+    }
+    history = []
+    for position, (index, value) in enumerate(zip(iterations, residuals)):
+        is_final = position == len(iterations) - 1
+        history.append(
+            {
+                "iteration": index,
+                "elapsed_seconds": float(index + 1),
+                "reported_relative_residual": value,
+                "global_true_relative_residual": value,
+                "bottom_true_relative_residual": value,
+                "top_true_relative_residual": value,
+                "modal_true_relative_residual": value,
+                "pc_apply_count": 1 if is_final else 0,
+                "bottom_action_apply_count": 2 if is_final else 0,
+                "top_action_apply_count": 2 if is_final else 0,
+            }
+        )
+    contract = True
+    numeric = not negative
+    telemetry = {
+        "task037b_v2_gate": True,
+        "profile": profile,
+        "max_it": max_it,
+        "ordinary_default_changed": False,
+        "sides": sides,
+        "fixed_callback_certificates": {
+            "bottom": certificate() if "bottom" in approximate else None,
+            "top": certificate() if "top" in approximate else None,
+        },
+        "modal_schur": {
+            "shape": [240, 240],
+            "rank": 240,
+            "finite": True,
+            "condition": 2.0,
+            "matrix_repeat_error": 1.0e-14,
+            "lu_repeat_solve_error": 1.0e-14,
+            "build_apply_count": {"bottom": 480, "top": 480},
+        },
+        "modal_schur_contract_pass": True,
+        "factor_identity": factor_identity,
+        "factor_identity_pass": True,
+        "global_operator_inventory": {
+            "global_A_materialized": False,
+            "matrix_free": True,
+            "p6_direct_factor_count": 0,
+        },
+        "global_operator_contract": True,
+        "pc_setup_inventory": {
+            "global_A_materialized": False,
+            "borrowed_local_factor_count": 2,
+            "pc_owned_local_factor_count": 0,
+            "bottom_direct_factor_count": expected["bottom"][0],
+            "bottom_ilu_factor_count": expected["bottom"][1],
+            "top_direct_factor_count": expected["top"][0],
+            "top_ilu_factor_count": expected["top"][1],
+        },
+        "pc_inventory_pass": True,
+        "online_apply_counts": {
+            "bottom": sides["bottom"]["online_apply"],
+            "top": sides["top"]["online_apply"],
+        },
+        "release_records": release_records,
+        "release_pass": True,
+    }
+    validation = {
+        "official_record": False,
+        "R": "not_run",
+        "T": "not_run",
+        "A": "not_run",
+        "A_volume": "not_run",
+        "orders": "not_run",
+        "external_diffraction_orders": "not_run",
+        "field": "not_run",
+        "12_plus_12": "not_run",
+        "Full3D": "not_run",
+        "full3d_comparison": "not_run",
+    }
+    return {
+        "schema_version": 1,
+        "record_schema": "task037b.v2-block-pc-screen.v1",
+        "timestamp_utc": "2026-08-08T00:00:00+00:00",
+        "benchmark_id": "task037b_v2_bounded_block_pc_screen",
+        "official_record": False,
+        "case": {
+            "degree": 6,
+            "h_nm": 10.0,
+            "modal_degree": 6,
+            "modal_h_nm": 10.0,
+            "requested_modes": 120,
+            "candidate_modes": 240,
+            "mpi_size": 8,
+            "solver_path": "block-ldu-action-screen",
+            "polarization_kind": "s",
+            "incident_grazing_deg": 10.0,
+            "bottom_interface_nm": 10.0,
+            "top_interface_nm": 110.0,
+            "v2_profile": profile,
+            "v2_max_it": max_it,
+        },
+        "hybrid_system": {
+            "global_A_materialized": False,
+            "global_direct_factor_count": 0,
+        },
+        "screen": {
+            "profile": profile,
+            "max_it": max_it,
+            "restart": 90,
+            "rtol": 1.0e-6,
+            "atol": 0.0,
+            "zero_initial": True,
+            "converged_reason": 2 if not negative else -3,
+            "iterations": max_it,
+            "history": history,
+            "inventory_before_release": {
+                "pc_apply_count": 1,
+                "bottom_action_apply_count": 2,
+                "top_action_apply_count": 2,
+            },
+        },
+        "v2_telemetry": telemetry,
+        "validation": validation,
+        "physical_field_reconstruction": {"status": "not_run"},
+        "gates": {
+            "v2_fixed_callback_certificate": True,
+            "v2_modal_schur": True,
+            "v2_online_apply_counts": True,
+            "v2_factor_identity": True,
+            "v2_global_operator": True,
+            "v2_pc_inventory": True,
+            "v2_release": True,
+            "v2_screen": numeric,
+            "v2_integration_pass": contract,
+            "v2_worker_numerical_pass": numeric,
+        },
+        "qualification": {
+            "task037b_v2_gate": True,
+            "profile": profile,
+            "max_it": max_it,
+            "official_record": False,
+            "integration_pass": contract,
+            "worker_numerical_pass": numeric,
+            "disposition": "screen_pass" if numeric else "screen_numerical_negative",
+        },
+        "status": (
+            "task037b_v2_screen_pass"
+            if numeric
+            else "task037b_v2_screen_numerical_negative"
+        ),
+    }
 
 
 class Task033MemoryWatchdogContractTests(unittest.TestCase):
@@ -2163,6 +2455,183 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
         self.assertIsNone(incomplete["peak_worker_rank_uss_sum_mb"])
         self.assertEqual(incomplete["peak_worker_rank_rss_sum_mb"], 18.0)
         self.assertEqual(incomplete["peak_mpi_process_tree_rss_mb"], 27.0)
+
+    def test_v2_parser_scope_forwarding_and_fixed_watchdog_limits(self) -> None:
+        base = [
+            "--target",
+            "hybrid",
+            "--case-label",
+            "task037b_v2",
+            "--degree",
+            "6",
+            "--h-nm",
+            "10",
+            "--modal-degree",
+            "6",
+            "--modal-h-nm",
+            "10",
+            "--mpi-size",
+            "8",
+            "--requested-modes",
+            "120",
+            "--candidate-modes",
+            "240",
+            "--solver-path",
+            "block-ldu-action-screen",
+            "--stage4-full3d-assembly-backend",
+            "assembly_time_static_condensed",
+            "--bottom-interface-nm",
+            "10",
+            "--top-interface-nm",
+            "110",
+            "--incident-grazing-deg",
+            "10",
+            "--polarization-kind",
+            "s",
+            "--internal-propagation-model",
+            "full3d_uniform_cg",
+            "--internal-traction-model",
+            "scalar_cg_discrete_derivative",
+            "--full3d-reference",
+            "full3d.json",
+            "--full3d-reference-sha256",
+            "b" * 64,
+            "--task035c-p6-preflight-authority",
+            "preflight.json",
+            "--task035c-p6-preflight-sha256",
+            "a" * 64,
+            "--verified-clean-sha",
+            SOURCE_SHA,
+            "--host-environment-id",
+            "WSL2-Ubuntu-24.04",
+            "--task037b-v2-gate",
+            "--task037b-v2-profile",
+            "bottom-approx",
+            "--task037b-v2-max-it",
+            "20",
+            "--warning-gib",
+            "10",
+            "--terminate-gib",
+            "14",
+            "--timeout-seconds",
+            "3600",
+        ]
+        args = _parse_args(base)
+        self.assertEqual(args.task037b_v2_profile, "bottom-approx")
+        self.assertEqual(args.task037b_v2_max_it, 20)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            command = _worker_command(args, root / "record.json", root / "stages.jsonl")
+        self.assertEqual(command.count("--task037b-v2-gate"), 1)
+        self.assertEqual(command.count("--task037b-v2-profile"), 1)
+        self.assertIn("bottom-approx", command)
+        self.assertEqual(command.count("--task037b-v2-max-it"), 1)
+        for flag in (
+            "--task035c-p6-h10-gate",
+            "--task037b-h1-gate",
+            "--task037b-h3-gate",
+            "--task037b-h4-gate",
+            "--task037b-h5-gate",
+            "--task037b-v1-gate",
+        ):
+            self.assertNotIn(flag, command)
+        with self.assertRaises(SystemExit):
+            _parse_args(
+                [
+                    item
+                    for item in base
+                    if item not in {"--task037b-v2-profile", "bottom-approx"}
+                ]
+            )
+        with self.assertRaises(SystemExit):
+            _parse_args(
+                [
+                    *base[:-6],
+                    "--warning-gib",
+                    "11",
+                    "--terminate-gib",
+                    "14",
+                    "--timeout-seconds",
+                    "3600",
+                ]
+            )
+        double = _parse_args(
+            [
+                *base,
+                "--task037b-v2-profile",
+                "double",
+                "--task037b-v2-max-it",
+                "100",
+                "--timeout-seconds",
+                "7200",
+            ]
+        )
+        self.assertEqual(
+            (double.task037b_v2_profile, double.task037b_v2_max_it), ("double", 100)
+        )
+        self.assertEqual(
+            worker_process_group_popen_kwargs().get("start_new_session"), True
+        )
+
+    def test_v2_raw_checker_recomputes_pass_negative_lifecycle_and_terminal(
+        self,
+    ) -> None:
+        for profile in ("bottom-approx", "top-approx", "double"):
+            record = _v2_raw_record(profile=profile)
+            self.assertTrue(_task037b_v2_numerical_pass(record))
+            record["status"] = "forged_status"
+            self.assertFalse(
+                _task037b_v2_numerical_pass(record, require_numerical_pass=False)
+            )
+        self.assertTrue(
+            _task037b_v2_numerical_pass(_v2_raw_record(profile="double", max_it=100))
+        )
+        self.assertTrue(
+            _task037b_v2_numerical_pass(_v2_raw_record(profile="double", max_it=200))
+        )
+        negative = _v2_raw_record(profile="bottom-approx", negative=True)
+        self.assertFalse(_task037b_v2_numerical_pass(negative))
+        self.assertTrue(
+            _task037b_v2_numerical_pass(negative, require_numerical_pass=False)
+        )
+        frozen_screen = _v2_raw_record(profile="double")
+        frozen_screen["screen"]["restart"] = 89
+        self.assertFalse(
+            _task037b_v2_numerical_pass(frozen_screen, require_numerical_pass=False)
+        )
+        lifecycle = _v2_raw_record(profile="double")
+        lifecycle["v2_telemetry"]["release_pass"] = False
+        self.assertFalse(
+            _task037b_v2_numerical_pass(lifecycle, require_numerical_pass=False)
+        )
+        destroyed = _v2_raw_record(profile="double")
+        destroyed["v2_telemetry"]["release_records"]["bottom"]["woodbury"]["after"][
+            "destroyed"
+        ] = False
+        self.assertFalse(
+            _task037b_v2_numerical_pass(destroyed, require_numerical_pass=False)
+        )
+        terminal = _v2_raw_record(profile="double")
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "solver_record.json"
+            path.write_text(json.dumps(terminal), encoding="utf-8")
+            self.assertTrue(_task034_terminal_record_is_complete(path))
+
+    def test_v2_resource_classification_keeps_numeric_result_separate(self) -> None:
+        below = _task037b_v2_resource_classification(5.0 * 1024.0)
+        exact = _task037b_v2_resource_classification(6.0 * 1024.0)
+        above = _task037b_v2_resource_classification(6.0 * 1024.0 + 1.0)
+        missing = _task037b_v2_resource_classification(None)
+        negative = _task037b_v2_resource_classification(-1.0)
+        self.assertTrue(below["engineering_positive"])
+        self.assertTrue(below["resource_positive"])
+        self.assertTrue(exact["resource_positive"])
+        self.assertFalse(exact["resource_review"])
+        self.assertTrue(above["resource_review"])
+        self.assertFalse(above["resource_positive"])
+        self.assertTrue(missing["measurement_failure"])
+        self.assertTrue(negative["measurement_failure"])
+        self.assertFalse(negative["measurement_present"])
 
 
 if __name__ == "__main__":
