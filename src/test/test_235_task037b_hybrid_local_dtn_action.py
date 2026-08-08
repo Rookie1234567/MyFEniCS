@@ -37,6 +37,7 @@ from src.solvers.hybrid_static_field_recovery import (
 from src.solvers.hybrid_local_dtn import assemble_hybrid_local_dtn_system
 from src.solvers.hybrid_local_dtn_action import (
     assemble_hybrid_local_dtn_action_system,
+    create_hybrid_local_dtn_action_components,
 )
 
 
@@ -561,9 +562,7 @@ class TestTask037bHybridLocalDtnAction:
             owner = comm.size - 1
             values = (
                 np.asarray(
-                    vector.getValues(
-                        np.arange(vector.getSize(), dtype=PETSc.IntType)
-                    ),
+                    vector.getValues(np.arange(vector.getSize(), dtype=PETSc.IntType)),
                     dtype=np.complex128,
                 )
                 if comm.rank == owner
@@ -680,3 +679,87 @@ class TestTask037bHybridLocalDtnAction:
                 vector.destroy()
             for vector in direct_full.values():
                 vector.destroy()
+
+    def test_r1_dtn_component_action_identity(self):
+        """Check the borrowed F/C/D/H action on fixed bottom/top probes."""
+
+        def manual_action(components, source):
+            target = components.F.createVecLeft()
+            d_work = components.D.createVecLeft()
+            h_work = components.H.createVecLeft()
+            c_work = components.C.createVecLeft()
+            components.F.mult(source, target)
+            components.D.mult(source, d_work)
+            components.solve_h(d_work, h_work)
+            components.C.mult(h_work, c_work)
+            target.axpy(PETSc.ScalarType(-1.0), c_work)
+            d_work.destroy()
+            h_work.destroy()
+            c_work.destroy()
+            return target
+
+        for side in ("bottom", "top"):
+            system = self.action[side]
+            components = create_hybrid_local_dtn_action_components(system)
+            sources = []
+            try:
+                for seed in (17037, 27037, 37037):
+                    source = system.A.createVecRight()
+                    _fill_global_vector(source, seed)
+                    sources.append((f"random_{seed}", source))
+                physical = system.b.copy()
+                sources.append(("physical_rhs", physical))
+                block = getattr(self.action_coupling, side)
+                for label, traction in (
+                    ("positive_lowest", block.positive_traction),
+                    ("negative_lowest", block.negative_traction),
+                ):
+                    modal = traction.createVecRight()
+                    modal.set(0.0)
+                    first, last = (int(value) for value in modal.getOwnershipRange())
+                    if first == 0 and last > 0:
+                        modal.getArray()[:] = 0.0
+                        modal.getArray()[0] = PETSc.ScalarType(1.0)
+                    modal.assemble()
+                    source = traction.createVecLeft()
+                    traction.mult(modal, source)
+                    modal.destroy()
+                    sources.append((f"modal_{label}", source))
+
+                for label, source in sources:
+                    expected = manual_action(components, source)
+                    actual = system.A.createVecLeft()
+                    component = components.F.createVecLeft()
+                    component_repeat = components.F.createVecLeft()
+                    system.A.mult(source, actual)
+                    components.mult(source, component)
+                    components.mult(source, component_repeat)
+                    action_error = _relative_vector_error(actual, expected)
+                    repeat_error = _relative_vector_error(component_repeat, component)
+                    component_error = _relative_vector_error(component, expected)
+                    assert np.isfinite(action_error)
+                    assert np.isfinite(repeat_error)
+                    assert np.isfinite(component_error)
+                    assert action_error <= 1.0e-11
+                    assert repeat_error <= 1.0e-12
+                    assert component_error <= 1.0e-11
+                    if MPI.COMM_WORLD.rank == 0:
+                        print(
+                            f"R1 {side} {label} action={action_error:.3e} "
+                            f"repeat={repeat_error:.3e} component={component_error:.3e}",
+                            flush=True,
+                        )
+                    component_repeat.destroy()
+                    component.destroy()
+                    actual.destroy()
+                    expected.destroy()
+            finally:
+                for _label, source in sources:
+                    source.destroy()
+                components.destroy()
+                retained = system.A.createVecRight()
+                retained.set(0.0)
+                retained_result = system.A.createVecLeft()
+                system.A.mult(retained, retained_result)
+                retained_result.destroy()
+                retained.destroy()

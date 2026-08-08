@@ -15,6 +15,7 @@ from benchmarks.run_task033_memory_watchdog import (
     _parse_args,
     _task034_terminal_worker_drain,
     _task037b_h5_numerical_pass,
+    _task037b_v1_r1_numerical_pass,
     _watchdog_source_after,
     _watchdog_source_before,
     _worker_command,
@@ -30,6 +31,63 @@ from benchmarks.task033_hybrid_funnel import build_hybrid_funnel
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE_SHA = "a" * 40
+
+
+def _v1_raw_record() -> dict:
+    names = (
+        "physical",
+        "random_seed_3701",
+        "random_seed_3702",
+        "random_seed_3703",
+        "modal_positive_lowest_propagating_or_lossy",
+        "modal_negative_lowest_propagating_or_lossy",
+    )
+    probes = [
+        {
+            "name": name,
+            "metadata": {"kind": "contract"},
+            "source_digest": "a" * 64,
+            "component_digest": "b" * 64,
+            "action_relative_error": 1.0e-14,
+            "component_repeat_relative_error": 1.0e-15,
+            "finite": True,
+            "pass": True,
+        }
+        for name in names
+    ]
+    side = {
+        "h_condition_number": 2.0,
+        "matrices": {},
+        "operator_inventory": {},
+        "probes": probes,
+        "component_destroyed": True,
+        "action_usable_after_component_destroy": True,
+        "pass": True,
+    }
+    return {
+        "schema_version": 1,
+        "record_schema": "task037b.v1-r1-dtn-component-action.v1",
+        "benchmark_id": "task037b_v1_dtn_component_action",
+        "status": "task037b_v1_r1_pass_awaiting_r2",
+        "hybrid_system": {
+            "global_action_constructed": False,
+            "global_A_materialized": False,
+            "global_F_materialized": False,
+            "explicit_global_C_D_materialized": False,
+            "direct_factor_count": 0,
+        },
+        "v1_telemetry": {
+            "task037b_v1_gate": True,
+            "formal_probe_count_per_side": 6,
+            "sides": {"bottom": copy.deepcopy(side), "top": copy.deepcopy(side)},
+        },
+        "gates": {"r1_pass": True},
+        "qualification": {
+            "task037b_v1_gate": True,
+            "r1_pass": True,
+            "integration_pass": True,
+        },
+    }
 
 
 def _funnel_shard(mode_count: int, delta: float) -> dict:
@@ -71,9 +129,7 @@ def _funnel_shard(mode_count: int, delta: float) -> dict:
                 "graded_plan_hash": None,
                 "requested_modes_per_direction": mode_count,
             },
-            "hybrid_system": {
-                "primary_solver_path": "modal-schur-memory-minimal"
-            },
+            "hybrid_system": {"primary_solver_path": "modal-schur-memory-minimal"},
             "solve": {"true_relative_residual": 1.0e-12},
             "port_power": {
                 "R_total": 0.1 + delta,
@@ -171,7 +227,9 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
         self.assertFalse(rejected["pass"])
         self.assertIn("expected_sha256_matches", rejected["failures"])
 
-    def test_high_order_core_accepts_only_audited_non_numerical_descendant(self) -> None:
+    def test_high_order_core_accepts_only_audited_non_numerical_descendant(
+        self,
+    ) -> None:
         current_sha = "b" * 40
         evidence = attach_evidence_sha256(
             {
@@ -282,7 +340,9 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
             ["benchmarks/run_task033_qep_matrix.py"],
         )
 
-    def test_source_preflight_rejects_nonignored_untracked_before_and_after(self) -> None:
+    def test_source_preflight_rejects_nonignored_untracked_before_and_after(
+        self,
+    ) -> None:
         sha = "a" * 40
 
         def dirty_git(*args: str) -> str:
@@ -318,11 +378,11 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
             after = _watchdog_source_after(clean_source)
         self.assertFalse(after["source_stable_during_run"])
         self.assertFalse(after["source_clean_verified"])
-        self.assertEqual(
-            after["nonignored_untracked_after"], ["uncommitted_solver.py"]
-        )
+        self.assertEqual(after["nonignored_untracked_after"], ["uncommitted_solver.py"])
 
-    def test_task032_anchor_default_reuse_and_explicit_same_sha_requalification(self) -> None:
+    def test_task032_anchor_default_reuse_and_explicit_same_sha_requalification(
+        self,
+    ) -> None:
         matrix = json.loads(DEFAULT_RESOURCE_MATRIX.read_text(encoding="utf-8"))
         common = {
             "degree": 2,
@@ -414,18 +474,14 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
         args._qep_effective_limit_gib = 9.25
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            command = _worker_command(
-                args, root / "record.json", root / "stages.jsonl"
-            )
+            command = _worker_command(args, root / "record.json", root / "stages.jsonl")
         rendered = " ".join(command)
         self.assertIn("benchmarks.run_task033_qep_matrix", rendered)
         self.assertIn("--no-swap-verified", command)
         self.assertIn("--watchdog-enabled-verified", command)
         self.assertIn("--one-large-case-verified", command)
         self.assertIn("--left-candidate-modes", command)
-        self.assertEqual(
-            command[command.index("--left-candidate-modes") + 1], "16"
-        )
+        self.assertEqual(command[command.index("--left-candidate-modes") + 1], "16")
         self.assertIn("b" * 64, command)
         self.assertIn("--container-limit-gib", command)
         self.assertIn("9.25", command)
@@ -475,9 +531,7 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
             "full3d_uniform_cg",
         )
         self.assertEqual(
-            corrected_command[
-                corrected_command.index("--internal-traction-model") + 1
-            ],
+            corrected_command[corrected_command.index("--internal-traction-model") + 1],
             "scalar_cg_discrete_derivative",
         )
 
@@ -633,9 +687,7 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
         )
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            command = _worker_command(
-                args, root / "record.json", root / "stages.jsonl"
-            )
+            command = _worker_command(args, root / "record.json", root / "stages.jsonl")
         rendered = " ".join(command)
         self.assertIn("benchmarks.run_task032_phase6_augmented", rendered)
         self.assertIn("--degree 2", rendered)
@@ -680,9 +732,7 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
         )
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            command = _worker_command(
-                args, root / "record.json", root / "stages.jsonl"
-            )
+            command = _worker_command(args, root / "record.json", root / "stages.jsonl")
         rendered = " ".join(command)
         self.assertIn("--degree 2", rendered)
         self.assertIn("--h-nm 5.0", rendered)
@@ -754,7 +804,9 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
                         gate["failures"],
                     )
 
-    def test_hybrid_nondefault_physics_and_minimal_comparison_are_forwarded(self) -> None:
+    def test_hybrid_nondefault_physics_and_minimal_comparison_are_forwarded(
+        self,
+    ) -> None:
         args = _parse_args(
             [
                 "--target",
@@ -786,9 +838,7 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
         )
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            command = _worker_command(
-                args, root / "record.json", root / "stages.jsonl"
-            )
+            command = _worker_command(args, root / "record.json", root / "stages.jsonl")
         rendered = " ".join(command)
         self.assertIn("--incident-grazing-deg 5.0", rendered)
         self.assertIn("--polarization-kind p", rendered)
@@ -815,21 +865,15 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
             "expected_core_sha256": None,
             "current_source_sha": SOURCE_SHA,
         }
-        fast = hybrid_launch_gate(
-            matrix, comparison_solver_path="fast", **common
-        )
+        fast = hybrid_launch_gate(matrix, comparison_solver_path="fast", **common)
         self.assertFalse(fast["pass"])
         self.assertIn(
             "task033_augmented_comparison_uses_memory_minimal",
             fast["failures"],
         )
-        minimal = hybrid_launch_gate(
-            matrix, comparison_solver_path="minimal", **common
-        )
+        minimal = hybrid_launch_gate(matrix, comparison_solver_path="minimal", **common)
         self.assertTrue(minimal["pass"], minimal["failures"])
-        self.assertEqual(
-            minimal["physical_case"]["comparison_solver_path"], "minimal"
-        )
+        self.assertEqual(minimal["physical_case"]["comparison_solver_path"], "minimal")
         self.assertEqual(
             minimal["independent_prediction"][
                 "uncalibrated_incidence_polarization_contingency"
@@ -864,27 +908,19 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
             "expected_m160_funnel_sha256": digest,
             "observed_m160_funnel_sha256": digest,
         }
-        passed = hybrid_launch_gate(
-            matrix, m160_funnel_evidence=evidence, **common
-        )
+        passed = hybrid_launch_gate(matrix, m160_funnel_evidence=evidence, **common)
         self.assertTrue(passed["pass"], passed["failures"])
         self.assertTrue(passed["conditional_m240_evidence"]["pass"])
         self.assertEqual(
-            passed["independent_prediction"][
-                "conditional_mode_workspace_contingency"
-            ],
+            passed["independent_prediction"]["conditional_mode_workspace_contingency"],
             2.25,
         )
 
-        missing = hybrid_launch_gate(
-            matrix, m160_funnel_evidence=None, **common
-        )
+        missing = hybrid_launch_gate(matrix, m160_funnel_evidence=None, **common)
         self.assertFalse(missing["pass"])
         stale_case = copy.deepcopy(evidence)
         stale_case["case"]["h_nm"] = 3.0
-        stale = hybrid_launch_gate(
-            matrix, m160_funnel_evidence=stale_case, **common
-        )
+        stale = hybrid_launch_gate(matrix, m160_funnel_evidence=stale_case, **common)
         self.assertFalse(stale["pass"])
         wrong_digest = hybrid_launch_gate(
             matrix,
@@ -894,14 +930,12 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
         self.assertFalse(wrong_digest["pass"])
 
     def test_task32_comparison_contract_records_selected_builder(self) -> None:
-        source = (
-            ROOT / "benchmarks" / "run_task032_phase6_augmented.py"
-        ).read_text(encoding="utf-8")
+        source = (ROOT / "benchmarks" / "run_task032_phase6_augmented.py").read_text(
+            encoding="utf-8"
+        )
         self.assertIn('"--comparison-solver-path"', source)
         self.assertIn('choices=("fast", "minimal")', source)
-        self.assertIn(
-            '"comparison_solver_path": comparison_solver_path', source
-        )
+        self.assertIn('"comparison_solver_path": comparison_solver_path', source)
         self.assertIn("build_hybrid_modal_schur_memory_minimal_system", source)
 
     def test_contract_rejects_missing_qep_material_and_bad_thresholds(self) -> None:
@@ -1069,21 +1103,28 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
 
     def test_static_hybrid_cli_requires_hash_bound_fresh_reference(self) -> None:
         base = [
-            "--target", "hybrid",
-            "--case-label", "static_h1a",
-            "--degree", "2",
-            "--h-nm", "5",
-            "--mpi-size", "1",
-            "--requested-modes", "120",
-            "--candidate-modes", "240",
-            "--full3d-reference", "fresh_static.json",
+            "--target",
+            "hybrid",
+            "--case-label",
+            "static_h1a",
+            "--degree",
+            "2",
+            "--h-nm",
+            "5",
+            "--mpi-size",
+            "1",
+            "--requested-modes",
+            "120",
+            "--candidate-modes",
+            "240",
+            "--full3d-reference",
+            "fresh_static.json",
             "--stage4-full3d-assembly-backend",
             "assembly_time_static_condensed",
-            "--verified-clean-sha", "f" * 40,
+            "--verified-clean-sha",
+            "f" * 40,
         ]
-        args = _parse_args(
-            [*base, "--full3d-reference-sha256", "a" * 64]
-        )
+        args = _parse_args([*base, "--full3d-reference-sha256", "a" * 64])
         self.assertEqual(
             args.stage4_full3d_assembly_backend,
             "assembly_time_static_condensed",
@@ -1094,16 +1135,26 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             _parse_args(
                 [
-                    "--target", "hybrid",
-                    "--case-label", "standard",
-                    "--degree", "2",
-                    "--h-nm", "5",
-                    "--mpi-size", "1",
-                    "--requested-modes", "120",
-                    "--candidate-modes", "240",
-                    "--full3d-reference", "standard.json",
-                    "--full3d-reference-sha256", "a" * 64,
-                    "--verified-clean-sha", "f" * 40,
+                    "--target",
+                    "hybrid",
+                    "--case-label",
+                    "standard",
+                    "--degree",
+                    "2",
+                    "--h-nm",
+                    "5",
+                    "--mpi-size",
+                    "1",
+                    "--requested-modes",
+                    "120",
+                    "--candidate-modes",
+                    "240",
+                    "--full3d-reference",
+                    "standard.json",
+                    "--full3d-reference-sha256",
+                    "a" * 64,
+                    "--verified-clean-sha",
+                    "f" * 40,
                 ]
             )
 
@@ -1129,6 +1180,28 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
                 }
             )
         )
+
+    def test_v1_numerical_pass_recomputes_raw_component_contract(self) -> None:
+        self.assertTrue(_task037b_v1_r1_numerical_pass(_v1_raw_record()))
+
+        error_record = _v1_raw_record()
+        error_record["v1_telemetry"]["sides"]["bottom"]["probes"][0][
+            "action_relative_error"
+        ] = 2.0e-11
+        self.assertFalse(_task037b_v1_r1_numerical_pass(error_record))
+
+        missing_side = _v1_raw_record()
+        del missing_side["v1_telemetry"]["sides"]["top"]
+        self.assertFalse(_task037b_v1_r1_numerical_pass(missing_side))
+
+        qualification_only = {
+            "qualification": {
+                "task037b_v1_gate": True,
+                "r1_pass": True,
+                "integration_pass": True,
+            }
+        }
+        self.assertFalse(_task037b_v1_r1_numerical_pass(qualification_only))
 
     def test_h5_external_no_swap_is_a_formal_requirement(self) -> None:
         kwargs = {
@@ -1156,9 +1229,7 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
         }
         self.assertTrue(_task034_terminal_worker_drain(**kwargs))
         self.assertFalse(
-            _task034_terminal_worker_drain(
-                **{**kwargs, "stage": "record_and_release"}
-            )
+            _task034_terminal_worker_drain(**{**kwargs, "stage": "record_and_release"})
         )
         self.assertFalse(
             _task034_terminal_worker_drain(
@@ -1166,9 +1237,7 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
             )
         )
         self.assertFalse(
-            _task034_terminal_worker_drain(
-                **{**kwargs, "live_worker_count": 1}
-            )
+            _task034_terminal_worker_drain(**{**kwargs, "live_worker_count": 1})
         )
 
     def test_h5_stage_memory_summary_keeps_peaks_separate(self) -> None:

@@ -33,6 +33,7 @@ from .common_3d_solve import _create_nedelec_space
 from .condensed_dtn import (
     DtnBlockAssembler,
     PetscCondensedBlocks,
+    SmallDenseInverse,
     condensed_rhs,
     create_matrix_free_condensed_operator,
 )
@@ -61,8 +62,10 @@ from .hybrid_local_static_condensation import (
 from .static_local_schur_action import create_static_local_schur_action
 
 __all__ = (
+    "HybridLocalDtnActionComponents",
     "HybridLocalDtnActionSystem",
     "assemble_hybrid_local_dtn_action_system",
+    "create_hybrid_local_dtn_action_components",
 )
 
 
@@ -192,6 +195,62 @@ class HybridLocalDtnActionSystem:
         self.full_fe_rhs.destroy()
         self.static_condensation.destroy()
         self._destroyed = True
+
+
+class HybridLocalDtnActionComponents:
+    """Non-owning F/C/D/H actions for one local DtN action system.
+
+    The four PETSc matrices are borrowed from ``system``.  This carrier owns
+    only the small-H inverse and its scratch vectors, so destroying it cannot
+    destroy the one-sided action system or its matrix-free ``A``.
+    """
+
+    def __init__(self, system: HybridLocalDtnActionSystem) -> None:
+        self.F = system.fine_action
+        self.C = system.blocks.C
+        self.D = system.blocks.D
+        self.H = system.blocks.H
+        self._h_solver = SmallDenseInverse(self.H)
+        self._d_work = self.D.createVecLeft()
+        self._h_work = self.H.createVecLeft()
+        self._c_work = self.C.createVecLeft()
+        self._destroyed = False
+
+    @property
+    def h_condition_number(self) -> float:
+        return float(self._h_solver.condition_number)
+
+    def solve_h(self, rhs: PETSc.Vec, solution: PETSc.Vec) -> None:
+        if self._destroyed:
+            raise RuntimeError("DtN component actions have been destroyed.")
+        self._h_solver.solve(rhs, solution)
+
+    def mult(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        """Apply ``F - C H^{-1} D`` using borrowed component matrices."""
+
+        if self._destroyed:
+            raise RuntimeError("DtN component actions have been destroyed.")
+        self.F.mult(source, target)
+        self.D.mult(source, self._d_work)
+        self._h_solver.solve(self._d_work, self._h_work)
+        self.C.mult(self._h_work, self._c_work)
+        target.axpy(PETSc.ScalarType(-1.0), self._c_work)
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self._c_work.destroy()
+        self._h_work.destroy()
+        self._d_work.destroy()
+        self._destroyed = True
+
+
+def create_hybrid_local_dtn_action_components(
+    system: HybridLocalDtnActionSystem,
+) -> HybridLocalDtnActionComponents:
+    """Create a non-owning F/C/D/H view over ``system``."""
+
+    return HybridLocalDtnActionComponents(system)
 
 
 def _empty_action_stats(n_rows: int) -> dict[str, Any]:

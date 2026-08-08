@@ -94,7 +94,10 @@ from src.solvers.hybrid_fem_modal_schur_direct import (
 from src.solvers.hybrid_local_iterative_inverse import (
     build_hybrid_local_iterative_inverse,
 )
-from src.solvers.hybrid_local_dtn_action import assemble_hybrid_local_dtn_action_system
+from src.solvers.hybrid_local_dtn_action import (
+    assemble_hybrid_local_dtn_action_system,
+    create_hybrid_local_dtn_action_components,
+)
 from src.solvers.hybrid_local_dtn import assemble_hybrid_local_dtn_system
 from src.solvers.hybrid_static_field_recovery import recover_hybrid_static_local_field
 from src.solvers.condensed_dtn import (
@@ -746,6 +749,14 @@ class _H5QualificationStop(RuntimeError):
         self.record = record
 
 
+class _V1QualificationStop(RuntimeError):
+    """Internal control flow after writing the bounded V1-R1 record."""
+
+    def __init__(self, record: dict[str, Any]) -> None:
+        super().__init__(record.get("status", "V1-R1 qualification complete"))
+        self.record = record
+
+
 NUMERICAL_INFINITY_BETA_H_CUTOFF = 1.0e4
 
 
@@ -1129,6 +1140,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Open only the frozen Task037b H5 local-inverse qualification path.",
     )
+    parser.add_argument(
+        "--task037b-v1-gate",
+        action="store_true",
+        help="Open only the frozen Task037b V1 DtN component-action path.",
+    )
     parser.add_argument("--task035c-p6-preflight-authority", type=Path)
     parser.add_argument("--task035c-p6-preflight-sha256")
     parser.add_argument("--bottom-interface-nm", type=float, default=10.0)
@@ -1186,6 +1202,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "modal-schur-memory-minimal",
             "block-ldu-exact",
             "local-inverse-qualification",
+            "dtn-component-qualification",
         ),
         default="augmented",
         help=(
@@ -1211,23 +1228,21 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         args.task037b_h3_gate,
         args.task037b_h4_gate,
         args.task037b_h5_gate,
+        args.task037b_v1_gate,
     )
     if sum(bool(value) for value in selected_scoped_gates) > 1:
         parser.error(
-            "Task035c p6/h10, Task037b H1, H3, H4, and H5 gates are "
+            "Task035c p6/h10, Task037b H1, H3, H4, H5, and V1 gates are "
             "mutually exclusive."
         )
-    if (
-        args.solver_path == "local-inverse-qualification"
-        and not args.task037b_h5_gate
-    ):
-        parser.error(
-            "local-inverse-qualification requires --task037b-h5-gate."
-        )
+    if args.solver_path == "local-inverse-qualification" and not args.task037b_h5_gate:
+        parser.error("local-inverse-qualification requires --task037b-h5-gate.")
+    if args.solver_path == "dtn-component-qualification" and not args.task037b_v1_gate:
+        parser.error("dtn-component-qualification requires --task037b-v1-gate.")
     if args.degree == 6 and not any(selected_scoped_gates):
         parser.error(
             "p6 is fail-closed; pass a fixed scoped Task035c, Task037b H1, "
-            "or Task037b H3/H4/H5 gate."
+            "or Task037b H3/H4/H5/V1 gate."
         )
     if args.task035c_p6_h10_gate:
         scoped = bool(
@@ -1263,6 +1278,42 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "the qualified discrete axial propagation/traction pair, "
                 "10/110 nm interfaces, standard/static backend, and "
                 "hash-bound historical and matching Full3D authorities."
+            )
+    elif args.task037b_v1_gate:
+        scoped = bool(
+            args.degree == 6
+            and math.isclose(args.h_nm, 10.0)
+            and args.modal_degree == 6
+            and args.modal_h_nm is not None
+            and math.isclose(args.modal_h_nm, 10.0)
+            and args.requested_modes == 120
+            and args.candidate_modes == 240
+            and args.solver_path == "dtn-component-qualification"
+            and args.comparison_solver_path == "fast"
+            and not args.compare_modal_schur
+            and args.stage4_full3d_assembly_backend
+            == ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+            and math.isclose(args.bottom_interface_nm, 10.0)
+            and math.isclose(args.top_interface_nm, 110.0)
+            and args.graded_reference_h is None
+            and math.isclose(args.incident_grazing_deg, 10.0)
+            and args.polarization_kind == "s"
+            and args.internal_propagation_model == "full3d_uniform_cg"
+            and args.internal_traction_model == "scalar_cg_discrete_derivative"
+            and args.full3d_reference is not None
+            and valid_hex_digest(args.full3d_reference_sha256, 64)
+            and args.task035c_p6_preflight_authority is not None
+            and valid_hex_digest(args.task035c_p6_preflight_sha256, 64)
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and args.host_environment_id == "WSL2-Ubuntu-24.04"
+            and not args.allow_dirty_research
+        )
+        if not scoped:
+            parser.error(
+                "--task037b-v1-gate is restricted to the fixed p6/h10, "
+                "10/110 nm, S-polarized, full3d/scalar-CG, M120+M120, "
+                "candidate240, dtn-component-qualification, "
+                "static-condensed MPI8 path."
             )
     elif args.task037b_h1_gate:
         scoped = bool(
@@ -1375,7 +1426,9 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         or args.task035c_p6_preflight_sha256 is not None
         or args.full3d_reference_sha256 is not None
     ):
-        parser.error("Task035c/H1/H3/H4/H5 authority SHA arguments require a scoped gate.")
+        parser.error(
+            "Task035c/H1/H3/H4/H5/V1 authority SHA arguments require a scoped gate."
+        )
     return args
 
 
@@ -1391,13 +1444,14 @@ def _task035c_worker_authority_gate(
         or args.task037b_h3_gate
         or args.task037b_h4_gate
         or args.task037b_h5_gate
+        or args.task037b_v1_gate
     ):
         return None
 
     authority_path = args.task035c_p6_preflight_authority
     reference_path = args.full3d_reference
     if authority_path is None or reference_path is None:
-        raise SystemExit("Task035c/H1 authority paths are required.")
+        raise SystemExit("Task035c/H1/H3/H4/H5/V1 authority paths are required.")
     authority_path = (
         authority_path if authority_path.is_absolute() else ROOT / authority_path
     ).resolve()
@@ -1444,6 +1498,7 @@ def _task035c_worker_authority_gate(
             or args.task037b_h3_gate
             or args.task037b_h4_gate
             or args.task037b_h5_gate
+            or args.task037b_v1_gate
         )
         else task035c_p6_h10_full3d_reference_gate(
             reference if isinstance(reference, dict) else None,
@@ -1460,6 +1515,8 @@ def _task035c_worker_authority_gate(
             if args.task037b_h4_gate
             else "task037b.h3-worker-authority-gate.v1"
             if args.task037b_h3_gate
+            else "task037b.v1-worker-authority-gate.v1"
+            if args.task037b_v1_gate
             else "task037b.h5-worker-authority-gate.v1"
             if args.task037b_h5_gate
             else "task035c.p6-h10-worker-authority-gate.v1"
@@ -1593,9 +1650,7 @@ def _run_h5_local_qualification(
                     "factor_count": 1,
                     "inventory": _local_factor_inventory(factor),
                 }
-                timings[f"h5a_{side}_factor"] = _max_elapsed(
-                    comm, factor_started
-                )
+                timings[f"h5a_{side}_factor"] = _max_elapsed(comm, factor_started)
                 mark_stage(f"h5a_{side}_solve")
                 solve_started = time.perf_counter()
                 for name, rhs, metadata in rhs_list:
@@ -1639,9 +1694,7 @@ def _run_h5_local_qualification(
                     finally:
                         if candidate is not None:
                             candidate.destroy()
-                side_record["solve_seconds"] = _max_elapsed(
-                    comm, solve_started
-                )
+                side_record["solve_seconds"] = _max_elapsed(comm, solve_started)
                 timings[f"h5a_{side}_solve"] = side_record["solve_seconds"]
             finally:
                 release_started = time.perf_counter()
@@ -1652,12 +1705,9 @@ def _run_h5_local_qualification(
                 "factor_count": 0,
                 "released": True,
             }
-            timings[f"h5a_{side}_release"] = _max_elapsed(
-                comm, release_started
-            )
+            timings[f"h5a_{side}_release"] = _max_elapsed(comm, release_started)
             side_record["pass"] = bool(
-                side_record["rhs"]
-                and all(row["pass"] for row in side_record["rhs"])
+                side_record["rhs"] and all(row["pass"] for row in side_record["rhs"])
             )
             h5a_sides[side] = side_record
             h5a_pass = bool(h5a_pass and side_record["pass"])
@@ -1670,9 +1720,7 @@ def _run_h5_local_qualification(
         trim_local = _trim_process_heap()
         trim_ranks = comm.allgather(trim_local)
         comm.barrier()
-        timings["h5_post_direct_heap_trim"] = _max_elapsed(
-            comm, heap_trim_started
-        )
+        timings["h5_post_direct_heap_trim"] = _max_elapsed(comm, heap_trim_started)
         oracle_release = {
             "bottom_A_b_destroyed": True,
             "top_A_b_destroyed": True,
@@ -1702,8 +1750,7 @@ def _run_h5_local_qualification(
                     ),
                 }
             h5b_factor_count_before = sum(
-                h5b_sides[side]["factor_count_before"]
-                for side in ("bottom", "top")
+                h5b_sides[side]["factor_count_before"] for side in ("bottom", "top")
             )
 
             for side, stage, inverse in (
@@ -1746,9 +1793,7 @@ def _run_h5_local_qualification(
                                 "setup_seconds": float(first.setup_seconds),
                                 "solve_seconds": float(first.solve_seconds),
                                 "apply_seconds": float(first.apply_seconds),
-                                "solution_digest": _h1_owned_vec_digest(
-                                    first.solution
-                                ),
+                                "solution_digest": _h1_owned_vec_digest(first.solution),
                                 "direct_solution_relative_error": float(
                                     first_direct_error
                                 ),
@@ -1784,8 +1829,7 @@ def _run_h5_local_qualification(
                                 and second.converged_reason > 0
                                 and first.iterations <= 300
                                 and second.iterations <= 300
-                                and first.converged_reason
-                                == second.converged_reason
+                                and first.converged_reason == second.converged_reason
                                 and first.iterations == second.iterations
                                 and np.isfinite(first.reported_relative_residual)
                                 and np.isfinite(second.reported_relative_residual)
@@ -1832,9 +1876,7 @@ def _run_h5_local_qualification(
                             first.destroy()
                         if second is not None:
                             second.destroy()
-                h5b_sides[side]["solve_seconds"] = _max_elapsed(
-                    comm, solve_started
-                )
+                h5b_sides[side]["solve_seconds"] = _max_elapsed(comm, solve_started)
                 timings[stage] = h5b_sides[side]["solve_seconds"]
 
             h5b_pass = bool(
@@ -1849,8 +1891,7 @@ def _run_h5_local_qualification(
         if h5a_pass:
             h5_no_direct_fallback = bool(
                 all(
-                    h5b_sides[side]["configuration"]["no_direct_fallback"]
-                    is True
+                    h5b_sides[side]["configuration"]["no_direct_fallback"] is True
                     for side in ("bottom", "top")
                 )
             )
@@ -1885,9 +1926,7 @@ def _run_h5_local_qualification(
             action_survives = bool(
                 bottom.A.getType() == "python" and top.A.getType() == "python"
             )
-        timings["h5b_release_record"] = _max_elapsed(
-            comm, release_started
-        )
+        timings["h5b_release_record"] = _max_elapsed(comm, release_started)
 
         _verify_source_stable_at_end(
             comm,
@@ -1993,9 +2032,7 @@ def _run_h5_local_qualification(
                 "incident_grazing_deg": float(args.incident_grazing_deg),
                 "bottom_interface_nm": float(args.bottom_interface_nm),
                 "top_interface_nm": float(args.top_interface_nm),
-                "stage4_full3d_assembly_backend": (
-                    args.stage4_full3d_assembly_backend
-                ),
+                "stage4_full3d_assembly_backend": (args.stage4_full3d_assembly_backend),
                 "internal_propagation_model": args.internal_propagation_model,
                 "internal_traction_model": args.internal_traction_model,
                 "solver_path": args.solver_path,
@@ -2026,9 +2063,7 @@ def _run_h5_local_qualification(
                 "h5b_all_22_rhs_twice_pass": h5b_pass,
                 "h5_worker_numerical_pass": h5_pass,
                 "h5_swap": "not_evaluated_external_watchdog",
-                "h5_no_direct_fallback": (
-                    h5_no_direct_fallback
-                ),
+                "h5_no_direct_fallback": (h5_no_direct_fallback),
             },
             "qualification": {
                 "task037b_h5_gate": True,
@@ -2065,6 +2100,305 @@ def _run_h5_local_qualification(
         for side_references in direct_references.values():
             for vector in side_references.values():
                 vector.destroy()
+
+
+def _run_v1_dtn_component_qualification(
+    *,
+    args: argparse.Namespace,
+    comm: MPI.Intracomm,
+    provenance: dict[str, Any],
+    authority_gate: dict[str, Any] | None,
+    positive,
+    negative,
+    bottom,
+    top,
+    coupling,
+    timings: dict[str, float],
+    total_started: float,
+    mark_stage,
+    progress,
+) -> None:
+    """Run the bounded V1 decomposition audit and stop before solver paths."""
+
+    started = time.perf_counter()
+    selections = _h5_frozen_mode_selection(positive, negative)
+    modal_selections = [
+        dict(item)
+        for item in selections
+        if item["criterion"] == "lowest_propagating_or_lossy"
+    ]
+    if len(modal_selections) != 2:
+        raise RuntimeError("V1 requires one frozen lowest modal probe per direction.")
+
+    def matrix_descriptor(matrix: PETSc.Mat) -> dict[str, Any]:
+        first, last = (int(value) for value in matrix.getOwnershipRange())
+        global_rows, global_cols = (int(value) for value in matrix.getSize())
+        local_rows, local_cols = (int(value) for value in matrix.getLocalSize())
+        return {
+            "type": str(matrix.getType()),
+            "global_size": [global_rows, global_cols],
+            "local_size": [local_rows, local_cols],
+            "ownership_range": [first, last],
+        }
+
+    side_records: dict[str, dict[str, Any]] = {}
+    for side, system in (("bottom", bottom), ("top", top)):
+        components = create_hybrid_local_dtn_action_components(system)
+        component_condition = float(components.h_condition_number)
+        component_matrices = {
+            "A": matrix_descriptor(system.A),
+            "F": matrix_descriptor(components.F),
+            "C": matrix_descriptor(components.C),
+            "D": matrix_descriptor(components.D),
+            "H": matrix_descriptor(components.H),
+        }
+        component_inventory = dict(system.inventory)
+        probes: list[dict[str, Any]] = []
+
+        def audit_probe(name: str, source: PETSc.Vec, metadata: dict[str, Any]) -> None:
+            actual = system.A.createVecLeft()
+            first = components.F.createVecLeft()
+            second = components.F.createVecLeft()
+            try:
+                system.A.mult(source, actual)
+                components.mult(source, first)
+                components.mult(source, second)
+                action_error = _relative_vector_error(actual, first)
+                repeat_error = _relative_vector_error(second, first)
+                finite = bool(
+                    np.isfinite(action_error)
+                    and np.isfinite(repeat_error)
+                    and np.isfinite(float(actual.norm()))
+                    and np.isfinite(float(first.norm()))
+                    and np.isfinite(float(second.norm()))
+                )
+                probes.append(
+                    {
+                        "name": name,
+                        "metadata": metadata,
+                        "source_digest": _h1_owned_vec_digest(source),
+                        "component_digest": _h1_owned_vec_digest(first),
+                        "action_relative_error": action_error,
+                        "component_repeat_relative_error": repeat_error,
+                        "finite": finite,
+                        "pass": bool(
+                            finite
+                            and action_error <= 1.0e-11
+                            and repeat_error <= 1.0e-12
+                        ),
+                    }
+                )
+                progress(
+                    f"Task037b V1-R1 {side}/{name}: "
+                    f"action={action_error:.3e}, repeat={repeat_error:.3e}"
+                )
+            finally:
+                actual.destroy()
+                first.destroy()
+                second.destroy()
+                source.destroy()
+
+        try:
+            audit_probe(
+                "physical",
+                system.b.copy(),
+                {"kind": "physical_action_rhs", "generator": "action_system.b"},
+            )
+            for seed in (3701, 3702, 3703):
+                vector = system.A.createVecRight()
+                _h5_fill_partition_independent_random_rhs(vector, seed)
+                audit_probe(
+                    f"random_seed_{seed}",
+                    vector,
+                    {
+                        "kind": "partition_independent_complex_random",
+                        "generator": "indexed_splitmix64_box_muller",
+                        "seed": seed,
+                        "normalization": "distributed_global_l2",
+                    },
+                )
+            for identity in modal_selections:
+                direction = str(identity["direction"])
+                mode_index = int(identity["local_mode_index"])
+                scaled = (side == "bottom" and direction == "negative") or (
+                    side == "top" and direction == "positive"
+                )
+                propagation = (
+                    coupling.propagation.forward
+                    if direction == "positive"
+                    else coupling.propagation.backward
+                )
+                scale = (
+                    complex(propagation.factors[mode_index]) if scaled else 1.0 + 0.0j
+                )
+                block = coupling.bottom if side == "bottom" else coupling.top
+                audit_probe(
+                    f"modal_{direction}_lowest_propagating_or_lossy",
+                    _h5_modal_traction_rhs(block, direction, mode_index, scale=scale),
+                    {
+                        "kind": "frozen_modal_traction",
+                        "mode_identity": dict(identity),
+                        "propagation_factor": _complex_json(scale),
+                    },
+                )
+            if len(probes) != 6:
+                raise RuntimeError("V1 requires exactly six probes per side.")
+        finally:
+            components.destroy()
+
+        after_source = system.A.createVecRight()
+        after_target = system.A.createVecLeft()
+        try:
+            after_source.set(0.0)
+            system.A.mult(after_source, after_target)
+            action_usable_after_destroy = bool(np.isfinite(float(after_target.norm())))
+        finally:
+            after_source.destroy()
+            after_target.destroy()
+        action_errors = [float(item["action_relative_error"]) for item in probes]
+        repeat_errors = [
+            float(item["component_repeat_relative_error"]) for item in probes
+        ]
+        side_records[side] = {
+            "h_condition_number": component_condition,
+            "matrices": component_matrices,
+            "operator_inventory": component_inventory,
+            "probes": probes,
+            "max_action_relative_error": max(action_errors),
+            "max_component_repeat_relative_error": max(repeat_errors),
+            "component_destroyed": True,
+            "action_usable_after_component_destroy": action_usable_after_destroy,
+            "pass": bool(
+                all(item["pass"] for item in probes) and action_usable_after_destroy
+            ),
+        }
+
+    side_pass = {side: bool(item["pass"]) for side, item in side_records.items()}
+    r1_pass = bool(len(side_records) == 2 and all(side_pass.values()))
+    timings["v1_component_action_audit"] = _max_elapsed(comm, started)
+    mark_stage("v1_r1_record")
+    _verify_source_stable_at_end(
+        comm,
+        provenance,
+        args.verified_clean_sha,
+        args.allow_dirty_research,
+    )
+    status = (
+        "task037b_v1_r1_pass_awaiting_r2"
+        if r1_pass
+        else "DTN_COMPONENT_DECOMPOSITION_IMPLEMENTATION_FAILED"
+    )
+    record = {
+        "schema_version": 1,
+        "record_schema": "task037b.v1-r1-dtn-component-action.v1",
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "benchmark_id": "task037b_v1_dtn_component_action",
+        "status": status,
+        "metadata": {
+            **provenance,
+            "command": list(sys.argv),
+            "verified_clean_sha": args.verified_clean_sha,
+            "authority_gate": authority_gate,
+        },
+        "case": {
+            "degree": args.degree,
+            "h_nm": args.h_nm,
+            "modal_degree": args.modal_degree,
+            "modal_h_nm": args.modal_h_nm,
+            "requested_modes": args.requested_modes,
+            "candidate_modes": args.candidate_modes,
+            "mpi_size": comm.size,
+            "polarization_kind": args.polarization_kind,
+            "incident_grazing_deg": args.incident_grazing_deg,
+            "bottom_interface_nm": args.bottom_interface_nm,
+            "top_interface_nm": args.top_interface_nm,
+            "solver_path": args.solver_path,
+            "formal_modal_probe_selection": modal_selections,
+        },
+        "hybrid_system": {
+            "global_action_constructed": False,
+            "global_A_materialized": False,
+            "global_F_materialized": False,
+            "explicit_global_C_D_materialized": False,
+            "direct_factor_count": 0,
+            "bottom_operator_inventory": dict(bottom.inventory),
+            "top_operator_inventory": dict(top.inventory),
+        },
+        "v1_telemetry": {
+            "task037b_v1_gate": True,
+            "r1_scope": "DtN component decomposition only",
+            "frozen_mode_selection": selections,
+            "formal_modal_probe_selection": modal_selections,
+            "formal_probe_count_per_side": 6,
+            "sides": side_records,
+            "max_action_relative_error": max(
+                item["max_action_relative_error"] for item in side_records.values()
+            ),
+            "max_component_repeat_relative_error": max(
+                item["max_component_repeat_relative_error"]
+                for item in side_records.values()
+            ),
+            "ordinary_default_changed": False,
+        },
+        "gates": {
+            "r1_all_probes_finite": bool(
+                all(
+                    probe["finite"]
+                    for side in side_records.values()
+                    for probe in side["probes"]
+                )
+            ),
+            "r1_all_action_errors_le_1e-11": bool(
+                all(
+                    probe["action_relative_error"] <= 1.0e-11
+                    for side in side_records.values()
+                    for probe in side["probes"]
+                )
+            ),
+            "r1_all_component_repeat_errors_le_1e-12": bool(
+                all(
+                    probe["component_repeat_relative_error"] <= 1.0e-12
+                    for side in side_records.values()
+                    for probe in side["probes"]
+                )
+            ),
+            "r1_component_destroy_preserves_action": bool(
+                all(
+                    side["action_usable_after_component_destroy"]
+                    for side in side_records.values()
+                )
+            ),
+            "r1_no_direct_factor": True,
+            "r1_pass": r1_pass,
+        },
+        "qualification": {
+            "task037b_v1_gate": True,
+            "r1_pass": r1_pass,
+            "worker_numerical_pass": r1_pass,
+            "integration_pass": r1_pass,
+            "disposition": (
+                "pass_awaiting_r2"
+                if r1_pass
+                else "DTN_COMPONENT_DECOMPOSITION_IMPLEMENTATION_FAILED"
+            ),
+            "boundary": (
+                "R1 DtN component decomposition only; R2-R5 not run; "
+                "no R/T/A, field, or 12+12 physics Gate."
+            ),
+        },
+        "timing_seconds_max_rank": {
+            **timings,
+            "total": _max_elapsed(comm, total_started),
+        },
+        "historical_peak_rss_mb_by_rank": comm.gather(
+            _historical_peak_rss_mb(), root=0
+        ),
+        "memory_semantics": (
+            "R1 component audit does not build a global action or direct factor; "
+            "resource samples remain external watchdog evidence."
+        ),
+    }
+    raise _V1QualificationStop(record)
 
 
 def main() -> None:
@@ -2150,6 +2484,7 @@ def main() -> None:
         or args.task037b_h3_gate
         or args.task037b_h4_gate
         or args.task037b_h5_gate
+        or args.task037b_v1_gate
     ) and comm.size not in TASK035C_P6_H10_MPI_SIZES:
         raise SystemExit("Task035c p6/h10 Hybrid is restricted to MPI1/2/4/8.")
     if (
@@ -2157,8 +2492,9 @@ def main() -> None:
         or args.task037b_h3_gate
         or args.task037b_h4_gate
         or args.task037b_h5_gate
+        or args.task037b_v1_gate
     ) and comm.size != 8:
-        raise SystemExit("Task037b H1/H3/H4/H5 Hybrid is restricted to MPI8.")
+        raise SystemExit("Task037b H1/H3/H4/H5/V1 Hybrid is restricted to MPI8.")
     task035c_p6_gate = _task035c_worker_authority_gate(
         args,
         current_source_sha=provenance.get("commit_sha"),
@@ -2561,11 +2897,7 @@ def main() -> None:
         )
         progress("Task32 Phase6: real positive/negative QEP bases complete")
 
-        if (
-            args.task037b_h3_gate
-            or args.task037b_h4_gate
-            or args.task037b_h5_gate
-        ):
+        if args.task037b_h3_gate or args.task037b_h4_gate or args.task037b_h5_gate:
             mark_stage("oracle_local_matrix_build")
             started = time.perf_counter()
             h3_direct_bottom = assemble_hybrid_local_dtn_system(
@@ -2623,9 +2955,7 @@ def main() -> None:
                 log=progress,
             )
             if args.task037b_h5_gate:
-                timings["h5_action_coupling_build"] = _max_elapsed(
-                    comm, started
-                )
+                timings["h5_action_coupling_build"] = _max_elapsed(comm, started)
             if args.task037b_h5_gate:
                 _run_h5_local_qualification(
                     args=args,
@@ -2820,8 +3150,12 @@ def main() -> None:
                     "h4a_exact_s_m": h4a_modal_diagnostic,
                     "h4b_g_only": h4b_modal_diagnostic,
                     "feedback": {
-                        "frobenius_norm": h4a_modal_diagnostic["feedback_frobenius_norm"],
-                        "relative_to_s_m": h4a_modal_diagnostic["feedback_relative_to_s_m"],
+                        "frobenius_norm": h4a_modal_diagnostic[
+                            "feedback_frobenius_norm"
+                        ],
+                        "relative_to_s_m": h4a_modal_diagnostic[
+                            "feedback_relative_to_s_m"
+                        ],
                         "relative_to_g": h4a_modal_diagnostic["feedback_relative_to_g"],
                     },
                     "h4a": {
@@ -2899,9 +3233,7 @@ def main() -> None:
                 / max(
                     float(np.linalg.norm(candidate_modal)),
                     float(
-                        np.linalg.norm(
-                            h3_direct_comparison_solution.modal_amplitudes
-                        )
+                        np.linalg.norm(h3_direct_comparison_solution.modal_amplitudes)
                     ),
                     1.0e-30,
                 )
@@ -2969,6 +3301,51 @@ def main() -> None:
             h3_solve_result.destroy()
             h3_solve_result = None
             timings["primary_system_build"] = timings["h2b_action_assembly"]
+        elif args.task037b_v1_gate:
+            mark_stage("v1_action_coupling_build")
+            started = time.perf_counter()
+            bottom = assemble_hybrid_local_dtn_action_system(
+                cfg,
+                "bottom",
+                bottom_interface_z_nm=args.bottom_interface_nm,
+                top_interface_z_nm=args.top_interface_nm,
+                log=progress,
+            )
+            top = assemble_hybrid_local_dtn_action_system(
+                cfg,
+                "top",
+                bottom_interface_z_nm=args.bottom_interface_nm,
+                top_interface_z_nm=args.top_interface_nm,
+                log=progress,
+            )
+            coupling = build_hybrid_internal_mode_coupling(
+                cfg,
+                spaces,
+                positive,
+                negative,
+                bottom,
+                top,
+                length_nm=args.top_interface_nm - args.bottom_interface_nm,
+                propagation_model=args.internal_propagation_model,
+                modal_traction_model=args.internal_traction_model,
+                log=progress,
+            )
+            timings["v1_action_coupling_build"] = _max_elapsed(comm, started)
+            _run_v1_dtn_component_qualification(
+                args=args,
+                comm=comm,
+                provenance=provenance,
+                authority_gate=task035c_p6_gate,
+                positive=positive,
+                negative=negative,
+                bottom=bottom,
+                top=top,
+                coupling=coupling,
+                timings=timings,
+                total_started=total_started,
+                mark_stage=mark_stage,
+                progress=progress,
+            )
         else:
             mark_stage("local_fem_dtn_assembly")
             started = time.perf_counter()
@@ -3493,9 +3870,7 @@ def main() -> None:
                         and h3_after_inventory["top_factor_released"] is True
                         and h3_preconditioner.factors_released
                     ),
-                    "h4b_diagnostic_finite": bool(
-                        h4b_finite and h4_diagnostic_finite
-                    ),
+                    "h4b_diagnostic_finite": bool(h4b_finite and h4_diagnostic_finite),
                     "h4b_evidence_complete": bool(
                         h4_telemetry is not None
                         and h4b_before_inventory is not None
@@ -3504,7 +3879,8 @@ def main() -> None:
                     "h4b_factors_released": bool(
                         h4b_after_inventory is not None
                         and h4b_before_inventory is not None
-                        and h4b_before_inventory["oracle_local_direct_factor_count"] == 2
+                        and h4b_before_inventory["oracle_local_direct_factor_count"]
+                        == 2
                         and h4b_after_inventory["oracle_local_direct_factor_count"] == 0
                         and h4b_after_inventory["bottom_factor_released"] is True
                         and h4b_after_inventory["top_factor_released"] is True
@@ -3815,9 +4191,7 @@ def main() -> None:
             }
         if args.task037b_h4_gate:
             h4_telemetry["operator_inventory"] = system.inventory
-            h4_telemetry["post_h4_direct_factor_inventory"] = (
-                h3_direct_factor_inventory
-            )
+            h4_telemetry["post_h4_direct_factor_inventory"] = h3_direct_factor_inventory
             h4_telemetry["timings"].update(
                 {
                     key: timings[key]
@@ -4007,9 +4381,8 @@ def main() -> None:
                 "primary_solver_path": args.solver_path,
                 "operator_inventory": (
                     system.inventory
-                    if (
-                        args.task037b_h3_gate or args.task037b_h4_gate
-                    ) and system is not None
+                    if (args.task037b_h3_gate or args.task037b_h4_gate)
+                    and system is not None
                     else None
                 ),
                 "matrix_size": (
@@ -4275,11 +4648,9 @@ def main() -> None:
                 "selected_middle_planes_reconstructed": physical_fields is not None,
                 "official_record": False,
                 "h3_algebra_disposition": (
-                    (
-                        "runner_gate_pass_12_channel_pending"
-                        if integration_pass
-                        else "HYBRID_BLOCK_ITERATIVE_ALGEBRA_FAILED"
-                    )
+                    "runner_gate_pass_12_channel_pending"
+                    if integration_pass
+                    else "HYBRID_BLOCK_ITERATIVE_ALGEBRA_FAILED"
                 )
                 if args.task037b_h3_gate
                 else None,
@@ -4344,6 +4715,8 @@ def main() -> None:
                     ),
                 }
             )
+    except _V1QualificationStop as stop:
+        record = stop.record
     except _H5QualificationStop as stop:
         record = stop.record
         h3_oracle_bottom = None

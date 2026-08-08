@@ -885,6 +885,7 @@ def _worker_command(
         or args.task037b_h3_gate
         or args.task037b_h4_gate
         or args.task037b_h5_gate
+        or args.task037b_v1_gate
     ):
         command.extend(
             (
@@ -902,7 +903,11 @@ def _worker_command(
                             else (
                                 "--task037b-h4-gate"
                                 if args.task037b_h4_gate
-                                else "--task037b-h5-gate"
+                                else (
+                                    "--task037b-h5-gate"
+                                    if args.task037b_h5_gate
+                                    else "--task037b-v1-gate"
+                                )
                             )
                         )
                     )
@@ -955,13 +960,18 @@ def _task034_terminal_record_is_complete(record_path: Path) -> bool:
     payload, error = _read_json_object(record_path)
     if error is not None or payload is None:
         return False
+    v1_record = payload.get(
+        "record_schema"
+    ) == "task037b.v1-r1-dtn-component-action.v1" and isinstance(
+        payload.get("v1_telemetry"), dict
+    )
     return bool(
         payload.get("schema_version") == 1
         and isinstance(payload.get("benchmark_id"), str)
         and isinstance(payload.get("timestamp_utc"), str)
         and isinstance(payload.get("status"), str)
         and isinstance(payload.get("qualification"), dict)
-        and isinstance(payload.get("solve"), dict)
+        and (isinstance(payload.get("solve"), dict) or v1_record)
         and isinstance(payload.get("gates"), dict)
     )
 
@@ -1084,6 +1094,7 @@ def _hybrid_measurements(record: dict[str, Any]) -> dict[str, Any]:
         "h3_telemetry": record.get("h3_telemetry"),
         "h4_telemetry": record.get("h4_telemetry"),
         "h5_telemetry": record.get("h5_telemetry"),
+        "v1_telemetry": record.get("v1_telemetry"),
         "status": record.get("status"),
         "case": record.get("case"),
         "qep": {
@@ -1188,6 +1199,104 @@ def _task037b_h5_numerical_pass(record: dict[str, Any]) -> bool:
     )
 
 
+def _task037b_v1_r1_numerical_pass(record: dict[str, Any]) -> bool:
+    """Recompute the bounded V1-R1 result from raw component-audit fields."""
+
+    if not isinstance(record, dict):
+        return False
+    if record.get("schema_version") != 1:
+        return False
+    if record.get("record_schema") != "task037b.v1-r1-dtn-component-action.v1":
+        return False
+    if record.get("benchmark_id") != "task037b_v1_dtn_component_action":
+        return False
+    if record.get("status") != "task037b_v1_r1_pass_awaiting_r2":
+        return False
+    qualification = record.get("qualification")
+    telemetry = record.get("v1_telemetry")
+    gates = record.get("gates")
+    if not isinstance(qualification, dict) or not isinstance(telemetry, dict):
+        return False
+    if qualification.get("task037b_v1_gate") is not True:
+        return False
+    if qualification.get("r1_pass") is not True:
+        return False
+    if qualification.get("integration_pass") is not True:
+        return False
+    if telemetry.get("task037b_v1_gate") is not True:
+        return False
+    if telemetry.get("formal_probe_count_per_side") != 6:
+        return False
+    if not isinstance(gates, dict) or gates.get("r1_pass") is not True:
+        return False
+    sides = telemetry.get("sides")
+    if not isinstance(sides, dict) or set(sides) != {"bottom", "top"}:
+        return False
+    hybrid_system = record.get("hybrid_system")
+    if not isinstance(hybrid_system, dict):
+        return False
+    if any(
+        (
+            hybrid_system.get("global_action_constructed") is not False,
+            hybrid_system.get("global_A_materialized") is not False,
+            hybrid_system.get("global_F_materialized") is not False,
+            hybrid_system.get("explicit_global_C_D_materialized") is not False,
+            hybrid_system.get("direct_factor_count") != 0,
+        )
+    ):
+        return False
+    required_names = {
+        "physical",
+        "random_seed_3701",
+        "random_seed_3702",
+        "random_seed_3703",
+        "modal_positive_lowest_propagating_or_lossy",
+        "modal_negative_lowest_propagating_or_lossy",
+    }
+    for side_name in ("bottom", "top"):
+        side = sides.get(side_name)
+        if not isinstance(side, dict):
+            return False
+        if side.get("component_destroyed") is not True:
+            return False
+        if side.get("action_usable_after_component_destroy") is not True:
+            return False
+        if side.get("pass") is not True:
+            return False
+        probes = side.get("probes")
+        if not isinstance(probes, list) or len(probes) != 6:
+            return False
+        if any(not isinstance(probe, dict) for probe in probes):
+            return False
+        if {probe.get("name") for probe in probes} != required_names:
+            return False
+        for probe in probes:
+            if not isinstance(probe, dict):
+                return False
+            if probe.get("finite") is not True:
+                return False
+            if probe.get("pass") is not True:
+                return False
+            action_error = probe.get("action_relative_error")
+            repeat_error = probe.get("component_repeat_relative_error")
+            if not isinstance(action_error, (int, float)) or not math.isfinite(
+                action_error
+            ):
+                return False
+            if not isinstance(repeat_error, (int, float)) or not math.isfinite(
+                repeat_error
+            ):
+                return False
+            if (
+                action_error < 0.0
+                or repeat_error < 0.0
+                or action_error > 1.0e-11
+                or repeat_error > 1.0e-12
+            ):
+                return False
+    return True
+
+
 def _h5_stage_memory_summary(
     rows: list[dict[str, Any]], *, expected_mpi_size: int
 ) -> dict[str, dict[str, Any]]:
@@ -1244,15 +1353,9 @@ def _h5_stage_memory_summary(
             "stages": sorted(stages),
             "sample_count": len(group_rows),
             "complete_smaps_sample_count": len(complete_rows),
-            "peak_worker_rank_rss_sum_mb": (
-                max(rss_values) if rss_values else None
-            ),
-            "peak_worker_rank_pss_sum_mb": (
-                max(pss_values) if pss_values else None
-            ),
-            "peak_worker_rank_uss_sum_mb": (
-                max(uss_values) if uss_values else None
-            ),
+            "peak_worker_rank_rss_sum_mb": (max(rss_values) if rss_values else None),
+            "peak_worker_rank_pss_sum_mb": (max(pss_values) if pss_values else None),
+            "peak_worker_rank_uss_sum_mb": (max(uss_values) if uss_values else None),
             "peak_mpi_process_tree_rss_mb": (
                 max(tree_rss_values) if tree_rss_values else None
             ),
@@ -1441,6 +1544,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "modal-schur-memory-minimal",
             "block-ldu-exact",
             "local-inverse-qualification",
+            "dtn-component-qualification",
         ),
         default="modal-schur-memory-minimal",
     )
@@ -1532,6 +1636,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Open only the frozen Task37b H5 local-inverse qualification path.",
     )
+    parser.add_argument(
+        "--task037b-v1-gate",
+        action="store_true",
+        help="Open only the frozen Task037b V1 DtN component-action path.",
+    )
     parser.add_argument("--task035c-p6-preflight-authority", type=Path)
     parser.add_argument("--task035c-p6-preflight-sha256")
     parser.add_argument(
@@ -1577,29 +1686,27 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--host-environment-id", default="windows-docker-desktop")
     args = parser.parse_args(argv)
-    if (
-        args.solver_path == "local-inverse-qualification"
-        and not args.task037b_h5_gate
-    ):
-        parser.error(
-            "local-inverse-qualification requires --task037b-h5-gate."
-        )
+    if args.solver_path == "local-inverse-qualification" and not args.task037b_h5_gate:
+        parser.error("local-inverse-qualification requires --task037b-h5-gate.")
+    if args.solver_path == "dtn-component-qualification" and not args.task037b_v1_gate:
+        parser.error("dtn-component-qualification requires --task037b-v1-gate.")
     selected_scoped_gates = (
         args.task035c_p6_h10_gate,
         args.task037b_h1_gate,
         args.task037b_h3_gate,
         args.task037b_h4_gate,
         args.task037b_h5_gate,
+        args.task037b_v1_gate,
     )
     if sum(bool(value) for value in selected_scoped_gates) > 1:
         parser.error(
-            "Task035c p6/h10, Task037b H1, Task037b H3, Task037b H4, and H5 gates are "
+            "Task035c p6/h10, Task037b H1, H3, H4, H5, and V1 gates are "
             "mutually exclusive."
         )
     if args.degree == 6 and not any(selected_scoped_gates):
         parser.error(
             "p6 is fail-closed; pass a fixed scoped Task035c, Task037b H1, "
-            "or Task037b H3/H4/H5 gate."
+            "or Task037b H3/H4/H5/V1 gate."
         )
     if (
         args.task035c_p6_h10_gate
@@ -1607,10 +1714,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         or args.task037b_h3_gate
         or args.task037b_h4_gate
         or args.task037b_h5_gate
+        or args.task037b_v1_gate
     ) and args.task034_workstation_gate:
         parser.error(
             "--task034-workstation-gate and the Task035c/H1/H3/H4/H5 scoped gates "
-            "are mutually exclusive."
+            "and V1 gate are mutually exclusive."
         )
     if (
         args.mpi_size not in (1, 2, 4)
@@ -1620,10 +1728,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         and not args.task037b_h3_gate
         and not args.task037b_h4_gate
         and not args.task037b_h5_gate
+        and not args.task037b_v1_gate
     ):
         parser.error(
             "MPI8/16/32 require --task034-workstation-gate or the scoped "
-            "Task035c p6/h10 gate."
+            "Task035c p6/h10, Task037b H1/H3/H4/H5/V1 gate."
         )
     if args.target == "qep" and args.material_kind is None:
         parser.error("--target qep requires --material-kind.")
@@ -1677,6 +1786,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         or args.task037b_h3_gate
         or args.task037b_h4_gate
         or args.task037b_h5_gate
+        or args.task037b_v1_gate
     ):
         parser.error(
             "--full3d-reference-sha256 is reserved for a scoped "
@@ -1750,6 +1860,42 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "10/110 nm interfaces, standard/static backend, and "
                 "hash-bound historical and matching Full3D authorities."
             )
+    elif args.task037b_v1_gate:
+        scoped = bool(
+            args.target == "hybrid"
+            and args.degree == 6
+            and math.isclose(args.h_nm, 10.0)
+            and args.modal_degree == 6
+            and args.modal_h_nm is not None
+            and math.isclose(args.modal_h_nm, 10.0)
+            and args.mpi_size == 8
+            and args.requested_modes == 120
+            and args.candidate_modes == 240
+            and args.solver_path == "dtn-component-qualification"
+            and args.comparison_solver_path == "fast"
+            and not args.compare_modal_schur
+            and args.stage4_full3d_assembly_backend == "assembly_time_static_condensed"
+            and math.isclose(args.bottom_interface_nm, 10.0)
+            and math.isclose(args.top_interface_nm, 110.0)
+            and args.graded_reference_h is None
+            and math.isclose(args.incident_grazing_deg, 10.0)
+            and args.polarization_kind == "s"
+            and args.internal_propagation_model == "full3d_uniform_cg"
+            and args.internal_traction_model == "scalar_cg_discrete_derivative"
+            and args.full3d_reference is not None
+            and valid_hex_digest(args.full3d_reference_sha256, 64)
+            and args.task035c_p6_preflight_authority is not None
+            and valid_hex_digest(args.task035c_p6_preflight_sha256, 64)
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and args.host_environment_id == "WSL2-Ubuntu-24.04"
+        )
+        if not scoped:
+            parser.error(
+                "--task037b-v1-gate is restricted to the fixed WSL p6/h10, "
+                "10/110 nm, S-polarized, full3d/scalar-CG, M120+M120, "
+                "candidate240, dtn-component-qualification, "
+                "static-condensed MPI8 path."
+            )
     elif args.task037b_h1_gate:
         scoped = bool(
             args.target == "hybrid"
@@ -1799,8 +1945,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and args.solver_path == "block-ldu-exact"
             and args.comparison_solver_path == "fast"
             and not args.compare_modal_schur
-            and args.stage4_full3d_assembly_backend
-            == "assembly_time_static_condensed"
+            and args.stage4_full3d_assembly_backend == "assembly_time_static_condensed"
             and math.isclose(args.bottom_interface_nm, 10.0)
             and math.isclose(args.top_interface_nm, 110.0)
             and args.graded_reference_h is None
@@ -1835,8 +1980,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and args.solver_path == "local-inverse-qualification"
             and args.comparison_solver_path == "fast"
             and not args.compare_modal_schur
-            and args.stage4_full3d_assembly_backend
-            == "assembly_time_static_condensed"
+            and args.stage4_full3d_assembly_backend == "assembly_time_static_condensed"
             and math.isclose(args.bottom_interface_nm, 10.0)
             and math.isclose(args.top_interface_nm, 110.0)
             and args.graded_reference_h is None
@@ -1863,7 +2007,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         or args.task035c_p6_preflight_sha256 is not None
     ):
         parser.error(
-            "Task035c/H1/H3/H4/H5 preflight authority arguments require a scoped gate."
+            "Task035c/H1/H3/H4/H5/V1 preflight authority arguments require a "
+            "scoped gate."
         )
     if args.task033_same_sha_anchor_requalification:
         scoped = bool(
@@ -2113,6 +2258,7 @@ def run(args: argparse.Namespace) -> int:
             or args.task037b_h3_gate
             or args.task037b_h4_gate
             or args.task037b_h5_gate
+            or args.task037b_v1_gate
         ):
             authority_path = args.task035c_p6_preflight_authority
             if authority_path is not None and not authority_path.is_absolute():
@@ -2173,6 +2319,7 @@ def run(args: argparse.Namespace) -> int:
                     or args.task037b_h3_gate
                     or args.task037b_h4_gate
                     or args.task037b_h5_gate
+                    or args.task037b_v1_gate
                 )
                 else task035c_p6_h10_full3d_reference_gate(
                     full3d_reference,
@@ -2190,6 +2337,7 @@ def run(args: argparse.Namespace) -> int:
                     or args.task037b_h3_gate
                     or args.task037b_h4_gate
                     or args.task037b_h5_gate
+                    or args.task037b_v1_gate
                 ),
                 "historical_preflight_readable": (authority_read_error is None),
                 "historical_preflight_gate": preflight_authority_gate["pass"],
@@ -2204,16 +2352,18 @@ def run(args: argparse.Namespace) -> int:
             failures = [name for name, passed in checks.items() if not passed]
             launch_gate = {
                 "schema_version": (
-                    (
-                        "task037b.h4-hybrid-launch-gate.v1"
-                        if args.task037b_h4_gate
-                        else "task037b.h3-hybrid-launch-gate.v1"
-                        if args.task037b_h3_gate
-                        else "task037b.h1-hybrid-launch-gate.v1"
-                        if args.task037b_h1_gate
+                    "task037b.h4-hybrid-launch-gate.v1"
+                    if args.task037b_h4_gate
+                    else "task037b.h3-hybrid-launch-gate.v1"
+                    if args.task037b_h3_gate
+                    else "task037b.h1-hybrid-launch-gate.v1"
+                    if args.task037b_h1_gate
+                    else (
+                        "task037b.h5-hybrid-launch-gate.v1"
+                        if args.task037b_h5_gate
                         else (
-                            "task037b.h5-hybrid-launch-gate.v1"
-                            if args.task037b_h5_gate
+                            "task037b.v1-hybrid-launch-gate.v1"
+                            if args.task037b_v1_gate
                             else "task035c.p6-h10-hybrid-launch-gate.v1"
                         )
                     )
@@ -2221,16 +2371,18 @@ def run(args: argparse.Namespace) -> int:
                 "pass": not failures,
                 "launch_eligible_recomputed": not failures,
                 "scope": (
-                    (
-                        "task037b_h4_fixed_block_ldu_p6_h10"
-                        if args.task037b_h4_gate
-                        else "task037b_h3_fixed_block_ldu_p6_h10"
-                        if args.task037b_h3_gate
-                        else "task037b_h1_fixed_augmented_p6_h10"
-                        if args.task037b_h1_gate
+                    "task037b_h4_fixed_block_ldu_p6_h10"
+                    if args.task037b_h4_gate
+                    else "task037b_h3_fixed_block_ldu_p6_h10"
+                    if args.task037b_h3_gate
+                    else "task037b_h1_fixed_augmented_p6_h10"
+                    if args.task037b_h1_gate
+                    else (
+                        "task037b_h5_fixed_local_inverse_p6_h10"
+                        if args.task037b_h5_gate
                         else (
-                            "task037b_h5_fixed_local_inverse_p6_h10"
-                            if args.task037b_h5_gate
+                            "task037b_v1_fixed_dtn_component_p6_h10"
+                            if args.task037b_v1_gate
                             else "task035c_fixed_rectangular_p6_h10"
                         )
                     )
@@ -2569,6 +2721,7 @@ def run(args: argparse.Namespace) -> int:
             or args.task037b_h3_gate
             or args.task037b_h4_gate
             or args.task037b_h5_gate
+            or args.task037b_v1_gate
         )
         and core_read_error is not None
     ):
@@ -2635,6 +2788,7 @@ def run(args: argparse.Namespace) -> int:
         or args.task037b_h3_gate
         or args.task037b_h4_gate
         or args.task037b_h5_gate
+        or args.task037b_v1_gate
     ):
         args.high_order_core_evidence_sha256 = core_gate.get("evidence_sha256")
     args._no_swap_verified = True
@@ -2650,9 +2804,14 @@ def run(args: argparse.Namespace) -> int:
         or args.task037b_h3_gate
         or args.task037b_h4_gate
         or args.task037b_h5_gate
+        or args.task037b_v1_gate
     )
     terminal_stage = (
-        "h5b_release_record" if args.task037b_h5_gate else "record_and_release"
+        "v1_r1_record"
+        if args.task037b_v1_gate
+        else "h5b_release_record"
+        if args.task037b_h5_gate
+        else "record_and_release"
     )
     environment = os.environ.copy()
     environment.update(
@@ -2699,7 +2858,7 @@ def run(args: argparse.Namespace) -> int:
             live_workers = [
                 {"pid": pid, "scope": "process_tree"} for pid in process_tree["pids"]
             ]
-            if not args.task037b_h5_gate:
+            if not (args.task037b_h5_gate or args.task037b_v1_gate):
                 row["worker_rank_rss_sum_mb"] = live_worker_rss_mb
                 row["worker_rank_rss_mb_json"] = json.dumps(
                     live_workers, separators=(",", ":")
@@ -2879,14 +3038,15 @@ def run(args: argparse.Namespace) -> int:
         measurements: dict[str, Any] = solver_record
     else:
         qualification = solver_record.get("qualification", {})
-        numerical_pass = (
-            _task037b_h5_numerical_pass(solver_record)
-            if args.task037b_h5_gate
-            else bool(
+        if args.task037b_v1_gate:
+            numerical_pass = _task037b_v1_r1_numerical_pass(solver_record)
+        elif args.task037b_h5_gate:
+            numerical_pass = _task037b_h5_numerical_pass(solver_record)
+        else:
+            numerical_pass = bool(
                 qualification.get("integration_pass")
                 and qualification.get("task033_physical_truncation_allowed")
             )
-        )
         measurements = _hybrid_measurements(solver_record)
         if args.task037b_h5_gate:
             measurements["h5_memory_stages"] = h5_memory_stages
@@ -2901,11 +3061,20 @@ def run(args: argparse.Namespace) -> int:
         terminated_for_authority_unreadable=(terminated_for_authority_unreadable),
         no_swap_pass=no_swap if args.task037b_h5_gate else True,
     )
+    summary_status = (
+        "task037b_v1_r1_pass_awaiting_r2"
+        if args.task037b_v1_gate and formal_pass
+        else "formal_not_pass"
+        if args.task037b_v1_gate
+        else "measured_shard_pass"
+        if formal_pass
+        else "formal_not_pass"
+    )
     summary = {
         "schema_version": "task033.memory-watchdog.v2",
         "benchmark_id": "task033_external_memory_watchdog",
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-        "status": "measured_shard_pass" if formal_pass else "formal_not_pass",
+        "status": summary_status,
         "target": args.target,
         "case_label": args.case_label,
         "command": command,
@@ -2915,7 +3084,9 @@ def run(args: argparse.Namespace) -> int:
         "memory_authority_pass": resource_gate["pass"],
         "physical_qualified": False,
         "qualification_identity": (
-            "measured_shard_pass_requires_funnel_aggregate_for_physical_qualification"
+            "task037b_v1_r1_raw_record_gate_awaiting_r2"
+            if args.task037b_v1_gate
+            else "measured_shard_pass_requires_funnel_aggregate_for_physical_qualification"
         ),
         "requested_modes": args.requested_modes,
         "candidate_modes": args.candidate_modes,
