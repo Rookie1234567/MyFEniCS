@@ -38,6 +38,7 @@ __all__ = (
     "create_action_block_ldu_preconditioner",
     "screen_action_block_ldu",
     "action_block_screen_gate",
+    "action_block_v3_progressive_gate",
     "create_exact_block_ldu_preconditioner",
     "create_g_only_block_ldu_preconditioner",
     "modal_block_diagnostic",
@@ -935,6 +936,7 @@ class HybridBlockLduScreenResult:
     last40: list[dict[str, Any]]
     inventory: dict[str, Any]
     pc_apply_seconds: float
+    progressive_stop_cause: str | None = None
 
 
 def screen_action_block_ldu(
@@ -943,6 +945,8 @@ def screen_action_block_ldu(
     context: HybridBlockLduPreconditioner,
     *,
     max_it: int,
+    v3_progressive: bool = False,
+    checkpoint_callback=None,
 ) -> HybridBlockLduScreenResult:
     """Run the fixed, bounded right-FGMRES screen and retain true residual rows."""
 
@@ -953,10 +957,14 @@ def screen_action_block_ldu(
     solution.set(0.0)
     monitor_solution.set(0.0)
     history: list[dict[str, Any]] = []
+    notified_checkpoints: set[int] = set()
     rhs_norm = max(float(rhs.norm()), _TINY)
     solve_started = time.perf_counter()
+    progressive_stop_cause: str | None = None
 
     def snapshot(iteration: int, reported: float, current: PETSc.KSP | None) -> None:
+        if v3_progressive and history and history[-1]["iteration"] == int(iteration):
+            return
         if current is None:
             solution.copy(monitor_solution)
             current_solution = monitor_solution
@@ -982,6 +990,14 @@ def screen_action_block_ldu(
             history[-1] = row
         else:
             history.append(row)
+        if (
+            v3_progressive
+            and checkpoint_callback is not None
+            and int(iteration) in (20, 60, 100, 200)
+            and int(iteration) not in notified_checkpoints
+        ):
+            notified_checkpoints.add(int(iteration))
+            checkpoint_callback(dict(row))
 
     ksp = PETSc.KSP().create(operator.getComm())
     try:
@@ -998,13 +1014,53 @@ def screen_action_block_ldu(
         ksp.setUp()
 
         def monitor(current: PETSc.KSP, iteration: int, residual_norm: float) -> None:
-            snapshot(
-                int(iteration),
-                float(residual_norm) / rhs_norm,
-                current,
-            )
+            if not v3_progressive:
+                snapshot(
+                    int(iteration),
+                    float(residual_norm) / rhs_norm,
+                    current,
+                )
+
+        def convergence_test(
+            current: PETSc.KSP, iteration: int, residual_norm: float
+        ) -> int:
+            nonlocal progressive_stop_cause
+            if v3_progressive:
+                snapshot(
+                    int(iteration),
+                    float(residual_norm) / rhs_norm,
+                    current,
+                )
+                row = history[-1]
+                if any(
+                    not np.isfinite(float(row[key])) or float(row[key]) < 0.0
+                    for key in _V3_RESIDUAL_KEYS
+                ):
+                    progressive_stop_cause = "v3_nonfinite"
+                    return int(PETSc.KSP.ConvergedReason.DIVERGED_NANORINF)
+                true_residual = float(row["global_true_relative_residual"])
+                if true_residual <= 1.0e-6:
+                    return int(PETSc.KSP.ConvergedReason.CONVERGED_RTOL)
+                live_gate = action_block_v3_progressive_gate(
+                    history,
+                    converged_reason=0,
+                    final=False,
+                )
+                if live_gate["hard_stop"]:
+                    progressive_stop_cause = live_gate["stop_cause"]
+                    return int(PETSc.KSP.ConvergedReason.DIVERGED_DTOL)
+                if int(iteration) >= 200:
+                    return int(PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT)
+                if live_gate["failed_stage"] is not None:
+                    progressive_stop_cause = live_gate["stop_cause"]
+                    return int(PETSc.KSP.ConvergedReason.DIVERGED_DTOL)
+            if float(residual_norm) <= 1.0e-6 * rhs_norm:
+                return int(PETSc.KSP.ConvergedReason.CONVERGED_RTOL)
+            return int(PETSc.KSP.ConvergedReason.ITERATING)
 
         ksp.setMonitor(monitor)
+        if v3_progressive:
+            ksp.setConvergenceTest(convergence_test)
         ksp.solve(rhs, solution)
         iterations = int(ksp.getIterationNumber())
         reason = int(ksp.getConvergedReason())
@@ -1025,6 +1081,7 @@ def screen_action_block_ldu(
             last40=[dict(row) for row in history[-40:]],
             inventory=inventory,
             pc_apply_seconds=float(inventory.get("pc_apply_seconds", 0.0)),
+            progressive_stop_cause=progressive_stop_cause,
         )
     finally:
         ksp.destroy()
@@ -1161,6 +1218,297 @@ def action_block_screen_gate(
         "predicted_iterations": predicted_iterations,
         "predicted_wall_seconds": predicted_wall_seconds,
         "recent_log_slope": recent_log_slope,
+    }
+
+
+_V3_CHECKPOINTS = (0, 1, 2, 5, 10, 20, 30, 40, 60, 80, 90, 100, 120, 150, 160, 180, 200)
+_V3_RESIDUAL_KEYS = (
+    "reported_relative_residual",
+    "global_true_relative_residual",
+    "bottom_true_relative_residual",
+    "top_true_relative_residual",
+    "modal_true_relative_residual",
+)
+
+
+def _v3_history_by_iteration(
+    history: list[dict[str, Any]],
+) -> dict[int, dict[str, Any]]:
+    rows: dict[int, dict[str, Any]] = {}
+    for row in history:
+        iteration = int(row["iteration"])
+        rows[iteration] = row
+    return rows
+
+
+def _v3_endpoint_slope(
+    rows: dict[int, dict[str, Any]], start: int, end: int
+) -> float | None:
+    if start not in rows or end not in rows:
+        return None
+    first = float(rows[start]["global_true_relative_residual"])
+    last = float(rows[end]["global_true_relative_residual"])
+    if first <= 0.0 or last <= 0.0 or end <= start:
+        return None
+    return float(np.exp((np.log(last) - np.log(first)) / float(end - start)))
+
+
+def _v3_window_net_decrease(
+    rows: dict[int, dict[str, Any]], start: int, end: int
+) -> bool:
+    window = [
+        rows[iteration]["global_true_relative_residual"]
+        for iteration in sorted(rows)
+        if start <= iteration <= end
+    ]
+    return bool(len(window) >= 2 and float(window[-1]) < float(window[0]))
+
+
+def action_block_v3_progressive_gate(
+    history: list[dict[str, Any]],
+    *,
+    converged_reason: int,
+    final: bool = True,
+) -> dict[str, Any]:
+    """Evaluate the fixed V3 double-screen checkpoints in one history.
+
+    This is deliberately separate from the historical V2 gate: V3 owns a
+    fixed max_it=200 and progressively admits the same single outer solve at
+    20, 60, 100, and 200 iterations.
+    """
+
+    rows = _v3_history_by_iteration(history)
+    ordered_iterations = sorted(rows)
+    finite = bool(
+        history
+        and all(
+            np.isfinite(float(row[key])) and float(row[key]) >= 0.0
+            for row in history
+            for key in _V3_RESIDUAL_KEYS
+        )
+    )
+    reported_true_agree = bool(
+        finite
+        and all(
+            abs(
+                float(row["reported_relative_residual"])
+                - float(row["global_true_relative_residual"])
+            )
+            <= 1.0e-6
+            * max(
+                float(row["reported_relative_residual"]),
+                float(row["global_true_relative_residual"]),
+            )
+            for row in history
+        )
+    )
+    iterations = ordered_iterations[-1] if ordered_iterations else 0
+    boundary_or_earlier = bool(
+        not final
+        or iterations == 200
+        or (iterations < 200 and int(converged_reason) > 0)
+    )
+    hard_stop = bool(not finite or (final and not boundary_or_earlier))
+    if len(ordered_iterations) >= 6:
+        for start in range(len(ordered_iterations) - 5):
+            sample = ordered_iterations[start : start + 6]
+            values = [
+                float(rows[iteration]["global_true_relative_residual"])
+                for iteration in sample
+            ]
+            if all(values[index + 1] > values[index] for index in range(5)):
+                later = [
+                    float(rows[iteration]["global_true_relative_residual"])
+                    for iteration in ordered_iterations[start + 6 :]
+                ]
+                if not later or min(later) >= values[-1]:
+                    hard_stop = True
+                    break
+    for start in range(max(0, len(ordered_iterations) - 4)):
+        sample = ordered_iterations[start : start + 5]
+        if len(sample) == 5 and all(
+            float(rows[sample[index]]["global_true_relative_residual"]) > 1.25
+            for index in range(5)
+        ):
+            hard_stop = True
+            break
+
+    stage = next(
+        (candidate for candidate in (200, 100, 60, 20) if candidate in rows),
+        None,
+    )
+    required = (
+        tuple(iteration for iteration in _V3_CHECKPOINTS if iteration <= stage)
+        if stage is not None
+        else ()
+    )
+    checkpoints_complete = bool(stage is not None and all(i in rows for i in required))
+    r20 = float(rows[20]["global_true_relative_residual"]) if 20 in rows else None
+    r10 = float(rows[10]["global_true_relative_residual"]) if 10 in rows else None
+    r40 = float(rows[40]["global_true_relative_residual"]) if 40 in rows else None
+    r60 = float(rows[60]["global_true_relative_residual"]) if 60 in rows else None
+    r90 = float(rows[90]["global_true_relative_residual"]) if 90 in rows else None
+    r100 = float(rows[100]["global_true_relative_residual"]) if 100 in rows else None
+    r160 = float(rows[160]["global_true_relative_residual"]) if 160 in rows else None
+    r200 = float(rows[200]["global_true_relative_residual"]) if 200 in rows else None
+    q10_20 = _v3_endpoint_slope(rows, 10, 20)
+    q40_60 = _v3_endpoint_slope(rows, 40, 60)
+    q160_200 = _v3_endpoint_slope(rows, 160, 200)
+    last20_net_decrease = _v3_window_net_decrease(rows, 41, 60)
+    last40_net_decrease = _v3_window_net_decrease(rows, 161, 200)
+    gates = {
+        "20": bool(
+            checkpoints_complete
+            and 20 <= int(stage)
+            and r20 is not None
+            and r10 is not None
+            and r20 < 0.65
+            and r20 / max(r10, _TINY) < 0.85
+            and q10_20 is not None
+            and q10_20 < 0.98
+            and all(np.isfinite(float(rows[20][key])) for key in _V3_RESIDUAL_KEYS[1:])
+        ),
+        "60": bool(
+            checkpoints_complete
+            and 60 <= int(stage)
+            and r60 is not None
+            and r40 is not None
+            and r60 < 0.30
+            and r60 < r40
+            and q40_60 is not None
+            and q40_60 < 0.99
+            and last20_net_decrease
+        ),
+        "100": bool(
+            checkpoints_complete
+            and 100 <= int(stage)
+            and r100 is not None
+            and r60 is not None
+            and r90 is not None
+            and r100 <= 0.12
+            and r100 < r60
+            and r100 <= r90
+            and _v3_window_net_decrease(rows, 61, 100)
+        ),
+        "200": False,
+    }
+    predicted_iterations: int | None = None
+    predicted_wall_seconds: float | None = None
+    prediction_slope: float | None = None
+    prediction_intercept: float | None = None
+    prediction_q_fit: float | None = None
+    prediction_rows = [
+        row for iteration, row in sorted(rows.items()) if 120 <= iteration <= 200
+    ]
+    if len(prediction_rows) >= 2:
+        x = np.asarray([row["iteration"] for row in prediction_rows], dtype=float)
+        y = np.log(
+            np.maximum(
+                np.asarray(
+                    [row["global_true_relative_residual"] for row in prediction_rows],
+                    dtype=float,
+                ),
+                _TINY,
+            )
+        )
+        prediction_slope, prediction_intercept = (
+            float(value) for value in np.polyfit(x, y, 1)
+        )
+        prediction_q_fit = float(np.exp(prediction_slope))
+        if prediction_slope < 0.0 and r200 is not None:
+            predicted_iterations = max(
+                200,
+                int(
+                    np.ceil((np.log(1.0e-6) - prediction_intercept) / prediction_slope)
+                ),
+            )
+            elapsed = np.asarray(
+                [row.get("elapsed_seconds", 0.0) for row in prediction_rows],
+                dtype=float,
+            )
+            wall_slope = float(np.polyfit(x, elapsed, 1)[0])
+            predicted_wall_seconds = float(
+                elapsed[-1] + max(predicted_iterations - 200, 0) * max(wall_slope, 0.0)
+            )
+    gates["200"] = bool(
+        checkpoints_complete
+        and stage == 200
+        and r200 is not None
+        and r160 is not None
+        and r200 <= 0.05
+        and r200 < r160
+        and last40_net_decrease
+        and q160_200 is not None
+        and q160_200 < 0.997
+        and len(prediction_rows) == 81
+        and [int(row["iteration"]) for row in prediction_rows] == list(range(120, 201))
+        and reported_true_agree
+        and predicted_iterations is not None
+        and predicted_iterations <= 3000
+    )
+    failed_stage = next(
+        (
+            name
+            for name in ("20", "60", "100", "200")
+            if stage is not None and int(name) <= stage and not gates[name]
+        ),
+        None,
+    )
+    final_true = (
+        float(rows[iterations]["global_true_relative_residual"])
+        if iterations in rows
+        else np.inf
+    )
+    bounded_convergence = bool(
+        final
+        and iterations < 200
+        and int(converged_reason) > 0
+        and np.isfinite(final_true)
+        and final_true <= 1.0e-6
+    )
+    not_reached_due_to_convergence = (
+        [candidate for candidate in _V3_CHECKPOINTS if candidate > iterations]
+        if bounded_convergence
+        else []
+    )
+    stop_required = bool(hard_stop or failed_stage is not None)
+    return {
+        "pass": bool(all(gates.values()) and not hard_stop),
+        "finite": finite,
+        "reported_true_agree": reported_true_agree,
+        "boundary_or_earlier": boundary_or_earlier,
+        "hard_stop": hard_stop,
+        "stop_required": stop_required,
+        "failed_stage": failed_stage,
+        "stop_cause": (
+            "v3_hard_stop"
+            if hard_stop
+            else f"v3_{failed_stage}_admission_failed"
+            if failed_stage is not None
+            else None
+        ),
+        "bounded_convergence": bounded_convergence,
+        "not_reached_due_to_convergence": not_reached_due_to_convergence,
+        "stage": stage,
+        "required_checkpoints": list(required),
+        "checkpoints_complete": checkpoints_complete,
+        "gates": gates,
+        "r20": r20,
+        "r60": r60,
+        "r100": r100,
+        "r200": r200,
+        "q10_20": q10_20,
+        "q40_60": q40_60,
+        "q160_200": q160_200,
+        "last20_net_decrease": last20_net_decrease,
+        "last40_net_decrease": last40_net_decrease,
+        "prediction_interval": [120, 200],
+        "prediction_sample_count": len(prediction_rows),
+        "prediction_slope": prediction_slope,
+        "prediction_intercept": prediction_intercept,
+        "prediction_q_fit": prediction_q_fit,
+        "predicted_iterations": predicted_iterations,
+        "predicted_wall_seconds": predicted_wall_seconds,
     }
 
 

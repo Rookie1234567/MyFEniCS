@@ -80,6 +80,7 @@ from src.solvers.hybrid_fem_modal_block_ldu import (
     HybridBlockLduPhysicalSolution,
     _HybridBlockLduOracleLocalSystem,
     action_block_screen_gate,
+    action_block_v3_progressive_gate,
     create_action_block_ldu_preconditioner,
     create_exact_block_ldu_preconditioner,
     create_g_only_block_ldu_preconditioner,
@@ -810,6 +811,14 @@ class _V2QualificationStop(RuntimeError):
         self.record = record
 
 
+class _V3QualificationStop(RuntimeError):
+    """Internal control flow after the single bounded V3 double screen."""
+
+    def __init__(self, record: dict[str, Any]) -> None:
+        super().__init__(record.get("status", "V3 double block screen complete"))
+        self.record = record
+
+
 NUMERICAL_INFINITY_BETA_H_CUTOFF = 1.0e4
 
 
@@ -1204,6 +1213,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Open only the frozen Task037b V2 bounded block-screen path.",
     )
     parser.add_argument(
+        "--task037b-v3-gate",
+        action="store_true",
+        help="Open only the frozen Task037b V3 double fixed-action screen path.",
+    )
+    parser.add_argument(
         "--task037b-v2-profile",
         choices=("bottom-approx", "top-approx", "double"),
         default=None,
@@ -1304,10 +1318,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         args.task037b_h5_gate,
         args.task037b_v1_gate,
         args.task037b_v2_gate,
+        args.task037b_v3_gate,
     )
     if sum(bool(value) for value in selected_scoped_gates) > 1:
         parser.error(
-            "Task035c p6/h10, Task037b H1, H3, H4, H5, V1, and V2 gates are "
+            "Task035c p6/h10, Task037b H1, H3, H4, H5, V1, V2, and V3 gates are "
             "mutually exclusive."
         )
     if args.solver_path == "local-inverse-qualification" and not args.task037b_h5_gate:
@@ -1336,11 +1351,19 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "dtn-woodbury-local-inverse-qualification requires --task037b-v1-gate."
         )
-    if args.solver_path == "block-ldu-action-screen" and not args.task037b_v2_gate:
-        parser.error("block-ldu-action-screen requires --task037b-v2-gate.")
+    if args.solver_path == "block-ldu-action-screen" and not (
+        args.task037b_v2_gate or args.task037b_v3_gate
+    ):
+        parser.error(
+            "block-ldu-action-screen requires --task037b-v2-gate or --task037b-v3-gate."
+        )
     if args.task037b_v2_gate and args.solver_path != "block-ldu-action-screen":
         parser.error(
             "--task037b-v2-gate requires --solver-path block-ldu-action-screen."
+        )
+    if args.task037b_v3_gate and args.solver_path != "block-ldu-action-screen":
+        parser.error(
+            "--task037b-v3-gate requires --solver-path block-ldu-action-screen."
         )
     if not args.task037b_v2_gate and (
         args.task037b_v2_profile is not None or args.task037b_v2_max_it is not None
@@ -1359,7 +1382,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     if args.degree == 6 and not any(selected_scoped_gates):
         parser.error(
             "p6 is fail-closed; pass a fixed scoped Task035c, Task037b H1, "
-            "or Task037b H3/H4/H5/V1/V2 gate."
+            "or Task037b H3/H4/H5/V1/V2/V3 gate."
         )
     if args.task035c_p6_h10_gate:
         scoped = bool(
@@ -1588,13 +1611,49 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "candidate240, block-ldu-action-screen, static-condensed MPI8 "
                 "path with a valid V2 profile/max-it pair."
             )
+    elif args.task037b_v3_gate:
+        scoped = bool(
+            args.degree == 6
+            and math.isclose(args.h_nm, 10.0)
+            and args.modal_degree == 6
+            and args.modal_h_nm is not None
+            and math.isclose(args.modal_h_nm, 10.0)
+            and args.requested_modes == 120
+            and args.candidate_modes == 240
+            and args.solver_path == "block-ldu-action-screen"
+            and args.comparison_solver_path == "fast"
+            and not args.compare_modal_schur
+            and args.stage4_full3d_assembly_backend
+            == ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+            and math.isclose(args.bottom_interface_nm, 10.0)
+            and math.isclose(args.top_interface_nm, 110.0)
+            and args.graded_reference_h is None
+            and math.isclose(args.incident_grazing_deg, 10.0)
+            and args.polarization_kind == "s"
+            and args.internal_propagation_model == "full3d_uniform_cg"
+            and args.internal_traction_model == "scalar_cg_discrete_derivative"
+            and args.full3d_reference is not None
+            and valid_hex_digest(args.full3d_reference_sha256, 64)
+            and args.task035c_p6_preflight_authority is not None
+            and valid_hex_digest(args.task035c_p6_preflight_sha256, 64)
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and args.host_environment_id == "WSL2-Ubuntu-24.04"
+            and not args.allow_dirty_research
+        )
+        if not scoped:
+            parser.error(
+                "--task037b-v3-gate is restricted to the fixed WSL p6/h10, "
+                "modal p6/h10, 10/110 nm, S-polarized, full3d/scalar-CG, "
+                "M120+M120, candidate240, block-ldu-action-screen, "
+                "static-condensed MPI8 path."
+            )
     elif (
         args.task035c_p6_preflight_authority is not None
         or args.task035c_p6_preflight_sha256 is not None
         or args.full3d_reference_sha256 is not None
     ):
         parser.error(
-            "Task035c/H1/H3/H4/H5/V1/V2 authority SHA arguments require a scoped gate."
+            "Task035c/H1/H3/H4/H5/V1/V2/V3 authority SHA arguments require a scoped gate."
         )
     return args
 
@@ -1613,13 +1672,14 @@ def _task035c_worker_authority_gate(
         or args.task037b_h5_gate
         or args.task037b_v1_gate
         or args.task037b_v2_gate
+        or args.task037b_v3_gate
     ):
         return None
 
     authority_path = args.task035c_p6_preflight_authority
     reference_path = args.full3d_reference
     if authority_path is None or reference_path is None:
-        raise SystemExit("Task035c/H1/H3/H4/H5/V1/V2 authority paths are required.")
+        raise SystemExit("Task035c/H1/H3/H4/H5/V1/V2/V3 authority paths are required.")
     authority_path = (
         authority_path if authority_path.is_absolute() else ROOT / authority_path
     ).resolve()
@@ -1668,6 +1728,7 @@ def _task035c_worker_authority_gate(
             or args.task037b_h5_gate
             or args.task037b_v1_gate
             or args.task037b_v2_gate
+            or args.task037b_v3_gate
         )
         else task035c_p6_h10_full3d_reference_gate(
             reference if isinstance(reference, dict) else None,
@@ -1690,6 +1751,8 @@ def _task035c_worker_authority_gate(
             if args.task037b_h5_gate
             else "task037b.v2-worker-authority-gate.v1"
             if args.task037b_v2_gate
+            else "task037b.v3-worker-authority-gate.v1"
+            if args.task037b_v3_gate
             else "task035c.p6-h10-worker-authority-gate.v1"
         ),
         "pass": bool(preflight_gate["pass"] and reference_gate["pass"]),
@@ -1873,8 +1936,18 @@ def _run_v2_block_screen(
     mark_stage,
     progress,
 ) -> None:
-    """Run one explicit-opt-in bounded V2 action block screen and stop."""
+    """Run one explicit-opt-in bounded V2 or V3 action block screen and stop."""
 
+    is_v3 = bool(args.task037b_v3_gate)
+    screen_profile = "double" if is_v3 else args.task037b_v2_profile
+    screen_max_it = 200 if is_v3 else int(args.task037b_v2_max_it)
+    record_schema = (
+        "task037b.v3-progressive-block-pc-screen.v1"
+        if is_v3
+        else "task037b.v2-block-pc-screen.v1"
+    )
+    telemetry_key = "v3_telemetry" if is_v3 else "v2_telemetry"
+    gate_prefix = "v3" if is_v3 else "v2"
     selections = _h5_frozen_mode_selection(positive, negative)
     layout = None
     action_matrix = None
@@ -1893,12 +1966,22 @@ def _run_v2_block_screen(
     release_records: dict[str, dict[str, Any]] = {"bottom": {}, "top": {}}
     record: dict[str, Any] | None = None
     started = time.perf_counter()
+    v3_stage_markers: list[str] = (
+        ["action_coupling_build_started", "action_coupling_build_ready"]
+        if is_v3
+        else []
+    )
+
+    def record_stage(stage: str) -> None:
+        mark_stage(stage)
+        if is_v3:
+            v3_stage_markers.append(stage)
 
     approximate_side = {
         "bottom-approx": "bottom",
         "top-approx": "top",
         "double": None,
-    }[args.task037b_v2_profile]
+    }[screen_profile]
     exact_side = (
         None
         if approximate_side is None
@@ -1910,7 +1993,7 @@ def _run_v2_block_screen(
     blocks = {"bottom": coupling.bottom, "top": coupling.top}
 
     try:
-        mark_stage("v2_action_block_setup")
+        record_stage("v3_action_block_setup" if is_v3 else "v2_action_block_setup")
         layout = HybridAugmentedLayout.build(
             bottom,
             top,
@@ -1943,6 +2026,8 @@ def _run_v2_block_screen(
 
         for side in ("bottom", "top"):
             if approximate_side is None or side == approximate_side:
+                if is_v3:
+                    record_stage(f"{side}_approx_setup_started")
                 components = create_hybrid_local_dtn_action_components(systems[side])
                 side_components[side] = components
                 fixed = build_hybrid_whole_endcap_fixed_smoother_action(systems[side])
@@ -1950,6 +2035,8 @@ def _run_v2_block_screen(
                 woodbury = HybridLocalDtnWoodburyFixedAction(fixed, components)
                 side_woodbury[side] = woodbury
                 side_actions[side] = woodbury
+                if is_v3:
+                    record_stage(f"{side}_approx_setup_ready")
             elif side == exact_side:
                 direct_system = None
                 try:
@@ -1978,13 +2065,35 @@ def _run_v2_block_screen(
                     }
                 )
 
+        def v3_callback_certificate_pass(cert: dict[str, Any] | None) -> bool:
+            return bool(
+                cert is not None
+                and cert["wrapper_vs_internal_woodbury_error"] <= 1.0e-12
+                and cert["linearity_error"] <= 1.0e-12
+                and cert["determinism_error"] <= 1.0e-14
+                and cert["repeat_hash_equal"]
+                and cert["woodbury"].get("K_rank") == R4_MODAL_COUNT
+                and np.isfinite(float(cert["woodbury"].get("K_condition_number")))
+                and float(cert["woodbury"]["K_condition_number"]) <= 1.0e6
+                and cert["woodbury"].get("arrays_finite") is True
+                and cert["base_factor_count"] == 1
+                and cert["local_direct_factor_count"] == 0
+                and cert["nested_ksp_created"] is False
+                and cert["apply_count_increment"] == 7
+            )
+
         certificates = {}
         for side in ("bottom", "top"):
             if side in side_woodbury:
                 certificates[side] = _v2_fixed_callback_certificate(side_woodbury[side])
-                if not certificates[side]["pass"]:
+                certificate_pass = (
+                    v3_callback_certificate_pass(certificates[side])
+                    if is_v3
+                    else bool(certificates[side]["pass"])
+                )
+                if not certificate_pass:
                     raise RuntimeError(
-                        f"V2 fixed callback certificate failed for {side}."
+                        f"{('V3' if is_v3 else 'V2')} fixed callback certificate failed for {side}."
                     )
             else:
                 certificates[side] = None
@@ -2061,7 +2170,7 @@ def _run_v2_block_screen(
             "bottom-approx": {"bottom": (0, 1), "top": (1, 0)},
             "top-approx": {"bottom": (1, 0), "top": (0, 1)},
             "double": {"bottom": (0, 1), "top": (0, 1)},
-        }[args.task037b_v2_profile]
+        }[screen_profile]
         factor_identity = {}
         for side in ("bottom", "top"):
             diagnostics = dict(side_actions[side].diagnostics)
@@ -2098,6 +2207,8 @@ def _run_v2_block_screen(
         if not factor_identity_pass:
             raise RuntimeError("V2 fixed-side factor identity failed.")
 
+        if is_v3:
+            record_stage("modal_schur_build_started")
         preconditioner = create_action_block_ldu_preconditioner(
             layout,
             bottom,
@@ -2121,30 +2232,57 @@ def _run_v2_block_screen(
         )
         if not pc_inventory_pass:
             raise RuntimeError("V2 PC factor inventory contract failed.")
+        if is_v3:
+            record_stage("modal_schur_build_ready")
         online_before = {
             side: int(side_actions[side].diagnostics["apply_count"])
             for side in ("bottom", "top")
         }
         setup_seconds = _max_elapsed(comm, started)
-        timings["v2_action_block_setup"] = setup_seconds
-        mark_stage("v2_outer_screen")
+        setup_key = "v3_action_block_setup" if is_v3 else "v2_action_block_setup"
+        timings[setup_key] = setup_seconds
+        if not is_v3:
+            record_stage("v2_outer_screen")
         started = time.perf_counter()
+        v3_checkpoint_events = {
+            20: "outer_iter_20",
+            60: "outer_iter_60",
+            100: "outer_iter_100",
+            200: "outer_iter_200",
+        }
+
+        def v3_checkpoint_callback(row: dict[str, Any]) -> None:
+            event = v3_checkpoint_events.get(int(row["iteration"]))
+            if event is not None:
+                record_stage(event)
+
         screen_result = screen_action_block_ldu(
             action_matrix,
             outer_rhs,
             preconditioner,
-            max_it=int(args.task037b_v2_max_it),
+            max_it=screen_max_it,
+            v3_progressive=is_v3,
+            checkpoint_callback=v3_checkpoint_callback if is_v3 else None,
         )
         preconditioner_after = dict(preconditioner.inventory)
         preconditioner = None
         pc_apply_seconds_local = float(screen_result.pc_apply_seconds)
         pc_apply_seconds_max = float(comm.allreduce(pc_apply_seconds_local, op=MPI.MAX))
-        timings["v2_outer_screen"] = _max_elapsed(comm, started)
-        screen_gate = action_block_screen_gate(
-            screen_result.history,
-            profile=args.task037b_v2_profile,
-            max_it=int(args.task037b_v2_max_it),
-            converged_reason=int(screen_result.converged_reason),
+        screen_key = "v3_outer_screen" if is_v3 else "v2_outer_screen"
+        timings[screen_key] = _max_elapsed(comm, started)
+        screen_gate = (
+            action_block_v3_progressive_gate(
+                screen_result.history,
+                converged_reason=int(screen_result.converged_reason),
+                final=True,
+            )
+            if is_v3
+            else action_block_screen_gate(
+                screen_result.history,
+                profile=screen_profile,
+                max_it=screen_max_it,
+                converged_reason=int(screen_result.converged_reason),
+            )
         )
         online_after = {
             side: int(side_actions[side].diagnostics["apply_count"])
@@ -2176,33 +2314,90 @@ def _run_v2_block_screen(
             )
 
         modal_diagnostics = dict(screen_result.inventory["modal_schur"])
-        expected_modal_shape = [int(coupling.internal_unknown_count)] * 2
+        modal_condition_limit = 1.0e6 if is_v3 else 1.0e12
+        modal_repeat_limit = 1.0e-12 if is_v3 else 1.0e-13
+        expected_modal_shape = (
+            [240, 240] if is_v3 else [int(coupling.internal_unknown_count)] * 2
+        )
+        expected_modal_rank = 240 if is_v3 else coupling.internal_unknown_count
         modal_contract = bool(
-            modal_diagnostics.get("shape") == expected_modal_shape
-            and modal_diagnostics.get("rank") == coupling.internal_unknown_count
+            (not is_v3 or coupling.internal_unknown_count == 240)
+            and modal_diagnostics.get("shape") == expected_modal_shape
+            and modal_diagnostics.get("rank") == expected_modal_rank
             and np.isfinite(float(modal_diagnostics.get("condition")))
-            and float(modal_diagnostics["condition"]) <= 1.0e12
+            and float(modal_diagnostics["condition"]) <= modal_condition_limit
             and modal_diagnostics.get("finite") is True
-            and float(modal_diagnostics["matrix_repeat_error"]) <= 1.0e-13
-            and float(modal_diagnostics["lu_repeat_solve_error"]) <= 1.0e-13
+            and (
+                not is_v3
+                or (
+                    modal_diagnostics.get("dtype") == "complex128"
+                    and modal_diagnostics.get("normal_equations") is False
+                )
+            )
+            and float(modal_diagnostics["matrix_repeat_error"]) <= modal_repeat_limit
+            and float(modal_diagnostics["lu_repeat_solve_error"]) <= modal_repeat_limit
             and all(
                 value == 2 * coupling.internal_unknown_count
                 for value in modal_diagnostics["build_apply_count"].values()
             )
         )
-        callback_contract = bool(
-            all(
-                certificates[side] is not None and certificates[side]["pass"]
-                for side in ("bottom", "top")
-                if side == approximate_side
+        callback_contract = (
+            bool(
+                all(
+                    v3_callback_certificate_pass(cert) for cert in certificates.values()
+                )
             )
-            and all(item["pass"] for item in certificates.values() if item is not None)
+            if is_v3
+            else bool(
+                all(
+                    certificates[side] is not None and certificates[side]["pass"]
+                    for side in ("bottom", "top")
+                    if side == approximate_side
+                )
+                and all(
+                    item["pass"] for item in certificates.values() if item is not None
+                )
+            )
         )
+        v3_inventory_pass = True
+        if is_v3:
+            v3_inventory_pass = bool(
+                global_direct_factor_count == 0
+                and global_operator_inventory.get("global_A_materialized") is False
+                and all(
+                    systems[side].inventory.get("fine_global_A_materialized") is False
+                    and systems[side].inventory.get("explicit_external_c_matrix_count")
+                    == 0
+                    and systems[side].inventory.get("explicit_external_d_matrix_count")
+                    == 0
+                    for side in ("bottom", "top")
+                )
+            )
         side_contract = bool(
             all(item["online_apply"]["pass"] for item in side_records.values())
             and all(
                 item["borrowed_action_survives_after_screen"]
                 for item in side_records.values()
+            )
+        )
+        prediction_iterations = [
+            int(row["iteration"])
+            for row in screen_result.history
+            if 120 <= int(row["iteration"]) <= 200
+        ]
+        v3_prediction_contract = bool(
+            not is_v3
+            or screen_gate.get("stage") != 200
+            or (
+                screen_gate.get("prediction_interval") == [120, 200]
+                and screen_gate.get("prediction_sample_count") == 81
+                and prediction_iterations == list(range(120, 201))
+                and all(
+                    np.isfinite(float(row["global_true_relative_residual"]))
+                    and float(row["global_true_relative_residual"]) >= 0.0
+                    for row in screen_result.history
+                    if 120 <= int(row["iteration"]) <= 200
+                )
             )
         )
         integration_pass = bool(
@@ -2212,6 +2407,8 @@ def _run_v2_block_screen(
             and pc_inventory_pass
             and global_operator_contract
             and side_contract
+            and v3_inventory_pass
+            and v3_prediction_contract
         )
         for side in ("bottom", "top"):
             system = systems[side]
@@ -2250,26 +2447,76 @@ def _run_v2_block_screen(
         restart_bytes_by_rank = [
             int(value) for value in comm.allgather(restart_local_bytes)
         ]
-        mark_stage("v2_record")
+        record_stage("v3_record" if is_v3 else "v2_record")
         _verify_source_stable_at_end(
             comm,
             provenance,
             args.verified_clean_sha,
             args.allow_dirty_research,
         )
+        v3_bounded_pass = bool(is_v3 and screen_gate.get("bounded_convergence") is True)
+        v3_numerical_pass = bool(
+            screen_gate["pass"] if not is_v3 else screen_gate["pass"] or v3_bounded_pass
+        )
+        v3_slow = bool(
+            is_v3
+            and not v3_numerical_pass
+            and screen_gate.get("finite") is True
+            and screen_gate.get("r200") is not None
+            and 0.05 < float(screen_gate["r200"]) <= 0.12
+            and screen_gate.get("last40_net_decrease") is True
+            and screen_gate.get("q160_200") is not None
+            and float(screen_gate["q160_200"]) < 0.995
+            and screen_gate.get("reported_true_agree") is True
+            and screen_gate.get("hard_stop") is False
+            and screen_result.progressive_stop_cause is None
+            and all(
+                screen_gate.get("gates", {}).get(checkpoint) is True
+                for checkpoint in ("20", "60", "100")
+            )
+        )
+        v3_classification_code = (
+            "PASS"
+            if v3_numerical_pass
+            else "SLOW"
+            if v3_slow
+            else "FAMILY_NEGATIVE"
+            if is_v3
+            else None
+        )
+        v3_classification = {
+            "PASS": "DOUBLE_APPROXIMATE_200_STEP_PASS_AWAITING_FULL_REVIEW",
+            "SLOW": "DOUBLE_APPROXIMATE_SLOW_CONTRACTION_AWAITING_REVIEW",
+            "FAMILY_NEGATIVE": "FIXED_ILU0_WOODBURY_BLOCK_PC_FAMILY_NEGATIVE",
+        }.get(v3_classification_code)
+        initial_status = (
+            (
+                "task037b_v3_pass"
+                if v3_classification_code == "PASS"
+                else "task037b_v3_slow"
+                if v3_classification_code == "SLOW"
+                else "task037b_v3_family_negative"
+            )
+            if is_v3 and integration_pass
+            else "task037b_v3_implementation_gate_failed"
+            if is_v3
+            else "task037b_v2_screen_pass"
+            if integration_pass and screen_gate["pass"]
+            else "task037b_v2_screen_numerical_negative"
+            if integration_pass
+            else "task037b_v2_screen_contract_failed"
+        )
         record = {
             "schema_version": 1,
-            "record_schema": "task037b.v2-block-pc-screen.v1",
+            "record_schema": record_schema,
             "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-            "benchmark_id": "task037b_v2_bounded_block_pc_screen",
-            "official_record": False,
-            "status": (
-                "task037b_v2_screen_pass"
-                if integration_pass and screen_gate["pass"]
-                else "task037b_v2_screen_numerical_negative"
-                if integration_pass
-                else "task037b_v2_screen_contract_failed"
+            "benchmark_id": (
+                "task037b_v3_progressive_block_pc_screen"
+                if is_v3
+                else "task037b_v2_bounded_block_pc_screen"
             ),
+            "official_record": False,
+            "status": initial_status,
             "metadata": {
                 **provenance,
                 "command": list(sys.argv),
@@ -2283,14 +2530,24 @@ def _run_v2_block_screen(
                 "modal_h_nm": args.modal_h_nm,
                 "requested_modes": args.requested_modes,
                 "candidate_modes": args.candidate_modes,
+                "wavelength_nm": float(cfg.lambda0),
                 "mpi_size": comm.size,
                 "polarization_kind": args.polarization_kind,
                 "incident_grazing_deg": args.incident_grazing_deg,
                 "bottom_interface_nm": args.bottom_interface_nm,
                 "top_interface_nm": args.top_interface_nm,
                 "solver_path": args.solver_path,
-                "v2_profile": args.task037b_v2_profile,
-                "v2_max_it": args.task037b_v2_max_it,
+                "internal_propagation_model": args.internal_propagation_model,
+                "internal_traction_model": args.internal_traction_model,
+                "stage4_full3d_assembly_backend": (args.stage4_full3d_assembly_backend),
+                **(
+                    {"v3_gate": True}
+                    if is_v3
+                    else {
+                        "v2_profile": args.task037b_v2_profile,
+                        "v2_max_it": args.task037b_v2_max_it,
+                    }
+                ),
             },
             "hybrid_system": {
                 "operator_inventory": global_operator_inventory,
@@ -2306,12 +2563,14 @@ def _run_v2_block_screen(
                 ),
             },
             "screen": {
-                "profile": args.task037b_v2_profile,
-                "max_it": args.task037b_v2_max_it,
+                "profile": screen_profile,
+                "max_it": screen_max_it,
                 "restart": 90,
                 "rtol": 1.0e-6,
                 "atol": 0.0,
                 "zero_initial": True,
+                "outer_solver": "fgmres",
+                "pc_side": "right",
                 "converged_reason": int(screen_result.converged_reason),
                 "iterations": int(screen_result.iterations),
                 "reported_final": float(
@@ -2327,15 +2586,26 @@ def _run_v2_block_screen(
                 "last5": screen_result.last5,
                 "last40": screen_result.last40,
                 "gate": screen_gate,
+                **(
+                    {
+                        "progressive_stop_cause": screen_result.progressive_stop_cause,
+                        "effective_stop_cause": (
+                            screen_result.progressive_stop_cause
+                            or screen_gate.get("stop_cause")
+                        ),
+                    }
+                    if is_v3
+                    else {}
+                ),
                 "inventory_before_release": screen_result.inventory,
                 "inventory_after_release": preconditioner_after,
                 "pc_apply_seconds_max_rank": pc_apply_seconds_max,
                 "pc_apply_seconds_local": pc_apply_seconds_local,
             },
-            "v2_telemetry": {
-                "task037b_v2_gate": True,
-                "profile": args.task037b_v2_profile,
-                "max_it": args.task037b_v2_max_it,
+            telemetry_key: {
+                **({"task037b_v3_gate": True} if is_v3 else {"task037b_v2_gate": True}),
+                "profile": screen_profile,
+                "max_it": screen_max_it,
                 "frozen_mode_selection": selections,
                 "sides": side_records,
                 "fixed_callback_certificates": certificates,
@@ -2371,55 +2641,135 @@ def _run_v2_block_screen(
                     "max_bytes": int(max(restart_bytes_by_rank)),
                 },
                 "ordinary_default_changed": False,
+                **({"stage_markers": list(v3_stage_markers)} if is_v3 else {}),
+                **(
+                    {
+                        "classification": v3_classification,
+                        "classification_code": v3_classification_code,
+                        "bounded_convergence": v3_bounded_pass,
+                        "progressive_stop_cause": screen_result.progressive_stop_cause,
+                        "prediction_contract": v3_prediction_contract,
+                        "prediction_formula": (
+                            "log(r_i)=slope*i+intercept; "
+                            "i_target=(log(1e-6)-intercept)/slope"
+                        ),
+                        "official_outputs": {
+                            "R": "not_run",
+                            "T": "not_run",
+                            "A": "not_run",
+                            "A_volume": "not_run",
+                            "orders": "not_run",
+                            "field": "not_run",
+                            "12_plus_12": "not_run",
+                            "Full3D": "not_run",
+                        },
+                        "v3_release": False,
+                    }
+                    if is_v3
+                    else {}
+                ),
             },
-            "validation": _v2_not_run_validation_boundary(),
+            "validation": {
+                **_v2_not_run_validation_boundary(),
+                **(
+                    {
+                        "official_outputs": {
+                            "R": "not_run",
+                            "T": "not_run",
+                            "A": "not_run",
+                            "A_volume": "not_run",
+                            "orders": "not_run",
+                            "field": "not_run",
+                            "12_plus_12": "not_run",
+                            "Full3D": "not_run",
+                        }
+                    }
+                    if is_v3
+                    else {}
+                ),
+            },
             "physical_field_reconstruction": {"status": "not_run"},
-            "gates": {
-                "v2_fixed_callback_certificate": callback_contract,
-                "v2_modal_schur": modal_contract,
-                "v2_online_apply_counts": side_contract,
-                "v2_factor_identity": factor_identity_pass,
-                "v2_global_operator": global_operator_contract,
-                "v2_pc_inventory": pc_inventory_pass,
-                "v2_release": False,
-                "v2_screen": bool(screen_gate["pass"]),
-                "v2_integration_pass": integration_pass,
-                "v2_worker_numerical_pass": bool(screen_gate["pass"]),
-            },
+            "gates": (
+                {
+                    "v3_fixed_callback_certificate": callback_contract,
+                    "v3_modal_schur": modal_contract,
+                    "v3_online_apply_counts": side_contract,
+                    "v3_factor_identity": factor_identity_pass,
+                    "v3_global_operator": global_operator_contract,
+                    "v3_pc_inventory": pc_inventory_pass,
+                    "v3_action_inventory": v3_inventory_pass,
+                    "v3_prediction": v3_prediction_contract,
+                    "v3_release": False,
+                    "v3_screen": bool(screen_gate["pass"]),
+                    "v3_integration_pass": integration_pass,
+                    "v3_worker_numerical_pass": v3_numerical_pass,
+                }
+                if is_v3
+                else {
+                    "v2_fixed_callback_certificate": callback_contract,
+                    "v2_modal_schur": modal_contract,
+                    "v2_online_apply_counts": side_contract,
+                    "v2_factor_identity": factor_identity_pass,
+                    "v2_global_operator": global_operator_contract,
+                    "v2_pc_inventory": pc_inventory_pass,
+                    "v2_release": False,
+                    "v2_screen": bool(screen_gate["pass"]),
+                    "v2_integration_pass": integration_pass,
+                    "v2_worker_numerical_pass": bool(screen_gate["pass"]),
+                }
+            ),
             "qualification": {
-                "task037b_v2_gate": True,
-                "profile": args.task037b_v2_profile,
-                "max_it": args.task037b_v2_max_it,
+                **({"task037b_v3_gate": True} if is_v3 else {"task037b_v2_gate": True}),
+                "profile": screen_profile,
+                "max_it": screen_max_it,
                 "integration_pass": integration_pass,
-                "worker_numerical_pass": bool(screen_gate["pass"]),
+                "worker_numerical_pass": v3_numerical_pass
+                if is_v3
+                else bool(screen_gate["pass"]),
                 "official_record": False,
                 "disposition": (
-                    "screen_pass"
+                    v3_classification
+                    if is_v3 and integration_pass
+                    else "DOUBLE_APPROXIMATE_IMPLEMENTATION_GATE_FAILED"
+                    if is_v3
+                    else "screen_pass"
                     if integration_pass and screen_gate["pass"]
                     else "screen_numerical_negative"
                     if integration_pass
                     else "implementation_contract_failed"
                 ),
                 "boundary": (
-                    "V2 bounded block-PC screen only; no field, R/T/A, "
-                    "external diffraction, 12+12, or Full3D comparison."
+                    (
+                        "V3 progressive double block-PC screen only; no field, R/T/A, "
+                        if is_v3
+                        else "V2 bounded block-PC screen only; no field, R/T/A, "
+                    )
+                    + "external diffraction, 12+12, or Full3D comparison."
                 ),
             },
             "timing_seconds_max_rank": {
                 **timings,
-                "v2_record": _max_elapsed(comm, record_started),
+                ("v3_record" if is_v3 else "v2_record"): _max_elapsed(
+                    comm, record_started
+                ),
                 "total": _max_elapsed(comm, total_started),
             },
             "historical_peak_rss_mb_by_rank": comm.gather(
                 _historical_peak_rss_mb(), root=0
             ),
             "memory_semantics": (
-                "V2 bounded screen worker historical per-rank RSS; external "
-                "watchdog owns simultaneous resource classification."
+                (
+                    "V3 progressive screen worker historical per-rank RSS; external "
+                    if is_v3
+                    else "V2 bounded screen worker historical per-rank RSS; external "
+                )
+                + "watchdog owns simultaneous resource classification."
             ),
         }
     finally:
         v2_release_started = time.perf_counter()
+        if is_v3:
+            record_stage("release_started")
         if preconditioner is not None:
             preconditioner.destroy()
         for rhs_list in rhs_sets.values():
@@ -2533,8 +2883,12 @@ def _run_v2_block_screen(
             "release_seconds": _max_elapsed(comm, v2_release_started),
         }
         release_records["outer"] = outer_release
+        if is_v3:
+            record_stage("release_finished")
 
         if record is not None and screen_gate is not None:
+            if is_v3:
+                record[telemetry_key]["stage_markers"] = list(v3_stage_markers)
             existing_sides = set(side_woodbury) | set(side_oracles)
             release_pass = bool(
                 existing_sides == {"bottom", "top"}
@@ -2550,37 +2904,57 @@ def _run_v2_block_screen(
             )
             for side in ("bottom", "top"):
                 side_records[side]["release_records"] = release_records[side]
-            record["v2_telemetry"]["release_records"] = release_records
-            record["v2_telemetry"]["release_pass"] = release_pass
-            record["timing_seconds_max_rank"]["v2_release"] = float(
-                outer_release["release_seconds"]
-            )
+            record[telemetry_key]["release_records"] = release_records
+            record[telemetry_key]["release_pass"] = release_pass
+            if is_v3:
+                record[telemetry_key]["v3_release"] = release_pass
+            record["timing_seconds_max_rank"][
+                "v3_release" if is_v3 else "v2_release"
+            ] = float(outer_release["release_seconds"])
             record["timing_seconds_max_rank"]["total"] = _max_elapsed(
                 comm, total_started
             )
-            record["gates"]["v2_release"] = release_pass
-            record["gates"]["v2_integration_pass"] = final_integration_pass
+            record["gates"][f"{gate_prefix}_release"] = release_pass
+            record["gates"][f"{gate_prefix}_integration_pass"] = final_integration_pass
             record["qualification"]["integration_pass"] = final_integration_pass
-            record["qualification"]["worker_numerical_pass"] = bool(screen_gate["pass"])
-            record["gates"]["v2_worker_numerical_pass"] = bool(screen_gate["pass"])
+            record["qualification"]["worker_numerical_pass"] = (
+                v3_numerical_pass if is_v3 else bool(screen_gate["pass"])
+            )
+            record["gates"][f"{gate_prefix}_worker_numerical_pass"] = (
+                v3_numerical_pass if is_v3 else bool(screen_gate["pass"])
+            )
             if not final_integration_pass:
-                record["status"] = "task037b_v2_screen_contract_failed"
+                record["status"] = (
+                    "task037b_v3_implementation_gate_failed"
+                    if is_v3
+                    else "task037b_v2_screen_contract_failed"
+                )
                 record["qualification"]["disposition"] = (
-                    "implementation_contract_failed"
+                    "DOUBLE_APPROXIMATE_IMPLEMENTATION_GATE_FAILED"
+                    if is_v3
+                    else "implementation_contract_failed"
                 )
             else:
-                record["status"] = (
-                    "task037b_v2_screen_pass"
-                    if screen_gate["pass"]
-                    else "task037b_v2_screen_numerical_negative"
-                )
-                record["qualification"]["disposition"] = (
-                    "screen_pass"
-                    if screen_gate["pass"]
-                    else "screen_numerical_negative"
-                )
+                if is_v3:
+                    record["status"] = {
+                        "PASS": "task037b_v3_pass",
+                        "SLOW": "task037b_v3_slow",
+                        "FAMILY_NEGATIVE": "task037b_v3_family_negative",
+                    }[v3_classification_code]
+                    record["qualification"]["disposition"] = v3_classification
+                else:
+                    record["status"] = (
+                        "task037b_v2_screen_pass"
+                        if screen_gate["pass"]
+                        else "task037b_v2_screen_numerical_negative"
+                    )
+                    record["qualification"]["disposition"] = (
+                        "screen_pass"
+                        if screen_gate["pass"]
+                        else "screen_numerical_negative"
+                    )
 
-    raise _V2QualificationStop(record)
+    raise _V3QualificationStop(record) if is_v3 else _V2QualificationStop(record)
 
 
 def _run_h5_local_qualification(
@@ -5402,6 +5776,7 @@ def main() -> None:
         or args.task037b_h5_gate
         or args.task037b_v1_gate
         or args.task037b_v2_gate
+        or args.task037b_v3_gate
     ) and comm.size not in TASK035C_P6_H10_MPI_SIZES:
         raise SystemExit("Task035c p6/h10 Hybrid is restricted to MPI1/2/4/8.")
     if (
@@ -5411,8 +5786,9 @@ def main() -> None:
         or args.task037b_h5_gate
         or args.task037b_v1_gate
         or args.task037b_v2_gate
+        or args.task037b_v3_gate
     ) and comm.size != 8:
-        raise SystemExit("Task037b H1/H3/H4/H5/V1/V2 Hybrid is restricted to MPI8.")
+        raise SystemExit("Task037b H1/H3/H4/H5/V1/V2/V3 Hybrid is restricted to MPI8.")
     task035c_p6_gate = _task035c_worker_authority_gate(
         args,
         current_source_sha=provenance.get("commit_sha"),
@@ -5815,8 +6191,12 @@ def main() -> None:
         )
         progress("Task32 Phase6: real positive/negative QEP bases complete")
 
-        if args.task037b_v2_gate:
-            mark_stage("v2_action_coupling_build")
+        if args.task037b_v2_gate or args.task037b_v3_gate:
+            mark_stage(
+                "action_coupling_build_started"
+                if args.task037b_v3_gate
+                else "v2_action_coupling_build"
+            )
             started = time.perf_counter()
             bottom = assemble_hybrid_local_dtn_action_system(
                 cfg,
@@ -5844,7 +6224,14 @@ def main() -> None:
                 modal_traction_model=args.internal_traction_model,
                 log=progress,
             )
-            timings["v2_action_coupling_build"] = _max_elapsed(comm, started)
+            coupling_key = (
+                "action_coupling_build"
+                if args.task037b_v3_gate
+                else "v2_action_coupling_build"
+            )
+            timings[coupling_key] = _max_elapsed(comm, started)
+            if args.task037b_v3_gate:
+                mark_stage("action_coupling_build_ready")
             _run_v2_block_screen(
                 args=args,
                 comm=comm,
@@ -7745,6 +8132,8 @@ def main() -> None:
                     ),
                 }
             )
+    except _V3QualificationStop as stop:
+        record = stop.record
     except _V2QualificationStop as stop:
         record = stop.record
     except _V1R4QualificationStop as stop:

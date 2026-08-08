@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import copy
 import hashlib
+import math
 import tempfile
 import unittest
 from pathlib import Path
@@ -23,6 +24,9 @@ from benchmarks.run_task033_memory_watchdog import (
     _task037b_v1_r5_numerical_pass,
     _task037b_v2_numerical_pass,
     _task037b_v2_resource_classification,
+    _task037b_v3_numerical_pass,
+    _task037b_v3_evaluate_record,
+    _task037b_v3_resource_classification,
     _task037b_r5_resource_gate,
     _watchdog_source_after,
     _watchdog_source_before,
@@ -1155,6 +1159,228 @@ def _v2_raw_record(
             else "task037b_v2_screen_numerical_negative"
         ),
     }
+
+
+def _v3_raw_record(kind: str = "pass") -> dict:
+    record = _v2_raw_record(profile="double", max_it=200)
+    record["record_schema"] = "task037b.v3-progressive-block-pc-screen.v1"
+    record["benchmark_id"] = "task037b_v3_progressive_block_pc_screen"
+    record["status"] = "task037b_v3_pass"
+    record["case"].pop("v2_profile", None)
+    record["case"].pop("v2_max_it", None)
+    record["case"]["v3_gate"] = True
+    record["case"].update(
+        {
+            "wavelength_nm": 13.5,
+            "internal_propagation_model": "full3d_uniform_cg",
+            "internal_traction_model": "scalar_cg_discrete_derivative",
+            "stage4_full3d_assembly_backend": "assembly_time_static_condensed",
+        }
+    )
+    record["hybrid_system"]["operator_inventory"] = {
+        "global_A_materialized": False,
+        "matrix_free": True,
+        "p6_direct_factor_count": 0,
+    }
+    record["screen"]["profile"] = "double"
+    record["screen"]["max_it"] = 200
+    record["screen"]["converged_reason"] = -3
+    telemetry = record.pop("v2_telemetry")
+    telemetry["task037b_v2_gate"] = False
+    telemetry["task037b_v3_gate"] = True
+    telemetry["profile"] = "double"
+    telemetry["max_it"] = 200
+    telemetry["v3_release"] = True
+    telemetry["stage_markers"] = [
+        "action_coupling_build_started",
+        "action_coupling_build_ready",
+        "bottom_approx_setup_started",
+        "bottom_approx_setup_ready",
+        "top_approx_setup_started",
+        "top_approx_setup_ready",
+        "modal_schur_build_started",
+        "modal_schur_build_ready",
+        "release_started",
+        "release_finished",
+    ]
+    telemetry["modal_schur"].update({"dtype": "complex128", "normal_equations": False})
+    telemetry["prediction"] = {
+        "interval": [120, 200],
+        "sample_count": 81,
+    }
+    telemetry["official_outputs"] = {
+        key: "not_run"
+        for key in (
+            "R",
+            "T",
+            "A",
+            "A_volume",
+            "orders",
+            "field",
+            "12_plus_12",
+            "Full3D",
+        )
+    }
+    for side in ("bottom", "top"):
+        telemetry["sides"][side]["object_ledger"] = {
+            "inventory": {
+                "fine_global_A_materialized": False,
+                "explicit_external_c_matrix_count": 0,
+                "explicit_external_d_matrix_count": 0,
+            }
+        }
+    record["validation"]["official_outputs"] = dict(telemetry["official_outputs"])
+    record["screen"]["outer_solver"] = "fgmres"
+    record["screen"]["pc_side"] = "right"
+    for certificate in telemetry["fixed_callback_certificates"].values():
+        if certificate is not None:
+            certificate["pass"] = True
+    history = []
+    if kind == "early":
+        iterations = list(range(11))
+    elif kind == "negative":
+        iterations = list(range(21))
+    else:
+        iterations = list(range(201))
+    for iteration in iterations:
+        if kind == "slow":
+            if iteration <= 100:
+                value = 0.8 * math.exp(-0.021 * iteration)
+            elif iteration <= 160:
+                value = (
+                    0.8 * math.exp(-0.021 * 100) * math.exp(-0.001 * (iteration - 100))
+                )
+            else:
+                value = 0.09 * math.exp(-0.0052 * (iteration - 160))
+        elif kind == "negative":
+            value = 0.8 * math.exp(-0.021 * iteration)
+            if iteration >= 20:
+                value = 0.7
+        else:
+            value = 0.8 * math.exp(-0.021 * iteration)
+        if kind == "early" and iteration == 10:
+            value = 1.0e-7
+        history.append(
+            {
+                "iteration": iteration,
+                "elapsed_seconds": float(iteration + 1),
+                "reported_relative_residual": value,
+                "global_true_relative_residual": value,
+                "bottom_true_relative_residual": value,
+                "top_true_relative_residual": value,
+                "modal_true_relative_residual": value,
+                "pc_apply_count": 1 if iteration == iterations[-1] else 0,
+                "bottom_action_apply_count": 2 if iteration == iterations[-1] else 0,
+                "top_action_apply_count": 2 if iteration == iterations[-1] else 0,
+            }
+        )
+    record["screen"]["history"] = history
+    telemetry["stage_markers"] = [
+        *telemetry["stage_markers"][:8],
+        *[
+            f"outer_iter_{checkpoint}"
+            for checkpoint in (20, 60, 100, 200)
+            if iterations[-1] >= checkpoint
+        ],
+        "release_started",
+        "release_finished",
+    ]
+    record["screen"]["iterations"] = iterations[-1]
+    record["screen"]["converged_reason"] = (
+        2 if kind == "early" else (-4 if kind == "negative" else -3)
+    )
+    record["screen"]["gate"] = {
+        "stage": iterations[-1] if iterations[-1] in {20, 60, 100, 200} else None,
+        "not_reached_due_to_convergence": (
+            [20, 30, 40, 60, 80, 90, 100, 120, 150, 160, 180, 200]
+            if kind == "early"
+            else []
+        ),
+        "pass": kind == "pass",
+    }
+    if iterations[-1] == 200:
+        xs = list(range(120, 201))
+        ys = [
+            math.log(max(row["global_true_relative_residual"], 1.0e-300))
+            for row in history
+            if 120 <= row["iteration"] <= 200
+        ]
+        x_mean = sum(xs) / len(xs)
+        y_mean = sum(ys) / len(ys)
+        denominator = sum((x - x_mean) ** 2 for x in xs)
+        slope = sum((x - x_mean) * (y - y_mean) for x, y in zip(xs, ys)) / denominator
+        intercept = y_mean - slope * x_mean
+        predicted = max(
+            200,
+            math.ceil((math.log(1.0e-6) - intercept) / slope),
+        )
+        record["screen"]["gate"].update(
+            {
+                "prediction_interval": [120, 200],
+                "prediction_sample_count": 81,
+                "prediction_slope": slope,
+                "prediction_intercept": intercept,
+                "prediction_q_fit": math.exp(slope),
+                "predicted_iterations": predicted,
+            }
+        )
+    if kind == "early":
+        record["screen"]["progressive_stop_cause"] = None
+    elif kind == "negative":
+        record["screen"]["progressive_stop_cause"] = "v3_20_admission_failed"
+    else:
+        record["screen"]["progressive_stop_cause"] = None
+    telemetry["sides"]["bottom"]["release_records"] = telemetry["release_records"][
+        "bottom"
+    ]
+    telemetry["sides"]["top"]["release_records"] = telemetry["release_records"]["top"]
+    telemetry["factor_identity_pass"] = True
+    telemetry["modal_schur_contract_pass"] = True
+    telemetry["pc_inventory_pass"] = True
+    telemetry["global_operator_contract"] = True
+    telemetry["release_pass"] = True
+    record["v3_telemetry"] = telemetry
+    record["gates"] = {
+        "v3_fixed_callback_certificate": True,
+        "v3_modal_schur": True,
+        "v3_online_apply_counts": True,
+        "v3_factor_identity": True,
+        "v3_global_operator": True,
+        "v3_pc_inventory": True,
+        "v3_release": True,
+        "v3_integration_pass": True,
+        "v3_worker_numerical_pass": kind in {"pass", "early"},
+        "v3_screen": kind in {"pass", "early"},
+    }
+    qualification = record["qualification"]
+    qualification.pop("task037b_v2_gate", None)
+    qualification["task037b_v3_gate"] = True
+    qualification["profile"] = "double"
+    qualification["max_it"] = 200
+    qualification["integration_pass"] = True
+    qualification["worker_numerical_pass"] = kind in {"pass", "early"}
+    numeric = kind in {"pass", "early"}
+    qualification["disposition"] = (
+        "DOUBLE_APPROXIMATE_200_STEP_PASS_AWAITING_FULL_REVIEW"
+        if numeric
+        else "DOUBLE_APPROXIMATE_SLOW_CONTRACTION_AWAITING_REVIEW"
+        if kind == "slow"
+        else "FIXED_ILU0_WOODBURY_BLOCK_PC_FAMILY_NEGATIVE"
+    )
+    record["status"] = (
+        "task037b_v3_pass"
+        if numeric
+        else "task037b_v3_slow"
+        if kind == "slow"
+        else "task037b_v3_family_negative"
+    )
+    if kind == "implementation":
+        telemetry["modal_schur"]["condition"] = 1.0e7
+        qualification["integration_pass"] = False
+        qualification["worker_numerical_pass"] = False
+        qualification["disposition"] = "DOUBLE_APPROXIMATE_IMPLEMENTATION_GATE_FAILED"
+        record["status"] = "task037b_v3_implementation_gate_failed"
+    return record
 
 
 class Task033MemoryWatchdogContractTests(unittest.TestCase):
@@ -2572,6 +2798,40 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
         self.assertEqual(
             worker_process_group_popen_kwargs().get("start_new_session"), True
         )
+        v3_base = [
+            item
+            for item in base
+            if item
+            not in {
+                "--task037b-v2-gate",
+                "--task037b-v2-profile",
+                "bottom-approx",
+                "--task037b-v2-max-it",
+                "20",
+                "--timeout-seconds",
+                "3600",
+            }
+        ]
+        v3_base.extend(("--task037b-v3-gate", "--timeout-seconds", "7200"))
+        v3_args = _parse_args(v3_base)
+        self.assertTrue(v3_args.task037b_v3_gate)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            v3_command = _worker_command(
+                v3_args, root / "record.json", root / "stages.jsonl"
+            )
+        self.assertEqual(v3_command.count("--task037b-v3-gate"), 1)
+        for forbidden in (
+            "--task037b-v2-gate",
+            "--task037b-v2-profile",
+            "--task037b-v2-max-it",
+            "--task037b-h1-gate",
+            "--task037b-h3-gate",
+            "--task037b-h4-gate",
+            "--task037b-h5-gate",
+            "--task037b-v1-gate",
+        ):
+            self.assertNotIn(forbidden, v3_command)
 
     def test_v2_raw_checker_recomputes_pass_negative_lifecycle_and_terminal(
         self,
@@ -2632,6 +2892,320 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
         self.assertTrue(missing["measurement_failure"])
         self.assertTrue(negative["measurement_failure"])
         self.assertFalse(negative["measurement_present"])
+
+    def test_v3_raw_checker_recomputes_classification_and_resource_separation(
+        self,
+    ) -> None:
+        passed = _v3_raw_record("pass")
+        self.assertTrue(_task037b_v3_numerical_pass(passed))
+        self.assertEqual(
+            _task037b_v3_evaluate_record(passed)["disposition"],
+            "DOUBLE_APPROXIMATE_200_STEP_PASS_AWAITING_FULL_REVIEW",
+        )
+
+        slow = _v3_raw_record("slow")
+        self.assertTrue(_task037b_v3_numerical_pass(slow, require_numerical_pass=False))
+        self.assertFalse(_task037b_v3_numerical_pass(slow))
+        self.assertEqual(
+            _task037b_v3_evaluate_record(slow)["disposition"],
+            "DOUBLE_APPROXIMATE_SLOW_CONTRACTION_AWAITING_REVIEW",
+        )
+
+        negative = _v3_raw_record("negative")
+        self.assertTrue(
+            _task037b_v3_numerical_pass(negative, require_numerical_pass=False)
+        )
+        self.assertFalse(_task037b_v3_numerical_pass(negative))
+        self.assertEqual(
+            _task037b_v3_evaluate_record(negative)["disposition"],
+            "FIXED_ILU0_WOODBURY_BLOCK_PC_FAMILY_NEGATIVE",
+        )
+
+        early = _v3_raw_record("early")
+        self.assertTrue(_task037b_v3_numerical_pass(early))
+        self.assertEqual(
+            early["screen"]["gate"]["not_reached_due_to_convergence"],
+            [20, 30, 40, 60, 80, 90, 100, 120, 150, 160, 180, 200],
+        )
+        bounded_checkpoint = _v3_raw_record("early")
+        last_row = bounded_checkpoint["screen"]["history"][-1]
+        for iteration in range(11, 21):
+            row = copy.deepcopy(last_row)
+            row["iteration"] = iteration
+            row["elapsed_seconds"] = float(iteration + 1)
+            bounded_checkpoint["screen"]["history"].append(row)
+        bounded_checkpoint["screen"]["iterations"] = 20
+        bounded_checkpoint["screen"]["converged_reason"] = 2
+        bounded_checkpoint["screen"]["gate"]["stage"] = 20
+        bounded_checkpoint["screen"]["gate"]["not_reached_due_to_convergence"] = [
+            30,
+            40,
+            60,
+            80,
+            90,
+            100,
+            120,
+            150,
+            160,
+            180,
+            200,
+        ]
+        bounded_checkpoint["v3_telemetry"]["stage_markers"].insert(8, "outer_iter_20")
+        self.assertTrue(_task037b_v3_numerical_pass(bounded_checkpoint))
+
+        implementation = _v3_raw_record("implementation")
+        self.assertFalse(
+            _task037b_v3_numerical_pass(implementation, require_numerical_pass=False)
+        )
+        hard_stop = _v3_raw_record("negative")
+        for row in hard_stop["screen"]["history"][-5:]:
+            for key in (
+                "reported_relative_residual",
+                "global_true_relative_residual",
+                "bottom_true_relative_residual",
+                "top_true_relative_residual",
+                "modal_true_relative_residual",
+            ):
+                row[key] = 2.0
+        hard_stop["screen"]["progressive_stop_cause"] = "v3_hard_stop"
+        self.assertTrue(
+            _task037b_v3_numerical_pass(hard_stop, require_numerical_pass=False)
+        )
+        self.assertFalse(_task037b_v3_numerical_pass(hard_stop))
+        self.assertEqual(
+            _task037b_v3_evaluate_record(hard_stop)["disposition"],
+            "FIXED_ILU0_WOODBURY_BLOCK_PC_FAMILY_NEGATIVE",
+        )
+        breakdown = _v3_raw_record("negative")
+        breakdown["screen"]["converged_reason"] = -5
+        breakdown["screen"]["progressive_stop_cause"] = None
+        self.assertTrue(
+            _task037b_v3_numerical_pass(breakdown, require_numerical_pass=False)
+        )
+        self.assertFalse(_task037b_v3_numerical_pass(breakdown))
+
+        nonnegative_slope = _v3_raw_record("pass")
+        for row in nonnegative_slope["screen"]["history"]:
+            if 120 <= row["iteration"] <= 200:
+                for key in (
+                    "reported_relative_residual",
+                    "global_true_relative_residual",
+                    "bottom_true_relative_residual",
+                    "top_true_relative_residual",
+                    "modal_true_relative_residual",
+                ):
+                    row[key] = 0.01
+        nonnegative_slope["screen"]["gate"].update(
+            {
+                "prediction_slope": 0.0,
+                "prediction_intercept": math.log(0.01),
+                "prediction_q_fit": 1.0,
+                "predicted_iterations": None,
+                "pass": False,
+            }
+        )
+        nonnegative_slope["status"] = "task037b_v3_family_negative"
+        nonnegative_slope["qualification"].update(
+            {
+                "disposition": "FIXED_ILU0_WOODBURY_BLOCK_PC_FAMILY_NEGATIVE",
+                "worker_numerical_pass": False,
+            }
+        )
+        nonnegative_evaluation = _task037b_v3_evaluate_record(nonnegative_slope)
+        self.assertTrue(
+            _task037b_v3_numerical_pass(nonnegative_slope, require_numerical_pass=False)
+        )
+        self.assertFalse(_task037b_v3_numerical_pass(nonnegative_slope))
+        self.assertTrue(nonnegative_evaluation["prediction_infinite"])
+        self.assertEqual(
+            nonnegative_evaluation["disposition"],
+            "FIXED_ILU0_WOODBURY_BLOCK_PC_FAMILY_NEGATIVE",
+        )
+
+        tamper_cases = (
+            (
+                "reason_cause",
+                "negative",
+                lambda candidate: candidate["screen"].update({"converged_reason": -3}),
+                "reason_cause",
+            ),
+            (
+                "not_reached",
+                "negative",
+                lambda candidate: candidate["screen"]["gate"].update(
+                    {"not_reached_due_to_convergence": [20]}
+                ),
+                "not_reached",
+            ),
+            (
+                "duplicate_history",
+                "negative",
+                lambda candidate: candidate["screen"]["history"].append(
+                    copy.deepcopy(candidate["screen"]["history"][-1])
+                ),
+                "history",
+            ),
+            (
+                "missing_history",
+                "negative",
+                lambda candidate: candidate["screen"]["history"].pop(3),
+                "history",
+            ),
+            (
+                "reported_true_audit",
+                "negative",
+                lambda candidate: candidate["screen"]["history"][1].update(
+                    {"reported_relative_residual": 1.0}
+                ),
+                "reported_true_agree",
+            ),
+            (
+                "prediction_samples",
+                "pass",
+                lambda candidate: candidate["screen"]["gate"].update(
+                    {"prediction_sample_count": 80}
+                ),
+                "prediction",
+            ),
+            (
+                "callback_rank",
+                "negative",
+                lambda candidate: candidate["v3_telemetry"][
+                    "fixed_callback_certificates"
+                ]["bottom"]["woodbury"].update({"K_rank": 39}),
+                "callback",
+            ),
+            (
+                "callback_condition",
+                "negative",
+                lambda candidate: candidate["v3_telemetry"][
+                    "fixed_callback_certificates"
+                ]["top"]["woodbury"].update({"K_condition_number": 1.0e7}),
+                "callback",
+            ),
+            (
+                "modal_condition",
+                "negative",
+                lambda candidate: candidate["v3_telemetry"]["modal_schur"].update(
+                    {"condition": 1.0e7}
+                ),
+                "modal",
+            ),
+            (
+                "modal_rank",
+                "negative",
+                lambda candidate: candidate["v3_telemetry"]["modal_schur"].update(
+                    {"rank": 239}
+                ),
+                "modal",
+            ),
+            (
+                "direct_inventory",
+                "negative",
+                lambda candidate: candidate["v3_telemetry"]["factor_identity"][
+                    "bottom"
+                ].update({"direct_factor_count": 1}),
+                "factor_identity",
+            ),
+            (
+                "nested_ksp",
+                "negative",
+                lambda candidate: candidate["v3_telemetry"][
+                    "fixed_callback_certificates"
+                ]["top"].update({"nested_ksp_created": True}),
+                "callback",
+            ),
+            (
+                "apply_count",
+                "negative",
+                lambda candidate: candidate["v3_telemetry"]["sides"]["top"][
+                    "online_apply"
+                ].update({"increment": 1}),
+                "online_counts",
+            ),
+            (
+                "outer_release",
+                "negative",
+                lambda candidate: candidate["v3_telemetry"]["release_records"][
+                    "outer"
+                ].update({"destroy_calls_complete": False}),
+                "outer_release",
+            ),
+            (
+                "side_release",
+                "negative",
+                lambda candidate: candidate["v3_telemetry"]["release_records"][
+                    "bottom"
+                ]["woodbury"]["after"].update({"destroyed": False}),
+                "release",
+            ),
+            (
+                "stage_order",
+                "negative",
+                lambda candidate: candidate["v3_telemetry"]["stage_markers"].append(
+                    "outer_iter_200"
+                ),
+                "stages",
+            ),
+            (
+                "official_output",
+                "negative",
+                lambda candidate: candidate["v3_telemetry"]["official_outputs"].update(
+                    {"R": "run"}
+                ),
+                "official_boundary",
+            ),
+            (
+                "object_inventory",
+                "negative",
+                lambda candidate: candidate["v3_telemetry"]["sides"]["bottom"][
+                    "object_ledger"
+                ]["inventory"].update({"fine_global_A_materialized": True}),
+                "object_inventory",
+            ),
+            (
+                "record_status",
+                "negative",
+                lambda candidate: candidate.update({"status": "task037b_v3_pass"}),
+                "record_status_mismatch",
+            ),
+        )
+        for label, kind, mutate, failure in tamper_cases:
+            with self.subTest(tamper=label):
+                candidate = _v3_raw_record(kind)
+                mutate(candidate)
+                evaluation = _task037b_v3_evaluate_record(candidate)
+                self.assertFalse(
+                    _task037b_v3_numerical_pass(candidate, require_numerical_pass=False)
+                )
+                self.assertIn(failure, evaluation["failures"])
+        for peak, resource_positive, engineering_positive, stretch_positive in (
+            (6.0 * 1024.0, True, False, False),
+            (5.0 * 1024.0, True, True, False),
+            (3.77 * 1024.0, True, True, True),
+        ):
+            classified = _task037b_v3_resource_classification(peak)
+            self.assertEqual(classified["resource_positive"], resource_positive)
+            self.assertEqual(classified["engineering_positive"], engineering_positive)
+            self.assertEqual(classified["stretch_positive"], stretch_positive)
+        self.assertTrue(
+            _task037b_v3_resource_classification(None)["measurement_failure"]
+        )
+        self.assertTrue(
+            _task037b_v3_resource_classification(-1.0)["measurement_failure"]
+        )
+        pass_disposition = _task037b_v3_evaluate_record(passed)["disposition"]
+        resource_negative = _task037b_v3_resource_classification(6.5 * 1024.0)
+        self.assertTrue(resource_negative["resource_review"])
+        self.assertEqual(
+            _task037b_v3_evaluate_record(passed)["disposition"],
+            pass_disposition,
+        )
+        terminal = _v3_raw_record("negative")
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "solver_record.json"
+            path.write_text(json.dumps(terminal), encoding="utf-8")
+            self.assertTrue(_task034_terminal_record_is_complete(path))
 
 
 if __name__ == "__main__":
