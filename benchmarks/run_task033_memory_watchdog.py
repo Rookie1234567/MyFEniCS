@@ -4734,6 +4734,7 @@ def run(args: argparse.Namespace) -> int:
             or args.task037b_h4_gate
             or args.task037b_h5_gate
             or args.task037b_v1_gate
+            or args.task037b_v2_gate
         )
         and core_read_error is not None
     ):
