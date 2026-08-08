@@ -241,3 +241,76 @@ resource-unqualified。这个资源分类不改写 V2-T 的数值负结果，也
 |---|---|---|---|---|---|
 | V2-B | [summary](../../../benchmarks/artifacts/task037b/v2_b_bottom_approx_5b94060_mpi8.json), ed8cd8ced09d5964cbef12e6590fb6f126bc831ac7d3734c57dcea13b0cf8b78 | 69c1688c0e6b024d0e0eb5fe95f10ad8d467ad88bde7053996a599eb0cb598b2 | 140b7f8b23d97f26035490fac691450d072c5569bbe9104f1762153414266297 | 3148ad936568dc9bf9c26e782872206aa832da746968d05436cd12027a190043 | 0f7b484effda2b5b640cc9bf4bebf4b3c24d67f0f43a99838e7a6ebeec2c0ba0 |
 | V2-T | [summary](../../../benchmarks/artifacts/task037b/v2_t_top_approx_5b94060_mpi8.json), c092aaa13f94af9a7a3c508dca64c343fc940872cfcf57838a3160374c4d6cea | a5e19a1391462d093425a67d8d9cd7cfe72b431ebdaff9e57753ed99bae73956 | d892c5761e7bd56772ae6a26903f395b61a16a50c23637f8467ed5119e41cc37 | 7addf0d4ceb36767368af6d57151c9099c2abac7de17abd953b9288fa667c134 | e4c5ed0ec83ff0385302a2e9ac11055a61787b5d7963cbac28860f65fab8034a |
+
+## Review V3 双侧 fixed block-PC formal resource ledger
+
+V3 的源码身份为 `c7b6aa3ddaac4dbfb9f86aab8f59801330d63a16`，只进行一次 MPI8
+double fixed-action screen。process-tree simultaneous RSS 是资源权威；worker RSS/PSS/USS
+是 8 个 MPI rank 的同步总和，PSS/USS 来自 timeline 的 smaps_rollup 列独立取最大值，
+不是累计对象体积，也不是 factor payload 的替代。
+
+### V3 resource and lifecycle evidence
+
+| 指标 | V3 measured 值 | 口径/状态 |
+|---|---:|---|
+| process-tree RSS peak | 6448.09375 MiB = 6.296966552734375 GiB | release_finished；权威峰值 |
+| worker RSS simultaneous sum peak | 6433.4375 MiB | release_finished |
+| worker PSS simultaneous sum peak | 5335.591796875 MiB | release_finished smaps_rollup max |
+| worker USS simultaneous sum peak | 5153.04296875 MiB | top_approx_setup_started smaps_rollup max |
+| swap / dedicated cgroup swap | 0 / 0 bytes | pass |
+| warning / memory termination | false / false | 10 / 14 GiB thresholds未触发 |
+| timeout / authority termination | false / false | pass |
+| process group | worker_exited=true；process_group_exited=true；no_orphan=true | pass |
+| resource-positive | false | `6.296966552734375 > 6.0 GiB` |
+| engineering-positive | false | `>5.0 GiB` |
+| stretch-positive | false | `>3.77 GiB` |
+| numerical result | pass | 不因 resource-negative 改写 |
+
+因此 V3 是 numerical pass / MPI8 resource negative / resource review required；这不是
+算法失败，也不是测量失败。相较 V2-B 的 7.9730224609375 GiB 和 V2-T 的
+8.532058715820312 GiB，V3 分别约低 21.0% 和 26.2%；该 derived 对比不能作性能外推，
+因为 V2 各保留一个 exact direct factor。
+
+### V3 factor、action storage and timings
+
+| 项目 | bottom | top | 数据身份 |
+|---|---:|---:|---|
+| direct factor count | 0 | 0 | measured raw inventory |
+| ILU factor count | 1 | 1 | measured raw inventory |
+| factor rows | 8424 | 8424 | measured |
+| source matrix NNZ | 6086016 | 6086016 | measured record |
+| stored factor NNZ | 6086016 | 6086016 | measured record |
+| factor CSR payload estimate | 121754080 bytes | 121754080 bytes | derived formula |
+| W local shape | 1290×40 | 1290×40 | measured action diagnostic |
+| W local bytes | 825600 | 825600 | measured recorded rank-local storage |
+| W distributed bytes | not separately recorded | not separately recorded | raw record does not provide a separate sum |
+| K replicated bytes | 25600 | 25600 | measured per-side replicated storage |
+| LU replicated bytes | 25760 | 25760 | measured per-side replicated storage |
+| FGMRES restart90 basis/vector estimate | global sum 49,486,848 bytes；rank0 local 7,471,680 | max-rank local 9,244,032 | derived estimate；不是 RSS |
+| action/coupling cache bytes | not separately recorded | not separately recorded | no object-level field in raw record |
+| field-recovery objects | not_built | not_built | official physics not_run |
+| factor lifecycle | 1→0, released | 1→0, released | measured release record |
+
+| 阶段 | seconds | 数据身份 |
+|---|---:|---|
+| cross-section and QEP assembly | 2.4661267809569836 | measured max-rank |
+| positive/negative biorthogonal bases | 50.69769007700961 | measured max-rank |
+| action/coupling build | 211.2913892850047 | measured max-rank |
+| V3 action block setup | 47.30083924799692 | measured max-rank |
+| V3 outer screen | 32.7934253399726 | measured max-rank |
+| V3 record | 0.015043351915664971 | measured max-rank |
+| V3 release | 0.0009031089721247554 | measured max-rank |
+| total | 344.5687012251001 | measured max-rank |
+
+### V3 raw evidence
+
+| artifact | SHA256 |
+|---|---|
+| [solver record](../../../benchmarks/artifacts/task037b/v3_double_block_pc_c7b6aa3_mpi8/solver_record.json) | `df54c36ccca35a79b61bbd3fcf4dde47222aae0574b5d7c09ded1444ec7fc3d0` |
+| [promoted summary](../../../benchmarks/artifacts/task037b/v3_double_block_pc_c7b6aa3_mpi8.json) | `49343b30ec892b9f3a06b525b1535467f70b87637f5f73daf6d499a185a608fe` |
+| [memory stages](../../../benchmarks/artifacts/task037b/v3_double_block_pc_c7b6aa3_mpi8/memory_stages.jsonl) | `47b4127b1bec86eb44012fbf0a906afd0710889d674e8d0aaa1b9ebadf9238ec` |
+| [memory timeline](../../../benchmarks/artifacts/task037b/v3_double_block_pc_c7b6aa3_mpi8/memory_timeline.csv) | `e6eca60fd6caf35bf9a8d29bfa23a99dc1c0422d5dfe93b73db0976082173dc1` |
+| [worker stdout](../../../benchmarks/artifacts/task037b/v3_double_block_pc_c7b6aa3_mpi8/worker_stdout.txt) | `5b7c57c38969540da4e49a642969e747eb84cca859b92370f05210988fa9d6bf` |
+
+Full3D authority and preflight authority were hash-checked for launch identity only; no Full3D
+comparison or official physics was run in V3.

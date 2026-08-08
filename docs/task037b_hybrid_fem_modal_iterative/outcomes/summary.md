@@ -2,7 +2,7 @@
 
 ## 一句话结论
 
-H0 继承基线通过；首次 H1 direct Hybrid MPI8 formal 在生成 Hybrid 解以前因近简并模态分组检查退出，历史证据保留。post-fix source `2990f357f7dec23b1713bd0088bdc43c3ce6f5bc` 已完成同一冻结条件下的有效求解并通过 task.md §9 H1 contract；H2a、H2b、H3 与 H4 均已通过。H5a exact reference 通过，但冻结的 H5b local inverse 双侧资格化失败，按合同受控停止。
+原 H0-H5 历史保持不变：H5b local inverse 双侧资格化失败，按合同受控停止；此前 H1 的首次失败与 post-fix recovery 也继续保留。随后 Review V1/V2/V3 受控研究中，V3 双侧 candidate numerical pass、MPI8 resource negative、official physics not_run，当前 awaiting review。
 
 ## H0-H10 矩阵
 
@@ -253,3 +253,36 @@ exact bottom direct factor，不能预测 double 峰值。
 完整 residual history、PSS/USS 口径、raw artifact 路径与 SHA 见
 [V2 compact record](../../../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v2_block_pc_screen_v1.json)；
 V2 单侧表见 [one-sided boundary](one_sided_replacement.md) 与 [double funnel boundary](double_iterative_funnel.md)。
+
+## Review V3 双侧 fixed block-PC formal 结项
+
+V3 研究的是把两个端盖都换成同一个固定、只做一次作用的近似 action，再用 exact
+matrix-free Hybrid block operator 做外层迭代。这样可以直接观察“双侧不保留 direct factor”
+是否仍有持续收缩，同时不把本轮 screen 冒充 official physics。
+
+| 项目 | V3 结果 | 数据身份/边界 |
+|---|---|---|
+| source | `c7b6aa3ddaac4dbfb9f86aab8f59801330d63a16`，parent `9e01280...` | measured provenance |
+| frozen case | p6/h10、modal p6/h10、13.5 nm、S、10°、10/110 nm、M120/candidate240、MPI8 | measured configuration |
+| callback | identity=0、linearity约2e-15、determinism=0、repeat hash相同 | algebra pass |
+| K / modal Schur | K rank=40，condition=3.0332/4.1627；modal 240×240、rank=240、condition=1845.7878710 | measured algebra |
+| factor inventory | direct bottom/top=0/0；ILU=1/1；global direct=0；global A=false；F=false/false；explicit C/D=0/0 | measured lifecycle contract |
+| 200-step screen | r20=0.47312934919147054；r60=0.11272071486850113；r100=0.022267181511852894；r200=0.0015751888272117643 | measured true residual |
+| prediction | 120–200 共81点；q_fit=0.9734079564；predicted total=469 | derived from raw true history |
+| numerical disposition | `DOUBLE_APPROXIMATE_200_STEP_PASS_AWAITING_FULL_REVIEW` | numerical pass |
+| MPI8 resource | 6448.09375 MiB = 6.296966552734375 GiB | resource negative，超过6.0 GiB |
+| engineering / stretch | false / false | 分别超过5.0 / 3.77 GiB |
+| official physics | field、R/T/A、A_volume、orders、12+12、Full3D comparison | all not_run |
+
+formal record、numeric contract 和 release 均通过；资源分类独立为 review required，不改写
+numeric pass。停止原因是 Review V3 授权边界已完成、等待下一轮 review，不是算法失败。
+V2-B/T 的 process-tree peak 分别为 7.9730224609375/8.532058715820312 GiB；V3 约低
+21.0%/26.2%，但 V2 含一侧 direct factor，不能作等价性能外推。
+
+V3 raw evidence 与完整 17 checkpoint 见
+[V3 compact record](../../../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v3_double_block_pc_screen_v1.json)。
+Full3D authority SHA 为 `b8b428476cdeb4b80495f4a8b1c89e3bb2f67c682c695fc72bb59dbbbd94b4e3`，
+preflight authority SHA 为 `96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8`；
+本轮只做 authority identity check，没有运行 Full3D comparison。V3 source、runner、watchdog、
+candidate 与 compact docs 仍为 research-only，ordinary defaults unchanged，master merge
+未获授权。

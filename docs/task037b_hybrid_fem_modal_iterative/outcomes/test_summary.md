@@ -145,3 +145,28 @@ field 和 12+12 未运行；H6–H10 因 stop rule not_run。
 V2-T 的 formal_record_pass=true 仅说明实现、source/launch/resource authority、完整 raw
 record 和安全清理均完成；它不覆盖 worker_numerical_pass=false。两次 formal 各只启动一个
 parent watchdog，均 swap=0、无 orphan，且没有重跑 V2-B、没有启动 double。
+
+## Review V3 focused 与唯一 formal Gate
+
+V3 只在 source `c7b6aa3ddaac4dbfb9f86aab8f59801330d63a16` 上运行一次 MPI8 double
+fixed-action screen；没有因结果或资源分类重跑。最终测试账本如下：
+
+| 范围 | 实测结果 | 边界 |
+|---|---|---|
+| final serial test239 + test241 + test242 + test59 | 46 passed，exit 0 | focused only |
+| MPI1 test239 + test241 + test242 | 13 passed / rank | tiny/action fixture，不是 PDE |
+| MPI2 test239 + test241 + test242 | 13 passed / rank | tiny/action fixture，不是 PDE |
+| MPI4 test239 + test241 + test242 | 13 passed / rank | pack/split/lifecycle fixture，不是 PDE |
+| Ruff check | pass | 五个 V3 touched Python files |
+| Ruff format-check | pass | 五个 V3 touched Python files |
+| five-file py_compile | pass | syntax/static only |
+| git diff --check | pass | final source checkpoint |
+| formal MPI8 | 唯一一次，exit 0 | raw record、summary、timeline、stages、stdout 均写出 |
+| full pytest / CI | not_run | 不声称 CI |
+| test240 / additional PDE | not_run | Review V3 明确禁止 |
+
+V3 的 callback、same-action modal Schur、direct=0/0 与 ILU=1/1、online apply count、
+progressive checkpoint、release/no-swap/no-orphan 均由 raw record 保存。数值分类为 pass；
+process-tree peak 超过 6 GiB 只产生独立 resource review，不改写 numerical disposition。官方
+field recovery、R/T/A、A_volume、diffraction orders、12+12 和 Full3D comparison 全部
+not_run。

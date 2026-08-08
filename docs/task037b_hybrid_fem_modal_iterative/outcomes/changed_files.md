@@ -145,3 +145,23 @@ SHA 保留在 compact evidence，不纳入 Git。
 以上仅是 research closeout/选择性 review 材料。ignored raw artifacts、heavy timeline、
 ordinary defaults、未资格化 production candidate 和整体 Task37b merge 均属于 do-not-merge；
 任何后续算法家族都必须取得新的 review。
+
+## Review V3 source and code-free evidence boundary
+
+V3 formal source 为 `c7b6aa3ddaac4dbfb9f86aab8f59801330d63a16`，parent 为
+`9e01280df6c241932242a75d70db27210ceed46e`；subject 为
+`feat(task037b): add V3 double fixed-action screen`。它只把已审的 bounded screen 接线
+扩展到一个无参数、显式 opt-in 的 double progressive screen；ordinary defaults、V2 flags、
+V2 schema 和既有历史结果不变。
+
+| 分组 | 文件/证据 | 选择性边界 |
+|---|---|---|
+| V3 research-only source | benchmarks/run_task032_phase6_augmented.py；benchmarks/run_task033_memory_watchdog.py；src/solvers/hybrid_fem_modal_block_ldu.py | V3 runner/watchdog/core；仅显式 V3 gate，ordinary defaults unchanged |
+| V3 independent contracts | src/test/test_242_task037b_v2_block_screen_runner.py；src/test/test_59_task033_memory_watchdog_contract.py | focused progressive/checker tests；不声称 CI/full pytest |
+| compact evidence | benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v3_double_block_pc_screen_v1.json | hash-bound source、argv、17 checkpoints、Gate、资源与 official not_run |
+| V3 closeout docs | docs/task037b_hybrid_fem_modal_iterative/outcomes/double_iterative_funnel.md；resource_ledger.md；test_summary.md；changed_files.md；summary.md；docs/development_progress.md；docs/task037b_hybrid_fem_modal_iterative/response_v4.md | 追加式 research closeout；保留 V2、response_v3 和旧负结果 |
+| do-not-merge | ignored raw artifacts/heavy timeline；任何 full solve、field/R/T/A、production qualification、ordinary default change | 不整体 merge Task37b |
+
+V3 没有触碰 `hybrid_local_dtn_woodbury.py` 或 `hybrid_local_iterative_inverse.py`，没有调用
+LocalInverse.solve、nested local FGMRES/KSP 或 fallback。raw artifact 仍只以相对路径和
+SHA256 绑定，heavy timeline 与 solver arrays 不进入 Git。

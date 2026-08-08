@@ -2408,3 +2408,29 @@ negative；双端低内存近似逆资格未证明。
 733a1cb 的首次 V2-B 只在 worker/PDE 前因 scoped Case090 evidence wiring 停止；5b94060
 单行修复后才完成唯一正式 B/T。两者不是三次数值 screen。ordinary defaults unchanged，
 不进入 H6，也不自动重开 LOR、AMS/HX、p2/p4、p-multigrid、full-space ILU 或其他算法家族。
+
+## 2026-08-09：Task037b Review V3 双侧 fixed block-PC formal screen
+
+Review V3 在 source `c7b6aa3ddaac4dbfb9f86aab8f59801330d63a16` 上只运行一次冻结的 MPI8
+double screen。bottom/top 都使用 whole-endcap ILU(0) 加 40-mode DtN Woodbury fixed action，
+外层仍是 exact matrix-free Hybrid operator；没有调用 LocalInverse.solve、nested local
+FGMRES/KSP 或 fallback，ordinary defaults unchanged。
+
+| 项目 | 结果 | 状态 |
+|---|---|---|
+| 20/60/100/200 true residual | 0.4731293492 / 0.1127207149 / 0.0222671815 / 0.0015751888 | all gates pass |
+| 120–200 prediction | 81 samples；q_fit=0.9734079564；predicted total=469 | derived pass |
+| callback / modal Schur | identity=0；linearity约2e-15；modal 240×240、rank240、condition1845.7878710 | algebra pass |
+| factor identity | direct=0/0；ILU=1/1；global A=false；global direct=0 | lifecycle pass |
+| resource | process-tree 6.296966552734375 GiB | resource negative，review required |
+| official physics | field、R/T/A、A_volume、orders、12+12、Full3D comparison | not_run |
+
+V3 numerical disposition 为 `DOUBLE_APPROXIMATE_200_STEP_PASS_AWAITING_FULL_REVIEW`。超过
+6.0 GiB 的资源结果独立记录，不改写 numerical pass；5.0 GiB engineering-positive 与
+3.77 GiB stretch-positive 均未达到。停止原因是授权边界完成并等待新 review，不是算法失败。
+V3 的 compact hash-bound record 和 raw SHA 索引见
+[Task037b V3 record](../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v3_double_block_pc_screen_v1.json)
+与 [V3 summary](task037b_hybrid_fem_modal_iterative/outcomes/summary.md)。
+
+V3 不启动 full solve、field recovery、R/T/A、12+12、Full3D comparison、restart sweep 或
+任何新算法家族；不修改 response_v1–v3，不授权 master merge 或 production qualification。
