@@ -99,3 +99,74 @@ H5b 最大 direct-solution diagnostic relative error 为 bottom `0.9382154125402
 结合 H1 source `2990f357f7dec23b1713bd0088bdc43c3ce6f5bc` 的 whole-direct authority，H5a exact/direct reference 通过说明 exact local action 与 RHS 接线没有失败；它不单独证明 whole direct Hybrid。冻结的 partition ASM + shifted ILU(0) local inverse 在 bottom/top 均无法资格化，正式分类为 `LOCAL_INVERSE_FAMILY_NEGATIVE`。这只否定本任务冻结的 local inverse candidate，不否定 Hybrid 模型，也不证明任何未经授权的新算法家族不可能。H5c、H6-H10 按任务停止规则未运行。
 
 原始证据保留在 Git ignored 目录：[solver record](../../../benchmarks/artifacts/task037b/h5_local_inverse_216437c_mpi8/solver_record.json)、[summary](../../../benchmarks/artifacts/task037b/h5_local_inverse_216437c_mpi8.json)、[timeline](../../../benchmarks/artifacts/task037b/h5_local_inverse_216437c_mpi8/memory_timeline.csv)、[stages](../../../benchmarks/artifacts/task037b/h5_local_inverse_216437c_mpi8/memory_stages.jsonl)、[stdout](../../../benchmarks/artifacts/task037b/h5_local_inverse_216437c_mpi8/worker_stdout.txt)。
+
+## V1 R1–R5 research closeout（与原 H5b 分开）
+
+这一节记录 Review V1 的连续诊断链。R1–R5 使用同一冻结 p6/h10、modal p6/h10、M120/candidate240、MPI8、S 偏振、10° grazing、bottom/top=10/110 nm、static-condensed、full3d_uniform_cg/scalar_cg_discrete_derivative 身份；每一阶段均为一次正式 MPI8 watchdog 运行。以下 R5 是 DtN-aware whole-endcap local inverse 研究候选，不能与本文件前面的原 H5b 六-slab记录混称。
+
+| 阶段 | source SHA | formal / numeric | status | 关键结论 |
+|---|---|---|---|---|
+| V1-R1 | e2e57675867dcb3476441f27b33eb45a0d90b040 | pass / pass | task037b_v1_r1_pass_awaiting_r2 | bottom/top 各 6 probes；分解 action error 与 component repeat 均 0；销毁 components 后 A 仍可用 |
+| V1-R2 | a9ee7067503879ce082145430169acc8aeb48b7b | pass / negative | task037b_v1_r2_complete_awaiting_r3 | 六-slab F-only；bottom/top max F-only true residual=0.9482247431562106 / 0.9499229695708535，repeat=0 |
+| V1-R3 | 31d30842f0bcf24edde2113217db7a6dfc1264c1 | pass / negative | task037b_v1_r3_complete_awaiting_r4 | whole-endcap ILU(0) 的 F-only 与 complete-A 两个 case 均完成且 finite，但均未达到 1e-8 |
+| V1-R4 | 53faebb14960f8ddbaf88f54f8ceae511ccd7764 | pass / pass | task037b_v1_r4_complete_awaiting_r5 | exact F inverse + 40-mode Woodbury 与 exact A 一致；rank/condition、符号、ownership 和 factor 顺序均通过 |
+| V1-R5 | 2a2ef3d37514e4ab30d50209065af84c1dafd59b | pass / negative | WHOLE_ENDCAP_ILU0_DTN_WOODBURY_NEGATIVE | PC 线性、确定性、K、finite、生命周期与资源均合法；21 个非零 RHS 为 0/21 |
+
+各阶段的 watchdog summary、solver record、memory stages、timeline 和 stdout 均保留在 Git ignored artifact 目录；完整路径与 SHA 见 Case101 compact record。
+
+### R5 operator、资源与判定
+
+R5 的实际 PC 是 whole-endcap ILU(0) base inverse 加上真实 40-mode Matrix-free DtN Woodbury correction。它没有物化 global F/A，也没有 direct fallback。两侧 K 均为 40 阶、rank=40、condition finite 且 bottom/top=3.0331668903694333 / 4.162687539173755；linearity 最大值=1.88588624470667e-15 / 3.0970882574272953e-15，determinism 最大值均为 0，arrays_finite=true。
+
+| side | nonzero capacity | zero physical | max nonzero complete-A residual | max modal residual | max repeat | factor before→after |
+|---|---:|---:|---:|---:|---:|---|
+| bottom | 0/10 | 1/1 | 0.009555400179345386 | 0.00018386608677910615 | 0 | 1→0 |
+| top | 0/11 | not applicable | 0.009190066519286536 | 0.0002041643360139555（physical=0.0008193612125815937） | 0 | 1→0 |
+
+bottom 的 physical RHS 是零方程，只记录 zero_equation_pass，不计入 21 个非零 capacity。R5 全部 22 个 RHS 都 finite，repeat solution error 都为 0；这只证明重复求解 deterministic，不证明收敛。由于不满足 full，也不满足“所有 physical/modal <=1e-8 且所有 random <=1e-5 且至少一个 random >1e-8”的 borderline 条件，最终归入 WHOLE_ENDCAP_ILU0_DTN_WOODBURY_NEGATIVE。severe_negative=false 只表示没有触发预定义 severe 子标签，不改变其余数值失败的 negative 结论。
+
+### R5 bottom：11 个固定 RHS
+
+| RHS | kind | first reason/it/residual | second reason/it/residual | repeat | pass |
+|---|---|---:|---:|---:|---|
+| physical | physical zero | 2 / 0 / 0 | 2 / 0 / 0 | 0 | true（zero only） |
+| random_seed_3701 | random | -3 / 300 / 0.006890904871342775 | -3 / 300 / 0.006890904871342775 | 0 | false |
+| random_seed_3702 | random | -3 / 300 / 0.009333916518280314 | -3 / 300 / 0.009333916518280314 | 0 | false |
+| random_seed_3703 | random | -3 / 300 / 0.008790118723806585 | -3 / 300 / 0.008790118723806585 | 0 | false |
+| random_seed_3704 | random | -3 / 300 / 0.009555400179345386 | -3 / 300 / 0.009555400179345386 | 0 | false |
+| modal_positive_lowest_propagating_or_lossy | frozen modal | -3 / 300 / 0.0001838660867791061 | -3 / 300 / 0.0001838660867791061 | 0 | false |
+| modal_positive_proxy_abs_im_beta_gt_abs_re_beta | frozen modal | -3 / 300 / 0.00008092229529467422 | -3 / 300 / 0.00008092229529467422 | 0 | false |
+| modal_positive_highest_retained_index | frozen modal | -3 / 300 / 0.000049372365734227 | -3 / 300 / 0.000049372365734227 | 0 | false |
+| modal_negative_lowest_propagating_or_lossy | frozen modal | -3 / 300 / 0.0001838660866969548 | -3 / 300 / 0.0001838660866969548 | 0 | false |
+| modal_negative_proxy_abs_im_beta_gt_abs_re_beta | frozen modal | -3 / 300 / 0.00007451095946450286 | -3 / 300 / 0.00007451095946450286 | 0 | false |
+| modal_negative_highest_retained_index | frozen modal | -3 / 300 / 0.00005624533952496862 | -3 / 300 / 0.00005624533952496862 | 0 | false |
+
+### R5 top：11 个固定 RHS
+
+| RHS | kind | first reason/it/residual | second reason/it/residual | repeat | pass |
+|---|---|---:|---:|---:|---|
+| physical | physical nonzero | -3 / 300 / 0.0008193612125815937 | -3 / 300 / 0.0008193612125815937 | 0 | false |
+| random_seed_3701 | random | -3 / 300 / 0.009075322356907048 | -3 / 300 / 0.009075322356907048 | 0 | false |
+| random_seed_3702 | random | -3 / 300 / 0.008611317809909208 | -3 / 300 / 0.008611317809909208 | 0 | false |
+| random_seed_3703 | random | -3 / 300 / 0.008246260206763207 | -3 / 300 / 0.008246260206763207 | 0 | false |
+| random_seed_3704 | random | -3 / 300 / 0.009190066519286536 | -3 / 300 / 0.009190066519286536 | 0 | false |
+| modal_positive_lowest_propagating_or_lossy | frozen modal | -3 / 300 / 0.0002041643360139555 | -3 / 300 / 0.0002041643360139555 | 0 | false |
+| modal_positive_proxy_abs_im_beta_gt_abs_re_beta | frozen modal | -3 / 300 / 0.0000871291034537535 | -3 / 300 / 0.0000871291034537535 | 0 | false |
+| modal_positive_highest_retained_index | frozen modal | -3 / 300 / 0.00004873361547726218 | -3 / 300 / 0.00004873361547726218 | 0 | false |
+| modal_negative_lowest_propagating_or_lossy | frozen modal | -3 / 300 / 0.0002041643359447555 | -3 / 300 / 0.0002041643359447555 | 0 | false |
+| modal_negative_proxy_abs_im_beta_gt_abs_re_beta | frozen modal | -3 / 300 / 0.00008082290996470642 | -3 / 300 / 0.00008082290996470642 | 0 | false |
+| modal_negative_highest_retained_index | frozen modal | -3 / 300 / 0.00005982074371481139 | -3 / 300 / 0.00005982074371481139 | 0 | false |
+
+R5 的 random residual 约为 6.89e-3–9.56e-3，modal residual 约为 4.87e-5–2.04e-4，top physical residual 约为 8.19e-4。也就是说，DtN correction 把 complete-A 的结果拉回到 whole-endcap F-only 的量级，但 ILU(0) 对 fine-space 的逼近仍比 1e-8 高约 4–6 个数量级。R1 分解、R4 exact Woodbury 和 R5 数值负结论分别证明了不同层次的事实；不能把 R5 写成 Hybrid 模型错误或 Woodbury 公式失败。
+
+### 五套 raw evidence
+
+| 阶段 | summary | solver record |
+|---|---|---|
+| R1 | [summary](../../../benchmarks/artifacts/task037b/v1_r1_dtn_identity_e2e5767_mpi8.json) | [record](../../../benchmarks/artifacts/task037b/v1_r1_dtn_identity_e2e5767_mpi8/solver_record.json) |
+| R2 | [summary](../../../benchmarks/artifacts/task037b/v1_r2_f_only_a9ee706_mpi8.json) | [record](../../../benchmarks/artifacts/task037b/v1_r2_f_only_a9ee706_mpi8/solver_record.json) |
+| R3 | [summary](../../../benchmarks/artifacts/task037b/v1_r3_whole_endcap_31d3084_mpi8.json) | [record](../../../benchmarks/artifacts/task037b/v1_r3_whole_endcap_31d3084_mpi8/solver_record.json) |
+| R4 | [summary](../../../benchmarks/artifacts/task037b/v1_r4_dtn_woodbury_53faebb_mpi8.json) | [record](../../../benchmarks/artifacts/task037b/v1_r4_dtn_woodbury_53faebb_mpi8/solver_record.json) |
+| R5 | [summary](../../../benchmarks/artifacts/task037b/v1_r5_dtn_woodbury_local_inverse_2a2ef3d_mpi8.json) | [record](../../../benchmarks/artifacts/task037b/v1_r5_dtn_woodbury_local_inverse_2a2ef3d_mpi8/solver_record.json) |
+
+R5 source 2a2ef3d37514e4ab30d50209065af84c1dafd59b 的正式结论是 research closeout、numerical negative；H6–H10 not_run，ordinary defaults unchanged，master merge 未授权。

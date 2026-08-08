@@ -159,3 +159,45 @@ H5a direct 与 H5b candidate 的内存下降是实测阶段差异。H5b process-
 | `../../../benchmarks/artifacts/task037b/h5_local_inverse_216437c_mpi8/memory_stages.jsonl` | `a27af6f56fb1028ec0174d1fd08c632279fc4af9258e06918d1166c1021aaabc` |
 | `../../../benchmarks/artifacts/task037b/h5_local_inverse_216437c_mpi8/memory_timeline.csv` | `8b060e61c04419abc19d4bee08bbafa572b9ca7ed484978e7d540eaf339e2f2f` |
 | `../../../benchmarks/artifacts/task037b/h5_local_inverse_216437c_mpi8/worker_stdout.txt` | `dcab0800a76be977f57d18b3b1fccdcb940b14a76cb4582e71f850b62d5c2178` |
+
+## V1 R1–R5 resource closeout
+
+R1–R5 均为独立 formal MPI8 watchdog 运行；这里的 process-tree 峰值与 worker-rank RSS
+分开列出。R5 的 7.0 GiB 是本轮 standalone process-tree review threshold，不是 H9
+或 production resource qualification。
+
+| 阶段 | source | worker RSS peak (MiB) | process-tree peak (MiB) | authority peak (GiB) | swap | numeric |
+|---|---|---:|---:|---:|---:|---|
+| R1 | e2e5767 | 5763.66796875 | 5778.29296875 | 5.628582000732422 | 0 | pass |
+| R2 | a9ee706 | 7139.3828125 | 7154.078125 | 6.972053527832031 | 0 | negative |
+| R3 | 31d3084 | 7031.91015625 | 7046.53515625 | 6.867099761962891 | 0 | negative |
+| R4 | 53faebb | 8006.87109375 | 8021.515625 | 7.819210052490234 | 0 | pass |
+| R5 | 2a2ef3d | 6417.9296875 | 6432.54296875 | 6.267509460449219 | 0 | negative |
+
+R5 process-tree peak 为 6432.54296875 MiB，即 6.281780242919922 GiB，低于 7.0 GiB
+standalone threshold；swap=0、warning/termination=false、measurement_present=true。但
+R5 数值 Gate 失败，所以 H6 不具资格，不能把这个资源结果包装成 production qualification，
+也不能替代 H9 的后续资源目标。
+
+### R5 factor、Woodbury 与阶段时间
+
+| 项目 | bottom | top |
+|---|---:|---:|
+| source/factor NNZ | 6086016 / 6086016 | 6086016 / 6086016 |
+| factor CSR payload estimate | 121754080 bytes | 121754080 bytes |
+| W local bytes（各 rank） | 825600…944640 | 825600…944640 |
+| W distributed sum / max | 5391360 / 944640 bytes | 5391360 / 944640 bytes |
+| K replicated bytes per rank | 25600 | 25600 |
+| LU replicated bytes per rank | 25760 | 25760 |
+| factor before→after | 1→0 | 1→0 |
+
+| R5 stage | seconds |
+|---|---:|
+| action/coupling build | 210.52379103191197 |
+| bottom setup / solves / release | 8.554142217966728 / 215.98842261300888 / 0.000328178983181715 |
+| top setup / solves / release | 8.374698366038501 / 238.89191701100208 / 0.00027341709937900305 |
+| R5 qualification total | 472.072925756918 |
+| watchdog total | 735.0470628660405 |
+
+W 的 local bytes 是按 rank 的实际 owned storage；K/LU 是每 rank replicated storage。factor
+NNZ 是 raw record 的 recorded count；payload 是明确公式的估算，不是实测分配量。

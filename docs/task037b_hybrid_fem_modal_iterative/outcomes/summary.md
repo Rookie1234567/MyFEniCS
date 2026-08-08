@@ -170,3 +170,52 @@ H5 评估的是冻结的双侧局部近似逆：把端部区域切成 x 方向 6
 资源、逐 RHS residual、fixed-apply 诊断、factor NNZ/载荷估算和证据 hash 见 [H5 local endcap evidence](local_endcap_inverse_matrix.md)；H6 后续一侧替代与 H7-H10 funnel 均按停止规则未运行。
 
 完整 residual、Sₘ/G feedback、operator inventory、factor before/after 和 hash-bound artifact 见 [exact block-LDU oracle](exact_block_ldu_oracle.md)。
+
+## V1 R1–R5 最终研究结项
+
+R1–R5 是 Review V1 的单一连续研究链，R5 source 为
+2a2ef3d37514e4ab30d50209065af84c1dafd59b。冻结身份仍为 p6/h10、modal p6/h10、
+M120/candidate240、MPI8、S、10°、10/110 nm、static-condensed、
+full3d_uniform_cg/scalar_cg_discrete_derivative；两份 authority 未改变。
+
+| 阶段 | 状态 | 证明了什么 |
+|---|---|---|
+| V1-R1 | pass | 真实 F/C/D/H action decomposition identity；6 probes/side，destroy 后 A 可用 |
+| V1-R2 | controlled numerical negative | 六-slab F-only 不能资格化，说明仅排除 DtN correction 仍不足 |
+| V1-R3 | controlled numerical negative | whole-endcap ILU(0) 比六 slab 改善，但 F-only 与 complete-A 均未过 1e-8 |
+| V1-R4 | pass | exact F inverse + 40-mode Woodbury 与 exact A 一致；公式、符号和 ownership 正确 |
+| V1-R5 | WHOLE_ENDCAP_ILU0_DTN_WOODBURY_NEGATIVE | PC 代数、确定性、K、数组有限性、lifecycle 和资源合法，但 21/21 非零 capacity 全部失败 |
+
+R5 random residual 约 6.89e-3–9.56e-3，modal 约 4.87e-5–2.04e-4，top physical
+约 8.19e-4。DtN correction 将 complete-A 结果拉回 whole-endcap F-only 的量级，但
+ILU(0) fine-space 逼近仍比 1e-8 高约 4–6 个数量级。severe_negative=false 只表示
+未触发预定义 severe 子标签；它既不满足 full，也不满足 borderline，所以按 Review §13
+仍归 negative 并关闭本任务。该结论不表示 Hybrid 模型错误，也不表示 Woodbury 公式失败。
+
+### 最终状态矩阵与边界
+
+| 阶段 | 最终状态 |
+|---|---|
+| H0 | pass |
+| H1 direct authority | pass |
+| H2a / H2b | pass |
+| H3 exact block-LDU | pass |
+| H4a exact Sₘ | pass |
+| H4b G-only | bounded diagnostic complete；non-stopping negative |
+| H5a | pass |
+| H5b | controlled negative；原六-slab candidate |
+| H5c | not_run |
+| H6–H10 | not_run；closed pending new review |
+| V1-R5 official R/T/A、field、12+12 | not_run |
+| ordinary defaults | unchanged |
+| master merge | not authorized |
+
+V1-R1–R5 的 compact hash-bound record 见
+[Case101 record](../../../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v1_r1_r5_research_closeout_v1.json)；
+逐 RHS 表与解释见 [local endcap evidence](local_endcap_inverse_matrix.md)。R5 raw artifact
+仍在 Git ignored 目录，response_v1、原 H5b raw 数值和既有 review/task 文件均未改写。
+
+R5 的 process-tree peak 为 6432.54296875 MiB（6.281780242919922 GiB），低于本轮
+standalone 7.0 GiB threshold，swap=0；这只是独立资源 Gate，通过不等于 H9 或 production
+resource qualification。Hybrid-P、低秩 direct Hybrid 与本 iterative candidate 均保持
+research-only。

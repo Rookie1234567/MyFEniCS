@@ -1,0 +1,172 @@
+{
+  "schema_version": 1,
+  "record_schema": "task037b.v1.r1-r5.research-closeout.v1",
+  "decision": {
+    "kind": "research_closeout",
+    "r5_numerical_negative": true,
+    "h6_h10_not_run": true,
+    "ordinary_defaults_unchanged": true,
+    "master_merge_authorized": false
+  },
+  "case": {
+    "degree": 6,
+    "h_nm": 10,
+    "modal_degree": 6,
+    "modal_h_nm": 10,
+    "requested_modes": 120,
+    "candidate_modes": 240,
+    "mpi_size": 8,
+    "polarization": "s",
+    "grazing_deg": 10,
+    "bottom_interface_nm": 10,
+    "top_interface_nm": 110,
+    "assembly_backend": "assembly_time_static_condensed",
+    "internal_propagation_model": "full3d_uniform_cg",
+    "internal_traction_model": "scalar_cg_discrete_derivative"
+  },
+  "authority": {
+    "full3d_path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_full_static_mpi8_244b62e.json",
+    "full3d_sha256": "b8b428476cdeb4b80495f4a8b1c89e3bb2f67c682c695fc72bb59dbbbd94b4e3",
+    "preflight_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json",
+    "preflight_sha256": "96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8"
+  },
+  "stages": {
+    "R1": {
+      "source_sha": "e2e57675867dcb3476441f27b33eb45a0d90b040",
+      "artifact_dir": "benchmarks/artifacts/task037b/v1_r1_dtn_identity_e2e5767_mpi8",
+      "formal_pass": true,
+      "numeric_pass": true,
+      "status": "task037b_v1_r1_pass_awaiting_r2",
+      "key_gates": {
+        "probe_count_per_side": 6,
+        "max_action_relative_error": 0.0,
+        "max_component_repeat_relative_error": 0.0,
+        "component_destroy_preserves_action": true,
+        "no_direct_factor": true
+      },
+      "artifacts": {
+        "summary_json": {"path": "benchmarks/artifacts/task037b/v1_r1_dtn_identity_e2e5767_mpi8.json", "sha256": "844eae42b86a6c04bcc74719fb04440e047957899bada074ffd2e00fdacdb9f5"},
+        "solver_record": {"path": "benchmarks/artifacts/task037b/v1_r1_dtn_identity_e2e5767_mpi8/solver_record.json", "sha256": "007aa1e3576dc861b5817cec2b577de3da04900d2a006f26faf75911c116efbb"},
+        "memory_stages": {"path": "benchmarks/artifacts/task037b/v1_r1_dtn_identity_e2e5767_mpi8/memory_stages.jsonl", "sha256": "ec8e5dd7b6edc76b28c73c3d540f75065e7d16f98a9e212d2072cd5594cf9074"},
+        "memory_timeline": {"path": "benchmarks/artifacts/task037b/v1_r1_dtn_identity_e2e5767_mpi8/memory_timeline.csv", "sha256": "d4fabf704210af5e63e8a72fe839e9aca8df657600516673f8507cf3d99d2ec4"},
+        "worker_stdout": {"path": "benchmarks/artifacts/task037b/v1_r1_dtn_identity_e2e5767_mpi8/worker_stdout.txt", "sha256": "540df4295723146fbad3aa609a43da42ef72b986df45805f69a5b04fe0562bfb"}
+      }
+    },
+    "R2": {
+      "source_sha": "a9ee7067503879ce082145430169acc8aeb48b7b",
+      "artifact_dir": "benchmarks/artifacts/task037b/v1_r2_f_only_a9ee706_mpi8",
+      "formal_pass": true,
+      "numeric_pass": false,
+      "status": "task037b_v1_r2_complete_awaiting_r3",
+      "key_gates": {
+        "contract_pass": true,
+        "operator": "F_only",
+        "external_dtn_correction": "excluded",
+        "max_true_residual_bottom": 0.9482247431562106,
+        "max_true_residual_top": 0.9499229695708535,
+        "max_repeat_solution_relative_error": 0.0,
+        "factor_released": true,
+        "physics_not_run": true
+      },
+      "artifacts": {
+        "summary_json": {"path": "benchmarks/artifacts/task037b/v1_r2_f_only_a9ee706_mpi8.json", "sha256": "fc8fa0dda5363f2d9f58b6fa2de72a367fe3142ab91a55ab85960c0ee357f184"},
+        "solver_record": {"path": "benchmarks/artifacts/task037b/v1_r2_f_only_a9ee706_mpi8/solver_record.json", "sha256": "b6994b10d0c6e83e70e2224147b12cc3c239e7ae60870bf4a5a47bb2416cab77"},
+        "memory_stages": {"path": "benchmarks/artifacts/task037b/v1_r2_f_only_a9ee706_mpi8/memory_stages.jsonl", "sha256": "97e7b6b2c61a7265b74f46ba00c372030fb5a9ead2cb1a47717ebe96a54ea34d"},
+        "memory_timeline": {"path": "benchmarks/artifacts/task037b/v1_r2_f_only_a9ee706_mpi8/memory_timeline.csv", "sha256": "49c478cc2478e9971529ba1c3b8e98cdc5e83c25a5607ec927d25e788ca37691"},
+        "worker_stdout": {"path": "benchmarks/artifacts/task037b/v1_r2_f_only_a9ee706_mpi8/worker_stdout.txt", "sha256": "115203f3095ff5717a4cf87171f7963bbddc8a812df0e7b4130e1dc89714b9fa"}
+      }
+    },
+    "R3": {
+      "source_sha": "31d30842f0bcf24edde2113217db7a6dfc1264c1",
+      "artifact_dir": "benchmarks/artifacts/task037b/v1_r3_whole_endcap_31d3084_mpi8",
+      "formal_pass": true,
+      "numeric_pass": false,
+      "status": "task037b_v1_r3_complete_awaiting_r4",
+      "key_gates": {
+        "contract_pass": true,
+        "profile": "v1_whole_endcap_ilu0",
+        "cases": ["R3-F", "R3-A"],
+        "all_probes_finite": true,
+        "no_direct_fallback": true,
+        "factors_released": true,
+        "physics_not_run": true
+      },
+      "artifacts": {
+        "summary_json": {"path": "benchmarks/artifacts/task037b/v1_r3_whole_endcap_31d3084_mpi8.json", "sha256": "8874b1061581fe146b7a9077114533d2b2c2f7ce516a1083292672bfcb916f2d"},
+        "solver_record": {"path": "benchmarks/artifacts/task037b/v1_r3_whole_endcap_31d3084_mpi8/solver_record.json", "sha256": "bcff4597732be07d002eb121563e647e98f7f44b08303b6080bcf5dc67ab8184"},
+        "memory_stages": {"path": "benchmarks/artifacts/task037b/v1_r3_whole_endcap_31d3084_mpi8/memory_stages.jsonl", "sha256": "38b5fba1d7fd89d66f214daa972407134d295b956418ecf88f198664b82940d7"},
+        "memory_timeline": {"path": "benchmarks/artifacts/task037b/v1_r3_whole_endcap_31d3084_mpi8/memory_timeline.csv", "sha256": "3fc9b6cbca066fc196d0e937ace14fa32f168f669e10d26a8dfee9c46743956e"},
+        "worker_stdout": {"path": "benchmarks/artifacts/task037b/v1_r3_whole_endcap_31d3084_mpi8/worker_stdout.txt", "sha256": "a4fc2b47c37cf28b3fb52911539951ea3f0063cf8b6c663f4b41eaf17c1689ea"}
+      }
+    },
+    "R4": {
+      "source_sha": "53faebb14960f8ddbaf88f54f8ceae511ccd7764",
+      "artifact_dir": "benchmarks/artifacts/task037b/v1_r4_dtn_woodbury_53faebb_mpi8",
+      "formal_pass": true,
+      "numeric_pass": true,
+      "status": "task037b_v1_r4_complete_awaiting_r5",
+      "key_gates": {
+        "contract_pass": true,
+        "operator": "borrowed_F_plus_Dtn_Woodbury",
+        "base_identity": "exact_F_direct_test_only",
+        "n_aux": 40,
+        "K_rank": 40,
+        "normal_equations": false,
+        "factor_noncoexistence": true,
+        "factors_released": true,
+        "physics_not_run": true
+      },
+      "artifacts": {
+        "summary_json": {"path": "benchmarks/artifacts/task037b/v1_r4_dtn_woodbury_53faebb_mpi8.json", "sha256": "0696d1756cd7c1dc360fa9d67200c5d99dfd4ff2fa5963e71b6ef6158c150bc3"},
+        "solver_record": {"path": "benchmarks/artifacts/task037b/v1_r4_dtn_woodbury_53faebb_mpi8/solver_record.json", "sha256": "24014279f0884b84cdac13a2ddf3e34d34e095f7d20e81739e0c6ccc81adecb9"},
+        "memory_stages": {"path": "benchmarks/artifacts/task037b/v1_r4_dtn_woodbury_53faebb_mpi8/memory_stages.jsonl", "sha256": "b5d063bb85ca92e6ff4a6403ee2ca277e83eb4077c2f092c1aadbee435e35d77"},
+        "memory_timeline": {"path": "benchmarks/artifacts/task037b/v1_r4_dtn_woodbury_53faebb_mpi8/memory_timeline.csv", "sha256": "abb3cc1500c59df26ffde587f6b7857668441fcd3095616526ae15fa6233cb7e"},
+        "worker_stdout": {"path": "benchmarks/artifacts/task037b/v1_r4_dtn_woodbury_53faebb_mpi8/worker_stdout.txt", "sha256": "8ee10fb9d60818373fb675edda3c8b37eb7b1667cc774e5645ca3b7e1b3aaf96"}
+      }
+    },
+    "R5": {
+      "source_sha": "2a2ef3d37514e4ab30d50209065af84c1dafd59b",
+      "artifact_dir": "benchmarks/artifacts/task037b/v1_r5_dtn_woodbury_local_inverse_2a2ef3d_mpi8",
+      "formal_pass": true,
+      "numeric_pass": false,
+      "status": "WHOLE_ENDCAP_ILU0_DTN_WOODBURY_NEGATIVE",
+      "key_gates": {
+        "contract_pass": true,
+        "algebra_legality_pass": true,
+        "capacity_nonzero_bottom": "0/10",
+        "capacity_nonzero_top": "0/11",
+        "bottom_zero_equation_pass": true,
+        "pc_linearity_max": 3.0970882574272953e-15,
+        "pc_determinism_max": 0.0,
+        "K_rank": 40,
+        "K_condition_bottom": 3.0331668903694333,
+        "K_condition_top": 4.162687539173755,
+        "arrays_finite": true,
+        "factor_noncoexistence": true,
+        "factors_released": true,
+        "no_direct_fallback": true,
+        "severe_negative": false,
+        "physics_not_run": true
+      },
+      "resource": {
+        "process_tree_peak_mb": 6432.54296875,
+        "process_tree_peak_gib": 6.281780242919922,
+        "worker_rss_peak_mb": 6417.9296875,
+        "threshold_gib": 7.0,
+        "measurement_present": true,
+        "exceeds_threshold": false,
+        "swap": 0,
+        "total_seconds": 735.0470628660405,
+        "source_stage": "v1_r5_top_solves",
+        "h6_eligible": false
+      },
+      "artifacts": {
+        "summary_json": {"path": "benchmarks/artifacts/task037b/v1_r5_dtn_woodbury_local_inverse_2a2ef3d_mpi8.json", "sha256": "b42605ec9cf1952657376e6a950b271e097dfbaa17c23c2693873b0ee50fa575"},
+        "solver_record": {"path": "benchmarks/artifacts/task037b/v1_r5_dtn_woodbury_local_inverse_2a2ef3d_mpi8/solver_record.json", "sha256": "78b31337e8d82638f56ba79226f0ecb9ee0c6d57209a4ef5a28fef7238905602"},
+        "memory_stages": {"path": "benchmarks/artifacts/task037b/v1_r5_dtn_woodbury_local_inverse_2a2ef3d_mpi8/memory_stages.jsonl", "sha256": "d537964100b3e46d487779ffa2d15c587b304ac45453c36d2e220ceab483c85d"},
+        "memory_timeline": {"path": "benchmarks/artifacts/task037b/v1_r5_dtn_woodbury_local_inverse_2a2ef3d_mpi8/memory_timeline.csv", "sha256": "68a869e5d0d28c30406745bbf75a5f1e7e064bc77a3d0996a6415097dd645ac4"},
+        "worker_stdout": {"path": "benchmarks/artifacts/task037b/v1_r5_dtn_woodbury_local_inverse_2a2ef3d_mpi8/worker_stdout.txt", "sha256": "dd42ea785c3481884dcd3e0048e83158d32db70c1bee67548e116fbf98ede45c"}
+      }
+    }
+  }
+}

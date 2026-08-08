@@ -107,3 +107,22 @@ H5a/H5b 的阶段内存、逐 RHS 表、1/2/4/8 fixed-apply 诊断和 raw eviden
 
 H3/H4 的完整 residual、Sₘ/G feedback、operator inventory、factor before/after 与
 hash-bound artifact 见 [exact block-LDU oracle](exact_block_ldu_oracle.md)。
+
+## V1 R1–R5 implementation 与 formal 测试收口
+
+| 范围 | 结果 |
+|---|---|
+| V1 serial implementation / contract | 52 passed |
+| MPI2 focused | 1 passed / 每 rank |
+| MPI4 focused | 1 passed / 每 rank |
+| R1–R5 formal MPI8 | 每阶段仅启动一次；raw solver record、watchdog summary、timeline、stages、stdout 均写出 |
+| Ruff check | pass |
+| Ruff format-check | pass |
+| compileall | pass |
+| git diff --check | pass |
+| full pytest / CI | not_run；不声称 CI |
+
+V1-R1 是 component action identity pass；R2、R3 和 R5 是合法 numerical negative；
+R4 exact Woodbury oracle pass。R5 的 negative 是完整记录后的受控研究结论，不是 parser、
+MPI ownership、资源、serialization 或 lifecycle infrastructure failure。R5 official R/T/A、
+field 和 12+12 未运行；H6–H10 因 stop rule not_run。

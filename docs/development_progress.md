@@ -2355,3 +2355,32 @@ phase_e_unlocked = false
 ```
 
 未运行 Phase E/F、目标 adaptive cycle、p4/h5 heavy 或 ordinary-default change。
+
+## 2026-08-08：Task037b Review V1 R1–R5 research closeout
+
+Task037b Review V1 的 R1–R5 已完成一次连续、hash-bound 的 MPI8 研究链。R1 通过真实
+F/C/D/H action 分解；R2 的六-slab F-only 与 R3 的 whole-endcap ILU(0) 均为合法
+numerical negative；R4 的 exact F inverse Woodbury 与 complete A 一致，证明了公式、
+符号和 ownership；R5 的 DtN-aware whole-endcap ILU(0) PC 在代数、线性、确定性、40-mode
+K、数组有限性、factor lifecycle 和独立资源测量上均合法，但 21 个非零 RHS 为 0/21，
+最终为 WHOLE_ENDCAP_ILU0_DTN_WOODBURY_NEGATIVE。
+
+R5 的 random true residual 约 6.89e-3–9.56e-3，modal 约 4.87e-5–2.04e-4，top
+physical 约 8.19e-4；DtN correction 将 complete-A 结果拉回 whole-endcap F-only
+量级，但 ILU(0) fine-space 近似仍比 1e-8 高约 4–6 个数量级。这个结论只关闭本轮
+冻结的 iterative candidate，不表示 Hybrid 模型错误，也不表示 Woodbury 公式失败。
+
+| 项目 | 当前边界 |
+|---|---|
+| H0–H4 | 按既有 evidence pass；H4b 为 bounded diagnostic complete |
+| H5a / H5b | exact local reference pass / 原六-slab controlled negative |
+| V1-R1 / R4 | pass |
+| V1-R2 / R3 / R5 | controlled numerical negative |
+| H5c、H6–H10 | not_run；closed pending new review |
+| ordinary defaults | unchanged |
+| production qualification | Hybrid-P、低秩 direct Hybrid 与本 iterative candidate 均未资格化 |
+| master merge | not authorized |
+
+五套 ignored raw evidence 与 compact record 由 Case101 保存；没有复制 timeline、solver
+数组或其他 heavy artifact 到 Git。后续若要探索新的算法家族，必须重新取得 review，不由
+closeout 自动开启扫描、候选或 H6–H10。

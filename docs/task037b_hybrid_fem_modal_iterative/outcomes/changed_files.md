@@ -87,3 +87,30 @@ resource evidence 仍未创建。
 | `216437c6f13b3a3bf46e74451f63779189453c6f` | `feat(task037b): wire H5 local inverse qualification` | `benchmarks/run_task032_phase6_augmented.py`：H5 frozen mode/RHS、H5a/H5b early qualification path；`benchmarks/run_task033_memory_watchdog.py`：H5 parser、launch、terminal drain、阶段内存摘要与 no-swap semantics；`src/test/test_181_task035c_p6_h10_runner_gates.py`、`src/test/test_59_task033_memory_watchdog_contract.py`、`src/test/test_238_task037b_h5_fixture_helpers.py`：H5 contracts |
 
 H5a exact reference 通过，H5b 冻结 local inverse family 为 `LOCAL_INVERSE_FAMILY_NEGATIVE`；H5c、H6-H10 按顺序未运行。上述代码保持 H5 explicit opt-in，ordinary defaults unchanged；没有把该 candidate、Hybrid-P 或低秩 direct Hybrid 提升为 production-qualified。H5 raw artifacts 为 ignored 文件，只由 docs 以路径和 SHA 引用。
+
+## V1 R1–R5 research-only source chain
+
+| SHA | subject | 角色与边界 |
+|---|---|---|
+| e2e57675867dcb3476441f27b33eb45a0d90b040 | feat(task037b): add V1 endcap action identity gate | R1 action decomposition、唯一 V1 entry；research-only |
+| a9ee7067503879ce082145430169acc8aeb48b7b | feat(task037b): add V1 R2 F-only diagnostic | R2 six-slab F-only diagnostic；research-only |
+| 31d30842f0bcf24edde2113217db7a6dfc1264c1 | feat(task037b): add V1 R3 whole-endcap baseline | R3 whole-endcap ILU(0) baseline；research-only |
+| 53faebb14960f8ddbaf88f54f8ceae511ccd7764 | feat(task037b): qualify exact DtN Woodbury oracle | R4 exact F inverse Woodbury oracle；research-only |
+| 2a2ef3d37514e4ab30d50209065af84c1dafd59b | feat(task037b): qualify DtN-aware whole-endcap inverse | R5 DtN-aware local inverse candidate与正式 negative evidence；research-only |
+
+上述 source/runner/checker 路径均保持 ordinary defaults unchanged；R5 candidate、Hybrid-P 和
+低秩 direct Hybrid 均不得 production-qualified。compact research record 位于
+../../../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v1_r1_r5_research_closeout_v1.json。
+未经新的 review 与用户授权，不整体 merge 到 master。
+
+## 文件角色与选择性边界
+
+| 分组 | 文件/范围 | 选择性边界 |
+|---|---|---|
+| research-only numerical/core | src/solvers/hybrid_local_dtn_action.py；src/solvers/hybrid_local_iterative_inverse.py；src/solvers/hybrid_local_dtn_woodbury.py | 仅保留已审 research evidence，不提升为 ordinary production |
+| explicit-opt-in runner/watchdog | benchmarks/run_task032_phase6_augmented.py；benchmarks/run_task033_memory_watchdog.py | 仅用于显式 opt-in 的 V1 路径；ordinary defaults unchanged |
+| tests/independent checker-contract | src/test/test_181_task035c_p6_h10_runner_gates.py；src/test/test_59_task033_memory_watchdog_contract.py；src/test/test_235_task037b_hybrid_local_dtn_action.py；src/test/test_237_task037b_hybrid_local_iterative_inverse.py；src/test/test_239_task037b_hybrid_local_dtn_woodbury.py；src/test/test_240_task037b_hybrid_local_dtn_woodbury_local_inverse.py | focused tests 与 independent checker contracts |
+| compact evidence/docs | 本轮 exact 9 files：docs/development_progress.md；本 outcomes 目录下的 changed_files.md、local_endcap_inverse_matrix.md、resource_ledger.md、summary.md、test_summary.md；docs/task037b_hybrid_fem_modal_iterative/response_v2.md；benchmarks/cases/101_hybrid_iterative_block_solver/README.md；benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v1_r1_r5_research_closeout_v1.json | 仅为可审 compact evidence，不纳入 heavy raw arrays |
+| do-not-merge | ignored raw artifacts/heavy timeline；ordinary defaults；任何 production qualification | 保留研究证据，不整体合入 |
+
+以上分组属于 research closeout；后续如需选择性合入，必须按依赖组重新 review，不能整体 merge Task37b。
