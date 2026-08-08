@@ -7,6 +7,10 @@ import pytest
 from mpi4py import MPI
 from petsc4py import PETSc
 
+from benchmarks.run_task032_phase6_augmented import (
+    _parse_args,
+    _v2_not_run_validation_boundary,
+)
 from src.solvers.hybrid_fem_modal_augmented_direct import HybridAugmentedLayout
 from src.solvers.hybrid_fem_modal_block_ldu import (
     action_block_screen_gate,
@@ -217,6 +221,117 @@ def _history(iterations: tuple[int, ...], residuals: tuple[float, ...]):
         }
         for iteration, residual in zip(iterations, residuals)
     ]
+
+
+def _v2_parser_args(profile: str = "bottom-approx", max_it: int = 20) -> list[str]:
+    return [
+        "--task037b-v2-gate",
+        "--task037b-v2-profile",
+        profile,
+        "--task037b-v2-max-it",
+        str(max_it),
+        "--degree",
+        "6",
+        "--h-nm",
+        "10",
+        "--modal-degree",
+        "6",
+        "--modal-h-nm",
+        "10",
+        "--requested-modes",
+        "120",
+        "--candidate-modes",
+        "240",
+        "--solver-path",
+        "block-ldu-action-screen",
+        "--stage4-full3d-assembly-backend",
+        "assembly_time_static_condensed",
+        "--bottom-interface-nm",
+        "10",
+        "--top-interface-nm",
+        "110",
+        "--incident-grazing-deg",
+        "10",
+        "--polarization-kind",
+        "s",
+        "--internal-propagation-model",
+        "full3d_uniform_cg",
+        "--internal-traction-model",
+        "scalar_cg_discrete_derivative",
+        "--full3d-reference",
+        "/tmp/v2-full3d-reference.json",
+        "--full3d-reference-sha256",
+        "0" * 64,
+        "--task035c-p6-preflight-authority",
+        "/tmp/v2-preflight-authority.json",
+        "--task035c-p6-preflight-sha256",
+        "1" * 64,
+        "--verified-clean-sha",
+        "2" * 40,
+        "--host-environment-id",
+        "WSL2-Ubuntu-24.04",
+    ]
+
+
+def test_v2_parser_opt_in_scope_and_defaults():
+    ordinary = _parse_args([])
+    assert ordinary.solver_path == "augmented"
+    assert ordinary.task037b_v2_gate is False
+    assert ordinary.task037b_v2_profile is None
+    assert ordinary.task037b_v2_max_it is None
+    for profile, max_it in (
+        ("bottom-approx", 20),
+        ("top-approx", 20),
+        ("double", 20),
+        ("double", 100),
+        ("double", 200),
+    ):
+        parsed = _parse_args(_v2_parser_args(profile, max_it))
+        assert parsed.task037b_v2_gate is True
+        assert parsed.task037b_v2_profile == profile
+        assert parsed.task037b_v2_max_it == max_it
+        assert parsed.solver_path == "block-ldu-action-screen"
+
+    with pytest.raises(SystemExit):
+        _parse_args(["--solver-path", "block-ldu-action-screen"])
+    with pytest.raises(SystemExit):
+        _parse_args(["--task037b-v2-profile", "bottom-approx"])
+    with pytest.raises(SystemExit):
+        _parse_args(["--task037b-v2-gate", "--solver-path", "block-ldu-action-screen"])
+    profile_only = _v2_parser_args("bottom-approx", 20)
+    max_index = profile_only.index("--task037b-v2-max-it")
+    del profile_only[max_index : max_index + 2]
+    with pytest.raises(SystemExit):
+        _parse_args(profile_only)
+    max_only = _v2_parser_args("bottom-approx", 20)
+    profile_index = max_only.index("--task037b-v2-profile")
+    del max_only[profile_index : profile_index + 2]
+    with pytest.raises(SystemExit):
+        _parse_args(max_only)
+    with pytest.raises(SystemExit):
+        _parse_args(_v2_parser_args("bottom-approx", 100))
+    with pytest.raises(SystemExit):
+        drifted = _v2_parser_args("bottom-approx", 20)
+        drifted[drifted.index("--h-nm") + 1] = "9"
+        _parse_args(drifted)
+    with pytest.raises(SystemExit):
+        _parse_args(_v2_parser_args("double", 20) + ["--task037b-v1-gate"])
+
+
+def test_v2_validation_boundary_is_not_official():
+    validation = _v2_not_run_validation_boundary()
+    assert validation["official_record"] is False
+    for key in (
+        "R",
+        "T",
+        "A",
+        "A_volume",
+        "orders",
+        "field",
+        "12_plus_12",
+        "Full3D",
+    ):
+        assert validation[key] == "not_run"
 
 
 def test_action_block_screen_true_residual_and_lifecycle():

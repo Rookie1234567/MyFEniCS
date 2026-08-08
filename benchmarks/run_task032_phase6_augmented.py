@@ -76,11 +76,15 @@ from src.solvers.hybrid_fem_modal_augmented_direct import (
 )
 from src.solvers.hybrid_fem_modal_block_ldu import (
     HybridBlockActionSystem,
+    HybridBlockLduDirectAction,
     HybridBlockLduPhysicalSolution,
     _HybridBlockLduOracleLocalSystem,
+    action_block_screen_gate,
+    create_action_block_ldu_preconditioner,
     create_exact_block_ldu_preconditioner,
     create_g_only_block_ldu_preconditioner,
     modal_block_diagnostic,
+    screen_action_block_ldu,
     solve_exact_block_ldu,
 )
 from src.solvers.hybrid_fem_modal_iterative import create_hybrid_assembled_block_action
@@ -94,6 +98,7 @@ from src.solvers.hybrid_fem_modal_schur_direct import (
 from src.solvers.hybrid_local_iterative_inverse import (
     H5_MAX_IT,
     R3_PRECONDITIONER_PROFILE,
+    build_hybrid_whole_endcap_fixed_smoother_action,
     build_hybrid_local_iterative_inverse,
 )
 from src.solvers.hybrid_local_dtn_action import (
@@ -102,6 +107,7 @@ from src.solvers.hybrid_local_dtn_action import (
 )
 from src.solvers.hybrid_local_dtn_woodbury import (
     R4_MODAL_COUNT,
+    HybridLocalDtnWoodburyFixedAction,
     HybridLocalDtnWoodburyOracle,
     build_hybrid_local_dtn_woodbury_local_inverse,
 )
@@ -796,6 +802,14 @@ class _V1R5QualificationStop(RuntimeError):
         self.record = record
 
 
+class _V2QualificationStop(RuntimeError):
+    """Internal control flow after one bounded V2 block-screen record."""
+
+    def __init__(self, record: dict[str, Any]) -> None:
+        super().__init__(record.get("status", "V2 block screen complete"))
+        self.record = record
+
+
 NUMERICAL_INFINITY_BETA_H_CUTOFF = 1.0e4
 
 
@@ -1184,6 +1198,22 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Open only the frozen Task037b V1 DtN component-action path.",
     )
+    parser.add_argument(
+        "--task037b-v2-gate",
+        action="store_true",
+        help="Open only the frozen Task037b V2 bounded block-screen path.",
+    )
+    parser.add_argument(
+        "--task037b-v2-profile",
+        choices=("bottom-approx", "top-approx", "double"),
+        default=None,
+    )
+    parser.add_argument(
+        "--task037b-v2-max-it",
+        choices=(20, 100, 200),
+        type=int,
+        default=None,
+    )
     parser.add_argument("--task035c-p6-preflight-authority", type=Path)
     parser.add_argument("--task035c-p6-preflight-sha256")
     parser.add_argument("--bottom-interface-nm", type=float, default=10.0)
@@ -1246,6 +1276,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "whole-endcap-ilu0-qualification",
             "dtn-woodbury-oracle-qualification",
             "dtn-woodbury-local-inverse-qualification",
+            "block-ldu-action-screen",
         ),
         default="augmented",
         help=(
@@ -1272,10 +1303,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         args.task037b_h4_gate,
         args.task037b_h5_gate,
         args.task037b_v1_gate,
+        args.task037b_v2_gate,
     )
     if sum(bool(value) for value in selected_scoped_gates) > 1:
         parser.error(
-            "Task035c p6/h10, Task037b H1, H3, H4, H5, and V1 gates are "
+            "Task035c p6/h10, Task037b H1, H3, H4, H5, V1, and V2 gates are "
             "mutually exclusive."
         )
     if args.solver_path == "local-inverse-qualification" and not args.task037b_h5_gate:
@@ -1304,10 +1336,30 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "dtn-woodbury-local-inverse-qualification requires --task037b-v1-gate."
         )
+    if args.solver_path == "block-ldu-action-screen" and not args.task037b_v2_gate:
+        parser.error("block-ldu-action-screen requires --task037b-v2-gate.")
+    if args.task037b_v2_gate and args.solver_path != "block-ldu-action-screen":
+        parser.error(
+            "--task037b-v2-gate requires --solver-path block-ldu-action-screen."
+        )
+    if not args.task037b_v2_gate and (
+        args.task037b_v2_profile is not None or args.task037b_v2_max_it is not None
+    ):
+        parser.error("V2 profile/max-it require --task037b-v2-gate.")
+    if args.task037b_v2_gate and (
+        args.task037b_v2_profile is None or args.task037b_v2_max_it is None
+    ):
+        parser.error("V2 gate requires --task037b-v2-profile and --task037b-v2-max-it.")
+    if (
+        args.task037b_v2_gate
+        and args.task037b_v2_profile != "double"
+        and args.task037b_v2_max_it != 20
+    ):
+        parser.error("V2 one-sided profiles require --task037b-v2-max-it 20.")
     if args.degree == 6 and not any(selected_scoped_gates):
         parser.error(
             "p6 is fail-closed; pass a fixed scoped Task035c, Task037b H1, "
-            "or Task037b H3/H4/H5/V1 gate."
+            "or Task037b H3/H4/H5/V1/V2 gate."
         )
     if args.task035c_p6_h10_gate:
         scoped = bool(
@@ -1497,13 +1549,52 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "candidate240, local-inverse-qualification, "
                 "static-condensed MPI8 path."
             )
+    elif args.task037b_v2_gate:
+        scoped = bool(
+            args.degree == 6
+            and math.isclose(args.h_nm, 10.0)
+            and args.modal_degree == 6
+            and args.modal_h_nm is not None
+            and math.isclose(args.modal_h_nm, 10.0)
+            and args.requested_modes == 120
+            and args.candidate_modes == 240
+            and args.solver_path == "block-ldu-action-screen"
+            and args.task037b_v2_profile in {"bottom-approx", "top-approx", "double"}
+            and args.task037b_v2_max_it in {20, 100, 200}
+            and (args.task037b_v2_profile == "double" or args.task037b_v2_max_it == 20)
+            and args.comparison_solver_path == "fast"
+            and not args.compare_modal_schur
+            and args.stage4_full3d_assembly_backend
+            == ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+            and math.isclose(args.bottom_interface_nm, 10.0)
+            and math.isclose(args.top_interface_nm, 110.0)
+            and args.graded_reference_h is None
+            and math.isclose(args.incident_grazing_deg, 10.0)
+            and args.polarization_kind == "s"
+            and args.internal_propagation_model == "full3d_uniform_cg"
+            and args.internal_traction_model == "scalar_cg_discrete_derivative"
+            and args.full3d_reference is not None
+            and valid_hex_digest(args.full3d_reference_sha256, 64)
+            and args.task035c_p6_preflight_authority is not None
+            and valid_hex_digest(args.task035c_p6_preflight_sha256, 64)
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and args.host_environment_id == "WSL2-Ubuntu-24.04"
+            and not args.allow_dirty_research
+        )
+        if not scoped:
+            parser.error(
+                "--task037b-v2-gate is restricted to the fixed WSL p6/h10, "
+                "10/110 nm, S-polarized, full3d/scalar-CG, M120+M120, "
+                "candidate240, block-ldu-action-screen, static-condensed MPI8 "
+                "path with a valid V2 profile/max-it pair."
+            )
     elif (
         args.task035c_p6_preflight_authority is not None
         or args.task035c_p6_preflight_sha256 is not None
         or args.full3d_reference_sha256 is not None
     ):
         parser.error(
-            "Task035c/H1/H3/H4/H5/V1 authority SHA arguments require a scoped gate."
+            "Task035c/H1/H3/H4/H5/V1/V2 authority SHA arguments require a scoped gate."
         )
     return args
 
@@ -1521,13 +1612,14 @@ def _task035c_worker_authority_gate(
         or args.task037b_h4_gate
         or args.task037b_h5_gate
         or args.task037b_v1_gate
+        or args.task037b_v2_gate
     ):
         return None
 
     authority_path = args.task035c_p6_preflight_authority
     reference_path = args.full3d_reference
     if authority_path is None or reference_path is None:
-        raise SystemExit("Task035c/H1/H3/H4/H5/V1 authority paths are required.")
+        raise SystemExit("Task035c/H1/H3/H4/H5/V1/V2 authority paths are required.")
     authority_path = (
         authority_path if authority_path.is_absolute() else ROOT / authority_path
     ).resolve()
@@ -1575,6 +1667,7 @@ def _task035c_worker_authority_gate(
             or args.task037b_h4_gate
             or args.task037b_h5_gate
             or args.task037b_v1_gate
+            or args.task037b_v2_gate
         )
         else task035c_p6_h10_full3d_reference_gate(
             reference if isinstance(reference, dict) else None,
@@ -1595,6 +1688,8 @@ def _task035c_worker_authority_gate(
             if args.task037b_v1_gate
             else "task037b.h5-worker-authority-gate.v1"
             if args.task037b_h5_gate
+            else "task037b.v2-worker-authority-gate.v1"
+            if args.task037b_v2_gate
             else "task035c.p6-h10-worker-authority-gate.v1"
         ),
         "pass": bool(preflight_gate["pass"] and reference_gate["pass"]),
@@ -1643,6 +1738,849 @@ def _h5_true_relative_residual(
         return float(residual.norm()) / max(float(rhs.norm()), 1.0e-30)
     finally:
         residual.destroy()
+
+
+def _v2_not_run_validation_boundary() -> dict[str, Any]:
+    """Return the fixed no-official-physics boundary for V2 records."""
+
+    return {
+        "official_record": False,
+        "R": "not_run",
+        "T": "not_run",
+        "A": "not_run",
+        "A_volume": "not_run",
+        "orders": "not_run",
+        "external_diffraction_orders": "not_run",
+        "field": "not_run",
+        "12_plus_12": "not_run",
+        "Full3D": "not_run",
+        "full3d_comparison": "not_run",
+    }
+
+
+def _v2_fixed_callback_certificate(
+    action: HybridLocalDtnWoodburyFixedAction,
+) -> dict[str, Any]:
+    """Certify one fixed Woodbury callback without constructing another solver."""
+
+    operator = action.operator
+    source = operator.createVecRight()
+    repeat_source = operator.createVecRight()
+    combination = operator.createVecRight()
+    wrapper = operator.createVecLeft()
+    oracle = operator.createVecLeft()
+    repeat_first = operator.createVecLeft()
+    repeat_second = operator.createVecLeft()
+    x = operator.createVecRight()
+    y = operator.createVecRight()
+    x_result = operator.createVecLeft()
+    y_result = operator.createVecLeft()
+    combination_result = operator.createVecLeft()
+    expected = operator.createVecLeft()
+    before = int(action.diagnostics["apply_count"])
+    try:
+        _h5_fill_partition_independent_random_rhs(source, 3701)
+        source.copy(repeat_source)
+        action.apply(source, wrapper)
+        action.woodbury.apply(source, oracle)
+        action.apply(repeat_source, repeat_first)
+        action.apply(repeat_source, repeat_second)
+        _h5_fill_partition_independent_random_rhs(x, 3702)
+        _h5_fill_partition_independent_random_rhs(y, 3703)
+        alpha = 0.37 - 0.11j
+        beta = -0.23 + 0.19j
+        x.copy(combination)
+        combination.scale(PETSc.ScalarType(alpha))
+        combination.axpy(PETSc.ScalarType(beta), y)
+        action.apply(x, x_result)
+        action.apply(y, y_result)
+        x_result.copy(expected)
+        expected.scale(PETSc.ScalarType(alpha))
+        y_result.scale(PETSc.ScalarType(beta))
+        expected.axpy(PETSc.ScalarType(1.0), y_result)
+        action.apply(combination, combination_result)
+        diagnostics = action.diagnostics
+        woodbury = dict(diagnostics["woodbury"])
+        base = dict(diagnostics["base_diagnostics"])
+        repeat_error = _relative_vector_error(repeat_second, repeat_first)
+        certificate = {
+            "apply_count_before": before,
+            "apply_count_after": int(diagnostics["apply_count"]),
+            "apply_count_increment": int(diagnostics["apply_count"]) - before,
+            "wrapper_vs_internal_woodbury_error": _relative_vector_error(
+                wrapper, oracle
+            ),
+            "linearity_error": _relative_vector_error(combination_result, expected),
+            "determinism_error": repeat_error,
+            "repeat_hash_equal": bool(
+                _h1_owned_vec_digest(repeat_first)["sha256"]
+                == _h1_owned_vec_digest(repeat_second)["sha256"]
+            ),
+            "woodbury": woodbury,
+            "base_diagnostics": base,
+            "base_factor_count": int(diagnostics["base_factor_count"]),
+            "local_direct_factor_count": int(diagnostics["local_direct_factor_count"]),
+            "nested_ksp_created": bool(diagnostics["nested_ksp_created"]),
+        }
+        certificate["pass"] = bool(
+            certificate["wrapper_vs_internal_woodbury_error"] <= 1.0e-13
+            and certificate["linearity_error"] <= 1.0e-12
+            and certificate["determinism_error"] <= 1.0e-14
+            and certificate["repeat_hash_equal"]
+            and woodbury.get("K_rank") == R4_MODAL_COUNT
+            and np.isfinite(float(woodbury.get("K_condition_number")))
+            and float(woodbury["K_condition_number"]) <= 1.0e10
+            and woodbury.get("arrays_finite") is True
+            and certificate["base_factor_count"] == 1
+            and certificate["local_direct_factor_count"] == 0
+            and certificate["nested_ksp_created"] is False
+            and certificate["apply_count_increment"] == 7
+        )
+        return certificate
+    finally:
+        for vector in (
+            expected,
+            combination_result,
+            y_result,
+            x_result,
+            y,
+            x,
+            repeat_second,
+            repeat_first,
+            oracle,
+            wrapper,
+            combination,
+            repeat_source,
+            source,
+        ):
+            vector.destroy()
+
+
+def _run_v2_block_screen(
+    *,
+    args: argparse.Namespace,
+    comm: MPI.Intracomm,
+    provenance: dict[str, Any],
+    authority_gate: dict[str, Any] | None,
+    cfg: Any,
+    positive: Any,
+    negative: Any,
+    bottom: Any,
+    top: Any,
+    coupling: Any,
+    timings: dict[str, float],
+    total_started: float,
+    mark_stage,
+    progress,
+) -> None:
+    """Run one explicit-opt-in bounded V2 action block screen and stop."""
+
+    selections = _h5_frozen_mode_selection(positive, negative)
+    layout = None
+    action_matrix = None
+    action_context = None
+    outer_rhs = None
+    preconditioner = None
+    rhs_sets: dict[str, list[tuple[str, PETSc.Vec, dict[str, Any]]]] = {}
+    side_actions: dict[str, Any] = {}
+    side_components: dict[str, Any] = {}
+    side_fixed: dict[str, Any] = {}
+    side_woodbury: dict[str, Any] = {}
+    side_oracles: dict[str, Any] = {}
+    screen_result = None
+    screen_gate = None
+    side_records: dict[str, dict[str, Any]] = {"bottom": {}, "top": {}}
+    release_records: dict[str, dict[str, Any]] = {"bottom": {}, "top": {}}
+    record: dict[str, Any] | None = None
+    started = time.perf_counter()
+
+    approximate_side = {
+        "bottom-approx": "bottom",
+        "top-approx": "top",
+        "double": None,
+    }[args.task037b_v2_profile]
+    exact_side = (
+        None
+        if approximate_side is None
+        else "top"
+        if approximate_side == "bottom"
+        else "bottom"
+    )
+    systems = {"bottom": bottom, "top": top}
+    blocks = {"bottom": coupling.bottom, "top": coupling.top}
+
+    try:
+        mark_stage("v2_action_block_setup")
+        layout = HybridAugmentedLayout.build(
+            bottom,
+            top,
+            coupling.internal_unknown_count,
+        )
+        action_matrix, action_context = create_hybrid_assembled_block_action(
+            bottom,
+            top,
+            coupling,
+        )
+        outer_rhs = layout.pack(
+            bottom.b,
+            top.b,
+            internal_modal_rhs_correction(coupling),
+        )
+        global_operator_inventory = dict(action_context.inventory)
+        if "p6_direct_factor_count" not in global_operator_inventory:
+            raise RuntimeError("V2 global operator inventory lacks p6 factor count.")
+        global_direct_factor_count = global_operator_inventory["p6_direct_factor_count"]
+        if global_direct_factor_count is None:
+            raise RuntimeError("V2 global operator factor count is unavailable.")
+        global_direct_factor_count = int(global_direct_factor_count)
+        global_operator_contract = bool(
+            global_operator_inventory.get("global_A_materialized") is False
+            and global_operator_inventory.get("matrix_free") is True
+            and global_direct_factor_count == 0
+        )
+        if not global_operator_contract:
+            raise RuntimeError("V2 global operator contract failed.")
+
+        for side in ("bottom", "top"):
+            if approximate_side is None or side == approximate_side:
+                components = create_hybrid_local_dtn_action_components(systems[side])
+                side_components[side] = components
+                fixed = build_hybrid_whole_endcap_fixed_smoother_action(systems[side])
+                side_fixed[side] = fixed
+                woodbury = HybridLocalDtnWoodburyFixedAction(fixed, components)
+                side_woodbury[side] = woodbury
+                side_actions[side] = woodbury
+            elif side == exact_side:
+                direct_system = None
+                try:
+                    direct_system = assemble_hybrid_local_dtn_system(
+                        cfg,
+                        side,
+                        bottom_interface_z_nm=args.bottom_interface_nm,
+                        top_interface_z_nm=args.top_interface_nm,
+                        local_mesh_override=systems[side].local_mesh,
+                    )
+                    oracle = _h3_oracle_local_system(direct_system)
+                    side_oracles[side] = oracle
+                finally:
+                    if direct_system is not None:
+                        direct_system.destroy()
+                factor, factor_setup = _factor_local(oracle.A)
+                direct_action = HybridBlockLduDirectAction(
+                    oracle.A,
+                    factor,
+                    _local_factor_inventory(factor),
+                )
+                side_actions[side] = direct_action
+                side_records[side].update(
+                    {
+                        "factor_setup_seconds": float(factor_setup),
+                    }
+                )
+
+        certificates = {}
+        for side in ("bottom", "top"):
+            if side in side_woodbury:
+                certificates[side] = _v2_fixed_callback_certificate(side_woodbury[side])
+                if not certificates[side]["pass"]:
+                    raise RuntimeError(
+                        f"V2 fixed callback certificate failed for {side}."
+                    )
+            else:
+                certificates[side] = None
+
+        if approximate_side is not None:
+            rhs_sets[approximate_side] = _h5_rhs_set(
+                systems[approximate_side],
+                blocks[approximate_side],
+                selections,
+                side=approximate_side,
+                propagation=coupling.propagation,
+            )
+            rho_records = []
+            rhs_list = rhs_sets[approximate_side]
+            while rhs_list:
+                name, vector, metadata = rhs_list.pop(0)
+                if float(vector.norm()) <= 1.0e-30:
+                    vector.destroy()
+                    continue
+                target = systems[approximate_side].A.createVecLeft()
+                before = int(side_actions[approximate_side].diagnostics["apply_count"])
+                try:
+                    side_actions[approximate_side].apply(vector, target)
+                    rho = _h5_true_relative_residual(
+                        systems[approximate_side].A,
+                        vector,
+                        target,
+                    )
+                    after = int(
+                        side_actions[approximate_side].diagnostics["apply_count"]
+                    )
+                    rho_records.append(
+                        {
+                            "name": name,
+                            "metadata": dict(metadata),
+                            "source_digest": _h1_owned_vec_digest(vector),
+                            "rho": float(rho),
+                            "apply_count_before": before,
+                            "apply_count_after": after,
+                            "finite": bool(np.isfinite(rho)),
+                            "apply_count_increment": after - before,
+                            "pass": bool(after - before == 1 and np.isfinite(rho)),
+                        }
+                    )
+                finally:
+                    target.destroy()
+                    vector.destroy()
+            rhs_sets[approximate_side] = []
+            expected_nonzero = 10 if approximate_side == "bottom" else 11
+            if len(rho_records) != expected_nonzero or not all(
+                item["pass"] for item in rho_records
+            ):
+                raise RuntimeError(
+                    f"V2 one-apply diagnostic failed for {approximate_side}."
+                )
+            side_records[approximate_side].update(
+                {
+                    "rho_records": rho_records,
+                    "nonzero_rhs_count": len(rho_records),
+                    "one_apply_diagnostic": {
+                        "status": "pass",
+                        "expected_nonzero_rhs_count": expected_nonzero,
+                    },
+                }
+            )
+        else:
+            for side in ("bottom", "top"):
+                side_records[side]["one_apply_diagnostic"] = {
+                    "status": "not_run_here",
+                    "authority": "one-sided B/T required",
+                }
+
+        expected_factors = {
+            "bottom-approx": {"bottom": (0, 1), "top": (1, 0)},
+            "top-approx": {"bottom": (1, 0), "top": (0, 1)},
+            "double": {"bottom": (0, 1), "top": (0, 1)},
+        }[args.task037b_v2_profile]
+        factor_identity = {}
+        for side in ("bottom", "top"):
+            diagnostics = dict(side_actions[side].diagnostics)
+            direct_count = int(
+                diagnostics.get(
+                    "direct_factor_count",
+                    diagnostics.get("local_direct_factor_count", 0),
+                )
+            )
+            ilu_count = int(
+                diagnostics.get(
+                    "ilu_factor_count", diagnostics.get("base_factor_count", 0)
+                )
+            )
+            expected_direct, expected_ilu = expected_factors[side]
+            factor_identity[side] = {
+                "direct_factor_count": direct_count,
+                "ilu_factor_count": ilu_count,
+                "borrowed_local_factor_count": direct_count + ilu_count,
+                "expected_direct_factor_count": expected_direct,
+                "expected_ilu_factor_count": expected_ilu,
+                "pass": bool(
+                    direct_count == expected_direct and ilu_count == expected_ilu
+                ),
+            }
+            side_records[side]["factor_identity"] = factor_identity[side]
+        factor_identity_pass = bool(
+            all(item["pass"] for item in factor_identity.values())
+            and sum(
+                item["borrowed_local_factor_count"] for item in factor_identity.values()
+            )
+            == 2
+        )
+        if not factor_identity_pass:
+            raise RuntimeError("V2 fixed-side factor identity failed.")
+
+        preconditioner = create_action_block_ldu_preconditioner(
+            layout,
+            bottom,
+            top,
+            coupling,
+            side_actions["bottom"],
+            side_actions["top"],
+        )
+        pc_setup_inventory = dict(preconditioner.inventory)
+        pc_inventory_pass = bool(
+            pc_setup_inventory.get("global_A_materialized") is False
+            and pc_setup_inventory.get("borrowed_local_factor_count") == 2
+            and pc_setup_inventory.get("pc_owned_local_factor_count") == 0
+            and all(
+                pc_setup_inventory.get(f"{side}_direct_factor_count")
+                == expected_factors[side][0]
+                and pc_setup_inventory.get(f"{side}_ilu_factor_count")
+                == expected_factors[side][1]
+                for side in ("bottom", "top")
+            )
+        )
+        if not pc_inventory_pass:
+            raise RuntimeError("V2 PC factor inventory contract failed.")
+        online_before = {
+            side: int(side_actions[side].diagnostics["apply_count"])
+            for side in ("bottom", "top")
+        }
+        setup_seconds = _max_elapsed(comm, started)
+        timings["v2_action_block_setup"] = setup_seconds
+        mark_stage("v2_outer_screen")
+        started = time.perf_counter()
+        screen_result = screen_action_block_ldu(
+            action_matrix,
+            outer_rhs,
+            preconditioner,
+            max_it=int(args.task037b_v2_max_it),
+        )
+        preconditioner_after = dict(preconditioner.inventory)
+        preconditioner = None
+        pc_apply_seconds_local = float(screen_result.pc_apply_seconds)
+        pc_apply_seconds_max = float(comm.allreduce(pc_apply_seconds_local, op=MPI.MAX))
+        timings["v2_outer_screen"] = _max_elapsed(comm, started)
+        screen_gate = action_block_screen_gate(
+            screen_result.history,
+            profile=args.task037b_v2_profile,
+            max_it=int(args.task037b_v2_max_it),
+            converged_reason=int(screen_result.converged_reason),
+        )
+        online_after = {
+            side: int(side_actions[side].diagnostics["apply_count"])
+            for side in ("bottom", "top")
+        }
+        online_counts = {
+            side: {
+                "before": online_before[side],
+                "after": online_after[side],
+                "increment": online_after[side] - online_before[side],
+                "expected_increment": 2
+                * int(screen_result.inventory["pc_apply_count"]),
+                "pass": online_after[side] - online_before[side]
+                == 2 * int(screen_result.inventory["pc_apply_count"]),
+            }
+            for side in ("bottom", "top")
+        }
+        for side in ("bottom", "top"):
+            side_records[side].update(
+                {
+                    "action_diagnostics_before_release": dict(
+                        side_actions[side].diagnostics
+                    ),
+                    "online_apply": online_counts[side],
+                    "borrowed_action_survives_after_screen": bool(
+                        not side_actions[side].diagnostics.get("destroyed", False)
+                    ),
+                }
+            )
+
+        modal_diagnostics = dict(screen_result.inventory["modal_schur"])
+        expected_modal_shape = [int(coupling.internal_unknown_count)] * 2
+        modal_contract = bool(
+            modal_diagnostics.get("shape") == expected_modal_shape
+            and modal_diagnostics.get("rank") == coupling.internal_unknown_count
+            and np.isfinite(float(modal_diagnostics.get("condition")))
+            and float(modal_diagnostics["condition"]) <= 1.0e12
+            and modal_diagnostics.get("finite") is True
+            and float(modal_diagnostics["matrix_repeat_error"]) <= 1.0e-13
+            and float(modal_diagnostics["lu_repeat_solve_error"]) <= 1.0e-13
+            and all(
+                value == 2 * coupling.internal_unknown_count
+                for value in modal_diagnostics["build_apply_count"].values()
+            )
+        )
+        callback_contract = bool(
+            all(
+                certificates[side] is not None and certificates[side]["pass"]
+                for side in ("bottom", "top")
+                if side == approximate_side
+            )
+            and all(item["pass"] for item in certificates.values() if item is not None)
+        )
+        side_contract = bool(
+            all(item["online_apply"]["pass"] for item in side_records.values())
+            and all(
+                item["borrowed_action_survives_after_screen"]
+                for item in side_records.values()
+            )
+        )
+        integration_pass = bool(
+            modal_contract
+            and callback_contract
+            and factor_identity_pass
+            and pc_inventory_pass
+            and global_operator_contract
+            and side_contract
+        )
+        for side in ("bottom", "top"):
+            system = systems[side]
+            object_ledger = {
+                "inventory": dict(system.inventory),
+                "base_matrix_stats": dict(system.base_matrix_stats),
+                "augmented_matrix_stats": dict(system.augmented_matrix_stats),
+                "coupling_stats": dict(system.coupling_stats),
+                "static_condensation": system.static_condensation.metadata.to_dict(),
+            }
+            if side in side_components:
+                components = side_components[side]
+                component_matrices = {
+                    name: getattr(components, name) for name in ("F", "C", "D", "H")
+                }
+                object_ledger["components"] = {
+                    "h_condition_number": float(components.h_condition_number),
+                    "matrices": {
+                        name: {
+                            "type": str(matrix.getType()),
+                            "global_size": list(matrix.getSize()),
+                            "local_size": list(matrix.getLocalSize()),
+                        }
+                        for name, matrix in component_matrices.items()
+                    },
+                }
+            side_records[side]["object_ledger"] = object_ledger
+        record_started = time.perf_counter()
+        restart_local_rows = int(action_matrix.getLocalSize()[0])
+        restart_local_bytes = int(
+            (2 * 90 + 1) * restart_local_rows * np.dtype(np.complex128).itemsize
+        )
+        restart_rows_by_rank = [
+            int(value) for value in comm.allgather(restart_local_rows)
+        ]
+        restart_bytes_by_rank = [
+            int(value) for value in comm.allgather(restart_local_bytes)
+        ]
+        mark_stage("v2_record")
+        _verify_source_stable_at_end(
+            comm,
+            provenance,
+            args.verified_clean_sha,
+            args.allow_dirty_research,
+        )
+        record = {
+            "schema_version": 1,
+            "record_schema": "task037b.v2-block-pc-screen.v1",
+            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+            "benchmark_id": "task037b_v2_bounded_block_pc_screen",
+            "official_record": False,
+            "status": (
+                "task037b_v2_screen_pass"
+                if integration_pass and screen_gate["pass"]
+                else "task037b_v2_screen_numerical_negative"
+                if integration_pass
+                else "task037b_v2_screen_contract_failed"
+            ),
+            "metadata": {
+                **provenance,
+                "command": list(sys.argv),
+                "verified_clean_sha": args.verified_clean_sha,
+                "authority_gate": authority_gate,
+            },
+            "case": {
+                "degree": args.degree,
+                "h_nm": args.h_nm,
+                "modal_degree": args.modal_degree,
+                "modal_h_nm": args.modal_h_nm,
+                "requested_modes": args.requested_modes,
+                "candidate_modes": args.candidate_modes,
+                "mpi_size": comm.size,
+                "polarization_kind": args.polarization_kind,
+                "incident_grazing_deg": args.incident_grazing_deg,
+                "bottom_interface_nm": args.bottom_interface_nm,
+                "top_interface_nm": args.top_interface_nm,
+                "solver_path": args.solver_path,
+                "v2_profile": args.task037b_v2_profile,
+                "v2_max_it": args.task037b_v2_max_it,
+            },
+            "hybrid_system": {
+                "operator_inventory": global_operator_inventory,
+                "matrix_size": list(action_matrix.getSize()),
+                "local_matrix_size": list(action_matrix.getLocalSize()),
+                "matrix_type": str(action_matrix.getType()),
+                "global_A_materialized": False,
+                "global_direct_factor_count": global_direct_factor_count,
+                "global_operator_contract": global_operator_contract,
+                "side_factor_identity": factor_identity,
+                "pc_owned_local_factor_count": int(
+                    pc_setup_inventory["pc_owned_local_factor_count"]
+                ),
+            },
+            "screen": {
+                "profile": args.task037b_v2_profile,
+                "max_it": args.task037b_v2_max_it,
+                "restart": 90,
+                "rtol": 1.0e-6,
+                "atol": 0.0,
+                "zero_initial": True,
+                "converged_reason": int(screen_result.converged_reason),
+                "iterations": int(screen_result.iterations),
+                "reported_final": float(
+                    screen_result.history[-1]["reported_relative_residual"]
+                ),
+                "final_true_relative_residual": float(
+                    screen_result.final_true_relative_residual
+                ),
+                "minimum_true_relative_residual": float(
+                    screen_result.minimum_true_relative_residual
+                ),
+                "history": screen_result.history,
+                "last5": screen_result.last5,
+                "last40": screen_result.last40,
+                "gate": screen_gate,
+                "inventory_before_release": screen_result.inventory,
+                "inventory_after_release": preconditioner_after,
+                "pc_apply_seconds_max_rank": pc_apply_seconds_max,
+                "pc_apply_seconds_local": pc_apply_seconds_local,
+            },
+            "v2_telemetry": {
+                "task037b_v2_gate": True,
+                "profile": args.task037b_v2_profile,
+                "max_it": args.task037b_v2_max_it,
+                "frozen_mode_selection": selections,
+                "sides": side_records,
+                "fixed_callback_certificates": certificates,
+                "modal_schur": modal_diagnostics,
+                "modal_schur_contract_pass": modal_contract,
+                "factor_identity": factor_identity,
+                "factor_identity_pass": factor_identity_pass,
+                "global_operator_inventory": global_operator_inventory,
+                "global_operator_contract": global_operator_contract,
+                "pc_setup_inventory": pc_setup_inventory,
+                "pc_inventory_pass": pc_inventory_pass,
+                "online_apply_counts": online_counts,
+                "pc_apply_seconds_max_rank": pc_apply_seconds_max,
+                "pc_apply_seconds_local": pc_apply_seconds_local,
+                "release_records": release_records,
+                "release_pass": False,
+                "restart_basis_bytes": {
+                    "derived_estimate": True,
+                    "formula": "(2*restart+1)*rows*complex128_bytes",
+                    "local_rows": int(action_matrix.getLocalSize()[0]),
+                    "global_rows": int(action_matrix.getSize()[0]),
+                    "local_bytes": restart_local_bytes,
+                    "global_bytes": int(
+                        (2 * 90 + 1)
+                        * action_matrix.getSize()[0]
+                        * np.dtype(np.complex128).itemsize
+                    ),
+                    "rows_by_rank": restart_rows_by_rank,
+                    "bytes_by_rank": restart_bytes_by_rank,
+                    "sum_rows": int(sum(restart_rows_by_rank)),
+                    "max_rows": int(max(restart_rows_by_rank)),
+                    "sum_bytes": int(sum(restart_bytes_by_rank)),
+                    "max_bytes": int(max(restart_bytes_by_rank)),
+                },
+                "ordinary_default_changed": False,
+            },
+            "validation": _v2_not_run_validation_boundary(),
+            "physical_field_reconstruction": {"status": "not_run"},
+            "gates": {
+                "v2_fixed_callback_certificate": callback_contract,
+                "v2_modal_schur": modal_contract,
+                "v2_online_apply_counts": side_contract,
+                "v2_factor_identity": factor_identity_pass,
+                "v2_global_operator": global_operator_contract,
+                "v2_pc_inventory": pc_inventory_pass,
+                "v2_release": False,
+                "v2_screen": bool(screen_gate["pass"]),
+                "v2_integration_pass": integration_pass,
+                "v2_worker_numerical_pass": bool(screen_gate["pass"]),
+            },
+            "qualification": {
+                "task037b_v2_gate": True,
+                "profile": args.task037b_v2_profile,
+                "max_it": args.task037b_v2_max_it,
+                "integration_pass": integration_pass,
+                "worker_numerical_pass": bool(screen_gate["pass"]),
+                "official_record": False,
+                "disposition": (
+                    "screen_pass"
+                    if integration_pass and screen_gate["pass"]
+                    else "screen_numerical_negative"
+                    if integration_pass
+                    else "implementation_contract_failed"
+                ),
+                "boundary": (
+                    "V2 bounded block-PC screen only; no field, R/T/A, "
+                    "external diffraction, 12+12, or Full3D comparison."
+                ),
+            },
+            "timing_seconds_max_rank": {
+                **timings,
+                "v2_record": _max_elapsed(comm, record_started),
+                "total": _max_elapsed(comm, total_started),
+            },
+            "historical_peak_rss_mb_by_rank": comm.gather(
+                _historical_peak_rss_mb(), root=0
+            ),
+            "memory_semantics": (
+                "V2 bounded screen worker historical per-rank RSS; external "
+                "watchdog owns simultaneous resource classification."
+            ),
+        }
+    finally:
+        v2_release_started = time.perf_counter()
+        if preconditioner is not None:
+            preconditioner.destroy()
+        for rhs_list in rhs_sets.values():
+            for _name, vector, _metadata in rhs_list:
+                vector.destroy()
+
+        # Release in ownership phases: PC context, Woodbury data, fixed bases,
+        # components, direct carriers, then oracle matrices.
+        for side, woodbury in side_woodbury.items():
+            before = dict(woodbury.diagnostics)
+            release_started = time.perf_counter()
+            woodbury.destroy()
+            after = dict(woodbury.diagnostics)
+            release_records[side]["woodbury"] = {
+                "before": before,
+                "after": after,
+                "release_seconds": _max_elapsed(comm, release_started),
+            }
+            side_records[side]["woodbury_release"] = release_records[side]["woodbury"]
+
+        for side, fixed in side_fixed.items():
+            before = dict(fixed.diagnostics)
+            release_started = time.perf_counter()
+            fixed.destroy()
+            after = dict(fixed.diagnostics)
+            release_records[side]["fixed_base"] = {
+                "before": before,
+                "after": after,
+                "release_seconds": _max_elapsed(comm, release_started),
+            }
+            side_records[side]["fixed_base_release"] = release_records[side][
+                "fixed_base"
+            ]
+
+        for side, components in side_components.items():
+            release_started = time.perf_counter()
+            components.destroy()
+            release_records[side]["components"] = {
+                "destroyed": bool(getattr(components, "_destroyed", False)),
+                "release_seconds": _max_elapsed(comm, release_started),
+            }
+
+        for side in set(side_actions).intersection(side_oracles):
+            direct_action = side_actions[side]
+            before = dict(direct_action.diagnostics)
+            release_started = time.perf_counter()
+            direct_action.destroy()
+            after = dict(direct_action.diagnostics)
+            release_records[side]["direct_action"] = {
+                "before": before,
+                "after": after,
+                "release_seconds": _max_elapsed(comm, release_started),
+            }
+            side_records[side]["direct_action_release"] = release_records[side][
+                "direct_action"
+            ]
+
+        for side, oracle in side_oracles.items():
+            release_started = time.perf_counter()
+            oracle.destroy()
+            release_records[side]["oracle"] = {
+                "destroyed": bool(getattr(oracle, "_destroyed", False)),
+                "release_seconds": _max_elapsed(comm, release_started),
+            }
+
+        for side in ("bottom", "top"):
+            if side in side_woodbury:
+                release_pass = bool(
+                    release_records[side]["woodbury"]["after"].get("destroyed", False)
+                    and release_records[side]["fixed_base"]["after"].get(
+                        "destroyed", False
+                    )
+                    and release_records[side]["components"]["destroyed"]
+                )
+            elif side in side_oracles and side in side_actions:
+                release_pass = bool(
+                    release_records[side]["direct_action"]["after"].get(
+                        "destroyed", False
+                    )
+                    and release_records[side]["oracle"]["destroyed"]
+                )
+            else:
+                continue
+            release_records[side]["release_pass"] = release_pass
+            side_records[side]["release_pass"] = release_pass
+
+        outer_rhs_destroy_call_completed = False
+        action_matrix_destroy_call_completed = False
+        action_context_destroyed = False
+        if outer_rhs is not None:
+            outer_rhs.destroy()
+            outer_rhs_destroy_call_completed = True
+        if action_matrix is not None:
+            action_matrix.destroy()
+            action_matrix_destroy_call_completed = True
+        if action_context is not None:
+            action_context.destroy()
+            action_context_destroyed = bool(
+                getattr(action_context, "_destroyed", False)
+            )
+
+        outer_release = {
+            "outer_rhs_destroy_call_completed": outer_rhs_destroy_call_completed,
+            "action_matrix_destroy_call_completed": action_matrix_destroy_call_completed,
+            "action_context_destroyed": action_context_destroyed,
+            "destroy_calls_complete": bool(
+                outer_rhs_destroy_call_completed
+                and action_matrix_destroy_call_completed
+                and action_context_destroyed
+            ),
+            "release_seconds": _max_elapsed(comm, v2_release_started),
+        }
+        release_records["outer"] = outer_release
+
+        if record is not None and screen_gate is not None:
+            existing_sides = set(side_woodbury) | set(side_oracles)
+            release_pass = bool(
+                existing_sides == {"bottom", "top"}
+                and all(
+                    release_records[side].get("release_pass", False)
+                    for side in ("bottom", "top")
+                )
+                and outer_release["destroy_calls_complete"]
+                and screen_result is not None
+            )
+            final_integration_pass = bool(
+                record["qualification"]["integration_pass"] and release_pass
+            )
+            for side in ("bottom", "top"):
+                side_records[side]["release_records"] = release_records[side]
+            record["v2_telemetry"]["release_records"] = release_records
+            record["v2_telemetry"]["release_pass"] = release_pass
+            record["timing_seconds_max_rank"]["v2_release"] = float(
+                outer_release["release_seconds"]
+            )
+            record["timing_seconds_max_rank"]["total"] = _max_elapsed(
+                comm, total_started
+            )
+            record["gates"]["v2_release"] = release_pass
+            record["gates"]["v2_integration_pass"] = final_integration_pass
+            record["qualification"]["integration_pass"] = final_integration_pass
+            record["qualification"]["worker_numerical_pass"] = bool(screen_gate["pass"])
+            record["gates"]["v2_worker_numerical_pass"] = bool(screen_gate["pass"])
+            if not final_integration_pass:
+                record["status"] = "task037b_v2_screen_contract_failed"
+                record["qualification"]["disposition"] = (
+                    "implementation_contract_failed"
+                )
+            else:
+                record["status"] = (
+                    "task037b_v2_screen_pass"
+                    if screen_gate["pass"]
+                    else "task037b_v2_screen_numerical_negative"
+                )
+                record["qualification"]["disposition"] = (
+                    "screen_pass"
+                    if screen_gate["pass"]
+                    else "screen_numerical_negative"
+                )
+
+    raise _V2QualificationStop(record)
 
 
 def _run_h5_local_qualification(
@@ -4463,6 +5401,7 @@ def main() -> None:
         or args.task037b_h4_gate
         or args.task037b_h5_gate
         or args.task037b_v1_gate
+        or args.task037b_v2_gate
     ) and comm.size not in TASK035C_P6_H10_MPI_SIZES:
         raise SystemExit("Task035c p6/h10 Hybrid is restricted to MPI1/2/4/8.")
     if (
@@ -4471,8 +5410,9 @@ def main() -> None:
         or args.task037b_h4_gate
         or args.task037b_h5_gate
         or args.task037b_v1_gate
+        or args.task037b_v2_gate
     ) and comm.size != 8:
-        raise SystemExit("Task037b H1/H3/H4/H5/V1 Hybrid is restricted to MPI8.")
+        raise SystemExit("Task037b H1/H3/H4/H5/V1/V2 Hybrid is restricted to MPI8.")
     task035c_p6_gate = _task035c_worker_authority_gate(
         args,
         current_source_sha=provenance.get("commit_sha"),
@@ -4875,7 +5815,53 @@ def main() -> None:
         )
         progress("Task32 Phase6: real positive/negative QEP bases complete")
 
-        if args.task037b_h3_gate or args.task037b_h4_gate or args.task037b_h5_gate:
+        if args.task037b_v2_gate:
+            mark_stage("v2_action_coupling_build")
+            started = time.perf_counter()
+            bottom = assemble_hybrid_local_dtn_action_system(
+                cfg,
+                "bottom",
+                bottom_interface_z_nm=args.bottom_interface_nm,
+                top_interface_z_nm=args.top_interface_nm,
+                log=progress,
+            )
+            top = assemble_hybrid_local_dtn_action_system(
+                cfg,
+                "top",
+                bottom_interface_z_nm=args.bottom_interface_nm,
+                top_interface_z_nm=args.top_interface_nm,
+                log=progress,
+            )
+            coupling = build_hybrid_internal_mode_coupling(
+                cfg,
+                spaces,
+                positive,
+                negative,
+                bottom,
+                top,
+                length_nm=args.top_interface_nm - args.bottom_interface_nm,
+                propagation_model=args.internal_propagation_model,
+                modal_traction_model=args.internal_traction_model,
+                log=progress,
+            )
+            timings["v2_action_coupling_build"] = _max_elapsed(comm, started)
+            _run_v2_block_screen(
+                args=args,
+                comm=comm,
+                provenance=provenance,
+                authority_gate=task035c_p6_gate,
+                cfg=cfg,
+                positive=positive,
+                negative=negative,
+                bottom=bottom,
+                top=top,
+                coupling=coupling,
+                timings=timings,
+                total_started=total_started,
+                mark_stage=mark_stage,
+                progress=progress,
+            )
+        elif args.task037b_h3_gate or args.task037b_h4_gate or args.task037b_h5_gate:
             mark_stage("oracle_local_matrix_build")
             started = time.perf_counter()
             h3_direct_bottom = assemble_hybrid_local_dtn_system(
@@ -6759,6 +7745,8 @@ def main() -> None:
                     ),
                 }
             )
+    except _V2QualificationStop as stop:
+        record = stop.record
     except _V1R4QualificationStop as stop:
         record = stop.record
     except _V1R5QualificationStop as stop:
