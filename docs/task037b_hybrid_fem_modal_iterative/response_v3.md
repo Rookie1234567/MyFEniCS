@@ -35,7 +35,7 @@ raw record 均完成；worker_numerical_pass=false 表示 screen 数值 Gate 未
 |---|---|
 | source | 5b94060eae3a2ce02dd87e8a8c2075b635711346 |
 | branch | codex/20260807-task37b-hybrid-iterative-development |
-| physics | p6/h10、modal p6/h10、M120/candidate240、MPI8、10/110 nm、10° S |
+| physics | p6/h10、modal p6/h10、13.5 nm、M120/candidate240、external modes/endcap=40、MPI8、10/110 nm、10° S |
 | assembly/models | static-condensed、full3d_uniform_cg、scalar_cg_discrete_derivative |
 | callback | FixedAction wrapper 每次精确调用一次 HybridLocalDtnWoodburyOracle.apply |
 | inner solver | 不调用 LocalInverse.solve，不创建 nested local FGMRES/KSP、fallback 或 adaptive path |
@@ -48,7 +48,7 @@ raw record 均完成；worker_numerical_pass=false 表示 screen 数值 Gate 未
 Task37-extra 只作为继承的冻结负证据：remote ref e637b11d93baae920cb019f26fd0dcbd94802af6，
 reviewed source 30e179799b8eb6dee1be1bb976002550424bb40d，payload 3128209352 B =
 2.9133719876408577 GiB，约 trace ILU 25.636x；1V rho 为 5.61e6/3.47e6/6.17e7，
-2V rho 为 4.89e15/1.65e15/1.41e16，G2_FAIL、G3 prohibited。LOR、AMS/HX、p2/p4、
+2V rho 为 4.89e15/1.65e15/1.41e16，G2_FAIL、G3 prohibited；LOR transfer/algebra = pass only。LOR、AMS/HX、p2/p4、
 p-multigrid、full-space ILU 继续冻结，未重开。
 
 V2 依赖顺序与边界如下；六个实现提交均为 research-only，ordinary defaults unchanged：

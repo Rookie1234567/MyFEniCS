@@ -26,11 +26,13 @@
   "frozen_case": {
     "degree": 6,
     "h_nm": 10,
+    "wavelength_nm": 13.5,
     "modal_degree": 6,
     "modal_h_nm": 10,
     "mpi_size": 8,
     "requested_modes": 120,
     "candidate_modes": 240,
+    "external_modes_per_endcap": 40,
     "bottom_interface_nm": 10,
     "top_interface_nm": 110,
     "incident_grazing_deg": 10,
@@ -64,6 +66,7 @@
     "rho_2v": [4.89e15, 1.65e15, 1.41e16],
     "G2": "G2_FAIL",
     "G3": "prohibited",
+    "lor_transfer_algebra": "pass_only",
     "frozen_lanes": ["LOR", "AMS/HX", "p2/p4", "p-multigrid", "full-space ILU"]
   },
   "runs": {
