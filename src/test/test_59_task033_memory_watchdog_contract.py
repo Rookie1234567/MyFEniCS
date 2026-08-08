@@ -13,10 +13,12 @@ from benchmarks.run_task033_memory_watchdog import (
     _formal_shard_pass,
     _h5_stage_memory_summary,
     _parse_args,
+    _task034_terminal_record_is_complete,
     _task034_terminal_worker_drain,
     _task037b_h5_numerical_pass,
     _task037b_v1_r1_numerical_pass,
     _task037b_v1_r2_numerical_pass,
+    _task037b_v1_r3_numerical_pass,
     _watchdog_source_after,
     _watchdog_source_before,
     _worker_command,
@@ -223,6 +225,167 @@ def _v1_r2_raw_record() -> dict:
             "worker_numerical_pass": True,
             "integration_pass": True,
             "disposition": "pass_awaiting_r3",
+        },
+    }
+
+
+def _v1_r3_raw_record(*, numerical_negative: bool = False) -> dict:
+    names = (
+        "physical",
+        "random_seed_3701",
+        "random_seed_3702",
+        "random_seed_3703",
+        "random_seed_3704",
+        "modal_positive_lowest_propagating_or_lossy",
+        "modal_positive_first_kind_evanescent",
+        "modal_positive_highest_retained_index",
+        "modal_negative_lowest_propagating_or_lossy",
+        "modal_negative_first_kind_evanescent",
+        "modal_negative_highest_retained_index",
+    )
+    residual = 2.0e-8 if numerical_negative else 1.0e-12
+
+    def preconditioner(identity: str, correction: str) -> dict:
+        return {
+            "operator": {
+                "matrix_type": "python",
+                "identity": identity,
+                "external_dtn_correction": correction,
+            },
+            "configuration": {
+                "preconditioner_profile": "v1_whole_endcap_ilu0",
+                "coordinate_axis": 0,
+                "num_slabs": 1,
+                "overlap_fraction": 0.0,
+                "interpolation": "partition",
+                "ilu_levels": 0,
+                "factor_only": True,
+                "one_apply_per_pc_apply": True,
+                "two_step_action_operator": None,
+                "outer_solver": "right_fgmres",
+                "restart": 30,
+                "max_it": 300,
+                "rtol": 1.0e-10,
+                "atol": 0.0,
+                "true_residual_limit": 1.0e-8,
+            },
+            "rows": 8,
+            "source_matrix_nnz": 16,
+            "factor_nnz": 32,
+            "factor_csr_payload_estimate_bytes": 128,
+            "partition_audit": {"partition_weight_sum_error": 0.0},
+            "owner_partition": {
+                "owners": [0],
+                "row_counts": [8],
+                "intervals": [[0.0, 1.0]],
+            },
+            "shift": True,
+            "factor_fingerprints": [{"subdomain": 0, "sha256": "b" * 64}],
+            "no_direct_fallback": True,
+            "borrowed_action_survives_after_release": True,
+            "candidate_direct_factor_count": 0,
+            "factor_count_before_destroy": 1,
+            "factor_count_after_destroy": 0,
+            "factors_released": True,
+        }
+
+    def probe(name: str) -> dict:
+        return {
+            "name": name,
+            "reported_residual": residual,
+            "true_relative_residual": residual,
+            "setup_seconds": 1.0,
+            "solve_seconds": 2.0,
+            "apply_seconds": 3.0,
+            "stationary_correction_residuals": {
+                "1": 1.0e-1,
+                "2": 1.0e-2,
+                "4": 1.0e-3,
+                "8": 1.0e-4,
+            },
+            "explicit_true_residual_recomputed": True,
+            "finite": True,
+            "pass": not numerical_negative,
+            "reason": 2 if not numerical_negative else -3,
+            "iterations": 1 if not numerical_negative else 300,
+        }
+
+    def case(identity: str, correction: str) -> dict:
+        probes = [probe(name) for name in names]
+        case_pass = not numerical_negative
+        return {
+            "operator_identity": identity,
+            "external_dtn_correction": correction,
+            "preconditioner": preconditioner(identity, correction),
+            "probes": probes,
+            "probe_count": 11,
+            "max_true_relative_residual": residual,
+            "all_probes_finite": True,
+            "pass": case_pass,
+        }
+
+    sides = {
+        "bottom": {
+            "cases": {
+                "R3-F": case("fine_action_F_only", "excluded"),
+                "R3-A": case("complete_hybrid_action", "included"),
+            },
+            "pass": not numerical_negative,
+        },
+        "top": {
+            "cases": {
+                "R3-F": case("fine_action_F_only", "excluded"),
+                "R3-A": case("complete_hybrid_action", "included"),
+            },
+            "pass": not numerical_negative,
+        },
+    }
+    return {
+        "schema_version": 1,
+        "record_schema": "task037b.v1-r3-whole-endcap-ilu0.v1",
+        "benchmark_id": "task037b_v1_r3_whole_endcap_ilu0",
+        "status": "task037b_v1_r3_complete_awaiting_r4",
+        "hybrid_system": {
+            "global_action_constructed": False,
+            "global_A_materialized": False,
+            "global_F_materialized": False,
+            "explicit_global_C_D_materialized": False,
+            "direct_factor_count": 0,
+        },
+        "validation": {
+            "port_power": "not_run",
+            "R_total": "not_run",
+            "T_total": "not_run",
+            "A_balance": "not_run",
+            "A_volume_total": "not_run",
+        },
+        "physical_field_reconstruction": {"status": "not_run"},
+        "v1_r3_telemetry": {
+            "task037b_v1_gate": True,
+            "preconditioner_profile": "v1_whole_endcap_ilu0",
+            "formal_probe_count_per_side": 11,
+            "sides": sides,
+            "r3_contract_pass": True,
+            "r3_numerical_pass": not numerical_negative,
+        },
+        "gates": {
+            "r3_record_complete": True,
+            "r3_all_cases_complete": True,
+            "r3_all_probes_finite": True,
+            "r3_no_direct_fallback": True,
+            "r3_factors_released": True,
+            "r3_pass": not numerical_negative,
+        },
+        "qualification": {
+            "task037b_v1_gate": True,
+            "r3_pass": not numerical_negative,
+            "worker_numerical_pass": not numerical_negative,
+            "integration_pass": True,
+            "disposition": (
+                "r3_numerical_pass_awaiting_r4"
+                if not numerical_negative
+                else "r3_numerical_negative_awaiting_r4"
+            ),
         },
     }
 
@@ -1383,6 +1546,27 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
         }
         self.assertFalse(_task037b_v1_r2_numerical_pass(qualification_only))
 
+    def test_v1_r3_checker_contract_and_legal_negative(self) -> None:
+        self.assertTrue(_task037b_v1_r3_numerical_pass(_v1_r3_raw_record()))
+
+        negative = _v1_r3_raw_record(numerical_negative=True)
+        self.assertTrue(
+            _task037b_v1_r3_numerical_pass(negative, require_numerical_pass=False)
+        )
+        self.assertFalse(_task037b_v1_r3_numerical_pass(negative))
+
+        wrong_profile = _v1_r3_raw_record()
+        wrong_profile["v1_r3_telemetry"]["sides"]["bottom"]["cases"]["R3-F"][
+            "preconditioner"
+        ]["configuration"]["preconditioner_profile"] = "h5_six_slab_ilu0"
+        self.assertFalse(_task037b_v1_r3_numerical_pass(wrong_profile))
+
+        unreleased = _v1_r3_raw_record()
+        unreleased["v1_r3_telemetry"]["sides"]["top"]["cases"]["R3-A"][
+            "preconditioner"
+        ]["factors_released"] = False
+        self.assertFalse(_task037b_v1_r3_numerical_pass(unreleased))
+
     def test_h5_external_no_swap_is_a_formal_requirement(self) -> None:
         kwargs = {
             "return_code": 0,
@@ -1419,6 +1603,14 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
         self.assertFalse(
             _task034_terminal_worker_drain(**{**kwargs, "live_worker_count": 1})
         )
+
+    def test_v1_r3_terminal_record_is_complete(self) -> None:
+        record = _v1_r3_raw_record()
+        record["timestamp_utc"] = "2026-08-08T00:00:00+00:00"
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "solver_record.json"
+            path.write_text(json.dumps(record), encoding="utf-8")
+            self.assertTrue(_task034_terminal_record_is_complete(path))
 
     def test_h5_stage_memory_summary_keeps_peaks_separate(self) -> None:
         rows = [

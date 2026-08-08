@@ -93,6 +93,7 @@ from src.solvers.hybrid_fem_modal_schur_direct import (
 )
 from src.solvers.hybrid_local_iterative_inverse import (
     H5_MAX_IT,
+    R3_PRECONDITIONER_PROFILE,
     build_hybrid_local_iterative_inverse,
 )
 from src.solvers.hybrid_local_dtn_action import (
@@ -766,6 +767,14 @@ class _V1R2QualificationStop(RuntimeError):
         self.record = record
 
 
+class _V1R3QualificationStop(RuntimeError):
+    """Internal control flow after writing the bounded V1-R3 record."""
+
+    def __init__(self, record: dict[str, Any]) -> None:
+        super().__init__(record.get("status", "V1-R3 qualification complete"))
+        self.record = record
+
+
 NUMERICAL_INFINITY_BETA_H_CUTOFF = 1.0e4
 
 
@@ -1213,6 +1222,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "local-inverse-qualification",
             "dtn-component-qualification",
             "f-only-local-inverse-qualification",
+            "whole-endcap-ilu0-qualification",
         ),
         default="augmented",
         help=(
@@ -1254,6 +1264,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         and not args.task037b_v1_gate
     ):
         parser.error("f-only-local-inverse-qualification requires --task037b-v1-gate.")
+    if (
+        args.solver_path == "whole-endcap-ilu0-qualification"
+        and not args.task037b_v1_gate
+    ):
+        parser.error("whole-endcap-ilu0-qualification requires --task037b-v1-gate.")
     if args.degree == 6 and not any(selected_scoped_gates):
         parser.error(
             "p6 is fail-closed; pass a fixed scoped Task035c, Task037b H1, "
@@ -1304,7 +1319,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and args.requested_modes == 120
             and args.candidate_modes == 240
             and args.solver_path
-            in ("dtn-component-qualification", "f-only-local-inverse-qualification")
+            in (
+                "dtn-component-qualification",
+                "f-only-local-inverse-qualification",
+                "whole-endcap-ilu0-qualification",
+            )
             and args.comparison_solver_path == "fast"
             and not args.compare_modal_schur
             and args.stage4_full3d_assembly_backend
@@ -1328,8 +1347,9 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             parser.error(
                 "--task037b-v1-gate is restricted to the fixed p6/h10, "
                 "10/110 nm, S-polarized, full3d/scalar-CG, M120+M120, "
-                "candidate240, dtn-component-qualification or "
-                "f-only-local-inverse-qualification, "
+                "candidate240, dtn-component-qualification, "
+                "f-only-local-inverse-qualification or "
+                "whole-endcap-ilu0-qualification, "
                 "static-condensed MPI8 path."
             )
     elif args.task037b_h1_gate:
@@ -2776,6 +2796,410 @@ def _run_v1_r2_f_only_qualification(
                 vector.destroy()
 
 
+def _run_v1_r3_whole_endcap_qualification(
+    *,
+    args: argparse.Namespace,
+    comm: MPI.Intracomm,
+    provenance: dict[str, Any],
+    authority_gate: dict[str, Any] | None,
+    positive,
+    negative,
+    bottom,
+    top,
+    coupling,
+    timings: dict[str, float],
+    total_started: float,
+    mark_stage,
+    progress,
+) -> None:
+    """Run sequential whole-endcap ILU(0) R3-F/R3-A diagnostics."""
+
+    started = time.perf_counter()
+    selections = _h5_frozen_mode_selection(positive, negative)
+    rhs_sets: dict[str, list[tuple[str, PETSc.Vec, dict[str, Any]]]] = {
+        "bottom": [],
+        "top": [],
+    }
+    side_records: dict[str, dict[str, Any]] = {}
+    inverse = None
+
+    def solve_summary(result) -> dict[str, Any]:
+        diagnostics = result.diagnostics
+        return {
+            "reason": int(result.converged_reason),
+            "iterations": int(result.iterations),
+            "reported_residual": float(result.reported_relative_residual),
+            "true_relative_residual": float(result.true_relative_residual),
+            "stationary_correction_residuals": {
+                str(key): float(value)
+                for key, value in result.stationary_correction_residuals.items()
+            },
+            "setup_seconds": float(result.setup_seconds),
+            "solve_seconds": float(result.solve_seconds),
+            "apply_seconds": float(result.apply_seconds),
+            "solution_digest": _h1_owned_vec_digest(result.solution),
+            "explicit_true_residual_recomputed": bool(
+                diagnostics["explicit_true_residual_recomputed"]
+            ),
+        }
+
+    def diagnostics_snapshot(diagnostics: dict[str, Any]) -> dict[str, Any]:
+        smoother = diagnostics["smoother"]
+        lifecycle = diagnostics["lifecycle"]
+        partition = diagnostics["partition_audit"]
+        return {
+            "operator": dict(diagnostics["operator"]),
+            "configuration": dict(diagnostics["configuration"]),
+            "rows": int(diagnostics["rows"]),
+            "source_matrix_nnz": int(diagnostics["source_matrix_nnz"]),
+            "factor_nnz": int(diagnostics["factor_nnz"]),
+            "factor_csr_payload_estimate_bytes": int(
+                diagnostics["factor_csr_payload_estimate_bytes"]
+            ),
+            "factor_csr_payload_estimate_formula": diagnostics[
+                "factor_csr_payload_estimate_formula"
+            ],
+            "partition_audit": dict(partition),
+            "owner_partition": {
+                "owners": list(partition["slab_owners"]),
+                "row_counts": list(partition["slab_row_counts"]),
+                "intervals": list(partition["coordinate_intervals"]),
+            },
+            "shift": bool(smoother["subdomain_local_diagonal_shift"]),
+            "factor_fingerprints": [
+                dict(item) for item in smoother["factor_fingerprints"]
+            ],
+            "factor_count_before_destroy": int(
+                lifecycle["factor_count_before_destroy"]
+            ),
+            "candidate_direct_factor_count": int(
+                lifecycle["candidate_direct_factor_count"]
+            ),
+            "factor_only_storage": bool(lifecycle["factor_only_storage"]),
+            "no_direct_fallback": bool(diagnostics["no_direct_fallback"]),
+        }
+
+    def result_is_finite(result: dict[str, Any]) -> bool:
+        stationary = result["stationary_correction_residuals"]
+        return bool(
+            all(
+                np.isfinite(float(result[key]))
+                for key in (
+                    "reported_residual",
+                    "true_relative_residual",
+                    "setup_seconds",
+                    "solve_seconds",
+                    "apply_seconds",
+                )
+            )
+            and set(stationary) == {"1", "2", "4", "8"}
+            and all(np.isfinite(float(value)) for value in stationary.values())
+        )
+
+    def run_case(
+        side: str,
+        case_name: str,
+        operator_override: PETSc.Mat | None,
+        operator_identity: str,
+    ) -> dict[str, Any]:
+        nonlocal inverse
+        case_started = time.perf_counter()
+        stage_prefix = f"v1_r3_{side}_{case_name.lower().replace('-', '_')}"
+        action_system = bottom if side == "bottom" else top
+        borrowed_action = (
+            action_system.fine_action
+            if operator_identity == "fine_action_F_only"
+            else action_system.A
+        )
+        mark_stage(f"{stage_prefix}_setup")
+        setup_started = time.perf_counter()
+        inverse = build_hybrid_local_iterative_inverse(
+            bottom if side == "bottom" else top,
+            operator_override=operator_override,
+            operator_identity=operator_identity,
+            preconditioner_profile=R3_PRECONDITIONER_PROFILE,
+        )
+        timings[f"{stage_prefix}_setup"] = _max_elapsed(comm, setup_started)
+        contract = diagnostics_snapshot(inverse._diagnostics())
+        mark_stage(f"{stage_prefix}_solves")
+        solve_started = time.perf_counter()
+        rows: list[dict[str, Any]] = []
+        try:
+            for name, rhs, metadata in rhs_sets[side]:
+                result = None
+                try:
+                    result = inverse.solve(rhs)
+                    summary = solve_summary(result)
+                    row = {
+                        "name": name,
+                        "metadata": dict(metadata),
+                        "source_digest": _h1_owned_vec_digest(rhs),
+                        **summary,
+                        "finite": result_is_finite(summary),
+                    }
+                    row["pass"] = bool(
+                        row["finite"]
+                        and summary["reason"] > 0
+                        and summary["iterations"] <= H5_MAX_IT
+                        and summary["true_relative_residual"] <= 1.0e-8
+                        and summary["explicit_true_residual_recomputed"]
+                    )
+                    progress(
+                        f"Task037b V1-R3 {side}/{case_name}/{name}: "
+                        f"reason={summary['reason']}, "
+                        f"iterations={summary['iterations']}, "
+                        f"true={summary['true_relative_residual']:.3e}"
+                    )
+                    rows.append(row)
+                finally:
+                    if result is not None:
+                        result.destroy()
+            timings[f"{stage_prefix}_solves"] = _max_elapsed(comm, solve_started)
+        finally:
+            release_started = time.perf_counter()
+            released_inverse = inverse
+            released_inverse.destroy()
+            inverse = None
+            timings[f"{stage_prefix}_release"] = _max_elapsed(comm, release_started)
+            mark_stage(f"{stage_prefix}_release")
+        if len(rows) != 11:
+            raise RuntimeError("V1-R3 requires exactly eleven probes per side/case.")
+        factor_count_after_destroy = released_inverse.factor_count_after_destroy
+        factor_count_before_destroy = released_inverse.factor_count_before_destroy
+        factors_released = released_inverse.factors_released
+        action_survives_after_release = bool(
+            borrowed_action.getType() == "python"
+            and borrowed_action.getSize() == action_system.A.getSize()
+        )
+        contract.update(
+            {
+                "factor_count_before_destroy": (
+                    None
+                    if factor_count_before_destroy is None
+                    else int(factor_count_before_destroy)
+                ),
+                "factor_count_after_destroy": (
+                    None
+                    if factor_count_after_destroy is None
+                    else int(factor_count_after_destroy)
+                ),
+                "factors_released": bool(factors_released),
+                "borrowed_action_survives_after_release": action_survives_after_release,
+                "case_wall_seconds": _max_elapsed(comm, case_started),
+            }
+        )
+        actual_operator = contract["operator"]
+        return {
+            "operator_identity": actual_operator["identity"],
+            "external_dtn_correction": actual_operator["external_dtn_correction"],
+            "preconditioner": contract,
+            "probes": rows,
+            "probe_count": len(rows),
+            "max_true_relative_residual": max(
+                row["true_relative_residual"] for row in rows
+            ),
+            "all_probes_finite": bool(all(row["finite"] for row in rows)),
+            "pass": bool(all(row["pass"] for row in rows)),
+        }
+
+    try:
+        rhs_sets["bottom"] = _h5_rhs_set(
+            bottom,
+            coupling.bottom,
+            selections,
+            side="bottom",
+            propagation=coupling.propagation,
+        )
+        rhs_sets["top"] = _h5_rhs_set(
+            top,
+            coupling.top,
+            selections,
+            side="top",
+            propagation=coupling.propagation,
+        )
+        for side, system in (("bottom", bottom), ("top", top)):
+            side_cases = {
+                "R3-F": run_case(
+                    side,
+                    "R3-F",
+                    system.fine_action,
+                    "fine_action_F_only",
+                ),
+                "R3-A": run_case(
+                    side,
+                    "R3-A",
+                    None,
+                    "complete_hybrid_action",
+                ),
+            }
+            side_records[side] = {
+                "cases": side_cases,
+                "pass": bool(all(item["pass"] for item in side_cases.values())),
+            }
+        r3_pass = bool(
+            all(side_record["pass"] for side_record in side_records.values())
+        )
+        r3_contract_pass = bool(
+            len(side_records) == 2
+            and all(
+                len(side_record["cases"]) == 2
+                and all(
+                    case["probe_count"] == 11
+                    and case["preconditioner"]["configuration"][
+                        "preconditioner_profile"
+                    ]
+                    == "v1_whole_endcap_ilu0"
+                    and case["preconditioner"]["configuration"]["num_slabs"] == 1
+                    and case["preconditioner"]["configuration"]["overlap_fraction"]
+                    == 0.0
+                    and case["preconditioner"]["operator"]["identity"]
+                    == case["operator_identity"]
+                    and case["preconditioner"]["operator"]["external_dtn_correction"]
+                    == case["external_dtn_correction"]
+                    and case["preconditioner"]["no_direct_fallback"] is True
+                    and case["preconditioner"]["candidate_direct_factor_count"] == 0
+                    and case["preconditioner"]["factor_count_before_destroy"] == 1
+                    and case["preconditioner"]["shift"] is True
+                    and case["preconditioner"]["borrowed_action_survives_after_release"]
+                    is True
+                    and case["preconditioner"]["factors_released"] is True
+                    and case["preconditioner"]["factor_count_after_destroy"] == 0
+                    and np.isfinite(
+                        case["preconditioner"]["partition_audit"][
+                            "partition_weight_sum_error"
+                        ]
+                    )
+                    and case["preconditioner"]["partition_audit"][
+                        "partition_weight_sum_error"
+                    ]
+                    <= 1.0e-12
+                    for case in side_record["cases"].values()
+                )
+                for side_record in side_records.values()
+            )
+        )
+        timings["v1_r3_whole_endcap_qualification"] = _max_elapsed(comm, started)
+        mark_stage("v1_r3_record")
+        _verify_source_stable_at_end(
+            comm,
+            provenance,
+            args.verified_clean_sha,
+            args.allow_dirty_research,
+        )
+        record = {
+            "schema_version": 1,
+            "record_schema": "task037b.v1-r3-whole-endcap-ilu0.v1",
+            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+            "benchmark_id": "task037b_v1_r3_whole_endcap_ilu0",
+            "status": "task037b_v1_r3_complete_awaiting_r4",
+            "metadata": {
+                **provenance,
+                "command": list(sys.argv),
+                "verified_clean_sha": args.verified_clean_sha,
+                "authority_gate": authority_gate,
+            },
+            "case": {
+                "degree": args.degree,
+                "h_nm": args.h_nm,
+                "modal_degree": args.modal_degree,
+                "modal_h_nm": args.modal_h_nm,
+                "requested_modes": args.requested_modes,
+                "candidate_modes": args.candidate_modes,
+                "mpi_size": comm.size,
+                "polarization_kind": args.polarization_kind,
+                "incident_grazing_deg": args.incident_grazing_deg,
+                "bottom_interface_nm": args.bottom_interface_nm,
+                "top_interface_nm": args.top_interface_nm,
+                "solver_path": args.solver_path,
+                "operator_identity": "R3-F_then_R3-A",
+                "preconditioner_profile": R3_PRECONDITIONER_PROFILE,
+                "formal_rhs_count_per_side": 11,
+            },
+            "hybrid_system": {
+                "global_action_constructed": False,
+                "global_A_materialized": False,
+                "global_F_materialized": False,
+                "explicit_global_C_D_materialized": False,
+                "direct_factor_count": 0,
+                "bottom_operator_inventory": dict(bottom.inventory),
+                "top_operator_inventory": dict(top.inventory),
+            },
+            "validation": {
+                "port_power": "not_run",
+                "R_total": "not_run",
+                "T_total": "not_run",
+                "A_balance": "not_run",
+                "A_volume_total": "not_run",
+            },
+            "physical_field_reconstruction": {"status": "not_run"},
+            "v1_r3_telemetry": {
+                "task037b_v1_gate": True,
+                "r3_scope": "whole-endcap ILU(0) R3-F/R3-A baseline",
+                "preconditioner_profile": R3_PRECONDITIONER_PROFILE,
+                "frozen_mode_selection": selections,
+                "formal_probe_count_per_side": 11,
+                "sides": side_records,
+                "r3_contract_pass": r3_contract_pass,
+                "r3_numerical_pass": r3_pass,
+                "ordinary_default_changed": False,
+            },
+            "gates": {
+                "r3_record_complete": r3_contract_pass,
+                "r3_all_cases_complete": r3_contract_pass,
+                "r3_all_probes_finite": bool(
+                    all(
+                        case["all_probes_finite"]
+                        for side_record in side_records.values()
+                        for case in side_record["cases"].values()
+                    )
+                ),
+                "r3_no_direct_fallback": bool(
+                    all(
+                        case["preconditioner"]["candidate_direct_factor_count"] == 0
+                        and case["preconditioner"]["no_direct_fallback"] is True
+                        for side_record in side_records.values()
+                        for case in side_record["cases"].values()
+                    )
+                ),
+                "r3_factors_released": r3_contract_pass,
+                "r3_pass": r3_pass,
+            },
+            "qualification": {
+                "task037b_v1_gate": True,
+                "r3_pass": r3_pass,
+                "worker_numerical_pass": r3_pass,
+                "integration_pass": r3_contract_pass,
+                "disposition": (
+                    "r3_numerical_pass_awaiting_r4"
+                    if r3_pass
+                    else "r3_numerical_negative_awaiting_r4"
+                ),
+                "boundary": (
+                    "R3-F/R3-A whole-endcap ILU(0) baseline only; R4/R5 and "
+                    "R/T/A/field/12+12 physics gates are not run."
+                ),
+            },
+            "timing_seconds_max_rank": {
+                **timings,
+                "total": _max_elapsed(comm, total_started),
+            },
+            "historical_peak_rss_mb_by_rank": comm.gather(
+                _historical_peak_rss_mb(), root=0
+            ),
+            "memory_semantics": (
+                "R3-F and R3-A are sequential whole-endcap factors; resource "
+                "samples remain external watchdog evidence."
+            ),
+        }
+        raise _V1R3QualificationStop(record)
+    finally:
+        if inverse is not None:
+            inverse.destroy()
+        for rhs_list in rhs_sets.values():
+            for _name, vector, _metadata in rhs_list:
+                vector.destroy()
+
+
 def main() -> None:
     args = _parse_args()
     if args.h_nm <= 0.0:
@@ -3706,7 +4130,23 @@ def main() -> None:
                 log=progress,
             )
             timings["v1_action_coupling_build"] = _max_elapsed(comm, started)
-            if args.solver_path == "f-only-local-inverse-qualification":
+            if args.solver_path == "whole-endcap-ilu0-qualification":
+                _run_v1_r3_whole_endcap_qualification(
+                    args=args,
+                    comm=comm,
+                    provenance=provenance,
+                    authority_gate=task035c_p6_gate,
+                    positive=positive,
+                    negative=negative,
+                    bottom=bottom,
+                    top=top,
+                    coupling=coupling,
+                    timings=timings,
+                    total_started=total_started,
+                    mark_stage=mark_stage,
+                    progress=progress,
+                )
+            elif args.solver_path == "f-only-local-inverse-qualification":
                 _run_v1_r2_f_only_qualification(
                     args=args,
                     comm=comm,
@@ -5107,6 +5547,8 @@ def main() -> None:
                     ),
                 }
             )
+    except _V1R3QualificationStop as stop:
+        record = stop.record
     except _V1R2QualificationStop as stop:
         record = stop.record
     except _V1QualificationStop as stop:

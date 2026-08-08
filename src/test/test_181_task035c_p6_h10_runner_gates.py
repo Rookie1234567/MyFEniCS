@@ -237,6 +237,12 @@ def _v1_r2_hybrid_cli() -> list[str]:
     return cli
 
 
+def _v1_r3_hybrid_cli() -> list[str]:
+    cli = _v1_hybrid_cli()
+    cli[cli.index("--solver-path") + 1] = "whole-endcap-ilu0-qualification"
+    return cli
+
+
 class Task035cP6H10RunnerGateTests(unittest.TestCase):
     def test_ordinary_defaults_remain_unchanged(self) -> None:
         phase6 = parse_phase6_args([])
@@ -618,6 +624,21 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
                 ]
             )
 
+    def test_task037b_v1_r3_whole_endcap_gate_and_worker_forwarding(self) -> None:
+        args = parse_memory_args(_v1_r3_hybrid_cli())
+        self.assertTrue(args.task037b_v1_gate)
+        self.assertEqual(args.solver_path, "whole-endcap-ilu0-qualification")
+        command = _worker_command(args, Path("record.json"), Path("stages.jsonl"))
+        self.assertIn("--task037b-v1-gate", command)
+        self.assertEqual(
+            command[command.index("--solver-path") + 1],
+            "whole-endcap-ilu0-qualification",
+        )
+        without_flag = _v1_r3_hybrid_cli()
+        without_flag.remove("--task037b-v1-gate")
+        with self.assertRaises(SystemExit):
+            parse_memory_args(without_flag)
+
     def test_task035c_rejects_augmented_and_h1_summary_forwards(self) -> None:
         old_augmented = _hybrid_cli("assembly_time_static_condensed")
         old_augmented[old_augmented.index("--solver-path") + 1] = "augmented"
@@ -631,6 +652,7 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
                 "h4_telemetry": {"task037b_h4_gate": True},
                 "h5_telemetry": {"task037b_h5_gate": True},
                 "v1_telemetry": {"task037b_v1_gate": True},
+                "v1_r3_telemetry": {"r3_contract_pass": True},
                 "hybrid_system": {
                     "block_shapes": {"A": [1, 1]},
                     "inserted_nnz_by_block": {"A": 1},
@@ -647,6 +669,7 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
         self.assertTrue(summary["h4_telemetry"]["task037b_h4_gate"])
         self.assertTrue(summary["h5_telemetry"]["task037b_h5_gate"])
         self.assertTrue(summary["v1_telemetry"]["task037b_v1_gate"])
+        self.assertTrue(summary["v1_r3_telemetry"]["r3_contract_pass"])
         self.assertNotIn("h5_memory_stages", summary)
         self.assertEqual(summary["hybrid_system"]["block_shapes"], {"A": [1, 1]})
         self.assertFalse(

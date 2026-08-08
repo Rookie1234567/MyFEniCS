@@ -970,13 +970,23 @@ def _task034_terminal_record_is_complete(record_path: Path) -> bool:
     ) == "task037b.v1-r2-f-only-local-inverse.v1" and isinstance(
         payload.get("v1_r2_telemetry"), dict
     )
+    v1_r3_record = payload.get(
+        "record_schema"
+    ) == "task037b.v1-r3-whole-endcap-ilu0.v1" and isinstance(
+        payload.get("v1_r3_telemetry"), dict
+    )
     return bool(
         payload.get("schema_version") == 1
         and isinstance(payload.get("benchmark_id"), str)
         and isinstance(payload.get("timestamp_utc"), str)
         and isinstance(payload.get("status"), str)
         and isinstance(payload.get("qualification"), dict)
-        and (isinstance(payload.get("solve"), dict) or v1_record or v1_r2_record)
+        and (
+            isinstance(payload.get("solve"), dict)
+            or v1_record
+            or v1_r2_record
+            or v1_r3_record
+        )
         and isinstance(payload.get("gates"), dict)
     )
 
@@ -1101,6 +1111,7 @@ def _hybrid_measurements(record: dict[str, Any]) -> dict[str, Any]:
         "h5_telemetry": record.get("h5_telemetry"),
         "v1_telemetry": record.get("v1_telemetry"),
         "v1_r2_telemetry": record.get("v1_r2_telemetry"),
+        "v1_r3_telemetry": record.get("v1_r3_telemetry"),
         "status": record.get("status"),
         "case": record.get("case"),
         "qep": {
@@ -1557,6 +1568,272 @@ def _task037b_v1_r2_numerical_pass(
     return bool(all_pass if require_numerical_pass else True)
 
 
+def _task037b_v1_r3_numerical_pass(
+    record: dict[str, Any], *, require_numerical_pass: bool = True
+) -> bool:
+    """Recompute the V1-R3 whole-endcap contract from raw probe fields."""
+
+    if not isinstance(record, dict):
+        return False
+    if (
+        record.get("schema_version") != 1
+        or record.get("record_schema") != "task037b.v1-r3-whole-endcap-ilu0.v1"
+        or record.get("benchmark_id") != "task037b_v1_r3_whole_endcap_ilu0"
+        or record.get("status") != "task037b_v1_r3_complete_awaiting_r4"
+    ):
+        return False
+    telemetry = record.get("v1_r3_telemetry")
+    qualification = record.get("qualification")
+    gates = record.get("gates")
+    if (
+        not isinstance(telemetry, dict)
+        or not isinstance(qualification, dict)
+        or not isinstance(gates, dict)
+        or telemetry.get("task037b_v1_gate") is not True
+        or telemetry.get("preconditioner_profile") != "v1_whole_endcap_ilu0"
+        or telemetry.get("formal_probe_count_per_side") != 11
+        or qualification.get("task037b_v1_gate") is not True
+        or qualification.get("integration_pass") is not True
+    ):
+        return False
+    hybrid_system = record.get("hybrid_system")
+    if (
+        not isinstance(hybrid_system, dict)
+        or hybrid_system.get("global_action_constructed") is not False
+        or hybrid_system.get("global_A_materialized") is not False
+        or hybrid_system.get("global_F_materialized") is not False
+        or hybrid_system.get("explicit_global_C_D_materialized") is not False
+        or hybrid_system.get("direct_factor_count") != 0
+    ):
+        return False
+    validation = record.get("validation")
+    physical = record.get("physical_field_reconstruction")
+    if (
+        not isinstance(validation, dict)
+        or any(
+            validation.get(name) != "not_run"
+            for name in (
+                "port_power",
+                "R_total",
+                "T_total",
+                "A_balance",
+                "A_volume_total",
+            )
+        )
+        or not isinstance(physical, dict)
+        or physical.get("status") != "not_run"
+    ):
+        return False
+    base_names = {
+        "physical",
+        "random_seed_3701",
+        "random_seed_3702",
+        "random_seed_3703",
+        "random_seed_3704",
+    }
+    sides = telemetry.get("sides")
+    if (
+        not isinstance(sides, dict)
+        or set(sides) != {"bottom", "top"}
+        or telemetry.get("r3_contract_pass") is not True
+    ):
+        return False
+    all_numeric_pass = True
+    all_finite = True
+    all_contract = True
+    expected_identity = {
+        "R3-F": ("fine_action_F_only", "excluded"),
+        "R3-A": ("complete_hybrid_action", "included"),
+    }
+    for side in ("bottom", "top"):
+        side_record = sides.get(side)
+        if not isinstance(side_record, dict) or set(side_record.get("cases", {})) != {
+            "R3-F",
+            "R3-A",
+        }:
+            return False
+        side_numeric_pass = True
+        for case_name, (identity, correction) in expected_identity.items():
+            case = side_record["cases"].get(case_name)
+            if (
+                not isinstance(case, dict)
+                or case.get("operator_identity") != identity
+                or case.get("external_dtn_correction") != correction
+                or case.get("probe_count") != 11
+                or not isinstance(case.get("preconditioner"), dict)
+                or not isinstance(case.get("probes"), list)
+                or len(case["probes"]) != 11
+            ):
+                return False
+            preconditioner = case["preconditioner"]
+            configuration = preconditioner.get("configuration")
+            fingerprints = preconditioner.get("factor_fingerprints")
+            operator = preconditioner.get("operator")
+            partition_audit = preconditioner.get("partition_audit")
+            owner_partition = preconditioner.get("owner_partition")
+            if (
+                not isinstance(configuration, dict)
+                or configuration.get("preconditioner_profile") != "v1_whole_endcap_ilu0"
+                or configuration.get("coordinate_axis") != 0
+                or configuration.get("num_slabs") != 1
+                or configuration.get("overlap_fraction") != 0.0
+                or configuration.get("interpolation") != "partition"
+                or configuration.get("ilu_levels") != 0
+                or configuration.get("factor_only") is not True
+                or configuration.get("one_apply_per_pc_apply") is not True
+                or configuration.get("two_step_action_operator") is not None
+                or configuration.get("outer_solver") != "right_fgmres"
+                or configuration.get("restart") != 30
+                or configuration.get("max_it") != 300
+                or configuration.get("rtol") != 1.0e-10
+                or configuration.get("atol") != 0.0
+                or configuration.get("true_residual_limit") != 1.0e-8
+                or not isinstance(operator, dict)
+                or operator.get("identity") != identity
+                or operator.get("external_dtn_correction") != correction
+                or preconditioner.get("shift") is not True
+                or preconditioner.get("candidate_direct_factor_count") != 0
+                or preconditioner.get("no_direct_fallback") is not True
+                or preconditioner.get("borrowed_action_survives_after_release")
+                is not True
+                or preconditioner.get("factor_count_before_destroy") != 1
+                or preconditioner.get("factor_count_after_destroy") != 0
+                or preconditioner.get("factors_released") is not True
+                or not isinstance(fingerprints, list)
+                or len(fingerprints) != 1
+                or type(preconditioner.get("rows")) is not int
+                or preconditioner["rows"] <= 0
+                or type(preconditioner.get("source_matrix_nnz")) is not int
+                or preconditioner["source_matrix_nnz"] <= 0
+                or type(preconditioner.get("factor_nnz")) is not int
+                or preconditioner["factor_nnz"] <= 0
+                or type(preconditioner.get("factor_csr_payload_estimate_bytes"))
+                is not int
+                or preconditioner["factor_csr_payload_estimate_bytes"] <= 0
+                or not isinstance(partition_audit, dict)
+                or not isinstance(owner_partition, dict)
+            ):
+                return False
+            partition_weight_error = partition_audit.get("partition_weight_sum_error")
+            owners = owner_partition.get("owners")
+            row_counts = owner_partition.get("row_counts")
+            intervals = owner_partition.get("intervals")
+            if (
+                type(partition_weight_error) not in (int, float)
+                or not math.isfinite(float(partition_weight_error))
+                or float(partition_weight_error) > 1.0e-12
+                or not isinstance(owners, list)
+                or len(owners) != 1
+                or not isinstance(row_counts, list)
+                or len(row_counts) != 1
+                or type(row_counts[0]) is not int
+                or row_counts[0] != preconditioner["rows"]
+                or not isinstance(intervals, list)
+                or len(intervals) != 1
+            ):
+                return False
+            probes = case["probes"]
+            names = {probe.get("name") for probe in probes}
+            if any(type(probe.get("name")) is not str for probe in probes):
+                return False
+            expected_names = set(base_names)
+            for direction in ("positive", "negative"):
+                expected_names.update(
+                    {
+                        f"modal_{direction}_lowest_propagating_or_lossy",
+                        f"modal_{direction}_highest_retained_index",
+                    }
+                )
+                modal_options = {
+                    f"modal_{direction}_first_kind_evanescent",
+                    f"modal_{direction}_proxy_abs_im_beta_gt_abs_re_beta",
+                }
+                selected_options = names & modal_options
+                if len(selected_options) != 1:
+                    return False
+                expected_names.update(selected_options)
+            if names != expected_names or len(names) != 11:
+                return False
+            case_numeric_pass = True
+            case_finite = True
+            for probe in probes:
+                stationary = probe.get("stationary_correction_residuals")
+                numeric_values = (
+                    probe.get("reported_residual"),
+                    probe.get("true_relative_residual"),
+                    probe.get("setup_seconds"),
+                    probe.get("solve_seconds"),
+                    probe.get("apply_seconds"),
+                )
+                finite = bool(
+                    probe.get("explicit_true_residual_recomputed") is True
+                    and all(
+                        isinstance(value, (int, float)) and math.isfinite(float(value))
+                        for value in numeric_values
+                    )
+                    and isinstance(stationary, dict)
+                    and set(stationary) == {"1", "2", "4", "8"}
+                    and all(
+                        isinstance(value, (int, float)) and math.isfinite(float(value))
+                        for value in stationary.values()
+                    )
+                )
+                expected_pass = bool(
+                    finite
+                    and type(probe.get("reason")) is int
+                    and type(probe.get("iterations")) is int
+                    and probe["reason"] > 0
+                    and probe["iterations"] <= 300
+                    and probe["true_relative_residual"] <= 1.0e-8
+                )
+                if (
+                    type(probe.get("finite")) is not bool
+                    or type(probe.get("pass")) is not bool
+                    or probe.get("finite") is not finite
+                    or probe.get("pass") is not expected_pass
+                ):
+                    return False
+                case_finite &= finite
+                case_numeric_pass &= expected_pass
+            if case.get("all_probes_finite") is not case_finite:
+                return False
+            if case.get("pass") is not case_numeric_pass:
+                return False
+            side_numeric_pass &= case_numeric_pass
+            all_finite &= case_finite
+            all_contract &= bool(
+                preconditioner.get("factors_released") is True
+                and preconditioner.get("factor_count_after_destroy") == 0
+                and preconditioner.get("no_direct_fallback") is True
+                and preconditioner.get("borrowed_action_survives_after_release") is True
+            )
+        if side_record.get("pass") is not side_numeric_pass:
+            return False
+        all_numeric_pass &= side_numeric_pass
+    if (
+        telemetry.get("r3_contract_pass") is not all_contract
+        or telemetry.get("r3_numerical_pass") is not all_numeric_pass
+        or gates.get("r3_record_complete") is not all_contract
+        or gates.get("r3_all_cases_complete") is not all_contract
+        or gates.get("r3_all_probes_finite") is not all_finite
+        or gates.get("r3_no_direct_fallback") is not True
+        or gates.get("r3_factors_released") is not all_contract
+        or gates.get("r3_pass") is not all_numeric_pass
+        or qualification.get("r3_pass") is not all_numeric_pass
+        or qualification.get("worker_numerical_pass") is not all_numeric_pass
+        or qualification.get("disposition")
+        != (
+            "r3_numerical_pass_awaiting_r4"
+            if all_numeric_pass
+            else "r3_numerical_negative_awaiting_r4"
+        )
+    ):
+        return False
+    return bool(
+        all_numeric_pass if require_numerical_pass else all_contract and all_finite
+    )
+
+
 def _h5_stage_memory_summary(
     rows: list[dict[str, Any]], *, expected_mpi_size: int
 ) -> dict[str, dict[str, Any]]:
@@ -1806,6 +2083,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "local-inverse-qualification",
             "dtn-component-qualification",
             "f-only-local-inverse-qualification",
+            "whole-endcap-ilu0-qualification",
         ),
         default="modal-schur-memory-minimal",
     )
@@ -1956,6 +2234,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         and not args.task037b_v1_gate
     ):
         parser.error("f-only-local-inverse-qualification requires --task037b-v1-gate.")
+    if (
+        args.solver_path == "whole-endcap-ilu0-qualification"
+        and not args.task037b_v1_gate
+    ):
+        parser.error("whole-endcap-ilu0-qualification requires --task037b-v1-gate.")
     selected_scoped_gates = (
         args.task035c_p6_h10_gate,
         args.task037b_h1_gate,
@@ -2138,7 +2421,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and args.requested_modes == 120
             and args.candidate_modes == 240
             and args.solver_path
-            in ("dtn-component-qualification", "f-only-local-inverse-qualification")
+            in (
+                "dtn-component-qualification",
+                "f-only-local-inverse-qualification",
+                "whole-endcap-ilu0-qualification",
+            )
             and args.comparison_solver_path == "fast"
             and not args.compare_modal_schur
             and args.stage4_full3d_assembly_backend == "assembly_time_static_condensed"
@@ -2160,8 +2447,9 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             parser.error(
                 "--task037b-v1-gate is restricted to the fixed WSL p6/h10, "
                 "10/110 nm, S-polarized, full3d/scalar-CG, M120+M120, "
-                "candidate240, dtn-component-qualification or "
-                "f-only-local-inverse-qualification, "
+                "candidate240, dtn-component-qualification, "
+                "f-only-local-inverse-qualification or "
+                "whole-endcap-ilu0-qualification, "
                 "static-condensed MPI8 path."
             )
     elif args.task037b_h1_gate:
@@ -2631,7 +2919,9 @@ def run(args: argparse.Namespace) -> int:
                         if args.task037b_h5_gate
                         else (
                             (
-                                "task037b.v1-r2-hybrid-launch-gate.v1"
+                                "task037b.v1-r3-hybrid-launch-gate.v1"
+                                if args.solver_path == "whole-endcap-ilu0-qualification"
+                                else "task037b.v1-r2-hybrid-launch-gate.v1"
                                 if args.solver_path
                                 == "f-only-local-inverse-qualification"
                                 else "task037b.v1-hybrid-launch-gate.v1"
@@ -2655,7 +2945,9 @@ def run(args: argparse.Namespace) -> int:
                         if args.task037b_h5_gate
                         else (
                             (
-                                "task037b_v1_r2_fixed_f_only_p6_h10"
+                                "task037b_v1_r3_fixed_whole_endcap_p6_h10"
+                                if args.solver_path == "whole-endcap-ilu0-qualification"
+                                else "task037b_v1_r2_fixed_f_only_p6_h10"
                                 if args.solver_path
                                 == "f-only-local-inverse-qualification"
                                 else "task037b_v1_fixed_dtn_component_p6_h10"
@@ -3086,7 +3378,9 @@ def run(args: argparse.Namespace) -> int:
     )
     terminal_stage = (
         (
-            "v1_r2_f_only_record"
+            "v1_r3_record"
+            if args.solver_path == "whole-endcap-ilu0-qualification"
+            else "v1_r2_f_only_record"
             if args.solver_path == "f-only-local-inverse-qualification"
             else "v1_r1_record"
         )
@@ -3327,6 +3621,11 @@ def run(args: argparse.Namespace) -> int:
                 formal_numerical_pass = _task037b_v1_r2_numerical_pass(
                     solver_record, require_numerical_pass=False
                 )
+            elif args.solver_path == "whole-endcap-ilu0-qualification":
+                numerical_pass = _task037b_v1_r3_numerical_pass(solver_record)
+                formal_numerical_pass = _task037b_v1_r3_numerical_pass(
+                    solver_record, require_numerical_pass=False
+                )
             else:
                 numerical_pass = _task037b_v1_r1_numerical_pass(solver_record)
                 formal_numerical_pass = numerical_pass
@@ -3351,7 +3650,21 @@ def run(args: argparse.Namespace) -> int:
         terminated_for_memory=terminated_for_memory,
         terminated_for_timeout=terminated_for_timeout,
         terminated_for_authority_unreadable=(terminated_for_authority_unreadable),
-        no_swap_pass=no_swap if args.task037b_h5_gate else True,
+        no_swap_pass=(
+            no_swap
+            if args.task037b_h5_gate
+            or (
+                args.task037b_v1_gate
+                and args.solver_path == "whole-endcap-ilu0-qualification"
+            )
+            else True
+        ),
+    )
+    r3_record_complete = bool(
+        args.task037b_v1_gate
+        and args.solver_path == "whole-endcap-ilu0-qualification"
+        and formal_pass
+        and formal_numerical_pass
     )
     r2_record_complete = bool(
         args.task037b_v1_gate
@@ -3360,7 +3673,9 @@ def run(args: argparse.Namespace) -> int:
         and formal_numerical_pass
     )
     summary_status = (
-        "task037b_v1_r2_complete_awaiting_r3"
+        "task037b_v1_r3_complete_awaiting_r4"
+        if r3_record_complete
+        else "task037b_v1_r2_complete_awaiting_r3"
         if r2_record_complete
         else "task037b_v1_r1_pass_awaiting_r2"
         if args.task037b_v1_gate and formal_pass
@@ -3384,7 +3699,12 @@ def run(args: argparse.Namespace) -> int:
         "memory_authority_pass": resource_gate["pass"],
         "physical_qualified": False,
         "qualification_identity": (
-            "task037b_v1_r2_raw_record_gate_awaiting_r3"
+            "task037b_v1_r3_raw_record_gate_awaiting_r4"
+            if r3_record_complete
+            else "task037b_v1_r3_raw_record_formal_not_pass"
+            if args.task037b_v1_gate
+            and args.solver_path == "whole-endcap-ilu0-qualification"
+            else "task037b_v1_r2_raw_record_gate_awaiting_r3"
             if r2_record_complete
             else "task037b_v1_r2_raw_record_formal_not_pass"
             if args.task037b_v1_gate

@@ -35,6 +35,8 @@ H5_MAX_IT = 300
 H5_RTOL = 1.0e-10
 H5_ATOL = 0.0
 H5_TRUE_RESIDUAL_LIMIT = 1.0e-8
+H5_PRECONDITIONER_PROFILE = "h5_six_slab_ilu0"
+R3_PRECONDITIONER_PROFILE = "v1_whole_endcap_ilu0"
 
 __all__ = (
     "H5_ATOL",
@@ -47,6 +49,8 @@ __all__ = (
     "H5_RESTART",
     "H5_RTOL",
     "H5_TRUE_RESIDUAL_LIMIT",
+    "H5_PRECONDITIONER_PROFILE",
+    "R3_PRECONDITIONER_PROFILE",
     "HybridLocalIterativeInverse",
     "HybridLocalIterativeInverseResult",
     "build_hybrid_local_iterative_inverse",
@@ -137,6 +141,7 @@ class HybridLocalIterativeInverse:
         *,
         operator_override: PETSc.Mat | None = None,
         operator_identity: str = "complete_hybrid_action",
+        preconditioner_profile: str = H5_PRECONDITIONER_PROFILE,
     ) -> None:
         self.action_system = action_system
         if operator_override is None:
@@ -154,6 +159,15 @@ class HybridLocalIterativeInverse:
             self.operator = operator_override
             self.external_dtn_correction = "excluded"
         self.operator_identity = operator_identity
+        if preconditioner_profile not in {
+            H5_PRECONDITIONER_PROFILE,
+            R3_PRECONDITIONER_PROFILE,
+        }:
+            raise ValueError(
+                "unknown local inverse preconditioner profile: "
+                f"{preconditioner_profile}"
+            )
+        self.preconditioner_profile = preconditioner_profile
         self.condensed = action_system.static_condensation.condensed
         if self.operator.getType() != "python":
             raise ValueError("H5 exact local operator must be a MatPython action")
@@ -171,6 +185,14 @@ class HybridLocalIterativeInverse:
         self.factor_count_before_destroy: int | None = None
         self.factor_count_after_destroy: int | None = None
         setup_started = perf_counter()
+        num_slabs = (
+            H5_NUM_SLABS if preconditioner_profile == H5_PRECONDITIONER_PROFILE else 1
+        )
+        overlap_fraction = (
+            H5_OVERLAP_FRACTION
+            if preconditioner_profile == H5_PRECONDITIONER_PROFILE
+            else 0.0
+        )
         axis_min, axis_max = _axis_interval(
             action_system.local_mesh.mesh,
             H5_COORDINATE_AXIS,
@@ -179,8 +201,8 @@ class HybridLocalIterativeInverse:
             self.condensed,
             action_system.local_mesh.mesh,
             domain_z=(axis_min, axis_max),
-            num_slabs=H5_NUM_SLABS,
-            overlap_fraction=H5_OVERLAP_FRACTION,
+            num_slabs=num_slabs,
+            overlap_fraction=overlap_fraction,
             coordinate_axis=H5_COORDINATE_AXIS,
         )
         self.smoother = DistributedPhysicalSlabSmoother.from_owner_local_plan(
@@ -321,9 +343,14 @@ class HybridLocalIterativeInverse:
                 "local_size": [int(value) for value in self.operator.getLocalSize()],
             },
             "configuration": {
+                "preconditioner_profile": self.preconditioner_profile,
                 "coordinate_axis": H5_COORDINATE_AXIS,
-                "num_slabs": H5_NUM_SLABS,
-                "overlap_fraction": H5_OVERLAP_FRACTION,
+                "num_slabs": len(self.plan.coordinate_intervals),
+                "overlap_fraction": (
+                    H5_OVERLAP_FRACTION
+                    if self.preconditioner_profile == H5_PRECONDITIONER_PROFILE
+                    else 0.0
+                ),
                 "interpolation": H5_INTERPOLATION,
                 "ilu_levels": H5_ILU_LEVELS,
                 "factor_only": True,
@@ -401,6 +428,7 @@ def build_hybrid_local_iterative_inverse(
     *,
     operator_override: PETSc.Mat | None = None,
     operator_identity: str = "complete_hybrid_action",
+    preconditioner_profile: str = H5_PRECONDITIONER_PROFILE,
 ) -> HybridLocalIterativeInverse:
     """Build the local inverse without owning ``action_system`` or its operator."""
 
@@ -408,4 +436,5 @@ def build_hybrid_local_iterative_inverse(
         action_system,
         operator_override=operator_override,
         operator_identity=operator_identity,
+        preconditioner_profile=preconditioner_profile,
     )

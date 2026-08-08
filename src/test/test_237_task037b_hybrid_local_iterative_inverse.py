@@ -23,6 +23,7 @@ from src.solvers.hybrid_local_iterative_inverse import (
     H5_OVERLAP_FRACTION,
     H5_RESTART,
     H5_RTOL,
+    R3_PRECONDITIONER_PROFILE,
     build_hybrid_local_iterative_inverse,
 )
 from src.solvers.physical_slab_two_level import build_owner_local_slab_plan
@@ -128,6 +129,7 @@ def test_h5_local_inverse_configuration_residual_and_lifecycle():
     repeat = None
     f_only_inverse = None
     f_only_result = None
+    whole_endcap_inverse = None
     try:
         assert inverse.plan.coordinate_axis == H5_COORDINATE_AXIS == 0
         assert len(inverse.plan.coordinate_intervals) == H5_NUM_SLABS
@@ -135,6 +137,7 @@ def test_h5_local_inverse_configuration_residual_and_lifecycle():
         config = diagnostics["configuration"]
         assert config == {
             "coordinate_axis": H5_COORDINATE_AXIS,
+            "preconditioner_profile": "h5_six_slab_ilu0",
             "num_slabs": H5_NUM_SLABS,
             "overlap_fraction": H5_OVERLAP_FRACTION,
             "interpolation": H5_INTERPOLATION,
@@ -205,11 +208,57 @@ def test_h5_local_inverse_configuration_residual_and_lifecycle():
         assert action.getType() == "python"
         f_only_inverse.destroy()
         assert f_only_inverse.factors_released is True
+        whole_endcap_inverse = build_hybrid_local_iterative_inverse(
+            action_carrier,
+            operator_override=action,
+            operator_identity="fine_action_F_only",
+            preconditioner_profile=R3_PRECONDITIONER_PROFILE,
+        )
+        whole_endcap_diagnostics = whole_endcap_inverse._diagnostics()
+        assert whole_endcap_diagnostics["lifecycle"] == {
+            "candidate_direct_factor_count": 0,
+            "factor_count_before_destroy": 1,
+            "factor_only_storage": True,
+            "factors_released": False,
+            "factor_count_after_destroy": None,
+        }
+        assert (
+            whole_endcap_diagnostics["partition_audit"]["partition_weight_sum_error"]
+            <= 1.0e-12
+        )
+        assert whole_endcap_diagnostics["configuration"] == {
+            "preconditioner_profile": R3_PRECONDITIONER_PROFILE,
+            "coordinate_axis": H5_COORDINATE_AXIS,
+            "num_slabs": 1,
+            "overlap_fraction": 0.0,
+            "interpolation": H5_INTERPOLATION,
+            "ilu_levels": H5_ILU_LEVELS,
+            "factor_only": True,
+            "one_apply_per_pc_apply": True,
+            "two_step_action_operator": None,
+            "outer_solver": "right_fgmres",
+            "restart": H5_RESTART,
+            "max_it": H5_MAX_IT,
+            "rtol": H5_RTOL,
+            "atol": H5_ATOL,
+            "true_residual_limit": 1.0e-8,
+        }
+        assert len(whole_endcap_inverse.plan.coordinate_intervals) == 1
+        assert whole_endcap_diagnostics["operator"]["identity"] == (
+            "fine_action_F_only"
+        )
+        whole_endcap_inverse.destroy()
+        assert whole_endcap_inverse.factors_released is True
+        assert whole_endcap_inverse.factor_count_before_destroy == 1
+        assert whole_endcap_inverse.factor_count_after_destroy == 0
+        assert action.getType() == "python"
     finally:
         if f_only_result is not None:
             f_only_result.destroy()
         if f_only_inverse is not None:
             f_only_inverse.destroy()
+        if whole_endcap_inverse is not None:
+            whole_endcap_inverse.destroy()
         if repeat is not None:
             repeat.destroy()
         if result is not None:
