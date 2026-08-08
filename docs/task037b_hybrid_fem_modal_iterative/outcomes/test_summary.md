@@ -126,3 +126,22 @@ V1-R1 是 component action identity pass；R2、R3 和 R5 是合法 numerical ne
 R4 exact Woodbury oracle pass。R5 的 negative 是完整记录后的受控研究结论，不是 parser、
 MPI ownership、资源、serialization 或 lifecycle infrastructure failure。R5 official R/T/A、
 field 和 12+12 未运行；H6–H10 因 stop rule not_run。
+
+## Review V2 focused 与 formal Gate
+
+| 范围 | 结果 |
+|---|---|
+| Review V2 MPI focused | 已沿用同一 source-bound evidence：MPI1/2/4 action、Schur、pack/split、lifecycle 均通过 |
+| V2-B formal MPI8 | 唯一一次 bottom approximate / top exact；contract/numeric pass，screen final 0.26797784324787316 |
+| V2-T formal MPI8 | 唯一一次 top approximate / bottom exact；contract pass、合法 numerical negative，screen final 0.3518371324843258 |
+| V2 double 20/100/200 | not_run_due_to_one_sided_gate |
+| V2 official physics | field、R/T/A、external diffraction、12+12、Full3D comparison 全部 not_run |
+| V2 source | 5b94060eae3a2ce02dd87e8a8c2075b635711346；未因 docs closeout 改变 |
+| test242 serial | 3 passed，3.20 s，exit 0 |
+| watchdog Ruff check/format-check/compileall | exit 0；All checks passed、1 file already formatted、compileall pass |
+| compact JSON | python -m json.tool、两套 raw artifact path/SHA 核对、Markdown 相对链接核对、git diff --check 全部 pass |
+| full pytest / CI | not_run；不声称 CI |
+
+V2-T 的 formal_record_pass=true 仅说明实现、source/launch/resource authority、完整 raw
+record 和安全清理均完成；它不覆盖 worker_numerical_pass=false。两次 formal 各只启动一个
+parent watchdog，均 swap=0、无 orphan，且没有重跑 V2-B、没有启动 double。

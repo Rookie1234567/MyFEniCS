@@ -114,3 +114,34 @@ H5a exact reference 通过，H5b 冻结 local inverse family 为 `LOCAL_INVERSE_
 | do-not-merge | ignored raw artifacts/heavy timeline；ordinary defaults；任何 production qualification | 保留研究证据，不整体合入 |
 
 以上分组属于 research closeout；后续如需选择性合入，必须按依赖组重新 review，不能整体 merge Task37b。
+
+## Review V2 单侧 block-PC screen source 与证据
+
+| SHA | subject | 角色与边界 |
+|---|---|---|
+| a42938eb912c2d24acc15e64a668649dfafc7dbe | feat(task037b): add fixed one-apply R5 action | fixed Woodbury callback carrier；research-only，ordinary defaults unchanged |
+| 25d5a211b8df5a59784bfa0e60a8324f890eeed8 | feat(task037b): add same-action block LDU | same-action modal Schur/block-LDU core；research-only，ordinary defaults unchanged |
+| e75ce90256d53cc12c295eb0b2fbd5d4b4dc4343 | feat(task037b): add bounded block screen core | bounded outer screen core；research-only，ordinary defaults unchanged |
+| 3baa695c0c8e1933d2c36923f8d4f96dffde8e82 | feat(task037b): add bounded block screen runner | frozen V2 flags/runner；research-only，ordinary defaults unchanged |
+| 733a1cb0ee533639e29b3a5ce60becf6a29162ec | feat(task037b): add V2 block screen watchdog | V2 explicit parser/worker/watchdog 接线；首次 B 在 worker/PDE 前因 scoped Case090 evidence wiring 停止，不是数值 screen |
+| 5b94060eae3a2ce02dd87e8a8c2075b635711346 | fix(task037b): exempt V2 scoped launch from Case090 evidence | 单行 scoped launch exemption；正式 V2-B/T 各只运行一次，source stable |
+
+V2 使用已审的 fixed one-apply callback、action block-LDU 和 outer true-residual screen；
+不调用 LocalInverse.solve，不创建 nested local FGMRES/KSP，不改 ordinary defaults。V2-B
+与 V2-T 的 ignored raw solver record、summary、timeline、stages、stdout 只以路径和
+SHA 保留在 compact evidence，不纳入 Git。
+
+## Review V2 closeout 文件角色
+
+本次 code-free closeout 的精确九文件为：
+
+| 分组 | 文件 | 选择性边界 |
+|---|---|---|
+| compact evidence record | benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v2_block_pc_screen_v1.json | hash-bound V2-B/T、完整 0–20 history、double not_run 和 official not_run；不是 production schema |
+| outcomes | docs/task037b_hybrid_fem_modal_iterative/outcomes/one_sided_replacement.md；double_iterative_funnel.md；resource_ledger.md；summary.md；test_summary.md；changed_files.md | 追加式 V2 研究结项；保留既有 H5/R5 原文 |
+| project progress | docs/development_progress.md | 记录 V2 单侧停止与 TOP_APPROXIMATE_SIDE_NEGATIVE |
+| response | docs/task037b_hybrid_fem_modal_iterative/response_v3.md | 面向审阅的 V2 closeout；不替换 response_v1/v2 |
+
+以上仅是 research closeout/选择性 review 材料。ignored raw artifacts、heavy timeline、
+ordinary defaults、未资格化 production candidate 和整体 Task37b merge 均属于 do-not-merge；
+任何后续算法家族都必须取得新的 review。

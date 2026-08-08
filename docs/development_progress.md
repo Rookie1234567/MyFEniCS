@@ -2384,3 +2384,27 @@ physical 约 8.19e-4；DtN correction 将 complete-A 结果拉回 whole-endcap F
 五套 ignored raw evidence 与 compact record 由 Case101 保存；没有复制 timeline、solver
 数组或其他 heavy artifact 到 Git。后续若要探索新的算法家族，必须重新取得 review，不由
 closeout 自动开启扫描、候选或 H6–H10。
+
+## 2026-08-08：Task037b Review V2 单侧 block-PC screen 结项
+
+Review V2 只测试固定 DtN Woodbury action 作为完整 Hybrid block-LDU 近似局部逆的有限步
+容量。V2-B 使用 bottom approximate / top exact，20 步 true residual 从 1 降到
+0.26797784324787316，严格 screen pass。V2-T 使用 top approximate / bottom exact，
+20 步 true residual 从 1 降到 0.3518371324843258；虽然 last5 净下降，但严格高于
+0.35，因此分类为 TOP_APPROXIMATE_SIDE_NEGATIVE。
+
+两次运行都证明 fixed callback、modal Schur、factor identity、online apply count、
+matrix-free global operator、release、swap 和 no-orphan 合同；这不是 solver wiring
+失败。两侧 process-tree 峰值分别为 7.9730224609375 GiB 与 8.532058715820312 GiB，
+均高于 V2 standalone 6 GiB resource-positive 参考线，故没有 resource-qualified
+candidate。PSS/USS 是 timeline smaps_rollup 的 8-rank simultaneous sums，不是对象体积。
+
+因为单侧结果一正一负，double 20/100/200、full solve、official Hybrid field、R/T/A、
+external diffraction、12+12 和 Full3D physical comparison 全部 not_run。最终结论是
+exact matrix-free block operator pass、exact block-LDU pass、DtN Woodbury algebra pass、
+bottom fixed approximate one-sided capacity pass、top fixed approximate one-sided capacity
+negative；双端低内存近似逆资格未证明。
+
+733a1cb 的首次 V2-B 只在 worker/PDE 前因 scoped Case090 evidence wiring 停止；5b94060
+单行修复后才完成唯一正式 B/T。两者不是三次数值 screen。ordinary defaults unchanged，
+不进入 H6，也不自动重开 LOR、AMS/HX、p2/p4、p-multigrid、full-space ILU 或其他算法家族。

@@ -219,3 +219,37 @@ R5 的 process-tree peak 为 6432.54296875 MiB（6.281780242919922 GiB），低�
 standalone 7.0 GiB threshold，swap=0；这只是独立资源 Gate，通过不等于 H9 或 production
 resource qualification。Hybrid-P、低秩 direct Hybrid 与本 iterative candidate 均保持
 research-only。
+
+## Review V2 单侧 block-PC screen 结项
+
+V2 继续回答一个窄问题：已经通过代数和生命周期审计的固定 DtN Woodbury action，作为
+完整 Hybrid block-LDU 的近似局部逆，是否在最多 20 步外层 screen 中提供真实容量。
+它不运行 official field、R/T/A 或 Full3D physical comparison；ordinary defaults 仍未改变。
+
+| 运行 | 结果 | true residual | 关键资源 |
+|---|---|---:|---:|
+| V2-B bottom approximate / top exact | numeric pass | final=min=0.26797784324787316；last5 净下降 | process-tree 8164.375 MiB，7.9730224609375 GiB |
+| V2-T top approximate / bottom exact | numeric negative | final=min=0.3518371324843258；严格高于 0.35，差 0.0018371324843258 | process-tree 8736.828125 MiB，8.532058715820312 GiB |
+
+两份 raw record 的 contract/integration、callback、modal Schur、factor identity、online
+apply、release、source/launch/resource authority、swap 和 no-orphan 均通过。V2-T 的
+formal_record_pass=true 只表示实现、来源、资源监测和完整 raw record 已完成；不能把它
+解释成 numerical pass。它的 worker_numerical_pass=false 与 status
+task037b_v2_screen_numerical_negative 一致。
+
+V2-B 的 fixed callback identity=0、linearity error=1.9458251250889472e-15、
+determinism=0、repeat hash 一致、K rank=40/condition=3.033166890369435；V2-T 对应
+为 0、1.9498727881145686e-15、0、hash 一致、rank=40/condition=4.162687539173754。
+两份 modal Schur 均为 240×240、rank=240，condition 分别为 831.7366055154229 与
+638.1064857343471，build apply bottom/top 均为 480/480。B 的 factor identity
+bottom direct/ILU=0/1、top=1/0；T 反向为 1/0、0/1；online increments 两侧均为 40。
+
+最终 classification=TOP_APPROXIMATE_SIDE_NEGATIVE。double 20/100/200、full solve、
+official Hybrid field、R/T/A、external diffraction、12+12 和 Full3D physical comparison
+均为 not_run_due_to_one_sided_gate 或 not_run。两侧 process-tree 峰值均高于 6 GiB
+standalone resource-positive 线，因此没有 resource-qualified candidate；T 的峰值含
+exact bottom direct factor，不能预测 double 峰值。
+
+完整 residual history、PSS/USS 口径、raw artifact 路径与 SHA 见
+[V2 compact record](../../../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v2_block_pc_screen_v1.json)；
+V2 单侧表见 [one-sided boundary](one_sided_replacement.md) 与 [double funnel boundary](double_iterative_funnel.md)。

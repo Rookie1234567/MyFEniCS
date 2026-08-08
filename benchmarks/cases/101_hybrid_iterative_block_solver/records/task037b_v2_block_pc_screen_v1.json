@@ -1,0 +1,348 @@
+{
+  "schema_version": "task037b.v2-block-pc-screen.v1",
+  "decision": "research closeout",
+  "classification": "TOP_APPROXIMATE_SIDE_NEGATIVE",
+  "source": {
+    "branch": "codex/20260807-task37b-hybrid-iterative-development",
+    "numerical_source_sha": "5b94060eae3a2ce02dd87e8a8c2075b635711346",
+    "ordinary_defaults_changed": false,
+    "fixed_callback": "HybridLocalDtnWoodburyFixedAction.apply wrapper -> exactly one HybridLocalDtnWoodburyOracle.apply",
+    "nested_local_inverse_solve": false,
+    "nested_local_fgmres_or_ksp": false,
+    "double_run": "not_run_due_to_one_sided_gate"
+  },
+  "implementation_preflight_history": {
+    "733a1cb0ee533639e29b3a5ce60becf6a29162ec": "first V2-B stopped before worker/PDE because scoped Case090 evidence wiring was missing; not a numerical screen",
+    "5b94060eae3a2ce02dd87e8a8c2075b635711346": "one-line scoped evidence exemption fix; the only formal V2-B and V2-T runs used this source"
+  },
+  "resource_measurement_semantics": {
+    "process_tree_rss": "authoritative simultaneous process-tree RSS peak",
+    "worker_rank_rss_pss_uss": "simultaneous sums across all 8 worker ranks",
+    "pss_uss_source": "timeline worker-rank smaps_rollup columns; independent finite maxima",
+    "not_object_volume": true,
+    "B_peak_stage": "v2_outer_screen",
+    "T_peak_stage": "v2_outer_screen"
+  },
+  "frozen_case": {
+    "degree": 6,
+    "h_nm": 10,
+    "modal_degree": 6,
+    "modal_h_nm": 10,
+    "mpi_size": 8,
+    "requested_modes": 120,
+    "candidate_modes": 240,
+    "bottom_interface_nm": 10,
+    "top_interface_nm": 110,
+    "incident_grazing_deg": 10,
+    "polarization": "s",
+    "assembly_backend": "assembly_time_static_condensed",
+    "internal_propagation_model": "full3d_uniform_cg",
+    "internal_traction_model": "scalar_cg_discrete_derivative",
+    "solver_path": "block-ldu-action-screen",
+    "screen": {
+      "right_fgmres": true,
+      "restart": 90,
+      "rtol": 1e-6,
+      "atol": 0,
+      "zero_initial": true,
+      "max_it": 20
+    },
+    "authority": {
+      "full3d_path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_full_static_mpi8_244b62e.json",
+      "full3d_sha256": "b8b428476cdeb4b80495f4a8b1c89e3bb2f67c682c695fc72bb59dbbbd94b4e3",
+      "preflight_path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json",
+      "preflight_sha256": "96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8"
+    }
+  },
+  "task037_extra_inherited": {
+    "remote_ref_sha": "e637b11d93baae920cb019f26fd0dcbd94802af6",
+    "reviewed_source_sha": "30e179799b8eb6dee1be1bb976002550424bb40d",
+    "payload_bytes": 3128209352,
+    "payload_gib": 2.9133719876408577,
+    "trace_ilu_ratio": 25.636,
+    "rho_1v": [5610000.0, 3470000.0, 61700000.0],
+    "rho_2v": [4.89e15, 1.65e15, 1.41e16],
+    "G2": "G2_FAIL",
+    "G3": "prohibited",
+    "frozen_lanes": ["LOR", "AMS/HX", "p2/p4", "p-multigrid", "full-space ILU"]
+  },
+  "runs": {
+    "V2-B": {
+      "profile": "bottom-approx",
+      "status": "task037b_v2_screen_pass",
+      "contract_pass": true,
+      "numeric_pass": true,
+      "formal_record_pass": true,
+      "all_residuals_finite": true,
+      "process_control": {"worker_exited": true, "process_group_exited": true, "no_orphan": true},
+      "classification": "BOTTOM_APPROXIMATE_SIDE_PASS",
+      "final_true": 0.26797784324787316,
+      "minimum_true": 0.26797784324787316,
+      "last5_global_true": [0.33441266119140983, 0.3215306246825267, 0.2969113368753384, 0.2843769347044006, 0.26797784324787316],
+      "converged_reason": -3,
+      "iterations": 20,
+      "callback": {
+        "identity_error": 0.0,
+        "linearity_error": 1.9458251250889472e-15,
+        "determinism_error": 0.0,
+        "repeat_hash_equal": true,
+        "apply_count": [0, 7, 7],
+        "K_rank": 40,
+        "K_condition": 3.033166890369435,
+        "arrays_finite": true,
+        "normal_equations": false,
+        "base_factor_count": 1,
+        "local_direct_factor_count": 0,
+        "nested_ksp_created": false
+      },
+      "modal_schur": {
+        "shape": [240, 240],
+        "dtype": "complex128",
+        "rank": 240,
+        "condition": 831.7366055154229,
+        "matrix_repeat_error": 0.0,
+        "lu_repeat_solve_error": 0.0,
+        "build_apply_count": {"bottom": 480, "top": 480},
+        "matrix_sha256": "not_recorded"
+      },
+      "factor_identity": {
+        "bottom": {"direct": 0, "ilu": 1},
+        "top": {"direct": 1, "ilu": 0},
+        "pc_owned": 0,
+        "global_direct": 0
+      },
+      "online_apply_increment": {"bottom": 40, "top": 40},
+      "lifecycle": {
+        "bottom": "woodbury/base/components released",
+        "top": "direct/oracle released",
+        "outer": "rhs/matrix/context released",
+        "borrowed_action_survives": {"bottom": true, "top": true},
+        "release_pass": true
+      },
+      "resource": {
+        "process_tree_peak_mib": 8164.375,
+        "process_tree_peak_gib": 7.9730224609375,
+        "worker_rss_sum_peak_mib": 8149.71875,
+        "worker_pss_sum_peak_mib": 7027.908203125,
+        "worker_uss_sum_peak_mib": 6841.94921875,
+        "resource_threshold_gib": 6.0,
+        "resource_positive": false,
+        "warning_gib": 10.0,
+        "terminate_gib": 14.0,
+        "warning": false,
+        "terminated": false,
+        "swap": 0
+      },
+      "timing": {
+        "v2_action_coupling_build": 207.9441819100175,
+        "v2_action_block_setup": 128.05278197606094,
+        "v2_outer_screen": 3.436653778073378,
+        "v2_release": 0.0009947650833055377,
+        "total": 390.9353968849173
+      },
+      "raw_artifacts": {
+        "summary": {
+          "path": "../../../artifacts/task037b/v2_b_bottom_approx_5b94060_mpi8.json",
+          "sha256": "ed8cd8ced09d5964cbef12e6590fb6f126bc831ac7d3734c57dcea13b0cf8b78"
+        },
+        "solver_record": {
+          "path": "../../../artifacts/task037b/v2_b_bottom_approx_5b94060_mpi8/solver_record.json",
+          "sha256": "69c1688c0e6b024d0e0eb5fe95f10ad8d467ad88bde7053996a599eb0cb598b2"
+        },
+        "memory_stages": {
+          "path": "../../../artifacts/task037b/v2_b_bottom_approx_5b94060_mpi8/memory_stages.jsonl",
+          "sha256": "140b7f8b23d97f26035490fac691450d072c5569bbe9104f1762153414266297"
+        },
+        "timeline": {
+          "path": "../../../artifacts/task037b/v2_b_bottom_approx_5b94060_mpi8/memory_timeline.csv",
+          "sha256": "3148ad936568dc9bf9c26e782872206aa832da746968d05436cd12027a190043"
+        },
+        "stdout": {
+          "path": "../../../artifacts/task037b/v2_b_bottom_approx_5b94060_mpi8/worker_stdout.txt",
+          "sha256": "0f7b484effda2b5b640cc9bf4bebf4b3c24d67f0f43a99838e7a6ebeec2c0ba0"
+        }
+      },
+      "history_fields": ["iteration", "reported", "global_true", "bottom_true", "top_true", "modal_true", "pc_apply", "bottom_action_apply", "top_action_apply"],
+      "history": [
+        [0,1.0,1.0,0.0,1.0,0.0,0,497,480],
+        [1,0.8097782595632942,0.8097782595632941,0.9374674250040609,0.6557408296613579,2.2588599110139178e-13,1,499,482],
+        [2,0.7223326210531341,0.722332621053134,0.8847877854153108,0.5217644154374905,1.5675927476942173e-13,2,501,484],
+        [3,0.6685163113151575,0.6685163113151573,0.8510566799027092,0.44691405849442456,1.1700915620331344e-13,3,503,486],
+        [4,0.6433411404044964,0.6433411404044963,0.8312286789692094,0.4138878229369579,8.907238697661219e-14,4,505,488],
+        [5,0.6345084421766387,0.6345084421766384,0.8307757828978899,0.4026009631934246,7.713508774283566e-14,5,507,490],
+        [6,0.6041662295237177,0.6041662295237172,0.8126005227590045,0.3650168328969053,7.239388783354032e-14,6,509,492],
+        [7,0.5846085989491263,0.5846085989491258,0.8050661261511862,0.34176721396526033,6.07165655822106e-14,7,511,494],
+        [8,0.559500079937083,0.5595000799370826,0.7931274837046525,0.31304033944960186,5.5992775269025035e-14,8,513,496],
+        [9,0.5275178930612495,0.5275178930612491,0.7706507573764623,0.27827512749977984,5.652797514280094e-14,9,515,498],
+        [10,0.5049818650746019,0.5049818650746013,0.7621088115250952,0.2550066840542229,4.527608125311945e-14,10,517,500],
+        [11,0.4729146587622235,0.4729146587622231,0.7456153028878426,0.2236482744721899,4.4552424823352576e-14,11,519,502],
+        [12,0.4421156503573898,0.4421156503573894,0.7230684374103322,0.19546624829093728,4.012091102082332e-14,12,521,504],
+        [13,0.42175840720654423,0.421758407206544,0.7089168450557972,0.17788015404940022,3.726101581985095e-14,13,523,506],
+        [14,0.38649838243513746,0.3864983824351375,0.6796554228253116,0.1493809996249775,3.505122349774933e-14,14,525,508],
+        [15,0.35879817546734194,0.3587981754673419,0.6523311153474797,0.12873613071869308,2.9043967949572843e-14,15,527,510],
+        [16,0.3344126611914099,0.33441266119140983,0.6252558134859793,0.11145703118921423,2.421637588346296e-14,16,529,512],
+        [17,0.32153062468252663,0.3215306246825267,0.6127100178257627,0.1019665526171917,2.0457290457794743e-14,17,531,514],
+        [18,0.29691133687533766,0.2969113368753384,0.5797291578374232,0.08548705325769218,1.6966164377554965e-14,18,533,516],
+        [19,0.28437693470440034,0.2843769347044006,0.5629159663749564,0.07779915056956428,1.5612295137496707e-14,19,535,518],
+        [20,0.26797784324787244,0.26797784324787316,0.5412034685579917,0.06847298884883123,1.637093459838141e-14,20,537,520]
+      ]
+    },
+    "V2-T": {
+      "profile": "top-approx",
+      "status": "task037b_v2_screen_numerical_negative",
+      "contract_pass": true,
+      "numeric_pass": false,
+      "formal_record_pass": true,
+      "all_residuals_finite": true,
+      "process_control": {"worker_exited": true, "process_group_exited": true, "no_orphan": true},
+      "classification": "TOP_APPROXIMATE_SIDE_NEGATIVE",
+      "final_true": 0.3518371324843258,
+      "minimum_true": 0.3518371324843258,
+      "last5_global_true": [0.4282518461159683, 0.4057858207851675, 0.38499127627038954, 0.36751279080607757, 0.3518371324843258],
+      "converged_reason": -3,
+      "iterations": 20,
+      "screen_threshold": 0.35,
+      "failure_margin": 0.0018371324843258,
+      "callback": {
+        "identity_error": 0.0,
+        "linearity_error": 1.9498727881145686e-15,
+        "determinism_error": 0.0,
+        "repeat_hash_equal": true,
+        "apply_count": [0, 7, 7],
+        "K_rank": 40,
+        "K_condition": 4.162687539173754,
+        "arrays_finite": true,
+        "normal_equations": false,
+        "base_factor_count": 1,
+        "local_direct_factor_count": 0,
+        "nested_ksp_created": false
+      },
+      "modal_schur": {
+        "shape": [240, 240],
+        "dtype": "complex128",
+        "rank": 240,
+        "condition": 638.1064857343471,
+        "matrix_repeat_error": 0.0,
+        "lu_repeat_solve_error": 0.0,
+        "build_apply_count": {"bottom": 480, "top": 480},
+        "matrix_sha256": "not_recorded"
+      },
+      "factor_identity": {
+        "bottom": {"direct": 1, "ilu": 0},
+        "top": {"direct": 0, "ilu": 1},
+        "pc_owned": 0,
+        "global_direct": 0
+      },
+      "online_apply_increment": {"bottom": 40, "top": 40},
+      "lifecycle": {
+        "bottom": "direct/oracle released",
+        "top": "woodbury/base/components released",
+        "outer": "rhs/matrix/context released",
+        "borrowed_action_survives": {"bottom": true, "top": true},
+        "release_pass": true
+      },
+      "resource": {
+        "process_tree_peak_mib": 8736.828125,
+        "process_tree_peak_gib": 8.532058715820312,
+        "worker_rss_sum_peak_mib": 8722.1796875,
+        "worker_pss_sum_peak_mib": 7609.48046875,
+        "worker_uss_sum_peak_mib": 7424.91015625,
+        "resource_threshold_gib": 6.0,
+        "resource_positive": false,
+        "warning_gib": 10.0,
+        "terminate_gib": 14.0,
+        "warning": false,
+        "terminated": false,
+        "swap": 0
+      },
+      "timing": {
+        "v2_action_coupling_build": 209.06154159689322,
+        "v2_action_block_setup": 124.67885652708355,
+        "v2_outer_screen": 3.2543981729540974,
+        "v2_release": 0.0008212319808080792,
+        "total": 389.2415761810262
+      },
+      "raw_artifacts": {
+        "summary": {
+          "path": "../../../artifacts/task037b/v2_t_top_approx_5b94060_mpi8.json",
+          "sha256": "c092aaa13f94af9a7a3c508dca64c343fc940872cfcf57838a3160374c4d6cea"
+        },
+        "solver_record": {
+          "path": "../../../artifacts/task037b/v2_t_top_approx_5b94060_mpi8/solver_record.json",
+          "sha256": "a5e19a1391462d093425a67d8d9cd7cfe72b431ebdaff9e57753ed99bae73956"
+        },
+        "memory_stages": {
+          "path": "../../../artifacts/task037b/v2_t_top_approx_5b94060_mpi8/memory_stages.jsonl",
+          "sha256": "d892c5761e7bd56772ae6a26903f395b61a16a50c23637f8467ed5119e41cc37"
+        },
+        "timeline": {
+          "path": "../../../artifacts/task037b/v2_t_top_approx_5b94060_mpi8/memory_timeline.csv",
+          "sha256": "7addf0d4ceb36767368af6d57151c9099c2abac7de17abd953b9288fa667c134"
+        },
+        "stdout": {
+          "path": "../../../artifacts/task037b/v2_t_top_approx_5b94060_mpi8/worker_stdout.txt",
+          "sha256": "e4c5ed0ec83ff0385302a2e9ac11055a61787b5d7963cbac28860f65fab8034a"
+        }
+      },
+      "history_fields": ["iteration", "reported", "global_true", "bottom_true", "top_true", "modal_true", "pc_apply", "bottom_action_apply", "top_action_apply"],
+      "history": [
+        [0,1.0,1.0,0.0,1.0,0.0,0,480,498],
+        [1,0.8965053226979912,0.8965053226979914,6.737252426892261e-13,0.8965053226979914,1.8288253929106047e-13,1,482,500],
+        [2,0.8192367771584093,0.8192367771584096,5.640113437441343e-13,0.8192367771584096,1.4367951085839565e-13,2,484,502],
+        [3,0.7686809378186996,0.7686809378186998,5.902106103953753e-13,0.7686809378186998,1.419228784132084e-13,3,486,504],
+        [4,0.7405574454915292,0.7405574454915296,5.226996469280819e-13,0.7405574454915296,1.1940416712769524e-13,4,488,506],
+        [5,0.7267537746446432,0.7267537746446435,5.122024491443906e-13,0.7267537746446435,1.0943331262474347e-13,5,490,508],
+        [6,0.7038275586124387,0.7038275586124387,5.459056777160202e-13,0.7038275586124387,1.1438515606444635e-13,6,492,510],
+        [7,0.6878721575161473,0.6878721575161472,5.250502259056805e-13,0.6878721575161472,1.095731865448306e-13,7,494,512],
+        [8,0.6614439403261557,0.6614439403261557,5.244545099425719e-13,0.6614439403261557,1.0243944445110447e-13,8,496,514],
+        [9,0.6273743926199977,0.6273743926199975,5.383974738379511e-13,0.6273743926199975,8.857344934761095e-14,9,498,516],
+        [10,0.6122558424161344,0.6122558424161341,5.123257585477666e-13,0.6122558424161341,7.91158995024033e-14,10,500,518],
+        [11,0.5787723192124525,0.5787723192124523,4.884392362370155e-13,0.5787723192124523,7.633904181736775e-14,11,502,520],
+        [12,0.5400315733201867,0.5400315733201865,4.3704767565945436e-13,0.5400315733201865,5.885743052912698e-14,12,504,522],
+        [13,0.5244784690964017,0.5244784690964017,3.887848407750931e-13,0.5244784690964017,5.216374187054699e-14,13,506,524],
+        [14,0.4865450209008872,0.48654502090088675,3.6920080178253306e-13,0.48654502090088675,4.719628812801869e-14,14,508,526],
+        [15,0.4506777048234877,0.4506777048234873,3.162769528713885e-13,0.4506777048234873,4.410608500367992e-14,15,510,528],
+        [16,0.4282518461159685,0.4282518461159683,2.9806995034448496e-13,0.4282518461159683,3.799473607912556e-14,16,512,530],
+        [17,0.4057858207851678,0.4057858207851675,2.673906764418291e-13,0.4057858207851675,3.606699097949519e-14,17,514,532],
+        [18,0.38499127627039054,0.38499127627038954,2.3329003660610223e-13,0.38499127627038954,3.0941141443430606e-14,18,516,534],
+        [19,0.3675127908060787,0.36751279080607757,2.2387069765771302e-13,0.36751279080607757,3.1342373785204356e-14,19,518,536],
+        [20,0.35183713248432746,0.3518371324843258,2.1199023222527964e-13,0.3518371324843258,2.842592469531595e-14,20,520,538]
+      ]
+    }
+  },
+  "double_status": {
+    "double20": "not_run_due_to_one_sided_gate",
+    "double100": "not_run_due_to_one_sided_gate",
+    "double200": "not_run_due_to_one_sided_gate",
+    "reason": "V2-B passed but V2-T failed strict final/min < 0.35"
+  },
+  "official": {
+    "official_record": false,
+    "Hybrid_field": "not_run",
+    "R": "not_run",
+    "T": "not_run",
+    "A": "not_run",
+    "A_volume": "not_run",
+    "external_diffraction_orders": "not_run",
+    "12_plus_12": "not_run",
+    "Full3D_physical_comparison": "not_run"
+  },
+  "conclusion": [
+    "exact matrix-free block operator pass",
+    "exact block-LDU pass",
+    "DtN Woodbury algebra pass",
+    "bottom fixed approximate one-sided capacity pass",
+    "top fixed approximate one-sided capacity negative",
+    "double low-memory approximate inverse qualification not demonstrated"
+  ],
+  "stop": {
+    "classification": "TOP_APPROXIMATE_SIDE_NEGATIVE",
+    "resource_classification": "both one-sided process-tree peaks exceed 6 GiB resource-positive line",
+    "next_steps": "close V2; do not start double or full physics without new review"
+  },
+  "tests": {
+    "formal_mpi8": "V2-B and V2-T each one watchdog run; no rerun",
+    "focused_mpi": "prior source-bound MPI1/2/4 Gate retained",
+    "full_pytest": "not_run"
+  }
+}

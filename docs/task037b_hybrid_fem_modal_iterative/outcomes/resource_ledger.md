@@ -201,3 +201,43 @@ R5 数值 Gate 失败，所以 H6 不具资格，不能把这个资源结果包�
 
 W 的 local bytes 是按 rank 的实际 owned storage；K/LU 是每 rank replicated storage。factor
 NNZ 是 raw record 的 recorded count；payload 是明确公式的估算，不是实测分配量。
+
+## Review V2 单侧 block-PC screen
+
+V2-B 与 V2-T 都是同一冻结 p6/h10、modal p6/h10、MPI8、M120/candidate240 配置下的
+一次性单侧 screen。process-tree simultaneous RSS 是本表的权威过程树峰值；worker RSS、
+PSS、USS 是 8 个同时存活 MPI worker rank 的同步总和。PSS/USS 从 memory timeline 的
+smaps_rollup 列独立取最大值，不是累计对象体积，也不是 factor payload 估算。两次峰值
+都发生在 v2_outer_screen。
+
+| 运行 | process-tree RSS | worker RSS sum | worker PSS sum | worker USS sum | swap | wall |
+|---|---:|---:|---:|---:|---:|---:|
+| V2-B bottom approximate | 8164.375 MiB / 7.9730224609375 GiB | 8149.71875 MiB | 7027.908203125 MiB | 6841.94921875 MiB | 0 | 390.9353968849173 s |
+| V2-T top approximate | 8736.828125 MiB / 8.532058715820312 GiB | 8722.1796875 MiB | 7609.48046875 MiB | 7424.91015625 MiB | 0 | 389.2415761810262 s |
+
+两次 watchdog 安全阈值均为 warning=10 GiB、termination=14 GiB；均未 warning、未因
+内存或 timeout 终止，且 worker/process group 均自然退出、无 orphan。V2 的 standalone
+resource-positive 参考线是 process-tree <=6 GiB，B/T 均未达到，因此两者都标记
+resource-unqualified。这个资源分类不改写 V2-T 的数值负结果，也不能外推双侧 screen
+峰值；T 的配置含一个 exact bottom direct factor。
+
+### V2 阶段峰值
+
+| 阶段 | V2-B process-tree MiB | V2-T process-tree MiB |
+|---|---:|---:|
+| v2_action_coupling_build | 5784.54296875 | 5780.2578125 |
+| v2_action_block_setup | 8162.29296875 | 8735.1015625 |
+| v2_outer_screen | 8164.375 | 8736.828125 |
+| v2_record | 8158.58203125 | 8734.8515625 |
+
+| 运行 | coupling build s | block setup s | outer screen s | release s | total s |
+|---|---:|---:|---:|---:|---:|
+| V2-B | 207.9441819100175 | 128.05278197606094 | 3.436653778073378 | 0.0009947650833055377 | 390.9353968849173 |
+| V2-T | 209.06154159689322 | 124.67885652708355 | 3.2543981729540974 | 0.0008212319808080792 | 389.2415761810262 |
+
+### V2 raw evidence
+
+| 运行 | summary | solver record | stages | timeline | stdout |
+|---|---|---|---|---|---|
+| V2-B | [summary](../../../benchmarks/artifacts/task037b/v2_b_bottom_approx_5b94060_mpi8.json), ed8cd8ced09d5964cbef12e6590fb6f126bc831ac7d3734c57dcea13b0cf8b78 | 69c1688c0e6b024d0eeb5fe95f10ad8d467ad88bde7053996a599eb0cb598b2 | 140b7f8b23d97f26035490fac691450d072c5569bbe9104f1762153414266297 | 3148ad936568dc9bf9c26e782872206aa832da746968d05436cd12027a190043 | 0f7b484effda2b5b640cc9bf4bebf4b3c24d67f0f43a99838e7a6ebeec2c0ba0 |
+| V2-T | [summary](../../../benchmarks/artifacts/task037b/v2_t_top_approx_5b94060_mpi8.json), c092aaa13f94af9a7a3c508dca64c343fc940872cfcf57838a3160374c4d6cea | a5e19a1391462d093425a67d8d9cd7cfe72b431ebdaff9e57753ed99bae73956 | d892c5761e7bd56772ae6a26903f395b61a16a50c23637f8467ed5119e41cc37 | 7addf0d4ceb36767368af6d57151c9099c2abac7de17abd953b9288fa667c134 | e4c5ed0ec83ff0385302a2e9ac11055a61787b5d7963cbac28860f65fab8034a |
