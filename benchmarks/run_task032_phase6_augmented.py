@@ -92,6 +92,7 @@ from src.solvers.hybrid_fem_modal_schur_direct import (
     solve_hybrid_modal_schur_direct,
 )
 from src.solvers.hybrid_local_iterative_inverse import (
+    H5_MAX_IT,
     build_hybrid_local_iterative_inverse,
 )
 from src.solvers.hybrid_local_dtn_action import (
@@ -757,6 +758,14 @@ class _V1QualificationStop(RuntimeError):
         self.record = record
 
 
+class _V1R2QualificationStop(RuntimeError):
+    """Internal control flow after writing the bounded V1-R2 record."""
+
+    def __init__(self, record: dict[str, Any]) -> None:
+        super().__init__(record.get("status", "V1-R2 qualification complete"))
+        self.record = record
+
+
 NUMERICAL_INFINITY_BETA_H_CUTOFF = 1.0e4
 
 
@@ -1203,6 +1212,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "block-ldu-exact",
             "local-inverse-qualification",
             "dtn-component-qualification",
+            "f-only-local-inverse-qualification",
         ),
         default="augmented",
         help=(
@@ -1239,6 +1249,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error("local-inverse-qualification requires --task037b-h5-gate.")
     if args.solver_path == "dtn-component-qualification" and not args.task037b_v1_gate:
         parser.error("dtn-component-qualification requires --task037b-v1-gate.")
+    if (
+        args.solver_path == "f-only-local-inverse-qualification"
+        and not args.task037b_v1_gate
+    ):
+        parser.error("f-only-local-inverse-qualification requires --task037b-v1-gate.")
     if args.degree == 6 and not any(selected_scoped_gates):
         parser.error(
             "p6 is fail-closed; pass a fixed scoped Task035c, Task037b H1, "
@@ -1288,7 +1303,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and math.isclose(args.modal_h_nm, 10.0)
             and args.requested_modes == 120
             and args.candidate_modes == 240
-            and args.solver_path == "dtn-component-qualification"
+            and args.solver_path
+            in ("dtn-component-qualification", "f-only-local-inverse-qualification")
             and args.comparison_solver_path == "fast"
             and not args.compare_modal_schur
             and args.stage4_full3d_assembly_backend
@@ -1312,7 +1328,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             parser.error(
                 "--task037b-v1-gate is restricted to the fixed p6/h10, "
                 "10/110 nm, S-polarized, full3d/scalar-CG, M120+M120, "
-                "candidate240, dtn-component-qualification, "
+                "candidate240, dtn-component-qualification or "
+                "f-only-local-inverse-qualification, "
                 "static-condensed MPI8 path."
             )
     elif args.task037b_h1_gate:
@@ -2401,6 +2418,364 @@ def _run_v1_dtn_component_qualification(
     raise _V1QualificationStop(record)
 
 
+def _run_v1_r2_f_only_qualification(
+    *,
+    args: argparse.Namespace,
+    comm: MPI.Intracomm,
+    provenance: dict[str, Any],
+    authority_gate: dict[str, Any] | None,
+    positive,
+    negative,
+    bottom,
+    top,
+    coupling,
+    timings: dict[str, float],
+    total_started: float,
+    mark_stage,
+    progress,
+) -> None:
+    """Run the V1-R2 six-slab diagnostic with the external correction removed."""
+
+    started = time.perf_counter()
+    selections = _h5_frozen_mode_selection(positive, negative)
+    propagation = coupling.propagation
+    rhs_sets: dict[str, list[tuple[str, PETSc.Vec, dict[str, Any]]]] = {
+        "bottom": [],
+        "top": [],
+    }
+    bottom_inverse = None
+    top_inverse = None
+    side_records: dict[str, dict[str, Any]] = {}
+
+    def inverse_contract(inverse) -> dict[str, Any]:
+        diagnostics = inverse._diagnostics()
+        smoother = diagnostics["smoother"]
+        return {
+            "operator": dict(diagnostics["operator"]),
+            "configuration": dict(diagnostics["configuration"]),
+            "smoother": {
+                "subdomain_local_diagonal_shift": bool(
+                    smoother["subdomain_local_diagonal_shift"]
+                ),
+                "factor_fingerprints": [
+                    dict(fingerprint) for fingerprint in smoother["factor_fingerprints"]
+                ],
+            },
+            "partition_audit": dict(diagnostics["partition_audit"]),
+            "source_matrix_nnz": diagnostics["source_matrix_nnz"],
+            "factor_nnz": diagnostics["factor_nnz"],
+            "factor_csr_payload_estimate_bytes": diagnostics[
+                "factor_csr_payload_estimate_bytes"
+            ],
+            "assembly_payload": dict(diagnostics["assembly_payload"]),
+            "no_direct_fallback": bool(diagnostics["no_direct_fallback"]),
+            "factor_count_before_destroy": int(
+                diagnostics["lifecycle"]["factor_count_before_destroy"]
+            ),
+        }
+
+    def solve_summary(result) -> dict[str, Any]:
+        diagnostics = result.diagnostics
+        return {
+            "reason": int(result.converged_reason),
+            "iterations": int(result.iterations),
+            "reported_residual": float(result.reported_relative_residual),
+            "f_only_true_residual": float(result.true_relative_residual),
+            "stationary_correction_residuals": {
+                str(key): float(value)
+                for key, value in result.stationary_correction_residuals.items()
+            },
+            "setup_seconds": float(result.setup_seconds),
+            "solve_seconds": float(result.solve_seconds),
+            "apply_seconds": float(result.apply_seconds),
+            "solution_digest": _h1_owned_vec_digest(result.solution),
+            "explicit_true_residual_recomputed": bool(
+                diagnostics["explicit_true_residual_recomputed"]
+            ),
+            "operator_identity": diagnostics["operator"]["identity"],
+            "external_dtn_correction": diagnostics["operator"][
+                "external_dtn_correction"
+            ],
+        }
+
+    def result_is_finite(result: dict[str, Any]) -> bool:
+        stationary = result["stationary_correction_residuals"]
+        return bool(
+            all(
+                np.isfinite(float(result[key]))
+                for key in (
+                    "reported_residual",
+                    "f_only_true_residual",
+                    "setup_seconds",
+                    "solve_seconds",
+                    "apply_seconds",
+                )
+            )
+            and set(stationary) == {"1", "2", "4", "8"}
+            and all(np.isfinite(float(value)) for value in stationary.values())
+        )
+
+    def result_pass(result: dict[str, Any]) -> bool:
+        return bool(
+            result_is_finite(result)
+            and result["reason"] > 0
+            and result["iterations"] <= H5_MAX_IT
+            and result["f_only_true_residual"] <= 1.0e-8
+            and result["operator_identity"] == "fine_action_F_only"
+            and result["external_dtn_correction"] == "excluded"
+            and result["explicit_true_residual_recomputed"]
+        )
+
+    try:
+        rhs_sets["bottom"] = _h5_rhs_set(
+            bottom,
+            coupling.bottom,
+            selections,
+            side="bottom",
+            propagation=propagation,
+        )
+        rhs_sets["top"] = _h5_rhs_set(
+            top,
+            coupling.top,
+            selections,
+            side="top",
+            propagation=propagation,
+        )
+        mark_stage("v1_r2_f_only_inverse_setup")
+        setup_started = time.perf_counter()
+        bottom_inverse = build_hybrid_local_iterative_inverse(
+            bottom,
+            operator_override=bottom.fine_action,
+            operator_identity="fine_action_F_only",
+        )
+        top_inverse = build_hybrid_local_iterative_inverse(
+            top,
+            operator_override=top.fine_action,
+            operator_identity="fine_action_F_only",
+        )
+        timings["v1_r2_f_only_inverse_setup"] = _max_elapsed(comm, setup_started)
+        inverse_contracts = {
+            "bottom": inverse_contract(bottom_inverse),
+            "top": inverse_contract(top_inverse),
+        }
+        mark_stage("v1_r2_f_only_solves")
+        for side, inverse in (("bottom", bottom_inverse), ("top", top_inverse)):
+            rows: list[dict[str, Any]] = []
+            for name, rhs, metadata in rhs_sets[side]:
+                source_digest = _h1_owned_vec_digest(rhs)
+                first = None
+                second = None
+                try:
+                    first = inverse.solve(rhs)
+                    second = inverse.solve(rhs)
+                    first_summary = solve_summary(first)
+                    second_summary = solve_summary(second)
+                    repeat_error = _relative_vector_error(
+                        second.solution,
+                        first.solution,
+                    )
+                    row = {
+                        "name": name,
+                        "metadata": dict(metadata),
+                        "source_digest": source_digest,
+                        "first": first_summary,
+                        "second": second_summary,
+                        "repeat_reason_equal": bool(
+                            first_summary["reason"] == second_summary["reason"]
+                        ),
+                        "repeat_iterations_equal": bool(
+                            first_summary["iterations"] == second_summary["iterations"]
+                        ),
+                        "repeat_solution_relative_error": float(repeat_error),
+                        "finite": bool(
+                            result_is_finite(first_summary)
+                            and result_is_finite(second_summary)
+                            and np.isfinite(repeat_error)
+                        ),
+                    }
+                    row["pass"] = bool(
+                        row["finite"]
+                        and result_pass(first_summary)
+                        and result_pass(second_summary)
+                        and row["repeat_reason_equal"]
+                        and row["repeat_iterations_equal"]
+                        and repeat_error <= 1.0e-10
+                    )
+                    progress(
+                        f"Task037b V1-R2 {side}/{name}: "
+                        f"first_reason={first_summary['reason']}, "
+                        f"first_it={first_summary['iterations']}, "
+                        f"first_true={first_summary['f_only_true_residual']:.3e}; "
+                        f"second_reason={second_summary['reason']}, "
+                        f"second_it={second_summary['iterations']}, "
+                        f"second_true={second_summary['f_only_true_residual']:.3e}"
+                    )
+                    rows.append(row)
+                finally:
+                    if second is not None:
+                        second.destroy()
+                    if first is not None:
+                        first.destroy()
+            if len(rows) != 11:
+                raise RuntimeError("V1-R2 requires exactly eleven probes per side.")
+            side_records[side] = {
+                "operator_identity": "fine_action_F_only",
+                "external_dtn_correction": "excluded",
+                "probe_count": len(rows),
+                "probes": rows,
+                "max_first_true_residual": max(
+                    row["first"]["f_only_true_residual"] for row in rows
+                ),
+                "max_second_true_residual": max(
+                    row["second"]["f_only_true_residual"] for row in rows
+                ),
+                "max_repeat_solution_relative_error": max(
+                    row["repeat_solution_relative_error"] for row in rows
+                ),
+                "pass": bool(all(row["pass"] for row in rows)),
+            }
+        no_direct_fallback = bool(
+            all(
+                contract["no_direct_fallback"]
+                for contract in inverse_contracts.values()
+            )
+            and bottom.inventory.get("direct_factor_count") == 0
+            and top.inventory.get("direct_factor_count") == 0
+        )
+        r2_pass = bool(
+            all(side_record["pass"] for side_record in side_records.values())
+            and no_direct_fallback
+        )
+        release_started = time.perf_counter()
+        bottom_inverse.destroy()
+        bottom_inverse = None
+        top_inverse.destroy()
+        top_inverse = None
+        for side in ("bottom", "top"):
+            inverse_contracts[side].update(
+                {"factor_count_after_destroy": 0, "factors_released": True}
+            )
+        timings["v1_r2_f_only_release"] = _max_elapsed(comm, release_started)
+        mark_stage("v1_r2_f_only_release")
+        mark_stage("v1_r2_f_only_record")
+        _verify_source_stable_at_end(
+            comm,
+            provenance,
+            args.verified_clean_sha,
+            args.allow_dirty_research,
+        )
+        timings["v1_r2_f_only_qualification"] = _max_elapsed(comm, started)
+        record = {
+            "schema_version": 1,
+            "record_schema": "task037b.v1-r2-f-only-local-inverse.v1",
+            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+            "benchmark_id": "task037b_v1_r2_f_only_local_inverse",
+            "status": "task037b_v1_r2_complete_awaiting_r3",
+            "metadata": {
+                **provenance,
+                "command": list(sys.argv),
+                "verified_clean_sha": args.verified_clean_sha,
+                "authority_gate": authority_gate,
+            },
+            "case": {
+                "degree": args.degree,
+                "h_nm": args.h_nm,
+                "modal_degree": args.modal_degree,
+                "modal_h_nm": args.modal_h_nm,
+                "requested_modes": args.requested_modes,
+                "candidate_modes": args.candidate_modes,
+                "mpi_size": comm.size,
+                "polarization_kind": args.polarization_kind,
+                "incident_grazing_deg": args.incident_grazing_deg,
+                "bottom_interface_nm": args.bottom_interface_nm,
+                "top_interface_nm": args.top_interface_nm,
+                "solver_path": args.solver_path,
+                "operator_identity": "fine_action_F_only",
+                "external_dtn_correction": "excluded",
+                "formal_rhs_count_per_side": 11,
+            },
+            "hybrid_system": {
+                "global_action_constructed": False,
+                "global_A_materialized": False,
+                "global_F_materialized": False,
+                "explicit_global_C_D_materialized": False,
+                "direct_factor_count": 0,
+                "bottom_operator_inventory": dict(bottom.inventory),
+                "top_operator_inventory": dict(top.inventory),
+            },
+            "validation": {
+                "port_power": "not_run",
+                "R_total": "not_run",
+                "T_total": "not_run",
+                "A_balance": "not_run",
+                "A_volume_total": "not_run",
+            },
+            "physical_field_reconstruction": {"status": "not_run"},
+            "v1_r2_telemetry": {
+                "task037b_v1_gate": True,
+                "r2_scope": "F-only local operator; external DtN correction excluded",
+                "frozen_mode_selection": selections,
+                "formal_probe_count_per_side": 11,
+                "operator": "borrowed fine_action F_s",
+                "external_dtn_correction_excluded": True,
+                "sides": side_records,
+                "preconditioner": inverse_contracts,
+                "ordinary_default_changed": False,
+            },
+            "gates": {
+                "r2_record_complete": True,
+                "r2_all_probe_records_complete": bool(
+                    all(side["probe_count"] == 11 for side in side_records.values())
+                ),
+                "r2_all_probes_finite": bool(
+                    all(
+                        row["finite"]
+                        for side in side_records.values()
+                        for row in side["probes"]
+                    )
+                ),
+                "r2_no_direct_fallback": no_direct_fallback,
+                "r2_pass": r2_pass,
+            },
+            "qualification": {
+                "task037b_v1_gate": True,
+                "r2_pass": r2_pass,
+                "worker_numerical_pass": r2_pass,
+                "integration_pass": True,
+                "disposition": (
+                    "pass_awaiting_r3"
+                    if r2_pass
+                    else "F_ONLY_LOCAL_INVERSE_FAMILY_DIAGNOSTIC_NEGATIVE"
+                ),
+                "boundary": (
+                    "R2 F-only six-slab diagnostic complete; R3 whole-endcap test "
+                    "awaiting review; no R/T/A, field, or 12+12 physics Gate."
+                ),
+            },
+            "timing_seconds_max_rank": {
+                **timings,
+                "total": _max_elapsed(comm, total_started),
+            },
+            "historical_peak_rss_mb_by_rank": comm.gather(
+                _historical_peak_rss_mb(), root=0
+            ),
+            "memory_semantics": (
+                "R2 uses the same six-slab local inverse lifecycle as H5b; "
+                "resource samples remain external watchdog evidence."
+            ),
+        }
+        record["gates"]["r2_factors_released"] = True
+        raise _V1R2QualificationStop(record)
+    finally:
+        if bottom_inverse is not None:
+            bottom_inverse.destroy()
+        if top_inverse is not None:
+            top_inverse.destroy()
+        for rhs_list in rhs_sets.values():
+            for _name, vector, _metadata in rhs_list:
+                vector.destroy()
+
+
 def main() -> None:
     args = _parse_args()
     if args.h_nm <= 0.0:
@@ -3331,21 +3706,38 @@ def main() -> None:
                 log=progress,
             )
             timings["v1_action_coupling_build"] = _max_elapsed(comm, started)
-            _run_v1_dtn_component_qualification(
-                args=args,
-                comm=comm,
-                provenance=provenance,
-                authority_gate=task035c_p6_gate,
-                positive=positive,
-                negative=negative,
-                bottom=bottom,
-                top=top,
-                coupling=coupling,
-                timings=timings,
-                total_started=total_started,
-                mark_stage=mark_stage,
-                progress=progress,
-            )
+            if args.solver_path == "f-only-local-inverse-qualification":
+                _run_v1_r2_f_only_qualification(
+                    args=args,
+                    comm=comm,
+                    provenance=provenance,
+                    authority_gate=task035c_p6_gate,
+                    positive=positive,
+                    negative=negative,
+                    bottom=bottom,
+                    top=top,
+                    coupling=coupling,
+                    timings=timings,
+                    total_started=total_started,
+                    mark_stage=mark_stage,
+                    progress=progress,
+                )
+            else:
+                _run_v1_dtn_component_qualification(
+                    args=args,
+                    comm=comm,
+                    provenance=provenance,
+                    authority_gate=task035c_p6_gate,
+                    positive=positive,
+                    negative=negative,
+                    bottom=bottom,
+                    top=top,
+                    coupling=coupling,
+                    timings=timings,
+                    total_started=total_started,
+                    mark_stage=mark_stage,
+                    progress=progress,
+                )
         else:
             mark_stage("local_fem_dtn_assembly")
             started = time.perf_counter()
@@ -4715,6 +5107,8 @@ def main() -> None:
                     ),
                 }
             )
+    except _V1R2QualificationStop as stop:
+        record = stop.record
     except _V1QualificationStop as stop:
         record = stop.record
     except _H5QualificationStop as stop:

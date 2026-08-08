@@ -965,13 +965,18 @@ def _task034_terminal_record_is_complete(record_path: Path) -> bool:
     ) == "task037b.v1-r1-dtn-component-action.v1" and isinstance(
         payload.get("v1_telemetry"), dict
     )
+    v1_r2_record = payload.get(
+        "record_schema"
+    ) == "task037b.v1-r2-f-only-local-inverse.v1" and isinstance(
+        payload.get("v1_r2_telemetry"), dict
+    )
     return bool(
         payload.get("schema_version") == 1
         and isinstance(payload.get("benchmark_id"), str)
         and isinstance(payload.get("timestamp_utc"), str)
         and isinstance(payload.get("status"), str)
         and isinstance(payload.get("qualification"), dict)
-        and (isinstance(payload.get("solve"), dict) or v1_record)
+        and (isinstance(payload.get("solve"), dict) or v1_record or v1_r2_record)
         and isinstance(payload.get("gates"), dict)
     )
 
@@ -1095,6 +1100,7 @@ def _hybrid_measurements(record: dict[str, Any]) -> dict[str, Any]:
         "h4_telemetry": record.get("h4_telemetry"),
         "h5_telemetry": record.get("h5_telemetry"),
         "v1_telemetry": record.get("v1_telemetry"),
+        "v1_r2_telemetry": record.get("v1_r2_telemetry"),
         "status": record.get("status"),
         "case": record.get("case"),
         "qep": {
@@ -1295,6 +1301,260 @@ def _task037b_v1_r1_numerical_pass(record: dict[str, Any]) -> bool:
             ):
                 return False
     return True
+
+
+def _task037b_v1_r2_numerical_pass(
+    record: dict[str, Any], *, require_numerical_pass: bool = True
+) -> bool:
+    """Recompute V1-R2 contract and optionally require all probes to pass."""
+
+    if not isinstance(record, dict):
+        return False
+    if (
+        record.get("schema_version") != 1
+        or record.get("record_schema") != "task037b.v1-r2-f-only-local-inverse.v1"
+        or record.get("benchmark_id") != "task037b_v1_r2_f_only_local_inverse"
+        or record.get("status") != "task037b_v1_r2_complete_awaiting_r3"
+    ):
+        return False
+    qualification = record.get("qualification")
+    telemetry = record.get("v1_r2_telemetry")
+    gates = record.get("gates")
+    if not isinstance(qualification, dict) or not isinstance(telemetry, dict):
+        return False
+    if (
+        qualification.get("task037b_v1_gate") is not True
+        or qualification.get("integration_pass") is not True
+        or telemetry.get("task037b_v1_gate") is not True
+        or telemetry.get("formal_probe_count_per_side") != 11
+        or telemetry.get("external_dtn_correction_excluded") is not True
+        or not isinstance(gates, dict)
+        or gates.get("r2_record_complete") is not True
+    ):
+        return False
+    hybrid_system = record.get("hybrid_system")
+    if not isinstance(hybrid_system, dict) or any(
+        (
+            hybrid_system.get("global_action_constructed") is not False,
+            hybrid_system.get("global_A_materialized") is not False,
+            hybrid_system.get("global_F_materialized") is not False,
+            hybrid_system.get("explicit_global_C_D_materialized") is not False,
+            hybrid_system.get("direct_factor_count") != 0,
+        )
+    ):
+        return False
+    validation = record.get("validation")
+    physical_field_reconstruction = record.get("physical_field_reconstruction")
+    if (
+        not isinstance(validation, dict)
+        or any(
+            validation.get(name) != "not_run"
+            for name in (
+                "port_power",
+                "R_total",
+                "T_total",
+                "A_balance",
+                "A_volume_total",
+            )
+        )
+        or not isinstance(physical_field_reconstruction, dict)
+        or physical_field_reconstruction.get("status") != "not_run"
+    ):
+        return False
+    base_names = {
+        "physical",
+        "random_seed_3701",
+        "random_seed_3702",
+        "random_seed_3703",
+        "random_seed_3704",
+    }
+    modal_names = {
+        f"modal_{direction}_{criterion}"
+        for direction in ("positive", "negative")
+        for criterion in (
+            "lowest_propagating_or_lossy",
+            "highest_retained_index",
+            "first_kind_evanescent",
+            "proxy_abs_im_beta_gt_abs_re_beta",
+        )
+    }
+    sides = telemetry.get("sides")
+    contracts = telemetry.get("preconditioner")
+    if (
+        not isinstance(sides, dict)
+        or set(sides) != {"bottom", "top"}
+        or not isinstance(contracts, dict)
+        or set(contracts) != {"bottom", "top"}
+    ):
+        return False
+    all_pass = True
+    for side_name in ("bottom", "top"):
+        side = sides.get(side_name)
+        contract = contracts.get(side_name)
+        configuration = (
+            contract.get("configuration") if isinstance(contract, dict) else None
+        )
+        smoother = contract.get("smoother") if isinstance(contract, dict) else None
+        factor_fingerprints = (
+            smoother.get("factor_fingerprints") if isinstance(smoother, dict) else None
+        )
+        if (
+            not isinstance(side, dict)
+            or not isinstance(contract, dict)
+            or side.get("operator_identity") != "fine_action_F_only"
+            or side.get("external_dtn_correction") != "excluded"
+            or side.get("probe_count") != 11
+            or type(contract.get("factor_count_before_destroy")) is not int
+            or contract.get("factor_count_before_destroy") != 6
+            or contract.get("no_direct_fallback") is not True
+            or contract.get("factor_count_after_destroy") != 0
+            or contract.get("factors_released") is not True
+            or not isinstance(configuration, dict)
+            or configuration.get("coordinate_axis") != 0
+            or configuration.get("num_slabs") != 6
+            or configuration.get("overlap_fraction") != 0.125
+            or configuration.get("interpolation") != "partition"
+            or configuration.get("ilu_levels") != 0
+            or configuration.get("factor_only") is not True
+            or configuration.get("one_apply_per_pc_apply") is not True
+            or configuration.get("two_step_action_operator") is not None
+            or configuration.get("outer_solver") != "right_fgmres"
+            or configuration.get("restart") != 30
+            or configuration.get("max_it") != 300
+            or configuration.get("rtol") != 1.0e-10
+            or configuration.get("atol") != 0.0
+            or configuration.get("true_residual_limit") != 1.0e-8
+            or not isinstance(smoother, dict)
+            or smoother.get("subdomain_local_diagonal_shift") is not True
+            or not isinstance(factor_fingerprints, list)
+            or len(factor_fingerprints) != 6
+        ):
+            return False
+        probes = side.get("probes")
+        if (
+            not isinstance(probes, list)
+            or len(probes) != 11
+            or not all(isinstance(probe, dict) for probe in probes)
+        ):
+            return False
+        if any(type(probe.get("name")) is not str for probe in probes):
+            return False
+        names = {probe["name"] for probe in probes}
+        expected_names = base_names | {name for name in names if name in modal_names}
+        for direction in ("positive", "negative"):
+            if not {
+                f"modal_{direction}_lowest_propagating_or_lossy",
+                f"modal_{direction}_highest_retained_index",
+            }.issubset(names):
+                return False
+            if (
+                len(
+                    {
+                        f"modal_{direction}_first_kind_evanescent",
+                        f"modal_{direction}_proxy_abs_im_beta_gt_abs_re_beta",
+                    }
+                    & names
+                )
+                != 1
+            ):
+                return False
+        if names != expected_names or len(names) != 11:
+            return False
+        side_pass = True
+        for probe in probes:
+            first = probe.get("first")
+            second = probe.get("second")
+            stationary_keys = {"1", "2", "4", "8"}
+            if (
+                not isinstance(first, dict)
+                or not isinstance(second, dict)
+                or first.get("operator_identity") != "fine_action_F_only"
+                or second.get("operator_identity") != "fine_action_F_only"
+                or first.get("external_dtn_correction") != "excluded"
+                or second.get("external_dtn_correction") != "excluded"
+                or first.get("explicit_true_residual_recomputed") is not True
+                or second.get("explicit_true_residual_recomputed") is not True
+                or set(first.get("stationary_correction_residuals", {}))
+                != stationary_keys
+                or set(second.get("stationary_correction_residuals", {}))
+                != stationary_keys
+            ):
+                return False
+            numeric_keys = (
+                "reported_residual",
+                "f_only_true_residual",
+                "setup_seconds",
+                "solve_seconds",
+                "apply_seconds",
+            )
+            finite = True
+            for result in (first, second):
+                if (
+                    type(result.get("reason")) is not int
+                    or type(result.get("iterations")) is not int
+                ):
+                    return False
+                finite &= all(
+                    isinstance(result.get(key), (int, float))
+                    and math.isfinite(float(result[key]))
+                    for key in numeric_keys
+                )
+                finite &= all(
+                    isinstance(value, (int, float)) and math.isfinite(float(value))
+                    for value in result["stationary_correction_residuals"].values()
+                )
+            repeat_error = probe.get("repeat_solution_relative_error")
+            finite &= isinstance(repeat_error, (int, float)) and math.isfinite(
+                float(repeat_error)
+            )
+            finite &= float(repeat_error) >= 0.0
+            expected_pass = bool(
+                finite
+                and first["reason"] > 0
+                and second["reason"] > 0
+                and first["iterations"] <= 300
+                and second["iterations"] <= 300
+                and first["f_only_true_residual"] <= 1.0e-8
+                and second["f_only_true_residual"] <= 1.0e-8
+                and probe.get("repeat_reason_equal") is True
+                and probe.get("repeat_iterations_equal") is True
+                and float(repeat_error) <= 1.0e-10
+            )
+            if (
+                type(probe.get("finite")) is not bool
+                or type(probe.get("pass")) is not bool
+                or probe.get("finite") is not finite
+                or probe.get("pass") is not expected_pass
+                or probe.get("repeat_reason_equal")
+                is not (first["reason"] == second["reason"])
+                or probe.get("repeat_iterations_equal")
+                is not (first["iterations"] == second["iterations"])
+            ):
+                return False
+            side_pass &= expected_pass
+        if side.get("pass") is not side_pass:
+            return False
+        all_pass &= side_pass
+    expected_disposition = (
+        "pass_awaiting_r3"
+        if all_pass
+        else "F_ONLY_LOCAL_INVERSE_FAMILY_DIAGNOSTIC_NEGATIVE"
+    )
+    if (
+        gates.get("r2_all_probe_records_complete") is not True
+        or gates.get("r2_all_probes_finite")
+        is not all(
+            probe["finite"] for side in sides.values() for probe in side["probes"]
+        )
+        or gates.get("r2_no_direct_fallback") is not True
+        or gates.get("r2_factors_released") is not True
+        or gates.get("r2_pass") is not all_pass
+        or qualification.get("r2_pass") is not all_pass
+        or qualification.get("worker_numerical_pass") is not all_pass
+        or qualification.get("disposition") != expected_disposition
+    ):
+        return False
+    return bool(all_pass if require_numerical_pass else True)
 
 
 def _h5_stage_memory_summary(
@@ -1545,6 +1805,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "block-ldu-exact",
             "local-inverse-qualification",
             "dtn-component-qualification",
+            "f-only-local-inverse-qualification",
         ),
         default="modal-schur-memory-minimal",
     )
@@ -1690,6 +1951,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error("local-inverse-qualification requires --task037b-h5-gate.")
     if args.solver_path == "dtn-component-qualification" and not args.task037b_v1_gate:
         parser.error("dtn-component-qualification requires --task037b-v1-gate.")
+    if (
+        args.solver_path == "f-only-local-inverse-qualification"
+        and not args.task037b_v1_gate
+    ):
+        parser.error("f-only-local-inverse-qualification requires --task037b-v1-gate.")
     selected_scoped_gates = (
         args.task035c_p6_h10_gate,
         args.task037b_h1_gate,
@@ -1871,7 +2137,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and args.mpi_size == 8
             and args.requested_modes == 120
             and args.candidate_modes == 240
-            and args.solver_path == "dtn-component-qualification"
+            and args.solver_path
+            in ("dtn-component-qualification", "f-only-local-inverse-qualification")
             and args.comparison_solver_path == "fast"
             and not args.compare_modal_schur
             and args.stage4_full3d_assembly_backend == "assembly_time_static_condensed"
@@ -1893,7 +2160,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             parser.error(
                 "--task037b-v1-gate is restricted to the fixed WSL p6/h10, "
                 "10/110 nm, S-polarized, full3d/scalar-CG, M120+M120, "
-                "candidate240, dtn-component-qualification, "
+                "candidate240, dtn-component-qualification or "
+                "f-only-local-inverse-qualification, "
                 "static-condensed MPI8 path."
             )
     elif args.task037b_h1_gate:
@@ -2362,7 +2630,12 @@ def run(args: argparse.Namespace) -> int:
                         "task037b.h5-hybrid-launch-gate.v1"
                         if args.task037b_h5_gate
                         else (
-                            "task037b.v1-hybrid-launch-gate.v1"
+                            (
+                                "task037b.v1-r2-hybrid-launch-gate.v1"
+                                if args.solver_path
+                                == "f-only-local-inverse-qualification"
+                                else "task037b.v1-hybrid-launch-gate.v1"
+                            )
                             if args.task037b_v1_gate
                             else "task035c.p6-h10-hybrid-launch-gate.v1"
                         )
@@ -2381,7 +2654,12 @@ def run(args: argparse.Namespace) -> int:
                         "task037b_h5_fixed_local_inverse_p6_h10"
                         if args.task037b_h5_gate
                         else (
-                            "task037b_v1_fixed_dtn_component_p6_h10"
+                            (
+                                "task037b_v1_r2_fixed_f_only_p6_h10"
+                                if args.solver_path
+                                == "f-only-local-inverse-qualification"
+                                else "task037b_v1_fixed_dtn_component_p6_h10"
+                            )
                             if args.task037b_v1_gate
                             else "task035c_fixed_rectangular_p6_h10"
                         )
@@ -2807,7 +3085,11 @@ def run(args: argparse.Namespace) -> int:
         or args.task037b_v1_gate
     )
     terminal_stage = (
-        "v1_r1_record"
+        (
+            "v1_r2_f_only_record"
+            if args.solver_path == "f-only-local-inverse-qualification"
+            else "v1_r1_record"
+        )
         if args.task037b_v1_gate
         else "h5b_release_record"
         if args.task037b_h5_gate
@@ -3035,24 +3317,34 @@ def run(args: argparse.Namespace) -> int:
     )
     if args.target == "qep":
         numerical_pass = solver_record.get("status") == "measured_shard_pass"
+        formal_numerical_pass = numerical_pass
         measurements: dict[str, Any] = solver_record
     else:
         qualification = solver_record.get("qualification", {})
         if args.task037b_v1_gate:
-            numerical_pass = _task037b_v1_r1_numerical_pass(solver_record)
+            if args.solver_path == "f-only-local-inverse-qualification":
+                numerical_pass = _task037b_v1_r2_numerical_pass(solver_record)
+                formal_numerical_pass = _task037b_v1_r2_numerical_pass(
+                    solver_record, require_numerical_pass=False
+                )
+            else:
+                numerical_pass = _task037b_v1_r1_numerical_pass(solver_record)
+                formal_numerical_pass = numerical_pass
         elif args.task037b_h5_gate:
             numerical_pass = _task037b_h5_numerical_pass(solver_record)
+            formal_numerical_pass = numerical_pass
         else:
             numerical_pass = bool(
                 qualification.get("integration_pass")
                 and qualification.get("task033_physical_truncation_allowed")
             )
+            formal_numerical_pass = numerical_pass
         measurements = _hybrid_measurements(solver_record)
         if args.task037b_h5_gate:
             measurements["h5_memory_stages"] = h5_memory_stages
     formal_pass = _formal_shard_pass(
         return_code=return_code,
-        numerical_pass=numerical_pass,
+        numerical_pass=formal_numerical_pass,
         resource_gate_pass=resource_gate["pass"],
         source_gate_pass=source_gate["pass"],
         launch_gate_pass=launch_gate["pass"],
@@ -3061,8 +3353,16 @@ def run(args: argparse.Namespace) -> int:
         terminated_for_authority_unreadable=(terminated_for_authority_unreadable),
         no_swap_pass=no_swap if args.task037b_h5_gate else True,
     )
+    r2_record_complete = bool(
+        args.task037b_v1_gate
+        and args.solver_path == "f-only-local-inverse-qualification"
+        and formal_pass
+        and formal_numerical_pass
+    )
     summary_status = (
-        "task037b_v1_r1_pass_awaiting_r2"
+        "task037b_v1_r2_complete_awaiting_r3"
+        if r2_record_complete
+        else "task037b_v1_r1_pass_awaiting_r2"
         if args.task037b_v1_gate and formal_pass
         else "formal_not_pass"
         if args.task037b_v1_gate
@@ -3084,7 +3384,12 @@ def run(args: argparse.Namespace) -> int:
         "memory_authority_pass": resource_gate["pass"],
         "physical_qualified": False,
         "qualification_identity": (
-            "task037b_v1_r1_raw_record_gate_awaiting_r2"
+            "task037b_v1_r2_raw_record_gate_awaiting_r3"
+            if r2_record_complete
+            else "task037b_v1_r2_raw_record_formal_not_pass"
+            if args.task037b_v1_gate
+            and args.solver_path == "f-only-local-inverse-qualification"
+            else "task037b_v1_r1_raw_record_gate_awaiting_r2"
             if args.task037b_v1_gate
             else "measured_shard_pass_requires_funnel_aggregate_for_physical_qualification"
         ),

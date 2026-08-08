@@ -16,6 +16,7 @@ from benchmarks.run_task033_memory_watchdog import (
     _task034_terminal_worker_drain,
     _task037b_h5_numerical_pass,
     _task037b_v1_r1_numerical_pass,
+    _task037b_v1_r2_numerical_pass,
     _watchdog_source_after,
     _watchdog_source_before,
     _worker_command,
@@ -86,6 +87,142 @@ def _v1_raw_record() -> dict:
             "task037b_v1_gate": True,
             "r1_pass": True,
             "integration_pass": True,
+        },
+    }
+
+
+def _v1_r2_raw_record() -> dict:
+    names = (
+        "physical",
+        "random_seed_3701",
+        "random_seed_3702",
+        "random_seed_3703",
+        "random_seed_3704",
+        "modal_positive_lowest_propagating_or_lossy",
+        "modal_positive_first_kind_evanescent",
+        "modal_positive_highest_retained_index",
+        "modal_negative_lowest_propagating_or_lossy",
+        "modal_negative_first_kind_evanescent",
+        "modal_negative_highest_retained_index",
+    )
+
+    def result() -> dict:
+        return {
+            "reason": 2,
+            "iterations": 1,
+            "reported_residual": 1.0e-12,
+            "f_only_true_residual": 2.0e-12,
+            "stationary_correction_residuals": {
+                "1": 1.0e-1,
+                "2": 1.0e-2,
+                "4": 1.0e-3,
+                "8": 1.0e-4,
+            },
+            "setup_seconds": 1.0,
+            "solve_seconds": 2.0,
+            "apply_seconds": 3.0,
+            "operator_identity": "fine_action_F_only",
+            "external_dtn_correction": "excluded",
+            "explicit_true_residual_recomputed": True,
+        }
+
+    def side() -> dict:
+        probes = []
+        for name in names:
+            probes.append(
+                {
+                    "name": name,
+                    "first": result(),
+                    "second": result(),
+                    "repeat_reason_equal": True,
+                    "repeat_iterations_equal": True,
+                    "repeat_solution_relative_error": 1.0e-14,
+                    "finite": True,
+                    "pass": True,
+                }
+            )
+        return {
+            "operator_identity": "fine_action_F_only",
+            "external_dtn_correction": "excluded",
+            "probe_count": 11,
+            "probes": probes,
+            "pass": True,
+        }
+
+    def preconditioner_contract() -> dict:
+        return {
+            "configuration": {
+                "coordinate_axis": 0,
+                "num_slabs": 6,
+                "overlap_fraction": 0.125,
+                "interpolation": "partition",
+                "ilu_levels": 0,
+                "factor_only": True,
+                "one_apply_per_pc_apply": True,
+                "two_step_action_operator": None,
+                "outer_solver": "right_fgmres",
+                "restart": 30,
+                "max_it": 300,
+                "rtol": 1.0e-10,
+                "atol": 0.0,
+                "true_residual_limit": 1.0e-8,
+            },
+            "smoother": {
+                "subdomain_local_diagonal_shift": True,
+                "factor_fingerprints": [
+                    {"subdomain": index, "sha256": "a" * 64} for index in range(6)
+                ],
+            },
+            "no_direct_fallback": True,
+            "factor_count_before_destroy": 6,
+            "factor_count_after_destroy": 0,
+            "factors_released": True,
+        }
+
+    return {
+        "schema_version": 1,
+        "record_schema": "task037b.v1-r2-f-only-local-inverse.v1",
+        "benchmark_id": "task037b_v1_r2_f_only_local_inverse",
+        "status": "task037b_v1_r2_complete_awaiting_r3",
+        "hybrid_system": {
+            "global_action_constructed": False,
+            "global_A_materialized": False,
+            "global_F_materialized": False,
+            "explicit_global_C_D_materialized": False,
+            "direct_factor_count": 0,
+        },
+        "validation": {
+            "port_power": "not_run",
+            "R_total": "not_run",
+            "T_total": "not_run",
+            "A_balance": "not_run",
+            "A_volume_total": "not_run",
+        },
+        "physical_field_reconstruction": {"status": "not_run"},
+        "v1_r2_telemetry": {
+            "task037b_v1_gate": True,
+            "external_dtn_correction_excluded": True,
+            "formal_probe_count_per_side": 11,
+            "sides": {"bottom": side(), "top": side()},
+            "preconditioner": {
+                "bottom": preconditioner_contract(),
+                "top": preconditioner_contract(),
+            },
+        },
+        "gates": {
+            "r2_record_complete": True,
+            "r2_all_probe_records_complete": True,
+            "r2_all_probes_finite": True,
+            "r2_no_direct_fallback": True,
+            "r2_factors_released": True,
+            "r2_pass": True,
+        },
+        "qualification": {
+            "task037b_v1_gate": True,
+            "r2_pass": True,
+            "worker_numerical_pass": True,
+            "integration_pass": True,
+            "disposition": "pass_awaiting_r3",
         },
     }
 
@@ -1202,6 +1339,49 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
             }
         }
         self.assertFalse(_task037b_v1_r1_numerical_pass(qualification_only))
+
+    def test_v1_r2_numerical_pass_recomputes_f_only_contract(self) -> None:
+        self.assertTrue(_task037b_v1_r2_numerical_pass(_v1_r2_raw_record()))
+
+        error_record = _v1_r2_raw_record()
+        error_record["v1_r2_telemetry"]["sides"]["bottom"]["probes"][0]["first"][
+            "f_only_true_residual"
+        ] = 2.0e-8
+        error_record["v1_r2_telemetry"]["sides"]["bottom"]["probes"][0]["pass"] = False
+        error_record["v1_r2_telemetry"]["sides"]["bottom"]["pass"] = False
+        error_record["gates"]["r2_pass"] = False
+        error_record["qualification"]["r2_pass"] = False
+        error_record["qualification"]["worker_numerical_pass"] = False
+        error_record["qualification"]["disposition"] = (
+            "F_ONLY_LOCAL_INVERSE_FAMILY_DIAGNOSTIC_NEGATIVE"
+        )
+        self.assertTrue(
+            _task037b_v1_r2_numerical_pass(error_record, require_numerical_pass=False)
+        )
+        self.assertFalse(_task037b_v1_r2_numerical_pass(error_record))
+
+        missing_side = _v1_r2_raw_record()
+        del missing_side["v1_r2_telemetry"]["sides"]["top"]
+        self.assertFalse(_task037b_v1_r2_numerical_pass(missing_side))
+
+        malformed_name = _v1_r2_raw_record()
+        malformed_name["v1_r2_telemetry"]["sides"]["bottom"]["probes"][0]["name"] = None
+        self.assertFalse(_task037b_v1_r2_numerical_pass(malformed_name))
+
+        wrong_configuration = _v1_r2_raw_record()
+        wrong_configuration["v1_r2_telemetry"]["preconditioner"]["bottom"][
+            "configuration"
+        ]["overlap_fraction"] = 0.25
+        self.assertFalse(_task037b_v1_r2_numerical_pass(wrong_configuration))
+
+        qualification_only = {
+            "qualification": {
+                "task037b_v1_gate": True,
+                "r2_pass": True,
+                "integration_pass": True,
+            }
+        }
+        self.assertFalse(_task037b_v1_r2_numerical_pass(qualification_only))
 
     def test_h5_external_no_swap_is_a_formal_requirement(self) -> None:
         kwargs = {

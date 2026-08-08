@@ -126,6 +126,8 @@ def test_h5_local_inverse_configuration_residual_and_lifecycle():
     inverse = build_hybrid_local_iterative_inverse(action_carrier)
     result = None
     repeat = None
+    f_only_inverse = None
+    f_only_result = None
     try:
         assert inverse.plan.coordinate_axis == H5_COORDINATE_AXIS == 0
         assert len(inverse.plan.coordinate_intervals) == H5_NUM_SLABS
@@ -149,6 +151,8 @@ def test_h5_local_inverse_configuration_residual_and_lifecycle():
         }
         assert action.getType() == "python"
         assert diagnostics["operator"]["global_A_materialized"] is False
+        assert diagnostics["operator"]["identity"] == "complete_hybrid_action"
+        assert diagnostics["operator"]["external_dtn_correction"] == "included"
         assert diagnostics["no_direct_fallback"] is True
         assert diagnostics["smoother"]["factor_only_storage"] is True
         assert diagnostics["smoother"]["local_solver_types"] == ["ilu"] * H5_NUM_SLABS
@@ -185,7 +189,27 @@ def test_h5_local_inverse_configuration_residual_and_lifecycle():
         assert repeat.converged_reason == result.converged_reason
         assert repeat.iterations == result.iterations
         assert _relative_error(result.solution, repeat.solution) <= 1.0e-10
+
+        inverse.destroy()
+        f_only_inverse = build_hybrid_local_iterative_inverse(
+            action_carrier,
+            operator_override=action,
+            operator_identity="fine_action_F_only",
+        )
+        f_only_diagnostics = f_only_inverse._diagnostics()
+        assert f_only_diagnostics["operator"]["identity"] == "fine_action_F_only"
+        assert f_only_diagnostics["operator"]["external_dtn_correction"] == ("excluded")
+        f_only_result = f_only_inverse.solve(rhs)
+        assert f_only_result.converged_reason > 0
+        assert f_only_result.true_relative_residual <= 1.0e-8
+        assert action.getType() == "python"
+        f_only_inverse.destroy()
+        assert f_only_inverse.factors_released is True
     finally:
+        if f_only_result is not None:
+            f_only_result.destroy()
+        if f_only_inverse is not None:
+            f_only_inverse.destroy()
         if repeat is not None:
             repeat.destroy()
         if result is not None:

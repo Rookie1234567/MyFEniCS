@@ -231,6 +231,12 @@ def _v1_hybrid_cli() -> list[str]:
     return cli
 
 
+def _v1_r2_hybrid_cli() -> list[str]:
+    cli = _v1_hybrid_cli()
+    cli[cli.index("--solver-path") + 1] = "f-only-local-inverse-qualification"
+    return cli
+
+
 class Task035cP6H10RunnerGateTests(unittest.TestCase):
     def test_ordinary_defaults_remain_unchanged(self) -> None:
         phase6 = parse_phase6_args([])
@@ -564,6 +570,53 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
         combined.append("--task037b-h5-gate")
         with self.assertRaises(SystemExit):
             parse_memory_args(combined)
+
+    def test_task037b_v1_r2_f_only_gate_and_worker_forwarding(self) -> None:
+        args = parse_memory_args(_v1_r2_hybrid_cli())
+        self.assertTrue(args.task037b_v1_gate)
+        self.assertEqual(args.solver_path, "f-only-local-inverse-qualification")
+        command = _worker_command(args, Path("record.json"), Path("stages.jsonl"))
+        self.assertIn("--task037b-v1-gate", command)
+        self.assertEqual(
+            command[command.index("--solver-path") + 1],
+            "f-only-local-inverse-qualification",
+        )
+        worker_cli = _v1_r2_hybrid_cli()
+        remove_pairs = {"--target", "--case-label", "--mpi-size"}
+        phase6_cli: list[str] = []
+        index = 0
+        while index < len(worker_cli):
+            if worker_cli[index] in remove_pairs:
+                index += 2
+                continue
+            phase6_cli.append(worker_cli[index])
+            index += 1
+        worker = parse_phase6_args(phase6_cli)
+        self.assertTrue(worker.task037b_v1_gate)
+        self.assertEqual(worker.solver_path, "f-only-local-inverse-qualification")
+        with self.assertRaises(SystemExit):
+            parse_memory_args(
+                [
+                    "--target",
+                    "hybrid",
+                    "--case-label",
+                    "ordinary_f_only",
+                    "--degree",
+                    "2",
+                    "--h-nm",
+                    "5",
+                    "--mpi-size",
+                    "1",
+                    "--requested-modes",
+                    "80",
+                    "--candidate-modes",
+                    "160",
+                    "--solver-path",
+                    "f-only-local-inverse-qualification",
+                    "--verified-clean-sha",
+                    SOURCE_SHA,
+                ]
+            )
 
     def test_task035c_rejects_augmented_and_h1_summary_forwards(self) -> None:
         old_augmented = _hybrid_cli("assembly_time_static_condensed")

@@ -129,14 +129,36 @@ class HybridLocalIterativeInverseResult:
 
 
 class HybridLocalIterativeInverse:
-    """H5b right-FGMRES with one partition-of-unity ASM apply per PC call."""
+    """Right-FGMRES with one partition-of-unity ASM apply per PC call."""
 
-    def __init__(self, action_system: HybridLocalDtnActionSystem) -> None:
+    def __init__(
+        self,
+        action_system: HybridLocalDtnActionSystem,
+        *,
+        operator_override: PETSc.Mat | None = None,
+        operator_identity: str = "complete_hybrid_action",
+    ) -> None:
         self.action_system = action_system
-        self.operator = action_system.A
+        if operator_override is None:
+            if operator_identity != "complete_hybrid_action":
+                raise ValueError(
+                    "default inverse requires the complete action identity"
+                )
+            self.operator = action_system.A
+            self.external_dtn_correction = "included"
+        else:
+            if operator_identity != "fine_action_F_only":
+                raise ValueError(
+                    "operator overrides must identify the borrowed F action"
+                )
+            self.operator = operator_override
+            self.external_dtn_correction = "excluded"
+        self.operator_identity = operator_identity
         self.condensed = action_system.static_condensation.condensed
         if self.operator.getType() != "python":
             raise ValueError("H5 exact local operator must be a MatPython action")
+        if self.operator.getSize() != action_system.A.getSize():
+            raise ValueError("iterative inverse operator must match the action size")
         if self.condensed.matrix is not None:
             raise ValueError("H5 action condensation must not retain a global matrix")
         if action_system.inventory.get("global_A_materialized") is not False:
@@ -291,6 +313,8 @@ class HybridLocalIterativeInverse:
         return {
             "operator": {
                 "matrix_type": str(self.operator.getType()),
+                "identity": self.operator_identity,
+                "external_dtn_correction": self.external_dtn_correction,
                 "matrix_free": True,
                 "global_A_materialized": False,
                 "global_size": int(self.operator.getSize()[0]),
@@ -374,7 +398,14 @@ class HybridLocalIterativeInverse:
 
 def build_hybrid_local_iterative_inverse(
     action_system: HybridLocalDtnActionSystem,
+    *,
+    operator_override: PETSc.Mat | None = None,
+    operator_identity: str = "complete_hybrid_action",
 ) -> HybridLocalIterativeInverse:
-    """Build the frozen H5b factor-only inverse without owning ``action_system``."""
+    """Build the local inverse without owning ``action_system`` or its operator."""
 
-    return HybridLocalIterativeInverse(action_system)
+    return HybridLocalIterativeInverse(
+        action_system,
+        operator_override=operator_override,
+        operator_identity=operator_identity,
+    )
