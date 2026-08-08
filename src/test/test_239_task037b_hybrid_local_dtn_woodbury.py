@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import hashlib
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 from mpi4py import MPI
 from petsc4py import PETSc
 
 from src.solvers.hybrid_local_dtn_woodbury import (
     R4_MODAL_COUNT,
+    HybridLocalDtnWoodburyFixedAction,
     HybridLocalDtnWoodburyOracle,
 )
 
@@ -21,6 +24,36 @@ class _DenseBaseInverse:
             np.asarray(source.getArray(readonly=True), dtype=np.complex128)
             / self.diagonal
         )
+
+
+class _FixedBaseAction:
+    def __init__(self, base: _DenseBaseInverse) -> None:
+        self.base = base
+        self.apply_count = 0
+
+    @property
+    def diagnostics(self) -> dict[str, object]:
+        return {
+            "identity": "tiny_fixed_non_ksp_base",
+            "factor_count": 1,
+            "ksp_created": False,
+        }
+
+    def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        self.apply_count += 1
+        self.base.solve(source, target)
+
+
+def _global_vec_digest(vector: PETSc.Vec) -> str:
+    comm = vector.getComm().tompi4py()
+    first, last = (int(value) for value in vector.getOwnershipRange())
+    local = np.asarray(vector.getArray(readonly=True), dtype=np.complex128)
+    packets = comm.allgather((first, last, local.tobytes(order="C")))
+    digest = hashlib.sha256()
+    for packet_first, packet_last, payload in sorted(packets):
+        digest.update(np.asarray((packet_first, packet_last), dtype="<i8").tobytes())
+        digest.update(payload)
+    return digest.hexdigest()
 
 
 class _DenseMatPythonAction:
@@ -156,6 +189,128 @@ def test_exact_woodbury_matpython_components_and_lifecycle():
         assert oracle.diagnostics["destroyed"] is True
         assert c_context.destroyed is False
         assert d_context.destroyed is False
+        F.destroy()
+        C.destroy()
+        D.destroy()
+        H.destroy()
+        assert c_context.destroyed is True
+        assert d_context.destroyed is True
+
+
+def test_fixed_woodbury_action_is_one_apply_nonowning_and_fail_closed():
+    comm = MPI.COMM_WORLD
+    if comm.size not in (1, 2, 4):
+        return
+    rows = 8
+    rng = np.random.default_rng(240)
+    base_dense = np.eye(rows, dtype=np.complex128) * (2.0 + 0.2j)
+    C_dense = rng.standard_normal((rows, R4_MODAL_COUNT)) + 1j * rng.standard_normal(
+        (rows, R4_MODAL_COUNT)
+    )
+    D_dense = rng.standard_normal((R4_MODAL_COUNT, rows)) + 1j * rng.standard_normal(
+        (R4_MODAL_COUNT, rows)
+    )
+    H_dense = np.eye(R4_MODAL_COUNT, dtype=np.complex128) * (3.0 + 0.1j)
+    F = _matrix_from_dense(base_dense)
+    C = _python_matrix_from_dense(C_dense)
+    D = _python_matrix_from_dense(D_dense)
+    H = _matrix_from_dense(H_dense)
+    c_context = C.getPythonContext()
+    d_context = D.getPythonContext()
+    components = SimpleNamespace(F=F, C=C, D=D, H=H)
+    base = _DenseBaseInverse(base_dense[0, 0])
+    existing = HybridLocalDtnWoodburyOracle(base, components)
+    base_action = _FixedBaseAction(base)
+    fixed = HybridLocalDtnWoodburyFixedAction(base_action, components)
+    try:
+        diagnostics = fixed.diagnostics
+        assert diagnostics["nested_ksp_created"] is False
+        assert diagnostics["base_factor_count"] == 1
+        assert diagnostics["base_diagnostics"]["identity"] == "tiny_fixed_non_ksp_base"
+        assert diagnostics["local_direct_factor_count"] == 0
+        assert diagnostics["local_direct_factor_count_owned"] == 0
+        assert diagnostics["woodbury"]["K_rank"] == R4_MODAL_COUNT
+        assert np.isfinite(diagnostics["woodbury"]["K_condition_number"])
+        assert diagnostics["woodbury"]["K_condition_number"] <= 1.0e10
+        assert diagnostics["woodbury"]["arrays_finite"] is True
+        assert not hasattr(fixed, "ksp")
+        assert fixed.diagnostics["woodbury"]["apply_count"] == 0
+        assert base_action.apply_count == 40
+
+        template = F.createVecRight()
+        source = _random_vector(template, 240)
+        other = _random_vector(template, 241)
+        template.destroy()
+        existing_target = F.createVecLeft()
+        fixed_target = F.createVecLeft()
+        repeat_target = F.createVecLeft()
+        combined = F.createVecRight()
+        lhs = F.createVecLeft()
+        source_action = F.createVecLeft()
+        other_action = F.createVecLeft()
+        linear_rhs = F.createVecLeft()
+        try:
+            existing.apply(source, existing_target)
+            before_count = fixed.diagnostics["woodbury"]["apply_count"]
+            fixed.apply(source, fixed_target)
+            assert fixed.diagnostics["woodbury"]["apply_count"] == before_count + 1
+            assert base_action.apply_count == 41
+            assert _relative_error(fixed_target, existing_target) <= 1.0e-13
+
+            alpha = PETSc.ScalarType(0.7 - 0.2j)
+            beta = PETSc.ScalarType(-0.3 + 0.4j)
+            source.copy(combined)
+            combined.scale(alpha)
+            combined.axpy(beta, other)
+            fixed.apply(combined, lhs)
+            fixed.apply(source, source_action)
+            fixed.apply(other, other_action)
+            source_action.scale(alpha)
+            other_action.scale(beta)
+            source_action.axpy(PETSc.ScalarType(1.0), other_action)
+            source_action.copy(linear_rhs)
+            assert _relative_error(lhs, linear_rhs) <= 1.0e-12
+
+            fixed.apply(source, repeat_target)
+            repeat_digest = _global_vec_digest(repeat_target)
+            fixed.apply(source, existing_target)
+            assert _relative_error(repeat_target, existing_target) <= 1.0e-14
+            assert repeat_digest == _global_vec_digest(existing_target)
+            assert fixed.diagnostics["woodbury"]["apply_count"] == 6
+            assert base_action.apply_count == 46
+        finally:
+            linear_rhs.destroy()
+            other_action.destroy()
+            source_action.destroy()
+            lhs.destroy()
+            combined.destroy()
+            repeat_target.destroy()
+            fixed_target.destroy()
+            existing_target.destroy()
+            other.destroy()
+            source.destroy()
+    finally:
+        fixed.destroy()
+        assert fixed.diagnostics["destroyed"] is True
+        assert fixed.diagnostics["owned_action_data_released"] is True
+        with pytest.raises(RuntimeError, match="destroyed"):
+            source = F.createVecRight()
+            target = F.createVecLeft()
+            try:
+                fixed.apply(source, target)
+            finally:
+                target.destroy()
+                source.destroy()
+        existing_target = F.createVecLeft()
+        source_template = F.createVecRight()
+        source = _random_vector(source_template, 241)
+        source_template.destroy()
+        try:
+            existing.apply(source, existing_target)
+        finally:
+            existing_target.destroy()
+            source.destroy()
+        existing.destroy()
         F.destroy()
         C.destroy()
         D.destroy()

@@ -39,6 +39,7 @@ R4_MODAL_COUNT = 40
 __all__ = (
     "R4_MODAL_COUNT",
     "HybridLocalDtnWoodburyOracle",
+    "HybridLocalDtnWoodburyFixedAction",
     "HybridLocalDtnWoodburyLocalInverse",
     "HybridLocalDtnWoodburyLocalInverseResult",
     "build_hybrid_local_dtn_woodbury_local_inverse",
@@ -252,6 +253,116 @@ class HybridLocalDtnWoodburyOracle:
         self._K = None
         self._lu = None
         self._piv = None
+        self._destroyed = True
+
+
+class _FixedBaseApplyAdapter:
+    """Adapt one borrowed fixed smoother callback to the Oracle solve contract."""
+
+    def __init__(self, base_action: Any) -> None:
+        if not hasattr(base_action, "apply"):
+            raise TypeError(
+                "Fixed Woodbury base action must expose apply(source, target)"
+            )
+        self.base_action = base_action
+
+    def solve(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        self.base_action.apply(source, target)
+
+
+class HybridLocalDtnWoodburyFixedAction:
+    """Non-owning one-apply adapter around the fixed R5 Woodbury action.
+
+    The supplied base action and action components are borrowed.  This carrier
+    owns only the Oracle's W/K/LU data and scratch vectors; it never constructs
+    a KSP and never calls a local-inverse ``solve`` method.
+    """
+
+    operator_identity = "r5_fixed_whole_endcap_woodbury_action"
+
+    def __init__(
+        self,
+        base_action: Any,
+        components: Any,
+        *,
+        base_identity: str = "whole_endcap_ilu0_fixed_smoother",
+    ) -> None:
+        self.base_action = base_action
+        self.components = components
+        self.operator = components.F
+        base_diagnostics = getattr(base_action, "diagnostics", None)
+        if callable(base_diagnostics):
+            base_diagnostics = base_diagnostics()
+        if not isinstance(base_diagnostics, dict):
+            raise TypeError("Fixed Woodbury base action needs diagnostics")
+        if (
+            "factor_count" not in base_diagnostics
+            or "ksp_created" not in base_diagnostics
+        ):
+            raise ValueError(
+                "Fixed Woodbury base diagnostics need factor_count and ksp_created"
+            )
+        self._base_qualification = {
+            "factor_count": int(base_diagnostics["factor_count"]),
+            "ksp_created": bool(base_diagnostics["ksp_created"]),
+        }
+        self._base_adapter = _FixedBaseApplyAdapter(base_action)
+        self.woodbury = HybridLocalDtnWoodburyOracle(
+            self._base_adapter,
+            components,
+            base_identity=base_identity,
+        )
+        self._destroyed = False
+        self._pre_destroy_diagnostics: dict[str, Any] | None = None
+        self._base_pre_destroy_diagnostics: dict[str, Any] | None = None
+
+    def _base_diagnostics_now(self) -> dict[str, Any]:
+        diagnostics = getattr(self.base_action, "diagnostics", None)
+        if callable(diagnostics):
+            diagnostics = diagnostics()
+        if not isinstance(diagnostics, dict):
+            raise RuntimeError("Fixed Woodbury base diagnostics are unavailable")
+        return dict(diagnostics)
+
+    def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        if self._destroyed:
+            raise RuntimeError("Fixed Woodbury action has been destroyed")
+        self.woodbury.apply(source, target)
+
+    @property
+    def diagnostics(self) -> dict[str, Any]:
+        woodbury = (
+            self._pre_destroy_diagnostics
+            if self._pre_destroy_diagnostics is not None
+            else self.woodbury.diagnostics
+        )
+        base_diagnostics = (
+            self._base_pre_destroy_diagnostics
+            if self._base_pre_destroy_diagnostics is not None
+            else self._base_diagnostics_now()
+        )
+        return {
+            "operator_identity": self.operator_identity,
+            "base_identity": woodbury["base_identity"],
+            "base_factor_count": int(self._base_qualification["factor_count"]),
+            "base_factor_borrowed": True,
+            "local_direct_factor_count": 0,
+            "local_direct_factor_count_owned": 0,
+            "nested_ksp_created": bool(self._base_qualification["ksp_created"]),
+            "base_diagnostics": base_diagnostics,
+            "apply_count": int(woodbury["apply_count"]),
+            "woodbury": dict(woodbury),
+            "components_borrowed": True,
+            "owned_action_data_released": bool(self._destroyed),
+            "destroyed": bool(self._destroyed),
+        }
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self._base_pre_destroy_diagnostics = self._base_diagnostics_now()
+        self._pre_destroy_diagnostics = dict(self.woodbury.diagnostics)
+        self.woodbury.destroy()
         self._destroyed = True
 
 

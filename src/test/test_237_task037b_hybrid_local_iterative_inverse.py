@@ -24,7 +24,12 @@ from src.solvers.hybrid_local_iterative_inverse import (
     H5_RESTART,
     H5_RTOL,
     R3_PRECONDITIONER_PROFILE,
+    HybridWholeEndcapFixedSmootherAction,
     build_hybrid_local_iterative_inverse,
+    build_hybrid_whole_endcap_fixed_smoother_action,
+)
+from src.solvers.hybrid_local_dtn_woodbury import (
+    HybridLocalDtnWoodburyFixedAction,
 )
 from src.solvers.physical_slab_two_level import build_owner_local_slab_plan
 from src.solvers.static_local_schur_action import create_static_local_schur_action
@@ -87,9 +92,42 @@ def _relative_error(actual: PETSc.Vec, expected: PETSc.Vec) -> float:
         difference.destroy()
 
 
+def _build_tiny_woodbury_components(operator: PETSc.Mat):
+    rows = int(operator.getSize()[0])
+    if rows < 40:
+        raise RuntimeError("tiny Woodbury smoke needs at least 40 active rows")
+    comm = operator.getComm()
+    H = PETSc.Mat().createAIJ((40, 40), comm=comm)
+    H.setUp()
+    active_local_rows = int(operator.getLocalSize()[0])
+    auxiliary_local_rows = int(H.getLocalSize()[0])
+    C = PETSc.Mat().createAIJ(
+        size=((active_local_rows, rows), (auxiliary_local_rows, 40)),
+        comm=comm,
+    )
+    D = PETSc.Mat().createAIJ(
+        size=((auxiliary_local_rows, 40), (active_local_rows, rows)),
+        comm=comm,
+    )
+    C.setUp()
+    D.setUp()
+    c_first, c_last = (int(value) for value in C.getOwnershipRange())
+    for row in range(c_first, min(c_last, 40)):
+        C.setValue(row, row, PETSc.ScalarType(1.0))
+    d_first, d_last = (int(value) for value in D.getOwnershipRange())
+    for row in range(d_first, min(d_last, 40)):
+        D.setValue(row, row, PETSc.ScalarType(1.0))
+    h_first, h_last = (int(value) for value in H.getOwnershipRange())
+    for row in range(h_first, min(h_last, 40)):
+        H.setValue(row, row, PETSc.ScalarType(100.0))
+    for matrix in (C, D, H):
+        matrix.assemble()
+    return C, D, H
+
+
 @pytest.mark.skipif(
-    MPI.COMM_WORLD.size not in (1, 2),
-    reason="H5 tiny local inverse runs serial or MPI2",
+    MPI.COMM_WORLD.size not in (1, 2, 4),
+    reason="H5 tiny local inverse runs serial, MPI2, or MPI4",
 )
 def test_h5_local_inverse_configuration_residual_and_lifecycle():
     comm = MPI.COMM_WORLD
@@ -130,6 +168,12 @@ def test_h5_local_inverse_configuration_residual_and_lifecycle():
     f_only_inverse = None
     f_only_result = None
     whole_endcap_inverse = None
+    whole_endcap_target = None
+    fixed_smoother = None
+    fixed_target = None
+    fixed_woodbury = None
+    fixed_woodbury_target = None
+    auxiliary_matrices = None
     try:
         assert inverse.plan.coordinate_axis == H5_COORDINATE_AXIS == 0
         assert len(inverse.plan.coordinate_intervals) == H5_NUM_SLABS
@@ -247,18 +291,81 @@ def test_h5_local_inverse_configuration_residual_and_lifecycle():
         assert whole_endcap_diagnostics["operator"]["identity"] == (
             "fine_action_F_only"
         )
+        whole_endcap_target = action.createVecLeft()
+        whole_endcap_inverse.smoother.solve(rhs, whole_endcap_target)
         whole_endcap_inverse.destroy()
         assert whole_endcap_inverse.factors_released is True
         assert whole_endcap_inverse.factor_count_before_destroy == 1
         assert whole_endcap_inverse.factor_count_after_destroy == 0
         assert action.getType() == "python"
+        fixed_smoother = build_hybrid_whole_endcap_fixed_smoother_action(action_carrier)
+        assert isinstance(fixed_smoother, HybridWholeEndcapFixedSmootherAction)
+        assert not hasattr(fixed_smoother, "ksp")
+        fixed_diagnostics = fixed_smoother.diagnostics
+        assert fixed_diagnostics["preconditioner_profile"] == R3_PRECONDITIONER_PROFILE
+        assert fixed_diagnostics["base_factor_count"] == 1
+        assert fixed_diagnostics["factor_count"] == 1
+        assert fixed_diagnostics["ksp_created"] is False
+        assert fixed_diagnostics["smoother"]["global_subdomain_count"] == 1
+        assert fixed_diagnostics["smoother"]["one_level_apply_count"] == 0
+        assert fixed_diagnostics["factor_csr_payload_estimate_bytes"] > 0
+        auxiliary_matrices = _build_tiny_woodbury_components(action)
+        fixed_woodbury = HybridLocalDtnWoodburyFixedAction(
+            fixed_smoother,
+            SimpleNamespace(
+                F=action,
+                C=auxiliary_matrices[0],
+                D=auxiliary_matrices[1],
+                H=auxiliary_matrices[2],
+            ),
+        )
+        woodbury_diagnostics = fixed_woodbury.diagnostics
+        assert woodbury_diagnostics["base_factor_count"] == 1
+        assert woodbury_diagnostics["nested_ksp_created"] is False
+        assert woodbury_diagnostics["woodbury"]["apply_count"] == 0
+        assert woodbury_diagnostics["woodbury"]["K_rank"] == 40
+        assert np.isfinite(woodbury_diagnostics["woodbury"]["K_condition_number"])
+        assert woodbury_diagnostics["woodbury"]["K_condition_number"] <= 1.0e10
+        assert woodbury_diagnostics["woodbury"]["arrays_finite"] is True
+        assert woodbury_diagnostics["base_diagnostics"]["apply_count"] == 40
+        assert fixed_smoother.diagnostics["apply_count"] == 40
+        fixed_woodbury_target = action.createVecLeft()
+        fixed_woodbury.apply(rhs, fixed_woodbury_target)
+        assert fixed_woodbury.diagnostics["woodbury"]["apply_count"] == 1
+        assert fixed_woodbury.diagnostics["base_diagnostics"]["apply_count"] == 41
+        assert fixed_smoother.diagnostics["apply_count"] == 41
+        fixed_woodbury.destroy()
+        assert fixed_woodbury.diagnostics["destroyed"] is True
+        assert fixed_smoother.diagnostics["destroyed"] is False
+        fixed_target = action.createVecLeft()
+        fixed_smoother.apply(rhs, fixed_target)
+        assert _relative_error(fixed_target, whole_endcap_target) <= 1.0e-13
+        assert fixed_smoother.diagnostics["apply_count"] == 42
+        fixed_smoother.destroy()
+        assert fixed_smoother.factor_count_before_destroy == 1
+        assert fixed_smoother.factor_count_after_destroy == 0
+        assert fixed_smoother.factors_released is True
+        assert fixed_smoother.diagnostics["destroyed"] is True
+        with pytest.raises(RuntimeError, match="destroyed"):
+            fixed_smoother.apply(rhs, fixed_target)
+        assert action.getType() == "python"
     finally:
+        if fixed_woodbury_target is not None:
+            fixed_woodbury_target.destroy()
+        if fixed_woodbury is not None:
+            fixed_woodbury.destroy()
+        if fixed_target is not None:
+            fixed_target.destroy()
+        if fixed_smoother is not None:
+            fixed_smoother.destroy()
         if f_only_result is not None:
             f_only_result.destroy()
         if f_only_inverse is not None:
             f_only_inverse.destroy()
         if whole_endcap_inverse is not None:
             whole_endcap_inverse.destroy()
+        if whole_endcap_target is not None:
+            whole_endcap_target.destroy()
         if repeat is not None:
             repeat.destroy()
         if result is not None:
@@ -269,4 +376,7 @@ def test_h5_local_inverse_configuration_residual_and_lifecycle():
         rhs.destroy()
         action.destroy()
         action_context.destroy()
+        if auxiliary_matrices is not None:
+            for matrix in auxiliary_matrices:
+                matrix.destroy()
         condensed.destroy()
