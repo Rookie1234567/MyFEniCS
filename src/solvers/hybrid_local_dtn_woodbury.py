@@ -14,6 +14,7 @@ owned here.
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from time import perf_counter
 from typing import Any
 
@@ -23,6 +24,14 @@ from petsc4py import PETSc
 from scipy.linalg import lu_factor, lu_solve
 
 from .condensed_dtn import gather_small_petsc_matrix
+from .hybrid_local_dtn_action import create_hybrid_local_dtn_action_components
+from .hybrid_local_iterative_inverse import (
+    H5_ATOL,
+    H5_MAX_IT,
+    H5_RESTART,
+    H5_RTOL,
+    R3_PRECONDITIONER_PROFILE,
+)
 
 
 R4_MODAL_COUNT = 40
@@ -30,6 +39,9 @@ R4_MODAL_COUNT = 40
 __all__ = (
     "R4_MODAL_COUNT",
     "HybridLocalDtnWoodburyOracle",
+    "HybridLocalDtnWoodburyLocalInverse",
+    "HybridLocalDtnWoodburyLocalInverseResult",
+    "build_hybrid_local_dtn_woodbury_local_inverse",
 )
 
 
@@ -95,6 +107,7 @@ class HybridLocalDtnWoodburyOracle:
         self._piv: np.ndarray | None = None
         self._K_rank: int | None = None
         self._K_condition: float | None = None
+        self._arrays_finite = False
         self._setup_seconds = 0.0
         self._apply_seconds = 0.0
         self.apply_count = 0
@@ -144,6 +157,17 @@ class HybridLocalDtnWoodburyOracle:
             else float("inf")
         )
         lu, piv = lu_factor(K, check_finite=True)
+        local_arrays_finite = bool(
+            np.all(np.isfinite(H_dense))
+            and np.all(np.isfinite(W_local))
+            and np.all(np.isfinite(D_times_W))
+            and np.all(np.isfinite(K))
+            and np.all(np.isfinite(lu))
+            and np.all(np.isfinite(piv))
+        )
+        self._arrays_finite = bool(
+            self.comm.allreduce(local_arrays_finite, op=MPI.LAND)
+        )
         self._W_local = W_local
         self._K = K
         self._lu = np.asarray(lu, dtype=np.complex128)
@@ -172,6 +196,15 @@ class HybridLocalDtnWoodburyOracle:
         q = lu_solve((self._lu, self._piv), d_values, check_finite=True)
         self._z.copy(target)
         target.getArray()[:] += self._W_local @ q
+        local_apply_finite = bool(
+            np.all(np.isfinite(self._z.getArray(readonly=True)))
+            and np.all(np.isfinite(self._d_work.getArray(readonly=True)))
+            and np.all(np.isfinite(q))
+            and np.all(np.isfinite(target.getArray(readonly=True)))
+        )
+        self._arrays_finite = bool(
+            self._arrays_finite and self.comm.allreduce(local_apply_finite, op=MPI.LAND)
+        )
         self.apply_count += 1
         self._apply_seconds += _max_over_comm(
             self.comm,
@@ -195,6 +228,7 @@ class HybridLocalDtnWoodburyOracle:
             "K_nbytes": None if K is None else int(K.nbytes),
             "K_rank": self._K_rank,
             "K_condition_number": self._K_condition,
+            "arrays_finite": bool(self._arrays_finite),
             "LU_shape": None if lu is None else list(lu.shape),
             "LU_nbytes": (
                 None if lu is None or piv is None else int(lu.nbytes + piv.nbytes)
@@ -219,3 +253,297 @@ class HybridLocalDtnWoodburyOracle:
         self._lu = None
         self._piv = None
         self._destroyed = True
+
+
+class _WholeEndcapSmootherBase:
+    """Adapt only the retained R3 smoother action to the R4 base contract."""
+
+    def __init__(self, inverse: Any) -> None:
+        self.inverse = inverse
+
+    def solve(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        smoother = getattr(self.inverse, "smoother", None)
+        if smoother is None:
+            raise RuntimeError("R5 whole-endcap smoother is unavailable")
+        smoother.solve(source, target)
+
+
+class _R5WoodburyPcContext:
+    """PETSc Python-PC bridge for the fixed R5 Woodbury action."""
+
+    def __init__(self, woodbury: HybridLocalDtnWoodburyOracle) -> None:
+        self.woodbury: HybridLocalDtnWoodburyOracle | None = woodbury
+
+    def apply(self, _pc: PETSc.PC, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        if self.woodbury is None:
+            raise RuntimeError("R5 Woodbury PC context has been destroyed")
+        self.woodbury.apply(source, target)
+
+
+@dataclass
+class HybridLocalDtnWoodburyLocalInverseResult:
+    """One R5 complete-action solve; its solution is owned by the result."""
+
+    solution: PETSc.Vec
+    iterations: int
+    converged_reason: int
+    reported_relative_residual: float
+    true_relative_residual: float
+    block_relative_residuals: dict[str, float]
+    setup_seconds: float
+    solve_seconds: float
+    apply_seconds: float
+    diagnostics: dict[str, Any]
+    _destroyed: bool = field(default=False, init=False, repr=False)
+
+    def destroy(self) -> None:
+        if not self._destroyed:
+            self.solution.destroy()
+            self._destroyed = True
+
+
+class HybridLocalDtnWoodburyLocalInverse:
+    """R5 right-FGMRES using the fixed whole-endcap smoother Woodbury PC."""
+
+    operator_identity = "complete_hybrid_action_with_whole_endcap_dtn_woodbury"
+    base_identity = "whole_endcap_ilu0_smoother"
+
+    def __init__(
+        self,
+        action_system: Any,
+        base_inverse: Any,
+        *,
+        components: Any | None = None,
+    ) -> None:
+        self.action_system = action_system
+        self.operator = action_system.A
+        self.base_inverse = base_inverse
+        self._components_owned = components is None
+        self.components = (
+            create_hybrid_local_dtn_action_components(action_system)
+            if components is None
+            else components
+        )
+        self._destroyed = False
+        self.factors_released = False
+        self.factor_count_before_destroy: int | None = None
+        self.factor_count_after_destroy: int | None = None
+        if getattr(base_inverse, "preconditioner_profile", None) != (
+            R3_PRECONDITIONER_PROFILE
+        ):
+            raise ValueError(
+                "R5 base inverse must use the fixed whole-endcap ILU(0) profile"
+            )
+        smoother = getattr(base_inverse, "smoother", None)
+        if smoother is None or not hasattr(smoother, "solve"):
+            raise TypeError("R5 base inverse must expose its smoother.solve action")
+        if self.operator.getType() != "python":
+            raise ValueError("R5 complete operator must be a MatPython action")
+        if action_system.inventory.get("global_A_materialized") is not False:
+            raise ValueError("R5 candidate cannot retain a materialized global A")
+        if action_system.inventory.get("direct_factor_count") != 0:
+            raise ValueError("R5 candidate cannot own a direct factor")
+        self._base_smoother_diagnostics = dict(smoother.diagnostics)
+        self._base_factor_count = int(
+            self._base_smoother_diagnostics["global_subdomain_count"]
+        )
+        adapter = _WholeEndcapSmootherBase(base_inverse)
+        started = perf_counter()
+        self.woodbury = HybridLocalDtnWoodburyOracle(
+            adapter,
+            self.components,
+            base_identity=self.base_identity,
+        )
+        self._pc_context = _R5WoodburyPcContext(self.woodbury)
+        self.ksp = PETSc.KSP().create(self.operator.getComm())
+        self.ksp.setOperators(self.operator)
+        self.ksp.setType(PETSc.KSP.Type.FGMRES)
+        self.ksp.setGMRESRestart(H5_RESTART)
+        self.ksp.setPCSide(PETSc.PC.Side.RIGHT)
+        self.ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED)
+        self.ksp.setTolerances(
+            rtol=H5_RTOL,
+            atol=H5_ATOL,
+            max_it=H5_MAX_IT,
+        )
+        pc = self.ksp.getPC()
+        pc.setType(PETSc.PC.Type.PYTHON)
+        pc.setPythonContext(self._pc_context)
+        self.ksp.setUp()
+        self.setup_seconds = _max_over_comm(
+            self.operator.getComm().tompi4py(), perf_counter() - started
+        )
+
+    def _true_relative_residual(
+        self,
+        rhs: PETSc.Vec,
+        solution: PETSc.Vec,
+        residual: PETSc.Vec,
+    ) -> float:
+        self.operator.mult(solution, residual)
+        residual.scale(PETSc.ScalarType(-1.0))
+        residual.axpy(PETSc.ScalarType(1.0), rhs)
+        return float(residual.norm()) / max(float(rhs.norm()), 1.0e-30)
+
+    def solve(
+        self,
+        rhs: PETSc.Vec,
+    ) -> HybridLocalDtnWoodburyLocalInverseResult:
+        if self._destroyed:
+            raise RuntimeError("R5 local inverse has been destroyed")
+        if rhs.getSize() != self.operator.getSize()[1]:
+            raise ValueError("R5 RHS does not match the complete action")
+        solution = rhs.duplicate()
+        residual = rhs.duplicate()
+        solution.set(0.0)
+        apply_before = self.woodbury.apply_count
+        apply_seconds_before = self.woodbury.diagnostics["apply_seconds"]
+        started = perf_counter()
+        try:
+            self.ksp.solve(rhs, solution)
+            solve_seconds = _max_over_comm(
+                self.operator.getComm().tompi4py(), perf_counter() - started
+            )
+            rhs_norm = max(float(rhs.norm()), 1.0e-30)
+            reported = float(self.ksp.getResidualNorm()) / rhs_norm
+            true_relative = self._true_relative_residual(rhs, solution, residual)
+            woodbury_diagnostics = self.woodbury.diagnostics
+            return HybridLocalDtnWoodburyLocalInverseResult(
+                solution=solution,
+                iterations=int(self.ksp.getIterationNumber()),
+                converged_reason=int(self.ksp.getConvergedReason()),
+                reported_relative_residual=float(reported),
+                true_relative_residual=float(true_relative),
+                block_relative_residuals={"active": float(true_relative)},
+                setup_seconds=float(self.setup_seconds),
+                solve_seconds=float(solve_seconds),
+                apply_seconds=float(
+                    woodbury_diagnostics["apply_seconds"] - apply_seconds_before
+                ),
+                diagnostics={
+                    "reported_residual_is_monitor": True,
+                    "explicit_complete_action_residual_recomputed": True,
+                    "pc_apply_count": int(self.woodbury.apply_count - apply_before),
+                    "woodbury": woodbury_diagnostics,
+                },
+            )
+        except Exception:
+            solution.destroy()
+            raise
+        finally:
+            residual.destroy()
+
+    @property
+    def diagnostics(self) -> dict[str, Any]:
+        woodbury = self.woodbury.diagnostics
+        return {
+            "operator": {
+                "identity": self.operator_identity,
+                "base_identity": self.base_identity,
+                "external_dtn_correction": "included",
+                "matrix_type": str(self.operator.getType()),
+                "matrix_free": True,
+                "global_A_materialized": False,
+                "direct_factor_count": 0,
+                "global_size": int(self.operator.getSize()[0]),
+                "local_size": [int(value) for value in self.operator.getLocalSize()],
+            },
+            "configuration": {
+                "preconditioner_profile": R3_PRECONDITIONER_PROFILE,
+                "num_subdomains": 1,
+                "overlap_fraction": 0.0,
+                "coordinate_axis": 0,
+                "interpolation": "partition",
+                "ilu_levels": 0,
+                "factor_only": True,
+                "one_apply_per_pc_apply": True,
+                "two_step_action_operator": None,
+                "outer_solver": "right_fgmres",
+                "restart": H5_RESTART,
+                "max_it": H5_MAX_IT,
+                "rtol": H5_RTOL,
+                "atol": H5_ATOL,
+                "true_residual_limit": 1.0e-8,
+            },
+            "base": {
+                "identity": self.base_identity,
+                "source_matrix_nnz": int(
+                    self._base_smoother_diagnostics["global_factor_nnz"]
+                ),
+                "factor_nnz": int(
+                    self._base_smoother_diagnostics["global_stored_factor_nnz"]
+                ),
+                "factor_count": self._base_factor_count,
+                "factor_csr_payload_estimate_bytes": int(
+                    self._base_smoother_diagnostics.get(
+                        "global_stored_factor_nnz",
+                        self._base_smoother_diagnostics["global_factor_nnz"],
+                    )
+                    * (
+                        np.dtype(PETSc.ScalarType).itemsize
+                        + np.dtype(PETSc.IntType).itemsize
+                    )
+                    + (
+                        self._base_smoother_diagnostics.get(
+                            "global_factor_rows", self.operator.getSize()[0]
+                        )
+                        + 16
+                    )
+                    * np.dtype(PETSc.IntType).itemsize
+                ),
+                "factor_csr_payload_estimate_formula": (
+                    "factor_nnz*(scalar_bytes+integer_bytes)"
+                    "+(factor_rows+16)*integer_bytes"
+                ),
+                "smoother_diagnostics": dict(self._base_smoother_diagnostics),
+            },
+            "woodbury": woodbury,
+            "no_direct_fallback": True,
+            "lifecycle": {
+                "candidate_direct_factor_count": 0,
+                "factor_count_before_destroy": self.factor_count_before_destroy
+                if self.factor_count_before_destroy is not None
+                else self._base_factor_count,
+                "factor_count_after_destroy": self.factor_count_after_destroy,
+                "factors_released": self.factors_released,
+                "components_borrowed": True,
+            },
+        }
+
+    def destroy(self) -> None:
+        """Release outer KSP, Woodbury data, then the whole-endcap smoother."""
+
+        if self._destroyed:
+            return
+        self.factor_count_before_destroy = self._base_factor_count
+        ksp = self.ksp
+        self.ksp = None
+        if ksp is not None:
+            ksp.destroy()
+        self._pc_context.woodbury = None
+        self.woodbury.destroy()
+        if self._components_owned:
+            self.components.destroy()
+        self.base_inverse.destroy()
+        self.factor_count_after_destroy = int(
+            getattr(self.base_inverse, "factor_count_after_destroy", 0)
+        )
+        self.factors_released = bool(
+            getattr(self.base_inverse, "factors_released", False)
+        )
+        self._destroyed = True
+
+
+def build_hybrid_local_dtn_woodbury_local_inverse(
+    action_system: Any,
+    base_inverse: Any,
+    *,
+    components: Any | None = None,
+) -> HybridLocalDtnWoodburyLocalInverse:
+    """Build the fixed R5 local-inverse Woodbury outer context."""
+
+    return HybridLocalDtnWoodburyLocalInverse(
+        action_system,
+        base_inverse,
+        components=components,
+    )

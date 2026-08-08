@@ -980,6 +980,11 @@ def _task034_terminal_record_is_complete(record_path: Path) -> bool:
     ) == "task037b.v1-r4-dtn-woodbury.v1" and isinstance(
         payload.get("v1_r4_telemetry"), dict
     )
+    v1_r5_record = payload.get(
+        "record_schema"
+    ) == "task037b.v1-r5-dtn-woodbury-local-inverse.v1" and isinstance(
+        payload.get("v1_r5_telemetry"), dict
+    )
     return bool(
         payload.get("schema_version") == 1
         and isinstance(payload.get("benchmark_id"), str)
@@ -992,6 +997,7 @@ def _task034_terminal_record_is_complete(record_path: Path) -> bool:
             or v1_r2_record
             or v1_r3_record
             or v1_r4_record
+            or v1_r5_record
         )
         and isinstance(payload.get("gates"), dict)
     )
@@ -1119,6 +1125,7 @@ def _hybrid_measurements(record: dict[str, Any]) -> dict[str, Any]:
         "v1_r2_telemetry": record.get("v1_r2_telemetry"),
         "v1_r3_telemetry": record.get("v1_r3_telemetry"),
         "v1_r4_telemetry": record.get("v1_r4_telemetry"),
+        "v1_r5_telemetry": record.get("v1_r5_telemetry"),
         "status": record.get("status"),
         "case": record.get("case"),
         "qep": {
@@ -2233,6 +2240,447 @@ def _task037b_v1_r4_numerical_pass(record: dict[str, Any]) -> bool:
     return True
 
 
+def _task037b_v1_r5_numerical_pass(
+    record: dict[str, Any], *, require_numerical_pass: bool = True
+) -> bool:
+    """Recompute the fixed R5 local-inverse Woodbury contract from raw data."""
+
+    if not isinstance(record, dict):
+        return False
+    telemetry = record.get("v1_r5_telemetry")
+    qualification = record.get("qualification")
+    gates = record.get("gates")
+    hybrid = record.get("hybrid_system")
+    validation = record.get("validation")
+    physical = record.get("physical_field_reconstruction")
+    if (
+        record.get("schema_version") != 1
+        or record.get("record_schema") != "task037b.v1-r5-dtn-woodbury-local-inverse.v1"
+        or record.get("benchmark_id") != "task037b_v1_r5_dtn_woodbury_local_inverse"
+        or not isinstance(telemetry, dict)
+        or not isinstance(qualification, dict)
+        or not isinstance(gates, dict)
+        or not isinstance(hybrid, dict)
+        or not isinstance(validation, dict)
+        or not isinstance(physical, dict)
+        or telemetry.get("task037b_v1_gate") is not True
+        or telemetry.get("ordinary_default_changed") is not False
+        or qualification.get("task037b_v1_gate") is not True
+        or hybrid.get("global_A_materialized") is not False
+        or hybrid.get("global_F_materialized") is not False
+        or hybrid.get("explicit_global_C_D_materialized") is not False
+        or hybrid.get("direct_factor_count") != 0
+        or hybrid.get("external_auxiliary_rows_in_krylov") != 0
+        or any(
+            validation.get(name) != "not_run"
+            for name in (
+                "port_power",
+                "R_total",
+                "T_total",
+                "A_balance",
+                "A_volume_total",
+                "external_diffraction_orders",
+            )
+        )
+        or physical.get("status") != "not_run"
+    ):
+        return False
+
+    def finite_number(value: Any) -> bool:
+        return bool(
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(float(value))
+        )
+
+    def row_residual(row: dict[str, Any]) -> float:
+        return max(
+            float(row["first"]["complete_A_true_residual"]),
+            float(row["second"]["complete_A_true_residual"]),
+        )
+
+    sides = telemetry.get("sides")
+    if not isinstance(sides, dict) or set(sides) != {"bottom", "top"}:
+        return False
+    factor_lifecycle = gates.get("r5_factor_lifecycle")
+    if (
+        not isinstance(factor_lifecycle, dict)
+        or factor_lifecycle.get("bottom_released_before_top_setup") is not True
+        or factor_lifecycle.get("global_max_active_factor_count") != 1
+        or factor_lifecycle.get("global_final_active_factor_count") != 0
+    ):
+        return False
+    side_contracts: dict[str, bool] = {}
+    side_algebra: dict[str, bool] = {}
+    side_numeric: dict[str, bool] = {}
+    all_random_values: list[float] = []
+    all_modal_values: list[float] = []
+    all_iterations_ok = True
+    all_rows_finite = True
+    severe_negative = False
+    for side_name, side in sides.items():
+        if not isinstance(side, dict):
+            return False
+        expected_capacity = 10 if side_name == "bottom" else 11
+        expected_zero = 1 if side_name == "bottom" else 0
+        operator = side.get("operator")
+        configuration = side.get("configuration")
+        base = side.get("base")
+        woodbury = side.get("woodbury")
+        pc_audit = side.get("pc_audit")
+        release = side.get("factor_release")
+        rows = side.get("rows")
+        if (
+            not isinstance(operator, dict)
+            or not isinstance(configuration, dict)
+            or not isinstance(base, dict)
+            or not isinstance(woodbury, dict)
+            or not isinstance(pc_audit, dict)
+            or not isinstance(release, dict)
+            or not isinstance(rows, list)
+            or len(rows) != 11
+            or side.get("probe_count") != 11
+            or side.get("nonzero_capacity_count") != expected_capacity
+            or side.get("zero_physical_count") != expected_zero
+            or operator.get("identity")
+            != "complete_hybrid_action_with_whole_endcap_dtn_woodbury"
+            or operator.get("base_identity") != "whole_endcap_ilu0_smoother"
+            or operator.get("external_dtn_correction") != "included"
+            or operator.get("matrix_type") != "python"
+            or operator.get("matrix_free") is not True
+            or operator.get("global_A_materialized") is not False
+            or configuration.get("preconditioner_profile") != "v1_whole_endcap_ilu0"
+            or configuration.get("num_subdomains") != 1
+            or configuration.get("overlap_fraction") != 0.0
+            or configuration.get("coordinate_axis") != 0
+            or configuration.get("interpolation") != "partition"
+            or configuration.get("ilu_levels") != 0
+            or configuration.get("factor_only") is not True
+            or configuration.get("one_apply_per_pc_apply") is not True
+            or configuration.get("two_step_action_operator") is not None
+            or configuration.get("outer_solver") != "right_fgmres"
+            or configuration.get("restart") != 30
+            or configuration.get("max_it") != 300
+            or configuration.get("rtol") != 1.0e-10
+            or configuration.get("atol") != 0.0
+            or configuration.get("true_residual_limit") != 1.0e-8
+            or base.get("identity") != "whole_endcap_ilu0_smoother"
+            or not all(
+                isinstance(base.get(name), int) and base.get(name) > 0
+                for name in (
+                    "source_matrix_nnz",
+                    "factor_nnz",
+                    "factor_csr_payload_estimate_bytes",
+                )
+            )
+            or woodbury.get("base_identity") != "whole_endcap_ilu0_smoother"
+            or woodbury.get("n_aux") != 40
+            or woodbury.get("K_shape") != [40, 40]
+            or woodbury.get("K_dtype") != "complex128"
+            or not isinstance(woodbury.get("W_local_nbytes_by_rank"), list)
+            or not woodbury["W_local_nbytes_by_rank"]
+            or release.get("factor_count_before") != 1
+            or release.get("factor_count_after") != 0
+            or release.get("factors_released") is not True
+            or release.get("woodbury_destroyed") is not True
+            or release.get("max_active_factor_count") != 1
+            or release.get("never_simultaneous") is not True
+            or side.get("action_survives_after_release") is not True
+        ):
+            return False
+        row_names: set[str] = set()
+        random_rows = []
+        modal_rows = []
+        physical_rows = []
+        all_finite = True
+        all_numeric = True
+        nonzero_rows = []
+        nonzero_numeric_flags = []
+        zero_rows = []
+        zero_numeric_flags = []
+        for row in rows:
+            if not isinstance(row, dict) or not isinstance(row.get("name"), str):
+                return False
+            if row["name"] in row_names:
+                return False
+            row_names.add(row["name"])
+            first = row.get("first")
+            second = row.get("second")
+            if not isinstance(first, dict) or not isinstance(second, dict):
+                return False
+            numeric_keys = (
+                "reported_residual",
+                "complete_A_true_residual",
+                "setup_seconds",
+                "solve_seconds",
+                "apply_seconds",
+            )
+            finite = bool(
+                all(finite_number(first.get(key)) for key in numeric_keys)
+                and all(finite_number(second.get(key)) for key in numeric_keys)
+                and all(
+                    float(first.get(key)) >= 0.0 and float(second.get(key)) >= 0.0
+                    for key in numeric_keys
+                )
+                and isinstance(first.get("reason"), int)
+                and not isinstance(first.get("reason"), bool)
+                and isinstance(second.get("reason"), int)
+                and not isinstance(second.get("reason"), bool)
+                and isinstance(first.get("iterations"), int)
+                and not isinstance(first.get("iterations"), bool)
+                and isinstance(second.get("iterations"), int)
+                and not isinstance(second.get("iterations"), bool)
+                and finite_number(row.get("repeat_solution_relative_error"))
+                and float(row["repeat_solution_relative_error"]) >= 0.0
+                and row.get("repeat_reason_equal")
+                is (first["reason"] == second["reason"])
+                and row.get("repeat_iterations_equal")
+                is (first["iterations"] == second["iterations"])
+            )
+            finite &= bool(
+                float(first.get("complete_A_true_residual", 0.0)) >= 0.0
+                and float(second.get("complete_A_true_residual", 0.0)) >= 0.0
+            )
+            row_numeric = bool(
+                finite
+                and first["reason"] > 0
+                and second["reason"] > 0
+                and first["iterations"] <= 300
+                and second["iterations"] <= 300
+                and float(first["complete_A_true_residual"]) <= 1.0e-8
+                and float(second["complete_A_true_residual"]) <= 1.0e-8
+                and float(row["repeat_solution_relative_error"]) <= 1.0e-12
+            )
+            if row.get("finite") is not finite or row.get("pass") is not row_numeric:
+                return False
+            all_finite &= finite
+            all_numeric &= row_numeric
+            if row.get("zero_physical_rhs") is True:
+                if row.get("zero_equation_pass") is not row_numeric:
+                    return False
+                zero_rows.append(row)
+                zero_numeric_flags.append(row_numeric)
+            elif row.get("zero_physical_rhs") is False:
+                if row.get("capacity_pass") is not row_numeric:
+                    return False
+                nonzero_rows.append(row)
+                nonzero_numeric_flags.append(row_numeric)
+            else:
+                return False
+            kind = (row.get("metadata") or {}).get("kind")
+            if kind == "partition_independent_complex_random":
+                random_rows.append(row)
+            elif kind == "frozen_modal_traction":
+                modal_rows.append(row)
+            elif kind == "physical_action_rhs":
+                physical_rows.append(row)
+        expected_random_names = {
+            f"random_seed_{seed}" for seed in (3701, 3702, 3703, 3704)
+        }
+        expected_modal_identity = True
+        for direction in ("positive", "negative"):
+            direction_modal = [
+                row
+                for row in modal_rows
+                if isinstance(row.get("metadata"), dict)
+                and isinstance(row["metadata"].get("mode_identity"), dict)
+                and row["metadata"]["mode_identity"].get("direction") == direction
+            ]
+            criteria = [
+                row["metadata"]["mode_identity"].get("criterion")
+                for row in direction_modal
+            ]
+            expected_modal_identity &= bool(
+                len(direction_modal) == 3
+                and criteria.count("lowest_propagating_or_lossy") == 1
+                and criteria.count("highest_retained_index") == 1
+                and sum(
+                    criterion
+                    in {
+                        "first_kind_evanescent",
+                        "proxy_abs_im_beta_gt_abs_re_beta",
+                    }
+                    for criterion in criteria
+                )
+                == 1
+                and all(
+                    row["metadata"]["mode_identity"].get("local_mode_index") == 119
+                    for row in direction_modal
+                    if row["metadata"]["mode_identity"].get("criterion")
+                    == "highest_retained_index"
+                )
+            )
+        expected_capacity_pass_count = sum(
+            bool(value) for value in nonzero_numeric_flags
+        )
+        expected_zero_equation_pass = bool(
+            len(zero_rows) == expected_zero and all(zero_numeric_flags)
+        )
+        if (
+            side.get("capacity_pass_count") != expected_capacity_pass_count
+            or side.get("zero_equation_pass") is not expected_zero_equation_pass
+        ):
+            return False
+        expected_contract = bool(
+            len(nonzero_rows) == expected_capacity
+            and len(zero_rows) == expected_zero
+            and len(random_rows) == 4
+            and {row["name"] for row in random_rows} == expected_random_names
+            and len(modal_rows) == 6
+            and len(physical_rows) == 1
+            and physical_rows[0]["name"] == "physical"
+            and physical_rows[0]["zero_physical_rhs"] is (side_name == "bottom")
+            and expected_modal_identity
+            and side.get("capacity_expected_count") == expected_capacity
+            and side.get("zero_equation_pass") is expected_zero_equation_pass
+        )
+        expected_no_direct_fallback = bool(
+            operator.get("direct_factor_count") == 0
+            and base.get("identity") == "whole_endcap_ilu0_smoother"
+        )
+        expected_algebra = bool(
+            all_finite
+            and all(
+                float(row["repeat_solution_relative_error"]) <= 1.0e-12 for row in rows
+            )
+            and side.get("pc_audit", {}).get("finite") is True
+            and finite_number(side["pc_audit"].get("linearity_error"))
+            and finite_number(side["pc_audit"].get("determinism_error"))
+            and float(side["pc_audit"]["linearity_error"]) <= 1.0e-11
+            and float(side["pc_audit"]["determinism_error"]) <= 1.0e-12
+            and expected_no_direct_fallback
+            and woodbury.get("normal_equations") is False
+            and woodbury.get("K_rank") == 40
+            and finite_number(woodbury.get("K_condition_number"))
+            and float(woodbury["K_condition_number"]) <= 1.0e10
+            and woodbury.get("arrays_finite") is True
+        )
+        expected_side_numeric = bool(
+            expected_contract
+            and expected_algebra
+            and expected_capacity_pass_count == expected_capacity
+            and all_numeric
+        )
+        if (
+            side.get("contract_pass") is not expected_contract
+            or side.get("algebra_legality_pass") is not expected_algebra
+            or side.get("pass") is not expected_side_numeric
+            or side.get("all_probes_finite") is not all_finite
+            or side.get("no_direct_fallback") is not expected_no_direct_fallback
+        ):
+            return False
+        side_contracts[side_name] = expected_contract
+        side_algebra[side_name] = expected_algebra
+        side_numeric[side_name] = expected_side_numeric
+        random_values = [row_residual(row) for row in random_rows]
+        other_values = [row_residual(row) for row in (*modal_rows, *physical_rows)]
+        all_random_values.extend(random_values)
+        all_modal_values.extend(other_values)
+        all_iterations_ok &= all(
+            summary["iterations"] <= 300
+            for row in rows
+            for summary in (row["first"], row["second"])
+        )
+        all_rows_finite &= all_finite
+        severe_negative |= bool(
+            sum(value > 1.0e-2 for value in random_values) > len(random_values) / 2
+            or any(value > 1.0e-3 for value in other_values)
+        )
+
+    expected_contract = bool(
+        all(side_contracts.values())
+        and factor_lifecycle["bottom_released_before_top_setup"] is True
+        and factor_lifecycle["global_max_active_factor_count"] == 1
+        and factor_lifecycle["global_final_active_factor_count"] == 0
+    )
+    expected_algebra = bool(expected_contract and all(side_algebra.values()))
+    expected_numeric = bool(expected_algebra and all(side_numeric.values()))
+    expected_pc_linearity = bool(
+        all(
+            finite_number(side["pc_audit"].get("linearity_error"))
+            and float(side["pc_audit"]["linearity_error"]) <= 1.0e-11
+            for side in sides.values()
+        )
+    )
+    expected_pc_determinism = bool(
+        all(
+            finite_number(side["pc_audit"].get("determinism_error"))
+            and float(side["pc_audit"]["determinism_error"]) <= 1.0e-12
+            for side in sides.values()
+        )
+    )
+    expected_factors_released = bool(
+        all(
+            side["factor_release"].get("factor_count_after") == 0
+            and side["factor_release"].get("factors_released") is True
+            for side in sides.values()
+        )
+    )
+    expected_no_direct_fallback = bool(
+        all(side.get("no_direct_fallback") is True for side in sides.values())
+    )
+    expected_factor_noncoexistence = bool(
+        factor_lifecycle["bottom_released_before_top_setup"] is True
+        and factor_lifecycle["global_max_active_factor_count"] == 1
+        and factor_lifecycle["global_final_active_factor_count"] == 0
+    )
+    expected_borderline = bool(
+        not expected_numeric
+        and expected_contract
+        and expected_algebra
+        and all_modal_values
+        and all_random_values
+        and all(value <= 1.0e-8 for value in all_modal_values)
+        and all(value <= 1.0e-5 for value in all_random_values)
+        and any(value > 1.0e-8 for value in all_random_values)
+        and all_iterations_ok
+        and all_rows_finite
+    )
+    expected_status = (
+        "task037b_v1_r5_complete_awaiting_h6"
+        if expected_numeric
+        else "DTN_WOODBURY_LOCAL_INVERSE_BORDERLINE"
+        if expected_borderline
+        else "WHOLE_ENDCAP_ILU0_DTN_WOODBURY_NEGATIVE"
+        if expected_contract
+        else "DTN_WOODBURY_LOCAL_INVERSE_IMPLEMENTATION_FAILED"
+    )
+    expected_disposition = (
+        "r5_pass_awaiting_h6"
+        if expected_numeric
+        else "DTN_WOODBURY_LOCAL_INVERSE_BORDERLINE"
+        if expected_borderline
+        else "WHOLE_ENDCAP_ILU0_DTN_WOODBURY_NEGATIVE"
+        if expected_contract
+        else "DTN_WOODBURY_LOCAL_INVERSE_IMPLEMENTATION_FAILED"
+    )
+    if (
+        record.get("status") != expected_status
+        or telemetry.get("r5_contract_pass") is not expected_contract
+        or telemetry.get("r5_algebra_legality_pass") is not expected_algebra
+        or telemetry.get("r5_numerical_pass") is not expected_numeric
+        or telemetry.get("r5_borderline") is not expected_borderline
+        or telemetry.get("severe_negative") is not severe_negative
+        or gates.get("r5_record_complete") is not expected_contract
+        or gates.get("r5_all_probe_records_complete") is not True
+        or gates.get("r5_all_probes_finite")
+        is not all(side.get("all_probes_finite") is True for side in sides.values())
+        or gates.get("r5_pc_linearity") is not expected_pc_linearity
+        or gates.get("r5_pc_determinism") is not expected_pc_determinism
+        or gates.get("r5_factors_released") is not expected_factors_released
+        or gates.get("r5_no_direct_fallback") is not expected_no_direct_fallback
+        or gates.get("r5_factor_noncoexistence") is not expected_factor_noncoexistence
+        or gates.get("r5_algebra_legality_pass") is not expected_algebra
+        or gates.get("r5_pass") is not expected_numeric
+        or qualification.get("r5_pass") is not expected_numeric
+        or qualification.get("worker_numerical_pass") is not expected_numeric
+        or qualification.get("integration_pass") is not expected_contract
+        or qualification.get("disposition") != expected_disposition
+    ):
+        return False
+    return bool(expected_numeric if require_numerical_pass else expected_contract)
+
+
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
@@ -2311,6 +2759,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "f-only-local-inverse-qualification",
             "whole-endcap-ilu0-qualification",
             "dtn-woodbury-oracle-qualification",
+            "dtn-woodbury-local-inverse-qualification",
         ),
         default="modal-schur-memory-minimal",
     )
@@ -2471,6 +2920,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         and not args.task037b_v1_gate
     ):
         parser.error("dtn-woodbury-oracle-qualification requires --task037b-v1-gate.")
+    if (
+        args.solver_path == "dtn-woodbury-local-inverse-qualification"
+        and not args.task037b_v1_gate
+    ):
+        parser.error(
+            "dtn-woodbury-local-inverse-qualification requires --task037b-v1-gate."
+        )
     selected_scoped_gates = (
         args.task035c_p6_h10_gate,
         args.task037b_h1_gate,
@@ -2658,6 +3114,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "f-only-local-inverse-qualification",
                 "whole-endcap-ilu0-qualification",
                 "dtn-woodbury-oracle-qualification",
+                "dtn-woodbury-local-inverse-qualification",
             )
             and args.comparison_solver_path == "fast"
             and not args.compare_modal_schur
@@ -2684,6 +3141,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "f-only-local-inverse-qualification or "
                 "whole-endcap-ilu0-qualification or "
                 "dtn-woodbury-oracle-qualification, "
+                "dtn-woodbury-local-inverse-qualification, "
                 "static-condensed MPI8 path."
             )
     elif args.task037b_h1_gate:
@@ -2984,6 +3442,45 @@ def _formal_shard_pass(
         and not terminated_for_authority_unreadable
         and no_swap_pass
     )
+
+
+def _task037b_r5_resource_gate(
+    *,
+    formal_pass: bool,
+    record_complete: bool,
+    numerical_pass: bool,
+    process_tree_peak_mb: float | None,
+) -> dict[str, Any]:
+    """Classify the R5 process-tree threshold without using worker-only RSS."""
+
+    measurement_present = bool(
+        isinstance(process_tree_peak_mb, (int, float))
+        and not isinstance(process_tree_peak_mb, bool)
+        and math.isfinite(float(process_tree_peak_mb))
+    )
+    peak_mb = float(process_tree_peak_mb) if measurement_present else None
+    exceeds_threshold = bool(measurement_present and peak_mb > 7.0 * 1024.0)
+    resource_review = bool(
+        formal_pass and numerical_pass and measurement_present and exceeds_threshold
+    )
+    measurement_failure = bool(formal_pass and not measurement_present)
+    h6_eligible = bool(
+        formal_pass
+        and record_complete
+        and numerical_pass
+        and measurement_present
+        and not exceeds_threshold
+    )
+    return {
+        "process_tree_peak_mb": peak_mb,
+        "process_tree_peak_gib": None if peak_mb is None else peak_mb / 1024.0,
+        "threshold_gib": 7.0,
+        "measurement_present": measurement_present,
+        "exceeds_threshold": exceeds_threshold,
+        "resource_review": resource_review,
+        "measurement_failure": measurement_failure,
+        "h6_eligible": h6_eligible,
+    }
 
 
 def run(args: argparse.Namespace) -> int:
@@ -3618,7 +4115,9 @@ def run(args: argparse.Namespace) -> int:
     )
     terminal_stage = (
         (
-            "v1_r4_record"
+            "v1_r5_record"
+            if args.solver_path == "dtn-woodbury-local-inverse-qualification"
+            else "v1_r4_record"
             if args.solver_path == "dtn-woodbury-oracle-qualification"
             else "v1_r3_record"
             if args.solver_path == "whole-endcap-ilu0-qualification"
@@ -3858,7 +4357,12 @@ def run(args: argparse.Namespace) -> int:
     else:
         qualification = solver_record.get("qualification", {})
         if args.task037b_v1_gate:
-            if args.solver_path == "dtn-woodbury-oracle-qualification":
+            if args.solver_path == "dtn-woodbury-local-inverse-qualification":
+                numerical_pass = _task037b_v1_r5_numerical_pass(solver_record)
+                formal_numerical_pass = _task037b_v1_r5_numerical_pass(
+                    solver_record, require_numerical_pass=False
+                )
+            elif args.solver_path == "dtn-woodbury-oracle-qualification":
                 numerical_pass = _task037b_v1_r4_numerical_pass(solver_record)
                 formal_numerical_pass = numerical_pass
             elif args.solver_path == "f-only-local-inverse-qualification":
@@ -3904,11 +4408,53 @@ def run(args: argparse.Namespace) -> int:
                 in (
                     "whole-endcap-ilu0-qualification",
                     "dtn-woodbury-oracle-qualification",
+                    "dtn-woodbury-local-inverse-qualification",
                 )
             )
             else True
         ),
     )
+    r5_raw_contract = bool(
+        args.task037b_v1_gate
+        and args.solver_path == "dtn-woodbury-local-inverse-qualification"
+        and _task037b_v1_r5_numerical_pass(solver_record, require_numerical_pass=False)
+    )
+    r5_process_tree_peak_mb = max(
+        (
+            float(stage.get("max_mpi_process_tree_rss_mb"))
+            for stage in (memory.get("stage_peaks") or [])
+            if isinstance(stage, dict)
+            and isinstance(stage.get("max_mpi_process_tree_rss_mb"), (int, float))
+            and math.isfinite(float(stage["max_mpi_process_tree_rss_mb"]))
+        ),
+        default=None,
+    )
+    r5_resource_state = _task037b_r5_resource_gate(
+        formal_pass=formal_pass,
+        record_complete=r5_raw_contract,
+        numerical_pass=numerical_pass,
+        process_tree_peak_mb=r5_process_tree_peak_mb,
+    )
+    r5_resource_review = bool(
+        args.task037b_v1_gate
+        and args.solver_path == "dtn-woodbury-local-inverse-qualification"
+        and r5_resource_state["resource_review"]
+    )
+    r5_resource_measurement_failure = bool(
+        args.task037b_v1_gate
+        and args.solver_path == "dtn-woodbury-local-inverse-qualification"
+        and r5_resource_state["measurement_failure"]
+    )
+    if r5_resource_measurement_failure:
+        formal_pass = False
+    r5_record_complete = bool(
+        args.task037b_v1_gate
+        and args.solver_path == "dtn-woodbury-local-inverse-qualification"
+        and formal_pass
+        and formal_numerical_pass
+        and r5_raw_contract
+    )
+    r5_h6_eligible = bool(r5_record_complete and r5_resource_state["h6_eligible"])
     r3_record_complete = bool(
         args.task037b_v1_gate
         and args.solver_path == "whole-endcap-ilu0-qualification"
@@ -3927,24 +4473,44 @@ def run(args: argparse.Namespace) -> int:
         and formal_pass
         and formal_numerical_pass
     )
-    summary_status = (
-        "task037b_v1_r4_complete_awaiting_r5"
-        if r4_record_complete
-        else "task037b_v1_r4_raw_record_formal_not_pass"
-        if args.task037b_v1_gate
-        and args.solver_path == "dtn-woodbury-oracle-qualification"
-        else "task037b_v1_r3_complete_awaiting_r4"
-        if r3_record_complete
-        else "task037b_v1_r2_complete_awaiting_r3"
-        if r2_record_complete
-        else "task037b_v1_r1_pass_awaiting_r2"
-        if args.task037b_v1_gate and formal_pass
-        else "formal_not_pass"
-        if args.task037b_v1_gate
-        else "measured_shard_pass"
-        if formal_pass
-        else "formal_not_pass"
+    r5_path = bool(
+        args.task037b_v1_gate
+        and args.solver_path == "dtn-woodbury-local-inverse-qualification"
     )
+    if r5_path:
+        if r5_resource_measurement_failure:
+            summary_status = "R5_RESOURCE_MEASUREMENT_FAILED"
+        elif r5_resource_review:
+            summary_status = "NUMERICAL_PASS_RESOURCE_REVIEW_REQUIRED"
+        elif r5_h6_eligible:
+            summary_status = "task037b_v1_r5_complete_awaiting_h6"
+        elif r5_record_complete:
+            # A contract-complete bounded negative/borderline is a controlled
+            # stop, not a formal-record failure.
+            summary_status = str(
+                solver_record.get("status", "WHOLE_ENDCAP_ILU0_DTN_WOODBURY_NEGATIVE")
+            )
+        else:
+            summary_status = "task037b_v1_r5_raw_record_formal_not_pass"
+    else:
+        summary_status = (
+            "task037b_v1_r4_complete_awaiting_r5"
+            if r4_record_complete
+            else "task037b_v1_r4_raw_record_formal_not_pass"
+            if args.task037b_v1_gate
+            and args.solver_path == "dtn-woodbury-oracle-qualification"
+            else "task037b_v1_r3_complete_awaiting_r4"
+            if r3_record_complete
+            else "task037b_v1_r2_complete_awaiting_r3"
+            if r2_record_complete
+            else "task037b_v1_r1_pass_awaiting_r2"
+            if args.task037b_v1_gate and formal_pass
+            else "formal_not_pass"
+            if args.task037b_v1_gate
+            else "measured_shard_pass"
+            if formal_pass
+            else "formal_not_pass"
+        )
     summary = {
         "schema_version": "task033.memory-watchdog.v2",
         "benchmark_id": "task033_external_memory_watchdog",
@@ -3959,7 +4525,20 @@ def run(args: argparse.Namespace) -> int:
         "memory_authority_pass": resource_gate["pass"],
         "physical_qualified": False,
         "qualification_identity": (
-            "task037b_v1_r4_raw_record_gate_awaiting_r5"
+            "task037b_v1_r5_resource_review_required"
+            if r5_resource_review
+            else "task037b_v1_r5_resource_measurement_failed"
+            if r5_resource_measurement_failure
+            else "task037b_v1_r5_raw_record_gate_awaiting_h6"
+            if r5_h6_eligible
+            else "task037b_v1_r5_raw_record_complete_controlled_stop"
+            if args.task037b_v1_gate
+            and args.solver_path == "dtn-woodbury-local-inverse-qualification"
+            and r5_record_complete
+            else "task037b_v1_r5_raw_record_formal_not_pass"
+            if args.task037b_v1_gate
+            and args.solver_path == "dtn-woodbury-local-inverse-qualification"
+            else "task037b_v1_r4_raw_record_gate_awaiting_r5"
             if r4_record_complete
             else "task037b_v1_r4_raw_record_formal_not_pass"
             if args.task037b_v1_gate
@@ -4009,6 +4588,26 @@ def run(args: argparse.Namespace) -> int:
             "dedicated cgroup swap must be zero. WSL-global pswp is diagnostic only."
         ),
     }
+    if (
+        args.task037b_v1_gate
+        and args.solver_path == "dtn-woodbury-local-inverse-qualification"
+    ):
+        summary["r5_resource_gate"] = {
+            "process_tree_peak_mb": r5_process_tree_peak_mb,
+            "process_tree_peak_gib": (
+                None
+                if r5_process_tree_peak_mb is None
+                else r5_process_tree_peak_mb / 1024.0
+            ),
+            "threshold_gib": 7.0,
+            "measurement_present": r5_process_tree_peak_mb is not None,
+            "exceeds_threshold": bool(
+                r5_process_tree_peak_mb is not None
+                and r5_process_tree_peak_mb > 7.0 * 1024.0
+            ),
+            "resource_review": r5_resource_review,
+            "h6_eligible": r5_h6_eligible,
+        }
     if args.task037b_h5_gate:
         summary.update(
             {

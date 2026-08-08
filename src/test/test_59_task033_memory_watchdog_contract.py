@@ -20,6 +20,8 @@ from benchmarks.run_task033_memory_watchdog import (
     _task037b_v1_r2_numerical_pass,
     _task037b_v1_r3_numerical_pass,
     _task037b_v1_r4_numerical_pass,
+    _task037b_v1_r5_numerical_pass,
+    _task037b_r5_resource_gate,
     _watchdog_source_after,
     _watchdog_source_before,
     _worker_command,
@@ -529,6 +531,240 @@ def _v1_r4_raw_record() -> dict:
             "worker_numerical_pass": True,
             "integration_pass": True,
             "disposition": "r4_pass_awaiting_r5",
+        },
+    }
+
+
+def _v1_r5_raw_record(
+    *, numerical_negative: bool = False, negative_side: str = "both"
+) -> dict:
+    names = (
+        "physical",
+        "random_seed_3701",
+        "random_seed_3702",
+        "random_seed_3703",
+        "random_seed_3704",
+        "modal_positive_lowest_propagating_or_lossy",
+        "modal_positive_first_kind_evanescent",
+        "modal_positive_highest_retained_index",
+        "modal_negative_lowest_propagating_or_lossy",
+        "modal_negative_first_kind_evanescent",
+        "modal_negative_highest_retained_index",
+    )
+
+    def metadata(name: str) -> dict:
+        if name == "physical":
+            return {"kind": "physical_action_rhs"}
+        if name.startswith("random_seed_"):
+            return {
+                "kind": "partition_independent_complex_random",
+                "seed": int(name.rsplit("_", 1)[1]),
+            }
+        direction = "positive" if "positive" in name else "negative"
+        if "lowest" in name:
+            criterion = "lowest_propagating_or_lossy"
+            local_mode_index = 0
+        elif "first_kind" in name:
+            criterion = "first_kind_evanescent"
+            local_mode_index = 1
+        else:
+            criterion = "highest_retained_index"
+            local_mode_index = 119
+        return {
+            "kind": "frozen_modal_traction",
+            "mode_identity": {
+                "direction": direction,
+                "criterion": criterion,
+                "local_mode_index": local_mode_index,
+            },
+        }
+
+    def row(name: str, side_name: str) -> dict:
+        zero = side_name == "bottom" and name == "physical"
+        side_negative = numerical_negative and negative_side in {"both", side_name}
+        residual = 2.0e-7 if side_negative and name == "random_seed_3701" else 2.0e-12
+        numeric = not side_negative or name != "random_seed_3701"
+        first = {
+            "reason": 2,
+            "iterations": 1,
+            "reported_residual": 1.0e-12,
+            "complete_A_true_residual": residual,
+            "setup_seconds": 1.0,
+            "solve_seconds": 2.0,
+            "apply_seconds": 3.0,
+        }
+        second = dict(first)
+        return {
+            "name": name,
+            "metadata": metadata(name),
+            "first": first,
+            "second": second,
+            "repeat_reason_equal": True,
+            "repeat_iterations_equal": True,
+            "repeat_solution_relative_error": 1.0e-13,
+            "zero_physical_rhs": zero,
+            "zero_equation_pass": numeric if zero else False,
+            "capacity_pass": numeric if not zero else False,
+            "finite": True,
+            "pass": numeric,
+        }
+
+    def side(side_name: str) -> dict:
+        rows = [row(name, side_name) for name in names]
+        expected_capacity = 10 if side_name == "bottom" else 11
+        capacity_pass_count = sum(
+            row_item["capacity_pass"]
+            for row_item in rows
+            if not row_item["zero_physical_rhs"]
+        )
+        components = {
+            "F": {"type": "python", "shape": [8424, 8424]},
+            "C": {"type": "python", "shape": [8424, 40]},
+            "D": {"type": "python", "shape": [40, 8424]},
+            "H": {"type": "python", "shape": [40, 40]},
+        }
+        return {
+            "probe_count": 11,
+            "rows": rows,
+            "operator": {
+                "identity": "complete_hybrid_action_with_whole_endcap_dtn_woodbury",
+                "base_identity": "whole_endcap_ilu0_smoother",
+                "external_dtn_correction": "included",
+                "matrix_type": "python",
+                "matrix_free": True,
+                "global_A_materialized": False,
+                "direct_factor_count": 0,
+                "components": components,
+            },
+            "configuration": {
+                "preconditioner_profile": "v1_whole_endcap_ilu0",
+                "num_subdomains": 1,
+                "overlap_fraction": 0.0,
+                "coordinate_axis": 0,
+                "interpolation": "partition",
+                "ilu_levels": 0,
+                "factor_only": True,
+                "one_apply_per_pc_apply": True,
+                "two_step_action_operator": None,
+                "outer_solver": "right_fgmres",
+                "restart": 30,
+                "max_it": 300,
+                "rtol": 1.0e-10,
+                "atol": 0.0,
+                "true_residual_limit": 1.0e-8,
+            },
+            "base": {
+                "identity": "whole_endcap_ilu0_smoother",
+                "source_matrix_nnz": 1000,
+                "factor_nnz": 2000,
+                "factor_csr_payload_estimate_bytes": 32000,
+            },
+            "woodbury": {
+                "base_identity": "whole_endcap_ilu0_smoother",
+                "n_aux": 40,
+                "K_rank": 40,
+                "K_shape": [40, 40],
+                "K_dtype": "complex128",
+                "K_condition_number": 2.0,
+                "normal_equations": False,
+                "arrays_finite": True,
+                "W_local_nbytes_by_rank": [8424 * 40 * 16],
+                "K_replicated_per_rank_nbytes": 40 * 40 * 16,
+                "LU_replicated_per_rank_nbytes": 40 * 40 * 16,
+            },
+            "pc_audit": {
+                "linearity_error": 1.0e-13,
+                "determinism_error": 1.0e-14,
+                "finite": True,
+            },
+            "factor_release": {
+                "factor_count_before": 1,
+                "factor_count_after": 0,
+                "factors_released": True,
+                "woodbury_destroyed": True,
+                "max_active_factor_count": 1,
+                "never_simultaneous": True,
+            },
+            "action_survives_after_release": True,
+            "no_direct_fallback": True,
+            "all_probes_finite": True,
+            "contract_pass": True,
+            "algebra_legality_pass": True,
+            "nonzero_capacity_count": expected_capacity,
+            "capacity_expected_count": expected_capacity,
+            "capacity_pass_count": capacity_pass_count,
+            "zero_physical_count": 1 if side_name == "bottom" else 0,
+            "zero_equation_pass": True,
+            "pass": not (numerical_negative and negative_side in {"both", side_name}),
+        }
+
+    status = (
+        "DTN_WOODBURY_LOCAL_INVERSE_BORDERLINE"
+        if numerical_negative
+        else "task037b_v1_r5_complete_awaiting_h6"
+    )
+    numeric_pass = not numerical_negative
+    return {
+        "schema_version": 1,
+        "record_schema": "task037b.v1-r5-dtn-woodbury-local-inverse.v1",
+        "benchmark_id": "task037b_v1_r5_dtn_woodbury_local_inverse",
+        "timestamp_utc": "2026-08-08T00:00:00+00:00",
+        "status": status,
+        "hybrid_system": {
+            "global_action_constructed": False,
+            "global_A_materialized": False,
+            "global_F_materialized": False,
+            "explicit_global_C_D_materialized": False,
+            "direct_factor_count": 0,
+            "external_auxiliary_rows_in_krylov": 0,
+        },
+        "validation": {
+            "port_power": "not_run",
+            "R_total": "not_run",
+            "T_total": "not_run",
+            "A_balance": "not_run",
+            "A_volume_total": "not_run",
+            "external_diffraction_orders": "not_run",
+        },
+        "physical_field_reconstruction": {"status": "not_run"},
+        "v1_r5_telemetry": {
+            "task037b_v1_gate": True,
+            "ordinary_default_changed": False,
+            "formal_probe_count_per_side": 11,
+            "r5_contract_pass": True,
+            "r5_algebra_legality_pass": True,
+            "r5_numerical_pass": numeric_pass,
+            "r5_borderline": numerical_negative,
+            "severe_negative": False,
+            "sides": {"bottom": side("bottom"), "top": side("top")},
+        },
+        "gates": {
+            "r5_record_complete": True,
+            "r5_all_probe_records_complete": True,
+            "r5_all_probes_finite": True,
+            "r5_pc_linearity": True,
+            "r5_pc_determinism": True,
+            "r5_factors_released": True,
+            "r5_no_direct_fallback": True,
+            "r5_factor_noncoexistence": True,
+            "r5_algebra_legality_pass": True,
+            "r5_pass": numeric_pass,
+            "r5_factor_lifecycle": {
+                "bottom_released_before_top_setup": True,
+                "global_max_active_factor_count": 1,
+                "global_final_active_factor_count": 0,
+            },
+        },
+        "qualification": {
+            "task037b_v1_gate": True,
+            "r5_pass": numeric_pass,
+            "worker_numerical_pass": numeric_pass,
+            "integration_pass": True,
+            "disposition": (
+                "r5_pass_awaiting_h6"
+                if numeric_pass
+                else "DTN_WOODBURY_LOCAL_INVERSE_BORDERLINE"
+            ),
         },
     }
 
@@ -1731,6 +1967,70 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
             path = Path(temporary) / "solver_record.json"
             path.write_text(json.dumps(terminal), encoding="utf-8")
             self.assertTrue(_task034_terminal_record_is_complete(path))
+
+    def test_v1_r5_checker_mapping_lifecycle_and_resource_gate(self) -> None:
+        record = _v1_r5_raw_record()
+        self.assertTrue(_task037b_v1_r5_numerical_pass(record))
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "solver_record.json"
+            path.write_text(json.dumps(record), encoding="utf-8")
+            self.assertTrue(_task034_terminal_record_is_complete(path))
+
+        borderline = _v1_r5_raw_record(numerical_negative=True, negative_side="bottom")
+        self.assertTrue(
+            _task037b_v1_r5_numerical_pass(borderline, require_numerical_pass=False)
+        )
+        self.assertFalse(_task037b_v1_r5_numerical_pass(borderline))
+
+        negative = copy.deepcopy(borderline)
+        for side_name, side in negative["v1_r5_telemetry"]["sides"].items():
+            for row in side["rows"]:
+                if (row["metadata"] or {}).get("kind") == (
+                    "partition_independent_complex_random"
+                ):
+                    row["first"]["complete_A_true_residual"] = 2.0e-2
+                    row["second"]["complete_A_true_residual"] = 2.0e-2
+                    row["pass"] = False
+                    row["capacity_pass"] = False
+            side["capacity_pass_count"] = 6 if side_name == "bottom" else 7
+            side["pass"] = False
+        negative["v1_r5_telemetry"]["r5_borderline"] = False
+        negative["v1_r5_telemetry"]["severe_negative"] = True
+        negative["status"] = "WHOLE_ENDCAP_ILU0_DTN_WOODBURY_NEGATIVE"
+        negative["qualification"]["disposition"] = (
+            "WHOLE_ENDCAP_ILU0_DTN_WOODBURY_NEGATIVE"
+        )
+        self.assertTrue(
+            _task037b_v1_r5_numerical_pass(negative, require_numerical_pass=False)
+        )
+
+        lifecycle = _v1_r5_raw_record()
+        lifecycle["gates"]["r5_factor_lifecycle"][
+            "global_final_active_factor_count"
+        ] = 1
+        self.assertFalse(
+            _task037b_v1_r5_numerical_pass(lifecycle, require_numerical_pass=False)
+        )
+
+        common = {
+            "formal_pass": True,
+            "record_complete": True,
+            "numerical_pass": True,
+        }
+        below = _task037b_r5_resource_gate(
+            **common, process_tree_peak_mb=7.0 * 1024.0 - 1.0
+        )
+        exact = _task037b_r5_resource_gate(**common, process_tree_peak_mb=7.0 * 1024.0)
+        above = _task037b_r5_resource_gate(
+            **common, process_tree_peak_mb=7.0 * 1024.0 + 1.0
+        )
+        missing = _task037b_r5_resource_gate(**common, process_tree_peak_mb=None)
+        self.assertTrue(below["h6_eligible"])
+        self.assertTrue(exact["h6_eligible"])
+        self.assertTrue(above["resource_review"])
+        self.assertFalse(above["h6_eligible"])
+        self.assertTrue(missing["measurement_failure"])
+        self.assertFalse(missing["h6_eligible"])
 
     def test_h5_external_no_swap_is_a_formal_requirement(self) -> None:
         kwargs = {

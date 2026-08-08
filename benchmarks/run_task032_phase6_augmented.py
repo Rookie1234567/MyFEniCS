@@ -103,6 +103,7 @@ from src.solvers.hybrid_local_dtn_action import (
 from src.solvers.hybrid_local_dtn_woodbury import (
     R4_MODAL_COUNT,
     HybridLocalDtnWoodburyOracle,
+    build_hybrid_local_dtn_woodbury_local_inverse,
 )
 from src.solvers.hybrid_local_dtn import assemble_hybrid_local_dtn_system
 from src.solvers.hybrid_static_field_recovery import recover_hybrid_static_local_field
@@ -787,6 +788,14 @@ class _V1R4QualificationStop(RuntimeError):
         self.record = record
 
 
+class _V1R5QualificationStop(RuntimeError):
+    """Internal control flow after the bounded V1-R5 record is complete."""
+
+    def __init__(self, record: dict[str, Any]) -> None:
+        super().__init__(record.get("status", "V1-R5 qualification complete"))
+        self.record = record
+
+
 NUMERICAL_INFINITY_BETA_H_CUTOFF = 1.0e4
 
 
@@ -1236,6 +1245,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "f-only-local-inverse-qualification",
             "whole-endcap-ilu0-qualification",
             "dtn-woodbury-oracle-qualification",
+            "dtn-woodbury-local-inverse-qualification",
         ),
         default="augmented",
         help=(
@@ -1287,6 +1297,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         and not args.task037b_v1_gate
     ):
         parser.error("dtn-woodbury-oracle-qualification requires --task037b-v1-gate.")
+    if (
+        args.solver_path == "dtn-woodbury-local-inverse-qualification"
+        and not args.task037b_v1_gate
+    ):
+        parser.error(
+            "dtn-woodbury-local-inverse-qualification requires --task037b-v1-gate."
+        )
     if args.degree == 6 and not any(selected_scoped_gates):
         parser.error(
             "p6 is fail-closed; pass a fixed scoped Task035c, Task037b H1, "
@@ -1342,6 +1359,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "f-only-local-inverse-qualification",
                 "whole-endcap-ilu0-qualification",
                 "dtn-woodbury-oracle-qualification",
+                "dtn-woodbury-local-inverse-qualification",
             )
             and args.comparison_solver_path == "fast"
             and not args.compare_modal_schur
@@ -1370,6 +1388,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "f-only-local-inverse-qualification or "
                 "whole-endcap-ilu0-qualification or "
                 "dtn-woodbury-oracle-qualification, "
+                "dtn-woodbury-local-inverse-qualification, "
                 "static-condensed MPI8 path."
             )
     elif args.task037b_h1_gate:
@@ -3359,6 +3378,603 @@ def _run_v1_r4_woodbury_qualification(
     raise _V1R4QualificationStop(record)
 
 
+def _run_v1_r5_local_inverse_qualification(
+    *,
+    args: argparse.Namespace,
+    comm: MPI.Intracomm,
+    provenance: dict[str, Any],
+    authority_gate: dict[str, Any] | None,
+    positive: Any,
+    negative: Any,
+    bottom: Any,
+    top: Any,
+    coupling: Any,
+    timings: dict[str, float],
+    total_started: float,
+    mark_stage,
+    progress,
+) -> None:
+    """Run the fixed whole-endcap smoother Woodbury R5 candidate."""
+
+    started = time.perf_counter()
+    selections = _h5_frozen_mode_selection(positive, negative)
+    rhs_sets = {
+        "bottom": _h5_rhs_set(
+            bottom,
+            coupling.bottom,
+            selections,
+            side="bottom",
+            propagation=coupling.propagation,
+        ),
+        "top": _h5_rhs_set(
+            top,
+            coupling.top,
+            selections,
+            side="top",
+            propagation=coupling.propagation,
+        ),
+    }
+    side_records: dict[str, dict[str, Any]] = {}
+
+    rhs_released = False
+
+    def release_rhs_sets() -> None:
+        nonlocal rhs_released
+        if rhs_released:
+            return
+        for rhs_list in rhs_sets.values():
+            for _name, vector, _metadata in rhs_list:
+                vector.destroy()
+        rhs_released = True
+
+    bottom_released_before_top_setup = False
+    global_max_active_factor_count = 0
+    global_final_active_factor_count = 0
+
+    def result_summary(result: Any) -> dict[str, Any]:
+        diagnostics = result.diagnostics
+        return {
+            "reason": int(result.converged_reason),
+            "iterations": int(result.iterations),
+            "reported_residual": float(result.reported_relative_residual),
+            "complete_A_true_residual": float(result.true_relative_residual),
+            "setup_seconds": float(result.setup_seconds),
+            "solve_seconds": float(result.solve_seconds),
+            "apply_seconds": float(result.apply_seconds),
+            "solution_digest": _h1_owned_vec_digest(result.solution),
+            "explicit_true_residual_recomputed": bool(
+                diagnostics["explicit_complete_action_residual_recomputed"]
+            ),
+        }
+
+    def summary_finite(summary: dict[str, Any]) -> bool:
+        return bool(
+            all(
+                np.isfinite(float(summary[key]))
+                for key in (
+                    "reported_residual",
+                    "complete_A_true_residual",
+                    "setup_seconds",
+                    "solve_seconds",
+                    "apply_seconds",
+                )
+            )
+            and summary["reason"] == int(summary["reason"])
+            and summary["iterations"] == int(summary["iterations"])
+        )
+
+    for side, action_system in (("bottom", bottom), ("top", top)):
+        base_inverse = None
+        inverse = None
+        side_started = time.perf_counter()
+        try:
+            if side == "top":
+                bottom_release = side_records["bottom"]["factor_release"]
+                bottom_released_before_top_setup = bool(
+                    bottom_release["factor_count_after"] == 0
+                    and bottom_release["factors_released"] is True
+                )
+            mark_stage(f"v1_r5_{side}_setup")
+            setup_started = time.perf_counter()
+            base_inverse = build_hybrid_local_iterative_inverse(
+                action_system,
+                preconditioner_profile=R3_PRECONDITIONER_PROFILE,
+            )
+            inverse = build_hybrid_local_dtn_woodbury_local_inverse(
+                action_system,
+                base_inverse,
+            )
+            timings[f"v1_r5_{side}_setup"] = _max_elapsed(comm, setup_started)
+            preconditioner = inverse.diagnostics
+            mark_stage(f"v1_r5_{side}_solves")
+            solve_started = time.perf_counter()
+            rows: list[dict[str, Any]] = []
+            for name, rhs, metadata in rhs_sets[side]:
+                first = None
+                second = None
+                try:
+                    first = inverse.solve(rhs)
+                    second = inverse.solve(rhs)
+                    first_summary = result_summary(first)
+                    second_summary = result_summary(second)
+                    repeat_error = _relative_vector_error(
+                        first.solution, second.solution
+                    )
+                    row = {
+                        "name": name,
+                        "metadata": dict(metadata),
+                        "source_digest": _h1_owned_vec_digest(rhs),
+                        "first": first_summary,
+                        "second": second_summary,
+                        "repeat_reason_equal": bool(
+                            first_summary["reason"] == second_summary["reason"]
+                        ),
+                        "repeat_iterations_equal": bool(
+                            first_summary["iterations"] == second_summary["iterations"]
+                        ),
+                        "repeat_solution_relative_error": float(repeat_error),
+                        "zero_physical_rhs": bool(float(rhs.norm()) <= 1.0e-30),
+                    }
+                    row["finite"] = bool(
+                        summary_finite(first_summary)
+                        and summary_finite(second_summary)
+                        and np.isfinite(repeat_error)
+                    )
+                    row["pass"] = bool(
+                        row["finite"]
+                        and first_summary["reason"] > 0
+                        and second_summary["reason"] > 0
+                        and first_summary["iterations"] <= H5_MAX_IT
+                        and second_summary["iterations"] <= H5_MAX_IT
+                        and first_summary["complete_A_true_residual"] <= 1.0e-8
+                        and second_summary["complete_A_true_residual"] <= 1.0e-8
+                        and repeat_error <= 1.0e-12
+                    )
+                    progress(
+                        f"Task037b V1-R5 {side}/{name}: "
+                        f"first_reason={first_summary['reason']}, "
+                        f"first_it={first_summary['iterations']}, "
+                        f"first_true={first_summary['complete_A_true_residual']:.3e}; "
+                        f"second_reason={second_summary['reason']}, "
+                        f"second_it={second_summary['iterations']}, "
+                        f"second_true={second_summary['complete_A_true_residual']:.3e}"
+                    )
+                    rows.append(row)
+                finally:
+                    if second is not None:
+                        second.destroy()
+                    if first is not None:
+                        first.destroy()
+            timings[f"v1_r5_{side}_solves"] = _max_elapsed(comm, solve_started)
+
+            nonzero_indices = [
+                index
+                for index, item in enumerate(rhs_sets[side])
+                if float(item[1].norm()) > 1.0e-30
+            ]
+            if len(nonzero_indices) < 2:
+                raise RuntimeError("R5 requires two nonzero probes for PC audit")
+            first_rhs = rhs_sets[side][nonzero_indices[0]][1]
+            second_rhs = rhs_sets[side][nonzero_indices[1]][1]
+            pc_first = action_system.A.createVecLeft()
+            pc_second = action_system.A.createVecLeft()
+            pc_repeat = action_system.A.createVecLeft()
+            pc_lhs = action_system.A.createVecLeft()
+            pc_rhs = action_system.A.createVecLeft()
+            combined_rhs = action_system.A.createVecRight()
+            try:
+                alpha = PETSc.ScalarType(1.25)
+                beta = PETSc.ScalarType(-0.75)
+                inverse.woodbury.apply(first_rhs, pc_first)
+                inverse.woodbury.apply(second_rhs, pc_second)
+                inverse.woodbury.apply(first_rhs, pc_repeat)
+                first_rhs.copy(combined_rhs)
+                combined_rhs.scale(alpha)
+                combined_rhs.axpy(beta, second_rhs)
+                inverse.woodbury.apply(combined_rhs, pc_lhs)
+                pc_first.copy(pc_rhs)
+                pc_rhs.scale(alpha)
+                pc_rhs.axpy(beta, pc_second)
+                pc_linearity_error = _relative_vector_error(pc_lhs, pc_rhs)
+                pc_determinism_error = _relative_vector_error(pc_first, pc_repeat)
+            finally:
+                combined_rhs.destroy()
+                pc_rhs.destroy()
+                pc_lhs.destroy()
+                pc_repeat.destroy()
+                pc_second.destroy()
+                pc_first.destroy()
+
+            # Refresh after all solves and PC probes so apply counters/timing
+            # and the stored global arrays_finite evidence are not stale.
+            preconditioner = inverse.diagnostics
+            woodbury = dict(preconditioner["woodbury"])
+            local_w_bytes = int(woodbury["W_local_nbytes"])
+            w_bytes_by_rank = [int(value) for value in comm.allgather(local_w_bytes)]
+            woodbury.update(
+                {
+                    "W_local_nbytes_by_rank": w_bytes_by_rank,
+                    "W_local_nbytes_sum": int(sum(w_bytes_by_rank)),
+                    "W_local_nbytes_max": int(max(w_bytes_by_rank)),
+                    "K_replicated_per_rank_nbytes": int(woodbury["K_nbytes"]),
+                    "LU_replicated_per_rank_nbytes": int(woodbury["LU_nbytes"]),
+                }
+            )
+            preconditioner["woodbury"] = woodbury
+            preconditioner["pc_audit"] = {
+                "linearity_error": float(pc_linearity_error),
+                "determinism_error": float(pc_determinism_error),
+                "finite": bool(
+                    np.isfinite(pc_linearity_error)
+                    and np.isfinite(pc_determinism_error)
+                ),
+            }
+
+            mark_stage(f"v1_r5_{side}_release")
+            released_inverse = inverse
+            inverse = None
+            release_started = time.perf_counter()
+            released_inverse.destroy()
+            timings[f"v1_r5_{side}_release"] = _max_elapsed(comm, release_started)
+            factor_before = released_inverse.factor_count_before_destroy
+            factor_after = released_inverse.factor_count_after_destroy
+            factors_released = released_inverse.factors_released
+            woodbury_destroyed = released_inverse.woodbury.diagnostics["destroyed"]
+            global_max_active_factor_count = max(
+                global_max_active_factor_count, int(factor_before)
+            )
+            global_final_active_factor_count = int(factor_after)
+            action_survives = False
+            zero = action_system.A.createVecRight()
+            zero_result = action_system.A.createVecLeft()
+            try:
+                zero.set(0.0)
+                action_system.A.mult(zero, zero_result)
+                action_survives = bool(
+                    action_system.A.getType() == "python"
+                    and np.isfinite(float(zero_result.norm()))
+                )
+            finally:
+                zero_result.destroy()
+                zero.destroy()
+            base_inverse = None
+            nonzero_rows = [row for row in rows if not row["zero_physical_rhs"]]
+            zero_rows = [row for row in rows if row["zero_physical_rhs"]]
+            expected_nonzero = 10 if side == "bottom" else 11
+            for row in nonzero_rows:
+                row["capacity_pass"] = bool(row["pass"])
+            for row in zero_rows:
+                row["zero_equation_pass"] = bool(row["pass"])
+            capacity_pass_count = sum(
+                bool(row["capacity_pass"]) for row in nonzero_rows
+            )
+            zero_equation_pass = bool(
+                len(zero_rows) == (1 if side == "bottom" else 0)
+                and all(row.get("zero_equation_pass") is True for row in zero_rows)
+            )
+            side_contract_pass = bool(
+                len(rows) == 11
+                and len(nonzero_rows) == expected_nonzero
+                and len(zero_rows) == (1 if side == "bottom" else 0)
+                and preconditioner["operator"]["identity"]
+                == "complete_hybrid_action_with_whole_endcap_dtn_woodbury"
+                and preconditioner["configuration"]["preconditioner_profile"]
+                == R3_PRECONDITIONER_PROFILE
+                and preconditioner["configuration"]["num_subdomains"] == 1
+                and preconditioner["configuration"]["overlap_fraction"] == 0.0
+                and preconditioner["lifecycle"]["candidate_direct_factor_count"] == 0
+                and factor_before == 1
+                and factor_after == 0
+                and factors_released is True
+                and woodbury_destroyed is True
+                and action_survives
+            )
+            algebra_legality_pass = bool(
+                all(row["finite"] for row in rows)
+                and all(
+                    row["repeat_solution_relative_error"] <= 1.0e-12 for row in rows
+                )
+                and preconditioner["no_direct_fallback"] is True
+                and woodbury["K_rank"] == R4_MODAL_COUNT
+                and np.isfinite(woodbury["K_condition_number"])
+                and woodbury["K_condition_number"] <= 1.0e10
+                and woodbury["normal_equations"] is False
+                and woodbury["arrays_finite"] is True
+                and preconditioner["pc_audit"]["finite"]
+                and pc_linearity_error <= 1.0e-11
+                and pc_determinism_error <= 1.0e-12
+            )
+            side_numerical_pass = bool(
+                side_contract_pass
+                and algebra_legality_pass
+                and capacity_pass_count == expected_nonzero
+                and zero_equation_pass
+                and all(row["pass"] for row in rows)
+                and pc_linearity_error <= 1.0e-11
+                and pc_determinism_error <= 1.0e-12
+            )
+            side_records[side] = {
+                "operator": dict(preconditioner["operator"]),
+                "configuration": dict(preconditioner["configuration"]),
+                "base": dict(preconditioner["base"]),
+                "woodbury": woodbury,
+                "pc_audit": dict(preconditioner["pc_audit"]),
+                "algebra_legality_pass": algebra_legality_pass,
+                "rows": rows,
+                "probe_count": len(rows),
+                "nonzero_capacity_count": len(nonzero_rows),
+                "capacity_pass_count": int(capacity_pass_count),
+                "capacity_expected_count": expected_nonzero,
+                "zero_physical_count": len(zero_rows),
+                "zero_equation_pass": zero_equation_pass,
+                "factor_release": {
+                    "factor_count_before": int(factor_before),
+                    "factor_count_after": int(factor_after),
+                    "factors_released": bool(factors_released),
+                    "woodbury_destroyed": bool(woodbury_destroyed),
+                    "max_active_factor_count": int(factor_before),
+                    "never_simultaneous": bool(factor_before == 1),
+                },
+                "action_survives_after_release": bool(action_survives),
+                "no_direct_fallback": bool(
+                    preconditioner["no_direct_fallback"]
+                    and preconditioner["operator"]["direct_factor_count"] == 0
+                ),
+                "contract_pass": side_contract_pass,
+                "all_probes_finite": bool(all(row["finite"] for row in rows)),
+                "pass": side_numerical_pass,
+                "wall_seconds": _max_elapsed(comm, side_started),
+            }
+        except Exception:
+            release_rhs_sets()
+            raise
+        finally:
+            if inverse is not None:
+                inverse.destroy()
+                base_inverse = None
+            if base_inverse is not None:
+                base_inverse.destroy()
+
+    r5_contract_pass = bool(
+        set(side_records) == {"bottom", "top"}
+        and all(side["contract_pass"] for side in side_records.values())
+        and bottom_released_before_top_setup
+        and global_max_active_factor_count == 1
+        and global_final_active_factor_count == 0
+    )
+    r5_algebra_legality_pass = bool(
+        r5_contract_pass
+        and all(
+            side["algebra_legality_pass"]
+            and side["pc_audit"]["linearity_error"] <= 1.0e-11
+            and side["pc_audit"]["determinism_error"] <= 1.0e-12
+            for side in side_records.values()
+        )
+    )
+    r5_numerical_pass = bool(
+        r5_algebra_legality_pass and all(side["pass"] for side in side_records.values())
+    )
+
+    def row_residual(row: dict[str, Any]) -> float:
+        return max(
+            float(row["first"]["complete_A_true_residual"]),
+            float(row["second"]["complete_A_true_residual"]),
+        )
+
+    all_random_values: list[float] = []
+    all_modal_values: list[float] = []
+    all_iterations_ok = True
+    all_rows_finite = True
+    severe_negative = False
+    for side in side_records.values():
+        random_rows = [
+            row
+            for row in side["rows"]
+            if row["metadata"].get("kind") == "partition_independent_complex_random"
+        ]
+        modal_or_physical_rows = [
+            row
+            for row in side["rows"]
+            if row["metadata"].get("kind")
+            in {"physical_action_rhs", "frozen_modal_traction"}
+        ]
+        random_values = [row_residual(row) for row in random_rows]
+        modal_values = [row_residual(row) for row in modal_or_physical_rows]
+        all_random_values.extend(random_values)
+        all_modal_values.extend(modal_values)
+        all_iterations_ok &= all(
+            summary["iterations"] <= H5_MAX_IT
+            for row in side["rows"]
+            for summary in (row["first"], row["second"])
+        )
+        all_rows_finite &= side["all_probes_finite"]
+        severe_negative |= bool(
+            sum(value > 1.0e-2 for value in random_values) > len(random_values) / 2
+            or any(value > 1.0e-3 for value in modal_values)
+        )
+    r5_borderline = bool(
+        not r5_numerical_pass
+        and r5_contract_pass
+        and r5_algebra_legality_pass
+        and all_modal_values
+        and all_random_values
+        and all(value <= 1.0e-8 for value in all_modal_values)
+        and all(value <= 1.0e-5 for value in all_random_values)
+        and any(value > 1.0e-8 for value in all_random_values)
+        and all_iterations_ok
+        and all_rows_finite
+    )
+    timings["v1_r5_local_inverse_qualification"] = _max_elapsed(comm, started)
+    mark_stage("v1_r5_record")
+    _verify_source_stable_at_end(
+        comm,
+        provenance,
+        args.verified_clean_sha,
+        args.allow_dirty_research,
+    )
+    status = (
+        "task037b_v1_r5_complete_awaiting_h6"
+        if r5_numerical_pass
+        else "DTN_WOODBURY_LOCAL_INVERSE_BORDERLINE"
+        if r5_borderline
+        else "WHOLE_ENDCAP_ILU0_DTN_WOODBURY_NEGATIVE"
+        if r5_contract_pass
+        else "DTN_WOODBURY_LOCAL_INVERSE_IMPLEMENTATION_FAILED"
+    )
+    record = {
+        "schema_version": 1,
+        "record_schema": "task037b.v1-r5-dtn-woodbury-local-inverse.v1",
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "benchmark_id": "task037b_v1_r5_dtn_woodbury_local_inverse",
+        "status": status,
+        "metadata": {
+            **provenance,
+            "command": list(sys.argv),
+            "verified_clean_sha": args.verified_clean_sha,
+            "authority_gate": authority_gate,
+        },
+        "case": {
+            "degree": args.degree,
+            "h_nm": args.h_nm,
+            "modal_degree": args.modal_degree,
+            "modal_h_nm": args.modal_h_nm,
+            "requested_modes": args.requested_modes,
+            "candidate_modes": args.candidate_modes,
+            "mpi_size": comm.size,
+            "polarization_kind": args.polarization_kind,
+            "incident_grazing_deg": args.incident_grazing_deg,
+            "bottom_interface_nm": args.bottom_interface_nm,
+            "top_interface_nm": args.top_interface_nm,
+            "solver_path": args.solver_path,
+            "operator_identity": (
+                "complete_hybrid_action_with_whole_endcap_dtn_woodbury"
+            ),
+            "formal_probe_count_per_side": 11,
+        },
+        "hybrid_system": {
+            "global_action_constructed": False,
+            "global_A_materialized": False,
+            "global_F_materialized": False,
+            "explicit_global_C_D_materialized": False,
+            "direct_factor_count": 0,
+            "external_auxiliary_rows_in_krylov": 0,
+            "bottom_operator_inventory": dict(bottom.inventory),
+            "top_operator_inventory": dict(top.inventory),
+        },
+        "validation": {
+            "port_power": "not_run",
+            "R_total": "not_run",
+            "T_total": "not_run",
+            "A_balance": "not_run",
+            "A_volume_total": "not_run",
+            "external_diffraction_orders": "not_run",
+        },
+        "physical_field_reconstruction": {"status": "not_run"},
+        "official_record": False,
+        "v1_r5_telemetry": {
+            "task037b_v1_gate": True,
+            "r5_scope": "whole-endcap ILU(0) base with fixed 40-mode Woodbury PC",
+            "preconditioner_profile": R3_PRECONDITIONER_PROFILE,
+            "frozen_mode_selection": selections,
+            "formal_probe_count_per_side": 11,
+            "sides": side_records,
+            "r5_contract_pass": r5_contract_pass,
+            "r5_algebra_legality_pass": r5_algebra_legality_pass,
+            "r5_numerical_pass": r5_numerical_pass,
+            "r5_borderline": r5_borderline,
+            "severe_negative": severe_negative,
+            "ordinary_default_changed": False,
+            "swap": "not_evaluated_external_watchdog",
+        },
+        "gates": {
+            "r5_record_complete": r5_contract_pass,
+            "r5_all_probe_records_complete": bool(
+                all(side["probe_count"] == 11 for side in side_records.values())
+            ),
+            "r5_all_probes_finite": bool(
+                all(
+                    row["finite"]
+                    for side in side_records.values()
+                    for row in side["rows"]
+                )
+            ),
+            "r5_pc_linearity": bool(
+                all(
+                    side["pc_audit"]["linearity_error"] <= 1.0e-11
+                    for side in side_records.values()
+                )
+            ),
+            "r5_pc_determinism": bool(
+                all(
+                    side["pc_audit"]["determinism_error"] <= 1.0e-12
+                    for side in side_records.values()
+                )
+            ),
+            "r5_factor_noncoexistence": bool(
+                bottom_released_before_top_setup
+                and global_max_active_factor_count == 1
+                and global_final_active_factor_count == 0
+            ),
+            "r5_factors_released": bool(
+                all(
+                    side["factor_release"]["factor_count_after"] == 0
+                    and side["factor_release"]["factors_released"] is True
+                    for side in side_records.values()
+                )
+            ),
+            "r5_no_direct_fallback": bool(
+                all(
+                    side["no_direct_fallback"] is True for side in side_records.values()
+                )
+            ),
+            "r5_algebra_legality_pass": r5_algebra_legality_pass,
+            "r5_pass": r5_numerical_pass,
+            "r5_factor_lifecycle": {
+                "bottom_released_before_top_setup": bool(
+                    bottom_released_before_top_setup
+                ),
+                "global_max_active_factor_count": int(global_max_active_factor_count),
+                "global_final_active_factor_count": int(
+                    global_final_active_factor_count
+                ),
+            },
+        },
+        "qualification": {
+            "task037b_v1_gate": True,
+            "r5_pass": r5_numerical_pass,
+            "worker_numerical_pass": r5_numerical_pass,
+            "integration_pass": r5_contract_pass,
+            "disposition": (
+                "r5_pass_awaiting_h6"
+                if r5_numerical_pass
+                else "DTN_WOODBURY_LOCAL_INVERSE_BORDERLINE"
+                if r5_borderline
+                else "WHOLE_ENDCAP_ILU0_DTN_WOODBURY_NEGATIVE"
+                if r5_contract_pass
+                else "DTN_WOODBURY_LOCAL_INVERSE_IMPLEMENTATION_FAILED"
+            ),
+            "boundary": (
+                "R5 local-inverse Woodbury candidate only; R/T/A, field, and "
+                "12+12 physics gates are not run."
+            ),
+        },
+        "timing_seconds_max_rank": {
+            **timings,
+            "total": _max_elapsed(comm, total_started),
+        },
+        "historical_peak_rss_mb_by_rank": comm.gather(
+            _historical_peak_rss_mb(), root=0
+        ),
+        "memory_semantics": (
+            "R5 whole-endcap smoother factors and Woodbury data are sequential "
+            "per side; process-tree resource review remains external watchdog "
+            "evidence."
+        ),
+    }
+    release_rhs_sets()
+    raise _V1R5QualificationStop(record)
+
+
 def _run_v1_r3_whole_endcap_qualification(
     *,
     args: argparse.Namespace,
@@ -4700,6 +5316,22 @@ def main() -> None:
                     provenance=provenance,
                     authority_gate=task035c_p6_gate,
                     cfg=cfg,
+                    positive=positive,
+                    negative=negative,
+                    bottom=bottom,
+                    top=top,
+                    coupling=coupling,
+                    timings=timings,
+                    total_started=total_started,
+                    mark_stage=mark_stage,
+                    progress=progress,
+                )
+            elif args.solver_path == "dtn-woodbury-local-inverse-qualification":
+                _run_v1_r5_local_inverse_qualification(
+                    args=args,
+                    comm=comm,
+                    provenance=provenance,
+                    authority_gate=task035c_p6_gate,
                     positive=positive,
                     negative=negative,
                     bottom=bottom,
@@ -6128,6 +6760,8 @@ def main() -> None:
                 }
             )
     except _V1R4QualificationStop as stop:
+        record = stop.record
+    except _V1R5QualificationStop as stop:
         record = stop.record
     except _V1R3QualificationStop as stop:
         record = stop.record
