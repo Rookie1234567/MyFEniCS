@@ -243,6 +243,12 @@ def _v1_r3_hybrid_cli() -> list[str]:
     return cli
 
 
+def _v1_r4_hybrid_cli() -> list[str]:
+    cli = _v1_hybrid_cli()
+    cli[cli.index("--solver-path") + 1] = "dtn-woodbury-oracle-qualification"
+    return cli
+
+
 class Task035cP6H10RunnerGateTests(unittest.TestCase):
     def test_ordinary_defaults_remain_unchanged(self) -> None:
         phase6 = parse_phase6_args([])
@@ -635,6 +641,39 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
             "whole-endcap-ilu0-qualification",
         )
         without_flag = _v1_r3_hybrid_cli()
+        without_flag.remove("--task037b-v1-gate")
+        with self.assertRaises(SystemExit):
+            parse_memory_args(without_flag)
+
+    def test_task037b_v1_r4_woodbury_gate_and_worker_forwarding(self) -> None:
+        args = parse_memory_args(_v1_r4_hybrid_cli())
+        self.assertTrue(args.task037b_v1_gate)
+        self.assertEqual(args.mpi_size, 8)
+        self.assertEqual(args.requested_modes, 120)
+        self.assertEqual(args.candidate_modes, 240)
+        self.assertEqual(args.solver_path, "dtn-woodbury-oracle-qualification")
+        command = _worker_command(args, Path("record.json"), Path("stages.jsonl"))
+        self.assertIn("--task037b-v1-gate", command)
+        self.assertEqual(
+            command[command.index("--solver-path") + 1],
+            "dtn-woodbury-oracle-qualification",
+        )
+        worker_cli = _v1_r4_hybrid_cli()
+        remove_pairs = {"--target", "--case-label", "--mpi-size"}
+        phase6_cli: list[str] = []
+        index = 0
+        while index < len(worker_cli):
+            if worker_cli[index] in remove_pairs:
+                index += 2
+                continue
+            phase6_cli.append(worker_cli[index])
+            index += 1
+        worker = parse_phase6_args(phase6_cli)
+        self.assertTrue(worker.task037b_v1_gate)
+        self.assertEqual(worker.degree, 6)
+        self.assertEqual(worker.h_nm, 10.0)
+        self.assertEqual(worker.solver_path, "dtn-woodbury-oracle-qualification")
+        without_flag = _v1_r4_hybrid_cli()
         without_flag.remove("--task037b-v1-gate")
         with self.assertRaises(SystemExit):
             parse_memory_args(without_flag)

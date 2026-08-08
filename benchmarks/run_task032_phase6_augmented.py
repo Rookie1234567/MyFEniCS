@@ -100,6 +100,10 @@ from src.solvers.hybrid_local_dtn_action import (
     assemble_hybrid_local_dtn_action_system,
     create_hybrid_local_dtn_action_components,
 )
+from src.solvers.hybrid_local_dtn_woodbury import (
+    R4_MODAL_COUNT,
+    HybridLocalDtnWoodburyOracle,
+)
 from src.solvers.hybrid_local_dtn import assemble_hybrid_local_dtn_system
 from src.solvers.hybrid_static_field_recovery import recover_hybrid_static_local_field
 from src.solvers.condensed_dtn import (
@@ -775,6 +779,14 @@ class _V1R3QualificationStop(RuntimeError):
         self.record = record
 
 
+class _V1R4QualificationStop(RuntimeError):
+    """Internal control flow after the bounded V1-R4 record is complete."""
+
+    def __init__(self, record: dict[str, Any]) -> None:
+        super().__init__(record.get("status", "V1-R4 qualification complete"))
+        self.record = record
+
+
 NUMERICAL_INFINITY_BETA_H_CUTOFF = 1.0e4
 
 
@@ -1223,6 +1235,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "dtn-component-qualification",
             "f-only-local-inverse-qualification",
             "whole-endcap-ilu0-qualification",
+            "dtn-woodbury-oracle-qualification",
         ),
         default="augmented",
         help=(
@@ -1269,6 +1282,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         and not args.task037b_v1_gate
     ):
         parser.error("whole-endcap-ilu0-qualification requires --task037b-v1-gate.")
+    if (
+        args.solver_path == "dtn-woodbury-oracle-qualification"
+        and not args.task037b_v1_gate
+    ):
+        parser.error("dtn-woodbury-oracle-qualification requires --task037b-v1-gate.")
     if args.degree == 6 and not any(selected_scoped_gates):
         parser.error(
             "p6 is fail-closed; pass a fixed scoped Task035c, Task037b H1, "
@@ -1323,6 +1341,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "dtn-component-qualification",
                 "f-only-local-inverse-qualification",
                 "whole-endcap-ilu0-qualification",
+                "dtn-woodbury-oracle-qualification",
             )
             and args.comparison_solver_path == "fast"
             and not args.compare_modal_schur
@@ -1349,7 +1368,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "10/110 nm, S-polarized, full3d/scalar-CG, M120+M120, "
                 "candidate240, dtn-component-qualification, "
                 "f-only-local-inverse-qualification or "
-                "whole-endcap-ilu0-qualification, "
+                "whole-endcap-ilu0-qualification or "
+                "dtn-woodbury-oracle-qualification, "
                 "static-condensed MPI8 path."
             )
     elif args.task037b_h1_gate:
@@ -2796,6 +2816,549 @@ def _run_v1_r2_f_only_qualification(
                 vector.destroy()
 
 
+def _run_v1_r4_woodbury_qualification(
+    *,
+    args: argparse.Namespace,
+    comm: MPI.Intracomm,
+    provenance: dict[str, Any],
+    authority_gate: dict[str, Any] | None,
+    cfg: Any,
+    positive: Any,
+    negative: Any,
+    bottom: Any,
+    top: Any,
+    coupling: Any,
+    timings: dict[str, float],
+    total_started: float,
+    mark_stage,
+    progress,
+) -> None:
+    """Run the bounded borrowed-base Woodbury R4 diagnostic and stop."""
+
+    started = time.perf_counter()
+    selections = _h5_frozen_mode_selection(positive, negative)
+    rhs_sets = {
+        "bottom": _h5_rhs_set(
+            bottom,
+            coupling.bottom,
+            selections,
+            side="bottom",
+            propagation=coupling.propagation,
+        ),
+        "top": _h5_rhs_set(
+            top,
+            coupling.top,
+            selections,
+            side="top",
+            propagation=coupling.propagation,
+        ),
+    }
+    side_records: dict[str, dict[str, Any]] = {}
+
+    def matrix_descriptor(matrix: PETSc.Mat) -> dict[str, Any]:
+        first, last = matrix.getOwnershipRange()
+        return {
+            "type": str(matrix.getType()),
+            "shape": [int(value) for value in matrix.getSize()],
+            "local_shape": [int(value) for value in matrix.getLocalSize()],
+            "ownership_range": [int(first), int(last)],
+        }
+
+    def finite_row(row: dict[str, Any]) -> bool:
+        values = (
+            row["direct_true_residual"],
+            row["woodbury_true_residual"],
+            row["solution_relative_error"],
+            row["repeat_error"],
+        )
+        return bool(all(np.isfinite(float(value)) for value in values))
+
+    for side, action_system in (("bottom", bottom), ("top", top)):
+        direct_system = None
+        blocks = None
+        explicit_a = None
+        explicit_port = None
+        explicit_f = None
+        a_factor = None
+        f_factor = None
+        components = None
+        oracle = None
+        component_descriptors: dict[str, Any] = {}
+        active_factor_count = 0
+        max_active_factor_count = 0
+        a_released_before_f_created = False
+        explicit_reference_blocks_released = False
+        direct_solutions: dict[str, PETSc.Vec] = {}
+        side_started = time.perf_counter()
+        try:
+            mark_stage(f"v1_r4_{side}_explicit_a_assembly")
+            assembly_started = time.perf_counter()
+            direct_system = assemble_hybrid_local_dtn_system(
+                cfg,
+                side,
+                bottom_interface_z_nm=args.bottom_interface_nm,
+                top_interface_z_nm=args.top_interface_nm,
+                local_mesh_override=action_system.local_mesh,
+                log=progress,
+            )
+            blocks = extract_petsc_condensed_blocks(
+                direct_system.A,
+                direct_system.b,
+                n_fe=direct_system.n_fe,
+                n_aux=direct_system.n_external_aux,
+            )
+            if blocks.n_aux != R4_MODAL_COUNT:
+                raise RuntimeError("R4 direct reference must expose 40 auxiliary modes")
+            explicit_a, explicit_port = build_explicit_condensed_operator(blocks)
+            direct_system.destroy()
+            direct_system = None
+            timings[f"v1_r4_{side}_explicit_a_assembly"] = _max_elapsed(
+                comm, assembly_started
+            )
+
+            mark_stage(f"v1_r4_{side}_a_factor")
+            a_factor_started = time.perf_counter()
+            a_factor, a_setup_seconds = _factor_local(explicit_a)
+            active_factor_count += 1
+            max_active_factor_count = max(max_active_factor_count, active_factor_count)
+            a_factor_count_before = active_factor_count
+            a_inventory = _local_factor_inventory(a_factor)
+            timings[f"v1_r4_{side}_a_factor"] = _max_elapsed(comm, a_factor_started)
+            mark_stage(f"v1_r4_{side}_a_reference_solve")
+            a_solve_started = time.perf_counter()
+            a_rows: list[dict[str, Any]] = []
+            for name, rhs, metadata in rhs_sets[side]:
+                reference = rhs.duplicate()
+                a_factor.solve(rhs, reference)
+                direct_solutions[name] = reference
+                a_rows.append(
+                    {
+                        "name": name,
+                        "metadata": dict(metadata),
+                        "source_digest": _h1_owned_vec_digest(rhs),
+                        "direct_true_residual": _h5_true_relative_residual(
+                            explicit_a, rhs, reference
+                        ),
+                        "solution_digest": _h1_owned_vec_digest(reference),
+                    }
+                )
+            timings[f"v1_r4_{side}_a_reference_solve"] = _max_elapsed(
+                comm, a_solve_started
+            )
+            a_release_started = time.perf_counter()
+            a_factor.destroy()
+            a_factor = None
+            active_factor_count -= 1
+            a_factor_count_after_release = active_factor_count
+            a_release_seconds = _max_elapsed(comm, a_release_started)
+            explicit_a.destroy()
+            explicit_a = None
+            explicit_port.destroy()
+            explicit_port = None
+            a_released_before_f_created = active_factor_count == 0
+            explicit_f = blocks.require_f()
+            blocks.F = None
+            blocks.destroy()
+            blocks = None
+            explicit_reference_blocks_released = (
+                blocks is None and explicit_f is not None
+            )
+
+            mark_stage(f"v1_r4_{side}_f_factor")
+            f_factor_started = time.perf_counter()
+            f_factor, f_setup_seconds = _factor_local(explicit_f)
+            active_factor_count += 1
+            max_active_factor_count = max(max_active_factor_count, active_factor_count)
+            f_factor_count_before = active_factor_count
+            f_inventory = _local_factor_inventory(f_factor)
+            timings[f"v1_r4_{side}_f_factor"] = _max_elapsed(comm, f_factor_started)
+            components = create_hybrid_local_dtn_action_components(action_system)
+            component_descriptors = {
+                "F": matrix_descriptor(components.F),
+                "C": matrix_descriptor(components.C),
+                "D": matrix_descriptor(components.D),
+                "H": matrix_descriptor(components.H),
+            }
+            oracle_started = time.perf_counter()
+            oracle = HybridLocalDtnWoodburyOracle(
+                f_factor,
+                components,
+                base_identity="exact_F_direct_test_only",
+            )
+            timings[f"v1_r4_{side}_woodbury_setup"] = _max_elapsed(comm, oracle_started)
+            mark_stage(f"v1_r4_{side}_woodbury_solve")
+            solve_started = time.perf_counter()
+            woodbury_rows: list[dict[str, Any]] = []
+            for a_row, (name, rhs, metadata) in zip(
+                a_rows,
+                rhs_sets[side],
+                strict=True,
+            ):
+                first = rhs.duplicate()
+                second = rhs.duplicate()
+                try:
+                    oracle.apply(rhs, first)
+                    oracle.apply(rhs, second)
+                    woodbury_diagnostics = oracle.diagnostics
+                    row = {
+                        **a_row,
+                        "name": name,
+                        "metadata": dict(metadata),
+                        "woodbury_true_residual": _h5_true_relative_residual(
+                            action_system.A, rhs, first
+                        ),
+                        "solution_relative_error": _relative_vector_error(
+                            first, direct_solutions[name]
+                        ),
+                        "repeat_error": _relative_vector_error(first, second),
+                        "solution_digest": _h1_owned_vec_digest(first),
+                        "zero_physical_rhs": bool(float(rhs.norm()) <= 1.0e-30),
+                    }
+                    row["finite"] = finite_row(row)
+                    row["pass"] = bool(
+                        row["finite"]
+                        and row["direct_true_residual"] <= 1.0e-10
+                        and row["woodbury_true_residual"] <= 1.0e-10
+                        and row["solution_relative_error"] <= 1.0e-10
+                        and row["repeat_error"] <= 1.0e-12
+                        and woodbury_diagnostics["K_rank"] == R4_MODAL_COUNT
+                        and woodbury_diagnostics["K_condition_number"] <= 1.0e10
+                    )
+                    progress(
+                        f"Task037b V1-R4 {side}/{name}: "
+                        f"woodbury={row['woodbury_true_residual']:.3e}, "
+                        f"solution={row['solution_relative_error']:.3e}, "
+                        f"repeat={row['repeat_error']:.3e}"
+                    )
+                    woodbury_rows.append(row)
+                finally:
+                    first.destroy()
+                    second.destroy()
+            timings[f"v1_r4_{side}_woodbury_solve"] = _max_elapsed(comm, solve_started)
+            woodbury_diagnostics = oracle.diagnostics
+            local_w_bytes = int(woodbury_diagnostics["W_local_nbytes"])
+            w_bytes_by_rank = [int(value) for value in comm.allgather(local_w_bytes)]
+            woodbury_diagnostics.update(
+                {
+                    "W_local_nbytes_by_rank": w_bytes_by_rank,
+                    "W_local_nbytes_sum": int(sum(w_bytes_by_rank)),
+                    "W_local_nbytes_max": int(max(w_bytes_by_rank)),
+                    "K_replicated_per_rank_nbytes": int(
+                        woodbury_diagnostics["K_nbytes"]
+                    ),
+                    "LU_replicated_per_rank_nbytes": int(
+                        woodbury_diagnostics["LU_nbytes"]
+                    ),
+                }
+            )
+            oracle.destroy()
+            oracle = None
+            components.destroy()
+            components = None
+            zero = action_system.A.createVecRight()
+            zero_result = action_system.A.createVecLeft()
+            try:
+                zero.set(0.0)
+                action_system.A.mult(zero, zero_result)
+                action_survives_after_release = bool(
+                    action_system.A.getType() == "python"
+                    and np.isfinite(float(zero_result.norm()))
+                )
+            finally:
+                zero_result.destroy()
+                zero.destroy()
+            f_release_started = time.perf_counter()
+            f_factor.destroy()
+            f_factor = None
+            active_factor_count -= 1
+            f_release_seconds = _max_elapsed(comm, f_release_started)
+            f_factor_count_after_release = active_factor_count
+            explicit_f.destroy()
+            explicit_f = None
+            final_active_factor_count = f_factor_count_after_release
+            factor_release = {
+                "a_factor": {
+                    "factor_count_before": a_factor_count_before,
+                    "factor_count_after": a_factor_count_after_release,
+                    "inventory": a_inventory,
+                    "released": True,
+                    "setup_seconds": float(a_setup_seconds),
+                    "release_seconds": float(a_release_seconds),
+                },
+                "f_factor": {
+                    "factor_count_before": f_factor_count_before,
+                    "factor_count_after": f_factor_count_after_release,
+                    "inventory": f_inventory,
+                    "released": True,
+                    "setup_seconds": float(f_setup_seconds),
+                    "release_seconds": float(f_release_seconds),
+                },
+                "a_released_before_f_created": a_released_before_f_created,
+                "max_active_factor_count": max_active_factor_count,
+                "final_active_factor_count": final_active_factor_count,
+                "never_simultaneous": bool(
+                    a_released_before_f_created
+                    and max_active_factor_count == 1
+                    and final_active_factor_count == 0
+                ),
+                "explicit_reference_C_D_H_released_before_f_factor": (
+                    explicit_reference_blocks_released
+                ),
+            }
+            nonzero_rows = [
+                row for row in woodbury_rows if not row["zero_physical_rhs"]
+            ]
+            zero_rows = [row for row in woodbury_rows if row["zero_physical_rhs"]]
+            expected_nonzero = 10 if side == "bottom" else 11
+            for row in nonzero_rows:
+                row["capacity_pass"] = bool(row["pass"])
+            for row in zero_rows:
+                row["zero_equation_pass"] = bool(row["pass"])
+            capacity_pass_count = sum(
+                bool(row["capacity_pass"]) for row in nonzero_rows
+            )
+            zero_equation_pass = bool(
+                len(zero_rows) == (1 if side == "bottom" else 0)
+                and all(row.get("zero_equation_pass") is True for row in zero_rows)
+            )
+            side_contract_pass = bool(
+                len(woodbury_rows) == 11
+                and len(nonzero_rows) == expected_nonzero
+                and len(zero_rows) == (1 if side == "bottom" else 0)
+                and action_survives_after_release
+                and factor_release["never_simultaneous"]
+                and factor_release["max_active_factor_count"] == 1
+                and factor_release["final_active_factor_count"] == 0
+                and factor_release["explicit_reference_C_D_H_released_before_f_factor"]
+            )
+            side_numerical_pass = bool(
+                side_contract_pass
+                and capacity_pass_count == expected_nonzero
+                and zero_equation_pass
+                and all(row["pass"] for row in woodbury_rows)
+            )
+            side_records[side] = {
+                "operator": {
+                    "identity": "borrowed_F_plus_Dtn_Woodbury",
+                    "base_identity": "exact_F_direct_test_only",
+                    "external_dtn_correction": "included",
+                    "normal_equations": False,
+                    "n_aux": R4_MODAL_COUNT,
+                    "components": component_descriptors,
+                },
+                "rows": woodbury_rows,
+                "probe_count": len(woodbury_rows),
+                "direct_reference_rows": a_rows,
+                "woodbury": dict(woodbury_diagnostics),
+                "factor_release": factor_release,
+                "action_survives_after_release": action_survives_after_release,
+                "nonzero_capacity_count": len(nonzero_rows),
+                "capacity_pass_count": int(capacity_pass_count),
+                "capacity_expected_count": expected_nonzero,
+                "zero_physical_count": len(zero_rows),
+                "zero_equation_pass": zero_equation_pass,
+                "contract_pass": side_contract_pass,
+                "all_probes_finite": bool(all(row["finite"] for row in woodbury_rows)),
+                "pass": side_numerical_pass,
+                "wall_seconds": _max_elapsed(comm, side_started),
+            }
+            for reference in direct_solutions.values():
+                reference.destroy()
+            direct_solutions.clear()
+        finally:
+            if oracle is not None:
+                oracle.destroy()
+            if components is not None:
+                components.destroy()
+            if f_factor is not None:
+                f_factor.destroy()
+                active_factor_count = max(active_factor_count - 1, 0)
+            if explicit_f is not None:
+                explicit_f.destroy()
+            if a_factor is not None:
+                a_factor.destroy()
+            if explicit_port is not None:
+                explicit_port.destroy()
+            if explicit_a is not None:
+                explicit_a.destroy()
+            if blocks is not None:
+                blocks.destroy()
+            if direct_system is not None:
+                direct_system.destroy()
+            for reference in direct_solutions.values():
+                reference.destroy()
+
+    r4_contract_pass = bool(
+        set(side_records) == {"bottom", "top"}
+        and all(
+            side_record["probe_count"] == 11
+            and side_record["nonzero_capacity_count"]
+            == (10 if side_name == "bottom" else 11)
+            and side_record["zero_physical_count"]
+            == (1 if side_name == "bottom" else 0)
+            and side_record["contract_pass"] is True
+            and side_record["action_survives_after_release"] is True
+            and side_record["factor_release"]["never_simultaneous"] is True
+            and side_record["factor_release"]["max_active_factor_count"] == 1
+            and side_record["factor_release"]["final_active_factor_count"] == 0
+            and side_record["factor_release"][
+                "explicit_reference_C_D_H_released_before_f_factor"
+            ]
+            is True
+            and all(
+                factor["factor_count_before"] == 1
+                and factor["factor_count_after"] == 0
+                and factor["released"] is True
+                for factor in side_record["factor_release"].values()
+                if isinstance(factor, dict) and "factor_count_before" in factor
+            )
+            for side_name, side_record in side_records.items()
+        )
+    )
+    r4_numerical_pass = bool(
+        r4_contract_pass
+        and all(side_record["pass"] for side_record in side_records.values())
+    )
+    timings["v1_r4_woodbury_qualification"] = _max_elapsed(comm, started)
+    mark_stage("v1_r4_record")
+    _verify_source_stable_at_end(
+        comm,
+        provenance,
+        args.verified_clean_sha,
+        args.allow_dirty_research,
+    )
+    record = {
+        "schema_version": 1,
+        "record_schema": "task037b.v1-r4-dtn-woodbury.v1",
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "benchmark_id": "task037b_v1_r4_dtn_woodbury_oracle",
+        "status": (
+            "task037b_v1_r4_complete_awaiting_r5"
+            if r4_numerical_pass
+            else "DTN_WOODBURY_ORACLE_IMPLEMENTATION_FAILED"
+        ),
+        "metadata": {
+            **provenance,
+            "command": list(sys.argv),
+            "verified_clean_sha": args.verified_clean_sha,
+            "authority_gate": authority_gate,
+        },
+        "case": {
+            "degree": args.degree,
+            "h_nm": args.h_nm,
+            "modal_degree": args.modal_degree,
+            "modal_h_nm": args.modal_h_nm,
+            "requested_modes": args.requested_modes,
+            "candidate_modes": args.candidate_modes,
+            "mpi_size": comm.size,
+            "polarization_kind": args.polarization_kind,
+            "incident_grazing_deg": args.incident_grazing_deg,
+            "bottom_interface_nm": args.bottom_interface_nm,
+            "top_interface_nm": args.top_interface_nm,
+            "solver_path": args.solver_path,
+            "operator_identity": "borrowed_F_plus_Dtn_Woodbury",
+            "formal_rhs_count_per_side": 11,
+        },
+        "hybrid_system": {
+            "global_action_constructed": False,
+            "global_A_materialized": False,
+            "global_F_materialized": False,
+            "explicit_global_C_D_materialized": False,
+            "direct_factor_count": 0,
+            "external_auxiliary_rows_in_krylov": 0,
+            "bottom_operator_inventory": dict(bottom.inventory),
+            "top_operator_inventory": dict(top.inventory),
+        },
+        "validation": {
+            "port_power": "not_run",
+            "R_total": "not_run",
+            "T_total": "not_run",
+            "A_balance": "not_run",
+            "A_volume_total": "not_run",
+            "external_diffraction_orders": "not_run",
+        },
+        "physical_field_reconstruction": {"status": "not_run"},
+        "official_record": False,
+        "v1_r4_telemetry": {
+            "task037b_v1_gate": True,
+            "r4_scope": "borrowed-base 40-mode Woodbury exact action",
+            "formula": "A=F-C H^-1 D; W=F^-1 C; K=H-DW",
+            "n_aux": R4_MODAL_COUNT,
+            "normal_equations": False,
+            "frozen_mode_selection": selections,
+            "formal_probe_count_per_side": 11,
+            "sides": side_records,
+            "r4_contract_pass": r4_contract_pass,
+            "r4_numerical_pass": r4_numerical_pass,
+            "ordinary_default_changed": False,
+        },
+        "gates": {
+            "r4_record_complete": r4_contract_pass,
+            "r4_all_probe_records_complete": bool(
+                all(side["probe_count"] == 11 for side in side_records.values())
+            ),
+            "r4_all_probes_finite": bool(
+                all(
+                    row["finite"]
+                    for side in side_records.values()
+                    for row in side["rows"]
+                )
+            ),
+            "r4_factor_noncoexistence": bool(
+                all(
+                    side["factor_release"]["never_simultaneous"]
+                    for side in side_records.values()
+                )
+            ),
+            "r4_factors_released": bool(
+                all(
+                    factor["factor_count_after"] == 0 and factor["released"] is True
+                    for side in side_records.values()
+                    for factor in (
+                        side["factor_release"]["a_factor"],
+                        side["factor_release"]["f_factor"],
+                    )
+                )
+            ),
+            "r4_no_direct_fallback": bool(
+                all(
+                    side["factor_release"]["never_simultaneous"]
+                    and side["action_survives_after_release"]
+                    for side in side_records.values()
+                )
+            ),
+            "r4_pass": r4_numerical_pass,
+        },
+        "qualification": {
+            "task037b_v1_gate": True,
+            "r4_pass": r4_numerical_pass,
+            "worker_numerical_pass": r4_numerical_pass,
+            "integration_pass": r4_numerical_pass,
+            "disposition": (
+                "r4_pass_awaiting_r5"
+                if r4_numerical_pass
+                else "DTN_WOODBURY_ORACLE_IMPLEMENTATION_FAILED"
+            ),
+            "boundary": (
+                "R4 Woodbury oracle only; R5 and R/T/A, field, and 12+12 "
+                "physics gates are not run."
+            ),
+        },
+        "timing_seconds_max_rank": {
+            **timings,
+            "total": _max_elapsed(comm, total_started),
+        },
+        "historical_peak_rss_mb_by_rank": comm.gather(
+            _historical_peak_rss_mb(), root=0
+        ),
+        "memory_semantics": (
+            "R4 explicit A and F factors are sequential test-only references; "
+            "the global Hybrid action remains unmaterialized."
+        ),
+    }
+    raise _V1R4QualificationStop(record)
+
+
 def _run_v1_r3_whole_endcap_qualification(
     *,
     args: argparse.Namespace,
@@ -4130,7 +4693,24 @@ def main() -> None:
                 log=progress,
             )
             timings["v1_action_coupling_build"] = _max_elapsed(comm, started)
-            if args.solver_path == "whole-endcap-ilu0-qualification":
+            if args.solver_path == "dtn-woodbury-oracle-qualification":
+                _run_v1_r4_woodbury_qualification(
+                    args=args,
+                    comm=comm,
+                    provenance=provenance,
+                    authority_gate=task035c_p6_gate,
+                    cfg=cfg,
+                    positive=positive,
+                    negative=negative,
+                    bottom=bottom,
+                    top=top,
+                    coupling=coupling,
+                    timings=timings,
+                    total_started=total_started,
+                    mark_stage=mark_stage,
+                    progress=progress,
+                )
+            elif args.solver_path == "whole-endcap-ilu0-qualification":
                 _run_v1_r3_whole_endcap_qualification(
                     args=args,
                     comm=comm,
@@ -5547,6 +6127,8 @@ def main() -> None:
                     ),
                 }
             )
+    except _V1R4QualificationStop as stop:
+        record = stop.record
     except _V1R3QualificationStop as stop:
         record = stop.record
     except _V1R2QualificationStop as stop:

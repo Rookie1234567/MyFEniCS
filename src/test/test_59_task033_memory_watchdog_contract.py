@@ -19,6 +19,7 @@ from benchmarks.run_task033_memory_watchdog import (
     _task037b_v1_r1_numerical_pass,
     _task037b_v1_r2_numerical_pass,
     _task037b_v1_r3_numerical_pass,
+    _task037b_v1_r4_numerical_pass,
     _watchdog_source_after,
     _watchdog_source_before,
     _worker_command,
@@ -386,6 +387,148 @@ def _v1_r3_raw_record(*, numerical_negative: bool = False) -> dict:
                 if not numerical_negative
                 else "r3_numerical_negative_awaiting_r4"
             ),
+        },
+    }
+
+
+def _v1_r4_raw_record() -> dict:
+    names = (
+        "physical",
+        "random_seed_3701",
+        "random_seed_3702",
+        "random_seed_3703",
+        "random_seed_3704",
+        "modal_positive_lowest_propagating_or_lossy",
+        "modal_positive_first_kind_evanescent",
+        "modal_positive_highest_retained_index",
+        "modal_negative_lowest_propagating_or_lossy",
+        "modal_negative_first_kind_evanescent",
+        "modal_negative_highest_retained_index",
+    )
+
+    def row(name: str, zero_physical_rhs: bool) -> dict:
+        return {
+            "name": name,
+            "direct_true_residual": 1.0e-12,
+            "woodbury_true_residual": 2.0e-12,
+            "solution_relative_error": 3.0e-12,
+            "repeat_error": 4.0e-13,
+            "zero_physical_rhs": zero_physical_rhs,
+            "zero_equation_pass": zero_physical_rhs,
+            "capacity_pass": not zero_physical_rhs,
+            "finite": True,
+            "pass": True,
+        }
+
+    def side(side_name: str) -> dict:
+        rows = [
+            row(name, side_name == "bottom" and name == "physical") for name in names
+        ]
+        expected_capacity = 10 if side_name == "bottom" else 11
+        components = {
+            "F": {"type": "python", "shape": [8424, 8424]},
+            "C": {"type": "python", "shape": [8424, 40]},
+            "D": {"type": "python", "shape": [40, 8424]},
+            "H": {"type": "python", "shape": [40, 40]},
+        }
+        return {
+            "probe_count": 11,
+            "rows": rows,
+            "operator": {
+                "identity": "borrowed_F_plus_Dtn_Woodbury",
+                "base_identity": "exact_F_direct_test_only",
+                "external_dtn_correction": "included",
+                "n_aux": 40,
+                "normal_equations": False,
+                "components": components,
+            },
+            "woodbury": {
+                "base_identity": "exact_F_direct_test_only",
+                "n_aux": 40,
+                "K_rank": 40,
+                "K_shape": [40, 40],
+                "K_dtype": "complex128",
+                "K_condition_number": 2.0,
+                "normal_equations": False,
+                "W_local_nbytes_by_rank": [8424 * 40 * 16],
+                "K_replicated_per_rank_nbytes": 40 * 40 * 16,
+                "LU_replicated_per_rank_nbytes": 40 * 40 * 16,
+            },
+            "factor_release": {
+                "a_factor": {
+                    "factor_count_before": 1,
+                    "factor_count_after": 0,
+                    "released": True,
+                },
+                "f_factor": {
+                    "factor_count_before": 1,
+                    "factor_count_after": 0,
+                    "released": True,
+                },
+                "never_simultaneous": True,
+                "max_active_factor_count": 1,
+                "final_active_factor_count": 0,
+                "a_released_before_f_created": True,
+                "explicit_reference_C_D_H_released_before_f_factor": True,
+            },
+            "action_survives_after_release": True,
+            "all_probes_finite": True,
+            "contract_pass": True,
+            "nonzero_capacity_count": expected_capacity,
+            "capacity_pass_count": expected_capacity,
+            "capacity_expected_count": expected_capacity,
+            "zero_physical_count": 1 if side_name == "bottom" else 0,
+            "zero_equation_pass": True,
+            "pass": True,
+        }
+
+    return {
+        "schema_version": 1,
+        "record_schema": "task037b.v1-r4-dtn-woodbury.v1",
+        "benchmark_id": "task037b_v1_r4_dtn_woodbury_oracle",
+        "status": "task037b_v1_r4_complete_awaiting_r5",
+        "hybrid_system": {
+            "global_action_constructed": False,
+            "global_A_materialized": False,
+            "global_F_materialized": False,
+            "explicit_global_C_D_materialized": False,
+            "direct_factor_count": 0,
+            "external_auxiliary_rows_in_krylov": 0,
+        },
+        "validation": {
+            "port_power": "not_run",
+            "R_total": "not_run",
+            "T_total": "not_run",
+            "A_balance": "not_run",
+            "A_volume_total": "not_run",
+            "external_diffraction_orders": "not_run",
+        },
+        "physical_field_reconstruction": {"status": "not_run"},
+        "v1_r4_telemetry": {
+            "task037b_v1_gate": True,
+            "n_aux": 40,
+            "normal_equations": False,
+            "formal_probe_count_per_side": 11,
+            "r4_contract_pass": True,
+            "r4_numerical_pass": True,
+            "ordinary_default_changed": False,
+            "sides": {"bottom": side("bottom"), "top": side("top")},
+        },
+        "gates": {
+            "r4_record_complete": True,
+            "r4_all_probe_records_complete": True,
+            "r4_all_probes_finite": True,
+            "r4_factor_noncoexistence": True,
+            "r4_factors_released": True,
+            "r4_no_direct_fallback": True,
+            "r4_pass": True,
+        },
+        "qualification": {
+            "task037b_v1_gate": True,
+            "r4_pass": True,
+            "worker_numerical_pass": True,
+            "integration_pass": True,
+            "disposition": "r4_pass_awaiting_r5",
         },
     }
 
@@ -1566,6 +1709,28 @@ class Task033MemoryWatchdogContractTests(unittest.TestCase):
             "preconditioner"
         ]["factors_released"] = False
         self.assertFalse(_task037b_v1_r3_numerical_pass(unreleased))
+
+    def test_v1_r4_checker_contract_threshold_lifecycle_and_terminal(self) -> None:
+        self.assertTrue(_task037b_v1_r4_numerical_pass(_v1_r4_raw_record()))
+
+        threshold = _v1_r4_raw_record()
+        threshold["v1_r4_telemetry"]["sides"]["bottom"]["rows"][1][
+            "woodbury_true_residual"
+        ] = 1.0e-9
+        self.assertFalse(_task037b_v1_r4_numerical_pass(threshold))
+
+        unreleased = _v1_r4_raw_record()
+        unreleased["v1_r4_telemetry"]["sides"]["top"]["factor_release"]["f_factor"][
+            "factor_count_after"
+        ] = 1
+        self.assertFalse(_task037b_v1_r4_numerical_pass(unreleased))
+
+        terminal = _v1_r4_raw_record()
+        terminal["timestamp_utc"] = "2026-08-08T00:00:00+00:00"
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "solver_record.json"
+            path.write_text(json.dumps(terminal), encoding="utf-8")
+            self.assertTrue(_task034_terminal_record_is_complete(path))
 
     def test_h5_external_no_swap_is_a_formal_requirement(self) -> None:
         kwargs = {

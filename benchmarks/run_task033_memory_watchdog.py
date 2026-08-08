@@ -975,6 +975,11 @@ def _task034_terminal_record_is_complete(record_path: Path) -> bool:
     ) == "task037b.v1-r3-whole-endcap-ilu0.v1" and isinstance(
         payload.get("v1_r3_telemetry"), dict
     )
+    v1_r4_record = payload.get(
+        "record_schema"
+    ) == "task037b.v1-r4-dtn-woodbury.v1" and isinstance(
+        payload.get("v1_r4_telemetry"), dict
+    )
     return bool(
         payload.get("schema_version") == 1
         and isinstance(payload.get("benchmark_id"), str)
@@ -986,6 +991,7 @@ def _task034_terminal_record_is_complete(record_path: Path) -> bool:
             or v1_record
             or v1_r2_record
             or v1_r3_record
+            or v1_r4_record
         )
         and isinstance(payload.get("gates"), dict)
     )
@@ -1112,6 +1118,7 @@ def _hybrid_measurements(record: dict[str, Any]) -> dict[str, Any]:
         "v1_telemetry": record.get("v1_telemetry"),
         "v1_r2_telemetry": record.get("v1_r2_telemetry"),
         "v1_r3_telemetry": record.get("v1_r3_telemetry"),
+        "v1_r4_telemetry": record.get("v1_r4_telemetry"),
         "status": record.get("status"),
         "case": record.get("case"),
         "qep": {
@@ -2007,6 +2014,225 @@ def _available_physical_core_count() -> int | None:
     return len(physical_cores) or None
 
 
+def _task037b_v1_r4_numerical_pass(record: dict[str, Any]) -> bool:
+    """Recompute the bounded R4 Woodbury contract from raw probe fields."""
+
+    if not isinstance(record, dict):
+        return False
+    if (
+        record.get("schema_version") != 1
+        or record.get("record_schema") != "task037b.v1-r4-dtn-woodbury.v1"
+        or record.get("benchmark_id") != "task037b_v1_r4_dtn_woodbury_oracle"
+        or record.get("status") != "task037b_v1_r4_complete_awaiting_r5"
+    ):
+        return False
+    telemetry = record.get("v1_r4_telemetry")
+    qualification = record.get("qualification")
+    gates = record.get("gates")
+    if (
+        not isinstance(telemetry, dict)
+        or not isinstance(qualification, dict)
+        or not isinstance(gates, dict)
+        or telemetry.get("task037b_v1_gate") is not True
+        or telemetry.get("n_aux") != 40
+        or telemetry.get("normal_equations") is not False
+        or telemetry.get("formal_probe_count_per_side") != 11
+        or telemetry.get("r4_contract_pass") is not True
+        or telemetry.get("r4_numerical_pass") is not True
+        or telemetry.get("ordinary_default_changed") is not False
+        or qualification.get("task037b_v1_gate") is not True
+        or qualification.get("integration_pass") is not True
+    ):
+        return False
+    hybrid_system = record.get("hybrid_system")
+    validation = record.get("validation")
+    physical = record.get("physical_field_reconstruction")
+    if (
+        not isinstance(hybrid_system, dict)
+        or hybrid_system.get("global_action_constructed") is not False
+        or hybrid_system.get("global_A_materialized") is not False
+        or hybrid_system.get("global_F_materialized") is not False
+        or hybrid_system.get("explicit_global_C_D_materialized") is not False
+        or hybrid_system.get("direct_factor_count") != 0
+        or hybrid_system.get("external_auxiliary_rows_in_krylov") != 0
+        or not isinstance(validation, dict)
+        or any(
+            validation.get(name) != "not_run"
+            for name in (
+                "port_power",
+                "R_total",
+                "T_total",
+                "A_balance",
+                "A_volume_total",
+                "external_diffraction_orders",
+            )
+        )
+        or not isinstance(physical, dict)
+        or physical.get("status") != "not_run"
+    ):
+        return False
+    sides = telemetry.get("sides")
+    if not isinstance(sides, dict) or set(sides) != {"bottom", "top"}:
+        return False
+    expected_side_pass = True
+    capacity_pass_total = 0
+    for side_name, side in sides.items():
+        expected_capacity = 10 if side_name == "bottom" else 11
+        expected_zero = 1 if side_name == "bottom" else 0
+        if (
+            not isinstance(side, dict)
+            or side.get("probe_count") != 11
+            or side.get("contract_pass") is not True
+            or side.get("action_survives_after_release") is not True
+            or side.get("all_probes_finite") is not True
+            or not isinstance(side.get("rows"), list)
+            or len(side["rows"]) != 11
+            or side.get("operator", {}).get("n_aux") != 40
+            or side.get("operator", {}).get("normal_equations") is not False
+            or side.get("operator", {}).get("identity")
+            != "borrowed_F_plus_Dtn_Woodbury"
+            or side.get("operator", {}).get("base_identity")
+            != "exact_F_direct_test_only"
+            or side.get("operator", {}).get("external_dtn_correction") != "included"
+        ):
+            return False
+        components = side.get("operator", {}).get("components")
+        if (
+            not isinstance(components, dict)
+            or not isinstance(components.get("F"), dict)
+            or not isinstance(components.get("C"), dict)
+            or not isinstance(components.get("D"), dict)
+            or not isinstance(components.get("H"), dict)
+            or components["F"].get("type") != "python"
+            or components["C"].get("type") != "python"
+            or components["D"].get("type") != "python"
+            or components["F"].get("shape") != [8424, 8424]
+            or components["C"].get("shape") != [8424, 40]
+            or components["D"].get("shape") != [40, 8424]
+            or components["H"].get("shape") != [40, 40]
+        ):
+            return False
+        woodbury = side.get("woodbury")
+        release = side.get("factor_release")
+        if (
+            not isinstance(woodbury, dict)
+            or woodbury.get("base_identity") != "exact_F_direct_test_only"
+            or woodbury.get("n_aux") != 40
+            or woodbury.get("K_rank") != 40
+            or woodbury.get("K_shape") != [40, 40]
+            or woodbury.get("K_dtype") != "complex128"
+            or not isinstance(woodbury.get("K_condition_number"), (int, float))
+            or not math.isfinite(float(woodbury["K_condition_number"]))
+            or float(woodbury["K_condition_number"]) > 1.0e10
+            or woodbury.get("normal_equations") is not False
+            or not isinstance(woodbury.get("W_local_nbytes_by_rank"), list)
+            or not woodbury["W_local_nbytes_by_rank"]
+            or not isinstance(release, dict)
+            or release.get("never_simultaneous") is not True
+            or release.get("max_active_factor_count") != 1
+            or release.get("final_active_factor_count") != 0
+            or release.get("a_released_before_f_created") is not True
+            or release.get("explicit_reference_C_D_H_released_before_f_factor")
+            is not True
+        ):
+            return False
+        for factor_name in ("a_factor", "f_factor"):
+            factor = release.get(factor_name)
+            if (
+                not isinstance(factor, dict)
+                or factor.get("factor_count_before") != 1
+                or factor.get("factor_count_after") != 0
+                or factor.get("released") is not True
+            ):
+                return False
+        side_pass = True
+        nonzero_rows = []
+        zero_rows = []
+        for row in side["rows"]:
+            if not isinstance(row, dict):
+                return False
+            numeric = (
+                "direct_true_residual",
+                "woodbury_true_residual",
+                "solution_relative_error",
+                "repeat_error",
+            )
+            finite = all(
+                isinstance(row.get(key), (int, float))
+                and math.isfinite(float(row[key]))
+                and float(row[key]) >= 0.0
+                for key in numeric
+            )
+            expected = bool(
+                finite
+                and float(row["direct_true_residual"]) <= 1.0e-10
+                and float(row["woodbury_true_residual"]) <= 1.0e-10
+                and float(row["solution_relative_error"]) <= 1.0e-10
+                and float(row["repeat_error"]) <= 1.0e-12
+            )
+            if row.get("finite") is not finite or row.get("pass") is not expected:
+                return False
+            if row.get("zero_physical_rhs") is True:
+                if row.get("zero_equation_pass") is not expected:
+                    return False
+                zero_rows.append(row)
+            elif row.get("zero_physical_rhs") is False:
+                if row.get("capacity_pass") is not expected:
+                    return False
+                nonzero_rows.append(row)
+            else:
+                return False
+        capacity_pass_count = sum(bool(row["capacity_pass"]) for row in nonzero_rows)
+        zero_equation_pass = bool(
+            len(zero_rows) == expected_zero
+            and all(row.get("zero_equation_pass") is True for row in zero_rows)
+        )
+        side_pass = bool(
+            len(nonzero_rows) == expected_capacity
+            and capacity_pass_count == expected_capacity
+            and zero_equation_pass
+        )
+        capacity_pass_total += capacity_pass_count
+        if (
+            side.get("pass") is not side_pass
+            or side.get("nonzero_capacity_count") != len(nonzero_rows)
+            or side.get("capacity_pass_count") != capacity_pass_count
+            or side.get("capacity_expected_count") != expected_capacity
+            or side.get("zero_physical_count") != len(zero_rows)
+            or side.get("zero_equation_pass") is not zero_equation_pass
+        ):
+            return False
+        zero_names = {row.get("name") for row in zero_rows}
+        if (
+            side_name == "bottom"
+            and zero_names != {"physical"}
+            or side_name == "top"
+            and zero_names
+        ):
+            return False
+        expected_side_pass &= side_pass
+    if (
+        gates.get("r4_record_complete") is not True
+        or gates.get("r4_all_probe_records_complete") is not True
+        or gates.get("r4_all_probes_finite") is not True
+        or gates.get("r4_factor_noncoexistence") is not True
+        or gates.get("r4_factors_released") is not True
+        or gates.get("r4_no_direct_fallback") is not True
+        or capacity_pass_total != 21
+        or gates.get("r4_pass") is not expected_side_pass
+        or qualification.get("r4_pass") is not expected_side_pass
+        or qualification.get("worker_numerical_pass") is not expected_side_pass
+        or qualification.get("disposition")
+        != (
+            "r4_pass_awaiting_r5"
+            if expected_side_pass
+            else "DTN_WOODBURY_ORACLE_IMPLEMENTATION_FAILED"
+        )
+    ):
+        return False
+    return True
+
+
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
@@ -2084,6 +2310,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "dtn-component-qualification",
             "f-only-local-inverse-qualification",
             "whole-endcap-ilu0-qualification",
+            "dtn-woodbury-oracle-qualification",
         ),
         default="modal-schur-memory-minimal",
     )
@@ -2239,6 +2466,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         and not args.task037b_v1_gate
     ):
         parser.error("whole-endcap-ilu0-qualification requires --task037b-v1-gate.")
+    if (
+        args.solver_path == "dtn-woodbury-oracle-qualification"
+        and not args.task037b_v1_gate
+    ):
+        parser.error("dtn-woodbury-oracle-qualification requires --task037b-v1-gate.")
     selected_scoped_gates = (
         args.task035c_p6_h10_gate,
         args.task037b_h1_gate,
@@ -2425,6 +2657,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "dtn-component-qualification",
                 "f-only-local-inverse-qualification",
                 "whole-endcap-ilu0-qualification",
+                "dtn-woodbury-oracle-qualification",
             )
             and args.comparison_solver_path == "fast"
             and not args.compare_modal_schur
@@ -2449,7 +2682,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "10/110 nm, S-polarized, full3d/scalar-CG, M120+M120, "
                 "candidate240, dtn-component-qualification, "
                 "f-only-local-inverse-qualification or "
-                "whole-endcap-ilu0-qualification, "
+                "whole-endcap-ilu0-qualification or "
+                "dtn-woodbury-oracle-qualification, "
                 "static-condensed MPI8 path."
             )
     elif args.task037b_h1_gate:
@@ -2924,6 +3158,9 @@ def run(args: argparse.Namespace) -> int:
                                 else "task037b.v1-r2-hybrid-launch-gate.v1"
                                 if args.solver_path
                                 == "f-only-local-inverse-qualification"
+                                else "task037b.v1-r4-hybrid-launch-gate.v1"
+                                if args.solver_path
+                                == "dtn-woodbury-oracle-qualification"
                                 else "task037b.v1-hybrid-launch-gate.v1"
                             )
                             if args.task037b_v1_gate
@@ -2950,6 +3187,9 @@ def run(args: argparse.Namespace) -> int:
                                 else "task037b_v1_r2_fixed_f_only_p6_h10"
                                 if args.solver_path
                                 == "f-only-local-inverse-qualification"
+                                else "task037b_v1_r4_fixed_dtn_woodbury_p6_h10"
+                                if args.solver_path
+                                == "dtn-woodbury-oracle-qualification"
                                 else "task037b_v1_fixed_dtn_component_p6_h10"
                             )
                             if args.task037b_v1_gate
@@ -3378,7 +3618,9 @@ def run(args: argparse.Namespace) -> int:
     )
     terminal_stage = (
         (
-            "v1_r3_record"
+            "v1_r4_record"
+            if args.solver_path == "dtn-woodbury-oracle-qualification"
+            else "v1_r3_record"
             if args.solver_path == "whole-endcap-ilu0-qualification"
             else "v1_r2_f_only_record"
             if args.solver_path == "f-only-local-inverse-qualification"
@@ -3616,7 +3858,10 @@ def run(args: argparse.Namespace) -> int:
     else:
         qualification = solver_record.get("qualification", {})
         if args.task037b_v1_gate:
-            if args.solver_path == "f-only-local-inverse-qualification":
+            if args.solver_path == "dtn-woodbury-oracle-qualification":
+                numerical_pass = _task037b_v1_r4_numerical_pass(solver_record)
+                formal_numerical_pass = numerical_pass
+            elif args.solver_path == "f-only-local-inverse-qualification":
                 numerical_pass = _task037b_v1_r2_numerical_pass(solver_record)
                 formal_numerical_pass = _task037b_v1_r2_numerical_pass(
                     solver_record, require_numerical_pass=False
@@ -3655,7 +3900,11 @@ def run(args: argparse.Namespace) -> int:
             if args.task037b_h5_gate
             or (
                 args.task037b_v1_gate
-                and args.solver_path == "whole-endcap-ilu0-qualification"
+                and args.solver_path
+                in (
+                    "whole-endcap-ilu0-qualification",
+                    "dtn-woodbury-oracle-qualification",
+                )
             )
             else True
         ),
@@ -3666,6 +3915,12 @@ def run(args: argparse.Namespace) -> int:
         and formal_pass
         and formal_numerical_pass
     )
+    r4_record_complete = bool(
+        args.task037b_v1_gate
+        and args.solver_path == "dtn-woodbury-oracle-qualification"
+        and formal_pass
+        and formal_numerical_pass
+    )
     r2_record_complete = bool(
         args.task037b_v1_gate
         and args.solver_path == "f-only-local-inverse-qualification"
@@ -3673,7 +3928,12 @@ def run(args: argparse.Namespace) -> int:
         and formal_numerical_pass
     )
     summary_status = (
-        "task037b_v1_r3_complete_awaiting_r4"
+        "task037b_v1_r4_complete_awaiting_r5"
+        if r4_record_complete
+        else "task037b_v1_r4_raw_record_formal_not_pass"
+        if args.task037b_v1_gate
+        and args.solver_path == "dtn-woodbury-oracle-qualification"
+        else "task037b_v1_r3_complete_awaiting_r4"
         if r3_record_complete
         else "task037b_v1_r2_complete_awaiting_r3"
         if r2_record_complete
@@ -3699,7 +3959,12 @@ def run(args: argparse.Namespace) -> int:
         "memory_authority_pass": resource_gate["pass"],
         "physical_qualified": False,
         "qualification_identity": (
-            "task037b_v1_r3_raw_record_gate_awaiting_r4"
+            "task037b_v1_r4_raw_record_gate_awaiting_r5"
+            if r4_record_complete
+            else "task037b_v1_r4_raw_record_formal_not_pass"
+            if args.task037b_v1_gate
+            and args.solver_path == "dtn-woodbury-oracle-qualification"
+            else "task037b_v1_r3_raw_record_gate_awaiting_r4"
             if r3_record_complete
             else "task037b_v1_r3_raw_record_formal_not_pass"
             if args.task037b_v1_gate
