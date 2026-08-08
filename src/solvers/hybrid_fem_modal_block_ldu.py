@@ -8,6 +8,7 @@ verify the exact right block-LDU algebra on a small oracle problem.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import time
 from typing import Any
 
 import numpy as np
@@ -32,8 +33,11 @@ __all__ = (
     "HybridBlockLduPhysicalSolution",
     "HybridBlockLduDirectAction",
     "HybridActionModalSchurSystem",
+    "HybridBlockLduScreenResult",
     "build_hybrid_action_modal_schur",
     "create_action_block_ldu_preconditioner",
+    "screen_action_block_ldu",
+    "action_block_screen_gate",
     "create_exact_block_ldu_preconditioner",
     "create_g_only_block_ldu_preconditioner",
     "modal_block_diagnostic",
@@ -148,6 +152,12 @@ class HybridActionModalSchurSystem:
 
     def __post_init__(self) -> None:
         self._shape = tuple(self.modal_schur.shape)
+        self._array_bytes = {
+            "modal_schur_bytes": int(self.modal_schur.nbytes),
+            "modal_constraint_bytes": int(self.modal_constraint.nbytes),
+            "lu_bytes": int(self.lu.nbytes),
+            "pivots_bytes": int(self.pivots.nbytes),
+        }
         self._finite = bool(
             np.all(np.isfinite(self.modal_schur))
             and np.all(np.isfinite(self.lu))
@@ -186,6 +196,7 @@ class HybridActionModalSchurSystem:
             "matrix_repeat_error": float(self.matrix_repeat_error),
             "lu_repeat_solve_error": float(self.lu_repeat_solve_error),
             "build_apply_count": dict(self.build_apply_count),
+            **self._array_bytes,
             "destroyed": bool(self._destroyed),
         }
 
@@ -421,6 +432,7 @@ class HybridBlockLduPreconditioner:
         self._modal_rhs = np.empty(2 * self.mode_count, dtype=np.complex128)
         self._modal_solution = np.empty_like(self._modal_rhs)
         self._pc_apply_count = 0
+        self._pc_apply_seconds = 0.0
         self._check_layouts()
 
     @property
@@ -464,6 +476,7 @@ class HybridBlockLduPreconditioner:
                 ),
                 "top_action_apply_count": int(top_diagnostics.get("apply_count", 0)),
                 "pc_apply_count": int(self._pc_apply_count),
+                "pc_apply_seconds": float(self._pc_apply_seconds),
                 "borrowed_side_actions": True,
                 "modal_block_name": self.modal_block_name,
                 "modal_block_condition": self._modal_block_condition,
@@ -482,6 +495,8 @@ class HybridBlockLduPreconditioner:
             "modal_schur_condition": float(
                 self.modal_schur_system.modal_schur_condition
             ),
+            "pc_apply_count": int(self._pc_apply_count),
+            "pc_apply_seconds": float(self._pc_apply_seconds),
         }
 
     def _check_layouts(self) -> None:
@@ -543,6 +558,7 @@ class HybridBlockLduPreconditioner:
     def apply(self, _pc: PETSc.PC | None, source: PETSc.Vec, target: PETSc.Vec) -> None:
         if self._destroyed:
             raise RuntimeError("H3 block-LDU preconditioner has been destroyed")
+        apply_started = time.perf_counter()
         modal = self._source_parts(source)
         if self._action_mode:
             self.bottom_action.apply(self._bottom_rhs, self._bottom_first)
@@ -582,6 +598,7 @@ class HybridBlockLduPreconditioner:
         )
         if self.layout.comm.rank == self.layout.modal_owner:
             target_local[self.layout.local_modal_slice] = self._modal_solution
+        self._pc_apply_seconds += time.perf_counter() - apply_started
         self._pc_apply_count += 1
 
     def destroy(self, _pc: PETSc.PC | None = None) -> None:
@@ -903,6 +920,248 @@ def _residual_metrics(
         rhs_bottom.destroy()
         residual.destroy()
     return global_relative, block
+
+
+@dataclass
+class HybridBlockLduScreenResult:
+    """True-residual history from one bounded action-backed outer solve."""
+
+    history: list[dict[str, Any]]
+    converged_reason: int
+    iterations: int
+    final_true_relative_residual: float
+    minimum_true_relative_residual: float
+    last5: list[dict[str, Any]]
+    last40: list[dict[str, Any]]
+    inventory: dict[str, Any]
+    pc_apply_seconds: float
+
+
+def screen_action_block_ldu(
+    operator: PETSc.Mat,
+    rhs: PETSc.Vec,
+    context: HybridBlockLduPreconditioner,
+    *,
+    max_it: int,
+) -> HybridBlockLduScreenResult:
+    """Run the fixed, bounded right-FGMRES screen and retain true residual rows."""
+
+    if int(max_it) not in {20, 100, 200}:
+        raise ValueError("V2 screen max_it must be one of 20, 100, or 200.")
+    solution = operator.createVecRight()
+    monitor_solution = operator.createVecRight()
+    solution.set(0.0)
+    monitor_solution.set(0.0)
+    history: list[dict[str, Any]] = []
+    rhs_norm = max(float(rhs.norm()), _TINY)
+    solve_started = time.perf_counter()
+
+    def snapshot(iteration: int, reported: float, current: PETSc.KSP | None) -> None:
+        if current is None:
+            solution.copy(monitor_solution)
+            current_solution = monitor_solution
+        else:
+            current_solution = current.buildSolution(monitor_solution)
+        global_true, block = _residual_metrics(operator, rhs, current_solution, context)
+        inventory = context.inventory
+        row = {
+            "iteration": int(iteration),
+            "reported_relative_residual": float(reported),
+            "global_true_relative_residual": float(global_true),
+            "bottom_true_relative_residual": float(block["bottom"]),
+            "top_true_relative_residual": float(block["top"]),
+            "modal_true_relative_residual": float(block["modal"]),
+            "pc_apply_count": int(inventory.get("pc_apply_count", 0)),
+            "bottom_action_apply_count": int(
+                inventory.get("bottom_action_apply_count", 0)
+            ),
+            "top_action_apply_count": int(inventory.get("top_action_apply_count", 0)),
+            "elapsed_seconds": float(time.perf_counter() - solve_started),
+        }
+        if history and history[-1]["iteration"] == int(iteration):
+            history[-1] = row
+        else:
+            history.append(row)
+
+    ksp = PETSc.KSP().create(operator.getComm())
+    try:
+        snapshot(0, 1.0 if rhs_norm > _TINY else 0.0, None)
+        ksp.setOperators(operator)
+        ksp.setType(PETSc.KSP.Type.FGMRES)
+        ksp.setGMRESRestart(90)
+        ksp.setPCSide(PETSc.PC.Side.RIGHT)
+        ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED)
+        ksp.setTolerances(rtol=1.0e-6, atol=0.0, max_it=int(max_it))
+        pc = ksp.getPC()
+        pc.setType(PETSc.PC.Type.PYTHON)
+        pc.setPythonContext(context)
+        ksp.setUp()
+
+        def monitor(current: PETSc.KSP, iteration: int, residual_norm: float) -> None:
+            snapshot(
+                int(iteration),
+                float(residual_norm) / rhs_norm,
+                current,
+            )
+
+        ksp.setMonitor(monitor)
+        ksp.solve(rhs, solution)
+        iterations = int(ksp.getIterationNumber())
+        reason = int(ksp.getConvergedReason())
+        reported = float(ksp.getResidualNorm()) / rhs_norm
+        snapshot(iterations, reported, None)
+        inventory = dict(context.inventory)
+        final_true = float(history[-1]["global_true_relative_residual"])
+        minimum_true = float(
+            min(row["global_true_relative_residual"] for row in history)
+        )
+        return HybridBlockLduScreenResult(
+            history=history,
+            converged_reason=reason,
+            iterations=iterations,
+            final_true_relative_residual=final_true,
+            minimum_true_relative_residual=minimum_true,
+            last5=[dict(row) for row in history[-5:]],
+            last40=[dict(row) for row in history[-40:]],
+            inventory=inventory,
+            pc_apply_seconds=float(inventory.get("pc_apply_seconds", 0.0)),
+        )
+    finally:
+        ksp.destroy()
+        monitor_solution.destroy()
+        solution.destroy()
+        context.destroy()
+
+
+def action_block_screen_gate(
+    history: list[dict[str, Any]],
+    *,
+    profile: str,
+    max_it: int,
+    converged_reason: int,
+) -> dict[str, Any]:
+    """Evaluate only the frozen bounded-screen numerical gate."""
+
+    if profile not in {"bottom-approx", "top-approx", "double"}:
+        raise ValueError("Unknown V2 action-screen profile.")
+    if profile != "double" and int(max_it) != 20:
+        raise ValueError("One-sided V2 screens require max_it=20.")
+    if profile == "double" and int(max_it) not in {20, 100, 200}:
+        raise ValueError("Double V2 screens require max_it=20, 100, or 200.")
+    threshold = 0.35
+    strict_threshold = True
+    recent_window = 5
+    if profile == "double" and int(max_it) == 100:
+        threshold = 0.12
+        strict_threshold = False
+        recent_window = 40
+    elif profile == "double" and int(max_it) == 200:
+        threshold = 0.05
+        strict_threshold = False
+        recent_window = 40
+    residual_keys = (
+        "reported_relative_residual",
+        "global_true_relative_residual",
+        "bottom_true_relative_residual",
+        "top_true_relative_residual",
+        "modal_true_relative_residual",
+    )
+    finite = bool(
+        history
+        and all(
+            all(np.isfinite(float(row[key])) for key in residual_keys)
+            for row in history
+        )
+    )
+    final = float(history[-1]["global_true_relative_residual"]) if history else np.inf
+    minimum = (
+        float(min(row["global_true_relative_residual"] for row in history))
+        if history
+        else np.inf
+    )
+    window = history[-recent_window:] if history else []
+    net_descent = bool(
+        len(window) >= 2
+        and float(window[-1]["global_true_relative_residual"])
+        < float(window[0]["global_true_relative_residual"])
+    )
+    iterations = int(history[-1]["iteration"]) if history else int(max_it) + 1
+    predicted_iterations: int | None = None
+    predicted_wall_seconds: float | None = None
+    recent_log_slope: float | None = None
+    if profile == "double" and int(max_it) == 200 and len(window) >= 2:
+        x = np.asarray([row["iteration"] for row in window], dtype=float)
+        y = np.log(
+            np.maximum(
+                np.asarray(
+                    [row["global_true_relative_residual"] for row in window],
+                    dtype=float,
+                ),
+                _TINY,
+            )
+        )
+        recent_log_slope = float(np.polyfit(x, y, 1)[0])
+        prediction_target = 1.0e-6
+        if final <= prediction_target:
+            predicted_iterations = iterations
+            predicted_wall_seconds = float(window[-1]["elapsed_seconds"])
+        elif recent_log_slope < 0.0:
+            predicted_iterations = int(
+                iterations
+                + np.ceil(np.log(prediction_target / final) / recent_log_slope)
+            )
+            elapsed = np.asarray(
+                [row["elapsed_seconds"] for row in window], dtype=float
+            )
+            wall_slope = float(np.polyfit(x, elapsed, 1)[0])
+            predicted_wall_seconds = float(
+                elapsed[-1]
+                + max(predicted_iterations - iterations, 0) * max(wall_slope, 0.0)
+            )
+        else:
+            predicted_iterations = None
+            predicted_wall_seconds = None
+    predicted_ok = bool(
+        profile != "double"
+        or int(max_it) != 200
+        or (
+            predicted_iterations is not None
+            and predicted_wall_seconds is not None
+            and predicted_iterations <= 3000
+        )
+    )
+    threshold_ok = bool(
+        final < threshold and minimum < threshold
+        if strict_threshold
+        else final <= threshold and minimum <= threshold
+    )
+    boundary_or_earlier = bool(
+        iterations == int(max_it)
+        or (iterations < int(max_it) and int(converged_reason) > 0)
+    )
+    gate_pass = bool(
+        finite and boundary_or_earlier and threshold_ok and net_descent and predicted_ok
+    )
+    return {
+        "pass": gate_pass,
+        "profile": profile,
+        "max_it": int(max_it),
+        "threshold": float(threshold),
+        "finite": finite,
+        "final": final,
+        "minimum": minimum,
+        "iterations": iterations,
+        "converged_reason": int(converged_reason),
+        "boundary_or_earlier": boundary_or_earlier,
+        "net_descent": net_descent,
+        "recent_window": int(recent_window),
+        "prediction_target": 1.0e-6
+        if profile == "double" and int(max_it) == 200
+        else None,
+        "predicted_iterations": predicted_iterations,
+        "predicted_wall_seconds": predicted_wall_seconds,
+        "recent_log_slope": recent_log_slope,
+    }
 
 
 def solve_exact_block_ldu(
