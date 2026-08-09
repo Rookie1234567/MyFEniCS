@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -441,6 +442,38 @@ def _write_authority_grid_payload(
     }
 
 
+@contextmanager
+def _canonical_active_trace_view(source: PETSc.Vec, condensed: Any):
+    """Expose only canonical active rows without copying an appended tail."""
+
+    active_rows = int(condensed.active_rows)
+    source_size = int(source.getSize())
+    if source_size == active_rows:
+        yield source
+        return
+    appended_rows = int(condensed.appended_rows)
+    expected_size = active_rows + appended_rows
+    if appended_rows <= 0 or source_size != expected_size:
+        raise RuntimeError(
+            "Canonical active source size must equal active rows or active plus "
+            f"appended rows, got {source_size} for {active_rows}+{appended_rows}."
+        )
+    start, end = map(int, source.getOwnershipRange())
+    local_n = max(0, min(end, active_rows) - start)
+    active_is = PETSc.IS().createStride(
+        local_n,
+        first=start,
+        step=1,
+        comm=source.getComm(),
+    )
+    active_vec = source.getSubVector(active_is)
+    try:
+        yield active_vec
+    finally:
+        source.restoreSubVector(active_is, active_vec)
+        active_is.destroy()
+
+
 def _write_canonical_manifest_exports(
     *,
     systems: dict[str, Any],
@@ -479,17 +512,18 @@ def _write_canonical_manifest_exports(
             else physical_solution.top_recovered
         )
         condensed = system.static_condensation.condensed
-        if active_solution.getSize() != int(condensed.active_rows):
-            raise RuntimeError(f"{side} active solution does not match canonical rows.")
         side_exports: dict[str, Any] = {}
         for packet_role in ("active_trace", "full_fe"):
             if packet_role == "active_trace":
-                packets, audit = extract_canonical_active_trace_packets(
-                    condensed,
-                    system.V,
-                    system.floquet_data,
-                    active_solution,
-                )
+                with _canonical_active_trace_view(
+                    active_solution, condensed
+                ) as trace_solution:
+                    packets, audit = extract_canonical_active_trace_packets(
+                        condensed,
+                        system.V,
+                        system.floquet_data,
+                        trace_solution,
+                    )
             else:
                 packets, audit = extract_canonical_full_fe_packets(
                     system.V,

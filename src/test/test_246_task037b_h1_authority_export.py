@@ -4,12 +4,15 @@ import copy
 import hashlib
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
+from petsc4py import PETSc
 
 from benchmarks.run_task032_phase6_augmented import (
     _array_descriptor,
+    _canonical_active_trace_view,
     _parse_args,
     _write_authority_grid_payload,
 )
@@ -158,6 +161,50 @@ def test_h1_numeric_grid_writer_roundtrip(tmp_path: Path) -> None:
         assert modal_descriptor["dtype"] == "complex128"
         assert modal_descriptor["bytes"] == payload["modal_amplitudes"].nbytes
         assert modal_descriptor["sha256"] == hashlib.sha256(modal_bytes).hexdigest()
+
+
+def test_canonical_active_trace_view_preserves_prefix_and_lifecycle() -> None:
+    comm = PETSc.COMM_WORLD
+    mpi = comm.tompi4py()
+    size = int(mpi.Get_size())
+    rank = int(mpi.Get_rank())
+    local_active = 4
+    active_rows = local_active * size
+    appended_rows = 2
+    condensed = SimpleNamespace(
+        active_rows=active_rows,
+        appended_rows=appended_rows,
+    )
+
+    local_source = local_active + (appended_rows if rank == size - 1 else 0)
+    source = PETSc.Vec().createMPI(
+        (local_source, active_rows + appended_rows),
+        comm=comm,
+    )
+    first, last = map(int, source.getOwnershipRange())
+    source.getArray()[:] = np.arange(first, last, dtype=np.complex128)
+    source.assemble()
+    before = np.array(source.getArray(readonly=True), copy=True)
+    with _canonical_active_trace_view(source, condensed) as active:
+        assert int(active.getSize()) == active_rows
+        assert int(
+            active.getOwnershipRange()[1] - active.getOwnershipRange()[0]
+        ) == len(active.getArray(readonly=True))
+        gathered = mpi.allgather(np.array(active.getArray(readonly=True), copy=True))
+        assert np.array_equal(
+            np.concatenate(gathered), np.arange(active_rows, dtype=np.complex128)
+        )
+    np.testing.assert_array_equal(source.getArray(readonly=True), before)
+    source.destroy()
+
+    exact = PETSc.Vec().createMPI((local_active, active_rows), comm=comm)
+    first, last = map(int, exact.getOwnershipRange())
+    exact.getArray()[:] = np.arange(first, last, dtype=np.complex128) + 1.0j
+    exact.assemble()
+    with _canonical_active_trace_view(exact, condensed) as active:
+        assert active is exact
+        assert int(active.getSize()) == active_rows
+    exact.destroy()
 
 
 def test_checker_compares_numeric_h1_payload_and_keeps_candidate_read_only(
