@@ -408,12 +408,21 @@ def iter_canonical_full_fe_packets(
         for dimension in (1, 2)
     }
     index_map = function_space.dofmap.index_map
-    all_local_dofs = np.arange(
-        int(index_map.size_local) + int(index_map.num_ghosts), dtype=np.int32
+    selected_local_dof_mask = np.zeros(
+        int(index_map.size_local) + int(index_map.num_ghosts), dtype=np.bool_
+    )
+    for cell in range(int(owned_cells[0])):
+        selected_local_dof_mask[function_space.dofmap.cell_dofs(cell)] = True
+    for incidents in entity_incidents.values():
+        for _entity, cell in incidents:
+            selected_local_dof_mask[function_space.dofmap.cell_dofs(cell)] = True
+    relevant_local_dofs = np.flatnonzero(selected_local_dof_mask).astype(
+        np.int32, copy=False
     )
     union_ids = np.asarray(
-        index_map.local_to_global(all_local_dofs), dtype=PETSc.IntType
+        index_map.local_to_global(relevant_local_dofs), dtype=PETSc.IntType
     )
+    del selected_local_dof_mask, relevant_local_dofs
     union_ids.sort()
     union_ids, union_values = _scatter_values(vector, union_ids)
     layout = function_space.dofmap.dof_layout
