@@ -1,0 +1,347 @@
+{
+  "canonical_checks": {
+    "dtype": true,
+    "duplicate_count": true,
+    "export_after_numerical_gate": true,
+    "extractor_method": true,
+    "extractor_source": true,
+    "manifest_evidence": true,
+    "manifest_path": true,
+    "mpi_size": true,
+    "packet_count": true,
+    "record_packet_count": true,
+    "role": true
+  },
+  "checks": {
+    "canonical.dtype": true,
+    "canonical.duplicate_count": true,
+    "canonical.export_after_numerical_gate": true,
+    "canonical.extractor_method": true,
+    "canonical.extractor_source": true,
+    "canonical.manifest_evidence": true,
+    "canonical.manifest_path": true,
+    "canonical.mpi_size": true,
+    "canonical.packet_count": true,
+    "canonical.record_packet_count": true,
+    "canonical.role": true,
+    "raw.run_summary.json": true,
+    "raw.watchdog_timeline.jsonl": true,
+    "raw.worker_stdout.txt": true,
+    "runtime.command_python_executable": true,
+    "runtime.identical": true,
+    "runtime.recorded_match": true,
+    "runtime.watchdog_values": true,
+    "runtime.worker_values": true,
+    "source.end_clean": true,
+    "source.recorded_stable_clean": true,
+    "source.same_commit": true,
+    "source.start_clean": true,
+    "timeline.live_sample_count": true,
+    "timeline.live_samples_readable": true,
+    "timeline.peak_limit": true,
+    "timeline.peak_recomputed": true,
+    "timeline.resource_authority": true,
+    "timeline.swap_recomputed": true,
+    "timeline.swap_zero": true,
+    "timeline.worker_swap_zero": true,
+    "watchdog.command": true,
+    "watchdog.completion_elapsed_seconds": true,
+    "watchdog.controlled_stop": true,
+    "watchdog.evidence_sha256": true,
+    "watchdog.mpi_size": true,
+    "watchdog.peak_scope": true,
+    "watchdog.poll_interval_seconds": true,
+    "watchdog.return_code": true,
+    "watchdog.rss_limit_bytes": true,
+    "watchdog.schema": true,
+    "watchdog.status": true,
+    "watchdog.termination": true,
+    "watchdog.timeout_seconds": true,
+    "watchdog.wall_seconds": true,
+    "worker.evidence_sha256": true,
+    "worker.fresh_qualification_pass": true,
+    "worker.mpi_size": true,
+    "worker.qualification_status_matches": true,
+    "worker.recorded_worker_pass_matches": true,
+    "worker.reference_action_type": true,
+    "worker.reference_apply_count": true,
+    "worker.reference_no_global_matrix": true,
+    "worker.reference_same_worker": true,
+    "worker.schema": true,
+    "worker.scope_constraint_count": true,
+    "worker.scope_global_rows": true,
+    "worker.source_definition_matches_measurement": true,
+    "worker.top_level_status": true,
+    "worker.watchdog_recomputed_pass": true,
+    "worker.watchdog_worker_evidence_valid": true,
+    "worker.watchdog_worker_qualification_pass": true,
+    "worker.watchdog_worker_summary_present": true,
+    "worker.watchdog_worker_summary_status": true
+  },
+  "embedded_evidence_sha256": {
+    "watchdog_summary": "a9e1afa02cc4fd80af8c945b41aa7410d6cb85ecaa912a759b5f649930ff68bb",
+    "worker_summary": "64fad74db773673d7dda0b2190395c42627c1ba1b69b183910f5e9b7e4e08bd7"
+  },
+  "evidence_sha256": "eeb002ad7d4091aec4aaf34055379f2a8f3bc4c64a46b3dda11328f8b28d0513",
+  "measurement": {
+    "candidate_first_apply_seconds": 1.2354860971681774,
+    "candidate_second_apply_seconds": 1.195433100918308,
+    "canonical_export": true,
+    "canonical_packet_count": 164592,
+    "completion_elapsed_seconds": 14.121019201120362,
+    "constraint_count": 9210,
+    "deterministic": true,
+    "finite": true,
+    "global_rows": 173802,
+    "process_tree_peak_rss_bytes": 332636160,
+    "process_tree_swap_bytes": 0,
+    "reference_first_apply_seconds": 1.1653526849113405,
+    "relative_error": 2.7326039504560278e-17,
+    "retained_payload": {
+      "global_max_bytes": 6151104,
+      "global_sum_bytes": 6151104,
+      "local_bytes": 6151104
+    }
+  },
+  "memory_authority": {
+    "review_v4_peak_gate_pass": true,
+    "review_v4_process_tree_peak_limit_bytes": 1342177280,
+    "review_v4_process_tree_peak_limit_gib": 1.25,
+    "user_lt_2GB_target_bytes": 2000000000,
+    "user_lt_2GB_target_evaluated": true,
+    "user_lt_2GB_target_note": "broader user target; not the Review V4 qualification authority",
+    "user_lt_2GB_target_pass": true
+  },
+  "pass": true,
+  "problems": [],
+  "raw_artifact_checks": {
+    "run_summary.json": true,
+    "watchdog_timeline.jsonl": true,
+    "worker_stdout.txt": true
+  },
+  "raw_artifacts": {
+    "canonical/seed_17037/candidate_manifest.json": {
+      "bytes": 718,
+      "path": "canonical/seed_17037/candidate_manifest.json",
+      "present": true,
+      "sha256": "1dfdcbfcd73010234dcdb7438eb3d869c9cbd07ed6981fc0ba5275c170faf139"
+    },
+    "run_summary.json": {
+      "bytes": 10049,
+      "path": "run_summary.json",
+      "present": true,
+      "sha256": "bcf220a7b62ce803387a71c6dd3cefed0447f6ada17234328106aa23b785114c"
+    },
+    "watchdog_summary.json": {
+      "bytes": 7098,
+      "path": "watchdog_summary.json",
+      "present": true,
+      "sha256": "f8228385afc128aa3d2fd8a49398957da4d68d9eb6a634692748fe3a10ceae6a"
+    },
+    "watchdog_timeline.jsonl": {
+      "bytes": 85175,
+      "path": "watchdog_timeline.jsonl",
+      "present": true,
+      "sha256": "61ffb299b4fd9a22bd65468e81bec8f28759295d6d8fea281ccdba2f4962a2a0"
+    },
+    "worker_stdout.txt": {
+      "bytes": 7525,
+      "path": "worker_stdout.txt",
+      "present": true,
+      "sha256": "b83ac543bc909515c05b9a4109831d9d6b69a641caaada4f96f69592981988b9"
+    }
+  },
+  "raw_evidence_sha256": {
+    "canonical_manifest_bytes": "1dfdcbfcd73010234dcdb7438eb3d869c9cbd07ed6981fc0ba5275c170faf139",
+    "watchdog_summary_bytes": "f8228385afc128aa3d2fd8a49398957da4d68d9eb6a634692748fe3a10ceae6a",
+    "worker_summary_bytes": "bcf220a7b62ce803387a71c6dd3cefed0447f6ada17234328106aa23b785114c"
+  },
+  "raw_run_directory": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task037_extra_h1r2_v4_66ccb589_mpi1_20260809_run1",
+  "runtime_identity": {
+    "match": true,
+    "watchdog": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "_MYFENICS_WSL_QUALIFIED_ACTIVATION": "1",
+      "sys.executable": "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python"
+    },
+    "worker": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "_MYFENICS_WSL_QUALIFIED_ACTIVATION": "1",
+      "sys.executable": "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python"
+    }
+  },
+  "runtime_identity_checks": {
+    "command_python_executable": true,
+    "identical": true,
+    "recorded_match": true,
+    "watchdog_values": true,
+    "worker_values": true
+  },
+  "schema": "task037.candidate_h.h1r2.compact_check.v1",
+  "scope_boundary": {
+    "H1R3": "locked_pending_review",
+    "H2": "locked"
+  },
+  "source_checks": {
+    "end_clean": true,
+    "recorded_stable_clean": true,
+    "same_commit": true,
+    "start_clean": true
+  },
+  "source_identity": {
+    "end": {
+      "cleanliness_semantics": "all tracked changes plus every nonignored untracked path",
+      "git_error": null,
+      "nonignored_untracked_paths": [],
+      "source_commit_full_sha": "66ccb5891b7f6caac3ebfe08f72cf525c40f3fef",
+      "source_worktree_dirty": false,
+      "tracked_source_dirty": false,
+      "worktree_status_porcelain": []
+    },
+    "source_commit_full_sha": "66ccb5891b7f6caac3ebfe08f72cf525c40f3fef",
+    "start": {
+      "cleanliness_semantics": "all tracked changes plus every nonignored untracked path",
+      "git_error": null,
+      "nonignored_untracked_paths": [],
+      "source_commit_full_sha": "66ccb5891b7f6caac3ebfe08f72cf525c40f3fef",
+      "source_worktree_dirty": false,
+      "tracked_source_dirty": false,
+      "worktree_status_porcelain": []
+    }
+  },
+  "status": "pass",
+  "timeline_checks": {
+    "live_sample_count": true,
+    "live_samples_readable": true,
+    "peak_limit": true,
+    "peak_recomputed": true,
+    "resource_authority": true,
+    "swap_recomputed": true,
+    "swap_zero": true,
+    "worker_swap_zero": true
+  },
+  "watchdog_checks": {
+    "command": true,
+    "completion_elapsed_seconds": true,
+    "controlled_stop": true,
+    "evidence_sha256": true,
+    "mpi_size": true,
+    "peak_scope": true,
+    "poll_interval_seconds": true,
+    "return_code": true,
+    "rss_limit_bytes": true,
+    "schema": true,
+    "status": true,
+    "termination": true,
+    "timeout_seconds": true,
+    "wall_seconds": true
+  },
+  "worker_checks": {
+    "evidence_sha256": true,
+    "fresh_qualification_pass": true,
+    "mpi_size": true,
+    "qualification_status_matches": true,
+    "recorded_worker_pass_matches": true,
+    "reference_action_type": true,
+    "reference_apply_count": true,
+    "reference_no_global_matrix": true,
+    "reference_same_worker": true,
+    "schema": true,
+    "scope_constraint_count": true,
+    "scope_global_rows": true,
+    "source_definition_matches_measurement": true,
+    "top_level_status": true,
+    "watchdog_recomputed_pass": true,
+    "watchdog_worker_evidence_valid": true,
+    "watchdog_worker_qualification_pass": true,
+    "watchdog_worker_summary_present": true,
+    "watchdog_worker_summary_status": true
+  },
+  "worker_qualification_recomputed": {
+    "action_checks": {
+      "candidate_apply_count": true,
+      "candidate_repeat_apply_count": true,
+      "deterministic": true,
+      "finite": true,
+      "numerical_gate": true,
+      "reference_apply_count": true,
+      "relative_error": true,
+      "second_within_reference_bound": true
+    },
+    "candidate_audit_checks": {
+      "apply_count": true,
+      "backend": true,
+      "cell_metadata_retained": true,
+      "coefficient_count": true,
+      "constraint_count": true,
+      "constraint_nnz_closes": true,
+      "dense_cell_tensor_materialized_per_apply": true,
+      "dtn_used": true,
+      "factor_count": true,
+      "form_rank": true,
+      "global_A_materialized": true,
+      "global_condensed_schur_materialized": true,
+      "global_constraint_matrix_materialized": true,
+      "global_matrix_materialized": true,
+      "global_rows": true,
+      "ksp_created": true,
+      "ordinary_default_changed": true,
+      "retained_dense_cell_tensor_count": true,
+      "storage_closure": true
+    },
+    "candidate_payload_global_sum_bytes": 6151104,
+    "candidate_payload_local_bytes": 6151104,
+    "canonical_checks": {
+      "export_after_numeric_gate": true,
+      "manifest_path": true,
+      "manifest_presence": true,
+      "packet_count": true
+    },
+    "eligible_for_H1R2": true,
+    "expected_canonical_packet_count": 164592,
+    "pass": true,
+    "payload_component_sum_bytes": 6151104,
+    "payload_gate_pass": true,
+    "problems": [],
+    "scope_checks": {
+      "candidate_apply_count": true,
+      "canonical_after_gate": true,
+      "condensation": true,
+      "degree": true,
+      "dtn": true,
+      "dtn_surface_term": true,
+      "field_formulation": true,
+      "h_nm": true,
+      "ksp": true,
+      "mpi_size": true,
+      "operator": true,
+      "ordinary_default_changed": true,
+      "payload_limit_bytes": true,
+      "reference_apply_count": true,
+      "source_labels": true,
+      "timeout_seconds": true
+    },
+    "source_checks": {
+      "source_definition_label": true,
+      "source_definition_sha256": true,
+      "source_envelope": true,
+      "source_formula": true,
+      "source_frequency": true,
+      "source_label": true,
+      "source_seed": true
+    },
+    "source_keys_fixed": true,
+    "status": "pass",
+    "timing_checks": {
+      "candidate_apply_seconds": true,
+      "candidate_repeat_apply_seconds": true,
+      "reference_apply_seconds": true
+    }
+  }
+}
