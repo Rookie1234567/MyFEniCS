@@ -11,6 +11,7 @@ import benchmarks.run_task033_memory_watchdog as watchdog
 import benchmarks.run_task032_phase6_augmented as augmented
 from benchmarks.run_task032_phase6_augmented import (
     _parse_args,
+    _write_canonical_manifest_exports,
     _v6_collective_heap_cleanup,
     _v4_full_fe_threshold_pass as _runner_full_fe_threshold_pass,
     _v4_not_run_validation_boundary,
@@ -166,6 +167,41 @@ def test_v6_recovery_heap_cleanup_order_is_v6_only():
     assert source.count("v6_bottom_recovery_heap_cleanup_started") == 1
     assert source.count("v6_top_recovery_heap_cleanup_started") == 1
     assert "if is_v6:" in source[bottom_cleanup - 80 : bottom_cleanup]
+    assert _parse_args([]).task037b_v6_gate is False
+
+
+def test_v6_canonical_heap_cleanup_is_side_scoped_and_ordered():
+    writer = inspect.signature(_write_canonical_manifest_exports)
+    assert writer.parameters["sides"].default == ("bottom", "top")
+    source = inspect.getsource(augmented._run_v4_full_solve)
+    canonical_source = source[source.index("canonical_exports = {}") :]
+    side_loop = canonical_source.index('for side in ("bottom", "top"):')
+    export = canonical_source.index("sides=(side,)", side_loop)
+    exports_update = canonical_source.index(
+        "canonical_exports.update(side_exports)", export
+    )
+    side_delete = canonical_source.index("del side_exports", exports_update)
+    cleanup_started = canonical_source.index(
+        'f"v6_{side}_canonical_heap_cleanup_started"', side_loop
+    )
+    cleanup_call = canonical_source.index(
+        "_v6_collective_heap_cleanup(comm)", cleanup_started
+    )
+    cleanup_finished = canonical_source.index(
+        'f"v6_{side}_canonical_heap_cleanup_finished"', cleanup_call
+    )
+    assert (
+        side_loop
+        < export
+        < exports_update
+        < side_delete
+        < cleanup_started
+        < cleanup_call
+        < cleanup_finished
+    )
+    assert canonical_source.count("sides=(side,)") == 1
+    assert source.count("v6_{side}_canonical_heap_cleanup_started") == 1
+    assert source.count("v6_{side}_canonical_heap_cleanup_finished") == 1
     assert _parse_args([]).task037b_v6_gate is False
 
 

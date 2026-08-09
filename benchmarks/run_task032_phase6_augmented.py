@@ -527,6 +527,7 @@ def _write_canonical_manifest_exports(
     run_dir: Path,
     comm: MPI.Intracomm,
     prefix: str,
+    sides: tuple[str, ...] = ("bottom", "top"),
 ) -> dict[str, Any]:
     from benchmarks.canonical_vector_artifacts import (
         MANIFEST_SCHEMA,
@@ -547,7 +548,7 @@ def _write_canonical_manifest_exports(
     except ValueError:
         run_dir_label = str(run_dir.resolve())
     exports: dict[str, Any] = {}
-    for side in ("bottom", "top"):
+    for side in sides:
         system = systems[side]
         active_solution = (
             physical_solution.bottom if side == "bottom" else physical_solution.top
@@ -4062,17 +4063,46 @@ def _run_v4_full_solve(
                         schema="task037b.v4-own-grid-EH-modal-q.v1",
                     )
                 own_grid_meta = comm.bcast(own_grid_meta, root=0)
-                canonical_exports = (
-                    _write_canonical_manifest_exports(
-                        systems=systems,
-                        physical_solution=physical_solution,
-                        run_dir=run_dir,
-                        comm=comm,
-                        prefix="task037b_v4",
-                    )
-                    if own_physics_pass
-                    else {}
-                )
+                canonical_exports = {}
+                if own_physics_pass:
+                    if is_v6:
+                        v5_multimetric_telemetry["canonical_heap_cleanup_by_side"] = {}
+                        for side in ("bottom", "top"):
+                            side_exports = _write_canonical_manifest_exports(
+                                systems=systems,
+                                physical_solution=physical_solution,
+                                run_dir=run_dir,
+                                comm=comm,
+                                prefix="task037b_v4",
+                                sides=(side,),
+                            )
+                            canonical_exports.update(side_exports)
+                            del side_exports
+                            record_stage(f"v6_{side}_canonical_heap_cleanup_started")
+                            canonical_cleanup = _v6_collective_heap_cleanup(comm)
+                            canonical_cleanup["status"] = "measured"
+                            canonical_cleanup["release_pass"] = bool(
+                                canonical_cleanup["collective_call_completed"]
+                            )
+                            timings[f"v6_{side}_canonical_heap_cleanup"] = (
+                                canonical_cleanup["elapsed_seconds_max_rank"]
+                            )
+                            v5_multimetric_telemetry["canonical_heap_cleanup_by_side"][
+                                side
+                            ] = canonical_cleanup
+                            record_stage(f"v6_{side}_canonical_heap_cleanup_finished")
+                            if not canonical_cleanup["release_pass"]:
+                                raise RuntimeError(
+                                    f"V6 {side} canonical collective cleanup failed."
+                                )
+                    else:
+                        canonical_exports = _write_canonical_manifest_exports(
+                            systems=systems,
+                            physical_solution=physical_solution,
+                            run_dir=run_dir,
+                            comm=comm,
+                            prefix="task037b_v4",
+                        )
                 canonical_pass = bool(
                     own_physics_pass
                     and all(
