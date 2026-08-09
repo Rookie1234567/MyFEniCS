@@ -1064,16 +1064,25 @@ def _task034_terminal_worker_drain(
     terminal_record_complete: bool,
     live_worker_count: int | None,
     terminal_stage: str = "record_and_release",
+    expected_worker_count: int | None = None,
 ) -> bool:
     """Recognize only the normal worker-before-launcher MPI exit window."""
 
+    partial_terminal_drain = bool(
+        isinstance(expected_worker_count, int)
+        and not isinstance(expected_worker_count, bool)
+        and expected_worker_count > 0
+        and isinstance(live_worker_count, int)
+        and not isinstance(live_worker_count, bool)
+        and 0 <= live_worker_count < expected_worker_count
+    )
     return bool(
         task034_workstation_gate
         and process_running
         and not authority_readable
         and stage == terminal_stage
         and terminal_record_complete
-        and live_worker_count == 0
+        and (live_worker_count == 0 or partial_terminal_drain)
     )
 
 
@@ -7521,6 +7530,9 @@ def run(args: argparse.Namespace) -> int:
                 terminal_record_complete=terminal_record_complete,
                 live_worker_count=live_worker_count,
                 terminal_stage=terminal_stage,
+                expected_worker_count=(
+                    args.mpi_size if args.task037b_v4_gate else None
+                ),
             )
             readability_sample_is_formal = _resource_readability_sample_is_formal(
                 task034_workstation_gate=scoped_worker_gate,

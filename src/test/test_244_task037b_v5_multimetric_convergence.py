@@ -9,6 +9,7 @@ from petsc4py import PETSc
 from benchmarks.run_task032_phase6_augmented import _parse_args
 from benchmarks.run_task033_memory_watchdog import (
     _parse_args as _watchdog_parse_args,
+    _task034_terminal_worker_drain,
     _worker_command,
     _task037b_v5_linear_disposition,
 )
@@ -243,6 +244,27 @@ def test_v5_multimetric_decision_covers_frozen_seven_cases():
     )
     assert v4_replay["decision"] == "ITERATING"
     assert v4_replay["reason"] == int(PETSc.KSP.ConvergedReason.ITERATING)
+
+
+def test_v5_terminal_drain_excludes_partial_nonterminal_worker_states():
+    common = {
+        "task034_workstation_gate": True,
+        "process_running": True,
+        "authority_readable": False,
+        "stage": "v4_worker_cleanup_finished",
+        "terminal_record_complete": True,
+        "terminal_stage": "v4_worker_cleanup_finished",
+        "expected_worker_count": 8,
+    }
+    assert _task034_terminal_worker_drain(**common, live_worker_count=4)
+    assert not _task034_terminal_worker_drain(**common, live_worker_count=8)
+    assert not _task034_terminal_worker_drain(**common, live_worker_count=None)
+    assert not _task034_terminal_worker_drain(
+        **{**common, "terminal_record_complete": False}, live_worker_count=4
+    )
+    assert not _task034_terminal_worker_drain(
+        **{**common, "stage": "record_and_release"}, live_worker_count=4
+    )
 
 
 def test_v5_parser_is_frozen_and_does_not_open_v2_options():
