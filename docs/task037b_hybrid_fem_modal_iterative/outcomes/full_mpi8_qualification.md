@@ -230,3 +230,140 @@ parent summary 的 `no_swap=false` 与 `terminated_for_authority_unreadable=true
 本次 V5 compact record 见
 [task037b_v5_mpi8_multimetric_full_qualification_v1.json](../../../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v5_mpi8_multimetric_full_qualification_v1.json)。
 raw summary、solver、stages、timeline、stdout 和诊断 NPZ 的路径及 SHA 均在 compact 中绑定。
+
+---
+
+## V6 tight-linear + exact-traction full qualification
+
+以下 V6 章节追加在 V4/V5 历史之后，不覆盖此前的受控负结果。完整路径、SHA 和机器可读字段见
+[V6 compact record](../../../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v6_mpi8_traction_aligned_full_qualification_v1.json)，
+叙述格式参见 [response_v7.md](../response_v7.md)。
+
+### 身份与冻结配置
+
+V6 implementation 与 formal candidate source 均为
+`ea132d8a31e5ccd6c45fb90bbb9b5f676cd78b0e`。本轮只运行一次正式 MPI8 candidate：zero
+initial，没有 retry、warm start 或 continuation。H1 authority export 与 offline checker 是
+独立进程，不计入 candidate 的在线内存峰值。
+
+| 项目 | V6 冻结值 |
+|---|---|
+| FE / modal mesh | p6/h10 / modal p6/h10 |
+| wavelength / polarization / incidence | 13.5 nm / S / 10° |
+| interfaces | 10 / 110 nm |
+| modal count | requested M120 / candidate 240 |
+| external DtN | 40 modes per side |
+| MPI | 8 |
+| outer operator | exact monolithic Hybrid operator |
+| two-sided PC | fixed whole-endcap ILU(0) + 40-mode DtN Woodbury action |
+| outer solver | right FGMRES，restart90，max_it1000，rtol `5e-9`，atol `0` |
+| initial guess | zero |
+| propagation / traction | `full3d_uniform_cg` / `scalar_cg_discrete_derivative` |
+| ordinary defaults | unchanged |
+
+这里的 exact monolithic operator 是完整 Hybrid 线性算子；两侧 ILU(0)+Woodbury 只构成固定
+block-LDU 预条件器，不是 direct fallback 或 nested KSP。
+
+### 线性 Gate、终点与 checkpoints
+
+V6 在 iteration `792` 以 KSP reason `2` 结束。retained solution 上的 postsolve audit 对四项
+explicit residual 独立重算一次，并与 KSP 的 reported scalar 分开记录：
+
+| residual | final value | 来源 |
+|---|---:|---|
+| reported | `3.5780618848244904e-9` | `ksp.getResidualNorm()` |
+| global | `3.5780621758560974e-9` | explicit recomputation |
+| bottom | `4.921856192471026e-9` | explicit recomputation |
+| top | `2.6635966837463555e-9` | explicit recomputation |
+| modal | `1.673064946867675e-15` | explicit recomputation |
+
+五项均满足 `5e-9`，postsolve `pass=true`。history 有 `793` 条 authoritative row，连续为
+`0..792`，每个 iteration 一条；postsolve count 为 `1`，monitor 没有重复施加 exact residual
+action。到达的 checkpoint 是 `0,1,2,5,10,20,60,100,200,500,534,557,600,630,700,750,792`；
+`800/850/900/950/1000` 明确为 `not_reached`。iteration `534` 的 bottom residual 为
+`1.3641751862904296e-6`，仍是 `ITERATING`，不能用预测值替代。
+
+### Recovery、traction 与物理量
+
+| Gate | bottom | top | 结论 |
+|---|---:|---:|---|
+| external q relative residual | `0.0` | `0.0` | pass |
+| full-FE linear residual | `3.575993025427101e-9` | `4.2692816985701626e-9` | pass |
+| full-FE interior relative | `1.963069419531454e-12` | `2.008475074822439e-12` | pass |
+| full-FE interior max | `9.13998051238186e-13` | `1.0800977776814194e-12` | pass |
+| exact traction dual | `4.82014143560811e-9` | `2.6635966837463555e-9` | pass，限值 `1e-8` |
+
+candidate own physics 的 energy 数值为：
+
+| R | T | A | A_volume | R+T+A_volume | closure |
+|---:|---:|---:|---:|---:|---:|
+| `0.0007628816277264678` | `0.6027016338728362` | `0.39653548449943743` | `0.3965354850818476` | `1.0000000005824101` | `5.824101201312715e-10` |
+
+canonical 的 bottom/top active-trace/full-FE 四个角色均通过；坐标对齐的 selected E/H 也通过：
+
+| 区域 | E relative L2 | H relative L2 |
+|---|---:|---:|
+| bottom | `3.6550912519981292e-9` | `1.960485560693665e-9` |
+| top | `1.6077088754815805e-9` | `3.0693637907261264e-9` |
+| middle | `2.178645424601463e-9` | `2.2049249305064133e-9` |
+
+### orders、12+12 与 Full3D
+
+80 个 order row 的 key/finite coverage 为 `80/80`；其中 `12` 个 significant、`68` 个
+below-floor。significant power/amplitude 均为 `12/12`，最大 relative error 为
+`6.693275231450045e-7 / 5.300628623385173e-7`。below-floor row 的全行相对误差只保留为
+diagnostic，不作为近零通道的数值 Gate。
+
+| 比较 | analytic identity | power | amplitude | 最大 power / amplitude error |
+|---|---:|---:|---:|---:|
+| iterative vs frozen Full3D | 12/12 | 12/12 | 12/12 | `1.5279966083647095e-10 / 4.140043436863321e-9` |
+| direct-Hybrid vs frozen Full3D | 12/12 | 12/12 | 12/12 | `1.984856723424855e-12 / 2.0684155314519094e-12` |
+
+H1 direct 是 frozen M120 comparison authority，不是 mode-count convergence 或 continuum
+convergence 证据。pinned Full3D 对 modal、canonical、selected interface/middle fields 没有
+对应 numeric arrays，因此这些维度保持 `not_available`，没有使用 hash/pass label 冒充数组。
+
+### modal coefficient 的表示边界
+
+raw modal coefficient relative L2 为 `1.993317780985689`，这是
+`diagnostic_not_comparable_independent_qep_gauge`，不是 pass。没有 shared basis fingerprint
+或 transport 时，两个独立 QEP 的相位和近简并子空间基底可不同，逐项 coefficient 比较不具
+gauge invariance。magnitude relative L2 为 `1.3177050713514743e-9`，而坐标对齐的物理 E/H
+全部通过，因此本轮以物理重建作为 modal qualification authority。
+
+这是一项对 Review V6 字面 raw modal-amplitude 要求的表示语义修正：不伪造 transport，不
+删除 raw mismatch，也不把 `1.993317780985689` 改写成 pass。
+
+### Authority 修复链、资源与时间
+
+首次 H1 export 因 augmented active-trace `8464` 对 condensed active rows `8424` 的实现接线
+错误失败；该 summary、NPZ、stages、timeline、stdout 和失败分类均保留。source
+`3c717d41cf1a8ad375e03db207cc2a0a231256d4` 的窄修复后只独立重跑 H1 export，candidate 没有
+重跑。首次 checker 的 `pass=false` 也保留；source `a4477c2a3d6232434695d6295deee9f05a554c5c`
+修复后只重跑 checker 一次，最终 `result.pass=true`、`failures=[]`。
+
+| candidate online 资源 | 值 |
+|---|---:|
+| process-tree RSS peak | `7297.50390625 MiB = 7.126468658447266 GiB` |
+| worker RSS / PSS / USS peak | `7282.8046875 / 5580.908203125 / 5306.3828125 MiB` |
+| peak stage | `candidate_field_recovery` |
+| swap | readable all-live rows observed zero；不扩大为 dedicated-cgroup Gate |
+| resource classification | `MPI8_RESOURCE_NEGATIVE` |
+
+H1 独立 export peak `7.766315460205078 GiB` 与 checker RSS `110.66796875 MiB` 均不并入
+candidate online peak。candidate timing 为 cross/QEP `0.9218149570515379s`、bases
+`53.62479058501776s`、action/coupling `212.48145506496076s`、setup `47.69138909096364s`、
+outer `129.57329463399947s`、postprocess/release `0.003203326021321118s`、total
+`469.0012320310343s`。
+
+### 测试与最终边界
+
+focused serial 证据为 preformal `29 passed`、最终 checker 修复 Gate 的 test243 `12 passed` 与
+test246 `12 passed`；MPI2/MPI4 指定 action/lifecycle 节点各 `5 passed/rank`。touched-file
+Ruff check、format-check、compileall、git diff-check 均通过。full pytest 与 CI 为 `not_run`。
+
+双重结论是：numerical + physics PASS，但资源分类为 `MPI8_RESOURCE_NEGATIVE`，所以总体
+`DOUBLE_APPROXIMATE_MPI8_TIGHT_LINEAR_AND_PHYSICS_PASS` 仍是 research-only，不得冒充
+production qualification。ordinary defaults unchanged；master merge 未授权。Review V6 到此
+闭环；随后授权的持续内存优化属于下一独立研究阶段，不改写本 V6 事实，也不能把它提升为
+production 结论。
