@@ -413,9 +413,23 @@ def iter_canonical_full_fe_packets(
     )
     for cell in range(int(owned_cells[0])):
         selected_local_dof_mask[function_space.dofmap.cell_dofs(cell)] = True
-    for incidents in entity_incidents.values():
-        for _entity, cell in incidents:
-            selected_local_dof_mask[function_space.dofmap.cell_dofs(cell)] = True
+    layout = function_space.dofmap.dof_layout
+    for dimension, incidents in entity_incidents.items():
+        cell_to_entity = topology.connectivity(topology.dim, dimension)
+        for entity, cell in incidents:
+            local_entity = int(
+                np.flatnonzero(
+                    np.asarray(cell_to_entity.links(cell), dtype=np.int32)
+                    == int(entity)
+                )[0]
+            )
+            positions = np.asarray(
+                layout.entity_dofs(dimension, local_entity), dtype=np.int32
+            )
+            local_dofs = np.asarray(
+                function_space.dofmap.cell_dofs(cell), dtype=np.int32
+            )
+            selected_local_dof_mask[local_dofs[positions]] = True
     relevant_local_dofs = np.flatnonzero(selected_local_dof_mask).astype(
         np.int32, copy=False
     )
@@ -425,7 +439,6 @@ def iter_canonical_full_fe_packets(
     del selected_local_dof_mask, relevant_local_dofs
     union_ids.sort()
     union_ids, union_values = _scatter_values(vector, union_ids)
-    layout = function_space.dofmap.dof_layout
     for dimension, incidents in entity_incidents.items():
         cell_to_entity = topology.connectivity(topology.dim, dimension)
         for entity, cell in incidents:
