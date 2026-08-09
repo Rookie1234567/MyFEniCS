@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -63,6 +64,14 @@ def _make_run(tmp_path: Path) -> Path:
     scope = _scope()
     audit = _candidate_audit()
     measurement = _measurement()
+    runtime_identity = {
+        "_MYFENICS_WSL_QUALIFIED_ACTIVATION": "1",
+        "sys.executable": sys.executable,
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+    }
     source_dir = run_dir / "canonical" / H1R2_SOURCE_LABEL
     source_dir.mkdir(parents=True)
     packets = tuple(
@@ -101,6 +110,7 @@ def _make_run(tmp_path: Path) -> Path:
     )
     worker = {
         "schema": "task037.candidate_h.h1r2.worker.v1",
+        "runtime_identity": runtime_identity,
         "status": "pass",
         "mpi_size": 1,
         "global_rows": 4,
@@ -170,6 +180,8 @@ def _make_run(tmp_path: Path) -> Path:
         "worker_summary_evidence_sha256_valid": True,
         "worker_qualification_recomputed": qualification,
         "worker_qualification_pass": True,
+        "watchdog_runtime_identity": runtime_identity,
+        "worker_runtime_identity_match": True,
         "source_at_start": _source_identity(),
         "source_at_end": _source_identity(),
         "source_stable_clean": True,
@@ -221,6 +233,17 @@ def test_h1r2_checker_recomputes_good_raw_and_binds_compact_evidence(tmp_path):
     assert compact["memory_authority"]["review_v4_peak_gate_pass"] is True
     assert compact["memory_authority"]["user_lt_2GB_target_evaluated"] is True
     assert compact["memory_authority"]["user_lt_2GB_target_pass"] is True
+    runtime = compact["runtime_identity"]
+    assert runtime["match"] is True
+    for identity in (runtime["watchdog"], runtime["worker"]):
+        assert identity["_MYFENICS_WSL_QUALIFIED_ACTIVATION"] == "1"
+        assert identity["sys.executable"] == _load(
+            run_dir / "watchdog_summary.json"
+        )["command"][3]
+        assert identity["OMP_NUM_THREADS"] == "1"
+        assert identity["OPENBLAS_NUM_THREADS"] == "1"
+        assert identity["MKL_NUM_THREADS"] == "1"
+        assert identity["NUMEXPR_NUM_THREADS"] == "1"
     assert compact["source_identity"]["source_commit_full_sha"] == "a" * 40
     for relative_path in (
         "worker_stdout.txt",
@@ -277,6 +300,7 @@ def test_h1r2_wall_is_diagnostic_when_completion_is_within_gate(tmp_path):
         "swap",
         "source",
         "worker_evidence",
+        "runtime",
         "timeline_hash",
         "embedded_pass",
         "status_closure",
@@ -332,6 +356,18 @@ def test_h1r2_checker_rejects_representative_raw_mutations(tmp_path, mutation):
         worker = _load(worker_path)
         worker["evidence_sha256"] = "0" * 64
         _write_json(worker_path, worker)
+    elif mutation == "runtime":
+        worker_path = run_dir / "run_summary.json"
+        worker = _load(worker_path)
+        worker["runtime_identity"]["OMP_NUM_THREADS"] = "2"
+        worker = attach_evidence_sha256(worker)
+        _write_json(worker_path, worker)
+        _rewrite_watchdog(
+            run_dir,
+            lambda raw: raw.update(
+                {"raw_artifacts": _h1r2_file_metadata(run_dir)}
+            ),
+        )
     elif mutation == "timeline_hash":
         timeline_path = run_dir / "watchdog_timeline.jsonl"
         with timeline_path.open("a", encoding="utf-8") as stream:

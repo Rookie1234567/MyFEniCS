@@ -75,6 +75,34 @@ def _h1r2_source_definition_hash(definition: dict[str, Any]) -> str:
     ).hexdigest()
 
 
+def _h1r2_runtime_identity() -> dict[str, str | None]:
+    return {
+        "_MYFENICS_WSL_QUALIFIED_ACTIVATION": os.environ.get(
+            "_MYFENICS_WSL_QUALIFIED_ACTIVATION"
+        ),
+        "sys.executable": sys.executable,
+        "OMP_NUM_THREADS": os.environ.get("OMP_NUM_THREADS"),
+        "OPENBLAS_NUM_THREADS": os.environ.get("OPENBLAS_NUM_THREADS"),
+        "MKL_NUM_THREADS": os.environ.get("MKL_NUM_THREADS"),
+        "NUMEXPR_NUM_THREADS": os.environ.get("NUMEXPR_NUM_THREADS"),
+    }
+
+
+def _h1r2_runtime_identity_is_valid(
+    identity: object,
+) -> bool:
+    return bool(
+        isinstance(identity, dict)
+        and isinstance(identity.get("sys.executable"), str)
+        and identity.get("sys.executable")
+        and identity.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION") == "1"
+        and identity.get("OMP_NUM_THREADS") == "1"
+        and identity.get("OPENBLAS_NUM_THREADS") == "1"
+        and identity.get("MKL_NUM_THREADS") == "1"
+        and identity.get("NUMEXPR_NUM_THREADS") == "1"
+    )
+
+
 SOURCE_DEFINITIONS = {
     "seed_17037": {
         "seed": 17037,
@@ -1286,6 +1314,7 @@ def run_worker(
             )
         global_rows = int(candidate.audit["global_rows"])
         constraint_count = int(floquet.num_constraints)
+        runtime_identity = _h1r2_runtime_identity() if h1r2 else None
         emit_progress("worker_summary_started")
         if comm.rank == 0:
             if h1r2:
@@ -1316,6 +1345,7 @@ def run_worker(
                 )
                 summary = {
                     "schema": "task037.candidate_h.h1r2.worker.v1",
+                    "runtime_identity": runtime_identity,
                     "status": (
                         "pass" if qualification["pass"] else "gate_failed"
                     ),
@@ -1526,6 +1556,9 @@ def run_watchdog(args, *, mode: str = "h1_2") -> int:
     stdout_path = run_dir / "worker_stdout.txt"
     timeline_path = run_dir / "watchdog_timeline.jsonl"
     command = _watchdog_command(args, mode=mode)
+    watchdog_runtime_identity = (
+        _h1r2_runtime_identity() if h1r2 else None
+    )
     source_at_start = _inspect_candidate_source()
     started = time.perf_counter()
     controlled_stop = None
@@ -1598,6 +1631,15 @@ def run_watchdog(args, *, mode: str = "h1_2") -> int:
         json.loads(summary_path.read_text(encoding="utf-8"))
         if summary_path.exists()
         else None
+    )
+    worker_runtime_identity = (
+        worker_summary.get("runtime_identity")
+        if h1r2 and worker_summary is not None
+        else None
+    )
+    worker_runtime_identity_match = bool(
+        h1r2
+        and worker_runtime_identity == watchdog_runtime_identity
     )
     source_start_json = source_at_start.as_jsonable()
     source_end_json = source_at_end.as_jsonable()
@@ -1672,6 +1714,11 @@ def run_watchdog(args, *, mode: str = "h1_2") -> int:
                 and completion_elapsed_seconds <= timeout_seconds
                 and worker_summary_evidence_sha256_valid
                 and worker_qualification_recomputed is not None
+                and _h1r2_runtime_identity_is_valid(
+                    watchdog_runtime_identity
+                )
+                and _h1r2_runtime_identity_is_valid(worker_runtime_identity)
+                and worker_runtime_identity_match
             )
         )
     )
@@ -1710,6 +1757,8 @@ def run_watchdog(args, *, mode: str = "h1_2") -> int:
             ),
             "worker_qualification_recomputed": worker_qualification_recomputed,
             "worker_qualification_pass": worker_qualification_pass,
+            "watchdog_runtime_identity": watchdog_runtime_identity,
+            "worker_runtime_identity_match": worker_runtime_identity_match,
             "source_at_start": source_start_json,
             "source_at_end": source_end_json,
             "source_stable_clean": source_stable_clean,
@@ -1803,6 +1852,26 @@ def _h1r2_check_raw(run_dir: Path) -> dict[str, Any]:
     expected_command = _watchdog_command(
         SimpleNamespace(run_dir=run_dir), mode="h1r2"
     )
+    watchdog_runtime_identity = watchdog.get("watchdog_runtime_identity")
+    worker_runtime_identity = worker.get("runtime_identity")
+    command = watchdog.get("command")
+    runtime_identity_checks = {
+        "watchdog_values": _h1r2_runtime_identity_is_valid(
+            watchdog_runtime_identity
+        ),
+        "worker_values": _h1r2_runtime_identity_is_valid(
+            worker_runtime_identity
+        ),
+        "identical": worker_runtime_identity == watchdog_runtime_identity,
+        "command_python_executable": (
+            isinstance(command, list)
+            and len(command) > 3
+            and command[3] == watchdog_runtime_identity.get("sys.executable")
+            if isinstance(watchdog_runtime_identity, dict)
+            else False
+        ),
+        "recorded_match": watchdog.get("worker_runtime_identity_match") is True,
+    }
     timeout = H1R2_TIMEOUT_SECONDS
     rss_limit = H1_RSS_LIMIT_BYTES
     expected_manifest_path = (
@@ -2004,6 +2073,10 @@ def _h1r2_check_raw(run_dir: Path) -> dict[str, Any]:
         **{f"timeline.{name}": value for name, value in timeline_checks.items()},
         **{f"worker.{name}": value for name, value in worker_checks.items()},
         **{
+            f"runtime.{name}": value
+            for name, value in runtime_identity_checks.items()
+        },
+        **{
             f"canonical.{name}": value
             for name, value in canonical_checks.items()
         },
@@ -2072,6 +2145,7 @@ def _h1r2_check_raw(run_dir: Path) -> dict[str, Any]:
         "source_checks": source_checks,
         "timeline_checks": timeline_checks,
         "worker_checks": worker_checks,
+        "runtime_identity_checks": runtime_identity_checks,
         "canonical_checks": canonical_checks,
         "worker_qualification_recomputed": fresh_qualification,
         "raw_run_directory": str(run_dir),
@@ -2087,6 +2161,11 @@ def _h1r2_check_raw(run_dir: Path) -> dict[str, Any]:
         "embedded_evidence_sha256": {
             "worker_summary": worker.get("evidence_sha256"),
             "watchdog_summary": watchdog.get("evidence_sha256"),
+        },
+        "runtime_identity": {
+            "watchdog": watchdog_runtime_identity,
+            "worker": worker_runtime_identity,
+            "match": watchdog.get("worker_runtime_identity_match"),
         },
         "measurement": compact_measurement,
         "memory_authority": _h1r2_memory_authority(timeline_peak_for_authority),
