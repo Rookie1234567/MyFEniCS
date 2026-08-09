@@ -125,9 +125,12 @@ def _cell_local_global_dofs(function_space, cell: int) -> np.ndarray:
 
 
 def _scatter_values(
-    vector: PETSc.Vec, global_ids: set[int]
+    vector: PETSc.Vec, global_ids: Iterable[int] | np.ndarray
 ) -> tuple[np.ndarray, np.ndarray]:
-    indices = np.asarray(sorted(global_ids), dtype=PETSc.IntType)
+    indices = np.asarray(
+        global_ids if isinstance(global_ids, np.ndarray) else sorted(global_ids),
+        dtype=PETSc.IntType,
+    )
     source = PETSc.Vec().createSeq(len(indices), comm=PETSc.COMM_SELF)
     global_is = PETSc.IS().createGeneral(indices, comm=PETSc.COMM_SELF)
     local_is = PETSc.IS().createStride(
@@ -404,21 +407,15 @@ def iter_canonical_full_fe_packets(
         dimension: _owned_entity_incidents(function_space, dimension)
         for dimension in (1, 2)
     }
-    cells = set(int(cell) for cell in range(int(owned_cells[0])))
-    cells.update(
-        int(cell)
-        for incidents in entity_incidents.values()
-        for _entity, cell in incidents
+    index_map = function_space.dofmap.index_map
+    all_local_dofs = np.arange(
+        int(index_map.size_local) + int(index_map.num_ghosts), dtype=np.int32
     )
-    full_ids = set()
-    for cell in cells:
-        full_ids.update(
-            int(value) for value in _cell_local_global_dofs(function_space, cell)
-        )
-    union_ids, union_values = _scatter_values(vector, full_ids)
-    values_by_global = {
-        int(value): union_values[index] for index, value in enumerate(union_ids)
-    }
+    union_ids = np.asarray(
+        index_map.local_to_global(all_local_dofs), dtype=PETSc.IntType
+    )
+    union_ids.sort()
+    union_ids, union_values = _scatter_values(vector, union_ids)
     layout = function_space.dofmap.dof_layout
     for dimension, incidents in entity_incidents.items():
         cell_to_entity = topology.connectivity(topology.dim, dimension)
@@ -435,12 +432,8 @@ def iter_canonical_full_fe_packets(
             local_dofs = np.asarray(
                 function_space.dofmap.cell_dofs(cell), dtype=np.int32
             )
-            values = np.asarray(
-                [
-                    values_by_global[int(value)]
-                    for value in _global_dofs(function_space, local_dofs[positions])
-                ]
-            )
+            global_dofs = _global_dofs(function_space, local_dofs[positions])
+            values = union_values[np.searchsorted(union_ids, global_dofs)]
             coords = _entity_coordinates(function_space, dimension, entity)
             (
                 canonical_values,
@@ -467,9 +460,7 @@ def iter_canonical_full_fe_packets(
     for cell in range(int(owned_cells[0])):
         local_dofs = np.asarray(function_space.dofmap.cell_dofs(cell), dtype=np.int32)
         global_dofs = _global_dofs(function_space, local_dofs)
-        local_values = np.asarray(
-            [values_by_global[int(value)] for value in global_dofs]
-        )
+        local_values = union_values[np.searchsorted(union_ids, global_dofs)]
         canonical_values = np.ascontiguousarray(local_values)
         function_space.element.Tt_apply(
             canonical_values,
