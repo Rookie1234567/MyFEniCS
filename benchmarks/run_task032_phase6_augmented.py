@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import argparse
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from datetime import datetime, timezone
 import gc
 import hashlib
@@ -528,6 +528,7 @@ def _write_canonical_manifest_exports(
     comm: MPI.Intracomm,
     prefix: str,
     sides: tuple[str, ...] = ("bottom", "top"),
+    stream_packets: bool = False,
 ) -> dict[str, Any]:
     from benchmarks.canonical_vector_artifacts import (
         MANIFEST_SCHEMA,
@@ -538,6 +539,8 @@ def _write_canonical_manifest_exports(
     from src.solvers.hcurl_canonical_vector_dolfinx import (
         extract_canonical_active_trace_packets,
         extract_canonical_full_fe_packets,
+        iter_canonical_active_trace_packets,
+        iter_canonical_full_fe_packets,
     )
 
     if comm.rank == 0:
@@ -561,39 +564,79 @@ def _write_canonical_manifest_exports(
         condensed = system.static_condensation.condensed
         side_exports: dict[str, Any] = {}
         for packet_role in ("active_trace", "full_fe"):
-            if packet_role == "active_trace":
-                with _canonical_active_trace_view(
-                    active_solution, condensed
-                ) as trace_solution:
-                    packets, audit = extract_canonical_active_trace_packets(
-                        condensed,
+            packet_context = (
+                _canonical_active_trace_view(active_solution, condensed)
+                if packet_role == "active_trace"
+                else nullcontext(recovered_field.electric_field.x.petsc_vec)
+            )
+            with packet_context as packet_source:
+                if packet_role == "active_trace":
+                    if stream_packets:
+                        packets = iter_canonical_active_trace_packets(
+                            condensed,
+                            system.V,
+                            system.floquet_data,
+                            packet_source,
+                        )
+                    else:
+                        packets, audit = extract_canonical_active_trace_packets(
+                            condensed,
+                            system.V,
+                            system.floquet_data,
+                            packet_source,
+                        )
+                elif stream_packets:
+                    packets = iter_canonical_full_fe_packets(
                         system.V,
+                        packet_source,
                         system.floquet_data,
-                        trace_solution,
                     )
-            else:
-                packets, audit = extract_canonical_full_fe_packets(
-                    system.V,
-                    recovered_field.electric_field.x.petsc_vec,
-                    system.floquet_data,
+                else:
+                    packets, audit = extract_canonical_full_fe_packets(
+                        system.V,
+                        packet_source,
+                        system.floquet_data,
+                    )
+                shard_path = run_dir / (
+                    f"{prefix}_{side}_{packet_role}_canonical_rank{comm.rank:04d}.jsonl"
                 )
-            packet_finite = bool(
-                all(
-                    np.isfinite(complex(value).real)
-                    and np.isfinite(complex(value).imag)
-                    for _key, value in packets
+                shard = write_canonical_packet_shard(
+                    shard_path,
+                    packets,
+                    audit_packets=stream_packets,
                 )
-            )
-            if not packet_finite or int(audit["local_duplicate_count"]) != 0:
-                raise RuntimeError(f"{side} {packet_role} canonical audit failed.")
-            shard_path = run_dir / (
-                f"{prefix}_{side}_{packet_role}_canonical_rank{comm.rank:04d}.jsonl"
-            )
-            shard = write_canonical_packet_shard(shard_path, packets)
+                if stream_packets:
+                    packet_finite = bool(shard.pop("packet_finite"))
+                    local_duplicate_count = int(shard.pop("local_duplicate_count"))
+                    local_packet_count = int(shard["packet_count"])
+                    audit = {
+                        "role": packet_role,
+                        "local_packet_count": local_packet_count,
+                        "local_duplicate_count": local_duplicate_count,
+                        "global_packet_count": int(
+                            comm.allreduce(local_packet_count, op=MPI.SUM)
+                        ),
+                        "summed_local_duplicate_count": int(
+                            comm.allreduce(local_duplicate_count, op=MPI.SUM)
+                        ),
+                        "trace_mass_norm": "not_qualified",
+                        "hcurl_norm": "not_qualified",
+                    }
+                else:
+                    packet_finite = bool(
+                        all(
+                            np.isfinite(complex(value).real)
+                            and np.isfinite(complex(value).imag)
+                            for _key, value in packets
+                        )
+                    )
+                    local_duplicate_count = int(audit["local_duplicate_count"])
+                if not packet_finite or local_duplicate_count != 0:
+                    raise RuntimeError(f"{side} {packet_role} canonical audit failed.")
             shard.update(
                 {
                     "rank": int(comm.rank),
-                    "local_duplicate_count": int(audit["local_duplicate_count"]),
+                    "local_duplicate_count": local_duplicate_count,
                     "extractor_audit": audit,
                     "packet_finite": packet_finite,
                 }
@@ -4075,6 +4118,7 @@ def _run_v4_full_solve(
                                 comm=comm,
                                 prefix="task037b_v4",
                                 sides=(side,),
+                                stream_packets=True,
                             )
                             canonical_exports.update(side_exports)
                             del side_exports

@@ -8,7 +8,7 @@ standard physical norm audit are opt-in offline comparator operations.
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 from typing import Any
 
 import numpy as np
@@ -37,6 +37,8 @@ from .hcurl_canonical_vector import (
 )
 
 __all__ = (
+    "iter_canonical_active_trace_packets",
+    "iter_canonical_full_fe_packets",
     "extract_canonical_active_trace_packets",
     "extract_canonical_full_fe_packets",
     "reconstruct_canonical_full_fe_function",
@@ -274,12 +276,12 @@ def _packet_audit(
     }
 
 
-def extract_canonical_active_trace_packets(
+def iter_canonical_active_trace_packets(
     condensed: AssemblyTimeCondensedSystem,
     function_space,
     floquet_data,
     active_vec: PETSc.Vec,
-) -> tuple[tuple[CanonicalPacket, ...], dict[str, Any]]:
+) -> Iterator[CanonicalPacket]:
     """Expand active trace rows and emit one owner-local packet per edge/face."""
 
     degree, trace_positions, _interior_positions = _space_data(function_space)
@@ -307,7 +309,6 @@ def extract_canonical_active_trace_packets(
                 active_union.update(int(value) for value in active_ids)
     union_ids, union_values = _scatter_values(active_vec, active_union)
     union_positions = {int(value): index for index, value in enumerate(union_ids)}
-    packets = []
     layout = function_space.dofmap.dof_layout
     for dimension in (1, 2):
         for entity, cell in _owned_entity_incidents(function_space, dimension):
@@ -341,31 +342,41 @@ def extract_canonical_active_trace_packets(
                 values, coords, dimension, degree, tolerance, relations
             )
             for basis, value in enumerate(canonical_values):
-                packets.append(
-                    canonical_packet(
-                        canonical_key(
-                            role="active_trace",
-                            entity_dimension=dimension,
-                            physical_entity=physical_key,
-                            entity_local_basis_index=basis,
-                            orientation_state=state,
-                            floquet_master=floquet_master,
-                            floquet_coefficient=phase,
-                        ),
-                        value,
-                    )
+                yield canonical_packet(
+                    canonical_key(
+                        role="active_trace",
+                        entity_dimension=dimension,
+                        physical_entity=physical_key,
+                        entity_local_basis_index=basis,
+                        orientation_state=state,
+                        floquet_master=floquet_master,
+                        floquet_coefficient=phase,
+                    ),
+                    value,
                 )
-    packets = tuple(packets)
+
+
+def extract_canonical_active_trace_packets(
+    condensed: AssemblyTimeCondensedSystem,
+    function_space,
+    floquet_data,
+    active_vec: PETSc.Vec,
+) -> tuple[tuple[CanonicalPacket, ...], dict[str, Any]]:
+    packets = tuple(
+        iter_canonical_active_trace_packets(
+            condensed, function_space, floquet_data, active_vec
+        )
+    )
     return packets, _packet_audit(
         packets, function_space.mesh.comm, role="active_trace"
     )
 
 
-def extract_canonical_full_fe_packets(
+def iter_canonical_full_fe_packets(
     function_space,
     recovered_vec,
     floquet_data,
-) -> tuple[tuple[CanonicalPacket, ...], dict[str, Any]]:
+) -> Iterator[CanonicalPacket]:
     """Emit owner-local edge/face and cell-interior packets from a full field."""
 
     degree, _trace_positions, interior_positions = _space_data(function_space)
@@ -397,7 +408,6 @@ def extract_canonical_full_fe_packets(
         int(value): union_values[index] for index, value in enumerate(union_ids)
     }
     layout = function_space.dofmap.dof_layout
-    packets = []
     for dimension, incidents in entity_incidents.items():
         cell_to_entity = topology.connectivity(topology.dim, dimension)
         for entity, cell in incidents:
@@ -429,8 +439,8 @@ def extract_canonical_full_fe_packets(
             ) = _canonical_entity_values(
                 values, coords, dimension, degree, tolerance, relations
             )
-            packets.extend(
-                canonical_packet(
+            for basis, value in enumerate(canonical_values):
+                yield canonical_packet(
                     canonical_key(
                         role="full_fe",
                         entity_dimension=dimension,
@@ -442,8 +452,6 @@ def extract_canonical_full_fe_packets(
                     ),
                     value,
                 )
-                for basis, value in enumerate(canonical_values)
-            )
     for cell in range(int(owned_cells[0])):
         local_dofs = np.asarray(function_space.dofmap.cell_dofs(cell), dtype=np.int32)
         global_dofs = _global_dofs(function_space, local_dofs)
@@ -458,8 +466,8 @@ def extract_canonical_full_fe_packets(
         )
         coords = _entity_coordinates(function_space, 3, cell)
         physical_key = canonical_entity_key(coords, tolerance)
-        packets.extend(
-            canonical_packet(
+        for basis, value in enumerate(canonical_values[interior_positions]):
+            yield canonical_packet(
                 canonical_key(
                     role="full_fe",
                     entity_dimension=3,
@@ -469,9 +477,16 @@ def extract_canonical_full_fe_packets(
                 ),
                 value,
             )
-            for basis, value in enumerate(canonical_values[interior_positions])
-        )
-    packets = tuple(packets)
+
+
+def extract_canonical_full_fe_packets(
+    function_space,
+    recovered_vec,
+    floquet_data,
+) -> tuple[tuple[CanonicalPacket, ...], dict[str, Any]]:
+    packets = tuple(
+        iter_canonical_full_fe_packets(function_space, recovered_vec, floquet_data)
+    )
     return packets, _packet_audit(packets, function_space.mesh.comm, role="full_fe")
 
 

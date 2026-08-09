@@ -26,6 +26,8 @@ from src.solvers.hcurl_canonical_vector import (
 from src.solvers.hcurl_canonical_vector_dolfinx import (
     extract_canonical_active_trace_packets,
     extract_canonical_full_fe_packets,
+    iter_canonical_active_trace_packets,
+    iter_canonical_full_fe_packets,
 )
 from src.test.test_226_task037_canonical_vector_dolfinx import (
     _active_from_field,
@@ -189,6 +191,63 @@ def test_deterministic_manifest_and_controlled_comparison_failures(tmp_path: Pat
     assert duplicate_failed["duplicate_left_count"]
 
 
+def test_streamed_packet_audit_preserves_default_bytes_and_metadata(tmp_path: Path):
+    packets = _packets()
+    old_path = tmp_path / "old.jsonl"
+    stream_path = tmp_path / "stream.jsonl"
+    old = write_canonical_packet_shard(old_path, packets)
+
+    class _OneShotIterable:
+        def __init__(self, rows):
+            self.rows = rows
+            self.iteration_count = 0
+            self.yield_count = 0
+
+        def __iter__(self):
+            if self.iteration_count:
+                raise AssertionError("streamed packets were iterated twice")
+            self.iteration_count += 1
+            for row in self.rows:
+                self.yield_count += 1
+                yield row
+
+    one_shot = _OneShotIterable(packets)
+    streamed = write_canonical_packet_shard(
+        stream_path,
+        one_shot,
+        audit_packets=True,
+    )
+    assert one_shot.iteration_count == 1
+    assert one_shot.yield_count == len(packets)
+    assert set(old) == {
+        "filename",
+        "packet_count",
+        "file_sha256",
+        "key_digest_algorithm",
+        "dtype",
+        "schema_version",
+    }
+    assert old_path.read_bytes() == stream_path.read_bytes()
+    assert streamed["file_sha256"] == old["file_sha256"]
+    assert streamed["packet_count"] == old["packet_count"]
+    assert streamed["packet_finite"] is True
+    assert streamed["local_duplicate_count"] == 0
+    assert read_canonical_packet_shard(stream_path, streamed["file_sha256"]) == packets
+
+    duplicate = write_canonical_packet_shard(
+        tmp_path / "stream_duplicate.jsonl",
+        (packet for packet in packets + packets[:1]),
+        audit_packets=True,
+    )
+    assert duplicate["local_duplicate_count"] == 1
+    nonfinite = write_canonical_packet_shard(
+        tmp_path / "stream_nonfinite.jsonl",
+        ((packets[0][0], complex(float("nan"))),),
+        audit_packets=True,
+    )
+    assert nonfinite["packet_finite"] is False
+
+
 def test_serial_hexa_extraction_artifact_roundtrip(tmp_path: Path):
     _mesh, function_space, condensed = _static_fixture(MPI.COMM_SELF)
     field = fem.Function(function_space)
@@ -199,9 +258,26 @@ def test_serial_hexa_extraction_artifact_roundtrip(tmp_path: Path):
         extract_canonical_active_trace_packets(condensed, function_space, None, active),
         extract_canonical_full_fe_packets(function_space, field.x.petsc_vec, None),
     )
+    streamed = (
+        iter_canonical_active_trace_packets(condensed, function_space, None, active),
+        iter_canonical_full_fe_packets(function_space, field.x.petsc_vec, None),
+    )
     results = {}
-    for role, (packets, audit) in zip(("active_trace", "full_fe"), extracted):
-        shard = write_canonical_packet_shard(tmp_path / f"{role}.jsonl", packets)
+    for index, (role, (packets, audit)) in enumerate(
+        zip(("active_trace", "full_fe"), extracted)
+    ):
+        shard_path = tmp_path / f"{role}.jsonl"
+        shard = write_canonical_packet_shard(shard_path, packets)
+        stream_path = tmp_path / f"{role}.stream.jsonl"
+        stream_shard = write_canonical_packet_shard(
+            stream_path,
+            streamed[index],
+            audit_packets=True,
+        )
+        assert stream_path.read_bytes() == shard_path.read_bytes()
+        assert stream_shard["packet_count"] == shard["packet_count"]
+        assert stream_shard["packet_finite"] is True
+        assert stream_shard["local_duplicate_count"] == audit["local_duplicate_count"]
         manifest = canonical_shard_manifest(
             role=role,
             mpi_size=1,
@@ -244,6 +320,10 @@ def test_mpi2_owner_local_shards_roundtrip():
         extract_canonical_active_trace_packets(condensed, function_space, None, active),
         extract_canonical_full_fe_packets(function_space, field.x.petsc_vec, None),
     )
+    streamed = (
+        iter_canonical_active_trace_packets(condensed, function_space, None, active),
+        iter_canonical_full_fe_packets(function_space, field.x.petsc_vec, None),
+    )
     reference = None
     if comm.rank == 0:
         _ref_mesh, ref_space, ref_condensed = _static_fixture(MPI.COMM_SELF)
@@ -263,10 +343,19 @@ def test_mpi2_owner_local_shards_roundtrip():
         ref_condensed.destroy()
     root_path = tempfile.mkdtemp(prefix="task037-c1-mpi2-") if comm.rank == 0 else None
     root_path = Path(comm.bcast(root_path, root=0))
-    for role, (packets, audit) in zip(("active_trace", "full_fe"), extracted):
+    for index, (role, (packets, audit)) in enumerate(
+        zip(("active_trace", "full_fe"), extracted)
+    ):
         shard = write_canonical_packet_shard(
-            root_path / f"{role}_rank{comm.rank}.jsonl", packets
+            root_path / f"{role}_rank{comm.rank}.jsonl",
+            streamed[index],
+            audit_packets=True,
         )
+        assert shard["packet_count"] == audit["local_packet_count"]
+        assert shard["packet_finite"] is True
+        assert shard["local_duplicate_count"] == audit["local_duplicate_count"]
+        shard.pop("packet_finite")
+        shard.pop("local_duplicate_count")
         shard.update(
             rank=comm.rank,
             local_duplicate_count=audit["local_duplicate_count"],

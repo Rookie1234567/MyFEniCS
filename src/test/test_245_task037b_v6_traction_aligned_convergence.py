@@ -173,6 +173,7 @@ def test_v6_recovery_heap_cleanup_order_is_v6_only():
 def test_v6_canonical_heap_cleanup_is_side_scoped_and_ordered():
     writer = inspect.signature(_write_canonical_manifest_exports)
     assert writer.parameters["sides"].default == ("bottom", "top")
+    assert writer.parameters["stream_packets"].default is False
     source = inspect.getsource(augmented._run_v4_full_solve)
     canonical_source = source[source.index("canonical_exports = {}") :]
     side_loop = canonical_source.index('for side in ("bottom", "top"):')
@@ -202,6 +203,7 @@ def test_v6_canonical_heap_cleanup_is_side_scoped_and_ordered():
     assert canonical_source.count("sides=(side,)") == 1
     assert source.count("v6_{side}_canonical_heap_cleanup_started") == 1
     assert source.count("v6_{side}_canonical_heap_cleanup_finished") == 1
+    assert canonical_source.count("stream_packets=True") == 1
     assert _parse_args([]).task037b_v6_gate is False
 
 
