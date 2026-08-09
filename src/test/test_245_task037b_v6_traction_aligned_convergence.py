@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from pathlib import Path
 
 import numpy as np
@@ -7,6 +8,7 @@ from mpi4py import MPI
 from petsc4py import PETSc
 
 import benchmarks.run_task033_memory_watchdog as watchdog
+import benchmarks.run_task032_phase6_augmented as augmented
 from benchmarks.run_task032_phase6_augmented import (
     _parse_args,
     _v6_collective_heap_cleanup,
@@ -144,6 +146,27 @@ def test_v6_collective_heap_cleanup_records_calls_without_page_release_gate():
         assert "rss_released_mb" in rank_audit
         assert "allocator_reported_pages_released" in rank_audit
     assert audit["petsc_garbage_cleanup_called"] is True
+
+
+def test_v6_recovery_heap_cleanup_order_is_v6_only():
+    source = inspect.getsource(augmented._run_v4_full_solve)
+    bottom_recovery = source.index(
+        "bottom_recovered = recover_hybrid_static_local_field("
+    )
+    bottom_cleanup = source.index(
+        'record_stage("v6_bottom_recovery_heap_cleanup_started")'
+    )
+    top_recovery = source.index("top_recovered = recover_hybrid_static_local_field(")
+    top_cleanup = source.index('record_stage("v6_top_recovery_heap_cleanup_started")')
+    physical_carrier = source.index(
+        "physical_solution = HybridBlockLduPhysicalSolution("
+    )
+    assert bottom_recovery < bottom_cleanup < top_recovery < top_cleanup
+    assert top_cleanup < physical_carrier
+    assert source.count("v6_bottom_recovery_heap_cleanup_started") == 1
+    assert source.count("v6_top_recovery_heap_cleanup_started") == 1
+    assert "if is_v6:" in source[bottom_cleanup - 80 : bottom_cleanup]
+    assert _parse_args([]).task037b_v6_gate is False
 
 
 def test_v6_early_qep_release_destroys_once_and_records_cleanup():

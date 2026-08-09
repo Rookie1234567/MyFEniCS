@@ -3638,6 +3638,7 @@ def _run_v4_full_solve(
             record_stage("v6_pre_recovery_heap_cleanup_finished")
             if not pre_recovery_cleanup["release_pass"]:
                 raise RuntimeError("V6 pre-recovery collective cleanup failed.")
+            v5_multimetric_telemetry["recovery_heap_cleanup_by_side"] = {}
         if numerical_pass:
             record["v4_telemetry"]["recovery_phase"] = "external_auxiliary"
             record_stage("candidate_field_recovery")
@@ -3676,6 +3677,22 @@ def _run_v4_full_solve(
                 candidate_modal,
                 auxiliary_override=bottom_auxiliary,
             )
+            if is_v6:
+                record_stage("v6_bottom_recovery_heap_cleanup_started")
+                bottom_recovery_cleanup = _v6_collective_heap_cleanup(comm)
+                bottom_recovery_cleanup["status"] = "measured"
+                bottom_recovery_cleanup["release_pass"] = bool(
+                    bottom_recovery_cleanup["collective_call_completed"]
+                )
+                timings["v6_bottom_recovery_heap_cleanup"] = bottom_recovery_cleanup[
+                    "elapsed_seconds_max_rank"
+                ]
+                v5_multimetric_telemetry["recovery_heap_cleanup_by_side"]["bottom"] = (
+                    bottom_recovery_cleanup
+                )
+                record_stage("v6_bottom_recovery_heap_cleanup_finished")
+                if not bottom_recovery_cleanup["release_pass"]:
+                    raise RuntimeError("V6 bottom recovery collective cleanup failed.")
             top_recovered = recover_hybrid_static_local_field(
                 top,
                 coupling,
@@ -3683,6 +3700,22 @@ def _run_v4_full_solve(
                 candidate_modal,
                 auxiliary_override=top_auxiliary,
             )
+            if is_v6:
+                record_stage("v6_top_recovery_heap_cleanup_started")
+                top_recovery_cleanup = _v6_collective_heap_cleanup(comm)
+                top_recovery_cleanup["status"] = "measured"
+                top_recovery_cleanup["release_pass"] = bool(
+                    top_recovery_cleanup["collective_call_completed"]
+                )
+                timings["v6_top_recovery_heap_cleanup"] = top_recovery_cleanup[
+                    "elapsed_seconds_max_rank"
+                ]
+                v5_multimetric_telemetry["recovery_heap_cleanup_by_side"]["top"] = (
+                    top_recovery_cleanup
+                )
+                record_stage("v6_top_recovery_heap_cleanup_finished")
+                if not top_recovery_cleanup["release_pass"]:
+                    raise RuntimeError("V6 top recovery collective cleanup failed.")
             physical_solution = HybridBlockLduPhysicalSolution(
                 bottom=candidate_bottom,
                 top=candidate_top,
