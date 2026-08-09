@@ -371,6 +371,216 @@ def _h1_owned_vec_digest(vector: PETSc.Vec) -> dict[str, Any]:
     return comm.bcast(summary, root=0)
 
 
+def _array_descriptor(values: Any) -> dict[str, Any]:
+    array = np.ascontiguousarray(np.asarray(values, dtype=np.complex128))
+    return {
+        "shape": [int(value) for value in array.shape],
+        "dtype": "complex128",
+        "bytes": int(array.nbytes),
+        "sha256": hashlib.sha256(array.tobytes(order="C")).hexdigest(),
+    }
+
+
+def _write_authority_grid_payload(
+    path: Path,
+    *,
+    sample_x: np.ndarray,
+    sample_y: np.ndarray,
+    sample_z: np.ndarray,
+    electric: np.ndarray,
+    magnetic: np.ndarray,
+    modal: np.ndarray,
+    bottom_q: np.ndarray,
+    top_q: np.ndarray,
+    schema: str,
+) -> dict[str, Any]:
+    arrays = {
+        "E_V_per_m": np.asarray(electric, dtype=np.complex128),
+        "H_A_per_m": np.asarray(magnetic, dtype=np.complex128),
+        "modal_amplitudes": np.asarray(modal, dtype=np.complex128),
+        "bottom_q": np.asarray(bottom_q, dtype=np.complex128),
+        "top_q": np.asarray(top_q, dtype=np.complex128),
+    }
+    expected_shapes = {
+        "E_V_per_m": (5, 20, 40, 3),
+        "H_A_per_m": (5, 20, 40, 3),
+        "modal_amplitudes": (240,),
+        "bottom_q": (40,),
+        "top_q": (40,),
+    }
+    if any(
+        value.shape != expected_shapes[name] or not np.all(np.isfinite(value))
+        for name, value in arrays.items()
+    ):
+        raise RuntimeError("Authority payload has invalid shape or nonfinite values.")
+    if (
+        np.asarray(sample_x).shape != (40,)
+        or np.asarray(sample_y).shape != (20,)
+        or np.asarray(sample_z).shape != (5,)
+    ):
+        raise RuntimeError("Authority selected grid must be 5x20x40.")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(
+        path,
+        x_nm=np.asarray(sample_x, dtype=np.float64),
+        y_nm=np.asarray(sample_y, dtype=np.float64),
+        z_nm=np.asarray(sample_z, dtype=np.float64),
+        **arrays,
+    )
+    try:
+        label = str(path.resolve().relative_to(ROOT))
+    except ValueError:
+        label = str(path.resolve())
+    return {
+        "path": label,
+        "sha256": _sha256(path),
+        "bytes": int(path.stat().st_size),
+        "schema": schema,
+        "rank0_only": True,
+        "arrays": {name: _array_descriptor(value) for name, value in arrays.items()},
+    }
+
+
+def _write_canonical_manifest_exports(
+    *,
+    systems: dict[str, Any],
+    physical_solution: Any,
+    run_dir: Path,
+    comm: MPI.Intracomm,
+    prefix: str,
+) -> dict[str, Any]:
+    from benchmarks.canonical_vector_artifacts import (
+        MANIFEST_SCHEMA,
+        canonical_shard_manifest,
+        write_canonical_manifest,
+        write_canonical_packet_shard,
+    )
+    from src.solvers.hcurl_canonical_vector_dolfinx import (
+        extract_canonical_active_trace_packets,
+        extract_canonical_full_fe_packets,
+    )
+
+    if comm.rank == 0:
+        run_dir.mkdir(parents=True, exist_ok=True)
+    comm.barrier()
+    try:
+        run_dir_label = str(run_dir.resolve().relative_to(ROOT))
+    except ValueError:
+        run_dir_label = str(run_dir.resolve())
+    exports: dict[str, Any] = {}
+    for side in ("bottom", "top"):
+        system = systems[side]
+        active_solution = (
+            physical_solution.bottom if side == "bottom" else physical_solution.top
+        )
+        recovered_field = (
+            physical_solution.bottom_recovered
+            if side == "bottom"
+            else physical_solution.top_recovered
+        )
+        condensed = system.static_condensation.condensed
+        if active_solution.getSize() != int(condensed.active_rows):
+            raise RuntimeError(f"{side} active solution does not match canonical rows.")
+        side_exports: dict[str, Any] = {}
+        for packet_role in ("active_trace", "full_fe"):
+            if packet_role == "active_trace":
+                packets, audit = extract_canonical_active_trace_packets(
+                    condensed,
+                    system.V,
+                    system.floquet_data,
+                    active_solution,
+                )
+            else:
+                packets, audit = extract_canonical_full_fe_packets(
+                    system.V,
+                    recovered_field.electric_field.x.petsc_vec,
+                    system.floquet_data,
+                )
+            packet_finite = bool(
+                all(
+                    np.isfinite(complex(value).real)
+                    and np.isfinite(complex(value).imag)
+                    for _key, value in packets
+                )
+            )
+            if not packet_finite or int(audit["local_duplicate_count"]) != 0:
+                raise RuntimeError(f"{side} {packet_role} canonical audit failed.")
+            shard_path = run_dir / (
+                f"{prefix}_{side}_{packet_role}_canonical_rank{comm.rank:04d}.jsonl"
+            )
+            shard = write_canonical_packet_shard(shard_path, packets)
+            shard.update(
+                {
+                    "rank": int(comm.rank),
+                    "local_duplicate_count": int(audit["local_duplicate_count"]),
+                    "extractor_audit": audit,
+                    "packet_finite": packet_finite,
+                }
+            )
+            by_rank = comm.gather(shard, root=0)
+            if comm.rank == 0:
+                by_rank = sorted(by_rank, key=lambda item: int(item["rank"]))
+                manifest = canonical_shard_manifest(
+                    role=f"{side}_{packet_role}",
+                    mpi_size=comm.size,
+                    shard_metadata=by_rank,
+                    extractor_audit={
+                        "by_rank": [item["extractor_audit"] for item in by_rank]
+                    },
+                )
+                manifest_path = run_dir / (
+                    f"{prefix}_{side}_{packet_role}_canonical_manifest.json"
+                )
+                manifest_sha256 = write_canonical_manifest(manifest_path, manifest)
+                extractor_global_count = int(
+                    sum(
+                        int(item["extractor_audit"]["local_packet_count"])
+                        for item in by_rank
+                    )
+                )
+                manifest_audit = manifest["extractor_audit"]["by_rank"]
+                role_pass = bool(
+                    all(item["packet_finite"] for item in by_rank)
+                    and all(
+                        int(item["extractor_audit"]["local_duplicate_count"]) == 0
+                        for item in by_rank
+                    )
+                    and int(manifest["global_summed_packet_count"])
+                    == extractor_global_count
+                    and int(manifest["global_summed_packet_count"])
+                    == int(
+                        sum(int(item["local_packet_count"]) for item in manifest_audit)
+                    )
+                )
+                try:
+                    manifest_label = str(manifest_path.resolve().relative_to(ROOT))
+                except ValueError:
+                    manifest_label = str(manifest_path.resolve())
+                side_exports[packet_role] = {
+                    "manifest": manifest_label,
+                    "manifest_sha256": manifest_sha256,
+                    "schema_version": MANIFEST_SCHEMA,
+                    "global_summed_packet_count": int(
+                        manifest["global_summed_packet_count"]
+                    ),
+                    "extractor_global_packet_count": extractor_global_count,
+                    "packet_finite": all(item["packet_finite"] for item in by_rank),
+                    "local_duplicates_zero": all(
+                        int(item["extractor_audit"]["local_duplicate_count"]) == 0
+                        for item in by_rank
+                    ),
+                    "manifest_audit_count_matches": role_pass,
+                    "pass": role_pass,
+                }
+            side_exports = comm.bcast(
+                side_exports if comm.rank == 0 else None,
+                root=0,
+            )
+            del packets
+        exports[side] = {"run_directory": run_dir_label, "roles": side_exports}
+    return exports
+
+
 def _v5_snapshot_metadata(
     value: Any,
     *,
@@ -1256,6 +1466,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Open only the frozen Task037b H1 augmented MPI8 path.",
     )
     parser.add_argument(
+        "--task037b-h1-authority-export",
+        action="store_true",
+        help="Opt in to the numeric H1 direct-Hybrid authority payload export.",
+    )
+    parser.add_argument(
         "--task037b-h3-gate",
         action="store_true",
         help="Open only the frozen Task037b H3 exact block-LDU MPI8 path.",
@@ -1422,6 +1637,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error("--task037b-v6-gate requires --task037b-v5-gate.")
     if args.task037b_v6_gate and not args.task037b_v4_gate:
         parser.error("--task037b-v6-gate requires --task037b-v4-gate.")
+    if args.task037b_h1_authority_export and not args.task037b_h1_gate:
+        parser.error("--task037b-h1-authority-export requires --task037b-h1-gate.")
     if args.solver_path == "local-inverse-qualification" and not args.task037b_h5_gate:
         parser.error("local-inverse-qualification requires --task037b-h5-gate.")
     if args.solver_path == "dtn-component-qualification" and not args.task037b_v1_gate:
@@ -2487,15 +2704,6 @@ def _run_v4_full_solve(
             ),
         }
 
-    def array_descriptor(values: Any) -> dict[str, Any]:
-        array = np.ascontiguousarray(np.asarray(values))
-        return {
-            "shape": [int(value) for value in array.shape],
-            "dtype": str(array.dtype),
-            "bytes": int(array.nbytes),
-            "sha256": hashlib.sha256(array.tobytes()).hexdigest(),
-        }
-
     def external_q_identity(
         system: Any,
         active_solution: PETSc.Vec,
@@ -2540,150 +2748,6 @@ def _run_v4_full_solve(
             "finite": finite,
             "pass": bool(finite and residual <= 1.0e-10),
         }
-
-    def write_canonical_exports() -> dict[str, Any]:
-        from benchmarks.canonical_vector_artifacts import (
-            MANIFEST_SCHEMA,
-            canonical_shard_manifest,
-            write_canonical_manifest,
-            write_canonical_packet_shard,
-        )
-        from src.solvers.hcurl_canonical_vector_dolfinx import (
-            extract_canonical_active_trace_packets,
-            extract_canonical_full_fe_packets,
-        )
-
-        run_dir = Path(args.output).parent
-        if comm.rank == 0:
-            run_dir.mkdir(parents=True, exist_ok=True)
-        comm.barrier()
-        try:
-            run_dir_label = str(run_dir.resolve().relative_to(ROOT))
-        except ValueError:
-            run_dir_label = str(run_dir.resolve())
-        exports: dict[str, Any] = {}
-        for side in ("bottom", "top"):
-            system = systems[side]
-            active_solution = (
-                physical_solution.bottom if side == "bottom" else physical_solution.top
-            )
-            recovered_field = (
-                physical_solution.bottom_recovered
-                if side == "bottom"
-                else physical_solution.top_recovered
-            )
-            condensed = system.static_condensation.condensed
-            if active_solution.getSize() != int(condensed.active_rows):
-                raise RuntimeError(
-                    f"{side} active solution does not match canonical trace rows."
-                )
-            side_exports: dict[str, Any] = {}
-            for packet_role in ("active_trace", "full_fe"):
-                if packet_role == "active_trace":
-                    packets, audit = extract_canonical_active_trace_packets(
-                        condensed,
-                        system.V,
-                        system.floquet_data,
-                        active_solution,
-                    )
-                else:
-                    packets, audit = extract_canonical_full_fe_packets(
-                        system.V,
-                        recovered_field.electric_field.x.petsc_vec,
-                        system.floquet_data,
-                    )
-                packet_finite = bool(
-                    all(
-                        np.isfinite(complex(value).real)
-                        and np.isfinite(complex(value).imag)
-                        for _key, value in packets
-                    )
-                )
-                if not packet_finite or int(audit["local_duplicate_count"]) != 0:
-                    raise RuntimeError(
-                        f"{side} {packet_role} canonical packet audit failed."
-                    )
-                shard_path = run_dir / (
-                    f"task037b_v4_{side}_{packet_role}_canonical_"
-                    f"rank{comm.rank:04d}.jsonl"
-                )
-                shard = write_canonical_packet_shard(shard_path, packets)
-                shard.update(
-                    {
-                        "rank": int(comm.rank),
-                        "local_duplicate_count": int(audit["local_duplicate_count"]),
-                        "extractor_audit": audit,
-                        "packet_finite": packet_finite,
-                    }
-                )
-                by_rank = comm.gather(shard, root=0)
-                if comm.rank == 0:
-                    by_rank = sorted(by_rank, key=lambda item: int(item["rank"]))
-                    manifest = canonical_shard_manifest(
-                        role=f"{side}_{packet_role}",
-                        mpi_size=comm.size,
-                        shard_metadata=by_rank,
-                        extractor_audit={
-                            "by_rank": [item["extractor_audit"] for item in by_rank]
-                        },
-                    )
-                    manifest_path = run_dir / (
-                        f"task037b_v4_{side}_{packet_role}_canonical_manifest.json"
-                    )
-                    manifest_sha256 = write_canonical_manifest(manifest_path, manifest)
-                    extractor_global_count = int(
-                        sum(
-                            int(item["extractor_audit"]["local_packet_count"])
-                            for item in by_rank
-                        )
-                    )
-                    manifest_audit = manifest["extractor_audit"]["by_rank"]
-                    role_pass = bool(
-                        all(item["packet_finite"] for item in by_rank)
-                        and all(
-                            int(item["extractor_audit"]["local_duplicate_count"]) == 0
-                            for item in by_rank
-                        )
-                        and int(manifest["global_summed_packet_count"])
-                        == extractor_global_count
-                        and int(manifest["global_summed_packet_count"])
-                        == int(
-                            sum(
-                                int(item["local_packet_count"])
-                                for item in manifest_audit
-                            )
-                        )
-                    )
-                    try:
-                        manifest_label = str(manifest_path.resolve().relative_to(ROOT))
-                    except ValueError:
-                        manifest_label = str(manifest_path.resolve())
-                    side_exports[packet_role] = {
-                        "manifest": manifest_label,
-                        "manifest_sha256": manifest_sha256,
-                        "schema_version": MANIFEST_SCHEMA,
-                        "global_summed_packet_count": int(
-                            manifest["global_summed_packet_count"]
-                        ),
-                        "extractor_global_packet_count": extractor_global_count,
-                        "packet_finite": all(item["packet_finite"] for item in by_rank),
-                        "local_duplicates_zero": all(
-                            int(item["extractor_audit"]["local_duplicate_count"]) == 0
-                            for item in by_rank
-                        ),
-                        "manifest_audit_count_matches": role_pass,
-                        "pass": role_pass,
-                    }
-                side_exports = comm.bcast(
-                    side_exports if comm.rank == 0 else None,
-                    root=0,
-                )
-                del packets
-            exports[side] = {
-                "run_directory": run_dir_label,
-                "roles": side_exports,
-            }
-        return exports
 
     def base_record() -> dict[str, Any]:
         return {
@@ -3850,60 +3914,29 @@ def _run_v4_full_solve(
                 own_grid_path = run_dir / "v4_own_grid_EH_modal_q.npz"
                 own_grid_meta = None
                 if comm.rank == 0 and (not is_v6 or own_physics_pass):
-                    run_dir.mkdir(parents=True, exist_ok=True)
-                    modal_values = np.asarray(
-                        physical_solution.modal_amplitudes, dtype=np.complex128
-                    )
-                    bottom_q = np.asarray(bottom_auxiliary, dtype=np.complex128)
-                    top_q = np.asarray(top_auxiliary, dtype=np.complex128)
-                    if (
-                        modal_values.shape != (240,)
-                        or bottom_q.shape != (40,)
-                        or top_q.shape != (40,)
-                    ):
-                        raise RuntimeError(
-                            "V4 own-grid auxiliary/modal payload shapes are not 240/40/40."
-                        )
-                    np.savez_compressed(
+                    own_grid_meta = _write_authority_grid_payload(
                         own_grid_path,
-                        x_nm=sample_x,
-                        y_nm=sample_y,
-                        z_nm=sample_z,
-                        E_V_per_m=np.asarray(
-                            selected_planes.electric_V_per_m, dtype=np.complex128
-                        ),
-                        H_A_per_m=np.asarray(
-                            selected_planes.magnetic_A_per_m, dtype=np.complex128
-                        ),
-                        modal_amplitudes=modal_values,
-                        bottom_q=bottom_q,
-                        top_q=top_q,
+                        sample_x=sample_x,
+                        sample_y=sample_y,
+                        sample_z=sample_z,
+                        electric=selected_planes.electric_V_per_m,
+                        magnetic=selected_planes.magnetic_A_per_m,
+                        modal=physical_solution.modal_amplitudes,
+                        bottom_q=bottom_auxiliary,
+                        top_q=top_auxiliary,
+                        schema="task037b.v4-own-grid-EH-modal-q.v1",
                     )
-                    try:
-                        own_grid_label = str(own_grid_path.resolve().relative_to(ROOT))
-                    except ValueError:
-                        own_grid_label = str(own_grid_path)
-                    own_grid_meta = {
-                        "path": own_grid_label,
-                        "sha256": _sha256(own_grid_path),
-                        "bytes": int(own_grid_path.stat().st_size),
-                        "schema": "task037b.v4-own-grid-EH-modal-q.v1",
-                        "rank0_only": True,
-                        "arrays": {
-                            "E_V_per_m": array_descriptor(
-                                selected_planes.electric_V_per_m
-                            ),
-                            "H_A_per_m": array_descriptor(
-                                selected_planes.magnetic_A_per_m
-                            ),
-                            "modal_amplitudes": array_descriptor(modal_values),
-                            "bottom_q": array_descriptor(bottom_q),
-                            "top_q": array_descriptor(top_q),
-                        },
-                    }
                 own_grid_meta = comm.bcast(own_grid_meta, root=0)
                 canonical_exports = (
-                    write_canonical_exports() if own_physics_pass else {}
+                    _write_canonical_manifest_exports(
+                        systems=systems,
+                        physical_solution=physical_solution,
+                        run_dir=run_dir,
+                        comm=comm,
+                        prefix="task037b_v4",
+                    )
+                    if own_physics_pass
+                    else {}
                 )
                 canonical_pass = bool(
                     own_physics_pass
@@ -3974,10 +4007,10 @@ def _run_v4_full_solve(
                             "sample_x_nm": sample_x.tolist(),
                             "sample_y_nm": sample_y.tolist(),
                             "sample_z_nm": sample_z.tolist(),
-                            "electric": array_descriptor(
+                            "electric": _array_descriptor(
                                 selected_planes.electric_V_per_m
                             ),
-                            "magnetic": array_descriptor(
+                            "magnetic": _array_descriptor(
                                 selected_planes.magnetic_A_per_m
                             ),
                             "own_grid": own_grid_meta,
@@ -10081,6 +10114,57 @@ def main() -> None:
                     "sequential_sum": (bottom_recovery_seconds + top_recovery_seconds),
                 },
             }
+            if args.task037b_h1_authority_export:
+                authority_run_dir = Path(args.output).parent
+                authority_npz = authority_run_dir / "h1_authority_grid_EH_modal_q.npz"
+                auxiliary = validation["external_auxiliary_amplitudes"]
+                if comm.rank == 0:
+                    authority_grid = _write_authority_grid_payload(
+                        authority_npz,
+                        sample_x=sample_x,
+                        sample_y=sample_y,
+                        sample_z=sample_z,
+                        electric=selected_planes.electric_V_per_m,
+                        magnetic=selected_planes.magnetic_A_per_m,
+                        modal=solution.modal_amplitudes,
+                        bottom_q=auxiliary["bottom"],
+                        top_q=auxiliary["top"],
+                        schema="task037b.h1-authority-grid-EH-modal-q.v1",
+                    )
+                else:
+                    authority_grid = None
+                authority_grid = comm.bcast(authority_grid, root=0)
+                authority_canonical = _write_canonical_manifest_exports(
+                    systems={"bottom": bottom, "top": top},
+                    physical_solution=solution,
+                    run_dir=authority_run_dir,
+                    comm=comm,
+                    prefix="task037b_h1",
+                )
+                authority_payload_complete = bool(
+                    all(
+                        authority_canonical.get(side, {})
+                        .get("roles", {})
+                        .get(role, {})
+                        .get("pass")
+                        is True
+                        for side in ("bottom", "top")
+                        for role in ("active_trace", "full_fe")
+                    )
+                )
+                if not authority_payload_complete:
+                    raise RuntimeError("H1 authority canonical payload is incomplete.")
+                h1_telemetry.update(
+                    {
+                        "own_grid": authority_grid,
+                        "canonical_export": authority_canonical,
+                        "authority_payload": {
+                            "numeric_npz": authority_grid,
+                            "canonical_export": authority_canonical,
+                            "payload_complete": authority_payload_complete,
+                        },
+                    }
+                )
         if args.task037b_h3_gate:
             h3_telemetry = {
                 "task037b_h3_gate": True,

@@ -142,6 +142,16 @@ def _validation(record: Mapping[str, Any]) -> Mapping[str, Any]:
     return value if isinstance(value, Mapping) else {}
 
 
+def _payload_telemetry(record: Mapping[str, Any]) -> Mapping[str, Any]:
+    for key in ("v4_telemetry", "h1_telemetry"):
+        value = record.get(key)
+        if isinstance(value, Mapping) and (
+            "own_grid" in value or "canonical_export" in value
+        ):
+            return value
+    return {}
+
+
 def _order_map(value: Any) -> dict[tuple[str, int, int, str], Mapping[str, Any]] | None:
     if not isinstance(value, list) or len(value) != 80:
         return None
@@ -239,10 +249,23 @@ def _relative_l2(left: Any, right: Any) -> float | None:
     )
 
 
+def _relative_array_l2(left: np.ndarray, right: np.ndarray) -> float | None:
+    if left.shape != right.shape:
+        return None
+    left = np.asarray(left, dtype=np.complex128)
+    right = np.asarray(right, dtype=np.complex128)
+    if not np.all(np.isfinite(left)) or not np.all(np.isfinite(right)):
+        return None
+    return float(
+        np.linalg.norm(left - right)
+        / max(np.linalg.norm(left), np.linalg.norm(right), 1.0e-15)
+    )
+
+
 def _check_own_grid(
     record: Mapping[str, Any], anchor: Path
 ) -> tuple[bool, dict[str, Any]]:
-    telemetry = record.get("v4_telemetry", {})
+    telemetry = _payload_telemetry(record)
     own_grid = telemetry.get("own_grid") if isinstance(telemetry, Mapping) else None
     if not isinstance(own_grid, Mapping) or not own_grid:
         return False, {"status": "missing"}
@@ -289,7 +312,7 @@ def _check_own_grid(
 def _check_canonical_exports(
     record: Mapping[str, Any], anchor: Path
 ) -> tuple[bool, dict[str, Any]]:
-    telemetry = record.get("v4_telemetry", {})
+    telemetry = _payload_telemetry(record)
     exports = (
         telemetry.get("canonical_export") if isinstance(telemetry, Mapping) else None
     )
@@ -364,40 +387,101 @@ def _check_canonical_exports(
     return all_pass, results
 
 
-def _authority_payload_state(authority: Mapping[str, Any] | None) -> dict[str, Any]:
+def _load_grid_arrays(record: Mapping[str, Any], anchor: Path) -> dict[str, Any]:
+    telemetry = _payload_telemetry(record)
+    own_grid = telemetry.get("own_grid")
+    path = _resolve(
+        own_grid.get("path") if isinstance(own_grid, Mapping) else None,
+        anchor,
+    )
+    if path is None:
+        raise FileNotFoundError("numeric grid payload is not bound")
+    with np.load(path, allow_pickle=False) as payload:
+        arrays: dict[str, Any] = {
+            name: np.asarray(payload[name]) for name in ARRAY_SHAPES
+        }
+        for name in ("x_nm", "y_nm", "z_nm"):
+            arrays[name] = np.asarray(payload[name]) if name in payload.files else None
+        return arrays
+
+
+def _load_canonical_values(
+    record: Mapping[str, Any], anchor: Path
+) -> dict[str, dict[str, complex]]:
+    telemetry = _payload_telemetry(record)
+    exports = telemetry.get("canonical_export")
+    if not isinstance(exports, Mapping):
+        raise FileNotFoundError("canonical payload is not bound")
+    values: dict[str, dict[str, complex]] = {}
+    for side in ("bottom", "top"):
+        roles = exports.get(side, {}).get("roles")
+        if not isinstance(roles, Mapping):
+            raise ValueError("canonical roles are incomplete")
+        for role in ("active_trace", "full_fe"):
+            item = roles.get(role)
+            if not isinstance(item, Mapping):
+                raise ValueError("canonical role is incomplete")
+            manifest_path = _resolve(item.get("manifest"), anchor)
+            if manifest_path is None:
+                raise FileNotFoundError("canonical manifest is missing")
+            manifest = read_canonical_manifest(
+                manifest_path, item.get("manifest_sha256")
+            )
+            role_values: dict[str, complex] = {}
+            for shard in manifest.get("per_rank_shards", []):
+                shard_path = manifest_path.parent / str(shard["filename"])
+                packets = read_canonical_packet_shard(
+                    shard_path, shard.get("file_sha256")
+                )
+                for key, value in packets:
+                    key_label = json.dumps(key, sort_keys=True, separators=(",", ":"))
+                    if key_label in role_values:
+                        raise ValueError("canonical packet key is duplicated")
+                    role_values[key_label] = complex(value)
+            values[f"{side}_{role}"] = role_values
+    return values
+
+
+def _authority_payload_state(
+    authority: Mapping[str, Any] | None,
+    anchor: Path,
+) -> dict[str, Any]:
     if not isinstance(authority, Mapping):
         return {"status": "not_run_authority_payload_gap", "payload_complete": False}
-    telemetry = authority.get("h1_telemetry", {})
-    validation = authority.get("validation", {})
-    modal = (
-        telemetry.get("modal_amplitudes") if isinstance(telemetry, Mapping) else None
-    )
-    modal_values = modal.get("values") if isinstance(modal, Mapping) else modal
-    field = validation.get("field") if isinstance(validation, Mapping) else None
-    canonical = (
-        validation.get("canonical_export") if isinstance(validation, Mapping) else None
-    )
-    modal_payload = bool(
-        isinstance(modal_values, list)
-        and len(modal_values) == 240
-        and all(_complex_value(value) is not None for value in modal_values)
-    )
-    field_payload = bool(
-        isinstance(field, Mapping)
-        and isinstance(field.get("E_V_per_m"), list)
-        and isinstance(field.get("H_A_per_m"), list)
-    )
-    canonical_payload = bool(
-        isinstance(canonical, Mapping) and isinstance(canonical.get("packets"), list)
-    )
-    payload_complete = bool(modal_payload and (field_payload or canonical_payload))
-    return {
-        "status": "available" if payload_complete else "not_run_authority_payload_gap",
-        "payload_complete": payload_complete,
-        "modal_numeric_payload": modal_payload,
-        "field_numeric_payload": field_payload,
-        "canonical_numeric_payload": canonical_payload,
-    }
+    try:
+        grid_pass, grid = _check_own_grid(authority, anchor)
+        canonical_pass, canonical = _check_canonical_exports(authority, anchor)
+        modal_payload = bool(
+            grid_pass
+            and grid.get("arrays", {}).get("modal_amplitudes", {}).get("pass") is True
+        )
+        field_payload = bool(
+            grid_pass
+            and all(
+                grid.get("arrays", {}).get(name, {}).get("pass") is True
+                for name in ("E_V_per_m", "H_A_per_m")
+            )
+        )
+        payload_complete = bool(modal_payload and field_payload and canonical_pass)
+        return {
+            "status": "available"
+            if payload_complete
+            else "not_run_authority_payload_gap",
+            "payload_complete": payload_complete,
+            "modal_numeric_payload": modal_payload,
+            "field_numeric_payload": field_payload,
+            "canonical_numeric_payload": canonical_pass,
+            "grid": grid,
+            "canonical": canonical,
+        }
+    except (OSError, KeyError, TypeError, ValueError):
+        return {
+            "status": "not_run_authority_payload_gap",
+            "payload_complete": False,
+            "modal_numeric_payload": False,
+            "field_numeric_payload": False,
+            "canonical_numeric_payload": False,
+        }
 
 
 def _compare_order_maps(
@@ -431,10 +515,14 @@ def _compare_order_maps(
                 "pass": bool(power_relative <= 1.0e-3 and amplitude_relative <= 1.0e-3),
             }
         )
+    numeric_pass = bool(rows) and all(row["pass"] for row in rows)
     return {
-        "status": "pass" if keys_match and len(rows) == 80 else "fail",
+        "status": (
+            "pass" if keys_match and len(rows) == 80 and numeric_pass else "fail"
+        ),
         "count": len(rows),
         "key_and_finite_coverage_pass": bool(keys_match and len(rows) == 80),
+        "numeric_pass": numeric_pass,
         "max_power_relative_error": max(
             (row["power_relative_error"] for row in rows), default=None
         ),
@@ -656,7 +744,9 @@ def check_v4_evidence(
         authority_records[name] = (
             _load_json(path) if path is not None and binding["pass"] else None
         )
-    h1_state = _authority_payload_state(authority_records.get("h1_direct"))
+    h1_state = _authority_payload_state(
+        authority_records.get("h1_direct"), summary_path
+    )
     authority_payload_gap = h1_state["payload_complete"] is False
     result["authorities"] = {
         "bindings": authority_bindings,
@@ -681,10 +771,36 @@ def check_v4_evidence(
         "modal": {"status": direct_status},
         "canonical": {"status": direct_status},
         "selected_fields": {"status": direct_status},
-        "iterative_vs_full3d": {"status": "not_run_dependency_gate"},
+        "iterative_vs_full3d": {
+            "status": "not_run_dependency_gate",
+            "dimensions": {
+                "twelve_plus_twelve_powers_amplitudes": {
+                    "status": "not_run_dependency_gate",
+                    "source": "significant_reference",
+                },
+                "modal": {
+                    "status": "not_available",
+                    "reason": "pinned Full3D authority has no numeric modal array",
+                },
+                "canonical": {
+                    "status": "not_available",
+                    "reason": "pinned Full3D authority has no numeric canonical arrays",
+                },
+                "selected_interface_fields": {
+                    "status": "not_available",
+                    "reason": "pinned Full3D authority has no selected interface E/H arrays",
+                },
+                "selected_middle_fields": {
+                    "status": "not_available",
+                    "reason": "pinned Full3D authority has no selected middle E/H arrays",
+                },
+            },
+        },
         "offline_resource": {"status": "not_run"},
     }
-    comparison_ready = bool(candidate_evidence_pass and candidate_gate)
+    comparison_ready = bool(
+        candidate_evidence_pass and candidate_gate and authority_bindings_pass
+    )
     if not comparison_ready:
         for name in (
             "q",
@@ -704,7 +820,30 @@ def check_v4_evidence(
                 "top": own_grid.get("q_values", {}).get("top_q"),
             }
         )
-        h1_q = _q_map(h1_validation.get("external_auxiliary_amplitudes"))
+        candidate_arrays = _load_grid_arrays(record, summary_path)
+        h1_grid_pass = bool(
+            isinstance(h1_state.get("grid"), Mapping)
+            and all(
+                h1_state["grid"].get("arrays", {}).get(name, {}).get("pass") is True
+                for name in ARRAY_SHAPES
+            )
+        )
+        h1_arrays = _load_grid_arrays(h1, summary_path) if h1_grid_pass else None
+        if h1_arrays is not None:
+            h1_q = _q_map(
+                {
+                    "bottom": [
+                        [float(value.real), float(value.imag)]
+                        for value in h1_arrays["bottom_q"]
+                    ],
+                    "top": [
+                        [float(value.real), float(value.imag)]
+                        for value in h1_arrays["top_q"]
+                    ],
+                }
+            )
+        else:
+            h1_q = _q_map(h1_validation.get("external_auxiliary_amplitudes"))
         if candidate_q is not None and h1_q is not None:
             q_rows = {}
             for side in ("bottom", "top"):
@@ -725,11 +864,131 @@ def check_v4_evidence(
         h1_orders = _order_map(h1_validation.get("external_diffraction_orders"))
         if candidate_orders is not None and h1_orders is not None:
             comparisons["orders"] = _compare_order_maps(h1_orders, candidate_orders)
+            twelve_plus_twelve = _compare_full_hybrid(h1_orders, candidate_orders)
             comparisons["twelve_plus_twelve"] = {
+                "status": "pass" if twelve_plus_twelve.get("pass") is True else "fail",
+                "result": twelve_plus_twelve,
+            }
+        if h1_arrays is None or not h1_state.get("modal_numeric_payload"):
+            comparisons["modal"] = {"status": "not_run_authority_payload_gap"}
+        else:
+            modal_error = _relative_array_l2(
+                candidate_arrays["modal_amplitudes"],
+                h1_arrays["modal_amplitudes"],
+            )
+            comparisons["modal"] = {
+                "status": (
+                    "pass"
+                    if modal_error is not None and modal_error <= 1.0e-5
+                    else "fail"
+                ),
+                "relative_l2_error": modal_error,
+            }
+        selected_parts = {
+            "bottom_interface": (0, slice(None), slice(None), slice(0, 2)),
+            "top_interface": (4, slice(None), slice(None), slice(0, 2)),
+            "middle": (slice(1, 4), slice(None), slice(None), slice(None)),
+        }
+        if h1_arrays is None or not h1_state.get("field_numeric_payload"):
+            comparisons["selected_fields"] = {"status": "not_run_authority_payload_gap"}
+        else:
+            coordinate_alignment = {
+                name: bool(
+                    candidate_arrays.get(name) is not None
+                    and h1_arrays.get(name) is not None
+                    and candidate_arrays[name].shape == h1_arrays[name].shape
+                    and np.array_equal(candidate_arrays[name], h1_arrays[name])
+                )
+                for name in ("x_nm", "y_nm", "z_nm")
+            }
+            coordinate_alignment_pass = all(coordinate_alignment.values())
+            selected_errors: dict[str, Any] = {}
+            for part, selector in selected_parts.items():
+                fields: dict[str, Any] = {}
+                for name in ("E_V_per_m", "H_A_per_m"):
+                    error = _relative_array_l2(
+                        candidate_arrays[name][selector], h1_arrays[name][selector]
+                    )
+                    fields[name] = {
+                        "relative_l2_error": error,
+                        "pass": error is not None and error <= 5.0e-3,
+                    }
+                selected_errors[part] = {
+                    "fields": fields,
+                    "pass": all(item["pass"] for item in fields.values()),
+                }
+            comparisons["selected_fields"] = {
                 "status": "pass"
-                if _compare_full_hybrid(h1_orders, candidate_orders).get("pass") is True
+                if coordinate_alignment_pass
+                and all(item["pass"] for item in selected_errors.values())
                 else "fail",
-                "result": _compare_full_hybrid(h1_orders, candidate_orders),
+                "threshold": 5.0e-3,
+                "coordinate_alignment_pass": coordinate_alignment_pass,
+                "coordinate_alignment": coordinate_alignment,
+                "parts": selected_errors,
+            }
+        if not h1_state.get("canonical_numeric_payload"):
+            comparisons["canonical"] = {"status": "not_run_authority_payload_gap"}
+        else:
+            candidate_canonical = _load_canonical_values(record, summary_path)
+            h1_canonical = _load_canonical_values(h1, summary_path)
+            canonical_rows: dict[str, Any] = {}
+            for role in sorted(set(candidate_canonical) | set(h1_canonical)):
+                left = candidate_canonical.get(role, {})
+                right = h1_canonical.get(role, {})
+                common_keys = sorted(set(left) & set(right))
+                keys_match = set(left) == set(right) and bool(left)
+                left_values = np.asarray([left[key] for key in common_keys])
+                right_values = np.asarray([right[key] for key in common_keys])
+                relative_l2 = _relative_array_l2(left_values, right_values)
+                diagnostic_rows = [
+                    {
+                        "key": key,
+                        "absolute_difference": abs(left[key] - right[key]),
+                        "relative_difference": abs(left[key] - right[key])
+                        / max(abs(left[key]), abs(right[key]), 1.0e-15),
+                    }
+                    for key in common_keys
+                ]
+                max_absolute = max(
+                    diagnostic_rows,
+                    key=lambda row: row["absolute_difference"],
+                    default=None,
+                )
+                max_relative = max(
+                    diagnostic_rows,
+                    key=lambda row: row["relative_difference"],
+                    default=None,
+                )
+                canonical_rows[role] = {
+                    "key_coverage_pass": keys_match,
+                    "relative_l2_error": relative_l2,
+                    "max_absolute_difference": (
+                        max_absolute["absolute_difference"]
+                        if max_absolute is not None
+                        else None
+                    ),
+                    "max_absolute_key": (
+                        max_absolute["key"] if max_absolute is not None else None
+                    ),
+                    "max_relative_difference": (
+                        max_relative["relative_difference"]
+                        if max_relative is not None
+                        else None
+                    ),
+                    "max_relative_key": (
+                        max_relative["key"] if max_relative is not None else None
+                    ),
+                    "pass": bool(
+                        keys_match and relative_l2 is not None and relative_l2 <= 1.0e-5
+                    ),
+                }
+            comparisons["canonical"] = {
+                "status": "pass"
+                if all(item["pass"] for item in canonical_rows.values())
+                else "fail",
+                "relative_l2_threshold": 1.0e-5,
+                "roles": canonical_rows,
             }
         candidate_values = _validation_observables(record)
         h1_values = _validation_observables(h1)
@@ -837,6 +1096,12 @@ def check_v4_evidence(
             comparisons["significant_reference"] = {"status": "fail"}
     else:
         comparisons["significant_reference"] = {"status": "not_run_dependency_gate"}
+    comparisons["iterative_vs_full3d"]["dimensions"][
+        "twelve_plus_twelve_powers_amplitudes"
+    ] = {
+        "status": comparisons["significant_reference"]["status"],
+        "source": "significant_reference",
+    }
     usage = resource.getrusage(resource.RUSAGE_SELF)
     comparisons["offline_resource"] = {
         "status": "measured",

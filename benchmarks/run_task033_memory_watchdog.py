@@ -948,6 +948,8 @@ def _worker_command(
         command.append("--task037b-v5-gate")
     if args.task037b_v6_gate:
         command.append("--task037b-v6-gate")
+    if getattr(args, "task037b_h1_authority_export", False):
+        command.append("--task037b-h1-authority-export")
     if args.compare_modal_schur:
         command.append("--compare-modal-schur")
     if args.graded_reference_h is not None:
@@ -5975,6 +5977,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Open only the frozen Task037b H1 augmented MPI8 path.",
     )
     parser.add_argument(
+        "--task037b-h1-authority-export",
+        action="store_true",
+        help="Opt in to the numeric H1 direct-Hybrid authority payload export.",
+    )
+    parser.add_argument(
         "--task037b-h3-gate",
         action="store_true",
         help="Open only the frozen Task037b H3 exact block-LDU MPI8 path.",
@@ -6137,6 +6144,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "--task037b-v6-gate requires --solver-path block-ldu-action-full-solve."
         )
+    if args.task037b_h1_authority_export and not args.task037b_h1_gate:
+        parser.error("--task037b-h1-authority-export requires --task037b-h1-gate.")
     if args.solver_path == "block-ldu-action-full-solve" and not args.task037b_v4_gate:
         parser.error("block-ldu-action-full-solve requires --task037b-v4-gate.")
     if (
