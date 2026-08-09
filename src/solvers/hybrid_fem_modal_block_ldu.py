@@ -1141,6 +1141,7 @@ def solve_action_block_ldu_full(
     max_it: int = 700,
     checkpoint_callback=None,
     v5_multimetric: bool = False,
+    v6_traction_aligned: bool = False,
 ) -> HybridBlockLduFullSolveResult:
     """Run the V4 fixed double-action solve and retain only the solution.
 
@@ -1150,8 +1151,20 @@ def solve_action_block_ldu_full(
     not destroyed here and remain available for recovery/audit by the caller.
     """
 
-    if int(max_it) != 700:
-        raise ValueError("V4 full solve requires max_it=700.")
+    if v6_traction_aligned and not v5_multimetric:
+        raise ValueError("V6 multimetric solve requires the V5 frozen profile.")
+    if v6_traction_aligned:
+        if int(max_it) != 1000:
+            raise ValueError("V6 traction-aligned solve requires max_it=1000.")
+    elif int(max_it) != 700:
+        raise ValueError("V4/V5 full solve requires max_it=700.")
+    multimetric = bool(v5_multimetric)
+    profile_threshold = 5.0e-9 if v6_traction_aligned else 1.0e-6
+    profile_identity = (
+        "traction_aligned_multimetric_true_residual_gate"
+        if v6_traction_aligned
+        else "multimetric_true_residual_gate"
+    )
     context.defer_action_modal_schur_release = True
     checkpoints = {
         0,
@@ -1178,6 +1191,32 @@ def solve_action_block_ldu_full(
     }
     if v5_multimetric:
         checkpoints.update({500, 520, 534, 540, 550, 560, 580, 600})
+    if v6_traction_aligned:
+        checkpoints.update(
+            {
+                0,
+                1,
+                2,
+                5,
+                10,
+                20,
+                60,
+                100,
+                200,
+                500,
+                534,
+                557,
+                600,
+                630,
+                700,
+                750,
+                800,
+                850,
+                900,
+                950,
+                1000,
+            }
+        )
     solution = operator.createVecRight()
     monitor_solution = operator.createVecRight()
     retained_solution = operator.createVecRight()
@@ -1210,7 +1249,7 @@ def solve_action_block_ldu_full(
         current: PETSc.KSP | None,
     ) -> dict[str, Any]:
         nonlocal history_evaluation_count
-        if v5_multimetric and int(iteration) in history_cache:
+        if multimetric and int(iteration) in history_cache:
             return history_cache[int(iteration)]
         if current is None:
             solution.copy(monitor_solution)
@@ -1237,18 +1276,22 @@ def solve_action_block_ldu_full(
             history[-1] = row
         else:
             history.append(row)
-        if v5_multimetric:
+        if multimetric:
             history_cache[int(iteration)] = row
             history_evaluation_count += 1
-        if not v5_multimetric:
+        if not multimetric:
             notify_checkpoint(row)
         return row
 
     try:
-        if v5_multimetric:
+        if multimetric:
             initial_row = snapshot(0, 1.0 if rhs_norm > _TINY else 0.0, None)
             initial_decision = multimetric_true_residual_decision(
-                0, initial_row, max_it=700
+                0,
+                initial_row,
+                max_it=max_it,
+                threshold=profile_threshold,
+                identity=profile_identity,
             )
             initial_row.update(
                 {
@@ -1269,14 +1312,18 @@ def solve_action_block_ldu_full(
         ksp.setGMRESRestart(ksp_restart)
         ksp.setPCSide(PETSc.PC.Side.RIGHT)
         ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED)
-        ksp.setTolerances(rtol=1.0e-6, atol=0.0, max_it=700)
+        ksp.setTolerances(
+            rtol=profile_threshold if multimetric else 1.0e-6,
+            atol=0.0,
+            max_it=max_it,
+        )
         pc = ksp.getPC()
         pc.setType(PETSc.PC.Type.PYTHON)
         pc.setPythonContext(context)
         ksp.setUp()
 
         def monitor(current: PETSc.KSP, iteration: int, residual_norm: float) -> None:
-            if not v5_multimetric:
+            if not multimetric:
                 snapshot(
                     int(iteration),
                     float(residual_norm) / rhs_norm,
@@ -1293,7 +1340,11 @@ def solve_action_block_ldu_full(
             )
             if int(iteration) not in decision_cache:
                 decision = multimetric_true_residual_decision(
-                    int(iteration), row, max_it=700
+                    int(iteration),
+                    row,
+                    max_it=max_it,
+                    threshold=profile_threshold,
+                    identity=profile_identity,
                 )
                 row.update(
                     {
@@ -1307,7 +1358,7 @@ def solve_action_block_ldu_full(
                 notify_checkpoint(row)
             return int(decision_cache[int(iteration)]["reason"])
 
-        if not v5_multimetric:
+        if not multimetric:
             ksp.setMonitor(monitor)
         else:
             ksp.setConvergenceTest(convergence_test)
@@ -1315,10 +1366,14 @@ def solve_action_block_ldu_full(
         iterations = int(ksp.getIterationNumber())
         reason = int(ksp.getConvergedReason())
         reported = float(ksp.getResidualNorm()) / rhs_norm
-        if v5_multimetric and iterations not in decision_cache:
+        if multimetric and iterations not in decision_cache:
             final_row = snapshot(iterations, reported, None)
             final_decision = multimetric_true_residual_decision(
-                iterations, final_row, max_it=700
+                iterations,
+                final_row,
+                max_it=max_it,
+                threshold=profile_threshold,
+                identity=profile_identity,
             )
             final_row.update(
                 {
@@ -1344,7 +1399,7 @@ def solve_action_block_ldu_full(
             "solution_snapshot_retained": True,
             "borrowed_side_actions_retained": False,
         }
-        if v5_multimetric:
+        if multimetric:
             post_global, post_block = _residual_metrics(
                 operator, rhs, retained_solution, context
             )
@@ -1364,12 +1419,20 @@ def solve_action_block_ldu_full(
                 },
             }
             postsolve_decision = multimetric_true_residual_decision(
-                iterations, postsolve_decision_values, max_it=700
+                iterations,
+                postsolve_decision_values,
+                max_it=max_it,
+                threshold=profile_threshold,
+                identity=profile_identity,
             )
             postsolve_pass = bool(reason > 0 and postsolve_decision["positive"])
             postsolve_audit = {
                 **postsolve_values,
-                "identity": "multimetric_true_residual_gate",
+                "identity": profile_identity,
+                "profile": "v6_traction_aligned"
+                if v6_traction_aligned
+                else "v5_multimetric",
+                "threshold": profile_threshold,
                 "restart": int(ksp_restart),
                 "restart_source": (
                     "configured PETSc.KSP.setGMRESRestart(90); "
@@ -1437,10 +1500,8 @@ def solve_action_block_ldu_full(
             release=release,
             pc_apply_seconds=float(inventory.get("pc_apply_seconds", 0.0)),
             postsolve_audit=postsolve_audit,
-            history_evaluation_count=(
-                history_evaluation_count if v5_multimetric else 0
-            ),
-            postsolve_evaluation_count=1 if v5_multimetric else 0,
+            history_evaluation_count=(history_evaluation_count if multimetric else 0),
+            postsolve_evaluation_count=1 if multimetric else 0,
         )
         returned = True
         return result
@@ -1603,11 +1664,17 @@ def multimetric_true_residual_decision(
     residuals: dict[str, Any],
     *,
     max_it: int = 700,
+    threshold: float = 1.0e-6,
+    identity: str = "multimetric_true_residual_gate",
 ) -> dict[str, Any]:
-    """Apply the fixed V5 five-residual convergence decision."""
+    """Apply the frozen five-residual convergence decision."""
 
-    if int(max_it) != 700:
-        raise ValueError("V5 multimetric convergence requires max_it=700.")
+    profile = (int(max_it), float(threshold), identity)
+    if profile not in {
+        (700, 1.0e-6, "multimetric_true_residual_gate"),
+        (1000, 5.0e-9, "traction_aligned_multimetric_true_residual_gate"),
+    }:
+        raise ValueError("Unsupported frozen multimetric convergence profile.")
     values: dict[str, float] = {}
     try:
         values = {key: float(residuals[key]) for key in _V3_RESIDUAL_KEYS}
@@ -1620,7 +1687,7 @@ def multimetric_true_residual_decision(
     positive = bool(
         int(iteration) > 0
         and finite_nonnegative
-        and all(value <= 1.0e-6 for value in values.values())
+        and all(value <= float(threshold) for value in values.values())
     )
     if not finite_nonnegative:
         reason = int(PETSc.KSP.ConvergedReason.DIVERGED_NANORINF)
@@ -1640,9 +1707,9 @@ def multimetric_true_residual_decision(
         reason = int(PETSc.KSP.ConvergedReason.ITERATING)
         decision = "ITERATING"
     return {
-        "identity": "multimetric_true_residual_gate",
+        "identity": identity,
         "iteration": int(iteration),
-        "threshold": 1.0e-6,
+        "threshold": float(threshold),
         "residuals": values,
         "max_true_residual": max_true,
         "all_finite_nonnegative": finite_nonnegative,

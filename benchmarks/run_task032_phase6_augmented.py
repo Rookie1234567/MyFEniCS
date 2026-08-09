@@ -1299,6 +1299,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--task037b-v6-gate",
+        action="store_true",
+        help=(
+            "Open only the research-only Task037b V6 traction-aligned full-solve "
+            "path; requires the frozen V4 and V5 gates."
+        ),
+    )
+    parser.add_argument(
         "--task037b-v2-profile",
         choices=("bottom-approx", "top-approx", "double"),
         default=None,
@@ -1410,6 +1418,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         )
     if args.task037b_v5_gate and not args.task037b_v4_gate:
         parser.error("--task037b-v5-gate requires --task037b-v4-gate.")
+    if args.task037b_v6_gate and not args.task037b_v5_gate:
+        parser.error("--task037b-v6-gate requires --task037b-v5-gate.")
+    if args.task037b_v6_gate and not args.task037b_v4_gate:
+        parser.error("--task037b-v6-gate requires --task037b-v4-gate.")
     if args.solver_path == "local-inverse-qualification" and not args.task037b_h5_gate:
         parser.error("local-inverse-qualification requires --task037b-h5-gate.")
     if args.solver_path == "dtn-component-qualification" and not args.task037b_v1_gate:
@@ -1460,6 +1472,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "--task037b-v5-gate requires --solver-path block-ldu-action-full-solve."
         )
+    if args.task037b_v6_gate and args.solver_path != "block-ldu-action-full-solve":
+        parser.error(
+            "--task037b-v6-gate requires --solver-path block-ldu-action-full-solve."
+        )
     if not args.task037b_v2_gate and (
         args.task037b_v2_profile is not None or args.task037b_v2_max_it is not None
     ):
@@ -1474,6 +1490,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         and args.task037b_v2_max_it != 20
     ):
         parser.error("V2 one-sided profiles require --task037b-v2-max-it 20.")
+    if args.task037b_v6_gate and (
+        args.task037b_v2_profile is not None or args.task037b_v2_max_it is not None
+    ):
+        parser.error("V6 does not accept V2 profile/max-it options.")
     if args.degree == 6 and not any(selected_scoped_gates):
         parser.error(
             "p6 is fail-closed; pass a fixed scoped Task035c, Task037b H1, "
@@ -2183,6 +2203,8 @@ def _v4_full_fe_threshold_pass(
     full_relative: Any,
     interior_relative: Any,
     interior_max: Any,
+    *,
+    tight: bool = False,
 ) -> bool:
     """Apply the frozen V4 full-FE and interior recovery thresholds."""
 
@@ -2199,9 +2221,9 @@ def _v4_full_fe_threshold_pass(
         return False
     return bool(
         all(np.isfinite(value) and value >= 0.0 for value in values)
-        and values[0] <= 1.0e-6
-        and values[1] <= 1.0e-8
-        and values[2] <= 1.0e-8
+        and values[0] <= (1.0e-8 if tight else 1.0e-6)
+        and values[1] <= (1.0e-10 if tight else 1.0e-8)
+        and values[2] <= (1.0e-10 if tight else 1.0e-8)
     )
 
 
@@ -2222,8 +2244,19 @@ def _run_v4_full_solve(
     total_started: float,
     mark_stage,
     v5_multimetric: bool = False,
+    v6_traction_aligned: bool = False,
 ) -> None:
     """Run the single V4/V5 double fixed-action solve and controlled-stop record."""
+
+    is_v6 = bool(v6_traction_aligned)
+    v5_multimetric = bool(v5_multimetric or is_v6)
+    profile_max_it = 1000 if is_v6 else 700
+    profile_threshold = 5.0e-9 if is_v6 else 1.0e-6
+    profile_identity = (
+        "traction_aligned_multimetric_true_residual_gate"
+        if is_v6
+        else "multimetric_true_residual_gate"
+    )
 
     layout = None
     action_matrix = None
@@ -2655,7 +2688,9 @@ def _run_v4_full_solve(
     def base_record() -> dict[str, Any]:
         return {
             "record_schema": (
-                "task037b.v5-multimetric-full-block-pc.v1"
+                "task037b.v6-traction-aligned-full-block-pc.v1"
+                if is_v6
+                else "task037b.v5-multimetric-full-block-pc.v1"
                 if v5_multimetric
                 else "task037b.v4-full-block-pc.v1"
             ),
@@ -2683,18 +2718,16 @@ def _run_v4_full_solve(
                 "solver_path": "block-ldu-action-full-solve",
                 "outer_solver": "right_fgmres",
                 "restart": 90,
-                "rtol": 1.0e-6,
+                "rtol": profile_threshold if v5_multimetric else 1.0e-6,
                 "atol": 0.0,
-                "max_it": 700,
+                "max_it": profile_max_it if v5_multimetric else 700,
                 "zero_initial": True,
                 "normal_equations": False,
                 "local_inverse_solve_called": False,
                 "nested_ksp_created": False,
                 "direct_fallback": False,
                 **(
-                    {"convergence_identity": "multimetric_true_residual_gate"}
-                    if v5_multimetric
-                    else {}
+                    {"convergence_identity": profile_identity} if v5_multimetric else {}
                 ),
             },
             "source": dict(provenance),
@@ -2899,6 +2932,32 @@ def _run_v4_full_solve(
         }
         if v5_multimetric:
             checkpoint_iterations.update({500, 520, 534, 550, 560, 580, 600})
+        if is_v6:
+            checkpoint_iterations.update(
+                {
+                    0,
+                    1,
+                    2,
+                    5,
+                    10,
+                    20,
+                    60,
+                    100,
+                    200,
+                    500,
+                    534,
+                    557,
+                    600,
+                    630,
+                    700,
+                    750,
+                    800,
+                    850,
+                    900,
+                    950,
+                    1000,
+                }
+            )
 
         def checkpoint_callback(row: dict[str, Any]) -> None:
             iteration = int(row["iteration"])
@@ -2910,9 +2969,10 @@ def _run_v4_full_solve(
             action_matrix,
             outer_rhs,
             preconditioner,
-            max_it=700,
+            max_it=profile_max_it,
             checkpoint_callback=checkpoint_callback,
             v5_multimetric=v5_multimetric,
+            v6_traction_aligned=is_v6,
         )
         timings["v4_outer_solve"] = _max_elapsed(comm, outer_started)
         solve_reason = int(full_result.converged_reason)
@@ -2980,12 +3040,15 @@ def _run_v4_full_solve(
                         and not isinstance(row.get(key), bool)
                         for key in v5_residual_keys
                     )
-                    or row["multimetric_identity"] != "multimetric_true_residual_gate"
+                    or row["multimetric_identity"] != profile_identity
                 ):
                     return False
                 expected = multimetric_true_residual_decision(
                     int(row["iteration"]),
                     {key: row[key] for key in v5_residual_keys},
+                    max_it=profile_max_it,
+                    threshold=profile_threshold,
+                    identity=profile_identity,
                 )
                 recorded_max = float(row["multimetric_max_true_residual"])
                 expected_max = float(expected["max_true_residual"])
@@ -3050,7 +3113,7 @@ def _run_v4_full_solve(
             numerical_pass = bool(
                 solve_reason > 0
                 and finite
-                and solve_iterations <= 700
+                and solve_iterations <= profile_max_it
                 and v5_audit_finite
                 and v5_postsolve_audit.get("pass") is True
                 and v5_implementation_pass
@@ -3162,18 +3225,27 @@ def _run_v4_full_solve(
         }
         if v5_multimetric:
             record["v4_telemetry"]["multimetric"] = {
-                "identity": "multimetric_true_residual_gate",
+                "identity": profile_identity,
+                "profile": "v6_traction_aligned" if is_v6 else "v5_multimetric",
+                "threshold": profile_threshold,
+                "max_it": profile_max_it,
                 "history_evaluation_count": int(full_result.history_evaluation_count),
                 "postsolve_evaluation_count": int(
                     full_result.postsolve_evaluation_count
                 ),
                 "postsolve_audit": v5_postsolve_audit,
                 "implementation_pass": v5_implementation_pass,
-                "v5_disposition": (
-                    "V5_POSTSOLVE_PASS"
+                ("v6_disposition" if is_v6 else "v5_disposition"): (
+                    "V6_POSTSOLVE_PASS"
+                    if is_v6 and numerical_pass
+                    else "V5_POSTSOLVE_PASS"
                     if numerical_pass
                     else "CUSTOM_CONVERGENCE_FALSE_POSITIVE"
                     if v5_postsolve_audit.get("custom_convergence_false_positive")
+                    else "TIGHT_LINEAR_GATE_NOT_REACHED_BY_1000"
+                    if is_v6
+                    and solve_reason == -3
+                    and solve_iterations == profile_max_it
                     else "MULTIMETRIC_LINEAR_GATE_NOT_REACHED_BY_700"
                     if solve_reason == -3 and solve_iterations == 700
                     else "V5_MULTIMETRIC_NUMERICAL_NEGATIVE"
@@ -3557,6 +3629,7 @@ def _run_v4_full_solve(
                         full_relative,
                         interior_relative,
                         interior_max,
+                        tight=is_v6,
                     )
                     and trace_rows_pass
                     and recovery_audit_pass
@@ -3776,7 +3849,7 @@ def _run_v4_full_solve(
                 run_dir = Path(args.output).parent
                 own_grid_path = run_dir / "v4_own_grid_EH_modal_q.npz"
                 own_grid_meta = None
-                if comm.rank == 0:
+                if comm.rank == 0 and (not is_v6 or own_physics_pass):
                     run_dir.mkdir(parents=True, exist_ok=True)
                     modal_values = np.asarray(
                         physical_solution.modal_amplitudes, dtype=np.complex128
@@ -4009,7 +4082,37 @@ def _run_v4_full_solve(
             else:
                 disposition = "V5_MULTIMETRIC_NUMERICAL_NEGATIVE"
             if v5_multimetric_telemetry is not None:
-                v5_multimetric_telemetry["v5_disposition"] = disposition
+                v5_multimetric_telemetry[
+                    "v6_disposition" if is_v6 else "v5_disposition"
+                ] = disposition
+        if is_v6:
+            traction_gate = (
+                record["v4_telemetry"]
+                .get("physics_gates", {})
+                .get("exact_traction_dual", {})
+                .get("pass")
+            )
+            if not numerical_pass:
+                if solve_reason > 0 and not v5_postsolve_audit.get("pass", False):
+                    disposition = "TIGHT_CUSTOM_CONVERGENCE_FALSE_POSITIVE"
+                elif solve_reason == -3 and solve_iterations == profile_max_it:
+                    disposition = "TIGHT_LINEAR_GATE_NOT_REACHED_BY_1000"
+                else:
+                    disposition = "TIGHT_LINEAR_GATE_NOT_REACHED_BY_1000"
+            elif not recovery_pass:
+                disposition = "TIGHT_LINEAR_PASS_RECOVERY_FAIL"
+            elif traction_gate is False:
+                disposition = "TIGHT_LINEAR_PASS_EXACT_TRACTION_FAIL"
+            elif not own_physics_pass or not canonical_pass:
+                disposition = "DOUBLE_APPROXIMATE_IMPLEMENTATION_GATE_FAILED"
+            elif not direct_comparator.get("pass", False):
+                disposition = (
+                    "TIGHT_LINEAR_AND_OWN_PHYSICS_PASS_AUTHORITY_PAYLOAD_INCOMPLETE"
+                )
+            else:
+                disposition = "DOUBLE_APPROXIMATE_MPI8_TIGHT_LINEAR_AND_PHYSICS_PASS"
+            if v5_multimetric_telemetry is not None:
+                v5_multimetric_telemetry["v6_disposition"] = disposition
         record["qualification"].update(
             {
                 "numerical_pass": numerical_pass,
@@ -4024,7 +4127,16 @@ def _run_v4_full_solve(
                 "disposition": disposition,
             }
         )
-        if v5_multimetric and disposition == (
+        if is_v6:
+            record["status"] = {
+                "TIGHT_LINEAR_GATE_NOT_REACHED_BY_1000": "task037b_v6_tight_linear_gate_not_reached",
+                "TIGHT_CUSTOM_CONVERGENCE_FALSE_POSITIVE": "task037b_v6_custom_convergence_false_positive",
+                "TIGHT_LINEAR_PASS_RECOVERY_FAIL": "task037b_v6_linear_pass_recovery_failed",
+                "TIGHT_LINEAR_PASS_EXACT_TRACTION_FAIL": "task037b_v6_linear_pass_exact_traction_failed",
+                "TIGHT_LINEAR_AND_OWN_PHYSICS_PASS_AUTHORITY_PAYLOAD_INCOMPLETE": "task037b_v6_full_solve_awaiting_authority_payload",
+                "DOUBLE_APPROXIMATE_MPI8_TIGHT_LINEAR_AND_PHYSICS_PASS": "task037b_v6_full_solve_pass",
+            }.get(disposition, "task037b_v6_implementation_gate_failed")
+        elif v5_multimetric and disposition == (
             "NUMERICAL_AND_OWN_PHYSICS_PASS_AUTHORITY_PAYLOAD_INCOMPLETE"
         ):
             record["status"] = "task037b_v5_full_solve_awaiting_authority_payload"
@@ -4085,10 +4197,39 @@ def _run_v4_full_solve(
                 "canonical": "FULL_LINEAR_SOLVE_PASS_CANONICAL_GATE_FAIL",
             }
             if v5_multimetric:
-                record["status"] = "task037b_v5_linear_pass_recovery_or_physics_failed"
+                if is_v6:
+                    traction_gate = (
+                        record.get("v4_telemetry", {})
+                        .get("physics_gates", {})
+                        .get("exact_traction_dual", {})
+                        .get("pass")
+                    )
+                    if recovery_phase in {"external_auxiliary", "full_fe"}:
+                        record["status"] = "task037b_v6_linear_pass_recovery_failed"
+                        v6_exception_disposition = "TIGHT_LINEAR_PASS_RECOVERY_FAIL"
+                    elif traction_gate is False:
+                        record["status"] = (
+                            "task037b_v6_linear_pass_exact_traction_failed"
+                        )
+                        v6_exception_disposition = (
+                            "TIGHT_LINEAR_PASS_EXACT_TRACTION_FAIL"
+                        )
+                    else:
+                        record["status"] = "task037b_v6_implementation_gate_failed"
+                        v6_exception_disposition = (
+                            "DOUBLE_APPROXIMATE_IMPLEMENTATION_GATE_FAILED"
+                        )
+                else:
+                    record["status"] = (
+                        "task037b_v5_linear_pass_recovery_or_physics_failed"
+                    )
                 if v5_multimetric_telemetry is not None:
-                    v5_multimetric_telemetry["v5_disposition"] = (
-                        "MULTIMETRIC_LINEAR_PASS_RECOVERY_OR_PHYSICS_FAIL"
+                    v5_multimetric_telemetry[
+                        "v6_disposition" if is_v6 else "v5_disposition"
+                    ] = (
+                        v6_exception_disposition
+                        if is_v6
+                        else "MULTIMETRIC_LINEAR_PASS_RECOVERY_OR_PHYSICS_FAIL"
                     )
             else:
                 record["status"] = phase_status.get(
@@ -4103,7 +4244,9 @@ def _run_v4_full_solve(
                     "complete_qualification_pass": False,
                     "physics_pass": bool(physics_pass),
                     "disposition": (
-                        "MULTIMETRIC_LINEAR_PASS_RECOVERY_OR_PHYSICS_FAIL"
+                        v6_exception_disposition
+                        if is_v6
+                        else "MULTIMETRIC_LINEAR_PASS_RECOVERY_OR_PHYSICS_FAIL"
                         if v5_multimetric
                         else phase_disposition.get(
                             recovery_phase, "FULL_LINEAR_SOLVE_PASS_PHYSICS_GATE_FAIL"
@@ -4117,11 +4260,15 @@ def _run_v4_full_solve(
             record["v4_telemetry"]["recovery_phase"] = recovery_phase
         else:
             if v5_multimetric:
-                record["status"] = "task037b_v5_implementation_gate_failed"
+                record["status"] = (
+                    "task037b_v6_implementation_gate_failed"
+                    if is_v6
+                    else "task037b_v5_implementation_gate_failed"
+                )
                 if v5_multimetric_telemetry is not None:
-                    v5_multimetric_telemetry["v5_disposition"] = (
-                        "DOUBLE_APPROXIMATE_IMPLEMENTATION_GATE_FAILED"
-                    )
+                    v5_multimetric_telemetry[
+                        "v6_disposition" if is_v6 else "v5_disposition"
+                    ] = "DOUBLE_APPROXIMATE_IMPLEMENTATION_GATE_FAILED"
             else:
                 record["status"] = "task037b_v4_implementation_gate_failed"
             record["qualification"].update(
@@ -4229,18 +4376,26 @@ def _run_v4_full_solve(
                     record["qualification"]["implementation_error"] = (
                         "V5 snapshot/release lifecycle contract failed."
                     )
-                    record["status"] = "task037b_v5_implementation_gate_failed"
-                    v5_multimetric_telemetry["v5_disposition"] = (
-                        "DOUBLE_APPROXIMATE_IMPLEMENTATION_GATE_FAILED"
+                    record["status"] = (
+                        "task037b_v6_implementation_gate_failed"
+                        if is_v6
+                        else "task037b_v5_implementation_gate_failed"
                     )
+                    v5_multimetric_telemetry[
+                        "v6_disposition" if is_v6 else "v5_disposition"
+                    ] = "DOUBLE_APPROXIMATE_IMPLEMENTATION_GATE_FAILED"
             record["timing_seconds_max_rank"] = {
                 **timings,
                 "v4_total": _max_elapsed(comm, total_started),
             }
             if v5_multimetric:
-                record["v5_telemetry"] = dict(telemetry.get("multimetric", {}))
-                record["v5_telemetry"]["stage_markers"] = list(stage_markers)
-                record["qualification"]["v5_multimetric"] = True
+                telemetry_key = "v6_telemetry" if is_v6 else "v5_telemetry"
+                record[telemetry_key] = dict(telemetry.get("multimetric", {}))
+                record[telemetry_key]["stage_markers"] = list(stage_markers)
+                if is_v6:
+                    record["qualification"]["v6_traction_aligned"] = True
+                else:
+                    record["qualification"]["v5_multimetric"] = True
     raise _V4QualificationStop(record)
 
 
@@ -8580,6 +8735,7 @@ def main() -> None:
                     total_started=total_started,
                     mark_stage=mark_stage,
                     v5_multimetric=args.task037b_v5_gate,
+                    v6_traction_aligned=args.task037b_v6_gate,
                 )
             else:
                 _run_v2_block_screen(

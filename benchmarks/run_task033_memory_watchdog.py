@@ -946,6 +946,8 @@ def _worker_command(
         )
     if args.task037b_v5_gate:
         command.append("--task037b-v5-gate")
+    if args.task037b_v6_gate:
+        command.append("--task037b-v6-gate")
     if args.compare_modal_schur:
         command.append("--compare-modal-schur")
     if args.graded_reference_h is not None:
@@ -1033,13 +1035,20 @@ def _task034_terminal_record_is_complete(record_path: Path) -> bool:
         and isinstance(payload.get("v4_telemetry"), dict)
         and isinstance(payload.get("v5_telemetry"), dict)
     )
+    v6_record = (
+        payload.get("record_schema") == "task037b.v6-traction-aligned-full-block-pc.v1"
+        and isinstance(payload.get("v4_telemetry"), dict)
+        and isinstance(payload.get("v6_telemetry"), dict)
+    )
     v4_telemetry = payload.get("v4_telemetry")
-    v5_telemetry = payload.get("v5_telemetry")
+    v5_telemetry = (
+        payload.get("v6_telemetry") if v6_record else payload.get("v5_telemetry")
+    )
     stage_markers = (
         v4_telemetry.get("stage_markers", []) if isinstance(v4_telemetry, dict) else []
     )
     modern_v4_record = bool(
-        (v4_record or v5_record)
+        (v4_record or v5_record or v6_record)
         and isinstance(payload.get("case"), dict)
         and isinstance(payload.get("solver"), dict)
         and isinstance(payload.get("qualification"), dict)
@@ -1053,7 +1062,7 @@ def _task034_terminal_record_is_complete(record_path: Path) -> bool:
         and payload["qualification"].get("postprocess_release_pass") is True
     )
     modern_v5_record = bool(
-        v5_record
+        (v5_record or v6_record)
         and modern_v4_record
         and isinstance(v5_telemetry, dict)
         and isinstance(v4_telemetry.get("multimetric"), dict)
@@ -4225,6 +4234,41 @@ def _task037b_v5_linear_disposition(
     return "V5_MULTIMETRIC_NUMERICAL_NEGATIVE"
 
 
+def _task037b_v6_linear_disposition(
+    *,
+    contract_pass: bool,
+    numeric: bool,
+    iterations: Any,
+    reason: Any,
+    postsolve_positive: bool,
+    recovery_pass: bool,
+    own_physics_pass: bool,
+    canonical_pass: bool,
+    direct_comparator_pass: bool,
+    traction_pass: bool | None = None,
+) -> str:
+    """Classify the V6 tight linear and traction-aligned lanes."""
+
+    if not contract_pass:
+        return _TASK037B_V4_IMPLEMENTATION
+    reason_is_int = isinstance(reason, int) and not isinstance(reason, bool)
+    if not numeric and reason_is_int and reason > 0 and not postsolve_positive:
+        return "TIGHT_CUSTOM_CONVERGENCE_FALSE_POSITIVE"
+    if not numeric and reason == -3 and iterations == 1000:
+        return "TIGHT_LINEAR_GATE_NOT_REACHED_BY_1000"
+    if numeric and not recovery_pass:
+        return "TIGHT_LINEAR_PASS_RECOVERY_FAIL"
+    if numeric and recovery_pass and traction_pass is False:
+        return "TIGHT_LINEAR_PASS_EXACT_TRACTION_FAIL"
+    if numeric and recovery_pass and (not own_physics_pass or not canonical_pass):
+        return _TASK037B_V4_IMPLEMENTATION
+    if numeric and recovery_pass and own_physics_pass and canonical_pass:
+        if not direct_comparator_pass:
+            return "TIGHT_LINEAR_AND_OWN_PHYSICS_PASS_AUTHORITY_PAYLOAD_INCOMPLETE"
+        return "DOUBLE_APPROXIMATE_MPI8_TIGHT_LINEAR_AND_PHYSICS_PASS"
+    return "TIGHT_LINEAR_GATE_NOT_REACHED_BY_1000"
+
+
 def _task037b_v4_resource_classification(
     process_tree_peak_mb: float | int | None,
 ) -> dict[str, Any]:
@@ -4315,6 +4359,8 @@ def _v4_full_fe_threshold_pass(
     full_relative: Any,
     interior_relative: Any,
     interior_max: Any,
+    *,
+    tight: bool = False,
 ) -> bool:
     """Apply the frozen V4 full-FE and interior recovery thresholds."""
 
@@ -4331,9 +4377,9 @@ def _v4_full_fe_threshold_pass(
         return False
     return bool(
         all(_v2_finite_number(value) and float(value) >= 0.0 for value in values)
-        and values[0] <= 1.0e-6
-        and values[1] <= 1.0e-8
-        and values[2] <= 1.0e-8
+        and values[0] <= (1.0e-8 if tight else 1.0e-6)
+        and values[1] <= (1.0e-10 if tight else 1.0e-8)
+        and values[2] <= (1.0e-10 if tight else 1.0e-8)
     )
 
 
@@ -4413,9 +4459,22 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
         case = record.get("case", {})
         solver = record.get("solver", {})
         telemetry = record.get("v4_telemetry", {})
-        v5_telemetry = record.get("v5_telemetry", {})
-        is_v5 = record.get("record_schema") == (
-            "task037b.v5-multimetric-full-block-pc.v1"
+        is_v6 = record.get("record_schema") == (
+            "task037b.v6-traction-aligned-full-block-pc.v1"
+        )
+        is_v5 = record.get("record_schema") in {
+            "task037b.v5-multimetric-full-block-pc.v1",
+            "task037b.v6-traction-aligned-full-block-pc.v1",
+        }
+        profile_max_it = 1000 if is_v6 else 700
+        profile_threshold = 5.0e-9 if is_v6 else 1.0e-6
+        profile_identity = (
+            "traction_aligned_multimetric_true_residual_gate"
+            if is_v6
+            else "multimetric_true_residual_gate"
+        )
+        v5_telemetry = (
+            record.get("v6_telemetry", {}) if is_v6 else record.get("v5_telemetry", {})
         )
         validation = record.get("validation")
         qualification = record.get("qualification", {})
@@ -4428,6 +4487,7 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
             in {
                 "task037b.v4-full-block-pc.v1",
                 "task037b.v5-multimetric-full-block-pc.v1",
+                "task037b.v6-traction-aligned-full-block-pc.v1",
             }
             and case.get("degree") == 6
             and case.get("h_nm") == 10.0
@@ -4449,19 +4509,15 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
             solver.get("solver_path") == "block-ldu-action-full-solve"
             and solver.get("outer_solver") == "right_fgmres"
             and solver.get("restart") == 90
-            and solver.get("rtol") == 1.0e-6
+            and solver.get("rtol") == profile_threshold
             and solver.get("atol") == 0.0
-            and solver.get("max_it") == 700
+            and solver.get("max_it") == profile_max_it
             and solver.get("zero_initial") is True
             and solver.get("normal_equations") is False
             and solver.get("local_inverse_solve_called") is False
             and solver.get("nested_ksp_created") is False
             and solver.get("direct_fallback") is False
-            and (
-                not is_v5
-                or solver.get("convergence_identity")
-                == "multimetric_true_residual_gate"
-            )
+            and (not is_v5 or solver.get("convergence_identity") == profile_identity)
         )
         official_keys = {
             "official_record",
@@ -4525,7 +4581,7 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
             isinstance(history, list)
             and history
             and nonnegative_int(iterations)
-            and int(iterations) <= 700
+            and int(iterations) <= profile_max_it
         ):
             expected_iterations = list(range(int(iterations) + 1))
             actual_iterations = [row.get("iteration") for row in history]
@@ -4607,6 +4663,32 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
             }
             if is_v5:
                 fixed_checkpoints.update({500, 520, 534, 550, 560, 580, 600})
+            if is_v6:
+                fixed_checkpoints.update(
+                    {
+                        0,
+                        1,
+                        2,
+                        5,
+                        10,
+                        20,
+                        60,
+                        100,
+                        200,
+                        500,
+                        534,
+                        557,
+                        600,
+                        630,
+                        700,
+                        750,
+                        800,
+                        850,
+                        900,
+                        950,
+                        1000,
+                    }
+                )
             required_checkpoints = {
                 checkpoint
                 for checkpoint in fixed_checkpoints
@@ -4707,12 +4789,12 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
             screen_history_contract
             and screen.get("converged_reason") is not None
             and solver.get("restart") == 90
-            and solver.get("rtol") == 1.0e-6
+            and solver.get("rtol") == profile_threshold
             and solver.get("atol") == 0.0
             and solver.get("zero_initial") is True
-            and solver.get("max_it") == 700
+            and solver.get("max_it") == profile_max_it
             and screen.get("iterations") == len(history) - 1
-            and int(iterations) <= 700
+            and int(iterations) <= profile_max_it
             and final_row_contract
             and checkpoint_contract
             and roundoff_contract
@@ -4765,7 +4847,7 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
                     isinstance(row_iteration, int)
                     and not isinstance(row_iteration, bool)
                     and row_iteration > 0
-                    and all(float(value) <= 1.0e-6 for value in values)
+                    and all(float(value) <= profile_threshold for value in values)
                 ):
                     expected_decision = {"CONVERGED_USER", "CONVERGED_RTOL"}
                     reason_contract = (
@@ -4777,7 +4859,7 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
                 elif (
                     isinstance(row_iteration, int)
                     and not isinstance(row_iteration, bool)
-                    and row_iteration >= 700
+                    and row_iteration >= profile_max_it
                 ):
                     expected_decision = "DIVERGED_MAX_IT"
                     reason_contract = row.get("multimetric_reason") == -3
@@ -4792,8 +4874,7 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
                 v5_history_contract = bool(
                     v5_history_contract
                     and all(key in row for key in required_residual_keys)
-                    and row.get("multimetric_identity")
-                    == "multimetric_true_residual_gate"
+                    and row.get("multimetric_identity") == profile_identity
                     and max_contract
                     and decision_contract
                     and reason_contract
@@ -4848,17 +4929,17 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
             and not isinstance(postsolve_reason, bool)
             and postsolve_reason > 0
             and postsolve_values_contract
-            and all(float(value) <= 1.0e-6 for value in postsolve_values)
+            and all(float(value) <= profile_threshold for value in postsolve_values)
         )
         postsolve_contract = bool(
             not is_v5
             or (
                 isinstance(v5_telemetry, dict)
-                and v5_telemetry.get("identity") == "multimetric_true_residual_gate"
+                and v5_telemetry.get("identity") == profile_identity
                 and v5_telemetry.get("history_evaluation_count") == len(history)
                 and v5_telemetry.get("postsolve_evaluation_count") == 1
                 and isinstance(postsolve, dict)
-                and postsolve.get("identity") == "multimetric_true_residual_gate"
+                and postsolve.get("identity") == profile_identity
                 and postsolve.get("restart") == 90
                 and postsolve.get("reported_residual_source") == "ksp.getResidualNorm()"
                 and isinstance(explicit_postsolve, dict)
@@ -5110,7 +5191,7 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
                 and all(
                     _v2_finite_number(postsolve.get(key))
                     and float(postsolve[key]) >= 0.0
-                    and float(postsolve[key]) <= 1.0e-6
+                    and float(postsolve[key]) <= profile_threshold
                     for key in (
                         "ksp_reported_relative_residual",
                         "global_true_relative_residual",
@@ -5249,6 +5330,7 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
                     full_relative,
                     interior_relative,
                     interior_max,
+                    tight=is_v6,
                 )
                 and trace_rows
                 and recovery_ok
@@ -5589,7 +5671,25 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
             and isinstance(gates.get("direct_hybrid_comparison"), dict)
             and gates["direct_hybrid_comparison"].get("pass") is True
         )
-        if is_v5:
+        if is_v6:
+            traction_gate = (
+                telemetry.get("physics_gates", {})
+                .get("exact_traction_dual", {})
+                .get("pass")
+            )
+            disposition = _task037b_v6_linear_disposition(
+                contract_pass=bool(integration),
+                numeric=numeric,
+                iterations=iterations,
+                reason=reason,
+                postsolve_positive=postsolve_positive,
+                recovery_pass=recovery_pass,
+                own_physics_pass=own_physics_pass,
+                canonical_pass=canonical_pass,
+                direct_comparator_pass=direct_comparator_pass,
+                traction_pass=traction_gate,
+            )
+        elif is_v5:
             disposition = _task037b_v5_linear_disposition(
                 contract_pass=bool(integration),
                 numeric=numeric,
@@ -5634,7 +5734,17 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
             else:
                 disposition = "FULL_LINEAR_SOLVE_PASS_CANONICAL_GATE_FAIL"
         expected_status = (
-            "task037b_v5_full_solve_awaiting_authority_payload"
+            {
+                "TIGHT_LINEAR_GATE_NOT_REACHED_BY_1000": "task037b_v6_tight_linear_gate_not_reached",
+                "TIGHT_CUSTOM_CONVERGENCE_FALSE_POSITIVE": "task037b_v6_custom_convergence_false_positive",
+                "TIGHT_LINEAR_PASS_RECOVERY_FAIL": "task037b_v6_linear_pass_recovery_failed",
+                "TIGHT_LINEAR_PASS_EXACT_TRACTION_FAIL": "task037b_v6_linear_pass_exact_traction_failed",
+                "TIGHT_LINEAR_AND_OWN_PHYSICS_PASS_AUTHORITY_PAYLOAD_INCOMPLETE": "task037b_v6_full_solve_awaiting_authority_payload",
+                "DOUBLE_APPROXIMATE_MPI8_TIGHT_LINEAR_AND_PHYSICS_PASS": "task037b_v6_full_solve_pass",
+                _TASK037B_V4_IMPLEMENTATION: "task037b_v6_implementation_gate_failed",
+            }.get(disposition, "task037b_v6_implementation_gate_failed")
+            if is_v6
+            else "task037b_v5_full_solve_awaiting_authority_payload"
             if is_v5
             and disposition
             == "NUMERICAL_AND_OWN_PHYSICS_PASS_AUTHORITY_PAYLOAD_INCOMPLETE"
@@ -5674,9 +5784,12 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
             failures.append("qualification_disposition_mismatch")
         if is_v5 and (
             not isinstance(v5_telemetry, dict)
-            or v5_telemetry.get("v5_disposition") != disposition
+            or v5_telemetry.get("v6_disposition" if is_v6 else "v5_disposition")
+            != disposition
         ):
-            failures.append("v5_disposition_mismatch")
+            failures.append(
+                "v6_disposition_mismatch" if is_v6 else "v5_disposition_mismatch"
+            )
         if qualification.get("numerical_pass") is not numeric:
             failures.append("qualification_numerical_pass_mismatch")
         for field, expected in (
@@ -5905,6 +6018,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--task037b-v6-gate",
+        action="store_true",
+        help=(
+            "Open only the research-only Task037b V6 traction-aligned path; "
+            "requires the frozen V4 and V5 gates."
+        ),
+    )
+    parser.add_argument(
         "--task037b-v2-profile",
         choices=("bottom-approx", "top-approx", "double"),
     )
@@ -6004,9 +6125,17 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         )
     if args.task037b_v5_gate and not args.task037b_v4_gate:
         parser.error("--task037b-v5-gate requires --task037b-v4-gate.")
+    if args.task037b_v6_gate and not args.task037b_v5_gate:
+        parser.error("--task037b-v6-gate requires --task037b-v5-gate.")
+    if args.task037b_v6_gate and not args.task037b_v4_gate:
+        parser.error("--task037b-v6-gate requires --task037b-v4-gate.")
     if args.task037b_v5_gate and args.solver_path != "block-ldu-action-full-solve":
         parser.error(
             "--task037b-v5-gate requires --solver-path block-ldu-action-full-solve."
+        )
+    if args.task037b_v6_gate and args.solver_path != "block-ldu-action-full-solve":
+        parser.error(
+            "--task037b-v6-gate requires --solver-path block-ldu-action-full-solve."
         )
     if args.solver_path == "block-ldu-action-full-solve" and not args.task037b_v4_gate:
         parser.error("block-ldu-action-full-solve requires --task037b-v4-gate.")
@@ -6033,6 +6162,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         args.task037b_v2_profile is not None or args.task037b_v2_max_it is not None
     ):
         parser.error("V5 does not accept V2 profile/max-it options.")
+    if args.task037b_v6_gate and (
+        args.task037b_v2_profile is not None or args.task037b_v2_max_it is not None
+    ):
+        parser.error("V6 does not accept V2 profile/max-it options.")
     selected_scoped_gates = (
         args.task035c_p6_h10_gate,
         args.task037b_h1_gate,
@@ -7950,12 +8083,24 @@ def run(args: argparse.Namespace) -> int:
         in {
             "task037b.v4-full-block-pc.v1",
             "task037b.v5-multimetric-full-block-pc.v1",
+            "task037b.v6-traction-aligned-full-block-pc.v1",
         }
         and isinstance(solver_record.get("v4_telemetry"), dict)
         and (
             solver_record.get("record_schema")
-            != "task037b.v5-multimetric-full-block-pc.v1"
-            or isinstance(solver_record.get("v5_telemetry"), dict)
+            not in {
+                "task037b.v5-multimetric-full-block-pc.v1",
+                "task037b.v6-traction-aligned-full-block-pc.v1",
+            }
+            or isinstance(
+                solver_record.get(
+                    "v6_telemetry"
+                    if solver_record.get("record_schema")
+                    == "task037b.v6-traction-aligned-full-block-pc.v1"
+                    else "v5_telemetry"
+                ),
+                dict,
+            )
         )
     )
     r5_raw_contract = bool(
