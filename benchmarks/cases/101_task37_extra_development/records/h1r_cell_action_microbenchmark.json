@@ -1,0 +1,1103 @@
+{
+  "H2_locked": true,
+  "MPI1_memory_target_evaluated": false,
+  "environment": {
+    "communicator": "MPI.COMM_SELF",
+    "mpi_size": 1,
+    "petsc_int_type": "int32",
+    "petsc_scalar_type": "complex128",
+    "sys_executable": "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+    "thread_environment": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1"
+    },
+    "versions": {
+      "basix": "0.10.0",
+      "dolfinx": "0.10.0.post2",
+      "ffcx": "0.10.1.post0",
+      "ufl": "2025.2.1"
+    }
+  },
+  "evidence_sha256": "0caf43c1b1f8b1fe6eb502b13ca0c22f59f76b81d09d11f33e4845f196c9bc6b",
+  "exact_command": [
+    "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+    "-m",
+    "benchmarks.run_task037_extra_h1r",
+    "run",
+    "--output",
+    "benchmarks/cases/101_task37_extra_development/records/h1r_cell_action_microbenchmark.json"
+  ],
+  "measurements": [
+    {
+      "a_b_relative_error": 0.0,
+      "a_current_dense_reassembly": {
+        "apply_count": 5,
+        "cell_tensor_scratch_count": 1,
+        "cell_tensor_scratch_reused": true,
+        "deterministic": true,
+        "exact_class_cached_dense_tensor_count": 0,
+        "finite": true,
+        "first_apply_breakdown_seconds": {
+          "gemv_seconds": 1.7552985809743404e-05,
+          "orientation_seconds": 7.802899926900864e-05,
+          "tabulation_seconds": 0.00813114910852164
+        },
+        "first_apply_seconds": 0.00823377096094191,
+        "gemv_count": 5,
+        "global_matrix_materialized": false,
+        "median_repeated_apply_seconds": 0.008251193503383547,
+        "median_repeated_breakdown_seconds": {
+          "gemv_seconds": 1.6510486602783203e-05,
+          "orientation_seconds": 4.850846016779542e-05,
+          "tabulation_seconds": 0.008180072996765375
+        },
+        "orientation_count": 5,
+        "relative_error_vs_dense_authority": 0.0,
+        "retained_bytes": 46656,
+        "retained_cell_dense_matrix_count": 0,
+        "setup_breakdown_seconds": {
+          "orientation_seconds": 0.0,
+          "tabulation_seconds": 0.0
+        },
+        "setup_seconds": 3.3369287848472595e-06,
+        "tabulation_count": 5,
+        "touched_bytes_estimate_formula": "6*tensor_bytes + 2*vector_bytes; deterministic per-apply lower-bound estimate",
+        "touched_bytes_estimated": 281664
+      },
+      "active_cell_tag": 1,
+      "b_cached_dense_diagnostic": {
+        "apply_count": 5,
+        "cell_tensor_scratch_count": 0,
+        "cell_tensor_scratch_reused": false,
+        "deterministic": true,
+        "diagnostic_only": true,
+        "eligible_for_H2": false,
+        "exact_class_cached_dense_tensor_count": 1,
+        "finite": true,
+        "first_apply_breakdown_seconds": {
+          "gemv_seconds": 2.250692341476679e-05,
+          "orientation_seconds": 0.0,
+          "tabulation_seconds": 0.0
+        },
+        "first_apply_seconds": 2.7796020731329918e-05,
+        "gemv_count": 5,
+        "global_matrix_materialized": false,
+        "h_refinement_scalability": "not_claimed",
+        "median_repeated_apply_seconds": 4.692526999861002e-06,
+        "median_repeated_breakdown_seconds": {
+          "gemv_seconds": 3.655033651739359e-06,
+          "orientation_seconds": 0.0,
+          "tabulation_seconds": 0.0
+        },
+        "orientation_count": 1,
+        "relative_error_vs_dense_authority": 0.0,
+        "retained_bytes": 46656,
+        "retained_cell_dense_matrix_count": 1,
+        "setup_breakdown_seconds": {
+          "orientation_seconds": 0.00010422198101878166,
+          "tabulation_seconds": 0.008475683978758752
+        },
+        "setup_seconds": 0.008588992990553379,
+        "tabulation_count": 1,
+        "touched_bytes_estimate_formula": "tensor_bytes + 2*vector_bytes; deterministic per-apply lower-bound estimate",
+        "touched_bytes_estimated": 48384
+      },
+      "c_rank_one_direct_action": {
+        "apply_count": 5,
+        "backend_identity": "dolfinx.fem.assemble_vector(existing ndarray, rank-one form)",
+        "cell_tensor_scratch_count": 0,
+        "coefficient_count": 1,
+        "dense_cell_tensor_materialized_per_apply": false,
+        "deterministic": true,
+        "eligible_for_H1R2": "not_evaluated_until_p6_gate",
+        "finite": true,
+        "first_apply_seconds": 0.00027473492082208395,
+        "form_rank": 1,
+        "global_matrix_materialized": false,
+        "global_rows": 54,
+        "kernel_output_local_rows": 54,
+        "kernel_output_local_rows_semantics": "local_storage_entries",
+        "last_packed_coefficient_bytes": 864,
+        "last_packed_coefficient_entry_count": 54,
+        "last_packed_coefficient_shapes": [
+          [
+            1,
+            54
+          ],
+          [
+            0,
+            54
+          ]
+        ],
+        "local_ghost_rows": 0,
+        "local_owned_rows": 54,
+        "local_storage_entries": 54,
+        "median_repeated_apply_seconds": 7.066805846989155e-05,
+        "ordinary_default_changed": false,
+        "output_shape": [
+          54
+        ],
+        "per_apply_bounded_temporary_bytes": 864,
+        "per_apply_packed_coefficient_temporary": true,
+        "qualification_scope": "single_cell_H1R1_only",
+        "relative_error_vs_dense_authority": 1.0448732588064883e-15,
+        "retained_bytes": 1728,
+        "retained_dense_cell_tensor_count": 0,
+        "retained_numeric_payload_components": {
+          "coefficient_function_local_array_bytes": 864,
+          "output_buffer_bytes": 864,
+          "packed_constants_bytes": 0
+        },
+        "retained_payload_per_exact_class_bytes": 1728,
+        "setup_seconds": 0.007889422005973756,
+        "touched_bytes_estimate_formula": "coefficient_function_local_array_bytes + output_buffer_bytes + packed_coefficients_bytes; deterministic per-apply lower-bound estimate",
+        "touched_bytes_estimated": 2592
+      },
+      "class_identity": {
+        "canonical_coordinates": [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          1.0,
+          0.0,
+          1.0,
+          0.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "canonical_widths": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "cell_info": 0,
+        "cell_tag": 1,
+        "degree": 2,
+        "element": {
+          "basix_cell_type": "hexahedron",
+          "basix_degree": 2,
+          "basix_family": "N1E",
+          "basix_hash": 16913352432823651566,
+          "basix_map_type": "covariantPiola"
+        },
+        "material_coefficients": {
+          "1": {
+            "curl": [
+              1.0,
+              0.15
+            ],
+            "mass": [
+              2.5,
+              -0.2
+            ]
+          },
+          "2": {
+            "curl": [
+              1.7,
+              -0.25
+            ],
+            "mass": [
+              0.65,
+              0.4
+            ]
+          }
+        },
+        "sha256": "fd1f2c5ecc4c553a3e994995ff19e2fd225d433822adc58007fece427c9fcf2b"
+      },
+      "degree": 2,
+      "dense_p6_class_bytes": 12446784,
+      "material_tags": [
+        1,
+        2
+      ],
+      "nloc": 54,
+      "repeats": 4
+    },
+    {
+      "a_b_relative_error": 0.0,
+      "a_current_dense_reassembly": {
+        "apply_count": 5,
+        "cell_tensor_scratch_count": 1,
+        "cell_tensor_scratch_reused": true,
+        "deterministic": true,
+        "exact_class_cached_dense_tensor_count": 0,
+        "finite": true,
+        "first_apply_breakdown_seconds": {
+          "gemv_seconds": 3.453996032476425e-05,
+          "orientation_seconds": 9.177997708320618e-05,
+          "tabulation_seconds": 0.11463102791458368
+        },
+        "first_apply_seconds": 0.11476325092371553,
+        "gemv_count": 5,
+        "global_matrix_materialized": false,
+        "median_repeated_apply_seconds": 0.11626529000932351,
+        "median_repeated_breakdown_seconds": {
+          "gemv_seconds": 3.393151564523578e-05,
+          "orientation_seconds": 9.3046051915735e-05,
+          "tabulation_seconds": 0.11612569203134626
+        },
+        "orientation_count": 5,
+        "relative_error_vs_dense_authority": 0.0,
+        "retained_bytes": 331776,
+        "retained_cell_dense_matrix_count": 0,
+        "setup_breakdown_seconds": {
+          "orientation_seconds": 0.0,
+          "tabulation_seconds": 0.0
+        },
+        "setup_seconds": 2.5909394025802612e-06,
+        "tabulation_count": 5,
+        "touched_bytes_estimate_formula": "6*tensor_bytes + 2*vector_bytes; deterministic per-apply lower-bound estimate",
+        "touched_bytes_estimated": 1995264
+      },
+      "active_cell_tag": 1,
+      "b_cached_dense_diagnostic": {
+        "apply_count": 5,
+        "cell_tensor_scratch_count": 0,
+        "cell_tensor_scratch_reused": false,
+        "deterministic": true,
+        "diagnostic_only": true,
+        "eligible_for_H2": false,
+        "exact_class_cached_dense_tensor_count": 1,
+        "finite": true,
+        "first_apply_breakdown_seconds": {
+          "gemv_seconds": 1.6730045899748802e-05,
+          "orientation_seconds": 0.0,
+          "tabulation_seconds": 0.0
+        },
+        "first_apply_seconds": 1.8937978893518448e-05,
+        "gemv_count": 5,
+        "global_matrix_materialized": false,
+        "h_refinement_scalability": "not_claimed",
+        "median_repeated_apply_seconds": 1.647550379857421e-05,
+        "median_repeated_breakdown_seconds": {
+          "gemv_seconds": 1.5927013009786606e-05,
+          "orientation_seconds": 0.0,
+          "tabulation_seconds": 0.0
+        },
+        "orientation_count": 1,
+        "relative_error_vs_dense_authority": 0.0,
+        "retained_bytes": 331776,
+        "retained_cell_dense_matrix_count": 1,
+        "setup_breakdown_seconds": {
+          "orientation_seconds": 0.00033225107472389936,
+          "tabulation_seconds": 0.10705655300989747
+        },
+        "setup_seconds": 0.10740622400771827,
+        "tabulation_count": 1,
+        "touched_bytes_estimate_formula": "tensor_bytes + 2*vector_bytes; deterministic per-apply lower-bound estimate",
+        "touched_bytes_estimated": 336384
+      },
+      "c_rank_one_direct_action": {
+        "apply_count": 5,
+        "backend_identity": "dolfinx.fem.assemble_vector(existing ndarray, rank-one form)",
+        "cell_tensor_scratch_count": 0,
+        "coefficient_count": 1,
+        "dense_cell_tensor_materialized_per_apply": false,
+        "deterministic": true,
+        "eligible_for_H1R2": "not_evaluated_until_p6_gate",
+        "finite": true,
+        "first_apply_seconds": 0.00041074701584875584,
+        "form_rank": 1,
+        "global_matrix_materialized": false,
+        "global_rows": 144,
+        "kernel_output_local_rows": 144,
+        "kernel_output_local_rows_semantics": "local_storage_entries",
+        "last_packed_coefficient_bytes": 2304,
+        "last_packed_coefficient_entry_count": 144,
+        "last_packed_coefficient_shapes": [
+          [
+            1,
+            144
+          ],
+          [
+            0,
+            144
+          ]
+        ],
+        "local_ghost_rows": 0,
+        "local_owned_rows": 144,
+        "local_storage_entries": 144,
+        "median_repeated_apply_seconds": 0.00017496757209300995,
+        "ordinary_default_changed": false,
+        "output_shape": [
+          144
+        ],
+        "per_apply_bounded_temporary_bytes": 2304,
+        "per_apply_packed_coefficient_temporary": true,
+        "qualification_scope": "single_cell_H1R1_only",
+        "relative_error_vs_dense_authority": 6.510716434423364e-16,
+        "retained_bytes": 4608,
+        "retained_dense_cell_tensor_count": 0,
+        "retained_numeric_payload_components": {
+          "coefficient_function_local_array_bytes": 2304,
+          "output_buffer_bytes": 2304,
+          "packed_constants_bytes": 0
+        },
+        "retained_payload_per_exact_class_bytes": 4608,
+        "setup_seconds": 0.004713600035756826,
+        "touched_bytes_estimate_formula": "coefficient_function_local_array_bytes + output_buffer_bytes + packed_coefficients_bytes; deterministic per-apply lower-bound estimate",
+        "touched_bytes_estimated": 6912
+      },
+      "class_identity": {
+        "canonical_coordinates": [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          1.0,
+          0.0,
+          1.0,
+          0.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "canonical_widths": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "cell_info": 0,
+        "cell_tag": 1,
+        "degree": 3,
+        "element": {
+          "basix_cell_type": "hexahedron",
+          "basix_degree": 3,
+          "basix_family": "N1E",
+          "basix_hash": 16913352432823651565,
+          "basix_map_type": "covariantPiola"
+        },
+        "material_coefficients": {
+          "1": {
+            "curl": [
+              1.0,
+              0.15
+            ],
+            "mass": [
+              2.5,
+              -0.2
+            ]
+          },
+          "2": {
+            "curl": [
+              1.7,
+              -0.25
+            ],
+            "mass": [
+              0.65,
+              0.4
+            ]
+          }
+        },
+        "sha256": "9bac2ca9348bf1b3f108771edfc1960c491d43422b6ff57b3e8865fbd3a363be"
+      },
+      "degree": 3,
+      "dense_p6_class_bytes": 12446784,
+      "material_tags": [
+        1,
+        2
+      ],
+      "nloc": 144,
+      "repeats": 4
+    },
+    {
+      "a_b_relative_error": 0.0,
+      "a_current_dense_reassembly": {
+        "apply_count": 5,
+        "cell_tensor_scratch_count": 1,
+        "cell_tensor_scratch_reused": true,
+        "deterministic": true,
+        "exact_class_cached_dense_tensor_count": 0,
+        "finite": true,
+        "first_apply_breakdown_seconds": {
+          "gemv_seconds": 8.957600221037865e-05,
+          "orientation_seconds": 0.0002926230663433671,
+          "tabulation_seconds": 0.8222581469453871
+        },
+        "first_apply_seconds": 0.8226485629566014,
+        "gemv_count": 5,
+        "global_matrix_materialized": false,
+        "median_repeated_apply_seconds": 0.8266520819743164,
+        "median_repeated_breakdown_seconds": {
+          "gemv_seconds": 9.491195669397712e-05,
+          "orientation_seconds": 0.00028098904294893146,
+          "tabulation_seconds": 0.8261634309310466
+        },
+        "orientation_count": 5,
+        "relative_error_vs_dense_authority": 0.0,
+        "retained_bytes": 1440000,
+        "retained_cell_dense_matrix_count": 0,
+        "setup_breakdown_seconds": {
+          "orientation_seconds": 0.0,
+          "tabulation_seconds": 0.0
+        },
+        "setup_seconds": 3.990018740296364e-06,
+        "tabulation_count": 5,
+        "touched_bytes_estimate_formula": "6*tensor_bytes + 2*vector_bytes; deterministic per-apply lower-bound estimate",
+        "touched_bytes_estimated": 8649600
+      },
+      "active_cell_tag": 1,
+      "b_cached_dense_diagnostic": {
+        "apply_count": 5,
+        "cell_tensor_scratch_count": 0,
+        "cell_tensor_scratch_reused": false,
+        "deterministic": true,
+        "diagnostic_only": true,
+        "eligible_for_H2": false,
+        "exact_class_cached_dense_tensor_count": 1,
+        "finite": true,
+        "first_apply_breakdown_seconds": {
+          "gemv_seconds": 7.127504795789719e-05,
+          "orientation_seconds": 0.0,
+          "tabulation_seconds": 0.0
+        },
+        "first_apply_seconds": 7.424294017255306e-05,
+        "gemv_count": 5,
+        "global_matrix_materialized": false,
+        "h_refinement_scalability": "not_claimed",
+        "median_repeated_apply_seconds": 7.172551704570651e-05,
+        "median_repeated_breakdown_seconds": {
+          "gemv_seconds": 7.036101305857301e-05,
+          "orientation_seconds": 0.0,
+          "tabulation_seconds": 0.0
+        },
+        "orientation_count": 1,
+        "relative_error_vs_dense_authority": 0.0,
+        "retained_bytes": 1440000,
+        "retained_cell_dense_matrix_count": 1,
+        "setup_breakdown_seconds": {
+          "orientation_seconds": 0.00026697898283600807,
+          "tabulation_seconds": 0.8276659760158509
+        },
+        "setup_seconds": 0.8279413939453661,
+        "tabulation_count": 1,
+        "touched_bytes_estimate_formula": "tensor_bytes + 2*vector_bytes; deterministic per-apply lower-bound estimate",
+        "touched_bytes_estimated": 1449600
+      },
+      "c_rank_one_direct_action": {
+        "apply_count": 5,
+        "backend_identity": "dolfinx.fem.assemble_vector(existing ndarray, rank-one form)",
+        "cell_tensor_scratch_count": 0,
+        "coefficient_count": 1,
+        "dense_cell_tensor_materialized_per_apply": false,
+        "deterministic": true,
+        "eligible_for_H1R2": "not_evaluated_until_p6_gate",
+        "finite": true,
+        "first_apply_seconds": 0.0009075960842892528,
+        "form_rank": 1,
+        "global_matrix_materialized": false,
+        "global_rows": 300,
+        "kernel_output_local_rows": 300,
+        "kernel_output_local_rows_semantics": "local_storage_entries",
+        "last_packed_coefficient_bytes": 4800,
+        "last_packed_coefficient_entry_count": 300,
+        "last_packed_coefficient_shapes": [
+          [
+            1,
+            300
+          ],
+          [
+            0,
+            300
+          ]
+        ],
+        "local_ghost_rows": 0,
+        "local_owned_rows": 300,
+        "local_storage_entries": 300,
+        "median_repeated_apply_seconds": 0.0005751060671173036,
+        "ordinary_default_changed": false,
+        "output_shape": [
+          300
+        ],
+        "per_apply_bounded_temporary_bytes": 4800,
+        "per_apply_packed_coefficient_temporary": true,
+        "qualification_scope": "single_cell_H1R1_only",
+        "relative_error_vs_dense_authority": 1.4617639397633573e-15,
+        "retained_bytes": 9600,
+        "retained_dense_cell_tensor_count": 0,
+        "retained_numeric_payload_components": {
+          "coefficient_function_local_array_bytes": 4800,
+          "output_buffer_bytes": 4800,
+          "packed_constants_bytes": 0
+        },
+        "retained_payload_per_exact_class_bytes": 9600,
+        "setup_seconds": 4.697555392980576,
+        "touched_bytes_estimate_formula": "coefficient_function_local_array_bytes + output_buffer_bytes + packed_coefficients_bytes; deterministic per-apply lower-bound estimate",
+        "touched_bytes_estimated": 14400
+      },
+      "class_identity": {
+        "canonical_coordinates": [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          1.0,
+          0.0,
+          1.0,
+          0.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "canonical_widths": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "cell_info": 0,
+        "cell_tag": 1,
+        "degree": 4,
+        "element": {
+          "basix_cell_type": "hexahedron",
+          "basix_degree": 4,
+          "basix_family": "N1E",
+          "basix_hash": 16913352432823651564,
+          "basix_map_type": "covariantPiola"
+        },
+        "material_coefficients": {
+          "1": {
+            "curl": [
+              1.0,
+              0.15
+            ],
+            "mass": [
+              2.5,
+              -0.2
+            ]
+          },
+          "2": {
+            "curl": [
+              1.7,
+              -0.25
+            ],
+            "mass": [
+              0.65,
+              0.4
+            ]
+          }
+        },
+        "sha256": "3e81fda23736345c8ff85e14f7c0b3af201af0fab25f9e7382c75bbca3f88785"
+      },
+      "degree": 4,
+      "dense_p6_class_bytes": 12446784,
+      "material_tags": [
+        1,
+        2
+      ],
+      "nloc": 300,
+      "repeats": 4
+    },
+    {
+      "a_b_relative_error": 0.0,
+      "a_current_dense_reassembly": {
+        "apply_count": 5,
+        "cell_tensor_scratch_count": 1,
+        "cell_tensor_scratch_reused": true,
+        "deterministic": true,
+        "exact_class_cached_dense_tensor_count": 0,
+        "finite": true,
+        "first_apply_breakdown_seconds": {
+          "gemv_seconds": 0.0008684970671311021,
+          "orientation_seconds": 0.004296839004382491,
+          "tabulation_seconds": 19.928487439989112
+        },
+        "first_apply_seconds": 19.933682644041255,
+        "gemv_count": 5,
+        "global_matrix_materialized": false,
+        "median_repeated_apply_seconds": 20.05118844646495,
+        "median_repeated_breakdown_seconds": {
+          "gemv_seconds": 0.000869196024723351,
+          "orientation_seconds": 0.004321829997934401,
+          "tabulation_seconds": 20.045995232474525
+        },
+        "orientation_count": 5,
+        "relative_error_vs_dense_authority": 0.0,
+        "retained_bytes": 12446784,
+        "retained_cell_dense_matrix_count": 0,
+        "setup_breakdown_seconds": {
+          "orientation_seconds": 0.0,
+          "tabulation_seconds": 0.0
+        },
+        "setup_seconds": 2.297293394804001e-05,
+        "tabulation_count": 5,
+        "touched_bytes_estimate_formula": "6*tensor_bytes + 2*vector_bytes; deterministic per-apply lower-bound estimate",
+        "touched_bytes_estimated": 74708928
+      },
+      "active_cell_tag": 1,
+      "b_cached_dense_diagnostic": {
+        "apply_count": 5,
+        "cell_tensor_scratch_count": 0,
+        "cell_tensor_scratch_reused": false,
+        "deterministic": true,
+        "diagnostic_only": true,
+        "eligible_for_H2": false,
+        "exact_class_cached_dense_tensor_count": 1,
+        "finite": true,
+        "first_apply_breakdown_seconds": {
+          "gemv_seconds": 0.0009454090613871813,
+          "orientation_seconds": 0.0,
+          "tabulation_seconds": 0.0
+        },
+        "first_apply_seconds": 0.0009732820326462388,
+        "gemv_count": 5,
+        "global_matrix_materialized": false,
+        "h_refinement_scalability": "not_claimed",
+        "median_repeated_apply_seconds": 0.0007399940514005721,
+        "median_repeated_breakdown_seconds": {
+          "gemv_seconds": 0.0007261585560627282,
+          "orientation_seconds": 0.0,
+          "tabulation_seconds": 0.0
+        },
+        "orientation_count": 1,
+        "relative_error_vs_dense_authority": 0.0,
+        "retained_bytes": 12446784,
+        "retained_cell_dense_matrix_count": 1,
+        "setup_breakdown_seconds": {
+          "orientation_seconds": 0.005484876921400428,
+          "tabulation_seconds": 20.565937013016082
+        },
+        "setup_seconds": 20.571481373975985,
+        "tabulation_count": 1,
+        "touched_bytes_estimate_formula": "tensor_bytes + 2*vector_bytes; deterministic per-apply lower-bound estimate",
+        "touched_bytes_estimated": 12475008
+      },
+      "c_rank_one_direct_action": {
+        "apply_count": 5,
+        "backend_identity": "dolfinx.fem.assemble_vector(existing ndarray, rank-one form)",
+        "cell_tensor_scratch_count": 0,
+        "coefficient_count": 1,
+        "dense_cell_tensor_materialized_per_apply": false,
+        "deterministic": true,
+        "eligible_for_H1R2": "not_evaluated_until_p6_gate",
+        "finite": true,
+        "first_apply_seconds": 0.007405082928016782,
+        "form_rank": 1,
+        "global_matrix_materialized": false,
+        "global_rows": 882,
+        "kernel_output_local_rows": 882,
+        "kernel_output_local_rows_semantics": "local_storage_entries",
+        "last_packed_coefficient_bytes": 14112,
+        "last_packed_coefficient_entry_count": 882,
+        "last_packed_coefficient_shapes": [
+          [
+            1,
+            882
+          ],
+          [
+            0,
+            882
+          ]
+        ],
+        "local_ghost_rows": 0,
+        "local_owned_rows": 882,
+        "local_storage_entries": 882,
+        "median_repeated_apply_seconds": 0.005264257488306612,
+        "ordinary_default_changed": false,
+        "output_shape": [
+          882
+        ],
+        "per_apply_bounded_temporary_bytes": 14112,
+        "per_apply_packed_coefficient_temporary": true,
+        "qualification_scope": "single_cell_H1R1_only",
+        "relative_error_vs_dense_authority": 1.3489283709986367e-15,
+        "retained_bytes": 28224,
+        "retained_dense_cell_tensor_count": 0,
+        "retained_numeric_payload_components": {
+          "coefficient_function_local_array_bytes": 14112,
+          "output_buffer_bytes": 14112,
+          "packed_constants_bytes": 0
+        },
+        "retained_payload_per_exact_class_bytes": 28224,
+        "setup_seconds": 48.40854476997629,
+        "touched_bytes_estimate_formula": "coefficient_function_local_array_bytes + output_buffer_bytes + packed_coefficients_bytes; deterministic per-apply lower-bound estimate",
+        "touched_bytes_estimated": 42336
+      },
+      "class_identity": {
+        "canonical_coordinates": [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          1.0,
+          0.0,
+          1.0,
+          0.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "canonical_widths": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "cell_info": 0,
+        "cell_tag": 1,
+        "degree": 6,
+        "element": {
+          "basix_cell_type": "hexahedron",
+          "basix_degree": 6,
+          "basix_family": "N1E",
+          "basix_hash": 16913352432823651554,
+          "basix_map_type": "covariantPiola"
+        },
+        "material_coefficients": {
+          "1": {
+            "curl": [
+              1.0,
+              0.15
+            ],
+            "mass": [
+              2.5,
+              -0.2
+            ]
+          },
+          "2": {
+            "curl": [
+              1.7,
+              -0.25
+            ],
+            "mass": [
+              0.65,
+              0.4
+            ]
+          }
+        },
+        "sha256": "f4ea064944a7b0874d9df1fb23ab0eaa52e924e1e05b3c9a8bb0f39dbd6e2fdd"
+      },
+      "degree": 6,
+      "dense_p6_class_bytes": 12446784,
+      "material_tags": [
+        1,
+        2
+      ],
+      "nloc": 882,
+      "repeats": 4
+    }
+  ],
+  "qualification": {
+    "degrees_exact": true,
+    "eligible_for_H1R2": false,
+    "p6_speedup": 3808.9300325837494,
+    "pass": false,
+    "per_degree_checks": {
+      "2": {
+        "a_median_repeated_apply_seconds": 0.008251193503383547,
+        "b_checks": {
+          "diagnostic_only": true,
+          "eligible_for_H2": true,
+          "h_refinement_scalability": true
+        },
+        "c_checks": {
+          "apply_count": true,
+          "backend_identity": true,
+          "cell_tensor_scratch_count": true,
+          "coefficient_count": true,
+          "dense_cell_tensor_materialized_per_apply": true,
+          "deterministic": true,
+          "finite": true,
+          "form_rank": true,
+          "global_matrix_materialized": true,
+          "ordinary_default_changed": true,
+          "packed_entry_bytes_closure": true,
+          "packed_shapes": false,
+          "per_apply_packed_coefficient_temporary": true,
+          "qualification_scope": true,
+          "relative_error": true,
+          "retained_dense_cell_tensor_count": true,
+          "retained_payload_per_exact_class_bytes": true
+        },
+        "c_median_repeated_apply_seconds": 7.066805846989155e-05,
+        "checks": {
+          "b_diagnostic_only": true,
+          "b_eligible_for_H2": true,
+          "b_h_refinement_scalability": true,
+          "c_apply_count": true,
+          "c_backend_identity": true,
+          "c_cell_tensor_scratch_count": true,
+          "c_coefficient_count": true,
+          "c_dense_cell_tensor_materialized_per_apply": true,
+          "c_deterministic": true,
+          "c_finite": true,
+          "c_form_rank": true,
+          "c_global_matrix_materialized": true,
+          "c_ordinary_default_changed": true,
+          "c_packed_entry_bytes_closure": true,
+          "c_packed_shapes": false,
+          "c_per_apply_packed_coefficient_temporary": true,
+          "c_qualification_scope": true,
+          "c_relative_error": true,
+          "c_retained_dense_cell_tensor_count": true,
+          "c_retained_payload_per_exact_class_bytes": true,
+          "p6_speedup": true
+        },
+        "p6_speedup_gate_pass": true,
+        "pass": false,
+        "speedup_a_over_c": 116.75987259362738
+      },
+      "3": {
+        "a_median_repeated_apply_seconds": 0.11626529000932351,
+        "b_checks": {
+          "diagnostic_only": true,
+          "eligible_for_H2": true,
+          "h_refinement_scalability": true
+        },
+        "c_checks": {
+          "apply_count": true,
+          "backend_identity": true,
+          "cell_tensor_scratch_count": true,
+          "coefficient_count": true,
+          "dense_cell_tensor_materialized_per_apply": true,
+          "deterministic": true,
+          "finite": true,
+          "form_rank": true,
+          "global_matrix_materialized": true,
+          "ordinary_default_changed": true,
+          "packed_entry_bytes_closure": true,
+          "packed_shapes": false,
+          "per_apply_packed_coefficient_temporary": true,
+          "qualification_scope": true,
+          "relative_error": true,
+          "retained_dense_cell_tensor_count": true,
+          "retained_payload_per_exact_class_bytes": true
+        },
+        "c_median_repeated_apply_seconds": 0.00017496757209300995,
+        "checks": {
+          "b_diagnostic_only": true,
+          "b_eligible_for_H2": true,
+          "b_h_refinement_scalability": true,
+          "c_apply_count": true,
+          "c_backend_identity": true,
+          "c_cell_tensor_scratch_count": true,
+          "c_coefficient_count": true,
+          "c_dense_cell_tensor_materialized_per_apply": true,
+          "c_deterministic": true,
+          "c_finite": true,
+          "c_form_rank": true,
+          "c_global_matrix_materialized": true,
+          "c_ordinary_default_changed": true,
+          "c_packed_entry_bytes_closure": true,
+          "c_packed_shapes": false,
+          "c_per_apply_packed_coefficient_temporary": true,
+          "c_qualification_scope": true,
+          "c_relative_error": true,
+          "c_retained_dense_cell_tensor_count": true,
+          "c_retained_payload_per_exact_class_bytes": true,
+          "p6_speedup": true
+        },
+        "p6_speedup_gate_pass": true,
+        "pass": false,
+        "speedup_a_over_c": 664.4962184622345
+      },
+      "4": {
+        "a_median_repeated_apply_seconds": 0.8266520819743164,
+        "b_checks": {
+          "diagnostic_only": true,
+          "eligible_for_H2": true,
+          "h_refinement_scalability": true
+        },
+        "c_checks": {
+          "apply_count": true,
+          "backend_identity": true,
+          "cell_tensor_scratch_count": true,
+          "coefficient_count": true,
+          "dense_cell_tensor_materialized_per_apply": true,
+          "deterministic": true,
+          "finite": true,
+          "form_rank": true,
+          "global_matrix_materialized": true,
+          "ordinary_default_changed": true,
+          "packed_entry_bytes_closure": true,
+          "packed_shapes": false,
+          "per_apply_packed_coefficient_temporary": true,
+          "qualification_scope": true,
+          "relative_error": true,
+          "retained_dense_cell_tensor_count": true,
+          "retained_payload_per_exact_class_bytes": true
+        },
+        "c_median_repeated_apply_seconds": 0.0005751060671173036,
+        "checks": {
+          "b_diagnostic_only": true,
+          "b_eligible_for_H2": true,
+          "b_h_refinement_scalability": true,
+          "c_apply_count": true,
+          "c_backend_identity": true,
+          "c_cell_tensor_scratch_count": true,
+          "c_coefficient_count": true,
+          "c_dense_cell_tensor_materialized_per_apply": true,
+          "c_deterministic": true,
+          "c_finite": true,
+          "c_form_rank": true,
+          "c_global_matrix_materialized": true,
+          "c_ordinary_default_changed": true,
+          "c_packed_entry_bytes_closure": true,
+          "c_packed_shapes": false,
+          "c_per_apply_packed_coefficient_temporary": true,
+          "c_qualification_scope": true,
+          "c_relative_error": true,
+          "c_retained_dense_cell_tensor_count": true,
+          "c_retained_payload_per_exact_class_bytes": true,
+          "p6_speedup": true
+        },
+        "p6_speedup_gate_pass": true,
+        "pass": false,
+        "speedup_a_over_c": 1437.3906471164132
+      },
+      "6": {
+        "a_median_repeated_apply_seconds": 20.05118844646495,
+        "b_checks": {
+          "diagnostic_only": true,
+          "eligible_for_H2": true,
+          "h_refinement_scalability": true
+        },
+        "c_checks": {
+          "apply_count": true,
+          "backend_identity": true,
+          "cell_tensor_scratch_count": true,
+          "coefficient_count": true,
+          "dense_cell_tensor_materialized_per_apply": true,
+          "deterministic": true,
+          "finite": true,
+          "form_rank": true,
+          "global_matrix_materialized": true,
+          "ordinary_default_changed": true,
+          "packed_entry_bytes_closure": true,
+          "packed_shapes": false,
+          "per_apply_packed_coefficient_temporary": true,
+          "qualification_scope": true,
+          "relative_error": true,
+          "retained_dense_cell_tensor_count": true,
+          "retained_payload_per_exact_class_bytes": true
+        },
+        "c_median_repeated_apply_seconds": 0.005264257488306612,
+        "checks": {
+          "b_diagnostic_only": true,
+          "b_eligible_for_H2": true,
+          "b_h_refinement_scalability": true,
+          "c_apply_count": true,
+          "c_backend_identity": true,
+          "c_cell_tensor_scratch_count": true,
+          "c_coefficient_count": true,
+          "c_dense_cell_tensor_materialized_per_apply": true,
+          "c_deterministic": true,
+          "c_finite": true,
+          "c_form_rank": true,
+          "c_global_matrix_materialized": true,
+          "c_ordinary_default_changed": true,
+          "c_packed_entry_bytes_closure": true,
+          "c_packed_shapes": false,
+          "c_per_apply_packed_coefficient_temporary": true,
+          "c_qualification_scope": true,
+          "c_relative_error": true,
+          "c_retained_dense_cell_tensor_count": true,
+          "c_retained_payload_per_exact_class_bytes": true,
+          "p6_speedup": true
+        },
+        "p6_speedup_gate_pass": true,
+        "pass": false,
+        "speedup_a_over_c": 3808.9300325837494
+      }
+    },
+    "problems": [
+      "degree_2:c_packed_shapes",
+      "degree_3:c_packed_shapes",
+      "degree_4:c_packed_shapes",
+      "degree_6:c_packed_shapes"
+    ],
+    "schema": "task037_extra_h1r1.qualification.v1",
+    "source_stable_clean": true,
+    "status": "gate_failed"
+  },
+  "schema": "task037_extra_h1r1.raw.v1",
+  "scope": {
+    "communicator": "MPI.COMM_SELF",
+    "degrees": [
+      2,
+      3,
+      4,
+      6
+    ],
+    "mpi_size": 1,
+    "repeats": 4
+  },
+  "source_identity": {
+    "end_clean": true,
+    "source_at_end": {
+      "cleanliness_semantics": "all tracked changes plus every nonignored untracked path",
+      "git_error": null,
+      "nonignored_untracked_paths": [],
+      "source_commit_full_sha": "04030436b16050016d4b8ec37f30bf6bac56a144",
+      "source_worktree_dirty": false,
+      "tracked_source_dirty": false,
+      "worktree_status_porcelain": []
+    },
+    "source_at_start": {
+      "cleanliness_semantics": "all tracked changes plus every nonignored untracked path",
+      "git_error": null,
+      "nonignored_untracked_paths": [],
+      "source_commit_full_sha": "04030436b16050016d4b8ec37f30bf6bac56a144",
+      "source_worktree_dirty": false,
+      "tracked_source_dirty": false,
+      "worktree_status_porcelain": []
+    },
+    "stable_clean": true,
+    "start_clean": true
+  },
+  "timestamp_utc": "2026-08-09T17:15:35.052469+00:00"
+}

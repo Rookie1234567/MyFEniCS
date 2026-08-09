@@ -179,7 +179,7 @@ def _synthetic_h1r1_record():
                     "cell_tensor_scratch_count": 0,
                     "global_matrix_materialized": False,
                     "retained_payload_per_exact_class_bytes": 4096,
-                    "last_packed_coefficient_shapes": [[nloc]],
+                    "last_packed_coefficient_shapes": [[1, nloc], [0, nloc]],
                     "last_packed_coefficient_entry_count": nloc,
                     "last_packed_coefficient_bytes": nloc * 16,
                     "per_apply_bounded_temporary_bytes": nloc * 16,
@@ -218,6 +218,12 @@ def _synthetic_h1r1_record():
 
 def test_h1r1_pure_qualification_pass_and_evidence_hash():
     record = attach_evidence_sha256(_synthetic_h1r1_record())
+    assert record["source_identity"]["stable_clean"] is True
+    assert all(
+        item["c_rank_one_direct_action"]["last_packed_coefficient_shapes"]
+        == [[1, item["nloc"]], [0, item["nloc"]]]
+        for item in record["measurements"]
+    )
     result = evaluate_h1r1_qualification(record)
     assert evidence_sha256_is_valid(record)
     assert result["status"] == "pass"

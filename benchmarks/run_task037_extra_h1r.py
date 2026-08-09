@@ -527,12 +527,15 @@ def evaluate_h1r1_qualification(
                 and all(
                     isinstance(dimension, int)
                     and not isinstance(dimension, bool)
-                    and dimension > 0
+                    and dimension >= 0
                     for dimension in shape
                 )
                 and math.prod(shape) <= nloc
                 for shape in packed_shapes
             )
+            and isinstance(packed_entries, int)
+            and sum(math.prod(shape) for shape in packed_shapes)
+            == packed_entries
         )
         packed_closure_gate = bool(
             isinstance(packed_entries, int)
