@@ -1,0 +1,316 @@
+{
+  "schema": "task037b.v5-mpi8-multimetric-full-qualification.v1",
+  "provenance": {
+    "review": "Task037b Review V5",
+    "branch": "codex/20260807-task37b-hybrid-iterative-development",
+    "implementation_checkpoint": "770e74513b4444f032adb7f61c5d350fb53d9458",
+    "formal_candidate_source": "892f186b39c0eb89f1912640430fd79599d86318",
+    "postprocessor_correction": "11c01d5268f1e0fc8eb307945179b540ccfcb2aa",
+    "formal_run_count": 1,
+    "retry": false,
+    "warm_start": false,
+    "continuation": false,
+    "ordinary_defaults_changed": false
+  },
+  "raw_artifacts": {
+    "summary": {
+      "path": "benchmarks/artifacts/task037b/v5_multimetric_full_892f186_mpi8.json",
+      "sha256": "1c0fcddeb011618e1306577a39e2c3983bb42fa7c4080efe2569dae7973f67ee"
+    },
+    "solver_record": {
+      "path": "benchmarks/artifacts/task037b/v5_multimetric_full_892f186_mpi8/solver_record.json",
+      "sha256": "237a7f5e2b21ac8ae61d842ee1b3ff3b433cbee82389c06575fe7e3a8913878e"
+    },
+    "memory_sampler_summary": {
+      "path": "benchmarks/artifacts/task037b/v5_multimetric_full_892f186_mpi8/memory_sampler_summary.json",
+      "sha256": "1c0fcddeb011618e1306577a39e2c3983bb42fa7c4080efe2569dae7973f67ee"
+    },
+    "memory_timeline": {
+      "path": "benchmarks/artifacts/task037b/v5_multimetric_full_892f186_mpi8/memory_timeline.csv",
+      "sha256": "166dce778af8f7e7115ee0b1ea2dcd67c3259ecde2204dc32cb6880920f463fd"
+    },
+    "memory_stages": {
+      "path": "benchmarks/artifacts/task037b/v5_multimetric_full_892f186_mpi8/memory_stages.jsonl",
+      "sha256": "536ad9eafad3a9d17c962526f845305a07a6b21bf8f4f74aacbdced1e7864382"
+    },
+    "worker_stdout": {
+      "path": "benchmarks/artifacts/task037b/v5_multimetric_full_892f186_mpi8/worker_stdout.txt",
+      "sha256": "3d8d95ffb1185b6d2b9ffdecb0975f834c3b1686712539db0b581176f381dba5"
+    },
+    "own_grid_npz": {
+      "path": "benchmarks/artifacts/task037b/v5_multimetric_full_892f186_mpi8/v4_own_grid_EH_modal_q.npz",
+      "sha256": "f8e9eb9a47dbe91d374c04b3a74d0ea12df0ff538c23fafaa9a8c65089ac51fe",
+      "schema": "task037b.v4-own-grid-EH-modal-q.v1",
+      "bytes": 336601,
+      "rank0_only": true
+    },
+    "embedded_history": {
+      "storage": "solver_record.v4_telemetry.history",
+      "rows": 558,
+      "iterations": "0..557",
+      "sha256": "dabe4169db8952f94e4ae591b54529f20f9e64a085cf13246c89837fcbe1f09b",
+      "source": "raw_summary.v4_artifacts.history_sha256",
+      "bound_by_solver_record_sha256": true
+    }
+  },
+  "frozen_case": {
+    "case_label": "task037b_v5_multimetric_full_892f186_mpi8",
+    "wavelength_nm": 13.5,
+    "degree": 6,
+    "h_nm": 10.0,
+    "modal_degree": 6,
+    "modal_h_nm": 10.0,
+    "interfaces_nm": [10.0, 110.0],
+    "polarization": "s",
+    "incident_grazing_deg": 10.0,
+    "requested_modes": 120,
+    "candidate_modes": 240,
+    "external_modes_per_endcap": 40,
+    "mpi_size": 8,
+    "assembly_backend": "assembly_time_static_condensed",
+    "internal_propagation_model": "full3d_uniform_cg",
+    "internal_traction_model": "scalar_cg_discrete_derivative",
+    "solver_path": "block-ldu-action-full-solve",
+    "outer_operator": "exact monolithic Hybrid operator",
+    "pc": "fixed whole-endcap ILU(0) + 40-mode DtN Woodbury action",
+    "outer_solver": "right_fgmres",
+    "restart": 90,
+    "rtol": 1e-06,
+    "atol": 0.0,
+    "max_it": 700,
+    "zero_initial": true,
+    "normal_equations": false,
+    "local_inverse_solve_called": false,
+    "nested_ksp_created": false,
+    "direct_fallback": false
+  },
+  "checkpoints": [
+    {"iteration": 500, "elapsed_s": 81.33067819301505, "reported": 2.2424710600856975e-06, "global": 2.242471060163116e-06, "bottom": 3.4111266901058858e-06, "top": 1.5835805727648354e-06, "modal": 1.4094975322947167e-15, "multimetric_max": 3.4111266901058858e-06, "ksp_reason": 0, "decision": "ITERATING", "pc_apply": 500, "bottom_action_apply": 1487, "top_action_apply": 1487},
+    {"iteration": 520, "elapsed_s": 84.56075759895612, "reported": 1.4265563629448059e-06, "global": 1.4265563629094859e-06, "bottom": 2.0548396968980893e-06, "top": 1.0386858184740322e-06, "modal": 1.5241312777460737e-15, "multimetric_max": 2.0548396968980893e-06, "ksp_reason": 0, "decision": "ITERATING", "pc_apply": 520, "bottom_action_apply": 1527, "top_action_apply": 1527},
+    {"iteration": 534, "elapsed_s": 86.82920670497697, "reported": 9.832241894524608e-07, "global": 9.832241891202619e-07, "bottom": 1.364175187660687e-06, "top": 7.290772088419766e-07, "modal": 1.6064823432658189e-15, "multimetric_max": 1.364175187660687e-06, "ksp_reason": 0, "decision": "ITERATING", "pc_apply": 534, "bottom_action_apply": 1555, "top_action_apply": 1555},
+    {"iteration": 540, "elapsed_s": 87.80791945999954, "reported": 8.137715143365693e-07, "global": 8.137715143585267e-07, "bottom": 1.2167293120702838e-06, "top": 5.8057495384064e-07, "modal": 1.925960881288701e-15, "multimetric_max": 1.2167293120702838e-06, "ksp_reason": 0, "decision": "ITERATING", "pc_apply": 540, "bottom_action_apply": 1567, "top_action_apply": 1567},
+    {"iteration": 550, "elapsed_s": 89.45420049794484, "reported": 7.243836969791837e-07, "global": 7.243836969886748e-07, "bottom": 1.1057248017639442e-06, "top": 5.104540257008618e-07, "modal": 1.0202967889790073e-15, "multimetric_max": 1.1057248017639442e-06, "ksp_reason": 0, "decision": "ITERATING", "pc_apply": 550, "bottom_action_apply": 1587, "top_action_apply": 1587},
+    {"iteration": 557, "elapsed_s": 90.59673926699907, "reported": 6.457740108721289e-07, "global": 6.45774010063497e-07, "bottom": 9.811891391712585e-07, "top": 4.5634977013685214e-07, "modal": 1.3354878193519844e-15, "multimetric_max": 9.811891391712585e-07, "ksp_reason": 2, "decision": "CONVERGED_RTOL", "pc_apply": 557, "bottom_action_apply": 1601, "top_action_apply": 1601}
+  ],
+  "linear_gate": {
+    "threshold": 1e-06,
+    "ksp_reason": 2,
+    "iterations": 557,
+    "history_rows": 558,
+    "history_contiguous": true,
+    "one_exact_history_row_per_iteration": true,
+    "monitor_reapplies_exact_residual_action": false,
+    "custom_convergence_reason_identity": "multimetric_true_residual_gate",
+    "final": {
+      "reported": 6.457740108721289e-07,
+      "global": 6.45774010063497e-07,
+      "bottom": 9.811891391712585e-07,
+      "top": 4.5634977013685214e-07,
+      "modal": 1.3354878193519844e-15,
+      "all_finite_nonnegative": true,
+      "pass": true
+    },
+    "postsolve_audit": {
+      "pass": true,
+      "decision": "CONVERGED_RTOL",
+      "reason": 2,
+      "reported_source": "ksp.getResidualNorm()",
+      "explicit_recomputed": true,
+      "explicit_global": 6.45774010063497e-07,
+      "explicit_bottom": 9.811891391712585e-07,
+      "explicit_top": 4.5634977013685214e-07,
+      "explicit_modal": 1.3354878193519844e-15,
+      "restart": 90,
+      "restart_source": "configured PETSc.KSP.setGMRESRestart(90); qualified petsc4py exposes no getGMRESRestart()"
+    },
+    "not_reached_checkpoints": [560, 580, 600, 630, 700],
+    "postsolve_evaluation_count": 1,
+    "history_evaluation_count": 558,
+    "disposition": "MULTIMETRIC_LINEAR_PASS_RECOVERY_OR_PHYSICS_FAIL"
+  },
+  "recovery": {
+    "pass": true,
+    "external_auxiliary": {
+      "bottom": {"q_relative_residual": 0.0, "q_pass": true, "mode_count": 40, "mode_finite": true, "mode_unique": true},
+      "top": {"q_relative_residual": 0.0, "q_pass": true, "mode_count": 40, "mode_finite": true, "mode_unique": true}
+    },
+    "full_fe": {
+      "bottom": {"linear_system_relative_residual": 7.128867121665533e-07, "interior_relative_residual": 1.964774406457519e-12, "interior_max_abs_residual": 8.726571982174999e-13, "pass": true},
+      "top": {"linear_system_relative_residual": 7.31449061294792e-07, "interior_relative_residual": 2.0030607460888172e-12, "interior_max_abs_residual": 1.123510764743594e-12, "pass": true},
+      "trace_audit": "exact_mpc_trace_expansion_built; constraint applied before global matrix insertion; embedded identity slave rows not allocated",
+      "full_global_matrix_allocated": false
+    }
+  },
+  "physics": {
+    "pass": false,
+    "interface_e": {"bottom_relative_l2": 5.112828439237629e-07, "top_relative_l2": 5.438313443889813e-07, "pass": true},
+    "exact_traction_dual": {"threshold": 1e-08, "bottom_relative": 9.609121539153052e-07, "top_relative": 4.5634977013685214e-07, "pass": false, "failure": "bottom_and_top_exceed_1e-8"},
+    "energy_diagnostic": {"pass": true, "closure_error": -1.002582173281752e-06, "A_balance_minus_A_volume": 1.002582173337263e-06},
+    "external_orders_finite": true,
+    "failure_scope": "exact_traction_dual_only"
+  },
+  "official_outputs": {
+    "status": "not_run_dependency_gate",
+    "values": {
+      "official_record": "not_run",
+      "field": "not_run",
+      "R": "not_run",
+      "T": "not_run",
+      "A": "not_run",
+      "A_volume": "not_run",
+      "orders": "not_run",
+      "external_diffraction_orders": "not_run",
+      "12_plus_12": "not_run",
+      "candidate_sample_grid": "not_run",
+      "canonical_export": "not_run",
+      "direct_hybrid_comparison": "not_run_dependency_gate",
+      "Full3D": "not_run_dependency_gate",
+      "full3d_comparison": "not_run_dependency_gate"
+    },
+    "authority_inventory": {
+      "H1_direct": {
+        "source_commit": "2990f357f7dec23b1713bd0088bdc43c3ce6f5bc",
+        "solver_record": {"path": "benchmarks/artifacts/task037b/h1_direct_authority_postfix_2990f35_mpi8/solver_record.json", "sha256": "290fc25c119bbf641b8f0277ed5f9a101bc11a4df898c9133509f53c56dd4a1c"},
+        "summary": {"path": "benchmarks/artifacts/task037b/h1_direct_authority_postfix_2990f35_mpi8.json", "sha256": "e22aa1edfeab331d5a8be13ca085e029d5446a4fdf300a5787a00688ef700db2"},
+        "scalar_summary": "R/T/A, residual and field-error scalar summaries available",
+        "numeric_arrays": {"q": "available", "external_orders": "available", "12_plus_12": "available", "modal": "missing_numeric_vector", "selected_interface_middle_EH": "missing_numeric_arrays"},
+        "manifests": "canonical numeric manifests/vectors missing",
+        "hash_or_pass_label_only": "present but not a replacement for missing arrays"
+      },
+      "pinned_Full3D": {
+        "source_commit": "244b62e1fb4f299a468363cf90a2dd548dc34ff6",
+        "record": {"path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_full_static_mpi8_244b62e.json", "sha256": "b8b428476cdeb4b80495f4a8b1c89e3bb2f67c682c695fc72bb59dbbbd94b4e3"},
+        "scalar_summary": "solver_summary contains R/T/A, A_volume, residual, field-error and closure scalars",
+        "numeric_payload": {
+          "full3d_reference_samples": {
+            "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/cases/091/task033_full3d/p6_h10_pols_full-solve_mpi8_20260726T023040Z/full3d_reference_samples.npz",
+            "sha256": "f8d44616d8333188edfa2f903eaed14dc7c47e9b39b33921b91269fc9a04d2e3",
+            "shape": [5, 20, 40, 3],
+            "dtype": "complex128",
+            "arrays": ["E_V_per_m", "H_A_per_m"],
+            "grid_z_nm": [10.0, 30.0, 60.0, 90.0, 110.0]
+          },
+          "metadata_manifest": {
+            "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/cases/091/task033_full3d/p6_h10_pols_full-solve_mpi8_20260726T023040Z/full3d_reference_samples.json",
+            "sha256": "74ea1a9984625883a65da9a5f6c9187279665b23e5cc980e500f6eb39053b7b2",
+            "schema_version": 1,
+            "grid_convention": "periodic-cell-centered-x-y; exact-requested-z",
+            "point_count": 4000
+          },
+          "record_scalars": {
+            "R_total": 0.0007628814751258605,
+            "T_total": 0.6027016339855377,
+            "A_balance": 0.3965354845393365,
+            "A_volume_total": 0.39653548454280696,
+            "energy_closure_error_port_volume": 3.4705571749782393e-12
+          }
+        },
+        "raw_evidence": {
+          "run_directory": "benchmarks/artifacts/cases/091/task033_full3d/p6_h10_pols_full-solve_mpi8_20260726T023040Z",
+          "solver_summary": "run_summary.json",
+          "timeline": "memory_timeline.csv",
+          "progress": "progress_3d.jsonl",
+          "stdout": "worker_stdout.txt"
+        },
+        "referenced_manifest_paths": {
+          "dtn_port_orders_json": "dtn_port_diffraction_orders_3d.json (record-referenced; independent SHA not recorded)",
+          "dtn_port_orders_csv": "dtn_port_diffraction_orders_3d.csv (record-referenced; independent SHA not recorded)",
+          "dtn_auxiliary_amplitudes": "dtn_auxiliary_amplitudes_3d.json (record-referenced; independent SHA not recorded)"
+        },
+        "hash_or_pass_label_only": "record, verified sample archive and metadata are hash-bound; DtN referenced paths are not independently hash-verified"
+      },
+      "case095_significant_reference": {
+        "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/significant_channel_reference_v1.json",
+        "sha256": "83b7bcfeb510b849aea391d86f306072ead0232781598ea1232617e2535293e3",
+        "numeric_payload": "12 channel powers, complex amplitudes, mode keys and thresholds available",
+        "manifests": "authority_manifest available",
+        "hash_or_pass_label_only": "mechanical validation labels retained separately"
+      },
+      "conditional_direct_authority_export": "not_run_dependency_gate",
+      "Full3D_checker_comparison": "not_run_dependency_gate"
+    },
+    "h1_payload_gap": ["modal", "canonical", "selected_fields"],
+    "conditional_direct_export": "not_run_dependency_gate"
+  },
+  "lifecycle": {
+    "postsolve_snapshot_pass": true,
+    "release_repeat_pass": true,
+    "pre_release_global": 6.45774010063497e-07,
+    "post_release_global": 6.45774010063497e-07,
+    "relative_difference": 0.0,
+    "borrowed_exact_actions_usable": true,
+    "ksp_destroyed": true,
+    "pc_context_destroyed": true,
+    "both_ilu_released": true,
+    "both_woodbury_wklu_released": true,
+    "modal_schur_released": true,
+    "snapshot_release": {"snapshot_destroyed": true, "bottom_snapshot_destroyed": true, "top_snapshot_destroyed": true, "modal_snapshot_released": true},
+    "outer_ready": {"bottom_direct": 0, "top_direct": 0, "global_direct": 0, "bottom_ilu": 1, "top_ilu": 1, "nested_ksp": false, "direct_fallback": false},
+    "online_apply": {"bottom_increment": 1114, "top_increment": 1114, "expected": "2*557"},
+    "K": {"bottom_rank": 40, "top_rank": 40, "bottom_condition": 3.0331668903694333, "top_condition": 4.1626875391737554},
+    "modal_schur": {"shape": [240, 240], "rank": 240, "condition": 1774.3032595169025, "dtype": "complex128", "normal_equations": false}
+  },
+  "resource": {
+    "authority_metric": "simultaneous process-tree RSS",
+    "peak_stage": "v4_worker_cleanup_finished",
+    "process_tree_rss_peak_mib": 7218.7734375,
+    "process_tree_rss_peak_gib": 7.049583435058594,
+    "worker_rss_peak_mib": 7204.125,
+    "worker_rss_peak_gib": 7.0352783203125,
+    "worker_pss_peak_mib": 5500.109375,
+    "worker_pss_peak_gib": 5.3712005615234375,
+    "worker_uss_peak_mib": 5225.45703125,
+    "worker_uss_peak_gib": 5.102985382080078,
+    "thresholds_gib": {"resource_positive_le_6": false, "engineering_positive_le_5": false, "stretch_positive_le_3_77": false},
+    "swap_observed": 0,
+    "parent_summary_no_swap": false,
+    "parent_summary_terminated_for_authority_unreadable": true,
+    "worker_natural_completion": true,
+    "process_group_exited": true,
+    "sigkill": false,
+    "corrected_offline_audit": {"timeline_rows": 1428, "worker_count_distribution": {"0": 2, "8": 1426}, "all_eight_live_rows": 1426, "all_live_smaps_readable_count": 8, "all_live_swap": 0, "status": "corrected_offline_audit_zero_swap_qualified", "scope": "observed all-live timeline rows only"},
+    "raw_parent_authority_caveat": "immutable summary fields no_swap=false and terminated_for_authority_unreadable=true are retained; they reflect the pre-fix terminal/postprocessor classification, not a worker OOM termination",
+    "post_cleanup_peak_semantics": "allocator/high-water RSS after cleanup; not a live-object inventory"
+  },
+  "timings": {
+    "cross_section_and_qep_assembly_s": 2.8342967540957034,
+    "positive_and_negative_biorthogonal_bases_s": 50.99822999397293,
+    "action_coupling_s": 208.7397422080394,
+    "setup_s": 47.39639616198838,
+    "outer_s": 90.62511192599777,
+    "release_s": 0.0028692259220406413,
+    "total_s": 422.9385745129548
+  },
+  "postprocessor_audit": {
+    "immutable_parent_exit": 1,
+    "immutable_parent_status": "task037b_v4_implementation_gate_failed",
+    "immutable_parent_failures": ["physics_contract", "record_status_mismatch", "qualification_disposition_mismatch", "v5_disposition_mismatch"],
+    "same_solver_read_only_evaluator": {"contract_pass": true, "numerical_pass": true, "recovery_pass": true, "physics_pass": false, "failures": [], "disposition": "MULTIMETRIC_LINEAR_PASS_RECOVERY_OR_PHYSICS_FAIL"},
+    "second_numerical_run": false,
+    "raw_solver_unchanged": true
+  },
+  "tests": {
+    "preformal_serial": "29 passed",
+    "preformal_mpi2": "5 passed per rank",
+    "preformal_mpi4": "5 passed per rank",
+    "preformal_static": "touched-file Ruff check/format-check, compileall, git diff --check pass",
+    "postprocessor_test244": "9 passed",
+    "postprocessor_test59_test74": "4 passed",
+    "postprocessor_static": "Ruff check/format-check, compileall, git diff --check pass",
+    "full_pytest": "not_run",
+    "ci": "not_run"
+  },
+  "final_classification": {
+    "numerical": "pass",
+    "recovery": "pass",
+    "own_physics": "fail_exact_traction_dual",
+    "overall": "MULTIMETRIC_LINEAR_PASS_RECOVERY_OR_PHYSICS_FAIL",
+    "resource": "MPI8_RESOURCE_NEGATIVE",
+    "production": "not_qualified/research-only",
+    "direct_hybrid": "not_run_dependency_gate",
+    "Full3D_comparison": "not_run_dependency_gate",
+    "authority_payload_gap": true,
+    "ordinary_defaults": "unchanged",
+    "master_merge": "not_authorized"
+  }
+}

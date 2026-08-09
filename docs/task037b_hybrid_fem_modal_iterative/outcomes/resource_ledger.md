@@ -354,3 +354,35 @@ cgroup 非dedicated，故正式 zero-swap/memory-authority Gate 未资格化。r
 `56.02552783791907 s`、outer `96.9506127560744 s`、release `0.004097130033187568 s`，
 总计 `417.24723999900743 s`。完整 raw 路径与 SHA 见
 [V4 full qualification](full_mpi8_qualification.md)。
+
+## Review V5 资源账本
+
+V5 的资源权威仍是 simultaneous process-tree RSS；worker RSS/PSS/USS 是8个 rank 同一采样
+时刻的同步总和，PSS/USS 来自 timeline 的 `smaps_rollup`，不是累计对象体积。
+
+| 指标 | 峰值 | 阶段与状态 |
+|---|---:|---|
+| process-tree RSS | `7218.7734375 MiB = 7.049583435058594 GiB` | `v4_worker_cleanup_finished`；online authority |
+| worker RSS sum | `7204.125 MiB = 7.0352783203125 GiB` | 同步 rank sum |
+| worker PSS sum | `5500.109375 MiB = 5.3712005615234375 GiB` | smaps_rollup 独立最大值 |
+| worker USS sum | `5225.45703125 MiB = 5.102985382080078 GiB` | smaps_rollup 独立最大值 |
+| resource / engineering / stretch | `false / false / false` | thresholds `6 / 5 / 3.77 GiB` |
+
+峰值位于 cleanup 后，可能是 allocator high-water；不能把它当成此时仍存活的 factor 或
+snapshot inventory，也不能用 PSS/USS 替代 RSS authority。V5 timing 为 cross/QEP
+`2.8342967540957034 s`、bases `50.99822999397293 s`、action/coupling
+`208.7397422080394 s`、setup `47.39639616198838 s`、outer `90.62511192599777 s`、
+release `0.0028692259220406413 s`、total `422.9385745129548 s`。
+
+### swap 与 terminal drain 的离线更正
+
+只读扫描 `memory_timeline.csv` 得到 1428 rows：worker-count `{0:2, 8:1426}`；1426 条
+all-eight-live rows 的 `smaps_readable_count=8` 且 worker/process-tree swap 均为0。因此
+对“运行中 all-live 观测”可记 `corrected offline audit zero-swap qualified`。首行是
+`process_start` 的0-worker样本，末行是 `v4_worker_cleanup_finished` 后正常的0-worker
+terminal drain，不是运行中的 authority 缺失。
+
+这项离线审计不能改写 immutable parent summary：其中 `no_swap=false`、
+`terminated_for_authority_unreadable=true` 仍按 raw 原样保留，原因是 pre-fix terminal/
+postprocessor helper 错把正常 partial drain 当作 authority unreadable。worker 自然结束、
+未触发10/14 GiB或7200 s、未使用 SIGKILL，process group 已退出。

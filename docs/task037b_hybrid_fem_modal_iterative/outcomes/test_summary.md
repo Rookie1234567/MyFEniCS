@@ -199,3 +199,18 @@ V4 数值失败后 official recovery/field/R/T/A/orders/12+12/Full3D 均 not_run
 但 `pass=false`，唯一 failure 为 `h1_authority_payload_gap`。完整数值、资源、lifecycle 与
 artifact hash 见 [V4 full qualification](full_mpi8_qualification.md) 和
 [V4 compact record](../../../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v4_mpi8_full_qualification_v1.json)。
+
+## Review V5 测试与 postprocessor 记录
+
+| 阶段 | 结果 | 范围 |
+|---|---|---|
+| preformal serial | `29 passed` | test241–test244 focused |
+| preformal MPI2 | `5 passed per rank` | 指定 action/lifecycle 节点 |
+| preformal MPI4 | `5 passed per rank` | 指定 action/lifecycle 节点 |
+| preformal static | pass | touched-file Ruff check/format-check、compileall、diff-check |
+| postprocessor correction | `test244: 9 passed`；test59/test74相关节点 `4 passed` | 只读 raw/evaluator 合同修正 |
+| postprocessor static | pass | 两文件 Ruff check/format-check、compileall、diff-check |
+| full pytest / CI | `not_run` | 不声称 CI 或全仓通过 |
+
+postprocessor 是对同一 raw solver record 的纯函数分类修正，不是第二次数值运行；没有
+重跑 MPI8、没有修改 raw artifacts，也没有开展 Full3D、direct export 或 physics postprocess。

@@ -146,3 +146,87 @@ checker-process `ru_maxrss` 为 `35.13671875 MiB`，`online_rss_included=false`�
 最终 focused evidence 为 serial `18 passed`、MPI2 key action/lifecycle 每 rank `5 passed`、
 MPI4 每 rank 同为 `5 passed`；touched-file Ruff/format/compileall/diff checks 均 pass。
 Full pytest、test240、extra PDE 和 CI 均为 `not_run`。
+
+## Review V5：同一 candidate 的唯一多指标正式运行
+
+V5 把“是否达到线性停止条件”定义为五个量同时达标：PETSc reported residual、exact
+global residual、bottom/top block residual 和 modal residual 都必须 finite、非负且不超过
+`1e-6`。这样可以避免只看一个全局标量而漏掉某一侧端盖的局部误差。以下内容来自 V5
+raw record；本节不覆盖 V4 历史。
+
+### 身份、运行次数与 postprocessor 边界
+
+| 项目 | 精确值 | 语义 |
+|---|---|---|
+| V5 implementation checkpoint | `770e74513b4444f032adb7f61c5d350fb53d9458` | 允许的实现基线 |
+| unique formal candidate source | `892f186b39c0eb89f1912640430fd79599d86318` | 唯一 MPI8 numerical source |
+| formal run count | `1` | 无 retry、warm start、continuation 或参数修改 |
+| pure postprocessor correction | `11c01d5268f1e0fc8eb307945179b540ccfcb2aa` | 只读同一 solver record 的合同修正 |
+| raw parent result | exit `1`; `task037b_v4_implementation_gate_failed` | `terminal V4/V5 record legacy-field completeness contract` 与 `official-not-run energy evaluator contract`；非 solver raw 物理结论 |
+| corrected read-only evaluation | contract/numerical/recovery=`true`; physics=`false`; failures=`[]` | 正确 disposition 为 `MULTIMETRIC_LINEAR_PASS_RECOVERY_OR_PHYSICS_FAIL` |
+
+postprocessor 没有再次启动 solver，不改变 raw solver、物理数值或运行次数。raw parent 的
+`physics_contract`、`record_status_mismatch`、`qualification_disposition_mismatch` 和
+`v5_disposition_mismatch` 原样保留；它们是上述两个合同错误产生的四个 parent failure label，不能把 parent exit1 写成第二次数值失败。
+
+### 线性 Gate 与 checkpoints
+
+| iteration | reported | global | bottom | top | modal | multimetric max | elapsed s | ksp reason | PC apply | bottom/top action |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 500 | 2.2424710600856975e-6 | 2.242471060163116e-6 | 3.4111266901058858e-6 | 1.5835805727648354e-6 | 1.4094975322947167e-15 | 3.4111266901058858e-6 | 81.33067819301505 | 0 | 500 | 1487 / 1487 |
+| 520 | 1.4265563629448059e-6 | 1.4265563629094859e-6 | 2.0548396968980893e-6 | 1.0386858184740322e-6 | 1.5241312777460737e-15 | 2.0548396968980893e-6 | 84.56075759895612 | 0 | 520 | 1527 / 1527 |
+| 534 | 9.832241894524608e-7 | 9.832241891202619e-7 | 1.364175187660687e-6 | 7.290772088419766e-7 | 1.6064823432658189e-15 | 1.364175187660687e-6 | 86.82920670497697 | 0 | 534 | 1555 / 1555 |
+| 540 | 8.137715143365693e-7 | 8.137715143585267e-7 | 1.2167293120702838e-6 | 5.8057495384064e-7 | 1.925960881288701e-15 | 1.2167293120702838e-6 | 87.80791945999954 | 0 | 540 | 1567 / 1567 |
+| 550 | 7.243836969791837e-7 | 7.243836969886748e-7 | 1.1057248017639442e-6 | 5.104540257008618e-7 | 1.0202967889790073e-15 | 1.1057248017639442e-6 | 89.45420049794484 | 0 | 550 | 1587 / 1587 |
+| 557 | 6.457740108721289e-7 | 6.45774010063497e-7 | 9.811891391712585e-7 | 4.5634977013685214e-7 | 1.3354878193519844e-15 | 9.811891391712585e-7 | 90.59673926699907 | 2 | 557 | 1601 / 1601 |
+
+raw 中共有 558 条连续 authoritative history row（iteration `0..557`，每个 iteration 一条）；
+因此 560、580、600、630、700 是 `not_reached`，不是补写的零或预测值。iteration 534 的
+decision 仍为 `ITERATING`，实际终点 557 的 KSP reason 为 `2`。retained solution 上的
+postsolve explicit audit 只执行一次，五个值均通过 `1e-6`，所以 `numerical linear pass=true`。
+
+### Recovery、own physics 与 official boundary
+
+| Gate | raw 结果 | 结论 |
+|---|---|---|
+| external q identity | bottom/top relative residual `0.0 / 0.0`；各40 mode，finite、unique | pass |
+| full-FE bottom | linear `7.128867121665533e-7`；interior relative `1.964774406457519e-12`；interior max `8.726571982174999e-13` | pass |
+| full-FE top | linear `7.31449061294792e-7`；interior relative `2.0030607460888172e-12`；interior max `1.123510764743594e-12` | pass |
+| interface E | bottom/top relative L2 `5.112828439237629e-7 / 5.438313443889813e-7` | pass |
+| exact traction dual | bottom/top `9.609121539153052e-7 / 4.5634977013685214e-7`，限值 `1e-8` | fail；唯一 own-physics failure |
+| energy diagnostic | closure `-1.002582173281752e-6`；`A_balance-A_volume=1.002582173337263e-6` | raw diagnostic pass |
+
+因此 `recovery=true`、`own_physics=false`，overall 为
+`MULTIMETRIC_LINEAR_PASS_RECOVERY_OR_PHYSICS_FAIL`。R/T/A、`A_volume`、orders、field、
+12+12、canonical、direct-Hybrid 和 Full3D comparison 全部 `not_run`；energy diagnostic
+不是 official output。H1 的 modal/canonical/selected-fields 数值 payload gap 仍在，且 own
+physics 未通过，所以 conditional direct-Hybrid authority export 为
+`not_run_dependency_gate`，不能用 hash 或零值补齐。
+
+### 生命周期、资源、时间与证据入口
+
+| 项目 | raw measured/derived 结果 |
+|---|---|
+| fixed factors / actions | bottom/top direct `0/0`，ILU `1/1`；nested KSP/direct fallback=false |
+| K | rank `40/40`；condition `3.0331668903694333 / 4.1626875391737554` |
+| modal Schur | `240x240` complex128；rank240；condition `1774.3032595169025`；normal equations=false |
+| online applies | each side increment `1114=2*557` |
+| release-repeat | pre/post global `6.45774010063497e-7 / 6.45774010063497e-7`；relative difference `0.0`；borrowed exact actions usable |
+| snapshot | postsolve、保存和最终四项 destroy/release 均 pass |
+| online RSS authority | process-tree `7218.7734375 MiB = 7.049583435058594 GiB`；worker RSS `7204.125 MiB = 7.0352783203125 GiB` |
+| worker PSS / USS | `5500.109375 MiB = 5.3712005615234375 GiB` / `5225.45703125 MiB = 5.102985382080078 GiB` |
+| peak stage | `v4_worker_cleanup_finished`；cleanup 后 high-water，不等同 live-object inventory |
+| resource | `<=6 / <=5 / <=3.77 GiB` 全部 false |
+| timing total | `422.9385745129548 s`；outer `90.62511192599777 s`；action/coupling `208.7397422080394 s`；setup `47.39639616198838 s` |
+
+离线只读 timeline audit 共 1428 行：worker-count 为 `{0: 2, 8: 1426}`；1426 条
+all-eight-live 行的 `smaps_readable_count=8`，worker/process-tree swap 观测均为0。首行是
+尚未拉起 worker 的 `process_start`，末行是 `v4_worker_cleanup_finished` 后正常的 0-worker
+terminal drain。这里可称 `corrected offline audit zero-swap qualified`，但 immutable raw
+parent summary 的 `no_swap=false` 与 `terminated_for_authority_unreadable=true` 必须保留，
+因为它们来自修复前 terminal/postprocessor 分类；本次不是 memory kill，worker 自然结束且
+未使用 SIGKILL。
+
+本次 V5 compact record 见
+[task037b_v5_mpi8_multimetric_full_qualification_v1.json](../../../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v5_mpi8_multimetric_full_qualification_v1.json)。
+raw summary、solver、stages、timeline、stdout 和诊断 NPZ 的路径及 SHA 均在 compact 中绑定。

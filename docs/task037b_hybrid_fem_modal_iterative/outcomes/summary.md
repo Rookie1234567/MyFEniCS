@@ -344,3 +344,30 @@ canonical、selected-fields 数值载荷不存在，独立 checker 对这些项�
 V4 raw/compact evidence 见 [V4 compact record](../../../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v4_mpi8_full_qualification_v1.json)
 和 [V4 full qualification](full_mpi8_qualification.md)。正式停止原因是授权边界完成并等待
 review，不是自动开启重跑、调参或新算法家族。
+
+## Review V5：同一 candidate 的多指标 full-solve 结项
+
+V5 在 source `892f186b39c0eb89f1912640430fd79599d86318` 上只运行一次；它保留 V4 的
+fixed-action 与 full-solve 数据流，新增的多指标 Gate 要求 reported/global/bottom/top/modal
+五个残差同时达到 `<=1e-6`。V5 implementation checkpoint 为
+`770e74513b4444f032adb7f61c5d350fb53d9458`，formal 后纯 postprocessor correction 为
+`11c01d5268f1e0fc8eb307945179b540ccfcb2aa`；没有 retry、warm start、continuation 或参数修改。
+
+| 结果层 | 精确结论 | 证据边界 |
+|---|---|---|
+| numerical | pass；KSP reason `2`，iteration `557` | 五个终值 `6.457740108721289e-7 / 6.45774010063497e-7 / 9.811891391712585e-7 / 4.5634977013685214e-7 / 1.3354878193519844e-15` |
+| recovery | pass | q identity 与两侧 full-FE recovery 均通过 |
+| own physics | fail_exact_traction_dual | bottom/top exact dual `9.609121539153052e-7 / 4.5634977013685214e-7`，限值 `1e-8` |
+| overall | `MULTIMETRIC_LINEAR_PASS_RECOVERY_OR_PHYSICS_FAIL` | 不是 linear solver failure |
+| resource | `MPI8_RESOURCE_NEGATIVE` | process-tree RSS `7.049583435058594 GiB > 6 GiB` |
+| production | `not_qualified/research-only` | ordinary defaults unchanged，master merge 未授权 |
+
+official `R/T/A`、`A_volume`、orders、field、12+12、canonical、direct-Hybrid 和 Full3D
+comparison 全部 `not_run`。energy closure 是 diagnostic gate，不是 official output。H1 缺少
+modal/canonical/selected-fields 数值 payload；conditional direct export 因 own physics
+失败为 `not_run_dependency_gate`。
+
+V5 compact evidence 见
+[task037b_v5_mpi8_multimetric_full_qualification_v1.json](../../../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v5_mpi8_multimetric_full_qualification_v1.json)。完整 checkpoint、生命周期、资源口径、timing、raw SHA 和 parent/postprocessor
+边界均以该 hash-bound record 及
+[V5 full qualification](full_mpi8_qualification.md) 为准。
