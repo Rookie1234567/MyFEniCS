@@ -165,3 +165,33 @@ V2 schema 和既有历史结果不变。
 V3 没有触碰 `hybrid_local_dtn_woodbury.py` 或 `hybrid_local_iterative_inverse.py`，没有调用
 LocalInverse.solve、nested local FGMRES/KSP 或 fallback。raw artifact 仍只以相对路径和
 SHA256 绑定，heavy timeline 与 solver arrays 不进入 Git。
+
+## Review V4 source checkpoint 与本次 code-free evidence
+
+V4 source checkpoint 为 `eb1fc88483dd4d9cb5eabb071f8af0e87f91ba49`，parent 为
+`d3b15af96d4719f04dcf006c6caf98d1a2503366`，subject 为
+`feat(task037b): qualify frozen MPI8 full block solve`。该提交的 research-only scope 如下：
+
+| 分组 | 文件/职责 | ordinary/default 边界 |
+|---|---|---|
+| V4 solver/core | `src/solvers/hybrid_fem_modal_block_ldu.py` | full-solve API、deferred modal release、snapshot；explicit opt-in |
+| V4 runner | `benchmarks/run_task032_phase6_augmented.py` | frozen p6/h10/MPI8 full-solve route；ordinary defaults unchanged |
+| V4 watchdog | `benchmarks/run_task033_memory_watchdog.py` | source/authority/resource/process-group route；ordinary defaults unchanged |
+| V4 checker | `benchmarks/task037b_v4_full_qualification_checker.py` | offline read-only candidate/authority evidence checker |
+| V4 focused test | `src/test/test_243_task037b_v4_full_qualification.py` | tiny serial/MPI action/lifecycle/recovery contracts |
+
+上述 source 文件没有调用 `LocalInverse.solve`，没有 nested local FGMRES/KSP、direct fallback 或
+ordinary default 变更。V4 这次 code-free closeout 只新增/更新下列八个 tracked 文件，raw
+solver、timeline、stages、stdout 和 checker 仍保留在 ignored artifact 目录：
+
+| 类别 | 文件 |
+|---|---|
+| compact record | `benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v4_mpi8_full_qualification_v1.json` |
+| response | `docs/task037b_hybrid_fem_modal_iterative/response_v5.md` |
+| outcome | `docs/task037b_hybrid_fem_modal_iterative/outcomes/full_mpi8_qualification.md` |
+| outcome updates | `outcomes/summary.md`、`outcomes/resource_ledger.md`、`outcomes/test_summary.md`、`outcomes/changed_files.md` |
+| project progress | `docs/development_progress.md` |
+
+本次 closeout 不修改 Python、测试、task/review、response_v1–v4 或 ordinary defaults，不重跑
+pytest、Ruff、checker、MPI 或 PDE；只将已完成的唯一 formal evidence 写成 hash-bound compact
+记录和可审阅文档。

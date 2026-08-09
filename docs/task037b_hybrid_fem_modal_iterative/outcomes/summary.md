@@ -2,7 +2,7 @@
 
 ## 一句话结论
 
-原 H0-H5 历史保持不变：H5b local inverse 双侧资格化失败，按合同受控停止；此前 H1 的首次失败与 post-fix recovery 也继续保留。随后 Review V1/V2/V3 受控研究中，V3 双侧 candidate numerical pass、MPI8 resource negative、official physics not_run，当前 awaiting review。
+原 H0-H5 历史保持不变：H5b local inverse 双侧资格化失败，按合同受控停止；此前 H1 的首次失败与 post-fix recovery 也继续保留。随后 Review V1/V2/V3/V4 受控研究中，V3 双侧 screen numerical pass 但 resource negative；V4 唯一 MPI8 full solve 为 controlled local-block numerical negative，resource 也未达到 `<=6 GiB`，official physics 全部 not_run，当前 awaiting review。
 
 ## H0-H10 矩阵
 
@@ -286,3 +286,61 @@ preflight authority SHA 为 `96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13
 本轮只做 authority identity check，没有运行 Full3D comparison。V3 source、runner、watchdog、
 candidate 与 compact docs 仍为 research-only，ordinary defaults unchanged，master merge
 未获授权。
+
+## Review V4 唯一 MPI8 full solve
+
+V4 是在 source `eb1fc88483dd4d9cb5eabb071f8af0e87f91ba49` 上唯一运行一次的 full-solve lane。
+它用固定的 whole-endcap ILU(0)+40-mode Woodbury action 做两侧局部预条件，并用 exact
+matrix-free block operator 做 outer right FGMRES；固定 action 只意味着 callback 的线性操作
+和生命周期被冻结，不意味着引入 nested local solver。ordinary defaults、V2/V3 flags 和历史
+结果均未改变。
+
+| 层次 | 结果 | 数据身份/边界 |
+|---|---|---|
+| formal run | exactly one；KSP reason=2，iteration=534 | measured raw solver record |
+| numerical | negative | global/top/modal 通过；bottom=`1.3641751886101987e-6` 超过 `1e-6` |
+| disposition | `FIXED_ILU0_WOODBURY_BLOCK_PC_FULL_NEGATIVE` | controlled local-block Gate miss，不称发散或平台 |
+| process-tree RSS | `6440.1328125 MiB = 6.289192199707031 GiB` | resource negative，超过6 GiB |
+| engineering / stretch | false / false | 分别超过5 / 3.77 GiB |
+| official physics | field、recovery、R/T/A、orders、12+12、canonical、direct/Full3D | not_run |
+
+### V4 checkpoint 与结构证据
+
+| iteration | global | bottom | top | modal | PC apply | bottom/top action |
+|---:|---:|---:|---:|---:|---:|---:|
+| 20 | 0.4731293491910546 | 0.7915576229904723 | 0.4144951475878447 | 2.7011301558523683e-15 | 20 | 527 / 527 |
+| 60 | 0.11272071486842282 | 0.2032001429319691 | 0.06665913881529464 | 2.5454113396942133e-15 | 60 | 607 / 607 |
+| 100 | 0.022267181511820732 | 0.02427052205015629 | 0.01791884170341418 | 1.662848140283262e-15 | 100 | 687 / 687 |
+| 200 | 0.0015751888272089055 | 0.0024392066956133935 | 0.0010989265634579726 | 1.0150435351696175e-15 | 200 | 887 / 887 |
+| 534 | 9.832241902112744e-7 | 1.3641751886101987e-6 | 7.290772097898545e-7 | 1.2365161175289584e-15 | 534 | 1555 / 1555 |
+
+global operator 为 Python matrix-free，global/bottom/top direct factor 为 `0/0/0`，两侧
+ILU 为 `1/1`，global A/F 与 explicit C/D 均未 materialize。两侧 K rank=40，condition 为
+`3.0331668903694333 / 4.162687539173756`；modal Schur 为 240×240、rank240、condition
+`1160.2452412629682`，matrix/LU repeat error 为0，normal equations=false。online 每侧
+apply 增量为 `1068=2*534`。完整 history 0–534 仍只在 hash-bound raw solver record 中保存。
+
+### V4 resource、authority 与后处理边界
+
+timeline 解析得到 worker PSS simultaneous sum peak=`5326.6474609375 MiB`
+(`5.201804161071777 GiB`)，USS simultaneous sum peak=`5144.26171875 MiB`
+(`5.023693084716797 GiB`)，二者峰值均位于 `v4_worker_cleanup_finished`，RSS 仍是
+process-tree authority。PSS/USS 是8 rank同一采样的 smaps_rollup sums，不是累计对象体积；
+峰值发生在 cleanup 后，可能反映 allocator high-water，而不是 live object inventory。
+
+timeline/process-tree 观测 swap 均为0，但 all-live authority/swap readability=false、job
+cgroup 非dedicated，所以正式 zero-swap/memory-authority Gate 未资格化；保留 raw
+`no_swap=false` 与 `terminated_for_authority_unreadable=true`。worker 自然结束、未被
+SIGKILL、process group 已退出。
+
+bottom Gate 失败后 recovery、external auxiliary、field、R/T/A、A_volume、orders、12+12、
+canonical、direct-Hybrid 与 Full3D comparison 均为 `not_run_dependency_gate`。H1 modal、
+canonical、selected-fields 数值载荷不存在，独立 checker 对这些项写
+`not_run_authority_payload_gap`，没有用 hash 或零值替代数组。checker exit=0 只表示
+`evidence_integrity_pass=true`，不是完整 qualification pass；其 failure 为
+`h1_authority_payload_gap`，offline wall=`0.05152548989281058 s`、ru_maxrss=
+`35.13671875 MiB`，不并入 online RSS。
+
+V4 raw/compact evidence 见 [V4 compact record](../../../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v4_mpi8_full_qualification_v1.json)
+和 [V4 full qualification](full_mpi8_qualification.md)。正式停止原因是授权边界完成并等待
+review，不是自动开启重跑、调参或新算法家族。

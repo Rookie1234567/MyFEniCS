@@ -170,3 +170,32 @@ progressive checkpoint、release/no-swap/no-orphan 均由 raw record 保存。�
 process-tree peak 超过 6 GiB 只产生独立 resource review，不改写 numerical disposition。官方
 field recovery、R/T/A、A_volume、diffraction orders、12+12 和 Full3D comparison 全部
 not_run。
+
+## Review V4 focused 与唯一 formal run
+
+V4 使用 source `eb1fc88483dd4d9cb5eabb071f8af0e87f91ba49`，只启动一次 MPI8 full solve；不因
+bottom local-block Gate miss 重跑。测试和静态结果如下：
+
+| 范围 | 结果 | 语义 |
+|---|---|---|
+| focused serial | `18 passed` | test239/test241/test242/test235/test243 的最终节点 |
+| MPI2 key action/lifecycle | `5 passed` per rank | tiny fixture，不是 PDE |
+| MPI4 key action/lifecycle | `5 passed` per rank | tiny fixture，不是 PDE |
+| Ruff check | pass | 五个 touched Python files |
+| Ruff format-check | pass | 五个 touched Python files |
+| compileall | pass | 五个 touched Python files |
+| git diff --check | pass | source checkpoint |
+| independent checker | exit 0 | evidence integrity pass only；不是 full qualification pass |
+| full pytest / CI | `not_run` | 不声称 CI |
+| test240 / additional PDE | `not_run` | Review V4 边界外 |
+
+五个 touched Python files 指 `run_task032_phase6_augmented.py`、
+`run_task033_memory_watchdog.py`、`hybrid_fem_modal_block_ldu.py`、
+`task037b_v4_full_qualification_checker.py` 与 `test_243_task037b_v4_full_qualification.py`。
+此前全仓 format-check 对 257 个历史无关文件的发现不属于本轮 Gate，也没有改动那些文件。
+
+V4 数值失败后 official recovery/field/R/T/A/orders/12+12/Full3D 均 not_run；checker
+`evidence_integrity_pass=true`、`candidate_evidence_pass=true`、`authority_bindings_pass=true`，
+但 `pass=false`，唯一 failure 为 `h1_authority_payload_gap`。完整数值、资源、lifecycle 与
+artifact hash 见 [V4 full qualification](full_mpi8_qualification.md) 和
+[V4 compact record](../../../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v4_mpi8_full_qualification_v1.json)。

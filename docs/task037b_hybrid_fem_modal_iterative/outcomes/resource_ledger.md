@@ -314,3 +314,43 @@ double fixed-action screen。process-tree simultaneous RSS 是资源权威；wor
 
 Full3D authority and preflight authority were hash-checked for launch identity only; no Full3D
 comparison or official physics was run in V3.
+
+## Review V4 唯一 MPI8 full-solve resource ledger
+
+V4 source `eb1fc88483dd4d9cb5eabb071f8af0e87f91ba49` 只启动一次。process-tree simultaneous RSS
+仍是资源权威；worker RSS/PSS/USS 是同一采样中 8 个 rank 的同步 sums，PSS/USS 来自 timeline
+smaps_rollup 列的独立峰值，不是累计对象体积。
+
+| 指标 | measured peak | 阶段/语义 |
+|---|---:|---|
+| process-tree RSS | 6440.1328125 MiB = 6.289192199707031 GiB | `v4_worker_cleanup_finished`，RSS authority |
+| worker RSS sum | 6425.453125 MiB = 6.2748565673828125 GiB | 同步 8-rank sum |
+| worker PSS sum | 5326.6474609375 MiB = 5.201804161071777 GiB | `v4_worker_cleanup_finished`，smaps_rollup max |
+| worker USS sum | 5144.26171875 MiB = 5.023693084716797 GiB | `v4_worker_cleanup_finished`，smaps_rollup max |
+| peak elapsed | 419.3236320320284 s | timeline sample |
+| resource-positive `<=6 GiB` | false | process-tree RSS 超限 |
+| engineering-positive `<=5 GiB` | false | 不作资源正结果 |
+| stretch-positive `<=3.77 GiB` | false | 不作 stretch 结果 |
+
+峰值发生在 release/cleanup 后。它可能是 allocator high-water，而不是仍存活的 factor、W/K/LU
+或 modal object；因此不能用 PSS/USS 替代 RSS，也不能用 release 后 current inventory 反推
+峰值。FGMRES restart90 basis/vector 只作 derived estimate：
+
+```math
+estimated_bytes = (2 * restart + 1) * rows * complex128_bytes
+```
+
+V4 raw estimate 为 global/sum `49,486,848` bytes，rank0 local `7,471,680` bytes，max-rank
+`9,244,032` bytes；它不是 RSS。W/K/LU、action/coupling cache 与 field object 仍按 raw
+schema 区分 measured、derived、not_run。
+
+timeline 与 process-tree swap 样本均为0，但 all-live authority/swap readability=false、job
+cgroup 非dedicated，故正式 zero-swap/memory-authority Gate 未资格化。raw summary 保留
+`no_swap=false` 与 `terminated_for_authority_unreadable=true`；这不是 memory kill。worker
+自然结束、warning10/terminate14、timeout7200 未触发、无 SIGKILL，process group 已退出。
+
+阶段时间（max-rank measured）为 cross-section/QEP `0.8889220430282876 s`、bases
+`53.283052755054086 s`、action/coupling `210.08973653102294 s`、V4 setup
+`56.02552783791907 s`、outer `96.9506127560744 s`、release `0.004097130033187568 s`，
+总计 `417.24723999900743 s`。完整 raw 路径与 SHA 见
+[V4 full qualification](full_mpi8_qualification.md)。

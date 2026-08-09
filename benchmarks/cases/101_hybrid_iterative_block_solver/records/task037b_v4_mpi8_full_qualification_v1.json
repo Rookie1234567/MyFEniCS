@@ -1,0 +1,599 @@
+{
+  "record_schema": "task037b.v4-mpi8-full-qualification.v1",
+  "record_state": "controlled_numerical_negative",
+  "official_record": "not_run",
+  "source": {
+    "branch": "codex/20260807-task37b-hybrid-iterative-development",
+    "commit_sha": "eb1fc88483dd4d9cb5eabb071f8af0e87f91ba49",
+    "parent_sha": "d3b15af96d4719f04dcf006c6caf98d1a2503366",
+    "git_dirty_at_run": false,
+    "ordinary_default_changed": false,
+    "review": "review_report_v4.md"
+  },
+  "frozen_configuration": {
+    "target": "hybrid",
+    "degree": 6,
+    "h_nm": 10.0,
+    "modal_degree": 6,
+    "modal_h_nm": 10.0,
+    "wavelength_nm": 13.5,
+    "polarization": "s",
+    "incident_grazing_deg": 10.0,
+    "interfaces_nm": [10.0, 110.0],
+    "requested_modes": 120,
+    "candidate_modes": 240,
+    "external_modes_per_endcap": 40,
+    "mpi_size": 8,
+    "internal_propagation_model": "full3d_uniform_cg",
+    "internal_traction_model": "scalar_cg_discrete_derivative",
+    "assembly_backend": "assembly_time_static_condensed",
+    "solver_path": "block-ldu-action-full-solve",
+    "comparison_solver_path": "fast",
+    "outer_solver": "right_fgmres",
+    "restart": 90,
+    "rtol": 1e-06,
+    "atol": 0.0,
+    "max_it": 700,
+    "zero_initial": true
+  },
+  "formal_run": {
+    "case_label": "task037b_v4_full_double_block_pc_eb1fc88_mpi8",
+    "run_dir": "benchmarks/artifacts/task037b/v4_full_double_block_pc_eb1fc88_mpi8",
+    "summary_output": "benchmarks/artifacts/task037b/v4_full_double_block_pc_eb1fc88_mpi8.json",
+    "entrypoint": "python -m benchmarks.run_task033_memory_watchdog",
+    "parent_watchdog_invocation": {
+      "entrypoint": "python -m benchmarks.run_task033_memory_watchdog",
+      "raw_full_argv_saved": false,
+      "frozen_fields": {
+        "task_gate": "--task037b-v4-gate",
+        "warning_gib": 10.0,
+        "terminate_gib": 14.0,
+        "timeout_seconds": 7200,
+        "poll_interval_seconds": 0.25,
+        "run_dir": "benchmarks/artifacts/task037b/v4_full_double_block_pc_eb1fc88_mpi8",
+        "summary_output": "benchmarks/artifacts/task037b/v4_full_double_block_pc_eb1fc88_mpi8.json"
+      },
+      "summary_path": "benchmarks/artifacts/task037b/v4_full_double_block_pc_eb1fc88_mpi8.json",
+      "summary_sha256": "3838cc17d705453dec6764ba1fa0e838c202cad1d1e96cc755873ee1ad1ea44a",
+      "semantics": "the promoted raw summary did not save the parent watchdog argv; only its frozen fields are recorded here"
+    },
+    "emitted_worker_command": [
+      "mpiexec",
+      "-n",
+      "8",
+      "/home/Projects/MyFEniCS/.venv/bin/python",
+      "-m",
+      "benchmarks.run_task032_phase6_augmented",
+      "--degree",
+      "6",
+      "--h-nm",
+      "10.0",
+      "--bottom-interface-nm",
+      "10.0",
+      "--top-interface-nm",
+      "110.0",
+      "--incident-grazing-deg",
+      "10.0",
+      "--polarization-kind",
+      "s",
+      "--requested-modes",
+      "120",
+      "--candidate-modes",
+      "240",
+      "--solver-path",
+      "block-ldu-action-full-solve",
+      "--stage4-full3d-assembly-backend",
+      "assembly_time_static_condensed",
+      "--comparison-solver-path",
+      "fast",
+      "--verified-clean-sha",
+      "eb1fc88483dd4d9cb5eabb071f8af0e87f91ba49",
+      "--output",
+      "/tmp/task037b-master-retry.MXbbuS/benchmarks/artifacts/task037b/v4_full_double_block_pc_eb1fc88_mpi8/solver_record.json",
+      "--memory-stages",
+      "/tmp/task037b-master-retry.MXbbuS/benchmarks/artifacts/task037b/v4_full_double_block_pc_eb1fc88_mpi8/memory_stages.jsonl",
+      "--container-image",
+      "myfenics-stage4:task28",
+      "--container-digest",
+      "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+      "--host-environment-id",
+      "WSL2-Ubuntu-24.04",
+      "--modal-h-nm",
+      "10.0",
+      "--modal-degree",
+      "6",
+      "--internal-propagation-model",
+      "full3d_uniform_cg",
+      "--internal-traction-model",
+      "scalar_cg_discrete_derivative",
+      "--full3d-reference",
+      "/home/Projects/MyFEniCS/benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_full_static_mpi8_244b62e.json",
+      "--full3d-reference-sha256",
+      "b8b428476cdeb4b80495f4a8b1c89e3bb2f67c682c695fc72bb59dbbbd94b4e3",
+      "--task037b-v4-gate",
+      "--task035c-p6-preflight-authority",
+      "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json",
+      "--task035c-p6-preflight-sha256",
+      "96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8"
+    ],
+    "emitted_worker_command_semantics": "copied verbatim from raw summary.command; absolute /tmp paths are execution-worktree carriers and summary SHA binds the original command",
+    "watchdog_parameters": {
+      "warning_gib": 10.0,
+      "terminate_gib": 14.0,
+      "timeout_seconds": 7200,
+      "poll_interval_seconds": 0.25,
+      "container_image": "myfenics-stage4:task28",
+      "container_digest": "sha256:08c61b2cde742442b0031437dbc5160db979494587e6b6364f7935beb29dd76d",
+      "host_environment_id": "WSL2-Ubuntu-24.04"
+    },
+    "run_count": 1,
+    "rerun": false
+  },
+  "authority_bindings": {
+    "full3d": {
+      "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task035c_hybrid_channel_memory/p6_h10_full_static_mpi8_244b62e.json",
+      "sha256": "b8b428476cdeb4b80495f4a8b1c89e3bb2f67c682c695fc72bb59dbbbd94b4e3",
+      "use": "launch identity only; comparison not_run"
+    },
+    "p6_preflight": {
+      "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json",
+      "sha256": "96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8",
+      "use": "historical preflight identity only"
+    },
+    "h1_solver": {
+      "path": "benchmarks/artifacts/task037b/h1_direct_authority_postfix_2990f35_mpi8/solver_record.json",
+      "sha256": "290fc25c119bbf641b8f0277ed5f9a101bc11a4df898c9133509f53c56dd4a1c"
+    },
+    "h1_summary": {
+      "path": "benchmarks/artifacts/task037b/h1_direct_authority_postfix_2990f35_mpi8.json",
+      "sha256": "e22aa1edfeab331d5a8be13ca085e029d5446a4fdf300a5787a00688ef700db2"
+    },
+    "significant_reference": {
+      "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/significant_channel_reference_v1.json",
+      "sha256": "83b7bcfeb510b849aea391d86f306072ead0232781598ea1232617e2535293e3"
+    },
+    "v3_provenance_gate": {
+      "pass": true,
+      "expected_equals_observed": true,
+      "artifacts": {
+        "v3_compact": {
+          "path": "benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v3_double_block_pc_screen_v1.json",
+          "expected_sha256": "4b04bd54e17e12cff36e42f59f97af88d2296ce74e7b90eade3fedbd199cbee1",
+          "observed_sha256": "4b04bd54e17e12cff36e42f59f97af88d2296ce74e7b90eade3fedbd199cbee1"
+        },
+        "v3_solver_record": {
+          "path": "benchmarks/artifacts/task037b/v3_double_block_pc_c7b6aa3_mpi8/solver_record.json",
+          "expected_sha256": "df54c36ccca35a79b61bbd3fcf4dde47222aae0574b5d7c09ded1444ec7fc3d0",
+          "observed_sha256": "df54c36ccca35a79b61bbd3fcf4dde47222aae0574b5d7c09ded1444ec7fc3d0"
+        },
+        "v3_summary": {
+          "path": "benchmarks/artifacts/task037b/v3_double_block_pc_c7b6aa3_mpi8.json",
+          "expected_sha256": "49343b30ec892b9f3a06b525b1535467f70b87637f5f73daf6d499a185a608fe",
+          "observed_sha256": "49343b30ec892b9f3a06b525b1535467f70b87637f5f73daf6d499a185a608fe"
+        },
+        "v3_memory_stages": {
+          "path": "benchmarks/artifacts/task037b/v3_double_block_pc_c7b6aa3_mpi8/memory_stages.jsonl",
+          "expected_sha256": "47b4127b1bec86eb44012fbf0a906afd0710889d674e8d0aaa1b9ebadf9238ec",
+          "observed_sha256": "47b4127b1bec86eb44012fbf0a906afd0710889d674e8d0aaa1b9ebadf9238ec"
+        },
+        "v3_timeline": {
+          "path": "benchmarks/artifacts/task037b/v3_double_block_pc_c7b6aa3_mpi8/memory_timeline.csv",
+          "expected_sha256": "e6eca60fd6caf35bf9a8d29bfa23a99dc1c0422d5dfe93b73db0976082173dc1",
+          "observed_sha256": "e6eca60fd6caf35bf9a8d29bfa23a99dc1c0422d5dfe93b73db0976082173dc1",
+          "semantics": "copied from raw v4_provenance_gate"
+        },
+        "v3_stdout": {
+          "path": "benchmarks/artifacts/task037b/v3_double_block_pc_c7b6aa3_mpi8/worker_stdout.txt",
+          "expected_sha256": "5b7c57c38969540da4e49a642969e747eb84cca859b92370f05210988fa9d6bf",
+          "observed_sha256": "5b7c57c38969540da4e49a642969e747eb84cca859b92370f05210988fa9d6bf"
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "solver_record": {
+      "path": "benchmarks/artifacts/task037b/v4_full_double_block_pc_eb1fc88_mpi8/solver_record.json",
+      "sha256": "1d3b51398efcb55be819f080797f2dc175f50e3252065f47a7abd0b9c5d3193d"
+    },
+    "summary": {
+      "path": "benchmarks/artifacts/task037b/v4_full_double_block_pc_eb1fc88_mpi8.json",
+      "sha256": "3838cc17d705453dec6764ba1fa0e838c202cad1d1e96cc755873ee1ad1ea44a"
+    },
+    "embedded_history": {
+      "path": "benchmarks/artifacts/task037b/v4_full_double_block_pc_eb1fc88_mpi8/solver_record.json",
+      "sha256": "61f0f33a8f962dbf37f312a5fba33a0e7c432432089bbbad7a3b0baf6a94b8ad",
+      "semantics": "canonical raw history digest; complete 0-534 rows remain in solver record"
+    },
+    "stages": {
+      "path": "benchmarks/artifacts/task037b/v4_full_double_block_pc_eb1fc88_mpi8/memory_stages.jsonl",
+      "sha256": "08c051a0ba3504f25b0c2c915b7d94aaaa964b3e68c10942dbe04e72a3f2cc24"
+    },
+    "timeline": {
+      "path": "benchmarks/artifacts/task037b/v4_full_double_block_pc_eb1fc88_mpi8/memory_timeline.csv",
+      "sha256": "3d8253a4bd73f07800a65043a353479fd32128fa4b168cf8a340f93bc9520899"
+    },
+    "stdout": {
+      "path": "benchmarks/artifacts/task037b/v4_full_double_block_pc_eb1fc88_mpi8/worker_stdout.txt",
+      "sha256": "309b30ce76218516021e8403cec5aa76c1712c21e82f6f2a03a4a95631bfbdd4"
+    },
+    "independent_checker": {
+      "path": "benchmarks/artifacts/task037b/v4_full_double_block_pc_eb1fc88_mpi8/independent_checker.json",
+      "sha256": "bb3998f35d498e21b42999b1b7e3bca6dd3bde40148471807400734a43dad326"
+    }
+  },
+  "solver_result": {
+    "status": "task037b_v4_full_solve_numerical_negative",
+    "return_code": 1,
+    "converged_reason": 2,
+    "iterations": 534,
+    "reported_relative_residual": 9.83224189598995e-07,
+    "global_true_relative_residual": 9.832241902112744e-07,
+    "bottom_true_relative_residual": 1.3641751886101987e-06,
+    "top_true_relative_residual": 7.290772097898545e-07,
+    "modal_true_relative_residual": 1.2365161175289584e-15,
+    "all_residuals_finite": true,
+    "five_residual_gate_pass": false,
+    "bottom_gate_miss_relative_to_1e-6": 0.3641751886101987,
+    "progress_description": "overall decreasing raw history; bottom has 12 full-history rises but all four columns have no last90 rises; controlled local-block Gate miss, not divergence or plateau",
+    "numerical_disposition": "FIXED_ILU0_WOODBURY_BLOCK_PC_FULL_NEGATIVE"
+  },
+  "history": {
+    "raw_rows": 535,
+    "iteration_span": [0, 534],
+    "continuous": true,
+    "tracked_copy": false,
+    "raw_solver_record_path": "benchmarks/artifacts/task037b/v4_full_double_block_pc_eb1fc88_mpi8/solver_record.json",
+    "embedded_history_sha256": "61f0f33a8f962dbf37f312a5fba33a0e7c432432089bbbad7a3b0baf6a94b8ad"
+  },
+  "history_trend_audit": {
+    "source": "all 535 rows in raw solver_record.v4_telemetry.history",
+    "last90_iteration_range": [444, 534],
+    "modal_finite": true,
+    "modal_monotonicity_required": false,
+    "columns": {
+      "reported": {
+        "forward_rise_count": 0,
+        "max_forward_rise": 0.0,
+        "last90_forward_rise_count": 0,
+        "last90_max_forward_rise": 0.0,
+        "last90_start": 6.502265000166764e-06,
+        "last90_end": 9.83224189598995e-07,
+        "last90_net_improvement": 5.519040810567769e-06
+      },
+      "global_true": {
+        "forward_rise_count": 0,
+        "max_forward_rise": 0.0,
+        "last90_forward_rise_count": 0,
+        "last90_max_forward_rise": 0.0,
+        "last90_start": 6.502265000367077e-06,
+        "last90_end": 9.832241902112744e-07,
+        "last90_net_improvement": 5.519040810155802e-06
+      },
+      "bottom_true": {
+        "forward_rise_count": 12,
+        "max_forward_rise": 0.9199767157497346,
+        "last90_forward_rise_count": 0,
+        "last90_max_forward_rise": 0.0,
+        "last90_start": 1.1276311447922479e-05,
+        "last90_end": 1.3641751886101987e-06,
+        "last90_net_improvement": 9.91213625931228e-06
+      },
+      "top_true": {
+        "forward_rise_count": 0,
+        "max_forward_rise": 0.0,
+        "last90_forward_rise_count": 0,
+        "last90_max_forward_rise": 0.0,
+        "last90_start": 4.150438174788662e-06,
+        "last90_end": 7.290772097898545e-07,
+        "last90_net_improvement": 3.4213609649988075e-06
+      }
+    },
+    "interpretation": "reported/global/top have no full-history forward rises; bottom has 12 full-history rises; all four columns have no last90 rises and positive last90 net improvement",
+    "data_identity": "derived by direct raw-history scan"
+  },
+  "checkpoints": [
+    {
+      "iteration": 20,
+      "reported": 0.47312934919105415,
+      "global_true": 0.4731293491910546,
+      "bottom_true": 0.7915576229904723,
+      "top_true": 0.4144951475878447,
+      "modal_true": 2.7011301558523683e-15,
+      "pc_apply_count": 20,
+      "bottom_action_apply_count": 527,
+      "top_action_apply_count": 527,
+      "data_identity": "measured raw checkpoint"
+    },
+    {
+      "iteration": 60,
+      "reported": 0.1127207148684223,
+      "global_true": 0.11272071486842282,
+      "bottom_true": 0.2032001429319691,
+      "top_true": 0.06665913881529464,
+      "modal_true": 2.5454113396942133e-15,
+      "pc_apply_count": 60,
+      "bottom_action_apply_count": 607,
+      "top_action_apply_count": 607,
+      "data_identity": "measured raw checkpoint"
+    },
+    {
+      "iteration": 100,
+      "reported": 0.022267181511820375,
+      "global_true": 0.022267181511820732,
+      "bottom_true": 0.02427052205015629,
+      "top_true": 0.01791884170341418,
+      "modal_true": 1.662848140283262e-15,
+      "pc_apply_count": 100,
+      "bottom_action_apply_count": 687,
+      "top_action_apply_count": 687,
+      "data_identity": "measured raw checkpoint"
+    },
+    {
+      "iteration": 200,
+      "reported": 0.0015751888272091388,
+      "global_true": 0.0015751888272089055,
+      "bottom_true": 0.0024392066956133935,
+      "top_true": 0.0010989265634579726,
+      "modal_true": 1.0150435351696175e-15,
+      "pc_apply_count": 200,
+      "bottom_action_apply_count": 887,
+      "top_action_apply_count": 887,
+      "data_identity": "measured raw checkpoint"
+    },
+    {
+      "iteration": 534,
+      "reported": 9.83224189598995e-07,
+      "global_true": 9.832241902112744e-07,
+      "bottom_true": 1.3641751886101987e-06,
+      "top_true": 7.290772097898545e-07,
+      "modal_true": 1.2365161175289584e-15,
+      "pc_apply_count": 534,
+      "bottom_action_apply_count": 1555,
+      "top_action_apply_count": 1555,
+      "data_identity": "measured final raw checkpoint"
+    }
+  ],
+  "algebra_and_inventory": {
+    "global_operator": {
+      "matrix_type": "python",
+      "matrix_free": true,
+      "global_A_materialized": false,
+      "global_direct_factor_count": 0,
+      "bottom_direct_factor_count": 0,
+      "top_direct_factor_count": 0,
+      "bottom_global_F_materialized": false,
+      "top_global_F_materialized": false,
+      "explicit_C_count": 0,
+      "explicit_D_count": 0,
+      "data_identity": "measured raw inventory"
+    },
+    "sides": {
+      "bottom": {
+        "direct_factor_count": 0,
+        "ilu_factor_count": 1,
+        "K_rank": 40,
+        "K_condition": 3.0331668903694333,
+        "callback": {
+          "wrapper_vs_internal_error": 0.0,
+          "linearity_error": 1.873328098581355e-15,
+          "determinism_error": 0.0,
+          "repeat_hash_equal": true,
+          "apply_count_increment": 7,
+          "base_factor_count": 1,
+          "local_direct_factor_count": 0,
+          "nested_ksp_created": false,
+          "arrays_finite": true
+        },
+        "online_apply": {
+          "before": 487,
+          "after": 1555,
+          "increment": 1068,
+          "expected_increment": 1068,
+          "data_identity": "measured raw count"
+        }
+      },
+      "top": {
+        "direct_factor_count": 0,
+        "ilu_factor_count": 1,
+        "K_rank": 40,
+        "K_condition": 4.162687539173756,
+        "callback": {
+          "wrapper_vs_internal_error": 0.0,
+          "linearity_error": 1.9553874565674403e-15,
+          "determinism_error": 0.0,
+          "repeat_hash_equal": true,
+          "apply_count_increment": 7,
+          "base_factor_count": 1,
+          "local_direct_factor_count": 0,
+          "nested_ksp_created": false,
+          "arrays_finite": true
+        },
+        "online_apply": {
+          "before": 487,
+          "after": 1555,
+          "increment": 1068,
+          "expected_increment": 1068,
+          "data_identity": "measured raw count"
+        }
+      }
+    },
+    "modal_schur": {
+      "shape": [240, 240],
+      "dtype": "complex128",
+      "rank": 240,
+      "condition": 1160.2452412629682,
+      "finite": true,
+      "normal_equations": false,
+      "matrix_repeat_error": 0.0,
+      "lu_repeat_error": 0.0,
+      "build_apply_count_per_side": 480,
+      "data_identity": "measured raw modal diagnostic"
+    },
+    "restart_basis_bytes": {
+      "derived_estimate": true,
+      "formula": "(2*restart+1)*rows*complex128_bytes",
+      "restart": 90,
+      "local_rows": 2580,
+      "global_rows": 17088,
+      "local_bytes": 7471680,
+      "global_bytes": 49486848,
+      "rows_by_rank": [2580, 2004, 1356, 2040, 1596, 2292, 2028, 3192],
+      "bytes_by_rank": [7471680, 5803584, 3926976, 5907840, 4622016, 6637632, 5873088, 9244032],
+      "sum_rows": 17088,
+      "max_rows": 3192,
+      "sum_bytes": 49486848,
+      "max_bytes": 9244032,
+      "data_identity": "copied from raw v4_telemetry.restart_basis_bytes"
+    }
+  },
+  "lifecycle": {
+    "core_solve": {
+      "ksp_destroyed": true,
+      "pc_context_destroyed": true,
+      "modal_schur_retained_after_pc_destroyed": true,
+      "borrowed_side_actions_retained": true,
+      "solution_snapshot_retained": true
+    },
+    "release_pass": true,
+    "release_order": [
+      "pc_context",
+      "bottom_fixed_ilu",
+      "top_fixed_ilu",
+      "bottom_woodbury_wklu",
+      "top_woodbury_wklu",
+      "action_modal_schur",
+      "bottom_components",
+      "top_components",
+      "outer_action_matrix",
+      "outer_action_context"
+    ],
+    "side_factor_release": {
+      "bottom": "fixed factor 1->0; Woodbury destroyed; components destroyed",
+      "top": "fixed factor 1->0; Woodbury destroyed; components destroyed"
+    },
+    "postprocess_release": {
+      "release_pass": true,
+      "release_order": [
+        "bottom_static_condensation_cache",
+        "top_static_condensation_cache",
+        "coupling",
+        "positive_modal_basis",
+        "negative_modal_basis",
+        "qep_operators"
+      ],
+      "release_seconds": 0.004097130033187568
+    },
+    "no_orphan": true,
+    "data_identity": "measured raw lifecycle ledger"
+  },
+  "timings_seconds_max_rank": {
+    "cross_section_qep": 0.8889220430282876,
+    "positive_negative_bases": 53.283052755054086,
+    "action_coupling": 210.08973653102294,
+    "v4_setup": 56.02552783791907,
+    "outer": 96.9506127560744,
+    "release": 0.004097130033187568,
+    "total": 417.24723999900743,
+    "data_identity": "measured max-rank stage timing"
+  },
+  "downstream_gates": {
+    "recovery": "not_run_dependency_gate",
+    "external_auxiliary": "not_run_dependency_gate",
+    "field": "not_run_dependency_gate",
+    "RTA": "not_run_dependency_gate",
+    "A_volume": "not_run_dependency_gate",
+    "orders": "not_run_dependency_gate",
+    "12_plus_12": "not_run_dependency_gate",
+    "canonical": "not_run_dependency_gate",
+    "direct_hybrid": "not_run_dependency_gate",
+    "full3d_comparison": "not_run_dependency_gate",
+    "H1_modal_payload": "not_run_authority_payload_gap",
+    "H1_canonical_payload": "not_run_authority_payload_gap",
+    "H1_selected_fields_payload": "not_run_authority_payload_gap"
+  },
+  "resource": {
+    "process_tree_rss_peak_mib": 6440.1328125,
+    "process_tree_rss_peak_gib": 6.289192199707031,
+    "process_tree_peak_stage": "v4_worker_cleanup_finished",
+    "worker_rss_sum_peak_mib": 6425.453125,
+    "worker_rss_sum_peak_gib": 6.2748565673828125,
+    "worker_pss_sum_peak_mib": 5326.6474609375,
+    "worker_pss_sum_peak_gib": 5.201804161071777,
+    "worker_pss_peak_stage": "v4_worker_cleanup_finished",
+    "worker_uss_sum_peak_mib": 5144.26171875,
+    "worker_uss_sum_peak_gib": 5.023693084716797,
+    "worker_uss_peak_stage": "v4_worker_cleanup_finished",
+    "peak_elapsed_seconds": 419.3236320320284,
+    "measurement_semantics": "process-tree simultaneous RSS is the authority; worker RSS/PSS/USS are eight-rank simultaneous sums; PSS/USS are smaps_rollup maxima, not cumulative object volume",
+    "peak_after_release_note": "the peak followed release/cleanup and may reflect allocator high-water state rather than live-object inventory",
+    "resource_positive_le_6_gib": false,
+    "engineering_positive_le_5_gib": false,
+    "stretch_positive_le_3_77_gib": false,
+    "warning_triggered": false,
+    "memory_termination_triggered": false,
+    "timeout_triggered": false,
+    "swap_observed_timeline_bytes": 0,
+    "swap_observed_process_tree_bytes": 0,
+    "swap_formal_gate": "not_qualified_authority_unreadable",
+    "all_live_swap_samples_readable": false,
+    "all_live_authority_samples_readable": false,
+    "job_cgroup_dedicated": false,
+    "summary_no_swap": false,
+    "summary_terminated_for_authority_unreadable": true,
+    "sigkill_required": false,
+    "worker_natural_completion": true,
+    "data_identity": "measured timeline; classifications derived"
+  },
+  "offline_checker": {
+    "path": "benchmarks/artifacts/task037b/v4_full_double_block_pc_eb1fc88_mpi8/independent_checker.json",
+    "sha256": "bb3998f35d498e21b42999b1b7e3bca6dd3bde40148471807400734a43dad326",
+    "exit_code": 0,
+    "evidence_integrity_pass": true,
+    "candidate_evidence_pass": true,
+    "authority_bindings_pass": true,
+    "recognized_controlled_negative": true,
+    "pass": false,
+    "failures": ["h1_authority_payload_gap"],
+    "authority_payload_gap": true,
+    "comparison_state": "not_run_dependency_gate",
+    "offline_wall_seconds": 0.05152548989281058,
+    "offline_ru_maxrss_mib": 35.13671875,
+    "online_rss_included": false,
+    "data_identity": "measured independent checker result"
+  },
+  "tests": {
+    "focused_serial_passed": 18,
+    "mpi2_key_action_lifecycle_passed_per_rank": 5,
+    "mpi4_key_action_lifecycle_passed_per_rank": 5,
+    "ruff_check_touched_files": "pass",
+    "ruff_format_check_touched_files": "pass",
+    "compileall_touched_files": "pass",
+    "git_diff_check": "pass",
+    "full_pytest": "not_run",
+    "ci": "not_run"
+  },
+  "official_outputs": {
+    "field_recovery": "not_run_dependency_gate",
+    "R": "not_run_dependency_gate",
+    "T": "not_run_dependency_gate",
+    "A": "not_run_dependency_gate",
+    "A_volume": "not_run_dependency_gate",
+    "external_diffraction_orders": "not_run_dependency_gate",
+    "orders": "not_run_dependency_gate",
+    "12_plus_12": "not_run_dependency_gate",
+    "Full3D": "not_run_dependency_gate",
+    "direct_hybrid": "not_run_dependency_gate",
+    "canonical": "not_run_dependency_gate",
+    "H1_modal": "not_run_authority_payload_gap",
+    "H1_canonical": "not_run_authority_payload_gap",
+    "H1_selected_fields": "not_run_authority_payload_gap"
+  },
+  "decision": {
+    "numerical": "negative",
+    "resource": "negative",
+    "resource_reason": "process-tree RSS 6.289192199707031 GiB exceeds 6.0 GiB",
+    "stop_reason": "authorized one-run boundary completed; awaiting review",
+    "algorithm_family_conclusion": "not_a_loss_of_convergence_capability",
+    "next_step": "review only; no rerun, tuning, full solve, RTA, field, or new candidate authorized"
+  }
+}

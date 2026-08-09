@@ -2434,3 +2434,65 @@ V3 的 compact hash-bound record 和 raw SHA 索引见
 
 V3 不启动 full solve、field recovery、R/T/A、12+12、Full3D comparison、restart sweep 或
 任何新算法家族；不修改 response_v1–v3，不授权 master merge 或 production qualification。
+
+## 2026-08-09：Task037b Review V4 唯一 MPI8 full-solve 结项
+
+Review V4 在 source `eb1fc88483dd4d9cb5eabb071f8af0e87f91ba49` 上只运行一次冻结的 MPI8
+full solve。两侧均使用固定 whole-endcap ILU(0)+40-mode Woodbury action，outer 仍是 exact
+matrix-free block operator；没有调用 LocalInverse.solve、nested local FGMRES/KSP 或 direct
+fallback，ordinary defaults unchanged。固定 action 是一个可重复的局部线性操作，目的是让
+外层预条件行为和对象释放顺序可审计，而不是引入第二个隐藏求解器。
+
+| 项目 | 结果 | 状态 |
+|---|---|---|
+| frozen case | p6/h10、modal p6/h10、13.5 nm、S、10°、10/110 nm、M120/candidate240、40 modes/endcap、MPI8 | measured configuration |
+| outer | right FGMRES；restart90；rtol `1e-6`；atol0；zero initial；max_it700 | frozen |
+| KSP | reason=2；iterations=534 | measured |
+| residuals | global=`9.832241902112744e-7`；bottom=`1.3641751886101987e-6`；top=`7.290772097898545e-7`；modal=`1.2365161175289584e-15` | bottom Gate miss |
+| disposition | `FIXED_ILU0_WOODBURY_BLOCK_PC_FULL_NEGATIVE` | controlled local-block negative |
+| RSS | `6440.1328125 MiB = 6.289192199707031 GiB` | resource negative |
+| official physics | recovery、field、R/T/A、orders、12+12、canonical、direct/Full3D | not_run |
+
+global/top/modal residual 通过，bottom 高于 `1e-6`。535 行 raw audit 显示 reported/global/top
+全史无正向回升，bottom 全史有12次回升；四列在最后90个迭代间隔（iteration 444→534）均无回升并有正向净改善。因此不能
+把本次结果说成发散或平台；Review V4 §9.4 的相关文字与该局部 miss 不完全吻合，
+本项目将它保留为 controlled local-block Gate miss，不扩大为 PC 家族结论，也不重跑。
+
+| checkpoint | global | bottom | top | modal | PC / action counts |
+|---:|---:|---:|---:|---:|---:|
+| 20 | 0.4731293491910546 | 0.7915576229904723 | 0.4144951475878447 | 2.7011301558523683e-15 | 20 / 527,527 |
+| 60 | 0.11272071486842282 | 0.2032001429319691 | 0.06665913881529464 | 2.5454113396942133e-15 | 60 / 607,607 |
+| 100 | 0.022267181511820732 | 0.02427052205015629 | 0.01791884170341418 | 1.662848140283262e-15 | 100 / 687,687 |
+| 200 | 0.0015751888272089055 | 0.0024392066956133935 | 0.0010989265634579726 | 1.0150435351696175e-15 | 200 / 887,887 |
+| 534 | 9.832241902112744e-7 | 1.3641751886101987e-6 | 7.290772097898545e-7 | 1.2365161175289584e-15 | 534 / 1555,1555 |
+
+结构证据为 global direct/A/F=false/0、bottom/top direct=0/0、ILU=1/1、explicit C/D=0/0；
+K rank40/40、condition `3.0331668903694333 / 4.162687539173756`；modal Schur 240×240、
+rank240、condition `1160.2452412629682`，matrix/LU repeat error为0；online每侧 apply
+增量 `1068=2*534`。KSP/PC、两侧 factors/Woodbury/components、modal Schur、outer matrix
+与 postprocess cache 的 release ledger 全部 pass，borrowed actions 和 solution snapshot 的
+存活合同也通过。
+
+资源 authority 是 process-tree RSS。timeline 的 worker PSS sum 峰值为
+`5326.6474609375 MiB = 5.201804161071777 GiB`，USS sum 峰值为
+`5144.26171875 MiB = 5.023693084716797 GiB`，均位于 `v4_worker_cleanup_finished`；PSS/USS
+是 smaps_rollup simultaneous rank sums，不是累计对象体积。峰值在 cleanup 后，可能是 allocator
+high-water。观测 swap 为0，但 all-live authority/swap readability=false、job cgroup非dedicated，
+所以只记录“观测为0、正式 zero-swap Gate 未资格化”；worker自然结束，无SIGKILL，无orphan。
+
+V4 由于 bottom residual Gate 失败，在 recovery 前停止；external auxiliary、field、R/T/A、
+A_volume、orders、12+12、canonical、direct-Hybrid、Full3D comparison 均 not_run。H1 modal/
+canonical/selected-fields 因没有数值 payload 分别记 `not_run_authority_payload_gap`。独立
+checker exit0 仅为 evidence integrity pass，`pass=false` 且 failure=`h1_authority_payload_gap`。
+
+阶段 max-rank timing 为 QEP `0.8889220430282876 s`、bases `53.283052755054086 s`、
+action/coupling `210.08973653102294 s`、setup `56.02552783791907 s`、outer
+`96.9506127560744 s`、release `0.004097130033187568 s`、total
+`417.24723999900743 s`。最终 V4 compact record、raw SHA、checker SHA 与测试清单见
+[V4 full qualification](task037b_hybrid_fem_modal_iterative/outcomes/full_mpi8_qualification.md)
+和 [Case101 compact record](../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v4_mpi8_full_qualification_v1.json)。
+
+V4 focused serial 合计18 passed；MPI2和MPI4 key action/lifecycle各5 passed per rank；五个
+touched Python files 的 Ruff check、format-check、compileall 与 diff-check pass。full pytest、
+test240、额外PDE和CI not_run。本轮 docs/compact closeout 不改变 source、不重跑，不授权
+master merge 或 production qualification，下一步仅等待 review。
