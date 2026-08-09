@@ -1033,25 +1033,63 @@ def _task034_terminal_record_is_complete(record_path: Path) -> bool:
         and isinstance(payload.get("v4_telemetry"), dict)
         and isinstance(payload.get("v5_telemetry"), dict)
     )
-    return bool(
-        payload.get("schema_version") == 1
-        and isinstance(payload.get("benchmark_id"), str)
-        and isinstance(payload.get("timestamp_utc"), str)
-        and isinstance(payload.get("status"), str)
+    v4_telemetry = payload.get("v4_telemetry")
+    v5_telemetry = payload.get("v5_telemetry")
+    stage_markers = (
+        v4_telemetry.get("stage_markers", []) if isinstance(v4_telemetry, dict) else []
+    )
+    modern_v4_record = bool(
+        (v4_record or v5_record)
+        and isinstance(payload.get("case"), dict)
+        and isinstance(payload.get("solver"), dict)
         and isinstance(payload.get("qualification"), dict)
-        and (
-            isinstance(payload.get("solve"), dict)
-            or v1_record
-            or v1_r2_record
-            or v1_r3_record
-            or v1_r4_record
-            or v1_r5_record
-            or v2_record
-            or v3_record
-            or v4_record
-            or v5_record
+        and isinstance(v4_telemetry, dict)
+        and isinstance(payload.get("status"), str)
+        and isinstance(stage_markers, list)
+        and stage_markers
+        and stage_markers[-1] == "v4_worker_cleanup_finished"
+        and isinstance(v4_telemetry.get("main_postprocess_release"), dict)
+        and v4_telemetry["main_postprocess_release"].get("release_pass") is True
+        and payload["qualification"].get("postprocess_release_pass") is True
+    )
+    modern_v5_record = bool(
+        v5_record
+        and modern_v4_record
+        and isinstance(v5_telemetry, dict)
+        and isinstance(v4_telemetry.get("multimetric"), dict)
+        and isinstance(v5_telemetry.get("snapshot_release"), dict)
+        and all(
+            v5_telemetry["snapshot_release"].get(key) is True
+            for key in (
+                "snapshot_destroyed",
+                "bottom_snapshot_destroyed",
+                "top_snapshot_destroyed",
+                "modal_snapshot_released",
+            )
         )
-        and isinstance(payload.get("gates"), dict)
+    )
+    legacy_record = bool(
+        isinstance(payload.get("solve"), dict)
+        or v1_record
+        or v1_r2_record
+        or v1_r3_record
+        or v1_r4_record
+        or v1_r5_record
+        or v2_record
+        or v3_record
+    )
+    return bool(
+        modern_v5_record
+        or (modern_v4_record and v4_record)
+        or (
+            payload.get("schema_version") == 1
+            and isinstance(payload.get("benchmark_id"), str)
+            and isinstance(payload.get("timestamp_utc"), str)
+            and isinstance(payload.get("status"), str)
+            and isinstance(payload.get("qualification"), dict)
+            and legacy_record
+            and isinstance(payload.get("gates"), dict)
+        )
     )
 
 
@@ -4299,6 +4337,55 @@ def _v4_full_fe_threshold_pass(
     )
 
 
+def _task037b_v4_energy_contract(validation: Any, energy: Any) -> tuple[bool, bool]:
+    if not isinstance(validation, dict) or not isinstance(energy, dict):
+        return False, False
+    official_record = validation.get("official_record")
+    closure_error = energy.get("closure_error")
+    balance_error = energy.get("A_balance_minus_A_volume")
+    if official_record == "not_run":
+        expected = bool(
+            _v2_finite_number(closure_error)
+            and _v2_finite_number(balance_error)
+            and abs(float(closure_error)) <= 1.0e-5
+        )
+        return expected, energy.get("pass") is expected
+    if official_record != "candidate_measured_not_official":
+        return False, False
+    a_volume = validation.get("A_volume")
+    values = (
+        validation.get("R"),
+        validation.get("T"),
+        validation.get("A"),
+        a_volume.get("A_volume_total") if isinstance(a_volume, dict) else None,
+    )
+    if not all(_v2_finite_number(value) and float(value) >= 0.0 for value in values):
+        return False, False
+    recomputed_closure = float(values[0]) + float(values[1]) + float(values[3]) - 1.0
+    recomputed_balance = float(values[2]) - float(values[3])
+    expected = bool(
+        abs(recomputed_closure) <= 1.0e-5 and _v2_finite_number(recomputed_balance)
+    )
+    consistent = bool(
+        energy.get("pass") is expected
+        and _v2_finite_number(closure_error)
+        and _v2_finite_number(balance_error)
+        and math.isclose(
+            float(closure_error),
+            recomputed_closure,
+            rel_tol=1.0e-12,
+            abs_tol=1.0e-15,
+        )
+        and math.isclose(
+            float(balance_error),
+            recomputed_balance,
+            rel_tol=1.0e-12,
+            abs_tol=1.0e-15,
+        )
+    )
+    return expected, consistent
+
+
 def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
     """Independently recompute the V4 numerical and lifecycle evidence."""
 
@@ -5328,45 +5415,8 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
                 and len(order_keys) == len(set(order_keys))
             )
             energy = gates.get("energy", {})
-            a_volume_raw = (
-                validation.get("A_volume", {}).get("A_volume_total")
-                if isinstance(validation, dict)
-                and isinstance(validation.get("A_volume"), dict)
-                else None
-            )
-            r_value = validation.get("R") if isinstance(validation, dict) else None
-            t_value = validation.get("T") if isinstance(validation, dict) else None
-            a_value = validation.get("A") if isinstance(validation, dict) else None
-            energy_values = all(
-                finite(value) for value in (r_value, t_value, a_value, a_volume_raw)
-            )
-            closure_error = (
-                float(r_value) + float(t_value) + float(a_volume_raw) - 1.0
-                if energy_values
-                else math.inf
-            )
-            balance_error = (
-                float(a_value) - float(a_volume_raw) if energy_values else math.inf
-            )
-            energy_pass = bool(
-                energy_values
-                and signed_finite(closure_error)
-                and signed_finite(balance_error)
-                and abs(closure_error) <= 1.0e-5
-                and signed_finite(energy.get("closure_error"))
-                and signed_finite(energy.get("A_balance_minus_A_volume"))
-                and math.isclose(
-                    float(energy["closure_error"]),
-                    closure_error,
-                    rel_tol=1.0e-12,
-                    abs_tol=1.0e-15,
-                )
-                and math.isclose(
-                    float(energy["A_balance_minus_A_volume"]),
-                    balance_error,
-                    rel_tol=1.0e-12,
-                    abs_tol=1.0e-15,
-                )
+            energy_pass, energy_contract = _task037b_v4_energy_contract(
+                validation, energy
             )
             own_physics_pass = bool(
                 interface_e_pass
@@ -5382,7 +5432,7 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
                 and gates.get("exact_traction_dual", {}).get("pass") is traction_pass
                 and gates.get("middle_interface_samples_finite") is sample_finite
                 and gates.get("external_orders_finite") is orders_finite
-                and gates.get("energy", {}).get("pass") is energy_pass
+                and energy_contract
                 and gates.get("own_physics_pass") is own_physics_pass
                 and gates.get("pass") is physics_pass
             )

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import copy
+import json
 from pathlib import Path
 
 import numpy as np
@@ -9,7 +11,9 @@ from petsc4py import PETSc
 from benchmarks.run_task032_phase6_augmented import _parse_args
 from benchmarks.run_task033_memory_watchdog import (
     _parse_args as _watchdog_parse_args,
+    _task034_terminal_record_is_complete,
     _task034_terminal_worker_drain,
+    _task037b_v4_energy_contract,
     _worker_command,
     _task037b_v5_linear_disposition,
 )
@@ -264,6 +268,93 @@ def test_v5_terminal_drain_excludes_partial_nonterminal_worker_states():
     )
     assert not _task034_terminal_worker_drain(
         **{**common, "stage": "record_and_release"}, live_worker_count=4
+    )
+
+
+def test_v5_terminal_record_requires_real_stage_and_release(tmp_path):
+    record = {
+        "record_schema": "task037b.v5-multimetric-full-block-pc.v1",
+        "case": {},
+        "solver": {},
+        "qualification": {"postprocess_release_pass": True},
+        "status": "task037b_v5_linear_pass_recovery_or_physics_failed",
+        "v4_telemetry": {
+            "stage_markers": ["v4_worker_cleanup_finished"],
+            "main_postprocess_release": {"release_pass": True},
+            "multimetric": {},
+        },
+        "v5_telemetry": {
+            "snapshot_release": {
+                "snapshot_destroyed": True,
+                "bottom_snapshot_destroyed": True,
+                "top_snapshot_destroyed": True,
+                "modal_snapshot_released": True,
+            }
+        },
+    }
+    path = tmp_path / "solver_record.json"
+    path.write_text(json.dumps(record), encoding="utf-8")
+    assert _task034_terminal_record_is_complete(path)
+    for key, value in (
+        ("stage_markers", ["candidate_field_recovery"]),
+        ("main_postprocess_release", {"release_pass": False}),
+    ):
+        candidate = copy.deepcopy(record)
+        candidate["v4_telemetry"][key] = value
+        path.write_text(json.dumps(candidate), encoding="utf-8")
+        assert not _task034_terminal_record_is_complete(path)
+    candidate = copy.deepcopy(record)
+    candidate["v5_telemetry"]["snapshot_release"]["modal_snapshot_released"] = False
+    path.write_text(json.dumps(candidate), encoding="utf-8")
+    assert not _task034_terminal_record_is_complete(path)
+
+    legacy = {
+        "schema_version": 1,
+        "benchmark_id": "legacy",
+        "timestamp_utc": "now",
+        "status": "legacy",
+        "qualification": {},
+        "solve": {},
+        "gates": {},
+    }
+    path.write_text(json.dumps(legacy), encoding="utf-8")
+    assert _task034_terminal_record_is_complete(path)
+    legacy.pop("gates")
+    path.write_text(json.dumps(legacy), encoding="utf-8")
+    assert not _task034_terminal_record_is_complete(path)
+
+
+def test_v5_energy_contract_separates_measured_and_not_run_boundaries():
+    measured_validation = {
+        "official_record": "candidate_measured_not_official",
+        "R": 0.1,
+        "T": 0.2,
+        "A": 0.7,
+        "A_volume": {"A_volume_total": 0.7},
+    }
+    measured_energy = {
+        "closure_error": 0.0,
+        "A_balance_minus_A_volume": 0.0,
+        "pass": True,
+    }
+    assert _task037b_v4_energy_contract(measured_validation, measured_energy) == (
+        True,
+        True,
+    )
+
+    not_run_energy = {
+        "closure_error": -1.0e-6,
+        "A_balance_minus_A_volume": 1.0e-6,
+        "pass": True,
+    }
+    assert _task037b_v4_energy_contract(
+        {"official_record": "not_run"}, not_run_energy
+    ) == (True, True)
+    tampered = copy.deepcopy(not_run_energy)
+    tampered["closure_error"] = 2.0e-5
+    assert _task037b_v4_energy_contract({"official_record": "not_run"}, tampered) == (
+        False,
+        False,
     )
 
 
