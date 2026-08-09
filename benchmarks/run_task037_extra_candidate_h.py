@@ -38,6 +38,7 @@ H1_RSS_LIMIT_BYTES = int(1.25 * GIB)
 H1_POLL_SECONDS = 0.25
 H1_TIMEOUT_SECONDS = 1800.0
 DUAL_RELATIVE_TOLERANCE = 1.0e-11
+H1R_PROGRESS_SCHEMA = "task037_extra_h1r_progress.v1"
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
 SOURCE_DEFINITIONS = {
@@ -92,6 +93,62 @@ SOURCE_DEFINITIONS = {
         ),
     },
 }
+
+
+def _proc_memory_field(path: Path, field: str) -> int | None:
+    try:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if line.startswith(field):
+                fields = line.split()
+                return int(fields[1]) * 1024
+    except (OSError, IndexError, ValueError):
+        return None
+    return None
+
+
+def _self_memory_bytes() -> tuple[int | None, int | None, int | None]:
+    rss = _proc_memory_field(Path("/proc/self/status"), "VmRSS:")
+    smaps_rollup = Path("/proc/self/smaps_rollup")
+    pss = _proc_memory_field(smaps_rollup, "Pss:")
+    private_clean = _proc_memory_field(smaps_rollup, "Private_Clean:")
+    private_dirty = _proc_memory_field(smaps_rollup, "Private_Dirty:")
+    uss = (
+        None
+        if private_clean is None or private_dirty is None
+        else int(private_clean + private_dirty)
+    )
+    return rss, pss, uss
+
+
+def _emit_h1r_progress(
+    writer: Any,
+    *,
+    event: str,
+    worker_started: float,
+    rank: int,
+    source_label: str | None = None,
+    apply_count: int | None = None,
+    cell_count: int | None = None,
+    local_rows: int | None = None,
+    global_rows: int | None = None,
+) -> None:
+    rss_bytes, pss_bytes, uss_bytes = _self_memory_bytes()
+    record = {
+        "schema": H1R_PROGRESS_SCHEMA,
+        "event": str(event),
+        "elapsed_wall_seconds": float(time.perf_counter() - worker_started),
+        "rank": int(rank),
+        "rss_bytes": rss_bytes,
+        "pss_bytes": pss_bytes,
+        "uss_bytes": uss_bytes,
+        "source_label": source_label,
+        "apply_count": apply_count,
+        "cell_count": cell_count,
+        "local_rows": local_rows,
+        "global_rows": global_rows,
+    }
+    writer.write(json.dumps(record, sort_keys=True) + "\n")
+    writer.flush()
 
 
 def _inspect_candidate_source() -> Any:
@@ -233,6 +290,12 @@ def _action_record(
     function_space,
     mpc,
     tolerance: float,
+    progress_writer: Any | None = None,
+    progress_started: float | None = None,
+    progress_rank: int | None = None,
+    progress_cell_count: int | None = None,
+    progress_local_rows: int | None = None,
+    progress_global_rows: int | None = None,
 ) -> dict[str, Any]:
     import numpy as np
     from mpi4py import MPI
@@ -242,13 +305,83 @@ def _action_record(
     candidate_repeat = source.duplicate()
     difference = source.duplicate()
     try:
+        if progress_writer is not None:
+            _emit_h1r_progress(
+                progress_writer,
+                event="reference_apply_started",
+                worker_started=float(progress_started),
+                rank=int(progress_rank),
+                source_label=label,
+                apply_count=getattr(reference_context, "apply_count", None),
+                cell_count=progress_cell_count,
+                local_rows=progress_local_rows,
+                global_rows=progress_global_rows,
+            )
         reference_start = time.perf_counter()
         reference_context.mult(None, source, reference_output)
         reference_seconds = time.perf_counter() - reference_start
+        if progress_writer is not None:
+            _emit_h1r_progress(
+                progress_writer,
+                event="reference_apply_ready",
+                worker_started=float(progress_started),
+                rank=int(progress_rank),
+                source_label=label,
+                apply_count=getattr(reference_context, "apply_count", None),
+                cell_count=progress_cell_count,
+                local_rows=progress_local_rows,
+                global_rows=progress_global_rows,
+            )
+            _emit_h1r_progress(
+                progress_writer,
+                event="candidate_apply_1_started",
+                worker_started=float(progress_started),
+                rank=int(progress_rank),
+                source_label=label,
+                apply_count=1,
+                cell_count=progress_cell_count,
+                local_rows=progress_local_rows,
+                global_rows=progress_global_rows,
+            )
         candidate_start = time.perf_counter()
         candidate_action.matrix.mult(source, candidate_output)
         candidate_seconds = time.perf_counter() - candidate_start
+        if progress_writer is not None:
+            _emit_h1r_progress(
+                progress_writer,
+                event="candidate_apply_1_ready",
+                worker_started=float(progress_started),
+                rank=int(progress_rank),
+                source_label=label,
+                apply_count=1,
+                cell_count=progress_cell_count,
+                local_rows=progress_local_rows,
+                global_rows=progress_global_rows,
+            )
+            _emit_h1r_progress(
+                progress_writer,
+                event="candidate_apply_2_started",
+                worker_started=float(progress_started),
+                rank=int(progress_rank),
+                source_label=label,
+                apply_count=2,
+                cell_count=progress_cell_count,
+                local_rows=progress_local_rows,
+                global_rows=progress_global_rows,
+            )
         candidate_action.matrix.mult(source, candidate_repeat)
+        if progress_writer is not None:
+            _emit_h1r_progress(
+                progress_writer,
+                event="candidate_apply_2_ready",
+                worker_started=float(progress_started),
+                rank=int(progress_rank),
+                source_label=label,
+                apply_count=2,
+                cell_count=progress_cell_count,
+                local_rows=progress_local_rows,
+                global_rows=progress_global_rows,
+            )
         candidate_repeat_equal = np.array_equal(
             candidate_output.getArray(readonly=True),
             candidate_repeat.getArray(readonly=True),
@@ -270,9 +403,21 @@ def _action_record(
 
         source_definition = _source_definition(label, cfg)
         source_dir = run_dir / "canonical" / label
-        source_dir.mkdir(parents=True, exist_ok=True)
         rank = function_space.mesh.comm.rank
         candidate_shard = source_dir / f"candidate_rank{rank}.jsonl"
+        if progress_writer is not None:
+            _emit_h1r_progress(
+                progress_writer,
+                event="canonical_export_started",
+                worker_started=float(progress_started),
+                rank=int(progress_rank),
+                source_label=label,
+                apply_count=2,
+                cell_count=progress_cell_count,
+                local_rows=progress_local_rows,
+                global_rows=progress_global_rows,
+            )
+        source_dir.mkdir(parents=True, exist_ok=True)
         candidate_metadata = write_canonical_packet_shard(
             candidate_shard,
             iter_canonical_full_fe_dual_packets(
@@ -303,6 +448,18 @@ def _action_record(
         candidate_manifest_data = function_space.mesh.comm.bcast(
             candidate_manifest_data, root=0
         )
+        if progress_writer is not None:
+            _emit_h1r_progress(
+                progress_writer,
+                event="canonical_export_ready",
+                worker_started=float(progress_started),
+                rank=int(progress_rank),
+                source_label=label,
+                apply_count=2,
+                cell_count=progress_cell_count,
+                local_rows=progress_local_rows,
+                global_rows=progress_global_rows,
+            )
         return {
             "label": label,
             "kind": "physical_coordinate_analytic_primal",
@@ -427,6 +584,7 @@ def _evaluate_worker_qualification(
 def run_worker(
     run_dir: Path,
 ) -> bool:
+    worker_started = time.perf_counter()
     from dolfinx import fem
     from mpi4py import MPI
 
@@ -442,6 +600,29 @@ def run_worker(
     from src.solvers.mpc_form_action import MpcFormActionContext
 
     comm = MPI.COMM_WORLD
+    progress_writer = sys.stdout
+    progress_cell_count: int | None = None
+    progress_local_rows: int | None = None
+    progress_global_rows: int | None = None
+
+    def emit_progress(
+        event: str,
+        *,
+        source_label: str | None = None,
+        apply_count: int | None = None,
+    ) -> None:
+        _emit_h1r_progress(
+            progress_writer,
+            event=event,
+            worker_started=worker_started,
+            rank=comm.rank,
+            source_label=source_label,
+            apply_count=apply_count,
+            cell_count=progress_cell_count,
+            local_rows=progress_local_rows,
+            global_rows=progress_global_rows,
+        )
+
     cfg = target_stage4_config(degree=6, h_nm=10.0)
     if cfg.stage4_boundary_model != "dtn_port":
         raise RuntimeError("Candidate-H requires the frozen dtn_port configuration identity")
@@ -450,9 +631,21 @@ def run_worker(
     if comm.rank == 0:
         run_dir.mkdir(parents=True, exist_ok=True)
     comm.barrier()
+    emit_progress("mesh_build_started")
     mesh_data = build_airbox_mesh_3d(cfg, run_dir / "mesh")
+    progress_cell_count = int(
+        mesh_data.mesh.topology.index_map(mesh_data.mesh.topology.dim).size_local
+    )
+    emit_progress("mesh_build_ready")
+    emit_progress("function_space_started")
     function_space = _create_nedelec_space(mesh_data.mesh, cfg)
+    progress_local_rows = int(function_space.dofmap.index_map.size_local)
+    progress_global_rows = int(function_space.dofmap.index_map.size_global)
+    emit_progress("function_space_ready")
+    emit_progress("floquet_mpc_started")
     floquet = build_double_floquet_mpc(function_space, mesh_data, cfg)
+    emit_progress("floquet_mpc_ready")
+    emit_progress("form_compile_started")
     a_ufl, _ = _build_variational_forms(
         mesh_data.mesh,
         mesh_data,
@@ -462,7 +655,9 @@ def run_worker(
         incident_field=None,
     )
     a_compiled = fem.form(a_ufl)
+    emit_progress("form_compile_ready")
     tolerance = floquet_geometry_tolerance(cfg)
+    emit_progress("candidate_build_started")
     candidate = build_task037_extra_candidate_h_fullspace_action(
         a_compiled,
         function_space,
@@ -471,11 +666,26 @@ def run_worker(
         task037_extra_candidate_h=True,
         geometry_tolerance=tolerance,
     )
+    progress_local_rows = int(candidate.audit["local_owned_rows"])
+    progress_global_rows = int(candidate.audit["global_rows"])
+    emit_progress("candidate_build_ready")
+    emit_progress("reference_build_started")
     reference = MpcFormActionContext(a_ufl, floquet.mpc)
+    emit_progress("reference_build_ready")
     try:
         source_results = []
         for label in SOURCE_DEFINITIONS:
+            emit_progress(
+                "source_interpolation_started",
+                source_label=label,
+                apply_count=0,
+            )
             source = _make_primal_source(function_space, floquet.mpc, cfg, label)
+            emit_progress(
+                "source_interpolation_ready",
+                source_label=label,
+                apply_count=0,
+            )
             try:
                 source_results.append(
                     _action_record(
@@ -488,6 +698,12 @@ def run_worker(
                         function_space=function_space,
                         mpc=floquet.mpc,
                         tolerance=tolerance,
+                        progress_writer=progress_writer,
+                        progress_started=worker_started,
+                        progress_rank=comm.rank,
+                        progress_cell_count=progress_cell_count,
+                        progress_local_rows=progress_local_rows,
+                        progress_global_rows=progress_global_rows,
                     )
                 )
             finally:
@@ -499,6 +715,7 @@ def run_worker(
         )
         global_rows = int(candidate.audit["global_rows"])
         constraint_count = int(floquet.num_constraints)
+        emit_progress("worker_summary_started")
         if comm.rank == 0:
             qualification = _evaluate_worker_qualification(
                 source_results,
@@ -550,7 +767,9 @@ def run_worker(
             worker_pass = bool(qualification["pass"])
         else:
             worker_pass = None
-        return bool(comm.bcast(worker_pass, root=0))
+        worker_pass = bool(comm.bcast(worker_pass, root=0))
+        emit_progress("worker_summary_ready")
+        return worker_pass
     finally:
         reference.destroy()
         candidate.destroy()
