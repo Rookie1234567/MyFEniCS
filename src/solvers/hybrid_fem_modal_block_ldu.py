@@ -34,9 +34,11 @@ __all__ = (
     "HybridBlockLduDirectAction",
     "HybridActionModalSchurSystem",
     "HybridBlockLduScreenResult",
+    "HybridBlockLduFullSolveResult",
     "build_hybrid_action_modal_schur",
     "create_action_block_ldu_preconditioner",
     "screen_action_block_ldu",
+    "solve_action_block_ldu_full",
     "action_block_screen_gate",
     "action_block_v3_progressive_gate",
     "create_exact_block_ldu_preconditioner",
@@ -367,10 +369,12 @@ class HybridBlockLduPreconditioner:
     bottom_action: Any | None = None
     top_action: Any | None = None
     action_modal_schur_system: HybridActionModalSchurSystem | None = None
+    defer_action_modal_schur_release: bool = False
     _destroyed: bool = field(default=False, init=False, repr=False)
 
     def __post_init__(self) -> None:
         self._action_mode = self.action_modal_schur_system is not None
+        self._action_modal_schur_released = False
         if self._action_mode:
             if self.bottom_action is None or self.top_action is None:
                 raise ValueError("Action block-LDU requires both side actions.")
@@ -482,6 +486,7 @@ class HybridBlockLduPreconditioner:
                 "modal_block_name": self.modal_block_name,
                 "modal_block_condition": self._modal_block_condition,
                 "modal_schur": modal_diagnostics,
+                "action_modal_schur_released": bool(self._action_modal_schur_released),
                 "destroyed": bool(self._destroyed),
             }
         return {
@@ -602,6 +607,17 @@ class HybridBlockLduPreconditioner:
         self._pc_apply_seconds += time.perf_counter() - apply_started
         self._pc_apply_count += 1
 
+    def release_deferred_action_modal_schur(self) -> None:
+        if not self._action_mode:
+            return
+        if self._action_modal_schur_released:
+            return
+        if self.action_modal_schur_system is None:
+            raise RuntimeError("Deferred action modal Schur is unavailable.")
+        self.action_modal_schur_system.destroy()
+        self.modal_schur = None
+        self._action_modal_schur_released = True
+
     def destroy(self, _pc: PETSc.PC | None = None) -> None:
         if self._destroyed:
             return
@@ -627,8 +643,8 @@ class HybridBlockLduPreconditioner:
         ):
             vector.destroy()
         if self._action_mode:
-            self.action_modal_schur_system.destroy()
-            self.modal_schur = None
+            if not self.defer_action_modal_schur_release:
+                self.release_deferred_action_modal_schur()
         else:
             self.modal_schur_system.destroy()
         self._destroyed = True
@@ -939,6 +955,29 @@ class HybridBlockLduScreenResult:
     progressive_stop_cause: str | None = None
 
 
+@dataclass
+class HybridBlockLduFullSolveResult:
+    """Retained V4 full-solve snapshot after KSP/PC release."""
+
+    solution: PETSc.Vec
+    history: list[dict[str, Any]]
+    checkpoints: list[dict[str, Any]]
+    converged_reason: int
+    iterations: int
+    final_reported_relative_residual: float
+    final_true_relative_residual: float
+    block_relative_residuals: dict[str, float]
+    inventory: dict[str, Any]
+    release: dict[str, Any]
+    pc_apply_seconds: float
+    _destroyed: bool = field(default=False, init=False, repr=False)
+
+    def destroy(self) -> None:
+        if not self._destroyed:
+            self.solution.destroy()
+            self._destroyed = True
+
+
 def screen_action_block_ldu(
     operator: PETSc.Mat,
     rhs: PETSc.Vec,
@@ -1088,6 +1127,203 @@ def screen_action_block_ldu(
         monitor_solution.destroy()
         solution.destroy()
         context.destroy()
+
+
+def solve_action_block_ldu_full(
+    operator: PETSc.Mat,
+    rhs: PETSc.Vec,
+    context: HybridBlockLduPreconditioner,
+    *,
+    max_it: int = 700,
+    checkpoint_callback=None,
+) -> HybridBlockLduFullSolveResult:
+    """Run the V4 fixed double-action solve and retain only the solution.
+
+    This deliberately remains separate from ``screen_action_block_ldu`` so the
+    V2/V3 bounded-screen limits and progressive-stop behavior cannot change.
+    The returned solution is an owned snapshot; the borrowed side actions are
+    not destroyed here and remain available for recovery/audit by the caller.
+    """
+
+    if int(max_it) != 700:
+        raise ValueError("V4 full solve requires max_it=700.")
+    context.defer_action_modal_schur_release = True
+    checkpoints = {
+        0,
+        1,
+        2,
+        5,
+        10,
+        20,
+        40,
+        60,
+        80,
+        90,
+        100,
+        120,
+        150,
+        180,
+        200,
+        270,
+        360,
+        450,
+        540,
+        630,
+        700,
+    }
+    solution = operator.createVecRight()
+    monitor_solution = operator.createVecRight()
+    retained_solution = operator.createVecRight()
+    solution.set(0.0)
+    monitor_solution.set(0.0)
+    retained_solution.set(0.0)
+    history: list[dict[str, Any]] = []
+    notified_checkpoints: set[int] = set()
+    rhs_norm = max(float(rhs.norm()), _TINY)
+    solve_started = time.perf_counter()
+    ksp = PETSc.KSP().create(operator.getComm())
+    returned = False
+
+    def snapshot(
+        iteration: int,
+        reported: float,
+        current: PETSc.KSP | None,
+    ) -> None:
+        if current is None:
+            solution.copy(monitor_solution)
+            current_solution = monitor_solution
+        else:
+            current_solution = current.buildSolution(monitor_solution)
+        global_true, block = _residual_metrics(operator, rhs, current_solution, context)
+        inventory = context.inventory
+        row = {
+            "iteration": int(iteration),
+            "reported_relative_residual": float(reported),
+            "global_true_relative_residual": float(global_true),
+            "bottom_true_relative_residual": float(block["bottom"]),
+            "top_true_relative_residual": float(block["top"]),
+            "modal_true_relative_residual": float(block["modal"]),
+            "pc_apply_count": int(inventory.get("pc_apply_count", 0)),
+            "bottom_action_apply_count": int(
+                inventory.get("bottom_action_apply_count", 0)
+            ),
+            "top_action_apply_count": int(inventory.get("top_action_apply_count", 0)),
+            "elapsed_seconds": float(time.perf_counter() - solve_started),
+        }
+        if history and history[-1]["iteration"] == int(iteration):
+            history[-1] = row
+        else:
+            history.append(row)
+        if (
+            checkpoint_callback is not None
+            and int(iteration) in checkpoints
+            and int(iteration) not in notified_checkpoints
+        ):
+            notified_checkpoints.add(int(iteration))
+            checkpoint_callback(dict(row))
+
+    try:
+        snapshot(0, 1.0 if rhs_norm > _TINY else 0.0, None)
+        ksp.setOperators(operator)
+        ksp.setType(PETSc.KSP.Type.FGMRES)
+        ksp.setGMRESRestart(90)
+        ksp.setPCSide(PETSc.PC.Side.RIGHT)
+        ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED)
+        ksp.setTolerances(rtol=1.0e-6, atol=0.0, max_it=700)
+        pc = ksp.getPC()
+        pc.setType(PETSc.PC.Type.PYTHON)
+        pc.setPythonContext(context)
+        ksp.setUp()
+
+        def monitor(current: PETSc.KSP, iteration: int, residual_norm: float) -> None:
+            snapshot(
+                int(iteration),
+                float(residual_norm) / rhs_norm,
+                current,
+            )
+
+        ksp.setMonitor(monitor)
+        ksp.solve(rhs, solution)
+        iterations = int(ksp.getIterationNumber())
+        reason = int(ksp.getConvergedReason())
+        reported = float(ksp.getResidualNorm()) / rhs_norm
+        snapshot(iterations, reported, None)
+        if iterations not in notified_checkpoints and checkpoint_callback is not None:
+            notified_checkpoints.add(iterations)
+            checkpoint_callback(dict(history[-1]))
+        solution.copy(retained_solution)
+        release: dict[str, Any] = {
+            "ksp_destroyed": False,
+            "pc_context_destroyed": False,
+            "action_modal_schur_retained_after_pc_destroyed": False,
+            "action_modal_schur_released": False,
+            "solution_snapshot_retained": True,
+            "borrowed_side_actions_retained": False,
+        }
+        final_true = float(history[-1]["global_true_relative_residual"])
+        block = {
+            key: float(history[-1][key])
+            for key in (
+                "bottom_true_relative_residual",
+                "top_true_relative_residual",
+                "modal_true_relative_residual",
+            )
+        }
+        block = {
+            "bottom": block["bottom_true_relative_residual"],
+            "top": block["top_true_relative_residual"],
+            "modal": block["modal_true_relative_residual"],
+        }
+        inventory = dict(context.inventory)
+        ksp.destroy()
+        ksp = None
+        release["ksp_destroyed"] = True
+        context.destroy()
+        release["pc_context_destroyed"] = bool(context.inventory.get("destroyed"))
+        modal_after_pc = dict(context.inventory.get("modal_schur", {}))
+        release["action_modal_schur_retained_after_pc_destroyed"] = bool(
+            modal_after_pc.get("destroyed") is False
+        )
+        borrowed_actions = [
+            action
+            for action in (context.bottom_action, context.top_action)
+            if action is not None
+        ]
+        release["borrowed_side_actions_retained"] = bool(borrowed_actions) and all(
+            not bool(_action_diagnostics(action).get("destroyed"))
+            for action in borrowed_actions
+        )
+        result = HybridBlockLduFullSolveResult(
+            solution=retained_solution,
+            history=[dict(row) for row in history],
+            checkpoints=[
+                dict(row)
+                for row in history
+                if int(row["iteration"]) in checkpoints
+                or int(row["iteration"]) == iterations
+            ],
+            converged_reason=reason,
+            iterations=iterations,
+            final_reported_relative_residual=float(reported),
+            final_true_relative_residual=final_true,
+            block_relative_residuals=block,
+            inventory=inventory,
+            release=release,
+            pc_apply_seconds=float(inventory.get("pc_apply_seconds", 0.0)),
+        )
+        returned = True
+        return result
+    finally:
+        if ksp is not None:
+            ksp.destroy()
+        if not context._destroyed:
+            context.destroy()
+        if not returned and context._action_mode:
+            context.release_deferred_action_modal_schur()
+        monitor_solution.destroy()
+        solution.destroy()
+        if not returned:
+            retained_solution.destroy()
 
 
 def action_block_screen_gate(

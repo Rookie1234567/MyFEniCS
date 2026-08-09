@@ -86,6 +86,7 @@ from src.solvers.hybrid_fem_modal_block_ldu import (
     create_g_only_block_ldu_preconditioner,
     modal_block_diagnostic,
     screen_action_block_ldu,
+    solve_action_block_ldu_full,
     solve_exact_block_ldu,
 )
 from src.solvers.hybrid_fem_modal_iterative import create_hybrid_assembled_block_action
@@ -819,6 +820,14 @@ class _V3QualificationStop(RuntimeError):
         self.record = record
 
 
+class _V4QualificationStop(RuntimeError):
+    """Internal control flow after the bounded V4 full-solve record."""
+
+    def __init__(self, record: dict[str, Any]) -> None:
+        super().__init__(record.get("status", "V4 full solve complete"))
+        self.record = record
+
+
 NUMERICAL_INFINITY_BETA_H_CUTOFF = 1.0e4
 
 
@@ -1218,6 +1227,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Open only the frozen Task037b V3 double fixed-action screen path.",
     )
     parser.add_argument(
+        "--task037b-v4-gate",
+        action="store_true",
+        help="Open only the frozen Task037b V4 double fixed-action full-solve path.",
+    )
+    parser.add_argument(
         "--task037b-v2-profile",
         choices=("bottom-approx", "top-approx", "double"),
         default=None,
@@ -1291,6 +1305,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "dtn-woodbury-oracle-qualification",
             "dtn-woodbury-local-inverse-qualification",
             "block-ldu-action-screen",
+            "block-ldu-action-full-solve",
         ),
         default="augmented",
         help=(
@@ -1319,10 +1334,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         args.task037b_v1_gate,
         args.task037b_v2_gate,
         args.task037b_v3_gate,
+        args.task037b_v4_gate,
     )
     if sum(bool(value) for value in selected_scoped_gates) > 1:
         parser.error(
-            "Task035c p6/h10, Task037b H1, H3, H4, H5, V1, V2, and V3 gates are "
+            "Task035c p6/h10, Task037b H1, H3, H4, H5, V1, V2, V3, and V4 gates are "
             "mutually exclusive."
         )
     if args.solver_path == "local-inverse-qualification" and not args.task037b_h5_gate:
@@ -1357,6 +1373,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "block-ldu-action-screen requires --task037b-v2-gate or --task037b-v3-gate."
         )
+    if args.solver_path == "block-ldu-action-full-solve" and not args.task037b_v4_gate:
+        parser.error("block-ldu-action-full-solve requires --task037b-v4-gate.")
     if args.task037b_v2_gate and args.solver_path != "block-ldu-action-screen":
         parser.error(
             "--task037b-v2-gate requires --solver-path block-ldu-action-screen."
@@ -1364,6 +1382,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     if args.task037b_v3_gate and args.solver_path != "block-ldu-action-screen":
         parser.error(
             "--task037b-v3-gate requires --solver-path block-ldu-action-screen."
+        )
+    if args.task037b_v4_gate and args.solver_path != "block-ldu-action-full-solve":
+        parser.error(
+            "--task037b-v4-gate requires --solver-path block-ldu-action-full-solve."
         )
     if not args.task037b_v2_gate and (
         args.task037b_v2_profile is not None or args.task037b_v2_max_it is not None
@@ -1382,7 +1404,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     if args.degree == 6 and not any(selected_scoped_gates):
         parser.error(
             "p6 is fail-closed; pass a fixed scoped Task035c, Task037b H1, "
-            "or Task037b H3/H4/H5/V1/V2/V3 gate."
+            "or Task037b H3/H4/H5/V1/V2/V3/V4 gate."
         )
     if args.task035c_p6_h10_gate:
         scoped = bool(
@@ -1647,15 +1669,137 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "M120+M120, candidate240, block-ldu-action-screen, "
                 "static-condensed MPI8 path."
             )
+    elif args.task037b_v4_gate:
+        scoped = bool(
+            args.degree == 6
+            and math.isclose(args.h_nm, 10.0)
+            and args.modal_degree == 6
+            and args.modal_h_nm is not None
+            and math.isclose(args.modal_h_nm, 10.0)
+            and args.requested_modes == 120
+            and args.candidate_modes == 240
+            and args.solver_path == "block-ldu-action-full-solve"
+            and args.comparison_solver_path == "fast"
+            and not args.compare_modal_schur
+            and args.stage4_full3d_assembly_backend
+            == ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+            and math.isclose(args.bottom_interface_nm, 10.0)
+            and math.isclose(args.top_interface_nm, 110.0)
+            and args.graded_reference_h is None
+            and math.isclose(args.incident_grazing_deg, 10.0)
+            and args.polarization_kind == "s"
+            and args.internal_propagation_model == "full3d_uniform_cg"
+            and args.internal_traction_model == "scalar_cg_discrete_derivative"
+            and args.full3d_reference is not None
+            and valid_hex_digest(args.full3d_reference_sha256, 64)
+            and args.task035c_p6_preflight_authority is not None
+            and valid_hex_digest(args.task035c_p6_preflight_sha256, 64)
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and args.host_environment_id == "WSL2-Ubuntu-24.04"
+            and not args.allow_dirty_research
+        )
+        if not scoped:
+            parser.error(
+                "--task037b-v4-gate is restricted to the frozen p6/h10, modal "
+                "p6/h10, 13.5 nm, S-polarized full3d/scalar-CG, 10/110 nm, "
+                "M120/candidate240, block-ldu-action-full-solve, static-condensed "
+                "MPI8 path."
+            )
     elif (
         args.task035c_p6_preflight_authority is not None
         or args.task035c_p6_preflight_sha256 is not None
         or args.full3d_reference_sha256 is not None
     ):
         parser.error(
-            "Task035c/H1/H3/H4/H5/V1/V2/V3 authority SHA arguments require a scoped gate."
+            "Task035c/H1/H3/H4/H5/V1/V2/V3/V4 authority SHA arguments require a scoped gate."
         )
     return args
+
+
+def _v4_hash_bound_provenance_gate() -> dict[str, Any]:
+    """Verify only hash-bound H1/V3 metadata before a V4 candidate run."""
+
+    h1_records = {
+        "solver_record": (
+            ROOT
+            / "benchmarks/artifacts/task037b/h1_direct_authority_postfix_2990f35_mpi8"
+            / "solver_record.json",
+            "290fc25c119bbf641b8f0277ed5f9a101bc11a4df898c9133509f53c56dd4a1c",
+        ),
+        "summary": (
+            ROOT
+            / "benchmarks/artifacts/task037b/h1_direct_authority_postfix_2990f35_mpi8.json",
+            "e22aa1edfeab331d5a8be13ca085e029d5446a4fdf300a5787a00688ef700db2",
+        ),
+    }
+    compact_path = (
+        ROOT
+        / "benchmarks/cases/101_hybrid_iterative_block_solver/records"
+        / "task037b_v3_double_block_pc_screen_v1.json"
+    )
+    failures: list[str] = []
+    observed: dict[str, Any] = {}
+    for name, (path, expected) in h1_records.items():
+        if not path.is_file():
+            failures.append(f"missing_h1_{name}")
+            continue
+        actual = _sha256(path)
+        observed[f"h1_{name}"] = {
+            "path": path.relative_to(ROOT).as_posix(),
+            "sha256": actual,
+            "expected_sha256": expected,
+        }
+        if actual != expected:
+            failures.append(f"h1_{name}_sha256_mismatch")
+    compact: dict[str, Any] | None = None
+    if not compact_path.is_file():
+        failures.append("missing_v3_compact_record")
+    else:
+        compact_sha = _sha256(compact_path)
+        observed["v3_compact"] = {
+            "path": compact_path.relative_to(ROOT).as_posix(),
+            "sha256": compact_sha,
+            "expected_sha256": (
+                "4b04bd54e17e12cff36e42f59f97af88d2296ce74e7b90eade3fedbd199cbee1"
+            ),
+        }
+        if compact_sha != observed["v3_compact"]["expected_sha256"]:
+            failures.append("v3_compact_sha256_mismatch")
+        try:
+            compact = json.loads(compact_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            failures.append("v3_compact_unreadable")
+        if not isinstance(compact, dict):
+            failures.append("v3_compact_not_object")
+    raw_artifacts = compact.get("raw_artifacts", {}) if compact else {}
+    if not isinstance(raw_artifacts, dict):
+        failures.append("v3_compact_raw_artifacts_missing")
+        raw_artifacts = {}
+    raw_observed: dict[str, Any] = {}
+    for name, item in raw_artifacts.items():
+        if not isinstance(item, dict) or not isinstance(item.get("path"), str):
+            failures.append(f"v3_raw_{name}_descriptor_missing")
+            continue
+        path = ROOT / item["path"]
+        expected = item.get("sha256")
+        if not path.is_file() or not isinstance(expected, str):
+            failures.append(f"v3_raw_{name}_missing")
+            continue
+        actual = _sha256(path)
+        raw_observed[name] = {
+            "path": item["path"],
+            "sha256": actual,
+            "expected_sha256": expected,
+        }
+        if actual != expected:
+            failures.append(f"v3_raw_{name}_sha256_mismatch")
+    observed["v3_raw_artifacts"] = raw_observed
+    return {
+        "status": "pass" if not failures else "failed",
+        "payload_loaded": False,
+        "failures": failures,
+        "observed": observed,
+    }
 
 
 def _task035c_worker_authority_gate(
@@ -1673,13 +1817,16 @@ def _task035c_worker_authority_gate(
         or args.task037b_v1_gate
         or args.task037b_v2_gate
         or args.task037b_v3_gate
+        or args.task037b_v4_gate
     ):
         return None
 
     authority_path = args.task035c_p6_preflight_authority
     reference_path = args.full3d_reference
     if authority_path is None or reference_path is None:
-        raise SystemExit("Task035c/H1/H3/H4/H5/V1/V2/V3 authority paths are required.")
+        raise SystemExit(
+            "Task035c/H1/H3/H4/H5/V1/V2/V3/V4 authority paths are required."
+        )
     authority_path = (
         authority_path if authority_path.is_absolute() else ROOT / authority_path
     ).resolve()
@@ -1729,6 +1876,7 @@ def _task035c_worker_authority_gate(
             or args.task037b_v1_gate
             or args.task037b_v2_gate
             or args.task037b_v3_gate
+            or args.task037b_v4_gate
         )
         else task035c_p6_h10_full3d_reference_gate(
             reference if isinstance(reference, dict) else None,
@@ -1738,6 +1886,9 @@ def _task035c_worker_authority_gate(
             assembly_backend=args.stage4_full3d_assembly_backend,
             mpi_size=mpi_size,
         )
+    )
+    v4_provenance_gate = (
+        _v4_hash_bound_provenance_gate() if args.task037b_v4_gate else None
     )
     gate = {
         "schema_version": (
@@ -1753,9 +1904,15 @@ def _task035c_worker_authority_gate(
             if args.task037b_v2_gate
             else "task037b.v3-worker-authority-gate.v1"
             if args.task037b_v3_gate
+            else "task037b.v4-worker-authority-gate.v1"
+            if args.task037b_v4_gate
             else "task035c.p6-h10-worker-authority-gate.v1"
         ),
-        "pass": bool(preflight_gate["pass"] and reference_gate["pass"]),
+        "pass": bool(
+            preflight_gate["pass"]
+            and reference_gate["pass"]
+            and (v4_provenance_gate is None or v4_provenance_gate["status"] == "pass")
+        ),
         "historical_preflight": {
             **preflight_gate,
             "path": str(authority_path),
@@ -1765,6 +1922,8 @@ def _task035c_worker_authority_gate(
             "path": str(reference_path),
         },
     }
+    if v4_provenance_gate is not None:
+        gate["v4_hash_bound_provenance"] = v4_provenance_gate
     gate["failures"] = [
         *(
             []
@@ -1780,6 +1939,14 @@ def _task035c_worker_authority_gate(
             else [
                 f"matching_full3d_reference:{failure}"
                 for failure in reference_gate["failures"]
+            ]
+        ),
+        *(
+            []
+            if v4_provenance_gate is None or v4_provenance_gate["status"] == "pass"
+            else [
+                f"v4_hash_bound_provenance:{failure}"
+                for failure in v4_provenance_gate["failures"]
             ]
         ),
     ]
@@ -1917,6 +2084,1647 @@ def _v2_fixed_callback_certificate(
             source,
         ):
             vector.destroy()
+
+
+def _v4_not_run_validation_boundary() -> dict[str, Any]:
+    """Keep all official physics outputs closed until the full solve passes."""
+
+    return {
+        "official_record": "not_run",
+        "R": "not_run",
+        "T": "not_run",
+        "A": "not_run",
+        "A_volume": "not_run",
+        "orders": "not_run",
+        "external_diffraction_orders": "not_run",
+        "field": "not_run",
+        "12_plus_12": "not_run",
+        "Full3D": "not_run",
+        "full3d_comparison": "not_run",
+        "candidate_sample_grid": "not_run",
+        "canonical_export": "not_run",
+    }
+
+
+def _v4_full_fe_threshold_pass(
+    full_relative: Any,
+    interior_relative: Any,
+    interior_max: Any,
+) -> bool:
+    """Apply the frozen V4 full-FE and interior recovery thresholds."""
+
+    try:
+        values = tuple(
+            float(value)
+            for value in (
+                full_relative,
+                interior_relative,
+                interior_max,
+            )
+        )
+    except (TypeError, ValueError):
+        return False
+    return bool(
+        all(np.isfinite(value) and value >= 0.0 for value in values)
+        and values[0] <= 1.0e-6
+        and values[1] <= 1.0e-8
+        and values[2] <= 1.0e-8
+    )
+
+
+def _run_v4_full_solve(
+    *,
+    args: argparse.Namespace,
+    comm: MPI.Intracomm,
+    provenance: dict[str, Any],
+    authority_gate: dict[str, Any] | None,
+    cfg: Any,
+    cross_section: Any,
+    positive: Any,
+    negative: Any,
+    bottom: Any,
+    top: Any,
+    coupling: Any,
+    timings: dict[str, float],
+    total_started: float,
+    mark_stage,
+) -> None:
+    """Run the single V4 double fixed-action solve and controlled-stop record."""
+
+    layout = None
+    action_matrix = None
+    action_context = None
+    outer_rhs = None
+    preconditioner = None
+    full_result = None
+    physical_solution = None
+    candidate_bottom = None
+    candidate_top = None
+    bottom_auxiliary_vec = None
+    top_auxiliary_vec = None
+    side_components: dict[str, Any] = {}
+    side_fixed: dict[str, Any] = {}
+    side_woodbury: dict[str, Any] = {}
+    side_records: dict[str, dict[str, Any]] = {"bottom": {}, "top": {}}
+    stage_markers: list[str] = []
+    record: dict[str, Any] | None = None
+    implementation_error: str | None = None
+    recovery_error: str | None = None
+    numerical_pass = False
+    recovery_pass = False
+    own_physics_pass = False
+    physics_pass = False
+    external_recovery_pass = False
+    full_fe_recovery_pass = False
+    canonical_pass = False
+    canonical_exports: dict[str, Any] = {}
+    energy_pass = False
+    direct_comparator: dict[str, Any] = {
+        "status": "not_run",
+        "pass": False,
+    }
+    recovery_gates: dict[str, Any] = {}
+    release_ledger: dict[str, Any] = {}
+    outer_release: dict[str, Any] = {}
+    released = False
+    validation: dict[str, Any] = _v4_not_run_validation_boundary()
+    systems = {"bottom": bottom, "top": top}
+    started = time.perf_counter()
+
+    def record_stage(stage: str) -> None:
+        mark_stage(stage)
+        stage_markers.append(stage)
+
+    def release_action_stack() -> None:
+        nonlocal action_matrix, action_context, outer_rhs, preconditioner, released
+        if released:
+            return
+        record_stage("release_started")
+        deferred_modal_schur = bool(
+            preconditioner is not None
+            and getattr(preconditioner, "defer_action_modal_schur_release", False)
+        )
+        preconditioner_destroyed = False
+        modal_schur_retained = False
+        if preconditioner is not None:
+            if not bool(getattr(preconditioner, "_destroyed", False)):
+                preconditioner.destroy()
+            preconditioner_destroyed = bool(
+                getattr(preconditioner, "_destroyed", False)
+            )
+            if deferred_modal_schur:
+                modal_schur_retained = bool(
+                    preconditioner.inventory.get("modal_schur", {}).get("destroyed")
+                    is False
+                )
+        outer_rhs_present = outer_rhs is not None
+        outer_rhs_destroy_call_completed = False
+        if outer_rhs is not None:
+            outer_rhs.destroy()
+            outer_rhs = None
+            outer_rhs_destroy_call_completed = True
+        release_order = ["pc_context"]
+        release_objects = {
+            side: {
+                "fixed": side_fixed.pop(side, None),
+                "woodbury": side_woodbury.pop(side, None),
+                "components": side_components.pop(side, None),
+            }
+            for side in ("bottom", "top")
+        }
+        side_release: dict[str, Any] = {
+            side: {"release_order": []}
+            for side, objects in release_objects.items()
+            if any(value is not None for value in objects.values())
+        }
+        for side in ("bottom", "top"):
+            fixed = release_objects[side]["fixed"]
+            if fixed is None:
+                continue
+            fixed.destroy()
+            release_order.append(f"{side}_fixed_ilu")
+            side_release[side]["release_order"].append(f"{side}_fixed_ilu")
+            side_release[side]["fixed_base_after"] = dict(fixed.diagnostics)
+
+        for side in ("bottom", "top"):
+            woodbury = release_objects[side]["woodbury"]
+            if woodbury is None:
+                continue
+            woodbury.destroy()
+            release_order.append(f"{side}_woodbury_wklu")
+            side_release[side]["release_order"].append(f"{side}_woodbury_wklu")
+            side_release[side]["woodbury_after"] = dict(woodbury.diagnostics)
+
+        modal_schur_release_call_completed = False
+        modal_schur_released = False
+        if preconditioner is not None and deferred_modal_schur:
+            preconditioner.release_deferred_action_modal_schur()
+            modal_schur_release_call_completed = True
+            modal_schur_released = bool(
+                preconditioner.inventory.get("modal_schur", {}).get("destroyed") is True
+            )
+            release_order.append("action_modal_schur")
+        preconditioner = None
+
+        for side in ("bottom", "top"):
+            components = release_objects[side]["components"]
+            if components is None:
+                continue
+            components.destroy()
+            release_order.append(f"{side}_components")
+            side_release[side]["release_order"].append(f"{side}_components")
+            side_release[side]["components_destroyed"] = bool(
+                getattr(components, "_destroyed", False)
+            )
+
+        for side, release_record in side_release.items():
+            release_record.setdefault("fixed_base_after", None)
+            release_record.setdefault("woodbury_after", None)
+            release_record.setdefault("components_destroyed", False)
+            release_record["release_pass"] = bool(
+                release_record["woodbury_after"] is not None
+                and release_record["woodbury_after"].get("destroyed") is True
+                and release_record["fixed_base_after"] is not None
+                and release_record["fixed_base_after"].get("destroyed") is True
+                and release_record["components_destroyed"]
+            )
+            side_records[side]["release_records"] = release_record
+        action_matrix_destroy_call_completed = False
+        if action_matrix is not None:
+            action_matrix.destroy()
+            action_matrix = None
+            action_matrix_destroy_call_completed = True
+            release_order.append("outer_action_matrix")
+        if action_context is not None:
+            action_context.destroy()
+            action_context_destroyed = bool(
+                getattr(action_context, "_destroyed", False)
+            )
+            action_context = None
+            release_order.append("outer_action_context")
+        else:
+            action_context_destroyed = False
+        release_ledger.update(side_release)
+        outer_release.update(
+            {
+                "preconditioner_destroyed": preconditioner_destroyed,
+                "action_modal_schur_retained_after_pc_destroyed": (
+                    modal_schur_retained
+                ),
+                "action_modal_schur_release_call_completed": (
+                    modal_schur_release_call_completed
+                ),
+                "action_modal_schur_released": modal_schur_released,
+                "outer_rhs_present": outer_rhs_present,
+                "outer_rhs_destroy_call_completed": (outer_rhs_destroy_call_completed),
+                "action_context_destroyed": action_context_destroyed,
+                "action_matrix_destroy_call_completed": (
+                    action_matrix_destroy_call_completed
+                ),
+                "release_order": release_order,
+                "destroy_calls_complete": bool(
+                    outer_rhs_destroy_call_completed
+                    and action_matrix_destroy_call_completed
+                    and action_context_destroyed
+                ),
+            }
+        )
+        released = True
+        record_stage("release_finished")
+
+    def mode_identity(system: Any) -> dict[str, Any]:
+        rows: list[dict[str, Any]] = []
+        keys: list[tuple[Any, ...]] = []
+        finite = True
+        for mode in system.external_modes:
+            beta = complex(mode.beta)
+            row = {
+                "m": int(mode.m),
+                "n": int(mode.n),
+                "beta": _complex_json(beta),
+                "polarization": str(mode.polarization),
+                "rayleigh_warning": bool(mode.rayleigh_warning),
+            }
+            rows.append(row)
+            keys.append(
+                (
+                    row["m"],
+                    row["n"],
+                    row["polarization"],
+                )
+            )
+            finite = bool(
+                finite
+                and row["polarization"] in {"s", "p"}
+                and np.isfinite(beta.real)
+                and np.isfinite(beta.imag)
+            )
+        return {
+            "count": int(len(rows)),
+            "rows": rows,
+            "unique": len(set(keys)) == len(keys),
+            "finite": finite,
+            "pass": bool(
+                len(rows) == R4_MODAL_COUNT and len(set(keys)) == len(keys) and finite
+            ),
+        }
+
+    def array_descriptor(values: Any) -> dict[str, Any]:
+        array = np.ascontiguousarray(np.asarray(values))
+        return {
+            "shape": [int(value) for value in array.shape],
+            "dtype": str(array.dtype),
+            "bytes": int(array.nbytes),
+            "sha256": hashlib.sha256(array.tobytes()).hexdigest(),
+        }
+
+    def external_q_identity(
+        system: Any,
+        active_solution: PETSc.Vec,
+        amplitudes: np.ndarray,
+    ) -> dict[str, Any]:
+        values = np.asarray(amplitudes, dtype=np.complex128)
+        q_vector = system.blocks.H.createVecRight()
+        d_work = system.blocks.D.createVecLeft()
+        h_work = system.blocks.H.createVecLeft()
+        try:
+            q_vector.set(PETSc.ScalarType(0.0))
+            first, last = map(int, q_vector.getOwnershipRange())
+            if last > first:
+                q_vector.getArray()[:] = values[first:last]
+            q_vector.assemble()
+            system.blocks.D.mult(active_solution, d_work)
+            system.blocks.H.mult(q_vector, h_work)
+            d_values = _h3_replicated_vec_values(d_work)
+            hq_values = _h3_replicated_vec_values(h_work)
+            b_values = _h3_replicated_vec_values(system.blocks.b_aux)
+        finally:
+            q_vector.destroy()
+            d_work.destroy()
+            h_work.destroy()
+        expected = b_values - d_values
+        scale = max(
+            float(np.linalg.norm(hq_values)),
+            float(np.linalg.norm(expected)),
+            1.0e-30,
+        )
+        residual = float(np.linalg.norm(hq_values - expected) / scale)
+        finite = bool(
+            values.shape == (len(system.external_modes),)
+            and np.all(np.isfinite(values))
+            and np.all(np.isfinite(hq_values))
+            and np.all(np.isfinite(expected))
+            and np.isfinite(residual)
+        )
+        return {
+            "equation": "H*q - (b_aux - D*u)",
+            "relative_residual": residual,
+            "finite": finite,
+            "pass": bool(finite and residual <= 1.0e-10),
+        }
+
+    def write_canonical_exports() -> dict[str, Any]:
+        from benchmarks.canonical_vector_artifacts import (
+            MANIFEST_SCHEMA,
+            canonical_shard_manifest,
+            write_canonical_manifest,
+            write_canonical_packet_shard,
+        )
+        from src.solvers.hcurl_canonical_vector_dolfinx import (
+            extract_canonical_active_trace_packets,
+            extract_canonical_full_fe_packets,
+        )
+
+        run_dir = Path(args.output).parent
+        if comm.rank == 0:
+            run_dir.mkdir(parents=True, exist_ok=True)
+        comm.barrier()
+        try:
+            run_dir_label = str(run_dir.resolve().relative_to(ROOT))
+        except ValueError:
+            run_dir_label = str(run_dir.resolve())
+        exports: dict[str, Any] = {}
+        for side in ("bottom", "top"):
+            system = systems[side]
+            active_solution = (
+                physical_solution.bottom if side == "bottom" else physical_solution.top
+            )
+            recovered_field = (
+                physical_solution.bottom_recovered
+                if side == "bottom"
+                else physical_solution.top_recovered
+            )
+            condensed = system.static_condensation.condensed
+            if active_solution.getSize() != int(condensed.active_rows):
+                raise RuntimeError(
+                    f"{side} active solution does not match canonical trace rows."
+                )
+            side_exports: dict[str, Any] = {}
+            for packet_role in ("active_trace", "full_fe"):
+                if packet_role == "active_trace":
+                    packets, audit = extract_canonical_active_trace_packets(
+                        condensed,
+                        system.V,
+                        system.floquet_data,
+                        active_solution,
+                    )
+                else:
+                    packets, audit = extract_canonical_full_fe_packets(
+                        system.V,
+                        recovered_field.electric_field.x.petsc_vec,
+                        system.floquet_data,
+                    )
+                packet_finite = bool(
+                    all(
+                        np.isfinite(complex(value).real)
+                        and np.isfinite(complex(value).imag)
+                        for _key, value in packets
+                    )
+                )
+                if not packet_finite or int(audit["local_duplicate_count"]) != 0:
+                    raise RuntimeError(
+                        f"{side} {packet_role} canonical packet audit failed."
+                    )
+                shard_path = run_dir / (
+                    f"task037b_v4_{side}_{packet_role}_canonical_"
+                    f"rank{comm.rank:04d}.jsonl"
+                )
+                shard = write_canonical_packet_shard(shard_path, packets)
+                shard.update(
+                    {
+                        "rank": int(comm.rank),
+                        "local_duplicate_count": int(audit["local_duplicate_count"]),
+                        "extractor_audit": audit,
+                        "packet_finite": packet_finite,
+                    }
+                )
+                by_rank = comm.gather(shard, root=0)
+                if comm.rank == 0:
+                    by_rank = sorted(by_rank, key=lambda item: int(item["rank"]))
+                    manifest = canonical_shard_manifest(
+                        role=f"{side}_{packet_role}",
+                        mpi_size=comm.size,
+                        shard_metadata=by_rank,
+                        extractor_audit={
+                            "by_rank": [item["extractor_audit"] for item in by_rank]
+                        },
+                    )
+                    manifest_path = run_dir / (
+                        f"task037b_v4_{side}_{packet_role}_canonical_manifest.json"
+                    )
+                    manifest_sha256 = write_canonical_manifest(manifest_path, manifest)
+                    extractor_global_count = int(
+                        sum(
+                            int(item["extractor_audit"]["local_packet_count"])
+                            for item in by_rank
+                        )
+                    )
+                    manifest_audit = manifest["extractor_audit"]["by_rank"]
+                    role_pass = bool(
+                        all(item["packet_finite"] for item in by_rank)
+                        and all(
+                            int(item["extractor_audit"]["local_duplicate_count"]) == 0
+                            for item in by_rank
+                        )
+                        and int(manifest["global_summed_packet_count"])
+                        == extractor_global_count
+                        and int(manifest["global_summed_packet_count"])
+                        == int(
+                            sum(
+                                int(item["local_packet_count"])
+                                for item in manifest_audit
+                            )
+                        )
+                    )
+                    try:
+                        manifest_label = str(manifest_path.resolve().relative_to(ROOT))
+                    except ValueError:
+                        manifest_label = str(manifest_path.resolve())
+                    side_exports[packet_role] = {
+                        "manifest": manifest_label,
+                        "manifest_sha256": manifest_sha256,
+                        "schema_version": MANIFEST_SCHEMA,
+                        "global_summed_packet_count": int(
+                            manifest["global_summed_packet_count"]
+                        ),
+                        "extractor_global_packet_count": extractor_global_count,
+                        "packet_finite": all(item["packet_finite"] for item in by_rank),
+                        "local_duplicates_zero": all(
+                            int(item["extractor_audit"]["local_duplicate_count"]) == 0
+                            for item in by_rank
+                        ),
+                        "manifest_audit_count_matches": role_pass,
+                        "pass": role_pass,
+                    }
+                side_exports = comm.bcast(
+                    side_exports if comm.rank == 0 else None,
+                    root=0,
+                )
+                del packets
+            exports[side] = {
+                "run_directory": run_dir_label,
+                "roles": side_exports,
+            }
+        return exports
+
+    def base_record() -> dict[str, Any]:
+        return {
+            "record_schema": "task037b.v4-full-block-pc.v1",
+            "case": {
+                "degree": int(args.degree),
+                "h_nm": float(args.h_nm),
+                "wavelength_nm": float(cfg.lambda0),
+                "modal_degree": int(args.modal_degree),
+                "modal_h_nm": float(args.modal_h_nm),
+                "requested_modes": int(args.requested_modes),
+                "candidate_modes": int(args.candidate_modes),
+                "external_modes_per_endcap": int(R4_MODAL_COUNT),
+                "interfaces_nm": [
+                    float(args.bottom_interface_nm),
+                    float(args.top_interface_nm),
+                ],
+                "grazing_deg": float(args.incident_grazing_deg),
+                "polarization": args.polarization_kind,
+                "propagation_model": args.internal_propagation_model,
+                "traction_model": args.internal_traction_model,
+                "assembly_backend": args.stage4_full3d_assembly_backend,
+                "mpi_size": int(comm.size),
+            },
+            "solver": {
+                "solver_path": "block-ldu-action-full-solve",
+                "outer_solver": "right_fgmres",
+                "restart": 90,
+                "rtol": 1.0e-6,
+                "atol": 0.0,
+                "max_it": 700,
+                "zero_initial": True,
+                "normal_equations": False,
+                "local_inverse_solve_called": False,
+                "nested_ksp_created": False,
+                "direct_fallback": False,
+            },
+            "source": dict(provenance),
+            "authority": dict(authority_gate or {}),
+            "validation": dict(validation),
+            "v4_telemetry": {
+                "stage_markers": list(stage_markers),
+                "official_outputs": dict(validation),
+                "authority_payload_gap": "not_checked_in_candidate",
+            },
+            "qualification": {
+                "integration_pass": False,
+                "numerical_pass": False,
+                "recovery_pass": False,
+                "disposition": "DOUBLE_APPROXIMATE_IMPLEMENTATION_GATE_FAILED",
+            },
+            "timing_seconds_max_rank": {},
+        }
+
+    try:
+        layout = HybridAugmentedLayout.build(
+            bottom,
+            top,
+            coupling.internal_unknown_count,
+        )
+        action_matrix, action_context = create_hybrid_assembled_block_action(
+            bottom,
+            top,
+            coupling,
+        )
+        outer_rhs = layout.pack(
+            bottom.b,
+            top.b,
+            internal_modal_rhs_correction(coupling),
+        )
+        global_inventory = dict(action_context.inventory)
+        global_direct = global_inventory.get("p6_direct_factor_count")
+        global_contract = bool(
+            global_direct is not None
+            and int(global_direct) == 0
+            and global_inventory.get("global_A_materialized") is False
+            and global_inventory.get("matrix_free") is True
+            and global_inventory.get("bottom_global_F_materialized") is False
+            and global_inventory.get("top_global_F_materialized") is False
+            and global_inventory.get("explicit_external_c_matrix_count") == 0
+            and global_inventory.get("explicit_external_d_matrix_count") == 0
+        )
+        side_object_ledger = {}
+        for side in ("bottom", "top"):
+            system = systems[side]
+            side_object_ledger[side] = {
+                "action_system_inventory": dict(system.inventory),
+                "base_matrix_stats": dict(system.base_matrix_stats),
+                "augmented_matrix_stats": dict(system.augmented_matrix_stats),
+                "coupling_stats": dict(system.coupling_stats),
+                "static_condensation": system.static_condensation.metadata.to_dict(),
+            }
+            global_contract = bool(
+                global_contract
+                and system.inventory.get("fine_global_A_materialized") is False
+                and system.inventory.get("explicit_external_c_matrix_count") == 0
+                and system.inventory.get("explicit_external_d_matrix_count") == 0
+            )
+        record = base_record()
+        record["hybrid_system"] = {
+            "global_operator_inventory": global_inventory,
+            "global_direct_factor_count": (
+                None if global_direct is None else int(global_direct)
+            ),
+            "global_A_materialized": global_inventory.get("global_A_materialized"),
+            "global_operator_contract": global_contract,
+            "object_ledger": side_object_ledger,
+        }
+        if not global_contract:
+            raise RuntimeError("V4 matrix-free/global-A contract failed.")
+
+        for side in ("bottom", "top"):
+            record_stage(f"{side}_approx_setup_started")
+            components = create_hybrid_local_dtn_action_components(systems[side])
+            side_components[side] = components
+            fixed = build_hybrid_whole_endcap_fixed_smoother_action(systems[side])
+            side_fixed[side] = fixed
+            woodbury = HybridLocalDtnWoodburyFixedAction(fixed, components)
+            side_woodbury[side] = woodbury
+            side_records[side]["setup"] = {
+                "operator_identity": woodbury.operator_identity,
+                "base_identity": woodbury.diagnostics["base_identity"],
+            }
+            record_stage(f"{side}_approx_setup_ready")
+
+        certificates: dict[str, dict[str, Any]] = {}
+        callback_pass = True
+        for side in ("bottom", "top"):
+            certificate = _v2_fixed_callback_certificate(side_woodbury[side])
+            certificates[side] = certificate
+            woodbury = certificate["woodbury"]
+            side_pass = bool(
+                certificate["wrapper_vs_internal_woodbury_error"] <= 1.0e-12
+                and certificate["linearity_error"] <= 1.0e-12
+                and certificate["determinism_error"] <= 1.0e-14
+                and certificate["repeat_hash_equal"]
+                and woodbury.get("K_rank") == R4_MODAL_COUNT
+                and np.isfinite(float(woodbury.get("K_condition_number")))
+                and float(woodbury["K_condition_number"]) <= 1.0e6
+                and woodbury.get("arrays_finite") is True
+                and certificate["base_factor_count"] == 1
+                and certificate["local_direct_factor_count"] == 0
+                and certificate["nested_ksp_created"] is False
+                and certificate["apply_count_increment"] == 7
+            )
+            side_records[side]["callback_certificate"] = certificate
+            side_records[side]["callback_contract_pass"] = side_pass
+            callback_pass = bool(callback_pass and side_pass)
+        if not callback_pass:
+            raise RuntimeError("V4 fixed callback certificate failed.")
+
+        factor_identity = {}
+        factor_identity_pass = True
+        for side in ("bottom", "top"):
+            diagnostics = dict(side_woodbury[side].diagnostics)
+            direct = int(diagnostics.get("local_direct_factor_count", 0))
+            ilu = int(diagnostics.get("base_factor_count", 0))
+            item = {
+                "direct_factor_count": direct,
+                "ilu_factor_count": ilu,
+                "borrowed_local_factor_count": direct + ilu,
+                "expected_direct_factor_count": 0,
+                "expected_ilu_factor_count": 1,
+                "pass": bool(direct == 0 and ilu == 1),
+            }
+            factor_identity[side] = item
+            side_records[side]["factor_identity"] = item
+            factor_identity_pass = bool(factor_identity_pass and item["pass"])
+        if not factor_identity_pass:
+            raise RuntimeError("V4 side factor identity failed.")
+
+        record_stage("modal_schur_build_started")
+        preconditioner = create_action_block_ldu_preconditioner(
+            layout,
+            bottom,
+            top,
+            coupling,
+            side_woodbury["bottom"],
+            side_woodbury["top"],
+        )
+        pc_setup_inventory = dict(preconditioner.inventory)
+        modal_diagnostics = dict(pc_setup_inventory.get("modal_schur", {}))
+        pc_inventory_pass = bool(
+            pc_setup_inventory.get("global_A_materialized") is False
+            and pc_setup_inventory.get("borrowed_local_factor_count") == 2
+            and pc_setup_inventory.get("pc_owned_local_factor_count") == 0
+            and pc_setup_inventory.get("bottom_direct_factor_count") == 0
+            and pc_setup_inventory.get("top_direct_factor_count") == 0
+            and pc_setup_inventory.get("bottom_ilu_factor_count") == 1
+            and pc_setup_inventory.get("top_ilu_factor_count") == 1
+            and modal_diagnostics.get("shape") == [240, 240]
+            and modal_diagnostics.get("dtype") == "complex128"
+            and modal_diagnostics.get("rank") == 240
+            and modal_diagnostics.get("finite") is True
+            and np.isfinite(float(modal_diagnostics.get("condition")))
+            and float(modal_diagnostics["condition"]) <= 1.0e8
+            and modal_diagnostics.get("normal_equations") is False
+            and float(modal_diagnostics.get("matrix_repeat_error")) <= 1.0e-12
+            and float(modal_diagnostics.get("lu_repeat_solve_error")) <= 1.0e-12
+            and all(
+                int(value) == 480
+                for value in modal_diagnostics.get("build_apply_count", {}).values()
+            )
+        )
+        if not pc_inventory_pass:
+            raise RuntimeError("V4 PC/modal Schur setup inventory failed.")
+        record_stage("modal_schur_build_ready")
+        online_before = {
+            side: int(side_woodbury[side].diagnostics["apply_count"])
+            for side in ("bottom", "top")
+        }
+        setup_elapsed = _max_elapsed(comm, started)
+        timings["v4_setup"] = setup_elapsed
+
+        def checkpoint_callback(row: dict[str, Any]) -> None:
+            iteration = int(row["iteration"])
+            if iteration in {
+                0,
+                1,
+                2,
+                5,
+                10,
+                20,
+                40,
+                60,
+                80,
+                90,
+                100,
+                120,
+                150,
+                180,
+                200,
+                270,
+                360,
+                450,
+                540,
+                630,
+                700,
+            }:
+                record_stage(f"outer_iter_{iteration}")
+
+        outer_started = time.perf_counter()
+        full_result = solve_action_block_ldu_full(
+            action_matrix,
+            outer_rhs,
+            preconditioner,
+            max_it=700,
+            checkpoint_callback=checkpoint_callback,
+        )
+        timings["v4_outer_solve"] = _max_elapsed(comm, outer_started)
+        solve_reason = int(full_result.converged_reason)
+        solve_iterations = int(full_result.iterations)
+        solve_reported = float(full_result.final_reported_relative_residual)
+        solve_true = float(full_result.final_true_relative_residual)
+        solve_blocks = dict(full_result.block_relative_residuals)
+        solve_release = dict(full_result.release)
+        solve_pc_seconds = float(full_result.pc_apply_seconds)
+        online_after = {
+            side: int(side_woodbury[side].diagnostics["apply_count"])
+            for side in ("bottom", "top")
+        }
+        pc_count = int(full_result.inventory.get("pc_apply_count", 0))
+        online = {}
+        for side in ("bottom", "top"):
+            increment = online_after[side] - online_before[side]
+            online[side] = {
+                "before": online_before[side],
+                "after": online_after[side],
+                "increment": increment,
+                "expected_increment": 2 * pc_count,
+                "pass": increment == 2 * pc_count,
+            }
+            side_records[side]["online_apply"] = online[side]
+            side_records[side]["action_diagnostics_before_release"] = dict(
+                side_woodbury[side].diagnostics
+            )
+            side_records[side]["borrowed_action_survives_after_solve"] = bool(
+                not side_woodbury[side].diagnostics.get("destroyed", False)
+            )
+        history = [dict(row) for row in full_result.history]
+        residual_keys = (
+            "global_true_relative_residual",
+            "bottom_true_relative_residual",
+            "top_true_relative_residual",
+            "modal_true_relative_residual",
+            "reported_relative_residual",
+        )
+        finite = bool(
+            history
+            and all(
+                np.isfinite(float(row[key])) and float(row[key]) >= 0.0
+                for row in history
+                for key in residual_keys
+            )
+        )
+        numerical_pass = bool(
+            solve_reason > 0
+            and finite
+            and solve_iterations <= 700
+            and solve_reported <= 1.0e-6
+            and solve_true <= 1.0e-6
+            and all(value <= 1.0e-6 for value in solve_blocks.values())
+            and all(item["pass"] for item in online.values())
+        )
+        last90 = history[-90:] if history else []
+        last90_decrease = bool(
+            len(last90) >= 2
+            and float(last90[-1]["global_true_relative_residual"])
+            < float(last90[0]["global_true_relative_residual"])
+        )
+        last90_values = np.asarray(
+            [float(row["global_true_relative_residual"]) for row in last90],
+            dtype=np.float64,
+        )
+        last90_roundoff = (
+            1024.0
+            * np.finfo(np.float64).eps
+            * max(float(np.max(np.abs(last90_values), initial=0.0)), 1.0e-30)
+        )
+        last90_no_rebound = bool(
+            len(last90_values) >= 2
+            and np.all(np.diff(last90_values) <= last90_roundoff)
+        )
+        slow_contraction = bool(
+            not numerical_pass
+            and solve_reason == -3
+            and solve_iterations == 700
+            and finite
+            and last90_decrease
+            and last90_no_rebound
+        )
+        v4_restart_local_rows = int(action_matrix.getLocalSize()[0])
+        v4_restart_global_rows = int(action_matrix.getSize()[0])
+        v4_restart_rows_by_rank = [
+            int(value) for value in comm.allgather(v4_restart_local_rows)
+        ]
+        v4_restart_bytes_by_rank = [
+            int((2 * 90 + 1) * rows * np.dtype(np.complex128).itemsize)
+            for rows in v4_restart_rows_by_rank
+        ]
+        record["v4_telemetry"] = {
+            "stage_markers": list(stage_markers),
+            "history": history,
+            "checkpoints": [dict(row) for row in full_result.checkpoints],
+            "screen": {
+                "converged_reason": solve_reason,
+                "iterations": solve_iterations,
+                "final_reported_relative_residual": solve_reported,
+                "final_true_relative_residual": solve_true,
+                "block_relative_residuals": solve_blocks,
+                "finite": finite,
+                "last90_net_decrease": last90_decrease,
+                "last90_no_rebound": last90_no_rebound,
+                "last90_roundoff_tolerance": last90_roundoff,
+            },
+            "fixed_callback": {
+                "bottom": certificates["bottom"],
+                "top": certificates["top"],
+            },
+            "pc_setup_inventory": pc_setup_inventory,
+            "factor_identity": factor_identity,
+            "online_apply": online,
+            "modal_schur": modal_diagnostics,
+            "pc_apply_count": pc_count,
+            "pc_apply_seconds": solve_pc_seconds,
+            "full_solve_release": solve_release,
+            "restart_basis_bytes": {
+                "derived_estimate": True,
+                "formula": "(2*restart+1)*rows*complex128_bytes",
+                "restart": 90,
+                "local_rows": v4_restart_local_rows,
+                "global_rows": v4_restart_global_rows,
+                "local_bytes": int(
+                    (2 * 90 + 1)
+                    * v4_restart_local_rows
+                    * np.dtype(np.complex128).itemsize
+                ),
+                "global_bytes": int(
+                    (2 * 90 + 1)
+                    * v4_restart_global_rows
+                    * np.dtype(np.complex128).itemsize
+                ),
+                "rows_by_rank": v4_restart_rows_by_rank,
+                "bytes_by_rank": v4_restart_bytes_by_rank,
+                "sum_rows": int(sum(v4_restart_rows_by_rank)),
+                "max_rows": int(max(v4_restart_rows_by_rank)),
+                "sum_bytes": int(sum(v4_restart_bytes_by_rank)),
+                "max_bytes": int(max(v4_restart_bytes_by_rank)),
+            },
+            "ordinary_default_changed": False,
+            "official_outputs": dict(validation),
+            "authority_payload_gap": "independent comparator requires numerical H1 arrays; not loaded",
+        }
+        record["side_records"] = side_records
+
+        if numerical_pass:
+            candidate_bottom, candidate_top, candidate_modal = layout.split(
+                full_result.solution,
+                bottom.b,
+                top.b,
+            )
+        full_result.destroy()
+        full_result = None
+        release_action_stack()
+        record["v4_telemetry"]["release"] = {
+            "sides": dict(release_ledger),
+            "outer": dict(outer_release),
+            "core_solve": solve_release,
+        }
+        side_release_pass = bool(
+            all(
+                release_ledger.get(side, {}).get("release_pass") is True
+                for side in ("bottom", "top")
+            )
+        )
+        outer_release_pass = bool(outer_release.get("destroy_calls_complete") is True)
+        core_release_pass = bool(
+            solve_release.get("ksp_destroyed") is True
+            and solve_release.get("pc_context_destroyed") is True
+            and solve_release.get("action_modal_schur_retained_after_pc_destroyed")
+            is True
+            and outer_release.get("action_modal_schur_retained_after_pc_destroyed")
+            is True
+            and outer_release.get("action_modal_schur_released") is True
+            and solve_release.get("borrowed_side_actions_retained") is True
+        )
+        lifecycle_pass = bool(
+            side_release_pass and outer_release_pass and core_release_pass
+        )
+        record["v4_telemetry"]["release_pass"] = lifecycle_pass
+        record["qualification"]["integration_pass"] = bool(
+            global_contract
+            and callback_pass
+            and factor_identity_pass
+            and pc_inventory_pass
+            and all(item["pass"] for item in online.values())
+            and lifecycle_pass
+        )
+        if not record["qualification"]["integration_pass"]:
+            raise RuntimeError(
+                "V4 full-solve implementation/lifecycle contract failed."
+            )
+        if numerical_pass:
+            record["v4_telemetry"]["recovery_phase"] = "external_auxiliary"
+            record_stage("candidate_field_recovery")
+            bottom_auxiliary_vec = recover_petsc_auxiliary(
+                bottom.blocks,
+                candidate_bottom,
+            )
+            top_auxiliary_vec = recover_petsc_auxiliary(top.blocks, candidate_top)
+            bottom_auxiliary = _h3_replicated_vec_values(bottom_auxiliary_vec)
+            top_auxiliary = _h3_replicated_vec_values(top_auxiliary_vec)
+            external_gates: dict[str, Any] = {}
+            for side, active_solution, amplitudes in (
+                ("bottom", candidate_bottom, bottom_auxiliary),
+                ("top", candidate_top, top_auxiliary),
+            ):
+                system = systems[side]
+                external_gates[side] = {
+                    "external_q_identity": external_q_identity(
+                        system, active_solution, amplitudes
+                    ),
+                    "mode_identity": mode_identity(system),
+                }
+            external_recovery_pass = bool(
+                all(
+                    item["external_q_identity"].get("pass") is True
+                    and item["mode_identity"].get("pass") is True
+                    for item in external_gates.values()
+                )
+            )
+            record["v4_telemetry"]["external_recovery_gates"] = external_gates
+            record["v4_telemetry"]["recovery_phase"] = "full_fe"
+            bottom_recovered = recover_hybrid_static_local_field(
+                bottom,
+                coupling,
+                candidate_bottom,
+                candidate_modal,
+                auxiliary_override=bottom_auxiliary,
+            )
+            top_recovered = recover_hybrid_static_local_field(
+                top,
+                coupling,
+                candidate_top,
+                candidate_modal,
+                auxiliary_override=top_auxiliary,
+            )
+            physical_solution = HybridBlockLduPhysicalSolution(
+                bottom=candidate_bottom,
+                top=candidate_top,
+                modal_amplitudes=np.asarray(candidate_modal, dtype=np.complex128),
+                bottom_auxiliary=bottom_auxiliary,
+                top_auxiliary=top_auxiliary,
+                bottom_recovered=bottom_recovered,
+                top_recovered=top_recovered,
+                factor_solver="fixed_dtn_woodbury_action",
+                converged_reason=solve_reason,
+                reported_relative_residual=solve_reported,
+                relative_residual=solve_true,
+                block_relative_residuals=solve_blocks,
+                iterations=solve_iterations,
+            )
+            candidate_bottom = None
+            candidate_top = None
+            recovery_gates: dict[str, Any] = {}
+            for side, recovered, active_solution, amplitudes in (
+                (
+                    "bottom",
+                    physical_solution.bottom_recovered,
+                    physical_solution.bottom,
+                    bottom_auxiliary,
+                ),
+                (
+                    "top",
+                    physical_solution.top_recovered,
+                    physical_solution.top,
+                    top_auxiliary,
+                ),
+            ):
+                system = systems[side]
+                q_gate = external_gates[side]["external_q_identity"]
+                mode_gate = external_gates[side]["mode_identity"]
+                full_residual = dict(recovered.full_operator_residual)
+                recovery_audit = dict(recovered.recovery_audit)
+                streaming_audit = dict(recovered.streaming_audit)
+                trace_audit = dict(
+                    system.static_condensation.condensed.trace_constraints.build_audit
+                )
+                rhs_norm = max(
+                    float(full_residual.get("linear_system_rhs_norm", 0.0)),
+                    1.0e-30,
+                )
+                full_relative = float(
+                    full_residual.get("linear_system_relative_residual", np.inf)
+                )
+                interior_relative = (
+                    float(
+                        full_residual.get(
+                            "eliminated_cell_interior_residual_norm", np.inf
+                        )
+                    )
+                    / rhs_norm
+                )
+                interior_max = float(
+                    full_residual.get(
+                        "eliminated_cell_interior_max_abs_residual", np.inf
+                    )
+                )
+                trace_full_rows = int(trace_audit.get("full_trace_rows", -1))
+                trace_active_rows = int(trace_audit.get("active_rows", -1))
+                trace_slave_rows = int(trace_audit.get("slave_rows", -1))
+                trace_contract_pass = bool(
+                    trace_audit.get("status") == "exact_mpc_trace_expansion_built"
+                    and trace_audit.get(
+                        "constraint_applied_before_global_matrix_insertion"
+                    )
+                    is True
+                    and trace_audit.get("embedded_identity_slave_rows_allocated")
+                    is False
+                )
+                trace_rows_pass = bool(
+                    trace_contract_pass
+                    and trace_full_rows >= 0
+                    and trace_active_rows >= 0
+                    and trace_slave_rows >= 0
+                    and trace_full_rows == trace_active_rows + trace_slave_rows
+                    and trace_active_rows
+                    == int(system.static_condensation.condensed.active_rows)
+                    and trace_full_rows
+                    == int(system.static_condensation.condensed.trace_rows)
+                )
+                full_finite = bool(
+                    np.isfinite(full_relative)
+                    and full_relative >= 0.0
+                    and np.isfinite(interior_relative)
+                    and interior_relative >= 0.0
+                    and np.isfinite(interior_max)
+                    and interior_max >= 0.0
+                )
+                recovery_audit_pass = bool(
+                    recovery_audit.get("status")
+                    == "full_field_recovered_without_full_global_matrix"
+                    and recovery_audit.get("full_global_matrix_allocated") is False
+                    and recovery_audit.get("full_trace_matrix_allocated") is False
+                    and int(recovery_audit.get("recovered_interior_rows", -1))
+                    == int(system.static_condensation.condensed.interior_rows)
+                )
+                streaming_pass = bool(
+                    streaming_audit.get("full_surface_mode_matrix_retained") is False
+                    and streaming_audit.get("full_global_matrix_allocated") is False
+                    and streaming_audit.get("full_effective_rhs_reassembled_once")
+                    is True
+                )
+                full_fe_pass = bool(
+                    _v4_full_fe_threshold_pass(
+                        full_relative,
+                        interior_relative,
+                        interior_max,
+                    )
+                    and trace_rows_pass
+                    and recovery_audit_pass
+                    and streaming_pass
+                )
+                recovery_gates[side] = {
+                    "external_q_identity": q_gate,
+                    "mode_identity": mode_gate,
+                    "full_operator_residual": full_residual,
+                    "interior_relative_residual": interior_relative,
+                    "interior_max_abs_residual": interior_max,
+                    "trace_constraint_audit": trace_audit,
+                    "trace_contract_pass": trace_contract_pass,
+                    "trace_rows_pass": trace_rows_pass,
+                    "full_finite": full_finite,
+                    "recovery_audit": recovery_audit,
+                    "streaming_audit": streaming_audit,
+                    "recovery_audit_pass": recovery_audit_pass,
+                    "streaming_pass": streaming_pass,
+                    "full_fe_pass": full_fe_pass,
+                    "pass": bool(q_gate["pass"] and mode_gate["pass"] and full_fe_pass),
+                }
+            external_recovery_pass = bool(
+                all(
+                    item.get("external_q_identity", {}).get("pass") is True
+                    and item.get("mode_identity", {}).get("pass") is True
+                    for item in recovery_gates.values()
+                )
+            )
+            full_fe_recovery_pass = bool(
+                all(
+                    item.get("full_fe_pass") is True for item in recovery_gates.values()
+                )
+            )
+            recovery_pass = bool(external_recovery_pass and full_fe_recovery_pass)
+            record["v4_telemetry"]["recovery_gates"] = recovery_gates
+            if external_recovery_pass and full_fe_recovery_pass:
+                record["v4_telemetry"]["recovery_phase"] = "own_physics"
+                validation_raw = evaluate_hybrid_augmented_solution(
+                    cfg,
+                    bottom,
+                    top,
+                    coupling,
+                    physical_solution,
+                    auxiliary_override=(bottom_auxiliary, top_auxiliary),
+                )
+                sample_x = (
+                    cfg.x_min
+                    + (np.arange(40, dtype=np.float64) + 0.5) * cfg.period_x / 40.0
+                )
+                sample_y = (
+                    cfg.y_min
+                    + (np.arange(20, dtype=np.float64) + 0.5) * cfg.period_y / 20.0
+                )
+                sample_z = np.asarray(
+                    (10.0, 30.0, 60.0, 90.0, 110.0),
+                    dtype=np.float64,
+                )
+                if tuple(sample_z.tolist()) != (10.0, 30.0, 60.0, 90.0, 110.0):
+                    raise RuntimeError("V4 candidate planes are not frozen H1 planes.")
+                reconstructor = ModalFieldReconstructor(
+                    cfg,
+                    cross_section,
+                    coupling.spaces,
+                    positive,
+                    negative,
+                    bottom_z_nm=args.bottom_interface_nm,
+                    top_z_nm=args.top_interface_nm,
+                    propagation=coupling.propagation,
+                    positive_traction_beta_per_nm=(
+                        coupling.positive_traction_beta_per_nm
+                    ),
+                    negative_traction_beta_per_nm=(
+                        coupling.negative_traction_beta_per_nm
+                    ),
+                )
+                selected_planes = reconstructor.selected_planes(
+                    physical_solution.modal_amplitudes,
+                    sample_x,
+                    sample_y,
+                    sample_z,
+                )
+                expected_grid_shape = (5, 20, 40, 3)
+                if (
+                    selected_planes.electric_V_per_m.shape != expected_grid_shape
+                    or selected_planes.magnetic_A_per_m.shape != expected_grid_shape
+                ):
+                    raise RuntimeError(
+                        "V4 own-grid E/H payload does not match 5x20x40x3."
+                    )
+                interface_samples = reconstructor.selected_planes(
+                    physical_solution.modal_amplitudes,
+                    sample_x,
+                    sample_y,
+                    np.asarray((10.0, 110.0), dtype=np.float64),
+                )
+                interface_continuity = interface_field_continuity(
+                    cfg,
+                    bottom,
+                    top,
+                    physical_solution.bottom_physical,
+                    physical_solution.top_physical,
+                    interface_samples,
+                )
+                absorption = hybrid_volume_absorption(
+                    cfg,
+                    bottom,
+                    top,
+                    physical_solution.bottom_physical,
+                    physical_solution.top_physical,
+                    reconstructor,
+                    physical_solution.modal_amplitudes,
+                    incident_power=float(
+                        validation_raw["port_power"]["incident_power_code_units"]
+                    ),
+                )
+                port_power = validation_raw["port_power"]
+                r_value = float(port_power.get("R_total", np.nan))
+                t_value = float(port_power.get("T_total", np.nan))
+                a_value = float(port_power.get("A_balance", np.nan))
+                a_volume = float(absorption.get("A_volume_total", np.nan))
+                closure_error = float(r_value + t_value + a_volume - 1.0)
+                balance_error = float(a_value - a_volume)
+                traction = validation_raw["fe_modal_traction_equilibrium"]
+                for side in ("bottom", "top"):
+                    interface_continuity[side]["traction_hcurl_dual"] = traction[
+                        f"{side}_dual"
+                    ]
+                traction_pass, traction_gate_role = _exact_traction_gate(
+                    {},
+                    [
+                        traction["bottom_dual"].get("relative_dual"),
+                        traction["top_dual"].get("relative_dual"),
+                    ],
+                    1.0e-8,
+                )
+                interface_e_pass = bool(
+                    all(
+                        np.isfinite(
+                            float(
+                                interface_continuity[side]["electric_tangential"][
+                                    "relative_l2"
+                                ]
+                            )
+                        )
+                        and float(
+                            interface_continuity[side]["electric_tangential"][
+                                "relative_l2"
+                            ]
+                        )
+                        <= 5.0e-3
+                        for side in ("bottom", "top")
+                    )
+                )
+                sample_finite = bool(
+                    np.all(np.isfinite(selected_planes.electric_V_per_m))
+                    and np.all(np.isfinite(selected_planes.magnetic_A_per_m))
+                )
+                orders = validation_raw["external_diffraction_orders"]
+                order_keys: list[tuple[Any, ...]] = []
+                order_rows_finite = True
+                for row in orders:
+                    row_ok = bool(
+                        isinstance(row, dict)
+                        and row.get("side") in {"bottom", "top"}
+                        and isinstance(row.get("m"), int)
+                        and not isinstance(row.get("m"), bool)
+                        and isinstance(row.get("n"), int)
+                        and not isinstance(row.get("n"), bool)
+                        and row.get("polarization") in {"s", "p"}
+                        and all(
+                            np.isfinite(complex(row[key]).real)
+                            and np.isfinite(complex(row[key]).imag)
+                            for key in (
+                                "total_projection",
+                                "incident_projection",
+                                "outgoing_amplitude",
+                                "outgoing_amplitude_at_boundary",
+                                "power_ratio",
+                                "R",
+                                "T",
+                            )
+                        )
+                    )
+                    order_rows_finite = bool(order_rows_finite and row_ok)
+                    if row_ok:
+                        order_keys.append(
+                            (
+                                row["side"],
+                                row["m"],
+                                row["n"],
+                                row["polarization"],
+                            )
+                        )
+                orders_finite = bool(
+                    len(orders) == 80
+                    and order_rows_finite
+                    and len(order_keys) == len(set(order_keys))
+                )
+                energy_pass = bool(
+                    np.isfinite(r_value)
+                    and np.isfinite(t_value)
+                    and np.isfinite(a_value)
+                    and np.isfinite(a_volume)
+                    and np.isfinite(closure_error)
+                    and np.isfinite(balance_error)
+                    and abs(closure_error) <= 1.0e-5
+                )
+                own_physics_pass = bool(
+                    interface_e_pass
+                    and traction_pass
+                    and sample_finite
+                    and orders_finite
+                    and energy_pass
+                )
+                record["v4_telemetry"]["recovery_phase"] = "canonical"
+                run_dir = Path(args.output).parent
+                own_grid_path = run_dir / "v4_own_grid_EH_modal_q.npz"
+                own_grid_meta = None
+                if comm.rank == 0:
+                    run_dir.mkdir(parents=True, exist_ok=True)
+                    modal_values = np.asarray(
+                        physical_solution.modal_amplitudes, dtype=np.complex128
+                    )
+                    bottom_q = np.asarray(bottom_auxiliary, dtype=np.complex128)
+                    top_q = np.asarray(top_auxiliary, dtype=np.complex128)
+                    if (
+                        modal_values.shape != (240,)
+                        or bottom_q.shape != (40,)
+                        or top_q.shape != (40,)
+                    ):
+                        raise RuntimeError(
+                            "V4 own-grid auxiliary/modal payload shapes are not 240/40/40."
+                        )
+                    np.savez_compressed(
+                        own_grid_path,
+                        x_nm=sample_x,
+                        y_nm=sample_y,
+                        z_nm=sample_z,
+                        E_V_per_m=np.asarray(
+                            selected_planes.electric_V_per_m, dtype=np.complex128
+                        ),
+                        H_A_per_m=np.asarray(
+                            selected_planes.magnetic_A_per_m, dtype=np.complex128
+                        ),
+                        modal_amplitudes=modal_values,
+                        bottom_q=bottom_q,
+                        top_q=top_q,
+                    )
+                    try:
+                        own_grid_label = str(own_grid_path.resolve().relative_to(ROOT))
+                    except ValueError:
+                        own_grid_label = str(own_grid_path)
+                    own_grid_meta = {
+                        "path": own_grid_label,
+                        "sha256": _sha256(own_grid_path),
+                        "bytes": int(own_grid_path.stat().st_size),
+                        "schema": "task037b.v4-own-grid-EH-modal-q.v1",
+                        "rank0_only": True,
+                        "arrays": {
+                            "E_V_per_m": array_descriptor(
+                                selected_planes.electric_V_per_m
+                            ),
+                            "H_A_per_m": array_descriptor(
+                                selected_planes.magnetic_A_per_m
+                            ),
+                            "modal_amplitudes": array_descriptor(modal_values),
+                            "bottom_q": array_descriptor(bottom_q),
+                            "top_q": array_descriptor(top_q),
+                        },
+                    }
+                own_grid_meta = comm.bcast(own_grid_meta, root=0)
+                canonical_exports = (
+                    write_canonical_exports() if own_physics_pass else {}
+                )
+                canonical_pass = bool(
+                    own_physics_pass
+                    and all(
+                        canonical_exports.get(side, {})
+                        .get("roles", {})
+                        .get(role, {})
+                        .get("pass")
+                        is True
+                        for side in ("bottom", "top")
+                        for role in ("active_trace", "full_fe")
+                    )
+                )
+                direct_comparator = {
+                    "status": "not_run_authority_payload_gap",
+                    "pass": False,
+                    "modal_relative_l2": "not_run",
+                    "bottom_canonical_relative_l2": "not_run",
+                    "top_canonical_relative_l2": "not_run",
+                }
+                physics_pass = bool(own_physics_pass and canonical_pass)
+                record["v4_telemetry"]["own_grid"] = own_grid_meta
+                record["v4_telemetry"]["recovery_phase"] = "own_physics_and_canonical"
+                record["v4_telemetry"]["physics_gates"] = {
+                    "interface_e": {
+                        "pass": interface_e_pass,
+                        "reports": interface_continuity,
+                    },
+                    "exact_traction_dual": {
+                        "pass": traction_pass,
+                        "gate_role": traction_gate_role,
+                        "reports": traction,
+                    },
+                    "middle_interface_samples_finite": sample_finite,
+                    "external_orders_finite": orders_finite,
+                    "external_order_reports": orders,
+                    "energy": {
+                        "closure_error": closure_error,
+                        "A_balance_minus_A_volume": balance_error,
+                        "pass": energy_pass,
+                    },
+                    "own_physics_pass": own_physics_pass,
+                    "direct_hybrid_comparison": direct_comparator,
+                    "pass": physics_pass,
+                }
+                if own_physics_pass and canonical_pass:
+                    validation = {
+                        "official_record": "candidate_measured_not_official",
+                        "status": "measured_candidate_only",
+                        "port_power": port_power,
+                        "fe_modal_traction_equilibrium": traction,
+                        "field_recovery": "measured_candidate_own_grid",
+                        "field": {
+                            "status": "measured_candidate_own_grid",
+                            "own_grid": own_grid_meta,
+                        },
+                        "candidate_sample_grid": {
+                            "shape": [5, 20, 40, 3],
+                            "x_count": 40,
+                            "y_count": 20,
+                            "z_nm": sample_z.tolist(),
+                            "own_grid": own_grid_meta,
+                        },
+                        "A_volume": absorption,
+                        "canonical_export": {
+                            "status": "measured_manifest_backed",
+                            "grid_shape": [5, 20, 40, 3],
+                            "sample_x_nm": sample_x.tolist(),
+                            "sample_y_nm": sample_y.tolist(),
+                            "sample_z_nm": sample_z.tolist(),
+                            "electric": array_descriptor(
+                                selected_planes.electric_V_per_m
+                            ),
+                            "magnetic": array_descriptor(
+                                selected_planes.magnetic_A_per_m
+                            ),
+                            "own_grid": own_grid_meta,
+                            "manifests": canonical_exports,
+                            "pass": canonical_pass,
+                        },
+                        "R": r_value,
+                        "T": t_value,
+                        "A": a_value,
+                        "orders": orders,
+                        "external_diffraction_orders": orders,
+                        "energy_closure": {
+                            "R_plus_T_plus_A_volume": float(
+                                r_value + t_value + a_volume
+                            ),
+                            "closure_error": closure_error,
+                            "A_balance_minus_A_volume": balance_error,
+                            "pass": energy_pass,
+                        },
+                        "external_auxiliary_recovery": recovery_gates,
+                        "direct_hybrid_comparison": direct_comparator,
+                        "12_plus_12": "not_run",
+                        "Full3D": "not_run",
+                        "full3d_comparison": "not_run",
+                    }
+                else:
+                    validation = _v4_not_run_validation_boundary()
+            else:
+                recovery_phase = (
+                    "external_auxiliary" if not external_recovery_pass else "full_fe"
+                )
+                record["v4_telemetry"]["recovery_phase"] = recovery_phase
+                record["v4_telemetry"]["physics_gates"] = {
+                    "external_recovery_pass": external_recovery_pass,
+                    "full_fe_recovery_pass": full_fe_recovery_pass,
+                    "pass": False,
+                }
+                validation = _v4_not_run_validation_boundary()
+                recovery_pass = False
+                own_physics_pass = False
+                physics_pass = False
+        else:
+            validation = _v4_not_run_validation_boundary()
+            recovery_pass = False
+            own_physics_pass = False
+            physics_pass = False
+            record["v4_telemetry"]["recovery_phase"] = "numerical"
+            record["v4_telemetry"]["physics_gates"] = {"pass": False}
+        record["v4_telemetry"]["recovery_gates"] = recovery_gates
+        record["v4_telemetry"]["canonical_export"] = (
+            canonical_exports if numerical_pass else {}
+        )
+        complete_qualification_pass = bool(
+            numerical_pass
+            and recovery_pass
+            and physics_pass
+            and direct_comparator.get("pass", False)
+        )
+        record["validation"] = validation
+        record["v4_telemetry"]["official_outputs"] = dict(validation)
+        if numerical_pass and not external_recovery_pass:
+            disposition = "FULL_LINEAR_SOLVE_PASS_EXTERNAL_RECOVERY_FAIL"
+        elif numerical_pass and not full_fe_recovery_pass:
+            disposition = "FULL_LINEAR_SOLVE_PASS_FULL_FE_RECOVERY_FAIL"
+        elif numerical_pass and not own_physics_pass:
+            disposition = "FULL_LINEAR_SOLVE_PASS_OWN_PHYSICS_GATE_FAIL"
+        elif numerical_pass and not canonical_pass:
+            disposition = "FULL_LINEAR_SOLVE_PASS_CANONICAL_GATE_FAIL"
+        elif numerical_pass and not direct_comparator.get("pass", False):
+            disposition = (
+                "FULL_LINEAR_SOLVE_PASS_AWAITING_REVIEW_NOT_RUN_AUTHORITY_PAYLOAD_GAP"
+            )
+        elif numerical_pass and physics_pass:
+            disposition = "DOUBLE_APPROXIMATE_MPI8_FULL_NUMERICAL_AND_PHYSICS_PASS"
+        elif numerical_pass:
+            disposition = "FULL_LINEAR_SOLVE_PASS_PHYSICS_GATE_FAIL"
+        elif slow_contraction:
+            disposition = "DOUBLE_APPROXIMATE_FULL_SLOW_CONTRACTION_AWAITING_REVIEW"
+        else:
+            disposition = "FIXED_ILU0_WOODBURY_BLOCK_PC_FULL_NEGATIVE"
+        record["qualification"].update(
+            {
+                "numerical_pass": numerical_pass,
+                "recovery_pass": recovery_pass,
+                "own_physics_pass": own_physics_pass,
+                "canonical_pass": canonical_pass,
+                "complete_qualification_pass": complete_qualification_pass,
+                "physics_pass": physics_pass,
+                "recovery_phase": record["v4_telemetry"].get(
+                    "recovery_phase", "not_run"
+                ),
+                "disposition": disposition,
+            }
+        )
+        if numerical_pass and complete_qualification_pass:
+            record["status"] = "task037b_v4_full_solve_pass"
+        elif numerical_pass and not external_recovery_pass:
+            record["status"] = "task037b_v4_external_recovery_failed"
+        elif numerical_pass and not full_fe_recovery_pass:
+            record["status"] = "task037b_v4_full_fe_recovery_failed"
+        elif numerical_pass and not own_physics_pass:
+            record["status"] = "task037b_v4_own_physics_failed"
+        elif numerical_pass and not canonical_pass:
+            record["status"] = "task037b_v4_canonical_failed"
+        elif numerical_pass and physics_pass:
+            record["status"] = "task037b_v4_full_solve_awaiting_authority_payload"
+        elif numerical_pass and recovery_pass:
+            record["status"] = "task037b_v4_full_solve_physics_gate_failed"
+        elif numerical_pass:
+            record["status"] = "task037b_v4_full_solve_recovery_failed"
+        else:
+            record["status"] = "task037b_v4_full_solve_numerical_negative"
+    except Exception as exc:
+        implementation_error = f"{type(exc).__name__}: {exc}"
+        if record is None:
+            record = base_record()
+        recovery_exception = bool(
+            released
+            and numerical_pass
+            and record["qualification"].get("integration_pass") is True
+        )
+        if recovery_exception:
+            recovery_error = implementation_error
+            recovery_phase = str(
+                record.get("v4_telemetry", {}).get(
+                    "recovery_phase", "external_auxiliary"
+                )
+            )
+            phase_status = {
+                "external_auxiliary": "task037b_v4_external_recovery_failed",
+                "full_fe": "task037b_v4_full_fe_recovery_failed",
+                "own_physics": "task037b_v4_own_physics_failed",
+                "canonical": "task037b_v4_canonical_failed",
+            }
+            phase_disposition = {
+                "external_auxiliary": "FULL_LINEAR_SOLVE_PASS_EXTERNAL_RECOVERY_FAIL",
+                "full_fe": "FULL_LINEAR_SOLVE_PASS_FULL_FE_RECOVERY_FAIL",
+                "own_physics": "FULL_LINEAR_SOLVE_PASS_OWN_PHYSICS_GATE_FAIL",
+                "canonical": "FULL_LINEAR_SOLVE_PASS_CANONICAL_GATE_FAIL",
+            }
+            record["status"] = phase_status.get(
+                recovery_phase, "task037b_v4_recovery_gate_failed"
+            )
+            record["qualification"].update(
+                {
+                    "numerical_pass": True,
+                    "recovery_pass": bool(recovery_pass),
+                    "own_physics_pass": bool(own_physics_pass),
+                    "canonical_pass": bool(canonical_pass),
+                    "complete_qualification_pass": False,
+                    "physics_pass": bool(physics_pass),
+                    "disposition": phase_disposition.get(
+                        recovery_phase, "FULL_LINEAR_SOLVE_PASS_PHYSICS_GATE_FAIL"
+                    ),
+                    "recovery_phase": recovery_phase,
+                    "recovery_error": recovery_error,
+                }
+            )
+            record["v4_telemetry"]["recovery_error"] = recovery_error
+            record["v4_telemetry"]["recovery_phase"] = recovery_phase
+        else:
+            record["status"] = "task037b_v4_implementation_gate_failed"
+            record["qualification"].update(
+                {
+                    "integration_pass": False,
+                    "numerical_pass": bool(numerical_pass),
+                    "recovery_pass": False,
+                    "physics_pass": False,
+                    "disposition": "DOUBLE_APPROXIMATE_IMPLEMENTATION_GATE_FAILED",
+                    "implementation_error": implementation_error,
+                }
+            )
+        record["validation"] = _v4_not_run_validation_boundary()
+        record["v4_telemetry"]["official_outputs"] = dict(record["validation"])
+    finally:
+        if not released:
+            release_action_stack()
+        if full_result is not None:
+            full_result.destroy()
+        if physical_solution is not None:
+            physical_solution.destroy()
+        else:
+            if candidate_bottom is not None:
+                candidate_bottom.destroy()
+            if candidate_top is not None:
+                candidate_top.destroy()
+        if bottom_auxiliary_vec is not None:
+            bottom_auxiliary_vec.destroy()
+        if top_auxiliary_vec is not None:
+            top_auxiliary_vec.destroy()
+        if record is not None:
+            telemetry = record.setdefault("v4_telemetry", {})
+            telemetry["stage_markers"] = list(stage_markers)
+            release_telemetry = dict(telemetry.get("release", {}))
+            release_telemetry.update(
+                {
+                    "sides": dict(release_ledger),
+                    "outer": dict(outer_release),
+                    "release_pass": bool(
+                        all(
+                            release_ledger.get(side, {}).get("release_pass") is True
+                            for side in ("bottom", "top")
+                        )
+                        and outer_release.get("destroy_calls_complete") is True
+                    ),
+                }
+            )
+            telemetry["release"] = release_telemetry
+            record["timing_seconds_max_rank"] = {
+                **timings,
+                "v4_total": _max_elapsed(comm, total_started),
+            }
+    raise _V4QualificationStop(record)
 
 
 def _run_v2_block_screen(
@@ -5777,6 +7585,7 @@ def main() -> None:
         or args.task037b_v1_gate
         or args.task037b_v2_gate
         or args.task037b_v3_gate
+        or args.task037b_v4_gate
     ) and comm.size not in TASK035C_P6_H10_MPI_SIZES:
         raise SystemExit("Task035c p6/h10 Hybrid is restricted to MPI1/2/4/8.")
     if (
@@ -5787,8 +7596,11 @@ def main() -> None:
         or args.task037b_v1_gate
         or args.task037b_v2_gate
         or args.task037b_v3_gate
+        or args.task037b_v4_gate
     ) and comm.size != 8:
-        raise SystemExit("Task037b H1/H3/H4/H5/V1/V2/V3 Hybrid is restricted to MPI8.")
+        raise SystemExit(
+            "Task037b H1/H3/H4/H5/V1/V2/V3/V4 Hybrid is restricted to MPI8."
+        )
     task035c_p6_gate = _task035c_worker_authority_gate(
         args,
         current_source_sha=provenance.get("commit_sha"),
@@ -6191,10 +8003,10 @@ def main() -> None:
         )
         progress("Task32 Phase6: real positive/negative QEP bases complete")
 
-        if args.task037b_v2_gate or args.task037b_v3_gate:
+        if args.task037b_v2_gate or args.task037b_v3_gate or args.task037b_v4_gate:
             mark_stage(
                 "action_coupling_build_started"
-                if args.task037b_v3_gate
+                if args.task037b_v3_gate or args.task037b_v4_gate
                 else "v2_action_coupling_build"
             )
             started = time.perf_counter()
@@ -6227,27 +8039,47 @@ def main() -> None:
             coupling_key = (
                 "action_coupling_build"
                 if args.task037b_v3_gate
+                else "v4_action_coupling_build"
+                if args.task037b_v4_gate
                 else "v2_action_coupling_build"
             )
             timings[coupling_key] = _max_elapsed(comm, started)
-            if args.task037b_v3_gate:
+            if args.task037b_v3_gate or args.task037b_v4_gate:
                 mark_stage("action_coupling_build_ready")
-            _run_v2_block_screen(
-                args=args,
-                comm=comm,
-                provenance=provenance,
-                authority_gate=task035c_p6_gate,
-                cfg=cfg,
-                positive=positive,
-                negative=negative,
-                bottom=bottom,
-                top=top,
-                coupling=coupling,
-                timings=timings,
-                total_started=total_started,
-                mark_stage=mark_stage,
-                progress=progress,
-            )
+            if args.task037b_v4_gate:
+                _run_v4_full_solve(
+                    args=args,
+                    comm=comm,
+                    provenance=provenance,
+                    authority_gate=task035c_p6_gate,
+                    cfg=cfg,
+                    cross_section=cross_section,
+                    positive=positive,
+                    negative=negative,
+                    bottom=bottom,
+                    top=top,
+                    coupling=coupling,
+                    timings=timings,
+                    total_started=total_started,
+                    mark_stage=mark_stage,
+                )
+            else:
+                _run_v2_block_screen(
+                    args=args,
+                    comm=comm,
+                    provenance=provenance,
+                    authority_gate=task035c_p6_gate,
+                    cfg=cfg,
+                    positive=positive,
+                    negative=negative,
+                    bottom=bottom,
+                    top=top,
+                    coupling=coupling,
+                    timings=timings,
+                    total_started=total_started,
+                    mark_stage=mark_stage,
+                    progress=progress,
+                )
         elif args.task037b_h3_gate or args.task037b_h4_gate or args.task037b_h5_gate:
             mark_stage("oracle_local_matrix_build")
             started = time.perf_counter()
@@ -8132,6 +9964,8 @@ def main() -> None:
                     ),
                 }
             )
+    except _V4QualificationStop as stop:
+        record = stop.record
     except _V3QualificationStop as stop:
         record = stop.record
     except _V2QualificationStop as stop:
@@ -8153,6 +9987,99 @@ def main() -> None:
     except _ModalBasisCapacityStop:
         pass
     finally:
+        if args.task037b_v4_gate:
+            mark_stage("v4_postprocess_release_started")
+            v4_release_started = time.perf_counter()
+            v4_postprocess_release: dict[str, Any] = {
+                "release_order": [],
+                "objects": {},
+            }
+            if system is not None:
+                system.destroy()
+                v4_postprocess_release["release_order"].append("action_system")
+                v4_postprocess_release["objects"]["action_system"] = {
+                    "destroy_call_completed": True,
+                    "destroyed": bool(getattr(system, "_destroyed", False)),
+                }
+                system = None
+            for side, local_system in (("bottom", bottom), ("top", top)):
+                if local_system is not None:
+                    local_system.destroy()
+                    v4_postprocess_release["release_order"].append(
+                        f"{side}_static_condensation_cache"
+                    )
+                    v4_postprocess_release["objects"][
+                        f"{side}_static_condensation_cache"
+                    ] = {
+                        "destroy_call_completed": True,
+                        "destroyed": bool(getattr(local_system, "_destroyed", False)),
+                    }
+            bottom = None
+            top = None
+            if coupling is not None:
+                coupling.destroy()
+                v4_postprocess_release["release_order"].append("coupling")
+                v4_postprocess_release["objects"]["coupling"] = {
+                    "destroy_call_completed": True,
+                    "destroy_state": "not_exposed",
+                }
+                coupling = None
+            for name, basis in (
+                ("positive_modal_basis", positive),
+                ("negative_modal_basis", negative),
+            ):
+                if basis is not None:
+                    basis.destroy()
+                    v4_postprocess_release["release_order"].append(name)
+                    v4_postprocess_release["objects"][name] = {
+                        "destroy_call_completed": True,
+                        "destroy_state": "not_exposed",
+                    }
+            positive = None
+            negative = None
+            if operators is not None:
+                operators.destroy()
+                v4_postprocess_release["release_order"].append("qep_operators")
+                v4_postprocess_release["objects"]["qep_operators"] = {
+                    "destroy_call_completed": True,
+                    "destroy_state": "not_exposed",
+                }
+                operators = None
+            v4_postprocess_release["release_seconds"] = _max_elapsed(
+                comm, v4_release_started
+            )
+            expected_release_objects = {
+                "bottom_static_condensation_cache",
+                "top_static_condensation_cache",
+                "coupling",
+                "positive_modal_basis",
+                "negative_modal_basis",
+                "qep_operators",
+            }
+            if "action_system" in v4_postprocess_release["objects"]:
+                expected_release_objects.add("action_system")
+            v4_postprocess_release["release_pass"] = bool(
+                set(v4_postprocess_release["objects"]) == expected_release_objects
+                and all(
+                    item.get("destroy_call_completed") is True
+                    for item in v4_postprocess_release["objects"].values()
+                )
+            )
+            if record is not None:
+                v4_telemetry = record.setdefault("v4_telemetry", {})
+                v4_markers = v4_telemetry.setdefault("stage_markers", [])
+                v4_markers.append("v4_postprocess_release_started")
+                v4_telemetry["main_postprocess_release"] = v4_postprocess_release
+                v4_timing = record.setdefault("timing_seconds_max_rank", {})
+                v4_timing["v4_postprocess_release"] = v4_postprocess_release[
+                    "release_seconds"
+                ]
+                v4_timing["total"] = _max_elapsed(comm, total_started)
+            mark_stage("v4_postprocess_release_finished")
+            if record is not None:
+                record["v4_telemetry"]["stage_markers"].append(
+                    "v4_postprocess_release_finished"
+                )
         if h3_direct_comparison_solution is not None:
             h3_direct_comparison_solution.destroy()
         if h3_direct_comparison_system is not None:
@@ -8202,6 +10129,34 @@ def main() -> None:
             negative.destroy()
         if operators is not None:
             operators.destroy()
+
+    if args.task037b_v4_gate:
+        mark_stage("v4_worker_cleanup_finished")
+        if record is not None:
+            record["v4_telemetry"]["stage_markers"].append("v4_worker_cleanup_finished")
+            record["timing_seconds_max_rank"]["total"] = _max_elapsed(
+                comm, total_started
+            )
+            postprocess_release = record["v4_telemetry"].get(
+                "main_postprocess_release", {}
+            )
+            postprocess_release_pass = bool(
+                postprocess_release.get("release_pass") is True
+            )
+            record["qualification"]["postprocess_release_pass"] = (
+                postprocess_release_pass
+            )
+            final_integration_pass = bool(
+                record["qualification"].get("integration_pass") is True
+                and postprocess_release_pass
+            )
+            record["qualification"]["integration_pass"] = final_integration_pass
+            record["v4_telemetry"]["final_integration_pass"] = final_integration_pass
+            if not postprocess_release_pass:
+                record["status"] = "task037b_v4_postprocess_release_failed"
+                record["qualification"]["disposition"] = (
+                    "DOUBLE_APPROXIMATE_IMPLEMENTATION_GATE_FAILED"
+                )
 
     if comm.rank == 0:
         args.output.parent.mkdir(parents=True, exist_ok=True)
