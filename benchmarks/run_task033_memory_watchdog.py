@@ -944,6 +944,8 @@ def _worker_command(
                 str(args.task037b_v2_max_it),
             )
         )
+    if args.task037b_v5_gate:
+        command.append("--task037b-v5-gate")
     if args.compare_modal_schur:
         command.append("--compare-modal-schur")
     if args.graded_reference_h is not None:
@@ -1026,6 +1028,11 @@ def _task034_terminal_record_is_complete(record_path: Path) -> bool:
     ) == "task037b.v4-full-block-pc.v1" and isinstance(
         payload.get("v4_telemetry"), dict
     )
+    v5_record = (
+        payload.get("record_schema") == "task037b.v5-multimetric-full-block-pc.v1"
+        and isinstance(payload.get("v4_telemetry"), dict)
+        and isinstance(payload.get("v5_telemetry"), dict)
+    )
     return bool(
         payload.get("schema_version") == 1
         and isinstance(payload.get("benchmark_id"), str)
@@ -1042,6 +1049,7 @@ def _task034_terminal_record_is_complete(record_path: Path) -> bool:
             or v2_record
             or v3_record
             or v4_record
+            or v5_record
         )
         and isinstance(payload.get("gates"), dict)
     )
@@ -4141,6 +4149,35 @@ _TASK037B_V4_NEGATIVE = "FIXED_ILU0_WOODBURY_BLOCK_PC_FULL_NEGATIVE"
 _TASK037B_V4_IMPLEMENTATION = "DOUBLE_APPROXIMATE_IMPLEMENTATION_GATE_FAILED"
 
 
+def _task037b_v5_linear_disposition(
+    *,
+    contract_pass: bool,
+    numeric: bool,
+    iterations: Any,
+    reason: Any,
+    postsolve_positive: bool,
+    recovery_pass: bool,
+    own_physics_pass: bool,
+    canonical_pass: bool,
+    direct_comparator_pass: bool,
+) -> str:
+    """Classify the V5 linear/recovery boundary from raw recomputed fields."""
+
+    if not contract_pass:
+        return _TASK037B_V4_IMPLEMENTATION
+    reason_is_int = isinstance(reason, int) and not isinstance(reason, bool)
+    if not numeric and reason_is_int and reason > 0 and not postsolve_positive:
+        return "CUSTOM_CONVERGENCE_FALSE_POSITIVE"
+    if not numeric and reason == -3 and iterations == 700:
+        return "MULTIMETRIC_LINEAR_GATE_NOT_REACHED_BY_700"
+    if numeric and (not recovery_pass or not own_physics_pass or not canonical_pass):
+        return "MULTIMETRIC_LINEAR_PASS_RECOVERY_OR_PHYSICS_FAIL"
+    if numeric and recovery_pass and own_physics_pass and canonical_pass:
+        if not direct_comparator_pass:
+            return "NUMERICAL_AND_OWN_PHYSICS_PASS_AUTHORITY_PAYLOAD_INCOMPLETE"
+    return "V5_MULTIMETRIC_NUMERICAL_NEGATIVE"
+
+
 def _task037b_v4_resource_classification(
     process_tree_peak_mb: float | int | None,
 ) -> dict[str, Any]:
@@ -4280,6 +4317,10 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
         case = record.get("case", {})
         solver = record.get("solver", {})
         telemetry = record.get("v4_telemetry", {})
+        v5_telemetry = record.get("v5_telemetry", {})
+        is_v5 = record.get("record_schema") == (
+            "task037b.v5-multimetric-full-block-pc.v1"
+        )
         validation = record.get("validation")
         qualification = record.get("qualification", {})
         hybrid = record.get("hybrid_system", {})
@@ -4287,7 +4328,11 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
         history = telemetry.get("history")
         failures: list[str] = []
         case_contract = bool(
-            record.get("record_schema") == "task037b.v4-full-block-pc.v1"
+            record.get("record_schema")
+            in {
+                "task037b.v4-full-block-pc.v1",
+                "task037b.v5-multimetric-full-block-pc.v1",
+            }
             and case.get("degree") == 6
             and case.get("h_nm") == 10.0
             and case.get("wavelength_nm") == 13.5
@@ -4316,6 +4361,11 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
             and solver.get("local_inverse_solve_called") is False
             and solver.get("nested_ksp_created") is False
             and solver.get("direct_fallback") is False
+            and (
+                not is_v5
+                or solver.get("convergence_identity")
+                == "multimetric_true_residual_gate"
+            )
         )
         official_keys = {
             "official_record",
@@ -4355,6 +4405,26 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
         )
         screen_history_contract = False
         iterations = screen.get("iterations")
+        v5_invalid_stop = bool(is_v5 and screen.get("converged_reason") == -9)
+
+        def numeric_residual(value: Any) -> bool:
+            return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+        def residual_shape(value: Any) -> bool:
+            return numeric_residual(value) if v5_invalid_stop else finite(value)
+
+        def same_residual(left: Any, right: Any) -> bool:
+            if v5_invalid_stop:
+                if not numeric_residual(left) or not numeric_residual(right):
+                    return False
+                left_value = float(left)
+                right_value = float(right)
+                return bool(
+                    (math.isnan(left_value) and math.isnan(right_value))
+                    or left_value == right_value
+                )
+            return left == right
+
         if (
             isinstance(history, list)
             and history
@@ -4367,7 +4437,9 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
                 actual_iterations == expected_iterations
                 and all(
                     isinstance(row, dict)
-                    and all(finite(row.get(key)) for key in required_residual_keys)
+                    and all(
+                        residual_shape(row.get(key)) for key in required_residual_keys
+                    )
                     and all(
                         nonnegative_int(row.get(key))
                         for key in (
@@ -4388,20 +4460,31 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
             final_blocks = screen.get("block_relative_residuals", {})
             final_row_contract = bool(
                 isinstance(final_blocks, dict)
-                and finite(screen.get("final_reported_relative_residual"))
-                and finite(screen.get("final_true_relative_residual"))
-                and finite(final_blocks.get("bottom"))
-                and finite(final_blocks.get("top"))
-                and finite(final_blocks.get("modal"))
-                and screen.get("final_reported_relative_residual")
-                == final_row["reported_relative_residual"]
-                and screen.get("final_true_relative_residual")
-                == final_row["global_true_relative_residual"]
-                and final_blocks.get("bottom")
-                == final_row["bottom_true_relative_residual"]
-                and final_blocks.get("top") == final_row["top_true_relative_residual"]
-                and final_blocks.get("modal")
-                == final_row["modal_true_relative_residual"]
+                and residual_shape(screen.get("final_reported_relative_residual"))
+                and residual_shape(screen.get("final_true_relative_residual"))
+                and residual_shape(final_blocks.get("bottom"))
+                and residual_shape(final_blocks.get("top"))
+                and residual_shape(final_blocks.get("modal"))
+                and same_residual(
+                    screen.get("final_reported_relative_residual"),
+                    final_row["reported_relative_residual"],
+                )
+                and same_residual(
+                    screen.get("final_true_relative_residual"),
+                    final_row["global_true_relative_residual"],
+                )
+                and same_residual(
+                    final_blocks.get("bottom"),
+                    final_row["bottom_true_relative_residual"],
+                )
+                and same_residual(
+                    final_blocks.get("top"),
+                    final_row["top_true_relative_residual"],
+                )
+                and same_residual(
+                    final_blocks.get("modal"),
+                    final_row["modal_true_relative_residual"],
+                )
             )
             fixed_checkpoints = {
                 0,
@@ -4426,6 +4509,8 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
                 630,
                 700,
             }
+            if is_v5:
+                fixed_checkpoints.update({500, 520, 534, 550, 560, 580, 600})
             required_checkpoints = {
                 checkpoint
                 for checkpoint in fixed_checkpoints
@@ -4450,7 +4535,15 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
                     isinstance(row, dict)
                     and row.get("iteration") in history_by_iteration
                     and all(
-                        row.get(key) == history_by_iteration[row["iteration"]].get(key)
+                        (
+                            same_residual(
+                                row.get(key),
+                                history_by_iteration[row["iteration"]].get(key),
+                            )
+                            if key in required_residual_keys
+                            else row.get(key)
+                            == history_by_iteration[row["iteration"]].get(key)
+                        )
                         for key in checkpoint_value_keys
                     )
                     for row in checkpoint_rows
@@ -4463,7 +4556,9 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
                     isinstance(row, dict)
                     and nonnegative_int(row.get("iteration"))
                     and int(row["iteration"]) <= int(iterations)
-                    and all(finite(row.get(key)) for key in required_residual_keys)
+                    and all(
+                        residual_shape(row.get(key)) for key in required_residual_keys
+                    )
                     and all(
                         nonnegative_int(row.get(key))
                         for key in (
@@ -4495,16 +4590,23 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
                     for left, right in zip(last90_values, last90_values[1:])
                 )
             )
-        roundoff_contract = bool(
-            last90_roundoff is not None
-            and finite(screen.get("last90_roundoff_tolerance"))
-            and math.isclose(
-                float(screen["last90_roundoff_tolerance"]),
-                float(last90_roundoff),
-                rel_tol=1.0e-12,
-                abs_tol=1.0e-30,
+        if v5_invalid_stop:
+            roundoff_contract = bool(
+                screen.get("last90_net_decrease") == "not_applicable"
+                and screen.get("last90_no_rebound") == "not_applicable"
+                and screen.get("last90_roundoff_tolerance") == "not_applicable"
             )
-        )
+        else:
+            roundoff_contract = bool(
+                last90_roundoff is not None
+                and finite(screen.get("last90_roundoff_tolerance"))
+                and math.isclose(
+                    float(screen["last90_roundoff_tolerance"]),
+                    float(last90_roundoff),
+                    rel_tol=1.0e-12,
+                    abs_tol=1.0e-30,
+                )
+            )
         screen_contract = bool(
             screen_history_contract
             and screen.get("converged_reason") is not None
@@ -4525,6 +4627,172 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
             failures.append("checkpoint_contract")
         if not roundoff_contract:
             failures.append("roundoff_contract")
+
+        v5_history_contract = True
+        if is_v5:
+            for row in history if isinstance(history, list) else []:
+                if not isinstance(row, dict):
+                    v5_history_contract = False
+                    continue
+                values = [row.get(key) for key in required_residual_keys]
+                values_numeric = all(numeric_residual(value) for value in values)
+                values_nonnegative = bool(
+                    values_numeric
+                    and all(
+                        _v2_finite_number(value) and float(value) >= 0.0
+                        for value in values
+                    )
+                )
+                row_iteration = row.get("iteration")
+                if values_numeric:
+                    expected_max = max(float(value) for value in values)
+                    recorded_max = row.get("multimetric_max_true_residual")
+                    max_contract = bool(
+                        numeric_residual(recorded_max)
+                        and (
+                            (
+                                math.isnan(float(recorded_max))
+                                and math.isnan(expected_max)
+                            )
+                            or (
+                                not math.isnan(expected_max)
+                                and float(recorded_max) == expected_max
+                            )
+                        )
+                    )
+                else:
+                    max_contract = False
+                if not values_nonnegative:
+                    expected_decision = "DIVERGED_NANORINF"
+                    reason_contract = row.get("multimetric_reason") == -9
+                elif (
+                    isinstance(row_iteration, int)
+                    and not isinstance(row_iteration, bool)
+                    and row_iteration > 0
+                    and all(float(value) <= 1.0e-6 for value in values)
+                ):
+                    expected_decision = {"CONVERGED_USER", "CONVERGED_RTOL"}
+                    reason_contract = (
+                        row.get("multimetric_decision") in expected_decision
+                        and isinstance(row.get("multimetric_reason"), int)
+                        and not isinstance(row.get("multimetric_reason"), bool)
+                        and row["multimetric_reason"] > 0
+                    )
+                elif (
+                    isinstance(row_iteration, int)
+                    and not isinstance(row_iteration, bool)
+                    and row_iteration >= 700
+                ):
+                    expected_decision = "DIVERGED_MAX_IT"
+                    reason_contract = row.get("multimetric_reason") == -3
+                else:
+                    expected_decision = "ITERATING"
+                    reason_contract = row.get("multimetric_reason") == 0
+                decision_contract = (
+                    row.get("multimetric_decision") in expected_decision
+                    if isinstance(expected_decision, set)
+                    else row.get("multimetric_decision") == expected_decision
+                )
+                v5_history_contract = bool(
+                    v5_history_contract
+                    and all(key in row for key in required_residual_keys)
+                    and row.get("multimetric_identity")
+                    == "multimetric_true_residual_gate"
+                    and max_contract
+                    and decision_contract
+                    and reason_contract
+                )
+        postsolve = v5_telemetry.get("postsolve_audit", {}) if is_v5 else {}
+        postsolve_values = (
+            [
+                postsolve.get("ksp_reported_relative_residual"),
+                postsolve.get("global_true_relative_residual"),
+                postsolve.get("bottom_true_relative_residual"),
+                postsolve.get("top_true_relative_residual"),
+                postsolve.get("modal_true_relative_residual"),
+            ]
+            if isinstance(postsolve, dict)
+            else []
+        )
+        explicit_postsolve = (
+            postsolve.get("explicit_recomputed_residuals", {})
+            if isinstance(postsolve, dict)
+            else {}
+        )
+        postsolve_reason = (
+            postsolve.get("reason") if isinstance(postsolve, dict) else None
+        )
+        postsolve_invalid = bool(is_v5 and postsolve_reason == -9)
+
+        def same_postsolve_residual(left: Any, right: Any) -> bool:
+            if postsolve_invalid:
+                if not numeric_residual(left) or not numeric_residual(right):
+                    return False
+                left_value = float(left)
+                right_value = float(right)
+                return bool(
+                    (math.isnan(left_value) and math.isnan(right_value))
+                    or left_value == right_value
+                )
+            return left == right
+
+        postsolve_values_contract = bool(
+            isinstance(postsolve, dict)
+            and all(
+                (
+                    numeric_residual(value)
+                    if postsolve_invalid
+                    else _v2_finite_number(value) and float(value) >= 0.0
+                )
+                for value in postsolve_values
+            )
+        )
+        postsolve_positive = bool(
+            isinstance(postsolve_reason, int)
+            and not isinstance(postsolve_reason, bool)
+            and postsolve_reason > 0
+            and postsolve_values_contract
+            and all(float(value) <= 1.0e-6 for value in postsolve_values)
+        )
+        postsolve_contract = bool(
+            not is_v5
+            or (
+                isinstance(v5_telemetry, dict)
+                and v5_telemetry.get("identity") == "multimetric_true_residual_gate"
+                and v5_telemetry.get("history_evaluation_count") == len(history)
+                and v5_telemetry.get("postsolve_evaluation_count") == 1
+                and isinstance(postsolve, dict)
+                and postsolve.get("identity") == "multimetric_true_residual_gate"
+                and postsolve.get("restart") == 90
+                and postsolve.get("reported_residual_source") == "ksp.getResidualNorm()"
+                and isinstance(explicit_postsolve, dict)
+                and postsolve_values_contract
+                and all(
+                    same_postsolve_residual(
+                        explicit_postsolve.get(key), postsolve.get(key)
+                    )
+                    for key in (
+                        "global_true_relative_residual",
+                        "bottom_true_relative_residual",
+                        "top_true_relative_residual",
+                        "modal_true_relative_residual",
+                    )
+                )
+                and (
+                    not postsolve_invalid
+                    or (
+                        postsolve.get("decision") == "DIVERGED_NANORINF"
+                        and postsolve.get("all_finite_nonnegative") is False
+                        and postsolve.get("pass") is False
+                    )
+                )
+                and postsolve.get("pass") is postsolve_positive
+                and v5_telemetry.get("implementation_pass") is True
+            )
+        )
+        v5_contract = bool(not is_v5 or (v5_history_contract and postsolve_contract))
+        if not v5_contract:
+            failures.append("v5_multimetric_contract")
 
         callback_contract = True
         callbacks = telemetry.get("fixed_callback")
@@ -4732,6 +5000,30 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
             and reason > 0
             and all(float(history[-1][key]) <= 1.0e-6 for key in required_residual_keys)
         )
+        if is_v5:
+            postsolve = v5_telemetry.get("postsolve_audit", {})
+            numeric = bool(
+                screen_contract
+                and v5_history_contract
+                and v5_contract
+                and isinstance(postsolve, dict)
+                and isinstance(postsolve.get("reason", reason), int)
+                and not isinstance(postsolve.get("reason", reason), bool)
+                and postsolve.get("reason", reason) > 0
+                and postsolve.get("pass") is True
+                and all(
+                    _v2_finite_number(postsolve.get(key))
+                    and float(postsolve[key]) >= 0.0
+                    and float(postsolve[key]) <= 1.0e-6
+                    for key in (
+                        "ksp_reported_relative_residual",
+                        "global_true_relative_residual",
+                        "bottom_true_relative_residual",
+                        "top_true_relative_residual",
+                        "modal_true_relative_residual",
+                    )
+                )
+            )
         gates = telemetry.get("physics_gates", {})
         recovery_gates = telemetry.get("recovery_gates", {})
 
@@ -5116,24 +5408,141 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
         )
         if not official_boundary:
             failures.append("official_boundary")
+        v5_snapshot_contract = True
+        v5_release_repeat_contract = True
+        if is_v5:
+            snapshot_metadata = v5_telemetry.get("snapshot_metadata", {})
+            release_repeat = v5_telemetry.get("release_repeat", {})
+            if numeric:
+                snapshot_entries = (
+                    [
+                        snapshot_metadata.get(name)
+                        for name in (
+                            "full_solution",
+                            "bottom_active",
+                            "top_active",
+                            "modal",
+                        )
+                    ]
+                    if isinstance(snapshot_metadata, dict)
+                    else []
+                )
+                v5_snapshot_contract = bool(
+                    isinstance(snapshot_metadata, dict)
+                    and snapshot_metadata.get("status") == "measured"
+                    and snapshot_metadata.get("pass") is True
+                    and all(
+                        isinstance(item, dict)
+                        and nonnegative_int(item.get("global_size"))
+                        and nonnegative_int(item.get("local_size"))
+                        and isinstance(item.get("local_size_by_rank"), list)
+                        and all(
+                            nonnegative_int(value)
+                            for value in item["local_size_by_rank"]
+                        )
+                        and item.get("dtype") == "complex128"
+                        and item.get("finite") is True
+                        and isinstance(item.get("content_hash"), str)
+                        and len(item["content_hash"]) == 64
+                        and (
+                            not str(item.get("ownership", "")).startswith("PETSc.Vec")
+                            or (
+                                isinstance(item.get("layout_digest"), dict)
+                                and item["layout_digest"].get("global_rows")
+                                == item["global_size"]
+                                and isinstance(
+                                    item["layout_digest"].get("rank_digests"),
+                                    list,
+                                )
+                                and sum(item["local_size_by_rank"])
+                                == item["global_size"]
+                                and item["layout_digest"].get("sha256")
+                                == item["content_hash"]
+                            )
+                        )
+                        for item in snapshot_entries
+                    )
+                )
+                v5_release_repeat_contract = bool(
+                    isinstance(release_repeat, dict)
+                    and release_repeat.get("status") == "measured"
+                    and release_repeat.get("pass") is True
+                    and release_repeat.get("finite") is True
+                    and release_repeat.get("relative_difference") is not None
+                    and finite(release_repeat.get("relative_difference"))
+                    and release_repeat["relative_difference"] <= 1.0e-10
+                    and release_repeat.get("borrowed_exact_actions_usable") is True
+                    and release_repeat.get("repeat_action_mult_completed") is True
+                    and release_repeat.get("factor_inventory", {}).get("consistent")
+                    is True
+                    and release_repeat.get("new_factor_count") == 0
+                    and release_repeat.get("new_ksp_count") == 0
+                    and release_repeat.get("direct_fallback") is False
+                    and v5_telemetry.get("release_pass") is True
+                    and isinstance(v5_telemetry.get("snapshot_release"), dict)
+                    and all(
+                        v5_telemetry["snapshot_release"].get(key) is True
+                        for key in (
+                            "snapshot_destroyed",
+                            "bottom_snapshot_destroyed",
+                            "top_snapshot_destroyed",
+                            "modal_snapshot_released",
+                        )
+                    )
+                )
+            else:
+                v5_snapshot_contract = bool(
+                    isinstance(snapshot_metadata, dict)
+                    and snapshot_metadata.get("status")
+                    in {"not_run", "not_run_dependency_gate"}
+                )
+                v5_release_repeat_contract = bool(
+                    isinstance(release_repeat, dict)
+                    and release_repeat.get("status")
+                    in {"not_run", "not_run_dependency_gate"}
+                )
+            if not v5_snapshot_contract:
+                failures.append("v5_snapshot_contract")
+            if not v5_release_repeat_contract:
+                failures.append("v5_release_repeat_contract")
         integration = bool(
             case_contract
             and solver_contract
             and official_boundary
             and screen_contract
+            and v5_contract
             and callback_contract
             and modal_contract
             and inventory_contract
             and restart_basis_contract
             and online_contract
             and release_contract
+            and v5_snapshot_contract
+            and v5_release_repeat_contract
             and recovery_contract
             and physics_contract
             and telemetry.get("ordinary_default_changed") is False
             and record.get("qualification", {}).get("integration_pass") is True
         )
         contract_pass = bool(integration)
-        if not integration:
+        direct_comparator_pass = bool(
+            isinstance(gates, dict)
+            and isinstance(gates.get("direct_hybrid_comparison"), dict)
+            and gates["direct_hybrid_comparison"].get("pass") is True
+        )
+        if is_v5:
+            disposition = _task037b_v5_linear_disposition(
+                contract_pass=bool(integration),
+                numeric=numeric,
+                iterations=iterations,
+                reason=reason,
+                postsolve_positive=postsolve_positive,
+                recovery_pass=recovery_pass,
+                own_physics_pass=own_physics_pass,
+                canonical_pass=canonical_pass,
+                direct_comparator_pass=direct_comparator_pass,
+            )
+        elif not integration:
             disposition = _TASK037B_V4_IMPLEMENTATION
         elif numeric and recovery_pass and physics_pass:
             disposition = (
@@ -5145,7 +5554,7 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
             disposition = "FULL_LINEAR_SOLVE_PASS_RECOVERY_GATE_FAIL"
         else:
             disposition = _TASK037B_V4_NEGATIVE
-        if (
+        if not is_v5 and (
             not numeric
             and int(screen.get("converged_reason", 0)) == -3
             and screen.get("iterations") == 700
@@ -5155,18 +5564,35 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
             ]
             if len(values) >= 2 and values[-1] < values[0] and last90_no_rebound:
                 disposition = _TASK037B_V4_SLOW
-        if numeric and not recovery_pass:
+        if not is_v5 and numeric and not recovery_pass:
             if not external_recovery_pass:
                 disposition = "FULL_LINEAR_SOLVE_PASS_EXTERNAL_RECOVERY_FAIL"
             else:
                 disposition = "FULL_LINEAR_SOLVE_PASS_FULL_FE_RECOVERY_FAIL"
-        elif numeric and recovery_pass and not physics_pass:
+        elif not is_v5 and numeric and recovery_pass and not physics_pass:
             if not own_physics_pass:
                 disposition = "FULL_LINEAR_SOLVE_PASS_OWN_PHYSICS_GATE_FAIL"
             else:
                 disposition = "FULL_LINEAR_SOLVE_PASS_CANONICAL_GATE_FAIL"
         expected_status = (
-            "task037b_v4_full_solve_awaiting_authority_payload"
+            "task037b_v5_full_solve_awaiting_authority_payload"
+            if is_v5
+            and disposition
+            == "NUMERICAL_AND_OWN_PHYSICS_PASS_AUTHORITY_PAYLOAD_INCOMPLETE"
+            else "task037b_v5_linear_pass_recovery_or_physics_failed"
+            if is_v5
+            and disposition == "MULTIMETRIC_LINEAR_PASS_RECOVERY_OR_PHYSICS_FAIL"
+            else "task037b_v5_multimetric_numerical_negative"
+            if is_v5
+            and disposition
+            in {
+                "MULTIMETRIC_LINEAR_GATE_NOT_REACHED_BY_700",
+                "CUSTOM_CONVERGENCE_FALSE_POSITIVE",
+                "V5_MULTIMETRIC_NUMERICAL_NEGATIVE",
+            }
+            else "task037b_v5_implementation_gate_failed"
+            if is_v5
+            else "task037b_v4_full_solve_awaiting_authority_payload"
             if disposition
             == "FULL_LINEAR_SOLVE_PASS_AWAITING_REVIEW_NOT_RUN_AUTHORITY_PAYLOAD_GAP"
             else "task037b_v4_full_solve_numerical_negative"
@@ -5187,6 +5613,11 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
             failures.append("record_status_mismatch")
         if qualification.get("disposition") != disposition:
             failures.append("qualification_disposition_mismatch")
+        if is_v5 and (
+            not isinstance(v5_telemetry, dict)
+            or v5_telemetry.get("v5_disposition") != disposition
+        ):
+            failures.append("v5_disposition_mismatch")
         if qualification.get("numerical_pass") is not numeric:
             failures.append("qualification_numerical_pass_mismatch")
         for field, expected in (
@@ -5407,6 +5838,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Open only the frozen Task037b V4 full double fixed-action path.",
     )
     parser.add_argument(
+        "--task037b-v5-gate",
+        action="store_true",
+        help=(
+            "Open only the research-only Task037b V5 multimetric path; "
+            "requires the frozen V4 gate."
+        ),
+    )
+    parser.add_argument(
         "--task037b-v2-profile",
         choices=("bottom-approx", "top-approx", "double"),
     )
@@ -5504,6 +5943,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(
             "--task037b-v4-gate requires --solver-path block-ldu-action-full-solve."
         )
+    if args.task037b_v5_gate and not args.task037b_v4_gate:
+        parser.error("--task037b-v5-gate requires --task037b-v4-gate.")
+    if args.task037b_v5_gate and args.solver_path != "block-ldu-action-full-solve":
+        parser.error(
+            "--task037b-v5-gate requires --solver-path block-ldu-action-full-solve."
+        )
     if args.solver_path == "block-ldu-action-full-solve" and not args.task037b_v4_gate:
         parser.error("block-ldu-action-full-solve requires --task037b-v4-gate.")
     if (
@@ -5525,6 +5970,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         args.task037b_v2_profile is not None or args.task037b_v2_max_it is not None
     ):
         parser.error("V4 does not accept V2 profile/max-it options.")
+    if args.task037b_v5_gate and (
+        args.task037b_v2_profile is not None or args.task037b_v2_max_it is not None
+    ):
+        parser.error("V5 does not accept V2 profile/max-it options.")
     selected_scoped_gates = (
         args.task035c_p6_h10_gate,
         args.task037b_h1_gate,
@@ -7435,8 +7884,17 @@ def run(args: argparse.Namespace) -> int:
     v4_solver_record_available = bool(
         v4_path
         and isinstance(solver_record, dict)
-        and solver_record.get("record_schema") == "task037b.v4-full-block-pc.v1"
+        and solver_record.get("record_schema")
+        in {
+            "task037b.v4-full-block-pc.v1",
+            "task037b.v5-multimetric-full-block-pc.v1",
+        }
         and isinstance(solver_record.get("v4_telemetry"), dict)
+        and (
+            solver_record.get("record_schema")
+            != "task037b.v5-multimetric-full-block-pc.v1"
+            or isinstance(solver_record.get("v5_telemetry"), dict)
+        )
     )
     r5_raw_contract = bool(
         args.task037b_v1_gate

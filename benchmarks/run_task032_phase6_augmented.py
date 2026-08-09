@@ -85,6 +85,7 @@ from src.solvers.hybrid_fem_modal_block_ldu import (
     create_exact_block_ldu_preconditioner,
     create_g_only_block_ldu_preconditioner,
     modal_block_diagnostic,
+    multimetric_true_residual_decision,
     screen_action_block_ldu,
     solve_action_block_ldu_full,
     solve_exact_block_ldu,
@@ -368,6 +369,64 @@ def _h1_owned_vec_digest(vector: PETSc.Vec) -> dict[str, Any]:
             "sha256": combined.hexdigest(),
         }
     return comm.bcast(summary, root=0)
+
+
+def _v5_snapshot_metadata(
+    value: Any,
+    *,
+    comm: MPI.Intracomm,
+    ownership: str,
+) -> dict[str, Any]:
+    """Record a layout-bound digest for one retained V5 solution snapshot."""
+
+    if hasattr(value, "getOwnershipRange") and hasattr(value, "getArray"):
+        vec_comm = value.getComm().tompi4py()
+        local = np.ascontiguousarray(
+            np.asarray(value.getArray(readonly=True), dtype=np.complex128)
+        )
+        local_size = int(local.size)
+        local_sizes = [int(item) for item in vec_comm.allgather(local_size)]
+        finite = bool(
+            vec_comm.allreduce(
+                bool(np.all(np.isfinite(local))),
+                op=MPI.LAND,
+            )
+        )
+        digest = _h1_owned_vec_digest(value)
+        return {
+            "shape": [int(value.getSize())],
+            "global_size": int(value.getSize()),
+            "local_size": local_size,
+            "local_size_by_rank": local_sizes,
+            "global_bytes": int(value.getSize()) * np.dtype(np.complex128).itemsize,
+            "local_bytes": int(local.nbytes),
+            "dtype": "complex128",
+            "ownership": ownership,
+            "finite": finite,
+            "content_hash": digest["sha256"],
+            "layout_digest": digest,
+        }
+    array = np.ascontiguousarray(np.asarray(value, dtype=np.complex128))
+    finite = bool(
+        comm.allreduce(
+            bool(np.all(np.isfinite(array))),
+            op=MPI.LAND,
+        )
+    )
+    digest = _h1_replicated_array_digest(array)
+    return {
+        "shape": [int(item) for item in array.shape],
+        "global_size": int(array.size),
+        "local_size": int(array.size),
+        "local_size_by_rank": [int(array.size)] * comm.size,
+        "global_bytes": int(array.nbytes),
+        "local_bytes": int(array.nbytes),
+        "dtype": "complex128",
+        "ownership": ownership,
+        "finite": finite,
+        "content_hash": digest["sha256"],
+        "layout_digest": digest,
+    }
 
 
 def _relative_vector_error(actual: PETSc.Vec, expected: PETSc.Vec) -> float:
@@ -1232,6 +1291,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Open only the frozen Task037b V4 double fixed-action full-solve path.",
     )
     parser.add_argument(
+        "--task037b-v5-gate",
+        action="store_true",
+        help=(
+            "Open only the research-only Task037b V5 multimetric full-solve path; "
+            "requires the frozen V4 gate."
+        ),
+    )
+    parser.add_argument(
         "--task037b-v2-profile",
         choices=("bottom-approx", "top-approx", "double"),
         default=None,
@@ -1341,6 +1408,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "Task035c p6/h10, Task037b H1, H3, H4, H5, V1, V2, V3, and V4 gates are "
             "mutually exclusive."
         )
+    if args.task037b_v5_gate and not args.task037b_v4_gate:
+        parser.error("--task037b-v5-gate requires --task037b-v4-gate.")
     if args.solver_path == "local-inverse-qualification" and not args.task037b_h5_gate:
         parser.error("local-inverse-qualification requires --task037b-h5-gate.")
     if args.solver_path == "dtn-component-qualification" and not args.task037b_v1_gate:
@@ -1386,6 +1455,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     if args.task037b_v4_gate and args.solver_path != "block-ldu-action-full-solve":
         parser.error(
             "--task037b-v4-gate requires --solver-path block-ldu-action-full-solve."
+        )
+    if args.task037b_v5_gate and args.solver_path != "block-ldu-action-full-solve":
+        parser.error(
+            "--task037b-v5-gate requires --solver-path block-ldu-action-full-solve."
         )
     if not args.task037b_v2_gate and (
         args.task037b_v2_profile is not None or args.task037b_v2_max_it is not None
@@ -2148,8 +2221,9 @@ def _run_v4_full_solve(
     timings: dict[str, float],
     total_started: float,
     mark_stage,
+    v5_multimetric: bool = False,
 ) -> None:
-    """Run the single V4 double fixed-action solve and controlled-stop record."""
+    """Run the single V4/V5 double fixed-action solve and controlled-stop record."""
 
     layout = None
     action_matrix = None
@@ -2160,6 +2234,16 @@ def _run_v4_full_solve(
     physical_solution = None
     candidate_bottom = None
     candidate_top = None
+    candidate_modal = None
+    v5_snapshot_metadata: dict[str, Any] = {"status": "not_run"}
+    v5_release_repeat: dict[str, Any] = {"status": "not_run"}
+    v5_snapshot_release: dict[str, Any] = {"status": "not_run"}
+    v5_multimetric_telemetry: dict[str, Any] | None = None
+    v5_repeat_pass = True
+    v5_snapshot_destroyed = False
+    v5_bottom_snapshot_destroyed = False
+    v5_top_snapshot_destroyed = False
+    v5_modal_snapshot_released = False
     bottom_auxiliary_vec = None
     top_auxiliary_vec = None
     side_components: dict[str, Any] = {}
@@ -2174,6 +2258,7 @@ def _run_v4_full_solve(
     recovery_pass = False
     own_physics_pass = False
     physics_pass = False
+    v5_implementation_pass = True
     external_recovery_pass = False
     full_fe_recovery_pass = False
     canonical_pass = False
@@ -2569,7 +2654,11 @@ def _run_v4_full_solve(
 
     def base_record() -> dict[str, Any]:
         return {
-            "record_schema": "task037b.v4-full-block-pc.v1",
+            "record_schema": (
+                "task037b.v5-multimetric-full-block-pc.v1"
+                if v5_multimetric
+                else "task037b.v4-full-block-pc.v1"
+            ),
             "case": {
                 "degree": int(args.degree),
                 "h_nm": float(args.h_nm),
@@ -2602,6 +2691,11 @@ def _run_v4_full_solve(
                 "local_inverse_solve_called": False,
                 "nested_ksp_created": False,
                 "direct_fallback": False,
+                **(
+                    {"convergence_identity": "multimetric_true_residual_gate"}
+                    if v5_multimetric
+                    else {}
+                ),
             },
             "source": dict(provenance),
             "authority": dict(authority_gate or {}),
@@ -2780,31 +2874,35 @@ def _run_v4_full_solve(
         setup_elapsed = _max_elapsed(comm, started)
         timings["v4_setup"] = setup_elapsed
 
+        checkpoint_iterations = {
+            0,
+            1,
+            2,
+            5,
+            10,
+            20,
+            40,
+            60,
+            80,
+            90,
+            100,
+            120,
+            150,
+            180,
+            200,
+            270,
+            360,
+            450,
+            540,
+            630,
+            700,
+        }
+        if v5_multimetric:
+            checkpoint_iterations.update({500, 520, 534, 550, 560, 580, 600})
+
         def checkpoint_callback(row: dict[str, Any]) -> None:
             iteration = int(row["iteration"])
-            if iteration in {
-                0,
-                1,
-                2,
-                5,
-                10,
-                20,
-                40,
-                60,
-                80,
-                90,
-                100,
-                120,
-                150,
-                180,
-                200,
-                270,
-                360,
-                450,
-                540,
-                630,
-                700,
-            }:
+            if iteration in checkpoint_iterations:
                 record_stage(f"outer_iter_{iteration}")
 
         outer_started = time.perf_counter()
@@ -2814,13 +2912,16 @@ def _run_v4_full_solve(
             preconditioner,
             max_it=700,
             checkpoint_callback=checkpoint_callback,
+            v5_multimetric=v5_multimetric,
         )
         timings["v4_outer_solve"] = _max_elapsed(comm, outer_started)
         solve_reason = int(full_result.converged_reason)
+        v5_invalid_stop = bool(v5_multimetric and solve_reason == -9)
         solve_iterations = int(full_result.iterations)
         solve_reported = float(full_result.final_reported_relative_residual)
         solve_true = float(full_result.final_true_relative_residual)
         solve_blocks = dict(full_result.block_relative_residuals)
+        v5_postsolve_audit = dict(full_result.postsolve_audit)
         solve_release = dict(full_result.release)
         solve_pc_seconds = float(full_result.pc_apply_seconds)
         online_after = {
@@ -2846,6 +2947,64 @@ def _run_v4_full_solve(
                 not side_woodbury[side].diagnostics.get("destroyed", False)
             )
         history = [dict(row) for row in full_result.history]
+        if v5_multimetric:
+            history_final = history[-1]
+            solve_reported = float(history_final["reported_relative_residual"])
+            solve_true = float(history_final["global_true_relative_residual"])
+            solve_blocks = {
+                "bottom": float(history_final["bottom_true_relative_residual"]),
+                "top": float(history_final["top_true_relative_residual"]),
+                "modal": float(history_final["modal_true_relative_residual"]),
+            }
+            v5_residual_keys = (
+                "reported_relative_residual",
+                "global_true_relative_residual",
+                "bottom_true_relative_residual",
+                "top_true_relative_residual",
+                "modal_true_relative_residual",
+            )
+
+            def v5_row_contract(row: dict[str, Any]) -> bool:
+                decision_keys = (
+                    "multimetric_max_true_residual",
+                    "multimetric_decision",
+                    "multimetric_reason",
+                    "multimetric_identity",
+                )
+                if (
+                    not isinstance(row.get("iteration"), int)
+                    or isinstance(row.get("iteration"), bool)
+                    or not all(key in row for key in decision_keys)
+                    or not all(
+                        isinstance(row.get(key), (int, float))
+                        and not isinstance(row.get(key), bool)
+                        for key in v5_residual_keys
+                    )
+                    or row["multimetric_identity"] != "multimetric_true_residual_gate"
+                ):
+                    return False
+                expected = multimetric_true_residual_decision(
+                    int(row["iteration"]),
+                    {key: row[key] for key in v5_residual_keys},
+                )
+                recorded_max = float(row["multimetric_max_true_residual"])
+                expected_max = float(expected["max_true_residual"])
+                max_matches = bool(
+                    recorded_max == expected_max
+                    or (math.isnan(recorded_max) and math.isnan(expected_max))
+                )
+                return bool(
+                    max_matches
+                    and row["multimetric_decision"] == expected["decision"]
+                    and row["multimetric_reason"] == expected["reason"]
+                )
+
+            v5_implementation_pass = bool(
+                [row.get("iteration") for row in history] == list(range(len(history)))
+                and full_result.history_evaluation_count == len(history)
+                and full_result.postsolve_evaluation_count == 1
+                and all(v5_row_contract(row) for row in history)
+            )
         residual_keys = (
             "global_true_relative_residual",
             "bottom_true_relative_residual",
@@ -2861,34 +3020,76 @@ def _run_v4_full_solve(
                 for key in residual_keys
             )
         )
-        numerical_pass = bool(
-            solve_reason > 0
-            and finite
-            and solve_iterations <= 700
-            and solve_reported <= 1.0e-6
-            and solve_true <= 1.0e-6
-            and all(value <= 1.0e-6 for value in solve_blocks.values())
-            and all(item["pass"] for item in online.values())
-        )
+        if v5_multimetric:
+            v5_audit_values = {
+                "reported_relative_residual": v5_postsolve_audit.get(
+                    "ksp_reported_relative_residual"
+                ),
+                "global_true_relative_residual": v5_postsolve_audit.get(
+                    "global_true_relative_residual"
+                ),
+                "bottom_true_relative_residual": v5_postsolve_audit.get(
+                    "bottom_true_relative_residual"
+                ),
+                "top_true_relative_residual": v5_postsolve_audit.get(
+                    "top_true_relative_residual"
+                ),
+                "modal_true_relative_residual": v5_postsolve_audit.get(
+                    "modal_true_relative_residual"
+                ),
+            }
+            v5_audit_finite = bool(
+                all(
+                    isinstance(value, (int, float))
+                    and not isinstance(value, bool)
+                    and np.isfinite(float(value))
+                    and float(value) >= 0.0
+                    for value in v5_audit_values.values()
+                )
+            )
+            numerical_pass = bool(
+                solve_reason > 0
+                and finite
+                and solve_iterations <= 700
+                and v5_audit_finite
+                and v5_postsolve_audit.get("pass") is True
+                and v5_implementation_pass
+                and all(item["pass"] for item in online.values())
+            )
+        else:
+            numerical_pass = bool(
+                solve_reason > 0
+                and finite
+                and solve_iterations <= 700
+                and solve_reported <= 1.0e-6
+                and solve_true <= 1.0e-6
+                and all(value <= 1.0e-6 for value in solve_blocks.values())
+                and all(item["pass"] for item in online.values())
+            )
         last90 = history[-90:] if history else []
-        last90_decrease = bool(
-            len(last90) >= 2
-            and float(last90[-1]["global_true_relative_residual"])
-            < float(last90[0]["global_true_relative_residual"])
-        )
-        last90_values = np.asarray(
-            [float(row["global_true_relative_residual"]) for row in last90],
-            dtype=np.float64,
-        )
-        last90_roundoff = (
-            1024.0
-            * np.finfo(np.float64).eps
-            * max(float(np.max(np.abs(last90_values), initial=0.0)), 1.0e-30)
-        )
-        last90_no_rebound = bool(
-            len(last90_values) >= 2
-            and np.all(np.diff(last90_values) <= last90_roundoff)
-        )
+        if v5_invalid_stop:
+            last90_decrease = "not_applicable"
+            last90_no_rebound = "not_applicable"
+            last90_roundoff = "not_applicable"
+        else:
+            last90_decrease = bool(
+                len(last90) >= 2
+                and float(last90[-1]["global_true_relative_residual"])
+                < float(last90[0]["global_true_relative_residual"])
+            )
+            last90_values = np.asarray(
+                [float(row["global_true_relative_residual"]) for row in last90],
+                dtype=np.float64,
+            )
+            last90_roundoff = (
+                1024.0
+                * np.finfo(np.float64).eps
+                * max(float(np.max(np.abs(last90_values), initial=0.0)), 1.0e-30)
+            )
+            last90_no_rebound = bool(
+                len(last90_values) >= 2
+                and np.all(np.diff(last90_values) <= last90_roundoff)
+            )
         slow_contraction = bool(
             not numerical_pass
             and solve_reason == -3
@@ -2959,6 +3160,40 @@ def _run_v4_full_solve(
             "official_outputs": dict(validation),
             "authority_payload_gap": "independent comparator requires numerical H1 arrays; not loaded",
         }
+        if v5_multimetric:
+            record["v4_telemetry"]["multimetric"] = {
+                "identity": "multimetric_true_residual_gate",
+                "history_evaluation_count": int(full_result.history_evaluation_count),
+                "postsolve_evaluation_count": int(
+                    full_result.postsolve_evaluation_count
+                ),
+                "postsolve_audit": v5_postsolve_audit,
+                "implementation_pass": v5_implementation_pass,
+                "v5_disposition": (
+                    "V5_POSTSOLVE_PASS"
+                    if numerical_pass
+                    else "CUSTOM_CONVERGENCE_FALSE_POSITIVE"
+                    if v5_postsolve_audit.get("custom_convergence_false_positive")
+                    else "MULTIMETRIC_LINEAR_GATE_NOT_REACHED_BY_700"
+                    if solve_reason == -3 and solve_iterations == 700
+                    else "V5_MULTIMETRIC_NUMERICAL_NEGATIVE"
+                ),
+                "history_rows_have_decision_fields": bool(
+                    all(
+                        all(
+                            key in row
+                            for key in (
+                                "multimetric_max_true_residual",
+                                "multimetric_decision",
+                                "multimetric_reason",
+                                "multimetric_identity",
+                            )
+                        )
+                        for row in history
+                    )
+                ),
+            }
+            v5_multimetric_telemetry = record["v4_telemetry"]["multimetric"]
         record["side_records"] = side_records
 
         if numerical_pass:
@@ -2967,8 +3202,40 @@ def _run_v4_full_solve(
                 bottom.b,
                 top.b,
             )
-        full_result.destroy()
-        full_result = None
+            if v5_multimetric:
+                v5_snapshot_metadata = {
+                    "status": "measured",
+                    "full_solution": _v5_snapshot_metadata(
+                        full_result.solution,
+                        comm=comm,
+                        ownership="PETSc.Vec retained full solution",
+                    ),
+                    "bottom_active": _v5_snapshot_metadata(
+                        candidate_bottom,
+                        comm=comm,
+                        ownership="PETSc.Vec retained bottom active split",
+                    ),
+                    "top_active": _v5_snapshot_metadata(
+                        candidate_top,
+                        comm=comm,
+                        ownership="PETSc.Vec retained top active split",
+                    ),
+                    "modal": _v5_snapshot_metadata(
+                        candidate_modal,
+                        comm=comm,
+                        ownership="replicated retained modal amplitudes",
+                    ),
+                }
+                v5_snapshot_metadata["pass"] = bool(
+                    all(
+                        item.get("finite") is True
+                        for item in v5_snapshot_metadata.values()
+                        if isinstance(item, dict)
+                    )
+                )
+        if not v5_multimetric:
+            full_result.destroy()
+            full_result = None
         release_action_stack()
         record["v4_telemetry"]["release"] = {
             "sides": dict(release_ledger),
@@ -2992,15 +3259,140 @@ def _run_v4_full_solve(
             and outer_release.get("action_modal_schur_released") is True
             and solve_release.get("borrowed_side_actions_retained") is True
         )
+        if v5_multimetric and numerical_pass:
+            repeat_action = None
+            repeat_context = None
+            repeat_rhs = None
+            repeat_residual = None
+            repeat_mult_completed = False
+            try:
+                repeat_action, repeat_context = create_hybrid_assembled_block_action(
+                    bottom,
+                    top,
+                    coupling,
+                )
+                repeat_rhs = layout.pack(
+                    bottom.b,
+                    top.b,
+                    internal_modal_rhs_correction(coupling),
+                )
+                repeat_residual = repeat_action.createVecRight()
+                repeat_action.mult(full_result.solution, repeat_residual)
+                repeat_mult_completed = True
+                repeat_residual.axpy(PETSc.ScalarType(-1.0), repeat_rhs)
+                repeat_rhs_norm = max(float(repeat_rhs.norm()), 1.0e-30)
+                repeat_global = float(repeat_residual.norm()) / repeat_rhs_norm
+                pre_release_global = float(
+                    v5_postsolve_audit["global_true_relative_residual"]
+                )
+                relative_difference = abs(repeat_global - pre_release_global) / max(
+                    abs(repeat_global), abs(pre_release_global), 1.0e-30
+                )
+                repeat_inventory = dict(repeat_context.inventory)
+                repeat_direct_counts = {
+                    side: repeat_inventory.get(f"{side}_direct_factor_count")
+                    for side in ("bottom", "top")
+                }
+                direct_counts_available = bool(
+                    all(
+                        isinstance(value, int)
+                        and not isinstance(value, bool)
+                        and value >= 0
+                        for value in repeat_direct_counts.values()
+                    )
+                    and isinstance(repeat_inventory.get("p6_direct_factor_count"), int)
+                    and not isinstance(
+                        repeat_inventory.get("p6_direct_factor_count"), bool
+                    )
+                )
+                measured_factor_count = (
+                    int(sum(repeat_direct_counts.values()))
+                    if direct_counts_available
+                    else None
+                )
+                factor_inventory_consistent = bool(
+                    direct_counts_available
+                    and repeat_inventory["p6_direct_factor_count"]
+                    == measured_factor_count
+                )
+                borrowed_actions_usable = bool(
+                    repeat_mult_completed
+                    and not bool(getattr(bottom, "_destroyed", False))
+                    and not bool(getattr(top, "_destroyed", False))
+                )
+                v5_release_repeat = {
+                    "status": "measured",
+                    "pre_release_global_true_relative_residual": pre_release_global,
+                    "post_release_global_true_relative_residual": repeat_global,
+                    "relative_difference": relative_difference,
+                    "finite": bool(
+                        np.isfinite(pre_release_global)
+                        and np.isfinite(repeat_global)
+                        and np.isfinite(relative_difference)
+                    ),
+                    "borrowed_exact_actions_usable": borrowed_actions_usable,
+                    "new_factor_count": measured_factor_count,
+                    "factor_inventory": {
+                        "bottom_direct_factor_count": repeat_direct_counts["bottom"],
+                        "top_direct_factor_count": repeat_direct_counts["top"],
+                        "p6_direct_factor_count": repeat_inventory.get(
+                            "p6_direct_factor_count"
+                        ),
+                        "consistent": factor_inventory_consistent,
+                    },
+                    "new_factor_count_source": (
+                        "repeat_context.inventory bottom/top/p6 direct factor counts"
+                    ),
+                    "new_ksp_count": 0,
+                    "new_ksp_count_source": (
+                        "create_hybrid_assembled_block_action MatPython path; "
+                        "no KSP constructed"
+                    ),
+                    "direct_fallback": False,
+                    "repeat_action_mult_completed": repeat_mult_completed,
+                }
+                v5_release_repeat["pass"] = bool(
+                    v5_release_repeat["finite"]
+                    and v5_release_repeat["relative_difference"] <= 1.0e-10
+                    and borrowed_actions_usable
+                    and factor_inventory_consistent
+                    and v5_release_repeat["new_factor_count"] == 0
+                    and v5_release_repeat["new_ksp_count"] == 0
+                    and v5_release_repeat["direct_fallback"] is False
+                )
+            except Exception as exc:
+                v5_release_repeat = {
+                    "status": "failed",
+                    "pass": False,
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+            finally:
+                if repeat_residual is not None:
+                    repeat_residual.destroy()
+                if repeat_rhs is not None:
+                    repeat_rhs.destroy()
+                if repeat_action is not None:
+                    repeat_action.destroy()
+                if repeat_context is not None:
+                    repeat_context.destroy()
+            v5_repeat_pass = bool(v5_release_repeat.get("pass") is True)
         lifecycle_pass = bool(
-            side_release_pass and outer_release_pass and core_release_pass
+            side_release_pass
+            and outer_release_pass
+            and core_release_pass
+            and (not v5_multimetric or v5_repeat_pass)
         )
         record["v4_telemetry"]["release_pass"] = lifecycle_pass
+        if v5_multimetric and v5_multimetric_telemetry is not None:
+            v5_multimetric_telemetry["snapshot_metadata"] = v5_snapshot_metadata
+            v5_multimetric_telemetry["release_repeat"] = v5_release_repeat
+            v5_multimetric_telemetry["snapshot_release"] = v5_snapshot_release
         record["qualification"]["integration_pass"] = bool(
             global_contract
             and callback_pass
             and factor_identity_pass
             and pc_inventory_pass
+            and (not v5_multimetric or v5_implementation_pass)
             and all(item["pass"] for item in online.values())
             and lifecycle_pass
         )
@@ -3070,6 +3462,7 @@ def _run_v4_full_solve(
             )
             candidate_bottom = None
             candidate_top = None
+            candidate_modal = None
             recovery_gates: dict[str, Any] = {}
             for side, recovered, active_solution, amplitudes in (
                 (
@@ -3592,6 +3985,31 @@ def _run_v4_full_solve(
             disposition = "DOUBLE_APPROXIMATE_FULL_SLOW_CONTRACTION_AWAITING_REVIEW"
         else:
             disposition = "FIXED_ILU0_WOODBURY_BLOCK_PC_FULL_NEGATIVE"
+        if v5_multimetric:
+            if numerical_pass and (
+                not recovery_pass or not own_physics_pass or not canonical_pass
+            ):
+                disposition = "MULTIMETRIC_LINEAR_PASS_RECOVERY_OR_PHYSICS_FAIL"
+            elif (
+                numerical_pass
+                and own_physics_pass
+                and canonical_pass
+                and not direct_comparator.get("pass", False)
+            ):
+                disposition = (
+                    "NUMERICAL_AND_OWN_PHYSICS_PASS_AUTHORITY_PAYLOAD_INCOMPLETE"
+                )
+            elif (
+                not numerical_pass
+                and v5_postsolve_audit.get("custom_convergence_false_positive") is True
+            ):
+                disposition = "CUSTOM_CONVERGENCE_FALSE_POSITIVE"
+            elif not numerical_pass and solve_reason == -3 and solve_iterations == 700:
+                disposition = "MULTIMETRIC_LINEAR_GATE_NOT_REACHED_BY_700"
+            else:
+                disposition = "V5_MULTIMETRIC_NUMERICAL_NEGATIVE"
+            if v5_multimetric_telemetry is not None:
+                v5_multimetric_telemetry["v5_disposition"] = disposition
         record["qualification"].update(
             {
                 "numerical_pass": numerical_pass,
@@ -3606,7 +4024,21 @@ def _run_v4_full_solve(
                 "disposition": disposition,
             }
         )
-        if numerical_pass and complete_qualification_pass:
+        if v5_multimetric and disposition == (
+            "NUMERICAL_AND_OWN_PHYSICS_PASS_AUTHORITY_PAYLOAD_INCOMPLETE"
+        ):
+            record["status"] = "task037b_v5_full_solve_awaiting_authority_payload"
+        elif v5_multimetric and disposition == (
+            "MULTIMETRIC_LINEAR_PASS_RECOVERY_OR_PHYSICS_FAIL"
+        ):
+            record["status"] = "task037b_v5_linear_pass_recovery_or_physics_failed"
+        elif v5_multimetric and disposition in {
+            "MULTIMETRIC_LINEAR_GATE_NOT_REACHED_BY_700",
+            "CUSTOM_CONVERGENCE_FALSE_POSITIVE",
+            "V5_MULTIMETRIC_NUMERICAL_NEGATIVE",
+        }:
+            record["status"] = "task037b_v5_multimetric_numerical_negative"
+        elif numerical_pass and complete_qualification_pass:
             record["status"] = "task037b_v4_full_solve_pass"
         elif numerical_pass and not external_recovery_pass:
             record["status"] = "task037b_v4_external_recovery_failed"
@@ -3652,9 +4084,16 @@ def _run_v4_full_solve(
                 "own_physics": "FULL_LINEAR_SOLVE_PASS_OWN_PHYSICS_GATE_FAIL",
                 "canonical": "FULL_LINEAR_SOLVE_PASS_CANONICAL_GATE_FAIL",
             }
-            record["status"] = phase_status.get(
-                recovery_phase, "task037b_v4_recovery_gate_failed"
-            )
+            if v5_multimetric:
+                record["status"] = "task037b_v5_linear_pass_recovery_or_physics_failed"
+                if v5_multimetric_telemetry is not None:
+                    v5_multimetric_telemetry["v5_disposition"] = (
+                        "MULTIMETRIC_LINEAR_PASS_RECOVERY_OR_PHYSICS_FAIL"
+                    )
+            else:
+                record["status"] = phase_status.get(
+                    recovery_phase, "task037b_v4_recovery_gate_failed"
+                )
             record["qualification"].update(
                 {
                     "numerical_pass": True,
@@ -3663,8 +4102,12 @@ def _run_v4_full_solve(
                     "canonical_pass": bool(canonical_pass),
                     "complete_qualification_pass": False,
                     "physics_pass": bool(physics_pass),
-                    "disposition": phase_disposition.get(
-                        recovery_phase, "FULL_LINEAR_SOLVE_PASS_PHYSICS_GATE_FAIL"
+                    "disposition": (
+                        "MULTIMETRIC_LINEAR_PASS_RECOVERY_OR_PHYSICS_FAIL"
+                        if v5_multimetric
+                        else phase_disposition.get(
+                            recovery_phase, "FULL_LINEAR_SOLVE_PASS_PHYSICS_GATE_FAIL"
+                        )
                     ),
                     "recovery_phase": recovery_phase,
                     "recovery_error": recovery_error,
@@ -3673,7 +4116,14 @@ def _run_v4_full_solve(
             record["v4_telemetry"]["recovery_error"] = recovery_error
             record["v4_telemetry"]["recovery_phase"] = recovery_phase
         else:
-            record["status"] = "task037b_v4_implementation_gate_failed"
+            if v5_multimetric:
+                record["status"] = "task037b_v5_implementation_gate_failed"
+                if v5_multimetric_telemetry is not None:
+                    v5_multimetric_telemetry["v5_disposition"] = (
+                        "DOUBLE_APPROXIMATE_IMPLEMENTATION_GATE_FAILED"
+                    )
+            else:
+                record["status"] = "task037b_v4_implementation_gate_failed"
             record["qualification"].update(
                 {
                     "integration_pass": False,
@@ -3691,13 +4141,28 @@ def _run_v4_full_solve(
             release_action_stack()
         if full_result is not None:
             full_result.destroy()
+            if v5_multimetric:
+                v5_snapshot_destroyed = bool(getattr(full_result, "_destroyed", False))
+            full_result = None
         if physical_solution is not None:
             physical_solution.destroy()
+            if v5_multimetric:
+                v5_bottom_snapshot_destroyed = bool(
+                    getattr(physical_solution, "_destroyed", False)
+                )
+                v5_top_snapshot_destroyed = v5_bottom_snapshot_destroyed
+                physical_solution.modal_amplitudes = None
+                v5_modal_snapshot_released = True
         else:
             if candidate_bottom is not None:
                 candidate_bottom.destroy()
+                v5_bottom_snapshot_destroyed = bool(v5_multimetric)
             if candidate_top is not None:
                 candidate_top.destroy()
+                v5_top_snapshot_destroyed = bool(v5_multimetric)
+            if candidate_modal is not None:
+                candidate_modal = None
+                v5_modal_snapshot_released = bool(v5_multimetric)
         if bottom_auxiliary_vec is not None:
             bottom_auxiliary_vec.destroy()
         if top_auxiliary_vec is not None:
@@ -3705,25 +4170,77 @@ def _run_v4_full_solve(
         if record is not None:
             telemetry = record.setdefault("v4_telemetry", {})
             telemetry["stage_markers"] = list(stage_markers)
+            if v5_multimetric:
+                if v5_snapshot_metadata.get("status") == "measured":
+                    v5_snapshot_release.update(
+                        {
+                            "status": "measured",
+                            "snapshot_destroyed": v5_snapshot_destroyed,
+                            "bottom_snapshot_destroyed": v5_bottom_snapshot_destroyed,
+                            "top_snapshot_destroyed": v5_top_snapshot_destroyed,
+                            "modal_snapshot_released": v5_modal_snapshot_released,
+                        }
+                    )
+                else:
+                    v5_snapshot_release.update(
+                        {
+                            "status": "not_run_dependency_gate",
+                            "snapshot_destroyed": None,
+                            "bottom_snapshot_destroyed": None,
+                            "top_snapshot_destroyed": None,
+                            "modal_snapshot_released": None,
+                        }
+                    )
+                if v5_multimetric_telemetry is not None:
+                    v5_multimetric_telemetry["snapshot_release"] = v5_snapshot_release
             release_telemetry = dict(telemetry.get("release", {}))
+            release_pass = bool(
+                all(
+                    release_ledger.get(side, {}).get("release_pass") is True
+                    for side in ("bottom", "top")
+                )
+                and outer_release.get("destroy_calls_complete") is True
+            )
+            if v5_multimetric and numerical_pass:
+                release_pass = bool(
+                    release_pass
+                    and v5_snapshot_metadata.get("pass") is True
+                    and v5_release_repeat.get("pass") is True
+                    and v5_snapshot_release.get("snapshot_destroyed") is True
+                    and v5_snapshot_release.get("bottom_snapshot_destroyed") is True
+                    and v5_snapshot_release.get("top_snapshot_destroyed") is True
+                    and v5_snapshot_release.get("modal_snapshot_released") is True
+                )
             release_telemetry.update(
                 {
                     "sides": dict(release_ledger),
                     "outer": dict(outer_release),
-                    "release_pass": bool(
-                        all(
-                            release_ledger.get(side, {}).get("release_pass") is True
-                            for side in ("bottom", "top")
-                        )
-                        and outer_release.get("destroy_calls_complete") is True
-                    ),
+                    "release_pass": release_pass,
                 }
             )
             telemetry["release"] = release_telemetry
+            if v5_multimetric and v5_multimetric_telemetry is not None:
+                v5_multimetric_telemetry["release_pass"] = release_pass
+                if not release_pass:
+                    record["qualification"]["integration_pass"] = False
+                    record["qualification"]["disposition"] = (
+                        "DOUBLE_APPROXIMATE_IMPLEMENTATION_GATE_FAILED"
+                    )
+                    record["qualification"]["implementation_error"] = (
+                        "V5 snapshot/release lifecycle contract failed."
+                    )
+                    record["status"] = "task037b_v5_implementation_gate_failed"
+                    v5_multimetric_telemetry["v5_disposition"] = (
+                        "DOUBLE_APPROXIMATE_IMPLEMENTATION_GATE_FAILED"
+                    )
             record["timing_seconds_max_rank"] = {
                 **timings,
                 "v4_total": _max_elapsed(comm, total_started),
             }
+            if v5_multimetric:
+                record["v5_telemetry"] = dict(telemetry.get("multimetric", {}))
+                record["v5_telemetry"]["stage_markers"] = list(stage_markers)
+                record["qualification"]["v5_multimetric"] = True
     raise _V4QualificationStop(record)
 
 
@@ -8062,6 +8579,7 @@ def main() -> None:
                     timings=timings,
                     total_started=total_started,
                     mark_stage=mark_stage,
+                    v5_multimetric=args.task037b_v5_gate,
                 )
             else:
                 _run_v2_block_screen(

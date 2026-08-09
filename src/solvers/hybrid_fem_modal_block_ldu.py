@@ -39,6 +39,7 @@ __all__ = (
     "create_action_block_ldu_preconditioner",
     "screen_action_block_ldu",
     "solve_action_block_ldu_full",
+    "multimetric_true_residual_decision",
     "action_block_screen_gate",
     "action_block_v3_progressive_gate",
     "create_exact_block_ldu_preconditioner",
@@ -970,6 +971,9 @@ class HybridBlockLduFullSolveResult:
     inventory: dict[str, Any]
     release: dict[str, Any]
     pc_apply_seconds: float
+    postsolve_audit: dict[str, Any] = field(default_factory=dict)
+    history_evaluation_count: int = 0
+    postsolve_evaluation_count: int = 0
     _destroyed: bool = field(default=False, init=False, repr=False)
 
     def destroy(self) -> None:
@@ -1136,6 +1140,7 @@ def solve_action_block_ldu_full(
     *,
     max_it: int = 700,
     checkpoint_callback=None,
+    v5_multimetric: bool = False,
 ) -> HybridBlockLduFullSolveResult:
     """Run the V4 fixed double-action solve and retain only the solution.
 
@@ -1171,6 +1176,8 @@ def solve_action_block_ldu_full(
         630,
         700,
     }
+    if v5_multimetric:
+        checkpoints.update({500, 520, 534, 540, 550, 560, 580, 600})
     solution = operator.createVecRight()
     monitor_solution = operator.createVecRight()
     retained_solution = operator.createVecRight()
@@ -1178,17 +1185,33 @@ def solve_action_block_ldu_full(
     monitor_solution.set(0.0)
     retained_solution.set(0.0)
     history: list[dict[str, Any]] = []
+    history_cache: dict[int, dict[str, Any]] = {}
+    decision_cache: dict[int, dict[str, Any]] = {}
+    history_evaluation_count = 0
     notified_checkpoints: set[int] = set()
     rhs_norm = max(float(rhs.norm()), _TINY)
     solve_started = time.perf_counter()
     ksp = PETSc.KSP().create(operator.getComm())
+    ksp_restart = 90
     returned = False
+
+    def notify_checkpoint(row: dict[str, Any], *, force: bool = False) -> None:
+        iteration = int(row["iteration"])
+        if checkpoint_callback is None or iteration in notified_checkpoints:
+            return
+        if not force and iteration not in checkpoints:
+            return
+        notified_checkpoints.add(iteration)
+        checkpoint_callback(dict(row))
 
     def snapshot(
         iteration: int,
         reported: float,
         current: PETSc.KSP | None,
-    ) -> None:
+    ) -> dict[str, Any]:
+        nonlocal history_evaluation_count
+        if v5_multimetric and int(iteration) in history_cache:
+            return history_cache[int(iteration)]
         if current is None:
             solution.copy(monitor_solution)
             current_solution = monitor_solution
@@ -1214,19 +1237,36 @@ def solve_action_block_ldu_full(
             history[-1] = row
         else:
             history.append(row)
-        if (
-            checkpoint_callback is not None
-            and int(iteration) in checkpoints
-            and int(iteration) not in notified_checkpoints
-        ):
-            notified_checkpoints.add(int(iteration))
-            checkpoint_callback(dict(row))
+        if v5_multimetric:
+            history_cache[int(iteration)] = row
+            history_evaluation_count += 1
+        if not v5_multimetric:
+            notify_checkpoint(row)
+        return row
 
     try:
-        snapshot(0, 1.0 if rhs_norm > _TINY else 0.0, None)
+        if v5_multimetric:
+            initial_row = snapshot(0, 1.0 if rhs_norm > _TINY else 0.0, None)
+            initial_decision = multimetric_true_residual_decision(
+                0, initial_row, max_it=700
+            )
+            initial_row.update(
+                {
+                    "multimetric_max_true_residual": initial_decision[
+                        "max_true_residual"
+                    ],
+                    "multimetric_decision": initial_decision["decision"],
+                    "multimetric_reason": initial_decision["reason"],
+                    "multimetric_identity": initial_decision["identity"],
+                }
+            )
+            decision_cache[0] = initial_decision
+            notify_checkpoint(initial_row)
+        else:
+            snapshot(0, 1.0 if rhs_norm > _TINY else 0.0, None)
         ksp.setOperators(operator)
         ksp.setType(PETSc.KSP.Type.FGMRES)
-        ksp.setGMRESRestart(90)
+        ksp.setGMRESRestart(ksp_restart)
         ksp.setPCSide(PETSc.PC.Side.RIGHT)
         ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED)
         ksp.setTolerances(rtol=1.0e-6, atol=0.0, max_it=700)
@@ -1236,21 +1276,65 @@ def solve_action_block_ldu_full(
         ksp.setUp()
 
         def monitor(current: PETSc.KSP, iteration: int, residual_norm: float) -> None:
-            snapshot(
+            if not v5_multimetric:
+                snapshot(
+                    int(iteration),
+                    float(residual_norm) / rhs_norm,
+                    current,
+                )
+
+        def convergence_test(
+            current: PETSc.KSP, iteration: int, residual_norm: float
+        ) -> int:
+            row = snapshot(
                 int(iteration),
                 float(residual_norm) / rhs_norm,
                 current,
             )
+            if int(iteration) not in decision_cache:
+                decision = multimetric_true_residual_decision(
+                    int(iteration), row, max_it=700
+                )
+                row.update(
+                    {
+                        "multimetric_max_true_residual": decision["max_true_residual"],
+                        "multimetric_decision": decision["decision"],
+                        "multimetric_reason": decision["reason"],
+                        "multimetric_identity": decision["identity"],
+                    }
+                )
+                decision_cache[int(iteration)] = decision
+                notify_checkpoint(row)
+            return int(decision_cache[int(iteration)]["reason"])
 
-        ksp.setMonitor(monitor)
+        if not v5_multimetric:
+            ksp.setMonitor(monitor)
+        else:
+            ksp.setConvergenceTest(convergence_test)
         ksp.solve(rhs, solution)
         iterations = int(ksp.getIterationNumber())
         reason = int(ksp.getConvergedReason())
         reported = float(ksp.getResidualNorm()) / rhs_norm
-        snapshot(iterations, reported, None)
-        if iterations not in notified_checkpoints and checkpoint_callback is not None:
-            notified_checkpoints.add(iterations)
-            checkpoint_callback(dict(history[-1]))
+        if v5_multimetric and iterations not in decision_cache:
+            final_row = snapshot(iterations, reported, None)
+            final_decision = multimetric_true_residual_decision(
+                iterations, final_row, max_it=700
+            )
+            final_row.update(
+                {
+                    "multimetric_max_true_residual": final_decision[
+                        "max_true_residual"
+                    ],
+                    "multimetric_decision": final_decision["decision"],
+                    "multimetric_reason": final_decision["reason"],
+                    "multimetric_identity": final_decision["identity"],
+                }
+            )
+            decision_cache[iterations] = final_decision
+            notify_checkpoint(final_row, force=True)
+        else:
+            snapshot(iterations, reported, None)
+        notify_checkpoint(history[-1], force=True)
         solution.copy(retained_solution)
         release: dict[str, Any] = {
             "ksp_destroyed": False,
@@ -1260,20 +1344,62 @@ def solve_action_block_ldu_full(
             "solution_snapshot_retained": True,
             "borrowed_side_actions_retained": False,
         }
-        final_true = float(history[-1]["global_true_relative_residual"])
-        block = {
-            key: float(history[-1][key])
-            for key in (
-                "bottom_true_relative_residual",
-                "top_true_relative_residual",
-                "modal_true_relative_residual",
+        if v5_multimetric:
+            post_global, post_block = _residual_metrics(
+                operator, rhs, retained_solution, context
             )
-        }
-        block = {
-            "bottom": block["bottom_true_relative_residual"],
-            "top": block["top_true_relative_residual"],
-            "modal": block["modal_true_relative_residual"],
-        }
+            postsolve_values = {
+                "ksp_reported_relative_residual": reported,
+                "global_true_relative_residual": float(post_global),
+                "bottom_true_relative_residual": float(post_block["bottom"]),
+                "top_true_relative_residual": float(post_block["top"]),
+                "modal_true_relative_residual": float(post_block["modal"]),
+            }
+            postsolve_decision_values = {
+                "reported_relative_residual": reported,
+                **{
+                    key: value
+                    for key, value in postsolve_values.items()
+                    if key != "ksp_reported_relative_residual"
+                },
+            }
+            postsolve_decision = multimetric_true_residual_decision(
+                iterations, postsolve_decision_values, max_it=700
+            )
+            postsolve_pass = bool(reason > 0 and postsolve_decision["positive"])
+            postsolve_audit = {
+                **postsolve_values,
+                "identity": "multimetric_true_residual_gate",
+                "restart": int(ksp_restart),
+                "restart_source": (
+                    "configured PETSc.KSP.setGMRESRestart(90); "
+                    "qualified petsc4py exposes no getGMRESRestart()"
+                ),
+                "reported_residual_source": "ksp.getResidualNorm()",
+                "explicit_recomputed_residuals": {
+                    key: value
+                    for key, value in postsolve_values.items()
+                    if key != "ksp_reported_relative_residual"
+                },
+                "decision": postsolve_decision["decision"],
+                "reason": reason,
+                "all_finite_nonnegative": postsolve_decision["all_finite_nonnegative"],
+                "max_true_residual": postsolve_decision["max_true_residual"],
+                "pass": postsolve_pass,
+                "custom_convergence_false_positive": bool(
+                    reason > 0 and not postsolve_pass
+                ),
+            }
+            final_true = float(post_global)
+            block = {key: float(value) for key, value in post_block.items()}
+        else:
+            postsolve_audit = {}
+            final_true = float(history[-1]["global_true_relative_residual"])
+            block = {
+                "bottom": float(history[-1]["bottom_true_relative_residual"]),
+                "top": float(history[-1]["top_true_relative_residual"]),
+                "modal": float(history[-1]["modal_true_relative_residual"]),
+            }
         inventory = dict(context.inventory)
         ksp.destroy()
         ksp = None
@@ -1310,6 +1436,11 @@ def solve_action_block_ldu_full(
             inventory=inventory,
             release=release,
             pc_apply_seconds=float(inventory.get("pc_apply_seconds", 0.0)),
+            postsolve_audit=postsolve_audit,
+            history_evaluation_count=(
+                history_evaluation_count if v5_multimetric else 0
+            ),
+            postsolve_evaluation_count=1 if v5_multimetric else 0,
         )
         returned = True
         return result
@@ -1465,6 +1596,60 @@ _V3_RESIDUAL_KEYS = (
     "top_true_relative_residual",
     "modal_true_relative_residual",
 )
+
+
+def multimetric_true_residual_decision(
+    iteration: int,
+    residuals: dict[str, Any],
+    *,
+    max_it: int = 700,
+) -> dict[str, Any]:
+    """Apply the fixed V5 five-residual convergence decision."""
+
+    if int(max_it) != 700:
+        raise ValueError("V5 multimetric convergence requires max_it=700.")
+    values: dict[str, float] = {}
+    try:
+        values = {key: float(residuals[key]) for key in _V3_RESIDUAL_KEYS}
+    except (KeyError, TypeError, ValueError):
+        values = {key: float("nan") for key in _V3_RESIDUAL_KEYS}
+    finite_nonnegative = bool(
+        all(np.isfinite(value) and value >= 0.0 for value in values.values())
+    )
+    max_true = float(max(values.values(), default=float("nan")))
+    positive = bool(
+        int(iteration) > 0
+        and finite_nonnegative
+        and all(value <= 1.0e-6 for value in values.values())
+    )
+    if not finite_nonnegative:
+        reason = int(PETSc.KSP.ConvergedReason.DIVERGED_NANORINF)
+        decision = "DIVERGED_NANORINF"
+    elif positive:
+        user_reason = getattr(PETSc.KSP.ConvergedReason, "CONVERGED_USER", None)
+        reason = int(
+            PETSc.KSP.ConvergedReason.CONVERGED_RTOL
+            if user_reason is None
+            else user_reason
+        )
+        decision = "CONVERGED_USER" if user_reason is not None else "CONVERGED_RTOL"
+    elif int(iteration) >= int(max_it):
+        reason = int(PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT)
+        decision = "DIVERGED_MAX_IT"
+    else:
+        reason = int(PETSc.KSP.ConvergedReason.ITERATING)
+        decision = "ITERATING"
+    return {
+        "identity": "multimetric_true_residual_gate",
+        "iteration": int(iteration),
+        "threshold": 1.0e-6,
+        "residuals": values,
+        "max_true_residual": max_true,
+        "all_finite_nonnegative": finite_nonnegative,
+        "positive": positive,
+        "decision": decision,
+        "reason": reason,
+    }
 
 
 def _v3_history_by_iteration(
