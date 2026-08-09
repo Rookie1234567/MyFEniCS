@@ -295,27 +295,39 @@ def iter_canonical_active_trace_packets(
         dimension: topology.connectivity(topology.dim, dimension)
         for dimension in (1, 2)
     }
-    cell_trace_cache = {}
+    incidents_by_dimension = {
+        dimension: _owned_entity_incidents(function_space, dimension)
+        for dimension in (1, 2)
+    }
+    seen_cells: set[int] = set()
     active_union: set[int] = set()
     for dimension in (1, 2):
-        for _entity, cell in _owned_entity_incidents(function_space, dimension):
-            if cell not in cell_trace_cache:
-                cell_dofs = _cell_local_global_dofs(function_space, cell)
-                original_trace = cell_dofs[trace_positions]
-                active_ids, expansion, _identity = _cell_trace_expansion(
-                    original_trace, constraints
-                )
-                cell_trace_cache[cell] = (original_trace, active_ids, expansion)
-                active_union.update(int(value) for value in active_ids)
+        for _entity, cell in incidents_by_dimension[dimension]:
+            if cell in seen_cells:
+                continue
+            seen_cells.add(cell)
+            cell_dofs = _cell_local_global_dofs(function_space, cell)
+            original_trace = cell_dofs[trace_positions]
+            active_ids, _expansion, _identity = _cell_trace_expansion(
+                original_trace, constraints
+            )
+            active_union.update(int(value) for value in active_ids)
+            del _expansion, active_ids, original_trace, cell_dofs
     union_ids, union_values = _scatter_values(active_vec, active_union)
+    del seen_cells, active_union
     union_positions = {int(value): index for index, value in enumerate(union_ids)}
     layout = function_space.dofmap.dof_layout
     for dimension in (1, 2):
-        for entity, cell in _owned_entity_incidents(function_space, dimension):
-            original_trace, active_ids, expansion = cell_trace_cache[cell]
+        for entity, cell in incidents_by_dimension[dimension]:
+            cell_dofs = _cell_local_global_dofs(function_space, cell)
+            original_trace = cell_dofs[trace_positions]
+            active_ids, expansion, _identity = _cell_trace_expansion(
+                original_trace, constraints
+            )
             local_values = expansion.dot(
                 union_values[[union_positions[int(value)] for value in active_ids]]
             )
+            del expansion, active_ids, original_trace, cell_dofs
             local_entity = int(
                 np.flatnonzero(
                     np.asarray(cell_to_entity[dimension].links(cell), dtype=np.int32)
