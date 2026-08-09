@@ -8,13 +8,14 @@ standard physical norm audit are opt-in offline comparator operations.
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 import hashlib
 from typing import Any
 
 import numpy as np
 import ufl
 from dolfinx import cpp, fem
+from dolfinx.la.petsc import create_vector
 from mpi4py import MPI
 from petsc4py import PETSc
 
@@ -40,6 +41,7 @@ from .hcurl_canonical_vector import (
 __all__ = (
     "extract_canonical_active_trace_packets",
     "extract_canonical_full_fe_packets",
+    "iter_canonical_full_fe_dual_packets",
     "reconstruct_canonical_active_trace_vector",
     "reconstruct_canonical_full_fe_function",
     "compare_hcurl_fields",
@@ -283,6 +285,140 @@ def _packet_audit(
         "trace_mass_norm": "not_qualified",
         "hcurl_norm": "not_qualified",
     }
+
+
+def iter_canonical_full_fe_dual_packets(
+    function_space,
+    mpc,
+    recovered_vec,
+    *,
+    geometry_tolerance: float | None = None,
+) -> Iterator[CanonicalPacket]:
+    """Stream owner-local full-FE dual packets from one constrained vector.
+
+    Entity blocks use the conjugate-transpose physical transform.  Cell
+    interiors use Basix Tt_apply directly, so no per-cell orientation
+    matrix or global coefficient array is materialized.  The temporary MPC
+    extended vector is owned by this iterator and is destroyed when iteration
+    exhausts or raises.
+    """
+
+    if mpc is None:
+        raise ValueError("full-FE dual packets require finalized MPC metadata")
+    degree, _trace_positions, interior_positions = _space_data(function_space)
+    topology, cell_info, owned_cells = _topology_data(function_space)
+    tolerance = _resolve_geometry_tolerance(function_space, geometry_tolerance)
+    element_data = function_space.element
+    layout = function_space.dofmap.dof_layout
+    vector = (
+        recovered_vec
+        if isinstance(recovered_vec, PETSc.Vec)
+        else recovered_vec.x.petsc_vec
+    )
+    vector_index_map = mpc.function_space.dofmap.index_map
+    owned_size = int(function_space.dofmap.index_map.size_local)
+    if int(vector_index_map.size_local) != owned_size:
+        raise RuntimeError("MPC extended vector changed owned full-FE rows")
+    source_values = np.asarray(vector.getArray(readonly=True))
+    if source_values.size != owned_size:
+        raise RuntimeError("full-FE dual source has an incompatible owned layout")
+    extended = create_vector(
+        [
+            (
+                vector_index_map,
+                mpc.function_space.dofmap.index_map_bs,
+            )
+        ]
+    )
+    is_slave = np.asarray(mpc.is_slave, dtype=bool)
+    dimension = int(element_data.space_dimension)
+    stored = np.empty(dimension, dtype=np.complex128)
+    try:
+        with extended.localForm() as local:
+            local.set(0.0)
+            local.array_w[:owned_size] = source_values
+        extended.ghostUpdate(
+            addv=PETSc.InsertMode.INSERT_VALUES,
+            mode=PETSc.ScatterMode.FORWARD,
+        )
+        with extended.localForm() as local:
+            local_values = local.array_r
+            for dimension_index in (1, 2):
+                cell_to_entity = topology.connectivity(topology.dim, dimension_index)
+                for entity, cell in _owned_entity_incidents(
+                    function_space, dimension_index
+                ):
+                    local_entities = np.asarray(
+                        cell_to_entity.links(cell), dtype=np.int32
+                    )
+                    matches = np.flatnonzero(local_entities == int(entity))
+                    if matches.size != 1:
+                        raise RuntimeError("entity incidence is not unique")
+                    positions = np.asarray(
+                        layout.entity_dofs(dimension_index, int(matches[0])),
+                        dtype=np.int32,
+                    )
+                    local_dofs = np.asarray(
+                        function_space.dofmap.cell_dofs(cell), dtype=np.int32
+                    )[positions]
+                    slave_mask = np.asarray(
+                        [bool(is_slave[int(dof)]) for dof in local_dofs],
+                        dtype=bool,
+                    )
+                    if np.any(slave_mask) and not np.all(slave_mask):
+                        raise RuntimeError("Floquet entity block is partly constrained")
+                    if np.all(slave_mask):
+                        continue
+                    coordinates = _entity_coordinates(
+                        function_space, dimension_index, entity
+                    )
+                    transform, state = _physical_entity_transform(
+                        coordinates, dimension_index, degree, tolerance
+                    )
+                    canonical_values = transform.conj().T @ local_values[local_dofs]
+                    physical_key = canonical_entity_key(coordinates, tolerance)
+                    for basis, value in enumerate(canonical_values):
+                        yield canonical_packet(
+                            canonical_key(
+                                role="full_fe_dual",
+                                entity_dimension=dimension_index,
+                                physical_entity=physical_key,
+                                entity_local_basis_index=basis,
+                                orientation_state=state,
+                            ),
+                            value,
+                        )
+            for cell in range(int(owned_cells[0])):
+                local_dofs = np.asarray(
+                    function_space.dofmap.cell_dofs(cell), dtype=np.int32
+                )
+                stored[:] = local_values[local_dofs]
+                for position, local_dof in enumerate(local_dofs):
+                    if is_slave[int(local_dof)]:
+                        stored[position] = 0.0
+                element_data.Tt_apply(
+                    stored,
+                    np.asarray([cell_info[cell]], dtype=np.uint32),
+                    1,
+                )
+                physical_key = canonical_entity_key(
+                    _entity_coordinates(function_space, 3, cell), tolerance
+                )
+                for basis, position in enumerate(interior_positions):
+                    local_dof = int(local_dofs[int(position)])
+                    if local_dof < owned_size and not is_slave[local_dof]:
+                        yield canonical_packet(
+                            canonical_key(
+                                role="full_fe_dual",
+                                entity_dimension=3,
+                                physical_entity=physical_key,
+                                entity_local_basis_index=basis,
+                                orientation_state=("canonical_cell", "Tt_apply"),
+                            ),
+                            stored[int(position)],
+                        )
+    finally:
+        extended.destroy()
 
 
 def extract_canonical_active_trace_packets(

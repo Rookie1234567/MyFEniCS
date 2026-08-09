@@ -117,6 +117,25 @@ def test_fullspace_action_matches_assembled_reference(degree: int, mode: str):
         assert action.audit["slab_matrix_nnz"] == 0
         assert action.audit["slab_factor_count"] == 0
         assert action.audit["factor_count"] == 0
+        payload = action.audit["candidate_owned_numeric_payload_components"]
+        assert sum(payload.values()) == action.audit[
+            "candidate_owned_numeric_payload_local_bytes"
+        ]
+        assert action.audit["candidate_owned_numeric_payload_global_sum_bytes"] > 0
+        assert action.audit["candidate_owned_numeric_payload_global_max_bytes"] > 0
+        assert action.audit["candidate_owned_numeric_payload_local_bytes"] == action.audit[
+            "candidate_owned_numeric_payload_global_sum_bytes"
+        ]
+        assert action.audit["candidate_owned_numeric_payload_local_bytes"] == action.audit[
+            "candidate_owned_numeric_payload_global_max_bytes"
+        ]
+        assert payload["cell_tensor_scratch_bytes"] == action.audit[
+            "cell_tensor_scratch_bytes"
+        ]
+        assert payload["input_output_vec_storage_bytes"] > 0
+        assert action.audit["payload_ghost_storage_counted"] is True
+        assert action.audit["payload_python_object_headers_excluded"] is True
+        assert action.audit["payload_borrowed_mesh_form_mpc_excluded"] is True
     finally:
         difference.destroy()
         repeated.destroy()

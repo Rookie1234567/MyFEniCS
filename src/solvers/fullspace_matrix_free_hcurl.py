@@ -16,6 +16,7 @@ from typing import Any
 
 import numpy as np
 from dolfinx.la.petsc import create_vector
+from mpi4py import MPI
 from petsc4py import PETSc
 
 from .hcurl_assembly_time_condensation import (
@@ -92,9 +93,11 @@ class FullSpaceMatrixFreeHcurlAction:
         coordinates = []
         info_arrays = []
         for cell in range(owned_cells):
-            local_dofs.append(
-                np.asarray(self._dofmap.cell_dofs(cell), dtype=np.int32)
+            local_dof_array = np.array(
+                self._dofmap.cell_dofs(cell), dtype=np.int32, copy=True, order="C"
             )
+            local_dof_array.flags.writeable = False
+            local_dofs.append(local_dof_array)
             canonical, _widths = _canonical_axis_aligned_coordinates(
                 mesh,
                 cell,
@@ -109,7 +112,8 @@ class FullSpaceMatrixFreeHcurlAction:
         self._cell_local_dofs = tuple(local_dofs)
         self._cell_coordinates = tuple(coordinates)
         self._cell_infos = tuple(info_arrays)
-        self._cell_tags = tuple(int(tag) for tag in tags)
+        self._cell_tags = np.ascontiguousarray(tags, dtype=np.int32).copy()
+        self._cell_tags.flags.writeable = False
         self._cell_tensor = np.empty((dimension, dimension), dtype=np.complex128)
         if mpc is None:
             vector_dofmap = self._dofmap
@@ -132,7 +136,7 @@ class FullSpaceMatrixFreeHcurlAction:
                 raise RuntimeError("MPC extended layout changed global rows")
             extended_local_size = int(extended_index_map.size_local + extended_index_map.num_ghosts)
             owned_size = int(extended_index_map.size_local)
-            slaves = np.asarray(mpc.slaves, dtype=np.int32)
+            slaves = np.array(mpc.slaves, dtype=np.int32, copy=True, order="C")
             if np.any(slaves < 0) or np.any(slaves >= extended_local_size):
                 raise RuntimeError("MPC slave index is outside extended layout")
             coefficients, offsets = mpc.coefficients()
@@ -172,7 +176,7 @@ class FullSpaceMatrixFreeHcurlAction:
                     flat_masters.extend(int(value) for value in masters)
                     flat_coefficients.extend(complex(value) for value in row_coefficients)
                 slave_offsets[row + 1] = len(flat_masters)
-            slave_indices = np.ascontiguousarray(slaves, dtype=np.int32)
+            slave_indices = np.array(slaves, dtype=np.int32, copy=True, order="C")
             owned_slave_indices = slave_indices[slave_indices < owned_size].copy()
             slave_masters = np.ascontiguousarray(flat_masters, dtype=np.int32)
             slave_coefficients = np.ascontiguousarray(
@@ -236,6 +240,44 @@ class FullSpaceMatrixFreeHcurlAction:
         )
         self._matrix.setUp()
         self._destroyed = False
+        index_map = vector_dofmap.index_map
+        vec_entries = int(index_map.size_local + index_map.num_ghosts)
+        payload_components = {
+            "owned_cell_dof_arrays_bytes": int(
+                sum(array.nbytes for array in self._cell_local_dofs)
+            ),
+            "canonical_coordinates_bytes": int(
+                sum(array.nbytes for array in self._cell_coordinates)
+            ),
+            "cell_info_bytes": int(sum(array.nbytes for array in self._cell_infos)),
+            "cell_tag_bytes": int(self._cell_tags.nbytes),
+            "mpc_copy_bytes": int(
+                0
+                if mpc is None
+                else sum(
+                    array.nbytes
+                    for array in (
+                        self._mpc_slave_indices,
+                        self._mpc_owned_slave_indices,
+                        self._mpc_slave_offsets,
+                        self._mpc_slave_masters,
+                        self._mpc_slave_coefficients,
+                    )
+                )
+            ),
+            "input_output_vec_storage_bytes": int(
+                2 * vec_entries * np.dtype(PETSc.ScalarType).itemsize
+            ),
+            "cell_tensor_scratch_bytes": int(self._cell_tensor.nbytes),
+        }
+        local_payload_bytes = int(sum(payload_components.values()))
+        payload_global_sum_bytes = int(
+            mesh.comm.allreduce(local_payload_bytes, op=MPI.SUM)
+        )
+        payload_global_max_bytes = int(
+            mesh.comm.allreduce(local_payload_bytes, op=MPI.MAX)
+        )
+        payload_components = MappingProxyType(payload_components)
         self.audit: Mapping[str, Any] = MappingProxyType(
             {
                 "task037_extra_candidate_h": True,
@@ -245,17 +287,20 @@ class FullSpaceMatrixFreeHcurlAction:
                 "local_owned_rows": local_rows,
                 "local_cell_count": owned_cells,
                 "cell_dof_count": dimension,
-                "material_tags": tuple(sorted(set(self._cell_tags))),
+                "material_tags": tuple(sorted(set(map(int, self._cell_tags)))),
                 "kernel_ids": tuple(sorted(int(key) for key in self._kernels)),
                 "orientation": "dolfinx_element_T_apply",
                 "ghost_forward": True,
                 "reverse_scatter": True,
                 "global_matrix_materialized": False,
                 "global_A_materialized": False,
+                "global_condensed_schur_materialized": False,
                 "retained_cell_dense_matrix_count": 0,
+                "retained_cell_dense_882x882_count": 0,
                 "cell_tensor_scratch_count": 1,
                 "cell_tensor_scratch_bytes": int(self._cell_tensor.nbytes),
                 "cell_tensor_scratch_reused": True,
+                "cell_schur_matrix_nnz": 0,
                 "slab_matrix_nnz": 0,
                 "slab_factor_count": 0,
                 "factor_count": 0,
@@ -267,6 +312,21 @@ class FullSpaceMatrixFreeHcurlAction:
                 "mpc_metadata_cached": mpc is not None,
                 "mpc_per_apply_collective": False,
                 "global_constraint_matrix_materialized": False,
+                "dtn_probe": False,
+                "explicit_C_nnz": 0,
+                "explicit_D_nnz": 0,
+                "ksp_create_count": 0,
+                "ksp_solve_count": 0,
+                "official_field": False,
+                "official_RTA": False,
+                "candidate_owned_numeric_payload_components": payload_components,
+                "candidate_owned_numeric_payload_local_bytes": local_payload_bytes,
+                "candidate_owned_numeric_payload_global_sum_bytes": payload_global_sum_bytes,
+                "candidate_owned_numeric_payload_global_max_bytes": payload_global_max_bytes,
+                "payload_ghost_storage_counted": True,
+                "payload_python_object_headers_excluded": True,
+                "payload_borrowed_mesh_form_mpc_excluded": True,
+                "payload_no_double_counting": True,
             }
         )
 

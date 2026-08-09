@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import replace
+import shutil
+import tempfile
 from types import SimpleNamespace
+from pathlib import Path
 
 import dolfinx_mpc
 import numpy as np
@@ -13,15 +16,18 @@ from dolfinx.la.petsc import create_vector
 from mpi4py import MPI
 from petsc4py import PETSc
 
+from benchmarks.canonical_vector_artifacts import (
+    canonical_shard_manifest,
+    compare_canonical_manifests,
+    write_canonical_manifest,
+    write_canonical_packet_shard,
+)
 from src.common.config_3d import target_stage4_config
 from src.constraints.floquet_3d import build_double_floquet_mpc
 from src.constraints.floquet_3d_high_order import floquet_geometry_tolerance
 from src.solvers.hcurl_canonical_vector_dolfinx import (
-    _entity_coordinates,
-    _owned_entity_incidents,
-    _physical_entity_transform,
+    iter_canonical_full_fe_dual_packets,
 )
-from src.geometry.tetra_mesh_audit import canonical_entity_key
 from src.solvers.fullspace_matrix_free_hcurl import (
     build_task037_extra_candidate_h_fullspace_action,
 )
@@ -148,115 +154,16 @@ def _physical_source(function_space, mpc) -> PETSc.Vec:
     return source
 
 
-def _dual_packet(function_space, mpc, vector, tolerance: float):
-    mesh_3d = function_space.mesh
-    topology = mesh_3d.topology
-    topology.create_entity_permutations()
-    for dimension in (1, 2):
-        topology.create_entities(dimension)
-        topology.create_connectivity(dimension, topology.dim)
-        topology.create_connectivity(topology.dim, dimension)
-    layout = function_space.dofmap.dof_layout
-    element_data = function_space.element
-    degree = int(element_data.basix_element.degree)
-    cell_info = np.asarray(topology.get_cell_permutation_info(), dtype=np.uint32)
-    owned_size = int(function_space.dofmap.index_map.size_local)
-    extended = create_vector(
-        [(mpc.function_space.dofmap.index_map, mpc.function_space.dofmap.index_map_bs)]
+def _write_dual_shard(function_space, mpc, vector, tolerance: float, path: Path):
+    return write_canonical_packet_shard(
+        path,
+        iter_canonical_full_fe_dual_packets(
+            function_space,
+            mpc,
+            vector,
+            geometry_tolerance=tolerance,
+        ),
     )
-    try:
-        with extended.localForm() as local:
-            local.set(0.0)
-            local.array_w[:owned_size] = vector.getArray(readonly=True)
-        extended.ghostUpdate(
-            addv=PETSc.InsertMode.INSERT_VALUES,
-            mode=PETSc.ScatterMode.FORWARD,
-        )
-        with extended.localForm() as local:
-            local_values = np.asarray(local.array_r, dtype=np.complex128).copy()
-    finally:
-        extended.destroy()
-
-    is_slave = np.asarray(mpc.is_slave, dtype=bool)
-    packets: dict[tuple[object, ...], complex] = {}
-
-    def add_packet(key, value):
-        if key in packets:
-            raise AssertionError(f"duplicate dual packet key: {key!r}")
-        packets[key] = complex(value)
-
-    for dimension in (1, 2):
-        for entity, cell in _owned_entity_incidents(function_space, dimension):
-            local_entities = np.asarray(
-                topology.connectivity(topology.dim, dimension).links(cell),
-                dtype=np.int32,
-            )
-            local_entity_matches = np.flatnonzero(local_entities == int(entity))
-            if local_entity_matches.size != 1:
-                raise RuntimeError("entity incidence is not unique")
-            local_entity = int(local_entity_matches[0])
-            positions = np.asarray(
-                layout.entity_dofs(dimension, local_entity), dtype=np.int32
-            )
-            local_dofs = np.asarray(
-                function_space.dofmap.cell_dofs(cell), dtype=np.int32
-            )[positions]
-            slave_mask = np.asarray(
-                [bool(is_slave[int(dof)]) for dof in local_dofs], dtype=bool
-            )
-            if np.any(slave_mask) and not np.all(slave_mask):
-                raise AssertionError("Floquet entity block is partly constrained")
-            if np.all(slave_mask):
-                continue
-            coordinates = _entity_coordinates(function_space, dimension, entity)
-            transform, state = _physical_entity_transform(
-                coordinates, dimension, degree, tolerance
-            )
-            canonical_dual = transform.conj().T @ local_values[local_dofs]
-            physical_key = canonical_entity_key(coordinates, tolerance)
-            for basis, value in enumerate(canonical_dual):
-                add_packet((dimension, physical_key, state, basis), value)
-
-    interior_positions = np.asarray(
-        element_data.basix_element.entity_dofs[3][0], dtype=np.int32
-    )
-    owned_cells = int(topology.index_map(topology.dim).size_local)
-    dimension = int(element_data.space_dimension)
-    for cell in range(owned_cells):
-        local_dofs = np.asarray(
-            function_space.dofmap.cell_dofs(cell), dtype=np.int32
-        )
-        stored = local_values[local_dofs].copy()
-        for position, local_dof in enumerate(local_dofs):
-            if is_slave[int(local_dof)]:
-                stored[position] = 0.0
-        orientation = np.zeros((dimension, dimension), dtype=np.complex128)
-        info = np.asarray([cell_info[cell]], dtype=np.uint32)
-        for column in range(dimension):
-            basis = np.zeros(dimension, dtype=np.complex128)
-            basis[column] = 1.0
-            element_data.T_apply(basis, info, 1)
-            orientation[:, column] = basis
-        canonical_dual = orientation.conj().T @ stored
-        physical_key = canonical_entity_key(
-            _entity_coordinates(function_space, 3, cell), tolerance
-        )
-        for basis, position in enumerate(interior_positions):
-            local_dof = int(local_dofs[int(position)])
-            if local_dof < owned_size and not is_slave[local_dof]:
-                add_packet((3, physical_key, basis), canonical_dual[int(position)])
-    return packets
-
-
-def _merge_packets(comm, local_packets):
-    merged = {}
-    duplicate_count = 0
-    for packet in comm.allgather(local_packets):
-        for key, value in packet.items():
-            if key in merged:
-                duplicate_count += 1
-            merged[key] = value
-    return merged, duplicate_count
 
 
 @pytest.mark.parametrize("degree", [2, 3])
@@ -294,6 +201,7 @@ def test_fullspace_mpc_action_and_dual_packets_are_partition_invariant(degree: i
     serial_action = None
     serial_source = None
     serial_observed = None
+    packet_root = None
     try:
         assembled.mult(source, expected)
         action.matrix.mult(source, observed)
@@ -337,63 +245,97 @@ def test_fullspace_mpc_action_and_dual_packets_are_partition_invariant(degree: i
         assert action.audit["global_constraint_matrix_materialized"] is False
 
         tolerance = floquet_geometry_tolerance(cfg)
-        local_packets = _dual_packet(
-            function_space, floquet.mpc, observed, tolerance
+        if comm.rank == 0:
+            packet_root = Path(
+                tempfile.mkdtemp(prefix=f"task037_h1_2_dual_p{degree}_")
+            )
+        packet_root = Path(
+            comm.bcast(None if packet_root is None else str(packet_root), root=0)
         )
-        world_packets, duplicate_count = _merge_packets(comm, local_packets)
-        if comm.size == 1:
-            serial_packet = world_packets
-        else:
-            serial_cfg, _, serial_space, serial_tags, _, serial_floquet, serial_form = (
-                _build_case(degree, MPI.COMM_SELF)
+        world_shard = packet_root / f"world_rank{comm.rank}.jsonl"
+        world_metadata = _write_dual_shard(
+            function_space, floquet.mpc, observed, tolerance, world_shard
+        )
+        gathered_metadata = comm.gather(world_metadata, root=0)
+        comparison = None
+        if comm.rank == 0:
+            world_manifest_path = packet_root / "world_manifest.json"
+            world_manifest = canonical_shard_manifest(
+                role="full_fe_dual",
+                mpi_size=comm.size,
+                shard_metadata=gathered_metadata,
+                extractor_audit={"source": "candidate_action_observed"},
             )
-            serial_assembled = dolfinx_mpc.assemble_matrix(
-                serial_form,
-                serial_floquet.mpc,
-                diagval=PETSc.ScalarType(1.0),
+            world_manifest_sha256 = write_canonical_manifest(
+                world_manifest_path, world_manifest
             )
-            serial_assembled.assemble()
-            serial_action = build_task037_extra_candidate_h_fullspace_action(
-                serial_form,
-                serial_space,
-                serial_tags,
-                mpc=serial_floquet.mpc,
-                task037_extra_candidate_h=True,
-                geometry_tolerance=floquet_geometry_tolerance(serial_cfg),
+            if comm.size == 1:
+                serial_manifest_path = world_manifest_path
+                serial_manifest_sha256 = world_manifest_sha256
+            else:
+                (
+                    serial_cfg,
+                    _serial_mesh_data,
+                    serial_space,
+                    serial_tags,
+                    _serial_tags,
+                    serial_floquet,
+                    serial_form,
+                ) = _build_case(degree, MPI.COMM_SELF)
+                serial_assembled = dolfinx_mpc.assemble_matrix(
+                    serial_form,
+                    serial_floquet.mpc,
+                    diagval=PETSc.ScalarType(1.0),
+                )
+                serial_assembled.assemble()
+                serial_action = build_task037_extra_candidate_h_fullspace_action(
+                    serial_form,
+                    serial_space,
+                    serial_tags,
+                    mpc=serial_floquet.mpc,
+                    task037_extra_candidate_h=True,
+                    geometry_tolerance=floquet_geometry_tolerance(serial_cfg),
+                )
+                serial_source = _physical_source(serial_space, serial_floquet.mpc)
+                serial_observed = serial_assembled.createVecLeft()
+                serial_action.matrix.mult(serial_source, serial_observed)
+                serial_shard = packet_root / "serial_rank0.jsonl"
+                serial_metadata = _write_dual_shard(
+                    serial_space,
+                    serial_floquet.mpc,
+                    serial_observed,
+                    floquet_geometry_tolerance(serial_cfg),
+                    serial_shard,
+                )
+                serial_manifest_path = packet_root / "serial_manifest.json"
+                serial_manifest = canonical_shard_manifest(
+                    role="full_fe_dual",
+                    mpi_size=1,
+                    shard_metadata=(serial_metadata,),
+                    extractor_audit={"source": "serial_reference_action"},
+                )
+                serial_manifest_sha256 = write_canonical_manifest(
+                    serial_manifest_path, serial_manifest
+                )
+            comparison = compare_canonical_manifests(
+                world_manifest_path,
+                serial_manifest_path,
+                left_sha256=world_manifest_sha256,
+                right_sha256=serial_manifest_sha256,
+                relative_tolerance=1.0e-11,
             )
-            serial_source = _physical_source(serial_space, serial_floquet.mpc)
-            serial_observed = serial_assembled.createVecLeft()
-            serial_action.matrix.mult(serial_source, serial_observed)
-            serial_packets = _dual_packet(
-                serial_space,
-                serial_floquet.mpc,
-                serial_observed,
-                floquet_geometry_tolerance(serial_cfg),
-            )
-            serial_packet = serial_packets
-        missing = set(serial_packet).difference(world_packets)
-        extra = set(world_packets).difference(serial_packet)
-        assert not missing
-        assert not extra
-        assert duplicate_count == 0
+        comparison = comm.bcast(comparison, root=0)
+        assert comparison["pass"] is True
+        assert comparison["duplicate_left_count"] == 0
+        assert comparison["duplicate_right_count"] == 0
+        assert comparison["missing_key_count"] == 0
+        assert comparison["extra_key_count"] == 0
         expected_reduced_dual_rows = (
             int(action.audit["global_rows"]) - int(floquet.num_constraints)
         )
-        assert len(world_packets) == expected_reduced_dual_rows
-        assert len(serial_packet) == expected_reduced_dual_rows
-        values_world = np.asarray(
-            [world_packets[key] for key in sorted(world_packets, key=repr)],
-            dtype=np.complex128,
-        )
-        values_serial = np.asarray(
-            [serial_packet[key] for key in sorted(serial_packet, key=repr)],
-            dtype=np.complex128,
-        )
-        packet_error = np.linalg.norm(values_world - values_serial) / max(
-            np.linalg.norm(values_serial), 1.0e-30
-        )
-        assert packet_error <= 1.0e-11
-        assert len(world_packets) == len(serial_packet)
+        assert comparison["left_shape"][0] == expected_reduced_dual_rows
+        assert comparison["right_shape"][0] == expected_reduced_dual_rows
+        packet_error = comparison["relative_coefficient_l2"]
         global_permutation_values = sorted(
             {
                 int(value)
@@ -418,11 +360,11 @@ def test_fullspace_mpc_action_and_dual_packets_are_partition_invariant(degree: i
                     "finite": True,
                     "repeated_bitwise_equal": True,
                     "world_dual_packet_relative_error": packet_error,
-                    "world_dual_packet_count": len(world_packets),
-                    "serial_dual_packet_count": len(serial_packet),
-                    "missing": len(missing),
-                    "extra": len(extra),
-                    "duplicate": duplicate_count,
+                    "world_dual_packet_count": comparison["left_shape"][0],
+                    "serial_dual_packet_count": comparison["right_shape"][0],
+                    "missing": comparison["missing_key_count"],
+                    "extra": comparison["extra_key_count"],
+                    "duplicate": comparison["duplicate_left_count"],
                     "phase_x": complex(floquet.phase_x),
                     "phase_y": complex(floquet.phase_y),
                     "global_material_tags": sorted(global_tags),
@@ -452,6 +394,8 @@ def test_fullspace_mpc_action_and_dual_packets_are_partition_invariant(degree: i
                 }
             )
     finally:
+        if comm.rank == 0 and packet_root is not None:
+            shutil.rmtree(packet_root, ignore_errors=True)
         if serial_observed is not None:
             serial_observed.destroy()
         if serial_source is not None:
