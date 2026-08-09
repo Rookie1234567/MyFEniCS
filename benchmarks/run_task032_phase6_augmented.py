@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 from contextlib import contextmanager
 from datetime import datetime, timezone
+import gc
 import hashlib
 import json
 import math
@@ -299,6 +300,51 @@ def _verify_source_stable_at_end(
 
 def _max_elapsed(comm: MPI.Intracomm, started: float) -> float:
     return float(comm.allreduce(time.perf_counter() - started, op=MPI.MAX))
+
+
+def _v6_collective_heap_cleanup(comm: MPI.Intracomm) -> dict[str, Any]:
+    """Collect PETSc/Python garbage, trim each rank, and retain rank evidence."""
+
+    started = time.perf_counter()
+    gc.collect()
+    PETSc.garbage_cleanup(comm)
+    gc.collect()
+    local = dict(_trim_process_heap())
+    local["rank"] = int(comm.rank)
+    rank_audits = comm.allgather(local)
+    return {
+        "petsc_garbage_cleanup_called": True,
+        "collective_call_completed": bool(
+            all(item.get("call_completed") is True for item in rank_audits)
+        ),
+        "rank_audits": rank_audits,
+        "max_rss_before_mb": max(float(item["rss_before_mb"]) for item in rank_audits),
+        "max_rss_after_mb": max(float(item["rss_after_mb"]) for item in rank_audits),
+        "max_rss_released_mb": max(
+            float(item["rss_released_mb"]) for item in rank_audits
+        ),
+        "pages_released_any_rank": bool(
+            any(
+                item.get("allocator_reported_pages_released") is True
+                for item in rank_audits
+            )
+        ),
+        "elapsed_seconds_max_rank": _max_elapsed(comm, started),
+    }
+
+
+def _v6_release_qep_operators(operators: Any, comm: MPI.Intracomm) -> dict[str, Any]:
+    """Destroy V6-only QEP operators once, then perform the collective cleanup."""
+
+    operators.destroy()
+    cleanup = _v6_collective_heap_cleanup(comm)
+    return {
+        "status": "measured",
+        "destroy_call_completed": True,
+        "destroy_state": getattr(operators, "_destroyed", "not_exposed"),
+        "cleanup": cleanup,
+        "release_pass": bool(cleanup["collective_call_completed"]),
+    }
 
 
 def _historical_peak_rss_mb() -> float | None:
@@ -2496,6 +2542,7 @@ def _run_v4_full_solve(
     mark_stage,
     v5_multimetric: bool = False,
     v6_traction_aligned: bool = False,
+    v6_early_qep_cleanup: dict[str, Any] | None = None,
 ) -> None:
     """Run the single V4/V5 double fixed-action solve and controlled-stop record."""
 
@@ -3364,6 +3411,10 @@ def _run_v4_full_solve(
                 ),
             }
             v5_multimetric_telemetry = record["v4_telemetry"]["multimetric"]
+            if is_v6:
+                v5_multimetric_telemetry["early_qep_cleanup"] = dict(
+                    v6_early_qep_cleanup
+                )
         record["side_records"] = side_records
 
         if numerical_pass:
@@ -3570,6 +3621,23 @@ def _run_v4_full_solve(
             raise RuntimeError(
                 "V4 full-solve implementation/lifecycle contract failed."
             )
+        if is_v6 and numerical_pass:
+            record_stage("v6_pre_recovery_heap_cleanup_started")
+            pre_recovery_cleanup = _v6_collective_heap_cleanup(comm)
+            pre_recovery_cleanup["status"] = "measured"
+            pre_recovery_cleanup["release_pass"] = bool(
+                pre_recovery_cleanup["collective_call_completed"]
+            )
+            timings["v6_pre_recovery_heap_cleanup"] = pre_recovery_cleanup[
+                "elapsed_seconds_max_rank"
+            ]
+            if v5_multimetric_telemetry is not None:
+                v5_multimetric_telemetry["pre_recovery_heap_cleanup"] = (
+                    pre_recovery_cleanup
+                )
+            record_stage("v6_pre_recovery_heap_cleanup_finished")
+            if not pre_recovery_cleanup["release_pass"]:
+                raise RuntimeError("V6 pre-recovery collective cleanup failed.")
         if numerical_pass:
             record["v4_telemetry"]["recovery_phase"] = "external_auxiliary"
             record_stage("candidate_field_recovery")
@@ -8387,6 +8455,7 @@ def main() -> None:
     modal_cfg.incident_phi_deg = cfg.incident_phi_deg
     modal_cfg.polarization_kind = cfg.polarization_kind
     operators = None
+    v6_early_qep_cleanup: dict[str, Any] | None = None
     positive = None
     negative = None
     bottom = None
@@ -8785,6 +8854,16 @@ def main() -> None:
             timings[coupling_key] = _max_elapsed(comm, started)
             if args.task037b_v3_gate or args.task037b_v4_gate:
                 mark_stage("action_coupling_build_ready")
+            if args.task037b_v6_gate:
+                mark_stage("v6_qep_early_release_started")
+                v6_early_qep_cleanup = _v6_release_qep_operators(operators, comm)
+                operators = None
+                timings["v6_qep_early_cleanup"] = v6_early_qep_cleanup["cleanup"][
+                    "elapsed_seconds_max_rank"
+                ]
+                mark_stage("v6_qep_early_release_finished")
+                if not v6_early_qep_cleanup["release_pass"]:
+                    raise RuntimeError("V6 early QEP release contract failed.")
             if args.task037b_v4_gate:
                 _run_v4_full_solve(
                     args=args,
@@ -8803,6 +8882,7 @@ def main() -> None:
                     mark_stage=mark_stage,
                     v5_multimetric=args.task037b_v5_gate,
                     v6_traction_aligned=args.task037b_v6_gate,
+                    v6_early_qep_cleanup=v6_early_qep_cleanup,
                 )
             else:
                 _run_v2_block_screen(
@@ -10786,6 +10866,22 @@ def main() -> None:
                 "release_order": [],
                 "objects": {},
             }
+            if args.task037b_v6_gate:
+                early_qep_pass = bool(v6_early_qep_cleanup.get("release_pass") is True)
+                early_qep_cleanup = v6_early_qep_cleanup["cleanup"]
+                v4_postprocess_release["release_order"].append(
+                    "qep_operators_early_release"
+                )
+                v4_postprocess_release["objects"]["qep_operators_early_release"] = {
+                    "destroy_call_completed": bool(
+                        v6_early_qep_cleanup.get("destroy_call_completed") is True
+                    ),
+                    "cleanup_call_completed": bool(
+                        early_qep_cleanup.get("collective_call_completed") is True
+                    ),
+                    "released_early": True,
+                    "release_pass": early_qep_pass,
+                }
             if system is not None:
                 system.destroy()
                 v4_postprocess_release["release_order"].append("action_system")
@@ -10846,8 +10942,12 @@ def main() -> None:
                 "coupling",
                 "positive_modal_basis",
                 "negative_modal_basis",
-                "qep_operators",
             }
+            expected_release_objects.add(
+                "qep_operators_early_release"
+                if args.task037b_v6_gate
+                else "qep_operators"
+            )
             if "action_system" in v4_postprocess_release["objects"]:
                 expected_release_objects.add("action_system")
             v4_postprocess_release["release_pass"] = bool(
@@ -10855,6 +10955,13 @@ def main() -> None:
                 and all(
                     item.get("destroy_call_completed") is True
                     for item in v4_postprocess_release["objects"].values()
+                )
+                and (
+                    not args.task037b_v6_gate
+                    or v4_postprocess_release["objects"]["qep_operators_early_release"][
+                        "release_pass"
+                    ]
+                    is True
                 )
             )
             if record is not None:

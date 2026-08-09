@@ -3,13 +3,16 @@ from __future__ import annotations
 from pathlib import Path
 
 import numpy as np
+from mpi4py import MPI
 from petsc4py import PETSc
 
 import benchmarks.run_task033_memory_watchdog as watchdog
 from benchmarks.run_task032_phase6_augmented import (
     _parse_args,
+    _v6_collective_heap_cleanup,
     _v4_full_fe_threshold_pass as _runner_full_fe_threshold_pass,
     _v4_not_run_validation_boundary,
+    _v6_release_qep_operators,
 )
 from benchmarks.run_task033_memory_watchdog import (
     _parse_args as _watchdog_parse_args,
@@ -126,6 +129,40 @@ def test_v6_recovery_thresholds_are_profile_specific():
             exceeded = list(tight_values)
             exceeded[index] = value * (1.0 + 1.0e-6)
             assert not helper(*exceeded, tight=True)
+
+
+def test_v6_collective_heap_cleanup_records_calls_without_page_release_gate():
+    audit = _v6_collective_heap_cleanup(MPI.COMM_WORLD)
+    assert audit["collective_call_completed"] is True
+    assert len(audit["rank_audits"]) == MPI.COMM_WORLD.Get_size()
+    assert audit["elapsed_seconds_max_rank"] >= 0.0
+    for rank_audit in audit["rank_audits"]:
+        assert rank_audit["call_completed"] is True
+        assert rank_audit["rank"] in range(MPI.COMM_WORLD.Get_size())
+        assert "rss_before_mb" in rank_audit
+        assert "rss_after_mb" in rank_audit
+        assert "rss_released_mb" in rank_audit
+        assert "allocator_reported_pages_released" in rank_audit
+    assert audit["petsc_garbage_cleanup_called"] is True
+
+
+def test_v6_early_qep_release_destroys_once_and_records_cleanup():
+    class _FakeQepOperators:
+        def __init__(self):
+            self.destroy_calls = 0
+            self._destroyed = False
+
+        def destroy(self):
+            self.destroy_calls += 1
+            self._destroyed = True
+
+    operators = _FakeQepOperators()
+    audit = _v6_release_qep_operators(operators, MPI.COMM_WORLD)
+    assert operators.destroy_calls == 1
+    assert audit["destroy_call_completed"] is True
+    assert audit["destroy_state"] is True
+    assert audit["cleanup"]["collective_call_completed"] is True
+    assert audit["release_pass"] is True
 
 
 def test_v6_parser_and_worker_command_require_v4_v5_pair():
