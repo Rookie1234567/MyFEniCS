@@ -21,7 +21,10 @@ from benchmarks.run_task033_memory_watchdog import (
     _worker_command,
 )
 from benchmarks.task037b_v4_full_qualification_checker import (
+    _compare_to_significant_reference,
     _compare_order_maps,
+    _load_significant_reference,
+    _significant_reference_order_map,
     check_v4_evidence,
 )
 from src.test.test_243_task037b_v4_full_qualification import _write_bundle
@@ -212,6 +215,16 @@ def test_checker_compares_numeric_h1_payload_and_keeps_candidate_read_only(
 ) -> None:
     summary_path = _write_bundle(tmp_path / "complete")
     solver_path, _h1 = _add_numeric_h1_payload(summary_path)
+    candidate_path = summary_path.parent / "solver_record.json"
+    candidate = json.loads(candidate_path.read_text())
+    candidate["validation"]["A_volume"].pop("R_plus_T_plus_A_volume")
+    candidate["validation"]["energy_closure"] = {
+        "R_plus_T_plus_A_volume": 1.0,
+    }
+    candidate_path.write_text(json.dumps(candidate, sort_keys=True), encoding="utf-8")
+    summary = json.loads(summary_path.read_text())
+    summary["v4_artifacts"]["solver_record_sha256"] = _sha256(candidate_path)
+    summary_path.write_text(json.dumps(summary, sort_keys=True), encoding="utf-8")
     before = json.loads((summary_path.parent / "solver_record.json").read_text())
     result = check_v4_evidence(summary_path)
     after = json.loads((summary_path.parent / "solver_record.json").read_text())
@@ -219,9 +232,20 @@ def test_checker_compares_numeric_h1_payload_and_keeps_candidate_read_only(
     assert result["evidence_integrity_pass"] is True
     assert result["comparisons"]["q"]["status"] == "pass"
     assert result["comparisons"]["twelve_plus_twelve"]["status"] == "pass"
-    assert result["comparisons"]["modal"]["status"] == "pass"
+    assert (
+        result["comparisons"]["modal"]["status"]
+        == "diagnostic_not_comparable_independent_qep_gauge"
+    )
+    assert result["comparisons"]["modal"]["qualification_pass"] is True
     assert result["comparisons"]["selected_fields"]["status"] == "pass"
     assert result["comparisons"]["canonical"]["status"] == "pass"
+    assert result["comparisons"]["energy"]["status"] == "pass"
+    assert (
+        result["comparisons"]["energy"]["fields"]["R_plus_T_plus_A_volume"][
+            "absolute_difference"
+        ]
+        == 0.0
+    )
     full3d_dimensions = result["comparisons"]["iterative_vs_full3d"]["dimensions"]
     assert (
         full3d_dimensions["twelve_plus_twelve_powers_amplitudes"]["status"]
@@ -259,7 +283,12 @@ def test_checker_recomputes_numeric_difference_after_hash_bound_modal_tamper(
     assert result["candidate_evidence_pass"] is True
     assert result["evidence_integrity_pass"] is True
     assert result["authority_payload_gap"] is False
-    assert result["comparisons"]["modal"]["status"] == "fail"
+    assert (
+        result["comparisons"]["modal"]["status"]
+        == "diagnostic_not_comparable_independent_qep_gauge"
+    )
+    assert result["comparisons"]["modal"]["relative_l2_error"] > 1.0e-5
+    assert result["comparisons"]["modal"]["qualification_pass"] is True
     assert result["pass"] is False
     assert result["fail_closed"] is True
 
@@ -278,9 +307,81 @@ def test_order_coverage_without_numeric_agreement_is_not_pass() -> None:
     right[("top", 40, 0, "s")]["power_ratio"] = 10.0
 
     result = _compare_order_maps(left, right)
+    assert result["all_order_coverage"] is True
     assert result["key_and_finite_coverage_pass"] is True
     assert result["numeric_pass"] is False
     assert result["status"] == "fail"
+
+
+def test_order_below_floor_is_coverage_diagnostic_only() -> None:
+    left = {}
+    right = {}
+    for index in range(80):
+        key = ("bottom" if index < 40 else "top", index, 0, "s")
+        power = 1.0 if index < 12 else 1.0e-12
+        row = {
+            "power_ratio": power,
+            "outgoing_amplitude_at_boundary": [1.0, 0.0],
+        }
+        left[key] = row
+        right[key] = copy.deepcopy(row)
+        if index == 12:
+            right[key]["power_ratio"] = 2.0e-12
+            right[key]["outgoing_amplitude_at_boundary"] = [3.0, 4.0]
+
+    result = _compare_order_maps(left, right)
+    assert result["status"] == "pass"
+    assert result["all_order_coverage"] is True
+    assert result["significant_numeric_comparison"]["pass"] is True
+    assert result["significant_count"] == 12
+    assert result["below_floor_count"] == 68
+    below_floor_row = next(
+        row for row in result["rows"] if row["key"] == list(("bottom", 12, 0, "s"))
+    )
+    assert below_floor_row["diagnostic_pass"] is False
+
+
+def test_hash_bound_significant_reference_maps_frozen_full3d_channels() -> None:
+    root = Path(__file__).resolve().parents[2]
+    reference = _load_significant_reference(
+        root / "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/"
+        "significant_channel_reference_v1.json",
+        "83b7bcfeb510b849aea391d86f306072ead0232781598ea1232617e2535293e3",
+    )
+    frozen_orders = _significant_reference_order_map(reference)
+    comparison = _compare_to_significant_reference(
+        frozen_orders, frozen_orders, reference
+    )
+    assert len(frozen_orders) == 12
+    assert comparison["analytic_identity_pass_count"] == 12
+    assert comparison["pass"] is True
+
+
+def test_checker_field_tamper_fails_physical_modal_qualification(
+    tmp_path: Path,
+) -> None:
+    summary_path = _write_bundle(tmp_path / "field_tamper")
+    solver_path, h1 = _add_numeric_h1_payload(summary_path)
+    grid_path = Path(h1["h1_telemetry"]["own_grid"]["path"])
+    with np.load(grid_path, allow_pickle=False) as payload:
+        arrays = {name: np.asarray(payload[name]) for name in payload.files}
+    arrays["E_V_per_m"] = arrays["E_V_per_m"].copy()
+    arrays["E_V_per_m"][0, 0, 0, 0] = 1.0 + 1.0j
+    np.savez_compressed(grid_path, **arrays)
+    h1["h1_telemetry"]["own_grid"]["sha256"] = _sha256(grid_path)
+    h1["h1_telemetry"]["own_grid"]["arrays"]["E_V_per_m"] = _array_descriptor(
+        arrays["E_V_per_m"]
+    )
+    solver_path.write_text(json.dumps(h1, sort_keys=True), encoding="utf-8")
+    summary = json.loads(summary_path.read_text())
+    summary["v4_authorities"]["h1_direct"]["sha256"] = _sha256(solver_path)
+    summary_path.write_text(json.dumps(summary, sort_keys=True), encoding="utf-8")
+
+    result = check_v4_evidence(summary_path)
+    assert result["candidate_evidence_pass"] is True
+    assert result["comparisons"]["selected_fields"]["status"] == "fail"
+    assert result["comparisons"]["modal"]["qualification_pass"] is False
+    assert result["pass"] is False
 
 
 @pytest.mark.parametrize("missing", ("modal", "selected", "canonical"))

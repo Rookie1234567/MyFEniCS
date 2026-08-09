@@ -262,6 +262,19 @@ def _relative_array_l2(left: np.ndarray, right: np.ndarray) -> float | None:
     )
 
 
+def _relative_magnitude_l2(left: np.ndarray, right: np.ndarray) -> float | None:
+    if left.shape != right.shape:
+        return None
+    left = np.asarray(left, dtype=np.complex128)
+    right = np.asarray(right, dtype=np.complex128)
+    if not np.all(np.isfinite(left)) or not np.all(np.isfinite(right)):
+        return None
+    return float(
+        np.linalg.norm(np.abs(left) - np.abs(right))
+        / max(np.linalg.norm(left), np.linalg.norm(right), 1.0e-15)
+    )
+
+
 def _check_own_grid(
     record: Mapping[str, Any], anchor: Path
 ) -> tuple[bool, dict[str, Any]]:
@@ -512,17 +525,30 @@ def _compare_order_maps(
                 "power_relative_error": power_relative,
                 "boundary_amplitude_absolute_error": amplitude_error,
                 "boundary_amplitude_relative_error": amplitude_relative,
-                "pass": bool(power_relative <= 1.0e-3 and amplitude_relative <= 1.0e-3),
+                "diagnostic_pass": bool(
+                    power_relative <= 1.0e-3 and amplitude_relative <= 1.0e-3
+                ),
             }
         )
-    numeric_pass = bool(rows) and all(row["pass"] for row in rows)
+    significant = (
+        _compare_full_hybrid(left, right)
+        if keys_match
+        else {"pass": False, "significant_channel_count": None, "channels": []}
+    )
+    coverage_pass = bool(keys_match and len(rows) == 80)
     return {
-        "status": (
-            "pass" if keys_match and len(rows) == 80 and numeric_pass else "fail"
-        ),
+        "status": "pass" if coverage_pass and significant["pass"] else "fail",
         "count": len(rows),
-        "key_and_finite_coverage_pass": bool(keys_match and len(rows) == 80),
-        "numeric_pass": numeric_pass,
+        "all_order_coverage": coverage_pass,
+        "key_and_finite_coverage_pass": coverage_pass,
+        "numeric_pass": bool(significant["pass"]),
+        "significant_count": significant.get("significant_channel_count"),
+        "below_floor_count": (
+            80 - int(significant["significant_channel_count"])
+            if significant.get("significant_channel_count") is not None
+            else None
+        ),
+        "significant_numeric_comparison": significant,
         "max_power_relative_error": max(
             (row["power_relative_error"] for row in rows), default=None
         ),
@@ -557,12 +583,44 @@ def _validation_observables(record: Mapping[str, Any]) -> dict[str, Any]:
         "A_volume_total": volume.get("A_volume_total"),
         "local_regions": volume.get("local_regions"),
         "middle_modal_region": volume.get("middle_modal_region"),
-        "R_plus_T_plus_A_volume": volume.get("R_plus_T_plus_A_volume"),
+        "R_plus_T_plus_A_volume": volume.get(
+            "R_plus_T_plus_A_volume",
+            energy.get("R_plus_T_plus_A_volume"),
+        ),
         "energy_closure_error": volume.get(
             "energy_closure_error", energy.get("closure_error")
         ),
     }
     return values
+
+
+def _significant_reference_order_map(
+    reference: Mapping[str, Any],
+) -> dict[tuple[str, int, int, str], Mapping[str, Any]]:
+    channels = reference.get("channels")
+    if not isinstance(channels, Mapping) or len(channels) != 12:
+        raise ValueError("significant reference must contain 12 channels")
+    result: dict[tuple[str, int, int, str], Mapping[str, Any]] = {}
+    for key, item in channels.items():
+        if not isinstance(item, Mapping):
+            raise ValueError("significant reference channel is not an object")
+        identity = item.get("analytic_identity")
+        center = item.get("reference_center")
+        if not isinstance(identity, Mapping) or not isinstance(center, Mapping):
+            raise ValueError("significant reference channel payload is incomplete")
+        order_key = _order_key(identity, "significant reference analytic identity")
+        if order_key != key or order_key in result:
+            raise ValueError("significant reference channel identity is duplicated")
+        amplitude = center.get("complex_amplitude")
+        if _complex_value(amplitude) is None or not _finite(center.get("power")):
+            raise ValueError("significant reference channel payload is nonfinite")
+        mapped = dict(identity)
+        mapped["outgoing_amplitude_at_boundary"] = amplitude
+        mapped["power_ratio"] = center["power"]
+        result[order_key] = mapped
+    if len(result) != 12:
+        raise ValueError("significant reference channel identity is incomplete")
+    return result
 
 
 def check_v4_evidence(
@@ -771,6 +829,7 @@ def check_v4_evidence(
         "modal": {"status": direct_status},
         "canonical": {"status": direct_status},
         "selected_fields": {"status": direct_status},
+        "direct_hybrid_vs_full3d": {"status": "not_run_dependency_gate"},
         "iterative_vs_full3d": {
             "status": "not_run_dependency_gate",
             "dimensions": {
@@ -793,6 +852,10 @@ def check_v4_evidence(
                 "selected_middle_fields": {
                     "status": "not_available",
                     "reason": "pinned Full3D authority has no selected middle E/H arrays",
+                },
+                "direct_hybrid_vs_frozen_full3d": {
+                    "status": "not_run_dependency_gate",
+                    "source": "significant_reference",
                 },
             },
         },
@@ -864,25 +927,30 @@ def check_v4_evidence(
         h1_orders = _order_map(h1_validation.get("external_diffraction_orders"))
         if candidate_orders is not None and h1_orders is not None:
             comparisons["orders"] = _compare_order_maps(h1_orders, candidate_orders)
-            twelve_plus_twelve = _compare_full_hybrid(h1_orders, candidate_orders)
+            twelve_plus_twelve = comparisons["orders"]["significant_numeric_comparison"]
             comparisons["twelve_plus_twelve"] = {
                 "status": "pass" if twelve_plus_twelve.get("pass") is True else "fail",
                 "result": twelve_plus_twelve,
             }
         if h1_arrays is None or not h1_state.get("modal_numeric_payload"):
-            comparisons["modal"] = {"status": "not_run_authority_payload_gap"}
+            comparisons["modal"] = {
+                "status": "not_run_authority_payload_gap",
+                "qualification_pass": False,
+            }
         else:
             modal_error = _relative_array_l2(
                 candidate_arrays["modal_amplitudes"],
                 h1_arrays["modal_amplitudes"],
             )
             comparisons["modal"] = {
-                "status": (
-                    "pass"
-                    if modal_error is not None and modal_error <= 1.0e-5
-                    else "fail"
-                ),
+                "status": "diagnostic_not_comparable_independent_qep_gauge",
+                "diagnostic_only": True,
                 "relative_l2_error": modal_error,
+                "magnitude_relative_l2": _relative_magnitude_l2(
+                    candidate_arrays["modal_amplitudes"],
+                    h1_arrays["modal_amplitudes"],
+                ),
+                "qualification_pass": False,
             }
         selected_parts = {
             "bottom_interface": (0, slice(None), slice(None), slice(0, 2)),
@@ -927,6 +995,10 @@ def check_v4_evidence(
                 "coordinate_alignment": coordinate_alignment,
                 "parts": selected_errors,
             }
+        if comparisons["modal"].get("diagnostic_only") is True:
+            comparisons["modal"]["qualification_pass"] = bool(
+                comparisons["selected_fields"].get("status") == "pass"
+            )
         if not h1_state.get("canonical_numeric_payload"):
             comparisons["canonical"] = {"status": "not_run_authority_payload_gap"}
         else:
@@ -1072,36 +1144,83 @@ def check_v4_evidence(
         if isinstance(authority_specs, Mapping)
         else {}
     )
-    if comparison_ready and isinstance(h1, Mapping) and isinstance(record, Mapping):
+    if (
+        comparison_ready
+        and not authority_payload_gap
+        and isinstance(h1, Mapping)
+        and isinstance(record, Mapping)
+    ):
         try:
             reference_path = _resolve(reference_spec.get("path"), summary_path)
             reference_sha = reference_spec.get("sha256")
             if reference_path is None or not isinstance(reference_sha, str):
                 raise ValueError("significant reference binding is incomplete")
             reference = _load_significant_reference(reference_path, reference_sha)
-            full_orders = _order_map(_validation(h1).get("external_diffraction_orders"))
-            hybrid_orders = _order_map(
+            frozen_orders = _significant_reference_order_map(reference)
+            direct_orders = _order_map(
+                _validation(h1).get("external_diffraction_orders")
+            )
+            iterative_orders = _order_map(
                 _validation(record).get("external_diffraction_orders")
             )
-            if full_orders is None or hybrid_orders is None:
+            if direct_orders is None or iterative_orders is None:
                 raise ValueError("significant comparison order payload is incomplete")
-            significant = _compare_to_significant_reference(
-                full_orders, hybrid_orders, reference
+            iterative_reference = _compare_to_significant_reference(
+                frozen_orders, iterative_orders, reference
+            )
+            direct_reference = _compare_to_significant_reference(
+                frozen_orders, direct_orders, reference
             )
             comparisons["significant_reference"] = {
-                "status": "pass" if significant.get("pass") is True else "fail",
-                "result": significant,
+                "status": (
+                    "pass" if iterative_reference.get("pass") is True else "fail"
+                ),
+                "source": "hash_bound_significant_reference",
+                "result": iterative_reference,
+            }
+            comparisons["direct_hybrid_vs_full3d"] = {
+                "status": ("pass" if direct_reference.get("pass") is True else "fail"),
+                "source": "hash_bound_significant_reference",
+                "result": direct_reference,
+            }
+            comparisons["iterative_vs_full3d"]["status"] = (
+                "pass" if iterative_reference.get("pass") is True else "fail"
+            )
+            comparisons["iterative_vs_full3d"]["dimensions"][
+                "twelve_plus_twelve_powers_amplitudes"
+            ] = {
+                "status": (
+                    "pass" if iterative_reference.get("pass") is True else "fail"
+                ),
+                "source": "hash_bound_significant_reference",
+                "result": iterative_reference,
+            }
+            comparisons["iterative_vs_full3d"]["dimensions"][
+                "direct_hybrid_vs_frozen_full3d"
+            ] = {
+                "status": ("pass" if direct_reference.get("pass") is True else "fail"),
+                "source": "hash_bound_significant_reference",
+                "result": direct_reference,
             }
         except (OSError, TypeError, ValueError, KeyError):
             comparisons["significant_reference"] = {"status": "fail"}
+            comparisons["direct_hybrid_vs_full3d"] = {"status": "fail"}
+            comparisons["iterative_vs_full3d"]["status"] = "fail"
+            comparisons["iterative_vs_full3d"]["dimensions"][
+                "twelve_plus_twelve_powers_amplitudes"
+            ] = {"status": "fail", "source": "hash_bound_significant_reference"}
+            comparisons["iterative_vs_full3d"]["dimensions"][
+                "direct_hybrid_vs_frozen_full3d"
+            ] = {"status": "fail", "source": "hash_bound_significant_reference"}
     else:
         comparisons["significant_reference"] = {"status": "not_run_dependency_gate"}
-    comparisons["iterative_vs_full3d"]["dimensions"][
-        "twelve_plus_twelve_powers_amplitudes"
-    ] = {
-        "status": comparisons["significant_reference"]["status"],
-        "source": "significant_reference",
-    }
+        comparisons["direct_hybrid_vs_full3d"] = {"status": "not_run_dependency_gate"}
+        comparisons["iterative_vs_full3d"]["dimensions"][
+            "twelve_plus_twelve_powers_amplitudes"
+        ] = {"status": "not_run_dependency_gate", "source": "significant_reference"}
+        comparisons["iterative_vs_full3d"]["dimensions"][
+            "direct_hybrid_vs_frozen_full3d"
+        ] = {"status": "not_run_dependency_gate", "source": "significant_reference"}
     usage = resource.getrusage(resource.RUSAGE_SELF)
     comparisons["offline_resource"] = {
         "status": "measured",
@@ -1126,8 +1245,12 @@ def check_v4_evidence(
     result["pass"] = bool(
         candidate_evidence_pass
         and not authority_payload_gap
+        and comparisons["modal"].get("qualification_pass") is True
+        and comparisons["iterative_vs_full3d"].get("status") == "pass"
+        and comparisons["direct_hybrid_vs_full3d"].get("status") == "pass"
         and all(
-            item.get("status") in {"pass", "not_run"}
+            item.get("status")
+            in {"pass", "not_run", "diagnostic_not_comparable_independent_qep_gauge"}
             for item in comparisons.values()
             if isinstance(item, Mapping)
             and "status" in item
