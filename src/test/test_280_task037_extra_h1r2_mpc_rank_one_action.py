@@ -224,6 +224,10 @@ def _run_case(degree: int, *, full_checks: bool) -> dict[str, float | int]:
         assert audit["retained_dense_cell_tensor_count"] == 0
         assert audit["dense_cell_tensor_materialized_per_apply"] is False
         assert audit["cell_metadata_retained"] is False
+        assert audit["cell_schur_matrix_nnz"] == 0
+        assert audit["slab_matrix_nnz"] == 0
+        assert audit["cell_schur_matrix_materialized"] is False
+        assert audit["slab_matrix_materialized"] is False
         assert audit["factor_count"] == 0
         assert audit["ksp_created"] is False
         assert audit["dtn_used"] is False

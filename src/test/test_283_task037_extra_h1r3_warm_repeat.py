@@ -223,7 +223,8 @@ def test_h1r3_worker_qualification_recomputes_twelve_apply_and_steady_gates():
         "rss_span",
         "swap",
         "root_pid",
-        "inventory_field_missing",
+        "inventory_cell_schur_missing",
+        "inventory_slab_missing",
         "count",
     ),
 )
@@ -250,8 +251,10 @@ def test_h1r3_worker_qualification_rejects_representative_mutations(mutation):
         telemetry[5]["process_tree_swap_bytes"] = 1
     elif mutation == "root_pid":
         telemetry[5]["process_tree_root_pid"] = 12
-    elif mutation == "inventory_field_missing":
+    elif mutation == "inventory_cell_schur_missing":
         audit.pop("cell_schur_matrix_nnz")
+    elif mutation == "inventory_slab_missing":
+        audit.pop("slab_matrix_nnz")
     elif mutation == "count":
         measurement["candidate_apply_count"] = 11
     qualification = _evaluate_h1r3_warm_worker_qualification(
