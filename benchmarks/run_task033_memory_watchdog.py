@@ -56,6 +56,16 @@ from benchmarks.task033_watchdog_launch import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _serialize_repo_path(path: Path) -> str:
+    resolved = path.resolve()
+    try:
+        return str(resolved.relative_to(ROOT))
+    except ValueError:
+        return str(resolved)
+
+
 DEFAULT_ARTIFACT_ROOT = ROOT / "benchmarks" / "artifacts" / "cases" / "091"
 REDUCED_EQUAL_ACCURACY_RESOURCE_MATRIX = (
     ROOT
@@ -2745,9 +2755,9 @@ def run(args: argparse.Namespace) -> int:
         "worker_source": solver_record.get("metadata")
         or solver_record.get("provenance"),
         "solver_record_sha256": _sha256(record_path),
-        "solver_record_ignored_path": str(record_path.relative_to(ROOT)),
-        "timeline_ignored_path": str(timeline_path.relative_to(ROOT)),
-        "stdout_ignored_path": str(stdout_path.relative_to(ROOT)),
+        "solver_record_ignored_path": _serialize_repo_path(record_path),
+        "timeline_ignored_path": _serialize_repo_path(timeline_path),
+        "stdout_ignored_path": _serialize_repo_path(stdout_path),
         "measurements": measurements,
         "memory_semantics": (
             "Authority is max(simultaneous live MPI worker RSS sum, container "

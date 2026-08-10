@@ -484,3 +484,68 @@ def test_task37c_online_record_setup_failure_is_not_a_second_exception() -> None
     assert record["mode_identity"]["pass"] is False
     assert record["online_pass"] is False
     assert record["error"] == "RuntimeError: setup failed"
+
+
+def test_task037c_external_artifact_paths_are_serialized_without_root(
+    tmp_path: Path,
+) -> None:
+    run_root = (tmp_path / "external_run").resolve()
+    run_root.mkdir()
+    archive = run_root / "full3d_reference_samples.npz"
+    metadata = run_root / "full3d_reference_samples.json"
+    archive.write_bytes(b"synthetic archive")
+    metadata.write_text("{}\n", encoding="utf-8")
+    authority_path = tmp_path / "full3d_authority.json"
+    native = {
+        "schema_version": "task033.full3d-watchdog.v1",
+        "run_kind": "full-solve",
+        "status": "task037c_full3d_robustness_pass",
+        "no_swap": True,
+        "source": {
+            "commit_sha": SHA40,
+            "tracked_source_dirty": False,
+            "stable_and_clean_after": True,
+        },
+        "qualification": {"pass": True},
+        "degree": 6,
+        "h_nm": 10.0,
+        "mpi_size": 8,
+        "resource_authority": {"memory_authority_gib": 1.0},
+        "solver_summary": {
+            "full3d_reference_archive": str(archive),
+            "full3d_reference_metadata": str(metadata),
+            "full3d_reference_archive_sha256": direct._sha256(archive),
+            "polarization_kind": "s",
+            "case_status": "completed",
+            "official_result": True,
+            "full3d_reference_exported": True,
+            "incident_theta_deg": 89.0,
+            "incident_phi_deg": 0.0,
+            "linear_system_relative_residual": 1.0e-10,
+            "R_total": 0.1,
+            "T_total": 0.8,
+            "A_balance": 0.1,
+            "A_volume_total": 0.1,
+            "energy_closure_error_port_volume": 0.0,
+        },
+    }
+    normalized = direct._normalize_full3d_reference_record(
+        native,
+        path=authority_path,
+        expected_theta_deg=89.0,
+        expected_grazing_deg=1.0,
+        expected_status="task037c_full3d_robustness_pass",
+    )
+    normalized_root = normalized["artifacts"]["ignored_run_root"]
+    assert normalized_root == str(run_root)
+    archive_info = direct._reference_archive((authority_path, normalized))
+    assert archive_info is not None
+    assert archive_info[0] == archive
+    assert direct._serialize_repo_path(direct.ROOT / "benchmarks") == "benchmarks"
+    assert (
+        memory_watchdog._serialize_repo_path(memory_watchdog.ROOT / "benchmarks")
+        == "benchmarks"
+    )
+    assert memory_watchdog._serialize_repo_path(tmp_path / "outside") == str(
+        (tmp_path / "outside").resolve()
+    )

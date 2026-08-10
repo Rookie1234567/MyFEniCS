@@ -91,6 +91,16 @@ from src.solvers.common_3d_solve import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _serialize_repo_path(path: Path) -> str:
+    resolved = path.resolve()
+    try:
+        return str(resolved.relative_to(ROOT))
+    except ValueError:
+        return str(resolved)
+
+
 DEFAULT_OUTPUT = (
     ROOT
     / "benchmarks"
@@ -909,7 +919,7 @@ def _normalize_full3d_reference_record(
             metadata = ROOT / metadata
         archive = archive.resolve()
         metadata = metadata.resolve()
-        run_root = archive.parent.relative_to(ROOT)
+        run_root = archive.parent
         commit_sha = str(source["commit_sha"]).lower()
         polarization_kind = str(solver["polarization_kind"]).lower()
         archive_sha256 = str(solver["full3d_reference_archive_sha256"]).lower()
@@ -997,7 +1007,7 @@ def _normalize_full3d_reference_record(
             ),
         },
         "artifacts": {
-            "ignored_run_root": run_root.as_posix(),
+            "ignored_run_root": _serialize_repo_path(run_root),
             "reference_npz_sha256": archive_sha256,
         },
         "qualification": {
@@ -1111,7 +1121,7 @@ def _reference_comparison(
     reference_path, reference = loaded_reference
     results = reference["results"]
     return {
-        "reference_file": str(reference_path.relative_to(ROOT)),
+        "reference_file": _serialize_repo_path(reference_path),
         "reference_commit_sha": reference["metadata"]["commit_sha"],
         "reference_grid_converged": reference["qualification"]["grid_converged"],
         "hybrid_minus_full3d": {
@@ -2396,7 +2406,7 @@ def main(argv: list[str] | None = None) -> None:
                 {
                     "reference_npz_sha256_expected": expected_reference_npz_sha256,
                     "reference_npz_sha256_observed": observed_reference_npz_sha256,
-                    "reference_record": str(reference_record_path.relative_to(ROOT)),
+                    "reference_record": _serialize_repo_path(reference_record_path),
                     "reference_record_sha256": _sha256(reference_record_path),
                     "reference_record_source_commit_full_sha": str(
                         reference_record["metadata"]["commit_sha"]
