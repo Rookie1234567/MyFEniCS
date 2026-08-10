@@ -13,6 +13,7 @@ from collections.abc import Mapping, Sequence
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import statistics
 import subprocess
@@ -1174,6 +1175,10 @@ def _worker_command(executable: str, phase: str, run_dir: Path) -> list[str]:
     ]
 
 
+def _worker_executable() -> str:
+    return os.path.abspath(sys.executable)
+
+
 def _run_watchdog(run_dir: Path) -> int:
     run_dir = run_dir.resolve()
     if run_dir.exists():
@@ -1184,7 +1189,7 @@ def _run_watchdog(run_dir: Path) -> int:
     stage: dict[str, Any] | None = None
     online: dict[str, Any] | None = None
     error: str | None = None
-    executable = str(Path(sys.executable).resolve())
+    executable = _worker_executable()
     try:
         source_start = _light_source()
         command = _worker_command(executable, "jit-worker", run_dir)

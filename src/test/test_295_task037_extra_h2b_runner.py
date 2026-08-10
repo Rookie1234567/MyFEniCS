@@ -324,6 +324,21 @@ def test_h2b_fixed_cli_scope_and_singleton_commands(tmp_path: Path):
     assert runner._fixed_scope()["swap_limit_bytes"] == 0
 
 
+def test_h2b_worker_executable_preserves_venv_symlink(monkeypatch, tmp_path: Path):
+    target = tmp_path / "usr" / "bin" / "python3.12"
+    target.parent.mkdir(parents=True)
+    target.write_text("python", encoding="utf-8")
+    link = tmp_path / ".venv" / "bin" / "python"
+    link.parent.mkdir(parents=True)
+    link.symlink_to(target)
+    monkeypatch.setattr(runner.sys, "executable", str(link))
+    executable = runner._worker_executable()
+    command = runner._worker_command(executable, "jit-worker", tmp_path)
+    assert executable == str(link)
+    assert command[0] == str(link)
+    assert command[0] != str(target)
+
+
 def test_h2b_sources_are_action_mapped_and_mixed_uses_residuals():
     size = 8
     slave_rows = np.array([1, 6], dtype=np.int64)
