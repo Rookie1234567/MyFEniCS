@@ -90,13 +90,19 @@ def _add_external_tractions(
     system: HybridLocalDtnSystem,
     full_rhs: PETSc.Vec,
     reduced_solution: PETSc.Vec,
+    auxiliary_override: np.ndarray | None = None,
 ) -> dict[str, Any]:
-    auxiliary = _gather_auxiliary_values(
-        reduced_solution,
-        system.n_fe,
-        system.n_external_aux,
-        system.local_mesh.mesh.comm,
-    )
+    if auxiliary_override is None:
+        auxiliary = _gather_auxiliary_values(
+            reduced_solution,
+            system.n_fe,
+            system.n_external_aux,
+            system.local_mesh.mesh.comm,
+        )
+    else:
+        auxiliary = np.asarray(auxiliary_override, dtype=np.complex128)
+        if auxiliary.shape != (len(system.external_modes),):
+            raise ValueError("External auxiliary override has the wrong shape.")
     assemblers = (
         _ReusableSurfaceComponentAssembler(
             system.V,
@@ -222,6 +228,8 @@ def recover_hybrid_static_local_field(
     coupling: HybridInternalModeCoupling,
     reduced_solution: PETSc.Vec,
     modal_amplitudes: np.ndarray,
+    *,
+    auxiliary_override: np.ndarray | None = None,
 ) -> HybridStaticRecoveredLocalField:
     """Recover one local field without retaining any full ``N_FE x M`` block."""
 
@@ -255,6 +263,7 @@ def recover_hybrid_static_local_field(
             system,
             full_effective_rhs,
             reduced_solution,
+            auxiliary_override=auxiliary_override,
         )
         internal_audit = _add_internal_tractions(
             system,

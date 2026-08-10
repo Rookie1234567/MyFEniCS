@@ -106,6 +106,7 @@ class HybridLocalStaticCondensation:
     bilinear_form: Any
     floquet_data: Any
     metadata: HybridLocalReductionMetadata
+    reduced_operator: PETSc.Mat | None = None
 
     def __post_init__(self) -> None:
         _validate_binding(
@@ -113,6 +114,7 @@ class HybridLocalStaticCondensation:
             self.bilinear_form,
             self.floquet_data,
             self.metadata,
+            self.reduced_operator,
         )
 
     def reduce_surface_vector(
@@ -278,7 +280,10 @@ class HybridLocalStaticCondensation:
                 self.bilinear_form,
                 self.floquet_data,
                 embedded_fe_solution,
-                self.condensed.matrix,
+                _select_reduced_operator(
+                    self.condensed,
+                    self.reduced_operator,
+                ),
                 reduced_effective_rhs,
                 reduced_solution,
                 self.condensed,
@@ -322,6 +327,7 @@ def bind_hybrid_local_static_condensation(
     assembly_backend_requested: str,
     assembly_backend_actual: str,
     external_auxiliary_rows: int,
+    reduced_operator: PETSc.Mat | None = None,
 ) -> HybridLocalStaticCondensation:
     """Bind a previously built condensed system to one Hybrid local block."""
 
@@ -366,6 +372,7 @@ def bind_hybrid_local_static_condensation(
         bilinear_form=bilinear_form,
         floquet_data=floquet_data,
         metadata=metadata,
+        reduced_operator=reduced_operator,
     )
 
 
@@ -387,6 +394,7 @@ def _validate_binding(
     bilinear_form: Any,
     floquet_data: Any,
     metadata: HybridLocalReductionMetadata,
+    reduced_operator: PETSc.Mat | None,
 ) -> None:
     if bilinear_form is None:
         raise ValueError(
@@ -446,7 +454,8 @@ def _validate_binding(
             "system: " + "; ".join(mismatches)
         )
     expected_rows = condensed.active_rows + condensed.appended_rows
-    if condensed.matrix.getSize() != (expected_rows, expected_rows):
+    reduced_matrix = _select_reduced_operator(condensed, reduced_operator)
+    if reduced_matrix.getSize() != (expected_rows, expected_rows):
         raise RuntimeError(
             "Hybrid local condensed matrix does not contain exactly active "
             "trace plus appended auxiliary rows"
@@ -488,6 +497,18 @@ def _validate_binding(
         raise TypeError(
             "Hybrid local static condensation requires PETSc complex128"
         )
+
+
+def _select_reduced_operator(
+    condensed: AssemblyTimeCondensedSystem,
+    reduced_operator: PETSc.Mat | None,
+) -> PETSc.Mat:
+    selected = reduced_operator if reduced_operator is not None else condensed.matrix
+    if selected is None:
+        raise RuntimeError(
+            "Hybrid local condensed recovery requires a reduced operator"
+        )
+    return selected
 
 
 __all__ = [

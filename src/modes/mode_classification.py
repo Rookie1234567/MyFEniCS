@@ -453,6 +453,21 @@ def _joint_near_degenerate_groups(
             if joins:
                 union(first_group, second_group)
 
+    audit = _near_degenerate_partition_audit(
+        betas,
+        groups,
+        values,
+        near_degenerate_tolerance=near_degenerate_tolerance,
+        block_rotation_tolerance=block_rotation_tolerance,
+    )
+    if (
+        not audit["pass"]
+        and audit["status"] == "near_degenerate_block_partition_split"
+        and audit["worst_cross_block_is_near_degenerate_candidate"]
+    ):
+        first_group, second_group = audit["worst_cross_block_group_ids"]
+        union(int(first_group), int(second_group))
+
     components: dict[int, list[int]] = {}
     for index in range(len(betas)):
         components.setdefault(find(group_of[index]), []).append(int(index))
