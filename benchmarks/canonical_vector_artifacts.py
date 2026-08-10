@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -45,8 +46,11 @@ def canonical_key_json_bytes(key: tuple[Any, ...]) -> bytes:
     ).encode("utf-8")
 
 
-def _packet_line(key: tuple[Any, ...], value: complex) -> bytes:
-    key_bytes = canonical_key_json_bytes(key)
+def _packet_line(
+    key: tuple[Any, ...], value: complex, *, key_bytes: bytes | None = None
+) -> bytes:
+    if key_bytes is None:
+        key_bytes = canonical_key_json_bytes(key)
     coefficient = complex(value)
     record = {
         "schema_version": SHARD_SCHEMA,
@@ -66,17 +70,35 @@ def _packet_line(key: tuple[Any, ...], value: complex) -> bytes:
 
 
 def write_canonical_packet_shard(
-    path: Path, packets: Iterable[CanonicalPacket]
+    path: Path,
+    packets: Iterable[CanonicalPacket],
+    *,
+    audit_packets: bool = False,
 ) -> dict[str, Any]:
     digest = hashlib.sha256()
     count = 0
+    packet_finite = True
+    duplicate_count = 0
+    seen_key_bytes: set[bytes] | None = set() if audit_packets else None
     with path.open("wb") as stream:
         for key, value in packets:
-            line = _packet_line(key, value)
+            key_bytes = canonical_key_json_bytes(key)
+            if seen_key_bytes is not None:
+                if key_bytes in seen_key_bytes:
+                    duplicate_count += 1
+                else:
+                    seen_key_bytes.add(key_bytes)
+                coefficient = complex(value)
+                packet_finite = (
+                    packet_finite
+                    and math.isfinite(coefficient.real)
+                    and math.isfinite(coefficient.imag)
+                )
+            line = _packet_line(key, value, key_bytes=key_bytes)
             stream.write(line)
             digest.update(line)
             count += 1
-    return {
+    metadata = {
         "filename": path.name,
         "packet_count": int(count),
         "file_sha256": digest.hexdigest(),
@@ -84,6 +106,14 @@ def write_canonical_packet_shard(
         "dtype": "complex128",
         "schema_version": SHARD_SCHEMA,
     }
+    if audit_packets:
+        metadata.update(
+            {
+                "packet_finite": bool(packet_finite),
+                "local_duplicate_count": int(duplicate_count),
+            }
+        )
+    return metadata
 
 
 def read_canonical_packet_shard(
