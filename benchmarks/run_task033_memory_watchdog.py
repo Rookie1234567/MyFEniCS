@@ -948,6 +948,8 @@ def _worker_command(
         command.append("--task037b-v5-gate")
     if args.task037b_v6_gate:
         command.append("--task037b-v6-gate")
+    if args.task037b_v6_mpi_scaling_gate:
+        command.append("--task037b-v6-mpi-scaling-gate")
     if getattr(args, "task037b_h1_authority_export", False):
         command.append("--task037b-h1-authority-export")
     if args.compare_modal_schur:
@@ -4480,6 +4482,9 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
         )
         validation = record.get("validation")
         qualification = record.get("qualification", {})
+        mpi_scaling_study = bool(
+            is_v6 and qualification.get("mpi_scaling_study") is True
+        )
         hybrid = record.get("hybrid_system", {})
         screen = telemetry.get("screen", {})
         history = telemetry.get("history")
@@ -4505,7 +4510,15 @@ def _task037b_v4_evaluate_record(record: dict[str, Any]) -> dict[str, Any]:
             and case.get("propagation_model") == "full3d_uniform_cg"
             and case.get("traction_model") == "scalar_cg_discrete_derivative"
             and case.get("assembly_backend") == "assembly_time_static_condensed"
-            and case.get("mpi_size") == 8
+            and (
+                case.get("mpi_size") == 8
+                or (mpi_scaling_study and case.get("mpi_size") in (1, 2, 4, 8))
+            )
+            and (
+                not mpi_scaling_study
+                or qualification.get("qualification_identity")
+                == "task037b.v6-mpi-scaling-study.v1"
+            )
         )
         solver_contract = bool(
             solver.get("solver_path") == "block-ldu-action-full-solve"
@@ -6033,6 +6046,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--task037b-v6-mpi-scaling-gate",
+        action="store_true",
+        help=(
+            "Opt in to the research-only V6 MPI scaling carrier; requires V4/V5/V6 "
+            "and permits only MPI1/2/4/8."
+        ),
+    )
+    parser.add_argument(
         "--task037b-v2-profile",
         choices=("bottom-approx", "top-approx", "double"),
     )
@@ -6136,6 +6157,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error("--task037b-v6-gate requires --task037b-v5-gate.")
     if args.task037b_v6_gate and not args.task037b_v4_gate:
         parser.error("--task037b-v6-gate requires --task037b-v4-gate.")
+    if args.task037b_v6_mpi_scaling_gate and not args.task037b_v6_gate:
+        parser.error("--task037b-v6-mpi-scaling-gate requires --task037b-v6-gate.")
+    if args.task037b_v6_mpi_scaling_gate and args.mpi_size not in (1, 2, 4, 8):
+        parser.error("V6 MPI scaling permits only MPI sizes 1, 2, 4, and 8.")
     if args.task037b_v5_gate and args.solver_path != "block-ldu-action-full-solve":
         parser.error(
             "--task037b-v5-gate requires --solver-path block-ldu-action-full-solve."
@@ -6584,7 +6609,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and args.modal_degree == 6
             and args.modal_h_nm is not None
             and math.isclose(args.modal_h_nm, 10.0)
-            and args.mpi_size == 8
+            and (
+                args.mpi_size == 8
+                or (args.task037b_v6_mpi_scaling_gate and args.mpi_size in (1, 2, 4, 8))
+            )
             and args.requested_modes == 120
             and args.candidate_modes == 240
             and args.solver_path == "block-ldu-action-full-solve"
@@ -6610,7 +6638,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "--task037b-v4-gate is restricted to the fixed WSL p6/h10, "
                 "modal p6/h10, 13.5 nm S-polarized 10/110 nm, "
                 "full3d/scalar-CG, M120/candidate240, block-ldu-action-full-solve, "
-                "static-condensed MPI8 path."
+                "static-condensed MPI8 path, or the explicit V6 MPI-scaling "
+                "MPI1/2/4/8 path."
             )
     elif args.task037b_v2_gate:
         scoped = bool(
@@ -6996,6 +7025,9 @@ def run(args: argparse.Namespace) -> int:
             full3d_reference_observed_sha256 = (
                 None if full3d_path is None else _sha256(full3d_path)
             )
+            reference_mpi_size = (
+                8 if args.task037b_v6_mpi_scaling_gate else args.mpi_size
+            )
             full3d_reference_gate = (
                 task037b_h1_pinned_full3d_reference_gate(
                     full3d_reference,
@@ -7003,7 +7035,7 @@ def run(args: argparse.Namespace) -> int:
                     observed_sha256=full3d_reference_observed_sha256,
                     current_source_sha=source_before.get("commit_sha"),
                     assembly_backend=args.stage4_full3d_assembly_backend,
-                    mpi_size=args.mpi_size,
+                    mpi_size=reference_mpi_size,
                 )
                 if (
                     args.task037b_h1_gate
@@ -7021,9 +7053,20 @@ def run(args: argparse.Namespace) -> int:
                     observed_sha256=full3d_reference_observed_sha256,
                     current_source_sha=source_before.get("commit_sha"),
                     assembly_backend=args.stage4_full3d_assembly_backend,
-                    mpi_size=args.mpi_size,
+                    mpi_size=reference_mpi_size,
                 )
             )
+            if args.task037b_v6_mpi_scaling_gate:
+                full3d_reference_gate.update(
+                    {
+                        "mpi_identity": "cross_mpi_fixed_physics_authority",
+                        "reference_mpi_size": 8,
+                        "candidate_mpi_size": args.mpi_size,
+                    }
+                )
+                full3d_reference_gate.setdefault("checks", {})[
+                    "cross_mpi_fixed_physics_authority"
+                ] = bool(full3d_reference_gate.get("pass") is True)
             checks = {
                 "scoped_gate_parser_passed": bool(
                     args.task035c_p6_h10_gate
@@ -7465,6 +7508,7 @@ def run(args: argparse.Namespace) -> int:
     v4_path = bool(
         args.task037b_v4_gate and args.solver_path == "block-ldu-action-full-solve"
     )
+    scaling_path = bool(args.task037b_v6_mpi_scaling_gate)
     v4_provenance_gate = (
         _task037b_v4_hash_bound_provenance_gate()
         if v4_path
@@ -7507,8 +7551,16 @@ def run(args: argparse.Namespace) -> int:
     )
     if not preflight_pass:
         summary = {
-            "schema_version": "task033.memory-watchdog.v2",
-            "benchmark_id": "task033_external_memory_watchdog",
+            "schema_version": (
+                "task037b.v6-mpi-scaling-study.v1"
+                if scaling_path
+                else "task033.memory-watchdog.v2"
+            ),
+            "benchmark_id": (
+                "task037b_v6_mpi_scaling_study"
+                if scaling_path
+                else "task033_external_memory_watchdog"
+            ),
             "timestamp_utc": datetime.now(timezone.utc).isoformat(),
             "status": ("task037b_v4_formal_not_pass" if v4_path else "formal_not_pass"),
             "target": args.target,
@@ -7532,6 +7584,15 @@ def run(args: argparse.Namespace) -> int:
             "requested_modes": args.requested_modes,
             "measurements": None,
         }
+        if scaling_path:
+            summary.update(
+                {
+                    "mpi_size": args.mpi_size,
+                    "scaling_study": True,
+                    "qualification_identity": "task037b.v6-mpi-scaling-study.v1",
+                    "original_v6_formal": False,
+                }
+            )
         rendered = json.dumps(summary, ensure_ascii=False, indent=2) + "\n"
         (run_dir / "memory_sampler_summary.json").write_text(rendered, encoding="utf-8")
         if args.summary_output is not None:
@@ -8366,6 +8427,17 @@ def run(args: argparse.Namespace) -> int:
             "dedicated cgroup swap must be zero. WSL-global pswp is diagnostic only."
         ),
     }
+    if scaling_path:
+        summary.update(
+            {
+                "schema_version": "task037b.v6-mpi-scaling-study.v1",
+                "benchmark_id": "task037b_v6_mpi_scaling_study",
+                "mpi_size": args.mpi_size,
+                "scaling_study": True,
+                "original_v6_formal": False,
+                "qualification_identity": "task037b.v6-mpi-scaling-study.v1",
+            }
+        )
     if (
         args.task037b_v1_gate
         and args.solver_path == "dtn-woodbury-local-inverse-qualification"

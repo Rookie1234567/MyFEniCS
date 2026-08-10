@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+import json
 from pathlib import Path
 
 import numpy as np
@@ -9,6 +10,7 @@ from petsc4py import PETSc
 
 import benchmarks.run_task033_memory_watchdog as watchdog
 import benchmarks.run_task032_phase6_augmented as augmented
+import benchmarks.task037b_v4_full_qualification_checker as checker
 from benchmarks.run_task032_phase6_augmented import (
     _parse_args,
     _write_canonical_manifest_exports,
@@ -291,6 +293,233 @@ def test_v6_parser_and_worker_command_require_v4_v5_pair():
     assert command.count("--task037b-v6-gate") == 1
     assert "--task037b-v2-profile" not in command
     assert "--task037b-v2-max-it" not in command
+    assert "--task037b-v6-mpi-scaling-gate" not in command
+
+
+def test_v6_mpi_scaling_is_explicit_and_size_bounded():
+    with np.testing.assert_raises(SystemExit):
+        _parse_args(_v5_parser_args() + ["--task037b-v6-mpi-scaling-gate"])
+
+    worker_args = _parse_args(
+        _v5_parser_args()
+        + [
+            "--task037b-v4-gate",
+            "--task037b-v6-gate",
+            "--task037b-v6-mpi-scaling-gate",
+        ]
+    )
+    assert worker_args.task037b_v6_mpi_scaling_gate is True
+
+    scaling_args = _watchdog_v4_v5_args(v5=True)
+    scaling_args[scaling_args.index("--mpi-size") + 1] = "2"
+    scaling_args.extend(["--task037b-v6-gate", "--task037b-v6-mpi-scaling-gate"])
+    parsed = _watchdog_parse_args(scaling_args)
+    command = _worker_command(
+        parsed,
+        Path("/tmp/v6-scaling-worker-record.json"),
+        Path("/tmp/v6-scaling-worker-stages.jsonl"),
+    )
+    assert parsed.mpi_size == 2
+    assert command.count("--task037b-v6-mpi-scaling-gate") == 1
+    assert command[command.index("-n") + 1] == "2"
+
+    ordinary_mpi2 = _watchdog_v4_v5_args(v5=True)
+    ordinary_mpi2[ordinary_mpi2.index("--mpi-size") + 1] = "2"
+    with np.testing.assert_raises(SystemExit):
+        _watchdog_parse_args(ordinary_mpi2 + ["--task037b-v6-gate"])
+
+    invalid_scaling = list(scaling_args)
+    invalid_scaling[invalid_scaling.index("--mpi-size") + 1] = "16"
+    with np.testing.assert_raises(SystemExit):
+        _watchdog_parse_args(invalid_scaling)
+
+
+def test_v6_scaling_pins_mpi8_full3d_reference_authority():
+    for source in (
+        inspect.getsource(augmented._task035c_worker_authority_gate),
+        inspect.getsource(watchdog.run),
+    ):
+        assert "reference_mpi_size" in source
+        assert '"mpi_identity": "cross_mpi_fixed_physics_authority"' in source
+        assert '"reference_mpi_size": 8' in source
+        assert '"candidate_mpi_size": mpi_size' in source or (
+            '"candidate_mpi_size": args.mpi_size' in source
+        )
+
+
+def test_v6_scaling_evaluator_contract_keeps_minimal_record_route():
+    case = {
+        "degree": 6,
+        "h_nm": 10.0,
+        "wavelength_nm": 13.5,
+        "modal_degree": 6,
+        "modal_h_nm": 10.0,
+        "requested_modes": 120,
+        "candidate_modes": 240,
+        "external_modes_per_endcap": 40,
+        "interfaces_nm": [10.0, 110.0],
+        "grazing_deg": 10.0,
+        "polarization": "s",
+        "propagation_model": "full3d_uniform_cg",
+        "traction_model": "scalar_cg_discrete_derivative",
+        "assembly_backend": "assembly_time_static_condensed",
+        "mpi_size": 4,
+        "mpi_scaling_study": True,
+    }
+    record = {
+        "record_schema": "task037b.v6-traction-aligned-full-block-pc.v1",
+        "case": case,
+        "solver": {},
+        "qualification": {
+            "mpi_scaling_study": True,
+            "qualification_identity": "task037b.v6-mpi-scaling-study.v1",
+        },
+        "validation": {},
+        "v4_telemetry": {"screen": {}, "history": []},
+        "v6_telemetry": {"postsolve_audit": {}},
+    }
+    result = watchdog._task037b_v4_evaluate_record(record)
+    assert "case_contract" not in result["failures"]
+    assert "evaluator_exception" not in result["failures"]
+
+
+def test_v6_scaling_aggregate_extracts_observable_gates(monkeypatch, tmp_path):
+    def evidence_pass(*args, **kwargs):
+        return {
+            "pass": True,
+            "evidence_integrity_pass": True,
+            "authority_bindings_pass": True,
+        }
+
+    def observables(record):
+        return {
+            "R": 0.1,
+            "T": 0.6,
+            "A": 0.3,
+            "A_volume_total": 0.3,
+            "R_plus_T_plus_A_volume": 1.0,
+            "energy_closure_error": 1.0e-10,
+        }
+
+    def order_rows():
+        row = {
+            "total_projection": [0.0, 0.0],
+            "incident_projection": [0.0, 0.0],
+            "outgoing_amplitude": [0.0, 0.0],
+            "outgoing_amplitude_at_boundary": [0.0, 0.0],
+            "power_ratio": 0.0,
+            "R": 0.0,
+            "T": 0.0,
+        }
+        return [
+            dict(row, side=side, m=mode, n=0, polarization=polarization)
+            for side in ("bottom", "top")
+            for mode in range(20)
+            for polarization in ("s", "p")
+        ]
+
+    monkeypatch.setattr(checker, "check_v4_evidence", evidence_pass)
+    monkeypatch.setattr(checker, "_validation_observables", observables)
+    monkeypatch.setattr(
+        checker, "_compare_full_hybrid", lambda actual, reference: {"pass": True}
+    )
+    summary_paths = []
+    base = {
+        "record_schema": "task037b.v6-traction-aligned-full-block-pc.v1",
+        "case": {"frozen_physics_identity": "p6-h10-s-13p5nm"},
+        "solver": {"solver_path": "block-ldu-action-full-solve"},
+        "source": {
+            "branch": "codex/task037b",
+            "commit_sha": "a" * 40,
+            "verified_clean_sha": "b" * 40,
+        },
+        "qualification": {
+            key: True
+            for key in (
+                "numerical_pass",
+                "recovery_pass",
+                "own_physics_pass",
+                "canonical_pass",
+                "physics_pass",
+                "postprocess_release_pass",
+            )
+        },
+        "validation": {"external_diffraction_orders": order_rows()},
+        "v4_telemetry": {
+            "screen": {"iterations": 792},
+            "physics_gates": {
+                "exact_traction_dual": {
+                    "reports": {
+                        "bottom_relative_residual": 4.0e-9,
+                        "top_relative_residual": 3.0e-9,
+                    }
+                }
+            },
+        },
+        "v6_telemetry": {
+            "postsolve_audit": {
+                "ksp_reported_relative_residual": 3.0e-9,
+                "global_true_relative_residual": 3.0e-9,
+                "bottom_true_relative_residual": 4.0e-9,
+                "top_true_relative_residual": 3.0e-9,
+                "modal_true_relative_residual": 1.0e-15,
+            }
+        },
+        "timing_seconds_max_rank": {"total": 10.0, "v4_total": 9.0},
+    }
+    for mpi_size in (1, 2, 4, 8):
+        scaling = mpi_size != 8
+        record = json.loads(json.dumps(base))
+        record["case"].update(mpi_size=mpi_size, mpi_scaling_study=scaling)
+        record["qualification"].update(
+            mpi_scaling_study=scaling,
+            qualification_identity=(
+                "task037b.v6-mpi-scaling-study.v1" if scaling else None
+            ),
+        )
+        record_file = tmp_path / f"mpi{mpi_size}_solver.json"
+        record_file.write_text(json.dumps(record))
+        summary_file = tmp_path / f"mpi{mpi_size}_summary.json"
+        summary_file.write_text(
+            json.dumps(
+                {
+                    "schema_version": (
+                        "task037b.v6-mpi-scaling-study.v1"
+                        if scaling
+                        else "task033.memory-watchdog.v2"
+                    ),
+                    "scaling_study": scaling,
+                    "v4_artifacts": {"solver_record_path": record_file.name},
+                    "memory": {
+                        "stage_peaks": [
+                            {"stage": "outer", "max_mpi_process_tree_rss_mb": 6144.0}
+                        ]
+                    },
+                }
+            )
+        )
+        summary_paths.append(summary_file)
+    result = checker.check_v6_mpi_scaling_evidence(summary_paths)
+    assert result["pass"] is True
+    assert set(result["comparison_to_mpi8"]) == {"1", "2", "4"}
+    mpi1 = next(case for case in result["cases"] if case["mpi_size"] == 1)
+    assert mpi1["provenance"]["source_commit_sha"] == "a" * 40
+    assert mpi1["provenance"]["verified_clean_sha"] == "b" * 40
+    assert mpi1["metrics"]["postsolve_residual_pass"] is True
+    assert mpi1["metrics"]["exact_traction_pass"] is True
+    assert mpi1["metrics"]["energy_pass"] is True
+    assert mpi1["metrics"]["resource_6gib_pass"] is True
+    assert mpi1["metrics"]["energy"]["A_volume"] is not None
+    assert mpi1["metrics"]["timing"]["total"] is not None
+    bad = json.loads((tmp_path / "mpi4_solver.json").read_text())
+    bad["v6_telemetry"]["postsolve_audit"]["top_true_relative_residual"] = 6.0e-9
+    bad["v4_telemetry"]["physics_gates"]["exact_traction_dual"]["reports"][
+        "bottom_relative_residual"
+    ] = 2.0e-8
+    (tmp_path / "mpi4_solver.json").write_text(json.dumps(bad))
+    failed = checker.check_v6_mpi_scaling_evidence(summary_paths)
+    assert "mpi4_postsolve_residual_gate" in failed["failures"]
+    assert "mpi4_exact_traction_gate" in failed["failures"]
 
 
 def test_v6_dispositions_keep_physics_and_parent_control_lanes_separate():

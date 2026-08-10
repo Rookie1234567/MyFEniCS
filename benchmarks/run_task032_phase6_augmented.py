@@ -1646,6 +1646,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--task037b-v6-mpi-scaling-gate",
+        action="store_true",
+        help=(
+            "Opt in to the research-only V6 MPI scaling carrier; requires V4/V5/V6 "
+            "and permits only MPI1/2/4/8."
+        ),
+    )
+    parser.add_argument(
         "--task037b-v2-profile",
         choices=("bottom-approx", "top-approx", "double"),
         default=None,
@@ -1761,6 +1769,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error("--task037b-v6-gate requires --task037b-v5-gate.")
     if args.task037b_v6_gate and not args.task037b_v4_gate:
         parser.error("--task037b-v6-gate requires --task037b-v4-gate.")
+    if args.task037b_v6_mpi_scaling_gate and not args.task037b_v6_gate:
+        parser.error("--task037b-v6-mpi-scaling-gate requires --task037b-v6-gate.")
     if args.task037b_h1_authority_export and not args.task037b_h1_gate:
         parser.error("--task037b-h1-authority-export requires --task037b-h1-gate.")
     if args.solver_path == "local-inverse-qualification" and not args.task037b_h5_gate:
@@ -2137,7 +2147,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "--task037b-v4-gate is restricted to the frozen p6/h10, modal "
                 "p6/h10, 13.5 nm, S-polarized full3d/scalar-CG, 10/110 nm, "
                 "M120/candidate240, block-ldu-action-full-solve, static-condensed "
-                "MPI8 path."
+                "MPI8 path, or the explicit V6 MPI-scaling MPI1/2/4/8 path."
             )
     elif (
         args.task035c_p6_preflight_authority is not None
@@ -2293,6 +2303,9 @@ def _task035c_worker_authority_gate(
         observed_sha256=_sha256(authority_path),
         authority_is_tracked=authority_is_tracked,
     )
+    reference_mpi_size = (
+        8 if getattr(args, "task037b_v6_mpi_scaling_gate", False) else mpi_size
+    )
     reference_gate = (
         task037b_h1_pinned_full3d_reference_gate(
             reference if isinstance(reference, dict) else None,
@@ -2300,7 +2313,7 @@ def _task035c_worker_authority_gate(
             observed_sha256=_sha256(reference_path),
             current_source_sha=current_source_sha,
             assembly_backend=args.stage4_full3d_assembly_backend,
-            mpi_size=mpi_size,
+            mpi_size=reference_mpi_size,
         )
         if (
             args.task037b_h1_gate
@@ -2318,9 +2331,20 @@ def _task035c_worker_authority_gate(
             observed_sha256=_sha256(reference_path),
             current_source_sha=current_source_sha,
             assembly_backend=args.stage4_full3d_assembly_backend,
-            mpi_size=mpi_size,
+            mpi_size=reference_mpi_size,
         )
     )
+    if getattr(args, "task037b_v6_mpi_scaling_gate", False):
+        reference_gate.update(
+            {
+                "mpi_identity": "cross_mpi_fixed_physics_authority",
+                "reference_mpi_size": 8,
+                "candidate_mpi_size": mpi_size,
+            }
+        )
+        reference_gate.setdefault("checks", {})["cross_mpi_fixed_physics_authority"] = (
+            bool(reference_gate.get("pass") is True)
+        )
     v4_provenance_gate = (
         _v4_hash_bound_provenance_gate() if args.task037b_v4_gate else None
     )
@@ -2591,6 +2615,7 @@ def _run_v4_full_solve(
     """Run the single V4/V5 double fixed-action solve and controlled-stop record."""
 
     is_v6 = bool(v6_traction_aligned)
+    is_v6_scaling = bool(is_v6 and getattr(args, "task037b_v6_mpi_scaling_gate", False))
     v5_multimetric = bool(v5_multimetric or is_v6)
     profile_max_it = 1000 if is_v6 else 700
     profile_threshold = 5.0e-9 if is_v6 else 1.0e-6
@@ -2902,6 +2927,7 @@ def _run_v4_full_solve(
                 "traction_model": args.internal_traction_model,
                 "assembly_backend": args.stage4_full3d_assembly_backend,
                 "mpi_size": int(comm.size),
+                **({"mpi_scaling_study": True} if is_v6_scaling else {}),
             },
             "solver": {
                 "solver_path": "block-ldu-action-full-solve",
@@ -2932,6 +2958,14 @@ def _run_v4_full_solve(
                 "numerical_pass": False,
                 "recovery_pass": False,
                 "disposition": "DOUBLE_APPROXIMATE_IMPLEMENTATION_GATE_FAILED",
+                **(
+                    {
+                        "mpi_scaling_study": True,
+                        "qualification_identity": "task037b.v6-mpi-scaling-study.v1",
+                    }
+                    if is_v6_scaling
+                    else {}
+                ),
             },
             "timing_seconds_max_rank": {},
         }
@@ -8529,18 +8563,25 @@ def main() -> None:
     ) and comm.size not in TASK035C_P6_H10_MPI_SIZES:
         raise SystemExit("Task035c p6/h10 Hybrid is restricted to MPI1/2/4/8.")
     if (
-        args.task037b_h1_gate
-        or args.task037b_h3_gate
-        or args.task037b_h4_gate
-        or args.task037b_h5_gate
-        or args.task037b_v1_gate
-        or args.task037b_v2_gate
-        or args.task037b_v3_gate
-        or args.task037b_v4_gate
-    ) and comm.size != 8:
-        raise SystemExit(
-            "Task037b H1/H3/H4/H5/V1/V2/V3/V4 Hybrid is restricted to MPI8."
+        (
+            args.task037b_h1_gate
+            or args.task037b_h3_gate
+            or args.task037b_h4_gate
+            or args.task037b_h5_gate
+            or args.task037b_v1_gate
+            or args.task037b_v2_gate
+            or args.task037b_v3_gate
+            or args.task037b_v4_gate
         )
+        and comm.size != 8
+        and not args.task037b_v6_mpi_scaling_gate
+    ):
+        raise SystemExit(
+            "Task037b H1/H3/H4/H5/V1/V2/V3/V4 Hybrid is restricted to MPI8; "
+            "V6 MPI scaling is the only explicit exception."
+        )
+    if args.task037b_v6_mpi_scaling_gate and comm.size not in (1, 2, 4, 8):
+        raise SystemExit("V6 MPI scaling permits only MPI1/2/4/8.")
     task035c_p6_gate = _task035c_worker_authority_gate(
         args,
         current_source_sha=provenance.get("commit_sha"),

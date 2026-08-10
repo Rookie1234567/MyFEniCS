@@ -15,7 +15,7 @@ import math
 import resource
 import time
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 import numpy as np
 
@@ -646,7 +646,10 @@ def check_v4_evidence(
     if summary is None:
         result["failures"].append("summary_unreadable")
         return result
-    if summary.get("schema_version") != "task033.memory-watchdog.v2":
+    if summary.get("schema_version") not in {
+        "task033.memory-watchdog.v2",
+        "task037b.v6-mpi-scaling-study.v1",
+    }:
         result["failures"].append("summary_schema")
     artifacts = summary.get("v4_artifacts", {})
     if not isinstance(artifacts, Mapping):
@@ -1265,11 +1268,367 @@ def check_v4_evidence(
     return result
 
 
+def check_v6_mpi_scaling_evidence(
+    summary_paths: Sequence[Path | str],
+    *,
+    authorities: Mapping[str, Mapping[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Check MPI1/2/4 carriers against one immutable MPI8 candidate."""
+
+    result: dict[str, Any] = {
+        "schema": "task037b.v6-mpi-scaling-check.v1",
+        "summary_count": len(summary_paths),
+        "cases": [],
+        "comparison_to_mpi8": {},
+        "failures": [],
+        "pass": False,
+    }
+    if len(summary_paths) != 4:
+        result["failures"].append("expected_exactly_four_mpi_summaries")
+        return result
+
+    identities: list[dict[str, Any]] = []
+    records: list[dict[str, Any]] = []
+    for summary_value in summary_paths:
+        summary_path = Path(summary_value).resolve()
+        checked = check_v4_evidence(summary_path, authorities=authorities)
+        summary = _load_json(summary_path)
+        artifacts = (
+            summary.get("v4_artifacts", {}) if isinstance(summary, Mapping) else {}
+        )
+        solver_path = _resolve(
+            (
+                artifacts.get("solver_record_path")
+                if isinstance(artifacts, Mapping)
+                else None
+            ),
+            summary_path,
+        )
+        record = _load_json(solver_path) if solver_path is not None else None
+        case = record.get("case", {}) if isinstance(record, Mapping) else {}
+        solver = record.get("solver", {}) if isinstance(record, Mapping) else {}
+        source = record.get("source", {}) if isinstance(record, Mapping) else {}
+        qualification = (
+            record.get("qualification", {}) if isinstance(record, Mapping) else {}
+        )
+        qualification = qualification if isinstance(qualification, Mapping) else {}
+        mpi_size = case.get("mpi_size") if isinstance(case, Mapping) else None
+        scaling = bool(
+            isinstance(summary, Mapping)
+            and summary.get("scaling_study") is True
+            and isinstance(qualification, Mapping)
+            and qualification.get("mpi_scaling_study") is True
+        )
+        stage_peaks = (
+            summary.get("memory", {}).get("stage_peaks", [])
+            if isinstance(summary, Mapping)
+            else []
+        )
+        stage_peak = max(
+            (
+                item
+                for item in stage_peaks
+                if isinstance(item, Mapping)
+                and _finite(item.get("max_mpi_process_tree_rss_mb"))
+            ),
+            key=lambda item: float(item["max_mpi_process_tree_rss_mb"]),
+            default=None,
+        )
+        v6_telemetry = (
+            record.get("v6_telemetry", {}) if isinstance(record, Mapping) else {}
+        )
+        postsolve = (
+            v6_telemetry.get("postsolve_audit", {})
+            if isinstance(v6_telemetry, Mapping)
+            else {}
+        )
+        residual_names = (
+            "ksp_reported_relative_residual",
+            "global_true_relative_residual",
+            "bottom_true_relative_residual",
+            "top_true_relative_residual",
+            "modal_true_relative_residual",
+        )
+        residuals = {
+            name: postsolve.get(name) if isinstance(postsolve, Mapping) else None
+            for name in residual_names
+        }
+        residual_pass = bool(
+            all(
+                _finite(value) and float(value) <= 5.0e-9
+                for value in residuals.values()
+            )
+        )
+        v4_telemetry = (
+            record.get("v4_telemetry", {}) if isinstance(record, Mapping) else {}
+        )
+        physics_gates = (
+            v4_telemetry.get("physics_gates", {})
+            if isinstance(v4_telemetry, Mapping)
+            else {}
+        )
+        traction_gate = (
+            physics_gates.get("exact_traction_dual", {})
+            if isinstance(physics_gates, Mapping)
+            else {}
+        )
+        traction_reports = (
+            traction_gate.get("reports", {})
+            if isinstance(traction_gate, Mapping)
+            else {}
+        )
+        traction = {
+            "bottom_relative_residual": (
+                traction_reports.get("bottom_relative_residual")
+                if isinstance(traction_reports, Mapping)
+                else None
+            ),
+            "top_relative_residual": (
+                traction_reports.get("top_relative_residual")
+                if isinstance(traction_reports, Mapping)
+                else None
+            ),
+        }
+        traction_pass = bool(
+            all(
+                _finite(value) and float(value) <= 1.0e-8 for value in traction.values()
+            )
+        )
+        observables = _validation_observables(record)
+        validation = _validation(record)
+        energy_closure = validation.get("energy_closure")
+        energy_closure = energy_closure if isinstance(energy_closure, Mapping) else {}
+        energy = {
+            "R": observables.get("R"),
+            "T": observables.get("T"),
+            "A": observables.get("A"),
+            "A_volume": observables.get("A_volume_total"),
+            "closure": (
+                observables.get("R_plus_T_plus_A_volume")
+                if observables.get("R_plus_T_plus_A_volume") is not None
+                else energy_closure.get("R_plus_T_plus_A_volume")
+            ),
+            "closure_error": (
+                observables.get("energy_closure_error")
+                if observables.get("energy_closure_error") is not None
+                else energy_closure.get("closure_error")
+            ),
+        }
+        energy_pass = bool(
+            all(_finite(energy[name]) for name in ("R", "T", "A", "A_volume"))
+            and _finite(energy["closure"])
+            and _finite(energy["closure_error"])
+            and abs(float(energy["closure_error"])) <= 1.0e-5
+        )
+        timing_source = record.get("timing_seconds_max_rank", {})
+        timing_source = timing_source if isinstance(timing_source, Mapping) else {}
+        timing_names = (
+            "total",
+            "v4_total",
+            "cross_section_and_qep_assembly",
+            "positive_and_negative_biorthogonal_bases",
+            "v4_action_coupling_build",
+            "v4_setup",
+            "v4_outer_solve",
+            "v6_pre_recovery_heap_cleanup",
+            "v6_bottom_recovery_heap_cleanup",
+            "v6_top_recovery_heap_cleanup",
+            "v6_pre_canonical_heap_cleanup",
+            "v6_bottom_canonical_heap_cleanup",
+            "v6_top_canonical_heap_cleanup",
+            "v4_postprocess_release",
+        )
+        timing = {name: timing_source.get(name) for name in timing_names}
+        metrics = {
+            "iterations": (
+                record.get("v4_telemetry", {}).get("screen", {}).get("iterations")
+                if isinstance(record, Mapping)
+                else None
+            ),
+            "process_tree_peak_mb": (
+                None
+                if stage_peak is None
+                else float(stage_peak["max_mpi_process_tree_rss_mb"])
+            ),
+            "peak_stage": None if stage_peak is None else stage_peak.get("stage"),
+            "wall_seconds": timing_source.get("v4_total"),
+            "resource_6gib_pass": bool(
+                stage_peak is not None
+                and float(stage_peak["max_mpi_process_tree_rss_mb"]) <= 6144.0
+            ),
+            "postsolve_residuals": residuals,
+            "postsolve_residual_pass": residual_pass,
+            "exact_traction": traction,
+            "exact_traction_pass": traction_pass,
+            "energy": energy,
+            "energy_pass": energy_pass,
+            "timing": timing,
+        }
+        case_result = {
+            "summary_path": str(summary_path),
+            "mpi_size": mpi_size,
+            "scaling_study": scaling,
+            "provenance": {
+                "source_commit_sha": (
+                    source.get("commit_sha") if isinstance(source, Mapping) else None
+                ),
+                "verified_clean_sha": (
+                    source.get("verified_clean_sha")
+                    if isinstance(source, Mapping)
+                    else None
+                ),
+            },
+            "checker": checked,
+            "qualification": {
+                key: qualification.get(key)
+                if isinstance(qualification, Mapping)
+                else None
+                for key in (
+                    "numerical_pass",
+                    "recovery_pass",
+                    "own_physics_pass",
+                    "canonical_pass",
+                    "physics_pass",
+                    "postprocess_release_pass",
+                )
+            },
+            "metrics": metrics,
+        }
+        result["cases"].append(case_result)
+        if checked.get("pass") is not True:
+            result["failures"].append(f"mpi{mpi_size}_offline_checker")
+        if not residual_pass:
+            result["failures"].append(f"mpi{mpi_size}_postsolve_residual_gate")
+        if not traction_pass:
+            result["failures"].append(f"mpi{mpi_size}_exact_traction_gate")
+        if not energy_pass:
+            result["failures"].append(f"mpi{mpi_size}_energy_gate")
+        if mpi_size != 8 and (
+            not scaling
+            or qualification.get("qualification_identity")
+            != "task037b.v6-mpi-scaling-study.v1"
+        ):
+            result["failures"].append(f"mpi{mpi_size}_scaling_identity")
+        if not isinstance(case, Mapping) or not isinstance(solver, Mapping):
+            result["failures"].append(f"mpi{mpi_size}_record_contract")
+        identities.append(
+            {
+                "case": {
+                    key: value
+                    for key, value in case.items()
+                    if key not in {"mpi_size", "mpi_scaling_study"}
+                }
+                if isinstance(case, Mapping)
+                else None,
+                "solver": dict(solver) if isinstance(solver, Mapping) else None,
+                "source": {
+                    key: value
+                    for key, value in source.items()
+                    if key not in {"commit_sha", "verified_clean_sha"}
+                }
+                if isinstance(source, Mapping)
+                else None,
+            }
+        )
+        records.append(record if isinstance(record, dict) else {})
+
+    sizes = sorted(
+        item["mpi_size"]
+        for item in result["cases"]
+        if isinstance(item.get("mpi_size"), int)
+    )
+    if sizes != [1, 2, 4, 8]:
+        result["failures"].append("mpi_sizes_must_be_1_2_4_8")
+    if identities and any(identity != identities[0] for identity in identities[1:]):
+        result["failures"].append("frozen_case_solver_or_source_identity_changed")
+    mpi8_index = next(
+        (index for index, item in enumerate(result["cases"]) if item["mpi_size"] == 8),
+        None,
+    )
+    if mpi8_index is not None:
+        base = records[mpi8_index]
+        base_observables = _validation_observables(base)
+        base_orders = _order_map(_validation(base).get("external_diffraction_orders"))
+        for index, item in enumerate(result["cases"]):
+            mpi_size = item["mpi_size"]
+            if mpi_size == 8:
+                continue
+            record = records[index]
+            observables = _validation_observables(record)
+            energy_rows: dict[str, Any] = {}
+            for key in ("R", "T", "A", "A_volume_total"):
+                difference = (
+                    None
+                    if not _payload_finite(base_observables.get(key))
+                    or not _payload_finite(observables.get(key))
+                    else abs(float(observables[key]) - float(base_observables[key]))
+                )
+                energy_rows[key] = {
+                    "absolute_difference": difference,
+                    "pass": difference is not None and difference <= 1.0e-5,
+                }
+            current_orders = _order_map(
+                _validation(record).get("external_diffraction_orders")
+            )
+            order_result: dict[str, Any] = {
+                "coverage_80_pass": bool(
+                    base_orders is not None
+                    and current_orders is not None
+                    and set(base_orders) == set(current_orders)
+                ),
+                "significant_numeric_comparison": None,
+            }
+            if order_result["coverage_80_pass"]:
+                order_result["significant_numeric_comparison"] = _compare_full_hybrid(
+                    base_orders, current_orders
+                )
+            energy_pass = all(row["pass"] for row in energy_rows.values())
+            orders_pass = bool(
+                order_result["coverage_80_pass"]
+                and order_result["significant_numeric_comparison"]
+                and order_result["significant_numeric_comparison"].get("pass") is True
+            )
+            item["comparison_to_mpi8"] = {
+                "energy": {
+                    "status": "pass" if energy_pass else "fail",
+                    "fields": energy_rows,
+                },
+                "orders": {"status": "pass" if orders_pass else "fail", **order_result},
+                "pass": bool(energy_pass and orders_pass),
+            }
+            result["comparison_to_mpi8"][str(mpi_size)] = item["comparison_to_mpi8"]
+            if not item["comparison_to_mpi8"]["pass"]:
+                result["failures"].append(f"mpi{mpi_size}_comparison_to_mpi8")
+    else:
+        result["failures"].append("missing_mpi8_baseline")
+    result["evidence_integrity_pass"] = bool(
+        all(
+            case["checker"].get("evidence_integrity_pass") is True
+            for case in result["cases"]
+        )
+    )
+    result["authority_bindings_pass"] = bool(
+        all(
+            case["checker"].get("authority_bindings_pass") is True
+            for case in result["cases"]
+        )
+    )
+    result["pass"] = not result["failures"]
+    result["fail_closed"] = bool(not result["pass"])
+    return result
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Read-only Task037b V4 evidence checker"
     )
-    parser.add_argument("--summary", type=Path, required=True)
+    parser.add_argument("--summary", type=Path)
+    parser.add_argument(
+        "--mpi-scaling-summary",
+        type=Path,
+        action="append",
+        help="Supply exactly four immutable MPI1/2/4/8 summaries for the scaling carrier.",
+    )
     parser.add_argument("--h1-authority", type=Path)
     parser.add_argument("--h1-sha256")
     parser.add_argument("--h1-summary", type=Path)
@@ -1288,9 +1647,27 @@ def main(argv: list[str] | None = None) -> int:
             "sha256": args.significant_reference_sha256,
         },
     }
-    result = check_v4_evidence(args.summary, authorities=authorities)
+    if args.mpi_scaling_summary:
+        if args.summary is not None:
+            parser.error("--summary and --mpi-scaling-summary are mutually exclusive.")
+        result = check_v6_mpi_scaling_evidence(
+            args.mpi_scaling_summary,
+            authorities=authorities,
+        )
+    else:
+        if args.summary is None:
+            parser.error("--summary is required unless --mpi-scaling-summary is used.")
+        result = check_v4_evidence(args.summary, authorities=authorities)
     print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
-    return 0 if result["evidence_integrity_pass"] else 2
+    return (
+        0
+        if (
+            result.get("pass") is True
+            if args.mpi_scaling_summary
+            else result.get("evidence_integrity_pass") is True
+        )
+        else 2
+    )
 
 
 if __name__ == "__main__":
