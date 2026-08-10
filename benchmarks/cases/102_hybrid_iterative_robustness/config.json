@@ -1,0 +1,20 @@
+{
+  "case": "task037c_hybrid_iterative_robustness",
+  "classification": "research_only_explicit_opt_in",
+  "profile": {
+    "theta_deg": 89.0,
+    "grazing_deg": 1.0,
+    "phi_deg": [-5.0, 0.0, 5.0],
+    "polarization": "s",
+    "degree": 6,
+    "h_nm": 10.0,
+    "wavelength_nm": 13.5,
+    "requested_modes": [120, 160],
+    "mpi_size": [1, 8],
+    "restart": 90,
+    "max_it": 1600,
+    "rtol": 5e-9,
+    "initial_guess": "zero"
+  },
+  "records": []
+}

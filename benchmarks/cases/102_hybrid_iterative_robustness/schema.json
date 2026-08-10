@@ -1,0 +1,13 @@
+{
+  "record_schema": "task037c.hybrid-iterative-robustness.v1",
+  "required": [
+    "profile",
+    "source",
+    "mode_identity",
+    "comparisons",
+    "resource"
+  ],
+  "allowed_phi_deg": [-5.0, 0.0, 5.0],
+  "allowed_requested_modes": [120, 160],
+  "allowed_mpi_size": [1, 8]
+}
