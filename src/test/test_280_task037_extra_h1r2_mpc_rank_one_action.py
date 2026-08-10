@@ -13,6 +13,7 @@ from src.solvers.mpc_form_action import MpcFormActionContext
 from src.solvers.hcurl_rank_one_mpc_action import (
     build_task037_extra_h1r2_mpc_action,
 )
+import src.solvers.hcurl_rank_one_mpc_action as rank_one_action
 from src.test.test_272_task037_extra_fullspace_mf_mpi import _build_case
 
 
@@ -267,6 +268,8 @@ def _run_case(
         assert audit["ksp_created"] is False
         assert audit["dtn_used"] is False
         assert audit["ordinary_default_changed"] is False
+        assert audit["form_jit_options"] is None
+        assert audit["jit_options_explicit"] is False
         assert not any(
             isinstance(value, np.ndarray) and value.ndim >= 2
             for value in vars(candidate).values()
@@ -377,6 +380,22 @@ def _run_case(
 def test_h1r2_mpc_rank_one_p2_minimal_case():
     result = _run_case(2, full_checks=False)
     assert result["degree"] == 2
+
+
+def test_h1r2_action_form_options_are_explicit_without_changing_default_call(
+    monkeypatch,
+):
+    calls = []
+
+    def fake_form(value, **kwargs):
+        calls.append((value, kwargs))
+        return value
+
+    monkeypatch.setattr(rank_one_action.fem, "form", fake_form)
+    assert rank_one_action._compile_action_form("default", None) == "default"
+    options = {"cache_dir": "/tmp/task037-extra-test"}
+    assert rank_one_action._compile_action_form("explicit", options) == "explicit"
+    assert calls == [("default", {}), ("explicit", {"jit_options": options})]
 
 
 def test_h1r2_mpc_rank_one_p2_mpi2_world_smoke():

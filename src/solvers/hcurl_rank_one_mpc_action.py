@@ -7,6 +7,7 @@ an explicitly opted-in H1R.2 component, not an ordinary solver path.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from types import MappingProxyType
 from typing import Any
 
@@ -23,10 +24,24 @@ __all__ = (
 )
 
 
+def _compile_action_form(action_ufl: Any, jit_options: Mapping[str, Any] | None) -> Any:
+    """Compile with the legacy call shape unless options were explicitly supplied."""
+
+    if jit_options is None:
+        return fem.form(action_ufl)
+    return fem.form(action_ufl, jit_options=dict(jit_options))
+
+
 class HcurlRankOneMpcAction:
     """Owned coefficient/output action with cached flat MPC metadata."""
 
-    def __init__(self, bilinear_form: Any, mpc: Any) -> None:
+    def __init__(
+        self,
+        bilinear_form: Any,
+        mpc: Any,
+        *,
+        jit_options: Mapping[str, Any] | None = None,
+    ) -> None:
         if np.dtype(PETSc.ScalarType) != np.dtype(np.complex128):
             raise TypeError("H1R.2 MPC action requires complex128 PETSc")
         if not hasattr(mpc, "function_space"):
@@ -42,7 +57,8 @@ class HcurlRankOneMpcAction:
         if np.dtype(self._coefficient.x.array.dtype) != np.dtype(np.complex128):
             raise TypeError("H1R.2 action requires complex128 coefficient storage")
         self._action_ufl = ufl.action(bilinear_form, self._coefficient)
-        self._action_form = fem.form(self._action_ufl)
+        self._jit_options = None if jit_options is None else dict(jit_options)
+        self._action_form = _compile_action_form(self._action_ufl, self._jit_options)
         self._assemble_vector = fem.assemble_vector
         self._pack_coefficients = fem.pack_coefficients
         self._constants = np.ascontiguousarray(
@@ -182,6 +198,12 @@ class HcurlRankOneMpcAction:
             "ksp_created": False,
             "dtn_used": False,
             "ordinary_default_changed": False,
+            "form_jit_options": (
+                None
+                if self._jit_options is None
+                else dict(self._jit_options)
+            ),
+            "jit_options_explicit": self._jit_options is not None,
         }
         components = {
             "coefficient_function_local_array_bytes": int(
@@ -309,9 +331,14 @@ def build_task037_extra_h1r2_mpc_action(
     mpc: Any,
     *,
     task037_extra_h1r2: bool = False,
+    jit_options: Mapping[str, Any] | None = None,
 ) -> HcurlRankOneMpcAction:
     """Build the explicitly opted-in H1R.2 MPC rank-one action."""
 
     if not bool(task037_extra_h1r2):
         raise ValueError("H1R.2 MPC action requires explicit opt-in")
-    return HcurlRankOneMpcAction(bilinear_form, mpc)
+    return HcurlRankOneMpcAction(
+        bilinear_form,
+        mpc,
+        jit_options=jit_options,
+    )
