@@ -71,6 +71,9 @@
 | Task035 | H(curl) field/goal-oriented adaptivity | Review V6 research baseline；Task035b 从其 stacked branch 继续 |
 | Task035b | high-order local-hp resource envelope | PARTIAL_WITH_CONTROLLED_NEGATIVES；Review V2 后最强 h13 仍为 10/12 + 10/12，Hybrid/resource v3 stopped by Gate |
 | Task035c | Hybrid channel accuracy + static memory closure | p2/h5 root cause closed；p6/h10 MPI8 six-path physics pass；mandatory memory pass with 50% gap |
+| Task036 | Hybrid direct bugfix hardening | controlled-negative closeout；保留 research evidence，ordinary default unchanged |
+| Task037 | Full3D static-condensed iterative baseline | M3a explicit-opt-in research baseline；不是 production default |
+| Task037b | frozen Hybrid iterative M10 | Review V7 selective-merge qualified research capability；master release仍待 full pytest + integrated anchor Gate |
 
 ## 当前任务
 
@@ -88,6 +91,9 @@
 | Task035 | `task035_hcurl_goal_oriented_adaptivity/` | Review V6 research baseline；不再继续该分支开发 |
 | Task035b | `task035b_high_order_local_hp_resource_envelope/` | Review V2 连续研究批次形成 `response_v3.md`；等待集中审阅，ordinary default 不变 |
 | Task035c | `task035c_hybrid_channel_memory_closure/` | 执行完成待集中Review；ordinary default不变；未授权master merge或h13 adaptive |
+| Task036 | `task036_forward_solver_bugfix_hardening/` | controlled-negative direct Hybrid closeout；不提升 ordinary default |
+| Task037 | `task037_static_condensed_full3d_iterative/` | M3a explicit-opt-in Full3D research baseline；0.7 nm not qualified |
+| Task037b | `task037b_hybrid_fem_modal_iterative/` | frozen M10 capability已形成；Case101 compact、runner/watchdog/checker与V7边界见下方 |
 
 ## Task28 审计入口
 
@@ -180,3 +186,11 @@
 Task034 的最终证据见 [`task034_workstation_wsl_adaptive_scalability/outcomes/summary.md`](task034_workstation_wsl_adaptive_scalability/outcomes/summary.md)、[`all_model_results.json`](task034_workstation_wsl_adaptive_scalability/outcomes/all_model_results.json)、Review V1–V3 与 Response V1–V4。Task035 已形成 [`README.md`](task035_hcurl_goal_oriented_adaptivity/README.md)、[`Review V6`](task035_hcurl_goal_oriented_adaptivity/review_report_v6.md)、[`Response V5`](task035_hcurl_goal_oriented_adaptivity/response_v5.md) 和 [`outcomes summary`](task035_hcurl_goal_oriented_adaptivity/outcomes/summary.md) 所冻结的 periodic tetra、DWR/R5、one-cycle h 与 fixed-mesh p-up research baseline；其普通默认仍未提升，后续实现范围已转入 Task035b。
 
 完整任务目录仍按 `task.md -> outcomes -> development_progress -> review_report/response` 闭环。从 Task029 起，所有新 Task 都必须遵循 [`task_retrospective_standard.md`](task_retrospective_standard.md)；从 Task032 起，中大型任务 summary 必须表格优先；从 Task033 起，公式和表格 rendered view 也是交付 Gate。Task033 已从 Task032 clean master 建立独立执行分支；后续阶段继续绑定 clean SHA 与独立审阅。
+
+## Task036 / Task037 / Task037b 入口
+
+| 任务 | 阶段与入口 |
+|---|---|
+| Task036 | [`final_summary.md`](task036_forward_solver_bugfix_hardening/outcomes/final_summary.md)；direct Hybrid controlled-negative hardening，ordinary default unchanged |
+| Task037 | [`summary.md`](task037_static_condensed_full3d_iterative/outcomes/summary.md)；Full3D static-condensed M3a explicit-opt-in research baseline |
+| Task037b | [`task.md`](task037b_hybrid_fem_modal_iterative/task.md)、[`review_report_v7.md`](task037b_hybrid_fem_modal_iterative/review_report_v7.md)、[`outcomes/summary.md`](task037b_hybrid_fem_modal_iterative/outcomes/summary.md)；冻结 M10 的 Case101 README、compact record 与 dedicated runner/watchdog/checker 为显式研究入口 |

@@ -18,9 +18,24 @@
 | 目标 p2 h=5/3/2，MPI4 | matrix-free condensed workstation | recommended | h=2 为 13.08 GB |
 | 目标 p2 h=5/3/2，内存优先 | Task30 compact physical-slab low-memory profile | experimental | `workstation_memory_success_with_qualifications`；clean h5/h3 为 1.688/3.793 GB；h2 9.375 GB 为历史审阅参考；需显式 flags |
 | frozen p2 h=5/3/2，约 8 GiB 硬限制 | Task31 assembled-F-free memory-first profile | experimental | h2 external simultaneous peak 7.898 GiB、legacy internal 8.176 GiB；solve 约为 Task30 的 5.01x；显式 opt-in |
+| Task037 M3a Full3D 迭代研究基线 | Task037 explicit-opt-in iterative entry | research_only | p6/h10 Full3D；不是 ordinary default，不是 0.7 nm qualification |
+| Task37b M10 Hybrid 迭代研究能力 | `run_task037b_hybrid_iterative.py --frozen-m10`，配套 watchdog/checker | research_only | MPI8 process-tree RSS `5.8775 GiB`、swap `0`；冻结 p6/h10、M120/240、exact action；不是 ordinary 推荐 |
 | h=1.5 或新物理参数 | 无 production 推荐 | not_verified | 先做 qualification |
 
 完整命令、outer KSP/local smoother 合法性和组件 flag 身份统一见 [`iterative_solver_ports.md`](iterative_solver_ports.md)。
+
+## 1.1 Task037 与 Task37b 的显式研究入口
+
+Task037 M3a 与 Task37b M10 都是“先把完整有限元作用在向量上，再用迭代法逐步逼近
+解”的研究入口；它们不会替换普通 direct solver。Task37b 进一步把端点的 40 个 DtN
+模态和一个固定的 whole-endcap ILU(0) 组合成 action-only 预条件器，并在求解后恢复两侧
+场、检查能量和导出 canonical packets。这样可以减少同时驻留的大矩阵和因子，但也把
+可用范围固定在一组已验证的 p6/h10、13.5 nm、S、10°、M120/240、MPI8 参数上。
+
+正式使用必须显式调用冻结 runner，再由独立 process-tree watchdog 和只读 checker
+绑定源码、authority、残差、物理量、生命周期和 raw artifact。参数、MPI 数、网格、模态
+数量、PC 或物理改变后，不能沿用这次结果；应重新生成 source/hash-bound evidence。
+这里没有参数扫描、自动 fallback 或 ordinary default 变更。
 
 ## 2. Ordinary auxiliary direct
 

@@ -494,7 +494,7 @@ Task036 先修复 Full3D/Hybrid 共用的投影、界面牵引、beta 身份、n
 
 ---
 
-## 1.5 静态凝聚法：迭代求解（Task037 V7 已结项）
+## 1.5 静态凝聚法：迭代求解（待定）
 
 Task037 证明了一个可复用但必须显式 opt-in 的 p6/h10 Full3D 迭代基线：
 matrix-free fine action、80-mode Matrix-free DtN component、owner-local
@@ -520,9 +520,17 @@ M3a 是 explicit opt-in research baseline；约 `91.4M` p6 local factor NNZ，�
 
 ### 1.5.2 Hybrid 与 Task37b
 
-Task037 不产生 Hybrid iterative production model。Task37b 只保留 V7.1 的远程
-分支交接计划；本 docs commit 形成时尚未创建，只有 master push 后按 V7.1 只创建/push，
-且不开发。
+Task037b 登记一个冻结但仅供研究使用的 Hybrid iterative capability。它不是 ordinary
+direct/default，也不是 production service；入口必须显式 opt-in，且改变参数后必须重新
+取得 source、数值、物理、资源和独立 checker evidence。
+
+| Model ID | source / 冻结域 | 数值与物理结果 | 资源与身份 |
+|---|---|---|---|
+| `task037_full3d_m3a_iterative_research` | Task037 M3a；p6/h10；Full3D；explicit opt-in | Full3D iterative baseline；ordinary default unchanged | `research_only`；不作 0.7 nm qualification |
+| `task037b_frozen_m10_hybrid_iterative` | historical implementation `ea132d8a31e5ccd6c45fb90bbb9b5f676cd78b0e`；formal source `b291f3dfdf5f0064ff243038f6809172f811d7aa`；p6/h10、13.5 nm、S、10°、M120/240、MPI8 | `792` iterations；reported/global/bottom/top/modal residual `3.578062165607276e-09 / 3.578062144715876e-09 / 4.921856578759462e-09 / 2.6635965562403923e-09 / 1.4561321294580367e-15`；traction bottom/top `4.820141813913522e-09 / 2.6635965562403923e-09`；physics、canonical、`12+12` 通过 | process-tree RSS `5.8775 GiB`；swap `0`；`research_only`、explicit opt-in、ordinary default unchanged；0.7 nm `not_qualified` |
+
+M10 的 exact action、fixed endcap ILU(0)+DtN Woodbury、recovery、own-physics、canonical
+和生命周期证据由 Case101 两份 compact record 绑定；raw artifact 不进入 Git。
 
 ---
 

@@ -1,4 +1,27 @@
-# 项目开发进度：Task000–Task037
+# 项目开发进度：Task000–Task037b
+
+## 2026-08-10：Task037b frozen M10 结项与 Review V7 selective-merge capability
+
+Task037b 在 reviewed Task37b source `361908dd71fc12734b8ac19881d6e0d3aaae5d56` 的
+V7 选择性范围内登记冻结 M10 Hybrid iterative research capability。它是显式 opt-in
+研究入口，不改变 ordinary direct Hybrid 默认，也不提前宣称已经发布到 master；master
+发布仍受 full pytest 与 integrated anchor Gate 约束。
+
+| 维度 | 结论 |
+|---|---|
+| 冻结模型 | p6/h10、modal p6/h10、13.5 nm、S、10° grazing、10/110 nm、M120/candidate240、MPI8 |
+| 算法 | exact Hybrid action；action-consistent modal Schur；两侧 fixed whole-endcap ILU(0)+40-mode DtN Woodbury；right FGMRES90 |
+| 数值/物理 | 792 iterations；五项 residual、bottom/top exact traction、recovery、own-physics、80 orders、canonical 与 `12+12` authority comparison 通过 |
+| 资源/生命周期 | process-tree RSS `6018.57421875 MiB`（`5.8775 GiB`），swap `0`；M10 cleanup 顺序与生命周期 Gate 通过 |
+| ordinary boundary | `research_only`、explicit opt-in；ordinary direct Hybrid/default unchanged |
+| 排除路线 | 0.7 nm、参数扫描、fallback、历史 negative machinery、post-V7 scaling 和 production promotion 不在本次能力范围 |
+| 下一任务 | Task37c `planned / no task yet`；未创建 task 文件或实现 |
+
+入口与 compact evidence 见
+[`Case101 README`](../benchmarks/cases/101_hybrid_iterative_block_solver/README.md)、
+[`M10 qualification compact`](../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v6_mpi8_traction_aligned_full_qualification_v1.json)
+和
+[`memory closeout compact`](../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v6_memory_optimization_closeout_v1.json)。
 
 ## 2026-08-07：Task037 静态凝聚 Full3D 迭代正式结项
 
@@ -13,7 +36,7 @@ Task037 在 reviewed source `d8b16c349f7726b4873ce1932668c12a1ba78926` 的选择
 | M3a iterative | p6/h10 MPI1/2/4/8 full solve 通过；MPI4 official true | explicit opt-in research baseline；不是 production default |
 | canonical | active/full relative L2 `1.2553897989392794e-06` / `7.880394014572244e-07` | `1e-5` comparator pass |
 | F/E | frozen ideal-capacity negative；E1 pass、E2 late residual `6/6` fail | controlled negatives；不生产化 |
-| Task37b | V7.1 handoff 计划保留 | docs closeout 时尚未创建；master push 后按 V7.1 只创建/push，不开发 |
+| Task37b | Review V7 selective-merge qualified research capability | frozen M10 MPI8 已完成；master 发布仍受 full pytest + integrated anchor Gate 约束 |
 
 docs closeout 前的 10 个 code/test selective commits、5 个 Case100 compact records 和最终文档见
 [`task037_static_condensed_full3d_iterative/outcomes/summary.md`](task037_static_condensed_full3d_iterative/outcomes/summary.md)。

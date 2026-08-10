@@ -80,6 +80,10 @@ CLOSED_RESEARCH_RECORD_CASES = {
         "records/task37_candidate_f_f0b_decisive_capacity_v1.json",
         "records/task37_v6_e2_modal_capacity_closeout_v1.json",
     ),
+    "101_hybrid_iterative_block_solver": (
+        "records/task037b_v6_mpi8_traction_aligned_full_qualification_v1.json",
+        "records/task037b_v6_memory_optimization_closeout_v1.json",
+    ),
 }
 
 RECORDED_CASES = {
