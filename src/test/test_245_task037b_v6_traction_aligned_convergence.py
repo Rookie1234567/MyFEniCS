@@ -207,6 +207,45 @@ def test_v6_canonical_heap_cleanup_is_side_scoped_and_ordered():
     assert _parse_args([]).task037b_v6_gate is False
 
 
+def test_v6_pre_canonical_cleanup_follows_descriptor_materialization():
+    source = inspect.getsource(augmented._run_v4_full_solve)
+    own_grid_bcast = source.index("own_grid_meta = comm.bcast")
+    electric = source.index(
+        "selected_electric_descriptor = _array_descriptor", own_grid_bcast
+    )
+    magnetic = source.index(
+        "selected_magnetic_descriptor = _array_descriptor", electric
+    )
+    deletion = source.index("del (", magnetic)
+    cleanup_started = source.index('"v6_pre_canonical_heap_cleanup_started"', deletion)
+    cleanup_call = source.index("_v6_collective_heap_cleanup(comm)", cleanup_started)
+    cleanup_finished = source.index(
+        '"v6_pre_canonical_heap_cleanup_finished"', cleanup_call
+    )
+    canonical_exports = source.index("canonical_exports = {}", cleanup_finished)
+    canonical_record = source[
+        source.index('"canonical_export": {', canonical_exports) :
+    ]
+    assert all(
+        name in source[deletion:cleanup_started]
+        for name in (
+            "reconstructor",
+            "interface_samples",
+            "selected_planes",
+            "validation_raw",
+        )
+    )
+    assert own_grid_bcast < electric < magnetic < deletion
+    assert (
+        deletion < cleanup_started < cleanup_call < cleanup_finished < canonical_exports
+    )
+    assert '"electric": selected_electric_descriptor' in canonical_record
+    assert '"magnetic": selected_magnetic_descriptor' in canonical_record
+    assert "selected_planes.electric_V_per_m" not in canonical_record
+    assert "selected_planes.magnetic_A_per_m" not in canonical_record
+    assert _parse_args([]).task037b_v6_gate is False
+
+
 def test_v6_early_qep_release_destroys_once_and_records_cleanup():
     class _FakeQepOperators:
         def __init__(self):

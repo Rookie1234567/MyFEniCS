@@ -4106,6 +4106,36 @@ def _run_v4_full_solve(
                         schema="task037b.v4-own-grid-EH-modal-q.v1",
                     )
                 own_grid_meta = comm.bcast(own_grid_meta, root=0)
+                selected_electric_descriptor = _array_descriptor(
+                    selected_planes.electric_V_per_m
+                )
+                selected_magnetic_descriptor = _array_descriptor(
+                    selected_planes.magnetic_A_per_m
+                )
+                if is_v6 and own_physics_pass:
+                    del (
+                        reconstructor,
+                        interface_samples,
+                        selected_planes,
+                        validation_raw,
+                    )
+                    record_stage("v6_pre_canonical_heap_cleanup_started")
+                    pre_canonical_cleanup = _v6_collective_heap_cleanup(comm)
+                    pre_canonical_cleanup["status"] = "measured"
+                    pre_canonical_cleanup["release_pass"] = bool(
+                        pre_canonical_cleanup["collective_call_completed"]
+                    )
+                    timings["v6_pre_canonical_heap_cleanup"] = pre_canonical_cleanup[
+                        "elapsed_seconds_max_rank"
+                    ]
+                    v5_multimetric_telemetry["pre_canonical_heap_cleanup"] = (
+                        pre_canonical_cleanup
+                    )
+                    record_stage("v6_pre_canonical_heap_cleanup_finished")
+                    if not pre_canonical_cleanup["release_pass"]:
+                        raise RuntimeError(
+                            "V6 pre-canonical collective cleanup failed."
+                        )
                 canonical_exports = {}
                 if own_physics_pass:
                     if is_v6:
@@ -4216,12 +4246,8 @@ def _run_v4_full_solve(
                             "sample_x_nm": sample_x.tolist(),
                             "sample_y_nm": sample_y.tolist(),
                             "sample_z_nm": sample_z.tolist(),
-                            "electric": _array_descriptor(
-                                selected_planes.electric_V_per_m
-                            ),
-                            "magnetic": _array_descriptor(
-                                selected_planes.magnetic_A_per_m
-                            ),
+                            "electric": selected_electric_descriptor,
+                            "magnetic": selected_magnetic_descriptor,
                             "own_grid": own_grid_meta,
                             "manifests": canonical_exports,
                             "pass": canonical_pass,
