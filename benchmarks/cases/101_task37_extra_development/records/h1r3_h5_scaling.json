@@ -1,0 +1,291 @@
+{
+  "checks": {
+    "canonical.canonical_directory_absent": true,
+    "canonical.canonical_export_false": true,
+    "canonical.canonical_packet_none": true,
+    "canonical.manifest_none": true,
+    "h10_authority": true,
+    "h1r31_prerequisite": true,
+    "raw.recorded_key_set": true,
+    "raw.recorded_metadata": true,
+    "root.positive_root_pid": true,
+    "root.schema": true,
+    "runtime.command_python_executable": true,
+    "runtime.identical": true,
+    "runtime.recorded_match": true,
+    "runtime.watchdog_values": true,
+    "runtime.worker_values": true,
+    "scale.action_seconds_per_row": true,
+    "scale.alpha_payload": true,
+    "scale.completion": true,
+    "scale.packed_per_row": true,
+    "scale.payload_per_row": true,
+    "scale.peak_limit": true,
+    "scale.peak_slope": true,
+    "scale.swap_zero": true,
+    "source.same_current_commit": true,
+    "source.watchdog_end_clean": true,
+    "source.watchdog_source_stable": true,
+    "source.watchdog_start_clean": true,
+    "source.worker_end_clean": true,
+    "source.worker_start_clean": true,
+    "timeline.live_sample_count": true,
+    "timeline.live_samples_present": true,
+    "timeline.live_samples_readable": true,
+    "timeline.peak_limit": true,
+    "timeline.peak_recomputed": true,
+    "timeline.resource_authority": true,
+    "timeline.swap_recomputed": true,
+    "timeline.swap_zero": true,
+    "watchdog.command": true,
+    "watchdog.completion": true,
+    "watchdog.controlled_stop": true,
+    "watchdog.evidence": true,
+    "watchdog.mpi_size": true,
+    "watchdog.return_code": true,
+    "watchdog.rss_limit_bytes": true,
+    "watchdog.schema": true,
+    "watchdog.source_stable_clean": true,
+    "watchdog.status": true,
+    "watchdog.termination_not_requested": true,
+    "watchdog.timeout_seconds": true,
+    "watchdog.worker_qualification_pass": true,
+    "watchdog.worker_recomputation": true,
+    "watchdog.worker_summary_evidence": true,
+    "watchdog.worker_summary_present": true,
+    "watchdog.worker_summary_status": true,
+    "worker.axis_cell_counts": true,
+    "worker.constraint_count": true,
+    "worker.evidence": true,
+    "worker.fresh_pass": true,
+    "worker.global_cells": true,
+    "worker.global_rows": true,
+    "worker.mpi_size": true,
+    "worker.qualification_pass": true,
+    "worker.qualification_status": true,
+    "worker.reference_action": true,
+    "worker.schema": true,
+    "worker.source_definition_matches_measurement": true,
+    "worker.status_pass": true,
+    "worker_qualification": true
+  },
+  "evidence_sha256": "76c8a538ad0f018336ab5d566694d426072ceb4a48a96a33441ee3f22cf08d41",
+  "h10_authority": {
+    "global_rows": 173802,
+    "pass": true,
+    "payload_global_sum_bytes": 6151104,
+    "peak_process_tree_rss_bytes": 340541440,
+    "raw_artifact_checks": {
+      "record_sha256": true,
+      "recorded_key_set": true,
+      "recorded_metadata": true
+    },
+    "raw_checks": {
+      "compact_evidence": true,
+      "compact_global_rows": true,
+      "compact_payload": true,
+      "compact_peak": true,
+      "compact_schema": true,
+      "compact_source": true,
+      "compact_source_clean": true,
+      "compact_status": true,
+      "raw_embedded_artifacts": true,
+      "watchdog_evidence": true,
+      "watchdog_peak": true,
+      "watchdog_schema": true,
+      "watchdog_source": true,
+      "watchdog_status": true,
+      "worker_evidence": true,
+      "worker_payload": true,
+      "worker_rows": true,
+      "worker_schema": true,
+      "worker_source": true,
+      "worker_status": true
+    },
+    "raw_run_directory": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task037_extra_h1r3_warm_repeat_v6_5529a01",
+    "record_path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/cases/101_task37_extra_development/records/h1r3_warm_repeat_v2.json",
+    "record_sha256": "b2e347c1663df932ace40efdee898ca1c6a62790ce30b748e64fcb721bcac658",
+    "source_commit_full_sha": "5529a0159ac5b1500b4ccbd17ad962e2a875f3f1"
+  },
+  "h1r31_prerequisite": {
+    "checks": {
+      "evidence": true,
+      "h1r32_eligible": true,
+      "h2_locked": true,
+      "problems_empty": true,
+      "record_sha256": true,
+      "schema": true,
+      "status_pass": true
+    },
+    "pass": true,
+    "record_path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/cases/101_task37_extra_development/records/h1r3_mpi2_partition_identity.json",
+    "record_sha256": "2e927f1734c676a9df48972e0d4e353cabee085b91772e78159d48628a33020c",
+    "source_commit_full_sha": "c133a803d6086f6df8bf2cf703a53b43a79419c1"
+  },
+  "measurement": {
+    "axis_cell_counts": [
+      12,
+      5,
+      28
+    ],
+    "candidate_apply_seconds": 7.41738795908168,
+    "candidate_repeat_apply_seconds": 7.548130201874301,
+    "canonical_export": false,
+    "canonical_packet_count": null,
+    "constraint_count": 34542,
+    "deterministic": true,
+    "finite": true,
+    "global_cells": 1680,
+    "global_rows": 1127502,
+    "packed_temporary_bytes": 23708160,
+    "reference_apply_seconds": 7.448299763025716,
+    "relative_error": 2.868804640065144e-17,
+    "retained_payload_components": {
+      "coefficient_function_local_array_bytes": 18040032,
+      "conjugated_master_coefficients_bytes": 552672,
+      "constraint_work_bytes": 552672,
+      "flat_slave_indices_bytes": 138168,
+      "master_indices_bytes": 138168,
+      "output_vector_local_storage_bytes": 18040032,
+      "owned_slave_indices_bytes": 138168,
+      "owned_slave_work_bytes": 552672,
+      "packed_constants_bytes": 0,
+      "slave_indices_bytes": 138168
+    },
+    "retained_payload_global_max_bytes": 38290752,
+    "retained_payload_global_sum_bytes": 38290752,
+    "retained_payload_local_bytes": 38290752,
+    "timing_reduction": "mpi_max"
+  },
+  "memory_authority": {
+    "action_only": true,
+    "completed_process_tree_peak_limit_bytes": 805306368,
+    "completed_process_tree_peak_rss_bytes": 638500864,
+    "completion_elapsed_seconds": 40.16706551914103,
+    "swap_bytes": 0,
+    "user_lt_2GB_not_inferred": true
+  },
+  "pass": true,
+  "problems": [],
+  "raw_artifacts": {
+    "h1r3_h5_root_pid.json": {
+      "bytes": 74,
+      "path": "h1r3_h5_root_pid.json",
+      "present": true,
+      "sha256": "1ab21d7b8ab6a955407843f8e07c1637c2e8473253c26738ab9a9d62375d79ec"
+    },
+    "run_summary.json": {
+      "bytes": 14458,
+      "path": "run_summary.json",
+      "present": true,
+      "sha256": "1696b0ca5fe436c96d0579d9e68ec3f1b3e129491e3e7f274a1f73f098135b3b"
+    },
+    "watchdog_summary.json": {
+      "bytes": 11111,
+      "path": "watchdog_summary.json",
+      "present": true,
+      "sha256": "162fa11b6495b051477167674523ad021d18c661a766af7d262bf55e5d8eb630"
+    },
+    "watchdog_timeline.jsonl": {
+      "bytes": 236468,
+      "path": "watchdog_timeline.jsonl",
+      "present": true,
+      "sha256": "5ce286a40398b29f2fdecb0a75164b7066957fe20c2ccded3df7476dafb3979f"
+    },
+    "worker_stdout.txt": {
+      "bytes": 7574,
+      "path": "worker_stdout.txt",
+      "present": true,
+      "sha256": "38323d69cbd71118d0e70107f22f159d52ebb80e23b7fd1863a20d1ca8c993b1"
+    }
+  },
+  "raw_run_directory": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task037_extra_h1r3_h5_v6_d25669d_20260810_run1",
+  "runtime_identity": {
+    "match": true,
+    "watchdog": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "_MYFENICS_WSL_QUALIFIED_ACTIVATION": "1",
+      "sys.executable": "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python"
+    },
+    "worker": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "_MYFENICS_WSL_QUALIFIED_ACTIVATION": "1",
+      "sys.executable": "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python"
+    }
+  },
+  "scaling": {
+    "M10_bytes": 6151104,
+    "M5_bytes": 38290752,
+    "N10_rows": 173802,
+    "N5_rows": 1127502,
+    "N_h1_axis_cell_counts": [
+      51,
+      25,
+      140
+    ],
+    "N_h1_rows": 116527176,
+    "P10_bytes": 340541440,
+    "P5_bytes": 638500864,
+    "P_h1_pred_bytes": 36692207894.33216,
+    "P_h1_pred_scope": "action-only; not full solver/PDE qualification",
+    "action_seconds_per_row": 6.694560366078553e-06,
+    "action_seconds_per_row_limit": 1.03171980264e-05,
+    "alpha_payload": 0.9779306095631883,
+    "b_peak_bytes_per_row": 312.42468700849327,
+    "packed_temporary_bytes_per_row": 21.027155605932407,
+    "packed_temporary_bytes_per_row_limit": 28,
+    "retained_payload_bytes_per_row": 33.9606954134006,
+    "retained_payload_bytes_per_row_limit": 45
+  },
+  "schema": "task037.candidate_h.h1r3.h5.compact_check.v1",
+  "scope_boundary": {
+    "H1R3.2": "pass",
+    "H2": "locked"
+  },
+  "source_identity": {
+    "end": {
+      "cleanliness_semantics": "all tracked changes plus every nonignored untracked path",
+      "git_error": null,
+      "nonignored_untracked_paths": [],
+      "source_commit_full_sha": "d25669db29a25608685cce3bfff1f63379885aa5",
+      "source_worktree_dirty": false,
+      "tracked_source_dirty": false,
+      "worktree_status_porcelain": []
+    },
+    "source_commit_full_sha": "d25669db29a25608685cce3bfff1f63379885aa5",
+    "start": {
+      "cleanliness_semantics": "all tracked changes plus every nonignored untracked path",
+      "git_error": null,
+      "nonignored_untracked_paths": [],
+      "source_commit_full_sha": "d25669db29a25608685cce3bfff1f63379885aa5",
+      "source_worktree_dirty": false,
+      "tracked_source_dirty": false,
+      "worktree_status_porcelain": []
+    },
+    "worker_end": {
+      "cleanliness_semantics": "all tracked changes plus every nonignored untracked path",
+      "git_error": null,
+      "nonignored_untracked_paths": [],
+      "source_commit_full_sha": "d25669db29a25608685cce3bfff1f63379885aa5",
+      "source_worktree_dirty": false,
+      "tracked_source_dirty": false,
+      "worktree_status_porcelain": []
+    },
+    "worker_start": {
+      "cleanliness_semantics": "all tracked changes plus every nonignored untracked path",
+      "git_error": null,
+      "nonignored_untracked_paths": [],
+      "source_commit_full_sha": "d25669db29a25608685cce3bfff1f63379885aa5",
+      "source_worktree_dirty": false,
+      "tracked_source_dirty": false,
+      "worktree_status_porcelain": []
+    }
+  },
+  "status": "pass"
+}
