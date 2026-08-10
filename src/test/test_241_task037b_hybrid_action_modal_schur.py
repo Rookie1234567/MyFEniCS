@@ -1,0 +1,429 @@
+from __future__ import annotations
+
+from types import SimpleNamespace
+
+import numpy as np
+from mpi4py import MPI
+from petsc4py import PETSc
+
+from src.solvers.hybrid_fem_modal_augmented_direct import (
+    HybridAugmentedLayout,
+    internal_modal_constraint_matrix,
+)
+from src.solvers.hybrid_fem_modal_block_ldu import (
+    build_hybrid_action_modal_schur,
+    create_action_block_ldu_preconditioner,
+)
+
+
+class _FixedAction:
+    def __init__(self, operator: PETSc.Mat, inverse_diagonal: np.ndarray) -> None:
+        self.operator = operator
+        self.inverse_diagonal = np.asarray(inverse_diagonal, dtype=np.complex128)
+        self.apply_count = 0
+        self.destroyed = False
+
+    @property
+    def diagnostics(self) -> dict[str, object]:
+        return {
+            "operator_identity": "test_fixed_action",
+            "direct_factor_count": 0,
+            "ilu_factor_count": 1 if not self.destroyed else 0,
+            "factor_count": 1 if not self.destroyed else 0,
+            "apply_count": self.apply_count,
+            "destroyed": self.destroyed,
+        }
+
+    def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        if self.destroyed:
+            raise RuntimeError("The fixed action is destroyed.")
+        source.copy(target)
+        first, last = (int(value) for value in source.getOwnershipRange())
+        target.getArray()[:] *= self.inverse_diagonal[first:last]
+        self.apply_count += 1
+
+    def destroy(self) -> None:
+        self.destroyed = True
+
+
+def _matrix_from_dense(
+    row_template: PETSc.Vec,
+    column_template: PETSc.Vec,
+    dense: np.ndarray,
+) -> PETSc.Mat:
+    dense = np.asarray(dense, dtype=np.complex128)
+    matrix = PETSc.Mat().createAIJ(
+        size=(
+            (row_template.getLocalSize(), dense.shape[0]),
+            (column_template.getLocalSize(), dense.shape[1]),
+        ),
+        comm=row_template.getComm(),
+    )
+    first, last = (int(value) for value in row_template.getOwnershipRange())
+    for row in range(first, last):
+        for column, value in enumerate(dense[row]):
+            if value != 0.0:
+                matrix.setValue(row, column, PETSc.ScalarType(value))
+    matrix.assemble()
+    return matrix
+
+
+def _relative_array_error(actual: np.ndarray, expected: np.ndarray) -> float:
+    return float(
+        np.linalg.norm(np.asarray(actual) - np.asarray(expected))
+        / max(float(np.linalg.norm(expected)), 1.0e-30)
+    )
+
+
+def _gather_vector(vector: PETSc.Vec) -> np.ndarray:
+    comm = vector.getComm().tompi4py()
+    packets = comm.allgather(
+        (
+            tuple(int(value) for value in vector.getOwnershipRange()),
+            np.asarray(vector.getArray(readonly=True), dtype=np.complex128).copy(),
+        )
+    )
+    result = np.empty(int(vector.getSize()), dtype=np.complex128)
+    for (first, last), values in packets:
+        result[first:last] = values
+    return result
+
+
+def _tiny_fixture() -> dict[str, object]:
+    comm = MPI.COMM_WORLD
+    template = PETSc.Vec().createMPI((None, 4), comm=comm)
+    modal_template = PETSc.Vec().createMPI(
+        (2 if comm.rank == comm.size - 1 else 0, 2), comm=comm
+    )
+    diagonal = np.asarray(
+        [2.0 + 0.1j, 2.4 - 0.2j, 2.8 + 0.15j, 3.1 - 0.05j],
+        dtype=np.complex128,
+    )
+    inverse = 1.0 / diagonal
+    bottom_a = _matrix_from_dense(template, template, np.diag(diagonal))
+    top_a = _matrix_from_dense(template, template, np.diag(diagonal))
+    blocks = {
+        "bottom_positive": np.asarray(
+            [[0.20, 0.01], [0.02, 0.25], [0.03, 0.00], [0.00, 0.04]],
+            dtype=np.complex128,
+        ),
+        "bottom_negative": np.asarray(
+            [[0.05, 0.00], [0.00, 0.06], [0.11, 0.01], [0.00, 0.09]],
+            dtype=np.complex128,
+        ),
+        "top_positive": np.asarray(
+            [[0.07, 0.00], [0.00, 0.08], [0.18, 0.02], [0.01, 0.21]],
+            dtype=np.complex128,
+        ),
+        "top_negative": np.asarray(
+            [[0.04, 0.01], [0.00, 0.03], [0.06, 0.00], [0.02, 0.10]],
+            dtype=np.complex128,
+        ),
+        "bottom_projection": np.asarray(
+            [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0]],
+            dtype=np.complex128,
+        ),
+        "top_projection": np.asarray(
+            [[0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0]],
+            dtype=np.complex128,
+        ),
+    }
+    matrices = {
+        name: _matrix_from_dense(
+            template if values.shape[0] == 4 else modal_template,
+            modal_template if values.shape[1] == 2 else template,
+            values,
+        )
+        for name, values in blocks.items()
+    }
+    template.destroy()
+    modal_template.destroy()
+    zero = np.zeros((2, 2), dtype=np.complex128)
+    bottom_block = SimpleNamespace(
+        projection=matrices["bottom_projection"],
+        positive_traction=matrices["bottom_positive"],
+        negative_traction=matrices["bottom_negative"],
+        positive_interior_correction=zero.copy(),
+        negative_interior_correction=zero.copy(),
+        modal_rhs_correction=np.zeros(2, dtype=np.complex128),
+    )
+    top_block = SimpleNamespace(
+        projection=matrices["top_projection"],
+        positive_traction=matrices["top_positive"],
+        negative_traction=matrices["top_negative"],
+        positive_interior_correction=zero.copy(),
+        negative_interior_correction=zero.copy(),
+        modal_rhs_correction=np.zeros(2, dtype=np.complex128),
+    )
+    coupling = SimpleNamespace(
+        mode_count_per_direction=2,
+        internal_unknown_count=4,
+        negative_trace_to_positive=np.eye(2, dtype=np.complex128),
+        propagation=SimpleNamespace(
+            forward=SimpleNamespace(factors=np.asarray([0.8 + 0.1j, 1.1 - 0.05j])),
+            backward=SimpleNamespace(factors=np.asarray([0.7 - 0.1j, 0.9 + 0.04j])),
+        ),
+        bottom=bottom_block,
+        top=top_block,
+    )
+    bottom_b = bottom_a.createVecRight()
+    top_b = top_a.createVecRight()
+    bottom_b.set(0.0)
+    top_b.set(0.0)
+    bottom = SimpleNamespace(
+        side="bottom",
+        A=bottom_a,
+        b=bottom_b,
+        global_size=4,
+        local_mesh=SimpleNamespace(mesh=SimpleNamespace(comm=comm)),
+    )
+    top = SimpleNamespace(
+        side="top",
+        A=top_a,
+        b=top_b,
+        global_size=4,
+        local_mesh=SimpleNamespace(mesh=SimpleNamespace(comm=comm)),
+    )
+    layout = HybridAugmentedLayout.build(bottom, top, 4)
+    return {
+        "comm": comm,
+        "coupling": coupling,
+        "bottom": bottom,
+        "top": top,
+        "layout": layout,
+        "diagonal": diagonal,
+        "inverse": inverse,
+        "blocks": blocks,
+    }
+
+
+def _actions(fixture: dict[str, object]) -> tuple[_FixedAction, _FixedAction]:
+    inverse = fixture["inverse"]
+    return (
+        _FixedAction(fixture["bottom"].A, inverse),
+        _FixedAction(fixture["top"].A, inverse),
+    )
+
+
+def _expected_modal_matrix(fixture: dict[str, object]) -> np.ndarray:
+    coupling = fixture["coupling"]
+    blocks = fixture["blocks"]
+    inverse = np.diag(fixture["inverse"])
+    expected = internal_modal_constraint_matrix(coupling)
+    bottom = np.zeros_like(expected)
+    top = np.zeros_like(expected)
+    for column in range(4):
+        modal = np.zeros(4, dtype=np.complex128)
+        modal[column] = 1.0
+        bottom_traction = blocks["bottom_positive"] @ modal[:2]
+        bottom_traction += blocks["bottom_negative"] @ (
+            coupling.propagation.backward.factors * modal[2:]
+        )
+        top_traction = blocks["top_positive"] @ (
+            coupling.propagation.forward.factors * modal[:2]
+        )
+        top_traction += blocks["top_negative"] @ modal[2:]
+        bottom[:2, column] = blocks["bottom_projection"] @ (inverse @ bottom_traction)
+        top[2:, column] = blocks["top_projection"] @ (inverse @ top_traction)
+    return expected - bottom - top
+
+
+def _destroy_fixture(fixture: dict[str, object]) -> None:
+    for block in (fixture["coupling"].bottom, fixture["coupling"].top):
+        block.projection.destroy()
+        block.positive_traction.destroy()
+        block.negative_traction.destroy()
+    fixture["bottom"].b.destroy()
+    fixture["top"].b.destroy()
+    fixture["bottom"].A.destroy()
+    fixture["top"].A.destroy()
+
+
+def test_action_modal_schur_is_repeated_and_borrowed():
+    fixture = _tiny_fixture()
+    bottom, top = _actions(fixture)
+    try:
+        expected = _expected_modal_matrix(fixture)
+        first = build_hybrid_action_modal_schur(fixture["coupling"], bottom, top)
+        second = build_hybrid_action_modal_schur(fixture["coupling"], bottom, top)
+        assert _relative_array_error(first.modal_schur, expected) <= 1.0e-13
+        assert _relative_array_error(first.modal_schur, second.modal_schur) <= 1.0e-13
+        assert first.diagnostics["rank"] == 4
+        assert np.isfinite(first.diagnostics["condition"])
+        assert first.diagnostics["normal_equations"] is False
+        assert first.diagnostics["build_apply_count"] == {"bottom": 8, "top": 8}
+        assert bottom.diagnostics["apply_count"] == 16
+        assert top.diagnostics["apply_count"] == 16
+        first.destroy()
+        second.destroy()
+        assert bottom.diagnostics["destroyed"] is False
+        assert top.diagnostics["destroyed"] is False
+    finally:
+        bottom.destroy()
+        top.destroy()
+        _destroy_fixture(fixture)
+
+
+def test_action_block_apply_is_linear_and_owns_no_side_factor():
+    fixture = _tiny_fixture()
+    bottom, top = _actions(fixture)
+    context = create_action_block_ldu_preconditioner(
+        fixture["layout"],
+        fixture["bottom"],
+        fixture["top"],
+        fixture["coupling"],
+        bottom,
+        top,
+    )
+    source_bottom = fixture["bottom"].A.createVecRight()
+    source_top = fixture["top"].A.createVecRight()
+    source_bottom.set(0.0)
+    source_top.set(0.0)
+    first, last = (int(value) for value in source_bottom.getOwnershipRange())
+    source_bottom.getArray()[:] = np.asarray(
+        [1.0 + 0.1j, -0.5 + 0.2j, 0.8 - 0.3j, 0.2 + 0.4j][first:last],
+        dtype=PETSc.ScalarType,
+    )
+    first, last = (int(value) for value in source_top.getOwnershipRange())
+    source_top.getArray()[:] = np.asarray(
+        [-0.4 + 0.2j, 0.7 - 0.1j, 1.2 + 0.3j, -0.3 - 0.2j][first:last],
+        dtype=PETSc.ScalarType,
+    )
+    modal = np.asarray([0.3 + 0.1j, -0.2 + 0.4j, 0.5 - 0.2j, -0.1 + 0.3j])
+    source = fixture["layout"].pack(source_bottom, source_top, modal)
+    target = fixture["layout"].create_vector()
+    target_repeat = fixture["layout"].create_vector()
+    source_y = source.duplicate()
+    first, last = (int(value) for value in source_y.getOwnershipRange())
+    source_y.getArray()[:] = np.asarray(
+        [
+            0.2 - 0.1j,
+            1.1 + 0.3j,
+            -0.7 + 0.5j,
+            0.6 - 0.4j,
+            0.9 + 0.2j,
+            -1.0 + 0.1j,
+            0.4 - 0.6j,
+            0.8 + 0.7j,
+            -0.3 + 0.2j,
+            0.5 - 0.8j,
+            1.2 + 0.1j,
+            -0.9 - 0.3j,
+        ][first:last],
+        dtype=PETSc.ScalarType,
+    )
+    target_y = fixture["layout"].create_vector()
+    combined = source.duplicate()
+    combined_target = fixture["layout"].create_vector()
+    linear_target = fixture["layout"].create_vector()
+    workspace_ids = tuple(
+        id(getattr(context, name))
+        for name in (
+            "_bottom_coupling",
+            "_top_coupling",
+            "_bottom_positive_source",
+            "_top_positive_source",
+        )
+    )
+    try:
+        context.apply(None, source, target)
+        context.apply(None, source, target_repeat)
+        assert (
+            _relative_array_error(_gather_vector(target_repeat), _gather_vector(target))
+            <= 1.0e-13
+        )
+        context.apply(None, source_y, target_y)
+        alpha, beta = 0.3, -0.7
+        source.copy(combined)
+        combined.scale(PETSc.ScalarType(alpha))
+        combined.axpy(PETSc.ScalarType(beta), source_y)
+        context.apply(None, combined, combined_target)
+        target.copy(linear_target)
+        linear_target.scale(PETSc.ScalarType(alpha))
+        linear_target.axpy(PETSc.ScalarType(beta), target_y)
+        assert (
+            _relative_array_error(
+                _gather_vector(combined_target), _gather_vector(linear_target)
+            )
+            <= 1.0e-13
+        )
+        assert (
+            tuple(
+                id(getattr(context, name))
+                for name in (
+                    "_bottom_coupling",
+                    "_top_coupling",
+                    "_bottom_positive_source",
+                    "_top_positive_source",
+                )
+            )
+            == workspace_ids
+        )
+        assert context.inventory["pc_owned_local_factor_count"] == 0
+        assert context.inventory["direct_factor_count"] == 0
+        assert context.inventory["pc_apply_count"] == 4
+        assert bottom.diagnostics["apply_count"] == 16
+        assert top.diagnostics["apply_count"] == 16
+        expected_matrix = _expected_modal_matrix(fixture)
+        bottom_values = _gather_vector(source_bottom)
+        top_values = _gather_vector(source_top)
+        modal_rhs = modal.copy()
+        modal_rhs[:2] -= fixture["blocks"]["bottom_projection"] @ (
+            np.diag(fixture["inverse"]) @ bottom_values
+        )
+        modal_rhs[2:] -= fixture["blocks"]["top_projection"] @ (
+            np.diag(fixture["inverse"]) @ top_values
+        )
+        expected_modal = np.linalg.solve(expected_matrix, modal_rhs)
+        bottom_traction = fixture["blocks"]["bottom_positive"] @ expected_modal[:2]
+        bottom_traction += fixture["blocks"]["bottom_negative"] @ (
+            fixture["coupling"].propagation.backward.factors * expected_modal[2:]
+        )
+        top_traction = fixture["blocks"]["top_positive"] @ (
+            fixture["coupling"].propagation.forward.factors * expected_modal[:2]
+        )
+        top_traction += fixture["blocks"]["top_negative"] @ expected_modal[2:]
+        expected_bottom = np.diag(fixture["inverse"]) @ (
+            bottom_values - bottom_traction
+        )
+        expected_top = np.diag(fixture["inverse"]) @ (top_values - top_traction)
+        actual_bottom, actual_top, actual_modal = fixture["layout"].split(
+            target, fixture["bottom"].b, fixture["top"].b
+        )
+        try:
+            assert (
+                _relative_array_error(_gather_vector(actual_bottom), expected_bottom)
+                <= 1.0e-13
+            )
+            assert (
+                _relative_array_error(_gather_vector(actual_top), expected_top)
+                <= 1.0e-13
+            )
+            assert _relative_array_error(actual_modal, expected_modal) <= 1.0e-13
+        finally:
+            actual_modal = None
+            actual_top.destroy()
+            actual_bottom.destroy()
+        context.defer_action_modal_schur_release = True
+        context.destroy(None)
+        assert context.action_modal_schur_system.diagnostics["destroyed"] is False
+        context.release_deferred_action_modal_schur()
+        assert context.action_modal_schur_system.diagnostics["destroyed"] is True
+        assert bottom.diagnostics["destroyed"] is False
+        assert top.diagnostics["destroyed"] is False
+    finally:
+        target.destroy()
+        source.destroy()
+        source_top.destroy()
+        source_bottom.destroy()
+        linear_target.destroy()
+        combined_target.destroy()
+        combined.destroy()
+        target_y.destroy()
+        source_y.destroy()
+        target_repeat.destroy()
+        if not context._destroyed:
+            context.destroy()
+        bottom.destroy()
+        top.destroy()
+        _destroy_fixture(fixture)

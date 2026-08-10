@@ -79,13 +79,9 @@ def _factor_local(matrix: PETSc.Mat) -> tuple[PETSc.KSP, float]:
 
 def _local_factor_inventory(ksp: PETSc.KSP) -> dict:
     inventory = _petsc_factor_inventory(ksp)
-    inventory["mumps_icntl_14_requested_percent"] = (
-        MUMPS_WORKSPACE_RELAXATION_PERCENT
-    )
+    inventory["mumps_icntl_14_requested_percent"] = MUMPS_WORKSPACE_RELAXATION_PERCENT
     try:
-        observed = int(
-            ksp.getPC().getFactorMatrix().getMumpsIcntl(14)
-        )
+        observed = int(ksp.getPC().getFactorMatrix().getMumpsIcntl(14))
     except Exception:
         observed = None
     inventory["mumps_icntl_14_observed_percent"] = observed
@@ -193,7 +189,11 @@ def _local_schur_response(
     started = time.perf_counter()
     factor.matSolve(right_hand_sides, solved)
     elapsed = _max_elapsed(system.local_mesh.mesh.comm, started)
-    projection = coupling.bottom.projection if system.side == "bottom" else coupling.top.projection
+    projection = (
+        coupling.bottom.projection
+        if system.side == "bottom"
+        else coupling.top.projection
+    )
     try:
         response = _project_multi_rhs(projection, solved)
         payload_bytes = int(
@@ -324,9 +324,7 @@ def build_hybrid_modal_schur_direct_system(
         top_contribution[count:, :] = top_response
         modal_constraint = internal_modal_constraint_matrix(coupling)
         modal_schur = (
-            modal_constraint
-            - bottom_contribution[:, 1:]
-            - top_contribution[:, 1:]
+            modal_constraint - bottom_contribution[:, 1:] - top_contribution[:, 1:]
         )
         modal_rhs = (
             internal_modal_rhs_correction(coupling)
@@ -335,7 +333,9 @@ def build_hybrid_modal_schur_direct_system(
         )
         condition = float(np.linalg.cond(modal_schur))
         if not np.isfinite(condition):
-            raise RuntimeError("The Task32 modal Schur matrix is singular or non-finite.")
+            raise RuntimeError(
+                "The Task32 modal Schur matrix is singular or non-finite."
+            )
         return HybridModalSchurDirectSystem(
             modal_schur=modal_schur,
             modal_rhs=modal_rhs,
@@ -422,9 +422,7 @@ def build_hybrid_modal_schur_memory_minimal_system(
     top_contribution[count:, :] = top_response
     modal_constraint = internal_modal_constraint_matrix(coupling)
     modal_schur = (
-        modal_constraint
-        - bottom_contribution[:, 1:]
-        - top_contribution[:, 1:]
+        modal_constraint - bottom_contribution[:, 1:] - top_contribution[:, 1:]
     )
     modal_rhs = (
         internal_modal_rhs_correction(coupling)
@@ -459,13 +457,13 @@ def build_hybrid_modal_schur_memory_minimal_system(
     )
 
 
-def _coupling_action(
-    system: HybridLocalDtnSystem,
+def modal_coupling_action(
+    side: str,
     coupling: HybridInternalModeCoupling,
     modal: np.ndarray,
 ) -> PETSc.Vec:
     count = coupling.mode_count_per_direction
-    if system.side == "bottom":
+    if side == "bottom":
         block = coupling.bottom
         positive_values = modal[:count]
         negative_values = (
@@ -498,7 +496,7 @@ def _recover_local_field(
     coupling: HybridInternalModeCoupling,
     modal: np.ndarray,
 ) -> PETSc.Vec:
-    coupling_value = _coupling_action(system, coupling, modal)
+    coupling_value = modal_coupling_action(system.side, coupling, modal)
     rhs = system.b.duplicate()
     solution = system.b.duplicate()
     try:
@@ -518,7 +516,7 @@ def _local_relative_residual(
     modal: np.ndarray,
 ) -> tuple[float, float]:
     residual = system.A.createVecLeft()
-    coupling_value = _coupling_action(system, coupling, modal)
+    coupling_value = modal_coupling_action(system.side, coupling, modal)
     try:
         system.A.mult(field, residual)
         operator_norm = float(residual.norm())
@@ -549,12 +547,15 @@ def _modal_residual(
     try:
         coupling.bottom.projection.mult(bottom, bottom_projection)
         coupling.top.projection.mult(top, top_projection)
-        actual = np.concatenate(
-            (
-                _replicated_modal_vector(bottom_projection),
-                _replicated_modal_vector(top_projection),
+        actual = (
+            np.concatenate(
+                (
+                    _replicated_modal_vector(bottom_projection),
+                    _replicated_modal_vector(top_projection),
+                )
             )
-        ) + system.modal_constraint @ modal
+            + system.modal_constraint @ modal
+        )
     finally:
         bottom_projection.destroy()
         top_projection.destroy()
@@ -605,9 +606,7 @@ def solve_hybrid_modal_schur_direct(
         top_recovery_factor, elapsed = _factor_local(top_system.A)
         recovery_factor_setup["top"] = elapsed
     try:
-        top = _recover_local_field(
-            top_system, top_recovery_factor, coupling, modal
-        )
+        top = _recover_local_field(top_system, top_recovery_factor, coupling, modal)
     finally:
         if system.top_factor is None:
             top_recovery_factor.destroy()
