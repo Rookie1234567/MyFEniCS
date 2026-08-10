@@ -107,9 +107,7 @@ class HybridAugmentedLayout:
     @property
     def global_size(self) -> int:
         return int(
-            sum(self.bottom_local_sizes)
-            + sum(self.top_local_sizes)
-            + self.modal_count
+            sum(self.bottom_local_sizes) + sum(self.top_local_sizes) + self.modal_count
         )
 
     @property
@@ -161,7 +159,9 @@ class HybridAugmentedLayout:
         ends = np.asarray([last for _first, last in ranges], dtype=np.int64)
         owners = np.searchsorted(ends, values, side="right")
         if np.any(owners >= len(ranges)) or np.any(values < starts[owners]):
-            raise IndexError("A distributed block index lies outside its ownership map.")
+            raise IndexError(
+                "A distributed block index lies outside its ownership map."
+            )
         offsets = np.asarray(self.combined_offsets, dtype=np.int64)[owners]
         local_offsets = np.asarray(within_rank_offset, dtype=np.int64)[owners]
         mapped = offsets + local_offsets + values - starts[owners]
@@ -251,15 +251,11 @@ def internal_modal_constraint_matrix(
     """Return the small ``2M x 2M`` E-trace/propagation constraint block."""
 
     mode_count = coupling.mode_count_per_direction
-    negative_map = np.asarray(
-        coupling.negative_trace_to_positive, dtype=np.complex128
-    )
+    negative_map = np.asarray(coupling.negative_trace_to_positive, dtype=np.complex128)
     if negative_map.shape != (mode_count, mode_count):
         raise ValueError("Negative trace mapping has the wrong shape.")
     forward = np.asarray(coupling.propagation.forward.factors, dtype=np.complex128)
-    backward = np.asarray(
-        coupling.propagation.backward.factors, dtype=np.complex128
-    )
+    backward = np.asarray(coupling.propagation.backward.factors, dtype=np.complex128)
     identity = np.eye(mode_count, dtype=np.complex128)
     base = np.block(
         [
@@ -453,9 +449,7 @@ def build_hybrid_augmented_direct_system(
         raise ValueError("Hybrid local systems must be ordered bottom, top.")
     mode_count = coupling.mode_count_per_direction
     internal_count = 2 * mode_count
-    layout = HybridAugmentedLayout.build(
-        bottom_system, top_system, internal_count
-    )
+    layout = HybridAugmentedLayout.build(bottom_system, top_system, internal_count)
     matrix = PETSc.Mat().createAIJ(
         size=(
             (layout.local_size, layout.global_size),
@@ -479,9 +473,7 @@ def build_hybrid_augmented_direct_system(
     )
 
     forward = np.asarray(coupling.propagation.forward.factors, dtype=np.complex128)
-    backward = np.asarray(
-        coupling.propagation.backward.factors, dtype=np.complex128
-    )
+    backward = np.asarray(coupling.propagation.backward.factors, dtype=np.complex128)
     inserted["C_bottom_positive"] = _copy_block(
         matrix,
         coupling.bottom.positive_traction,
@@ -590,14 +582,10 @@ def solve_hybrid_augmented_direct(
     try:
         system.A.mult(x, residual)
         residual.axpy(PETSc.ScalarType(-1.0), system.b)
-        relative_residual = float(
-            residual.norm() / max(system.b.norm(), 1.0e-30)
-        )
+        relative_residual = float(residual.norm() / max(system.b.norm(), 1.0e-30))
     finally:
         residual.destroy()
-    bottom, top, modal = system.layout.split(
-        x, bottom_system.b, top_system.b
-    )
+    bottom, top, modal = system.layout.split(x, bottom_system.b, top_system.b)
     bottom_recovered = None
     top_recovered = None
     static_requested = (
@@ -613,9 +601,7 @@ def solve_hybrid_augmented_direct(
             top.destroy()
             x.destroy()
             ksp.destroy()
-            raise ValueError(
-                "Hybrid bottom/top local assembly backends must match."
-            )
+            raise ValueError("Hybrid bottom/top local assembly backends must match.")
         if coupling is None:
             bottom.destroy()
             top.destroy()
@@ -777,9 +763,7 @@ def _external_diffraction_order_rows(
             zip(system.external_modes, values, system.incident_projections)
         ):
             outgoing = (
-                complex(value - incident)
-                if mode.side == "top"
-                else complex(value)
+                complex(value - incident) if mode.side == "top" else complex(value)
             )
             boundary_amplitude = outgoing * _mode_boundary_phase(mode, cfg)
             modal_power = _mode_power_at_boundary(mode, cfg, outgoing)
@@ -801,9 +785,7 @@ def _external_diffraction_order_rows(
                     "outgoing_amplitude_at_boundary": boundary_amplitude,
                     "power_ratio": power_ratio,
                     "R": (
-                        power_ratio
-                        if mode.side == "top" and mode.propagating
-                        else 0.0
+                        power_ratio if mode.side == "top" and mode.propagating else 0.0
                     ),
                     "T": (
                         power_ratio
@@ -838,15 +820,9 @@ def evaluate_hybrid_augmented_solution(
         raise ValueError("The solved internal modal vector has the wrong shape.")
     bottom_incident = modal[:mode_count]
     top_incident = modal[mode_count:]
-    forward = np.asarray(
-        coupling.propagation.forward.factors, dtype=np.complex128
-    )
-    backward = np.asarray(
-        coupling.propagation.backward.factors, dtype=np.complex128
-    )
-    negative_map = np.asarray(
-        coupling.negative_trace_to_positive, dtype=np.complex128
-    )
+    forward = np.asarray(coupling.propagation.forward.factors, dtype=np.complex128)
+    backward = np.asarray(coupling.propagation.backward.factors, dtype=np.complex128)
+    negative_map = np.asarray(coupling.negative_trace_to_positive, dtype=np.complex128)
 
     bottom_projection = coupling.bottom.projection.createVecLeft()
     top_projection = coupling.top.projection.createVecLeft()
@@ -858,13 +834,9 @@ def evaluate_hybrid_augmented_solution(
     finally:
         bottom_projection.destroy()
         top_projection.destroy()
-    bottom_expected = bottom_incident + negative_map @ (
-        backward * top_incident
-    )
+    bottom_expected = bottom_incident + negative_map @ (backward * top_incident)
     top_expected = forward * bottom_incident + negative_map @ top_incident
-    bottom_e_relative = _relative_array_residual(
-        bottom_actual, bottom_expected
-    )
+    bottom_e_relative = _relative_array_residual(bottom_actual, bottom_expected)
     top_e_relative = _relative_array_residual(top_actual, top_expected)
     combined_actual = np.concatenate((bottom_actual, top_actual))
     combined_expected = np.concatenate((bottom_expected, top_expected))
@@ -911,9 +883,7 @@ def evaluate_hybrid_augmented_solution(
         [*bottom_system.external_modes, *top_system.external_modes],
         np.concatenate((bottom_aux, top_aux)),
         [
-            *np.asarray(
-                bottom_system.incident_projections, dtype=np.complex128
-            ),
+            *np.asarray(bottom_system.incident_projections, dtype=np.complex128),
             *np.asarray(top_system.incident_projections, dtype=np.complex128),
         ],
     )
@@ -939,9 +909,7 @@ def evaluate_hybrid_augmented_solution(
                 "absolute_dual_coefficient_norm"
             ],
             "bottom_relative_residual": bottom_fe_dual["relative_dual"],
-            "top_absolute_residual": top_fe_dual[
-                "absolute_dual_coefficient_norm"
-            ],
+            "top_absolute_residual": top_fe_dual["absolute_dual_coefficient_norm"],
             "top_relative_residual": top_fe_dual["relative_dual"],
             "bottom_dual": bottom_fe_dual,
             "top_dual": top_fe_dual,

@@ -59,27 +59,19 @@ class HybridLocalReductionMetadata:
         """Return JSON-ready provenance without exposing PETSc objects."""
 
         return {
-            "schema_version": (
-                "myfenics.hybrid-local-static-condensation-metadata.v1"
-            ),
+            "schema_version": ("myfenics.hybrid-local-static-condensation-metadata.v1"),
             "status": "hybrid_local_static_condensation_bound",
             "assembly_backend_requested": self.assembly_backend_requested,
             "assembly_backend_actual": self.assembly_backend_actual,
             "full_fe_rows": self.full_fe_rows,
-            "trace_rows_before_constraints": (
-                self.trace_rows_before_constraints
-            ),
+            "trace_rows_before_constraints": (self.trace_rows_before_constraints),
             "active_trace_rows": self.active_trace_rows,
             "cell_interior_rows": self.cell_interior_rows,
             "floquet_slave_rows": self.floquet_slave_rows,
             "external_auxiliary_rows": self.external_auxiliary_rows,
             "local_algebra_rows": self.local_algebra_rows,
-            "full_global_matrix_allocated": (
-                self.full_global_matrix_allocated
-            ),
-            "full_trace_matrix_allocated": (
-                self.full_trace_matrix_allocated
-            ),
+            "full_global_matrix_allocated": (self.full_global_matrix_allocated),
+            "full_trace_matrix_allocated": (self.full_trace_matrix_allocated),
             "ordinary_default_changed": self.ordinary_default_changed,
         }
 
@@ -136,8 +128,7 @@ class HybridLocalStaticCondensation:
         }.get(role)
         if reduction_side is None:
             raise ValueError(
-                "Hybrid surface vector role must be 'load_column' or "
-                "'row_functional'"
+                "Hybrid surface vector role must be 'load_column' or 'row_functional'"
             )
         _require_vector_size(
             full_vector,
@@ -208,9 +199,7 @@ class HybridLocalStaticCondensation:
         full_mpc_vector: PETSc.Vec,
         *,
         eliminated_tolerance: float = 1.0e-12,
-        eliminated_relative_tolerance: float = (
-            1024.0 * np.finfo(np.float64).eps
-        ),
+        eliminated_relative_tolerance: float = (1024.0 * np.finfo(np.float64).eps),
         audit: dict[str, object] | None = None,
     ) -> PETSc.Vec:
         """Project a verified trace-only tangential surface vector.
@@ -298,17 +287,13 @@ class HybridLocalStaticCondensation:
         embedded_fe_solution.destroy()
         recovery_audit = {
             **recovery,
-            "assembly_backend_actual": (
-                self.metadata.assembly_backend_actual
-            ),
+            "assembly_backend_actual": (self.metadata.assembly_backend_actual),
             "effective_rhs_includes_coupled_surface_actions_required": True,
             "ordinary_default_changed": False,
         }
         residual_audit = {
             **residual,
-            "assembly_backend_actual": (
-                self.metadata.assembly_backend_actual
-            ),
+            "assembly_backend_actual": (self.metadata.assembly_backend_actual),
             "effective_rhs_includes_coupled_surface_actions_required": True,
             "ordinary_default_changed": False,
         }
@@ -360,9 +345,7 @@ def bind_hybrid_local_static_condensation(
         cell_interior_rows=int(condensed.interior_rows),
         floquet_slave_rows=int(condensed.trace_constraints.slave_rows),
         external_auxiliary_rows=external_auxiliary_rows,
-        local_algebra_rows=int(
-            condensed.active_rows + external_auxiliary_rows
-        ),
+        local_algebra_rows=int(condensed.active_rows + external_auxiliary_rows),
         full_global_matrix_allocated=False,
         full_trace_matrix_allocated=False,
         ordinary_default_changed=False,
@@ -384,9 +367,7 @@ def _require_vector_size(
 ) -> None:
     observed = int(vector.getSize())
     if observed != int(expected):
-        raise ValueError(
-            f"{label} has {observed} rows; expected {int(expected)}"
-        )
+        raise ValueError(f"{label} has {observed} rows; expected {int(expected)}")
 
 
 def _validate_binding(
@@ -405,10 +386,8 @@ def _validate_binding(
             "Hybrid local static condensation requires qualified Floquet MPC"
         )
     if (
-        metadata.assembly_backend_requested
-        != ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
-        or metadata.assembly_backend_actual
-        != ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+        metadata.assembly_backend_requested != ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+        or metadata.assembly_backend_actual != ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
     ):
         raise ValueError(
             "Hybrid local reduction metadata does not describe an explicit "
@@ -419,9 +398,7 @@ def _validate_binding(
             "Hybrid local static condensation cannot change the ordinary "
             "assembly default"
         )
-    if condensed.full_rows != (
-        condensed.trace_rows + condensed.interior_rows
-    ):
+    if condensed.full_rows != (condensed.trace_rows + condensed.interior_rows):
         raise RuntimeError("Hybrid local FE row partition does not close")
     if condensed.active_rows != condensed.trace_constraints.active_rows:
         raise RuntimeError(
@@ -430,17 +407,13 @@ def _validate_binding(
     if condensed.trace_rows != (
         condensed.active_rows + condensed.trace_constraints.slave_rows
     ):
-        raise RuntimeError(
-            "Hybrid local trace/Floquet row partition does not close"
-        )
+        raise RuntimeError("Hybrid local trace/Floquet row partition does not close")
     expected_metadata = {
         "full_fe_rows": int(condensed.full_rows),
         "trace_rows_before_constraints": int(condensed.trace_rows),
         "active_trace_rows": int(condensed.active_rows),
         "cell_interior_rows": int(condensed.interior_rows),
-        "floquet_slave_rows": int(
-            condensed.trace_constraints.slave_rows
-        ),
+        "floquet_slave_rows": int(condensed.trace_constraints.slave_rows),
         "external_auxiliary_rows": int(condensed.appended_rows),
     }
     mismatches = [
@@ -470,9 +443,7 @@ def _validate_binding(
         "full_trace_matrix_allocated",
         "inactive_max_p_rows_retained_in_matrix",
     )
-    failed_false = [
-        name for name in required_false if audit.get(name) is not False
-    ]
+    failed_false = [name for name in required_false if audit.get(name) is not False]
     if failed_false:
         raise ValueError(
             "Hybrid local condensed system lacks physical-reduction evidence: "
@@ -485,18 +456,14 @@ def _validate_binding(
         )
     mpc_space = floquet_data.mpc.function_space
     dofmap = mpc_space.dofmap
-    mpc_full_rows = int(
-        dofmap.index_map.size_global * dofmap.index_map_bs
-    )
+    mpc_full_rows = int(dofmap.index_map.size_global * dofmap.index_map_bs)
     if mpc_full_rows != condensed.full_rows:
         raise ValueError(
             "Hybrid local Floquet MPC and condensed FE spaces have different "
             "global row counts"
         )
     if np.dtype(PETSc.ScalarType) != np.dtype(np.complex128):
-        raise TypeError(
-            "Hybrid local static condensation requires PETSc complex128"
-        )
+        raise TypeError("Hybrid local static condensation requires PETSc complex128")
 
 
 def _select_reduced_operator(

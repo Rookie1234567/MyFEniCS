@@ -56,13 +56,11 @@ def _reduced_internal_action(
     if system.side == "bottom":
         positive_values = modal[:count]
         negative_values = (
-            np.asarray(coupling.propagation.backward.factors)
-            * modal[count:]
+            np.asarray(coupling.propagation.backward.factors) * modal[count:]
         )
     else:
         positive_values = (
-            np.asarray(coupling.propagation.forward.factors)
-            * modal[:count]
+            np.asarray(coupling.propagation.forward.factors) * modal[:count]
         )
         negative_values = modal[count:]
     positive_source = _modal_vector(
@@ -171,13 +169,11 @@ def _add_internal_tractions(
     if system.side == "bottom":
         positive_values = modal[:count]
         negative_values = (
-            np.asarray(coupling.propagation.backward.factors)
-            * modal[count:]
+            np.asarray(coupling.propagation.backward.factors) * modal[count:]
         )
     else:
         positive_values = (
-            np.asarray(coupling.propagation.forward.factors)
-            * modal[:count]
+            np.asarray(coupling.propagation.forward.factors) * modal[:count]
         )
         negative_values = modal[count:]
     evaluator = _ReusableModeTractionEvaluator(coupling.spaces)
