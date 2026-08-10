@@ -225,3 +225,16 @@ pytest、Ruff、checker、MPI 或 PDE；只将已完成的唯一 formal evidence
 | do-not-merge | ignored raw、M6/M9 负收益的错误包装、M11 未实现设计 | 保留负结果，禁止整体 merge |
 
 所有 M1–M10 的 source commit、parent、changed files、raw artifact 与测试证据已绑定在 [closeout compact record](../../../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v6_memory_optimization_closeout_v1.json)。本轮文档不修改 Python 数值源码、测试源码、阈值、ordinary defaults、solver/PC/physics。
+
+## V7 后 MPI scaling diagnostic 的边界
+
+本轮只记录用户在 V7 结项后授权的 post-V7 research-only 数量诊断；没有新增 Python 数值源码、测试、阈值或 ordinary default 修改。
+
+| 依赖组 | 文件/证据 | 数值行为 | 测试/正式证据 | merge 边界 |
+|---|---|---|---|---|
+| scaling carrier | source `28cbead4` 的已审 watchdog/worker/checker/test carrier | 仅显式 opt-in 放行 MPI1/2/4；冻结 MPI8 candidate | carrier focused Gate、MPI1/2/4/8 raw、一次 aggregate | research-only；不改 ordinary 默认 |
+| compact evidence | `task037b_v6_mpi_scaling_1_2_4_8_v1.json` | 不改变数值 | JSON/link/diff 轻量 Gate | evidence/docs only |
+| formal report | `mpi_scaling_comparison.md`、`response_v9.md` 与索引追加 | 不改变数值 | 绑定四路 raw/checker SHA | docs only；不授权 production |
+| production numerical/core | none approved | V7 selective merge 边界不变 | 不新增 production evidence | do-not-merge |
+
+四路不是同一 source SHA 的四次重跑：MPI8 为 `b291f3d`，MPI1/2/4 为 `28cbead`；冻结 physics/solver/parameter contract 相同。完整表格和 provenance 见 [MPI scaling report](mpi_scaling_comparison.md)。

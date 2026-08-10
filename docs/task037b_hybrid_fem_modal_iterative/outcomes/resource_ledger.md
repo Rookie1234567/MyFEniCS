@@ -435,3 +435,16 @@ M10 authority peak 同采样 worker RSS sum/PSS/USS 为 `6003.94140625 / 4369.64
 ### M11 资源可行性停止
 
 M11 只读审计估计每侧已知 recovered full payload 约 `415776 bytes`，systems/coupling/bases 和两端后续联合校验仍需存活；QEP/factor 大对象已提前释放。顺序回收/export 与 temporary artifact/reload 都没有建立至少 `64 MiB` 的可信收益，且后者会增加 I/O、hash 和 DOLFINx 重建风险。因此选择保持当前生命周期，M11 formal `not_run`，不继续新的 MPI8 候选。M10 已满足 6 GiB，不做 MPI reduction。
+
+## V7 后 MPI scaling diagnostic 资源对照
+
+这是冻结 M10 candidate 的一次性、单样本 research-only 对照；权威资源字段是完整 MPI process-tree simultaneous RSS，worker RSS/PSS/USS 是 companion，离线 checker RSS 不计入 online 峰值。
+
+| MPI | process-tree RSS MiB / GiB | worker RSS/PSS/USS at RSS peak MiB | raw peak stage | total s | 相对 MPI8 RSS 节省 |
+|---:|---:|---:|---|---:|---:|
+| 1 | 1637.765625 / 1.5993804931640625 | 1623.25390625 / 1611.8427734375 / 1605.10546875 | `outer_iter_630` | 1035.158474470023 | 72.7881460712443% |
+| 2 | 2423.6640625 / 2.3668594360351562 | 2409.20703125 / 2220.15234375 / 2048.51953125 | `outer_iter_270` | 687.5406564989826 | 59.73026211175689% |
+| 4 | 3907.26953125 / 3.815692901611328 | 3892.65234375 / 3091.7041015625 / 2821.9765625 | `v6_pre_canonical_heap_cleanup_started` | 512.5570110660046 | 35.07981476613738% |
+| 8 | 6018.57421875 / 5.877513885498047 | 6003.94140625 / 4369.6455078125 / 4102.09375 | `v6_top_recovery_heap_cleanup_finished` | 467.8611913640052 | 0% |
+
+所有四路 swap 为 0。MPI4/MPI8 timeline 的全程 PSS/USS 最大值可见 [MPI scaling report](mpi_scaling_comparison.md)；不要把它们与 process-tree RSS 混用。setup 约 46–47 秒，basis/action/outer 是主要时间变化来源。离线 aggregate checker 每 case RSS `123.58203125 MiB`，`online_rss_included=false`，不属于上述 authority。

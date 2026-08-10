@@ -244,3 +244,17 @@ M1–M10 的 focused tests 只证明各自局部生命周期/packet/API 合同�
 | MPI reduction | `not_run`；MPI8 已满足严格 6 GiB |
 | M11 implementation/formal | `not_run`；只完成 read-only feasibility stop |
 | 新 PDE、MPI4/8 candidate 或 checker retry | `not_run` |
+
+## V7 后 MPI scaling diagnostic 证据
+
+本轮仅整理已完成的 immutable evidence，未重跑 pytest、MPI、PDE、Ruff、compileall 或 CI。
+
+| 项目 | 已记录结果 |
+|---|---|
+| scaling carrier focused Gate | `15 passed`；另有 `5 passed / 10 deselected` 的既有 carrier 输出，均为本地 focused evidence |
+| carrier static Gate | Ruff check/format-check、compileall、git diff-check `pass` |
+| MPI1/2/4/8 online | 四次各运行一次；residual/traction/physics/canonical/lifecycle raw Gate `pass` |
+| aggregate checker | 一次实际模块运行，exit 0、`pass=true`、`failures=[]` |
+| full pytest / CI | `not_run`；不声称 CI 通过 |
+
+四路 raw、summary/stages/timeline/stdout SHA、唯一 aggregate checker SHA 见 [MPI scaling compact](../../../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v6_mpi_scaling_1_2_4_8_v1.json)。checker 的 order significant 误差是各路 Hybrid 对 frozen Full3D 的比较，不是 cross-MPI test。

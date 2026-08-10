@@ -402,3 +402,16 @@ M10 是与原 V6 相同物理与算法合同下的内存生命周期优化，不
 M11 只读审计选择 C（保持现有生命周期）。A 的已知 recovered payload 每侧约 `415776 bytes`，不足以建立至少 `64 MiB` 的可靠收益；B 会引入临时序列化、hash、reload 和 DOLFINx 重建。M11 implementation/formal 均 `not_run`。full pytest、CI、MPI reduction 也为 `not_run`。V6/M1–M10 仍是研究分支证据，不能冒充 production 或 continuum/mode-count/0.7 nm qualification。
 
 完整资源阶段与七轮 cleanup 见 [resource ledger](resource_ledger.md)；M1–M10 改动依赖和 selective merge 边界见 [changed files](changed_files.md)；实际 focused tests 见 [test summary](test_summary.md)。
+
+## V7 后 MPI1/2/4/8 scaling diagnostic
+
+本节是 V7 结项后用户授权的冻结 candidate 数量诊断，不重开算法研究，也不改变上面的 M10 结论。四路只改变 MPI size；MPI1/2/4 使用 scaling carrier `28cbead4ef90a7fbe17d93ed8c9061e09bc92e3d`，MPI8 使用 M10 source `b291f3dfdf5f0064ff243038f6809172f811d7aa`。普通 no-flag 路径、MPI8 lock、solver/PC/物理均 unchanged。
+
+| MPI | iterations | process-tree RSS peak MiB | raw peak stage | total s | numerical/physics | aggregate authority |
+|---:|---:|---:|---|---:|---|---|
+| 1 | 794 | 1637.765625 | `outer_iter_630` | 1035.158474470023 | pass | pass |
+| 2 | 758 | 2423.6640625 | `outer_iter_270` | 687.5406564989826 | pass | pass |
+| 4 | 760 | 3907.26953125 | `v6_pre_canonical_heap_cleanup_started` | 512.5570110660046 | pass | pass |
+| 8 | 792 | 6018.57421875 | `v6_top_recovery_heap_cleanup_finished` | 467.8611913640052 | pass | pass |
+
+四路均通过 residual、exact traction、recovery、own-physics、energy、canonical/lifecycle；唯一 aggregate checker `pass=true`、`failures=[]`。MPI4 是本次单样本的时间/内存平衡点，但这不是一般 MPI 最优性结论。订单层的 significant 最大误差是各 MPI Hybrid 对 frozen Full3D authority 的误差；checker 没有提供 MPI-vs-MPI8 的逐通道 order 差值。完整残差、R/T/A、PSS/USS、timing、authority SHA 与限制见 [MPI scaling report](mpi_scaling_comparison.md) 和 [scaling compact](../../../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v6_mpi_scaling_1_2_4_8_v1.json)。本轮 docs-only，未重跑测试或 formal。

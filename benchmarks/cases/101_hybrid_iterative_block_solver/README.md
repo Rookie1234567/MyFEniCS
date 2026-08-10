@@ -31,3 +31,12 @@ R5 official R/T/A、field 和 12+12 未运行；H6–H10 按 stop rule not_run�
 算法家族必须取得新的 review。详细逐 RHS 表见
 [local endcap evidence](../../../docs/task037b_hybrid_fem_modal_iterative/outcomes/local_endcap_inverse_matrix.md)，
 总回应见 [response_v2](../../../docs/task037b_hybrid_fem_modal_iterative/response_v2.md)。
+
+## V7 后 MPI scaling diagnostic
+
+V7 结项后另行授权的 MPI1/2/4/8 对照冻结同一 M10 Hybrid iterative candidate，只改变 MPI size；这是 research-only evidence，不是 active benchmark、production qualification、continuum/mode-count 结论，也不改变普通默认路径。
+
+- [scaling compact](records/task037b_v6_mpi_scaling_1_2_4_8_v1.json)
+- [scaling report](../../../docs/task037b_hybrid_fem_modal_iterative/outcomes/mpi_scaling_comparison.md)
+
+四路唯一 aggregate checker `pass=true`；完整 process-tree peak、residual、traction、R/T/A、timing、authority 与 source boundary 以 compact/report 为准。MPI8 raw source 为 M10 `b291f3d`，MPI1/2/4 为 `28cbead` scaling carrier；不可简称为同 SHA 四次 formal。
