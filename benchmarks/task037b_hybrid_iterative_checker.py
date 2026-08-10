@@ -1071,6 +1071,53 @@ def _h1_validation(solver: Mapping[str, Any]) -> Mapping[str, Any]:
     return _mapping(solver.get("validation"), "h1_solver.validation")
 
 
+def _h1_volume_absorption(solver: Mapping[str, Any]) -> Mapping[str, Any]:
+    reconstruction = _mapping(
+        solver.get("physical_field_reconstruction"),
+        "h1_solver.physical_field_reconstruction",
+    )
+    return _mapping(
+        reconstruction.get("volume_absorption"),
+        "h1_solver.physical_field_reconstruction.volume_absorption",
+    )
+
+
+def _significant_reference_order_map(
+    reference: Mapping[str, Any],
+) -> dict[tuple[str, int, int, str], Mapping[str, Any]]:
+    channels = reference.get("channels")
+    if not isinstance(channels, Mapping) or len(channels) != 12:
+        raise EvidenceError("significant reference must contain 12 channels")
+    result: dict[tuple[str, int, int, str], Mapping[str, Any]] = {}
+    for key, item in channels.items():
+        channel = _mapping(item, "significant reference channel")
+        identity = _mapping(
+            channel.get("analytic_identity"),
+            "significant reference analytic identity",
+        )
+        center = _mapping(
+            channel.get("reference_center"),
+            "significant reference reference center",
+        )
+        order_key = _order_key(identity, "significant reference analytic identity")
+        _require(
+            order_key == key and order_key not in result,
+            "significant reference channel identity is duplicated",
+        )
+        amplitude = center.get("complex_amplitude")
+        _complex_pair(amplitude, f"significant reference {order_key} amplitude")
+        power = _finite(center.get("power"), f"significant reference {order_key} power")
+        mapped = dict(identity)
+        mapped["outgoing_amplitude_at_boundary"] = amplitude
+        mapped["power_ratio"] = power
+        result[order_key] = mapped
+    _require(
+        len(result) == 12,
+        "significant reference channel identity is incomplete",
+    )
+    return result
+
+
 def _h1_orders(
     solver: Mapping[str, Any],
 ) -> dict[tuple[str, int, int, str], Mapping[str, Any]]:
@@ -1085,10 +1132,7 @@ def _h1_observables(solver: Mapping[str, Any]) -> dict[str, float]:
     port_power = _mapping(
         validation.get("port_power"), "h1_solver.validation.port_power"
     )
-    volume = _mapping(
-        validation.get("volume_absorption"),
-        "h1_solver.validation.volume_absorption",
-    )
+    volume = _h1_volume_absorption(solver)
     values = {
         "R": _finite(port_power.get("R_total"), "h1 R_total"),
         "T": _finite(port_power.get("T_total"), "h1 T_total"),
@@ -1249,16 +1293,19 @@ def _compare_significant(
     significant: Mapping[str, Any],
     context: str,
 ) -> tuple[dict[str, Any], list[str]]:
-    report: dict[str, Any] = {"pinned_full3d_payload": "not_available_hash_bound_only"}
+    report: dict[str, Any] = {
+        "pinned_full3d_payload": "hash_bound_significant_reference"
+    }
     failures: list[str] = []
     hybrid = _compare_full_hybrid(h1_orders, candidate_orders)
     report["h1_vs_candidate"] = hybrid
     if hybrid.get("pass") is not True:
         failures.append(f"{context}.h1_vs_candidate")
     reference = _load_significant_reference(significant["path"], significant["sha256"])
-    direct = _compare_to_significant_reference(h1_orders, h1_orders, reference)
+    frozen_orders = _significant_reference_order_map(reference)
+    direct = _compare_to_significant_reference(frozen_orders, h1_orders, reference)
     iterative = _compare_to_significant_reference(
-        h1_orders, candidate_orders, reference
+        frozen_orders, candidate_orders, reference
     )
     report["direct_vs_significant_reference"] = direct
     report["iterative_vs_significant_reference"] = iterative
@@ -1507,11 +1554,8 @@ def check_evidence(args: argparse.Namespace) -> dict[str, Any]:
         "candidate.physics.absorption",
     )
     h1_absorption = _absorption_observables(
-        _mapping(
-            _h1_validation(h1_solver).get("volume_absorption"),
-            "h1_solver.validation.volume_absorption",
-        ),
-        "h1_solver.validation.volume_absorption",
+        _h1_volume_absorption(h1_solver),
+        "h1_solver.physical_field_reconstruction.volume_absorption",
     )
     if bool(candidate_absorption) != bool(h1_absorption) or set(
         candidate_absorption

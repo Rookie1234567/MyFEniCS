@@ -328,6 +328,8 @@ def _fixture(tmp_path: Path) -> tuple[Namespace, dict[str, object]]:
                 "validation": {
                     "external_diffraction_orders": _orders(),
                     "port_power": {"R_total": 0.1, "T_total": 0.2, "A_balance": 0.7},
+                },
+                "physical_field_reconstruction": {
                     "volume_absorption": {
                         "A_volume_total": 0.7,
                         "energy_closure_error": 0.0,
@@ -414,11 +416,17 @@ def test_synthetic_complete_positive_top_level(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     args, _payload = _fixture(tmp_path)
+    h1_solver = json.loads(Path(args.h1_solver_record).read_text())
+    assert "volume_absorption" not in h1_solver["validation"]
+    assert checker._h1_volume_absorption(h1_solver)["A_volume_total"] == pytest.approx(
+        0.7
+    )
     monkeypatch.setattr(checker, "_compare_full_hybrid", lambda *_args: {"pass": True})
     monkeypatch.setattr(
         checker, "_compare_to_significant_reference", lambda *_args: {"pass": True}
     )
     monkeypatch.setattr(checker, "_load_significant_reference", lambda *_args: {})
+    monkeypatch.setattr(checker, "_significant_reference_order_map", lambda *_args: {})
     result = checker.check_evidence(args)
     assert result["pass"] is True and result["failures"] == []
     assert all(
@@ -431,6 +439,42 @@ def test_synthetic_complete_positive_top_level(
             "observables_pass",
         )
     )
+
+
+def test_h1_absorption_wrong_validation_layer_fails(tmp_path: Path) -> None:
+    args, _payload = _fixture(tmp_path)
+    solver = json.loads(Path(args.h1_solver_record).read_text())
+    wrong = json.loads(json.dumps(solver))
+    wrong["validation"]["volume_absorption"] = wrong[
+        "physical_field_reconstruction"
+    ].pop("volume_absorption")
+    with pytest.raises(checker.EvidenceError):
+        checker._h1_volume_absorption(wrong)
+
+
+def test_significant_reference_order_map_uses_frozen_authority() -> None:
+    reference_path = (
+        checker.ROOT
+        / "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/"
+        "significant_channel_reference_v1.json"
+    )
+    reference = checker._load_significant_reference(
+        reference_path,
+        "83b7bcfeb510b849aea391d86f306072ead0232781598ea1232617e2535293e3",
+    )
+    frozen_orders = checker._significant_reference_order_map(reference)
+    assert len(frozen_orders) == 12
+    result = checker._compare_to_significant_reference(
+        frozen_orders,
+        frozen_orders,
+        reference,
+    )
+    assert result["analytic_identity_pass_count"] == 12
+    assert result["full3d_power_pass_count"] == 12
+    assert result["full3d_complex_amplitude_pass_count"] == 12
+    assert result["hybrid_power_pass_count"] == 12
+    assert result["hybrid_complex_amplitude_pass_count"] == 12
+    assert result["pass"] is True
 
 
 def test_hash_tamper_and_output_collision_fail_closed(tmp_path: Path) -> None:
