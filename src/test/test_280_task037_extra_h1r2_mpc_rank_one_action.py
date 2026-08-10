@@ -95,12 +95,15 @@ def _relative(first: PETSc.Vec, second: PETSc.Vec) -> float:
         difference.destroy()
 
 
-def _run_case(degree: int, *, full_checks: bool) -> dict[str, float | int]:
-    comm = MPI.COMM_SELF
+def _run_case(
+    degree: int, *, full_checks: bool, comm=None
+) -> dict[str, object]:
+    if comm is None:
+        comm = MPI.COMM_SELF
     cfg, mesh_data, function_space, cell_tags, tags, floquet, _ = _build_case(
         degree, comm
     )
-    del cfg, mesh_data
+    del cfg
     bilinear = _bilinear_form(function_space, cell_tags)
     compiled = fem.form(bilinear)
     assembled = dolfinx_mpc.assemble_matrix(
@@ -115,12 +118,23 @@ def _run_case(degree: int, *, full_checks: bool) -> dict[str, float | int]:
     )
     sources = [_source(function_space, floquet.mpc, variant) for variant in (0, 1)]
     candidate_owned_outputs = []
+    reference_errors = []
+    candidate_errors = []
+    finite_local = True
+    deterministic_local = True
     try:
-        assert {int(tag) for tag in tags} == {1, 2}
+        global_tags = set().union(
+            *comm.allgather({int(tag) for tag in tags})
+        )
+        assert global_tags == {1, 2}
         assert abs(complex(floquet.phase_x) - 1.0) > 1.0e-12
         assert abs(complex(floquet.phase_y) - 1.0) > 1.0e-12
-        assert int(floquet.num_edge_constraints) > 0
-        assert int(floquet.num_face_constraints) > 0
+        assert comm.allreduce(
+            int(floquet.num_edge_constraints) > 0, op=MPI.LOR
+        )
+        assert comm.allreduce(
+            int(floquet.num_face_constraints) > 0, op=MPI.LOR
+        )
         for source in sources:
             source_before = np.array(
                 source.getArray(readonly=True), copy=True
@@ -134,11 +148,21 @@ def _run_case(degree: int, *, full_checks: bool) -> dict[str, float | int]:
                 reference.mult(None, source, reference_output)
                 candidate.mult(source).copy(result=observed)
                 candidate.mult(source).copy(result=repeated)
-                assert _relative(reference_output, expected) <= _TOLERANCE
-                assert _relative(observed, expected) <= _TOLERANCE
-                assert np.array_equal(
+                reference_error = _relative(reference_output, expected)
+                candidate_error = _relative(observed, expected)
+                reference_errors.append(reference_error)
+                candidate_errors.append(candidate_error)
+                assert reference_error <= _TOLERANCE
+                assert candidate_error <= _TOLERANCE
+                repeated_equal = np.array_equal(
                     observed.getArray(readonly=True),
                     repeated.getArray(readonly=True),
+                )
+                assert repeated_equal
+                deterministic_local = deterministic_local and repeated_equal
+                finite_local = finite_local and bool(
+                    np.all(np.isfinite(reference_output.getArray(readonly=True)))
+                    and np.all(np.isfinite(observed.getArray(readonly=True)))
                 )
                 assert np.all(np.isfinite(observed.getArray(readonly=True)))
                 candidate_owned_outputs.append(
@@ -183,15 +207,26 @@ def _run_case(degree: int, *, full_checks: bool) -> dict[str, float | int]:
         assert audit["local_storage_entries"] == (
             audit["local_owned_rows"] + audit["local_ghost_rows"]
         )
-        assert audit["global_rows"] == audit["local_owned_rows"]
-        assert audit["retained_numeric_payload_local_bytes"] == sum(
+        index_map = floquet.mpc.function_space.dofmap.index_map
+        assert audit["global_rows"] == int(index_map.size_global)
+        assert audit["local_owned_rows"] == int(index_map.size_local)
+        assert audit["local_ghost_rows"] == int(index_map.num_ghosts)
+        assert comm.allreduce(
+            int(audit["local_owned_rows"]), op=MPI.SUM
+        ) == audit["global_rows"]
+        local_payload = int(audit["retained_numeric_payload_local_bytes"])
+        assert local_payload == sum(
             components.values()
         )
-        assert audit["retained_numeric_payload_global_sum_bytes"] == audit[
-            "retained_numeric_payload_local_bytes"
-        ]
-        assert audit["retained_numeric_payload_global_max_bytes"] == audit[
-            "retained_numeric_payload_local_bytes"
+        assert audit["retained_numeric_payload_global_sum_bytes"] == comm.allreduce(
+            local_payload, op=MPI.SUM
+        )
+        assert audit["retained_numeric_payload_global_max_bytes"] == comm.allreduce(
+            local_payload, op=MPI.MAX
+        )
+        assert local_payload <= audit["retained_numeric_payload_global_max_bytes"]
+        assert audit["retained_numeric_payload_global_max_bytes"] <= audit[
+            "retained_numeric_payload_global_sum_bytes"
         ]
         assert candidate_owned_outputs[0].shape == candidate_owned_outputs[1].shape
         assert not np.array_equal(
@@ -239,11 +274,96 @@ def _run_case(degree: int, *, full_checks: bool) -> dict[str, float | int]:
         assert not any(
             name.startswith("_cell") for name in vars(candidate)
         )
+        cell_infos = np.asarray(
+            mesh_data.mesh.topology.get_cell_permutation_info(), dtype=np.uint32
+        )
+        owned_cell_count = int(mesh_data.mesh.topology.index_map(3).size_local)
+        global_permutation_values = sorted(
+            {
+                int(value)
+                for rank_values in comm.allgather(
+                    [int(value) for value in cell_infos[:owned_cell_count]]
+                )
+                for value in rank_values
+            }
+        )
+        local_payload = int(audit["retained_numeric_payload_local_bytes"])
+        global_payload_sum = int(
+            audit["retained_numeric_payload_global_sum_bytes"]
+        )
+        global_payload_max = int(
+            audit["retained_numeric_payload_global_max_bytes"]
+        )
+        global_rows = int(audit["global_rows"])
+        reference_error_max = float(
+            comm.allreduce(max(reference_errors), op=MPI.MAX)
+        )
+        candidate_error_max = float(
+            comm.allreduce(max(candidate_errors), op=MPI.MAX)
+        )
+        owned_constraints_global = int(
+            comm.allreduce(
+                int(audit["owned_constraint_count"]), op=MPI.SUM
+            )
+        )
+        assert (
+            owned_constraints_global
+            == audit["constraint_count"]
+            == int(floquet.num_constraints)
+        )
+        finite = bool(comm.allreduce(finite_local, op=MPI.LAND))
+        deterministic = bool(comm.allreduce(deterministic_local, op=MPI.LAND))
         if full_checks:
             assert np.all(np.isfinite(candidate.output_vector.getArray()))
+        if comm.size == 2 and comm.rank == 0:
+            print(
+                {
+                    "h1r2_mpi2_smoke": {
+                        "degree": degree,
+                        "assembled_reference_relative_error": reference_error_max,
+                        "candidate_relative_error": candidate_error_max,
+                        "finite": finite,
+                        "deterministic": deterministic,
+                        "phase_x": complex(floquet.phase_x),
+                        "phase_y": complex(floquet.phase_y),
+                        "global_material_tags": sorted(global_tags),
+                        "global_permutation_unique_values": global_permutation_values,
+                        "edge_constraints": int(floquet.num_edge_constraints),
+                        "face_constraints": int(floquet.num_face_constraints),
+                        "global_constraints": int(floquet.num_constraints),
+                        "audit_global_rows": global_rows,
+                        "audit_local_owned_rows_rank0": int(
+                            audit["local_owned_rows"]
+                        ),
+                        "audit_local_ghost_rows_rank0": int(
+                            audit["local_ghost_rows"]
+                        ),
+                        "audit_owned_constraints_global": int(
+                            owned_constraints_global
+                        ),
+                        "payload_local_rank0_bytes": local_payload,
+                        "payload_global_sum_bytes": global_payload_sum,
+                        "payload_global_max_bytes": global_payload_max,
+                        "inventory": {
+                            key: audit[key]
+                            for key in (
+                                "global_matrix_materialized",
+                                "global_constraint_matrix_materialized",
+                                "global_condensed_schur_materialized",
+                                "retained_dense_cell_tensor_count",
+                                "cell_schur_matrix_nnz",
+                                "slab_matrix_nnz",
+                                "factor_count",
+                                "ksp_created",
+                                "dtn_used",
+                            )
+                        },
+                    }
+                }
+            )
         return {
             "degree": degree,
-            "global_rows": int(audit["global_rows"]),
+            "global_rows": global_rows,
             "constraints": int(audit["constraint_count"]),
         }
     finally:
@@ -257,6 +377,16 @@ def _run_case(degree: int, *, full_checks: bool) -> dict[str, float | int]:
 def test_h1r2_mpc_rank_one_p2_minimal_case():
     result = _run_case(2, full_checks=False)
     assert result["degree"] == 2
+
+
+def test_h1r2_mpc_rank_one_p2_mpi2_world_smoke():
+    comm = MPI.COMM_WORLD
+    if comm.size != 2:
+        pytest.skip("MPI2 smoke is qualified only for COMM_WORLD size 2")
+    result = _run_case(2, full_checks=True, comm=comm)
+    assert result["degree"] == 2
+    assert result["global_rows"] > 0
+    assert result["constraints"] > 0
 
 
 @pytest.mark.parametrize("degree", (2, 3))

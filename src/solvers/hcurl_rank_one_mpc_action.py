@@ -140,7 +140,11 @@ class HcurlRankOneMpcAction:
             "local_ghost_rows": self._ghost_rows,
             "local_storage_entries": local_storage,
             "global_rows": self._global_rows,
-            "constraint_count": int(slaves.size),
+            "constraint_count": int(
+                function_space.mesh.comm.allreduce(
+                    self._owned_slave_indices.size, op=MPI.SUM
+                )
+            ),
             "owned_constraint_count": int(self._owned_slave_indices.size),
             "constraint_nnz": int(self._master_indices.size),
             "constraint_nnz_closes": bool(
