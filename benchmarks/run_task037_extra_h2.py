@@ -223,22 +223,13 @@ def _proxy_identity(cfg) -> tuple[Any, ...]:
 def _proxy_forms(function_space, mesh_data, cfg):
     u = ufl.TrialFunction(function_space)
     v = ufl.TestFunction(function_space)
-    dx = ufl.Measure(
-        "dx",
-        domain=mesh_data.mesh,
-        subdomain_data=mesh_data.cell_tags,
-    )
-    tags = (cfg.tags.air, cfg.tags.substrate, cfg.tags.grating)
-    curl_form = sum(
+    dx = ufl.Measure("dx", domain=mesh_data.mesh)
+    curl_form = (
         PETSc.ScalarType(1.0 / cfg.mu_r)
         * ufl.inner(ufl.curl(u), ufl.curl(v))
-        * dx(int(tag))
-        for tag in tags
+        * dx
     )
-    mass_form = sum(
-        PETSc.ScalarType(1.0) * ufl.inner(u, v) * dx(int(tag))
-        for tag in tags
-    )
+    mass_form = PETSc.ScalarType(1.0) * ufl.inner(u, v) * dx
     return fem.form(curl_form), fem.form(mass_form)
 
 

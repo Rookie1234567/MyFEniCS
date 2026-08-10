@@ -4,11 +4,19 @@ import io
 import json
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 import benchmarks.run_task037_extra_h2 as h2
 from benchmarks.task033_case090_pde_core import attach_evidence_sha256
 from src.common.config_3d import target_stage4_config
+from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
+from src.solvers.common_3d_solve import _create_nedelec_space
+from src.solvers.hcurl_assembly_time_condensation import (
+    _cell_integral_kernels,
+)
+from src.solvers.hcurl_exact_class_block_cache import build_b0_proxy_tensor
+from src.constraints.floquet_3d_high_order import floquet_geometry_tolerance
 
 
 def _identity(sha: str = "a" * 40):
@@ -331,6 +339,90 @@ def test_h2a_production_material_and_proxy_identity(tag_name: str):
         "mass_coefficient",
         "unit-before-abs-epsilon",
     )
+
+
+def test_h2a_default_proxy_forms_match_tagged_cell_authority(tmp_path: Path):
+    cfg = target_stage4_config(degree=2, h_nm=10.0)
+    mesh_data = build_airbox_mesh_3d(cfg, tmp_path / "production_mesh")
+    function_space = _create_nedelec_space(mesh_data.mesh, cfg)
+    curl_form, mass_form = h2._proxy_forms(function_space, mesh_data, cfg)
+    assert tuple(sorted(_cell_integral_kernels(curl_form))) == (-1,)
+    assert tuple(sorted(_cell_integral_kernels(mass_form))) == (-1,)
+
+    u = h2.ufl.TrialFunction(function_space)
+    v = h2.ufl.TestFunction(function_space)
+    tagged_dx = h2.ufl.Measure(
+        "dx",
+        domain=mesh_data.mesh,
+        subdomain_data=mesh_data.cell_tags,
+    )
+    tags = (cfg.tags.air, cfg.tags.substrate, cfg.tags.grating)
+    tagged_curl = h2.fem.form(
+        sum(
+            h2.PETSc.ScalarType(1.0 / cfg.mu_r)
+            * h2.ufl.inner(h2.ufl.curl(u), h2.ufl.curl(v))
+            * tagged_dx(int(tag))
+            for tag in tags
+        )
+    )
+    tagged_mass = h2.fem.form(
+        sum(
+            h2.PETSc.ScalarType(1.0) * h2.ufl.inner(u, v) * tagged_dx(int(tag))
+            for tag in tags
+        )
+    )
+    owned_cells = int(mesh_data.mesh.topology.index_map(3).size_local)
+    actual_tags = h2._cell_tag_array(mesh_data.cell_tags, owned_cells)
+    tolerance = floquet_geometry_tolerance(cfg)
+    assert actual_tags.size > 0
+    for tag in np.unique(actual_tags):
+        cell = int(np.flatnonzero(actual_tags == tag)[0])
+        new_curl, _, new_curl_info = h2.tabulate_task037_extra_h2a_cell_tensor(
+            curl_form,
+            function_space,
+            mesh_data.cell_tags,
+            cell,
+            geometry_tolerance=tolerance,
+        )
+        old_curl, _, old_curl_info = h2.tabulate_task037_extra_h2a_cell_tensor(
+            tagged_curl,
+            function_space,
+            mesh_data.cell_tags,
+            cell,
+            geometry_tolerance=tolerance,
+        )
+        new_mass, _, new_mass_info = h2.tabulate_task037_extra_h2a_cell_tensor(
+            mass_form,
+            function_space,
+            mesh_data.cell_tags,
+            cell,
+            geometry_tolerance=tolerance,
+        )
+        old_mass, _, old_mass_info = h2.tabulate_task037_extra_h2a_cell_tensor(
+            tagged_mass,
+            function_space,
+            mesh_data.cell_tags,
+            cell,
+            geometry_tolerance=tolerance,
+        )
+        assert new_curl_info == old_curl_info == new_mass_info == old_mass_info
+        for observed, reference in ((new_curl, old_curl), (new_mass, old_mass)):
+            assert np.all(np.isfinite(observed))
+            assert np.all(np.isfinite(reference))
+            assert np.linalg.norm(observed - reference) / np.linalg.norm(reference) <= 1.0e-11
+        new_b0 = build_b0_proxy_tensor(
+            new_curl,
+            new_mass,
+            k0=float(cfg.k0),
+            abs_epsilon=float(abs(h2._material_epsilon(cfg, int(tag)))),
+        )
+        old_b0 = build_b0_proxy_tensor(
+            old_curl,
+            old_mass,
+            k0=float(cfg.k0),
+            abs_epsilon=float(abs(h2._material_epsilon(cfg, int(tag)))),
+        )
+        assert np.linalg.norm(new_b0 - old_b0) / np.linalg.norm(old_b0) <= 1.0e-11
 
 
 @pytest.mark.parametrize("field", ("global_rows", "constraint_count"))
