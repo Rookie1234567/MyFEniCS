@@ -11,7 +11,8 @@ import shlex
 import subprocess
 import sys
 import time
-from typing import Any
+from types import SimpleNamespace
+from typing import Any, Mapping
 
 from mpi4py import MPI
 import numpy as np
@@ -29,6 +30,11 @@ from benchmarks.task035c_p6_h10_gates import (
     task035c_p6_h10_full3d_reference_gate,
     task035c_p6_h10_preflight_authority_gate,
     valid_hex_digest,
+)
+from benchmarks.task037c_robustness import (
+    TASK37C_GRAZING_DEG,
+    TASK37C_PHI_VALUES,
+    TASK37C_POLARIZATION,
 )
 from benchmarks.task032_final_gates import (
     _all_formal_true,
@@ -237,9 +243,7 @@ def _verify_source_stable_at_end(
 ) -> None:
     """Require the same tracked-source state at the end of a formal shard."""
 
-    end = _source_provenance(
-        comm, verified_clean_sha, allow_dirty_research
-    )
+    end = _source_provenance(comm, verified_clean_sha, allow_dirty_research)
     if end["commit_sha"] != start["commit_sha"]:
         raise SystemExit("Tracked source HEAD changed during the Hybrid run.")
     if not allow_dirty_research and end["tracked_source_dirty"]:
@@ -313,9 +317,7 @@ def _basis_summary(basis) -> dict[str, Any]:
     return {
         "mode_count": len(basis.modes),
         "max_biorthogonality_identity_error": basis.max_identity_error,
-        "max_biorthogonality_entry_identity_error": (
-            basis.max_entry_identity_error
-        ),
+        "max_biorthogonality_entry_identity_error": (basis.max_entry_identity_error),
         "biorthogonality_identity_diagnostics": {
             "worst_row_index": worst_row,
             "worst_row_sum": float(row_sums[worst_row]),
@@ -340,9 +342,7 @@ def _basis_summary(basis) -> dict[str, Any]:
         "betas_per_nm": [_complex_json(mode.beta) for mode in basis.modes],
         "directions": [mode.direction for mode in basis.modes],
         "kinds": [mode.kind for mode in basis.modes],
-        "passive_branch_valid": [
-            mode.passive_branch_valid for mode in basis.modes
-        ],
+        "passive_branch_valid": [mode.passive_branch_valid for mode in basis.modes],
         "polynomial_relative_residuals": [
             mode.right.polynomial_relative_residual for mode in basis.modes
         ],
@@ -381,6 +381,482 @@ class _ModalBasisCapacityStop(RuntimeError):
 
 
 NUMERICAL_INFINITY_BETA_H_CUTOFF = 1.0e4
+TASK37C_DIRECT_TRUE_RESIDUAL_TOL = 1.0e-9
+TASK37C_DIRECT_Q_IDENTITY_TOL = 1.0e-10
+TASK37C_DIRECT_TRACTION_TOL = 1.0e-8
+TASK37C_DIRECT_ENERGY_TOL = 1.0e-5
+
+
+def _task037c_full3d_reference_gate(
+    path: Path,
+    *,
+    expected_sha256: str | None,
+    current_source_sha: str | None,
+    phi_deg: float,
+) -> dict[str, Any]:
+    """Bind a direct Hybrid run to the matching Task37c Full3D record."""
+
+    checks: dict[str, bool] = {
+        "path_exists": path.is_file(),
+        "hash_valid": valid_hex_digest(expected_sha256, 64),
+    }
+    observed_sha256 = None
+    reference: dict[str, Any] = {}
+    failures: list[str] = []
+    if checks["path_exists"]:
+        try:
+            observed_sha256 = _sha256(path)
+            reference = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+            failures.append(f"reference_read_error:{type(exc).__name__}")
+    checks["hash_matches"] = bool(
+        checks["hash_valid"] and observed_sha256 == str(expected_sha256).lower()
+    )
+    solver = reference.get("solver_summary", {})
+    solver = solver if isinstance(solver, dict) else {}
+    config = solver.get("config", {})
+    config = config if isinstance(config, dict) else {}
+    source = reference.get("source", {})
+    source = source if isinstance(source, dict) else {}
+    qualification = reference.get("qualification", {})
+    qualification = qualification if isinstance(qualification, dict) else {}
+    checks.update(
+        {
+            "schema": reference.get("schema_version") == "task033.full3d-watchdog.v1",
+            "task037c_identity": bool(
+                math.isclose(float(config.get("incident_theta_deg", math.nan)), 89.0)
+                and math.isclose(
+                    90.0 - float(config.get("incident_theta_deg", math.nan)),
+                    TASK37C_GRAZING_DEG,
+                )
+                and math.isclose(
+                    float(config.get("incident_phi_deg", math.nan)), phi_deg
+                )
+                and config.get("polarization_kind") == TASK37C_POLARIZATION
+                and config.get("nedelec_degree") == 6
+                and math.isclose(float(config.get("mesh_target_size", math.nan)), 10.0)
+            ),
+            "source_identity": bool(
+                source.get("commit_sha") == current_source_sha
+                and source.get("tracked_source_dirty") is False
+                and source.get("stable_and_clean_after") is True
+            ),
+            "full_solve": bool(
+                reference.get("run_kind") == "full-solve"
+                and reference.get("status") == "task037c_full3d_robustness_pass"
+                and reference.get("return_code") == 0
+                and qualification.get("pass") is True
+                and qualification.get("failures") == []
+            ),
+            "true_residual": bool(
+                math.isfinite(
+                    float(solver.get("linear_system_relative_residual", math.nan))
+                )
+                and float(solver.get("linear_system_relative_residual", math.inf))
+                <= TASK37C_DIRECT_TRUE_RESIDUAL_TOL
+            ),
+            "no_swap": reference.get("no_swap") is True,
+        }
+    )
+    failures.extend(name for name, passed in checks.items() if not passed)
+    return {
+        "schema_version": "task037c.direct-full3d-reference-gate.v1",
+        "pass": not failures,
+        "path": str(path),
+        "expected_sha256": expected_sha256,
+        "observed_sha256": observed_sha256,
+        "phi_deg": phi_deg,
+        "checks": checks,
+        "failures": sorted(set(failures)),
+    }
+
+
+def _write_task037c_direct_payload(
+    *,
+    output: Path,
+    comm: MPI.Intracomm,
+    x_nm: np.ndarray,
+    y_nm: np.ndarray,
+    z_nm: np.ndarray,
+    electric: np.ndarray,
+    magnetic: np.ndarray,
+    modal_amplitudes: np.ndarray,
+    bottom_q: np.ndarray,
+    top_q: np.ndarray,
+    modal_count: int,
+    bottom_mode_count: int,
+    top_mode_count: int,
+) -> dict[str, Any]:
+    """Persist the bounded direct Hybrid field/q carrier once per run."""
+
+    arrays = {
+        "x_nm": np.asarray(x_nm, dtype=np.float64),
+        "y_nm": np.asarray(y_nm, dtype=np.float64),
+        "z_nm": np.asarray(z_nm, dtype=np.float64),
+        "E_V_per_m": np.asarray(electric, dtype=np.complex128),
+        "H_A_per_m": np.asarray(magnetic, dtype=np.complex128),
+        "modal_amplitudes": np.asarray(modal_amplitudes, dtype=np.float64),
+        "bottom_q": np.asarray(bottom_q, dtype=np.complex128),
+        "top_q": np.asarray(top_q, dtype=np.complex128),
+    }
+    expected_shapes = {
+        "x_nm": (40,),
+        "y_nm": (20,),
+        "z_nm": (5,),
+        "E_V_per_m": (5, 20, 40, 3),
+        "H_A_per_m": (5, 20, 40, 3),
+    }
+    expected_shapes.update(
+        {
+            "modal_amplitudes": (int(modal_count),),
+            "bottom_q": (int(bottom_mode_count),),
+            "top_q": (int(top_mode_count),),
+        }
+    )
+    if set(arrays) != {
+        "x_nm",
+        "y_nm",
+        "z_nm",
+        "E_V_per_m",
+        "H_A_per_m",
+        "modal_amplitudes",
+        "bottom_q",
+        "top_q",
+    } or any(arrays[name].shape != shape for name, shape in expected_shapes.items()):
+        raise RuntimeError("Task37c direct payload has an invalid array contract.")
+    if not all(
+        shape[0] > 0
+        for name, shape in expected_shapes.items()
+        if name
+        in {
+            "modal_amplitudes",
+            "bottom_q",
+            "top_q",
+        }
+    ):
+        raise RuntimeError("Task37c direct payload mode counts must be positive.")
+    if not all(np.all(np.isfinite(value)) for value in arrays.values()):
+        raise RuntimeError("Task37c direct payload contains non-finite values.")
+    if not np.allclose(arrays["z_nm"], [10.0, 30.0, 60.0, 90.0, 110.0]):
+        raise RuntimeError("Task37c direct payload has the wrong z planes.")
+    payload_path = output.with_name(f"{output.stem}_task037c_direct_payload.npz")
+    if comm.rank == 0:
+        payload_path.parent.mkdir(parents=True, exist_ok=True)
+        np.savez_compressed(payload_path, **arrays)
+        metadata = {
+            "schema_version": "task037c.direct-hybrid-payload.v1",
+            "path": str(payload_path),
+            "sha256": _sha256(payload_path),
+            "bytes": payload_path.stat().st_size,
+            "keys": sorted(arrays),
+            "arrays": {
+                name: {
+                    "shape": list(value.shape),
+                    "dtype": str(value.dtype),
+                    "bytes": int(value.nbytes),
+                    "sha256": hashlib.sha256(value.tobytes()).hexdigest(),
+                    "finite": True,
+                }
+                for name, value in arrays.items()
+            },
+        }
+    else:
+        metadata = None
+    return comm.bcast(metadata, root=0)
+
+
+def _task037c_direct_order_gate(
+    rows: list[dict[str, Any]],
+    systems: tuple[Any, Any],
+) -> dict[str, Any]:
+    expected = {
+        (str(mode.side), int(mode.m), int(mode.n), str(mode.polarization))
+        for system in systems
+        for mode in system.external_modes
+    }
+    observed = {
+        (
+            str(row.get("side")),
+            int(row.get("m")),
+            int(row.get("n")),
+            str(row.get("polarization")),
+        )
+        for row in rows
+    }
+    finite = all(
+        all(
+            np.isfinite(complex(row[name]))
+            for name in ("beta_per_nm", "total_projection", "outgoing_amplitude")
+        )
+        and np.isfinite(float(row["power_ratio"]))
+        for row in rows
+    )
+    return {
+        "count": len(rows),
+        "expected_count": len(expected),
+        "keys_unique": len(observed) == len(rows),
+        "keys_match": observed == expected,
+        "all_finite": finite,
+        "pass": len(rows) == len(expected)
+        and len(observed) == len(rows)
+        and observed == expected
+        and finite,
+    }
+
+
+def _task037c_external_q_identity(
+    local_system: Any,
+    solution: PETSc.Vec,
+    *,
+    tolerance: float = TASK37C_DIRECT_Q_IDENTITY_TOL,
+) -> dict[str, Any]:
+    """Audit only the terminal external rows of one local augmented system."""
+
+    action = local_system.A.createVecLeft()
+    residual = local_system.A.createVecLeft()
+    comm = local_system.A.getComm().tompi4py()
+
+    def q_norm(vector: PETSc.Vec) -> float:
+        start, _end = vector.getOwnershipRange()
+        values = np.asarray(vector.getArray(readonly=True))
+        global_indices = start + np.arange(values.size)
+        lower = int(local_system.n_fe)
+        upper = lower + int(local_system.n_external_aux)
+        selected = values[(global_indices >= lower) & (global_indices < upper)]
+        local_squared = float(np.vdot(selected, selected).real)
+        return float(math.sqrt(comm.allreduce(local_squared, op=MPI.SUM)))
+
+    try:
+        local_system.A.mult(solution, action)
+        action.copy(residual)
+        residual.axpy(PETSc.ScalarType(-1.0), local_system.b)
+        action_norm = q_norm(action)
+        rhs_norm = q_norm(local_system.b)
+        absolute = q_norm(residual)
+        relative = absolute / max(action_norm, rhs_norm, 1.0e-30)
+        return {
+            "external_row_count": int(local_system.n_external_aux),
+            "action_norm": action_norm,
+            "rhs_norm": rhs_norm,
+            "absolute_residual": absolute,
+            "relative_residual": float(relative),
+            "pass": bool(math.isfinite(relative) and relative <= tolerance),
+        }
+    finally:
+        residual.destroy()
+        action.destroy()
+
+
+def _task037c_direct_canonical_exports(
+    *,
+    solution: Any,
+    systems: tuple[Any, Any],
+    run_dir: Path,
+    comm: MPI.Intracomm,
+) -> dict[str, Any]:
+    """Reuse the audited streaming writer one side at a time."""
+
+    from benchmarks.run_task037b_hybrid_iterative import (
+        _write_canonical_manifest_exports,
+        collective_heap_cleanup,
+    )
+
+    physical_solution = SimpleNamespace(
+        bottom=solution.bottom,
+        top=solution.top,
+        bottom_recovered=solution.bottom_recovered,
+        top_recovered=solution.top_recovered,
+    )
+    exports: dict[str, Any] = {}
+    for side in ("bottom", "top"):
+        exports[side] = _write_canonical_manifest_exports(
+            side=side,
+            systems={"bottom": systems[0], "top": systems[1]},
+            physical_solution=physical_solution,
+            run_dir=run_dir,
+            comm=comm,
+            prefix="task037c_direct",
+        )
+        cleanup = collective_heap_cleanup(comm)
+        exports[side]["cleanup"] = cleanup
+        if not cleanup["collective_call_completed"]:
+            raise RuntimeError(f"Task37c {side} canonical cleanup failed.")
+    return exports
+
+
+def _task037c_direct_qualification(
+    *,
+    solution: Any,
+    validation: dict[str, Any],
+    physical_fields: dict[str, Any],
+    gates: dict[str, bool],
+    q_identity: dict[str, dict[str, Any]],
+    order_gate: dict[str, Any],
+    payload: dict[str, Any] | None,
+    canonical: dict[str, Any] | None,
+    authority_gate: dict[str, Any],
+) -> dict[str, Any]:
+    """Combine only the direct Task37c numerical and export gates."""
+
+    port_power = validation["port_power"]
+    absorption = physical_fields["volume_absorption"]
+    observable_values = {
+        "R": port_power["R_total"],
+        "T": port_power["T_total"],
+        "A": port_power["A_balance"],
+        "A_volume": absorption["A_volume_total"],
+        "closure": absorption["energy_closure_error"],
+    }
+    observables_finite = all(
+        math.isfinite(float(value)) for value in observable_values.values()
+    )
+    canonical_pass = bool(
+        canonical is not None
+        and set(canonical) == {"bottom", "top"}
+        and all(
+            set(export.get("roles", {})) == {"active_trace", "full_fe"}
+            and all(role.get("pass") is True for role in export["roles"].values())
+            for export in canonical.values()
+        )
+    )
+    payload_keys = {
+        "x_nm",
+        "y_nm",
+        "z_nm",
+        "E_V_per_m",
+        "H_A_per_m",
+        "modal_amplitudes",
+        "bottom_q",
+        "top_q",
+    }
+    payload_pass = bool(
+        payload is not None
+        and set(payload.get("keys", ())) == payload_keys
+        and all(
+            descriptor.get("finite") is True
+            for descriptor in payload.get("arrays", {}).values()
+        )
+    )
+    comparison_gate_prefixes = (
+        "volume_absorption_full3d_",
+        "middle_plane_",
+    )
+    direct_gate_values = {
+        key: value
+        for key, value in gates.items()
+        if not key.startswith(comparison_gate_prefixes)
+    }
+    inherited_direct_gates_pass = _all_formal_true(direct_gate_values)
+    full3d_comparison_gates = {
+        key: value
+        for key, value in gates.items()
+        if key.startswith(comparison_gate_prefixes)
+    }
+    checks = {
+        "same_phi_full3d_authority": authority_gate.get("pass") is True,
+        "inherited_direct_gates_pass": inherited_direct_gates_pass,
+        "monolithic_true_residual_le_1e-9": (
+            float(solution.relative_residual) <= TASK37C_DIRECT_TRUE_RESIDUAL_TOL
+        ),
+        "local_recovery_full_residual_le_1e-9": gates.get(
+            "condensed_full_operator_relative_residual_le_1e-9", False
+        ),
+        "local_recovery_interior_residual_le_1e-9": gates.get(
+            "condensed_eliminated_interior_max_residual_le_1e-9", False
+        ),
+        "interface_projection_le_1e-8": (
+            float(validation["interface_e_projection"]["combined_relative_residual"])
+            <= 1.0e-8
+        ),
+        "exact_traction_le_1e-8": gates.get(
+            "assembled_interface_h_t_exact_dual_le_1e-8", False
+        ),
+        "bottom_external_q_identity_le_1e-10": q_identity["bottom"]["pass"],
+        "top_external_q_identity_le_1e-10": q_identity["top"]["pass"],
+        "observables_finite": observables_finite,
+        "energy_closure_abs_le_1e-5": abs(float(observable_values["closure"]))
+        <= TASK37C_DIRECT_ENERGY_TOL,
+        "external_orders_exact_and_finite": order_gate.get("pass") is True,
+        "direct_field_payload": payload_pass,
+        "canonical_exports": canonical_pass,
+    }
+    failures = sorted(name for name, passed in checks.items() if not passed)
+    return {
+        "schema_version": "task037c.direct-hybrid-qualification.v1",
+        "checks": checks,
+        "observables": observable_values,
+        "q_identity": q_identity,
+        "order_gate": order_gate,
+        "payload": payload,
+        "canonical_pass": canonical_pass,
+        "full3d_comparison": {
+            "status": "pending_offline_comparator",
+            "gates": full3d_comparison_gates,
+            "pass": "not_run",
+            "available_partial_gates_pass": bool(
+                full3d_comparison_gates
+                and all(value is True for value in full3d_comparison_gates.values())
+            ),
+        },
+        "swap0": "watchdog_required",
+        "pass": not failures,
+        "failures": failures,
+    }
+
+
+def _task037c_record_status(
+    *,
+    enabled: bool,
+    qualification: Mapping[str, Any] | None,
+    legacy_status: str,
+) -> str:
+    if not enabled:
+        return legacy_status
+    return (
+        "task037c_direct_robustness_pass"
+        if qualification is not None and qualification.get("pass") is True
+        else "task037c_direct_robustness_failed"
+    )
+
+
+def _task037c_raw_qualification_fields(
+    qualification: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    return {
+        "task037c_direct": qualification,
+        "task037c_direct_pass": (
+            None if qualification is None else qualification.get("pass") is True
+        ),
+        "official_record": False,
+    }
+
+
+def _task037c_capacity_failure_fields(
+    *,
+    enabled: bool,
+    incident_phi_deg: float,
+    authority_gate: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    if not enabled:
+        return {
+            "status": "insufficient_finite_admissible_modes",
+            "case": {},
+            "metadata": {},
+            "qualification": {},
+        }
+    return {
+        "status": "task037c_direct_robustness_failed",
+        "case": {"incident_phi_deg": float(incident_phi_deg)},
+        "metadata": {
+            "task037c_robustness_gate": True,
+            "incident_phi_deg": float(incident_phi_deg),
+            "task037c_authority_gate": authority_gate,
+        },
+        "qualification": {
+            **_task037c_raw_qualification_fields(None),
+            "task037c_direct_pass": False,
+        },
+    }
 
 
 def _case080_reference_path(
@@ -409,6 +885,10 @@ def _normalize_full3d_reference_record(
     reference: dict[str, Any],
     *,
     path: Path,
+    expected_theta_deg: float = 80.0,
+    expected_grazing_deg: float = 10.0,
+    expected_phi_deg: float = 0.0,
+    expected_status: str = "full3d_reference_pass",
 ) -> dict[str, Any]:
     """Normalize a native watchdog record without writing a derived descriptor."""
 
@@ -432,9 +912,7 @@ def _normalize_full3d_reference_record(
         run_root = archive.parent.relative_to(ROOT)
         commit_sha = str(source["commit_sha"]).lower()
         polarization_kind = str(solver["polarization_kind"]).lower()
-        archive_sha256 = str(
-            solver["full3d_reference_archive_sha256"]
-        ).lower()
+        archive_sha256 = str(solver["full3d_reference_archive_sha256"]).lower()
         finite_results = (
             solver["linear_system_relative_residual"],
             solver["R_total"],
@@ -445,7 +923,7 @@ def _normalize_full3d_reference_record(
             resource_authority["memory_authority_gib"],
         )
         raw_valid = bool(
-            reference["status"] == "full3d_reference_pass"
+            reference["status"] == expected_status
             and reference["run_kind"] == "full-solve"
             and qualification["pass"] is True
             and reference["no_swap"] is True
@@ -455,22 +933,20 @@ def _normalize_full3d_reference_record(
             and solver["official_result"] is True
             and solver["full3d_reference_exported"] is True
             and polarization_kind in {"s", "p"}
-            and math.isclose(float(solver["incident_theta_deg"]), 80.0)
-            and math.isclose(float(solver["incident_phi_deg"]), 0.0)
+            and math.isclose(float(solver["incident_theta_deg"]), expected_theta_deg)
+            and math.isclose(
+                90.0 - float(solver["incident_theta_deg"]),
+                expected_grazing_deg,
+            )
+            and math.isclose(float(solver["incident_phi_deg"]), expected_phi_deg)
             and float(solver["linear_system_relative_residual"]) <= 1.0e-9
             and archive.name == "full3d_reference_samples.npz"
             and metadata.name == "full3d_reference_samples.json"
             and metadata.parent == archive.parent
             and len(commit_sha) == 40
-            and all(
-                character in "0123456789abcdef"
-                for character in commit_sha
-            )
+            and all(character in "0123456789abcdef" for character in commit_sha)
             and len(archive_sha256) == 64
-            and all(
-                character in "0123456789abcdef"
-                for character in archive_sha256
-            )
+            and all(character in "0123456789abcdef" for character in archive_sha256)
             and all(np.isfinite(float(value)) for value in finite_results)
         )
     except (KeyError, TypeError, ValueError, OSError) as error:
@@ -494,9 +970,9 @@ def _normalize_full3d_reference_record(
         },
         "physical_model": {
             "wavelength_nm": 13.5,
-            "incident_theta_deg": 80.0,
-            "incident_grazing_deg": 10.0,
-            "incident_phi_deg": 0.0,
+            "incident_theta_deg": expected_theta_deg,
+            "incident_grazing_deg": expected_grazing_deg,
+            "incident_phi_deg": expected_phi_deg,
             "polarization_kind": polarization_kind,
             "nedelec_degree": int(reference["degree"]),
             "mesh_h_nm": float(reference["h_nm"]),
@@ -541,6 +1017,9 @@ def _validate_case080_reference_identity(
     h_nm: float,
     path: Path,
     polarization_kind: str = "s",
+    expected_theta_deg: float = 80.0,
+    expected_grazing_deg: float = 10.0,
+    expected_phi_deg: float = 0.0,
 ) -> None:
     try:
         physical_model = reference["physical_model"]
@@ -550,14 +1029,16 @@ def _validate_case080_reference_identity(
         identity_valid = (
             physical_model["nedelec_degree"] == degree
             and abs(float(physical_model["mesh_h_nm"]) - h_nm) <= 1.0e-12
-            and abs(float(physical_model["incident_grazing_deg"]) - 10.0)
+            and abs(
+                float(physical_model["incident_grazing_deg"]) - expected_grazing_deg
+            )
             <= 1.0e-12
-            and abs(float(physical_model["incident_theta_deg"]) - 80.0)
+            and abs(float(physical_model["incident_theta_deg"]) - expected_theta_deg)
             <= 1.0e-12
-            and abs(float(physical_model["incident_phi_deg"])) <= 1.0e-12
+            and abs(float(physical_model["incident_phi_deg"]) - expected_phi_deg)
+            <= 1.0e-12
             and physical_model["polarization_kind"] == polarization_kind
-            and abs(float(physical_model["wavelength_nm"]) - 13.5)
-            <= 1.0e-12
+            and abs(float(physical_model["wavelength_nm"]) - 13.5) <= 1.0e-12
             and qualification["phase1_reference_pass"] is True
             and metadata["git_dirty"] is False
             and metadata["tracked_source_dirty"] is False
@@ -571,7 +1052,8 @@ def _validate_case080_reference_identity(
     if not identity_valid:
         raise RuntimeError(
             "Case080 reference identity does not match the requested p/h and "
-            f"pinned 10-degree {polarization_kind}-polarized 13.5-nm model: {path}"
+            f"pinned grazing={expected_grazing_deg:g}, phi={expected_phi_deg:g} "
+            f"{polarization_kind}-polarized 13.5-nm model: {path}"
         )
 
 
@@ -581,10 +1063,12 @@ def _load_case080_reference(
     reference_by_degree_and_h: dict[tuple[int, float], Path] | None = None,
     *,
     polarization_kind: str = "s",
+    expected_theta_deg: float = 80.0,
+    expected_grazing_deg: float = 10.0,
+    expected_phi_deg: float = 0.0,
+    expected_status: str = "full3d_reference_pass",
 ) -> tuple[Path, dict[str, Any]] | None:
-    reference_path = _case080_reference_path(
-        degree, h_nm, reference_by_degree_and_h
-    )
+    reference_path = _case080_reference_path(degree, h_nm, reference_by_degree_and_h)
     if reference_path is None:
         return None
     if not reference_path.exists():
@@ -598,7 +1082,12 @@ def _load_case080_reference(
             f"Cannot load pinned Case080 reference record: {reference_path}"
         ) from error
     reference = _normalize_full3d_reference_record(
-        reference, path=reference_path
+        reference,
+        path=reference_path,
+        expected_theta_deg=expected_theta_deg,
+        expected_grazing_deg=expected_grazing_deg,
+        expected_phi_deg=expected_phi_deg,
+        expected_status=expected_status,
     )
     _validate_case080_reference_identity(
         reference,
@@ -606,6 +1095,9 @@ def _load_case080_reference(
         h_nm=h_nm,
         path=reference_path,
         polarization_kind=polarization_kind,
+        expected_theta_deg=expected_theta_deg,
+        expected_grazing_deg=expected_grazing_deg,
+        expected_phi_deg=expected_phi_deg,
     )
     return reference_path, reference
 
@@ -621,15 +1113,11 @@ def _reference_comparison(
     return {
         "reference_file": str(reference_path.relative_to(ROOT)),
         "reference_commit_sha": reference["metadata"]["commit_sha"],
-        "reference_grid_converged": reference["qualification"][
-            "grid_converged"
-        ],
+        "reference_grid_converged": reference["qualification"]["grid_converged"],
         "hybrid_minus_full3d": {
             "R_total": float(port_power["R_total"] - results["R_total"]),
             "T_total": float(port_power["T_total"] - results["T_total"]),
-            "A_balance": float(
-                port_power["A_balance"] - results["A_balance"]
-            ),
+            "A_balance": float(port_power["A_balance"] - results["A_balance"]),
         },
         "full3d": {
             "R_total": results["R_total"],
@@ -752,6 +1240,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "M120/M160 Hybrid path. Ordinary defaults remain unchanged."
         ),
     )
+    parser.add_argument(
+        "--task037c-robustness-gate",
+        action="store_true",
+        help=(
+            "Explicitly open the independent Task37c grazing-1-degree direct "
+            "Hybrid authority lane. Ordinary and Task035c defaults remain unchanged."
+        ),
+    )
     parser.add_argument("--task035c-p6-preflight-authority", type=Path)
     parser.add_argument("--task035c-p6-preflight-sha256")
     parser.add_argument("--bottom-interface-nm", type=float, default=10.0)
@@ -764,6 +1260,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default="mechanism",
     )
     parser.add_argument("--incident-grazing-deg", type=float, default=10.0)
+    parser.add_argument("--incident-phi-deg", type=float, default=0.0)
     parser.add_argument(
         "--polarization-kind",
         choices=("s", "p"),
@@ -822,12 +1319,53 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=os.environ.get("TASK032_HOST_ENVIRONMENT_ID", "SK-20260601OSDE"),
     )
     args = parser.parse_args(argv)
-    if args.degree == 6 and not args.task035c_p6_h10_gate:
+    if args.task035c_p6_h10_gate and args.task037c_robustness_gate:
         parser.error(
-            "p6 is fail-closed; pass --task035c-p6-h10-gate for the fixed "
-            "Task035c p6/h10 Hybrid authority only."
+            "Task035c p6/h10 and Task37c robustness gates are mutually exclusive."
         )
-    if args.task035c_p6_h10_gate:
+    if args.degree == 6 and not (
+        args.task035c_p6_h10_gate or args.task037c_robustness_gate
+    ):
+        parser.error("p6 is fail-closed; pass one explicit p6 authority gate.")
+    if args.task037c_robustness_gate:
+        scoped = bool(
+            args.degree == 6
+            and math.isclose(args.h_nm, 10.0)
+            and args.modal_degree == 6
+            and args.modal_h_nm is not None
+            and math.isclose(args.modal_h_nm, 10.0)
+            and args.requested_modes in (120, 160)
+            and args.candidate_modes == 2 * args.requested_modes
+            and args.solver_path == "modal-schur-memory-minimal"
+            and not args.compare_modal_schur
+            and args.stage4_full3d_assembly_backend
+            == ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+            and math.isclose(args.bottom_interface_nm, 10.0)
+            and math.isclose(args.top_interface_nm, 110.0)
+            and args.graded_reference_h is None
+            and math.isclose(args.incident_grazing_deg, TASK37C_GRAZING_DEG)
+            and args.incident_phi_deg in TASK37C_PHI_VALUES
+            and args.polarization_kind == TASK37C_POLARIZATION
+            and args.internal_propagation_model == "full3d_uniform_cg"
+            and args.internal_traction_model == "scalar_cg_discrete_derivative"
+            and math.isclose(args.near_degenerate_tolerance, 1.0e-6)
+            and math.isclose(args.block_rotation_tolerance, 1.0e-6)
+            and args.full3d_reference is not None
+            and valid_hex_digest(args.full3d_reference_sha256, 64)
+            and args.task035c_p6_preflight_authority is not None
+            and valid_hex_digest(args.task035c_p6_preflight_sha256, 64)
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and not args.allow_dirty_research
+        )
+        if not scoped:
+            parser.error(
+                "--task037c-robustness-gate is restricted to clean p6/h10 S "
+                "grazing-1-degree phi=-5/0/+5 static-condensed Hybrid M120/M160, "
+                "exact 2M pool, modal-schur-memory-minimal, 10/110 nm, "
+                "full3d_uniform_cg/scalar_cg_discrete_derivative, and hash-bound "
+                "same-phi Full3D plus p6 preflight authorities."
+            )
+    elif args.task035c_p6_h10_gate:
         scoped = bool(
             args.degree == 6
             and math.isclose(args.h_nm, 10.0)
@@ -838,16 +1376,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and args.candidate_modes == 2 * args.requested_modes
             and args.solver_path == "modal-schur-memory-minimal"
             and not args.compare_modal_schur
-            and args.stage4_full3d_assembly_backend
-            in TASK035C_P6_H10_BACKENDS
+            and args.stage4_full3d_assembly_backend in TASK035C_P6_H10_BACKENDS
             and math.isclose(args.bottom_interface_nm, 10.0)
             and math.isclose(args.top_interface_nm, 110.0)
             and args.graded_reference_h is None
             and math.isclose(args.incident_grazing_deg, 10.0)
+            and math.isclose(args.incident_phi_deg, 0.0)
             and args.polarization_kind == "s"
             and args.internal_propagation_model == "full3d_uniform_cg"
-            and args.internal_traction_model
-            == "scalar_cg_discrete_derivative"
+            and args.internal_traction_model == "scalar_cg_discrete_derivative"
             and args.full3d_reference is not None
             and valid_hex_digest(args.full3d_reference_sha256, 64)
             and args.task035c_p6_preflight_authority is not None
@@ -869,9 +1406,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         or args.task035c_p6_preflight_sha256 is not None
         or args.full3d_reference_sha256 is not None
     ):
+        parser.error("Task035c authority SHA arguments require --task035c-p6-h10-gate.")
+    elif not math.isclose(args.incident_phi_deg, 0.0):
         parser.error(
-            "Task035c authority SHA arguments require "
-            "--task035c-p6-h10-gate."
+            "--incident-phi-deg is reserved for the explicit Task37c gate; "
+            "ordinary Hybrid remains at phi=0."
         )
     return args
 
@@ -913,10 +1452,7 @@ def _task035c_worker_authority_gate(
         authority_relative = None
     authority_is_tracked = bool(
         authority_relative is not None
-        and _git(
-            "ls-files", "--error-unmatch", "--", authority_relative
-        )
-        is not None
+        and _git("ls-files", "--error-unmatch", "--", authority_relative) is not None
     )
     preflight_gate = task035c_p6_h10_preflight_authority_gate(
         authority if isinstance(authority, dict) else None,
@@ -963,31 +1499,80 @@ def _task035c_worker_authority_gate(
         ),
     ]
     if not gate["pass"]:
-        raise SystemExit(
-            f"Task035c p6/h10 worker authority failed: {gate['failures']}"
-        )
+        raise SystemExit(f"Task035c p6/h10 worker authority failed: {gate['failures']}")
     return gate
 
 
-def main() -> None:
-    args = _parse_args()
+def _task037c_worker_authority_gate(
+    args: argparse.Namespace,
+    *,
+    current_source_sha: str | None,
+) -> dict[str, Any]:
+    """Bind the direct Task37c lane to p6 geometry and same-phi Full3D."""
+
+    authority_path = args.task035c_p6_preflight_authority
+    reference_path = args.full3d_reference
+    if authority_path is None or reference_path is None:
+        raise SystemExit("Task37c p6 and Full3D authority paths are required.")
+    authority_path = (
+        authority_path if authority_path.is_absolute() else ROOT / authority_path
+    ).resolve()
+    reference_path = (
+        reference_path if reference_path.is_absolute() else ROOT / reference_path
+    ).resolve()
+    try:
+        authority = json.loads(authority_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SystemExit(
+            f"Task37c p6 preflight authority is unreadable: {exc}"
+        ) from exc
+    try:
+        authority_relative = authority_path.relative_to(ROOT).as_posix()
+    except ValueError:
+        authority_relative = None
+    authority_is_tracked = bool(
+        authority_relative is not None
+        and _git("ls-files", "--error-unmatch", "--", authority_relative) is not None
+    )
+    preflight = task035c_p6_h10_preflight_authority_gate(
+        authority if isinstance(authority, dict) else None,
+        expected_sha256=args.task035c_p6_preflight_sha256,
+        observed_sha256=_sha256(authority_path),
+        authority_is_tracked=authority_is_tracked,
+    )
+    reference = _task037c_full3d_reference_gate(
+        reference_path,
+        expected_sha256=args.full3d_reference_sha256,
+        current_source_sha=current_source_sha,
+        phi_deg=float(args.incident_phi_deg),
+    )
+    failures = [
+        *(f"p6_preflight:{item}" for item in preflight["failures"]),
+        *(f"full3d:{item}" for item in reference["failures"]),
+    ]
+    gate = {
+        "schema_version": "task037c.direct-worker-authority-gate.v1",
+        "pass": not failures,
+        "historical_p6_preflight": {**preflight, "path": str(authority_path)},
+        "same_phi_full3d": reference,
+        "failures": sorted(set(failures)),
+    }
+    if not gate["pass"]:
+        raise SystemExit(f"Task37c direct authority failed: {gate['failures']}")
+    return gate
+
+
+def main(argv: list[str] | None = None) -> None:
+    args = _parse_args(argv)
     if args.h_nm <= 0.0:
         raise SystemExit("--h-nm must be positive.")
-    modal_h_nm = (
-        float(args.h_nm)
-        if args.modal_h_nm is None
-        else float(args.modal_h_nm)
-    )
+    modal_h_nm = float(args.h_nm) if args.modal_h_nm is None else float(args.modal_h_nm)
     modal_degree = (
-        int(args.degree)
-        if args.modal_degree is None
-        else int(args.modal_degree)
+        int(args.degree) if args.modal_degree is None else int(args.modal_degree)
     )
     if modal_h_nm <= 0.0:
         raise SystemExit("--modal-h-nm must be positive.")
-    if not (
-        0.0 < args.bottom_interface_nm < args.top_interface_nm < 120.0
-    ):
+    if not (0.0 < args.bottom_interface_nm < args.top_interface_nm < 120.0):
         raise SystemExit(
             "Task33 buffer interfaces must satisfy "
             "0 < bottom-interface-nm < top-interface-nm < 120."
@@ -1000,10 +1585,7 @@ def main() -> None:
             )
         if args.degree not in (2, 3):
             raise SystemExit("The Task034 fixed-p graded path is restricted to p2/p3.")
-        if (
-            args.bottom_interface_nm != 10.0
-            or args.top_interface_nm != 110.0
-        ):
+        if args.bottom_interface_nm != 10.0 or args.top_interface_nm != 110.0:
             raise SystemExit(
                 "The first Task033 graded path is qualified only at the "
                 "reviewed 10/110 nm matching interfaces."
@@ -1057,17 +1639,22 @@ def main() -> None:
     provenance = _source_provenance(
         comm, args.verified_clean_sha, args.allow_dirty_research
     )
-    if (
-        args.task035c_p6_h10_gate
-        and comm.size not in TASK035C_P6_H10_MPI_SIZES
-    ):
-        raise SystemExit(
-            "Task035c p6/h10 Hybrid is restricted to MPI1/2/4/8."
-        )
+    if args.task035c_p6_h10_gate and comm.size not in TASK035C_P6_H10_MPI_SIZES:
+        raise SystemExit("Task035c p6/h10 Hybrid is restricted to MPI1/2/4/8.")
+    if args.task037c_robustness_gate and comm.size != 8:
+        raise SystemExit("Task37c direct Hybrid is restricted to MPI8.")
     task035c_p6_gate = _task035c_worker_authority_gate(
         args,
         current_source_sha=provenance.get("commit_sha"),
         mpi_size=comm.size,
+    )
+    task037c_authority_gate = (
+        _task037c_worker_authority_gate(
+            args,
+            current_source_sha=provenance.get("commit_sha"),
+        )
+        if args.task037c_robustness_gate
+        else None
     )
 
     if comm.rank == 0 and args.memory_stages is not None:
@@ -1097,12 +1684,11 @@ def main() -> None:
     total_started = time.perf_counter()
     timings: dict[str, float] = {}
     cfg = target_stage4_config(degree=args.degree, h_nm=args.h_nm)
-    cfg.stage4_full3d_assembly_backend = (
-        args.stage4_full3d_assembly_backend
-    )
+    cfg.stage4_full3d_assembly_backend = args.stage4_full3d_assembly_backend
     cfg.matrix_diagnostics_assemble_only = False
     cfg.matrix_diagnostics_factorization_only = False
     cfg.incident_theta_deg = 90.0 - float(args.incident_grazing_deg)
+    cfg.incident_phi_deg = float(args.incident_phi_deg)
     cfg.polarization_kind = args.polarization_kind
     modal_cfg = target_stage4_config(
         degree=modal_degree,
@@ -1149,9 +1735,7 @@ def main() -> None:
             "h_nm": args.h_nm,
             "modal_degree": modal_degree,
             "modal_h_nm": modal_h_nm,
-            "internal_propagation_model": (
-                args.internal_propagation_model
-            ),
+            "internal_propagation_model": (args.internal_propagation_model),
             "internal_traction_model": args.internal_traction_model,
             "discrete_axial_qualification_scope": (
                 _discrete_axial_qualification_scope(
@@ -1175,6 +1759,12 @@ def main() -> None:
             "graded_plan_hash": None,
             "graded_plan": None,
         }
+        capacity_fields = _task037c_capacity_failure_fields(
+            enabled=args.task037c_robustness_gate,
+            incident_phi_deg=cfg.incident_phi_deg,
+            authority_gate=task037c_authority_gate,
+        )
+        case.update(capacity_fields["case"])
         selection_record = _directional_selection_summary(selection)
         capacity = {
             "status": "insufficient_finite_admissible_modes",
@@ -1187,16 +1777,10 @@ def main() -> None:
             "numerically_infinite_candidate_count": (
                 selection.numerically_infinite_candidate_count
             ),
-            "finite_spectrum_abs_beta_h_cutoff": (
-                NUMERICAL_INFINITY_BETA_H_CUTOFF
-            ),
-            "finite_spectrum_abs_beta_cutoff_per_nm": (
-                selection.abs_beta_cutoff
-            ),
+            "finite_spectrum_abs_beta_h_cutoff": (NUMERICAL_INFINITY_BETA_H_CUTOFF),
+            "finite_spectrum_abs_beta_cutoff_per_nm": (selection.abs_beta_cutoff),
             "first_rejected_numerical_infinity_beta_per_nm": (
-                selection_record[
-                    "first_rejected_numerical_infinity_beta_per_nm"
-                ]
+                selection_record["first_rejected_numerical_infinity_beta_per_nm"]
             ),
             "leading_coefficient_singular_by_design": (
                 operators.leading_coefficient_singular_by_design
@@ -1208,7 +1792,7 @@ def main() -> None:
             "schema_version": 1,
             "benchmark_id": "task033_hybrid_modal_basis_capacity",
             "timestamp_utc": timestamp,
-            "status": "insufficient_finite_admissible_modes",
+            "status": capacity_fields["status"],
             "metadata": {
                 **provenance,
                 "timestamp_utc": timestamp,
@@ -1224,9 +1808,7 @@ def main() -> None:
                 "internal_propagation_model_requested": (
                     args.internal_propagation_model
                 ),
-                "internal_traction_model_requested": (
-                    args.internal_traction_model
-                ),
+                "internal_traction_model_requested": (args.internal_traction_model),
                 "stage4_full3d_assembly_backend_requested": (
                     args.stage4_full3d_assembly_backend
                 ),
@@ -1237,6 +1819,7 @@ def main() -> None:
                     if not provenance["tracked_source_dirty"]
                     else "dirty_task033_finite_spectrum_capacity_research"
                 ),
+                **capacity_fields["metadata"],
             },
             "case": case,
             "qep": {
@@ -1248,9 +1831,7 @@ def main() -> None:
                 "coefficient_degree": operators.coefficient_degree,
                 "quadrature_degree": operators.quadrature_degree,
                 "quadrature_policy": operators.quadrature_policy,
-                f"{direction}_solver_converged_modes": (
-                    solver_report.converged_modes
-                ),
+                f"{direction}_solver_converged_modes": (solver_report.converged_modes),
                 f"{direction}_directional_selection": selection_record,
             },
             "hybrid_system": {
@@ -1283,6 +1864,7 @@ def main() -> None:
                 "modal_basis_capacity_pass": False,
                 "capacity_disposition": "insufficient_finite_admissible_modes",
                 "official_record": False,
+                **capacity_fields["qualification"],
                 "boundary": (
                     "Measured finite-spectrum capacity negative; numerical-infinity "
                     "roots from singular K2 are rejected before adjoint pairing."
@@ -1320,8 +1902,8 @@ def main() -> None:
                 coarse_factor=args.graded_coarse_factor,
                 comm_size=comm.size,
             )
-            graded_bottom_mesh, graded_top_mesh = (
-                build_task034_graded_local_mesh_pair(cfg, graded_plan)
+            graded_bottom_mesh, graded_top_mesh = build_task034_graded_local_mesh_pair(
+                cfg, graded_plan
             )
             cross_section = build_matching_cross_section(
                 cfg,
@@ -1337,16 +1919,10 @@ def main() -> None:
         spaces = build_cross_section_spaces(
             cross_section, transverse_degree=modal_degree
         )
-        operators = assemble_quadratic_beta_operators(
-            modal_cfg, cross_section, spaces
-        )
-        poynting_evaluator = PoyntingFluxEvaluator(
-            modal_cfg, cross_section, spaces
-        )
+        operators = assemble_quadratic_beta_operators(modal_cfg, cross_section, spaces)
+        poynting_evaluator = PoyntingFluxEvaluator(modal_cfg, cross_section, spaces)
         target = analytic_homogeneous_beta(modal_cfg, modal_cfg.n_air)
-        timings["cross_section_and_qep_assembly"] = _max_elapsed(
-            comm, started
-        )
+        timings["cross_section_and_qep_assembly"] = _max_elapsed(comm, started)
         progress("Task32 Phase6: cross-section QEP assembled")
 
         mark_stage("cross_section_eigen_solve")
@@ -1362,9 +1938,7 @@ def main() -> None:
             desired_direction="forward",
             requested_modes=args.requested_modes,
             poynting_evaluator=poynting_evaluator,
-            maximum_abs_beta=(
-                NUMERICAL_INFINITY_BETA_H_CUTOFF / modal_h_nm
-            ),
+            maximum_abs_beta=(NUMERICAL_INFINITY_BETA_H_CUTOFF / modal_h_nm),
         )
         if len(positive_right) != args.requested_modes:
             for mode in positive_right:
@@ -1406,9 +1980,7 @@ def main() -> None:
             desired_direction="backward",
             requested_modes=args.requested_modes,
             poynting_evaluator=poynting_evaluator,
-            maximum_abs_beta=(
-                NUMERICAL_INFINITY_BETA_H_CUTOFF / modal_h_nm
-            ),
+            maximum_abs_beta=(NUMERICAL_INFINITY_BETA_H_CUTOFF / modal_h_nm),
         )
         if len(negative_right) != args.requested_modes:
             for mode in negative_right:
@@ -1498,9 +2070,7 @@ def main() -> None:
         started = time.perf_counter()
         if args.solver_path == "augmented":
             mark_stage("augmented_matrix_and_factor")
-            system = build_hybrid_augmented_direct_system(
-                bottom, top, coupling
-            )
+            system = build_hybrid_augmented_direct_system(bottom, top, coupling)
             timings["primary_system_build"] = _max_elapsed(comm, started)
             timings["monolithic_assembly"] = timings["primary_system_build"]
             progress("Task32 Phase6: monolithic augmented AIJ complete")
@@ -1536,6 +2106,18 @@ def main() -> None:
             cfg, bottom, top, coupling, solution
         )
         port_power = validation["port_power"]
+        task037c_q_identity = None
+        task037c_order_gate = None
+        task037c_payload = None
+        task037c_canonical = None
+        if args.task037c_robustness_gate:
+            task037c_q_identity = {
+                "bottom": _task037c_external_q_identity(bottom, solution.bottom),
+                "top": _task037c_external_q_identity(top, solution.top),
+            }
+            task037c_order_gate = _task037c_direct_order_gate(
+                validation["external_diffraction_orders"], (bottom, top)
+            )
         modal_schur_comparison = None
         if args.compare_modal_schur:
             started = time.perf_counter()
@@ -1568,8 +2150,7 @@ def main() -> None:
             )
             rta_delta = {
                 key: float(
-                    schur_validation["port_power"][key]
-                    - validation["port_power"][key]
+                    schur_validation["port_power"][key] - validation["port_power"][key]
                 )
                 for key in ("R_total", "T_total", "A_balance")
             }
@@ -1582,8 +2163,7 @@ def main() -> None:
                     <= 1.0e-9
                 ),
                 "top_solution_relative_error_le_1e-9": (
-                    _relative_vector_error(schur_solution.top, solution.top)
-                    <= 1.0e-9
+                    _relative_vector_error(schur_solution.top, solution.top) <= 1.0e-9
                 ),
                 "modal_schur_full_residual_le_1e-9": (
                     schur_solution.relative_residual <= 1.0e-9
@@ -1601,16 +2181,10 @@ def main() -> None:
                 ),
             }
             modal_schur_comparison = {
-                "status": (
-                    "pass" if all(comparison_gates.values()) else "failed"
-                ),
+                "status": ("pass" if all(comparison_gates.values()) else "failed"),
                 "comparison_solver_path": comparison_solver_path,
-                "comparison_solver_path_argument": (
-                    args.comparison_solver_path
-                ),
-                "comparison_lifecycle_strategy": (
-                    schur_system.lifecycle_strategy
-                ),
+                "comparison_solver_path_argument": (args.comparison_solver_path),
+                "comparison_lifecycle_strategy": (schur_system.lifecycle_strategy),
                 "multi_rhs_count": schur_system.multi_rhs_count,
                 "modal_schur_shape": list(schur_system.modal_schur.shape),
                 "modal_schur_bytes": int(schur_system.modal_schur.nbytes),
@@ -1661,15 +2235,11 @@ def main() -> None:
                 ),
             }
             progress(
-                "Task32 Phase7: "
-                f"{comparison_solver_path} direct comparison complete"
+                f"Task32 Phase7: {comparison_solver_path} direct comparison complete"
             )
-        pinned_reference_case = (
+        pinned_reference_case = args.task037c_robustness_gate or (
             abs(args.incident_grazing_deg - 10.0) <= 1.0e-12
-            and (
-                args.polarization_kind == "s"
-                or args.full3d_reference is not None
-            )
+            and (args.polarization_kind == "s" or args.full3d_reference is not None)
         )
         explicit_reference = args.full3d_reference
         if explicit_reference is not None and not explicit_reference.is_absolute():
@@ -1685,6 +2255,22 @@ def main() -> None:
                 args.h_nm,
                 reference_by_degree_and_h=reference_registry,
                 polarization_kind=args.polarization_kind,
+                expected_theta_deg=(
+                    90.0 - args.incident_grazing_deg
+                    if args.task037c_robustness_gate
+                    else 80.0
+                ),
+                expected_grazing_deg=(
+                    args.incident_grazing_deg if args.task037c_robustness_gate else 10.0
+                ),
+                expected_phi_deg=(
+                    args.incident_phi_deg if args.task037c_robustness_gate else 0.0
+                ),
+                expected_status=(
+                    "task037c_full3d_robustness_pass"
+                    if args.task037c_robustness_gate
+                    else "full3d_reference_pass"
+                ),
             )
             if pinned_reference_case
             else None
@@ -1704,12 +2290,14 @@ def main() -> None:
                 sample_y = np.asarray(archive["y_nm"], dtype=np.float64)
                 sample_z = np.asarray(archive["z_nm"], dtype=np.float64)
         else:
-            sample_x = cfg.x_min + (
-                np.arange(40, dtype=np.float64) + 0.5
-            ) * cfg.period_x / 40.0
-            sample_y = cfg.y_min + (
-                np.arange(20, dtype=np.float64) + 0.5
-            ) * cfg.period_y / 20.0
+            sample_x = (
+                cfg.x_min
+                + (np.arange(40, dtype=np.float64) + 0.5) * cfg.period_x / 40.0
+            )
+            sample_y = (
+                cfg.y_min
+                + (np.arange(20, dtype=np.float64) + 0.5) * cfg.period_y / 20.0
+            )
             sample_z = np.linspace(
                 args.bottom_interface_nm,
                 args.top_interface_nm,
@@ -1727,20 +2315,14 @@ def main() -> None:
             bottom_z_nm=args.bottom_interface_nm,
             top_z_nm=args.top_interface_nm,
             propagation=coupling.propagation,
-            positive_traction_beta_per_nm=(
-                coupling.positive_traction_beta_per_nm
-            ),
-            negative_traction_beta_per_nm=(
-                coupling.negative_traction_beta_per_nm
-            ),
+            positive_traction_beta_per_nm=(coupling.positive_traction_beta_per_nm),
+            negative_traction_beta_per_nm=(coupling.negative_traction_beta_per_nm),
         )
         reconstruction_traction_betas = reconstructor.traction_beta_per_nm
         trace_modal_oracle = None
         if reference_archive is not None:
             mark_stage("full3d_trace_modal_oracle")
-            trace_modal_oracle = reconstructor.full3d_trace_modal_oracle(
-                archive_path
-            )
+            trace_modal_oracle = reconstructor.full3d_trace_modal_oracle(archive_path)
             mark_stage("middle_plane_reconstruction")
         selected_planes = reconstructor.selected_planes(
             solution.modal_amplitudes,
@@ -1757,6 +2339,28 @@ def main() -> None:
                 dtype=np.float64,
             ),
         )
+        if args.task037c_robustness_gate:
+            task037c_payload = _write_task037c_direct_payload(
+                output=args.output,
+                comm=comm,
+                x_nm=sample_x,
+                y_nm=sample_y,
+                z_nm=sample_z,
+                electric=selected_planes.electric_V_per_m,
+                magnetic=selected_planes.magnetic_A_per_m,
+                modal_amplitudes=np.abs(solution.modal_amplitudes),
+                bottom_q=validation["external_auxiliary_amplitudes"]["bottom"],
+                top_q=validation["external_auxiliary_amplitudes"]["top"],
+                modal_count=int(coupling.internal_unknown_count),
+                bottom_mode_count=int(bottom.n_external_aux),
+                top_mode_count=int(top.n_external_aux),
+            )
+            task037c_canonical = _task037c_direct_canonical_exports(
+                solution=solution,
+                systems=(bottom, top),
+                run_dir=args.output.parent,
+                comm=comm,
+            )
         interface_continuity = interface_field_continuity(
             cfg,
             bottom,
@@ -1798,15 +2402,12 @@ def main() -> None:
                         reference_record["metadata"]["commit_sha"]
                     ).lower(),
                     "reference_binding_verified": (
-                        expected_reference_npz_sha256
-                        == observed_reference_npz_sha256
+                        expected_reference_npz_sha256 == observed_reference_npz_sha256
                     ),
                 }
             )
         absorption["R_plus_T_plus_A_volume"] = float(
-            port_power["R_total"]
-            + port_power["T_total"]
-            + absorption["A_volume_total"]
+            port_power["R_total"] + port_power["T_total"] + absorption["A_volume_total"]
         )
         absorption["energy_closure_error"] = float(
             absorption["R_plus_T_plus_A_volume"] - 1.0
@@ -1835,9 +2436,13 @@ def main() -> None:
             "full3d_trace_modal_oracle": trace_modal_oracle,
             "volume_absorption": absorption,
             "selected_plane_full3d_comparison": field_reference,
+            "task037c_direct_payload": task037c_payload,
+            "task037c_canonical_export": task037c_canonical,
         }
         timings["physical_field_reconstruction"] = _max_elapsed(comm, started)
-        progress("Task32 Phase6: physical interface/absorption/selected-plane reconstruction complete")
+        progress(
+            "Task32 Phase6: physical interface/absorption/selected-plane reconstruction complete"
+        )
         mark_stage("record_and_release")
         directions_valid = (
             all(mode.direction == "forward" for mode in positive.modes)
@@ -1846,8 +2451,7 @@ def main() -> None:
             and all(mode.passive_branch_valid for mode in negative.modes)
         )
         reciprocal_valid = len(pairs) == args.requested_modes and all(
-            pair.opposite_direction and pair.passive_branches_valid
-            for pair in pairs
+            pair.opposite_direction and pair.passive_branches_valid for pair in pairs
         )
         forward_factors = np.asarray(
             coupling.propagation.forward.factors, dtype=np.complex128
@@ -1867,8 +2471,7 @@ def main() -> None:
             "requested_forward_and_backward_passive_bases": directions_valid,
             "reciprocal_pairing_complete": reciprocal_valid,
             "biorthogonality_identity_error_le_1e-6": (
-                max(positive.max_identity_error, negative.max_identity_error)
-                <= 1.0e-6
+                max(positive.max_identity_error, negative.max_identity_error) <= 1.0e-6
             ),
             "right_and_left_qep_residuals_le_1e-8": (
                 max(
@@ -1905,9 +2508,7 @@ def main() -> None:
                 solution.relative_residual <= 1.0e-9
             ),
             "interface_e_projection_relative_residual_le_1e-8": (
-                validation["interface_e_projection"][
-                    "combined_relative_residual"
-                ]
+                validation["interface_e_projection"]["combined_relative_residual"]
                 <= 1.0e-8
             ),
             "fe_modal_traction_equilibrium_relative_residual_le_1e-8": (
@@ -1953,15 +2554,11 @@ def main() -> None:
                         <= 1.0e-9
                     ),
                     "condensed_full_surface_mode_matrix_not_retained": all(
-                        not item.streaming_audit[
-                            "full_surface_mode_matrix_retained"
-                        ]
+                        not item.streaming_audit["full_surface_mode_matrix_retained"]
                         for item in recovered_sides
                     ),
                     "condensed_full_global_matrix_not_allocated": all(
-                        not item.streaming_audit[
-                            "full_global_matrix_allocated"
-                        ]
+                        not item.streaming_audit["full_global_matrix_allocated"]
                         for item in recovered_sides
                     ),
                 }
@@ -1975,8 +2572,8 @@ def main() -> None:
                 .get("relative_dual")
                 for side in ("bottom", "top")
             ]
-            exact_traction_pass, _exact_traction_role = (
-                _exact_traction_gate({}, exact_traction_values, 1.0e-8)
+            exact_traction_pass, _exact_traction_role = _exact_traction_gate(
+                {}, exact_traction_values, 1.0e-8
             )
             gates.update(
                 {
@@ -1991,25 +2588,20 @@ def main() -> None:
                     ),
                     "diagnostic_sampled_traction_density_l2_proxy_le_1e-2": (
                         max(
-                            interface_physical[side][
-                                "traction_density_l2_proxy"
-                            ]["relative_l2"]
+                            interface_physical[side]["traction_density_l2_proxy"][
+                                "relative_l2"
+                            ]
                             for side in ("bottom", "top")
                         )
                         <= 1.0e-2
                     ),
-                    "assembled_interface_h_t_exact_dual_le_1e-8": (
-                        exact_traction_pass
-                    ),
+                    "assembled_interface_h_t_exact_dual_le_1e-8": (exact_traction_pass),
                     "volume_energy_closure_abs_le_1e-5": (
-                        abs(absorption_physical["energy_closure_error"])
-                        <= 1.0e-5
+                        abs(absorption_physical["energy_closure_error"]) <= 1.0e-5
                     ),
                 }
             )
-            planes_physical = physical_fields[
-                "selected_plane_full3d_comparison"
-            ]
+            planes_physical = physical_fields["selected_plane_full3d_comparison"]
             if planes_physical is not None:
                 gates.update(
                     {
@@ -2022,15 +2614,11 @@ def main() -> None:
                             <= 1.0e-5
                         ),
                         "middle_plane_e_relative_l2_le_5e-3": (
-                            planes_physical[
-                                "max_middle_plane_electric_relative_l2"
-                            ]
+                            planes_physical["max_middle_plane_electric_relative_l2"]
                             <= 5.0e-3
                         ),
                         "middle_plane_h_relative_l2_le_5e-3": (
-                            planes_physical[
-                                "max_middle_plane_magnetic_relative_l2"
-                            ]
+                            planes_physical["max_middle_plane_magnetic_relative_l2"]
                             <= 5.0e-3
                         ),
                     }
@@ -2048,6 +2636,19 @@ def main() -> None:
             and not key.startswith("diagnostic_")
         )
         integration_pass = _all_formal_true(gates)
+        task037c_direct_qualification = None
+        if args.task037c_robustness_gate:
+            task037c_direct_qualification = _task037c_direct_qualification(
+                solution=solution,
+                validation=validation,
+                physical_fields=physical_fields,
+                gates=gates,
+                q_identity=task037c_q_identity,
+                order_gate=task037c_order_gate,
+                payload=task037c_payload,
+                canonical=task037c_canonical,
+                authority_gate=task037c_authority_gate,
+            )
         interface_closure_pass = bool(
             physical_fields is not None
             and gates.get(
@@ -2078,12 +2679,8 @@ def main() -> None:
             not task33_variant or args.requested_modes >= 80
         )
         projection_stats = {
-            "bottom": _petsc_matrix_stats(
-                coupling.bottom.projection, assemble=False
-            ),
-            "top": _petsc_matrix_stats(
-                coupling.top.projection, assemble=False
-            ),
+            "bottom": _petsc_matrix_stats(coupling.bottom.projection, assemble=False),
+            "top": _petsc_matrix_stats(coupling.top.projection, assemble=False),
         }
         factor_inventory = (
             {"augmented": _petsc_factor_inventory(solution.ksp)}
@@ -2091,9 +2688,7 @@ def main() -> None:
             else primary_schur_system.factor_inventory
         )
         full_vector_size = int(positive.modes[0].right.right_full.getSize())
-        reduced_vector_size = int(
-            positive.modes[0].right.right_reduced.getSize()
-        )
+        reduced_vector_size = int(positive.modes[0].right.right_reduced.getSize())
         eigenvector_bytes = int(
             2
             * args.requested_modes
@@ -2102,9 +2697,7 @@ def main() -> None:
             * np.dtype(PETSc.ScalarType).itemsize
         )
         active_column_counts = {
-            "bottom": distributed_active_column_count(
-                coupling.bottom.projection
-            ),
+            "bottom": distributed_active_column_count(coupling.bottom.projection),
             "top": distributed_active_column_count(coupling.top.projection),
         }
         object_payload_ledger = {
@@ -2115,8 +2708,7 @@ def main() -> None:
                 for side, result in active_column_counts.items()
             },
             "interface_active_column_count_diagnostics": {
-                side: result.to_dict()
-                for side, result in active_column_counts.items()
+                side: result.to_dict() for side, result in active_column_counts.items()
             },
             "mode_count_per_direction": args.requested_modes,
             "retained_right_left_eigenvector_bytes": eigenvector_bytes,
@@ -2138,6 +2730,17 @@ def main() -> None:
         )
         rss = comm.gather(_historical_peak_rss_mb(), root=0)
         timestamp = datetime.now(timezone.utc).isoformat()
+        legacy_status = (
+            "algebraic_smoke_pass_physical_truncation_not_qualified"
+            if task33_variant
+            and algebraic_chain_pass
+            and not task033_physical_truncation_allowed
+            else (
+                "physical_integration_pass_mode_convergence_pending"
+                if integration_pass
+                else "physical_integration_failed"
+            )
+        )
         record = {
             "schema_version": 1,
             "benchmark_id": (
@@ -2155,16 +2758,10 @@ def main() -> None:
                 )
             ),
             "timestamp_utc": timestamp,
-            "status": (
-                "algebraic_smoke_pass_physical_truncation_not_qualified"
-                if task33_variant
-                and algebraic_chain_pass
-                and not task033_physical_truncation_allowed
-                else (
-                    "physical_integration_pass_mode_convergence_pending"
-                    if integration_pass
-                    else "physical_integration_failed"
-                )
+            "status": _task037c_record_status(
+                enabled=args.task037c_robustness_gate,
+                qualification=task037c_direct_qualification,
+                legacy_status=legacy_status,
             ),
             "metadata": {
                 **provenance,
@@ -2181,13 +2778,18 @@ def main() -> None:
                 "internal_propagation_model_requested": (
                     args.internal_propagation_model
                 ),
-                "internal_traction_model_requested": (
-                    args.internal_traction_model
-                ),
+                "internal_traction_model_requested": (args.internal_traction_model),
                 "stage4_full3d_assembly_backend_requested": (
                     args.stage4_full3d_assembly_backend
                 ),
                 "task035c_p6_h10_authority_gate": task035c_p6_gate,
+                "task037c_robustness_gate": task037c_authority_gate,
+                "task037c_full3d_reference_gate": (
+                    None
+                    if task037c_authority_gate is None
+                    else task037c_authority_gate["same_phi_full3d"]
+                ),
+                "incident_phi_deg": float(args.incident_phi_deg),
                 "task33_variant": task33_variant,
                 "provenance": (
                     (
@@ -2209,9 +2811,7 @@ def main() -> None:
                 "h_nm": args.h_nm,
                 "modal_degree": modal_degree,
                 "modal_h_nm": modal_h_nm,
-                "internal_propagation_model": (
-                    args.internal_propagation_model
-                ),
+                "internal_propagation_model": (args.internal_propagation_model),
                 "internal_traction_model": args.internal_traction_model,
                 "discrete_axial_qualification_scope": (
                     _discrete_axial_qualification_scope(
@@ -2225,11 +2825,11 @@ def main() -> None:
                 "block_rotation_tolerance": args.block_rotation_tolerance,
                 "bottom_interface_nm": args.bottom_interface_nm,
                 "top_interface_nm": args.top_interface_nm,
-                "middle_length_nm": (
-                    args.top_interface_nm - args.bottom_interface_nm
-                ),
+                "middle_length_nm": (args.top_interface_nm - args.bottom_interface_nm),
                 "wavelength_nm": cfg.lambda0,
                 "incident_grazing_deg": 90.0 - cfg.incident_theta_deg,
+                "incident_theta_deg": cfg.incident_theta_deg,
+                "incident_phi_deg": cfg.incident_phi_deg,
                 "polarization_kind": cfg.polarization_kind,
                 "mesh_policy": (
                     "task034_periodic_conforming_fixed_p_graded_opt_in"
@@ -2241,9 +2841,7 @@ def main() -> None:
                     args.graded_profile if graded_plan is not None else None
                 ),
                 "graded_coarse_factor": (
-                    args.graded_coarse_factor
-                    if graded_plan is not None
-                    else None
+                    args.graded_coarse_factor if graded_plan is not None else None
                 ),
                 "graded_plan_hash": (
                     graded_plan.plan_hash if graded_plan is not None else None
@@ -2261,12 +2859,8 @@ def main() -> None:
                 "coefficient_degree": operators.coefficient_degree,
                 "quadrature_degree": operators.quadrature_degree,
                 "quadrature_policy": operators.quadrature_policy,
-                "positive_solver_converged_modes": (
-                    positive_report.converged_modes
-                ),
-                "negative_solver_converged_modes": (
-                    negative_report.converged_modes
-                ),
+                "positive_solver_converged_modes": (positive_report.converged_modes),
+                "negative_solver_converged_modes": (negative_report.converged_modes),
                 "positive_directional_selection": (
                     _directional_selection_summary(positive_selection)
                 ),
@@ -2282,9 +2876,7 @@ def main() -> None:
                         "relative_beta_error": pair.relative_beta_error,
                         "electric_mass_overlap": pair.electric_mass_overlap,
                         "opposite_direction": pair.opposite_direction,
-                        "passive_branches_valid": (
-                            pair.passive_branches_valid
-                        ),
+                        "passive_branches_valid": (pair.passive_branches_valid),
                     }
                     for pair in pairs
                 ],
@@ -2294,23 +2886,15 @@ def main() -> None:
                 "matrix_size": (
                     list(system.A.getSize()) if system is not None else None
                 ),
-                "matrix_stats": (
-                    system.matrix_stats if system is not None else None
-                ),
-                "block_shapes": (
-                    system.block_shapes if system is not None else None
-                ),
+                "matrix_stats": (system.matrix_stats if system is not None else None),
+                "block_shapes": (system.block_shapes if system is not None else None),
                 "inserted_nnz_by_block": (
                     system.inserted_nnz_by_block if system is not None else None
                 ),
                 "bottom_global_size": bottom.global_size,
                 "top_global_size": top.global_size,
-                "assembly_backend_requested": (
-                    args.stage4_full3d_assembly_backend
-                ),
-                "bottom_assembly_backend_actual": (
-                    bottom.assembly_backend_actual
-                ),
+                "assembly_backend_requested": (args.stage4_full3d_assembly_backend),
+                "bottom_assembly_backend_actual": (bottom.assembly_backend_actual),
                 "top_assembly_backend_actual": top.assembly_backend_actual,
                 "bottom_assembly_backend_qualification": (
                     bottom.assembly_backend_qualification
@@ -2333,8 +2917,7 @@ def main() -> None:
                 "bottom_local_mesh_cells": list(bottom.local_mesh.mesh_cells),
                 "top_local_mesh_cells": list(top.local_mesh.mesh_cells),
                 "bottom_local_thickness_nm": (
-                    bottom.local_mesh.interface_z_nm
-                    - bottom.local_mesh.external_z_nm
+                    bottom.local_mesh.interface_z_nm - bottom.local_mesh.external_z_nm
                 ),
                 "top_local_thickness_nm": (
                     top.local_mesh.external_z_nm - top.local_mesh.interface_z_nm
@@ -2407,9 +2990,7 @@ def main() -> None:
                     "max_factor_magnitude": float(
                         coupling.propagation.max_factor_magnitude
                     ),
-                    "passivity_valid": bool(
-                        coupling.propagation.passivity_valid
-                    ),
+                    "passivity_valid": bool(coupling.propagation.passivity_valid),
                 },
                 "qep_to_interface_quadrature_degree": (
                     coupling.interface_quadrature_degree
@@ -2417,14 +2998,10 @@ def main() -> None:
                 "cell_interior_modal_correction_norms": {
                     side: {
                         "positive_frobenius": float(
-                            np.linalg.norm(
-                                block.positive_interior_correction
-                            )
+                            np.linalg.norm(block.positive_interior_correction)
                         ),
                         "negative_frobenius": float(
-                            np.linalg.norm(
-                                block.negative_interior_correction
-                            )
+                            np.linalg.norm(block.negative_interior_correction)
                         ),
                         "modal_rhs_l2": float(
                             np.linalg.norm(block.modal_rhs_correction)
@@ -2437,9 +3014,7 @@ def main() -> None:
                 },
                 "tangential_surface_trace_only_audit": {
                     side: {
-                        "verified": bool(
-                            block.tangential_surface_trace_only_verified
-                        ),
+                        "verified": bool(block.tangential_surface_trace_only_verified),
                         "pairwise_interior_schur_evaluated": bool(
                             block.interior_modal_pairwise_schur_evaluated
                         ),
@@ -2462,9 +3037,7 @@ def main() -> None:
                     if system is not None
                     else primary_schur_system.dense_interface_square_formed
                 ),
-                "full_field_or_mode_gathered": (
-                    coupling.full_field_or_mode_gathered
-                ),
+                "full_field_or_mode_gathered": (coupling.full_field_or_mode_gathered),
                 "modal_schur": (
                     None
                     if primary_schur_system is None
@@ -2482,9 +3055,7 @@ def main() -> None:
                         "multi_rhs_solve_seconds": (
                             primary_schur_system.multi_rhs_solve_seconds
                         ),
-                        "lifecycle_strategy": (
-                            primary_schur_system.lifecycle_strategy
-                        ),
+                        "lifecycle_strategy": (primary_schur_system.lifecycle_strategy),
                         "recovery_refactor_required": (
                             primary_schur_system.recovery_refactor_required
                         ),
@@ -2497,9 +3068,7 @@ def main() -> None:
                 "true_relative_residual": solution.relative_residual,
                 "setup_seconds": getattr(solution, "setup_seconds", None),
                 "solve_seconds": getattr(solution, "solve_seconds", None),
-                "modal_solve_seconds": getattr(
-                    solution, "modal_solve_seconds", None
-                ),
+                "modal_solve_seconds": getattr(solution, "modal_solve_seconds", None),
                 "recovery_seconds": getattr(solution, "recovery_seconds", None),
                 "recovery_factor_setup_seconds": getattr(
                     solution, "recovery_factor_setup_seconds", {}
@@ -2508,15 +3077,11 @@ def main() -> None:
                     None
                     if solution.bottom_recovered is None
                     else {
-                        "recovery": (
-                            solution.bottom_recovered.recovery_audit
-                        ),
+                        "recovery": (solution.bottom_recovered.recovery_audit),
                         "full_operator_residual": (
                             solution.bottom_recovered.full_operator_residual
                         ),
-                        "streaming": (
-                            solution.bottom_recovered.streaming_audit
-                        ),
+                        "streaming": (solution.bottom_recovered.streaming_audit),
                     }
                 ),
                 "top_static_recovery": (
@@ -2539,6 +3104,7 @@ def main() -> None:
             "gates": gates,
             "qualification": {
                 "integration_pass": integration_pass,
+                **_task037c_raw_qualification_fields(task037c_direct_qualification),
                 "algebraic_chain_pass": algebraic_chain_pass,
                 "task033_physical_truncation_allowed": (
                     task033_physical_truncation_allowed
@@ -2579,7 +3145,6 @@ def main() -> None:
                 ),
                 "volume_absorption_reconstructed": physical_fields is not None,
                 "selected_middle_planes_reconstructed": physical_fields is not None,
-                "official_record": False,
                 "hybrid_p_disposition": hybrid_p_status,
                 "boundary": (
                     (
@@ -2639,7 +3204,13 @@ def main() -> None:
         print(f"Task32 Phase6 record: {args.output}", flush=True)
         print(f"Task32 Phase6 status: {record['status']}", flush=True)
     comm.barrier()
-    if not record["qualification"]["integration_pass"]:
+    if (
+        args.task037c_robustness_gate
+        and record["qualification"].get("task037c_direct_pass") is not True
+    ) or (
+        not args.task037c_robustness_gate
+        and not record["qualification"]["integration_pass"]
+    ):
         raise SystemExit(2)
 
 

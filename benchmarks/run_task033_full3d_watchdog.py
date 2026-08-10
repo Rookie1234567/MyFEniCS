@@ -15,6 +15,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
+import numpy as np
+
 from benchmarks.task034_wsl_resources import (
     cgroup_snapshot,
     effective_memory_limit,
@@ -64,6 +66,10 @@ from benchmarks.task035d_nested_p_snapshot_gate import (
 from benchmarks.task035d_nested_p_dwr_checker import (
     task035d_nested_p_dwr_report_gate,
 )
+from benchmarks.task037c_robustness import (
+    TASK37C_PHI_VALUES,
+    direction_s_phase_audit,
+)
 from benchmarks.watchdog_process_control import (
     terminate_process_tree,
     worker_process_group_popen_kwargs,
@@ -104,6 +110,11 @@ TASK035D_SELECTIVE_FACE_PHASES = {
 }
 TASK037_M3A_MAX_ITERATIONS = 3000
 TASK037_M3A_MPI_SIZES = (1, 2, 4, 8)
+TASK037C_MPI_SIZE = 8
+TASK037C_GRAZING_DEG = 1.0
+TASK037C_THETA_DEG = 89.0
+TASK037C_TRUE_RESIDUAL_TOL = 1.0e-9
+TASK037C_ENERGY_TOL = 1.0e-5
 
 
 def _read_int_or_max(path: Path) -> tuple[int | None, str]:
@@ -366,7 +377,7 @@ def _path_from_root(path: Path) -> str:
         return str(path.resolve())
 
 
-def _task037_m3a_write_canonical_artifacts(
+def _write_canonical_artifacts(
     run_dir: Path,
     *,
     field: Any,
@@ -374,6 +385,7 @@ def _task037_m3a_write_canonical_artifacts(
     floquet_data: Any,
     linear_system: dict[str, Any],
     dtn_result: dict[str, Any],
+    artifact_prefix: str = "task037_m3a",
 ) -> dict[str, Any]:
     from petsc4py import PETSc
 
@@ -423,7 +435,7 @@ def _task037_m3a_write_canonical_artifacts(
         ("full_fe", full_packets, full_audit),
     ):
         shard_path = run_dir / (
-            f"task037_m3a_{packet_role}_canonical_rank{comm.rank:04d}.jsonl"
+            f"{artifact_prefix}_{packet_role}_canonical_rank{comm.rank:04d}.jsonl"
         )
         shard = write_canonical_packet_shard(shard_path, packets)
         shard.update(
@@ -445,7 +457,7 @@ def _task037_m3a_write_canonical_artifacts(
                 },
             )
             manifest_path = run_dir / (
-                f"task037_m3a_{packet_role}_canonical_manifest.json"
+                f"{artifact_prefix}_{packet_role}_canonical_manifest.json"
             )
             manifest_sha256 = write_canonical_manifest(manifest_path, manifest)
             exports[packet_role] = {
@@ -469,7 +481,7 @@ def _task037_m3a_solution_observer(run_dir: Path):
         linear_system: dict[str, Any],
         dtn_result: dict[str, Any],
     ) -> None:
-        exports = _task037_m3a_write_canonical_artifacts(
+        exports = _write_canonical_artifacts(
             run_dir,
             field=field,
             mesh_data=mesh_data,
@@ -479,6 +491,35 @@ def _task037_m3a_solution_observer(run_dir: Path):
         )
         if mesh_data.mesh.comm.rank == 0:
             summary["task037_m3a_canonical_export"] = {
+                "status": "completed",
+                "roles": exports,
+            }
+
+    return observe
+
+
+def _task037c_solution_observer(run_dir: Path):
+    def observe(
+        *,
+        field: Any,
+        mesh_data: Any,
+        config: Any,
+        floquet_data: Any,
+        summary: dict[str, Any],
+        linear_system: dict[str, Any],
+        dtn_result: dict[str, Any],
+    ) -> None:
+        exports = _write_canonical_artifacts(
+            run_dir,
+            field=field,
+            mesh_data=mesh_data,
+            floquet_data=floquet_data,
+            linear_system=linear_system,
+            dtn_result=dtn_result,
+            artifact_prefix="task037c",
+        )
+        if mesh_data.mesh.comm.rank == 0:
+            summary["task037c_canonical_export"] = {
                 "status": "completed",
                 "roles": exports,
             }
@@ -565,12 +606,21 @@ def _full3d_config(args: argparse.Namespace):
     from src.common.config_3d import target_stage4_config
 
     cfg = target_stage4_config(degree=args.degree, h_nm=args.h_nm)
+    task037c_gate = bool(args.task037c_robustness_gate)
     full_solve = args.run_kind == "full-solve"
     factorization_only = args.run_kind == "factorization-only"
     return replace(
         cfg,
         polarization_kind=args.polarization_kind,
         custom_polarization=None,
+        incident_theta_deg=(
+            90.0 - float(args.incident_grazing_deg)
+            if task037c_gate
+            else cfg.incident_theta_deg
+        ),
+        incident_phi_deg=(
+            float(args.incident_phi_deg) if task037c_gate else cfg.incident_phi_deg
+        ),
         stage4_full3d_assembly_backend=(args.stage4_full3d_assembly_backend),
         stage4_variable_p_cell_degree_plan=(
             None
@@ -607,6 +657,9 @@ def _worker_launch_contract(args: argparse.Namespace) -> dict[str, Any]:
         "run_kind": str(args.run_kind),
         "mpi_size": int(args.mpi_size),
         "profile": str(args.profile),
+        "task037c_robustness_gate": bool(args.task037c_robustness_gate),
+        "incident_grazing_deg": args.incident_grazing_deg,
+        "incident_phi_deg": args.incident_phi_deg,
         "run_dir": str(Path(args.run_dir).resolve()),
         "stage4_full3d_assembly_backend": str(args.stage4_full3d_assembly_backend),
         "task037_e0_matrix_free_dtn_gate": bool(args.task037_e0_matrix_free_dtn_gate),
@@ -740,7 +793,9 @@ def _revalidate_task035d_worker_inputs(args: argparse.Namespace) -> None:
 
 def _revalidate_task037_m0_worker_source(args: argparse.Namespace) -> None:
     if not (
-        args.task037_e0_matrix_free_dtn_gate or args.task037_m3a_overlap0125_partition
+        args.task037_e0_matrix_free_dtn_gate
+        or args.task037_m3a_overlap0125_partition
+        or args.task037c_robustness_gate
     ):
         return
     head = subprocess.check_output(
@@ -753,7 +808,7 @@ def _revalidate_task037_m0_worker_source(args: argparse.Namespace) -> None:
     ).strip()
     if head != args.verified_clean_sha or status:
         raise SystemExit(
-            "Task037 M0 worker source identity is not the clean parent-qualified commit."
+            "Task037 explicit worker source identity is not the clean parent-qualified commit."
         )
 
 
@@ -764,8 +819,13 @@ def _worker(args: argparse.Namespace) -> int:
 
     e0_gate = bool(args.task037_e0_matrix_free_dtn_gate)
     m3a_gate = bool(args.task037_m3a_overlap0125_partition)
+    task037c_gate = bool(args.task037c_robustness_gate)
     solution_observer = (
-        _task037_m3a_solution_observer(args.run_dir) if m3a_gate else None
+        _task037c_solution_observer(args.run_dir)
+        if task037c_gate
+        else _task037_m3a_solution_observer(args.run_dir)
+        if m3a_gate
+        else None
     )
     variable_observer = None
     linear_solver_port = (
@@ -847,7 +907,7 @@ def _worker(args: argparse.Namespace) -> int:
         static_retain_local_schur_for_matrix_free=(e0_gate or m3a_gate),
         matrix_free_dtn=e0_gate,
         matrix_free_dtn_probe=e0_gate,
-        canonical_vector_export=m3a_gate,
+        canonical_vector_export=(m3a_gate or task037c_gate),
     )
     return 0
 
@@ -905,6 +965,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--task035c-p6-preflight-authority", type=Path)
     parser.add_argument("--task035c-p6-preflight-sha256")
+    parser.add_argument(
+        "--task037c-robustness-gate",
+        action="store_true",
+        help="Run the explicit theta=89 degree Task37c Full3D authority lane.",
+    )
+    parser.add_argument("--incident-grazing-deg", type=float)
+    parser.add_argument("--incident-phi-deg", type=float)
     parser.add_argument(
         "--task037-e0-matrix-free-dtn-gate",
         action="store_true",
@@ -1043,6 +1110,37 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             f"Task034 p{args.degree}/h{args.h_nm:g} is outside the "
             "fixed-geometry candidate matrix."
         )
+    if args.task037c_robustness_gate:
+        scoped_task037c = bool(
+            args.degree == 6
+            and math.isclose(args.h_nm, 10.0)
+            and args.polarization_kind == "s"
+            and args.run_kind == "full-solve"
+            and args.mpi_size == TASK037C_MPI_SIZE
+            and args.profile == "default"
+            and args.stage4_full3d_assembly_backend == "assembly_time_static_condensed"
+            and not args.allow_swap
+            and args.incident_grazing_deg is not None
+            and math.isclose(args.incident_grazing_deg, TASK037C_GRAZING_DEG)
+            and args.incident_phi_deg in TASK37C_PHI_VALUES
+            and args.task035c_p6_preflight_authority is not None
+            and valid_hex_digest(args.task035c_p6_preflight_sha256, 64)
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and args.timeout_seconds == 7200.0
+            and not args.task035c_p6_h10_gate
+            and not args.task035d_case097_gate
+            and not args.task037_e0_matrix_free_dtn_gate
+            and not args.task037_m3a_overlap0125_partition
+        )
+        if not scoped_task037c:
+            parser.error(
+                "--task037c-robustness-gate requires clean-source, no-swap, "
+                "default MUMPS p6/h10 S full-solve on MPI8 with theta=89, "
+                "grazing=1, phi=-5/0/+5, static condensed backend, and "
+                "hash-bound Task035c geometry/backend preflight."
+            )
+    elif args.incident_grazing_deg is not None or args.incident_phi_deg is not None:
+        parser.error("incident angle options require --task037c-robustness-gate.")
     if args.task034_p4_h3_added_point and not (
         args.degree == 4 and math.isclose(args.h_nm, 3.0)
     ):
@@ -1053,7 +1151,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             bool(args.task035d_case097_gate),
         )
     )
-    if args.degree == 6 and selected_p6_gate_count != 1:
+    if (
+        args.degree == 6
+        and selected_p6_gate_count != 1
+        and not args.task037c_robustness_gate
+    ):
         parser.error(
             "p6 is fail-closed; select exactly one scoped Task035c or "
             "Task035d p6/h10 gate."
@@ -1095,7 +1197,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "assembly_time_static_condensed and a hash-bound historical "
                 "preflight authority."
             )
-    elif (
+    elif not args.task037c_robustness_gate and (
         args.task035c_p6_preflight_authority is not None
         or args.task035c_p6_preflight_sha256 is not None
     ):
@@ -1351,7 +1453,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def _validate_task035c_p6_preflight(
     args: argparse.Namespace,
 ) -> dict[str, Any] | None:
-    if not args.task035c_p6_h10_gate:
+    if not (args.task035c_p6_h10_gate or args.task037c_robustness_gate):
         return None
     path = args.task035c_p6_preflight_authority
     if path is None:
@@ -1386,6 +1488,11 @@ def _validate_task035c_p6_preflight(
         authority_is_tracked=tracked,
     )
     gate["path"] = _path_from_root(path)
+    gate["lane"] = (
+        "task037c_geometry_backend_authority"
+        if args.task037c_robustness_gate
+        else "task035c_p6_h10_preflight"
+    )
     if not gate["pass"]:
         raise SystemExit(
             f"Task035c p6/h10 preflight authority failed: {gate['failures']}"
@@ -2626,10 +2733,429 @@ def _task037_m3a_qualification(
     }
 
 
+def _task037c_path(value: Any, run_dir: Path) -> Path | None:
+    if not isinstance(value, str) or not value:
+        return None
+    path = Path(value)
+    if not path.is_absolute():
+        path = ROOT / path if not (run_dir / path).is_file() else run_dir / path
+    return path.resolve()
+
+
+def _task037c_finite_complex(value: Any) -> bool:
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return math.isfinite(float(value))
+    if isinstance(value, list) and len(value) == 2:
+        return all(
+            isinstance(part, (int, float))
+            and not isinstance(part, bool)
+            and math.isfinite(float(part))
+            for part in value
+        )
+    return False
+
+
+def _task037c_close_sequence(
+    actual: Any,
+    expected: tuple[float, ...],
+    *,
+    tolerance: float = 1.0e-13,
+) -> bool:
+    return (
+        isinstance(actual, list)
+        and len(actual) == len(expected)
+        and all(
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isclose(float(value), expected[index], abs_tol=tolerance)
+            for index, value in enumerate(actual)
+        )
+    )
+
+
+def _task037c_complex_close(value: Any, expected: complex) -> bool:
+    return (
+        isinstance(value, list)
+        and len(value) == 2
+        and all(
+            isinstance(part, (int, float))
+            and not isinstance(part, bool)
+            and math.isfinite(float(part))
+            for part in value
+        )
+        and math.isclose(float(value[0]), expected.real, abs_tol=1.0e-13)
+        and math.isclose(float(value[1]), expected.imag, abs_tol=1.0e-13)
+    )
+
+
+def _task037c_order_export_gate(path: Path | None) -> dict[str, Any]:
+    descriptor = {
+        "path": None if path is None else str(path.resolve()),
+        "observed_sha256": None,
+        "bytes": None,
+    }
+    if path is not None and path.is_file():
+        descriptor["observed_sha256"] = _sha256(path)
+        descriptor["bytes"] = path.stat().st_size
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8")) if path else None
+    except (OSError, json.JSONDecodeError):
+        payload = None
+    rows = payload.get("orders") if isinstance(payload, dict) else None
+    keys: list[tuple[str, int, int, str]] = []
+    if not isinstance(rows, list):
+        return {
+            **descriptor,
+            "count": 0,
+            "keys_unique": False,
+            "all_finite": False,
+            "pass": False,
+        }
+    for row in rows:
+        if not isinstance(row, dict):
+            return {
+                **descriptor,
+                "count": len(rows),
+                "keys_unique": False,
+                "all_finite": False,
+                "pass": False,
+            }
+        side = row.get("side")
+        m = row.get("m")
+        n = row.get("n")
+        polarization = row.get("polarization")
+        if (
+            side not in {"bottom", "top"}
+            or isinstance(m, bool)
+            or not isinstance(m, int)
+            or isinstance(n, bool)
+            or not isinstance(n, int)
+            or polarization not in {"s", "p"}
+        ):
+            return {
+                **descriptor,
+                "count": len(rows),
+                "keys_unique": False,
+                "all_finite": False,
+                "pass": False,
+            }
+        keys.append((side, m, n, polarization))
+        if not all(
+            _task037c_finite_complex(row.get(name))
+            for name in (
+                "beta",
+                "outgoing_amplitude",
+                "outgoing_amplitude_at_boundary",
+            )
+        ) or not all(
+            isinstance(row.get(name), (int, float)) and math.isfinite(float(row[name]))
+            for name in ("power_ratio", "R", "T")
+        ):
+            return {
+                **descriptor,
+                "count": len(rows),
+                "keys_unique": False,
+                "all_finite": False,
+                "pass": False,
+            }
+    unique = len(set(keys)) == len(keys)
+    return {
+        **descriptor,
+        "count": len(rows),
+        "keys_unique": unique,
+        "all_finite": True,
+        "keys": keys,
+        "pass": bool(rows) and unique,
+    }
+
+
+def _task037c_auxiliary_export_gate(
+    solver_summary: Mapping[str, Any],
+    run_dir: Path,
+    order_gate: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Audit the hash-bound Full3D external-q carrier without retaining arrays."""
+
+    path = _task037c_path(solver_summary.get("dtn_auxiliary_amplitudes_file"), run_dir)
+    payload: Any = None
+    observed_sha = None
+    failures: list[str] = []
+    if path is not None and path.is_file():
+        try:
+            observed_sha = _sha256(path)
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+            failures.append(f"read_error:{type(exc).__name__}")
+    else:
+        failures.append("file_missing")
+    rows = payload if isinstance(payload, list) else []
+    order_keys = {
+        tuple(key)
+        for key in order_gate.get("keys", [])
+        if isinstance(key, (list, tuple)) and len(key) == 4
+    }
+    keys: list[tuple[str, int, int, str]] = []
+    finite = True
+    for row in rows:
+        if not isinstance(row, Mapping):
+            finite = False
+            continue
+        try:
+            key = (
+                str(row["side"]),
+                int(row["m"]),
+                int(row["n"]),
+                str(row["polarization"]),
+            )
+            keys.append(key)
+            finite &= all(
+                _task037c_finite_complex(row[name])
+                for name in (
+                    "beta",
+                    "auxiliary_amplitude_total_projection",
+                    "outgoing_amplitude",
+                    "outgoing_amplitude_at_boundary",
+                )
+            )
+        except (KeyError, TypeError, ValueError):
+            finite = False
+    bottom_count = sum(key[0] == "bottom" for key in keys)
+    top_count = sum(key[0] == "top" for key in keys)
+    expected_bottom = solver_summary.get("dtn_port_bottom_mode_count")
+    expected_top = solver_summary.get("dtn_port_top_mode_count")
+    checks = {
+        "file_present": path is not None and path.is_file(),
+        "hash_available": valid_hex_digest(observed_sha, 64),
+        "rows_are_list": isinstance(payload, list),
+        "keys_unique": len(keys) == len(set(keys)),
+        "keys_match_orders": set(keys) == order_keys,
+        "bottom_count_matches_summary": bottom_count == expected_bottom,
+        "top_count_matches_summary": top_count == expected_top,
+        "all_finite": finite,
+    }
+    failures.extend(name for name, passed in checks.items() if not passed)
+    return {
+        "path": None if path is None else str(path),
+        "observed_sha256": observed_sha,
+        "count": len(keys),
+        "bottom_count": bottom_count,
+        "top_count": top_count,
+        "keys": [list(key) for key in keys],
+        "checks": checks,
+        "pass": not failures,
+        "failures": sorted(set(failures)),
+    }
+
+
+def _task037c_reference_export_gate(
+    solver_summary: Mapping[str, Any],
+    run_dir: Path,
+) -> dict[str, Any]:
+    metadata_path = _task037c_path(
+        solver_summary.get("full3d_reference_metadata"), run_dir
+    )
+    archive_path = _task037c_path(
+        solver_summary.get("full3d_reference_archive"), run_dir
+    )
+    try:
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except (AttributeError, OSError, json.JSONDecodeError):
+        metadata = {}
+    try:
+        with np.load(archive_path, allow_pickle=False) as archive:
+            arrays = {name: np.asarray(archive[name]) for name in archive.files}
+    except (AttributeError, OSError, TypeError, ValueError):
+        arrays = {}
+    expected_arrays = {
+        "x_nm": (40,),
+        "y_nm": (20,),
+        "z_nm": (5,),
+        "E_V_per_m": (5, 20, 40, 3),
+        "H_A_per_m": (5, 20, 40, 3),
+    }
+    arrays_pass = all(
+        name in arrays
+        and arrays[name].shape == shape
+        and arrays[name].dtype
+        == np.dtype(np.float64 if name.endswith("_nm") else np.complex128)
+        and np.isfinite(arrays[name]).all()
+        for name, shape in expected_arrays.items()
+    )
+    z_values_pass = bool(
+        "z_nm" in arrays
+        and np.allclose(
+            arrays["z_nm"],
+            np.asarray((10.0, 30.0, 60.0, 90.0, 110.0), dtype=np.float64),
+            rtol=0.0,
+            atol=1.0e-12,
+        )
+    )
+    metadata_pass = bool(
+        metadata.get("array_shape_z_y_x_component") == [5, 20, 40, 3]
+        and metadata.get("point_count") == 4000
+        and archive_path is not None
+        and archive_path.is_file()
+        and metadata.get("archive") == archive_path.name
+        and metadata.get("archive_sha256") == _sha256(archive_path)
+        and metadata.get("archive_bytes") == archive_path.stat().st_size
+    )
+    return {
+        "metadata": metadata,
+        "archive": str(archive_path) if archive_path else None,
+        "metadata_pass": metadata_pass,
+        "arrays_pass": arrays_pass,
+        "z_values_pass": z_values_pass,
+        "pass": metadata_pass and arrays_pass and z_values_pass,
+    }
+
+
+def _task037c_full3d_qualification(
+    *,
+    args: argparse.Namespace,
+    solver_summary: Mapping[str, Any],
+    run_dir: Path,
+    no_swap: bool,
+    common: Mapping[str, bool],
+) -> dict[str, Any]:
+    expected = direction_s_phase_audit(float(args.incident_phi_deg))
+    config = solver_summary.get("config")
+    config = config if isinstance(config, dict) else {}
+    order_gate = _task037c_order_export_gate(
+        _task037c_path(solver_summary.get("dtn_port_orders_json"), run_dir)
+    )
+    auxiliary_gate = _task037c_auxiliary_export_gate(
+        solver_summary, run_dir, order_gate
+    )
+    reference_gate = _task037c_reference_export_gate(solver_summary, run_dir)
+    canonical = solver_summary.get("task037c_canonical_export")
+    canonical = canonical if isinstance(canonical, dict) else {}
+    roles = canonical.get("roles")
+    roles = roles if isinstance(roles, dict) else {}
+    canonical_checks = {}
+    for role_name in ("active_trace", "full_fe"):
+        role = roles.get(role_name)
+        manifest_path = _task037c_path(
+            role.get("manifest") if isinstance(role, dict) else None,
+            run_dir,
+        )
+        canonical_checks[role_name] = bool(
+            isinstance(role, dict)
+            and manifest_path is not None
+            and manifest_path.is_file()
+            and _sha256(manifest_path) == role.get("manifest_sha256")
+        )
+    energy_values = {
+        name: solver_summary.get(name)
+        for name in ("R_total", "T_total", "A_balance", "A_volume_total")
+    }
+    energy_finite = all(
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(float(value))
+        for value in energy_values.values()
+    )
+    closure = solver_summary.get("energy_closure_error_port_volume")
+    checks = {
+        **common,
+        "theta_phi_polarization": (
+            math.isclose(
+                float(config.get("incident_theta_deg", math.nan)), TASK037C_THETA_DEG
+            )
+            and math.isclose(
+                float(config.get("incident_phi_deg", math.nan)),
+                float(args.incident_phi_deg),
+            )
+            and config.get("polarization_kind") == "s"
+            and config.get("nedelec_degree") == 6
+            and math.isclose(float(config.get("mesh_target_size", math.nan)), 10.0)
+        ),
+        "direction_identity": _task037c_close_sequence(
+            config.get("propagation_direction"), tuple(expected["direction"])
+        ),
+        "s_identity": (
+            isinstance(config.get("polarization"), list)
+            and len(config["polarization"]) == 3
+            and all(
+                _task037c_complex_close(config["polarization"][index], complex(value))
+                for index, value in enumerate(expected["s_basis"])
+            )
+        ),
+        "wavevector_identity": (
+            isinstance(config.get("wavevector"), list)
+            and len(config["wavevector"]) == 3
+            and _task037c_complex_close(
+                config["wavevector"][0], complex(expected["kx"])
+            )
+            and _task037c_complex_close(
+                config["wavevector"][1], complex(expected["ky"])
+            )
+        ),
+        "floquet_phase_identity": (
+            _task037c_complex_close(
+                config.get("floquet_phase_x"), expected["floquet_phase_x"]
+            )
+            and _task037c_complex_close(
+                config.get("floquet_phase_y"), expected["floquet_phase_y"]
+            )
+        ),
+        "direct_success": (
+            solver_summary.get("case_status") == "completed"
+            and solver_summary.get("official_result") is True
+            and solver_summary.get("ksp_converged") is True
+        ),
+        "true_residual_le_1e-9": _finite_number_le(
+            solver_summary.get("linear_system_relative_residual"),
+            TASK037C_TRUE_RESIDUAL_TOL,
+        ),
+        "energy_finite": energy_finite,
+        "energy_closure_le_1e-5": (
+            isinstance(closure, (int, float))
+            and math.isfinite(float(closure))
+            and abs(float(closure)) <= TASK037C_ENERGY_TOL
+        ),
+        "external_orders": order_gate["pass"],
+        "external_q": auxiliary_gate["pass"],
+        "full3d_reference_export": reference_gate["pass"],
+        "canonical_active_trace": canonical_checks["active_trace"],
+        "canonical_full_fe": canonical_checks["full_fe"],
+        "no_swap": no_swap,
+    }
+    failures = [name for name, passed in checks.items() if not passed]
+    direction_report = {
+        "theta_deg": float(expected["theta_deg"]),
+        "phi_deg": float(expected["phi_deg"]),
+        "grazing_deg": float(expected["grazing_deg"]),
+        "direction": [float(value) for value in expected["direction"]],
+        "s_basis": [float(value) for value in expected["s_basis"]],
+        "kx": float(expected["kx"]),
+        "ky": float(expected["ky"]),
+        "floquet_phase_x": [
+            float(expected["floquet_phase_x"].real),
+            float(expected["floquet_phase_x"].imag),
+        ],
+        "floquet_phase_y": [
+            float(expected["floquet_phase_y"].real),
+            float(expected["floquet_phase_y"].imag),
+        ],
+    }
+    return {
+        "pass": not failures,
+        "checks": checks,
+        "failures": failures,
+        "lane": "task037c_full3d_robustness",
+        "direction_audit": direction_report,
+        "external_orders": order_gate,
+        "external_q": auxiliary_gate,
+        "reference_export": reference_gate,
+        "canonical": canonical,
+    }
+
+
 def _qualify(
     *,
     args: argparse.Namespace,
     solver_summary: dict[str, Any],
+    run_dir: Path | None = None,
     events: list[dict[str, Any]],
     return_code: int,
     terminated_for_memory: bool,
@@ -2668,6 +3194,14 @@ def _qualify(
             solver_summary.get("polarization_kind") == args.polarization_kind
         ),
     }
+    if args.task037c_robustness_gate:
+        return _task037c_full3d_qualification(
+            args=args,
+            solver_summary=solver_summary,
+            run_dir=run_dir or ROOT,
+            no_swap=no_swap,
+            common=common,
+        )
     if args.task037_e0_matrix_free_dtn_gate:
         return _task037_e0_qualification(
             solver_summary=solver_summary,
@@ -2845,16 +3379,27 @@ def _worker_command(args: argparse.Namespace, run_dir: Path) -> list[str]:
         "--run-dir",
         str(run_dir),
     ]
-    if args.task035c_p6_h10_gate:
+    if args.task035c_p6_h10_gate or args.task037c_robustness_gate:
         command.extend(
             (
-                "--task035c-p6-h10-gate",
                 "--task035c-p6-preflight-authority",
                 str(args.task035c_p6_preflight_authority),
                 "--task035c-p6-preflight-sha256",
                 str(args.task035c_p6_preflight_sha256),
                 "--verified-clean-sha",
                 str(args.verified_clean_sha),
+            )
+        )
+    if args.task035c_p6_h10_gate:
+        command.append("--task035c-p6-h10-gate")
+    if args.task037c_robustness_gate:
+        command.extend(
+            (
+                "--task037c-robustness-gate",
+                "--incident-grazing-deg",
+                str(args.incident_grazing_deg),
+                "--incident-phi-deg",
+                str(args.incident_phi_deg),
             )
         )
     if args.task037_e0_matrix_free_dtn_gate:
@@ -2980,6 +3525,7 @@ def _run_parent(args: argparse.Namespace) -> int:
         args.task035d_case097_gate
         or args.task037_e0_matrix_free_dtn_gate
         or args.task037_m3a_overlap0125_partition
+        or args.task037c_robustness_gate
     ):
         task035d_status_before = subprocess.check_output(
             ["git", "status", "--porcelain", "--untracked-files=all"],
@@ -3163,6 +3709,7 @@ def _run_parent(args: argparse.Namespace) -> int:
     qualification = _qualify(
         args=args,
         solver_summary=solver_summary,
+        run_dir=run_dir,
         events=events,
         return_code=return_code,
         terminated_for_memory=terminated_for_memory,
@@ -3585,6 +4132,10 @@ def _run_parent(args: argparse.Namespace) -> int:
             args.task035d_selective_face_dwr_phase == "enriched-evaluate"
             and task035d_selective_face_controlled_negative
         )
+        else "task037c_full3d_robustness_pass"
+        if qualification["pass"] and args.task037c_robustness_gate
+        else "task037c_full3d_robustness_not_pass"
+        if args.task037c_robustness_gate
         else "task035d_candidate_numerical_pass"
         if qualification["pass"] and args.task035d_case097_gate
         else "full3d_reference_pass"
@@ -3630,6 +4181,12 @@ def _run_parent(args: argparse.Namespace) -> int:
         "task037_e0_matrix_free_dtn_gate": bool(args.task037_e0_matrix_free_dtn_gate),
         "task037_m3a_overlap0125_partition": bool(
             args.task037_m3a_overlap0125_partition
+        ),
+        "task037c_robustness_gate": bool(args.task037c_robustness_gate),
+        "task037c_incident_grazing_deg": args.incident_grazing_deg,
+        "task037c_incident_phi_deg": args.incident_phi_deg,
+        "task037c_qualification": (
+            qualification if args.task037c_robustness_gate else None
         ),
         "task037_m3a_core_audit": {
             "path": _path_from_root(m3a_core_audit_path),
