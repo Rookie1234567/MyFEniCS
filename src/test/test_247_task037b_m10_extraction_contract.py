@@ -360,6 +360,39 @@ def test_physics_stage_has_bounded_grid_and_side_ordered_canonical_contract() ->
         ]
         assert len(calls) == expected
 
+    calls_by_name = {
+        name: next(
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == name
+        )
+        for name in (
+            "evaluate_hybrid_augmented_solution",
+            "interface_field_continuity",
+            "hybrid_volume_absorption",
+        )
+    }
+    assert isinstance(
+        calls_by_name["evaluate_hybrid_augmented_solution"].args[4], ast.Name
+    )
+    assert calls_by_name["evaluate_hybrid_augmented_solution"].args[4].id == "solution"
+    for name in ("interface_field_continuity", "hybrid_volume_absorption"):
+        call = calls_by_name[name]
+        assert isinstance(call.args[3], ast.Attribute)
+        assert isinstance(call.args[4], ast.Attribute)
+        assert isinstance(call.args[3].value, ast.Name)
+        assert isinstance(call.args[4].value, ast.Name)
+        assert (call.args[3].value.id, call.args[3].attr) == (
+            "recovery",
+            "bottom_physical",
+        )
+        assert (call.args[4].value.id, call.args[4].attr) == (
+            "recovery",
+            "top_physical",
+        )
+
     cleanup_order = [
         source.index("del arrays"),
         source.index("del reconstructor"),
