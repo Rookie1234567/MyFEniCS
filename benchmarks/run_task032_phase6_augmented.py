@@ -643,14 +643,16 @@ def _task037c_external_q_identity(
         action_norm = q_norm(action)
         rhs_norm = q_norm(local_system.b)
         absolute = q_norm(residual)
-        relative = absolute / max(action_norm, rhs_norm, 1.0e-30)
+        normalization_scale = max(action_norm, rhs_norm, 1.0)
+        normalized = absolute / normalization_scale
         return {
             "external_row_count": int(local_system.n_external_aux),
             "action_norm": action_norm,
             "rhs_norm": rhs_norm,
             "absolute_residual": absolute,
-            "relative_residual": float(relative),
-            "pass": bool(math.isfinite(relative) and relative <= tolerance),
+            "normalization_scale": normalization_scale,
+            "normalized_residual": float(normalized),
+            "pass": bool(math.isfinite(normalized) and normalized <= tolerance),
         }
     finally:
         residual.destroy()

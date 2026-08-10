@@ -467,6 +467,25 @@ def test_task037c_external_q_identity_is_partition_safe_and_fail_closed() -> Non
     assert failed["external_row_count"] == 2
     assert failed["pass"] is False
 
+    zero_rhs_roundoff = SimpleNamespace(
+        A=matrix,
+        b=_FakeVec(np.zeros(4, dtype=np.complex128)),
+        n_fe=2,
+        n_external_aux=2,
+    )
+    roundoff = direct._task037c_external_q_identity(
+        zero_rhs_roundoff,
+        _FakeVec(np.array([0.0, 0.0, 4.0e-13, 0.0])),
+    )
+    assert roundoff["normalization_scale"] == 1.0
+    assert roundoff["normalized_residual"] == 4.0e-13
+    assert roundoff["pass"] is True
+    material = direct._task037c_external_q_identity(
+        zero_rhs_roundoff,
+        _FakeVec(np.array([0.0, 0.0, 1.0e-6, 0.0])),
+    )
+    assert material["pass"] is False
+
 
 def test_task37c_online_record_setup_failure_is_not_a_second_exception() -> None:
     record = iterative.build_frozen_m10_online_record(
