@@ -12,10 +12,11 @@ import hashlib
 from typing import Any, Iterable, Sequence
 
 import numpy as np
-from dolfinx import fem
+from dolfinx import cpp, fem
 from petsc4py import PETSc
 
 from .hcurl_assembly_time_condensation import AssemblyTimeCondensedSystem
+from ..coupling.hybrid_internal_modes import _DistributedTwoDimensionalEvaluator
 
 
 RESEARCH_STATUS = "research_only_correctness_oracle"
@@ -98,6 +99,184 @@ class EndpointActiveRows:
                 ).size
             ),
         }
+
+
+def _column_array(values: np.ndarray, name: str) -> np.ndarray:
+    columns = np.asarray(values, dtype=np.complex128)
+    if columns.ndim == 1:
+        columns = columns[:, None]
+    if columns.ndim != 2:
+        raise ValueError(f"{name} must be a one- or two-dimensional array.")
+    return columns
+
+
+class EndpointModeLifter:
+    """Research-only 2D tangential trace lift into a 3D H(curl) cell."""
+
+    def __init__(
+        self,
+        V: Any,
+        axis_scale_nm: float,
+    ) -> None:
+        self.V = V
+        mesh = V.mesh
+        mesh.topology.create_entities(mesh.topology.dim)
+        cell_map = mesh.topology.index_map(mesh.topology.dim)
+        self.cells = np.arange(int(cell_map.size_local), dtype=np.int32)
+        self.interpolation_points = np.asarray(
+            cpp.fem.interpolation_coords(
+                V.element._cpp_object,
+                mesh.geometry._cpp_object,
+                self.cells,
+            ),
+            dtype=np.float64,
+        )
+        self.point_cell_keys: np.ndarray | None = None
+        self.evaluator: _DistributedTwoDimensionalEvaluator | None = None
+        self.target = fem.Function(V)
+        self.padding = 1.0e-10 * max(float(axis_scale_nm), 1.0)
+
+    def _build_point_cell_keys(
+        self, evaluator: _DistributedTwoDimensionalEvaluator
+    ) -> np.ndarray:
+        coordinates = self.interpolation_points
+        if coordinates.shape[0] == 3:
+            points = coordinates.T
+        elif coordinates.shape[1] == 3:
+            points = coordinates
+        else:
+            raise RuntimeError("Interpolation coordinates need three columns.")
+        return np.asarray(
+            [evaluator._cell_key(float(point[0]), float(point[1])) for point in points],
+            dtype=np.int64,
+        ).reshape(-1, 2)
+
+    def lift(self, source: fem.Function) -> fem.Function:
+        """Interpolate one 2D tangential trace into the target 3D field."""
+
+        if self.evaluator is None:
+            self.evaluator = _DistributedTwoDimensionalEvaluator(
+                source, padding=self.padding
+            )
+            self.point_cell_keys = self._build_point_cell_keys(self.evaluator)
+        else:
+            self.evaluator.set_source(source)
+        values = self.evaluator.evaluate_points(
+            self.interpolation_points,
+            cell_keys=self.point_cell_keys,
+        )
+
+        def cached_values(points: np.ndarray) -> np.ndarray:
+            points = np.asarray(points, dtype=np.float64)
+            if points.shape != self.interpolation_points.shape or not np.allclose(
+                points,
+                self.interpolation_points,
+                rtol=0.0,
+                atol=1.0e-13,
+            ):
+                raise RuntimeError("Endpoint interpolation points changed.")
+            return values
+
+        self.target.x.array[:] = 0.0
+        self.target.interpolate(cached_values, self.cells)
+        self.target.x.scatter_forward()
+        return self.target
+
+
+def _active_values_for_port(
+    field: fem.Function,
+    condensed: AssemblyTimeCondensedSystem,
+    port_rows: Sequence[int],
+) -> np.ndarray:
+    """Extract owned original values in the requested active-row order."""
+
+    vector = field.x.petsc_vec
+    constraints = condensed.trace_constraints
+    requested = np.asarray(port_rows, dtype=PETSc.IntType)
+    requested_set = {int(row) for row in requested}
+    original_ids = []
+    active_ids = []
+    for original in constraints.owned_active_original_dofs:
+        original = int(original)
+        active = int(constraints.original_to_active[original])
+        if active in requested_set:
+            original_ids.append(original)
+            active_ids.append(active)
+    values = np.asarray(
+        vector.getValues(np.asarray(original_ids, dtype=PETSc.IntType)),
+        dtype=np.complex128,
+    )
+    entries = list(zip(active_ids, values, strict=True))
+    packets = vector.getComm().tompi4py().allgather(entries)
+    owned: dict[int, complex] = {}
+    for packet in packets:
+        for active, value in packet:
+            active = int(active)
+            if active in owned:
+                raise RuntimeError("Endpoint active row has multiple owners.")
+            owned[active] = complex(value)
+    missing = [int(row) for row in requested if int(row) not in owned]
+    if missing:
+        raise RuntimeError(f"Endpoint active rows are missing: {missing[:8]}.")
+    return np.asarray([owned[int(row)] for row in requested], dtype=np.complex128)
+
+
+def lifted_endpoint_columns(
+    sources: Sequence[fem.Function],
+    lifter: EndpointModeLifter,
+    condensed: AssemblyTimeCondensedSystem,
+    rows: EndpointActiveRows,
+    *,
+    mpc: Any,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Lift, homogenize, and return separate left/right active columns."""
+
+    left_columns = []
+    right_columns = []
+    for source in sources:
+        field = lifter.lift(source)
+        mpc.homogenize(field)
+        field.x.scatter_forward()
+        left_columns.append(_active_values_for_port(field, condensed, rows.left_active))
+        right_columns.append(
+            _active_values_for_port(field, condensed, rows.right_active)
+        )
+    return np.column_stack(left_columns), np.column_stack(right_columns)
+
+
+def assemble_directional_endpoint_columns(
+    left_columns: np.ndarray,
+    right_columns: np.ndarray,
+    *,
+    multipliers: Sequence[complex],
+) -> np.ndarray:
+    """Assemble directional left/right electric columns in port order."""
+    left = _column_array(left_columns, "left_columns")
+    right = _column_array(right_columns, "right_columns")
+    if left.shape[1] != right.shape[1]:
+        raise ValueError("Left/right endpoint column counts differ.")
+    phase = np.asarray(multipliers, dtype=np.complex128)
+    if phase.shape != (left.shape[1],):
+        raise ValueError("Directional multiplier count differs from columns.")
+    return np.vstack((left, right * phase[None, :]))
+
+
+def apply_directional_endpoint_columns(
+    action: OneCellTwoPortSchurAction,
+    left_columns: np.ndarray,
+    right_columns: np.ndarray,
+    *,
+    multipliers: Sequence[complex],
+) -> np.ndarray:
+    """Apply exact one-cell Schur action to directional endpoint columns."""
+    port_columns = assemble_directional_endpoint_columns(
+        left_columns,
+        right_columns,
+        multipliers=multipliers,
+    )
+    if port_columns.shape[0] != action.port_rows:
+        raise ValueError("Directional columns do not match the Schur port rows.")
+    return action.apply_columns(port_columns)
 
 
 def _owned_original_rows_on_facets(
