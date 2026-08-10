@@ -15,14 +15,21 @@ import gc
 import hashlib
 import json
 import os
+import platform
 from pathlib import Path
+import shlex
 import subprocess
 import sys
+import sysconfig
 import time
 from typing import Any
 
 import numpy as np
 import ufl
+import basix
+import dolfinx
+import ffcx
+import ffcx.codegeneration
 from dolfinx import fem
 from mpi4py import MPI
 from petsc4py import PETSc
@@ -95,6 +102,26 @@ R0_FORBIDDEN_IDENTITY_WORDS = (
     "geometry_key",
     "entity_id",
 )
+
+R1_SCHEMA = "task037.extra.h2a.r1"
+R1_STAGE_WORKER_SCHEMA = f"{R1_SCHEMA}.stage-worker.v1"
+R1_HIT_WORKER_SCHEMA = f"{R1_SCHEMA}.hit-worker.v1"
+R1_WATCHDOG_SCHEMA = f"{R1_SCHEMA}.watchdog.v1"
+R1_CHECK_SCHEMA = f"{R1_SCHEMA}.check.v1"
+R1_PROGRESS_SCHEMA = f"{R1_SCHEMA}.progress.v1"
+R1_STAGE_TIMEOUT_SECONDS = 3600.0
+R1_HIT_TIMEOUT_SECONDS = 1800.0
+R1_STAGE_RSS_LIMIT_BYTES = 1_800_000_000
+R1_HIT_RSS_LIMIT_BYTES = 1_750_000_000
+R1_SWAP_LIMIT_BYTES = 0
+R1_R0_RECORD_PATH = (
+    ROOT / "benchmarks/cases/101_task37_extra_development/records"
+    / "h2a_class_discovery.json"
+)
+R1_R0_RECORD_SHA256 = (
+    "3024dea6ac33aa24c78a86e3f9ae7e699630320906134088f7df302b992e134d"
+)
+R1_R0_SOURCE_SHA = "b7eef17f10655be99f5bba072f9a547ae05f17ac"
 
 
 def _runtime_identity() -> dict[str, Any]:
@@ -244,7 +271,7 @@ def _proxy_identity(cfg) -> tuple[Any, ...]:
     )
 
 
-def _proxy_forms(function_space, mesh_data, cfg):
+def _proxy_ufl_forms(function_space, mesh_data, cfg):
     u = ufl.TrialFunction(function_space)
     v = ufl.TestFunction(function_space)
     dx = ufl.Measure("dx", domain=mesh_data.mesh)
@@ -254,14 +281,23 @@ def _proxy_forms(function_space, mesh_data, cfg):
         * dx
     )
     mass_form = PETSc.ScalarType(1.0) * ufl.inner(u, v) * dx
-    jit_options = {
+    return curl_form, mass_form
+
+
+def _form_jit_options(cache_dir: Path | None = None) -> dict[str, Any]:
+    jit_options: dict[str, Any] = {
         "cffi_extra_compile_args": list(H2A_FORM_JIT_EXTRA_COMPILE_ARGS),
     }
-    return fem.form(curl_form, jit_options=jit_options), fem.form(
-        mass_form,
-        jit_options={
-            "cffi_extra_compile_args": list(H2A_FORM_JIT_EXTRA_COMPILE_ARGS),
-        },
+    if cache_dir is not None:
+        jit_options["cache_dir"] = str(Path(cache_dir).resolve())
+    return jit_options
+
+
+def _proxy_forms(function_space, mesh_data, cfg, *, cache_dir: Path | None = None):
+    curl_form, mass_form = _proxy_ufl_forms(function_space, mesh_data, cfg)
+    jit_options = _form_jit_options(cache_dir)
+    return fem.form(curl_form, jit_options=dict(jit_options)), fem.form(
+        mass_form, jit_options=dict(jit_options)
     )
 
 
@@ -2833,6 +2869,929 @@ def _r0_run_check(args: argparse.Namespace) -> int:
     return 0 if result["pass"] else 1
 
 
+def _r1_identity() -> dict[str, Any]:
+    identity = dict(_r0_identity())
+    for field in (
+        "form_jit_called",
+        "r0_patch_or_factor_constructed",
+        "r1_patch_or_factor_constructed",
+    ):
+        identity.pop(field, None)
+    return identity
+
+
+def _r1_scope() -> dict[str, Any]:
+    return {
+        "mode": "isolated_jit_stage_and_cache_hit",
+        "degree": 6,
+        "h_nm": 10.0,
+        "mpi_size": 1,
+        "launch_mode": "mpi_singleton_direct",
+        "stage_timeout_seconds": R1_STAGE_TIMEOUT_SECONDS,
+        "hit_timeout_seconds": R1_HIT_TIMEOUT_SECONDS,
+        "stage_rss_limit_bytes": R1_STAGE_RSS_LIMIT_BYTES,
+        "hit_rss_limit_bytes": R1_HIT_RSS_LIMIT_BYTES,
+        "swap_limit_bytes": R1_SWAP_LIMIT_BYTES,
+        "form_jit_compile_policy": {
+            "cffi_extra_compile_args": list(H2A_FORM_JIT_EXTRA_COMPILE_ARGS),
+        },
+        "operator": "B0=K_curl+k0^2*M_abs_epsilon",
+        "identity": _r1_identity(),
+    }
+
+
+def _r1_worker_command(
+    run_dir: Path, phase: str, executable: str
+) -> list[str]:
+    subcommand = {
+        "stage": "r1-stage-worker",
+        "hit": "r1-hit-worker",
+    }.get(phase)
+    if subcommand is None:
+        raise ValueError(f"unknown R1 phase: {phase}")
+    return [str(executable), "-m", "benchmarks.run_task037_extra_h2",
+            subcommand, "--run-dir", str(run_dir.resolve())]
+
+
+def _r1_emit_marker(
+    stream,
+    *,
+    event: str,
+    phase: str,
+    started: float,
+    rank: int = 0,
+) -> dict[str, Any]:
+    marker = {"schema": R1_PROGRESS_SCHEMA, "event": str(event), "phase": str(phase),
+              "elapsed_wall_seconds": float(time.perf_counter() - started), "rank": int(rank)}
+    line = json.dumps(marker, sort_keys=True, separators=(",", ":"))
+    stream.write(line + "\n")
+    stream.flush()
+    print(line, flush=True)
+    return marker
+
+
+def _r1_compiler_probe() -> dict[str, Any]:
+    compiler_setting = sysconfig.get_config_var("CC") or "cc"
+    compiler_tokens = shlex.split(str(compiler_setting))
+    if not compiler_tokens:
+        raise ValueError("sysconfig CC is empty")
+    compiler = compiler_tokens[0]
+    probe_command = [compiler, "--version"]
+    completed = subprocess.run(
+        probe_command,
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=30.0,
+    )
+    version_line = next(
+        (line.strip() for line in completed.stdout.splitlines() if line.strip()),
+        "",
+    )
+    if not version_line:
+        raise ValueError("compiler --version returned no text")
+    return {
+        "sysconfig_cc": str(compiler_setting),
+        "probe_command": probe_command,
+        "version_line": version_line,
+    }
+
+
+def _r1_runtime_identity(
+    *, compiler_probe: bool = True, compiler: Mapping[str, Any] | None = None
+) -> dict[str, Any]:
+    identity = {
+        **_runtime_identity(),
+        "python_version": platform.python_version(),
+        "petsc_version": ".".join(str(value) for value in PETSc.Sys.getVersion()),
+        "dolfinx_version": str(dolfinx.__version__),
+        "basix_version": str(basix.__version__),
+        "ffcx_version": str(ffcx.__version__),
+        "ufl_version": str(ufl.__version__),
+        "ffcx_header_signature": str(ffcx.codegeneration.get_signature()),
+        "ufcx_header_signature": str(dolfinx.ufcx_signature),
+        "sysconfig": {
+            name: str(sysconfig.get_config_var(name) or "")
+            for name in ("CC", "CFLAGS", "SOABI", "EXT_SUFFIX")
+        },
+        "compiler": _r1_compiler_probe() if compiler_probe else compiler,
+    }
+    if not isinstance(identity["compiler"], Mapping):
+        raise ValueError("stage compiler identity is missing")
+    return identity
+
+
+def _r1_form_code_state(
+    code: Any,
+) -> tuple[str, str | None]:
+    if not isinstance(code, (tuple, list)) or len(code) != 2:
+        return "invalid", None
+    if code[0] is None and code[1] is None:
+        return "hit_no_new_decl_impl", None
+    if not all(isinstance(part, str) and part for part in code):
+        return "invalid", None
+    code_sha256 = hashlib.sha256(
+        (code[0] + "\0" + code[1]).encode("utf-8")
+    ).hexdigest()
+    return "cold_decl_impl_generated", code_sha256
+
+
+def _r1_form_record(
+    *,
+    role: str,
+    ufl_form: Any,
+    compiled_form: Any,
+    cache_dir: Path,
+    cfg: Any,
+    function_space: Any,
+) -> dict[str, Any]:
+    module_name = str(compiled_form.module.__name__)
+    prefix = "libffcx_forms_"
+    if not module_name.startswith(prefix):
+        raise ValueError("unexpected FFCx module name")
+    code_state, code_sha256 = _r1_form_code_state(compiled_form.code)
+    return {
+        "role": str(role),
+        "ufl_signature": str(ufl_form.signature()),
+        "ufcx_signature": compiled_form.module.ffi.string(
+            compiled_form.ufcx_form.signature
+        ).decode("ascii"),
+        "module_name": module_name,
+        "ffcx_signature_stem": module_name[len(prefix) :],
+        "code_state": code_state,
+        "code_sha256": code_sha256,
+        "jit_options": _form_jit_options(cache_dir),
+        "form_compiler_options": {
+            "scalar_type": str(np.dtype(PETSc.ScalarType)),
+        },
+        "proxy_identity": _jsonable(_proxy_identity(cfg)),
+        "element_signature": _jsonable(
+            _canonical_basis_signature(function_space)
+        ),
+    }
+
+
+def _r1_cache_snapshot(cache_dir: Path) -> list[dict[str, Any]]:
+    if not cache_dir.is_dir():
+        raise FileNotFoundError(cache_dir)
+    entries = []
+    for path in sorted(cache_dir.iterdir(), key=lambda item: item.name):
+        if not path.is_file():
+            raise ValueError(f"non-file cache entry: {path.name}")
+        stat = path.stat()
+        entries.append({"path": path.name, "bytes": int(stat.st_size),
+                        "mtime_ns": int(stat.st_mtime_ns), "sha256": _sha256_file(path)})
+    return entries
+
+
+def _r1_cache_digest(entries: Iterable[Mapping[str, Any]]) -> str:
+    data = json.dumps(_jsonable(list(entries)), sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(data.encode("utf-8")).hexdigest()
+
+
+def _r1_progress_events(path: Path) -> list[str]:
+    events = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            marker = json.loads(line)
+            if marker.get("schema") != R1_PROGRESS_SCHEMA:
+                raise ValueError("R1 progress schema mismatch")
+            events.append(str(marker["event"]))
+    return events
+
+
+_R1_PROGRESS = {
+    "stage": (
+        "mesh_build_started", "mesh_build_ready", "function_space_started",
+        "function_space_ready", "curl_form_compile_started",
+        "curl_form_compile_ready", "mass_form_compile_started",
+        "mass_form_compile_ready", "manifest_started", "manifest_ready",
+        "worker_summary_started",
+    ),
+    "hit": (
+        "r0_record_validation_started", "r0_record_validation_ready",
+        "mesh_build_started", "mesh_build_ready", "function_space_started",
+        "function_space_ready", "floquet_mpc_started", "floquet_mpc_ready",
+        "curl_cache_load_started", "curl_cache_load_ready",
+        "mass_cache_load_started", "mass_cache_load_ready",
+        "worker_summary_started",
+    ),
+}
+
+
+def _r1_expected_progress(phase: str) -> tuple[str, ...]:
+    return _R1_PROGRESS[phase]
+
+
+def _r1_read_r0_authority() -> dict[str, Any]:
+    if not R1_R0_RECORD_PATH.is_file():
+        raise FileNotFoundError(R1_R0_RECORD_PATH)
+    record_sha256 = _sha256_file(R1_R0_RECORD_PATH)
+    if record_sha256 != R1_R0_RECORD_SHA256:
+        raise ValueError("R0 compact record SHA mismatch")
+    record = read_json_object(R1_R0_RECORD_PATH)
+    measurements = record.get("measurements")
+    p6 = measurements.get("p6_h10") if isinstance(measurements, Mapping) else None
+    if (
+        record.get("schema") != R0_CHECK_SCHEMA
+        or record.get("status") != "pass"
+        or record.get("pass") is not True
+        or record.get("problems") != []
+        or not evidence_sha256_is_valid(record)
+        or not isinstance(measurements, Mapping)
+        or measurements.get("source_commit_full_sha") != R1_R0_SOURCE_SHA
+        or measurements.get("mpi_size") != 1
+        or not isinstance(p6, Mapping)
+        or p6.get("global_rows") != H2A_FIXED_GLOBAL_ROWS
+        or p6.get("constraint_count") != H2A_FIXED_CONSTRAINT_COUNT
+        or p6.get("unique_class_count") != 24
+        or p6.get("local_nloc") != 882
+        or not isinstance(p6.get("class_inventory"), list)
+        or len(p6["class_inventory"]) != 24
+        or p6.get("identity") != _r0_identity()
+    ):
+        raise ValueError("R0 compact authority is not the frozen passing record")
+    return {
+        "record_sha256": record_sha256,
+        "source_commit_full_sha": R1_R0_SOURCE_SHA,
+        "class_count": 24,
+        "local_nloc": 882,
+        "global_rows": H2A_FIXED_GLOBAL_ROWS,
+        "constraint_count": H2A_FIXED_CONSTRAINT_COUNT,
+    }
+
+
+def _r1_phase_identity(phase: str) -> dict[str, Any]:
+    return {"jit_api_called": True, "compile_called": phase == "stage",
+            "compiler_probe_called": phase == "stage",
+            "floquet_mpc_called": phase == "hit", "class_discovery_called": False,
+            "tensor_tabulation_called": False, "factorization_called": False}
+
+
+def _r1_cache_files_valid(files: Any) -> bool:
+    if not isinstance(files, list) or not files:
+        return False
+    suffixes = {".c": False, ".o": False, ".so": False, ".c.cached": False}
+    paths = []
+    for item in files:
+        if not isinstance(item, Mapping):
+            return False
+        path = item.get("path")
+        size, mtime, sha = item.get("bytes"), item.get("mtime_ns"), item.get("sha256")
+        if not isinstance(path, str) or not path or not isinstance(size, int) or isinstance(size, bool) or size <= 0 or not isinstance(mtime, int) or isinstance(mtime, bool) or mtime <= 0 or not isinstance(sha, str) or len(sha) != 64 or sha.lower() != sha or any(char not in "0123456789abcdef" for char in sha):
+            return False
+        paths.append(path)
+        for suffix in suffixes:
+            if path.endswith(suffix):
+                suffixes[suffix] = True
+    return len(paths) == len(set(paths)) and all(suffixes.values())
+
+
+def _r1_bind_cache_files(forms: list[dict[str, Any]], cache: list[dict[str, Any]]) -> None:
+    for form in forms:
+        module = str(form["module_name"])
+        form["cache_files"] = [
+            item for item in cache if str(item["path"]).startswith(module + ".")
+        ]
+        if not _r1_cache_files_valid(form["cache_files"]):
+            raise ValueError(f"cache files missing for {module}")
+
+
+def _r1_runtime_is_complete(identity: Any) -> bool:
+    fields = (
+        "python_version", "petsc_version", "dolfinx_version", "basix_version",
+        "ffcx_version", "ufl_version", "ffcx_header_signature",
+        "ufcx_header_signature", "sysconfig", "compiler",
+    )
+    return (
+        _runtime_identity_is_qualified(identity)
+        and isinstance(identity, Mapping)
+        and all(isinstance(identity.get(field), (str, Mapping)) and identity.get(field) for field in fields)
+        and isinstance(identity.get("compiler"), Mapping)
+        and isinstance(identity["compiler"].get("version_line"), str)
+        and bool(identity["compiler"]["version_line"])
+    )
+
+
+def _r1_run_worker(args: argparse.Namespace, phase: str) -> int:
+    comm = MPI.COMM_WORLD
+    run_dir = Path(args.run_dir).resolve()
+    cache_dir = run_dir / "jit_cache"
+    summary_path = run_dir / f"{phase}_summary.json"
+    progress_path = run_dir / f"{phase}_progress.jsonl"
+    started = time.perf_counter()
+    source_at_start = inspect_tracked_source(ROOT)
+    runtime: dict[str, Any] | None = None
+    forms: list[dict[str, Any]] = []
+    cache_before: list[dict[str, Any]] = []
+    cache_after: list[dict[str, Any]] = []
+    r0_authority: dict[str, Any] | None = None
+    stage_manifest_sha256: str | None = None
+    stage_runtime: Mapping[str, Any] | None = None
+    measurement: dict[str, Any] | None = None
+    error: str | None = None
+    try:
+        run_dir.mkdir(parents=True, exist_ok=True)
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        if comm.size != 1:
+            raise ValueError(f"R1 {phase} is fixed to MPI1, got {comm.size}")
+        stage: Mapping[str, Any] | None = None
+        if phase == "stage" and _r1_cache_snapshot(cache_dir):
+            raise ValueError("R1 stage cache is not initially empty")
+        with progress_path.open("w", encoding="utf-8") as markers:
+            emit = lambda event: _r1_emit_marker(
+                markers, event=event, phase=phase, started=started
+            )
+            if phase == "hit":
+                emit("r0_record_validation_started")
+            if phase == "hit":
+                stage = read_json_object(run_dir / "stage_summary.json")
+                stage_manifest_sha256 = _sha256_file(run_dir / "stage_summary.json")
+                if (
+                    stage.get("schema") != R1_STAGE_WORKER_SCHEMA
+                    or stage.get("status") != "measurement_complete"
+                    or not evidence_sha256_is_valid(stage)
+                ):
+                    raise ValueError("invalid stage manifest")
+                r0_authority = _r1_read_r0_authority()
+                stage_runtime = stage.get("runtime_identity")
+                if not isinstance(stage_runtime, Mapping):
+                    raise ValueError("stage runtime identity is missing")
+                cache_before = _r1_cache_snapshot(cache_dir)
+                if cache_before != stage.get("cache_inventory"):
+                    raise ValueError("cache differs from stage manifest")
+                emit("r0_record_validation_ready")
+            runtime = _r1_runtime_identity(
+                compiler_probe=phase == "stage",
+                compiler=(stage_runtime or {}).get("compiler")
+                if phase == "hit"
+                else None,
+            )
+            cfg = target_stage4_config(degree=6, h_nm=10.0)
+            emit("mesh_build_started")
+            mesh_data = build_airbox_mesh_3d(cfg, run_dir / f"{phase}_mesh")
+            emit("mesh_build_ready")
+            emit("function_space_started")
+            function_space = _create_nedelec_space(mesh_data.mesh, cfg)
+            emit("function_space_ready")
+            if phase == "hit":
+                emit("floquet_mpc_started")
+                floquet = build_double_floquet_mpc(function_space, mesh_data, cfg)
+                emit("floquet_mpc_ready")
+                index_map = function_space.dofmap.index_map
+                measurement = {
+                    "global_cells": int(mesh_data.mesh.topology.index_map(3).size_global),
+                    "local_nloc": int(function_space.element.space_dimension),
+                    "global_rows": int(index_map.size_global * function_space.dofmap.index_map_bs),
+                    "constraint_count": int(floquet.num_constraints),
+                }
+                if measurement != {"global_cells": 252, "local_nloc": 882,
+                                   "global_rows": H2A_FIXED_GLOBAL_ROWS,
+                                   "constraint_count": H2A_FIXED_CONSTRAINT_COUNT}:
+                    raise ValueError("R1 hit p6 identity mismatch")
+            curl_ufl, mass_ufl = _proxy_ufl_forms(function_space, mesh_data, cfg)
+            labels = ("form_compile", "form_compile") if phase == "stage" else ("cache_load", "cache_load")
+            for role, form, label in zip(("curl", "mass"), (curl_ufl, mass_ufl), labels):
+                emit(f"{role}_{label}_started")
+                compiled = fem.form(form, jit_options=_form_jit_options(cache_dir))
+                forms.append(_r1_form_record(role=role, ufl_form=form,
+                                              compiled_form=compiled, cache_dir=cache_dir,
+                                              cfg=cfg, function_space=function_space))
+                emit(f"{role}_{label}_ready")
+            cache_after = _r1_cache_snapshot(cache_dir)
+            _r1_bind_cache_files(forms, cache_after)
+            if phase == "hit":
+                if cache_after != cache_before or not _r1_forms_match(stage.get("forms"), forms, cache_dir):
+                    raise ValueError("R1 cache-hit identity mismatch")
+            else:
+                emit("manifest_started")
+                emit("manifest_ready")
+            emit("worker_summary_started")
+            del mass_ufl, curl_ufl, function_space, mesh_data
+            if phase == "hit":
+                clear_floquet_topology_cache()
+                gc.collect()
+    except (
+        OSError,
+        RuntimeError,
+        ValueError,
+        TypeError,
+        KeyError,
+        subprocess.SubprocessError,
+        json.JSONDecodeError,
+    ) as exc:
+        error = f"{type(exc).__name__}: {exc}"
+    source_at_end = inspect_tracked_source(ROOT)
+    cache_inventory = cache_after if phase == "stage" else []
+    payload = attach_evidence_sha256(
+        {
+            "schema": (
+                R1_STAGE_WORKER_SCHEMA
+                if phase == "stage"
+                else R1_HIT_WORKER_SCHEMA
+            ),
+            "status": "measurement_complete" if error is None else "gate_failed",
+            "scope": _r1_scope(),
+            "phase": phase,
+            "source_at_start": source_at_start.as_jsonable(),
+            "source_at_end": source_at_end.as_jsonable(),
+            "runtime_identity": runtime,
+            "r0_authority": r0_authority,
+            "initial_cache_empty": phase == "stage" and not cache_before,
+            "stage_manifest_sha256": stage_manifest_sha256,
+            "forms": forms,
+            "cache_inventory": cache_inventory,
+            "cache_inventory_sha256": _r1_cache_digest(cache_inventory),
+            "cache_before": cache_before if phase == "hit" else None,
+            "cache_after": cache_after if phase == "hit" else None,
+            "cache_unchanged": (
+                cache_before == cache_after if phase == "hit" else None
+            ),
+            "measurement": measurement,
+            "identity": _r1_identity(),
+            "phase_identity": _r1_phase_identity(phase),
+            "error": error,
+            "elapsed_wall_seconds": float(time.perf_counter() - started),
+        }
+    )
+    _write_json(summary_path, payload)
+    return 0 if error is None else 1
+
+
+def _r1_run_stage_worker(args: argparse.Namespace) -> int:
+    return _r1_run_worker(args, "stage")
+
+
+def _r1_run_hit_worker(args: argparse.Namespace) -> int:
+    return _r1_run_worker(args, "hit")
+
+
+def _r1_last_progress_event(path: Path) -> str | None:
+    if not path.is_file():
+        return None
+    try:
+        for line in reversed(path.read_text(encoding="utf-8").splitlines()):
+            if line.strip():
+                return str(json.loads(line)["event"])
+    except (OSError, KeyError, TypeError, json.JSONDecodeError):
+        return None
+    return None
+
+
+def _r1_compiler_descendant_pids(
+    pids: Iterable[int], root_pid: int
+) -> list[int]:
+    compiler_pids = []
+    for pid in pids:
+        if int(pid) == int(root_pid):
+            continue
+        try:
+            name = Path(Path(f"/proc/{int(pid)}/cmdline").read_bytes().split(b"\0", 1)[0].decode("utf-8", errors="replace")).name
+        except OSError:
+            continue
+        if (
+            "gcc" in name
+            or name in {"cc", "cc1", "cc1plus", "collect2", "clang", "clang++"}
+        ):
+            compiler_pids.append(int(pid))
+    return sorted(set(compiler_pids))
+
+
+def _r1_run_phase(
+    *,
+    run_dir: Path,
+    phase: str,
+    controller_started: float,
+    timeout_seconds: float,
+    rss_limit_bytes: int,
+) -> dict[str, Any]:
+    progress_path = run_dir / f"{phase}_progress.jsonl"
+    command = _r1_worker_command(run_dir, phase, sys.executable)
+    phase_started = time.perf_counter()
+    process: subprocess.Popen[Any] | None = None
+    termination: str | None = None
+    samples: list[dict[str, Any]] = []
+    try:
+        with (run_dir / f"{phase}_stdout.txt").open("w", encoding="utf-8") as stdout, (run_dir / f"{phase}_timeline.jsonl").open("w", encoding="utf-8") as timeline:
+            process = subprocess.Popen(command, cwd=ROOT, stdout=stdout, stderr=subprocess.STDOUT, start_new_session=True)
+            while process.poll() is None:
+                try:
+                    observed = process_tree_sample(process.pid)
+                except (OSError, ValueError):
+                    termination = "authority_unreadable"
+                    _h2a_terminate_process_tree(process)
+                    break
+                elapsed = float(time.perf_counter() - phase_started)
+                sample = {
+                    "schema": R1_PROGRESS_SCHEMA, "sample_kind": "worker", "phase": phase,
+                    "elapsed_wall_seconds": elapsed, "root_pid": int(process.pid),
+                    "pids": [int(pid) for pid in observed.pids], "process_count": len(observed.pids),
+                    "rss_bytes": int(observed.rss_bytes), "swap_bytes": int(observed.swap_bytes),
+                    "all_status_readable": bool(observed.all_status_readable),
+                    "progress_event": _r1_last_progress_event(progress_path),
+                    "compiler_descendant_pids": _r1_compiler_descendant_pids(observed.pids, process.pid),
+                }
+                samples.append(sample)
+                timeline.write(json.dumps(sample, sort_keys=True, separators=(",", ":")) + "\n")
+                timeline.flush()
+                if not observed.all_status_readable:
+                    termination = "authority_unreadable"
+                elif observed.swap_bytes > R1_SWAP_LIMIT_BYTES:
+                    termination = "swap_nonzero"
+                elif observed.rss_bytes >= rss_limit_bytes:
+                    termination = f"process_tree_rss_over_{rss_limit_bytes}_bytes"
+                elif elapsed >= timeout_seconds:
+                    termination = "wall_timeout"
+                if termination is not None:
+                    _h2a_terminate_process_tree(process)
+                    break
+                time.sleep(0.05)
+            return_code = process.wait()
+            completion_elapsed = float(time.perf_counter() - phase_started)
+            if termination is None and completion_elapsed > timeout_seconds:
+                termination = "wall_timeout_post_exit"
+            timeline.write(json.dumps({"schema": R1_PROGRESS_SCHEMA, "sample_kind": "final", "phase": phase, "elapsed_wall_seconds": completion_elapsed, "return_code": return_code}, sort_keys=True, separators=(",", ":")) + "\n")
+            timeline.flush()
+    except (OSError, ValueError, TypeError, subprocess.SubprocessError):
+        if process is not None and process.poll() is None:
+            _h2a_terminate_process_tree(process)
+            process.wait()
+        raise
+    all_pids = sorted({int(pid) for sample in samples for pid in sample["pids"] if int(pid) != int(process.pid)})
+    compiler_pids = sorted({int(pid) for sample in samples for pid in sample["compiler_descendant_pids"]})
+    return {
+        "phase": phase,
+        "command": command,
+        "root_pid": int(process.pid),
+        "return_code": int(return_code),
+        "termination": termination,
+        "completion_elapsed_seconds": completion_elapsed,
+        "controller_elapsed_start": float(phase_started - controller_started),
+        "controller_elapsed_end": float(time.perf_counter() - controller_started),
+        "live_sample_count": len(samples),
+        "process_tree_peak_rss_bytes": (
+            max((sample["rss_bytes"] for sample in samples), default=None)
+        ),
+        "process_tree_swap_bytes": (
+            max((sample["swap_bytes"] for sample in samples), default=None)
+        ),
+        "observed_process_tree_pids": all_pids,
+        "observed_compiler_descendant_pids": compiler_pids,
+    }
+
+
+def _r1_artifact(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        return {"path": path.name, "present": False}
+    return {"path": path.name, "present": True, "bytes": int(path.stat().st_size), "sha256": _sha256_file(path)}
+
+
+def _r1_timeline_metrics(path: Path, phase: str) -> dict[str, Any]:
+    samples = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            sample = json.loads(line)
+            if sample.get("schema") != R1_PROGRESS_SCHEMA or sample.get("phase") != phase:
+                raise ValueError("R1 timeline schema or phase mismatch")
+            samples.append(sample)
+    live = [sample for sample in samples if sample.get("sample_kind") == "worker"]
+    if not live:
+        return {
+            "readable": False, "live_sample_count": 0, "peak_rss_bytes": None,
+            "swap_bytes": None, "compiler_descendant_pids": [],
+            "compile_marker_samples": 0,
+            "compile_marker_compiler_descendant_count": None,
+            "cache_load_samples": 0, "cache_load_compiler_descendant_count": None,
+        }
+    readable = all(
+        isinstance(sample.get("rss_bytes"), int)
+        and not isinstance(sample["rss_bytes"], bool)
+        and sample["rss_bytes"] >= 0
+        and isinstance(sample.get("swap_bytes"), int)
+        and not isinstance(sample["swap_bytes"], bool)
+        and sample["swap_bytes"] >= 0
+        and sample.get("all_status_readable") is True
+        and isinstance(sample.get("pids"), list)
+        and all(isinstance(pid, int) and not isinstance(pid, bool) and pid > 0 for pid in sample["pids"])
+        and isinstance(sample.get("process_count"), int)
+        and sample["process_count"] >= 0
+        and sample["process_count"] == len(sample["pids"])
+        and isinstance(sample.get("compiler_descendant_pids"), list)
+        and all(isinstance(pid, int) and not isinstance(pid, bool) and pid > 0 for pid in sample["compiler_descendant_pids"])
+        for sample in live
+    )
+    compiler_pids = sorted({int(pid) for sample in live for pid in sample["compiler_descendant_pids"]})
+    cache_events = {"curl_cache_load_started", "curl_cache_load_ready", "mass_cache_load_started", "mass_cache_load_ready"}
+    compile_events = {"curl_form_compile_started", "curl_form_compile_ready", "mass_form_compile_started", "mass_form_compile_ready"}
+    cache_samples = [s for s in live if phase == "hit" and s.get("progress_event") in cache_events]
+    compile_samples = [s for s in live if phase == "stage" and s.get("progress_event") in compile_events]
+    def max_children(items):
+        return max((len(s["compiler_descendant_pids"]) for s in items), default=None)
+    return {
+        "readable": readable, "live_sample_count": len(live),
+        "peak_rss_bytes": max(s["rss_bytes"] for s in live),
+        "swap_bytes": max(s["swap_bytes"] for s in live),
+        "compiler_descendant_pids": compiler_pids,
+        "compile_marker_samples": len(compile_samples),
+        "compile_marker_compiler_descendant_count": max_children(compile_samples),
+        "cache_load_samples": len(cache_samples),
+        "cache_load_compiler_descendant_count": max_children(cache_samples),
+    }
+
+
+def _r1_run_watchdog(args: argparse.Namespace) -> int:
+    run_dir = Path(args.run_dir).resolve()
+    if run_dir.exists():
+        raise FileExistsError(f"R1 run directory already exists: {run_dir}")
+    run_dir.parent.mkdir(parents=True, exist_ok=True)
+    run_dir.mkdir()
+    controller_started, source_at_start = time.perf_counter(), inspect_tracked_source(ROOT)
+    runtime_identity: dict[str, Any] | None = None
+    stage: dict[str, Any] | None = None
+    hit: dict[str, Any] | None = None
+    error: str | None = None
+    try:
+        stage = _r1_run_phase(run_dir=run_dir, phase="stage", controller_started=controller_started, timeout_seconds=R1_STAGE_TIMEOUT_SECONDS, rss_limit_bytes=R1_STAGE_RSS_LIMIT_BYTES)
+        pids = {int(stage["root_pid"]), *map(int, stage["observed_process_tree_pids"])}
+        stage["processes_gone_before_hit"] = all(not Path(f"/proc/{pid}").exists() for pid in pids)
+        stage_path = run_dir / "stage_summary.json"
+        stage_ok = stage["return_code"] == 0 and stage["termination"] is None and stage["processes_gone_before_hit"] and stage_path.is_file()
+        if stage_ok:
+            summary = read_json_object(stage_path)
+            runtime_identity = summary.get("runtime_identity")
+            stage_ok = (
+                summary.get("status") == "measurement_complete"
+                and evidence_sha256_is_valid(summary)
+                and _r1_runtime_is_complete(runtime_identity)
+            )
+        if stage_ok:
+            hit = _r1_run_phase(run_dir=run_dir, phase="hit", controller_started=controller_started, timeout_seconds=R1_HIT_TIMEOUT_SECONDS, rss_limit_bytes=R1_HIT_RSS_LIMIT_BYTES)
+        else:
+            error = "stage_gate_failed_before_hit"
+    except (
+        OSError,
+        RuntimeError,
+        ValueError,
+        TypeError,
+        KeyError,
+        subprocess.SubprocessError,
+        json.JSONDecodeError,
+    ) as exc:
+        error = f"{type(exc).__name__}: {exc}"
+    source_at_end = inspect_tracked_source(ROOT)
+    if stage is not None:
+        stage["hit_started_after_stage_exit"] = bool(hit and hit["controller_elapsed_start"] > stage["controller_elapsed_end"])
+    summaries = [
+        {"source_at_start": source_at_start.as_jsonable(), "source_at_end": source_at_end.as_jsonable()},
+        *[read_json_object(run_dir / name) for name in ("stage_summary.json", "hit_summary.json") if (run_dir / name).is_file()],
+    ]
+    shas = []
+    source_clean = True
+    for item in summaries:
+        start, end = item.get("source_at_start"), item.get("source_at_end")
+        source_clean = source_clean and _r0_source_pair_is_clean(start, end)
+        if isinstance(start, Mapping) and isinstance(end, Mapping):
+            shas += [start["source_commit_full_sha"], end["source_commit_full_sha"]]
+    source_clean = source_clean and bool(shas) and len(set(shas)) == 1
+    status = bool(error is None and stage and hit and stage["return_code"] == hit["return_code"] == 0 and stage["termination"] is None and hit["termination"] is None and stage.get("processes_gone_before_hit") and stage.get("hit_started_after_stage_exit") and source_clean and runtime_identity)
+    raw_artifact_names = ("stage_progress.jsonl", "stage_stdout.txt", "stage_summary.json", "stage_timeline.jsonl", "hit_progress.jsonl", "hit_stdout.txt", "hit_summary.json", "hit_timeline.jsonl")
+    payload = attach_evidence_sha256(
+        {
+            "schema": R1_WATCHDOG_SCHEMA,
+            "status": "pass" if status else "gate_failed",
+            "run_dir": str(run_dir),
+            "scope": _r1_scope(),
+            "runtime_identity": runtime_identity,
+            "source_at_start": source_at_start.as_jsonable(),
+            "source_at_end": source_at_end.as_jsonable(),
+            "source_clean_and_stable": source_clean,
+            "stage": stage,
+            "hit": hit,
+            "error": error,
+            "completion_elapsed_seconds": float(time.perf_counter() - controller_started),
+            "raw_artifacts": {
+                name: _r1_artifact(run_dir / name)
+                for name in raw_artifact_names
+            },
+        }
+    )
+    _write_json(run_dir / "r1_watchdog_summary.json", payload)
+    print(f"R1 watchdog status={payload['status']} run_dir={run_dir}", flush=True)
+    return 0 if status else 1
+
+
+def _r1_forms_match(
+    stage_forms: Any, hit_forms: Any, expected_cache_dir: Path
+) -> bool:
+    if not isinstance(stage_forms, list) or not isinstance(hit_forms, list) or len(stage_forms) != 2 or len(hit_forms) != 2:
+        return False
+    required = {"role", "ufl_signature", "ufcx_signature", "module_name", "ffcx_signature_stem", "jit_options", "form_compiler_options", "proxy_identity", "element_signature", "cache_files", "code_state", "code_sha256"}
+    if [item.get("role") for item in stage_forms if isinstance(item, Mapping)] != ["curl", "mass"] or [item.get("role") for item in hit_forms if isinstance(item, Mapping)] != ["curl", "mass"]:
+        return False
+    modules = [item.get("module_name") for item in stage_forms if isinstance(item, Mapping)]
+    if len(modules) != 2 or len(set(modules)) != 2:
+        return False
+    for stage_form, hit_form in zip(stage_forms, hit_forms):
+        if not isinstance(stage_form, Mapping) or not isinstance(hit_form, Mapping) or not required.issubset(stage_form) or not required.issubset(hit_form):
+            return False
+        if stage_form["module_name"] != "libffcx_forms_" + stage_form["ffcx_signature_stem"]:
+            return False
+        if any(not isinstance(stage_form[key], str) or not stage_form[key] for key in ("ufl_signature", "ufcx_signature", "module_name", "ffcx_signature_stem")):
+            return False
+        if (
+            stage_form["jit_options"] != _form_jit_options(expected_cache_dir)
+            or stage_form["form_compiler_options"] != {"scalar_type": "complex128"}
+            or not isinstance(stage_form["proxy_identity"], (Mapping, list, tuple))
+            or not stage_form["proxy_identity"]
+            or not isinstance(stage_form["element_signature"], (Mapping, list, tuple))
+            or not stage_form["element_signature"]
+        ):
+            return False
+        code_sha = stage_form["code_sha256"]
+        if stage_form["code_state"] != "cold_decl_impl_generated" or not isinstance(code_sha, str) or len(code_sha) != 64 or code_sha.lower() != code_sha or any(char not in "0123456789abcdef" for char in code_sha) or hit_form["code_state"] != "hit_no_new_decl_impl" or hit_form["code_sha256"] is not None:
+            return False
+        if not _r1_cache_files_valid(stage_form["cache_files"]) or stage_form["cache_files"] != hit_form["cache_files"]:
+            return False
+        if any(
+            not str(item["path"]).startswith(stage_form["module_name"] + ".")
+            for item in stage_form["cache_files"]
+        ):
+            return False
+        if any(hit_form[key] != stage_form[key] for key in required - {"code_state", "code_sha256"}):
+            return False
+    return True
+
+
+def _r1_check_raw(run_dir: Path) -> dict[str, Any]:
+    run_dir = run_dir.resolve()
+    stage_path, hit_path = run_dir / "stage_summary.json", run_dir / "hit_summary.json"
+    watchdog = read_json_object(run_dir / "r1_watchdog_summary.json")
+    stage, hit, runtime = read_json_object(stage_path), read_json_object(hit_path), None
+    r0_authority = _r1_read_r0_authority()
+    runtime = watchdog.get("runtime_identity")
+    stage_progress = _r1_progress_events(run_dir / "stage_progress.jsonl")
+    hit_progress = _r1_progress_events(run_dir / "hit_progress.jsonl")
+    stage_timeline = _r1_timeline_metrics(run_dir / "stage_timeline.jsonl", "stage")
+    hit_timeline = _r1_timeline_metrics(run_dir / "hit_timeline.jsonl", "hit")
+    stage_phase, hit_phase = watchdog.get("stage"), watchdog.get("hit")
+    pairs = ({"source_at_start": watchdog.get("source_at_start"), "source_at_end": watchdog.get("source_at_end")}, stage, hit)
+    shas: list[str] = []
+    source_ok = True
+    for pair in pairs:
+        start = pair.get("source_at_start") if isinstance(pair, Mapping) else None
+        end = pair.get("source_at_end") if isinstance(pair, Mapping) else None
+        source_ok = _r0_source_pair_is_clean(start, end) and source_ok
+        if isinstance(start, Mapping) and isinstance(end, Mapping):
+            shas += [str(start["source_commit_full_sha"]), str(end["source_commit_full_sha"])]
+    source_ok = source_ok and bool(shas) and len(set(shas)) == 1
+
+    def identity_ok(summary: Any, phase: str) -> bool:
+        return (isinstance(summary, Mapping)
+                and summary.get("schema") == (R1_STAGE_WORKER_SCHEMA if phase == "stage" else R1_HIT_WORKER_SCHEMA)
+                and summary.get("status") == "measurement_complete" and summary.get("error") is None
+                and summary.get("scope") == _r1_scope() and summary.get("identity") == _r1_identity()
+                and summary.get("phase_identity") == _r1_phase_identity(phase)
+                and _r1_runtime_is_complete(summary.get("runtime_identity"))
+                and evidence_sha256_is_valid(summary)
+                )
+
+    def time_ok(phase: Any, limit: float) -> bool:
+        value = phase.get("completion_elapsed_seconds") if isinstance(phase, Mapping) else None
+        return isinstance(value, (int, float)) and not isinstance(value, bool) and np.isfinite(value) and 0.0 <= value <= limit
+
+    def cache_binding_closed(forms: Any, inventory: Any) -> bool:
+        if not isinstance(forms, list) or not isinstance(inventory, list):
+            return False
+        bound = [item for form in forms if isinstance(form, Mapping) for item in form.get("cache_files", [])]
+        return len(bound) == len(inventory) and sorted(bound, key=lambda item: item.get("path", "")) == sorted(inventory, key=lambda item: item.get("path", ""))
+
+    phase_specs = ((stage_phase, stage_timeline, "stage", R1_STAGE_TIMEOUT_SECONDS), (hit_phase, hit_timeline, "hit", R1_HIT_TIMEOUT_SECONDS))
+    phase_ok = all(
+        isinstance(phase, Mapping) and phase.get("return_code") == 0 and phase.get("termination") is None
+        and time_ok(phase, limit) and timeline["readable"] and isinstance(timeline["peak_rss_bytes"], int)
+        and timeline["peak_rss_bytes"] < (R1_STAGE_RSS_LIMIT_BYTES if name == "stage" else R1_HIT_RSS_LIMIT_BYTES)
+        and timeline["swap_bytes"] == 0 and phase.get("process_tree_peak_rss_bytes") == timeline["peak_rss_bytes"]
+        and phase.get("process_tree_swap_bytes") == timeline["swap_bytes"]
+        for phase, timeline, name, limit in phase_specs
+    )
+    artifact_names = ("stage_progress.jsonl", "stage_stdout.txt", "stage_summary.json", "stage_timeline.jsonl", "hit_progress.jsonl", "hit_stdout.txt", "hit_summary.json", "hit_timeline.jsonl")
+    recorded = watchdog.get("raw_artifacts")
+    artifacts_ok = isinstance(recorded, Mapping) and all(
+        isinstance(recorded.get(name), Mapping) and recorded[name] == _r1_artifact(run_dir / name) and recorded[name].get("present") is True
+        for name in artifact_names
+    )
+    checks = {
+        "schema": watchdog.get("schema") == R1_WATCHDOG_SCHEMA,
+        "status": watchdog.get("status") == "pass",
+        "watchdog_evidence_valid": evidence_sha256_is_valid(watchdog),
+        "run_dir_exact": watchdog.get("run_dir") == str(run_dir),
+        "scope_exact": watchdog.get("scope") == _r1_scope(),
+        "runtime_complete": _r1_runtime_is_complete(runtime),
+        "source_clean_and_stable": source_ok,
+        "worker_identity": stage.get("runtime_identity") == runtime and hit.get("runtime_identity") == runtime,
+        "stage_identity": identity_ok(stage, "stage"), "hit_identity": identity_ok(hit, "hit"),
+        "progress_exact": tuple(stage_progress) == _r1_expected_progress("stage") and tuple(hit_progress) == _r1_expected_progress("hit"),
+        "phase_resources": phase_ok,
+        "stage_compiler": bool(stage_timeline["compiler_descendant_pids"]) and stage_timeline["compile_marker_samples"] > 0 and stage_timeline["compile_marker_compiler_descendant_count"] > 0,
+        "hit_cache_load": not hit_timeline["compiler_descendant_pids"],
+        "phase_order": isinstance(stage_phase, Mapping) and isinstance(hit_phase, Mapping) and stage_phase.get("processes_gone_before_hit") is True and stage_phase.get("hit_started_after_stage_exit") is True and hit_phase.get("controller_elapsed_start", -1) > stage_phase.get("controller_elapsed_end", float("inf")),
+        "commands": isinstance(runtime, Mapping) and isinstance(stage_phase, Mapping) and isinstance(hit_phase, Mapping) and stage_phase.get("command") == _r1_worker_command(run_dir, "stage", str(runtime.get("sys_executable"))) and hit_phase.get("command") == _r1_worker_command(run_dir, "hit", str(runtime.get("sys_executable"))),
+        "r0_authority": hit.get("r0_authority") == r0_authority,
+        "stage_manifest_sha_exact": hit.get("stage_manifest_sha256") == _sha256_file(stage_path),
+        "hit_measurement": hit.get("measurement") == {"global_cells": 252, "local_nloc": 882, "global_rows": H2A_FIXED_GLOBAL_ROWS, "constraint_count": H2A_FIXED_CONSTRAINT_COUNT},
+        "forms": _r1_forms_match(stage.get("forms"), hit.get("forms"), run_dir / "jit_cache"),
+        "cache": stage.get("initial_cache_empty") is True and isinstance(stage.get("cache_inventory"), list) and stage.get("cache_inventory_sha256") == _r1_cache_digest(stage["cache_inventory"]) and hit.get("cache_unchanged") is True and hit.get("cache_before") == hit.get("cache_after") == stage.get("cache_inventory") and _r1_cache_snapshot(run_dir / "jit_cache") == stage.get("cache_inventory"),
+        "cache_binding_closed": cache_binding_closed(stage.get("forms"), stage.get("cache_inventory")) and cache_binding_closed(hit.get("forms"), hit.get("cache_after")),
+        "raw_artifacts_hash_valid": artifacts_ok,
+        "watchdog_completion_valid": time_ok(watchdog, float("inf")),
+    }
+    problems = sorted(
+        name for name, passed in checks.items() if passed is not True
+    )
+    measurements = None
+    if not problems:
+        measurements = {
+            "source_commit_full_sha": runtime and watchdog[
+                "source_at_start"
+            ]["source_commit_full_sha"],
+            "runtime_identity": runtime,
+            "r0_authority": r0_authority,
+            "stage": {
+                "forms": stage["forms"],
+                "cache_inventory": stage["cache_inventory"],
+                "completion_elapsed_seconds": stage_phase["completion_elapsed_seconds"],
+                "process_tree_peak_rss_bytes": stage_timeline["peak_rss_bytes"],
+                "swap_bytes": stage_timeline["swap_bytes"],
+                "compiler_descendant_pids": stage_timeline[
+                    "compiler_descendant_pids"
+                ],
+                "compiler_descendant_count": len(stage_timeline["compiler_descendant_pids"]),
+                "processes_gone_before_hit": stage_phase["processes_gone_before_hit"],
+            },
+            "hit": {
+                "measurement": hit["measurement"],
+                "forms": hit["forms"],
+                "completion_elapsed_seconds": hit_phase["completion_elapsed_seconds"],
+                "process_tree_peak_rss_bytes": hit_timeline["peak_rss_bytes"],
+                "swap_bytes": hit_timeline["swap_bytes"],
+                "compiler_child_process_count": len(hit_timeline["compiler_descendant_pids"]),
+                "form_jit_cache_hit": True,
+                "c_source_regeneration": False,
+                "cache_inventory_unchanged": hit["cache_unchanged"],
+                "cache_load_compiler_descendant_count": hit_timeline[
+                    "cache_load_compiler_descendant_count"
+                ],
+            },
+            "identity": _r1_identity(),
+        }
+    return {
+        "schema": R1_CHECK_SCHEMA,
+        "status": "pass" if not problems else "gate_failed",
+        "pass": not problems,
+        "problems": problems,
+        "watchdog_checks": checks,
+        "stage_timeline": stage_timeline,
+        "hit_timeline": hit_timeline,
+        "measurements": measurements,
+        "raw_artifacts": {
+            name: _r1_artifact(run_dir / name)
+            for name in (
+                "stage_progress.jsonl",
+                "stage_stdout.txt",
+                "stage_summary.json",
+                "stage_timeline.jsonl",
+                "hit_progress.jsonl",
+                "hit_stdout.txt",
+                "hit_summary.json",
+                "hit_timeline.jsonl",
+                "r1_watchdog_summary.json",
+            )
+        },
+    }
+
+
+def _r1_run_check(args: argparse.Namespace) -> int:
+    try:
+        result = _r1_check_raw(Path(args.run_dir))
+    except (
+        OSError,
+        ValueError,
+        TypeError,
+        KeyError,
+        json.JSONDecodeError,
+    ) as exc:
+        result = {
+            "schema": R1_CHECK_SCHEMA,
+            "status": "gate_failed",
+            "pass": False,
+            "problems": [f"raw_unreadable:{type(exc).__name__}"],
+        }
+    output = Path(args.output).resolve()
+    _write_json(output, attach_evidence_sha256(result))
+    print(f"R1 check status={result['status']} output={output}", flush=True)
+    return 0 if result["pass"] else 1
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -2856,6 +3815,19 @@ def _parser() -> argparse.ArgumentParser:
     r0_checker.add_argument("--run-dir", required=True)
     r0_checker.add_argument("--output", required=True)
     r0_checker.set_defaults(handler=_r0_run_check)
+    r1_stage_worker = sub.add_parser("r1-stage-worker")
+    r1_stage_worker.add_argument("--run-dir", required=True)
+    r1_stage_worker.set_defaults(handler=_r1_run_stage_worker)
+    r1_hit_worker = sub.add_parser("r1-hit-worker")
+    r1_hit_worker.add_argument("--run-dir", required=True)
+    r1_hit_worker.set_defaults(handler=_r1_run_hit_worker)
+    r1_watchdog = sub.add_parser("r1-watchdog")
+    r1_watchdog.add_argument("--run-dir", required=True)
+    r1_watchdog.set_defaults(handler=_r1_run_watchdog)
+    r1_checker = sub.add_parser("r1-check")
+    r1_checker.add_argument("--run-dir", required=True)
+    r1_checker.add_argument("--output", required=True)
+    r1_checker.set_defaults(handler=_r1_run_check)
     return parser
 
 
