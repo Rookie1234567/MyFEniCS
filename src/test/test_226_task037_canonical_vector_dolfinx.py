@@ -230,7 +230,11 @@ class TestTask037CanonicalVectorDolfinx(unittest.TestCase):
                 for key in phase_keys
             )
         )
-        self.assertTrue(any(key[6] != (1.0, 0.0) for key in phase_keys))
+        local_nonunit_phase_count = sum(key[6] != (1.0, 0.0) for key in phase_keys)
+        global_nonunit_phase_count = V.mesh.comm.allreduce(
+            local_nonunit_phase_count, op=MPI.SUM
+        )
+        self.assertGreater(global_nonunit_phase_count, 0)
 
         # The old relation formula stopped at master runtime ordering.  Use one
         # actual p6 face block as a direct physical-transform oracle.
