@@ -89,6 +89,156 @@ H1R31_HISTORICAL_SOURCE_SHA = (
 H1R31_HISTORICAL_MANIFEST_SHA256 = (
     "1dfdcbfcd73010234dcdb7438eb3d869c9cbd07ed6981fc0ba5275c170faf139"
 )
+H1R32_SOURCE_LABEL = "seed_17037"
+H1R32_TIMEOUT_SECONDS = 1800.0
+H1R32_REFERENCE_APPLY_COUNT = 1
+H1R32_CANDIDATE_APPLY_COUNT = 2
+H1R32_PEAK_LIMIT_BYTES = int(0.75 * GIB)
+H1R32_GLOBAL_ROWS = 1127502
+H1R32_GLOBAL_CELLS = 1680
+H1R32_AXIS_CELL_COUNTS = (12, 5, 28)
+H1R32_H1_AXIS_CELL_COUNTS = (51, 25, 140)
+H1R32_H1_GLOBAL_ROWS = 116527176
+H1R32_PAYLOAD_BYTES_PER_ROW_LIMIT = 45
+H1R32_PACKED_BYTES_PER_ROW_LIMIT = 28
+H1R32_ALPHA_PAYLOAD_LIMIT = 1.10
+H1R32_ACTION_SECONDS_PER_ROW_LIMIT = 1.03171980264e-5
+H1R32_PEAK_SLOPE_BYTES_PER_ROW_LIMIT = 512
+H1R32_H10_RAW_DIR = (
+    REPOSITORY_ROOT
+    / "benchmarks/artifacts/task037_extra_h1r3_warm_repeat_v6_5529a01"
+)
+H1R32_H10_RECORD = (
+    REPOSITORY_ROOT
+    / "benchmarks/cases/101_task37_extra_development/records/"
+    "h1r3_warm_repeat_v2.json"
+)
+H1R32_H10_RECORD_SHA256 = (
+    "b2e347c1663df932ace40efdee898ca1c6a62790ce30b748e64fcb721bcac658"
+)
+H1R32_H10_SOURCE_SHA = "5529a0159ac5b1500b4ccbd17ad962e2a875f3f1"
+H1R32_H10_GLOBAL_ROWS = 173802
+H1R32_H10_PAYLOAD_BYTES = 6151104
+H1R32_H10_PEAK_BYTES = 340541440
+H1R32_H1R31_RECORD = (
+    REPOSITORY_ROOT
+    / "benchmarks/cases/101_task37_extra_development/records/"
+    "h1r3_mpi2_partition_identity.json"
+)
+H1R32_H1R31_RECORD_SHA256 = (
+    "2e927f1734c676a9df48972e0d4e353cabee085b91772e78159d48628a33020c"
+)
+H1R32_ROOT_PID_FILE = "h1r3_h5_root_pid.json"
+
+
+def _h1r32_structured_hexa_identity(
+    axis_cell_counts: tuple[int, int, int], degree: int = 6
+) -> dict[str, Any]:
+    """Return the fixed tensor-hexa H(curl) row decomposition for H1R3.2."""
+
+    nx, ny, nz = (int(value) for value in axis_cell_counts)
+    p = int(degree)
+    if min(nx, ny, nz, p) <= 0:
+        raise ValueError("structured hexa identity requires positive counts")
+    edge_rows = p * (
+        nx * (ny + 1) * (nz + 1)
+        + (nx + 1) * ny * (nz + 1)
+        + (nx + 1) * (ny + 1) * nz
+    )
+    face_rows = 2 * p * (p - 1) * (
+        (nx + 1) * ny * nz
+        + nx * (ny + 1) * nz
+        + nx * ny * (nz + 1)
+    )
+    cell_rows = 3 * p * (p - 1) ** 2 * nx * ny * nz
+    return {
+        "axis_cell_counts": [nx, ny, nz],
+        "degree": p,
+        "global_cells": nx * ny * nz,
+        "edge_rows": edge_rows,
+        "face_rows": face_rows,
+        "cell_rows": cell_rows,
+        "global_rows": edge_rows + face_rows + cell_rows,
+    }
+
+
+def _h1r32_scope(
+    *,
+    global_rows: int,
+    constraint_count: int,
+    global_cells: int,
+    axis_cell_counts: tuple[int, int, int],
+) -> dict[str, Any]:
+    return {
+        "degree": 6,
+        "h_nm": 5.0,
+        "mpi_size": 1,
+        "source_labels": [H1R32_SOURCE_LABEL],
+        "reference_apply_count": H1R32_REFERENCE_APPLY_COUNT,
+        "candidate_apply_count": H1R32_CANDIDATE_APPLY_COUNT,
+        "timeout_seconds": H1R32_TIMEOUT_SECONDS,
+        "process_tree_peak_limit_bytes": H1R32_PEAK_LIMIT_BYTES,
+        "payload_bytes_per_global_row_limit": H1R32_PAYLOAD_BYTES_PER_ROW_LIMIT,
+        "packed_bytes_per_global_row_limit": H1R32_PACKED_BYTES_PER_ROW_LIMIT,
+        "alpha_payload_limit": H1R32_ALPHA_PAYLOAD_LIMIT,
+        "action_seconds_per_global_row_limit": H1R32_ACTION_SECONDS_PER_ROW_LIMIT,
+        "peak_slope_bytes_per_row_limit": H1R32_PEAK_SLOPE_BYTES_PER_ROW_LIMIT,
+        "global_rows": int(global_rows),
+        "constraint_count": int(constraint_count),
+        "global_cells": int(global_cells),
+        "axis_cell_counts": [int(value) for value in axis_cell_counts],
+        "field_formulation": "total_field_dtn_port",
+        "operator": "A_h=curl-curl-k0^2*epsilon*mass",
+        "dtn_surface_term": False,
+        "condensation": False,
+        "ksp": False,
+        "dtn": False,
+        "canonical_export_enabled": False,
+        "canonical_after_gate": False,
+        "ordinary_default_changed": False,
+        "h2": "locked",
+    }
+
+
+def _h1r32_fixed_scope_checks(scope: object) -> dict[str, bool]:
+    scope = scope if isinstance(scope, dict) else {}
+    constraint_count = scope.get("constraint_count")
+    return {
+        "degree": scope.get("degree") == 6,
+        "h_nm": scope.get("h_nm") == 5.0,
+        "mpi_size": scope.get("mpi_size") == 1,
+        "source_labels": scope.get("source_labels") == [H1R32_SOURCE_LABEL],
+        "reference_apply_count": scope.get("reference_apply_count")
+        == H1R32_REFERENCE_APPLY_COUNT,
+        "candidate_apply_count": scope.get("candidate_apply_count")
+        == H1R32_CANDIDATE_APPLY_COUNT,
+        "timeout_seconds": scope.get("timeout_seconds") == H1R32_TIMEOUT_SECONDS,
+        "process_tree_peak_limit_bytes": scope.get(
+            "process_tree_peak_limit_bytes"
+        )
+        == H1R32_PEAK_LIMIT_BYTES,
+        "axis_cell_counts": scope.get("axis_cell_counts")
+        == list(H1R32_AXIS_CELL_COUNTS),
+        "global_cells": scope.get("global_cells") == H1R32_GLOBAL_CELLS,
+        "global_rows": scope.get("global_rows") == H1R32_GLOBAL_ROWS,
+        "constraint_count": isinstance(constraint_count, int)
+        and not isinstance(constraint_count, bool)
+        and constraint_count >= 0,
+        "field_formulation": scope.get("field_formulation")
+        == "total_field_dtn_port",
+        "operator": scope.get("operator")
+        == "A_h=curl-curl-k0^2*epsilon*mass",
+        "dtn_surface_term": scope.get("dtn_surface_term") is False,
+        "condensation": scope.get("condensation") is False,
+        "ksp": scope.get("ksp") is False,
+        "dtn": scope.get("dtn") is False,
+        "canonical_export_enabled": scope.get("canonical_export_enabled")
+        is False,
+        "canonical_after_gate": scope.get("canonical_after_gate") is False,
+        "ordinary_default_changed": scope.get("ordinary_default_changed")
+        is False,
+        "h2_locked": scope.get("h2") == "locked",
+    }
 
 
 def _h1r2_numerical_gate(
@@ -338,6 +488,18 @@ def _h1r31_file_metadata(
             Path(run_dir) / manifest_relative_path, manifest_relative_path
         )
     return metadata
+
+
+def _h1r32_file_metadata(run_dir: Path) -> dict[str, dict[str, Any]]:
+    return {
+        name: _h1r3_path_metadata(Path(run_dir) / name, name)
+        for name in (
+            "worker_stdout.txt",
+            "watchdog_timeline.jsonl",
+            "run_summary.json",
+            H1R32_ROOT_PID_FILE,
+        )
+    }
 
 
 def _h1r3_scope() -> dict[str, Any]:
@@ -686,6 +848,236 @@ def _evaluate_h1r31_worker_qualification(
         "retained_payload_global_sum_bytes": payload_sum,
         "retained_payload_global_max_bytes": payload_max,
         "expected_canonical_packet_count": H1R31_PACKET_COUNT,
+    }
+
+
+def _evaluate_h1r32_worker_qualification(
+    measurement: object,
+    candidate_audit: object,
+    *,
+    scope: object,
+) -> dict[str, Any]:
+    """Recompute the fixed H1R3.2 h5 action and payload contract."""
+
+    measurement = measurement if isinstance(measurement, dict) else {}
+    candidate_audit = (
+        candidate_audit if isinstance(candidate_audit, dict) else {}
+    )
+
+    def nonnegative_int(value: object) -> bool:
+        return (
+            isinstance(value, int)
+            and not isinstance(value, bool)
+            and value >= 0
+        )
+
+    def positive_number(value: object) -> bool:
+        return (
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(float(value))
+            and float(value) > 0.0
+        )
+
+    scope_checks = _h1r32_fixed_scope_checks(scope)
+    source_definition = measurement.get("source_definition")
+    source_checks = {
+        "label": measurement.get("label") == H1R32_SOURCE_LABEL,
+        "definition_mapping": isinstance(source_definition, dict),
+        "definition_hash": False,
+        "seed": False,
+        "frequency": False,
+        "formula": False,
+    }
+    if isinstance(source_definition, dict):
+        source_checks.update(
+            {
+                "definition_hash": (
+                    measurement.get("source_definition_sha256")
+                    == source_definition.get("definition_sha256")
+                    == _h1r2_source_definition_hash(source_definition)
+                ),
+                "seed": source_definition.get("seed") == 17037,
+                "frequency": tuple(source_definition.get("frequency", ()))
+                == (1, 1, 0),
+                "formula": source_definition.get("formula")
+                == SOURCE_DEFINITIONS[H1R32_SOURCE_LABEL]["formula"],
+            }
+        )
+
+    reference_seconds = measurement.get("reference_apply_seconds")
+    candidate_seconds = measurement.get("candidate_apply_seconds")
+    second_seconds = measurement.get("candidate_repeat_apply_seconds")
+    timing_checks = {
+        "reference_positive": positive_number(reference_seconds),
+        "candidate_first_positive": positive_number(candidate_seconds),
+        "candidate_second_positive": positive_number(second_seconds),
+        "timing_reduction": measurement.get("timing_reduction") == "mpi_max",
+        "second_seconds_per_row": bool(
+            positive_number(second_seconds)
+            and float(second_seconds) / H1R32_GLOBAL_ROWS
+            <= H1R32_ACTION_SECONDS_PER_ROW_LIMIT
+        ),
+    }
+    relative_error = measurement.get(
+        "reference_vs_candidate_relative_error", float("nan")
+    )
+    action_checks = {
+        "finite": measurement.get("finite") is True,
+        "deterministic": measurement.get("deterministic") is True
+        and measurement.get("candidate_repeat_equal") is True,
+        "relative_error": (
+            isinstance(relative_error, (int, float))
+            and not isinstance(relative_error, bool)
+            and math.isfinite(float(relative_error))
+            and 0.0 <= float(relative_error) <= DUAL_RELATIVE_TOLERANCE
+        ),
+        "reference_apply_count": measurement.get("reference_apply_count")
+        == H1R32_REFERENCE_APPLY_COUNT,
+        "candidate_apply_count": measurement.get("candidate_apply_count")
+        == H1R32_CANDIDATE_APPLY_COUNT,
+        "candidate_repeat_apply_count": measurement.get(
+            "candidate_repeat_apply_count"
+        )
+        == H1R32_CANDIDATE_APPLY_COUNT,
+        "canonical_disabled": measurement.get("canonical_export") is False
+        and measurement.get("candidate_canonical_packet_count") is None
+        and measurement.get("candidate_manifest") is None,
+    }
+    components = candidate_audit.get("retained_numeric_payload_components")
+    components_valid = bool(
+        isinstance(components, dict)
+        and bool(components)
+        and all(nonnegative_int(value) for value in components.values())
+    )
+    payload_local = candidate_audit.get("retained_numeric_payload_local_bytes")
+    payload_sum = candidate_audit.get(
+        "retained_numeric_payload_global_sum_bytes"
+    )
+    payload_max = candidate_audit.get(
+        "retained_numeric_payload_global_max_bytes"
+    )
+    packed_bytes = candidate_audit.get("last_packed_coefficient_bytes")
+    bounded_bytes = candidate_audit.get("per_apply_bounded_temporary_bytes")
+    component_sum = (
+        sum(int(value) for value in components.values())
+        if components_valid
+        else None
+    )
+    payload_checks = {
+        "components_valid": components_valid,
+        "component_sum_closes": components_valid
+        and component_sum == payload_local,
+        "local_nonnegative": nonnegative_int(payload_local)
+        and payload_local > 0,
+        "global_sum_nonnegative": nonnegative_int(payload_sum)
+        and payload_sum > 0,
+        "global_max_nonnegative": nonnegative_int(payload_max)
+        and payload_max > 0,
+        "mpi1_payload_closure": (
+            component_sum == payload_local == payload_sum == payload_max
+        ),
+        "payload_row_limit": (
+            nonnegative_int(payload_sum)
+            and payload_sum <= H1R32_PAYLOAD_BYTES_PER_ROW_LIMIT
+            * H1R32_GLOBAL_ROWS
+        ),
+        "packed_nonnegative": nonnegative_int(packed_bytes)
+        and packed_bytes >= 0,
+        "packed_bound_matches": nonnegative_int(bounded_bytes)
+        and bounded_bytes == packed_bytes,
+        "packed_row_limit": (
+            nonnegative_int(packed_bytes)
+            and packed_bytes <= H1R32_PACKED_BYTES_PER_ROW_LIMIT
+            * H1R32_GLOBAL_ROWS
+        ),
+    }
+    local_storage_checks = {
+        name: nonnegative_int(candidate_audit.get(name))
+        for name in (
+            "local_storage_entries",
+            "local_owned_rows",
+            "local_ghost_rows",
+        )
+    }
+    local_storage_checks["storage_closure"] = bool(
+        all(local_storage_checks.values())
+        and candidate_audit.get("local_storage_entries")
+        == candidate_audit.get("local_owned_rows")
+        + candidate_audit.get("local_ghost_rows")
+    )
+    inventory_expected = {
+        "global_matrix_materialized": False,
+        "global_constraint_matrix_materialized": False,
+        "global_condensed_schur_materialized": False,
+        "cell_schur_matrix_nnz": 0,
+        "slab_matrix_nnz": 0,
+        "cell_schur_matrix_materialized": False,
+        "slab_matrix_materialized": False,
+        "retained_dense_cell_tensor_count": 0,
+        "dense_cell_tensor_materialized_per_apply": False,
+        "cell_metadata_retained": False,
+        "factor_count": 0,
+        "ksp_created": False,
+        "dtn_used": False,
+        "ordinary_default_changed": False,
+    }
+    inventory_checks = {
+        name: candidate_audit.get(name) == expected
+        for name, expected in inventory_expected.items()
+    }
+    audit_checks = {
+        "backend": candidate_audit.get("backend")
+        == (
+            "dolfinx.fem.assemble_vector(existing ndarray, rank-one form)"
+            " + vectorized MPC R^H"
+        ),
+        "form_rank": candidate_audit.get("form_rank") == 1,
+        "coefficient_count": candidate_audit.get("coefficient_count") == 1,
+        "apply_count": candidate_audit.get("apply_count")
+        == H1R32_CANDIDATE_APPLY_COUNT,
+        "global_rows": candidate_audit.get("global_rows")
+        == H1R32_GLOBAL_ROWS,
+        "constraint_count": candidate_audit.get("constraint_count")
+        == (scope.get("constraint_count") if isinstance(scope, dict) else None),
+        "constraint_nnz_closes": candidate_audit.get("constraint_nnz_closes")
+        is True,
+        "local_storage": all(local_storage_checks.values()),
+    }
+    checks = {
+        **{f"scope.{name}": value for name, value in scope_checks.items()},
+        **{f"source.{name}": value for name, value in source_checks.items()},
+        **{f"timing.{name}": value for name, value in timing_checks.items()},
+        **{f"action.{name}": value for name, value in action_checks.items()},
+        **{f"payload.{name}": value for name, value in payload_checks.items()},
+        **{
+            f"local_storage.{name}": value
+            for name, value in local_storage_checks.items()
+        },
+        **{f"audit.{name}": value for name, value in audit_checks.items()},
+        **{
+            f"inventory.{name}": value
+            for name, value in inventory_checks.items()
+        },
+    }
+    problems = [name for name, value in checks.items() if value is not True]
+    return {
+        "status": "pass" if not problems else "gate_failed",
+        "pass": not problems,
+        "problems": problems,
+        "checks": checks,
+        "scope_checks": scope_checks,
+        "source_checks": source_checks,
+        "timing_checks": timing_checks,
+        "action_checks": action_checks,
+        "payload_checks": payload_checks,
+        "local_storage_checks": local_storage_checks,
+        "audit_checks": audit_checks,
+        "inventory_checks": inventory_checks,
+        "retained_payload_global_sum_bytes": payload_sum,
+        "retained_payload_global_max_bytes": payload_max,
+        "packed_temporary_bytes": packed_bytes,
+        "relative_error": relative_error,
     }
 
 
@@ -1818,6 +2210,7 @@ def _h1r2_action_record(
     progress_global_rows: int | None = None,
     canonical_method: str = "H1R2-direct-rank-one-MPC",
     timing_global_max: bool = False,
+    canonical_export_enabled: bool = True,
 ) -> dict[str, Any]:
     """Measure one fixed H1R.2 source and export only after numeric gates."""
 
@@ -1953,7 +2346,7 @@ def _h1r2_action_record(
         )
 
         candidate_manifest_data = None
-        if numeric_gate:
+        if numeric_gate and canonical_export_enabled:
             rank = comm.rank
             source_dir = run_dir / "canonical" / label
             candidate_shard = source_dir / f"candidate_rank{rank}.jsonl"
@@ -2034,7 +2427,7 @@ def _h1r2_action_record(
             "finite": finite,
             "deterministic": deterministic,
             "reference_vs_candidate_relative_error": float(relative_error),
-            "canonical_export": bool(numeric_gate),
+            "canonical_export": bool(numeric_gate and canonical_export_enabled),
             "candidate_canonical_packet_count": (
                 None
                 if candidate_manifest_data is None
@@ -2314,7 +2707,7 @@ def run_worker(
     from src.common.config_3d import target_stage4_config
     from src.constraints.floquet_3d import build_double_floquet_mpc
     from src.constraints.floquet_3d_high_order import floquet_geometry_tolerance
-    from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
+    from src.geometry.mesh_builder_3d import build_airbox_mesh_3d, stage4_axis_plan
     from src.solvers.common_3d_forms import _build_variational_forms
     from src.solvers.common_3d_solve import _create_nedelec_space
     from src.solvers.fullspace_matrix_free_hcurl import (
@@ -2322,12 +2715,19 @@ def run_worker(
     )
     from src.solvers.mpc_form_action import MpcFormActionContext
 
-    if mode not in {"h1_2", "h1r2", "h1r3_warm", "h1r3_mpi2"}:
+    if mode not in {
+        "h1_2",
+        "h1r2",
+        "h1r3_warm",
+        "h1r3_mpi2",
+        "h1r3_h5",
+    }:
         raise ValueError(f"unsupported Candidate-H worker mode: {mode}")
     h1r2 = mode == "h1r2"
     h1r3 = mode == "h1r3_warm"
     h1r31 = mode == "h1r3_mpi2"
-    h1r2_or_h1r3 = h1r2 or h1r3 or h1r31
+    h1r32 = mode == "h1r3_h5"
+    h1r2_or_h1r3 = h1r2 or h1r3 or h1r31 or h1r32
     if h1r2_or_h1r3:
         from src.solvers.hcurl_rank_one_mpc_action import (
             build_task037_extra_h1r2_mpc_action,
@@ -2339,7 +2739,7 @@ def run_worker(
     progress_local_rows: int | None = None
     progress_global_rows: int | None = None
     h1r3_source_at_start = (
-        _inspect_candidate_source() if h1r3 or h1r31 else None
+        _inspect_candidate_source() if h1r3 or h1r31 or h1r32 else None
     )
     telemetry_writer = None
 
@@ -2361,7 +2761,7 @@ def run_worker(
             global_rows=progress_global_rows,
         )
 
-    cfg = target_stage4_config(degree=6, h_nm=10.0)
+    cfg = target_stage4_config(degree=6, h_nm=5.0 if h1r32 else 10.0)
     if cfg.stage4_boundary_model != "dtn_port":
         raise RuntimeError("Candidate-H requires the frozen dtn_port configuration identity")
     if cfg.divergence_penalty != 0.0:
@@ -2371,6 +2771,13 @@ def run_worker(
     comm.barrier()
     emit_progress("mesh_build_started")
     mesh_data = build_airbox_mesh_3d(cfg, run_dir / "mesh")
+    axis_cell_counts = None
+    if h1r32:
+        axis_plan = stage4_axis_plan(cfg, comm.size)
+        axis_cell_counts = tuple(
+            len(getattr(axis_plan, f"{axis_name}_values")) - 1
+            for axis_name in ("x", "y", "z")
+        )
     progress_cell_count = int(
         mesh_data.mesh.topology.index_map(mesh_data.mesh.topology.dim).size_local
     )
@@ -2407,6 +2814,8 @@ def run_worker(
         a_compiled = fem.form(a_ufl)
         emit_progress("form_compile_ready")
     tolerance = floquet_geometry_tolerance(cfg)
+    if h1r32:
+        emit_progress("form_compile_started")
     emit_progress("candidate_build_started")
     if h1r2_or_h1r3:
         candidate = build_task037_extra_h1r2_mpc_action(
@@ -2429,6 +2838,8 @@ def run_worker(
     emit_progress("reference_build_started")
     reference = MpcFormActionContext(a_ufl, floquet.mpc)
     emit_progress("reference_build_ready")
+    if h1r32:
+        emit_progress("form_compile_ready")
     try:
         if h1r3 and comm.rank == 0:
             telemetry_writer = (run_dir / H1R3_TELEMETRY_FILE).open(
@@ -2493,6 +2904,28 @@ def run_worker(
                             timing_global_max=True,
                         )
                     )
+                elif h1r32:
+                    source_results.append(
+                        _h1r2_action_record(
+                            reference,
+                            candidate,
+                            source,
+                            run_dir=run_dir,
+                            cfg=cfg,
+                            function_space=function_space,
+                            mpc=floquet.mpc,
+                            tolerance=tolerance,
+                            progress_writer=progress_writer,
+                            progress_started=worker_started,
+                            progress_rank=comm.rank,
+                            progress_cell_count=progress_cell_count,
+                            progress_local_rows=progress_local_rows,
+                            progress_global_rows=progress_global_rows,
+                            canonical_method="H1R3.2-disabled-canonical",
+                            timing_global_max=True,
+                            canonical_export_enabled=False,
+                        )
+                    )
                 elif h1r2:
                     source_results.append(
                         _h1r2_action_record(
@@ -2549,9 +2982,18 @@ def run_worker(
             )
         global_rows = int(candidate.audit["global_rows"])
         constraint_count = int(floquet.num_constraints)
+        global_cells = (
+            int(
+                mesh_data.mesh.topology.index_map(
+                    mesh_data.mesh.topology.dim
+                ).size_global
+            )
+            if h1r32
+            else None
+        )
         runtime_identity = _h1r2_runtime_identity() if h1r2_or_h1r3 else None
         h1r3_source_at_end = (
-            _inspect_candidate_source() if h1r3 or h1r31 else None
+            _inspect_candidate_source() if h1r3 or h1r31 or h1r32 else None
         )
         emit_progress("worker_summary_started")
         if comm.rank == 0:
@@ -2623,6 +3065,48 @@ def run_worker(
                     "source_definitions": {
                         H1R31_SOURCE_LABEL: _source_definition(
                             H1R31_SOURCE_LABEL, cfg
+                        )
+                    },
+                    "measurements": source_results,
+                    "candidate_action_audit": candidate_audit,
+                    "reference_action": {
+                        "type": "MpcFormActionContext",
+                        "same_worker": True,
+                        "apply_count": int(reference.apply_count),
+                        "global_matrix_materialized": False,
+                    },
+                    "qualification": qualification,
+                    "source_at_start": h1r3_source_at_start.as_jsonable(),
+                    "source_at_end": h1r3_source_at_end.as_jsonable(),
+                }
+            elif h1r32:
+                assert axis_cell_counts is not None
+                scope = _h1r32_scope(
+                    global_rows=global_rows,
+                    constraint_count=constraint_count,
+                    global_cells=int(global_cells),
+                    axis_cell_counts=axis_cell_counts,
+                )
+                qualification = _evaluate_h1r32_worker_qualification(
+                    source_results[0],
+                    candidate_audit,
+                    scope=scope,
+                )
+                summary = {
+                    "schema": "task037.candidate_h.h1r3.h5.worker.v1",
+                    "runtime_identity": runtime_identity,
+                    "status": (
+                        "pass" if qualification["pass"] else "gate_failed"
+                    ),
+                    "mpi_size": int(comm.size),
+                    "global_rows": global_rows,
+                    "constraint_count": constraint_count,
+                    "global_cells": int(global_cells),
+                    "axis_cell_counts": list(axis_cell_counts),
+                    "scope": scope,
+                    "source_definitions": {
+                        H1R32_SOURCE_LABEL: _source_definition(
+                            H1R32_SOURCE_LABEL, cfg
                         )
                     },
                     "measurements": source_results,
@@ -2734,7 +3218,7 @@ def run_worker(
                     ],
                     "qualification": qualification,
                 }
-            if h1r2 or h1r3 or h1r31:
+            if h1r2 or h1r3 or h1r31 or h1r32:
                 summary = attach_evidence_sha256(summary)
             (run_dir / "run_summary.json").write_text(
                 json.dumps(summary, ensure_ascii=False, sort_keys=True, indent=2)
@@ -2788,6 +3272,18 @@ def _watchdog_command(args, *, mode: str = "h1_2") -> list[str]:
             "-m",
             "benchmarks.run_task037_extra_candidate_h",
             "h1r3-mpi2-worker",
+            "--run-dir",
+            str(Path(args.run_dir).resolve()),
+        ]
+    if mode == "h1r3_h5":
+        return [
+            "mpiexec",
+            "-n",
+            "1",
+            sys.executable,
+            "-m",
+            "benchmarks.run_task037_extra_candidate_h",
+            "h1r3-h5-worker",
             "--run-dir",
             str(Path(args.run_dir).resolve()),
         ]
@@ -2891,16 +3387,25 @@ def _h1r2_scope_boundary() -> dict[str, str]:
 
 
 def run_watchdog(args, *, mode: str = "h1_2") -> int:
-    if mode not in {"h1_2", "h1r2", "h1r3_warm", "h1r3_mpi2"}:
+    if mode not in {
+        "h1_2",
+        "h1r2",
+        "h1r3_warm",
+        "h1r3_mpi2",
+        "h1r3_h5",
+    }:
         raise ValueError(f"unsupported Candidate-H watchdog mode: {mode}")
     h1r2 = mode == "h1r2"
     h1r3 = mode == "h1r3_warm"
     h1r31 = mode == "h1r3_mpi2"
+    h1r32 = mode == "h1r3_h5"
     timeout_seconds = (
         H1R3_TIMEOUT_SECONDS
         if h1r3
         else H1R31_TIMEOUT_SECONDS
         if h1r31
+        else H1R32_TIMEOUT_SECONDS
+        if h1r32
         else H1R2_TIMEOUT_SECONDS
         if h1r2
         else H1_TIMEOUT_SECONDS
@@ -2911,6 +3416,8 @@ def run_watchdog(args, *, mode: str = "h1_2") -> int:
         if h1r3
         else H1R31_PEAK_LIMIT_BYTES
         if h1r31
+        else H1R32_PEAK_LIMIT_BYTES
+        if h1r32
         else H1_RSS_LIMIT_BYTES
     )
     run_dir = Path(args.run_dir).resolve()
@@ -2919,7 +3426,9 @@ def run_watchdog(args, *, mode: str = "h1_2") -> int:
     timeline_path = run_dir / "watchdog_timeline.jsonl"
     command = _watchdog_command(args, mode=mode)
     watchdog_runtime_identity = (
-        _h1r2_runtime_identity() if h1r2 or h1r3 or h1r31 else None
+        _h1r2_runtime_identity()
+        if h1r2 or h1r3 or h1r31 or h1r32
+        else None
     )
     source_at_start = _inspect_candidate_source()
     started = time.perf_counter()
@@ -2935,7 +3444,7 @@ def run_watchdog(args, *, mode: str = "h1_2") -> int:
         source_start_json = source_at_start.as_jsonable()
         source_start_allowed = (
             _h1r2_source_is_clean(source_start_json)
-            if h1r2 or h1r3 or h1r31
+            if h1r2 or h1r3 or h1r31 or h1r32
             else not source_at_start.tracked_source_dirty
             and source_at_start.source_commit_full_sha is not None
         )
@@ -2950,11 +3459,20 @@ def run_watchdog(args, *, mode: str = "h1_2") -> int:
                     start_new_session=True,
                     text=True,
                 )
-                if h1r3:
-                    (run_dir / H1R3_ROOT_PID_FILE).write_text(
+                if h1r3 or h1r32:
+                    root_pid_path = (
+                        run_dir / H1R32_ROOT_PID_FILE
+                        if h1r32
+                        else run_dir / H1R3_ROOT_PID_FILE
+                    )
+                    root_pid_path.write_text(
                         json.dumps(
                             {
-                                "schema": "task037.candidate_h.h1r3.root_pid.v1",
+                                "schema": (
+                                    "task037.candidate_h.h1r3.h5.root_pid.v1"
+                                    if h1r32
+                                    else "task037.candidate_h.h1r3.root_pid.v1"
+                                ),
                                 "root_pid": int(process.pid),
                             },
                             sort_keys=True,
@@ -2971,7 +3489,7 @@ def run_watchdog(args, *, mode: str = "h1_2") -> int:
             timeline.write(json.dumps(sample, sort_keys=True) + "\n")
             timeline.flush()
             if return_code is not None:
-                if h1r2 or h1r3 or h1r31:
+                if h1r2 or h1r3 or h1r31 or h1r32:
                     completion_elapsed_seconds = time.perf_counter() - started
                     if completion_elapsed_seconds > timeout_seconds:
                         controlled_stop = "timeout"
@@ -2988,6 +3506,8 @@ def run_watchdog(args, *, mode: str = "h1_2") -> int:
                         if h1r3
                         else "process_tree_rss_over_0.75_GiB"
                         if h1r31
+                        else "process_tree_rss_over_0.75_GiB"
+                        if h1r32
                         else "process_tree_rss_over_1.25_GiB"
                     )
                 elif swap != 0:
@@ -3014,11 +3534,11 @@ def run_watchdog(args, *, mode: str = "h1_2") -> int:
     )
     worker_runtime_identity = (
         worker_summary.get("runtime_identity")
-        if (h1r2 or h1r3 or h1r31) and worker_summary is not None
+        if (h1r2 or h1r3 or h1r31 or h1r32) and worker_summary is not None
         else None
     )
     worker_runtime_identity_match = bool(
-        (h1r2 or h1r3 or h1r31)
+        (h1r2 or h1r3 or h1r31 or h1r32)
         and worker_runtime_identity == watchdog_runtime_identity
     )
     source_start_json = source_at_start.as_jsonable()
@@ -3030,7 +3550,7 @@ def run_watchdog(args, *, mode: str = "h1_2") -> int:
             and source_start_json["source_commit_full_sha"]
             == source_end_json["source_commit_full_sha"]
         )
-        if h1r2 or h1r3 or h1r31
+        if h1r2 or h1r3 or h1r31 or h1r32
         else bool(
             source_at_start.source_commit_full_sha is not None
             and source_at_start.source_commit_full_sha
@@ -3068,11 +3588,18 @@ def run_watchdog(args, *, mode: str = "h1_2") -> int:
                 worker_summary.get("candidate_action_audit", {}),
                 scope=worker_summary.get("scope", {}),
             )
+    elif h1r32 and worker_summary is not None:
+        if worker_summary.get("schema") == "task037.candidate_h.h1r3.h5.worker.v1":
+            worker_qualification_recomputed = _evaluate_h1r32_worker_qualification(
+                (worker_summary.get("measurements") or [{}])[0],
+                worker_summary.get("candidate_action_audit", {}),
+                scope=worker_summary.get("scope", {}),
+            )
     worker_qualification_pass = bool(
         worker_summary is not None
         and (
             worker_qualification_recomputed["pass"]
-            if (h1r2 or h1r3 or h1r31)
+            if (h1r2 or h1r3 or h1r31 or h1r32)
             and worker_qualification_recomputed is not None
             else worker_summary.get("qualification", {}).get("pass") is True
         )
@@ -3124,7 +3651,7 @@ def run_watchdog(args, *, mode: str = "h1_2") -> int:
         and (not h1r31 or worker_process_tree_all_ranks)
         and peak_process_tree_rss <= rss_limit_bytes
         and (
-            not (h1r2 or h1r3 or h1r31)
+            not (h1r2 or h1r3 or h1r31 or h1r32)
             or (
                 completion_elapsed_seconds is not None
                 and completion_elapsed_seconds <= timeout_seconds
@@ -3136,7 +3663,7 @@ def run_watchdog(args, *, mode: str = "h1_2") -> int:
                 and _h1r2_runtime_identity_is_valid(worker_runtime_identity)
                 and worker_runtime_identity_match
                 and (
-                    not (h1r3 or h1r31)
+                    not (h1r3 or h1r31 or h1r32)
                     or worker_summary.get("status") == "pass"
                 )
             )
@@ -3261,6 +3788,55 @@ def run_watchdog(args, *, mode: str = "h1_2") -> int:
                 else None
             ),
             "raw_artifacts": h1r31_artifacts,
+        }
+        watchdog_summary = attach_evidence_sha256(watchdog_summary)
+    elif h1r32:
+        h1r32_worker = worker_summary or {}
+        h1r32_artifacts = _h1r32_file_metadata(run_dir)
+        watchdog_summary = {
+            "schema": "task037.candidate_h.h1r3.h5.watchdog.v1",
+            "command": command,
+            "mpi_size": 1,
+            "return_code": None if return_code is None else int(return_code),
+            "status": "pass" if watchdog_pass else (
+                "controlled_stop" if controlled_stop is not None else "worker_failed"
+            ),
+            "controlled_stop": controlled_stop,
+            "timeout_seconds": timeout_seconds,
+            "poll_interval_seconds": poll_seconds,
+            "rss_limit_bytes": rss_limit_bytes,
+            "termination": termination,
+            "wall_seconds": wall_seconds,
+            "completion_elapsed_seconds": completion_elapsed_seconds,
+            "peak_process_tree_rss_bytes": peak_process_tree_rss,
+            "peak_includes_only_worker_alive_samples": True,
+            "worker_live_sample_count": len(live_samples),
+            "worker_process_tree_swap_bytes": (
+                None if not live_swap_values else max(live_swap_values)
+            ),
+            "worker_swap_zero": worker_swap_zero,
+            "resource_authority_readable": live_authority_readable,
+            "final_sample": final_sample,
+            "worker_summary_present": worker_summary is not None,
+            "worker_summary_status": (
+                None if worker_summary is None else worker_summary.get("status")
+            ),
+            "worker_summary_evidence_sha256_valid": (
+                worker_summary_evidence_sha256_valid
+            ),
+            "worker_qualification_recomputed": worker_qualification_recomputed,
+            "worker_qualification_pass": worker_qualification_pass,
+            "watchdog_runtime_identity": watchdog_runtime_identity,
+            "worker_runtime_identity_match": worker_runtime_identity_match,
+            "source_at_start": source_start_json,
+            "source_at_end": source_end_json,
+            "source_stable_clean": source_stable_clean,
+            "reference_and_candidate_same_worker": True,
+            "global_rows": h1r32_worker.get("global_rows"),
+            "constraint_count": h1r32_worker.get("constraint_count"),
+            "global_cells": h1r32_worker.get("global_cells"),
+            "axis_cell_counts": h1r32_worker.get("axis_cell_counts"),
+            "raw_artifacts": h1r32_artifacts,
         }
         watchdog_summary = attach_evidence_sha256(watchdog_summary)
     elif h1r2:
@@ -4741,6 +5317,629 @@ def run_h1r31_check(
     return 0 if result["pass"] else 1
 
 
+def _h1r32_read_h10_baseline() -> dict[str, Any]:
+    raw_dir = Path(H1R32_H10_RAW_DIR).resolve()
+    record_path = Path(H1R32_H10_RECORD).resolve()
+    record_bytes = record_path.read_bytes()
+    compact = json.loads(record_bytes.decode("utf-8"))
+    recorded_artifacts = compact.get("raw_artifacts")
+    manifest_paths = [
+        name
+        for name in (recorded_artifacts or {})
+        if str(name).startswith("canonical/")
+    ]
+    if len(manifest_paths) != 1:
+        raise ValueError("H1R3.0R h10 baseline must have one manifest")
+    actual_artifacts = _h1r3_file_metadata(raw_dir)
+    manifest_path = manifest_paths[0]
+    actual_artifacts[manifest_path] = _h1r3_path_metadata(
+        raw_dir / manifest_path, manifest_path
+    )
+    actual_artifacts["watchdog_summary.json"] = _h1r3_path_metadata(
+        raw_dir / "watchdog_summary.json", "watchdog_summary.json"
+    )
+    raw_worker = json.loads(
+        (raw_dir / "run_summary.json").read_text(encoding="utf-8")
+    )
+    raw_watchdog = json.loads(
+        (raw_dir / "watchdog_summary.json").read_text(encoding="utf-8")
+    )
+    compact_measurement = compact.get("measurement", {})
+    compact_memory = compact.get("memory_authority", {})
+    source_identity = compact.get("source_identity", {})
+    source_start = raw_watchdog.get("source_at_start", {})
+    source_end = raw_watchdog.get("source_at_end", {})
+    raw_artifact_checks = {
+        "recorded_key_set": isinstance(recorded_artifacts, dict)
+        and set(recorded_artifacts) == set(actual_artifacts),
+        "record_sha256": hashlib.sha256(record_bytes).hexdigest()
+        == H1R32_H10_RECORD_SHA256,
+        "recorded_metadata": isinstance(recorded_artifacts, dict)
+        and all(
+            recorded_artifacts.get(name) == metadata
+            for name, metadata in actual_artifacts.items()
+        ),
+    }
+    raw_checks = {
+        "compact_schema": compact.get("schema")
+        == "task037.candidate_h.h1r3.warm.compact_check.v1",
+        "compact_evidence": evidence_sha256_is_valid(compact),
+        "compact_status": compact.get("status") == "pass"
+        and compact.get("pass") is True,
+        "compact_source": source_identity.get("source_commit_full_sha")
+        == H1R32_H10_SOURCE_SHA,
+        "compact_source_clean": _h1r2_source_is_clean(
+            source_identity.get("start", {})
+        )
+        and _h1r2_source_is_clean(source_identity.get("end", {})),
+        "compact_global_rows": compact_measurement.get("global_rows")
+        == H1R32_H10_GLOBAL_ROWS,
+        "compact_payload": compact_measurement.get(
+            "retained_payload_global_sum_bytes"
+        )
+        == H1R32_H10_PAYLOAD_BYTES,
+        "compact_peak": compact_memory.get(
+            "completed_process_tree_peak_rss_bytes"
+        )
+        == H1R32_H10_PEAK_BYTES,
+        "worker_schema": raw_worker.get("schema")
+        == "task037.candidate_h.h1r3.warm.worker.v1",
+        "worker_status": raw_worker.get("status") == "pass"
+        and raw_worker.get("qualification", {}).get("pass") is True,
+        "worker_evidence": evidence_sha256_is_valid(raw_worker),
+        "worker_source": _h1r2_source_is_clean(
+            raw_worker.get("source_at_start", {})
+        )
+        and _h1r2_source_is_clean(raw_worker.get("source_at_end", {}))
+        and raw_worker.get("source_at_start", {}).get("source_commit_full_sha")
+        == H1R32_H10_SOURCE_SHA
+        and raw_worker.get("source_at_end", {}).get("source_commit_full_sha")
+        == H1R32_H10_SOURCE_SHA,
+        "worker_rows": raw_worker.get("global_rows") == H1R32_H10_GLOBAL_ROWS
+        and raw_worker.get("candidate_action_audit", {}).get(
+            "global_rows"
+        )
+        == H1R32_H10_GLOBAL_ROWS,
+        "worker_payload": raw_worker.get(
+            "candidate_action_audit", {}
+        ).get("retained_numeric_payload_global_sum_bytes")
+        == H1R32_H10_PAYLOAD_BYTES,
+        "watchdog_schema": raw_watchdog.get("schema")
+        == "task037.candidate_h.h1r3.warm.watchdog.v1",
+        "watchdog_status": raw_watchdog.get("status") == "pass"
+        and raw_watchdog.get("return_code") == 0,
+        "watchdog_evidence": evidence_sha256_is_valid(raw_watchdog),
+        "watchdog_source": _h1r2_source_is_clean(source_start)
+        and _h1r2_source_is_clean(source_end)
+        and source_start.get("source_commit_full_sha") == H1R32_H10_SOURCE_SHA
+        and source_end.get("source_commit_full_sha") == H1R32_H10_SOURCE_SHA,
+        "watchdog_peak": raw_watchdog.get("peak_process_tree_rss_bytes")
+        == H1R32_H10_PEAK_BYTES,
+        "raw_embedded_artifacts": isinstance(raw_watchdog.get("raw_artifacts"), dict)
+        and all(
+            raw_watchdog["raw_artifacts"].get(name) == metadata
+            for name, metadata in actual_artifacts.items()
+            if name != "watchdog_summary.json"
+        ),
+    }
+    checks = {
+        **{f"artifact.{name}": value for name, value in raw_artifact_checks.items()},
+        **{f"raw.{name}": value for name, value in raw_checks.items()},
+    }
+    problems = [name for name, value in checks.items() if value is not True]
+    if problems:
+        raise ValueError("H1R3.0R h10 baseline failed: " + ",".join(problems))
+    return {
+        "raw_dir": raw_dir,
+        "record_path": record_path,
+        "record_sha256": H1R32_H10_RECORD_SHA256,
+        "source_commit_full_sha": H1R32_H10_SOURCE_SHA,
+        "global_rows": H1R32_H10_GLOBAL_ROWS,
+        "payload_global_sum_bytes": H1R32_H10_PAYLOAD_BYTES,
+        "peak_process_tree_rss_bytes": H1R32_H10_PEAK_BYTES,
+        "manifest_path": manifest_path,
+        "raw_artifacts": actual_artifacts,
+        "raw_artifact_checks": raw_artifact_checks,
+        "raw_checks": raw_checks,
+        "compact": compact,
+        "pass": True,
+    }
+
+
+def _h1r32_read_h1r31_prerequisite() -> dict[str, Any]:
+    record_path = Path(H1R32_H1R31_RECORD).resolve()
+    record_bytes = record_path.read_bytes()
+    record = json.loads(record_bytes.decode("utf-8"))
+    checks = {
+        "record_sha256": hashlib.sha256(record_bytes).hexdigest()
+        == H1R32_H1R31_RECORD_SHA256,
+        "schema": record.get("schema")
+        == "task037.candidate_h.h1r3.mpi2.compact_check.v1",
+        "evidence": evidence_sha256_is_valid(record),
+        "status_pass": record.get("status") == "pass"
+        and record.get("pass") is True,
+        "problems_empty": record.get("problems") == [],
+        "h1r32_eligible": record.get("scope_boundary", {}).get("H1R3.2")
+        == "eligible_by_review_v6",
+        "h2_locked": record.get("scope_boundary", {}).get("H2") == "locked",
+    }
+    problems = [name for name, value in checks.items() if value is not True]
+    if problems:
+        raise ValueError("H1R3.1 prerequisite failed: " + ",".join(problems))
+    return {
+        "record_path": record_path,
+        "record_sha256": H1R32_H1R31_RECORD_SHA256,
+        "checks": checks,
+        "source_commit_full_sha": record.get("source_identity", {}).get(
+            "source_commit_full_sha"
+        ),
+        "pass": True,
+    }
+
+
+def _h1r32_check_raw(run_dir: Path, h10_run_dir: Path) -> dict[str, Any]:
+    run_dir = Path(run_dir).resolve()
+    h10_run_dir = Path(h10_run_dir).resolve()
+    if h10_run_dir != Path(H1R32_H10_RAW_DIR).resolve():
+        raise ValueError("H1R3.0R h10 path is not the frozen authority")
+    h10 = _h1r32_read_h10_baseline()
+    h1r31 = _h1r32_read_h1r31_prerequisite()
+    watchdog = json.loads(
+        (run_dir / "watchdog_summary.json").read_text(encoding="utf-8")
+    )
+    worker = json.loads(
+        (run_dir / "run_summary.json").read_text(encoding="utf-8")
+    )
+    timeline = [
+        json.loads(line)
+        for line in (run_dir / "watchdog_timeline.jsonl")
+        .read_text(encoding="utf-8")
+        .splitlines()
+        if line.strip()
+    ]
+    root = json.loads(
+        (run_dir / H1R32_ROOT_PID_FILE).read_text(encoding="utf-8")
+    )
+    actual_artifacts = _h1r32_file_metadata(run_dir)
+    recorded_artifacts = watchdog.get("raw_artifacts")
+    actual_artifacts["watchdog_summary.json"] = _h1r3_path_metadata(
+        run_dir / "watchdog_summary.json", "watchdog_summary.json"
+    )
+    watchdog_artifacts = {
+        name: metadata
+        for name, metadata in actual_artifacts.items()
+        if name != "watchdog_summary.json"
+    }
+    raw_artifact_checks = {
+        "recorded_key_set": isinstance(recorded_artifacts, dict)
+        and set(recorded_artifacts) == set(watchdog_artifacts),
+        "recorded_metadata": isinstance(recorded_artifacts, dict)
+        and all(
+            recorded_artifacts.get(name) == metadata
+            for name, metadata in watchdog_artifacts.items()
+        ),
+    }
+    worker_source_start = worker.get("source_at_start", {})
+    worker_source_end = worker.get("source_at_end", {})
+    watchdog_source_start = watchdog.get("source_at_start", {})
+    watchdog_source_end = watchdog.get("source_at_end", {})
+    source_checks = {
+        "watchdog_start_clean": _h1r2_source_is_clean(watchdog_source_start),
+        "watchdog_end_clean": _h1r2_source_is_clean(watchdog_source_end),
+        "worker_start_clean": _h1r2_source_is_clean(worker_source_start),
+        "worker_end_clean": _h1r2_source_is_clean(worker_source_end),
+        "same_current_commit": (
+            watchdog_source_start.get("source_commit_full_sha")
+            == watchdog_source_end.get("source_commit_full_sha")
+            == worker_source_start.get("source_commit_full_sha")
+            == worker_source_end.get("source_commit_full_sha")
+        ),
+        "watchdog_source_stable": watchdog.get("source_stable_clean") is True,
+    }
+    runtime_watchdog = watchdog.get("watchdog_runtime_identity")
+    runtime_worker = worker.get("runtime_identity")
+    command = watchdog.get("command")
+    expected_command = _watchdog_command(
+        SimpleNamespace(run_dir=run_dir), mode="h1r3_h5"
+    )
+    runtime_checks = {
+        "watchdog_values": _h1r2_runtime_identity_is_valid(runtime_watchdog),
+        "worker_values": _h1r2_runtime_identity_is_valid(runtime_worker),
+        "identical": runtime_worker == runtime_watchdog,
+        "command_python_executable": (
+            isinstance(command, list)
+            and len(command) > 3
+            and isinstance(runtime_watchdog, dict)
+            and command[3] == runtime_watchdog.get("sys.executable")
+        ),
+        "recorded_match": watchdog.get("worker_runtime_identity_match") is True,
+    }
+    live_timeline = [item for item in timeline if item.get("worker_alive") is True]
+    timeline_peak = max(
+        (
+            item.get("worker_tree_rss_sum_bytes")
+            for item in live_timeline
+            if isinstance(item.get("worker_tree_rss_sum_bytes"), int)
+            and not isinstance(item.get("worker_tree_rss_sum_bytes"), bool)
+            and item.get("worker_tree_rss_sum_bytes") >= 0
+        ),
+        default=None,
+    )
+    live_swaps = [_live_sample_swap(item) for item in live_timeline]
+    timeline_swap = (
+        max(live_swaps)
+        if live_swaps and all(value is not None for value in live_swaps)
+        else None
+    )
+    timeline_checks = {
+        "live_samples_present": bool(live_timeline),
+        "live_samples_readable": bool(
+            live_timeline
+            and all(_live_sample_is_readable(item) for item in live_timeline)
+        ),
+        "peak_recomputed": watchdog.get("peak_process_tree_rss_bytes")
+        == timeline_peak,
+        "peak_limit": isinstance(timeline_peak, int)
+        and timeline_peak <= H1R32_PEAK_LIMIT_BYTES,
+        "swap_recomputed": watchdog.get("worker_process_tree_swap_bytes")
+        == timeline_swap,
+        "swap_zero": timeline_swap == 0,
+        "live_sample_count": watchdog.get("worker_live_sample_count")
+        == len(live_timeline),
+        "resource_authority": watchdog.get("resource_authority_readable") is True,
+    }
+    root_checks = {
+        "schema": root.get("schema") == "task037.candidate_h.h1r3.h5.root_pid.v1",
+        "positive_root_pid": isinstance(root.get("root_pid"), int)
+        and not isinstance(root.get("root_pid"), bool)
+        and root.get("root_pid") > 0,
+    }
+    measurement = (worker.get("measurements") or [{}])[0]
+    candidate_audit = worker.get("candidate_action_audit", {})
+    fresh_qualification = _evaluate_h1r32_worker_qualification(
+        measurement, candidate_audit, scope=worker.get("scope", {})
+    )
+    worker_checks = {
+        "schema": worker.get("schema")
+        == "task037.candidate_h.h1r3.h5.worker.v1",
+        "evidence": evidence_sha256_is_valid(worker),
+        "status_pass": worker.get("status") == "pass",
+        "qualification_status": worker.get("qualification", {}).get("status")
+        == fresh_qualification.get("status"),
+        "qualification_pass": worker.get("qualification", {}).get("pass")
+        == fresh_qualification.get("pass"),
+        "fresh_pass": fresh_qualification.get("pass") is True,
+        "mpi_size": worker.get("mpi_size") == 1,
+        "global_rows": worker.get("global_rows") == H1R32_GLOBAL_ROWS,
+        "global_cells": worker.get("global_cells") == H1R32_GLOBAL_CELLS,
+        "axis_cell_counts": worker.get("axis_cell_counts")
+        == list(H1R32_AXIS_CELL_COUNTS),
+        "constraint_count": worker.get("constraint_count")
+        == worker.get("scope", {}).get("constraint_count")
+        == candidate_audit.get("constraint_count"),
+        "source_definition_matches_measurement": worker.get(
+            "source_definitions", {}
+        ).get(H1R32_SOURCE_LABEL)
+        == measurement.get("source_definition"),
+        "reference_action": (
+            worker.get("reference_action", {}).get("type")
+            == "MpcFormActionContext"
+            and worker.get("reference_action", {}).get("same_worker") is True
+            and worker.get("reference_action", {}).get("apply_count")
+            == H1R32_REFERENCE_APPLY_COUNT
+            and worker.get("reference_action", {}).get(
+                "global_matrix_materialized"
+            )
+            is False
+        ),
+    }
+    watchdog_checks = {
+        "schema": watchdog.get("schema")
+        == "task037.candidate_h.h1r3.h5.watchdog.v1",
+        "evidence": evidence_sha256_is_valid(watchdog),
+        "command": command == expected_command,
+        "mpi_size": watchdog.get("mpi_size") == 1,
+        "timeout_seconds": watchdog.get("timeout_seconds")
+        == H1R32_TIMEOUT_SECONDS,
+        "rss_limit_bytes": watchdog.get("rss_limit_bytes")
+        == H1R32_PEAK_LIMIT_BYTES,
+        "status": watchdog.get("status") == "pass",
+        "return_code": watchdog.get("return_code") == 0,
+        "controlled_stop": watchdog.get("controlled_stop") is None,
+        "completion": (
+            isinstance(watchdog.get("completion_elapsed_seconds"), (int, float))
+            and not isinstance(watchdog.get("completion_elapsed_seconds"), bool)
+            and math.isfinite(float(watchdog["completion_elapsed_seconds"]))
+            and 0.0 <= watchdog["completion_elapsed_seconds"]
+            <= H1R32_TIMEOUT_SECONDS
+        ),
+        "worker_summary_present": watchdog.get("worker_summary_present") is True,
+        "worker_summary_status": watchdog.get("worker_summary_status")
+        == worker.get("status"),
+        "worker_summary_evidence": watchdog.get(
+            "worker_summary_evidence_sha256_valid"
+        )
+        is True
+        and evidence_sha256_is_valid(worker),
+        "worker_qualification_pass": watchdog.get("worker_qualification_pass")
+        == fresh_qualification.get("pass"),
+        "worker_recomputation": watchdog.get("worker_qualification_recomputed")
+        == fresh_qualification,
+        "source_stable_clean": watchdog.get("source_stable_clean") is True,
+        "termination_not_requested": watchdog.get("termination", {}).get(
+            "requested"
+        )
+        is False,
+    }
+    scale_values = {
+        "M5_bytes": candidate_audit.get(
+            "retained_numeric_payload_global_sum_bytes"
+        ),
+        "N5_rows": worker.get("global_rows"),
+        "P5_bytes": timeline_peak,
+        "M10_bytes": H1R32_H10_PAYLOAD_BYTES,
+        "N10_rows": H1R32_H10_GLOBAL_ROWS,
+        "P10_bytes": H1R32_H10_PEAK_BYTES,
+    }
+    alpha_payload = None
+    b_peak = None
+    p_h1_pred = None
+    if (
+        isinstance(scale_values["M5_bytes"], (int, float))
+        and scale_values["M5_bytes"] > 0
+        and isinstance(scale_values["N5_rows"], (int, float))
+        and scale_values["N5_rows"] > H1R32_H10_GLOBAL_ROWS
+    ):
+        alpha_payload = math.log(
+            float(scale_values["M5_bytes"]) / H1R32_H10_PAYLOAD_BYTES
+        ) / math.log(float(scale_values["N5_rows"]) / H1R32_H10_GLOBAL_ROWS)
+    if (
+        isinstance(scale_values["P5_bytes"], (int, float))
+        and not isinstance(scale_values["P5_bytes"], bool)
+        and math.isfinite(float(scale_values["P5_bytes"]))
+        and float(scale_values["P5_bytes"]) >= 0.0
+        and isinstance(scale_values["P10_bytes"], (int, float))
+        and not isinstance(scale_values["P10_bytes"], bool)
+        and math.isfinite(float(scale_values["P10_bytes"]))
+        and float(scale_values["P10_bytes"]) >= 0.0
+        and isinstance(scale_values["N5_rows"], int)
+        and not isinstance(scale_values["N5_rows"], bool)
+        and scale_values["N5_rows"] > H1R32_H10_GLOBAL_ROWS
+    ):
+        b_peak = (
+            float(scale_values["P5_bytes"]) - float(scale_values["P10_bytes"])
+        ) / (float(scale_values["N5_rows"]) - H1R32_H10_GLOBAL_ROWS)
+        p_h1_pred = float(scale_values["P10_bytes"]) + b_peak * (
+            H1R32_H1_GLOBAL_ROWS - H1R32_H10_GLOBAL_ROWS
+        )
+    retained_payload_bytes_per_row = None
+    packed_temporary_bytes_per_row = None
+    action_seconds_per_row = None
+    if (
+        isinstance(scale_values["M5_bytes"], (int, float))
+        and not isinstance(scale_values["M5_bytes"], bool)
+        and math.isfinite(float(scale_values["M5_bytes"]))
+        and isinstance(scale_values["N5_rows"], int)
+        and not isinstance(scale_values["N5_rows"], bool)
+        and scale_values["N5_rows"] > 0
+    ):
+        retained_payload_bytes_per_row = float(
+            scale_values["M5_bytes"]
+        ) / float(scale_values["N5_rows"])
+    packed_temporary_bytes = candidate_audit.get(
+        "last_packed_coefficient_bytes"
+    )
+    if (
+        isinstance(packed_temporary_bytes, int)
+        and not isinstance(packed_temporary_bytes, bool)
+        and packed_temporary_bytes >= 0
+        and isinstance(scale_values["N5_rows"], int)
+        and not isinstance(scale_values["N5_rows"], bool)
+        and scale_values["N5_rows"] > 0
+    ):
+        packed_temporary_bytes_per_row = float(packed_temporary_bytes) / float(
+            scale_values["N5_rows"]
+        )
+    candidate_repeat_seconds = measurement.get(
+        "candidate_repeat_apply_seconds"
+    )
+    if (
+        isinstance(candidate_repeat_seconds, (int, float))
+        and not isinstance(candidate_repeat_seconds, bool)
+        and math.isfinite(float(candidate_repeat_seconds))
+        and isinstance(scale_values["N5_rows"], int)
+        and not isinstance(scale_values["N5_rows"], bool)
+        and scale_values["N5_rows"] > 0
+    ):
+        action_seconds_per_row = float(candidate_repeat_seconds) / float(
+            scale_values["N5_rows"]
+        )
+    scale_checks = {
+        "payload_per_row": bool(
+            isinstance(scale_values["M5_bytes"], (int, float))
+            and math.isfinite(float(scale_values["M5_bytes"]))
+            and float(scale_values["M5_bytes"]) / H1R32_GLOBAL_ROWS
+            <= H1R32_PAYLOAD_BYTES_PER_ROW_LIMIT
+        ),
+        "packed_per_row": fresh_qualification.get("payload_checks", {}).get(
+            "packed_row_limit"
+        )
+        is True,
+        "alpha_payload": (
+            alpha_payload is not None
+            and math.isfinite(alpha_payload)
+            and alpha_payload <= H1R32_ALPHA_PAYLOAD_LIMIT
+        ),
+        "action_seconds_per_row": fresh_qualification.get(
+            "timing_checks", {}
+        ).get("second_seconds_per_row")
+        is True,
+        "peak_slope": (
+            b_peak is not None
+            and math.isfinite(b_peak)
+            and b_peak <= H1R32_PEAK_SLOPE_BYTES_PER_ROW_LIMIT
+        ),
+        "peak_limit": timeline_checks["peak_limit"],
+        "swap_zero": timeline_checks["swap_zero"],
+        "completion": watchdog_checks["completion"],
+    }
+    canonical_checks = {
+        "canonical_export_false": measurement.get("canonical_export") is False,
+        "canonical_packet_none": measurement.get(
+            "candidate_canonical_packet_count"
+        )
+        is None,
+        "manifest_none": measurement.get("candidate_manifest") is None,
+        "canonical_directory_absent": not (run_dir / "canonical").exists(),
+    }
+    checks = {
+        **{f"raw.{name}": value for name, value in raw_artifact_checks.items()},
+        **{f"source.{name}": value for name, value in source_checks.items()},
+        **{f"runtime.{name}": value for name, value in runtime_checks.items()},
+        **{f"root.{name}": value for name, value in root_checks.items()},
+        **{f"timeline.{name}": value for name, value in timeline_checks.items()},
+        **{f"worker.{name}": value for name, value in worker_checks.items()},
+        **{f"watchdog.{name}": value for name, value in watchdog_checks.items()},
+        **{f"scale.{name}": value for name, value in scale_checks.items()},
+        **{f"canonical.{name}": value for name, value in canonical_checks.items()},
+        "h10_authority": h10["pass"],
+        "h1r31_prerequisite": h1r31["pass"],
+        "worker_qualification": fresh_qualification.get("pass") is True,
+    }
+    problems = [name for name, value in checks.items() if value is not True]
+    return {
+        "schema": "task037.candidate_h.h1r3.h5.compact_check.v1",
+        "status": "pass" if not problems else "gate_failed",
+        "pass": not problems,
+        "checks": checks,
+        "problems": problems,
+        "raw_run_directory": str(run_dir),
+        "raw_artifacts": actual_artifacts,
+        "source_identity": {
+            "start": watchdog_source_start,
+            "end": watchdog_source_end,
+            "worker_start": worker_source_start,
+            "worker_end": worker_source_end,
+            "source_commit_full_sha": watchdog_source_start.get(
+                "source_commit_full_sha"
+            ),
+        },
+        "runtime_identity": {
+            "watchdog": runtime_watchdog,
+            "worker": runtime_worker,
+            "match": watchdog.get("worker_runtime_identity_match"),
+        },
+        "measurement": {
+            "global_rows": worker.get("global_rows"),
+            "global_cells": worker.get("global_cells"),
+            "axis_cell_counts": worker.get("axis_cell_counts"),
+            "constraint_count": worker.get("constraint_count"),
+            "reference_apply_seconds": measurement.get("reference_apply_seconds"),
+            "candidate_apply_seconds": measurement.get("candidate_apply_seconds"),
+            "candidate_repeat_apply_seconds": measurement.get(
+                "candidate_repeat_apply_seconds"
+            ),
+            "timing_reduction": measurement.get("timing_reduction"),
+            "relative_error": measurement.get(
+                "reference_vs_candidate_relative_error"
+            ),
+            "finite": measurement.get("finite"),
+            "deterministic": measurement.get("deterministic"),
+            "retained_payload_components": candidate_audit.get(
+                "retained_numeric_payload_components"
+            ),
+            "retained_payload_local_bytes": candidate_audit.get(
+                "retained_numeric_payload_local_bytes"
+            ),
+            "retained_payload_global_sum_bytes": candidate_audit.get(
+                "retained_numeric_payload_global_sum_bytes"
+            ),
+            "retained_payload_global_max_bytes": candidate_audit.get(
+                "retained_numeric_payload_global_max_bytes"
+            ),
+            "packed_temporary_bytes": candidate_audit.get(
+                "last_packed_coefficient_bytes"
+            ),
+            "canonical_export": measurement.get("canonical_export"),
+            "canonical_packet_count": measurement.get(
+                "candidate_canonical_packet_count"
+            ),
+        },
+        "scaling": {
+            **scale_values,
+            "retained_payload_bytes_per_row": retained_payload_bytes_per_row,
+            "packed_temporary_bytes_per_row": packed_temporary_bytes_per_row,
+            "action_seconds_per_row": action_seconds_per_row,
+            "N_h1_rows": H1R32_H1_GLOBAL_ROWS,
+            "N_h1_axis_cell_counts": list(H1R32_H1_AXIS_CELL_COUNTS),
+            "retained_payload_bytes_per_row_limit": H1R32_PAYLOAD_BYTES_PER_ROW_LIMIT,
+            "packed_temporary_bytes_per_row_limit": H1R32_PACKED_BYTES_PER_ROW_LIMIT,
+            "action_seconds_per_row_limit": H1R32_ACTION_SECONDS_PER_ROW_LIMIT,
+            "alpha_payload": alpha_payload,
+            "b_peak_bytes_per_row": b_peak,
+            "P_h1_pred_bytes": p_h1_pred,
+            "P_h1_pred_scope": "action-only; not full solver/PDE qualification",
+        },
+        "memory_authority": {
+            "completed_process_tree_peak_limit_bytes": H1R32_PEAK_LIMIT_BYTES,
+            "completed_process_tree_peak_rss_bytes": timeline_peak,
+            "swap_bytes": timeline_swap,
+            "completion_elapsed_seconds": watchdog.get(
+                "completion_elapsed_seconds"
+            ),
+            "action_only": True,
+            "user_lt_2GB_not_inferred": True,
+        },
+        "h10_authority": {
+            "raw_run_directory": str(h10["raw_dir"]),
+            "record_path": str(h10["record_path"]),
+            "record_sha256": h10["record_sha256"],
+            "source_commit_full_sha": h10["source_commit_full_sha"],
+            "global_rows": h10["global_rows"],
+            "payload_global_sum_bytes": h10["payload_global_sum_bytes"],
+            "peak_process_tree_rss_bytes": h10["peak_process_tree_rss_bytes"],
+            "raw_artifact_checks": h10["raw_artifact_checks"],
+            "raw_checks": h10["raw_checks"],
+            "pass": h10["pass"],
+        },
+        "h1r31_prerequisite": {
+            "record_path": str(h1r31["record_path"]),
+            "record_sha256": h1r31["record_sha256"],
+            "source_commit_full_sha": h1r31["source_commit_full_sha"],
+            "checks": h1r31["checks"],
+            "pass": h1r31["pass"],
+        },
+        "scope_boundary": {
+            "H1R3.2": "pass" if not problems else "gate_failed",
+            "H2": "locked",
+        },
+    }
+
+
+def run_h1r32_check(
+    run_dir: Path, h10_run_dir: Path, output: Path
+) -> int:
+    try:
+        result = _h1r32_check_raw(Path(run_dir), Path(h10_run_dir))
+    except (OSError, KeyError, TypeError, ValueError, IndexError, AttributeError) as exc:
+        result = {
+            "schema": "task037.candidate_h.h1r3.h5.compact_check.v1",
+            "status": "gate_failed",
+            "pass": False,
+            "problems": [
+                f"controlled_checker_failure:{type(exc).__name__}:{exc}"
+            ],
+        }
+    result = attach_evidence_sha256(result)
+    output = Path(output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
+        json.dumps(result, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return 0 if result["pass"] else 1
+
+
 def _read_compare_run_identity(
     run_dir: Path, expected_mpi_size: int
 ) -> dict[str, Any]:
@@ -4918,6 +6117,14 @@ def _parser() -> argparse.ArgumentParser:
     h1r31_check.add_argument("--run-dir", type=Path, required=True)
     h1r31_check.add_argument("--mpi1-run-dir", type=Path, required=True)
     h1r31_check.add_argument("--output", type=Path, required=True)
+    h1r32_worker = subparsers.add_parser("h1r3-h5-worker")
+    h1r32_worker.add_argument("--run-dir", type=Path, required=True)
+    h1r32_watchdog = subparsers.add_parser("h1r3-h5-watchdog")
+    h1r32_watchdog.add_argument("--run-dir", type=Path, required=True)
+    h1r32_check = subparsers.add_parser("h1r3-h5-check")
+    h1r32_check.add_argument("--run-dir", type=Path, required=True)
+    h1r32_check.add_argument("--h10-run-dir", type=Path, required=True)
+    h1r32_check.add_argument("--output", type=Path, required=True)
     compare = subparsers.add_parser("compare")
     compare.add_argument("--mpi1-run-dir", type=Path, required=True)
     compare.add_argument("--mpi2-run-dir", type=Path, required=True)
@@ -4949,6 +6156,12 @@ def main(argv: list[str] | None = None) -> int:
         return run_watchdog(args, mode="h1r3_mpi2")
     if args.command == "h1r3-mpi2-check":
         return run_h1r31_check(args.run_dir, args.mpi1_run_dir, args.output)
+    if args.command == "h1r3-h5-worker":
+        return 0 if run_worker(args.run_dir, mode="h1r3_h5") else 1
+    if args.command == "h1r3-h5-watchdog":
+        return run_watchdog(args, mode="h1r3_h5")
+    if args.command == "h1r3-h5-check":
+        return run_h1r32_check(args.run_dir, args.h10_run_dir, args.output)
     result = compare_run_directories(args.mpi1_run_dir, args.mpi2_run_dir)
     payload = json.dumps(result, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
     if args.output is None:
