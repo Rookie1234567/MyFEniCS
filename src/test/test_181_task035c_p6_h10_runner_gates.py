@@ -20,6 +20,7 @@ from benchmarks.run_task033_memory_watchdog import (
 from benchmarks.task035c_p6_h10_gates import (
     task035c_p6_h10_full3d_reference_gate,
     task035c_p6_h10_preflight_authority_gate,
+    task037b_h1_pinned_full3d_reference_gate,
 )
 
 
@@ -199,15 +200,11 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
         phase6 = parse_phase6_args([])
         self.assertEqual(phase6.degree, 2)
         self.assertEqual(phase6.solver_path, "augmented")
-        self.assertEqual(
-            phase6.stage4_full3d_assembly_backend, "standard_full"
-        )
+        self.assertEqual(phase6.stage4_full3d_assembly_backend, "standard_full")
         self.assertFalse(phase6.task035c_p6_h10_gate)
 
         full3d = parse_full3d_args(["--degree", "3"])
-        self.assertEqual(
-            full3d.stage4_full3d_assembly_backend, "standard_full"
-        )
+        self.assertEqual(full3d.stage4_full3d_assembly_backend, "standard_full")
         self.assertFalse(full3d.task035c_p6_h10_gate)
 
     def test_discrete_axial_scope_is_user_visible_and_fail_closed(self) -> None:
@@ -347,6 +344,20 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
                 mpi_size=8,
             )
             self.assertTrue(accepted["pass"], accepted["failures"])
+            pinned = task037b_h1_pinned_full3d_reference_gate(
+                reference,
+                expected_sha256=RECORD_SHA256,
+                observed_sha256=RECORD_SHA256,
+                current_source_sha="f" * 40,
+                assembly_backend=backend,
+                mpi_size=8,
+            )
+            self.assertTrue(pinned["pass"], pinned["failures"])
+            self.assertTrue(pinned["checks"]["pinned_historical_source_identity"])
+            self.assertNotIn("current_source_sha", pinned)
+            self.assertEqual(pinned["reference_source_sha"], SOURCE_SHA)
+            self.assertEqual(pinned["current_hybrid_source_sha"], "f" * 40)
+            self.assertEqual(pinned["reference_role"], "pinned_historical_case096")
             stale = task035c_p6_h10_full3d_reference_gate(
                 reference,
                 expected_sha256=RECORD_SHA256,
@@ -357,6 +368,16 @@ class Task035cP6H10RunnerGateTests(unittest.TestCase):
             )
             self.assertFalse(stale["pass"])
             self.assertIn("exact_final_source_sha", stale["failures"])
+            stale_pinned = task037b_h1_pinned_full3d_reference_gate(
+                reference,
+                expected_sha256="0" * 64,
+                observed_sha256=RECORD_SHA256,
+                current_source_sha="f" * 40,
+                assembly_backend=backend,
+                mpi_size=8,
+            )
+            self.assertFalse(stale_pinned["pass"])
+            self.assertIn("record_hash_matches_expected", stale_pinned["failures"])
 
 
 if __name__ == "__main__":
