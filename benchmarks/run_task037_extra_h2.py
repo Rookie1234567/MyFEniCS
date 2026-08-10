@@ -71,6 +71,7 @@ H2A_FIXED_DEGREE = 6
 H2A_FIXED_H_NM = 10.0
 H2A_FIXED_GLOBAL_ROWS = 173_802
 H2A_FIXED_CONSTRAINT_COUNT = 9_210
+H2A_FORM_JIT_EXTRA_COMPILE_ARGS = ("-O0", "-g0")
 
 
 def _runtime_identity() -> dict[str, Any]:
@@ -230,7 +231,15 @@ def _proxy_forms(function_space, mesh_data, cfg):
         * dx
     )
     mass_form = PETSc.ScalarType(1.0) * ufl.inner(u, v) * dx
-    return fem.form(curl_form), fem.form(mass_form)
+    jit_options = {
+        "cffi_extra_compile_args": list(H2A_FORM_JIT_EXTRA_COMPILE_ARGS),
+    }
+    return fem.form(curl_form, jit_options=jit_options), fem.form(
+        mass_form,
+        jit_options={
+            "cffi_extra_compile_args": list(H2A_FORM_JIT_EXTRA_COMPILE_ARGS),
+        },
+    )
 
 
 def _blocks_for_cell(blocks: Iterable[Any], cell_dofs: np.ndarray) -> tuple[Any, ...]:
@@ -613,6 +622,9 @@ def _fixed_scope() -> dict[str, Any]:
         "h_nm": H2A_FIXED_H_NM,
         "mpi_size": 1,
         "launch_mode": "mpi_singleton_direct",
+        "form_jit_compile_policy": {
+            "cffi_extra_compile_args": list(H2A_FORM_JIT_EXTRA_COMPILE_ARGS),
+        },
         "operator": "B0=K_curl+k0^2*M_abs_epsilon",
         "inventory_only": True,
         "Bc_inverse_implemented": False,

@@ -425,6 +425,31 @@ def test_h2a_default_proxy_forms_match_tagged_cell_authority(tmp_path: Path):
         assert np.linalg.norm(new_b0 - old_b0) / np.linalg.norm(old_b0) <= 1.0e-11
 
 
+def test_h2a_proxy_forms_bind_fixed_o0_compile_policy(
+    monkeypatch, tmp_path: Path
+):
+    cfg = target_stage4_config(degree=2, h_nm=10.0)
+    mesh_data = build_airbox_mesh_3d(cfg, tmp_path / "policy_mesh")
+    function_space = _create_nedelec_space(mesh_data.mesh, cfg)
+    calls = []
+
+    def capture_form(form, **kwargs):
+        calls.append(kwargs)
+        return form
+
+    monkeypatch.setattr(h2.fem, "form", capture_form)
+    h2._proxy_forms(function_space, mesh_data, cfg)
+    expected = {
+        "jit_options": {
+            "cffi_extra_compile_args": ["-O0", "-g0"],
+        }
+    }
+    assert calls == [expected, expected]
+    assert h2._fixed_scope()["form_jit_compile_policy"] == expected[
+        "jit_options"
+    ]
+
+
 @pytest.mark.parametrize("field", ("global_rows", "constraint_count"))
 def test_h2a_p6_identity_is_frozen(tmp_path: Path, field: str):
     _write_good_raw(tmp_path)
