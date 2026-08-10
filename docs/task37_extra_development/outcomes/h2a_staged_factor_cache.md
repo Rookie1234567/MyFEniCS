@@ -184,3 +184,121 @@ Attempt1 与 attempt2 的 raw 都在 ignored artifact 目录；tracked 只保留
 H2A-R1 PASS 只表示隔离 form-JIT 和 fresh cache-hit 证据通过，授权进入 H2A-R2。R2 才能验证每个 exact class 的代表性 tensor、constrained block、exact numeric hash/dedup、LU factor、factor manifest 与实际 resident payload；R1 不等于 factor 或 smoother pass。
 
 本轮没有运行 H2A-R2、H2B/H2C/H2D/H4、KSP、PDE、DtN、field 或 RTA。H2B/H2C/H2D/H4 继续 locked；不得把本 outcome 的 cache-hit 结果外推为 PDE 内存或物理结果。H2A-R1 的 formal 预算已经用完（2/2），后续只能按 Review V8 顺序进入获授权的 R2，不得原样再跑 R1。
+
+## H2A-R2 受约束 factor store 正式 PASS（primary attempt #1/3）
+
+### 这一步做什么
+
+R1 只证明昂贵的 form 编译可以隔离，并且新的进程能从冻结 cache 命中；它还没有产生局部数值因子。R2 在同一 full-space 局部算子上加入真实的 Floquet 约束展开：稀疏的 `C_c` 把一个 cell 的完整自由度映射到独立的全局行，然后暂时计算
+`C_c^H (K_curl + k0^2 M_|epsilon|) C_c`，再按 exact numeric class 复用一个 pivoted LU。相同 class 的 cell 只保留 class 引用和 gather 行，不为每个 cell 保存 dense 矩阵或 factor。
+
+这样做的收益是可以直接审阅“约束后的局部 action、factor residual、solve residual 和真实 JSON/NumPy factor payload”；代价是需要保存 factor store，并且它仍然只覆盖局部 action/factor 证据，不等于全局 PDE、KSP、smoother 或物理场结果。
+
+| 项目 | 实际状态 |
+|---|---|
+| Review 合同 | Review V8 |
+| H2A-R2 | **PASS** |
+| formal attempt | `#1/3`；本轮没有重跑 watchdog |
+| 本轮 checker | 对既有 raw 执行两次相同的 `r2-check`；两次均 PASS 且 canonical 字节完全相同 |
+| source | `da8ddbb257b0d9d510e9d711d23144f50dabd0e4`，start/end 均 clean |
+| scope | p6/h10、MPI1 singleton、252 cells、`nloc=882` |
+| operator | `C^H*(K_curl+k0^2*M_abs_epsilon)*C` |
+| timeout / RSS | `<=7200 s` / `<1,750,000,000 B` |
+| swap | `0 B` |
+| R1 cache | 已通过 R1 authority 的同一 cache；命中后未重新 staging |
+
+正式命令与本轮轻量复现命令如下；本轮对同一 raw 连续执行两次 lightweight checker，均 PASS 且 byte-identical，不启动 worker/heavy：
+
+```bash
+cd /home/shenjh/Projects/MyFEniCSx_task37_extra
+export GIT_DIR="$PWD/.git-codex"
+export GIT_WORK_TREE="$PWD"
+source scripts/activate_myfenics_wsl.sh
+python -m benchmarks.run_task037_extra_h2 r2-watchdog \
+  --run-dir benchmarks/artifacts/task037_extra_development/h2a_r2_da8ddbb_run1
+python -m benchmarks.run_task037_extra_h2 r2-check \
+  --run-dir benchmarks/artifacts/task037_extra_development/h2a_r2_da8ddbb_run1 \
+  --output benchmarks/cases/101_task37_extra_development/records/h2a_staged_factor_cache.json
+```
+
+### R2 Gate 实测
+
+| Gate / measured field | 实际值 | 限值或合同 | 状态 |
+|---|---:|---:|---|
+| global rows / constraints | `173802 / 9210` | 固定 authority | PASS |
+| cells / local `nloc` | `252 / 882` | 固定 authority | PASS |
+| exact classes | `24` | `<=32` | PASS |
+| unique numeric factors / hash dedup | `16 / 8` | `<=32` | PASS |
+| transformed action relative error（24 classes最大值） | `0.0` | `<=1e-11` | PASS |
+| factorization residual（最大值） | `8.540193602788576e-16` | `<=1e-10` | PASS |
+| representative solve residual（最大值） | `4.861914019080286e-11` | `<=1e-10` | PASS |
+| factor finite / measured deterministic | `true / true` | 均须为真 | PASS |
+| loaded solve deterministic | `true` | 必须为真 | PASS |
+| process-tree peak | `717139968 B` | `<1,750,000,000 B` | PASS |
+| swap | `0 B` | `0` | PASS |
+| completion elapsed | `4658.770581231918 s` | `<=7200 s` | PASS |
+| live samples / termination | `18506 / null` | 可重算、正常结束 | PASS |
+
+Factor store 在 cold builder 阶段的 factor audit 为 `201925908 B`；正式 payload Gate 采用释放 builder 后由 loader 验证的磁盘 manifest authority，而不是用较小的 worker 自报值。manifest 绑定 JSON 和全部 NumPy 数组，loader 冷加载后给出如下闭合口径：
+
+| retained factor + metadata 组件 | bytes |
+|---|---:|
+| factor values | `199148544` |
+| pivots | `56448` |
+| per-class sparse expansion | `508128` |
+| cell reference arrays | `1781144` |
+| canonical metadata / file bindings | `439548` |
+| 合计 `factor_plus_metadata_bytes` | **`201933812`** |
+| R2 限值 | `400000000 B` |
+
+合计与 manifest/loader 的 verified payload 完全相等，因此该 payload Gate PASS。24 个 class 都产生了 `factor_started` 和 `factor_ready`；builder 随后释放，cold load 只加载已验证的 factor store。每个 cell 仍只有 class ID 与实际 independent global rows，没有 per-cell factor、global matrix、Schur 或 slab factor。
+
+### R0/R1 authority 与 cache identity
+
+| authority | 固定身份 |
+|---|---|
+| R0 record | [h2a_class_discovery.json](../../../benchmarks/cases/101_task37_extra_development/records/h2a_class_discovery.json)，file SHA `3024dea6ac33aa24c78a86e3f9ae7e699630320906134088f7df302b992e134d`，source `b7eef17f10655be99f5bba072f9a547ae05f17ac` |
+| R1 record identity | 旧 canonical file SHA `672b036c69edfd74ee613ecc7264b0d699cb472730ebf76a048db1cb333c21ef`，embedded evidence `361187150b5c2ff4c76094cb99c26436d1d7c29e0709ae42608cbc9f154221cc`，source `107a3ac1ea01ab0cfdd450a268789890ef76e030` |
+| R2 current record | [h2a_staged_factor_cache.json](../../../benchmarks/cases/101_task37_extra_development/records/h2a_staged_factor_cache.json)，file SHA `2af81d454b89d63e1a5d03916286b527112dd76da34259712e73557918516c9c`，embedded evidence `c288b8c4d5b0e2587b26c7404fb73685095bacff82ca70fcea6373356442c405` |
+| R1 snapshot evidence | `c2a6512ee753adab88f715326f0b719a1bbc76af8f1e8d8c032949c3e610f3d1`；由 R2 record 自带 evidence hash 绑定 |
+| R1 cache authority | `h2a_r1_107a3ac_run2/jit_cache`；R2 cache before/after unchanged，`form_jit_cache_hit=true` |
+| compiler descendants | `[]`；R2 不重新编译 C source |
+
+R2 checker 同时保留并 hash-bind 了 R0 class inventory、R1 record identity、当前 worker/watchdog summary 和 factor-store manifest；`status=pass`、`problems=[]`。canonical R2 record 内还带有自带 evidence hash 的 `r1_authority_snapshot`，其中冻结 R1 record/raw artifacts、runtime、stage/hit forms、cache inventory 与 watchdog evidence；第二次 checker 会从该 snapshot 重新验证同一 R1 authority，而不依赖已被提升的 canonical 路径。R1 的旧 raw 和 attempt1 负证据没有被覆盖；R1 record 的旧 SHA 在 R2 raw 中作为冻结 authority 保存，即使 canonical 路径现在承载 R2 record。
+
+### 永久 full-space identity
+
+| identity | R2 实际值 |
+|---|---|
+| fine space | `uncondensed_fullspace` |
+| condensation | `false` |
+| global matrix / global constraint matrix | `false / false` |
+| global condensed Schur | `false` |
+| cell Schur matrix NNZ | `0` |
+| slab matrix NNZ / slab factor count | `0 / 0` |
+| static condensed operator / trace slab PC | `false / false` |
+| B2/B4 local Krylov | `false` |
+| fullspace patch lane | `true`；仍是冻结候选 lane |
+| interior recovery | `false` |
+| KSP / DtN / PDE solve | `false / false / false` |
+| ordinary default changed | `false` |
+
+本次 R2 PASS 的准确含义是：在固定 MPI1 p6/h10 full-space action 上，约束展开、exact class factorization、residual、determinism、cache identity、factor artifact 和资源 Gate 均有通过的证据。它不表示已经完成 smoother contraction、global PDE/KSP、field/RTA、DtN 或 direct-method physical comparison。
+
+### Raw evidence 索引
+
+Raw 目录为 ignored artifact：[h2a_r2_da8ddbb_run1](../../../benchmarks/artifacts/task037_extra_development/h2a_r2_da8ddbb_run1)。关键文件 SHA 如下；factor manifest 内部另外 hash-bind 107 个 NumPy/JSON 文件条目：
+
+| raw 文件 | SHA256 |
+|---|---|
+| `run_summary.json` | `fa22734a63fc5ed953a81e0ee7649c5229cca1d1fc89d0fde481488489e1c8dc` |
+| `r2_watchdog_summary.json` | `f552014db609f11b7b5554ff5c82f790f002052f5323f9429cbe214e0d87a053` |
+| `r2_watchdog_timeline.jsonl` | `6fd4c51580d0559cfca681fe89fe431f0ef114812ccea57330697dbea37194fd` |
+| `r2_progress.jsonl` | `3f1dc478e2e3074d1adcec407ac8dbecdf96d90350569994dc8c10690edc8ca6` |
+| `r2_worker_stdout.txt` | `231d51c20a3041d0729b291cb7a750739b4bfb49de7cfb5481094b0b5c806992` |
+| `r2_root_pid.json` | `1946d90b37c0de187c80b41fa6bdc30920c6d11069604ffd0f7c71329e698b87` |
+| `factor_store/manifest.json` | `1bac2dab37ac19dfa6ab81834327b96e251b1178e0ff652a03347bdd0fa48f98` |
+
+### 运行边界
+
+H2A-R2 通过后，Review V8 允许继续讨论后续阶段；本轮没有运行 H2B、H2C、H2D、H4、KSP、PDE、DtN、field 或 RTA，也没有生成 H2B 文件。不要把 `201933812 B` 的局部 factor payload 或 `717139968 B` 的 R2 action 进程树峰值外推成 PDE 内存结论。后续若要进入 H2B，仍需遵守 Review V8 的阶段授权和新的 Gate；R2 PASS 不自动等于 H2B 或物理求解通过。

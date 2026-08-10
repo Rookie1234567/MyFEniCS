@@ -35,7 +35,20 @@ def _clean_source() -> dict[str, object]:
 
 
 def _fake_authorities(monkeypatch: pytest.MonkeyPatch) -> tuple[dict, dict]:
-    real_r1 = runner._r2_read_r1_authority()
+    runtime = {
+        "qualified_activation": "1",
+        "sys_executable": str(runner.ROOT / ".venv/bin/python"),
+        "petsc_scalar_type": "complex128",
+        "petsc_int_type": "int32",
+        "threads": {
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "MKL_NUM_THREADS": "1",
+            "NUMEXPR_NUM_THREADS": "1",
+        },
+    }
+    forms = [{"role": "curl"}, {"role": "mass"}]
+    cache_inventory = [{"path": "synthetic.cache", "bytes": 1, "sha256": "a" * 64}]
     monkeypatch.setattr(runner, "R2_FIXED_NLOC", 2)
     inventory = []
     for class_id in range(24):
@@ -73,14 +86,96 @@ def _fake_authorities(monkeypatch: pytest.MonkeyPatch) -> tuple[dict, dict]:
         "evidence_sha256": runner.R2_R1_EVIDENCE_SHA256,
         "source_commit_full_sha": runner.R2_R1_SOURCE_SHA,
         "raw_dir": str(runner.R2_R1_RAW_DIR),
-        "runtime_identity": real_r1["runtime_identity"],
-        "stage_forms": real_r1["stage_forms"],
-        "hit_forms": real_r1["hit_forms"],
-        "cache_inventory": real_r1["cache_inventory"],
+        "runtime_identity": runtime,
+        "stage_forms": forms,
+        "hit_forms": forms,
+        "cache_inventory": cache_inventory,
+        "raw_artifacts": {},
+        "watchdog_evidence_sha256": "w" * 64,
     }
     monkeypatch.setattr(runner, "_r2_read_r0_authority", lambda: r0)
     monkeypatch.setattr(runner, "_r2_read_r1_authority", lambda: r1)
     return r0, r1
+
+
+def _write_synthetic_r1_canonical(path: Path, authority: dict) -> dict:
+    record = runner.attach_evidence_sha256(
+        {
+            "schema": runner.R1_CHECK_SCHEMA,
+            "status": "pass",
+            "pass": True,
+            "problems": [],
+            "measurements": {
+                "source_commit_full_sha": authority["source_commit_full_sha"],
+                "runtime_identity": authority["runtime_identity"],
+                "stage": {
+                    "forms": authority["stage_forms"],
+                    "cache_inventory": authority["cache_inventory"],
+                },
+                "hit": {"forms": authority["hit_forms"]},
+            },
+            "raw_artifacts": authority["raw_artifacts"],
+        }
+    )
+    runner._write_json(path, record)
+    return record
+
+
+def _synthetic_r1_setup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> dict:
+    source = "s" * 40
+    runtime = {"synthetic": True}
+    forms = [{"role": "curl"}, {"role": "mass"}]
+    cache_inventory = [{"path": "synthetic.cache", "bytes": 1, "sha256": "a" * 64}]
+    path = tmp_path / "r1" / "h2a_staged_factor_cache.json"
+    record = runner.attach_evidence_sha256(
+        {
+            "schema": runner.R1_CHECK_SCHEMA,
+            "status": "pass",
+            "pass": True,
+            "problems": [],
+            "measurements": {
+                "source_commit_full_sha": source,
+                "runtime_identity": runtime,
+                "stage": {"forms": forms, "cache_inventory": cache_inventory},
+                "hit": {"forms": forms},
+            },
+            "raw_artifacts": {},
+        }
+    )
+    runner._write_json(path, record)
+    monkeypatch.setattr(runner, "R2_R1_RECORD_PATH", path)
+    monkeypatch.setattr(runner, "R2_R1_RECORD_SHA256", runner._sha256_file(path))
+    monkeypatch.setattr(runner, "R2_R1_EVIDENCE_SHA256", record["evidence_sha256"])
+    monkeypatch.setattr(runner, "R2_R1_SOURCE_SHA", source)
+    monkeypatch.setattr(runner, "R2_R1_RAW_DIR", tmp_path / "r1-raw")
+    monkeypatch.setattr(runner, "R2_R1_JIT_CACHE_DIR", tmp_path / "r1-cache")
+    monkeypatch.setattr(
+        runner, "_r2_validate_r1_authority", lambda authority: dict(authority)
+    )
+    return record
+
+
+def _synthetic_r2_record(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> dict:
+    _synthetic_r1_setup(tmp_path, monkeypatch)
+    authority = runner._r2_read_r1_authority()
+    snapshot = runner._r2_make_r1_authority_snapshot(authority)
+    record = runner.attach_evidence_sha256(
+        {
+            "schema": runner.R2_CHECK_SCHEMA,
+            "status": "pass",
+            "pass": True,
+            "problems": [],
+            "r1_authority_snapshot": snapshot,
+        }
+    )
+    path = tmp_path / "r2" / "h2a_staged_factor_cache.json"
+    runner._write_json(path, record)
+    monkeypatch.setattr(runner, "R2_R1_RECORD_PATH", path)
+    return record
 
 
 def _write_progress(path: Path) -> None:
@@ -98,8 +193,15 @@ def _write_progress(path: Path) -> None:
             runner._r2_emit_marker(stream, event=event, started=0.0)
 
 
-def _build_raw_fixture(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    r0, r1 = _fake_authorities(monkeypatch)
+def _build_raw_fixture(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    authorities: tuple[dict, dict] | None = None,
+) -> Path:
+    if authorities is None:
+        r0, r1 = _fake_authorities(monkeypatch)
+    else:
+        r0, r1 = authorities
     run_dir = tmp_path / "r2"
     run_dir.mkdir()
     class_map = r0["class_inventory"]
@@ -304,13 +406,73 @@ def test_r2_fixed_scope_and_parser() -> None:
         runner._parser().parse_args(["r2-watchdog", "--run-dir", "run", "--timeout", "1"])
 
 
+def test_r2_authority_states(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _synthetic_r1_setup(tmp_path, monkeypatch)
+    initial = runner._r2_read_r1_authority()
+    assert initial["record_sha256"] == runner.R2_R1_RECORD_SHA256
+    assert initial["evidence_sha256"] == runner.R2_R1_EVIDENCE_SHA256
+    snapshot = runner._r2_make_r1_authority_snapshot(initial)
+    record = runner.attach_evidence_sha256(
+        {
+            "schema": runner.R2_CHECK_SCHEMA,
+            "status": "pass",
+            "pass": True,
+            "problems": [],
+            "r1_authority_snapshot": snapshot,
+        }
+    )
+    path = tmp_path / "r2-state.json"
+    runner._write_json(path, record)
+    monkeypatch.setattr(runner, "R2_R1_RECORD_PATH", path)
+    promoted = runner._r2_read_r1_authority()
+    assert promoted["record_sha256"] == runner.R2_R1_RECORD_SHA256
+    assert promoted["evidence_sha256"] == runner.R2_R1_EVIDENCE_SHA256
+
+
 def test_r2_real_authorities_are_read_only() -> None:
     r0 = runner._r2_read_r0_authority()
     r1 = runner._r2_read_r1_authority()
-    assert r0["class_inventory"] and len(r0["class_inventory"]) == 24
-    assert r0["global_rows"] == 173802 and r0["constraint_count"] == 9210
+    assert len(r0["class_inventory"]) == 24
+    assert r0["global_rows"] == 173802
+    assert r0["constraint_count"] == 9210
     assert r1["record_sha256"] == runner.R2_R1_RECORD_SHA256
+    assert r1["evidence_sha256"] == runner.R2_R1_EVIDENCE_SHA256
+    assert r1["source_commit_full_sha"] == runner.R2_R1_SOURCE_SHA
+    assert set(r1["raw_artifacts"]) == {
+        "stage_progress.jsonl",
+        "stage_stdout.txt",
+        "stage_summary.json",
+        "stage_timeline.jsonl",
+        "hit_progress.jsonl",
+        "hit_stdout.txt",
+        "hit_summary.json",
+        "hit_timeline.jsonl",
+        "r1_watchdog_summary.json",
+    }
     assert r1["cache_inventory"]
+
+
+def test_r2_snapshot_is_required_and_fixed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    original = _synthetic_r2_record(tmp_path, monkeypatch)
+    cases = []
+    missing = copy.deepcopy(original)
+    missing.pop("r1_authority_snapshot")
+    cases.append(missing)
+    tampered = copy.deepcopy(original)
+    snapshot = tampered["r1_authority_snapshot"]
+    snapshot["r1_source_commit_full_sha"] = "f" * 40
+    tampered["r1_authority_snapshot"] = runner.attach_evidence_sha256(snapshot)
+    cases.append(tampered)
+    for index, record in enumerate(cases):
+        path = tmp_path / f"r2-{index}.json"
+        runner._write_json(path, runner.attach_evidence_sha256(record))
+        monkeypatch.setattr(runner, "R2_R1_RECORD_PATH", path)
+        with pytest.raises(ValueError):
+            runner._r2_read_r1_authority()
 
 
 def test_r2_checker_synthetic_pass_and_gate_mutations(
@@ -381,6 +543,48 @@ def test_r2_checker_synthetic_pass_and_gate_mutations(
         worker, r0, r1, mutated_store
     )
     assert qualification["checks"]["factor_class_authority"] is False
+
+
+def test_r2_checker_is_idempotent_for_one_raw(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    production_reader = runner._r2_read_r1_authority
+    r0, r1 = _fake_authorities(monkeypatch)
+    output = tmp_path / "canonical" / "h2a_staged_factor_cache.json"
+    r1_record = _write_synthetic_r1_canonical(output, r1)
+    monkeypatch.setattr(runner, "R2_R1_RECORD_PATH", output)
+    monkeypatch.setattr(
+        runner, "R2_R1_RECORD_SHA256", runner._sha256_file(output)
+    )
+    monkeypatch.setattr(
+        runner, "R2_R1_EVIDENCE_SHA256", r1_record["evidence_sha256"]
+    )
+    monkeypatch.setattr(
+        runner,
+        "_r2_validate_r1_authority",
+        lambda authority: dict(authority),
+    )
+    run_dir = _build_raw_fixture(tmp_path, monkeypatch, (r0, r1))
+    monkeypatch.setattr(runner, "_r2_read_r1_authority", production_reader)
+    snapshot_calls = []
+    production_snapshot_reader = runner._r2_r1_authority_from_snapshot
+
+    def snapshot_reader(snapshot):
+        snapshot_calls.append(snapshot)
+        return production_snapshot_reader(snapshot)
+
+    monkeypatch.setattr(runner, "_r2_r1_authority_from_snapshot", snapshot_reader)
+    args = SimpleNamespace(run_dir=str(run_dir), output=str(output))
+    r1_sha = runner._sha256_file(output)
+    assert runner._r2_run_check(args) == 0
+    first = output.read_bytes()
+    assert runner._sha256_file(output) != r1_sha
+    assert snapshot_calls == []
+    assert runner._r2_run_check(args) == 0
+    assert output.read_bytes() == first
+    assert len(snapshot_calls) == 1
+    result = json.loads(output.read_text(encoding="utf-8"))
+    assert result["r1_authority_snapshot"]["schema"] == runner.R2_R1_SNAPSHOT_SCHEMA
 
 
 def test_r2_checker_rejects_missing_marker_and_peak(

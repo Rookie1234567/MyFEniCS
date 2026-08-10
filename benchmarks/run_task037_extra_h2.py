@@ -139,6 +139,7 @@ R2_SCHEMA = "task037.extra.h2a.r2"
 R2_WORKER_SCHEMA = f"{R2_SCHEMA}.worker.v1"
 R2_WATCHDOG_SCHEMA = f"{R2_SCHEMA}.watchdog.v1"
 R2_CHECK_SCHEMA = f"{R2_SCHEMA}.check.v1"
+R2_R1_SNAPSHOT_SCHEMA = f"{R2_SCHEMA}.r1-authority.v1"
 R2_PROGRESS_SCHEMA = f"{R2_SCHEMA}.progress.v1"
 R2_TIMEOUT_SECONDS = 7200.0
 R2_RSS_LIMIT_BYTES = 1_750_000_000
@@ -4149,30 +4150,54 @@ def _r2_recorded_file_matches(root: Path, item: Any, relative: str) -> bool:
     )
 
 
-def _r2_read_r1_authority() -> dict[str, Any]:
-    path = R2_R1_RECORD_PATH
-    if not path.is_file() or _sha256_file(path) != R2_R1_RECORD_SHA256:
-        raise ValueError("R2 frozen R1 record is missing or changed")
-    record = read_json_object(path)
+def _r2_validate_r1_authority(authority: Mapping[str, Any]) -> dict[str, Any]:
     if (
-        record.get("schema") != R1_CHECK_SCHEMA
-        or record.get("status") != "pass"
-        or record.get("pass") is not True
-        or record.get("problems") != []
-        or record.get("evidence_sha256") != R2_R1_EVIDENCE_SHA256
-        or not evidence_sha256_is_valid(record)
+        authority.get("record_sha256") != R2_R1_RECORD_SHA256
+        or authority.get("evidence_sha256") != R2_R1_EVIDENCE_SHA256
+        or authority.get("source_commit_full_sha") != R2_R1_SOURCE_SHA
     ):
-        raise ValueError("R2 frozen R1 compact is not the passing record")
-    raw_dir = R2_R1_RAW_DIR
-    recorded = record.get("raw_artifacts")
-    if not raw_dir.is_dir() or not isinstance(recorded, Mapping):
-        raise ValueError("R2 frozen R1 raw evidence is missing")
-    for relative, item in recorded.items():
-        if not _r2_recorded_file_matches(raw_dir, item, str(relative)):
+        raise ValueError("R2 frozen R1 identity is not exact")
+    raw_dir = Path(str(authority.get("raw_dir"))).resolve()
+    if raw_dir != R2_R1_RAW_DIR.resolve():
+        raise ValueError("R2 frozen R1 raw directory is not exact")
+    expected_files = (
+        "stage_progress.jsonl",
+        "stage_stdout.txt",
+        "stage_summary.json",
+        "stage_timeline.jsonl",
+        "hit_progress.jsonl",
+        "hit_stdout.txt",
+        "hit_summary.json",
+        "hit_timeline.jsonl",
+        "r1_watchdog_summary.json",
+    )
+    recorded = authority.get("raw_artifacts")
+    if (
+        not raw_dir.is_dir()
+        or not isinstance(recorded, Mapping)
+        or set(recorded) != set(expected_files)
+    ):
+        raise ValueError("R2 frozen R1 raw artifact map is incomplete")
+    for relative in expected_files:
+        if not _r2_recorded_file_matches(raw_dir, recorded[relative], relative):
             raise ValueError(f"R1 raw artifact is not hash-bound: {relative}")
     watchdog = read_json_object(raw_dir / "r1_watchdog_summary.json")
     stage = read_json_object(raw_dir / "stage_summary.json")
     hit = read_json_object(raw_dir / "hit_summary.json")
+    runtime = authority.get("runtime_identity")
+    stage_forms = authority.get("stage_forms")
+    hit_forms = authority.get("hit_forms")
+    cache = authority.get("cache_inventory")
+    watchdog_source_start = watchdog.get("source_at_start")
+    watchdog_source_end = watchdog.get("source_at_end")
+    source_pairs = (
+        watchdog_source_start,
+        watchdog_source_end,
+        stage.get("source_at_start"),
+        stage.get("source_at_end"),
+        hit.get("source_at_start"),
+        hit.get("source_at_end"),
+    )
     if (
         not evidence_sha256_is_valid(watchdog)
         or watchdog.get("status") != "pass"
@@ -4180,20 +4205,23 @@ def _r2_read_r1_authority() -> dict[str, Any]:
         or not evidence_sha256_is_valid(hit)
         or stage.get("status") != "measurement_complete"
         or hit.get("status") != "measurement_complete"
-        or stage.get("source_at_start") != watchdog.get("source_at_start")
-        or stage.get("source_at_end") != watchdog.get("source_at_end")
-        or hit.get("source_at_start") != watchdog.get("source_at_start")
-        or hit.get("source_at_end") != watchdog.get("source_at_end")
-        or not _r0_source_pair_is_clean(
-            watchdog.get("source_at_start"), watchdog.get("source_at_end")
+        or not all(isinstance(source, Mapping) for source in source_pairs)
+        or stage.get("source_at_start") != watchdog_source_start
+        or stage.get("source_at_end") != watchdog_source_end
+        or hit.get("source_at_start") != watchdog_source_start
+        or hit.get("source_at_end") != watchdog_source_end
+        or any(
+            source.get("source_commit_full_sha") != R2_R1_SOURCE_SHA
+            for source in source_pairs
         )
+        or not _r0_source_pair_is_clean(
+            watchdog_source_start, watchdog_source_end
+        )
+        or watchdog.get("runtime_identity") != runtime
+        or watchdog.get("evidence_sha256")
+        != authority.get("watchdog_evidence_sha256")
     ):
         raise ValueError("R1 raw source or evidence binding is invalid")
-    measurements = record.get("measurements")
-    runtime = measurements.get("runtime_identity") if isinstance(measurements, Mapping) else None
-    stage_forms = measurements.get("stage", {}).get("forms") if isinstance(measurements, Mapping) else None
-    hit_forms = measurements.get("hit", {}).get("forms") if isinstance(measurements, Mapping) else None
-    cache = measurements.get("stage", {}).get("cache_inventory") if isinstance(measurements, Mapping) else None
     actual_cache = _r1_cache_snapshot(R2_R1_JIT_CACHE_DIR)
     if (
         not _runtime_identity_is_qualified(runtime)
@@ -4211,12 +4239,130 @@ def _r2_read_r1_authority() -> dict[str, Any]:
         "evidence_sha256": R2_R1_EVIDENCE_SHA256,
         "source_commit_full_sha": R2_R1_SOURCE_SHA,
         "raw_dir": str(raw_dir),
+        "raw_artifacts": {
+            relative: recorded[relative] for relative in expected_files
+        },
         "runtime_identity": runtime,
         "stage_forms": stage_forms,
         "hit_forms": hit_forms,
         "cache_inventory": actual_cache,
         "watchdog_evidence_sha256": watchdog.get("evidence_sha256"),
     }
+
+
+def _r2_r1_authority_from_snapshot(snapshot: Any) -> dict[str, Any]:
+    if (
+        not isinstance(snapshot, Mapping)
+        or snapshot.get("schema") != R2_R1_SNAPSHOT_SCHEMA
+        or not evidence_sha256_is_valid(snapshot)
+        or snapshot.get("r1_record_sha256") != R2_R1_RECORD_SHA256
+        or snapshot.get("r1_embedded_evidence_sha256") != R2_R1_EVIDENCE_SHA256
+        or snapshot.get("r1_source_commit_full_sha") != R2_R1_SOURCE_SHA
+    ):
+        raise ValueError("R2 frozen R1 snapshot is missing or changed")
+    return _r2_validate_r1_authority(
+        {
+            "record_sha256": snapshot.get("r1_record_sha256"),
+            "evidence_sha256": snapshot.get("r1_embedded_evidence_sha256"),
+            "source_commit_full_sha": snapshot.get("r1_source_commit_full_sha"),
+            "raw_dir": snapshot.get("raw_dir"),
+            "raw_artifacts": snapshot.get("raw_artifacts"),
+            "runtime_identity": snapshot.get("runtime_identity"),
+            "stage_forms": snapshot.get("stage_forms"),
+            "hit_forms": snapshot.get("hit_forms"),
+            "cache_inventory": snapshot.get("cache_inventory"),
+            "watchdog_evidence_sha256": snapshot.get(
+                "watchdog_evidence_sha256"
+            ),
+        }
+    )
+
+
+def _r2_make_r1_authority_snapshot(
+    authority: Mapping[str, Any]
+) -> dict[str, Any]:
+    return attach_evidence_sha256(
+        {
+            "schema": R2_R1_SNAPSHOT_SCHEMA,
+            "r1_record_sha256": authority["record_sha256"],
+            "r1_embedded_evidence_sha256": authority["evidence_sha256"],
+            "r1_source_commit_full_sha": authority["source_commit_full_sha"],
+            "raw_dir": authority["raw_dir"],
+            "raw_artifacts": authority["raw_artifacts"],
+            "runtime_identity": authority["runtime_identity"],
+            "stage_forms": authority["stage_forms"],
+            "hit_forms": authority["hit_forms"],
+            "cache_inventory": authority["cache_inventory"],
+            "watchdog_evidence_sha256": authority["watchdog_evidence_sha256"],
+        }
+    )
+
+
+def _r2_read_r1_authority() -> dict[str, Any]:
+    path = R2_R1_RECORD_PATH
+    if not path.is_file():
+        raise ValueError("R2 frozen R1 record is missing or changed")
+    record_sha = _sha256_file(path)
+    if record_sha == R2_R1_RECORD_SHA256:
+        record = read_json_object(path)
+        if (
+            record.get("schema") != R1_CHECK_SCHEMA
+            or record.get("status") != "pass"
+            or record.get("pass") is not True
+            or record.get("problems") != []
+            or record.get("evidence_sha256") != R2_R1_EVIDENCE_SHA256
+            or not evidence_sha256_is_valid(record)
+        ):
+            raise ValueError("R2 frozen R1 compact is not the passing record")
+        measurements = record.get("measurements")
+        authority = {
+            "record_sha256": R2_R1_RECORD_SHA256,
+            "evidence_sha256": R2_R1_EVIDENCE_SHA256,
+            "source_commit_full_sha": R2_R1_SOURCE_SHA,
+            "raw_dir": str(R2_R1_RAW_DIR),
+            "raw_artifacts": record.get("raw_artifacts"),
+            "runtime_identity": (
+                measurements.get("runtime_identity")
+                if isinstance(measurements, Mapping)
+                else None
+            ),
+            "stage_forms": (
+                measurements.get("stage", {}).get("forms")
+                if isinstance(measurements, Mapping)
+                else None
+            ),
+            "hit_forms": (
+                measurements.get("hit", {}).get("forms")
+                if isinstance(measurements, Mapping)
+                else None
+            ),
+            "cache_inventory": (
+                measurements.get("stage", {}).get("cache_inventory")
+                if isinstance(measurements, Mapping)
+                else None
+            ),
+            "watchdog_evidence_sha256": None,
+        }
+        recorded = authority["raw_artifacts"]
+        if isinstance(recorded, Mapping):
+            watchdog_path = R2_R1_RAW_DIR / "r1_watchdog_summary.json"
+            if watchdog_path.is_file():
+                authority["watchdog_evidence_sha256"] = read_json_object(
+                    watchdog_path
+                ).get("evidence_sha256")
+        return _r2_validate_r1_authority(authority)
+    record = read_json_object(path)
+    if (
+        record.get("schema") != R2_CHECK_SCHEMA
+        or record.get("status") != "pass"
+        or record.get("pass") is not True
+        or record.get("problems") != []
+        or not evidence_sha256_is_valid(record)
+    ):
+        raise ValueError("R2 frozen R1 record is missing or changed")
+    return _r2_r1_authority_from_snapshot(
+        record.get("r1_authority_snapshot")
+    )
 
 
 def _r2_emit_marker(stream, *, event: str, started: float, class_id: int | None = None) -> None:
@@ -4987,6 +5133,7 @@ def _r2_check_raw(run_dir: Path) -> dict[str, Any]:
     worker = read_json_object(run_dir / "run_summary.json")
     r0_authority = _r2_read_r0_authority()
     r1_authority = _r2_read_r1_authority()
+    r1_authority_snapshot = _r2_make_r1_authority_snapshot(r1_authority)
     timeline = _r2_timeline_metrics(run_dir / "r2_watchdog_timeline.jsonl")
     progress_ok = _r2_progress_is_valid(run_dir / "r2_progress.jsonl")
     root_ok = _r2_root_metadata_is_valid(run_dir / "r2_root_pid.json", timeline)
@@ -5127,6 +5274,7 @@ def _r2_check_raw(run_dir: Path) -> dict[str, Any]:
         "problems": sorted(set(problems)),
         "worker_qualification": worker_eval,
         "watchdog_checks": phase,
+        "r1_authority_snapshot": r1_authority_snapshot,
         "measurements": measurements,
         "raw_artifacts": {name: _r2_artifact(run_dir, name) for name in raw_names},
         "raw_evidence_sha256": {
