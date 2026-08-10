@@ -46,8 +46,22 @@ docs/task037b_hybrid_fem_modal_iterative/review_report_v7_1_task37c_continuous_e
 
 - 这两项必须形成职责清晰的 docs-only commit或并入最终Task37b closeout docs commit；
 - 不得因此扩大 solver code白名单；
-- full pytest与M10 integration anchor仍必须在包含Task37c任务书的拟推送HEAD上完成；
+- M10 integration anchor仍必须在包含Task37c任务书的拟推送HEAD上完成；
 - Task37c任务书本身不得修改Task37b成功算法、ordinary defaults或master当前行为。
+
+若无 deselect的full repository pytest在本V7.1提交到达前已经于拟集成代码HEAD上启动或完成，
+不得中断、作废或仅因新增这两个docs-only文件而整套重跑。允许沿用该full pytest结果，前提是：
+
+```text
+full pytest code/config parent == final integration code/config
+V7.1之后没有任何Python、配置、测试逻辑或ordinary-default改动
+final HEAD重新运行documentation-contract tests
+final HEAD重新运行Markdown rendering/checker、compile/diff checks
+full pytest原始命令、parent SHA、结果和docs-only后继关系被准确记录
+```
+
+若full pytest本身出现failure，仍按V7停止；docs-only后继不能掩盖失败。
+若V7.1到达后又发生任何代码或测试逻辑变更，则必须在新HEAD上重新运行full pytest。
 
 若Task37b merge/test/M10 Gate失败，不得为了不中断而提前创建或执行Task37c。
 
