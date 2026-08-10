@@ -1177,19 +1177,58 @@ def _check_h2a_raw(run_dir: Path) -> dict[str, Any]:
     worker_path = run_dir / "run_summary.json"
     watchdog_path = run_dir / "watchdog_summary.json"
     timeline_path = run_dir / "watchdog_timeline.jsonl"
-    worker = read_json_object(worker_path)
     watchdog = read_json_object(watchdog_path)
-    worker_eval = _evaluate_h2a_worker_qualification(worker)
     timeline = _timeline_metrics(timeline_path)
-    worker_runtime = worker.get("runtime_identity")
+    worker = (
+        read_json_object(worker_path)
+        if worker_path.is_file()
+        else None
+    )
+    worker_present = isinstance(worker, Mapping)
+    worker_eval = (
+        _evaluate_h2a_worker_qualification(worker)
+        if worker_present
+        else {
+            "schema": "task037.extra.h2a.worker.qualification.v1",
+            "pass": False,
+            "problems": ["worker_summary_missing"],
+        }
+    )
+    worker_runtime = (
+        worker.get("runtime_identity") if worker_present else None
+    )
     watchdog_runtime = watchdog.get("runtime_identity")
+    actual_timeline_artifact = {
+        "path": timeline_path.name,
+        "sha256": _sha256_file(timeline_path),
+        "bytes": int(timeline_path.stat().st_size),
+    }
+    recorded_artifacts = watchdog.get("raw_artifacts")
+    recorded_timeline_artifact = (
+        recorded_artifacts.get("watchdog_timeline.jsonl")
+        if isinstance(recorded_artifacts, Mapping)
+        else None
+    )
+    worker_evidence_valid = (
+        evidence_sha256_is_valid(worker) if worker_present else False
+    )
     command = watchdog.get("command")
     watchdog_checks = {
         "schema": watchdog.get("schema") == H2A_WATCHDOG_SCHEMA,
         "status": watchdog.get("status") == "pass",
-        "worker_evidence_valid": evidence_sha256_is_valid(worker),
+        "worker_summary_present": watchdog.get("worker_summary_present")
+        is worker_present,
+        "worker_evidence_valid": worker_evidence_valid,
         "watchdog_evidence_valid": evidence_sha256_is_valid(watchdog),
         "worker_qualification_pass": worker_eval["pass"],
+        "watchdog_worker_qualification_pass": watchdog.get(
+            "worker_qualification_pass"
+        )
+        is worker_eval["pass"],
+        "watchdog_worker_evidence_valid": watchdog.get(
+            "worker_evidence_valid"
+        )
+        is worker_evidence_valid,
         "runtime_identity_qualified": _runtime_identity_is_qualified(
             watchdog_runtime
         ),
@@ -1211,8 +1250,11 @@ def _check_h2a_raw(run_dir: Path) -> dict[str, Any]:
         ),
         "source_clean_and_stable": watchdog.get("source_clean_and_stable") is True,
         "source_pair_matches_worker": (
-            watchdog.get("source_at_start") == worker.get("source_at_start")
-            and watchdog.get("source_at_end") == worker.get("source_at_end")
+            worker_present
+            and watchdog.get("source_at_start")
+            == worker.get("source_at_start")
+            and watchdog.get("source_at_end")
+            == worker.get("source_at_end")
         ),
         "timeline_readable": timeline["readable"],
         "timeline_has_live_samples": timeline["live_sample_count"] > 0,
@@ -1229,6 +1271,16 @@ def _check_h2a_raw(run_dir: Path) -> dict[str, Any]:
             isinstance(watchdog.get("process_tree_swap_bytes"), int)
             and not isinstance(watchdog.get("process_tree_swap_bytes"), bool)
             and watchdog["process_tree_swap_bytes"] == timeline["swap_bytes"]
+        ),
+        "watchdog_timeline_hash_valid": (
+            isinstance(recorded_timeline_artifact, Mapping)
+            and recorded_timeline_artifact.get("sha256")
+            == actual_timeline_artifact["sha256"]
+            and recorded_timeline_artifact.get("bytes")
+            == actual_timeline_artifact["bytes"]
+            and isinstance(recorded_timeline_artifact.get("path"), str)
+            and Path(recorded_timeline_artifact["path"]).resolve()
+            == timeline_path
         ),
         "termination_none": watchdog.get("termination") is None,
         "completion_elapsed_valid": (
@@ -1253,6 +1305,39 @@ def _check_h2a_raw(run_dir: Path) -> dict[str, Any]:
             )
         except (KeyError, TypeError, ValueError):
             problems.append("measurements")
+    failure_measurements = None
+    if not worker_present:
+        failure_measurements = {
+            "source_at_start": watchdog.get("source_at_start"),
+            "source_at_end": watchdog.get("source_at_end"),
+            "scope": watchdog.get("scope"),
+            "runtime_identity": watchdog.get("runtime_identity"),
+            "return_code": watchdog.get("return_code"),
+            "termination": watchdog.get("termination"),
+            "completion_elapsed_seconds": watchdog.get(
+                "completion_elapsed_seconds"
+            ),
+            "process_tree_peak_rss_bytes": timeline["peak_rss_bytes"],
+            "process_tree_swap_bytes": timeline["swap_bytes"],
+            "live_sample_count": timeline["live_sample_count"],
+        }
+    raw_artifacts = {
+        "run_summary": (
+            {
+                "path": worker_path.name,
+                "sha256": _sha256_file(worker_path),
+                "bytes": int(worker_path.stat().st_size),
+            }
+            if worker_present
+            else {"path": worker_path.name, "present": False}
+        ),
+        "watchdog_summary": {
+            "path": watchdog_path.name,
+            "sha256": _sha256_file(watchdog_path),
+            "bytes": int(watchdog_path.stat().st_size),
+        },
+        "watchdog_timeline": actual_timeline_artifact,
+    }
     return {
         "schema": H2A_CHECK_SCHEMA,
         "status": "pass" if not problems else "gate_failed",
@@ -1262,18 +1347,8 @@ def _check_h2a_raw(run_dir: Path) -> dict[str, Any]:
         "watchdog_checks": checks,
         "timeline": timeline,
         "measurements": measurements,
-        "raw_artifacts": {
-            name: {
-                "path": path.name,
-                "sha256": _sha256_file(path),
-                "bytes": int(path.stat().st_size),
-            }
-            for name, path in {
-                "run_summary": worker_path,
-                "watchdog_summary": watchdog_path,
-                "watchdog_timeline": timeline_path,
-            }.items()
-        },
+        "failure_measurements": failure_measurements,
+        "raw_artifacts": raw_artifacts,
     }
 
 

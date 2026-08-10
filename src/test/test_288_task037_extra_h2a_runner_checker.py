@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -214,6 +215,17 @@ def _write_good_raw(run_dir: Path):
             "worker_summary_present": True,
             "worker_evidence_valid": True,
             "worker_qualification_pass": True,
+            "raw_artifacts": {
+                "watchdog_timeline.jsonl": {
+                    "path": str(run_dir / "watchdog_timeline.jsonl"),
+                    "sha256": h2.hashlib.sha256(
+                        (run_dir / "watchdog_timeline.jsonl").read_bytes()
+                    ).hexdigest(),
+                    "bytes": int(
+                        (run_dir / "watchdog_timeline.jsonl").stat().st_size
+                    ),
+                },
+            },
         }
     )
     (run_dir / "watchdog_summary.json").write_text(
@@ -298,6 +310,7 @@ def test_h2a_checker_good_raw_and_refinement_recompute(tmp_path: Path):
     assert measurements["p2_h5"]["global_cell_count"] == 100
     assert measurements["refinement"]["class_growth_strictly_sublinear"] is True
     assert measurements["process_tree"]["peak_rss_bytes"] == 200
+    assert result["failure_measurements"] is None
     assert {
         item["path"] for item in result["raw_artifacts"].values()
     } == {
@@ -305,6 +318,68 @@ def test_h2a_checker_good_raw_and_refinement_recompute(tmp_path: Path):
         "watchdog_summary.json",
         "watchdog_timeline.jsonl",
     }
+
+
+def test_h2a_checker_preserves_partial_failure_evidence_without_worker(
+    tmp_path: Path,
+):
+    _, watchdog = _write_good_raw(tmp_path)
+    (tmp_path / "run_summary.json").unlink()
+
+    result = h2._check_h2a_raw(tmp_path)
+
+    assert result["pass"] is False
+    assert result["status"] == "gate_failed"
+    assert result["measurements"] is None
+    assert "worker_summary_missing" in result["problems"]
+    assert result["failure_measurements"] == {
+        "source_at_start": watchdog["source_at_start"],
+        "source_at_end": watchdog["source_at_end"],
+        "scope": watchdog["scope"],
+        "runtime_identity": watchdog["runtime_identity"],
+        "return_code": 0,
+        "termination": None,
+        "completion_elapsed_seconds": 1.5,
+        "process_tree_peak_rss_bytes": 200,
+        "process_tree_swap_bytes": 0,
+        "live_sample_count": 2,
+    }
+    assert result["raw_artifacts"]["run_summary"] == {
+        "path": "run_summary.json",
+        "present": False,
+    }
+    assert result["raw_artifacts"]["watchdog_summary"]["sha256"] == h2._sha256_file(
+        tmp_path / "watchdog_summary.json"
+    )
+    assert result["raw_artifacts"]["watchdog_timeline"]["sha256"] == h2._sha256_file(
+        tmp_path / "watchdog_timeline.jsonl"
+    )
+    assert "class_count" not in result["failure_measurements"]
+    assert "factor_count" not in result["failure_measurements"]
+
+
+@pytest.mark.parametrize("filename", ("watchdog_summary.json", "watchdog_timeline.jsonl"))
+@pytest.mark.parametrize("corrupt", (False, True))
+def test_h2a_run_check_keeps_required_raw_unreadable_fail_closed(
+    tmp_path: Path, filename: str, corrupt: bool
+):
+    _write_good_raw(tmp_path)
+    path = tmp_path / filename
+    if corrupt:
+        path.write_text("not json\n", encoding="utf-8")
+    else:
+        path.unlink()
+    output = tmp_path / "check.json"
+
+    result = h2._run_check(
+        SimpleNamespace(run_dir=str(tmp_path), output=str(output))
+    )
+
+    assert result == 1
+    compact = json.loads(output.read_text(encoding="utf-8"))
+    assert compact["pass"] is False
+    assert compact["status"] == "gate_failed"
+    assert compact["problems"][0].startswith("raw_unreadable:")
 
 
 @pytest.mark.parametrize("tag_name", ("air", "substrate", "grating"))
