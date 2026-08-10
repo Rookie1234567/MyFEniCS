@@ -646,6 +646,8 @@ class OwnerLocalSlabPlan:
     local_cell_indices_by_slab: tuple[tuple[int, ...], ...]
     slab_row_counts: tuple[int, ...]
     partition_weights_by_slab: tuple[np.ndarray, ...]
+    coordinate_axis: int = 2
+    coordinate_intervals: tuple[tuple[float, float], ...] = ()
 
 
 def _owner_from_scalar_row_counts(
@@ -670,11 +672,18 @@ def build_owner_local_slab_plan(
     domain_z: tuple[float, float],
     num_slabs: int,
     overlap_fraction: float,
+    coordinate_axis: int = 2,
 ) -> OwnerLocalSlabPlan:
     """Route complete slab row sets to owners without using ``condensed.matrix``."""
 
-    z_min, z_max = (float(value) for value in domain_z)
-    if not z_min < z_max or num_slabs < 1 or overlap_fraction < 0.0:
+    if (
+        not isinstance(coordinate_axis, int)
+        or isinstance(coordinate_axis, bool)
+        or coordinate_axis not in (0, 1, 2)
+    ):
+        raise ValueError("coordinate_axis must be one of 0, 1, or 2")
+    axis_min, axis_max = (float(value) for value in domain_z)
+    if not axis_min < axis_max or num_slabs < 1 or overlap_fraction < 0.0:
         raise ValueError("invalid physical slab domain, count, or overlap")
     records = owned_cell_geometry(mesh)
     recovery_maps = condensed.cell_recovery_maps
@@ -686,11 +695,11 @@ def build_owner_local_slab_plan(
     active_start, active_end = layout.getOwnershipRange()
     ownership_ranges = tuple(comm.allgather((int(active_start), int(active_end))))
     layout.destroy()
-    width = (z_max - z_min) / num_slabs
+    width = (axis_max - axis_min) / num_slabs
     intervals = tuple(
         (
-            z_min + slab * width - overlap_fraction * width,
-            z_min + (slab + 1) * width + overlap_fraction * width,
+            axis_min + slab * width - overlap_fraction * width,
+            axis_min + (slab + 1) * width + overlap_fraction * width,
         )
         for slab in range(num_slabs)
     )
@@ -710,11 +719,11 @@ def build_owner_local_slab_plan(
                 if coefficient != 0
             )
         local_query_rows.update(cell_rows)
-        z_cell_min = float(np.min(record.coordinates[:, 2]))
-        z_cell_max = float(np.max(record.coordinates[:, 2]))
+        axis_cell_min = float(np.min(record.coordinates[:, coordinate_axis]))
+        axis_cell_max = float(np.max(record.coordinates[:, coordinate_axis]))
         cell_mask = 0
         for slab, (low, high) in enumerate(intervals):
-            if cell_rows and z_cell_max >= low and z_cell_min <= high:
+            if cell_rows and axis_cell_max >= low and axis_cell_min <= high:
                 cell_mask |= 1 << slab
         for row in cell_rows:
             local_seed_masks[row] = local_seed_masks.get(row, 0) | cell_mask
@@ -836,6 +845,8 @@ def build_owner_local_slab_plan(
         ),
         slab_row_counts=tuple(int(value) for value in row_counts),
         partition_weights_by_slab=tuple(partition_weights_by_slab),
+        coordinate_axis=coordinate_axis,
+        coordinate_intervals=intervals,
     )
 
 
@@ -1420,6 +1431,10 @@ class DistributedPhysicalSlabSmoother:
         self._first_submatrix_reported = False
         self._first_factor_reported = False
         self._global_subdomain_count = len(subdomains)
+        self.max_sender_payload_bytes = 0
+        self.max_owner_payload_bytes = 0
+        self.coordinate_axis = 2
+        self.coordinate_intervals = ()
 
         global_diagonal_shift: np.ndarray | None = None
         self.subdomain_local_diagonal_shift = diagonal_shift is not None
@@ -1618,6 +1633,10 @@ class DistributedPhysicalSlabSmoother:
         self._first_submatrix_reported = False
         self._first_factor_reported = False
         self._global_subdomain_count = len(plan.slab_owners)
+        self.max_sender_payload_bytes = 0
+        self.max_owner_payload_bytes = 0
+        self.coordinate_axis = int(plan.coordinate_axis)
+        self.coordinate_intervals = plan.coordinate_intervals
         self.partition_weight_sum_error: float | None = None
         self.partition_weight_min: float | None = None
         self.partition_weight_max: float | None = None
@@ -1646,6 +1665,14 @@ class DistributedPhysicalSlabSmoother:
             for slab, owner in enumerate(plan.slab_owners):
                 slab_matrix, _slab_audit = assemble_owner_local_slab_matrix(
                     condensed, plan, slab
+                )
+                self.max_sender_payload_bytes = max(
+                    self.max_sender_payload_bytes,
+                    int(_slab_audit["max_sender_payload_bytes"]),
+                )
+                self.max_owner_payload_bytes = max(
+                    self.max_owner_payload_bytes,
+                    int(_slab_audit["max_owner_payload_bytes"]),
                 )
                 if precomputed_diagonal_shift is None:
                     slab_shift, _shift_audit = owner_local_slab_diagonal_shift(
@@ -1838,6 +1865,14 @@ class DistributedPhysicalSlabSmoother:
             "global_factor_rows": self.global_factor_rows,
             "global_factor_nnz": self.global_factor_nnz,
             "global_stored_factor_nnz": self.global_stored_factor_nnz,
+            "global_subdomain_count": self._global_subdomain_count,
+            "rank_local_factor_count": len(self._factors),
+            "max_sender_payload_bytes": self.max_sender_payload_bytes,
+            "max_owner_payload_bytes": self.max_owner_payload_bytes,
+            "coordinate_axis": int(self.coordinate_axis),
+            "coordinate_intervals": [
+                [float(low), float(high)] for low, high in self.coordinate_intervals
+            ],
             "maximum_owner_rows": self.maximum_owner_rows,
             "minimum_owner_rows": self.minimum_owner_rows,
             "factor_fingerprints": [

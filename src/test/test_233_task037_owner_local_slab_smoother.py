@@ -97,6 +97,8 @@ def test_owner_local_factor_only_smoother_matches_assembled_oracle():
         num_slabs=3,
         overlap_fraction=0.0,
     )
+    assert plan.coordinate_axis == 2
+    assert len(plan.coordinate_intervals) == 3
     full_subdomains = _full_subdomains(plan)
     partition_plan = build_owner_local_slab_plan(
         view,
