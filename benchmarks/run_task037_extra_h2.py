@@ -1,16 +1,16 @@
-"""Narrow H2A exact-class inventory worker and resource checker.
+"""Narrow H2A inventory and R2 constrained-factor worker/checker.
 
 This module is intentionally separate from the frozen Candidate-H runner.  It
-only discovers the production full-space cell classes for the coercive proxy
-``B0 = K_curl + k0**2 M_|epsilon|`` and inventories the reviewed exact-class
-cache.  It does not implement a smoother, a constrained inverse, or a PDE
-solve.
+discovers the production full-space cell classes, probes the reviewed exact-
+class cache, and provides the opt-in R2 constrained-factor path for
+``B0 = K_curl + k0**2 M_|epsilon|``.  It does not implement a smoother, a
+production solver, or a PDE solve.
 """
 
 from __future__ import annotations
 
 import argparse
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 import gc
 import hashlib
 import json
@@ -58,10 +58,22 @@ from src.solvers.hcurl_exact_class_block_cache import (
     H2AClassBlockSpec,
     H2ACellReference,
     _key_json,
+    build_b0_proxy_tensor,
     build_task037_extra_h2a_block_cache,
     make_task037_extra_h2a_class_key,
     make_task037_extra_h2a_constraint_pattern,
     tabulate_task037_extra_h2a_cell_tensor,
+)
+from src.solvers.hcurl_r2_constrained_local_block import (
+    build_h2a_r2_cell_expansion,
+    build_h2a_r2_transformed_block,
+)
+from src.solvers.hcurl_r2_factor_store import (
+    H2AR2CellReference,
+    H2AR2ClassInput,
+    build_h2a_r2_factor_store,
+    load_h2a_r2_factor_store,
+    write_h2a_r2_factor_store,
 )
 
 
@@ -122,6 +134,64 @@ R1_R0_RECORD_SHA256 = (
     "3024dea6ac33aa24c78a86e3f9ae7e699630320906134088f7df302b992e134d"
 )
 R1_R0_SOURCE_SHA = "b7eef17f10655be99f5bba072f9a547ae05f17ac"
+
+R2_SCHEMA = "task037.extra.h2a.r2"
+R2_WORKER_SCHEMA = f"{R2_SCHEMA}.worker.v1"
+R2_WATCHDOG_SCHEMA = f"{R2_SCHEMA}.watchdog.v1"
+R2_CHECK_SCHEMA = f"{R2_SCHEMA}.check.v1"
+R2_PROGRESS_SCHEMA = f"{R2_SCHEMA}.progress.v1"
+R2_TIMEOUT_SECONDS = 7200.0
+R2_RSS_LIMIT_BYTES = 1_750_000_000
+R2_SWAP_LIMIT_BYTES = 0
+R2_UNIQUE_FACTOR_LIMIT = 32
+R2_FACTOR_PAYLOAD_LIMIT_BYTES = 400_000_000
+R2_FORMAL_BUDGET_RUNS = 3
+R2_FIXED_CELL_COUNT = 252
+R2_FIXED_NLOC = 882
+R2_FIXED_GLOBAL_ROWS = 173_802
+R2_FIXED_CONSTRAINT_COUNT = 9_210
+R2_R1_RECORD_PATH = (
+    ROOT / "benchmarks/cases/101_task37_extra_development/records"
+    / "h2a_staged_factor_cache.json"
+)
+R2_R1_RECORD_SHA256 = (
+    "672b036c69edfd74ee613ecc7264b0d699cb472730ebf76a048db1cb333c21ef"
+)
+R2_R1_EVIDENCE_SHA256 = (
+    "361187150b5c2ff4c76094cb99c26436d1d7c29e0709ae42608cbc9f154221cc"
+)
+R2_R1_SOURCE_SHA = "107a3ac1ea01ab0cfdd450a268789890ef76e030"
+R2_R1_RAW_DIR = (
+    ROOT / "benchmarks/artifacts/task037_extra_development"
+    / "h2a_r1_107a3ac_run2"
+)
+R2_R1_JIT_CACHE_DIR = R2_R1_RAW_DIR / "jit_cache"
+R2_PROGRESS_PREFIX = (
+    "authority_validate_started",
+    "authority_validate_ready",
+    "mesh_build_started",
+    "mesh_build_ready",
+    "function_space_started",
+    "function_space_ready",
+    "floquet_mpc_started",
+    "floquet_mpc_ready",
+    "curl_cache_load_started",
+    "curl_cache_load_ready",
+    "mass_cache_load_started",
+    "mass_cache_load_ready",
+    "class_discovery_started",
+    "class_discovery_ready",
+    "cell_expansion_started",
+    "cell_expansion_ready",
+)
+R2_PROGRESS_SUFFIX = (
+    "factor_artifact_write_started",
+    "factor_artifact_write_ready",
+    "builder_release",
+    "cold_load_started",
+    "cold_load_ready",
+    "worker_summary_started",
+)
 
 
 def _runtime_identity() -> dict[str, Any]:
@@ -3948,6 +4018,1315 @@ def _r1_run_check(args: argparse.Namespace) -> int:
     return 0 if result["pass"] else 1
 
 
+def _r2_identity() -> dict[str, Any]:
+    return {
+        "fine_space": "uncondensed_fullspace",
+        "condensation": False,
+        "fullspace_global_rows_h10": R2_FIXED_GLOBAL_ROWS,
+        "global_matrix_materialized": False,
+        "global_constraint_matrix_materialized": False,
+        "global_condensed_schur_materialized": False,
+        "cell_schur_matrix_nnz": 0,
+        "slab_matrix_nnz": 0,
+        "slab_factor_count": 0,
+        "static_condensed_operator_used": False,
+        "trace_slab_pc_used": False,
+        "B2_B4_local_krylov_used": False,
+        "fullspace_patch_pc_used": True,
+        "interior_recovery_required": False,
+        "ksp_created": False,
+        "dtn_used": False,
+        "pde_solve_called": False,
+        "ordinary_default_changed": False,
+    }
+
+
+def _r2_scope() -> dict[str, Any]:
+    return {
+        "mode": "constrained_factor_cache",
+        "degree": 6,
+        "h_nm": 10.0,
+        "mpi_size": 1,
+        "launch_mode": "mpi_singleton_direct",
+        "global_cells": R2_FIXED_CELL_COUNT,
+        "local_nloc": R2_FIXED_NLOC,
+        "global_rows": R2_FIXED_GLOBAL_ROWS,
+        "constraint_count": R2_FIXED_CONSTRAINT_COUNT,
+        "timeout_seconds": R2_TIMEOUT_SECONDS,
+        "rss_limit_bytes": R2_RSS_LIMIT_BYTES,
+        "swap_limit_bytes": R2_SWAP_LIMIT_BYTES,
+        "unique_factor_limit": R2_UNIQUE_FACTOR_LIMIT,
+        "factor_payload_limit_bytes": R2_FACTOR_PAYLOAD_LIMIT_BYTES,
+        "formal_budget_runs": R2_FORMAL_BUDGET_RUNS,
+        "operator": "C^H*(K_curl+k0^2*M_abs_epsilon)*C",
+        "authority": {
+            "r0_record_path": str(R1_R0_RECORD_PATH),
+            "r0_record_sha256": R1_R0_RECORD_SHA256,
+            "r0_source_sha": R1_R0_SOURCE_SHA,
+            "r1_record_path": str(R2_R1_RECORD_PATH),
+            "r1_record_sha256": R2_R1_RECORD_SHA256,
+            "r1_evidence_sha256": R2_R1_EVIDENCE_SHA256,
+            "r1_source_sha": R2_R1_SOURCE_SHA,
+            "r1_raw_dir": str(R2_R1_RAW_DIR),
+        },
+        "jit_options": _form_jit_options(R2_R1_JIT_CACHE_DIR),
+        "identity": _r2_identity(),
+    }
+
+
+def _r2_worker_command(
+    run_dir: Path, executable: str, jit_cache_dir: Path = R2_R1_JIT_CACHE_DIR
+) -> list[str]:
+    cache = Path(jit_cache_dir).resolve()
+    if cache != R2_R1_JIT_CACHE_DIR.resolve():
+        raise ValueError("R2 JIT cache directory is fixed to the passing R1 cache")
+    return [
+        str(executable),
+        "-m",
+        "benchmarks.run_task037_extra_h2",
+        "r2-worker",
+        "--run-dir",
+        str(Path(run_dir).resolve()),
+        "--jit-cache-dir",
+        str(cache),
+    ]
+
+
+def _r2_read_r0_authority() -> dict[str, Any]:
+    path = R1_R0_RECORD_PATH
+    if not path.is_file() or _sha256_file(path) != R1_R0_RECORD_SHA256:
+        raise ValueError("R2 frozen R0 record is missing or changed")
+    record = read_json_object(path)
+    measurements = record.get("measurements")
+    p6 = measurements.get("p6_h10") if isinstance(measurements, Mapping) else None
+    inventory = p6.get("class_inventory") if isinstance(p6, Mapping) else None
+    if (
+        record.get("schema") != R0_CHECK_SCHEMA
+        or record.get("status") != "pass"
+        or record.get("pass") is not True
+        or record.get("problems") != []
+        or not evidence_sha256_is_valid(record)
+        or not isinstance(measurements, Mapping)
+        or measurements.get("source_commit_full_sha") != R1_R0_SOURCE_SHA
+        or not isinstance(p6, Mapping)
+        or p6.get("global_cells") != R2_FIXED_CELL_COUNT
+        or p6.get("global_rows") != R2_FIXED_GLOBAL_ROWS
+        or p6.get("constraint_count") != R2_FIXED_CONSTRAINT_COUNT
+        or p6.get("local_nloc") != R2_FIXED_NLOC
+        or p6.get("unique_class_count") != 24
+        or not isinstance(inventory, list)
+        or len(inventory) != 24
+        or p6.get("inventory_digest") != _r0_digest(tuple(inventory))
+        or p6.get("identity") != _r0_identity()
+    ):
+        raise ValueError("R2 frozen R0 authority is not the passing inventory")
+    if tuple(item.get("class_id") for item in inventory) != tuple(range(24)):
+        raise ValueError("R2 frozen R0 class ids are not continuous")
+    return {
+        "record_sha256": R1_R0_RECORD_SHA256,
+        "evidence_sha256": record["evidence_sha256"],
+        "source_commit_full_sha": R1_R0_SOURCE_SHA,
+        "inventory_digest": p6["inventory_digest"],
+        "class_inventory": inventory,
+        "identity": p6["identity"],
+        "global_cells": R2_FIXED_CELL_COUNT,
+        "local_nloc": R2_FIXED_NLOC,
+        "global_rows": R2_FIXED_GLOBAL_ROWS,
+        "constraint_count": R2_FIXED_CONSTRAINT_COUNT,
+    }
+
+
+def _r2_recorded_file_matches(root: Path, item: Any, relative: str) -> bool:
+    path = root / relative
+    return (
+        isinstance(item, Mapping)
+        and item.get("path") == relative
+        and not Path(relative).is_absolute()
+        and ".." not in Path(relative).parts
+        and path.is_file()
+        and item.get("bytes") == path.stat().st_size
+        and item.get("sha256") == _sha256_file(path)
+    )
+
+
+def _r2_read_r1_authority() -> dict[str, Any]:
+    path = R2_R1_RECORD_PATH
+    if not path.is_file() or _sha256_file(path) != R2_R1_RECORD_SHA256:
+        raise ValueError("R2 frozen R1 record is missing or changed")
+    record = read_json_object(path)
+    if (
+        record.get("schema") != R1_CHECK_SCHEMA
+        or record.get("status") != "pass"
+        or record.get("pass") is not True
+        or record.get("problems") != []
+        or record.get("evidence_sha256") != R2_R1_EVIDENCE_SHA256
+        or not evidence_sha256_is_valid(record)
+    ):
+        raise ValueError("R2 frozen R1 compact is not the passing record")
+    raw_dir = R2_R1_RAW_DIR
+    recorded = record.get("raw_artifacts")
+    if not raw_dir.is_dir() or not isinstance(recorded, Mapping):
+        raise ValueError("R2 frozen R1 raw evidence is missing")
+    for relative, item in recorded.items():
+        if not _r2_recorded_file_matches(raw_dir, item, str(relative)):
+            raise ValueError(f"R1 raw artifact is not hash-bound: {relative}")
+    watchdog = read_json_object(raw_dir / "r1_watchdog_summary.json")
+    stage = read_json_object(raw_dir / "stage_summary.json")
+    hit = read_json_object(raw_dir / "hit_summary.json")
+    if (
+        not evidence_sha256_is_valid(watchdog)
+        or watchdog.get("status") != "pass"
+        or not evidence_sha256_is_valid(stage)
+        or not evidence_sha256_is_valid(hit)
+        or stage.get("status") != "measurement_complete"
+        or hit.get("status") != "measurement_complete"
+        or stage.get("source_at_start") != watchdog.get("source_at_start")
+        or stage.get("source_at_end") != watchdog.get("source_at_end")
+        or hit.get("source_at_start") != watchdog.get("source_at_start")
+        or hit.get("source_at_end") != watchdog.get("source_at_end")
+        or not _r0_source_pair_is_clean(
+            watchdog.get("source_at_start"), watchdog.get("source_at_end")
+        )
+    ):
+        raise ValueError("R1 raw source or evidence binding is invalid")
+    measurements = record.get("measurements")
+    runtime = measurements.get("runtime_identity") if isinstance(measurements, Mapping) else None
+    stage_forms = measurements.get("stage", {}).get("forms") if isinstance(measurements, Mapping) else None
+    hit_forms = measurements.get("hit", {}).get("forms") if isinstance(measurements, Mapping) else None
+    cache = measurements.get("stage", {}).get("cache_inventory") if isinstance(measurements, Mapping) else None
+    actual_cache = _r1_cache_snapshot(R2_R1_JIT_CACHE_DIR)
+    if (
+        not _runtime_identity_is_qualified(runtime)
+        or not _r1_forms_match(stage_forms, hit_forms, R2_R1_JIT_CACHE_DIR)
+        or not isinstance(cache, list)
+        or cache != actual_cache
+        or stage.get("cache_inventory") != actual_cache
+        or hit.get("cache_before") != actual_cache
+        or hit.get("cache_after") != actual_cache
+        or hit.get("cache_unchanged") is not True
+    ):
+        raise ValueError("R1 cache-hit authority is not closed")
+    return {
+        "record_sha256": R2_R1_RECORD_SHA256,
+        "evidence_sha256": R2_R1_EVIDENCE_SHA256,
+        "source_commit_full_sha": R2_R1_SOURCE_SHA,
+        "raw_dir": str(raw_dir),
+        "runtime_identity": runtime,
+        "stage_forms": stage_forms,
+        "hit_forms": hit_forms,
+        "cache_inventory": actual_cache,
+        "watchdog_evidence_sha256": watchdog.get("evidence_sha256"),
+    }
+
+
+def _r2_emit_marker(stream, *, event: str, started: float, class_id: int | None = None) -> None:
+    marker = {
+        "schema": R2_PROGRESS_SCHEMA,
+        "event": str(event),
+        "elapsed_wall_seconds": float(time.perf_counter() - started),
+        "class_id": None if class_id is None else int(class_id),
+    }
+    stream.write(json.dumps(marker, sort_keys=True, separators=(",", ":")) + "\n")
+    stream.flush()
+    print(json.dumps(marker, sort_keys=True), flush=True)
+
+
+def _r2_progress_is_valid(path: Path) -> bool:
+    events: list[dict[str, Any]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            event = json.loads(line)
+            if event.get("schema") != R2_PROGRESS_SCHEMA:
+                return False
+            events.append(event)
+    expected = list(R2_PROGRESS_PREFIX)
+    for class_id in range(24):
+        expected.extend(("factor_started", "factor_ready"))
+    expected.extend(R2_PROGRESS_SUFFIX)
+    if [str(item.get("event")) for item in events] != expected:
+        return False
+    factor_ids = [int(item.get("class_id")) for item in events if item.get("event") == "factor_started"]
+    return factor_ids == list(range(24)) and all(
+        int(item.get("class_id")) == int(start.get("class_id"))
+        for start, item in zip(
+            (item for item in events if item.get("event") == "factor_started"),
+            (item for item in events if item.get("event") == "factor_ready"),
+            strict=True,
+        )
+    )
+
+
+def _r2_artifact(root: Path, relative: str) -> dict[str, Any]:
+    path = root / relative
+    if not path.is_file():
+        return {"path": relative, "present": False}
+    return {
+        "path": relative,
+        "present": True,
+        "bytes": int(path.stat().st_size),
+        "sha256": _sha256_file(path),
+    }
+
+
+def _r2_timeline_metrics(path: Path) -> dict[str, Any]:
+    samples = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            item = json.loads(line)
+            if item.get("schema") != R2_PROGRESS_SCHEMA:
+                raise ValueError("R2 timeline schema mismatch")
+            samples.append(item)
+    live = [item for item in samples if item.get("sample_kind") == "worker"]
+    readable = bool(live)
+    roots: set[int] = set()
+    for item in live:
+        pids = item.get("pids")
+        root = item.get("root_pid")
+        count = item.get("process_count")
+        valid = (
+            isinstance(root, int) and not isinstance(root, bool) and root > 0
+            and isinstance(pids, list) and len(pids) == len(set(pids))
+            and all(isinstance(pid, int) and not isinstance(pid, bool) and pid > 0 for pid in pids)
+            and root in pids
+            and isinstance(count, int) and not isinstance(count, bool)
+            and count == len(pids)
+            and isinstance(item.get("rss_bytes"), int)
+            and not isinstance(item["rss_bytes"], bool)
+            and item["rss_bytes"] >= 0
+            and isinstance(item.get("swap_bytes"), int)
+            and not isinstance(item["swap_bytes"], bool)
+            and item["swap_bytes"] >= 0
+            and item.get("all_status_readable") is True
+            and isinstance(item.get("compiler_descendant_pids"), list)
+            and all(isinstance(pid, int) and not isinstance(pid, bool) and pid > 0 for pid in item["compiler_descendant_pids"])
+        )
+        readable = readable and valid
+        if isinstance(root, int) and not isinstance(root, bool):
+            roots.add(root)
+    return {
+        "readable": bool(readable and len(roots) == 1),
+        "live_sample_count": len(live),
+        "peak_rss_bytes": max((item["rss_bytes"] for item in live), default=None) if readable else None,
+        "swap_bytes": max((item["swap_bytes"] for item in live), default=None) if readable else None,
+        "root_pid": next(iter(roots)) if len(roots) == 1 else None,
+        "compiler_descendant_pids": sorted({int(pid) for item in live for pid in item["compiler_descendant_pids"]}),
+    }
+
+
+def _r2_root_metadata_is_valid(path: Path, timeline: Mapping[str, Any]) -> bool:
+    root = read_json_object(path)
+    return (
+        root.get("schema") == f"{R2_SCHEMA}.root.v1"
+        and isinstance(root.get("root_pid"), int)
+        and not isinstance(root.get("root_pid"), bool)
+        and root["root_pid"] > 0
+        and root["root_pid"] == timeline.get("root_pid")
+    )
+
+
+def _r2_relative_action_error(
+    block: np.ndarray,
+    expansion: Any,
+    transformed: np.ndarray | None = None,
+) -> float:
+    dense = expansion.materialize_dense()
+    rhs = np.asarray(
+        [1.0 + 0.013 * index + 1j * (0.21 - 0.007 * index)
+         for index in range(expansion.independent_count)],
+        dtype=np.complex128,
+    )
+    direct = dense.conj().T @ np.asarray(block, dtype=np.complex128) @ dense @ rhs
+    observed = (
+        build_h2a_r2_transformed_block(block, expansion)
+        if transformed is None
+        else np.asarray(transformed, dtype=np.complex128)
+    ) @ rhs
+    return float(
+        np.linalg.norm(observed - direct)
+        / max(float(np.linalg.norm(direct)), 1.0e-30)
+    )
+
+
+def _r2_representative_classes(
+    inventory: Sequence[Mapping[str, Any]],
+) -> dict[str, int] | None:
+    interior = next(
+        (
+            int(item["class_id"])
+            for item in inventory
+            if item.get("constraint_pattern_kinds") == []
+        ),
+        None,
+    )
+    periodic = next(
+        (
+            int(item["class_id"])
+            for item in inventory
+            if item.get("constraint_pattern_kinds")
+            and not any(
+                "corner" in str(kind)
+                for kind in item["constraint_pattern_kinds"]
+            )
+        ),
+        None,
+    )
+    corner = next(
+        (
+            int(item["class_id"])
+            for item in inventory
+            if any(
+                "corner" in str(kind)
+                for kind in item.get("constraint_pattern_kinds", [])
+            )
+        ),
+        None,
+    )
+    if interior is None or periodic is None or corner is None:
+        return None
+    return {"interior": interior, "periodic": periodic, "corner": corner}
+
+
+def _r2_run_worker(args: argparse.Namespace) -> int:
+    comm = MPI.COMM_WORLD
+    run_dir = Path(args.run_dir).resolve()
+    cache_dir = Path(args.jit_cache_dir).resolve()
+    run_dir.mkdir(parents=True, exist_ok=True)
+    progress_path = run_dir / "r2_progress.jsonl"
+    summary_path = run_dir / "run_summary.json"
+    source_at_start = _r1_inspect_source(ROOT)
+    started = time.perf_counter()
+    error: str | None = None
+    runtime: dict[str, Any] | None = None
+    r0_authority: dict[str, Any] | None = None
+    r1_authority: dict[str, Any] | None = None
+    measurement: dict[str, Any] | None = None
+    forms: list[dict[str, Any]] = []
+    compiled_forms: list[Any] = []
+    cache_before: list[dict[str, Any]] | None = None
+    cache_after: list[dict[str, Any]] | None = None
+    class_inventory: list[dict[str, Any]] = []
+    expansion_inventory: list[dict[str, Any]] = []
+    cell_references: tuple[H2AR2CellReference, ...] = ()
+    representative_ids: dict[str, int] = {}
+    action_errors: list[float] = []
+    factor_audit: Mapping[str, Any] | None = None
+    loaded_audit: Mapping[str, Any] | None = None
+    factor_manifest: str | None = None
+    factor_manifest_sha256: str | None = None
+    loaded_solve_deterministic = False
+    phase_identity = {
+        "form_jit_called": True,
+        "tensor_tabulation_called": True,
+        "factorization_called": True,
+        "global_matrix_materialized": False,
+        "global_constraint_matrix_materialized": False,
+    }
+    mesh_data = function_space = floquet = None
+    try:
+        if comm.size != 1:
+            raise ValueError(f"R2 worker is fixed to MPI1, got {comm.size}")
+        if cache_dir != R2_R1_JIT_CACHE_DIR.resolve():
+            raise ValueError("R2 worker cache path is not the frozen R1 cache")
+        with progress_path.open("w", encoding="utf-8") as markers:
+            _r2_emit_marker(markers, event="authority_validate_started", started=started)
+            r0_authority = _r2_read_r0_authority()
+            r1_authority = _r2_read_r1_authority()
+            _r2_emit_marker(markers, event="authority_validate_ready", started=started)
+            runtime = _r1_runtime_identity(
+                compiler_probe=False,
+                compiler=r1_authority["runtime_identity"]["compiler"],
+            )
+            if runtime != r1_authority["runtime_identity"]:
+                raise ValueError("R2 runtime differs from R1 authority")
+            cfg = target_stage4_config(degree=6, h_nm=10.0)
+            _r2_emit_marker(markers, event="mesh_build_started", started=started)
+            mesh_data = build_airbox_mesh_3d(cfg, run_dir / "mesh")
+            local_cells = int(mesh_data.mesh.topology.index_map(3).size_local)
+            _r2_emit_marker(markers, event="mesh_build_ready", started=started)
+            _r2_emit_marker(markers, event="function_space_started", started=started)
+            function_space = _create_nedelec_space(mesh_data.mesh, cfg)
+            _r2_emit_marker(markers, event="function_space_ready", started=started)
+            _r2_emit_marker(markers, event="floquet_mpc_started", started=started)
+            floquet = build_double_floquet_mpc(function_space, mesh_data, cfg)
+            index_map = function_space.dofmap.index_map
+            measurement = {
+                "global_cells": int(mesh_data.mesh.topology.index_map(3).size_global),
+                "local_cells": local_cells,
+                "local_nloc": int(function_space.element.space_dimension),
+                "global_rows": int(index_map.size_global * function_space.dofmap.index_map_bs),
+                "constraint_count": int(floquet.num_constraints),
+            }
+            if measurement != {
+                "global_cells": R2_FIXED_CELL_COUNT,
+                "local_cells": R2_FIXED_CELL_COUNT,
+                "local_nloc": R2_FIXED_NLOC,
+                "global_rows": R2_FIXED_GLOBAL_ROWS,
+                "constraint_count": R2_FIXED_CONSTRAINT_COUNT,
+            }:
+                raise ValueError("R2 p6 identity mismatch")
+            _r2_emit_marker(markers, event="floquet_mpc_ready", started=started)
+            cache_before = _r1_cache_snapshot(cache_dir)
+            if cache_before != r1_authority["cache_inventory"]:
+                raise ValueError("R2 cache differs before form load")
+            curl_ufl, mass_ufl = _proxy_ufl_forms(function_space, mesh_data, cfg)
+            for role, form in zip(("curl", "mass"), (curl_ufl, mass_ufl), strict=True):
+                event = f"{role}_cache_load_started"
+                _r2_emit_marker(markers, event=event, started=started)
+                compiled = fem.form(form, jit_options=_form_jit_options(cache_dir))
+                record = _r1_form_record(
+                    role=role,
+                    ufl_form=form,
+                    compiled_form=compiled,
+                    cache_dir=cache_dir,
+                    cfg=cfg,
+                    function_space=function_space,
+                )
+                if record["code_state"] != "hit_no_new_decl_impl":
+                    raise ValueError(f"R2 {role} form was not a cache hit")
+                forms.append(record)
+                compiled_forms.append(compiled)
+                _r2_emit_marker(markers, event=f"{role}_cache_load_ready", started=started)
+            cache_after = _r1_cache_snapshot(cache_dir)
+            _r1_bind_cache_files(forms, cache_after)
+            if cache_after != cache_before or forms != r1_authority["hit_forms"]:
+                raise ValueError("R2 form/cache identity differs from R1 hit")
+            topology = floquet.phase_independent_topology
+            if topology is None:
+                raise ValueError("R2 Floquet topology is missing")
+            _r2_emit_marker(markers, event="class_discovery_started", started=started)
+            discovery = _r0_discover_case_inventory(
+                function_space,
+                mesh_data,
+                cfg,
+                floquet,
+                geometry_tolerance=floquet_geometry_tolerance(cfg),
+            )
+            if (
+                discovery["class_inventory"] != r0_authority["class_inventory"]
+                or discovery["class_inventory_digest"] != r0_authority["inventory_digest"]
+            ):
+                raise ValueError("R2 discovery does not close against R0")
+            _r2_emit_marker(markers, event="class_discovery_ready", started=started)
+            _r2_emit_marker(markers, event="cell_expansion_started", started=started)
+            refs = tuple(discovery["references"])
+            key_to_id = {
+                item["class_key_sha256"]: int(item["class_id"])
+                for item in r0_authority["class_inventory"]
+            }
+            tags = _cell_tag_array(
+                mesh_data.cell_tags,
+                int(mesh_data.mesh.topology.index_map(3).size_local),
+            )
+            blocks = tuple(topology.blocks)
+            expansions: dict[int, Any] = {}
+            cell_refs: list[H2AR2CellReference] = []
+            first_cell: dict[int, int] = {}
+            for cell, reference in enumerate(refs):
+                class_id = key_to_id.get(_r0_digest(reference.class_key))
+                if class_id is None:
+                    raise ValueError("R2 cell class key is not in R0 inventory")
+                cell_dofs = np.asarray(reference.local_dofs, dtype=np.int64)
+                expansion = build_h2a_r2_cell_expansion(
+                    _blocks_for_cell(blocks, cell_dofs),
+                    cell_dofs,
+                    index_map,
+                    index_map_bs=int(function_space.dofmap.index_map_bs),
+                    phase_x=floquet.phase_x,
+                    phase_y=floquet.phase_y,
+                    phase_corner=floquet.phase_corner,
+                )
+                old = expansions.get(class_id)
+                if old is not None and (
+                    old.pattern_sha256 != expansion.pattern_sha256
+                    or old.pattern_identity != expansion.pattern_identity
+                ):
+                    raise ValueError("R2 expansion pattern differs within class")
+                expansions.setdefault(class_id, expansion)
+                first_cell.setdefault(class_id, cell)
+                cell_refs.append(
+                    H2AR2CellReference(class_id, expansion.independent_global_rows)
+                )
+            if len(cell_refs) != R2_FIXED_CELL_COUNT or len(expansions) != 24:
+                raise ValueError("R2 expansion class/cell count mismatch")
+            expansion_inventory = [
+                {
+                    "class_id": class_id,
+                    "expansion_pattern_sha256": expansions[class_id].pattern_sha256,
+                    "independent_count": expansions[class_id].independent_count,
+                    "nloc": expansions[class_id].nloc,
+                    "cell_count": int(r0_authority["class_inventory"][class_id]["cell_count"]),
+                }
+                for class_id in range(24)
+            ]
+            if any(
+                item["independent_count"]
+                != int(r0_authority["class_inventory"][item["class_id"]]["constrained_unique_reduced_row_count"])
+                for item in expansion_inventory
+            ):
+                raise ValueError("R2 expansion reduced-row count differs from R0")
+            cell_references = tuple(cell_refs)
+            _r2_emit_marker(markers, event="cell_expansion_ready", started=started)
+            cell_tags = mesh_data.cell_tags
+            tolerance = floquet_geometry_tolerance(cfg)
+            class_inventory = [dict(item) for item in r0_authority["class_inventory"]]
+            representative_ids = _r2_representative_classes(class_inventory)
+            if representative_ids is None:
+                raise ValueError("R2 inventory lacks interior/periodic/corner classes")
+
+            def class_inputs() -> Iterable[H2AR2ClassInput]:
+                for class_id in range(24):
+                    _r2_emit_marker(markers, event="factor_started", started=started, class_id=class_id)
+                    cell = first_cell[class_id]
+                    expansion = expansions[class_id]
+                    tag = int(tags[cell])
+                    curl_tensor, _widths, _info = tabulate_task037_extra_h2a_cell_tensor(
+                        compiled_forms[0], function_space, cell_tags, cell,
+                        geometry_tolerance=tolerance,
+                    )
+                    mass_tensor, _widths, _info = tabulate_task037_extra_h2a_cell_tensor(
+                        compiled_forms[1], function_space, cell_tags, cell,
+                        geometry_tolerance=tolerance,
+                    )
+                    proxy = build_b0_proxy_tensor(
+                        curl_tensor,
+                        mass_tensor,
+                        k0=float(cfg.k0),
+                        abs_epsilon=float(abs(_material_epsilon(cfg, tag))),
+                    )
+                    transformed = build_h2a_r2_transformed_block(proxy, expansion)
+                    action_errors.append(
+                        _r2_relative_action_error(proxy, expansion, transformed)
+                    )
+                    item = H2AR2ClassInput(
+                        class_id=class_id,
+                        class_key_sha256=class_inventory[class_id]["class_key_sha256"],
+                        constraint_pattern_sha256=class_inventory[class_id]["constraint_pattern_sha256"],
+                        expansion_pattern_sha256=expansion.pattern_sha256,
+                        expansion=expansion,
+                        transformed_matrix=transformed,
+                    )
+                    yield item
+                    del curl_tensor, mass_tensor, proxy, transformed, item
+                    _r2_emit_marker(markers, event="factor_ready", started=started, class_id=class_id)
+
+            store_identity = {
+                "source_identity": source_at_start.as_jsonable(),
+                "config_identity": {"degree": 6, "h_nm": 10.0, "mpi_size": 1},
+                "form_identity": forms,
+                "cache_identity": {"cache_dir": str(cache_dir), "inventory": cache_after},
+            }
+            store = build_h2a_r2_factor_store(
+                class_inputs(),
+                cell_references,
+                identity=store_identity,
+                task037_extra_h2a_r2=True,
+            )
+            factor_audit = dict(store.audit)
+            _r2_emit_marker(markers, event="factor_artifact_write_started", started=started)
+            manifest_path = write_h2a_r2_factor_store(
+                store, run_dir / "factor_store", task037_extra_h2a_r2=True
+            )
+            factor_manifest = str(manifest_path.relative_to(run_dir))
+            factor_manifest_sha256 = _sha256_file(manifest_path)
+            _r2_emit_marker(markers, event="factor_artifact_write_ready", started=started)
+            del store
+            gc.collect()
+            _r2_emit_marker(markers, event="builder_release", started=started)
+            _r2_emit_marker(markers, event="cold_load_started", started=started)
+            loaded = load_h2a_r2_factor_store(
+                manifest_path, task037_extra_h2a_r2=True
+            )
+            loaded_audit = dict(loaded.audit)
+            loaded_solve_deterministic = True
+            for class_id in range(24):
+                size = int(loaded.classes[class_id].expansion.independent_count)
+                rhs = np.asarray(
+                    [1.0 + 0.011 * index + 1j * (0.19 - 0.005 * index)
+                     for index in range(size)], dtype=np.complex128
+                )
+                left = loaded.solve(class_id, rhs)
+                right = loaded.solve(class_id, rhs)
+                loaded_solve_deterministic = loaded_solve_deterministic and bool(
+                    np.array_equal(left, right) and np.all(np.isfinite(left))
+                )
+            del loaded
+            _r2_emit_marker(markers, event="cold_load_ready", started=started)
+            _r2_emit_marker(markers, event="worker_summary_started", started=started)
+    except (
+        OSError,
+        RuntimeError,
+        ValueError,
+        TypeError,
+        KeyError,
+        IndexError,
+        subprocess.SubprocessError,
+        json.JSONDecodeError,
+    ) as exc:
+        error = f"{type(exc).__name__}: {exc}"
+    finally:
+        mesh_data = function_space = floquet = None
+        clear_floquet_topology_cache()
+        gc.collect()
+    source_at_end = _r1_inspect_source(ROOT)
+    payload = attach_evidence_sha256(
+        {
+            "schema": R2_WORKER_SCHEMA,
+            "status": "measurement_complete" if error is None else "gate_failed",
+            "scope": _r2_scope(),
+            "identity": _r2_identity(),
+            "phase_identity": phase_identity,
+            "source_at_start": source_at_start.as_jsonable(),
+            "source_at_end": source_at_end.as_jsonable(),
+            "runtime_identity": runtime or _runtime_identity(),
+            "r0_authority": r0_authority,
+            "r1_authority": {
+                key: r1_authority[key]
+                for key in ("record_sha256", "evidence_sha256", "source_commit_full_sha")
+            } if r1_authority else None,
+            "measurement": measurement,
+            "forms": forms,
+            "cache_before": cache_before,
+            "cache_after": cache_after,
+            "cache_unchanged": cache_before is not None and cache_before == cache_after,
+            "compiler_descendant_pids": [],
+            "class_inventory": class_inventory,
+            "expansion_inventory": expansion_inventory,
+            "cell_reference_count": len(cell_references),
+            "representative_class_ids": representative_ids,
+            "action_relative_error_max": max(action_errors, default=None),
+            "action_relative_errors": action_errors,
+            "factor_manifest": factor_manifest,
+            "factor_manifest_sha256": factor_manifest_sha256,
+            "factor_audit": factor_audit,
+            "loaded_factor_audit": loaded_audit,
+            "loaded_solve_deterministic": loaded_solve_deterministic,
+            "error": error,
+            "elapsed_wall_seconds": float(time.perf_counter() - started),
+        }
+    )
+    _write_json(summary_path, payload)
+    return 0 if error is None else 1
+
+
+def _r2_run_worker_handler(args: argparse.Namespace) -> int:
+    return _r2_run_worker(args)
+
+
+def _r2_worker_qualification(
+    worker: Mapping[str, Any],
+    r0_authority: Mapping[str, Any],
+    r1_authority: Mapping[str, Any],
+    factor_store: Any,
+) -> dict[str, Any]:
+    problems: list[str] = []
+    audit = factor_store.audit
+    checks = {
+        "schema": worker.get("schema") == R2_WORKER_SCHEMA,
+        "status": worker.get("status") == "measurement_complete",
+        "error": worker.get("error") is None,
+        "evidence": evidence_sha256_is_valid(worker),
+        "scope": worker.get("scope") == _r2_scope(),
+        "identity": worker.get("identity") == _r2_identity(),
+        "phase_identity": worker.get("phase_identity") == {
+            "form_jit_called": True,
+            "tensor_tabulation_called": True,
+            "factorization_called": True,
+            "global_matrix_materialized": False,
+            "global_constraint_matrix_materialized": False,
+        },
+        "runtime": _runtime_identity_is_qualified(worker.get("runtime_identity")),
+        "runtime_matches_r1": worker.get("runtime_identity") == r1_authority.get("runtime_identity"),
+        "source": _r0_source_pair_is_clean(
+            worker.get("source_at_start"), worker.get("source_at_end")
+        ),
+        "measurement": worker.get("measurement") == {
+            "global_cells": R2_FIXED_CELL_COUNT,
+            "local_cells": R2_FIXED_CELL_COUNT,
+            "local_nloc": R2_FIXED_NLOC,
+            "global_rows": R2_FIXED_GLOBAL_ROWS,
+            "constraint_count": R2_FIXED_CONSTRAINT_COUNT,
+        },
+        "r0_inventory": worker.get("class_inventory") == r0_authority.get("class_inventory"),
+        "r0_digest": (
+            isinstance(worker.get("class_inventory"), list)
+            and _r0_digest(tuple(worker["class_inventory"]))
+            == r0_authority.get("inventory_digest")
+        ),
+        "cell_references": worker.get("cell_reference_count") == R2_FIXED_CELL_COUNT,
+        "expansion_count": isinstance(worker.get("expansion_inventory"), list)
+        and len(worker["expansion_inventory"]) == 24,
+        "representative_classes": (
+            isinstance(worker.get("representative_class_ids"), Mapping)
+            and _r2_representative_classes(r0_authority["class_inventory"])
+            == worker["representative_class_ids"]
+        ),
+        "factor_class_count": audit.get("class_count") == 24,
+        "factor_cell_count": audit.get("cell_count") == R2_FIXED_CELL_COUNT,
+        "factor_dedup_count": (
+            isinstance(audit.get("numeric_hash_dedup_count"), int)
+            and not isinstance(audit["numeric_hash_dedup_count"], bool)
+            and audit["numeric_hash_dedup_count"] >= 0
+            and audit["numeric_hash_dedup_count"]
+            + audit.get("unique_factor_count", -1)
+            == audit.get("class_count")
+        ),
+        "factor_audit_binding": (
+            # The streamed builder audit measures its in-memory metadata;
+            # the cold loader measures canonical manifest metadata including
+            # file bindings.  The loaded audit is therefore the payload Gate
+            # authority; these fields bind the numeric builder result only.
+            isinstance(worker.get("factor_audit"), Mapping)
+            and all(
+                worker["factor_audit"].get(field) == audit.get(field)
+                for field in (
+                    "class_count",
+                    "unique_factor_count",
+                    "cell_count",
+                    "finite",
+                    "deterministic",
+                    "factorization_residual_max",
+                    "solve_residual_max",
+                )
+            )
+            and worker.get("loaded_factor_audit") == dict(audit)
+        ),
+        "factor_expansion_binding": (
+            isinstance(worker.get("expansion_inventory"), list)
+            and len(factor_store.classes) == 24
+            and [
+                record.expansion.pattern_sha256 for record in factor_store.classes
+            ]
+            == [
+                item.get("expansion_pattern_sha256")
+                for item in worker["expansion_inventory"]
+            ]
+            and all(
+                record.expansion.offsets.size - 1 == R2_FIXED_NLOC
+                for record in factor_store.classes
+            )
+        ),
+        "unique_factor_count": (
+            isinstance(audit.get("unique_factor_count"), int)
+            and not isinstance(audit["unique_factor_count"], bool)
+            and 1 <= audit["unique_factor_count"] <= R2_UNIQUE_FACTOR_LIMIT
+        ),
+        "factor_payload": (
+            isinstance(audit.get("factor_plus_metadata_bytes"), int)
+            and not isinstance(audit["factor_plus_metadata_bytes"], bool)
+            and 0 < audit["factor_plus_metadata_bytes"] <= R2_FACTOR_PAYLOAD_LIMIT_BYTES
+        ),
+        "factor_finite": audit.get("finite") is True,
+        "factor_deterministic": audit.get("deterministic") is True,
+        "factorization_residual": (
+            isinstance(audit.get("factorization_residual_max"), (int, float))
+            and not isinstance(audit["factorization_residual_max"], bool)
+            and np.isfinite(audit["factorization_residual_max"])
+            and audit["factorization_residual_max"] <= 1.0e-10
+        ),
+        "solve_residual": (
+            isinstance(audit.get("solve_residual_max"), (int, float))
+            and not isinstance(audit["solve_residual_max"], bool)
+            and np.isfinite(audit["solve_residual_max"])
+            and audit["solve_residual_max"] <= 1.0e-10
+        ),
+        "no_per_cell_factor": audit.get("per_cell_factor_count") == 0,
+        "no_slab_factor": audit.get("slab_factor_count") == 0,
+        "no_global_matrix": audit.get("global_matrix_materialized") is False,
+        "no_global_constraint_matrix": audit.get("global_constraint_matrix_materialized") is False,
+        "no_schur": audit.get("schur_materialized") is False,
+        "action_error": (
+            isinstance(worker.get("action_relative_error_max"), (int, float))
+            and np.isfinite(worker["action_relative_error_max"])
+            and worker["action_relative_error_max"] <= 1.0e-11
+            and isinstance(worker.get("action_relative_errors"), list)
+            and len(worker["action_relative_errors"]) == 24
+            and all(
+                isinstance(value, (int, float))
+                and not isinstance(value, bool)
+                and np.isfinite(value)
+                and value <= 1.0e-11
+                for value in worker["action_relative_errors"]
+            )
+            and worker["action_relative_error_max"]
+            == max(worker["action_relative_errors"])
+        ),
+        "loaded_solve_deterministic": worker.get("loaded_solve_deterministic") is True,
+        "cache_hit": (
+            worker.get("cache_unchanged") is True
+            and worker.get("cache_before") == r1_authority.get("cache_inventory")
+            and worker.get("cache_after") == r1_authority.get("cache_inventory")
+            and worker.get("compiler_descendant_pids") == []
+            and worker.get("forms") == r1_authority.get("hit_forms")
+        ),
+    }
+    expansion_by_id: dict[int, Mapping[str, Any]] = {}
+    if checks["expansion_count"]:
+        expansion_by_id = {
+            int(item.get("class_id")): item
+            for item in worker["expansion_inventory"]
+            if isinstance(item, Mapping)
+        }
+        if tuple(sorted(expansion_by_id)) != tuple(range(24)):
+            checks["expansion_ids"] = False
+        else:
+            checks["expansion_ids"] = True
+            for class_id, inventory_item in enumerate(r0_authority["class_inventory"]):
+                item = expansion_by_id[class_id]
+                if (
+                    not _r0_sha256_is_valid(item.get("expansion_pattern_sha256"))
+                    or item.get("nloc") != R2_FIXED_NLOC
+                    or item.get("independent_count")
+                    != inventory_item.get("constrained_unique_reduced_row_count")
+                    or item.get("cell_count") != inventory_item.get("cell_count")
+                ):
+                    checks["expansion_ids"] = False
+    else:
+        checks["expansion_ids"] = False
+    checks["factor_class_authority"] = (
+        checks["expansion_ids"]
+        and len(factor_store.classes) == 24
+        and all(
+            record.class_id == class_id
+            and record.class_key_sha256
+            == r0_authority["class_inventory"][class_id]["class_key_sha256"]
+            and record.constraint_pattern_sha256
+            == r0_authority["class_inventory"][class_id][
+                "constraint_pattern_sha256"
+            ]
+            and record.expansion_pattern_sha256
+            == expansion_by_id[class_id]["expansion_pattern_sha256"]
+            for class_id, record in enumerate(factor_store.classes)
+        )
+    )
+    solve_repeat_ok = True
+    for class_id, record in enumerate(factor_store.classes):
+        size = int(record.expansion.independent_count)
+        rhs = np.asarray(
+            [1.0 + 0.011 * index + 1j * (0.19 - 0.005 * index)
+             for index in range(size)],
+            dtype=np.complex128,
+        )
+        first = factor_store.solve(class_id, rhs)
+        second = factor_store.solve(class_id, rhs)
+        solve_repeat_ok = solve_repeat_ok and bool(
+            np.array_equal(first, second) and np.all(np.isfinite(first))
+        )
+    checks["checker_solve_repeat"] = solve_repeat_ok
+    problems.extend(name for name, passed in checks.items() if passed is not True)
+    return {
+        "schema": f"{R2_SCHEMA}.worker.qualification.v1",
+        "pass": not problems,
+        "problems": sorted(set(problems)),
+        "checks": checks,
+    }
+
+
+def _r2_raw_artifacts_match(
+    run_dir: Path, recorded: Any, names: Iterable[str]
+) -> bool:
+    return isinstance(recorded, Mapping) and all(
+        _r2_recorded_file_matches(run_dir, recorded.get(name), name)
+        for name in names
+    )
+
+
+def _r2_manifest_identity_matches(
+    manifest: Mapping[str, Any],
+    worker: Mapping[str, Any],
+    r1_authority: Mapping[str, Any],
+) -> bool:
+    metadata = manifest.get("metadata")
+    expected_cache = {
+        "cache_dir": str(R2_R1_JIT_CACHE_DIR.resolve()),
+        "inventory": worker.get("cache_after"),
+    }
+    return (
+        isinstance(metadata, Mapping)
+        and metadata.get("source_identity") == worker.get("source_at_start")
+        and metadata.get("config_identity")
+        == {"degree": 6, "h_nm": 10.0, "mpi_size": 1}
+        and metadata.get("form_identity") == worker.get("forms")
+        and metadata.get("form_identity") == r1_authority.get("hit_forms")
+        and metadata.get("cache_identity") == expected_cache
+        and metadata.get("materialization_identity")
+        == {
+            "per_cell_factor": False,
+            "slab_factor": False,
+            "global_matrix": False,
+            "global_constraint_matrix": False,
+            "schur": False,
+        }
+    )
+
+
+def _r2_cell_map_authority(
+    factor_store: Any, r0_authority: Mapping[str, Any]
+) -> bool:
+    cells = factor_store.cells
+    if len(cells) != R2_FIXED_CELL_COUNT:
+        return False
+    counts = [0] * 24
+    for cell in cells:
+        class_id = int(cell.class_id)
+        if class_id < 0 or class_id >= 24:
+            return False
+        rows = cell.independent_global_rows
+        if np.any(rows < 0) or np.any(rows >= R2_FIXED_GLOBAL_ROWS):
+            return False
+        counts[class_id] += 1
+    expected = [
+        int(item["cell_count"])
+        for item in r0_authority["class_inventory"]
+    ]
+    return counts == expected
+
+
+def _r2_check_raw(run_dir: Path) -> dict[str, Any]:
+    run_dir = run_dir.resolve()
+    watchdog = read_json_object(run_dir / "r2_watchdog_summary.json")
+    worker = read_json_object(run_dir / "run_summary.json")
+    r0_authority = _r2_read_r0_authority()
+    r1_authority = _r2_read_r1_authority()
+    timeline = _r2_timeline_metrics(run_dir / "r2_watchdog_timeline.jsonl")
+    progress_ok = _r2_progress_is_valid(run_dir / "r2_progress.jsonl")
+    root_ok = _r2_root_metadata_is_valid(run_dir / "r2_root_pid.json", timeline)
+    manifest_relative = worker.get("factor_manifest")
+    manifest_path = run_dir / "factor_store/manifest.json"
+    manifest = read_json_object(manifest_path)
+    factor_store = load_h2a_r2_factor_store(
+        manifest_path, task037_extra_h2a_r2=True
+    )
+    worker_eval = _r2_worker_qualification(
+        worker, r0_authority, r1_authority, factor_store
+    )
+    runtime = watchdog.get("runtime_identity")
+    source_ok = (
+        _r0_source_pair_is_clean(
+            watchdog.get("source_at_start"), watchdog.get("source_at_end")
+        )
+        and watchdog.get("source_at_start") == worker.get("source_at_start")
+        and watchdog.get("source_at_end") == worker.get("source_at_end")
+        and worker_eval["checks"].get("source") is True
+    )
+    phase = {
+        "schema": watchdog.get("schema") == R2_WATCHDOG_SCHEMA,
+        "status": watchdog.get("status") == "pass",
+        "watchdog_evidence_valid": evidence_sha256_is_valid(watchdog),
+        "worker_evidence_valid": evidence_sha256_is_valid(worker),
+        "worker_summary_present": (run_dir / "run_summary.json").is_file(),
+        "worker_qualification_pass": worker_eval["pass"],
+        "run_dir_exact": watchdog.get("run_dir") == str(run_dir),
+        "scope_exact": watchdog.get("scope") == _r2_scope(),
+        "command_exact": watchdog.get("command") == _r2_worker_command(run_dir, str(runtime.get("sys_executable")) if isinstance(runtime, Mapping) else ""),
+        "runtime_qualified": _runtime_identity_is_qualified(runtime),
+        "runtime_matches_worker": runtime == worker.get("runtime_identity"),
+        "source_clean_and_stable": source_ok,
+        "return_code_zero": watchdog.get("return_code") == 0,
+        "termination_none": watchdog.get("termination") is None,
+        "completion_valid": (
+            isinstance(watchdog.get("completion_elapsed_seconds"), (int, float))
+            and not isinstance(watchdog["completion_elapsed_seconds"], bool)
+            and np.isfinite(watchdog["completion_elapsed_seconds"])
+            and 0.0 <= watchdog["completion_elapsed_seconds"] <= R2_TIMEOUT_SECONDS
+        ),
+        "timeline_readable": timeline["readable"] and timeline["live_sample_count"] > 0,
+        "timeline_peak_strictly_below_limit": (
+            isinstance(timeline["peak_rss_bytes"], int)
+            and timeline["peak_rss_bytes"] < R2_RSS_LIMIT_BYTES
+        ),
+        "timeline_swap_zero": timeline["swap_bytes"] == 0,
+        "watchdog_peak_matches_timeline": watchdog.get("process_tree_peak_rss_bytes") == timeline["peak_rss_bytes"],
+        "watchdog_swap_matches_timeline": watchdog.get("process_tree_swap_bytes") == timeline["swap_bytes"],
+        "compiler_descendants_zero": timeline["compiler_descendant_pids"] == [],
+        "progress_exact": progress_ok,
+        "root_metadata": root_ok,
+        "factor_manifest_path": manifest_relative == "factor_store/manifest.json",
+        "factor_manifest_sha256": (
+            isinstance(worker.get("factor_manifest_sha256"), str)
+            and worker["factor_manifest_sha256"] == _sha256_file(manifest_path)
+        ),
+        "manifest_identity": _r2_manifest_identity_matches(
+            manifest, worker, r1_authority
+        ),
+        "cell_map_authority": _r2_cell_map_authority(
+            factor_store, r0_authority
+        ),
+        "raw_artifacts_hash_valid": _r2_raw_artifacts_match(
+            run_dir,
+            watchdog.get("raw_artifacts"),
+            (
+                "r2_worker_stdout.txt",
+                "r2_progress.jsonl",
+                "r2_watchdog_timeline.jsonl",
+                "r2_root_pid.json",
+                "run_summary.json",
+                "factor_store/manifest.json",
+            ),
+        ),
+    }
+    problems = list(worker_eval["problems"])
+    problems.extend(name for name, passed in phase.items() if passed is not True)
+    measurements = None
+    if not problems:
+        measurements = {
+            "source_commit_full_sha": worker["source_at_start"]["source_commit_full_sha"],
+            "runtime_identity": runtime,
+            "mpi_size": 1,
+            "p6_h10": {
+                "global_cells": worker["measurement"]["global_cells"],
+                "local_nloc": worker["measurement"]["local_nloc"],
+                "global_rows": worker["measurement"]["global_rows"],
+                "constraint_count": worker["measurement"]["constraint_count"],
+                "unique_class_count": factor_store.audit["class_count"],
+                "class_inventory": worker["class_inventory"],
+                "expansion_inventory": worker["expansion_inventory"],
+                "representative_class_ids": worker["representative_class_ids"],
+                "inventory_digest": r0_authority["inventory_digest"],
+            },
+            "factor": {
+                "unique_factor_count": factor_store.audit["unique_factor_count"],
+                "class_count": factor_store.audit["class_count"],
+                "cell_count": factor_store.audit["cell_count"],
+                "retained_payload_components": factor_store.audit["retained_payload_components"],
+                "retained_payload_bytes": factor_store.audit["retained_payload_bytes"],
+                "factor_plus_metadata_bytes": factor_store.audit["factor_plus_metadata_bytes"],
+                "factorization_residual_max": factor_store.audit["factorization_residual_max"],
+                "solve_residual_max": factor_store.audit["solve_residual_max"],
+                "finite": factor_store.audit["finite"],
+                "deterministic": factor_store.audit["deterministic"],
+            },
+            "action_relative_error_max": worker["action_relative_error_max"],
+            "cache": {
+                "form_jit_cache_hit": True,
+                "c_source_regeneration": False,
+                "cache_inventory_unchanged": worker["cache_unchanged"],
+                "compiler_descendant_pids": timeline["compiler_descendant_pids"],
+            },
+            "process_tree": {
+                "peak_rss_bytes": timeline["peak_rss_bytes"],
+                "swap_bytes": timeline["swap_bytes"],
+                "completion_elapsed_seconds": watchdog["completion_elapsed_seconds"],
+                "live_sample_count": timeline["live_sample_count"],
+            },
+            "identity": _r2_identity(),
+            "formal_budget_runs": R2_FORMAL_BUDGET_RUNS,
+        }
+    raw_names = (
+        "r2_worker_stdout.txt",
+        "r2_progress.jsonl",
+        "r2_watchdog_timeline.jsonl",
+        "r2_root_pid.json",
+        "run_summary.json",
+        "factor_store/manifest.json",
+        "r2_watchdog_summary.json",
+    )
+    return {
+        "schema": R2_CHECK_SCHEMA,
+        "status": "pass" if not problems else "gate_failed",
+        "pass": not problems,
+        "problems": sorted(set(problems)),
+        "worker_qualification": worker_eval,
+        "watchdog_checks": phase,
+        "measurements": measurements,
+        "raw_artifacts": {name: _r2_artifact(run_dir, name) for name in raw_names},
+        "raw_evidence_sha256": {
+            "worker_summary_evidence_sha256": worker.get("evidence_sha256"),
+            "watchdog_summary_evidence_sha256": watchdog.get("evidence_sha256"),
+            "factor_manifest_file_sha256": _sha256_file(manifest_path),
+            "watchdog_summary_file_sha256": _sha256_file(
+                run_dir / "r2_watchdog_summary.json"
+            ),
+        },
+    }
+
+
+def _r2_run_watchdog(args: argparse.Namespace) -> int:
+    run_dir = Path(args.run_dir).resolve()
+    if run_dir.exists():
+        raise FileExistsError(f"R2 run directory already exists: {run_dir}")
+    run_dir.parent.mkdir(parents=True, exist_ok=True)
+    run_dir.mkdir()
+    started = time.perf_counter()
+    source_at_start = _r1_inspect_source(ROOT)
+    command = _r2_worker_command(run_dir, sys.executable)
+    timeline_path = run_dir / "r2_watchdog_timeline.jsonl"
+    stdout_path = run_dir / "r2_worker_stdout.txt"
+    root_path = run_dir / "r2_root_pid.json"
+    process: subprocess.Popen[Any] | None = None
+    samples: list[dict[str, Any]] = []
+    termination: str | None = None
+    return_code: int | None = None
+    with stdout_path.open("w", encoding="utf-8") as stdout, timeline_path.open(
+        "w", encoding="utf-8"
+    ) as timeline_stream:
+        if source_at_start.tracked_source_dirty or source_at_start.nonignored_untracked_paths:
+            termination = "source_not_clean"
+        else:
+            process = subprocess.Popen(
+                command,
+                cwd=ROOT,
+                stdout=stdout,
+                stderr=subprocess.STDOUT,
+                start_new_session=True,
+            )
+            _write_json(
+                root_path,
+                {"schema": f"{R2_SCHEMA}.root.v1", "root_pid": int(process.pid)},
+            )
+        while process is not None and process.poll() is None:
+            try:
+                observed = process_tree_sample(process.pid)
+            except (OSError, ValueError):
+                observed = None
+            if observed is None:
+                termination = "authority_unreadable"
+                if process.poll() is None:
+                    _h2a_terminate_process_tree(process)
+                break
+            pids = [int(pid) for pid in observed.pids]
+            sample = {
+                "schema": R2_PROGRESS_SCHEMA,
+                "sample_kind": "worker",
+                "elapsed_wall_seconds": float(time.perf_counter() - started),
+                "root_pid": int(process.pid),
+                "pids": pids,
+                "process_count": len(pids),
+                "rss_bytes": int(observed.rss_bytes),
+                "swap_bytes": int(observed.swap_bytes),
+                "all_status_readable": bool(observed.all_status_readable),
+                "progress_event": _r1_last_progress_event(run_dir / "r2_progress.jsonl"),
+                "compiler_descendant_pids": _r1_compiler_descendant_pids(pids, process.pid),
+            }
+            samples.append(sample)
+            timeline_stream.write(json.dumps(sample, sort_keys=True, separators=(",", ":")) + "\n")
+            timeline_stream.flush()
+            elapsed = sample["elapsed_wall_seconds"]
+            if not sample["all_status_readable"]:
+                termination = "authority_unreadable"
+            elif sample["swap_bytes"] > R2_SWAP_LIMIT_BYTES:
+                termination = "swap_nonzero"
+            elif sample["rss_bytes"] >= R2_RSS_LIMIT_BYTES:
+                termination = f"process_tree_rss_over_{R2_RSS_LIMIT_BYTES}_bytes"
+            elif elapsed >= R2_TIMEOUT_SECONDS:
+                termination = "wall_timeout"
+            if termination is not None:
+                _h2a_terminate_process_tree(process)
+                break
+            time.sleep(0.25)
+        if process is not None:
+            return_code = process.wait()
+        completion = float(time.perf_counter() - started)
+        if process is not None and termination is None and completion > R2_TIMEOUT_SECONDS:
+            termination = "wall_timeout_post_exit"
+        timeline_stream.write(
+            json.dumps(
+                {
+                    "schema": R2_PROGRESS_SCHEMA,
+                    "sample_kind": "final",
+                    "elapsed_wall_seconds": completion,
+                    "return_code": return_code,
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            + "\n"
+        )
+        timeline_stream.flush()
+    source_at_end = _r1_inspect_source(ROOT)
+    worker_path = run_dir / "run_summary.json"
+    worker = read_json_object(worker_path) if worker_path.is_file() else None
+    watchdog_runtime = (
+        worker.get("runtime_identity")
+        if isinstance(worker, Mapping)
+        else _runtime_identity()
+    )
+    peak = max((item["rss_bytes"] for item in samples), default=None)
+    swap = max((item["swap_bytes"] for item in samples), default=None)
+    source_clean = _r0_source_pair_is_clean(
+        source_at_start.as_jsonable(), source_at_end.as_jsonable()
+    )
+    raw_names = (
+        "r2_worker_stdout.txt",
+        "r2_progress.jsonl",
+        "r2_watchdog_timeline.jsonl",
+        "r2_root_pid.json",
+        "run_summary.json",
+        "factor_store/manifest.json",
+    )
+    raw_artifacts = {
+        name: _r2_artifact(run_dir, name) for name in raw_names
+    }
+    status = bool(
+        termination is None
+        and return_code == 0
+        and isinstance(worker, Mapping)
+        and worker.get("status") == "measurement_complete"
+        and evidence_sha256_is_valid(worker)
+        and source_clean
+        and isinstance(peak, int)
+        and peak < R2_RSS_LIMIT_BYTES
+        and swap == 0
+    )
+    payload = attach_evidence_sha256(
+        {
+            "schema": R2_WATCHDOG_SCHEMA,
+            "status": "pass" if status else "gate_failed",
+            "run_dir": str(run_dir),
+            "command": command,
+            "scope": _r2_scope(),
+            "runtime_identity": watchdog_runtime,
+            "source_at_start": source_at_start.as_jsonable(),
+            "source_at_end": source_at_end.as_jsonable(),
+            "source_clean_and_stable": source_clean,
+            "return_code": return_code,
+            "termination": termination,
+            "completion_elapsed_seconds": completion,
+            "live_sample_count": len(samples),
+            "process_tree_peak_rss_bytes": peak,
+            "process_tree_swap_bytes": swap,
+            "compiler_descendant_pids": sorted({
+                int(pid) for item in samples for pid in item["compiler_descendant_pids"]
+            }),
+            "worker_summary_present": isinstance(worker, Mapping),
+            "worker_evidence_valid": isinstance(worker, Mapping) and evidence_sha256_is_valid(worker),
+            "worker_runtime_identity_match": isinstance(worker, Mapping) and worker.get("runtime_identity") == watchdog_runtime,
+            "raw_artifacts": raw_artifacts,
+        }
+    )
+    _write_json(run_dir / "r2_watchdog_summary.json", payload)
+    print(f"R2 watchdog status={payload['status']} run_dir={run_dir}", flush=True)
+    return 0 if status else 1
+
+
+def _r2_run_check(args: argparse.Namespace) -> int:
+    try:
+        result = _r2_check_raw(Path(args.run_dir))
+    except (
+        OSError,
+        ValueError,
+        TypeError,
+        KeyError,
+        IndexError,
+        json.JSONDecodeError,
+    ) as exc:
+        result = {
+            "schema": R2_CHECK_SCHEMA,
+            "status": "gate_failed",
+            "pass": False,
+            "problems": [f"raw_unreadable:{type(exc).__name__}"],
+        }
+    output = Path(args.output).resolve()
+    if output == R2_R1_RECORD_PATH.resolve() and result["pass"] is not True:
+        print(
+            "R2 check failed; frozen R1 canonical record was not overwritten",
+            flush=True,
+        )
+        return 1
+    _write_json(output, attach_evidence_sha256(result))
+    print(f"R2 check status={result['status']} output={output}", flush=True)
+    return 0 if result["pass"] else 1
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -3984,6 +5363,17 @@ def _parser() -> argparse.ArgumentParser:
     r1_checker.add_argument("--run-dir", required=True)
     r1_checker.add_argument("--output", required=True)
     r1_checker.set_defaults(handler=_r1_run_check)
+    r2_worker = sub.add_parser("r2-worker")
+    r2_worker.add_argument("--run-dir", required=True)
+    r2_worker.add_argument("--jit-cache-dir", required=True)
+    r2_worker.set_defaults(handler=_r2_run_worker_handler)
+    r2_watchdog = sub.add_parser("r2-watchdog")
+    r2_watchdog.add_argument("--run-dir", required=True)
+    r2_watchdog.set_defaults(handler=_r2_run_watchdog)
+    r2_checker = sub.add_parser("r2-check")
+    r2_checker.add_argument("--run-dir", required=True)
+    r2_checker.add_argument("--output", required=True)
+    r2_checker.set_defaults(handler=_r2_run_check)
     return parser
 
 
