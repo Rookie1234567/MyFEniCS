@@ -2880,6 +2880,25 @@ def _r1_identity() -> dict[str, Any]:
     return identity
 
 
+def _r1_inspect_source(root: Path):
+    saved = {
+        name: os.environ.get(name)
+        for name in ("GIT_DIR", "GIT_WORK_TREE")
+    }
+    git_dir = root / ".git-codex"
+    try:
+        if git_dir.exists():
+            os.environ["GIT_DIR"] = str(git_dir.resolve())
+            os.environ["GIT_WORK_TREE"] = str(root.resolve())
+        return inspect_tracked_source(root)
+    finally:
+        for name, value in saved.items():
+            if value is None:
+                os.environ.pop(name, None)
+            else:
+                os.environ[name] = value
+
+
 def _r1_scope() -> dict[str, Any]:
     return {
         "mode": "isolated_jit_stage_and_cache_hit",
@@ -3180,7 +3199,7 @@ def _r1_run_worker(args: argparse.Namespace, phase: str) -> int:
     summary_path = run_dir / f"{phase}_summary.json"
     progress_path = run_dir / f"{phase}_progress.jsonl"
     started = time.perf_counter()
-    source_at_start = inspect_tracked_source(ROOT)
+    source_at_start = _r1_inspect_source(ROOT)
     runtime: dict[str, Any] | None = None
     forms: list[dict[str, Any]] = []
     cache_before: list[dict[str, Any]] = []
@@ -3281,7 +3300,7 @@ def _r1_run_worker(args: argparse.Namespace, phase: str) -> int:
         json.JSONDecodeError,
     ) as exc:
         error = f"{type(exc).__name__}: {exc}"
-    source_at_end = inspect_tracked_source(ROOT)
+    source_at_end = _r1_inspect_source(ROOT)
     cache_inventory = cache_after if phase == "stage" else []
     payload = attach_evidence_sha256(
         {
@@ -3357,6 +3376,72 @@ def _r1_compiler_descendant_pids(
     return sorted(set(compiler_pids))
 
 
+def _r1_timeline_sample(
+    *,
+    phase: str,
+    process: subprocess.Popen[Any],
+    observed: Any,
+    progress_path: Path,
+    elapsed: float,
+    sample_kind: str,
+    transient_classification: str | None = None,
+) -> dict[str, Any]:
+    pids = [int(pid) for pid in getattr(observed, "pids", [])]
+    rss = getattr(observed, "rss_bytes", None)
+    swap = getattr(observed, "swap_bytes", None)
+    sample = {
+        "schema": R1_PROGRESS_SCHEMA,
+        "sample_kind": sample_kind,
+        "phase": phase,
+        "elapsed_wall_seconds": float(elapsed),
+        "root_pid": int(process.pid),
+        "pids": pids,
+        "process_count": len(pids),
+        "rss_bytes": None if rss is None else int(rss),
+        "swap_bytes": None if swap is None else int(swap),
+        "all_status_readable": bool(
+            getattr(observed, "all_status_readable", False)
+        ),
+        "progress_event": _r1_last_progress_event(progress_path),
+        "compiler_descendant_pids": _r1_compiler_descendant_pids(
+            pids, process.pid
+        ),
+    }
+    if transient_classification is not None:
+        sample["transient_classification"] = transient_classification
+    return sample
+
+
+def _r1_confirm_unreadable(
+    process: subprocess.Popen[Any],
+    observed: Any,
+    sampler: Any,
+    rss_limit_bytes: int,
+    *,
+    pause: Any = time.sleep,
+) -> tuple[str, Any | None]:
+    rss = getattr(observed, "rss_bytes", None)
+    swap = getattr(observed, "swap_bytes", None)
+    if isinstance(rss, int) and not isinstance(rss, bool) and rss >= rss_limit_bytes:
+        return "resource_gate", None
+    if isinstance(swap, int) and not isinstance(swap, bool) and swap > 0:
+        return "resource_gate", None
+    pause(0.015)
+    if process.poll() is not None:
+        return "root_exited", None
+    try:
+        confirmed = sampler(process.pid)
+    except (OSError, ValueError):
+        confirmed = None
+    if process.poll() is not None:
+        return "root_exited", None
+    if confirmed is not None and bool(
+        getattr(confirmed, "all_status_readable", False)
+    ):
+        return "recovered_readable", confirmed
+    return "authority_unreadable_confirmed", confirmed
+
+
 def _r1_run_phase(
     *,
     run_dir: Path,
@@ -3371,6 +3456,7 @@ def _r1_run_phase(
     process: subprocess.Popen[Any] | None = None
     termination: str | None = None
     samples: list[dict[str, Any]] = []
+    transient_count = 0
     try:
         with (run_dir / f"{phase}_stdout.txt").open("w", encoding="utf-8") as stdout, (run_dir / f"{phase}_timeline.jsonl").open("w", encoding="utf-8") as timeline:
             process = subprocess.Popen(command, cwd=ROOT, stdout=stdout, stderr=subprocess.STDOUT, start_new_session=True)
@@ -3378,25 +3464,66 @@ def _r1_run_phase(
                 try:
                     observed = process_tree_sample(process.pid)
                 except (OSError, ValueError):
-                    termination = "authority_unreadable"
-                    _h2a_terminate_process_tree(process)
-                    break
+                    observed = None
+                if observed is None or not bool(
+                    getattr(observed, "all_status_readable", False)
+                ):
+                    classification, confirmed = _r1_confirm_unreadable(
+                        process,
+                        observed,
+                        process_tree_sample,
+                        rss_limit_bytes,
+                    )
+                    transient_count += 1
+                    transient = _r1_timeline_sample(
+                        phase=phase,
+                        process=process,
+                        observed=observed,
+                        progress_path=progress_path,
+                        elapsed=float(time.perf_counter() - phase_started),
+                        sample_kind="transient_unreadable",
+                        transient_classification=classification,
+                    )
+                    timeline.write(
+                        json.dumps(
+                            transient, sort_keys=True, separators=(",", ":")
+                        )
+                        + "\n"
+                    )
+                    timeline.flush()
+                    if classification == "resource_gate":
+                        rss = getattr(observed, "rss_bytes", None)
+                        swap = getattr(observed, "swap_bytes", None)
+                        if isinstance(swap, int) and swap > 0:
+                            termination = "swap_nonzero"
+                        elif isinstance(rss, int) and rss >= rss_limit_bytes:
+                            termination = (
+                                f"process_tree_rss_over_{rss_limit_bytes}_bytes"
+                            )
+                        else:
+                            termination = "authority_unreadable"
+                        _h2a_terminate_process_tree(process)
+                        break
+                    if classification == "authority_unreadable_confirmed":
+                        termination = "authority_unreadable_confirmed"
+                        _h2a_terminate_process_tree(process)
+                        break
+                    if classification == "root_exited":
+                        break
+                    observed = confirmed
                 elapsed = float(time.perf_counter() - phase_started)
-                sample = {
-                    "schema": R1_PROGRESS_SCHEMA, "sample_kind": "worker", "phase": phase,
-                    "elapsed_wall_seconds": elapsed, "root_pid": int(process.pid),
-                    "pids": [int(pid) for pid in observed.pids], "process_count": len(observed.pids),
-                    "rss_bytes": int(observed.rss_bytes), "swap_bytes": int(observed.swap_bytes),
-                    "all_status_readable": bool(observed.all_status_readable),
-                    "progress_event": _r1_last_progress_event(progress_path),
-                    "compiler_descendant_pids": _r1_compiler_descendant_pids(observed.pids, process.pid),
-                }
+                sample = _r1_timeline_sample(
+                    phase=phase,
+                    process=process,
+                    observed=observed,
+                    progress_path=progress_path,
+                    elapsed=elapsed,
+                    sample_kind="worker",
+                )
                 samples.append(sample)
                 timeline.write(json.dumps(sample, sort_keys=True, separators=(",", ":")) + "\n")
                 timeline.flush()
-                if not observed.all_status_readable:
-                    termination = "authority_unreadable"
-                elif observed.swap_bytes > R1_SWAP_LIMIT_BYTES:
+                if observed.swap_bytes > R1_SWAP_LIMIT_BYTES:
                     termination = "swap_nonzero"
                 elif observed.rss_bytes >= rss_limit_bytes:
                     termination = f"process_tree_rss_over_{rss_limit_bytes}_bytes"
@@ -3429,6 +3556,7 @@ def _r1_run_phase(
         "controller_elapsed_start": float(phase_started - controller_started),
         "controller_elapsed_end": float(time.perf_counter() - controller_started),
         "live_sample_count": len(samples),
+        "transient_count": int(transient_count),
         "process_tree_peak_rss_bytes": (
             max((sample["rss_bytes"] for sample in samples), default=None)
         ),
@@ -3455,6 +3583,27 @@ def _r1_timeline_metrics(path: Path, phase: str) -> dict[str, Any]:
                 raise ValueError("R1 timeline schema or phase mismatch")
             samples.append(sample)
     live = [sample for sample in samples if sample.get("sample_kind") == "worker"]
+    transient = [
+        sample
+        for sample in samples
+        if sample.get("sample_kind") == "transient_unreadable"
+    ]
+    transient_valid = all(
+        isinstance(sample.get("transient_classification"), str)
+        and sample["transient_classification"]
+        in {"recovered_readable", "root_exited"}
+        and all(
+            field in sample
+            for field in (
+                "pids",
+                "rss_bytes",
+                "swap_bytes",
+                "progress_event",
+                "compiler_descendant_pids",
+            )
+        )
+        for sample in transient
+    )
     if not live:
         return {
             "readable": False, "live_sample_count": 0, "peak_rss_bytes": None,
@@ -3462,6 +3611,8 @@ def _r1_timeline_metrics(path: Path, phase: str) -> dict[str, Any]:
             "compile_marker_samples": 0,
             "compile_marker_compiler_descendant_count": None,
             "cache_load_samples": 0, "cache_load_compiler_descendant_count": None,
+            "transient_count": len(transient),
+            "transient_valid": transient_valid,
         }
     readable = all(
         isinstance(sample.get("rss_bytes"), int)
@@ -3496,6 +3647,8 @@ def _r1_timeline_metrics(path: Path, phase: str) -> dict[str, Any]:
         "compile_marker_compiler_descendant_count": max_children(compile_samples),
         "cache_load_samples": len(cache_samples),
         "cache_load_compiler_descendant_count": max_children(cache_samples),
+        "transient_count": len(transient),
+        "transient_valid": transient_valid,
     }
 
 
@@ -3505,7 +3658,7 @@ def _r1_run_watchdog(args: argparse.Namespace) -> int:
         raise FileExistsError(f"R1 run directory already exists: {run_dir}")
     run_dir.parent.mkdir(parents=True, exist_ok=True)
     run_dir.mkdir()
-    controller_started, source_at_start = time.perf_counter(), inspect_tracked_source(ROOT)
+    controller_started, source_at_start = time.perf_counter(), _r1_inspect_source(ROOT)
     runtime_identity: dict[str, Any] | None = None
     stage: dict[str, Any] | None = None
     hit: dict[str, Any] | None = None
@@ -3538,7 +3691,7 @@ def _r1_run_watchdog(args: argparse.Namespace) -> int:
         json.JSONDecodeError,
     ) as exc:
         error = f"{type(exc).__name__}: {exc}"
-    source_at_end = inspect_tracked_source(ROOT)
+    source_at_end = _r1_inspect_source(ROOT)
     if stage is not None:
         stage["hit_started_after_stage_exit"] = bool(hit and hit["controller_elapsed_start"] > stage["controller_elapsed_end"])
     summaries = [
@@ -3669,6 +3822,7 @@ def _r1_check_raw(run_dir: Path) -> dict[str, Any]:
     phase_ok = all(
         isinstance(phase, Mapping) and phase.get("return_code") == 0 and phase.get("termination") is None
         and time_ok(phase, limit) and timeline["readable"] and isinstance(timeline["peak_rss_bytes"], int)
+        and timeline["transient_valid"] is True
         and timeline["peak_rss_bytes"] < (R1_STAGE_RSS_LIMIT_BYTES if name == "stage" else R1_HIT_RSS_LIMIT_BYTES)
         and timeline["swap_bytes"] == 0 and phase.get("process_tree_peak_rss_bytes") == timeline["peak_rss_bytes"]
         and phase.get("process_tree_swap_bytes") == timeline["swap_bytes"]
@@ -3722,6 +3876,7 @@ def _r1_check_raw(run_dir: Path) -> dict[str, Any]:
                 "completion_elapsed_seconds": stage_phase["completion_elapsed_seconds"],
                 "process_tree_peak_rss_bytes": stage_timeline["peak_rss_bytes"],
                 "swap_bytes": stage_timeline["swap_bytes"],
+                "transient_count": stage_timeline["transient_count"],
                 "compiler_descendant_pids": stage_timeline[
                     "compiler_descendant_pids"
                 ],
@@ -3734,6 +3889,7 @@ def _r1_check_raw(run_dir: Path) -> dict[str, Any]:
                 "completion_elapsed_seconds": hit_phase["completion_elapsed_seconds"],
                 "process_tree_peak_rss_bytes": hit_timeline["peak_rss_bytes"],
                 "swap_bytes": hit_timeline["swap_bytes"],
+                "transient_count": hit_timeline["transient_count"],
                 "compiler_child_process_count": len(hit_timeline["compiler_descendant_pids"]),
                 "form_jit_cache_hit": True,
                 "c_source_regeneration": False,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import sys
 from types import SimpleNamespace
@@ -297,6 +298,121 @@ def test_r1_fixed_commands_and_phase_contract():
         "discovery" not in event and "tensor" not in event
         for event in runner._r1_expected_progress("hit")
     )
+
+
+def test_r1_source_inspection_temporarily_binds_and_restores_git_env(monkeypatch):
+    seen = {}
+
+    def fake_inspect(root):
+        seen["git_dir"] = os.environ.get("GIT_DIR")
+        seen["work_tree"] = os.environ.get("GIT_WORK_TREE")
+        return SimpleNamespace()
+
+    monkeypatch.setattr(runner, "inspect_tracked_source", fake_inspect)
+    monkeypatch.delenv("GIT_DIR", raising=False)
+    monkeypatch.delenv("GIT_WORK_TREE", raising=False)
+    runner._r1_inspect_source(runner.ROOT)
+    assert seen == {
+        "git_dir": str((runner.ROOT / ".git-codex").resolve()),
+        "work_tree": str(runner.ROOT.resolve()),
+    }
+    assert "GIT_DIR" not in os.environ
+    assert "GIT_WORK_TREE" not in os.environ
+
+    monkeypatch.setenv("GIT_DIR", "original-dir")
+    monkeypatch.setenv("GIT_WORK_TREE", "original-tree")
+    runner._r1_inspect_source(runner.ROOT)
+    assert os.environ["GIT_DIR"] == "original-dir"
+    assert os.environ["GIT_WORK_TREE"] == "original-tree"
+
+
+def test_r1_unreadable_confirmation_recovers_or_stops_once():
+    class _Process:
+        pid = 123
+
+        def __init__(self, returncode=None):
+            self.returncode = returncode
+
+        def poll(self):
+            return self.returncode
+
+    unreadable = SimpleNamespace(
+        pids=[123, 124], rss_bytes=100, swap_bytes=0, all_status_readable=False
+    )
+    readable = SimpleNamespace(
+        pids=[123, 124], rss_bytes=110, swap_bytes=0, all_status_readable=True
+    )
+    classification, confirmed = runner._r1_confirm_unreadable(
+        _Process(), unreadable, lambda _pid: readable, 1000,
+        pause=lambda _seconds: None,
+    )
+    assert classification == "recovered_readable"
+    assert confirmed is readable
+
+    persistent = SimpleNamespace(
+        pids=[123], rss_bytes=100, swap_bytes=0, all_status_readable=False
+    )
+    classification, confirmed = runner._r1_confirm_unreadable(
+        _Process(), unreadable, lambda _pid: persistent, 1000,
+        pause=lambda _seconds: None,
+    )
+    assert classification == "authority_unreadable_confirmed"
+    assert confirmed is persistent
+
+    def gone(_pid):
+        raise OSError("gone")
+
+    classification, confirmed = runner._r1_confirm_unreadable(
+        _Process(returncode=0), unreadable, gone, 1000,
+        pause=lambda _seconds: None,
+    )
+    assert classification == "root_exited"
+    assert confirmed is None
+
+
+def test_r1_timeline_rejects_unclassified_transient(tmp_path: Path):
+    path = tmp_path / "stage_timeline.jsonl"
+    samples = [
+        {
+            "schema": runner.R1_PROGRESS_SCHEMA,
+            "sample_kind": "transient_unreadable",
+            "phase": "stage",
+            "pids": [100],
+            "rss_bytes": None,
+            "swap_bytes": None,
+            "progress_event": "curl_form_compile_started",
+            "compiler_descendant_pids": [],
+            "transient_classification": "authority_unreadable_confirmed",
+        },
+        {
+            "schema": runner.R1_PROGRESS_SCHEMA,
+            "sample_kind": "worker",
+            "phase": "stage",
+            "elapsed_wall_seconds": 0.5,
+            "root_pid": 100,
+            "pids": [100],
+            "process_count": 1,
+            "rss_bytes": 100,
+            "swap_bytes": 0,
+            "all_status_readable": True,
+            "progress_event": "curl_form_compile_started",
+            "compiler_descendant_pids": [101],
+        },
+        {
+            "schema": runner.R1_PROGRESS_SCHEMA,
+            "sample_kind": "final",
+            "phase": "stage",
+            "elapsed_wall_seconds": 1.0,
+            "return_code": 0,
+        },
+    ]
+    path.write_text(
+        "".join(json.dumps(sample) + "\n" for sample in samples),
+        encoding="utf-8",
+    )
+    metrics = runner._r1_timeline_metrics(path, "stage")
+    assert metrics["transient_count"] == 1
+    assert metrics["transient_valid"] is False
 
 
 def test_r1_cache_snapshot_and_form_code_states(tmp_path: Path):
