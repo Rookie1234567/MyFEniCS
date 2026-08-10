@@ -38,6 +38,7 @@ __all__ = (
     "build_b0_proxy_tensor",
     "build_task037_extra_h2a_block_cache",
     "make_task037_extra_h2a_class_key",
+    "make_task037_extra_h2a_constraint_pattern",
     "tabulate_task037_extra_h2a_cell_tensor",
 )
 
@@ -106,13 +107,80 @@ def _normalize_constraint_pattern(
         )
         normalized.append(
             (
-                str(entry["topology"]),
+                _freeze_key(entry["topology"]),
                 int(entry["local_slave"]),
                 ("phase", _complex_pair(entry["phase"])),
                 ("columns", columns),
             )
         )
     return tuple(sorted(normalized, key=lambda item: (item[0], item[1])))
+
+
+def make_task037_extra_h2a_constraint_pattern(
+    blocks: Iterable[Any],
+    *,
+    cell_local_dofs: Sequence[int],
+    phase_x: complex,
+    phase_y: complex,
+    phase_corner: complex | None = None,
+) -> tuple[dict[str, Any], ...]:
+    """Return the normalized local Floquet expansion for one cell.
+
+    ``blocks`` are the already selected phase-independent topology blocks that
+    touch this cell.  The result uses the cell's canonical local DoF ordinals
+    and transform-column ordinals only.  It intentionally excludes absolute
+    local/global rows, entity IDs, geometry keys, and any owner information;
+    those belong to :class:`H2ACellReference`, not an exact class key.
+    The actual phase is recorded separately from the phase-independent Basix
+    transform so it is not multiplied twice.
+    """
+
+    local_rows = tuple(int(value) for value in cell_local_dofs)
+    if not local_rows or len(set(local_rows)) != len(local_rows):
+        raise ValueError("H2A cell local DoF rows must be unique and nonempty")
+    ordinal_by_row = {row: ordinal for ordinal, row in enumerate(local_rows)}
+    phases = {
+        "x": complex(phase_x),
+        "y": complex(phase_y),
+        "corner": (
+            complex(phase_corner)
+            if phase_corner is not None
+            else complex(phase_x) * complex(phase_y)
+        ),
+    }
+    result: list[dict[str, Any]] = []
+    for block in blocks:
+        slave_rows = tuple(int(value) for value in block.slave_local_dofs)
+        if not slave_rows:
+            continue
+        if not all(row in ordinal_by_row for row in slave_rows):
+            continue
+        transform = np.asarray(block.coefficient_transform, dtype=np.complex128)
+        if transform.shape[0] != len(slave_rows):
+            raise ValueError("H2A Floquet transform rows do not match local slaves")
+        if str(block.kind) not in phases:
+            raise ValueError(f"Unsupported H2A Floquet phase kind {block.kind!r}")
+        topology = (
+            ("entity_kind", str(block.entity_kind)),
+            ("direction", str(block.kind)),
+            ("vertex_permutation", tuple(int(value) for value in block.entity_vertex_permutation)),
+            ("cell_type", str(block.cell_type)),
+        )
+        for row_index, slave_row in enumerate(slave_rows):
+            columns = tuple(
+                (column, complex(value))
+                for column, value in enumerate(transform[row_index])
+                if complex(value) != 0.0 + 0.0j
+            )
+            result.append(
+                {
+                    "topology": topology,
+                    "local_slave": ordinal_by_row[slave_row],
+                    "phase": phases[str(block.kind)],
+                    "columns": columns,
+                }
+            )
+    return tuple(result)
 
 
 def make_task037_extra_h2a_class_key(
@@ -567,6 +635,57 @@ class HcurlExactClassBlockCache:
             }
             for key in ordered_keys
         )
+        local_factor_values_finite = all(
+            bool(np.all(np.isfinite(factor.values)))
+            for factor in local_factors.values()
+        )
+        local_factor_pivots_finite = all(
+            bool(np.all(np.isfinite(factor.pivots)))
+            for factor in local_factors.values()
+        )
+        factor_values_finite = bool(
+            comm.allreduce(local_factor_values_finite, op=MPI.LAND)
+        )
+        factor_pivots_finite = bool(
+            comm.allreduce(local_factor_pivots_finite, op=MPI.LAND)
+        )
+        class_factor_ids = tuple(
+            int(item["factor_id"]) for item in class_inventory
+        )
+        cell_factor_relation_closed = (
+            len(cell_class_ids) == len(cell_factor_ids)
+            and all(
+                int(cell_factor_ids[index])
+                == class_factor_ids[int(cell_class_ids[index])]
+                for index in range(len(cell_class_ids))
+            )
+        )
+        deterministic_inventory_local_closed = (
+            tuple(item["class_id"] for item in class_inventory)
+            == tuple(range(len(class_inventory)))
+            and all(
+                0 <= int(value) < len(ordered_keys)
+                for value in cell_class_ids
+            )
+            and all(
+                0 <= int(value) < len(global_signatures)
+                for value in cell_factor_ids
+            )
+            and set(class_factor_ids) == set(range(len(global_signatures)))
+            and cell_factor_relation_closed
+        )
+        deterministic_inventory_closed = bool(
+            comm.allreduce(deterministic_inventory_local_closed, op=MPI.LAND)
+        )
+        deterministic_inventory_sha256 = hashlib.sha256(
+            _key_json(
+                (
+                    class_inventory,
+                    tuple(int(value) for value in cell_class_ids),
+                    tuple(int(value) for value in cell_factor_ids),
+                )
+            ).encode("utf-8")
+        ).hexdigest()
         class_metadata_bytes = len(
             json.dumps(
                 _freeze_key((ordered_keys, class_inventory)),
@@ -687,6 +806,10 @@ class HcurlExactClassBlockCache:
             "class_inventory": class_inventory,
             "cell_class_ids": tuple(int(value) for value in cell_class_ids),
             "cell_factor_ids": tuple(int(value) for value in cell_factor_ids),
+            "factor_values_finite": factor_values_finite,
+            "factor_pivots_finite": factor_pivots_finite,
+            "deterministic_class_inventory_closed": deterministic_inventory_closed,
+            "deterministic_class_inventory_sha256": deterministic_inventory_sha256,
             "destroyed": False,
         }
 
