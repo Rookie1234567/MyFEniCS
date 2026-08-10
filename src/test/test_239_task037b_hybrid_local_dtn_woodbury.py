@@ -120,20 +120,21 @@ def _random_vector(template: PETSc.Vec, seed: int) -> PETSc.Vec:
     return vector
 
 
-def test_exact_woodbury_matpython_components_and_lifecycle():
+@pytest.mark.parametrize("mode_count", [HYBRID_DTN_WOODBURY_MODE_COUNT, 42])
+def test_exact_woodbury_matpython_components_and_lifecycle(mode_count: int):
     comm = MPI.COMM_WORLD
     if comm.size not in (1, 2, 4):
         return
     rows = 8
     rng = np.random.default_rng(239)
     base_dense = np.eye(rows, dtype=np.complex128) * (2.0 + 0.2j)
-    C_dense = rng.standard_normal(
-        (rows, HYBRID_DTN_WOODBURY_MODE_COUNT)
-    ) + 1j * rng.standard_normal((rows, HYBRID_DTN_WOODBURY_MODE_COUNT))
-    D_dense = rng.standard_normal(
-        (HYBRID_DTN_WOODBURY_MODE_COUNT, rows)
-    ) + 1j * rng.standard_normal((HYBRID_DTN_WOODBURY_MODE_COUNT, rows))
-    H_dense = np.eye(HYBRID_DTN_WOODBURY_MODE_COUNT, dtype=np.complex128) * (3.0 + 0.1j)
+    C_dense = rng.standard_normal((rows, mode_count)) + 1j * rng.standard_normal(
+        (rows, mode_count)
+    )
+    D_dense = rng.standard_normal((mode_count, rows)) + 1j * rng.standard_normal(
+        (mode_count, rows)
+    )
+    H_dense = np.eye(mode_count, dtype=np.complex128) * (3.0 + 0.1j)
     F = _matrix_from_dense(base_dense)
     C = _python_matrix_from_dense(C_dense)
     D = _python_matrix_from_dense(D_dense)
@@ -145,18 +146,12 @@ def test_exact_woodbury_matpython_components_and_lifecycle():
     oracle = HybridLocalDtnWoodburyOracle(base, components)
     try:
         diagnostics = oracle.diagnostics
-        assert diagnostics["n_aux"] == HYBRID_DTN_WOODBURY_MODE_COUNT
+        assert diagnostics["n_aux"] == mode_count
         assert diagnostics["normal_equations"] is False
-        assert diagnostics["K_rank"] == HYBRID_DTN_WOODBURY_MODE_COUNT
+        assert diagnostics["K_rank"] == mode_count
         assert np.isfinite(diagnostics["K_condition_number"])
-        assert (
-            diagnostics["W_local_nbytes"]
-            == F.getLocalSize()[0] * HYBRID_DTN_WOODBURY_MODE_COUNT * 16
-        )
-        assert (
-            diagnostics["K_nbytes"]
-            == HYBRID_DTN_WOODBURY_MODE_COUNT * HYBRID_DTN_WOODBURY_MODE_COUNT * 16
-        )
+        assert diagnostics["W_local_nbytes"] == F.getLocalSize()[0] * mode_count * 16
+        assert diagnostics["K_nbytes"] == mode_count * mode_count * 16
         for seed in (1, 2, 3):
             source_template = F.createVecRight()
             source = _random_vector(source_template, seed)
@@ -201,20 +196,21 @@ def test_exact_woodbury_matpython_components_and_lifecycle():
         assert d_context.destroyed is True
 
 
-def test_fixed_woodbury_action_is_one_apply_nonowning_and_fail_closed():
+@pytest.mark.parametrize("mode_count", [HYBRID_DTN_WOODBURY_MODE_COUNT, 42])
+def test_fixed_woodbury_action_is_one_apply_nonowning_and_fail_closed(mode_count: int):
     comm = MPI.COMM_WORLD
     if comm.size not in (1, 2, 4):
         return
     rows = 8
     rng = np.random.default_rng(240)
     base_dense = np.eye(rows, dtype=np.complex128) * (2.0 + 0.2j)
-    C_dense = rng.standard_normal(
-        (rows, HYBRID_DTN_WOODBURY_MODE_COUNT)
-    ) + 1j * rng.standard_normal((rows, HYBRID_DTN_WOODBURY_MODE_COUNT))
-    D_dense = rng.standard_normal(
-        (HYBRID_DTN_WOODBURY_MODE_COUNT, rows)
-    ) + 1j * rng.standard_normal((HYBRID_DTN_WOODBURY_MODE_COUNT, rows))
-    H_dense = np.eye(HYBRID_DTN_WOODBURY_MODE_COUNT, dtype=np.complex128) * (3.0 + 0.1j)
+    C_dense = rng.standard_normal((rows, mode_count)) + 1j * rng.standard_normal(
+        (rows, mode_count)
+    )
+    D_dense = rng.standard_normal((mode_count, rows)) + 1j * rng.standard_normal(
+        (mode_count, rows)
+    )
+    H_dense = np.eye(mode_count, dtype=np.complex128) * (3.0 + 0.1j)
     F = _matrix_from_dense(base_dense)
     C = _python_matrix_from_dense(C_dense)
     D = _python_matrix_from_dense(D_dense)
@@ -233,13 +229,13 @@ def test_fixed_woodbury_action_is_one_apply_nonowning_and_fail_closed():
         assert diagnostics["base_diagnostics"]["identity"] == "tiny_fixed_non_ksp_base"
         assert diagnostics["local_direct_factor_count"] == 0
         assert diagnostics["local_direct_factor_count_owned"] == 0
-        assert diagnostics["woodbury"]["K_rank"] == HYBRID_DTN_WOODBURY_MODE_COUNT
+        assert diagnostics["woodbury"]["K_rank"] == mode_count
         assert np.isfinite(diagnostics["woodbury"]["K_condition_number"])
         assert diagnostics["woodbury"]["K_condition_number"] <= 1.0e10
         assert diagnostics["woodbury"]["arrays_finite"] is True
         assert not hasattr(fixed, "ksp")
         assert fixed.diagnostics["woodbury"]["apply_count"] == 0
-        assert base_action.apply_count == 40
+        assert base_action.apply_count == mode_count
 
         template = F.createVecRight()
         source = _random_vector(template, 240)
@@ -258,7 +254,7 @@ def test_fixed_woodbury_action_is_one_apply_nonowning_and_fail_closed():
             before_count = fixed.diagnostics["woodbury"]["apply_count"]
             fixed.apply(source, fixed_target)
             assert fixed.diagnostics["woodbury"]["apply_count"] == before_count + 1
-            assert base_action.apply_count == 41
+            assert base_action.apply_count == mode_count + 1
             assert _relative_error(fixed_target, existing_target) <= 1.0e-13
 
             alpha = PETSc.ScalarType(0.7 - 0.2j)
@@ -281,7 +277,7 @@ def test_fixed_woodbury_action_is_one_apply_nonowning_and_fail_closed():
             assert _relative_error(repeat_target, existing_target) <= 1.0e-14
             assert repeat_digest == _global_vec_digest(existing_target)
             assert fixed.diagnostics["woodbury"]["apply_count"] == 6
-            assert base_action.apply_count == 46
+            assert base_action.apply_count == mode_count + 6
         finally:
             linear_rhs.destroy()
             other_action.destroy()

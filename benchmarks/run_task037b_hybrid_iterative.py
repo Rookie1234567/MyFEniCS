@@ -8,7 +8,7 @@ historical Task032/Task033 runners.
 from __future__ import annotations
 
 from contextlib import contextmanager, nullcontext
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import argparse
 import gc
@@ -80,6 +80,13 @@ from benchmarks.task035c_p6_h10_gates import (
     task035c_p6_h10_preflight_authority_gate,
     task037b_h1_pinned_full3d_reference_gate,
     valid_hex_digest,
+)
+from benchmarks.task037c_robustness import (
+    Task37cProfile,
+    canonical_mode_key,
+    direction_s_phase_audit,
+    make_task37c_profile,
+    profile_record,
 )
 from src.solvers.common_3d_utils import _trim_process_heap
 
@@ -170,6 +177,7 @@ class FrozenM10Setup:
     mode_selection: dict[str, dict[str, int]]
     timings: dict[str, float]
     qep_release: dict[str, Any]
+    profile: FrozenM10Profile | Task37cProfile = FROZEN_M10
     _final_release_done: bool = field(default=False, init=False, repr=False)
     _final_release_state: dict[str, bool] = field(
         default_factory=dict, init=False, repr=False
@@ -363,6 +371,7 @@ def solve_frozen_m10_linear(
     """Run the frozen action-only outer solve and retain only recovery inputs."""
 
     started = time.perf_counter()
+    profile = setup.profile
     modal_count = int(setup.coupling.internal_unknown_count)
     layout = HybridAugmentedLayout.build(setup.bottom, setup.top, modal_count)
     operator: PETSc.Mat | None = None
@@ -409,6 +418,11 @@ def solve_frozen_m10_linear(
         )
         side_inventory: dict[str, Any] = {}
         for side in ("bottom", "top"):
+            expected_external_count = len(
+                setup.bottom.external_modes
+                if side == "bottom"
+                else setup.top.external_modes
+            )
             fixed_diagnostics = fixed[side].diagnostics
             woodbury_diagnostics = woodbury[side].diagnostics
             woodbury_matrix = woodbury_diagnostics["woodbury"]
@@ -417,7 +431,12 @@ def solve_frozen_m10_linear(
                 or int(woodbury_diagnostics["base_factor_count"]) != 1
                 or int(woodbury_diagnostics["local_direct_factor_count"]) != 0
                 or woodbury_diagnostics["nested_ksp_created"] is not False
-                or int(woodbury_matrix["K_rank"]) != M10_MODAL_COUNT
+                or int(woodbury_matrix["K_rank"]) != expected_external_count
+                or tuple(woodbury_matrix["K_shape"])
+                != (
+                    expected_external_count,
+                    expected_external_count,
+                )
                 or not np.isfinite(float(woodbury_matrix["K_condition_number"]))
                 or float(woodbury_matrix["K_condition_number"]) > 1.0e6
                 or woodbury_matrix["arrays_finite"] is not True
@@ -456,10 +475,10 @@ def solve_frozen_m10_linear(
             raise RuntimeError("Frozen M10 block-LDU inventory is not qualified.")
 
         config = HybridBlockLduIterativeConfig(
-            restart=FROZEN_M10.restart,
-            max_it=FROZEN_M10.max_it,
-            threshold=FROZEN_M10.rtol,
-            initial_guess=FROZEN_M10.initial_guess,
+            restart=profile.restart,
+            max_it=profile.max_it,
+            threshold=profile.rtol,
+            initial_guess=profile.initial_guess,
         )
         result = solve_hybrid_block_ldu_iterative(
             operator,
@@ -477,11 +496,11 @@ def solve_frozen_m10_linear(
         )
         linear_pass = bool(
             int(result.converged_reason) > 0
-            and 0 < int(result.iterations) <= FROZEN_M10.max_it
+            and 0 < int(result.iterations) <= profile.max_it
             and postsolve["pass"] is True
             and all(
                 np.isfinite(float(postsolve[key]))
-                and 0.0 <= float(postsolve[key]) <= FROZEN_M10.rtol
+                and 0.0 <= float(postsolve[key]) <= profile.rtol
                 for key in residual_keys
             )
         )
@@ -601,6 +620,7 @@ def _recover_frozen_m10_side(
         (int(mode.m), int(mode.n), str(mode.polarization))
         for mode in system.external_modes
     ]
+    expected_count = len(system.external_modes)
     beta_finite = all(
         np.isfinite(complex(mode.beta).real) and np.isfinite(complex(mode.beta).imag)
         for mode in system.external_modes
@@ -608,7 +628,7 @@ def _recover_frozen_m10_side(
     polarizations = {str(mode.polarization) for mode in system.external_modes}
     mode_identity = {
         "count": len(mode_keys),
-        "expected_count": M10_MODAL_COUNT,
+        "expected_count": expected_count,
         "unique": len(set(mode_keys)) == len(mode_keys),
         "polarizations": sorted(polarizations),
         "polarization_sp": polarizations <= {"s", "p"},
@@ -623,12 +643,12 @@ def _recover_frozen_m10_side(
         "auxiliary_finite": q_values_finite,
         "mode_identity": mode_identity,
         "pass": bool(
-            auxiliary.shape == (M10_MODAL_COUNT,)
+            auxiliary.shape == (expected_count,)
             and q_values_finite
             and np.isfinite(auxiliary_relative)
             and auxiliary_relative >= 0.0
             and auxiliary_relative <= 1.0e-10
-            and mode_identity["count"] == M10_MODAL_COUNT
+            and mode_identity["count"] == expected_count
             and mode_identity["unique"]
             and mode_identity["polarization_sp"]
             and mode_identity["beta_finite"]
@@ -834,6 +854,10 @@ def _write_frozen_m10_grid_payload(
     run_dir: Path,
     arrays: Mapping[str, np.ndarray],
     comm: MPI.Intracomm,
+    *,
+    modal_count: int,
+    bottom_mode_count: int,
+    top_mode_count: int,
 ) -> dict[str, Any]:
     expected_keys = (
         "x_nm",
@@ -851,9 +875,9 @@ def _write_frozen_m10_grid_payload(
         "z_nm": (5,),
         "E_V_per_m": (5, 20, 40, 3),
         "H_A_per_m": (5, 20, 40, 3),
-        "modal_amplitudes": (240,),
-        "bottom_q": (40,),
-        "top_q": (40,),
+        "modal_amplitudes": (int(modal_count),),
+        "bottom_q": (int(bottom_mode_count),),
+        "top_q": (int(top_mode_count),),
     }
     if tuple(arrays) != expected_keys:
         raise ValueError("Frozen M10 own-grid NPZ keys are not exact.")
@@ -879,7 +903,10 @@ def _write_frozen_m10_grid_payload(
     return dict(comm.bcast(payload, root=0))
 
 
-def _audit_frozen_m10_external_orders(rows: list[dict[str, Any]]) -> dict[str, Any]:
+def _audit_frozen_m10_external_orders(
+    rows: list[dict[str, Any]],
+    expected_keys: set[tuple[str, int, int, str]],
+) -> dict[str, Any]:
     keys = []
     finite = True
     identity_valid = True
@@ -912,10 +939,13 @@ def _audit_frozen_m10_external_orders(rows: list[dict[str, Any]]) -> dict[str, A
         "unique_key_count": len(set(keys)),
         "keys_unique": len(set(keys)) == len(keys),
         "identity_valid": identity_valid,
+        "expected_count": len(expected_keys),
+        "expected_keys_match": set(keys) == expected_keys,
         "all_finite": finite,
         "pass": bool(
-            len(rows) == 80
+            len(rows) == len(expected_keys)
             and len(set(keys)) == len(keys)
+            and set(keys) == expected_keys
             and identity_valid
             and finite
         ),
@@ -941,6 +971,7 @@ def run_frozen_m10_physics(
     ):
         raise RuntimeError("Frozen M10 physics requires passed two-side recovery.")
 
+    profile = setup.profile
     solution = SimpleNamespace(
         bottom=recovery.bottom_solution,
         top=recovery.top_solution,
@@ -982,8 +1013,8 @@ def run_frozen_m10_physics(
         setup.spaces,
         setup.positive,
         setup.negative,
-        bottom_z_nm=FROZEN_M10.bottom_interface_nm,
-        top_z_nm=FROZEN_M10.top_interface_nm,
+        bottom_z_nm=profile.bottom_interface_nm,
+        top_z_nm=profile.top_interface_nm,
         propagation=setup.coupling.propagation,
         positive_traction_beta_per_nm=setup.coupling.positive_traction_beta_per_nm,
         negative_traction_beta_per_nm=setup.coupling.negative_traction_beta_per_nm,
@@ -1016,7 +1047,15 @@ def run_frozen_m10_physics(
         incident_power=float(port_power["incident_power_code_units"]),
     )
     external_orders = list(validation["external_diffraction_orders"])
-    order_audit = _audit_frozen_m10_external_orders(external_orders)
+    expected_order_keys = {
+        (str(mode.side), int(mode.m), int(mode.n), str(mode.polarization))
+        for system in (setup.bottom, setup.top)
+        for mode in system.external_modes
+    }
+    order_audit = _audit_frozen_m10_external_orders(
+        external_orders,
+        expected_order_keys,
+    )
     energy = {
         "R": float(port_power["R_total"]),
         "T": float(port_power["T_total"]),
@@ -1073,7 +1112,14 @@ def run_frozen_m10_physics(
             "bottom_q": recovery.bottom_q,
             "top_q": recovery.top_q,
         }
-        own_grid = _write_frozen_m10_grid_payload(run_dir, arrays, comm)
+        own_grid = _write_frozen_m10_grid_payload(
+            run_dir,
+            arrays,
+            comm,
+            modal_count=int(setup.coupling.internal_unknown_count),
+            bottom_mode_count=len(setup.bottom.external_modes),
+            top_mode_count=len(setup.top.external_modes),
+        )
         del arrays
     del reconstructor
     del interface_samples
@@ -1194,6 +1240,58 @@ def _json_safe(value: Any) -> Any:
     raise TypeError(f"unsupported compact record value: {type(value).__name__}")
 
 
+def _task37c_config_audit(
+    setup: FrozenM10Setup,
+    profile: Task37cProfile,
+) -> dict[str, Any]:
+    expected = direction_s_phase_audit(profile.incident_phi_deg)
+    cfg = setup.cfg
+    actual = {
+        "theta_deg": float(cfg.incident_theta_deg),
+        "phi_deg": float(cfg.incident_phi_deg),
+        "grazing_deg": 90.0 - float(cfg.incident_theta_deg),
+        "polarization": str(cfg.polarization_kind),
+        "direction": np.asarray(cfg.direction_vector, dtype=np.float64).tolist(),
+        "s_basis": np.asarray(cfg.s_polarization_vector, dtype=np.complex128).tolist(),
+        "kx": complex(cfg.kx),
+        "ky": complex(cfg.ky),
+        "floquet_phase_x": complex(cfg.floquet_phase_x),
+        "floquet_phase_y": complex(cfg.floquet_phase_y),
+    }
+    scalar_match = bool(
+        actual["theta_deg"] == expected["theta_deg"]
+        and actual["phi_deg"] == expected["phi_deg"]
+        and actual["grazing_deg"] == expected["grazing_deg"]
+        and actual["polarization"] == profile.polarization_kind
+    )
+    vector_match = bool(
+        np.allclose(actual["direction"], expected["direction"], atol=1.0e-13, rtol=0.0)
+        and np.allclose(
+            np.asarray(actual["s_basis"], dtype=np.complex128),
+            np.asarray(expected["s_basis"], dtype=np.float64),
+            atol=1.0e-13,
+            rtol=0.0,
+        )
+    )
+    phase_match = all(
+        abs(actual[name] - expected[name]) <= 1.0e-13
+        for name in (
+            "kx",
+            "ky",
+            "floquet_phase_x",
+            "floquet_phase_y",
+        )
+    )
+    return {
+        "expected": expected,
+        "actual": actual,
+        "scalar_match": scalar_match,
+        "vector_match": vector_match,
+        "phase_match": phase_match,
+        "pass": scalar_match and vector_match and phase_match and expected["pass"],
+    }
+
+
 def build_frozen_m10_online_record(
     *,
     case_label: str,
@@ -1206,6 +1304,8 @@ def build_frozen_m10_online_record(
     physics: FrozenM10Physics | None = None,
     final_release: Mapping[str, Any] | None = None,
     error: str | None = None,
+    profile: FrozenM10Profile | Task37cProfile = FROZEN_M10,
+    setup: FrozenM10Setup | None = None,
 ) -> dict[str, Any]:
     """Build bounded online evidence from compact carrier snapshots."""
 
@@ -1226,15 +1326,18 @@ def build_frozen_m10_online_record(
         and reason is not None
         and reason > 0
         and iterations is not None
-        and 0 < iterations <= FROZEN_M10.max_it
+        and 0 < iterations <= profile.max_it
         and postsolve.get("pass") is True
         and all(
             np.isfinite(float(residuals[key]))
-            and 0.0 <= float(residuals[key]) <= FROZEN_M10.rtol
+            and 0.0 <= float(residuals[key]) <= profile.rtol
             for key in residual_keys
         )
     )
-    integration_performance_pass = bool(iterations is not None and iterations <= 900)
+    performance_gate_applies = isinstance(profile, FrozenM10Profile)
+    integration_performance_pass = bool(
+        not performance_gate_applies or (iterations is not None and iterations <= 900)
+    )
     release_pass = bool(linear is not None and linear.release.get("pass") is True)
     recovery_pass = bool(recovery is not None and recovery.recovery_pass is True)
     physics_pass = bool(physics is not None and physics.physics_pass is True)
@@ -1315,11 +1418,74 @@ def build_frozen_m10_online_record(
         if physics is not None
         else {}
     )
+    task37c_metadata: dict[str, Any] = {}
+    if isinstance(profile, Task37cProfile):
+        if setup is None:
+            task37c_metadata = {
+                "cfg_audit": {"status": "not_run", "pass": False},
+                "mode_identity": {
+                    "status": "not_run",
+                    "bottom": {"status": "not_run", "pass": False},
+                    "top": {"status": "not_run", "pass": False},
+                    "pass": False,
+                },
+                "comparisons": {"status": "not_run_in_R1"},
+                "resource": {"status": "watchdog_carrier_not_run_in_runner"},
+            }
+            qualification["cfg_audit_pass"] = False
+            qualification["mode_identity_pass"] = False
+            online_pass = False
+        else:
+            side_identity: dict[str, Any] = {}
+            for side, system in (("bottom", setup.bottom), ("top", setup.top)):
+                keys = [canonical_mode_key(mode) for mode in system.external_modes]
+                betas = [complex(mode.beta) for mode in system.external_modes]
+                side_identity[side] = {
+                    "count": len(keys),
+                    "keys": keys,
+                    "keys_unique": len(set(keys)) == len(keys),
+                    "propagating_count": sum(
+                        bool(mode.propagating) for mode in system.external_modes
+                    ),
+                    "rayleigh_warning_count": sum(
+                        bool(mode.rayleigh_warning) for mode in system.external_modes
+                    ),
+                    "beta_finite": all(
+                        np.isfinite(beta.real) and np.isfinite(beta.imag)
+                        for beta in betas
+                    ),
+                    "polarization_valid": all(
+                        str(mode.polarization) in {"s", "p"}
+                        for mode in system.external_modes
+                    ),
+                }
+                side_identity[side]["pass"] = bool(
+                    side_identity[side]["count"] > 0
+                    and side_identity[side]["keys_unique"]
+                    and side_identity[side]["beta_finite"]
+                    and side_identity[side]["polarization_valid"]
+                )
+            task37c_metadata = {
+                "cfg_audit": _task37c_config_audit(setup, profile),
+                "mode_identity": side_identity,
+                "comparisons": {"status": "not_run_in_R1"},
+                "resource": {"status": "watchdog_carrier_not_run_in_runner"},
+            }
+            cfg_pass = bool(task37c_metadata["cfg_audit"]["pass"])
+            mode_pass = all(
+                side_report["pass"]
+                for side_report in task37c_metadata["mode_identity"].values()
+            )
+            qualification["cfg_audit_pass"] = cfg_pass
+            qualification["mode_identity_pass"] = mode_pass
+            online_pass = bool(online_pass and cfg_pass and mode_pass)
     record = {
-        "record_schema": M10_RECORD_SCHEMA,
-        "qualification_schema": M10_QUALIFICATION_SCHEMA,
+        "record_schema": getattr(profile, "record_schema", M10_RECORD_SCHEMA),
+        "qualification_schema": getattr(
+            profile, "qualification_schema", M10_QUALIFICATION_SCHEMA
+        ),
         "case_label": case_label,
-        "profile": asdict(FROZEN_M10),
+        "profile": profile_record(profile),
         "ordinary_default_changed": False,
         "explicit_opt_in": True,
         "source": {
@@ -1339,6 +1505,7 @@ def build_frozen_m10_online_record(
         },
         "qualification": qualification,
         "integration_performance_pass": integration_performance_pass,
+        "integration_performance_gate_applies": performance_gate_applies,
         "online_pass": online_pass,
         "status": (
             "online_candidate_pass_awaiting_offline_checker"
@@ -1346,6 +1513,8 @@ def build_frozen_m10_online_record(
             else "failed"
         ),
     }
+    if task37c_metadata:
+        record.update(task37c_metadata)
     if error is not None:
         record["error"] = str(error)
     return _json_safe(record)
@@ -1376,21 +1545,26 @@ def build_frozen_m10_setup(
     comm: MPI.Intracomm = MPI.COMM_WORLD,
     *,
     log=None,
+    profile: FrozenM10Profile | Task37cProfile = FROZEN_M10,
 ) -> FrozenM10Setup:
     """Build the frozen physical/QEP/endcap/coupling bundle only.
 
     The returned objects remain owned by the caller for the next solve and
     recovery stages.  QEP coefficient matrices are released only after both
     local action systems and the internal coupling are complete.
+
+    The default remains requested_modes=FROZEN_M10.candidate_modes,
+    near_degenerate_tolerance=FROZEN_M10.near_degenerate_tolerance, and
+    block_rotation_tolerance=FROZEN_M10.block_rotation_tolerance.
     """
 
     cfg = target_stage4_config(
-        degree=FROZEN_M10.degree,
-        h_nm=FROZEN_M10.h_nm,
+        degree=profile.degree,
+        h_nm=profile.h_nm,
     )
     modal_cfg = target_stage4_config(
-        degree=FROZEN_M10.modal_degree,
-        h_nm=FROZEN_M10.modal_h_nm,
+        degree=profile.modal_degree,
+        h_nm=profile.modal_h_nm,
     )
     for current_cfg in (cfg, modal_cfg):
         current_cfg.stage4_full3d_assembly_backend = (
@@ -1399,15 +1573,16 @@ def build_frozen_m10_setup(
         current_cfg.matrix_diagnostics_assemble_unconstrained = False
         current_cfg.matrix_diagnostics_assemble_only = False
         current_cfg.matrix_diagnostics_factorization_only = False
-        current_cfg.incident_theta_deg = 90.0 - FROZEN_M10.incident_grazing_deg
-        current_cfg.polarization_kind = FROZEN_M10.polarization_kind
+        current_cfg.incident_theta_deg = 90.0 - profile.incident_grazing_deg
+        current_cfg.incident_phi_deg = getattr(profile, "incident_phi_deg", 0.0)
+        current_cfg.polarization_kind = profile.polarization_kind
 
     timings: dict[str, float] = {}
     started = time.perf_counter()
     cross_section = build_matching_cross_section(modal_cfg, "stage4_xy")
     spaces = build_cross_section_spaces(
         cross_section,
-        transverse_degree=FROZEN_M10.modal_degree,
+        transverse_degree=profile.modal_degree,
     )
     operators = assemble_quadratic_beta_operators(
         modal_cfg,
@@ -1427,20 +1602,20 @@ def build_frozen_m10_setup(
     positive_right, positive_report = solve_quadratic_beta_modes(
         operators,
         target=target,
-        requested_modes=FROZEN_M10.candidate_modes,
+        requested_modes=profile.candidate_modes,
     )
     positive_right, positive_selection = select_passive_direction_modes(
         positive_right,
         desired_direction="forward",
-        requested_modes=FROZEN_M10.requested_modes,
+        requested_modes=profile.requested_modes,
         poynting_evaluator=poynting_evaluator,
-        maximum_abs_beta=M10_BETA_H_CUTOFF / FROZEN_M10.modal_h_nm,
+        maximum_abs_beta=M10_BETA_H_CUTOFF / profile.modal_h_nm,
     )
-    if len(positive_right) != FROZEN_M10.requested_modes:
+    if len(positive_right) != profile.requested_modes:
         for mode in positive_right:
             mode.destroy()
         raise RuntimeError(
-            "Frozen M10 forward QEP selection did not deliver 120 modes."
+            f"Profile forward QEP selection did not deliver {profile.requested_modes} modes."
         )
     positive = build_biorthogonal_mode_basis(
         modal_cfg,
@@ -1449,29 +1624,29 @@ def build_frozen_m10_setup(
         operators,
         positive_right,
         adjoint_target=np.conj(target),
-        requested_left_modes=FROZEN_M10.candidate_modes,
-        near_degenerate_tolerance=FROZEN_M10.near_degenerate_tolerance,
-        block_rotation_tolerance=FROZEN_M10.block_rotation_tolerance,
+        requested_left_modes=profile.candidate_modes,
+        near_degenerate_tolerance=profile.near_degenerate_tolerance,
+        block_rotation_tolerance=profile.block_rotation_tolerance,
         poynting_evaluator=poynting_evaluator,
         log=log,
     )
     negative_right, negative_report = solve_quadratic_beta_modes(
         operators,
         target=-target,
-        requested_modes=FROZEN_M10.candidate_modes,
+        requested_modes=profile.candidate_modes,
     )
     negative_right, negative_selection = select_passive_direction_modes(
         negative_right,
         desired_direction="backward",
-        requested_modes=FROZEN_M10.requested_modes,
+        requested_modes=profile.requested_modes,
         poynting_evaluator=poynting_evaluator,
-        maximum_abs_beta=M10_BETA_H_CUTOFF / FROZEN_M10.modal_h_nm,
+        maximum_abs_beta=M10_BETA_H_CUTOFF / profile.modal_h_nm,
     )
-    if len(negative_right) != FROZEN_M10.requested_modes:
+    if len(negative_right) != profile.requested_modes:
         for mode in negative_right:
             mode.destroy()
         raise RuntimeError(
-            "Frozen M10 backward QEP selection did not deliver 120 modes."
+            f"Profile backward QEP selection did not deliver {profile.requested_modes} modes."
         )
     negative = build_biorthogonal_mode_basis(
         modal_cfg,
@@ -1480,14 +1655,14 @@ def build_frozen_m10_setup(
         operators,
         negative_right,
         adjoint_target=-np.conj(target),
-        requested_left_modes=FROZEN_M10.candidate_modes,
-        near_degenerate_tolerance=FROZEN_M10.near_degenerate_tolerance,
-        block_rotation_tolerance=FROZEN_M10.block_rotation_tolerance,
+        requested_left_modes=profile.candidate_modes,
+        near_degenerate_tolerance=profile.near_degenerate_tolerance,
+        block_rotation_tolerance=profile.block_rotation_tolerance,
         poynting_evaluator=poynting_evaluator,
         log=log,
     )
     reciprocal_pairs = pair_reciprocal_mode_bases(operators, positive, negative)
-    if len(reciprocal_pairs) != FROZEN_M10.requested_modes:
+    if len(reciprocal_pairs) != profile.requested_modes:
         raise RuntimeError("Frozen M10 reciprocal QEP pairing is incomplete.")
     timings["qep_solve_and_biorthogonal_bases"] = _max_elapsed(comm, started)
 
@@ -1495,16 +1670,16 @@ def build_frozen_m10_setup(
     bottom = assemble_hybrid_local_dtn_action_system(
         cfg,
         "bottom",
-        bottom_interface_z_nm=FROZEN_M10.bottom_interface_nm,
-        top_interface_z_nm=FROZEN_M10.top_interface_nm,
+        bottom_interface_z_nm=profile.bottom_interface_nm,
+        top_interface_z_nm=profile.top_interface_nm,
         comm=comm,
         log=log,
     )
     top = assemble_hybrid_local_dtn_action_system(
         cfg,
         "top",
-        bottom_interface_z_nm=FROZEN_M10.bottom_interface_nm,
-        top_interface_z_nm=FROZEN_M10.top_interface_nm,
+        bottom_interface_z_nm=profile.bottom_interface_nm,
+        top_interface_z_nm=profile.top_interface_nm,
         comm=comm,
         log=log,
     )
@@ -1518,9 +1693,9 @@ def build_frozen_m10_setup(
         negative,
         bottom,
         top,
-        length_nm=FROZEN_M10.top_interface_nm - FROZEN_M10.bottom_interface_nm,
-        propagation_model=FROZEN_M10.internal_propagation_model,
-        modal_traction_model=FROZEN_M10.internal_traction_model,
+        length_nm=profile.top_interface_nm - profile.bottom_interface_nm,
+        propagation_model=profile.internal_propagation_model,
+        modal_traction_model=profile.internal_traction_model,
         log=log,
     )
     timings["internal_modal_coupling"] = _max_elapsed(comm, started)
@@ -1555,9 +1730,14 @@ def build_frozen_m10_setup(
                 "candidate_modes": int(negative_selection.candidate_modes),
                 "selected_modes": int(negative_selection.selected_modes),
             },
+            "external_modes": {
+                "bottom": len(bottom.external_modes),
+                "top": len(top.external_modes),
+            },
         },
         timings=timings,
         qep_release=qep_release,
+        profile=profile,
     )
 
 
@@ -2063,37 +2243,93 @@ def _write_canonical_manifest_exports(
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Run only the frozen Task037b M10 positive profile."
+        description="Run an explicit frozen Task037b or Task037c positive profile."
     )
-    parser.add_argument("--frozen-m10", action="store_true")
+    profile_group = parser.add_mutually_exclusive_group(required=True)
+    profile_group.add_argument("--frozen-m10", action="store_true")
+    profile_group.add_argument("--task037c-robustness-gate", action="store_true")
     parser.add_argument("--case-label", required=True)
     parser.add_argument("--run-dir", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--memory-stages", type=Path)
     parser.add_argument("--verified-clean-sha", required=True)
-    parser.add_argument("--h1-authority", type=Path, required=True)
-    parser.add_argument("--h1-authority-sha256", required=True)
-    parser.add_argument("--full3d-reference", type=Path, required=True)
-    parser.add_argument("--full3d-reference-sha256", required=True)
-    parser.add_argument("--task035c-p6-preflight-authority", type=Path, required=True)
-    parser.add_argument("--task035c-p6-preflight-sha256", required=True)
+    parser.add_argument("--h1-authority", type=Path)
+    parser.add_argument("--h1-authority-sha256")
+    parser.add_argument("--full3d-reference", type=Path)
+    parser.add_argument("--full3d-reference-sha256")
+    parser.add_argument("--task035c-p6-preflight-authority", type=Path)
+    parser.add_argument("--task035c-p6-preflight-sha256")
+    parser.add_argument(
+        "--incident-phi-deg",
+        type=float,
+        choices=(-5.0, 0.0, 5.0),
+    )
+    parser.add_argument("--requested-modes", type=int, choices=(120, 160))
+    parser.add_argument("--mpi-size", type=int, choices=(1, 8))
     return parser
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = build_parser()
     args = parser.parse_args(argv)
-    if not args.frozen_m10:
-        parser.error("--frozen-m10 is required; no ordinary profile exists here")
+    if args.task037c_robustness_gate:
+        if args.incident_phi_deg is None or args.requested_modes is None:
+            parser.error("Task37c requires --incident-phi-deg and --requested-modes")
+        if args.mpi_size is None:
+            parser.error("Task37c requires --mpi-size")
+        if any(
+            value is not None
+            for value in (
+                args.h1_authority,
+                args.h1_authority_sha256,
+                args.full3d_reference,
+                args.full3d_reference_sha256,
+                args.task035c_p6_preflight_authority,
+                args.task035c_p6_preflight_sha256,
+            )
+        ):
+            parser.error("Task37c does not accept Task37b authority arguments")
+    else:
+        if any(
+            value is not None
+            for value in (args.incident_phi_deg, args.requested_modes, args.mpi_size)
+        ):
+            parser.error("Task37b frozen M10 does not accept Task37c profile options")
+        required_authorities = (
+            args.h1_authority,
+            args.h1_authority_sha256,
+            args.full3d_reference,
+            args.full3d_reference_sha256,
+            args.task035c_p6_preflight_authority,
+            args.task035c_p6_preflight_sha256,
+        )
+        if any(value is None for value in required_authorities):
+            parser.error("frozen M10 requires all three authority path/hash pairs")
     if not valid_hex_digest(args.verified_clean_sha, 40):
         parser.error("--verified-clean-sha must be a 40-character hex digest")
-    if not valid_hex_digest(args.h1_authority_sha256, 64):
-        parser.error("--h1-authority-sha256 must be a 64-character hex digest")
-    if not valid_hex_digest(args.full3d_reference_sha256, 64):
-        parser.error("--full3d-reference-sha256 must be a 64-character hex digest")
-    if not valid_hex_digest(args.task035c_p6_preflight_sha256, 64):
-        parser.error("--task035c-p6-preflight-sha256 must be a 64-character hex digest")
+    for name in (
+        "h1_authority_sha256",
+        "full3d_reference_sha256",
+        "task035c_p6_preflight_sha256",
+    ):
+        value = getattr(args, name)
+        if value is not None and not valid_hex_digest(value, 64):
+            parser.error(
+                f"--{name.replace('_', '-')} must be a 64-character hex digest"
+            )
     return args
+
+
+def profile_from_args(
+    args: argparse.Namespace,
+) -> FrozenM10Profile | Task37cProfile:
+    if args.frozen_m10:
+        return FROZEN_M10
+    return make_task37c_profile(
+        args.incident_phi_deg,
+        args.requested_modes,
+        args.mpi_size,
+    )
 
 
 def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
@@ -2108,8 +2344,11 @@ def run_frozen_m10(args: argparse.Namespace) -> int:
     """Run the single frozen positive M10 chain and write its online record."""
 
     comm = MPI.COMM_WORLD
-    if comm.size != FROZEN_M10.mpi_size:
-        raise RuntimeError("frozen M10 formal identity requires MPI8")
+    profile = profile_from_args(args)
+    if comm.size != profile.mpi_size:
+        raise RuntimeError(
+            f"profile formal identity requires MPI{profile.mpi_size}, got MPI{comm.size}"
+        )
     _ensure_output_paths(args, comm)
     lifecycle = LifecycleTrace(memory_stages=args.memory_stages, comm=comm)
     source_before: dict[str, Any] = {"status": "not_recorded"}
@@ -2126,11 +2365,22 @@ def run_frozen_m10(args: argparse.Namespace) -> int:
 
     try:
         source_before = _source_provenance(comm, args.verified_clean_sha)
-        authority_bindings = load_authority_bindings(
-            args, current_source_sha=source_before["commit_sha"], comm=comm
-        )
+        if args.frozen_m10:
+            authority_bindings = load_authority_bindings(
+                args, current_source_sha=source_before["commit_sha"], comm=comm
+            )
+        else:
+            authority_bindings = {
+                "task037c_profile": {
+                    "profile_id": profile.profile_id,
+                    "incident_phi_deg": profile.incident_phi_deg,
+                    "requested_modes": profile.requested_modes,
+                    "mpi_size": profile.mpi_size,
+                    "authority_comparison": "not_run_in_R1",
+                }
+            }
         lifecycle.record("setup")
-        setup = build_frozen_m10_setup(comm, log=rank0_log)
+        setup = build_frozen_m10_setup(comm, log=rank0_log, profile=profile)
         lifecycle.record("solve")
         linear = solve_frozen_m10_linear(setup, log=rank0_log)
         if not linear.linear_pass or linear.release.get("pass") is not True:
@@ -2189,6 +2439,8 @@ def run_frozen_m10(args: argparse.Namespace) -> int:
         physics=physics,
         final_release=final_release,
         error=error,
+        profile=profile,
+        setup=setup,
     )
     return_code = 0 if bool(record["online_pass"]) else 1
     if comm.rank == 0:
