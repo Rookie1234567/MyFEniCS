@@ -386,3 +386,52 @@ terminal drain，不是运行中的 authority 缺失。
 `terminated_for_authority_unreadable=true` 仍按 raw 原样保留，原因是 pre-fix terminal/
 postprocessor helper 错把正常 partial drain 当作 authority unreadable。worker 自然结束、
 未触发10/14 GiB或7200 s、未使用 SIGKILL，process group 已退出。
+
+## M1–M10 同物理 MPI8 内存优化阶梯
+
+本节追加 M1–M10 的正式候选资源结果；完整 source、raw summary、solver/stages/timeline/stdout 和 checker SHA 见 [V6 memory optimization closeout compact](../../../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v6_memory_optimization_closeout_v1.json)。统一权威口径为同时存活 MPI process-tree RSS；worker RSS sum、PSS/USS 和 allocator audit 作为伴随诊断，不能互相替代。
+
+| 阶段 | 改动 | source commit | process-tree RSS peak MiB | GiB | 相对上一阶段 MiB | 资源结论 |
+|---|---|---|---:|---:|---:|---|
+| V6 original | tight candidate | `ea132d8a` | `7297.50390625` | `7.126468658447266` | — | negative |
+| M1 | QEP/pre-recovery cleanup | `8710989b` | `6188.55078125` | `6.043506622314453` | `-1108.953125` | negative |
+| M2 | recovery-side cleanup | `691bb813` | `6156.65234375` | `6.012355804443359` | `-31.8984375` | negative |
+| M3 | canonical side cleanup | `e383ccdc` | `6161.02734375` | `6.016628265380859` | `+4.375` | negative |
+| M4 | audited canonical streaming | `0f5f9bfd` | `6147.89453125` | `6.003803253173828` | `-13.1328125` | negative |
+| M5 | bounded trace expansion | `d3d97606` | `6128.7109375` | `5.985068321228027` | `-19.18359375` | positive |
+| M6 | compact full-field lookup | `3cb742ba` | `6166.9921875` | `6.022453308105469` | `+38.28125` | negative |
+| M7 | used-DoF mask | `fdeb5932` | `6144.15234375` | `6.000148773193359` | `-22.83984375` | negative by `0.15234375` MiB |
+| M8 | entity-position mask | `48239c90` | `6140.84765625` | `5.9971160888671875` | `-3.3046875` | positive, narrow |
+| M9 | cell-major active trace | `dda87f76` | `6140.44140625` | `5.9967193603515625` | `-0.40625` | positive, negative optimization result |
+| M10 | own-physics pre-canonical release | `b291f3df` | `6018.57421875` | `5.877513885498047` | `-121.8671875` | positive |
+
+M10 的严格 6 GiB margin 为 `125.42578125 MiB`。M9 只比 M8 降 `0.40625 MiB`，该结果保留为负收益；不能把 cell-major 改动包装成实质性内存收益。M10 的下降来自已不再被 canonical 使用的 own-physics/reconstruction 引用提前释放，并复用既有 collective heap cleanup；没有改 solver、PC、物理或 ordinary default。
+
+### M10 分阶段与 cleanup audit
+
+| 阶段 | process-tree RSS peak MiB | 数据身份 |
+|---|---:|---|
+| action coupling | `5776.06640625` | measured |
+| outer | `5569.85546875` | measured |
+| candidate field recovery | `5079.453125` | measured |
+| bottom recovery cleanup started / finished | `5446.48046875 / 5435.84375` | measured |
+| top recovery cleanup finished | `6018.57421875` | measured authority peak |
+| pre-canonical cleanup finished | `5735.54296875` | measured |
+| bottom canonical cleanup started / finished | `5741.578125 / 5663.859375` | measured |
+| final cleanup | `5661.6484375` | measured |
+
+| cleanup | rank-sum released MiB | max-rank released MiB | elapsed seconds |
+|---|---:|---:|---:|
+| early QEP | `1323.609375` | `259.96875` | `0.14505604491569102` |
+| pre-recovery | `629.4453125` | `439.66796875` | `0.21119930793065578` |
+| bottom recovery | `168.640625` | `22.375` | `0.12909691501408815` |
+| top recovery | `166.71875` | `21.90625` | `0.12219237198587507` |
+| pre-canonical | `443.9765625` | `64.7421875` | `0.12799965194426477` |
+| bottom canonical | `84.734375` | `79.88671875` | `0.12775007204618305` |
+| top canonical | `5.12890625` | `0.71875` | `0.11686409101821482` |
+
+M10 authority peak 同采样 worker RSS sum/PSS/USS 为 `6003.94140625 / 4369.6455078125 / 4102.09375 MiB`；全程 PSS/USS 最大值为 `4668.7451171875 / 4487.77734375 MiB`，swap 为 `0`。checker 独立 RSS 为 `110.63671875 MiB`，不并入 online peak。
+
+### M11 资源可行性停止
+
+M11 只读审计估计每侧已知 recovered full payload 约 `415776 bytes`，systems/coupling/bases 和两端后续联合校验仍需存活；QEP/factor 大对象已提前释放。顺序回收/export 与 temporary artifact/reload 都没有建立至少 `64 MiB` 的可信收益，且后者会增加 I/O、hash 和 DOLFINx 重建风险。因此选择保持当前生命周期，M11 formal `not_run`，不继续新的 MPI8 候选。M10 已满足 6 GiB，不做 MPI reduction。

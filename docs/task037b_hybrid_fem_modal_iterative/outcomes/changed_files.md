@@ -195,3 +195,33 @@ solver、timeline、stages、stdout 和 checker 仍保留在 ignored artifact �
 本次 closeout 不修改 Python、测试、task/review、response_v1–v4 或 ordinary defaults，不重跑
 pytest、Ruff、checker、MPI 或 PDE；只将已完成的唯一 formal evidence 写成 hash-bound compact
 记录和可审阅文档。
+
+## M1–M10 依赖组与 selective merge 边界
+
+以下表格追加 M1–M10 的精确 commit 链。每个阶段先在上一阶段 clean source 上形成单一 commit，再以相同物理合同运行一次 MPI8；它们不是可脱离 V6 contract 独立合入的生产功能。
+
+| 顺序 | commit / subject | 文件 | 数值行为 | 测试/证据 | merge 边界 |
+|---:|---|---|---|---|---|
+| V6 | `ea132d8a31e5ccd6c45fb90bbb9b5f676cd78b0e` / add V6 traction-aligned qualification | runner、watchdog、Hybrid solver、test245 | 新增显式 V6 research gate；ordinary unchanged | V6 focused/static、唯一 candidate、checker | research-only；须连同 review/compact 审查 |
+| M1 | `8710989b77306127d5d6ba51a9b771a2a3eb142e` / release Hybrid memory before recovery | runner、test245 | 仅 V6 生命周期 cleanup | test243/244/245 focused、MPI2、static、M1 raw | 依赖 V6；不单独合入 |
+| M2 | `691bb8139ded9483c8dd4d8f412615351abde1b0` / trim recovery heap between endcaps | runner、test245 | recovery 侧间 cleanup；数值不变 | focused/MPI2/static、M2 raw/checker | 依赖 M1 |
+| M3 | `e383ccdc99f350b7e753aabfb6fcca0478159641` / release canonical packet heap by side | runner、test245 | canonical side cleanup；数值不变 | focused/MPI2/static、M3 raw/checker | 依赖 M2 |
+| M4 | `0f5f9bfddfc2f2cfdb9c3bcd56674043f9eb9382` / stream canonical packet export | canonical artifacts、runner、solver、test227、test245 | audited JSONL streaming；schema/bytes兼容 | test227/245、MPI2、static、M4 raw/checker | 依赖 V6/M3；研究性 writer 变更 |
+| M5 | `d3d97606ef3bb92c815e85944d8fd658573d9980` / bound canonical trace expansion memory | canonical solver | 单 cell expansion 生命周期；packet 语义不变 | test226/227 serial+MPI2、static、M5 raw/checker | 依赖 M4；不可单独提升 production |
+| M6 | `3cb742baa085d640e219fc239818bfc1f57f6dfd` / compact canonical full-field lookup | canonical solver | local+ghost compact lookup；数值不变但资源负结果保留 | test226/227 serial+MPI2、static、M6 raw/checker | 依赖 M5；M6 负资源结果不可隐藏 |
+| M7 | `fdeb5932b3afdb0d5700e9277736235d5a1d8cb6` / restrict canonical scatter to used dofs | canonical solver | used-DoF mask；数值不变 | test226/227 serial+MPI2、static、M7 raw/checker | 依赖 M6 |
+| M8 | `48239c90d12ba8c23335bbdc5e0e2eda0816789d` / restrict canonical scatter to entity dofs | canonical solver | entity-position mask；数值不变 | test226/227 serial+MPI2、static、M8 raw/checker | 依赖 M7 |
+| M9 | `dda87f7669aff196ca7b41ec03a88dabca0f21c3` / stream active trace by cell | canonical solver | cell-major bounded stream；数值不变，内存收益仅 `-0.40625 MiB` | test226/227/228 serial+MPI2、static、M9 raw/checker | 依赖 M8；负收益研究证据 |
+| M10 | `b291f3dfdf5f0064ff243038f6809172f811d7aa` / release own-physics heap before canonical export | runner、test245 | 删除后续不再引用的 own-physics 临时对象；数值不变 | test245 serial/MPI2、static、M10 raw/checker | 依赖 M9；当前最佳但仍 research-only |
+
+### 推荐选择性顺序
+
+| 依赖组 | 内容 | 结项建议 |
+|---|---|---|
+| production numerical/core | none approved；V6/M1–M10 均为 research-only | do-not-merge；普通默认保持不变 |
+| reusable runner/watchdog | V6 runner 与 cleanup 生命周期 | 需另行审查，不把单一 formal evidence 当作 production approval |
+| checker/benchmark | M4 writer、test227、V6 checker 语义 | 可作为独立 evidence infrastructure review，但必须保留 hash-bound authority 边界 |
+| compact evidence/docs | 本轮 compact、response_v8、outcomes 更新 | 可作为文档/证据组审查；不携带 heavy raw |
+| do-not-merge | ignored raw、M6/M9 负收益的错误包装、M11 未实现设计 | 保留负结果，禁止整体 merge |
+
+所有 M1–M10 的 source commit、parent、changed files、raw artifact 与测试证据已绑定在 [closeout compact record](../../../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v6_memory_optimization_closeout_v1.json)。本轮文档不修改 Python 数值源码、测试源码、阈值、ordinary defaults、solver/PC/physics。

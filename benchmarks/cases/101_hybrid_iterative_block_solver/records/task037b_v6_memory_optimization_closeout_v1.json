@@ -1,0 +1,632 @@
+{
+  "schema": "task037b.v6-memory-optimization-closeout.v1",
+  "identity": {
+    "task": "Task37b",
+    "branch": "codex/20260807-task37b-hybrid-iterative-development",
+    "base_v6_source_commit_sha": "ea132d8a31e5ccd6c45fb90bbb9b5f676cd78b0e",
+    "implementation_head_before_docs_sha": "b291f3dfdf5f0064ff243038f6809172f811d7aa",
+    "ordinary_defaults_unchanged": true,
+    "research_only": true,
+    "master_merge_authorized": false,
+    "mpi_reduction": "not_run; MPI8 already meets the 6 GiB process-tree gate at M10",
+    "formal_candidate_policy": "each M0-M10 candidate ran once; no retry, warm start, continuation, or parameter relaxation"
+  },
+  "optimization_commits": [
+    {
+      "label": "base_v6",
+      "commit_sha": "ea132d8a31e5ccd6c45fb90bbb9b5f676cd78b0e",
+      "parent_commit_sha": "2f78ac81854f1d2e9af9376e7ef8bb0e2aa73ef6",
+      "subject": "feat(task037b): add V6 traction-aligned qualification",
+      "target": "V6 tight linear, recovery, exact traction, own-physics and canonical qualification",
+      "changed_files": ["benchmarks/run_task032_phase6_augmented.py", "benchmarks/run_task033_memory_watchdog.py", "src/solvers/hybrid_fem_modal_block_ldu.py", "src/test/test_245_task037b_v6_traction_aligned_convergence.py"]
+    },
+    {
+      "label": "M1",
+      "commit_sha": "8710989b77306127d5d6ba51a9b771a2a3eb142e",
+      "parent_commit_sha": "208de3ee00a57ffee5a14ac2ebf698b7a1c6f69e",
+      "subject": "perf(task037b): release Hybrid memory before recovery",
+      "target": "early QEP and pre-recovery collective heap cleanup",
+      "changed_files": ["benchmarks/run_task032_phase6_augmented.py", "src/test/test_245_task037b_v6_traction_aligned_convergence.py"]
+    },
+    {
+      "label": "M2",
+      "commit_sha": "691bb8139ded9483c8dd4d8f412615351abde1b0",
+      "parent_commit_sha": "8710989b77306127d5d6ba51a9b771a2a3eb142e",
+      "subject": "perf(task037b): trim recovery heap between endcaps",
+      "target": "bottom/top recovery-side heap cleanup",
+      "changed_files": ["benchmarks/run_task032_phase6_augmented.py", "src/test/test_245_task037b_v6_traction_aligned_convergence.py"]
+    },
+    {
+      "label": "M3",
+      "commit_sha": "e383ccdc99f350b7e753aabfb6fcca0478159641",
+      "parent_commit_sha": "691bb8139ded9483c8dd4d8f412615351abde1b0",
+      "subject": "perf(task037b): release canonical packet heap by side",
+      "target": "bottom/top canonical side cleanup",
+      "changed_files": ["benchmarks/run_task032_phase6_augmented.py", "src/test/test_245_task037b_v6_traction_aligned_convergence.py"]
+    },
+    {
+      "label": "M4",
+      "commit_sha": "0f5f9bfddfc2f2cfdb9c3bcd56674043f9eb9382",
+      "parent_commit_sha": "e383ccdc99f350b7e753aabfb6fcca0478159641",
+      "subject": "perf(task037b): stream canonical packet export",
+      "target": "single-pass audited canonical JSONL streaming",
+      "changed_files": ["benchmarks/canonical_vector_artifacts.py", "benchmarks/run_task032_phase6_augmented.py", "src/solvers/hcurl_canonical_vector_dolfinx.py", "src/test/test_227_task037_canonical_vector_artifacts.py", "src/test/test_245_task037b_v6_traction_aligned_convergence.py"]
+    },
+    {
+      "label": "M5",
+      "commit_sha": "d3d97606ef3bb92c815e85944d8fd658573d9980",
+      "parent_commit_sha": "0f5f9bfddfc2f2cfdb9c3bcd56674043f9eb9382",
+      "subject": "perf(task037b): bound canonical trace expansion memory",
+      "target": "one-cell active-trace expansion lifetime",
+      "changed_files": ["src/solvers/hcurl_canonical_vector_dolfinx.py"]
+    },
+    {
+      "label": "M6",
+      "commit_sha": "3cb742baa085d640e219fc239818bfc1f57f6dfd",
+      "parent_commit_sha": "d3d97606ef3bb92c815e85944d8fd658573d9980",
+      "subject": "perf(task037b): compact canonical full-field lookup",
+      "target": "compact local+ghost full-field lookup",
+      "changed_files": ["src/solvers/hcurl_canonical_vector_dolfinx.py"]
+    },
+    {
+      "label": "M7",
+      "commit_sha": "fdeb5932b3afdb0d5700e9277736235d5a1d8cb6",
+      "parent_commit_sha": "3cb742baa085d640e219fc239818bfc1f57f6dfd",
+      "subject": "perf(task037b): restrict canonical scatter to used dofs",
+      "target": "used-cell DoF mask for full-field scatter",
+      "changed_files": ["src/solvers/hcurl_canonical_vector_dolfinx.py"]
+    },
+    {
+      "label": "M8",
+      "commit_sha": "48239c90d12ba8c23335bbdc5e0e2eda0816789d",
+      "parent_commit_sha": "fdeb5932b3afdb0d5700e9277736235d5a1d8cb6",
+      "subject": "perf(task037b): restrict canonical scatter to entity dofs",
+      "target": "entity-position DoF mask for canonical scatter",
+      "changed_files": ["src/solvers/hcurl_canonical_vector_dolfinx.py"]
+    },
+    {
+      "label": "M9",
+      "commit_sha": "dda87f7669aff196ca7b41ec03a88dabca0f21c3",
+      "parent_commit_sha": "48239c90d12ba8c23335bbdc5e0e2eda0816789d",
+      "subject": "perf(task037b): stream active trace by cell",
+      "target": "cell-major bounded active-trace streaming",
+      "changed_files": ["src/solvers/hcurl_canonical_vector_dolfinx.py"]
+    },
+    {
+      "label": "M10",
+      "commit_sha": "b291f3dfdf5f0064ff243038f6809172f811d7aa",
+      "parent_commit_sha": "dda87f7669aff196ca7b41ec03a88dabca0f21c3",
+      "subject": "perf(task037b): release own-physics heap before canonical export",
+      "target": "release unused own-physics/reconstruction objects before canonical export",
+      "changed_files": ["benchmarks/run_task032_phase6_augmented.py", "src/test/test_245_task037b_v6_traction_aligned_convergence.py"]
+    },
+    {
+      "label": "M11",
+      "status": "read_only_feasibility_stop",
+      "commit_sha": null,
+      "formal": "not_run",
+      "target": "no approved implementation; A/B rejected, C selected"
+    }
+  ],
+  "formal_runs": [
+    {
+      "label": "M0",
+      "case": "task037b_v6_traction_aligned_full_ea132d8_mpi8",
+      "source_commit_sha": "ea132d8a31e5ccd6c45fb90bbb9b5f676cd78b0e",
+      "formal_run_count": 1,
+      "summary": {
+        "path": "benchmarks/artifacts/task037b/v6_traction_aligned_full_ea132d8_mpi8.json",
+        "sha256": "78628858097dfd3f8e278c4c4bebf911277a38bc049b2235c9b272eb1bbfb1f6"
+      },
+      "solver": {
+        "path": "benchmarks/artifacts/task037b/v6_traction_aligned_full_ea132d8_mpi8/solver_record.json",
+        "sha256": "8417fe90e85d3041e02079d23e457b36ab92b2ab2751510906c5543820a0b2e9"
+      },
+      "online": {
+        "return_code": 0,
+        "numeric_pass": true,
+        "physics_pass": true
+      },
+      "process_tree_rss_peak_mib": 7297.50390625,
+      "peak_stage": "candidate_field_recovery",
+      "peak_gib": 7.126468658447266,
+      "stages": {
+        "path": "benchmarks/artifacts/task037b/v6_traction_aligned_full_ea132d8_mpi8/memory_stages.jsonl",
+        "sha256": "ab6632df5a34fae390e0e6ca1d4d3fb104bc7dfec2fd3261f96e81e7ef678573"
+      },
+      "timeline": {
+        "path": "benchmarks/artifacts/task037b/v6_traction_aligned_full_ea132d8_mpi8/memory_timeline.csv",
+        "sha256": "601df24dac9c473c971d7470b37a35a5d7befb9792ee6f7855a0d2264d728ac7"
+      },
+      "stdout": {
+        "path": "benchmarks/artifacts/task037b/v6_traction_aligned_full_ea132d8_mpi8/worker_stdout.txt",
+        "sha256": "cfcd1bc48a2bb5942a6efd2f468cf5f804f2b1cad8fe95ef209c8554fa81f938"
+      },
+      "offline_checker": {
+        "path": "benchmarks/artifacts/task037b/v6_offline_qualification_checker_a4477c2.json",
+        "sha256": "ed58821c29a74835d69e87d88dc95861bdeb7cd7547000b4dd316d3aaed82f19",
+        "return_code": 0,
+        "pass": true,
+        "failures": []
+      }
+    },
+    {
+      "label": "M1",
+      "case": "task037b_v6_m1_memory_8710989_mpi8",
+      "source_commit_sha": "8710989b77306127d5d6ba51a9b771a2a3eb142e",
+      "formal_run_count": 1,
+      "summary": {
+        "path": "benchmarks/artifacts/task037b/v6_m1_memory_8710989_mpi8.json",
+        "sha256": "0fca17108e9f6b7b3d885cff1d9766cacbf992d4c6f2c200f1985594d6131f30"
+      },
+      "solver": {
+        "path": "benchmarks/artifacts/task037b/v6_m1_memory_8710989_mpi8/solver_record.json",
+        "sha256": "0b7481fccd2099b577b35c3bd376c8920c6cf39dc494b740edd7ef3d6ce1ee69"
+      },
+      "online": {
+        "return_code": 0,
+        "numeric_pass": true,
+        "physics_pass": true
+      },
+      "process_tree_rss_peak_mib": 6188.55078125,
+      "peak_stage": "v4_worker_cleanup_finished",
+      "peak_gib": 6.043506622314453,
+      "stages": {
+        "path": "benchmarks/artifacts/task037b/v6_m1_memory_8710989_mpi8/memory_stages.jsonl",
+        "sha256": "6168fc97d4510d6fae0f4abd70404928957ed9f35b594675f2575cf374e4e224"
+      },
+      "timeline": {
+        "path": "benchmarks/artifacts/task037b/v6_m1_memory_8710989_mpi8/memory_timeline.csv",
+        "sha256": "5454f877fbb5d59ffd049d602e76df3a8644e0d1546e86cf3e13909c0c203030"
+      },
+      "stdout": {
+        "path": "benchmarks/artifacts/task037b/v6_m1_memory_8710989_mpi8/worker_stdout.txt",
+        "sha256": "5545bde3480aed1d7897ae18eb37012b5036549bcf4027c77743d6e3323454de"
+      },
+      "offline_checker": {
+        "path": "benchmarks/artifacts/task037b/v6_m1_offline_qualification_checker_8710989.json",
+        "sha256": "5ece08d6eb47a9b3d2fa5023b28ebc0ab956da5004e50cf57bb8f8c38d03cb9a",
+        "return_code": 0,
+        "pass": true,
+        "failures": []
+      }
+    },
+    {
+      "label": "M2",
+      "case": "task037b_v6_m2_recovery_heap_691bb81_mpi8",
+      "source_commit_sha": "691bb8139ded9483c8dd4d8f412615351abde1b0",
+      "formal_run_count": 1,
+      "summary": {
+        "path": "benchmarks/artifacts/task037b/v6_m2_recovery_heap_691bb81_mpi8.json",
+        "sha256": "7545c98d8c8fe459a2b84ceaa137c50b26e7ecd71b8e632a9d4da347043b8940"
+      },
+      "solver": {
+        "path": "benchmarks/artifacts/task037b/v6_m2_recovery_heap_691bb81_mpi8/solver_record.json",
+        "sha256": "9aa1dee1298f90deb83bc6c55cc57e61699db5a2d7368dbfb8c4aa98feeb7191"
+      },
+      "online": {
+        "return_code": 0,
+        "numeric_pass": true,
+        "physics_pass": true
+      },
+      "process_tree_rss_peak_mib": 6156.65234375,
+      "peak_stage": "v4_worker_cleanup_finished",
+      "peak_gib": 6.012355804443359,
+      "stages": {
+        "path": "benchmarks/artifacts/task037b/v6_m2_recovery_heap_691bb81_mpi8/memory_stages.jsonl",
+        "sha256": "e5499533e723f6ed38acbef5a7bc755cec5cedaf9491ee54a4353b11b1a38808"
+      },
+      "timeline": {
+        "path": "benchmarks/artifacts/task037b/v6_m2_recovery_heap_691bb81_mpi8/memory_timeline.csv",
+        "sha256": "95cee45f8357ab7cf1e36a7cedd5e499af718ef39cb87ee147a7dcc0ab4da048"
+      },
+      "stdout": {
+        "path": "benchmarks/artifacts/task037b/v6_m2_recovery_heap_691bb81_mpi8/worker_stdout.txt",
+        "sha256": "cc0408d434020ba5a043641f7ec447739dcb651e77ee7dd430a3d5e6ece07492"
+      },
+      "offline_checker": {
+        "path": "benchmarks/artifacts/task037b/v6_m2_offline_qualification_checker_691bb81.json",
+        "sha256": "141a3d57e04f6ba6d1107fee47b5772ed566bf7cda28e99c5cd5b44593ce6527",
+        "return_code": 0,
+        "pass": true,
+        "failures": []
+      }
+    },
+    {
+      "label": "M3",
+      "case": "task037b_v6_m3_canonical_heap_e383ccd_mpi8",
+      "source_commit_sha": "e383ccdc99f350b7e753aabfb6fcca0478159641",
+      "formal_run_count": 1,
+      "summary": {
+        "path": "benchmarks/artifacts/task037b/v6_m3_canonical_heap_e383ccd_mpi8.json",
+        "sha256": "85f24788abd71326b837f446684277de326dfb707b317bf74ff08a03859fe619"
+      },
+      "solver": {
+        "path": "benchmarks/artifacts/task037b/v6_m3_canonical_heap_e383ccd_mpi8/solver_record.json",
+        "sha256": "c9383bbd3862241915c9f02b4a065660c967571873f08da375e70f7b57d80bee"
+      },
+      "online": {
+        "return_code": 0,
+        "numeric_pass": true,
+        "physics_pass": true
+      },
+      "process_tree_rss_peak_mib": 6161.02734375,
+      "peak_stage": "v6_bottom_canonical_heap_cleanup_started",
+      "peak_gib": 6.016628265380859,
+      "stages": {
+        "path": "benchmarks/artifacts/task037b/v6_m3_canonical_heap_e383ccd_mpi8/memory_stages.jsonl",
+        "sha256": "f509c0806b09fe75c924ca61aaa950b5b3cd1987ca1654bc35a83076630dee07"
+      },
+      "timeline": {
+        "path": "benchmarks/artifacts/task037b/v6_m3_canonical_heap_e383ccd_mpi8/memory_timeline.csv",
+        "sha256": "cef596f539611e651d13cf81932ff1912471a663717eb3a4ed13f143cfc22c84"
+      },
+      "stdout": {
+        "path": "benchmarks/artifacts/task037b/v6_m3_canonical_heap_e383ccd_mpi8/worker_stdout.txt",
+        "sha256": "30ca26233dfae0a8fb01ed300e9ce2511d7dcfdb9edf8b611bfa1316c949c497"
+      },
+      "offline_checker": {
+        "path": "benchmarks/artifacts/task037b/v6_m3_offline_qualification_checker_e383ccd.json",
+        "sha256": "8c30f19d88078d9bb7596317f89fbbbf6ee9520db7c75d321031113c370c93a7",
+        "return_code": 0,
+        "pass": true,
+        "failures": []
+      }
+    },
+    {
+      "label": "M4",
+      "case": "task037b_v6_m4_canonical_stream_0f5f9bf_mpi8",
+      "source_commit_sha": "0f5f9bfddfc2f2cfdb9c3bcd56674043f9eb9382",
+      "formal_run_count": 1,
+      "summary": {
+        "path": "benchmarks/artifacts/task037b/v6_m4_canonical_stream_0f5f9bf_mpi8.json",
+        "sha256": "0e73be02afff1e5ba0077f47cb9dc8e1ebeb97d7e42f0bb8b935cb6662f771f5"
+      },
+      "solver": {
+        "path": "benchmarks/artifacts/task037b/v6_m4_canonical_stream_0f5f9bf_mpi8/solver_record.json",
+        "sha256": "cd3ba6060482c0ac9cc6c73e776c912703fb5c8a139babe023bf222a9db1f6e8"
+      },
+      "online": {
+        "return_code": 0,
+        "numeric_pass": true,
+        "physics_pass": true
+      },
+      "process_tree_rss_peak_mib": 6147.89453125,
+      "peak_stage": "v6_top_recovery_heap_cleanup_finished",
+      "peak_gib": 6.003803253173828,
+      "stages": {
+        "path": "benchmarks/artifacts/task037b/v6_m4_canonical_stream_0f5f9bf_mpi8/memory_stages.jsonl",
+        "sha256": "dd3edd720cb62e860e73df430c47a3f5b640185c818cc09a1b714df9a6129ec7"
+      },
+      "timeline": {
+        "path": "benchmarks/artifacts/task037b/v6_m4_canonical_stream_0f5f9bf_mpi8/memory_timeline.csv",
+        "sha256": "e51677da463945fdb1ec8028efc5d62e0eaa47dd4d0fe50a66231c3a25e79881"
+      },
+      "stdout": {
+        "path": "benchmarks/artifacts/task037b/v6_m4_canonical_stream_0f5f9bf_mpi8/worker_stdout.txt",
+        "sha256": "3d09ebf2d918a6d81cb83bfd105bfaa1f59c8caaed00d26a48ca70d708c4045b"
+      },
+      "offline_checker": {
+        "path": "benchmarks/artifacts/task037b/v6_m4_offline_qualification_checker_0f5f9bf.json",
+        "sha256": "7aeaf1d119756d49b0115794659af3c3059c7041ced11817fc1650381120c25f",
+        "return_code": 0,
+        "pass": true,
+        "failures": []
+      }
+    },
+    {
+      "label": "M5",
+      "case": "task037b_v6_m5_bounded_trace_d3d9760_mpi8",
+      "source_commit_sha": "d3d97606ef3bb92c815e85944d8fd658573d9980",
+      "formal_run_count": 1,
+      "summary": {
+        "path": "benchmarks/artifacts/task037b/v6_m5_bounded_trace_d3d9760_mpi8.json",
+        "sha256": "62c423ba5c25d8c2e5e8cf6a9447b3dc03756dad5d34bf86e659f77015e98993"
+      },
+      "solver": {
+        "path": "benchmarks/artifacts/task037b/v6_m5_bounded_trace_d3d9760_mpi8/solver_record.json",
+        "sha256": "41d9d3158251722d24d5a97eae74ce7a29902b4ab2c506f26329444baaff43d9"
+      },
+      "online": {
+        "return_code": 0,
+        "numeric_pass": true,
+        "physics_pass": true
+      },
+      "process_tree_rss_peak_mib": 6128.7109375,
+      "peak_stage": "v6_top_recovery_heap_cleanup_finished",
+      "peak_gib": 5.985068321228027,
+      "stages": {
+        "path": "benchmarks/artifacts/task037b/v6_m5_bounded_trace_d3d9760_mpi8/memory_stages.jsonl",
+        "sha256": "f97d6c80a6d6b4981b083e45422cb1d2ffda9ee578637e00127a2f01179019c1"
+      },
+      "timeline": {
+        "path": "benchmarks/artifacts/task037b/v6_m5_bounded_trace_d3d9760_mpi8/memory_timeline.csv",
+        "sha256": "e40ebe9aec31005d819d28e24697602806fd72968a76de9ae7ee66dcc0ce69eb"
+      },
+      "stdout": {
+        "path": "benchmarks/artifacts/task037b/v6_m5_bounded_trace_d3d9760_mpi8/worker_stdout.txt",
+        "sha256": "110086f9f6f2a9f9d860e432220388da71ad1c2421ac1abbb27044765739b76a"
+      },
+      "offline_checker": {
+        "path": "benchmarks/artifacts/task037b/v6_m5_offline_qualification_checker_d3d9760.json",
+        "sha256": "c1b77efd6bd4d5289e0fe902c4ead2b56a45ac0f0a74dd1c10d7595612653d46",
+        "return_code": 0,
+        "pass": true,
+        "failures": []
+      }
+    },
+    {
+      "label": "M6",
+      "case": "task037b_v6_m6_compact_full_fe_3cb742b_mpi8",
+      "source_commit_sha": "3cb742baa085d640e219fc239818bfc1f57f6dfd",
+      "formal_run_count": 1,
+      "summary": {
+        "path": "benchmarks/artifacts/task037b/v6_m6_compact_full_fe_3cb742b_mpi8.json",
+        "sha256": "cc7148d2d8c454ee8972f0e0579c09be75e8e62cd1e495162280d71325c62b2f"
+      },
+      "solver": {
+        "path": "benchmarks/artifacts/task037b/v6_m6_compact_full_fe_3cb742b_mpi8/solver_record.json",
+        "sha256": "61c1a6a1e981ded8c688ffd1eca358e3dcb21e2bfb279e5115a54098a3f106d7"
+      },
+      "online": {
+        "return_code": 0,
+        "numeric_pass": true,
+        "physics_pass": true
+      },
+      "process_tree_rss_peak_mib": 6166.9921875,
+      "peak_stage": "v6_top_recovery_heap_cleanup_finished",
+      "peak_gib": 6.022453308105469,
+      "stages": {
+        "path": "benchmarks/artifacts/task037b/v6_m6_compact_full_fe_3cb742b_mpi8/memory_stages.jsonl",
+        "sha256": "4d736d49a5ffab43bbe3ec48f975f4d35b0335e5e482527d6639d413dfd0b0f4"
+      },
+      "timeline": {
+        "path": "benchmarks/artifacts/task037b/v6_m6_compact_full_fe_3cb742b_mpi8/memory_timeline.csv",
+        "sha256": "85ae6fac14e1f0612af78ae47cd5d234e13ab1d927f6299a9393c117d4e918c8"
+      },
+      "stdout": {
+        "path": "benchmarks/artifacts/task037b/v6_m6_compact_full_fe_3cb742b_mpi8/worker_stdout.txt",
+        "sha256": "5a85f5c5d9d8ea926dc4363a5f93bf540848a8c246d05493cd096a06d7b07bd1"
+      },
+      "offline_checker": {
+        "path": "benchmarks/artifacts/task037b/v6_m6_offline_qualification_checker_3cb742b.json",
+        "sha256": "78a6a58d4b4ebc626cd0d3cbaa46628bc41c01d900a69f00001ab29fcaa162d7",
+        "return_code": 0,
+        "pass": true,
+        "failures": []
+      }
+    },
+    {
+      "label": "M7",
+      "case": "task037b_v6_m7_used_dofs_fdeb593_mpi8",
+      "source_commit_sha": "fdeb5932b3afdb0d5700e9277736235d5a1d8cb6",
+      "formal_run_count": 1,
+      "summary": {
+        "path": "benchmarks/artifacts/task037b/v6_m7_used_dofs_fdeb593_mpi8.json",
+        "sha256": "3c063e178ced2a6f67b700140e2fafe743ffaad0711a28f4d0fa105ed72d2172"
+      },
+      "solver": {
+        "path": "benchmarks/artifacts/task037b/v6_m7_used_dofs_fdeb593_mpi8/solver_record.json",
+        "sha256": "963616df8de1696e89d7208ef63624363d772b98f815556736395aca2e5ab3cb"
+      },
+      "online": {
+        "return_code": 0,
+        "numeric_pass": true,
+        "physics_pass": true
+      },
+      "process_tree_rss_peak_mib": 6144.15234375,
+      "peak_stage": "v6_top_recovery_heap_cleanup_finished",
+      "peak_gib": 6.000148773193359,
+      "stages": {
+        "path": "benchmarks/artifacts/task037b/v6_m7_used_dofs_fdeb593_mpi8/memory_stages.jsonl",
+        "sha256": "5bda7349eb9a5caaa8f72d434037c37f1ef5173686474c6389b8789425e8082f"
+      },
+      "timeline": {
+        "path": "benchmarks/artifacts/task037b/v6_m7_used_dofs_fdeb593_mpi8/memory_timeline.csv",
+        "sha256": "83a2f5eec5c012cb6dfcf59359064d8b9cc92f7f3c9567ad80fb359c1ebf5843"
+      },
+      "stdout": {
+        "path": "benchmarks/artifacts/task037b/v6_m7_used_dofs_fdeb593_mpi8/worker_stdout.txt",
+        "sha256": "e967eb9aa2acfc7a084eb3463c366451f9ef2eb4899339b2043140d554f4aa2d"
+      },
+      "offline_checker": {
+        "path": "benchmarks/artifacts/task037b/v6_m7_offline_qualification_checker_fdeb593.json",
+        "sha256": "0f297fe519333d06e4d589b335f2526837899cad33036edf4abc3083fdafc010",
+        "return_code": 0,
+        "pass": true,
+        "failures": []
+      }
+    },
+    {
+      "label": "M8",
+      "case": "task037b_v6_m8_entity_dofs_48239c9_mpi8",
+      "source_commit_sha": "48239c90d12ba8c23335bbdc5e0e2eda0816789d",
+      "formal_run_count": 1,
+      "summary": {
+        "path": "benchmarks/artifacts/task037b/v6_m8_entity_dofs_48239c9_mpi8.json",
+        "sha256": "dca68f967fd9c84b76ee86206945a011eaac7a1cb19092b3c6f4a60043a70344"
+      },
+      "solver": {
+        "path": "benchmarks/artifacts/task037b/v6_m8_entity_dofs_48239c9_mpi8/solver_record.json",
+        "sha256": "81df4cae2a24c55e3e198d65cd7b1f02a3318dfa25c6fecf7ddc46b94de80b0d"
+      },
+      "online": {
+        "return_code": 0,
+        "numeric_pass": true,
+        "physics_pass": true
+      },
+      "process_tree_rss_peak_mib": 6140.84765625,
+      "peak_stage": "v6_bottom_canonical_heap_cleanup_started",
+      "peak_gib": 5.9971160888671875,
+      "stages": {
+        "path": "benchmarks/artifacts/task037b/v6_m8_entity_dofs_48239c9_mpi8/memory_stages.jsonl",
+      "sha256": "f72de8f143be45bc982dffc58398aa4d2db2228b187a55d853b53f61e5a605f7"
+      },
+      "timeline": {
+        "path": "benchmarks/artifacts/task037b/v6_m8_entity_dofs_48239c9_mpi8/memory_timeline.csv",
+        "sha256": "b1bc053d64a91db8d261f994fd5affca96a6b0069418718e20580a65ed3f8dba"
+      },
+      "stdout": {
+        "path": "benchmarks/artifacts/task037b/v6_m8_entity_dofs_48239c9_mpi8/worker_stdout.txt",
+        "sha256": "94aac405f72f5ce589f7cae80532825ff22d5ea2dd0336368ed487d36dd9749d"
+      },
+      "offline_checker": {
+        "path": "benchmarks/artifacts/task037b/v6_m8_offline_qualification_checker_48239c9.json",
+        "sha256": "00e41cc903c7685b346765f605073dfa7dbbe2e067cb70067f6193b605ecdfe8",
+        "return_code": 0,
+        "pass": true,
+        "failures": []
+      }
+    },
+    {
+      "label": "M9",
+      "case": "task037b_v6_m9_cell_major_dda87f7_mpi8",
+      "source_commit_sha": "dda87f7669aff196ca7b41ec03a88dabca0f21c3",
+      "formal_run_count": 1,
+      "summary": {
+        "path": "benchmarks/artifacts/task037b/v6_m9_cell_major_dda87f7_mpi8.json",
+        "sha256": "0a425f989a4eed7ccf1033bdb4160d5c5f485b72eea57862e20982875574f7db"
+      },
+      "solver": {
+        "path": "benchmarks/artifacts/task037b/v6_m9_cell_major_dda87f7_mpi8/solver_record.json",
+        "sha256": "fb6415a3264a790d400818dd3658dacf1ae8531aec2d8725f721a5a870999868"
+      },
+      "online": {
+        "return_code": 0,
+        "numeric_pass": true,
+        "physics_pass": true
+      },
+      "process_tree_rss_peak_mib": 6140.44140625,
+      "peak_stage": "v6_bottom_canonical_heap_cleanup_started",
+      "peak_gib": 5.9967193603515625,
+      "stages": {
+        "path": "benchmarks/artifacts/task037b/v6_m9_cell_major_dda87f7_mpi8/memory_stages.jsonl",
+        "sha256": "e62d620565e7b2003c2be37dbfb0758fb92c11788dc4698a7081dfc25018d055"
+      },
+      "timeline": {
+        "path": "benchmarks/artifacts/task037b/v6_m9_cell_major_dda87f7_mpi8/memory_timeline.csv",
+        "sha256": "e35e335027b64c219c66639ff043d760f70e1b4106400844e611bbc476d1f927"
+      },
+      "stdout": {
+        "path": "benchmarks/artifacts/task037b/v6_m9_cell_major_dda87f7_mpi8/worker_stdout.txt",
+        "sha256": "bb406cb1ced53ea99ef7ff77a985a51b1f5132ce1c961138831fa75b56ab30b6"
+      },
+      "offline_checker": {
+        "path": "benchmarks/artifacts/task037b/v6_m9_offline_qualification_checker_dda87f7.json",
+        "sha256": "479f89e1c774f677480734eae50dd00186ebfe012c822adc4fe1954020cef910",
+        "return_code": 0,
+        "pass": true,
+        "failures": []
+      }
+    },
+    {
+      "label": "M10",
+      "case": "task037b_v6_m10_precanonical_b291f3d_mpi8",
+      "source_commit_sha": "b291f3dfdf5f0064ff243038f6809172f811d7aa",
+      "formal_run_count": 1,
+      "summary": {
+        "path": "benchmarks/artifacts/task037b/v6_m10_precanonical_b291f3d_mpi8.json",
+        "sha256": "3c468b29af8f29964bd35e01e66b2fcd9ed44d885fda89d1df38282e8e7014b2"
+      },
+      "solver": {
+        "path": "benchmarks/artifacts/task037b/v6_m10_precanonical_b291f3d_mpi8/solver_record.json",
+        "sha256": "cc6ed31c4d68838e7ce764d1ce334565617a91f602ddbb61e0b292fdd982ea16"
+      },
+      "online": {
+        "return_code": 0,
+        "raw_status": "task037b_v6_full_solve_awaiting_authority_payload",
+        "numeric_pass": true,
+        "recovery_pass": true,
+        "own_physics_pass": true,
+        "canonical_pass": true,
+        "lifecycle_pass": true,
+        "complete_qualification": false
+      },
+      "process_tree_rss_peak_mib": 6018.57421875,
+      "peak_stage": "v6_top_recovery_heap_cleanup_finished",
+      "peak_gib": 5.877513885498047,
+      "stages": {
+        "path": "benchmarks/artifacts/task037b/v6_m10_precanonical_b291f3d_mpi8/memory_stages.jsonl",
+        "sha256": "86e848d42d86d39692e787972110e4f1657be78dc47b95c50c6d4e508e8ca3fc"
+      },
+      "timeline": {
+        "path": "benchmarks/artifacts/task037b/v6_m10_precanonical_b291f3d_mpi8/memory_timeline.csv",
+        "sha256": "73cb89868f672a3d21f49cd0282af6bb22f1ca5fae33d6d88cb9c4db5a7e8710"
+      },
+      "stdout": {
+        "path": "benchmarks/artifacts/task037b/v6_m10_precanonical_b291f3d_mpi8/worker_stdout.txt",
+        "sha256": "ebe54351be6aa68eb517577a6ec135fcec2abec2df66d3f252be5de50cbd604b"
+      },
+      "offline_checker": {
+        "path": "benchmarks/artifacts/task037b/v6_m10_offline_qualification_checker_b291f3d.json",
+        "sha256": "feab4a65d5900c7afc9b7729aa9d80c8449a4ce3822c33c991f8c6baf36a3039",
+        "return_code": 0,
+        "pass": true,
+        "failures": []
+      }
+    }
+  ],
+  "m10_online": {
+    "formal_run_count": 1,
+    "status": "task037b_v6_full_solve_awaiting_authority_payload",
+    "return_code": 0,
+    "iterations": 792,
+    "reason": 2,
+    "decision": "CONVERGED_RTOL",
+    "five_residuals": {"reported":3.578062165607276e-09,"global":3.578062144715876e-09,"bottom":4.921856578759462e-09,"top":2.6635965562403923e-09,"modal":1.4561321294580367e-15},
+    "exact_traction": {"bottom":4.820141813913522e-09,"top":2.6635965562403923e-09,"threshold":1e-08},
+    "energy": {"R":0.0007628816277266691,"T":0.6027016338728337,"A":0.39653548449943965,"A_volume":0.39653548508184505,"R_plus_T_plus_A_volume":1.0000000005824054,"closure":5.82405457194568e-10},
+    "online_gates": {"numerical":true,"recovery":true,"own_physics":true,"canonical":true,"lifecycle":true,"resource_process_tree_rss":true,"complete_qualification":false},
+    "combined_online_plus_offline_qualification": true,
+    "resource": {"process_tree_rss_peak_mib":6018.57421875,"process_tree_rss_peak_gib":5.877513885498047,"strict_6gib_threshold_mib":6144,"margin_mib":125.42578125,"peak_stage":"v6_top_recovery_heap_cleanup_finished","worker_rss_sum_at_peak_mib":6003.94140625,"pss_sum_at_peak_mib":4369.6455078125,"uss_sum_at_peak_mib":4102.09375,"all_run_pss_max_mib":4668.7451171875,"all_run_uss_max_mib":4487.77734375,"swap":"0"},
+    "cleanup_rank_sum_mib": {"early_qep":1323.609375,"pre_recovery":629.4453125,"bottom_recovery":168.640625,"top_recovery":166.71875,"pre_canonical":443.9765625,"bottom_canonical":84.734375,"top_canonical":5.12890625},
+    "cleanup_max_rank_mib": {"early_qep":259.96875,"pre_recovery":439.66796875,"bottom_recovery":22.375,"top_recovery":21.90625,"pre_canonical":64.7421875,"bottom_canonical":79.88671875,"top_canonical":0.71875},
+    "cleanup_timings_seconds": {"early_qep":0.14505604491569102,"pre_recovery":0.21119930793065578,"bottom_recovery":0.12909691501408815,"top_recovery":0.12219237198587507,"pre_canonical":0.12799965194426477,"bottom_canonical":0.12775007204618305,"top_canonical":0.11686409101821482},
+    "stage_peaks_mib": {"action_coupling":5776.06640625,"outer":5569.85546875,"candidate_field_recovery":5079.453125,"bottom_recovery_cleanup_started":5446.48046875,"bottom_recovery_cleanup_finished":5435.84375,"top_recovery_cleanup_finished":6018.57421875,"pre_canonical_cleanup_finished":5735.54296875,"bottom_canonical_cleanup_started":5741.578125,"bottom_canonical_cleanup_finished":5663.859375,"final_cleanup":5661.6484375},
+    "comparison_to_process_tree_baselines_mib": {"M9":-121.8671875,"M8":-122.2734375,"M5":-110.13671875,"original_V6":-1278.9296875}
+  },
+  "m10_offline_checker": {
+    "path": "benchmarks/artifacts/task037b/v6_m10_offline_qualification_checker_b291f3d.json",
+    "sha256": "feab4a65d5900c7afc9b7729aa9d80c8449a4ce3822c33c991f8c6baf36a3039",
+    "return_code": 0,
+    "pass": true,
+    "failures": [],
+    "candidate_evidence_pass": true,
+    "evidence_integrity_pass": true,
+    "authority_bindings_pass": true,
+    "authority_payload_gap": false,
+    "checker_wall_seconds": 27.266378779080696,
+    "checker_rss_mib": 110.63671875,
+    "q_relative_residual": {"bottom":3.1552581864833886e-09,"top":4.059311187825597e-09},
+    "orders": {"coverage":"80/80","significant":"12/12","below_floor":68,"max_significant_power_relative":1.798107156229766e-06,"all_row_amplitude_diagnostic_max":1.0062938100254508},
+    "energy_abs_errors": {"R":1.5258519003424204e-10,"T":1.1129708266111038e-10,"A":4.1288084062784947e-11,"A_volume":3.853606322934411e-10,"closure":4.2664871635622603e-10},
+    "canonical_relative_l2": {"bottom_active_trace":1.2448122637440733e-08,"bottom_full_fe":8.412882793356171e-09,"top_active_trace":1.3683141787825865e-08,"top_full_fe":9.101963011513551e-09,"threshold":1e-05},
+    "selected_fields": {"coordinate_alignment_pass":true,"threshold":5e-03,"bottom_interface_E":3.6550910104971564e-09,"bottom_interface_H":1.9604715398522264e-09,"top_interface_E":1.6077125042452214e-09,"top_interface_H":3.0693657611802307e-09,"middle_E":2.1786453656373047e-09,"middle_H":2.204926561589274e-09},
+    "modal": {"raw_status":"diagnostic_not_comparable_independent_qep_gauge","raw_relative_l2":1.1292458067631135,"magnitude_relative_l2":1.4759171008539638e-09,"qualification_pass":true},
+    "full3d_comparisons": {"iterative":{"analytic":"12/12","power":"12/12","amplitude":"12/12","max_power_error":1.5279985631812265e-10,"max_amplitude_error":4.140045890152348e-09},"direct_hybrid":{"analytic":"12/12","power":"12/12","amplitude":"12/12","max_power_error":1.984856723424855e-12,"max_amplitude_error":2.0684155314519094e-12}},
+    "authority_inputs": {"h1_solver_sha256":"91a53c0989f0ae67c685f225ae1308121d34f97c590a4639f5f966193bce1f50","h1_summary_sha256":"ef0e7bb0157656ae5840a27641498925428740483535a1748c9dafe432bf72bb","h1_npz_sha256":"fe64bdd3e08acd854fdc3d047a024e68f997870ab9c12ed8d4e08b403a0612cb","full3d_sha256":"b8b428476cdeb4b80495f4a8b1c89e3bb2f67c682c695fc72bb59dbbbd94b4e3","significant_reference_sha256":"83b7bcfeb510b849aea391d86f306072ead0232781598ea1232617e2535293e3"}
+  },
+  "m11_feasibility": {
+    "status": "read_only_feasibility_stop",
+    "formal": "not_run",
+    "A_sequential_recovery_export": "rejected; known recovered field payload is <1 MiB per side and later joint validation/canonical dependencies remain",
+    "B_temporary_artifact_reload": "rejected; would add serialization, hash, reload and DOLFINx reconstruction without a measured benefit",
+    "C_keep_current_lifecycle": "selected",
+    "known_recover_payload_bytes": {"bottom":415776,"top":415776,"basis":"derived from 25986 complex128 full rows; local/ghost DOLFINx overhead not_recorded"},
+    "still_required": ["systems/coupling", "positive_negative_bases", "cross_section", "bottom_top_recovered_fields for joint later gates"],
+    "qep_and_factor_state": "already released before recovery",
+    "64_mib_benefit_gate": "not_established",
+    "next_step": "stop M11; do not run another MPI8 candidate"
+  },
+  "disposition": {
+    "numerical_physics": "PASS",
+    "resource": "MPI8_RESOURCE_POSITIVE",
+    "final_status": "DOUBLE_APPROXIMATE_MPI8_TIGHT_LINEAR_AND_PHYSICS_PASS_WITH_MPI8_RESOURCE_POSITIVE",
+    "scope": "research-only",
+    "ordinary_defaults": "unchanged",
+    "production": "not_authorized",
+    "full_pytest": "not_run",
+    "ci": "not_run",
+    "ignored_raw_artifacts": "not staged"
+  }
+}

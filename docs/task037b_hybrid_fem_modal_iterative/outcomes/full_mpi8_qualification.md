@@ -367,3 +367,86 @@ Ruff check、format-check、compileall、git diff-check 均通过。full pytest 
 production qualification。ordinary defaults unchanged；master merge 未授权。Review V6 到此
 闭环；随后授权的持续内存优化属于下一独立研究阶段，不改写本 V6 事实，也不能把它提升为
 production 结论。
+
+## M1–M10 内存优化阶梯与最终结项
+
+以下章节只追加 M1–M10 的同物理 MPI8 证据，不覆盖 V4、V5 或原始 V6 结论。完整 source、parent、raw artifact SHA 和每一轮独立 checker SHA 见 [V6 memory optimization closeout compact](../../../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v6_memory_optimization_closeout_v1.json)。process-tree RSS 是唯一资源权威；worker RSS、PSS、USS 和对象字节不能替代它。
+
+| 阶段 | source commit | 改动目标 | process-tree RSS peak MiB | 峰值标签 | 在线数值/物理 |
+|---|---|---|---:|---|---|
+| V6 original | `ea132d8a31e5ccd6c45fb90bbb9b5f676cd78b0e` | traction-aligned tight candidate | `7297.50390625` | `candidate_field_recovery` | pass；resource negative |
+| M1 | `8710989b77306127d5d6ba51a9b771a2a3eb142e` | QEP/pre-recovery cleanup | `6188.55078125` | `v4_worker_cleanup_finished` | pass |
+| M2 | `691bb8139ded9483c8dd4d8f412615351abde1b0` | endcap recovery cleanup | `6156.65234375` | `v4_worker_cleanup_finished` | pass |
+| M3 | `e383ccdc99f350b7e753aabfb6fcca0478159641` | canonical side cleanup | `6161.02734375` | `v6_bottom_canonical_heap_cleanup_started` | pass |
+| M4 | `0f5f9bfddfc2f2cfdb9c3bcd56674043f9eb9382` | audited canonical streaming | `6147.89453125` | `v6_top_recovery_heap_cleanup_finished` | pass |
+| M5 | `d3d97606ef3bb92c815e85944d8fd658573d9980` | bounded trace expansion | `6128.7109375` | `v6_top_recovery_heap_cleanup_finished` | pass |
+| M6 | `3cb742baa085d640e219fc239818bfc1f57f6dfd` | compact full-field lookup | `6166.9921875` | `v6_top_recovery_heap_cleanup_finished` | pass |
+| M7 | `fdeb5932b3afdb0d5700e9277736235d5a1d8cb6` | used-DoF scatter mask | `6144.15234375` | `v6_top_recovery_heap_cleanup_finished` | pass；超线 `0.15234375` MiB |
+| M8 | `48239c90d12ba8c23335bbdc5e0e2eda0816789d` | entity-position mask | `6140.84765625` | `v6_bottom_canonical_heap_cleanup_started` | pass |
+| M9 | `dda87f7669aff196ca7b41ec03a88dabca0f21c3` | cell-major active-trace stream | `6140.44140625` | `v6_bottom_canonical_heap_cleanup_started` | pass；较 M8 仅 `-0.40625` MiB |
+| M10 | `b291f3dfdf5f0064ff243038f6809172f811d7aa` | own-physics heap pre-canonical release | `6018.57421875` | `v6_top_recovery_heap_cleanup_finished` | pass；resource positive |
+
+每个阶段 formal run count 都是 `1`；没有 warm start、continuation、重试或参数放宽。M1–M10 的独立 offline checker 均为 exit 0、`pass=true`、`failures=[]`；各 checker output 的 hash-bound 路径见 compact record。
+
+### M10 tight residual、traction 与 official observable
+
+M10 candidate 使用 p6/h10、13.5 nm、S、10°、M120/240、每端 40 个 DtN mode、MPI8、exact monolithic Hybrid operator、双侧 fixed whole-endcap ILU(0)+Woodbury、right FGMRES restart90/max_it1000/`5e-9`、zero initial。它不是新的物理参数或 solver 算法。
+
+| 项目 | measured value | 结论 |
+|---|---:|---|
+| iteration / reason | `792 / 2` | `CONVERGED_RTOL` |
+| reported residual | `3.578062165607276e-9` | `<=5e-9` |
+| global residual | `3.578062144715876e-9` | `<=5e-9` |
+| bottom residual | `4.921856578759462e-9` | `<=5e-9` |
+| top residual | `2.6635965562403923e-9` | `<=5e-9` |
+| modal residual | `1.4561321294580367e-15` | `<=5e-9` |
+| exact traction bottom/top | `4.820141813913522e-9 / 2.6635965562403923e-9` | each `<=1e-8` |
+| recovery / own physics / canonical / lifecycle | `true / true / true / true` | pass |
+
+| R | T | A | A_volume | R+T+A_volume | closure |
+|---:|---:|---:|---:|---:|---:|
+| `0.0007628816277266691` | `0.6027016338728337` | `0.39653548449943965` | `0.39653548508184505` | `1.0000000005824054` | `5.82405457194568e-10` |
+
+M10 checker 的 orders key/finite coverage 为 `80/80`，其中 significant `12`、below-floor `68`，significant power/amplitude 数值 Gate 为 `12/12`。canonical 四角色、坐标对齐的 selected interface/middle E/H、energy 和两组 12+12 Full3D comparison 均通过。
+
+| 比较 | analytic / power / amplitude | 最大误差 |
+|---|---|---|
+| iterative vs frozen Full3D | `12/12 / 12/12 / 12/12` | power `1.5279985631812265e-10`；amplitude `4.140045890152348e-9` |
+| direct-Hybrid vs frozen Full3D | `12/12 / 12/12 / 12/12` | power `1.984856723424855e-12`；amplitude `2.0684155314519094e-12` |
+
+raw modal coefficient 只保留为 `diagnostic_not_comparable_independent_qep_gauge`；本轮 raw relative L2 为 `1.1292458067631135`，不是 pass。magnitude relative L2 为 `1.4759171008539638e-9`，且坐标对齐物理 E/H 通过，所以 physical reconstruction 是 modal qualification authority。没有 shared basis fingerprint/transport，不把独立 QEP 系数逐项比较称为 gauge-invariant，也不删除 raw mismatch。
+
+### M10 生命周期、资源与边界
+
+M10 process-tree authority peak 为 `6018.57421875 MiB = 5.877513885498047 GiB`，严格 6 GiB 余量为 `125.42578125 MiB`。峰值同采样 worker RSS sum/PSS/USS 为 `6003.94140625 / 4369.6455078125 / 4102.09375 MiB`；全程 PSS/USS 最大值为 `4668.7451171875 / 4487.77734375 MiB`，swap 为 0。PSS/USS 不代替 RSS authority。
+
+| 阶段 | process-tree RSS peak MiB |
+|---|---:|
+| action coupling | `5776.06640625` |
+| outer | `5569.85546875` |
+| candidate field recovery | `5079.453125` |
+| bottom recovery cleanup started / finished | `5446.48046875 / 5435.84375` |
+| top recovery cleanup finished | `6018.57421875` |
+| pre-canonical cleanup finished | `5735.54296875` |
+| bottom canonical cleanup started / finished | `5741.578125 / 5663.859375` |
+| final cleanup | `5661.6484375` |
+
+M10 cleanup rank-sum/max-rank release（MiB）为：early QEP `1323.609375/259.96875`、pre-recovery `629.4453125/439.66796875`、bottom recovery `168.640625/22.375`、top recovery `166.71875/21.90625`、pre-canonical `443.9765625/64.7421875`、bottom canonical `84.734375/79.88671875`、top canonical `5.12890625/0.71875`。这些是 measured allocator audit，不是仍存活对象总量。
+
+M10 相对 M9、M8、M5、原始 V6 的 process-tree RSS 分别下降 `121.8671875`、`122.2734375`、`110.13671875`、`1278.9296875 MiB`。因此本轮得到实质资源余量，但仍只称 research-only；没有授权 master merge。
+
+### M11 feasibility stop
+
+M11 没有修改或 formal run。只读生命周期审计认为：已知两端 recovered full payload 每侧约 `415776 bytes`，而 systems/coupling/bases 及后续 joint validation 仍需保留；QEP operators/factors 已在 recovery 前释放。顺序 recovery/export（A）无法合理证明至少 `64 MiB` 收益；temporary artifact/reload（B）会引入额外序列化、hash、reload 与 DOLFINx 重建；保持现状的 C 被选中。M11 状态为 `read_only_feasibility_stop`，不是新的 numerical result。
+
+### 结项判定
+
+| 层次 | 结论 |
+|---|---|
+| numerical / physics | `PASS` |
+| resource | `MPI8_RESOURCE_POSITIVE` |
+| final research status | `DOUBLE_APPROXIMATE_MPI8_TIGHT_LINEAR_AND_PHYSICS_PASS_WITH_MPI8_RESOURCE_POSITIVE` |
+| ordinary / production | ordinary defaults unchanged；research-only；master merge not authorized |
+| not run | full pytest、CI、MPI reduction、M11 formal |
+
+测试与变更分组分别见 [test summary](test_summary.md) 和 [changed files](changed_files.md)；M10 hash-bound compact 见 [closeout record](../../../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v6_memory_optimization_closeout_v1.json)。

@@ -214,3 +214,33 @@ artifact hash 见 [V4 full qualification](full_mpi8_qualification.md) 和
 
 postprocessor 是对同一 raw solver record 的纯函数分类修正，不是第二次数值运行；没有
 重跑 MPI8、没有修改 raw artifacts，也没有开展 Full3D、direct export 或 physics postprocess。
+
+## M1–M10 结项 focused Gate
+
+以下是已经实际运行并在各阶段 turn/record 中保留的 focused Gate；它不是 full repository 统计。每轮对应的 source、raw summary 和 checker SHA 见 [closeout compact record](../../../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v6_memory_optimization_closeout_v1.json)。
+
+| 阶段 | serial focused | MPI focused | static Gate | 独立 offline checker |
+|---|---|---|---|---|
+| V6 preformal | `test243/test244/test245` 合计 `29 passed`；test243 `12 passed`；test246 `12 passed` | 指定 action/lifecycle `5 passed/rank`，MPI2/MPI4 | touched Ruff check/format、compileall、diff-check pass | final V6 checker `pass=true` |
+| M1 | test243/test244/test245；recorded pass，exact count not consolidated | cleanup lifecycle node；recorded MPI2 pass，exact per-rank count not consolidated | recorded static pass，exact command output not consolidated | `v6_m1_offline...` pass；exit 0 |
+| M2 | test243/test244/test245；recorded pass，exact count not consolidated | recovery cleanup lifecycle node；recorded MPI2 pass，exact per-rank count not consolidated | recorded static pass，exact command output not consolidated | `v6_m2_offline...` pass；exit 0 |
+| M3 | test243/test244/test245；recorded pass，exact count not consolidated | canonical ordering/lifecycle node；recorded MPI2 pass，exact per-rank count not consolidated | recorded static pass，exact command output not consolidated | `v6_m3_offline...` pass；exit 0 |
+| M4 | test227/test245；recorded serial pass，exact count not consolidated | owner-local artifact/lifecycle node；recorded MPI2 pass，exact per-rank count not consolidated | recorded static pass，exact command output not consolidated | `v6_m4_offline...` pass；exit 0 |
+| M5 | test226/test227；recorded serial pass，exact count not consolidated | test226/test227；recorded MPI2 pass，exact per-rank count not consolidated | recorded static pass，exact command output not consolidated | `v6_m5_offline...` pass；exit 0 |
+| M6 | test226/test227；recorded serial pass，exact count not consolidated | test226/test227；recorded MPI2 pass，exact per-rank count not consolidated | recorded static pass，exact command output not consolidated | `v6_m6_offline...` pass；exit 0 |
+| M7 | test226/test227；recorded serial pass，exact count not consolidated | test226/test227；recorded MPI2 pass，exact per-rank count not consolidated | recorded static pass，exact command output not consolidated | `v6_m7_offline...` pass；exit 0 |
+| M8 | test226/test227；recorded serial pass，exact count not consolidated | test226/test227；recorded MPI2 pass，exact per-rank count not consolidated | recorded static pass，exact command output not consolidated | `v6_m8_offline...` pass；exit 0 |
+| M9 | test226/test227/test228；recorded serial pass，exact count not consolidated | 同三文件；recorded MPI2 pass，exact per-rank count not consolidated | recorded static pass，exact command output not consolidated | `v6_m9_offline...` pass；exit 0 |
+| M10 | test245（含 pre-canonical lifecycle contract）；recorded serial pass，exact count not consolidated | test245；recorded MPI2 pass，exact per-rank count not consolidated | recorded static pass，exact command output not consolidated | `v6_m10_offline...` pass；exit 0 |
+
+M1–M10 的 focused tests 只证明各自局部生命周期/packet/API 合同和 source/static Gate；online numerical/physics 与独立 checker 结论分别由对应 raw artifact 记录。M9 的 `-0.40625 MiB` 负收益没有被测试或文档改写成通过。
+
+## 未运行项
+
+| 项目 | 状态 |
+|---|---|
+| full repository pytest | `not_run` |
+| CI/GitHub Actions | `not_run`；不声称 CI 通过 |
+| MPI reduction | `not_run`；MPI8 已满足严格 6 GiB |
+| M11 implementation/formal | `not_run`；只完成 read-only feasibility stop |
+| 新 PDE、MPI4/8 candidate 或 checker retry | `not_run` |

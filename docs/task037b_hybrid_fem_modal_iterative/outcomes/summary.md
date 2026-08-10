@@ -371,3 +371,34 @@ V5 compact evidence 见
 [task037b_v5_mpi8_multimetric_full_qualification_v1.json](../../../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v5_mpi8_multimetric_full_qualification_v1.json)。完整 checkpoint、生命周期、资源口径、timing、raw SHA 和 parent/postprocessor
 边界均以该 hash-bound record 及
 [V5 full qualification](full_mpi8_qualification.md) 为准。
+
+## Task37b V6 与 M1–M10 最终结论
+
+本节只追加当前结项，不删除 V1–V5 的负结果、not_run 边界或历史资源口径。逐轮 commit、parent、改动文件、raw SHA 和 checker SHA 以 [memory optimization closeout compact](../../../benchmarks/cases/101_hybrid_iterative_block_solver/records/task037b_v6_memory_optimization_closeout_v1.json) 为唯一结构化索引。
+
+| 范围 | 实施/实验 | 数值与物理 | process-tree RSS peak MiB | 资源结论 |
+|---|---|---|---:|---|
+| V6 original | traction-aligned tight candidate，唯一 MPI8 | pass | `7297.50390625` | negative |
+| M1–M4 | cleanup、canonical side cleanup、streaming | 各自在线数值/物理 pass | `6188.55078125` → `6147.89453125` | M4 仍超 6 GiB |
+| M5 | bounded trace expansion | pass；offline pass | `6128.7109375` | positive |
+| M6 | compact full-field lookup | pass；offline pass | `6166.9921875` | negative；扩大 local+ghost 集合的代价 |
+| M7–M9 | used/entity DoF、cell-major trace | pass；offline pass | `6144.15234375` → `6140.44140625` | positive但余量窄；M9 仅 `-0.40625 MiB` |
+| M10 | own-physics pre-canonical release | pass；offline pass | `6018.57421875` | current best，positive |
+
+### 当前最佳正式结论
+
+| 层次 | 结论 | 数据身份/证据 |
+|---|---|---|
+| numerical / physics | `PASS` | M10 full explicit residual、recovery、traction、own physics、canonical、lifecycle |
+| offline authority | `pass=true`，`failures=[]` | checker output SHA `feab4a65d5900c7afc9b7729aa9d80c8449a4ce3822c33c991f8c6baf36a3039` |
+| resource | `MPI8_RESOURCE_POSITIVE` | measured process-tree RSS `6018.57421875 MiB`，低于 `6144 MiB` |
+| final status | `DOUBLE_APPROXIMATE_MPI8_TIGHT_LINEAR_AND_PHYSICS_PASS_WITH_MPI8_RESOURCE_POSITIVE` | research-only |
+| production boundary | ordinary defaults unchanged；master merge not authorized | measured scope boundary |
+
+M10 是与原 V6 相同物理与算法合同下的内存生命周期优化，不是新的 solver/PC/physics。其 `792/2` 收敛、五项 residual、exact traction、R/T/A、`A_volume` 和 closure 均通过；M10 checker 的 80/80 orders、12 significant、canonical、坐标对齐 selected E/H、energy、iterative/direct vs frozen Full3D 12/12 均通过。raw modal coefficient 仍是独立 QEP gauge diagnostic，不改写为 pass；physical E/H reconstruction 是其资格权威。
+
+### M11 决策、未运行项与合并边界
+
+M11 只读审计选择 C（保持现有生命周期）。A 的已知 recovered payload 每侧约 `415776 bytes`，不足以建立至少 `64 MiB` 的可靠收益；B 会引入临时序列化、hash、reload 和 DOLFINx 重建。M11 implementation/formal 均 `not_run`。full pytest、CI、MPI reduction 也为 `not_run`。V6/M1–M10 仍是研究分支证据，不能冒充 production 或 continuum/mode-count/0.7 nm qualification。
+
+完整资源阶段与七轮 cleanup 见 [resource ledger](resource_ledger.md)；M1–M10 改动依赖和 selective merge 边界见 [changed files](changed_files.md)；实际 focused tests 见 [test summary](test_summary.md)。
