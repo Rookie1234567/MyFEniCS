@@ -621,6 +621,7 @@ def _fixed_scope() -> dict[str, Any]:
         "degree": H2A_FIXED_DEGREE,
         "h_nm": H2A_FIXED_H_NM,
         "mpi_size": 1,
+        "launch_mode": "mpi_singleton_direct",
         "operator": "B0=K_curl+k0^2*M_abs_epsilon",
         "inventory_only": True,
         "Bc_inverse_implemented": False,
@@ -631,9 +632,6 @@ def _fixed_scope() -> dict[str, Any]:
 
 def _h2a_worker_command(run_dir: Path, executable: str) -> list[str]:
     return [
-        "mpiexec",
-        "-n",
-        "1",
         str(executable),
         "-m",
         "benchmarks.run_task037_extra_h2",
@@ -1195,9 +1193,18 @@ def _check_h2a_raw(run_dir: Path) -> dict[str, Any]:
         "runtime_identity_match": watchdog_runtime == worker_runtime,
         "command_runtime_identity": (
             isinstance(command, list)
-            and len(command) > 3
+            and len(command) == 6
             and isinstance(watchdog_runtime, Mapping)
-            and command[3] == watchdog_runtime.get("sys_executable")
+            and command[0] == watchdog_runtime.get("sys_executable")
+            and command[1:5]
+            == [
+                "-m",
+                "benchmarks.run_task037_extra_h2",
+                "worker",
+                "--run-dir",
+            ]
+            and isinstance(command[5], str)
+            and Path(command[5]).resolve() == run_dir
         ),
         "source_clean_and_stable": watchdog.get("source_clean_and_stable") is True,
         "source_pair_matches_worker": (

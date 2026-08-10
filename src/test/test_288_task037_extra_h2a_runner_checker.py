@@ -226,6 +226,23 @@ def test_h2a_fixed_parser_has_no_relaxation_arguments():
         parser.parse_args(["worker", "--run-dir", "raw", "--degree", "2"])
 
 
+def test_h2a_worker_uses_direct_qualified_singleton_command():
+    run_dir = Path("relative-raw")
+    executable = str(h2.ROOT / ".venv" / "bin" / "python")
+    command = h2._h2a_worker_command(run_dir, executable)
+    assert command[0] == executable
+    assert "mpiexec" not in command
+    assert command[1:5] == [
+        "-m",
+        "benchmarks.run_task037_extra_h2",
+        "worker",
+        "--run-dir",
+    ]
+    assert command[5] == str(run_dir.resolve())
+    assert h2._fixed_scope()["mpi_size"] == 1
+    assert h2._fixed_scope()["launch_mode"] == "mpi_singleton_direct"
+
+
 def test_h2a_progress_marker_flushes_and_has_narrow_schema():
     class FlushCapture(io.StringIO):
         def __init__(self):
