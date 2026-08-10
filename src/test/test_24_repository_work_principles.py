@@ -36,12 +36,21 @@ SAME_TASK_BRANCH_CLAUSES = (
     "`master` 只接受最终批准的合并，不作为 review 中转分支",
 )
 
+FORMULA_STANDARD_CLAUSES = (
+    "所有新建或修改的独立公式使用 GitHub fenced math block",
+    "开 fence 为三个反引号加 math，闭 fence 为三个反引号",
+    r"禁止新增多行 `$$` 或 `\[...\]`",
+    "行内公式规则保持现有标准",
+)
+
 
 class RepositoryWorkPrinciplesTests(unittest.TestCase):
     def test_protected_files_exist_and_keep_markers(self) -> None:
         for path in PROTECTED_FILES:
             with self.subTest(path=path.relative_to(REPOSITORY_ROOT)):
-                self.assertTrue(path.is_file(), f"missing protected governance file: {path}")
+                self.assertTrue(
+                    path.is_file(), f"missing protected governance file: {path}"
+                )
                 text = path.read_text(encoding="utf-8")
                 self.assertIn(BEGIN_MARKER, text)
                 self.assertIn(END_MARKER, text)
@@ -85,6 +94,21 @@ class RepositoryWorkPrinciplesTests(unittest.TestCase):
                     "task_retrospective_standard.md",
                     path.read_text(encoding="utf-8"),
                 )
+
+    def test_fenced_math_standard_is_synchronized(self) -> None:
+        old_default_phrases = (
+            "独立公式使用空行隔开的 `$$` block",
+            "独立公式必须使用空行隔开的 `$$` block",
+        )
+        for path in PROTECTED_FILES:
+            with self.subTest(path=path.relative_to(REPOSITORY_ROOT)):
+                text = path.read_text(encoding="utf-8")
+                for clause in FORMULA_STANDARD_CLAUSES:
+                    with self.subTest(clause=clause):
+                        self.assertIn(clause, text)
+                for phrase in old_default_phrases:
+                    with self.subTest(phrase=phrase):
+                        self.assertNotIn(phrase, text)
 
 
 if __name__ == "__main__":
