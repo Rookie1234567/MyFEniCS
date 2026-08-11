@@ -163,6 +163,7 @@ class H2BConstrainedBlockSmoother:
         self._last_action_count = 0
         self._total_action_count = 0
         self._apply_count = 0
+        self._last_strategy = "symmetric"
 
     def _build_coloring(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         row_color_mask = np.zeros(self._global_row_count, dtype=np.uint64)
@@ -236,9 +237,7 @@ class H2BConstrainedBlockSmoother:
     def last_correction(self) -> np.ndarray:
         return self._correction.copy()
 
-    def apply(self, rhs: np.ndarray) -> np.ndarray:
-        """Apply exactly one forward and one reverse fixed-unit sweep."""
-
+    def _prepare_rhs(self, rhs: np.ndarray) -> None:
         if not isinstance(rhs, np.ndarray):
             raise TypeError("H2B residual must be a NumPy array")
         values = rhs
@@ -257,20 +256,43 @@ class H2BConstrainedBlockSmoother:
         self._correction[self._slave_rows] = values[self._slave_rows]
         self._last_action_count = 0
 
-        color_ranges = (
-            range(self._color_offsets.size - 1),
-            range(self._color_offsets.size - 2, -1, -1),
+    def _apply_strategy(self, rhs: np.ndarray, strategy: str) -> np.ndarray:
+        self._prepare_rhs(rhs)
+        color_count = self._color_offsets.size - 1
+        if strategy == "additive":
+            color_ranges = (range(1),)
+        elif strategy == "forward":
+            color_ranges = (range(color_count),)
+        elif strategy == "symmetric":
+            color_ranges = (
+                range(color_count),
+                range(color_count - 1, -1, -1),
+            )
+        else:
+            raise ValueError("H2B S0 strategy must be additive, forward, or symmetric")
+
+        initial_residual = (
+            self._working_residual.copy() if strategy == "additive" else None
         )
         for color_range in color_ranges:
             for color in color_range:
                 self._color_delta.fill(0.0)
-                start = int(self._color_offsets[color])
-                stop = int(self._color_offsets[color + 1])
-                for cell_position in self._color_cells[start:stop]:
+                if strategy == "additive":
+                    cell_positions = range(len(self._cells))
+                else:
+                    start = int(self._color_offsets[color])
+                    stop = int(self._color_offsets[color + 1])
+                    cell_positions = self._color_cells[start:stop]
+                for cell_position in cell_positions:
                     cell_id = int(cell_position)
                     rows = self._cell_rows[cell_id]
                     class_id = int(self._cells[cell_id].class_id)
-                    local_rhs = self._working_residual[rows]
+                    source = (
+                        self._working_residual
+                        if initial_residual is None
+                        else initial_residual
+                    )
+                    local_rhs = source[rows]
                     solved = self._factor_store.solve(class_id, local_rhs)
                     if (
                         not isinstance(solved, np.ndarray)
@@ -282,19 +304,37 @@ class H2BConstrainedBlockSmoother:
                     ):
                         raise ValueError("H2B factor solve returned invalid values")
                     solved /= self._multiplicity[rows]
-                    self._color_delta[rows] = solved
+                    self._correction[rows] += solved
+                    if strategy != "additive":
+                        self._color_delta[rows] = solved
                     del local_rhs, solved
 
-                self._correction += self._color_delta
+                if strategy == "additive":
+                    self._color_delta[:] = self._correction
+                    self._color_delta[self._slave_rows] = 0.0
+                else:
+                    self._color_delta[self._slave_rows] = 0.0
                 self._action(self._color_delta, self._action_output)
                 if not np.all(np.isfinite(self._action_output)):
                     raise ValueError("H2B exact action returned nonfinite values")
                 self._working_residual -= self._action_output
                 self._last_action_count += 1
 
+        del initial_residual
         self._total_action_count += self._last_action_count
         self._apply_count += 1
+        self._last_strategy = strategy
         return self._correction.copy()
+
+    def apply(self, rhs: np.ndarray) -> np.ndarray:
+        """Apply exactly one forward and one reverse fixed-unit sweep."""
+
+        return self._apply_strategy(rhs, "symmetric")
+
+    def apply_s0(self, rhs: np.ndarray, strategy: str) -> np.ndarray:
+        """Apply one of the three fixed H2B-S0 combinations."""
+
+        return self._apply_strategy(rhs, strategy)
 
     @property
     def audit(self) -> dict[str, Any]:
@@ -330,6 +370,12 @@ class H2BConstrainedBlockSmoother:
             self._factor_payload_bytes + retained_work + transient_bound
         )
         covered_multiplicity = self._multiplicity[self._independent_rows]
+        color_count = self._color_offsets.size - 1
+        expected_action_count = {
+            "additive": 1,
+            "forward": color_count,
+            "symmetric": 2 * color_count,
+        }[self._last_strategy]
         return {
             "schema": _H2B_SCHEMA,
             "task037_extra_h2b": True,
@@ -355,9 +401,10 @@ class H2BConstrainedBlockSmoother:
             "factor_plus_work_bytes": factor_plus_work,
             "factor_plus_work_limit_bytes": 500_000_000,
             "action_count": int(self._last_action_count),
-            "expected_action_count": int(2 * (self._color_offsets.size - 1)),
+            "expected_action_count": int(expected_action_count),
             "total_action_count": int(self._total_action_count),
             "apply_count": int(self._apply_count),
+            "last_strategy": self._last_strategy,
             "identity": _fixed_identity(),
             "materialization_identity": {
                 "global_matrix_materialized": False,

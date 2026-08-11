@@ -28,11 +28,26 @@ H2B_WORKER_SCHEMA = f"{H2B_SCHEMA}.worker.v1"
 H2B_WATCHDOG_SCHEMA = f"{H2B_SCHEMA}.watchdog.v1"
 H2B_CHECK_SCHEMA = f"{H2B_SCHEMA}.check.v1"
 H2B_PROGRESS_SCHEMA = f"{H2B_SCHEMA}.progress.v1"
+H2B_S0_SCHEMA = f"{H2B_SCHEMA}.s0"
+H2B_S0_WORKER_SCHEMA = f"{H2B_S0_SCHEMA}.worker.v1"
+H2B_S0_WATCHDOG_SCHEMA = f"{H2B_S0_SCHEMA}.watchdog.v1"
+H2B_S0_CHECK_SCHEMA = f"{H2B_S0_SCHEMA}.check.v1"
 H2B_STAGE_TIMEOUT_SECONDS = 3600.0
 H2B_ONLINE_TIMEOUT_SECONDS = 1800.0
 H2B_STAGE_RSS_LIMIT_BYTES = 1_800_000_000
 H2B_ONLINE_RSS_LIMIT_BYTES = 1_450_000_000
 H2B_SWAP_LIMIT_BYTES = 0
+H2B_S0_RSS_LIMIT_BYTES = 1_000_000_000
+H2B_S0_TIMEOUT_SECONDS = 3_600.0
+H2B_S0_STRATEGIES = ("additive", "forward", "symmetric")
+H2B_S0_OPERATIONAL_ACTION_COUNTS = {"additive": 1, "forward": 8, "symmetric": 16}
+H2B_S0_RHO_LIMITS = {
+    "gradient-dominated": 0.95,
+    "curl-dominated": 0.95,
+    "mixed": 0.85,
+    "checkerboard/high-frequency": 0.70,
+    "physical-RHS-like": 0.95,
+}
 H2B_FACTOR_WORK_LIMIT_BYTES = 500_000_000
 H2B_R2_RECORD_PATH = (
     ROOT
@@ -133,6 +148,24 @@ H2B_ONLINE_EVENTS = (
     "summary_started",
     "summary_ready",
 )
+_S0_SMOOTHER_EVENT = H2B_ONLINE_EVENTS.index("smoother_ready")
+H2B_S0_EVENTS = (
+    H2B_ONLINE_EVENTS[:_S0_SMOOTHER_EVENT]
+    + ("s0_measurement_started", "s0_measurement_ready")
+    + H2B_ONLINE_EVENTS[_S0_SMOOTHER_EVENT + 1 :]
+)
+H2B_S0_ARTIFACT_NAMES = (
+    "stage_progress.jsonl",
+    "stage_stdout.txt",
+    "stage_summary.json",
+    "stage_timeline.jsonl",
+    "s0_progress.jsonl",
+    "s0_stdout.txt",
+    "s0_summary.json",
+    "s0_timeline.jsonl",
+    "stage_root_pid.json",
+    "s0_root_pid.json",
+)
 _HEX = set("0123456789abcdef")
 
 
@@ -218,6 +251,24 @@ def _fixed_scope() -> dict[str, Any]:
         "timing_protocol": "one warm action, five volume actions median; two applies/source median",
         "formal_budget_runs": H2B_PRIMARY_BUDGET,
         "fallback": "not_implemented",
+    }
+
+
+def _s0_scope() -> dict[str, Any]:
+    return {
+        "mode": "h2b_s0_scale_invariant_direction",
+        "degree": 6,
+        "h_nm": 10.0,
+        "mpi_size": 1,
+        "global_cells": H2B_FIXED_CELLS,
+        "local_nloc": H2B_FIXED_NLOC,
+        "global_rows": H2B_FIXED_ROWS,
+        "constraint_count": H2B_FIXED_CONSTRAINTS,
+        "strategies": list(H2B_S0_STRATEGIES),
+        "operator": "K_curl+k0^2*M_abs_epsilon; code uses (1/mu_r) with mu_r=1",
+        "online_timeout_seconds": H2B_S0_TIMEOUT_SECONDS,
+        "online_rss_limit_bytes": H2B_S0_RSS_LIMIT_BYTES,
+        "swap_limit_bytes": H2B_SWAP_LIMIT_BYTES,
     }
 
 
@@ -426,6 +477,468 @@ def _residual_source_arrays(
         "checkerboard/high-frequency": np.ascontiguousarray(checker),
         "physical-RHS-like": physical,
     }
+
+
+def _s0_array_sha(value: Any) -> str:
+    import numpy as np
+
+    array = np.ascontiguousarray(np.asarray(value, dtype=np.complex128))
+    return hashlib.sha256(memoryview(array).cast("B")).hexdigest()
+
+
+def _s0_oracle_metrics(
+    rhs: Any,
+    correction: Any,
+    operational_residual: Any,
+    diagnostic_action: Any,
+    *,
+    repeat_correction: Any,
+    repeat_residual: Any,
+    repeat_diagnostic_action: Any,
+    operational_action_count: int,
+    diagnostic_action_count: int,
+) -> dict[str, Any]:
+    """Compute the scale-invariant S0 direction oracle from full vectors."""
+
+    import numpy as np
+
+    values = tuple(
+        np.ascontiguousarray(np.asarray(value, dtype=np.complex128))
+        for value in (
+            rhs,
+            correction,
+            operational_residual,
+            diagnostic_action,
+            repeat_correction,
+            repeat_residual,
+            repeat_diagnostic_action,
+        )
+    )
+    r, z, r_final, q, z_repeat, r_repeat, q_repeat = values
+    if any(value.ndim != 1 or not np.all(np.isfinite(value)) for value in values):
+        raise ValueError("H2B-S0 oracle vectors must be finite one-dimensional arrays")
+    if not (r.shape == z.shape == r_final.shape == q.shape == z_repeat.shape == r_repeat.shape == q_repeat.shape):
+        raise ValueError("H2B-S0 oracle vector shapes must match")
+    r_norm = float(np.linalg.norm(r))
+    q_norm = float(np.linalg.norm(q))
+    if not math.isfinite(r_norm) or r_norm <= 0.0:
+        raise ValueError("H2B-S0 RHS norm must be positive and finite")
+    if not math.isfinite(q_norm) or q_norm <= 0.0:
+        raise ValueError("H2B-S0 diagnostic action norm must be positive and finite")
+    qh_r = np.vdot(q, r)
+    omega = complex(qh_r / (q_norm * q_norm))
+    unit_residual = r - q
+    scaled_residual = r - omega * q
+    q_over_r = q_norm / r_norm
+    z_norm = float(np.linalg.norm(z))
+    z_over_r = z_norm / r_norm
+    return {
+        "r_norm": r_norm,
+        "z_norm": z_norm,
+        "q_norm": q_norm,
+        "unit_residual_norm": float(np.linalg.norm(unit_residual)),
+        "scaled_residual_norm": float(np.linalg.norm(scaled_residual)),
+        "q_h_r_real": float(qh_r.real),
+        "q_h_r_imag": float(qh_r.imag),
+        "omega_real": float(omega.real),
+        "omega_imag": float(omega.imag),
+        "omega_abs": float(abs(omega)),
+        "rho_unit": float(np.linalg.norm(unit_residual) / r_norm),
+        "rho_star": float(np.linalg.norm(scaled_residual) / r_norm),
+        "eta": float(abs(qh_r) / (q_norm * r_norm)),
+        "q_over_r_amplification": float(q_over_r),
+        "z_over_r_amplification": float(z_over_r),
+        "action_closure_relative_error": float(
+            np.linalg.norm((r - r_final) - q) / max(q_norm, np.finfo(float).tiny)
+        ),
+        "repeat_action_closure_relative_error": float(
+            np.linalg.norm((r - r_repeat) - q_repeat)
+            / max(float(np.linalg.norm(q_repeat)), np.finfo(float).tiny)
+        ),
+        "correction_sha256": _s0_array_sha(z),
+        "repeat_correction_sha256": _s0_array_sha(z_repeat),
+        "operational_residual_sha256": _s0_array_sha(r_final),
+        "repeat_operational_residual_sha256": _s0_array_sha(r_repeat),
+        "diagnostic_action_sha256": _s0_array_sha(q),
+        "repeat_diagnostic_action_sha256": _s0_array_sha(q_repeat),
+        "finite": True,
+        "deterministic": bool(
+            np.array_equal(z, z_repeat)
+            and np.array_equal(r_final, r_repeat)
+            and np.array_equal(q, q_repeat)
+        ),
+        "operational_action_count": int(operational_action_count),
+        "diagnostic_action_count": int(diagnostic_action_count),
+    }
+
+
+def _s0_positive_times(value: Any, count: int) -> bool:
+    return (
+        isinstance(value, list)
+        and len(value) == count
+        and all(
+            isinstance(item, (int, float))
+            and not isinstance(item, bool)
+            and math.isfinite(float(item))
+            and float(item) > 0.0
+            for item in value
+        )
+    )
+
+
+def _s0_source_valid(label: Any, record: Any) -> bool:
+    if not isinstance(record, Mapping):
+        return False
+    if label not in H2B_SOURCE_LABELS:
+        return False
+    if record.get("definition") != H2B_SOURCE_DEFINITIONS[label] or record.get("definition_sha256") != _source_definition_sha(label):
+        return False
+    if not _valid_hash(record.get("vector_sha256")):
+        return False
+    if record.get("rho_norm_scope") != "all_fullspace_rows" or record.get("external_slave_mask") is not False:
+        return False
+    required = (
+        "r_norm",
+        "z_norm",
+        "q_norm",
+        "unit_residual_norm",
+        "scaled_residual_norm",
+        "q_h_r_real",
+        "q_h_r_imag",
+        "rho_unit",
+        "rho_star",
+        "eta",
+        "action_closure_relative_error",
+        "repeat_action_closure_relative_error",
+    )
+    numeric = []
+    for key in required:
+        value = record.get(key)
+        if not isinstance(value, (int, float)) or isinstance(value, bool):
+            return False
+        if not math.isfinite(float(value)):
+            return False
+        if key not in {"q_h_r_real", "q_h_r_imag"} and float(value) < 0.0:
+            return False
+        numeric.append(float(value))
+    r_norm, z_norm, q_norm, unit_norm, scaled_norm = numeric[:5]
+    qh_real, qh_imag = numeric[5:7]
+    if r_norm <= 0.0 or q_norm <= 0.0:
+        return False
+    omega_abs = record.get("omega_abs")
+    omega_real = record.get("omega_real")
+    omega_imag = record.get("omega_imag")
+    q_over_r = record.get("q_over_r_amplification")
+    z_over_r = record.get("z_over_r_amplification")
+    for key, value in (
+        ("omega_abs", omega_abs),
+        ("omega_real", omega_real),
+        ("omega_imag", omega_imag),
+        ("q_over_r_amplification", q_over_r),
+        ("z_over_r_amplification", z_over_r),
+    ):
+        if (
+            not isinstance(value, (int, float))
+            or isinstance(value, bool)
+            or not math.isfinite(float(value))
+            or (key not in {"omega_real", "omega_imag"} and float(value) < 0.0)
+        ):
+            return False
+    qh_abs = math.hypot(qh_real, qh_imag)
+    qh_expected = qh_abs / (q_norm * q_norm)
+    rho_unit = unit_norm / r_norm
+    rho_star = scaled_norm / r_norm
+    eta = qh_abs / (q_norm * r_norm)
+    if not (
+        math.isclose(float(omega_real), qh_real / (q_norm * q_norm), rel_tol=1e-12, abs_tol=1e-15)
+        and math.isclose(float(omega_imag), qh_imag / (q_norm * q_norm), rel_tol=1e-12, abs_tol=1e-15)
+        and math.isclose(float(omega_abs), qh_expected, rel_tol=1e-12, abs_tol=1e-15)
+        and math.isclose(record.get("rho_unit"), rho_unit, rel_tol=1e-12, abs_tol=1e-15)
+        and math.isclose(record.get("rho_star"), rho_star, rel_tol=1e-12, abs_tol=1e-15)
+        and math.isclose(record.get("eta"), eta, rel_tol=1e-12, abs_tol=1e-15)
+        and math.isclose(float(record["q_over_r_amplification"]), q_norm / r_norm, rel_tol=1e-12, abs_tol=1e-15)
+        and math.isclose(float(record["z_over_r_amplification"]), z_norm / r_norm, rel_tol=1e-12, abs_tol=1e-15)
+        and rho_star <= 1.0 + 1.0e-12
+        and eta <= 1.0 + 1.0e-12
+        and rho_star <= rho_unit + 1.0e-12
+        and float(record["action_closure_relative_error"]) <= 1.0e-11
+        and float(record["repeat_action_closure_relative_error"]) <= 1.0e-11
+    ):
+        return False
+    apply_seconds = record.get("apply_seconds")
+    diagnostic_seconds = record.get("diagnostic_action_seconds")
+    wall_seconds = record.get("wall_seconds")
+    if (
+        not _s0_positive_times(apply_seconds, 2)
+        or not _s0_positive_times(diagnostic_seconds, 2)
+        or not isinstance(wall_seconds, (int, float))
+        or isinstance(wall_seconds, bool)
+        or not math.isfinite(float(wall_seconds))
+        or float(wall_seconds) <= 0.0
+        or not math.isclose(
+            float(wall_seconds),
+            sum(float(item) for item in apply_seconds + diagnostic_seconds),
+            rel_tol=1.0e-12,
+            abs_tol=1.0e-15,
+        )
+    ):
+        return False
+    hashes = (
+        "correction_sha256",
+        "repeat_correction_sha256",
+        "operational_residual_sha256",
+        "repeat_operational_residual_sha256",
+        "diagnostic_action_sha256",
+        "repeat_diagnostic_action_sha256",
+    )
+    if not all(_valid_hash(record.get(key)) for key in hashes):
+        return False
+    return bool(
+        record.get("finite") is True
+        and record.get("deterministic") is True
+        and record.get("correction_sha256") == record.get("repeat_correction_sha256")
+        and record.get("operational_residual_sha256") == record.get("repeat_operational_residual_sha256")
+        and record.get("diagnostic_action_sha256") == record.get("repeat_diagnostic_action_sha256")
+    )
+
+
+def _s0_combination_valid(strategy: Any, combination: Any) -> bool:
+    if not isinstance(combination, Mapping) or strategy not in H2B_S0_STRATEGIES:
+        return False
+    wall_seconds = combination.get("wall_seconds")
+    if (
+        not isinstance(wall_seconds, (int, float))
+        or isinstance(wall_seconds, bool)
+        or not math.isfinite(float(wall_seconds))
+        or float(wall_seconds) <= 0.0
+    ):
+        return False
+    sources = combination.get("sources")
+    if not isinstance(sources, list) or [item.get("label") for item in sources if isinstance(item, Mapping)] != list(H2B_SOURCE_LABELS):
+        return False
+    expected_actions = H2B_S0_OPERATIONAL_ACTION_COUNTS[strategy]
+    for source in sources:
+        if not isinstance(source, Mapping) or not _s0_source_valid(source.get("label"), source):
+            return False
+        if (
+            type(source.get("operational_action_count")) is not int
+            or source.get("operational_action_count") != expected_actions
+            or type(source.get("diagnostic_action_count")) is not int
+            or source.get("diagnostic_action_count") != 2
+        ):
+            return False
+    return True
+
+
+def _s0_resource_valid(resource: Any) -> bool:
+    if not isinstance(resource, Mapping):
+        return False
+    peak = resource.get("process_tree_peak_rss_bytes")
+    swap = resource.get("process_tree_swap_bytes")
+    return (
+        type(peak) is int
+        and peak >= 0
+        and type(swap) is int
+        and swap == 0
+        and peak < H2B_S0_RSS_LIMIT_BYTES
+    )
+
+
+def _s0_select_route(combinations: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    """Recompute the fixed S0 route without trusting a worker status field."""
+
+    passing: list[dict[str, Any]] = []
+    valid: list[str] = []
+    for combination in combinations:
+        strategy = combination.get("strategy")
+        source_records = combination.get("sources")
+        if not isinstance(strategy, str) or not _s0_combination_valid(strategy, combination):
+            continue
+        valid.append(strategy)
+        if not all(
+            float(source["rho_star"]) <= H2B_S0_RHO_LIMITS[source["label"]]
+            for source in source_records
+        ):
+            continue
+        worst = max(float(record["rho_star"]) for record in source_records)
+        passing.append(
+            {
+                "strategy": strategy,
+                "operational_action_count": H2B_S0_OPERATIONAL_ACTION_COUNTS[strategy],
+                "worst_rho_star": worst,
+                "wall_seconds": float(combination["wall_seconds"]),
+            }
+        )
+    passing.sort(key=lambda item: (item["operational_action_count"], item["worst_rho_star"], item["wall_seconds"]))
+    selected = passing[0] if passing else None
+    return {
+        "route": "H2B-K" if selected is not None else "H2B-P",
+        "selected_strategy": None if selected is None else selected["strategy"],
+        "valid_strategies": valid,
+        "passing_strategies": [item["strategy"] for item in passing],
+        "selection": selected,
+    }
+
+
+def _s0_check_payload(raw: Mapping[str, Any]) -> dict[str, Any]:
+    """Recompute S0 validity, resource stop, and direction qualification."""
+
+    checks: dict[str, bool] = {}
+    problems: list[str] = []
+    checks["scope"] = raw.get("scope") == _s0_scope()
+    checks["identity"] = raw.get("identity") == _fixed_identity()
+    p6 = raw.get("p6")
+    checks["p6"] = isinstance(p6, Mapping) and all(
+        type(p6.get(key)) is int and p6.get(key) == value
+        for key, value in {
+            "global_cells": H2B_FIXED_CELLS,
+            "local_cells": H2B_FIXED_CELLS,
+            "local_nloc": H2B_FIXED_NLOC,
+            "global_rows": H2B_FIXED_ROWS,
+            "constraint_count": H2B_FIXED_CONSTRAINTS,
+        }.items()
+    )
+    factor = raw.get("factor")
+    checks["factor_authority"] = isinstance(factor, Mapping) and all(
+        type(factor.get(key)) is int and factor.get(key) == value
+        for key, value in {
+            "class_count": H2B_FIXED_CLASSES,
+            "cell_count": H2B_FIXED_CELLS,
+            "unique_factor_count": H2B_FIXED_FACTORS,
+            "factor_plus_metadata_bytes": 201_933_812,
+        }.items()
+    ) and factor.get("finite") is True and factor.get("deterministic") is True
+    combinations = raw.get("combinations")
+    checks["strategy_order"] = isinstance(combinations, list) and [
+        item.get("strategy") for item in combinations if isinstance(item, Mapping)
+    ] == list(H2B_S0_STRATEGIES)
+    if not isinstance(combinations, list):
+        combinations = []
+    checks["combinations_valid"] = len(combinations) == len(H2B_S0_STRATEGIES) and all(
+        isinstance(item, Mapping) and _s0_combination_valid(item.get("strategy"), item)
+        for item in combinations
+    )
+    resource = raw.get("resource")
+    checks["resource"] = _s0_resource_valid(resource)
+    problems.extend(name for name, passed in checks.items() if passed is not True)
+    failure_measurements = {
+        "p6": p6,
+        "factor": factor,
+        "combinations": combinations,
+        "resource": resource,
+    }
+    if problems:
+        nonresource_problems = [name for name in problems if name != "resource"]
+        status = "STOP_ANOMALY" if nonresource_problems else "STOP_RESOURCE"
+        return {
+            "schema": H2B_S0_CHECK_SCHEMA,
+            "status": status,
+            "pass": False,
+            "route": status,
+            "s0_direction_gate_pass": False,
+            "problems": sorted(problems),
+            "checks": checks,
+            "measurements": None,
+            "failure_measurements": failure_measurements,
+        }
+    selection = _s0_select_route(combinations)
+    return {
+        "schema": H2B_S0_CHECK_SCHEMA,
+        "status": "pass",
+        "pass": True,
+        "route": selection["route"],
+        "s0_direction_gate_pass": selection["route"] == "H2B-K",
+        "problems": [],
+        "checks": checks,
+        "measurements": {
+            "p6": p6,
+            "factor": factor,
+            "combinations": combinations,
+            "resource": resource,
+            "selection": selection,
+        },
+        "failure_measurements": None,
+    }
+
+
+def _s0_project_campaign_sources(combinations: Any, resource: Mapping[str, Any]) -> list[dict[str, Any]]:
+    peak = int(resource["process_tree_peak_rss_bytes"])
+    swap = int(resource["process_tree_swap_bytes"])
+    return [
+        {
+            **combination,
+            "sources": [
+                {
+                    **source,
+                    "process_tree_peak_rss_bytes": peak,
+                    "process_tree_swap_bytes": swap,
+                    "process_tree_peak_scope": "whole_s0_online_campaign",
+                }
+                for source in combination["sources"]
+            ],
+        }
+        for combination in combinations
+    ]
+
+
+def _s0_measure_source(
+    label: str,
+    rhs: Any,
+    smoother: Any,
+    exact_action: Any,
+    strategy: str,
+    slave_rows: Any,
+) -> dict[str, Any]:
+    """Run two fixed applications and one diagnostic action per result."""
+
+    import numpy as np
+
+    value = np.ascontiguousarray(np.asarray(rhs, dtype=np.complex128))
+    first_tick = time.perf_counter()
+    first_correction = smoother.apply_s0(value, strategy)
+    first_seconds = float(time.perf_counter() - first_tick)
+    first_residual = smoother.last_residual
+    second_tick = time.perf_counter()
+    second_correction = smoother.apply_s0(value, strategy)
+    second_seconds = float(time.perf_counter() - second_tick)
+    second_residual = smoother.last_residual
+    diagnostic = []
+    diagnostic_seconds: list[float] = []
+    rows = np.asarray(slave_rows, dtype=np.int64)
+    for correction in (first_correction, second_correction):
+        source = np.ascontiguousarray(correction, dtype=np.complex128).copy()
+        source[rows] = 0.0
+        target = np.empty_like(source)
+        diagnostic_tick = time.perf_counter()
+        exact_action(source, target)
+        diagnostic_seconds.append(float(time.perf_counter() - diagnostic_tick))
+        diagnostic.append(np.ascontiguousarray(target))
+    metrics = _s0_oracle_metrics(
+        value,
+        first_correction,
+        first_residual,
+        diagnostic[0],
+        repeat_correction=second_correction,
+        repeat_residual=second_residual,
+        repeat_diagnostic_action=diagnostic[1],
+        operational_action_count=int(smoother.audit["action_count"]),
+        diagnostic_action_count=2,
+    )
+    metrics.update(
+        {
+            "label": label,
+            "apply_seconds": [first_seconds, second_seconds],
+            "diagnostic_action_seconds": diagnostic_seconds,
+            "wall_seconds": float(
+                first_seconds
+                + second_seconds
+                + sum(diagnostic_seconds)
+            ),
+            "rho_norm_scope": "all_fullspace_rows",
+            "external_slave_mask": False,
+        }
+    )
+    return metrics
 
 
 def _cache_snapshot(cache_dir: Path) -> list[dict[str, Any]]:
@@ -768,7 +1281,116 @@ def _run_jit_worker(run_dir: Path) -> int:
     return 0 if error is None else 1
 
 
-def _run_online_worker(run_dir: Path) -> int:
+def _run_legacy_measurement(smoother: Any, source_arrays: Mapping[str, Any], sources: list[dict[str, Any]], exact_action: Any, slaves: Any) -> tuple[dict[str, Any], dict[str, Any]]:
+    import numpy as np
+
+    warm = np.zeros(H2B_FIXED_ROWS, dtype=np.complex128)
+    warm_target = np.zeros_like(warm)
+    warm_tick = time.perf_counter()
+    exact_action(warm, warm_target)
+    warm_seconds = float(time.perf_counter() - warm_tick)
+    volume_probe = np.asarray(source_arrays["physical-RHS-like"], dtype=np.complex128)
+    volume_probe[slaves] = 0.0
+    action_times: list[float] = []
+    for _ in range(5):
+        out = np.empty_like(volume_probe)
+        tick = time.perf_counter()
+        exact_action(volume_probe, out)
+        action_times.append(float(time.perf_counter() - tick))
+    smoother_times: list[float] = []
+    for record in sources:
+        rhs = np.ascontiguousarray(source_arrays[record["label"]], dtype=np.complex128)
+        rhs[slaves] = 0.0
+        first_tick = time.perf_counter()
+        first_correction = smoother.apply(rhs)
+        first_seconds = float(time.perf_counter() - first_tick)
+        smoother_times.append(first_seconds)
+        first_residual = smoother.last_residual
+        second_tick = time.perf_counter()
+        second_correction = smoother.apply(rhs)
+        second_seconds = float(time.perf_counter() - second_tick)
+        smoother_times.append(second_seconds)
+        second_residual = smoother.last_residual
+        independent_target = np.empty_like(rhs)
+        correction_for_action = np.ascontiguousarray(first_correction, dtype=np.complex128)
+        correction_for_action[slaves] = 0.0
+        exact_action(correction_for_action, independent_target)
+        independent_residual = rhs - independent_target
+        denominator = float(np.linalg.norm(rhs))
+        numerator = float(np.linalg.norm(independent_residual))
+        record.update(
+            {
+                "correction_sha256": _s0_array_sha(first_correction),
+                "repeat_correction_sha256": _s0_array_sha(second_correction),
+                "residual_sha256": _s0_array_sha(first_residual),
+                "repeat_residual_sha256": _s0_array_sha(second_residual),
+                "finite": bool(np.all(np.isfinite(first_correction)) and np.all(np.isfinite(first_residual))),
+                "independent_residual_numerator": numerator,
+                "independent_residual_denominator": denominator,
+                "rho": numerator / max(denominator, np.finfo(float).tiny),
+                "independent_action_relative_error": float(
+                    np.linalg.norm(first_residual - independent_residual)
+                    / max(denominator, np.finfo(float).tiny)
+                ),
+                "apply_seconds": [first_seconds, second_seconds],
+            }
+        )
+    action_median = float(statistics.median(action_times))
+    smoother_median = float(statistics.median(smoother_times))
+    return smoother.audit, {
+        "timing": {
+            "warm_action_seconds": warm_seconds,
+            "volume_action_seconds": action_times,
+            "action_median_seconds": action_median,
+            "smoother_apply_seconds": smoother_times,
+            "smoother_median_seconds": smoother_median,
+            "smoother_action_ratio": smoother_median / max(action_median, 1.0e-30),
+        },
+    }
+
+
+def _run_s0_measurement(
+    store: Any,
+    source_arrays: Mapping[str, Any],
+    base_sources: list[dict[str, Any]],
+    exact_action: Any,
+    slaves: Any,
+) -> dict[str, Any]:
+    import numpy as np
+    from src.solvers.hcurl_h2b_block_smoother import (
+        build_h2b_constrained_block_smoother,
+    )
+
+    combinations: list[dict[str, Any]] = []
+    for strategy in H2B_S0_STRATEGIES:
+        strategy_started = time.perf_counter()
+        smoother = build_h2b_constrained_block_smoother(
+            store,
+            global_row_count=H2B_FIXED_ROWS,
+            owned_slave_identity_rows=slaves,
+            action=exact_action,
+            task037_extra_h2b=True,
+        )
+        records = []
+        for base in base_sources:
+            label = str(base["label"])
+            rhs = np.ascontiguousarray(source_arrays[label], dtype=np.complex128)
+            rhs[slaves] = 0.0
+            record = dict(base)
+            record.update(_s0_measure_source(label, rhs, smoother, exact_action, strategy, slaves))
+            records.append(record)
+        combinations.append(
+            {
+                "strategy": strategy,
+                "sources": records,
+                "wall_seconds": float(time.perf_counter() - strategy_started),
+            }
+        )
+        del smoother
+    return {"combinations": combinations}
+
+
+def _run_online_worker(run_dir: Path, *, s0: bool = False) -> int:
     import gc
 
     import numpy as np
@@ -782,8 +1404,10 @@ def _run_online_worker(run_dir: Path) -> int:
     from src.solvers.hcurl_rank_one_mpc_action import build_task037_extra_h1r2_mpc_action
 
     run_dir = run_dir.resolve()
-    progress = run_dir / "online_progress.jsonl"
-    summary_path = run_dir / "online_summary.json"
+    phase = "s0" if s0 else "online"
+    worker_schema = H2B_S0_WORKER_SCHEMA if s0 else H2B_WORKER_SCHEMA
+    progress = run_dir / ("s0_progress.jsonl" if s0 else "online_progress.jsonl")
+    summary_path = run_dir / ("s0_summary.json" if s0 else "online_summary.json")
     stage_path = run_dir / "stage_summary.json"
     started = time.perf_counter()
     source_start = _source_pair(h2a)
@@ -796,7 +1420,7 @@ def _run_online_worker(run_dir: Path) -> int:
     sources: list[dict[str, Any]] = []
     try:
         with progress.open("w", encoding="utf-8") as markers:
-            _emit_marker(markers, event="authority_validate_started", phase="online", started=started)
+            _emit_marker(markers, event="authority_validate_started", phase=phase, started=started)
             stage = _read_json(stage_path)
             if stage.get("schema") != H2B_WORKER_SCHEMA or not _evidence_valid(stage):
                 raise ValueError("stage summary authority is invalid")
@@ -805,15 +1429,15 @@ def _run_online_worker(run_dir: Path) -> int:
             r0 = authority["r0"]
             if r0["global_rows"] != H2B_FIXED_ROWS or r0["constraint_count"] != H2B_FIXED_CONSTRAINTS:
                 raise ValueError("R0 authority identity mismatch")
-            _emit_marker(markers, event="authority_validate_ready", phase="online", started=started)
+            _emit_marker(markers, event="authority_validate_ready", phase=phase, started=started)
             cfg = target_stage4_config(degree=6, h_nm=10.0)
-            _emit_marker(markers, event="mesh_build_started", phase="online", started=started)
+            _emit_marker(markers, event="mesh_build_started", phase=phase, started=started)
             mesh_data = build_airbox_mesh_3d(cfg, run_dir / "online_mesh")
-            _emit_marker(markers, event="mesh_build_ready", phase="online", started=started)
-            _emit_marker(markers, event="function_space_started", phase="online", started=started)
+            _emit_marker(markers, event="mesh_build_ready", phase=phase, started=started)
+            _emit_marker(markers, event="function_space_started", phase=phase, started=started)
             function_space = _create_nedelec_space(mesh_data.mesh, cfg)
-            _emit_marker(markers, event="function_space_ready", phase="online", started=started)
-            _emit_marker(markers, event="floquet_mpc_started", phase="online", started=started)
+            _emit_marker(markers, event="function_space_ready", phase=phase, started=started)
+            _emit_marker(markers, event="floquet_mpc_started", phase=phase, started=started)
             floquet = h2a.build_double_floquet_mpc(function_space, mesh_data, cfg)
             index_map = function_space.dofmap.index_map
             measurement = {
@@ -831,11 +1455,11 @@ def _run_online_worker(run_dir: Path) -> int:
                 "constraint_count": H2B_FIXED_CONSTRAINTS,
             }:
                 raise ValueError("H2B p6 identity mismatch")
-            _emit_marker(markers, event="floquet_mpc_ready", phase="online", started=started)
+            _emit_marker(markers, event="floquet_mpc_ready", phase=phase, started=started)
             cache_dir = run_dir / "jit_cache"
             before = _cache_snapshot(cache_dir)
             _b0, _epsilon = _build_b0_form(function_space, mesh_data, cfg)
-            _emit_marker(markers, event="b0_cache_load_started", phase="online", started=started)
+            _emit_marker(markers, event="b0_cache_load_started", phase=phase, started=started)
             runtime = _runtime_identity(
                 h2a,
                 compiler_probe=False,
@@ -854,13 +1478,13 @@ def _run_online_worker(run_dir: Path) -> int:
             after = _cache_snapshot(cache_dir)
             if form_record["code_state"] != "hit_no_new_decl_impl" or before != after:
                 raise ValueError("online B0 form did not hit the staged cache")
-            _emit_marker(markers, event="b0_cache_load_ready", phase="online", started=started)
-            _emit_marker(markers, event="factor_load_started", phase="online", started=started)
+            _emit_marker(markers, event="b0_cache_load_ready", phase=phase, started=started)
+            _emit_marker(markers, event="factor_load_started", phase=phase, started=started)
             store = h2a.load_h2a_r2_factor_store(H2B_R2_MANIFEST, task037_extra_h2a_r2=True)
             factor_audit = dict(store.audit)
             if _sha256_file(H2B_R2_MANIFEST) != H2B_R2_MANIFEST_SHA256:
                 raise ValueError("R2 factor manifest changed")
-            _emit_marker(markers, event="factor_load_ready", phase="online", started=started)
+            _emit_marker(markers, event="factor_load_ready", phase=phase, started=started)
             slaves = np.asarray(floquet.mpc.slaves, dtype=np.int64)
             primal_arrays = _source_arrays(function_space, cfg, slaves, floquet.mpc)
             source_vec = action.output_vector.duplicate()
@@ -881,93 +1505,65 @@ def _run_online_worker(run_dir: Path) -> int:
             source_arrays = _residual_source_arrays(primal_arrays, exact_action, slaves)
             del primal_arrays
             sources = _source_records_from_arrays(source_arrays, slaves)
-            _emit_marker(markers, event="source_setup_ready", phase="online", started=started)
+            _emit_marker(markers, event="source_setup_ready", phase=phase, started=started)
 
-            smoother = build_h2b_constrained_block_smoother(
-                store,
-                global_row_count=H2B_FIXED_ROWS,
-                owned_slave_identity_rows=slaves,
-                action=exact_action,
-                task037_extra_h2b=True,
-            )
-            _emit_marker(markers, event="smoother_ready", phase="online", started=started)
-            warm = np.zeros(H2B_FIXED_ROWS, dtype=np.complex128)
-            warm_target = np.zeros_like(warm)
-            warm_tick = time.perf_counter()
-            exact_action(warm, warm_target)
-            warm_seconds = float(time.perf_counter() - warm_tick)
-            volume_probe = np.asarray(source_arrays["physical-RHS-like"], dtype=np.complex128)
-            volume_probe[slaves] = 0.0
-            action_times: list[float] = []
-            for _ in range(5):
-                out = np.empty_like(volume_probe)
-                tick = time.perf_counter()
-                exact_action(volume_probe, out)
-                action_times.append(float(time.perf_counter() - tick))
-            smoother_times: list[float] = []
-            for record in sources:
-                rhs = np.ascontiguousarray(source_arrays[record["label"]], dtype=np.complex128)
-                rhs[slaves] = 0.0
-                first_tick = time.perf_counter()
-                first_correction = smoother.apply(rhs)
-                first_seconds = float(time.perf_counter() - first_tick)
-                smoother_times.append(first_seconds)
-                first_residual = smoother.last_residual
-                second_tick = time.perf_counter()
-                second_correction = smoother.apply(rhs)
-                second_seconds = float(time.perf_counter() - second_tick)
-                smoother_times.append(second_seconds)
-                second_residual = smoother.last_residual
-                independent_target = np.empty_like(rhs)
-                correction_for_action = np.ascontiguousarray(first_correction, dtype=np.complex128)
-                correction_for_action[slaves] = 0.0
-                exact_action(correction_for_action, independent_target)
-                independent_residual = rhs - independent_target
-                denominator = float(np.linalg.norm(rhs))
-                numerator = float(np.linalg.norm(independent_residual))
-                residual_error = float(
-                    np.linalg.norm(first_residual - independent_residual)
-                    / max(denominator, np.finfo(float).tiny)
+            smoother = None
+            if s0:
+                _emit_marker(markers, event="s0_measurement_started", phase=phase, started=started)
+                s0_measurement = _run_s0_measurement(
+                    store, source_arrays, sources, exact_action, slaves
                 )
-                record.update(
-                    {
-                        "correction_sha256": hashlib.sha256(memoryview(first_correction).cast("B")).hexdigest(),
-                        "repeat_correction_sha256": hashlib.sha256(memoryview(second_correction).cast("B")).hexdigest(),
-                        "residual_sha256": hashlib.sha256(memoryview(first_residual).cast("B")).hexdigest(),
-                        "repeat_residual_sha256": hashlib.sha256(memoryview(second_residual).cast("B")).hexdigest(),
-                        "finite": bool(np.all(np.isfinite(first_correction)) and np.all(np.isfinite(first_residual))),
-                        "independent_residual_numerator": numerator,
-                        "independent_residual_denominator": denominator,
-                        "rho": numerator / max(denominator, np.finfo(float).tiny),
-                        "independent_action_relative_error": residual_error,
-                        "apply_seconds": [first_seconds, second_seconds],
-                    }
+                payload_measurement = {
+                    "p6": measurement,
+                    "factor": {
+                        "class_count": int(factor_audit["class_count"]),
+                        "cell_count": int(factor_audit["cell_count"]),
+                        "unique_factor_count": int(factor_audit["unique_factor_count"]),
+                        "factor_plus_metadata_bytes": int(factor_audit["factor_plus_metadata_bytes"]),
+                        "finite": factor_audit["finite"],
+                        "deterministic": factor_audit["deterministic"],
+                    },
+                    **s0_measurement,
+                    "cache": {
+                        "before": before,
+                        "after": after,
+                        "unchanged": before == after,
+                        "form_jit_cache_hit": True,
+                        "c_source_regeneration": False,
+                        "compiler_descendant_pids": [],
+                    },
+                    "stage_manifest_sha256": _sha256_file(stage_path),
+                    "r2_manifest_sha256": H2B_R2_MANIFEST_SHA256,
+                }
+                _emit_marker(markers, event="s0_measurement_ready", phase=phase, started=started)
+            else:
+                smoother = build_h2b_constrained_block_smoother(
+                    store,
+                    global_row_count=H2B_FIXED_ROWS,
+                    owned_slave_identity_rows=slaves,
+                    action=exact_action,
+                    task037_extra_h2b=True,
                 )
-            smoother_audit = smoother.audit
-            _emit_marker(markers, event="summary_started", phase="online", started=started)
-            timing = {
-                "warm_action_seconds": warm_seconds,
-                "volume_action_seconds": action_times,
-                "action_median_seconds": float(statistics.median(action_times)),
-                "smoother_apply_seconds": smoother_times,
-                "smoother_median_seconds": float(statistics.median(smoother_times)),
-                "smoother_action_ratio": float(statistics.median(smoother_times) / max(statistics.median(action_times), 1.0e-30)),
-            }
-            payload_measurement = {
-                "p6": measurement,
-                "timing": timing,
-                "cache": {
-                    "before": before,
-                    "after": after,
-                    "unchanged": before == after,
-                    "form_jit_cache_hit": True,
-                    "c_source_regeneration": False,
-                    "compiler_descendant_pids": [],
-                },
-                "stage_manifest_sha256": _sha256_file(stage_path),
-                "r2_manifest_sha256": H2B_R2_MANIFEST_SHA256,
-            }
-            _emit_marker(markers, event="summary_ready", phase="online", started=started)
+                _emit_marker(markers, event="smoother_ready", phase=phase, started=started)
+                smoother_audit, legacy_measurement = _run_legacy_measurement(
+                    smoother, source_arrays, sources, exact_action, slaves
+                )
+                payload_measurement = {
+                    "p6": measurement,
+                    **legacy_measurement,
+                    "cache": {
+                        "before": before,
+                        "after": after,
+                        "unchanged": before == after,
+                        "form_jit_cache_hit": True,
+                        "c_source_regeneration": False,
+                        "compiler_descendant_pids": [],
+                    },
+                    "stage_manifest_sha256": _sha256_file(stage_path),
+                    "r2_manifest_sha256": H2B_R2_MANIFEST_SHA256,
+                }
+            _emit_marker(markers, event="summary_started", phase=phase, started=started)
+            _emit_marker(markers, event="summary_ready", phase=phase, started=started)
             source_vec.destroy()
             action.destroy()
             del smoother, store, _epsilon, _b0, function_space, mesh_data, floquet
@@ -983,10 +1579,10 @@ def _run_online_worker(run_dir: Path) -> int:
     source_end = _source_pair(h2a)
     payload = _attach_evidence(
         {
-            "schema": H2B_WORKER_SCHEMA,
-            "phase": "online",
+            "schema": worker_schema,
+            "phase": phase,
             "status": "measurement_complete" if error is None else "gate_failed",
-            "scope": _fixed_scope(),
+            "scope": _s0_scope() if s0 else _fixed_scope(),
             "identity": _fixed_identity(),
             "phase_identity": _phase_identity(jit_api=True, compile_called=False, compiler_probe=False),
             "source_at_start": source_start,
@@ -1002,14 +1598,18 @@ def _run_online_worker(run_dir: Path) -> int:
             "factor_manifest": str(H2B_R2_MANIFEST),
             "factor_manifest_sha256": H2B_R2_MANIFEST_SHA256,
             "factor_audit": factor_audit,
-            "smoother_audit": smoother_audit,
-            "sources": sources,
+            **({"smoother_audit": smoother_audit} if not s0 else {}),
+            "sources": [] if s0 else sources,
             "error": error,
             "elapsed_wall_seconds": float(time.perf_counter() - started),
         }
     )
     _write_json(summary_path, payload)
     return 0 if error is None else 1
+
+
+def _run_s0_worker(run_dir: Path) -> int:
+    return _run_online_worker(run_dir, s0=True)
 
 
 def _compiler_descendant_pids(pids: Sequence[int]) -> list[int]:
@@ -1104,6 +1704,11 @@ def _monitor_phase(
     }
 
 
+def _processes_gone(process_info: Mapping[str, Any]) -> bool:
+    pids = [process_info.get("root_pid"), *process_info.get("observed_process_tree_pids", [])]
+    return all(isinstance(pid, int) and not (Path("/proc") / str(pid)).exists() for pid in pids)
+
+
 def _stage_gate_allows_online(
     stage_process: Mapping[str, Any],
     stage_summary: Mapping[str, Any],
@@ -1163,7 +1768,7 @@ def _stage_gate_allows_online(
 
 
 def _worker_command(executable: str, phase: str, run_dir: Path) -> list[str]:
-    if phase not in {"jit-worker", "online-worker"}:
+    if phase not in {"jit-worker", "online-worker", "s0-worker"}:
         raise ValueError("H2B worker phase is fixed")
     return [
         str(executable),
@@ -1195,7 +1800,7 @@ def _run_watchdog(run_dir: Path) -> int:
         command = _worker_command(executable, "jit-worker", run_dir)
         stage = _monitor_phase(run_dir, "stage", command, H2B_STAGE_TIMEOUT_SECONDS, H2B_STAGE_RSS_LIMIT_BYTES)
         stage_summary = _read_json(run_dir / "stage_summary.json")
-        processes_gone = all(not (Path("/proc") / str(pid)).exists() for pid in [stage["root_pid"], *stage["observed_process_tree_pids"]])
+        processes_gone = _processes_gone(stage)
         stage["processes_gone_before_online"] = bool(processes_gone)
         stage_ok = _stage_gate_allows_online(stage, stage_summary, processes_gone, run_dir)
         if not stage_ok:
@@ -1237,6 +1842,332 @@ def _run_watchdog(run_dir: Path) -> int:
     )
     _write_json(run_dir / "h2b_watchdog_summary.json", payload)
     return 0 if payload["status"] == "pass" else 1
+
+
+def _run_s0_watchdog(run_dir: Path) -> int:
+    """Run the existing cache stage, then the single S0 worker sequentially."""
+
+    run_dir = run_dir.resolve()
+    if run_dir.exists():
+        raise FileExistsError(f"H2B-S0 run directory already exists: {run_dir}")
+    run_dir.mkdir(parents=True)
+    started = time.perf_counter()
+    source_start: dict[str, Any] | None = None
+    source_end: dict[str, Any] | None = None
+    executable: str | None = None
+    stage: dict[str, Any] | None = None
+    error: str | None = None
+    s0: dict[str, Any] | None = None
+    try:
+        source_start = _light_source()
+        executable = _worker_executable()
+        stage = _monitor_phase(
+            run_dir,
+            "stage",
+            _worker_command(executable, "jit-worker", run_dir),
+            H2B_STAGE_TIMEOUT_SECONDS,
+            H2B_STAGE_RSS_LIMIT_BYTES,
+        )
+        stage_summary = _read_json(run_dir / "stage_summary.json")
+        processes_gone = _processes_gone(stage)
+        stage["processes_gone_before_s0"] = bool(processes_gone)
+        if not _stage_gate_allows_online(stage, stage_summary, processes_gone, run_dir):
+            error = "stage_gate_failed_before_s0"
+        else:
+            s0 = _monitor_phase(
+                run_dir,
+                "s0",
+                _worker_command(executable, "s0-worker", run_dir),
+                H2B_S0_TIMEOUT_SECONDS,
+                H2B_S0_RSS_LIMIT_BYTES,
+            )
+            s0["processes_gone_after_s0"] = _processes_gone(s0)
+    except _worker_error_types() as exc:
+        error = f"{type(exc).__name__}: {exc}"
+    if source_start is not None:
+        try:
+            source_end = _light_source()
+        except _worker_error_types() as exc:
+            error = f"{type(exc).__name__}: {exc}"
+    stage_ok = (
+        stage is not None
+        and stage.get("return_code") == 0
+        and stage.get("termination") is None
+        and stage.get("processes_gone_before_s0") is True
+    )
+    s0_ok = (
+        s0 is not None
+        and s0.get("return_code") == 0
+        and s0.get("termination") is None
+        and s0.get("processes_gone_after_s0") is True
+    )
+    payload = _attach_evidence(
+        {
+            "schema": H2B_S0_WATCHDOG_SCHEMA,
+            "status": "pass" if error is None and stage_ok and s0_ok else "gate_failed",
+            "run_dir": str(run_dir),
+            "scope": _s0_scope(),
+            "identity": _fixed_identity(),
+            "command_identity": {
+                "python": executable,
+                "launch_mode": "direct_singleton",
+                "stage_command": None if stage is None else stage["command"],
+                "s0_command": None if s0 is None else s0["command"],
+            },
+            "source_at_start": source_start,
+            "source_at_end": source_end,
+            "stage": stage,
+            "s0": s0,
+            "error": error,
+            "completion_elapsed_seconds": float(time.perf_counter() - started),
+            "raw_artifacts": {
+                name: _artifact(run_dir, name) for name in H2B_S0_ARTIFACT_NAMES
+            },
+        }
+    )
+    _write_json(run_dir / "h2b_s0_watchdog_summary.json", payload)
+    return 0 if payload["status"] == "pass" else 1
+
+
+def _s0_artifacts_match(run_dir: Path, recorded: Any) -> bool:
+    if not isinstance(recorded, Mapping) or set(recorded) != set(H2B_S0_ARTIFACT_NAMES):
+        return False
+    for name in H2B_S0_ARTIFACT_NAMES:
+        actual = _artifact(run_dir, name)
+        if actual.get("present") is not True or recorded.get(name) != actual:
+            return False
+    return True
+
+
+def _s0_controlled_missing_summary(run_dir: Path, watchdog: Mapping[str, Any]) -> dict[str, Any] | None:
+    if (
+        watchdog.get("schema") != H2B_S0_WATCHDOG_SCHEMA
+        or not _evidence_valid(watchdog)
+        or (run_dir / "s0_summary.json").is_file()
+    ):
+        return None
+    s0 = watchdog.get("s0")
+    termination = s0.get("termination") if isinstance(s0, Mapping) else None
+    if not isinstance(termination, Mapping):
+        return None
+    try:
+        timeline = _timeline_metrics(run_dir / "s0_timeline.jsonl", "s0")
+    except _worker_error_types():
+        return None
+    peak = int(timeline["peak_rss_bytes"])
+    swap = int(timeline["swap_bytes"])
+    reason = termination.get("reason")
+    resource_stop = peak >= H2B_S0_RSS_LIMIT_BYTES or swap > H2B_SWAP_LIMIT_BYTES
+    status = "STOP_RESOURCE" if resource_stop else "STOP_ANOMALY"
+    return {
+        "schema": H2B_S0_CHECK_SCHEMA,
+        "status": status,
+        "pass": False,
+        "route": status,
+        "s0_direction_gate_pass": False,
+        "problems": [
+            "s0_summary_missing",
+            "s0_resource_termination" if resource_stop else "s0_timeout_or_termination",
+        ],
+        "checks": {
+            "watchdog_evidence": True,
+            "s0_termination": True,
+            "timeline": True,
+            "resource": resource_stop,
+            "online_measurement_formed": False,
+        },
+        "measurements": None,
+        "failure_measurements": {
+            "resource": {
+                "process_tree_peak_rss_bytes": peak,
+                "process_tree_swap_bytes": swap,
+                "process_tree_peak_scope": "whole_s0_online_campaign",
+                "live_sample_count": timeline["live_sample_count"],
+            },
+            "termination": termination,
+            "termination_reason": reason,
+            "s0_process": s0,
+            "online_measurement_formed": False,
+            "raw_artifacts": watchdog.get("raw_artifacts"),
+            "watchdog_summary_sha256": _sha256_file(run_dir / "h2b_s0_watchdog_summary.json"),
+        },
+    }
+
+
+def _run_s0_check(run_dir: Path, output: Path) -> int:
+    try:
+        run_dir = run_dir.resolve()
+        watchdog = _read_json(run_dir / "h2b_s0_watchdog_summary.json")
+        if not (run_dir / "s0_summary.json").is_file():
+            controlled = _s0_controlled_missing_summary(run_dir, watchdog)
+            if controlled is not None:
+                _write_json(output.resolve(), _attach_evidence(controlled))
+                print(f"H2B-S0 check status={controlled['status']} output={output.resolve()}", flush=True)
+                return 1
+        stage = _read_json(run_dir / "stage_summary.json")
+        worker = _read_json(run_dir / "s0_summary.json")
+        stage_timeline = _timeline_metrics(run_dir / "stage_timeline.jsonl", "stage")
+        timeline = _timeline_metrics(run_dir / "s0_timeline.jsonl", "s0")
+        measurement = worker.get("measurement")
+        raw = {
+            "scope": worker.get("scope"),
+            "identity": worker.get("identity"),
+            "p6": None if not isinstance(measurement, Mapping) else measurement.get("p6"),
+            "factor": None if not isinstance(measurement, Mapping) else measurement.get("factor"),
+            "combinations": None if not isinstance(measurement, Mapping) else measurement.get("combinations"),
+            "resource": {
+                "process_tree_peak_rss_bytes": timeline["peak_rss_bytes"],
+                "process_tree_swap_bytes": timeline["swap_bytes"],
+                "scope": "whole_s0_online_campaign",
+            },
+        }
+        result = _s0_check_payload(raw)
+        checks = result["checks"]
+        authority_error: str | None = None
+        try:
+            authority = _authority()
+        except _worker_error_types() as exc:
+            authority = {}
+            authority_error = f"{type(exc).__name__}: {exc}"
+        stage_process = watchdog.get("stage")
+        s0_process = watchdog.get("s0")
+        worker_source = worker.get("source_at_start")
+        command_identity = watchdog.get("command_identity")
+        executable = command_identity.get("python") if isinstance(command_identity, Mapping) else None
+        compact_authority = {
+            "source_commit_full_sha": (
+                worker_source.get("source_commit_full_sha")
+                if isinstance(worker_source, Mapping)
+                else None
+            ),
+            "factor_manifest_sha256": authority.get("factor_manifest_sha256"),
+            "r2_record_sha256": authority.get("r2_record_sha256"),
+            "r2_record_evidence_sha256": authority.get("r2_evidence_sha256"),
+            "producer_authority": worker.get("producer_authority"),
+            "b0_form": worker.get("form"),
+            "raw_artifacts": watchdog.get("raw_artifacts"),
+            "watchdog_summary_sha256": _sha256_file(run_dir / "h2b_s0_watchdog_summary.json"),
+        }
+        checks.update(
+            {
+                "watchdog_evidence": watchdog.get("schema") == H2B_S0_WATCHDOG_SCHEMA and _evidence_valid(watchdog),
+                "worker_evidence": worker.get("schema") == H2B_S0_WORKER_SCHEMA and worker.get("phase") == "s0" and _evidence_valid(worker),
+                "worker_status": worker.get("status") == "measurement_complete" and worker.get("error") is None,
+                "watchdog_status": watchdog.get("status") == "pass",
+                "source": (
+                    _source_pair_valid(worker.get("source_at_start"), worker.get("source_at_end"))
+                    and _source_pair_valid(stage.get("source_at_start"), stage.get("source_at_end"))
+                    and _source_pair_valid(watchdog.get("source_at_start"), watchdog.get("source_at_end"))
+                    and watchdog.get("source_at_start") == worker.get("source_at_start")
+                    and stage.get("source_at_start") == worker.get("source_at_start")
+                ),
+                "runtime": (
+                    _runtime_valid(stage.get("runtime_identity"))
+                    and _runtime_valid(worker.get("runtime_identity"))
+                    and stage.get("runtime_identity") == worker.get("runtime_identity")
+                ),
+                "phase_identity": worker.get("phase_identity")
+                == _phase_identity(jit_api=True, compile_called=False, compiler_probe=False),
+                "stage_identity": (
+                    stage.get("scope") == _fixed_scope()
+                    and stage.get("identity") == _fixed_identity()
+                    and stage.get("phase_identity")
+                    == _phase_identity(jit_api=True, compile_called=True, compiler_probe=True)
+                ),
+                "watchdog_identity": (
+                    watchdog.get("scope") == _s0_scope()
+                    and watchdog.get("identity") == _fixed_identity()
+                ),
+                "authority": (
+                    authority_error is None
+                    and worker.get("producer_authority") == authority.get("producer_authority")
+                    and worker.get("factor_manifest_sha256") == authority.get("factor_manifest_sha256")
+                    and worker.get("factor_manifest") == str(H2B_R2_MANIFEST)
+                ),
+                "forms": _forms_match(stage.get("form"), worker.get("form"), run_dir),
+                "commands": (
+                    isinstance(command_identity, Mapping)
+                    and isinstance(executable, str)
+                    and command_identity.get("launch_mode") == "direct_singleton"
+                    and command_identity.get("stage_command")
+                    == _worker_command(executable, "jit-worker", run_dir)
+                    and command_identity.get("s0_command")
+                    == _worker_command(executable, "s0-worker", run_dir)
+                ),
+                "cache_hit": (
+                    isinstance(measurement, Mapping)
+                    and isinstance(measurement.get("cache"), Mapping)
+                    and measurement["cache"].get("unchanged") is True
+                    and measurement["cache"].get("form_jit_cache_hit") is True
+                    and measurement["cache"].get("c_source_regeneration") is False
+                    and measurement["cache"].get("compiler_descendant_pids") == []
+                    and isinstance(worker.get("form"), Mapping)
+                    and worker["form"].get("code_state") == "hit_no_new_decl_impl"
+                ),
+                "stage_manifest": (
+                    isinstance(measurement, Mapping)
+                    and measurement.get("stage_manifest_sha256") == _sha256_file(run_dir / "stage_summary.json")
+                    and measurement.get("r2_manifest_sha256") == authority.get("factor_manifest_sha256")
+                ),
+                "run_dir": watchdog.get("run_dir") == str(run_dir),
+                "progress": _progress_events(run_dir / "s0_progress.jsonl", "s0") == list(H2B_S0_EVENTS),
+                "watchdog_artifacts": _s0_artifacts_match(run_dir, watchdog.get("raw_artifacts")),
+                "stage_resource": stage_timeline["peak_rss_bytes"] < H2B_STAGE_RSS_LIMIT_BYTES and stage_timeline["swap_bytes"] == 0,
+                "lifecycle": (
+                    isinstance(stage_process, Mapping)
+                    and isinstance(s0_process, Mapping)
+                    and stage_process.get("return_code") == 0
+                    and stage_process.get("termination") is None
+                    and stage_process.get("processes_gone_before_s0") is True
+                    and s0_process.get("return_code") == 0
+                    and s0_process.get("termination") is None
+                    and s0_process.get("processes_gone_after_s0") is True
+                ),
+            }
+        )
+        problems = sorted(name for name, passed in checks.items() if passed is not True)
+        result["problems"] = problems
+        if problems:
+            result["pass"] = False
+            nonresource_problems = [name for name in problems if name not in {"resource", "stage_resource"}]
+            if nonresource_problems:
+                result["status"] = "STOP_ANOMALY"
+                result["route"] = "STOP_ANOMALY"
+                result["s0_direction_gate_pass"] = False
+            elif not checks["resource"] or not checks["stage_resource"]:
+                result["status"] = "STOP_RESOURCE"
+                result["route"] = "STOP_RESOURCE"
+                result["s0_direction_gate_pass"] = False
+            elif result["status"] == "pass":
+                result["status"] = "STOP_ANOMALY"
+                result["route"] = "STOP_ANOMALY"
+                result["s0_direction_gate_pass"] = False
+            result["failure_measurements"] = result.get("failure_measurements") or {
+                "p6": raw["p6"],
+                "factor": raw["factor"],
+                "combinations": raw["combinations"],
+                "resource": raw["resource"],
+            }
+            result["failure_measurements"]["authority"] = compact_authority
+        else:
+            result["measurements"]["combinations"] = _s0_project_campaign_sources(
+                result["measurements"]["combinations"], raw["resource"]
+            )
+            result["measurements"]["source_identity"] = worker.get("source_at_start")
+            result["measurements"]["authority"] = compact_authority
+            result["measurements"]["resource"]["scope"] = "whole_s0_online_campaign"
+            result["pass"] = True
+            result["status"] = "pass"
+    except _worker_error_types() as exc:
+        result = {
+            "schema": H2B_S0_CHECK_SCHEMA,
+            "status": "gate_failed",
+            "pass": False,
+            "problems": [f"raw_unreadable:{type(exc).__name__}"],
+        }
+    _write_json(output.resolve(), _attach_evidence(result))
+    print(f"H2B-S0 check status={result['status']} output={output.resolve()}", flush=True)
+    return 0 if result["pass"] else 1
 
 
 def _source_pair_valid(start: Any, end: Any) -> bool:
@@ -1773,23 +2704,36 @@ def _run_check(run_dir: Path, output: Path) -> int:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="run_task037_extra_h2b")
     sub = parser.add_subparsers(dest="command", required=True)
-    for name, handler in (("jit-worker", _run_jit_worker), ("online-worker", _run_online_worker)):
+    for name, handler in (
+        ("jit-worker", _run_jit_worker),
+        ("online-worker", _run_online_worker),
+        ("s0-worker", _run_s0_worker),
+    ):
         item = sub.add_parser(name)
         item.add_argument("--run-dir", required=True)
         item.set_defaults(handler=handler)
     watchdog = sub.add_parser("watchdog")
     watchdog.add_argument("--run-dir", required=True)
     watchdog.set_defaults(handler=_run_watchdog)
+    s0_watchdog = sub.add_parser("s0-watchdog")
+    s0_watchdog.add_argument("--run-dir", required=True)
+    s0_watchdog.set_defaults(handler=_run_s0_watchdog)
     checker = sub.add_parser("check")
     checker.add_argument("--run-dir", required=True)
     checker.add_argument("--output", required=True)
     checker.set_defaults(handler=lambda args: _run_check(Path(args.run_dir), Path(args.output)))
+    s0_checker = sub.add_parser("s0-check")
+    s0_checker.add_argument("--run-dir", required=True)
+    s0_checker.add_argument("--output", required=True)
+    s0_checker.set_defaults(
+        handler=lambda args: _run_s0_check(Path(args.run_dir), Path(args.output))
+    )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
-    if args.command in {"jit-worker", "online-worker", "watchdog"}:
+    if args.command in {"jit-worker", "online-worker", "s0-worker", "watchdog", "s0-watchdog"}:
         return int(args.handler(Path(args.run_dir)))
     return int(args.handler(args))
 
