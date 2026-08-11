@@ -384,6 +384,33 @@ class H2AR2FactorStore:
             dtype=np.complex128,
         )
 
+    def reconstruct_numeric_matrix(self, factor_id: int) -> np.ndarray:
+        """Return a fresh matrix reconstructed from one owned LU factor.
+
+        The returned array is independent of the retained factor values and
+        pivots.  The store has already checked the original numeric SHA and
+        LU residual while loading; the separate SHA accessor lets a caller
+        bind that authority without treating roundoff-reconstructed bytes as
+        the original matrix bytes.
+        """
+
+        if type(factor_id) is not int or factor_id < 0 or factor_id >= len(self._factors):
+            raise ValueError("R2 factor id is out of range")
+        factor = self._factors[factor_id]
+        matrix = np.ascontiguousarray(
+            _reconstruct_lu(factor.values, factor.pivots), dtype=np.complex128
+        )
+        if not np.all(np.isfinite(matrix)):
+            raise ValueError("R2 LU reconstruction is nonfinite")
+        return matrix
+
+    def factor_numeric_matrix_sha256(self, factor_id: int) -> str:
+        """Return the verified numeric-matrix SHA for one retained factor."""
+
+        if type(factor_id) is not int or factor_id < 0 or factor_id >= len(self._factors):
+            raise ValueError("R2 factor id is out of range")
+        return str(self._factors[factor_id].numeric_matrix_sha256)
+
     def _metadata(self) -> dict[str, Any]:
         return {
             "source_identity": self._identity.get("source_identity"),
