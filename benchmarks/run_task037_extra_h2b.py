@@ -1729,6 +1729,7 @@ def _run_p0_worker(run_dir: Path) -> int:
     from src.solvers.hcurl_h2b_block_smoother import (
         discover_h2b_p0_touching_cells,
         factorize_h2b_p0_patch,
+        group_h2b_p0_touching_cells_by_class,
         measure_h2b_p0_patch_direction,
         _p0_numeric_sha,
         select_h2b_p0_class,
@@ -1953,6 +1954,9 @@ def _run_p0_worker(run_dir: Path) -> int:
             touching = discover_h2b_p0_touching_cells(
                 cell_refs, patch_rows, task037_extra_h2b=True
             )
+            touching_groups = group_h2b_p0_touching_cells_by_class(
+                cell_refs, touching, task037_extra_h2b=True
+            )
             _emit_marker(
                 markers,
                 event="touching_discovery_ready",
@@ -1978,40 +1982,46 @@ def _run_p0_worker(run_dir: Path) -> int:
             tags = discovery["tags"]
 
             def tensor_stream():
-                for ordinal in touching:
-                    cell = int(ordinal)
-                    class_id = int(cell_refs[cell].class_id)
+                for class_id, class_cells in touching_groups:
+                    representative = int(class_cells[0])
                     template = expansions[class_id]
                     curl_tensor, _widths, _info = h2a.tabulate_task037_extra_h2a_cell_tensor(
                         proxy_forms[0],
                         function_space,
                         mesh_data.cell_tags,
-                        cell,
+                        representative,
                         geometry_tolerance=tolerance,
                     )
                     mass_tensor, _widths, _info = h2a.tabulate_task037_extra_h2a_cell_tensor(
                         proxy_forms[1],
                         function_space,
                         mesh_data.cell_tags,
-                        cell,
+                        representative,
                         geometry_tolerance=tolerance,
                     )
-                    proxy = h2a.build_b0_proxy_tensor(
-                        curl_tensor,
-                        mass_tensor,
-                        k0=float(cfg.k0),
-                        abs_epsilon=float(abs(h2a._material_epsilon(cfg, int(tags[cell])))),
+                    proxy = np.ascontiguousarray(
+                        h2a.build_b0_proxy_tensor(
+                            curl_tensor,
+                            mass_tensor,
+                            k0=float(cfg.k0),
+                            abs_epsilon=float(
+                                abs(h2a._material_epsilon(cfg, int(tags[representative])))
+                            ),
+                        ),
+                        dtype=np.complex128,
                     )
-                    cell_expansion = H2AR2CellExpansion(
-                        offsets=template.offsets,
-                        column_indices=template.column_indices,
-                        coefficients=template.coefficients,
-                        independent_global_rows=cell_refs[cell].independent_global_rows,
-                        pattern_identity=template.pattern_identity,
-                        pattern_sha256=template.pattern_sha256,
-                    )
-                    yield cell, np.ascontiguousarray(proxy, dtype=np.complex128), cell_expansion
-                    del curl_tensor, mass_tensor, proxy, cell_expansion
+                    for cell in class_cells:
+                        cell_expansion = H2AR2CellExpansion(
+                            offsets=template.offsets,
+                            column_indices=template.column_indices,
+                            coefficients=template.coefficients,
+                            independent_global_rows=cell_refs[cell].independent_global_rows,
+                            pattern_identity=template.pattern_identity,
+                            pattern_sha256=template.pattern_sha256,
+                        )
+                        yield cell, proxy, cell_expansion
+                        del cell_expansion
+                    del curl_tensor, mass_tensor, proxy
 
             _emit_marker(markers, event="patch_assembly_started", phase="p0", started=started)
             patch = stream_h2b_p0_patch(
@@ -2019,6 +2029,19 @@ def _run_p0_worker(run_dir: Path) -> int:
                 patch_rows,
                 tensor_stream(),
                 task037_extra_h2b=True,
+            )
+            patch.update(
+                {
+                    "touching_class_ids": tuple(
+                        int(class_id) for class_id, _cells in touching_groups
+                    ),
+                    "touching_class_count": len(touching_groups),
+                    "tensor_tabulation_cell_count": len(touching_groups),
+                    "tensor_reuse_cell_count": len(touching) - len(touching_groups),
+                    "max_live_dense_proxy_count": 1,
+                    "cell_dense_tensors_retained": False,
+                    "tensor_accumulation_order": "first_seen_class_then_ascending_cell_ordinal",
+                }
             )
             _emit_marker(markers, event="patch_assembly_ready", phase="p0", started=started)
             slaves = np.asarray(floquet.mpc.slaves, dtype=np.int64)
@@ -4167,10 +4190,28 @@ def _p0_check_payload(raw: Mapping[str, Any]) -> dict[str, Any]:
         )
         class_ids = raw["cell_class_ids"]
         inventory = raw["class_inventory"]
+        if (
+            not isinstance(references, list)
+            or len(references) != H2B_FIXED_CELLS
+            or not isinstance(class_ids, list)
+            or len(class_ids) != len(references)
+            or len(class_ids) != H2B_FIXED_CELLS
+        ):
+            raise ValueError("P0 cell class identity length is invalid")
         counts = {int(item["class_id"]): 0 for item in inventory}
+        if any(
+            type(class_id) is not int or class_id not in counts
+            for class_id in class_ids
+        ):
+            raise ValueError("P0 cell class identity is invalid")
+        touching_class_ids: list[int] = []
+        seen_touching_classes: set[int] = set()
+        for ordinal in touching:
+            class_id = class_ids[int(ordinal)]
+            if class_id not in seen_touching_classes:
+                seen_touching_classes.add(class_id)
+                touching_class_ids.append(class_id)
         for class_id in class_ids:
-            if type(class_id) is not int or class_id not in counts:
-                raise ValueError("P0 cell class identity is invalid")
             counts[class_id] += 1
         if not all(isinstance(reference, Mapping) for reference in references):
             raise ValueError("P0 cell references are not structured mappings")
@@ -4205,10 +4246,37 @@ def _p0_check_payload(raw: Mapping[str, Any]) -> dict[str, Any]:
         checks["touching"] = tuple(touching) == tuple(
             raw["touching_cell_ordinals"]
         )
+        checks["patch"] = bool(
+            checks["patch"]
+            and isinstance(patch, Mapping)
+            and isinstance(patch.get("touching_class_ids"), list)
+            and all(type(value) is int for value in patch["touching_class_ids"])
+            and patch["touching_class_ids"] == touching_class_ids
+            and type(patch.get("touching_cell_count")) is int
+            and patch["touching_cell_count"] == len(touching)
+            and isinstance(patch.get("touching_cell_ordinals"), list)
+            and all(
+                type(value) is int for value in patch["touching_cell_ordinals"]
+            )
+            and patch["touching_cell_ordinals"] == list(touching)
+            and type(patch.get("touching_class_count")) is int
+            and patch["touching_class_count"] == len(touching_class_ids)
+            and type(patch.get("tensor_tabulation_cell_count")) is int
+            and patch["tensor_tabulation_cell_count"] == len(touching_class_ids)
+            and type(patch.get("tensor_reuse_cell_count")) is int
+            and patch["tensor_reuse_cell_count"]
+            == len(touching) - len(touching_class_ids)
+            and type(patch.get("max_live_dense_proxy_count")) is int
+            and patch["max_live_dense_proxy_count"] == 1
+            and patch.get("cell_dense_tensors_retained") is False
+            and patch.get("tensor_accumulation_order")
+            == "first_seen_class_then_ascending_cell_ordinal"
+        )
     except (KeyError, TypeError, ValueError):
         checks["cell_authority"] = False
         checks["central"] = False
         checks["touching"] = False
+        checks["patch"] = False
     factor = raw.get("factor")
     factor_numbers = (
         factor.get("factorization_residual"),
@@ -4588,17 +4656,224 @@ def _p0_check_raw(run_dir: Path) -> dict[str, Any]:
     return result
 
 
+def _controlled_p0_failure(
+    run_dir: Path, cause: BaseException
+) -> dict[str, Any] | None:
+    """Preserve the one observed P0 timeout with complete raw evidence."""
+
+    run_dir = run_dir.resolve()
+    p0_summary_path = run_dir / "p0_summary.json"
+    stage_path = run_dir / "stage_summary.json"
+    watchdog_path = run_dir / "p0_watchdog_summary.json"
+    if (
+        p0_summary_path.exists()
+        or not stage_path.is_file()
+        or not watchdog_path.is_file()
+    ):
+        return None
+    try:
+        stage = _read_json(stage_path)
+        watchdog = _read_json(watchdog_path)
+        stage_timeline = _timeline_metrics(
+            run_dir / "stage_timeline.jsonl", "stage"
+        )
+        p0_timeline = _timeline_metrics(run_dir / "p0_timeline.jsonl", "p0")
+        stage_events = _progress_events(
+            run_dir / "stage_progress.jsonl", "stage"
+        )
+        p0_events = _progress_events(run_dir / "p0_progress.jsonl", "p0")
+        actual_artifacts = {
+            name: _artifact(run_dir, name) for name in H2B_P0_ARTIFACT_NAMES
+        }
+    except _worker_error_types():
+        return None
+
+    stage_process = watchdog.get("stage")
+    p0_process = watchdog.get("p0")
+    if not isinstance(stage_process, Mapping) or not isinstance(
+        p0_process, Mapping
+    ):
+        return None
+    p0_termination = p0_process.get("termination")
+    p0_termination_detail = (
+        p0_termination.get("termination")
+        if isinstance(p0_termination, Mapping)
+        else None
+    )
+    stage_source_start = stage.get("source_at_start")
+    stage_source_end = stage.get("source_at_end")
+    source_ok = bool(
+        _checker_source_valid(stage_source_start)
+        and _checker_source_valid(stage_source_end)
+        and _source_pair_valid(stage_source_start, stage_source_end)
+        and watchdog.get("source_at_start") == stage_source_start
+        and watchdog.get("source_at_end") == stage_source_end
+        and _checker_source_valid(watchdog.get("source_at_start"))
+        and _checker_source_valid(watchdog.get("source_at_end"))
+    )
+    stage_ok = bool(
+        stage.get("schema") == H2B_WORKER_SCHEMA
+        and stage.get("phase") == "stage"
+        and stage.get("status") == "measurement_complete"
+        and stage.get("error") is None
+        and _evidence_valid(stage)
+        and stage.get("scope") == _fixed_scope()
+        and stage.get("identity") == _fixed_identity()
+        and _runtime_valid(stage.get("runtime_identity"))
+    )
+    stage_lifecycle = bool(
+        type(stage_process.get("return_code")) is int
+        and stage_process.get("return_code") == 0
+        and stage_process.get("termination") is None
+        and stage_process.get("processes_gone_before_p0") is True
+        and isinstance(stage_process.get("processes_gone_before_p0_drain"), Mapping)
+        and stage_process["processes_gone_before_p0_drain"].get("gone") is True
+        and isinstance(stage_process.get("command"), list)
+        and stage_process["command"][-1:] == [str(run_dir)]
+    )
+    p0_lifecycle = bool(
+        type(p0_process.get("return_code")) is int
+        and p0_process.get("return_code") == -15
+        and p0_process.get("processes_gone_after_p0") is True
+        and isinstance(p0_process.get("processes_gone_after_p0_drain"), Mapping)
+        and p0_process["processes_gone_after_p0_drain"].get("gone") is True
+        and isinstance(p0_termination, Mapping)
+        and p0_termination.get("reason") == "timeout"
+        and isinstance(p0_termination_detail, Mapping)
+        and p0_termination_detail.get("sigkill_required") is False
+        and p0_termination_detail.get("worker_exited") is True
+        and isinstance(p0_process.get("command"), list)
+        and p0_process["command"][-1:] == [str(run_dir)]
+    )
+    timeline_ok = bool(
+        stage_timeline["swap_bytes"] == 0
+        and p0_timeline["swap_bytes"] == 0
+        and stage_process.get("swap_bytes") == stage_timeline["swap_bytes"]
+        and p0_process.get("swap_bytes") == p0_timeline["swap_bytes"]
+        and stage_timeline["peak_rss_bytes"] < H2B_STAGE_RSS_LIMIT_BYTES
+        and stage_process.get("peak_rss_bytes")
+        == stage_timeline["peak_rss_bytes"]
+        and p0_process.get("peak_rss_bytes")
+        == p0_timeline["peak_rss_bytes"]
+        and p0_timeline["peak_rss_bytes"] < H2B_P0_RSS_LIMIT_BYTES
+    )
+    progress_ok = bool(
+        stage_events == list(H2B_STAGE_EVENTS)
+        and p0_events
+        and stage_events[-1]
+        and p0_events[-1]
+    )
+    artifacts_ok = bool(
+        isinstance(watchdog.get("raw_artifacts"), Mapping)
+        and set(watchdog["raw_artifacts"]) == set(H2B_P0_ARTIFACT_NAMES)
+        and all(
+            watchdog["raw_artifacts"].get(name) == actual_artifacts[name]
+            for name in H2B_P0_ARTIFACT_NAMES
+        )
+        and actual_artifacts["p0_summary.json"] == {
+            "path": "p0_summary.json",
+            "present": False,
+        }
+        and all(
+            actual_artifacts[name].get("present") is True
+            for name in H2B_P0_ARTIFACT_NAMES
+            if name != "p0_summary.json"
+        )
+    )
+    watchdog_ok = bool(
+        watchdog.get("schema") == H2B_P0_WATCHDOG_SCHEMA
+        and watchdog.get("status") == "gate_failed"
+        and watchdog.get("error") is None
+        and _evidence_valid(watchdog)
+        and watchdog.get("run_dir") == str(run_dir)
+        and watchdog.get("scope") == _p0_scope()
+        and watchdog.get("identity") == _fixed_identity()
+    )
+    checks = {
+        "p0_summary_absent": not p0_summary_path.exists(),
+        "stage_evidence": stage_ok,
+        "watchdog_evidence": watchdog_ok,
+        "source": source_ok,
+        "stage_lifecycle": stage_lifecycle,
+        "p0_timeout_lifecycle": p0_lifecycle,
+        "timelines": timeline_ok,
+        "progress": progress_ok,
+        "raw_artifacts": artifacts_ok,
+        "p0_measurements_formed": False,
+    }
+    if not all(checks[name] for name in checks if name != "p0_measurements_formed"):
+        return None
+    try:
+        checker_source = _light_source()
+    except _worker_error_types():
+        return None
+    if not _checker_source_valid(checker_source):
+        return None
+    failure_measurements: dict[str, Any] = {
+        "run_dir": str(run_dir),
+        "run_source_at_start": stage_source_start,
+        "run_source_at_end": stage_source_end,
+        "stage": {
+            "worker_elapsed_seconds": stage.get("elapsed_wall_seconds"),
+            "process_tree_elapsed_seconds": stage_process.get(
+                "elapsed_wall_seconds"
+            ),
+            "process_tree_peak_rss_bytes": stage_timeline["peak_rss_bytes"],
+            "process_tree_swap_bytes": stage_timeline["swap_bytes"],
+            "return_code": stage_process.get("return_code"),
+            "termination": stage_process.get("termination"),
+        },
+        "p0": {
+            "process_tree_elapsed_seconds": p0_process.get(
+                "elapsed_wall_seconds"
+            ),
+            "process_tree_peak_rss_bytes": p0_timeline["peak_rss_bytes"],
+            "process_tree_swap_bytes": p0_timeline["swap_bytes"],
+            "return_code": p0_process.get("return_code"),
+            "termination": p0_process.get("termination"),
+        },
+        "progress": {
+            "stage_event_count": len(stage_events),
+            "stage_last_event": stage_events[-1],
+            "p0_event_count": len(p0_events),
+            "p0_last_event": p0_events[-1],
+        },
+        "processes_gone_after_p0": True,
+        "raw_artifacts": actual_artifacts,
+        "watchdog_summary_sha256": _sha256_file(watchdog_path),
+        "checker_cause": f"{type(cause).__name__}: {cause}",
+        "checker_source": checker_source,
+    }
+    return {
+        "schema": H2B_P0_CHECK_SCHEMA,
+        "status": "gate_failed",
+        "pass": False,
+        "problems": [
+            "p0_execution_timeout",
+            "p0_measurements_not_produced",
+        ],
+        "checks": checks,
+        "measurements": None,
+        "failure_measurements": failure_measurements,
+        "raw_artifacts": actual_artifacts,
+        "watchdog_summary_sha256": _sha256_file(watchdog_path),
+        "checker_source": checker_source,
+    }
+
+
 def _run_p0_check(run_dir: Path, output: Path) -> int:
     try:
         result = _p0_check_raw(run_dir)
     except _worker_error_types() as exc:
-        result = {
-            "schema": H2B_P0_CHECK_SCHEMA,
-            "status": "gate_failed",
-            "pass": False,
-            "problems": [f"raw_unreadable:{type(exc).__name__}"],
-            "measurements": None,
-        }
+        result = _controlled_p0_failure(run_dir, exc)
+        if result is None:
+            result = {
+                "schema": H2B_P0_CHECK_SCHEMA,
+                "status": "gate_failed",
+                "pass": False,
+                "problems": [f"raw_unreadable:{type(exc).__name__}"],
+                "measurements": None,
+            }
     _write_json(output.resolve(), _attach_evidence(result))
     print(f"H2B-P0 check status={result['status']} output={output.resolve()}", flush=True)
     return 0 if result["pass"] else 1

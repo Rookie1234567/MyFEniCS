@@ -23,6 +23,7 @@ __all__ = (
     "H2BP0Factor",
     "select_h2b_p0_class",
     "discover_h2b_p0_touching_cells",
+    "group_h2b_p0_touching_cells_by_class",
     "stream_h2b_p0_patch",
     "factorize_h2b_p0_patch",
     "measure_h2b_p0_patch_direction",
@@ -583,6 +584,42 @@ def discover_h2b_p0_touching_cells(
         missing = sorted(patch_set - covered)
         raise ValueError(f"H2B-P0 patch rows are not covered: {missing[:4]}")
     return tuple(touching)
+
+
+def group_h2b_p0_touching_cells_by_class(
+    cell_references: Sequence[Any],
+    touching_cell_ordinals: Sequence[int],
+    *,
+    task037_extra_h2b: bool = False,
+) -> tuple[tuple[int, tuple[int, ...]], ...]:
+    """Group touching cells by exact class in first-seen order.
+
+    The returned cell ordinals are sorted within each class.  This is only an
+    ordering helper for one-class-at-a-time P0 tensor streaming; it does not
+    retain tensors or introduce a cache.
+    """
+
+    _p0_require_opt_in(task037_extra_h2b)
+    groups: dict[int, list[int]] = {}
+    order: list[int] = []
+    seen_cells: set[int] = set()
+    for value in touching_cell_ordinals:
+        ordinal = int(value)
+        if ordinal in seen_cells or ordinal < 0 or ordinal >= len(cell_references):
+            raise ValueError("H2B-P0 touching cell ordinals are invalid")
+        seen_cells.add(ordinal)
+        reference = cell_references[ordinal]
+        if isinstance(reference, Mapping):
+            class_id = reference.get("class_id")
+        else:
+            class_id = getattr(reference, "class_id", None)
+        if type(class_id) is not int or class_id < 0:
+            raise ValueError("H2B-P0 cell reference class id is invalid")
+        if class_id not in groups:
+            groups[class_id] = []
+            order.append(class_id)
+        groups[class_id].append(ordinal)
+    return tuple((class_id, tuple(sorted(groups[class_id]))) for class_id in order)
 
 
 def _p0_add_restricted_cell(

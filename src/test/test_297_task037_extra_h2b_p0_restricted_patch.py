@@ -10,6 +10,7 @@ import benchmarks.run_task037_extra_h2b as runner
 from src.solvers.hcurl_h2b_block_smoother import (
     discover_h2b_p0_touching_cells,
     factorize_h2b_p0_patch,
+    group_h2b_p0_touching_cells_by_class,
     measure_h2b_p0_patch_direction,
     _p0_lu_reconstruction,
     select_h2b_p0_class,
@@ -72,6 +73,30 @@ def _constrained_expansion() -> H2AR2CellExpansion:
     )
 
 
+def _shared_class_expansion(rows: tuple[int, ...]) -> H2AR2CellExpansion:
+    offsets = np.asarray((0, 2, 4), dtype=np.int32)
+    columns = np.asarray((0, 1, 1, 2), dtype=np.int32)
+    coefficients = np.asarray(
+        (1.0 + 0.0j, 0.4 + 0.2j, 1.0 + 0.0j, -0.3 + 0.15j),
+        dtype=np.complex128,
+    )
+    identity = _pattern_payload(
+        nloc=2,
+        independent_count=3,
+        offsets=offsets,
+        column_indices=columns,
+        coefficients=coefficients,
+    )
+    return H2AR2CellExpansion(
+        offsets=offsets,
+        column_indices=columns,
+        coefficients=coefficients,
+        independent_global_rows=np.asarray(rows, dtype=np.int64),
+        pattern_identity=identity,
+        pattern_sha256=_pattern_sha256(identity),
+    )
+
+
 def test_p0_selects_unique_largest_unconstrained_class_and_rejects_ties():
     selected = select_h2b_p0_class(
         [_class(0, 4), _class(3, 52), _class(2, 39, constrained=True)],
@@ -105,6 +130,100 @@ def test_p0_touching_cells_use_expanded_master_support_and_canonical_order():
         discover_h2b_p0_touching_cells(
             refs, np.asarray((10, 20, 77), dtype=np.int64), task037_extra_h2b=True
         )
+
+
+def test_p0_exact_class_stream_reuses_one_proxy_per_group_and_matches_reference():
+    refs = tuple(
+        SimpleNamespace(
+            class_id=class_id,
+            independent_global_rows=np.asarray(rows, dtype=np.int64),
+        )
+        for class_id, rows in (
+            (4, (0, 1, 2)),
+            (7, (6, 7)),
+            (4, (3, 4, 5)),
+            (7, (6, 7)),
+        )
+    )
+    touching = (0, 1, 2, 3)
+    groups = group_h2b_p0_touching_cells_by_class(
+        refs, touching, task037_extra_h2b=True
+    )
+    assert groups == ((4, (0, 2)), (7, (1, 3)))
+    class4_template = _shared_class_expansion((0, 1, 2))
+    class7_template = _identity_expansion((0, 1))
+    templates = {4: class4_template, 7: class7_template}
+    blocks = {
+        4: np.asarray(
+            ((3.0 + 0.0j, 0.2 + 0.1j), (0.2 - 0.1j, 2.0 + 0.0j)),
+            dtype=np.complex128,
+            order="C",
+        ),
+        7: np.asarray(
+            ((2.0 + 0.0j, 0.3 - 0.2j), (0.3 + 0.2j, 2.5 + 0.0j)),
+            dtype=np.complex128,
+            order="C",
+        ),
+    }
+
+    def expansion_for(class_id, rows):
+        template = templates[class_id]
+        return H2AR2CellExpansion(
+            offsets=template.offsets,
+            column_indices=template.column_indices,
+            coefficients=template.coefficients,
+            independent_global_rows=np.asarray(rows, dtype=np.int64),
+            pattern_identity=template.pattern_identity,
+            pattern_sha256=template.pattern_sha256,
+        )
+
+    grouped_calls = []
+    max_live = 0
+    live = 0
+
+    def grouped_stream():
+        nonlocal live, max_live
+        for class_id, ordinals in groups:
+            grouped_calls.append((class_id, ordinals[0]))
+            proxy = np.array(blocks[class_id], copy=True, order="C")
+            live += 1
+            max_live = max(max_live, live)
+            for ordinal in ordinals:
+                yield ordinal, proxy, expansion_for(
+                    class_id, refs[ordinal].independent_global_rows
+                )
+            live -= 1
+
+    reference_calls = []
+
+    def reference_stream():
+        for ordinal in touching:
+            class_id = refs[ordinal].class_id
+            reference_calls.append((class_id, ordinal))
+            yield (
+                ordinal,
+                np.array(blocks[class_id], copy=True, order="C"),
+                expansion_for(class_id, refs[ordinal].independent_global_rows),
+            )
+
+    patch_rows = np.arange(8, dtype=np.int64)
+    grouped = stream_h2b_p0_patch(
+        refs, patch_rows, grouped_stream(), task037_extra_h2b=True
+    )
+    reference = stream_h2b_p0_patch(
+        refs, patch_rows, reference_stream(), task037_extra_h2b=True
+    )
+    relative = np.linalg.norm(
+        grouped["matrix"] - reference["matrix"]
+    ) / np.linalg.norm(reference["matrix"])
+    assert relative <= 1.0e-14
+    assert np.allclose(
+        grouped["matrix"], grouped["matrix"].conj().T, rtol=0.0, atol=1.0e-14
+    )
+    assert grouped_calls == [(4, 0), (7, 1)]
+    assert reference_calls == [(4, 0), (7, 1), (4, 2), (7, 3)]
+    assert max_live == 1
+    assert grouped["touching_cell_count"] == 4
 
 
 def test_p0_streaming_matches_dense_column_reconstruction_and_keeps_patch_only():
@@ -150,7 +269,7 @@ def test_p0_streaming_matches_dense_column_reconstruction_and_keeps_patch_only()
     assert result["slab_factor"] is False
 
 
-def test_p0_core_patch_json_roundtrip_matches_checker_patch_shape():
+def test_p0_core_patch_json_roundtrip_is_json_safe():
     rows = tuple(range(882))
     result = stream_h2b_p0_patch(
         (SimpleNamespace(independent_global_rows=np.asarray(rows, dtype=np.int64)),),
@@ -164,11 +283,12 @@ def test_p0_core_patch_json_roundtrip_matches_checker_patch_shape():
             allow_nan=False,
         )
     )
-    payload = _p0_checker_payload()
-    payload["patch"] = patch
-    payload["factor"]["matrix_sha256"] = patch["matrix_sha256"]
-    checked = runner._p0_check_payload(payload)
-    assert checked["checks"]["patch"] is True
+    assert "matrix" not in patch
+    assert patch["patch_rows"] == list(rows)
+    assert patch["touching_cell_ordinals"] == [0]
+    assert patch["touching_cell_count"] == 1
+    assert patch["matrix_shape"] == [882, 882]
+    assert patch["matrix_nbytes"] == 882 * 882 * 16
 
 
 def test_p0_factor_and_patch_row_oracle_are_finite_deterministic_and_include_spill():
@@ -438,6 +558,14 @@ def _p0_checker_payload() -> dict[str, object]:
         "patch": {
             "patch_row_count": 882,
             "touching_cell_count": 252,
+            "touching_cell_ordinals": list(range(252)),
+            "touching_class_ids": [0],
+            "touching_class_count": 1,
+            "tensor_tabulation_cell_count": 1,
+            "tensor_reuse_cell_count": 251,
+            "max_live_dense_proxy_count": 1,
+            "cell_dense_tensors_retained": False,
+            "tensor_accumulation_order": "first_seen_class_then_ascending_cell_ordinal",
             "matrix_sha256": "1" * 64,
             "matrix_shape": [882, 882],
             "matrix_dtype": "complex128",
@@ -483,11 +611,31 @@ def test_p0_checker_recomputes_selection_and_rejects_missing_payload_key():
     checked = runner._p0_check_payload(payload)
     assert checked["pass"] is True
     assert checked["measurements"]["p6"]["constraint_count"] == 9210
+    assert checked["measurements"]["patch"]["touching_class_count"] == 1
+    assert checked["measurements"]["patch"]["tensor_reuse_cell_count"] == 251
     broken = {**payload}
     broken.pop("cell_class_ids")
     failed = runner._p0_check_payload(broken)
     assert failed["pass"] is False
     assert "cell_authority" in failed["problems"]
+    short_ids = {
+        **payload,
+        "cell_class_ids": payload["cell_class_ids"][:-1],
+    }
+    failed_short = runner._p0_check_payload(short_ids)
+    assert failed_short["pass"] is False
+    assert "cell_authority" in failed_short["problems"]
+    assert "patch" in failed_short["problems"]
+    bool_ordinals = {
+        **payload,
+        "patch": {
+            **payload["patch"],
+            "touching_cell_ordinals": [True] + list(range(1, 252)),
+        },
+    }
+    failed_bool_ordinal = runner._p0_check_payload(bool_ordinals)
+    assert failed_bool_ordinal["pass"] is False
+    assert "patch" in failed_bool_ordinal["problems"]
     over_limit = {**payload, "resource": {
         **payload["resource"],
         "process_tree_peak_rss_bytes": runner.H2B_P0_RSS_LIMIT_BYTES,
@@ -510,6 +658,17 @@ def test_p0_checker_recomputes_selection_and_rejects_missing_payload_key():
     assert "materialization" in runner._p0_check_payload(
         bad_materialization
     )["problems"]
+    bad_reuse = {**payload, "patch": {
+        **payload["patch"],
+        "tensor_reuse_cell_count": 0,
+    }}
+    assert "patch" in runner._p0_check_payload(bad_reuse)["problems"]
+    missing_reuse = {**payload, "patch": {
+        key: value
+        for key, value in payload["patch"].items()
+        if key != "tensor_tabulation_cell_count"
+    }}
+    assert "patch" in runner._p0_check_payload(missing_reuse)["problems"]
 
 
 def test_p0_other_source_gate_is_strictly_zero_point_ninety_five():
@@ -764,3 +923,176 @@ def test_p0_raw_checker_integration_uses_structured_worker_payload(tmp_path, mon
     )
     broken = runner._p0_check_raw(run_dir)
     assert broken["checks"]["watchdog_evidence"] is False
+
+
+def test_p0_controlled_timeout_preserves_only_measured_failure_evidence(
+    tmp_path, monkeypatch
+):
+    run_dir = tmp_path / "p0"
+    run_dir.mkdir()
+    source = {
+        "source_commit_full_sha": "a" * 40,
+        "tracked_source_dirty": False,
+        "source_worktree_dirty": False,
+        "cleanliness_semantics": "all tracked changes plus every nonignored untracked path",
+        "nonignored_untracked_paths": [],
+        "worktree_status_porcelain": [],
+        "git_error": None,
+    }
+    runtime = {
+        "qualified_activation": "1",
+        "sys_executable": "/repo/.venv/bin/python",
+        "petsc_scalar_type": "complex128",
+        "petsc_int_type": "int32",
+        "threads": {
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "MKL_NUM_THREADS": "1",
+            "NUMEXPR_NUM_THREADS": "1",
+        },
+    }
+
+    def write_progress(phase, events):
+        (run_dir / f"{phase}_progress.jsonl").write_text(
+            "".join(
+                json.dumps(
+                    {
+                        "schema": runner.H2B_PROGRESS_SCHEMA,
+                        "phase": phase,
+                        "event": event,
+                    }
+                )
+                + "\n"
+                for event in events
+            ),
+            encoding="utf-8",
+        )
+
+    def write_timeline(phase, rss):
+        (run_dir / f"{phase}_timeline.jsonl").write_text(
+            json.dumps(
+                {
+                    "schema": runner.H2B_PROGRESS_SCHEMA,
+                    "phase": phase,
+                    "sample_kind": "worker",
+                    "root_pid": 11 if phase == "stage" else 12,
+                    "pids": [11 if phase == "stage" else 12],
+                    "process_count": 1,
+                    "rss_bytes": rss,
+                    "swap_bytes": 0,
+                    "all_status_readable": True,
+                    "compiler_descendant_pids": [],
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+    for name in runner.H2B_P0_ARTIFACT_NAMES:
+        if name != "p0_summary.json":
+            (run_dir / name).write_bytes(b"artifact")
+    write_progress("stage", runner.H2B_STAGE_EVENTS)
+    write_progress("p0", runner.H2B_P0_EVENTS[:17])
+    write_timeline("stage", 200)
+    write_timeline("p0", 100)
+    stage = {
+        "schema": runner.H2B_WORKER_SCHEMA,
+        "phase": "stage",
+        "status": "measurement_complete",
+        "scope": runner._fixed_scope(),
+        "identity": runner._fixed_identity(),
+        "source_at_start": source,
+        "source_at_end": source,
+        "runtime_identity": runtime,
+        "error": None,
+        "elapsed_wall_seconds": 25.0,
+    }
+    runner._write_json(run_dir / "stage_summary.json", runner._attach_evidence(stage))
+    watchdog = {
+        "schema": runner.H2B_P0_WATCHDOG_SCHEMA,
+        "status": "gate_failed",
+        "run_dir": str(run_dir.resolve()),
+        "scope": runner._p0_scope(),
+        "identity": runner._fixed_identity(),
+        "source_at_start": source,
+        "source_at_end": source,
+        "error": None,
+        "stage": {
+            "command": ["python", "jit-worker", "--run-dir", str(run_dir)],
+            "return_code": 0,
+            "termination": None,
+            "processes_gone_before_p0": True,
+            "processes_gone_before_p0_drain": {"gone": True},
+            "elapsed_wall_seconds": 26.0,
+            "peak_rss_bytes": 200,
+            "swap_bytes": 0,
+        },
+        "p0": {
+            "command": ["python", "p0-worker", "--run-dir", str(run_dir)],
+            "return_code": -15,
+            "processes_gone_after_p0": True,
+            "processes_gone_after_p0_drain": {"gone": True},
+            "elapsed_wall_seconds": 3600.09,
+            "peak_rss_bytes": 100,
+            "swap_bytes": 0,
+            "termination": {
+                "reason": "timeout",
+                "termination": {
+                    "sigkill_required": False,
+                    "worker_exited": True,
+                },
+            },
+        },
+    }
+    watchdog["raw_artifacts"] = {
+        name: runner._artifact(run_dir, name)
+        for name in runner.H2B_P0_ARTIFACT_NAMES
+    }
+    runner._write_json(
+        run_dir / "p0_watchdog_summary.json", runner._attach_evidence(watchdog)
+    )
+    checker_source = dict(source)
+    checker_source["source_commit_full_sha"] = "b" * 40
+    monkeypatch.setattr(runner, "_light_source", lambda: checker_source)
+
+    result = runner._controlled_p0_failure(
+        run_dir, FileNotFoundError(run_dir / "p0_summary.json")
+    )
+    assert result["status"] == "gate_failed"
+    assert result["pass"] is False
+    assert result["measurements"] is None
+    assert "p0_execution_timeout" in result["problems"]
+    assert "p0_measurements_not_produced" in result["problems"]
+    assert result["failure_measurements"]["p0"]["return_code"] == -15
+    assert result["failure_measurements"]["p0"]["process_tree_peak_rss_bytes"] == 100
+    assert "factor" not in result["failure_measurements"]
+    assert result["failure_measurements"]["run_source_at_start"][
+        "source_commit_full_sha"
+    ] == "a" * 40
+    assert result["failure_measurements"]["checker_source"][
+        "source_commit_full_sha"
+    ] == "b" * 40
+    assert (
+        result["failure_measurements"]["run_source_at_start"]["source_commit_full_sha"]
+        != result["failure_measurements"]["checker_source"]["source_commit_full_sha"]
+    )
+    assert result["raw_artifacts"]["p0_summary.json"] == {
+        "path": "p0_summary.json",
+        "present": False,
+    }
+
+    invalid = dict(watchdog)
+    invalid["evidence_sha256"] = "0" * 64
+    runner._write_json(run_dir / "p0_watchdog_summary.json", invalid)
+    assert runner._controlled_p0_failure(run_dir, ValueError("bad evidence")) is None
+    output = tmp_path / "generic.json"
+    assert runner._run_p0_check(run_dir, output) == 1
+    generic = json.loads(output.read_text(encoding="utf-8"))
+    assert generic["problems"]
+    assert all(problem.startswith("raw_unreadable:") for problem in generic["problems"])
+
+    runner._write_json(
+        run_dir / "p0_watchdog_summary.json", runner._attach_evidence(watchdog)
+    )
+    (run_dir / "p0_summary.json").write_text("{}", encoding="utf-8")
+    assert runner._controlled_p0_failure(run_dir, FileNotFoundError("p0")) is None
