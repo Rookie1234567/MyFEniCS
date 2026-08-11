@@ -420,7 +420,12 @@ def _good_raw(tmp_path: Path, monkeypatch):
             "after": [],
             "unchanged": True,
         },
-        "p0_anchor": {"source_order": list(runner.H2B_SOURCE_LABELS), "sources": sources},
+        "p0_anchor": {
+            "schema": "task037.extra.h2b.p1.anchor.v1",
+            "source_order": list(runner.H2B_SOURCE_LABELS),
+            "sources": sources,
+            "finite": True,
+        },
         "neighborhood_digest": runner.hashlib.sha256(
             memoryview(
                 np.ascontiguousarray(np.repeat(np.arange(84, dtype=np.int32), 3))
@@ -568,6 +573,51 @@ def test_p1_checker_recomputes_good_result_and_rejects_status_tamper(tmp_path, m
     failed = runner._p1_check_raw(tmp_path)
     assert failed["pass"] is False
     assert "p1_worker" in failed["problems"]
+
+
+def _anchor_gate_fixture():
+    return {
+        "schema": "task037.extra.h2b.p1.anchor.v1",
+        "source_order": list(runner.H2B_SOURCE_LABELS),
+        "finite": True,
+        "sources": {
+            label: {"finite": True, "exact_action_relative_error": 0.0}
+            for label in runner.H2B_SOURCE_LABELS
+        },
+    }
+
+
+@pytest.mark.parametrize("mutation", ["missing", "nan", "closure", "finite"])
+def test_p1_anchor_gate_is_explicit_and_fail_closed(mutation):
+    anchor = _anchor_gate_fixture()
+    if mutation == "missing":
+        del anchor["sources"]["mixed"]["exact_action_relative_error"]
+    elif mutation == "nan":
+        anchor["sources"]["mixed"]["exact_action_relative_error"] = float("nan")
+    elif mutation == "closure":
+        anchor["sources"]["mixed"]["exact_action_relative_error"] = 2.0e-11
+    else:
+        anchor["sources"]["mixed"]["finite"] = False
+    assert runner._p1_anchor_gate_valid(anchor) is False
+
+
+def test_p1_anchor_failure_measurements_keep_json_safe_metrics():
+    anchor = _anchor_gate_fixture()
+    anchor["sources"]["mixed"]["finite"] = False
+    failure = runner._p1_anchor_failure_measurements(
+        anchor,
+        {"global_cells": 252, "global_rows": 173802},
+        {"matrix_sha256": "a" * 64, "matrix": np.zeros((1, 1))},
+        {"matrix_sha256": "b" * 64, "solve_residual": 0.0},
+        {"source": "c" * 40},
+        None,
+        None,
+    )
+    encoded = json.dumps(failure, allow_nan=False)
+    decoded = json.loads(encoded)
+    assert decoded["p6"]["global_cells"] == 252
+    assert "mixed" in decoded["p0_anchor"]["sources"]
+    assert "matrix" not in decoded["patch"]
 
 
 @pytest.mark.parametrize("mutation", ["factor_store", "neighborhood_digest"])

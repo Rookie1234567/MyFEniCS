@@ -52,6 +52,26 @@ H2B_P1_ANCHOR_SOURCE_LABELS = (
     "checkerboard/high-frequency",
     "physical-RHS-like",
 )
+_H2B_P1_ANCHOR_NUMERIC_FIELDS = (
+    "patch_row_count",
+    "r_norm",
+    "q_norm",
+    "rho_unit",
+    "rho_star",
+    "eta",
+    "omega_real",
+    "omega_imag",
+    "omega_abs",
+    "correction_norm",
+    "correction_amplification",
+    "exact_action_relative_error",
+    "element_operator_mismatch_relative",
+    "off_patch_spill_norm",
+    "off_patch_spill_ratio",
+    "full_space_rho_star",
+    "full_space_rho_unit",
+    "full_space_eta",
+)
 _SHA_HEX = frozenset("0123456789abcdef")
 
 
@@ -1413,8 +1433,9 @@ def measure_h2b_p1_anchor_sources(
         for key in required_authority
     ):
         raise ValueError("H2B-P1 anchor authority is invalid")
-    sources = {
-        label: measure_h2b_p0_patch_direction(
+    sources: dict[str, dict[str, Any]] = {}
+    for label in H2B_P1_ANCHOR_SOURCE_LABELS:
+        record = measure_h2b_p0_patch_direction(
             np.asarray(rhs_by_label[label]),
             patch_matrix,
             factor,
@@ -1423,15 +1444,20 @@ def measure_h2b_p1_anchor_sources(
             closure_matrix=patch_matrix,
             task037_extra_h2b=True,
         )
-        for label in H2B_P1_ANCHOR_SOURCE_LABELS
-    }
+        record["finite"] = bool(
+            all(
+                key in record
+                and not isinstance(record[key], bool)
+                and isinstance(record[key], (int, float, np.integer, np.floating))
+                and np.isfinite(float(record[key]))
+                for key in _H2B_P1_ANCHOR_NUMERIC_FIELDS
+            )
+        )
+        sources[label] = record
     return {
         "schema": "task037.extra.h2b.p1.anchor.v1",
         "authority": _jsonable(authority),
         "sources": sources,
         "source_order": list(H2B_P1_ANCHOR_SOURCE_LABELS),
-        "finite": all(
-            np.isfinite(float(item["full_space_rho_star"]))
-            for item in sources.values()
-        ),
+        "finite": all(item["finite"] is True for item in sources.values()),
     }

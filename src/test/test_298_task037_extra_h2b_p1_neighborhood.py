@@ -550,6 +550,7 @@ def test_p1_anchor_source_oracle_requires_authority_and_uses_five_fixed_labels()
     )
     assert result["source_order"] == list(H2B_P1_ANCHOR_SOURCE_LABELS)
     assert result["finite"] is True
+    assert all(item["finite"] is True for item in result["sources"].values())
     assert all(item["exact_action_relative_error"] <= 1.0e-11 for item in result["sources"].values())
     with pytest.raises(ValueError, match="authority"):
         measure_h2b_p1_anchor_sources(

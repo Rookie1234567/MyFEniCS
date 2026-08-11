@@ -2525,6 +2525,7 @@ def _run_p1_worker(run_dir: Path) -> int:
     anchor_matrix = None
     anchor_factor = None
     anchor = None
+    failure_measurements: dict[str, Any] | None = None
     try:
         with progress_path.open("w", encoding="utf-8") as markers:
             stage = _read_json(stage_path)
@@ -2730,10 +2731,40 @@ def _run_p1_worker(run_dir: Path) -> int:
                 },
                 task037_extra_h2b=True,
             )
-            if any(
-                not item.get("finite") or float(item.get("exact_action_relative_error", 2.0)) > 1.0e-11
-                for item in anchor["sources"].values()
-            ):
+            if not _p1_anchor_gate_valid(anchor):
+                patch_record = {
+                    key: value for key, value in anchor_stream.items() if key != "matrix"
+                }
+                factor_record = {
+                    "matrix_sha256": anchor_factor.matrix_sha256,
+                    "factor_values_sha256": anchor_factor.factor_values_sha256,
+                    "pivot_sha256": anchor_factor.pivot_sha256,
+                    "factorization_residual": float(anchor_factor.factorization_residual),
+                    "solve_residual": float(anchor_factor.solve_residual),
+                    "finite": bool(anchor_factor.finite),
+                    "deterministic": bool(anchor_factor.deterministic),
+                    "pivot_growth": float(anchor_factor.pivot_growth),
+                    "reciprocal_condition_estimate": float(anchor_factor.reciprocal_condition_estimate),
+                    "condition_estimate": float(anchor_factor.condition_estimate),
+                    "solve_gains": [float(value) for value in anchor_factor.solve_gains],
+                }
+                failure_measurements = _p1_anchor_failure_measurements(
+                    anchor,
+                    p6,
+                    patch_record,
+                    factor_record,
+                    authority,
+                    preflight_live_set,
+                    preflight_basis,
+                )
+                _emit_marker(
+                    markers,
+                    event="p0_anchor_failed",
+                    phase="p1",
+                    started=started,
+                    reason="p0_anchor_gate",
+                    closure_limit=1.0e-11,
+                )
                 raise ValueError("P1 P0 anchor failed")
             _emit_marker(markers, event="p0_anchor_ready", phase="p1", started=started)
             if source_vec is not None:
@@ -2961,6 +2992,7 @@ def _run_p1_worker(run_dir: Path) -> int:
             "runtime_identity": runtime,
             "form": form_record,
             "measurement": measurement,
+            "failure_measurements": failure_measurements,
             "preflight_live_set": preflight_live_set,
             "preflight_basis": preflight_basis,
             "controlled_stop": controlled_stop,
@@ -3290,6 +3322,53 @@ def _p1_phase_identity_valid(value: Any, *, factorization_called: bool) -> bool:
     )
     expected["factorization_called"] = bool(factorization_called)
     return value == expected
+
+
+def _p1_anchor_gate_valid(value: Any) -> bool:
+    if not isinstance(value, Mapping):
+        return False
+    if (
+        value.get("schema") != "task037.extra.h2b.p1.anchor.v1"
+        or value.get("source_order") != list(H2B_SOURCE_LABELS)
+        or value.get("finite") is not True
+    ):
+        return False
+    sources = value.get("sources")
+    if not isinstance(sources, Mapping) or set(sources) != set(H2B_SOURCE_LABELS):
+        return False
+    for label in H2B_SOURCE_LABELS:
+        item = sources.get(label)
+        error = item.get("exact_action_relative_error") if isinstance(item, Mapping) else None
+        if (
+            not isinstance(item, Mapping)
+            or item.get("finite") is not True
+            or not isinstance(error, (int, float))
+            or isinstance(error, bool)
+            or not math.isfinite(float(error))
+            or not 0.0 <= float(error) <= 1.0e-11
+        ):
+            return False
+    return True
+
+
+def _p1_anchor_failure_measurements(
+    anchor: Mapping[str, Any],
+    p6: Mapping[str, Any],
+    patch: Mapping[str, Any],
+    factor: Mapping[str, Any],
+    authority: Mapping[str, Any],
+    preflight_live_set: Mapping[str, Any] | None,
+    preflight_basis: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    return {
+        "p6": dict(p6),
+        "p0_anchor": dict(anchor),
+        "patch": {key: value for key, value in patch.items() if key != "matrix"},
+        "factor": dict(factor),
+        "authority": dict(authority),
+        "preflight_live_set": preflight_live_set,
+        "preflight_basis": preflight_basis,
+    }
 
 
 def _p1_p6_valid(value: Any) -> bool:
@@ -6162,22 +6241,9 @@ def _p1_check_raw(run_dir: Path) -> dict[str, Any]:
     checks["p6"] = _p1_p6_valid(
         measurement.get("p6") if isinstance(measurement, Mapping) else None
     )
-    checks["anchor"] = False
-    if isinstance(measurement, Mapping) and isinstance(measurement.get("p0_anchor"), Mapping):
-        anchor = measurement["p0_anchor"]
-        sources = anchor.get("sources")
-        checks["anchor"] = bool(
-            anchor.get("source_order") == list(H2B_SOURCE_LABELS)
-            and isinstance(sources, Mapping)
-            and all(
-                isinstance(sources.get(label), Mapping)
-                and sources[label].get("finite") is True
-                and isinstance(sources[label].get("exact_action_relative_error"), (int, float))
-                and np.isfinite(float(sources[label]["exact_action_relative_error"]))
-                and 0.0 <= float(sources[label]["exact_action_relative_error"]) <= 1.0e-11
-                for label in H2B_SOURCE_LABELS
-            )
-        )
+    checks["anchor"] = _p1_anchor_gate_valid(
+        measurement.get("p0_anchor") if isinstance(measurement, Mapping) else None
+    )
     store = None
     try:
         manifest_path = run_dir / "factor_store" / "manifest.json"
