@@ -63,6 +63,67 @@ H2B_P1_PREFLIGHT_P0_RECORD_SHA256 = (
 H2B_P1_PREFLIGHT_P0_EVIDENCE_SHA256 = (
     "11f6a5a00557cf6ad11d4a9413a72283a7fd9ec9a5085a56e74b733538e75d47"
 )
+H2B_C1_SCHEMA = "task037.extra.h2b.canonical-orbit"
+H2B_C1_WORKER_SCHEMA = f"{H2B_C1_SCHEMA}.worker.v1"
+H2B_C1_WATCHDOG_SCHEMA = f"{H2B_C1_SCHEMA}.watchdog.v1"
+H2B_C1_CHECK_SCHEMA = f"{H2B_C1_SCHEMA}.check.v1"
+H2B_C1_TIMEOUT_SECONDS = 1_800.0
+H2B_C1_WATCHDOG_RSS_LIMIT_BYTES = 1_480_000_000
+H2B_C1_COMPLETED_RSS_LIMIT_BYTES = 1_500_000_000
+H2B_C1_METADATA_LIMIT_BYTES = 16_777_216
+H2B_C1_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_450_000_000
+H2B_C1_CLOSURE_LIMIT = 1.0e-11
+H2B_C1_NEIGHBORHOOD_COUNT = 84
+H2B_C1_EVENTS = (
+    "authority_validated",
+    "mesh_ready",
+    "space_ready",
+    "floquet_mpc_ready",
+    "cache_load_ready",
+    "r2_factor_load_ready",
+    "neighborhood_discovery_ready",
+    "candidate_orbit_ready",
+    "transform_orbit_ready",
+    "class_block_reconstruction_started",
+    "class_block_reconstruction_ready",
+    "probe_ready",
+    "patch_audit_started",
+    "patch_audit_ready",
+    "summary_ready",
+)
+H2B_C1_ARTIFACT_NAMES = (
+    "stage_progress.jsonl",
+    "stage_stdout.txt",
+    "stage_summary.json",
+    "stage_timeline.jsonl",
+    "c1_progress.jsonl",
+    "c1_stdout.txt",
+    "c1_summary.json",
+    "c1_timeline.jsonl",
+    "stage_root_pid.json",
+    "c1_root_pid.json",
+    "c1_candidate_stop.json",
+    "c1_manifest.json",
+    "neighborhood_ids.npy",
+    "orbit_ids.npy",
+    "representative_ids.npy",
+    "metadata_sha256.npy",
+    "provenance_sha256.npy",
+    "row_token_sha256.npy",
+    "row_provenance_sha256.npy",
+    "permutations.npy",
+    "phases.npy",
+    "transform_sha256.npy",
+    "repeat_transform_sha256.npy",
+    "probes.npy",
+    "patch_neighborhood_ids.npy",
+    "patch_hermitian_row_numerator_squared.npy",
+    "patch_congruence_row_numerator_squared.npy",
+    "patch_congruence_row_denominator_squared.npy",
+    "patch_member_action.npy",
+    "patch_transformed_action.npy",
+    "patch_member_exact_action.npy",
+)
 H2B_PROCESS_DRAIN_TIMEOUT_SECONDS = 5.0
 H2B_PROCESS_DRAIN_POLL_SECONDS = 0.05
 H2B_TRANSIENT_RECHECK_SECONDS = 0.02
@@ -331,6 +392,13 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _array_sha256(array: Any) -> str:
+    import numpy as np
+
+    contiguous = np.ascontiguousarray(array)
+    return hashlib.sha256(memoryview(contiguous).cast("B")).hexdigest()
+
+
 def _read_json(path: Path) -> dict[str, Any]:
     value = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, dict):
@@ -433,7 +501,7 @@ def _p1_scope() -> dict[str, Any]:
         "local_nloc": H2B_FIXED_NLOC,
         "global_rows": H2B_FIXED_ROWS,
         "constraint_count": H2B_FIXED_CONSTRAINTS,
-        "neighborhood_count": 84,
+        "neighborhood_count": H2B_C1_NEIGHBORHOOD_COUNT,
         "unique_factor_limit": H2B_P1_MAX_UNIQUE_FACTORS,
         "timeout_seconds": H2B_P1_TIMEOUT_SECONDS,
         "stage_rss_limit_bytes": H2B_P1_STAGE_RSS_LIMIT_BYTES,
@@ -446,6 +514,73 @@ def _p1_scope() -> dict[str, Any]:
         "anchor": "central_cell=3, central_class=3, touching_cells=19",
         "formal_budget_runs": 1,
         "fallback": "not_implemented",
+    }
+
+
+def _c1_scope() -> dict[str, Any]:
+    return {
+        "mode": "h2b_canonical_orbit_patch_audit",
+        "degree": 6,
+        "h_nm": 10.0,
+        "mpi_size": 1,
+        "global_cells": H2B_FIXED_CELLS,
+        "local_nloc": H2B_FIXED_NLOC,
+        "global_rows": H2B_FIXED_ROWS,
+        "constraint_count": H2B_FIXED_CONSTRAINTS,
+        "class_count": H2B_FIXED_CLASSES,
+        "neighborhood_count": H2B_C1_NEIGHBORHOOD_COUNT,
+        "candidate_representative_limit": H2B_P1_MAX_UNIQUE_FACTORS,
+        "timeout_seconds": H2B_C1_TIMEOUT_SECONDS,
+        "stage_rss_limit_bytes": H2B_C1_WATCHDOG_RSS_LIMIT_BYTES,
+        "watchdog_rss_limit_bytes": H2B_C1_WATCHDOG_RSS_LIMIT_BYTES,
+        "completed_rss_limit_bytes": H2B_C1_COMPLETED_RSS_LIMIT_BYTES,
+        "predicted_live_set_limit_bytes": H2B_C1_PREDICTED_LIVE_SET_LIMIT_BYTES,
+        "metadata_limit_bytes": H2B_C1_METADATA_LIMIT_BYTES,
+        "swap_limit_bytes": H2B_SWAP_LIMIT_BYTES,
+        "operator": "K_curl+k0^2*M_abs_epsilon; code uses (1/mu_r) with mu_r=1",
+        "patch_definition": "R_P B0 R_P^T for every canonical neighborhood",
+        "construction": "R2 reconstructed exact-class blocks with C0 metadata transforms",
+        "factorization": False,
+        "factor_store_writer": False,
+        "ordinary_default_changed": False,
+    }
+
+
+def _c1_phase_identity() -> dict[str, Any]:
+    return {
+        "jit_api_called": True,
+        "compile_called": False,
+        "compiler_probe_called": False,
+        "tensor_tabulation_called": False,
+        "factorization_called": False,
+        "factor_store_writer_called": False,
+        "global_matrix_materialized": False,
+        "global_constraint_matrix_materialized": False,
+        "ordinary_default_changed": False,
+    }
+
+
+def _c1_preflight_live_set(metadata_bytes: int) -> dict[str, Any]:
+    dense_bytes = H2B_FIXED_NLOC * H2B_FIXED_NLOC * 16
+    components = {
+        "mesh_action_runtime_bytes": H2B_P1_PREFLIGHT_BASELINE_BYTES,
+        "r2_lu_bytes": 199_204_992,
+        "reconstructed_class_cache_bytes": 199_148_544,
+        "representative_patch_bytes": dense_bytes,
+        "current_patch_bytes": dense_bytes,
+        "comparison_patch_bytes": dense_bytes,
+        "orbit_metadata_bytes": int(metadata_bytes),
+        "planning_allocator_reserve_bytes": H2B_P1_PREFLIGHT_RESERVE_BYTES,
+    }
+    predicted = int(sum(components.values()))
+    return {
+        "kind": "conservative_predicted_input_not_measured",
+        "components": components,
+        "planning_reserve_basis": "H2B_P1_PREFLIGHT_RESERVE_BYTES from qualified P1 preflight",
+        "predicted_live_set_bytes": predicted,
+        "limit_bytes": H2B_C1_PREDICTED_LIVE_SET_LIMIT_BYTES,
+        "predicted_live_set_gate": predicted < H2B_C1_PREDICTED_LIVE_SET_LIMIT_BYTES,
+        "measured": False,
     }
 
 
@@ -3004,6 +3139,741 @@ def _run_p1_worker(run_dir: Path) -> int:
     return 0 if status == "measurement_complete" else 1
 
 
+def _run_c1_worker(run_dir: Path) -> int:
+    """Run the C1 metadata/orbit and patch-only audit; never factorize."""
+
+    import gc
+
+    import numpy as np
+    from petsc4py import PETSc
+
+    h2a = _lazy_h2a()
+    from src.common.config_3d import target_stage4_config
+    from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
+    from src.solvers.common_3d_solve import _create_nedelec_space
+    from src.solvers.hcurl_h2b_p1_factor_store import (
+        build_h2b_p1_class_block_authority,
+        discover_h2b_p1_neighborhoods,
+        stream_h2b_p1_neighborhood,
+    )
+    from src.solvers.hcurl_h2b_canonical_orbit import (
+        C1CandidateOrbitLimit,
+        C1MetadataNotProven,
+        audit_c1_patch,
+        build_c1_candidate_audit,
+        build_c1_orbit_audit,
+        fixed_c1_probes,
+        write_c1_candidate_manifest,
+        write_c1_orbit_manifest,
+    )
+    from src.solvers.hcurl_r2_constrained_local_block import build_h2a_r2_cell_expansion
+    from src.solvers.hcurl_r2_factor_store import (
+        H2AR2CellReference,
+        load_h2a_r2_factor_store,
+    )
+    from src.solvers.hcurl_rank_one_mpc_action import (
+        build_task037_extra_h1r2_mpc_action,
+    )
+
+    run_dir = run_dir.resolve()
+    progress_path = run_dir / "c1_progress.jsonl"
+    summary_path = run_dir / "c1_summary.json"
+    stage_path = run_dir / "stage_summary.json"
+    started = time.perf_counter()
+    source_start = _source_pair(h2a)
+    source_end: dict[str, Any] | None = None
+    runtime: dict[str, Any] | None = None
+    form_record: dict[str, Any] | None = None
+    measurement: dict[str, Any] | None = None
+    error: str | None = None
+    controlled_stop: dict[str, Any] | None = None
+    orbit_audit = None
+    candidate_audit = None
+    candidate_manifest_path: Path | None = None
+    probes = None
+    class_authority = None
+    store = None
+    action = None
+    source_vec = None
+    try:
+        with progress_path.open("w", encoding="utf-8") as markers:
+            stage = _read_json(stage_path)
+            if not (
+                stage.get("status") == "measurement_complete"
+                and _evidence_valid(stage)
+                and stage.get("scope") == _fixed_scope()
+                and stage.get("identity") == _fixed_identity()
+                and _form_files_valid(run_dir, stage.get("form"))
+                and _progress_events(run_dir / "stage_progress.jsonl", "stage")
+                == list(H2B_STAGE_EVENTS)
+            ):
+                raise ValueError("C1 stage authority is incomplete")
+            authority = _p1_authority()
+            _emit_marker(markers, event="authority_validated", phase="c1", started=started)
+            cfg = target_stage4_config(degree=6, h_nm=10.0)
+            mesh_data = build_airbox_mesh_3d(cfg, run_dir / "c1_mesh")
+            _emit_marker(markers, event="mesh_ready", phase="c1", started=started)
+            function_space = _create_nedelec_space(mesh_data.mesh, cfg)
+            _emit_marker(markers, event="space_ready", phase="c1", started=started)
+            floquet = h2a.build_double_floquet_mpc(function_space, mesh_data, cfg)
+            _emit_marker(markers, event="floquet_mpc_ready", phase="c1", started=started)
+            index_map = function_space.dofmap.index_map
+            p6 = {
+                "global_cells": int(mesh_data.mesh.topology.index_map(3).size_global),
+                "local_cells": int(mesh_data.mesh.topology.index_map(3).size_local),
+                "local_nloc": int(function_space.element.space_dimension),
+                "global_rows": int(index_map.size_global * function_space.dofmap.index_map_bs),
+                "constraint_count": int(floquet.num_constraints),
+            }
+            expected_p6 = {
+                "global_cells": H2B_FIXED_CELLS,
+                "local_cells": H2B_FIXED_CELLS,
+                "local_nloc": H2B_FIXED_NLOC,
+                "global_rows": H2B_FIXED_ROWS,
+                "constraint_count": H2B_FIXED_CONSTRAINTS,
+            }
+            if p6 != expected_p6:
+                raise ValueError("C1 p6 identity mismatch")
+            cache_dir = run_dir / "jit_cache"
+            cache_before = _cache_snapshot(cache_dir)
+            b0, _epsilon = _build_b0_form(function_space, mesh_data, cfg)
+            runtime = _runtime_identity(
+                h2a,
+                compiler_probe=False,
+                compiler=stage["runtime_identity"]["compiler"],
+            )
+            action = build_task037_extra_h1r2_mpc_action(
+                b0,
+                floquet.mpc,
+                task037_extra_h1r2=True,
+                jit_options=_expected_jit_options(cache_dir),
+            )
+            form_record = _form_record(
+                action._action_form,
+                action._action_ufl,
+                cache_dir,
+                cfg,
+                function_space,
+                "b0",
+            )
+            cache_after = _cache_snapshot(cache_dir)
+            if (
+                form_record.get("code_state") != "hit_no_new_decl_impl"
+                or cache_before != cache_after
+            ):
+                raise ValueError("C1 B0 action did not hit the staged cache")
+            _emit_marker(markers, event="cache_load_ready", phase="c1", started=started)
+            store = load_h2a_r2_factor_store(
+                H2B_R2_MANIFEST, task037_extra_h2a_r2=True
+            )
+            if len(store.cells) != H2B_FIXED_CELLS or len(store.classes) != H2B_FIXED_CLASSES:
+                raise ValueError("C1 R2 authority count mismatch")
+            _emit_marker(markers, event="r2_factor_load_ready", phase="c1", started=started)
+            discovery = h2a._discover_cell_references(
+                function_space,
+                mesh_data,
+                cfg,
+                floquet,
+                geometry_tolerance=h2a.floquet_geometry_tolerance(cfg),
+            )
+            class_inventory = authority["r0"]["class_inventory"]
+            inventory_by_id = {int(item["class_id"]): item for item in class_inventory}
+            blocks = tuple(floquet.phase_independent_topology.blocks)
+            cell_refs: list[H2AR2CellReference] = []
+            cell_metadata: list[dict[str, Any]] = []
+            class_records = {int(record.class_id): record for record in store.classes}
+            for reference in discovery["references"]:
+                cell_dofs = np.asarray(reference.local_dofs, dtype=np.int64)
+                class_id = next(
+                    (
+                        int(item["class_id"])
+                        for item in class_inventory
+                        if str(item["class_key_sha256"]) == h2a._r0_digest(reference.class_key)
+                    ),
+                    None,
+                )
+                if class_id is None or class_id not in class_records:
+                    raise ValueError("C1 discovery class is not in R2 authority")
+                expansion = build_h2a_r2_cell_expansion(
+                    h2a._blocks_for_cell(blocks, cell_dofs),
+                    cell_dofs,
+                    index_map,
+                    index_map_bs=int(function_space.dofmap.index_map_bs),
+                    phase_x=floquet.phase_x,
+                    phase_y=floquet.phase_y,
+                    phase_corner=floquet.phase_corner,
+                )
+                record = class_records[class_id]
+                if (
+                    expansion.pattern_sha256 != str(record.expansion_pattern_sha256)
+                    or not np.array_equal(expansion.offsets, record.expansion.offsets)
+                    or not np.array_equal(expansion.column_indices, record.expansion.column_indices)
+                    or not np.array_equal(expansion.coefficients, record.expansion.coefficients)
+                ):
+                    raise ValueError("C1 fresh expansion SHA differs from R2 authority")
+                cell_refs.append(H2AR2CellReference(class_id, expansion.independent_global_rows))
+                cell_metadata.append(
+                    _c1_cell_metadata(
+                        cell_refs[-1], record, inventory_by_id[class_id], _c1_scope()
+                    )
+                )
+            if any(
+                int(left.class_id) != int(right.class_id)
+                or not np.array_equal(left.independent_global_rows, right.independent_global_rows)
+                for left, right in zip(store.cells, cell_refs, strict=True)
+            ):
+                raise ValueError("C1 fresh cell references differ from R2 authority")
+            p1_discovery = discover_h2b_p1_neighborhoods(
+                cell_refs,
+                store.classes,
+                class_inventory,
+                {"operator": _c1_scope()["operator"]},
+                task037_extra_h2b=True,
+            )
+            neighborhoods = p1_discovery["neighborhoods"]
+            if (
+                p1_discovery["cell_count"] != H2B_FIXED_CELLS
+                or p1_discovery["unique_neighborhood_count"] != H2B_C1_NEIGHBORHOOD_COUNT
+            ):
+                raise ValueError("C1 neighborhood discovery count mismatch")
+
+            from src.solvers.hcurl_h2b_canonical_congruence import build_canonical_row_tokens
+
+            def token_loader(neighborhood_id: int):
+                neighborhood = neighborhoods[neighborhood_id]
+                central_rows = cell_refs[neighborhood.representative_cell].independent_global_rows
+                return build_canonical_row_tokens(
+                    central_rows,
+                    [cell_metadata[index] for index in neighborhood.touching_cell_ordinals],
+                    task037_extra_h2b=True,
+                )
+
+            _emit_marker(
+                markers,
+                event="neighborhood_discovery_ready",
+                phase="c1",
+                started=started,
+                neighborhood_count=len(neighborhoods),
+                neighborhood_digest=p1_discovery["neighborhood_digest"],
+            )
+            candidate_audit = build_c1_candidate_audit(
+                tuple(range(len(neighborhoods))),
+                token_loader,
+                task037_extra_h2b=True,
+            )
+            _emit_marker(
+                markers,
+                event="candidate_orbit_ready",
+                phase="c1",
+                started=started,
+                representative_count=candidate_audit.representative_count,
+                neighborhood_digest=p1_discovery["neighborhood_digest"],
+            )
+            if candidate_audit.representative_count > H2B_P1_MAX_UNIQUE_FACTORS:
+                candidate_manifest_path = write_c1_candidate_manifest(
+                    run_dir,
+                    candidate_audit,
+                    identity={
+                        "source_at_start": source_start,
+                        "r2_authority": authority["producer_authority"],
+                        "p0_authority": authority["p0"],
+                        "form": form_record,
+                        "cache": {
+                            "dir": str(cache_dir.resolve()),
+                            "before": cache_before,
+                            "after": cache_after,
+                            "unchanged": cache_before == cache_after,
+                        },
+                        "neighborhood_digest": p1_discovery["neighborhood_digest"],
+                        "scope": _c1_scope(),
+                    },
+                )
+                raise C1CandidateOrbitLimit(
+                    representative_count=candidate_audit.representative_count,
+                    limit=H2B_P1_MAX_UNIQUE_FACTORS,
+                    candidate=candidate_audit,
+                )
+            orbit_audit = build_c1_orbit_audit(
+                tuple(range(len(neighborhoods))),
+                token_loader,
+                task037_extra_h2b=True,
+                candidate=candidate_audit,
+            )
+            _emit_marker(
+                markers,
+                event="transform_orbit_ready",
+                phase="c1",
+                started=started,
+                representative_count=orbit_audit.representative_count,
+                neighborhood_digest=p1_discovery["neighborhood_digest"],
+            )
+            probes = fixed_c1_probes(H2B_FIXED_NLOC)
+            preflight = _c1_preflight_live_set(orbit_audit.retained_metadata_bytes)
+            if not preflight["predicted_live_set_gate"]:
+                controlled_stop = {
+                    "reason": "predicted_live_set_gate",
+                    "predicted_live_set_bytes": preflight["predicted_live_set_bytes"],
+                    "limit_bytes": H2B_C1_PREDICTED_LIVE_SET_LIMIT_BYTES,
+                }
+            if controlled_stop is None:
+                _emit_marker(markers, event="class_block_reconstruction_started", phase="c1", started=started)
+                class_authority = build_h2b_p1_class_block_authority(
+                    store, task037_extra_h2b=True
+                )
+                _emit_marker(markers, event="class_block_reconstruction_ready", phase="c1", started=started)
+                del store
+                store = None
+                gc.collect()
+                _emit_marker(markers, event="probe_ready", phase="c1", started=started, probe_seed=20260812)
+                slaves = np.asarray(floquet.mpc.slaves, dtype=np.int64)
+                source_vec = action.output_vector.duplicate()
+
+                def exact_action(source: np.ndarray) -> np.ndarray:
+                    if (
+                        source.dtype != np.dtype(np.complex128)
+                        or source.ndim != 1
+                        or source.size != H2B_FIXED_ROWS
+                        or not source.flags.c_contiguous
+                        or np.any(source[slaves] != 0.0)
+                    ):
+                        raise ValueError("C1 exact action source is invalid")
+                    with source_vec.localForm() as local:
+                        local.set(0.0)
+                        local.array_w[: source.size] = source
+                    source_vec.ghostUpdate(
+                        addv=PETSc.InsertMode.INSERT_VALUES,
+                        mode=PETSc.ScatterMode.FORWARD,
+                    )
+                    result = action.mult(source_vec)
+                    return np.array(
+                        result.getArray(readonly=True),
+                        dtype=np.complex128,
+                        copy=True,
+                        order="C",
+                    )
+
+                def embed(rows: np.ndarray, vector: np.ndarray) -> np.ndarray:
+                    full = np.zeros(H2B_FIXED_ROWS, dtype=np.complex128)
+                    full[rows] = vector
+                    return full
+
+                patch_records: list[dict[str, Any]] = []
+                patch_arrays: dict[str, list[np.ndarray]] = {
+                    "patch_neighborhood_ids": [],
+                    "patch_hermitian_row_numerator_squared": [],
+                    "patch_congruence_row_numerator_squared": [],
+                    "patch_congruence_row_denominator_squared": [],
+                    "patch_member_action": [],
+                    "patch_transformed_action": [],
+                    "patch_member_exact_action": [],
+                }
+                representative_matrix = None
+                representative_stream = None
+                active_orbit_id: int | None = None
+                representative_id = -1
+                representative = None
+                live_patch_matrix_count = 0
+                observed_max_live_patch_matrix_count = 0
+                patch_order = tuple(
+                    sorted(
+                        range(len(neighborhoods)),
+                        key=lambda neighborhood_id: (
+                            int(orbit_audit.orbit_ids[neighborhood_id]),
+                            int(neighborhood_id),
+                        ),
+                    )
+                )
+
+                def observe_live_patch_matrices(count: int) -> None:
+                    nonlocal observed_max_live_patch_matrix_count
+                    if type(count) is not int or count < 0:
+                        raise ValueError("C1 patch matrix lifecycle count is invalid")
+                    observed_max_live_patch_matrix_count = max(
+                        observed_max_live_patch_matrix_count, count
+                    )
+                for patch_order_index, neighborhood_id in enumerate(patch_order):
+                    orbit_id = int(orbit_audit.orbit_ids[neighborhood_id])
+                    if active_orbit_id != orbit_id:
+                        if representative_matrix is not None:
+                            del representative_matrix
+                        if representative_stream is not None:
+                            del representative_stream
+                        representative_id = int(orbit_audit.representative_ids[neighborhood_id])
+                        representative = neighborhoods[representative_id]
+                        representative_stream = stream_h2b_p1_neighborhood(
+                            representative,
+                            cell_refs,
+                            class_authority,
+                            task037_extra_h2b=True,
+                        )
+                        representative_matrix = representative_stream.pop("matrix")
+                        if (
+                            not isinstance(representative_matrix, np.ndarray)
+                            or representative_matrix.dtype != np.dtype(np.complex128)
+                            or representative_matrix.ndim != 2
+                            or representative_matrix.shape != (H2B_FIXED_NLOC, H2B_FIXED_NLOC)
+                            or not representative_matrix.flags.c_contiguous
+                        ):
+                            raise ValueError("C1 representative patch matrix has invalid storage")
+                        live_patch_matrix_count = 1
+                        observe_live_patch_matrices(live_patch_matrix_count)
+                        active_orbit_id = orbit_id
+                    _emit_marker(
+                        markers,
+                        event="patch_audit_started",
+                        phase="c1",
+                        started=started,
+                        neighborhood_id=int(neighborhood_id),
+                        patch_order_index=int(patch_order_index),
+                    )
+                    neighborhood = neighborhoods[neighborhood_id]
+                    current_stream = stream_h2b_p1_neighborhood(
+                        neighborhood,
+                        cell_refs,
+                        class_authority,
+                        task037_extra_h2b=True,
+                    )
+                    current_matrix = current_stream.pop("matrix")
+                    if (
+                        not isinstance(current_matrix, np.ndarray)
+                        or current_matrix.dtype != np.dtype(np.complex128)
+                        or current_matrix.ndim != 2
+                        or current_matrix.shape != (H2B_FIXED_NLOC, H2B_FIXED_NLOC)
+                        or not current_matrix.flags.c_contiguous
+                    ):
+                        raise ValueError("C1 current patch matrix has invalid storage")
+                    repeat_stream = stream_h2b_p1_neighborhood(
+                        neighborhood,
+                        cell_refs,
+                        class_authority,
+                        task037_extra_h2b=True,
+                    )
+                    repeat_matrix = repeat_stream.pop("matrix")
+                    if (
+                        not isinstance(repeat_matrix, np.ndarray)
+                        or repeat_matrix.dtype != np.dtype(np.complex128)
+                        or repeat_matrix.ndim != 2
+                        or repeat_matrix.shape != (H2B_FIXED_NLOC, H2B_FIXED_NLOC)
+                        or not repeat_matrix.flags.c_contiguous
+                    ):
+                        raise ValueError("C1 repeat patch matrix has invalid storage")
+                    live_patch_matrix_count = 3
+                    observe_live_patch_matrices(live_patch_matrix_count)
+                    repeat_matrix_sha256 = _array_sha256(repeat_matrix)
+                    del repeat_matrix, repeat_stream
+                    live_patch_matrix_count = 2
+                    transform = build_monomial_transform(
+                        token_loader(representative_id),
+                        token_loader(neighborhood_id),
+                        task037_extra_h2b=True,
+                    )
+                    member_rows = np.asarray(neighborhood.patch_rows, dtype=np.int64)
+                    patch_audit = audit_c1_patch(
+                        representative_matrix,
+                        current_matrix,
+                        repeat_matrix_sha256,
+                        transform,
+                        probes,
+                        embed_member=lambda vector, rows=member_rows: embed(rows, vector),
+                        exact_action=exact_action,
+                        restrict_member=lambda vector, rows=member_rows: np.ascontiguousarray(vector[rows]),
+                        lifecycle_observer=observe_live_patch_matrices,
+                    )
+                    record = {
+                        "neighborhood_id": int(neighborhood_id),
+                        "patch_order_index": int(patch_order_index),
+                        "orbit_id": orbit_id,
+                        "representative_id": representative_id,
+                        "key_sha256": neighborhood.key_sha256,
+                        "transform": transform.audit(),
+                        "transform_sha256": _c1_hash_row(orbit_audit.transform_sha256[neighborhood_id]),
+                        "repeat_transform_sha256": _c1_hash_row(orbit_audit.repeat_transform_sha256[neighborhood_id]),
+                        **patch_audit.jsonable(),
+                    }
+                    patch_records.append(record)
+                    for name, value in {
+                        "patch_neighborhood_ids": np.asarray(neighborhood_id, dtype=np.int32),
+                        "patch_hermitian_row_numerator_squared": patch_audit.hermitian_row_numerator_squared,
+                        "patch_congruence_row_numerator_squared": patch_audit.congruence_row_numerator_squared,
+                        "patch_congruence_row_denominator_squared": patch_audit.congruence_row_denominator_squared,
+                        "patch_member_action": patch_audit.member_patch_action,
+                        "patch_transformed_action": patch_audit.transformed_patch_action,
+                        "patch_member_exact_action": patch_audit.member_exact_action,
+                    }.items():
+                        patch_arrays[name].append(value)
+                    _emit_marker(
+                        markers,
+                        event="patch_audit_ready",
+                        phase="c1",
+                        started=started,
+                        neighborhood_id=int(neighborhood_id),
+                        patch_order_index=int(patch_order_index),
+                        congruence_relative_error=patch_audit.congruence_relative_error,
+                    )
+                    if (
+                        not patch_audit.finite
+                        or not patch_audit.deterministic
+                        or patch_audit.hermitian_error > H2B_C1_CLOSURE_LIMIT
+                        or patch_audit.congruence_relative_error > H2B_C1_CLOSURE_LIMIT
+                        or patch_audit.patch_action_relative_error > H2B_C1_CLOSURE_LIMIT
+                        or patch_audit.exact_action_relative_error > H2B_C1_CLOSURE_LIMIT
+                    ) and controlled_stop is None:
+                        controlled_stop = {
+                            "reason": "c1_patch_or_action_gate",
+                            "neighborhood_id": int(neighborhood_id),
+                        }
+                    del current_matrix, current_stream
+                    live_patch_matrix_count = 1
+                    observe_live_patch_matrices(live_patch_matrix_count)
+                    if controlled_stop is not None:
+                        break
+                if representative_matrix is not None:
+                    del representative_matrix
+                    live_patch_matrix_count = 0
+                    observe_live_patch_matrices(live_patch_matrix_count)
+                if representative_stream is not None:
+                    del representative_stream
+                if controlled_stop is None and len(patch_records) != H2B_C1_NEIGHBORHOOD_COUNT:
+                    controlled_stop = {
+                        "reason": "c1_patch_count_incomplete",
+                        "patch_count": len(patch_records),
+                    }
+                manifest_path = write_c1_orbit_manifest(
+                    run_dir,
+                    orbit_audit,
+                    probes,
+                    identity={
+                        "source_at_start": source_start,
+                        "r2_authority": authority["producer_authority"],
+                        "p0_authority": authority["p0"],
+                        "form": form_record,
+                        "cache": {
+                            "dir": str(cache_dir.resolve()),
+                            "before": cache_before,
+                            "after": cache_after,
+                            "unchanged": cache_before == cache_after,
+                        },
+                        "neighborhood_digest": p1_discovery["neighborhood_digest"],
+                        "scope": _c1_scope(),
+                    },
+                    patch_audits=patch_records,
+                    patch_arrays={
+                        name: np.asarray(values)
+                        for name, values in patch_arrays.items()
+                    },
+                )
+                manifest_payload = _read_json(manifest_path)
+                measurement = {
+                    "p6": p6,
+                    "class_count": H2B_FIXED_CLASSES,
+                    "neighborhood_count": H2B_C1_NEIGHBORHOOD_COUNT,
+                    "unique_neighborhood_count": H2B_C1_NEIGHBORHOOD_COUNT,
+                    "candidate_representative_count": orbit_audit.representative_count,
+                    "cell_count": H2B_FIXED_CELLS,
+                    "neighborhood_digest": p1_discovery["neighborhood_digest"],
+                    "probe_seed": 20260812,
+                    "probe_sha256": _array_sha256(probes),
+                    "retained_orbit_metadata_bytes": manifest_payload["retained_metadata_bytes"],
+                    "preflight_live_set": preflight,
+                    "manifest": {
+                        "path": str(manifest_path),
+                        "sha256": _sha256_file(manifest_path),
+                        "evidence_sha256": _read_json(manifest_path)["evidence_sha256"],
+                    },
+                    "authority": authority["producer_authority"],
+                    "form": form_record,
+                    "cache": {
+                        "dir": str(cache_dir.resolve()),
+                        "before": cache_before,
+                        "after": cache_after,
+                        "unchanged": cache_before == cache_after,
+                    },
+                    "patch_audits": patch_records,
+                    "patch_neighborhood_ids": [int(value) for value in patch_order[: len(patch_records)]],
+                    "max_live_patch_matrix_count": observed_max_live_patch_matrix_count,
+                    "cell_dense_tensors_retained": False,
+                    "materialization_identity": orbit_audit.jsonable(),
+                }
+            else:
+                probes = fixed_c1_probes(H2B_FIXED_NLOC)
+                preflight = _c1_preflight_live_set(orbit_audit.retained_metadata_bytes)
+                manifest_path = write_c1_orbit_manifest(
+                    run_dir,
+                    orbit_audit,
+                    probes,
+                    identity={
+                        "source_at_start": source_start,
+                        "r2_authority": authority["producer_authority"],
+                        "p0_authority": authority["p0"],
+                        "form": form_record,
+                        "cache": {
+                            "dir": str(cache_dir.resolve()),
+                            "before": cache_before,
+                            "after": cache_after,
+                            "unchanged": cache_before == cache_after,
+                        },
+                        "neighborhood_digest": p1_discovery["neighborhood_digest"],
+                        "scope": _c1_scope(),
+                    },
+                )
+                manifest_payload = _read_json(manifest_path)
+                measurement = {
+                    "p6": p6,
+                    "class_count": H2B_FIXED_CLASSES,
+                    "neighborhood_count": H2B_C1_NEIGHBORHOOD_COUNT,
+                    "unique_neighborhood_count": H2B_C1_NEIGHBORHOOD_COUNT,
+                    "candidate_representative_count": orbit_audit.representative_count,
+                    "cell_count": H2B_FIXED_CELLS,
+                    "neighborhood_digest": p1_discovery["neighborhood_digest"],
+                    "preflight_live_set": preflight,
+                    "manifest": {
+                        "path": str(manifest_path),
+                        "sha256": _sha256_file(manifest_path),
+                        "evidence_sha256": _read_json(manifest_path)["evidence_sha256"],
+                    },
+                    "retained_orbit_metadata_bytes": manifest_payload["retained_metadata_bytes"],
+                    "authority": authority["producer_authority"],
+                    "form": form_record,
+                    "cache": {
+                        "dir": str(cache_dir.resolve()),
+                        "before": cache_before,
+                        "after": cache_after,
+                        "unchanged": cache_before == cache_after,
+                    },
+                    "max_live_patch_matrix_count": 0,
+                    "cell_dense_tensors_retained": False,
+                    "materialization_identity": orbit_audit.jsonable(),
+                }
+            _emit_marker(markers, event="summary_ready", phase="c1", started=started)
+    except (C1CandidateOrbitLimit, C1MetadataNotProven) as exc:
+        candidate = (
+            exc.candidate
+            if isinstance(exc, C1CandidateOrbitLimit)
+            else candidate_audit
+        )
+        if candidate is None:
+            error = f"{type(exc).__name__}: {exc}"
+        else:
+            if candidate_manifest_path is None:
+                candidate_manifest_path = write_c1_candidate_manifest(
+                    run_dir,
+                    candidate,
+                    identity={
+                        "source_at_start": source_start,
+                        "r2_authority": authority["producer_authority"],
+                        "p0_authority": authority["p0"],
+                        "form": form_record,
+                        "cache": {
+                            "dir": str(cache_dir.resolve()),
+                            "before": cache_before,
+                            "after": cache_after,
+                            "unchanged": cache_before == cache_after,
+                        },
+                        "neighborhood_digest": p1_discovery["neighborhood_digest"],
+                        "scope": _c1_scope(),
+                    },
+                )
+            is_limit = isinstance(exc, C1CandidateOrbitLimit)
+            controlled_stop = {
+                "reason": (
+                    "candidate_representative_limit"
+                    if is_limit
+                    else "MONOMIAL_TRANSFORM_NOT_PROVEN"
+                ),
+                "candidate_representative_count": candidate.representative_count,
+                "limit": H2B_P1_MAX_UNIQUE_FACTORS,
+                "class_block_reconstruction_called": False,
+                "patch_audit_called": False,
+                "factorization_called": False,
+            }
+            if not is_limit:
+                controlled_stop["transform_called"] = True
+            manifest_payload = _read_json(candidate_manifest_path)
+            measurement = {
+                "p6": p6,
+                "class_count": H2B_FIXED_CLASSES,
+                "cell_count": H2B_FIXED_CELLS,
+                "neighborhood_count": H2B_C1_NEIGHBORHOOD_COUNT,
+                "unique_neighborhood_count": H2B_C1_NEIGHBORHOOD_COUNT,
+                "candidate_representative_count": candidate.representative_count,
+                "neighborhood_digest": p1_discovery["neighborhood_digest"],
+                "retained_orbit_metadata_bytes": manifest_payload["retained_metadata_bytes"],
+                "preflight_live_set": None,
+                "manifest": {
+                    "path": str(candidate_manifest_path),
+                    "sha256": _sha256_file(candidate_manifest_path),
+                    "evidence_sha256": manifest_payload["evidence_sha256"],
+                },
+                "max_live_patch_matrix_count": 0,
+                "cell_dense_tensors_retained": False,
+                "materialization_identity": {
+                    "factorization_called": False,
+                    "factor_store_written": False,
+                    "global_matrix_materialized": False,
+                    "global_constraint_matrix_materialized": False,
+                    "per_cell_factor": False,
+                    "per_cell_dense_tensor": False,
+                    "slab_factor": False,
+                },
+                "authority": authority["producer_authority"],
+                "form": form_record,
+                "cache": {
+                    "dir": str((run_dir / "jit_cache").resolve()),
+                    "before": cache_before,
+                    "after": cache_after,
+                    "unchanged": cache_before == cache_after,
+                },
+            }
+            _write_json(
+                run_dir / "c1_candidate_stop.json",
+                _attach_evidence(
+                    {
+                        "schema": H2B_C1_WORKER_SCHEMA,
+                        "reason": controlled_stop,
+                        "measurement": measurement,
+                    }
+                ),
+            )
+            with progress_path.open("a", encoding="utf-8") as markers:
+                _emit_marker(markers, event="summary_ready", phase="c1", started=started)
+    except (OSError, RuntimeError, TypeError, ValueError) as exc:
+        error = f"{type(exc).__name__}: {exc}"
+    finally:
+        if source_vec is not None:
+            source_vec.destroy()
+        if action is not None:
+            action.destroy()
+        if class_authority is not None:
+            del class_authority
+        if store is not None:
+            del store
+        h2a.clear_floquet_topology_cache()
+        gc.collect()
+    source_end = _source_pair(h2a)
+    phase_identity = _c1_phase_identity()
+    status = "measurement_complete" if error is None and controlled_stop is None else "gate_failed"
+    payload = _attach_evidence(
+        {
+            "schema": H2B_C1_WORKER_SCHEMA,
+            "phase": "c1",
+            "status": status,
+            "scope": _c1_scope(),
+            "identity": _fixed_identity(),
+            "phase_identity": phase_identity,
+            "source_at_start": source_start,
+            "source_at_end": source_end,
+            "runtime_identity": runtime,
+            "form": form_record,
+            "measurement": measurement,
+            "controlled_stop": controlled_stop,
+            "error": error,
+            "elapsed_wall_seconds": float(time.perf_counter() - started),
+        }
+    )
+    _write_json(summary_path, payload)
+    return 0 if status == "measurement_complete" else 1
+
+
 def _compiler_descendant_pids(pids: Sequence[int]) -> list[int]:
     found: list[int] = []
     for pid in pids:
@@ -3275,7 +4145,14 @@ def _stage_gate_allows_online(
 
 
 def _worker_command(executable: str, phase: str, run_dir: Path) -> list[str]:
-    if phase not in {"jit-worker", "online-worker", "s0-worker", "p0-worker", "p1-worker"}:
+    if phase not in {
+        "jit-worker",
+        "online-worker",
+        "s0-worker",
+        "p0-worker",
+        "p1-worker",
+        "c1-worker",
+    }:
         raise ValueError("H2B worker phase is fixed")
     return [
         str(executable),
@@ -3731,6 +4608,1387 @@ def _run_p1_watchdog(run_dir: Path) -> int:
     )
     _write_json(run_dir / "p1_watchdog_summary.json", payload)
     return 0 if payload["status"] == "pass" else 1
+
+
+def _run_c1_watchdog(run_dir: Path) -> int:
+    """Run the C1 stage and patch-only worker strictly sequentially."""
+
+    run_dir = run_dir.resolve()
+    if run_dir.exists():
+        raise FileExistsError(f"H2B-C1 run directory already exists: {run_dir}")
+    run_dir.mkdir(parents=True)
+    started = time.perf_counter()
+    source_start: dict[str, Any] | None = None
+    source_end: dict[str, Any] | None = None
+    executable = _worker_executable()
+    stage: dict[str, Any] | None = None
+    c1: dict[str, Any] | None = None
+    error: str | None = None
+    try:
+        source_start = _light_source()
+        stage = _monitor_phase(
+            run_dir,
+            "stage",
+            _worker_command(executable, "jit-worker", run_dir),
+            H2B_STAGE_TIMEOUT_SECONDS,
+            H2B_C1_WATCHDOG_RSS_LIMIT_BYTES,
+        )
+        stage["monitor_rss_limit_bytes"] = H2B_C1_WATCHDOG_RSS_LIMIT_BYTES
+        stage_summary = _read_json(run_dir / "stage_summary.json")
+        drain = _bounded_process_drain(stage)
+        stage["processes_gone_before_c1"] = bool(drain["gone"])
+        stage["processes_gone_before_c1_drain"] = drain
+        stage_ok = bool(
+            _stage_gate_allows_online(stage, stage_summary, bool(drain["gone"]), run_dir)
+            and int(stage.get("peak_rss_bytes", -1)) < H2B_C1_WATCHDOG_RSS_LIMIT_BYTES
+            and int(stage.get("swap_bytes", -1)) == H2B_SWAP_LIMIT_BYTES
+        )
+        if not stage_ok:
+            error = "stage_gate_failed_before_c1"
+        else:
+            c1 = _monitor_phase(
+                run_dir,
+                "c1",
+                _worker_command(executable, "c1-worker", run_dir),
+                H2B_C1_TIMEOUT_SECONDS,
+                H2B_C1_WATCHDOG_RSS_LIMIT_BYTES,
+            )
+            c1["monitor_rss_limit_bytes"] = H2B_C1_WATCHDOG_RSS_LIMIT_BYTES
+            drain = _bounded_process_drain(c1)
+            c1["processes_gone_after_c1"] = bool(drain["gone"])
+            c1["processes_gone_after_c1_drain"] = drain
+    except _worker_error_types() as exc:
+        error = f"{type(exc).__name__}: {exc}"
+    if source_start is not None:
+        try:
+            source_end = _light_source()
+        except _worker_error_types() as exc:
+            error = f"{type(exc).__name__}: {exc}"
+    stage_ok = bool(
+        isinstance(stage, Mapping)
+        and type(stage.get("return_code")) is int
+        and stage.get("return_code") == 0
+        and stage.get("termination") is None
+        and stage.get("processes_gone_before_c1") is True
+        and isinstance(stage.get("peak_rss_bytes"), int)
+        and stage["peak_rss_bytes"] < H2B_C1_WATCHDOG_RSS_LIMIT_BYTES
+        and stage.get("swap_bytes") == H2B_SWAP_LIMIT_BYTES
+    )
+    c1_ok = bool(
+        isinstance(c1, Mapping)
+        and type(c1.get("return_code")) is int
+        and c1.get("return_code") == 0
+        and c1.get("termination") is None
+        and c1.get("processes_gone_after_c1") is True
+        and isinstance(c1.get("peak_rss_bytes"), int)
+        and c1["peak_rss_bytes"] < H2B_C1_COMPLETED_RSS_LIMIT_BYTES
+        and c1.get("swap_bytes") == H2B_SWAP_LIMIT_BYTES
+    )
+    payload = _attach_evidence(
+        {
+            "schema": H2B_C1_WATCHDOG_SCHEMA,
+            "status": "pass" if error is None and stage_ok and c1_ok else "gate_failed",
+            "run_dir": str(run_dir),
+            "scope": _c1_scope(),
+            "identity": _fixed_identity(),
+            "command_identity": {
+                "python": executable,
+                "launch_mode": "direct_singleton",
+                "stage_command": None if stage is None else stage["command"],
+                "c1_command": None if c1 is None else c1["command"],
+            },
+            "source_at_start": source_start,
+            "source_at_end": source_end,
+            "stage": stage,
+            "c1": c1,
+            "error": error,
+            "completion_elapsed_seconds": float(time.perf_counter() - started),
+            "raw_artifacts": {
+                name: _artifact(run_dir, name) for name in H2B_C1_ARTIFACT_NAMES
+            },
+        }
+    )
+    _write_json(run_dir / "c1_watchdog_summary.json", payload)
+    return 0 if payload["status"] == "pass" else 1
+
+
+def _c1_hash_row(row: Any) -> str | None:
+    try:
+        import numpy as np
+
+        array = np.asarray(row)
+        if array.dtype != np.dtype(np.uint8) or array.ndim != 1:
+            return None
+        value = bytes(array.tolist()).decode("ascii")
+    except (UnicodeDecodeError, TypeError, ValueError):
+        return None
+    return value if _valid_hash(value) else None
+
+
+def _c1_orbit_partition_valid(
+    audit: Mapping[str, Any],
+    orbit_ids: Any,
+    representative_ids: Any,
+    metadata_sha256: Any,
+) -> bool:
+    """Close the 84-row orbit partition without inspecting patch values."""
+
+    import numpy as np
+
+    if not isinstance(audit, Mapping):
+        return False
+    members_by_orbit = audit.get("representative_members")
+    orbit_count = audit.get("representative_count")
+    if (
+        not isinstance(members_by_orbit, list)
+        or type(orbit_count) is not int
+        or orbit_count <= 0
+        or len(members_by_orbit) != orbit_count
+        or not all(
+            isinstance(row, list)
+            and all(type(value) is int for value in row)
+            for row in members_by_orbit
+        )
+    ):
+        return False
+    if (
+        not isinstance(orbit_ids, np.ndarray)
+        or not isinstance(representative_ids, np.ndarray)
+        or not isinstance(metadata_sha256, np.ndarray)
+        or orbit_ids.shape != (H2B_C1_NEIGHBORHOOD_COUNT,)
+        or representative_ids.shape != (H2B_C1_NEIGHBORHOOD_COUNT,)
+        or metadata_sha256.shape != (H2B_C1_NEIGHBORHOOD_COUNT, 64)
+    ):
+        return False
+    if set(int(value) for value in orbit_ids.tolist()) != set(range(orbit_count)):
+        return False
+    seen: list[int] = []
+    orbit_keys: set[bytes] = set()
+    for orbit_id in range(orbit_count):
+        members = np.flatnonzero(orbit_ids == orbit_id).astype(np.int32).tolist()
+        if not members or members != sorted(members):
+            return False
+        if members_by_orbit[orbit_id] != members:
+            return False
+        if any(int(representative_ids[member]) != members[0] for member in members):
+            return False
+        key_rows = {bytes(metadata_sha256[member].tolist()) for member in members}
+        if len(key_rows) != 1 or key_rows & orbit_keys:
+            return False
+        orbit_keys.update(key_rows)
+        seen.extend(members)
+    return sorted(seen) == list(range(H2B_C1_NEIGHBORHOOD_COUNT))
+
+
+def _c1_progress_state(
+    path: Path,
+    controlled_reason: str | None,
+    expected_patch_order: Sequence[int] | None = None,
+    *,
+    expected_neighborhood_digest: str | None = None,
+    expected_candidate_count: int | None = None,
+) -> tuple[bool, int]:
+    items = [
+        json.loads(line)
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    if any(
+        not isinstance(item, Mapping)
+        or item.get("schema") != H2B_PROGRESS_SCHEMA
+        or item.get("phase") != "c1"
+        for item in items
+    ):
+        return False, 0
+    events = [str(item.get("event")) for item in items]
+    prefix = list(H2B_C1_EVENTS[:8])
+    if events[: len(prefix)] != prefix:
+        return False, 0
+    cursor = len(prefix)
+    discovery = items[6]
+    candidate = items[7]
+    neighborhood_digest = discovery.get("neighborhood_digest")
+    candidate_count = candidate.get("representative_count")
+    if (
+        discovery.get("neighborhood_count") != H2B_C1_NEIGHBORHOOD_COUNT
+        or not _valid_hash(neighborhood_digest)
+        or candidate.get("neighborhood_digest") != neighborhood_digest
+        or type(candidate_count) is not int
+        or candidate_count <= 0
+        or (
+            expected_neighborhood_digest is not None
+            and (
+                not _valid_hash(expected_neighborhood_digest)
+                or expected_neighborhood_digest != neighborhood_digest
+            )
+        )
+        or (
+            expected_candidate_count is not None
+            and (
+                type(expected_candidate_count) is not int
+                or expected_candidate_count != candidate_count
+            )
+        )
+    ):
+        return False, 0
+
+    def transform_marker_valid(item: Mapping[str, Any]) -> bool:
+        return (
+            item.get("neighborhood_digest") == neighborhood_digest
+            and item.get("representative_count") == candidate_count
+        )
+
+    if controlled_reason in {
+        "candidate_representative_limit",
+        "MONOMIAL_TRANSFORM_NOT_PROVEN",
+    }:
+        return events[cursor:] == ["summary_ready"], 0
+    if controlled_reason == "predicted_live_set_gate":
+        return (
+            events[cursor : cursor + 2] == ["transform_orbit_ready", "summary_ready"]
+            and transform_marker_valid(items[cursor])
+            and len(events) == cursor + 2,
+            0,
+        )
+    if expected_patch_order is None:
+        return False, 0
+    expected_patch_order = list(expected_patch_order)
+    if (
+        not 1 <= len(expected_patch_order) <= H2B_C1_NEIGHBORHOOD_COUNT
+        or any(
+            type(value) is not int
+            or not 0 <= value < H2B_C1_NEIGHBORHOOD_COUNT
+            for value in expected_patch_order
+        )
+        or len(set(expected_patch_order)) != len(expected_patch_order)
+        or controlled_reason is None
+        and len(expected_patch_order) != H2B_C1_NEIGHBORHOOD_COUNT
+    ):
+        return False, 0
+    required = list(H2B_C1_EVENTS[8:12])
+    if events[cursor : cursor + len(required)] != required:
+        return False, 0
+    if (
+        not transform_marker_valid(items[cursor])
+        or items[cursor + 3].get("probe_seed") != 20260812
+    ):
+        return False, 0
+    cursor += len(required)
+    processed = 0
+    while (
+        cursor < len(events)
+        and events[cursor] == "patch_audit_started"
+        and processed < len(expected_patch_order)
+    ):
+        item = items[cursor]
+        ready = items[cursor + 1] if cursor + 1 < len(items) else None
+        if (
+            type(item.get("neighborhood_id")) is not int
+            or item["neighborhood_id"]
+            != expected_patch_order[processed]
+            or type(item.get("patch_order_index")) is not int
+            or item.get("patch_order_index") != processed
+            or cursor + 1 >= len(events)
+            or events[cursor + 1] != "patch_audit_ready"
+            or not isinstance(ready, Mapping)
+            or type(ready.get("neighborhood_id")) is not int
+            or ready.get("neighborhood_id")
+            != expected_patch_order[processed]
+            or type(ready.get("patch_order_index")) is not int
+            or ready.get("patch_order_index") != processed
+        ):
+            return False, processed
+        processed += 1
+        cursor += 2
+    if cursor < len(events) and events[cursor] == "patch_audit_started":
+        return False, processed
+    if controlled_reason is None:
+        return processed == H2B_C1_NEIGHBORHOOD_COUNT and events[cursor:] == ["summary_ready"], processed
+    return (
+        processed > 0
+        and processed <= H2B_C1_NEIGHBORHOOD_COUNT
+        and events[cursor:] == ["summary_ready"]
+        and controlled_reason in {"c1_patch_or_action_gate", "c1_patch_count_incomplete"}
+    ), processed
+
+
+def _c1_discovery_digest(path: Path) -> str | None:
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        item = json.loads(line)
+        if not isinstance(item, Mapping):
+            return None
+        if item.get("event") == "neighborhood_discovery_ready":
+            value = item.get("neighborhood_digest")
+            return value if _valid_hash(value) else None
+    return None
+
+
+def _c1_artifacts_match(
+    run_dir: Path,
+    recorded: Any,
+    *,
+    controlled_reason: str | None,
+    patch_count: int,
+) -> bool:
+    if not isinstance(recorded, Mapping) or set(recorded) != set(H2B_C1_ARTIFACT_NAMES):
+        return False
+    if controlled_reason not in {
+        None,
+        "candidate_representative_limit",
+        "MONOMIAL_TRANSFORM_NOT_PROVEN",
+        "predicted_live_set_gate",
+        "c1_patch_or_action_gate",
+        "c1_patch_count_incomplete",
+    }:
+        return False
+    patch_names = {name for name in H2B_C1_ARTIFACT_NAMES if name.startswith("patch_")}
+    required = set(H2B_C1_ARTIFACT_NAMES)
+    if controlled_reason in {
+        "candidate_representative_limit", "MONOMIAL_TRANSFORM_NOT_PROVEN"
+    }:
+        required = {
+            name
+            for name in H2B_C1_ARTIFACT_NAMES
+            if name
+            in {
+                "stage_progress.jsonl",
+                "stage_stdout.txt",
+                "stage_summary.json",
+                "stage_timeline.jsonl",
+                "stage_root_pid.json",
+                "c1_progress.jsonl",
+                "c1_stdout.txt",
+                "c1_summary.json",
+                "c1_timeline.jsonl",
+                "c1_root_pid.json",
+                "c1_candidate_stop.json",
+                "c1_manifest.json",
+                "neighborhood_ids.npy",
+                "orbit_ids.npy",
+                "representative_ids.npy",
+                "metadata_sha256.npy",
+                "provenance_sha256.npy",
+                "row_token_sha256.npy",
+                "row_provenance_sha256.npy",
+            }
+        }
+    elif controlled_reason == "predicted_live_set_gate":
+        required -= patch_names
+        required.discard("c1_candidate_stop.json")
+    elif controlled_reason in {"c1_patch_or_action_gate", "c1_patch_count_incomplete"}:
+        if patch_count <= 0:
+            return False
+        required.discard("c1_candidate_stop.json")
+    else:
+        required.discard("c1_candidate_stop.json")
+    for name in H2B_C1_ARTIFACT_NAMES:
+        actual = _artifact(run_dir, name)
+        if recorded.get(name) != actual or actual.get("present") is not (name in required):
+            return False
+    return True
+
+
+def _c1_command_identity_valid(
+    watchdog: Mapping[str, Any],
+    stage: Mapping[str, Any],
+    worker: Mapping[str, Any],
+    run_dir: Path,
+) -> bool:
+    command = watchdog.get("command_identity")
+    if not isinstance(command, Mapping):
+        return False
+    python = command.get("python")
+    if not isinstance(python, str) or not os.path.isabs(python):
+        return False
+    stage_runtime = stage.get("runtime_identity")
+    worker_runtime = worker.get("runtime_identity")
+    return bool(
+        command.get("launch_mode") == "direct_singleton"
+        and command.get("stage_command") == _worker_command(python, "jit-worker", run_dir)
+        and command.get("c1_command") == _worker_command(python, "c1-worker", run_dir)
+        and isinstance(stage_runtime, Mapping)
+        and isinstance(worker_runtime, Mapping)
+        and stage_runtime.get("sys_executable") == python
+        and worker_runtime.get("sys_executable") == python
+    )
+
+
+def _c1_manifest_measurement_binding(
+    run_dir: Path, measurement: Any, manifest: Mapping[str, Any]
+) -> bool:
+    binding = measurement.get("manifest") if isinstance(measurement, Mapping) else None
+    path = run_dir / "c1_manifest.json"
+    if (
+        not isinstance(binding, Mapping)
+        or set(binding) != {"path", "sha256", "evidence_sha256"}
+        or binding["path"] != str(path)
+        or not _valid_hash(binding["sha256"])
+        or binding["sha256"] != _sha256_file(path)
+        or not _valid_hash(binding["evidence_sha256"])
+        or binding["evidence_sha256"] != manifest.get("evidence_sha256")
+    ):
+        return False
+    return True
+
+
+def _c1_manifest_valid(
+    run_dir: Path,
+    worker: Mapping[str, Any],
+    authority: Mapping[str, Any],
+    controlled_reason: str | None,
+    processed_count: int,
+) -> tuple[bool, dict[str, Any] | None, dict[str, Any] | None, int]:
+    import numpy as np
+
+    from src.solvers.hcurl_h2b_canonical_orbit import (
+        C1CandidateAudit,
+        C1_ORBIT_METADATA_ARRAY_NAMES,
+        c1_retained_metadata_bytes,
+        load_c1_candidate_manifest,
+        load_c1_orbit_manifest,
+    )
+
+    if controlled_reason in {
+        "candidate_representative_limit", "MONOMIAL_TRANSFORM_NOT_PROVEN"
+    }:
+        candidate = _read_json(run_dir / "c1_candidate_stop.json")
+        reason = candidate.get("reason")
+        candidate_measurement = worker.get("measurement")
+        if not isinstance(candidate_measurement, Mapping):
+            return False, None, None, 0
+        candidate_count = candidate_measurement.get("candidate_representative_count")
+        candidate_manifest, candidate_arrays = load_c1_candidate_manifest(
+            run_dir / "c1_manifest.json"
+        )
+        candidate_audit = candidate_manifest.get("audit")
+        candidate_manifest_keys = {
+            "schema", "state", "identity", "audit", "files", "patch_audits",
+            "factorization_called", "factor_store_written",
+            "retained_metadata_bytes", "evidence_sha256",
+        }
+        if not candidate_manifest_keys <= set(candidate_manifest):
+            return False, None, None, 0
+        candidate_identity = candidate_manifest.get("identity")
+        identity_keys = {
+            "source_at_start", "r2_authority", "p0_authority", "form", "cache",
+            "scope", "neighborhood_digest",
+        }
+        if (
+            not isinstance(candidate_identity, Mapping)
+            or not identity_keys <= set(candidate_identity)
+            or not isinstance(candidate_identity.get("cache"), Mapping)
+            or candidate_identity["scope"] != _c1_scope()
+            or candidate_identity["source_at_start"] != worker.get("source_at_start")
+            or candidate_identity["r2_authority"] != authority.get("producer_authority")
+            or candidate_identity["p0_authority"] != authority.get("p0")
+            or candidate_identity["form"] != worker.get("form")
+            or candidate_identity["cache"] != worker.get("cache")
+            or candidate_identity["cache"].get("dir")
+            != str((run_dir / "jit_cache").resolve())
+            or not _valid_hash(candidate_identity["neighborhood_digest"])
+            or candidate_identity["neighborhood_digest"]
+            != candidate_measurement.get("neighborhood_digest")
+            or not _c1_manifest_measurement_binding(
+                run_dir, candidate_measurement, candidate_manifest
+            )
+        ):
+            return False, None, None, 0
+        if not isinstance(reason, Mapping) or not {
+            "reason", "candidate_representative_count",
+            "class_block_reconstruction_called", "patch_audit_called",
+            "factorization_called",
+        } <= set(reason):
+            return False, None, None, 0
+        if type(candidate_count) is not int:
+            return False, None, None, 0
+        if (
+            candidate.get("schema") != H2B_C1_WORKER_SCHEMA
+            or not _evidence_valid(candidate)
+            or candidate.get("reason") != worker.get("controlled_stop")
+            or candidate.get("measurement") != candidate_measurement
+            or reason.get("reason") != controlled_reason
+            or reason.get("candidate_representative_count")
+            != candidate_count
+            or reason.get("class_block_reconstruction_called") is not False
+            or reason.get("patch_audit_called") is not False
+            or reason.get("factorization_called") is not False
+            or reason.get("limit") != H2B_P1_MAX_UNIQUE_FACTORS
+            or (
+                controlled_reason == "MONOMIAL_TRANSFORM_NOT_PROVEN"
+                and reason.get("transform_called") is not True
+            )
+            or candidate_manifest.get("patch_audits") != []
+            or candidate_manifest.get("factorization_called") is not False
+            or candidate_manifest.get("factor_store_written") is not False
+            or not isinstance(candidate_audit, Mapping)
+            or candidate_audit.get("neighborhood_count") != H2B_C1_NEIGHBORHOOD_COUNT
+            or candidate_audit.get("representative_count")
+            != candidate_count
+            or candidate_arrays["neighborhood_ids"].shape != (H2B_C1_NEIGHBORHOOD_COUNT,)
+            or candidate_arrays["neighborhood_ids"].dtype != np.dtype(np.int32)
+            or candidate_arrays["orbit_ids"].dtype != np.dtype(np.int32)
+            or candidate_arrays["representative_ids"].dtype != np.dtype(np.int32)
+            or candidate_arrays["metadata_sha256"].dtype != np.dtype(np.uint8)
+            or candidate_arrays["provenance_sha256"].dtype != np.dtype(np.uint8)
+            or candidate_arrays["row_token_sha256"].dtype != np.dtype(np.uint8)
+            or candidate_arrays["row_provenance_sha256"].dtype != np.dtype(np.uint8)
+            or candidate_arrays["orbit_ids"].shape != (H2B_C1_NEIGHBORHOOD_COUNT,)
+            or candidate_arrays["representative_ids"].shape != (H2B_C1_NEIGHBORHOOD_COUNT,)
+            or candidate_arrays["metadata_sha256"].shape != (H2B_C1_NEIGHBORHOOD_COUNT, 64)
+            or candidate_arrays["provenance_sha256"].shape != (H2B_C1_NEIGHBORHOOD_COUNT, 64)
+            or candidate_arrays["row_token_sha256"].shape != (H2B_C1_NEIGHBORHOOD_COUNT, H2B_FIXED_NLOC, 64)
+            or candidate_arrays["row_provenance_sha256"].shape != (H2B_C1_NEIGHBORHOOD_COUNT, H2B_FIXED_NLOC, 64)
+            or not np.array_equal(
+                candidate_arrays["neighborhood_ids"],
+                np.arange(H2B_C1_NEIGHBORHOOD_COUNT, dtype=np.int32),
+            )
+            or not _c1_orbit_partition_valid(
+                candidate_audit,
+                candidate_arrays["orbit_ids"],
+                candidate_arrays["representative_ids"],
+                candidate_arrays["metadata_sha256"],
+            )
+            or (
+                controlled_reason == "candidate_representative_limit"
+                and candidate_count <= H2B_P1_MAX_UNIQUE_FACTORS
+            )
+            or (
+                controlled_reason == "MONOMIAL_TRANSFORM_NOT_PROVEN"
+                and candidate_count > H2B_P1_MAX_UNIQUE_FACTORS
+            )
+            or type(candidate_manifest["retained_metadata_bytes"]) is not int
+            or candidate_manifest["retained_metadata_bytes"]
+            != c1_retained_metadata_bytes(candidate_manifest, candidate_arrays)
+            or candidate_manifest["retained_metadata_bytes"] > H2B_C1_METADATA_LIMIT_BYTES
+            or candidate_measurement.get("retained_orbit_metadata_bytes")
+            != candidate_manifest["retained_metadata_bytes"]
+            or not isinstance(candidate_measurement.get("materialization_identity"), Mapping)
+            or any(
+                candidate_measurement["materialization_identity"].get(name) is not False
+                for name in (
+                    "factorization_called", "factor_store_written",
+                    "global_matrix_materialized", "global_constraint_matrix_materialized",
+                    "per_cell_factor", "per_cell_dense_tensor", "slab_factor",
+                )
+            )
+        ):
+            return False, None, None, 0
+        if any(
+            _c1_hash_row(row) is None
+            for name in ("metadata_sha256", "provenance_sha256")
+            for row in candidate_arrays[name]
+        ) or any(
+            _c1_hash_row(row) is None
+            for name in ("row_token_sha256", "row_provenance_sha256")
+            for row in candidate_arrays[name].reshape(-1, 64)
+        ):
+            return False, None, None, 0
+        try:
+            rebuilt_candidate = C1CandidateAudit(
+                neighborhood_ids=candidate_arrays["neighborhood_ids"],
+                orbit_ids=candidate_arrays["orbit_ids"],
+                representative_ids=candidate_arrays["representative_ids"],
+                metadata_sha256=candidate_arrays["metadata_sha256"],
+                provenance_sha256=candidate_arrays["provenance_sha256"],
+                row_token_sha256=candidate_arrays["row_token_sha256"],
+                row_provenance_sha256=candidate_arrays["row_provenance_sha256"],
+                representative_members=tuple(
+                    tuple(int(value) for value in members)
+                    for members in candidate_audit["representative_members"]
+                ),
+            )
+        except (TypeError, ValueError, KeyError):
+            return False, None, None, 0
+        if rebuilt_candidate.jsonable() != candidate_audit:
+            return False, None, None, 0
+        return True, candidate_manifest, candidate_arrays, 0
+
+    manifest_path = run_dir / "c1_manifest.json"
+    manifest, arrays = load_c1_orbit_manifest(manifest_path)
+    manifest_keys = {
+        "identity", "audit", "probe_seed", "probe_sha256", "files",
+        "patch_audits", "factorization_called", "factor_store_written",
+        "retained_metadata_bytes", "evidence_sha256",
+    }
+    if not manifest_keys <= set(manifest):
+        return False, manifest, arrays, 0
+    if not isinstance(manifest["identity"], Mapping):
+        return False, manifest, arrays, 0
+    identity = manifest["identity"]
+    measurement = worker.get("measurement")
+    if not isinstance(identity, Mapping) or not isinstance(measurement, Mapping):
+        return False, manifest, arrays, 0
+    identity_keys = {
+        "source_at_start", "r2_authority", "p0_authority", "form", "cache",
+        "scope", "neighborhood_digest",
+    }
+    if not identity_keys <= set(identity) or not isinstance(identity["cache"], Mapping):
+        return False, manifest, arrays, 0
+    if identity["scope"] != _c1_scope():
+        return False, manifest, arrays, 0
+    if (
+        identity["source_at_start"] != worker.get("source_at_start")
+        or identity["r2_authority"] != authority.get("producer_authority")
+        or identity["p0_authority"] != authority.get("p0")
+        or identity["form"] != worker.get("form")
+        or identity["cache"] != worker.get("cache")
+        or identity["cache"]["dir"]
+        != str((run_dir / "jit_cache").resolve())
+        or not _valid_hash(identity["neighborhood_digest"])
+        or identity["neighborhood_digest"] != measurement.get("neighborhood_digest")
+    ):
+        return False, manifest, arrays, 0
+    if not _c1_manifest_measurement_binding(run_dir, measurement, manifest):
+        return False, manifest, arrays, 0
+    if controlled_reason in {None, "predicted_live_set_gate"} and measurement.get("materialization_identity") != manifest.get("audit"):
+        return False, manifest, arrays, 0
+    if manifest["probe_seed"] != 20260812 or manifest["factorization_called"] is not False or manifest["factor_store_written"] is not False:
+        return False, manifest, arrays, 0
+    expected_shapes = {
+        "neighborhood_ids": (H2B_C1_NEIGHBORHOOD_COUNT,),
+        "orbit_ids": (H2B_C1_NEIGHBORHOOD_COUNT,),
+        "representative_ids": (H2B_C1_NEIGHBORHOOD_COUNT,),
+        "metadata_sha256": (H2B_C1_NEIGHBORHOOD_COUNT, 64),
+        "provenance_sha256": (H2B_C1_NEIGHBORHOOD_COUNT, 64),
+        "row_token_sha256": (H2B_C1_NEIGHBORHOOD_COUNT, H2B_FIXED_NLOC, 64),
+        "row_provenance_sha256": (H2B_C1_NEIGHBORHOOD_COUNT, H2B_FIXED_NLOC, 64),
+        "permutations": (H2B_C1_NEIGHBORHOOD_COUNT, H2B_FIXED_NLOC),
+        "phases": (H2B_C1_NEIGHBORHOOD_COUNT, H2B_FIXED_NLOC),
+        "transform_sha256": (H2B_C1_NEIGHBORHOOD_COUNT, 64),
+        "repeat_transform_sha256": (H2B_C1_NEIGHBORHOOD_COUNT, 64),
+        "probes": (2, H2B_FIXED_NLOC),
+    }
+    expected_dtypes = {
+        "neighborhood_ids": np.dtype(np.int32),
+        "orbit_ids": np.dtype(np.int32),
+        "representative_ids": np.dtype(np.int32),
+        "metadata_sha256": np.dtype(np.uint8),
+        "provenance_sha256": np.dtype(np.uint8),
+        "row_token_sha256": np.dtype(np.uint8),
+        "row_provenance_sha256": np.dtype(np.uint8),
+        "permutations": np.dtype(np.int32),
+        "phases": np.dtype(np.complex128),
+        "transform_sha256": np.dtype(np.uint8),
+        "repeat_transform_sha256": np.dtype(np.uint8),
+        "probes": np.dtype(np.complex128),
+    }
+    if any(
+        name not in arrays
+        or arrays[name].shape != shape
+        or arrays[name].dtype != expected_dtypes[name]
+        for name, shape in expected_shapes.items()
+    ):
+        return False, manifest, arrays, 0
+    if not np.array_equal(arrays["neighborhood_ids"], np.arange(H2B_C1_NEIGHBORHOOD_COUNT, dtype=np.int32)):
+        return False, manifest, arrays, 0
+    if not np.array_equal(arrays["probes"], __import__("src.solvers.hcurl_h2b_canonical_orbit", fromlist=["fixed_c1_probes"]).fixed_c1_probes(H2B_FIXED_NLOC)):
+        return False, manifest, arrays, 0
+    for name in (
+        "metadata_sha256", "provenance_sha256", "transform_sha256",
+        "repeat_transform_sha256",
+    ):
+        if any(_c1_hash_row(row) is None for row in arrays[name]):
+            return False, manifest, arrays, 0
+    for name in ("row_token_sha256", "row_provenance_sha256"):
+        if any(_c1_hash_row(row) is None for row in arrays[name].reshape(-1, 64)):
+            return False, manifest, arrays, 0
+    if any(
+        set(int(value) for value in row.tolist()) != set(range(H2B_FIXED_NLOC))
+        for row in arrays["permutations"]
+    ):
+        return False, manifest, arrays, 0
+    phases = arrays["phases"]
+    if np.any(~np.isfinite(phases)) or np.max(np.abs(np.abs(phases) ** 2 - 1.0)) > 1.0e-14:
+        return False, manifest, arrays, 0
+    audit = manifest["audit"]
+    audit_keys = {
+        "schema", "neighborhood_count", "row_count", "representative_count",
+        "representative_members", "retained_metadata_bytes",
+        "neighborhood_ids_sha256", "orbit_ids_sha256", "representative_ids_sha256",
+        "metadata_sha256_sha256", "provenance_sha256_sha256",
+        "row_token_sha256_sha256", "row_provenance_sha256_sha256",
+        "permutations_sha256", "phases_sha256", "transform_sha256_sha256",
+        "repeat_transform_sha256_sha256",
+    }
+    if (
+        not isinstance(audit, Mapping)
+        or not audit_keys <= set(audit)
+        or audit["neighborhood_count"] != H2B_C1_NEIGHBORHOOD_COUNT
+        or audit["row_count"] != H2B_FIXED_NLOC
+    ):
+        return False, manifest, arrays, 0
+    if type(audit["representative_count"]) is not int:
+        return False, manifest, arrays, 0
+    orbit_count = audit["representative_count"]
+    if orbit_count < 1 or orbit_count > H2B_P1_MAX_UNIQUE_FACTORS:
+        return False, manifest, arrays, 0
+    if not _c1_orbit_partition_valid(
+        audit,
+        arrays["orbit_ids"],
+        arrays["representative_ids"],
+        arrays["metadata_sha256"],
+    ):
+        return False, manifest, arrays, 0
+    audit_hashes = {
+        "neighborhood_ids_sha256": arrays["neighborhood_ids"],
+        "orbit_ids_sha256": arrays["orbit_ids"],
+        "representative_ids_sha256": arrays["representative_ids"],
+        "metadata_sha256_sha256": arrays["metadata_sha256"],
+        "provenance_sha256_sha256": arrays["provenance_sha256"],
+        "row_token_sha256_sha256": arrays["row_token_sha256"],
+        "row_provenance_sha256_sha256": arrays["row_provenance_sha256"],
+        "permutations_sha256": arrays["permutations"],
+        "phases_sha256": arrays["phases"],
+        "transform_sha256_sha256": arrays["transform_sha256"],
+        "repeat_transform_sha256_sha256": arrays["repeat_transform_sha256"],
+    }
+    if any(audit[key] != _array_sha256(value) for key, value in audit_hashes.items()):
+        return False, manifest, arrays, 0
+    audit_zero = dict(audit)
+    audit_zero["retained_metadata_bytes"] = 0
+    expected_metadata_bytes = sum(
+        int(arrays[name].nbytes)
+        for name in C1_ORBIT_METADATA_ARRAY_NAMES
+        if name in arrays
+    ) + len(_canonical_json(audit_zero))
+    audit_metadata_bytes = audit.get("retained_metadata_bytes")
+    if (
+        type(audit_metadata_bytes) is not int
+        or audit_metadata_bytes != expected_metadata_bytes
+    ):
+        return False, manifest, arrays, 0
+    metadata_bytes = manifest.get("retained_metadata_bytes")
+    if (
+        type(metadata_bytes) is not int
+        or metadata_bytes != c1_retained_metadata_bytes(manifest, arrays)
+        or metadata_bytes > H2B_C1_METADATA_LIMIT_BYTES
+        or measurement.get("retained_orbit_metadata_bytes") != metadata_bytes
+    ):
+        return False, manifest, arrays, 0
+    patch_names = {
+        "patch_neighborhood_ids",
+        "patch_hermitian_row_numerator_squared",
+        "patch_congruence_row_numerator_squared",
+        "patch_congruence_row_denominator_squared",
+        "patch_member_action",
+        "patch_transformed_action",
+        "patch_member_exact_action",
+    }
+    records = manifest.get("patch_audits")
+    if not isinstance(records, list):
+        return False, manifest, arrays, 0
+    if controlled_reason == "predicted_live_set_gate":
+        if records or any(name in arrays for name in patch_names):
+            return False, manifest, arrays, 0
+        return True, manifest, arrays, 0
+    if controlled_reason == "candidate_representative_limit":
+        if records or any(name in arrays for name in patch_names) or orbit_count <= H2B_P1_MAX_UNIQUE_FACTORS:
+            return False, manifest, arrays, 0
+        return True, manifest, arrays, 0
+    if processed_count != len(records) or processed_count <= 0 or processed_count > H2B_C1_NEIGHBORHOOD_COUNT:
+        return False, manifest, arrays, 0
+    if any(name not in arrays for name in patch_names):
+        return False, manifest, arrays, 0
+    expected_array_shapes = {
+        "patch_neighborhood_ids": (processed_count,),
+        "patch_hermitian_row_numerator_squared": (processed_count, H2B_FIXED_NLOC),
+        "patch_congruence_row_numerator_squared": (processed_count, H2B_FIXED_NLOC),
+        "patch_congruence_row_denominator_squared": (processed_count, H2B_FIXED_NLOC),
+        "patch_member_action": (processed_count, 2, H2B_FIXED_NLOC),
+        "patch_transformed_action": (processed_count, 2, H2B_FIXED_NLOC),
+        "patch_member_exact_action": (processed_count, 2, H2B_FIXED_NLOC),
+    }
+    expected_patch_dtypes = {
+        "patch_neighborhood_ids": np.dtype(np.int32),
+        "patch_hermitian_row_numerator_squared": np.dtype(np.float64),
+        "patch_congruence_row_numerator_squared": np.dtype(np.float64),
+        "patch_congruence_row_denominator_squared": np.dtype(np.float64),
+        "patch_member_action": np.dtype(np.complex128),
+        "patch_transformed_action": np.dtype(np.complex128),
+        "patch_member_exact_action": np.dtype(np.complex128),
+    }
+    if any(
+        arrays[name].shape != shape
+        or arrays[name].dtype != expected_patch_dtypes[name]
+        for name, shape in expected_array_shapes.items()
+    ):
+        return False, manifest, arrays, 0
+    expected_patch_order = np.asarray(
+        sorted(
+            range(H2B_C1_NEIGHBORHOOD_COUNT),
+            key=lambda neighborhood_id: (
+                int(arrays["orbit_ids"][neighborhood_id]),
+                int(neighborhood_id),
+            ),
+        ),
+        dtype=np.int32,
+    )
+    if not np.array_equal(arrays["patch_neighborhood_ids"], expected_patch_order[:processed_count]):
+        return False, manifest, arrays, 0
+    for index, record in enumerate(records):
+        neighborhood_id = int(expected_patch_order[index])
+        partial_numeric_last = (
+            controlled_reason == "c1_patch_or_action_gate"
+            and index == processed_count - 1
+        )
+        record_keys = {
+            "neighborhood_id", "patch_order_index", "orbit_id", "representative_id",
+            "key_sha256", "transform", "transform_sha256", "repeat_transform_sha256",
+            "matrix_sha256", "repeat_matrix_sha256", "comparison_matrix_sha256",
+            "finite", "deterministic", "matrix_materialized", "factorization_called",
+            "hermitian_error", "congruence_relative_error",
+            "patch_action_relative_error", "exact_action_relative_error",
+            "congruence_row_numerator_squared_sha256",
+            "congruence_row_denominator_squared_sha256",
+            "hermitian_row_numerator_squared_sha256",
+            "member_patch_action_sha256", "transformed_patch_action_sha256",
+            "member_exact_action_sha256",
+        }
+        if not isinstance(record, Mapping) or not record_keys <= set(record):
+            return False, manifest, arrays, processed_count
+        if (
+            record["neighborhood_id"] != neighborhood_id
+            or record.get("patch_order_index") != index
+            or any(
+                not _valid_hash(record.get(key))
+                for key in (
+                    "key_sha256", "transform_sha256", "repeat_transform_sha256",
+                    "matrix_sha256", "repeat_matrix_sha256", "comparison_matrix_sha256",
+                    "congruence_row_numerator_squared_sha256",
+                    "congruence_row_denominator_squared_sha256",
+                    "hermitian_row_numerator_squared_sha256",
+                    "member_patch_action_sha256", "transformed_patch_action_sha256",
+                    "member_exact_action_sha256",
+                )
+            )
+            or (
+                not partial_numeric_last
+                and record.get("matrix_sha256") != record.get("repeat_matrix_sha256")
+            )
+            or record.get("finite") is not True
+            or type(record.get("deterministic")) is not bool
+            or (not partial_numeric_last and record.get("deterministic") is not True)
+            or record.get("matrix_materialized") is not False
+            or record.get("factorization_called") is not False
+            or not all(
+                key in record
+                for key in (
+                    "hermitian_error", "congruence_relative_error",
+                    "patch_action_relative_error", "exact_action_relative_error",
+                )
+            )
+            or any(
+                not isinstance(record[key], (int, float))
+                or isinstance(record[key], bool)
+                or not math.isfinite(float(record[key]))
+                or float(record[key]) < 0.0
+                for key in (
+                    "hermitian_error", "congruence_relative_error",
+                    "patch_action_relative_error", "exact_action_relative_error",
+                )
+            )
+        ):
+            return False, manifest, arrays, processed_count
+        transform = record.get("transform")
+        transform_keys = {
+            "schema", "row_count", "reference_metadata_sha256",
+            "member_metadata_sha256", "reference_provenance_sha256",
+            "member_provenance_sha256", "permutation_sha256", "phases_sha256",
+            "transform_sha256", "phase_unit_error", "unitary_error", "finite",
+            "bijection", "matrix_materialized",
+        }
+        if (
+            not isinstance(transform, Mapping)
+            or not transform_keys <= set(transform)
+            or transform["schema"] != "task037.extra.h2b.canonical-congruence.c0.v1"
+            or transform["row_count"] != H2B_FIXED_NLOC
+            or any(
+                not _valid_hash(transform.get(key))
+                for key in (
+                    "reference_metadata_sha256", "member_metadata_sha256",
+                    "reference_provenance_sha256", "member_provenance_sha256",
+                    "permutation_sha256", "phases_sha256", "transform_sha256",
+                )
+            )
+        ):
+            return False, manifest, arrays, processed_count
+        representative_id = int(arrays["representative_ids"][neighborhood_id])
+        if (
+            transform["reference_metadata_sha256"]
+            != _c1_hash_row(arrays["metadata_sha256"][representative_id])
+            or transform["member_metadata_sha256"]
+            != _c1_hash_row(arrays["metadata_sha256"][neighborhood_id])
+            or transform["reference_provenance_sha256"]
+            != _c1_hash_row(arrays["provenance_sha256"][representative_id])
+            or transform["member_provenance_sha256"]
+            != _c1_hash_row(arrays["provenance_sha256"][neighborhood_id])
+        ):
+            return False, manifest, arrays, processed_count
+        try:
+            from src.solvers.hcurl_h2b_canonical_congruence import MonomialTransform
+
+            rebuilt_transform = MonomialTransform(
+                permutation=np.array(
+                    arrays["permutations"][neighborhood_id], dtype=np.int32, copy=True
+                ),
+                phases=np.array(
+                    arrays["phases"][neighborhood_id], dtype=np.complex128, copy=True
+                ),
+                reference_metadata_sha256=transform["reference_metadata_sha256"],
+                member_metadata_sha256=transform["member_metadata_sha256"],
+                reference_provenance_sha256=transform["reference_provenance_sha256"],
+                member_provenance_sha256=transform["member_provenance_sha256"],
+                transform_sha256=transform["transform_sha256"],
+            )
+        except (TypeError, ValueError):
+            return False, manifest, arrays, processed_count
+        if (
+            transform.get("permutation_sha256") != _array_sha256(arrays["permutations"][neighborhood_id])
+            or transform.get("phases_sha256") != _array_sha256(arrays["phases"][neighborhood_id])
+            or transform.get("transform_sha256") != _c1_hash_row(arrays["transform_sha256"][neighborhood_id])
+            or record.get("transform_sha256") != _c1_hash_row(arrays["transform_sha256"][neighborhood_id])
+            or record.get("repeat_transform_sha256") != _c1_hash_row(arrays["repeat_transform_sha256"][neighborhood_id])
+            or record.get("transform_sha256") != record.get("repeat_transform_sha256")
+            or transform["transform_sha256"] != rebuilt_transform.transform_sha256
+            or transform["phase_unit_error"] != rebuilt_transform.phase_unit_error
+            or transform["unitary_error"] != rebuilt_transform.unitary_error
+            or transform["finite"] is not True
+            or transform["bijection"] is not True
+            or transform["matrix_materialized"] is not False
+        ):
+            return False, manifest, arrays, processed_count
+        row_num = arrays["patch_congruence_row_numerator_squared"][index]
+        row_den = arrays["patch_congruence_row_denominator_squared"][index]
+        member_action = arrays["patch_member_action"][index]
+        transformed_action = arrays["patch_transformed_action"][index]
+        member_exact = arrays["patch_member_exact_action"][index]
+        if (
+            record.get("congruence_row_numerator_squared_sha256") != _array_sha256(row_num)
+            or record.get("congruence_row_denominator_squared_sha256") != _array_sha256(row_den)
+            or record.get("hermitian_row_numerator_squared_sha256") != _array_sha256(arrays["patch_hermitian_row_numerator_squared"][index])
+            or record.get("member_patch_action_sha256") != _array_sha256(member_action)
+            or record.get("transformed_patch_action_sha256") != _array_sha256(transformed_action)
+            or record.get("member_exact_action_sha256") != _array_sha256(member_exact)
+        ):
+            return False, manifest, arrays, processed_count
+    return True, manifest, arrays, processed_count
+
+
+def _c1_numeric_state(
+    manifest: Mapping[str, Any],
+    arrays: Mapping[str, Any],
+    *,
+    processed_count: int,
+    controlled_reason: str | None,
+) -> tuple[bool, bool, int | None]:
+    """Return evidence validity, Gate result, and the first failing index."""
+
+    import numpy as np
+
+    records = manifest.get("patch_audits")
+    if (
+        not isinstance(records, list)
+        or type(processed_count) is not int
+        or processed_count <= 0
+        or len(records) != processed_count
+    ):
+        return False, False, None
+    failure_index: int | None = None
+    for index, record in enumerate(records):
+        if not isinstance(record, Mapping):
+            return False, False, None
+        try:
+            row_num = np.asarray(arrays["patch_congruence_row_numerator_squared"][index])
+            row_den = np.asarray(arrays["patch_congruence_row_denominator_squared"][index])
+            herm_num = np.asarray(arrays["patch_hermitian_row_numerator_squared"][index])
+            member_action = np.asarray(arrays["patch_member_action"][index])
+            transformed_action = np.asarray(arrays["patch_transformed_action"][index])
+            member_exact = np.asarray(arrays["patch_member_exact_action"][index])
+        except (KeyError, IndexError, TypeError):
+            return False, False, None
+        if any(
+            not np.issubdtype(array.dtype, np.number)
+            or not np.all(np.isfinite(array))
+            or np.any(array < 0.0)
+            for array in (row_num, row_den, herm_num)
+        ) or any(
+            not np.all(np.isfinite(array))
+            for array in (member_action, transformed_action, member_exact)
+        ):
+            return False, False, None
+        denominator = float(np.sum(row_den, dtype=np.float64))
+        member_norm = float(np.linalg.norm(member_action))
+        if denominator <= 0.0 or member_norm <= 0.0:
+            return False, False, None
+        values = {
+            "hermitian_error": float(
+                np.sqrt(np.sum(herm_num, dtype=np.float64) / denominator)
+            ),
+            "congruence_relative_error": float(
+                np.sqrt(np.sum(row_num, dtype=np.float64) / denominator)
+            ),
+            "patch_action_relative_error": float(
+                np.linalg.norm(member_action - transformed_action) / member_norm
+            ),
+            "exact_action_relative_error": float(
+                np.linalg.norm(member_action - member_exact) / member_norm
+            ),
+        }
+        for name, value in values.items():
+            if (
+                not math.isfinite(value)
+                or name not in record
+                or not isinstance(record[name], (int, float))
+                or isinstance(record[name], bool)
+                or not math.isclose(
+                    value,
+                    float(record[name]),
+                    rel_tol=1.0e-12,
+                    abs_tol=1.0e-14,
+                )
+            ):
+                return False, False, None
+        gate_failed = any(value > H2B_C1_CLOSURE_LIMIT for value in values.values())
+        if (
+            controlled_reason == "c1_patch_or_action_gate"
+            and index == processed_count - 1
+            and (
+                record.get("matrix_sha256") != record.get("repeat_matrix_sha256")
+                or record.get("deterministic") is False
+            )
+        ):
+            gate_failed = True
+        if gate_failed and failure_index is None:
+            failure_index = index
+    return True, failure_index is None, failure_index
+
+
+def _c1_numeric_gate(
+    manifest: Mapping[str, Any],
+    arrays: Mapping[str, Any],
+) -> bool:
+    """Recompute a complete patch/action/Hermitian numeric Gate."""
+
+    evidence_valid, gate_pass, _failure_index = _c1_numeric_state(
+        manifest,
+        arrays,
+        processed_count=H2B_C1_NEIGHBORHOOD_COUNT,
+        controlled_reason=None,
+    )
+    return evidence_valid and gate_pass
+
+
+def _c1_check_raw(
+    run_dir: Path, checker_source: Mapping[str, Any] | None = None
+) -> dict[str, Any]:
+    """Independently validate one C1 raw campaign without factorization."""
+
+    import numpy as np
+
+    run_dir = run_dir.resolve()
+    watchdog = _read_json(run_dir / "c1_watchdog_summary.json")
+    stage = _read_json(run_dir / "stage_summary.json")
+    worker = _read_json(run_dir / "c1_summary.json")
+    authority = _p1_authority()
+    controlled = worker.get("controlled_stop")
+    controlled_reason = controlled.get("reason") if isinstance(controlled, Mapping) else None
+    watchdog_stage = watchdog.get("stage")
+    watchdog_c1 = watchdog.get("c1")
+    phase_identity = worker.get("phase_identity")
+    checks: dict[str, bool] = {}
+    problems: list[str] = []
+    source_values = (
+        watchdog.get("source_at_start"), watchdog.get("source_at_end"),
+        stage.get("source_at_start"), stage.get("source_at_end"),
+        worker.get("source_at_start"), worker.get("source_at_end"),
+    )
+    checks["watchdog_evidence"] = bool(
+        watchdog.get("schema") == H2B_C1_WATCHDOG_SCHEMA
+        and _evidence_valid(watchdog)
+        and watchdog.get("run_dir") == str(run_dir)
+        and watchdog.get("scope") == _c1_scope()
+        and watchdog.get("identity") == _fixed_identity()
+    )
+    checks["source_authority"] = bool(
+        _source_pair_valid(source_values[0], source_values[1])
+        and _source_pair_valid(source_values[2], source_values[3])
+        and _source_pair_valid(source_values[4], source_values[5])
+        and all(_checker_source_valid(value) for value in source_values)
+        and source_values[0] == source_values[2] == source_values[4]
+    )
+    worker_start = worker.get("source_at_start")
+    stage_start = stage.get("source_at_start")
+    checks["checker_source"] = bool(
+        _checker_source_valid(checker_source)
+        and isinstance(worker_start, Mapping)
+        and isinstance(stage_start, Mapping)
+        and checker_source["source_commit_full_sha"]
+        == worker_start.get("source_commit_full_sha")
+        and checker_source["source_commit_full_sha"]
+        == stage_start.get("source_commit_full_sha")
+    )
+    checks["command_identity"] = _c1_command_identity_valid(watchdog, stage, worker, run_dir)
+    stage_timeline: dict[str, Any] | None = None
+    c1_timeline: dict[str, Any] | None = None
+    try:
+        stage_timeline = _timeline_metrics(run_dir / "stage_timeline.jsonl", "stage")
+        c1_timeline = _timeline_metrics(run_dir / "c1_timeline.jsonl", "c1")
+    except _worker_error_types() as exc:
+        problems.append(f"timeline:{type(exc).__name__}")
+    checks["stage_lifecycle"] = bool(
+        stage.get("schema") == H2B_WORKER_SCHEMA
+        and stage.get("status") == "measurement_complete"
+        and stage.get("error") is None
+        and stage.get("phase_identity") == _phase_identity(jit_api=True, compile_called=True, compiler_probe=True)
+        and isinstance(watchdog_stage, Mapping)
+        and type(watchdog_stage.get("return_code")) is int
+        and watchdog_stage.get("return_code") == 0
+        and watchdog_stage.get("termination") is None
+        and watchdog_stage.get("processes_gone_before_c1") is True
+        and watchdog_stage.get("monitor_rss_limit_bytes") == H2B_C1_WATCHDOG_RSS_LIMIT_BYTES
+        and stage_timeline is not None
+        and stage_timeline["peak_rss_bytes"] < H2B_C1_WATCHDOG_RSS_LIMIT_BYTES
+        and stage_timeline["swap_bytes"] == 0
+    )
+    checks["stage_form"] = bool(
+        _form_files_valid(run_dir, stage.get("form"))
+        and _form_files_valid(run_dir, worker.get("form"))
+        and _forms_match(stage.get("form"), worker.get("form"), run_dir)
+    )
+    checks["c1_lifecycle"] = bool(
+        worker.get("schema") == H2B_C1_WORKER_SCHEMA
+        and worker.get("phase") == "c1"
+        and isinstance(watchdog_c1, Mapping)
+        and type(watchdog_c1.get("return_code")) is int
+        and (
+            (
+                controlled_reason is None
+                and watchdog_c1.get("return_code") == 0
+            )
+            or (
+                controlled_reason is not None
+                and watchdog_c1.get("return_code") == 1
+            )
+        )
+        and watchdog_c1.get("termination") is None
+        and watchdog_c1.get("processes_gone_after_c1") is True
+        and watchdog_c1.get("monitor_rss_limit_bytes") == H2B_C1_WATCHDOG_RSS_LIMIT_BYTES
+        and c1_timeline is not None
+        and c1_timeline["peak_rss_bytes"] < H2B_C1_COMPLETED_RSS_LIMIT_BYTES
+        and c1_timeline["swap_bytes"] == 0
+    )
+    checks["c1_phase_identity"] = phase_identity == _c1_phase_identity()
+    measurement = worker.get("measurement")
+    expected_patch_order = (
+        measurement.get("patch_neighborhood_ids")
+        if isinstance(measurement, Mapping)
+        else None
+    )
+    if not isinstance(expected_patch_order, list):
+        expected_patch_order = None
+    try:
+        discovery_digest = _c1_discovery_digest(run_dir / "c1_progress.jsonl")
+    except _worker_error_types() as exc:
+        discovery_digest = None
+        problems.append(f"discovery_digest:{type(exc).__name__}")
+    checks["neighborhood_digest"] = bool(
+        isinstance(measurement, Mapping)
+        and _valid_hash(discovery_digest)
+        and measurement.get("neighborhood_digest") == discovery_digest
+    )
+    checks["c1_progress"] = False
+    processed_count = 0
+    try:
+        checks["c1_progress"], processed_count = _c1_progress_state(
+            run_dir / "c1_progress.jsonl",
+            controlled_reason,
+            expected_patch_order,
+            expected_neighborhood_digest=(
+                measurement.get("neighborhood_digest")
+                if isinstance(measurement, Mapping)
+                else None
+            ),
+            expected_candidate_count=(
+                measurement.get("candidate_representative_count")
+                if isinstance(measurement, Mapping)
+                else None
+            ),
+        )
+    except _worker_error_types() as exc:
+        problems.append(f"progress:{type(exc).__name__}")
+    preflight = measurement.get("preflight_live_set") if isinstance(measurement, Mapping) else None
+    if controlled_reason in {
+        "candidate_representative_limit", "MONOMIAL_TRANSFORM_NOT_PROVEN"
+    }:
+        preflight_ok = preflight is None
+    elif controlled_reason == "predicted_live_set_gate":
+        preflight_ok = (
+            isinstance(preflight, Mapping)
+            and preflight.get("predicted_live_set_gate") is False
+            and type(preflight.get("predicted_live_set_bytes")) is int
+            and preflight.get("predicted_live_set_bytes") >= H2B_C1_PREDICTED_LIVE_SET_LIMIT_BYTES
+        )
+    else:
+        preflight_ok = (
+            isinstance(preflight, Mapping)
+            and preflight.get("predicted_live_set_gate") is True
+            and type(preflight.get("predicted_live_set_bytes")) is int
+            and preflight.get("predicted_live_set_bytes") < H2B_C1_PREDICTED_LIVE_SET_LIMIT_BYTES
+        )
+    checks["c1_measurement"] = bool(
+        isinstance(measurement, Mapping)
+        and measurement.get("p6") == {
+            "global_cells": H2B_FIXED_CELLS,
+            "local_cells": H2B_FIXED_CELLS,
+            "local_nloc": H2B_FIXED_NLOC,
+            "global_rows": H2B_FIXED_ROWS,
+            "constraint_count": H2B_FIXED_CONSTRAINTS,
+        }
+        and measurement.get("class_count") == H2B_FIXED_CLASSES
+        and measurement.get("cell_count") == H2B_FIXED_CELLS
+        and measurement.get("neighborhood_count") == H2B_C1_NEIGHBORHOOD_COUNT
+        and measurement.get("unique_neighborhood_count") == H2B_C1_NEIGHBORHOOD_COUNT
+        and preflight_ok
+        and type(measurement.get("max_live_patch_matrix_count")) is int
+        and measurement.get("max_live_patch_matrix_count") <= 3
+        and measurement.get("cell_dense_tensors_retained") is False
+        and measurement.get("form") == worker.get("form")
+        and measurement.get("cache") == worker.get("cache")
+        and measurement.get("authority") == authority["producer_authority"]
+    )
+    checks["resource"] = bool(
+        stage_timeline is not None
+        and c1_timeline is not None
+        and stage_timeline["peak_rss_bytes"] < H2B_C1_WATCHDOG_RSS_LIMIT_BYTES
+        and c1_timeline["peak_rss_bytes"] < H2B_C1_COMPLETED_RSS_LIMIT_BYTES
+        and stage_timeline["swap_bytes"] == 0
+        and c1_timeline["swap_bytes"] == 0
+    )
+    checks["manifest"] = False
+    checks["patch_audit"] = False
+    checks["numeric_evidence"] = False
+    checks["numeric_gate"] = False
+    manifest: dict[str, Any] | None = None
+    arrays: dict[str, Any] | None = None
+    try:
+        manifest_ok, manifest, arrays, _ = _c1_manifest_valid(
+            run_dir, worker, authority, controlled_reason, processed_count
+        )
+        checks["manifest"] = manifest_ok
+        checks["patch_audit"] = manifest_ok
+        if controlled_reason in {
+            "candidate_representative_limit",
+            "MONOMIAL_TRANSFORM_NOT_PROVEN",
+            "predicted_live_set_gate",
+        }:
+            checks["numeric_evidence"] = manifest_ok
+            checks["numeric_gate"] = manifest_ok
+        elif manifest_ok and arrays is not None:
+            numeric_evidence, numeric_pass, failure_index = _c1_numeric_state(
+                manifest,
+                arrays,
+                processed_count=processed_count,
+                controlled_reason=controlled_reason,
+            )
+            checks["numeric_evidence"] = numeric_evidence
+            if controlled_reason is None:
+                checks["numeric_gate"] = (
+                    numeric_evidence
+                    and numeric_pass
+                    and processed_count == H2B_C1_NEIGHBORHOOD_COUNT
+                )
+            elif controlled_reason == "c1_patch_or_action_gate":
+                records = manifest.get("patch_audits")
+                controlled_id = (
+                    controlled.get("neighborhood_id")
+                    if isinstance(controlled, Mapping)
+                    else None
+                )
+                checks["numeric_gate"] = bool(
+                    numeric_evidence
+                    and not numeric_pass
+                    and failure_index == processed_count - 1
+                    and isinstance(records, list)
+                    and records
+                    and isinstance(records[-1], Mapping)
+                    and controlled_id == records[-1].get("neighborhood_id")
+                )
+            elif controlled_reason == "c1_patch_count_incomplete":
+                checks["numeric_gate"] = bool(
+                    numeric_evidence
+                    and numeric_pass
+                    and processed_count < H2B_C1_NEIGHBORHOOD_COUNT
+                    and isinstance(controlled, Mapping)
+                    and controlled.get("patch_count") == processed_count
+                )
+    except _worker_error_types() as exc:
+        problems.append(f"manifest:{type(exc).__name__}")
+    candidate_count = measurement.get("candidate_representative_count") if isinstance(measurement, Mapping) else None
+    checks["candidate_limit"] = (
+        type(candidate_count) is int
+        and (
+            candidate_count > H2B_P1_MAX_UNIQUE_FACTORS
+            if controlled_reason == "candidate_representative_limit"
+            else 0 < candidate_count <= H2B_P1_MAX_UNIQUE_FACTORS
+        )
+    )
+    checks["no_factorization"] = bool(
+        isinstance(phase_identity, Mapping)
+        and phase_identity.get("factorization_called") is False
+        and phase_identity.get("factor_store_writer_called") is False
+        and (manifest is None or (manifest.get("factorization_called") is False and manifest.get("factor_store_written") is False))
+    )
+    checks["raw_artifacts"] = _c1_artifacts_match(
+        run_dir,
+        watchdog.get("raw_artifacts"),
+        controlled_reason=controlled_reason,
+        patch_count=processed_count,
+    )
+    if controlled_reason is not None:
+        problems.append(controlled_reason)
+    failed_checks = [name for name, value in checks.items() if not value]
+    problems.extend(name for name in failed_checks if name not in problems)
+    passed = not controlled_reason and all(checks.values()) and worker.get("status") == "measurement_complete" and watchdog.get("status") == "pass"
+    result: dict[str, Any] = {
+        "schema": H2B_C1_CHECK_SCHEMA,
+        "status": "pass" if passed else "gate_failed",
+        "pass": bool(passed),
+        "route": "C1-PASS-C2-ELIGIBLE" if passed else "M0-review-only",
+        "checks": checks,
+        "problems": problems,
+        "measurements": measurement if passed else None,
+        "failure_measurements": None if passed else measurement,
+        "authority": authority["producer_authority"],
+        "raw_artifacts": watchdog.get("raw_artifacts"),
+        "watchdog_summary": _artifact(run_dir, "c1_watchdog_summary.json"),
+    }
+    return result
+
+
+def _run_c1_check(run_dir: Path, output: Path) -> int:
+    try:
+        checker_source: Any = _light_source()
+    except _worker_error_types() as exc:
+        checker_source = {"git_error": f"{type(exc).__name__}: {exc}"}
+    try:
+        result = _c1_check_raw(run_dir, checker_source)
+    except _worker_error_types() as exc:
+        result = {
+            "schema": H2B_C1_CHECK_SCHEMA,
+            "status": "gate_failed",
+            "pass": False,
+            "route": "M0-review-only",
+            "checks": {},
+            "problems": [f"raw_unreadable:{type(exc).__name__}"],
+            "measurements": None,
+            "failure_measurements": None,
+        }
+    result["checker_source"] = checker_source
+    _write_json(output.resolve(), _attach_evidence(result))
+    print(f"H2B-C1 check status={result['status']} output={output.resolve()}", flush=True)
+    return 0 if result["pass"] else 1
 
 
 def _s0_artifacts_match(run_dir: Path, recorded: Any) -> bool:
@@ -4576,6 +6834,33 @@ def _p1_authority() -> dict[str, Any]:
             "touching_cell_count": measurements["patch"]["touching_cell_count"],
             "touching_class_count": measurements["patch"]["touching_class_count"],
         },
+    }
+
+
+def _c1_cell_metadata(
+    reference: Any,
+    class_record: Any,
+    inventory_item: Mapping[str, Any],
+    operator_identity: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Project one fresh R2 expansion into the C0 metadata-only carrier."""
+
+    expansion = class_record.expansion
+    return {
+        "class_key_sha256": str(class_record.class_key_sha256),
+        "constraint_pattern_sha256": str(class_record.constraint_pattern_sha256),
+        "expansion_pattern_sha256": str(class_record.expansion_pattern_sha256),
+        "numeric_matrix_sha256": str(class_record.numeric_matrix_sha256),
+        "orientation_identity": inventory_item["orientation"],
+        "material_identity": inventory_item["material_identity"],
+        "operator_identity": dict(operator_identity),
+        "cell_metric_identity": {"widths": inventory_item["cell_widths"]},
+        "independent_global_rows": np.asarray(
+            reference.independent_global_rows, dtype=np.int64
+        ),
+        "csr_offsets": np.asarray(expansion.offsets, dtype=np.int32),
+        "csr_columns": np.asarray(expansion.column_indices, dtype=np.int32),
+        "coefficients": np.asarray(expansion.coefficients, dtype=np.complex128),
     }
 
 
@@ -6466,6 +8751,7 @@ def _parser() -> argparse.ArgumentParser:
         ("s0-worker", _run_s0_worker),
         ("p0-worker", _run_p0_worker),
         ("p1-worker", _run_p1_worker),
+        ("c1-worker", _run_c1_worker),
     ):
         item = sub.add_parser(name)
         item.add_argument("--run-dir", required=True)
@@ -6504,6 +8790,15 @@ def _parser() -> argparse.ArgumentParser:
     p1_checker.set_defaults(
         handler=lambda args: _run_p1_check(Path(args.run_dir), Path(args.output))
     )
+    c1_watchdog = sub.add_parser("c1-watchdog")
+    c1_watchdog.add_argument("--run-dir", required=True)
+    c1_watchdog.set_defaults(handler=_run_c1_watchdog)
+    c1_checker = sub.add_parser("c1-check")
+    c1_checker.add_argument("--run-dir", required=True)
+    c1_checker.add_argument("--output", required=True)
+    c1_checker.set_defaults(
+        handler=lambda args: _run_c1_check(Path(args.run_dir), Path(args.output))
+    )
     return parser
 
 
@@ -6515,10 +8810,12 @@ def main(argv: list[str] | None = None) -> int:
         "s0-worker",
         "p0-worker",
         "p1-worker",
+        "c1-worker",
         "watchdog",
         "s0-watchdog",
         "p0-watchdog",
         "p1-watchdog",
+        "c1-watchdog",
     }:
         return int(args.handler(Path(args.run_dir)))
     return int(args.handler(args))
