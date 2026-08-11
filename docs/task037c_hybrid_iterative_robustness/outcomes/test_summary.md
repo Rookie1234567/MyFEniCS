@@ -91,3 +91,29 @@ solver、runner、阈值或数值配置。修复后的该次 run 内无自动重
 `TASK037C_S_POL_1DEG_AZIMUTH_ROBUSTNESS_PASS_UNDER_USER_AUTHORIZED_RESEARCH_EXTENSION`，
 不是 `production-qualified`。文档-only 修改后只需重跑文档合同、Markdown rendering、
 compileall 和 diff-check，不重复完整 pytest 或 PDE。
+
+### Integration finalization evidence
+
+以上历史表保留 source research branch 的原始测试身份，不改写其结论。
+当前 canonical selective integration 的 code/test parent 是
+`ec11350e51ab5cbc0397dbeef8098334b8ad74bb`：
+
+- 唯一 `python -m pytest -q)：955 passed、48 skipped、0 failed，exit 0，
+  1405.55 s；log `/tmp/task037c_r7_full_pytest_ec11350e.log`，
+  SHA256 `55062ac5e2a4eae158fbacf299df8a5b4ad2bc7157dd426c4565702b950ff880`，
+  size 1165 bytes。
+- 实际 integration focused 集合：122 passed in 12.28 s。
+- Case102 当前 `test_command.txt` 轻量集合：80 passed in 5.17 s。
+- MPI2 fixture：每 rank 2 passed in 2.34 s；MPI4 fixture：每 rank
+  2 passed in 5.49 s。
+- changed Python 的 Ruff check、其余19个文件的 format-check、compileall
+  与 diff-check 全部通过；`hybrid_internal_modes.py` 和
+  `stable_propagation.py` 的 formatter failure 是 origin/master inherited
+  baseline debt，未移植9a51全文件格式提交。
+
+唯一 MPI8 anchor 的完整 raw path、watchdog/online SHA 与逐项 numerical
+结果见 `response_v3.md §7.3`。其 own Gate 通过，resource classification
+为 MPI8 6144 MiB preferred 未通过；这不是 numerical failure。
+
+251/252 在当前 integration 白名单中未合入；本文件上方若出现它们的命令，
+只代表 source research branch 的历史实测，不代表当前 master 可执行文件。
