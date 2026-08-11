@@ -1,6 +1,6 @@
 # Task037-extra Review V9 consolidated response
 
-本文件保留并引用 [response_v8.md](response_v8.md)，不改写 V8 已记录的 H2B fixed-unit numeric hard stop、H2A 证据和历史结论。本轮新增的是 H2B-S0 证据、P0 run1/run2 历史受控停止、run3 exact-class formal PASS，以及针对已确认 execution defect 的窄修复测试结果。
+本文件保留并引用 [response_v8.md](response_v8.md)，不改写 V8 已记录的 H2B fixed-unit numeric hard stop、H2A 证据和历史结论。本轮新增的是 H2B-S0 证据、P0 run1/run2 历史受控停止、run3 exact-class formal PASS、P1 execution-fix formal 的第33因子受控停止，以及相应的窄修复测试结果。
 
 ## 用户授权与总状态
 
@@ -31,7 +31,7 @@
 | H2B-P0 原始 campaign | CONTROLLED_STOP / NOT_QUALIFIED | 旧 telemetry policy 在 stage 中止，online 未启动 |
 | H2B-P0 execution-fix rerun | CONTROLLED_STOP_TIMEOUT / NOT_QUALIFIED | stage 完成，P0 assembly 超时，未形成数值 summary |
 | H2B-P0 exact-class formal run3 | PASS / QUALIFIED | worker/checker 完成，42/42 checks true；仅代表性 central patch |
-| P1 | not_run / `ELIGIBLE_UNLOCKED` | P0 representative 已 qualification，P1 尚未运行 |
+| P1 | `CONTROLLED_STOP_UNIQUE_FACTOR_LIMIT / NOT_QUALIFIED` | 84-neighborhood campaign 在第33 factor停止；numeric/capacity Gate fail，不再重跑 |
 | H2B-K normalized two-level coercive solve | not_run / `locked_by_P1` | S0 失败后的 P 路线须先完成 P1 才能返回 K |
 | H2D / full-space matrix-free DtN | not_run / `locked_by_H2B-K` | H2B-K 未完成 |
 | H4 time-harmonic PDE | not_run / `locked_by_H2D` | 还须通过 H4 Gate |
@@ -111,7 +111,7 @@ element 对照的约 `0.953–0.975` 仍不合格；row-complete patch 五类全
 | tensor tabulations / reuse | `11 / 8` |
 | max live dense proxy / per-cell dense retained | `1 / false` |
 
-P1 仍需验证全部 exact-neighborhood classes、总 factor+metadata `<=500 MB` 和 predicted live set `<=1.7 GB`；不能把本次一个 patch 的 factor 或 online peak 外推为 P1/PDE 资格。
+P1 原 Gate 要求覆盖全部 exact-neighborhood classes、总 factor+metadata `<=500 MB` 和 predicted live set `<=1.7 GB`；本次已实际推进至 P1，但在第33个 unique factor处触发 numeric/capacity Gate fail，最终 factor payload 与 residual 未形成。不能把本次一个 patch 的 factor 或 online peak 外推为 P1/PDE 资格。
 
 ### 最可能的性能边界
 
@@ -133,9 +133,78 @@ implementation commit=`83609f3ac564530ebffea55e3e9e9d0726b33379`，代码与 foc
 
 run3 已测得 representative row-complete patch 的 factorization residual `7.886088118436545e-16`、solve residual `3.4228547837843815e-12`、condition estimate `7,388,382.1345291715`、pivot growth `1.2081134295646951`，以及五类 official patch `rho_star` 全部通过。element block 对照的 `0.953–0.975` 仍不合格；这正是为什么 P0 Gate 必须采用包含 touching 邻居贡献的 row-complete operator。run3 的 full-space rho/spill 仍只是 diagnostic，不替代 patch-row Gate。
 
-P0 只资格化一个 central representative（class=3、19 touching cells、11 touching classes），不是全部 neighborhood classes、全局 smoother 或 PDE。P1 仍需覆盖全部 exact-neighborhood classes，并验证总 factor+metadata `<=500 MB` 与 predicted live set `<=1.7 GB`。
+P0 只资格化一个 central representative（class=3、19 touching cells、11 touching classes），不是全部 neighborhood classes、全局 smoother 或 PDE。P1 原 Gate 要求覆盖全部 exact-neighborhood classes并验证总 factor+metadata `<=500 MB` 与 predicted live set `<=1.7 GB`；本次 P1 已在第33个 unique factor处停止，Gate 未满足，最终 payload/residual 未形成。
 
 用户要求的 MPI1 full PDE process-tree RSS `<2,000,000,000 B`、swap=0 和 direct authority physics comparison，本轮没有运行 PDE、没有 true PDE residual、没有 field/RTA，也没有 direct-method comparison；run3 stage 的 `1,277,276,160 B` 和 online 的 `767,352,832 B` 都不能冒充 full PDE peak。因此 H3/PDE qualification 仍为 none。
+
+## P1 formal：第33个 unique factor 受控停止
+
+### 授权边界与分类
+
+用户在 2026-08-11 明确授权：对具体 execution defect 可以持续定位、窄修、必要时执行修复后的 rerun，并在 Gate 通过后自动推进后续阶段；用户于 2026-08-12 本轮再次明确授权持续处理执行问题直至目标。授权覆盖了初始 P1 anchor false-fail 与 checker 修复，但不放宽数值、物理、RSS、swap、provenance 任何 Gate，也不覆盖当前 P1 数值停止，更不允许把数值负结果包装成 execution fix 重跑。第33个 unique numeric factor 是实际的数值/容量负结果，因此不再重跑。
+
+| P1 记录 | source / raw | status |
+|---|---|---|
+| initial run1 | `b5f8c2b9a736e532ca51e323644a2279c75063d2`；`h2b_p1_b5f8c2b_run1` | `CONTROLLED_EXECUTION_FAILURE / NOT_QUALIFIED`；per-source `finite` 缺失导致 worker false-fail，不是 numeric fail。stage peak `1,275,670,528 B`、online peak `801,951,744 B`、swap=0；v1 compact 保留。 |
+| execution-fix formal | `8a22239347aa6c14b0f487c256138a0bfa54c7dd`；`h2b_p1_8a22239_execution_fix_run1` | `CONTROLLED_STOP_UNIQUE_FACTOR_LIMIT / NOT_QUALIFIED`；anchor 契约通过后，numeric/capacity Gate 在第33 factor失败。 |
+
+P1 formal budget `1 + 1 execution-fix` 已用完。相关提交链为：v1 evidence `b68c0254e4a336104e1f2a616f928dbbda7bc33b`；anchor finite/failure metrics `6d9a76744d6b92483390eaf4d1853614c663acbe`；checker finite/evidence contract `8a22239347aa6c14b0f487c256138a0bfa54c7dd`；progress/provenance checker fix `674cdee63eb03df91b029e4efd929ddc5f17421c`；v3 evidence `61cd6a5b3ccbb9c33c4e00077853500ec1e961ac`。这些提交证明实现/checker contract，不构成 P1 数值通过。
+
+### execution-fix formal 的 measured 结果
+
+| 阶段/字段 | measured 值 | 边界 |
+|---|---:|---|
+| stage worker elapsed / watchdog wall | `23.850801 s / 24.706280 s` | stage RC0，正常完成 |
+| stage peak / swap | `1,276,121,088 B / 0 B` | `<1.5 GB`；不是 PDE peak |
+| P1 worker elapsed / watchdog wall | `124.180332 s / 125.042021 s` | worker RC1 的结构化 factor-limit stop |
+| P1 peak / swap | `987,938,816 B / 0 B` | `<1.7 GB`、swap=0；不是 PDE peak |
+| processes gone | `true` | stage/online 均回收 |
+| fixed predicted live set | `1,562,565,932 B` | 余量 `137,434,068 B`；predicted，不是 measured RSS |
+
+authority/discovery 闭合为 84 neighborhoods、252 cells、24 classes、173802 rows、882 nloc、9210 constraints；16 个 R2 class factors 已重构并释放。`p0_anchor_started -> p0_anchor_ready` 证明 worker 的 anchor finite 与 closure `<=1e-11` contract 通过，但 controlled summary 没有保留五个 source 的实际数值，所以五源 rho/closure/finite 必须记录为 `actual values=not_retained`，不能复用 P0 或 R2 数值。
+
+| factor campaign | 实际证据 |
+|---|---|
+| neighborhoods 0–31 | 32 个 unique factors 已完成 |
+| neighborhood 32 | matrix SHA=`3284fdf8334d49a4bd0be2db29c3981020ffe0fd3cc22490f945d4b7cf06093c`；key SHA=`621bbd6d1ec06ce8761ed9bb841632eb89c2c218bf9fbead32a8ff5c3d888914` |
+| controlled stop | `unique_numeric_factor_limit`；lower-bound=`33 > limit 32` |
+| P1 factor store | manifest 未写；P1 final factor payload、factorization residual、solve residual `not_formed` |
+
+这是精确 numeric SHA ledger 的新矩阵，不能用 tolerance 合并，也不能以冻结 R2 的16 factors替代P1 factor count。Review V9 因此把 P1 关闭为数值/容量负结果；不是 execution failure。
+
+### v1/v2/v3 compact 与 checker provenance
+
+v1 是 initial anchor false-fail 的历史输出。v2 是同一 frozen raw 经旧 checker 的过渡输出：第33因子 numeric stop 已存在，但真实 incomplete-start 序列使 `progress=false`。`674cdee63eb03df91b029e4efd929ddc5f17421c` 只修 checker 状态机/provenance，不改 raw、worker 或数值路径。随后同一 raw 只执行一次 lightweight checker 生成 v3：RC1 为预期的 numeric negative，23/23 checks 全 true，problems 仅 `unique_numeric_factor_limit`。
+
+| compact | file SHA | embedded evidence | status |
+|---|---|---|---|
+| v1 `h2b_expanded_neighborhood_factor_v1.json` | `80500bcec08a7b45c7088673007dbb8f92c6570875d6ed10a4bc3c6e21cd0724` | 初始 execution-failure evidence | 历史保留，非 numeric fail |
+| v2 `h2b_expanded_neighborhood_factor_v2.json` | `39aaa9522ea147c71ed7675cdde357e0931a13a97ed4e689661b07b590f5b374` | `adddd713827f38f87be7e031034b9c73f98de0fd73586f4ad216be2f7e89ffc7` | numeric stop，旧 progress false，永久保留 |
+| v3 `h2b_expanded_neighborhood_factor_v3.json` | `2e56bab2a4d2b074bdc8cff4a89a1c23dfe1932c4a0d4bceeff960a7d6eb387f` | `fa64bbc7238f19881e33e4f45827e2740a9ee6aba8742091bcb0ad5dd695b0df` | RC1、`gate_failed`、`pass=false`、23/23 checks true、唯一 problem 为 factor limit |
+
+v3 raw source=`8a22239347aa6c14b0f487c256138a0bfa54c7dd`；checker source=`674cdee63eb03df91b029e4efd929ddc5f17421c`，为另一个 clean SHA，二者没有混称。
+
+| raw artifact | SHA256 |
+|---|---|
+| `p1_watchdog_summary.json` | `e6007a13151ace5ecc0b3d626ab7f5436a43a8e90e66b8b337edb7b1a8812515` |
+| `p1_summary.json` | `30898ef68564dcfd7156c0dead0197861979d89ac09a40a447652ea717014894` |
+| `p1_progress.jsonl` | `f0e21c95eb5bc146d3a3acdfc2294f7dcbdad87ab79df4ad5d195fbddab4a861` |
+| `p1_timeline.jsonl` | `47e731f39adc21a54c6ca19e4c54b5e08574ceb9761c50df59ca4de2250b7b7b` |
+| `stage_summary.json` | `5caf190755af37f72bd86bf66e7ae8fbfc2803b09c2ceebe6c44b66e292d4e29` |
+| `stage_progress.jsonl` | `5c634a9ccc31bbf8c941a64a1c104a292fbe50e9b74e3c38611a10359b08a3a6` |
+| `stage_timeline.jsonl` | `7c947a25f31ab92d209d84b2a274232bb97f597ab03747f2c6c7c7b11a876507` |
+| `p1_stdout.log` | `8a926d1f42e8eb787382d1b71aee2e4683ac6264e109ea6237a273d813db5655` |
+| `p1_root_pid.txt` | `0eb4ab1460a30a6f9fff23dc4584681e60ce3c0bb1c7893926dc0371a32c4bc5` |
+| `stage_stdout.log` | `b35ee3352239a6e1139bbcd14653434495946c0fca87fcc92d58e685ad6ef1e7` |
+| `stage_root_pid.txt` | `aed48de12edc51ffeb4bd492d4db5cfe64aa51113ba2002d8bc5c1a0754f52d2` |
+
+冻结 R2 manifest `1bac2dab37ac19dfa6ab81834327b96e251b1178e0ff652a03347bdd0fa48f98`、R2 compact `2af81d454b89d63e1a5d03916286b527112dd76da34259712e73557918516c9c` 和 P0 v4 compact `2f1862043f9e75002f53230eee86f8c6ee68ac389b319397bd71b3bdd93fc75b` 仅作为 authority 输入，不能填充 P1 未形成的 factor/rho/solve 字段。
+
+### 后续依赖与停止边界
+
+P1 失败后 H2B-K normalized two-level coercive solve 仍 `locked_by_P1`；H2D/full-space matrix-free DtN `locked_by_H2B-K`；H4 time-harmonic PDE `locked_by_H2D`；official field/RTA `locked_by_H4 full solve + true residual/physics Gate`。P1 formal budget 已用完，numeric negative 禁止再跑。Review V9 §5.4 two-cell 未执行，它不提供 P1 factor-count 绕行。
+
+当前 full-space block-factor lane 在 P1 class-count Gate 关闭。若继续，需新的 review 定义有界、证明性的 exact permutation/phase-similarity canonical factor reuse 诊断；失败则转回 geometric MG 审阅。不得原样重跑 P1，不得无界扫描，不得制造 parallel evidence。MPI1 full PDE process-tree RSS `<2,000,000,000 B`、swap=0、direct-authority physics comparison 仍未测量/未达成；没有 PDE、true residual、field、RTA 或 direct comparison。
 
 ## Evidence index
 
@@ -158,6 +227,10 @@ P0 只资格化一个 central representative（class=3、19 touching cells、11 
 | run3 compact | `benchmarks/cases/101_task37_extra_development/records/h2b_row_complete_patch_exactclass_v4.json`；file `2f1862043f9e75002f53230eee86f8c6ee68ac389b319397bd71b3bdd93fc75b`；embedded `11f6a5a00557cf6ad11d4a9413a72283a7fd9ec9a5085a56e74b733538e75d47` |
 | v2 compact | `benchmarks/cases/101_task37_extra_development/records/h2b_row_complete_patch_v2.json`；SHA `d811b5d5fa834699088b255631a05621b61dbfdb6e150b36850c3eda8944ac3a`；byte-for-byte 保留 |
 | old compact | `.../h2b_row_complete_patch.json`；同 SHA `d811b5d5fa834699088b255631a05621b61dbfdb6e150b36850c3eda8944ac3a` |
+| P1 v1 compact | `benchmarks/cases/101_task37_extra_development/records/h2b_expanded_neighborhood_factor_v1.json`；file SHA `80500bcec08a7b45c7088673007dbb8f92c6570875d6ed10a4bc3c6e21cd0724`；raw source `b5f8c2b9a736e532ca51e323644a2279c75063d2` |
+| P1 v2 compact | `benchmarks/cases/101_task37_extra_development/records/h2b_expanded_neighborhood_factor_v2.json`；file SHA `39aaa9522ea147c71ed7675cdde357e0931a13a97ed4e689661b07b590f5b374`；raw source `8a22239347aa6c14b0f487c256138a0bfa54c7dd`；旧 checker 的 progress=false |
+| P1 v3 compact | `benchmarks/cases/101_task37_extra_development/records/h2b_expanded_neighborhood_factor_v3.json`；file SHA `2e56bab2a4d2b074bdc8cff4a89a1c23dfe1932c4a0d4bceeff960a7d6eb387f`；embedded `fa64bbc7238f19881e33e4f45827e2740a9ee6aba8742091bcb0ad5dd695b0df`；raw source `8a22239347aa6c14b0f487c256138a0bfa54c7dd`；checker source `674cdee63eb03df91b029e4efd929ddc5f17421c`；23/23 checks true |
+| P1 raw | `benchmarks/artifacts/task037_extra_development/h2b_p1_8a22239_execution_fix_run1`；watchdog SHA `e6007a13151ace5ecc0b3d626ab7f5436a43a8e90e66b8b337edb7b1a8812515`；summary SHA `30898ef68564dcfd7156c0dead0197861979d89ac09a40a447652ea717014894` |
 | V8 history | [response_v8.md](response_v8.md)，不覆盖 |
 
 ## 后续与 selective boundary
@@ -166,11 +239,11 @@ P0 只资格化一个 central representative（class=3、19 touching cells、11 
 |---|---|
 | H2B P0 code/test | research-only；exact-class implementation/test 已通过，representative P0 run3 已 formal qualification；不提升为 production default |
 | S0/P0 compact/raw/docs | 保留 hash-bound 正/负证据，不覆盖旧证据 |
-| P1 | `not_run / ELIGIBLE_UNLOCKED`；须覆盖全部 exact-neighborhood classes并重算总 Gate |
+| P1 | `CONTROLLED_STOP_UNIQUE_FACTOR_LIMIT / NOT_QUALIFIED`；第33 factor处 numeric/capacity Gate fail，后续保持 locked |
 | H2B-K normalized two-level coercive solve | `not_run / locked_by_P1`；S0 失败后的 P 路线须先完成 P1 才能返回 K |
 | H2D / full-space matrix-free DtN | `not_run / locked_by_H2B-K` |
 | H4 time-harmonic PDE | `not_run / locked_by_H2D` |
 | official field / RTA | `not_run / locked_by_H4`；H4 full solve + true residual/physics Gate |
 | ordinary default | unchanged |
 
-在用户 2026-08-11 的明确授权下，execution issue 可做窄修并重跑；本轮已记录的 run3 是 exact-class execution-fix 后的本次 P0 formal run3，也是该路径的一次正式 attempt。P0 formal PASS 后按 Review V9 Gate 自动推进，无需为一般执行问题等待新的 review。若出现数值负结果，严格走 Review V9 规定分支（包括 §5.4），不能以 execution fix 名义重跑。本轮未再启动新的 formal/heavy，也没有创建 H2D/H4/PDE outcome 或 record。
+在用户 2026-08-11、并于 2026-08-12 本轮再次明确授权下，execution issue 可做窄修并重跑；本轮已从 P0 PASS 实际推进至 P1。P1 的 `1 + 1 execution-fix` 预算已经用尽，并因第33个 unique factor 的 numeric/capacity 负结果停止；不得以 execution-fix 名义再次重跑。若出现其他数值负结果，严格走 Review V9 规定分支（包括 §5.4），不能包装为执行问题。P1 第33因子受控停止后未再启动 formal/heavy，也没有创建 H2D/H4/PDE outcome 或 record。
