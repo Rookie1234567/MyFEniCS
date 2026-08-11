@@ -52,3 +52,27 @@ middle E/H 均通过；失败值是显著 order power 的 relative delta，absol
 因为对应 direct 自身有效但 Full3D 比较未过，任务书允许每个非零 phi 一次 M160
 solver-vs-direct diagnostic。两次 diagnostic 都在 linear Gate失败，不能作为 M 选择、Full3D
 比较或 three-way pass 的输入。正式 R4、R5、R6 保持 `not_run_by_gate`。
+
+## Final f2d7719 / 2dbf898 closeout
+
+上段的 `not_run_by_gate` 只描述原 `6555663`、scalar traction、max_it=1600 冻结阶段；
+它不覆盖后续用户明确授权的 research extension。该扩展使用
+`full3d_one_cell_exact_schur`、固定 two-pass side correction、M120、restart90、
+zero initial 与 max_it=4500，并保持 ordinary defaults 不变。
+
+| phi | direct M120 self | direct M120-vs-M160 | direct M120-vs-Full3D | iterative M120 own / pairwise | 结论 |
+|---:|---|---|---|---|---|
+| 0° | pass | pass | pass | pass / pass | final pass |
+| -5° | pass | pass | pass | pass / pass | final pass |
+| +5° | pass | pass | pass | pass / pass | final pass |
+
+三角度的 M120/M160/Full3D 九份 comparison 全部通过，故该授权扩展的共同
+`M_robust=120`；这不是对上段历史 `M_robust=not_established` 的追溯改写。
+MPI8 与 MPI1 的 iterative identity comparison 也均通过，镜像只做 power-only，复振幅为
+`not_run_without_phase_map`。完整输入路径、SHA256 和误差字段见
+[MPI8 compact record](../../../benchmarks/cases/102_hybrid_iterative_robustness/records/task037c_mpi8_three_way_qualification_v1.json)
+与 [MPI1 compact record](../../../benchmarks/cases/102_hybrid_iterative_robustness/records/task037c_mpi1_identity_and_resource_v1.json)。
+
+该 M 选择只适用于限定分类
+`TASK037C_S_POL_1DEG_AZIMUTH_ROBUSTNESS_PASS_UNDER_USER_AUTHORIZED_RESEARCH_EXTENSION`，
+不得写成 `production-qualified`，也不得据此尝试 M200 或修改冻结 PC/阈值。

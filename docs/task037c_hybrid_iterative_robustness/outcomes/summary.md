@@ -167,3 +167,67 @@ fixed endcap/FEM preconditioned convergence bottleneck，而不是 QEP modal res
 
 原 R2/R3 JSON、九份 comparator、selection、phi=+5 path-typo 历史和两份 R4 diagnostic
 均保留在 ignored artifact 中；本轮不删除或覆盖。
+
+## 用户授权研究扩展最终资格化
+
+以下结果属于用户明确授权的 research extension，不追溯改写原冻结阶段结论。它把端面通量改为
+真实 10 nm 三维 H(curl) 单元 Schur 列，并在两侧固定 ILU(0)+40-mode Woodbury 作用后做一次
+确定性的残差修正；代价是额外的侧向算子作用和更长迭代时间；资源preferred仍未通过。`f2d7719` 是数值代码/配置父身份，
+完整证据见 [MPI8 compact record](../../../benchmarks/cases/102_hybrid_iterative_robustness/records/task037c_mpi8_three_way_qualification_v1.json)
+和 [MPI1 compact record](../../../benchmarks/cases/102_hybrid_iterative_robustness/records/task037c_mpi1_identity_and_resource_v1.json)。
+
+### MPI8 三种方法
+
+表内给 reported residual / iterations，完整 reported/global/bottom/top/modal 见 compact record；Full3D 与 direct 的单值为
+各自 true residual。`RSS` 是 Full3D/iterative 的 simultaneous process-tree peak；direct
+使用其 watchdog 的 `max_simultaneous_worker_rss_mb` 字段，二者保留原始采样口径差异。
+
+| phi | 方法 | R / T / A / A_volume | residual / iterations | RSS MiB | total wall s | own Gate |
+|---:|---|---|---|---:|---:|---|
+| 0° | Full3D | .365625789179 / .012990632411 / .621383578410 / .621383578414 | 6.770520252e-11 / — | 15374.609 | 257.409715 | pass |
+| 0° | Hybrid direct M120 | .365625789179 / .012990632411 / .621383578411 / .621383579539 | 5.765468683e-11 / — | 7693.633 | 449.431714 | pass |
+| 0° | Hybrid direct M160 | .365625789178 / .012990632411 / .621383578411 / .621383579529 | 3.103124270e-11 / — | 8124.754 | 533.128482 | pass |
+| 0° | Hybrid iterative M120 | .365625786729 / .012990632358 / .621383580913 / .621383576626 | 3.061697359e-9 / 1771 | 6542.090 | 1041.404664 | pass; preferred RSS fail |
+| -5° | Full3D | .365595712018 / .012994030264 / .621410257718 / .621410257720 | 9.001849713e-11 / — | 15248.820 | 230.831346 | pass |
+| -5° | Hybrid direct M120 | .365595712014 / .012994030264 / .621410257722 / .621410258879 | 7.449018674e-11 / — | 7481.434 | 421.923375 | pass |
+| -5° | Hybrid direct M160 | .365595712013 / .012994030264 / .621410257724 / .621410258872 | 1.159358963e-10 / — | 8002.000 | 494.679228 | pass |
+| -5° | Hybrid iterative M120 | .365595709120 / .012994030376 / .621410260504 / .621410260826 | 3.163761941e-9 / 3945 | 6623.156 | 1738.933491 | pass; preferred RSS fail |
+| +5° | Full3D | .365595712019 / .012994030264 / .621410257717 / .621410257720 | 4.905910037e-11 / — | 15124.184 | 245.132864 | pass |
+| +5° | Hybrid direct M120 | .365595712014 / .012994030264 / .621410257723 / .621410258880 | 4.543355137e-11 / — | 7550.172 | 422.165235 | pass |
+| +5° | Hybrid direct M160 | .365595712013 / .012994030264 / .621410257723 / .621410258871 | 3.905341864e-11 / — | 8015.836 | 493.817763 | pass |
+| +5° | Hybrid iterative M120 | .365595709299 / .012994030228 / .621410260473 / .621410256101 | 3.429167916e-9 / 2832 | 6475.238 | 1356.707269 | pass; preferred RSS fail |
+
+三角度 Full3D、direct M120/M160 与 iterative M120 的 own Gate 均通过；9 份 M120/M160/Full3D
+comparison 也全部通过，因此授权扩展的 `M_robust=120`。三角度 iterative 的完整五项残差、
+阶段时间、watchdog SHA 与 raw path 以 compact record 为准，不把该扩展写成
+`production-qualified`。
+
+### MPI1 iterative 资源与数值
+
+| phi | iterations | residual max / modal | R / T / A / A_volume | RSS MiB / total wall s | identity / resource |
+|---:|---:|---|---|---:|---|
+| 0° | 1472 | 4.953887173e-9 / 2.452093037e-15 | .365625794231 / .012990632482 / .621383573287 / .621383578463 | 1751.320 / 1903.921641 | pass / engineering; preferred fail |
+| -5° | 2160 | 4.845818350e-9 / 2.135024973e-15 | .365595714284 / .012994030084 / .621410255632 / .621410254316 | 1662.109 / 2194.594255 | pass / engineering; preferred fail |
+| +5° | 3338 | 4.999743003e-9 / 2.026232764e-15 | .365595710967 / .012994030395 / .621410258638 / .621410262566 | 1744.570 / 2777.664623 | pass / engineering; preferred fail |
+
+MPI1 的 1536 MiB 是 preferred、2048 MiB 是 engineering 边界；三角度均数值/identity通过、
+RSS 未过 preferred 但未超过 engineering，swap=0。MPI8 迭代峰值为 6475.238--6623.156 MiB，
+均未过 6144 MiB preferred；资源失败不等于数值失败。
+
+直观地看，MPI8 iterative 为 6475--6623 MiB，低于同 phi direct M120 的 7481--7694 MiB
+与 Full3D 的 15124--15375 MiB，但 direct 采样字段不同且 iterative 未过 6 GiB preferred；
+MPI1 为 1662--1751 MiB，是最低实测区间，代价是 total wall 约 1904--2778 s。
+
+### Gate 与限制
+
+| 项目 | 结果 | 边界 |
+|---|---|---|
+| 原 `6555663` scalar/max_it1600 阶段 | 历史负结果保留 | 不由本扩展追溯改写 |
+| final `f2d7719` Full3D/direct/iterative | 三角度 own Gate 与三路 comparison 全 pass | `M_robust=120` 仅限授权扩展 |
+| MPI8 资源 | 数值通过，preferred 未通过 | process-tree 6475.238--6623.156 MiB vs 6144 MiB |
+| MPI1 资源 | engineering 通过，preferred 未通过 | 1662.109--1751.320 MiB vs 1536/2048 MiB |
+| mirror | 3/3 power-only pass | 复振幅 `not_run_without_phase_map` |
+| production status | not production-qualified | 不追加 M200、新 PC、参数扫描或 continuum claim |
+
+最终限定分类为
+`TASK037C_S_POL_1DEG_AZIMUTH_ROBUSTNESS_PASS_UNDER_USER_AUTHORIZED_RESEARCH_EXTENSION`。

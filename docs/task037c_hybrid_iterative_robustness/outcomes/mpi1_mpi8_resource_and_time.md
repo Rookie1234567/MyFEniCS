@@ -90,3 +90,67 @@ preferred 资源 Gate；这些 direct 运行不是 formal iterative authority。
 
 不得用 MPI8 或 diagnostic 结果估算 MPI1 的 1.5 GiB preferred、2.0 GiB engineering 或
 6 GiB hard-stop 边界。MPI1 既没有 numerical identity evidence，也没有资源实测。
+
+## Final f2d7719 / 2dbf898 资源收口
+
+下表是用户授权 research extension 的实测资源结果。Full3D 与 iterative 的 RSS 使用
+simultaneous process-tree peak；direct 使用其 watchdog 的
+`max_simultaneous_worker_rss_mb` 字段，不能把不同采样字段冒充为完全同一口径。资源分类
+与 numerical pass 分开：资源 preferred 未通过不等于数值失败。
+
+### MPI8 iterative：数值通过，preferred RSS 未通过
+
+| phi | iterations | process-tree peak RSS MiB | total wall s | linear / solver / recovery s | resource |
+|---:|---:|---:|---:|---|---|
+| 0° | 1771 | 6542.090 | 1041.404664 | 639.593919 / 559.045728 / 0.883777 | preferred fail; numeric pass |
+| -5° | 3945 | 6623.156 | 1738.933491 | 1358.046840 / 1270.395367 / 0.893402 | preferred fail; numeric pass |
+| +5° | 2832 | 6475.238 | 1356.707269 | 971.160211 / 888.179311 / 0.876164 | preferred fail; numeric pass |
+
+MPI8 的 preferred 边界为 6144 MiB；三角度均 swap=0，未触发 hard stop。对应 watchdog
+路径分别为：
+
+```text
+/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/qualification_f2d7719/r4_two_pass_phi_0_m120_maxit4500/watchdog.json
+/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/qualification_f2d7719/r4_two_pass_phi_m5_m120_maxit4500/watchdog.json
+/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/qualification_f2d7719/r4_two_pass_phi_p5_m120_maxit4500/watchdog.json
+```
+
+### MPI1 iterative：engineering 通过，preferred 未通过
+
+| phi | iterations | process-tree peak RSS MiB | total wall s | linear / solver / recovery s | resource |
+|---:|---:|---:|---:|---|---|
+| 0° | 1472 | 1751.3203125 | 1903.921640981 | 838.921837 / 741.054243 / 2.597179 | engineering pass; preferred fail |
+| -5° | 2160 | 1662.109375 | 2194.594255160 | 1167.853283 / 1069.076619 / 2.249494 | engineering pass; preferred fail |
+| +5° | 3338 | 1744.5703125 | 2777.664622322 | 1752.751198 / 1654.381117 / 2.396955 | engineering pass; preferred fail |
+
+MPI1 的 preferred=1536 MiB、engineering=2048 MiB；三角度 numerical/identity 全部通过，
+RSS 均位于 engineering 区间，swap=0。MPI1 watchdog 与 compact evidence 路径为：
+
+注：`linear`、`solver`、`recovery` 是 raw timeline 中可能嵌套或重叠的阶段字段，不能
+直接相加来重构 `total wall`；总时间只采用 watchdog 的实测 total 字段。
+
+直观地看，MPI8 iterative 为 6475--6623 MiB，低于同 phi direct M120 的 7481--7694 MiB
+与 Full3D 的 15124--15375 MiB，但 direct 采样字段不同且 iterative 未过 6 GiB preferred；
+MPI1 为 1662--1751 MiB，是最低实测区间，代价是 total wall 约 1904--2778 s。
+
+```text
+/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/qualification_f2d7719/r6_mpi1_two_pass_phi_0_m120_maxit4500/watchdog.json
+/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/qualification_f2d7719/r6_mpi1_two_pass_phi_m5_m120_maxit4500/watchdog.json
+/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/qualification_f2d7719/r6_mpi1_two_pass_phi_p5_m120_maxit4500/watchdog.json
+```
+
+### 同 phi 的方法与总时间
+
+MPI8 Full3D、direct M120/M160 的同 phi 总时间和 max RSS 仍以本文件前述实测表及其 raw
+watchdog 为准；这里补充 iterative 与 MPI1 的可比总时间，不能把阶段缺失字段反向估算。
+
+| phi | MPI8 iterative total s | MPI1 iterative total s | MPI8/MPI1 linear s | MPI8/MPI1 recovery s |
+|---:|---:|---:|---:|---:|
+| 0° | 1041.404664 | 1903.921641 | 639.593919 / 838.921837 | 0.883777 / 2.597179 |
+| -5° | 1738.933491 | 2194.594255 | 1358.046840 / 1167.853283 | 0.893402 / 2.249494 |
+| +5° | 1356.707269 | 2777.664622 | 971.160211 / 1752.751198 | 0.876164 / 2.396955 |
+
+direct/Full3D 的 setup、solve、postprocess 阶段细节不在此处估算；审阅时直接读取对应
+raw watchdog/solver record。compact 绑定见
+[MPI8 record](../../../benchmarks/cases/102_hybrid_iterative_robustness/records/task037c_mpi8_three_way_qualification_v1.json)
+与 [MPI1 record](../../../benchmarks/cases/102_hybrid_iterative_robustness/records/task037c_mpi1_identity_and_resource_v1.json)。
