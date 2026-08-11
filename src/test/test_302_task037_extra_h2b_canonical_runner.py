@@ -3,6 +3,7 @@ from __future__ import annotations
 import inspect
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 
@@ -10,6 +11,40 @@ import benchmarks.run_task037_extra_h2b as runner
 
 
 _PROGRESS_DIGEST = "d" * 64
+
+
+def test_c1_cell_metadata_builds_fresh_expansion_arrays():
+    expansion = SimpleNamespace(
+        offsets=np.array([0, 1, 2], dtype=np.int64),
+        column_indices=np.array([3, 4], dtype=np.int64),
+        coefficients=np.array([1.0 + 0.0j, 0.25 - 0.5j], dtype=np.complex64),
+    )
+    class_record = SimpleNamespace(
+        class_key_sha256="a" * 64,
+        constraint_pattern_sha256="b" * 64,
+        expansion_pattern_sha256="c" * 64,
+        numeric_matrix_sha256="d" * 64,
+        expansion=expansion,
+    )
+    reference = SimpleNamespace(
+        independent_global_rows=np.array([101, 203], dtype=np.int32)
+    )
+
+    metadata = runner._c1_cell_metadata(
+        reference,
+        class_record,
+        {
+            "orientation": "identity",
+            "material_identity": {"epsilon": [1.0, 0.0]},
+            "cell_widths": [1.0, 1.0, 1.0],
+        },
+        {"operator": "B0"},
+    )
+
+    assert metadata["independent_global_rows"].dtype == np.dtype(np.int64)
+    assert metadata["csr_offsets"].dtype == np.dtype(np.int32)
+    assert metadata["csr_columns"].dtype == np.dtype(np.int32)
+    assert metadata["coefficients"].dtype == np.dtype(np.complex128)
 
 
 def _marker(event, *, digest=_PROGRESS_DIGEST, representative_count=1):

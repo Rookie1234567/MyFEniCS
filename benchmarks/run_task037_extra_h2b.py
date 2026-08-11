@@ -6844,6 +6844,7 @@ def _c1_cell_metadata(
     operator_identity: Mapping[str, Any],
 ) -> dict[str, Any]:
     """Project one fresh R2 expansion into the C0 metadata-only carrier."""
+    import numpy as np
 
     expansion = class_record.expansion
     return {
