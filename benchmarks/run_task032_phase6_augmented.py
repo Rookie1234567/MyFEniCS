@@ -139,9 +139,9 @@ def _discrete_axial_qualification_scope(
 ) -> dict[str, Any]:
     """Expose the fail-closed scope of the Task035c discrete axial symbols."""
 
-    selected = (
-        propagation_model == "full3d_uniform_cg"
-        or traction_model == "scalar_cg_discrete_derivative"
+    selected = propagation_model == "full3d_uniform_cg" or traction_model in (
+        "scalar_cg_discrete_derivative",
+        "full3d_one_cell_exact_schur",
     )
     return {
         "selected": selected,
@@ -1212,13 +1212,16 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         choices=(
             "continuous_qep_beta",
             "scalar_cg_discrete_derivative",
+            "full3d_one_cell_exact_schur",
         ),
         default="continuous_qep_beta",
         help=(
             "Modal interface traction symbol. The scalar-CG derivative is an "
             "explicit diagnostic and requires full3d_uniform_cg propagation "
             "under the same uniform-z affine-hexa qualification scope; "
-            "unsupported meshes fail closed without fallback. "
+            "unsupported meshes fail closed without fallback. The exact "
+            "one-cell Schur model is research-only and requires the explicit "
+            "Task37c robustness gate. "
             "continuous_qep_beta remains the ordinary default."
         ),
     )
@@ -1339,6 +1342,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         args.task035c_p6_h10_gate or args.task037c_robustness_gate
     ):
         parser.error("p6 is fail-closed; pass one explicit p6 authority gate.")
+    if (
+        args.internal_traction_model == "full3d_one_cell_exact_schur"
+        and not args.task037c_robustness_gate
+    ):
+        parser.error("full3d_one_cell_exact_schur requires --task037c-robustness-gate.")
     if args.task037c_robustness_gate:
         scoped = bool(
             args.degree == 6
@@ -1359,7 +1367,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and args.incident_phi_deg in TASK37C_PHI_VALUES
             and args.polarization_kind == TASK37C_POLARIZATION
             and args.internal_propagation_model == "full3d_uniform_cg"
-            and args.internal_traction_model == "scalar_cg_discrete_derivative"
+            and args.internal_traction_model
+            in ("scalar_cg_discrete_derivative", "full3d_one_cell_exact_schur")
             and math.isclose(args.near_degenerate_tolerance, 1.0e-6)
             and math.isclose(args.block_rotation_tolerance, 1.0e-6)
             and args.full3d_reference is not None
@@ -1374,7 +1383,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                 "--task037c-robustness-gate is restricted to clean p6/h10 S "
                 "grazing-1-degree phi=-5/0/+5 static-condensed Hybrid M120/M160, "
                 "exact 2M pool, modal-schur-memory-minimal, 10/110 nm, "
-                "full3d_uniform_cg/scalar_cg_discrete_derivative, and hash-bound "
+                "full3d_uniform_cg with scalar_cg_discrete_derivative or "
+                "full3d_one_cell_exact_schur, and hash-bound "
                 "same-phi Full3D plus p6 preflight authorities."
             )
     elif args.task035c_p6_h10_gate:
@@ -2075,6 +2085,11 @@ def main(argv: list[str] | None = None) -> None:
             length_nm=args.top_interface_nm - args.bottom_interface_nm,
             propagation_model=args.internal_propagation_model,
             modal_traction_model=args.internal_traction_model,
+            exact_one_cell_work_dir=(
+                args.output.resolve().parent / "exact_one_cell"
+                if args.internal_traction_model == "full3d_one_cell_exact_schur"
+                else None
+            ),
             log=progress,
         )
         timings["internal_modal_coupling"] = _max_elapsed(comm, started)
@@ -2965,6 +2980,8 @@ def main(argv: list[str] | None = None) -> None:
                         _complex_json(value)
                         for value in coupling.negative_traction_beta_per_nm
                     ],
+                    "traction_beta_source": coupling.traction_beta_source,
+                    "exact_one_cell_audit": coupling.exact_one_cell_audit,
                     "axial_fem_degree": int(cfg.nedelec_degree),
                     "axial_h_nm": float(cfg.mesh_target_size),
                     "forward_original_beta_per_nm": [

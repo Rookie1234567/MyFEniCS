@@ -1322,14 +1322,16 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         choices=(
             "continuous_qep_beta",
             "scalar_cg_discrete_derivative",
+            "full3d_one_cell_exact_schur",
         ),
         default="continuous_qep_beta",
         help=(
             "Explicit Hybrid traction-symbol diagnostic. "
             "scalar_cg_discrete_derivative requires full3d_uniform_cg and its "
             "same uniform-z affine-hexa qualification scope; unsupported "
-            "meshes fail closed. The ordinary default remains "
-            "continuous_qep_beta."
+            "meshes fail closed. full3d_one_cell_exact_schur is research-only "
+            "and requires the explicit Task37c gate. The ordinary default "
+            "remains continuous_qep_beta."
         ),
     )
     parser.add_argument(
@@ -1511,6 +1513,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "scalar_cg_discrete_derivative traction requires "
             "--internal-propagation-model full3d_uniform_cg."
         )
+    if (
+        args.internal_traction_model == "full3d_one_cell_exact_schur"
+        and not args.task037c_robustness_gate
+    ):
+        parser.error("full3d_one_cell_exact_schur requires --task037c-robustness-gate.")
     if args.graded_reference_h is not None and (
         args.modal_h_nm is not None or args.modal_degree is not None
     ):
@@ -1597,7 +1604,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             and args.incident_phi_deg in TASK37C_PHI_VALUES
             and args.polarization_kind == TASK37C_POLARIZATION
             and args.internal_propagation_model == "full3d_uniform_cg"
-            and args.internal_traction_model == "scalar_cg_discrete_derivative"
+            and args.internal_traction_model
+            in ("scalar_cg_discrete_derivative", "full3d_one_cell_exact_schur")
             and args.full3d_reference is not None
             and _valid_hex_digest(args.full3d_reference_sha256, 64)
             and args.task035c_p6_preflight_authority is not None

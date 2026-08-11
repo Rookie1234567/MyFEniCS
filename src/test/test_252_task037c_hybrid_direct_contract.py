@@ -17,7 +17,10 @@ from benchmarks.task037c_robustness import make_task37c_profile
 SHA40 = "a" * 40
 
 
-def _direct_argv(tmp_path: Path) -> list[str]:
+def _direct_argv(
+    tmp_path: Path,
+    traction_model: str = "scalar_cg_discrete_derivative",
+) -> list[str]:
     return [
         "--task037c-robustness-gate",
         "--degree",
@@ -39,7 +42,7 @@ def _direct_argv(tmp_path: Path) -> list[str]:
         "--internal-propagation-model",
         "full3d_uniform_cg",
         "--internal-traction-model",
-        "scalar_cg_discrete_derivative",
+        traction_model,
         "--incident-grazing-deg",
         "1",
         "--incident-phi-deg",
@@ -59,7 +62,11 @@ def _direct_argv(tmp_path: Path) -> list[str]:
     ]
 
 
-def _memory_task37c_argv(tmp_path: Path, phi: float) -> list[str]:
+def _memory_task37c_argv(
+    tmp_path: Path,
+    phi: float,
+    traction_model: str = "scalar_cg_discrete_derivative",
+) -> list[str]:
     return [
         "--target",
         "hybrid",
@@ -86,7 +93,7 @@ def _memory_task37c_argv(tmp_path: Path, phi: float) -> list[str]:
         "--internal-propagation-model",
         "full3d_uniform_cg",
         "--internal-traction-model",
-        "scalar_cg_discrete_derivative",
+        traction_model,
         "--incident-grazing-deg",
         "1",
         "--incident-phi-deg",
@@ -201,6 +208,14 @@ def test_task035c_keeps_phi_zero_and_task037c_requires_mpi8(
         parsed = memory_watchdog._parse_args(_memory_task37c_argv(tmp_path, phi))
         assert parsed.task037c_robustness_gate is True
         assert parsed.incident_phi_deg == phi
+    exact_watchdog = memory_watchdog._parse_args(
+        _memory_task37c_argv(
+            tmp_path,
+            -5.0,
+            "full3d_one_cell_exact_schur",
+        )
+    )
+    assert exact_watchdog.internal_traction_model == "full3d_one_cell_exact_schur"
 
     with pytest.raises(SystemExit):
         memory_watchdog._parse_args(
@@ -217,6 +232,22 @@ def test_task035c_keeps_phi_zero_and_task037c_requires_mpi8(
                 "1",
                 "--incident-phi-deg",
                 "5",
+            ]
+        )
+
+
+def test_exact_one_cell_traction_is_task037c_only(tmp_path: Path) -> None:
+    parsed = direct._parse_args(_direct_argv(tmp_path, "full3d_one_cell_exact_schur"))
+    assert parsed.internal_traction_model == "full3d_one_cell_exact_schur"
+    with pytest.raises(SystemExit):
+        direct._parse_args(
+            [
+                "--degree",
+                "2",
+                "--h-nm",
+                "10",
+                "--internal-traction-model",
+                "full3d_one_cell_exact_schur",
             ]
         )
 
