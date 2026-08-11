@@ -255,7 +255,12 @@ def test_task37c_cfg_and_side_identity_are_online_gate_inputs(
     assert make_record([], cfg_pass=True)["online_pass"] is False
 
 
-def _iterative_task37c_args(tmp_path, *, exact: bool = False) -> list[str]:
+def _iterative_task37c_args(
+    tmp_path,
+    *,
+    exact: bool = False,
+    two_pass: bool = False,
+) -> list[str]:
     args = [
         "--task037c-robustness-gate",
         "--case-label",
@@ -275,10 +280,17 @@ def _iterative_task37c_args(tmp_path, *, exact: bool = False) -> list[str]:
     ]
     if exact:
         args.extend(["--internal-traction-model", TASK37C_TRACTION_MODELS[1]])
+    if two_pass:
+        args.append("--task037c-two-pass-side-correction")
     return args
 
 
-def _watchdog_task37c_args(tmp_path, *, exact: bool = False) -> list[str]:
+def _watchdog_task37c_args(
+    tmp_path,
+    *,
+    exact: bool = False,
+    two_pass: bool = False,
+) -> list[str]:
     args = [
         "--task037c-robustness-gate",
         "--case-label",
@@ -298,6 +310,8 @@ def _watchdog_task37c_args(tmp_path, *, exact: bool = False) -> list[str]:
     ]
     if exact:
         args.extend(["--internal-traction-model", TASK37C_TRACTION_MODELS[1]])
+    if two_pass:
+        args.append("--task037c-two-pass-side-correction")
     return args
 
 
@@ -356,6 +370,58 @@ def test_task37c_exact_traction_model_propagates_to_worker_and_record(
     model_index = command.index("--internal-traction-model")
     assert command[model_index + 1] == exact
     assert watchdog_args.internal_traction_model == profile.internal_traction_model
+
+
+def test_task37c_two_pass_side_correction_is_explicit_and_forwarded(tmp_path) -> None:
+    runner_args = iterative_runner.parse_args(
+        _iterative_task37c_args(tmp_path, two_pass=True)
+    )
+    profile = iterative_runner.profile_from_args(runner_args)
+    assert profile.side_residual_correction_steps == 2
+    assert profile.preconditioner_identity.endswith("two_pass_residual_correction")
+    assert (
+        iterative_runner.profile_record(profile)["side_residual_correction_steps"] == 2
+    )
+
+    watchdog_args = watchdog.parse_args(_watchdog_task37c_args(tmp_path, two_pass=True))
+    command = watchdog.build_worker_command(
+        watchdog_args,
+        tmp_path / "payload",
+        tmp_path / "online.json",
+        tmp_path / "memory.json",
+    )
+    assert watchdog_args.task037c_two_pass_side_correction is True
+    assert "--task037c-two-pass-side-correction" in command
+    default_profile = make_task37c_profile(0.0, 120, 8)
+    assert default_profile.side_residual_correction_steps == 1
+    assert (
+        default_profile.preconditioner_identity
+        == "fixed_whole_endcap_ilu0_plus_dynamic_dtn_woodbury"
+    )
+    assert (
+        iterative_runner.profile_from_args(
+            iterative_runner.parse_args(_iterative_task37c_args(tmp_path))
+        ).side_residual_correction_steps
+        == 1
+    )
+    assert (
+        watchdog.parse_args(
+            _watchdog_task37c_args(tmp_path)
+        ).task037c_two_pass_side_correction
+        is False
+    )
+    frozen_profile = iterative_runner.profile_from_args(
+        iterative_runner.parse_args(_frozen_iterative_args(tmp_path))
+    )
+    assert frozen_profile.side_residual_correction_steps == 1
+    with pytest.raises(SystemExit):
+        iterative_runner.parse_args(
+            _frozen_iterative_args(tmp_path) + ["--task037c-two-pass-side-correction"]
+        )
+    with pytest.raises(SystemExit):
+        watchdog.parse_args(
+            _frozen_watchdog_args(tmp_path) + ["--task037c-two-pass-side-correction"]
+        )
 
 
 def test_task37c_traction_model_defaults_and_frozen_rejection(tmp_path) -> None:

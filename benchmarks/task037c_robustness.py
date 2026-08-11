@@ -33,6 +33,7 @@ TASK37C_RSS_PREFERRED_MIB = 6144.0
 TASK37C_MPI1_HARD_STOP_MIB = 6144.0
 TASK37C_MPI1_PREFERRED_MIB = 1536.0
 TASK37C_MPI1_ENGINEERING_MIB = 2048.0
+TASK37C_RESIDUAL_CORRECTION_STEPS = (1, 2)
 
 
 @dataclass(frozen=True)
@@ -72,6 +73,7 @@ class Task37cProfile:
     initial_guess: str = "zero"
     mpi_size: int = 8
     assembly_backend: str = "assembly_time_static_condensed"
+    side_residual_correction_steps: int = 1
 
 
 def make_task37c_profile(
@@ -80,6 +82,7 @@ def make_task37c_profile(
     mpi_size: int,
     *,
     traction_model: str = TASK37C_TRACTION_MODELS[0],
+    side_residual_correction_steps: int = 1,
 ) -> Task37cProfile:
     """Build a profile only for the frozen Task37c choice set."""
 
@@ -98,12 +101,22 @@ def make_task37c_profile(
         raise ValueError(
             f"Task37c traction model must be one of {TASK37C_TRACTION_MODELS}."
         )
+    correction_steps = int(side_residual_correction_steps)
+    if correction_steps not in TASK37C_RESIDUAL_CORRECTION_STEPS:
+        raise ValueError("Task37c side residual correction steps must be 1 or 2.")
+    preconditioner_identity = (
+        "fixed_whole_endcap_ilu0_plus_dynamic_dtn_woodbury_two_pass_residual_correction"
+        if correction_steps == 2
+        else "fixed_whole_endcap_ilu0_plus_dynamic_dtn_woodbury"
+    )
     return Task37cProfile(
         incident_phi_deg=phi,
         requested_modes=modes,
         candidate_modes=2 * modes,
         mpi_size=mpi,
         internal_traction_model=traction_model,
+        preconditioner_identity=preconditioner_identity,
+        side_residual_correction_steps=correction_steps,
     )
 
 

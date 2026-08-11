@@ -317,3 +317,108 @@ def test_fixed_woodbury_action_is_one_apply_nonowning_and_fail_closed(mode_count
         H.destroy()
         assert c_context.destroyed is True
         assert d_context.destroyed is True
+
+
+def test_two_pass_residual_correction_matches_stationary_formula_and_releases_scratch():
+    rows = 6
+    mode_count = 1
+    base_dense = np.eye(rows, dtype=np.complex128) * 2.0
+    zero_c = np.zeros((rows, mode_count), dtype=np.complex128)
+    zero_d = np.zeros((mode_count, rows), dtype=np.complex128)
+    identity_h = np.eye(mode_count, dtype=np.complex128)
+    residual_dense = np.asarray(
+        [
+            [1.2 + 0.1j, 0.3 - 0.2j, 0, 0, 0, 0],
+            [0.1 + 0.4j, 0.9 + 0.2j, 0.2, 0, 0, 0],
+            [0, -0.1j, 1.1 - 0.3j, 0.4, 0, 0],
+            [0, 0, 0.2 + 0.1j, 0.8 + 0.2j, 0.1, 0],
+            [0, 0, 0, 0.2, 1.3 - 0.1j, -0.2j],
+            [0, 0, 0, 0, 0.1 + 0.2j, 0.7 + 0.3j],
+        ],
+        dtype=np.complex128,
+    )
+    F = _matrix_from_dense(base_dense)
+    C = _matrix_from_dense(zero_c)
+    D = _matrix_from_dense(zero_d)
+    H = _matrix_from_dense(identity_h)
+    residual_operator = _python_matrix_from_dense(residual_dense)
+    residual_context = residual_operator.getPythonContext()
+    components = SimpleNamespace(F=F, C=C, D=D, H=H)
+    base_action = _FixedBaseAction(_DenseBaseInverse(2.0))
+    fixed = HybridLocalDtnWoodburyFixedAction(
+        base_action,
+        components,
+        residual_operator=residual_operator,
+        residual_correction_steps=2,
+    )
+    source_template = F.createVecRight()
+    source = _random_vector(source_template, 241)
+    source_template.destroy()
+    actual = F.createVecLeft()
+    expected = F.createVecLeft()
+    repeat = F.createVecLeft()
+    other_template = F.createVecRight()
+    other = _random_vector(other_template, 242)
+    other_template.destroy()
+    combined = F.createVecRight()
+    combined_result = F.createVecLeft()
+    source_result = F.createVecLeft()
+    other_result = F.createVecLeft()
+    try:
+        fixed.apply(source, actual)
+        start, end = (int(value) for value in source.getOwnershipRange())
+        values = np.asarray(source.getArray(readonly=True), dtype=np.complex128).copy()
+        rhs = np.empty(rows, dtype=np.complex128)
+        for first, last, local in MPI.COMM_WORLD.allgather((start, end, values)):
+            rhs[first:last] = local
+        first_pass = rhs / 2.0
+        expected_values = first_pass + (rhs - residual_dense @ first_pass) / 2.0
+        expected.getArray()[:] = expected_values[start:end]
+        assert _relative_error(actual, expected) <= 1.0e-12
+        diagnostics = fixed.diagnostics
+        assert diagnostics["operator_identity"].endswith("two_pass_residual_correction")
+        assert diagnostics["residual_correction_steps"] == 2
+        assert diagnostics["correction_operator_matrix_free"] is True
+        assert diagnostics["residual_correction_operator_borrowed"] is True
+        assert diagnostics["logical_apply_count"] == 1
+        assert diagnostics["raw_apply_count"] == 2
+        assert diagnostics["woodbury"]["apply_count"] == 2
+        assert diagnostics["base_factor_count"] == 1
+        assert diagnostics["local_direct_factor_count"] == 0
+        assert diagnostics["nested_ksp_created"] is False
+
+        fixed.apply(source, repeat)
+        assert _relative_error(actual, repeat) <= 1.0e-13
+        assert _global_vec_digest(actual) == _global_vec_digest(repeat)
+        alpha = PETSc.ScalarType(0.7 - 0.2j)
+        beta = PETSc.ScalarType(-0.3 + 0.4j)
+        source.copy(combined)
+        combined.scale(alpha)
+        combined.axpy(beta, other)
+        fixed.apply(combined, combined_result)
+        fixed.apply(source, source_result)
+        fixed.apply(other, other_result)
+        source_result.scale(alpha)
+        other_result.scale(beta)
+        source_result.axpy(PETSc.ScalarType(1.0), other_result)
+        assert _relative_error(combined_result, source_result) <= 1.0e-12
+    finally:
+        other_result.destroy()
+        source_result.destroy()
+        combined_result.destroy()
+        combined.destroy()
+        other.destroy()
+        repeat.destroy()
+        expected.destroy()
+        actual.destroy()
+        source.destroy()
+        fixed.destroy()
+        assert fixed.diagnostics["destroyed"] is True
+        assert fixed.diagnostics["owned_action_data_released"] is True
+        assert residual_context.destroyed is False
+        residual_operator.destroy()
+        F.destroy()
+        C.destroy()
+        D.destroy()
+        H.destroy()
+        assert residual_context.destroyed is True

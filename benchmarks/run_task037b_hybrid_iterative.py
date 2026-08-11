@@ -156,6 +156,7 @@ class FrozenM10Profile:
     initial_guess: str = "zero"
     mpi_size: int = M10_MPI_SIZE
     assembly_backend: str = "assembly_time_static_condensed"
+    side_residual_correction_steps: int = 1
 
 
 FROZEN_M10 = FrozenM10Profile()
@@ -412,10 +413,20 @@ def solve_frozen_m10_linear(
         fixed["bottom"] = build_hybrid_whole_endcap_fixed_smoother_action(setup.bottom)
         fixed["top"] = build_hybrid_whole_endcap_fixed_smoother_action(setup.top)
         woodbury["bottom"] = HybridLocalDtnWoodburyFixedAction(
-            fixed["bottom"], components["bottom"]
+            fixed["bottom"],
+            components["bottom"],
+            residual_operator=(
+                setup.bottom.A if profile.side_residual_correction_steps == 2 else None
+            ),
+            residual_correction_steps=profile.side_residual_correction_steps,
         )
         woodbury["top"] = HybridLocalDtnWoodburyFixedAction(
-            fixed["top"], components["top"]
+            fixed["top"],
+            components["top"],
+            residual_operator=(
+                setup.top.A if profile.side_residual_correction_steps == 2 else None
+            ),
+            residual_correction_steps=profile.side_residual_correction_steps,
         )
         side_inventory: dict[str, Any] = {}
         for side in ("bottom", "top"):
@@ -450,6 +461,17 @@ def solve_frozen_m10_linear(
                 "woodbury": woodbury_diagnostics,
             }
 
+        side_build_before = {
+            side: {
+                "logical_apply_count": int(
+                    side_inventory[side]["woodbury"]["logical_apply_count"]
+                ),
+                "raw_apply_count": int(
+                    side_inventory[side]["woodbury"]["raw_apply_count"]
+                ),
+            }
+            for side in ("bottom", "top")
+        }
         block_context = create_action_block_ldu_preconditioner(
             layout,
             setup.bottom,
@@ -474,6 +496,34 @@ def solve_frozen_m10_linear(
             or int(block_inventory["top_ilu_factor_count"]) != 1
         ):
             raise RuntimeError("Frozen M10 block-LDU inventory is not qualified.")
+        modal_schur_build_action_count = {}
+        for side in ("bottom", "top"):
+            modal_logical = int(modal_inventory["build_apply_count"][side])
+            logical_delta = int(woodbury[side].diagnostics["logical_apply_count"])
+            logical_delta -= side_build_before[side]["logical_apply_count"]
+            raw_delta = int(woodbury[side].diagnostics["raw_apply_count"])
+            raw_delta -= side_build_before[side]["raw_apply_count"]
+            expected_raw_delta = modal_logical * profile.side_residual_correction_steps
+            modal_schur_build_action_count[side] = {
+                "logical_apply_delta": logical_delta,
+                "raw_apply_delta": raw_delta,
+                "modal_schur_build_apply_count": modal_logical,
+                "expected_raw_apply_delta": expected_raw_delta,
+                "logical_matches_modal_schur": logical_delta == modal_logical,
+                "raw_matches_correction_steps": raw_delta == expected_raw_delta,
+            }
+        modal_schur_build_action_gate_pass = all(
+            item["logical_matches_modal_schur"] and item["raw_matches_correction_steps"]
+            for item in modal_schur_build_action_count.values()
+        )
+        if not modal_schur_build_action_gate_pass:
+            raise RuntimeError("Modal-Schur side action build count is not qualified.")
+        block_inventory["modal_schur_build_action_count"] = (
+            modal_schur_build_action_count
+        )
+        block_inventory["modal_schur_build_action_gate_pass"] = (
+            modal_schur_build_action_gate_pass
+        )
 
         config = HybridBlockLduIterativeConfig(
             restart=profile.restart,
@@ -487,6 +537,10 @@ def solve_frozen_m10_linear(
             block_context,
             config=config,
         )
+        if profile.side_residual_correction_steps == 2:
+            for side in ("bottom", "top"):
+                side_inventory[side]["fixed"] = fixed[side].diagnostics
+                side_inventory[side]["woodbury"] = woodbury[side].diagnostics
         postsolve = result.postsolve_audit
         residual_keys = (
             "reported_relative_residual",
@@ -2274,6 +2328,10 @@ def build_parser() -> argparse.ArgumentParser:
         choices=TASK37C_TRACTION_MODELS,
         default=None,
     )
+    parser.add_argument(
+        "--task037c-two-pass-side-correction",
+        action="store_true",
+    )
     return parser
 
 
@@ -2301,6 +2359,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             args.internal_traction_model or TASK37C_TRACTION_MODELS[0]
         )
     else:
+        if args.task037c_two_pass_side_correction:
+            parser.error("frozen M10 does not accept two-pass side correction")
         if args.internal_traction_model is not None:
             parser.error("frozen M10 does not accept --internal-traction-model")
         if any(
@@ -2344,6 +2404,9 @@ def profile_from_args(
         args.requested_modes,
         args.mpi_size,
         traction_model=args.internal_traction_model,
+        side_residual_correction_steps=(
+            2 if args.task037c_two_pass_side_correction else 1
+        ),
     )
 
 

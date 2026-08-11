@@ -241,6 +241,8 @@ def build_worker_command(
             "--internal-traction-model",
             args.internal_traction_model,
         ]
+        if args.task037c_two_pass_side_correction:
+            profile_args.append("--task037c-two-pass-side-correction")
     command = [
         "mpiexec",
         "-n",
@@ -537,6 +539,9 @@ def run_watchdog(args: argparse.Namespace) -> int:
             args.requested_modes,
             args.mpi_size,
             traction_model=args.internal_traction_model,
+            side_residual_correction_steps=(
+                2 if args.task037c_two_pass_side_correction else 1
+            ),
         )
     else:
         profile = None
@@ -692,6 +697,10 @@ def build_parser() -> argparse.ArgumentParser:
         choices=TASK37C_TRACTION_MODELS,
         default=None,
     )
+    parser.add_argument(
+        "--task037c-two-pass-side-correction",
+        action="store_true",
+    )
     return parser
 
 
@@ -719,6 +728,8 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
             args.internal_traction_model or TASK37C_TRACTION_MODELS[0]
         )
     else:
+        if args.task037c_two_pass_side_correction:
+            parser.error("frozen M10 does not accept two-pass side correction")
         if args.internal_traction_model is not None:
             parser.error("frozen M10 does not accept --internal-traction-model")
         if any(

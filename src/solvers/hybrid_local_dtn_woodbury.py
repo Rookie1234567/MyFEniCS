@@ -257,10 +257,37 @@ class HybridLocalDtnWoodburyFixedAction:
         components: Any,
         *,
         base_identity: str = "whole_endcap_ilu0_fixed_smoother",
+        residual_operator: PETSc.Mat | None = None,
+        residual_correction_steps: int = 1,
     ) -> None:
+        if residual_correction_steps not in (1, 2):
+            raise ValueError("Residual correction steps must be 1 or 2")
+        if residual_correction_steps == 2 and residual_operator is None:
+            raise ValueError(
+                "Two-pass correction requires a borrowed residual operator"
+            )
+        if residual_correction_steps == 1 and residual_operator is not None:
+            raise ValueError(
+                "A residual operator is only valid for two-pass correction"
+            )
         self.base_action = base_action
         self.components = components
         self.operator = components.F
+        self.operator_identity = (
+            "whole_endcap_ilu0_woodbury_fixed_action_two_pass_residual_correction"
+            if residual_correction_steps == 2
+            else self.operator_identity
+        )
+        self.residual_operator = residual_operator
+        self._residual_operator_borrowed = residual_operator is not None
+        self.residual_correction_steps = int(residual_correction_steps)
+        self._logical_apply_count = 0
+        self._residual: PETSc.Vec | None = None
+        self._correction: PETSc.Vec | None = None
+        self._correction_operator_matrix_free = bool(
+            residual_operator is not None
+            and str(residual_operator.getType()).lower() == "python"
+        )
         base_diagnostics = getattr(base_action, "diagnostics", None)
         if callable(base_diagnostics):
             base_diagnostics = base_diagnostics()
@@ -283,6 +310,9 @@ class HybridLocalDtnWoodburyFixedAction:
             components,
             base_identity=base_identity,
         )
+        if self.residual_correction_steps == 2:
+            self._residual = self.operator.createVecLeft()
+            self._correction = self.operator.createVecLeft()
         self._destroyed = False
         self._pre_destroy_diagnostics: dict[str, Any] | None = None
         self._base_pre_destroy_diagnostics: dict[str, Any] | None = None
@@ -299,6 +329,13 @@ class HybridLocalDtnWoodburyFixedAction:
         if self._destroyed:
             raise RuntimeError("Fixed Woodbury action has been destroyed")
         self.woodbury.apply(source, target)
+        if self.residual_correction_steps == 2:
+            self.residual_operator.mult(target, self._residual)
+            self._residual.scale(PETSc.ScalarType(-1.0))
+            self._residual.axpy(PETSc.ScalarType(1.0), source)
+            self.woodbury.apply(self._residual, self._correction)
+            target.axpy(PETSc.ScalarType(1.0), self._correction)
+        self._logical_apply_count += 1
 
     @property
     def diagnostics(self) -> dict[str, Any]:
@@ -314,6 +351,10 @@ class HybridLocalDtnWoodburyFixedAction:
         )
         return {
             "operator_identity": self.operator_identity,
+            "residual_correction_steps": int(self.residual_correction_steps),
+            "residual_correction_operator_borrowed": self._residual_operator_borrowed,
+            "correction_operator_matrix_free": self._correction_operator_matrix_free,
+            "logical_apply_count": int(self._logical_apply_count),
             "base_identity": woodbury["base_identity"],
             "base_factor_count": int(self._base_qualification["factor_count"]),
             "base_factor_borrowed": True,
@@ -321,7 +362,8 @@ class HybridLocalDtnWoodburyFixedAction:
             "local_direct_factor_count_owned": 0,
             "nested_ksp_created": bool(self._base_qualification["ksp_created"]),
             "base_diagnostics": base_diagnostics,
-            "apply_count": int(woodbury["apply_count"]),
+            "apply_count": int(self._logical_apply_count),
+            "raw_apply_count": int(woodbury["apply_count"]),
             "woodbury": dict(woodbury),
             "components_borrowed": True,
             "owned_action_data_released": bool(self._destroyed),
@@ -334,4 +376,11 @@ class HybridLocalDtnWoodburyFixedAction:
         self._base_pre_destroy_diagnostics = self._base_diagnostics_now()
         self._pre_destroy_diagnostics = dict(self.woodbury.diagnostics)
         self.woodbury.destroy()
+        if self._residual is not None:
+            self._residual.destroy()
+            self._residual = None
+        if self._correction is not None:
+            self._correction.destroy()
+            self._correction = None
+        self.residual_operator = None
         self._destroyed = True
