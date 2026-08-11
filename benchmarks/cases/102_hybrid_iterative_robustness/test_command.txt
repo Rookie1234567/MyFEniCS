@@ -1,0 +1,1 @@
+python -m pytest -q src/test/test_250_task037c_robustness_contract.py src/test/test_251_task037c_full3d_watchdog_contract.py src/test/test_252_task037c_hybrid_direct_contract.py src/test/test_253_task037c_comparator_contract.py

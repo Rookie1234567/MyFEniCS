@@ -84,6 +84,10 @@ CLOSED_RESEARCH_RECORD_CASES = {
         "records/task037b_v6_mpi8_traction_aligned_full_qualification_v1.json",
         "records/task037b_v6_memory_optimization_closeout_v1.json",
     ),
+    "102_hybrid_iterative_robustness": (
+        "records/task037c_mpi1_identity_and_resource_v1.json",
+        "records/task037c_mpi8_three_way_qualification_v1.json",
+    ),
 }
 
 RECORDED_CASES = {

@@ -125,6 +125,7 @@ class Task036HybridInterfaceSemanticsTests(unittest.TestCase):
         )
         coupling = SimpleNamespace(
             mode_count_per_direction=1,
+            modal_traction_model="scalar_cg_discrete_derivative",
             propagation=SimpleNamespace(
                 forward=SimpleNamespace(factors=np.asarray([0.4])),
                 backward=SimpleNamespace(factors=np.asarray([0.5])),

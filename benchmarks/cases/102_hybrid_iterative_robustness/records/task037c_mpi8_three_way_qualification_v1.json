@@ -1,0 +1,178 @@
+{
+  "schema": "task037c.compact-mpi8-three-way.v1",
+  "classification": "research_pass_under_user_authorized_extension",
+  "source": {
+    "verified_clean_sha": "f2d7719b6253251a06e8cd8388fd443bbf47d443",
+    "ordinary_defaults_unchanged": true,
+    "extension": {
+      "traction_model": "full3d_one_cell_exact_schur",
+      "side_residual_correction_steps": 2,
+      "max_it": 4500,
+      "restart": 90,
+      "rtol": 5e-9,
+      "initial_guess": "zero",
+      "qualification_scope": "user_authorized_research_only"
+    }
+  },
+  "profile": {
+    "degree": 6,
+    "h_nm": 10.0,
+    "wavelength_nm": 13.5,
+    "polarization": "s",
+    "grazing_deg": 1.0,
+    "requested_modes": 120,
+    "candidate_modes": 240,
+    "mpi_size": 8
+  },
+  "raw_evidence": {"scope": "case.raw paths and SHA256", "arrays_included": false, "timelines_included": false},
+  "cases": [
+    {
+      "phi_deg": 0.0,
+      "full3d": {
+        "raw": {"path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r2_full3d_phi_0/watchdog.json", "sha256": "586fbfb76d8aea7bad0f93e344f1b1e9207ec1c7043ed03fff0641338139fa6f"},
+        "gate": {"status": "task037c_full3d_robustness_pass", "return_code": 0, "pass": true, "true_residual": 6.77052025203597e-11, "closure": 3.665956427312267e-12, "orders": 80, "q": 80, "canonical": true, "swap_mib": 0.0},
+        "rta": {"R": 0.3656257891794656, "T": 0.01299063241065396, "A": 0.6213835784098803, "A_volume": 0.6213835784135464},
+        "total_wall_seconds": 257.40971506084315,
+        "rss_mib": 15374.609375,
+        "rss_authority": "watchdog.resource_authority.max_process_tree_rss_mb"
+      },
+      "direct_M120": {
+        "raw": {"path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r3_direct_phi_0_m120/watchdog.json", "sha256": "4fe81c2414a8eab57e7f33127ade3b52ed21bcad3caddd4884c2e7988bec1ca6"},
+        "gate": {"status": "task037c_direct_robustness_pass", "return_code": 0, "pass": true, "true_residual": 5.7654686832204546e-11, "q_max": 4.578935402482962e-13, "orders": 80, "canonical": true, "swap_mib": 0.0},
+        "rta": {"R": 0.3656257891787136, "T": 0.01299063241062439, "A": 0.621383578410662, "A_volume": 0.6213835795387049},
+        "iterations": "not_applicable_direct",
+        "total_wall_seconds": 449.4317143149674,
+        "rss_mib": 7693.6328125,
+        "rss_authority": "watchdog.memory.max_simultaneous_worker_rss_mb"
+      },
+      "direct_M160": {
+        "raw": {"path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r3_direct_phi_0_m160/watchdog.json", "sha256": "c3722bf0e509ea5d60f5a04b14a36b7df0bd643beeaf3a2808615bc42e3aeac1"},
+        "gate": {"status": "task037c_direct_robustness_pass", "return_code": 0, "pass": true, "true_residual": 3.1031242703441994e-11, "q_max": 1.4735880411475718e-13, "orders": 80, "canonical": true, "swap_mib": 0.0},
+        "rta": {"R": 0.365625789178451, "T": 0.012990632410629291, "A": 0.6213835784109197, "A_volume": 0.6213835795287246},
+        "iterations": "not_applicable_direct",
+        "total_wall_seconds": 533.1284818891436,
+        "rss_mib": 8124.75390625,
+        "rss_authority": "watchdog.memory.max_simultaneous_worker_rss_mb"
+      },
+      "iterative_M120": {
+        "raw": {
+          "watchdog": {"path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/qualification_f2d7719/r4_two_pass_phi_0_m120_maxit4500/watchdog.json", "sha256": "4cda183aa23edff5fab927923b681bb158e3aecf165b741f7aaea5840fa83012"},
+          "online": {"path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/qualification_f2d7719/r4_two_pass_phi_0_m120_maxit4500/run/online_record.json", "sha256": "c9b879b9ae0cf57423be50113f3e0b33f8377472726721067d175a5b4617e20f"}
+        },
+        "gate": {"status": "watchdog_pass_awaiting_offline_checker", "return_code": 0, "pass": true, "reason": 2, "q_and_orders": true, "canonical": true, "release": true, "swap_mib": 0.0},
+        "rta": {"R": 0.36562578672882173, "T": 0.012990632358471785, "A": 0.6213835809127065, "A_volume": 0.6213835766257165},
+        "iterations": 1771,
+        "residuals": {"reported": 3.061697359384168e-09, "global": 3.0616978112611967e-09, "bottom": 4.880057388977438e-09, "top": 2.4282803761906085e-09, "modal": 2.974757975517956e-15},
+        "total_wall_seconds": 1041.404664277099,
+        "rss_mib": 6542.08984375,
+        "rss_source": "watchdog.resource.process_tree_peak_rss_mib",
+        "rss_authority": "simultaneous mpi_process_tree_rss_mb"
+      }
+    },
+    {
+      "phi_deg": -5.0,
+      "full3d": {
+        "raw": {"path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r2_full3d_phi_m5/watchdog.json", "sha256": "dda0fd57d0f335f4cf87a6d1fee4dc59cb4541ec42fae8538048108fff345ab3"},
+        "gate": {"status": "task037c_full3d_robustness_pass", "return_code": 0, "pass": true, "true_residual": 9.001849713439721e-11, "closure": 1.4221956945448255e-12, "orders": 84, "q": 84, "canonical": true, "swap_mib": 0.0},
+        "rta": {"R": 0.3655957120177542, "T": 0.01299403026387442, "A": 0.6214102577183713, "A_volume": 0.6214102577197936},
+        "total_wall_seconds": 230.83134608506225,
+        "rss_mib": 15248.8203125,
+        "rss_authority": "watchdog.resource_authority.max_process_tree_rss_mb"
+      },
+      "direct_M120": {
+        "raw": {"path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r3_direct_phi_m5_m120/watchdog.json", "sha256": "f5f74dd0ad68326cc30fa4e74395e5fc4809bfe52ce97518f19d7d9d82dbd1f5"},
+        "gate": {"status": "task037c_direct_robustness_pass", "return_code": 0, "pass": true, "true_residual": 7.449018674393189e-11, "q_max": 1.7824165965588806e-12, "orders": 84, "canonical": true, "swap_mib": 0.0},
+        "rta": {"R": 0.36559571201409824, "T": 0.0129940302636889, "A": 0.6214102577222128, "A_volume": 0.6214102588794512},
+        "iterations": "not_applicable_direct",
+        "total_wall_seconds": 421.9233753760345,
+        "rss_mib": 7481.43359375,
+        "rss_authority": "watchdog.memory.max_simultaneous_worker_rss_mb"
+      },
+      "direct_M160": {
+        "raw": {"path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r3_direct_phi_m5_m160/watchdog.json", "sha256": "17130b066f60f18329cf3221441e0ac96b72a6a0281ed09801bdc58fd63430bb"},
+        "gate": {"status": "task037c_direct_robustness_pass", "return_code": 0, "pass": true, "true_residual": 1.1593589630573287e-10, "q_max": 3.6308577444953098e-12, "orders": 84, "canonical": true, "swap_mib": 0.0},
+        "rta": {"R": 0.3655957120127566, "T": 0.012994030263723854, "A": 0.6214102577235195, "A_volume": 0.6214102588715968},
+        "iterations": "not_applicable_direct",
+        "total_wall_seconds": 494.6792279218789,
+        "rss_mib": 8002.0,
+        "rss_authority": "watchdog.memory.max_simultaneous_worker_rss_mb"
+      },
+      "iterative_M120": {
+        "raw": {
+          "watchdog": {"path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/qualification_f2d7719/r4_two_pass_phi_m5_m120_maxit4500/watchdog.json", "sha256": "2012bf0559aeeff1daf60b880d96b2e80ffc93aa16c44f0ea117d262f781435f"},
+          "online": {"path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/qualification_f2d7719/r4_two_pass_phi_m5_m120_maxit4500/run/online_record.json", "sha256": "02e5eca80a6cc0ffcd4432876dac4d5169da08c054d12b68e64307aeeeff7fd3"}
+        },
+        "gate": {"status": "watchdog_pass_awaiting_offline_checker", "return_code": 0, "pass": true, "reason": 2, "q_and_orders": true, "canonical": true, "release": true, "swap_mib": 0.0},
+        "rta": {"R": 0.36559570912005296, "T": 0.01299403037624622, "A": 0.6214102605037007, "A_volume": 0.6214102608255432},
+        "iterations": 3945,
+        "residuals": {"reported": 3.163761941358598e-09, "global": 3.1637588910012017e-09, "bottom": 4.990863540566495e-09, "top": 2.51239357288403e-09, "modal": 2.9151535892984457e-15},
+        "total_wall_seconds": 1738.933491101954,
+        "rss_mib": 6623.15625,
+        "rss_source": "watchdog.resource.process_tree_peak_rss_mib",
+        "rss_authority": "simultaneous mpi_process_tree_rss_mb"
+      }
+    },
+    {
+      "phi_deg": 5.0,
+      "full3d": {
+        "raw": {"path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r2_full3d_phi_p5/watchdog.json", "sha256": "02e5b7ea3cd62f6bbbc80de1e9e2e6c61035a776c0c36c812c380428aa1eafd3"},
+        "gate": {"status": "task037c_full3d_robustness_pass", "return_code": 0, "pass": true, "true_residual": 4.905910036715885e-11, "closure": 2.7355895326763857e-12, "orders": 84, "q": 84, "canonical": true, "swap_mib": 0.0},
+        "rta": {"R": 0.36559571201864993, "T": 0.01299403026389586, "A": 0.6214102577174542, "A_volume": 0.6214102577201898},
+        "total_wall_seconds": 245.13286389806308,
+        "rss_mib": 15124.18359375,
+        "rss_authority": "watchdog.resource_authority.max_process_tree_rss_mb"
+      },
+      "direct_M120": {
+        "raw": {"path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r3_direct_phi_p5_m120/watchdog.json", "sha256": "af2fd5516a9266058898c9e4fccf9e3245094ca9153a2c1c601a99b58f041b72"},
+        "gate": {"status": "task037c_direct_robustness_pass", "return_code": 0, "pass": true, "true_residual": 4.54335513745034e-11, "q_max": 1.9624980247880094e-12, "orders": 84, "canonical": true, "swap_mib": 0.0},
+        "rta": {"R": 0.3655957120136601, "T": 0.012994030263700704, "A": 0.6214102577226391, "A_volume": 0.6214102588799613},
+        "iterations": "not_applicable_direct",
+        "total_wall_seconds": 422.16523488401435,
+        "rss_mib": 7550.171875,
+        "rss_authority": "watchdog.memory.max_simultaneous_worker_rss_mb"
+      },
+      "direct_M160": {
+        "raw": {"path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r3_direct_phi_p5_m160/watchdog.json", "sha256": "e1f600ba4728291208b2e6a8270b5a6acc87f61043dba1b69154aaba22bb5b4b"},
+        "gate": {"status": "task037c_direct_robustness_pass", "return_code": 0, "pass": true, "true_residual": 3.905341864131925e-11, "q_max": 8.678678670755228e-13, "orders": 84, "canonical": true, "swap_mib": 0.0},
+        "rta": {"R": 0.3655957120129662, "T": 0.012994030263701141, "A": 0.6214102577233326, "A_volume": 0.6214102588708196},
+        "iterations": "not_applicable_direct",
+        "total_wall_seconds": 493.81776277092285,
+        "rss_mib": 8015.8359375,
+        "rss_authority": "watchdog.memory.max_simultaneous_worker_rss_mb"
+      },
+      "iterative_M120": {
+        "raw": {
+          "watchdog": {"path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/qualification_f2d7719/r4_two_pass_phi_p5_m120_maxit4500/watchdog.json", "sha256": "7f12d20772bc172717f7affc6e15d4ec0dbfb3f6360008615187e5b4b532db17"},
+          "online": {"path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/qualification_f2d7719/r4_two_pass_phi_p5_m120_maxit4500/run/online_record.json", "sha256": "a715411a78f3d307861de8827af93b747cbf788f4c007a0899f057b634d09ba1"}
+        },
+        "gate": {"status": "watchdog_pass_awaiting_offline_checker", "return_code": 0, "pass": true, "reason": 2, "q_and_orders": true, "canonical": true, "release": true, "swap_mib": 0.0},
+        "rta": {"R": 0.3655957092994381, "T": 0.012994030227583397, "A": 0.6214102604729785, "A_volume": 0.6214102561008985},
+        "iterations": 2832,
+        "residuals": {"reported": 3.4291679160959187e-09, "global": 3.4291700830479546e-09, "bottom": 4.847417910243168e-09, "top": 2.7544543238791594e-09, "modal": 3.1513598800506863e-15},
+        "total_wall_seconds": 1356.7072694080416,
+        "rss_mib": 6475.23828125,
+        "rss_source": "watchdog.resource.process_tree_peak_rss_mib",
+        "rss_authority": "simultaneous mpi_process_tree_rss_mb"
+      }
+    }
+  ],
+  "comparators": [
+    {"phi_deg": 0.0, "kind": "m120_vs_m160", "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r3_comparisons_phi_0/m120_vs_m160.json", "sha256": "b0cdd12408a6f10d371e02fcf7395099b98c30d04eaeccc2d741c0156abdb044", "pass": true},
+    {"phi_deg": 0.0, "kind": "m120_vs_full3d", "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r3_comparisons_phi_0/m120_vs_full3d.json", "sha256": "80d3563c613d0cc6e4ce3e6c42c84a5a8af70cbc2093cfc078683b74415afb17", "pass": true},
+    {"phi_deg": 0.0, "kind": "m160_vs_full3d", "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r3_comparisons_phi_0/m160_vs_full3d.json", "sha256": "b1e807cdfeb68bcd649d76988053df3db38d8be1f71c70f63b4b27c5e1b72d4c", "pass": true},
+    {"phi_deg": -5.0, "kind": "m120_vs_m160", "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r3_comparisons_phi_m5/m120_vs_m160.json", "sha256": "91e90775b103db5fd3ff7928a8adce73836d811f84be25874d996de7b93ffd39", "pass": true},
+    {"phi_deg": -5.0, "kind": "m120_vs_full3d", "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r3_comparisons_phi_m5/m120_vs_full3d.json", "sha256": "9ebb41d000125ad1c1f4ab94af99e65b3e9e55b4879019548458d4c8f68a67f2", "pass": true},
+    {"phi_deg": -5.0, "kind": "m160_vs_full3d", "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r3_comparisons_phi_m5/m160_vs_full3d.json", "sha256": "477874707df5fe3e9a6360cedb64cd848da391d8b2142508c7638c212d2165c8", "pass": true},
+    {"phi_deg": 5.0, "kind": "m120_vs_m160", "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r3_comparisons_phi_p5/m120_vs_m160.json", "sha256": "b016d63052361ee1ee89ff689c376f5ebe7b151dbb2b4932b587743910362159", "pass": true},
+    {"phi_deg": 5.0, "kind": "m120_vs_full3d", "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r3_comparisons_phi_p5/m120_vs_full3d.json", "sha256": "c8e015dffdbd3a9424d8f530572ac1dfdac2d5e92d4e422ddcfdae13b3010d1c", "pass": true},
+    {"phi_deg": 5.0, "kind": "m160_vs_full3d", "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r3_comparisons_phi_p5/m160_vs_full3d.json", "sha256": "310d22edb1124b34f6663b0ec761e4c40df46cffb347e901fe58816ccffdca2a", "pass": true},
+    {"phi_deg": 0.0, "kind": "iterative_vs_full3d", "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r5_three_way/phi_0/iterative_vs_full3d.json", "sha256": "bb966f4ebc04bc56924173686f5eae45cb88913fd32d7209d7e33455c0a294f0", "pass": true},
+    {"phi_deg": 0.0, "kind": "iterative_vs_direct", "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r5_three_way/phi_0/iterative_vs_direct.json", "sha256": "17d9fdf073f17daf9d179222e81de526cef5721abc504488cea57e34542adf8b", "pass": true},
+    {"phi_deg": -5.0, "kind": "iterative_vs_full3d", "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r5_three_way/phi_m5/iterative_vs_full3d.json", "sha256": "d8c658e83ac45efd332ff9d34491a9d51cab65b6f21198e9aaaddfe9903c3f12", "pass": true},
+    {"phi_deg": -5.0, "kind": "iterative_vs_direct", "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r5_three_way/phi_m5/iterative_vs_direct.json", "sha256": "a2f025c1d5388801c271db14851d346e069c75257c64bdf45df7d6aaa9033e3c", "pass": true},
+    {"phi_deg": 5.0, "kind": "iterative_vs_full3d", "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r5_three_way/phi_p5/iterative_vs_full3d.json", "sha256": "685d9f15c8258799ada4f6ed45645df6fe06c0bb05afe0cb82bc9763f03d259b", "pass": true},
+    {"phi_deg": 5.0, "kind": "iterative_vs_direct", "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r5_three_way/phi_p5/iterative_vs_direct.json", "sha256": "6c4a21ede5c9daeb609241cce2cb23cd379f8dd3a411a830833a60978429b8d9", "pass": true}
+  ],
+  "resource_gate": {"authority": "simultaneous mpi_process_tree_rss_mb", "preferred_limit_mib": 6144.0, "observed_iterative_mib": {"phi_0": 6542.08984375, "phi_m5": 6623.15625, "phi_p5": 6475.23828125}, "preferred_pass": false, "swap_mib": 0.0},
+  "historical_boundary": {"original_scalar_max_it": 1600, "original_stage": "negative_history_preserved_in_response_v1", "extension_is_not_production_qualified": true, "m_robust": 120}
+}
