@@ -14,6 +14,7 @@ from benchmarks.run_task037c_exact_traction_column_audit import (
     _split_normalize_four_blocks,
 )
 from src.common.config_3d import target_stage4_config
+from src.geometry.mesh_builder_3d import stage4_axis_plan
 
 
 def test_split_normalizes_local_amplitudes_without_mixing_sides() -> None:
@@ -109,7 +110,10 @@ def test_one_cell_config_has_frozen_geometry() -> None:
     assert one_cell.interface_z == pytest.approx(0.0)
     assert one_cell.grating_height == pytest.approx(10.0)
     assert one_cell.mesh_axis_cell_counts == (6, 3, 1)
-    assert one_cell.mesh_axis_z_profile == "task037c_x2_one_cell_z0_z10"
+    assert one_cell.mesh_axis_z_profile == "task037c_x2_uniform_10nm_one_cell"
+    plan = stage4_axis_plan(one_cell, comm_size=8)
+    np.testing.assert_allclose(plan.z_values, [0.0, 10.0])
+    assert plan.mesh_cells_resolved == (6, 3, 1)
 
 
 def test_runner_has_no_endcap_import_or_builder() -> None:
