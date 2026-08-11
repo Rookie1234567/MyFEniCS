@@ -22,6 +22,10 @@ TASK37C_PHI_VALUES = (-5.0, 0.0, 5.0)
 TASK37C_POLARIZATION = "s"
 TASK37C_FORMAL_MPI = (1, 8)
 TASK37C_REQUESTED_MODES = (120, 160)
+TASK37C_TRACTION_MODELS = (
+    "scalar_cg_discrete_derivative",
+    "full3d_one_cell_exact_schur",
+)
 TASK37C_MAX_IT = 1600
 TASK37C_RTOL = 5.0e-9
 TASK37C_TRACTION_TOL = 1.0e-8
@@ -74,6 +78,8 @@ def make_task37c_profile(
     phi_deg: float,
     requested_modes: int,
     mpi_size: int,
+    *,
+    traction_model: str = TASK37C_TRACTION_MODELS[0],
 ) -> Task37cProfile:
     """Build a profile only for the frozen Task37c choice set."""
 
@@ -88,11 +94,16 @@ def make_task37c_profile(
         )
     if mpi not in TASK37C_FORMAL_MPI:
         raise ValueError(f"Task37c MPI size must be one of {TASK37C_FORMAL_MPI}.")
+    if traction_model not in TASK37C_TRACTION_MODELS:
+        raise ValueError(
+            f"Task37c traction model must be one of {TASK37C_TRACTION_MODELS}."
+        )
     return Task37cProfile(
         incident_phi_deg=phi,
         requested_modes=modes,
         candidate_modes=2 * modes,
         mpi_size=mpi,
+        internal_traction_model=traction_model,
     )
 
 

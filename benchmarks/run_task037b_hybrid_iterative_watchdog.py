@@ -24,7 +24,11 @@ from benchmarks.watchdog_process_control import (
     terminate_process_tree,
     worker_process_group_popen_kwargs,
 )
-from benchmarks.task037c_robustness import classify_mpi_resource, make_task37c_profile
+from benchmarks.task037c_robustness import (
+    TASK37C_TRACTION_MODELS,
+    classify_mpi_resource,
+    make_task37c_profile,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -234,6 +238,8 @@ def build_worker_command(
             str(args.requested_modes),
             "--mpi-size",
             str(args.mpi_size),
+            "--internal-traction-model",
+            args.internal_traction_model,
         ]
     command = [
         "mpiexec",
@@ -530,6 +536,7 @@ def run_watchdog(args: argparse.Namespace) -> int:
             args.incident_phi_deg,
             args.requested_modes,
             args.mpi_size,
+            traction_model=args.internal_traction_model,
         )
     else:
         profile = None
@@ -680,6 +687,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--incident-phi-deg", type=float, choices=(-5.0, 0.0, 5.0))
     parser.add_argument("--requested-modes", type=int, choices=(120, 160))
     parser.add_argument("--mpi-size", type=int, choices=(1, 8))
+    parser.add_argument(
+        "--internal-traction-model",
+        choices=TASK37C_TRACTION_MODELS,
+        default=None,
+    )
     return parser
 
 
@@ -703,7 +715,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
             )
         ):
             parser.error("Task37c does not accept Task37b authority arguments")
+        args.internal_traction_model = (
+            args.internal_traction_model or TASK37C_TRACTION_MODELS[0]
+        )
     else:
+        if args.internal_traction_model is not None:
+            parser.error("frozen M10 does not accept --internal-traction-model")
         if any(
             value is not None
             for value in (args.incident_phi_deg, args.requested_modes, args.mpi_size)
@@ -719,6 +736,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         )
         if any(value is None for value in required_authorities):
             parser.error("frozen M10 requires all authority path/hash pairs")
+        args.internal_traction_model = TASK37C_TRACTION_MODELS[0]
     return args
 
 

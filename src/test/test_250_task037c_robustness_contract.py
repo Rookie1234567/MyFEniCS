@@ -6,9 +6,11 @@ from types import SimpleNamespace
 import pytest
 
 from benchmarks import run_task037b_hybrid_iterative as iterative_runner
+from benchmarks import run_task037b_hybrid_iterative_watchdog as watchdog
 from benchmarks.task037c_robustness import (
     TASK37C_FORMAL_MPI,
     TASK37C_PHI_VALUES,
+    TASK37C_TRACTION_MODELS,
     canonical_mode_key,
     choose_m_robust,
     classify_mpi_resource,
@@ -251,3 +253,131 @@ def test_task37c_cfg_and_side_identity_are_online_gate_inputs(
         is False
     )
     assert make_record([], cfg_pass=True)["online_pass"] is False
+
+
+def _iterative_task37c_args(tmp_path, *, exact: bool = False) -> list[str]:
+    args = [
+        "--task037c-robustness-gate",
+        "--case-label",
+        "task037c_parser_test",
+        "--run-dir",
+        str(tmp_path / "run"),
+        "--output",
+        str(tmp_path / "online.json"),
+        "--verified-clean-sha",
+        "a" * 40,
+        "--incident-phi-deg",
+        "-5",
+        "--requested-modes",
+        "160",
+        "--mpi-size",
+        "8",
+    ]
+    if exact:
+        args.extend(["--internal-traction-model", TASK37C_TRACTION_MODELS[1]])
+    return args
+
+
+def _watchdog_task37c_args(tmp_path, *, exact: bool = False) -> list[str]:
+    args = [
+        "--task037c-robustness-gate",
+        "--case-label",
+        "task037c_watchdog_parser_test",
+        "--run-root",
+        str(tmp_path / "root"),
+        "--output",
+        str(tmp_path / "watchdog.json"),
+        "--verified-clean-sha",
+        "a" * 40,
+        "--incident-phi-deg",
+        "-5",
+        "--requested-modes",
+        "160",
+        "--mpi-size",
+        "8",
+    ]
+    if exact:
+        args.extend(["--internal-traction-model", TASK37C_TRACTION_MODELS[1]])
+    return args
+
+
+def _frozen_iterative_args(tmp_path) -> list[str]:
+    return [
+        "--frozen-m10",
+        "--case-label",
+        "frozen_parser_test",
+        "--run-dir",
+        str(tmp_path / "frozen-run"),
+        "--output",
+        str(tmp_path / "frozen.json"),
+        "--verified-clean-sha",
+        "a" * 40,
+        "--h1-authority",
+        str(tmp_path / "h1.json"),
+        "--h1-authority-sha256",
+        "b" * 64,
+        "--full3d-reference",
+        str(tmp_path / "full3d.json"),
+        "--full3d-reference-sha256",
+        "c" * 64,
+        "--task035c-p6-preflight-authority",
+        str(tmp_path / "p6.json"),
+        "--task035c-p6-preflight-sha256",
+        "d" * 64,
+    ]
+
+
+def _frozen_watchdog_args(tmp_path) -> list[str]:
+    args = _frozen_iterative_args(tmp_path)
+    run_root_index = args.index("--run-dir")
+    args[run_root_index] = "--run-root"
+    args[run_root_index + 1] = str(tmp_path / "frozen-root")
+    return args
+
+
+def test_task37c_exact_traction_model_propagates_to_worker_and_record(
+    tmp_path,
+) -> None:
+    exact = TASK37C_TRACTION_MODELS[1]
+    runner_args = iterative_runner.parse_args(
+        _iterative_task37c_args(tmp_path, exact=True)
+    )
+    profile = iterative_runner.profile_from_args(runner_args)
+    assert profile.internal_traction_model == exact
+    assert iterative_runner.profile_record(profile)["internal_traction_model"] == exact
+
+    watchdog_args = watchdog.parse_args(_watchdog_task37c_args(tmp_path, exact=True))
+    command = watchdog.build_worker_command(
+        watchdog_args,
+        tmp_path / "payload",
+        tmp_path / "online.json",
+        tmp_path / "memory.json",
+    )
+    model_index = command.index("--internal-traction-model")
+    assert command[model_index + 1] == exact
+    assert watchdog_args.internal_traction_model == profile.internal_traction_model
+
+
+def test_task37c_traction_model_defaults_and_frozen_rejection(tmp_path) -> None:
+    assert (
+        iterative_runner.profile_from_args(
+            iterative_runner.parse_args(_iterative_task37c_args(tmp_path))
+        ).internal_traction_model
+        == TASK37C_TRACTION_MODELS[0]
+    )
+    assert (
+        watchdog.parse_args(_watchdog_task37c_args(tmp_path)).internal_traction_model
+        == TASK37C_TRACTION_MODELS[0]
+    )
+    with pytest.raises(SystemExit):
+        iterative_runner.parse_args(
+            _frozen_iterative_args(tmp_path)
+            + ["--internal-traction-model", TASK37C_TRACTION_MODELS[1]]
+        )
+    with pytest.raises(SystemExit):
+        watchdog.parse_args(
+            _frozen_watchdog_args(tmp_path)
+            + ["--internal-traction-model", TASK37C_TRACTION_MODELS[1]]
+        )
+    with pytest.raises(ValueError):
+        make_task37c_profile(0.0, 120, 8, traction_model="not-a-model")

@@ -82,6 +82,7 @@ from benchmarks.task035c_p6_h10_gates import (
     valid_hex_digest,
 )
 from benchmarks.task037c_robustness import (
+    TASK37C_TRACTION_MODELS,
     Task37cProfile,
     canonical_mode_key,
     direction_s_phase_audit,
@@ -2266,6 +2267,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--requested-modes", type=int, choices=(120, 160))
     parser.add_argument("--mpi-size", type=int, choices=(1, 8))
+    parser.add_argument(
+        "--internal-traction-model",
+        choices=TASK37C_TRACTION_MODELS,
+        default=None,
+    )
     return parser
 
 
@@ -2289,7 +2295,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             )
         ):
             parser.error("Task37c does not accept Task37b authority arguments")
+        args.internal_traction_model = (
+            args.internal_traction_model or TASK37C_TRACTION_MODELS[0]
+        )
     else:
+        if args.internal_traction_model is not None:
+            parser.error("frozen M10 does not accept --internal-traction-model")
         if any(
             value is not None
             for value in (args.incident_phi_deg, args.requested_modes, args.mpi_size)
@@ -2305,6 +2316,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         )
         if any(value is None for value in required_authorities):
             parser.error("frozen M10 requires all three authority path/hash pairs")
+        args.internal_traction_model = TASK37C_TRACTION_MODELS[0]
     if not valid_hex_digest(args.verified_clean_sha, 40):
         parser.error("--verified-clean-sha must be a 40-character hex digest")
     for name in (
@@ -2329,6 +2341,7 @@ def profile_from_args(
         args.incident_phi_deg,
         args.requested_modes,
         args.mpi_size,
+        traction_model=args.internal_traction_model,
     )
 
 
