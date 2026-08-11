@@ -277,6 +277,7 @@ def _one_cell_config(cfg: SimulationConfig3D) -> SimulationConfig3D:
         grating_height=10.0,
         mesh_axis_cell_counts=(6, 3, 1),
         mesh_axis_z_values=(0.0, 10.0),
+        mesh_axis_z_profile="task037c_x2_one_cell_z0_z10",
         mesh_cell_type="hexahedron",
         mesh_spacing_mode="boundary_fitted",
         stage4_full3d_assembly_backend=ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,

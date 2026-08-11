@@ -109,6 +109,7 @@ def test_one_cell_config_has_frozen_geometry() -> None:
     assert one_cell.interface_z == pytest.approx(0.0)
     assert one_cell.grating_height == pytest.approx(10.0)
     assert one_cell.mesh_axis_cell_counts == (6, 3, 1)
+    assert one_cell.mesh_axis_z_profile == "task037c_x2_one_cell_z0_z10"
 
 
 def test_runner_has_no_endcap_import_or_builder() -> None:
