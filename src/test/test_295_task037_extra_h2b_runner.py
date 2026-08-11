@@ -339,9 +339,9 @@ def test_h2b_worker_executable_preserves_venv_symlink(monkeypatch, tmp_path: Pat
     assert command[0] != str(target)
 
 
-@pytest.mark.parametrize("exits_after_unreadable", [True, False])
+@pytest.mark.parametrize("monitor_mode", ["terminal", "persistent", "recheck_exit"])
 def test_h2b_monitor_distinguishes_terminal_exit_from_live_unreadable(
-    monkeypatch, tmp_path: Path, exits_after_unreadable: bool
+    monkeypatch, tmp_path: Path, monitor_mode: str
 ):
     import benchmarks.run_task033_case090_watchdog as watchdog_module
     import benchmarks.task034_wsl_resources as resources_module
@@ -354,7 +354,9 @@ def test_h2b_monitor_distinguishes_terminal_exit_from_live_unreadable(
 
         def poll(self):
             self.poll_count += 1
-            if exits_after_unreadable and self.poll_count >= 2:
+            if monitor_mode == "terminal" and self.poll_count >= 2:
+                return 0
+            if monitor_mode == "recheck_exit" and self.poll_count >= 4:
                 return 0
             return None
 
@@ -368,9 +370,25 @@ def test_h2b_monitor_distinguishes_terminal_exit_from_live_unreadable(
         swap_bytes=0,
         all_status_readable=False,
     )
+    recheck_samples = iter(
+        (
+            sample,
+            SimpleNamespace(
+                root_pid=424_242,
+                pids=(424_242, 424_243),
+                rss_bytes=9876,
+                swap_bytes=3,
+                all_status_readable=False,
+            ),
+        )
+    )
     terminated = []
     monkeypatch.setattr(runner.subprocess, "Popen", lambda *args, **kwargs: FakeProcess())
-    monkeypatch.setattr(resources_module, "process_tree_sample", lambda pid: sample)
+    monkeypatch.setattr(
+        resources_module,
+        "process_tree_sample",
+        lambda pid: next(recheck_samples) if monitor_mode == "recheck_exit" else sample,
+    )
     monkeypatch.setattr(
         watchdog_module,
         "terminate_process_tree",
@@ -388,18 +406,156 @@ def test_h2b_monitor_distinguishes_terminal_exit_from_live_unreadable(
         for line in (tmp_path / "s0_timeline.jsonl").read_text(encoding="utf-8").splitlines()
         if line.strip()
     ]
-    if exits_after_unreadable:
+    if monitor_mode == "terminal":
         assert observed["termination"] is None
         assert terminated == []
         assert timeline[-1]["sample_kind"] == "terminal_exit_unreadable"
         assert timeline[-1]["formal_sample"] is False
         assert timeline[-1]["terminal_exit"] is True
         assert timeline[-1]["return_code"] == 0
-    else:
+    elif monitor_mode == "persistent":
         assert observed["termination"]["reason"] == "process_tree_unreadable"
         assert terminated == [424_242]
-        assert timeline[-1]["sample_kind"] == "worker"
-        assert timeline[-1]["all_status_readable"] is False
+        assert timeline == []
+        assert observed["peak_rss_bytes"] == 1234
+    else:
+        assert observed["termination"] is None
+        assert terminated == []
+        assert observed["peak_rss_bytes"] == 0
+        assert observed["swap_bytes"] == 0
+        assert len(timeline) == 1
+        assert timeline[0]["sample_kind"] == "terminal_exit_unreadable"
+        assert timeline[0]["rss_bytes"] == 9876
+        assert timeline[0]["swap_bytes"] == 3
+
+
+def test_h2b_monitor_recovers_one_transient_unreadable_sample(
+    monkeypatch, tmp_path: Path
+):
+    import benchmarks.run_task033_case090_watchdog as watchdog_module
+    import benchmarks.task034_wsl_resources as resources_module
+
+    class FakeProcess:
+        pid = 424_242
+
+        def __init__(self):
+            self.poll_count = 0
+
+        def poll(self):
+            self.poll_count += 1
+            return 0 if self.poll_count >= 4 else None
+
+        def wait(self):
+            return 0
+
+    samples = iter(
+        (
+            SimpleNamespace(
+                root_pid=424_242,
+                pids=(424_242, 424_243),
+                rss_bytes=111,
+                swap_bytes=0,
+                all_status_readable=False,
+            ),
+            SimpleNamespace(
+                root_pid=424_242,
+                pids=(424_242,),
+                rss_bytes=9876,
+                swap_bytes=0,
+                all_status_readable=True,
+            ),
+        )
+    )
+    terminated = []
+    monkeypatch.setattr(runner.subprocess, "Popen", lambda *args, **kwargs: FakeProcess())
+    monkeypatch.setattr(resources_module, "process_tree_sample", lambda pid: next(samples))
+    monkeypatch.setattr(
+        watchdog_module,
+        "terminate_process_tree",
+        lambda process: terminated.append(process.pid) or {"requested": True},
+    )
+    observed = runner._monitor_phase(
+        tmp_path,
+        "s0",
+        ["python", "worker"],
+        timeout=10.0,
+        rss_limit=10_000,
+    )
+    timeline = [
+        runner.json.loads(line)
+        for line in (tmp_path / "s0_timeline.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    metrics = runner._timeline_metrics(tmp_path / "s0_timeline.jsonl", "s0")
+    assert observed["termination"] is None
+    assert observed["peak_rss_bytes"] == 9876
+    assert terminated == []
+    assert [item["sample_kind"] for item in timeline] == ["worker"]
+    assert timeline[0]["recovered_from_single_transient_unreadable"] is True
+    assert timeline[0]["initial_unreadable_pids"] == [424_242, 424_243]
+    assert metrics["live_sample_count"] == 1
+    assert metrics["peak_rss_bytes"] == 9876
+
+
+@pytest.mark.parametrize(
+    ("rss_bytes", "swap_bytes", "reason"),
+    [
+        (10_000, 0, "process_tree_rss_at_or_over_limit"),
+        (0, 1, "swap_over_limit"),
+    ],
+)
+def test_h2b_monitor_does_not_recover_initial_resource_violation(
+    monkeypatch,
+    tmp_path: Path,
+    rss_bytes: int,
+    swap_bytes: int,
+    reason: str,
+):
+    import benchmarks.run_task033_case090_watchdog as watchdog_module
+    import benchmarks.task034_wsl_resources as resources_module
+
+    class FakeProcess:
+        pid = 424_242
+
+        def poll(self):
+            return None
+
+        def wait(self):
+            return -15
+
+    samples = []
+    sample = SimpleNamespace(
+        root_pid=424_242,
+        pids=(424_242,),
+        rss_bytes=rss_bytes,
+        swap_bytes=swap_bytes,
+        all_status_readable=False,
+    )
+    terminated = []
+    monkeypatch.setattr(runner.subprocess, "Popen", lambda *args, **kwargs: FakeProcess())
+    monkeypatch.setattr(
+        resources_module,
+        "process_tree_sample",
+        lambda pid: samples.append(sample) or sample,
+    )
+    monkeypatch.setattr(
+        watchdog_module,
+        "terminate_process_tree",
+        lambda process: terminated.append(process.pid) or {"requested": True},
+    )
+    observed = runner._monitor_phase(
+        tmp_path,
+        "s0",
+        ["python", "worker"],
+        timeout=10.0,
+        rss_limit=10_000,
+    )
+    assert len(samples) == 1
+    assert (tmp_path / "s0_timeline.jsonl").read_text(encoding="utf-8") == ""
+    assert observed["termination"]["reason"] == reason
+    assert observed["peak_rss_bytes"] == rss_bytes
+    assert observed["swap_bytes"] == swap_bytes
+    assert terminated == [424_242]
 
 
 def test_h2b_bounded_process_drain_waits_for_disappearance(monkeypatch):

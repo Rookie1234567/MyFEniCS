@@ -48,6 +48,7 @@ H2B_P0_TIMEOUT_SECONDS = 3_600.0
 H2B_P0_RSS_LIMIT_BYTES = 1_500_000_000
 H2B_PROCESS_DRAIN_TIMEOUT_SECONDS = 5.0
 H2B_PROCESS_DRAIN_POLL_SECONDS = 0.05
+H2B_TRANSIENT_RECHECK_SECONDS = 0.02
 H2B_S0_STRATEGIES = ("additive", "forward", "symmetric")
 H2B_S0_OPERATIONAL_ACTION_COUNTS = {"additive": 1, "forward": 8, "symmetric": 16}
 H2B_S0_RHO_LIMITS = {
@@ -2322,6 +2323,37 @@ def _monitor_phase(
     root_path = run_dir / f"{phase}_root_pid.json"
     started = time.perf_counter()
     with stdout_path.open("w", encoding="utf-8") as stdout, timeline_path.open("w", encoding="utf-8") as timeline:
+        def write_timeline(item: Mapping[str, Any]) -> None:
+            timeline.write(json.dumps(item, sort_keys=True, separators=(",", ":")) + "\n")
+            timeline.flush()
+
+        def sample_item(sample: Any, sample_kind: str = "worker") -> dict[str, Any]:
+            pids = list(sample.pids)
+            return {
+                "schema": H2B_PROGRESS_SCHEMA,
+                "phase": phase,
+                "sample_kind": sample_kind,
+                "elapsed_wall_seconds": float(time.perf_counter() - started),
+                "root_pid": int(sample.root_pid),
+                "pids": pids,
+                "process_count": len(pids),
+                "rss_bytes": int(sample.rss_bytes),
+                "swap_bytes": int(sample.swap_bytes),
+                "all_status_readable": bool(sample.all_status_readable),
+                "compiler_descendant_pids": _compiler_descendant_pids(pids),
+            }
+
+        def terminal_item(sample: Any, return_code: int) -> dict[str, Any]:
+            item = sample_item(sample, "terminal_exit_unreadable")
+            item.update(
+                {
+                    "formal_sample": False,
+                    "terminal_exit": True,
+                    "return_code": int(return_code),
+                }
+            )
+            return item
+
         process = subprocess.Popen(
             command,
             cwd=str(ROOT),
@@ -2337,44 +2369,85 @@ def _monitor_phase(
         termination: dict[str, Any] | None = None
         while process.poll() is None:
             sample = process_tree_sample(process.pid)
-            pids = list(sample.pids)
-            compiler = _compiler_descendant_pids(pids)
-            item = {
-                "schema": H2B_PROGRESS_SCHEMA,
-                "phase": phase,
-                "sample_kind": "worker",
-                "elapsed_wall_seconds": float(time.perf_counter() - started),
-                "root_pid": int(sample.root_pid),
-                "pids": pids,
-                "process_count": len(pids),
-                "rss_bytes": int(sample.rss_bytes),
-                "swap_bytes": int(sample.swap_bytes),
-                "all_status_readable": bool(sample.all_status_readable),
-                "compiler_descendant_pids": compiler,
-            }
             if not sample.all_status_readable:
+                initial_pids = list(sample.pids)
+                initial_rss = int(sample.rss_bytes)
+                initial_swap = int(sample.swap_bytes)
+                if sample.swap_bytes > H2B_SWAP_LIMIT_BYTES:
+                    termination = {
+                        "reason": "swap_over_limit",
+                        "observed_status_readable": False,
+                        "observed_rss_lower_bound_bytes": initial_rss,
+                        "observed_swap_lower_bound_bytes": initial_swap,
+                        "initial_unreadable_pids": initial_pids,
+                    }
+                    peak = max(peak, initial_rss)
+                    swap = max(swap, initial_swap)
+                    sampled_pids.update(initial_pids)
+                    break
+                if sample.rss_bytes >= rss_limit:
+                    termination = {
+                        "reason": "process_tree_rss_at_or_over_limit",
+                        "observed_status_readable": False,
+                        "observed_rss_lower_bound_bytes": initial_rss,
+                        "observed_swap_lower_bound_bytes": initial_swap,
+                        "initial_unreadable_pids": initial_pids,
+                    }
+                    peak = max(peak, initial_rss)
+                    swap = max(swap, initial_swap)
+                    sampled_pids.update(initial_pids)
+                    break
                 terminal_return_code = process.poll()
                 if terminal_return_code is not None:
-                    item.update(
-                        {
-                            "sample_kind": "terminal_exit_unreadable",
-                            "formal_sample": False,
-                            "terminal_exit": True,
-                            "return_code": int(terminal_return_code),
+                    write_timeline(terminal_item(sample, terminal_return_code))
+                    sampled_pids.update(initial_pids)
+                    break
+                time.sleep(H2B_TRANSIENT_RECHECK_SECONDS)
+                terminal_return_code = process.poll()
+                if terminal_return_code is not None:
+                    write_timeline(terminal_item(sample, terminal_return_code))
+                    sampled_pids.update(initial_pids)
+                    break
+                recovered = process_tree_sample(process.pid)
+                if not recovered.all_status_readable:
+                    recheck_pids = list(recovered.pids)
+                    recheck_rss = int(recovered.rss_bytes)
+                    recheck_swap = int(recovered.swap_bytes)
+                    sampled_pids.update(initial_pids)
+                    sampled_pids.update(recheck_pids)
+                    terminal_return_code = process.poll()
+                    if terminal_return_code is not None:
+                        write_timeline(terminal_item(recovered, terminal_return_code))
+                    else:
+                        peak = max(peak, initial_rss, recheck_rss)
+                        swap = max(swap, initial_swap, recheck_swap)
+                        termination = {
+                            "reason": "process_tree_unreadable",
+                            "observed_status_readable": False,
+                            "observed_rss_lower_bound_bytes": max(initial_rss, recheck_rss),
+                            "observed_swap_lower_bound_bytes": max(initial_swap, recheck_swap),
+                            "initial_unreadable_pids": initial_pids,
+                            "recheck_unreadable_pids": recheck_pids,
                         }
-                    )
-            timeline.write(json.dumps(item, sort_keys=True, separators=(",", ":")) + "\n")
-            timeline.flush()
+                    break
+                item = sample_item(recovered)
+                item.update(
+                    {
+                        "recovered_from_single_transient_unreadable": True,
+                        "initial_unreadable_pids": initial_pids,
+                    }
+                )
+                sample = recovered
+                write_timeline(item)
+            else:
+                item = sample_item(sample)
+                write_timeline(item)
+            pids = list(sample.pids)
             if item["sample_kind"] == "worker" and sample.all_status_readable:
                 peak = max(peak, int(sample.rss_bytes))
                 swap = max(swap, int(sample.swap_bytes))
             sampled_pids.update(pids)
             elapsed = time.perf_counter() - started
-            if item["sample_kind"] == "terminal_exit_unreadable":
-                break
-            if not sample.all_status_readable:
-                termination = {"reason": "process_tree_unreadable"}
-                break
             if sample.swap_bytes > H2B_SWAP_LIMIT_BYTES:
                 termination = {"reason": "swap_over_limit"}
                 break
