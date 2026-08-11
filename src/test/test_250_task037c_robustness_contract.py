@@ -378,7 +378,7 @@ def test_task37c_two_pass_side_correction_is_explicit_and_forwarded(tmp_path) ->
     )
     profile = iterative_runner.profile_from_args(runner_args)
     assert profile.side_residual_correction_steps == 2
-    assert profile.max_it == 2000
+    assert profile.max_it == 4500
     assert profile.preconditioner_identity.endswith("two_pass_residual_correction")
     assert (
         iterative_runner.profile_record(profile)["side_residual_correction_steps"] == 2
