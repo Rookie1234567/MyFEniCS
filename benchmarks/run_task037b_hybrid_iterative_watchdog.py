@@ -24,10 +24,16 @@ from benchmarks.watchdog_process_control import (
     terminate_process_tree,
     worker_process_group_popen_kwargs,
 )
+from benchmarks.task037c_robustness import (
+    TASK37C_TRACTION_MODELS,
+    classify_mpi_resource,
+    make_task37c_profile,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
 WATCHDOG_SCHEMA = "task037b.m10-frozen-watchdog.v1"
+TASK37C_WATCHDOG_SCHEMA = "task037c.robustness-watchdog.v1"
 WORKER_MODULE = "benchmarks.run_task037b_hybrid_iterative"
 FROZEN_M10_MPI_SIZE = 8
 SAMPLE_INTERVAL_SECONDS = 1.0
@@ -219,14 +225,32 @@ def build_worker_command(
     online_path: Path,
     memory_stages: Path,
 ) -> list[str]:
-    return [
+    if args.frozen_m10:
+        mpi_size = FROZEN_M10_MPI_SIZE
+        profile_args = ["--frozen-m10"]
+    else:
+        mpi_size = int(args.mpi_size)
+        profile_args = [
+            "--task037c-robustness-gate",
+            "--incident-phi-deg",
+            str(args.incident_phi_deg),
+            "--requested-modes",
+            str(args.requested_modes),
+            "--mpi-size",
+            str(args.mpi_size),
+            "--internal-traction-model",
+            args.internal_traction_model,
+        ]
+        if args.task037c_two_pass_side_correction:
+            profile_args.append("--task037c-two-pass-side-correction")
+    command = [
         "mpiexec",
         "-n",
-        str(FROZEN_M10_MPI_SIZE),
+        str(mpi_size),
         sys.executable,
         "-m",
         WORKER_MODULE,
-        "--frozen-m10",
+        *profile_args,
         "--case-label",
         args.case_label,
         "--run-dir",
@@ -237,19 +261,25 @@ def build_worker_command(
         str(memory_stages),
         "--verified-clean-sha",
         args.verified_clean_sha,
-        "--h1-authority",
-        str(Path(args.h1_authority).resolve()),
-        "--h1-authority-sha256",
-        args.h1_authority_sha256,
-        "--full3d-reference",
-        str(Path(args.full3d_reference).resolve()),
-        "--full3d-reference-sha256",
-        args.full3d_reference_sha256,
-        "--task035c-p6-preflight-authority",
-        str(Path(args.task035c_p6_preflight_authority).resolve()),
-        "--task035c-p6-preflight-sha256",
-        args.task035c_p6_preflight_sha256,
     ]
+    if args.frozen_m10:
+        command.extend(
+            [
+                "--h1-authority",
+                str(Path(args.h1_authority).resolve()),
+                "--h1-authority-sha256",
+                args.h1_authority_sha256,
+                "--full3d-reference",
+                str(Path(args.full3d_reference).resolve()),
+                "--full3d-reference-sha256",
+                args.full3d_reference_sha256,
+                "--task035c-p6-preflight-authority",
+                str(Path(args.task035c_p6_preflight_authority).resolve()),
+                "--task035c-p6-preflight-sha256",
+                args.task035c_p6_preflight_sha256,
+            ]
+        )
+    return command
 
 
 def _worker_environment() -> dict[str, str]:
@@ -266,7 +296,13 @@ def _numeric_row_value(row: Mapping[str, Any], key: str) -> float:
     return value if math.isfinite(value) else math.inf
 
 
-def _resource_summary(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+def _resource_summary(
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    profile_kind: str = "frozen_m10",
+    mpi_size: int = FROZEN_M10_MPI_SIZE,
+    termination_limit: float | None = RSS_LIMIT_MIB,
+) -> dict[str, Any]:
     if rows:
         peak_row = max(
             rows,
@@ -279,8 +315,34 @@ def _resource_summary(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         (_numeric_row_value(row, "mpi_process_tree_swap_mb") for row in rows),
         default=0.0,
     )
-    rss_pass = bool(rows) and math.isfinite(peak_rss) and peak_rss <= RSS_LIMIT_MIB
-    swap_pass = math.isfinite(peak_swap) and peak_swap <= SWAP_LIMIT_MIB
+    finite_sample = bool(rows) and math.isfinite(peak_rss) and math.isfinite(peak_swap)
+    swap_pass = finite_sample and peak_swap == SWAP_LIMIT_MIB
+    preferred_pass = finite_sample and peak_rss <= RSS_LIMIT_MIB and swap_pass
+    if profile_kind == "frozen_m10":
+        resource_pass = preferred_pass
+        classification = "preferred" if resource_pass else "resource_unqualified"
+    elif int(mpi_size) == 1:
+        classification_info = classify_mpi_resource(
+            mpi_size=1,
+            numerical_pass=True,
+            rss_mib=peak_rss,
+            swap_mib=peak_swap,
+        )
+        preferred_pass = bool(classification_info["preferred_pass"])
+        resource_pass = (
+            finite_sample and swap_pass and not classification_info["hard_stop"]
+        )
+        classification = str(classification_info["classification"])
+    else:
+        classification_info = classify_mpi_resource(
+            mpi_size=8,
+            numerical_pass=True,
+            rss_mib=peak_rss,
+            swap_mib=peak_swap,
+        )
+        preferred_pass = bool(classification_info["preferred_pass"])
+        resource_pass = finite_sample and swap_pass
+        classification = str(classification_info["classification"])
     return {
         "sample_count": len(rows),
         "process_tree_peak_rss_mib": peak_rss,
@@ -296,10 +358,13 @@ def _resource_summary(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
             default=0.0,
         ),
         "rss_limit_mib": RSS_LIMIT_MIB,
+        "termination_rss_limit_mib": termination_limit,
         "swap_limit_mib": SWAP_LIMIT_MIB,
-        "rss_pass": rss_pass,
+        "rss_pass": resource_pass,
+        "preferred_pass": preferred_pass,
+        "classification": classification,
         "swap_pass": swap_pass,
-        "pass": rss_pass and swap_pass,
+        "pass": resource_pass,
         "timeline_authority": "simultaneous mpi_process_tree_rss_mb",
     }
 
@@ -310,6 +375,9 @@ def _qualification_summary(
     resource: Mapping[str, Any],
     termination_classification: str,
     process_control: Mapping[str, Any],
+    *,
+    profile_kind: str = "frozen_m10",
+    mpi_size: int = FROZEN_M10_MPI_SIZE,
 ) -> dict[str, Any]:
     checks = {
         "worker_exit0": worker_return_code == 0,
@@ -350,6 +418,9 @@ def _sampling_loop(
     clock: Callable[[], float] = time.monotonic,
     sleep_fn: Callable[[float], None] = time.sleep,
     heartbeat_fn: Callable[[str], None] = print,
+    rss_limit: float = RSS_LIMIT_MIB,
+    heartbeat_label: str = "M10",
+    rss_limit_inclusive: bool = False,
 ) -> dict[str, Any]:
     started = clock()
     previous: Mapping[str, Any] | None = None
@@ -371,13 +442,14 @@ def _sampling_loop(
         swap = _numeric_row_value(row, "mpi_process_tree_swap_mb")
         if elapsed - last_heartbeat >= HEARTBEAT_SECONDS:
             heartbeat_fn(
-                "M10 watchdog heartbeat "
+                f"{heartbeat_label} watchdog heartbeat "
                 f"elapsed={elapsed:.1f}s stage={row.get('stage')} "
                 f"process_tree_rss_mib={rss:.3f} swap_mib={swap:.3f}"
             )
             last_heartbeat = elapsed
         return_code = process.poll()
-        if rss > RSS_LIMIT_MIB:
+        rss_exceeded = rss >= rss_limit if rss_limit_inclusive else rss > rss_limit
+        if rss_exceeded:
             termination_classification = "rss_limit_exceeded"
             termination_reason = f"process_tree_rss_mib={rss}"
         elif swap > SWAP_LIMIT_MIB:
@@ -434,15 +506,22 @@ def _new_paths(
     return run_root, output, payload, online, memory_stages, timeline, stdout
 
 
-def _summary_failure(output: Path, error: Exception) -> int:
+def _summary_failure(
+    output: Path,
+    error: Exception,
+    *,
+    task37c: bool = False,
+    profile_id: str | None = None,
+) -> int:
     if output.exists():
         return 2
     output.parent.mkdir(parents=True, exist_ok=True)
     payload = {
-        "schema": WATCHDOG_SCHEMA,
-        "frozen": True,
+        "schema": TASK37C_WATCHDOG_SCHEMA if task37c else WATCHDOG_SCHEMA,
+        "frozen": not task37c,
         "explicit_opt_in": True,
         "ordinary_default_changed": False,
+        "profile": profile_id,
         "qualification": {"pass": False, "checks": {}},
         "status": "failed",
         "failures": [f"watchdog_error:{error}"],
@@ -454,24 +533,36 @@ def _summary_failure(output: Path, error: Exception) -> int:
 
 
 def run_watchdog(args: argparse.Namespace) -> int:
-    if not args.frozen_m10:
-        raise ValueError("--frozen-m10 is required")
+    if args.task037c_robustness_gate:
+        profile = make_task37c_profile(
+            args.incident_phi_deg,
+            args.requested_modes,
+            args.mpi_size,
+            traction_model=args.internal_traction_model,
+            side_residual_correction_steps=(
+                2 if args.task037c_two_pass_side_correction else 1
+            ),
+        )
+    else:
+        profile = None
     source = _source_preflight(args.verified_clean_sha)
-    authorities = [
-        _authority_binding(
-            "h1_direct_hybrid", args.h1_authority, args.h1_authority_sha256
-        ),
-        _authority_binding(
-            "full3d_reference",
-            args.full3d_reference,
-            args.full3d_reference_sha256,
-        ),
-        _authority_binding(
-            "task035c_p6_preflight",
-            args.task035c_p6_preflight_authority,
-            args.task035c_p6_preflight_sha256,
-        ),
-    ]
+    authorities = []
+    if args.frozen_m10:
+        authorities = [
+            _authority_binding(
+                "h1_direct_hybrid", args.h1_authority, args.h1_authority_sha256
+            ),
+            _authority_binding(
+                "full3d_reference",
+                args.full3d_reference,
+                args.full3d_reference_sha256,
+            ),
+            _authority_binding(
+                "task035c_p6_preflight",
+                args.task035c_p6_preflight_authority,
+                args.task035c_p6_preflight_sha256,
+            ),
+        ]
     run_root, output, payload, online, memory_stages, timeline, stdout = _new_paths(
         args
     )
@@ -494,10 +585,27 @@ def run_watchdog(args: argparse.Namespace) -> int:
             env=environment,
             **worker_process_group_popen_kwargs(),
         )
-        sampling = _sampling_loop(process, memory_stages, writer, timeline_stream)
+        is_m10 = args.frozen_m10
+        mpi_size = FROZEN_M10_MPI_SIZE if is_m10 else int(args.mpi_size)
+        profile_kind = "frozen_m10" if is_m10 else "task037c"
+        termination_limit = RSS_LIMIT_MIB if is_m10 or mpi_size == 1 else None
+        sampling = _sampling_loop(
+            process,
+            memory_stages,
+            writer,
+            timeline_stream,
+            rss_limit=termination_limit if termination_limit is not None else math.inf,
+            heartbeat_label=("M10" if is_m10 else profile.profile_id),
+            rss_limit_inclusive=bool(not is_m10 and mpi_size == 1),
+        )
     online_state = _read_online_record(online)
     record = online_state["record"]
-    resource = _resource_summary(sampling["rows"])
+    resource = _resource_summary(
+        sampling["rows"],
+        profile_kind=profile_kind,
+        mpi_size=mpi_size,
+        termination_limit=termination_limit,
+    )
     online_pass = bool(
         online_state["json_valid"]
         and record is not None
@@ -509,14 +617,16 @@ def run_watchdog(args: argparse.Namespace) -> int:
         resource,
         sampling["termination_classification"],
         sampling["process_control"],
+        profile_kind=profile_kind,
+        mpi_size=mpi_size,
     )
     failures = list(online_state["failures"])
     failures.extend(
         key for key, passed in qualification["checks"].items() if not passed
     )
     summary = {
-        "schema": WATCHDOG_SCHEMA,
-        "frozen": True,
+        "schema": WATCHDOG_SCHEMA if is_m10 else TASK37C_WATCHDOG_SCHEMA,
+        "frozen": bool(is_m10),
         "explicit_opt_in": True,
         "ordinary_default_changed": False,
         "case_label": args.case_label,
@@ -526,7 +636,8 @@ def run_watchdog(args: argparse.Namespace) -> int:
             "argv": command,
             "shell": shlex.join(command),
             "module": WORKER_MODULE,
-            "mpi_size": FROZEN_M10_MPI_SIZE,
+            "mpi_size": FROZEN_M10_MPI_SIZE if args.frozen_m10 else args.mpi_size,
+            "profile": None if profile is None else profile.profile_id,
         },
         "environment": {
             "python_executable": sys.executable,
@@ -554,6 +665,7 @@ def run_watchdog(args: argparse.Namespace) -> int:
         "qualification": qualification,
         "failures": failures,
         "status": qualification["status"],
+        "profile": None if profile is None else profile.__dict__,
     }
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("w", encoding="utf-8") as stream:
@@ -564,25 +676,78 @@ def run_watchdog(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--frozen-m10", action="store_true")
+    profile_group = parser.add_mutually_exclusive_group(required=True)
+    profile_group.add_argument("--frozen-m10", action="store_true")
+    profile_group.add_argument("--task037c-robustness-gate", action="store_true")
     parser.add_argument("--case-label", required=True)
     parser.add_argument("--run-root", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--verified-clean-sha", required=True)
-    parser.add_argument("--h1-authority", required=True, type=Path)
-    parser.add_argument("--h1-authority-sha256", required=True)
-    parser.add_argument("--full3d-reference", required=True, type=Path)
-    parser.add_argument("--full3d-reference-sha256", required=True)
-    parser.add_argument("--task035c-p6-preflight-authority", required=True, type=Path)
-    parser.add_argument("--task035c-p6-preflight-sha256", required=True)
+    parser.add_argument("--h1-authority", type=Path)
+    parser.add_argument("--h1-authority-sha256")
+    parser.add_argument("--full3d-reference", type=Path)
+    parser.add_argument("--full3d-reference-sha256")
+    parser.add_argument("--task035c-p6-preflight-authority", type=Path)
+    parser.add_argument("--task035c-p6-preflight-sha256")
+    parser.add_argument("--incident-phi-deg", type=float, choices=(-5.0, 0.0, 5.0))
+    parser.add_argument("--requested-modes", type=int, choices=(120, 160))
+    parser.add_argument("--mpi-size", type=int, choices=(1, 8))
+    parser.add_argument(
+        "--internal-traction-model",
+        choices=TASK37C_TRACTION_MODELS,
+        default=None,
+    )
+    parser.add_argument(
+        "--task037c-two-pass-side-correction",
+        action="store_true",
+    )
     return parser
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = build_parser()
     args = parser.parse_args(argv)
-    if not args.frozen_m10:
-        parser.error("--frozen-m10 is required")
+    if args.task037c_robustness_gate:
+        if args.incident_phi_deg is None or args.requested_modes is None:
+            parser.error("Task37c requires phi and requested modes")
+        if args.mpi_size is None:
+            parser.error("Task37c requires --mpi-size")
+        if any(
+            value is not None
+            for value in (
+                args.h1_authority,
+                args.h1_authority_sha256,
+                args.full3d_reference,
+                args.full3d_reference_sha256,
+                args.task035c_p6_preflight_authority,
+                args.task035c_p6_preflight_sha256,
+            )
+        ):
+            parser.error("Task37c does not accept Task37b authority arguments")
+        args.internal_traction_model = (
+            args.internal_traction_model or TASK37C_TRACTION_MODELS[0]
+        )
+    else:
+        if args.task037c_two_pass_side_correction:
+            parser.error("frozen M10 does not accept two-pass side correction")
+        if args.internal_traction_model is not None:
+            parser.error("frozen M10 does not accept --internal-traction-model")
+        if any(
+            value is not None
+            for value in (args.incident_phi_deg, args.requested_modes, args.mpi_size)
+        ):
+            parser.error("Task37b frozen M10 does not accept Task37c options")
+        required_authorities = (
+            args.h1_authority,
+            args.h1_authority_sha256,
+            args.full3d_reference,
+            args.full3d_reference_sha256,
+            args.task035c_p6_preflight_authority,
+            args.task035c_p6_preflight_sha256,
+        )
+        if any(value is None for value in required_authorities):
+            parser.error("frozen M10 requires all authority path/hash pairs")
+        args.internal_traction_model = TASK37C_TRACTION_MODELS[0]
     return args
 
 
@@ -597,8 +762,22 @@ def main(argv: Sequence[str] | None = None) -> int:
         RuntimeError,
         ValueError,
     ) as error:
-        print(f"M10 watchdog failed closed: {error}", file=sys.stderr)
-        return _summary_failure(Path(args.output).resolve(), error)
+        label = (
+            "Task37c robustness watchdog"
+            if args.task037c_robustness_gate
+            else "M10 watchdog"
+        )
+        print(f"{label} failed closed: {error}", file=sys.stderr)
+        return _summary_failure(
+            Path(args.output).resolve(),
+            error,
+            task37c=args.task037c_robustness_gate,
+            profile_id=(
+                "task037c.robustness.grazing1.v1"
+                if args.task037c_robustness_gate
+                else "task037b.m10.frozen.p6-h10.v1"
+            ),
+        )
 
 
 if __name__ == "__main__":

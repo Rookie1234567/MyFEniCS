@@ -57,6 +57,26 @@ def _resource_row(rss: float, swap: float = 0.0) -> dict[str, object]:
     }
 
 
+def _task37c_argv(tmp_path: Path, mpi_size: int = 8) -> list[str]:
+    return [
+        "--task037c-robustness-gate",
+        "--case-label",
+        "task037c_test",
+        "--run-root",
+        str(tmp_path / "run37c"),
+        "--output",
+        str(tmp_path / "summary37c.json"),
+        "--verified-clean-sha",
+        SHA,
+        "--incident-phi-deg",
+        "-5",
+        "--requested-modes",
+        "160",
+        "--mpi-size",
+        str(mpi_size),
+    ]
+
+
 def test_parser_requires_explicit_frozen_profile(tmp_path: Path) -> None:
     args = watchdog.parse_args(_argv(tmp_path))
     assert args.frozen_m10 is True
@@ -112,6 +132,31 @@ def test_worker_command_and_environment_are_frozen(tmp_path: Path) -> None:
     assert environment["PYTHONUNBUFFERED"] == "1"
 
 
+def test_task37c_worker_command_has_only_profile_authority(tmp_path: Path) -> None:
+    args = watchdog.parse_args(_task37c_argv(tmp_path))
+    command = watchdog.build_worker_command(
+        args,
+        tmp_path / "run37c" / "payload",
+        tmp_path / "run37c" / "online.json",
+        tmp_path / "run37c" / "stages.jsonl",
+    )
+    assert "--task037c-robustness-gate" in command
+    assert "--incident-phi-deg" in command and "-5.0" in command
+    assert "--requested-modes" in command and "160" in command
+    assert "--mpi-size" in command and "8" in command
+    for forbidden in (
+        "--frozen-m10",
+        "--h1-authority",
+        "--full3d-reference",
+        "--task035c-p6-preflight-authority",
+    ):
+        assert forbidden not in command
+    with pytest.raises(SystemExit):
+        watchdog.parse_args(
+            _task37c_argv(tmp_path) + ["--h1-authority", str(tmp_path / "wrong.json")]
+        )
+
+
 def test_source_preflight_binds_clean_sha(monkeypatch: pytest.MonkeyPatch) -> None:
     def fake_git_value(*parts: str) -> str:
         return {"rev-parse": SHA, "status": "", "branch": "local"}[parts[0]]
@@ -154,6 +199,31 @@ def test_resource_limits_are_fail_closed_at_strict_boundary() -> None:
     swapped = watchdog._resource_summary([_resource_row(100.0, 0.001)])
     assert swapped["swap_pass"] is False
     assert swapped["pass"] is False
+    mpi8 = watchdog._resource_summary(
+        [_resource_row(7000.0)],
+        profile_kind="task037c",
+        mpi_size=8,
+        termination_limit=None,
+    )
+    assert mpi8["pass"] is True
+    assert mpi8["preferred_pass"] is False
+    assert mpi8["classification"] == "resource_unqualified"
+    mpi1 = watchdog._resource_summary(
+        [_resource_row(6144.0)], profile_kind="task037c", mpi_size=1
+    )
+    assert mpi1["pass"] is False
+    assert mpi1["classification"] == "hard_stop"
+    mpi1_preferred = watchdog._resource_summary(
+        [_resource_row(1536.0)], profile_kind="task037c", mpi_size=1
+    )
+    assert mpi1_preferred["preferred_pass"] is True
+    mpi1_engineering = watchdog._resource_summary(
+        [_resource_row(1536.0001)], profile_kind="task037c", mpi_size=1
+    )
+    assert mpi1_engineering["preferred_pass"] is False
+    assert mpi1_engineering["classification"] == "engineering"
+    frozen = watchdog._resource_summary([_resource_row(6144.0001)])
+    assert frozen["pass"] is False
 
 
 def test_qualification_requires_worker_online_resource_and_clean_group() -> None:

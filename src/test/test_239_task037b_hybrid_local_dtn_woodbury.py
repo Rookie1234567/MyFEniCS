@@ -318,6 +318,7 @@ def test_fixed_woodbury_action_is_one_apply_nonowning_and_fail_closed(mode_count
         assert c_context.destroyed is True
         assert d_context.destroyed is True
 
+
 def test_two_pass_residual_correction_matches_stationary_formula_and_releases_scratch():
     rows = 6
     mode_count = 1
