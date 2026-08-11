@@ -381,3 +381,26 @@ def test_task37c_traction_model_defaults_and_frozen_rejection(tmp_path) -> None:
         )
     with pytest.raises(ValueError):
         make_task37c_profile(0.0, 120, 8, traction_model="not-a-model")
+
+
+def test_exact_one_cell_work_dir_is_opt_in_and_run_scoped(tmp_path) -> None:
+    exact_profile = make_task37c_profile(
+        -5.0,
+        120,
+        8,
+        traction_model=TASK37C_TRACTION_MODELS[1],
+    )
+    run_dir = tmp_path / "payload"
+    assert iterative_runner._exact_one_cell_work_dir(exact_profile, run_dir) == (
+        run_dir.resolve() / "exact_one_cell"
+    )
+
+    scalar_profile = make_task37c_profile(0.0, 120, 8)
+    assert iterative_runner._exact_one_cell_work_dir(scalar_profile, run_dir) is None
+    assert (
+        iterative_runner._exact_one_cell_work_dir(
+            iterative_runner.FROZEN_M10,
+            run_dir,
+        )
+        is None
+    )

@@ -1547,6 +1547,7 @@ def build_frozen_m10_setup(
     *,
     log=None,
     profile: FrozenM10Profile | Task37cProfile = FROZEN_M10,
+    exact_one_cell_work_dir: Path | None = None,
 ) -> FrozenM10Setup:
     """Build the frozen physical/QEP/endcap/coupling bundle only.
 
@@ -1697,6 +1698,7 @@ def build_frozen_m10_setup(
         length_nm=profile.top_interface_nm - profile.bottom_interface_nm,
         propagation_model=profile.internal_propagation_model,
         modal_traction_model=profile.internal_traction_model,
+        exact_one_cell_work_dir=exact_one_cell_work_dir,
         log=log,
     )
     timings["internal_modal_coupling"] = _max_elapsed(comm, started)
@@ -2345,6 +2347,15 @@ def profile_from_args(
     )
 
 
+def _exact_one_cell_work_dir(
+    profile: FrozenM10Profile | Task37cProfile,
+    run_dir: Path,
+) -> Path | None:
+    if profile.internal_traction_model != TASK37C_TRACTION_MODELS[1]:
+        return None
+    return Path(run_dir).resolve() / "exact_one_cell"
+
+
 def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
@@ -2393,7 +2404,12 @@ def run_frozen_m10(args: argparse.Namespace) -> int:
                 }
             }
         lifecycle.record("setup")
-        setup = build_frozen_m10_setup(comm, log=rank0_log, profile=profile)
+        setup = build_frozen_m10_setup(
+            comm,
+            log=rank0_log,
+            profile=profile,
+            exact_one_cell_work_dir=_exact_one_cell_work_dir(profile, args.run_dir),
+        )
         lifecycle.record("solve")
         linear = solve_frozen_m10_linear(setup, log=rank0_log)
         if not linear.linear_pass or linear.release.get("pass") is not True:
