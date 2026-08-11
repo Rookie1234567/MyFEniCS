@@ -220,9 +220,7 @@ def _scalar_cg_reference_matrices(
         values[basis_index, :] = polynomial(quadrature_x)
         derivatives[basis_index, :] = polynomial.deriv()(quadrature_x)
     mass = np.einsum("iq,q,jq->ij", values, quadrature_w, values)
-    stiffness = np.einsum(
-        "iq,q,jq->ij", derivatives, quadrature_w, derivatives
-    )
+    stiffness = np.einsum("iq,q,jq->ij", derivatives, quadrature_w, derivatives)
     mass.setflags(write=False)
     stiffness.setflags(write=False)
     return mass, stiffness
@@ -273,23 +271,16 @@ def _scalar_cg_periodic_cosine(
         cosine_theta = numerator / denominator
     else:
         mass, stiffness = _scalar_cg_reference_matrices(degree)
-        dynamic = (
-            stiffness.astype(np.complex128)
-            - q_direction * q_direction * mass
-        )
+        dynamic = stiffness.astype(np.complex128) - q_direction * q_direction * mass
         interior = list(range(1, degree))
         leading = dynamic[np.ix_([0, *interior], [0, *interior])]
         coupling = dynamic[np.ix_([0, *interior], [degree, *interior])]
         leading_sign, leading_logabs = np.linalg.slogdet(leading)
         coupling_sign, coupling_logabs = np.linalg.slogdet(coupling)
         if leading_sign == 0.0 or coupling_sign == 0.0:
-            raise ValueError(
-                "Axial CG periodic-chain determinant ratio is singular."
-            )
+            raise ValueError("Axial CG periodic-chain determinant ratio is singular.")
         cosine_theta = -(
-            leading_sign
-            / coupling_sign
-            * np.exp(leading_logabs - coupling_logabs)
+            leading_sign / coupling_sign * np.exp(leading_logabs - coupling_logabs)
         )
     cosine_theta = complex(cosine_theta)
     if abs(q_direction.imag) <= 1.0e-14 and abs(cosine_theta.imag) <= 1.0e-14:
@@ -372,9 +363,7 @@ def full3d_uniform_cg_discrete_beta(
         candidates, key=lambda candidate: abs(candidate - q_direction)
     )
     effective_beta = travel_sign * theta_direction / h_nm
-    if not np.isfinite(effective_beta.real) or not np.isfinite(
-        effective_beta.imag
-    ):
+    if not np.isfinite(effective_beta.real) or not np.isfinite(effective_beta.imag):
         raise FloatingPointError("Non-finite Full3D-compatible axial beta.")
     return complex(effective_beta)
 
@@ -410,9 +399,7 @@ def scalar_cg_discrete_traction_beta(
     if not np.isfinite(h_nm) or h_nm <= 0.0:
         raise ValueError("Scalar CG traction h_nm must be finite and positive.")
     if direction not in ("forward", "backward"):
-        raise ValueError(
-            f"Unsupported scalar CG traction direction {direction!r}."
-        )
+        raise ValueError(f"Unsupported scalar CG traction direction {direction!r}.")
     travel_sign = 1.0 if direction == "forward" else -1.0
     q_direction = travel_sign * beta * h_nm
     if q_direction.imag < -1.0e-12:
@@ -420,26 +407,19 @@ def scalar_cg_discrete_traction_beta(
             f"{direction} beta={beta!r} is not passive for scalar CG traction."
         )
     mass, stiffness = _scalar_cg_reference_matrices(degree)
-    dynamic = (
-        stiffness.astype(np.complex128) - q_direction * q_direction * mass
-    )
+    dynamic = stiffness.astype(np.complex128) - q_direction * q_direction * mass
     interior = list(range(1, degree))
     if interior:
         interior_block = dynamic[np.ix_(interior, interior)]
-        coupling_border = dynamic[
-            np.ix_([0, *interior], [degree, *interior])
-        ]
+        coupling_border = dynamic[np.ix_([0, *interior], [degree, *interior])]
         interior_sign, interior_logabs = np.linalg.slogdet(interior_block)
         coupling_sign, coupling_logabs = np.linalg.slogdet(coupling_border)
         if interior_sign == 0.0:
             raise ValueError(
-                "Scalar CG traction is singular at an interior Dirichlet "
-                "resonance."
+                "Scalar CG traction is singular at an interior Dirichlet resonance."
             )
         if coupling_sign == 0.0:
-            raise ValueError(
-                "Scalar CG traction endpoint coupling is singular."
-            )
+            raise ValueError("Scalar CG traction endpoint coupling is singular.")
         with np.errstate(over="raise", invalid="raise", under="ignore"):
             off_diagonal = complex(
                 coupling_sign
@@ -459,15 +439,9 @@ def scalar_cg_discrete_traction_beta(
     if multiplier == 0.0:
         raise ValueError("Scalar CG traction Bloch multiplier underflowed.")
     with np.errstate(over="raise", invalid="raise", divide="raise"):
-        outward_flux = (
-            0.5 * off_diagonal * (multiplier - 1.0 / multiplier) / h_nm
-        )
-    traction_beta = (
-        1j * outward_flux if direction == "forward" else -1j * outward_flux
-    )
-    if not np.isfinite(traction_beta.real) or not np.isfinite(
-        traction_beta.imag
-    ):
+        outward_flux = 0.5 * off_diagonal * (multiplier - 1.0 / multiplier) / h_nm
+    traction_beta = 1j * outward_flux if direction == "forward" else -1j * outward_flux
+    if not np.isfinite(traction_beta.real) or not np.isfinite(traction_beta.imag):
         raise FloatingPointError("Non-finite scalar CG traction beta.")
     return complex(traction_beta)
 
@@ -529,9 +503,7 @@ def _build_directional_block(
             -travel_sign * beta.imag * length_nm,
             0.0,
         )
-        log_magnitude_corrections.append(
-            log_magnitude - original_log_magnitude
-        )
+        log_magnitude_corrections.append(log_magnitude - original_log_magnitude)
         clipped.append(was_clipped)
     return DirectionalPropagationBlock(
         direction=direction,
