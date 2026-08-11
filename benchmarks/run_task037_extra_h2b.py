@@ -1,4 +1,4 @@
-"""Task037 H2B Phase 2: isolated B0 action staging and online smoother probe.
+"""Task037 H2B Phase 2: isolated action staging, smoother, and P0 patch probe.
 
 The controller is intentionally standard-library only.  DOLFINx, PETSc, the
 R2 loader, and the H2A helpers are imported only by the two worker entry
@@ -32,6 +32,11 @@ H2B_S0_SCHEMA = f"{H2B_SCHEMA}.s0"
 H2B_S0_WORKER_SCHEMA = f"{H2B_S0_SCHEMA}.worker.v1"
 H2B_S0_WATCHDOG_SCHEMA = f"{H2B_S0_SCHEMA}.watchdog.v1"
 H2B_S0_CHECK_SCHEMA = f"{H2B_S0_SCHEMA}.check.v1"
+H2B_P0_SCHEMA = f"{H2B_SCHEMA}.p0"
+H2B_P0_WORKER_SCHEMA = f"{H2B_P0_SCHEMA}.worker.v1"
+H2B_P0_WATCHDOG_SCHEMA = f"{H2B_P0_SCHEMA}.watchdog.v1"
+H2B_P0_CHECK_SCHEMA = f"{H2B_P0_SCHEMA}.check.v1"
+H2B_P0_DIRECTION_SCHEMA = "task037.extra.h2b.p0.restricted-patch.v1"
 H2B_STAGE_TIMEOUT_SECONDS = 3600.0
 H2B_ONLINE_TIMEOUT_SECONDS = 1800.0
 H2B_STAGE_RSS_LIMIT_BYTES = 1_800_000_000
@@ -39,6 +44,8 @@ H2B_ONLINE_RSS_LIMIT_BYTES = 1_450_000_000
 H2B_SWAP_LIMIT_BYTES = 0
 H2B_S0_RSS_LIMIT_BYTES = 1_000_000_000
 H2B_S0_TIMEOUT_SECONDS = 3_600.0
+H2B_P0_TIMEOUT_SECONDS = 3_600.0
+H2B_P0_RSS_LIMIT_BYTES = 1_500_000_000
 H2B_PROCESS_DRAIN_TIMEOUT_SECONDS = 5.0
 H2B_PROCESS_DRAIN_POLL_SECONDS = 0.05
 H2B_S0_STRATEGIES = ("additive", "forward", "symmetric")
@@ -72,6 +79,17 @@ H2B_R2_MANIFEST_SHA256 = (
 )
 H2B_R2_PRODUCER_SOURCE_SHA = (
     "da8ddbb257b0d9d510e9d711d23144f50dabd0e4"
+)
+H2B_S0_RECORD_PATH = (
+    ROOT
+    / "benchmarks/cases/101_task37_extra_development/records"
+    / "h2b_scale_invariant_direction.json"
+)
+H2B_S0_RECORD_SHA256 = (
+    "44283799e9712aa8e4355fa31e232ce8b3cbf679867c7fface599f3152054637"
+)
+H2B_S0_RECORD_EVIDENCE_SHA256 = (
+    "c773ba5f96419e9afb433936b348ed5b3f251003b02a7c2e3f3af0e5a675c98f"
 )
 H2B_FIXED_ROWS = 173_802
 H2B_FIXED_CONSTRAINTS = 9_210
@@ -167,6 +185,51 @@ H2B_S0_ARTIFACT_NAMES = (
     "s0_timeline.jsonl",
     "stage_root_pid.json",
     "s0_root_pid.json",
+)
+H2B_P0_ARTIFACT_NAMES = (
+    "stage_progress.jsonl",
+    "stage_stdout.txt",
+    "stage_summary.json",
+    "stage_timeline.jsonl",
+    "p0_progress.jsonl",
+    "p0_stdout.txt",
+    "p0_summary.json",
+    "p0_timeline.jsonl",
+    "stage_root_pid.json",
+    "p0_root_pid.json",
+)
+H2B_P0_EVENTS = (
+    "authority_validate_started",
+    "authority_validate_ready",
+    "mesh_build_started",
+    "mesh_build_ready",
+    "function_space_started",
+    "function_space_ready",
+    "floquet_mpc_started",
+    "floquet_mpc_ready",
+    "cache_load_started",
+    "cache_load_ready",
+    "factor_load_started",
+    "factor_load_ready",
+    "class_selection_started",
+    "class_selection_ready",
+    "touching_discovery_started",
+    "touching_discovery_ready",
+    "patch_assembly_started",
+    "patch_assembly_ready",
+    "element_factor_started",
+    "element_factor_ready",
+    "patch_factor_started",
+    "patch_factor_ready",
+    "source_measurement_started",
+    "source_measurement_ready",
+    "summary_started",
+    "summary_ready",
+)
+H2B_P0_CANONICAL_RECORD = (
+    ROOT
+    / "benchmarks/cases/101_task37_extra_development/records"
+    / "h2b_row_complete_patch.json"
 )
 _HEX = set("0123456789abcdef")
 
@@ -271,6 +334,42 @@ def _s0_scope() -> dict[str, Any]:
         "online_timeout_seconds": H2B_S0_TIMEOUT_SECONDS,
         "online_rss_limit_bytes": H2B_S0_RSS_LIMIT_BYTES,
         "swap_limit_bytes": H2B_SWAP_LIMIT_BYTES,
+    }
+
+
+def _p0_scope() -> dict[str, Any]:
+    return {
+        "mode": "h2b_p0_row_complete_restricted_patch",
+        "degree": 6,
+        "h_nm": 10.0,
+        "mpi_size": 1,
+        "global_cells": H2B_FIXED_CELLS,
+        "local_nloc": H2B_FIXED_NLOC,
+        "global_rows": H2B_FIXED_ROWS,
+        "constraint_count": H2B_FIXED_CONSTRAINTS,
+        "patch_row_count": H2B_FIXED_NLOC,
+        "timeout_seconds": H2B_P0_TIMEOUT_SECONDS,
+        "rss_limit_bytes": H2B_P0_RSS_LIMIT_BYTES,
+        "swap_limit_bytes": H2B_SWAP_LIMIT_BYTES,
+        "operator": "K_curl+k0^2*M_abs_epsilon; code uses (1/mu_r) with mu_r=1",
+        "patch_definition": "R_P B0 R_P^T",
+        "construction": "touching_local_tensor_streaming",
+        "official_rho_scope": "central_patch_rows",
+        "full_space_spill_scope": "diagnostic_only",
+        "formal_budget_runs": 1,
+    }
+
+
+def _p0_phase_identity() -> dict[str, Any]:
+    return {
+        "jit_api_called": True,
+        "compile_called": False,
+        "compiler_probe_called": False,
+        "tensor_tabulation_called": True,
+        "factorization_called": True,
+        "global_matrix_materialized": False,
+        "global_constraint_matrix_materialized": False,
+        "ordinary_default_changed": False,
     }
 
 
@@ -1614,6 +1713,588 @@ def _run_s0_worker(run_dir: Path) -> int:
     return _run_online_worker(run_dir, s0=True)
 
 
+def _run_p0_worker(run_dir: Path) -> int:
+    """Build one row-complete P0 patch after the existing cache stage."""
+
+    import gc
+
+    import numpy as np
+    from petsc4py import PETSc
+
+    h2a = _lazy_h2a()
+    from src.common.config_3d import target_stage4_config
+    from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
+    from src.solvers.common_3d_solve import _create_nedelec_space
+    from src.solvers.hcurl_h2b_block_smoother import (
+        discover_h2b_p0_touching_cells,
+        factorize_h2b_p0_patch,
+        measure_h2b_p0_patch_direction,
+        _p0_numeric_sha,
+        select_h2b_p0_class,
+        stream_h2b_p0_patch,
+    )
+    from src.solvers.hcurl_rank_one_mpc_action import (
+        build_task037_extra_h1r2_mpc_action,
+    )
+    from src.solvers.hcurl_r2_constrained_local_block import (
+        H2AR2CellExpansion,
+        build_h2a_r2_cell_expansion,
+    )
+    from src.solvers.hcurl_r2_factor_store import (
+        H2AR2CellReference,
+        load_h2a_r2_factor_store,
+    )
+
+    run_dir = run_dir.resolve()
+    progress_path = run_dir / "p0_progress.jsonl"
+    summary_path = run_dir / "p0_summary.json"
+    stage_path = run_dir / "stage_summary.json"
+    started = time.perf_counter()
+    source_start = _source_pair(h2a)
+    runtime: dict[str, Any] | None = None
+    error: str | None = None
+    measurement: dict[str, Any] | None = None
+    form_record: dict[str, Any] | None = None
+    action = None
+    source_vec = None
+    store = None
+    mesh_data = function_space = floquet = None
+    try:
+        with progress_path.open("w", encoding="utf-8") as markers:
+            _emit_marker(markers, event="authority_validate_started", phase="p0", started=started)
+            stage = _read_json(stage_path)
+            if (
+                stage.get("schema") != H2B_WORKER_SCHEMA
+                or stage.get("status") != "measurement_complete"
+                or not _evidence_valid(stage)
+                or not _form_files_valid(run_dir, stage.get("form"))
+            ):
+                raise ValueError("P0 stage authority is incomplete")
+            authority = _authority()
+            authority["s0_authority"] = _p0_s0_authority()
+            r0 = authority["r0"]
+            if r0.get("global_rows") != H2B_FIXED_ROWS or r0.get("constraint_count") != H2B_FIXED_CONSTRAINTS:
+                raise ValueError("P0 R0 authority identity mismatch")
+            _emit_marker(markers, event="authority_validate_ready", phase="p0", started=started)
+            cfg = target_stage4_config(degree=6, h_nm=10.0)
+            _emit_marker(markers, event="mesh_build_started", phase="p0", started=started)
+            mesh_data = build_airbox_mesh_3d(cfg, run_dir / "p0_mesh")
+            _emit_marker(markers, event="mesh_build_ready", phase="p0", started=started)
+            _emit_marker(markers, event="function_space_started", phase="p0", started=started)
+            function_space = _create_nedelec_space(mesh_data.mesh, cfg)
+            _emit_marker(markers, event="function_space_ready", phase="p0", started=started)
+            _emit_marker(markers, event="floquet_mpc_started", phase="p0", started=started)
+            floquet = h2a.build_double_floquet_mpc(function_space, mesh_data, cfg)
+            index_map = function_space.dofmap.index_map
+            p6 = {
+                "global_cells": int(mesh_data.mesh.topology.index_map(3).size_global),
+                "local_cells": int(mesh_data.mesh.topology.index_map(3).size_local),
+                "local_nloc": int(function_space.element.space_dimension),
+                "global_rows": int(index_map.size_global * function_space.dofmap.index_map_bs),
+                "constraint_count": int(floquet.num_constraints),
+            }
+            if p6 != {
+                "global_cells": H2B_FIXED_CELLS,
+                "local_cells": H2B_FIXED_CELLS,
+                "local_nloc": H2B_FIXED_NLOC,
+                "global_rows": H2B_FIXED_ROWS,
+                "constraint_count": H2B_FIXED_CONSTRAINTS,
+            }:
+                raise ValueError("P0 p6 identity mismatch")
+            _emit_marker(markers, event="floquet_mpc_ready", phase="p0", started=started)
+            cache_dir = run_dir / "jit_cache"
+            cache_before = _cache_snapshot(cache_dir)
+            _b0, _epsilon = _build_b0_form(function_space, mesh_data, cfg)
+            _emit_marker(markers, event="cache_load_started", phase="p0", started=started)
+            runtime = _runtime_identity(
+                h2a,
+                compiler_probe=False,
+                compiler=stage["runtime_identity"]["compiler"],
+            )
+            action = build_task037_extra_h1r2_mpc_action(
+                _b0,
+                floquet.mpc,
+                task037_extra_h1r2=True,
+                jit_options=_expected_jit_options(cache_dir),
+            )
+            form_record = _form_record(
+                action._action_form,
+                action._action_ufl,
+                cache_dir,
+                cfg,
+                function_space,
+                "b0",
+            )
+            cache_after = _cache_snapshot(cache_dir)
+            if (
+                form_record["code_state"] != "hit_no_new_decl_impl"
+                or cache_before != cache_after
+            ):
+                raise ValueError("P0 B0 action did not hit the staged cache")
+            _emit_marker(markers, event="cache_load_ready", phase="p0", started=started)
+            _emit_marker(markers, event="factor_load_started", phase="p0", started=started)
+            store = load_h2a_r2_factor_store(
+                H2B_R2_MANIFEST, task037_extra_h2a_r2=True
+            )
+            if store.audit.get("factor_plus_metadata_bytes") != 201_933_812:
+                raise ValueError("P0 R2 factor payload authority mismatch")
+            _emit_marker(markers, event="factor_load_ready", phase="p0", started=started)
+            discovery = h2a._discover_cell_references(
+                function_space,
+                mesh_data,
+                cfg,
+                floquet,
+                geometry_tolerance=h2a.floquet_geometry_tolerance(cfg),
+            )
+            class_inventory = r0["class_inventory"]
+            if (
+                discovery["global_cell_count"] != H2B_FIXED_CELLS
+                or discovery["references"] is None
+            ):
+                raise ValueError("P0 discovery identity mismatch")
+            key_to_id = {
+                str(item["class_key_sha256"]): int(item["class_id"])
+                for item in class_inventory
+            }
+            blocks = tuple(floquet.phase_independent_topology.blocks)
+            expansions: dict[int, Any] = {}
+            cell_refs: list[H2AR2CellReference] = []
+            for ordinal, reference in enumerate(discovery["references"]):
+                cell_dofs = np.asarray(reference.local_dofs, dtype=np.int64)
+                class_id = key_to_id.get(h2a._r0_digest(reference.class_key))
+                if class_id is None:
+                    raise ValueError("P0 discovery class is not in R0 authority")
+                expansion = build_h2a_r2_cell_expansion(
+                    h2a._blocks_for_cell(blocks, cell_dofs),
+                    cell_dofs,
+                    index_map,
+                    index_map_bs=int(function_space.dofmap.index_map_bs),
+                    phase_x=floquet.phase_x,
+                    phase_y=floquet.phase_y,
+                    phase_corner=floquet.phase_corner,
+                )
+                previous = expansions.get(class_id)
+                if previous is not None and previous.pattern_sha256 != expansion.pattern_sha256:
+                    raise ValueError("P0 expansion pattern differs within class")
+                expansions.setdefault(class_id, expansion)
+                cell_refs.append(
+                    H2AR2CellReference(class_id, expansion.independent_global_rows)
+                )
+            if len(cell_refs) != H2B_FIXED_CELLS:
+                raise ValueError("P0 cell reference count mismatch")
+            if len(store.cells) != len(cell_refs) or any(
+                int(loaded.class_id) != int(discovered.class_id)
+                or not np.array_equal(
+                    loaded.independent_global_rows,
+                    discovered.independent_global_rows,
+                )
+                for loaded, discovered in zip(store.cells, cell_refs, strict=True)
+            ):
+                raise ValueError("P0 discovery cells do not match frozen R2 cells")
+            store_classes = {int(item.class_id): item for item in store.classes}
+            if len(store_classes) != len(store.classes):
+                raise ValueError("P0 frozen R2 class ids are not unique")
+            store_factors = {int(item.factor_id): item for item in store.factors}
+            if len(store_factors) != len(store.factors):
+                raise ValueError("P0 frozen R2 factor ids are not unique")
+            inventory_by_id = {
+                int(item["class_id"]): item for item in class_inventory
+            }
+            for class_id, expansion in expansions.items():
+                inventory_item = inventory_by_id.get(int(class_id))
+                stored_class = store_classes.get(int(class_id))
+                if (
+                    not isinstance(inventory_item, Mapping)
+                    or stored_class is None
+                    or stored_class.class_key_sha256
+                    != inventory_item.get("class_key_sha256")
+                    or stored_class.constraint_pattern_sha256
+                    != inventory_item.get("constraint_pattern_sha256")
+                    or stored_class.expansion_pattern_sha256
+                    != expansion.pattern_sha256
+                ):
+                    raise ValueError("P0 class discovery is not R2-authority bound")
+            _emit_marker(markers, event="class_selection_started", phase="p0", started=started)
+            selection = select_h2b_p0_class(
+                class_inventory, task037_extra_h2b=True
+            )
+            selected_cells = [
+                ordinal
+                for ordinal, cell in enumerate(cell_refs)
+                if int(cell.class_id) == selection["class_id"]
+            ]
+            if not selected_cells:
+                raise ValueError("P0 selected class has no cells")
+            central_ordinal = min(selected_cells)
+            patch_rows = np.ascontiguousarray(
+                cell_refs[central_ordinal].independent_global_rows,
+                dtype=np.int64,
+            )
+            selected_inventory = inventory_by_id.get(int(selection["class_id"]))
+            if (
+                patch_rows.size != H2B_FIXED_NLOC
+                or not isinstance(selected_inventory, Mapping)
+                or selection["class_key_sha256"]
+                != selected_inventory["class_key_sha256"]
+                or selection["constraint_pattern_sha256"]
+                != selected_inventory["constraint_pattern_sha256"]
+            ):
+                raise ValueError("P0 selected class authority mismatch")
+            _emit_marker(
+                markers,
+                event="class_selection_ready",
+                phase="p0",
+                started=started,
+                class_id=selection["class_id"],
+                central_cell_ordinal=central_ordinal,
+            )
+            _emit_marker(markers, event="touching_discovery_started", phase="p0", started=started)
+            touching = discover_h2b_p0_touching_cells(
+                cell_refs, patch_rows, task037_extra_h2b=True
+            )
+            _emit_marker(
+                markers,
+                event="touching_discovery_ready",
+                phase="p0",
+                started=started,
+                touching_cell_count=len(touching),
+            )
+            tolerance = h2a.floquet_geometry_tolerance(cfg)
+            r1_proxy_cache_before = h2a._r1_cache_snapshot(
+                h2a.R2_R1_JIT_CACHE_DIR
+            )
+            proxy_forms = h2a._proxy_forms(
+                function_space,
+                mesh_data,
+                cfg,
+                cache_dir=h2a.R2_R1_JIT_CACHE_DIR,
+            )
+            r1_proxy_cache_after = h2a._r1_cache_snapshot(
+                h2a.R2_R1_JIT_CACHE_DIR
+            )
+            if r1_proxy_cache_before != r1_proxy_cache_after:
+                raise ValueError("P0 R1 proxy cache changed during tensor setup")
+            tags = discovery["tags"]
+
+            def tensor_stream():
+                for ordinal in touching:
+                    cell = int(ordinal)
+                    class_id = int(cell_refs[cell].class_id)
+                    template = expansions[class_id]
+                    curl_tensor, _widths, _info = h2a.tabulate_task037_extra_h2a_cell_tensor(
+                        proxy_forms[0],
+                        function_space,
+                        mesh_data.cell_tags,
+                        cell,
+                        geometry_tolerance=tolerance,
+                    )
+                    mass_tensor, _widths, _info = h2a.tabulate_task037_extra_h2a_cell_tensor(
+                        proxy_forms[1],
+                        function_space,
+                        mesh_data.cell_tags,
+                        cell,
+                        geometry_tolerance=tolerance,
+                    )
+                    proxy = h2a.build_b0_proxy_tensor(
+                        curl_tensor,
+                        mass_tensor,
+                        k0=float(cfg.k0),
+                        abs_epsilon=float(abs(h2a._material_epsilon(cfg, int(tags[cell])))),
+                    )
+                    cell_expansion = H2AR2CellExpansion(
+                        offsets=template.offsets,
+                        column_indices=template.column_indices,
+                        coefficients=template.coefficients,
+                        independent_global_rows=cell_refs[cell].independent_global_rows,
+                        pattern_identity=template.pattern_identity,
+                        pattern_sha256=template.pattern_sha256,
+                    )
+                    yield cell, np.ascontiguousarray(proxy, dtype=np.complex128), cell_expansion
+                    del curl_tensor, mass_tensor, proxy, cell_expansion
+
+            _emit_marker(markers, event="patch_assembly_started", phase="p0", started=started)
+            patch = stream_h2b_p0_patch(
+                cell_refs,
+                patch_rows,
+                tensor_stream(),
+                task037_extra_h2b=True,
+            )
+            _emit_marker(markers, event="patch_assembly_ready", phase="p0", started=started)
+            slaves = np.asarray(floquet.mpc.slaves, dtype=np.int64)
+            source_vec = action.output_vector.duplicate()
+
+            def exact_action(source: np.ndarray, target: np.ndarray) -> None:
+                if np.any(source[slaves] != 0.0):
+                    raise ValueError("P0 action source has nonzero identity rows")
+                with source_vec.localForm() as local:
+                    local.set(0.0)
+                    local.array_w[: source.size] = source
+                source_vec.ghostUpdate(
+                    addv=PETSc.InsertMode.INSERT_VALUES,
+                    mode=PETSc.ScatterMode.FORWARD,
+                )
+                result = action.mult(source_vec)
+                target[:] = np.asarray(
+                    result.getArray(readonly=True), dtype=np.complex128
+                )
+
+            primal_arrays = _source_arrays(function_space, cfg, slaves, floquet.mpc)
+            source_arrays = _residual_source_arrays(
+                primal_arrays, exact_action, slaves
+            )
+            base_sources = _source_records_from_arrays(source_arrays, slaves)
+
+            def direction_pair(
+                matrix: np.ndarray,
+                factor: Any,
+                rhs: np.ndarray,
+                closure_matrix: np.ndarray,
+            ) -> dict[str, Any]:
+                first = measure_h2b_p0_patch_direction(
+                    np.ascontiguousarray(rhs, dtype=np.complex128),
+                    matrix,
+                    factor,
+                    patch_rows,
+                    exact_action,
+                    closure_matrix=closure_matrix,
+                    task037_extra_h2b=True,
+                )
+                second = measure_h2b_p0_patch_direction(
+                    np.ascontiguousarray(rhs, dtype=np.complex128),
+                    matrix,
+                    factor,
+                    patch_rows,
+                    exact_action,
+                    closure_matrix=closure_matrix,
+                    task037_extra_h2b=True,
+                )
+                if (
+                    first["correction_sha256"] != second["correction_sha256"]
+                    or first["action_sha256"] != second["action_sha256"]
+                ):
+                    raise ValueError("P0 source direction is nondeterministic")
+                numeric_keys = (
+                    "r_norm",
+                    "q_norm",
+                    "rho_unit",
+                    "rho_star",
+                    "eta",
+                    "omega_real",
+                    "omega_imag",
+                    "omega_abs",
+                    "exact_action_relative_error",
+                    "off_patch_spill_norm",
+                    "off_patch_spill_ratio",
+                    "full_space_rho_star",
+                    "full_space_rho_unit",
+                    "full_space_eta",
+                )
+                return {
+                    **first,
+                    "finite": all(
+                        math.isfinite(float(first[key])) for key in numeric_keys
+                    ),
+                    "deterministic": True,
+                    "repeat_correction_sha256": second["correction_sha256"],
+                    "repeat_action_sha256": second["action_sha256"],
+                }
+
+            _emit_marker(markers, event="element_factor_started", phase="p0", started=started)
+            central = int(central_ordinal)
+            central_class = int(cell_refs[central].class_id)
+            central_curl, _widths, _info = h2a.tabulate_task037_extra_h2a_cell_tensor(
+                proxy_forms[0], function_space, mesh_data.cell_tags, central, geometry_tolerance=tolerance
+            )
+            central_mass, _widths, _info = h2a.tabulate_task037_extra_h2a_cell_tensor(
+                proxy_forms[1], function_space, mesh_data.cell_tags, central, geometry_tolerance=tolerance
+            )
+            central_proxy = h2a.build_b0_proxy_tensor(
+                central_curl,
+                central_mass,
+                k0=float(cfg.k0),
+                abs_epsilon=float(abs(h2a._material_epsilon(cfg, int(tags[central])))),
+            )
+            element_matrix = h2a.build_h2a_r2_transformed_block(
+                central_proxy, expansions[central_class]
+            )
+            element_factor = factorize_h2b_p0_patch(
+                np.ascontiguousarray(element_matrix, dtype=np.complex128),
+                task037_extra_h2b=True,
+            )
+            stored_class = store_classes.get(central_class)
+            stored_factor = (
+                store_factors.get(int(stored_class.factor_id))
+                if stored_class is not None
+                else None
+            )
+            if stored_class is None or stored_factor is None:
+                raise ValueError("P0 selected class factor is missing from R2 store")
+            if (
+                element_factor.matrix_sha256 != stored_factor.numeric_matrix_sha256
+                or element_factor.factor_values_sha256
+                != _p0_numeric_sha(stored_factor.values)
+                or element_factor.pivot_sha256 != _p0_numeric_sha(stored_factor.pivots)
+                or stored_class.class_key_sha256
+                != selection["class_key_sha256"]
+                or stored_class.constraint_pattern_sha256
+                != selection["constraint_pattern_sha256"]
+                or stored_class.expansion_pattern_sha256
+                != expansions[central_class].pattern_sha256
+            ):
+                raise ValueError("P0 element factor is not bound to frozen R2 factor")
+            element_audit = {
+                "matrix_sha256": element_factor.matrix_sha256,
+                "factor_values_sha256": element_factor.factor_values_sha256,
+                "pivot_sha256": element_factor.pivot_sha256,
+                "factor_bytes": element_factor.factor_bytes,
+                "factorization_residual": element_factor.factorization_residual,
+                "solve_residual": element_factor.solve_residual,
+                "finite": element_factor.finite,
+                "deterministic": element_factor.deterministic,
+                "pivot_growth": element_factor.pivot_growth,
+                "reciprocal_condition_estimate": element_factor.reciprocal_condition_estimate,
+                "condition_estimate": element_factor.condition_estimate,
+                "pivot_growth_convention": "max_abs_U_over_max_abs_matrix",
+                "solve_gains": list(element_factor.solve_gains),
+                "r2_store_binding": {
+                    "class_id": central_class,
+                    "factor_id": int(stored_class.factor_id),
+                    "class_key_sha256": stored_class.class_key_sha256,
+                    "constraint_pattern_sha256": stored_class.constraint_pattern_sha256,
+                    "expansion_pattern_sha256": stored_class.expansion_pattern_sha256,
+                    "matrix_sha256": stored_factor.numeric_matrix_sha256,
+                    "factor_values_sha256": _p0_numeric_sha(stored_factor.values),
+                    "pivot_sha256": _p0_numeric_sha(stored_factor.pivots),
+                },
+            }
+            element_source_records = {
+                str(base["label"]): direction_pair(
+                    np.ascontiguousarray(element_matrix, dtype=np.complex128),
+                    element_factor,
+                    source_arrays[str(base["label"])],
+                    patch["matrix"],
+                )
+                for base in base_sources
+            }
+            del element_factor, element_matrix, central_curl, central_mass, central_proxy
+            gc.collect()
+            _emit_marker(markers, event="element_factor_ready", phase="p0", started=started)
+            _emit_marker(markers, event="patch_factor_started", phase="p0", started=started)
+            patch_factor = factorize_h2b_p0_patch(
+                patch["matrix"], task037_extra_h2b=True
+            )
+            _emit_marker(markers, event="patch_factor_ready", phase="p0", started=started)
+            _emit_marker(markers, event="source_measurement_started", phase="p0", started=started)
+            source_records: list[dict[str, Any]] = []
+            for base in base_sources:
+                label = str(base["label"])
+                patch_record = direction_pair(
+                    patch["matrix"],
+                    patch_factor,
+                    source_arrays[label],
+                    patch["matrix"],
+                )
+                source_records.append(
+                    {
+                        **base,
+                        "element_block": element_source_records[label],
+                        "row_complete_patch": patch_record,
+                    }
+                )
+            _emit_marker(markers, event="source_measurement_ready", phase="p0", started=started)
+            measurement = {
+                "p6": p6,
+                "authority": authority["producer_authority"],
+                "cache": {
+                    "action_cache_dir": str(cache_dir.resolve()),
+                    "action_cache_before": cache_before,
+                    "action_cache_after": cache_after,
+                    "action_cache_unchanged": cache_before == cache_after,
+                    "r1_proxy_cache_dir": str(h2a.R2_R1_JIT_CACHE_DIR.resolve()),
+                    "r1_proxy_cache_before": r1_proxy_cache_before,
+                    "r1_proxy_cache_after": r1_proxy_cache_after,
+                    "r1_proxy_cache_unchanged": r1_proxy_cache_before
+                    == r1_proxy_cache_after,
+                },
+                "selection": selection,
+                "central_cell_ordinal": central_ordinal,
+                "patch_rows": patch_rows.tolist(),
+                "touching_cell_ordinals": list(touching),
+                "cell_class_ids": [int(cell.class_id) for cell in cell_refs],
+                "cell_references": [
+                    {
+                        "class_id": int(cell.class_id),
+                        "independent_global_rows": [
+                            int(row) for row in cell.independent_global_rows
+                        ],
+                    }
+                    for cell in cell_refs
+                ],
+                "s0_authority": authority["s0_authority"],
+                "element_factor": element_audit,
+                "patch": {
+                    key: value
+                    for key, value in patch.items()
+                    if key != "matrix"
+                },
+                "factor": {
+                    "matrix_sha256": patch_factor.matrix_sha256,
+                    "factor_values_sha256": patch_factor.factor_values_sha256,
+                    "pivot_sha256": patch_factor.pivot_sha256,
+                    "factor_bytes": patch_factor.factor_bytes,
+                    "factorization_residual": patch_factor.factorization_residual,
+                    "solve_residual": patch_factor.solve_residual,
+                    "finite": patch_factor.finite,
+                    "deterministic": patch_factor.deterministic,
+                    "pivot_growth": patch_factor.pivot_growth,
+                    "reciprocal_condition_estimate": patch_factor.reciprocal_condition_estimate,
+                    "condition_estimate": patch_factor.condition_estimate,
+                    "pivot_growth_convention": "max_abs_U_over_max_abs_matrix",
+                    "solve_gains": list(patch_factor.solve_gains),
+                },
+                "r2_factor_payload_bytes": int(store.audit["factor_plus_metadata_bytes"]),
+                "sources": source_records,
+                "materialization_identity": {
+                    "global_matrix_materialized": False,
+                    "global_constraint_matrix_materialized": False,
+                    "per_cell_factor": False,
+                    "slab_factor": False,
+                    "schur_materialized": False,
+                },
+            }
+            _emit_marker(markers, event="summary_started", phase="p0", started=started)
+            _emit_marker(markers, event="summary_ready", phase="p0", started=started)
+    except _worker_error_types() as exc:
+        error = f"{type(exc).__name__}: {exc}"
+    finally:
+        if source_vec is not None:
+            source_vec.destroy()
+        if action is not None:
+            action.destroy()
+        h2a.clear_floquet_topology_cache()
+        gc.collect()
+    source_end = _source_pair(h2a)
+    payload = _attach_evidence(
+        {
+            "schema": H2B_P0_WORKER_SCHEMA,
+            "phase": "p0",
+            "status": "measurement_complete" if error is None else "gate_failed",
+            "scope": _p0_scope(),
+            "identity": _fixed_identity(),
+            "phase_identity": _p0_phase_identity(),
+            "source_at_start": source_start,
+            "source_at_end": source_end,
+            "runtime_identity": runtime,
+            "form": form_record,
+            "measurement": measurement,
+            "error": error,
+            "elapsed_wall_seconds": float(time.perf_counter() - started),
+        }
+    )
+    _write_json(summary_path, payload)
+    return 0 if error is None else 1
+
+
 def _compiler_descendant_pids(pids: Sequence[int]) -> list[int]:
     found: list[int] = []
     for pid in pids:
@@ -1760,7 +2441,8 @@ def _stage_gate_allows_online(
     run_dir: Path | None = None,
 ) -> bool:
     basic = bool(
-        stage_process.get("return_code") == 0
+        type(stage_process.get("return_code")) is int
+        and stage_process.get("return_code") == 0
         and stage_process.get("termination") is None
         and stage_summary.get("status") == "measurement_complete"
         and _evidence_valid(stage_summary)
@@ -1812,7 +2494,7 @@ def _stage_gate_allows_online(
 
 
 def _worker_command(executable: str, phase: str, run_dir: Path) -> list[str]:
-    if phase not in {"jit-worker", "online-worker", "s0-worker"}:
+    if phase not in {"jit-worker", "online-worker", "s0-worker", "p0-worker"}:
         raise ValueError("H2B worker phase is fixed")
     return [
         str(executable),
@@ -1976,6 +2658,98 @@ def _run_s0_watchdog(run_dir: Path) -> int:
         }
     )
     _write_json(run_dir / "h2b_s0_watchdog_summary.json", payload)
+    return 0 if payload["status"] == "pass" else 1
+
+
+def _run_p0_watchdog(run_dir: Path) -> int:
+    """Run the existing cache stage and one isolated P0 online worker."""
+
+    run_dir = run_dir.resolve()
+    if run_dir.exists():
+        raise FileExistsError(f"H2B-P0 run directory already exists: {run_dir}")
+    run_dir.mkdir(parents=True)
+    started = time.perf_counter()
+    source_start: dict[str, Any] | None = None
+    source_end: dict[str, Any] | None = None
+    executable: str | None = None
+    stage: dict[str, Any] | None = None
+    p0: dict[str, Any] | None = None
+    error: str | None = None
+    try:
+        source_start = _light_source()
+        executable = _worker_executable()
+        stage = _monitor_phase(
+            run_dir,
+            "stage",
+            _worker_command(executable, "jit-worker", run_dir),
+            H2B_STAGE_TIMEOUT_SECONDS,
+            H2B_STAGE_RSS_LIMIT_BYTES,
+        )
+        stage_summary = _read_json(run_dir / "stage_summary.json")
+        drain = _bounded_process_drain(stage)
+        stage["processes_gone_before_p0"] = bool(drain["gone"])
+        stage["processes_gone_before_p0_drain"] = drain
+        if not _stage_gate_allows_online(
+            stage, stage_summary, bool(drain["gone"]), run_dir
+        ):
+            error = "stage_gate_failed_before_p0"
+        else:
+            p0 = _monitor_phase(
+                run_dir,
+                "p0",
+                _worker_command(executable, "p0-worker", run_dir),
+                H2B_P0_TIMEOUT_SECONDS,
+                H2B_P0_RSS_LIMIT_BYTES,
+            )
+            drain = _bounded_process_drain(p0)
+            p0["processes_gone_after_p0"] = bool(drain["gone"])
+            p0["processes_gone_after_p0_drain"] = drain
+    except _worker_error_types() as exc:
+        error = f"{type(exc).__name__}: {exc}"
+    if source_start is not None:
+        try:
+            source_end = _light_source()
+        except _worker_error_types() as exc:
+            error = f"{type(exc).__name__}: {exc}"
+    stage_ok = bool(
+        isinstance(stage, Mapping)
+        and type(stage.get("return_code")) is int
+        and stage.get("return_code") == 0
+        and stage.get("termination") is None
+        and stage.get("processes_gone_before_p0") is True
+    )
+    p0_ok = bool(
+        isinstance(p0, Mapping)
+        and type(p0.get("return_code")) is int
+        and p0.get("return_code") == 0
+        and p0.get("termination") is None
+        and p0.get("processes_gone_after_p0") is True
+    )
+    payload = _attach_evidence(
+        {
+            "schema": H2B_P0_WATCHDOG_SCHEMA,
+            "status": "pass" if error is None and stage_ok and p0_ok else "gate_failed",
+            "run_dir": str(run_dir),
+            "scope": _p0_scope(),
+            "identity": _fixed_identity(),
+            "command_identity": {
+                "python": executable,
+                "launch_mode": "direct_singleton",
+                "stage_command": None if stage is None else stage["command"],
+                "p0_command": None if p0 is None else p0["command"],
+            },
+            "source_at_start": source_start,
+            "source_at_end": source_end,
+            "stage": stage,
+            "p0": p0,
+            "error": error,
+            "completion_elapsed_seconds": float(time.perf_counter() - started),
+            "raw_artifacts": {
+                name: _artifact(run_dir, name) for name in H2B_P0_ARTIFACT_NAMES
+            },
+        }
+    )
+    _write_json(run_dir / "p0_watchdog_summary.json", payload)
     return 0 if payload["status"] == "pass" else 1
 
 
@@ -2683,6 +3457,43 @@ def _authority() -> dict[str, Any]:
     }
 
 
+def _p0_s0_authority() -> dict[str, Any]:
+    """Read the immutable passing S0 route only for the P0 lane."""
+
+    if not H2B_S0_RECORD_PATH.is_file():
+        raise ValueError("frozen H2B-S0 canonical authority is missing")
+    record_sha256 = _sha256_file(H2B_S0_RECORD_PATH)
+    if record_sha256 != H2B_S0_RECORD_SHA256:
+        raise ValueError("frozen H2B-S0 canonical authority is changed")
+    record = _read_json(H2B_S0_RECORD_PATH)
+    if (
+        record.get("schema") != H2B_S0_CHECK_SCHEMA
+        or record.get("status") != "pass"
+        or record.get("pass") is not True
+        or record.get("route") != "H2B-P"
+        or record.get("evidence_sha256") != H2B_S0_RECORD_EVIDENCE_SHA256
+        or not _evidence_valid(record)
+    ):
+        raise ValueError("frozen H2B-S0 authority is not the passing H2B-P result")
+    measurements = record.get("measurements")
+    authority = measurements.get("authority") if isinstance(measurements, Mapping) else None
+    if not isinstance(authority, Mapping) or record.get("s0_direction_gate_pass") is not False:
+        raise ValueError("frozen H2B-S0 authority evidence is incomplete")
+    return {
+        "record_path": str(H2B_S0_RECORD_PATH),
+        "record_sha256": record_sha256,
+        "evidence_sha256": H2B_S0_RECORD_EVIDENCE_SHA256,
+        "status": record["status"],
+        "pass": record["pass"],
+        "route": record["route"],
+        "s0_direction_gate_pass": record["s0_direction_gate_pass"],
+        "producer_authority": authority.get("producer_authority"),
+        "b0_form": authority.get("b0_form"),
+        "raw_artifacts": authority.get("raw_artifacts"),
+        "watchdog_summary_sha256": authority.get("watchdog_summary_sha256"),
+    }
+
+
 def _valid_hash(value: Any) -> bool:
     return isinstance(value, str) and len(value) == 64 and value.lower() == value and all(char in _HEX for char in value)
 
@@ -3083,6 +3894,643 @@ def _run_check(run_dir: Path, output: Path) -> int:
     return 0 if result["pass"] else 1
 
 
+def _p0_direction_valid(
+    label: str, record: Any, *, rho_limit: float | None
+) -> bool:
+    if not isinstance(record, Mapping):
+        return False
+    hashes = (
+        record.get("rhs_sha256"),
+        record.get("correction_sha256"),
+        record.get("repeat_correction_sha256"),
+        record.get("action_sha256"),
+        record.get("repeat_action_sha256"),
+    )
+    nonnegative_numbers = (
+        record.get("r_norm"),
+        record.get("q_norm"),
+        record.get("rho_unit"),
+        record.get("rho_star"),
+        record.get("eta"),
+        record.get("omega_abs"),
+        record.get("exact_action_relative_error"),
+        record.get("off_patch_spill_norm"),
+        record.get("off_patch_spill_ratio"),
+        record.get("full_space_rho_star"),
+        record.get("full_space_rho_unit"),
+        record.get("full_space_eta"),
+        record.get("correction_norm"),
+        record.get("correction_amplification"),
+        record.get("element_operator_mismatch_relative"),
+    )
+    signed_numbers = (
+        record.get("omega_real"),
+        record.get("omega_imag"),
+    )
+    return bool(
+        record.get("schema") == H2B_P0_DIRECTION_SCHEMA
+        and type(record.get("patch_row_count")) is int
+        and record.get("patch_row_count") == H2B_FIXED_NLOC
+        and all(_valid_hash(value) for value in hashes)
+        and all(
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(float(value))
+            and float(value) >= 0.0
+            for value in nonnegative_numbers
+        )
+        and all(
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(float(value))
+            for value in signed_numbers
+        )
+        and record.get("finite") is True
+        and record.get("deterministic") is True
+        and float(record["r_norm"]) > 0.0
+        and float(record["q_norm"]) > 0.0
+        and 0.0 <= float(record["rho_star"]) <= float(record["rho_unit"]) + 1.0e-12
+        and float(record["rho_star"]) <= 1.0 + 1.0e-12
+        and float(record["eta"]) <= 1.0 + 1.0e-12
+        and float(record["full_space_eta"]) <= 1.0 + 1.0e-12
+        and float(record["full_space_rho_star"]) <= 1.0 + 1.0e-12
+        and 0.0 <= float(record["exact_action_relative_error"]) <= 1.0e-11
+        and record.get("correction_sha256") == record.get("repeat_correction_sha256")
+        and record.get("action_sha256") == record.get("repeat_action_sha256")
+        and record.get("external_slave_mask") is False
+        and record.get("rho_scope") == "patch_rows_only"
+        and record.get("full_space_rho_scope") == "diagnostic_only"
+        and (rho_limit is None or float(record["rho_star"]) <= rho_limit)
+    )
+
+
+def _p0_source_valid(label: Any, record: Any) -> bool:
+    if not isinstance(label, str) or label not in H2B_SOURCE_LABELS:
+        return False
+    if not isinstance(record, Mapping):
+        return False
+    return bool(
+        record.get("definition") == H2B_SOURCE_DEFINITIONS[label]
+        and _valid_hash(record.get("definition_sha256"))
+        and _valid_hash(record.get("vector_sha256"))
+        and record.get("definition_sha256") == _source_definition_sha(label)
+        and isinstance(record.get("element_block"), Mapping)
+        and isinstance(record.get("row_complete_patch"), Mapping)
+        and record["element_block"].get("rhs_sha256")
+        == record["row_complete_patch"].get("rhs_sha256")
+        and _p0_direction_valid(
+            label, record.get("row_complete_patch"), rho_limit=H2B_S0_RHO_LIMITS[label]
+        )
+        and _p0_direction_valid(
+            label, record.get("element_block"), rho_limit=None
+        )
+    )
+
+
+def _p0_check_payload(raw: Mapping[str, Any]) -> dict[str, Any]:
+    """Independently qualify a normalized P0 payload without reading workers."""
+
+    from src.solvers.hcurl_h2b_block_smoother import (
+        discover_h2b_p0_touching_cells,
+        select_h2b_p0_class,
+    )
+
+    checks: dict[str, bool] = {}
+    problems: list[str] = []
+    checks["scope"] = raw.get("scope") == _p0_scope()
+    checks["identity"] = raw.get("identity") == _fixed_identity()
+    checks["authority"] = (
+        raw.get("authority") == raw.get("authority_expected")
+        and raw.get("worker_authority") == raw.get("authority_expected")
+    )
+    checks["s0_authority"] = (
+        raw.get("s0_authority") == raw.get("s0_authority_expected")
+        and isinstance(raw.get("s0_authority"), Mapping)
+        and raw["s0_authority"].get("status") == "pass"
+        and raw["s0_authority"].get("route") == "H2B-P"
+    )
+    checks["source"] = (
+        _source_pair_valid(raw.get("source_at_start"), raw.get("source_at_end"))
+        and raw.get("watchdog_source_at_start") == raw.get("source_at_start")
+        and raw.get("watchdog_source_at_end") == raw.get("source_at_end")
+    )
+    stage = raw.get("stage")
+    online = raw.get("online")
+    checks["stage_lifecycle"] = bool(
+        isinstance(stage, Mapping)
+        and type(stage.get("return_code")) is int
+        and stage.get("return_code") == 0
+        and stage.get("termination") is None
+        and stage.get("processes_gone_before_p0") is True
+    )
+    checks["online_lifecycle"] = bool(
+        isinstance(online, Mapping)
+        and type(online.get("return_code")) is int
+        and online.get("return_code") == 0
+        and online.get("termination") is None
+        and online.get("processes_gone_after_p0") is True
+    )
+    checks["events"] = raw.get("stage_events") == list(H2B_STAGE_EVENTS) and raw.get(
+        "online_events"
+    ) == list(H2B_P0_EVENTS)
+    checks["form_payload"] = bool(
+        isinstance(raw.get("form"), Mapping)
+        and raw["form"].get("role") == "b0"
+    )
+    p6 = raw.get("p6")
+    checks["p6"] = isinstance(p6, Mapping) and p6 == {
+        "global_cells": H2B_FIXED_CELLS,
+        "local_cells": H2B_FIXED_CELLS,
+        "local_nloc": H2B_FIXED_NLOC,
+        "global_rows": H2B_FIXED_ROWS,
+        "constraint_count": H2B_FIXED_CONSTRAINTS,
+    }
+    try:
+        expected_selection = select_h2b_p0_class(
+            raw["class_inventory"], task037_extra_h2b=True
+        )
+        checks["selection"] = raw.get("selection") == expected_selection
+    except (KeyError, TypeError, ValueError):
+        checks["selection"] = False
+        expected_selection = None
+    patch = raw.get("patch")
+    selection = raw.get("selection")
+    checks["patch"] = bool(
+        isinstance(patch, Mapping)
+        and isinstance(selection, Mapping)
+        and type(patch.get("patch_row_count")) is int
+        and patch.get("patch_row_count") == H2B_FIXED_NLOC
+        and type(patch.get("touching_cell_count")) is int
+        and patch.get("touching_cell_count") > 0
+        and _valid_hash(patch.get("matrix_sha256"))
+        and patch.get("matrix_shape") == [H2B_FIXED_NLOC, H2B_FIXED_NLOC]
+        and patch.get("matrix_dtype") == "complex128"
+        and type(patch.get("matrix_nbytes")) is int
+        and patch.get("matrix_nbytes") == H2B_FIXED_NLOC * H2B_FIXED_NLOC * 16
+        and patch.get("global_matrix_materialized") is False
+        and patch.get("global_constraint_matrix_materialized") is False
+        and patch.get("per_cell_factor") is False
+        and patch.get("slab_factor") is False
+        and patch.get("schur_materialized") is False
+    )
+    cache = raw.get("cache")
+    checks["cache"] = bool(
+        isinstance(cache, Mapping)
+        and cache.get("action_cache_unchanged") is True
+        and cache.get("action_cache_before") == cache.get("action_cache_after")
+        and isinstance(cache.get("action_cache_dir"), str)
+        and isinstance(cache.get("r1_proxy_cache_dir"), str)
+        and cache.get("r1_proxy_cache_before") == cache.get("r1_proxy_cache_after")
+        and cache.get("r1_proxy_cache_unchanged") is True
+    )
+    checks["factor_authority"] = (
+        type(raw.get("r2_factor_payload_bytes")) is int
+        and raw.get("r2_factor_payload_bytes") == 201_933_812
+    )
+    try:
+        references = raw["cell_references"]
+        touching = discover_h2b_p0_touching_cells(
+            references, raw["patch_rows"], task037_extra_h2b=True
+        )
+        class_ids = raw["cell_class_ids"]
+        inventory = raw["class_inventory"]
+        counts = {int(item["class_id"]): 0 for item in inventory}
+        for class_id in class_ids:
+            if type(class_id) is not int or class_id not in counts:
+                raise ValueError("P0 cell class identity is invalid")
+            counts[class_id] += 1
+        if not all(isinstance(reference, Mapping) for reference in references):
+            raise ValueError("P0 cell references are not structured mappings")
+        for reference, class_id in zip(references, class_ids, strict=True):
+            if reference.get("class_id") != class_id:
+                raise ValueError("P0 cell reference class id does not match")
+            rows = reference.get("independent_global_rows")
+            if (
+                not isinstance(rows, list)
+                or not rows
+                or any(type(row) is not int for row in rows)
+                or len(set(rows)) != len(rows)
+            ):
+                raise ValueError("P0 cell reference rows are invalid")
+        checks["cell_authority"] = bool(
+            len(references) == H2B_FIXED_CELLS
+            and len(class_ids) == H2B_FIXED_CELLS
+            and all(
+                type(item["cell_count"]) is int
+                and counts[int(item["class_id"])] == item["cell_count"]
+                for item in inventory
+            )
+        )
+        central = raw["central_cell_ordinal"]
+        checks["central"] = bool(
+            type(central) is int
+            and 0 <= central < len(references)
+            and class_ids[central] == raw["selection"]["class_id"]
+            and references[central].get("independent_global_rows")
+            == raw["patch_rows"]
+        )
+        checks["touching"] = tuple(touching) == tuple(
+            raw["touching_cell_ordinals"]
+        )
+    except (KeyError, TypeError, ValueError):
+        checks["cell_authority"] = False
+        checks["central"] = False
+        checks["touching"] = False
+    factor = raw.get("factor")
+    factor_numbers = (
+        factor.get("factorization_residual"),
+        factor.get("solve_residual"),
+        factor.get("pivot_growth"),
+        factor.get("reciprocal_condition_estimate"),
+        factor.get("condition_estimate"),
+    ) if isinstance(factor, Mapping) else ()
+    checks["factor"] = bool(
+        isinstance(factor, Mapping)
+        and all(
+            _valid_hash(factor.get(key))
+            for key in ("matrix_sha256", "factor_values_sha256", "pivot_sha256")
+        )
+        and factor.get("matrix_sha256") == patch.get("matrix_sha256")
+        and type(factor.get("factor_bytes")) is int
+        and factor.get("factor_bytes") == H2B_FIXED_NLOC * H2B_FIXED_NLOC * 16 + H2B_FIXED_NLOC * 4
+        and all(
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(float(value))
+            and float(value) >= 0.0
+            for value in factor_numbers
+        )
+        and float(factor["factorization_residual"]) <= 1.0e-10
+        and float(factor["solve_residual"]) <= 1.0e-10
+        and 0.0 < float(factor["reciprocal_condition_estimate"]) <= 1.0 + 1.0e-12
+        and float(factor["condition_estimate"]) >= 1.0 - 1.0e-12
+        and math.isclose(
+            float(factor["condition_estimate"]),
+            1.0 / float(factor["reciprocal_condition_estimate"]),
+            rel_tol=1.0e-12,
+            abs_tol=0.0,
+        )
+        and factor.get("finite") is True
+        and factor.get("deterministic") is True
+        and factor.get("pivot_growth_convention")
+        == "max_abs_U_over_max_abs_matrix"
+        and isinstance(factor.get("solve_gains"), list)
+        and len(factor["solve_gains"]) == 2
+        and all(
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and float(value) >= 0.0
+            and math.isfinite(float(value))
+            for value in factor["solve_gains"]
+        )
+    )
+    element_factor = raw.get("element_factor")
+    checks["element_factor"] = bool(
+        isinstance(element_factor, Mapping)
+        and all(
+            _valid_hash(element_factor.get(key))
+            for key in ("matrix_sha256", "factor_values_sha256", "pivot_sha256")
+        )
+        and type(element_factor.get("factor_bytes")) is int
+        and element_factor["factor_bytes"]
+        == H2B_FIXED_NLOC * H2B_FIXED_NLOC * 16 + H2B_FIXED_NLOC * 4
+        and element_factor.get("finite") is True
+        and element_factor.get("deterministic") is True
+        and all(
+            isinstance(element_factor.get(key), (int, float))
+            and not isinstance(element_factor.get(key), bool)
+            and math.isfinite(float(element_factor[key]))
+            and float(element_factor[key]) >= 0.0
+            for key in (
+                "factorization_residual",
+                "solve_residual",
+                "pivot_growth",
+                "reciprocal_condition_estimate",
+                "condition_estimate",
+            )
+        )
+        and element_factor["factorization_residual"] <= 1.0e-10
+        and element_factor["solve_residual"] <= 1.0e-10
+        and 0.0 < float(element_factor["reciprocal_condition_estimate"]) <= 1.0 + 1.0e-12
+        and float(element_factor["condition_estimate"]) >= 1.0 - 1.0e-12
+        and math.isclose(
+            float(element_factor["condition_estimate"]),
+            1.0 / float(element_factor["reciprocal_condition_estimate"]),
+            rel_tol=1.0e-12,
+            abs_tol=0.0,
+        )
+        and isinstance(element_factor.get("solve_gains"), list)
+        and len(element_factor["solve_gains"]) == 2
+        and all(
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and float(value) >= 0.0
+            and math.isfinite(float(value))
+            for value in element_factor["solve_gains"]
+        )
+        and element_factor.get("pivot_growth_convention")
+        == "max_abs_U_over_max_abs_matrix"
+    )
+    binding = (
+        element_factor.get("r2_store_binding")
+        if isinstance(element_factor, Mapping)
+        else None
+    )
+    inventory_by_id = {
+        int(item["class_id"]): item
+        for item in raw.get("class_inventory", [])
+        if isinstance(item, Mapping) and type(item.get("class_id")) is int
+    }
+    selected_id = (
+        raw.get("selection", {}).get("class_id")
+        if isinstance(raw.get("selection"), Mapping)
+        else None
+    )
+    selected_item = inventory_by_id.get(selected_id)
+    checks["r2_store_binding"] = bool(
+        isinstance(binding, Mapping)
+        and isinstance(selected_item, Mapping)
+        and binding.get("class_id") == selected_id
+        and binding.get("class_key_sha256") == selected_item.get("class_key_sha256")
+        and binding.get("constraint_pattern_sha256")
+        == selected_item.get("constraint_pattern_sha256")
+        and _valid_hash(binding.get("expansion_pattern_sha256"))
+        and _valid_hash(binding.get("matrix_sha256"))
+        and _valid_hash(binding.get("factor_values_sha256"))
+        and _valid_hash(binding.get("pivot_sha256"))
+        and type(binding.get("factor_id")) is int
+        and binding.get("matrix_sha256") == element_factor.get("matrix_sha256")
+        and binding.get("factor_values_sha256")
+        == element_factor.get("factor_values_sha256")
+        and binding.get("pivot_sha256") == element_factor.get("pivot_sha256")
+    )
+    sources = raw.get("sources")
+    checks["sources"] = bool(
+        isinstance(sources, list)
+        and [item.get("label") for item in sources if isinstance(item, Mapping)]
+        == list(H2B_SOURCE_LABELS)
+        and all(_p0_source_valid(item.get("label"), item) for item in sources)
+    )
+    resource = raw.get("resource")
+    checks["resource"] = bool(
+        isinstance(resource, Mapping)
+        and type(resource.get("process_tree_peak_rss_bytes")) is int
+        and resource["process_tree_peak_rss_bytes"] < H2B_P0_RSS_LIMIT_BYTES
+        and type(resource.get("process_tree_swap_bytes")) is int
+        and resource["process_tree_swap_bytes"] == H2B_SWAP_LIMIT_BYTES
+    )
+    checks["materialization"] = raw.get("materialization_identity") == {
+        "global_matrix_materialized": False,
+        "global_constraint_matrix_materialized": False,
+        "per_cell_factor": False,
+        "slab_factor": False,
+        "schur_materialized": False,
+    }
+    problems.extend(name for name, passed in checks.items() if passed is not True)
+    status = not problems
+    measurements = None
+    if status:
+        measurements = {
+            "selection": raw["selection"],
+            "p6": raw["p6"],
+            "central_cell_ordinal": raw["central_cell_ordinal"],
+            "patch_rows": raw["patch_rows"],
+            "cell_class_ids": raw["cell_class_ids"],
+            "cell_references": raw["cell_references"],
+            "touching_cell_ordinals": raw["touching_cell_ordinals"],
+            "cache": raw["cache"],
+            "r2_factor_payload_bytes": raw["r2_factor_payload_bytes"],
+            "element_factor": raw["element_factor"],
+            "patch": raw["patch"],
+            "factor": raw["factor"],
+            "sources": raw["sources"],
+            "resource": raw["resource"],
+            "authority": raw["authority"],
+            "s0_authority": raw["s0_authority"],
+            "form": raw["form"],
+        }
+    return {
+        "schema": H2B_P0_CHECK_SCHEMA,
+        "status": "pass" if status else "gate_failed",
+        "pass": status,
+        "problems": sorted(problems),
+        "checks": checks,
+        "measurements": measurements,
+    }
+
+
+def _p0_check_raw(run_dir: Path) -> dict[str, Any]:
+    run_dir = run_dir.resolve()
+    watchdog = _read_json(run_dir / "p0_watchdog_summary.json")
+    stage = _read_json(run_dir / "stage_summary.json")
+    online = _read_json(run_dir / "p0_summary.json")
+    authority = _authority()
+    authority["s0_authority"] = _p0_s0_authority()
+    checker_source = _light_source()
+    stage_timeline = _timeline_metrics(run_dir / "stage_timeline.jsonl", "stage")
+    p0_timeline = _timeline_metrics(run_dir / "p0_timeline.jsonl", "p0")
+    p0_measurement = online.get("measurement")
+    if not isinstance(p0_measurement, Mapping):
+        raise ValueError("P0 measurement is missing")
+    raw = {
+        "scope": online.get("scope"),
+        "identity": online.get("identity"),
+        "authority": authority["producer_authority"],
+        "authority_expected": authority["producer_authority"],
+        "worker_authority": p0_measurement.get("authority"),
+        "s0_authority": p0_measurement.get("s0_authority"),
+        "s0_authority_expected": authority["s0_authority"],
+        "source_at_start": online.get("source_at_start"),
+        "source_at_end": online.get("source_at_end"),
+        "watchdog_source_at_start": watchdog.get("source_at_start"),
+        "watchdog_source_at_end": watchdog.get("source_at_end"),
+        "stage": watchdog.get("stage"),
+        "online": watchdog.get("p0"),
+        "stage_events": _progress_events(run_dir / "stage_progress.jsonl", "stage"),
+        "online_events": _progress_events(run_dir / "p0_progress.jsonl", "p0"),
+        "p6": p0_measurement.get("p6"),
+        "class_inventory": authority["r0"]["class_inventory"],
+        "selection": p0_measurement.get("selection"),
+        "central_cell_ordinal": p0_measurement.get("central_cell_ordinal"),
+        "patch_rows": p0_measurement.get("patch_rows"),
+        "touching_cell_ordinals": p0_measurement.get("touching_cell_ordinals"),
+        "cell_class_ids": p0_measurement.get("cell_class_ids"),
+        "cell_references": p0_measurement.get("cell_references"),
+        "form": online.get("form"),
+        "cache": p0_measurement.get("cache"),
+        "r2_factor_payload_bytes": p0_measurement.get("r2_factor_payload_bytes"),
+        "element_factor": p0_measurement.get("element_factor"),
+        "patch": p0_measurement.get("patch"),
+        "factor": p0_measurement.get("factor"),
+        "sources": p0_measurement.get("sources"),
+        "resource": {
+            "process_tree_peak_rss_bytes": p0_timeline["peak_rss_bytes"],
+            "process_tree_swap_bytes": p0_timeline["swap_bytes"],
+        },
+        "materialization_identity": p0_measurement.get("materialization_identity"),
+    }
+    result = _p0_check_payload(raw)
+    result["checks"]["watchdog_evidence"] = bool(
+        watchdog.get("schema") == H2B_P0_WATCHDOG_SCHEMA
+        and _evidence_valid(watchdog)
+        and watchdog.get("scope") == _p0_scope()
+        and watchdog.get("identity") == _fixed_identity()
+        and type(watchdog.get("run_dir")) is str
+        and watchdog.get("run_dir") == str(run_dir)
+    )
+    result["checks"]["watchdog_status"] = (
+        watchdog.get("schema") == H2B_P0_WATCHDOG_SCHEMA
+        and watchdog.get("status") == "pass"
+    )
+    result["checks"]["online_evidence"] = bool(
+        online.get("schema") == H2B_P0_WORKER_SCHEMA
+        and online.get("status") == "measurement_complete"
+        and online.get("error") is None
+        and _evidence_valid(online)
+    )
+    result["checks"]["worker_status"] = bool(
+        online.get("status") == "measurement_complete"
+        and online.get("error") is None
+    )
+    result["checks"]["stage_evidence"] = bool(
+        stage.get("schema") == H2B_WORKER_SCHEMA
+        and stage.get("phase") == "stage"
+        and stage.get("status") == "measurement_complete"
+        and stage.get("error") is None
+        and _evidence_valid(stage)
+    )
+    result["checks"]["worker_source"] = bool(
+        _checker_source_valid(stage.get("source_at_start"))
+        and _checker_source_valid(stage.get("source_at_end"))
+        and _checker_source_valid(online.get("source_at_start"))
+        and _checker_source_valid(online.get("source_at_end"))
+        and _source_pair_valid(stage.get("source_at_start"), stage.get("source_at_end"))
+        and _source_pair_valid(online.get("source_at_start"), online.get("source_at_end"))
+        and stage.get("source_at_start") == online.get("source_at_start")
+        and stage.get("source_at_end") == online.get("source_at_end")
+    )
+    result["checks"]["checker_source"] = bool(
+        _checker_source_valid(checker_source)
+        and checker_source == stage.get("source_at_start")
+    )
+    result["checks"]["watchdog_source"] = bool(
+        _checker_source_valid(watchdog.get("source_at_start"))
+        and _checker_source_valid(watchdog.get("source_at_end"))
+        and watchdog.get("source_at_start") == stage.get("source_at_start")
+        and watchdog.get("source_at_end") == stage.get("source_at_end")
+    )
+    result["checks"]["runtime"] = bool(
+        _runtime_valid(stage.get("runtime_identity"))
+        and _runtime_valid(online.get("runtime_identity"))
+        and stage.get("runtime_identity") == online.get("runtime_identity")
+    )
+    result["checks"]["stage_scope_identity"] = bool(
+        stage.get("scope") == _fixed_scope()
+        and stage.get("identity") == _fixed_identity()
+    )
+    result["checks"]["phase_identity"] = bool(
+        stage.get("phase_identity")
+        == _phase_identity(jit_api=True, compile_called=True, compiler_probe=True)
+        and online.get("phase_identity") == _p0_phase_identity()
+    )
+    result["checks"]["online_form"] = _form_files_valid(
+        run_dir, online.get("form")
+    )
+    result["checks"]["stage_resource"] = bool(
+        stage_timeline["peak_rss_bytes"] < H2B_STAGE_RSS_LIMIT_BYTES
+        and stage_timeline["swap_bytes"] == 0
+    )
+    result["checks"]["form_identity"] = _forms_match(
+        stage.get("form"), online.get("form"), run_dir
+    )
+    result["checks"]["stage_cache"] = _form_files_valid(
+        run_dir, stage.get("form")
+    )
+    try:
+        import numpy as np
+
+        def array_sha(value: Any) -> str:
+            return hashlib.sha256(
+                memoryview(np.ascontiguousarray(value)).cast("B")
+            ).hexdigest()
+
+        h2a = _lazy_h2a()
+        store = h2a.load_h2a_r2_factor_store(
+            H2B_R2_MANIFEST, task037_extra_h2a_r2=True
+        )
+        stored_cells = all(
+            int(loaded.class_id) == int(reference["class_id"])
+            and np.array_equal(
+                loaded.independent_global_rows,
+                np.asarray(reference["independent_global_rows"], dtype=np.int64),
+            )
+            for loaded, reference in zip(
+                store.cells, raw["cell_references"], strict=True
+            )
+        ) and len(store.cells) == len(raw["cell_references"])
+        result["checks"]["r2_store_cells"] = stored_cells
+        class_id = int(raw["selection"]["class_id"])
+        stored_class = {int(item.class_id): item for item in store.classes}[class_id]
+        stored_factor = {
+            int(item.factor_id): item for item in store.factors
+        }[int(stored_class.factor_id)]
+        binding = raw["element_factor"]["r2_store_binding"]
+        result["checks"]["r2_store_selected_factor"] = bool(
+            binding.get("class_id") == class_id
+            and binding.get("factor_id") == int(stored_class.factor_id)
+            and binding.get("class_key_sha256") == stored_class.class_key_sha256
+            and binding.get("constraint_pattern_sha256")
+            == stored_class.constraint_pattern_sha256
+            and binding.get("expansion_pattern_sha256")
+            == stored_class.expansion_pattern_sha256
+            and binding.get("matrix_sha256") == stored_factor.numeric_matrix_sha256
+            and binding.get("factor_values_sha256") == array_sha(stored_factor.values)
+            and binding.get("pivot_sha256") == array_sha(stored_factor.pivots)
+        )
+    except (KeyError, TypeError, ValueError, OSError):
+        result["checks"]["r2_store_cells"] = False
+        result["checks"]["r2_store_selected_factor"] = False
+    artifact_names = (*H2B_P0_ARTIFACT_NAMES, "p0_watchdog_summary.json")
+    actual = {name: _artifact(run_dir, name) for name in artifact_names}
+    result["checks"]["raw_artifacts"] = all(
+        actual[name].get("present") is True for name in artifact_names
+    )
+    result["checks"]["raw_artifact_binding"] = (
+        isinstance(watchdog.get("raw_artifacts"), Mapping)
+        and all(watchdog["raw_artifacts"].get(name) == actual[name] for name in H2B_P0_ARTIFACT_NAMES)
+    )
+    result["problems"] = sorted(
+        name for name, passed in result["checks"].items() if passed is not True
+    )
+    result["pass"] = not result["problems"]
+    result["status"] = "pass" if result["pass"] else "gate_failed"
+    result["raw_artifacts"] = actual
+    result["watchdog_summary_sha256"] = actual["p0_watchdog_summary.json"]["sha256"]
+    result["authority"] = authority["producer_authority"]
+    result["s0_authority"] = authority["s0_authority"]
+    result["checker_source"] = checker_source
+    if not result["pass"] and result.get("measurements") is not None:
+        result["failure_measurements"] = result["measurements"]
+        result["measurements"] = None
+    return result
+
+
+def _run_p0_check(run_dir: Path, output: Path) -> int:
+    try:
+        result = _p0_check_raw(run_dir)
+    except _worker_error_types() as exc:
+        result = {
+            "schema": H2B_P0_CHECK_SCHEMA,
+            "status": "gate_failed",
+            "pass": False,
+            "problems": [f"raw_unreadable:{type(exc).__name__}"],
+            "measurements": None,
+        }
+    _write_json(output.resolve(), _attach_evidence(result))
+    print(f"H2B-P0 check status={result['status']} output={output.resolve()}", flush=True)
+    return 0 if result["pass"] else 1
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="run_task037_extra_h2b")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -3090,6 +4538,7 @@ def _parser() -> argparse.ArgumentParser:
         ("jit-worker", _run_jit_worker),
         ("online-worker", _run_online_worker),
         ("s0-worker", _run_s0_worker),
+        ("p0-worker", _run_p0_worker),
     ):
         item = sub.add_parser(name)
         item.add_argument("--run-dir", required=True)
@@ -3110,12 +4559,29 @@ def _parser() -> argparse.ArgumentParser:
     s0_checker.set_defaults(
         handler=lambda args: _run_s0_check(Path(args.run_dir), Path(args.output))
     )
+    p0_watchdog = sub.add_parser("p0-watchdog")
+    p0_watchdog.add_argument("--run-dir", required=True)
+    p0_watchdog.set_defaults(handler=_run_p0_watchdog)
+    p0_checker = sub.add_parser("p0-check")
+    p0_checker.add_argument("--run-dir", required=True)
+    p0_checker.add_argument("--output", required=True)
+    p0_checker.set_defaults(
+        handler=lambda args: _run_p0_check(Path(args.run_dir), Path(args.output))
+    )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
-    if args.command in {"jit-worker", "online-worker", "s0-worker", "watchdog", "s0-watchdog"}:
+    if args.command in {
+        "jit-worker",
+        "online-worker",
+        "s0-worker",
+        "p0-worker",
+        "watchdog",
+        "s0-watchdog",
+        "p0-watchdog",
+    }:
         return int(args.handler(Path(args.run_dir)))
     return int(args.handler(args))
 
