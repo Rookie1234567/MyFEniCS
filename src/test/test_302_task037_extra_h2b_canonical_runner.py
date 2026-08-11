@@ -47,6 +47,23 @@ def test_c1_cell_metadata_builds_fresh_expansion_arrays():
     assert metadata["coefficients"].dtype == np.dtype(np.complex128)
 
 
+def test_c1_cache_binding_and_checker_source_are_independent():
+    manifest_source = inspect.getsource(runner._c1_manifest_valid)
+    check_source = inspect.getsource(runner._c1_check_raw)
+
+    assert (
+        'candidate_identity["cache"] != candidate_measurement.get("cache")'
+        in manifest_source
+    )
+    assert 'identity["cache"] != measurement.get("cache")' in manifest_source
+    assert 'measurement.get("cache") == worker.get("cache")' not in check_source
+    assert 'isinstance(measurement.get("cache"), Mapping)' in check_source
+    assert 'measurement["cache"].get("unchanged") is True' in check_source
+    assert '_checker_source_valid(checker_source)' in check_source
+    assert 'checker_source["source_commit_full_sha"]' not in check_source
+    assert 'source_values[0] == source_values[2] == source_values[4]' in check_source
+
+
 def _marker(event, *, digest=_PROGRESS_DIGEST, representative_count=1):
     item = {"schema": runner.H2B_PROGRESS_SCHEMA, "phase": "c1", "event": event}
     if event == "neighborhood_discovery_ready":

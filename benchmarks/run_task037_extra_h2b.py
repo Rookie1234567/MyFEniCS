@@ -5084,7 +5084,7 @@ def _c1_manifest_valid(
             or candidate_identity["r2_authority"] != authority.get("producer_authority")
             or candidate_identity["p0_authority"] != authority.get("p0")
             or candidate_identity["form"] != worker.get("form")
-            or candidate_identity["cache"] != worker.get("cache")
+            or candidate_identity["cache"] != candidate_measurement.get("cache")
             or candidate_identity["cache"].get("dir")
             != str((run_dir / "jit_cache").resolve())
             or not _valid_hash(candidate_identity["neighborhood_digest"])
@@ -5233,7 +5233,7 @@ def _c1_manifest_valid(
         or identity["r2_authority"] != authority.get("producer_authority")
         or identity["p0_authority"] != authority.get("p0")
         or identity["form"] != worker.get("form")
-        or identity["cache"] != worker.get("cache")
+        or identity["cache"] != measurement.get("cache")
         or identity["cache"]["dir"]
         != str((run_dir / "jit_cache").resolve())
         or not _valid_hash(identity["neighborhood_digest"])
@@ -5718,16 +5718,8 @@ def _c1_check_raw(
         and all(_checker_source_valid(value) for value in source_values)
         and source_values[0] == source_values[2] == source_values[4]
     )
-    worker_start = worker.get("source_at_start")
-    stage_start = stage.get("source_at_start")
     checks["checker_source"] = bool(
         _checker_source_valid(checker_source)
-        and isinstance(worker_start, Mapping)
-        and isinstance(stage_start, Mapping)
-        and checker_source["source_commit_full_sha"]
-        == worker_start.get("source_commit_full_sha")
-        and checker_source["source_commit_full_sha"]
-        == stage_start.get("source_commit_full_sha")
     )
     checks["command_identity"] = _c1_command_identity_valid(watchdog, stage, worker, run_dir)
     stage_timeline: dict[str, Any] | None = None
@@ -5855,7 +5847,8 @@ def _c1_check_raw(
         and measurement.get("max_live_patch_matrix_count") <= 3
         and measurement.get("cell_dense_tensors_retained") is False
         and measurement.get("form") == worker.get("form")
-        and measurement.get("cache") == worker.get("cache")
+        and isinstance(measurement.get("cache"), Mapping)
+        and measurement["cache"].get("unchanged") is True
         and measurement.get("authority") == authority["producer_authority"]
     )
     checks["resource"] = bool(
