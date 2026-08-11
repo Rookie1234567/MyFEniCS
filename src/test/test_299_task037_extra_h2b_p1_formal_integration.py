@@ -266,7 +266,7 @@ def _p1_controlled_events() -> list[str]:
     prefix = list(runner.H2B_P1_EVENTS[: runner.H2B_P1_EVENTS.index("neighborhood_started")])
     return prefix + sum(
         [["neighborhood_started", "patch_ready", "factor_ready"] for _ in range(32)], []
-    ) + ["factor_limit_controlled_stop", "summary_ready"]
+    ) + ["neighborhood_started", "factor_limit_controlled_stop", "summary_ready"]
 
 
 def _write_timeline(path: Path, phase: str, root_pid: int):
@@ -727,6 +727,46 @@ def test_p1_checker_keeps_structured_33rd_factor_stop(tmp_path, monkeypatch):
     assert result["controlled_stop"]["lower_bound_unique_factor_count"] == 33
     assert result["failure_measurements"]["processed_neighborhood_count"] == 32
     assert result["failure_measurements"]["retained_unique_factor_count"] == 32
+
+
+def test_p1_controlled_progress_requires_the_incomplete_block_id(tmp_path):
+    path = tmp_path / "p1_progress.jsonl"
+    _write_progress(
+        path,
+        "p1",
+        _p1_controlled_events(),
+        runner.H2B_PROGRESS_SCHEMA,
+    )
+    assert runner._p1_progress_valid(path, controlled_stop=True)
+    rows = [json.loads(line) for line in path.read_text().splitlines()]
+    rows[-3]["neighborhood_id"] = 31
+    path.write_text(
+        "".join(json.dumps(row) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+    assert not runner._p1_progress_valid(path, controlled_stop=True)
+
+
+def test_p1_run_check_records_independent_checker_source_on_success_and_error(
+    tmp_path, monkeypatch
+):
+    _good_raw(tmp_path, monkeypatch)
+    checker_source = _source("b" * 40)
+    monkeypatch.setattr(runner, "_light_source", lambda: checker_source)
+    output = tmp_path / "compact.json"
+    assert runner._run_p1_check(tmp_path, output) == 0
+    compact = json.loads(output.read_text(encoding="utf-8"))
+    assert compact["checker_source"] == checker_source
+    assert compact["checker_source"] != _source("a" * 40)
+    assert compact["evidence_sha256"] == runner._attach_evidence(compact)[
+        "evidence_sha256"
+    ]
+
+    (tmp_path / "p1_summary.json").unlink()
+    error_output = tmp_path / "error-compact.json"
+    assert runner._run_p1_check(tmp_path, error_output) == 1
+    error_compact = json.loads(error_output.read_text(encoding="utf-8"))
+    assert error_compact["checker_source"] == checker_source
 
 
 def test_p1_loader_streams_factor_pairs_without_double_payload(tmp_path, monkeypatch):

@@ -4260,6 +4260,14 @@ def _p1_progress_valid(path: Path, *, controlled_stop: bool = False) -> bool:
     blocks = 0
     while cursor < len(events) and events[cursor] == "neighborhood_started":
         if (
+            controlled_stop
+            and type(items[cursor].get("neighborhood_id")) is int
+            and items[cursor]["neighborhood_id"] == blocks
+            and cursor + 1 < len(events)
+            and events[cursor + 1] == "factor_limit_controlled_stop"
+        ):
+            break
+        if (
             type(items[cursor].get("neighborhood_id")) is not int
             or items[cursor]["neighborhood_id"] != blocks
             or cursor + 1 >= len(events)
@@ -6429,6 +6437,10 @@ def _p1_check_raw(run_dir: Path) -> dict[str, Any]:
 
 def _run_p1_check(run_dir: Path, output: Path) -> int:
     try:
+        checker_source: Any = _light_source()
+    except _worker_error_types() as exc:
+        checker_source = {"git_error": f"{type(exc).__name__}: {exc}"}
+    try:
         result = _p1_check_raw(run_dir)
     except _worker_error_types() as exc:
         result = {
@@ -6439,6 +6451,7 @@ def _run_p1_check(run_dir: Path, output: Path) -> int:
             "problems": [f"raw_unreadable:{type(exc).__name__}"],
             "measurements": None,
         }
+    result["checker_source"] = checker_source
     _write_json(output.resolve(), _attach_evidence(result))
     print(f"H2B-P1 check status={result['status']} output={output.resolve()}", flush=True)
     return 0 if result["pass"] else 1
