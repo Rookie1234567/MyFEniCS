@@ -26,6 +26,7 @@ from .hcurl_h2b_block_smoother import (
 
 __all__ = (
     "H2B_P1_ANCHOR_SOURCE_LABELS",
+    "h2b_p1_anchor_source_finite",
     "H2BP1ClassBlockAuthority",
     "H2BP1FactorStore",
     "H2BP1FactorLedger",
@@ -78,6 +79,23 @@ _SHA_HEX = frozenset("0123456789abcdef")
 def _require_opt_in(task037_extra_h2b: bool) -> None:
     if not bool(task037_extra_h2b):
         raise ValueError("H2B-P1 requires explicit task037_extra_h2b opt-in")
+
+
+def h2b_p1_anchor_source_finite(record: Mapping[str, Any]) -> bool:
+    """Recompute finite status for one complete P1 anchor source record."""
+
+    if not isinstance(record, Mapping):
+        return False
+    try:
+        return all(
+            key in record
+            and not isinstance(record[key], bool)
+            and isinstance(record[key], (int, float, np.integer, np.floating))
+            and np.isfinite(float(record[key]))
+            for key in _H2B_P1_ANCHOR_NUMERIC_FIELDS
+        )
+    except (TypeError, OverflowError, ValueError):
+        return False
 
 
 def _jsonable(value: Any) -> Any:
@@ -1444,15 +1462,7 @@ def measure_h2b_p1_anchor_sources(
             closure_matrix=patch_matrix,
             task037_extra_h2b=True,
         )
-        record["finite"] = bool(
-            all(
-                key in record
-                and not isinstance(record[key], bool)
-                and isinstance(record[key], (int, float, np.integer, np.floating))
-                and np.isfinite(float(record[key]))
-                for key in _H2B_P1_ANCHOR_NUMERIC_FIELDS
-            )
-        )
+        record["finite"] = h2b_p1_anchor_source_finite(record)
         sources[label] = record
     return {
         "schema": "task037.extra.h2b.p1.anchor.v1",

@@ -291,6 +291,30 @@ def _write_timeline(path: Path, phase: str, root_pid: int):
     )
 
 
+def _anchor_source_record():
+    return {
+        "patch_row_count": 3,
+        "r_norm": 1.0,
+        "q_norm": 1.0,
+        "rho_unit": 0.0,
+        "rho_star": 0.0,
+        "eta": 1.0,
+        "omega_real": 1.0,
+        "omega_imag": 0.0,
+        "omega_abs": 1.0,
+        "correction_norm": 1.0,
+        "correction_amplification": 1.0,
+        "exact_action_relative_error": 0.0,
+        "element_operator_mismatch_relative": 0.0,
+        "off_patch_spill_norm": 0.0,
+        "off_patch_spill_ratio": 0.0,
+        "full_space_rho_star": 0.0,
+        "full_space_rho_unit": 0.0,
+        "full_space_eta": 1.0,
+        "finite": True,
+    }
+
+
 def _good_raw(tmp_path: Path, monkeypatch):
     source = _source("a" * 40)
     form = {"code_state": "hit_no_new_decl_impl"}
@@ -408,8 +432,7 @@ def _good_raw(tmp_path: Path, monkeypatch):
         "constraint_count": 9210,
     }
     sources = {
-        label: {"finite": True, "exact_action_relative_error": 0.0}
-        for label in runner.H2B_SOURCE_LABELS
+        label: _anchor_source_record() for label in runner.H2B_SOURCE_LABELS
     }
     measurement = {
         "p6": p6,
@@ -477,6 +500,7 @@ def _good_raw(tmp_path: Path, monkeypatch):
         "runtime_identity": {"sys_executable": "/tmp/.venv/bin/python"},
         "form": form,
         "measurement": measurement,
+        "failure_measurements": None,
         "preflight_live_set": runner._p1_preflight_live_set(),
         "preflight_basis": runner._p1_preflight_basis(),
     }
@@ -581,7 +605,7 @@ def _anchor_gate_fixture():
         "source_order": list(runner.H2B_SOURCE_LABELS),
         "finite": True,
         "sources": {
-            label: {"finite": True, "exact_action_relative_error": 0.0}
+            label: _anchor_source_record()
             for label in runner.H2B_SOURCE_LABELS
         },
     }
@@ -618,6 +642,38 @@ def test_p1_anchor_failure_measurements_keep_json_safe_metrics():
     assert decoded["p6"]["global_cells"] == 252
     assert "mixed" in decoded["p0_anchor"]["sources"]
     assert "matrix" not in decoded["patch"]
+
+
+def test_p1_checker_preserves_anchor_failure_measurements_but_not_pass(
+    tmp_path, monkeypatch
+):
+    _good_raw(tmp_path, monkeypatch)
+    worker = json.loads((tmp_path / "p1_summary.json").read_text(encoding="utf-8"))
+    p6 = worker["measurement"]["p6"]
+    worker["status"] = "gate_failed"
+    worker["measurement"] = None
+    worker["failure_measurements"] = {
+        "p6": p6,
+        "p0_anchor": _anchor_gate_fixture(),
+        "patch": {"patch_row_count": 882},
+    }
+    runner._write_json(tmp_path / "p1_summary.json", runner._attach_evidence(worker))
+    result = runner._p1_check_raw(tmp_path)
+    assert result["pass"] is False
+    assert result["measurements"] is None
+    assert result["failure_measurements"]["p0_anchor"]["sources"]
+
+
+def test_p1_checker_rejects_nonnull_failure_measurements_on_pass_raw(
+    tmp_path, monkeypatch
+):
+    _good_raw(tmp_path, monkeypatch)
+    worker = json.loads((tmp_path / "p1_summary.json").read_text(encoding="utf-8"))
+    worker["failure_measurements"] = {"unexpected": True}
+    runner._write_json(tmp_path / "p1_summary.json", runner._attach_evidence(worker))
+    result = runner._p1_check_raw(tmp_path)
+    assert result["pass"] is False
+    assert "p1_worker" in result["problems"]
 
 
 @pytest.mark.parametrize("mutation", ["factor_store", "neighborhood_digest"])
@@ -669,6 +725,8 @@ def test_p1_checker_keeps_structured_33rd_factor_stop(tmp_path, monkeypatch):
     assert result["status"] == "gate_failed"
     assert result["problems"] == ["unique_numeric_factor_limit"]
     assert result["controlled_stop"]["lower_bound_unique_factor_count"] == 33
+    assert result["failure_measurements"]["processed_neighborhood_count"] == 32
+    assert result["failure_measurements"]["retained_unique_factor_count"] == 32
 
 
 def test_p1_loader_streams_factor_pairs_without_double_payload(tmp_path, monkeypatch):

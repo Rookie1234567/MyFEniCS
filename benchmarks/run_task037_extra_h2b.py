@@ -3325,6 +3325,8 @@ def _p1_phase_identity_valid(value: Any, *, factorization_called: bool) -> bool:
 
 
 def _p1_anchor_gate_valid(value: Any) -> bool:
+    from src.solvers.hcurl_h2b_p1_factor_store import h2b_p1_anchor_source_finite
+
     if not isinstance(value, Mapping):
         return False
     if (
@@ -3342,6 +3344,7 @@ def _p1_anchor_gate_valid(value: Any) -> bool:
         if (
             not isinstance(item, Mapping)
             or item.get("finite") is not True
+            or not h2b_p1_anchor_source_finite(item)
             or not isinstance(error, (int, float))
             or isinstance(error, bool)
             or not math.isfinite(float(error))
@@ -5954,6 +5957,10 @@ def _p1_controlled_checks(
         "controlled_fields": False,
         "progress": False,
         "preflight": _p1_preflight_valid(worker),
+        "failure_measurements": (
+            "failure_measurements" in worker
+            and worker.get("failure_measurements") is None
+        ),
         "preflight_authority": False,
         "measurement_binding": False,
         "factor_store_not_written": not (run_dir / "factor_store" / "manifest.json").is_file(),
@@ -6151,6 +6158,8 @@ def _p1_check_raw(run_dir: Path) -> dict[str, Any]:
         and _p1_phase_identity_valid(
             worker.get("phase_identity"), factorization_called=True
         )
+        and "failure_measurements" in worker
+        and worker.get("failure_measurements") is None
         and worker.get("controlled_stop") is None
     )
     checks["command_identity"] = _p1_command_identity_valid(
@@ -6395,6 +6404,14 @@ def _p1_check_raw(run_dir: Path) -> dict[str, Any]:
     if not all(checks.values()):
         problems.extend(name for name, passed in checks.items() if not passed and name not in problems)
     passed = all(checks.values())
+    worker_failure_measurements = worker.get("failure_measurements")
+    retained_failure_measurements = (
+        worker_failure_measurements
+        if measurement is None
+        and isinstance(worker_failure_measurements, Mapping)
+        and _evidence_valid(worker)
+        else measurement
+    )
     result: dict[str, Any] = {
         "schema": H2B_P1_CHECK_SCHEMA,
         "status": "pass" if passed else "gate_failed",
@@ -6402,7 +6419,7 @@ def _p1_check_raw(run_dir: Path) -> dict[str, Any]:
         "checks": checks,
         "problems": problems,
         "measurements": measurement if passed else None,
-        "failure_measurements": measurement if not passed else None,
+        "failure_measurements": retained_failure_measurements if not passed else None,
         "authority": None if authority is None else authority["producer_authority"],
         "raw_artifacts": watchdog.get("raw_artifacts"),
         "watchdog_summary": _artifact(run_dir, "p1_watchdog_summary.json"),
