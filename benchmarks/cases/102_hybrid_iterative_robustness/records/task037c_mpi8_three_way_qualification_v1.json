@@ -60,12 +60,13 @@
           "online": {"path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/qualification_f2d7719/r4_two_pass_phi_0_m120_maxit4500/run/online_record.json", "sha256": "c9b879b9ae0cf57423be50113f3e0b33f8377472726721067d175a5b4617e20f"}
         },
         "gate": {"status": "watchdog_pass_awaiting_offline_checker", "return_code": 0, "pass": true, "reason": 2, "q_and_orders": true, "canonical": true, "release": true, "swap_mib": 0.0},
-        "rta": {"R": 0.36562578672882173, "T": 0.012990632358471785, "A": 0.6213835809127065, "A_volume": "raw_recorded_in_online_record"},
+        "rta": {"R": 0.36562578672882173, "T": 0.012990632358471785, "A": 0.6213835809127065, "A_volume": 0.6213835766257165},
         "iterations": 1771,
         "residuals": {"reported": 3.061697359384168e-09, "global": 3.0616978112611967e-09, "bottom": 4.880057388977438e-09, "top": 2.4282803761906085e-09, "modal": 2.974757975517956e-15},
         "total_wall_seconds": 1041.404664277099,
         "rss_mib": 6542.08984375,
-        "rss_authority": "watchdog.resource.timeline_authority"
+        "rss_source": "watchdog.resource.process_tree_peak_rss_mib",
+        "rss_authority": "simultaneous mpi_process_tree_rss_mb"
       }
     },
     {
@@ -102,12 +103,13 @@
           "online": {"path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/qualification_f2d7719/r4_two_pass_phi_m5_m120_maxit4500/run/online_record.json", "sha256": "02e5eca80a6cc0ffcd4432876dac4d5169da08c054d12b68e64307aeeeff7fd3"}
         },
         "gate": {"status": "watchdog_pass_awaiting_offline_checker", "return_code": 0, "pass": true, "reason": 2, "q_and_orders": true, "canonical": true, "release": true, "swap_mib": 0.0},
-        "rta": {"R": 0.36559570912005296, "T": 0.01299403037624622, "A": 0.6214102605037007, "A_volume": "raw_recorded_in_online_record"},
+        "rta": {"R": 0.36559570912005296, "T": 0.01299403037624622, "A": 0.6214102605037007, "A_volume": 0.6214102608255432},
         "iterations": 3945,
         "residuals": {"reported": 3.163761941358598e-09, "global": 3.1637588910012017e-09, "bottom": 4.990863540566495e-09, "top": 2.51239357288403e-09, "modal": 2.9151535892984457e-15},
         "total_wall_seconds": 1738.933491101954,
         "rss_mib": 6623.15625,
-        "rss_authority": "watchdog.resource.timeline_authority"
+        "rss_source": "watchdog.resource.process_tree_peak_rss_mib",
+        "rss_authority": "simultaneous mpi_process_tree_rss_mb"
       }
     },
     {
@@ -144,12 +146,13 @@
           "online": {"path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/qualification_f2d7719/r4_two_pass_phi_p5_m120_maxit4500/run/online_record.json", "sha256": "a715411a78f3d307861de8827af93b747cbf788f4c007a0899f057b634d09ba1"}
         },
         "gate": {"status": "watchdog_pass_awaiting_offline_checker", "return_code": 0, "pass": true, "reason": 2, "q_and_orders": true, "canonical": true, "release": true, "swap_mib": 0.0},
-        "rta": {"R": 0.3655957092994381, "T": 0.012994030227583397, "A": 0.6214102604729785, "A_volume": "raw_recorded_in_online_record"},
+        "rta": {"R": 0.3655957092994381, "T": 0.012994030227583397, "A": 0.6214102604729785, "A_volume": 0.6214102561008985},
         "iterations": 2832,
         "residuals": {"reported": 3.4291679160959187e-09, "global": 3.4291700830479546e-09, "bottom": 4.847417910243168e-09, "top": 2.7544543238791594e-09, "modal": 3.1513598800506863e-15},
         "total_wall_seconds": 1356.7072694080416,
         "rss_mib": 6475.23828125,
-        "rss_authority": "watchdog.resource.timeline_authority"
+        "rss_source": "watchdog.resource.process_tree_peak_rss_mib",
+        "rss_authority": "simultaneous mpi_process_tree_rss_mb"
       }
     }
   ],
