@@ -27,6 +27,7 @@ TASK37C_TRACTION_MODELS = (
     "full3d_one_cell_exact_schur",
 )
 TASK37C_MAX_IT = 1600
+TASK37C_TWO_PASS_MAX_IT = 2000
 TASK37C_RTOL = 5.0e-9
 TASK37C_TRACTION_TOL = 1.0e-8
 TASK37C_RSS_PREFERRED_MIB = 6144.0
@@ -116,6 +117,7 @@ def make_task37c_profile(
         mpi_size=mpi,
         internal_traction_model=traction_model,
         preconditioner_identity=preconditioner_identity,
+        max_it=(TASK37C_TWO_PASS_MAX_IT if correction_steps == 2 else TASK37C_MAX_IT),
         side_residual_correction_steps=correction_steps,
     )
 

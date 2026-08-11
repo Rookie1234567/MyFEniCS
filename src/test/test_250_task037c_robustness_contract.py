@@ -378,6 +378,7 @@ def test_task37c_two_pass_side_correction_is_explicit_and_forwarded(tmp_path) ->
     )
     profile = iterative_runner.profile_from_args(runner_args)
     assert profile.side_residual_correction_steps == 2
+    assert profile.max_it == 2000
     assert profile.preconditioner_identity.endswith("two_pass_residual_correction")
     assert (
         iterative_runner.profile_record(profile)["side_residual_correction_steps"] == 2
@@ -394,6 +395,7 @@ def test_task37c_two_pass_side_correction_is_explicit_and_forwarded(tmp_path) ->
     assert "--task037c-two-pass-side-correction" in command
     default_profile = make_task37c_profile(0.0, 120, 8)
     assert default_profile.side_residual_correction_steps == 1
+    assert default_profile.max_it == 1600
     assert (
         default_profile.preconditioner_identity
         == "fixed_whole_endcap_ilu0_plus_dynamic_dtn_woodbury"
@@ -414,6 +416,7 @@ def test_task37c_two_pass_side_correction_is_explicit_and_forwarded(tmp_path) ->
         iterative_runner.parse_args(_frozen_iterative_args(tmp_path))
     )
     assert frozen_profile.side_residual_correction_steps == 1
+    assert frozen_profile.max_it == iterative_runner.FROZEN_M10.max_it == 1000
     with pytest.raises(SystemExit):
         iterative_runner.parse_args(
             _frozen_iterative_args(tmp_path) + ["--task037c-two-pass-side-correction"]
