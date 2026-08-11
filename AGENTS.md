@@ -43,6 +43,8 @@
 - 每次提交只包含一个可说明的阶段或修复，不混入无关重构。
 - 不 amend、强推或重写既有历史，除非用户明确授权。
 - 负结果、受控停止和失败证据不得删除或改写为通过。
+- 会推送的任务执行目录必须是 canonical clone 登记的 worktree；不得把独立临时 clone 当作最终分支权威。若不得不用临时 clone，结项前必须在 canonical clone 中 fetch、建立或核对 local tracking ref，并验证 SHA、upstream 与 ahead/behind。
+- 分支名必须与任务书逐字符一致；开始执行前应检查近似分支名冲突，避免把相似 ref 误当作当前任务的远端权威。
 
 ## 4. 目录与代码架构
 
