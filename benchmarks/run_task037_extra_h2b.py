@@ -1,4 +1,4 @@
-"""Task037 H2B Phase 2: isolated action staging, smoother, and P0 patch probe.
+"""Task037 H2B opt-in runners: action staging, S0/P0 probes, and P1 factors.
 
 The controller is intentionally standard-library only.  DOLFINx, PETSc, the
 R2 loader, and the H2A helpers are imported only by the two worker entry
@@ -46,6 +46,23 @@ H2B_S0_RSS_LIMIT_BYTES = 1_000_000_000
 H2B_S0_TIMEOUT_SECONDS = 3_600.0
 H2B_P0_TIMEOUT_SECONDS = 3_600.0
 H2B_P0_RSS_LIMIT_BYTES = 1_500_000_000
+H2B_P1_TIMEOUT_SECONDS = 21_600.0
+H2B_P1_STAGE_RSS_LIMIT_BYTES = 1_500_000_000
+H2B_P1_ONLINE_RSS_LIMIT_BYTES = 1_700_000_000
+H2B_P1_CHECK_SCHEMA = f"{H2B_SCHEMA}.p1.check.v1"
+H2B_P1_WORKER_SCHEMA = f"{H2B_SCHEMA}.p1.worker.v1"
+H2B_P1_WATCHDOG_SCHEMA = f"{H2B_SCHEMA}.p1.watchdog.v1"
+H2B_P1_MAX_UNIQUE_FACTORS = 32
+H2B_P1_PREFLIGHT_LIMIT_BYTES = 1_700_000_000
+H2B_P1_PREFLIGHT_BASELINE_BYTES = 552_968_708
+H2B_P1_PREFLIGHT_METADATA_BYTES = 50_000_000
+H2B_P1_PREFLIGHT_RESERVE_BYTES = 250_000_000
+H2B_P1_PREFLIGHT_P0_RECORD_SHA256 = (
+    "2f1862043f9e75002f53230eee86f8c6ee68ac389b319397bd71b3bdd93fc75b"
+)
+H2B_P1_PREFLIGHT_P0_EVIDENCE_SHA256 = (
+    "11f6a5a00557cf6ad11d4a9413a72283a7fd9ec9a5085a56e74b733538e75d47"
+)
 H2B_PROCESS_DRAIN_TIMEOUT_SECONDS = 5.0
 H2B_PROCESS_DRAIN_POLL_SECONDS = 0.05
 H2B_TRANSIENT_RECHECK_SECONDS = 0.02
@@ -232,6 +249,51 @@ H2B_P0_CANONICAL_RECORD = (
     / "benchmarks/cases/101_task37_extra_development/records"
     / "h2b_row_complete_patch.json"
 )
+H2B_P0_V4_RECORD = (
+    ROOT
+    / "benchmarks/cases/101_task37_extra_development/records"
+    / "h2b_row_complete_patch_exactclass_v4.json"
+)
+H2B_P0_V4_RECORD_SHA256 = (
+    "2f1862043f9e75002f53230eee86f8c6ee68ac389b319397bd71b3bdd93fc75b"
+)
+H2B_P0_V4_EVIDENCE_SHA256 = (
+    "11f6a5a00557cf6ad11d4a9413a72283a7fd9ec9a5085a56e74b733538e75d47"
+)
+H2B_P1_ARTIFACT_NAMES = (
+    "stage_progress.jsonl",
+    "stage_stdout.txt",
+    "stage_summary.json",
+    "stage_timeline.jsonl",
+    "p1_progress.jsonl",
+    "p1_stdout.txt",
+    "p1_summary.json",
+    "p1_timeline.jsonl",
+    "stage_root_pid.json",
+    "p1_root_pid.json",
+    "factor_store/manifest.json",
+)
+H2B_P1_EVENTS = (
+    "authority_validated",
+    "mesh_ready",
+    "space_ready",
+    "floquet_mpc_ready",
+    "cache_load_ready",
+    "r2_factor_load_ready",
+    "neighborhood_discovery_ready",
+    "class_block_reconstruction_started",
+    "class_block_reconstruction_ready",
+    "r2_factor_store_released",
+    "p0_anchor_started",
+    "p0_anchor_ready",
+    "neighborhood_started",
+    "patch_ready",
+    "factor_ready",
+    "store_write_ready",
+    "builder_release",
+    "loader_ready",
+    "summary_ready",
+)
 _HEX = set("0123456789abcdef")
 
 
@@ -359,6 +421,93 @@ def _p0_scope() -> dict[str, Any]:
         "full_space_spill_scope": "diagnostic_only",
         "formal_budget_runs": 1,
     }
+
+
+def _p1_scope() -> dict[str, Any]:
+    return {
+        "mode": "h2b_p1_expanded_neighborhood_factor",
+        "degree": 6,
+        "h_nm": 10.0,
+        "mpi_size": 1,
+        "global_cells": H2B_FIXED_CELLS,
+        "local_nloc": H2B_FIXED_NLOC,
+        "global_rows": H2B_FIXED_ROWS,
+        "constraint_count": H2B_FIXED_CONSTRAINTS,
+        "neighborhood_count": 84,
+        "unique_factor_limit": H2B_P1_MAX_UNIQUE_FACTORS,
+        "timeout_seconds": H2B_P1_TIMEOUT_SECONDS,
+        "stage_rss_limit_bytes": H2B_P1_STAGE_RSS_LIMIT_BYTES,
+        "online_rss_limit_bytes": H2B_P1_ONLINE_RSS_LIMIT_BYTES,
+        "swap_limit_bytes": H2B_SWAP_LIMIT_BYTES,
+        "factor_work_limit_bytes": H2B_FACTOR_WORK_LIMIT_BYTES,
+        "operator": "K_curl+k0^2*M_abs_epsilon; code uses (1/mu_r) with mu_r=1",
+        "patch_definition": "R_P B0 R_P^T for every canonical neighborhood",
+        "construction": "R2 reconstructed exact-class blocks with numeric accumulation order",
+        "anchor": "central_cell=3, central_class=3, touching_cells=19",
+        "formal_budget_runs": 1,
+        "fallback": "not_implemented",
+    }
+
+
+def _p1_preflight_basis() -> dict[str, Any]:
+    return {
+        "kind": "conservative_predicted_input",
+        "accepted_factor_count_basis": H2B_P1_MAX_UNIQUE_FACTORS,
+        "baseline_bytes": H2B_P1_PREFLIGHT_BASELINE_BYTES,
+        "metadata_bytes": H2B_P1_PREFLIGHT_METADATA_BYTES,
+        "runtime_reserve_bytes": H2B_P1_PREFLIGHT_RESERVE_BYTES,
+        "baseline_derivation": {
+            "p0_v4_online_peak_bytes": 767_352_832,
+            "r2_factor_plus_metadata_bytes": 201_933_812,
+            "p0_factor_bytes": 12_450_312,
+            "equation": "767352832-201933812-12450312=552968708",
+        },
+        "p0_v4_record_sha256": H2B_P1_PREFLIGHT_P0_RECORD_SHA256,
+        "p0_v4_evidence_sha256": H2B_P1_PREFLIGHT_P0_EVIDENCE_SHA256,
+        "not_measured": True,
+    }
+
+
+def _p1_preflight_live_set() -> dict[str, Any]:
+    from src.solvers.hcurl_h2b_p1_factor_store import h2b_p1_live_set_audit
+
+    dense_bytes = H2B_FIXED_NLOC * H2B_FIXED_NLOC * 16
+    return h2b_p1_live_set_audit(
+        reconstruction_stage={
+            "mesh_action_runtime_bytes": H2B_P1_PREFLIGHT_BASELINE_BYTES,
+            "r2_lu_bytes": 199_204_992,
+            "reconstructed_cache_bytes": 199_148_544,
+            "reconstruction_lower_workspace_bytes": dense_bytes,
+            "reconstruction_upper_workspace_bytes": dense_bytes,
+            "reconstruction_permuted_workspace_bytes": dense_bytes,
+            "reconstruction_output_workspace_bytes": dense_bytes,
+            "reconstruction_pivots_bytes": H2B_FIXED_NLOC * 4,
+            "authority_copy_source_bytes": dense_bytes,
+            "authority_copy_destination_bytes": dense_bytes,
+            "metadata_work_bytes": H2B_P1_PREFLIGHT_METADATA_BYTES,
+            "runtime_reserve_bytes": H2B_P1_PREFLIGHT_RESERVE_BYTES,
+        },
+        factor_stage={
+            "mesh_action_runtime_bytes": H2B_P1_PREFLIGHT_BASELINE_BYTES,
+            "reconstructed_cache_bytes": 199_148_544,
+            "accepted_factor_bytes": H2B_P1_MAX_UNIQUE_FACTORS
+            * (dense_bytes + H2B_FIXED_NLOC * 4),
+            "current_patch_matrix_bytes": dense_bytes,
+            "current_lu_workspace_bytes": 12_450_312,
+            "factorization_original_copy_bytes": dense_bytes,
+            "factorization_first_lu_bytes": 12_450_312,
+            "factorization_repeated_lu_bytes": 12_450_312,
+            "factorization_lower_workspace_bytes": dense_bytes,
+            "factorization_upper_workspace_bytes": dense_bytes,
+            "factorization_reconstructed_workspace_bytes": dense_bytes,
+            "factorization_pivots_workspace_bytes": H2B_FIXED_NLOC * 8,
+            "factorization_condition_workspace_bytes": dense_bytes,
+            "metadata_work_bytes": H2B_P1_PREFLIGHT_METADATA_BYTES,
+            "runtime_reserve_bytes": H2B_P1_PREFLIGHT_RESERVE_BYTES,
+        },
+        limit_bytes=H2B_P1_PREFLIGHT_LIMIT_BYTES,
+        task037_extra_h2b=True,
+    )
 
 
 def _p0_phase_identity() -> dict[str, Any]:
@@ -2319,6 +2468,510 @@ def _run_p0_worker(run_dir: Path) -> int:
     return 0 if error is None else 1
 
 
+def _run_p1_worker(run_dir: Path) -> int:
+    """Build, persist, and cold-load the bounded P1 neighborhood store."""
+
+    import gc
+
+    import numpy as np
+    from petsc4py import PETSc
+
+    h2a = _lazy_h2a()
+    from src.common.config_3d import target_stage4_config
+    from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
+    from src.solvers.common_3d_solve import _create_nedelec_space
+    from src.solvers.hcurl_h2b_block_smoother import (
+        factorize_h2b_p0_patch,
+    )
+    from src.solvers.hcurl_rank_one_mpc_action import (
+        build_task037_extra_h1r2_mpc_action,
+    )
+    from src.solvers.hcurl_r2_constrained_local_block import build_h2a_r2_cell_expansion
+    from src.solvers.hcurl_r2_factor_store import (
+        H2AR2CellReference,
+        load_h2a_r2_factor_store,
+    )
+    from src.solvers.hcurl_h2b_p1_factor_store import (
+        H2BP1FactorLedger,
+        H2BP1FactorLimitExceeded,
+        build_h2b_p1_class_block_authority,
+        build_h2b_p1_factor_store,
+        discover_h2b_p1_neighborhoods,
+        measure_h2b_p1_anchor_sources,
+        stream_h2b_p1_neighborhood,
+        write_h2b_p1_factor_store,
+    )
+
+    run_dir = run_dir.resolve()
+    progress_path = run_dir / "p1_progress.jsonl"
+    summary_path = run_dir / "p1_summary.json"
+    stage_path = run_dir / "stage_summary.json"
+    started = time.perf_counter()
+    source_start = _source_pair(h2a)
+    runtime: dict[str, Any] | None = None
+    form_record: dict[str, Any] | None = None
+    measurement: dict[str, Any] | None = None
+    error: str | None = None
+    controlled_stop: dict[str, Any] | None = None
+    preflight_live_set: dict[str, Any] | None = None
+    preflight_basis: dict[str, Any] | None = None
+    factorization_called = False
+    action = None
+    source_vec = None
+    store = None
+    class_authority = None
+    source_arrays = None
+    anchor_stream = None
+    anchor_matrix = None
+    anchor_factor = None
+    anchor = None
+    try:
+        with progress_path.open("w", encoding="utf-8") as markers:
+            stage = _read_json(stage_path)
+            if (
+                stage.get("status") != "measurement_complete"
+                or not _evidence_valid(stage)
+                or stage.get("scope") != _fixed_scope()
+                or stage.get("identity") != _fixed_identity()
+                or not _form_files_valid(run_dir, stage.get("form"))
+                or _progress_events(run_dir / "stage_progress.jsonl", "stage")
+                != list(H2B_STAGE_EVENTS)
+            ):
+                raise ValueError("P1 stage authority is incomplete")
+            authority = _p1_authority()
+            _emit_marker(markers, event="authority_validated", phase="p1", started=started)
+            cfg = target_stage4_config(degree=6, h_nm=10.0)
+            mesh_data = build_airbox_mesh_3d(cfg, run_dir / "p1_mesh")
+            _emit_marker(markers, event="mesh_ready", phase="p1", started=started)
+            function_space = _create_nedelec_space(mesh_data.mesh, cfg)
+            _emit_marker(markers, event="space_ready", phase="p1", started=started)
+            floquet = h2a.build_double_floquet_mpc(function_space, mesh_data, cfg)
+            _emit_marker(markers, event="floquet_mpc_ready", phase="p1", started=started)
+            index_map = function_space.dofmap.index_map
+            p6 = {
+                "global_cells": int(mesh_data.mesh.topology.index_map(3).size_global),
+                "local_cells": int(mesh_data.mesh.topology.index_map(3).size_local),
+                "local_nloc": int(function_space.element.space_dimension),
+                "global_rows": int(index_map.size_global * function_space.dofmap.index_map_bs),
+                "constraint_count": int(floquet.num_constraints),
+            }
+            if p6 != {
+                "global_cells": H2B_FIXED_CELLS,
+                "local_cells": H2B_FIXED_CELLS,
+                "local_nloc": H2B_FIXED_NLOC,
+                "global_rows": H2B_FIXED_ROWS,
+                "constraint_count": H2B_FIXED_CONSTRAINTS,
+            }:
+                raise ValueError("P1 p6 identity mismatch")
+            cache_dir = run_dir / "jit_cache"
+            cache_before = _cache_snapshot(cache_dir)
+            b0, _epsilon = _build_b0_form(function_space, mesh_data, cfg)
+            runtime = _runtime_identity(
+                h2a,
+                compiler_probe=False,
+                compiler=stage["runtime_identity"]["compiler"],
+            )
+            action = build_task037_extra_h1r2_mpc_action(
+                b0,
+                floquet.mpc,
+                task037_extra_h1r2=True,
+                jit_options=_expected_jit_options(cache_dir),
+            )
+            form_record = _form_record(
+                action._action_form,
+                action._action_ufl,
+                cache_dir,
+                cfg,
+                function_space,
+                "b0",
+            )
+            cache_after = _cache_snapshot(cache_dir)
+            if form_record.get("code_state") != "hit_no_new_decl_impl" or cache_before != cache_after:
+                raise ValueError("P1 B0 action did not hit the staged cache")
+            _emit_marker(markers, event="cache_load_ready", phase="p1", started=started)
+            store = load_h2a_r2_factor_store(H2B_R2_MANIFEST, task037_extra_h2a_r2=True)
+            if store.audit.get("factor_plus_metadata_bytes") != 201_933_812:
+                raise ValueError("P1 R2 factor payload authority mismatch")
+            _emit_marker(markers, event="r2_factor_load_ready", phase="p1", started=started)
+            preflight_live_set = _p1_preflight_live_set()
+            preflight_basis = _p1_preflight_basis()
+            if (
+                authority["p0"].get("record_sha256")
+                != H2B_P1_PREFLIGHT_P0_RECORD_SHA256
+                or authority["p0"].get("evidence_sha256")
+                != H2B_P1_PREFLIGHT_P0_EVIDENCE_SHA256
+                or preflight_live_set["predicted_live_set_gate"] is not True
+            ):
+                raise ValueError("P1 fixed live-set preflight failed")
+            discovery = h2a._discover_cell_references(
+                function_space,
+                mesh_data,
+                cfg,
+                floquet,
+                geometry_tolerance=h2a.floquet_geometry_tolerance(cfg),
+            )
+            class_inventory = authority["r0"]["class_inventory"]
+            key_to_id = {
+                str(item["class_key_sha256"]): int(item["class_id"])
+                for item in class_inventory
+            }
+            blocks = tuple(floquet.phase_independent_topology.blocks)
+            cell_refs: list[H2AR2CellReference] = []
+            expansions: dict[int, Any] = {}
+            for reference in discovery["references"]:
+                cell_dofs = np.asarray(reference.local_dofs, dtype=np.int64)
+                class_id = key_to_id.get(h2a._r0_digest(reference.class_key))
+                if class_id is None:
+                    raise ValueError("P1 discovery class is not in R0 authority")
+                expansion = build_h2a_r2_cell_expansion(
+                    h2a._blocks_for_cell(blocks, cell_dofs),
+                    cell_dofs,
+                    index_map,
+                    index_map_bs=int(function_space.dofmap.index_map_bs),
+                    phase_x=floquet.phase_x,
+                    phase_y=floquet.phase_y,
+                    phase_corner=floquet.phase_corner,
+                )
+                previous = expansions.get(class_id)
+                if previous is not None and previous.pattern_sha256 != expansion.pattern_sha256:
+                    raise ValueError("P1 expansion pattern differs within class")
+                expansions.setdefault(class_id, expansion)
+                cell_refs.append(H2AR2CellReference(class_id, expansion.independent_global_rows))
+            if len(cell_refs) != H2B_FIXED_CELLS or len(store.cells) != len(cell_refs):
+                raise ValueError("P1 cell discovery count mismatch")
+            if any(
+                int(a.class_id) != int(b.class_id)
+                or not np.array_equal(a.independent_global_rows, b.independent_global_rows)
+                for a, b in zip(store.cells, cell_refs, strict=True)
+            ):
+                raise ValueError("P1 discovery cells do not match R2 authority")
+            p1_discovery = discover_h2b_p1_neighborhoods(
+                cell_refs,
+                store.classes,
+                class_inventory,
+                {"operator": _p1_scope()["operator"]},
+                task037_extra_h2b=True,
+            )
+            if p1_discovery["cell_count"] != H2B_FIXED_CELLS or p1_discovery["unique_neighborhood_count"] != 84:
+                raise ValueError("P1 neighborhood discovery count mismatch")
+            neighborhoods = p1_discovery["neighborhoods"]
+            _emit_marker(
+                markers,
+                event="neighborhood_discovery_ready",
+                phase="p1",
+                started=started,
+                neighborhood_count=len(neighborhoods),
+            )
+            _emit_marker(markers, event="class_block_reconstruction_started", phase="p1", started=started)
+            class_authority = build_h2b_p1_class_block_authority(
+                store, task037_extra_h2b=True
+            )
+            _emit_marker(
+                markers,
+                event="class_block_reconstruction_ready",
+                phase="p1",
+                started=started,
+                reconstruction_count=class_authority.audit["reconstruction_count"],
+            )
+            del store
+            store = None
+            gc.collect()
+            _emit_marker(markers, event="r2_factor_store_released", phase="p1", started=started)
+            central = next(
+                item for item in neighborhoods if item.representative_cell == 3
+            )
+            if (
+                central.central_class_id != 3
+                or central.patch_rows.size != H2B_FIXED_NLOC
+                or central.touching_cell_count != 19
+                or central.touching_class_count != 11
+            ):
+                raise ValueError("P1 P0 anchor topology does not close")
+            _emit_marker(markers, event="p0_anchor_started", phase="p1", started=started)
+            anchor_stream = stream_h2b_p1_neighborhood(
+                central, cell_refs, class_authority, task037_extra_h2b=True
+            )
+            anchor_matrix = np.ascontiguousarray(anchor_stream["matrix"], dtype=np.complex128)
+            factorization_called = True
+            anchor_factor = factorize_h2b_p0_patch(anchor_matrix, task037_extra_h2b=True)
+            slaves = np.asarray(floquet.mpc.slaves, dtype=np.int64)
+            source_vec = action.output_vector.duplicate()
+
+            def exact_action(source: np.ndarray, target: np.ndarray) -> None:
+                if np.any(source[slaves] != 0.0):
+                    raise ValueError("P1 exact action source has nonzero identity rows")
+                with source_vec.localForm() as local:
+                    local.set(0.0)
+                    local.array_w[: source.size] = source
+                source_vec.ghostUpdate(
+                    addv=PETSc.InsertMode.INSERT_VALUES,
+                    mode=PETSc.ScatterMode.FORWARD,
+                )
+                result = action.mult(source_vec)
+                target[:] = np.asarray(result.getArray(readonly=True), dtype=np.complex128)
+
+            source_arrays = _residual_source_arrays(
+                _source_arrays(function_space, cfg, slaves, floquet.mpc),
+                exact_action,
+                slaves,
+            )
+            anchor = measure_h2b_p1_anchor_sources(
+                source_arrays,
+                anchor_matrix,
+                anchor_factor,
+                central.patch_rows,
+                exact_action,
+                authority={
+                    "r0_source": authority["producer_authority"]["r0_source"],
+                    "r1_source": authority["producer_authority"]["r1_source"],
+                    "r2_factor_manifest_sha256": authority["producer_authority"]["r2_factor_manifest_sha256"],
+                    "r2_record_sha256": authority["r2_record_sha256"],
+                    "r2_record_evidence_sha256": authority["r2_evidence_sha256"],
+                },
+                task037_extra_h2b=True,
+            )
+            if any(
+                not item.get("finite") or float(item.get("exact_action_relative_error", 2.0)) > 1.0e-11
+                for item in anchor["sources"].values()
+            ):
+                raise ValueError("P1 P0 anchor failed")
+            _emit_marker(markers, event="p0_anchor_ready", phase="p1", started=started)
+            if source_vec is not None:
+                source_vec.destroy()
+                source_vec = None
+            if action is not None:
+                action.destroy()
+                action = None
+            del source_arrays, anchor_factor, anchor_matrix, anchor_stream, exact_action
+            source_arrays = None
+            anchor_factor = None
+            anchor_matrix = None
+            anchor_stream = None
+            gc.collect()
+            ledger = H2BP1FactorLedger(
+                max_unique_factors=H2B_P1_MAX_UNIQUE_FACTORS,
+                task037_extra_h2b=True,
+            )
+            neighborhood_records: list[dict[str, Any]] = []
+            for neighborhood in neighborhoods:
+                _emit_marker(
+                    markers,
+                    event="neighborhood_started",
+                    phase="p1",
+                    started=started,
+                    neighborhood_id=neighborhood.neighborhood_id,
+                )
+                first = stream_h2b_p1_neighborhood(
+                    neighborhood, cell_refs, class_authority, task037_extra_h2b=True
+                )
+                first_sha = first["matrix_sha256"]
+                first_matrix = first.pop("matrix")
+                before_count = len(ledger.factors)
+                try:
+                    factor_id = ledger.accept(first_matrix, task037_extra_h2b=True)
+                except H2BP1FactorLimitExceeded as exc:
+                    controlled_stop = {
+                        "reason": "unique_numeric_factor_limit",
+                        "offending_neighborhood_id": neighborhood.neighborhood_id,
+                        "offending_key_sha256": neighborhood.key_sha256,
+                        "offending_matrix_sha256": exc.matrix_sha256,
+                        "unique_factor_limit": exc.limit,
+                        "lower_bound_unique_factor_count": exc.lower_bound,
+                    }
+                    _emit_marker(
+                        markers,
+                        event="factor_limit_controlled_stop",
+                        phase="p1",
+                        started=started,
+                        **controlled_stop,
+                    )
+                    break
+                finally:
+                    del first_matrix, first
+                second = stream_h2b_p1_neighborhood(
+                    neighborhood, cell_refs, class_authority, task037_extra_h2b=True
+                )
+                second_sha = second["matrix_sha256"]
+                second_matrix = second.pop("matrix")
+                try:
+                    if second_sha != first_sha:
+                        raise ValueError("P1 neighborhood matrix is nondeterministic")
+                finally:
+                    del second_matrix, second
+                _emit_marker(
+                    markers,
+                    event="patch_ready",
+                    phase="p1",
+                    started=started,
+                    neighborhood_id=neighborhood.neighborhood_id,
+                )
+                event = "factor_ready" if len(ledger.factors) > before_count else "factor_dedup"
+                _emit_marker(
+                    markers,
+                    event=event,
+                    phase="p1",
+                    started=started,
+                    neighborhood_id=neighborhood.neighborhood_id,
+                    factor_id=factor_id,
+                )
+                neighborhood_records.append(
+                    {
+                        "neighborhood_id": neighborhood.neighborhood_id,
+                        "key_sha256": neighborhood.key_sha256,
+                        "representative_cell": neighborhood.representative_cell,
+                        "cell_ordinals": list(neighborhood.cell_ordinals),
+                        "multiplicity": len(neighborhood.cell_ordinals),
+                        "central_class_id": neighborhood.central_class_id,
+                        "touching_cell_ordinals": list(neighborhood.touching_cell_ordinals),
+                        "touching_class_ids": list(neighborhood.touching_class_ids),
+                        "touching_count": neighborhood.touching_cell_count,
+                        "touching_class_count": neighborhood.touching_class_count,
+                        "numeric_accumulation_order": list(neighborhood.numeric_accumulation_order),
+                        "numeric_accumulation_order_sha256": neighborhood.numeric_accumulation_order_sha256,
+                        "factor_id": factor_id,
+                    }
+                )
+            if controlled_stop is None:
+                if len(neighborhood_records) != len(neighborhoods):
+                    raise ValueError("P1 neighborhood factor ledger is incomplete")
+                row_offsets = np.asarray(
+                    [0]
+                    + [
+                        sum(len(cell_refs[index].independent_global_rows) for index in range(stop))
+                        for stop in range(1, len(cell_refs) + 1)
+                    ],
+                    dtype=np.int64,
+                )
+                cell_rows = np.ascontiguousarray(
+                    np.concatenate([cell.independent_global_rows for cell in cell_refs]),
+                    dtype=np.int64,
+                )
+                identity = {
+                    "source_identity": source_start,
+                    "full_source_sha256": source_start.get("source_commit_full_sha"),
+                    "config_identity": {"degree": 6, "h_nm": 10.0, "mpi_size": 1},
+                    "form_identity": form_record,
+                    "cache_identity": {"cache_dir": str(cache_dir.resolve()), "inventory": cache_after},
+                    "r0_authority": authority["r0"],
+                    "r1_authority": authority["r1"],
+                    "r2_authority": authority["producer_authority"],
+                    "p0_authority": authority["p0"],
+                    "materialization_identity": _fixed_identity(),
+                }
+                p1_store = build_h2b_p1_factor_store(
+                    ledger.factors,
+                    neighborhood_records,
+                    p1_discovery["cell_neighborhood_ids"],
+                    row_offsets,
+                    cell_rows,
+                    identity=identity,
+                    task037_extra_h2b=True,
+                )
+                _emit_marker(markers, event="store_write_ready", phase="p1", started=started)
+                manifest_path = write_h2b_p1_factor_store(
+                    p1_store, run_dir / "factor_store", task037_extra_h2b=True
+                )
+                neighborhood_count = len(neighborhoods)
+                cell_count = len(cell_refs)
+                neighborhood_digest = p1_discovery["neighborhood_digest"]
+                del (
+                    p1_store,
+                    ledger,
+                    class_authority,
+                    p1_discovery,
+                    expansions,
+                    cell_refs,
+                    row_offsets,
+                    cell_rows,
+                    identity,
+                    neighborhood_records,
+                    neighborhoods,
+                )
+                class_authority = None
+                gc.collect()
+                _emit_marker(markers, event="builder_release", phase="p1", started=started)
+                from src.solvers.hcurl_h2b_p1_factor_store import load_h2b_p1_factor_store
+
+                loaded = load_h2b_p1_factor_store(manifest_path, task037_extra_h2b=True)
+                _emit_marker(markers, event="loader_ready", phase="p1", started=started)
+                loaded_audit = loaded.audit_jsonable()
+                measurement = {
+                    "p6": p6,
+                    "p0_anchor": anchor,
+                    "neighborhood_count": neighborhood_count,
+                    "cell_count": cell_count,
+                    "neighborhood_digest": neighborhood_digest,
+                    "unique_factor_count": len(loaded.factors),
+                    "retained_unique_factor_count": len(loaded.factors),
+                    "factor_store": loaded_audit,
+                    "factor_store_manifest": {
+                        "path": str(manifest_path),
+                        "sha256": _sha256_file(manifest_path),
+                        "evidence_sha256": _read_json(manifest_path)["evidence_sha256"],
+                    },
+                    "cache": {
+                        "before": cache_before,
+                        "after": cache_after,
+                        "unchanged": cache_before == cache_after,
+                        "dir": str(cache_dir.resolve()),
+                    },
+                    "authority": authority,
+                    "materialization_identity": loaded_audit["materialization_identity"],
+                }
+                del loaded
+            if controlled_stop is not None:
+                measurement = {
+                    "neighborhood_count": len(neighborhoods),
+                    "processed_neighborhood_count": len(neighborhood_records),
+                    "retained_unique_factor_count": len(ledger.factors),
+                    "controlled_stop": controlled_stop,
+                    "p6": p6,
+                    "authority": authority,
+                    "preflight_live_set": preflight_live_set,
+                    "preflight_basis": preflight_basis,
+                }
+            _emit_marker(markers, event="summary_ready", phase="p1", started=started)
+    except _worker_error_types() as exc:
+        error = f"{type(exc).__name__}: {exc}"
+    finally:
+        if source_vec is not None:
+            source_vec.destroy()
+        if action is not None:
+            action.destroy()
+        h2a.clear_floquet_topology_cache()
+        gc.collect()
+    source_end = _source_pair(h2a)
+    phase_identity = _phase_identity(
+        jit_api=True,
+        compile_called=False,
+        compiler_probe=False,
+    )
+    phase_identity["factorization_called"] = bool(factorization_called)
+    status = "measurement_complete" if error is None and controlled_stop is None else "gate_failed"
+    payload = _attach_evidence(
+        {
+            "schema": H2B_P1_WORKER_SCHEMA,
+            "phase": "p1",
+            "status": status,
+            "scope": _p1_scope(),
+            "identity": _fixed_identity(),
+            "phase_identity": phase_identity,
+            "source_at_start": source_start,
+            "source_at_end": source_end,
+            "runtime_identity": runtime,
+            "form": form_record,
+            "measurement": measurement,
+            "preflight_live_set": preflight_live_set,
+            "preflight_basis": preflight_basis,
+            "controlled_stop": controlled_stop,
+            "error": error,
+            "elapsed_wall_seconds": float(time.perf_counter() - started),
+        }
+    )
+    _write_json(summary_path, payload)
+    return 0 if status == "measurement_complete" else 1
+
+
 def _compiler_descendant_pids(pids: Sequence[int]) -> list[int]:
     found: list[int] = []
     for pid in pids:
@@ -2590,7 +3243,7 @@ def _stage_gate_allows_online(
 
 
 def _worker_command(executable: str, phase: str, run_dir: Path) -> list[str]:
-    if phase not in {"jit-worker", "online-worker", "s0-worker", "p0-worker"}:
+    if phase not in {"jit-worker", "online-worker", "s0-worker", "p0-worker", "p1-worker"}:
         raise ValueError("H2B worker phase is fixed")
     return [
         str(executable),
@@ -2600,6 +3253,58 @@ def _worker_command(executable: str, phase: str, run_dir: Path) -> list[str]:
         "--run-dir",
         str(Path(run_dir).resolve()),
     ]
+
+
+def _p1_command_identity_valid(
+    watchdog: Mapping[str, Any],
+    stage: Mapping[str, Any],
+    worker: Mapping[str, Any],
+    run_dir: Path,
+) -> bool:
+    command_identity = watchdog.get("command_identity")
+    if not isinstance(command_identity, Mapping):
+        return False
+    python = command_identity.get("python")
+    if not isinstance(python, str) or not os.path.isabs(python):
+        return False
+    stage_runtime = stage.get("runtime_identity")
+    worker_runtime = worker.get("runtime_identity")
+    return bool(
+        command_identity.get("launch_mode") == "direct_singleton"
+        and command_identity.get("stage_command")
+        == _worker_command(python, "jit-worker", run_dir)
+        and command_identity.get("p1_command")
+        == _worker_command(python, "p1-worker", run_dir)
+        and isinstance(stage_runtime, Mapping)
+        and isinstance(worker_runtime, Mapping)
+        and stage_runtime.get("sys_executable") == python
+        and worker_runtime.get("sys_executable") == python
+    )
+
+
+def _p1_phase_identity_valid(value: Any, *, factorization_called: bool) -> bool:
+    expected = _phase_identity(
+        jit_api=True,
+        compile_called=False,
+        compiler_probe=False,
+    )
+    expected["factorization_called"] = bool(factorization_called)
+    return value == expected
+
+
+def _p1_p6_valid(value: Any) -> bool:
+    expected = {
+        "global_cells": H2B_FIXED_CELLS,
+        "local_cells": H2B_FIXED_CELLS,
+        "local_nloc": H2B_FIXED_NLOC,
+        "global_rows": H2B_FIXED_ROWS,
+        "constraint_count": H2B_FIXED_CONSTRAINTS,
+    }
+    return bool(
+        isinstance(value, Mapping)
+        and value == expected
+        and all(type(value.get(key)) is int for key in expected)
+    )
 
 
 def _worker_executable() -> str:
@@ -2689,8 +3394,8 @@ def _run_s0_watchdog(run_dir: Path) -> int:
             run_dir,
             "stage",
             _worker_command(executable, "jit-worker", run_dir),
-            H2B_STAGE_TIMEOUT_SECONDS,
-            H2B_STAGE_RSS_LIMIT_BYTES,
+            H2B_P1_TIMEOUT_SECONDS,
+            H2B_P1_STAGE_RSS_LIMIT_BYTES,
         )
         stage_summary = _read_json(run_dir / "stage_summary.json")
         drain = _bounded_process_drain(stage)
@@ -2846,6 +3551,103 @@ def _run_p0_watchdog(run_dir: Path) -> int:
         }
     )
     _write_json(run_dir / "p0_watchdog_summary.json", payload)
+    return 0 if payload["status"] == "pass" else 1
+
+
+def _run_p1_watchdog(run_dir: Path) -> int:
+    """Run the P1 stage and online builder strictly sequentially."""
+
+    run_dir = run_dir.resolve()
+    if run_dir.exists():
+        raise FileExistsError(f"H2B-P1 run directory already exists: {run_dir}")
+    run_dir.mkdir(parents=True)
+    started = time.perf_counter()
+    source_start: dict[str, Any] | None = None
+    source_end: dict[str, Any] | None = None
+    executable: str | None = None
+    stage: dict[str, Any] | None = None
+    p1: dict[str, Any] | None = None
+    error: str | None = None
+    try:
+        source_start = _light_source()
+        executable = _worker_executable()
+        stage = _monitor_phase(
+            run_dir,
+            "stage",
+            _worker_command(executable, "jit-worker", run_dir),
+            H2B_STAGE_TIMEOUT_SECONDS,
+            H2B_P1_STAGE_RSS_LIMIT_BYTES,
+        )
+        stage_summary = _read_json(run_dir / "stage_summary.json")
+        drain = _bounded_process_drain(stage)
+        stage["processes_gone_before_p1"] = bool(drain["gone"])
+        stage["processes_gone_before_p1_drain"] = drain
+        stage_ok = bool(
+            _stage_gate_allows_online(stage, stage_summary, bool(drain["gone"]), run_dir)
+            and int(stage.get("peak_rss_bytes", 0)) < H2B_P1_STAGE_RSS_LIMIT_BYTES
+            and int(stage.get("swap_bytes", 0)) == H2B_SWAP_LIMIT_BYTES
+        )
+        if not stage_ok:
+            error = "stage_gate_failed_before_p1"
+        else:
+            p1 = _monitor_phase(
+                run_dir,
+                "p1",
+                _worker_command(executable, "p1-worker", run_dir),
+                H2B_P1_TIMEOUT_SECONDS,
+                H2B_P1_ONLINE_RSS_LIMIT_BYTES,
+            )
+            drain = _bounded_process_drain(p1)
+            p1["processes_gone_after_p1"] = bool(drain["gone"])
+            p1["processes_gone_after_p1_drain"] = drain
+    except _worker_error_types() as exc:
+        error = f"{type(exc).__name__}: {exc}"
+    if source_start is not None:
+        try:
+            source_end = _light_source()
+        except _worker_error_types() as exc:
+            error = f"{type(exc).__name__}: {exc}"
+    stage_ok = bool(
+        isinstance(stage, Mapping)
+        and type(stage.get("return_code")) is int
+        and stage.get("return_code") == 0
+        and stage.get("termination") is None
+        and stage.get("processes_gone_before_p1") is True
+        and int(stage.get("peak_rss_bytes", 0)) < H2B_P1_STAGE_RSS_LIMIT_BYTES
+        and int(stage.get("swap_bytes", 0)) == 0
+    )
+    p1_ok = bool(
+        isinstance(p1, Mapping)
+        and type(p1.get("return_code")) is int
+        and p1.get("return_code") == 0
+        and p1.get("termination") is None
+        and p1.get("processes_gone_after_p1") is True
+    )
+    payload = _attach_evidence(
+        {
+            "schema": H2B_P1_WATCHDOG_SCHEMA,
+            "status": "pass" if error is None and stage_ok and p1_ok else "gate_failed",
+            "run_dir": str(run_dir),
+            "scope": _p1_scope(),
+            "identity": _fixed_identity(),
+            "command_identity": {
+                "python": executable,
+                "launch_mode": "direct_singleton",
+                "stage_command": None if stage is None else stage["command"],
+                "p1_command": None if p1 is None else p1["command"],
+            },
+            "source_at_start": source_start,
+            "source_at_end": source_end,
+            "stage": stage,
+            "p1": p1,
+            "error": error,
+            "completion_elapsed_seconds": float(time.perf_counter() - started),
+            "raw_artifacts": {
+                name: _artifact(run_dir, name) for name in H2B_P1_ARTIFACT_NAMES
+            },
+        }
+    )
+    _write_json(run_dir / "p1_watchdog_summary.json", payload)
     return 0 if payload["status"] == "pass" else 1
 
 
@@ -3361,6 +4163,53 @@ def _progress_events(path: Path, phase: str) -> list[str]:
     return events
 
 
+def _p1_progress_valid(path: Path, *, controlled_stop: bool = False) -> bool:
+    events = _progress_events(path, "p1")
+    items = [
+        json.loads(line)
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    prefix = list(H2B_P1_EVENTS[: H2B_P1_EVENTS.index("neighborhood_started")])
+    suffix = ["store_write_ready", "builder_release", "loader_ready", "summary_ready"]
+    if events[: len(prefix)] != prefix:
+        return False
+    cursor = len(prefix)
+    blocks = 0
+    while cursor < len(events) and events[cursor] == "neighborhood_started":
+        if (
+            type(items[cursor].get("neighborhood_id")) is not int
+            or items[cursor]["neighborhood_id"] != blocks
+            or cursor + 1 >= len(events)
+            or events[cursor + 1] != "patch_ready"
+            or items[cursor + 1].get("neighborhood_id") != blocks
+        ):
+            return False
+        if (
+            cursor + 2 >= len(events)
+            or events[cursor + 2] not in {"factor_ready", "factor_dedup"}
+            or items[cursor + 2].get("neighborhood_id") != blocks
+        ):
+            return False
+        blocks += 1
+        cursor += 3
+    if controlled_stop:
+        if (
+            cursor < len(events)
+            and events[cursor] == "neighborhood_started"
+            and type(items[cursor].get("neighborhood_id")) is int
+            and items[cursor]["neighborhood_id"] == blocks
+        ):
+            cursor += 1
+        return (
+            blocks >= 1
+            and cursor + 2 == len(events)
+            and events[cursor] == "factor_limit_controlled_stop"
+            and events[cursor + 1] == "summary_ready"
+        )
+    return blocks == 84 and events[cursor:] == suffix
+
+
 def _timeline_sample_valid(item: Mapping[str, Any], readable: bool) -> bool:
     pids = item.get("pids")
     return bool(
@@ -3587,6 +4436,56 @@ def _p0_s0_authority() -> dict[str, Any]:
         "b0_form": authority.get("b0_form"),
         "raw_artifacts": authority.get("raw_artifacts"),
         "watchdog_summary_sha256": authority.get("watchdog_summary_sha256"),
+    }
+
+
+def _p1_authority() -> dict[str, Any]:
+    """Bind the P1 run to the frozen R0/R1/R2 and qualified P0 records."""
+
+    authority = _authority()
+    if not H2B_P0_V4_RECORD.is_file() or _sha256_file(H2B_P0_V4_RECORD) != H2B_P0_V4_RECORD_SHA256:
+        raise ValueError("frozen P0 v4 authority is missing or changed")
+    p0 = _read_json(H2B_P0_V4_RECORD)
+    if (
+        p0.get("status") != "pass"
+        or p0.get("pass") is not True
+        or p0.get("schema") != H2B_P0_CHECK_SCHEMA
+        or p0.get("evidence_sha256") != H2B_P0_V4_EVIDENCE_SHA256
+        or not _evidence_valid(p0)
+    ):
+        raise ValueError("frozen P0 v4 authority is not qualified")
+    measurements = p0.get("measurements")
+    if not isinstance(measurements, Mapping):
+        raise ValueError("frozen P0 v4 measurements are missing")
+    p6 = measurements.get("p6")
+    if p6 != {
+        "global_cells": H2B_FIXED_CELLS,
+        "local_cells": H2B_FIXED_CELLS,
+        "local_nloc": H2B_FIXED_NLOC,
+        "global_rows": H2B_FIXED_ROWS,
+        "constraint_count": H2B_FIXED_CONSTRAINTS,
+    }:
+        raise ValueError("frozen P0 v4 p6 authority is incomplete")
+    if (
+        measurements.get("central_cell_ordinal") != 3
+        or measurements.get("patch", {}).get("touching_cell_count") != 19
+        or measurements.get("patch", {}).get("touching_class_count") != 11
+    ):
+        raise ValueError("frozen P0 v4 anchor topology is incomplete")
+    if measurements.get("authority") != authority["producer_authority"]:
+        raise ValueError("frozen P0 v4 R2 authority binding is incomplete")
+    return {
+        **authority,
+        "p0": {
+            "record_path": str(H2B_P0_V4_RECORD),
+            "record_sha256": H2B_P0_V4_RECORD_SHA256,
+            "evidence_sha256": H2B_P0_V4_EVIDENCE_SHA256,
+            "source_sha256": measurements["authority"].get("r2_producer_source_full_sha"),
+            "central_cell_ordinal": 3,
+            "central_class_id": measurements.get("selection", {}).get("class_id"),
+            "touching_cell_count": measurements["patch"]["touching_cell_count"],
+            "touching_class_count": measurements["patch"]["touching_class_count"],
+        },
     }
 
 
@@ -4879,6 +5778,589 @@ def _run_p0_check(run_dir: Path, output: Path) -> int:
     return 0 if result["pass"] else 1
 
 
+def _p1_artifacts_match(
+    run_dir: Path, recorded: Any, *, controlled_stop: bool = False
+) -> bool:
+    if not isinstance(recorded, Mapping) or set(recorded) != set(H2B_P1_ARTIFACT_NAMES):
+        return False
+    for name in H2B_P1_ARTIFACT_NAMES:
+        actual = _artifact(run_dir, name)
+        expected_present = (
+            name != "factor_store/manifest.json" if controlled_stop else True
+        )
+        if actual.get("present") is not expected_present or recorded[name] != actual:
+            return False
+    return True
+
+
+def _p1_preflight_valid(worker: Mapping[str, Any]) -> bool:
+    return (
+        worker.get("preflight_live_set") == _p1_preflight_live_set()
+        and worker.get("preflight_basis") == _p1_preflight_basis()
+    )
+
+
+def _p1_controlled_checks(
+    run_dir: Path,
+    stage: Mapping[str, Any],
+    worker: Mapping[str, Any],
+    watchdog: Mapping[str, Any],
+    controlled: Mapping[str, Any],
+) -> dict[str, bool]:
+    checks: dict[str, bool] = {
+        "watchdog_evidence": (
+            watchdog.get("schema") == H2B_P1_WATCHDOG_SCHEMA
+            and watchdog.get("status") == "gate_failed"
+            and _evidence_valid(watchdog)
+            and watchdog.get("run_dir") == str(run_dir)
+            and watchdog.get("scope") == _p1_scope()
+            and watchdog.get("identity") == _fixed_identity()
+            and _p1_artifacts_match(
+                run_dir, watchdog.get("raw_artifacts"), controlled_stop=True
+            )
+        ),
+        "command_identity": _p1_command_identity_valid(
+            watchdog, stage, worker, run_dir
+        ),
+        "watchdog_source": (
+            _checker_source_valid(watchdog.get("source_at_start"))
+            and _checker_source_valid(watchdog.get("source_at_end"))
+            and watchdog.get("source_at_start") == watchdog.get("source_at_end")
+        ),
+        "stage_source": (
+            _checker_source_valid(stage.get("source_at_start"))
+            and _checker_source_valid(stage.get("source_at_end"))
+            and stage.get("source_at_start") == stage.get("source_at_end")
+            and stage.get("source_at_start") == watchdog.get("source_at_start")
+        ),
+        "stage_runtime": _runtime_valid(stage.get("runtime_identity")),
+        "stage_worker": (
+            stage.get("schema") == H2B_WORKER_SCHEMA
+            and stage.get("phase") == "stage"
+            and stage.get("status") == "measurement_complete"
+            and stage.get("error") is None
+            and _evidence_valid(stage)
+            and stage.get("scope") == _fixed_scope()
+            and stage.get("identity") == _fixed_identity()
+            and stage.get("phase_identity")
+            == _phase_identity(jit_api=True, compile_called=True, compiler_probe=True)
+        ),
+        "stage_lifecycle": False,
+        "stage_timeline": False,
+        "form_cache": False,
+        "p1_source": (
+            _checker_source_valid(worker.get("source_at_start"))
+            and _checker_source_valid(worker.get("source_at_end"))
+            and worker.get("source_at_start") == worker.get("source_at_end")
+            and worker.get("source_at_start") == watchdog.get("source_at_start")
+        ),
+        "p1_runtime": _runtime_valid(worker.get("runtime_identity")),
+        "p1_worker_status": (
+            worker.get("phase") == "p1"
+            and worker.get("status") == "gate_failed"
+            and worker.get("error") is None
+            and _evidence_valid(worker)
+        ),
+        "p1_identity": (
+            worker.get("schema") == H2B_P1_WORKER_SCHEMA
+            and worker.get("scope") == _p1_scope()
+            and worker.get("identity") == _fixed_identity()
+            and _p1_phase_identity_valid(
+                worker.get("phase_identity"), factorization_called=True
+            )
+            and worker.get("controlled_stop") == dict(controlled)
+        ),
+        "p1_lifecycle": False,
+        "p1_timeline": False,
+        "controlled_fields": False,
+        "progress": False,
+        "preflight": _p1_preflight_valid(worker),
+        "preflight_authority": False,
+        "measurement_binding": False,
+        "factor_store_not_written": not (run_dir / "factor_store" / "manifest.json").is_file(),
+    }
+    authority: Mapping[str, Any] | None = None
+    measurement = worker.get("measurement")
+    stage_process = watchdog.get("stage")
+    p1_process = watchdog.get("p1")
+    if isinstance(stage_process, Mapping):
+        checks["stage_lifecycle"] = (
+            type(stage_process.get("return_code")) is int
+            and stage_process.get("return_code") == 0
+            and stage_process.get("termination") is None
+            and stage_process.get("processes_gone_before_p1") is True
+            and type(stage_process.get("peak_rss_bytes")) is int
+            and stage_process["peak_rss_bytes"] < H2B_P1_STAGE_RSS_LIMIT_BYTES
+            and type(stage_process.get("swap_bytes")) is int
+            and stage_process["swap_bytes"] == 0
+        )
+    if isinstance(p1_process, Mapping):
+        checks["p1_lifecycle"] = (
+            type(p1_process.get("return_code")) is int
+            and p1_process.get("return_code") == 1
+            and p1_process.get("termination") is None
+            and p1_process.get("processes_gone_after_p1") is True
+            and type(p1_process.get("peak_rss_bytes")) is int
+            and p1_process["peak_rss_bytes"] < H2B_P1_ONLINE_RSS_LIMIT_BYTES
+            and type(p1_process.get("swap_bytes")) is int
+            and p1_process["swap_bytes"] == 0
+        )
+    try:
+        stage_timeline = _timeline_metrics(run_dir / "stage_timeline.jsonl", "stage")
+        p1_timeline = _timeline_metrics(run_dir / "p1_timeline.jsonl", "p1")
+        checks["stage_timeline"] = bool(
+            isinstance(stage_process, Mapping)
+            and stage_timeline["peak_rss_bytes"] == stage_process.get("peak_rss_bytes")
+            and stage_timeline["swap_bytes"] == stage_process.get("swap_bytes") == 0
+        )
+        checks["p1_timeline"] = bool(
+            isinstance(p1_process, Mapping)
+            and p1_timeline["peak_rss_bytes"] == p1_process.get("peak_rss_bytes")
+            and p1_timeline["swap_bytes"] == p1_process.get("swap_bytes") == 0
+            and not p1_timeline["compiler_descendant_pids"]
+        )
+    except _worker_error_types():
+        pass
+    checks["form_cache"] = bool(
+        _forms_match(stage.get("form"), worker.get("form"), run_dir)
+        and isinstance(stage.get("form"), Mapping)
+        and isinstance(worker.get("form"), Mapping)
+        and stage["form"].get("code_state") == "cold_decl_impl_generated"
+        and worker["form"].get("code_state") == "hit_no_new_decl_impl"
+        and _progress_events(run_dir / "stage_progress.jsonl", "stage") == list(H2B_STAGE_EVENTS)
+    )
+    try:
+        authority = _p1_authority()
+        checks["preflight_authority"] = bool(
+            isinstance(authority, Mapping)
+            and authority.get("p0", {}).get("record_sha256")
+            == H2B_P1_PREFLIGHT_P0_RECORD_SHA256
+            and authority.get("p0", {}).get("evidence_sha256")
+            == H2B_P1_PREFLIGHT_P0_EVIDENCE_SHA256
+        )
+    except _worker_error_types():
+        pass
+    try:
+        items = [
+            json.loads(line)
+            for line in (run_dir / "p1_progress.jsonl").read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        marker = next(
+            item for item in reversed(items)
+            if item.get("event") == "factor_limit_controlled_stop"
+        )
+        completed_blocks = sum(
+            item.get("event") in {"factor_ready", "factor_dedup"}
+            for item in items
+        )
+        checks["controlled_fields"] = (
+            controlled.get("reason") == "unique_numeric_factor_limit"
+            and type(controlled.get("offending_neighborhood_id")) is int
+            and 0 <= controlled["offending_neighborhood_id"] < 84
+            and _valid_hash(controlled.get("offending_key_sha256"))
+            and _valid_hash(controlled.get("offending_matrix_sha256"))
+            and type(controlled.get("unique_factor_limit")) is int
+            and controlled["unique_factor_limit"] == H2B_P1_MAX_UNIQUE_FACTORS
+            and type(controlled.get("lower_bound_unique_factor_count")) is int
+            and controlled["lower_bound_unique_factor_count"] == 33
+        )
+        checks["progress"] = bool(
+            _p1_progress_valid(run_dir / "p1_progress.jsonl", controlled_stop=True)
+            and marker.get("event") == "factor_limit_controlled_stop"
+            and marker.get("reason") == controlled.get("reason")
+            and completed_blocks == controlled.get("offending_neighborhood_id")
+            and all(marker.get(key) == controlled.get(key) for key in (
+                "offending_neighborhood_id", "offending_key_sha256",
+                "offending_matrix_sha256", "unique_factor_limit",
+                "lower_bound_unique_factor_count",
+            ))
+        )
+    except _worker_error_types():
+        pass
+    checks["measurement_binding"] = bool(
+        isinstance(measurement, Mapping)
+        and isinstance(authority, Mapping)
+        and type(measurement.get("neighborhood_count")) is int
+        and measurement.get("neighborhood_count") == 84
+        and type(measurement.get("processed_neighborhood_count")) is int
+        and measurement["processed_neighborhood_count"]
+        == controlled.get("offending_neighborhood_id")
+        and type(measurement.get("retained_unique_factor_count")) is int
+        and measurement.get("retained_unique_factor_count") == 32
+        and measurement.get("controlled_stop") == dict(controlled)
+        and _p1_p6_valid(measurement.get("p6"))
+        and measurement.get("authority") == authority
+        and measurement.get("preflight_live_set") == worker.get("preflight_live_set")
+        and measurement.get("preflight_basis") == worker.get("preflight_basis")
+    )
+    return checks
+
+
+def _p1_check_raw(run_dir: Path) -> dict[str, Any]:
+    """Independently qualify one P1 raw directory without refactoring factors."""
+
+    import numpy as np
+    from src.solvers.hcurl_h2b_p1_factor_store import load_h2b_p1_factor_store
+
+    run_dir = run_dir.resolve()
+    watchdog = _read_json(run_dir / "p1_watchdog_summary.json")
+    stage = _read_json(run_dir / "stage_summary.json")
+    worker = _read_json(run_dir / "p1_summary.json")
+    controlled = worker.get("controlled_stop")
+    if (
+        isinstance(controlled, Mapping)
+        and controlled.get("reason") == "unique_numeric_factor_limit"
+        and worker.get("schema") == H2B_P1_WORKER_SCHEMA
+        and worker.get("status") == "gate_failed"
+        and _evidence_valid(worker)
+    ):
+        controlled_checks = _p1_controlled_checks(
+            run_dir, stage, worker, watchdog, controlled
+        )
+        failed = [name for name, value in controlled_checks.items() if not value]
+        return {
+            "schema": H2B_P1_CHECK_SCHEMA,
+            "status": "gate_failed",
+            "pass": False,
+            "checks": {
+                "controlled_factor_limit": controlled_checks["controlled_fields"],
+                **controlled_checks,
+            },
+            "problems": [
+                "unique_numeric_factor_limit",
+                *failed,
+            ],
+            "measurements": None,
+            "failure_measurements": worker.get("measurement"),
+            "controlled_stop": dict(controlled),
+            "raw_watchdog_status": watchdog.get("status"),
+            "watchdog_summary": _artifact(run_dir, "p1_watchdog_summary.json"),
+        }
+    checks: dict[str, bool] = {}
+    problems: list[str] = []
+    checks["watchdog_evidence"] = (
+        watchdog.get("schema") == H2B_P1_WATCHDOG_SCHEMA
+        and _evidence_valid(watchdog)
+        and watchdog.get("scope") == _p1_scope()
+        and watchdog.get("identity") == _fixed_identity()
+        and watchdog.get("run_dir") == str(run_dir)
+        and _p1_artifacts_match(
+            run_dir, watchdog.get("raw_artifacts"), controlled_stop=False
+        )
+    )
+    checks["watchdog_status"] = watchdog.get("status") == "pass"
+    checks["stage_worker"] = bool(
+        stage.get("schema") == H2B_WORKER_SCHEMA
+        and stage.get("phase") == "stage"
+        and stage.get("status") == "measurement_complete"
+        and stage.get("error") is None
+        and _evidence_valid(stage)
+        and stage.get("scope") == _fixed_scope()
+        and stage.get("identity") == _fixed_identity()
+        and stage.get("phase_identity")
+        == _phase_identity(jit_api=True, compile_called=True, compiler_probe=True)
+    )
+    checks["p1_worker"] = bool(
+        worker.get("schema") == H2B_P1_WORKER_SCHEMA
+        and worker.get("phase") == "p1"
+        and worker.get("status") == "measurement_complete"
+        and worker.get("error") is None
+        and _evidence_valid(worker)
+        and worker.get("scope") == _p1_scope()
+        and worker.get("identity") == _fixed_identity()
+        and _p1_phase_identity_valid(
+            worker.get("phase_identity"), factorization_called=True
+        )
+        and worker.get("controlled_stop") is None
+    )
+    checks["command_identity"] = _p1_command_identity_valid(
+        watchdog, stage, worker, run_dir
+    )
+    checks["preflight"] = _p1_preflight_valid(worker)
+    checks["source"] = bool(
+        _source_pair_valid(stage.get("source_at_start"), stage.get("source_at_end"))
+        and _source_pair_valid(worker.get("source_at_start"), worker.get("source_at_end"))
+        and _source_pair_valid(watchdog.get("source_at_start"), watchdog.get("source_at_end"))
+        and watchdog.get("source_at_start") == worker.get("source_at_start")
+        and stage.get("source_at_start") == worker.get("source_at_start")
+    )
+    checks["runtime"] = bool(
+        _runtime_valid(stage.get("runtime_identity"))
+        and _runtime_valid(worker.get("runtime_identity"))
+        and stage.get("runtime_identity") == worker.get("runtime_identity")
+    )
+    stage_process = watchdog.get("stage")
+    p1_process = watchdog.get("p1")
+    checks["stage_lifecycle"] = bool(
+        isinstance(stage_process, Mapping)
+        and type(stage_process.get("return_code")) is int
+        and stage_process.get("return_code") == 0
+        and stage_process.get("termination") is None
+        and stage_process.get("processes_gone_before_p1") is True
+        and type(stage_process.get("peak_rss_bytes")) is int
+        and stage_process["peak_rss_bytes"] < H2B_P1_STAGE_RSS_LIMIT_BYTES
+        and type(stage_process.get("swap_bytes")) is int
+        and stage_process["swap_bytes"] == 0
+    )
+    checks["p1_lifecycle"] = bool(
+        isinstance(p1_process, Mapping)
+        and type(p1_process.get("return_code")) is int
+        and p1_process.get("return_code") == 0
+        and p1_process.get("termination") is None
+        and p1_process.get("processes_gone_after_p1") is True
+        and type(p1_process.get("peak_rss_bytes")) is int
+        and p1_process["peak_rss_bytes"] < H2B_P1_ONLINE_RSS_LIMIT_BYTES
+        and type(p1_process.get("swap_bytes")) is int
+        and p1_process["swap_bytes"] == 0
+    )
+    checks["timeline_resources"] = False
+    try:
+        stage_timeline = _timeline_metrics(run_dir / "stage_timeline.jsonl", "stage")
+        p1_timeline = _timeline_metrics(run_dir / "p1_timeline.jsonl", "p1")
+        stage_values = stage_process if isinstance(stage_process, Mapping) else {}
+        p1_values = p1_process if isinstance(p1_process, Mapping) else {}
+        checks["timeline_resources"] = bool(
+            stage_timeline["peak_rss_bytes"] == stage_values.get("peak_rss_bytes")
+            and stage_timeline["swap_bytes"] == stage_values.get("swap_bytes") == 0
+            and p1_timeline["peak_rss_bytes"] == p1_values.get("peak_rss_bytes")
+            and p1_timeline["swap_bytes"] == p1_values.get("swap_bytes") == 0
+            and not p1_timeline["compiler_descendant_pids"]
+        )
+    except _worker_error_types() as exc:
+        problems.append(f"timeline:{type(exc).__name__}")
+    checks["forms_cache_hit"] = bool(
+        _forms_match(stage.get("form"), worker.get("form"), run_dir)
+        and _progress_events(run_dir / "stage_progress.jsonl", "stage") == list(H2B_STAGE_EVENTS)
+    )
+    try:
+        authority = _p1_authority()
+        measurement = worker.get("measurement")
+        checks["authority"] = bool(
+            isinstance(measurement, Mapping)
+            and measurement.get("authority") == authority
+        )
+        checks["preflight_authority"] = bool(
+            isinstance(authority, Mapping)
+            and authority.get("p0", {}).get("record_sha256")
+            == H2B_P1_PREFLIGHT_P0_RECORD_SHA256
+            and authority.get("p0", {}).get("evidence_sha256")
+            == H2B_P1_PREFLIGHT_P0_EVIDENCE_SHA256
+        )
+    except _worker_error_types() as exc:
+        authority = None
+        measurement = worker.get("measurement")
+        checks["authority"] = False
+        checks["preflight_authority"] = False
+        problems.append(f"authority:{type(exc).__name__}")
+    checks["markers"] = False
+    try:
+        checks["markers"] = _p1_progress_valid(run_dir / "p1_progress.jsonl")
+    except _worker_error_types() as exc:
+        problems.append(f"progress:{type(exc).__name__}")
+    checks["forms_cache_hit"] = bool(checks["forms_cache_hit"] and worker.get("form", {}).get("code_state") == "hit_no_new_decl_impl")
+    checks["p6"] = _p1_p6_valid(
+        measurement.get("p6") if isinstance(measurement, Mapping) else None
+    )
+    checks["anchor"] = False
+    if isinstance(measurement, Mapping) and isinstance(measurement.get("p0_anchor"), Mapping):
+        anchor = measurement["p0_anchor"]
+        sources = anchor.get("sources")
+        checks["anchor"] = bool(
+            anchor.get("source_order") == list(H2B_SOURCE_LABELS)
+            and isinstance(sources, Mapping)
+            and all(
+                isinstance(sources.get(label), Mapping)
+                and sources[label].get("finite") is True
+                and isinstance(sources[label].get("exact_action_relative_error"), (int, float))
+                and np.isfinite(float(sources[label]["exact_action_relative_error"]))
+                and 0.0 <= float(sources[label]["exact_action_relative_error"]) <= 1.0e-11
+                for label in H2B_SOURCE_LABELS
+            )
+        )
+    store = None
+    try:
+        manifest_path = run_dir / "factor_store" / "manifest.json"
+        store = load_h2b_p1_factor_store(manifest_path, task037_extra_h2b=True)
+        checks["store"] = bool(
+            type(store.audit.get("neighborhood_count")) is int
+            and store.audit.get("neighborhood_count") == 84
+            and type(store.audit.get("cell_count")) is int
+            and store.audit.get("cell_count") == H2B_FIXED_CELLS
+            and type(store.audit.get("unique_factor_count")) is int
+            and 0 < store.audit.get("unique_factor_count") <= H2B_P1_MAX_UNIQUE_FACTORS
+            and type(store.audit.get("factor_plus_metadata_bytes")) is int
+            and store.audit.get("factor_plus_metadata_bytes") <= H2B_FACTOR_WORK_LIMIT_BYTES
+            and store.audit.get("factor_plus_metadata_gate") is True
+            and store.audit.get("finite") is True
+            and store.audit.get("deterministic") is True
+            and store.audit.get("materialization_identity") == {
+                "patch_matrices": False,
+                "per_cell_factor": False,
+                "class_expansion": False,
+                "global_matrix": False,
+                "global_constraint_matrix": False,
+                "slab_factor": False,
+                "schur": False,
+            }
+        )
+        factor_objects = getattr(store, "factors", ())
+        checks["factor_quality"] = bool(
+            len(factor_objects) == store.audit.get("unique_factor_count")
+            and
+            all(
+                bool(factor.finite)
+                and bool(factor.deterministic)
+                and np.isfinite(float(factor.factorization_residual))
+                and np.isfinite(float(factor.solve_residual))
+                and 0.0 <= float(factor.factorization_residual) <= 1.0e-10
+                and 0.0 <= float(factor.solve_residual) <= 1.0e-10
+                for factor in factor_objects
+            )
+        )
+        matrix_shas = [getattr(factor, "matrix_sha256", None) for factor in factor_objects]
+        factor_pairs = [
+            (
+                getattr(factor, "factor_values_sha256", None),
+                getattr(factor, "pivot_sha256", None),
+            )
+            for factor in factor_objects
+        ]
+        checks["factor_identity_uniqueness"] = bool(
+            all(_valid_hash(value) for value in matrix_shas)
+            and all(_valid_hash(value) for pair in factor_pairs for value in pair)
+            and len(set(matrix_shas)) == len(matrix_shas)
+            and len(set(factor_pairs)) == len(factor_pairs)
+        )
+        checks["neighborhood_authority"] = bool(
+            isinstance(authority, Mapping)
+            and len(authority["r0"].get("class_inventory", [])) == H2B_FIXED_CLASSES
+            and len(store.neighborhoods) == 84
+            and all(isinstance(record, Mapping) for record in store.neighborhoods)
+            and all(
+                _valid_hash(record.get("key_sha256"))
+                for record in store.neighborhoods
+            )
+            and len(
+                {record.get("key_sha256") for record in store.neighborhoods}
+            ) == 84
+            and [record.get("key_sha256") for record in store.neighborhoods]
+            == sorted(record.get("key_sha256") for record in store.neighborhoods)
+            and all(
+                type(record.get("central_class_id")) is int
+                and 0 <= record["central_class_id"] < H2B_FIXED_CLASSES
+                for record in store.neighborhoods
+            )
+            and sorted(
+                {
+                    record.get("central_class_id") for record in store.neighborhoods
+                }
+            ) == list(range(H2B_FIXED_CLASSES))
+            and sorted(
+                cell
+                for record in store.neighborhoods
+                for cell in record["cell_ordinals"]
+            ) == list(range(H2B_FIXED_CELLS))
+        )
+        cell_ids = getattr(store, "cell_neighborhood_ids", None)
+        store_neighborhood_digest = None
+        if isinstance(cell_ids, np.ndarray) and cell_ids.dtype == np.dtype(np.int32):
+            cell_ids = np.ascontiguousarray(cell_ids)
+            store_neighborhood_digest = hashlib.sha256(
+                memoryview(cell_ids).cast("B")
+            ).hexdigest()
+        store_audit = store.audit_jsonable()
+        cache = measurement.get("cache") if isinstance(measurement, Mapping) else None
+        checks["store_identity"] = bool(
+            isinstance(measurement, Mapping)
+            and isinstance(cache, Mapping)
+            and store.identity.get("source_identity") == worker.get("source_at_start")
+            and store.identity.get("form_identity") == worker.get("form")
+            and store.identity.get("config_identity") == {"degree": 6, "h_nm": 10.0, "mpi_size": 1}
+            and store.identity.get("cache_identity") == {
+                "cache_dir": cache.get("dir"),
+                "inventory": cache.get("after"),
+            }
+            and store.identity.get("r0_authority") == authority["r0"]
+            and store.identity.get("r1_authority") == authority["r1"]
+            and store.identity.get("r2_authority") == authority["producer_authority"]
+            and store.identity.get("p0_authority") == authority["p0"]
+        ) if isinstance(authority, Mapping) else False
+        manifest_actual = _artifact(run_dir, "factor_store/manifest.json")
+        manifest_json = _read_json(manifest_path)
+        manifest_binding = (
+            measurement.get("factor_store_manifest")
+            if isinstance(measurement, Mapping)
+            else None
+        )
+        checks["manifest_binding"] = bool(
+            isinstance(measurement, Mapping)
+            and isinstance(manifest_binding, Mapping)
+            and manifest_binding.get("sha256") == manifest_actual.get("sha256")
+            and manifest_binding.get("evidence_sha256")
+            == manifest_json.get("evidence_sha256")
+        )
+        expected_cache_dir = str((run_dir / "jit_cache").resolve())
+        checks["measurement_store_binding"] = bool(
+            isinstance(measurement, Mapping)
+            and measurement.get("neighborhood_count") == store.audit.get("neighborhood_count")
+            and measurement.get("cell_count") == store.audit.get("cell_count")
+            and measurement.get("unique_factor_count") == store.audit.get("unique_factor_count")
+            and measurement.get("retained_unique_factor_count")
+            == store.audit.get("unique_factor_count")
+            and measurement.get("neighborhood_digest") == store_neighborhood_digest
+            and measurement.get("factor_store") == store_audit
+            and measurement.get("materialization_identity")
+            == store_audit.get("materialization_identity")
+            and isinstance(cache, Mapping)
+            and cache.get("dir") == expected_cache_dir
+            and cache.get("unchanged") is True
+            and cache.get("before") == cache.get("after")
+            and cache.get("after") == _cache_snapshot(Path(expected_cache_dir))
+        )
+    except _worker_error_types() as exc:
+        checks["store"] = False
+        checks["store_identity"] = False
+        checks["manifest_binding"] = False
+        checks["factor_identity_uniqueness"] = False
+        checks["measurement_store_binding"] = False
+        problems.append(f"store:{type(exc).__name__}")
+    checks["raw_artifacts"] = checks["watchdog_evidence"]
+    if not all(checks.values()):
+        problems.extend(name for name, passed in checks.items() if not passed and name not in problems)
+    passed = all(checks.values())
+    result: dict[str, Any] = {
+        "schema": H2B_P1_CHECK_SCHEMA,
+        "status": "pass" if passed else "gate_failed",
+        "pass": passed,
+        "checks": checks,
+        "problems": problems,
+        "measurements": measurement if passed else None,
+        "failure_measurements": measurement if not passed else None,
+        "authority": None if authority is None else authority["producer_authority"],
+        "raw_artifacts": watchdog.get("raw_artifacts"),
+        "watchdog_summary": _artifact(run_dir, "p1_watchdog_summary.json"),
+    }
+    return result
+
+
+def _run_p1_check(run_dir: Path, output: Path) -> int:
+    try:
+        result = _p1_check_raw(run_dir)
+    except _worker_error_types() as exc:
+        result = {
+            "schema": H2B_P1_CHECK_SCHEMA,
+            "status": "gate_failed",
+            "pass": False,
+            "checks": {},
+            "problems": [f"raw_unreadable:{type(exc).__name__}"],
+            "measurements": None,
+        }
+    _write_json(output.resolve(), _attach_evidence(result))
+    print(f"H2B-P1 check status={result['status']} output={output.resolve()}", flush=True)
+    return 0 if result["pass"] else 1
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="run_task037_extra_h2b")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -4887,6 +6369,7 @@ def _parser() -> argparse.ArgumentParser:
         ("online-worker", _run_online_worker),
         ("s0-worker", _run_s0_worker),
         ("p0-worker", _run_p0_worker),
+        ("p1-worker", _run_p1_worker),
     ):
         item = sub.add_parser(name)
         item.add_argument("--run-dir", required=True)
@@ -4916,6 +6399,15 @@ def _parser() -> argparse.ArgumentParser:
     p0_checker.set_defaults(
         handler=lambda args: _run_p0_check(Path(args.run_dir), Path(args.output))
     )
+    p1_watchdog = sub.add_parser("p1-watchdog")
+    p1_watchdog.add_argument("--run-dir", required=True)
+    p1_watchdog.set_defaults(handler=_run_p1_watchdog)
+    p1_checker = sub.add_parser("p1-check")
+    p1_checker.add_argument("--run-dir", required=True)
+    p1_checker.add_argument("--output", required=True)
+    p1_checker.set_defaults(
+        handler=lambda args: _run_p1_check(Path(args.run_dir), Path(args.output))
+    )
     return parser
 
 
@@ -4926,9 +6418,11 @@ def main(argv: list[str] | None = None) -> int:
         "online-worker",
         "s0-worker",
         "p0-worker",
+        "p1-worker",
         "watchdog",
         "s0-watchdog",
         "p0-watchdog",
+        "p1-watchdog",
     }:
         return int(args.handler(Path(args.run_dir)))
     return int(args.handler(args))

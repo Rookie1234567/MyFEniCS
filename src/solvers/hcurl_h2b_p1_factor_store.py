@@ -12,6 +12,7 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 import hashlib
 import json
+from pathlib import Path
 from types import MappingProxyType
 from typing import Any
 
@@ -26,18 +27,24 @@ from .hcurl_h2b_block_smoother import (
 __all__ = (
     "H2B_P1_ANCHOR_SOURCE_LABELS",
     "H2BP1ClassBlockAuthority",
+    "H2BP1FactorStore",
     "H2BP1FactorLedger",
+    "H2BP1FactorLimitExceeded",
     "H2BP1Neighborhood",
     "canonical_h2b_p1_neighborhood_key",
     "build_h2b_p1_class_block_authority",
     "discover_h2b_p1_neighborhoods",
     "h2b_p1_live_set_audit",
+    "build_h2b_p1_factor_store",
+    "write_h2b_p1_factor_store",
+    "load_h2b_p1_factor_store",
     "measure_h2b_p1_anchor_sources",
     "stream_h2b_p1_neighborhood",
 )
 
 
 H2B_P1_NEIGHBORHOOD_SCHEMA = "task037.extra.h2b.p1.neighborhood.v1"
+H2B_P1_FACTOR_STORE_SCHEMA = "task037.extra.h2b.p1.factor-store.v1"
 H2B_P1_ANCHOR_SOURCE_LABELS = (
     "gradient-dominated",
     "curl-dominated",
@@ -66,6 +73,19 @@ def _jsonable(value: Any) -> Any:
         return [_jsonable(item) for item in value]
     if isinstance(value, complex):
         return [float(value.real), float(value.imag)]
+    return value
+
+
+def _deep_freeze(value: Any) -> Any:
+    """Freeze the small JSON-owned portion of a retained store."""
+
+    value = _jsonable(value)
+    if isinstance(value, Mapping):
+        return MappingProxyType(
+            {str(key): _deep_freeze(item) for key, item in value.items()}
+        )
+    if isinstance(value, (list, tuple)):
+        return tuple(_deep_freeze(item) for item in value)
     return value
 
 
@@ -605,6 +625,16 @@ def stream_h2b_p1_neighborhood(
     }
 
 
+class H2BP1FactorLimitExceeded(ValueError):
+    """Typed, bounded stop when a 33rd exact numeric factor is encountered."""
+
+    def __init__(self, *, matrix_sha256: str, limit: int, lower_bound: int) -> None:
+        self.matrix_sha256 = str(matrix_sha256)
+        self.limit = int(limit)
+        self.lower_bound = int(lower_bound)
+        super().__init__("H2B-P1 unique numeric factor limit exceeded")
+
+
 class H2BP1FactorLedger:
     """Exact-SHA deduplicated P1 LU factors with the 32-factor ceiling."""
 
@@ -636,7 +666,11 @@ class H2BP1FactorLedger:
         if existing is not None:
             return existing
         if len(self._factors) >= self._max_unique_factors:
-            raise ValueError("H2B-P1 unique numeric factor limit exceeded")
+            raise H2BP1FactorLimitExceeded(
+                matrix_sha256=matrix_sha,
+                limit=self._max_unique_factors,
+                lower_bound=len(self._factors) + 1,
+            )
         factor = factorize_h2b_p0_patch(values, task037_extra_h2b=True)
         factor_id = len(self._factors)
         self._factors.append(factor)
@@ -700,6 +734,566 @@ class H2BP1FactorLedger:
             "schur_materialized": False,
             "ordinary_default_changed": False,
         }
+
+
+def _p1_file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _p1_write_array(root: Path, relative: str, array: np.ndarray) -> dict[str, Any]:
+    values = np.ascontiguousarray(array)
+    if values.dtype == np.dtype(object):
+        raise TypeError("H2B-P1 cold arrays cannot have object dtype")
+    path = root / relative
+    np.save(path, values, allow_pickle=False)
+    return {
+        "path": relative,
+        "bytes": int(path.stat().st_size),
+        "sha256": _p1_file_sha256(path),
+        "array_sha256": _array_sha256(values),
+        "dtype": str(values.dtype),
+        "shape": [int(value) for value in values.shape],
+        "nbytes": int(values.nbytes),
+    }
+
+
+@dataclass(frozen=True)
+class H2BP1FactorStore:
+    """Cold-loadable retained P1 factors and compact cell gather maps.
+
+    The store owns only accepted LU arrays, JSON neighborhood records, and
+    ragged cell row references.  Patch matrices, reconstructed R2 blocks and
+    class expansions are deliberately absent from this representation.
+    """
+
+    factors: tuple[H2BP0Factor, ...]
+    neighborhoods: tuple[Mapping[str, Any], ...]
+    cell_neighborhood_ids: np.ndarray
+    cell_row_offsets: np.ndarray
+    cell_independent_global_rows: np.ndarray
+    identity: Mapping[str, Any]
+    manifest: Mapping[str, Any] | None = None
+
+    def __post_init__(self) -> None:
+        factors = tuple(self.factors)
+        if not factors:
+            raise ValueError("H2B-P1 factor store needs a factor")
+        matrix_shas = tuple(factor.matrix_sha256 for factor in factors)
+        factor_pairs = tuple(
+            (factor.factor_values_sha256, factor.pivot_sha256) for factor in factors
+        )
+        if (
+            any(
+                not _valid_sha(value)
+                for value in matrix_shas
+                + tuple(value for pair in factor_pairs for value in pair)
+            )
+            or len(set(matrix_shas)) != len(matrix_shas)
+            or len(set(factor_pairs)) != len(factor_pairs)
+        ):
+            raise ValueError("H2B-P1 factor numeric identities are not unique")
+        neighborhoods = tuple(_deep_freeze(dict(item)) for item in self.neighborhoods)
+        if not neighborhoods:
+            raise ValueError("H2B-P1 factor store needs neighborhoods")
+        raw_cell_ids = np.asarray(self.cell_neighborhood_ids)
+        raw_offsets = np.asarray(self.cell_row_offsets)
+        raw_rows = np.asarray(self.cell_independent_global_rows)
+        if raw_cell_ids.dtype != np.dtype(np.int32) or raw_offsets.dtype != np.dtype(np.int64) or raw_rows.dtype != np.dtype(np.int64):
+            raise ValueError("H2B-P1 cell mapping dtypes are invalid")
+        cell_ids = np.array(raw_cell_ids, dtype=np.int32, order="C", copy=True)
+        offsets = np.array(raw_offsets, dtype=np.int64, order="C", copy=True)
+        rows = np.array(raw_rows, dtype=np.int64, order="C", copy=True)
+        if (
+            cell_ids.ndim != 1
+            or offsets.ndim != 1
+            or rows.ndim != 1
+            or offsets.size != cell_ids.size + 1
+            or offsets.size == 1
+            or int(offsets[0]) != 0
+            or int(offsets[-1]) != rows.size
+            or np.any(np.diff(offsets) <= 0)
+            or np.any(cell_ids < 0)
+            or np.any(cell_ids >= len(neighborhoods))
+        ):
+            raise ValueError("H2B-P1 cell mapping arrays do not close")
+        for cell_id in range(cell_ids.size):
+            start, stop = int(offsets[cell_id]), int(offsets[cell_id + 1])
+            if np.unique(rows[start:stop]).size != stop - start:
+                raise ValueError("H2B-P1 cell independent rows are not unique")
+        by_id: dict[int, Mapping[str, Any]] = {}
+        for expected_id, record in enumerate(neighborhoods):
+            if not isinstance(record, Mapping):
+                raise ValueError("H2B-P1 neighborhood record is invalid")
+            if type(record.get("neighborhood_id")) is not int or record["neighborhood_id"] != expected_id:
+                raise ValueError("H2B-P1 neighborhood ids are not continuous")
+            key_sha = record.get("key_sha256")
+            factor_id = record.get("factor_id")
+            if not _valid_sha(key_sha) or type(factor_id) is not int or not 0 <= factor_id < len(factors):
+                raise ValueError("H2B-P1 neighborhood factor binding is invalid")
+            central_class_id = record.get("central_class_id")
+            if type(central_class_id) is not int or central_class_id < 0:
+                raise ValueError("H2B-P1 central class id is invalid")
+            touching = record.get("touching_cell_ordinals")
+            touching_classes = record.get("touching_class_ids")
+            order = record.get("numeric_accumulation_order")
+            if any(
+                not isinstance(values, (list, tuple))
+                or any(type(value) is not int for value in values)
+                for values in (touching, touching_classes, order)
+            ):
+                raise ValueError("H2B-P1 touching metadata sequence is invalid")
+            touching = tuple(touching)
+            touching_classes = tuple(touching_classes)
+            order = tuple(order)
+            if (
+                not touching
+                or len(touching_classes) != len(touching)
+                or len(set(touching)) != len(touching)
+                or len(order) != len(touching)
+                or len(set(order)) != len(order)
+                or set(order) != set(touching)
+                or type(record.get("touching_count")) is not int
+                or record["touching_count"] != len(touching)
+                or type(record.get("touching_class_count")) is not int
+                or record["touching_class_count"] != len(set(touching_classes))
+            ):
+                raise ValueError("H2B-P1 touching metadata does not close")
+            if record.get("numeric_accumulation_order_sha256") != _sha256(order):
+                raise ValueError("H2B-P1 numeric accumulation order SHA mismatch")
+            cells = record.get("cell_ordinals")
+            if not isinstance(cells, (list, tuple)) or any(
+                type(value) is not int for value in cells
+            ):
+                raise ValueError("H2B-P1 neighborhood cell ordinals are invalid")
+            if type(record.get("multiplicity")) is not int or record["multiplicity"] != len(cells):
+                raise ValueError("H2B-P1 neighborhood multiplicity is invalid")
+            if type(record.get("touching_count")) is not int or record["touching_count"] <= 0:
+                raise ValueError("H2B-P1 touching count is invalid")
+            by_id[expected_id] = record
+        members: list[list[int]] = [[] for _ in neighborhoods]
+        for cell_id, neighborhood_id in enumerate(cell_ids.tolist()):
+            members[int(neighborhood_id)].append(cell_id)
+        for neighborhood_id, record in by_id.items():
+            if tuple(members[neighborhood_id]) != tuple(record["cell_ordinals"]):
+                raise ValueError("H2B-P1 cell/neighborhood mapping mismatch")
+        identity = _deep_freeze(self.identity)
+        if not isinstance(identity, Mapping):
+            raise ValueError("H2B-P1 store identity is invalid")
+        cell_ids.setflags(write=False)
+        offsets.setflags(write=False)
+        rows.setflags(write=False)
+        object.__setattr__(self, "factors", factors)
+        object.__setattr__(self, "neighborhoods", neighborhoods)
+        object.__setattr__(self, "cell_neighborhood_ids", cell_ids)
+        object.__setattr__(self, "cell_row_offsets", offsets)
+        object.__setattr__(self, "cell_independent_global_rows", rows)
+        object.__setattr__(self, "identity", identity)
+        object.__setattr__(self, "manifest", None if self.manifest is None else _deep_freeze(self.manifest))
+        object.__setattr__(self, "_audit", _deep_freeze(self._make_audit()))
+
+    def _metadata(self) -> dict[str, Any]:
+        identity = _jsonable(self.identity)
+        metadata = {
+            "identity": identity,
+            "source_identity": identity.get("source_identity"),
+            "full_source_sha256": identity.get("full_source_sha256"),
+            "config_identity": identity.get("config_identity"),
+            "form_identity": identity.get("form_identity"),
+            "cache_identity": identity.get("cache_identity"),
+            "r0_authority": identity.get("r0_authority"),
+            "r1_authority": identity.get("r1_authority"),
+            "r2_authority": identity.get("r2_authority"),
+            "p0_authority": identity.get("p0_authority"),
+            "factor_count": len(self.factors),
+            "neighborhood_count": len(self.neighborhoods),
+            "cell_count": int(self.cell_neighborhood_ids.size),
+            "factors": [
+                {
+                    "factor_id": factor_id,
+                    "matrix_sha256": factor.matrix_sha256,
+                    "matrix_shape": [int(value) for value in factor.values.shape],
+                    "matrix_dtype": str(factor.values.dtype),
+                    "matrix_nbytes": int(factor.values.nbytes),
+                    "values_path": f"factor_{factor_id}_values.npy",
+                    "pivots_path": f"factor_{factor_id}_pivots.npy",
+                    "factor_values_sha256": factor.factor_values_sha256,
+                    "pivot_sha256": factor.pivot_sha256,
+                    "factorization_residual": float(factor.factorization_residual),
+                    "solve_residual": float(factor.solve_residual),
+                    "finite": bool(factor.finite),
+                    "deterministic": bool(factor.deterministic),
+                    "pivot_growth": float(factor.pivot_growth),
+                    "reciprocal_condition_estimate": float(
+                        factor.reciprocal_condition_estimate
+                    ),
+                    "condition_estimate": float(factor.condition_estimate),
+                    "solve_gains": [float(value) for value in factor.solve_gains],
+                }
+                for factor_id, factor in enumerate(self.factors)
+            ],
+            "cells": {
+                "neighborhood_ids_path": "cell_neighborhood_ids.npy",
+                "row_offsets_path": "cell_row_offsets.npy",
+                "independent_global_rows_path": "cell_independent_global_rows.npy",
+            },
+            "materialization_identity": {
+                "patch_matrices": False,
+                "per_cell_factor": False,
+                "class_expansion": False,
+                "global_matrix": False,
+                "global_constraint_matrix": False,
+                "slab_factor": False,
+                "schur": False,
+            },
+        }
+        return metadata
+
+    def _make_audit(self) -> dict[str, Any]:
+        metadata = self._metadata()
+        components = {
+            "factor_values_bytes": sum(int(factor.values.nbytes) for factor in self.factors),
+            "factor_pivots_bytes": sum(int(factor.pivots.nbytes) for factor in self.factors),
+            "neighborhood_metadata_bytes": len(_json_bytes(self.neighborhoods)),
+            "cell_neighborhood_mapping_bytes": int(self.cell_neighborhood_ids.nbytes),
+            "cell_reference_bytes": int(
+                self.cell_row_offsets.nbytes + self.cell_independent_global_rows.nbytes
+            ),
+            "canonical_json_metadata_bytes": len(_json_bytes(metadata)),
+        }
+        return {
+            "schema": H2B_P1_FACTOR_STORE_SCHEMA,
+            "unique_factor_count": len(self.factors),
+            "neighborhood_count": len(self.neighborhoods),
+            "cell_count": int(self.cell_neighborhood_ids.size),
+            "factor_plus_metadata_bytes": int(sum(components.values())),
+            "factor_plus_metadata_limit_bytes": 500_000_000,
+            "factor_plus_metadata_gate": int(sum(components.values())) <= 500_000_000,
+            "retained_payload_components": components,
+            "factor_plus_metadata_basis": (
+                "LU_values+pivots+neighborhood_JSON+cell_neighborhood_map+"
+                "cell_row_arrays+canonical_JSON_metadata"
+            ),
+            "materialization_identity": metadata["materialization_identity"],
+            "r2_reconstructed_cache_retained": False,
+            "class_expansion_retained": False,
+            "per_cell_factor_count": 0,
+            "finite": all(bool(factor.finite) for factor in self.factors),
+            "deterministic": all(bool(factor.deterministic) for factor in self.factors),
+        }
+
+    @property
+    def audit(self) -> Mapping[str, Any]:
+        return self._audit
+
+    def audit_jsonable(self) -> dict[str, Any]:
+        """Return an owned plain-JSON snapshot of the frozen audit."""
+
+        return _jsonable(self._audit)
+
+    def cell_rows(self, cell_id: int) -> np.ndarray:
+        if type(cell_id) is not int or not 0 <= cell_id < self.cell_neighborhood_ids.size:
+            raise ValueError("H2B-P1 cell id is out of range")
+        rows = self.cell_independent_global_rows[
+            int(self.cell_row_offsets[cell_id]) : int(self.cell_row_offsets[cell_id + 1])
+        ]
+        return rows
+
+    def factor_id_for_cell(self, cell_id: int) -> int:
+        if type(cell_id) is not int or not 0 <= cell_id < self.cell_neighborhood_ids.size:
+            raise ValueError("H2B-P1 cell id is out of range")
+        neighborhood_id = int(self.cell_neighborhood_ids[cell_id])
+        return int(self.neighborhoods[neighborhood_id]["factor_id"])
+
+    def gather_cell(self, full_vector: np.ndarray, cell_id: int) -> np.ndarray:
+        values = np.asarray(full_vector)
+        rows = self.cell_rows(cell_id)
+        if (
+            values.dtype != np.dtype(np.complex128)
+            or values.ndim != 1
+            or not values.flags.c_contiguous
+            or np.any(rows < 0)
+            or np.any(rows >= values.size)
+        ):
+            raise ValueError("H2B-P1 gather vector is invalid")
+        return np.ascontiguousarray(values[rows], dtype=np.complex128)
+
+    def solve_cell(self, cell_id: int, right_hand_side: np.ndarray) -> np.ndarray:
+        rows = self.cell_rows(cell_id)
+        values = np.asarray(right_hand_side)
+        if (
+            values.dtype != np.dtype(np.complex128)
+            or not values.flags.c_contiguous
+            or values.ndim != 1
+            or values.size != rows.size
+        ):
+            raise ValueError("H2B-P1 cell solve RHS must be C-contiguous complex128")
+        return self.factors[self.factor_id_for_cell(cell_id)].solve(values)
+
+
+def build_h2b_p1_factor_store(
+    factors: Sequence[H2BP0Factor],
+    neighborhoods: Sequence[Mapping[str, Any]],
+    cell_neighborhood_ids: np.ndarray,
+    cell_row_offsets: np.ndarray,
+    cell_independent_global_rows: np.ndarray,
+    *,
+    identity: Mapping[str, Any],
+    task037_extra_h2b: bool = False,
+) -> H2BP1FactorStore:
+    _require_opt_in(task037_extra_h2b)
+    return H2BP1FactorStore(
+        tuple(factors),
+        tuple(neighborhoods),
+        cell_neighborhood_ids,
+        cell_row_offsets,
+        cell_independent_global_rows,
+        identity,
+    )
+
+
+def write_h2b_p1_factor_store(
+    store: H2BP1FactorStore,
+    output_dir: str | Path,
+    *,
+    task037_extra_h2b: bool = False,
+) -> Path:
+    """Write one explicit P1 JSON/NumPy retained store."""
+
+    _require_opt_in(task037_extra_h2b)
+    root = Path(output_dir)
+    root.mkdir(parents=True, exist_ok=True)
+    files: dict[str, Any] = {}
+    for factor_id, factor in enumerate(store.factors):
+        values_path = f"factor_{factor_id}_values.npy"
+        pivots_path = f"factor_{factor_id}_pivots.npy"
+        files[values_path] = _p1_write_array(root, values_path, factor.values)
+        files[pivots_path] = _p1_write_array(root, pivots_path, factor.pivots)
+    files["cell_neighborhood_ids.npy"] = _p1_write_array(
+        root, "cell_neighborhood_ids.npy", store.cell_neighborhood_ids
+    )
+    files["cell_row_offsets.npy"] = _p1_write_array(
+        root, "cell_row_offsets.npy", store.cell_row_offsets
+    )
+    files["cell_independent_global_rows.npy"] = _p1_write_array(
+        root,
+        "cell_independent_global_rows.npy",
+        store.cell_independent_global_rows,
+    )
+    metadata = store._metadata()
+    neighborhoods = [_jsonable(record) for record in store.neighborhoods]
+    components = dict(store.audit["retained_payload_components"])
+    manifest: dict[str, Any] = {
+        "schema": H2B_P1_FACTOR_STORE_SCHEMA,
+        "task037_extra_h2b": True,
+        "metadata": metadata,
+        "neighborhoods": neighborhoods,
+        "files": files,
+        "payload": {
+            "components": components,
+            "factor_plus_metadata_bytes": int(sum(components.values())),
+            "factor_plus_metadata_limit_bytes": 500_000_000,
+            "factor_plus_metadata_basis": store.audit["factor_plus_metadata_basis"],
+        },
+        "materialization_identity": metadata["materialization_identity"],
+    }
+    manifest["evidence_sha256"] = _sha256(manifest)
+    manifest_path = root / "manifest.json"
+    manifest_path.write_bytes(_json_bytes(manifest) + b"\n")
+    return manifest_path
+
+
+def _p1_validate_file_entry(
+    root: Path, files: Mapping[str, Any], relative: Any
+) -> tuple[Path, Mapping[str, Any]]:
+    if (
+        not isinstance(relative, str)
+        or Path(relative).is_absolute()
+        or ".." in Path(relative).parts
+        or relative not in files
+        or not isinstance(files[relative], Mapping)
+    ):
+        raise ValueError("H2B-P1 array path is invalid")
+    entry = files[relative]
+    path = root / relative
+    if not path.is_file() or int(entry.get("bytes", -1)) != int(path.stat().st_size):
+        raise ValueError("H2B-P1 array file size is invalid")
+    if _p1_file_sha256(path) != entry.get("sha256"):
+        raise ValueError("H2B-P1 array file SHA mismatch")
+    return path, entry
+
+
+def _p1_load_array(
+    root: Path, files: Mapping[str, Any], relative: Any
+) -> np.ndarray:
+    path, entry = _p1_validate_file_entry(root, files, relative)
+    loaded = np.load(path, allow_pickle=False)
+    if not isinstance(loaded, np.ndarray) or loaded.dtype == np.dtype(object):
+        raise ValueError("H2B-P1 cold array is not numeric")
+    if str(loaded.dtype) != entry.get("dtype") or list(loaded.shape) != entry.get("shape"):
+        raise ValueError("H2B-P1 array shape/dtype mismatch")
+    if int(loaded.nbytes) != int(entry.get("nbytes", -1)) or _array_sha256(loaded) != entry.get("array_sha256"):
+        raise ValueError("H2B-P1 array identity mismatch")
+    result = np.ascontiguousarray(loaded)
+    result.setflags(write=False)
+    return result
+
+
+def load_h2b_p1_factor_store(
+    manifest_path: str | Path,
+    *,
+    task037_extra_h2b: bool = False,
+) -> H2BP1FactorStore:
+    """Validate all cold files and load the retained P1 store once into RAM."""
+
+    _require_opt_in(task037_extra_h2b)
+    path = Path(manifest_path)
+    manifest = json.loads(
+        path.read_text(encoding="utf-8"),
+        parse_constant=lambda value: (_ for _ in ()).throw(
+            ValueError(f"non-finite JSON constant {value}")
+        ),
+    )
+    if (
+        not isinstance(manifest, Mapping)
+        or manifest.get("schema") != H2B_P1_FACTOR_STORE_SCHEMA
+        or manifest.get("task037_extra_h2b") is not True
+        or manifest.get("evidence_sha256") != _sha256(
+            {key: value for key, value in manifest.items() if key != "evidence_sha256"}
+        )
+    ):
+        raise ValueError("H2B-P1 manifest schema/evidence is invalid")
+    metadata = manifest.get("metadata")
+    neighborhoods = manifest.get("neighborhoods")
+    files = manifest.get("files")
+    payload = manifest.get("payload")
+    if not isinstance(metadata, Mapping) or not isinstance(neighborhoods, list) or not isinstance(files, Mapping) or not isinstance(payload, Mapping):
+        raise ValueError("H2B-P1 manifest sections are missing")
+    identity = metadata.get("identity")
+    if not isinstance(identity, Mapping) or any(
+        metadata.get(key) != identity.get(key)
+        for key in (
+            "source_identity",
+            "full_source_sha256",
+            "config_identity",
+            "form_identity",
+            "cache_identity",
+            "r0_authority",
+            "r1_authority",
+            "r2_authority",
+            "p0_authority",
+        )
+    ):
+        raise ValueError("H2B-P1 identity projection is not closed")
+    factor_metadata = metadata.get("factors")
+    cells = metadata.get("cells")
+    if not isinstance(factor_metadata, list) or not isinstance(cells, Mapping):
+        raise ValueError("H2B-P1 factor/cell metadata is missing")
+    if metadata.get("factor_count") != len(factor_metadata) or metadata.get("neighborhood_count") != len(neighborhoods):
+        raise ValueError("H2B-P1 manifest counts are invalid")
+    referenced: list[str] = []
+    for item in factor_metadata:
+        if not isinstance(item, Mapping):
+            raise ValueError("H2B-P1 factor metadata is invalid")
+        for key in ("values_path", "pivots_path"):
+            relative = item.get(key)
+            if not isinstance(relative, str):
+                raise ValueError("H2B-P1 factor path is invalid")
+            _p1_validate_file_entry(path.parent, files, relative)
+            referenced.append(relative)
+    cell_paths = (
+        cells.get("neighborhood_ids_path"),
+        cells.get("row_offsets_path"),
+        cells.get("independent_global_rows_path"),
+    )
+    for relative in cell_paths:
+        if not isinstance(relative, str):
+            raise ValueError("H2B-P1 cell array path is invalid")
+        _p1_validate_file_entry(path.parent, files, relative)
+        referenced.append(relative)
+    if len(set(referenced)) != len(referenced) or set(referenced) != set(files):
+        raise ValueError("H2B-P1 file inventory is not closed")
+    factors: list[H2BP0Factor] = []
+    for expected_id, item in enumerate(factor_metadata):
+        if type(item.get("factor_id")) is not int or item["factor_id"] != expected_id:
+            raise ValueError("H2B-P1 factor ids are not continuous")
+        values = _p1_load_array(path.parent, files, item["values_path"])
+        pivots = _p1_load_array(path.parent, files, item["pivots_path"])
+        if (
+            not _valid_sha(item.get("matrix_sha256"))
+            or not _valid_sha(item.get("factor_values_sha256"))
+            or not _valid_sha(item.get("pivot_sha256"))
+            or _array_sha256(values) != item.get("factor_values_sha256")
+            or _array_sha256(pivots) != item.get("pivot_sha256")
+        ):
+            raise ValueError("H2B-P1 factor array binding failed")
+        if values.dtype != np.dtype(np.complex128) or pivots.dtype != np.dtype(np.int32) or values.ndim != 2 or values.shape[0] != values.shape[1] or pivots.shape != (values.shape[0],):
+            raise ValueError("H2B-P1 factor array shape/dtype is invalid")
+        if (
+            item.get("matrix_shape") != [int(value) for value in values.shape]
+            or item.get("matrix_dtype") != str(values.dtype)
+            or item.get("matrix_nbytes") != int(values.nbytes)
+        ):
+            raise ValueError("H2B-P1 factor matrix identity is invalid")
+        for key in ("factorization_residual", "solve_residual", "pivot_growth", "reciprocal_condition_estimate", "condition_estimate"):
+            if not isinstance(item.get(key), (int, float)) or not np.isfinite(float(item[key])) or float(item[key]) < 0.0:
+                raise ValueError("H2B-P1 factor audit is nonfinite")
+        if not isinstance(item.get("finite"), bool) or not isinstance(item.get("deterministic"), bool) or not item["finite"] or not item["deterministic"]:
+            raise ValueError("H2B-P1 factor finite/deterministic audit failed")
+        gains = item.get("solve_gains")
+        if (
+            not isinstance(gains, list)
+            or len(gains) != 2
+            or any(
+                not isinstance(value, (int, float))
+                or not np.isfinite(float(value))
+                or float(value) < 0.0
+                for value in gains
+            )
+        ):
+            raise ValueError("H2B-P1 factor solve gains are invalid")
+        factors.append(
+            H2BP0Factor(
+                values=values,
+                pivots=pivots,
+                matrix_sha256=item["matrix_sha256"],
+                factor_values_sha256=item["factor_values_sha256"],
+                pivot_sha256=item["pivot_sha256"],
+                factorization_residual=float(item["factorization_residual"]),
+                solve_residual=float(item["solve_residual"]),
+                finite=True,
+                deterministic=True,
+                pivot_growth=float(item["pivot_growth"]),
+                reciprocal_condition_estimate=float(item["reciprocal_condition_estimate"]),
+                condition_estimate=float(item["condition_estimate"]),
+                solve_gains=tuple(float(value) for value in item["solve_gains"]),
+            )
+        )
+        del values, pivots
+    cell_ids = _p1_load_array(path.parent, files, cell_paths[0])
+    offsets = _p1_load_array(path.parent, files, cell_paths[1])
+    rows = _p1_load_array(path.parent, files, cell_paths[2])
+    loaded = H2BP1FactorStore(
+        tuple(factors),
+        tuple(neighborhoods),
+        cell_ids,
+        offsets,
+        rows,
+        metadata.get("identity", {}),
+        None,
+    )
+    del cell_ids, offsets, rows
+    if metadata.get("cell_count") != loaded.cell_neighborhood_ids.size:
+        raise ValueError("H2B-P1 manifest cell count is invalid")
+    expected_components = loaded.audit["retained_payload_components"]
+    if payload.get("components") != expected_components or payload.get("factor_plus_metadata_bytes") != loaded.audit["factor_plus_metadata_bytes"]:
+        raise ValueError("H2B-P1 retained payload accounting mismatch")
+    if manifest.get("materialization_identity") != loaded.audit["materialization_identity"]:
+        raise ValueError("H2B-P1 materialization identity mismatch")
+    return loaded
 
 
 def h2b_p1_live_set_audit(
