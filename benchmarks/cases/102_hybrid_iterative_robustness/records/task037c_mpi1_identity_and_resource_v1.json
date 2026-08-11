@@ -1,0 +1,43 @@
+{
+  "schema": "task037c.compact-mpi1-identity-resource.v1",
+  "classification": "research_pass_under_user_authorized_extension",
+  "source": {"verified_clean_sha": "f2d7719b6253251a06e8cd8388fd443bbf47d443", "ordinary_defaults_unchanged": true, "traction_model": "full3d_one_cell_exact_schur", "side_residual_correction_steps": 2, "max_it": 4500, "restart": 90, "rtol": 5e-9},
+  "profile": {"degree": 6, "h_nm": 10.0, "wavelength_nm": 13.5, "polarization": "s", "grazing_deg": 1.0, "requested_modes": 120, "mpi_size": 1},
+  "raw_evidence": {"scope": "case.raw paths and SHA256", "arrays_included": false, "timelines_included": false},
+  "cases": [
+    {
+      "phi_deg": 0.0,
+      "raw": {
+        "watchdog": {"path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/qualification_f2d7719/r6_mpi1_two_pass_phi_0_m120_maxit4500/watchdog.json", "sha256": "cc14c7333409cd94d34d866fd7d6d9a5d8674a81dcb43143c595f66e07d7c25f"},
+        "online": {"path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/qualification_f2d7719/r6_mpi1_two_pass_phi_0_m120_maxit4500/run/online_record.json", "sha256": "251294fdf15653a57ac9cd2f6fc073448d165e72bc9d7c0ec44376018235add4"}
+      },
+      "gate": {"pass": true, "reason": 2, "iterations": 1472, "residuals": {"reported": 3.907252210650714e-09, "global": 3.907251814109135e-09, "bottom": 4.953887173283623e-09, "top": 3.1665304948395907e-09, "modal": 2.4520930368199082e-15}, "traction_bottom": 4.953887173283623e-09, "traction_top": 3.1665304948395907e-09, "rta": {"R": 0.36562579423061303, "T": 0.012990632481912843, "A": 0.6213835732874742, "A_volume": 0.621383578463383}, "closure": 5.175908812660168e-09, "canonical": true, "release": true, "swap_mib": 0.0},
+      "resource": {"rss_mib": 1751.3203125, "classification": "engineering", "preferred_limit_mib": 1536.0, "engineering_limit_mib": 2048.0, "preferred_pass": false, "swap_mib": 0.0, "total_wall_seconds": 1903.9216409809887}
+    },
+    {
+      "phi_deg": -5.0,
+      "raw": {
+        "watchdog": {"path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/qualification_f2d7719/r6_mpi1_two_pass_phi_m5_m120_maxit4500/watchdog.json", "sha256": "c87b2439073c7245b6fc1fec64d2d6ee7548439060d4bbf33c2254171ccffe6b"},
+        "online": {"path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/qualification_f2d7719/r6_mpi1_two_pass_phi_m5_m120_maxit4500/run/online_record.json", "sha256": "963a9f40c293c6b653d3a87a716548f32425d44cb94ade4c3d7d4236a78a75ad"}
+      },
+      "gate": {"pass": true, "reason": 2, "iterations": 2160, "residuals": {"reported": 3.543603377232092e-09, "global": 3.5435997116250184e-09, "bottom": 4.845818349885687e-09, "top": 2.8547638714345937e-09, "modal": 2.1350249734113876e-15}, "traction_bottom": 4.8458183501976705e-09, "traction_top": 2.8547638714345937e-09, "rta": {"R": 0.3655957142844214, "T": 0.01299403008383748, "A": 0.6214102556317411, "A_volume": 0.6214102543162413}, "closure": -1.3154998201869716e-09, "canonical": true, "release": true, "swap_mib": 0.0},
+      "resource": {"rss_mib": 1662.109375, "classification": "engineering", "preferred_limit_mib": 1536.0, "engineering_limit_mib": 2048.0, "preferred_pass": false, "swap_mib": 0.0, "total_wall_seconds": 2194.5942551600747}
+    },
+    {
+      "phi_deg": 5.0,
+      "raw": {
+        "watchdog": {"path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/qualification_f2d7719/r6_mpi1_two_pass_phi_p5_m120_maxit4500/watchdog.json", "sha256": "a7eb581f6dfcb042a65855dc7d113aba2c56246a8d1865a3221d3d95ec6521f3"},
+        "online": {"path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/qualification_f2d7719/r6_mpi1_two_pass_phi_p5_m120_maxit4500/run/online_record.json", "sha256": "93bcfcdbde5d5c571fed3325ecf0f8db19b02788901eccb1018402002ee38149"}
+      },
+      "gate": {"pass": true, "reason": 2, "iterations": 3338, "residuals": {"reported": 2.8095457174166228e-09, "global": 2.809543076284752e-09, "bottom": 4.9997430026734784e-09, "top": 2.1951439778246774e-09, "modal": 2.026232764479412e-15}, "traction_bottom": 4.9997430026734784e-09, "traction_top": 2.1951439778246774e-09, "rta": {"R": 0.3655957109671093, "T": 0.012994030395102104, "A": 0.6214102586377886, "A_volume": 0.6214102625658544}, "closure": 3.928065872571551e-09, "canonical": true, "release": true, "swap_mib": 0.0},
+      "resource": {"rss_mib": 1744.5703125, "classification": "engineering", "preferred_limit_mib": 1536.0, "engineering_limit_mib": 2048.0, "preferred_pass": false, "swap_mib": 0.0, "total_wall_seconds": 2777.6646223219577}
+    }
+  ],
+  "comparators": [
+    {"phi_deg": 0.0, "kind": "mpi8_vs_mpi1", "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r6_mpi1_vs_mpi8/phi_0.json", "sha256": "f56665b5340498b3dbc8f75a4625bea351224a770b333cf1ff76da065e98b987", "pass": true},
+    {"phi_deg": -5.0, "kind": "mpi8_vs_mpi1", "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r6_mpi1_vs_mpi8/phi_m5.json", "sha256": "58b5d980c04de3a351faae969979f63ce2478b08cf7eea966a13cd7189c99542", "pass": true},
+    {"phi_deg": 5.0, "kind": "mpi8_vs_mpi1", "path": "/home/Projects/MyFEniCS/benchmarks/artifacts/task037c/final_f2d7719/r6_mpi1_vs_mpi8/phi_p5.json", "sha256": "61b962395952798e7110f7c0a7c4237ec596f8cd735a407a6f8f66905661492b", "pass": true}
+  ],
+  "resource_gate": {"authority": "simultaneous mpi_process_tree_rss_mb", "preferred_limit_mib": 1536.0, "engineering_limit_mib": 2048.0, "all_cases_preferred_pass": false, "all_cases_engineering_pass": true, "swap_mib": 0.0},
+  "historical_boundary": {"original_scalar_max_it": 1600, "extension_is_not_production_qualified": true, "classification": "MPI1_identity_and_resource_pass_under_authorized_extension"}
+}

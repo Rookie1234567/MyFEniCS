@@ -1,12 +1,26 @@
 {
   "record_schema": "task037c.hybrid-iterative-robustness.v1",
   "required": [
-    "profile",
+    "schema",
+    "classification",
     "source",
-    "mode_identity",
-    "comparisons",
-    "resource"
+    "profile",
+    "raw_evidence",
+    "cases",
+    "comparators",
+    "resource_gate",
+    "historical_boundary"
   ],
+  "compact_records": [
+    "records/task037c_mpi1_identity_and_resource_v1.json",
+    "records/task037c_mpi8_three_way_qualification_v1.json"
+  ],
+  "research_extension": {
+    "traction_model": "full3d_one_cell_exact_schur",
+    "side_residual_correction_steps": 2,
+    "max_it": 4500,
+    "production_qualified": false
+  },
   "allowed_phi_deg": [-5.0, 0.0, 5.0],
   "allowed_requested_modes": [120, 160],
   "allowed_mpi_size": [1, 8]

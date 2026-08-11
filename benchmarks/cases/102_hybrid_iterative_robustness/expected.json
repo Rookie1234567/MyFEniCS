@@ -1,6 +1,9 @@
 {
-  "status": "not_run",
-  "records": [],
+  "status": "research_pass_under_user_authorized_extension",
+  "records": [
+    "records/task037c_mpi1_identity_and_resource_v1.json",
+    "records/task037c_mpi8_three_way_qualification_v1.json"
+  ],
   "raw_artifacts_tracked": false,
-  "formal_qualification": "pending"
+  "formal_qualification": "limited_research_scope_not_production_qualified"
 }
