@@ -39,6 +39,8 @@ H2B_ONLINE_RSS_LIMIT_BYTES = 1_450_000_000
 H2B_SWAP_LIMIT_BYTES = 0
 H2B_S0_RSS_LIMIT_BYTES = 1_000_000_000
 H2B_S0_TIMEOUT_SECONDS = 3_600.0
+H2B_PROCESS_DRAIN_TIMEOUT_SECONDS = 5.0
+H2B_PROCESS_DRAIN_POLL_SECONDS = 0.05
 H2B_S0_STRATEGIES = ("additive", "forward", "symmetric")
 H2B_S0_OPERATIONAL_ACTION_COUNTS = {"additive": 1, "forward": 8, "symmetric": 16}
 H2B_S0_RHO_LIMITS = {
@@ -1669,12 +1671,26 @@ def _monitor_phase(
                 "all_status_readable": bool(sample.all_status_readable),
                 "compiler_descendant_pids": compiler,
             }
+            if not sample.all_status_readable:
+                terminal_return_code = process.poll()
+                if terminal_return_code is not None:
+                    item.update(
+                        {
+                            "sample_kind": "terminal_exit_unreadable",
+                            "formal_sample": False,
+                            "terminal_exit": True,
+                            "return_code": int(terminal_return_code),
+                        }
+                    )
             timeline.write(json.dumps(item, sort_keys=True, separators=(",", ":")) + "\n")
             timeline.flush()
-            peak = max(peak, int(sample.rss_bytes))
-            swap = max(swap, int(sample.swap_bytes))
+            if item["sample_kind"] == "worker" and sample.all_status_readable:
+                peak = max(peak, int(sample.rss_bytes))
+                swap = max(swap, int(sample.swap_bytes))
             sampled_pids.update(pids)
             elapsed = time.perf_counter() - started
+            if item["sample_kind"] == "terminal_exit_unreadable":
+                break
             if not sample.all_status_readable:
                 termination = {"reason": "process_tree_unreadable"}
                 break
@@ -1707,6 +1723,34 @@ def _monitor_phase(
 def _processes_gone(process_info: Mapping[str, Any]) -> bool:
     pids = [process_info.get("root_pid"), *process_info.get("observed_process_tree_pids", [])]
     return all(isinstance(pid, int) and not (Path("/proc") / str(pid)).exists() for pid in pids)
+
+
+def _s0_stage_lifecycle_valid(stage_process: Any) -> bool:
+    return bool(
+        isinstance(stage_process, Mapping)
+        and type(stage_process.get("return_code")) is int
+        and stage_process.get("return_code") == 0
+        and stage_process.get("termination") is None
+        and stage_process.get("processes_gone_before_s0") is True
+    )
+
+
+def _bounded_process_drain(process_info: Mapping[str, Any]) -> dict[str, Any]:
+    """Check post-wait PID teardown for at most the fixed five-second window."""
+
+    started = time.perf_counter()
+    polls = 0
+    while True:
+        gone = _processes_gone(process_info)
+        elapsed = float(time.perf_counter() - started)
+        if gone or elapsed >= H2B_PROCESS_DRAIN_TIMEOUT_SECONDS:
+            return {
+                "gone": bool(gone),
+                "elapsed_wall_seconds": elapsed,
+                "poll_count": polls,
+            }
+        polls += 1
+        time.sleep(H2B_PROCESS_DRAIN_POLL_SECONDS)
 
 
 def _stage_gate_allows_online(
@@ -1800,8 +1844,10 @@ def _run_watchdog(run_dir: Path) -> int:
         command = _worker_command(executable, "jit-worker", run_dir)
         stage = _monitor_phase(run_dir, "stage", command, H2B_STAGE_TIMEOUT_SECONDS, H2B_STAGE_RSS_LIMIT_BYTES)
         stage_summary = _read_json(run_dir / "stage_summary.json")
-        processes_gone = _processes_gone(stage)
+        drain = _bounded_process_drain(stage)
+        processes_gone = drain["gone"]
         stage["processes_gone_before_online"] = bool(processes_gone)
+        stage["processes_gone_before_online_drain"] = drain
         stage_ok = _stage_gate_allows_online(stage, stage_summary, processes_gone, run_dir)
         if not stage_ok:
             error = "stage_gate_failed_before_online"
@@ -1869,8 +1915,10 @@ def _run_s0_watchdog(run_dir: Path) -> int:
             H2B_STAGE_RSS_LIMIT_BYTES,
         )
         stage_summary = _read_json(run_dir / "stage_summary.json")
-        processes_gone = _processes_gone(stage)
+        drain = _bounded_process_drain(stage)
+        processes_gone = drain["gone"]
         stage["processes_gone_before_s0"] = bool(processes_gone)
+        stage["processes_gone_before_s0_drain"] = drain
         if not _stage_gate_allows_online(stage, stage_summary, processes_gone, run_dir):
             error = "stage_gate_failed_before_s0"
         else:
@@ -1881,7 +1929,9 @@ def _run_s0_watchdog(run_dir: Path) -> int:
                 H2B_S0_TIMEOUT_SECONDS,
                 H2B_S0_RSS_LIMIT_BYTES,
             )
-            s0["processes_gone_after_s0"] = _processes_gone(s0)
+            drain = _bounded_process_drain(s0)
+            s0["processes_gone_after_s0"] = bool(drain["gone"])
+            s0["processes_gone_after_s0_drain"] = drain
     except _worker_error_types() as exc:
         error = f"{type(exc).__name__}: {exc}"
     if source_start is not None:
@@ -1994,6 +2044,172 @@ def _s0_controlled_missing_summary(run_dir: Path, watchdog: Mapping[str, Any]) -
     }
 
 
+def _s0_terminal_exit_race_adjudication(
+    run_dir: Path,
+    watchdog: Mapping[str, Any],
+    stage: Mapping[str, Any],
+    worker: Mapping[str, Any],
+    checks: Mapping[str, Any],
+    timeline: Mapping[str, Any],
+    checker_source: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Adjudicate only the already-recorded S0 terminal-exit race."""
+
+    required_checks = (
+        "watchdog_evidence",
+        "worker_evidence",
+        "worker_status",
+        "source",
+        "runtime",
+        "phase_identity",
+        "stage_identity",
+        "watchdog_identity",
+        "authority",
+        "forms",
+        "commands",
+        "cache_hit",
+        "stage_manifest",
+        "run_dir",
+        "progress",
+        "watchdog_artifacts",
+        "stage_resource",
+        "stage_lifecycle",
+        "resource",
+        "p6",
+        "factor_authority",
+        "strategy_order",
+        "combinations_valid",
+    )
+    failed = [name for name in required_checks if checks.get(name) is not True]
+    s0 = watchdog.get("s0")
+    termination = s0.get("termination") if isinstance(s0, Mapping) else None
+    nested = termination.get("termination") if isinstance(termination, Mapping) else None
+    termination_ok = bool(
+        isinstance(termination, Mapping)
+        and termination.get("reason") == "process_tree_unreadable"
+        and isinstance(nested, Mapping)
+        and nested.get("requested") is True
+        and nested.get("worker_exited") is True
+        and nested.get("sigkill_required") is False
+    )
+    source_ok = bool(
+        _source_pair_valid(worker.get("source_at_start"), worker.get("source_at_end"))
+        and _source_pair_valid(stage.get("source_at_start"), stage.get("source_at_end"))
+        and _source_pair_valid(watchdog.get("source_at_start"), watchdog.get("source_at_end"))
+        and watchdog.get("source_at_start") == worker.get("source_at_start")
+        and stage.get("source_at_start") == worker.get("source_at_start")
+    )
+    if not source_ok:
+        failed.append("source_pair")
+    if watchdog.get("status") != "gate_failed":
+        failed.append("raw_watchdog_status")
+    if watchdog.get("error") is not None:
+        failed.append("watchdog_error")
+    worker_elapsed = worker.get("elapsed_wall_seconds")
+    terminal_elapsed = timeline.get("terminal_elapsed_seconds") if isinstance(timeline, Mapping) else None
+    time_closed = bool(
+        isinstance(worker_elapsed, (int, float))
+        and not isinstance(worker_elapsed, bool)
+        and math.isfinite(float(worker_elapsed))
+        and float(worker_elapsed) > 0.0
+        and isinstance(terminal_elapsed, (int, float))
+        and not isinstance(terminal_elapsed, bool)
+        and math.isfinite(float(terminal_elapsed))
+        and float(terminal_elapsed) >= float(worker_elapsed)
+    )
+    if not time_closed:
+        failed.append("terminal_time_after_worker_summary")
+    if not (
+        isinstance(stage, Mapping)
+        and stage.get("status") == "measurement_complete"
+        and _evidence_valid(stage)
+    ):
+        failed.append("stage_complete")
+    if not _s0_stage_lifecycle_valid(watchdog.get("stage")):
+        failed.append("stage_lifecycle")
+    if not (
+        watchdog.get("schema") == H2B_S0_WATCHDOG_SCHEMA
+        and _evidence_valid(watchdog)
+    ):
+        failed.append("watchdog_complete")
+    if not (
+        isinstance(worker, Mapping)
+        and worker.get("status") == "measurement_complete"
+        and worker.get("error") is None
+        and _evidence_valid(worker)
+    ):
+        failed.append("worker_complete")
+    processes_gone = bool(isinstance(s0, Mapping) and _processes_gone(s0))
+    if not (
+        isinstance(s0, Mapping)
+        and type(s0.get("return_code")) is int
+        and s0.get("return_code") == 0
+        and termination_ok
+        and processes_gone
+    ):
+        failed.append("worker_processes_gone")
+    if not (
+        isinstance(timeline, Mapping)
+        and timeline.get("legacy_terminal_exit") is True
+        and isinstance(timeline.get("live_sample_count"), int)
+        and timeline["live_sample_count"] > 0
+    ):
+        failed.append("timeline_terminal_exit")
+    terminal_pids = timeline.get("terminal_pids") if isinstance(timeline, Mapping) else None
+    observed_pids = s0.get("observed_process_tree_pids") if isinstance(s0, Mapping) else None
+    root_pid = timeline.get("root_pid") if isinstance(timeline, Mapping) else None
+    terminal_pid_binding = bool(
+        isinstance(terminal_pids, list)
+        and terminal_pids
+        and all(type(pid) is int and pid > 0 for pid in terminal_pids)
+        and isinstance(observed_pids, list)
+        and all(type(pid) is int and pid > 0 for pid in observed_pids)
+        and type(root_pid) is int
+        and root_pid > 0
+        and isinstance(s0, Mapping)
+        and type(s0.get("root_pid")) is int
+        and root_pid == s0.get("root_pid")
+        and root_pid in terminal_pids
+        and set(terminal_pids).issubset(observed_pids)
+    )
+    if not terminal_pid_binding:
+        failed.append("terminal_pid_binding")
+    if not _s0_artifacts_match(run_dir, watchdog.get("raw_artifacts")):
+        failed.append("raw_artifacts")
+    if not _checker_source_valid(checker_source):
+        failed.append("checker_source")
+    failed = sorted(set(failed))
+    return {
+        "value": not failed,
+        "reason": "legacy_terminal_exit_race_recovered" if not failed else "legacy_terminal_exit_race_rejected",
+        "failed_requirements": failed,
+        "raw_watchdog_status": watchdog.get("status"),
+        "termination_reason": (
+            termination.get("reason") if isinstance(termination, Mapping) else None
+        ),
+        "live_sample_count": timeline.get("live_sample_count"),
+        "terminal_elapsed_seconds": terminal_elapsed,
+        "terminal_pids": timeline.get("terminal_pids"),
+        "worker_elapsed_seconds": worker_elapsed,
+        "processes_gone": processes_gone,
+        "worker_return_code": s0.get("return_code") if isinstance(s0, Mapping) else None,
+    }
+
+
+def _s0_check_problems(
+    checks: Mapping[str, Any], adjudication: Mapping[str, Any]
+) -> list[str]:
+    return sorted(
+        name
+        for name, passed in checks.items()
+        if passed is not True
+        and not (
+            adjudication.get("value") is True
+            and name == "watchdog_status"
+        )
+    )
+
+
 def _run_s0_check(run_dir: Path, output: Path) -> int:
     try:
         run_dir = run_dir.resolve()
@@ -2007,7 +2223,12 @@ def _run_s0_check(run_dir: Path, output: Path) -> int:
         stage = _read_json(run_dir / "stage_summary.json")
         worker = _read_json(run_dir / "s0_summary.json")
         stage_timeline = _timeline_metrics(run_dir / "stage_timeline.jsonl", "stage")
-        timeline = _timeline_metrics(run_dir / "s0_timeline.jsonl", "s0")
+        terminal_exit_race = False
+        try:
+            timeline = _timeline_metrics(run_dir / "s0_timeline.jsonl", "s0")
+        except ValueError:
+            timeline = _s0_legacy_terminal_exit_timeline(run_dir / "s0_timeline.jsonl")
+            terminal_exit_race = True
         measurement = worker.get("measurement")
         raw = {
             "scope": worker.get("scope"),
@@ -2032,6 +2253,10 @@ def _run_s0_check(run_dir: Path, output: Path) -> int:
         stage_process = watchdog.get("stage")
         s0_process = watchdog.get("s0")
         worker_source = worker.get("source_at_start")
+        try:
+            checker_source = _light_source()
+        except _worker_error_types():
+            checker_source = None
         command_identity = watchdog.get("command_identity")
         executable = command_identity.get("python") if isinstance(command_identity, Mapping) else None
         compact_authority = {
@@ -2040,6 +2265,17 @@ def _run_s0_check(run_dir: Path, output: Path) -> int:
                 if isinstance(worker_source, Mapping)
                 else None
             ),
+            "producer_source_commit_full_sha": (
+                worker_source.get("source_commit_full_sha")
+                if isinstance(worker_source, Mapping)
+                else None
+            ),
+            "checker_source_commit_full_sha": (
+                checker_source.get("source_commit_full_sha")
+                if isinstance(checker_source, Mapping)
+                else None
+            ),
+            "checker_source": checker_source,
             "factor_manifest_sha256": authority.get("factor_manifest_sha256"),
             "r2_record_sha256": authority.get("r2_record_sha256"),
             "r2_record_evidence_sha256": authority.get("r2_evidence_sha256"),
@@ -2047,6 +2283,12 @@ def _run_s0_check(run_dir: Path, output: Path) -> int:
             "b0_form": worker.get("form"),
             "raw_artifacts": watchdog.get("raw_artifacts"),
             "watchdog_summary_sha256": _sha256_file(run_dir / "h2b_s0_watchdog_summary.json"),
+        }
+        adjudication = {
+            "value": False,
+            "reason": "not_applicable",
+            "failed_requirements": [],
+            "raw_watchdog_status": watchdog.get("status"),
         }
         checks.update(
             {
@@ -2113,19 +2355,37 @@ def _run_s0_check(run_dir: Path, output: Path) -> int:
                 "progress": _progress_events(run_dir / "s0_progress.jsonl", "s0") == list(H2B_S0_EVENTS),
                 "watchdog_artifacts": _s0_artifacts_match(run_dir, watchdog.get("raw_artifacts")),
                 "stage_resource": stage_timeline["peak_rss_bytes"] < H2B_STAGE_RSS_LIMIT_BYTES and stage_timeline["swap_bytes"] == 0,
-                "lifecycle": (
-                    isinstance(stage_process, Mapping)
-                    and isinstance(s0_process, Mapping)
-                    and stage_process.get("return_code") == 0
-                    and stage_process.get("termination") is None
-                    and stage_process.get("processes_gone_before_s0") is True
+                "stage_lifecycle": _s0_stage_lifecycle_valid(stage_process),
+                "s0_lifecycle": (
+                    isinstance(s0_process, Mapping)
+                    and type(s0_process.get("return_code")) is int
                     and s0_process.get("return_code") == 0
                     and s0_process.get("termination") is None
                     and s0_process.get("processes_gone_after_s0") is True
                 ),
+                "checker_source": (
+                    _checker_source_valid(checker_source)
+                ),
             }
         )
-        problems = sorted(name for name, passed in checks.items() if passed is not True)
+        if terminal_exit_race:
+            adjudication = _s0_terminal_exit_race_adjudication(
+                run_dir,
+                watchdog,
+                stage,
+                worker,
+                checks,
+                timeline,
+                checker_source,
+            )
+            checks["terminal_exit_race_adjudication"] = adjudication["value"]
+            if adjudication["value"] is True:
+                checks["s0_lifecycle"] = True
+        checks["lifecycle"] = checks["stage_lifecycle"] and checks["s0_lifecycle"]
+        if not terminal_exit_race:
+            checks["terminal_exit_race_adjudication"] = True
+        compact_authority["adjudication"] = adjudication
+        problems = _s0_check_problems(checks, adjudication)
         result["problems"] = problems
         if problems:
             result["pass"] = False
@@ -2185,6 +2445,23 @@ def _source_pair_valid(start: Any, end: Any) -> bool:
     )
 
 
+def _checker_source_valid(source: Any) -> bool:
+    if not isinstance(source, Mapping):
+        return False
+    commit = source.get("source_commit_full_sha")
+    return bool(
+        isinstance(commit, str)
+        and len(commit) == 40
+        and commit.lower() == commit
+        and all(char in _HEX for char in commit)
+        and source.get("tracked_source_dirty") is False
+        and source.get("source_worktree_dirty") is False
+        and source.get("nonignored_untracked_paths") == []
+        and source.get("worktree_status_porcelain") == []
+        and source.get("git_error") is None
+    )
+
+
 def _runtime_valid(identity: Any) -> bool:
     if not isinstance(identity, Mapping):
         return False
@@ -2214,43 +2491,148 @@ def _progress_events(path: Path, phase: str) -> list[str]:
     return events
 
 
+def _timeline_sample_valid(item: Mapping[str, Any], readable: bool) -> bool:
+    pids = item.get("pids")
+    return bool(
+        isinstance(item.get("root_pid"), int)
+        and not isinstance(item["root_pid"], bool)
+        and item["root_pid"] > 0
+        and isinstance(pids, list)
+        and all(isinstance(pid, int) and not isinstance(pid, bool) and pid > 0 for pid in pids)
+        and item["root_pid"] in pids
+        and item.get("process_count") == len(pids)
+        and isinstance(item.get("rss_bytes"), int)
+        and not isinstance(item["rss_bytes"], bool)
+        and item["rss_bytes"] >= 0
+        and isinstance(item.get("swap_bytes"), int)
+        and not isinstance(item["swap_bytes"], bool)
+        and item["swap_bytes"] >= 0
+        and item.get("all_status_readable") is readable
+        and isinstance(item.get("compiler_descendant_pids"), list)
+        and all(
+            isinstance(pid, int)
+            and not isinstance(pid, bool)
+            and pid > 0
+            for pid in item["compiler_descendant_pids"]
+        )
+    )
+
+
 def _timeline_metrics(path: Path, phase: str) -> dict[str, Any]:
     live: list[dict[str, Any]] = []
     compiler: set[int] = set()
+    terminal_seen = False
+    terminal_sample: Mapping[str, Any] | None = None
     for line in path.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
         item = json.loads(line)
         if item.get("schema") != H2B_PROGRESS_SCHEMA or item.get("phase") != phase:
             raise ValueError(f"{phase} timeline schema mismatch")
-        if item.get("sample_kind") == "worker":
-            pids = item.get("pids")
-            valid = (
-                isinstance(item.get("root_pid"), int) and not isinstance(item["root_pid"], bool) and item["root_pid"] > 0
-                and isinstance(pids, list) and all(isinstance(pid, int) and not isinstance(pid, bool) and pid > 0 for pid in pids)
-                and item["root_pid"] in pids
-                and item.get("process_count") == len(pids)
-                and isinstance(item.get("rss_bytes"), int) and not isinstance(item["rss_bytes"], bool) and item["rss_bytes"] >= 0
-                and isinstance(item.get("swap_bytes"), int) and not isinstance(item["swap_bytes"], bool) and item["swap_bytes"] >= 0
-                and item.get("all_status_readable") is True
-                and isinstance(item.get("compiler_descendant_pids"), list)
-                and all(isinstance(pid, int) and not isinstance(pid, bool) and pid > 0 for pid in item["compiler_descendant_pids"])
-            )
-            if not valid:
+        if terminal_seen:
+            raise ValueError(f"{phase} timeline has samples after terminal exit")
+        if item.get("sample_kind") == "terminal_exit_unreadable":
+            if (
+                not _timeline_sample_valid(item, readable=False)
+                or item.get("terminal_exit") is not True
+                or item.get("formal_sample") is not False
+                or not isinstance(item.get("return_code"), int)
+                or isinstance(item.get("return_code"), bool)
+                or not isinstance(item.get("elapsed_wall_seconds"), (int, float))
+                or isinstance(item.get("elapsed_wall_seconds"), bool)
+                or not math.isfinite(float(item["elapsed_wall_seconds"]))
+                or float(item["elapsed_wall_seconds"]) <= 0.0
+            ):
+                raise ValueError(f"{phase} terminal timeline sample is invalid")
+            terminal_seen = True
+            terminal_sample = item
+        elif item.get("sample_kind") == "worker":
+            if not _timeline_sample_valid(item, readable=True):
                 raise ValueError(f"{phase} timeline sample is unreadable")
             live.append(item)
             compiler.update(int(pid) for pid in item["compiler_descendant_pids"])
+        else:
+            raise ValueError(f"{phase} timeline sample kind is invalid")
     if not live:
         raise ValueError(f"{phase} timeline has no live sample")
     roots = {int(item["root_pid"]) for item in live}
     if len(roots) != 1:
         raise ValueError(f"{phase} timeline has multiple roots")
+    root_pid = next(iter(roots))
+    if terminal_sample is not None and terminal_sample["root_pid"] != root_pid:
+        raise ValueError(f"{phase} terminal timeline root mismatch")
+    metrics = {
+        "live_sample_count": len(live),
+        "peak_rss_bytes": max(int(item["rss_bytes"]) for item in live),
+        "swap_bytes": max(int(item["swap_bytes"]) for item in live),
+        "root_pid": root_pid,
+        "compiler_descendant_pids": sorted(compiler),
+    }
+    if terminal_sample is not None:
+        metrics.update(
+            {
+                "terminal_elapsed_seconds": float(terminal_sample["elapsed_wall_seconds"]),
+                "terminal_pids": list(terminal_sample["pids"]),
+            }
+        )
+    return metrics
+
+
+def _s0_legacy_terminal_exit_timeline(path: Path) -> dict[str, Any]:
+    """Read only the recorded S0 teardown-race shape from the first campaign."""
+
+    items = [
+        json.loads(line)
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    if len(items) < 2:
+        raise ValueError("s0 legacy terminal-exit timeline is incomplete")
+    for item in items:
+        if item.get("schema") != H2B_PROGRESS_SCHEMA or item.get("phase") != "s0":
+            raise ValueError("s0 legacy terminal-exit timeline schema mismatch")
+    final = items[-1]
+    legacy_terminal = (
+        final.get("sample_kind") == "worker"
+        and _timeline_sample_valid(final, readable=False)
+    )
+    if not legacy_terminal:
+        raise ValueError("s0 legacy terminal-exit sample is missing or misplaced")
+    terminal_elapsed = final.get("elapsed_wall_seconds")
+    if (
+        not isinstance(terminal_elapsed, (int, float))
+        or isinstance(terminal_elapsed, bool)
+        or not math.isfinite(float(terminal_elapsed))
+        or float(terminal_elapsed) <= 0.0
+    ):
+        raise ValueError("s0 legacy terminal-exit time is invalid")
+    live = items[:-1]
+    if not all(
+        item.get("sample_kind") == "worker"
+        and _timeline_sample_valid(item, readable=True)
+        for item in live
+    ):
+        raise ValueError("s0 legacy timeline has an earlier unreadable sample")
+    roots = {int(item["root_pid"]) for item in live}
+    if len(roots) != 1 or int(final["root_pid"]) not in roots:
+        raise ValueError("s0 legacy terminal-exit timeline root mismatch")
+    compiler = sorted(
+        {
+            int(pid)
+            for item in live
+            for pid in item["compiler_descendant_pids"]
+        }
+    )
     return {
         "live_sample_count": len(live),
         "peak_rss_bytes": max(int(item["rss_bytes"]) for item in live),
         "swap_bytes": max(int(item["swap_bytes"]) for item in live),
         "root_pid": roots.pop(),
-        "compiler_descendant_pids": sorted(compiler),
+        "compiler_descendant_pids": compiler,
+        "legacy_terminal_exit": True,
+        "terminal_sample_kind": final.get("sample_kind"),
+        "terminal_elapsed_seconds": float(terminal_elapsed),
+        "terminal_pids": list(final["pids"]),
     }
 
 

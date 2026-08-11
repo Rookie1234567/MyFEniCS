@@ -339,6 +339,90 @@ def test_h2b_worker_executable_preserves_venv_symlink(monkeypatch, tmp_path: Pat
     assert command[0] != str(target)
 
 
+@pytest.mark.parametrize("exits_after_unreadable", [True, False])
+def test_h2b_monitor_distinguishes_terminal_exit_from_live_unreadable(
+    monkeypatch, tmp_path: Path, exits_after_unreadable: bool
+):
+    import benchmarks.run_task033_case090_watchdog as watchdog_module
+    import benchmarks.task034_wsl_resources as resources_module
+
+    class FakeProcess:
+        pid = 424_242
+
+        def __init__(self):
+            self.poll_count = 0
+
+        def poll(self):
+            self.poll_count += 1
+            if exits_after_unreadable and self.poll_count >= 2:
+                return 0
+            return None
+
+        def wait(self):
+            return 0
+
+    sample = SimpleNamespace(
+        root_pid=424_242,
+        pids=(424_242,),
+        rss_bytes=1234,
+        swap_bytes=0,
+        all_status_readable=False,
+    )
+    terminated = []
+    monkeypatch.setattr(runner.subprocess, "Popen", lambda *args, **kwargs: FakeProcess())
+    monkeypatch.setattr(resources_module, "process_tree_sample", lambda pid: sample)
+    monkeypatch.setattr(
+        watchdog_module,
+        "terminate_process_tree",
+        lambda process: terminated.append(process.pid) or {"requested": True},
+    )
+    observed = runner._monitor_phase(
+        tmp_path,
+        "s0",
+        ["python", "worker"],
+        timeout=10.0,
+        rss_limit=1_000_000,
+    )
+    timeline = [
+        runner.json.loads(line)
+        for line in (tmp_path / "s0_timeline.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    if exits_after_unreadable:
+        assert observed["termination"] is None
+        assert terminated == []
+        assert timeline[-1]["sample_kind"] == "terminal_exit_unreadable"
+        assert timeline[-1]["formal_sample"] is False
+        assert timeline[-1]["terminal_exit"] is True
+        assert timeline[-1]["return_code"] == 0
+    else:
+        assert observed["termination"]["reason"] == "process_tree_unreadable"
+        assert terminated == [424_242]
+        assert timeline[-1]["sample_kind"] == "worker"
+        assert timeline[-1]["all_status_readable"] is False
+
+
+def test_h2b_bounded_process_drain_waits_for_disappearance(monkeypatch):
+    states = iter((False, True))
+    clock = iter((0.0, 0.01, 0.02))
+    monkeypatch.setattr(runner, "_processes_gone", lambda process: next(states))
+    monkeypatch.setattr(runner.time, "perf_counter", lambda: next(clock))
+    monkeypatch.setattr(runner.time, "sleep", lambda seconds: None)
+    result = runner._bounded_process_drain({"return_code": 0})
+    assert result["gone"] is True
+    assert result["poll_count"] == 1
+    assert result["elapsed_wall_seconds"] == 0.02
+
+
+def test_h2b_bounded_process_drain_has_fixed_stop(monkeypatch):
+    monkeypatch.setattr(runner, "_processes_gone", lambda process: False)
+    monkeypatch.setattr(runner.time, "perf_counter", iter((0.0, 5.0)).__next__)
+    result = runner._bounded_process_drain({"return_code": 0})
+    assert result["gone"] is False
+    assert result["poll_count"] == 0
+    assert result["elapsed_wall_seconds"] == runner.H2B_PROCESS_DRAIN_TIMEOUT_SECONDS
+
+
 def test_h2b_sources_are_action_mapped_and_mixed_uses_residuals():
     size = 8
     slave_rows = np.array([1, 6], dtype=np.int64)

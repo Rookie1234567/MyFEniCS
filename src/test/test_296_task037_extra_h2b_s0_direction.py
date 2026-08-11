@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
@@ -230,6 +231,385 @@ def test_s0_resource_stop_never_routes_to_patch(resource):
     assert checked["status"] == "STOP_RESOURCE"
     assert checked["route"] == "STOP_RESOURCE"
     assert checked["failure_measurements"]["resource"] == resource
+
+
+def _terminal_sample(
+    readable: bool, rss: int = 900_000_000, elapsed: float = 1.0
+) -> dict[str, object]:
+    return {
+        "schema": runner.H2B_PROGRESS_SCHEMA,
+        "phase": "s0",
+        "sample_kind": "worker",
+        "elapsed_wall_seconds": elapsed,
+        "root_pid": 900_001,
+        "pids": [900_001, 900_002],
+        "process_count": 2,
+        "rss_bytes": rss,
+        "swap_bytes": 0,
+        "all_status_readable": readable,
+        "compiler_descendant_pids": [],
+    }
+
+
+def _terminal_race_fixture(tmp_path: Path) -> dict[str, object]:
+    raw = tmp_path / "legacy-race"
+    raw.mkdir()
+    for name in runner.H2B_S0_ARTIFACT_NAMES:
+        (raw / name).write_bytes(name.encode("utf-8"))
+    source = {
+        "source_commit_full_sha": "a" * 40,
+        "tracked_source_dirty": False,
+        "source_worktree_dirty": False,
+        "cleanliness_semantics": "all tracked changes plus every nonignored untracked path",
+        "nonignored_untracked_paths": [],
+        "worktree_status_porcelain": [],
+        "git_error": None,
+    }
+    stage = runner._attach_evidence(
+        {
+            "schema": runner.H2B_WORKER_SCHEMA,
+            "phase": "stage",
+            "status": "measurement_complete",
+            "source_at_start": source,
+            "source_at_end": source,
+        }
+    )
+    worker = runner._attach_evidence(
+        {
+            "schema": runner.H2B_S0_WORKER_SCHEMA,
+            "phase": "s0",
+            "status": "measurement_complete",
+            "error": None,
+            "elapsed_wall_seconds": 1.0,
+            "source_at_start": source,
+            "source_at_end": source,
+        }
+    )
+    watchdog = runner._attach_evidence(
+        {
+            "schema": runner.H2B_S0_WATCHDOG_SCHEMA,
+            "status": "gate_failed",
+            "error": None,
+            "source_at_start": source,
+            "source_at_end": source,
+            "stage": {
+                "return_code": 0,
+                "termination": None,
+                "processes_gone_before_s0": True,
+            },
+            "s0": {
+                "root_pid": 900_001,
+                "observed_process_tree_pids": [900_001, 900_002],
+                "return_code": 0,
+                "termination": {
+                    "reason": "process_tree_unreadable",
+                    "termination": {
+                        "requested": True,
+                        "worker_exited": True,
+                        "sigkill_required": False,
+                    },
+                },
+            },
+            "raw_artifacts": {
+                name: runner._artifact(raw, name)
+                for name in runner.H2B_S0_ARTIFACT_NAMES
+            },
+        }
+    )
+    timeline_path = raw / "s0_timeline.jsonl"
+    timeline_path.write_text(
+        "\n".join(
+            runner.json.dumps(item, sort_keys=True, separators=(",", ":"))
+            for item in (
+                _terminal_sample(True),
+                _terminal_sample(True, 950_000_000),
+                _terminal_sample(False, elapsed=2.0),
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    watchdog["raw_artifacts"] = {
+        name: runner._artifact(raw, name)
+        for name in runner.H2B_S0_ARTIFACT_NAMES
+    }
+    watchdog = runner._attach_evidence(watchdog)
+    checks = {
+        key: True
+        for key in (
+            "watchdog_evidence",
+            "worker_evidence",
+            "worker_status",
+            "source",
+            "runtime",
+            "phase_identity",
+            "stage_identity",
+            "watchdog_identity",
+            "authority",
+            "forms",
+            "commands",
+            "cache_hit",
+            "stage_manifest",
+            "run_dir",
+            "progress",
+            "watchdog_artifacts",
+            "stage_resource",
+            "stage_lifecycle",
+            "resource",
+            "p6",
+            "factor_authority",
+            "strategy_order",
+            "combinations_valid",
+        )
+    }
+    return {
+        "run_dir": raw,
+        "watchdog": watchdog,
+        "stage": stage,
+        "worker": worker,
+        "checks": checks,
+        "timeline": runner._s0_legacy_terminal_exit_timeline(timeline_path),
+        "checker_source": {
+            "source_commit_full_sha": "b" * 40,
+            "tracked_source_dirty": False,
+            "source_worktree_dirty": False,
+            "nonignored_untracked_paths": [],
+            "worktree_status_porcelain": [],
+            "git_error": None,
+        },
+    }
+
+
+def test_s0_legacy_terminal_exit_race_is_strictly_adjudicated(tmp_path, monkeypatch):
+    fixture = _terminal_race_fixture(tmp_path)
+    monkeypatch.setattr(runner, "_processes_gone", lambda process: True)
+    result = runner._s0_terminal_exit_race_adjudication(**fixture)
+    assert result["value"] is True
+    assert result["reason"] == "legacy_terminal_exit_race_recovered"
+    assert result["raw_watchdog_status"] == "gate_failed"
+    assert result["live_sample_count"] == 2
+    assert result["terminal_elapsed_seconds"] == 2.0
+    assert result["terminal_pids"] == [900_001, 900_002]
+    assert result["worker_elapsed_seconds"] == 1.0
+    assert result["processes_gone"] is True
+    assert result["worker_return_code"] == 0
+
+
+def test_s0_terminal_sample_is_accepted_but_not_counted_in_peak(tmp_path):
+    path = tmp_path / "s0_timeline.jsonl"
+    terminal = _terminal_sample(False, rss=2_000_000_000, elapsed=2.0)
+    terminal.update(
+        {
+            "sample_kind": "terminal_exit_unreadable",
+            "formal_sample": False,
+            "terminal_exit": True,
+            "return_code": 0,
+        }
+    )
+    path.write_text(
+        "\n".join(
+            runner.json.dumps(item, sort_keys=True, separators=(",", ":"))
+            for item in (_terminal_sample(True, rss=1234), terminal)
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    metrics = runner._timeline_metrics(path, "s0")
+    assert metrics["peak_rss_bytes"] == 1234
+    assert metrics["swap_bytes"] == 0
+    assert metrics["terminal_elapsed_seconds"] == 2.0
+    assert metrics["terminal_pids"] == [900_001, 900_002]
+
+
+def test_s0_terminal_sample_root_must_match_live_root(tmp_path):
+    path = tmp_path / "s0_timeline.jsonl"
+    terminal = _terminal_sample(False, elapsed=2.0)
+    terminal.update(
+        {
+            "sample_kind": "terminal_exit_unreadable",
+            "formal_sample": False,
+            "terminal_exit": True,
+            "return_code": 0,
+            "root_pid": 900_003,
+            "pids": [900_003, 900_002],
+        }
+    )
+    path.write_text(
+        "\n".join(
+            runner.json.dumps(item, sort_keys=True, separators=(",", ":"))
+            for item in (_terminal_sample(True), terminal)
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="terminal timeline root mismatch"):
+        runner._timeline_metrics(path, "s0")
+
+
+def test_s0_checker_source_requires_clean_full_provenance():
+    clean = {
+        "source_commit_full_sha": "a" * 40,
+        "tracked_source_dirty": False,
+        "source_worktree_dirty": False,
+        "nonignored_untracked_paths": [],
+        "worktree_status_porcelain": [],
+        "git_error": None,
+    }
+    assert runner._checker_source_valid(clean) is True
+    for key, value in (
+        ("tracked_source_dirty", True),
+        ("source_worktree_dirty", True),
+        ("nonignored_untracked_paths", ["?? output.json"]),
+        ("worktree_status_porcelain", ["?? output.json"]),
+    ):
+        dirty = {**clean, key: value}
+        assert runner._checker_source_valid(dirty) is False
+
+
+def test_s0_terminal_time_must_follow_worker_summary(tmp_path, monkeypatch):
+    fixture = _terminal_race_fixture(tmp_path)
+    fixture["timeline"]["terminal_elapsed_seconds"] = 0.5
+    monkeypatch.setattr(runner, "_processes_gone", lambda process: True)
+    result = runner._s0_terminal_exit_race_adjudication(**fixture)
+    assert result["value"] is False
+    assert "terminal_time_after_worker_summary" in result["failed_requirements"]
+
+
+def test_s0_adjudicated_watchdog_failure_does_not_block_h2b_p_route():
+    payload = _s0_payload()
+    values = {
+        label: limit + 0.01
+        for label, limit in runner.H2B_S0_RHO_LIMITS.items()
+    }
+    payload["combinations"] = [
+        {
+            **combination,
+            "sources": [
+                {
+                    **source,
+                    "scaled_residual_norm": source["r_norm"] * values[source["label"]],
+                    "rho_star": values[source["label"]],
+                }
+                for source in combination["sources"]
+            ],
+        }
+        for combination in payload["combinations"]
+    ]
+    checked = runner._s0_check_payload(payload)
+    assert checked["route"] == "H2B-P"
+    checks = {**checked["checks"], "watchdog_status": False}
+    adjudication = {
+        "value": True,
+        "reason": "legacy_terminal_exit_race_recovered",
+        "raw_watchdog_status": "gate_failed",
+    }
+    assert runner._s0_check_problems(checks, adjudication) == []
+    assert runner._s0_check_problems(
+        checks, {**adjudication, "value": False}
+    ) == ["watchdog_status"]
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        "worker",
+        "worker_error",
+        "termination",
+        "sigkill",
+        "s0_return",
+        "stage_return",
+        "stage_termination",
+        "stage_gone",
+        "progress",
+        "authority",
+        "raw_artifacts",
+        "source",
+        "checker_source",
+        "timeline",
+        "pids",
+        "terminal_pids",
+    ),
+)
+def test_s0_legacy_terminal_exit_race_missing_requirement_fails(
+    tmp_path, monkeypatch, mutation
+):
+    fixture = _terminal_race_fixture(tmp_path)
+    monkeypatch.setattr(runner, "_processes_gone", lambda process: mutation != "pids")
+    if mutation == "worker":
+        fixture["worker"]["status"] = "gate_failed"
+    elif mutation == "worker_error":
+        fixture["worker"]["error"] = "unexpected"
+    elif mutation == "termination":
+        fixture["watchdog"]["s0"]["termination"]["reason"] = "timeout"
+    elif mutation == "sigkill":
+        fixture["watchdog"]["s0"]["termination"]["termination"]["sigkill_required"] = True
+    elif mutation == "s0_return":
+        fixture["watchdog"]["s0"]["return_code"] = False
+    elif mutation == "stage_return":
+        fixture["watchdog"]["stage"]["return_code"] = 1
+    elif mutation == "stage_termination":
+        fixture["watchdog"]["stage"]["termination"] = {"reason": "unexpected"}
+    elif mutation == "stage_gone":
+        fixture["watchdog"]["stage"]["processes_gone_before_s0"] = False
+    elif mutation == "progress":
+        fixture["checks"]["progress"] = False
+    elif mutation == "authority":
+        fixture["checks"]["authority"] = False
+    elif mutation == "raw_artifacts":
+        (fixture["run_dir"] / "s0_summary.json").write_bytes(b"changed")
+    elif mutation == "source":
+        fixture["worker"]["source_at_start"]["source_commit_full_sha"] = "c" * 40
+    elif mutation == "checker_source":
+        fixture["checker_source"]["git_error"] = "unavailable"
+    elif mutation == "timeline":
+        fixture["timeline"]["legacy_terminal_exit"] = False
+    elif mutation == "terminal_pids":
+        fixture["timeline"]["terminal_pids"] = [900_999]
+    result = runner._s0_terminal_exit_race_adjudication(**fixture)
+    assert result["value"] is False
+    assert result["failed_requirements"]
+    if mutation.startswith("stage_"):
+        assert "stage_lifecycle" in result["failed_requirements"]
+    if mutation == "terminal_pids":
+        assert "terminal_pid_binding" in result["failed_requirements"]
+
+
+def test_s0_legacy_malformed_timeline_is_not_adjudicated(tmp_path):
+    path = tmp_path / "s0_timeline.jsonl"
+    path.write_text(
+        "\n".join(
+            runner.json.dumps(item, sort_keys=True, separators=(",", ":"))
+            for item in (
+                _terminal_sample(True),
+                _terminal_sample(False),
+                _terminal_sample(True),
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="earlier unreadable|terminal-exit"):
+        runner._s0_legacy_terminal_exit_timeline(path)
+
+    explicit = _terminal_sample(False, elapsed=2.0)
+    explicit.update(
+        {
+            "sample_kind": "terminal_exit_unreadable",
+            "formal_sample": False,
+            "terminal_exit": True,
+            "return_code": 0,
+        }
+    )
+    path.write_text(
+        "\n".join(
+            runner.json.dumps(item, sort_keys=True, separators=(",", ":"))
+            for item in (_terminal_sample(True), explicit)
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="terminal-exit"):
+        runner._s0_legacy_terminal_exit_timeline(path)
 
 
 def test_s0_oracle_accepts_negative_imaginary_inner_product():
