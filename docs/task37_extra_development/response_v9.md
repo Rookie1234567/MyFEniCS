@@ -1,104 +1,104 @@
-# Task037-extra Response V9：S0 路由与 P0 lifecycle 收口
+# Task037-extra Review V9 consolidated response
 
-本文件是 Review V9 本轮新增的 consolidated handoff。它保留并引用 [response_v8.md](response_v8.md)，不改写 V8 已记录的 H2B fixed-unit numeric hard stop、H2A 证据和历史结论。本轮新增两项实际阶段：H2B-S0 完成了尺度不变方向诊断；随后 H2B-P0 只启动 stage，因 telemetry lifecycle race 未进入 online。
+本文件保留并引用 [response_v8.md](response_v8.md)，不改写 V8 已记录的 H2B fixed-unit numeric hard stop、H2A 证据和历史结论。本轮新增的是 H2B-S0 证据、P0 两次执行边界，以及针对已确认 execution defect 的 exact-class 窄修复测试结果。
 
-## 阶段总表
+## 用户授权与总状态
 
-| 阶段 | 状态 | 实际边界 |
+2026-08-11，用户明确允许：对执行性问题持续做针对性定位、修复和修复后的重跑；在后续数值/物理/资源 Gate 全部通过后继续完整 PDE 目标。这一明确授权覆盖 Review V9 原 P0=1 campaign 之外的 execution-fix rerun，但不放宽任何数值、物理、RSS、swap 或 provenance Gate，也不允许把数值失败包装成执行问题重复运行；不授权新分支、PR、merge/rebase/cherry-pick、force-push、master 或 ordinary default 修改。
+
+## 保留的冻结结论
+
+| 结论 | 状态 |
+|---|---|
+| G2 LOR-HX | `G2_FAIL` |
+| G3 additive LOR-HX | prohibited |
+| old G4 sweep with failed LOR-HX | prohibited |
+| old H1.2 | `CONTROLLED_STOP_TIMEOUT / NOT_QUALIFIED` |
+| H1R3.0R / H1R3.1 / H1R3.2 | PASS |
+| H2A-R0 / H2A-R1 / H2A-R2 | PASS，但不等于 PDE qualification |
+| V8 H2B fixed-unit primary | `FAIL_NUMERIC / NOT_QUALIFIED` |
+| ordinary default | unchanged |
+| research-only implementation | 不提升为 production numerical candidate |
+
+上述结论继续以 [response_v8.md](response_v8.md) 为历史 authority；本 response 只补充 V9 的 S0/P0 执行边界，不覆盖其原始 evidence。
+
+| 阶段 | 状态 | 结论边界 |
 |---|---|---|
-| H1R3.0R / H1R3.1 / H1R3.2 | PASS | 保留 V6 已审 action/identity/scaling evidence |
-| H2A-R0 / R1 / R2 | PASS | discovery、JIT hit、constrained factor store；不等于 PDE |
-| H2B fixed-unit primary | FAIL_NUMERIC / NOT_QUALIFIED | V8 五类 source 的 fixed-unit symmetric 结果失败；保留 response_v8 |
-| H2B-S0 | evidence PASS；direction Gate FAIL | 三组合 valid，但无一组合通过 rho_star；route=H2B-P |
-| H2B-P0 | NOT_QUALIFIED / controlled execution failure | 只完成 stage，online 未启动；不能判定 P0 数值算法 |
-| H2B-K | not_run / locked_by_S0 route and P0 boundary | S0 未产生 K 资格，P0 也未完成 |
-| H2B-P1 | not_run / locked_by_P0 | P0 没有资格化 |
-| H2D / H4 / PDE / DtN / field / RTA | not_run / locked | 本轮没有物理求解或后处理 |
+| H1R3.0R / H1R3.1 / H1R3.2 | PASS | 保留此前已审 action/identity/scaling evidence |
+| H2A-R0 / R1 / R2 | PASS | discovery、JIT hit、constrained factor store；不等于 PDE qualification |
+| H2B fixed-unit primary | FAIL_NUMERIC / NOT_QUALIFIED | 详见 `response_v8.md`，不因本轮执行修复改变 |
+| H2B-S0 | evidence 可验；direction Gate FAIL | 三组合 valid，但无一组合通过，route=H2B-P |
+| H2B-P0 原始 campaign | CONTROLLED_STOP / NOT_QUALIFIED | 旧 telemetry policy 在 stage 中止，online 未启动 |
+| H2B-P0 execution-fix rerun | CONTROLLED_STOP_TIMEOUT / NOT_QUALIFIED | stage 完成，P0 assembly 超时，未形成数值 summary |
+| P1 | not_run / `locked_by_P0` | P0 未 qualification |
+| H2B-K normalized two-level coercive solve | not_run / `locked_by_P1` | S0 失败后的 P 路线须先完成 P1 才能返回 K |
+| H2D / full-space matrix-free DtN | not_run / `locked_by_H2B-K` | H2B-K 未完成 |
+| H4 time-harmonic PDE | not_run / `locked_by_H2D` | 还须通过 H4 Gate |
+| official field / RTA | not_run / `locked_by_H4` | 须完成 H4 full solve，并通过 true residual/physics Gate |
 
-H3/PDE qualification = none。本轮没有形成任何 H3 或 PDE 资格证据。
+## S0 结论保持不变
 
-S0 compact 的 status=pass 只说明 raw 记录经过 checker 验证且 evidence 可读；关键数值字段 s0_direction_gate_pass=false，三组合的正式方向 Gate 无一通过。因此不能把 S0 写成算法 PASS。
+S0 compact 的 evidence `status=pass` 只表示 raw 记录可被 checker 验证；`s0_direction_gate_pass=false`，三种组合都没有取得方向资格，正式路线为 H2B-P。不能把 S0 写成算法 PASS。S0 的五类 source、687476736 B whole-campaign peak、swap=0、factor+metadata=201933812 B 和 raw/compact 证据继续以 [h2b_scale_invariant_direction.md](outcomes/h2b_scale_invariant_direction.md) 为准。
 
-## H2B-S0：实际结论
+## P0 两次执行及最小诊断
 
-S0 固定使用 p6/h10、MPI1、252 cells、173802 full-space rows、9210 Floquet identity rows、24 exact classes、16 unique factors 和 factor+metadata 201933812 B。全程保持 uncondensed full-space、无 condensation、无 global matrix、无 Schur/slab/KSP/DtN/PDE，ordinary default unchanged。
+P0 的 row-complete patch 只围绕 central cell 的 882 个 independent rows，目标是构造 `B_P = R_P B0 R_P^T`，不是全局矩阵或 PDE。P0 的永久边界保持：uncondensed full-space、condensation=false、global matrix/global constraint matrix/static Schur/trace slab/B2-B4 Krylov/KSP/matrix-free DtN/PDE 均未使用，ordinary default unchanged。
 
-永久 identity 仍为 uncondensed full-space；condensation、static condensed operator、trace slab PC、
-B2/B4 local Krylov、global matrix、global constraint matrix、KSP、DtN 和 PDE solve 均为 false，slab
-matrix/factor 为 0。这些是冻结的 materialization 边界，不是未运行阶段的 PASS。
+| attempt | source | raw | measured outcome |
+|---|---|---|---|
+| 原始 P0 | `d6f7cc4d1cb334a5666545783add7e171da00c52` | `h2b_p0_d6f7cc4_run1` | stage 在 `b0_compile_started` 附近被旧 monitor 的单帧 unreadable policy 终止；online 未启动 |
+| execution-fix rerun | `90a9dbbf01ac06abf3417116831d3483b7f37ca8` | `h2b_p0_90a9dbb_run2` | stage RC0；P0 在 3600.090414687 s timeout，`p0_summary.json` 缺失 |
 
-Additive 只有 checkerboard/high-frequency 未通过，rho_star=0.9594480817867957，高于 0.70；gradient/curl/mixed/physical 分别为 0.00027302412076899286、0.7220541849334704、0.7013670818808797、0.6642345659875032，均在对应上限内。Forward 的五个 rho_star 约为 0.9999929–0.9999989，symmetric 的五个约为 0.9999610–0.9999989，均不合格。于是 checker 从三组完整 valid measurements 重新得到 route=H2B-P，而不是依赖 worker 自报 route。
+run2 的实测边界：stage `26.242200638 s`、RC0、peak `1,286,606,848 B`、swap0；P0 elapsed `3600.090414687 s`、RC `-15`、peak `709,206,016 B`、swap0；reason=`timeout`，SIGTERM 足够、无 SIGKILL，进程全部退出。最后 marker 为 `patch_assembly_started`。authority、mesh、space、Floquet、cache、R2 factor/class authority、central cell selection 已完成；central ordinal=3、class=3、touching cells=19。没有生成 P0 factor/rho/solve/patch completion measurement，因此结论是执行 timeout，不是数值算法 FAIL。
 
-S0 process-tree peak=687476736 B、swap=0；这是 whole S0 online campaign 的 measured peak，不是 PDE peak。S0 compact 与 outcome 见 [h2b_scale_invariant_direction.md](outcomes/h2b_scale_invariant_direction.md)。
+### 最可能的性能边界
 
-## H2B-P0：唯一 formal campaign 的实际边界
+旧 P0 producer 对 19 个 touching cells 逐 cell 重新 tabulate curl+mass dense tensor。冻结 R2 raw 的 class factor 步骤约 191.78–195.89 s，median 约 193.78 s；因此 `19×193.78≈3681.82 s`，超过 3600 s。run2 的 class 序列是：
 
-P0 formal source 是 d6f7cc4d1cb334a5666545783add7e171da00c52，Review V9 给 P0 恰好一次 campaign。它启动了 stage 的 jit-worker，在 b0_compile_started 后因一次 process-tree status unreadable 被 watchdog 终止：
+```text
+[6, 8, 14, 3, 5, 13, 3, 3, 3, 5, 2, 3, 2, 2, 7, 4, 1, 4, 0]
+```
 
-| 项目 | measured 值 |
-|---|---:|
-| stage elapsed | 58.98348014599833 s |
-| stage peak RSS | 1281662976 B |
-| stage swap | 0 B |
-| stage return code | -15 |
-| termination | process_tree_unreadable |
-| last marker | b0_compile_started |
-| p0 command / payload | null / null |
-| stage_summary | missing |
-| P0 online | not_run |
+它包含 11 个 unique exact classes；按每 class 只 tabulate 一次，旧计时推导的 construction estimate 为约 `11×193.78≈2131.58 s`。这两个数值都是 derived prediction，不是优化后 formal 实测。raw 支持的根因边界是重复 exact-class tabulation 与 timeout 的时间关系；不能把预测写成修复后的 PASS，也不能把 stage/P0 peak写成 PDE 内存。
 
-峰值低于 1.5 GB 不能使 P0 通过，因为 stage 没有正常完成；更不能把它当作完整 P0 build 或 PDE 内存。P0 没有测量 factor residual、solve residual、condition/pivot、solve gain、五类 rho、class/cell/touching inventory、patch closure 或 off-patch spill。因此结论是执行生命周期未完成，而不是 P0 算法 FAIL。
+### 已实现但尚未 formal 的修复
 
-基于 raw 与代码路径的最小诊断是：PID/编译后代集合在最后样本附近发生变化，并出现单帧 all_status_readable=false；旧 monitor 对单次不可读立即杀组。这与短暂子进程生命周期竞态一致，是基于 raw 与代码的最可能诊断；raw 没有直接测得具体的 clone/exec/exit 系统事件。这是 telemetry lifecycle diagnosis，不是数值、factor、action 或 PDE 失败。随后提交的 083fb7863375c197437975bb51847682d9240f9a 是 formal attempt 后的 prospective one-recheck fix，只做了一次固定 20ms H2B 专用复采；test295=32 passed，focused 294–297=89 passed，compileall/AST/diff-check 通过。但该提交没有重新运行 formal P0，也没有 execution-fix rerun；P0 预算保持已消耗状态。
+当前代码按 first-seen class 分组、class 内 ordinal 升序；每个 class 只为代表 cell tabulate 一次，随后每个 cell 仍用自己的 `independent_global_rows` 与同 class expansion pattern 累积，组完成即释放 proxy，最多一个 dense proxy 存活。没有改变 patch、orientation、MPC、action、factor、rho 或物理定义，没有 per-cell tensor/cache。
 
-P0 compact 的原始 checker 状态是 gate_failed、pass=false、measurements=null、problem=raw_unreadable:FileNotFoundError。它保持 byte-for-byte 不变，见 [h2b_row_complete_patch.md](outcomes/h2b_row_complete_patch.md)。
+这是 `implemented/tested_only`，不是 P0 PASS。最终测试为 test297 `15 passed`、focused 294–297 `91 passed`，compileall、AST duplicate-key、diff-check 均通过；没有因此重新运行 formal。
 
-## 用户最终目标
+## P0 数值状态与长期 PDE 目标
 
-用户要求的 MPI1 full PDE RSS < 2000000000 B、swap=0，以及与 direct authority 的物理一致性，本轮没有达成：
+由于 run2 没有 `p0_summary.json`，以下字段全部 `not_measured`：factorization/solve residual、condition/pivot、solve gain、element/patch 五类 `rho_star`、exact-action closure、off-patch spill、class/cell/touching completion audit、P0 online resource qualification。不能从 H2A-R2 factor store 或 S0 evidence 猜测这些字段。
 
-- 没有运行 PDE；
-- 没有 true PDE residual；
-- 没有 field、RTA 或 direct-method comparison；
-- S0 的 687476736 B 是 S0 online campaign peak；
-- P0 stage 的 1281662976 B 是未完成 JIT stage peak；
-- 两者都不能冒充 full PDE process-tree memory。
-
-## 保留的历史结论与停止项
-
-以下结论保持不变：
-
-- G2=G2_FAIL；
-- G3 prohibited；
-- old G4 prohibited；
-- 旧 H1.2 为 controlled timeout / NOT_QUALIFIED；
-- H1R3.0R、H1R3.1、H1R3.2 PASS；
-- H2A-R0/R1/R2 PASS，但不自动等于 PDE qualification；
-- V8 H2B fixed-unit primary 的 FAIL_NUMERIC 仍以 response_v8 为准；
-- ordinary default unchanged；
-- H2B core/runner 仍是 research-only，不提升为 production numerical candidate。
-
-本轮停止后不进入 P1、H2B-K、H2D、H4、PDE、DtN、field 或 RTA。Review V9 的 P0 预算没有 execution-fix rerun；后续若要处理 telemetry 或重新进行 P0，必须由新 review 明确授权，不能自行重启同一 campaign。
+用户要求的 MPI1 full PDE process-tree RSS `<2,000,000,000 B`、swap=0 和 direct authority physics comparison，本轮没有运行 PDE、没有 true PDE residual、没有 field/RTA，也没有 direct-method comparison；stage 的 1.286 GB 和未完成 P0 的 709 MB 都不能冒充 full PDE peak。因此 H3/PDE qualification 仍为 none。
 
 ## Evidence index
 
 | evidence | 路径 / 身份 |
 |---|---|
-| S0 outcome | [h2b_scale_invariant_direction.md](outcomes/h2b_scale_invariant_direction.md) |
-| S0 compact | benchmarks/cases/101_task37_extra_development/records/h2b_scale_invariant_direction.json；file SHA 44283799e9712aa8e4355fa31e232ce8b3cbf679867c7fface599f3152054637；embedded c773ba5f96419e9afb433936b348ed5b3f251003b02a7c2e3f3af0e5a675c98f |
-| S0 raw | benchmarks/artifacts/task037_extra_development/h2b_s0_053f5cb_run1；source 053f5cbb577e6e81571748d1580aa3858b5eeece |
-| P0 outcome | [h2b_row_complete_patch.md](outcomes/h2b_row_complete_patch.md) |
-| P0 compact | benchmarks/cases/101_task37_extra_development/records/h2b_row_complete_patch.json；file SHA d811b5d5fa834699088b255631a05621b61dbfdb6e150b36850c3eda8944ac3a；embedded 52e9251d46b1c6b7353f7975fb0ffa8e15ee63f15ae0691cab216ba980d98f3e |
-| P0 raw | benchmarks/artifacts/task037_extra_development/h2b_p0_d6f7cc4_run1；watchdog SHA 514ae1f01ab6f6dd1126f4b8790c0e47bf69acbae52ff2ebc1e38e2dbeaa60a2；stage progress SHA ac2b6278b467d42c469e1c8df2a4daa38a841e60ede9e08202d4c13bc14170f3；timeline SHA 09fe1b0bffd989cb77b5af26a24b63a2344ca5d9c671b79a97fa3c75fb583a4a |
-| historical consolidated handoff | [response_v8.md](response_v8.md)；保持不改 |
+| S0 outcome/compact | [h2b_scale_invariant_direction.md](outcomes/h2b_scale_invariant_direction.md)；compact file `44283799e9712aa8e4355fa31e232ce8b3cbf679867c7fface599f3152054637` |
+| 原始 P0 outcome | [h2b_row_complete_patch.md](outcomes/h2b_row_complete_patch.md) |
+| run2 raw | `benchmarks/artifacts/task037_extra_development/h2b_p0_90a9dbb_run2` |
+| run2 watchdog | `p0_watchdog_summary.json` SHA `100128aee4a4c013256a27313cd8f9b4565d75479182e969a24eda8300ec8430`；embedded `7fc7af8e391bd0b30f0663128376de0c5a35dc9291253baca98043053db2ade4` |
+| run2 stage summary | `stage_summary.json` SHA `ee7278fd44288753664827677355500e8101d4090d0600677a292ac98d0e2c9f` |
+| run2 progress | `p0_progress.jsonl` SHA `d3ac29e2b32755f47a915d874632cf96dcf066892f4fe2b782b7c4fa0893ed59` |
+| run2 timeline | `p0_timeline.jsonl` SHA `a8e1b6dc11b78538edbda49745aac677004d359a9fbcd59e13f44c3b57d4a74f` |
+| v2 compact | `benchmarks/cases/101_task37_extra_development/records/h2b_row_complete_patch_v2.json`；SHA `d811b5d5fa834699088b255631a05621b61dbfdb6e150b36850c3eda8944ac3a`；byte-for-byte 保留 |
+| old compact | `.../h2b_row_complete_patch.json`；同 SHA `d811b5d5fa834699088b255631a05621b61dbfdb6e150b36850c3eda8944ac3a` |
+| V8 history | [response_v8.md](response_v8.md)，不覆盖 |
 
-## 文档与合并边界
+## 后续与 selective boundary
 
-| 组别 | 当前建议 |
+| 组别 | 当前判断 |
 |---|---|
-| S0/P0 research implementation | 不视为 production numerical candidate；不改变 ordinary default |
-| S0/P0 tests | 可保留作为生命周期和负结果回归 |
-| compact evidence/raw | 保留 hash-bound 负证据，禁止覆盖旧 evidence |
-| H2B-K/P1/H2D/H4/PDE | do-not-run，等待新 review |
+| H2B P0 code/test | research-only，已做 execution-fix implementation/test，不具备 formal qualification |
+| S0/P0 compact/raw/docs | 保留 hash-bound 正/负证据，不覆盖旧证据 |
+| P1 | `not_run / locked_by_P0` |
+| H2B-K normalized two-level coercive solve | `not_run / locked_by_P1`；S0 失败后的 P 路线须先完成 P1 才能返回 K |
+| H2D / full-space matrix-free DtN | `not_run / locked_by_H2B-K` |
+| H4 time-harmonic PDE | `not_run / locked_by_H2D` |
+| official field / RTA | `not_run / locked_by_H4`；H4 full solve + true residual/physics Gate |
+| ordinary default | unchanged |
 
-本轮没有创建 h2b_normalized_global_solve.md、h2d_fullspace_dtn.md 或 h4_fullspace_pde.md；没有新增 H2D/H4/PDE record。
+在用户 2026-08-11 的明确授权下，execution issue 可做窄修并重跑；P0 formal PASS 后按 Review V9 Gate 自动推进，无需为一般执行问题等待新的 review。若出现数值负结果，严格走 Review V9 规定分支（包括 §5.4），不能以 execution fix 名义重跑。本轮没有启动新的 formal/heavy，也没有创建 H2D/H4/PDE outcome 或 record。
