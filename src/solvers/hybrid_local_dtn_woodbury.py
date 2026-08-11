@@ -1,4 +1,4 @@
-"""Exact fixed 40-mode DtN Woodbury action over borrowed local components."""
+"""Exact dynamic-mode DtN Woodbury action over borrowed local components."""
 
 from __future__ import annotations
 
@@ -43,7 +43,7 @@ def _gather_owned_small_vector(vector: PETSc.Vec) -> np.ndarray:
 
 
 class HybridLocalDtnWoodburyOracle:
-    """Exact fixed 40-mode Woodbury action over borrowed local components."""
+    """Exact mode-count-preserving Woodbury action over borrowed components."""
 
     def __init__(
         self,
@@ -61,11 +61,8 @@ class HybridLocalDtnWoodburyOracle:
         self.base_identity = str(base_identity)
         self.comm = self.F.getComm().tompi4py()
         self.n_aux = int(self.H.getSize()[0])
-        if self.n_aux != HYBRID_DTN_WOODBURY_MODE_COUNT or self.H.getSize() != (
-            HYBRID_DTN_WOODBURY_MODE_COUNT,
-            HYBRID_DTN_WOODBURY_MODE_COUNT,
-        ):
-            raise ValueError("Woodbury oracle requires exactly 40 auxiliary modes")
+        if self.n_aux <= 0 or self.H.getSize() != (self.n_aux, self.n_aux):
+            raise ValueError("Woodbury oracle requires a non-empty square modal block")
         if self.C.getSize() != (self.F.getSize()[0], self.n_aux):
             raise ValueError("borrowed C has incompatible active/modal dimensions")
         if self.D.getSize() != (self.n_aux, self.F.getSize()[0]):
