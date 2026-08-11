@@ -50,6 +50,25 @@ P0 的 row-complete patch 是一个只围绕中心 cell 的局部实验：中心
 
 run2 已完成 authority、mesh、space、Floquet、R1 cache hit、R2 factor/class authority、central-cell selection 和 touching discovery；central cell 为 canonical ordinal 3，selected class 为 3，touching cells 为 19。没有生成 P0 matrix/factor/source measurement 的完成记录。
 
+### run2 的 v3 受控失败 compact
+
+对同一 run2 raw 只执行了一次离线 `p0-check`，没有启动 worker、JIT 或 formal。RC=1 是预期的 `gate_failed`，不是 checker 异常；这是把 run2 的受控 timeout 绑定到 raw 的结构化 compact evidence，而不是 P0 数值 PASS。
+
+| 字段 | 值 |
+|---|---|
+| compact | `benchmarks/cases/101_task37_extra_development/records/h2b_row_complete_patch_timeout_v3.json` |
+| status / pass | `gate_failed` / `false` |
+| measurements | `null` |
+| problems | `p0_execution_timeout`, `p0_measurements_not_produced` |
+| checks | 除 `p0_measurements_formed=false` 外全部 `true` |
+| run source | `90a9dbbf01ac06abf3417116831d3483b7f37ca8` |
+| checker clean source | `83609f3ac564530ebffea55e3e9e9d0726b33379` |
+| file SHA | `14e796543dbd69005077dd8f5d03c964c71c7840c14fdfd445361a05ef124931` |
+| embedded evidence SHA | `8d853895e48a1e382d92783fb6eddb165c124a9233222130d5176d284be0b11e` |
+| watchdog SHA | `100128aee4a4c013256a27313cd8f9b4565d75479182e969a24eda8300ec8430` |
+
+run source 与 checker source 明确不同且分别绑定。v3 的 `failure_measurements` 只保留真实 stage/P0 elapsed、RSS、swap、return code、timeout、进程退出、progress last marker、source 和 raw artifact hashes；没有伪造 factor、rho 或 solve 字段。v2 compact 仍是旧 checker 的 generic `raw_unreadable` 历史输出，v3 才是绑定 run2 的结构化受控失败证据。
+
 ## 重复 tabulation 的根因与窄修复
 
 旧实现对 19 个 touching cells 逐一重新 tabulate curl 与 mass dense tensors。冻结 R2 raw 中 24 个 class factor 步骤约为 191.78–195.89 s，median 约 193.78 s。由旧计时得到的 construction 预测为：
@@ -73,7 +92,7 @@ run2 已完成 authority、mesh、space、Floquet、R1 cache hit、R2 factor/cla
 - 每组完成立即释放 dense proxy，最多同时保留一个 proxy；
 - 不保留 per-cell dense tensor/cache，不改变 patch 定义、orientation、MPC reduction、action、factor、rho 或物理方程。
 
-状态是 `implemented/tested_only`，不是 formal PASS。`test297=15 passed`，focused `294–297=91 passed`；这些只证明实现和小型合同测试，不证明 P0 正式 Gate。
+状态是 `implemented/tested_only`，不是 formal PASS；implementation commit=`83609f3ac564530ebffea55e3e9e9d0726b33379`。`test297=15 passed`，focused `294–297=91 passed`；这些只证明实现和小型合同测试，不证明 P0 正式 Gate。
 
 ## 永久 scope 与尚未测量项
 
@@ -102,6 +121,7 @@ run2 已完成 authority、mesh、space、Floquet、R1 cache hit、R2 factor/cla
 | run2 stage summary | `.../stage_summary.json` | `ee7278fd44288753664827677355500e8101d4090d0600677a292ac98d0e2c9f` |
 | run2 P0 progress | `.../p0_progress.jsonl` | `d3ac29e2b32755f47a915d874632cf96dcf066892f4fe2b782b7c4fa0893ed59` |
 | run2 P0 timeline | `.../p0_timeline.jsonl` | `a8e1b6dc11b78538edbda49745aac677004d359a9fbcd59e13f44c3b57d4a74f` |
+| run2 v3 compact | `benchmarks/cases/101_task37_extra_development/records/h2b_row_complete_patch_timeout_v3.json` | file `14e796543dbd69005077dd8f5d03c964c71c7840c14fdfd445361a05ef124931`；embedded `8d853895e48a1e382d92783fb6eddb165c124a9233222130d5176d284be0b11e` |
 | run1 watchdog | `benchmarks/artifacts/task037_extra_development/h2b_p0_d6f7cc4_run1/p0_watchdog_summary.json` | `514ae1f01ab6f6dd1126f4b8790c0e47bf69acbae52ff2ebc1e38e2dbeaa60a2` |
 | run1 stage progress | `.../stage_progress.jsonl` | `ac2b6278b467d42c469e1c8df2a4daa38a841e60ede9e08202d4c13bc14170f3` |
 | run1 stage root PID | `.../stage_root_pid.json` | `9ff92245b304f8b019a3e421c523f1c898bc805f9f7fb1b0efbf9d535d564140` |
@@ -112,7 +132,7 @@ run2 已完成 authority、mesh、space、Floquet、R1 cache hit、R2 factor/cla
 | old compact embedded evidence | 同一 compact | `52e9251d46b1c6b7353f7975fb0ffa8e15ee63f15ae0691cab216ba980d98f3e` |
 | old P0 raw | `benchmarks/artifacts/task037_extra_development/h2b_p0_d6f7cc4_run1` | 负证据，保持不改 |
 
-v2 compact 仍是旧 checker 生成的 generic `raw_unreadable` 输出，不能单独绑定 run2；它作为历史输出保留，不能覆盖旧 compact。当前没有创建新的 P0 compact，也没有运行 checker。
+v2 compact 仍是旧 checker 生成的 generic `raw_unreadable` 输出，不能单独绑定 run2；它作为历史输出保留，不能覆盖旧 compact。v3 compact 已单独绑定 run2，未改写 v2 或旧 compact。
 
 ## 停止边界
 

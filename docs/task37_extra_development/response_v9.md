@@ -51,6 +51,22 @@ P0 的 row-complete patch 只围绕 central cell 的 882 个 independent rows，
 
 run2 的实测边界：stage `26.242200638 s`、RC0、peak `1,286,606,848 B`、swap0；P0 elapsed `3600.090414687 s`、RC `-15`、peak `709,206,016 B`、swap0；reason=`timeout`，SIGTERM 足够、无 SIGKILL，进程全部退出。最后 marker 为 `patch_assembly_started`。authority、mesh、space、Floquet、cache、R2 factor/class authority、central cell selection 已完成；central ordinal=3、class=3、touching cells=19。没有生成 P0 factor/rho/solve/patch completion measurement，因此结论是执行 timeout，不是数值算法 FAIL。
 
+### run2 v3 compact：结构化受控失败证据
+
+对同一 run2 raw 只运行了一次轻量离线 checker，RC=1 是预期的 `gate_failed`，不是 checker 异常。v3 compact 的 `pass=false`、`measurements=null`，problems 精确为 `p0_execution_timeout` 与 `p0_measurements_not_produced`；除 `p0_measurements_formed=false` 外所有 checks 均为 `true`。它是 run2 受控失败的合格 compact evidence，不是 P0 数值 PASS。
+
+| 字段 | 值 |
+|---|---|
+| path | `benchmarks/cases/101_task37_extra_development/records/h2b_row_complete_patch_timeout_v3.json` |
+| run source | `90a9dbbf01ac06abf3417116831d3483b7f37ca8` |
+| checker clean source | `83609f3ac564530ebffea55e3e9e9d0726b33379` |
+| file SHA | `14e796543dbd69005077dd8f5d03c964c71c7840c14fdfd445361a05ef124931` |
+| embedded evidence SHA | `8d853895e48a1e382d92783fb6eddb165c124a9233222130d5176d284be0b11e` |
+| watchdog SHA | `100128aee4a4c013256a27313cd8f9b4565d75479182e969a24eda8300ec8430` |
+| failure measurements | 仅真实 stage/P0 elapsed、peak、swap、RC、timeout、last marker、source、退出与 raw artifact hashes |
+
+run source 与 checker source 不同且分别绑定；v3 没有 factor/rho/solve 伪造字段。v2 compact 仍保留为旧 generic `raw_unreadable` 历史输出，不能单独证明 run2；v3 才结构化绑定 run2。
+
 ### 最可能的性能边界
 
 旧 P0 producer 对 19 个 touching cells 逐 cell 重新 tabulate curl+mass dense tensor。冻结 R2 raw 的 class factor 步骤约 191.78–195.89 s，median 约 193.78 s；因此 `19×193.78≈3681.82 s`，超过 3600 s。run2 的 class 序列是：
@@ -65,7 +81,7 @@ run2 的实测边界：stage `26.242200638 s`、RC0、peak `1,286,606,848 B`、s
 
 当前代码按 first-seen class 分组、class 内 ordinal 升序；每个 class 只为代表 cell tabulate 一次，随后每个 cell 仍用自己的 `independent_global_rows` 与同 class expansion pattern 累积，组完成即释放 proxy，最多一个 dense proxy 存活。没有改变 patch、orientation、MPC、action、factor、rho 或物理定义，没有 per-cell tensor/cache。
 
-这是 `implemented/tested_only`，不是 P0 PASS。最终测试为 test297 `15 passed`、focused 294–297 `91 passed`，compileall、AST duplicate-key、diff-check 均通过；没有因此重新运行 formal。
+这是 `implemented/tested_only`，不是 P0 PASS；implementation commit=`83609f3ac564530ebffea55e3e9e9d0726b33379`。最终测试为 test297 `15 passed`、focused 294–297 `91 passed`，compileall、AST duplicate-key、diff-check 均通过；没有因此重新运行 formal。
 
 ## P0 数值状态与长期 PDE 目标
 
@@ -84,6 +100,7 @@ run2 的实测边界：stage `26.242200638 s`、RC0、peak `1,286,606,848 B`、s
 | run2 stage summary | `stage_summary.json` SHA `ee7278fd44288753664827677355500e8101d4090d0600677a292ac98d0e2c9f` |
 | run2 progress | `p0_progress.jsonl` SHA `d3ac29e2b32755f47a915d874632cf96dcf066892f4fe2b782b7c4fa0893ed59` |
 | run2 timeline | `p0_timeline.jsonl` SHA `a8e1b6dc11b78538edbda49745aac677004d359a9fbcd59e13f44c3b57d4a74f` |
+| run2 v3 compact | `benchmarks/cases/101_task37_extra_development/records/h2b_row_complete_patch_timeout_v3.json`；file `14e796543dbd69005077dd8f5d03c964c71c7840c14fdfd445361a05ef124931`；embedded `8d853895e48a1e382d92783fb6eddb165c124a9233222130d5176d284be0b11e` |
 | v2 compact | `benchmarks/cases/101_task37_extra_development/records/h2b_row_complete_patch_v2.json`；SHA `d811b5d5fa834699088b255631a05621b61dbfdb6e150b36850c3eda8944ac3a`；byte-for-byte 保留 |
 | old compact | `.../h2b_row_complete_patch.json`；同 SHA `d811b5d5fa834699088b255631a05621b61dbfdb6e150b36850c3eda8944ac3a` |
 | V8 history | [response_v8.md](response_v8.md)，不覆盖 |
