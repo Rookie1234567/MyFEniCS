@@ -13,6 +13,7 @@ AxialPropagationModel = Literal["continuous_beta", "full3d_uniform_cg"]
 ModalTractionModel = Literal[
     "continuous_qep_beta",
     "scalar_cg_discrete_derivative",
+    "full3d_one_cell_exact_schur",
 ]
 
 

@@ -99,6 +99,8 @@ class HybridInternalModeCoupling:
     full_field_or_mode_gathered: bool = False
     dense_interface_square_formed: bool = False
     interface_quadrature_coefficient_degree: int = 0
+    exact_one_cell_audit: dict[str, object] | None = None
+    traction_beta_source: str = "coupling_selected_traction_beta_per_nm"
 
     @property
     def internal_unknown_count(self) -> int:
@@ -112,6 +114,17 @@ class HybridInternalModeCoupling:
         self.bottom.destroy()
         self.top.destroy()
         self.projection.destroy()
+
+
+def _destroy_pending_exact_overrides(
+    pending: dict[str, tuple[PETSc.Mat, PETSc.Mat]],
+) -> None:
+    """Destroy exact pairs that have not yet transferred to interface blocks."""
+
+    for pair in pending.values():
+        for matrix in pair:
+            matrix.destroy()
+    pending.clear()
 
 
 class _DistributedTwoDimensionalEvaluator:
@@ -1091,9 +1104,10 @@ def _build_interface_blocks(
     raw_negative_traces: Sequence[fem.Function],
     canonical_negative_traces: Sequence[fem.Function],
     canonical_negative_mapping: np.ndarray,
-    traction_evaluator: _ReusableModeTractionEvaluator,
+    traction_evaluator: _ReusableModeTractionEvaluator | None,
     positive_traction_beta_per_nm: Sequence[complex],
     negative_traction_beta_per_nm: Sequence[complex],
+    traction_override: tuple[PETSc.Mat, PETSc.Mat] | None = None,
     log=None,
 ) -> HybridInterfaceModeBlocks:
     if log is not None:
@@ -1102,66 +1116,91 @@ def _build_interface_blocks(
     trace_lifter = _ReusableInterfaceLifter(system, target_space=system.V)
     if log is not None:
         log(f"Task32 {system.side}: assembling canonical trace projection")
-    (
-        projection_matrix,
-        projection_queries,
-        negative_mapping,
-        trace_gram_condition,
-        positive_identity_error,
-        full_left_vectors,
-        inverse_gram,
-        modal_rhs_correction,
-        canonical_trace_raw_consistency_error,
-        canonical_trace_representation_error,
-    ) = _build_projection_matrix(
-        system,
-        projection,
-        raw_negative_traces,
-        canonical_negative_traces,
-        canonical_negative_mapping,
-        surface_load,
-        trace_lifter,
-        log,
-    )
-    if log is not None:
+    if log is not None and traction_override is None:
         log(f"Task32 {system.side}: assembling positive traction columns")
+    projection_matrix = None
+    full_left_vectors: tuple[PETSc.Vec, ...] = ()
     positive_traction = None
     negative_traction = None
+    positive_queries = 0
+    negative_queries = 0
     try:
         (
-            positive_traction,
-            positive_queries,
-            positive_interior_correction,
-        ) = _build_traction_matrix(
-            system,
-            positive_basis.modes,
-            traction_evaluator,
-            surface_load,
+            projection_matrix,
+            projection_queries,
+            negative_mapping,
+            trace_gram_condition,
+            positive_identity_error,
             full_left_vectors,
             inverse_gram,
-            positive_traction_beta_per_nm,
-        )
-        if log is not None:
-            log(f"Task32 {system.side}: assembling negative traction columns")
-        (
-            negative_traction,
-            negative_queries,
-            negative_interior_correction,
-        ) = _build_traction_matrix(
+            modal_rhs_correction,
+            canonical_trace_raw_consistency_error,
+            canonical_trace_representation_error,
+        ) = _build_projection_matrix(
             system,
-            negative_basis.modes,
-            traction_evaluator,
+            projection,
+            raw_negative_traces,
+            canonical_negative_traces,
+            canonical_negative_mapping,
             surface_load,
-            full_left_vectors,
-            inverse_gram,
-            negative_traction_beta_per_nm,
+            trace_lifter,
+            log,
         )
+        if traction_override is None:
+            if traction_evaluator is None:
+                raise ValueError("A scalar traction evaluator is required here.")
+            (
+                positive_traction,
+                positive_queries,
+                positive_interior_correction,
+            ) = _build_traction_matrix(
+                system,
+                positive_basis.modes,
+                traction_evaluator,
+                surface_load,
+                full_left_vectors,
+                inverse_gram,
+                positive_traction_beta_per_nm,
+            )
+            if log is not None:
+                log(f"Task32 {system.side}: assembling negative traction columns")
+            (
+                negative_traction,
+                negative_queries,
+                negative_interior_correction,
+            ) = _build_traction_matrix(
+                system,
+                negative_basis.modes,
+                traction_evaluator,
+                surface_load,
+                full_left_vectors,
+                inverse_gram,
+                negative_traction_beta_per_nm,
+            )
+        else:
+            positive_traction, negative_traction = traction_override
+            expected = (system.global_size, len(positive_basis.modes))
+            if (
+                positive_traction.getSize() != expected
+                or negative_traction.getSize() != expected
+            ):
+                raise ValueError(
+                    f"Exact traction block shape differs from {system.side} local algebra: "
+                    f"expected={expected}, positive={positive_traction.getSize()}, "
+                    f"negative={negative_traction.getSize()}"
+                )
+            positive_interior_correction = np.zeros(
+                (inverse_gram.shape[1], len(positive_basis.modes)),
+                dtype=np.complex128,
+            )
+            negative_interior_correction = np.zeros_like(positive_interior_correction)
     except Exception:
-        if positive_traction is not None:
+        if traction_override is None and positive_traction is not None:
             positive_traction.destroy()
-        if negative_traction is not None:
+        if traction_override is None and negative_traction is not None:
             negative_traction.destroy()
-        projection_matrix.destroy()
+        if projection_matrix is not None:
+            projection_matrix.destroy()
         raise
     finally:
         for vector in full_left_vectors:
@@ -1218,6 +1257,7 @@ def build_hybrid_internal_mode_coupling(
     length_nm: float = 100.0,
     propagation_model: AxialPropagationModel = "continuous_beta",
     modal_traction_model: ModalTractionModel = "continuous_qep_beta",
+    exact_one_cell_work_dir=None,
     log=None,
 ) -> HybridInternalModeCoupling:
     """Build sparse internal-interface blocks without assembling the full solve."""
@@ -1242,6 +1282,9 @@ def build_hybrid_internal_mode_coupling(
     if log is not None:
         log("Task32 internal coupling: building canonical modal projection")
     projection = ModalTraceProjection(spaces, positive_basis)
+    exact_one_cell_audit = None
+    exact_traction_overrides = None
+    pending_exact_overrides: dict[str, tuple[PETSc.Mat, PETSc.Mat]] = {}
     try:
         canonical_negative_mapping = np.empty(
             (mode_count, mode_count), dtype=np.complex128
@@ -1306,6 +1349,67 @@ def build_hybrid_internal_mode_coupling(
                 )
                 for mode in negative_basis.modes
             )
+        elif modal_traction_model == "full3d_one_cell_exact_schur":
+            if propagation_model != "full3d_uniform_cg":
+                raise ValueError(
+                    "full3d_one_cell_exact_schur requires full3d_uniform_cg."
+                )
+            if exact_one_cell_work_dir is None:
+                raise ValueError(
+                    "Exact one-cell traction requires an explicit ignored work directory."
+                )
+            if not np.isclose(float(length_nm), 100.0, rtol=0.0, atol=1.0e-12):
+                raise ValueError(
+                    "Exact Hybrid coupling requires a 100 nm middle interval."
+                )
+            cell_propagation = build_two_sided_propagation(
+                [*positive_basis.modes, *negative_basis.modes],
+                10.0,
+                propagation_model="full3d_uniform_cg",
+                axial_fem_degree=int(cfg.nedelec_degree),
+                axial_h_nm=10.0,
+            )
+            from .hybrid_one_cell_exact_traction_builder import (
+                build_exact_one_cell_traction_matrices,
+            )
+
+            exact_build = build_exact_one_cell_traction_matrices(
+                cfg,
+                positive_basis,
+                raw_negative_traces,
+                projection,
+                cell_propagation,
+                bottom_system,
+                top_system,
+                work_dir=exact_one_cell_work_dir,
+                coupling_propagation_length_nm=float(length_nm),
+                log=log,
+            )
+            exact_traction_overrides = exact_build.matrices
+            pending_exact_overrides = dict(exact_traction_overrides)
+            exact_one_cell_audit = exact_build.audit
+            positive_traction_beta = tuple(
+                scalar_cg_discrete_traction_beta(
+                    mode.beta,
+                    degree=int(cfg.nedelec_degree),
+                    h_nm=float(cfg.mesh_target_size),
+                    direction="forward",
+                )
+                for mode in positive_basis.modes
+            )
+            negative_traction_beta = tuple(
+                scalar_cg_discrete_traction_beta(
+                    mode.beta,
+                    degree=int(cfg.nedelec_degree),
+                    h_nm=float(cfg.mesh_target_size),
+                    direction="backward",
+                )
+                for mode in negative_basis.modes
+            )
+            traction_beta_source = (
+                "reconstruction_only_scalar_cg_discrete_derivative_"
+                "not_used_by_exact_coupling"
+            )
         else:
             raise ValueError(
                 f"Unsupported modal_traction_model {modal_traction_model!r}."
@@ -1315,6 +1419,7 @@ def build_hybrid_internal_mode_coupling(
             canonical_negative_mapping,
         )
     except Exception:
+        _destroy_pending_exact_overrides(pending_exact_overrides)
         projection.destroy()
         raise
     bottom = None
@@ -1322,7 +1427,16 @@ def build_hybrid_internal_mode_coupling(
     try:
         if log is not None:
             log("Task32 internal coupling: compiling reusable traction expression")
-        traction_evaluator = _ReusableModeTractionEvaluator(spaces)
+        traction_evaluator = (
+            None
+            if exact_traction_overrides is not None
+            else _ReusableModeTractionEvaluator(spaces)
+        )
+        bottom_override = (
+            None
+            if exact_traction_overrides is None
+            else pending_exact_overrides["bottom"]
+        )
         bottom = _build_interface_blocks(
             bottom_system,
             spaces,
@@ -1335,7 +1449,15 @@ def build_hybrid_internal_mode_coupling(
             traction_evaluator,
             positive_traction_beta,
             negative_traction_beta,
+            bottom_override,
             log,
+        )
+        if exact_traction_overrides is not None:
+            pending_exact_overrides.pop("bottom")
+        top_override = (
+            None
+            if exact_traction_overrides is None
+            else pending_exact_overrides["top"]
         )
         top = _build_interface_blocks(
             top_system,
@@ -1349,8 +1471,11 @@ def build_hybrid_internal_mode_coupling(
             traction_evaluator,
             positive_traction_beta,
             negative_traction_beta,
+            top_override,
             log,
         )
+        if exact_traction_overrides is not None:
+            pending_exact_overrides.pop("top")
         mapping_scale = max(
             float(np.linalg.norm(canonical_negative_mapping, ord=np.inf)),
             1.0,
@@ -1444,8 +1569,15 @@ def build_hybrid_internal_mode_coupling(
             interface_quadrature_coefficient_degree=(
                 bottom.quadrature_coefficient_degree
             ),
+            exact_one_cell_audit=exact_one_cell_audit,
+            traction_beta_source=(
+                traction_beta_source
+                if exact_traction_overrides is not None
+                else "coupling_selected_traction_beta_per_nm"
+            ),
         )
     except Exception:
+        _destroy_pending_exact_overrides(pending_exact_overrides)
         if bottom is not None:
             bottom.destroy()
         if top is not None:

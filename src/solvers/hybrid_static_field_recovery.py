@@ -10,6 +10,9 @@ import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
 
+from ..coupling.hybrid_one_cell_exact_traction import (
+    EXACT_ONE_CELL_TRACTION_MODEL,
+)
 from ..coupling.hybrid_internal_modes import (
     HybridInternalModeCoupling,
     _ReusableInterfaceSurfaceLoad,
@@ -165,6 +168,14 @@ def _add_internal_tractions(
     modal: np.ndarray,
     full_rhs: PETSc.Vec,
 ) -> dict[str, Any]:
+    if coupling.modal_traction_model == EXACT_ONE_CELL_TRACTION_MODEL:
+        return {
+            "internal_mode_surface_vectors_reassembled": 0,
+            "internal_mode_lifted_query_points": 0,
+            "traction_beta_source": "not_used_exact_one_cell_schur",
+            "exact_reduced_trace_columns": True,
+            "zero_eliminated_interior_support": True,
+        }
     count = coupling.mode_count_per_direction
     if system.side == "bottom":
         positive_values = modal[:count]
