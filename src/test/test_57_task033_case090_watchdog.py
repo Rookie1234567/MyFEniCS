@@ -365,6 +365,25 @@ class Task033Case090WatchdogTests(unittest.TestCase):
             wsl_resources._status_memory_kib({"State": "R (running)"}),
             (None, None),
         )
+        self.assertEqual(
+            wsl_resources._status_memory_kib(
+                {"State": "R (running)"}, ["0", "0"]
+            ),
+            (0, 0),
+        )
+        for statm_fields in (None, [], ["0"], ["1", "0"], ["0", "1"], ["bad", "0"]):
+            self.assertEqual(
+                wsl_resources._status_memory_kib(
+                    {"State": "R (running)"}, statm_fields
+                ),
+                (None, None),
+            )
+        self.assertEqual(
+            wsl_resources._status_memory_kib(
+                {"State": "R (running)", "VmRSS": "12 kB"}, ["0", "0"]
+            ),
+            (12, None),
+        )
 
     def test_process_tree_status_exit_race_requires_confirmed_natural_exit(self) -> None:
         decision = {

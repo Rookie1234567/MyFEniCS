@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 GIB = 1024**3
 
@@ -152,7 +152,9 @@ class ProcessTreeSample:
         return asdict(self)
 
 
-def _status_memory_kib(fields: Mapping[str, str]) -> tuple[int | None, int | None]:
+def _status_memory_kib(
+    fields: Mapping[str, str], statm_fields: Sequence[str] | None = None
+) -> tuple[int | None, int | None]:
     def kib(name: str) -> int | None:
         try:
             return int(fields[name].split()[0])
@@ -167,6 +169,22 @@ def _status_memory_kib(fields: Mapping[str, str]) -> tuple[int | None, int | Non
         # during normal MPI rank teardown; zero is authoritative.
         rss_kib = 0 if rss_kib is None else rss_kib
         swap_kib = 0 if swap_kib is None else swap_kib
+    elif (
+        rss_kib is None
+        and swap_kib is None
+        and "VmRSS" not in fields
+        and "VmSwap" not in fields
+        and statm_fields is not None
+    ):
+        try:
+            address_space_pages = int(statm_fields[0])
+            resident_pages = int(statm_fields[1])
+        except (IndexError, ValueError):
+            pass
+        else:
+            if address_space_pages == 0 and resident_pages == 0:
+                rss_kib = 0
+                swap_kib = 0
     return rss_kib, swap_kib
 
 
@@ -199,6 +217,19 @@ def process_tree_sample(root_pid: int) -> ProcessTreeSample:
         except ValueError:
             ppid = 0
         rss_kib, swap_kib = _status_memory_kib(fields)
+        if (
+            rss_kib is None
+            and swap_kib is None
+            and "VmRSS" not in fields
+            and "VmSwap" not in fields
+        ):
+            try:
+                statm_fields = (entry / "statm").read_text(
+                    encoding="utf-8", errors="ignore"
+                ).split()
+            except OSError:
+                statm_fields = None
+            rss_kib, swap_kib = _status_memory_kib(fields, statm_fields)
         processes[pid] = (ppid, rss_kib, swap_kib)
     selected = {int(root_pid)}
     changed = True
