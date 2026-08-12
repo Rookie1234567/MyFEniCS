@@ -12,6 +12,7 @@ from dolfinx.la.petsc import create_vector
 from mpi4py import MPI
 from petsc4py import PETSc
 
+import benchmarks.run_task037_extra_m as m1
 from src.common.config_3d import target_stage4_config
 from src.constraints.floquet_3d import build_double_floquet_mpc
 from src.solvers import hcurl_p_split_owner_transfer as owner_transfer
@@ -507,18 +508,23 @@ def test_real_floquet_mpc_owner_transfer_phase_and_orientation() -> None:
         p6_mpc=floquet6.mpc,
     )
     source_function = fem.Function(p4_space)
+    expected_function = fem.Function(p6_space)
     dual_function = fem.Function(p6_space)
-    source_function.interpolate(_analytic_hcurl)
+    manufactured_hcurl = m1._floquet_compatible_hcurl(cfg)
+    source_function.interpolate(manufactured_hcurl)
     source_function.x.scatter_forward()
-    dual_function.interpolate(_analytic_hcurl)
+    expected_function.interpolate(manufactured_hcurl)
+    expected_function.x.scatter_forward()
+    dual_function.interpolate(manufactured_hcurl)
     dual_function.x.scatter_forward()
     source = _function_to_mpc_vector(source_function, floquet4.mpc)
+    expected = _function_to_mpc_vector(expected_function, floquet6.mpc)
     image = _new_mpc_vector(floquet6.mpc)
     dual = _function_to_mpc_vector(dual_function, floquet6.mpc)
     adjoint = _new_mpc_vector(floquet4.mpc)
     repeat_image = _new_mpc_vector(floquet6.mpc)
     repeat_adjoint = _new_mpc_vector(floquet4.mpc)
-    owned_vectors = (source, image, dual, adjoint, repeat_image, repeat_adjoint)
+    owned_vectors = (source, expected, image, dual, adjoint, repeat_image, repeat_adjoint)
     try:
         transfer.apply(source, image)
         transfer.apply_adjoint(dual, adjoint)
@@ -536,6 +542,11 @@ def test_real_floquet_mpc_owner_transfer_phase_and_orientation() -> None:
             adjoint.getArray(readonly=True),
             repeat_adjoint.getArray(readonly=True),
         )
+        assert _global_relative_owned(
+            image.getArray(readonly=True),
+            expected.getArray(readonly=True),
+            MPI.COMM_WORLD,
+        ) <= 1.0e-11
         _assert_local_finite(image)
         _assert_local_finite(adjoint)
         assert floquet4.num_edge_constraints > 0

@@ -491,6 +491,60 @@ def test_m1_dual_source_is_partition_independent_by_global_id() -> None:
     np.testing.assert_array_equal(reconstructed, expected)
 
 
+def test_m1_floquet_compatible_manufactured_field() -> None:
+    cfg = SimpleNamespace(
+        x_min=-2.0,
+        x_max=3.0,
+        y_min=-1.0,
+        y_max=4.0,
+        floquet_phase_x=np.exp(0.37j),
+        floquet_phase_y=np.exp(-0.23j),
+    )
+    field = m1._floquet_compatible_hcurl(cfg)
+    x_min = np.asarray(
+        [[cfg.x_min, cfg.x_min], [0.25, 0.25], [0.5, 0.75]],
+        dtype=np.float64,
+    )
+    x_max = x_min.copy()
+    x_max[0] = cfg.x_max
+    y_min = x_min.copy()
+    y_min[1] = cfg.y_min
+    y_max = x_min.copy()
+    y_max[1] = cfg.y_max
+    corner_min = np.asarray(
+        [[cfg.x_min], [cfg.y_min], [0.5]],
+        dtype=np.float64,
+    )
+    corner_max = corner_min.copy()
+    corner_max[0] = cfg.x_max
+    corner_max[1] = cfg.y_max
+
+    np.testing.assert_allclose(
+        field(x_max),
+        complex(cfg.floquet_phase_x) * field(x_min),
+        rtol=0.0,
+        atol=1.0e-14,
+    )
+    np.testing.assert_allclose(
+        field(y_max),
+        complex(cfg.floquet_phase_y) * field(y_min),
+        rtol=0.0,
+        atol=1.0e-14,
+    )
+    np.testing.assert_allclose(
+        field(corner_max),
+        complex(cfg.floquet_phase_x)
+        * complex(cfg.floquet_phase_y)
+        * field(corner_min),
+        rtol=0.0,
+        atol=1.0e-14,
+    )
+    assert np.all(np.abs(field(corner_min)[:, 0]) > 0.0)
+    assert m1._m1_scope()["manufactured_field"] == (
+        "floquet_compatible_bilinear_p4_v1"
+    )
+
+
 def test_m1_canonical_route_is_owner_local() -> None:
     source = Path(m1.__file__).read_text(encoding="utf-8")
     assert "extract_canonical_full_fe_packets" not in source

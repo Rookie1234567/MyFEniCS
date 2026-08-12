@@ -44,6 +44,7 @@ M1_SWAP_LIMIT_BYTES = 0
 M1_IMAGE_LIMIT = 1.0e-11
 M1_ADJOINT_LIMIT = 1.0e-12
 M1_CANONICAL_LIMIT = 1.0e-12
+M1_MANUFACTURED_FIELD_ID = "floquet_compatible_bilinear_p4_v1"
 M1_EVENTS = (
     "authority_validated",
     "mesh_ready",
@@ -100,6 +101,7 @@ def _m1_scope(mpi_size: int | None = None) -> dict[str, Any]:
         "mesh_builder": "build_airbox_mesh_3d",
         "p4_space": "N1curl_degree4",
         "p6_space": "N1curl_degree6",
+        "manufactured_field": M1_MANUFACTURED_FIELD_ID,
         "fine_space": "uncondensed_fullspace",
         "mpi_size": None if mpi_size is None else int(mpi_size),
         "timeout_seconds": M1_TIMEOUT_SECONDS,
@@ -339,16 +341,31 @@ def _function_to_mpc_vector(function: Any, mpc: Any) -> Any:
     return vector
 
 
-def _analytic_hcurl(x: Any) -> Any:
+def _floquet_compatible_hcurl(cfg: Any) -> Any:
+    """Return the fixed cfg-bound p4-compatible Floquet polynomial field."""
+
     import numpy as np
 
-    return np.vstack(
-        (
-            0.7 + 0.13 * x[0] + 0.09j * x[1],
-            -0.2 + 0.17 * x[1] + 0.11j * x[2],
-            0.4 + 0.19 * x[2] + 0.07j * x[0],
-        )
+    c = np.asarray(
+        (1.0 + 0.2j, -0.3 + 0.4j, 0.7 - 0.1j),
+        dtype=np.complex128,
     )
+    x_min = float(cfg.x_min)
+    x_max = float(cfg.x_max)
+    y_min = float(cfg.y_min)
+    y_max = float(cfg.y_max)
+    phase_x = complex(cfg.floquet_phase_x)
+    phase_y = complex(cfg.floquet_phase_y)
+
+    def _field(x: Any) -> Any:
+        points = np.asarray(x)
+        sx = (points[0] - x_min) / (x_max - x_min)
+        sy = (points[1] - y_min) / (y_max - y_min)
+        qx = 1.0 + (phase_x - 1.0) * sx
+        qy = 1.0 + (phase_y - 1.0) * sy
+        return np.vstack(tuple(qx * qy * component for component in c))
+
+    return _field
 
 
 def _deterministic_global_dual_values(index_map: Any) -> Any:
@@ -672,9 +689,10 @@ def _run_m1_worker(run_dir: Path, phase: str, expected_mpi_size: int) -> int:
         source_function = fem.Function(p4_space)
         expected_function = fem.Function(p6_space)
         dual_function = fem.Function(p6_space)
-        source_function.interpolate(_analytic_hcurl)
+        manufactured_hcurl = _floquet_compatible_hcurl(cfg)
+        source_function.interpolate(manufactured_hcurl)
         source_function.x.scatter_forward()
-        expected_function.interpolate(_analytic_hcurl)
+        expected_function.interpolate(manufactured_hcurl)
         expected_function.x.scatter_forward()
         with dual_function.x.petsc_vec.localForm() as local:
             owned = int(p6_space.dofmap.index_map.size_local)
