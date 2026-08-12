@@ -777,13 +777,22 @@ def _assemble_unconstrained_form_vector(linear_form) -> PETSc.Vec:
 
 
 def _assemble_mpc_vector(
-    linear_form, mpc, *, quadrature_degree: int | None = None
+    linear_form,
+    mpc,
+    *,
+    quadrature_degree: int | None = None,
+    jit_options: Mapping[str, Any] | None = None,
 ) -> PETSc.Vec:
     form_options: dict[str, int] = {}
     if quadrature_degree is not None:
         form_options["quadrature_degree"] = int(quadrature_degree)
     return _assemble_mpc_form_vector(
-        fem.form(linear_form, form_compiler_options=form_options), mpc
+        fem.form(
+            linear_form,
+            form_compiler_options=form_options,
+            jit_options=None if jit_options is None else dict(jit_options),
+        ),
+        mpc,
     )
 
 
@@ -1323,6 +1332,7 @@ class _ReusableSurfaceComponentAssembler:
         component: int,
         *,
         quadrature_degree: int | None = None,
+        jit_options: Mapping[str, Any] | None = None,
     ):
         if component not in {0, 1}:
             raise ValueError(
@@ -1347,9 +1357,11 @@ class _ReusableSurfaceComponentAssembler:
         form_options: dict[str, int] = {}
         if quadrature_degree is not None:
             form_options["quadrature_degree"] = int(quadrature_degree)
+        compile_options = None if jit_options is None else dict(jit_options)
         self.form = fem.form(
             ufl.inner(ufl.as_vector(tuple(vector)), v) * ds(tag),
             form_compiler_options=form_options,
+            jit_options=compile_options,
         )
 
     def assemble_entries(self, mode: PortMode3D, mpc) -> tuple[np.ndarray, np.ndarray]:
