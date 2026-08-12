@@ -477,11 +477,10 @@ def task037_m3a_solution_observer(run_dir: Path):
             linear_system=linear_system,
             dtn_result=dtn_result,
         )
-        if mesh_data.mesh.comm.rank == 0:
-            summary["task037_m3a_canonical_export"] = {
-                "status": "completed",
-                "roles": exports,
-            }
+        summary["task037_m3a_canonical_export"] = {
+            "status": "completed",
+            "roles": exports,
+        }
 
     return observe
 

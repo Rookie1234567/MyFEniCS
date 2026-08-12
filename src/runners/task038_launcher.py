@@ -9,6 +9,7 @@ import subprocess
 import sys
 import time
 from datetime import datetime, timezone
+from functools import partial
 from pathlib import Path
 from typing import Any, Callable
 
@@ -337,6 +338,10 @@ def _run_worker(
     peak_swap = 0
     zero_swap_observed = True
     warning_triggered = False
+    peak_pss = None
+    peak_uss = None
+    smaps_attempted_sample_count = 0
+    smaps_complete_sample_count = 0
     termination: dict[str, Any] | None = None
     classification: str | None = None
     started = monotonic()
@@ -353,12 +358,21 @@ def _run_worker(
         )
         while True:
             authority = sample_factory(process.pid)
+            process_tree = authority.get("process_tree", {})
+            smaps = process_tree.get("smaps")
+            if isinstance(smaps, dict):
+                smaps_attempted_sample_count += 1
+                if smaps.get("complete") is True:
+                    pss = smaps.get("pss_bytes")
+                    uss = smaps.get("uss_bytes")
+                    if isinstance(pss, int) and isinstance(uss, int):
+                        smaps_complete_sample_count += 1
+                        peak_pss = pss if peak_pss is None else max(peak_pss, pss)
+                        peak_uss = uss if peak_uss is None else max(peak_uss, uss)
             if _authority_readable(authority):
                 sample_count += 1
                 memory = int(authority.get("memory_authority_bytes") or 0)
-                process_tree_rss = int(
-                    authority.get("process_tree", {}).get("rss_bytes") or 0
-                )
+                process_tree_rss = int(process_tree.get("rss_bytes") or 0)
                 swap_bytes = _swap_bytes(authority)
                 peak_authority = max(peak_authority, memory)
                 peak_process_tree = max(peak_process_tree, process_tree_rss)
@@ -401,6 +415,25 @@ def _run_worker(
     }
     if task039_budget is not None:
         resource_authority["task039_memory_budget"] = task039_budget
+        resource_authority.update(
+            {
+                "peak_pss_mb": (None if peak_pss is None else peak_pss / 1024**2),
+                "peak_uss_mb": (None if peak_uss is None else peak_uss / 1024**2),
+                "smaps_attempted_sample_count": smaps_attempted_sample_count,
+                "smaps_complete_sample_count": smaps_complete_sample_count,
+                "telemetry_status": (
+                    "not_measured"
+                    if smaps_attempted_sample_count == 0
+                    else (
+                        "measured" if smaps_complete_sample_count > 0 else "incomplete"
+                    )
+                ),
+                "peak_semantics": (
+                    "per-metric simultaneous process-tree peak across complete "
+                    "smaps samples; RSS/PSS/USS peaks may occur at different samples"
+                ),
+            }
+        )
     return {
         "exit_status": exit_status,
         "result_classification": classification,
@@ -439,6 +472,17 @@ def launch_specification(
             str(specification.identity.get("model_id", "")),
         )
     )
+    task039_profile = task039_model_id_matches(
+        str(specification.method["kind"]),
+        str(specification.identity.get("model_id", "")),
+        specification.method.get("requested_modes_per_direction"),
+    )
+    effective_sample_factory = sample_factory
+    if task039_profile and sample_factory is resource_authority_sample:
+        effective_sample_factory = partial(
+            resource_authority_sample,
+            include_smaps=True,
+        )
     run_directory = _timestamp_directory(specification, timestamp)
     start_time = _now()
     manifest, _resolved_sha = _write_bootstrap(
@@ -470,7 +514,7 @@ def launch_specification(
                 specification,
                 run_directory,
                 popen_factory=popen_factory,
-                sample_factory=sample_factory,
+                sample_factory=effective_sample_factory,
                 terminate_factory=terminate_factory,
                 monotonic=monotonic,
                 sleep=sleep,

@@ -13,17 +13,23 @@ from pathlib import Path
 
 import pytest
 
+from benchmarks.task034_wsl_resources import (
+    _read_smaps_rollup,
+    process_tree_smaps_sample,
+)
 from scripts.run_case import main as run_case_main
 from src.io import load_and_resolve
 from src.io.input_loader import InputError
 from src.io.execution_plan import CONTRACT_PROBE_ADAPTER, build_execution_plan
 from src.io.resolved_config import canonical_json_bytes, resolved_config_bytes
+from src.runners import task038_launcher as launcher
 from src.runners.task038_input_worker import validate_worker_contract
 from src.runners.task038_launcher import _run_worker, _swap_bytes, launch_specification
 
 
 ROOT = Path(__file__).resolve().parents[2]
 TEMPLATE = ROOT / "input/templates/full3d_direct_example.dat"
+TASK039_DIRECT = ROOT / "input/official/task039/5nm_p6h10_full3d_direct_mpi8.dat"
 SOURCE_SHA = "a" * 40
 REQUIRED_FILES = {
     "input_original.dat",
@@ -69,6 +75,25 @@ class _FakeProcess:
         return self.returncode
 
 
+class _SequenceProcess:
+    def __init__(self, polls_before_exit=1):
+        self.pid = 4343
+        self.returncode = None
+        self._poll_count = 0
+        self._polls_before_exit = polls_before_exit
+
+    def poll(self):
+        if self._poll_count < self._polls_before_exit:
+            self._poll_count += 1
+            return None
+        self.returncode = 0
+        return self.returncode
+
+    def wait(self):
+        self.returncode = 0
+        return self.returncode
+
+
 def _authority(*, memory=1024, swap=0):
     return {
         "memory_authority_bytes": memory,
@@ -90,6 +115,25 @@ def _unreadable_authority():
     authority = _authority()
     authority["process_tree"]["all_status_readable"] = False
     return authority
+
+
+def _authority_with_smaps(*, rss=1024, pss=1024, uss=512, complete=True):
+    authority = _authority(memory=rss)
+    authority["process_tree"]["smaps"] = {
+        "complete": complete,
+        "pss_bytes": pss if complete else None,
+        "uss_bytes": uss if complete else None,
+        "readable_pid_count": 1 if complete else 0,
+        "pid_count": 1,
+    }
+    return authority
+
+
+def _task039_spec(tmp_path):
+    return replace(
+        load_and_resolve(TASK039_DIRECT),
+        expected_output_parent=tmp_path / "results",
+    )
 
 
 def _fake_launch(specification, tmp_path, *, process, sample, **kwargs):
@@ -375,6 +419,177 @@ def test_unreadable_resource_sample_is_not_zero_swap_authority(tmp_path):
     authority = result["resource_authority"]
     assert authority["status"] == "not_available"
     assert authority["zero_swap_observed"] is None
+
+
+def test_smaps_rollup_requires_pss_rss_and_private_fields(tmp_path):
+    path = tmp_path / "smaps_rollup"
+    path.write_text(
+        "\n".join(
+            (
+                "Rss: 100 kB",
+                "Pss: 60 kB",
+                "Private_Clean: 10 kB",
+                "Private_Dirty: 20 kB",
+                "Private_Hugetlb: 3 kB",
+            )
+        ),
+        encoding="utf-8",
+    )
+    row = _read_smaps_rollup(path)
+    assert row is not None
+    assert row["pss_mb"] == pytest.approx(60 / 1024)
+    assert row["uss_mb"] == pytest.approx(33 / 1024)
+    path.write_text("Rss: 100 kB\nPss: 60 kB\nPrivate_Clean: 10 kB\n")
+    assert _read_smaps_rollup(path) is None
+
+
+def test_process_tree_smaps_aggregation_requires_all_pids(monkeypatch):
+    rows = {
+        11: {"pss_mb": 2.0, "uss_mb": 1.0},
+        12: {"pss_mb": 3.0, "uss_mb": 1.5},
+    }
+    monkeypatch.setattr(
+        "benchmarks.task034_wsl_resources._read_smaps_rollup",
+        lambda path: rows.get(int(path.parts[2])),
+    )
+    sample = process_tree_smaps_sample((11, 12))
+    assert sample["complete"] is True
+    assert sample["pss_bytes"] == int(5 * 1024**2)
+    assert sample["uss_bytes"] == int(2.5 * 1024**2)
+    incomplete = process_tree_smaps_sample((11, 13))
+    assert incomplete["complete"] is False
+    assert incomplete["pss_bytes"] is None
+    assert incomplete["uss_bytes"] is None
+
+
+def test_task039_default_sampler_requests_smaps_without_changing_fake_sampler(
+    monkeypatch, tmp_path
+):
+    specification = _task039_spec(tmp_path)
+    captured = {}
+
+    def fake_worker(_plan, _specification, _run_directory, **kwargs):
+        captured.update(kwargs)
+        return {
+            "exit_status": 0,
+            "result_classification": "contract_probe_pass",
+            "termination": None,
+            "resource_authority": {"status": "not_sampled"},
+        }
+
+    monkeypatch.setattr(launcher, "_run_worker", fake_worker)
+    launch_specification(
+        specification,
+        source_sha=SOURCE_SHA,
+        contract_probe=True,
+        mpiexec_command="/opt/mpiexec",
+        python_executable="/opt/python",
+        popen_factory=lambda *_args, **_kwargs: _FakeProcess(0),
+    )
+    sampler = captured["sample_factory"]
+    assert sampler.keywords == {"include_smaps": True}
+
+
+def test_task039_launcher_tracks_independent_smaps_peaks(monkeypatch, tmp_path):
+    specification = _task039_spec(tmp_path)
+    monkeypatch.setattr(
+        launcher,
+        "_task039_memory_budget",
+        lambda: {"effective_terminate_memory_gib": 220.0},
+    )
+    samples = iter(
+        (
+            _authority_with_smaps(pss=10 * 1024**2, uss=30 * 1024**2),
+            _authority_with_smaps(pss=20 * 1024**2, uss=25 * 1024**2),
+            _authority_with_smaps(complete=False),
+        )
+    )
+    result = launch_specification(
+        specification,
+        source_sha=SOURCE_SHA,
+        contract_probe=True,
+        mpiexec_command="/opt/mpiexec",
+        python_executable="/opt/python",
+        popen_factory=lambda *_args, **_kwargs: _SequenceProcess(2),
+        sample_factory=lambda _pid: next(samples),
+        sleep=lambda _seconds: None,
+        poll_interval=0.0,
+    )
+    authority = result["resource_authority"]
+    assert authority["peak_pss_mb"] == pytest.approx(20.0)
+    assert authority["peak_uss_mb"] == pytest.approx(30.0)
+    assert authority["smaps_attempted_sample_count"] == 3
+    assert authority["smaps_complete_sample_count"] == 2
+    assert authority["telemetry_status"] == "measured"
+    assert "different samples" in authority["peak_semantics"]
+
+
+def test_task039_pss_uss_do_not_trigger_memory_termination(monkeypatch, tmp_path):
+    specification = _task039_spec(tmp_path)
+    monkeypatch.setattr(
+        launcher,
+        "_task039_memory_budget",
+        lambda: {"effective_terminate_memory_gib": 1.0},
+    )
+    terminated = []
+    result = launch_specification(
+        specification,
+        source_sha=SOURCE_SHA,
+        contract_probe=True,
+        mpiexec_command="/opt/mpiexec",
+        python_executable="/opt/python",
+        popen_factory=lambda *_args, **_kwargs: _SequenceProcess(),
+        sample_factory=lambda _pid: _authority_with_smaps(
+            rss=1024,
+            pss=10 * 1024**3,
+            uss=9 * 1024**3,
+        ),
+        terminate_factory=lambda process: terminated.append(process),
+        sleep=lambda _seconds: None,
+        poll_interval=0.0,
+    )
+    assert result["exit_status"] == 0
+    assert terminated == []
+    assert result["resource_authority"]["peak_pss_mb"] == pytest.approx(10 * 1024)
+
+
+def test_task039_zero_complete_smaps_is_incomplete_not_zero(monkeypatch, tmp_path):
+    specification = _task039_spec(tmp_path)
+    monkeypatch.setattr(
+        launcher,
+        "_task039_memory_budget",
+        lambda: {"effective_terminate_memory_gib": 220.0},
+    )
+    result = launch_specification(
+        specification,
+        source_sha=SOURCE_SHA,
+        contract_probe=True,
+        mpiexec_command="/opt/mpiexec",
+        python_executable="/opt/python",
+        popen_factory=lambda *_args, **_kwargs: _FakeProcess(0),
+        sample_factory=lambda _pid: _authority_with_smaps(complete=False),
+        sleep=lambda _seconds: None,
+        poll_interval=0.0,
+    )
+    authority = result["resource_authority"]
+    assert authority["peak_pss_mb"] is None
+    assert authority["peak_uss_mb"] is None
+    assert authority["smaps_attempted_sample_count"] == 1
+    assert authority["smaps_complete_sample_count"] == 0
+    assert authority["telemetry_status"] == "incomplete"
+
+
+def test_ordinary_task38_resource_output_has_no_smaps_fields(tmp_path):
+    specification = _input(tmp_path, results_root=str(tmp_path / "results"))
+    result, _calls, _terminated = _fake_launch(
+        specification,
+        tmp_path,
+        process=_FakeProcess(0),
+        sample=_authority(),
+    )
+    authority = result["resource_authority"]
+    assert "peak_pss_mb" not in authority
+    assert "telemetry_status" not in authority
 
 
 def test_worker_checks_raw_copy_execution_and_input_path(tmp_path):

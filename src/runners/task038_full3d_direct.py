@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import hashlib
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
@@ -14,6 +15,7 @@ def _run_solver(
     numerical_output: Path,
     *,
     canonical_vector_export: bool,
+    solution_observer=None,
 ) -> dict[str, Any]:
     if cfg.stage_case == "stage1_airbox":
         from src.solvers.solve_maxwell_3d_stage_1_airbox import (
@@ -53,6 +55,7 @@ def _run_solver(
         return run_stage4b_block_grating_3d_case(
             cfg,
             numerical_output,
+            solution_observer=solution_observer,
             canonical_vector_export=canonical_vector_export,
         )
     raise ValueError(f"unsupported Full3D direct stage {cfg.stage_case!r}")
@@ -87,6 +90,67 @@ def _stage4_authority_errors(summary: Mapping[str, Any]) -> list[str]:
     for key in ("R_total", "T_total", "A_volume_total"):
         if not _finite_number(summary.get(key)):
             errors.append(f"numerical summary lacks finite {key}")
+    return errors
+
+
+def _canonical_solution_observer(run_directory: Path):
+    """Reuse the reviewed writer and expose a generic Full3D summary key."""
+
+    from benchmarks.run_task033_full3d_watchdog import (
+        task037_m3a_solution_observer,
+    )
+
+    reviewed_observer = task037_m3a_solution_observer(run_directory)
+
+    def observe(**kwargs: Any) -> None:
+        reviewed_observer(**kwargs)
+        summary = kwargs["summary"]
+        export = summary.pop("task037_m3a_canonical_export", None)
+        if not isinstance(export, Mapping):
+            raise ValueError("Full3D canonical observer did not produce an export")
+        summary["full3d_direct_canonical_export"] = dict(export)
+
+    return observe
+
+
+def _canonical_authority_errors(summary: Mapping[str, Any]) -> list[str]:
+    from benchmarks.canonical_vector_artifacts import MANIFEST_SCHEMA
+
+    export = summary.get("full3d_direct_canonical_export")
+    if not isinstance(export, Mapping):
+        return ["Full3D canonical export summary is missing"]
+    roles = export.get("roles")
+    if not isinstance(roles, Mapping) or set(roles) != {"active_trace", "full_fe"}:
+        return ["Full3D canonical export roles must be active_trace and full_fe"]
+    errors: list[str] = []
+    for role_name in ("active_trace", "full_fe"):
+        role = roles.get(role_name)
+        if not isinstance(role, Mapping):
+            errors.append(f"canonical role {role_name} is missing")
+            continue
+        manifest = role.get("manifest")
+        manifest_path = Path(manifest) if isinstance(manifest, str) else None
+        if manifest_path is not None and not manifest_path.is_absolute():
+            manifest_path = Path(__file__).resolve().parents[2] / manifest_path
+        digest = role.get("manifest_sha256")
+        packet_count = role.get("global_summed_packet_count")
+        if (
+            manifest_path is None
+            or not manifest_path.is_file()
+            or not isinstance(digest, str)
+            or len(digest) != 64
+            or any(character not in "0123456789abcdef" for character in digest)
+            or hashlib.sha256(manifest_path.read_bytes()).hexdigest() != digest
+        ):
+            errors.append(f"canonical role {role_name} manifest/hash is invalid")
+        if (
+            not isinstance(packet_count, int)
+            or isinstance(packet_count, bool)
+            or packet_count <= 0
+        ):
+            errors.append(f"canonical role {role_name} packet count is invalid")
+        if role.get("schema_version") != MANIFEST_SCHEMA:
+            errors.append(f"canonical role {role_name} schema is invalid")
     return errors
 
 
@@ -146,10 +210,20 @@ def run_full3d_direct(
 
     numerical_output = Path(run_directory).resolve() / "numerical_output"
     runner = solver_runner or _run_solver
+    solution_observer = (
+        _canonical_solution_observer(numerical_output)
+        if canonical_vector_export
+        else None
+    )
+    runner_kwargs: dict[str, Any] = {
+        "canonical_vector_export": canonical_vector_export,
+    }
+    if canonical_vector_export:
+        runner_kwargs["solution_observer"] = solution_observer
     summary = runner(
         cfg,
         numerical_output,
-        canonical_vector_export=canonical_vector_export,
+        **runner_kwargs,
     )
     if not isinstance(summary, Mapping):
         return {
@@ -163,6 +237,8 @@ def run_full3d_direct(
         if cfg.stage_case in {"stage4_flat_layer_sanity", "stage4_block_grating"}
         else _generic_authority_errors(summary)
     )
+    if canonical_vector_export:
+        errors.extend(_canonical_authority_errors(summary))
     return {
         "passed": not errors,
         "errors": errors,

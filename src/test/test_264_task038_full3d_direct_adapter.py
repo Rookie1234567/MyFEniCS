@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import hashlib
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -26,7 +28,7 @@ def _payload(path: Path = TEMPLATE) -> dict:
     return load_and_resolve(path).as_jsonable()
 
 
-def _summary(**updates):
+def _summary(*, canonical_root: Path | None = None, **updates):
     value = {
         "case_status": "completed",
         "official_result": True,
@@ -35,6 +37,22 @@ def _summary(**updates):
         "T_total": 0.7,
         "A_volume_total": 0.1,
     }
+    if canonical_root is not None:
+        canonical_root.mkdir(parents=True, exist_ok=True)
+        roles = {}
+        for role_name in ("active_trace", "full_fe"):
+            manifest = canonical_root / f"{role_name}.json"
+            manifest.write_text("{}\n", encoding="utf-8")
+            roles[role_name] = {
+                "manifest": str(manifest),
+                "manifest_sha256": hashlib.sha256(manifest.read_bytes()).hexdigest(),
+                "global_summed_packet_count": 1,
+                "schema_version": "task037.canonical-vector-manifest.v1",
+            }
+        value["full3d_direct_canonical_export"] = {
+            "status": "completed",
+            "roles": roles,
+        }
     value.update(updates)
     return value
 
@@ -87,9 +105,12 @@ def test_full3d_order_requests_are_preserved_but_not_injected_into_pde_cfg():
     second["output"]["diffraction_order_max_n"] = 101
     captured = []
 
-    def fake_solver(cfg, output_directory, *, canonical_vector_export):
+    def fake_solver(
+        cfg, output_directory, *, canonical_vector_export, solution_observer
+    ):
         captured.append((cfg, output_directory, canonical_vector_export))
-        return _summary()
+        assert solution_observer is not None
+        return _summary(canonical_root=output_directory)
 
     first_result = run_full3d_direct(
         first, "/tmp/task038-t4a", solver_runner=fake_solver
@@ -113,20 +134,110 @@ def test_adapter_passes_exact_cfg_output_and_canonical_export(tmp_path):
     payload = _payload()
     seen = {}
 
-    def fake_solver(cfg, output_directory, *, canonical_vector_export):
+    def fake_solver(
+        cfg, output_directory, *, canonical_vector_export, solution_observer
+    ):
         seen.update(
             cfg=cfg,
             output_directory=output_directory,
             canonical_vector_export=canonical_vector_export,
+            solution_observer=solution_observer,
         )
-        return _summary()
+        return _summary(canonical_root=output_directory)
 
     result = run_full3d_direct(payload, tmp_path, solver_runner=fake_solver)
     assert result["passed"] is True
     assert seen["output_directory"] == tmp_path.resolve() / "numerical_output"
     assert seen["canonical_vector_export"] is True
+    assert seen["solution_observer"] is not None
     assert seen["cfg"].case_name == payload["model_id"]
     assert seen["cfg"].stage_case == "stage4_block_grating"
+
+
+def test_canonical_observer_maps_reviewed_key_to_generic_full3d_key(
+    monkeypatch, tmp_path
+):
+    import benchmarks.run_task033_full3d_watchdog as watchdog
+    import src.runners.task038_full3d_direct as adapter
+
+    roles = {
+        "active_trace": {"manifest": "active", "manifest_sha256": "a" * 64},
+        "full_fe": {"manifest": "full", "manifest_sha256": "b" * 64},
+    }
+
+    def fake_factory(_run_directory):
+        def observe(**kwargs):
+            kwargs["summary"]["task037_m3a_canonical_export"] = {
+                "status": "completed",
+                "roles": roles,
+            }
+
+        return observe
+
+    monkeypatch.setattr(watchdog, "task037_m3a_solution_observer", fake_factory)
+    summary = {}
+    adapter._canonical_solution_observer(tmp_path)(summary=summary)
+    assert summary["full3d_direct_canonical_export"]["roles"] == roles
+    assert "task037_m3a_canonical_export" not in summary
+
+
+def test_reviewed_observer_writes_original_summary_key_on_nonroot_rank(
+    monkeypatch, tmp_path
+):
+    import benchmarks.run_task033_full3d_watchdog as watchdog
+
+    roles = {"active_trace": {"manifest": "a"}, "full_fe": {"manifest": "b"}}
+    monkeypatch.setattr(
+        watchdog,
+        "_task037_m3a_write_canonical_artifacts",
+        lambda *_args, **_kwargs: roles,
+    )
+    observer = watchdog.task037_m3a_solution_observer(tmp_path)
+    summary = {}
+    observer(
+        field=None,
+        mesh_data=SimpleNamespace(mesh=SimpleNamespace(comm=SimpleNamespace(rank=1))),
+        config=None,
+        floquet_data=None,
+        summary=summary,
+        linear_system={},
+        dtn_result={},
+    )
+    assert summary["task037_m3a_canonical_export"]["roles"] == roles
+
+
+def test_canonical_summary_missing_full_fe_fails_closed(tmp_path):
+    payload = _payload()
+
+    def fake_solver(
+        _cfg, output_directory, *, canonical_vector_export, solution_observer
+    ):
+        assert canonical_vector_export is True
+        assert solution_observer is not None
+        summary = _summary(canonical_root=output_directory)
+        del summary["full3d_direct_canonical_export"]["roles"]["full_fe"]
+        return summary
+
+    result = run_full3d_direct(payload, tmp_path, solver_runner=fake_solver)
+    assert result["passed"] is False
+    assert any("roles" in error for error in result["errors"])
+
+
+def test_canonical_false_keeps_legacy_solver_signature_and_summary(
+    tmp_path,
+):
+    payload = _payload(SMOKE)
+    seen = {}
+
+    def fake_solver(_cfg, output_directory, *, canonical_vector_export):
+        seen["canonical_vector_export"] = canonical_vector_export
+        seen["output_directory"] = output_directory
+        return _summary()
+
+    result = run_full3d_direct(payload, tmp_path, solver_runner=fake_solver)
+    assert result["passed"] is True
+    assert seen["canonical_vector_export"] is False
+    assert "full3d_direct_canonical_export" not in result["summary"]
 
 
 @pytest.mark.parametrize(

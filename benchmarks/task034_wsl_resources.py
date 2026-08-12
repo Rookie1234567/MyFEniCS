@@ -170,6 +170,63 @@ def _status_memory_kib(fields: Mapping[str, str]) -> tuple[int | None, int | Non
     return rss_kib, swap_kib
 
 
+def _read_smaps_rollup(path: Path) -> dict[str, float] | None:
+    """Read the small Linux smaps rollup used for process-tree telemetry."""
+
+    wanted = {
+        "Rss",
+        "Pss",
+        "Private_Clean",
+        "Private_Dirty",
+        "Private_Hugetlb",
+        "Shared_Clean",
+        "Shared_Dirty",
+        "Shared_Hugetlb",
+        "Anonymous",
+        "Swap",
+        "SwapPss",
+    }
+    values_kib: dict[str, int] = {}
+    try:
+        lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+    except OSError:
+        return None
+    for line in lines:
+        if ":" not in line:
+            continue
+        key, text = line.split(":", 1)
+        if key not in wanted:
+            continue
+        try:
+            values_kib[key] = int(text.split()[0])
+        except (IndexError, ValueError):
+            return None
+    if not {
+        "Rss",
+        "Pss",
+        "Private_Clean",
+        "Private_Dirty",
+    }.issubset(values_kib):
+        return None
+    private_kib = sum(
+        values_kib.get(key, 0)
+        for key in ("Private_Clean", "Private_Dirty", "Private_Hugetlb")
+    )
+    shared_kib = sum(
+        values_kib.get(key, 0)
+        for key in ("Shared_Clean", "Shared_Dirty", "Shared_Hugetlb")
+    )
+    return {
+        "rss_mb": values_kib["Rss"] / 1024.0,
+        "pss_mb": values_kib["Pss"] / 1024.0,
+        "uss_mb": private_kib / 1024.0,
+        "shared_mb": shared_kib / 1024.0,
+        "anonymous_mb": values_kib.get("Anonymous", 0) / 1024.0,
+        "swap_mb": values_kib.get("Swap", 0) / 1024.0,
+        "swap_pss_mb": values_kib.get("SwapPss", 0) / 1024.0,
+    }
+
+
 def process_tree_sample(root_pid: int) -> ProcessTreeSample:
     """Sample RSS and VmSwap for the root and every live descendant."""
 
@@ -221,7 +278,33 @@ def process_tree_sample(root_pid: int) -> ProcessTreeSample:
     )
 
 
-def resource_authority_sample(root_pid: int) -> dict[str, Any]:
+def process_tree_smaps_sample(pids: tuple[int, ...]) -> dict[str, Any]:
+    """Aggregate one complete process-tree smaps sample, or mark it incomplete."""
+
+    rows = [
+        _read_smaps_rollup(Path("/proc") / str(pid) / "smaps_rollup") for pid in pids
+    ]
+    readable = [row for row in rows if row is not None]
+    result: dict[str, Any] = {
+        "complete": bool(pids) and len(readable) == len(pids),
+        "readable_pid_count": len(readable),
+        "pid_count": len(pids),
+        "pss_bytes": None,
+        "uss_bytes": None,
+    }
+    if result["complete"]:
+        result["pss_bytes"] = int(
+            round(sum(float(row["pss_mb"]) for row in readable) * 1024**2)
+        )
+        result["uss_bytes"] = int(
+            round(sum(float(row["uss_mb"]) for row in readable) * 1024**2)
+        )
+    return result
+
+
+def resource_authority_sample(
+    root_pid: int, *, include_smaps: bool = False
+) -> dict[str, Any]:
     process_tree = process_tree_sample(root_pid)
     cgroup = cgroup_snapshot(root_pid)
     dedicated_current = (
@@ -243,8 +326,11 @@ def resource_authority_sample(root_pid: int) -> dict[str, Any]:
         and process_tree.swap_bytes == 0
         and (dedicated_swap is None or dedicated_swap == 0)
     )
+    process_tree_payload = process_tree.to_dict()
+    if include_smaps:
+        process_tree_payload["smaps"] = process_tree_smaps_sample(process_tree.pids)
     return {
-        "process_tree": process_tree.to_dict(),
+        "process_tree": process_tree_payload,
         "job_cgroup": cgroup,
         "wsl_vm_global_swap_diagnostic": vmstat_swap_pages(),
         "memory_authority_bytes": memory_authority,

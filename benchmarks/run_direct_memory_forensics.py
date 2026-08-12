@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from benchmarks.task034_wsl_resources import cgroup_snapshot
+from benchmarks.task034_wsl_resources import cgroup_snapshot, _read_smaps_rollup
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -164,69 +164,6 @@ def _vmstat_swap_pages() -> tuple[int | None, int | None]:
             except ValueError:
                 pass
     return values.get("pswpin"), values.get("pswpout")
-
-
-def _read_smaps_rollup(path: Path) -> dict[str, float] | None:
-    """Read proportional and private memory for one Linux process."""
-
-    wanted = {
-        "Rss",
-        "Pss",
-        "Private_Clean",
-        "Private_Dirty",
-        "Private_Hugetlb",
-        "Shared_Clean",
-        "Shared_Dirty",
-        "Shared_Hugetlb",
-        "Anonymous",
-        "Swap",
-        "SwapPss",
-    }
-    values_kib: dict[str, int] = {}
-    try:
-        lines = path.read_text(
-            encoding="utf-8",
-            errors="ignore",
-        ).splitlines()
-    except OSError:
-        return None
-    for line in lines:
-        if ":" not in line:
-            continue
-        key, text = line.split(":", 1)
-        if key not in wanted:
-            continue
-        try:
-            values_kib[key] = int(text.split()[0])
-        except (IndexError, ValueError):
-            return None
-    if "Pss" not in values_kib or "Rss" not in values_kib:
-        return None
-    private_kib = sum(
-        values_kib.get(key, 0)
-        for key in (
-            "Private_Clean",
-            "Private_Dirty",
-            "Private_Hugetlb",
-        )
-    )
-    shared_kib = sum(
-        values_kib.get(key, 0)
-        for key in (
-            "Shared_Clean",
-            "Shared_Dirty",
-            "Shared_Hugetlb",
-        )
-    )
-    return {
-        "rss_mb": values_kib["Rss"] / 1024.0,
-        "pss_mb": values_kib["Pss"] / 1024.0,
-        "uss_mb": private_kib / 1024.0,
-        "shared_mb": shared_kib / 1024.0,
-        "anonymous_mb": values_kib.get("Anonymous", 0) / 1024.0,
-        "swap_mb": values_kib.get("Swap", 0) / 1024.0,
-        "swap_pss_mb": values_kib.get("SwapPss", 0) / 1024.0,
-    }
 
 
 def _read_thread_runtime(path: Path) -> dict[str, Any] | None:
