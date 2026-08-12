@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import numpy as np
@@ -41,6 +42,117 @@ def test_m2_runner_helper_ownership_and_cli(monkeypatch) -> None:
     ):
         assert m2_runner._parser().parse_args(argv).command == argv[0]
     assert "m2_patch_rows.npy" in m2_runner._m2_recorded_artifacts(Path("/tmp/m2"))
+    assert "stage_summary.json" in m2_runner._m2_recorded_artifacts(Path("/tmp/m2"))
+
+
+def test_m2_watchdog_stage_gate_locks_or_allows_online(monkeypatch, tmp_path) -> None:
+    source = {
+        "source_commit_full_sha": "a" * 40,
+        "tracked_source_dirty": False,
+        "source_worktree_dirty": False,
+        "nonignored_untracked_paths": [],
+        "worktree_status_porcelain": [],
+        "git_error": None,
+    }
+    calls: list[str] = []
+
+    online_compiler_pids: list[int] = []
+
+    with monkeypatch.context() as strict:
+        strict.setattr(m2_runner, "_m2_stage_summary_valid", lambda *_args: True)
+        strict.setattr(m2_runner, "_m2_timeline_resource_valid", lambda *_args, **_kwargs: True)
+        stage_process = {
+            "return_code": 0,
+            "termination": None,
+            "processes_gone": True,
+            "peak_rss_bytes": m2_runner.M2_RSS_LIMIT_BYTES,
+            "swap_bytes": 0,
+        }
+        assert not m2_runner._m2_stage_gate_valid(stage_process, {}, tmp_path, True)
+        stage_process["peak_rss_bytes"] -= 1
+        assert m2_runner._m2_stage_gate_valid(stage_process, {}, tmp_path, True)
+
+    def monitor(_run_dir, phase, _command, _timeout, _limit):
+        calls.append(phase)
+        timeline = {
+            "schema": h2b_runner.H2B_PROGRESS_SCHEMA,
+            "phase": phase,
+            "sample_kind": "worker",
+            "elapsed_wall_seconds": 0.1,
+            "root_pid": 1,
+            "pids": [1],
+            "process_count": 1,
+            "rss_bytes": 100,
+            "swap_bytes": 0,
+            "all_status_readable": True,
+            "compiler_descendant_pids": list(online_compiler_pids if phase == "m2" else []),
+        }
+        (_run_dir / f"{phase}_timeline.jsonl").write_text(
+            json.dumps(timeline) + "\n",
+            encoding="utf-8",
+        )
+        return {
+            "phase": phase,
+            "return_code": 0 if phase == "stage" else 0,
+            "termination": None,
+            "peak_rss_bytes": 100,
+            "swap_bytes": 0,
+            "observed_process_tree_pids": [],
+        }
+
+    monkeypatch.setattr(m2_runner, "_h2b_monitor_phase", monitor)
+    monkeypatch.setattr(m2_runner, "_h2b_bounded_process_drain", lambda _value: {"gone": True})
+    monkeypatch.setattr(m2_runner, "_process_gone", lambda _value: True)
+    monkeypatch.setattr(m2_runner, "_clean_source", lambda: source)
+    monkeypatch.setattr(m2_runner, "_read_json", lambda _path: {})
+    monkeypatch.setattr(m2_runner, "_write_json", lambda *_args: None)
+    monkeypatch.setattr(
+        m2_runner,
+        "_artifact",
+        lambda _run_dir, name: {"path": name, "present": name == "m2_worker_summary.json"},
+    )
+    monkeypatch.setattr(m2_runner, "_m2_stage_gate_valid", lambda *_args: False)
+    assert m2_runner._run_m2_watchdog(tmp_path / "stage-stop") == 1
+    assert calls == ["stage"]
+
+    calls.clear()
+    monkeypatch.setattr(m2_runner, "_m2_stage_gate_valid", lambda *_args: True)
+    assert m2_runner._run_m2_watchdog(tmp_path / "stage-pass") == 0
+    assert calls == ["stage", "m2"]
+
+    calls.clear()
+    online_compiler_pids[:] = [1234]
+    assert m2_runner._run_m2_watchdog(tmp_path / "online-compiler-stop") == 1
+    assert calls == ["stage", "m2"]
+
+
+def test_m2_online_cache_and_compiler_contract(monkeypatch, tmp_path) -> None:
+    snapshot = [{"path": "module.so", "bytes": 3, "mtime_ns": 7, "sha256": "a" * 64}]
+    monkeypatch.setattr(m2_runner, "_h2b_cache_snapshot", lambda _path: snapshot)
+    monkeypatch.setattr(m2_runner, "_sha256_file", lambda _path: "b" * 64)
+    monkeypatch.setattr(m2_runner, "_h2b_forms_match", lambda *_args: True)
+    cache = {
+        "before": snapshot,
+        "after": snapshot,
+        "unchanged": True,
+        "form_jit_cache_hit": True,
+        "c_source_regeneration": False,
+        "compiler_descendant_pids": [],
+    }
+    measurement = {"cache": cache, "stage_manifest_sha256": "b" * 64}
+    assert m2_runner._m2_online_cache_valid(measurement, {}, {}, tmp_path) is True
+    assert m2_runner._m2_online_cache_valid(
+        {"cache": dict(cache, compiler_descendant_pids=[1234]), "stage_manifest_sha256": "b" * 64},
+        {},
+        {},
+        tmp_path,
+    ) is False
+    assert m2_runner._m2_online_cache_valid(
+        {"cache": dict(cache, after=[]), "stage_manifest_sha256": "b" * 64},
+        {},
+        {},
+        tmp_path,
+    ) is False
 
 
 def test_m2_checker_source_scope_is_fail_closed() -> None:

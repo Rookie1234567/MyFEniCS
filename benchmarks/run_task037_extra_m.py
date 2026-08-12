@@ -20,9 +20,18 @@ from typing import Any
 from benchmarks.run_task037_extra_h2b import (
     _artifact,
     _attach_evidence,
+    _bounded_process_drain as _h2b_bounded_process_drain,
     _build_b0_form as _h2b_build_b0_form,
+    _cache_snapshot as _h2b_cache_snapshot,
     _expected_jit_options as _h2b_expected_jit_options,
+    _form_record as _h2b_form_record,
+    _forms_match as _h2b_forms_match,
+    _monitor_phase as _h2b_monitor_phase,
     _p1_authority as _h2b_p1_authority,
+    _phase_identity as _h2b_phase_identity,
+    _stage_gate_allows_online as _h2b_stage_gate_allows_online,
+    _timeline_metrics as _h2b_timeline_metrics,
+    _worker_error_types as _h2b_worker_error_types,
     H2B_R2_MANIFEST,
     _lazy_h2a,
     _light_source as _clean_source,
@@ -30,6 +39,7 @@ from benchmarks.run_task037_extra_h2b import (
     _residual_source_arrays as _h2b_residual_source_arrays,
     _sha256_file,
     _source_arrays as _h2b_source_arrays,
+    _worker_command as _h2b_worker_command,
     _write_json,
 )
 from src.solvers.hcurl_h2b_block_smoother import _p0_numeric_sha
@@ -1692,7 +1702,8 @@ def _run_m1_check(run_dir: Path, output: Path) -> int:
 
 def _m2_scope() -> dict[str, Any]:
     return {
-        "mode": "m2_high_complement_patch_oracle",
+        "mode": "isolated_jit_stage_then_warm_online",
+        "numerical_route": "m2_high_complement_patch_oracle",
         "degree": 6,
         "h_nm": 10.0,
         "mpi_size": 1,
@@ -1707,6 +1718,8 @@ def _m2_scope() -> dict[str, Any]:
         "high_rank": 582,
         "timeout_seconds": M2_TIMEOUT_SECONDS,
         "rss_limit_bytes": M2_RSS_LIMIT_BYTES,
+        "stage_rss_limit_bytes": M2_RSS_LIMIT_BYTES,
+        "online_rss_limit_bytes": M2_RSS_LIMIT_BYTES,
         "swap_limit_bytes": M2_SWAP_LIMIT_BYTES,
         "factor_values_pivots_limit_bytes": M2_FACTOR_BYTES_LIMIT,
         "retained_transform_limit_bytes": M2_TRANSFORM_BYTES_LIMIT,
@@ -1737,6 +1750,7 @@ def _m2_identity() -> dict[str, Any]:
 
 def _m2_phase_identity() -> dict[str, Any]:
     return {
+        "phase": "online",
         "form_jit_used": True,
         "compile_called": False,
         "compiler_probe_called": False,
@@ -1746,6 +1760,99 @@ def _m2_phase_identity() -> dict[str, Any]:
         "global_constraint_matrix_materialized": False,
         "ordinary_default_changed": False,
     }
+
+
+def _m2_stage_summary_valid(stage_summary: Any, run_dir: Path) -> bool:
+    """Validate the existing H2B cold JIT authority before M2 starts."""
+
+    if not isinstance(stage_summary, Mapping):
+        return False
+    try:
+        return bool(
+            _h2b_stage_gate_allows_online(
+                {"return_code": 0, "termination": None},
+                stage_summary,
+                True,
+                run_dir,
+            )
+        )
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+        return False
+
+
+def _m2_stage_gate_valid(
+    stage_process: Any,
+    stage_summary: Any,
+    run_dir: Path,
+    processes_gone: bool,
+) -> bool:
+    """Apply the existing stage contract plus the stricter M2 RSS limit."""
+
+    if not isinstance(stage_process, Mapping):
+        return False
+    if not _m2_stage_summary_valid(stage_summary, run_dir):
+        return False
+    if not (
+        type(stage_process.get("return_code")) is int
+        and stage_process["return_code"] == 0
+        and stage_process.get("termination") is None
+        and processes_gone is True
+        and type(stage_process.get("peak_rss_bytes")) is int
+        and stage_process["peak_rss_bytes"] < M2_RSS_LIMIT_BYTES
+        and stage_process.get("swap_bytes") == M2_SWAP_LIMIT_BYTES
+    ):
+        return False
+    return _m2_timeline_resource_valid(
+        run_dir / "stage_timeline.jsonl",
+        stage_process,
+        "stage",
+        require_no_compiler=False,
+    )
+
+
+def _m2_timeline_resource_valid(
+    path: Path,
+    process: Mapping[str, Any],
+    phase: str,
+    *,
+    require_no_compiler: bool,
+) -> bool:
+    try:
+        metrics = _h2b_timeline_metrics(path, phase)
+    except _h2b_worker_error_types():
+        return False
+    return bool(
+        type(process.get("peak_rss_bytes")) is int
+        and process["peak_rss_bytes"] == metrics["peak_rss_bytes"]
+        and process["peak_rss_bytes"] < M2_RSS_LIMIT_BYTES
+        and type(process.get("swap_bytes")) is int
+        and process["swap_bytes"] == metrics["swap_bytes"] == M2_SWAP_LIMIT_BYTES
+        and (not require_no_compiler or metrics["compiler_descendant_pids"] == [])
+    )
+
+
+def _m2_online_cache_valid(
+    measurement: Any,
+    form: Any,
+    stage_form: Any,
+    run_dir: Path,
+) -> bool:
+    if not isinstance(measurement, Mapping) or not isinstance(measurement.get("cache"), Mapping):
+        return False
+    cache = measurement["cache"]
+    try:
+        snapshot = _h2b_cache_snapshot(run_dir / "jit_cache")
+    except (OSError, ValueError):
+        return False
+    return bool(
+        cache.get("before") == cache.get("after") == snapshot
+        and cache.get("unchanged") is True
+        and cache.get("form_jit_cache_hit") is True
+        and cache.get("c_source_regeneration") is False
+        and cache.get("compiler_descendant_pids") == []
+        and measurement.get("stage_manifest_sha256") == _sha256_file(run_dir / "stage_summary.json")
+        and _h2b_forms_match(stage_form, form, run_dir)
+    )
 
 
 def _m2_mark(run_dir: Path, event: str, started: float, **fields: Any) -> None:
@@ -1785,9 +1892,14 @@ def _m2_save_array(run_dir: Path, name: str, value: Any) -> None:
 
 def _m2_recorded_artifacts(run_dir: Path) -> dict[str, dict[str, Any]]:
     names = [
-        "m2_worker_summary.json",
+        "stage_progress.jsonl",
+        "stage_stdout.txt",
+        "stage_summary.json",
+        "stage_timeline.jsonl",
+        "stage_root_pid.json",
         "m2_progress.jsonl",
         "m2_stdout.txt",
+        "m2_worker_summary.json",
         "m2_timeline.jsonl",
         "m2_root_pid.json",
         "m2_injection.npy",
@@ -1977,8 +2089,22 @@ def _run_m2_worker(run_dir: Path) -> int:
     if not _source_valid(source_start):
         raise RuntimeError("M2 worker requires a clean source")
     action = source_vec = transfer = factor = None
+    stage_path = run_dir / "stage_summary.json"
+    cache_dir = run_dir / "jit_cache"
+    stage_summary: Mapping[str, Any] | None = None
+    cache_before: list[dict[str, Any]] | None = None
+    cache_after: list[dict[str, Any]] | None = None
     try:
         _m2_mark(run_dir, "authority_validated", started)
+        stage_summary = _read_json(stage_path)
+        if not _m2_stage_summary_valid(stage_summary, run_dir):
+            raise ValueError("M2 isolated JIT stage authority is invalid")
+        _m2_mark(
+            run_dir,
+            "stage_summary_validated",
+            started,
+            stage_manifest_sha256=_sha256_file(stage_path),
+        )
         cfg = target_stage4_config(degree=6, h_nm=10.0)
         mesh_data = build_airbox_mesh_3d(cfg, run_dir / "m2_mesh")
         _m2_mark(run_dir, "mesh_ready", started)
@@ -1990,8 +2116,29 @@ def _run_m2_worker(run_dir: Path) -> int:
         floquet6 = build_double_floquet_mpc(p6_space, mesh_data, cfg)
         _m2_mark(run_dir, "floquet_mpc_ready", started)
         transfer = build_owner_local_p4_p6_transfer(p4_space, p6_space, p4_mpc=floquet4.mpc, p6_mpc=floquet6.mpc)
+        cache_before = _h2b_cache_snapshot(cache_dir)
         b0, _epsilon = _h2b_build_b0_form(p6_space, mesh_data, cfg)
-        action = build_task037_extra_h1r2_mpc_action(b0, floquet6.mpc, task037_extra_h1r2=True, jit_options=_h2b_expected_jit_options(run_dir / "jit_cache"))
+        action = build_task037_extra_h1r2_mpc_action(
+            b0,
+            floquet6.mpc,
+            task037_extra_h1r2=True,
+            jit_options=_h2b_expected_jit_options(cache_dir),
+        )
+        form_record = _h2b_form_record(
+            action._action_form,
+            action._action_ufl,
+            cache_dir,
+            cfg,
+            p6_space,
+            "b0",
+        )
+        cache_after = _h2b_cache_snapshot(cache_dir)
+        if (
+            form_record.get("code_state") != "hit_no_new_decl_impl"
+            or cache_before != cache_after
+            or not _h2b_forms_match(stage_summary["form"], form_record, run_dir)
+        ):
+            raise ValueError("M2 online B0 form did not reuse the isolated JIT stage")
         _m2_mark(run_dir, "b0_action_ready", started)
         prepared = _m2_prepare_p0_patch(_lazy_h2a(), p6_space, mesh_data, cfg, floquet6, run_dir)
         _m2_mark(run_dir, "p0_authority_ready", started, touching_cell_count=19)
@@ -2091,8 +2238,10 @@ def _run_m2_worker(run_dir: Path) -> int:
             "scope": _m2_scope(),
             "identity": _m2_identity(),
             "phase_identity": _m2_phase_identity(),
+            "phase": "online",
             "source_at_start": source_start,
             "source_at_end": source_end,
+            "form": form_record,
             "measurement": {
                 "authority": {
                     "p0_record_sha256": prepared["authority"]["p0"]["record_sha256"],
@@ -2122,6 +2271,15 @@ def _run_m2_worker(run_dir: Path) -> int:
                     "deterministic": bool(factor.deterministic),
                 },
                 "sources": source_metrics,
+                "cache": {
+                    "before": cache_before,
+                    "after": cache_after,
+                    "unchanged": cache_before == cache_after,
+                    "form_jit_cache_hit": True,
+                    "c_source_regeneration": False,
+                    "compiler_descendant_pids": [],
+                },
+                "stage_manifest_sha256": _sha256_file(stage_path),
                 "materialization": _m2_identity(),
                 "raw_array_names": list(_m2_recorded_artifacts(run_dir)),
             },
@@ -2142,8 +2300,6 @@ def _run_m2_worker(run_dir: Path) -> int:
 
 
 def _run_m2_watchdog(run_dir: Path) -> int:
-    from benchmarks.run_task037_extra_h2b import _bounded_process_drain, _monitor_phase
-
     run_dir = run_dir.resolve()
     if run_dir.exists():
         raise FileExistsError(f"M2 run directory already exists: {run_dir}")
@@ -2151,39 +2307,88 @@ def _run_m2_watchdog(run_dir: Path) -> int:
     source_start = _clean_source()
     started = time.perf_counter()
     executable = os.path.abspath(sys.executable)
-    process = _monitor_phase(
-        run_dir,
-        "m2",
-        _m2_worker_command(executable, run_dir),
-        M2_TIMEOUT_SECONDS,
-        M2_RSS_LIMIT_BYTES,
-    )
-    process["drain"] = _bounded_process_drain(process)
-    process["processes_gone"] = bool(_process_gone(process))
+    stage: dict[str, Any] | None = None
+    online: dict[str, Any] | None = None
+    stage_summary: dict[str, Any] | None = None
+    error: str | None = None
+    try:
+        stage = _h2b_monitor_phase(
+            run_dir,
+            "stage",
+            _h2b_worker_command(executable, "jit-worker", run_dir),
+            M2_TIMEOUT_SECONDS,
+            M2_RSS_LIMIT_BYTES,
+        )
+        stage["drain"] = _h2b_bounded_process_drain(stage)
+        stage["processes_gone"] = bool(_process_gone(stage))
+        stage_summary = _read_json(run_dir / "stage_summary.json")
+        if not _m2_stage_gate_valid(
+            stage,
+            stage_summary,
+            run_dir,
+            bool(stage["processes_gone"]),
+        ):
+            error = "m2_stage_gate_failed_before_online"
+        else:
+            online = _h2b_monitor_phase(
+                run_dir,
+                "m2",
+                _m2_worker_command(executable, run_dir),
+                M2_TIMEOUT_SECONDS,
+                M2_RSS_LIMIT_BYTES,
+            )
+            online["drain"] = _h2b_bounded_process_drain(online)
+            online["processes_gone"] = bool(_process_gone(online))
+            if not (
+                online.get("return_code") == 0
+                and online.get("termination") is None
+                and online.get("processes_gone") is True
+                and online.get("peak_rss_bytes", M2_RSS_LIMIT_BYTES) < M2_RSS_LIMIT_BYTES
+                and online.get("swap_bytes") == M2_SWAP_LIMIT_BYTES
+                and _artifact(run_dir, "m2_worker_summary.json").get("present") is True
+                and _m2_timeline_resource_valid(
+                    run_dir / "m2_timeline.jsonl",
+                    online,
+                    "m2",
+                    require_no_compiler=True,
+                )
+            ):
+                error = "m2_online_resource_or_worker_gate_failed"
+    except _h2b_worker_error_types() as exc:
+        error = f"{type(exc).__name__}: {exc}"
     source_end = _clean_source()
     worker_ref = _artifact(run_dir, "m2_worker_summary.json")
-    error = None
-    if not (
-        process.get("return_code") == 0
-        and process.get("termination") is None
-        and process.get("processes_gone") is True
-        and process.get("peak_rss_bytes", M2_RSS_LIMIT_BYTES) < M2_RSS_LIMIT_BYTES
-        and process.get("swap_bytes") == M2_SWAP_LIMIT_BYTES
-        and worker_ref.get("present") is True
-    ):
-        error = "m2_worker_or_resource_gate_failed"
+    passed = bool(
+        error is None
+        and stage is not None
+        and online is not None
+        and stage.get("return_code") == 0
+        and online.get("return_code") == 0
+    )
     payload = _attach_evidence({
         "schema": M2_WATCHDOG_SCHEMA,
-        "status": "pass" if error is None else "gate_failed",
-        "pass": error is None,
-        "route": "M2" if error is None else "M2-review-only",
+        "status": "pass" if passed else "gate_failed",
+        "pass": passed,
+        "route": "M2" if passed else "M2-review-only",
         "run_dir": str(run_dir),
         "scope": _m2_scope(),
         "identity": _m2_identity(),
+        "phase_identity": {
+            "lifecycle": "isolated_jit_stage_then_warm_online",
+            "stage": _h2b_phase_identity(jit_api=True, compile_called=True, compiler_probe=True),
+            "online": _m2_phase_identity(),
+        },
         "source_at_start": source_start,
         "source_at_end": source_end,
-        "command_identity": {"python": executable, "m2_command": _m2_worker_command(executable, run_dir)},
-        "m2": process,
+        "command_identity": {
+            "python": executable,
+            "launch_mode": "direct_singleton_stage_then_mpi1_online",
+            "stage_command": _h2b_worker_command(executable, "jit-worker", run_dir),
+            "m2_command": _m2_worker_command(executable, run_dir),
+        },
+        "stage": stage,
+        "online": online,
+        "stage_summary": _artifact(run_dir, "stage_summary.json"),
         "worker_summary": worker_ref,
         "raw_artifacts": _m2_recorded_artifacts(run_dir),
         "error": error,
@@ -2228,6 +2433,7 @@ def _m2_check_raw(run_dir: Path, checker_source: Mapping[str, Any]) -> dict[str,
     problems: list[str] = []
     try:
         watchdog = _read_json(run_dir / "m2_watchdog_summary.json")
+        stage = _read_json(run_dir / "stage_summary.json")
         worker = _read_json(run_dir / "m2_worker_summary.json")
     except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
         return {
@@ -2248,25 +2454,99 @@ def _m2_check_raw(run_dir: Path, checker_source: Mapping[str, Any]) -> dict[str,
     )
     checks["source_authority"] = bool(
         _source_pair_valid(watchdog.get("source_at_start"), watchdog.get("source_at_end"))
+        and _source_pair_valid(stage.get("source_at_start"), stage.get("source_at_end"))
         and watchdog.get("source_at_start") == worker.get("source_at_start")
+        and watchdog.get("source_at_start") == stage.get("source_at_start")
         and _source_pair_valid(worker.get("source_at_start"), worker.get("source_at_end"))
         and _source_valid(checker_source)
         and checker_source == watchdog.get("source_at_start")
     )
     checks["scope_identity"] = watchdog.get("scope") == _m2_scope() and worker.get("scope") == _m2_scope()
     checks["identity"] = watchdog.get("identity") == _m2_identity() and worker.get("identity") == _m2_identity()
-    process_ok, process_problem = _phase_process_shape(watchdog.get("m2"), 1, M2_RSS_LIMIT_BYTES)
-    checks["resource"] = process_ok and _timeline_resource_valid(run_dir / "m2_timeline.jsonl", watchdog.get("m2"), M2_RSS_LIMIT_BYTES, "m2")
-    if process_problem:
-        problems.append(process_problem)
+    stage_process = watchdog.get("stage")
+    online_process = watchdog.get("online")
+    checks["command_identity"] = bool(
+        isinstance(watchdog.get("command_identity"), Mapping)
+        and watchdog["command_identity"].get("launch_mode")
+        == "direct_singleton_stage_then_mpi1_online"
+        and watchdog["command_identity"].get("python")
+        == stage.get("runtime_identity", {}).get("sys_executable")
+        and watchdog["command_identity"].get("stage_command")
+        == _h2b_worker_command(
+            watchdog["command_identity"].get("python"), "jit-worker", run_dir
+        )
+        and watchdog["command_identity"].get("m2_command")
+        == _m2_worker_command(
+            watchdog["command_identity"].get("python"), run_dir
+        )
+    ) if isinstance(watchdog.get("command_identity"), Mapping) and isinstance(
+        watchdog["command_identity"].get("python"), str
+    ) else False
+    checks["stage_resource"] = bool(
+        _m2_stage_gate_valid(
+            stage_process,
+            stage,
+            run_dir,
+            isinstance(stage_process, Mapping)
+            and stage_process.get("processes_gone") is True,
+        )
+    )
+    checks["online_resource"] = bool(
+        isinstance(online_process, Mapping)
+        and type(online_process.get("return_code")) is int
+        and online_process.get("return_code") == 0
+        and online_process.get("termination") is None
+        and online_process.get("processes_gone") is True
+        and type(online_process.get("peak_rss_bytes")) is int
+        and online_process["peak_rss_bytes"] < M2_RSS_LIMIT_BYTES
+        and online_process.get("swap_bytes") == M2_SWAP_LIMIT_BYTES
+        and _m2_timeline_resource_valid(
+            run_dir / "m2_timeline.jsonl",
+            online_process,
+            "m2",
+            require_no_compiler=True,
+        )
+    )
+    checks["stage_online_lifecycle"] = bool(
+        isinstance(stage_process, Mapping)
+        and isinstance(online_process, Mapping)
+        and stage_process.get("processes_gone") is True
+        and watchdog.get("phase_identity") == {
+            "lifecycle": "isolated_jit_stage_then_warm_online",
+            "stage": _h2b_phase_identity(jit_api=True, compile_called=True, compiler_probe=True),
+            "online": _m2_phase_identity(),
+        }
+    )
+    if not checks["stage_resource"]:
+        problems.append("stage_resource")
+    if not checks["online_resource"]:
+        problems.append("online_resource")
     checks["worker_schema"] = bool(
         worker.get("schema") == M2_WORKER_SCHEMA
+        and worker.get("phase") == "online"
         and worker.get("status") == "measurement_complete"
         and worker.get("error") is None
         and worker.get("controlled_stop") is None
+        and worker.get("phase_identity") == _m2_phase_identity()
         and _evidence_valid(worker)
     )
     measurement = worker.get("measurement")
+    checks["form_identity"] = bool(
+        _m2_stage_summary_valid(stage, run_dir)
+        and isinstance(stage.get("form"), Mapping)
+        and isinstance(worker.get("form"), Mapping)
+        and _h2b_forms_match(stage["form"], worker["form"], run_dir)
+    )
+    checks["online_cache"] = _m2_online_cache_valid(
+        measurement,
+        worker.get("form"),
+        stage.get("form"),
+        run_dir,
+    )
+    if not checks["form_identity"]:
+        problems.append("form_identity")
+    if not checks["online_cache"]:
+        problems.append("online_cache")
     current_authority = None
     try:
         current_authority = _h2b_p1_authority()
@@ -2477,7 +2757,12 @@ def _m2_check_raw(run_dir: Path, checker_source: Mapping[str, Any]) -> dict[str,
             } if factor is not None else None,
             "source_count": len(source_results),
             "sources": _plain(source_results),
-            "resource": watchdog.get("m2"),
+            "stage_resource": _plain(stage_process),
+            "online_resource": _plain(online_process),
+            "resource_peak_rss_bytes": max(
+                int(stage_process["peak_rss_bytes"]),
+                int(online_process["peak_rss_bytes"]),
+            ) if isinstance(stage_process, Mapping) and isinstance(online_process, Mapping) else None,
         },
         "checker_source": _plain(checker_source),
         "raw_artifacts": _plain(watchdog.get("raw_artifacts")),
