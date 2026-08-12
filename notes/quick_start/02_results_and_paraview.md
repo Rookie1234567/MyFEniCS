@@ -20,7 +20,7 @@
 
 ## 4. PyCharm 运行配置
 
-普通 Run 使用 `src/main.py`；在 `Edit Configurations | Logs` 可将 console 保存到用户路径。不要把日志重定向到 canonical `records/`。
+普通 Run 使用 `scripts/run_case.py <case.dat>`；在 `Edit Configurations | Logs` 可将 console 保存到用户路径。不要把日志重定向到 canonical `records/`。
 
 ## 5. 输出位置由哪里控制
 
@@ -30,7 +30,7 @@
 | benchmark case | `benchmarks/artifacts/cases/<id>/` |
 | canonical lightweight evidence | `benchmarks/cases/<id>/records/` 或顶层兼容 records |
 
-`results_root`/`--results-root` 只改变 artifact 根，不改变物理模型。
+public `.dat` 的 `output.results_root` 控制 artifact 根；public CLI 不接受 `--results-root` override，避免输入与命令行产生双重来源。
 
 ## 6. 典型 2D 目录树
 
@@ -72,8 +72,8 @@ serial 使用单 VTU；MPI 使用 PVD 总入口和 rank-local VTU。
 ## 9. CLI 等价命令
 
 ```text
-python src/main.py --preset 3d_stage1_airbox_smoke --results-root results/tutorial
-python src/main.py --preset 2d_complex_absorption --results-root results/tutorial
+python scripts/run_case.py input/smoke/3d_stage1_airbox_smoke.dat
+python scripts/run_case.py input/smoke/2d_complex_absorption.dat
 ```
 
 ## 10. 关键 JSON 字段

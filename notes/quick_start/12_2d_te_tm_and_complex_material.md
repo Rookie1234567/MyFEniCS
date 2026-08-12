@@ -18,25 +18,23 @@ TM 路径求解面内矢量 `E=(Ex,Ey)`，使用 N1curl；TE 路径求解标量 
 
 项目时间约定为 `exp(-i omega t)`，输入是折射率 `n`，内部计算 `epsilon_r=n^2`。本项目当前采用正 `Im(epsilon_r)` 表示吸收；若外部数据库给出相反约定，先转换。
 
-## 4. PyCharm presets
+## 4. Public dat inputs
 
-```python
-ACTIVE_PYCHARM_PRESET = "2d_complex_absorption"  # TM canonical geometry
-ACTIVE_PYCHARM_PRESET = "2d_te_port_smoke"       # TE 路径 smoke
+```text
+input/smoke/2d_complex_absorption.dat       # TM canonical geometry
+input/smoke/2d_te_port_smoke.dat            # TE path smoke
 ```
 
 Case003 的 TE canonical 参数由 case config/run 脚本冻结，不等同于 Robin `2d_te_port_smoke`。
 
-## 5. `main.py` 修改位置
+## 5. Dat 输入位置
 
-TM 有损 preset 是：
+TM 有损输入是 `input/smoke/2d_complex_absorption.dat`；其材料字段在 dat 中显式给出：
 
-```python
-replace(
-    _TM_DTN_AUX_2D,
-    n_substrate=0.999002304859 + 0.00182649365j,
-    n_grating=0.999002304859 + 0.00182649365j,
-)
+```text
+[materials]
+n_substrate = [0.999002304859, 0.00182649365]
+n_grating = [0.999002304859, 0.00182649365]
 ```
 
 TE 通过 `polarization_type="TE"` 进入 `solve_te_maxwell`，不是把 TM 矢量的某个分量设为零。
@@ -71,8 +69,10 @@ Case003 证明两个冻结案例的 residual、非负 R/T/A、`A_balance≈A_vol
 
 ## 9. CLI 等价命令
 
+PyCharm 的 Run Configuration 只填写 public `.dat` 路径，不添加物理 override。
+
 ```text
-python src/main.py --preset 2d_complex_absorption
+python scripts/run_case.py input/smoke/2d_complex_absorption.dat
 SOURCE_COMMIT=<sha> IMAGE_DIGEST=sha256:<digest> sh benchmarks/cases/003_2d_te_tm_complex_absorption/run.sh
 ```
 

@@ -1,6 +1,6 @@
 # Stage 2：2A / 2B / 2C 使用和代码阅读指南
 
-> **文档状态：历史长文。** 当前分别从 [`21_3d_stage2a_floquet.md`](21_3d_stage2a_floquet.md)、[`22_3d_stage2b_pml.md`](22_3d_stage2b_pml.md)、[`23_3d_stage2c_fresnel.md`](23_3d_stage2c_fresnel.md) 进入；2B/2C 当前是 experimental/test-backed，不再笼统写成生产支持。
+> **文档状态：历史长文。** 当前入口见 [`../../input/README.md`](../../input/README.md) 及 Stage2 当前页面；本文旧 preset/CLI 只用于追溯，2B/2C 仍是 experimental/test-backed。
 
 ## 2026-06-30 更新：p=2 高阶 Floquet 已覆盖 2A / 2B / 2C
 

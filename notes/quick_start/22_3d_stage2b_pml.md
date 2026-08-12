@@ -17,35 +17,24 @@ recommended production boundary = no
 
 先通过 Stage2A。PML 厚度必须由网格解析，且只在 PML cell tags 上使用拉伸张量。
 
-## 4. PyCharm preset
+## 4. Public dat input
 
-```python
-ACTIVE_PYCHARM_PRESET = "3d_stage2b_pml_smoke"
+```text
+input/smoke/3d_stage2b_pml_smoke.dat
 ```
 
-## 5. `main.py` 修改位置
+## 5. Dat 输入位置
 
-```python
-replace(
-    STAGE2_NO_GRATING_3D,
-    stage_case="pml_airbox",
-    use_pml=True,
-)
+```text
+[boundary]
+vertical_boundary = "pml"
+use_pml = true
 ```
 
 ## 6. 完整参数示例
 
-```python
-Stage2NoGratingInputs3D(
-    stage_case="pml_airbox",
-    use_floquet_xy=True,
-    use_pml=True,
-    pml_top_thickness=250.0,
-    pml_bottom_thickness=250.0,
-    pml_alpha=5.0,
-    nedelec_degree=1,
-    mesh_target_size=300.0,
-)
+```text
+完整参数位于 `input/smoke/3d_stage2b_pml_smoke.dat`。
 ```
 
 ## 7. 参数含义
@@ -64,9 +53,10 @@ Stage2NoGratingInputs3D(
 
 ## 9. CLI 等价命令
 
+PyCharm 的 Run Configuration 只填写该 `.dat` 路径，不增加 PML 或 solver CLI override。
+
 ```text
-python src/main.py --preset 3d_stage2b_pml_smoke \
-  --results-root benchmarks/artifacts/cases/012
+python scripts/run_case.py input/smoke/3d_stage2b_pml_smoke.dat
 ```
 
 ## 10. 真实调用链

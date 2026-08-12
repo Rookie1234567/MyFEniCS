@@ -17,31 +17,26 @@ DtN 端口把上下均匀半空间中的每个 Floquet 阶映射为边界 tracti
 
 必须使用 `constraint_backend="manual"`、`port_boundary_model="dtn"`、`use_pml=False`。上下 port plane 应位于均匀材料层内。
 
-## 4. PyCharm presets
+## 4. Public dat inputs
 
-```python
-ACTIVE_PYCHARM_PRESET = "2d_tm_dtn_auxiliary_smoke"
+```text
+input/smoke/2d_tm_dtn_auxiliary_smoke.dat
 # 或
-ACTIVE_PYCHARM_PRESET = "2d_tm_dtn_explicit_smoke"
+input/smoke/2d_tm_dtn_explicit_smoke.dat
 ```
 
-## 5. `main.py` 修改位置
+## 5. Dat 输入位置
 
-两个 preset 都由 `_TM_DTN_AUX_2D` 派生，只有 `port_dtn_assembly` 不同。这样可保证比较时几何、材料、网格和入射完全相同。
+两个完整 dat 分别固定 auxiliary 与 explicit 语义；比较时几何、材料、网格和入射字段保持对应文件中的值。
 
 ## 6. 完整参数示例
 
-```python
-replace(
-    EUV_GRATING_2D,
-    calculation_method="port",
-    constraint_backend="manual",
-    port_boundary_model="dtn",
-    port_dtn_assembly="auxiliary",
-    port_use_diffraction_orders=True,
-    nedelec_degree=2,
-    mesh_target_size=3.0,
-)
+```text
+[method]
+kind = "2d_port"
+[boundary]
+vertical_boundary = "dtn"
+dtn_assembly = "auxiliary"
 ```
 
 ## 7. 关键参数
@@ -60,11 +55,13 @@ Case002 是小型无损等价性案例，不证明复杂 grating 的网格精度
 
 ## 9. CLI 与 Case002
 
+PyCharm 的 Run Configuration 只填写下面的 `.dat` 路径。
+
 普通入口：
 
 ```text
-python src/main.py --preset 2d_tm_dtn_auxiliary_smoke
-python src/main.py --preset 2d_tm_dtn_explicit_smoke
+python scripts/run_case.py input/smoke/2d_tm_dtn_auxiliary_smoke.dat
+python scripts/run_case.py input/smoke/2d_tm_dtn_explicit_smoke.dat
 ```
 
 冻结双求解：

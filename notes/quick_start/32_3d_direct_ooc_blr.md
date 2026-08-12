@@ -17,11 +17,11 @@ new target records in V3 = none
 
 PETSc 必须实际链接 MUMPS；OOC 需要足够快且有空间的 scratch。先用 demo h5，不要把 preset 存在误认为 target production qualification。
 
-## 4. PyCharm presets
+## 4. Retained research/history presets
 
-```python
-ACTIVE_PYCHARM_PRESET = "3d_stage4b_demo_mumps_ooc"
-ACTIVE_PYCHARM_PRESET = "3d_stage4b_demo_mumps_blr"
+```text
+`src.main --preset 3d_stage4b_demo_mumps_ooc` 或
+`src.main --preset 3d_stage4b_demo_mumps_blr` 可显式 replay；没有无参默认。
 ```
 
 名称包含 `demo`，因为当前配置不是 Case021 target。
@@ -57,6 +57,8 @@ replace(
 Case030 保持 `experimental/test_backed/historical`。没有新的 target OOC/BLR record，也没有证明对所有 MPI 数和矩阵稳定。
 
 ## 9. CLI 等价命令
+
+PyCharm 的 retained replay 配置继续使用显式 `--preset`。
 
 ```text
 python src/main.py --preset 3d_stage4b_demo_mumps_ooc

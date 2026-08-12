@@ -97,16 +97,17 @@ TE 有独立的标量 Robin/DtN 系数。`port_boundary_model=dtn` 时 serial ma
 
 ## 8. 输入、输出和 shape
 
-输入 `cfg` 是复制的 Python 配置；`V` 的全局 DoF 取决于 mesh 和阶次。输出 summary 至少包含：mesh cells、full/reduced DoF、reduced residual、solver backend、Floquet mismatch、field maxima、power metrics 和 elapsed time。
+输入 `cfg` 是由 resolved dat 经 Task38 adapter 生成的内部 Python 配置；`V` 的全局 DoF 取决于 mesh 和阶次。输出 summary 至少包含：mesh cells、full/reduced DoF、reduced residual、solver backend、Floquet mismatch、field maxima、power metrics 和 elapsed time。
 
 场文件将复数拆为 real/imag/abs；`run_summary.json` 与 `solver_log.txt` 由 rank 0 写。普通结果位于 `results/`，benchmark 的重型场位于 gitignored artifact root。
 
 ## 9. 一次真实调用顺序
 
 ```text
-python src/main.py --preset 2d_tm_pml_floquet_smoke
-main::preset_cli_args
-run_cases::main
+python scripts/run_case.py input/smoke/2d_tm_pml_floquet_smoke.dat
+-> src.io.load_and_resolve
+-> src.runners.task038_2d
+-> run_cases::main
 SimulationConfig
 solve_vector_maxwell::run_case
 postprocess::save_fields_and_plots

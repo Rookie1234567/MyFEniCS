@@ -2,15 +2,15 @@
 
 ## 1. 功能与物理图景
 
-`src/main.py` 是 PyCharm facade，不是第二套求解器。它把一个命名 preset 翻译成 `run_cases` 或 `run_3d_cases` 的真实 CLI 参数。物理方程、网格、边界和求解仍在 `src/` 对应模块中完成。
+普通入口是 `scripts/run_case.py` 加一个显式 `.dat`；`src/main.py` 只保留 11 个 dat alias、6 个 research/history preset 和列表功能。物理方程、网格、边界和求解仍在 `src/` 对应模块中完成。
 
 ## 2. 当前能力状态
 
 ```text
-2D presets = 6
-3D presets = 11
-ordinary default = 3d_stage1_airbox_smoke
-iterative preset = 无；MPI4 使用独立 benchmark 配置
+ordinary migrated dat inputs = 11
+retained research/history presets = 6
+ordinary default = 无隐式 preset，必须显式 `.dat`
+ordinary Python iterative preset 无；Hybrid iterative 由 official dat 指定并按文件 `execution.mpi_size` 运行
 ```
 
 ## 3. 运行前提
@@ -23,10 +23,10 @@ python src/main.py --list-presets --verbose
 
 ## 4. PyCharm 选择位置
 
-只改顶部这一行即可选择已有功能：
+普通用户选择显式输入文件：
 
-```python
-ACTIVE_PYCHARM_PRESET = "2d_complex_absorption"
+```text
+python scripts/run_case.py input/smoke/2d_complex_absorption.dat --validate-only
 ```
 
 不要同时寻找旧的 `SIMULATION_DIMENSION`、`stage2_all` 或 `stage4_all`；它们不是当前入口。
@@ -35,37 +35,26 @@ ACTIVE_PYCHARM_PRESET = "2d_complex_absorption"
 
 | 配置类 | 用途 |
 |---|---|
-| `Inputs2D` | 2D TM/TE、PML/Robin/DtN |
-| `Stage1AirboxInputs3D` | Stage1 |
-| `Stage2NoGratingInputs3D` | Stage2A/2B/2C |
+| `input_schema` / `RunSpecification` | public `.dat` 白名单、解析与派生 |
+| `MIGRATED_PRESET_DATS` | 11 个 dat alias 的唯一映射 |
 | `Stage4GratingInputs3D` | Stage4A/4B direct |
 | `PresetInfo` | 几何、离散、资源和证据身份 |
 
-冻结 dataclass 防止运行时意外改值；源码中使用 `replace(base, field=value)` 产生新配置。
+schema 与 `RunSpecification` 负责冻结解析结果；用户变体应复制 `.dat` 并修改白名单字段，不修改 Python preset 对象。
 
 ## 6. 完整自定义参数示例
 
-```python
-MY_2D = replace(
-    PRESETS_2D["2d_tm_dtn_auxiliary_smoke"],
-    period_x=120.0,
-    lambda0=13.5,
-    n_substrate=0.999 + 0.002j,
-    mesh_target_size=3.0,
-)
-PRESETS_2D["2d_my_lossy_cell"] = MY_2D
-PRESET_INFO["2d_my_lossy_cell"] = PresetInfo(
-    physical_geometry="120 nm user cell",
-    discretization="TM N1curl p=2, h=3 nm",
-    resource_class="unmeasured",
-    evidence_status="user_experimental",
-    purpose="User-defined parameter study",
-)
+```text
+复制一个适用的 `.dat` 到自己的输入目录，直接修改白名单字段；不要修改
+`src/main.py` 或 PRESET_INFO。每个 `.dat` 只表示一次运行。
 ```
 
 ## 7. 2D 参数含义
 
-| 参数 | 单位 | 合法/典型值 | 改动影响 |
+下表使用内部概念名帮助阅读；public 可写的完整键、section、单位和适用性以
+[`input/README.md`](../../input/README.md) 及对应 `.dat` 为准，不要把短名直接当作 TOML 键。
+
+| 参数（内部概念名） | 单位 | 合法/典型值 | 改动影响 |
 |---|---|---|---|
 | `period_x` | nm | `>0` | Floquet 相位和衍射阶 |
 | `air_height`、`substrate_thickness` | nm | `>0` | port 面位置与吸收传播距离 |
@@ -80,7 +69,7 @@ PRESET_INFO["2d_my_lossy_cell"] = PresetInfo(
 
 ## 8. 3D 参数含义
 
-| 参数 | 物理对象 | 资格边界 |
+| 参数（内部概念名） | 物理对象 | 资格边界 |
 |---|---|---|
 | `period_x/y` | 双周期尺寸 | 改后不再是 target record |
 | `air_height/substrate_thickness` | z 向分层 | 影响端口和吸收 |
@@ -103,18 +92,18 @@ target preset 的物理参数来自 `src.common.config_3d::target_stage4_config`
 ## 10. CLI 等价命令
 
 ```text
-python src/main.py --preset 2d_complex_absorption
+python scripts/run_case.py input/smoke/2d_complex_absorption.dat
 python src/main.py --preset 3d_target_grating_direct_h5
 ```
 
-命令末尾可追加真实 runner 参数；后出现的同名参数覆盖 preset 值，但这会形成用户变体，不应覆盖 canonical record。
+public dat 命令不接受物理、solver、MPI 或 `--results-root` override；retained research/history preset 才保留旧 replay 参数。
 
 ## 11. 真实调用链
 
 ```text
-PRESETS_2D/PRESETS_3D
--> preset_cli_args
--> _pycharm_args_2d/_pycharm_args_3d
+scripts/run_case.py
+-> load_and_resolve(.dat)
+-> Task38 adapter/worker
 -> run_cases::main / run_3d_cases::main
 -> SimulationConfig / SimulationConfig3D
 ```
@@ -132,21 +121,21 @@ preset 名称唯一
 PRESET_INFO 完整
 runner parser 接受全部参数
 demo/target 名称不混淆
-ordinary default 仍为轻量 direct
+无参不会隐式 dispatch；dat 能力由对应 adapter 决定
 ```
 
 ## 14. 常见错误
 
 | 错误 | 原因 |
 |---|---|
-| 改了未激活 dataclass 但结果不变 | `ACTIVE_PYCHARM_PRESET` 指向别处 |
+| 修改了未使用文件但结果不变 | 实际命令仍指向另一个 `.dat` |
 | 把 `n` 当成 `epsilon` 输入 | 程序还会再平方 |
 | 用 demo 与 target record 比较 | 两者几何和入射不同 |
 | 参数扫描写到 canonical record | `--record` 路径使用错误 |
 
 ## 15. 如何进入自己的案例
 
-先从最近的 smoke 复制、改名、放到新的 artifact root；跑 residual、能量和网格收敛后，再考虑建立新的 benchmark。不要修改 Case021/031 的 `config.json` 来容纳个人扫描。
+先从最近的 smoke `.dat` 复制、改名并放到自己的输入目录；跑 residual、能量和网格收敛后，再考虑建立新的 benchmark。不要修改 Case021/031 的 `config.json` 来容纳个人扫描。
 
 ## 16. 链接
 

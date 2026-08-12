@@ -18,32 +18,25 @@ full mesh convergence = not claimed
 
 必须使用 complex PETSc；port 两侧应是均匀层。先运行 Stage1/2A，确认基础 H(curl) 和 Floquet。
 
-## 4. PyCharm preset
+## 4. Public dat input
 
-```python
-ACTIVE_PYCHARM_PRESET = "3d_stage4a_flat_layer_direct"
+```text
+input/smoke/3d_stage4a_flat_layer_direct.dat
 ```
 
 该案例 p=1、h=2 nm，属于轻量 sanity。
 
-## 5. `main.py` 修改位置
+## 5. Dat 输入位置
 
-`_STAGE4_FLAT_3D` 由 demo Stage4 配置派生并覆盖 flat geometry、10 nm 周期、上下各 5 nm、p=1、h=2 nm。
+完整 public 参数在 `input/smoke/3d_stage4a_flat_layer_direct.dat`；不再通过 Python dataclass 派生用户案例。
 
 ## 6. 完整参数块
 
-```python
-replace(
-    STAGE4_GRATING_3D,
-    stage_case="stage4_flat_layer_sanity",
-    nedelec_degree=1,
-    mesh_target_size=2.0,
-    period_x=10.0,
-    period_y=10.0,
-    air_height=5.0,
-    substrate_thickness=5.0,
-    stage4_boundary_model="dtn_port",
-)
+```text
+[geometry]
+geometry_kind = "flat_layer"
+[method]
+kind = "full3d_direct"
 ```
 
 ## 7. 参数含义
@@ -63,9 +56,10 @@ replace(
 
 ## 9. CLI 等价命令
 
+PyCharm 的 Run Configuration 只填写该 `.dat` 路径。
+
 ```text
-python src/main.py --preset 3d_stage4a_flat_layer_direct \
-  --results-root benchmarks/artifacts/cases/020
+python scripts/run_case.py input/smoke/3d_stage4a_flat_layer_direct.dat
 ```
 
 ## 10. 真实调用链

@@ -17,33 +17,26 @@ production grating claim = no
 
 complex PETSc 镜像可用；第一次运行建议 serial 默认。要复核 canonical MPI 行为，使用 Case010 的 MPI2 脚本。
 
-## 4. PyCharm preset
+## 4. Public dat input
 
-```python
-ACTIVE_PYCHARM_PRESET = "3d_stage1_airbox_smoke"
+```text
+input/smoke/3d_stage1_airbox_smoke.dat
 ```
 
-无参数运行即选择它。
+必须显式把该 dat 传给 `scripts/run_case.py`；无参数 `src.main` 不运行案例。
 
-## 5. `main.py` 修改位置
+## 5. Dat 输入位置
 
-`STAGE1_AIRBOX_3D = Stage1AirboxInputs3D()`。用户变体用 `replace` 创建新 preset，不改默认基线。
+用户变体复制 `.dat` 并修改白名单字段，不改 Python preset 或默认基线。
 
 ## 6. 完整参数块
 
-```python
-Stage1AirboxInputs3D(
-    stage_case="stage1_airbox",
-    case="normal",
-    nedelec_degree=1,
-    visualization_degree=1,
-    mesh_target_size=5.0,
-    lambda0=633.0,
-    period_x=10.0,
-    period_y=10.0,
-    air_height=5.0,
-    substrate_thickness=5.0,
-)
+```text
+[geometry]
+period_x_nm = 10.0
+period_y_nm = 10.0
+[method]
+kind = "full3d_direct"
 ```
 
 ## 7. 参数含义与资格影响
@@ -64,11 +57,11 @@ Stage1 只证明均匀介质平面波和基础 3D 离散；它不证明 Floquet�
 ## 9. CLI 等价命令
 
 ```text
-python src/main.py --preset 3d_stage1_airbox_smoke
+python scripts/run_case.py input/smoke/3d_stage1_airbox_smoke.dat
 sh benchmarks/cases/010_3d_stage1_airbox/run.sh
 ```
 
-Case010 脚本内部已经包含 `mpiexec -n 2`，不要再套一层 MPI。
+MPI2 由该 `.dat` 的 `execution.mpi_size` 与 launcher 声明，不要再在外层套 `mpiexec`。
 
 ## 10. 真实调用链
 
@@ -103,10 +96,10 @@ MPI 输出完整
 
 | 现象 | 原因 |
 |---|---|
-| 默认运行很重 | preset 被改成 Stage4 |
+| 意外启动重案例 | 命令指向了 Stage4 dat |
 | 方向余弦为负 | 入射方向/法向约定混淆 |
 | MPI 只显示一块 | 打开 rank VTU 而非 PVD |
-| p2 名字出现但预期 p1 | CLI 覆盖或旧结果目录 |
+| p2 但预期 p1 | 选错 dat 或读到旧结果目录 |
 
 ## 15. 从 Stage1 进入新案例
 

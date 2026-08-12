@@ -18,40 +18,32 @@
 
 采样或端口面必须在横向均匀材料层中。先确认 residual 通过，再解释衍射阶。Rayleigh cutoff 邻域尚未系统资格化。
 
-## 4. PyCharm preset
+## 4. Public dat input
 
-```python
-ACTIVE_PYCHARM_PRESET = "2d_tm_dtn_auxiliary_smoke"
+```text
+input/smoke/2d_tm_dtn_auxiliary_smoke.dat
 ```
 
 有损多阶示例用 `2d_complex_absorption`。
 
-## 5. `main.py` 修改位置
+## 5. Dat 输入位置
 
-关键字段位于 `Inputs2D`：
+关键字段位于对应 `.dat` 的 `[boundary]` 与 `[output]`：
 
-```python
-port_use_diffraction_orders=True
-port_dtn_order_count=2
-diffraction_order_count=None
-power_probe_num_points=None
+```text
+[boundary]
+dtn_order_policy = "auto_propagating"
+[output]
+export_diffraction_orders = true
 ```
 
 自动 DtN 阶次与 diagnostic probe 输出阶数不是同一概念。
 
 ## 6. 参数块示例
 
-```python
-replace(
-    _TM_DTN_AUX_2D,
-    period_x=100.0,
-    lambda0=13.5,
-    incident_angle_deg=0.0,
-    port_use_diffraction_orders=True,
-    port_rayleigh_tolerance=1.0e-6,
-    diffraction_order_count=8,
-    power_probe_num_points=512,
-)
+```text
+复制 `input/smoke/2d_tm_dtn_auxiliary_smoke.dat`，再按 input/README.md
+修改周期、角度和后处理采样字段；不要通过 src.main 或附加 CLI 覆盖。
 ```
 
 ## 7. 参数含义
@@ -78,8 +70,10 @@ P_m=L_x\,\frac{\operatorname{Re}Y_m}{2}\,|a_m(y_{port})|^2.
 
 ## 9. CLI 等价命令
 
+PyCharm 的 Run Configuration 只填写 public `.dat` 路径。
+
 ```text
-python src/main.py --preset 2d_complex_absorption
+python scripts/run_case.py input/smoke/2d_complex_absorption.dat
 python benchmarks/check_benchmarks.py --no-write
 ```
 

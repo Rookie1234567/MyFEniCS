@@ -17,35 +17,27 @@ official production RTA = 不声明
 
 使用 complex PETSc 镜像；本路径选择 `calculation_method="scattered"`、TM、manual Floquet。先运行默认 smoke，不要直接把 PML 厚度压到一个单元。
 
-## 4. PyCharm preset
+## 4. Public dat input
 
-```python
-ACTIVE_PYCHARM_PRESET = "2d_tm_pml_floquet_smoke"
+```text
+input/smoke/2d_tm_pml_floquet_smoke.dat
 ```
 
-`--list-presets --verbose` 会标记它为 lightweight experimental path smoke。
+`--list-presets --verbose` 只显示该 dat 的路径与迁移状态；资格边界来自 case 与 evidence。
 
-## 5. `main.py` 实际修改位置
+## 5. Dat 输入位置
 
-参数来自 `_TM_PML_2D = Inputs2D(...)`。要建立用户案例，用 `replace(_TM_PML_2D, ...)` 创建新名字，不要改 Case001 的冻结合同。
+完整参数位于 `input/smoke/2d_tm_pml_floquet_smoke.dat`。建立用户案例时复制该 dat 并修改白名单字段，不改 Case001 冻结合同。
 
 ## 6. 当前完整参数块
 
-```python
-Inputs2D(
-    calculation_method="scattered",
-    polarization_type="TM",
-    constraint_backend="manual",
-    scattering_background="layered",
-    period_x=600.0,
-    air_height=850.0,
-    substrate_thickness=350.0,
-    pml_top_thickness=300.0,
-    pml_bottom_thickness=300.0,
-    pml_alpha=5.0,
-    nedelec_degree=1,
-    mesh_target_size=80.0,
-)
+```text
+[geometry]
+period_x_nm = 600.0
+[method]
+kind = "2d_scattered"
+[boundary]
+vertical_boundary = "pml"
 ```
 
 ## 7. 参数含义、单位和合法值
@@ -66,16 +58,19 @@ Inputs2D(
 ## 9. CLI 等价命令
 
 ```text
-python src/main.py --preset 2d_tm_pml_floquet_smoke \
-  --results-root benchmarks/artifacts/cases/001
+python scripts/run_case.py input/smoke/2d_tm_pml_floquet_smoke.dat
 ```
+
+PyCharm 的 Run Configuration 同样只填写该 `.dat` 路径，不增加物理或 solver override。
 
 Case-contained 入口是 `benchmarks/cases/001_2d_tm_pml_floquet/run.sh`。
 
 ## 10. 真实调用链
 
 ```text
-src.main::preset_cli_args
+scripts/run_case.py
+-> src.io.load_and_resolve
+-> Task38 2D adapter
 -> src.runners.run_cases::main
 -> src.solvers.solve_vector_maxwell::run_case
 -> src.geometry.mesh_builder::build_mesh

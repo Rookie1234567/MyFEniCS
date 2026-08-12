@@ -1,6 +1,6 @@
 # 2D EUV 光栅 DtN 使用指南
 
-> **文档状态：历史验证长文。** 当前运行入口见 [`11_2d_dtn_floquet.md`](11_2d_dtn_floquet.md) 与 [`12_2d_te_tm_and_complex_material.md`](12_2d_te_tm_and_complex_material.md)；旧 `ACTIVE_2D_INPUT_GROUP="euv_grating"` 已被命名 preset 取代。
+> **文档状态：历史验证长文。** 当前运行入口见 [`../../input/README.md`](../../input/README.md) 的显式 `.dat`；本文旧变量名和命令仅用于追溯。
 
 ## 2026-06-29 更新：p=1 细网格续跑命令
 
