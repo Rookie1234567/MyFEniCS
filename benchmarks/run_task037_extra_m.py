@@ -1926,10 +1926,11 @@ def _m2_write_form_reuse(
     cache_before: list[dict[str, Any]],
     cache_after: list[dict[str, Any]],
 ) -> dict[str, Any]:
+    online_form = _plain(form_record)
     checks = {
-        "code_state_hit": form_record.get("code_state") == "hit_no_new_decl_impl",
+        "code_state_hit": online_form.get("code_state") == "hit_no_new_decl_impl",
         "cache_unchanged": cache_before == cache_after,
-        "forms_match": bool(_h2b_forms_match(stage_summary.get("form"), form_record, run_dir)),
+        "forms_match": bool(_h2b_forms_match(stage_summary.get("form"), online_form, run_dir)),
     }
     payload = _attach_evidence(
         {
@@ -1937,7 +1938,7 @@ def _m2_write_form_reuse(
             "phase": "online",
             "source": _plain(source),
             "stage_manifest_sha256": _sha256_file(run_dir / "stage_summary.json"),
-            "online_form": _plain(form_record),
+            "online_form": online_form,
             "cache": {
                 "before": _plain(cache_before),
                 "after": _plain(cache_after),

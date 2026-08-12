@@ -230,6 +230,33 @@ def test_m2_form_reuse_sidecar_records_each_gate(monkeypatch, tmp_path) -> None:
         assert failed["all_pass"] is False
 
 
+def test_m2_form_reuse_normalizes_fresh_nested_tuples(monkeypatch, tmp_path) -> None:
+    source, stage_form, online_form, cache = _m2_form_reuse_fixture(tmp_path)
+    stage_form["element_signature"] = ["N1E", 6, [["edge", [1, 2]]]]
+    online_form["element_signature"] = ("N1E", 6, (("edge", (1, 2)),))
+    seen: dict[str, object] = {}
+
+    def match(stage, online, _run_dir):
+        seen["stage"] = stage
+        seen["online"] = online
+        return stage["element_signature"] == online["element_signature"]
+
+    monkeypatch.setattr(m2_runner, "_h2b_forms_match", match)
+    sidecar = m2_runner._m2_write_form_reuse(
+        tmp_path,
+        source,
+        {"form": stage_form},
+        online_form,
+        cache,
+        cache,
+    )
+    assert seen["online"]["element_signature"] == stage_form["element_signature"]
+    assert isinstance(seen["online"]["element_signature"][2], list)
+    assert sidecar["online_form"]["element_signature"] == stage_form["element_signature"]
+    assert sidecar["online_form"]["code_state"] != stage_form["code_state"]
+    assert sidecar["checks"]["forms_match"] is True
+
+
 def test_m2_checker_contract_rejects_tampered_sidecar(monkeypatch, tmp_path) -> None:
     source, stage_form, online_form, cache = _m2_form_reuse_fixture(tmp_path)
     monkeypatch.setattr(m2_runner, "_h2b_forms_match", lambda *_args: True)
