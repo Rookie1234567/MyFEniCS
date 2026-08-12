@@ -1892,6 +1892,10 @@ def _m2_save_array(run_dir: Path, name: str, value: Any) -> None:
     np.save(run_dir / name, np.asarray(value), allow_pickle=False)
 
 
+def _m2_fill_action_target(action: Any, source: Any, target: Any) -> None:
+    target[...] = action(source)
+
+
 def _m2_recorded_artifacts(run_dir: Path) -> dict[str, dict[str, Any]]:
     names = [
         "stage_progress.jsonl",
@@ -2230,7 +2234,11 @@ def _run_m2_worker(run_dir: Path) -> int:
             return np.array(result.getArray(readonly=True), dtype=np.complex128, copy=True, order="C")
 
         primal = _h2b_source_arrays(p6_space, cfg, slaves, floquet6.mpc)
-        sources = _h2b_residual_source_arrays(primal, exact_action, slaves)
+
+        def residual_exact_action(source: np.ndarray, target: np.ndarray) -> None:
+            _m2_fill_action_target(exact_action, source, target)
+
+        sources = _h2b_residual_source_arrays(primal, residual_exact_action, slaves)
         source_metrics: list[dict[str, Any]] = []
         rhs_values: list[np.ndarray] = []
         correction_values: list[np.ndarray] = []

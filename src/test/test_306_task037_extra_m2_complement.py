@@ -46,6 +46,21 @@ def test_m2_runner_helper_ownership_and_cli(monkeypatch) -> None:
     assert "stage_summary.json" in m2_runner._m2_recorded_artifacts(Path("/tmp/m2"))
 
 
+def test_m2_fill_action_target_calls_action_once() -> None:
+    source = np.asarray((1.0 + 2.0j, -3.0 + 0.5j), dtype=np.complex128)
+    target = np.empty_like(source)
+    calls = 0
+
+    def action(values: np.ndarray) -> np.ndarray:
+        nonlocal calls
+        calls += 1
+        return values + (2.0 - 1.0j)
+
+    assert m2_runner._m2_fill_action_target(action, source, target) is None
+    assert calls == 1
+    np.testing.assert_array_equal(target, source + (2.0 - 1.0j))
+
+
 def test_m2_watchdog_stage_gate_locks_or_allows_online(monkeypatch, tmp_path) -> None:
     source = {
         "source_commit_full_sha": "a" * 40,
