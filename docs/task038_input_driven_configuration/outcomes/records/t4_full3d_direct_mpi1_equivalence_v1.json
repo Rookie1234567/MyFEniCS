@@ -23,8 +23,9 @@
       "a_volume_total": 0.00010858974749584228,
       "energy_closure_error": -2.55351295663786e-15,
       "elapsed_seconds": 0.9895727799739689,
-      "rss_mb": 218.87109375,
-      "swap": 0
+      "rss_mib": 218.87109375,
+      "rss_semantics": "solver-reported per-rank historical peak",
+      "swap_mib": 0.0
     },
     {
       "name": "new_dat_input",
@@ -46,8 +47,9 @@
       "a_volume_total": 0.00010858974749584228,
       "energy_closure_error": -2.55351295663786e-15,
       "elapsed_seconds": 0.9179285608697683,
-      "rss_mb": 236.953125,
-      "swap": 0
+      "rss_mib": 236.953125,
+      "rss_semantics": "simultaneous process-tree peak",
+      "swap_mib": 0.0
     }
   ],
   "equivalence": {
@@ -67,6 +69,6 @@
     "order_keys_and_shapes_equal": true,
     "canonical": "not_run_by_capability",
     "canonical_pass": false,
-    "timing_and_rss": "record_only"
+    "timing_and_rss": "record_only; RSS sources are different and are not comparable"
   }
 }
