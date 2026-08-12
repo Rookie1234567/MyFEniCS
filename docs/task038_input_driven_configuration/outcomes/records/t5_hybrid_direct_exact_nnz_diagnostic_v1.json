@@ -1,0 +1,57 @@
+{
+  "schema": "task038.t5.hybrid_direct_exact_nnz_diagnostic.v1",
+  "status": "controlled_diagnostic_failure",
+  "pass": false,
+  "source_sha": "535c285e8d565b6c79e99cad9a2c899a5ff1658a",
+  "commands": {
+    "legacy": "mpiexec -n 4 python /tmp/task38_t5_mpi4_535c285e/legacy_control.py",
+    "new": "python scripts/run_case.py input/official/grazing10_phi0_p2h5_hybrid_direct_m160_mpi4.dat"
+  },
+  "raw_evidence": {
+    "legacy_record": {
+      "path": "/tmp/task38_t5_mpi4_535c285e/legacy/run_summary.json",
+      "sha256": "8f40f3f02f5ed45e514528a781cef889ab30b0a19b1ca7e64ecdcc85722f4741",
+      "carrier_scope": "local_ignored_not_repository_portable"
+    },
+    "new_record": {
+      "path": "/tmp/myfenics-task38-input-driven-configuration-20260812/results/case080_grazing10_phi0_official/case080_grazing10_phi0_hybrid_direct_m160_mpi4_official__hybrid_direct__mpi4__M160/20260812T043041.648724Z/numerical_output/run_summary.json",
+      "sha256": "2dadaf0554cdaae64a88e90d7d7146b34897f1ec075c25dc2a5c5f1d4ed22505",
+      "carrier_scope": "local_ignored_not_repository_portable"
+    },
+    "legacy_log_sha256": "6ff0654b8cad651bd80aab2babb8a566790d59b0aee4f809683acf3775847ce8",
+    "new_log_sha256": "dfdd2b9c64325a251b151685b367657b893dfa72cc369a80be5d800c34e2c832"
+  },
+  "diagnostic_non_invariant": {
+    "field": "hybrid_system.matrix_stats.matrix_nnz_used",
+    "legacy": 2011205.0,
+    "new": 2011063.0,
+    "delta": 142.0,
+    "relative_delta": 0.00007060443863256108,
+    "counts_toward_formal_pass": false,
+    "block_counts_legacy": {
+      "A_bottom": 186196,
+      "A_top": 186308,
+      "C_bottom_negative": 19701,
+      "C_bottom_positive": 19710,
+      "C_top_negative": 19097,
+      "C_top_positive": 19119,
+      "D_bottom": 0,
+      "D_top": 0,
+      "H_modal": 51520
+    },
+    "block_counts_new": {
+      "A_bottom": 186196,
+      "A_top": 186308,
+      "C_bottom_negative": 19700,
+      "C_bottom_positive": 19687,
+      "C_top_negative": 19108,
+      "C_top_positive": 19084,
+      "D_bottom": 0,
+      "D_top": 0,
+      "H_modal": 51520
+    }
+  },
+  "cause": "_vec_nonzero_owned_entries uses relative_tol=1e-13 with a per-column global maximum; repeated QEP solves may rotate or phase near-degenerate bases across that storage threshold. Exact C-block sparsity and monolithic NNZ are not physical invariants.",
+  "preserved_formal_boundary": "This diagnostic is not rewritten as pass. Do not change cutoff, QEP basis, ordering, or solver to force equal NNZ.",
+  "companion_formal_record": "t5_hybrid_direct_mpi4_equivalence_v1.json"
+}

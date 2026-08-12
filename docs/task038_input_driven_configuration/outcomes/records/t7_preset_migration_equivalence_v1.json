@@ -1,0 +1,124 @@
+{
+  "schema": "task038.t7.preset_migration_equivalence.v1",
+  "status": "formal_pde_equivalence_pass",
+  "branch": "codex/20260812-task38-input-driven-configuration",
+  "source_sha": "f86a7e42dc2c44d36c8e5ab6dfa1d9bb8ef8ed42",
+  "carrier_scope": "local_ignored_not_repository_portable",
+  "formal_runs": {
+    "A_legacy_2d": {
+      "command": "python -m src.main --preset 2d_tm_pml_floquet_smoke --results-root /tmp/task038-t7-equivalence-uSq4SN/A1_postfix_legacy/results --unique-output",
+      "exit_status": 0,
+      "source_sha": "f86a7e42dc2c44d36c8e5ab6dfa1d9bb8ef8ed42",
+      "run_path": "/tmp/task038-t7-equivalence-uSq4SN/A1_postfix_legacy/results/2D_grating_tm_sc_lay_p1_h80p0_tri_lam633p0_t15p0_man_20260812_155235",
+      "summary_sha256": "3d65e355b5c9ba2988fa26a8dd9a09d7574ed022b0245d9796b810805eca3c59",
+      "residual": 4.595181492041868e-15,
+      "mesh_cells": 400,
+      "dofs": {"nedelec": 633, "reduced": 608},
+      "R_total": 0.02561938273503437,
+      "T_total": 0.8857932785737199,
+      "R_plus_T": 0.9114126613087543,
+      "A_balance": 0.08858733869124569,
+      "A_volume": 0.0,
+      "orders": 5,
+      "wall_seconds": 2.334997,
+      "rss_process_tree_mib": "not_measured",
+      "swap_process_tree_mib": "not_measured"
+    },
+    "A_dat_2d": {
+      "command": "python scripts/run_case.py input/smoke/2d_tm_pml_floquet_smoke.dat",
+      "exit_status": 0,
+      "classification": "worker_exit0",
+      "source_sha": "f86a7e42dc2c44d36c8e5ab6dfa1d9bb8ef8ed42",
+      "run_path": "/tmp/myfenics-task38-input-driven-configuration-20260812/results/2d_tm_pml_floquet_smoke/2d_tm_pml_floquet_smoke__2d_scattered__mpi1__Mna/20260812T075109.379271Z",
+      "manifest_sha256": "ebc4ad4d3407e8bd8f4eefcd4ad89cacb164e92f22b69ccb88d62cbec1132d2d",
+      "numerical_summary_sha256": "1bbcee555d10e57843fd28c29867b35fc385be833dad95863bf477a230b200d2",
+      "physical_model_sha256": "04da435fd87d33f93ae1605ad17f85cab536f049bf1acb29b7612e98b1fa1fef",
+      "residual": 4.595181492041868e-15,
+      "mesh_cells": 400,
+      "dofs": {"nedelec": 633, "reduced": 608},
+      "R_total": 0.02561938273503437,
+      "T_total": 0.8857932785737199,
+      "R_plus_T": 0.9114126613087543,
+      "A_balance": 0.08858733869124569,
+      "A_volume": 0.0,
+      "orders": 5,
+      "wall_seconds": 2.932676,
+      "rss_process_tree_mib": 263.546875,
+      "swap_process_tree_mib": 0.0,
+      "resource_sample_count": 12
+    },
+    "B_legacy_stage1": {
+      "command": "python -m src.main --preset 3d_stage1_airbox_smoke --results-root /tmp/task038-t7-equivalence-uSq4SN/B1_legacy/results --unique-output",
+      "exit_status": 0,
+      "source_sha": "f86a7e42dc2c44d36c8e5ab6dfa1d9bb8ef8ed42",
+      "run_path": "/tmp/task038-t7-equivalence-uSq4SN/B1_legacy/results/3D_stage1_airbox_normal_p1_h5p0_20260812_155321",
+      "summary_sha256": "20fca397db0fce516a5b04eedbc8db5b538740a8e4a09fa4a690a2bef1b33658",
+      "case_status": "completed",
+      "official_result": true,
+      "residual": 1.0869658196017029e-16,
+      "mesh_cells": 48,
+      "dofs": {"nedelec": 98, "rows": 98, "nnz": 1106},
+      "solution_norm": 35.35501465073796,
+      "wall_seconds": 4.461,
+      "rss_legacy_solver_reported_mib": 214.02734375,
+      "rss_process_tree_mib": "not_measured",
+      "swap_process_tree_mib": "not_measured"
+    },
+    "B_dat_stage1": {
+      "command": "python scripts/run_case.py input/smoke/3d_stage1_airbox_smoke.dat",
+      "exit_status": 0,
+      "classification": "worker_exit0",
+      "source_sha": "f86a7e42dc2c44d36c8e5ab6dfa1d9bb8ef8ed42",
+      "run_path": "/tmp/myfenics-task38-input-driven-configuration-20260812/results/3d_stage1_airbox_smoke/3d_stage1_airbox_smoke__full3d_direct__mpi1__Mna/20260812T075415.162527Z",
+      "manifest_sha256": "84eebda4a7fbcdd3f1294b1619861affa1761e544ef45a963cfefad164fe3763",
+      "numerical_summary_sha256": "aae660ee81f776d4f54a4ad81c6e4c51c26736ef644bf9b2190df3f0cc2e7fde",
+      "physical_model_sha256": "af2a60b47ba5918c6d6a747ac035fdf238eb158743f4a9255cce5abe7ddf5fbe",
+      "case_status": "completed",
+      "official_result": true,
+      "residual": 1.0869658196017029e-16,
+      "mesh_cells": 48,
+      "dofs": {"nedelec": 98, "rows": 98, "nnz": 1106},
+      "solution_norm": 35.35501465073796,
+      "wall_seconds": 2.184068,
+      "rss_process_tree_mib": 221.078125,
+      "swap_process_tree_mib": 0.0,
+      "resource_sample_count": 9
+    }
+  },
+  "comparison": {
+    "A_legacy_vs_dat": {
+      "status": "pass",
+      "max_shared_numeric_abs_delta": 0.0,
+      "max_shared_numeric_rel_delta": 0.0,
+      "excluded": ["case_name", "scattered_inactive.port_boundary_model", "scattered_inactive.port_dtn_order_count"]
+    },
+    "B_legacy_vs_dat": {
+      "status": "pass",
+      "max_shared_numeric_abs_delta": 8.271806125530277e-25,
+      "max_shared_numeric_rel_delta": 1.2576642775177548e-16,
+      "max_delta_field": "mean_poynting_W_per_m2[1]",
+      "excluded": ["case_name", "legacy_inactive.stage4_boundary_model", "timings_seconds", "resource_and_provenance"]
+    }
+  },
+  "diagnostic_failure_preserved": {
+    "source_sha": "2570bcd81fffd25286eb7a00468ee2bc6335d6e9",
+    "classification": "worker_nonzero_before_solver",
+    "reason": "MPI worker inherited an external cwd and could not import src",
+    "manifest_sha256": "099aac198f35deff10f6d81aa3bbf32356adab2d936f163854edfecffcf6229c",
+    "worker_stdout_sha256": "1db2379b5200fbbccf22687912acb2406510ceb619b3784946d6a06c8f8cf3ca",
+    "carrier_path": "/tmp/task38_t7_preset_equivalence_2570bcd8/A2_new/results/2d_tm_pml_floquet_smoke/2d_tm_pml_floquet_smoke__2d_scattered__mpi1__Mna/20260812T074409.735320Z",
+    "remediation": [
+      "worker cwd fixed to the current Task38 source root",
+      "qualified venv Python absolute path retained without symlink resolution to /usr/bin/python3.12"
+    ],
+    "repair_commit": "f86a7e42dc2c44d36c8e5ab6dfa1d9bb8ef8ed42",
+    "external_cwd_mpi1_contract_probe": "contract_probe_pass; 36 targeted tests"
+  },
+  "boundaries": {
+    "research_history_presets_retained": 6,
+    "mpi1_iterative_official_dat": "input/official/grazing1_phi0_hybrid_iterative_m120_mpi1.dat; validate/dry-run only",
+    "reporting_vs_dtn": "outgoing modes remained [(0, 0)] while reporting enumeration changed from 5x5 to 3x3",
+    "te_dtn": "2D TE + DtN is fail-closed except zero_order",
+    "canonical_smoke_fields": "not_run_by_capability"
+  }
+}

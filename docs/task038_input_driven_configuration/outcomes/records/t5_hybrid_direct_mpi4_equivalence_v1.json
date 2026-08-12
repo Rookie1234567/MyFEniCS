@@ -1,0 +1,145 @@
+{
+  "schema": "task038.t5.hybrid_direct_mpi4_equivalence.v1",
+  "status": "pass_with_diagnostic_non_invariant",
+  "formal_task_contract_pass": true,
+  "source_sha": "535c285e8d565b6c79e99cad9a2c899a5ff1658a",
+  "environment": {
+    "qualified_activation": true,
+    "mpi_size": 4,
+    "scalar_type": "complex128",
+    "int_type": "int32",
+    "omp_num_threads": 1,
+    "solver_path": "augmented",
+    "profile": "p2/h5, 13.5nm, S, grazing10deg, phi0, interfaces10/110, M160/candidate320, standard_full"
+  },
+  "commands": {
+    "legacy": "mpiexec -n 4 python /tmp/task38_t5_mpi4_535c285e/legacy_control.py",
+    "new": "python scripts/run_case.py input/official/grazing10_phi0_p2h5_hybrid_direct_m160_mpi4.dat"
+  },
+  "raw_evidence": {
+    "legacy_record": {
+      "path": "/tmp/task38_t5_mpi4_535c285e/legacy/run_summary.json",
+      "sha256": "8f40f3f02f5ed45e514528a781cef889ab30b0a19b1ca7e64ecdcc85722f4741",
+      "carrier_scope": "local_ignored_not_repository_portable"
+    },
+    "new_record": {
+      "path": "/tmp/myfenics-task38-input-driven-configuration-20260812/results/case080_grazing10_phi0_official/case080_grazing10_phi0_hybrid_direct_m160_mpi4_official__hybrid_direct__mpi4__M160/20260812T043041.648724Z/numerical_output/run_summary.json",
+      "sha256": "2dadaf0554cdaae64a88e90d7d7146b34897f1ec075c25dc2a5c5f1d4ed22505",
+      "carrier_scope": "local_ignored_not_repository_portable"
+    },
+    "legacy_log_sha256": "6ff0654b8cad651bd80aab2babb8a566790d59b0aee4f809683acf3775847ce8",
+    "new_log_sha256": "dfdd2b9c64325a251b151685b367657b893dfa72cc369a80be5d800c34e2c832",
+    "new_manifest_sha256": "65f9be5844a614f49ac62f16ed1f31593ea580b8b6bdc981c7cf2e54ee146b7c",
+    "new_parent_summary_sha256": "7c5dca056f1d3b66ae3b638f8649328f86e2dd1249b8275cee317672e21ba4f8"
+  },
+  "configuration_gate": {
+    "solver_relevant_mapping_equal": true,
+    "allowed_identity_output_differences": [
+      "case_name",
+      "full3d_reference_export",
+      "full3d_reference_plane_z"
+    ],
+    "residual": {
+      "legacy": 5.014855373361551e-12,
+      "new": 3.891075584849558e-12,
+      "limit": 1e-09,
+      "pass": true
+    },
+    "rta_and_closure": {
+      "absolute_deltas": {
+        "R_total": 1.5792922525292852e-14,
+        "T_total": 1.3433698597964394e-14,
+        "A_balance": 2.3314683517128287e-15,
+        "A_volume_total": 2.609024107869118e-15,
+        "energy_closure_error": 2.220446049250313e-16
+      },
+      "limit": 1e-12,
+      "pass": true
+    },
+    "orders_and_amplitudes": {
+      "order_count": 80,
+      "canonical_channel_key": "(side,m,n,polarization)",
+      "canonical_channel_key_count": 80,
+      "unique_spatial_mn_count": 20,
+      "keys_and_shapes_equal": true,
+      "max_power_abs_delta": 1.569577801063815e-14,
+      "max_complex_amplitude_abs_delta": 6.27142620593212e-14,
+      "max_boundary_amplitude_abs_delta": 6.027837738548099e-14,
+      "limit": 1e-12,
+      "pass": true
+    },
+    "dimensions_and_modes": {
+      "local_endcap_rows_cols": 6866,
+      "monolithic_shape": [14052, 14052],
+      "qep_full_shape": [789, 789],
+      "qep_reduced_shape": [720, 720],
+      "positive_modes": 160,
+      "negative_modes": 160,
+      "candidate_modes": 320,
+      "block_shapes_equal": true,
+      "pass": true
+    },
+    "canonical": {
+      "status": "not_run_by_capability",
+      "canonical_pass": false,
+      "counted_as_formal_pass": false
+    }
+  },
+  "diagnostic_non_invariant": {
+    "field": "hybrid_system.matrix_stats.matrix_nnz_used",
+    "legacy": 2011205.0,
+    "new": 2011063.0,
+    "delta": 142.0,
+    "relative_delta": 0.00007060443863256108,
+    "counts_toward_formal_pass": false,
+    "preserved_in": "t5_hybrid_direct_exact_nnz_diagnostic_v1.json"
+  },
+  "resource_and_timing": {
+    "new": {
+      "process_tree_peak_rss_mib": 1765.50390625,
+      "process_tree_swap_mib": 0.0,
+      "sample_count": 377,
+      "warning_triggered": false,
+      "zero_swap_observed": true,
+      "total_wall_seconds": 94.676131
+    },
+    "legacy": {
+      "process_tree_rss_mib": "not_measured",
+      "process_tree_swap_mib": "not_measured",
+      "host_global_swap_used_mib_after": 0.0,
+      "not_process_authority": true,
+      "total_wall_seconds": 93.65579088591039
+    },
+    "timing_and_rss_are_record_only": true
+  },
+  "tracked_case080_h5_m160_sanity": {
+    "record_path": "benchmarks/cases/080_hybrid_fem_modal_direct_baseline/records/hybrid_h5_m160.json",
+    "record_sha256": "b28bbf415770938474f6005649f746c086bfa7e2aa3c8e79d71319916005bf2a",
+    "source_sha": "735774473e54415ab5393f2d2cbc9c8d7d2a24e6",
+    "label": "historical different source, not current authority",
+    "current_record_deltas": {
+      "legacy": {
+        "R_total": -5.063033325924948e-13,
+        "T_total": 1.2437273433363316e-12,
+        "A_balance": -7.374656441072602e-13,
+        "A_volume_total": 2.9151125957582735e-12,
+        "energy_closure_error": 3.652633751016765e-12
+      },
+      "new": {
+        "R_total": -4.90510410067202e-13,
+        "T_total": 1.2302936447383672e-12,
+        "A_balance": -7.397971124589731e-13,
+        "A_volume_total": 2.9125035716504044e-12,
+        "energy_closure_error": 3.65241170641184e-12
+      }
+    },
+    "order_keys_equal": true,
+    "order_count": 80,
+    "max_power_delta_legacy": 1.588951192843524e-12,
+    "max_power_delta_new": 1.575573005396791e-12,
+    "max_amplitude_delta_legacy": 1.251170640192669e-10,
+    "max_amplitude_delta_new": 1.2510471227406145e-10,
+    "not_used_for_current_formal_gate": true
+  },
+  "result_boundary": "Task38 formal entry/configuration and physical-observable contract pass; canonical export was not run. Exact NNZ is diagnostic only, and the historical Case080 record is a different-source sanity reference, not a current authority."
+}

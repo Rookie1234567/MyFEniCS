@@ -1,0 +1,257 @@
+{
+  "schema": "task038.t6.hybrid_iterative_mpi8_equivalence.v1",
+  "status": "pass_with_attempt1_contract_failure_preserved",
+  "formal_task_contract_pass": true,
+  "carrier_scope": "local_ignored_not_repository_portable",
+  "source": {
+    "verified_clean_sha": "870a3f9ff1097256ab6ef4b8f50d83a05a010473",
+    "ordinary_defaults_unchanged": true,
+    "explicit_opt_in": true,
+    "qualification_scope": "Task38 user-authorized research extension"
+  },
+  "commands": {
+    "attempt1": "python scripts/run_case.py input/official/grazing1_phi0_hybrid_iterative_m120_mpi8.dat",
+    "attempt2": "python scripts/run_case.py input/official/grazing1_phi0_hybrid_iterative_m120_mpi8.dat"
+  },
+  "profile": {
+    "dimension": 3,
+    "method": "hybrid_iterative",
+    "degree": 6,
+    "h_nm": 10.0,
+    "modal_degree": 6,
+    "modal_h_nm": 10.0,
+    "wavelength_nm": 13.5,
+    "polarization": "s",
+    "grazing_angle_deg": 1.0,
+    "azimuth_deg": 0.0,
+    "interfaces_nm": [10.0, 110.0],
+    "requested_modes": 120,
+    "candidate_modes": 240,
+    "propagation_model": "full3d_uniform_cg",
+    "traction_model": "full3d_one_cell_exact_schur",
+    "assembly_backend": "assembly_time_static_condensed",
+    "operator_identity": "exact_monolithic_hybrid_operator",
+    "solver_path": "block-ldu-action-full-solve",
+    "preconditioner_identity": "fixed_whole_endcap_ilu0_plus_dynamic_dtn_woodbury_two_pass_residual_correction",
+    "restart": 90,
+    "max_it": 4500,
+    "relative_tolerance": 5e-09,
+    "initial_guess": "zero",
+    "shift": 0.1,
+    "subdomain_count": 1,
+    "overlap": 0.0,
+    "ilu_level": 0,
+    "side_residual_correction_steps": 2,
+    "mpi_size": 8
+  },
+  "attempts": {
+    "attempt1": {
+      "classification": "implementation_contract_failure_after_numerical_pass",
+      "exit_status": 4,
+      "run_directory": "/tmp/myfenics-task38-input-driven-configuration-20260812/results/euv_grazing1_phi0/euv_grazing1_phi0_hybrid_iterative_m120_mpi8__hybrid_iterative__mpi8__M120/20260812T052424.071151Z",
+      "raw_evidence": {
+        "run_manifest": {
+          "path": "/tmp/myfenics-task38-input-driven-configuration-20260812/results/euv_grazing1_phi0/euv_grazing1_phi0_hybrid_iterative_m120_mpi8__hybrid_iterative__mpi8__M120/20260812T052424.071151Z/run_manifest.json",
+          "sha256": "e52a374debe5192a7b160164ec466891967ff544ebc60fd23b971fd96a1e3155"
+        },
+        "run_summary": {
+          "path": "/tmp/myfenics-task38-input-driven-configuration-20260812/results/euv_grazing1_phi0/euv_grazing1_phi0_hybrid_iterative_m120_mpi8__hybrid_iterative__mpi8__M120/20260812T052424.071151Z/run_summary.json",
+          "sha256": "05974aa2395bee8ff45df950733bffd5ffaa0032969d4cd3b8c5353f6d4afa34"
+        },
+        "online_record": {
+          "path": "/tmp/myfenics-task38-input-driven-configuration-20260812/results/euv_grazing1_phi0/euv_grazing1_phi0_hybrid_iterative_m120_mpi8__hybrid_iterative__mpi8__M120/20260812T052424.071151Z/numerical_output/online_record.json",
+          "sha256": "98e0730bbaec3793912021034b80dc5b80199797c9dd42382ccb32ee2d748329"
+        },
+        "worker_stdout": {
+          "path": "/tmp/myfenics-task38-input-driven-configuration-20260812/results/euv_grazing1_phi0/euv_grazing1_phi0_hybrid_iterative_m120_mpi8__hybrid_iterative__mpi8__M120/20260812T052424.071151Z/worker_stdout.txt",
+          "sha256": "8bd21d571cde56e69e81010e666ff75ce6a36baaa5f878f854e578c57fea8e58"
+        }
+      },
+      "online_numerical_physics": {
+        "online_pass": true,
+        "qualification": "numerical_pass, physics_pass, recovery_pass, lifecycle_pass, release_pass, final_release_pass, cfg_audit_pass, mode_identity_pass, source_after_pass, error_free all true",
+        "iterations": 1771,
+        "reported_residual": 3.061648110592467e-09,
+        "global_residual": 3.0616522667204605e-09,
+        "bottom_residual": 4.88004925042638e-09,
+        "top_residual": 2.428240400908679e-09,
+        "modal_residual": 2.1248997882169147e-15,
+        "traction_bottom": 4.88004925042638e-09,
+        "traction_top": 2.428240400908679e-09,
+        "R": 0.3656257867290484,
+        "T": 0.012990632358454208,
+        "A": 0.6213835809124973,
+        "A_volume": 0.6213835766253957,
+        "closure": -4.2871017846835e-09,
+        "orders": 80,
+        "canonical_pass": true,
+        "resource_process_tree_peak_mib": 6613.98828125,
+        "swap_mib": 0.0
+      },
+      "unique_error": {
+        "message": "Task38 hybrid_iterative authority error: source after does not match verified source SHA",
+        "record_source_after_head": "6125d1e704e82e45ab9c0646d1f31af09327119a",
+        "record_source_after_clean": true,
+        "record_source_after_matches_verified_clean_sha": true,
+        "adapter_contract_mismatch": "adapter read source.after.commit_sha; the existing online record schema provides source.after.head"
+      }
+    },
+    "attempt2": {
+      "classification": "formal_pass",
+      "exit_status": 0,
+      "run_directory": "/tmp/myfenics-task38-input-driven-configuration-20260812/results/euv_grazing1_phi0/euv_grazing1_phi0_hybrid_iterative_m120_mpi8__hybrid_iterative__mpi8__M120/20260812T054924.561439Z",
+      "raw_evidence": {
+        "run_manifest": {
+          "path": "/tmp/myfenics-task38-input-driven-configuration-20260812/results/euv_grazing1_phi0/euv_grazing1_phi0_hybrid_iterative_m120_mpi8__hybrid_iterative__mpi8__M120/20260812T054924.561439Z/run_manifest.json",
+          "sha256": "8fe506a9536bec78f60a6ba5c1b59a4fb37d975e7cecf1fd60c2ea4de4f7a518"
+        },
+        "run_summary": {
+          "path": "/tmp/myfenics-task38-input-driven-configuration-20260812/results/euv_grazing1_phi0/euv_grazing1_phi0_hybrid_iterative_m120_mpi8__hybrid_iterative__mpi8__M120/20260812T054924.561439Z/run_summary.json",
+          "sha256": "1412b81a64cfd1b621f161848cbe22da208c5c6c9c63d04b2260912cf6441c4f"
+        },
+        "resolved_config": {
+          "path": "/tmp/myfenics-task38-input-driven-configuration-20260812/results/euv_grazing1_phi0/euv_grazing1_phi0_hybrid_iterative_m120_mpi8__hybrid_iterative__mpi8__M120/20260812T054924.561439Z/resolved_config.json",
+          "sha256": "9dd806759288e705a2b19a5837c769664daee2cca227ee7e779ffd062b42d71e"
+        },
+        "online_record": {
+          "path": "/tmp/myfenics-task38-input-driven-configuration-20260812/results/euv_grazing1_phi0/euv_grazing1_phi0_hybrid_iterative_m120_mpi8__hybrid_iterative__mpi8__M120/20260812T054924.561439Z/numerical_output/online_record.json",
+          "sha256": "76a326392e4ae2e4578cea44fa128095d1997e9985d987e1ab33d75eccfa8869"
+        },
+        "memory_stages": {
+          "path": "/tmp/myfenics-task38-input-driven-configuration-20260812/results/euv_grazing1_phi0/euv_grazing1_phi0_hybrid_iterative_m120_mpi8__hybrid_iterative__mpi8__M120/20260812T054924.561439Z/numerical_output/memory_stages.jsonl",
+          "sha256": "818dfef10dd91072fee417f6aca431ede3afc1a560f373b054e0b95f3f815e28"
+        },
+        "worker_stdout": {
+          "path": "/tmp/myfenics-task38-input-driven-configuration-20260812/results/euv_grazing1_phi0/euv_grazing1_phi0_hybrid_iterative_m120_mpi8__hybrid_iterative__mpi8__M120/20260812T054924.561439Z/worker_stdout.txt",
+          "sha256": "0e3c3290877d5ec9d2763e674d3dc26644a3d4d69a0d919174a5027599dec425"
+        }
+      },
+      "identity": {
+        "source_before_commit_sha": "870a3f9ff1097256ab6ef4b8f50d83a05a010473",
+        "source_after_head": "870a3f9ff1097256ab6ef4b8f50d83a05a010473",
+        "source_after_clean": true,
+        "matches_verified_clean_sha": true,
+        "input_sha256": "527f4d90819e64c961c908c1a3041cf8dbba7d937a8ccf78c453909389a8c12e",
+        "physical_model_sha256": "2d9fed2466c96f0db124ceb229eb937df0e49654a3bae17772ab70d4441a061d",
+        "resolved_config_sha256": "9dd806759288e705a2b19a5837c769664daee2cca227ee7e779ffd062b42d71e"
+      },
+      "gate": {
+        "worker_result_classification": "worker_exit0",
+        "online_pass": true,
+        "iterations": 1771,
+        "reason": 2,
+        "residuals": {
+          "reported": 3.061632638614486e-09,
+          "global": 3.061639832972372e-09,
+          "bottom": 4.880059476090313e-09,
+          "top": 2.4282287434315664e-09,
+          "modal": 3.106265787799924e-15,
+          "limit": 5e-09,
+          "pass": true
+        },
+        "traction": {
+          "bottom": 4.880059476090313e-09,
+          "top": 2.4282287434315664e-09,
+          "limit": 1e-08,
+          "pass": true
+        },
+        "physical": {
+          "R": 0.3656257867289616,
+          "T": 0.012990632358457535,
+          "A": 0.6213835809125808,
+          "A_volume": 0.6213835766254876,
+          "closure": -4.287093235966211e-09,
+          "all_finite": true,
+          "own_physics_pass": true,
+          "recovery_pass": true,
+          "physics_pass": true
+        },
+        "orders": {
+          "count": 80,
+          "keys_unique": true,
+          "expected_keys_match": true,
+          "pass": true
+        },
+        "operator_and_lifecycle": {
+          "operator_identity": "exact_monolithic_hybrid_operator",
+          "modal_count": 240,
+          "modal_schur_build_logical_each_side": 480,
+          "modal_schur_build_raw_each_side": 960,
+          "side_ilu_factor_count": 1,
+          "direct_factor_count_each_side": 0,
+          "nested_ksp_created": false,
+          "canonical_pass": true,
+          "lifecycle_pass": true,
+          "final_release_pass": true
+        },
+        "timing_seconds": {
+          "total_wall": 998.13832,
+          "linear_solve": 610.381756443996,
+          "solver_total": 531.1820057618897,
+          "recovery_total": 0.8649995881132782
+        },
+        "resource": {
+          "authority": "simultaneous process-tree RSS",
+          "process_tree_peak_rss_mib": 6585.01953125,
+          "process_tree_peak_swap_mib": 0.0,
+          "sample_count": 3963,
+          "warning_triggered": false,
+          "zero_swap_observed": true,
+          "preferred_limit_mib": 6144.0,
+          "preferred_pass": false
+        }
+      }
+    }
+  },
+  "historical_comparison": {
+    "formal_same_sha_comparison": false,
+    "source_note": "Historical accepted compact records use f2d7719; they are context only, not current same-SHA comparator inputs.",
+    "historical_arrays_unavailable": true,
+    "accepted_mpi8_phi0": {
+      "record_path": "benchmarks/cases/102_hybrid_iterative_robustness/records/task037c_mpi8_three_way_qualification_v1.json",
+      "record_sha256": "eec638b833679937252982ae394012e88e679c058cccc0c4f6c091d33754fbd8",
+      "source_sha": "f2d7719b6253251a06e8cd8388fd443bbf47d443",
+      "iterations": 1771,
+      "rss_mib": 6542.08984375,
+      "total_wall_seconds": 1041.404664277099,
+      "delta_current_minus_historical": {
+        "reported_residual": -6.472076968166789e-14,
+        "global_residual": -5.797828882490337e-14,
+        "bottom_residual": 2.0871128749688814e-15,
+        "top_residual": -5.163275904215344e-14,
+        "modal_residual": 1.3150781228196796e-16,
+        "R": 1.3988810110276972e-13,
+        "T": -1.425075335514947e-14,
+        "A": -1.2567724638756772e-13,
+        "A_volume": -2.289279876777073e-13,
+        "iterations": 0,
+        "rss_mib": 42.9296875,
+        "total_wall_seconds": -43.26634427709905
+      }
+    },
+    "accepted_mpi1_phi0": {
+      "record_path": "benchmarks/cases/102_hybrid_iterative_robustness/records/task037c_mpi1_identity_and_resource_v1.json",
+      "record_sha256": "a38d3c280cb655481f63e79baf658c5353a2e86823e46fcefb54a148b2baec5f",
+      "source_sha": "f2d7719b6253251a06e8cd8388fd443bbf47d443",
+      "iterations": 1472,
+      "rss_mib": 1751.3203125,
+      "total_wall_seconds": 1903.9216409809887,
+      "delta_current_minus_historical": {
+        "reported_residual": -8.456195720362277e-10,
+        "global_residual": -8.456119811367634e-10,
+        "bottom_residual": -7.382769719331004e-11,
+        "top_residual": -7.383017514080243e-10,
+        "modal_residual": 6.541727509800157e-16,
+        "R": -7.501651411168098e-09,
+        "T": -1.2345530847612807e-10,
+        "A": 7.62510665719418e-09,
+        "A_volume": -1.8378953914321983e-09,
+        "iterations": 299,
+        "rss_mib": 4833.69921875,
+        "total_wall_seconds": -905.7833209809887
+      },
+      "historical_closure": 5.175908812660168e-09,
+      "current_closure": -4.287093235966211e-09
+    }
+  }
+}
