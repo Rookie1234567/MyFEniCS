@@ -1,12 +1,12 @@
-# Task38 public input manual (T2 pure input resolution)
+# Task38 public input manual (T7 ordinary preset migration)
 
-本目录定义 Task38 的第一版公开输入合同。当前已提供纯 Python 的 `.dat` load/validate/resolve API、手写白名单、参数说明和四个 TOML 模板；T3 的 launcher、`--validate-only`/`--dry-run` 和 PDE 执行入口仍未实现。
+本目录定义 Task38 的第一版公开输入合同。当前已提供纯 Python 的 `.dat` load/validate/resolve API、手写白名单、参数说明、四个 TOML 模板和 T3 薄 launcher。Full3D direct、Hybrid direct、Hybrid iterative 以及普通 2D 的 adapter 只在各自已审能力范围内接线；本轮 T7 迁移 preset 并不等于任何数值或 production qualification。
 
 ## 1. 使用边界
 
 每个 `.dat` 文件只描述一次运行，格式是 Python 标准库 `tomllib` 可读的 TOML。文件不能包含 `runs`、`batch`、内部 PETSc 选项、authority 路径/hash、QEP/lifecycle 参数或任意 Python 表达式。复数使用 `[real, imag]` 两元素数组，例如 `n_air = [1.0, 0.0]`。
 
-T1 只定义字段、单位、适用范围、默认来源和文档覆盖；不要把模板误解为当前可执行命令。未来 T3 的主命令为 `python scripts/run_case.py input/path/to/case.dat`，辅助命令为 `python scripts/run_case.py input/path/to/case.dat --validate-only` 与 `python scripts/run_case.py input/path/to/case.dat --dry-run`；缺少 `.dat` 时必须显示用法并退出，不能静默运行默认案例。旧 `src.main`/PRESET/普通 CLI 将在等价迁移后 deprecate；底层 benchmark/research replay 因 T0 的 provenance 原因保留，不能继续作为普通无参默认入口。
+T1 定义字段、单位、适用范围、默认来源和文档覆盖；当前主命令为 `python scripts/run_case.py input/path/to/case.dat`，辅助命令为 `python scripts/run_case.py input/path/to/case.dat --validate-only` 与 `python scripts/run_case.py input/path/to/case.dat --dry-run`。缺少 `.dat` 时必须显示用法并退出，不能静默运行默认案例。旧 `src.main`/PRESET/普通 CLI 当前仍保留，待 T7 数值 Gate 后由 T8 按范围决定删除或 alias；底层 benchmark/research replay 因 T0 的 provenance 原因保留。
 
 ## 2. 顶层身份与九个 section
 
@@ -14,7 +14,7 @@ T1 只定义字段、单位、适用范围、默认来源和文档覆盖；不�
 
 `dimension=2` 使用 `2d_scattered` 或 `2d_port`，并且一次只能选择一个 method；`dimension=3` 使用 Full3D/Hybrid method。二维入射角键是 `incidence.tilt_from_downward_y_deg`；代码约定 `kx=sin(theta), ky=-cos(theta)`。三维 Stage4 grating 使用 `grazing_angle_deg` 与 `azimuth_deg`，内部派生 `incident_theta_deg = 90 - grazing_angle_deg`；Stage1/airbox/Fresnel 使用语义明确的 `tilt_from_downward_z_deg`，二者互斥。
 
-3D 现有 stage 映射由 geometry、Floquet 和边界组合决定：airbox + `strong_dirichlet` + 无 Floquet/PML 是 `stage1_airbox`；airbox + `strong_dirichlet` + 双 Floquet 是 `floquet_airbox`；airbox + PML 是 `pml_airbox`；`fresnel_interface` 必须使用 PML；rectangular grating 映射 `stage4_block_grating`。这些是 T2 派生的内部 stage 名，不是用户输入键。
+3D 现有 stage 映射由 geometry、Floquet 和边界组合决定：airbox + `strong_dirichlet` + 无 Floquet/PML 是 `stage1_airbox`；airbox + `strong_dirichlet` + 双 Floquet 是 `floquet_airbox`；airbox + PML 是 `pml_airbox`；`fresnel_interface` 必须使用 PML；`flat_layer` 映射 `stage4_flat_layer_sanity`；rectangular grating 映射 `stage4_block_grating`。这些是内部 stage 名，不是用户输入键。
 
 `method.requested_modes_per_direction` 是 Hybrid 用户输入；candidate pool、实际动态 DtN 模数、40-mode K、Woodbury/Schur 尺寸、QEP 与生命周期都是 adapter 派生或 internal。`propagation_model`、`traction_model`、`side_residual_correction_steps` 只能取受审有限 enum/组合。`solver` 公开有限 direct profile 和已审 iterative controls；raw PETSc options、未审 PC、authority path/hash 不公开。
 
@@ -32,7 +32,7 @@ T1 只定义字段、单位、适用范围、默认来源和文档覆盖；不�
 | `execution` | MPI、资源告警/终止、超时和 swap policy |
 | `output` | 结果目录、field/order/canonical/modal/reference-plane 导出 |
 
-T3 才可用的命令示意为（当前 T2 仍不可执行）：
+当前 public launcher 命令为（正式数值 adapter 仍按 method capability 受控）：
 
 ```text
 python scripts/run_case.py input/path/to/case.dat
@@ -40,7 +40,7 @@ python scripts/run_case.py input/path/to/case.dat --validate-only
 python scripts/run_case.py input/path/to/case.dat --dry-run
 ```
 
-当前 T2 不提供该脚本，也不接受把上述命令当作已完成的 PDE 入口。
+`--validate-only` 和 `--dry-run` 只做输入解析/计划输出，不启动 PDE；未接线的 method 会 fail closed，不会静默回退到旧 preset 或普通默认。
 
 以下量由 T2/T3 adapter 从公开输入派生，不能写成普通输入键：
 
@@ -72,7 +72,7 @@ python scripts/run_case.py input/path/to/case.dat --dry-run
 | `run_id` | `string` | `none` | yes | `—` | — | all | 单次运行标识 | `run_id` | safe filename characters [A-Za-z0-9_.-]+; must not overwrite an existing result | `"example_run_001"` |
 | `comparison_group` | `string` | `none` | yes | `—` | — | all | 可比较运行的分组标识 | `comparison_group` | safe filename characters [A-Za-z0-9_.-]+ | `"task038_examples"` |
 | `dimension` | `integer` | `none` | yes | `—` | 2, 3 | all | 问题维数 | `dimension` | — | `3` |
-| `geometry.geometry_kind` | `string` | `none` | yes | `—` | euv_grating_2d, layered_2d, airbox, fresnel_interface, rectangular_block_grating | 2d/3d | 形状模型名称 | `geometry_kind` | 2D uses euv_grating_2d/layered_2d; 3D uses airbox/fresnel_interface/rectangular_block_grating | `"rectangular_block_grating"` |
+| `geometry.geometry_kind` | `string` | `none` | yes | `—` | euv_grating_2d, layered_2d, airbox, fresnel_interface, flat_layer, rectangular_block_grating | 2d/3d | 形状模型名称 | `geometry_kind` | 2D uses euv_grating_2d/layered_2d; 3D uses airbox/fresnel_interface/flat_layer/rectangular_block_grating | `"rectangular_block_grating"` |
 | `geometry.period_x_nm` | `float` | `nm` | yes | `—` | — | 2d/3d | x 方向周期 | `period_x` | > 0 | `50.0` |
 | `geometry.period_y_nm` | `float` | `nm` | yes | `—` | — | 3d | y 方向周期 | `period_y` | > 0 | `25.0` |
 | `geometry.z_min_nm` | `float` | `nm` | yes | `—` | — | 3d | 三维计算域下界 | `z_min` | < z_max_nm | `-10.0` |
@@ -86,9 +86,9 @@ python scripts/run_case.py input/path/to/case.dat --dry-run
 | `materials.n_air` | `complex_pair` | `relative index` | yes | `—` | — | 2d/3d | 空气复折射率 [实部, 虚部] | `n_air` | — | `[1.0, 0.0]` |
 | `materials.mu_r` | `complex_pair` | `relative permeability` | no | `[1.0, 0.0]` | — | 2d/3d | 相对磁导率 [实部, 虚部] | `mu_r` | — | `[1.0, 0.0]` |
 | `materials.substrate_name` | `string` | `none` | no | `—` | — | 2d/3d | 基底材料名称 | `substrate_material_label` | optional descriptive label | `"Si / silicon"` |
-| `materials.n_substrate` | `complex_pair` | `relative index` | yes | `—` | — | 2d/3d | 基底复折射率 | `n_substrate` | — | `[0.999002304859, 0.00182649365]` |
+| `materials.n_substrate` | `complex_pair` | `relative index` | no | `—` | — | 2d/3d | 基底复折射率 | `n_substrate` | required for 2D, Fresnel, flat-layer and block-grating; optional for airbox | `[0.999002304859, 0.00182649365]` |
 | `materials.grating_name` | `string` | `none` | no | `—` | — | 2d/3d | grating 材料名称 | `grating_material_label` | optional descriptive label | `"Si / silicon"` |
-| `materials.n_grating` | `complex_pair` | `relative index` | yes | `—` | — | 2d/3d | grating 复折射率 [实部, 虚部] | `n_grating` | — | `[0.999002304859, 0.00182649365]` |
+| `materials.n_grating` | `complex_pair` | `relative index` | no | `—` | — | 2d/3d | grating 复折射率 [实部, 虚部] | `n_grating` | required for 2D and rectangular block-grating; optional for airbox, Fresnel and flat-layer | `[0.999002304859, 0.00182649365]` |
 | `incidence.wavelength_nm` | `float` | `nm` | yes | `—` | — | 2d/3d | 真空波长 | `lambda0` | > 0 | `13.5` |
 | `incidence.grazing_angle_deg` | `float` | `degree` | no | `—` | — | 3d | 相对表面的掠射角 | `incident_theta_deg = 90 - grazing_angle_deg` | required for Stage4 grating; 0 < value <= 90; mutually exclusive with tilt_from_downward_z_deg | `1.0` |
 | `incidence.tilt_from_downward_z_deg` | `float` | `degree` | no | `—` | — | 3d | Stage1/airbox/Fresnel 使用的、相对向下 z 轴的倾角 | `incident_theta_deg` | finite; use for Stage1/Stage2 airbox/Fresnel, mutually exclusive with grazing_angle_deg | `10.0` |
@@ -116,7 +116,7 @@ python scripts/run_case.py input/path/to/case.dat --dry-run
 | `boundary.use_floquet_y` | `boolean` | `none` | no | `false` | — | 3d | 是否施加 y 周期约束 | `use_floquet_xy` | 3D y component; x/y values must agree | `true` |
 | `boundary.vertical_boundary` | `enum` | `none` | yes | `—` | dtn_port, pml, robin0, strong_dirichlet, dtn, robin | 2d/3d | 上下边界模型 | `stage4_boundary_model / port_boundary_model` | 3D uses dtn_port/pml/robin0; airbox strong_dirichlet maps to Stage1/Floquet airbox, Fresnel requires pml; 2d_port uses dtn/robin; 2d_scattered uses pml | `"dtn_port"` |
 | `boundary.scattering_background` | `enum` | `none` | no | `—` | air, layered | 2d/3d | 散射背景的介质层模型 | `scattering_background` | required for 2d_scattered and Stage4 3D; Stage4 currently requires layered; may be omitted for port-only methods | `"layered"` |
-| `boundary.dtn_order_policy` | `enum` | `none` | no | `—` | zero_order, auto_propagating | 2d/3d | DtN 阶次选择策略 | `stage4_dtn_order_policy` | required only when vertical_boundary is dtn or dtn_port; 2D port maps to port_use_diffraction_orders; legacy manual is internal/not public v1 | `"auto_propagating"` |
+| `boundary.dtn_order_policy` | `enum` | `none` | no | `—` | zero_order, auto_propagating | 2d/3d | DtN 阶次选择策略 | `stage4_dtn_order_policy` | required only when vertical_boundary is dtn or dtn_port; 2D port maps to port_use_diffraction_orders; explicit 2D port accepts zero_order or auto_propagating; 2D TE + dtn currently accepts only zero_order; legacy manual is internal/not public v1 | `"auto_propagating"` |
 | `boundary.dtn_assembly` | `enum` | `none` | no | `—` | auxiliary, explicit | 2d/3d | DtN 装配方式 | `stage4_dtn_assembly / port_dtn_assembly` | required only when vertical_boundary is dtn or dtn_port | `"auxiliary"` |
 | `boundary.use_pml` | `boolean` | `none` | no | `false` | — | 2d/3d | 是否使用 PML | `2D scattered use_pml / 2D port port_use_pml / 3D use_pml` | compatible with vertical_boundary | `false` |
 | `boundary.pml_top_thickness_nm` | `float` | `nm` | no | `—` | — | 2d/3d | 顶部 PML 厚度 | `pml_top_thickness` | >= 0; required when use_pml | `25.0` |
@@ -165,8 +165,8 @@ python scripts/run_case.py input/path/to/case.dat --dry-run
 | `output.probe_fraction` | `float` | `fraction` | no | `0.75` | — | 3d | 探针在相邻区域中的归一化位置 | `diffraction_probe_fraction` | 0 < value < 1; optional when explicit probes are set | `0.75` |
 | `output.sample_count_x` | `integer` | `samples` | no | `40` | — | 3d | reference plane x 采样数 | `full3d_reference_sample_count_x` | > 0; required when export_reference_planes | `40` |
 | `output.sample_count_y` | `integer` | `samples` | no | `20` | — | 3d | reference plane y 采样数 | `full3d_reference_sample_count_y` | > 0; required when export_reference_planes | `20` |
-| `output.diffraction_order_max_m` | `integer` | `order` | no | `—` | — | 2d/3d | 最大 x 衍射级（后处理报告） | `2D diffraction_order_count / 3D diffraction_order_max_m` | >= 0; required when export_diffraction_orders; never selects PDE DtN modes | `2` |
-| `output.diffraction_order_max_n` | `integer` | `order` | no | `—` | — | 3d | 最大 y 衍射级 | `diffraction_order_max_n` | >= 0; required when export_diffraction_orders | `2` |
+| `output.diffraction_order_max_m` | `integer` | `order` | no | `—` | — | 2d/3d | 最大 x 衍射级（后处理报告） | `2D diffraction_order_count / 3D reporting_diffraction_order_max_m` | >= 0; required when export_diffraction_orders; never selects PDE DtN modes | `2` |
+| `output.diffraction_order_max_n` | `integer` | `order` | no | `—` | — | 3d | 最大 y 衍射级（后处理报告） | `3D reporting_diffraction_order_max_n` | >= 0; required when export_diffraction_orders | `2` |
 
 ## Machine-readable schema markers
 
@@ -285,7 +285,7 @@ The following marker block is intentionally outside the table so GitHub keeps al
 | complex value | `[real, imag]`，例如 `[1.0, 0.0]` | 写 `1+0j`、字符串表达式或三元数组 |
 | memory policy | 每个 dat 显式给 warning/terminate/timeout/zero-swap | 把历史 authority hard gate 当成所有用户的 global default |
 
-缺少 `.dat`、缺少顶层身份、section 重复、未知键、`grazing` 与 `tilt_from_downward_z` 同时出现、或把 2D/3D 专属字段混用，均由 T2 pure loader/validator 报错；T3 才把这些 API 接到命令行。
+缺少 `.dat`、缺少顶层身份、section 重复、未知键、`grazing` 与 `tilt_from_downward_z` 同时出现、或把 2D/3D 专属字段混用，均由 T2 pure loader/validator 报错；T3 public launcher 会把这些输入错误以简洁非零状态返回。
 
 ## 5. 模板、preset 与 legacy 边界
 
@@ -293,8 +293,8 @@ The following marker block is intentionally outside the table so GitHub keeps al
 
 | 模板 | 覆盖 | 状态 |
 | --- | --- | --- |
-| [ordinary_2d_example.dat](templates/ordinary_2d_example.dat) | 2D scattered + PML | public schema example，尚未接 launcher |
-| [full3d_direct_example.dat](templates/full3d_direct_example.dat) | Full3D direct | public schema example，完整 direct solve 属于后续入口 |
+| [ordinary_2d_example.dat](templates/ordinary_2d_example.dat) | 2D scattered + PML | 已连接ordinary 2D adapter，数值资格以正式 Gate 为准 |
+| [full3d_direct_example.dat](templates/full3d_direct_example.dat) | Full3D direct | 完整 public schema 示例；完整 direct solve 由 capability 决定 |
 | [hybrid_direct_example.dat](templates/hybrid_direct_example.dat) | Hybrid direct | accepted finite method template |
 | [hybrid_iterative_example.dat](templates/hybrid_iterative_example.dat) | Hybrid iterative、exact one-cell traction、two-pass | accepted research-extension template；不改变 ordinary default |
 
@@ -302,23 +302,25 @@ T0 审计的 preset 逐项处置如下；`migrate_to_dat` 表示迁移为显式�
 
 | preset | 处置 |
 | --- | --- |
-| `2d_complex_absorption` | `migrate_to_dat`；complex-material public case，保留 evidence/status 边界 |
-| `2d_fem_reference` | `migrate_to_dat`；普通 2D reference |
-| `2d_port_total` | `migrate_to_dat`；对应 `2d_port` |
-| `2d_scattered_pml` | `migrate_to_dat`；experimental smoke |
-| `3d_stage1_airbox` | `migrate_to_dat`；使用 tilt-from-downward-z |
-| `3d_stage2a_airbox` | `migrate_to_dat`；experimental/non-accuracy-qualified smoke |
-| `3d_stage2b_pml_smoke` | `migrate_to_dat`；experimental/non-accuracy-qualified smoke |
-| `3d_stage2c_fresnel_smoke` | `migrate_to_dat`；experimental/non-accuracy-qualified smoke |
-| `3d_stage4_normal` | `migrate_to_dat`；official Full3D template candidate |
-| `3d_stage4_oblique` | `migrate_to_dat`；grazing + azimuth |
-| `3d_stage4_target` | `keep_as_internal_factory`；物理值迁入 official dat，factory 不公开 |
-| `3d_mumps_default` | `migrate_to_dat`；有限 direct profile |
-| `3d_mumps_ooc_demo` | `research_only_not_public` |
-| `3d_mumps_blr_demo` | `research_only_not_public` |
-| `task037b_frozen_m10` | `migrate_to_dat`；official M10 input template，旧 flag/authority replay 保留 |
-| `task037c_exact_iterative` | `migrate_to_dat`；accepted research-extension template |
-| `task037c_exact_direct` | `migrate_to_dat`；accepted direct template |
+| `2d_tm_pml_floquet_smoke` | `migrate_to_dat` → [input/smoke/2d_tm_pml_floquet_smoke.dat](smoke/2d_tm_pml_floquet_smoke.dat)；experimental smoke |
+| `2d_tm_dtn_auxiliary_smoke` | `migrate_to_dat` → [input/smoke/2d_tm_dtn_auxiliary_smoke.dat](smoke/2d_tm_dtn_auxiliary_smoke.dat)；auxiliary DtN smoke |
+| `2d_tm_dtn_explicit_smoke` | `migrate_to_dat` → [input/smoke/2d_tm_dtn_explicit_smoke.dat](smoke/2d_tm_dtn_explicit_smoke.dat)；explicit + auto-propagating legacy semantics |
+| `2d_te_port_smoke` | `migrate_to_dat` → [input/smoke/2d_te_port_smoke.dat](smoke/2d_te_port_smoke.dat)；Robin port smoke |
+| `2d_complex_absorption` | `migrate_to_dat` → [input/smoke/2d_complex_absorption.dat](smoke/2d_complex_absorption.dat)；complex-material public case，保留 evidence/status 边界 |
+| `2d_euv_grating_direct` | `migrate_to_dat` → [input/examples/2d_euv_grating_direct.dat](examples/2d_euv_grating_direct.dat)；ordinary tutorial/example |
+| `3d_stage1_airbox_smoke` | `migrate_to_dat` → [input/smoke/3d_stage1_airbox_smoke.dat](smoke/3d_stage1_airbox_smoke.dat)；experimental airbox smoke |
+| `3d_stage2a_floquet_smoke` | `migrate_to_dat` → [input/smoke/3d_stage2a_floquet_smoke.dat](smoke/3d_stage2a_floquet_smoke.dat)；experimental Floquet smoke |
+| `3d_stage2b_pml_smoke` | `migrate_to_dat` → [input/smoke/3d_stage2b_pml_smoke.dat](smoke/3d_stage2b_pml_smoke.dat)；experimental PML smoke |
+| `3d_stage2c_fresnel_smoke` | `migrate_to_dat` → [input/smoke/3d_stage2c_fresnel_smoke.dat](smoke/3d_stage2c_fresnel_smoke.dat)；experimental Fresnel smoke |
+| `3d_stage4a_flat_layer_direct` | `migrate_to_dat` → [input/smoke/3d_stage4a_flat_layer_direct.dat](smoke/3d_stage4a_flat_layer_direct.dat)；flat-layer direct smoke |
+| `3d_stage4b_demo_direct_h5` | `keep_as_internal_factory`；legacy direct demo保留，未迁移 |
+| `3d_stage4b_demo_direct_h3` | `keep_as_internal_factory`；legacy direct demo保留，未迁移 |
+| `3d_stage4b_demo_mumps_ooc` | `research_only_not_public`；MUMPS OOC demo保留，未迁移 |
+| `3d_stage4b_demo_mumps_blr` | `research_only_not_public`；MUMPS BLR demo保留，未迁移 |
+| `3d_target_grating_direct_h5` | `keep_as_internal_factory`；target factory保留，物理值由已审 dat 显式承载 |
+| `3d_target_grating_direct_h3` | `keep_as_internal_factory`；target factory保留，物理值由已审 dat 显式承载 |
+
+另外，Task37c accepted MPI1 replay 示例为 [grazing1_phi0_hybrid_iterative_m120_mpi1.dat](official/grazing1_phi0_hybrid_iterative_m120_mpi1.dat)；它不是 ordinary preset，不计入上述 11 项迁移。
 
 Task37b/c 的 `--frozen-m10`、authority path/hash、candidate pool、dynamic DtN count、QEP/lifecycle 与 raw PETSc options 是 legacy/internal/replay 资料，不是公开键。M10 的独立 geometry/material/incidence/discretization/method/solver/execution/output 值可迁入 official dat；这些值不是全局默认。`azimuth_deg`、`requested_modes_per_direction`、接口、传播和 traction 是独立 public inputs，但未审的函数、PC、自动扫描和批量 campaign 仍不是 public schema。
 
@@ -326,7 +328,7 @@ Task37b/c 的 `--frozen-m10`、authority path/hash、candidate pool、dynamic Dt
 
 `output.export_fields`、`export_diffraction_orders`、`export_canonical_vectors`、`export_modal_amplitudes`、`export_reference_planes` 以及 reference-plane/采样字段是公开输出选择。authority record path/hash、checker comparison path、raw timeline、PETSc log 与大数组属于 internal provenance；未来 T4/T5 会把它们写入记录，但不会把它们变成用户输入。一个 dat 不表达 batch 或 sweep。
 
-T2 已提供 schema 解析、严格字段与 cross-field 校验、角度派生和 default/conditional resolution；T3 才实现 run_case 的用法显示、`.dat` 必填和 launcher 接线。本阶段不声称任何 PDE、MPI、solver 或 production qualification 已完成。
+T2 已提供 schema 解析、严格字段与 cross-field 校验、角度派生和 default/conditional resolution；T3 已提供 `.dat` 必填、validate-only/dry-run 与 launcher 合同；T4–T6 已按各自受控能力接线。T7 的 preset 迁移只证明 legacy parser 与 dat runtime mapping 的静态等价边界，不声称任何 ordinary preset 已通过 PDE 数值资格化。
 
 ## 7. 维护规则
 

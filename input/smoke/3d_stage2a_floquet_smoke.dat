@@ -1,0 +1,58 @@
+schema_version = 1
+model_id = "3d_stage2a_floquet_smoke"
+run_id = "3d_stage2a_floquet_smoke"
+comparison_group = "3d_stage2a_floquet_smoke"
+dimension = 3
+
+[geometry]
+geometry_kind = "airbox"
+period_x_nm = 600.0
+period_y_nm = 500.0
+z_min_nm = -550.0
+z_max_nm = 350.0
+interface_z_nm = 0.0
+air_height_nm = 350.0
+substrate_thickness_nm = 550.0
+
+[materials]
+n_air = [1.0, 0.0]
+mu_r = [1.0, 0.0]
+
+[incidence]
+wavelength_nm = 633.0
+tilt_from_downward_z_deg = 0.0
+azimuth_deg = 0.0
+polarization = "custom"
+custom_polarization = [[1.0, 0.0], [0.0, 0.0], [0.0, 0.0]]
+electric_amplitude = 1.0
+
+[discretization]
+nedelec_degree = 1
+visualization_degree = 1
+mesh_target_nm = 300.0
+mesh_cell_type = "auto"
+
+[boundary]
+use_floquet_x = true
+use_floquet_y = true
+vertical_boundary = "strong_dirichlet"
+use_pml = false
+
+[method]
+kind = "full3d_direct"
+
+[solver]
+direct_solver_profile = "default"
+linear_solver = "direct"
+
+[execution]
+mpi_size = 1
+warning_memory_gib = 4.0
+terminate_memory_gib = 6.0
+timeout_seconds = 600
+require_zero_swap = true
+
+[output]
+results_root = "results"
+unique_output = true
+export_diffraction_orders = false
