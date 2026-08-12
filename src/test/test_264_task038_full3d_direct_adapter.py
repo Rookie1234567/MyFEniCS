@@ -71,7 +71,11 @@ def test_small_smoke_matches_old_target_stage4_factory():
     dat_json = dat_cfg.as_jsonable()
     for snapshot in (old_json, dat_json):
         snapshot.pop("case_name")
+        snapshot.pop("reporting_diffraction_order_max_m")
+        snapshot.pop("reporting_diffraction_order_max_n")
     assert dat_json == old_json
+    assert dat_cfg.reporting_diffraction_order_max_m == 2
+    assert dat_cfg.reporting_diffraction_order_max_n == 2
     assert dat_cfg.diffraction_order_max_m is None
     assert dat_cfg.diffraction_order_max_n is None
 
@@ -153,11 +157,6 @@ def test_adapter_rejects_non_authoritative_solver_summary(tmp_path, updates):
         ("dimension", 2, "dimension=3"),
         ("method", {"kind": "hybrid_direct"}, "method.kind=full3d_direct"),
         ("solver", {"linear_solver": "fgmres"}, "linear_solver=direct"),
-        (
-            "geometry",
-            {"geometry_kind": "airbox"},
-            "rectangular block grating",
-        ),
     ),
 )
 def test_adapter_rejects_wrong_method_identity(field, value, message, tmp_path):
@@ -169,15 +168,17 @@ def test_adapter_rejects_wrong_method_identity(field, value, message, tmp_path):
 
 def test_full3d_and_hybrid_direct_are_connected_and_other_methods_fail_closed():
     assert CONNECTED_METHODS == {
+        "2d_scattered",
+        "2d_port",
         "full3d_direct",
         "hybrid_direct",
         "hybrid_iterative",
     }
+    assert method_adapter_available("2d_scattered") is True
+    assert method_adapter_available("2d_port") is True
     assert method_adapter_available("full3d_direct") is True
     assert method_adapter_available("hybrid_direct") is True
     assert method_adapter_available("hybrid_iterative") is True
-    for method in ("2d_scattered", "2d_port"):
-        assert method_adapter_available(method) is False
 
 
 def test_2d_still_rejects_the_3d_auto_cell_type(tmp_path):
@@ -224,7 +225,7 @@ def test_worker_dispatch_uses_the_same_resolved_payload(monkeypatch, tmp_path):
 
 def test_worker_dispatch_keeps_unconnected_methods_closed(tmp_path):
     status, errors = _dispatch_resolved_payload(
-        _payload(), expected_method="2d_scattered", output_directory=tmp_path
+        _payload(), expected_method="not_a_public_method", output_directory=tmp_path
     )
     assert status == 3
     assert "unavailable" in errors[0]

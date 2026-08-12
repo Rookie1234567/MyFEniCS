@@ -55,7 +55,30 @@ def _json_default(value):
     raise TypeError(f"Cannot JSON serialize {type(value)!r}")
 
 
-def _orders_for_modal_fit(cfg: SimulationConfig3D, power_orders: list[DiffractionOrder3D]) -> tuple[list[DiffractionOrder3D], bool]:
+def _reporting_bounds(cfg: SimulationConfig3D) -> tuple[int | None, int | None]:
+    values = (
+        cfg.reporting_diffraction_order_max_m,
+        cfg.reporting_diffraction_order_max_n,
+    )
+    if (values[0] is None) != (values[1] is None):
+        raise ValueError(
+            "reporting diffraction order bounds must be provided as a pair"
+        )
+    return values
+
+
+def _power_orders_for_reporting(cfg: SimulationConfig3D) -> list[DiffractionOrder3D]:
+    reporting_m, reporting_n = _reporting_bounds(cfg)
+    if reporting_m is None:
+        return enumerate_diffraction_orders_3d(cfg)
+    return enumerate_diffraction_orders_3d(
+        cfg, max_m_override=int(reporting_m), max_n_override=int(reporting_n)
+    )
+
+
+def _orders_for_modal_fit(
+    cfg: SimulationConfig3D, power_orders: list[DiffractionOrder3D]
+) -> tuple[list[DiffractionOrder3D], bool]:
     """Return modal-fit orders, optionally adding evanescent neighbors.
 
     The default Stage-4 benchmark has only the zero order propagating, but the
@@ -67,9 +90,18 @@ def _orders_for_modal_fit(cfg: SimulationConfig3D, power_orders: list[Diffractio
 
     if not (cfg.diffraction_zero_order_only and cfg.has_grating_block):
         return power_orders, False
-    max_m = 1 if cfg.diffraction_order_max_m is None else max(1, int(cfg.diffraction_order_max_m))
-    max_n = 1 if cfg.diffraction_order_max_n is None else max(1, int(cfg.diffraction_order_max_n))
-    return enumerate_diffraction_orders_3d(cfg, max_m_override=max_m, max_n_override=max_n), True
+    reporting_m, reporting_n = _reporting_bounds(cfg)
+    requested_m = (
+        reporting_m if reporting_m is not None else cfg.diffraction_order_max_m
+    )
+    requested_n = (
+        reporting_n if reporting_n is not None else cfg.diffraction_order_max_n
+    )
+    max_m = 1 if requested_m is None else max(1, int(requested_m))
+    max_n = 1 if requested_n is None else max(1, int(requested_n))
+    return enumerate_diffraction_orders_3d(
+        cfg, max_m_override=max_m, max_n_override=max_n
+    ), True
 
 
 def _mode_power(
@@ -628,7 +660,8 @@ def compute_diffraction_orders_3d(
 
     out_dir.mkdir(parents=True, exist_ok=True)
     comm = mesh_data.mesh.comm
-    power_orders = enumerate_diffraction_orders_3d(cfg)
+    reporting_m, reporting_n = _reporting_bounds(cfg)
+    power_orders = _power_orders_for_reporting(cfg)
     orders, fit_includes_evanescent_neighbors = _orders_for_modal_fit(cfg, power_orders)
     min_sample_count_x, min_sample_count_y = _validate_sample_counts(cfg, orders)
     top_z, bottom_z = _probe_z_locations(cfg)
@@ -837,8 +870,12 @@ def compute_diffraction_orders_3d(
         "diffraction_fit_order_count": len(orders),
         "diffraction_channel_count": len(rows),
         "diffraction_zero_order_only": bool(cfg.diffraction_zero_order_only),
-        "diffraction_order_max_m_requested": cfg.diffraction_order_max_m,
-        "diffraction_order_max_n_requested": cfg.diffraction_order_max_n,
+        "diffraction_order_max_m_requested": reporting_m
+        if reporting_m is not None
+        else cfg.diffraction_order_max_m,
+        "diffraction_order_max_n_requested": reporting_n
+        if reporting_n is not None
+        else cfg.diffraction_order_max_n,
         "diffraction_order_max_m_resolved": int(max((abs(order.m) for order in power_orders), default=0)),
         "diffraction_order_max_n_resolved": int(max((abs(order.n) for order in power_orders), default=0)),
         "diffraction_fit_includes_evanescent_neighbors": bool(fit_includes_evanescent_neighbors),
@@ -913,8 +950,12 @@ def compute_diffraction_orders_3d(
                 "bottom_modal_diagnostic": bottom_residual,
             },
             "diffraction_zero_order_only": bool(cfg.diffraction_zero_order_only),
-            "diffraction_order_max_m_requested": cfg.diffraction_order_max_m,
-            "diffraction_order_max_n_requested": cfg.diffraction_order_max_n,
+            "diffraction_order_max_m_requested": reporting_m
+            if reporting_m is not None
+            else cfg.diffraction_order_max_m,
+            "diffraction_order_max_n_requested": reporting_n
+            if reporting_n is not None
+            else cfg.diffraction_order_max_n,
             "per_order": rows,
             "diagnostic_e_fourier": {
                 "note": E_FOURIER_DIAGNOSTIC_NOTE,

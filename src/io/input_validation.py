@@ -433,6 +433,14 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         "execution.mpi_size",
                         "2D Fourier DtN port is qualified only for MPI1",
                     )
+                if (
+                    incidence["polarization"] == "te"
+                    and boundary.get("dtn_order_policy") != "zero_order"
+                ):
+                    raise _error(
+                        "boundary.dtn_order_policy",
+                        "TE Fourier DtN currently supports only zero_order",
+                    )
             elif method["constraint_backend"] not in {"manual", "mpc_official"}:
                 raise _error(
                     "method.constraint_backend",
@@ -454,6 +462,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
         if geometry_kind not in {
             "airbox",
             "fresnel_interface",
+            "flat_layer",
             "rectangular_block_grating",
         }:
             raise _error("geometry.geometry_kind", "invalid 3D geometry kind")
@@ -618,6 +627,22 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     "boundary.scattering_background",
                     "Stage4 rectangular grating currently requires layered",
                 )
+        elif geometry_kind == "flat_layer":
+            if kind != "full3d_direct":
+                raise _error(
+                    "method.kind",
+                    "flat_layer is currently connected only for full3d_direct",
+                )
+            if boundary.get("scattering_background") != "layered":
+                raise _error(
+                    "boundary.scattering_background",
+                    "Stage4 flat layer currently requires layered",
+                )
+            if boundary["vertical_boundary"] != "dtn_port":
+                raise _error(
+                    "boundary.vertical_boundary",
+                    "Stage4 flat layer requires dtn_port",
+                )
 
         if geometry_kind == "fresnel_interface":
             if boundary["vertical_boundary"] != "pml":
@@ -779,6 +804,14 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
             _require(geometry, key, f"geometry.{key}")
         if dimension == 3:
             _require(geometry, "grating_width_y_nm", "geometry.grating_width_y_nm")
+    if dimension == 2 or geometry_kind in {
+        "fresnel_interface",
+        "flat_layer",
+        "rectangular_block_grating",
+    }:
+        _require(materials, "n_substrate", "materials.n_substrate")
+    if dimension == 2 or geometry_kind in {"rectangular_block_grating"}:
+        _require(materials, "n_grating", "materials.n_grating")
     for key in ("grating_width_x_nm", "grating_height_nm"):
         if key in geometry:
             if geometry[key] < 0.0:
@@ -889,10 +922,13 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
             "boundary.dtn_assembly", "3D public DtN assembly must be auxiliary"
         )
     if dimension == 2 and boundary.get("dtn_assembly") == "explicit":
-        if kind != "2d_port" or boundary.get("dtn_order_policy") != "zero_order":
+        if kind != "2d_port" or boundary.get("dtn_order_policy") not in {
+            "zero_order",
+            "auto_propagating",
+        }:
             raise _error(
                 "boundary.dtn_assembly",
-                "2D explicit DtN is public only for zero_order 2d_port",
+                "2D explicit DtN is public only for zero_order or auto_propagating 2d_port",
             )
     if vertical == "pml":
         if boundary.get("use_pml") is not True:
@@ -1018,7 +1054,7 @@ def _jsonable(value: Any) -> Any:
     raise TypeError(f"cannot convert {type(value).__name__} to JSON")
 
 
-def _build_2d_config(config: Mapping[str, Any]) -> dict[str, Any]:
+def simulation_config_2d_from_normalized(config: Mapping[str, Any]):
     from src.common.config import SimulationConfig
 
     g = config["geometry"]
@@ -1047,8 +1083,10 @@ def _build_2d_config(config: Mapping[str, Any]) -> dict[str, Any]:
         lambda0=i["wavelength_nm"],
         incident_angle_deg=i["tilt_from_downward_y_deg"],
         n_air=_complex(m["n_air"]),
-        n_substrate=_complex(m["n_substrate"]),
-        n_grating=_complex(m["n_grating"]),
+        n_substrate=(
+            None if m.get("n_substrate") is None else _complex(m["n_substrate"])
+        ),
+        n_grating=(None if m.get("n_grating") is None else _complex(m["n_grating"])),
         use_pml=pml,
         port_use_pml=pml if is_port else False,
         port_incident_amplitude=complex(i["electric_amplitude"], 0.0),
@@ -1071,6 +1109,11 @@ def _build_2d_config(config: Mapping[str, Any]) -> dict[str, Any]:
         near_field_sub_depth=d["near_field_sub_depth_nm"],
         pml_alpha=b.get("pml_alpha", 5.0),
     )
+    return cfg
+
+
+def _build_2d_config(config: Mapping[str, Any]) -> dict[str, Any]:
+    cfg = simulation_config_2d_from_normalized(config)
     return {
         "internal": {"incident_theta_deg": cfg.incident_angle_deg},
         "k0": cfg.k0,
@@ -1117,6 +1160,8 @@ def simulation_config_3d_from_normalized(
     )
     if g["geometry_kind"] == "rectangular_block_grating":
         stage_case = "stage4_block_grating"
+    elif g["geometry_kind"] == "flat_layer":
+        stage_case = "stage4_flat_layer_sanity"
     elif g["geometry_kind"] == "fresnel_interface":
         stage_case = "fresnel_interface"
     elif b.get("use_floquet_x") and not b.get("use_pml"):
@@ -1125,10 +1170,20 @@ def simulation_config_3d_from_normalized(
         stage_case = "pml_airbox"
     else:
         stage_case = "stage1_airbox"
+    runtime_geometry_kind = (
+        "rectangular_block_grating"
+        if g["geometry_kind"] == "flat_layer"
+        else g["geometry_kind"]
+    )
+    reporting_requested = (
+        out.get("export_diffraction_orders", False)
+        and out.get("diffraction_order_max_m") is not None
+        and out.get("diffraction_order_max_n") is not None
+    )
     return SimulationConfig3D(
         case_name=config["model_id"],
         stage_case=stage_case,
-        geometry_kind=g["geometry_kind"],
+        geometry_kind=runtime_geometry_kind,
         lambda0=i["wavelength_nm"],
         n_air=_complex(m["n_air"]),
         mu_r=_complex(m["mu_r"]),
@@ -1141,8 +1196,10 @@ def simulation_config_3d_from_normalized(
         grating_height=g.get("grating_height_nm", 0.0),
         grating_width_x=g.get("grating_width_x_nm", 0.0),
         grating_width_y=g.get("grating_width_y_nm", 0.0),
-        n_substrate=_complex(m["n_substrate"]),
-        n_grating=_complex(m["n_grating"]),
+        n_substrate=(
+            None if m.get("n_substrate") is None else _complex(m["n_substrate"])
+        ),
+        n_grating=(None if m.get("n_grating") is None else _complex(m["n_grating"])),
         substrate_material_label=m.get("substrate_name"),
         grating_material_label=m.get("grating_name"),
         interface_z=g["interface_z_nm"],
@@ -1173,13 +1230,13 @@ def simulation_config_3d_from_normalized(
         mesh_refined_size=d.get("mesh_refined_size_nm"),
         mesh_refinement_radius=d.get("mesh_refinement_radius_nm"),
         floquet_constraint_mode=d.get("floquet_constraint_mode", "auto"),
-        diffraction_zero_order_only=b.get("dtn_order_policy") == "zero_order",
-        # These public reporting requests remain in the resolved output
-        # payload.  The current solver's auto DtN mode selection reads the
-        # config fields below, so T4 deliberately keeps the legacy identity
-        # until a reporting-only application is qualified before T7.
+        diffraction_zero_order_only=not reporting_requested,
+        # These public requests are reporting bounds only.  DtN mode selection
+        # uses stage4_dtn_order_policy independently below.
         diffraction_order_max_m=None,
         diffraction_order_max_n=None,
+        reporting_diffraction_order_max_m=out.get("diffraction_order_max_m"),
+        reporting_diffraction_order_max_n=out.get("diffraction_order_max_n"),
         diffraction_sample_count_x=out["diffraction_sample_count_x"],
         diffraction_sample_count_y=out["diffraction_sample_count_y"],
         diffraction_top_probe_z=out.get("top_probe_z_nm"),
@@ -1334,4 +1391,6 @@ __all__ = [
     "InputError",
     "load_and_resolve",
     "resolve_loaded_input",
+    "simulation_config_2d_from_normalized",
+    "simulation_config_3d_from_normalized",
 ]

@@ -181,7 +181,12 @@ def _dispatch_resolved_payload(
 ) -> tuple[int, list[str]]:
     """Dispatch the already validated payload without rereading its input."""
 
-    if expected_method == "full3d_direct":
+    if expected_method in {"2d_scattered", "2d_port"}:
+        from src.runners.task038_2d import run_2d
+
+        adapter = run_2d
+        label = "2D"
+    elif expected_method == "full3d_direct":
         from src.runners.task038_full3d_direct import run_full3d_direct
 
         adapter = run_full3d_direct

@@ -93,6 +93,8 @@ def test_plan_and_dry_run_cover_all_current_methods_with_connection_status(tmp_p
             "identity"
         ] == method_adapter_identity(method)
         expected_available = method in {
+            "2d_scattered",
+            "2d_port",
             "full3d_direct",
             "hybrid_direct",
             "hybrid_iterative",

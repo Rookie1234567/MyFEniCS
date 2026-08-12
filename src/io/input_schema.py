@@ -171,11 +171,12 @@ FIELD_SPECS: Final = (
             "layered_2d",
             "airbox",
             "fresnel_interface",
+            "flat_layer",
             "rectangular_block_grating",
         ),
         constraints=(
             "2D uses euv_grating_2d/layered_2d; 3D uses airbox/fresnel_interface/"
-            "rectangular_block_grating",
+            "flat_layer/rectangular_block_grating",
         ),
     ),
     _f(
@@ -332,7 +333,7 @@ FIELD_SPECS: Final = (
         "基底复折射率",
         "n_substrate",
         "[0.999002304859, 0.00182649365]",
-        required=True,
+        required=False,
     ),
     _f(
         "materials.grating_name",
@@ -352,7 +353,7 @@ FIELD_SPECS: Final = (
         "grating 复折射率 [实部, 虚部]",
         "n_grating",
         "[0.999002304859, 0.00182649365]",
-        required=True,
+        required=False,
     ),
     # incidence
     _f(
@@ -696,8 +697,10 @@ FIELD_SPECS: Final = (
         allowed=("zero_order", "auto_propagating"),
         constraints=(
             "required only when vertical_boundary is dtn or dtn_port; 2D port maps "
-            "to port_use_diffraction_orders; legacy manual order selection is "
-            "internal because it mixed output fields into PDE selection",
+            "to port_use_diffraction_orders; explicit 2D port accepts zero_order "
+            "or auto_propagating; TE with a 2D dtn boundary currently accepts only "
+            "zero_order; legacy manual order selection is internal because it mixed "
+            "output fields into PDE selection",
         ),
     ),
     _f(
