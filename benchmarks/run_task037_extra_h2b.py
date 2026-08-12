@@ -104,6 +104,26 @@ H2B_M3Y_BUILDER_EVENTS = (
     "store_ready",
     "summary_ready",
 )
+H2B_M4Y_SCHEMA = "task037.extra.h2b.m4y"
+H2B_M4Y_WORKER_SCHEMA = f"{H2B_M4Y_SCHEMA}.worker.v1"
+H2B_M4Y_WATCHDOG_SCHEMA = f"{H2B_M4Y_SCHEMA}.watchdog.v1"
+H2B_M4Y_CHECK_SCHEMA = f"{H2B_M4Y_SCHEMA}.check.v1"
+H2B_M4Y_TIMEOUT_SECONDS = 3_600.0
+H2B_M4Y_RSS_LIMIT_BYTES = 1_350_000_000
+H2B_M4Y_ACTION_REPEAT_LIMIT = 1.0e-11
+H2B_M4Y_WALL_RATIO_LIMIT = 6.0
+H2B_M4Y_M3Y_SOURCE_SHA = "404f6c6a5326219bcf6aca098b332b68214781a3"
+H2B_M4Y_M3Y_MANIFEST_SHA = (
+    "949c04da123ccf1e0014a301f617e3a9509b9aaed365793948c469e12feade17"
+)
+H2B_M4Y_M3Y_EVIDENCE_SHA = (
+    "07896915322f270eed18032a5aeb58f2d0647492ea3d3437bb53e67603a19ad9"
+)
+H2B_M4Y_M3Y_MANIFEST = (
+    ROOT
+    / "benchmarks/artifacts/task037_extra_development"
+    / "m3y_404f6c6_run1/factor_store/manifest.json"
+)
 H2B_M3Y_LOADER_EVENTS = (
     "store_load_started",
     "store_load_ready",
@@ -221,6 +241,14 @@ H2B_SOURCE_LABELS = (
     "checkerboard/high-frequency",
     "physical-RHS-like",
 )
+H2B_M4Y_SOURCE_LABELS = H2B_SOURCE_LABELS
+H2B_M4Y_RHO_LIMITS = {
+    "checkerboard/high-frequency": 0.70,
+    "mixed": 0.80,
+    "gradient-dominated": 0.90,
+    "curl-dominated": 0.90,
+    "physical-RHS-like": 0.90,
+}
 H2B_RHO_LIMITS = {
     "gradient-dominated": 1.0,
     "curl-dominated": 1.0,
@@ -612,6 +640,307 @@ def _m3y_scope() -> dict[str, Any]:
         "trace_slab": False,
         "schur": False,
         "ordinary_default_changed": False,
+    }
+
+
+def _m4y_scope() -> dict[str, Any]:
+    return {
+        "mode": "h2b_m4y_full_packed_patch_residual_minimizing_pc",
+        "degree": 6,
+        "h_nm": 10.0,
+        "mpi_size": 1,
+        "global_cells": H2B_FIXED_CELLS,
+        "local_cells": H2B_FIXED_CELLS,
+        "local_nloc": H2B_FIXED_NLOC,
+        "global_rows": H2B_FIXED_ROWS,
+        "constraint_count": H2B_FIXED_CONSTRAINTS,
+        "neighborhood_count": H2B_M3Y_NEIGHBORHOOD_COUNT,
+        "m3y_factor_limit": H2B_M3Y_FACTOR_LIMIT,
+        "rho_limits": dict(H2B_M4Y_RHO_LIMITS),
+        "action_repeat_limit": H2B_M4Y_ACTION_REPEAT_LIMIT,
+        "pc_action_wall_ratio_limit": H2B_M4Y_WALL_RATIO_LIMIT,
+        "online_timeout_seconds": H2B_M4Y_TIMEOUT_SECONDS,
+        "online_rss_limit_bytes": H2B_M4Y_RSS_LIMIT_BYTES,
+        "swap_limit_bytes": H2B_SWAP_LIMIT_BYTES,
+        "operator": "K_curl+k0^2*M_abs_epsilon; code uses (1/mu_r) with mu_r=1",
+        "patch_definition": "R_i B0 R_i^T for each physical cell, shared M3Y packed factors",
+        "construction": "deterministic additive PoU then one exact full-space action and omega",
+        "fine_space": "uncondensed_fullspace",
+        "global_matrix_materialized": False,
+        "global_constraint_matrix_materialized": False,
+        "static_condensation": False,
+        "trace_slab": False,
+        "dtn": False,
+        "ksp": False,
+        "pde": False,
+        "ordinary_default_changed": False,
+    }
+
+
+def _m4y_source_gate_valid(label: str, value: Any) -> bool:
+    if not isinstance(value, Mapping):
+        return False
+    required = (
+        "label",
+        "rho",
+        "rho_limit",
+        "finite",
+        "deterministic",
+        "action_repeat_relative_error",
+        "correction_repeat_relative_error",
+        "exact_action_count",
+        "partition_of_unity_closure_error",
+        "pc_action_wall_ratio",
+    )
+    if any(key not in value for key in required):
+        return False
+    try:
+        rho = float(value["rho"])
+        limit = float(value["rho_limit"])
+        action_repeat = float(value["action_repeat_relative_error"])
+        correction_repeat = float(value["correction_repeat_relative_error"])
+        closure = float(value["partition_of_unity_closure_error"])
+        wall_ratio = float(value["pc_action_wall_ratio"])
+    except (TypeError, ValueError):
+        return False
+    return bool(
+        value["label"] == label
+        and math.isfinite(rho)
+        and math.isfinite(limit)
+        and math.isfinite(action_repeat)
+        and math.isfinite(correction_repeat)
+        and math.isfinite(closure)
+        and math.isfinite(wall_ratio)
+        and value["finite"] is True
+        and value["deterministic"] is True
+        and type(value["exact_action_count"]) is int
+        and value["exact_action_count"] == 1
+        and limit == H2B_M4Y_RHO_LIMITS[label]
+        and 0.0 <= rho <= limit
+        and 0.0 <= action_repeat <= H2B_M4Y_ACTION_REPEAT_LIMIT
+        and 0.0 <= correction_repeat <= H2B_M4Y_ACTION_REPEAT_LIMIT
+        and 0.0 <= closure <= 1.0e-14
+        and 0.0 <= wall_ratio <= H2B_M4Y_WALL_RATIO_LIMIT
+    )
+
+
+def _m4y_materialization_valid(value: Any) -> bool:
+    required = (
+        "global_matrix",
+        "global_constraint_matrix",
+        "patch_matrices",
+        "static_condensation",
+        "trace_slab",
+        "schur",
+        "slab_factor",
+        "ql_qh_transform",
+        "per_cell_factor",
+    )
+    return isinstance(value, Mapping) and all(
+        key in value and value[key] is False for key in required
+    )
+
+
+def _m4y_action_audit_valid(value: Any) -> bool:
+    required = (
+        "global_matrix_materialized",
+        "global_constraint_matrix_materialized",
+        "global_condensed_schur_materialized",
+        "cell_schur_matrix_nnz",
+        "slab_matrix_nnz",
+        "cell_schur_matrix_materialized",
+        "slab_matrix_materialized",
+        "factor_count",
+        "ksp_created",
+        "dtn_used",
+        "ordinary_default_changed",
+    )
+    return bool(
+        isinstance(value, Mapping)
+        and all(key in value for key in required)
+        and value["global_matrix_materialized"] is False
+        and value["global_constraint_matrix_materialized"] is False
+        and value["global_condensed_schur_materialized"] is False
+        and value["cell_schur_matrix_nnz"] == 0
+        and value["slab_matrix_nnz"] == 0
+        and value["cell_schur_matrix_materialized"] is False
+        and value["slab_matrix_materialized"] is False
+        and value["factor_count"] == 0
+        and value["ksp_created"] is False
+        and value["dtn_used"] is False
+        and value["ordinary_default_changed"] is False
+    )
+
+
+def _m4y_m3y_audit_valid(value: Any) -> bool:
+    if not isinstance(value, Mapping):
+        return False
+    materialization = value.get("materialization_identity")
+    return bool(
+        value.get("packed_factor_count") == H2B_M3Y_NEIGHBORHOOD_COUNT
+        and value.get("cell_count") == H2B_FIXED_CELLS
+        and type(value.get("retained_total_bytes")) is int
+        and value["retained_total_bytes"] <= H2B_M3Y_RETAINED_LIMIT_BYTES
+        and value.get("retained_total_gate") is True
+        and value.get("factorization_info_max") == 0
+        and value.get("full_dense_factor_count") == 0
+        and value.get("pivots_retained") is False
+        and value.get("ordinary_default_changed") is False
+        and _m4y_materialization_valid(materialization)
+    )
+
+
+def _m4y_check_payload(value: Mapping[str, Any]) -> dict[str, Any]:
+    """Recompute the compact M4Y contract from a worker-shaped raw mapping."""
+
+    checks = {
+        "schema": False,
+        "scope": False,
+        "measurement_shape": False,
+        "p6": False,
+        "m3y_binding": False,
+        "m3y_audit": False,
+        "mmap_readonly": False,
+        "pc_audit": False,
+        "action_audit": False,
+        "form": False,
+        "cache": False,
+        "sources": False,
+        "action_repeat": False,
+        "wall_ratio": False,
+        "evidence_workspace": False,
+        "resource": False,
+    }
+    problems: list[str] = []
+    measurement = value.get("measurement") if isinstance(value, Mapping) else None
+    if not isinstance(value, Mapping) or not isinstance(measurement, Mapping):
+        problems.append("measurement_missing")
+        return {"checks": checks, "problems": problems, "pass": False, "measurements": None}
+    checks["schema"] = value.get("schema") == H2B_M4Y_WORKER_SCHEMA
+    checks["scope"] = value.get("scope") == _m4y_scope()
+    required_measurement = (
+        "p6",
+        "m3y_store",
+        "m3y_store_audit",
+        "m3y_store_mmap_readonly",
+        "pc_audit",
+        "action_audit",
+        "sources",
+        "array_artifacts",
+        "exact_action_repeat_relative_error",
+        "pc_action_wall_ratio",
+        "resource",
+        "cache",
+        "evidence_workspace_bytes",
+    )
+    checks["measurement_shape"] = all(key in measurement for key in required_measurement)
+    checks["p6"] = measurement.get("p6") == {
+        "global_cells": H2B_FIXED_CELLS,
+        "local_cells": H2B_FIXED_CELLS,
+        "local_nloc": H2B_FIXED_NLOC,
+        "global_rows": H2B_FIXED_ROWS,
+        "constraint_count": H2B_FIXED_CONSTRAINTS,
+    }
+    binding = measurement.get("m3y_store")
+    checks["m3y_binding"] = bool(
+        isinstance(binding, Mapping)
+        and binding.get("source_sha256") == H2B_M4Y_M3Y_SOURCE_SHA
+        and binding.get("manifest_sha256") == H2B_M4Y_M3Y_MANIFEST_SHA
+        and binding.get("evidence_sha256") == H2B_M4Y_M3Y_EVIDENCE_SHA
+        and _m3y_valid_sha(binding.get("manifest_sha256"))
+        and _m3y_valid_sha(binding.get("evidence_sha256"))
+    )
+    checks["m3y_audit"] = _m4y_m3y_audit_valid(measurement.get("m3y_store_audit"))
+    checks["mmap_readonly"] = measurement.get("m3y_store_mmap_readonly") is True
+    audit = measurement.get("pc_audit")
+    materialization = audit.get("materialization_identity") if isinstance(audit, Mapping) else None
+    checks["pc_audit"] = bool(
+        isinstance(audit, Mapping)
+        and audit.get("cell_count") == H2B_FIXED_CELLS
+        and audit.get("unique_factor_count") == H2B_M3Y_NEIGHBORHOOD_COUNT
+        and audit.get("factor_reuse_count") == H2B_FIXED_CELLS - H2B_M3Y_NEIGHBORHOOD_COUNT
+        and audit.get("factor_copy_count") == 0
+        and audit.get("per_cell_solution_retained") is False
+        and type(audit.get("m3y_retained_total_bytes")) is int
+        and audit["m3y_retained_total_bytes"] <= H2B_M3Y_RETAINED_LIMIT_BYTES
+        and isinstance(audit.get("partition_of_unity_closure_error"), (int, float))
+        and math.isfinite(float(audit["partition_of_unity_closure_error"]))
+        and float(audit["partition_of_unity_closure_error"]) <= 1.0e-14
+        and audit.get("fine_space") == "uncondensed_fullspace"
+        and audit.get("ordinary_default_changed") is False
+        and _m4y_materialization_valid(materialization)
+    )
+    checks["action_audit"] = _m4y_action_audit_valid(measurement.get("action_audit"))
+    form = value.get("form")
+    checks["form"] = bool(
+        isinstance(form, Mapping)
+        and form.get("role") == "b0"
+        and form.get("code_state") == "hit_no_new_decl_impl"
+        and isinstance(form.get("jit_options"), Mapping)
+        and form.get("form_compiler_options") == {"scalar_type": "complex128"}
+    )
+    cache = measurement.get("cache")
+    checks["cache"] = bool(
+        isinstance(cache, Mapping)
+        and cache.get("unchanged") is True
+        and cache.get("before") == cache.get("after")
+    )
+    sources = measurement.get("sources")
+    if (
+        isinstance(sources, list)
+        and all(isinstance(item, Mapping) for item in sources)
+        and [item.get("label") for item in sources] == list(H2B_M4Y_SOURCE_LABELS)
+    ):
+        checks["sources"] = all(
+            _m4y_source_gate_valid(label, item)
+            for label, item in zip(H2B_M4Y_SOURCE_LABELS, sources, strict=True)
+        )
+    repeat = measurement.get("exact_action_repeat_relative_error")
+    checks["action_repeat"] = bool(
+        isinstance(repeat, (int, float))
+        and not isinstance(repeat, bool)
+        and math.isfinite(float(repeat))
+        and 0.0 <= float(repeat) <= H2B_M4Y_ACTION_REPEAT_LIMIT
+    )
+    wall_ratio = measurement.get("pc_action_wall_ratio")
+    checks["wall_ratio"] = bool(
+        isinstance(wall_ratio, (int, float))
+        and not isinstance(wall_ratio, bool)
+        and math.isfinite(float(wall_ratio))
+        and 0.0 <= float(wall_ratio) <= H2B_M4Y_WALL_RATIO_LIMIT
+    )
+    evidence_workspace = measurement.get("evidence_workspace_bytes")
+    checks["evidence_workspace"] = bool(
+        type(evidence_workspace) is int and evidence_workspace >= 0
+    )
+    resource = measurement.get("resource")
+    checks["resource"] = bool(
+        isinstance(resource, Mapping)
+        and type(resource.get("peak_rss_bytes")) is int
+        and resource["peak_rss_bytes"] < H2B_M4Y_RSS_LIMIT_BYTES
+        and resource.get("swap_bytes") == H2B_SWAP_LIMIT_BYTES
+    )
+    for name, passed in checks.items():
+        if not passed:
+            problems.append(name)
+    return {
+        "checks": checks,
+        "problems": problems,
+        "pass": all(checks.values()),
+        "measurements": {
+            "m3y_store": binding,
+            "m3y_store_audit": measurement.get("m3y_store_audit"),
+            "m3y_store_mmap_readonly": measurement.get("m3y_store_mmap_readonly"),
+            "pc_audit": audit,
+            "action_audit": measurement.get("action_audit"),
+            "form": form,
+            "cache": cache,
+            "sources": sources,
+            "exact_action_repeat_relative_error": repeat,
+            "pc_action_wall_ratio": wall_ratio,
+            "evidence_workspace_bytes": evidence_workspace,
+            "resource": resource,
+        },
     }
 
 
@@ -3930,6 +4259,297 @@ def _run_m3y_loader(run_dir: Path) -> int:
     return 0 if status == "measurement_complete" else 1
 
 
+def _run_m4y_worker(run_dir: Path, m3y_manifest: Path | None = None) -> int:
+    """Apply the M3Y store as the explicitly opted-in M4Y PC."""
+
+    import gc
+
+    import numpy as np
+    from petsc4py import PETSc
+
+    h2a = _lazy_h2a()
+    from src.common.config_3d import target_stage4_config
+    from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
+    from src.solvers.common_3d_solve import _create_nedelec_space
+    from src.solvers.hcurl_h2b_m4y_packed_patch_pc import (
+        build_h2b_m4y_packed_patch_pc,
+    )
+    from src.solvers.hcurl_h2b_packed_patch_store import (
+        load_h2b_m3y_packed_patch_store,
+    )
+    from src.solvers.hcurl_rank_one_mpc_action import (
+        build_task037_extra_h1r2_mpc_action,
+    )
+
+    run_dir = run_dir.resolve()
+    run_dir.mkdir(parents=True, exist_ok=True)
+    progress_path = run_dir / "m4y_progress.jsonl"
+    summary_path = run_dir / "m4y_worker_summary.json"
+    stage_path = run_dir / "stage_summary.json"
+    manifest_path = (m3y_manifest or H2B_M4Y_M3Y_MANIFEST).resolve()
+    started = time.perf_counter()
+    source_start = _source_pair(h2a)
+    source_end: dict[str, Any] | None = None
+    runtime: dict[str, Any] | None = None
+    form_record: dict[str, Any] | None = None
+    measurement: dict[str, Any] | None = None
+    error: str | None = None
+    action = None
+    source_vec = None
+    store = None
+    try:
+        with progress_path.open("w", encoding="utf-8") as markers:
+            stage = _read_json(stage_path)
+            if stage.get("schema") != H2B_WORKER_SCHEMA or not _evidence_valid(stage):
+                raise ValueError("M4Y stage summary authority is invalid")
+            if not manifest_path.is_file() or _sha256_file(manifest_path) != H2B_M4Y_M3Y_MANIFEST_SHA:
+                raise ValueError("M4Y M3Y manifest identity is invalid")
+            manifest = _read_json(manifest_path)
+            identity = manifest.get("metadata", {}).get("identity", {})
+            source_identity = identity.get("source_identity", {})
+            if (
+                manifest.get("evidence_sha256") != H2B_M4Y_M3Y_EVIDENCE_SHA
+                or source_identity.get("source_commit_full_sha") != H2B_M4Y_M3Y_SOURCE_SHA
+            ):
+                raise ValueError("M4Y M3Y manifest source/evidence is not bound")
+            store = load_h2b_m3y_packed_patch_store(
+                manifest_path, task037_extra_h2b=True
+            )
+            _emit_marker(markers, event="m3y_store_ready", phase="m4y", started=started)
+            cfg = target_stage4_config(degree=6, h_nm=10.0)
+            mesh_data = build_airbox_mesh_3d(cfg, run_dir / "m4y_mesh")
+            _emit_marker(markers, event="mesh_ready", phase="m4y", started=started)
+            function_space = _create_nedelec_space(mesh_data.mesh, cfg)
+            floquet = h2a.build_double_floquet_mpc(function_space, mesh_data, cfg)
+            _emit_marker(markers, event="floquet_mpc_ready", phase="m4y", started=started)
+            index_map = function_space.dofmap.index_map
+            p6 = {
+                "global_cells": int(mesh_data.mesh.topology.index_map(3).size_global),
+                "local_cells": int(mesh_data.mesh.topology.index_map(3).size_local),
+                "local_nloc": int(function_space.element.space_dimension),
+                "global_rows": int(index_map.size_global * function_space.dofmap.index_map_bs),
+                "constraint_count": int(floquet.num_constraints),
+            }
+            if p6 != {
+                "global_cells": H2B_FIXED_CELLS,
+                "local_cells": H2B_FIXED_CELLS,
+                "local_nloc": H2B_FIXED_NLOC,
+                "global_rows": H2B_FIXED_ROWS,
+                "constraint_count": H2B_FIXED_CONSTRAINTS,
+            }:
+                raise ValueError("M4Y p6 identity mismatch")
+            cache_dir = run_dir / "jit_cache"
+            cache_before = _cache_snapshot(cache_dir)
+            b0, _epsilon = _build_b0_form(function_space, mesh_data, cfg)
+            runtime = _runtime_identity(
+                h2a,
+                compiler_probe=False,
+                compiler=stage["runtime_identity"]["compiler"],
+            )
+            action = build_task037_extra_h1r2_mpc_action(
+                b0,
+                floquet.mpc,
+                task037_extra_h1r2=True,
+                jit_options={
+                    "cache_dir": str(cache_dir.resolve()),
+                    "cffi_extra_compile_args": list(H2B_FORM_JIT_ARGS),
+                },
+            )
+            form_record = _form_record(
+                action._action_form,
+                action._action_ufl,
+                cache_dir,
+                cfg,
+                function_space,
+                "b0",
+            )
+            cache_after = _cache_snapshot(cache_dir)
+            if form_record.get("code_state") != "hit_no_new_decl_impl" or cache_before != cache_after:
+                raise ValueError("M4Y B0 form did not reuse the staged cache")
+            source_vec = action.output_vector.duplicate()
+            slaves = np.asarray(floquet.mpc.slaves, dtype=np.int64)
+            action_seconds: list[float] = []
+            last_action: np.ndarray | None = None
+
+            def exact_action(source: np.ndarray, target: np.ndarray) -> None:
+                nonlocal last_action
+                with source_vec.localForm() as local:
+                    local.set(0.0)
+                    local.array_w[: source.size] = source
+                source_vec.ghostUpdate(
+                    addv=PETSc.InsertMode.INSERT_VALUES,
+                    mode=PETSc.ScatterMode.FORWARD,
+                )
+                tick = time.perf_counter()
+                result = action.mult(source_vec)
+                elapsed = float(time.perf_counter() - tick)
+                action_seconds.append(elapsed)
+                target[:] = np.asarray(result.getArray(readonly=True), dtype=np.complex128)
+                last_action = np.array(target, dtype=np.complex128, copy=True)
+
+            primal_arrays = _source_arrays(function_space, cfg, slaves, floquet.mpc)
+            source_arrays = _residual_source_arrays(primal_arrays, exact_action, slaves)
+            del primal_arrays
+            source_records = _source_records_from_arrays(source_arrays, slaves)
+            source_rhs = np.empty(
+                (len(source_records), H2B_FIXED_ROWS), dtype=np.complex128
+            )
+            for source_index, source_record in enumerate(source_records):
+                source_rhs[source_index] = np.ascontiguousarray(
+                    source_arrays[source_record["label"]], dtype=np.complex128
+                )
+            del source_arrays
+            last_action = None
+            pc = build_h2b_m4y_packed_patch_pc(
+                store,
+                global_row_count=H2B_FIXED_ROWS,
+                exact_action=exact_action,
+                slave_identity_rows=slaves,
+                task037_extra_h2b=True,
+            )
+            results: list[dict[str, Any]] = []
+            correction_array = np.empty_like(source_rhs)
+            action_array = np.empty_like(source_rhs)
+            repeat_correction_array = np.empty_like(source_rhs)
+            repeat_action_array = np.empty_like(source_rhs)
+            for source_index, base in enumerate(source_records):
+                label = str(base["label"])
+                rhs = source_rhs[source_index]
+                first_tick = time.perf_counter()
+                correction, first = pc.apply_with_measurement(rhs)
+                first_elapsed = float(time.perf_counter() - first_tick)
+                if last_action is None:
+                    raise RuntimeError("M4Y exact action did not produce output")
+                first_action = last_action
+                second_tick = time.perf_counter()
+                repeat_correction, repeat = pc.apply_with_measurement(rhs)
+                second_elapsed = float(time.perf_counter() - second_tick)
+                if last_action is None:
+                    raise RuntimeError("M4Y repeat action did not produce output")
+                second_action = last_action
+                action_relative = float(
+                    np.linalg.norm(second_action - first_action)
+                    / max(np.linalg.norm(first_action), np.finfo(float).tiny)
+                )
+                correction_relative = float(
+                    np.linalg.norm(repeat_correction - correction)
+                    / max(np.linalg.norm(correction), np.finfo(float).tiny)
+                )
+                correction_array[source_index] = correction
+                action_array[source_index] = first_action
+                repeat_correction_array[source_index] = repeat_correction
+                repeat_action_array[source_index] = second_action
+                deterministic = bool(
+                    first["finite"]
+                    and repeat["finite"]
+                    and action_relative <= H2B_M4Y_ACTION_REPEAT_LIMIT
+                    and correction_relative <= H2B_M4Y_ACTION_REPEAT_LIMIT
+                )
+                results.append(
+                    {
+                        **first,
+                        "label": label,
+                        "deterministic": deterministic,
+                        "rho_limit": H2B_M4Y_RHO_LIMITS[label],
+                        "action_repeat_relative_error": action_relative,
+                        "correction_repeat_relative_error": correction_relative,
+                        "repeat_correction_sha256": _array_sha256(repeat_correction),
+                        "repeat_action_sha256": _array_sha256(second_action),
+                        "pc_action_wall_ratio": max(
+                            first_elapsed / max(action_seconds[-2], 1.0e-30),
+                            second_elapsed / max(action_seconds[-1], 1.0e-30),
+                        ),
+                        "apply_seconds": [first_elapsed, second_elapsed],
+                    }
+                )
+            arrays = {
+                "m4y_source_rhs.npy": source_rhs,
+                "m4y_source_correction.npy": correction_array,
+                "m4y_source_correction_repeat.npy": repeat_correction_array,
+                "m4y_source_action.npy": action_array,
+                "m4y_source_action_repeat.npy": repeat_action_array,
+            }
+            array_artifacts: dict[str, Any] = {}
+            for name, array in arrays.items():
+                np.save(run_dir / name, array, allow_pickle=False)
+                array_artifacts[name] = _artifact(run_dir, name)
+            evidence_workspace_bytes = int(sum(array.nbytes for array in arrays.values()))
+            measurement = {
+                "p6": p6,
+                "m3y_store": {
+                    "path": str(manifest_path),
+                    "source_sha256": H2B_M4Y_M3Y_SOURCE_SHA,
+                    "manifest_sha256": H2B_M4Y_M3Y_MANIFEST_SHA,
+                    "evidence_sha256": H2B_M4Y_M3Y_EVIDENCE_SHA,
+                },
+                "pc_audit": pc.audit,
+                "action_audit": h2a._jsonable(action.audit),
+                "m3y_store_audit": store.audit_jsonable(),
+                "m3y_store_mmap_readonly": bool(
+                    all(
+                        isinstance(factor.packed_values.base, np.memmap)
+                        and factor.packed_values.flags.writeable is False
+                        for factor in store.factors
+                    )
+                ),
+                "sources": results,
+                "source_metadata": source_records,
+                "array_artifacts": array_artifacts,
+                "evidence_workspace_bytes": evidence_workspace_bytes,
+                "exact_action_repeat_relative_error": max(
+                    item["action_repeat_relative_error"] for item in results
+                ),
+                "pc_action_wall_ratio": max(item["pc_action_wall_ratio"] for item in results),
+                "resource": {
+                    "peak_rss_bytes": None,
+                    "swap_bytes": None,
+                    "source": "watchdog_timeline",
+                },
+                "cache": {
+                    "before": cache_before,
+                    "after": cache_after,
+                    "unchanged": cache_before == cache_after,
+                },
+                "materialization_identity": pc.audit["materialization_identity"],
+            }
+            _emit_marker(markers, event="summary_ready", phase="m4y", started=started)
+            del pc, arrays, source_rhs, correction_array, repeat_correction_array
+            del action_array, repeat_action_array, last_action
+            del function_space, mesh_data, floquet, b0, _epsilon
+    except _worker_error_types() as exc:
+        error = f"{type(exc).__name__}: {exc}"
+    finally:
+        if source_vec is not None:
+            source_vec.destroy()
+        if action is not None:
+            action.destroy()
+        if store is not None:
+            del store
+        h2a.clear_floquet_topology_cache()
+        gc.collect()
+    source_end = _source_pair(h2a)
+    status = "measurement_complete" if error is None and measurement is not None else "gate_failed"
+    payload = _attach_evidence(
+        {
+            "schema": H2B_M4Y_WORKER_SCHEMA,
+            "phase": "m4y",
+            "status": status,
+            "route": "M4Y",
+            "scope": _m4y_scope(),
+            "identity": _fixed_identity(),
+            "source_at_start": source_start,
+            "source_at_end": source_end,
+            "runtime_identity": runtime,
+            "form": form_record,
+            "measurement": measurement,
+            "error": error,
+            "elapsed_wall_seconds": float(time.perf_counter() - started),
+        }
+    )
+    _write_json(summary_path, payload)
+    return 0 if status == "measurement_complete" else 1
+
+
 def _run_c1_worker(run_dir: Path) -> int:
     """Run the C1 metadata/orbit and patch-only audit; never factorize."""
 
@@ -5182,6 +5802,412 @@ def _run_m3y_check(run_dir: Path, output: Path) -> int:
     return 0 if result["pass"] else 1
 
 
+def _run_m4y_watchdog(run_dir: Path) -> int:
+    """Run the staged JIT and one M4Y online worker sequentially."""
+
+    run_dir = run_dir.resolve()
+    if run_dir.exists():
+        raise FileExistsError(f"M4Y run directory already exists: {run_dir}")
+    run_dir.mkdir(parents=True)
+    started = time.perf_counter()
+    executable = _worker_executable()
+    source_start: dict[str, Any] | None = None
+    source_end: dict[str, Any] | None = None
+    stage: dict[str, Any] | None = None
+    online: dict[str, Any] | None = None
+    error: str | None = None
+    try:
+        source_start = _light_source()
+        stage = _monitor_phase(
+            run_dir,
+            "stage",
+            _worker_command(executable, "jit-worker", run_dir),
+            H2B_STAGE_TIMEOUT_SECONDS,
+            H2B_M3Y_BUILDER_RSS_LIMIT_BYTES,
+        )
+        stage_drain = _bounded_process_drain(stage)
+        stage["processes_gone_before_m4y"] = bool(stage_drain["gone"])
+        stage["processes_gone_before_m4y_drain"] = stage_drain
+        stage_summary_path = run_dir / "stage_summary.json"
+        stage_ok = bool(
+            stage_summary_path.is_file()
+            and _stage_gate_allows_online(
+                stage,
+                _read_json(stage_summary_path),
+                bool(stage_drain["gone"]),
+                run_dir,
+            )
+            and stage.get("peak_rss_bytes") < H2B_M3Y_BUILDER_RSS_LIMIT_BYTES
+            and stage.get("swap_bytes") == H2B_SWAP_LIMIT_BYTES
+        )
+        if not stage_ok:
+            error = "stage_gate_failed_before_m4y"
+        else:
+            online = _monitor_phase(
+                run_dir,
+                "m4y",
+                _m4y_worker_command(executable, run_dir, H2B_M4Y_M3Y_MANIFEST),
+                H2B_M4Y_TIMEOUT_SECONDS,
+                H2B_M4Y_RSS_LIMIT_BYTES,
+            )
+            online_drain = _bounded_process_drain(online)
+            online["processes_gone_after_m4y"] = bool(online_drain["gone"])
+            online["processes_gone_after_m4y_drain"] = online_drain
+            if not (
+                online.get("return_code") == 0
+                and online.get("termination") is None
+                and online.get("processes_gone_after_m4y") is True
+                and online.get("peak_rss_bytes") < H2B_M4Y_RSS_LIMIT_BYTES
+                and online.get("swap_bytes") == H2B_SWAP_LIMIT_BYTES
+            ):
+                error = "m4y_online_resource_or_execution_gate_failed"
+    except _worker_error_types() as exc:
+        error = f"{type(exc).__name__}: {exc}"
+    if source_start is not None:
+        try:
+            source_end = _light_source()
+        except _worker_error_types() as exc:
+            error = f"{type(exc).__name__}: {exc}"
+    phase_pass = bool(
+        error is None
+        and stage is not None
+        and online is not None
+        and stage.get("return_code") == 0
+        and stage.get("termination") is None
+        and stage.get("processes_gone_before_m4y") is True
+        and stage.get("peak_rss_bytes") < H2B_M3Y_BUILDER_RSS_LIMIT_BYTES
+        and stage.get("swap_bytes") == H2B_SWAP_LIMIT_BYTES
+        and online.get("return_code") == 0
+        and online.get("termination") is None
+        and online.get("processes_gone_after_m4y") is True
+        and online.get("peak_rss_bytes") < H2B_M4Y_RSS_LIMIT_BYTES
+        and online.get("swap_bytes") == H2B_SWAP_LIMIT_BYTES
+    )
+    raw_artifacts = {
+        name: _artifact(run_dir, name)
+        for name in (
+            "stage_progress.jsonl",
+            "stage_stdout.txt",
+            "stage_summary.json",
+            "stage_timeline.jsonl",
+            "m4y_progress.jsonl",
+            "m4y_stdout.txt",
+            "m4y_worker_summary.json",
+            "m4y_timeline.jsonl",
+            "stage_root_pid.json",
+            "m4y_root_pid.json",
+            "m4y_source_rhs.npy",
+            "m4y_source_correction.npy",
+            "m4y_source_correction_repeat.npy",
+            "m4y_source_action.npy",
+            "m4y_source_action_repeat.npy",
+        )
+    }
+    payload = _attach_evidence(
+        {
+            "schema": H2B_M4Y_WATCHDOG_SCHEMA,
+            "status": "pass" if phase_pass else "gate_failed",
+            "route": "M4Y",
+            "run_dir": str(run_dir),
+            "scope": _m4y_scope(),
+            "identity": _fixed_identity(),
+            "command_identity": {
+                "python": executable,
+                "launch_mode": "direct_singleton",
+                "stage_command": None if stage is None else stage["command"],
+                "m4y_command": None if online is None else online["command"],
+                "m3y_manifest": str(H2B_M4Y_M3Y_MANIFEST),
+            },
+            "source_at_start": source_start,
+            "source_at_end": source_end,
+            "stage": stage,
+            "online": online,
+            "raw_artifacts": raw_artifacts,
+            "error": error,
+            "completion_elapsed_seconds": float(time.perf_counter() - started),
+        }
+    )
+    _write_json(run_dir / "m4y_watchdog_summary.json", payload)
+    return 0 if phase_pass else 1
+
+
+def _m4y_check_raw(run_dir: Path, checker_source: Mapping[str, Any]) -> dict[str, Any]:
+    import numpy as np
+
+    watchdog = _read_json(run_dir / "m4y_watchdog_summary.json")
+    worker = _read_json(run_dir / "m4y_worker_summary.json")
+    checks: dict[str, bool] = {
+        "watchdog": False,
+        "worker": False,
+        "source_authority": False,
+        "checker_source": False,
+        "form_cache_authority": False,
+        "command_identity": False,
+        "m3y_manifest": False,
+        "loaded_store": False,
+        "timeline": False,
+        "arrays": False,
+        "independent_recompute": False,
+    }
+    problems: list[str] = []
+    checks["watchdog"] = bool(
+        watchdog.get("schema") == H2B_M4Y_WATCHDOG_SCHEMA
+        and watchdog.get("status") == "pass"
+        and _evidence_valid(watchdog)
+    )
+    checks["worker"] = bool(
+        worker.get("schema") == H2B_M4Y_WORKER_SCHEMA
+        and worker.get("status") == "measurement_complete"
+        and _evidence_valid(worker)
+        and isinstance(worker.get("measurement"), Mapping)
+    )
+    worker_start = worker.get("source_at_start")
+    worker_end = worker.get("source_at_end")
+    watchdog_start = watchdog.get("source_at_start")
+    watchdog_end = watchdog.get("source_at_end")
+    worker_sha = worker_start.get("source_commit_full_sha") if isinstance(worker_start, Mapping) else None
+    checks["source_authority"] = bool(
+        isinstance(worker_start, Mapping)
+        and isinstance(worker_end, Mapping)
+        and isinstance(watchdog_start, Mapping)
+        and isinstance(watchdog_end, Mapping)
+        and _source_pair_valid(worker_start, worker_end)
+        and _source_pair_valid(watchdog_start, watchdog_end)
+        and worker_sha == watchdog_start.get("source_commit_full_sha")
+    )
+    checks["checker_source"] = bool(
+        _checker_source_valid(checker_source)
+        and checker_source.get("source_commit_full_sha") == worker_sha
+    )
+    try:
+        stage_summary = _read_json(run_dir / "stage_summary.json")
+        worker_form = worker["form"]
+        worker_cache = worker["measurement"]["cache"]
+        checks["form_cache_authority"] = bool(
+            _forms_match(stage_summary["form"], worker_form, run_dir)
+            and stage_summary["cache_inventory"] == worker_cache["after"]
+            and worker_cache["before"] == worker_cache["after"]
+            and worker_cache["after"] == _cache_snapshot(run_dir / "jit_cache")
+        )
+    except (KeyError, TypeError, OSError, ValueError):
+        checks["form_cache_authority"] = False
+    command_identity = watchdog.get("command_identity")
+    executable = command_identity.get("python") if isinstance(command_identity, Mapping) else None
+    stage_summary = None
+    try:
+        stage_summary = _read_json(run_dir / "stage_summary.json")
+    except _worker_error_types():
+        stage_summary = None
+    checks["command_identity"] = bool(
+        isinstance(command_identity, Mapping)
+        and isinstance(executable, str)
+        and os.path.isabs(executable)
+        and command_identity == {
+            "python": executable,
+            "launch_mode": "direct_singleton",
+            "stage_command": _worker_command(executable, "jit-worker", run_dir),
+            "m4y_command": _m4y_worker_command(executable, run_dir, H2B_M4Y_M3Y_MANIFEST),
+            "m3y_manifest": str(H2B_M4Y_M3Y_MANIFEST),
+        }
+        and isinstance(stage_summary, Mapping)
+        and isinstance(stage_summary.get("runtime_identity"), Mapping)
+        and stage_summary["runtime_identity"].get("sys_executable") == executable
+        and isinstance(worker.get("runtime_identity"), Mapping)
+        and worker["runtime_identity"].get("sys_executable") == executable
+    )
+    try:
+        manifest = _read_json(H2B_M4Y_M3Y_MANIFEST)
+        manifest_identity = manifest["metadata"]["identity"]["source_identity"]
+        checks["m3y_manifest"] = bool(
+            _sha256_file(H2B_M4Y_M3Y_MANIFEST) == H2B_M4Y_M3Y_MANIFEST_SHA
+            and manifest.get("evidence_sha256") == H2B_M4Y_M3Y_EVIDENCE_SHA
+            and manifest_identity.get("source_commit_full_sha") == H2B_M4Y_M3Y_SOURCE_SHA
+        )
+    except _worker_error_types():
+        checks["m3y_manifest"] = False
+    try:
+        from src.solvers.hcurl_h2b_packed_patch_store import (
+            load_h2b_m3y_packed_patch_store,
+        )
+
+        loaded_store = load_h2b_m3y_packed_patch_store(
+            H2B_M4Y_M3Y_MANIFEST, task037_extra_h2b=True
+        )
+        loaded_audit = loaded_store.audit_jsonable()
+        loaded_mmap_readonly = all(
+            isinstance(factor.packed_values.base, np.memmap)
+            and factor.packed_values.flags.writeable is False
+            for factor in loaded_store.factors
+        )
+        worker_measurement = worker["measurement"]
+        checks["loaded_store"] = bool(
+            _m4y_m3y_audit_valid(loaded_audit)
+            and loaded_mmap_readonly
+            and worker_measurement["m3y_store_audit"] == loaded_audit
+            and worker_measurement["m3y_store_mmap_readonly"] is True
+        )
+        del loaded_store
+    except (KeyError, OSError, TypeError, ValueError):
+        checks["loaded_store"] = False
+    try:
+        stage_metrics = _timeline_metrics(run_dir / "stage_timeline.jsonl", "stage")
+        online_metrics = _timeline_metrics(run_dir / "m4y_timeline.jsonl", "m4y")
+        checks["timeline"] = bool(
+            stage_metrics["peak_rss_bytes"] == watchdog["stage"]["peak_rss_bytes"]
+            and stage_metrics["swap_bytes"] == watchdog["stage"]["swap_bytes"]
+            and online_metrics["peak_rss_bytes"] == watchdog["online"]["peak_rss_bytes"]
+            and online_metrics["swap_bytes"] == watchdog["online"]["swap_bytes"]
+            and online_metrics["peak_rss_bytes"] < H2B_M4Y_RSS_LIMIT_BYTES
+            and online_metrics["swap_bytes"] == H2B_SWAP_LIMIT_BYTES
+            and online_metrics["compiler_descendant_pids"] == []
+        )
+    except _worker_error_types():
+        checks["timeline"] = False
+    measurement = worker.get("measurement")
+    merged = dict(worker)
+    merged_measurement = dict(measurement) if isinstance(measurement, Mapping) else {}
+    online = watchdog.get("online")
+    if isinstance(online, Mapping):
+        merged_measurement["resource"] = {
+            "peak_rss_bytes": online.get("peak_rss_bytes"),
+            "swap_bytes": online.get("swap_bytes"),
+            "source": "watchdog_timeline",
+        }
+    merged["measurement"] = merged_measurement
+    contract = _m4y_check_payload(merged)
+    checks.update({f"contract_{key}": value for key, value in contract["checks"].items()})
+    array_names = (
+        "m4y_source_rhs.npy",
+        "m4y_source_correction.npy",
+        "m4y_source_correction_repeat.npy",
+        "m4y_source_action.npy",
+        "m4y_source_action_repeat.npy",
+    )
+    arrays: dict[str, np.ndarray] = {}
+    try:
+        artifacts = merged_measurement["array_artifacts"]
+        for name in array_names:
+            artifact = artifacts[name]
+            path = run_dir / name
+            actual_artifact = _artifact(run_dir, name)
+            if artifact != actual_artifact:
+                raise ValueError("M4Y array artifact binding failed")
+            value = np.load(path, allow_pickle=False)
+            if value.ndim != 2 or value.shape[0] != len(H2B_M4Y_SOURCE_LABELS) or value.shape[1] != H2B_FIXED_ROWS:
+                raise ValueError("M4Y array shape failed")
+            if value.dtype != np.dtype(np.complex128) or not np.all(np.isfinite(value)):
+                raise ValueError("M4Y array dtype/finite failed")
+            arrays[name] = value
+        checks["arrays"] = True
+    except (KeyError, OSError, ValueError, TypeError):
+        checks["arrays"] = False
+    recomputed_sources: list[dict[str, Any]] = []
+    if checks["arrays"]:
+        try:
+            sources = merged_measurement["sources"]
+            for index, (label, record) in enumerate(zip(H2B_M4Y_SOURCE_LABELS, sources, strict=True)):
+                rhs = arrays["m4y_source_rhs.npy"][index]
+                action = arrays["m4y_source_action.npy"][index]
+                repeat_action = arrays["m4y_source_action_repeat.npy"][index]
+                correction = arrays["m4y_source_correction.npy"][index]
+                repeat_correction = arrays["m4y_source_correction_repeat.npy"][index]
+                denominator = np.vdot(action, action)
+                omega = np.vdot(action, rhs) / denominator
+                rho = float(np.linalg.norm(rhs - omega * action) / max(np.linalg.norm(rhs), np.finfo(float).tiny))
+                action_relative = float(np.linalg.norm(repeat_action - action) / max(np.linalg.norm(action), np.finfo(float).tiny))
+                correction_relative = float(np.linalg.norm(repeat_correction - correction) / max(np.linalg.norm(correction), np.finfo(float).tiny))
+                deterministic = bool(
+                    np.all(np.isfinite((rhs, action, repeat_action, correction, repeat_correction)))
+                    and action_relative <= H2B_M4Y_ACTION_REPEAT_LIMIT
+                    and correction_relative <= H2B_M4Y_ACTION_REPEAT_LIMIT
+                )
+                record_omega = record.get("omega")
+                record_omega_value = (
+                    complex(float(record_omega[0]), float(record_omega[1]))
+                    if isinstance(record_omega, list)
+                    and len(record_omega) == 2
+                    and all(isinstance(item, (int, float)) and not isinstance(item, bool) for item in record_omega)
+                    else None
+                )
+                recomputed = {
+                    "label": label,
+                    "rho": rho,
+                    "omega": [float(omega.real), float(omega.imag)],
+                    "action_repeat_relative_error": action_relative,
+                    "correction_repeat_relative_error": correction_relative,
+                    "finite": bool(np.all(np.isfinite((rhs, action, correction)))),
+                    "deterministic": deterministic,
+                    "rhs_sha256": _array_sha256(rhs),
+                    "action_sha256": _array_sha256(action),
+                    "repeat_action_sha256": _array_sha256(repeat_action),
+                    "correction_sha256": _array_sha256(correction),
+                    "repeat_correction_sha256": _array_sha256(repeat_correction),
+                }
+                recomputed_sources.append(recomputed)
+                if (
+                    not _m4y_source_gate_valid(label, record)
+                    or abs(float(record["rho"]) - rho) > 1.0e-12
+                    or record_omega_value is None
+                    or abs(record_omega_value - omega) > 1.0e-12
+                    or record.get("deterministic") is not deterministic
+                    or record.get("rhs_sha256") != recomputed["rhs_sha256"]
+                    or record.get("action_sha256") != recomputed["action_sha256"]
+                    or record.get("repeat_action_sha256") != recomputed["repeat_action_sha256"]
+                    or record.get("correction_sha256") != recomputed["correction_sha256"]
+                    or record.get("repeat_correction_sha256") != recomputed["repeat_correction_sha256"]
+                    or abs(float(record["action_repeat_relative_error"]) - action_relative) > 1.0e-12
+                    or abs(float(record["correction_repeat_relative_error"]) - correction_relative) > 1.0e-12
+                ):
+                    raise ValueError("M4Y checker recomputation disagrees with worker")
+            checks["independent_recompute"] = True
+        except (KeyError, TypeError, ValueError, FloatingPointError, ZeroDivisionError):
+            checks["independent_recompute"] = False
+    checks["contract_sources"] = checks.get("contract_sources", False)
+    for name, passed in checks.items():
+        if not passed:
+            problems.append(name)
+    return {
+        "schema": H2B_M4Y_CHECK_SCHEMA,
+        "status": "pass" if all(checks.values()) else "gate_failed",
+        "pass": all(checks.values()),
+        "route": "M4Y",
+        "checks": checks,
+        "problems": sorted(set(problems)),
+        "measurements": {
+            "contract": contract["measurements"],
+            "recomputed_sources": recomputed_sources,
+            "stage_peak_rss_bytes": watchdog.get("stage", {}).get("peak_rss_bytes"),
+            "online_peak_rss_bytes": watchdog.get("online", {}).get("peak_rss_bytes"),
+            "stage_swap_bytes": watchdog.get("stage", {}).get("swap_bytes"),
+            "online_swap_bytes": watchdog.get("online", {}).get("swap_bytes"),
+        },
+    }
+
+
+def _run_m4y_check(run_dir: Path, output: Path) -> int:
+    try:
+        checker_source = _light_source()
+        result = _m4y_check_raw(run_dir.resolve(), checker_source)
+    except _worker_error_types() as exc:
+        result = {
+            "schema": H2B_M4Y_CHECK_SCHEMA,
+            "status": "gate_failed",
+            "pass": False,
+            "route": "M4Y",
+            "checks": {},
+            "problems": [f"raw_unreadable:{type(exc).__name__}"],
+            "measurements": None,
+        }
+        result["checker_source"] = {"git_error": f"{type(exc).__name__}: {exc}"}
+        _write_json(output.resolve(), _attach_evidence(result))
+        print(f"M4Y check status={result['status']} output={output.resolve()}", flush=True)
+        return 1
+    result["checker_source"] = checker_source
+    _write_json(output.resolve(), _attach_evidence(result))
+    print(f"M4Y check status={result['status']} output={output.resolve()}", flush=True)
+    return 0 if result["pass"] else 1
+
+
 def _compiler_descendant_pids(pids: Sequence[int]) -> list[int]:
     found: list[int] = []
     for pid in pids:
@@ -5471,6 +6497,21 @@ def _worker_command(executable: str, phase: str, run_dir: Path) -> list[str]:
         phase,
         "--run-dir",
         str(Path(run_dir).resolve()),
+    ]
+
+
+def _m4y_worker_command(
+    executable: str, run_dir: Path, m3y_manifest: Path
+) -> list[str]:
+    return [
+        str(executable),
+        "-m",
+        "benchmarks.run_task037_extra_h2b",
+        "m4y-worker",
+        "--run-dir",
+        str(Path(run_dir).resolve()),
+        "--m3y-manifest",
+        str(Path(m3y_manifest).resolve()),
     ]
 
 
@@ -10114,6 +11155,23 @@ def _parser() -> argparse.ArgumentParser:
     m3y_checker.set_defaults(
         handler=lambda args: _run_m3y_check(Path(args.run_dir), Path(args.output))
     )
+    m4y_worker = sub.add_parser("m4y-worker")
+    m4y_worker.add_argument("--run-dir", required=True)
+    m4y_worker.add_argument("--m3y-manifest", required=True)
+    m4y_worker.set_defaults(
+        handler=lambda args: _run_m4y_worker(
+            Path(args.run_dir), Path(args.m3y_manifest)
+        )
+    )
+    m4y_watchdog = sub.add_parser("m4y-watchdog")
+    m4y_watchdog.add_argument("--run-dir", required=True)
+    m4y_watchdog.set_defaults(handler=_run_m4y_watchdog)
+    m4y_checker = sub.add_parser("m4y-check")
+    m4y_checker.add_argument("--run-dir", required=True)
+    m4y_checker.add_argument("--output", required=True)
+    m4y_checker.set_defaults(
+        handler=lambda args: _run_m4y_check(Path(args.run_dir), Path(args.output))
+    )
     return parser
 
 
@@ -10134,6 +11192,7 @@ def main(argv: list[str] | None = None) -> int:
         "p1-watchdog",
         "c1-watchdog",
         "m3y-watchdog",
+        "m4y-watchdog",
     }:
         return int(args.handler(Path(args.run_dir)))
     return int(args.handler(args))
