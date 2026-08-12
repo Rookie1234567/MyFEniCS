@@ -510,9 +510,9 @@ FIELD_SPECS: Final = (
         "2D mesh_cell_shape / 3D mesh_cell_type",
         '"hexahedron"',
         required=True,
-        allowed=("triangle", "quadrilateral", "tetrahedron", "hexahedron"),
+        allowed=("auto", "triangle", "quadrilateral", "tetrahedron", "hexahedron"),
         constraints=(
-            "2D allows triangle/quadrilateral; 3D allows tetrahedron/hexahedron",
+            "2D allows triangle/quadrilateral; 3D allows auto/tetrahedron/hexahedron",
         ),
     ),
     _f(

@@ -1,0 +1,80 @@
+# Small Stage4 Full3D direct smoke input; this is a complete one-run .dat.
+schema_version = 1
+model_id = "task038_stage4_p2_h100"
+run_id = "task038_stage4_p2_h100_full3d_direct_mpi1"
+comparison_group = "task038_stage4_p2_h100"
+dimension = 3
+
+[geometry]
+geometry_kind = "rectangular_block_grating"
+period_x_nm = 50.0
+period_y_nm = 25.0
+z_min_nm = -10.0
+z_max_nm = 130.0
+interface_z_nm = 0.0
+air_height_nm = 130.0
+substrate_thickness_nm = 10.0
+grating_width_x_nm = 17.0
+grating_width_y_nm = 25.0
+grating_height_nm = 120.0
+
+[materials]
+n_air = [1.0, 0.0]
+mu_r = [1.0, 0.0]
+substrate_name = "Si / silicon"
+n_substrate = [0.999002304859, 0.00182649365]
+grating_name = "Si / silicon"
+n_grating = [0.999002304859, 0.00182649365]
+
+[incidence]
+wavelength_nm = 13.5
+grazing_angle_deg = 10.0
+azimuth_deg = 0.0
+polarization = "s"
+electric_amplitude = 1.0
+
+[discretization]
+nedelec_degree = 2
+visualization_degree = 2
+mesh_target_nm = 100.0
+mesh_cell_type = "auto"
+mesh_spacing_mode = "auto"
+assembly_backend = "standard_full"
+floquet_constraint_mode = "auto"
+
+[boundary]
+use_floquet_x = true
+use_floquet_y = true
+vertical_boundary = "dtn_port"
+scattering_background = "layered"
+dtn_order_policy = "auto_propagating"
+dtn_assembly = "auxiliary"
+use_pml = false
+
+[method]
+kind = "full3d_direct"
+
+[solver]
+direct_solver_profile = "default"
+linear_solver = "direct"
+
+[execution]
+mpi_size = 1
+warning_memory_gib = 4.0
+terminate_memory_gib = 8.0
+timeout_seconds = 1800
+require_zero_swap = true
+
+[output]
+results_root = "results"
+unique_output = true
+export_fields = true
+export_diffraction_orders = true
+export_canonical_vectors = true
+export_modal_amplitudes = true
+export_reference_planes = false
+diffraction_sample_count_x = 32
+diffraction_sample_count_y = 32
+probe_fraction = 0.75
+diffraction_order_max_m = 2
+diffraction_order_max_n = 2

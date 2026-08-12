@@ -189,17 +189,27 @@ def test_launcher_bootstrap_is_byte_exact_and_probe_is_not_numerical(tmp_path):
         )
 
 
-def test_public_adapter_unavailable_is_recorded_and_fails_closed(tmp_path):
+def test_public_full3d_adapter_is_connected_but_worker_result_is_not_numeric_pass(
+    tmp_path,
+):
     specification = _input(tmp_path, results_root=str(tmp_path / "results"))
+
+    class _CompletedProcess(_FakeProcess):
+        pass
+
     result = launch_specification(
         specification,
         source_sha=SOURCE_SHA,
         timestamp="20260812T000001.000000Z",
+        popen_factory=lambda *_args, **_kwargs: _CompletedProcess(0),
+        sample_factory=lambda _pid: _authority(),
+        sleep=lambda _seconds: None,
+        poll_interval=0.0,
     )
-    assert result["result_classification"] == "adapter_unavailable"
-    assert result["exit_status"] is None
+    assert result["result_classification"] == "worker_exit0"
+    assert result["exit_status"] == 0
     summary = json.loads(Path(result["summary"]).read_bytes())
-    assert summary["result_classification"] == "adapter_unavailable"
+    assert summary["result_classification"] == "worker_exit0"
     manifest = json.loads(Path(result["manifest"]).read_bytes())
     assert manifest["resolved_method_adapter"] == "task038.full3d_direct"
 

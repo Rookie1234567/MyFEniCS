@@ -82,7 +82,7 @@ def _contract_bundle(tmp_path: Path, method: str = "full3d_direct"):
     return specification, run_directory, kwargs
 
 
-def test_plan_and_dry_run_cover_all_current_methods_without_solver_adapters(tmp_path):
+def test_plan_and_dry_run_cover_all_current_methods_with_connection_status(tmp_path):
     for method, template in TEMPLATES.items():
         specification = load_and_resolve(template)
         payload = dry_run_payload(specification)
@@ -92,7 +92,10 @@ def test_plan_and_dry_run_cover_all_current_methods_without_solver_adapters(tmp_
         assert payload["resolved_method_adapter"][
             "identity"
         ] == method_adapter_identity(method)
-        assert payload["resolved_method_adapter"]["status"] == "not_connected_in_T3"
+        expected_available = method == "full3d_direct"
+        assert payload["resolved_method_adapter"]["status"] == (
+            "connected" if expected_available else "unavailable"
+        )
         assert json.dumps(payload, sort_keys=True) == json.dumps(
             dry_run_payload(specification), sort_keys=True
         )
@@ -105,7 +108,7 @@ def test_plan_and_dry_run_cover_all_current_methods_without_solver_adapters(tmp_
             mpiexec_command="/opt/mpiexec",
         )
         assert plan.shell is False
-        assert plan.adapter_available is False
+        assert plan.adapter_available is expected_available
         assert plan.worker_module == WORKER_MODULE
         assert plan.argv[:6] == (
             "/opt/mpiexec",

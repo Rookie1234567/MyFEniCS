@@ -23,6 +23,7 @@ METHOD_ADAPTERS = {
     "hybrid_direct": "task038.hybrid_direct",
     "hybrid_iterative": "task038.hybrid_iterative",
 }
+CONNECTED_METHODS = frozenset({"full3d_direct"})
 
 
 @dataclass(frozen=True)
@@ -57,11 +58,11 @@ def method_adapter_identity(method: str) -> str:
 
 
 def method_adapter_available(method: str) -> bool:
-    """Report T3 status without pretending to provide a numerical adapter."""
+    """Report availability of the adapters actually connected in Task38."""
 
     if method not in METHOD_ADAPTERS:
         raise InputError(f"method.kind: unsupported Task38 method {method!r}")
-    return False
+    return method in CONNECTED_METHODS
 
 
 def build_execution_plan(
@@ -181,13 +182,18 @@ def dry_run_payload(specification: RunSpecification) -> dict[str, Any]:
         ),
         "resolved_method_adapter": {
             "identity": method_adapter_identity(specification.method["kind"]),
-            "status": "not_connected_in_T3",
+            "status": (
+                "connected"
+                if method_adapter_available(specification.method["kind"])
+                else "unavailable"
+            ),
         },
     }
 
 
 __all__ = [
     "CONTRACT_PROBE_ADAPTER",
+    "CONNECTED_METHODS",
     "ExecutionPlan",
     "METHOD_ADAPTERS",
     "WORKER_MODULE",

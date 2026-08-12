@@ -1,4 +1,4 @@
-"""Private Task38 worker contract probe; no numerical adapter is implemented here."""
+"""Private Task38 worker contract and resolved-payload dispatch."""
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ def _read_json_bytes(
     return value, payload, None
 
 
-def validate_worker_contract(
+def _load_and_validate_worker_payload(
     *,
     resolved_config: str | Path,
     manifest: str | Path,
@@ -38,8 +38,8 @@ def validate_worker_contract(
     expected_resolved_config_sha256: str,
     actual_mpi_size: int,
     contract_probe: bool = False,
-) -> list[str]:
-    """Validate resolved/manifest identity without reading the original .dat."""
+) -> tuple[dict[str, Any] | None, list[str]]:
+    """Read each contract JSON once and return the validated resolved payload."""
 
     resolved_path = Path(resolved_config)
     manifest_path = Path(manifest)
@@ -56,7 +56,7 @@ def validate_worker_contract(
     if manifest_error:
         errors.append(manifest_error)
     if resolved is None or resolved_bytes is None or manifest_value is None:
-        return errors
+        return None, errors
 
     resolved_sha = hashlib.sha256(resolved_bytes).hexdigest()
     if resolved_sha != expected_resolved_config_sha256:
@@ -146,6 +146,13 @@ def validate_worker_contract(
         errors.append("manifest solver payload mismatch")
     if manifest_value.get("requested_modes") != requested_modes:
         errors.append("manifest requested-mode identity mismatch")
+    return resolved, errors
+
+
+def validate_worker_contract(**kwargs: Any) -> list[str]:
+    """Validate worker identity without reading the original .dat."""
+
+    _resolved, errors = _load_and_validate_worker_payload(**kwargs)
     return errors
 
 
@@ -165,6 +172,27 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _dispatch_resolved_payload(
+    resolved_payload: dict[str, Any],
+    *,
+    expected_method: str,
+    output_directory: Path,
+) -> tuple[int, list[str]]:
+    """Dispatch the already validated payload without rereading its input."""
+
+    if expected_method != "full3d_direct":
+        return 3, ["Task38 numerical adapter is unavailable for this method"]
+    from src.runners.task038_full3d_direct import run_full3d_direct
+
+    try:
+        result = run_full3d_direct(resolved_payload, output_directory)
+    except Exception as exc:  # convert one worker boundary failure to a nonzero exit
+        return 4, [f"Task38 Full3D direct adapter failed: {exc}"]
+    if not result["passed"]:
+        return 4, list(result["errors"])
+    return 0, []
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
@@ -172,7 +200,7 @@ def main(argv: list[str] | None = None) -> int:
     except ImportError as exc:
         raise SystemExit(f"Task38 worker requires mpi4py: {exc}") from exc
     comm = MPI.COMM_WORLD
-    errors = validate_worker_contract(
+    resolved_payload, errors = _load_and_validate_worker_payload(
         resolved_config=args.resolved_config,
         manifest=args.manifest,
         expected_input_sha256=args.expected_input_sha256,
@@ -192,22 +220,32 @@ def main(argv: list[str] | None = None) -> int:
             for error in errors:
                 print(f"Task38 worker contract error: {error}")
         return 2
-    if not args.contract_probe:
+    if args.contract_probe:
+        comm.Barrier()
         if comm.rank == 0:
-            print("Task38 numerical worker adapter is not connected")
-        return 3
-    comm.Barrier()
-    if comm.rank == 0:
-        marker = args.expected_output_directory / "worker_contract_probe.json"
-        marker.write_bytes(
-            json.dumps(
-                {"status": "contract_probe_pass", "mpi_size": comm.size},
-                sort_keys=True,
-                separators=(",", ":"),
-            ).encode("utf-8")
-            + b"\n"
-        )
-    return 0
+            marker = args.expected_output_directory / "worker_contract_probe.json"
+            marker.write_bytes(
+                json.dumps(
+                    {"status": "contract_probe_pass", "mpi_size": comm.size},
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode("utf-8")
+                + b"\n"
+            )
+        return 0
+    if resolved_payload is None:
+        return 2
+    exit_status, dispatch_errors = _dispatch_resolved_payload(
+        resolved_payload,
+        expected_method=args.expected_method,
+        output_directory=args.expected_output_directory,
+    )
+    if exit_status != 0:
+        if comm.rank == 0:
+            for error in dispatch_errors:
+                print(f"Task38 Full3D direct authority error: {error}")
+        return exit_status
+    return exit_status
 
 
 if __name__ == "__main__":

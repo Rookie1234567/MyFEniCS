@@ -102,7 +102,7 @@ python scripts/run_case.py input/path/to/case.dat --dry-run
 | `discretization.nedelec_interior_degree` | `integer` | `order` | no | `—` | — | 3d | cell interior 阶次 | `nedelec_interior_degree` | >= 1; must be supplied with trace degree | `6` |
 | `discretization.visualization_degree` | `integer` | `order` | no | `2` | — | 2d/3d | 可视化/导出阶次 | `visualization_degree` | >= 1 | `6` |
 | `discretization.mesh_target_nm` | `float` | `nm` | yes | `—` | — | 2d/3d | 目标网格尺寸 | `mesh_target_size` | > 0 | `10.0` |
-| `discretization.mesh_cell_type` | `enum` | `none` | yes | `—` | triangle, quadrilateral, tetrahedron, hexahedron | 2d/3d | 网格单元类型 | `2D mesh_cell_shape / 3D mesh_cell_type` | 2D allows triangle/quadrilateral; 3D allows tetrahedron/hexahedron | `"hexahedron"` |
+| `discretization.mesh_cell_type` | `enum` | `none` | yes | `—` | auto, triangle, quadrilateral, tetrahedron, hexahedron | 2d/3d | 网格单元类型 | `2D mesh_cell_shape / 3D mesh_cell_type` | 2D allows triangle/quadrilateral; 3D allows auto/tetrahedron/hexahedron | `"hexahedron"` |
 | `discretization.mesh_spacing_mode` | `enum` | `none` | no | `auto` | auto, uniform_strict, boundary_fitted, local_refined | 3d | 三维网格尺寸分配策略 | `mesh_spacing_mode` | — | `"boundary_fitted"` |
 | `discretization.mesh_refined_size_nm` | `float` | `nm` | no | `—` | — | 3d | 三维局部细化尺寸 | `mesh_refined_size` | > 0 when refinement is enabled | `5.0` |
 | `discretization.mesh_refinement_radius_nm` | `float` | `nm` | no | `—` | — | 3d | 三维局部细化半径 | `mesh_refinement_radius` | > 0 when refinement is enabled | `25.0` |

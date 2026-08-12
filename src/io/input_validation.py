@@ -324,9 +324,14 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
             "rectangular_block_grating",
         }:
             raise _error("geometry.geometry_kind", "invalid 3D geometry kind")
-        if discretization["mesh_cell_type"] not in {"tetrahedron", "hexahedron"}:
+        if discretization["mesh_cell_type"] not in {
+            "auto",
+            "tetrahedron",
+            "hexahedron",
+        }:
             raise _error(
-                "discretization.mesh_cell_type", "3D allows tetrahedron or hexahedron"
+                "discretization.mesh_cell_type",
+                "3D allows auto, tetrahedron, or hexahedron",
             )
         if incidence["polarization"] not in {"s", "p", "custom"}:
             raise _error("incidence.polarization", "3D allows s, p, or custom")
@@ -889,12 +894,16 @@ def _build_2d_config(config: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
-    from src.common.config_3d import (
-        SimulationConfig3D,
-        qualify_stage4_full3d_assembly_backend,
-        resolve_stage4_full3d_assembly_backend,
-    )
+def simulation_config_3d_from_normalized(
+    config: Mapping[str, Any],
+):
+    """Build the runtime 3D config from the already-normalized public fields.
+
+    T2 resolution and the later Full3D adapter deliberately share this one
+    field mapping.  The adapter must not reconstruct a second public schema.
+    """
+
+    from src.common.config_3d import SimulationConfig3D
 
     g = config["geometry"]
     m = config["materials"]
@@ -908,21 +917,19 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
         if "grazing_angle_deg" in i
         else i["tilt_from_downward_z_deg"]
     )
-    cfg = SimulationConfig3D(
+    if g["geometry_kind"] == "rectangular_block_grating":
+        stage_case = "stage4_block_grating"
+    elif g["geometry_kind"] == "fresnel_interface":
+        stage_case = "fresnel_interface"
+    elif b.get("use_floquet_x") and not b.get("use_pml"):
+        stage_case = "floquet_airbox"
+    elif b.get("use_pml"):
+        stage_case = "pml_airbox"
+    else:
+        stage_case = "stage1_airbox"
+    return SimulationConfig3D(
         case_name=config["model_id"],
-        stage_case="stage4_block_grating"
-        if g["geometry_kind"] == "rectangular_block_grating"
-        else (
-            "fresnel_interface"
-            if g["geometry_kind"] == "fresnel_interface"
-            else (
-                "floquet_airbox"
-                if b.get("use_floquet_x") and not b.get("use_pml")
-                else "pml_airbox"
-                if b.get("use_pml")
-                else "stage1_airbox"
-            )
-        ),
+        stage_case=stage_case,
         geometry_kind=g["geometry_kind"],
         lambda0=i["wavelength_nm"],
         n_air=_complex(m["n_air"]),
@@ -969,6 +976,10 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
         mesh_refinement_radius=d.get("mesh_refinement_radius_nm"),
         floquet_constraint_mode=d.get("floquet_constraint_mode", "auto"),
         diffraction_zero_order_only=b.get("dtn_order_policy") == "zero_order",
+        # These public reporting requests remain in the resolved output
+        # payload.  The current solver's auto DtN mode selection reads the
+        # config fields below, so T4 deliberately keeps the legacy identity
+        # until a reporting-only application is qualified before T7.
         diffraction_order_max_m=None,
         diffraction_order_max_n=None,
         diffraction_sample_count_x=out["diffraction_sample_count_x"],
@@ -984,6 +995,18 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
         stage4_full3d_assembly_backend=d.get("assembly_backend", "standard_full"),
         unique_output=out["unique_output"],
     )
+
+
+def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
+    from src.common.config_3d import (
+        qualify_stage4_full3d_assembly_backend,
+        resolve_stage4_full3d_assembly_backend,
+    )
+
+    i = config["incidence"]
+    d = config["discretization"]
+    cfg = simulation_config_3d_from_normalized(config)
+    theta = cfg.incident_theta_deg
     try:
         fixed_trace_contract = cfg.nedelec_fixed_trace_contract
         trace_degree_resolved = cfg.nedelec_trace_degree_resolved

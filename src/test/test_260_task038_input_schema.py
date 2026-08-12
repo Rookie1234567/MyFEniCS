@@ -102,6 +102,13 @@ def test_schema_identity_sections_and_unique_whitelist():
         "boundary_fitted",
         "local_refined",
     )
+    assert FIELD_SPECS_BY_KEY["discretization.mesh_cell_type"].allowed == (
+        "auto",
+        "triangle",
+        "quadrilateral",
+        "tetrahedron",
+        "hexahedron",
+    )
     assert FIELD_SPECS_BY_KEY["boundary.dtn_order_policy"].allowed == (
         "zero_order",
         "auto_propagating",
