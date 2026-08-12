@@ -7,7 +7,8 @@
 | 项目 | 当前结论 |
 | --- | --- |
 | working branch | `codex/20260806-task37-iterative-extra-development` |
-| latest code/source before this response | `766154ae731ee9fac6d23492801ed7ac6e318616`（M4Y formal source；本次文档提交前的 clean code SHA） |
+| latest code/source before this response | `a3c677f0777eb858ac8b3435fec4cff92f29d9f3`（M5 formal source；本次文档提交前的 clean code SHA） |
+| M4Y formal source | `766154ae731ee9fac6d23492801ed7ac6e318616` |
 | previous M1 closeout source | `cc0573ba34cee13b1eb3b8dc8e51ac7e7cbe0dfc`（承接 `949494c...` 的历史文档/代码提交） |
 | M1 formal source 1 | `ad589ca1e7d473e6ed77827f8bb23410f21c38a9` |
 | M1 execution-fix formal source | `caed4dea78e9d9a924e2ad06daba9dd635801e94` |
@@ -19,7 +20,8 @@
 | M3Y packed full-store | `PASS / QUALIFIED`（明确授权的 research-only lane） |
 | M4Y packed patch PC | `FORMAL_NUMERIC_FAIL / NOT_QUALIFIED`；checkerboard source 超过 `0.70` |
 | M4Y-W 固定权重诊断 | `BEST_CASE_STRUCTURE_DIAGNOSTIC_ONLY / not_formal_pass` |
-| M5/M6/PDE | `not_run_yet`；已获用户授权继续正式研究 |
+| M5 第一屏 | `PASS / COERCIVE_TARGET_MET_WITHOUT_COARSE`；checker 26/26 |
+| M6/DtN/PDE | `not_run_yet`；已获用户授权继续正式研究 |
 | docs commit | `this_response_commit (exact SHA reported in final handoff)` |
 
 历史 execution-fix raw 的 p4 canonical adjoint 曾失败；随后用户授权继续 formal-count 范围内的正式研究。M1 v2 仍是正式 `PASS / QUALIFIED`，M2 high-complement oracle 的 checkerboard source 触发正式数值 Gate 失败，因此 M2 为 `FORMAL_NUMERIC_FAIL / NOT_QUALIFIED`。在该失败之后，用户又明确授权执行独立的 M3Y packed-store research lane；M3Y checker 正式通过。随后 M4Y 正式运行，但 checkerboard source 再次触发数值 Gate，故 M4Y 为 `FORMAL_NUMERIC_FAIL / NOT_QUALIFIED`；M4Y-W 只提供结构诊断，不改变该结论，也不代表 PDE 目标通过。所有结论均不放宽数值、容量、RSS、swap 或 provenance Gate。
@@ -77,7 +79,7 @@ M2 的通俗含义是：把一个完整的 882 维局部 patch 分成低阶 300 
 | fixed three-action symmetric LHL | `0.7318570005704766` |
 | exact patch inverse sanity | `2.1656111107723205e-12` |
 
-这些结果排除了“只补 low 阶段即可恢复 M2”的解释；这些旧离线诊断本身不构成 M3Y 资格，资格来自本轮正式 raw/checker。M3Y 已由用户越过阶段锁后正式通过；M4Y 已完成正式运行但因 checkerboard 数值 Gate 失败而 `NOT_QUALIFIED`，M5/M6、PDE、RTA 和 full PDE process-tree RSS 仍为 `not_run_yet`/`not_measured`。
+这些结果排除了“只补 low 阶段即可恢复 M2”的解释；这些旧离线诊断本身不构成 M3Y 资格，资格来自本轮正式 raw/checker。M3Y 已由用户越过阶段锁后正式通过；M4Y 已完成正式运行但因 checkerboard 数值 Gate 失败而 `NOT_QUALIFIED`；M5 第一屏随后正式通过，M6、PDE、RTA 和 full PDE process-tree RSS 仍为 `not_run_yet`/`not_measured`。
 
 ## 两个 fixture/provenance 缺陷
 
@@ -163,7 +165,55 @@ M4Y-W 只比较三种预先固定的合并权重：正式的左侧 PoU、无权 
 
 ## M4Y 之后的边界
 
-用户已明确授权继续独立 M5 research lane；这不把 M4Y 的 `FORMAL_NUMERIC_FAIL` 改成 PASS，也不放宽 `<2,000,000,000 B`、swap=0、true residual、physics 或 provenance Gate。M5、M6、PDE、RTA、full true residual、direct-authority physics comparison 和最终 PDE process-tree RSS 当前均为 `not_run_yet`/`not_measured`。ordinary default 未改变；不得把 M4Y-W 的结构诊断或 M4Y 的 online peak 当作 PDE qualification。
+用户已明确授权继续独立 M5 research lane；这不把 M4Y 的 `FORMAL_NUMERIC_FAIL` 改成 PASS，也不放宽 `<2,000,000,000 B`、swap=0、true residual、physics 或 provenance Gate。M5 第一屏已正式通过；M6、PDE、RTA、full true residual、direct-authority physics comparison 和最终 PDE process-tree RSS 仍为 `not_run_yet`/`not_measured`。75D coarse 因 iter100 true residual 已低于 `1e-8` 且没有传播型平台而 `not_needed/not_run`，不是 75D 资格化。ordinary default 未改变；不得把 M4Y-W 的结构诊断或 M4Y/M5 的 online peak 当作 PDE qualification。
+
+## M5 coercive global FGMRES 第一屏
+
+M5 第一屏用固定 coercive full-space 算子 `B0 = Kcurl + k0^2 M_abs_epsilon` 检查一个右预条件 FGMRES 是否能把真实残差持续压低。FGMRES 允许预条件器随当前 residual 改变，因此这里不能把 PETSc 内部 monitor norm 当作最终依据；每个 checkpoint 都重新做真实 `B0` action，checker 再从保存数组独立计算 `rhs-B0*x`。
+
+| 项目 | 正式实测 |
+| --- | --- |
+| source | `a3c677f0777eb858ac8b3435fec4cff92f29d9f3` |
+| scope | MPI1、p6/h10、252 cells、173,802 rows、882 local rows、9,210 constraints |
+| outer solver | right FGMRES，restart=20，max_it=100，unpreconditioned norm |
+| fixed screen | `rtol=0`、`atol=0`，checkpoint `20/50/100` |
+| watchdog | RC0，`status=pass`，elapsed `1185.6522394389904 s` |
+| checker | RC0，`status=pass`，26/26 checks true，`problems=[]` |
+| 分类 | `M5 FIRST_SCREEN_PASS / COERCIVE_TARGET_MET_WITHOUT_COARSE` |
+
+| checkpoint | worker reported | checker true residual | Gate |
+| --- | ---: | ---: | --- |
+| iter20 | `1.2075357244328856e-4` | `1.2075357244328856e-4` | `<=0.40` PASS |
+| iter50 | `3.1216557608039517e-6` | `3.121655760822562e-6` | 中间下降 |
+| iter100 | `2.9165492426098423e-9` | `2.916549231606929e-9` | `<=1e-3` PASS |
+| iter50 → iter100 | — | 严格下降 | PASS |
+
+`converged_reason=-3` 是固定 `rtol=atol=0`、`max_it=100` 达到预算后的预期 `DIVERGED_ITS` 终止语义，不是 positive PETSc convergence；正式 PASS 依据是 checker 独立重算的 explicit true residual 与资源/架构 Gate。
+
+| 资源/架构 | 实测 |
+| --- | --- |
+| stage / online peak | `1,183,698,944 B` / `978,083,840 B` |
+| swap / cleanup | `0 / 0`；stage、online processes gone |
+| operator / PC / sample actions | `108 / 100 / 3`；总 action `209=1+108+100` |
+| M3Y store | 84 factors、252 cells、`525,196,562 B`、mmap read-only |
+| factor reuse / copy | `168 / 0` |
+| PoU closure | `0.0` |
+| materialization | global matrix、static condensation、trace slab、Schur、DtN、coarse、PDE 均 false |
+| fine space / default | `uncondensed_fullspace` / `ordinary_default=false` |
+
+固定 physical-RHS-like source 的 SHA 是 `6f91c83e1722a07958e6d757f7aa13f88858c95ea9ff88fe9e8693629b6f2c6d`。M4Y 仍为 `FORMAL_NUMERIC_FAIL / NOT_QUALIFIED`，M5 是用户 override 后开启的独立 research lane，不改写 M4Y 负结果。
+
+iter100 已低于 `1e-8`，且没有传播型平台，所以固定 75D wave coarse 为 `not_needed/not_run`，不是 75D 已通过。M5 第一屏也不是 PDE 或 official physics qualification；M6/DtN、time-harmonic PDE、RTA、direct-authority physics comparison 和最终 PDE `<2,000,000,000 B` 目标仍未运行/未测量。
+
+| M5 证据 | 路径 / SHA |
+| --- | --- |
+| raw | `benchmarks/artifacts/task037_extra_development/m5_a3c677f_run1` |
+| watchdog summary | `m5_watchdog_summary.json`；`ccda2b2ab38b175f15fc40b28575ac21cf39ebd5fe492adf77eb8d4e34c242a7` |
+| worker summary | `m5_worker_summary.json`；`8b26af2962183ca8bc85734cd593d67cf899022813f7c85f6069db8ba12d4556` |
+| stage summary | `stage_summary.json`；`410ce5a6763e14be5c505c192509a5b8672d52e41af10a48b259a0fa51309d37` |
+| timeline | `m5_timeline.jsonl`；`03c06817c2f076933708c4d1d57864db21e2a0452475747fd302f630aecac39b` |
+| raw evidence | `b384cfa89b934618eb9d0e8f2cceea9ca5b4f8926684f232d8e7c084471ea85b` |
+| compact | `benchmarks/cases/101_task37_extra_development/records/m5_coercive_fgmres_screen.json`；`822c2d2af336395fc85fbfec99567029f29092be3413cd60da6c19beb4b901dc` |
 
 ## 实现与测试收口
 
@@ -238,6 +288,6 @@ M3Y 代码提交链为 `12777a72497a98576bcb8caa15d58b13a0c837c0`（初始实现
 
 ## 未运行项与硬停止
 
-M1 v2 已通过；M2 已完成正式运行但因 checkerboard 数值 Gate 失败而 `NOT_QUALIFIED`；M3Y 已由用户明确越锁授权并正式通过；M4Y 已正式运行但因 checkerboard 数值 Gate 失败而 `FORMAL_NUMERIC_FAIL / NOT_QUALIFIED`。当前仍未运行的是 M5、M6、PDE、official field/RTA、full true residual、direct-authority physics comparison 和 PDE process-tree RSS，均为 `not_run_yet`/`not_measured`。尚不能声称达成 MPI1 full PDE RSS 严格小于 2,000,000,000 B、swap=0 且直接法物理对照通过的最终目标。
+M1 v2 已通过；M2 已完成正式运行但因 checkerboard 数值 Gate 失败而 `NOT_QUALIFIED`；M3Y 已由用户明确越锁授权并正式通过；M4Y 已正式运行但因 checkerboard 数值 Gate 失败而 `FORMAL_NUMERIC_FAIL / NOT_QUALIFIED`；M5 第一屏已正式通过，分类为 `M5 FIRST_SCREEN_PASS / COERCIVE_TARGET_MET_WITHOUT_COARSE`。当前仍未运行的是 M6、PDE、official field/RTA、direct-authority physics comparison 和 PDE process-tree RSS，均为 `not_run_yet`/`not_measured`。75D coarse 因 M5 iter100 true residual 已低于 `1e-8` 且没有传播型平台而 `not_needed/not_run`。尚不能声称达成 MPI1 full PDE RSS 严格小于 2,000,000,000 B、swap=0 且直接法物理对照通过的最终目标。
 
-M2 与 M4Y 的数值 Gate 失败均保持原始负结论；用户之后的明确授权已开启 M3Y、M4Y 以及后续 M5/M6 正式研究，但没有把任何失败改写为通过，也没有放宽 Gate。M1/M2/M3Y/M4Y compact、所有早期执行失败 raw 和 M4Y-W 诊断均保留；没有新分支、PR、master/default 修改。研究代码和历史负结果保留，ordinary default 不变。
+M2 与 M4Y 的数值 Gate 失败均保持原始负结论；用户之后的明确授权已开启 M3Y、M4Y 以及后续 M5/M6 正式研究，但没有把任何失败改写为通过，也没有放宽 Gate。M1/M2/M3Y/M4Y/M5 compact、所有早期执行失败 raw 和 M4Y-W 诊断均保留；没有新分支、PR、master/default 修改。研究代码和历史负结果保留，ordinary default 不变。
