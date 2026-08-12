@@ -1,0 +1,47 @@
+{
+  "schema_version": "task039.inherited-p6h10-topology.v1",
+  "classification": "inherited_measured",
+  "role": "same_geometry_topology_not_5nm_measurement",
+  "sources": {
+    "full3d_geometry": {
+      "path": "benchmarks/cases/095_high_order_local_hp_resource_envelope/records/global_hexa_p1_p6_h10_p6_assembly_time_condensed_independent_mpi8.json",
+      "sha256": "96ac3949efc236393d4c2dbc6e1fa334ad5ccb0e9796bdeba13fbe0515577dd8",
+      "classification": "inherited_measured",
+      "role": "same_geometry_topology_not_5nm_measurement",
+      "fields": {
+        "cells": 252,
+        "full_fe_dofs": 173802,
+        "active_trace_rows": 51192,
+        "old_auxiliary_rows": 80,
+        "old_total_rows": 51272,
+        "old_matrix_nnz": 41989040.0
+      }
+    },
+    "hybrid_endcaps": {
+      "path": "benchmarks/artifacts/task037c/final_e87d096/r3_direct_phi_0_m120/run/solver_record.json",
+      "sha256": "ab9d54e52410d0b59f2a75abd459f79da415237b6de84d63e14fea1e15204f44",
+      "classification": "inherited_measured",
+      "role": "same_geometry_topology_not_5nm_measurement",
+      "fields": {
+        "bottom": {
+          "full_fe_rows": 25986,
+          "trace_rows_before_constraints": 9786,
+          "active_trace_rows": 8424,
+          "cell_interior_rows": 16200,
+          "floquet_slave_rows": 1362,
+          "old_external_auxiliary_rows": 40,
+          "old_local_algebra_rows": 8464
+        },
+        "top": {
+          "full_fe_rows": 25986,
+          "trace_rows_before_constraints": 9786,
+          "active_trace_rows": 8424,
+          "cell_interior_rows": 16200,
+          "floquet_slave_rows": 1362,
+          "old_external_auxiliary_rows": 40,
+          "old_local_algebra_rows": 8464
+        }
+      }
+    }
+  }
+}
