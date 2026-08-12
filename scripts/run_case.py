@@ -7,8 +7,12 @@ import json
 import sys
 from pathlib import Path
 
-from src.io import dry_run_payload, load_and_resolve
-from src.io.input_loader import InputError
+_REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPOSITORY_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPOSITORY_ROOT))
+
+from src.io import dry_run_payload, load_and_resolve  # noqa: E402
+from src.io.input_loader import InputError  # noqa: E402
 
 
 def _parser() -> argparse.ArgumentParser:

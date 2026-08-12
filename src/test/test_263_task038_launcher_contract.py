@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import subprocess
+import sys
 from dataclasses import replace
 from pathlib import Path
 
@@ -143,6 +145,26 @@ def test_public_cli_modes_are_thin_and_side_effect_free(tmp_path, capsys, monkey
         run_case_main([str(specification.source_path), "--unknown"])
     with pytest.raises(SystemExit):
         run_case_main([])
+
+
+def test_public_script_bootstraps_repository_root_without_pythonpath():
+    environment = os.environ.copy()
+    environment.pop("PYTHONPATH", None)
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/run_case.py",
+            "input/templates/full3d_direct_example.dat",
+            "--validate-only",
+        ],
+        cwd=ROOT,
+        env=environment,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert json.loads(completed.stdout)["status"] == "valid"
 
 
 def test_launcher_bootstrap_is_byte_exact_and_probe_is_not_numerical(tmp_path):
