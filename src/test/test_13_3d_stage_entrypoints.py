@@ -54,13 +54,7 @@ class Test3DStageEntrypoints(unittest.TestCase):
         with self.assertRaises(ValueError):
             run_stage4b_block_grating_3d_case(stage4a, out_dir)
 
-    def test_pycharm_3d_args_use_only_active_dataclass_group(self):
-        default_args = main_module._pycharm_args_3d()
-        self.assertEqual(
-            default_args[default_args.index("--stage-case") + 1], "stage1_airbox"
-        )
-        self.assertNotIn("--grating-width-x", default_args)
-
+    def test_retained_pycharm_3d_args_keep_research_dataclass_group(self):
         args = main_module._pycharm_args_3d("3d_stage4b_demo_direct_h5")
         self.assertIn("--stage-case", args)
         self.assertEqual(args[args.index("--stage-case") + 1], "stage4_block_grating")

@@ -1,5 +1,6 @@
 """Pure Task38 T7 checks for ordinary preset migration and runtime seams."""
 
+import json
 from pathlib import Path
 
 import pytest
@@ -9,156 +10,16 @@ from src.io import load_and_resolve
 from src.io.execution_plan import CONNECTED_METHODS
 from src.io.input_loader import InputError
 from src.io.input_validation import (
-    simulation_config_2d_from_normalized,
     simulation_config_3d_from_normalized,
 )
 from src.io.preset_migration import MIGRATED_PRESET_DATS
 from src.common.modes_3d import outgoing_port_modes_3d
 from src.postprocessing.diffraction_3d import _power_orders_for_reporting
-from src.runners import run_3d_cases
-from src.runners import run_cases
 from src.runners.task038_2d import run_2d
 
 
 ROOT = Path(__file__).resolve().parents[2]
 ORDINARY_2D = ROOT / "input/templates/ordinary_2d_example.dat"
-MIGRATED_3D_CASES = (
-    (
-        "3d_stage1_airbox_smoke",
-        {"case_name", "stage4_boundary_model"},
-    ),
-    (
-        "3d_stage2a_floquet_smoke",
-        {
-            "case_name",
-            "eps_substrate",
-            "n_substrate",
-            "pml_bottom_thickness",
-            "pml_top_thickness",
-            "stage4_boundary_model",
-            "substrate_thickness",
-        },
-    ),
-    (
-        "3d_stage2b_pml_smoke",
-        {
-            "case_name",
-            "eps_substrate",
-            "n_substrate",
-            "stage4_boundary_model",
-            "substrate_thickness",
-        },
-    ),
-    (
-        "3d_stage2c_fresnel_smoke",
-        {"case_name", "stage4_boundary_model", "substrate_thickness"},
-    ),
-    (
-        "3d_stage4a_flat_layer_direct",
-        {
-            "case_name",
-            "diffraction_order_max_m",
-            "diffraction_order_max_n",
-            "eps_grating",
-            "grating_index",
-            "grating_material_label",
-            "n_grating",
-            "reporting_diffraction_order_max_m",
-            "reporting_diffraction_order_max_n",
-        },
-    ),
-)
-MIGRATED_2D_CASES = (
-    (
-        "2d_tm_pml_floquet_smoke",
-        {"case_name", "port_boundary_model", "port_dtn_order_count"},
-    ),
-    (
-        "2d_tm_dtn_auxiliary_smoke",
-        {
-            "case_name",
-            "pml_bottom_thickness",
-            "pml_top_thickness",
-            "port_dtn_order_count",
-        },
-    ),
-    (
-        "2d_tm_dtn_explicit_smoke",
-        {
-            "case_name",
-            "pml_bottom_thickness",
-            "pml_top_thickness",
-            "port_dtn_order_count",
-        },
-    ),
-    (
-        "2d_te_port_smoke",
-        {
-            "case_name",
-            "pml_bottom_thickness",
-            "pml_top_thickness",
-            "port_dtn_order_count",
-        },
-    ),
-    (
-        "2d_complex_absorption",
-        {
-            "case_name",
-            "pml_bottom_thickness",
-            "pml_top_thickness",
-            "port_dtn_order_count",
-        },
-    ),
-    (
-        "2d_euv_grating_direct",
-        {
-            "case_name",
-            "pml_bottom_thickness",
-            "pml_top_thickness",
-            "port_dtn_order_count",
-        },
-    ),
-)
-
-
-def _captured_legacy_3d_config(name, tmp_path):
-    captured = []
-    original = run_3d_cases._run_stage_config
-    run_3d_cases._run_stage_config = lambda cfg, _out_dir: captured.append(cfg) or {}
-    try:
-        _, argv = main.preset_cli_args(name)
-        run_3d_cases.main([*argv, "--results-root", str(tmp_path / f"legacy_{name}")])
-    finally:
-        run_3d_cases._run_stage_config = original
-    assert len(captured) == 1
-    return captured[0]
-
-
-def _captured_legacy_2d_config(name, tmp_path):
-    captured = []
-    originals = {
-        key: getattr(run_cases, key)
-        for key in ("run_case", "run_te_case", "run_port_case", "run_te_port_case")
-    }
-
-    def fake_solver(cfg, *_args, **_kwargs):
-        captured.append(cfg)
-        return {
-            "case_name": cfg.case_name,
-            "config": cfg.as_jsonable(),
-            "power_metrics": {},
-        }
-
-    for key in originals:
-        setattr(run_cases, key, fake_solver)
-    try:
-        _, argv = main.preset_cli_args(name)
-        run_cases.main([*argv, "--results-root", str(tmp_path / f"legacy_{name}")])
-    finally:
-        for key, value in originals.items():
-            setattr(run_cases, key, value)
-    assert len(captured) == 1
-    return captured[0]
 
 
 def _summary():
@@ -231,10 +92,7 @@ def test_te_port_adapter_uses_the_existing_port_entrypoint(tmp_path):
 
 
 def test_explicit_dtn_keeps_legacy_auto_order_semantics(tmp_path):
-    legacy = main.PRESETS_2D["2d_tm_dtn_explicit_smoke"]
     specification = load_and_resolve(ROOT / "input/smoke/2d_tm_dtn_explicit_smoke.dat")
-    assert legacy.port_dtn_assembly == "explicit"
-    assert legacy.port_use_diffraction_orders is True
     assert specification.boundary["dtn_assembly"] == "explicit"
     assert specification.boundary["dtn_order_policy"] == "auto_propagating"
 
@@ -246,7 +104,7 @@ def test_explicit_dtn_keeps_legacy_auto_order_semantics(tmp_path):
 
     result = run_2d(specification.as_jsonable(), tmp_path, solver_runner=fake_solver)
     assert result["passed"] is True
-    assert received["cfg"].port_dtn_assembly == legacy.port_dtn_assembly
+    assert received["cfg"].port_dtn_assembly == "explicit"
     assert received["cfg"].port_use_diffraction_orders is True
 
 
@@ -316,72 +174,6 @@ def test_2d_adapter_rejects_requested_power_without_metrics(tmp_path):
     assert any("power metric" in error for error in result["errors"])
 
 
-@pytest.mark.parametrize("name,excluded_fields", MIGRATED_3D_CASES)
-def test_migrated_3d_dat_matches_legacy_parser_runtime(name, excluded_fields, tmp_path):
-    legacy_cfg = _captured_legacy_3d_config(name, tmp_path)
-    dat_path = ROOT / MIGRATED_PRESET_DATS[name]
-    specification = load_and_resolve(dat_path)
-    dat_cfg = simulation_config_3d_from_normalized(specification.as_jsonable())
-    legacy = legacy_cfg.as_jsonable()
-    migrated = dat_cfg.as_jsonable()
-    diffs = {
-        key: (legacy.get(key), migrated.get(key))
-        for key in sorted(set(legacy) | set(migrated))
-        if legacy.get(key) != migrated.get(key)
-    }
-    assert set(diffs) == excluded_fields
-    assert legacy["stage_case"] == migrated["stage_case"]
-    assert legacy["geometry_kind"] == migrated["geometry_kind"]
-    assert legacy["period_x"] == migrated["period_x"]
-    assert legacy["period_y"] == migrated["period_y"]
-    assert legacy["lambda0"] == migrated["lambda0"]
-    assert legacy["incident_theta_deg"] == migrated["incident_theta_deg"]
-    assert legacy["incident_phi_deg"] == migrated["incident_phi_deg"]
-    assert legacy["polarization_kind"] == migrated["polarization_kind"]
-    assert legacy["use_floquet_xy"] == migrated["use_floquet_xy"]
-    assert legacy["use_pml"] == migrated["use_pml"]
-    assert legacy["z_min"] == migrated["z_min"]
-    assert legacy["z_max"] == migrated["z_max"]
-
-
-@pytest.mark.parametrize("name,excluded_fields", MIGRATED_2D_CASES)
-def test_migrated_2d_dat_matches_legacy_parser_runtime(name, excluded_fields, tmp_path):
-    legacy_cfg = _captured_legacy_2d_config(name, tmp_path)
-    dat_path = ROOT / MIGRATED_PRESET_DATS[name]
-    specification = load_and_resolve(dat_path)
-    dat_cfg = simulation_config_2d_from_normalized(specification.as_jsonable())
-    legacy = legacy_cfg.as_jsonable()
-    migrated = dat_cfg.as_jsonable()
-    diffs = {
-        key: (legacy.get(key), migrated.get(key))
-        for key in sorted(set(legacy) | set(migrated))
-        if legacy.get(key) != migrated.get(key)
-    }
-    assert set(diffs) == excluded_fields
-    for key in (
-        "period_x",
-        "air_height",
-        "substrate_thickness",
-        "grating_width",
-        "grating_height",
-        "lambda0",
-        "incident_angle_deg",
-        "k0",
-        "kx",
-        "ky",
-        "polarization_type",
-        "calculation_method",
-        "constraint_backend",
-        "scattering_background",
-        "use_pml",
-        "port_use_pml",
-        "port_use_diffraction_orders",
-        "port_dtn_assembly",
-    ):
-        assert legacy[key] == migrated[key], key
-    assert len(specification.physical_model_sha256) == 64
-
-
 def test_te_dtn_auto_is_rejected_but_zero_order_is_resolvable(tmp_path):
     source = (ROOT / "input/smoke/2d_tm_dtn_auxiliary_smoke.dat").read_text(
         encoding="utf-8"
@@ -420,10 +212,9 @@ def test_preset_mapping_has_exact_scope_and_retains_history():
     assert len(MIGRATED_PRESET_DATS) == 11
     assert len(set(MIGRATED_PRESET_DATS.values())) == 11
     assert all((ROOT / path).is_file() for path in MIGRATED_PRESET_DATS.values())
-    assert set(MIGRATED_PRESET_DATS) <= set(main.PRESET_INFO)
-    retained = set(main.PRESETS_3D) - {
-        name for name in MIGRATED_PRESET_DATS if name.startswith("3d_")
-    }
+    assert set(MIGRATED_PRESET_DATS) <= set(main.available_preset_names())
+    assert not set(MIGRATED_PRESET_DATS) & set(main.PRESET_INFO)
+    retained = set(main.PRESETS_3D)
     assert retained == {
         "3d_stage4b_demo_direct_h5",
         "3d_stage4b_demo_direct_h3",
@@ -432,6 +223,26 @@ def test_preset_mapping_has_exact_scope_and_retains_history():
         "3d_target_grating_direct_h5",
         "3d_target_grating_direct_h3",
     }
+
+
+def test_t7_compact_evidence_is_present_and_hash_bound():
+    record_path = (
+        ROOT
+        / "docs/task038_input_driven_configuration/outcomes/records/"
+        / "t7_preset_migration_equivalence_v1.json"
+    )
+    record = json.loads(record_path.read_text(encoding="utf-8"))
+    assert record["status"] == "formal_pde_equivalence_pass"
+    assert record["source_sha"] == "f86a7e42dc2c44d36c8e5ab6dfa1d9bb8ef8ed42"
+    assert set(record["formal_runs"]) == {
+        "A_legacy_2d",
+        "A_dat_2d",
+        "B_legacy_stage1",
+        "B_dat_stage1",
+    }
+    assert record["comparison"]["A_legacy_vs_dat"]["status"] == "pass"
+    assert record["comparison"]["B_legacy_vs_dat"]["status"] == "pass"
+    assert record["boundaries"]["research_history_presets_retained"] == 6
 
 
 def test_iterative_mpi1_dat_preserves_mpi8_physical_identity():
