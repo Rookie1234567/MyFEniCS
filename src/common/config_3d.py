@@ -136,6 +136,10 @@ class SimulationConfig3D:
     diffraction_zero_order_only: bool = True
     diffraction_order_max_m: int | None = None
     diffraction_order_max_n: int | None = None
+    # Reporting-only Task38 bounds; outgoing DtN mode selection keeps reading
+    # diffraction_order_max_m/n above for legacy identity.
+    reporting_diffraction_order_max_m: int | None = None
+    reporting_diffraction_order_max_n: int | None = None
     diffraction_sample_count_x: int = 24
     diffraction_sample_count_y: int = 24
     diffraction_top_probe_z: float | None = None

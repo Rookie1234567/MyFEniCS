@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from copy import deepcopy
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -669,6 +670,27 @@ def _reference_archive(
     return archive, record_path, record
 
 
+def _reference_sampling_grid(cfg: Any, bottom_interface_nm: float, top_interface_nm: float):
+    """Use requested reference sampling while preserving ordinary defaults."""
+
+    sample_x = cfg.x_min + (
+        np.arange(int(cfg.full3d_reference_sample_count_x), dtype=np.float64) + 0.5
+    ) * cfg.period_x / int(cfg.full3d_reference_sample_count_x)
+    sample_y = cfg.y_min + (
+        np.arange(int(cfg.full3d_reference_sample_count_y), dtype=np.float64) + 0.5
+    ) * cfg.period_y / int(cfg.full3d_reference_sample_count_y)
+    if cfg.full3d_reference_plane_z:
+        sample_z = np.asarray(cfg.full3d_reference_plane_z, dtype=np.float64)
+    else:
+        sample_z = np.linspace(
+            bottom_interface_nm,
+            top_interface_nm,
+            5,
+            dtype=np.float64,
+        )
+    return sample_x, sample_y, sample_z
+
+
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Task32 Phase6 real-QEP hybrid augmented direct diagnostic"
@@ -969,8 +991,14 @@ def _task035c_worker_authority_gate(
     return gate
 
 
-def main() -> None:
-    args = _parse_args()
+def main(
+    argv: list[str] | None = None,
+    *,
+    config_override: Any | None = None,
+    use_case080_reference: bool = True,
+) -> dict[str, Any]:
+    command_argv = list(sys.argv[1:] if argv is None else argv)
+    args = _parse_args(argv)
     if args.h_nm <= 0.0:
         raise SystemExit("--h-nm must be positive.")
     modal_h_nm = (
@@ -1096,21 +1124,40 @@ def main() -> None:
 
     total_started = time.perf_counter()
     timings: dict[str, float] = {}
-    cfg = target_stage4_config(degree=args.degree, h_nm=args.h_nm)
-    cfg.stage4_full3d_assembly_backend = (
-        args.stage4_full3d_assembly_backend
-    )
-    cfg.matrix_diagnostics_assemble_only = False
-    cfg.matrix_diagnostics_factorization_only = False
-    cfg.incident_theta_deg = 90.0 - float(args.incident_grazing_deg)
-    cfg.polarization_kind = args.polarization_kind
-    modal_cfg = target_stage4_config(
-        degree=modal_degree,
-        h_nm=modal_h_nm,
-    )
-    modal_cfg.incident_theta_deg = cfg.incident_theta_deg
-    modal_cfg.incident_phi_deg = cfg.incident_phi_deg
-    modal_cfg.polarization_kind = cfg.polarization_kind
+    if config_override is None:
+        cfg = target_stage4_config(degree=args.degree, h_nm=args.h_nm)
+        cfg.stage4_full3d_assembly_backend = (
+            args.stage4_full3d_assembly_backend
+        )
+        cfg.matrix_diagnostics_assemble_only = False
+        cfg.matrix_diagnostics_factorization_only = False
+        cfg.incident_theta_deg = 90.0 - float(args.incident_grazing_deg)
+        cfg.polarization_kind = args.polarization_kind
+        modal_cfg = target_stage4_config(
+            degree=modal_degree,
+            h_nm=modal_h_nm,
+        )
+        modal_cfg.incident_theta_deg = cfg.incident_theta_deg
+        modal_cfg.incident_phi_deg = cfg.incident_phi_deg
+        modal_cfg.polarization_kind = cfg.polarization_kind
+    else:
+        cfg = deepcopy(config_override)
+        if (
+            cfg.nedelec_degree != args.degree
+            or not np.isclose(cfg.mesh_target_size, args.h_nm)
+            or modal_degree != cfg.nedelec_degree
+            or not np.isclose(modal_h_nm, cfg.mesh_target_size)
+            or not np.isclose(
+                cfg.incident_theta_deg, 90.0 - args.incident_grazing_deg
+            )
+            or cfg.polarization_kind != args.polarization_kind
+            or cfg.stage4_full3d_assembly_backend
+            != args.stage4_full3d_assembly_backend
+        ):
+            raise SystemExit(
+                "Task38 config override does not match the explicit runner argv."
+            )
+        modal_cfg = deepcopy(cfg)
     operators = None
     positive = None
     negative = None
@@ -1213,7 +1260,7 @@ def main() -> None:
                 **provenance,
                 "timestamp_utc": timestamp,
                 "command": "python -m benchmarks.run_task032_phase6_augmented "
-                + " ".join(shlex.quote(value) for value in sys.argv[1:]),
+                + " ".join(shlex.quote(value) for value in command_argv),
                 "mpi_size": comm.size,
                 "container_image": args.container_image,
                 "container_digest": args.container_digest,
@@ -1665,6 +1712,8 @@ def main() -> None:
                 f"{comparison_solver_path} direct comparison complete"
             )
         pinned_reference_case = (
+            use_case080_reference
+            and
             abs(args.incident_grazing_deg - 10.0) <= 1.0e-12
             and (
                 args.polarization_kind == "s"
@@ -1695,7 +1744,9 @@ def main() -> None:
             else None
         )
         reference_archive = (
-            _reference_archive(loaded_reference) if pinned_reference_case else None
+            _reference_archive(loaded_reference)
+            if pinned_reference_case
+            else None
         )
         if reference_archive is not None:
             archive_path, reference_record_path, reference_record = reference_archive
@@ -1704,17 +1755,10 @@ def main() -> None:
                 sample_y = np.asarray(archive["y_nm"], dtype=np.float64)
                 sample_z = np.asarray(archive["z_nm"], dtype=np.float64)
         else:
-            sample_x = cfg.x_min + (
-                np.arange(40, dtype=np.float64) + 0.5
-            ) * cfg.period_x / 40.0
-            sample_y = cfg.y_min + (
-                np.arange(20, dtype=np.float64) + 0.5
-            ) * cfg.period_y / 20.0
-            sample_z = np.linspace(
+            sample_x, sample_y, sample_z = _reference_sampling_grid(
+                cfg,
                 args.bottom_interface_nm,
                 args.top_interface_nm,
-                5,
-                dtype=np.float64,
             )
         mark_stage("middle_plane_reconstruction")
         started = time.perf_counter()
@@ -2170,7 +2214,7 @@ def main() -> None:
                 **provenance,
                 "timestamp_utc": timestamp,
                 "command": "python -m benchmarks.run_task032_phase6_augmented "
-                + " ".join(shlex.quote(value) for value in sys.argv[1:]),
+                + " ".join(shlex.quote(value) for value in command_argv),
                 "mpi_size": comm.size,
                 "container_image": args.container_image,
                 "container_digest": args.container_digest,
@@ -2641,6 +2685,7 @@ def main() -> None:
     comm.barrier()
     if not record["qualification"]["integration_pass"]:
         raise SystemExit(2)
+    return record
 
 
 if __name__ == "__main__":
