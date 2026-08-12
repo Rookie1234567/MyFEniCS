@@ -194,3 +194,7 @@ Task034 的最终证据见 [`task034_workstation_wsl_adaptive_scalability/outcom
 | Task036 | [`final_summary.md`](task036_forward_solver_bugfix_hardening/outcomes/final_summary.md)；direct Hybrid controlled-negative hardening，ordinary default unchanged |
 | Task037 | [`summary.md`](task037_static_condensed_full3d_iterative/outcomes/summary.md)；Full3D static-condensed M3a explicit-opt-in research baseline |
 | Task037b | [`task.md`](task037b_hybrid_fem_modal_iterative/task.md)、[`review_report_v7.md`](task037b_hybrid_fem_modal_iterative/review_report_v7.md)、[`outcomes/summary.md`](task037b_hybrid_fem_modal_iterative/outcomes/summary.md)；冻结 M10 的 Case101 README、compact record 与 dedicated runner/watchdog/checker 为显式研究入口 |
+
+## Task038 入口
+
+Task038 提供单一 `.dat` 配置入口，包含 11 个 migrated ordinary preset 和 6 个 retained research/history preset；ordinary numerical algorithms unchanged。当前入口、结项证据和 Review V1 分别见 [`response_v1`](task038_input_driven_configuration/response_v1.md)、[`outcomes summary`](task038_input_driven_configuration/outcomes/summary.md) 和 [`Review V1`](task038_input_driven_configuration/review_report_v1.md)。集成与是否合入 master 以当前分支审阅状态为准。

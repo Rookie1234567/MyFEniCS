@@ -2360,3 +2360,18 @@ phase_e_unlocked = false
 ```
 
 未运行 Phase E/F、目标 adaptive cycle、p4/h5 heavy 或 ordinary-default change。
+
+# 48. Task038：input-driven configuration
+
+Task038 用一个显式 `.dat` 文件统一描述 geometry、materials、incidence、discretization、boundary、method、solver、execution 和 output。这样用户提交的是一份可审查、可复现的配置合同，而不是在多个 preset 或命令行参数之间拼接物理值；它改变用户配置方式和入口，不改变 Maxwell、Hybrid、DtN 的数学实现，也不改变 ordinary defaults。
+
+| 项目 | 当前边界与证据 |
+|---|---|
+| 迁移范围 | 11 个 ordinary preset 已迁移到 dat；6 个 research/history preset 保留原有 Python replay。 |
+| 已连接入口 | ordinary 2D、staged 3D、Full3D direct、Hybrid direct、Hybrid iterative adapters；普通入口为一个 `.dat`。 |
+| provenance | 运行 manifest 保存 input/source/physical/resolved-config hash 及执行身份，供结果目录和审阅记录回溯。 |
+| source branch inherited evidence | source branch full pytest：1119 passed / 48 skipped / 0 failed / 1514.73 s；这是 inherited source evidence，不是本 integration worktree 的测试结论。 |
+| integration status | integration full pytest = `not_run_yet`；本阶段不把它写成通过。 |
+| T6 resource boundary | RSS `6585.01953125 MiB`；数值 Gate 通过，但 preferred resource boundary 未满足；这不是数值失败。 |
+| 尚未运行项 | current-same-SHA Hybrid iterative MPI1 formal = `not_run`；T4/T5 selected-field capability = `not_run_by_capability`。 |
+| 详细入口 | [`Task038 outcomes summary`](task038_input_driven_configuration/outcomes/summary.md)、[`response_v1`](task038_input_driven_configuration/response_v1.md)、[`Review V1`](task038_input_driven_configuration/review_report_v1.md)。 |
