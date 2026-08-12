@@ -211,6 +211,31 @@ def test_launcher_bootstrap_is_byte_exact_and_probe_is_not_numerical(tmp_path):
         )
 
 
+def test_worker_popen_uses_task38_source_root_as_cwd(tmp_path):
+    specification = _input(tmp_path, results_root=str(tmp_path / "results"))
+    captured = {}
+
+    def popen(argv, **kwargs):
+        captured["argv"] = argv
+        captured["kwargs"] = kwargs
+        return _FakeProcess(0)
+
+    result = launch_specification(
+        specification,
+        source_sha=SOURCE_SHA,
+        timestamp="20260812T000001.250000Z",
+        contract_probe=True,
+        mpiexec_command="/opt/mpiexec",
+        python_executable="/opt/python",
+        popen_factory=popen,
+        sample_factory=lambda _pid: _authority(),
+        sleep=lambda _seconds: None,
+        poll_interval=0.0,
+    )
+    assert result["result_classification"] == "contract_probe_pass"
+    assert captured["kwargs"]["cwd"] == Path(__file__).resolve().parents[2]
+
+
 def test_public_full3d_adapter_is_connected_but_worker_result_is_not_numeric_pass(
     tmp_path,
 ):

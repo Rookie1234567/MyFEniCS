@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import shutil
 import sys
 from dataclasses import dataclass
@@ -80,7 +81,7 @@ def build_execution_plan(
     """Build the private worker argv without shell interpolation or overrides."""
 
     run_directory = Path(run_directory).resolve()
-    executable = Path(python_executable or sys.executable).resolve()
+    executable = Path(os.path.abspath(python_executable or sys.executable))
     method = str(specification.method["kind"])
     if contract_probe:
         if adapter_identity != CONTRACT_PROBE_ADAPTER:

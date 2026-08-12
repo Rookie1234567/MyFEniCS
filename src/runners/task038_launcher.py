@@ -72,7 +72,7 @@ def _validate_source_sha(value: str) -> str:
 
 def _environment_identity() -> dict[str, Any]:
     return {
-        "python_executable": str(Path(sys.executable).resolve()),
+        "python_executable": os.path.abspath(sys.executable),
         "platform": platform.platform(),
         "qualified_activation": os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION"),
     }
@@ -227,6 +227,7 @@ def _run_worker(
         process = popen_factory(
             list(plan.argv),
             shell=False,
+            cwd=Path(__file__).resolve().parents[2],
             stdout=stdout,
             stderr=subprocess.STDOUT,
             text=True,

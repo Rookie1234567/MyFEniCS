@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -149,6 +150,24 @@ def test_contract_probe_is_explicit_and_not_a_public_method_override(tmp_path):
             source_sha="source-sha",
             adapter_identity="task038.other",
         )
+
+
+def test_plan_preserves_a_symlinked_python_entrypoint(tmp_path):
+    specification = _spec("full3d_direct")
+    python_link = tmp_path / "venv" / "bin" / "python"
+    python_link.parent.mkdir(parents=True)
+    python_link.symlink_to(Path("/usr/bin/python3.12"))
+    plan = build_execution_plan(
+        specification,
+        tmp_path / "run",
+        source_sha="source-sha",
+        python_executable=python_link,
+        mpiexec_command="/opt/mpiexec",
+    )
+    expected = Path(os.path.abspath(python_link))
+    assert plan.executable == expected
+    assert plan.argv[3] == str(expected)
+    assert plan.executable != expected.resolve()
 
 
 def test_worker_contract_accepts_matching_resolved_and_manifest(tmp_path):
