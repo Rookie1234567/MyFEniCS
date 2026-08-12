@@ -46,6 +46,8 @@
 | [`task035_hcurl_goal_oriented_adaptivity/README.md`](task035_hcurl_goal_oriented_adaptivity/README.md) | Task035 Review V6 research baseline：periodic tetra、DWR/R5、one-cycle h 与 fixed-mesh p-up 证据 |
 | [`task035b_high_order_local_hp_resource_envelope/README.md`](task035b_high_order_local_hp_resource_envelope/README.md) | Task035b Review V2 批次：h13 仍为 10/12 + 10/12；setup/cache 与 rank-memory 为工程正结果，三条 iterative screen 为受控负结果，仍无 Hybrid-eligible candidate |
 | [`task035c_hybrid_channel_memory_closure/README.md`](task035c_hybrid_channel_memory_closure/README.md) | Task035c：修复 Full3D–Hybrid 离散 phase/traction 合同；p6/h10 六路径 12/12+12/12；static Hybrid M120 峰值下降31.89%，50%目标未达 |
+| [`task037c_hybrid_iterative_robustness/response_v3.md`](task037c_hybrid_iterative_robustness/response_v3.md) | Task037c白名单能力已选择性进入master；S偏振、1°、phi=-5/0/+5 的授权 research extension；M_robust=120，preferred RSS未过，不是production-qualified |
+| [`task038_input_driven_configuration/response_v1.md`](task038_input_driven_configuration/response_v1.md) | Task038：完成单一 `.dat` input-driven configuration；11 migrated/6 retained，ordinary数值算法不变，final full pytest 1119 passed/48 skipped |
 | [`benchmark.md`](benchmark.md) | Benchmark 分层设计和当前结果；编号 cases 见 [`../benchmarks/cases/README.md`](../benchmarks/cases/README.md) |
 | [`../notes/theory/README.md`](../notes/theory/README.md) | 从 Maxwell 强/弱式到 DtN、RTA、凝聚、迭代 PC 和 Hybrid FEM–Modal 的规范理论 |
 | [`../notes/reference/code_walkthrough.md`](../notes/reference/code_walkthrough.md) | 逐模块/函数、对象生命周期与 equation-to-code 导读 |
@@ -73,7 +75,9 @@
 | Task035c | Hybrid channel accuracy + static memory closure | p2/h5 root cause closed；p6/h10 MPI8 six-path physics pass；mandatory memory pass with 50% gap |
 | Task036 | Hybrid direct bugfix hardening | controlled-negative closeout；保留 research evidence，ordinary default unchanged |
 | Task037 | Full3D static-condensed iterative baseline | M3a explicit-opt-in research baseline；不是 production default |
-| Task037b | frozen Hybrid iterative M10 | Review V7 selective-merge qualified research capability；master release仍待 full pytest + integrated anchor Gate |
+| Task037b | frozen Hybrid iterative M10 | 白名单能力已选择性进入 master；仍为 explicit-opt-in research capability，ordinary defaults不变，not production-qualified |
+| Task037c | Hybrid iterative robustness | 白名单能力已选择性进入 master；S偏振、1°、phi=-5/0/+5、M_robust=120；preferred RSS未过，仍not production-qualified |
+| Task038 | 单一 `.dat` input-driven configuration | 执行分支已完成并推送，尚未review/merge master；11 migrated/6 retained，ordinary 数值算法不变，final full pytest 1119 passed/48 skipped |
 
 ## 当前任务
 
@@ -93,7 +97,9 @@
 | Task035c | `task035c_hybrid_channel_memory_closure/` | 执行完成待集中Review；ordinary default不变；未授权master merge或h13 adaptive |
 | Task036 | `task036_forward_solver_bugfix_hardening/` | controlled-negative direct Hybrid closeout；不提升 ordinary default |
 | Task037 | `task037_static_condensed_full3d_iterative/` | M3a explicit-opt-in Full3D research baseline；0.7 nm not qualified |
-| Task037b | `task037b_hybrid_fem_modal_iterative/` | frozen M10 capability已形成；Case101 compact、runner/watchdog/checker与V7边界见下方 |
+| Task037b | `task037b_hybrid_fem_modal_iterative/` | 白名单能力已选择性进入master；frozen M10仍为explicit-opt-in research capability，ordinary defaults不变；Case101 compact、runner/watchdog/checker与V7边界见下方 |
+| Task037c | `task037c_hybrid_iterative_robustness/` | 白名单能力已选择性进入master；S偏振、1°、phi=-5/0/+5、M_robust=120；preferred RSS未过；not production-qualified |
+| Task038 | `task038_input_driven_configuration/` | 单一 `.dat` 普通入口；11 migrated/6 retained；ordinary 数值算法不变；final full pytest 1119 passed/48 skipped |
 
 ## Task28 审计入口
 
@@ -187,14 +193,12 @@ Task034 的最终证据见 [`task034_workstation_wsl_adaptive_scalability/outcom
 
 完整任务目录仍按 `task.md -> outcomes -> development_progress -> review_report/response` 闭环。从 Task029 起，所有新 Task 都必须遵循 [`task_retrospective_standard.md`](task_retrospective_standard.md)；从 Task032 起，中大型任务 summary 必须表格优先；从 Task033 起，公式和表格 rendered view 也是交付 Gate。Task033 已从 Task032 clean master 建立独立执行分支；后续阶段继续绑定 clean SHA 与独立审阅。
 
-## Task036 / Task037 / Task037b 入口
+## Task036 / Task037 / Task037b / Task037c / Task038 入口
 
 | 任务 | 阶段与入口 |
 |---|---|
 | Task036 | [`final_summary.md`](task036_forward_solver_bugfix_hardening/outcomes/final_summary.md)；direct Hybrid controlled-negative hardening，ordinary default unchanged |
 | Task037 | [`summary.md`](task037_static_condensed_full3d_iterative/outcomes/summary.md)；Full3D static-condensed M3a explicit-opt-in research baseline |
-| Task037b | [`task.md`](task037b_hybrid_fem_modal_iterative/task.md)、[`review_report_v7.md`](task037b_hybrid_fem_modal_iterative/review_report_v7.md)、[`outcomes/summary.md`](task037b_hybrid_fem_modal_iterative/outcomes/summary.md)；冻结 M10 的 Case101 README、compact record 与 dedicated runner/watchdog/checker 为显式研究入口 |
-
-## Task038 入口
-
-Task038 提供单一 `.dat` 配置入口，包含 11 个 migrated ordinary preset 和 6 个 retained research/history preset；ordinary numerical algorithms unchanged。当前入口、结项证据和 Review V1 分别见 [`response_v1`](task038_input_driven_configuration/response_v1.md)、[`outcomes summary`](task038_input_driven_configuration/outcomes/summary.md) 和 [`Review V1`](task038_input_driven_configuration/review_report_v1.md)。集成与是否合入 master 以当前分支审阅状态为准。
+| Task037b | [`task.md`](task037b_hybrid_fem_modal_iterative/task.md)、[`review_report_v7.md`](task037b_hybrid_fem_modal_iterative/review_report_v7.md)、[`outcomes/summary.md`](task037b_hybrid_fem_modal_iterative/outcomes/summary.md)；白名单能力已选择性进入master，frozen M10仍为显式研究入口，ordinary defaults不变、not production-qualified |
+| Task037c | [`response_v3.md`](task037c_hybrid_iterative_robustness/response_v3.md)、[`outcomes/summary.md`](task037c_hybrid_iterative_robustness/outcomes/summary.md)；白名单能力已选择性进入master；S偏振、1°、phi=-5/0/+5、M_robust=120，preferred RSS未过、not production-qualified |
+| Task038 | [`response_v1.md`](task038_input_driven_configuration/response_v1.md)、[`outcomes/summary.md`](task038_input_driven_configuration/outcomes/summary.md)；单一 `.dat` 普通入口、11 migrated/6 retained，ordinary 数值算法不变，final full pytest 1119 passed/48 skipped |
