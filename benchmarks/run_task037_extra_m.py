@@ -20,6 +20,8 @@ from typing import Any
 from benchmarks.run_task037_extra_h2b import (
     _artifact,
     _attach_evidence,
+    _build_b0_form as _h2b_build_b0_form,
+    _expected_jit_options as _h2b_expected_jit_options,
     _p1_authority as _h2b_p1_authority,
     H2B_R2_MANIFEST,
     _lazy_h2a,
@@ -31,6 +33,10 @@ from benchmarks.run_task037_extra_h2b import (
     _write_json,
 )
 from src.solvers.hcurl_h2b_block_smoother import _p0_numeric_sha
+from src.solvers.hcurl_h2b_m2_complement import (
+    M2_Q_ORTHOGONALITY_LIMIT,
+    M2_SPLIT_RECONSTRUCTION_LIMIT,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -1984,8 +1990,8 @@ def _run_m2_worker(run_dir: Path) -> int:
         floquet6 = build_double_floquet_mpc(p6_space, mesh_data, cfg)
         _m2_mark(run_dir, "floquet_mpc_ready", started)
         transfer = build_owner_local_p4_p6_transfer(p4_space, p6_space, p4_mpc=floquet4.mpc, p6_mpc=floquet6.mpc)
-        b0, _epsilon = _build_b0_form(p6_space, mesh_data, cfg)
-        action = build_task037_extra_h1r2_mpc_action(b0, floquet6.mpc, task037_extra_h1r2=True, jit_options=_expected_jit_options(run_dir / "jit_cache"))
+        b0, _epsilon = _h2b_build_b0_form(p6_space, mesh_data, cfg)
+        action = build_task037_extra_h1r2_mpc_action(b0, floquet6.mpc, task037_extra_h1r2=True, jit_options=_h2b_expected_jit_options(run_dir / "jit_cache"))
         _m2_mark(run_dir, "b0_action_ready", started)
         prepared = _m2_prepare_p0_patch(_lazy_h2a(), p6_space, mesh_data, cfg, floquet6, run_dir)
         _m2_mark(run_dir, "p0_authority_ready", started, touching_cell_count=19)
