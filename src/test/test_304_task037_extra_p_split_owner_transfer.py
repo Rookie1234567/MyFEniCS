@@ -19,6 +19,7 @@ from src.solvers import hcurl_p_split_owner_transfer as owner_transfer
 from src.solvers.hcurl_canonical_vector import compare_canonical_packets
 from src.solvers.hcurl_canonical_vector_dolfinx import (
     extract_canonical_full_fe_packets,
+    iter_canonical_full_fe_dual_packets,
     iter_canonical_full_fe_owner_packets,
 )
 from src.solvers.hcurl_p_split_owner_transfer import (
@@ -515,7 +516,7 @@ def test_real_floquet_mpc_owner_transfer_phase_and_orientation() -> None:
     source_function.x.scatter_forward()
     expected_function.interpolate(manufactured_hcurl)
     expected_function.x.scatter_forward()
-    dual_function.interpolate(manufactured_hcurl)
+    dual_function.interpolate(m1._floquet_compatible_p6_dual(cfg))
     dual_function.x.scatter_forward()
     source = _function_to_mpc_vector(source_function, floquet4.mpc)
     expected = _function_to_mpc_vector(expected_function, floquet6.mpc)
@@ -530,6 +531,22 @@ def test_real_floquet_mpc_owner_transfer_phase_and_orientation() -> None:
         transfer.apply_adjoint(dual, adjoint)
         transfer.apply(source, repeat_image)
         transfer.apply_adjoint(dual, repeat_adjoint)
+        adjoint_packets = tuple(
+            iter_canonical_full_fe_dual_packets(p4_space, floquet4.mpc, adjoint)
+        )
+        repeat_adjoint_packets = tuple(
+            iter_canonical_full_fe_dual_packets(
+                p4_space, floquet4.mpc, repeat_adjoint
+            )
+        )
+        assert adjoint_packets == repeat_adjoint_packets
+        local_keys = tuple(packet[0] for packet in adjoint_packets)
+        assert len(local_keys) == len(set(local_keys))
+        global_keys = MPI.COMM_WORLD.allgather(local_keys)
+        flattened_keys = tuple(key for rank_keys in global_keys for key in rank_keys)
+        assert len(flattened_keys) == len(set(flattened_keys))
+        assert sum(len(rank_keys) for rank_keys in global_keys) == len(flattened_keys)
+        assert len(flattened_keys) > 0
         lhs = complex(image.dot(dual))
         rhs = complex(source.dot(adjoint))
         relative = abs(lhs - rhs) / max(abs(lhs), abs(rhs), 1.0)

@@ -45,6 +45,7 @@ M1_IMAGE_LIMIT = 1.0e-11
 M1_ADJOINT_LIMIT = 1.0e-12
 M1_CANONICAL_LIMIT = 1.0e-12
 M1_MANUFACTURED_FIELD_ID = "floquet_compatible_bilinear_p4_v1"
+M1_DUAL_FIELD_ID = "floquet_compatible_degree5_dual_v1"
 M1_EVENTS = (
     "authority_validated",
     "mesh_ready",
@@ -102,6 +103,7 @@ def _m1_scope(mpi_size: int | None = None) -> dict[str, Any]:
         "p4_space": "N1curl_degree4",
         "p6_space": "N1curl_degree6",
         "manufactured_field": M1_MANUFACTURED_FIELD_ID,
+        "dual_field": M1_DUAL_FIELD_ID,
         "fine_space": "uncondensed_fullspace",
         "mpi_size": None if mpi_size is None else int(mpi_size),
         "timeout_seconds": M1_TIMEOUT_SECONDS,
@@ -368,18 +370,72 @@ def _floquet_compatible_hcurl(cfg: Any) -> Any:
     return _field
 
 
-def _deterministic_global_dual_values(index_map: Any) -> Any:
-    """Return the fixed dual source from owned global, not rank-local, ids."""
+def _floquet_compatible_p6_dual(cfg: Any) -> Any:
+    """Return the fixed degree-5 Floquet-compatible p6 dual field.
+
+    The qx*qy factors enforce the two Floquet face relations.  The remaining
+    factors have tensor degree at most five in x/y and four in z, so they are
+    representable by the p6 N1curl reference space without a fitted dual.
+    """
 
     import numpy as np
 
-    owned = int(index_map.size_local)
-    local_ids = np.arange(owned, dtype=np.int32)
-    global_ids = np.asarray(index_map.local_to_global(local_ids), dtype=np.int64)
-    if global_ids.shape != (owned,):
-        raise ValueError("index map returned an invalid owned global-id shape")
-    ids = global_ids.astype(np.float64)
-    return np.sin(0.013 * ids) + 1j * np.cos(0.017 * ids)
+    c = np.asarray(
+        (1.0 + 0.2j, -0.3 + 0.4j, 0.7 - 0.1j),
+        dtype=np.complex128,
+    )
+    x_min = float(cfg.x_min)
+    x_max = float(cfg.x_max)
+    y_min = float(cfg.y_min)
+    y_max = float(cfg.y_max)
+    z_min = float(cfg.domain_z_min)
+    z_max = float(cfg.domain_z_max)
+    phase_x = complex(cfg.floquet_phase_x)
+    phase_y = complex(cfg.floquet_phase_y)
+
+    def _field(x: Any) -> Any:
+        points = np.asarray(x, dtype=np.float64)
+        sx = (points[0] - x_min) / (x_max - x_min)
+        sy = (points[1] - y_min) / (y_max - y_min)
+        sz = (points[2] - z_min) / (z_max - z_min)
+        qx = 1.0 + (phase_x - 1.0) * sx
+        qy = 1.0 + (phase_y - 1.0) * sy
+        bx = sx * (1.0 - sx)
+        by = sy * (1.0 - sy)
+        q = qx * qy
+        return np.vstack(
+            (
+                c[0]
+                * q
+                * (
+                    1.0
+                    + 0.13 * bx**2
+                    + 0.07j * by
+                    + 0.11 * sz
+                    + 0.03j * sz**2
+                ),
+                c[1]
+                * q
+                * (
+                    1.0
+                    - 0.09 * bx
+                    + 0.15j * by**2
+                    + 0.12 * sz
+                    + 0.04j * sz**3
+                ),
+                c[2]
+                * q
+                * (
+                    1.0
+                    + 0.11 * bx * by
+                    + 0.08j * bx**2
+                    + 0.09 * sz**2
+                    + 0.02j * sz**4
+                ),
+            )
+        ).astype(np.complex128)
+
+    return _field
 
 
 def _write_canonical_manifest(
@@ -690,15 +746,12 @@ def _run_m1_worker(run_dir: Path, phase: str, expected_mpi_size: int) -> int:
         expected_function = fem.Function(p6_space)
         dual_function = fem.Function(p6_space)
         manufactured_hcurl = _floquet_compatible_hcurl(cfg)
+        dual_hcurl = _floquet_compatible_p6_dual(cfg)
         source_function.interpolate(manufactured_hcurl)
         source_function.x.scatter_forward()
         expected_function.interpolate(manufactured_hcurl)
         expected_function.x.scatter_forward()
-        with dual_function.x.petsc_vec.localForm() as local:
-            owned = int(p6_space.dofmap.index_map.size_local)
-            local.array_w[:owned] = _deterministic_global_dual_values(
-                p6_space.dofmap.index_map
-            )
+        dual_function.interpolate(dual_hcurl)
         dual_function.x.scatter_forward()
         source = _function_to_mpc_vector(source_function, floquet4.mpc)
         expected = _function_to_mpc_vector(expected_function, floquet6.mpc)

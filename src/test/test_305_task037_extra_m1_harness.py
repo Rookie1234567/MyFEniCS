@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 import json
+import inspect
 from pathlib import Path
 import sys
 from types import SimpleNamespace
@@ -468,29 +469,6 @@ def test_m1_parser_exposes_only_requested_subcommands() -> None:
     assert parser.parse_args(["m1-check", "--run-dir", "/tmp/r", "--output", "/tmp/o"]).command == "m1-check"
 
 
-def test_m1_dual_source_is_partition_independent_by_global_id() -> None:
-    class _IndexMap:
-        def __init__(self, start: int, size: int) -> None:
-            self.start = int(start)
-            self.size_local = int(size)
-
-        def local_to_global(self, local_ids: np.ndarray) -> np.ndarray:
-            return self.start + np.asarray(local_ids, dtype=np.int64)
-
-    comm = MPI.COMM_WORLD
-    global_size = 12
-    base, remainder = divmod(global_size, comm.size)
-    start = comm.rank * base + min(comm.rank, remainder)
-    size = base + int(comm.rank < remainder)
-    values = m1._deterministic_global_dual_values(_IndexMap(start, size))
-    packets = comm.allgather((start, values))
-    reconstructed = np.empty(global_size, dtype=np.complex128)
-    for packet_start, packet_values in packets:
-        reconstructed[packet_start : packet_start + len(packet_values)] = packet_values
-    expected = m1._deterministic_global_dual_values(_IndexMap(0, global_size))
-    np.testing.assert_array_equal(reconstructed, expected)
-
-
 def test_m1_floquet_compatible_manufactured_field() -> None:
     cfg = SimpleNamespace(
         x_min=-2.0,
@@ -543,6 +521,70 @@ def test_m1_floquet_compatible_manufactured_field() -> None:
     assert m1._m1_scope()["manufactured_field"] == (
         "floquet_compatible_bilinear_p4_v1"
     )
+
+
+def test_m1_floquet_compatible_p6_dual_contract() -> None:
+    cfg = SimpleNamespace(
+        x_min=-2.0,
+        x_max=3.0,
+        y_min=-1.0,
+        y_max=4.0,
+        domain_z_min=-0.5,
+        domain_z_max=2.0,
+        floquet_phase_x=np.exp(0.37j),
+        floquet_phase_y=np.exp(-0.23j),
+    )
+    field = m1._floquet_compatible_p6_dual(cfg)
+    x_min = np.asarray(
+        [[cfg.x_min, cfg.x_min], [0.25, 0.25], [0.5, 0.75]],
+        dtype=np.float64,
+    )
+    x_max = x_min.copy()
+    x_max[0] = cfg.x_max
+    y_min = x_min.copy()
+    y_min[1] = cfg.y_min
+    y_max = x_min.copy()
+    y_max[1] = cfg.y_max
+    corner_min = np.asarray(
+        [[cfg.x_min], [cfg.y_min], [0.5]],
+        dtype=np.float64,
+    )
+    corner_max = corner_min.copy()
+    corner_max[0] = cfg.x_max
+    corner_max[1] = cfg.y_max
+
+    np.testing.assert_allclose(
+        field(x_max),
+        complex(cfg.floquet_phase_x) * field(x_min),
+        rtol=0.0,
+        atol=1.0e-14,
+    )
+    np.testing.assert_allclose(
+        field(y_max),
+        complex(cfg.floquet_phase_y) * field(y_min),
+        rtol=0.0,
+        atol=1.0e-14,
+    )
+    np.testing.assert_allclose(
+        field(corner_max),
+        complex(cfg.floquet_phase_x)
+        * complex(cfg.floquet_phase_y)
+        * field(corner_min),
+        rtol=0.0,
+        atol=1.0e-14,
+    )
+    assert np.all(np.abs(field(corner_min)[:, 0]) > 0.0)
+    sample = field(
+        np.asarray(
+            [[-1.0, 0.25, 2.0], [0.0, 0.5, 1.5], [0.1, 1.25, 0.75]],
+            dtype=np.float64,
+        )
+    )
+    assert np.all(np.abs(sample) > 0.0)
+    assert m1._m1_scope()["dual_field"] == "floquet_compatible_degree5_dual_v1"
+    worker_source = inspect.getsource(m1._run_m1_worker)
+    assert "_deterministic_global_dual_values" not in worker_source
+    assert "local_to_global" not in worker_source
 
 
 def test_m1_canonical_route_is_owner_local() -> None:
