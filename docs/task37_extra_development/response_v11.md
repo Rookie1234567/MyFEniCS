@@ -2,21 +2,21 @@
 
 ## 授权与结论
 
-用户已明确授权：针对具体执行问题持续研究、定位、做窄修并在监督边界内推进；本轮据此记录 fixture/证据构造纠偏。该授权不放宽任何数值、candidate-count、RSS、swap、physics 或 provenance Gate，不允许把容量或数值负结果包装成 execution-fix，也不允许越过 Review V11 的正式预算和阶段锁定。
+用户已明确授权：针对具体执行问题持续研究、定位、做窄修并在监督边界内推进；本轮又明确授权忽略 Review V11 的“1 formal campaign + 1 execution-fix rerun”次数限制，继续进行本次版本化 M1 formal qualification。该授权只覆盖 formal-count 限制，不放宽任何数值、candidate-count、RSS、swap、physics 或 provenance Gate，不允许把容量或数值负结果包装成 execution-fix，也不允许越过 Review V11 的架构与阶段 Gate。
 
 | 项目 | 当前结论 |
 | --- | --- |
 | working branch | `codex/20260806-task37-iterative-extra-development` |
-| latest pushed code | `949494c73d1c6ece397471f0f0ccc96f78cc1d79` |
+| latest pushed source | `cc0573ba34cee13b1eb3b8dc8e51ac7e7cbe0dfc`（代码内容承接 `949494c...`，本提交含 V11 closeout docs） |
 | M1 formal source 1 | `ad589ca1e7d473e6ed77827f8bb23410f21c38a9` |
 | M1 execution-fix formal source | `caed4dea78e9d9a924e2ad06daba9dd635801e94` |
-| M1 latest dual-fixture fix | `949494c73d1c6ece397471f0f0ccc96f78cc1d79`；尚未 formal qualification |
-| formal budget | `1 campaign + 1 execution-fix rerun` 已耗尽；不得第三次 formal |
-| M1 最终状态 | `NOT_QUALIFIED_FORMAL_BUDGET_EXHAUSTED` |
-| M2–M6 | `not_run_by_gate`；不创建伪空 PASS outcome/record |
+| M1 latest dual-fixture fix | `949494c73d1c6ece397471f0f0ccc96f78cc1d79`；已由当前 v2 formal/checker 资格化 |
+| formal budget | 原 V11 次数限制由用户本轮明确授权忽略；其余 Gate 全部保留 |
+| M1 最终状态 | `PASS / QUALIFIED`（v2 checker 15/15） |
+| M2–M6 | 当前尚未运行；M1 evidence 提交后按 V11 进入 M2 |
 | docs commit | `this_response_commit (exact SHA reported in final handoff)` |
 
-M1 的资源和 p6 image 数值在 execution-fix raw 中达到相应 Gate，但正式 checker 的 p4 canonical adjoint 仍失败。因此当前是“正式资格未形成、且预算耗尽”；诊断证据支持两个 fixture/provenance 缺陷，而不是已经证明 transfer 算法科学失败。最新代码修复也没有重新 formal，不能把它写成 M1 PASS。
+历史 execution-fix raw 的 p4 canonical adjoint 曾失败；本轮用户授权只解除 formal-count 限制后，当前 source 使用已修复 dual fixture，v2 checker 独立重算全部 Gate 并通过。因此当前 M1 为正式 `PASS / QUALIFIED`；该结论不放宽任何数值、容量、RSS、swap 或 provenance Gate。
 
 ## 继承的冻结结论
 
@@ -29,7 +29,9 @@ M1 的资源和 p6 image 数值在 execution-fix raw 中达到相应 Gate，但�
 | initial formal run1 | source `ad589ca...`；MPI1 image `0.31070811280298904`，adjoint `1.6018790302711856e-17`；MPI2 未运行 | MPI1 peak `510,328,832 B`，swap=0，进程退出；worker RC=1 | 旧 affine 本身低阶、可由 p4 表示，但不满足非平凡 Floquet 边界，因而不是合法 constrained-p4 manufactured fixture；归类为 fixture/execution construction failure，不把 image 值当 transfer 科学负结果 |
 | execution-fix formal run1 | source `caed4dea...`；MPI1 image `5.468843900583829e-15`、adjoint `3.1471318267200023e-17`；MPI2 image `5.757606853614202e-15`、adjoint `1.521528936022671e-17`；两边 finite/deterministic | MPI1 peak `521,723,904 B`，MPI2 peak `974,729,216 B`，swap=0，RC=0，进程均退出；p4/p6 rows `53,084/173,802`，constraints `4,124/9,210` | worker 的 p6 image 和普通数值 Gate通过，但 checker 重算 p4 canonical adjoint relative L2=`0.9503885989179789`，故 M1 `gate_failed` |
 
-execution-fix checker 的冻结 record 为 `status=gate_failed`、`pass=false`、`route=M1-review-only`，15 项 checks 中 14 项为 true，唯一 problem 为 `canonical_p4_adjoint`。p6 canonical image relative L2=`1.982326002916046e-15`，max abs=`2.0888966564080594e-13`；p4 canonical adjoint max abs=`16.50305548580111`。p4/p6 两组 packet 的 missing/extra/duplicate 都为 `0/0/0`，所以这是证据绑定的 dual identity failure，不是缺包或资源停止。
+历史 execution-fix checker 的冻结 record 为 `status=gate_failed`、`pass=false`，15 项 checks 中 14 项为 true；该负结果永久保留。当前 v2 checker 为 `status=pass`、`pass=true`、`problems=[]`，15/15 checks true；p6 canonical relative L2=`1.982326002916046e-15`，p4 canonical adjoint relative L2=`1.3580087229674401e-15`，missing/extra/duplicate 全部 `0/0/0`。
+
+当前 v2 运行的资源为 MPI1 peak `521,449,472 B`、MPI2 peak `953,028,608 B`、swap=0、processes_gone=true；retained transfer payload 为 `18,244,384 / 15,574,480 B`，bounded workspace 为 `3,046,112 / 1,757,632 B`。raw source 与 checker source 均 clean、均为 `cc0573ba34cee13b1eb3b8dc8e51ac7e7cbe0dfc`。
 
 ## 两个 fixture/provenance 缺陷
 
@@ -61,7 +63,7 @@ orientation diagnostic 中 252 个 cell 有 82 个 nonzero `cell_info`，但 cur
 
 `949494c...` 的边界是“dual fixture 已改为 partition-independent”，不是“formal M1 已通过”。
 
-旧 formal raw 目录和旧 negative record 永久保留；本轮只新增诊断 compact 与两份 V11 文档。`m1_fullspace_p4_p6_transfer.json` 原字节保留，file SHA 为 `ad4184d82743a3063d426ad2bd2c2e582c5c3f6f5d8999548cf2d81d704422b0`，其 status 仍为 `gate_failed`，不能改写为 pass。
+旧 formal raw 目录和旧 negative record 永久保留；`m1_fullspace_p4_p6_transfer.json` 原字节保留，file SHA 为 `ad4184d82743a3063d426ad2bd2c2e582c5c3f6f5d8999548cf2d81d704422b0`，其 status 仍为 `gate_failed`，不能改写为 pass。当前新增 v2 compact file SHA 为 `6ed2c394fc0e04ed1222024bb1cc89281d6c77ac9be28e07451312906107cf72`，embedded evidence SHA 为 `2820715b3d30d54ee7af9169884b4cf562fbb969c0be31bb2238304366cf56ba`。
 
 ## 证据索引
 
@@ -70,6 +72,8 @@ orientation diagnostic 中 252 个 cell 有 82 个 nonzero `cell_info`，但 cur
 | initial raw | `benchmarks/artifacts/task037_extra_development/m1_ad589ca_run1`；watchdog `d9fc27103c8fe4fd3668e0d64e1d46c19235d1ee5b4b4767218e98be42798cb4` |
 | execution-fix raw | `benchmarks/artifacts/task037_extra_development/m1_caed4dea_execution_fix_run1`；watchdog `d9a094debc89e37df93a2b4bbc7a1209aa0d07b96d879907673b7d82dd38a9c0` |
 | frozen checker negative | `benchmarks/cases/101_task37_extra_development/records/m1_fullspace_p4_p6_transfer.json`；file SHA `ad4184d82743a3063d426ad2bd2c2e582c5c3f6f5d8999548cf2d81d704422b0`；embedded evidence SHA `a6aebc97116ff7d4baf3280d6d705a5fc420ce4f6be15eb9c2bb7582a921774f` |
+| current v2 checker | `benchmarks/cases/101_task37_extra_development/records/m1_fullspace_p4_p6_transfer_v2.json`；file SHA `6ed2c394fc0e04ed1222024bb1cc89281d6c77ac9be28e07451312906107cf72`；embedded evidence SHA `2820715b3d30d54ee7af9169884b4cf562fbb969c0be31bb2238304366cf56ba` |
+| current v2 raw watchdog | `benchmarks/artifacts/task037_extra_development/m1_cc0573b_qualification_run1/m1_watchdog_summary.json`；SHA `7ffa3c129a7938d4a9a34787b6709c62ba6fec950a236df2a46dfb25b3725389` |
 | fixture diagnostics compact | `benchmarks/cases/101_task37_extra_development/records/m1_fixture_diagnostics.json`；由 `evidence_sha256` 自绑定 |
 | source fixture diagnostic | `/tmp/task037_m1_floquet_polynomial_probe.json` SHA `7cc3f26392b3f485fc2d9d9971db97b609c0cf0ceff113f7d47ab5e7acf7c09d`；script SHA `44025eeee04644e365a6126643b1f8b95ba39e8e6528d8194b1eff2ceb2582a0` |
 | MPC diagnostic | `/tmp/task037_m1_mpc_commutation_diagnostic.json` SHA `3522def9cf00c532b8fc1a2a3839a7837d0a60f01903da7295ef5bccf6e519e0`；script SHA `1bcb35d36717398aa415009462a0de79ec2474ed0b684de630fb8195b60dbeb1` |
@@ -78,6 +82,6 @@ orientation diagnostic 中 252 个 cell 有 82 个 nonzero `cell_info`，但 cur
 
 ## 未运行项与硬停止
 
-M1 formal negative 之后不再启动第三次 formal，也不启动 M2–M6。H2B-K、H2D、H4、PDE、official field/RTA、full true residual、direct-authority physics comparison 和 PDE process-tree RSS 均为 `not_run_by_gate`/`not_measured`。因此不能声称达成 MPI1 full PDE RSS 严格小于 2,000,000,000 B、swap=0 且直接法物理对照通过的最终目标。
+当前 M1 v2 已通过，下一阶段是 M2；M2 尚未启动，H2B-K、H2D、H4、PDE、official field/RTA、full true residual、direct-authority physics comparison 和 PDE process-tree RSS 仍为 `not_run_by_gate`/`not_measured`。因此尚不能声称达成 MPI1 full PDE RSS 严格小于 2,000,000,000 B、swap=0 且直接法物理对照通过的最终目标。
 
-没有创建 M2–M6 outcome/record 是 V11 在前置 Gate 失败后的合规选择；没有新分支、PR、master/default 修改。研究代码和诊断结果保留用于后续审阅，但不提升 ordinary default，也不弱化现有负结果。
+M2–M6 在各自 Gate 前不创建伪 PASS 记录；当前仅 M1 v2 已产生正式 compact。没有新分支、PR、master/default 修改。研究代码和历史负结果保留，ordinary default 不变。
