@@ -3620,6 +3620,8 @@ def _run_m3y_builder(run_dir: Path) -> int:
                     ):
                         raise ValueError("M3Y sampled factor is nondeterministic")
                     del repeat_factor, repeat_matrix, repeat
+                if factor.matrix_sha256 != matrix_sha:
+                    raise ValueError("M3Y factor source matrix SHA is not bound")
                 record = {
                     "neighborhood_id": int(neighborhood.neighborhood_id),
                     "key_sha256": neighborhood.key_sha256,
@@ -4791,6 +4793,7 @@ def _m3y_check_raw(run_dir: Path, checker_source: Mapping[str, Any]) -> dict[str
     import numpy as np
     from src.solvers.hcurl_h2b_packed_patch_store import (
         load_h2b_m3y_packed_patch_store,
+        packed_factor_nbytes,
     )
 
     watchdog = _read_json(run_dir / "m3y_watchdog_summary.json")
@@ -4835,8 +4838,21 @@ def _m3y_check_raw(run_dir: Path, checker_source: Mapping[str, Any]) -> dict[str
         watchdog["scope"] == _m3y_scope()
         and builder["scope"] == _m3y_scope()
         and loader["scope"] == _m3y_scope()
+        and watchdog["identity"] == _fixed_identity()
         and builder["identity"] == _fixed_identity()
         and loader["identity"] == _fixed_identity()
+    )
+    command_identity = watchdog["command_identity"]
+    executable = command_identity["python"]
+    checks["command_identity"] = bool(
+        command_identity
+        == {
+            "python": executable,
+            "launch_mode": "direct_singleton",
+            "stage_command": _worker_command(executable, "jit-worker", run_dir),
+            "builder_command": _worker_command(executable, "m3y-builder", run_dir),
+            "loader_command": _worker_command(executable, "m3y-loader", run_dir),
+        }
     )
     stage_metrics = _timeline_metrics(run_dir / "stage_timeline.jsonl", "stage")
     builder_metrics = _timeline_metrics(
@@ -4846,11 +4862,20 @@ def _m3y_check_raw(run_dir: Path, checker_source: Mapping[str, Any]) -> dict[str
         run_dir / "m3y_loader_timeline.jsonl", "m3y_loader"
     )
     checks["stage_resource"] = bool(
-        _m3y_phase_ok(
+        _stage_gate_allows_online(
+            watchdog["stage"],
+            stage,
+            watchdog["stage"]["processes_gone_before_m3y_builder"],
+            run_dir,
+        )
+        and _m3y_phase_ok(
             watchdog["stage"],
             H2B_M3Y_BUILDER_RSS_LIMIT_BYTES,
             "processes_gone_before_m3y_builder",
         )
+        and stage_metrics["peak_rss_bytes"]
+        == watchdog["stage"]["peak_rss_bytes"]
+        and stage_metrics["swap_bytes"] == watchdog["stage"]["swap_bytes"]
         and stage_metrics["peak_rss_bytes"] < H2B_M3Y_BUILDER_RSS_LIMIT_BYTES
         and stage_metrics["swap_bytes"] == 0
     )
@@ -4860,6 +4885,8 @@ def _m3y_check_raw(run_dir: Path, checker_source: Mapping[str, Any]) -> dict[str
             H2B_M3Y_BUILDER_RSS_LIMIT_BYTES,
             "processes_gone_before_m3y_loader",
         )
+        and builder_metrics["peak_rss_bytes"] == watchdog["builder"]["peak_rss_bytes"]
+        and builder_metrics["swap_bytes"] == watchdog["builder"]["swap_bytes"]
         and builder_metrics["peak_rss_bytes"] < H2B_M3Y_BUILDER_RSS_LIMIT_BYTES
         and builder_metrics["swap_bytes"] == 0
         and builder_metrics["compiler_descendant_pids"] == []
@@ -4870,6 +4897,8 @@ def _m3y_check_raw(run_dir: Path, checker_source: Mapping[str, Any]) -> dict[str
             H2B_M3Y_LOADER_RSS_LIMIT_BYTES,
             "processes_gone_after_m3y_loader",
         )
+        and loader_metrics["peak_rss_bytes"] == watchdog["loader"]["peak_rss_bytes"]
+        and loader_metrics["swap_bytes"] == watchdog["loader"]["swap_bytes"]
         and loader_metrics["peak_rss_bytes"] < H2B_M3Y_LOADER_RSS_LIMIT_BYTES
         and loader_metrics["swap_bytes"] == 0
         and loader_metrics["compiler_descendant_pids"] == []
@@ -4957,7 +4986,11 @@ def _m3y_check_raw(run_dir: Path, checker_source: Mapping[str, Any]) -> dict[str
     }
     checks["factor_mapping"] = bool(
         loaded_audit["packed_factor_count"] == len(factors) <= H2B_M3Y_FACTOR_LIMIT
+        and loaded_audit["packed_factor_bytes"]
+        == len(factors) * packed_factor_nbytes(H2B_FIXED_NLOC)
         and len(factor_ids) == len(factors)
+        and len({factor.matrix_sha256 for factor in factors}) == len(factors)
+        and len({factor.factor_sha256 for factor in factors}) == len(factors)
         and all(
             _m3y_valid_sha(factor.matrix_sha256)
             and _m3y_valid_sha(factor.factor_sha256)
@@ -4977,6 +5010,33 @@ def _m3y_check_raw(run_dir: Path, checker_source: Mapping[str, Any]) -> dict[str
             for index, item in enumerate(solve_records)
         )
     )
+    checker_solves: list[dict[str, Any]] = []
+    for factor_id, factor in enumerate(factors):
+        rhs = _m3y_fixed_rhs(factor_id, int(factor.n))
+        solution = factor.solve(rhs)
+        checker_solves.append(
+            {
+                "factor_id": factor_id,
+                "rhs_sha256": _array_sha256(rhs),
+                "solution_sha256": _array_sha256(solution),
+                "finite": bool(np.all(np.isfinite(solution))),
+            }
+        )
+    loader_solve_by_id = {
+        int(item["factor_id"]): item for item in solve_records
+    }
+    checks["checker_factor_solve"] = bool(
+        len(checker_solves) == len(factors)
+        and len(loader_solve_by_id) == len(factors)
+        and all(
+            loader_solve_by_id[item["factor_id"]]["rhs_sha256"] == item["rhs_sha256"]
+            and loader_solve_by_id[item["factor_id"]]["solution_sha256"]
+            == item["solution_sha256"]
+            and loader_solve_by_id[item["factor_id"]]["finite"] is True
+            and item["finite"] is True
+            for item in checker_solves
+        )
+    )
     checks["old_m2_evidence"] = bool(
         _sha256_file(
             ROOT
@@ -4989,12 +5049,22 @@ def _m3y_check_raw(run_dir: Path, checker_source: Mapping[str, Any]) -> dict[str
         builder_measurement["preflight_live_set"] == _m3y_fixed_preflight()
         and builder_measurement["preflight_live_set"]["predicted_live_set_gate"] is True
     )
+    materialization_false_keys = (
+        "patch_matrices",
+        "global_matrix",
+        "global_constraint_matrix",
+        "static_condensation",
+        "trace_slab",
+        "slab_factor",
+        "schur",
+        "ql_qh_transform",
+        "per_cell_factor",
+    )
+    materialization = loaded_audit["materialization_identity"]
     checks["materialization"] = bool(
-        all(value is False for value in _fixed_identity().values() if isinstance(value, bool) and value is False)
-        and loaded_audit["materialization_identity"]["global_matrix"] is False
-        and loaded_audit["materialization_identity"]["static_condensation"] is False
-        and loaded_audit["materialization_identity"]["trace_slab"] is False
-        and loaded_audit["materialization_identity"]["schur"] is False
+        all(materialization[key] is False for key in materialization_false_keys)
+        and loaded_audit["full_dense_factor_count"] == 0
+        and loaded_audit["pivots_retained"] is False
     )
     for name, passed in checks.items():
         if not passed:

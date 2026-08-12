@@ -3,7 +3,10 @@ from __future__ import annotations
 import numpy as np
 
 import benchmarks.run_task037_extra_h2b as runner
-from src.solvers.hcurl_h2b_packed_patch_store import build_h2b_m3y_packed_factor
+from src.solvers.hcurl_h2b_packed_patch_store import (
+    build_h2b_m3y_packed_factor,
+    packed_factor_nbytes,
+)
 
 
 def _small_hpd() -> np.ndarray:
@@ -65,6 +68,9 @@ def test_m3y_fixed_rhs_and_packed_measurement_are_deterministic():
 def test_m3y_audit_missing_key_fails_closed():
     audit = _valid_audit()
     assert runner._m3y_audit_valid(audit)
+    assert packed_factor_nbytes(882) == 882 * 883 // 2 * 16
+    assert runner._m3y_valid_sha("a" * 64)
+    assert not runner._m3y_valid_sha("a" * 63)
     del audit["factorization_info_max"]
     assert not runner._m3y_audit_valid(audit)
 
