@@ -231,6 +231,139 @@ def _require(mapping: Mapping[str, Any], key: str, path: str) -> Any:
     return mapping[key]
 
 
+def _same_profile_value(actual: Any, expected: Any) -> bool:
+    if isinstance(actual, (list, tuple)) and isinstance(expected, (list, tuple)):
+        return len(actual) == len(expected) and all(
+            _same_profile_value(left, right) for left, right in zip(actual, expected)
+        )
+    return actual == expected
+
+
+def task038_hybrid_iterative_profile_errors(
+    config: Mapping[str, Any],
+) -> list[tuple[str, str]]:
+    """Return errors for the finite public profile connected to Task37c.
+
+    The historical Task37c runner constructs its own frozen target profile and
+    therefore cannot safely consume arbitrary public fields.  This explicit
+    table keeps the Task38 adapter fail-closed until a fully input-driven
+    iterative runner exists; it is deliberately not a general capability
+    registry.
+    """
+
+    expected: tuple[tuple[str, str, Any], ...] = (
+        ("geometry", "geometry_kind", "rectangular_block_grating"),
+        ("geometry", "period_x_nm", 50.0),
+        ("geometry", "period_y_nm", 25.0),
+        ("geometry", "z_min_nm", -10.0),
+        ("geometry", "z_max_nm", 130.0),
+        ("geometry", "interface_z_nm", 0.0),
+        ("geometry", "air_height_nm", 130.0),
+        ("geometry", "substrate_thickness_nm", 10.0),
+        ("geometry", "grating_width_x_nm", 17.0),
+        ("geometry", "grating_width_y_nm", 25.0),
+        ("geometry", "grating_height_nm", 120.0),
+        ("materials", "n_air", (1.0, 0.0)),
+        ("materials", "mu_r", (1.0, 0.0)),
+        ("materials", "substrate_name", "Si / silicon"),
+        ("materials", "grating_name", "Si / silicon"),
+        ("materials", "n_substrate", (0.999002304859, 0.00182649365)),
+        ("materials", "n_grating", (0.999002304859, 0.00182649365)),
+        ("incidence", "wavelength_nm", 13.5),
+        ("incidence", "grazing_angle_deg", 1.0),
+        ("incidence", "polarization", "s"),
+        ("incidence", "electric_amplitude", 1.0),
+        ("discretization", "nedelec_degree", 6),
+        ("discretization", "visualization_degree", 6),
+        ("discretization", "mesh_target_nm", 10.0),
+        ("discretization", "mesh_cell_type", "hexahedron"),
+        ("discretization", "mesh_spacing_mode", "boundary_fitted"),
+        ("discretization", "assembly_backend", "assembly_time_static_condensed"),
+        ("discretization", "floquet_constraint_mode", "auto"),
+        ("boundary", "vertical_boundary", "dtn_port"),
+        ("boundary", "scattering_background", "layered"),
+        ("boundary", "use_floquet_x", True),
+        ("boundary", "use_floquet_y", True),
+        ("boundary", "dtn_order_policy", "auto_propagating"),
+        ("boundary", "dtn_assembly", "auxiliary"),
+        ("boundary", "use_pml", False),
+        ("boundary", "pml_alpha", 5.0),
+        ("method", "bottom_interface_nm", 10.0),
+        ("method", "top_interface_nm", 110.0),
+        ("method", "requested_modes_per_direction", 120),
+        ("method", "propagation_model", "full3d_uniform_cg"),
+        ("method", "traction_model", "full3d_one_cell_exact_schur"),
+        ("solver", "linear_solver", "fgmres"),
+        ("solver", "preconditioner", "hybrid_block_ldu_ilu0_dtn_woodbury"),
+        ("solver", "restart", 90),
+        ("solver", "max_iterations", 4500),
+        ("solver", "relative_tolerance", 5.0e-9),
+        ("solver", "absolute_tolerance", 0.0),
+        ("solver", "initial_guess", "zero"),
+        ("solver", "ilu_level", 0),
+        ("solver", "ilu_shift", 0.1),
+        ("solver", "subdomain_count_per_endcap", 1),
+        ("solver", "overlap_fraction", 0.0),
+        ("solver", "side_residual_correction_steps", 2),
+        ("execution", "require_zero_swap", True),
+        ("output", "export_fields", True),
+        ("output", "export_diffraction_orders", True),
+        ("output", "export_canonical_vectors", True),
+        ("output", "export_modal_amplitudes", True),
+        ("output", "export_reference_planes", True),
+        ("output", "reference_plane_z_nm", (10.0, 30.0, 60.0, 90.0, 110.0)),
+        ("output", "sample_count_x", 40),
+        ("output", "sample_count_y", 20),
+        ("output", "diffraction_sample_count_x", 24),
+        ("output", "diffraction_sample_count_y", 24),
+        ("output", "top_probe_z_nm", 110.0),
+        ("output", "bottom_probe_z_nm", 10.0),
+        ("output", "probe_fraction", 0.75),
+        ("output", "diffraction_order_max_m", 2),
+        ("output", "diffraction_order_max_n", 2),
+    )
+    errors: list[tuple[str, str]] = []
+    for section, key, expected_value in expected:
+        values = config[section]
+        actual = values.get(key)
+        if not _same_profile_value(actual, expected_value):
+            errors.append(
+                (
+                    f"{section}.{key}",
+                    f"Task37c iterative adapter requires {expected_value!r}",
+                )
+            )
+    if config["execution"].get("mpi_size") not in {1, 8}:
+        errors.append(
+            (
+                "execution.mpi_size",
+                "Task37c iterative adapter accepts only MPI1 or MPI8",
+            )
+        )
+    incidence = config["incidence"]
+    if incidence.get("azimuth_deg") not in {-5.0, 0.0, 5.0}:
+        errors.append(
+            (
+                "incidence.azimuth_deg",
+                "Task37c iterative adapter accepts only -5, 0, or 5 degrees",
+            )
+        )
+    for key in (
+        "nedelec_trace_degree",
+        "nedelec_interior_degree",
+        "mesh_refined_size_nm",
+        "mesh_refinement_radius_nm",
+    ):
+        if key in config["discretization"]:
+            errors.append(
+                (
+                    f"discretization.{key}",
+                    "Task37c iterative adapter does not accept this override",
+                )
+            )
+    return errors
+
+
 def _validate_cross_fields(config: Mapping[str, Any]) -> None:
     dimension = config["dimension"]
     geometry = config["geometry"]
@@ -556,6 +689,11 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "method",
                 "Hybrid interfaces must lie strictly inside the uniform grating slab",
             )
+        if kind == "hybrid_iterative":
+            profile_errors = task038_hybrid_iterative_profile_errors(config)
+            if profile_errors:
+                path, message = profile_errors[0]
+                raise _error(path, message)
 
     if incidence["polarization"] == "custom":
         if dimension != 3 or "custom_polarization" not in incidence:

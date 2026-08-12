@@ -197,6 +197,17 @@ def _dispatch_resolved_payload(
             )
 
         label = "Hybrid direct"
+    elif expected_method == "hybrid_iterative":
+        from src.runners.task038_hybrid_iterative import run_hybrid_iterative
+
+        def adapter(payload, directory):
+            return run_hybrid_iterative(
+                payload,
+                directory,
+                source_sha=expected_source_sha,
+            )
+
+        label = "Hybrid iterative"
     else:
         return 3, [f"Task38 {expected_method} numerical adapter is unavailable"]
 

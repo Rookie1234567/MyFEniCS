@@ -695,10 +695,8 @@ def test_hybrid_accepted_alternate_pairs_and_rejected_solver_identities(tmp_path
             )
         ],
     )
-    assert (
-        load_and_resolve(iterative_scalar).method["traction_model"]
-        == "scalar_cg_discrete_derivative"
-    )
+    with pytest.raises(InputError, match="Task37c iterative adapter requires"):
+        load_and_resolve(iterative_scalar)
 
     direct_bad_solver = _write_variant(
         tmp_path,

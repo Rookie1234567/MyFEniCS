@@ -92,7 +92,11 @@ def test_plan_and_dry_run_cover_all_current_methods_with_connection_status(tmp_p
         assert payload["resolved_method_adapter"][
             "identity"
         ] == method_adapter_identity(method)
-        expected_available = method in {"full3d_direct", "hybrid_direct"}
+        expected_available = method in {
+            "full3d_direct",
+            "hybrid_direct",
+            "hybrid_iterative",
+        }
         assert payload["resolved_method_adapter"]["status"] == (
             "connected" if expected_available else "unavailable"
         )
