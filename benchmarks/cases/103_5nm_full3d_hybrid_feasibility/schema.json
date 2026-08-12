@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Task39 case 103 scaffold",
+  "type": "object",
+  "required": ["schema_version", "case_id", "one_dat_one_run", "dat_files", "phases"],
+  "properties": {
+    "schema_version": {"const": "task039.case103.v1"},
+    "case_id": {"const": "103_5nm_full3d_hybrid_feasibility"},
+    "one_dat_one_run": {"const": true},
+    "input_directory": {"const": "input/official/task039"},
+    "dat_files": {"type": "array", "minItems": 8, "uniqueItems": true},
+    "phases": {
+      "type": "object",
+      "required": ["T2_A0", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10"],
+      "properties": {
+        "T2_A0": {"type": "object", "required": ["status", "record"]},
+        "T3": {"$ref": "#/$defs/planned"},
+        "T4": {"$ref": "#/$defs/planned"},
+        "T5": {"$ref": "#/$defs/planned"},
+        "T6": {"$ref": "#/$defs/planned"},
+        "T7": {"$ref": "#/$defs/planned"},
+        "T8": {"$ref": "#/$defs/planned"},
+        "T9": {"$ref": "#/$defs/planned"},
+        "T10": {"$ref": "#/$defs/planned"}
+      }
+    }
+  },
+  "$defs": {
+    "planned": {
+      "type": "object",
+      "required": ["status", "plan"],
+      "properties": {
+        "status": {"const": "not_run"},
+        "plan": {"const": "planned"}
+      }
+    }
+  }
+}

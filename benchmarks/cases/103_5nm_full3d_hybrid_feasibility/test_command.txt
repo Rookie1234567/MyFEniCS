@@ -1,0 +1,5 @@
+source scripts/activate_myfenics_wsl.sh
+python scripts/run_case.py input/official/task039/5nm_p6h10_full3d_direct_mpi8.dat --validate-only
+python scripts/run_case.py input/official/task039/5nm_p6h10_full3d_direct_mpi8.dat --dry-run
+python -m pytest -q src/test/test_269_task039_preflight_capacity.py
+# T3-T10 remain planned; do not start MPI/PDE from this scaffold.

@@ -1,0 +1,12 @@
+{
+  "schema_version": "task039.case103.expected.v1",
+  "case_id": "103_5nm_full3d_hybrid_feasibility",
+  "a0": {
+    "status": "completed",
+    "record": "records/task039_t2_a0_preflight_v1.json",
+    "pde_launched": false,
+    "external_mode_count": 604,
+    "external_inventory_is_single_authority": true
+  },
+  "not_run": ["T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10"]
+}

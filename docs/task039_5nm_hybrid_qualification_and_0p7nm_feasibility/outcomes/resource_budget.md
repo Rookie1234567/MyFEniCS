@@ -72,3 +72,29 @@ M120 的通俗含义是 Hybrid 中部 QEP/内部模态每个传播方向的显�
 该中部模态问题的规模，但不代表任意材料都需要 120，也不代表模式数已经收敛。
 external DtN enumerator 必须根据波长、材料、Floquet shift、传播性和零级保留逐次
 给出 outgoing order inventory；significant channel 只在后处理报告中形成集合。
+
+## 5. T2 A0：5 nm capacity preflight（measured/derived 分开）
+
+本次 A0 绑定 source `643e1cd3eb6af7d2ed7500fae85f7dd28235b98b`，只执行
+`load_and_resolve`、8 个 dat 的 validate-only/dry-run 和纯 Python 容量计算；没有
+启动 MPI、mesh 或 PDE。完整记录见
+[task039_t2_a0_preflight_v1.json](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_t2_a0_preflight_v1.json)。
+
+| 项目 | 数值 | 分类与口径 |
+| --- | ---: | --- |
+| external channels | 604（bottom 300 / top 304） | `exact_component_computed`，来自唯一动态 inventory；S/P 为 150/150 与 152/152，propagating 604，nonpropagating 0，Rayleigh 0 |
+| Full3D rows | 51,796 | `derived_estimate`：51,192 inherited active trace rows + 604 channels |
+| Full3D NNZ | 42,913,900 | `derived_estimate`；每 auxiliary channel 的 1,765 是 Task39 预定拓扑假设 `2*882+1`，不是 095 carrier 的 measured 字段 |
+| Hybrid local rows | bottom 8,724 / top 8,728 | `derived_estimate`：inherited 8,424 + 每侧 channels |
+| Hybrid W | bottom 40,435,200 B / 38.562011719 MiB；top 40,974,336 B / 39.076171875 MiB | `derived_estimate`，complex128 16 B |
+| Hybrid K | bottom 1,440,000 B / 1.373291016 MiB；top 1,478,656 B / 1.410156250 MiB | `derived_estimate`，complex128 16 B |
+| W/K total | W 81,409,536 B / 77.638183594 MiB；K 2,918,656 B / 2.783447266 MiB | `derived_estimate`，不是 factorization/RSS |
+| WSL MemTotal | 244,883,734,528 B / 228.065750122 GiB | `measured_preflight` capacity source；MemAvailable=226,928,791,552 B |
+| effective hard stop | 205.2591751098633 GiB | `derived`：`min(220, 0.90 × 228.065750122)` |
+| process-tree VmSwap | 0 B | `measured_preflight`，本次 A0 Python process tree；不是 formal job zero-swap |
+| cgroup/global swap | cgroup `/init.scope`, not dedicated；vmstat pswpin/pswpout=0 | `diagnostic_preflight_not_formal_job`，不冒充作业 authority |
+| ABI | qualified=1，complex128/int32，MPI1 Python preflight | `measured_preflight` |
+
+095 Full3D rows/NNZ 和 Task37c endcap rows 是
+`inherited_measured / same_geometry_topology_not_5nm_measurement`；它们只用于上述
+派生估算，不能写成 Task39 5 nm 正式测量。T3–T10 仍为 `not_run/planned`。

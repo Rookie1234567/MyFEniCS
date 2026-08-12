@@ -66,6 +66,9 @@ QUALIFIED_OR_FROZEN_CASES = {
     "093_fixed_geometry_ph_convergence_mpi",
 }
 STAGING_OR_IN_PROGRESS_CASES: set[str] = set()
+TASK_SCOPED_IN_PROGRESS_CASES = {
+    "103_5nm_full3d_hybrid_feasibility",
+}
 ACTIVE_RESEARCH_CASES = {
     "094_hcurl_goal_oriented_adaptivity",
     "095_high_order_local_hp_resource_envelope",
@@ -287,6 +290,7 @@ class DocumentationContractTests(unittest.TestCase):
             observed,
             QUALIFIED_OR_FROZEN_CASES
             | STAGING_OR_IN_PROGRESS_CASES
+            | TASK_SCOPED_IN_PROGRESS_CASES
             | ACTIVE_RESEARCH_CASES
             | set(CLOSED_RESEARCH_RECORD_CASES),
         )
@@ -344,6 +348,26 @@ class DocumentationContractTests(unittest.TestCase):
                     command,
                     "python -m benchmarks.task035_case094",
                 )
+                self.assertNotIn("mpiexec", command)
+                self.assertNotIn("run_3d", command)
+
+        for case in sorted(TASK_SCOPED_IN_PROGRESS_CASES):
+            folder = cases_root / case
+            with self.subTest(case=case):
+                for name in (
+                    "README.md",
+                    "config.json",
+                    "schema.json",
+                    "expected.json",
+                    "test_command.txt",
+                ):
+                    self.assertTrue((folder / name).is_file(), name)
+                config = _load(folder / "config.json")
+                self.assertEqual(config["phases"]["T2_A0"]["status"], "completed")
+                for phase in ("T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10"):
+                    self.assertEqual(config["phases"][phase]["status"], "not_run")
+                    self.assertEqual(config["phases"][phase]["plan"], "planned")
+                command = _read(folder / "test_command.txt")
                 self.assertNotIn("mpiexec", command)
                 self.assertNotIn("run_3d", command)
 
