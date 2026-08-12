@@ -50,6 +50,20 @@ def test_migrated_alias_rejects_overrides_and_no_args_never_dispatches(capsys):
     assert "Usage: python scripts/run_case.py" in captured.err
 
 
+def test_main_rejects_direct_runner_facades_without_dispatch(monkeypatch, capsys):
+    from src.runners import run_3d_cases, run_cases
+
+    calls = []
+    monkeypatch.setattr(run_cases, "main", lambda args: calls.append(("2d", args)))
+    monkeypatch.setattr(run_3d_cases, "main", lambda args: calls.append(("3d", args)))
+
+    for args in (["2d"], ["3d", "--help"], ["--unknown"]):
+        assert main_module.main(list(args)) == 2
+
+    assert calls == []
+    assert "Deprecated direct runner arguments" in capsys.readouterr().err
+
+
 def test_retained_presets_keep_the_legacy_stage4_parser():
     for name in RETAINED:
         dimension, args = main_module.preset_cli_args(name)

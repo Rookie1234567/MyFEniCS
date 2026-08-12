@@ -418,17 +418,12 @@ def main(argv: list[str] | None = None) -> int:
         run_3d_cases_main(preset_args + args[2:])
         return 0
 
-    if args[0].lower() in ("2d", "3d"):
-        from src.runners.run_cases import main as run_cases_main
-        from src.runners.run_3d_cases import main as run_3d_cases_main
-
-        (run_3d_cases_main if args[0].lower() == "3d" else run_cases_main)(args[1:])
-        return 0
-
-    from src.runners.run_cases import main as run_cases_main
-
-    run_cases_main(args)
-    return 0
+    print(
+        "Deprecated direct runner arguments are no longer accepted by src.main; "
+        "use python scripts/run_case.py <case.dat>.",
+        file=sys.stderr,
+    )
+    return 2
 
 
 if __name__ == "__main__":
