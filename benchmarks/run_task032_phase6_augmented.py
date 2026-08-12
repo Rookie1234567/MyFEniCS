@@ -12,7 +12,8 @@ import shlex
 import subprocess
 import sys
 import time
-from typing import Any
+from types import SimpleNamespace
+from typing import Any, Mapping
 
 from mpi4py import MPI
 import numpy as np
@@ -124,10 +125,10 @@ def _discrete_axial_qualification_scope(
 ) -> dict[str, Any]:
     """Expose the fail-closed scope of the Task035c discrete axial symbols."""
 
-    selected = (
-        propagation_model == "full3d_uniform_cg"
-        or traction_model == "scalar_cg_discrete_derivative"
-    )
+    selected = propagation_model == "full3d_uniform_cg" or traction_model in {
+        "scalar_cg_discrete_derivative",
+        "full3d_one_cell_exact_schur",
+    }
     return {
         "selected": selected,
         "status": (
@@ -691,7 +692,49 @@ def _reference_sampling_grid(cfg: Any, bottom_interface_nm: float, top_interface
     return sample_x, sample_y, sample_z
 
 
-def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+def _direct_canonical_exports(
+    *,
+    solution: Any,
+    systems: tuple[Any, Any],
+    run_dir: Path,
+    comm: MPI.Intracomm,
+    prefix: str,
+) -> dict[str, Any]:
+    """Write the audited active/full packets for an explicit direct run."""
+
+    from benchmarks.run_task037b_hybrid_iterative import (
+        _write_canonical_manifest_exports,
+        collective_heap_cleanup,
+    )
+
+    physical_solution = SimpleNamespace(
+        bottom=solution.bottom,
+        top=solution.top,
+        bottom_recovered=solution.bottom_recovered,
+        top_recovered=solution.top_recovered,
+    )
+    exports: dict[str, Any] = {}
+    for side in ("bottom", "top"):
+        exports[side] = _write_canonical_manifest_exports(
+            side=side,
+            systems={"bottom": systems[0], "top": systems[1]},
+            physical_solution=physical_solution,
+            run_dir=run_dir,
+            comm=comm,
+            prefix=prefix,
+        )
+        cleanup = collective_heap_cleanup(comm)
+        exports[side]["cleanup"] = cleanup
+        if not cleanup["collective_call_completed"]:
+            raise RuntimeError(f"{prefix} {side} canonical cleanup failed.")
+    return exports
+
+
+def _parse_args(
+    argv: list[str] | None = None,
+    *,
+    allow_task039: bool = False,
+) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Task32 Phase6 real-QEP hybrid augmented direct diagnostic"
     )
@@ -729,12 +772,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "continuous_beta remains the ordinary default."
         ),
     )
+    traction_choices = (
+        "continuous_qep_beta",
+        "scalar_cg_discrete_derivative",
+    )
+    if allow_task039:
+        traction_choices += ("full3d_one_cell_exact_schur",)
     parser.add_argument(
         "--internal-traction-model",
-        choices=(
-            "continuous_qep_beta",
-            "scalar_cg_discrete_derivative",
-        ),
+        choices=traction_choices,
         default="continuous_qep_beta",
         help=(
             "Modal interface traction symbol. The scalar-CG derivative is an "
@@ -844,11 +890,53 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=os.environ.get("TASK032_HOST_ENVIRONMENT_ID", "SK-20260601OSDE"),
     )
     args = parser.parse_args(argv)
-    if args.degree == 6 and not args.task035c_p6_h10_gate:
+    if (
+        args.internal_traction_model == "full3d_one_cell_exact_schur"
+        and not allow_task039
+    ):
+        parser.error(
+            "full3d_one_cell_exact_schur is restricted to the Task39 Python opt-in."
+        )
+    if args.degree == 6 and not args.task035c_p6_h10_gate and not allow_task039:
         parser.error(
             "p6 is fail-closed; pass --task035c-p6-h10-gate for the fixed "
             "Task035c p6/h10 Hybrid authority only."
         )
+    if allow_task039:
+        scoped = bool(
+            not args.task035c_p6_h10_gate
+            and not args.allow_dirty_research
+            and args.degree == 6
+            and np.isclose(args.h_nm, 10.0)
+            and args.modal_degree == 6
+            and args.modal_h_nm is not None
+            and np.isclose(args.modal_h_nm, 10.0)
+            and args.requested_modes in (120, 240, 480, 960)
+            and args.candidate_modes == 2 * args.requested_modes
+            and args.solver_path == "augmented"
+            and not args.compare_modal_schur
+            and args.stage4_full3d_assembly_backend
+            == ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+            and args.graded_reference_h is None
+            and np.isclose(args.bottom_interface_nm, 10.0)
+            and np.isclose(args.top_interface_nm, 110.0)
+            and np.isclose(args.incident_grazing_deg, 10.0)
+            and args.polarization_kind == "s"
+            and args.internal_propagation_model == "full3d_uniform_cg"
+            and args.internal_traction_model == "full3d_one_cell_exact_schur"
+            and valid_hex_digest(args.verified_clean_sha, 40)
+            and args.task035c_p6_preflight_authority is None
+            and args.task035c_p6_preflight_sha256 is None
+            and args.full3d_reference is None
+            and args.full3d_reference_sha256 is None
+        )
+        if not scoped:
+            parser.error(
+                "Task39 p6/h10 Hybrid direct is restricted to numeric M120/240/480/960, "
+                "2M candidates, static-condensed full3d_uniform_cg, exact one-cell "
+                "traction, 10/110 interfaces, and a clean verified source."
+            )
+        return args
     if args.task035c_p6_h10_gate:
         scoped = bool(
             args.degree == 6
@@ -996,9 +1084,15 @@ def main(
     *,
     config_override: Any | None = None,
     use_case080_reference: bool = True,
+    canonical_export_prefix: str | None = None,
+    external_mode_inventory: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     command_argv = list(sys.argv[1:] if argv is None else argv)
-    args = _parse_args(argv)
+    allow_task039 = bool(
+        config_override is not None
+        and str(getattr(config_override, "case_name", "")).startswith("task039_5nm")
+    )
+    args = _parse_args(argv, allow_task039=allow_task039)
     if args.h_nm <= 0.0:
         raise SystemExit("--h-nm must be positive.")
     modal_h_nm = (
@@ -1170,6 +1264,7 @@ def main(
     schur_solution = None
     primary_schur_system = None
     record = None
+    opt_in_canonical_exports = None
     graded_plan = None
     graded_bottom_mesh = None
     graded_top_mesh = None
@@ -1882,6 +1977,18 @@ def main(
         }
         timings["physical_field_reconstruction"] = _max_elapsed(comm, started)
         progress("Task32 Phase6: physical interface/absorption/selected-plane reconstruction complete")
+        if canonical_export_prefix is not None:
+            if external_mode_inventory is None:
+                raise RuntimeError(
+                    "canonical export opt-in requires external mode inventory"
+                )
+            opt_in_canonical_exports = _direct_canonical_exports(
+                solution=solution,
+                systems=(bottom, top),
+                run_dir=args.output.parent,
+                comm=comm,
+                prefix=canonical_export_prefix,
+            )
         mark_stage("record_and_release")
         directions_valid = (
             all(mode.direction == "forward" for mode in positive.modes)
@@ -2648,6 +2755,8 @@ def main(
                 "per-rank ru_maxrss historical peaks; not simultaneous RSS"
             ),
         }
+        if opt_in_canonical_exports is not None:
+            record["canonical_exports"] = opt_in_canonical_exports
     except _ModalBasisCapacityStop:
         pass
     finally:
@@ -2673,6 +2782,8 @@ def main(
         if operators is not None:
             operators.destroy()
 
+    if record is not None and external_mode_inventory is not None:
+        record["external_mode_inventory"] = dict(external_mode_inventory)
     if comm.rank == 0:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(

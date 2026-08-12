@@ -22,6 +22,7 @@ from .dtn_port_3d import (
     Stage4ExternalLinearSolverRequest,
     Stage4ExternalLinearSolverSnapshot,
     Stage4NeverMaterializedLinearSolverRequest,
+    Stage4NeverMaterializedLinearSolverPort,
 )
 from .physical_slab_two_level import (
     DistributedPhysicalSlabSmoother,
@@ -35,6 +36,7 @@ from .static_local_schur_action import create_static_local_schur_action
 
 
 __all__ = (
+    "build_never_materialized_overlap0125_partition_port",
     "solve_assembled_static_condensed_fgmres",
     "solve_never_materialized_static_condensed_fgmres",
     "solve_never_materialized_overlap0125_partition_fgmres",
@@ -767,7 +769,7 @@ def solve_never_materialized_static_condensed_fgmres(
 def solve_never_materialized_overlap0125_partition_fgmres(
     request: Stage4NeverMaterializedLinearSolverRequest,
     *,
-    screen_iterations: Literal[20, 100, 200, 3000] = 20,
+    screen_iterations: Literal[20, 100, 200, 3000, 4000] = 20,
     residual_observer: Callable[[int, float, float], None] | None = None,
     true_residual_vector_observer: Callable[[int, PETSc.Vec, float], None]
     | None = None,
@@ -787,3 +789,47 @@ def solve_never_materialized_overlap0125_partition_fgmres(
         solver_profile="never_materialized_owner_local_overlap0125_partition",
         lifecycle_observer=lifecycle_observer,
     )
+
+
+def build_never_materialized_overlap0125_partition_port(
+    *,
+    screen_iterations: Literal[20, 100, 200, 3000, 4000] = 3000,
+    residual_observer_factory: Callable[[Any], Callable[[int, float, float], None]]
+    | None = None,
+    lifecycle_observer_factory: Callable[[Any], Callable[[str, dict[str, Any]], None]]
+    | None = None,
+    audit_observer: Callable[
+        [Any, Stage4ExternalLinearSolverSnapshot, dict[str, Any]], None
+    ]
+    | None = None,
+) -> Stage4NeverMaterializedLinearSolverPort:
+    """Build the accepted M3a action-only port without owning runner policy.
+
+    The numerical core remains ``solve_never_materialized...``.  Callers own
+    progress/audit callbacks and may select the finite 3000 or Task39 4000
+    screen budget; the historical default is deliberately unchanged.
+    """
+
+    if screen_iterations not in (20, 100, 200, 3000, 4000):
+        raise ValueError("unsupported M3a screen iteration budget")
+
+    def solve(request: Stage4NeverMaterializedLinearSolverRequest):
+        snapshot, audit = solve_never_materialized_overlap0125_partition_fgmres(
+            request,
+            screen_iterations=screen_iterations,
+            residual_observer=(
+                residual_observer_factory(request)
+                if residual_observer_factory is not None
+                else None
+            ),
+            lifecycle_observer=(
+                lifecycle_observer_factory(request)
+                if lifecycle_observer_factory is not None
+                else None
+            ),
+        )
+        if audit_observer is not None:
+            audit_observer(request, snapshot, audit)
+        return snapshot
+
+    return Stage4NeverMaterializedLinearSolverPort(solve)

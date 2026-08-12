@@ -8,6 +8,7 @@ historical Task032/Task033 runners.
 from __future__ import annotations
 
 from contextlib import contextmanager, nullcontext
+from copy import deepcopy
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import argparse
@@ -1299,7 +1300,11 @@ def _task37c_config_audit(
     setup: FrozenM10Setup,
     profile: Task37cProfile,
 ) -> dict[str, Any]:
-    expected = direction_s_phase_audit(profile.incident_phi_deg)
+    expected = direction_s_phase_audit(
+        profile.incident_phi_deg,
+        wavelength_nm=profile.wavelength_nm,
+        grazing_deg=profile.incident_grazing_deg,
+    )
     cfg = setup.cfg
     actual = {
         "theta_deg": float(cfg.incident_theta_deg),
@@ -1602,6 +1607,8 @@ def build_frozen_m10_setup(
     log=None,
     profile: FrozenM10Profile | Task37cProfile = FROZEN_M10,
     exact_one_cell_work_dir: Path | None = None,
+    cfg_override: Any | None = None,
+    modal_cfg_override: Any | None = None,
 ) -> FrozenM10Setup:
     """Build the frozen physical/QEP/endcap/coupling bundle only.
 
@@ -1614,13 +1621,21 @@ def build_frozen_m10_setup(
     block_rotation_tolerance=FROZEN_M10.block_rotation_tolerance.
     """
 
-    cfg = target_stage4_config(
-        degree=profile.degree,
-        h_nm=profile.h_nm,
+    cfg = (
+        deepcopy(cfg_override)
+        if cfg_override is not None
+        else target_stage4_config(
+            degree=profile.degree,
+            h_nm=profile.h_nm,
+        )
     )
-    modal_cfg = target_stage4_config(
-        degree=profile.modal_degree,
-        h_nm=profile.modal_h_nm,
+    modal_cfg = (
+        deepcopy(modal_cfg_override)
+        if modal_cfg_override is not None
+        else target_stage4_config(
+            degree=profile.modal_degree,
+            h_nm=profile.modal_h_nm,
+        )
     )
     for current_cfg in (cfg, modal_cfg):
         current_cfg.stage4_full3d_assembly_backend = (
@@ -1629,9 +1644,14 @@ def build_frozen_m10_setup(
         current_cfg.matrix_diagnostics_assemble_unconstrained = False
         current_cfg.matrix_diagnostics_assemble_only = False
         current_cfg.matrix_diagnostics_factorization_only = False
-        current_cfg.incident_theta_deg = 90.0 - profile.incident_grazing_deg
-        current_cfg.incident_phi_deg = getattr(profile, "incident_phi_deg", 0.0)
-        current_cfg.polarization_kind = profile.polarization_kind
+    if cfg_override is None:
+        cfg.incident_theta_deg = 90.0 - profile.incident_grazing_deg
+        cfg.incident_phi_deg = getattr(profile, "incident_phi_deg", 0.0)
+        cfg.polarization_kind = profile.polarization_kind
+    if modal_cfg_override is None:
+        modal_cfg.incident_theta_deg = 90.0 - profile.incident_grazing_deg
+        modal_cfg.incident_phi_deg = getattr(profile, "incident_phi_deg", 0.0)
+        modal_cfg.polarization_kind = profile.polarization_kind
 
     timings: dict[str, float] = {}
     started = time.perf_counter()
@@ -2298,7 +2318,9 @@ def _write_canonical_manifest_exports(
     return {"run_directory": run_directory, "roles": side_exports}
 
 
-def build_parser() -> argparse.ArgumentParser:
+def build_parser(
+    *, requested_modes_choices: tuple[int, ...] = (120, 160)
+) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Run an explicit frozen Task037b or Task037c positive profile."
     )
@@ -2321,7 +2343,7 @@ def build_parser() -> argparse.ArgumentParser:
         type=float,
         choices=(-5.0, 0.0, 5.0),
     )
-    parser.add_argument("--requested-modes", type=int, choices=(120, 160))
+    parser.add_argument("--requested-modes", type=int, choices=requested_modes_choices)
     parser.add_argument("--mpi-size", type=int, choices=(1, 8))
     parser.add_argument(
         "--internal-traction-model",
@@ -2335,8 +2357,12 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = build_parser()
+def parse_args(
+    argv: list[str] | None = None,
+    *,
+    requested_modes_choices: tuple[int, ...] = (120, 160),
+) -> argparse.Namespace:
+    parser = build_parser(requested_modes_choices=requested_modes_choices)
     args = parser.parse_args(argv)
     if args.task037c_robustness_gate:
         if args.incident_phi_deg is None or args.requested_modes is None:
@@ -2427,11 +2453,20 @@ def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
     )
 
 
-def run_frozen_m10(args: argparse.Namespace) -> int:
+def run_frozen_m10(
+    args: argparse.Namespace,
+    *,
+    profile_override: FrozenM10Profile | Task37cProfile | None = None,
+    cfg_override: Any | None = None,
+    modal_cfg_override: Any | None = None,
+    external_mode_inventory: Mapping[str, Any] | None = None,
+) -> int:
     """Run the single frozen positive M10 chain and write its online record."""
 
     comm = MPI.COMM_WORLD
-    profile = profile_from_args(args)
+    profile = (
+        profile_override if profile_override is not None else profile_from_args(args)
+    )
     if comm.size != profile.mpi_size:
         raise RuntimeError(
             f"profile formal identity requires MPI{profile.mpi_size}, got MPI{comm.size}"
@@ -2457,8 +2492,13 @@ def run_frozen_m10(args: argparse.Namespace) -> int:
                 args, current_source_sha=source_before["commit_sha"], comm=comm
             )
         else:
+            binding_key = (
+                "explicit_profile"
+                if str(profile.profile_id).startswith("task039.")
+                else "task037c_profile"
+            )
             authority_bindings = {
-                "task037c_profile": {
+                binding_key: {
                     "profile_id": profile.profile_id,
                     "incident_phi_deg": profile.incident_phi_deg,
                     "requested_modes": profile.requested_modes,
@@ -2472,6 +2512,8 @@ def run_frozen_m10(args: argparse.Namespace) -> int:
             log=rank0_log,
             profile=profile,
             exact_one_cell_work_dir=_exact_one_cell_work_dir(profile, args.run_dir),
+            cfg_override=cfg_override,
+            modal_cfg_override=modal_cfg_override,
         )
         lifecycle.record("solve")
         linear = solve_frozen_m10_linear(setup, log=rank0_log)
@@ -2534,11 +2576,36 @@ def run_frozen_m10(args: argparse.Namespace) -> int:
         profile=profile,
         setup=setup,
     )
+    if external_mode_inventory is not None:
+        record["external_mode_inventory"] = _json_safe(external_mode_inventory)
     return_code = 0 if bool(record["online_pass"]) else 1
     if comm.rank == 0:
         _write_json(args.output, record)
     comm.barrier()
     return int(comm.bcast(return_code, root=0))
+
+
+def run_explicit_hybrid_iterative_profile(
+    argv: list[str],
+    *,
+    profile: Task37cProfile,
+    cfg_override: Any,
+    modal_cfg_override: Any,
+    external_mode_inventory: Mapping[str, Any],
+) -> int:
+    """Run one explicitly supplied profile through the existing Task37c chain."""
+
+    args = parse_args(
+        argv,
+        requested_modes_choices=(120, 240, 480, 960),
+    )
+    return run_frozen_m10(
+        args,
+        profile_override=profile,
+        cfg_override=cfg_override,
+        modal_cfg_override=modal_cfg_override,
+        external_mode_inventory=external_mode_inventory,
+    )
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -91,6 +91,7 @@ def test_schema_identity_sections_and_unique_whitelist():
         "2d_scattered",
         "2d_port",
         "full3d_direct",
+        "full3d_iterative",
         "hybrid_direct",
         "hybrid_iterative",
     )
@@ -125,6 +126,7 @@ def test_schema_identity_sections_and_unique_whitelist():
         "fgmres",
     )
     assert FIELD_SPECS_BY_KEY["solver.preconditioner"].allowed == (
+        "full3d_m3a_physical_slab_two_level",
         "hybrid_block_ldu_ilu0_dtn_woodbury",
     )
     for key in (

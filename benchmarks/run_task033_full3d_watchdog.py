@@ -458,7 +458,7 @@ def _task037_m3a_write_canonical_artifacts(
     return exports
 
 
-def _task037_m3a_solution_observer(run_dir: Path):
+def task037_m3a_solution_observer(run_dir: Path):
     def observe(
         *,
         field: Any,
@@ -486,13 +486,14 @@ def _task037_m3a_solution_observer(run_dir: Path):
     return observe
 
 
-def _task037_m3a_solver_port(run_dir: Path):
-    from src.solvers.dtn_port_3d import Stage4NeverMaterializedLinearSolverPort
+def _task037_m3a_solver_port(
+    run_dir: Path, *, screen_iterations: int = TASK037_M3A_MAX_ITERATIONS
+):
     from src.solvers.static_condensed_iterative import (
-        solve_never_materialized_overlap0125_partition_fgmres,
+        build_never_materialized_overlap0125_partition_port,
     )
 
-    def solve(request):
+    def residual_observer_factory(request):
         comm = request.operator.getComm().tompi4py()
         residual_path = run_dir / "task037_m3a_residual_history.jsonl"
 
@@ -509,6 +510,11 @@ def _task037_m3a_solver_port(run_dir: Path):
                         )
                         + "\n"
                     )
+
+        return observe
+
+    def lifecycle_observer_factory(request):
+        comm = request.operator.getComm().tompi4py()
 
         def observe_lifecycle(event: str, payload: dict[str, Any]) -> None:
             ledgers = comm.gather(payload, root=0)
@@ -527,12 +533,10 @@ def _task037_m3a_solver_port(run_dir: Path):
                 },
             )
 
-        snapshot, audit = solve_never_materialized_overlap0125_partition_fgmres(
-            request,
-            screen_iterations=TASK037_M3A_MAX_ITERATIONS,
-            residual_observer=observe,
-            lifecycle_observer=observe_lifecycle,
-        )
+        return observe_lifecycle
+
+    def audit_observer(request, snapshot, audit):
+        comm = request.operator.getComm().tompi4py()
         if comm.rank == 0:
             audit.update(
                 {
@@ -547,9 +551,13 @@ def _task037_m3a_solver_port(run_dir: Path):
                 encoding="utf-8",
             )
         comm.barrier()
-        return snapshot
 
-    return Stage4NeverMaterializedLinearSolverPort(solve)
+    return build_never_materialized_overlap0125_partition_port(
+        screen_iterations=screen_iterations,
+        residual_observer_factory=residual_observer_factory,
+        lifecycle_observer_factory=lifecycle_observer_factory,
+        audit_observer=audit_observer,
+    )
 
 
 def _task037_e0_solver_port():
@@ -765,7 +773,7 @@ def _worker(args: argparse.Namespace) -> int:
     e0_gate = bool(args.task037_e0_matrix_free_dtn_gate)
     m3a_gate = bool(args.task037_m3a_overlap0125_partition)
     solution_observer = (
-        _task037_m3a_solution_observer(args.run_dir) if m3a_gate else None
+        task037_m3a_solution_observer(args.run_dir) if m3a_gate else None
     )
     variable_observer = None
     linear_solver_port = (

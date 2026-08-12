@@ -8,7 +8,12 @@ import json
 from pathlib import Path
 from typing import Any
 
-from src.io.execution_plan import CONTRACT_PROBE_ADAPTER, METHOD_ADAPTERS
+from src.io.execution_plan import (
+    CONTRACT_PROBE_ADAPTER,
+    method_adapter_identity,
+)
+from src.io.input_loader import InputError
+from src.io.input_validation import task039_07nm_launch_error, task039_model_id_matches
 
 
 def _read_json_bytes(
@@ -108,7 +113,13 @@ def _load_and_validate_worker_payload(
     elif execution_payload.get("mpi_size") != expected_mpi_size:
         errors.append("resolved config MPI size mismatch")
 
-    expected_method_adapter = METHOD_ADAPTERS.get(expected_method)
+    try:
+        expected_method_adapter = method_adapter_identity(
+            expected_method,
+            str(resolved.get("model_id", "")),
+        )
+    except InputError:
+        expected_method_adapter = None
     if contract_probe != (expected_adapter == CONTRACT_PROBE_ADAPTER):
         errors.append("contract-probe mode and adapter identity mismatch")
     if expected_adapter == CONTRACT_PROBE_ADAPTER:
@@ -181,6 +192,10 @@ def _dispatch_resolved_payload(
 ) -> tuple[int, list[str]]:
     """Dispatch the already validated payload without rereading its input."""
 
+    pending_07nm = task039_07nm_launch_error(resolved_payload)
+    if pending_07nm is not None:
+        return 4, [pending_07nm]
+
     if expected_method in {"2d_scattered", "2d_port"}:
         from src.runners.task038_2d import run_2d
 
@@ -191,28 +206,69 @@ def _dispatch_resolved_payload(
 
         adapter = run_full3d_direct
         label = "Full3D direct"
+    elif expected_method == "full3d_iterative":
+        from src.runners.task039_full3d_iterative import run_full3d_iterative
+
+        def adapter(payload, directory):
+            return run_full3d_iterative(
+                payload,
+                directory,
+                source_sha=expected_source_sha,
+            )
+
+        label = "Full3D iterative"
     elif expected_method == "hybrid_direct":
-        from src.runners.task038_hybrid_direct import run_hybrid_direct
+        if task039_model_id_matches(
+            "hybrid_direct", str(resolved_payload.get("model_id", ""))
+        ):
+            from src.runners.task039_hybrid_direct import run_task039_hybrid_direct
 
-        def adapter(payload, directory):
-            return run_hybrid_direct(
-                payload,
-                directory,
-                source_sha=expected_source_sha,
-            )
+            def adapter(payload, directory):
+                return run_task039_hybrid_direct(
+                    payload,
+                    directory,
+                    source_sha=expected_source_sha,
+                )
 
-        label = "Hybrid direct"
+            label = "Task39 Hybrid direct"
+        else:
+            from src.runners.task038_hybrid_direct import run_hybrid_direct
+
+            def adapter(payload, directory):
+                return run_hybrid_direct(
+                    payload,
+                    directory,
+                    source_sha=expected_source_sha,
+                )
+
+            label = "Hybrid direct"
     elif expected_method == "hybrid_iterative":
-        from src.runners.task038_hybrid_iterative import run_hybrid_iterative
-
-        def adapter(payload, directory):
-            return run_hybrid_iterative(
-                payload,
-                directory,
-                source_sha=expected_source_sha,
+        if task039_model_id_matches(
+            "hybrid_iterative", str(resolved_payload.get("model_id", ""))
+        ):
+            from src.runners.task039_hybrid_iterative import (
+                run_task039_hybrid_iterative,
             )
 
-        label = "Hybrid iterative"
+            def adapter(payload, directory):
+                return run_task039_hybrid_iterative(
+                    payload,
+                    directory,
+                    source_sha=expected_source_sha,
+                )
+
+            label = "Task39 Hybrid iterative"
+        else:
+            from src.runners.task038_hybrid_iterative import run_hybrid_iterative
+
+            def adapter(payload, directory):
+                return run_hybrid_iterative(
+                    payload,
+                    directory,
+                    source_sha=expected_source_sha,
+                )
+
+            label = "Hybrid iterative"
     else:
         return 3, [f"Task38 {expected_method} numerical adapter is unavailable"]
 

@@ -32,6 +32,7 @@ METHOD_KINDS: Final = (
     "2d_scattered",
     "2d_port",
     "full3d_direct",
+    "full3d_iterative",
     "hybrid_direct",
     "hybrid_iterative",
 )
@@ -90,10 +91,12 @@ _ALL_METHODS: Final = (
     "2d_scattered",
     "2d_port",
     "full3d_direct",
+    "full3d_iterative",
     "hybrid_direct",
     "hybrid_iterative",
 )
 _HYBRID_METHODS: Final = ("hybrid_direct", "hybrid_iterative")
+_ITERATIVE_METHODS: Final = ("full3d_iterative", "hybrid_iterative")
 
 IDENTITY_FIELD_SPECS: Final = (
     _f(
@@ -769,7 +772,8 @@ FIELD_SPECS: Final = (
         allowed=METHOD_KINDS,
         constraints=(
             "2D uses exactly one of 2d_scattered or 2d_port; 3D uses "
-            "full3d_direct/hybrid_direct/hybrid_iterative; no both/all mode",
+            "full3d_direct/full3d_iterative/hybrid_direct/hybrid_iterative; "
+            "no both/all mode",
         ),
     ),
     _f(
@@ -873,19 +877,22 @@ FIELD_SPECS: Final = (
         "solver.preconditioner",
         "enum",
         "none",
-        ("hybrid_iterative",),
+        _ITERATIVE_METHODS,
         "公开 preconditioner identity",
         "preconditioner",
         '"hybrid_block_ldu_ilu0_dtn_woodbury"',
         required=True,
-        allowed=("hybrid_block_ldu_ilu0_dtn_woodbury",),
+        allowed=(
+            "full3d_m3a_physical_slab_two_level",
+            "hybrid_block_ldu_ilu0_dtn_woodbury",
+        ),
         constraints=("only reviewed iterative identities are public",),
     ),
     _f(
         "solver.restart",
         "integer",
         "iterations",
-        ("hybrid_iterative",),
+        _ITERATIVE_METHODS,
         "GMRES/FGMRES restart 长度",
         "restart",
         "90",
@@ -896,7 +903,7 @@ FIELD_SPECS: Final = (
         "solver.max_iterations",
         "integer",
         "iterations",
-        ("hybrid_iterative",),
+        _ITERATIVE_METHODS,
         "最大迭代步数",
         "max_it",
         "4500",
@@ -907,7 +914,7 @@ FIELD_SPECS: Final = (
         "solver.relative_tolerance",
         "float",
         "relative residual",
-        ("hybrid_iterative",),
+        _ITERATIVE_METHODS,
         "相对残差容差",
         "rtol",
         "5.0e-9",
@@ -918,7 +925,7 @@ FIELD_SPECS: Final = (
         "solver.absolute_tolerance",
         "float",
         "absolute residual",
-        ("hybrid_iterative",),
+        _ITERATIVE_METHODS,
         "绝对残差容差",
         "atol",
         "0.0",
@@ -929,7 +936,7 @@ FIELD_SPECS: Final = (
         "solver.initial_guess",
         "enum",
         "none",
-        ("hybrid_iterative",),
+        _ITERATIVE_METHODS,
         "初始向量策略",
         "initial_guess",
         '"zero"',

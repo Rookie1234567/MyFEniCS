@@ -128,13 +128,16 @@ def direction_s_phase_audit(
     wavelength_nm: float = 13.5,
     period_x_nm: float = 50.0,
     period_y_nm: float = 25.0,
+    grazing_deg: float = TASK37C_GRAZING_DEG,
 ) -> dict[str, Any]:
     """Return the normalized grazing direction, S basis, and Floquet audit."""
 
     phi = float(phi_deg)
     if phi not in TASK37C_PHI_VALUES:
         raise ValueError("direction audit received an unsupported phi")
-    theta = math.radians(TASK37C_THETA_DEG)
+    grazing = float(grazing_deg)
+    theta_deg = 90.0 - grazing
+    theta = math.radians(theta_deg)
     azimuth = math.radians(phi)
     direction = (
         math.sin(theta) * math.cos(azimuth),
@@ -151,9 +154,9 @@ def direction_s_phase_audit(
     basis_norm = math.sqrt(sum(value * value for value in s_basis))
     dot = sum(a * b for a, b in zip(direction, s_basis, strict=True))
     return {
-        "theta_deg": TASK37C_THETA_DEG,
+        "theta_deg": theta_deg,
         "phi_deg": phi,
-        "grazing_deg": TASK37C_GRAZING_DEG,
+        "grazing_deg": grazing,
         "direction": direction,
         "s_basis": s_basis,
         "kx": kx,

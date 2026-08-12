@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from difflib import get_close_matches
+from copy import deepcopy
 from hashlib import sha256
 from math import isclose, isfinite
 from pathlib import Path
@@ -239,6 +240,453 @@ def _same_profile_value(actual: Any, expected: Any) -> bool:
     return actual == expected
 
 
+_TASK039_DELTA = 0.00603145547
+_TASK039_BETA = 0.00435380777
+_TASK039_N = (0.99396854453, 0.00435380777)
+_TASK039_EPSILON_R = (0.9879545118729887, 0.00865509594462061)
+_TASK039_MODE_CANDIDATES = (120, 240, 480, 960)
+_TASK039_MODEL_ID_PATTERNS = {
+    "full3d_direct": r"task039_5nm_full3d_direct",
+    "full3d_iterative": r"task039_5nm_full3d_iterative",
+    "hybrid_direct": r"task039_5nm_hybrid_direct_m(120|240|480|960)",
+    "hybrid_iterative": r"task039_5nm_hybrid_iterative_m(120|240|480|960)_candidate",
+}
+
+
+def task039_model_id_matches(
+    method: str,
+    model_id: str,
+    requested_modes: Any | None = None,
+) -> bool:
+    """Match one finite Task39 model identity and, for Hybrid, its M."""
+
+    pattern = _TASK039_MODEL_ID_PATTERNS.get(str(method))
+    if pattern is None:
+        return False
+    match = re.fullmatch(pattern, str(model_id))
+    if match is None:
+        return False
+    if str(method).startswith("hybrid_") and requested_modes is not None:
+        return int(match.group(1)) == int(requested_modes)
+    return True
+
+
+def _is_task039_5nm(config: Mapping[str, Any]) -> bool:
+    method = config.get("method")
+    kind = method.get("kind") if isinstance(method, Mapping) else None
+    return task039_model_id_matches(kind, str(config.get("model_id", "")))
+
+
+def _is_task039_candidate(config: Mapping[str, Any]) -> bool:
+    return str(config.get("model_id", "")).startswith("task039_5nm")
+
+
+def task039_material_provenance(
+    config: Mapping[str, Any],
+) -> dict[str, Any] | None:
+    """Return the 5 nm metadata derived from the sole public ``n`` input.
+
+    ``delta`` and ``beta`` are provenance metadata, not additional material
+    inputs.  The resolved dielectric value is always computed as ``n**2``;
+    this helper never changes the sign of the supplied imaginary component.
+    """
+
+    if not _is_task039_5nm(config):
+        return None
+    materials = config.get("materials")
+    incidence = config.get("incidence")
+    if not isinstance(materials, Mapping) or not isinstance(incidence, Mapping):
+        return None
+    substrate = materials.get("n_substrate")
+    grating = materials.get("n_grating")
+    if (
+        incidence.get("wavelength_nm") != 5.0
+        or not _same_profile_value(substrate, _TASK039_N)
+        or not _same_profile_value(grating, _TASK039_N)
+    ):
+        return None
+    n = complex(float(substrate[0]), float(substrate[1]))
+    epsilon = n**2
+    if not (
+        isclose(
+            epsilon.real,
+            _TASK039_EPSILON_R[0],
+            rel_tol=1.0e-13,
+            abs_tol=1.0e-15,
+        )
+        and isclose(
+            epsilon.imag,
+            _TASK039_EPSILON_R[1],
+            rel_tol=1.0e-13,
+            abs_tol=1.0e-15,
+        )
+    ):
+        return None
+    return {
+        "source": "derived_from_materials.n_substrate_and_n_grating",
+        "independent_input": "n",
+        "delta": _TASK039_DELTA,
+        "beta": _TASK039_BETA,
+        "n": [float(n.real), float(n.imag)],
+        "epsilon_r": [float(epsilon.real), float(epsilon.imag)],
+        "wavelength_nm": 5.0,
+        "air_label": "air",
+        "substrate_label": materials.get("substrate_name"),
+        "grating_label": materials.get("grating_name"),
+        "imaginary_sign_preserved": True,
+    }
+
+
+def _task039_inventory_from_modes(
+    modes: Any,
+    *,
+    selection: str,
+    extra: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Serialize keys plus finite channel metadata from one mode enumeration."""
+
+    rows = sorted(
+        (
+            {
+                "side": str(mode.side),
+                "m": int(mode.m),
+                "n": int(mode.n),
+                "polarization": str(mode.polarization),
+                "beta": [
+                    float(complex(mode.beta).real),
+                    float(complex(mode.beta).imag),
+                ],
+                "propagating": bool(mode.propagating),
+                "rayleigh_warning": bool(mode.rayleigh_warning),
+            }
+            for mode in modes
+        ),
+        key=lambda item: (
+            item["side"],
+            item["m"],
+            item["n"],
+            item["polarization"],
+        ),
+    )
+    if any(not isfinite(float(component)) for row in rows for component in row["beta"]):
+        raise ValueError("Task39 dynamic mode inventory contains non-finite beta")
+    keys = [
+        {
+            "side": row["side"],
+            "m": row["m"],
+            "n": row["n"],
+            "polarization": row["polarization"],
+        }
+        for row in rows
+    ]
+    per_side: dict[str, int] = {}
+    per_side_spatial: dict[str, set[tuple[int, int]]] = {}
+    polarization_counts = {"S": 0, "P": 0}
+    polarization_per_side: dict[str, dict[str, int]] = {}
+    for row in rows:
+        side = row["side"]
+        per_side[side] = per_side.get(side, 0) + 1
+        per_side_spatial.setdefault(side, set()).add((row["m"], row["n"]))
+        pol = row["polarization"].upper()
+        polarization_per_side.setdefault(side, {"S": 0, "P": 0})
+        if pol in polarization_counts:
+            polarization_counts[pol] += 1
+            polarization_per_side[side][pol] += 1
+    payload = {
+        "source": "outgoing_port_modes_3d",
+        "selection": selection,
+        "count": len(keys),
+        "keys": keys,
+        "modes": rows,
+        "counts": {
+            "per_side": per_side,
+            "unique_spatial_mn": len({(row["m"], row["n"]) for row in rows}),
+            "unique_spatial_mn_per_side": {
+                side: len(values) for side, values in per_side_spatial.items()
+            },
+            "polarization": polarization_counts,
+            "polarization_per_side": polarization_per_side,
+            "propagating": sum(row["propagating"] for row in rows),
+            "nonpropagating": sum(not row["propagating"] for row in rows),
+            "rayleigh_warning": sum(row["rayleigh_warning"] for row in rows),
+        },
+        "reporting_bounds_are_not_selection": True,
+    }
+    if extra:
+        payload.update(extra)
+    return payload
+
+
+def _task039_dynamic_external_mode_inventory_from_cfg(cfg: Any) -> dict[str, Any]:
+    """Serialize the dynamic DtN mode keys selected from one resolved cfg."""
+
+    from src.common.modes_3d import outgoing_port_modes_3d
+
+    return _task039_inventory_from_modes(
+        outgoing_port_modes_3d(cfg),
+        selection="dynamic_physical_propagation_inventory",
+    )
+
+
+def task039_dynamic_external_mode_inventory(
+    config: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Return the full dynamic external mode-key inventory for a normalized cfg."""
+
+    return _task039_dynamic_external_mode_inventory_from_cfg(
+        simulation_config_3d_from_normalized(config)
+    )
+
+
+def task039_air_side_external_mode_inventory(
+    cfg: Any,
+    *,
+    wavelength_nm: float = 0.7,
+) -> dict[str, Any]:
+    """Enumerate only the air-side 0.7 nm component without material claims."""
+
+    if float(wavelength_nm) != 0.7:
+        raise ValueError("Task39 air-side inventory is fixed at 0.7 nm")
+    air_cfg = deepcopy(cfg)
+    air_cfg.lambda0 = 0.7
+    air_cfg.n_air = 1.0 + 0.0j
+    air_cfg.n_substrate = None
+    air_cfg.n_grating = None
+    air_cfg.stage4_dtn_order_policy = "auto_propagating"
+    air_cfg.diffraction_order_max_m = None
+    air_cfg.diffraction_order_max_n = None
+    from src.common.modes_3d import outgoing_port_modes_3d
+
+    modes = outgoing_port_modes_3d(air_cfg)
+    return _task039_inventory_from_modes(
+        (mode for mode in modes if mode.side == "top"),
+        selection="top_air_only_dynamic_physical_propagation_inventory",
+        extra={
+            "air_n": [1.0, 0.0],
+            "wavelength_nm": 0.7,
+            "material_status": "0P7NM_MATERIAL_INPUT_INCOMPLETE",
+            "substrate_dependent": "pending",
+            "full_pde_allowed": False,
+            "full_pde_error": "0P7NM_MATERIAL_INPUT_INCOMPLETE",
+        },
+    )
+
+
+def task039_07nm_launch_error(config: Mapping[str, Any]) -> str | None:
+    """Reject any future 0.7 nm full launch before worker dispatch."""
+
+    if (
+        config.get("dimension") == 3
+        and re.fullmatch(r"task039_0p7nm(?:[_-].*)?", str(config.get("model_id", "")))
+        and isinstance(config.get("incidence"), Mapping)
+        and config["incidence"].get("wavelength_nm") == 0.7
+    ):
+        return "0P7NM_MATERIAL_INPUT_INCOMPLETE"
+    return None
+
+
+def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
+    """Return errors for the finite, explicit Task39 p6/h10 profiles."""
+
+    method = config["method"]
+    kind = method["kind"]
+    if not task039_model_id_matches(
+        kind,
+        str(config.get("model_id", "")),
+        method.get("requested_modes_per_direction"),
+    ):
+        errors: list[tuple[str, str]] = [
+            (
+                "model_id",
+                f"Task39 {kind} requires its finite model_id and matching M",
+            )
+        ]
+    else:
+        errors = []
+    expected: tuple[tuple[str, str, Any], ...] = (
+        ("geometry", "geometry_kind", "rectangular_block_grating"),
+        ("geometry", "period_x_nm", 50.0),
+        ("geometry", "period_y_nm", 25.0),
+        ("geometry", "z_min_nm", -10.0),
+        ("geometry", "z_max_nm", 130.0),
+        ("geometry", "interface_z_nm", 0.0),
+        ("geometry", "air_height_nm", 130.0),
+        ("geometry", "substrate_thickness_nm", 10.0),
+        ("geometry", "grating_width_x_nm", 17.0),
+        ("geometry", "grating_width_y_nm", 25.0),
+        ("geometry", "grating_height_nm", 120.0),
+        ("materials", "n_air", (1.0, 0.0)),
+        ("materials", "mu_r", (1.0, 0.0)),
+        ("materials", "n_substrate", _TASK039_N),
+        ("materials", "n_grating", _TASK039_N),
+        ("materials", "substrate_name", "Task39 5nm material"),
+        ("materials", "grating_name", "Task39 5nm material"),
+        ("incidence", "wavelength_nm", 5.0),
+        ("incidence", "grazing_angle_deg", 10.0),
+        ("incidence", "azimuth_deg", 0.0),
+        ("incidence", "polarization", "s"),
+        ("incidence", "electric_amplitude", 1.0),
+        ("discretization", "nedelec_degree", 6),
+        ("discretization", "visualization_degree", 6),
+        ("discretization", "mesh_target_nm", 10.0),
+        ("discretization", "mesh_cell_type", "hexahedron"),
+        ("discretization", "mesh_spacing_mode", "boundary_fitted"),
+        ("discretization", "assembly_backend", "assembly_time_static_condensed"),
+        ("discretization", "floquet_constraint_mode", "auto"),
+        ("boundary", "use_floquet_x", True),
+        ("boundary", "use_floquet_y", True),
+        ("boundary", "vertical_boundary", "dtn_port"),
+        ("boundary", "scattering_background", "layered"),
+        ("boundary", "dtn_order_policy", "auto_propagating"),
+        ("boundary", "dtn_assembly", "auxiliary"),
+        ("boundary", "use_pml", False),
+        ("boundary", "pml_alpha", 5.0),
+        ("execution", "warning_memory_gib", 180.0),
+        ("execution", "terminate_memory_gib", 220.0),
+        ("execution", "timeout_seconds", 21600),
+        ("execution", "require_zero_swap", True),
+        ("output", "export_fields", True),
+        ("output", "export_diffraction_orders", True),
+        ("output", "export_modal_amplitudes", True),
+        ("output", "export_reference_planes", True),
+        ("output", "reference_plane_z_nm", (10.0, 30.0, 60.0, 90.0, 110.0)),
+        ("output", "sample_count_x", 40),
+        ("output", "sample_count_y", 20),
+        ("output", "diffraction_sample_count_x", 32),
+        ("output", "diffraction_sample_count_y", 32),
+        ("output", "top_probe_z_nm", 110.0),
+        ("output", "bottom_probe_z_nm", 10.0),
+        ("output", "probe_fraction", 0.75),
+        ("output", "diffraction_order_max_m", 2),
+        ("output", "diffraction_order_max_n", 2),
+        ("output", "unique_output", True),
+    )
+    for section, key, expected_value in expected:
+        actual = config[section].get(key)
+        if not _same_profile_value(actual, expected_value):
+            errors.append((f"{section}.{key}", f"Task39 requires {expected_value!r}"))
+    provenance = task039_material_provenance(config)
+    if provenance is None:
+        errors.append(
+            (
+                "materials",
+                "Task39 requires the 5 nm n-only material provenance contract",
+            )
+        )
+    output = config["output"]
+    expected_canonical = kind in {
+        "full3d_direct",
+        "full3d_iterative",
+        "hybrid_direct",
+        "hybrid_iterative",
+    }
+    if output.get("export_canonical_vectors") is not expected_canonical:
+        errors.append(
+            (
+                "output.export_canonical_vectors",
+                f"Task39 {kind} requires {expected_canonical}",
+            )
+        )
+    if kind == "full3d_direct":
+        if config["execution"]["mpi_size"] != 8:
+            errors.append(("execution.mpi_size", "Task39 Full3D direct requires MPI8"))
+        solver = config["solver"]
+        if solver.get("direct_solver_profile") != "default":
+            errors.append(
+                ("solver.direct_solver_profile", "Task39 direct requires default")
+            )
+        if solver.get("linear_solver") != "direct":
+            errors.append(("solver.linear_solver", "Task39 direct requires direct"))
+    elif kind == "full3d_iterative":
+        if config["execution"]["mpi_size"] != 8:
+            errors.append(
+                ("execution.mpi_size", "Task39 Full3D iterative requires MPI8")
+            )
+        expected_solver = {
+            "linear_solver": "fgmres",
+            "preconditioner": "full3d_m3a_physical_slab_two_level",
+            "restart": 90,
+            "max_iterations": 4000,
+            "relative_tolerance": 1.0e-6,
+            "absolute_tolerance": 0.0,
+            "initial_guess": "zero",
+        }
+        for key, value in expected_solver.items():
+            if config["solver"].get(key) != value:
+                errors.append((f"solver.{key}", f"Task39 requires {value!r}"))
+    else:
+        expected_solver = {
+            "linear_solver": "direct" if kind == "hybrid_direct" else "fgmres",
+            "preconditioner": (
+                "hybrid_block_ldu_ilu0_dtn_woodbury"
+                if kind == "hybrid_iterative"
+                else None
+            ),
+            "restart": 90 if kind == "hybrid_iterative" else None,
+            "max_iterations": 6000 if kind == "hybrid_iterative" else None,
+            "relative_tolerance": 5.0e-9 if kind == "hybrid_iterative" else None,
+            "absolute_tolerance": 0.0 if kind == "hybrid_iterative" else None,
+            "initial_guess": "zero" if kind == "hybrid_iterative" else None,
+            "ilu_level": 0 if kind == "hybrid_iterative" else None,
+            "ilu_shift": 0.1 if kind == "hybrid_iterative" else None,
+            "subdomain_count_per_endcap": 1 if kind == "hybrid_iterative" else None,
+            "overlap_fraction": 0.0 if kind == "hybrid_iterative" else None,
+            "side_residual_correction_steps": 2 if kind == "hybrid_iterative" else None,
+        }
+        for key, value in expected_solver.items():
+            if value is not None and config["solver"].get(key) != value:
+                errors.append((f"solver.{key}", f"Task39 requires {value!r}"))
+        if kind == "hybrid_direct":
+            if config["execution"]["mpi_size"] != 8:
+                errors.append(
+                    ("execution.mpi_size", "Task39 Hybrid direct requires MPI8")
+                )
+            if config["solver"].get("direct_solver_profile") != "default":
+                errors.append(
+                    ("solver.direct_solver_profile", "Task39 direct requires default")
+                )
+            if (
+                method.get("requested_modes_per_direction")
+                not in _TASK039_MODE_CANDIDATES
+            ):
+                errors.append(
+                    (
+                        "method.requested_modes_per_direction",
+                        "Task39 Hybrid direct allows only 120/240/480/960",
+                    )
+                )
+        else:
+            if config["execution"]["mpi_size"] not in {1, 8}:
+                errors.append(
+                    (
+                        "execution.mpi_size",
+                        "Task39 Hybrid iterative allows only MPI1 or MPI8",
+                    )
+                )
+            if (
+                method.get("requested_modes_per_direction")
+                not in _TASK039_MODE_CANDIDATES
+            ):
+                errors.append(
+                    (
+                        "method.requested_modes_per_direction",
+                        "Task39 Hybrid iterative allows only numeric 120/240/480/960",
+                    )
+                )
+    if kind in {"hybrid_direct", "hybrid_iterative"}:
+        if (
+            method.get("bottom_interface_nm"),
+            method.get("top_interface_nm"),
+        ) != (10.0, 110.0):
+            errors.append(("method", "Task39 Hybrid interfaces must be 10/110 nm"))
+        if (
+            method.get("propagation_model"),
+            method.get("traction_model"),
+        ) != ("full3d_uniform_cg", "full3d_one_cell_exact_schur"):
+            errors.append(("method", "Task39 Hybrid requires the full3d exact pair"))
+    return errors
+
+
 def task038_hybrid_iterative_profile_errors(
     config: Mapping[str, Any],
 ) -> list[tuple[str, str]]:
@@ -378,6 +826,23 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
     output = config["output"]
     kind = method["kind"]
     geometry_kind = geometry["geometry_kind"]
+    model_id = str(config.get("model_id", ""))
+    if model_id.startswith("task039_"):
+        if model_id.startswith("task039_0p7nm"):
+            if incidence.get("wavelength_nm") != 0.7:
+                raise _error(
+                    "incidence.wavelength_nm",
+                    "0.7 nm component-only identity requires wavelength_nm=0.7",
+                )
+        elif not task039_model_id_matches(
+            kind,
+            model_id,
+            method.get("requested_modes_per_direction"),
+        ):
+            raise _error(
+                "model_id",
+                "unsupported finite Task39 identity for this method and M",
+            )
 
     if dimension == 2:
         if not kind.startswith("2d_"):
@@ -522,31 +987,71 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
             )
         if kind == "full3d_direct" and solver["linear_solver"] != "direct":
             raise _error("solver.linear_solver", "full3d_direct requires direct")
+        if kind == "full3d_direct" and _is_task039_candidate(config):
+            profile_errors = task039_profile_errors(config)
+            if profile_errors:
+                path, message = profile_errors[0]
+                raise _error(path, message)
+        if kind == "full3d_iterative":
+            if not _is_task039_candidate(config):
+                raise _error(
+                    "method.kind",
+                    "full3d_iterative is currently limited to the Task39 5 nm profile",
+                )
+            if solver["linear_solver"] != "fgmres":
+                raise _error("solver.linear_solver", "full3d_iterative requires fgmres")
+            if solver.get("preconditioner") != "full3d_m3a_physical_slab_two_level":
+                raise _error(
+                    "solver.preconditioner",
+                    "full3d_iterative requires the accepted M3a physical-slab profile",
+                )
+            profile_errors = task039_profile_errors(config)
+            if profile_errors:
+                path, message = profile_errors[0]
+                raise _error(path, message)
         if kind == "hybrid_direct":
             if solver["linear_solver"] != "direct":
                 raise _error("solver.linear_solver", "hybrid_direct requires direct")
-            if discretization["nedelec_degree"] not in {1, 2, 3, 4}:
+            allowed_degrees = (
+                {1, 2, 3, 4, 6} if _is_task039_candidate(config) else {1, 2, 3, 4}
+            )
+            if discretization["nedelec_degree"] not in allowed_degrees:
                 raise _error(
                     "discretization.nedelec_degree",
-                    "hybrid_direct supports degrees 1 through 4",
+                    "hybrid_direct supports degrees 1 through 4; Task39 adds p6",
                 )
             if solver.get("direct_solver_profile") != "default":
                 raise _error(
                     "solver.direct_solver_profile",
                     "hybrid_direct only supports direct_solver_profile=default",
                 )
-            if discretization["assembly_backend"] != "standard_full":
+            expected_assembly = (
+                "assembly_time_static_condensed"
+                if _is_task039_candidate(config)
+                else "standard_full"
+            )
+            if discretization["assembly_backend"] != expected_assembly:
                 raise _error(
                     "discretization.assembly_backend",
-                    "hybrid_direct requires standard_full",
+                    f"hybrid_direct requires {expected_assembly}",
                 )
+            expected_pair = (
+                ("full3d_uniform_cg", "full3d_one_cell_exact_schur")
+                if _is_task039_candidate(config)
+                else ("continuous_beta", "continuous_qep_beta")
+            )
             if (
                 method["propagation_model"],
                 method["traction_model"],
-            ) != ("continuous_beta", "continuous_qep_beta"):
+            ) != expected_pair:
                 raise _error(
                     "method",
-                    "hybrid_direct adapter supports only continuous_beta + continuous_qep_beta",
+                    (
+                        "hybrid_direct does not support this propagation/traction pair"
+                        if _is_task039_candidate(config)
+                        else "hybrid_direct adapter supports only "
+                        "continuous_beta + continuous_qep_beta"
+                    ),
                 )
             for key in (
                 "export_fields",
@@ -559,10 +1064,15 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                         f"output.{key}",
                         "hybrid_direct requires the supported Case080 output combination",
                     )
-            if output.get("export_canonical_vectors") is not False:
+            expected_canonical = _is_task039_candidate(config)
+            if output.get("export_canonical_vectors") is not expected_canonical:
                 raise _error(
                     "output.export_canonical_vectors",
-                    "hybrid_direct canonical vector export is not supported",
+                    (
+                        "Task39 hybrid_direct requires canonical vector export"
+                        if expected_canonical
+                        else "hybrid_direct canonical vector export is not supported"
+                    ),
                 )
             if output.get("unique_output") is not True:
                 raise _error(
@@ -585,6 +1095,11 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     "output.reference_plane_z_nm",
                     "hybrid_direct reference planes must lie between its interfaces",
                 )
+            if _is_task039_candidate(config):
+                profile_errors = task039_profile_errors(config)
+                if profile_errors:
+                    path, message = profile_errors[0]
+                    raise _error(path, message)
         if kind == "hybrid_iterative":
             if solver["linear_solver"] != "fgmres":
                 raise _error("solver.linear_solver", "hybrid_iterative requires fgmres")
@@ -715,7 +1230,11 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "Hybrid interfaces must lie strictly inside the uniform grating slab",
             )
         if kind == "hybrid_iterative":
-            profile_errors = task038_hybrid_iterative_profile_errors(config)
+            profile_errors = (
+                task039_profile_errors(config)
+                if _is_task039_candidate(config)
+                else task038_hybrid_iterative_profile_errors(config)
+            )
             if profile_errors:
                 path, message = profile_errors[0]
                 raise _error(path, message)
@@ -1010,12 +1529,13 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 raise _error(f"output.{key}", "must be positive")
     if "electric_amplitude" in incidence and incidence["electric_amplitude"] < 0.0:
         raise _error("incidence.electric_amplitude", "must be non-negative")
-    if kind == "hybrid_iterative":
+    if kind in {"hybrid_iterative", "full3d_iterative"}:
         for key in ("restart", "max_iterations", "subdomain_count_per_endcap"):
-            if solver[key] <= 0:
+            if key in solver and solver[key] <= 0:
                 raise _error(f"solver.{key}", "must be positive")
         if solver["relative_tolerance"] <= 0.0 or solver["absolute_tolerance"] < 0.0:
             raise _error("solver", "tolerances must be relative>0 and absolute>=0")
+    if kind == "hybrid_iterative":
         if solver["ilu_level"] < 0 or solver["ilu_shift"] < 0.0:
             raise _error("solver", "ILU level/shift must be non-negative")
         if not 0.0 <= solver["overlap_fraction"] < 1.0:
@@ -1288,7 +1808,7 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
         )
     except ValueError as exc:
         raise _error("discretization.assembly_backend", str(exc)) from exc
-    return {
+    derived = {
         "internal": {
             "incident_theta_deg": theta,
             "incident_phi_deg": i["azimuth_deg"],
@@ -1329,6 +1849,13 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
         "nedelec_trace_degree_resolved": trace_degree_resolved,
         "floquet_constraint_mode_requested": floquet_mode,
     }
+    material_provenance = task039_material_provenance(config)
+    if material_provenance is not None:
+        derived["material_provenance"] = material_provenance
+        derived["external_mode_inventory"] = (
+            _task039_dynamic_external_mode_inventory_from_cfg(cfg)
+        )
+    return derived
 
 
 def resolve_loaded_input(loaded: LoadedInput) -> RunSpecification:
@@ -1393,4 +1920,10 @@ __all__ = [
     "resolve_loaded_input",
     "simulation_config_2d_from_normalized",
     "simulation_config_3d_from_normalized",
+    "task039_07nm_launch_error",
+    "task039_air_side_external_mode_inventory",
+    "task039_dynamic_external_mode_inventory",
+    "task039_material_provenance",
+    "task039_model_id_matches",
+    "task039_profile_errors",
 ]

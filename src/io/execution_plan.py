@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from .input_loader import InputError
+from .input_validation import task039_model_id_matches
 from .resolved_config import resolved_config_bytes
 from .run_specification import RunSpecification
 
@@ -21,11 +22,21 @@ METHOD_ADAPTERS = {
     "2d_scattered": "task038.2d_scattered",
     "2d_port": "task038.2d_port",
     "full3d_direct": "task038.full3d_direct",
+    "full3d_iterative": "task039.full3d_iterative",
     "hybrid_direct": "task038.hybrid_direct",
     "hybrid_iterative": "task038.hybrid_iterative",
 }
+TASK039_HYBRID_DIRECT_ADAPTER = "task039.hybrid_direct"
+TASK039_HYBRID_ITERATIVE_ADAPTER = "task039.hybrid_iterative"
 CONNECTED_METHODS = frozenset(
-    {"2d_scattered", "2d_port", "full3d_direct", "hybrid_direct", "hybrid_iterative"}
+    {
+        "2d_scattered",
+        "2d_port",
+        "full3d_direct",
+        "full3d_iterative",
+        "hybrid_direct",
+        "hybrid_iterative",
+    }
 )
 
 
@@ -51,7 +62,18 @@ class ExecutionPlan:
     expected_manifest: Path
 
 
-def method_adapter_identity(method: str) -> str:
+def method_adapter_identity(method: str, model_id: str | None = None) -> str:
+    model_text = str(model_id or "")
+    if model_text.startswith("task039_0p7nm"):
+        raise InputError("0P7NM_MATERIAL_INPUT_INCOMPLETE")
+    if model_text.startswith("task039_") and not task039_model_id_matches(
+        method, model_text
+    ):
+        raise InputError(f"model_id: unsupported finite Task39 identity {model_text!r}")
+    if method == "hybrid_direct" and task039_model_id_matches(method, model_text):
+        return TASK039_HYBRID_DIRECT_ADAPTER
+    if method == "hybrid_iterative" and task039_model_id_matches(method, model_text):
+        return TASK039_HYBRID_ITERATIVE_ADAPTER
     try:
         return METHOD_ADAPTERS[method]
     except KeyError as exc:
@@ -60,9 +82,20 @@ def method_adapter_identity(method: str) -> str:
         ) from exc
 
 
-def method_adapter_available(method: str) -> bool:
+def method_adapter_available(method: str, model_id: str | None = None) -> bool:
     """Report availability of the adapters actually connected in Task38."""
 
+    model_text = str(model_id or "")
+    if model_text.startswith("task039_0p7nm"):
+        raise InputError("0P7NM_MATERIAL_INPUT_INCOMPLETE")
+    if model_text.startswith("task039_") and not task039_model_id_matches(
+        method, model_text
+    ):
+        raise InputError(f"model_id: unsupported finite Task39 identity {model_text!r}")
+    if method == "hybrid_direct" and task039_model_id_matches(method, model_text):
+        return True
+    if method == "hybrid_iterative" and task039_model_id_matches(method, model_text):
+        return True
     if method not in METHOD_ADAPTERS:
         raise InputError(f"method.kind: unsupported Task38 method {method!r}")
     return method in CONNECTED_METHODS
@@ -83,6 +116,7 @@ def build_execution_plan(
     run_directory = Path(run_directory).resolve()
     executable = Path(os.path.abspath(python_executable or sys.executable))
     method = str(specification.method["kind"])
+    model_id = str(specification.identity.get("model_id", ""))
     if contract_probe:
         if adapter_identity != CONTRACT_PROBE_ADAPTER:
             raise InputError(
@@ -91,10 +125,10 @@ def build_execution_plan(
         adapter = CONTRACT_PROBE_ADAPTER
         available = True
     else:
-        adapter = adapter_identity or method_adapter_identity(method)
-        if adapter != method_adapter_identity(method):
+        adapter = adapter_identity or method_adapter_identity(method, model_id)
+        if adapter != method_adapter_identity(method, model_id):
             raise InputError("public method adapter identity cannot be overridden")
-        available = method_adapter_available(method)
+        available = method_adapter_available(method, model_id)
 
     mpi_size = int(specification.execution["mpi_size"])
     requested_modes = specification.method.get("requested_modes_per_direction")
@@ -166,6 +200,7 @@ def dry_run_payload(specification: RunSpecification) -> dict[str, Any]:
         if "floquet_phase_x" in derived
         else {"x": derived.get("floquet_phase"), "y": None}
     )
+    external_inventory = derived.get("external_mode_inventory")
     return {
         "method": specification.method["kind"],
         "mpi_size": specification.execution["mpi_size"],
@@ -180,14 +215,25 @@ def dry_run_payload(specification: RunSpecification) -> dict[str, Any]:
         "wavevector": derived.get("wavevector"),
         "polarization": derived.get("polarization"),
         "floquet_phases": phases,
+        **(
+            {"external_mode_inventory": external_inventory}
+            if external_inventory is not None
+            else {}
+        ),
         "expected_output_directory": str(
             Path(specification.expected_output_parent).resolve()
         ),
         "resolved_method_adapter": {
-            "identity": method_adapter_identity(specification.method["kind"]),
+            "identity": method_adapter_identity(
+                specification.method["kind"],
+                str(specification.identity.get("model_id", "")),
+            ),
             "status": (
                 "connected"
-                if method_adapter_available(specification.method["kind"])
+                if method_adapter_available(
+                    specification.method["kind"],
+                    str(specification.identity.get("model_id", "")),
+                )
                 else "unavailable"
             ),
         },

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import platform
+import math
 import subprocess
 import sys
 import time
@@ -11,7 +12,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
-from benchmarks.task034_wsl_resources import resource_authority_sample
+from benchmarks.task034_wsl_resources import (
+    cgroup_snapshot,
+    resource_authority_sample,
+    wsl_memory_snapshot,
+)
 from benchmarks.watchdog_process_control import (
     terminate_process_tree,
     worker_process_group_popen_kwargs,
@@ -24,6 +29,7 @@ from src.io.execution_plan import (
     method_adapter_identity,
 )
 from src.io.input_loader import InputError
+from src.io.input_validation import task039_model_id_matches
 from src.io.resolved_config import canonical_json_bytes, write_resolved_config
 from src.io.run_specification import RunSpecification
 
@@ -31,6 +37,101 @@ from src.io.run_specification import RunSpecification
 PopenFactory = Callable[..., Any]
 SampleFactory = Callable[[int], dict[str, Any]]
 TerminateFactory = Callable[[Any], dict[str, Any]]
+
+
+def task039_resource_ledger(
+    actual_available_gib: float,
+    *,
+    observed_process_tree_gib: float,
+    observed_swap_gib: float,
+    available_classification: str = "measured",
+) -> dict[str, Any]:
+    """Return the Task39 resource decision using the existing launcher sample."""
+
+    available = float(actual_available_gib)
+    observed = float(observed_process_tree_gib)
+    swap = float(observed_swap_gib)
+    if (
+        not math.isfinite(available)
+        or available <= 0.0
+        or not math.isfinite(observed)
+        or observed < 0.0
+        or not math.isfinite(swap)
+        or swap < 0.0
+    ):
+        raise ValueError("Task39 resource samples must be finite and non-negative")
+    if available_classification not in {"measured", "estimated"}:
+        raise ValueError("available_classification must be measured or estimated")
+    hard_stop = min(220.0, 0.90 * available)
+    stop_reason = None
+    if swap > 0.0:
+        stop_reason = "swap_policy_violation"
+    elif observed >= hard_stop:
+        stop_reason = "memory_hard_stop"
+    return {
+        "warning_memory_gib": {
+            "value": 180.0,
+            "classification": "contract",
+        },
+        "hard_stop_memory_gib": {
+            "value": hard_stop,
+            "classification": "derived",
+            "source_classification": available_classification,
+        },
+        "actual_available_gib": {
+            "value": available,
+            "classification": available_classification,
+        },
+        "observed_process_tree_gib": {
+            "value": observed,
+            "classification": "measured",
+        },
+        "observed_swap_gib": {
+            "value": swap,
+            "classification": "measured",
+        },
+        "stop": stop_reason is not None,
+        "stop_reason": stop_reason,
+    }
+
+
+def _task039_memory_budget() -> dict[str, Any]:
+    """Read the finite WSL/cgroup capacity used by the Task39 hard stop."""
+
+    memory = wsl_memory_snapshot()
+    cgroup = cgroup_snapshot("self")
+    candidates: list[tuple[str, int]] = []
+    total = memory.get("mem_total_bytes")
+    if isinstance(total, int) and total > 0:
+        candidates.append(("wsl_mem_total", total))
+    cgroup_limit = cgroup.get("memory_limit_bytes")
+    if isinstance(cgroup_limit, int) and cgroup_limit > 0:
+        candidates.append(("cgroup_memory_max", cgroup_limit))
+    if not candidates:
+        raise InputError(
+            "Task39 resource preflight cannot read a finite WSL/cgroup memory limit"
+        )
+    source_name, limit_bytes = min(candidates, key=lambda item: item[1])
+    actual_limit_gib = limit_bytes / 1024**3
+    ledger = task039_resource_ledger(
+        actual_limit_gib,
+        observed_process_tree_gib=0.0,
+        observed_swap_gib=0.0,
+        available_classification="measured",
+    )
+    ledger.pop("observed_process_tree_gib", None)
+    ledger.pop("observed_swap_gib", None)
+    ledger.pop("stop", None)
+    ledger.pop("stop_reason", None)
+    ledger["source"] = {
+        "selected": source_name,
+        "wsl_mem_total_bytes": total,
+        "cgroup_memory_max_bytes": cgroup_limit,
+        "classification": "measured",
+    }
+    ledger["configured_terminate_memory_gib"] = 220.0
+    ledger["effective_terminate_memory_gib"] = ledger["hard_stop_memory_gib"]["value"]
+    return ledger
 
 
 def _now() -> str:
@@ -110,7 +211,7 @@ def _base_manifest(
     resolved_sha: str,
 ) -> dict[str, Any]:
     snapshot = specification.as_jsonable()
-    return {
+    manifest = {
         "model_id": snapshot["model_id"],
         "run_id": snapshot["run_id"],
         "comparison_group": snapshot["comparison_group"],
@@ -133,6 +234,13 @@ def _base_manifest(
         "numerical_output_directory": str(run_directory / "numerical_output"),
         "resolved_method_adapter": adapter_identity,
     }
+    material_provenance = snapshot["derived"].get("material_provenance")
+    if material_provenance is not None:
+        manifest["material_provenance"] = material_provenance
+    external_mode_inventory = snapshot["derived"].get("external_mode_inventory")
+    if external_mode_inventory is not None:
+        manifest["external_mode_inventory"] = external_mode_inventory
+    return manifest
 
 
 def _initial_summary(manifest: dict[str, Any]) -> dict[str, Any]:
@@ -212,6 +320,16 @@ def _run_worker(
     execution = specification.execution
     warning_limit = float(execution["warning_memory_gib"]) * 1024**3
     terminate_limit = float(execution["terminate_memory_gib"]) * 1024**3
+    task039_budget = None
+    model_id = str(specification.identity.get("model_id", ""))
+    method = str(specification.method.get("kind", ""))
+    requested_modes = specification.method.get("requested_modes_per_direction")
+    if task039_model_id_matches(method, model_id, requested_modes):
+        task039_budget = _task039_memory_budget()
+        warning_limit = 180.0 * 1024**3
+        terminate_limit = (
+            float(task039_budget["effective_terminate_memory_gib"]) * 1024**3
+        )
     timeout = float(execution["timeout_seconds"])
     sample_count = 0
     peak_authority = 0
@@ -271,20 +389,23 @@ def _run_worker(
             classification = "contract_probe_pass"
         else:
             classification = "worker_exit0" if exit_status == 0 else "worker_nonzero"
+    resource_authority = {
+        "status": "measured" if sample_count else "not_available",
+        "sample_count": sample_count,
+        "warning_triggered": warning_triggered,
+        "process_tree_peak_rss_mb": peak_process_tree / 1024**2,
+        "memory_authority_peak_mb": peak_authority / 1024**2,
+        "process_tree_peak_swap_mb": peak_swap / 1024**2,
+        "require_zero_swap": execution["require_zero_swap"],
+        "zero_swap_observed": zero_swap_observed if sample_count else None,
+    }
+    if task039_budget is not None:
+        resource_authority["task039_memory_budget"] = task039_budget
     return {
         "exit_status": exit_status,
         "result_classification": classification,
         "termination": termination,
-        "resource_authority": {
-            "status": "measured" if sample_count else "not_available",
-            "sample_count": sample_count,
-            "warning_triggered": warning_triggered,
-            "process_tree_peak_rss_mb": peak_process_tree / 1024**2,
-            "memory_authority_peak_mb": peak_authority / 1024**2,
-            "process_tree_peak_swap_mb": peak_swap / 1024**2,
-            "require_zero_swap": execution["require_zero_swap"],
-            "zero_swap_observed": zero_swap_observed if sample_count else None,
-        },
+        "resource_authority": resource_authority,
     }
 
 
@@ -313,7 +434,10 @@ def launch_specification(
     adapter = (
         CONTRACT_PROBE_ADAPTER
         if contract_probe
-        else method_adapter_identity(str(specification.method["kind"]))
+        else method_adapter_identity(
+            str(specification.method["kind"]),
+            str(specification.identity.get("model_id", "")),
+        )
     )
     run_directory = _timestamp_directory(specification, timestamp)
     start_time = _now()

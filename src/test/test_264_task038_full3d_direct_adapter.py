@@ -171,12 +171,14 @@ def test_full3d_and_hybrid_direct_are_connected_and_other_methods_fail_closed():
         "2d_scattered",
         "2d_port",
         "full3d_direct",
+        "full3d_iterative",
         "hybrid_direct",
         "hybrid_iterative",
     }
     assert method_adapter_available("2d_scattered") is True
     assert method_adapter_available("2d_port") is True
     assert method_adapter_available("full3d_direct") is True
+    assert method_adapter_available("full3d_iterative") is True
     assert method_adapter_available("hybrid_direct") is True
     assert method_adapter_available("hybrid_iterative") is True
 
