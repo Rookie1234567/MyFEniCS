@@ -54,6 +54,18 @@ results/<model_id>/<run_id>__<method>__mpi<N>__M<M-or-na>/<timestamp>/
 | T7 2D TM PML old/new | `f86a7e42dc2c44d36c8e5ab6dfa1d9bb8ef8ed42` | `4.595181492041868e-15`（两侧） | mesh400；DoF633；5 orders；R=`0.02561938273503437`；T=`0.8857932785737199`；R+T=`0.9114126613087543`；A_balance=`0.08858733869124569` | 所有共同 power/order 数值差 0 | dat 263.546875 MiB process-tree；legacy RSS not measured | formal light PDE equivalence pass |
 | T7 Stage1 old/new | `f86a7e42dc2c44d36c8e5ab6dfa1d9bb8ef8ed42` | `1.0869658196017029e-16`（两侧） | mesh48；DoF/rows98；NNZ1106；solution norm=`35.35501465073796`；R/T/A not applicable | 最大共享数值差 `8.271806125530277e-25`（`mean_poynting_W_per_m2[1]` 舍入） | dat 221.078125 MiB process-tree；legacy 214.02734375 MiB solver-reported historical | formal light PDE equivalence pass |
 
+## Review V1 selective-integration qualification
+
+以下五项是当前 integration HEAD `04bf4ea36d2936e0a9c1f258052b999301b9ac42` 的 fresh anchor；它们不覆盖上表中 source-branch historical SHA/数值。
+
+| 阶段/方法/MPI | residual 或完成状态 | 关键物理结果 | wall | process-tree RSS / swap | 判定 |
+|---|---|---|---:|---:|---|
+| T2 `2d_scattered` / MPI1 | `4.595181492041868e-15` | A_balance=`0.08858733869124569`；A_volume(PML)=`0` | 2.700s | 263.71484375 MiB / 0 MiB | pass |
+| T3 `full3d_direct` Stage1 / MPI1 | `1.0869658196017029e-16`；completed/official=`true/true` | Stage1 无 R/T/A authority | 2.426s | 220.699 MiB / 0 MiB | pass |
+| T4 `full3d_direct` Full3D / MPI1 | `5.520787756471226e-14` | R=`0.9997827084780738`；T=`0.00010870177442776488`；A_volume=`0.00010858974749584228`；closure≈`-2.55e-15` | 4.231s | 236.641 MiB / 0 MiB | §14.3 pass |
+| T5 `hybrid_direct` / MPI4 | `3.5212262245491577e-12` | R=`0.08902106910587265`；T=`0.44258674274410453`；A=`0.46839218815002287`；A_volume=`0.4683921881709747`；closure=`2.095190687612103e-11` | 95.3379s | 1762.98046875 MiB / 0 MiB | §14.3 pass；official_record=false、mode_count_converged=false、canonical comparison not_run |
+| T6 `hybrid_iterative` / MPI8 | reported/global/bottom/top/modal=`3.061648220429296e-09`/`3.0616508287283217e-09`/`4.879971042268039e-09`/`2.4282437987549574e-09`/`2.541191942436857e-15`；traction bottom/top=`4.879971042268039e-09`/`2.4282437987549574e-09` | 1771 iterations；R=`0.3656257867290164`；T=`0.012990632358452528`；A=`0.621383580912531`；A_volume=`0.6213835766254229`；closure=`-4.287108223977043e-09` | 1014.001252s | 6566.85546875 MiB / 0 MiB | §14.4 numerical pass；preferred 6144 MiB not met |
+
 T5 hash-pinned new summary 已验证：`results/.../20260812T043041.648724Z/numerical_output/run_summary.json` 的 SHA256 为 `2dadaf0554cdaae64a88e90d7d7146b34897f1ec075c25dc2a5c5f1d4ed22505`。因此统一表中的绝对 T5 dat 值来自该绑定 raw；legacy 绝对值未保存在 compact record，未猜测，必要处以 delta/`not_carried` 表示。
 
 Task §17.4 的 MPI1 条件由 inherited accepted MPI1 record 满足：`task037c_mpi1_identity_and_resource_v1.json`，SHA256 `a38d3c280cb655481f63e79baf658c5353a2e86823e46fcefb54a148b2baec5f`，source `f2d7719...`，1472 iterations、1751.3203125 MiB、1903.92164 s。它不是当前 Task38 same-SHA formal comparator，也不是本轮重跑；当前 Task38 MPI1 dat 只做 validate/dry-run。T6 MPI8 才是 Task38 fresh formal run。

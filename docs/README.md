@@ -77,7 +77,7 @@
 | Task037 | Full3D static-condensed iterative baseline | M3a explicit-opt-in research baseline；不是 production default |
 | Task037b | frozen Hybrid iterative M10 | 白名单能力已选择性进入 master；仍为 explicit-opt-in research capability，ordinary defaults不变，not production-qualified |
 | Task037c | Hybrid iterative robustness | 白名单能力已选择性进入 master；S偏振、1°、phi=-5/0/+5、M_robust=120；preferred RSS未过，仍not production-qualified |
-| Task038 | 单一 `.dat` input-driven configuration | 执行分支待 selective integration；11 migrated/6 retained，ordinary 数值算法不变；source-branch full pytest 1119 passed/48 skipped，integration full 为用户授权 controlled stop |
+| Task038 | 单一 `.dat` input-driven configuration | 已按 Review V1 白名单选择性进入 master；11 migrated/6 retained，ordinary defaults 不变；source-branch full pytest 1119 passed/48 skipped，integration full 为用户授权 controlled stop |
 
 ## 当前任务
 
