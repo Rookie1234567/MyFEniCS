@@ -69,7 +69,7 @@ def _record(*, online_pass: bool = True) -> dict:
         "source": {
             "before": {"commit_sha": SOURCE_SHA},
             "after": {
-                "commit_sha": SOURCE_SHA,
+                "head": SOURCE_SHA,
                 "clean": True,
                 "matches_verified_clean_sha": True,
             },
@@ -255,6 +255,7 @@ def test_dat_profile_variants_fail_during_load_and_resolve(tmp_path, old, new):
             relative_dual=2.0e-8
         ),
         lambda record: record["final_release"].update({"pass": False}),
+        lambda record: record["source"]["after"].update(head="b" * 40),
     ),
 )
 def test_negative_online_record_is_not_authoritative(tmp_path, change):

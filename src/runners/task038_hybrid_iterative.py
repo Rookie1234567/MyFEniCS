@@ -55,7 +55,7 @@ def _profile_errors(
         after = source.get("after")
         if not isinstance(before, Mapping) or before.get("commit_sha") != source_sha:
             errors.append("source before does not match verified source SHA")
-        if not isinstance(after, Mapping) or after.get("commit_sha") != source_sha:
+        if not isinstance(after, Mapping) or after.get("head") != source_sha:
             errors.append("source after does not match verified source SHA")
         elif not (
             after.get("clean") is True
