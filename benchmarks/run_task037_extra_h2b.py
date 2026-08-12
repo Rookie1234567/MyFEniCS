@@ -74,6 +74,42 @@ H2B_C1_METADATA_LIMIT_BYTES = 16_777_216
 H2B_C1_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_450_000_000
 H2B_C1_CLOSURE_LIMIT = 1.0e-11
 H2B_C1_NEIGHBORHOOD_COUNT = 84
+H2B_M3Y_SCHEMA = "task037.extra.h2b.m3y"
+H2B_M3Y_BUILDER_SCHEMA = f"{H2B_M3Y_SCHEMA}.builder.v1"
+H2B_M3Y_LOADER_SCHEMA = f"{H2B_M3Y_SCHEMA}.loader.v1"
+H2B_M3Y_WATCHDOG_SCHEMA = f"{H2B_M3Y_SCHEMA}.watchdog.v1"
+H2B_M3Y_CHECK_SCHEMA = f"{H2B_M3Y_SCHEMA}.check.v1"
+H2B_M3Y_BUILDER_TIMEOUT_SECONDS = H2B_P1_TIMEOUT_SECONDS
+H2B_M3Y_LOADER_TIMEOUT_SECONDS = 3_600.0
+H2B_M3Y_BUILDER_RSS_LIMIT_BYTES = 1_800_000_000
+H2B_M3Y_LOADER_RSS_LIMIT_BYTES = 1_050_000_000
+H2B_M3Y_NEIGHBORHOOD_COUNT = 84
+H2B_M3Y_FACTOR_LIMIT = 96
+H2B_M3Y_RETAINED_LIMIT_BYTES = 560_000_000
+H2B_M3Y_CLOSURE_LIMIT = 1.0e-11
+H2B_M3Y_SAMPLE_IDS = (0, 41, 83)
+H2B_M3Y_OLD_M2_COMPACT_SHA256 = (
+    "ebd512aa0e4b6823d5d95c5f816cc6e898c9fd97392af4f7346c83ba3ac4e31f"
+)
+H2B_M3Y_BUILDER_EVENTS = (
+    "authority_validated",
+    "mesh_ready",
+    "space_ready",
+    "floquet_mpc_ready",
+    "cache_load_ready",
+    "r2_factor_load_ready",
+    "neighborhood_discovery_ready",
+    "class_block_reconstruction_ready",
+    "factorization_complete",
+    "store_ready",
+    "summary_ready",
+)
+H2B_M3Y_LOADER_EVENTS = (
+    "store_load_started",
+    "store_load_ready",
+    "solve_audit_ready",
+    "summary_ready",
+)
 H2B_C1_EVENTS = (
     "authority_validated",
     "mesh_ready",
@@ -543,6 +579,179 @@ def _c1_scope() -> dict[str, Any]:
         "factorization": False,
         "factor_store_writer": False,
         "ordinary_default_changed": False,
+    }
+
+
+def _m3y_scope() -> dict[str, Any]:
+    return {
+        "mode": "h2b_m3y_full_packed_patch_store",
+        "degree": 6,
+        "h_nm": 10.0,
+        "mpi_size": 1,
+        "global_cells": H2B_FIXED_CELLS,
+        "local_cells": H2B_FIXED_CELLS,
+        "local_nloc": H2B_FIXED_NLOC,
+        "global_rows": H2B_FIXED_ROWS,
+        "constraint_count": H2B_FIXED_CONSTRAINTS,
+        "class_count": H2B_FIXED_CLASSES,
+        "neighborhood_count": H2B_M3Y_NEIGHBORHOOD_COUNT,
+        "packed_factor_limit": H2B_M3Y_FACTOR_LIMIT,
+        "retained_total_limit_bytes": H2B_M3Y_RETAINED_LIMIT_BYTES,
+        "builder_timeout_seconds": H2B_M3Y_BUILDER_TIMEOUT_SECONDS,
+        "builder_rss_limit_bytes": H2B_M3Y_BUILDER_RSS_LIMIT_BYTES,
+        "loader_timeout_seconds": H2B_M3Y_LOADER_TIMEOUT_SECONDS,
+        "loader_rss_limit_bytes": H2B_M3Y_LOADER_RSS_LIMIT_BYTES,
+        "swap_limit_bytes": H2B_SWAP_LIMIT_BYTES,
+        "operator": "K_curl+k0^2*M_abs_epsilon; code uses (1/mu_r) with mu_r=1",
+        "patch_definition": "R_P B0 R_P^T for every canonical neighborhood",
+        "factor_storage": "lower_complex128_packed_cholesky_zpptrf_zpptrs",
+        "construction": "R2 exact-class blocks streamed through the qualified P1 row-complete patch builder",
+        "global_matrix_materialized": False,
+        "global_constraint_matrix_materialized": False,
+        "static_condensation": False,
+        "trace_slab": False,
+        "schur": False,
+        "ordinary_default_changed": False,
+    }
+
+
+def _m3y_fixed_rhs(neighborhood_id: int, n: int = H2B_FIXED_NLOC):
+    import numpy as np
+
+    if type(neighborhood_id) is not int or neighborhood_id < 0:
+        raise ValueError("M3Y neighborhood id is invalid")
+    index = np.arange(n, dtype=np.float64)
+    scale = float(neighborhood_id + 1)
+    values = (1.0 + 0.001 * (index + 1.0) + 0.000001 * scale) + 1j * (
+        0.002 * (index + 1.0) + 0.000002 * scale
+    )
+    return np.asarray(values, dtype=np.complex128, order="C")
+
+
+def _m3y_valid_sha(value: Any) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and value == value.lower()
+        and all(char in "0123456789abcdef" for char in value)
+    )
+
+
+def _m3y_fixed_preflight() -> dict[str, Any]:
+    p1_builder_peak = 987_938_816
+    p1_retained = 201_933_812
+    h1_action_peak = 332_636_160
+    predicted = max(
+        p1_builder_peak - p1_retained + H2B_M3Y_RETAINED_LIMIT_BYTES,
+        h1_action_peak,
+    )
+    return {
+        "kind": "conservative_predicted_input_not_measured",
+        "components": {
+            "qualified_p1_builder_peak_anchor_bytes": p1_builder_peak,
+            "qualified_p1_retained_factor_metadata_anchor_bytes": p1_retained,
+            "qualified_h1_action_peak_anchor_bytes": h1_action_peak,
+            "m3y_retained_store_limit_bytes": H2B_M3Y_RETAINED_LIMIT_BYTES,
+        },
+        "equation": "max(987938816-201933812+560000000,332636160)",
+        "predicted_builder_online_live_set_bytes": int(predicted),
+        "limit_bytes": 1_750_000_000,
+        "predicted_live_set_gate": bool(predicted <= 1_750_000_000),
+        "measured": False,
+    }
+
+
+def _m3y_audit_valid(audit: Any) -> bool:
+    required = {
+        "schema",
+        "packed_cholesky",
+        "packed_factor_count",
+        "neighborhood_count",
+        "cell_count",
+        "packed_factor_bytes",
+        "metadata_mapping_bytes",
+        "retained_total_bytes",
+        "retained_total_limit_bytes",
+        "retained_total_gate",
+        "retained_payload_components",
+        "full_dense_factor_count",
+        "pivots_retained",
+        "factorization_info_max",
+        "finite",
+        "deterministic",
+        "materialization_identity",
+        "ordinary_default_changed",
+    }
+    if not isinstance(audit, Mapping) or not required.issubset(audit):
+        return False
+    materialization = audit["materialization_identity"]
+    components = audit["retained_payload_components"]
+    if not isinstance(materialization, Mapping) or not isinstance(components, Mapping):
+        return False
+    forbidden = (
+        "patch_matrices",
+        "global_matrix",
+        "global_constraint_matrix",
+        "static_condensation",
+        "trace_slab",
+        "slab_factor",
+        "schur",
+        "ql_qh_transform",
+        "per_cell_factor",
+    )
+    return bool(
+        audit["schema"] == "task037.extra.h2b.m3y.packed-factor-store.v1"
+        and audit["packed_cholesky"] is True
+        and type(audit["packed_factor_count"]) is int
+        and 0 < audit["packed_factor_count"] <= H2B_M3Y_FACTOR_LIMIT
+        and audit["neighborhood_count"] == H2B_M3Y_NEIGHBORHOOD_COUNT
+        and audit["cell_count"] == H2B_FIXED_CELLS
+        and type(audit["packed_factor_bytes"]) is int
+        and type(audit["metadata_mapping_bytes"]) is int
+        and audit["retained_total_bytes"]
+        == audit["packed_factor_bytes"] + audit["metadata_mapping_bytes"]
+        and audit["retained_total_limit_bytes"] == H2B_M3Y_RETAINED_LIMIT_BYTES
+        and audit["retained_total_gate"] is True
+        and sum(components.values()) == audit["retained_total_bytes"]
+        and audit["full_dense_factor_count"] == 0
+        and audit["pivots_retained"] is False
+        and audit["factorization_info_max"] == 0
+        and audit["finite"] is True
+        and audit["deterministic"] is True
+        and audit["ordinary_default_changed"] is False
+        and all(materialization.get(name) is False for name in forbidden)
+    )
+
+
+def _m3y_measure_factor(matrix: Any, factor: Any, neighborhood_id: int) -> dict[str, Any]:
+    import numpy as np
+
+    values = np.asarray(matrix)
+    rhs = _m3y_fixed_rhs(neighborhood_id, int(factor.n))
+    solution = factor.solve(rhs)
+    action = np.asarray(values @ solution, dtype=np.complex128, order="C")
+    repeat_solution = factor.solve(rhs)
+    repeat_action = np.asarray(values @ repeat_solution, dtype=np.complex128, order="C")
+    denominator = max(float(np.linalg.norm(rhs)), np.finfo(float).tiny)
+    solve_residual = float(np.linalg.norm(action - rhs) / denominator)
+    return {
+        "neighborhood_id": int(neighborhood_id),
+        "rhs_sha256": _array_sha256(rhs),
+        "solution_sha256": _array_sha256(solution),
+        "repeat_solution_sha256": _array_sha256(repeat_solution),
+        "action_sha256": _array_sha256(action),
+        "repeat_action_sha256": _array_sha256(repeat_action),
+        "solve_residual": solve_residual,
+        "action_closure_relative_error": solve_residual,
+        "finite": bool(
+            np.all(np.isfinite(rhs))
+            and np.all(np.isfinite(solution))
+            and np.all(np.isfinite(action))
+        ),
+        "deterministic": bool(
+            _array_sha256(solution) == _array_sha256(repeat_solution)
+            and _array_sha256(action) == _array_sha256(repeat_action)
+        ),
     }
 
 
@@ -3139,6 +3348,544 @@ def _run_p1_worker(run_dir: Path) -> int:
     return 0 if status == "measurement_complete" else 1
 
 
+def _m3y_compact_authority(authority: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "r0_source": authority["producer_authority"]["r0_source"],
+        "r1_source": authority["producer_authority"]["r1_source"],
+        "r2_producer_source_full_sha": authority["producer_authority"][
+            "r2_producer_source_full_sha"
+        ],
+        "r2_record_sha256": authority["r2_record_sha256"],
+        "r2_record_evidence_sha256": authority["r2_evidence_sha256"],
+        "r2_factor_manifest_sha256": authority["factor_manifest_sha256"],
+        "p0_record_sha256": authority["p0"]["record_sha256"],
+        "p0_evidence_sha256": authority["p0"]["evidence_sha256"],
+        "central_cell_ordinal": authority["p0"]["central_cell_ordinal"],
+        "central_class_id": authority["p0"]["central_class_id"],
+        "touching_cell_count": authority["p0"]["touching_cell_count"],
+        "touching_class_count": authority["p0"]["touching_class_count"],
+    }
+
+
+def _run_m3y_builder(run_dir: Path) -> int:
+    """Stream all exact row-complete patches into the packed M3Y cold store."""
+
+    import gc
+
+    import numpy as np
+
+    h2a = _lazy_h2a()
+    from src.common.config_3d import target_stage4_config
+    from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
+    from src.solvers.common_3d_solve import _create_nedelec_space
+    from src.solvers.hcurl_h2b_packed_patch_store import (
+        build_h2b_m3y_packed_factor,
+        build_h2b_m3y_packed_patch_store,
+        write_h2b_m3y_packed_patch_store,
+    )
+    from src.solvers.hcurl_rank_one_mpc_action import (
+        build_task037_extra_h1r2_mpc_action,
+    )
+    from src.solvers.hcurl_r2_constrained_local_block import build_h2a_r2_cell_expansion
+    from src.solvers.hcurl_r2_factor_store import (
+        H2AR2CellReference,
+        load_h2a_r2_factor_store,
+    )
+    from src.solvers.hcurl_h2b_p1_factor_store import (
+        build_h2b_p1_class_block_authority,
+        discover_h2b_p1_neighborhoods,
+        stream_h2b_p1_neighborhood,
+    )
+
+    run_dir = run_dir.resolve()
+    progress_path = run_dir / "m3y_builder_progress.jsonl"
+    summary_path = run_dir / "m3y_builder_summary.json"
+    stage_path = run_dir / "stage_summary.json"
+    started = time.perf_counter()
+    source_start = _source_pair(h2a)
+    source_end: dict[str, Any] | None = None
+    runtime: dict[str, Any] | None = None
+    form_record: dict[str, Any] | None = None
+    measurement: dict[str, Any] | None = None
+    error: str | None = None
+    authority: dict[str, Any] | None = None
+    action = None
+    class_authority = None
+    r2_store = None
+    store = None
+    try:
+        with progress_path.open("w", encoding="utf-8") as markers:
+            stage = _read_json(stage_path)
+            if (
+                stage.get("status") != "measurement_complete"
+                or not _evidence_valid(stage)
+                or not _stage_gate_allows_online(
+                    {
+                        "return_code": 0,
+                        "termination": None,
+                    },
+                    stage,
+                    True,
+                    run_dir,
+                )
+            ):
+                raise ValueError("M3Y stage authority is incomplete")
+            authority = _p1_authority()
+            _emit_marker(markers, event="authority_validated", phase="m3y_builder", started=started)
+            cfg = target_stage4_config(degree=6, h_nm=10.0)
+            mesh_data = build_airbox_mesh_3d(cfg, run_dir / "m3y_builder_mesh")
+            _emit_marker(markers, event="mesh_ready", phase="m3y_builder", started=started)
+            function_space = _create_nedelec_space(mesh_data.mesh, cfg)
+            _emit_marker(markers, event="space_ready", phase="m3y_builder", started=started)
+            floquet = h2a.build_double_floquet_mpc(function_space, mesh_data, cfg)
+            _emit_marker(markers, event="floquet_mpc_ready", phase="m3y_builder", started=started)
+            index_map = function_space.dofmap.index_map
+            p6 = {
+                "global_cells": int(mesh_data.mesh.topology.index_map(3).size_global),
+                "local_cells": int(mesh_data.mesh.topology.index_map(3).size_local),
+                "local_nloc": int(function_space.element.space_dimension),
+                "global_rows": int(index_map.size_global * function_space.dofmap.index_map_bs),
+                "constraint_count": int(floquet.num_constraints),
+            }
+            expected_p6 = {
+                "global_cells": H2B_FIXED_CELLS,
+                "local_cells": H2B_FIXED_CELLS,
+                "local_nloc": H2B_FIXED_NLOC,
+                "global_rows": H2B_FIXED_ROWS,
+                "constraint_count": H2B_FIXED_CONSTRAINTS,
+            }
+            if p6 != expected_p6:
+                raise ValueError("M3Y p6 identity mismatch")
+            cache_dir = run_dir / "jit_cache"
+            cache_before = _cache_snapshot(cache_dir)
+            b0, _epsilon = _build_b0_form(function_space, mesh_data, cfg)
+            runtime = _runtime_identity(
+                h2a,
+                compiler_probe=False,
+                compiler=stage["runtime_identity"]["compiler"],
+            )
+            action = build_task037_extra_h1r2_mpc_action(
+                b0,
+                floquet.mpc,
+                task037_extra_h1r2=True,
+                jit_options=_expected_jit_options(cache_dir),
+            )
+            form_record = _form_record(
+                action._action_form,
+                action._action_ufl,
+                cache_dir,
+                cfg,
+                function_space,
+                "b0",
+            )
+            cache_after = _cache_snapshot(cache_dir)
+            if (
+                form_record.get("code_state") != "hit_no_new_decl_impl"
+                or cache_before != cache_after
+            ):
+                raise ValueError("M3Y B0 action did not hit the staged cache")
+            _emit_marker(markers, event="cache_load_ready", phase="m3y_builder", started=started)
+            action.destroy()
+            action = None
+            del b0, _epsilon
+            gc.collect()
+            r2_store = load_h2a_r2_factor_store(
+                H2B_R2_MANIFEST, task037_extra_h2a_r2=True
+            )
+            if r2_store.audit.get("factor_plus_metadata_bytes") != 201_933_812:
+                raise ValueError("M3Y R2 factor payload authority mismatch")
+            _emit_marker(markers, event="r2_factor_load_ready", phase="m3y_builder", started=started)
+            discovery = h2a._discover_cell_references(
+                function_space,
+                mesh_data,
+                cfg,
+                floquet,
+                geometry_tolerance=h2a.floquet_geometry_tolerance(cfg),
+            )
+            class_inventory = authority["r0"]["class_inventory"]
+            key_to_id = {
+                str(item["class_key_sha256"]): int(item["class_id"])
+                for item in class_inventory
+            }
+            blocks = tuple(floquet.phase_independent_topology.blocks)
+            cell_refs: list[H2AR2CellReference] = []
+            expansions: dict[int, Any] = {}
+            for reference in discovery["references"]:
+                cell_dofs = np.asarray(reference.local_dofs, dtype=np.int64)
+                class_id = key_to_id.get(h2a._r0_digest(reference.class_key))
+                if class_id is None:
+                    raise ValueError("M3Y discovery class is not in R0 authority")
+                expansion = build_h2a_r2_cell_expansion(
+                    h2a._blocks_for_cell(blocks, cell_dofs),
+                    cell_dofs,
+                    index_map,
+                    index_map_bs=int(function_space.dofmap.index_map_bs),
+                    phase_x=floquet.phase_x,
+                    phase_y=floquet.phase_y,
+                    phase_corner=floquet.phase_corner,
+                )
+                previous = expansions.get(class_id)
+                if previous is not None and previous.pattern_sha256 != expansion.pattern_sha256:
+                    raise ValueError("M3Y expansion pattern differs within class")
+                expansions.setdefault(class_id, expansion)
+                cell_refs.append(
+                    H2AR2CellReference(class_id, expansion.independent_global_rows)
+                )
+            if len(cell_refs) != H2B_FIXED_CELLS or len(r2_store.cells) != len(cell_refs):
+                raise ValueError("M3Y cell discovery count mismatch")
+            if any(
+                int(a.class_id) != int(b.class_id)
+                or not np.array_equal(a.independent_global_rows, b.independent_global_rows)
+                for a, b in zip(r2_store.cells, cell_refs, strict=True)
+            ):
+                raise ValueError("M3Y discovery cells do not match R2 authority")
+            p1_discovery = discover_h2b_p1_neighborhoods(
+                cell_refs,
+                r2_store.classes,
+                class_inventory,
+                {"operator": _m3y_scope()["operator"]},
+                task037_extra_h2b=True,
+            )
+            if (
+                p1_discovery["cell_count"] != H2B_FIXED_CELLS
+                or p1_discovery["unique_neighborhood_count"] != H2B_M3Y_NEIGHBORHOOD_COUNT
+            ):
+                raise ValueError("M3Y neighborhood discovery count mismatch")
+            neighborhoods = p1_discovery["neighborhoods"]
+            _emit_marker(
+                markers,
+                event="neighborhood_discovery_ready",
+                phase="m3y_builder",
+                started=started,
+                neighborhood_count=len(neighborhoods),
+            )
+            class_authority = build_h2b_p1_class_block_authority(
+                r2_store, task037_extra_h2b=True
+            )
+            del r2_store
+            r2_store = None
+            gc.collect()
+            _emit_marker(
+                markers,
+                event="class_block_reconstruction_ready",
+                phase="m3y_builder",
+                started=started,
+                reconstruction_count=class_authority.audit["reconstruction_count"],
+            )
+            factors: list[Any] = []
+            factor_by_matrix: dict[str, int] = {}
+            neighborhood_records: list[dict[str, Any]] = []
+            factor_records: list[dict[str, Any]] = []
+            for neighborhood in neighborhoods:
+                first = stream_h2b_p1_neighborhood(
+                    neighborhood, cell_refs, class_authority, task037_extra_h2b=True
+                )
+                matrix_sha = str(first["matrix_sha256"])
+                matrix = first.pop("matrix")
+                if matrix_sha not in factor_by_matrix:
+                    factor = build_h2b_m3y_packed_factor(
+                        matrix, task037_extra_h2b=True
+                    )
+                    factor_id = len(factors)
+                    factors.append(factor)
+                    factor_by_matrix[matrix_sha] = factor_id
+                else:
+                    factor_id = factor_by_matrix[matrix_sha]
+                    factor = factors[factor_id]
+                measured = _m3y_measure_factor(
+                    matrix, factor, int(neighborhood.neighborhood_id)
+                )
+                if (
+                    not measured["finite"]
+                    or not measured["deterministic"]
+                    or measured["action_closure_relative_error"] > H2B_M3Y_CLOSURE_LIMIT
+                ):
+                    raise ValueError("M3Y packed factor closure gate failed")
+                repeat_matrix_sha: str | None = None
+                repeat_factor_sha: str | None = None
+                repeat_performed = neighborhood.neighborhood_id in H2B_M3Y_SAMPLE_IDS
+                if repeat_performed:
+                    repeat = stream_h2b_p1_neighborhood(
+                        neighborhood, cell_refs, class_authority, task037_extra_h2b=True
+                    )
+                    repeat_matrix_sha = str(repeat["matrix_sha256"])
+                    repeat_matrix = repeat.pop("matrix")
+                    repeat_factor = build_h2b_m3y_packed_factor(
+                        repeat_matrix, task037_extra_h2b=True
+                    )
+                    repeat_factor_sha = repeat_factor.factor_sha256
+                    if (
+                        repeat_matrix_sha != matrix_sha
+                        or repeat_factor_sha != factor.factor_sha256
+                    ):
+                        raise ValueError("M3Y sampled factor is nondeterministic")
+                    del repeat_factor, repeat_matrix, repeat
+                record = {
+                    "neighborhood_id": int(neighborhood.neighborhood_id),
+                    "key_sha256": neighborhood.key_sha256,
+                    "representative_cell": int(neighborhood.representative_cell),
+                    "cell_ordinals": list(neighborhood.cell_ordinals),
+                    "multiplicity": len(neighborhood.cell_ordinals),
+                    "central_class_id": int(neighborhood.central_class_id),
+                    "touching_cell_ordinals": list(neighborhood.touching_cell_ordinals),
+                    "touching_class_ids": list(neighborhood.touching_class_ids),
+                    "touching_count": neighborhood.touching_cell_count,
+                    "touching_class_count": neighborhood.touching_class_count,
+                    "numeric_accumulation_order": list(neighborhood.numeric_accumulation_order),
+                    "numeric_accumulation_order_sha256": neighborhood.numeric_accumulation_order_sha256,
+                    "factor_id": int(factor_id),
+                }
+                neighborhood_records.append(record)
+                factor_records.append(
+                    {
+                        **measured,
+                        "matrix_sha256": matrix_sha,
+                        "factor_sha256": factor.factor_sha256,
+                        "factor_id": int(factor_id),
+                        "factor_n": int(factor.n),
+                        "factor_bytes": int(factor.packed_nbytes),
+                        "factorization_info": int(factor.factorization_info),
+                        "repeat_performed": repeat_performed,
+                        "repeat_matrix_sha256": repeat_matrix_sha,
+                        "repeat_factor_sha256": repeat_factor_sha,
+                    }
+                )
+                del matrix, first
+            _emit_marker(
+                markers,
+                event="factorization_complete",
+                phase="m3y_builder",
+                started=started,
+                neighborhood_count=len(neighborhood_records),
+                factor_count=len(factors),
+            )
+            row_offsets = np.asarray(
+                [0]
+                + [
+                    sum(
+                        len(cell_refs[index].independent_global_rows)
+                        for index in range(stop)
+                    )
+                    for stop in range(1, len(cell_refs) + 1)
+                ],
+                dtype=np.int64,
+            )
+            cell_rows = np.ascontiguousarray(
+                np.concatenate(
+                    [cell.independent_global_rows for cell in cell_refs]
+                ),
+                dtype=np.int64,
+            )
+            identity = {
+                "source_identity": source_start,
+                "config_identity": {"degree": 6, "h_nm": 10.0, "mpi_size": 1},
+                "form_identity": form_record,
+                "cache_identity": {
+                    "cache_dir": str(cache_dir.resolve()),
+                    "inventory": cache_after,
+                    "unchanged": cache_before == cache_after,
+                },
+                "authority": _m3y_compact_authority(authority),
+                "neighborhood_digest": p1_discovery["neighborhood_digest"],
+                "materialization_identity": _fixed_identity(),
+            }
+            store = build_h2b_m3y_packed_patch_store(
+                tuple(factors),
+                tuple(neighborhood_records),
+                p1_discovery["cell_neighborhood_ids"],
+                row_offsets,
+                cell_rows,
+                identity=identity,
+                task037_extra_h2b=True,
+            )
+            if not _m3y_audit_valid(store.audit_jsonable()):
+                raise ValueError("M3Y packed store retained audit failed")
+            manifest_path = write_h2b_m3y_packed_patch_store(
+                store, run_dir / "factor_store", task037_extra_h2b=True
+            )
+            manifest = _read_json(manifest_path)
+            _emit_marker(markers, event="store_ready", phase="m3y_builder", started=started)
+            measurement = {
+                "p6": p6,
+                "neighborhood_count": len(neighborhood_records),
+                "cell_count": len(cell_refs),
+                "neighborhood_digest": p1_discovery["neighborhood_digest"],
+                "factor_records": factor_records,
+                "store_audit": store.audit_jsonable(),
+                "manifest": {
+                    "path": str(manifest_path),
+                    "sha256": _sha256_file(manifest_path),
+                    "evidence_sha256": manifest["evidence_sha256"],
+                },
+                "authority": _m3y_compact_authority(authority),
+                "cache": {
+                    "dir": str(cache_dir.resolve()),
+                    "before": cache_before,
+                    "after": cache_after,
+                    "unchanged": cache_before == cache_after,
+                },
+                "preflight_live_set": _m3y_fixed_preflight(),
+                "materialization_identity": store.audit_jsonable()[
+                    "materialization_identity"
+                ],
+            }
+            _emit_marker(markers, event="summary_ready", phase="m3y_builder", started=started)
+            del (
+                store,
+                factors,
+                factor_records,
+                neighborhood_records,
+                cell_refs,
+                row_offsets,
+                cell_rows,
+                p1_discovery,
+                expansions,
+            )
+            store = None
+            class_authority = None
+            gc.collect()
+    except _worker_error_types() as exc:
+        error = f"{type(exc).__name__}: {exc}"
+    finally:
+        if action is not None:
+            action.destroy()
+        if r2_store is not None:
+            del r2_store
+        if class_authority is not None:
+            del class_authority
+        if store is not None:
+            del store
+        h2a.clear_floquet_topology_cache()
+        gc.collect()
+    source_end = _source_pair(h2a)
+    phase_identity = _phase_identity(
+        jit_api=True, compile_called=False, compiler_probe=False
+    )
+    phase_identity.update(
+        {
+            "factorization_called": measurement is not None,
+            "packed_cholesky": True,
+            "factor_store_writer_called": measurement is not None,
+            "global_matrix_materialized": False,
+            "global_constraint_matrix_materialized": False,
+            "static_condensation": False,
+            "trace_slab": False,
+            "schur": False,
+        }
+    )
+    status = "measurement_complete" if error is None and measurement is not None else "gate_failed"
+    payload = _attach_evidence(
+        {
+            "schema": H2B_M3Y_BUILDER_SCHEMA,
+            "phase": "m3y_builder",
+            "status": status,
+            "scope": _m3y_scope(),
+            "identity": _fixed_identity(),
+            "phase_identity": phase_identity,
+            "source_at_start": source_start,
+            "source_at_end": source_end,
+            "runtime_identity": runtime,
+            "form": form_record,
+            "measurement": measurement,
+            "error": error,
+            "elapsed_wall_seconds": float(time.perf_counter() - started),
+        }
+    )
+    _write_json(summary_path, payload)
+    return 0 if status == "measurement_complete" else 1
+
+
+def _run_m3y_loader(run_dir: Path) -> int:
+    """Fresh mmap-load the packed store and run one fixed solve per factor."""
+
+    import gc
+
+    from src.solvers.hcurl_h2b_packed_patch_store import (
+        load_h2b_m3y_packed_patch_store,
+    )
+
+    run_dir = run_dir.resolve()
+    progress_path = run_dir / "m3y_loader_progress.jsonl"
+    summary_path = run_dir / "m3y_loader_summary.json"
+    started = time.perf_counter()
+    source_start = _light_source()
+    source_end: dict[str, Any] | None = None
+    measurement: dict[str, Any] | None = None
+    error: str | None = None
+    try:
+        with progress_path.open("w", encoding="utf-8") as markers:
+            _emit_marker(markers, event="store_load_started", phase="m3y_loader", started=started)
+            builder = _read_json(run_dir / "m3y_builder_summary.json")
+            if (
+                builder.get("schema") != H2B_M3Y_BUILDER_SCHEMA
+                or builder.get("status") != "measurement_complete"
+                or not _evidence_valid(builder)
+                or not isinstance(builder.get("measurement"), Mapping)
+            ):
+                raise ValueError("M3Y builder summary is incomplete")
+            manifest = run_dir / "factor_store" / "manifest.json"
+            store = load_h2b_m3y_packed_patch_store(
+                manifest, task037_extra_h2b=True
+            )
+            if not _m3y_audit_valid(store.audit_jsonable()):
+                raise ValueError("M3Y loaded audit is incomplete")
+            _emit_marker(markers, event="store_load_ready", phase="m3y_loader", started=started)
+            solves: list[dict[str, Any]] = []
+            import numpy as np
+
+            for factor_id, factor in enumerate(store.factors):
+                rhs = _m3y_fixed_rhs(factor_id, int(factor.n))
+                solution = factor.solve(rhs)
+                solves.append(
+                    {
+                        "factor_id": factor_id,
+                        "rhs_sha256": _array_sha256(rhs),
+                        "solution_sha256": _array_sha256(solution),
+                        "finite": bool(np.all(np.isfinite(solution))),
+                        "mmap_backed": isinstance(factor.packed_values.base, np.memmap),
+                        "readonly": factor.packed_values.flags.writeable is False,
+                    }
+                )
+            _emit_marker(markers, event="solve_audit_ready", phase="m3y_loader", started=started)
+            if not all(item["finite"] and item["mmap_backed"] and item["readonly"] for item in solves):
+                raise ValueError("M3Y loader solve/mmap audit failed")
+            builder_measurement = builder["measurement"]
+            measurement = {
+                "manifest": {
+                    "path": str(manifest),
+                    "sha256": _sha256_file(manifest),
+                    "evidence_sha256": _read_json(manifest)["evidence_sha256"],
+                },
+                "store_audit": store.audit_jsonable(),
+                "factor_solves": solves,
+                "builder_manifest": builder_measurement["manifest"],
+                "source_identity": builder["source_at_start"],
+            }
+            _emit_marker(markers, event="summary_ready", phase="m3y_loader", started=started)
+            del store
+            gc.collect()
+    except _worker_error_types() as exc:
+        error = f"{type(exc).__name__}: {exc}"
+    source_end = _light_source()
+    status = "measurement_complete" if error is None and measurement is not None else "gate_failed"
+    payload = _attach_evidence(
+        {
+            "schema": H2B_M3Y_LOADER_SCHEMA,
+            "phase": "m3y_loader",
+            "status": status,
+            "scope": _m3y_scope(),
+            "identity": _fixed_identity(),
+            "source_at_start": source_start,
+            "source_at_end": source_end,
+            "measurement": measurement,
+            "error": error,
+            "elapsed_wall_seconds": float(time.perf_counter() - started),
+        }
+    )
+    _write_json(summary_path, payload)
+    return 0 if status == "measurement_complete" else 1
+
+
 def _run_c1_worker(run_dir: Path) -> int:
     """Run the C1 metadata/orbit and patch-only audit; never factorize."""
 
@@ -3874,6 +4621,443 @@ def _run_c1_worker(run_dir: Path) -> int:
     return 0 if status == "measurement_complete" else 1
 
 
+def _m3y_phase_ok(
+    phase: Mapping[str, Any] | None,
+    limit_bytes: int,
+    gone_key: str,
+) -> bool:
+    return bool(
+        isinstance(phase, Mapping)
+        and type(phase.get("return_code")) is int
+        and phase["return_code"] == 0
+        and phase.get("termination") is None
+        and phase.get(gone_key) is True
+        and type(phase.get("peak_rss_bytes")) is int
+        and phase["peak_rss_bytes"] < limit_bytes
+        and phase.get("swap_bytes") == H2B_SWAP_LIMIT_BYTES
+    )
+
+
+def _run_m3y_watchdog(run_dir: Path) -> int:
+    """Run isolated JIT, packed builder, and fresh mmap loader sequentially."""
+
+    run_dir = run_dir.resolve()
+    if run_dir.exists():
+        raise FileExistsError(f"M3Y run directory already exists: {run_dir}")
+    run_dir.mkdir(parents=True)
+    started = time.perf_counter()
+    executable = _worker_executable()
+    source_start: dict[str, Any] | None = None
+    source_end: dict[str, Any] | None = None
+    stage: dict[str, Any] | None = None
+    builder: dict[str, Any] | None = None
+    loader: dict[str, Any] | None = None
+    error: str | None = None
+    try:
+        source_start = _light_source()
+        stage = _monitor_phase(
+            run_dir,
+            "stage",
+            _worker_command(executable, "jit-worker", run_dir),
+            H2B_STAGE_TIMEOUT_SECONDS,
+            H2B_M3Y_BUILDER_RSS_LIMIT_BYTES,
+        )
+        stage_drain = _bounded_process_drain(stage)
+        stage["processes_gone_before_m3y_builder"] = bool(stage_drain["gone"])
+        stage["processes_gone_before_m3y_builder_drain"] = stage_drain
+        stage_summary = _read_json(run_dir / "stage_summary.json")
+        stage_ok = bool(
+            _stage_gate_allows_online(
+                stage, stage_summary, bool(stage_drain["gone"]), run_dir
+            )
+            and int(stage.get("peak_rss_bytes", 0)) < H2B_M3Y_BUILDER_RSS_LIMIT_BYTES
+            and int(stage.get("swap_bytes", 0)) == H2B_SWAP_LIMIT_BYTES
+        )
+        if not stage_ok:
+            error = "stage_gate_failed_before_m3y_builder"
+        else:
+            builder = _monitor_phase(
+                run_dir,
+                "m3y_builder",
+                _worker_command(executable, "m3y-builder", run_dir),
+                H2B_M3Y_BUILDER_TIMEOUT_SECONDS,
+                H2B_M3Y_BUILDER_RSS_LIMIT_BYTES,
+            )
+            builder_drain = _bounded_process_drain(builder)
+            builder["processes_gone_before_m3y_loader"] = bool(builder_drain["gone"])
+            builder["processes_gone_before_m3y_loader_drain"] = builder_drain
+            if not _m3y_phase_ok(
+                builder,
+                H2B_M3Y_BUILDER_RSS_LIMIT_BYTES,
+                "processes_gone_before_m3y_loader",
+            ):
+                error = "m3y_builder_gate_failed_before_loader"
+            else:
+                loader = _monitor_phase(
+                    run_dir,
+                    "m3y_loader",
+                    _worker_command(executable, "m3y-loader", run_dir),
+                    H2B_M3Y_LOADER_TIMEOUT_SECONDS,
+                    H2B_M3Y_LOADER_RSS_LIMIT_BYTES,
+                )
+                loader_drain = _bounded_process_drain(loader)
+                loader["processes_gone_after_m3y_loader"] = bool(loader_drain["gone"])
+                loader["processes_gone_after_m3y_loader_drain"] = loader_drain
+                if not _m3y_phase_ok(
+                    loader,
+                    H2B_M3Y_LOADER_RSS_LIMIT_BYTES,
+                    "processes_gone_after_m3y_loader",
+                ):
+                    error = "m3y_loader_gate_failed"
+    except _worker_error_types() as exc:
+        error = f"{type(exc).__name__}: {exc}"
+    if source_start is not None:
+        try:
+            source_end = _light_source()
+        except _worker_error_types() as exc:
+            error = f"{type(exc).__name__}: {exc}"
+    phase_pass = (
+        error is None
+        and _m3y_phase_ok(
+            stage,
+            H2B_M3Y_BUILDER_RSS_LIMIT_BYTES,
+            "processes_gone_before_m3y_builder",
+        )
+        and _m3y_phase_ok(
+            builder,
+            H2B_M3Y_BUILDER_RSS_LIMIT_BYTES,
+            "processes_gone_before_m3y_loader",
+        )
+        and _m3y_phase_ok(
+            loader,
+            H2B_M3Y_LOADER_RSS_LIMIT_BYTES,
+            "processes_gone_after_m3y_loader",
+        )
+    )
+    raw_artifacts = {
+        name: _artifact(run_dir, name)
+        for name in (
+            "stage_progress.jsonl",
+            "stage_stdout.txt",
+            "stage_summary.json",
+            "stage_timeline.jsonl",
+            "m3y_builder_progress.jsonl",
+            "m3y_builder_stdout.txt",
+            "m3y_builder_summary.json",
+            "m3y_builder_timeline.jsonl",
+            "m3y_loader_progress.jsonl",
+            "m3y_loader_stdout.txt",
+            "m3y_loader_summary.json",
+            "m3y_loader_timeline.jsonl",
+            "stage_root_pid.json",
+            "m3y_builder_root_pid.json",
+            "m3y_loader_root_pid.json",
+            "factor_store/manifest.json",
+        )
+    }
+    payload = _attach_evidence(
+        {
+            "schema": H2B_M3Y_WATCHDOG_SCHEMA,
+            "status": "pass" if phase_pass else "gate_failed",
+            "route": "M3Y",
+            "run_dir": str(run_dir),
+            "scope": _m3y_scope(),
+            "identity": _fixed_identity(),
+            "command_identity": {
+                "python": executable,
+                "launch_mode": "direct_singleton",
+                "stage_command": None if stage is None else stage["command"],
+                "builder_command": None if builder is None else builder["command"],
+                "loader_command": None if loader is None else loader["command"],
+            },
+            "source_at_start": source_start,
+            "source_at_end": source_end,
+            "stage": stage,
+            "builder": builder,
+            "loader": loader,
+            "preflight_live_set": _m3y_fixed_preflight(),
+            "raw_artifacts": raw_artifacts,
+            "error": error,
+            "completion_elapsed_seconds": float(time.perf_counter() - started),
+        }
+    )
+    _write_json(run_dir / "m3y_watchdog_summary.json", payload)
+    return 0 if phase_pass else 1
+
+
+def _m3y_check_raw(run_dir: Path, checker_source: Mapping[str, Any]) -> dict[str, Any]:
+    """Independently recompute M3Y store, mapping, lifecycle, and byte Gates."""
+
+    import numpy as np
+    from src.solvers.hcurl_h2b_packed_patch_store import (
+        load_h2b_m3y_packed_patch_store,
+    )
+
+    watchdog = _read_json(run_dir / "m3y_watchdog_summary.json")
+    stage = _read_json(run_dir / "stage_summary.json")
+    builder = _read_json(run_dir / "m3y_builder_summary.json")
+    loader = _read_json(run_dir / "m3y_loader_summary.json")
+    checks: dict[str, bool] = {}
+    problems: list[str] = []
+    checks["watchdog_evidence"] = (
+        watchdog["schema"] == H2B_M3Y_WATCHDOG_SCHEMA
+        and _evidence_valid(watchdog)
+        and watchdog["status"] == "pass"
+    )
+    checks["worker_evidence"] = (
+        builder["schema"] == H2B_M3Y_BUILDER_SCHEMA
+        and builder["status"] == "measurement_complete"
+        and _evidence_valid(builder)
+        and loader["schema"] == H2B_M3Y_LOADER_SCHEMA
+        and loader["status"] == "measurement_complete"
+        and _evidence_valid(loader)
+    )
+    starts = (
+        watchdog["source_at_start"],
+        stage["source_at_start"],
+        builder["source_at_start"],
+        loader["source_at_start"],
+    )
+    ends = (
+        watchdog["source_at_end"],
+        stage["source_at_end"],
+        builder["source_at_end"],
+        loader["source_at_end"],
+    )
+    source_sha = starts[0]["source_commit_full_sha"]
+    checks["source_authority"] = bool(
+        all(_source_pair_valid(start, end) for start, end in zip(starts, ends, strict=True))
+        and all(start["source_commit_full_sha"] == source_sha for start in starts)
+        and _checker_source_valid(checker_source)
+        and checker_source["source_commit_full_sha"] == source_sha
+    )
+    checks["scope_identity"] = (
+        watchdog["scope"] == _m3y_scope()
+        and builder["scope"] == _m3y_scope()
+        and loader["scope"] == _m3y_scope()
+        and builder["identity"] == _fixed_identity()
+        and loader["identity"] == _fixed_identity()
+    )
+    stage_metrics = _timeline_metrics(run_dir / "stage_timeline.jsonl", "stage")
+    builder_metrics = _timeline_metrics(
+        run_dir / "m3y_builder_timeline.jsonl", "m3y_builder"
+    )
+    loader_metrics = _timeline_metrics(
+        run_dir / "m3y_loader_timeline.jsonl", "m3y_loader"
+    )
+    checks["stage_resource"] = bool(
+        _m3y_phase_ok(
+            watchdog["stage"],
+            H2B_M3Y_BUILDER_RSS_LIMIT_BYTES,
+            "processes_gone_before_m3y_builder",
+        )
+        and stage_metrics["peak_rss_bytes"] < H2B_M3Y_BUILDER_RSS_LIMIT_BYTES
+        and stage_metrics["swap_bytes"] == 0
+    )
+    checks["builder_resource"] = bool(
+        _m3y_phase_ok(
+            watchdog["builder"],
+            H2B_M3Y_BUILDER_RSS_LIMIT_BYTES,
+            "processes_gone_before_m3y_loader",
+        )
+        and builder_metrics["peak_rss_bytes"] < H2B_M3Y_BUILDER_RSS_LIMIT_BYTES
+        and builder_metrics["swap_bytes"] == 0
+        and builder_metrics["compiler_descendant_pids"] == []
+    )
+    checks["loader_resource"] = bool(
+        _m3y_phase_ok(
+            watchdog["loader"],
+            H2B_M3Y_LOADER_RSS_LIMIT_BYTES,
+            "processes_gone_after_m3y_loader",
+        )
+        and loader_metrics["peak_rss_bytes"] < H2B_M3Y_LOADER_RSS_LIMIT_BYTES
+        and loader_metrics["swap_bytes"] == 0
+        and loader_metrics["compiler_descendant_pids"] == []
+    )
+    checks["progress"] = bool(
+        _progress_events(run_dir / "m3y_builder_progress.jsonl", "m3y_builder")
+        == list(H2B_M3Y_BUILDER_EVENTS)
+        and _progress_events(run_dir / "m3y_loader_progress.jsonl", "m3y_loader")
+        == list(H2B_M3Y_LOADER_EVENTS)
+        and stage_metrics["peak_rss_bytes"] >= 0
+    )
+    builder_measurement = builder["measurement"]
+    loader_measurement = loader["measurement"]
+    manifest_path = run_dir / "factor_store" / "manifest.json"
+    manifest = _read_json(manifest_path)
+    manifest_binding = builder_measurement["manifest"]
+    checks["manifest_binding"] = bool(
+        Path(manifest_binding["path"]).resolve() == manifest_path.resolve()
+        and manifest_binding["sha256"] == _sha256_file(manifest_path)
+        and manifest_binding["evidence_sha256"] == manifest["evidence_sha256"]
+        and loader_measurement["manifest"] == manifest_binding
+        and _artifact(run_dir, "factor_store/manifest.json")["sha256"]
+        == manifest_binding["sha256"]
+    )
+    store = load_h2b_m3y_packed_patch_store(
+        manifest_path, task037_extra_h2b=True
+    )
+    loaded_audit = store.audit_jsonable()
+    worker_audit = builder_measurement["store_audit"]
+    loader_audit = loader_measurement["store_audit"]
+    checks["audit"] = bool(
+        _m3y_audit_valid(worker_audit)
+        and _m3y_audit_valid(loader_audit)
+        and _m3y_audit_valid(loaded_audit)
+        and worker_audit == loaded_audit == loader_audit
+    )
+    checks["topology"] = bool(
+        builder_measurement["p6"]
+        == {
+            "global_cells": H2B_FIXED_CELLS,
+            "local_cells": H2B_FIXED_CELLS,
+            "local_nloc": H2B_FIXED_NLOC,
+            "global_rows": H2B_FIXED_ROWS,
+            "constraint_count": H2B_FIXED_CONSTRAINTS,
+        }
+        and builder_measurement["neighborhood_count"] == H2B_M3Y_NEIGHBORHOOD_COUNT
+        and builder_measurement["cell_count"] == H2B_FIXED_CELLS
+        and builder_measurement["neighborhood_digest"]
+        == manifest["metadata"]["identity"]["neighborhood_digest"]
+    )
+    factor_records = builder_measurement["factor_records"]
+    factors = store.factors
+    record_by_id = {int(item["neighborhood_id"]): item for item in factor_records}
+    checks["factor_records"] = bool(
+        isinstance(factor_records, list)
+        and len(factor_records) == H2B_M3Y_NEIGHBORHOOD_COUNT
+        and set(record_by_id) == set(range(H2B_M3Y_NEIGHBORHOOD_COUNT))
+        and all(
+            _m3y_valid_sha(item["matrix_sha256"])
+            and _m3y_valid_sha(item["factor_sha256"])
+            and type(item["factor_id"]) is int
+            and 0 <= item["factor_id"] < len(factors)
+            and item["factor_sha256"] == factors[item["factor_id"]].factor_sha256
+            and item["matrix_sha256"] == factors[item["factor_id"]].matrix_sha256
+            and item["factor_n"] == H2B_FIXED_NLOC
+            and item["factor_bytes"] == H2B_FIXED_NLOC * (H2B_FIXED_NLOC + 1) // 2 * 16
+            and item["factorization_info"] == 0
+            and item["finite"] is True
+            and item["deterministic"] is True
+            and item["action_closure_relative_error"] <= H2B_M3Y_CLOSURE_LIMIT
+            and item["solve_residual"] <= H2B_M3Y_CLOSURE_LIMIT
+            for item in factor_records
+        )
+    )
+    checks["sample_determinism"] = all(
+        record_by_id[item_id]["repeat_performed"] is True
+        and record_by_id[item_id]["repeat_matrix_sha256"]
+        == record_by_id[item_id]["matrix_sha256"]
+        and record_by_id[item_id]["repeat_factor_sha256"]
+        == record_by_id[item_id]["factor_sha256"]
+        for item_id in H2B_M3Y_SAMPLE_IDS
+    )
+    factor_ids = {
+        int(item["factor_id"]): item["matrix_sha256"] for item in factor_records
+    }
+    checks["factor_mapping"] = bool(
+        loaded_audit["packed_factor_count"] == len(factors) <= H2B_M3Y_FACTOR_LIMIT
+        and len(factor_ids) == len(factors)
+        and all(
+            _m3y_valid_sha(factor.matrix_sha256)
+            and _m3y_valid_sha(factor.factor_sha256)
+            and factor.factorization_info == 0
+            for factor in factors
+        )
+    )
+    solve_records = loader_measurement["factor_solves"]
+    checks["loader_solve"] = bool(
+        isinstance(solve_records, list)
+        and len(solve_records) == len(factors)
+        and all(
+            item["factor_id"] == index
+            and item["finite"] is True
+            and item["mmap_backed"] is True
+            and item["readonly"] is True
+            for index, item in enumerate(solve_records)
+        )
+    )
+    checks["old_m2_evidence"] = bool(
+        _sha256_file(
+            ROOT
+            / "benchmarks/cases/101_task37_extra_development/records"
+            / "m2_high_complement_patch_oracle_v2.json"
+        )
+        == H2B_M3Y_OLD_M2_COMPACT_SHA256
+    )
+    checks["predicted_live_set"] = bool(
+        builder_measurement["preflight_live_set"] == _m3y_fixed_preflight()
+        and builder_measurement["preflight_live_set"]["predicted_live_set_gate"] is True
+    )
+    checks["materialization"] = bool(
+        all(value is False for value in _fixed_identity().values() if isinstance(value, bool) and value is False)
+        and loaded_audit["materialization_identity"]["global_matrix"] is False
+        and loaded_audit["materialization_identity"]["static_condensation"] is False
+        and loaded_audit["materialization_identity"]["trace_slab"] is False
+        and loaded_audit["materialization_identity"]["schur"] is False
+    )
+    for name, passed in checks.items():
+        if not passed:
+            problems.append(name)
+    return {
+        "schema": H2B_M3Y_CHECK_SCHEMA,
+        "status": "pass" if not problems else "gate_failed",
+        "pass": not problems,
+        "route": "M3Y",
+        "checks": checks,
+        "problems": problems,
+        "measurements": {
+            "topology": builder_measurement["p6"],
+            "neighborhood_count": builder_measurement["neighborhood_count"],
+            "cell_count": builder_measurement["cell_count"],
+            "factor_count": len(factors),
+            "packed_factor_bytes": loaded_audit["packed_factor_bytes"],
+            "retained_total_bytes": loaded_audit["retained_total_bytes"],
+            "retained_total_limit_bytes": H2B_M3Y_RETAINED_LIMIT_BYTES,
+            "max_action_closure_relative_error": max(
+                item["action_closure_relative_error"] for item in factor_records
+            ),
+            "max_solve_residual": max(item["solve_residual"] for item in factor_records),
+            "factor_records": factor_records,
+            "store_audit": loaded_audit,
+            "source_identity": source_sha,
+            "checker_source_identity": checker_source["source_commit_full_sha"],
+            "stage_peak_rss_bytes": stage_metrics["peak_rss_bytes"],
+            "builder_peak_rss_bytes": builder_metrics["peak_rss_bytes"],
+            "loader_peak_rss_bytes": loader_metrics["peak_rss_bytes"],
+            "stage_swap_bytes": stage_metrics["swap_bytes"],
+            "builder_swap_bytes": builder_metrics["swap_bytes"],
+            "loader_swap_bytes": loader_metrics["swap_bytes"],
+            "preflight_live_set": _m3y_fixed_preflight(),
+            "manifest": manifest_binding,
+        },
+    }
+
+
+def _run_m3y_check(run_dir: Path, output: Path) -> int:
+    try:
+        checker_source = _light_source()
+        result = _m3y_check_raw(run_dir.resolve(), checker_source)
+    except _worker_error_types() as exc:
+        result = {
+            "schema": H2B_M3Y_CHECK_SCHEMA,
+            "status": "gate_failed",
+            "pass": False,
+            "route": "M3Y",
+            "checks": {},
+            "problems": [f"raw_unreadable:{type(exc).__name__}"],
+            "measurements": None,
+            "checker_source": {"git_error": f"{type(exc).__name__}: {exc}"},
+        }
+        _write_json(output.resolve(), _attach_evidence(result))
+        print(f"M3Y check status={result['status']} output={output.resolve()}", flush=True)
+        return 1
+    result["checker_source"] = checker_source
+    _write_json(output.resolve(), _attach_evidence(result))
+    print(f"M3Y check status={result['status']} output={output.resolve()}", flush=True)
+    return 0 if result["pass"] else 1
+
+
 def _compiler_descendant_pids(pids: Sequence[int]) -> list[int]:
     found: list[int] = []
     for pid in pids:
@@ -4152,6 +5336,8 @@ def _worker_command(executable: str, phase: str, run_dir: Path) -> list[str]:
         "p0-worker",
         "p1-worker",
         "c1-worker",
+        "m3y-builder",
+        "m3y-loader",
     }:
         raise ValueError("H2B worker phase is fixed")
     return [
@@ -8746,6 +9932,8 @@ def _parser() -> argparse.ArgumentParser:
         ("p0-worker", _run_p0_worker),
         ("p1-worker", _run_p1_worker),
         ("c1-worker", _run_c1_worker),
+        ("m3y-builder", _run_m3y_builder),
+        ("m3y-loader", _run_m3y_loader),
     ):
         item = sub.add_parser(name)
         item.add_argument("--run-dir", required=True)
@@ -8793,6 +9981,15 @@ def _parser() -> argparse.ArgumentParser:
     c1_checker.set_defaults(
         handler=lambda args: _run_c1_check(Path(args.run_dir), Path(args.output))
     )
+    m3y_watchdog = sub.add_parser("m3y-watchdog")
+    m3y_watchdog.add_argument("--run-dir", required=True)
+    m3y_watchdog.set_defaults(handler=_run_m3y_watchdog)
+    m3y_checker = sub.add_parser("m3y-check")
+    m3y_checker.add_argument("--run-dir", required=True)
+    m3y_checker.add_argument("--output", required=True)
+    m3y_checker.set_defaults(
+        handler=lambda args: _run_m3y_check(Path(args.run_dir), Path(args.output))
+    )
     return parser
 
 
@@ -8805,11 +10002,14 @@ def main(argv: list[str] | None = None) -> int:
         "p0-worker",
         "p1-worker",
         "c1-worker",
+        "m3y-builder",
+        "m3y-loader",
         "watchdog",
         "s0-watchdog",
         "p0-watchdog",
         "p1-watchdog",
         "c1-watchdog",
+        "m3y-watchdog",
     }:
         return int(args.handler(Path(args.run_dir)))
     return int(args.handler(args))
