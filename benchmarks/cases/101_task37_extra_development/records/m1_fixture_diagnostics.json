@@ -1,0 +1,268 @@
+{
+  "schema": "task037.m1.fixture-diagnostics.v1",
+  "status": "diagnostic_complete",
+  "qualification": "not_formal_pass",
+  "m1_final": "NOT_QUALIFIED_FORMAL_BUDGET_EXHAUSTED",
+  "scope": {
+    "target": "p6/h10 MPI1 then MPI2 owner-local full-space p4-to-p6 transfer",
+    "rows": {
+      "p4_global": 53084,
+      "p6_global": 173802,
+      "p4_constraints": 4124,
+      "p6_constraints": 9210,
+      "cells": 252
+    },
+    "resource_limits": {
+      "timeout_seconds_per_phase": 1800,
+      "mpi1_process_tree_rss_strict_less_than_bytes": 900000000,
+      "mpi2_process_tree_rss_strict_less_than_bytes": 1300000000,
+      "swap_bytes": 0,
+      "retained_transfer_numeric_payload_less_or_equal_bytes": 128000000,
+      "bounded_apply_workspace_less_or_equal_bytes": 64000000
+    },
+    "forbidden_materialization": {
+      "global_matrix": false,
+      "global_constraint_matrix": false,
+      "global_transfer_matrix": false,
+      "numeric_allgather": false,
+      "replicated_global_numeric_vector": false,
+      "condensed": false,
+      "trace_only": false,
+      "ksp_or_pde": false
+    }
+  },
+  "formal_budget": {
+    "contract": "1 campaign + 1 execution-fix rerun",
+    "campaigns_used": 2,
+    "remaining": 0,
+    "third_formal": "forbidden",
+    "m2_to_m6": "not_run_by_gate"
+  },
+  "latest_code_formal_status": "not_authorized_not_run",
+  "formal_runs": [
+    {
+      "label": "initial_formal_run1",
+      "source_sha": "ad589ca1e7d473e6ed77827f8bb23410f21c38a9",
+      "raw_path": "benchmarks/artifacts/task037_extra_development/m1_ad589ca_run1",
+      "watchdog_status": "gate_failed",
+      "watchdog_route": "M1-review-only",
+      "mpi1": {
+        "return_code": 1,
+        "elapsed_seconds": 9.836065965995658,
+        "process_tree_peak_rss_bytes": 510328832,
+        "swap_bytes": 0,
+        "processes_gone": true,
+        "termination": null,
+        "image_relative_error": 0.31070811280298904,
+        "adjoint_relative_error": 1.6018790302711856e-17,
+        "image_deterministic": true,
+        "adjoint_deterministic": true,
+        "finite": true,
+        "canonical": "not_run_by_gate"
+      },
+      "mpi2": "not_run_by_gate",
+      "identity": {
+        "p4_rows": 53084,
+        "p6_rows": 173802,
+        "p4_constraints": 4124,
+        "p6_constraints": 9210,
+        "missing_rows": 0,
+        "extra_rows": 0,
+        "duplicate_rows": 0
+      },
+      "classification": "fixture/execution construction failure; not a transfer-science qualification result",
+      "raw_key_sha256": {
+        "m1_watchdog_summary.json": "d9fc27103c8fe4fd3668e0d64e1d46c19235d1ee5b4b4767218e98be42798cb4",
+        "mpi1_worker_summary.json": "b113b7fee27eecdad178fe5d2bd45792def3a621f757e34b032db829f3af203a",
+        "mpi1_progress.jsonl": "ed18eab42fc1aa6a5566d19dfa8e81ffa78dff040aa36f730559802385c19878",
+        "mpi1_timeline.jsonl": "d882f16ebd3e714ea2855e447598d3fd8de049838efb9dfa7701090bccc1a7c9"
+      }
+    },
+    {
+      "label": "execution_fix_formal_run1",
+      "source_sha": "caed4dea78e9d9a924e2ad06daba9dd635801e94",
+      "raw_path": "benchmarks/artifacts/task037_extra_development/m1_caed4dea_execution_fix_run1",
+      "watchdog_status": "pass",
+      "watchdog_route": "M1",
+      "campaign_elapsed_seconds": 31.006164351987536,
+      "mpi1": {
+        "return_code": 0,
+        "elapsed_seconds": 15.366251135012135,
+        "watchdog_elapsed_seconds": 16.270282771001803,
+        "process_tree_peak_rss_bytes": 521723904,
+        "swap_bytes": 0,
+        "processes_gone": true,
+        "termination": null,
+        "image_relative_error": 5.468843900583829e-15,
+        "adjoint_relative_error": 3.1471318267200023e-17,
+        "image_deterministic": true,
+        "adjoint_deterministic": true,
+        "finite": true,
+        "canonical_p6_packet_count": 173802,
+        "canonical_p4_packet_count": 48960,
+        "canonical_local_duplicate_count": "checker_recomputed"
+      },
+      "mpi2": {
+        "return_code": 0,
+        "elapsed_seconds": 13.284939228993608,
+        "watchdog_elapsed_seconds": 14.288424888000009,
+        "process_tree_peak_rss_bytes": 974729216,
+        "swap_bytes": 0,
+        "processes_gone": true,
+        "termination": null,
+        "image_relative_error": 5.757606853614202e-15,
+        "adjoint_relative_error": 1.521528936022671e-17,
+        "image_deterministic": true,
+        "adjoint_deterministic": true,
+        "finite": true,
+        "canonical_p6_packet_count": 173802,
+        "canonical_p4_packet_count": 48960,
+        "canonical_local_duplicate_count": "checker_recomputed"
+      },
+      "identity": {
+        "p4_rows": 53084,
+        "p6_rows": 173802,
+        "p4_constraints": 4124,
+        "p6_constraints": 9210,
+        "missing_rows": 0,
+        "extra_rows": 0,
+        "duplicate_rows": 0
+      },
+      "payload_and_workspace_bytes": {
+        "mpi1_retained_transfer_numeric_payload": 18244384,
+        "mpi2_retained_transfer_numeric_payload": 15574480,
+        "mpi1_retained_numeric_payload": 15463552,
+        "mpi2_retained_numeric_payload": 13976176,
+        "mpi1_lazy_p6_work_vec": 2780832,
+        "mpi2_lazy_p6_work_vec": 1598304,
+        "retained_transfer_payload_gate_limit": 128000000,
+        "mpi1_bounded_apply_workspace": 3046112,
+        "mpi2_bounded_apply_workspace": 1757632,
+        "bounded_apply_workspace_gate_limit": 64000000,
+        "payload_gate": true,
+        "workspace_gate": true
+      },
+      "checker_result_on_frozen_raw": {
+        "record_path": "benchmarks/cases/101_task37_extra_development/records/m1_fullspace_p4_p6_transfer.json",
+        "record_sha256": "ad4184d82743a3063d426ad2bd2c2e582c5c3f6f5d8999548cf2d81d704422b0",
+        "status": "gate_failed",
+        "pass": false,
+        "route": "M1-review-only",
+        "problems": ["canonical_p4_adjoint"],
+        "checks_true": 14,
+        "checks_total": 15,
+        "canonical_p6_image_relative_l2": 1.982326002916046e-15,
+        "canonical_p4_adjoint_relative_l2": 0.9503885989179789,
+        "canonical_p4_adjoint_max_abs": 16.50305548580111,
+        "canonical_p6_image_max_abs": 2.0888966564080594e-13,
+        "canonical_p6_missing_extra_duplicate": [0, 0, 0],
+        "canonical_p4_missing_extra_duplicate": [0, 0, 0],
+        "checker_source_sha": "caed4dea78e9d9a924e2ad06daba9dd635801e94"
+      },
+      "classification": "execution-fix exposed a separate dual-fixture partition-identity defect; not a third formal authorization",
+      "raw_key_sha256": {
+        "m1_watchdog_summary.json": "d9a094debc89e37df93a2b4bbc7a1209aa0d07b96d879907673b7d82dd38a9c0",
+        "mpi1_worker_summary.json": "34905b4ac0985f7815e8adf8e4ccb53aeecf0402ccfe04d8b9b89982b7c6d449",
+        "mpi2_worker_summary.json": "6356337f4fbad871743f781a53a553353da1085a6f534df822637ee73986150c",
+        "mpi1_p6_image_manifest.json": "7eccc8d43ea703c447b4e5b889deb508eaaa7b21fbb54dde780d6c1789172512",
+        "mpi1_p4_adjoint_manifest.json": "582e538852c52c32169715d85b1dd85ce68925b1fcec7889eb58d302b4400cce",
+        "mpi2_p6_image_manifest.json": "0e9dcb6a390a0fdcf0aebedc46334a8937fa1ce4cbe8b1e11a70318858214ada",
+        "mpi2_p4_adjoint_manifest.json": "bbe8156382224550ef341de35a0f31ad647a4479b289376511b0109d87166d38",
+        "mpi1_progress.jsonl": "e9e412c017ed01a6526c09ee4029b1116a93bfafc193ed6a4c83f9cdb93a371f",
+        "mpi2_progress.jsonl": "74fbc011fc83ef2d867528cb752d64b086f43541dabbc1b628fdb938204021c7",
+        "mpi1_timeline.jsonl": "bc7fa77667194df39e88de48e20ecfb925092ebcd9512ae7f7ff921541b33067",
+        "mpi2_timeline.jsonl": "c47690ec89e08355ff84af7cf4569bb3cb921ac6ba4b2e3a32f8b4b64b61cfae"
+      }
+    }
+  ],
+  "fixture_diagnostics": {
+    "orientation": {
+      "json_path": "/tmp/task037_m1_orientation_diagnostic.json",
+      "json_sha256": "53e7bf5f60faf01657c8fd88626d510adb24c8b8ab6db7534e8ff897eedf1f76",
+      "script_path": null,
+      "script_sha256": null,
+      "source_sha": "ad589ca1e7d473e6ed77827f8bb23410f21c38a9",
+      "source_sha_status": "diagnostic JSON did not embed source; recorded from initial-formal diagnostic context",
+      "cell_count": 252,
+      "nonzero_cell_info_count": 82,
+      "current_vs_prescribed_max_abs": 8.616549110757854e-15,
+      "current_vs_expected_max_abs": 8.766730831863097e-15,
+      "zero_cell_info_current_vs_expected_max_abs": 4.315525968814602e-15,
+      "conclusion": "orientation hypothesis not evidenced"
+    },
+    "mpc_commutation": {
+      "json_path": "/tmp/task037_m1_mpc_commutation_diagnostic.json",
+      "json_sha256": "3522def9cf00c532b8fc1a2a3839a7837d0a60f01903da7295ef5bccf6e519e0",
+      "script_path": "/tmp/task037_m1_mpc_commutation_diagnostic.py",
+      "script_sha256": "1bcb35d36717398aa415009462a0de79ec2474ed0b684de630fb8195b60dbeb1",
+      "source_sha": "ad589ca1e7d473e6ed77827f8bb23410f21c38a9",
+      "carrier_vs_dolfinx": {
+        "p4_max_coefficient_error": 0.0,
+        "p6_max_coefficient_error": 0.0,
+        "master_binding_mismatches": 0,
+        "slave_id_set_equal": true,
+        "p4_constraints": 4124,
+        "p6_constraints": 9210
+      },
+      "commutation_relative_errors": {
+        "p0_c4_vs_c6_p0": 0.3107081128029918,
+        "full_vs_c6_p0": 0.3107081128029918,
+        "full_vs_c6_expected": 0.31070811280299215,
+        "full_vs_p0_c4": 0.0,
+        "no_mpc_p0_vs_raw_p6": 7.427129517090156e-15
+      },
+      "conclusion": "carrier and DOLFINx lift agree; full transfer equals C6 P0 C4; initial mismatch was later explained by the non-compatible source fixture"
+    },
+    "floquet_polynomial_probe": {
+      "json_path": "/tmp/task037_m1_floquet_polynomial_probe.json",
+      "json_sha256": "7cc3f26392b3f485fc2d9d9971db97b609c0cf0ceff113f7d47ab5e7acf7c09d",
+      "script_path": "/tmp/task037_m1_floquet_polynomial_probe.py",
+      "script_sha256": "44025eeee04644e365a6126643b1f8b95ba39e8e6528d8194b1eff2ceb2582a0",
+      "source_sha": "ad589ca1e7d473e6ed77827f8bb23410f21c38a9",
+      "field_id": "floquet_compatible_bilinear_p4_v1",
+      "boundary_max_abs": 1.1102230246251565e-16,
+      "boundary_normalized_max": 8.298196493860385e-17,
+      "raw_p4_no_mpc_to_p6_relative": 5.102448959291011e-15,
+      "full_transfer_to_independent_p6_expected_relative": 5.466792763091917e-15,
+      "full_transfer_to_independent_p6_expected_max_abs": 1.7112135109858138e-13,
+      "orientation_nonzero_cell_count_global": 82,
+      "old_affine_negative_control_boundary_max_abs": 33.76939473850167,
+      "old_affine_negative_control_relative": 1.5286148007984073,
+      "all_probe_gates_pass": true,
+      "conclusion": "source fixture is p4-compatible and Floquet-compatible; this is diagnostic evidence, not a formal rerun"
+    },
+    "dual_partition": {
+      "json_path": "/tmp/task037_m1_dual_partition_diagnostic.json",
+      "json_sha256": "954d22b4b40a45afc969af59b28cb3da5d170ddd8c74cd254e91f86a0a045af5",
+      "script_path": "/tmp/task037_m1_dual_partition_diagnostic.py",
+      "script_sha256": "ba8900b97ae869001c7e3a05fd09bf6c626b995433f384a3688e0ee14ebb4ca5",
+      "source_sha": "caed4dea78e9d9a924e2ad06daba9dd635801e94",
+      "classification": "EVIDENCED_DUAL_FIXTURE_PARTITION_IDENTITY_DEFECT",
+      "rows": {
+        "p6": 173802,
+        "p4": 53084,
+        "p6_constraints": 9210,
+        "p4_constraints": 4124
+      },
+      "canonical_comparison": {
+        "global_id_dual_input_relative_l2": 0.9091583071292413,
+        "global_id_adjoint_output_relative_l2": 0.9503885989179789,
+        "manufactured_dual_input_relative_l2": 1.647661415080129e-15,
+        "manufactured_dual_adjoint_output_relative_l2": 1.3580087229674401e-15,
+        "missing_extra_duplicate_all_comparisons": [0, 0, 0],
+        "global_id_key_mapping_different_count": 72840,
+        "global_id_key_mapping_common_count": 164592,
+        "global_id_key_mapping_different_fraction": 0.4425488480606591,
+        "mapping_sample_count_retained": 20
+      },
+      "manufactured_dual_checks": {
+        "face_corner_floquet_residual_less_or_equal": 1e-13,
+        "backsub_relative_error": 1.33e-15,
+        "adjoint_finite": true,
+        "adjoint_deterministic": true
+      },
+      "conclusion": "global-id dual input is partition-dependent; the cfg-bound manufactured dual and its adjoint canonical output agree across MPI1/MPI2"
+    }
+  },
+  "evidence_sha256": "2ca797159d97784dac04543a4a5625871336359e5efb8f744c3ec4bfb2f69b47"
+}
