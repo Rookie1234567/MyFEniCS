@@ -23,7 +23,7 @@ inventory 只保存在 [T2 A0 record](records/task039_t2_a0_preflight_v1.json)�
 | --- | --- | --- |
 | T2 A0 | `completed` | 纯 Python preflight record；无 formal PDE |
 | T3 | `completed` | [Full3D direct MPI8 authority record](records/task039_t3_full3d_direct_mpi8_v1.json) |
-| T4 | `not_run` / `planned` | Full3D iterative anchor |
+| T4 | `negative_result_recorded` | [Full3D iterative MPI8 negative record](records/task039_t4_full3d_iterative_mpi8_negative_v1.json); 4000-step `DIVERGED_MAX_IT`, not a positive qualification |
 | T5 | `not_run` / `planned` | Hybrid direct M selection |
 | T6 | `not_run` / `planned` | Hybrid iterative candidate |
 | T7 | `not_run` / `planned` | conditional p6/h7.5 reference / Hybrid qualification |
@@ -34,3 +34,12 @@ inventory 只保存在 [T2 A0 record](records/task039_t2_a0_preflight_v1.json)�
 `config.json`、`schema.json` 和 `expected.json` 只描述这个计划与已绑定的 T2/T3
 compact evidence；它们不允许通过 CLI 覆盖 dat 的物理、solver 或 MPI 字段。T3
 raw results 仍在 ignored 目录，record 只保存可审查字段和 SHA256。
+
+T4 已有一次正式 Full3D iterative MPI8 运行，但残差在 4000 步上限仍为
+`0.1552648200050503`（reported），因此记录为
+`5NM_FULL3D_ITERATIVE_NUMERICAL_NEGATIVE_AT_P6H10`，不是 runner 的
+`worker_nonzero` 科学分类。官方 R/T/A、场、canonical 和 direct-vs-iterative
+比较均为 not_run。这个负结果阻断 T7/T8 的 Full3D iterative Phase B 扩展；T5
+Hybrid direct 仍可作为独立容量诊断，不能被标成 Full3D-validated。现有
+`config.json`/`expected.json` 的 T4 `not_run/planned` 继续表示尚未形成正向资格，
+以免把负结果误写成通过。

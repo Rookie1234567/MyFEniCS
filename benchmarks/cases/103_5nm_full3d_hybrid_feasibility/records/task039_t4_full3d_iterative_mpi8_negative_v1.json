@@ -1,0 +1,203 @@
+{
+  "schema_version": "task039.t4.full3d_iterative.negative.v1",
+  "case_id": "103_5nm_full3d_hybrid_feasibility",
+  "phase": "T4",
+  "status": "completed_negative",
+  "classification": "5NM_FULL3D_ITERATIVE_NUMERICAL_NEGATIVE_AT_P6H10",
+  "source": {
+    "branch": "codex/20260812-task39-5nm-hybrid-0p7nm-feasibility",
+    "sha": "0d0f6521fa451177510ebf0342fe31ff279dbd56",
+    "upstream": "origin/codex/20260812-task39-5nm-hybrid-0p7nm-feasibility",
+    "ahead": 0,
+    "behind": 0,
+    "clean": true
+  },
+  "identity": {
+    "input_path": "input/official/task039/5nm_p6h10_full3d_iterative_mpi8.dat",
+    "input_sha256": "0690d2d12ebd77df68ff55b6d285ad169006192657991fc89dce2ce886490f41",
+    "resolved_config_sha256": "1a9f2a40269ec3dd585451cc44820df37653ebacb41286d7f24a4608e3b3e20f",
+    "physical_model_sha256": "db52c70d667caa726e2b2e04b646402415a377fa7bbcef42c87ffc816b9b2a7a",
+    "model_id": "task039_5nm_full3d_iterative",
+    "method": "full3d_iterative",
+    "resolved_method_adapter": "task039.full3d_iterative",
+    "mpi_size": 8,
+    "physics": {
+      "wavelength_nm": 5.0,
+      "degree": 6,
+      "mesh_target_size_nm": 10.0,
+      "polarization": "s",
+      "grazing_deg": 10.0,
+      "theta_deg": 80.0,
+      "phi_deg": 0.0
+    }
+  },
+  "run": {
+    "run_directory": "results/task039_5nm_full3d_iterative/task039_5nm_full3d_iterative_p6h10_mpi8__full3d_iterative__mpi8__Mna/20260812T221136.855751Z",
+    "status": "finished",
+    "exit_status": 4,
+    "runner_classification": "worker_nonzero",
+    "pde_launched": true
+  },
+  "raw_hashes": {
+    "run_manifest.json": "512aa2de11ec461100afcdc5c0af7ac21851379f83f8bb8ae794d43bb328812f",
+    "run_summary.json": "185bd0296b66cbf80070997a098d70ff5707c854d9677adaefbbe7b6eefac7f6",
+    "numerical_output/run_summary.json": "46a377da87555a8ae16d5a22c5709280c97f796c5e07e47ff70a2c4c27e73068",
+    "numerical_output/solver_log.txt": "64ee988f5412913240175ce784a701ba427c8b8d502d83615b15ef3f8245cbf3",
+    "numerical_output/progress_3d.jsonl": "e2bd50f4aa3b6c49a2519d78374c3cb739b21f6d6da3e3fe941f73d0801c5e9a",
+    "numerical_output/task039_m3a_core_audit.json": "e33abf332f0b808ce78152d6fff25f2c10ee85373d4cf1a7860461c3c198d02d",
+    "numerical_output/NO_OFFICIAL_FIELD_OUTPUT.txt": "e11465d92e416af3e4321c581b7291b7d4df5c932b425541f9b0114e259d3f38",
+    "resolved_config.json": "1a9f2a40269ec3dd585451cc44820df37653ebacb41286d7f24a4608e3b3e20f",
+    "worker_stdout.txt": "a95d65d6e80575cc423b8e49efac99d1bc64070bdbb0d127ecebf3fb823bfeec"
+  },
+  "mesh_and_linear_algebra": {
+    "cells": 252,
+    "full_nedelec_dofs": 173802,
+    "active_trace_rows": 51192,
+    "active_condensed_rows": 51796,
+    "augmented_rows": 51796,
+    "dynamic_external_auxiliary_dofs": 604,
+    "matrix_nnz": "not_available",
+    "factor_nnz": "not_available"
+  },
+  "solver": {
+    "assembly_backend": "assembly_time_static_condensed",
+    "dtn_order_policy": "auto_propagating",
+    "operator": {
+      "global_action": "matrix_free",
+      "global_A_materialized": false,
+      "global_F_materialized": false,
+      "dtn_action_preallocation_audit": {
+        "matrix_free_dtn": false,
+        "explicit_c_matrix_count": 1,
+        "explicit_d_matrix_count": 1,
+        "small_h_materialized": true,
+        "status": "dtn_direct_blocks_preallocated"
+      }
+    },
+    "outer_ksp": "fgmres",
+    "pc_side": "right",
+    "norm_type": "unpreconditioned",
+    "restart": 90,
+    "relative_tolerance": 1e-6,
+    "absolute_tolerance": 0.0,
+    "max_it": 4000,
+    "iterations": 4000,
+    "initial_guess": "zero",
+    "num_slabs": 16,
+    "overlap_fraction": 0.125,
+    "interpolation": "partition",
+    "absorption_shift": 0.1,
+    "reported_residual": 0.1552648200050503,
+    "condensed_true_residual": 0.1552648200050506,
+    "full_augmented_true_residual": 0.1552648200050506,
+    "linear_system_relative_residual": 0.15528670704157801,
+    "converged": false,
+    "converged_reason": -3,
+    "converged_reason_name": "DIVERGED_MAX_IT",
+    "global_A_materialized": false,
+    "global_F_materialized": false,
+    "global_direct_factor_count": 0,
+    "no_global_factor_inventory": {
+      "global_schur_matrix_materialized": false,
+      "allowed_factor_scope": [
+        "SmallDenseInverse(H)",
+        "dense coarse LU",
+        "COMM_SELF factor_only ILU(0)"
+      ],
+      "coarse_dimension": 75,
+      "external_auxiliary_dofs": 604
+    }
+  },
+  "dynamic_external_inventory": {
+    "status": "present_in_run_manifest",
+    "source": "outgoing_port_modes_3d",
+    "canonical_sha256": "296c9e74d0a15c0dd2671e54fa7de2709c5f19f0c9f8665ffc4d35d740d4faea",
+    "total": 604,
+    "unique": 604,
+    "bottom": 300,
+    "top": 304,
+    "polarization": {"S": 302, "P": 302},
+    "polarization_per_side": {
+      "bottom": {"S": 150, "P": 150},
+      "top": {"S": 152, "P": 152}
+    },
+    "propagating": 604,
+    "nonpropagating": 0,
+    "rayleigh_warning": 0,
+    "zero_order_count": 4,
+    "diffraction_output": "not_generated; numerical postprocess was skipped"
+  },
+  "a2_gates": {
+    "solver_convergence": {
+      "status": "fail",
+      "actual": "DIVERGED_MAX_IT(-3) at 4000 iterations",
+      "limit": "converged with residual gates"
+    },
+    "iteration_bound": {"status": "pass", "actual": 4000, "limit": "<=4000"},
+    "reported_residual": {"status": "fail", "actual": 0.1552648200050503, "limit": "<=1e-6"},
+    "condensed_true_residual": {"status": "fail", "actual": 0.1552648200050506, "limit": "<=1e-6"},
+    "full_augmented_true_residual": {"status": "fail", "actual": 0.1552648200050506, "limit": "<=1e-6"},
+    "linear_system_residual": {"status": "fail", "actual": 0.15528670704157801, "limit": "<=1e-6"},
+    "global_action_no_global_A_F": {"status": "pass", "actual": {"global_action": "matrix_free", "global_A": false, "global_F": false, "dtn_matrix_free": false, "explicit_C": 1, "explicit_D": 1}},
+    "global_direct_factors": {"status": "pass", "actual": 0, "limit": 0},
+    "dynamic_inventory": {"status": "pass", "actual": 604, "limit": "604 unique keys"},
+    "official_result": {"status": "not_run", "actual": false, "reason": "solver did not converge"},
+    "R_T_A_A_volume": {"status": "not_run", "actual": "not_available"},
+    "energy_closure": {"status": "not_run", "actual": "not_available"},
+    "field_outputs": {"status": "not_run", "actual": "not_available"},
+    "canonical_vectors": {"status": "not_run", "actual": "not_available"},
+    "A2_identity_comparison": {"status": "not_run", "actual": "not_available"},
+    "significant_orders": {"status": "not_run", "actual": "not_available"},
+    "swap": {"status": "pass", "actual": 0.0, "limit": 0.0},
+    "memory_hard_stop": {"status": "pass", "actual": "not triggered"}
+  },
+  "not_run": [
+    "official_RTA",
+    "energy_closure",
+    "selected_E_H_fields",
+    "canonical_active_trace_and_full_fe",
+    "significant_diffraction_orders",
+    "A2_direct_vs_iterative_identity"
+  ],
+  "resources": {
+    "process_tree_rss_peak_mib": 12031.03125,
+    "process_tree_pss_peak_mib": 10738.3857421875,
+    "process_tree_uss_peak_mib": 10534.84765625,
+    "peak_semantics": "per-metric simultaneous process-tree peak across complete smaps samples; RSS/PSS/USS peaks may occur at different samples",
+    "swap_peak_mib": 0.0,
+    "sample_count": 8258,
+    "smaps_attempted_sample_count": 8259,
+    "smaps_complete_sample_count": 8257,
+    "telemetry_status": "measured",
+    "warning_triggered": false,
+    "memory_budget": {
+      "selected_limit_gib": 228.0657501220703,
+      "warning_gib": 180.0,
+      "configured_hard_gib": 220.0,
+      "effective_hard_gib": 205.2591751098633,
+      "effective_hard_formula": "min(220, 0.90 * selected_limit)",
+      "selected_source": "wsl_mem_total",
+      "selected_limit_classification": "measured",
+      "hard_classification": "derived"
+    },
+    "solver_rank_historical_peak_sum_mib": 11984.98828125,
+    "solver_rank_historical_peak_semantics": "historical sum upper bound; not simultaneous process-tree RSS"
+  },
+  "timing_seconds": {
+    "setup": 126.76721349800937,
+    "solve": 2595.817433956079,
+    "recovery": 0.9224864870775491,
+    "core_audit_total": 2723.535279825097,
+    "outer_wall": 2870.38648908888
+  },
+  "evidence_gaps": [
+    "The independent M3a core audit exists at numerical_output/task039_m3a_core_audit.json, but its audit fields were not embedded in numerical_output/run_summary.json.",
+    "No official diffraction output, selected field archive, or canonical vector artifacts were generated after the non-converged solve.",
+    "The audit gap does not alter the residual-based numerical negative classification and does not authorize a repair or rerun."
+  ],
+  "downstream_boundary": {
+    "T3_full3d_direct": "remains valid",
+    "T7_T8_full3d_iterative_phase_b": "blocked by this negative result",
+    "T5_hybrid_direct": "still allowed for capacity diagnostics; not Full3D-validated"
+  }
+}

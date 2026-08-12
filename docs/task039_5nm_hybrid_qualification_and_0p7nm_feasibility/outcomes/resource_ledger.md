@@ -51,3 +51,24 @@ progress timeline SHA 为
 
 前两次尝试仍按 configuration failure 和 evidence incomplete 保留，不能用本次
 measured resource 覆盖其历史边界。
+
+## 4. T4 Full3D iterative：数值负结果资源记录
+
+T4 的正式迭代运行在 4000 步达到 `DIVERGED_MAX_IT(-3)`，因此下面的资源是
+一次真实负结果运行的 measured telemetry，不是成功求解的资格化资源上限。
+
+| 指标 | measured 值 | 口径/判定 |
+| --- | ---: | --- |
+| simultaneous process-tree RSS peak | 12031.03125 MiB | 进程树同时 RSS 峰值 |
+| independent process-tree PSS peak | 10738.3857421875 MiB | complete smaps samples；独立 per-metric peak |
+| independent process-tree USS peak | 10534.84765625 MiB | complete smaps samples；独立 per-metric peak |
+| attempted/complete smaps samples | 8259 / 8257 | complete>0，telemetry status measured |
+| process-tree swap peak | 0 MiB | zero-swap pass |
+| warning / termination | false / none | 未触发资源终止 |
+| effective hard stop | 205.2591751098633 GiB | derived `min(220, 0.90 × 228.0657501220703)` |
+| solver-rank historical peak sum | 11984.98828125 MiB | 历史上界，不是 simultaneous process-tree RSS |
+
+RSS、PSS、USS 的峰值可能出现在不同完整 sample，不能合并成同一时刻的
+内存向量。T4 的 `task039_m3a_core_audit.json` 是独立 raw audit；其未嵌入
+summary 的证据缺口单独记录，不改变数值负分类。详细 raw 路径和 SHA 见
+[T4 negative record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_t4_full3d_iterative_mpi8_negative_v1.json)。

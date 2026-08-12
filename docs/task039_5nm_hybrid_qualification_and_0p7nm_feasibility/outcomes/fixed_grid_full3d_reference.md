@@ -95,5 +95,29 @@ global count 相等；逐项 filename/SHA/count/schema/duplicates 见 compact re
 | 15965.453125 MiB | 13932.458984375 MiB | 13611.3515625 MiB | 0 MiB |
 
 p6/h10 是 algorithmic stress anchor，h/lambda=2；它证明本 profile 的执行和
-authority 接线，不是 5 nm 网格收敛或 continuum 精度结论。T4 Full3D iterative、
-T5/T6 Hybrid 仍未运行，本页不提前宣称跨方法准确性。
+authority 接线，不是 5 nm 网格收敛或 continuum 精度结论。T4 Full3D iterative
+负结果见下节；T5/T6 Hybrid 仍未运行，本页不提前宣称跨方法准确性。
+
+## 6. T4：5 nm p6/h10 Full3D iterative 数值负结果
+
+迭代法不直接存储完整全局矩阵，而是按需要计算矩阵作用；这能节省存储，
+但仍必须在任务规定的残差限值内收敛。该次运行使用已接受的 M3a 物理分层、
+右侧 FGMRES 和 604 个动态外部通道，结果在 4000 步上限停止。
+
+| 项目 | 实测值/判定 |
+| --- | --- |
+| compact record | [T4 negative record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_t4_full3d_iterative_mpi8_negative_v1.json) |
+| source/input/resolved/physical | 0d0f6521fa451177510ebf0342fe31ff279dbd56 / 0690d2d12ebd77df68ff55b6d285ad169006192657991fc89dce2ce886490f41 / 1a9f2a40269ec3dd585451cc44820df37653ebacb41286d7f24a4608e3b3e20f / db52c70d667caa726e2b2e04b646402415a377fa7bbcef42c87ffc816b9b2a7a |
+| solver / MPI / mesh | Full3D iterative / MPI8 / p6/h10 / S / grazing=10° (theta=80°) |
+| iterations / reason | 4000 / `DIVERGED_MAX_IT(-3)` |
+| residuals | reported 0.1552648200050503；condensed 0.1552648200050506；full-augmented 0.1552648200050506；linear-system 0.15528670704157801 |
+| official and physical outputs | official=false；R/T/A/A_volume、energy closure、selected E/H、canonical、A2 identity = not_run/not_available |
+| global storage | global action matrix-free；global A/F=false/false；DtN preallocation audit 为 `matrix_free_dtn=false`、explicit C=1、explicit D=1；global direct factors=0 |
+| dynamic inventory | 604 unique keys；bottom/top=300/304；S/P=302/302；propagating=604；Rayleigh=0；仅有 inventory，未生成 diffraction output |
+| classification | `5NM_FULL3D_ITERATIVE_NUMERICAL_NEGATIVE_AT_P6H10` |
+
+本次 outer wall 为 2870.38648908888 s；setup/solve/recovery 分别为
+126.76721349800937 / 2595.817433956079 / 0.9224864870775491 s。RSS、PSS、
+USS 和 swap 的独立口径见 [resource ledger](resource_ledger.md)。独立
+`task039_m3a_core_audit.json` 存在，但没有嵌入 numerical summary；这只是
+telemetry/evidence gap，不改变上述残差负结论，也不触发修复或重跑。
