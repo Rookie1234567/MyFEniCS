@@ -755,6 +755,48 @@ def _m3y_measure_factor(matrix: Any, factor: Any, neighborhood_id: int) -> dict[
     }
 
 
+def _m3y_packed_factor_action(factor: Any, vector: Any):
+    """Apply ``L L^H`` from one lower packed Cholesky factor without unpacking."""
+
+    import numpy as np
+    from scipy.linalg import blas
+
+    values = np.asarray(vector)
+    if (
+        values.dtype != np.dtype(np.complex128)
+        or values.ndim != 1
+        or values.size != int(factor.n)
+        or not values.flags.c_contiguous
+        or not np.all(np.isfinite(values))
+    ):
+        raise ValueError("M3Y packed action vector is invalid")
+    packed = np.asarray(factor.packed_values)
+    tpmv = blas.get_blas_funcs(("tpmv",), (packed,))[0]
+    work = np.array(values, dtype=np.complex128, order="C", copy=True)
+    lower_transpose = tpmv(
+        int(factor.n),
+        packed,
+        work,
+        lower=1,
+        trans=2,
+        diag=0,
+        overwrite_x=1,
+    )
+    result = tpmv(
+        int(factor.n),
+        packed,
+        lower_transpose,
+        lower=1,
+        trans=0,
+        diag=0,
+        overwrite_x=1,
+    )
+    result = np.asarray(result, dtype=np.complex128)
+    if not np.all(np.isfinite(result)):
+        raise FloatingPointError("M3Y packed action returned nonfinite values")
+    return np.array(result, dtype=np.complex128, order="C", copy=True)
+
+
 def _c1_phase_identity() -> dict[str, Any]:
     return {
         "jit_api_called": True,
@@ -4845,7 +4887,11 @@ def _m3y_check_raw(run_dir: Path, checker_source: Mapping[str, Any]) -> dict[str
     command_identity = watchdog["command_identity"]
     executable = command_identity["python"]
     checks["command_identity"] = bool(
-        command_identity
+        isinstance(executable, str)
+        and Path(executable).is_absolute()
+        and executable == stage["runtime_identity"]["sys_executable"]
+        and executable == builder["runtime_identity"]["sys_executable"]
+        and command_identity
         == {
             "python": executable,
             "launch_mode": "direct_singleton",
@@ -5014,11 +5060,18 @@ def _m3y_check_raw(run_dir: Path, checker_source: Mapping[str, Any]) -> dict[str
     for factor_id, factor in enumerate(factors):
         rhs = _m3y_fixed_rhs(factor_id, int(factor.n))
         solution = factor.solve(rhs)
+        action = _m3y_packed_factor_action(factor, solution)
+        residual = float(
+            np.linalg.norm(action - rhs)
+            / max(float(np.linalg.norm(rhs)), np.finfo(float).tiny)
+        )
         checker_solves.append(
             {
                 "factor_id": factor_id,
                 "rhs_sha256": _array_sha256(rhs),
                 "solution_sha256": _array_sha256(solution),
+                "action_sha256": _array_sha256(action),
+                "packed_action_residual": residual,
                 "finite": bool(np.all(np.isfinite(solution))),
             }
         )
@@ -5034,6 +5087,7 @@ def _m3y_check_raw(run_dir: Path, checker_source: Mapping[str, Any]) -> dict[str
             == item["solution_sha256"]
             and loader_solve_by_id[item["factor_id"]]["finite"] is True
             and item["finite"] is True
+            and item["packed_action_residual"] <= H2B_M3Y_CLOSURE_LIMIT
             for item in checker_solves
         )
     )

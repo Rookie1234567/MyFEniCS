@@ -65,6 +65,18 @@ def test_m3y_fixed_rhs_and_packed_measurement_are_deterministic():
     assert runner._m3y_fixed_rhs(7, 2).dtype == np.dtype(np.complex128)
 
 
+def test_m3y_packed_action_matches_source_matrix_without_unpacking():
+    matrix = _small_hpd()
+    factor = build_h2b_m3y_packed_factor(matrix, task037_extra_h2b=True)
+    vector = np.asarray([0.5 - 0.2j, -0.1 + 0.7j], dtype=np.complex128)
+    assert np.allclose(
+        runner._m3y_packed_factor_action(factor, vector),
+        matrix @ vector,
+        rtol=1.0e-12,
+        atol=1.0e-12,
+    )
+
+
 def test_m3y_audit_missing_key_fails_closed():
     audit = _valid_audit()
     assert runner._m3y_audit_valid(audit)
