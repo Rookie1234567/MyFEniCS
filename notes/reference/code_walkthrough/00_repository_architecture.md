@@ -39,9 +39,9 @@
 
 | 文件组 | 责任 | 状态 |
 |---|---|---|
-| `main.py` | PyCharm 命名 preset 门面 | public |
-| `runners/run_cases.py` | 2D CLI、组合展开、结果根目录 | public |
-| `runners/run_3d_cases.py` | 3D 单 stage dispatch、PETSc option parse | public |
+| `main.py` | 迁移 dat alias 与保留 research preset 的兼容门面 | compatibility |
+| `runners/run_cases.py` | 2D 兼容解析与现有 runner | internal/research compatibility |
+| `runners/run_3d_cases.py` | 3D 兼容 stage dispatch、PETSc option parse | internal/research compatibility |
 | `solve_vector_maxwell.py` | 2D TM scattered | production |
 | `solve_te_maxwell.py` | 2D TE scattered/port | production |
 | `solve_port_maxwell.py` | 2D TM Robin/DtN total field | production |
@@ -53,7 +53,7 @@
 | `physical_slab_two_level.py` | MPI owner slab + sparse two-level PC | qualified benchmark path |
 | `stage4_runtime.py` | target Stage4 只装配 facade | qualified benchmark path |
 
-`solve_airbox_maxwell_3d_old.py`、`solve_maxwell_3d_common_old.py`、`solve_maxwell_3d_stage_2_no_grating_old.py`、`solve_maxwell_3d_stage_4_grating_old.py` 与 `runners/run_3d_airbox_old.py` 是 deprecated history，不应被新入口 import。
+上述五个旧 3D 模块已由 Task38 T9 移除；它们的实现仍可从 Git 历史回看。当前 adapter 使用现有 stage runner/common flow，不依赖这些不可达副本。
 
 ## postprocessing
 

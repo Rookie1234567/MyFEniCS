@@ -51,21 +51,15 @@
 
 ## 快速入口
 
-普通入口保持既有 direct 默认：
+普通用户的唯一主入口是一个完整 `.dat` 文件：
 
 ```bash
-python -m src.runners.run_cases
-python -m src.runners.run_3d_cases --stage-case stage1_airbox
-python -m src.runners.run_3d_cases --stage-case stage4_block_grating
+python scripts/run_case.py input/path/to/case.dat
 ```
 
-经过验证的 workstation profile 必须显式调用：
-
-```bash
-mpiexec -n 4 python -m benchmarks.run_workstation_iterative \
-  --h-nm 2 \
-  --record benchmarks/records/workstation_p2_h2_mpi4.json
-```
+字段、默认、示例和结果身份见 [Task38 input/README.md](input/README.md)。旧
+`run_cases`、`run_3d_cases` 和 Python preset 仅作为 internal/research
+compatibility 保留，不再作为普通用户入口展示。
 
 普通运行的完整网格、场和日志写入 `results/`，不提交 Git。正式 benchmark 重型输出写入 `benchmarks/artifacts/`，轻量摘要放在 `benchmarks/records/`。Task032 已在 13.5 nm h5/h3 上证明 Hybrid 与同网格 full3D 等价并降低 rows/NNZ；h3 memory-minimal simultaneous RSS 为 3.224 GiB，h2 因两类预测未过 4/5 GiB Gate 而未运行，1–10° S/P 的 30/30 仅是接口 smoke。Task033 的用户缩减范围已由 Review V6 接受并完成 F0：p3/p4 高阶 Floquet、QEP/匹配迹、p3/h5 同阶 closure、p3/h10 精度负结果和 p3/h7.5 fixed-p clear success。后者相对 p2/h3 将 FE DoF/local-system rows/total rows/factor-inventory NNZ/memory/指示性时间分别改善 2.571x/2.567x/2.548x/3.557x/1.606x/1.331x。p4 target 当前主机资源受限，native variable-p H(curl) fail closed。Task034 在 WSL native complex ABI 上完成 hardening、Case093 的 p2/p3/p4 S 偏振固定几何事实表、p3/h3 与 p4/h5 same-degree closure、p3/h5 Full3D/Hybrid MPI1/8/16 identity（MPI32 exploratory）以及受控资源 stop；graded-h 只达到 mechanism pass，三档 same-error 均为 controlled negative，field-driven adaptive 仍未资格化。0.7 nm 仅是 current-layout stress test，production feasibility unknown。Task035 目前只有 goal-oriented H(curl) adaptivity planning package，ordinary default 未改变。
 

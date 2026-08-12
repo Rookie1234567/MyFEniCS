@@ -17,12 +17,11 @@ Stage4B 在双周期 3D cell 中加入 rectangular block grating、complex Si、
 
 使用 qualified complex image。先运行 Stage4A。target h3 前确认可用内存；不要在 14 GB 配额下尝试 h2 direct。
 
-## 4. PyCharm presets
+## 4. Retained research/history presets
 
-```python
-ACTIVE_PYCHARM_PRESET = "3d_stage4b_demo_direct_h5"
-ACTIVE_PYCHARM_PRESET = "3d_target_grating_direct_h5"
-ACTIVE_PYCHARM_PRESET = "3d_target_grating_direct_h3"
+```text
+`src.main --preset` 仍可显式 replay：`3d_stage4b_demo_direct_h5`、
+`3d_target_grating_direct_h5`、`3d_target_grating_direct_h3`。
 ```
 
 初学者先 demo h5；复现 Benchmark 021 必须使用 `3d_target_*`。

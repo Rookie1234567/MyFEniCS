@@ -10,38 +10,27 @@ Stage2C 在双周期域中加入平坦空气/基底界面和 scattered-field 分
 
 ## 3. 运行前提
 
-先通过 Stage2A；基底材料和界面位置必须与背景场一致。该 preset 同时使用 Floquet 和 PML 路径。
+先通过 Stage2A；基底材料和界面位置必须与背景场一致。该 dat 案例同时使用 Floquet 和 PML 路径。
 
-## 4. PyCharm preset
+## 4. Public dat input
 
-```python
-ACTIVE_PYCHARM_PRESET = "3d_stage2c_fresnel_smoke"
+```text
+input/smoke/3d_stage2c_fresnel_smoke.dat
 ```
 
-## 5. `main.py` 修改位置
+## 5. Dat 输入位置
 
-```python
-replace(
-    STAGE2_NO_GRATING_3D,
-    stage_case="fresnel_interface",
-    use_floquet_xy=True,
-    use_pml=True,
-)
+```text
+[geometry]
+geometry_kind = "fresnel_interface"
+[boundary]
+vertical_boundary = "pml"
 ```
 
 ## 6. 完整参数示例
 
-```python
-Stage2NoGratingInputs3D(
-    stage_case="fresnel_interface",
-    case="normal",
-    lambda0=633.0,
-    n_substrate=1.45,
-    use_floquet_xy=True,
-    use_pml=True,
-    nedelec_degree=1,
-    mesh_target_size=300.0,
-)
+```text
+完整参数位于 `input/smoke/3d_stage2c_fresnel_smoke.dat`。
 ```
 
 ## 7. 参数含义
@@ -61,9 +50,10 @@ Stage2NoGratingInputs3D(
 
 ## 9. CLI 等价命令
 
+PyCharm 的 Run Configuration 只填写该 `.dat` 路径。
+
 ```text
-python src/main.py --preset 3d_stage2c_fresnel_smoke \
-  --results-root benchmarks/artifacts/cases/013
+python scripts/run_case.py input/smoke/3d_stage2c_fresnel_smoke.dat
 ```
 
 ## 10. 真实调用链

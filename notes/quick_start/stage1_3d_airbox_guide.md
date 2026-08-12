@@ -1,6 +1,6 @@
 # Stage 1：3D 空气盒子快速运行指南
 
-> **文档状态：历史长文。** 当前默认入口和验证口径见 [`20_3d_stage1_airbox.md`](20_3d_stage1_airbox.md)；无参数运行使用 10 x 10 x 10 nm、p1/h5 的 `3d_stage1_airbox_smoke`。
+> **文档状态：历史长文。** 当前入口和验证口径见 [`20_3d_stage1_airbox.md`](20_3d_stage1_airbox.md) 与 [`../../input/README.md`](../../input/README.md)；本文无参数旧行为仅用于追溯。
 
 ## 2026-06-24 更新：当前 3D 求解器只保留 direct
 

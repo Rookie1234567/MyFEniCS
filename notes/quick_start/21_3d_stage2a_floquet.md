@@ -12,27 +12,22 @@ Stage2A 在 Stage1 方程上增加 x/y 两组 Bloch-Floquet 约束，使相对�
 
 先通过 Stage1。当前 smoke 是均匀空气盒，不含 PML、界面或 grating。
 
-## 4. PyCharm preset
+## 4. Public dat input
 
-```python
-ACTIVE_PYCHARM_PRESET = "3d_stage2a_floquet_smoke"
+```text
+input/smoke/3d_stage2a_floquet_smoke.dat
 ```
 
-## 5. `main.py` 修改位置
+## 5. Dat 输入位置
 
-该 preset 由 `STAGE2_NO_GRATING_3D` 派生，只把 `stage_case` 设为 `floquet_airbox`。
+完整输入位于 `input/smoke/3d_stage2a_floquet_smoke.dat`；stage 映射由 geometry、Floquet 和 boundary 组合决定。
 
 ## 6. 完整参数块
 
-```python
-replace(
-    STAGE2_NO_GRATING_3D,
-    stage_case="floquet_airbox",
-    case="normal",
-    nedelec_degree=1,
-    mesh_target_size=300.0,
-    lambda0=633.0,
-)
+```text
+[boundary]
+use_floquet_x = true
+use_floquet_y = true
 ```
 
 ## 7. 参数含义
@@ -51,10 +46,13 @@ replace(
 
 ## 9. CLI 等价命令
 
+PyCharm 的 Run Configuration 只填写该 `.dat` 路径。
+
 ```text
-python src/main.py --preset 3d_stage2a_floquet_smoke \
-  --results-root benchmarks/artifacts/cases/011
+python scripts/run_case.py input/smoke/3d_stage2a_floquet_smoke.dat
 ```
+
+PyCharm 的 Run Configuration 只填写该 `.dat` 路径。
 
 ## 10. 真实调用链
 
