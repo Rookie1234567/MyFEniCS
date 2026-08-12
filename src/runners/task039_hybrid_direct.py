@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import hashlib
 import math
 from copy import deepcopy
 from pathlib import Path
 from typing import Any, Callable, Mapping
+
+import numpy as np
 
 from src.io.input_validation import (
     simulation_config_3d_from_normalized,
@@ -21,6 +24,16 @@ from src.runners.task038_hybrid_direct import (
 
 Task039Runner = Callable[[list[str], Any, str, Mapping[str, Any]], Mapping[str, Any]]
 TASK039_HYBRID_MODE_CANDIDATES = (120, 240, 480, 960)
+_TASK039_DIRECT_PAYLOAD_KEYS = (
+    "x_nm",
+    "y_nm",
+    "z_nm",
+    "E_V_per_m",
+    "H_A_per_m",
+    "modal_amplitudes",
+    "bottom_q",
+    "top_q",
+)
 
 
 def select_task039_hybrid_mode(
@@ -89,9 +102,146 @@ def _inventory_keys(inventory: Mapping[str, Any]) -> tuple[tuple[Any, ...], ...]
     )
 
 
+def _array_sha256(array: np.ndarray) -> str:
+    return hashlib.sha256(np.ascontiguousarray(array).tobytes()).hexdigest()
+
+
+def _file_sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _payload_errors(
+    payload: Any,
+    numerical_output: Path,
+    record: Mapping[str, Any],
+    expected_inventory: Mapping[str, Any],
+) -> list[str]:
+    if not isinstance(payload, Mapping):
+        return ["Task39 Hybrid direct comparison payload is missing"]
+    errors: list[str] = []
+    if payload.get("schema") != "task039.hybrid-direct-payload.v1":
+        errors.append("Task39 Hybrid direct payload schema is invalid")
+    if payload.get("keys") != list(_TASK039_DIRECT_PAYLOAD_KEYS):
+        errors.append("Task39 Hybrid direct payload keys are invalid")
+    path_value = payload.get("path")
+    relative_path = Path(path_value) if isinstance(path_value, str) else None
+    root = numerical_output.resolve()
+    if (
+        relative_path is None
+        or relative_path.is_absolute()
+        or ".." in relative_path.parts
+        or len(relative_path.parts) != 1
+    ):
+        return errors + ["Task39 Hybrid direct payload path is not output-local"]
+    payload_path = (root / relative_path).resolve()
+    if payload_path.parent != root or not payload_path.is_file():
+        return errors + [
+            "Task39 Hybrid direct payload file is missing or escapes output"
+        ]
+    if payload.get("sha256") != _file_sha256(payload_path):
+        errors.append("Task39 Hybrid direct payload file SHA256 mismatches")
+    if payload.get("bytes") != payload_path.stat().st_size:
+        errors.append("Task39 Hybrid direct payload byte count mismatches")
+
+    counts = expected_inventory.get("counts", {})
+    side_counts = counts.get("per_side", {}) if isinstance(counts, Mapping) else {}
+    hybrid_system = record.get("hybrid_system")
+    internal_unknown_count = (
+        hybrid_system.get("internal_unknown_count")
+        if isinstance(hybrid_system, Mapping)
+        else None
+    )
+    expected_shapes = {
+        "x_nm": (40,),
+        "y_nm": (20,),
+        "z_nm": (5,),
+        "E_V_per_m": (5, 20, 40, 3),
+        "H_A_per_m": (5, 20, 40, 3),
+        "modal_amplitudes": (
+            (int(internal_unknown_count),)
+            if isinstance(internal_unknown_count, int)
+            and not isinstance(internal_unknown_count, bool)
+            else None
+        ),
+        "bottom_q": (
+            (int(side_counts["bottom"]),)
+            if isinstance(side_counts, Mapping) and "bottom" in side_counts
+            else None
+        ),
+        "top_q": (
+            (int(side_counts["top"]),)
+            if isinstance(side_counts, Mapping) and "top" in side_counts
+            else None
+        ),
+    }
+    expected_dtypes = {
+        key: ("float64" if key.endswith("_nm") else "complex128")
+        for key in _TASK039_DIRECT_PAYLOAD_KEYS
+    }
+    metadata = payload.get("arrays")
+    if not isinstance(metadata, Mapping) or set(metadata) != set(
+        _TASK039_DIRECT_PAYLOAD_KEYS
+    ):
+        errors.append("Task39 Hybrid direct payload array metadata is incomplete")
+        metadata = {}
+    try:
+        with np.load(payload_path, allow_pickle=False) as archive:
+            if archive.files != list(_TASK039_DIRECT_PAYLOAD_KEYS):
+                errors.append("Task39 Hybrid direct payload NPZ keys are invalid")
+            for key in _TASK039_DIRECT_PAYLOAD_KEYS:
+                if key not in archive:
+                    continue
+                array = np.asarray(archive[key])
+                item = metadata.get(key)
+                if not isinstance(item, Mapping):
+                    errors.append(
+                        f"Task39 Hybrid direct payload metadata missing {key}"
+                    )
+                    continue
+                if expected_shapes[key] is None or array.shape != expected_shapes[key]:
+                    errors.append(
+                        f"Task39 Hybrid direct payload {key} shape is invalid"
+                    )
+                if str(array.dtype) != expected_dtypes[key]:
+                    errors.append(
+                        f"Task39 Hybrid direct payload {key} dtype is invalid"
+                    )
+                if not np.all(np.isfinite(array)):
+                    errors.append(f"Task39 Hybrid direct payload {key} is not finite")
+                if item.get("shape") != list(array.shape):
+                    errors.append(
+                        f"Task39 Hybrid direct payload {key} shape metadata mismatches"
+                    )
+                if item.get("dtype") != str(array.dtype):
+                    errors.append(
+                        f"Task39 Hybrid direct payload {key} dtype metadata mismatches"
+                    )
+                if item.get("bytes") != int(array.nbytes):
+                    errors.append(
+                        f"Task39 Hybrid direct payload {key} byte metadata mismatches"
+                    )
+                if item.get("sha256") != _array_sha256(array):
+                    errors.append(
+                        f"Task39 Hybrid direct payload {key} SHA256 mismatches"
+                    )
+                if item.get("finite") is not True:
+                    errors.append(
+                        f"Task39 Hybrid direct payload {key} finite flag is false"
+                    )
+            if "z_nm" in archive and not np.array_equal(
+                np.asarray(archive["z_nm"]),
+                np.asarray([10, 30, 60, 90, 110], dtype=np.float64),
+            ):
+                errors.append("Task39 Hybrid direct payload z planes are invalid")
+    except (OSError, ValueError, TypeError) as exc:
+        errors.append(f"Task39 Hybrid direct payload cannot be read: {exc}")
+    return errors
+
+
 def _authority_errors(
     record: Mapping[str, Any],
     expected_inventory: Mapping[str, Any],
+    numerical_output: Path,
 ) -> list[str]:
     errors: list[str] = []
     qualification = record.get("qualification")
@@ -127,6 +277,29 @@ def _authority_errors(
         closure = volume.get("energy_closure_error")
         if not _finite(closure) or abs(float(closure)) > 1.0e-5:
             errors.append("Task39 Hybrid direct energy closure exceeds 1e-5")
+        projection = validation.get("interface_e_projection")
+        if (
+            not isinstance(projection, Mapping)
+            or not _finite(projection.get("combined_relative_residual"))
+            or projection["combined_relative_residual"] > 1.0e-8
+        ):
+            errors.append("Task39 Hybrid direct interface projection exceeds 1e-8")
+        traction = validation.get("fe_modal_traction_equilibrium")
+        traction_pass = isinstance(traction, Mapping) and all(
+            _finite(traction.get(f"{side}_relative_residual"))
+            and traction[f"{side}_relative_residual"] <= 1.0e-8
+            for side in ("bottom", "top")
+        )
+        if not traction_pass:
+            errors.append("Task39 Hybrid direct exact traction exceeds 1e-8")
+        gates = record.get("gates")
+        for gate in (
+            "interface_e_projection_relative_residual_le_1e-8",
+            "fe_modal_traction_equilibrium_relative_residual_le_1e-8",
+            "assembled_interface_h_t_exact_dual_le_1e-8",
+        ):
+            if not isinstance(gates, Mapping) or gates.get(gate) is not True:
+                errors.append(f"Task39 Hybrid direct gate {gate} is not true")
 
     canonical = record.get("canonical_exports")
     if not isinstance(canonical, Mapping) or set(canonical) != {"bottom", "top"}:
@@ -150,6 +323,17 @@ def _authority_errors(
 
     if record.get("external_mode_inventory") != dict(expected_inventory):
         errors.append("Task39 Hybrid direct external mode inventory is not exact")
+
+    errors.extend(
+        _payload_errors(
+            physical.get("task039_direct_payload")
+            if isinstance(physical, Mapping)
+            else None,
+            numerical_output,
+            record,
+            expected_inventory,
+        )
+    )
 
     orders = (
         validation.get("external_diffraction_orders")
@@ -260,7 +444,7 @@ def run_task039_hybrid_direct(
             "external_mode_inventory": expected_inventory,
             "numerical_output_directory": str(numerical_output),
         }
-    errors = _authority_errors(record, expected_inventory)
+    errors = _authority_errors(record, expected_inventory, numerical_output)
     return {
         "passed": not errors,
         "errors": errors,

@@ -730,6 +730,102 @@ def _direct_canonical_exports(
     return exports
 
 
+_TASK039_DIRECT_PAYLOAD_KEYS = (
+    "x_nm",
+    "y_nm",
+    "z_nm",
+    "E_V_per_m",
+    "H_A_per_m",
+    "modal_amplitudes",
+    "bottom_q",
+    "top_q",
+)
+
+
+def _task039_array_sha256(array: np.ndarray) -> str:
+    return hashlib.sha256(np.ascontiguousarray(array).tobytes()).hexdigest()
+
+
+def _task039_direct_payload(
+    *,
+    selected_planes: Any,
+    sample_x: np.ndarray,
+    sample_y: np.ndarray,
+    sample_z: np.ndarray,
+    modal_amplitudes: np.ndarray,
+    external_auxiliary_amplitudes: Mapping[str, Any],
+    run_dir: Path,
+    comm: MPI.Intracomm,
+) -> dict[str, Any]:
+    """Persist the opt-in Task39 fields while their arrays are still alive."""
+
+    descriptor = None
+    if comm.rank == 0:
+        arrays = {
+            "x_nm": np.asarray(sample_x, dtype=np.float64),
+            "y_nm": np.asarray(sample_y, dtype=np.float64),
+            "z_nm": np.asarray(sample_z, dtype=np.float64),
+            "E_V_per_m": np.asarray(
+                selected_planes.electric_V_per_m, dtype=np.complex128
+            ),
+            "H_A_per_m": np.asarray(
+                selected_planes.magnetic_A_per_m, dtype=np.complex128
+            ),
+            "modal_amplitudes": np.asarray(modal_amplitudes, dtype=np.complex128),
+            "bottom_q": np.asarray(
+                external_auxiliary_amplitudes["bottom"], dtype=np.complex128
+            ),
+            "top_q": np.asarray(
+                external_auxiliary_amplitudes["top"], dtype=np.complex128
+            ),
+        }
+        expected_shapes = {
+            "x_nm": (40,),
+            "y_nm": (20,),
+            "z_nm": (5,),
+            "E_V_per_m": (5, 20, 40, 3),
+            "H_A_per_m": (5, 20, 40, 3),
+        }
+        for key, shape in expected_shapes.items():
+            if arrays[key].shape != shape:
+                raise RuntimeError(
+                    f"Task39 direct payload {key} shape {arrays[key].shape} "
+                    f"!= {shape}."
+                )
+        if not np.array_equal(
+            arrays["z_nm"], np.asarray([10, 30, 60, 90, 110], dtype=np.float64)
+        ):
+            raise RuntimeError("Task39 direct payload z planes are not frozen.")
+        if any(not np.all(np.isfinite(value)) for value in arrays.values()):
+            raise RuntimeError("Task39 direct payload contains a non-finite array.")
+        if arrays["modal_amplitudes"].ndim != 1 or any(
+            arrays[key].ndim != 1 for key in ("bottom_q", "top_q")
+        ):
+            raise RuntimeError("Task39 direct modal/q payload must be one-dimensional.")
+
+        run_dir.mkdir(parents=True, exist_ok=True)
+        payload_path = run_dir / "task039_direct_payload.npz"
+        np.savez(payload_path, **arrays)
+        descriptor = {
+            "schema": "task039.hybrid-direct-payload.v1",
+            "path": payload_path.name,
+            "sha256": _sha256(payload_path),
+            "bytes": payload_path.stat().st_size,
+            "keys": list(_TASK039_DIRECT_PAYLOAD_KEYS),
+            "arrays": {
+                key: {
+                    "shape": list(value.shape),
+                    "dtype": str(value.dtype),
+                    "bytes": int(value.nbytes),
+                    "sha256": _task039_array_sha256(value),
+                    "finite": True,
+                }
+                for key, value in arrays.items()
+            },
+        }
+    return comm.bcast(descriptor, root=0)
+
+
 def _parse_args(
     argv: list[str] | None = None,
     *,
@@ -1961,6 +2057,20 @@ def main(
                 absorption["A_volume_total"]
                 - reference_record["results"]["A_volume_total"]
             )
+        task039_direct_payload = None
+        if canonical_export_prefix == "task039_direct":
+            task039_direct_payload = _task039_direct_payload(
+                selected_planes=selected_planes,
+                sample_x=sample_x,
+                sample_y=sample_y,
+                sample_z=sample_z,
+                modal_amplitudes=solution.modal_amplitudes,
+                external_auxiliary_amplitudes=validation[
+                    "external_auxiliary_amplitudes"
+                ],
+                run_dir=args.output.parent,
+                comm=comm,
+            )
         physical_fields = {
             "sample_payload_bytes": int(
                 selected_planes.electric_V_per_m.nbytes
@@ -1975,6 +2085,8 @@ def main(
             "volume_absorption": absorption,
             "selected_plane_full3d_comparison": field_reference,
         }
+        if task039_direct_payload is not None:
+            physical_fields["task039_direct_payload"] = task039_direct_payload
         timings["physical_field_reconstruction"] = _max_elapsed(comm, started)
         progress("Task32 Phase6: physical interface/absorption/selected-plane reconstruction complete")
         if canonical_export_prefix is not None:

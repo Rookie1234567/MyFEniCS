@@ -1,5 +1,6 @@
 """Pure Task39 material and finite-profile contracts (no solver launch)."""
 
+import hashlib
 from pathlib import Path
 from math import isclose, pi
 import inspect
@@ -7,6 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 import numpy as np
+from mpi4py import MPI
 from petsc4py import PETSc
 
 from benchmarks.run_task032_phase6_augmented import _parse_args
@@ -413,7 +415,92 @@ def test_task039_hybrid_mode_selection_is_finite_and_not_a_campaign():
         select_task039_hybrid_mode({961: {"own": True}})
 
 
-def _task039_direct_record(inventory):
+def _task039_test_payload(tmp_path: Path, modal_count: int = 240):
+    arrays = {
+        "x_nm": np.zeros(40, dtype=np.float64),
+        "y_nm": np.zeros(20, dtype=np.float64),
+        "z_nm": np.asarray([10, 30, 60, 90, 110], dtype=np.float64),
+        "E_V_per_m": np.zeros((5, 20, 40, 3), dtype=np.complex128),
+        "H_A_per_m": np.zeros((5, 20, 40, 3), dtype=np.complex128),
+        "modal_amplitudes": np.zeros(modal_count, dtype=np.complex128),
+        "bottom_q": np.zeros(300, dtype=np.complex128),
+        "top_q": np.zeros(304, dtype=np.complex128),
+    }
+    keys = tuple(
+        (
+            "x_nm",
+            "y_nm",
+            "z_nm",
+            "E_V_per_m",
+            "H_A_per_m",
+            "modal_amplitudes",
+            "bottom_q",
+            "top_q",
+        )
+    )
+    output = tmp_path / "numerical_output"
+    output.mkdir(parents=True, exist_ok=True)
+    path = output / "task039_direct_payload.npz"
+    np.savez(path, **arrays)
+
+    def array_sha256(array):
+        return hashlib.sha256(np.ascontiguousarray(array).tobytes()).hexdigest()
+
+    return {
+        "schema": "task039.hybrid-direct-payload.v1",
+        "path": path.name,
+        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "bytes": path.stat().st_size,
+        "keys": list(keys),
+        "arrays": {
+            key: {
+                "shape": list(array.shape),
+                "dtype": str(array.dtype),
+                "bytes": int(array.nbytes),
+                "sha256": array_sha256(array),
+                "finite": True,
+            }
+            for key, array in arrays.items()
+        },
+    }
+
+
+def test_task039_direct_payload_writer_persists_exact_npz_keys(tmp_path: Path):
+    from benchmarks.run_task032_phase6_augmented import _task039_direct_payload
+
+    selected = SimpleNamespace(
+        electric_V_per_m=np.zeros((5, 20, 40, 3), dtype=np.complex128),
+        magnetic_A_per_m=np.zeros((5, 20, 40, 3), dtype=np.complex128),
+    )
+    descriptor = _task039_direct_payload(
+        selected_planes=selected,
+        sample_x=np.zeros(40, dtype=np.float64),
+        sample_y=np.zeros(20, dtype=np.float64),
+        sample_z=np.asarray([10, 30, 60, 90, 110], dtype=np.float64),
+        modal_amplitudes=np.zeros(240, dtype=np.complex128),
+        external_auxiliary_amplitudes={
+            "bottom": np.zeros(300, dtype=np.complex128),
+            "top": np.zeros(304, dtype=np.complex128),
+        },
+        run_dir=tmp_path,
+        comm=MPI.COMM_SELF,
+    )
+    assert descriptor["schema"] == "task039.hybrid-direct-payload.v1"
+    assert descriptor["keys"] == [
+        "x_nm",
+        "y_nm",
+        "z_nm",
+        "E_V_per_m",
+        "H_A_per_m",
+        "modal_amplitudes",
+        "bottom_q",
+        "top_q",
+    ]
+    with np.load(tmp_path / descriptor["path"], allow_pickle=False) as archive:
+        assert archive.files == descriptor["keys"]
+
+
+def _task039_direct_record(inventory, payload, internal_unknown_count: int = 240):
     orders = [
         {
             **key,
@@ -433,13 +520,26 @@ def _task039_direct_record(inventory):
                 "T_total": 0.7,
                 "A_balance": 0.1,
             },
+            "interface_e_projection": {"combined_relative_residual": 1.0e-10},
+            "fe_modal_traction_equilibrium": {
+                "bottom_relative_residual": 1.0e-10,
+                "top_relative_residual": 1.0e-10,
+            },
             "external_diffraction_orders": orders,
         },
         "physical_field_reconstruction": {
             "volume_absorption": {
                 "A_volume_total": 0.1,
                 "energy_closure_error": 0.0,
-            }
+            },
+            "task039_direct_payload": payload,
+        },
+        "case": {"requested_modes_per_direction": 120},
+        "hybrid_system": {"internal_unknown_count": internal_unknown_count},
+        "gates": {
+            "interface_e_projection_relative_residual_le_1e-8": True,
+            "fe_modal_traction_equilibrium_relative_residual_le_1e-8": True,
+            "assembled_interface_h_t_exact_dual_le_1e-8": True,
         },
         "canonical_exports": {
             side: {
@@ -791,7 +891,11 @@ def test_task039_hybrid_direct_passes_finite_cfg_and_inventory_to_runner(
             canonical_export_prefix=canonical_export_prefix,
             external_mode_inventory=external_mode_inventory,
         )
-        return _task039_direct_record(external_mode_inventory)
+        return _task039_direct_record(
+            external_mode_inventory,
+            _task039_test_payload(tmp_path, 2 * requested_modes),
+            internal_unknown_count=2 * requested_modes,
+        )
 
     result = run_task039_hybrid_direct(
         specification.as_jsonable(),
@@ -849,6 +953,18 @@ def test_task039_hybrid_direct_rejects_model_m_mismatch(tmp_path: Path):
 @pytest.mark.parametrize(
     "record_change",
     (
+        lambda record: record["physical_field_reconstruction"].pop(
+            "task039_direct_payload"
+        ),
+        lambda record: record["physical_field_reconstruction"][
+            "task039_direct_payload"
+        ].update({"sha256": "0" * 64}),
+        lambda record: record["validation"]["fe_modal_traction_equilibrium"].update(
+            {"bottom_relative_residual": 2.0e-8}
+        ),
+        lambda record: record["validation"]["interface_e_projection"].update(
+            {"combined_relative_residual": 2.0e-8}
+        ),
         lambda record: record.pop("canonical_exports"),
         lambda record: record["external_mode_inventory"]["keys"].pop(),
         lambda record: record["validation"]["external_diffraction_orders"].pop(),
@@ -864,7 +980,7 @@ def test_task039_hybrid_direct_rejects_incomplete_authority(
     specification = load_and_resolve(TASK039 / "5nm_p6h10_hybrid_direct_m120_mpi8.dat")
 
     def fake_runner(_argv, _cfg, _prefix, inventory):
-        record = _task039_direct_record(inventory)
+        record = _task039_direct_record(inventory, _task039_test_payload(tmp_path))
         record_change(record)
         return record
 
