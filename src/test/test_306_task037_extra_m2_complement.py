@@ -385,7 +385,7 @@ def test_m2_fixed_dimensions_and_deterministic_qr_carrier() -> None:
 def test_m2_constrained_cell_injection_uses_orientation_and_mpc_once() -> None:
     calls: list[tuple[int, int]] = []
 
-    def local_apply(values: np.ndarray, cell_info: int) -> np.ndarray:
+    def local_apply(values: np.ndarray, *, cell_info: int) -> np.ndarray:
         calls.append((cell_info, values.size))
         return np.asarray(
             (values[0], values[1], values[0] - values[1], 2.0 * values[1]),

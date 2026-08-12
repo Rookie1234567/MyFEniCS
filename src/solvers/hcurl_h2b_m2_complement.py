@@ -237,7 +237,10 @@ def build_h2b_m2_cell_injection(
         if p4_lift is not None:
             p4_lift(p4_values)
         local_p6 = np.asarray(
-            local_apply(np.ascontiguousarray(p4_values[p4_dofs]), int(cell_info)),
+            local_apply(
+                np.ascontiguousarray(p4_values[p4_dofs]),
+                cell_info=int(cell_info),
+            ),
             dtype=np.complex128,
         )
         if local_p6.shape != p6_dofs.shape or not np.all(np.isfinite(local_p6)):
