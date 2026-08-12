@@ -11,9 +11,9 @@
 | 7. 波长/角度/偏振 | runner Stage1 normal 默认 |
 | 8. 边界 | 解析场边界；无 Floquet/PML |
 | 9. FE/网格 | N1curl p1，h5 nm，MPI2 |
-| 10. PyCharm preset | `3d_stage1_airbox_smoke`（默认） |
+| 10. Task38 input | [`input/official/stage1_airbox_smoke_mpi2.dat`](../../../input/official/stage1_airbox_smoke_mpi2.dat)（benchmark MPI2） |
 | 11. 参数表 | record metadata + quick start 20 |
-| 12. 精确命令 | [`../../records/3d_stage1_mpi2_smoke.json`](../../records/3d_stage1_mpi2_smoke.json) `metadata.command` |
+| 12. 精确命令 | `python scripts/run_case.py input/official/stage1_airbox_smoke_mpi2.dat` |
 | 13. 调用链 | run_3d_cases -> Stage1 wrapper -> common flow |
 | 14. 理论 | Maxwell 强/弱式与 Stage ladder |
 | 15. 求解器 | MPI2 PETSc/MUMPS direct |
@@ -35,12 +35,12 @@
 
 ## PyCharm
 
-`src/main.py` 的默认 `ACTIVE_PYCHARM_PRESET` 就是 `3d_stage1_airbox_smoke`。单进程 PyCharm 用于交互检查；canonical MPI2 命令应通过 Docker/WSL External Tool 运行本目录 `run.sh`。
+本 case 使用显式的 [`input/official/stage1_airbox_smoke_mpi2.dat`](../../../input/official/stage1_airbox_smoke_mpi2.dat)，其中保留 canonical benchmark 所需 MPI2。不要依赖 `src/main.py` 的无参行为；MPI2 命令通过本目录 `run.sh` 或上面的 public command 运行。
 
 ## CLI 或测试
 
 ```text
-python src/main.py
+python scripts/run_case.py input/official/stage1_airbox_smoke_mpi2.dat
 sh benchmarks/cases/010_3d_stage1_airbox/run.sh
 python benchmarks/check_benchmarks.py --no-write
 ```

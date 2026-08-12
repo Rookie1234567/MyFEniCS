@@ -1,7 +1,7 @@
 {
   "case_id": "011_3d_stage2a_floquet",
   "status": "test_backed_smoke",
-  "preset": "3d_stage2a_floquet_smoke",
+  "input_dat": "input/smoke/3d_stage2a_floquet_smoke.dat",
   "feature": "double x/y Floquet pairing for a homogeneous 3D air box",
   "degree": 1,
   "mesh_target_size_nm": 300.0

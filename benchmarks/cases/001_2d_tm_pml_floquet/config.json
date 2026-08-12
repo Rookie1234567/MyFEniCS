@@ -1,7 +1,7 @@
 {
   "case_id": "001_2d_tm_pml_floquet",
   "status": "experimental_path_smoke",
-  "preset": "2d_tm_pml_floquet_smoke",
+  "input_dat": "input/smoke/2d_tm_pml_floquet_smoke.dat",
   "physical_model": "600 nm x-periodic TM scattered-field layered cell",
   "numerical_settings": "N1curl p=1, h=80 nm, upper/lower 300 nm PML, alpha=5"
 }

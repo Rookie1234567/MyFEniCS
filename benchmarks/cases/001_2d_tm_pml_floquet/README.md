@@ -11,9 +11,9 @@
 | 7. 波长/角度/偏振 | 633 nm、15 度、TM |
 | 8. 边界 | x-Floquet；y 上下 PML |
 | 9. FE/网格 | N1curl p1，target h80 nm，triangle |
-| 10. PyCharm preset | `2d_tm_pml_floquet_smoke` |
+| 10. Task38 input | [`input/smoke/2d_tm_pml_floquet_smoke.dat`](../../../input/smoke/2d_tm_pml_floquet_smoke.dat) |
 | 11. 参数表 | [`../../../notes/quick_start/10_2d_pml_floquet.md`](../../../notes/quick_start/10_2d_pml_floquet.md) |
-| 12. 精确命令 | `python src/main.py --preset 2d_tm_pml_floquet_smoke` |
+| 12. 精确命令 | `python scripts/run_case.py input/smoke/2d_tm_pml_floquet_smoke.dat` |
 | 13. 调用链 | main -> run_cases -> solve_vector_maxwell -> power_metrics |
 | 14. 理论 | Maxwell、Floquet、PML 三篇规范理论 |
 | 15. 求解器 | serial manual reduction + SuperLU（preset） |
@@ -37,13 +37,13 @@ PML 参数改变会同时影响吸收强度、离散误差和计算域尺寸。�
 
 ## PyCharm
 
-打开 `src/main.py`，选择 `2d_tm_pml_floquet_smoke`。Working directory 必须是仓库根目录，解释器必须是 complex DOLFINx 环境。普通单进程 Run 与本 case 的 serial manual 身份一致。
+使用仓库根目录下的 `input/smoke/2d_tm_pml_floquet_smoke.dat`。通过 `scripts/run_case.py` 运行；不依赖 `src/main.py` 的隐式选择，也不把 preset 名当作物理输入。
 
 ## CLI 或测试
 
 ```text
 sh benchmarks/cases/001_2d_tm_pml_floquet/run.sh
-python src/main.py --preset 2d_tm_pml_floquet_smoke
+python scripts/run_case.py input/smoke/2d_tm_pml_floquet_smoke.dat
 ```
 
 `run.sh` 把完整场写入 gitignored `benchmarks/artifacts/cases/001`，不会生成或覆盖 canonical record。
