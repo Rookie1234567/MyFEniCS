@@ -557,6 +557,39 @@ FIELD_SPECS: Final = (
         required=True,
     ),
     _f(
+        "discretization.near_field_margin_x_nm",
+        "float",
+        "nm",
+        ("2d",),
+        "二维近场 x 向外扩边",
+        "near_field_margin_x",
+        "5.0",
+        required=True,
+        constraints=(">= 0",),
+    ),
+    _f(
+        "discretization.near_field_air_top_nm",
+        "float",
+        "nm",
+        ("2d",),
+        "二维近场空气侧上边界",
+        "near_field_air_top",
+        "20.0",
+        required=True,
+        constraints=("> 0",),
+    ),
+    _f(
+        "discretization.near_field_sub_depth_nm",
+        "float",
+        "nm",
+        ("2d",),
+        "二维近场基底侧深度",
+        "near_field_sub_depth",
+        "10.0",
+        required=True,
+        constraints=("> 0",),
+    ),
+    _f(
         "discretization.assembly_backend",
         "enum",
         "none",
@@ -568,7 +601,10 @@ FIELD_SPECS: Final = (
         allowed=(
             "standard_full",
             "assembly_time_static_condensed",
-            "assembly_time_variable_p_condensed",
+        ),
+        constraints=(
+            "assembly_time_variable_p_condensed remains internal/research-only "
+            "because its geometry-bound degree plan is not a v1 input",
         ),
     ),
     _f(
@@ -619,10 +655,20 @@ FIELD_SPECS: Final = (
         "stage4_boundary_model / port_boundary_model",
         '"dtn_port"',
         required=True,
-        allowed=("dtn_port", "pml", "robin0", "dtn", "robin"),
+        allowed=(
+            "dtn_port",
+            "pml",
+            "robin0",
+            "strong_dirichlet",
+            "dtn",
+            "robin",
+        ),
         constraints=(
-            "3D uses dtn_port/pml/robin0; 2d_port uses dtn/robin; 2d_scattered "
-            "may use pml; layered is scattering_background, not a vertical boundary",
+            "3D uses dtn_port/pml/robin0/strong_dirichlet; airbox maps to "
+            "stage1_airbox/floquet_airbox/pml_airbox by Floquet/PML, Fresnel uses "
+            "pml, Stage4 uses dtn_port/pml/robin0; 2d_port uses dtn/robin; "
+            "2d_scattered uses pml; layered is scattering_background, not a "
+            "vertical boundary",
         ),
     ),
     _f(
@@ -632,11 +678,11 @@ FIELD_SPECS: Final = (
         _ANY_2D_3D,
         "散射背景的介质层模型",
         "scattering_background",
-        '"air"',
+        '"layered"',
         allowed=("air", "layered"),
         constraints=(
-            "required for 2d_scattered and Stage4 3D; may be omitted for "
-            "port-only methods",
+            "required for 2d_scattered and Stage4 3D; Stage4 currently requires "
+            "layered; may be omitted for port-only methods",
         ),
     ),
     _f(
@@ -647,10 +693,11 @@ FIELD_SPECS: Final = (
         "DtN 阶次选择策略",
         "stage4_dtn_order_policy",
         '"auto_propagating"',
-        allowed=("zero_order", "auto_propagating", "manual"),
+        allowed=("zero_order", "auto_propagating"),
         constraints=(
             "required only when vertical_boundary is dtn or dtn_port; 2D port maps "
-            "to port_use_diffraction_orders; manual requires diffraction order max",
+            "to port_use_diffraction_orders; legacy manual order selection is "
+            "internal because it mixed output fields into PDE selection",
         ),
     ),
     _f(
@@ -1071,39 +1118,6 @@ FIELD_SPECS: Final = (
         required=True,
     ),
     _f(
-        "output.near_field_margin_x_nm",
-        "float",
-        "nm",
-        ("2d",),
-        "二维近场 x 向外扩边",
-        "near_field_margin_x",
-        "5.0",
-        required=True,
-        constraints=(">= 0",),
-    ),
-    _f(
-        "output.near_field_air_top_nm",
-        "float",
-        "nm",
-        ("2d",),
-        "二维近场空气侧上边界",
-        "near_field_air_top",
-        "20.0",
-        required=True,
-        constraints=("> 0",),
-    ),
-    _f(
-        "output.near_field_sub_depth_nm",
-        "float",
-        "nm",
-        ("2d",),
-        "二维近场基底侧深度",
-        "near_field_sub_depth",
-        "10.0",
-        required=True,
-        constraints=("> 0",),
-    ),
-    _f(
         "output.export_canonical_vectors",
         "boolean",
         "none",
@@ -1224,7 +1238,7 @@ FIELD_SPECS: Final = (
         "order",
         _ANY_2D_3D,
         "最大 x 衍射级",
-        "2D diffraction_order_count (and port_dtn_order_count for manual port) / 3D diffraction_order_max_m",
+        "2D diffraction_order_count / 3D diffraction_order_max_m (postprocess reporting only; never PDE DtN selection)",
         "2",
         constraints=(">= 0; required when export_diffraction_orders",),
     ),

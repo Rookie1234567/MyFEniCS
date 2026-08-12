@@ -80,12 +80,12 @@ def test_schema_identity_sections_and_unique_whitelist():
         "geometry": 11,
         "materials": 6,
         "incidence": 8,
-        "discretization": 12,
+        "discretization": 15,
         "boundary": 10,
         "method": 7,
         "solver": 13,
         "execution": 5,
-        "output": 23,
+        "output": 20,
     }
     assert METHOD_KINDS == (
         "2d_scattered",
@@ -105,7 +105,13 @@ def test_schema_identity_sections_and_unique_whitelist():
     assert FIELD_SPECS_BY_KEY["boundary.dtn_order_policy"].allowed == (
         "zero_order",
         "auto_propagating",
-        "manual",
+    )
+    assert FIELD_SPECS_BY_KEY["discretization.assembly_backend"].allowed == (
+        "standard_full",
+        "assembly_time_static_condensed",
+    )
+    assert (
+        "strong_dirichlet" in FIELD_SPECS_BY_KEY["boundary.vertical_boundary"].allowed
     )
     assert FIELD_SPECS_BY_KEY["solver.linear_solver"].allowed == (
         "direct",
@@ -158,7 +164,7 @@ def test_readme_markers_and_continuous_table():
         "results/<model_id>/<run_id>__<method>__mpi<N>__M<M-or-na>/<timestamp>/" in text
     )
     assert "Woodbury K、Schur size、runtime lifecycle" in text
-    assert "T2 将实现 schema 解析" in text
+    assert "T2 已提供 schema 解析" in text
     assert "T1 loader" not in text
     assert rows["geometry.grating_width_x_nm"][8] == (
         "`2D grating_width / 3D grating_width_x`"
@@ -169,7 +175,7 @@ def test_readme_markers_and_continuous_table():
     assert rows["boundary.use_floquet_x"][8] == (
         "`2D periodic constraint contract / 3D use_floquet_xy`"
     )
-    assert rows["output.near_field_margin_x_nm"][8] == "`near_field_margin_x`"
+    assert rows["discretization.near_field_margin_x_nm"][8] == "`near_field_margin_x`"
     assert rows["output.diffraction_order_max_m"][8].startswith(
         "`2D diffraction_order_count"
     )

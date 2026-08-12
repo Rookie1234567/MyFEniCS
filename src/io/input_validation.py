@@ -1,0 +1,1116 @@
+"""Strict Task38 input validation and pure resolved-spec construction."""
+
+from __future__ import annotations
+
+from difflib import get_close_matches
+from hashlib import sha256
+from math import isclose, isfinite
+from pathlib import Path
+import re
+from typing import Any, Mapping
+import tomllib
+
+import numpy as np
+
+from .input_loader import InputError, LoadedInput
+from .resolved_config import canonical_json_bytes
+from .run_specification import RunSpecification
+from .input_schema import (
+    FIELD_SPECS_BY_KEY,
+    IDENTITY_KEYS,
+    METHOD_KINDS,
+    PUBLIC_FIELD_SPECS,
+    SECTION_NAMES,
+)
+
+
+_SAFE_ID = re.compile(r"^[A-Za-z0-9_.-]+$")
+_IDENTITY_SET = set(IDENTITY_KEYS)
+_SECTION_SET = set(SECTION_NAMES)
+
+
+def _error(path: str, message: str) -> InputError:
+    return InputError(f"{path}: {message}")
+
+
+def _suggest(value: str, choices: tuple[str, ...] | list[str] | set[str]) -> str:
+    match = get_close_matches(value, list(choices), n=1, cutoff=0.45)
+    return f"; did you mean {match[0]!r}?" if match else ""
+
+
+def _plain(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return {key: _plain(item) for key, item in value.items()}
+    if isinstance(value, tuple):
+        return [_plain(item) for item in value]
+    return value
+
+
+def _finite_number(value: Any, path: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise _error(path, "expected a finite number")
+    result = float(value)
+    if not isfinite(result):
+        raise _error(path, "NaN and infinity are not allowed")
+    return result
+
+
+def _parse_default(spec: Any) -> Any:
+    if spec.default is None:
+        return None
+    if spec.value_type in {"string", "path", "enum"}:
+        return spec.default
+    try:
+        return tomllib.loads(f"value = {spec.default}\n")["value"]
+    except (tomllib.TOMLDecodeError, TypeError) as exc:
+        raise InputError(f"schema default for {spec.key} is invalid: {exc}") from exc
+
+
+def _parse_value(spec: Any, value: Any) -> Any:
+    path = spec.key
+    value_type = spec.value_type
+    if value_type == "integer":
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise _error(path, "expected an integer; boolean is not an integer")
+        result: Any = int(value)
+    elif value_type == "float":
+        result = _finite_number(value, path)
+    elif value_type in {"string", "path"}:
+        if not isinstance(value, str):
+            raise _error(path, "expected a string")
+        if not value:
+            raise _error(path, "must not be empty")
+        result = value
+    elif value_type == "enum":
+        if not isinstance(value, str):
+            raise _error(path, "expected a string enum")
+        result = value
+    elif value_type == "boolean":
+        if not isinstance(value, bool):
+            raise _error(path, "expected a TOML boolean")
+        result = value
+    elif value_type == "complex_pair":
+        if not isinstance(value, (list, tuple)) or len(value) != 2:
+            raise _error(path, "expected [real, imag]")
+        result = tuple(
+            _finite_number(item, f"{path}[{index}]") for index, item in enumerate(value)
+        )
+    elif value_type == "complex_vector3":
+        if not isinstance(value, (list, tuple)) or len(value) != 3:
+            raise _error(path, "expected three [real, imag] pairs")
+        result = tuple(
+            _parse_complex_pair(item, f"{path}[{index}]")
+            for index, item in enumerate(value)
+        )
+    elif value_type == "float_array":
+        if not isinstance(value, (list, tuple)):
+            raise _error(path, "expected an array of finite numbers")
+        result = tuple(
+            _finite_number(item, f"{path}[{index}]") for index, item in enumerate(value)
+        )
+    else:
+        raise InputError(f"schema has unsupported value type {value_type!r} for {path}")
+
+    if spec.allowed:
+        candidate = result if value_type == "enum" else str(result)
+        if candidate not in spec.allowed:
+            choices = ", ".join(spec.allowed)
+            suggestion = (
+                _suggest(str(result), spec.allowed) if value_type == "enum" else ""
+            )
+            raise _error(
+                path,
+                f"value {result!r} is not allowed ({choices}){suggestion}",
+            )
+    return result
+
+
+def _parse_complex_pair(value: Any, path: str) -> tuple[float, float]:
+    if not isinstance(value, (list, tuple)) or len(value) != 2:
+        raise _error(path, "expected [real, imag]")
+    return tuple(
+        _finite_number(item, f"{path}[{index}]") for index, item in enumerate(value)
+    )
+
+
+def _applicable(spec: Any, dimension: int, method: str) -> bool:
+    return bool(
+        "all" in spec.applicability
+        or f"{dimension}d" in spec.applicability
+        or method in spec.applicability
+    )
+
+
+def _validate_root(document: Mapping[str, Any]) -> None:
+    expected = set(IDENTITY_KEYS) | _SECTION_SET
+    for key in document:
+        if key not in expected:
+            raise _error(
+                str(key),
+                "unknown top-level key" + _suggest(str(key), sorted(expected)),
+            )
+    for key in IDENTITY_KEYS:
+        if key not in document:
+            raise _error(key, "missing required identity key")
+    for section in SECTION_NAMES:
+        if section not in document:
+            raise _error(section, "missing required section")
+        if not isinstance(document[section], Mapping):
+            raise _error(section, "must be a TOML table")
+
+
+def _validate_sections(document: Mapping[str, Any]) -> dict[str, Any]:
+    _validate_root(document)
+    identity: dict[str, Any] = {}
+    identity_specs = {
+        spec.key: spec for spec in PUBLIC_FIELD_SPECS if "." not in spec.key
+    }
+    for key in IDENTITY_KEYS:
+        identity[key] = _parse_value(identity_specs[key], document[key])
+    if identity["schema_version"] != 1:
+        raise _error("schema_version", "only schema version 1 is supported")
+    for key in ("model_id", "run_id", "comparison_group"):
+        if not _SAFE_ID.fullmatch(identity[key]):
+            raise _error(key, "must match [A-Za-z0-9_.-]+")
+
+    dimension = identity["dimension"]
+    method_table = document["method"]
+    if "kind" not in method_table:
+        raise _error("method.kind", "missing required field")
+    method_spec = FIELD_SPECS_BY_KEY["method.kind"]
+    method = _parse_value(method_spec, method_table["kind"])
+    if method not in METHOD_KINDS:
+        raise _error(
+            "method.kind", f"unknown method {method!r}{_suggest(method, METHOD_KINDS)}"
+        )
+
+    normalized: dict[str, Any] = dict(identity)
+    for section in SECTION_NAMES:
+        raw_section = document[section]
+        known = {
+            spec.key.split(".", 1)[1]
+            for spec in PUBLIC_FIELD_SPECS
+            if spec.key.startswith(f"{section}.")
+        }
+        for key in raw_section:
+            if key not in known:
+                dotted = f"{section}.{key}"
+                raise _error(
+                    dotted,
+                    "unknown field" + _suggest(dotted, sorted(FIELD_SPECS_BY_KEY)),
+                )
+
+        values: dict[str, Any] = {}
+        for spec in PUBLIC_FIELD_SPECS:
+            if not spec.key.startswith(f"{section}."):
+                continue
+            field = spec.key.split(".", 1)[1]
+            active = _applicable(spec, dimension, method)
+            supplied = field in raw_section
+            if not active:
+                if supplied:
+                    raise _error(
+                        spec.key, "field is not applicable to this dimension/method"
+                    )
+                continue
+            if supplied:
+                values[field] = _parse_value(spec, raw_section[field])
+            elif spec.required:
+                raise _error(spec.key, "missing required field")
+            elif spec.default is not None:
+                values[field] = _parse_value(spec, _parse_default(spec))
+        normalized[section] = values
+
+    _validate_cross_fields(normalized)
+    return normalized
+
+
+def _require(mapping: Mapping[str, Any], key: str, path: str) -> Any:
+    if key not in mapping:
+        raise _error(path, "missing required conditional field")
+    return mapping[key]
+
+
+def _validate_cross_fields(config: Mapping[str, Any]) -> None:
+    dimension = config["dimension"]
+    geometry = config["geometry"]
+    materials = config["materials"]
+    incidence = config["incidence"]
+    discretization = config["discretization"]
+    d = discretization
+    boundary = config["boundary"]
+    method = config["method"]
+    solver = config["solver"]
+    execution = config["execution"]
+    output = config["output"]
+    kind = method["kind"]
+    geometry_kind = geometry["geometry_kind"]
+
+    if dimension == 2:
+        if not kind.startswith("2d_"):
+            raise _error("method.kind", "2D inputs require 2d_scattered or 2d_port")
+        if geometry_kind not in {"euv_grating_2d", "layered_2d"}:
+            raise _error(
+                "geometry.geometry_kind",
+                "2D geometry must be euv_grating_2d or layered_2d",
+            )
+        if discretization["mesh_cell_type"] not in {"triangle", "quadrilateral"}:
+            raise _error(
+                "discretization.mesh_cell_type", "2D allows triangle or quadrilateral"
+            )
+        if incidence["polarization"] not in {"tm", "te"}:
+            raise _error("incidence.polarization", "2D allows only tm or te")
+        if boundary.get("use_floquet_x") is not True:
+            raise _error(
+                "boundary.use_floquet_x",
+                "2D periodic constraint contract requires true",
+            )
+        if "use_floquet_y" in boundary:
+            raise _error("boundary.use_floquet_y", "2D must not provide use_floquet_y")
+        if kind == "2d_scattered":
+            if (
+                boundary.get("vertical_boundary") != "pml"
+                or boundary.get("use_pml") is not True
+            ):
+                raise _error(
+                    "boundary",
+                    "2d_scattered requires vertical_boundary=pml and use_pml=true",
+                )
+            _require(
+                boundary, "scattering_background", "boundary.scattering_background"
+            )
+        else:
+            if boundary["vertical_boundary"] not in {"dtn", "robin"}:
+                raise _error(
+                    "boundary.vertical_boundary", "2d_port requires dtn or robin"
+                )
+            if method["constraint_backend"] == "mpc_auto":
+                raise _error(
+                    "method.constraint_backend",
+                    "2d_port does not support mpc_auto",
+                )
+            if boundary["vertical_boundary"] == "dtn":
+                if method["constraint_backend"] != "manual":
+                    raise _error(
+                        "method.constraint_backend",
+                        "2D Fourier DtN port requires manual constraints",
+                    )
+                if config["execution"]["mpi_size"] != 1:
+                    raise _error(
+                        "execution.mpi_size",
+                        "2D Fourier DtN port is qualified only for MPI1",
+                    )
+            elif method["constraint_backend"] not in {"manual", "mpc_official"}:
+                raise _error(
+                    "method.constraint_backend",
+                    "2D Robin port requires manual or mpc_official constraints",
+                )
+            if (
+                boundary.get("use_pml") is True
+                and boundary["vertical_boundary"] != "pml"
+            ):
+                raise _error(
+                    "boundary.use_pml",
+                    "PML cannot be combined with a non-PML 2D port boundary",
+                )
+        if solver["linear_solver"] != "direct":
+            raise _error("solver.linear_solver", "2D public paths use direct")
+    else:
+        if kind in {"2d_scattered", "2d_port"}:
+            raise _error("method.kind", "3D inputs require a 3D method")
+        if geometry_kind not in {
+            "airbox",
+            "fresnel_interface",
+            "rectangular_block_grating",
+        }:
+            raise _error("geometry.geometry_kind", "invalid 3D geometry kind")
+        if discretization["mesh_cell_type"] not in {"tetrahedron", "hexahedron"}:
+            raise _error(
+                "discretization.mesh_cell_type", "3D allows tetrahedron or hexahedron"
+            )
+        if incidence["polarization"] not in {"s", "p", "custom"}:
+            raise _error("incidence.polarization", "3D allows s, p, or custom")
+        if boundary["vertical_boundary"] not in {
+            "dtn_port",
+            "pml",
+            "robin0",
+            "strong_dirichlet",
+        }:
+            raise _error(
+                "boundary.vertical_boundary",
+                "3D allows dtn_port, pml, robin0, or strong_dirichlet",
+            )
+        floquet_xy = boundary.get("use_floquet_x")
+        if floquet_xy != boundary.get("use_floquet_y"):
+            raise _error("boundary.use_floquet_x", "3D Floquet x/y values must agree")
+        if (geometry_kind != "airbox" or boundary.get("use_pml")) and not floquet_xy:
+            raise _error(
+                "boundary.use_floquet_x",
+                "3D grating, Fresnel, and PML airbox stages require dual Floquet",
+            )
+        grating = geometry_kind == "rectangular_block_grating"
+        grazing = "grazing_angle_deg" in incidence
+        tilt = "tilt_from_downward_z_deg" in incidence
+        if grazing == tilt:
+            raise _error(
+                "incidence",
+                "provide exactly one of grazing_angle_deg or tilt_from_downward_z_deg",
+            )
+        if grating and not grazing:
+            raise _error(
+                "incidence.grazing_angle_deg", "required for 3D grating/Stage4"
+            )
+        if not grating and not tilt:
+            raise _error(
+                "incidence.tilt_from_downward_z_deg", "required for airbox/Fresnel"
+            )
+        if grazing and not 0.0 < incidence["grazing_angle_deg"] <= 90.0:
+            raise _error(
+                "incidence.grazing_angle_deg", "must satisfy 0 < grazing <= 90 degrees"
+            )
+        if tilt and not 0.0 <= incidence["tilt_from_downward_z_deg"] <= 90.0:
+            raise _error(
+                "incidence.tilt_from_downward_z_deg",
+                "must satisfy 0 <= tilt <= 90 degrees",
+            )
+        if kind == "full3d_direct" and solver["linear_solver"] != "direct":
+            raise _error("solver.linear_solver", "full3d_direct requires direct")
+        if kind == "hybrid_direct":
+            if solver["linear_solver"] != "direct":
+                raise _error("solver.linear_solver", "hybrid_direct requires direct")
+            if (
+                method["propagation_model"],
+                method["traction_model"],
+            ) not in {
+                ("continuous_beta", "continuous_qep_beta"),
+                ("full3d_uniform_cg", "scalar_cg_discrete_derivative"),
+            }:
+                raise _error(
+                    "method",
+                    "hybrid_direct has no public support for this propagation/traction pair",
+                )
+        if kind == "hybrid_iterative":
+            if solver["linear_solver"] != "fgmres":
+                raise _error("solver.linear_solver", "hybrid_iterative requires fgmres")
+            if solver["preconditioner"] != "hybrid_block_ldu_ilu0_dtn_woodbury":
+                raise _error(
+                    "solver.preconditioner",
+                    "only the accepted hybrid block-LDU preconditioner is public",
+                )
+            if d["assembly_backend"] != "assembly_time_static_condensed":
+                raise _error(
+                    "discretization.assembly_backend",
+                    "hybrid_iterative requires assembly_time_static_condensed",
+                )
+            if (
+                method["propagation_model"],
+                method["traction_model"],
+            ) not in {
+                ("full3d_uniform_cg", "scalar_cg_discrete_derivative"),
+                ("full3d_uniform_cg", "full3d_one_cell_exact_schur"),
+            }:
+                raise _error(
+                    "method",
+                    "hybrid_iterative has no public support for this propagation/traction pair",
+                )
+            if (
+                solver["ilu_level"],
+                solver["subdomain_count_per_endcap"],
+                solver["overlap_fraction"],
+            ) != (0, 1, 0.0):
+                raise _error(
+                    "solver",
+                    "hybrid_iterative requires ILU(0), one subdomain per endcap, and zero overlap",
+                )
+        if geometry_kind == "rectangular_block_grating":
+            _require(
+                boundary, "scattering_background", "boundary.scattering_background"
+            )
+            if boundary["scattering_background"] != "layered":
+                raise _error(
+                    "boundary.scattering_background",
+                    "Stage4 rectangular grating currently requires layered",
+                )
+
+        if geometry_kind == "fresnel_interface":
+            if boundary["vertical_boundary"] != "pml":
+                raise _error(
+                    "boundary.vertical_boundary",
+                    "fresnel_interface requires vertical_boundary=pml",
+                )
+        elif geometry_kind == "airbox":
+            if boundary["use_pml"]:
+                if boundary["vertical_boundary"] != "pml":
+                    raise _error(
+                        "boundary.vertical_boundary",
+                        "airbox with PML requires vertical_boundary=pml",
+                    )
+            elif boundary["vertical_boundary"] != "strong_dirichlet":
+                raise _error(
+                    "boundary.vertical_boundary",
+                    "airbox without PML uses strong_dirichlet",
+                )
+        else:
+            if boundary["vertical_boundary"] == "strong_dirichlet":
+                raise _error(
+                    "boundary.vertical_boundary",
+                    "Stage4 grating does not use strong_dirichlet",
+                )
+
+    if kind == "hybrid_direct" or kind == "hybrid_iterative":
+        if method["bottom_interface_nm"] >= method["top_interface_nm"]:
+            raise _error("method", "bottom_interface_nm must be below top_interface_nm")
+        if method["requested_modes_per_direction"] <= 0:
+            raise _error("method.requested_modes_per_direction", "must be positive")
+        if dimension != 3 or geometry_kind != "rectangular_block_grating":
+            raise _error(
+                "method.kind",
+                "Hybrid public methods require a 3D rectangular Stage4 grating",
+            )
+        if d["mesh_cell_type"] != "hexahedron":
+            raise _error("discretization.mesh_cell_type", "Hybrid requires hexahedron")
+        if boundary["vertical_boundary"] != "dtn_port":
+            raise _error("boundary.vertical_boundary", "Hybrid requires dtn_port")
+        if boundary.get("dtn_assembly") != "auxiliary":
+            raise _error(
+                "boundary.dtn_assembly", "Hybrid requires auxiliary DtN assembly"
+            )
+        if boundary.get("use_pml") is True:
+            raise _error("boundary.use_pml", "Hybrid does not support PML")
+        if boundary.get("scattering_background") != "layered":
+            raise _error(
+                "boundary.scattering_background", "Hybrid requires layered background"
+            )
+        if not (
+            geometry["interface_z_nm"]
+            < method["bottom_interface_nm"]
+            < method["top_interface_nm"]
+            < geometry["interface_z_nm"] + geometry["grating_height_nm"]
+        ):
+            raise _error(
+                "method",
+                "Hybrid interfaces must lie strictly inside the uniform grating slab",
+            )
+
+    if incidence["polarization"] == "custom":
+        if dimension != 3 or "custom_polarization" not in incidence:
+            raise _error(
+                "incidence.custom_polarization",
+                "required only for 3D custom polarization",
+            )
+    elif "custom_polarization" in incidence:
+        raise _error(
+            "incidence.custom_polarization", "allowed only with polarization=custom"
+        )
+    if dimension == 2 and not isfinite(incidence["tilt_from_downward_y_deg"]):
+        raise _error("incidence.tilt_from_downward_y_deg", "must be finite")
+    if incidence["wavelength_nm"] <= 0.0:
+        raise _error("incidence.wavelength_nm", "must be positive")
+    if dimension == 3:
+        from src.common.config_3d import SimulationConfig3D
+
+        theta = (
+            90.0 - incidence["grazing_angle_deg"]
+            if "grazing_angle_deg" in incidence
+            else incidence["tilt_from_downward_z_deg"]
+        )
+        try:
+            SimulationConfig3D(
+                lambda0=incidence["wavelength_nm"],
+                n_air=_complex(materials["n_air"]),
+                incident_theta_deg=theta,
+                incident_phi_deg=incidence["azimuth_deg"],
+                polarization_kind=incidence["polarization"],
+                custom_polarization=(
+                    None
+                    if "custom_polarization" not in incidence
+                    else tuple(
+                        _complex(pair) for pair in incidence["custom_polarization"]
+                    )
+                ),
+            ).polarization_vector
+        except ValueError as exc:
+            raise _error("incidence", str(exc)) from exc
+
+    for key in ("period_x_nm", "air_height_nm"):
+        if geometry[key] <= 0.0:
+            raise _error(f"geometry.{key}", "must be positive")
+    if dimension == 3 and geometry["period_y_nm"] <= 0.0:
+        raise _error("geometry.period_y_nm", "must be positive")
+    if geometry["substrate_thickness_nm"] < 0.0:
+        raise _error("geometry.substrate_thickness_nm", "must be non-negative")
+    if dimension == 3:
+        if not geometry["z_min_nm"] < geometry["interface_z_nm"] < geometry["z_max_nm"]:
+            raise _error(
+                "geometry.interface_z_nm",
+                "must lie strictly between z_min_nm and z_max_nm",
+            )
+        if not isclose(
+            geometry["air_height_nm"],
+            geometry["z_max_nm"] - geometry["interface_z_nm"],
+            rel_tol=1.0e-12,
+            abs_tol=1.0e-12,
+        ):
+            raise _error(
+                "geometry.air_height_nm",
+                "must equal z_max_nm - interface_z_nm",
+            )
+        if not isclose(
+            geometry["substrate_thickness_nm"],
+            geometry["interface_z_nm"] - geometry["z_min_nm"],
+            rel_tol=1.0e-12,
+            abs_tol=1.0e-12,
+        ):
+            raise _error(
+                "geometry.substrate_thickness_nm",
+                "must equal interface_z_nm - z_min_nm",
+            )
+    is_grating = geometry_kind in {"euv_grating_2d", "rectangular_block_grating"}
+    if not is_grating:
+        geometry.setdefault("grating_width_x_nm", 0.0)
+        geometry.setdefault("grating_height_nm", 0.0)
+        if dimension == 3:
+            geometry.setdefault("grating_width_y_nm", 0.0)
+    if is_grating:
+        for key in ("grating_width_x_nm", "grating_height_nm"):
+            _require(geometry, key, f"geometry.{key}")
+        if dimension == 3:
+            _require(geometry, "grating_width_y_nm", "geometry.grating_width_y_nm")
+    for key in ("grating_width_x_nm", "grating_height_nm"):
+        if key in geometry:
+            if geometry[key] < 0.0:
+                raise _error(f"geometry.{key}", "must be non-negative")
+            if is_grating and geometry[key] <= 0.0:
+                raise _error(
+                    f"geometry.{key}",
+                    "is required and must be positive for grating geometry",
+                )
+            if not is_grating and geometry[key] != 0.0:
+                raise _error(
+                    f"geometry.{key}",
+                    "must be omitted or zero for non-grating geometry",
+                )
+    if dimension == 3 and "grating_width_y_nm" in geometry:
+        if geometry["grating_width_y_nm"] < 0.0:
+            raise _error("geometry.grating_width_y_nm", "must be non-negative")
+        if is_grating and geometry["grating_width_y_nm"] <= 0.0:
+            raise _error(
+                "geometry.grating_width_y_nm", "required for 3D grating geometry"
+            )
+        if not is_grating and geometry["grating_width_y_nm"] != 0.0:
+            raise _error(
+                "geometry.grating_width_y_nm",
+                "must be omitted or zero for non-grating geometry",
+            )
+    if geometry.get("grating_width_x_nm", 0.0) > geometry["period_x_nm"]:
+        raise _error("geometry.grating_width_x_nm", "must not exceed period_x_nm")
+    if (
+        dimension == 2
+        and geometry.get("grating_height_nm", 0.0) > geometry["air_height_nm"]
+    ):
+        raise _error(
+            "geometry.grating_height_nm", "must not exceed air_height_nm in 2D"
+        )
+    if (
+        dimension == 3
+        and geometry.get("grating_width_y_nm", 0.0) > geometry["period_y_nm"]
+    ):
+        raise _error("geometry.grating_width_y_nm", "must not exceed period_y_nm")
+    if (
+        dimension == 3
+        and geometry.get("grating_height_nm", 0.0)
+        > geometry["z_max_nm"] - geometry["interface_z_nm"]
+    ):
+        raise _error("geometry.grating_height_nm", "must fit below z_max_nm")
+
+    if dimension == 3:
+        trace = discretization.get("nedelec_trace_degree")
+        interior = discretization.get("nedelec_interior_degree")
+        if (trace is None) != (interior is None):
+            raise _error(
+                "discretization", "trace and interior degree must be supplied together"
+            )
+    if discretization.get("mesh_spacing_mode") == "local_refined":
+        if (
+            "mesh_refined_size_nm" not in discretization
+            or "mesh_refinement_radius_nm" not in discretization
+        ):
+            raise _error(
+                "discretization", "local_refined requires refined size and radius"
+            )
+    elif (
+        "mesh_refined_size_nm" in discretization
+        or "mesh_refinement_radius_nm" in discretization
+    ):
+        raise _error(
+            "discretization", "refinement size/radius are only valid for local_refined"
+        )
+    for key in ("nedelec_degree", "visualization_degree"):
+        if discretization[key] < 1:
+            raise _error(f"discretization.{key}", "must be at least one")
+    for key in ("nedelec_trace_degree", "nedelec_interior_degree"):
+        if key in discretization and discretization[key] < 1:
+            raise _error(f"discretization.{key}", "must be at least one")
+    if discretization["mesh_target_nm"] <= 0.0:
+        raise _error("discretization.mesh_target_nm", "must be positive")
+    if dimension == 2:
+        if discretization["near_field_margin_x_nm"] < 0.0:
+            raise _error(
+                "discretization.near_field_margin_x_nm",
+                "must be non-negative",
+            )
+        if discretization["near_field_air_top_nm"] <= 0.0:
+            raise _error("discretization.near_field_air_top_nm", "must be positive")
+        if discretization["near_field_sub_depth_nm"] <= 0.0:
+            raise _error("discretization.near_field_sub_depth_nm", "must be positive")
+    if (
+        "mesh_refined_size_nm" in discretization
+        and discretization["mesh_refined_size_nm"] <= 0.0
+    ):
+        raise _error("discretization.mesh_refined_size_nm", "must be positive")
+    if (
+        "mesh_refinement_radius_nm" in discretization
+        and discretization["mesh_refinement_radius_nm"] <= 0.0
+    ):
+        raise _error("discretization.mesh_refinement_radius_nm", "must be positive")
+
+    vertical = boundary["vertical_boundary"]
+    is_dtn = vertical in {"dtn", "dtn_port"}
+    for key in ("dtn_order_policy", "dtn_assembly"):
+        if is_dtn and key not in boundary:
+            raise _error(f"boundary.{key}", "required for a DtN boundary")
+        if not is_dtn and key in boundary:
+            raise _error(f"boundary.{key}", "only valid for a DtN boundary")
+    if dimension == 3 and is_dtn and boundary.get("dtn_assembly") != "auxiliary":
+        raise _error(
+            "boundary.dtn_assembly", "3D public DtN assembly must be auxiliary"
+        )
+    if dimension == 2 and boundary.get("dtn_assembly") == "explicit":
+        if kind != "2d_port" or boundary.get("dtn_order_policy") != "zero_order":
+            raise _error(
+                "boundary.dtn_assembly",
+                "2D explicit DtN is public only for zero_order 2d_port",
+            )
+    if vertical == "pml":
+        if boundary.get("use_pml") is not True:
+            raise _error("boundary.use_pml", "must be true for a PML boundary")
+        for key in ("pml_top_thickness_nm", "pml_bottom_thickness_nm"):
+            if key not in boundary or boundary[key] <= 0.0:
+                raise _error(f"boundary.{key}", "positive thickness required for PML")
+        if boundary.get("pml_alpha", 0.0) <= 0.0:
+            raise _error("boundary.pml_alpha", "must be positive for PML")
+    elif boundary.get("use_pml") is True:
+        raise _error(
+            "boundary.use_pml", "true is only valid with vertical_boundary=pml"
+        )
+    if "pml_top_thickness_nm" in boundary and boundary["pml_top_thickness_nm"] < 0.0:
+        raise _error("boundary.pml_top_thickness_nm", "must be non-negative")
+    if (
+        "pml_bottom_thickness_nm" in boundary
+        and boundary["pml_bottom_thickness_nm"] < 0.0
+    ):
+        raise _error("boundary.pml_bottom_thickness_nm", "must be non-negative")
+    if vertical != "pml" and any(
+        key in boundary for key in ("pml_top_thickness_nm", "pml_bottom_thickness_nm")
+    ):
+        raise _error(
+            "boundary", "PML thickness fields are only valid for a PML boundary"
+        )
+
+    if execution["mpi_size"] < 1:
+        raise _error("execution.mpi_size", "must be at least one")
+    if execution["warning_memory_gib"] <= 0 or execution["terminate_memory_gib"] <= 0:
+        raise _error("execution", "memory thresholds must be positive")
+    if execution["warning_memory_gib"] >= execution["terminate_memory_gib"]:
+        raise _error(
+            "execution", "warning_memory_gib must be below terminate_memory_gib"
+        )
+    if execution["timeout_seconds"] <= 0:
+        raise _error("execution.timeout_seconds", "must be positive")
+
+    if dimension == 3:
+        if output["export_reference_planes"]:
+            _require(output, "reference_plane_z_nm", "output.reference_plane_z_nm")
+            if not output["reference_plane_z_nm"]:
+                raise _error("output.reference_plane_z_nm", "must not be empty")
+            if output["sample_count_x"] <= 0 or output["sample_count_y"] <= 0:
+                raise _error("output", "reference sample counts must be positive")
+            if any(
+                not geometry["z_min_nm"] <= value <= geometry["z_max_nm"]
+                for value in output["reference_plane_z_nm"]
+            ):
+                raise _error(
+                    "output.reference_plane_z_nm",
+                    "planes must lie inside z bounds",
+                )
+        elif "reference_plane_z_nm" in output:
+            raise _error(
+                "output", "reference-plane fields require export_reference_planes=true"
+            )
+    if output["export_diffraction_orders"]:
+        _require(output, "diffraction_order_max_m", "output.diffraction_order_max_m")
+        if dimension == 3:
+            _require(
+                output, "diffraction_order_max_n", "output.diffraction_order_max_n"
+            )
+    if "diffraction_order_max_m" in output and output["diffraction_order_max_m"] < 0:
+        raise _error("output.diffraction_order_max_m", "must be non-negative")
+    if (
+        dimension == 3
+        and "diffraction_order_max_n" in output
+        and output["diffraction_order_max_n"] < 0
+    ):
+        raise _error("output.diffraction_order_max_n", "must be non-negative")
+    if dimension == 3 and not (0.0 < output["probe_fraction"] < 1.0):
+        raise _error("output.probe_fraction", "must lie strictly between zero and one")
+    if dimension == 2 and output["power_probe_num_points"] <= 1:
+        raise _error("output.power_probe_num_points", "must be greater than one")
+    if dimension == 3:
+        for key in ("diffraction_sample_count_x", "diffraction_sample_count_y"):
+            if output[key] <= 0:
+                raise _error(f"output.{key}", "must be positive")
+    if "electric_amplitude" in incidence and incidence["electric_amplitude"] < 0.0:
+        raise _error("incidence.electric_amplitude", "must be non-negative")
+    if kind == "hybrid_iterative":
+        for key in ("restart", "max_iterations", "subdomain_count_per_endcap"):
+            if solver[key] <= 0:
+                raise _error(f"solver.{key}", "must be positive")
+        if solver["relative_tolerance"] <= 0.0 or solver["absolute_tolerance"] < 0.0:
+            raise _error("solver", "tolerances must be relative>0 and absolute>=0")
+        if solver["ilu_level"] < 0 or solver["ilu_shift"] < 0.0:
+            raise _error("solver", "ILU level/shift must be non-negative")
+        if not 0.0 <= solver["overlap_fraction"] < 1.0:
+            raise _error("solver.overlap_fraction", "must satisfy 0 <= value < 1")
+
+
+def _validate_loaded_input(loaded: LoadedInput) -> dict[str, Any]:
+    """Validate and return a detached normalized public configuration."""
+
+    return _validate_sections(_plain(loaded.document))
+
+
+def _complex(pair: tuple[float, float]) -> complex:
+    return complex(pair[0], pair[1])
+
+
+def _complex_json(value: complex) -> list[float]:
+    return [float(value.real), float(value.imag)]
+
+
+def _jsonable(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return {str(key): _jsonable(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_jsonable(item) for item in value]
+    if isinstance(value, complex):
+        return _complex_json(value)
+    if isinstance(value, Path):
+        return str(value)
+    if isinstance(value, np.ndarray):
+        return _jsonable(value.tolist())
+    if isinstance(value, np.generic):
+        return _jsonable(value.item())
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+    raise TypeError(f"cannot convert {type(value).__name__} to JSON")
+
+
+def _build_2d_config(config: Mapping[str, Any]) -> dict[str, Any]:
+    from src.common.config import SimulationConfig
+
+    g = config["geometry"]
+    m = config["materials"]
+    i = config["incidence"]
+    d = config["discretization"]
+    b = config["boundary"]
+    method = config["method"]
+    out = config["output"]
+    is_port = method["kind"] == "2d_port"
+    pml = b.get("use_pml", False)
+    cfg = SimulationConfig(
+        case_name=config["model_id"],
+        calculation_method="port" if is_port else "scattered",
+        constraint_backend=method["constraint_backend"],
+        port_boundary_model="dtn" if b["vertical_boundary"] == "dtn" else "robin",
+        scattering_background=b.get("scattering_background", "layered"),
+        polarization_type=i["polarization"].upper(),
+        period_x=g["period_x_nm"],
+        air_height=g["air_height_nm"],
+        substrate_thickness=g["substrate_thickness_nm"],
+        pml_top_thickness=b.get("pml_top_thickness_nm", 0.0),
+        pml_bottom_thickness=b.get("pml_bottom_thickness_nm", 0.0),
+        grating_width=g.get("grating_width_x_nm", 0.0),
+        grating_height=g.get("grating_height_nm", 0.0),
+        lambda0=i["wavelength_nm"],
+        incident_angle_deg=i["tilt_from_downward_y_deg"],
+        n_air=_complex(m["n_air"]),
+        n_substrate=_complex(m["n_substrate"]),
+        n_grating=_complex(m["n_grating"]),
+        use_pml=pml,
+        port_use_pml=pml if is_port else False,
+        port_incident_amplitude=complex(i["electric_amplitude"], 0.0),
+        incident_e0_v_per_m=i["electric_amplitude"],
+        port_dtn_order_count=0,
+        port_dtn_assembly=b.get("dtn_assembly", "auxiliary"),
+        port_use_diffraction_orders=b.get("dtn_order_policy") == "auto_propagating",
+        unique_output=out["unique_output"],
+        compute_power_metrics=out["compute_power_metrics"],
+        diffraction_order_count=out.get("diffraction_order_max_m", 0),
+        power_probe_num_points=out["power_probe_num_points"],
+        nedelec_degree=d["nedelec_degree"],
+        visualization_degree=d["visualization_degree"],
+        generate_png_plots=out["generate_png_plots"],
+        mesh_target_size=d["mesh_target_nm"],
+        mesh_cell_shape=d["mesh_cell_type"],
+        mesh_lock_near_field_template=d["lock_near_field_template"],
+        near_field_margin_x=d["near_field_margin_x_nm"],
+        near_field_air_top=d["near_field_air_top_nm"],
+        near_field_sub_depth=d["near_field_sub_depth_nm"],
+        pml_alpha=b.get("pml_alpha", 5.0),
+    )
+    return {
+        "internal": {"incident_theta_deg": cfg.incident_angle_deg},
+        "k0": cfg.k0,
+        "omega": cfg.omega,
+        "wavevector": [_complex_json(cfg.kx), _complex_json(cfg.ky)],
+        "polarization": list(cfg.polarization),
+        "floquet_phase": _complex_json(cfg.floquet_phase),
+        "mesh_cell_type_resolved": cfg.mesh_cell_shape,
+        "total_height": cfg.total_height,
+        "config_properties": {
+            "x_min": cfg.x_min,
+            "x_max": cfg.x_max,
+            "y_min": cfg.y_min,
+            "y_max": cfg.y_max,
+            "eps_air": _complex_json(cfg.eps_air),
+            "eps_substrate": _complex_json(cfg.eps_substrate),
+            "eps_grating": _complex_json(cfg.eps_grating),
+        },
+    }
+
+
+def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
+    from src.common.config_3d import (
+        SimulationConfig3D,
+        qualify_stage4_full3d_assembly_backend,
+        resolve_stage4_full3d_assembly_backend,
+    )
+
+    g = config["geometry"]
+    m = config["materials"]
+    i = config["incidence"]
+    d = config["discretization"]
+    b = config["boundary"]
+    solver = config["solver"]
+    out = config["output"]
+    theta = (
+        90.0 - i["grazing_angle_deg"]
+        if "grazing_angle_deg" in i
+        else i["tilt_from_downward_z_deg"]
+    )
+    cfg = SimulationConfig3D(
+        case_name=config["model_id"],
+        stage_case="stage4_block_grating"
+        if g["geometry_kind"] == "rectangular_block_grating"
+        else (
+            "fresnel_interface"
+            if g["geometry_kind"] == "fresnel_interface"
+            else (
+                "floquet_airbox"
+                if b.get("use_floquet_x") and not b.get("use_pml")
+                else "pml_airbox"
+                if b.get("use_pml")
+                else "stage1_airbox"
+            )
+        ),
+        geometry_kind=g["geometry_kind"],
+        lambda0=i["wavelength_nm"],
+        n_air=_complex(m["n_air"]),
+        mu_r=_complex(m["mu_r"]),
+        period_x=g["period_x_nm"],
+        period_y=g["period_y_nm"],
+        z_min=g["z_min_nm"],
+        z_max=g["z_max_nm"],
+        air_height=g["air_height_nm"],
+        substrate_thickness=g["substrate_thickness_nm"],
+        grating_height=g.get("grating_height_nm", 0.0),
+        grating_width_x=g.get("grating_width_x_nm", 0.0),
+        grating_width_y=g.get("grating_width_y_nm", 0.0),
+        n_substrate=_complex(m["n_substrate"]),
+        n_grating=_complex(m["n_grating"]),
+        substrate_material_label=m.get("substrate_name"),
+        grating_material_label=m.get("grating_name"),
+        interface_z=g["interface_z_nm"],
+        scattering_background=b.get("scattering_background", "layered"),
+        stage4_boundary_model=b["vertical_boundary"],
+        stage4_dtn_order_policy=b.get("dtn_order_policy", "auto_propagating"),
+        stage4_dtn_assembly=b.get("dtn_assembly", "auxiliary"),
+        use_floquet_xy=b.get("use_floquet_x", False),
+        use_pml=b.get("use_pml", False),
+        pml_top_thickness=b.get("pml_top_thickness_nm", 0.0),
+        pml_bottom_thickness=b.get("pml_bottom_thickness_nm", 0.0),
+        pml_alpha=b.get("pml_alpha", 5.0),
+        incident_theta_deg=theta,
+        incident_phi_deg=i["azimuth_deg"],
+        polarization_kind=i["polarization"],
+        custom_polarization=None
+        if "custom_polarization" not in i
+        else tuple(_complex(pair) for pair in i["custom_polarization"]),
+        incident_amplitude=complex(i["electric_amplitude"], 0.0),
+        incident_e0_v_per_m=i["electric_amplitude"],
+        nedelec_degree=d["nedelec_degree"],
+        nedelec_trace_degree=d.get("nedelec_trace_degree"),
+        nedelec_interior_degree=d.get("nedelec_interior_degree"),
+        visualization_degree=d["visualization_degree"],
+        mesh_target_size=d["mesh_target_nm"],
+        mesh_cell_type=d["mesh_cell_type"],
+        mesh_spacing_mode=d.get("mesh_spacing_mode", "auto"),
+        mesh_refined_size=d.get("mesh_refined_size_nm"),
+        mesh_refinement_radius=d.get("mesh_refinement_radius_nm"),
+        floquet_constraint_mode=d.get("floquet_constraint_mode", "auto"),
+        diffraction_zero_order_only=b.get("dtn_order_policy") == "zero_order",
+        diffraction_order_max_m=None,
+        diffraction_order_max_n=None,
+        diffraction_sample_count_x=out["diffraction_sample_count_x"],
+        diffraction_sample_count_y=out["diffraction_sample_count_y"],
+        diffraction_top_probe_z=out.get("top_probe_z_nm"),
+        diffraction_bottom_probe_z=out.get("bottom_probe_z_nm"),
+        diffraction_probe_fraction=out["probe_fraction"],
+        full3d_reference_export=out["export_reference_planes"],
+        full3d_reference_plane_z=tuple(out.get("reference_plane_z_nm", ())),
+        full3d_reference_sample_count_x=out["sample_count_x"],
+        full3d_reference_sample_count_y=out["sample_count_y"],
+        petsc_direct_solver_profile=solver.get("direct_solver_profile", "default"),
+        stage4_full3d_assembly_backend=d.get("assembly_backend", "standard_full"),
+        unique_output=out["unique_output"],
+    )
+    try:
+        fixed_trace_contract = cfg.nedelec_fixed_trace_contract
+        trace_degree_resolved = cfg.nedelec_trace_degree_resolved
+    except ValueError as exc:
+        raise _error("discretization", str(exc)) from exc
+    floquet_mode = d.get("floquet_constraint_mode", "auto")
+    if (
+        floquet_mode in {"topological_edges", "sparse_facet"}
+        and trace_degree_resolved != 1
+    ):
+        raise _error(
+            "discretization.floquet_constraint_mode",
+            "topological_edges/sparse_facet require resolved trace degree 1",
+        )
+    if floquet_mode == "topological_trace_p2" and trace_degree_resolved != 2:
+        raise _error(
+            "discretization.floquet_constraint_mode",
+            "topological_trace_p2 requires resolved trace degree 2",
+        )
+    try:
+        assembly_audit = resolve_stage4_full3d_assembly_backend(cfg, apply=False)
+        assembly_qualification = qualify_stage4_full3d_assembly_backend(
+            cfg, audit=assembly_audit
+        )
+    except ValueError as exc:
+        raise _error("discretization.assembly_backend", str(exc)) from exc
+    return {
+        "internal": {
+            "incident_theta_deg": theta,
+            "incident_phi_deg": i["azimuth_deg"],
+            "stage_case": cfg.stage_case,
+        },
+        "k0": cfg.k0,
+        "omega": cfg.omega,
+        "direction_vector": _jsonable(cfg.direction_vector),
+        "wavevector": _jsonable(cfg.wavevector),
+        "polarization": _jsonable(cfg.polarization_vector),
+        "floquet_phase_x": _complex_json(cfg.floquet_phase_x),
+        "floquet_phase_y": _complex_json(cfg.floquet_phase_y),
+        "mesh_cells": list(cfg.mesh_cells),
+        "mesh_cell_type_resolved": cfg.mesh_cell_type_resolved,
+        "mesh_spacing_mode_requested": cfg.mesh_spacing_mode_requested,
+        "domain_z_min": cfg.domain_z_min,
+        "domain_z_max": cfg.domain_z_max,
+        "physical_bounds": {
+            "x_min": cfg.x_min,
+            "x_max": cfg.x_max,
+            "y_min": cfg.y_min,
+            "y_max": cfg.y_max,
+        },
+        "config_properties": {
+            "eps_air": _complex_json(cfg.eps_air),
+            "eps_substrate": _complex_json(cfg.eps_substrate),
+            "eps_grating": _complex_json(cfg.eps_grating),
+            "grating_x_min": cfg.grating_x_min,
+            "grating_x_max": cfg.grating_x_max,
+            "grating_y_min": cfg.grating_y_min,
+            "grating_y_max": cfg.grating_y_max,
+        },
+        "stage4_assembly_backend_audit": {
+            "resolution": assembly_audit,
+            "qualification": assembly_qualification,
+        },
+        "nedelec_trace_contract": fixed_trace_contract,
+        "nedelec_trace_degree_resolved": trace_degree_resolved,
+        "floquet_constraint_mode_requested": floquet_mode,
+    }
+
+
+def resolve_loaded_input(loaded: LoadedInput) -> RunSpecification:
+    """Validate one loaded input and resolve its derived pure configuration."""
+
+    normalized = _validate_loaded_input(loaded)
+    dimension = normalized["dimension"]
+    derived = (
+        _build_2d_config(normalized) if dimension == 2 else _build_3d_config(normalized)
+    )
+    physical = {
+        section: normalized[section]
+        for section in (
+            "geometry",
+            "materials",
+            "incidence",
+            "discretization",
+            "boundary",
+        )
+    }
+    physical_sha = sha256(canonical_json_bytes(physical)).hexdigest()
+    output = normalized["output"]
+    method = normalized["method"]["kind"]
+    modes = normalized["method"].get("requested_modes_per_direction")
+    mode_text = "na" if modes is None else str(modes)
+    parent = (
+        Path(output["results_root"])
+        / normalized["model_id"]
+        / (
+            f"{normalized['run_id']}__{method}__mpi{normalized['execution']['mpi_size']}__M{mode_text}"
+        )
+    )
+    return RunSpecification(
+        identity={key: normalized[key] for key in IDENTITY_KEYS},
+        geometry=normalized["geometry"],
+        materials=normalized["materials"],
+        incidence=normalized["incidence"],
+        discretization=normalized["discretization"],
+        boundary=normalized["boundary"],
+        method=normalized["method"],
+        solver=normalized["solver"],
+        execution=normalized["execution"],
+        output=normalized["output"],
+        derived=derived,
+        source_path=loaded.source_path,
+        raw_input_bytes=loaded.raw_input_bytes,
+        input_sha256=loaded.input_sha256,
+        physical_model_sha256=physical_sha,
+        expected_output_parent=parent,
+    )
+
+
+def load_and_resolve(path: str | Path) -> RunSpecification:
+    from .input_loader import load_dat_input
+
+    return resolve_loaded_input(load_dat_input(path))
+
+
+__all__ = [
+    "InputError",
+    "load_and_resolve",
+    "resolve_loaded_input",
+]

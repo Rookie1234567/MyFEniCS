@@ -1,6 +1,6 @@
-# Task38 public input manual (T1 schema)
+# Task38 public input manual (T2 pure input resolution)
 
-本目录定义 Task38 的第一版公开输入合同。当前阶段只发布手写的白名单、参数说明和四个 TOML 模板；还没有 loader、resolved-config 生成器、launcher 或 PDE 执行入口。T2 才会实现解析、严格校验和派生值，T3 才会把一个 `.dat` 文件接入运行入口。
+本目录定义 Task38 的第一版公开输入合同。当前已提供纯 Python 的 `.dat` load/validate/resolve API、手写白名单、参数说明和四个 TOML 模板；T3 的 launcher、`--validate-only`/`--dry-run` 和 PDE 执行入口仍未实现。
 
 ## 1. 使用边界
 
@@ -13,6 +13,8 @@ T1 只定义字段、单位、适用范围、默认来源和文档覆盖；不�
 五个顶层身份键必须恰有一次：`schema_version`、`model_id`、`run_id`、`comparison_group`、`dimension`。其后必须恰有以下九个 section：`geometry`、`materials`、`incidence`、`discretization`、`boundary`、`method`、`solver`、`execution`、`output`。一个文件只表示一个 run；`comparison_group` 只用于把多个独立 run 置于同一比较组，不会自动触发批处理。
 
 `dimension=2` 使用 `2d_scattered` 或 `2d_port`，并且一次只能选择一个 method；`dimension=3` 使用 Full3D/Hybrid method。二维入射角键是 `incidence.tilt_from_downward_y_deg`；代码约定 `kx=sin(theta), ky=-cos(theta)`。三维 Stage4 grating 使用 `grazing_angle_deg` 与 `azimuth_deg`，内部派生 `incident_theta_deg = 90 - grazing_angle_deg`；Stage1/airbox/Fresnel 使用语义明确的 `tilt_from_downward_z_deg`，二者互斥。
+
+3D 现有 stage 映射由 geometry、Floquet 和边界组合决定：airbox + `strong_dirichlet` + 无 Floquet/PML 是 `stage1_airbox`；airbox + `strong_dirichlet` + 双 Floquet 是 `floquet_airbox`；airbox + PML 是 `pml_airbox`；`fresnel_interface` 必须使用 PML；rectangular grating 映射 `stage4_block_grating`。这些是 T2 派生的内部 stage 名，不是用户输入键。
 
 `method.requested_modes_per_direction` 是 Hybrid 用户输入；candidate pool、实际动态 DtN 模数、40-mode K、Woodbury/Schur 尺寸、QEP 与生命周期都是 adapter 派生或 internal。`propagation_model`、`traction_model`、`side_residual_correction_steps` 只能取受审有限 enum/组合。`solver` 公开有限 direct profile 和已审 iterative controls；raw PETSc options、未审 PC、authority path/hash 不公开。
 
@@ -30,7 +32,7 @@ T1 只定义字段、单位、适用范围、默认来源和文档覆盖；不�
 | `execution` | MPI、资源告警/终止、超时和 swap policy |
 | `output` | 结果目录、field/order/canonical/modal/reference-plane 导出 |
 
-T3 才可用的命令示意为（当前 T1 不可执行）：
+T3 才可用的命令示意为（当前 T2 仍不可执行）：
 
 ```text
 python scripts/run_case.py input/path/to/case.dat
@@ -38,7 +40,7 @@ python scripts/run_case.py input/path/to/case.dat --validate-only
 python scripts/run_case.py input/path/to/case.dat --dry-run
 ```
 
-当前 T1 不提供该脚本，也不接受把上述命令当作已完成的 PDE 入口。
+当前 T2 不提供该脚本，也不接受把上述命令当作已完成的 PDE 入口。
 
 以下量由 T2/T3 adapter 从公开输入派生，不能写成普通输入键：
 
@@ -105,13 +107,16 @@ python scripts/run_case.py input/path/to/case.dat --dry-run
 | `discretization.mesh_refined_size_nm` | `float` | `nm` | no | `—` | — | 3d | 三维局部细化尺寸 | `mesh_refined_size` | > 0 when refinement is enabled | `5.0` |
 | `discretization.mesh_refinement_radius_nm` | `float` | `nm` | no | `—` | — | 3d | 三维局部细化半径 | `mesh_refinement_radius` | > 0 when refinement is enabled | `25.0` |
 | `discretization.lock_near_field_template` | `boolean` | `none` | yes | `—` | — | 2d | 是否锁定二维近场采样模板 | `mesh_lock_near_field_template` | — | `true` |
-| `discretization.assembly_backend` | `enum` | `none` | no | `standard_full` | standard_full, assembly_time_static_condensed, assembly_time_variable_p_condensed | 3d | 矩阵装配后端 | `stage4_full3d_assembly_backend` | — | `"assembly_time_static_condensed"` |
+| `discretization.near_field_margin_x_nm` | `float` | `nm` | yes | `—` | — | 2d | 二维近场 x 向外扩边 | `near_field_margin_x` | >= 0; mesh-affecting when lock_near_field_template=true | `5.0` |
+| `discretization.near_field_air_top_nm` | `float` | `nm` | yes | `—` | — | 2d | 二维近场空气侧上边界 | `near_field_air_top` | > 0; mesh-affecting when lock_near_field_template=true | `20.0` |
+| `discretization.near_field_sub_depth_nm` | `float` | `nm` | yes | — | — | 2d | 二维近场基底侧深度 | `near_field_sub_depth` | > 0; mesh-affecting when lock_near_field_template=true | `10.0` |
+| `discretization.assembly_backend` | `enum` | `none` | no | `standard_full` | standard_full, assembly_time_static_condensed | 3d | 矩阵装配后端 | `stage4_full3d_assembly_backend` | variable-p remains internal/research-only because no geometry-bound plan is public in v1 | `"assembly_time_static_condensed"` |
 | `discretization.floquet_constraint_mode` | `enum` | `none` | no | `auto` | auto, topological_edges, sparse_facet, topological_trace_p2 | 3d | Floquet 约束模式 | `floquet_constraint_mode` | — | `"auto"` |
 | `boundary.use_floquet_x` | `boolean` | `none` | no | `false` | — | 2d/3d | 是否施加 x 周期约束 | `2D periodic constraint contract / 3D use_floquet_xy` | 2D requires true; 3D may disable | `true` |
 | `boundary.use_floquet_y` | `boolean` | `none` | no | `false` | — | 3d | 是否施加 y 周期约束 | `use_floquet_xy` | 3D y component; x/y values must agree | `true` |
-| `boundary.vertical_boundary` | `enum` | `none` | yes | `—` | dtn_port, pml, robin0, dtn, robin | 2d/3d | 上下边界模型 | `stage4_boundary_model / port_boundary_model` | 3D uses dtn_port/pml/robin0; 2d_port uses dtn/robin; 2d_scattered may use pml; layered is scattering_background, not a vertical boundary | `"dtn_port"` |
-| `boundary.scattering_background` | `enum` | `none` | no | `—` | air, layered | 2d/3d | 散射背景的介质层模型 | `scattering_background` | required for 2d_scattered and Stage4 3D; may be omitted for port-only methods | `"air"` |
-| `boundary.dtn_order_policy` | `enum` | `none` | no | `—` | zero_order, auto_propagating, manual | 2d/3d | DtN 阶次选择策略 | `stage4_dtn_order_policy` | required only when vertical_boundary is dtn or dtn_port; 2D port maps to port_use_diffraction_orders; manual requires diffraction order max | `"auto_propagating"` |
+| `boundary.vertical_boundary` | `enum` | `none` | yes | `—` | dtn_port, pml, robin0, strong_dirichlet, dtn, robin | 2d/3d | 上下边界模型 | `stage4_boundary_model / port_boundary_model` | 3D uses dtn_port/pml/robin0; airbox strong_dirichlet maps to Stage1/Floquet airbox, Fresnel requires pml; 2d_port uses dtn/robin; 2d_scattered uses pml | `"dtn_port"` |
+| `boundary.scattering_background` | `enum` | `none` | no | `—` | air, layered | 2d/3d | 散射背景的介质层模型 | `scattering_background` | required for 2d_scattered and Stage4 3D; Stage4 currently requires layered; may be omitted for port-only methods | `"layered"` |
+| `boundary.dtn_order_policy` | `enum` | `none` | no | `—` | zero_order, auto_propagating | 2d/3d | DtN 阶次选择策略 | `stage4_dtn_order_policy` | required only when vertical_boundary is dtn or dtn_port; 2D port maps to port_use_diffraction_orders; legacy manual is internal/not public v1 | `"auto_propagating"` |
 | `boundary.dtn_assembly` | `enum` | `none` | no | `—` | auxiliary, explicit | 2d/3d | DtN 装配方式 | `stage4_dtn_assembly / port_dtn_assembly` | required only when vertical_boundary is dtn or dtn_port | `"auxiliary"` |
 | `boundary.use_pml` | `boolean` | `none` | no | `false` | — | 2d/3d | 是否使用 PML | `2D scattered use_pml / 2D port port_use_pml / 3D use_pml` | compatible with vertical_boundary | `false` |
 | `boundary.pml_top_thickness_nm` | `float` | `nm` | no | `—` | — | 2d/3d | 顶部 PML 厚度 | `pml_top_thickness` | >= 0; required when use_pml | `25.0` |
@@ -149,9 +154,6 @@ python scripts/run_case.py input/path/to/case.dat --dry-run
 | `output.compute_power_metrics` | `boolean` | `none` | yes | `—` | — | 2d | 是否计算二维功率指标 | `compute_power_metrics` | — | `true` |
 | `output.power_probe_num_points` | `integer` | `points` | yes | `—` | — | 2d | 二维功率探针采样点数 | `power_probe_num_points` | > 1 | `1001` |
 | `output.generate_png_plots` | `boolean` | `none` | yes | `—` | — | 2d | 是否生成二维 PNG 图 | `generate_png_plots` | — | `false` |
-| `output.near_field_margin_x_nm` | `float` | `nm` | yes | `—` | — | 2d | 二维近场 x 向外扩边 | `near_field_margin_x` | >= 0 | `5.0` |
-| `output.near_field_air_top_nm` | `float` | `nm` | yes | `—` | — | 2d | 二维近场空气侧上边界 | `near_field_air_top` | > 0 | `20.0` |
-| `output.near_field_sub_depth_nm` | `float` | `nm` | yes | `—` | — | 2d | 二维近场基底侧深度 | `near_field_sub_depth` | > 0 | `10.0` |
 | `output.export_canonical_vectors` | `boolean` | `none` | no | `false` | — | 3d | 导出 canonical 向量 | `canonical field export policy` | — | `true` |
 | `output.export_modal_amplitudes` | `boolean` | `none` | no | `false` | — | 3d | 导出 modal amplitude | `modal export policy` | — | `true` |
 | `output.export_reference_planes` | `boolean` | `none` | no | `false` | — | 3d | 导出 reference planes | `reference plane export policy` | — | `true` |
@@ -163,7 +165,7 @@ python scripts/run_case.py input/path/to/case.dat --dry-run
 | `output.probe_fraction` | `float` | `fraction` | no | `0.75` | — | 3d | 探针在相邻区域中的归一化位置 | `diffraction_probe_fraction` | 0 < value < 1; optional when explicit probes are set | `0.75` |
 | `output.sample_count_x` | `integer` | `samples` | no | `40` | — | 3d | reference plane x 采样数 | `full3d_reference_sample_count_x` | > 0; required when export_reference_planes | `40` |
 | `output.sample_count_y` | `integer` | `samples` | no | `20` | — | 3d | reference plane y 采样数 | `full3d_reference_sample_count_y` | > 0; required when export_reference_planes | `20` |
-| `output.diffraction_order_max_m` | `integer` | `order` | no | `—` | — | 2d/3d | 最大 x 衍射级 | `2D diffraction_order_count (and port_dtn_order_count for manual port) / 3D diffraction_order_max_m` | >= 0; required when export_diffraction_orders | `2` |
+| `output.diffraction_order_max_m` | `integer` | `order` | no | `—` | — | 2d/3d | 最大 x 衍射级（后处理报告） | `2D diffraction_order_count / 3D diffraction_order_max_m` | >= 0; required when export_diffraction_orders; never selects PDE DtN modes | `2` |
 | `output.diffraction_order_max_n` | `integer` | `order` | no | `—` | — | 3d | 最大 y 衍射级 | `diffraction_order_max_n` | >= 0; required when export_diffraction_orders | `2` |
 
 ## Machine-readable schema markers
@@ -210,6 +212,9 @@ The following marker block is intentionally outside the table so GitHub keeps al
 <!-- schema-field {"key":"discretization.mesh_refined_size_nm","unit":"nm","applicability":["3d"]} -->
 <!-- schema-field {"key":"discretization.mesh_refinement_radius_nm","unit":"nm","applicability":["3d"]} -->
 <!-- schema-field {"key":"discretization.lock_near_field_template","unit":"none","applicability":["2d"]} -->
+<!-- schema-field {"key":"discretization.near_field_margin_x_nm","unit":"nm","applicability":["2d"]} -->
+<!-- schema-field {"key":"discretization.near_field_air_top_nm","unit":"nm","applicability":["2d"]} -->
+<!-- schema-field {"key":"discretization.near_field_sub_depth_nm","unit":"nm","applicability":["2d"]} -->
 <!-- schema-field {"key":"discretization.assembly_backend","unit":"none","applicability":["3d"]} -->
 <!-- schema-field {"key":"discretization.floquet_constraint_mode","unit":"none","applicability":["3d"]} -->
 <!-- schema-field {"key":"boundary.use_floquet_x","unit":"none","applicability":["2d","3d"]} -->
@@ -254,9 +259,6 @@ The following marker block is intentionally outside the table so GitHub keeps al
 <!-- schema-field {"key":"output.compute_power_metrics","unit":"none","applicability":["2d"]} -->
 <!-- schema-field {"key":"output.power_probe_num_points","unit":"points","applicability":["2d"]} -->
 <!-- schema-field {"key":"output.generate_png_plots","unit":"none","applicability":["2d"]} -->
-<!-- schema-field {"key":"output.near_field_margin_x_nm","unit":"nm","applicability":["2d"]} -->
-<!-- schema-field {"key":"output.near_field_air_top_nm","unit":"nm","applicability":["2d"]} -->
-<!-- schema-field {"key":"output.near_field_sub_depth_nm","unit":"nm","applicability":["2d"]} -->
 <!-- schema-field {"key":"output.export_canonical_vectors","unit":"none","applicability":["3d"]} -->
 <!-- schema-field {"key":"output.export_modal_amplitudes","unit":"none","applicability":["3d"]} -->
 <!-- schema-field {"key":"output.export_reference_planes","unit":"none","applicability":["3d"]} -->
@@ -283,7 +285,7 @@ The following marker block is intentionally outside the table so GitHub keeps al
 | complex value | `[real, imag]`，例如 `[1.0, 0.0]` | 写 `1+0j`、字符串表达式或三元数组 |
 | memory policy | 每个 dat 显式给 warning/terminate/timeout/zero-swap | 把历史 authority hard gate 当成所有用户的 global default |
 
-缺少 `.dat`、缺少顶层身份、section 重复、未知键、`grazing` 与 `tilt_from_downward_z` 同时出现、或把 2D/3D 专属字段混用，均应由 T2 loader 明确报错；T1 schema 本身不执行这些运行时检查。
+缺少 `.dat`、缺少顶层身份、section 重复、未知键、`grazing` 与 `tilt_from_downward_z` 同时出现、或把 2D/3D 专属字段混用，均由 T2 pure loader/validator 报错；T3 才把这些 API 接到命令行。
 
 ## 5. 模板、preset 与 legacy 边界
 
@@ -324,7 +326,7 @@ Task37b/c 的 `--frozen-m10`、authority path/hash、candidate pool、dynamic Dt
 
 `output.export_fields`、`export_diffraction_orders`、`export_canonical_vectors`、`export_modal_amplitudes`、`export_reference_planes` 以及 reference-plane/采样字段是公开输出选择。authority record path/hash、checker comparison path、raw timeline、PETSc log 与大数组属于 internal provenance；未来 T4/T5 会把它们写入记录，但不会把它们变成用户输入。一个 dat 不表达 batch 或 sweep。
 
-T2 将实现 schema 解析、严格字段与 cross-field 校验、角度派生和 default/conditional resolution；T3 才实现 run_case 的用法显示、`.dat` 必填和 launcher 接线。本 T1 不声称任何 PDE、MPI、solver 或 production qualification 已完成。
+T2 已提供 schema 解析、严格字段与 cross-field 校验、角度派生和 default/conditional resolution；T3 才实现 run_case 的用法显示、`.dat` 必填和 launcher 接线。本阶段不声称任何 PDE、MPI、solver 或 production qualification 已完成。
 
 ## 7. 维护规则
 
