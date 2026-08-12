@@ -6,7 +6,7 @@
 
 每个 `.dat` 文件只描述一次运行，格式是 Python 标准库 `tomllib` 可读的 TOML。文件不能包含 `runs`、`batch`、内部 PETSc 选项、authority 路径/hash、QEP/lifecycle 参数或任意 Python 表达式。复数使用 `[real, imag]` 两元素数组，例如 `n_air = [1.0, 0.0]`。
 
-T1 定义字段、单位、适用范围、默认来源和文档覆盖；当前主命令为 `python scripts/run_case.py input/path/to/case.dat`，辅助命令为 `python scripts/run_case.py input/path/to/case.dat --validate-only` 与 `python scripts/run_case.py input/path/to/case.dat --dry-run`。缺少 `.dat` 时必须显示用法并退出，不能静默运行默认案例。旧 `src.main`/PRESET/普通 CLI 当前仍保留，待 T7 数值 Gate 后由 T8 按范围决定删除或 alias；底层 benchmark/research replay 因 T0 的 provenance 原因保留。
+当前主命令为 `python scripts/run_case.py input/path/to/case.dat`，辅助命令为 `python scripts/run_case.py input/path/to/case.dat --validate-only` 与 `python scripts/run_case.py input/path/to/case.dat --dry-run`。缺少 `.dat` 时必须显示用法并退出，不能静默运行默认案例。T8 已将11个普通迁移 preset 收薄为同一 dat alias；`src.main --preset <migrated>` 仅作兼容入口，六个 research/history preset 仍保留旧内部 runner/replay。无参 `src.main` 只显示迁移提示并非零退出；直接 2D/3D legacy CLI facade 保留至 T9。
 
 ## 2. 顶层身份与九个 section
 
@@ -332,4 +332,4 @@ T2 已提供 schema 解析、严格字段与 cross-field 校验、角度派生�
 
 ## 7. 维护规则
 
-新增 public 字段必须同时修改 `src/io/input_schema.py`、本手册、至少一个适用模板和 focused coverage test；不能从 dataclass、argparse、PETSc option 或 preset 自动导出。删除候选在 T7 等价性与 call graph 通过前只能标为候选，不能静默删除 legacy 入口。
+新增 public 字段必须同时修改 `src/io/input_schema.py`、本手册、至少一个适用模板和 focused coverage test；不能从 dataclass、argparse、PETSc option 或 preset 自动导出。保留的 legacy/research 入口只能在后续任务按已审 call graph 处理，不能因普通 dat 迁移而静默改变其 replay 行为。

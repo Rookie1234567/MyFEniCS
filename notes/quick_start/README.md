@@ -1,14 +1,14 @@
 # 快速开始索引
 
-本目录只回答五个问题：环境怎样准备、在 `src/main.py` 选哪个 preset、等价命令是什么、结果在哪里、失败先看什么。公式推导见 [`../theory/README.md`](../theory/README.md)，函数和数据流见 [`../reference/code_walkthrough.md`](../reference/code_walkthrough.md)，可复核数值见 [`../../benchmarks/cases/README.md`](../../benchmarks/cases/README.md)。
+本目录只回答五个问题：环境怎样准备、怎样选择显式 `.dat` 输入、等价命令是什么、结果在哪里、失败先看什么。公式推导见 [`../theory/README.md`](../theory/README.md)，函数和数据流见 [`../reference/code_walkthrough.md`](../reference/code_walkthrough.md)，可复核数值见 [`../../benchmarks/cases/README.md`](../../benchmarks/cases/README.md)。
 
 ## 最短路线
 
-1. 阅读 [`00_environment_and_pycharm.md`](00_environment_and_pycharm.md)，确认 Docker 复杂数环境。
-2. 打开 `src/main.py`，只修改 `ACTIVE_PYCHARM_PRESET`。
-3. 第一次保持默认 `3d_stage1_airbox_smoke`，在 PyCharm 运行 `main.py`。
+1. 阅读 [`00_environment_and_pycharm.md`](00_environment_and_pycharm.md)，确认 complex DOLFINx 环境。
+2. 从 [`input/README.md`](../../input/README.md) 选择一个显式 `.dat` 输入。
+3. 先运行 `python scripts/run_case.py input/path/to/case.dat --validate-only`，再按需要执行同一 dat；不要修改 ACTIVE 变量或依赖无参 `src.main`。
 4. 在 `results/` 最新时间戳目录查看 `run_summary.json`、`solver_log.txt` 和 ParaView 文件。
-5. 需要正式迭代结果时使用 [`40_3d_workstation_iterative.md`](40_3d_workstation_iterative.md) 的 MPI4 外部命令，普通单进程 `main.py` 不会偷偷启动它。
+5. 需要正式迭代结果时使用 [`40_3d_workstation_iterative.md`](40_3d_workstation_iterative.md) 的受控命令；保留的 research/history preset 只按其明确的旧 replay 入口运行。
 
 ## 按功能阅读
 

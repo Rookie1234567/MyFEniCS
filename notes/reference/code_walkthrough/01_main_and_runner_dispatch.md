@@ -1,25 +1,23 @@
 # `main.py` 与 runner 分发
 
-本文沿一组参数从 PyCharm 入口走到 2D/3D runner。入口层只负责选择、校验和翻译参数，不装配有限元矩阵，也不改变求解器默认值。
+本文沿一个显式 `.dat` 输入或保留的 research preset 入口走到 2D/3D runner。入口层只负责选择、校验和分发，不装配有限元矩阵，也不改变求解器默认值。
 
 ## 1. 文件与公开入口
 
 | 文件 | 关键入口 | 责任 |
 |---|---|---|
-| `src/main.py` | `main()`、`preset_cli_args(name)` | PyCharm 默认、preset 清单和 CLI 翻译 |
+| `scripts/run_case.py` | `main()` | 普通用户的 `.dat`、validate-only 和 dry-run 入口 |
+| `src/main.py` | `main()`、`preset_cli_args(name)` | 迁移 dat 的兼容 alias、保留 preset 清单和 legacy CLI facade |
 | `src/runners/run_cases.py` | `main(argv=None)` | 2D 参数解析与 TM/TE、scattered/port 分发 |
 | `src/runners/run_3d_cases.py` | `main(argv=None)` | 3D stage 参数解析、配置构造与输出目录 |
 | `src/common/config.py` | `SimulationConfig` | 2D resolved configuration 与派生物理量 |
 | `src/common/config_3d.py` | `SimulationConfig3D`、`target_stage4_config(...)` | 3D resolved configuration 和唯一 target 工厂 |
 
-`src/main.py::ACTIVE_PYCHARM_PRESET` 是无参数运行的唯一选择器，当前值为 `3d_stage1_airbox_smoke`。它是轻量 Stage1 direct smoke，不会启动大网格，也不会在 Python 进程内生成 MPI 子进程。
+`src/main.py` 无参数时只显示 usage/deprecation 并非零退出；它不再选择隐式 ACTIVE preset。普通输入必须显式传给 `scripts/run_case.py`；T8 保留的六个 research/history preset 仍可通过 `--preset` 走旧内部 runner。
 
 ## 2. Preset 对象和签名
 
 ```text
-Inputs2D / EUVGratingInputs2D
-Stage1AirboxInputs3D
-Stage2NoGratingInputs3D
 Stage4GratingInputs3D
 PresetInfo(name, geometry, discretization, resource_class, evidence_status, purpose)
 
@@ -29,7 +27,7 @@ format_preset_listing(verbose: bool = False) -> str
 preset_cli_args(name: str) -> tuple[str, list[str]]
 ```
 
-这些 dataclass 保存 Python 标量、复数和可选值，不包含 DOLFINx/PETSc 对象。`preset_cli_args` 的输出第一项是 `2d` 或 `3d`，第二项是 runner 可直接解析的 token 列表，因此主机上的契约测试无需导入有限元运行时。
+保留的 Stage4 dataclass 保存 Python 标量、复数和可选值，不包含 DOLFINx/PETSc 对象。迁移 preset 的 `preset_cli_args` 返回同一 public `.dat` 相对路径；保留 preset 才返回旧 3D runner token，因此契约测试无需导入有限元运行时。
 
 ## 3. Demo 与 target 的物理身份
 
@@ -42,16 +40,17 @@ Stage4 名称被有意拆成两组：
 
 target preset 先由唯一配置工厂生成，再经 `Stage4GratingInputs3D.from_simulation_config` 转换；普通 direct 只把 `matrix_diagnostics_assemble_only` 从 `True` 改为 `False`。测试逐字段比较几何、材料、角度、偏振、阶次、网格和 DtN 策略，防止复制参数漂移。
 
-运行 `python src/main.py --list-presets --verbose` 时，每个 preset 都显示 `geometry`、`discretization`、`resource` 和 `status`。其中 p=2、h=3 target direct 属于高资源运行，名称可用不等于当前 14 GB 环境保证成功。
+运行 `python src/main.py --list-presets --verbose` 时，11 个迁移项只显示 dat 路径和迁移状态，6 个保留 preset 显示 `geometry`、`discretization`、`resource` 和 `status`。其中 p=2、h=3 target direct 属于高资源运行，名称可用不等于当前 14 GB 环境保证成功。
 
 ## 4. 2D 参数流
 
 真实调用顺序为：
 
 ```text
-main::main
--> main::_pycharm_args_2d
--> run_cases::main(argv)
+scripts/run_case.py
+-> load_and_resolve(.dat)
+-> task038_input_worker / ordinary 2D adapter
+-> run_cases solver entry
 -> argparse
 -> run_cases::_base_updates
 -> SimulationConfig(**updates)
@@ -68,8 +67,9 @@ main::main
 ## 5. 3D 参数流
 
 ```text
-main::main
--> main::_pycharm_args_3d
+scripts/run_case.py
+-> load_and_resolve(.dat)
+-> task038_input_worker / 3D adapter
 -> run_3d_cases::main(argv)
 -> run_3d_cases::_stage_defaults(stage_case)
 -> run_3d_cases::_config_updates(args)
@@ -88,14 +88,13 @@ main::main
 参数优先级是：
 
 ```text
-config dataclass defaults
--> stage defaults
--> preset 生成的 CLI tokens
--> 用户在命令尾部追加的同名 flag
+schema default/conditional resolution
+-> explicit `.dat` fields
+-> adapter-specific accepted capability checks
 -> runner 构造的 resolved config
 ```
 
-argparse 对单值参数采用最后一次出现的值。比如 preset 后追加另一个 `--mesh-target-size` 会生效，但该运行已经偏离 frozen preset。判断可复现性时应读取 `run_summary.json` 的 resolved config 和 metadata command，而不是仅记录 preset 名称。
+public `.dat` 入口不接受物理、solver、MPI 或 results-root CLI override；这些字段必须写在输入文件中。保留的 research/history `--preset` replay 继续遵循旧 parser 语义，但不属于普通 public input。
 
 ## 7. 输出对象
 
@@ -115,12 +114,12 @@ runner 返回或汇总普通 Python dict，主要包含：
 ## 8. 一次可复核调用
 
 ```powershell
+python scripts/run_case.py input/smoke/2d_tm_dtn_auxiliary_smoke.dat --dry-run
 python src/main.py --list-presets --verbose
-python src/main.py --preset 2d_tm_dtn_auxiliary_smoke
 python src/main.py --preset 3d_target_grating_direct_h5
 ```
 
-最后一个命令是 MPI4 target direct 的参数入口，但资源资格应以 Case021 为准。迭代生产路径没有普通 main preset，必须按 Case031 通过 `mpiexec -n 4 -m benchmarks.run_workstation_iterative` 显式启动。
+最后一个命令仍是保留 research/history target direct 的参数入口，资源资格应以对应 Case 为准。普通迁移输入不再通过 `src.main` 重建物理参数；迭代生产路径仍按其受控 runner/Task38 dat 合同启动。
 
 ## 9. 公式到入口的关系
 
