@@ -2,6 +2,8 @@
 
 这个文件夹是第二版代码：`fenics_vector_maxwell_floquet_demo_v2_parallel`。旧版 `fenics_vector_maxwell_floquet_demo` 没有被修改，可以继续作为串行参考版使用。
 
+> **历史资料说明：** 本文保留旧 Docker/MPI 运行记录；`run_demo*.sh` 已移除，不能作为当前入口。当前普通用户只应使用 `python scripts/run_case.py <one-case.dat>`，完整参数和示例见 [`input/README.md`](../../input/README.md)。manual 与 `mpc_official` 后端分别由各自 `.dat` 文件中的 `method.constraint_backend` 选择。
+
 ## 1. 这版主要解决什么
 
 旧版代码的核心目标是把二维矢量 Maxwell、Floquet 周期边界、PML、端口法和反射透射率后处理跑通。它更适合学习、验证和小规模扫描。
@@ -80,6 +82,8 @@ E(x + L, y) = exp(i kx L) E(x, y)
 其中 `L = period_x`。不同的是，v2 把这个关系写成适合 MPI 分布式自由度的形式。
 
 ## 4. 已通过的测试
+
+以下命令是历史测试记录，不是当前入口。当前同类验证应改用上面的单一 `.dat` 命令，并从输入文件读取 backend、MPI 和物理参数。
 
 以下测试已经在 Docker 里的复杂 PETSc/DOLFINx 环境中实际运行通过。
 
@@ -373,14 +377,13 @@ a_m - (1/L) ell_m^H u = 0
 
 ## 10. 快捷脚本
 
-v2 还提供了一个 MPI 示例脚本：
+旧版 MPI 示例脚本 `run_demo_mpi.sh` 已移除。若要比较两个 backend，应从
+`input/templates/ordinary_2d_example.dat` 复制成两份完整用户 dat，在各自 `[method]`
+中分别设置 `manual` 与 `mpc_official`，再用当前入口运行：
 
-```bash
-fenics_vector_maxwell_floquet_demo_v2_parallel/run_demo_mpi.sh
+```text
+python scripts/run_case.py input/path/to/manual-case.dat
+python scripts/run_case.py input/path/to/mpc-official-case.dat
 ```
 
-默认使用 `MPI_PROCS=2`，运行 v2 中已经验证过的并行安全组合。需要改进程数时可以设置环境变量：
-
-```bash
-MPI_PROCS=4 fenics_vector_maxwell_floquet_demo_v2_parallel/run_demo_mpi.sh
-```
+不要把现有 smoke/example 文件误称为两种 backend，也不要再通过旧脚本或命令行 wrapper 覆盖 dat。

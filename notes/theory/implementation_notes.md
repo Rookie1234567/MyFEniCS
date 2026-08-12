@@ -1,5 +1,7 @@
 # 实现记录
 
+> **历史资料说明：** 本文保留旧 backend 的实现解释与结果记录。原先两个独立 Python runner 已移除；当前普通入口为 `python scripts/run_case.py <one-case.dat>`，详见 [`input/README.md`](../../input/README.md)。manual 与 `mpc_official` 由两个独立 dat 的 `[method] constraint_backend` 分别选择。
+
 ## 几何
 
 当前算例是一个二维周期单元：
@@ -138,10 +140,10 @@ scale = dof_right(E_probe) / dof_left(E_probe)
 
 ### 官方 `dolfinx_mpc` 后端
 
-文件：
+历史文件（已删除）：
 
 ```text
-src/runners/run_grating_mpc_official.py
+旧版 mpc_official runner
 ```
 
 实现位置：
@@ -161,10 +163,10 @@ src/solvers/solve_vector_maxwell.py::_solve_mpc
 
 ### 手写矩阵消元后端
 
-文件：
+历史文件（已删除）：
 
 ```text
-src/runners/run_grating_manual.py
+旧版 manual runner
 ```
 
 实现位置：
