@@ -1,10 +1,8 @@
-"""Thin M1 owner-local transfer evidence route.
+"""Thin M1/M2 opt-in evidence routes.
 
-The M1 route is deliberately separate from the H2B factor runners.  Its worker
-builds the already-reviewed full-space p4/p6 transfer and records bounded
-owner-local evidence; the watchdog only sequences MPI1 and MPI2; the checker
-recomputes the gates from the raw worker summaries and canonical manifests.
-No production default imports this module.
+M1 records the reviewed owner-local p4/p6 transfer.  M2 adds one bounded
+high-complement patch oracle.  Neither route is imported by the production
+default.
 """
 
 from __future__ import annotations
@@ -22,11 +20,17 @@ from typing import Any
 from benchmarks.run_task037_extra_h2b import (
     _artifact,
     _attach_evidence,
+    _p1_authority as _h2b_p1_authority,
+    H2B_R2_MANIFEST,
+    _lazy_h2a,
     _light_source as _clean_source,
     _read_json,
+    _residual_source_arrays as _h2b_residual_source_arrays,
     _sha256_file,
+    _source_arrays as _h2b_source_arrays,
     _write_json,
 )
+from src.solvers.hcurl_h2b_block_smoother import _p0_numeric_sha
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -46,6 +50,27 @@ M1_ADJOINT_LIMIT = 1.0e-12
 M1_CANONICAL_LIMIT = 1.0e-12
 M1_MANUFACTURED_FIELD_ID = "floquet_compatible_bilinear_p4_v1"
 M1_DUAL_FIELD_ID = "floquet_compatible_degree5_dual_v1"
+M2_SCHEMA = "task037.extra.m2.high-complement-patch-oracle"
+M2_WORKER_SCHEMA = f"{M2_SCHEMA}.worker.v1"
+M2_WATCHDOG_SCHEMA = f"{M2_SCHEMA}.watchdog.v1"
+M2_CHECK_SCHEMA = f"{M2_SCHEMA}.check.v1"
+M2_TIMEOUT_SECONDS = 1_800.0
+M2_RSS_LIMIT_BYTES = 1_300_000_000
+M2_SWAP_LIMIT_BYTES = 0
+M2_FACTOR_BYTES_LIMIT = 5_500_000
+M2_TRANSFORM_BYTES_LIMIT = 32_000_000
+M2_ACTION_CLOSURE_LIMIT = 1.0e-11
+M2_FACTOR_RESIDUAL_LIMIT = 1.0e-10
+M2_CHECKERBOARD_RHO_LIMIT = 0.70
+M2_MIXED_RHO_LIMIT = 0.90
+M2_OTHER_RHO_LIMIT = 0.98
+M2_SOURCE_LABELS = (
+    "gradient-dominated",
+    "curl-dominated",
+    "mixed",
+    "checkerboard/high-frequency",
+    "physical-RHS-like",
+)
 M1_EVENTS = (
     "authority_validated",
     "mesh_ready",
@@ -1659,6 +1684,808 @@ def _run_m1_check(run_dir: Path, output: Path) -> int:
     return 0 if result["pass"] else 1
 
 
+def _m2_scope() -> dict[str, Any]:
+    return {
+        "mode": "m2_high_complement_patch_oracle",
+        "degree": 6,
+        "h_nm": 10.0,
+        "mpi_size": 1,
+        "global_cells": 252,
+        "global_rows": 173802,
+        "constraint_count": 9210,
+        "central_cell_ordinal": 3,
+        "central_class_id": 3,
+        "touching_cell_count": 19,
+        "patch_row_count": 882,
+        "low_rank": 300,
+        "high_rank": 582,
+        "timeout_seconds": M2_TIMEOUT_SECONDS,
+        "rss_limit_bytes": M2_RSS_LIMIT_BYTES,
+        "swap_limit_bytes": M2_SWAP_LIMIT_BYTES,
+        "factor_values_pivots_limit_bytes": M2_FACTOR_BYTES_LIMIT,
+        "retained_transform_limit_bytes": M2_TRANSFORM_BYTES_LIMIT,
+        "operator": "K_curl+k0^2*M_abs_epsilon; code uses (1/mu_r) with mu_r=1",
+        "patch_definition": "restricted-global row-complete B_P from the qualified P0 stream",
+        "construction": "one central constrained/oriented I_c and one high-complement factor",
+        "global_matrix_materialized": False,
+        "global_constraint_matrix_materialized": False,
+        "ordinary_default_changed": False,
+    }
+
+
+def _m2_identity() -> dict[str, Any]:
+    return {
+        "fine_space": "uncondensed_fullspace",
+        "condensation": False,
+        "static_condensed_operator_used": False,
+        "global_matrix_materialized": False,
+        "global_constraint_matrix_materialized": False,
+        "schur_or_slab_materialized": False,
+        "per_neighborhood_qh_retained": False,
+        "global_numeric_allgather": False,
+        "local_krylov_or_ksp_called": False,
+        "pde_called": False,
+        "ordinary_default_changed": False,
+    }
+
+
+def _m2_phase_identity() -> dict[str, Any]:
+    return {
+        "form_jit_used": True,
+        "compile_called": False,
+        "compiler_probe_called": False,
+        "tensor_tabulation_called": True,
+        "factorization_called": True,
+        "global_matrix_materialized": False,
+        "global_constraint_matrix_materialized": False,
+        "ordinary_default_changed": False,
+    }
+
+
+def _m2_mark(run_dir: Path, event: str, started: float, **fields: Any) -> None:
+    path = run_dir / "m2_progress.jsonl"
+    item = {
+        "schema": f"{M2_SCHEMA}.progress.v1",
+        "phase": "m2",
+        "event": event,
+        "event_index": sum(1 for _line in path.open("r", encoding="utf-8")) if path.exists() else 0,
+        "elapsed_wall_seconds": float(time.perf_counter() - started),
+        **fields,
+    }
+    with path.open("a", encoding="utf-8") as stream:
+        stream.write(json.dumps(item, sort_keys=True, separators=(",", ":")) + "\n")
+        stream.flush()
+
+
+def _m2_worker_command(executable: str, run_dir: Path) -> list[str]:
+    return [
+        "mpiexec",
+        "-n",
+        "1",
+        str(executable),
+        "-m",
+        "benchmarks.run_task037_extra_m",
+        "m2-worker",
+        "--run-dir",
+        str(run_dir.resolve()),
+    ]
+
+
+def _m2_save_array(run_dir: Path, name: str, value: Any) -> None:
+    import numpy as np
+
+    np.save(run_dir / name, np.asarray(value), allow_pickle=False)
+
+
+def _m2_recorded_artifacts(run_dir: Path) -> dict[str, dict[str, Any]]:
+    names = [
+        "m2_worker_summary.json",
+        "m2_progress.jsonl",
+        "m2_stdout.txt",
+        "m2_timeline.jsonl",
+        "m2_root_pid.json",
+        "m2_injection.npy",
+        "m2_patch.npy",
+        "m2_patch_rows.npy",
+        "m2_q_high.npy",
+        "m2_factor_values.npy",
+        "m2_factor_pivots.npy",
+        "m2_source_rhs.npy",
+        "m2_source_corrections.npy",
+        "m2_source_actions.npy",
+    ]
+    return {name: _artifact(run_dir, name) for name in names}
+
+
+def _m2_prepare_p0_patch(h2a: Any, function_space: Any, mesh_data: Any, cfg: Any, floquet: Any, run_dir: Path) -> dict[str, Any]:
+    """Reuse the P0 discovery/stream authority without factoring its matrix."""
+
+    import numpy as np
+
+    from src.solvers.hcurl_h2b_block_smoother import (
+        discover_h2b_p0_touching_cells,
+        group_h2b_p0_touching_cells_by_class,
+        select_h2b_p0_class,
+        stream_h2b_p0_patch,
+    )
+    from src.solvers.hcurl_r2_constrained_local_block import (
+        H2AR2CellExpansion,
+        build_h2a_r2_cell_expansion,
+    )
+    from src.solvers.hcurl_r2_factor_store import (
+        H2AR2CellReference,
+        load_h2a_r2_factor_store,
+    )
+
+    index_map = function_space.dofmap.index_map
+    discovery = h2a._discover_cell_references(
+        function_space,
+        mesh_data,
+        cfg,
+        floquet,
+        geometry_tolerance=h2a.floquet_geometry_tolerance(cfg),
+    )
+    authority = _h2b_p1_authority()
+    inventory = authority["r0"]["class_inventory"]
+    key_to_id = {str(item["class_key_sha256"]): int(item["class_id"]) for item in inventory}
+    blocks = tuple(floquet.phase_independent_topology.blocks)
+    expansions: dict[int, Any] = {}
+    cell_refs: list[Any] = []
+    for reference in discovery["references"]:
+        cell_dofs = np.asarray(reference.local_dofs, dtype=np.int64)
+        class_id = key_to_id.get(h2a._r0_digest(reference.class_key))
+        if class_id is None:
+            raise ValueError("M2 discovery class is not in frozen R0 authority")
+        expansion = build_h2a_r2_cell_expansion(
+            h2a._blocks_for_cell(blocks, cell_dofs),
+            cell_dofs,
+            index_map,
+            index_map_bs=int(function_space.dofmap.index_map_bs),
+            phase_x=floquet.phase_x,
+            phase_y=floquet.phase_y,
+            phase_corner=floquet.phase_corner,
+        )
+        previous = expansions.get(class_id)
+        if previous is not None and previous.pattern_sha256 != expansion.pattern_sha256:
+            raise ValueError("M2 expansion pattern differs within an exact class")
+        expansions.setdefault(class_id, expansion)
+        cell_refs.append(H2AR2CellReference(class_id, expansion.independent_global_rows))
+    if len(cell_refs) != 252:
+        raise ValueError("M2 discovery did not produce 252 cell references")
+    r2_store = load_h2a_r2_factor_store(H2B_R2_MANIFEST, task037_extra_h2a_r2=True)
+    if r2_store.audit.get("factor_plus_metadata_bytes") != 201_933_812:
+        raise ValueError("M2 R2 factor authority payload changed")
+    if len(r2_store.cells) != len(cell_refs) or any(
+        int(left.class_id) != int(right.class_id)
+        or not np.array_equal(left.independent_global_rows, right.independent_global_rows)
+        for left, right in zip(r2_store.cells, cell_refs, strict=True)
+    ):
+        raise ValueError("M2 R2 cell authority does not match fresh discovery")
+    selection = select_h2b_p0_class(inventory, task037_extra_h2b=True)
+    central = min(
+        (ordinal for ordinal, reference in enumerate(cell_refs) if int(reference.class_id) == int(selection["class_id"])),
+        default=-1,
+    )
+    patch_rows = np.ascontiguousarray(cell_refs[central].independent_global_rows, dtype=np.int64)
+    touching = discover_h2b_p0_touching_cells(cell_refs, patch_rows, task037_extra_h2b=True)
+    groups = group_h2b_p0_touching_cells_by_class(cell_refs, touching, task037_extra_h2b=True)
+    if (central, int(cell_refs[central].class_id), len(touching), len(groups)) != (3, 3, 19, 11):
+        raise ValueError("M2 P0 representative topology does not close")
+    tolerance = h2a.floquet_geometry_tolerance(cfg)
+    proxy_forms = h2a._proxy_forms(
+        function_space,
+        mesh_data,
+        cfg,
+        cache_dir=h2a.R2_R1_JIT_CACHE_DIR,
+    )
+    tags = discovery["tags"]
+
+    def tensor_stream():
+        for class_id, class_cells in groups:
+            representative = int(class_cells[0])
+            template = expansions[class_id]
+            curl_tensor, _widths, _info = h2a.tabulate_task037_extra_h2a_cell_tensor(
+                proxy_forms[0], function_space, mesh_data.cell_tags, representative, geometry_tolerance=tolerance
+            )
+            mass_tensor, _widths, _info = h2a.tabulate_task037_extra_h2a_cell_tensor(
+                proxy_forms[1], function_space, mesh_data.cell_tags, representative, geometry_tolerance=tolerance
+            )
+            proxy = np.ascontiguousarray(
+                h2a.build_b0_proxy_tensor(
+                    curl_tensor,
+                    mass_tensor,
+                    k0=float(cfg.k0),
+                    abs_epsilon=float(abs(h2a._material_epsilon(cfg, int(tags[representative])))),
+                ),
+                dtype=np.complex128,
+            )
+            for cell in class_cells:
+                yield int(cell), proxy, H2AR2CellExpansion(
+                    offsets=template.offsets,
+                    column_indices=template.column_indices,
+                    coefficients=template.coefficients,
+                    independent_global_rows=cell_refs[cell].independent_global_rows,
+                    pattern_identity=template.pattern_identity,
+                    pattern_sha256=template.pattern_sha256,
+                )
+            del curl_tensor, mass_tensor, proxy
+
+    patch = stream_h2b_p0_patch(
+        cell_refs,
+        patch_rows,
+        tensor_stream(),
+        task037_extra_h2b=True,
+    )
+    patch_matrix = np.ascontiguousarray(patch.pop("matrix"), dtype=np.complex128)
+    patch["matrix_sha256"] = _p0_numeric_sha(patch_matrix)
+    patch["central_cell_ordinal"] = central
+    patch["central_class_id"] = int(cell_refs[central].class_id)
+    patch["patch_row_count"] = int(patch_rows.size)
+    patch["patch_definition"] = "restricted-global row-complete B_P"
+    patch["p0_authority_record_sha256"] = authority["p0"]["record_sha256"]
+    patch["p0_authority_evidence_sha256"] = authority["p0"]["evidence_sha256"]
+    patch["touching_class_ids"] = [int(class_id) for class_id, _cells in groups]
+    patch["touching_class_count"] = len(groups)
+    patch["tensor_tabulation_cell_count"] = len(groups)
+    patch["tensor_reuse_cell_count"] = len(touching) - len(groups)
+    patch["max_live_dense_proxy_count"] = 1
+    patch["cell_dense_tensors_retained"] = False
+    return {
+        "authority": authority,
+        "cell_refs": tuple(cell_refs),
+        "expansions": expansions,
+        "central_cell_ordinal": central,
+        "patch_rows": patch_rows,
+        "patch_matrix": patch_matrix,
+        "patch_audit": patch,
+    }
+
+
+def _run_m2_worker(run_dir: Path) -> int:
+    import numpy as np
+    from petsc4py import PETSc
+    from mpi4py import MPI
+    from dolfinx import default_real_type, fem
+    from basix.ufl import element
+    from dataclasses import replace
+
+    from src.common.config_3d import target_stage4_config
+    from src.constraints.floquet_3d import build_double_floquet_mpc
+    from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
+    from src.solvers.hcurl_h2b_block_smoother import factorize_h2b_p0_patch
+    from src.solvers.hcurl_h2b_m2_complement import (
+        build_h2b_m2_cell_injection,
+        build_h2b_m2_complement,
+        measure_h2b_m2_source,
+    )
+    from src.solvers.hcurl_p_split_owner_transfer import build_owner_local_p4_p6_transfer
+    from src.solvers.hcurl_rank_one_mpc_action import build_task037_extra_h1r2_mpc_action
+
+    comm = MPI.COMM_WORLD
+    if comm.size != 1:
+        raise ValueError("M2 formal worker is fixed to MPI1")
+    run_dir = run_dir.resolve()
+    run_dir.mkdir(parents=True, exist_ok=True)
+    started = time.perf_counter()
+    source_start = _clean_source()
+    if not _source_valid(source_start):
+        raise RuntimeError("M2 worker requires a clean source")
+    action = source_vec = transfer = factor = None
+    try:
+        _m2_mark(run_dir, "authority_validated", started)
+        cfg = target_stage4_config(degree=6, h_nm=10.0)
+        mesh_data = build_airbox_mesh_3d(cfg, run_dir / "m2_mesh")
+        _m2_mark(run_dir, "mesh_ready", started)
+        p4_space = fem.functionspace(mesh_data.mesh, element("N1curl", mesh_data.mesh.basix_cell(), 4, dtype=default_real_type))
+        p6_space = fem.functionspace(mesh_data.mesh, element("N1curl", mesh_data.mesh.basix_cell(), 6, dtype=default_real_type))
+        _m2_mark(run_dir, "space_ready", started)
+        p4_cfg = replace(cfg, nedelec_degree=4)
+        floquet4 = build_double_floquet_mpc(p4_space, mesh_data, p4_cfg)
+        floquet6 = build_double_floquet_mpc(p6_space, mesh_data, cfg)
+        _m2_mark(run_dir, "floquet_mpc_ready", started)
+        transfer = build_owner_local_p4_p6_transfer(p4_space, p6_space, p4_mpc=floquet4.mpc, p6_mpc=floquet6.mpc)
+        b0, _epsilon = _build_b0_form(p6_space, mesh_data, cfg)
+        action = build_task037_extra_h1r2_mpc_action(b0, floquet6.mpc, task037_extra_h1r2=True, jit_options=_expected_jit_options(run_dir / "jit_cache"))
+        _m2_mark(run_dir, "b0_action_ready", started)
+        prepared = _m2_prepare_p0_patch(_lazy_h2a(), p6_space, mesh_data, cfg, floquet6, run_dir)
+        _m2_mark(run_dir, "p0_authority_ready", started, touching_cell_count=19)
+        central_cell = int(prepared["central_cell_ordinal"])
+        central_stencil = next(cell for cell in transfer._cells if int(cell.global_cell) == central_cell)
+        p4_dofs = np.asarray(central_stencil.p4_local_dofs, dtype=np.int32)
+        p6_dofs = np.asarray(central_stencil.p6_local_dofs, dtype=np.int32)
+        p4_global = np.asarray(p4_space.dofmap.index_map.local_to_global(p4_dofs), dtype=np.int64)
+        p6_global = np.asarray(p6_space.dofmap.index_map.local_to_global(p6_dofs), dtype=np.int64)
+        injection = build_h2b_m2_cell_injection(
+            patch_rows=prepared["patch_rows"],
+            p4_global_rows=p4_global,
+            p4_cell_dofs=p4_dofs,
+            p6_global_rows=p6_global,
+            p6_cell_dofs=p6_dofs,
+            p4_local_rows=transfer.p4_constraints.local_rows,
+            p6_local_rows=transfer.p6_constraints.local_rows,
+            cell_info=int(central_stencil.cell_info),
+            local_apply=transfer.apply_reference,
+            p4_lift=transfer.p4_constraints.lift_in_place,
+            p6_lift=transfer.p6_constraints.lift_in_place,
+        )
+        carrier = build_h2b_m2_complement(injection)
+        _m2_mark(run_dir, "complement_ready", started, rank=300, high_rank=582)
+        high_matrix = np.ascontiguousarray(carrier.q_high.conj().T @ prepared["patch_matrix"] @ carrier.q_high, dtype=np.complex128)
+        factor = factorize_h2b_p0_patch(high_matrix, task037_extra_h2b=True)
+        high_repeat = np.ascontiguousarray(carrier.q_high.conj().T @ prepared["patch_matrix"] @ carrier.q_high, dtype=np.complex128)
+        if _p0_numeric_sha(high_matrix) != _p0_numeric_sha(high_repeat):
+            raise ValueError("M2 projected high patch is not deterministic")
+        _m2_mark(run_dir, "factor_ready", started, factor_bytes=int(factor.factor_bytes))
+        slaves = np.asarray(floquet6.mpc.slaves, dtype=np.int64)
+        source_vec = action.output_vector.duplicate()
+
+        def exact_action(source: np.ndarray) -> np.ndarray:
+            if np.any(source[slaves] != 0.0):
+                raise ValueError("M2 B0 source has nonzero identity rows")
+            with source_vec.localForm() as local:
+                local.set(0.0)
+                local.array_w[: source.size] = source
+            source_vec.ghostUpdate(addv=PETSc.InsertMode.INSERT_VALUES, mode=PETSc.ScatterMode.FORWARD)
+            result = action.mult(source_vec)
+            return np.array(result.getArray(readonly=True), dtype=np.complex128, copy=True, order="C")
+
+        primal = _h2b_source_arrays(p6_space, cfg, slaves, floquet6.mpc)
+        sources = _h2b_residual_source_arrays(primal, exact_action, slaves)
+        source_metrics: list[dict[str, Any]] = []
+        rhs_values: list[np.ndarray] = []
+        correction_values: list[np.ndarray] = []
+        action_values: list[np.ndarray] = []
+        for label in M2_SOURCE_LABELS:
+            first = measure_h2b_m2_source(
+                sources[label],
+                prepared["patch_rows"],
+                carrier,
+                factor,
+                exact_action,
+                patch_matrix=prepared["patch_matrix"],
+                high_patch_matrix=high_matrix,
+            )
+            second = measure_h2b_m2_source(
+                sources[label],
+                prepared["patch_rows"],
+                carrier,
+                factor,
+                exact_action,
+                patch_matrix=prepared["patch_matrix"],
+                high_patch_matrix=high_matrix,
+            )
+            if first["correction_sha256"] != second["correction_sha256"] or first["action_sha256"] != second["action_sha256"]:
+                raise ValueError(f"M2 source {label} is nondeterministic")
+            rhs_values.append(np.asarray(sources[label], dtype=np.complex128))
+            correction_values.append(first.pop("correction"))
+            action_values.append(first.pop("action"))
+            first.update({
+                "label": label,
+                "repeat_correction_sha256": second["correction_sha256"],
+                "repeat_action_sha256": second["action_sha256"],
+            })
+            source_metrics.append(first)
+        _m2_mark(run_dir, "measurement_ready", started)
+        _m2_save_array(run_dir, "m2_injection.npy", injection)
+        _m2_save_array(run_dir, "m2_patch.npy", prepared["patch_matrix"])
+        _m2_save_array(run_dir, "m2_patch_rows.npy", prepared["patch_rows"])
+        _m2_save_array(run_dir, "m2_q_high.npy", carrier.q_high)
+        _m2_save_array(run_dir, "m2_factor_values.npy", factor.values)
+        _m2_save_array(run_dir, "m2_factor_pivots.npy", factor.pivots)
+        _m2_save_array(run_dir, "m2_source_rhs.npy", np.stack(rhs_values))
+        _m2_save_array(run_dir, "m2_source_corrections.npy", np.stack(correction_values))
+        _m2_save_array(run_dir, "m2_source_actions.npy", np.stack(action_values))
+        source_end = _clean_source()
+        payload = _attach_evidence({
+            "schema": M2_WORKER_SCHEMA,
+            "status": "measurement_complete",
+            "pass": True,
+            "route": "M2",
+            "run_dir": str(run_dir),
+            "scope": _m2_scope(),
+            "identity": _m2_identity(),
+            "phase_identity": _m2_phase_identity(),
+            "source_at_start": source_start,
+            "source_at_end": source_end,
+            "measurement": {
+                "authority": {
+                    "p0_record_sha256": prepared["authority"]["p0"]["record_sha256"],
+                    "p0_evidence_sha256": prepared["authority"]["p0"]["evidence_sha256"],
+                },
+                "topology": {
+                    "central_cell_ordinal": central_cell,
+                    "central_class_id": 3,
+                    "touching_cell_count": 19,
+                    "patch_row_count": 882,
+                },
+                "injection": _plain(carrier.audit),
+                "patch": _plain(prepared["patch_audit"]),
+                "high_matrix_sha256": _p0_numeric_sha(high_matrix),
+                "factor": {
+                    "factor_values_sha256": factor.factor_values_sha256,
+                    "pivot_sha256": factor.pivot_sha256,
+                    "factorization_residual": float(factor.factorization_residual),
+                    "solve_residual": float(factor.solve_residual),
+                    "factor_bytes": int(factor.factor_bytes),
+                    "factor_values_bytes": int(factor.values.nbytes),
+                    "pivot_bytes": int(factor.pivots.nbytes),
+                    "factor_values_pivots_bytes": int(
+                        factor.values.nbytes + factor.pivots.nbytes
+                    ),
+                    "finite": bool(factor.finite),
+                    "deterministic": bool(factor.deterministic),
+                },
+                "sources": source_metrics,
+                "materialization": _m2_identity(),
+                "raw_array_names": list(_m2_recorded_artifacts(run_dir)),
+            },
+            "error": None,
+            "controlled_stop": None,
+            "elapsed_wall_seconds": float(time.perf_counter() - started),
+        })
+        _m2_mark(run_dir, "summary_ready", started)
+        _write_json(run_dir / "m2_worker_summary.json", payload)
+        return 0
+    finally:
+        if source_vec is not None:
+            source_vec.destroy()
+        if action is not None:
+            action.destroy()
+        if transfer is not None:
+            transfer.destroy()
+
+
+def _run_m2_watchdog(run_dir: Path) -> int:
+    from benchmarks.run_task037_extra_h2b import _bounded_process_drain, _monitor_phase
+
+    run_dir = run_dir.resolve()
+    if run_dir.exists():
+        raise FileExistsError(f"M2 run directory already exists: {run_dir}")
+    run_dir.mkdir(parents=True)
+    source_start = _clean_source()
+    started = time.perf_counter()
+    executable = os.path.abspath(sys.executable)
+    process = _monitor_phase(
+        run_dir,
+        "m2",
+        _m2_worker_command(executable, run_dir),
+        M2_TIMEOUT_SECONDS,
+        M2_RSS_LIMIT_BYTES,
+    )
+    process["drain"] = _bounded_process_drain(process)
+    process["processes_gone"] = bool(_process_gone(process))
+    source_end = _clean_source()
+    worker_ref = _artifact(run_dir, "m2_worker_summary.json")
+    error = None
+    if not (
+        process.get("return_code") == 0
+        and process.get("termination") is None
+        and process.get("processes_gone") is True
+        and process.get("peak_rss_bytes", M2_RSS_LIMIT_BYTES) < M2_RSS_LIMIT_BYTES
+        and process.get("swap_bytes") == M2_SWAP_LIMIT_BYTES
+        and worker_ref.get("present") is True
+    ):
+        error = "m2_worker_or_resource_gate_failed"
+    payload = _attach_evidence({
+        "schema": M2_WATCHDOG_SCHEMA,
+        "status": "pass" if error is None else "gate_failed",
+        "pass": error is None,
+        "route": "M2" if error is None else "M2-review-only",
+        "run_dir": str(run_dir),
+        "scope": _m2_scope(),
+        "identity": _m2_identity(),
+        "source_at_start": source_start,
+        "source_at_end": source_end,
+        "command_identity": {"python": executable, "m2_command": _m2_worker_command(executable, run_dir)},
+        "m2": process,
+        "worker_summary": worker_ref,
+        "raw_artifacts": _m2_recorded_artifacts(run_dir),
+        "error": error,
+        "elapsed_wall_seconds": float(time.perf_counter() - started),
+    })
+    _write_json(run_dir / "m2_watchdog_summary.json", payload)
+    print(f"M2 watchdog status={payload['status']} run_dir={run_dir}", flush=True)
+    return 0 if error is None else 1
+
+
+def _m2_source_gate_valid(result: Mapping[str, Any], rho_limit: float) -> bool:
+    return bool(
+        result.get("finite") is True
+        and result.get("rho_scope") == "complete_882_patch_rows"
+        and result.get("global_rho_scope") == "full_global_rows_diagnostic_only"
+        and all(
+            type(result.get(key)) in (int, float)
+            and math.isfinite(float(result[key]))
+            for key in (
+                "projected_high_closure_relative",
+                "action_closure_relative",
+                "full_space_rho_star",
+                "full_space_rho_unit",
+            )
+        )
+        and result["action_closure_relative"] <= M2_ACTION_CLOSURE_LIMIT
+        and result["full_space_rho_star"] <= rho_limit
+    )
+
+
+def _m2_check_raw(run_dir: Path, checker_source: Mapping[str, Any]) -> dict[str, Any]:
+    import numpy as np
+
+    from src.solvers.hcurl_h2b_block_smoother import factorize_h2b_p0_patch
+    from src.solvers.hcurl_h2b_m2_complement import (
+        _array_sha256,
+        build_h2b_m2_complement,
+        measure_h2b_m2_source,
+    )
+
+    checks: dict[str, bool] = {}
+    problems: list[str] = []
+    try:
+        watchdog = _read_json(run_dir / "m2_watchdog_summary.json")
+        worker = _read_json(run_dir / "m2_worker_summary.json")
+    except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+        return {
+            "schema": M2_CHECK_SCHEMA,
+            "status": "gate_failed",
+            "pass": False,
+            "route": "M2-review-only",
+            "checks": {"raw_readable": False},
+            "problems": [f"raw_unreadable:{type(exc).__name__}"],
+            "measurements": None,
+            "checker_source": _plain(checker_source),
+        }
+    checks["watchdog_schema"] = bool(
+        watchdog.get("schema") == M2_WATCHDOG_SCHEMA
+        and watchdog.get("status") == "pass"
+        and watchdog.get("pass") is True
+        and _evidence_valid(watchdog)
+    )
+    checks["source_authority"] = bool(
+        _source_pair_valid(watchdog.get("source_at_start"), watchdog.get("source_at_end"))
+        and watchdog.get("source_at_start") == worker.get("source_at_start")
+        and _source_pair_valid(worker.get("source_at_start"), worker.get("source_at_end"))
+        and _source_valid(checker_source)
+        and checker_source == watchdog.get("source_at_start")
+    )
+    checks["scope_identity"] = watchdog.get("scope") == _m2_scope() and worker.get("scope") == _m2_scope()
+    checks["identity"] = watchdog.get("identity") == _m2_identity() and worker.get("identity") == _m2_identity()
+    process_ok, process_problem = _phase_process_shape(watchdog.get("m2"), 1, M2_RSS_LIMIT_BYTES)
+    checks["resource"] = process_ok and _timeline_resource_valid(run_dir / "m2_timeline.jsonl", watchdog.get("m2"), M2_RSS_LIMIT_BYTES, "m2")
+    if process_problem:
+        problems.append(process_problem)
+    checks["worker_schema"] = bool(
+        worker.get("schema") == M2_WORKER_SCHEMA
+        and worker.get("status") == "measurement_complete"
+        and worker.get("error") is None
+        and worker.get("controlled_stop") is None
+        and _evidence_valid(worker)
+    )
+    measurement = worker.get("measurement")
+    current_authority = None
+    try:
+        current_authority = _h2b_p1_authority()
+    except (OSError, KeyError, TypeError, ValueError) as exc:
+        problems.append(f"p0_authority:{type(exc).__name__}")
+    current_p0 = (
+        current_authority.get("p0")
+        if isinstance(current_authority, Mapping)
+        else None
+    )
+    topology = measurement.get("topology") if isinstance(measurement, Mapping) else None
+    measurement_authority = (
+        measurement.get("authority") if isinstance(measurement, Mapping) else None
+    )
+    patch_audit = measurement.get("patch") if isinstance(measurement, Mapping) else None
+    checks["authority_topology"] = bool(
+        isinstance(current_p0, Mapping)
+        and isinstance(measurement_authority, Mapping)
+        and measurement_authority.get("p0_record_sha256") == current_p0.get("record_sha256")
+        and measurement_authority.get("p0_evidence_sha256") == current_p0.get("evidence_sha256")
+        and topology == {
+            "central_cell_ordinal": 3,
+            "central_class_id": 3,
+            "touching_cell_count": 19,
+            "patch_row_count": 882,
+        }
+        and isinstance(patch_audit, Mapping)
+        and patch_audit.get("patch_definition") == "restricted-global row-complete B_P"
+        and patch_audit.get("central_cell_ordinal") == 3
+        and patch_audit.get("central_class_id") == 3
+        and patch_audit.get("patch_row_count") == 882
+        and patch_audit.get("p0_authority_record_sha256") == current_p0.get("record_sha256")
+        and patch_audit.get("p0_authority_evidence_sha256") == current_p0.get("evidence_sha256")
+    )
+    if not checks["authority_topology"]:
+        problems.append("authority_topology_gate")
+    patch_rows = np.empty(0, dtype=np.int64)
+    injection = np.empty((0, 0), dtype=np.complex128)
+    patch = np.empty((0, 0), dtype=np.complex128)
+    q_high_raw = np.empty((0, 0), dtype=np.complex128)
+    factor_values_raw = np.empty((0, 0), dtype=np.complex128)
+    pivots_raw = np.empty(0, dtype=np.int32)
+    rhs = np.empty((0, 0), dtype=np.complex128)
+    corrections = np.empty((0, 0), dtype=np.complex128)
+    actions = np.empty((0, 0), dtype=np.complex128)
+    try:
+        injection = np.load(run_dir / "m2_injection.npy", allow_pickle=False)
+        patch = np.load(run_dir / "m2_patch.npy", allow_pickle=False)
+        patch_rows = np.load(run_dir / "m2_patch_rows.npy", allow_pickle=False)
+        q_high_raw = np.load(run_dir / "m2_q_high.npy", allow_pickle=False)
+        factor_values_raw = np.load(run_dir / "m2_factor_values.npy", allow_pickle=False)
+        pivots_raw = np.load(run_dir / "m2_factor_pivots.npy", allow_pickle=False)
+        rhs = np.load(run_dir / "m2_source_rhs.npy", allow_pickle=False)
+        corrections = np.load(run_dir / "m2_source_corrections.npy", allow_pickle=False)
+        actions = np.load(run_dir / "m2_source_actions.npy", allow_pickle=False)
+        carrier = build_h2b_m2_complement(injection)
+        q_high_equal = np.array_equal(carrier.q_high, q_high_raw)
+        high_matrix = np.ascontiguousarray(carrier.q_high.conj().T @ patch @ carrier.q_high, dtype=np.complex128)
+        factor = factorize_h2b_p0_patch(high_matrix, task037_extra_h2b=True)
+    except (OSError, ValueError, TypeError, RuntimeError) as exc:
+        q_high_equal = False
+        carrier = None
+        factor = None
+        high_matrix = None
+        problems.append(f"numeric_recompute:{type(exc).__name__}")
+    checks["complement"] = bool(
+        carrier is not None
+        and q_high_equal
+        and patch_rows.dtype == np.dtype(np.int64)
+        and patch_rows.shape == (882,)
+        and np.unique(patch_rows).size == patch_rows.size
+        and carrier.audit["rank"] == 300
+        and carrier.audit["q_high_dimension"] == 582
+        and carrier.audit["q_orthogonality_error"] <= M2_Q_ORTHOGONALITY_LIMIT
+        and carrier.audit["split_reconstruction_error"] <= M2_SPLIT_RECONSTRUCTION_LIMIT
+        and carrier.audit["retained_transform_bytes"] <= M2_TRANSFORM_BYTES_LIMIT
+        and carrier.audit["dense_qh_retained"] is True
+        and carrier.audit["dense_qh_count"] == 1
+    )
+    if not checks["complement"]:
+        problems.append("complement_gate")
+    factor_measurement = (
+        measurement.get("factor")
+        if isinstance(measurement, Mapping)
+        and isinstance(measurement.get("factor"), Mapping)
+        else None
+    )
+    factor_arrays_match = bool(
+        factor is not None
+        and factor_values_raw.dtype == factor.values.dtype
+        and factor_values_raw.shape == factor.values.shape
+        and pivots_raw.dtype == factor.pivots.dtype
+        and pivots_raw.shape == factor.pivots.shape
+        and np.array_equal(factor_values_raw, factor.values)
+        and np.array_equal(pivots_raw, factor.pivots)
+    )
+    checks["factor"] = bool(
+        factor is not None
+        and factor_arrays_match
+        and factor.factor_bytes <= M2_FACTOR_BYTES_LIMIT
+        and factor.factorization_residual <= M2_FACTOR_RESIDUAL_LIMIT
+        and factor.solve_residual <= M2_FACTOR_RESIDUAL_LIMIT
+        and factor.finite is True
+        and factor.deterministic is True
+        and isinstance(factor_measurement, Mapping)
+        and factor_measurement.get("factor_values_sha256") == factor.factor_values_sha256
+        and factor_measurement.get("pivot_sha256") == factor.pivot_sha256
+        and factor_measurement.get("factorization_residual") == factor.factorization_residual
+        and factor_measurement.get("solve_residual") == factor.solve_residual
+        and factor_measurement.get("factor_bytes") == factor.factor_bytes
+        and factor_measurement.get("factor_values_bytes") == factor.values.nbytes
+        and factor_measurement.get("pivot_bytes") == factor.pivots.nbytes
+        and factor_measurement.get("factor_values_pivots_bytes") == factor.factor_bytes
+    )
+    if not checks["factor"]:
+        problems.append("factor_gate")
+    source_results: list[dict[str, Any]] = []
+    worker_sources = measurement.get("sources") if isinstance(measurement, Mapping) else None
+    source_binding_ok = isinstance(worker_sources, list) and len(worker_sources) == len(M2_SOURCE_LABELS)
+    if (
+        carrier is not None
+        and factor is not None
+        and patch_rows.shape == (882,)
+        and rhs.shape == (len(M2_SOURCE_LABELS), 173802)
+        and corrections.shape == rhs.shape
+        and actions.shape == rhs.shape
+    ):
+        for index, label in enumerate(M2_SOURCE_LABELS):
+            result = measure_h2b_m2_source(
+                rhs[index],
+                patch_rows,
+                carrier,
+                factor,
+                lambda _values, expected=actions[index]: expected,
+                patch_matrix=patch,
+                high_patch_matrix=high_matrix,
+            )
+            result["label"] = label
+            if result["correction_sha256"] != _array_sha256(corrections[index]):
+                problems.append(f"source_correction_sha:{label}")
+            if result["action_sha256"] != _array_sha256(actions[index]):
+                problems.append(f"source_action_sha:{label}")
+            worker_item = (
+                worker_sources[index]
+                if isinstance(worker_sources, list) and index < len(worker_sources)
+                else None
+            )
+            if not (
+                isinstance(worker_item, Mapping)
+                and worker_item.get("label") == label
+                and worker_item.get("correction_sha256") == result["correction_sha256"]
+                and worker_item.get("action_sha256") == result["action_sha256"]
+                and worker_item.get("repeat_correction_sha256") == result["correction_sha256"]
+                and worker_item.get("repeat_action_sha256") == result["action_sha256"]
+            ):
+                source_binding_ok = False
+                problems.append(f"source_worker_binding:{label}")
+            result["repeat_correction_sha256"] = result["correction_sha256"]
+            result["repeat_action_sha256"] = result["action_sha256"]
+            result.pop("correction")
+            result.pop("action")
+            source_results.append(result)
+    checks["sources"] = bool(
+        len(source_results) == len(M2_SOURCE_LABELS)
+        and all(
+            _m2_source_gate_valid(
+                result,
+                M2_CHECKERBOARD_RHO_LIMIT
+                if result["label"] == "checkerboard/high-frequency"
+                else M2_MIXED_RHO_LIMIT
+                if result["label"] == "mixed"
+                else M2_OTHER_RHO_LIMIT,
+            )
+            for result in source_results
+        )
+    )
+    if not checks["sources"]:
+        problems.append("source_gate")
+    checks["source_binding"] = source_binding_ok
+    if not checks["source_binding"]:
+        problems.append("source_binding_gate")
+    checks["materialization"] = bool(
+        worker.get("identity") == _m2_identity()
+        and isinstance(worker.get("measurement"), Mapping)
+        and worker["measurement"].get("materialization") == _m2_identity()
+    )
+    checks["raw_artifacts"] = watchdog.get("raw_artifacts") == _m2_recorded_artifacts(run_dir)
+    passed = bool(all(checks.values()) and not problems)
+    return {
+        "schema": M2_CHECK_SCHEMA,
+        "status": "pass" if passed else "gate_failed",
+        "pass": passed,
+        "route": "M2" if passed else "M2-review-only",
+        "checks": checks,
+        "problems": list(dict.fromkeys(problems)),
+        "measurements": {
+            "topology": _plain(topology),
+            "authority": _plain(measurement_authority),
+            "patch": _plain(measurement.get("patch")) if isinstance(measurement, Mapping) else None,
+            "carrier": _plain(carrier.audit) if carrier is not None else None,
+            "factor": {
+                "factorization_residual": float(factor.factorization_residual),
+                "solve_residual": float(factor.solve_residual),
+                "factor_bytes": int(factor.factor_bytes),
+                "factor_values_bytes": int(factor.values.nbytes),
+                "pivot_bytes": int(factor.pivots.nbytes),
+                "factor_values_pivots_bytes": int(factor.factor_bytes),
+            } if factor is not None else None,
+            "source_count": len(source_results),
+            "sources": _plain(source_results),
+            "resource": watchdog.get("m2"),
+        },
+        "checker_source": _plain(checker_source),
+        "raw_artifacts": _plain(watchdog.get("raw_artifacts")),
+    }
+
+
+def _run_m2_check(run_dir: Path, output: Path) -> int:
+    checker_source = _clean_source()
+    result = _m2_check_raw(run_dir.resolve(), checker_source)
+    _write_json(output.resolve(), _attach_evidence(result))
+    print(f"M2 check status={result['status']} output={output.resolve()}", flush=True)
+    return 0 if result["pass"] else 1
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="run_task037_extra_m")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -1671,6 +2498,13 @@ def _parser() -> argparse.ArgumentParser:
     checker = sub.add_parser("m1-check")
     checker.add_argument("--run-dir", required=True)
     checker.add_argument("--output", required=True)
+    m2_worker = sub.add_parser("m2-worker")
+    m2_worker.add_argument("--run-dir", required=True)
+    m2_watchdog = sub.add_parser("m2-watchdog")
+    m2_watchdog.add_argument("--run-dir", required=True)
+    m2_checker = sub.add_parser("m2-check")
+    m2_checker.add_argument("--run-dir", required=True)
+    m2_checker.add_argument("--output", required=True)
     return parser
 
 
@@ -1680,7 +2514,13 @@ def main(argv: list[str] | None = None) -> int:
         return _run_m1_worker(Path(args.run_dir), args.phase, args.expected_mpi_size)
     if args.command == "m1-watchdog":
         return _run_m1_watchdog(Path(args.run_dir))
-    return _run_m1_check(Path(args.run_dir), Path(args.output))
+    if args.command == "m1-check":
+        return _run_m1_check(Path(args.run_dir), Path(args.output))
+    if args.command == "m2-worker":
+        return _run_m2_worker(Path(args.run_dir))
+    if args.command == "m2-watchdog":
+        return _run_m2_watchdog(Path(args.run_dir))
+    return _run_m2_check(Path(args.run_dir), Path(args.output))
 
 
 if __name__ == "__main__":
