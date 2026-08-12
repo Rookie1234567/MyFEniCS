@@ -17,7 +17,8 @@
 | T8 | `7f57f7a7dab45c7c8cae67bf0f5271db110aa339` | main alias、benchmark caller、current-guide contracts | pass；无新 PDE/MPI |
 | T9 | `de2e1880fa90a442996ada58ea321c774752a5ca` | `test_13/16/26/27/178/260/261/267`、文档/benchmark contracts、Ruff/定向 format/compileall、`check_benchmarks --no-write` | pass；295 passed、2 skipped；302/302 benchmark check；T10 扩大 format 审计见下 |
 | T10 文档前 Gate | `de2e1880fa90a442996ada58ea321c774752a5ca` | qualified `test_26 + test_260`、Markdown relative links、5 JSON parse、diff-check | pass；17 passed，11 Markdown files、5 JSON files |
-| T10 full Gate | `de2e1880fa90a442996ada58ea321c774752a5ca` | ABI/source preflight 后最终环境纠正下精确 `python -m pytest -q`，无 deselect/并行 | **pass**；1119 passed、48 skipped、0 failed，1514.73s |
+| T10 full Gate（source-branch inherited） | `de2e1880fa90a442996ada58ea321c774752a5ca` | ABI/source preflight 后精确 `python -m pytest -q`，无 deselect/并行 | inherited evidence；1119 passed、48 skipped、0 failed，1514.73s，不是当前 integration 结论 |
+| T10 integration full attempt | `04bf4ea36d2936e0a9c1f258052b999301b9ac42` | 同一 qualified shell 的精确 `python -m pytest -q` | 用户运行中授权 controlled stop；约 243s、最后 `[12%]`，未形成最终计数 |
 
 ### T10 final docs-only static Gate
 
@@ -39,7 +40,8 @@
 |---|---|---|---|
 | attempt 1 full | `python -m pytest -q`；parent `de2e1880...`；隔离 worktree 无 `.venv` | 1118 passed、48 skipped、1 failed，1352.60s，exit1 | diagnostic failure，保留，不改代码 |
 | targeted | 仅 `test_73_task034_hardening.py::Task034HardeningTests::test_dolfinx_mpc_probe_requires_project_complex_abi`；临时 `.venv` symlink；同一 parent | 1 passed，0.98s，exit0；probe 9/9 true | 环境 identity 验证，不是代码修复 |
-| final full | `python -m pytest -q`；同一 `de2e1880...`，仅纠正 `.venv` identity | 1119 passed、48 skipped、0 failed，1514.73s，exit0 | T10 final Gate pass |
+| source-branch final full | `python -m pytest -q`；同一 `de2e1880...`，仅纠正 `.venv` identity | 1119 passed、48 skipped、0 failed，1514.73s，exit0 | inherited source evidence，不是当前 integration 结果 |
+| current integration attempt | `python -m pytest -q`；HEAD `04bf4ea3...` | 用户授权 controlled stop，约 243s，最后 `[12%]`；SIGINT 后 wrapper exit 1；日志 SHA256 `d55e20c83f5171207b8462d1a89c4a6ebfb4f8c7a630d9cd94a186209c40cfc5` | `user-authorized skipped/controlled stop`；不计 pass，不归因代码 failure |
 
 两次 full 的 code/config parent 相同；第二次只纠正 worktree 到 canonical qualified venv 的 identity 接线。临时 symlink/excludes 已清理，首轮 failure excerpt 仍完整保留如下。
 

@@ -47,7 +47,7 @@
 | [`task035b_high_order_local_hp_resource_envelope/README.md`](task035b_high_order_local_hp_resource_envelope/README.md) | Task035b Review V2 批次：h13 仍为 10/12 + 10/12；setup/cache 与 rank-memory 为工程正结果，三条 iterative screen 为受控负结果，仍无 Hybrid-eligible candidate |
 | [`task035c_hybrid_channel_memory_closure/README.md`](task035c_hybrid_channel_memory_closure/README.md) | Task035c：修复 Full3D–Hybrid 离散 phase/traction 合同；p6/h10 六路径 12/12+12/12；static Hybrid M120 峰值下降31.89%，50%目标未达 |
 | [`task037c_hybrid_iterative_robustness/response_v3.md`](task037c_hybrid_iterative_robustness/response_v3.md) | Task037c白名单能力已选择性进入master；S偏振、1°、phi=-5/0/+5 的授权 research extension；M_robust=120，preferred RSS未过，不是production-qualified |
-| [`task038_input_driven_configuration/response_v1.md`](task038_input_driven_configuration/response_v1.md) | Task038：完成单一 `.dat` input-driven configuration；11 migrated/6 retained，ordinary数值算法不变，final full pytest 1119 passed/48 skipped |
+| [`task038_input_driven_configuration/response_v1.md`](task038_input_driven_configuration/response_v1.md) | Task038：单一 `.dat` input-driven configuration；11 migrated/6 retained，ordinary数值算法不变；source-branch full pytest 1119 passed/48 skipped，integration full 由用户授权 controlled stop |
 | [`benchmark.md`](benchmark.md) | Benchmark 分层设计和当前结果；编号 cases 见 [`../benchmarks/cases/README.md`](../benchmarks/cases/README.md) |
 | [`../notes/theory/README.md`](../notes/theory/README.md) | 从 Maxwell 强/弱式到 DtN、RTA、凝聚、迭代 PC 和 Hybrid FEM–Modal 的规范理论 |
 | [`../notes/reference/code_walkthrough.md`](../notes/reference/code_walkthrough.md) | 逐模块/函数、对象生命周期与 equation-to-code 导读 |
@@ -77,7 +77,7 @@
 | Task037 | Full3D static-condensed iterative baseline | M3a explicit-opt-in research baseline；不是 production default |
 | Task037b | frozen Hybrid iterative M10 | 白名单能力已选择性进入 master；仍为 explicit-opt-in research capability，ordinary defaults不变，not production-qualified |
 | Task037c | Hybrid iterative robustness | 白名单能力已选择性进入 master；S偏振、1°、phi=-5/0/+5、M_robust=120；preferred RSS未过，仍not production-qualified |
-| Task038 | 单一 `.dat` input-driven configuration | 执行分支已完成并推送，尚未review/merge master；11 migrated/6 retained，ordinary 数值算法不变，final full pytest 1119 passed/48 skipped |
+| Task038 | 单一 `.dat` input-driven configuration | 执行分支待 selective integration；11 migrated/6 retained，ordinary 数值算法不变；source-branch full pytest 1119 passed/48 skipped，integration full 为用户授权 controlled stop |
 
 ## 当前任务
 
@@ -201,4 +201,4 @@ Task034 的最终证据见 [`task034_workstation_wsl_adaptive_scalability/outcom
 | Task037 | [`summary.md`](task037_static_condensed_full3d_iterative/outcomes/summary.md)；Full3D static-condensed M3a explicit-opt-in research baseline |
 | Task037b | [`task.md`](task037b_hybrid_fem_modal_iterative/task.md)、[`review_report_v7.md`](task037b_hybrid_fem_modal_iterative/review_report_v7.md)、[`outcomes/summary.md`](task037b_hybrid_fem_modal_iterative/outcomes/summary.md)；白名单能力已选择性进入master，frozen M10仍为显式研究入口，ordinary defaults不变、not production-qualified |
 | Task037c | [`response_v3.md`](task037c_hybrid_iterative_robustness/response_v3.md)、[`outcomes/summary.md`](task037c_hybrid_iterative_robustness/outcomes/summary.md)；白名单能力已选择性进入master；S偏振、1°、phi=-5/0/+5、M_robust=120，preferred RSS未过、not production-qualified |
-| Task038 | [`response_v1.md`](task038_input_driven_configuration/response_v1.md)、[`outcomes/summary.md`](task038_input_driven_configuration/outcomes/summary.md)；单一 `.dat` 普通入口、11 migrated/6 retained，ordinary 数值算法不变，final full pytest 1119 passed/48 skipped |
+| Task038 | [`response_v1.md`](task038_input_driven_configuration/response_v1.md)、[`outcomes/summary.md`](task038_input_driven_configuration/outcomes/summary.md)；单一 `.dat` 普通入口、11 migrated/6 retained，ordinary 数值算法不变；source-branch full pytest 1119 passed/48 skipped，integration full 为用户授权 controlled stop |

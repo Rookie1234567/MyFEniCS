@@ -12,7 +12,7 @@
 | retained preset | 6 个 | research/history replay，仍由旧内部 factory/CLI 支持 |
 | 删除旧重复层 | 5 个不可达 3D 副本 | current adapter 仍调用现有 runner/solver |
 | ordinary 数值算法 | 未改变 | 未修改 solver 数学、ordinary default 或 retained replay |
-| full repository pytest | `1119 passed, 48 skipped, 0 failed in 1514.73s` | environment-corrected final full Gate pass；首轮 ABI identity diagnostic 与 targeted identity verification evidence 另列 |
+| full repository pytest（当前 integration） | 用户授权 controlled stop；未完成、未形成最终计数 | 不是通过也不是代码失败；source-branch 的 `1119 passed, 48 skipped, 0 failed` 仅作 inherited historical evidence |
 
 ## 阶段完成矩阵
 
@@ -28,7 +28,7 @@
 | T7 | 11 个 ordinary preset 的静态 dat 迁移与 2D/Stage1 代表性 PDE | 4 次轻量 old/new 对照通过；6 retained 未迁移 |
 | T8 | `src.main` 薄 alias、benchmark caller、current guidance | 11 migrated 只走 dat；6 retained replay 不变 |
 | T9 | 删除 5 个不可达旧模块、收敛当前教程 | 295 passed、2 skipped；无 formal PDE/MPI/full pytest |
-| T10 | 结项文档与最终全仓 Gate | docs Gate 与 environment-corrected final full Gate pass |
+| T10 | 结项文档与最终全仓 Gate | docs Gate 通过；当前 integration full pytest 由用户在运行中授权 controlled stop，未计为通过 |
 
 ## 用户流程与 provenance
 
@@ -64,12 +64,13 @@ T4/T5 canonical vector/selected field comparison 是 `not_run_by_capability`，�
 
 11 个 migrated dat 与 6 个 retained preset 的逐项 SHA、inactive exclusion、4 次 T7 PDE 证据见 [`preset_migration.md`](preset_migration.md)。T8/T9 的删除、调用图与保留依赖见 [`legacy_cleanup.md`](legacy_cleanup.md)。5 个 removed 文件是不可达旧 3D 副本；`run_cases.py`、`run_3d_cases.py`、Task37 authority、port-order-count、历史 tests/records 仍保留。
 
-## T10 full pytest 与环境诊断
+## T10 full pytest：历史 evidence 与当前 integration controlled stop
 
 | 阶段 | 命令/环境 | 结果 | 解释 |
 |---|---|---|---|
 | 首轮 full | `python -m pytest -q`，Task38 worktree 无 `.venv` identity 接线 | `1118 passed, 48 skipped, 1 failed in 1352.60s` | 既有 `test_73_task034_hardening.py::Task034HardeningTests::test_dolfinx_mpc_probe_requires_project_complex_abi` diagnostic failure；原始 excerpt 保留在 `test_summary.md` |
 | targeted | 同一 de2e code/config parent，临时 `.venv` symlink 指向 canonical venv；指定 test_73 node | `1 passed in 0.98s` | `_dolfinx_mpc_abi_probe` 9/9 true；这是环境 identity 验证，不是代码修复 |
-| final full | 同一 de2e code/config parent，仅纠正 worktree `.venv` identity，`python -m pytest -q` | `1119 passed, 48 skipped, 0 failed in 1514.73s (0:25:14)` | final environment-corrected zero-failure Gate；临时 symlink/excludes 已清理 |
+| source-branch final full（历史） | 同一 de2e code/config parent，仅纠正 worktree `.venv` identity，`python -m pytest -q` | `1119 passed, 48 skipped, 0 failed in 1514.73s (0:25:14)` | inherited source evidence；不冒充当前 integration 结果 |
+| 当前 integration full | HEAD `04bf4ea36d2936e0a9c1f258052b999301b9ac42`，`python -m pytest -q` | 用户于运行中授权 controlled stop，约 `243s`；最后输出 `[12%]`，日志未见 `F`/`E`，无最终计数；SIGINT 后 wrapper exit 1 | `user-authorized skipped/controlled stop`；不是 pass，也不是代码 failure。日志 `/tmp/task38_final_full_pytest_04bf4ea.log`，SHA256 `d55e20c83f5171207b8462d1a89c4a6ebfb4f8c7a630d9cd94a186209c40cfc5` |
 
-两次 full 使用同一 code/config parent `de2e1880fa90a442996ada58ea321c774752a5ca`；第二次只修正隔离 worktree 对共享 qualified venv 的 identity 接线，没有修改 Python、测试、阈值或 ordinary default。首轮 failure 仍是 diagnostic history，不被 final pass 删除或改写。
+首轮与 source-branch final full 使用同一 code/config parent `de2e1880fa90a442996ada58ea321c774752a5ca`；source-branch final full 只修正隔离 worktree 对共享 qualified venv 的 identity 接线，没有修改 Python、测试、阈值或 ordinary default。当前 integration attempt 在 `04bf4ea3...` 上按用户授权受控停止。首轮 failure 仍是 diagnostic history，不被改写。
