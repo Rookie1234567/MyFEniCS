@@ -2,23 +2,25 @@
 
 ## 授权与结论
 
-用户已明确授权：针对具体执行问题持续研究、定位、做窄修并在监督边界内推进；本轮又明确授权忽略 Review V11 的“1 formal campaign + 1 execution-fix rerun”次数限制，继续正式运行并推进 M1、M2。该授权只覆盖 formal-count 限制，不放宽任何数值、candidate-count、RSS、swap、physics 或 provenance Gate，不允许把容量或数值负结果包装成 execution-fix，也不允许越过 Review V11 的架构与阶段 Gate。
+用户明确授权原文为：“我允许你继续正式运行，不用管v11里的限制，继续执行任务”。据此，用户授权越过 V11 的正式运行次数限制、M2→M3 阶段锁和 84 个完整 882D packed factor 限制，并现已明确授权继续 M4–M6 正式研究。该授权不放宽 full-space、数值、RSS `<2,000,000,000 B`、swap=0、true residual `<=1e-6`、physics 或 provenance Gate，也不允许把容量或数值负结果包装成 execution-fix。
 
 | 项目 | 当前结论 |
 | --- | --- |
 | working branch | `codex/20260806-task37-iterative-extra-development` |
-| latest code/source before this response | `b4c1c6c76d667dac78e5dc384b302026379cb8d2`（M2 formal source；本次文档提交前的 clean code SHA） |
+| latest code/source before this response | `404f6c6a5326219bcf6aca098b332b68214781a3`（M3Y formal source；本次文档提交前的 clean code SHA） |
 | previous M1 closeout source | `cc0573ba34cee13b1eb3b8dc8e51ac7e7cbe0dfc`（承接 `949494c...` 的历史文档/代码提交） |
 | M1 formal source 1 | `ad589ca1e7d473e6ed77827f8bb23410f21c38a9` |
 | M1 execution-fix formal source | `caed4dea78e9d9a924e2ad06daba9dd635801e94` |
 | M1 latest dual-fixture fix | `949494c73d1c6ece397471f0f0ccc96f78cc1d79`；已由当前 v2 formal/checker 资格化 |
+| M3Y code chain | `12777a724...` → `b8afa94...` → `404f6c6a...` |
 | formal budget | 原 V11 次数限制由用户本轮明确授权忽略；其余 Gate 全部保留 |
 | M1 最终状态 | `PASS / QUALIFIED`（v2 checker 15/15） |
 | M2 最终状态 | `FORMAL_NUMERIC_FAIL / NOT_QUALIFIED`；checkerboard source 超过 `0.70` |
-| M3–M6 | `not_run_by_gate`；M2 数值 Gate 失败后锁定 |
+| M3Y packed full-store | `PASS / QUALIFIED`（明确授权的 research-only lane） |
+| M4–M6 | `not_run_yet`；已获用户授权继续正式研究 |
 | docs commit | `this_response_commit (exact SHA reported in final handoff)` |
 
-历史 execution-fix raw 的 p4 canonical adjoint 曾失败；随后用户授权继续 formal-count 范围内的正式研究。M1 v2 仍是正式 `PASS / QUALIFIED`，但最新 M2 high-complement oracle 的 checkerboard source 触发正式数值 Gate 失败，因此 M2 为 `FORMAL_NUMERIC_FAIL / NOT_QUALIFIED`。两项结论均不放宽任何数值、容量、RSS、swap 或 provenance Gate。
+历史 execution-fix raw 的 p4 canonical adjoint 曾失败；随后用户授权继续 formal-count 范围内的正式研究。M1 v2 仍是正式 `PASS / QUALIFIED`，M2 high-complement oracle 的 checkerboard source 触发正式数值 Gate 失败，因此 M2 为 `FORMAL_NUMERIC_FAIL / NOT_QUALIFIED`。在该失败之后，用户又明确授权执行独立的 M3Y packed-store research lane；M3Y checker 正式通过，但不改变 M2 结论，也不代表 PDE 目标通过。所有结论均不放宽数值、容量、RSS、swap 或 provenance Gate。
 
 ## 继承的冻结结论
 
@@ -73,7 +75,7 @@ M2 的通俗含义是：把一个完整的 882 维局部 patch 分成低阶 300 
 | fixed three-action symmetric LHL | `0.7318570005704766` |
 | exact patch inverse sanity | `2.1656111107723205e-12` |
 
-这些结果排除了“只补 low 阶段即可恢复 M2”的解释，但不是 M3/M4 qualification。M3–M6、H2B-K、H2D、H4、PDE、RTA 和 full PDE process-tree RSS 仍未运行。
+这些结果排除了“只补 low 阶段即可恢复 M2”的解释；这些旧离线诊断本身不构成 M3Y 资格，资格来自本轮正式 raw/checker。M3Y 已由用户越过阶段锁后正式通过；M4–M6 已获授权继续但当前仍为 `not_run_yet`，H2B-K、H2D、H4、PDE、RTA 和 full PDE process-tree RSS 仍为 `not_run_yet`/`not_measured`。
 
 ## 两个 fixture/provenance 缺陷
 
@@ -83,7 +85,7 @@ M2 的通俗含义是：把一个完整的 882 维局部 patch 分成低阶 300 
 
 ### 2. dual fixture
 
-execution-fix 之前的 dual 使用 DOLFINx global dof id 生成值；global numbering 会随 MPI partition 改变。诊断中相同 canonical keys 的 global id 有 `72,840/164,592` 不同，即 `44.25488480606591%`；旧 dual input canonical relative=`0.9091583071292413`，旧 adjoint output relative=`0.9503885989179789`。改为 cfg-bound、固定的 `floquet_compatible_degree5_dual_v1` 后，manufactured dual input relative=`1.647661415080129e-15`，manufactured adjoint output relative=`1.3580087229674401e-15`，missing/extra/duplicate 均为 `0/0/0`。修复 commit 为 `949494c73d1c6ece397471f0f0ccc96f78cc1d79`；它尚未正式运行，不能取代已冻结的 negative formal evidence。
+execution-fix 之前的 dual 使用 DOLFINx global dof id 生成值；global numbering 会随 MPI partition 改变。诊断中相同 canonical keys 的 global id 有 `72,840/164,592` 不同，即 `44.25488480606591%`；旧 dual input canonical relative=`0.9091583071292413`，旧 adjoint output relative=`0.9503885989179789`。改为 cfg-bound、固定的 `floquet_compatible_degree5_dual_v1` 后，manufactured dual input relative=`1.647661415080129e-15`，manufactured adjoint output relative=`1.3580087229674401e-15`，missing/extra/duplicate 均为 `0/0/0`。修复 commit 为 `949494c73d1c6ece397471f0f0ccc96f78cc1d79`；该修复已在 `cc0573b` clean source 的 M1 v2 formal/checker 中正式通过并资格化，同时保留旧 negative formal evidence。
 
 ### 诊断边界
 
@@ -107,6 +109,33 @@ orientation diagnostic 中 252 个 cell 有 82 个 nonzero `cell_info`，但 cur
 
 旧 formal raw 目录和旧 negative record 永久保留；`m1_fullspace_p4_p6_transfer.json` 原字节保留，file SHA 为 `ad4184d82743a3063d426ad2bd2c2e582c5c3f6f5d8999548cf2d81d704422b0`，其 status 仍为 `gate_failed`，不能改写为 pass。当前新增 v2 compact file SHA 为 `6ed2c394fc0e04ed1222024bb1cc89281d6c77ac9be28e07451312906107cf72`，embedded evidence SHA 为 `2820715b3d30d54ee7af9169884b4cf562fbb969c0be31bb2238304366cf56ba`。
 
+## M3Y packed row-complete factor store
+
+M3Y 的通俗含义是：对每个 882 行完整局部 patch，不长期保存一个 882×882 方阵 factor，而只保存其 lower packed complex128 Cholesky 三角因子；fresh loader 用 mmap 和三角 solve 读取它，packed action 由 checker 独立重算。它解决的是 84 个局部 factor 的存储问题，不是把局部证据变成全局 PDE 结果。
+
+| 项目 | 正式结果 |
+| --- | --- |
+| 授权与边界 | 用户明确授权越过 V11 的 M2→M3 锁和 84-factor 研究禁令；M2 `FORMAL_NUMERIC_FAIL` 保持不变，其他 Gate 未放宽 |
+| fixed scope | degree=6、`h_nm=10.0`、MPI1、252 cells、24 classes、84 neighborhoods、173802 global rows、882 local rows、9210 constraints |
+| source / checker | `404f6c6a5326219bcf6aca098b332b68214781a3` / 同一 clean SHA |
+| formal raw / compact | `benchmarks/artifacts/task037_extra_development/m3y_404f6c6_run1` / `benchmarks/cases/101_task37_extra_development/records/m3y_full_packed_patch_store.json` |
+| final status | `M3Y PASS / QUALIFIED`，仅指本 research-only packed-store lane |
+
+| Gate | 限值 | 实测 |
+| --- | ---: | ---: |
+| isolated JIT stage RSS | `<1,800,000,000 B` | `1,280,749,568 B` |
+| builder RSS | `<1,800,000,000 B` | `1,068,343,296 B` |
+| fresh loader RSS | `<1,050,000,000 B` | `575,459,328 B` |
+| swap / cleanup | `0 B` / process gone | `0 B` / `true` |
+| factors / packed bytes | `<=96` / formula `882*883/2*16` | `84` / `523,357,632 B` |
+| metadata/mapping / retained total | retained `<=560,000,000 B` | `1,838,930 B` / `525,196,562 B`，PASS |
+| max action closure / solve residual | `<=1e-11` | `8.402445013054496e-12` / `8.402445013054496e-12`，PASS |
+| predicted builder/online live set | `<=1,750,000,000 B` | `1,346,005,004 B`，`predicted`，不是实测 |
+
+builder 对 84 个 row-complete patch 流式生成 packed factor，抽样 neighborhood `0/41/83` 的重复 matrix/factor SHA 一致；全部 84 个 factor 的 solve/action 均记录为 finite、deterministic。loader 对 factor 文件做 read-only mmap 和 solve，checker 独立重算 packed action。`full_dense_factor_count=0`、`pivots=false`、patch/global matrix、global constraint matrix、Schur、static condensation、trace slab、QL/QH transform 和 per-cell factor 均为 `false`。独立 `m3y-check` 返回 RC0，compact 的 20/20 checks 为 `true`，`problems=[]`。
+
+M3Y 代码提交链为 `12777a72497a98576bcb8caa15d58b13a0c837c0`（初始实现）、`b8afa94dd93fca3336660c1e78c52021843acf92`（checker/resource 收紧）和 `404f6c6a5326219bcf6aca098b332b68214781a3`（最终 packed BLAS action 修正）。正式前轻量验证为 `39 passed`，compileall、AST duplicate-key 和 diff-check 均通过；Ruff 不可用。该 PASS 不等价于 PDE qualification，也不改变 ordinary default。
+
 ## 证据索引
 
 | 证据 | 路径 / SHA |
@@ -121,6 +150,11 @@ orientation diagnostic 中 252 个 cell 有 82 个 nonzero `cell_info`，但 cur
 | MPC diagnostic | `/tmp/task037_m1_mpc_commutation_diagnostic.json` SHA `3522def9cf00c532b8fc1a2a3839a7837d0a60f01903da7295ef5bccf6e519e0`；script SHA `1bcb35d36717398aa415009462a0de79ec2474ed0b684de630fb8195b60dbeb1` |
 | orientation diagnostic | `/tmp/task037_m1_orientation_diagnostic.json` SHA `53e7bf5f60faf01657c8fd88626d510adb24c8b8ab6db7534e8ff897eedf1f76`；临时 JSON 未嵌入 source/script SHA，compact 已标明该 provenance 限制 |
 | dual partition diagnostic | `/tmp/task037_m1_dual_partition_diagnostic.json` SHA `954d22b4b40a45afc969af59b28cb3da5d170ddd8c74cd254e91f86a0a045af5`；script SHA `ba8900b97ae869001c7e3a05fd09bf6c626b995433f384a3688e0ee14ebb4ca5` |
+| M3Y raw / watchdog | `benchmarks/artifacts/task037_extra_development/m3y_404f6c6_run1`；`m3y_watchdog_summary.json` SHA `bd364d928a45fda15f49c8890c76ea6a59029b6320221cc7ec546b73f32fdeb8` |
+| M3Y stage / builder / loader summaries | `stage_summary.json` `250e61783bf97ceb9a74fde8bf52910ad7d4f7d609fdfff852f098a6f814204c`；`m3y_builder_summary.json` `d0d7d3a80384994b3415dc41ac3e1b816c35b6ff0682fd3ad8384bb3a8fcb652`；`m3y_loader_summary.json` `eece84bb7250a80967665a0d63aef91dc9a0bd34366f69e2f506200a1e30ab82` |
+| M3Y progress / timeline | builder `5676e6074bdb0a219cc7f96c26ea03071d74b2885e7481cb3633743f8d7aa2af` / `213d8dc29598b3487f2278b684a09eb4174f2f8791dcfe00acaa339f59714512`；loader `da0a2c7aeb10f406357d486af76c6dbc9f89b266dea712044b7f70c732cca2f1` / `80c29993fe52821ec2711c6b1d52e45027289a81f6f8b4b656fc02713410c1a6` |
+| M3Y stage progress / timeline / manifest | `1648701c75611f180a0c7d7444584ff25f63f815742f21cbc4a45ed19fe8a60d` / `3d79487825b847a7fd23f67d485c995c0874ff5b1389b1909577913bbcdc0b0a` / manifest `949c04da123ccf1e0014a301f617e3a9509b9aaed365793948c469e12feade17` |
+| M3Y compact | `benchmarks/cases/101_task37_extra_development/records/m3y_full_packed_patch_store.json`；file SHA `f40d6e27c628b946f9ff735027e966cd192748322aa29f752f27ebc4daeab979`；embedded evidence SHA `605cb0c19e4e7c49d0304474b1e6844d2047f78abca8d20e7692ba524de5b241` |
 | M2 final raw worker | `benchmarks/artifacts/task037_extra_development/m2_b4c1c6c_statm_run1/m2_worker_summary.json`；SHA `3db16f4d2709c9839bbdec88366c0f740da1f7cd871981992c71c758adc74f73` |
 | M2 final raw watchdog | `benchmarks/artifacts/task037_extra_development/m2_b4c1c6c_statm_run1/m2_watchdog_summary.json`；SHA `bad3879a32d11434caf2bb5d4c235b05a91ffd7c210a4add496be958fd6d7425` |
 | M2 final raw form reuse | `benchmarks/artifacts/task037_extra_development/m2_b4c1c6c_statm_run1/m2_form_reuse.json`；SHA `7f90385c16534e79c81df8b36103c2ddfe52c6afcc7759ef9ec493e2fd1c27e9` |
@@ -130,6 +164,6 @@ orientation diagnostic 中 252 个 cell 有 82 个 nonzero `cell_info`，但 cur
 
 ## 未运行项与硬停止
 
-M1 v2 已通过；M2 已完成正式运行但因 checkerboard 数值 Gate 失败而 `NOT_QUALIFIED`。因此 H2B-K、H2D、H4、M3–M6、PDE、official field/RTA、full true residual、direct-authority physics comparison 和 PDE process-tree RSS 均为 `not_run_by_gate`/`not_measured`。尚不能声称达成 MPI1 full PDE RSS 严格小于 2,000,000,000 B、swap=0 且直接法物理对照通过的最终目标。
+M1 v2 已通过；M2 已完成正式运行但因 checkerboard 数值 Gate 失败而 `NOT_QUALIFIED`。用户随后明确越过 M2→M3 阶段锁并授权 M3Y，因此 M3Y 已正式通过；H2B-K、H2D、H4、M4–M6、PDE、official field/RTA、full true residual、direct-authority physics comparison 和 PDE process-tree RSS 仍为 `not_run_yet`/`not_measured`。尚不能声称达成 MPI1 full PDE RSS 严格小于 2,000,000,000 B、swap=0 且直接法物理对照通过的最终目标。
 
-M2 数值 Gate 失败后不进入 M3，也不创建 M3–M6 伪 PASS 记录。M1/M2 compact、所有早期执行失败 raw 和 M2 BEST_CASE 诊断均保留；没有新分支、PR、master/default 修改。研究代码和历史负结果保留，ordinary default 不变。
+M2 数值 Gate 失败仍保持原始负结论；用户之后的明确授权已开启 M3Y 以及后续 M4–M6 正式研究，但这些后续阶段当前仍未运行，不改变 M2。M1/M2 compact、所有早期执行失败 raw、M2 BEST_CASE 诊断和 M3Y raw/compact 均保留；没有新分支、PR、master/default 修改。研究代码和历史负结果保留，ordinary default 不变。
