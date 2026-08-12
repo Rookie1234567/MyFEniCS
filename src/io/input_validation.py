@@ -383,16 +383,65 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
         if kind == "hybrid_direct":
             if solver["linear_solver"] != "direct":
                 raise _error("solver.linear_solver", "hybrid_direct requires direct")
+            if discretization["nedelec_degree"] not in {1, 2, 3, 4}:
+                raise _error(
+                    "discretization.nedelec_degree",
+                    "hybrid_direct supports degrees 1 through 4",
+                )
+            if solver.get("direct_solver_profile") != "default":
+                raise _error(
+                    "solver.direct_solver_profile",
+                    "hybrid_direct only supports direct_solver_profile=default",
+                )
+            if discretization["assembly_backend"] != "standard_full":
+                raise _error(
+                    "discretization.assembly_backend",
+                    "hybrid_direct requires standard_full",
+                )
             if (
                 method["propagation_model"],
                 method["traction_model"],
-            ) not in {
-                ("continuous_beta", "continuous_qep_beta"),
-                ("full3d_uniform_cg", "scalar_cg_discrete_derivative"),
-            }:
+            ) != ("continuous_beta", "continuous_qep_beta"):
                 raise _error(
                     "method",
-                    "hybrid_direct has no public support for this propagation/traction pair",
+                    "hybrid_direct adapter supports only continuous_beta + continuous_qep_beta",
+                )
+            for key in (
+                "export_fields",
+                "export_diffraction_orders",
+                "export_modal_amplitudes",
+                "export_reference_planes",
+            ):
+                if output.get(key) is not True:
+                    raise _error(
+                        f"output.{key}",
+                        "hybrid_direct requires the supported Case080 output combination",
+                    )
+            if output.get("export_canonical_vectors") is not False:
+                raise _error(
+                    "output.export_canonical_vectors",
+                    "hybrid_direct canonical vector export is not supported",
+                )
+            if output.get("unique_output") is not True:
+                raise _error(
+                    "output.unique_output",
+                    "hybrid_direct requires unique_output=true",
+                )
+            if (
+                output.get("diffraction_order_max_m") != 2
+                or output.get("diffraction_order_max_n") != 2
+            ):
+                raise _error(
+                    "output.diffraction_order_max_m",
+                    "hybrid_direct supports only the accepted 2 x 2 reporting bounds",
+                )
+            if any(
+                not method["bottom_interface_nm"] <= value <= method["top_interface_nm"]
+                for value in output.get("reference_plane_z_nm", ())
+            ):
+                raise _error(
+                    "output.reference_plane_z_nm",
+                    "hybrid_direct reference planes must lie between its interfaces",
                 )
         if kind == "hybrid_iterative":
             if solver["linear_solver"] != "fgmres":
@@ -465,15 +514,26 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
     if kind == "hybrid_direct" or kind == "hybrid_iterative":
         if method["bottom_interface_nm"] >= method["top_interface_nm"]:
             raise _error("method", "bottom_interface_nm must be below top_interface_nm")
-        if method["requested_modes_per_direction"] <= 0:
+        if kind == "hybrid_direct" and method["requested_modes_per_direction"] < 2:
+            raise _error(
+                "method.requested_modes_per_direction",
+                "hybrid_direct requires at least two modes per direction",
+            )
+        if kind == "hybrid_iterative" and method["requested_modes_per_direction"] <= 0:
             raise _error("method.requested_modes_per_direction", "must be positive")
         if dimension != 3 or geometry_kind != "rectangular_block_grating":
             raise _error(
                 "method.kind",
                 "Hybrid public methods require a 3D rectangular Stage4 grating",
             )
-        if d["mesh_cell_type"] != "hexahedron":
-            raise _error("discretization.mesh_cell_type", "Hybrid requires hexahedron")
+        allowed_hybrid_cells = (
+            {"auto", "hexahedron"} if kind == "hybrid_direct" else {"hexahedron"}
+        )
+        if d["mesh_cell_type"] not in allowed_hybrid_cells:
+            raise _error(
+                "discretization.mesh_cell_type",
+                "hybrid_direct requires auto or hexahedron; hybrid_iterative requires hexahedron",
+            )
         if boundary["vertical_boundary"] != "dtn_port":
             raise _error("boundary.vertical_boundary", "Hybrid requires dtn_port")
         if boundary.get("dtn_assembly") != "auxiliary":

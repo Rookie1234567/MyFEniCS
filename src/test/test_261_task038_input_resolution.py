@@ -499,8 +499,30 @@ def test_physical_hash_excludes_identity_method_solver_execution_and_output(tmp_
     assert original.physical_model_sha256 == changed.physical_model_sha256
     assert original.input_sha256 != changed.input_sha256
 
-    hybrid = load_and_resolve("input/templates/hybrid_direct_example.dat")
-    assert original.physical_model_sha256 == hybrid.physical_model_sha256
+    hybrid_source = "input/templates/hybrid_direct_example.dat"
+    full3d_method = _write_variant(
+        tmp_path,
+        "same_physics_full3d_method.dat",
+        hybrid_source,
+        [
+            (
+                "[method]\n"
+                'kind = "hybrid_direct"\n'
+                "bottom_interface_nm = 10.0\n"
+                "top_interface_nm = 110.0\n"
+                "requested_modes_per_direction = 160\n"
+                'propagation_model = "continuous_beta"\n'
+                'traction_model = "continuous_qep_beta"\n',
+                '[method]\nkind = "full3d_direct"\n',
+            )
+        ],
+    )
+    hybrid = load_and_resolve(hybrid_source)
+    full3d = load_and_resolve(full3d_method)
+    assert hybrid.method["kind"] == "hybrid_direct"
+    assert full3d.method["kind"] == "full3d_direct"
+    assert hybrid.physical_model_sha256 == full3d.physical_model_sha256
+    assert hybrid.input_sha256 != full3d.input_sha256
 
     whitespace = tmp_path / "whitespace.dat"
     whitespace.write_bytes(Path(source).read_bytes() + b"\n")
@@ -531,7 +553,7 @@ def test_physical_hash_excludes_identity_method_solver_execution_and_output(tmp_
 def test_expected_parent_is_deterministic_and_method_specific():
     direct = load_and_resolve("input/templates/hybrid_direct_example.dat")
     assert str(direct.expected_output_parent).endswith(
-        "euv_grazing1_phi0_hybrid_direct_m120_mpi8__hybrid_direct__mpi8__M120"
+        "case080_grazing10_phi0_hybrid_direct_m160_mpi4__hybrid_direct__mpi4__M160"
     )
     full3d = load_and_resolve("input/templates/full3d_direct_example.dat")
     assert str(full3d.expected_output_parent).endswith(
@@ -659,10 +681,8 @@ def test_hybrid_accepted_alternate_pairs_and_rejected_solver_identities(tmp_path
             ),
         ],
     )
-    assert (
-        load_and_resolve(direct_scalar).method["traction_model"]
-        == "scalar_cg_discrete_derivative"
-    )
+    with pytest.raises(InputError, match="hybrid_direct adapter supports only"):
+        load_and_resolve(direct_scalar)
 
     iterative_scalar = _write_variant(
         tmp_path,

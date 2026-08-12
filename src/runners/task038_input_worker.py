@@ -177,17 +177,33 @@ def _dispatch_resolved_payload(
     *,
     expected_method: str,
     output_directory: Path,
+    expected_source_sha: str | None = None,
 ) -> tuple[int, list[str]]:
     """Dispatch the already validated payload without rereading its input."""
 
-    if expected_method != "full3d_direct":
-        return 3, ["Task38 numerical adapter is unavailable for this method"]
-    from src.runners.task038_full3d_direct import run_full3d_direct
+    if expected_method == "full3d_direct":
+        from src.runners.task038_full3d_direct import run_full3d_direct
+
+        adapter = run_full3d_direct
+        label = "Full3D direct"
+    elif expected_method == "hybrid_direct":
+        from src.runners.task038_hybrid_direct import run_hybrid_direct
+
+        def adapter(payload, directory):
+            return run_hybrid_direct(
+                payload,
+                directory,
+                source_sha=expected_source_sha,
+            )
+
+        label = "Hybrid direct"
+    else:
+        return 3, [f"Task38 {expected_method} numerical adapter is unavailable"]
 
     try:
-        result = run_full3d_direct(resolved_payload, output_directory)
+        result = adapter(resolved_payload, output_directory)
     except Exception as exc:  # convert one worker boundary failure to a nonzero exit
-        return 4, [f"Task38 Full3D direct adapter failed: {exc}"]
+        return 4, [f"Task38 {label} adapter failed: {exc}"]
     if not result["passed"]:
         return 4, list(result["errors"])
     return 0, []
@@ -239,11 +255,12 @@ def main(argv: list[str] | None = None) -> int:
         resolved_payload,
         expected_method=args.expected_method,
         output_directory=args.expected_output_directory,
+        expected_source_sha=args.expected_source_sha,
     )
     if exit_status != 0:
         if comm.rank == 0:
             for error in dispatch_errors:
-                print(f"Task38 Full3D direct authority error: {error}")
+                print(f"Task38 {args.expected_method} authority error: {error}")
         return exit_status
     return exit_status
 

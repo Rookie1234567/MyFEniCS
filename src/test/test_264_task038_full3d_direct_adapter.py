@@ -167,10 +167,11 @@ def test_adapter_rejects_wrong_method_identity(field, value, message, tmp_path):
         run_full3d_direct(payload, tmp_path, solver_runner=lambda *_a, **_k: _summary())
 
 
-def test_only_full3d_direct_is_connected_and_other_methods_fail_closed():
-    assert CONNECTED_METHODS == {"full3d_direct"}
+def test_full3d_and_hybrid_direct_are_connected_and_other_methods_fail_closed():
+    assert CONNECTED_METHODS == {"full3d_direct", "hybrid_direct"}
     assert method_adapter_available("full3d_direct") is True
-    for method in ("2d_scattered", "2d_port", "hybrid_direct", "hybrid_iterative"):
+    assert method_adapter_available("hybrid_direct") is True
+    for method in ("2d_scattered", "2d_port", "hybrid_iterative"):
         assert method_adapter_available(method) is False
 
 
@@ -218,7 +219,7 @@ def test_worker_dispatch_uses_the_same_resolved_payload(monkeypatch, tmp_path):
 
 def test_worker_dispatch_keeps_unconnected_methods_closed(tmp_path):
     status, errors = _dispatch_resolved_payload(
-        _payload(), expected_method="hybrid_direct", output_directory=tmp_path
+        _payload(), expected_method="hybrid_iterative", output_directory=tmp_path
     )
     assert status == 3
     assert "unavailable" in errors[0]

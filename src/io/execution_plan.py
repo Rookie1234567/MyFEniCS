@@ -23,7 +23,7 @@ METHOD_ADAPTERS = {
     "hybrid_direct": "task038.hybrid_direct",
     "hybrid_iterative": "task038.hybrid_iterative",
 }
-CONNECTED_METHODS = frozenset({"full3d_direct"})
+CONNECTED_METHODS = frozenset({"full3d_direct", "hybrid_direct"})
 
 
 @dataclass(frozen=True)

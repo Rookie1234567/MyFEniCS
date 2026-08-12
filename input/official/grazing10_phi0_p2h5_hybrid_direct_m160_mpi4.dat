@@ -1,7 +1,7 @@
-# One Hybrid direct run.  Method values are public finite enums, not free strings.
+# Case080 supported Hybrid direct official input; one run only.
 schema_version = 1
-model_id = "case080_grazing10_phi0"
-run_id = "case080_grazing10_phi0_hybrid_direct_m160_mpi4"
+model_id = "case080_grazing10_phi0_official"
+run_id = "case080_grazing10_phi0_hybrid_direct_m160_mpi4_official"
 comparison_group = "case080_grazing10_phi0"
 dimension = 3
 
