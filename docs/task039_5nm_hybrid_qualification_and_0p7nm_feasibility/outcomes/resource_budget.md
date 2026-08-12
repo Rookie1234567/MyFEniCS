@@ -97,4 +97,7 @@ external DtN enumerator 必须根据波长、材料、Floquet shift、传播性�
 
 095 Full3D rows/NNZ 和 Task37c endcap rows 是
 `inherited_measured / same_geometry_topology_not_5nm_measurement`；它们只用于上述
-派生估算，不能写成 Task39 5 nm 正式测量。T3–T10 仍为 `not_run/planned`。
+派生估算，不能写成 Task39 5 nm 正式测量。T3 已有一次 `measured complete` 的
+Full3D direct authority；T4–T10 仍为 `not_run/planned`。详见
+[T3 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_t3_full3d_direct_mpi8_v1.json)
+和 [resource ledger](resource_ledger.md)。

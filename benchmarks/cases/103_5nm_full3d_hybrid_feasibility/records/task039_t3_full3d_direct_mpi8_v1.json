@@ -1,0 +1,288 @@
+{
+  "schema_version": "task039.t3.full3d_direct_mpi8.v1",
+  "record_id": "task039_t3_full3d_direct_mpi8_v1",
+  "classification": "T3_FULL3D_DIRECT_AUTHORITY_ESTABLISHED",
+  "source": {
+    "branch": "codex/20260812-task39-5nm-hybrid-0p7nm-feasibility",
+    "source_sha": "76b6d6c08769496b60139797b2b9ab7849810964",
+    "clean_before_run": true,
+    "clean_after_run": true,
+    "mpi_size": 8
+  },
+  "input": {
+    "path": "input/official/task039/5nm_p6h10_full3d_direct_mpi8.dat",
+    "sha256": "e8b60ba70daa2074c21603d463790a28c881d35d7bd17b2b8315fef0318007b6"
+  },
+  "resolved": {
+    "sha256": "5e755e7499ada74c5cb5ec33a26afd87ba46820914d0c8bfddbe5bc387bb56bf",
+    "method": "full3d_direct",
+    "adapter": "task038.full3d_direct",
+    "model_id": "task039_5nm_full3d_direct"
+  },
+  "physical": {
+    "sha256": "db52c70d667caa726e2b2e04b646402415a377fa7bbcef42c87ffc816b9b2a7a",
+    "wavelength_nm": 5.0,
+    "degree": 6,
+    "h_nm": 10,
+    "grazing_deg": 10.0,
+    "theta_deg": 80.0,
+    "phi_deg": 0.0,
+    "polarization": "s",
+    "assembly_backend": "assembly_time_static_condensed"
+  },
+  "raw_run_directory": "results/task039_5nm_full3d_direct/task039_5nm_full3d_direct_p6h10_mpi8__full3d_direct__mpi8__Mna/20260812T204543.545080Z",
+  "attempts": [
+    {
+      "id": "a",
+      "run_directory": "results/task039_5nm_full3d_direct/task039_5nm_full3d_direct_p6h10_mpi8__full3d_direct__mpi8__Mna/20260812T193248.147644Z",
+      "classification": "configuration_input_failure",
+      "status": "failed",
+      "reason": "旧显式 top/bottom diffraction probe=110/10 与新 Task39 block 不相容；未形成数值 authority。",
+      "preserved": true
+    },
+    {
+      "id": "b",
+      "run_directory": "results/task039_5nm_full3d_direct/task039_5nm_full3d_direct_p6h10_mpi8__full3d_direct__mpi8__Mna/20260812T195748.825443Z",
+      "classification": "numerical_pass_evidence_incomplete",
+      "status": "worker_exit0",
+      "reason": "数值与 RSS/swap 通过，但 canonical vectors 和 PSS/USS telemetry 未形成完整 authority。",
+      "preserved": true
+    },
+    {
+      "id": "c",
+      "run_directory": "results/task039_5nm_full3d_direct/task039_5nm_full3d_direct_p6h10_mpi8__full3d_direct__mpi8__Mna/20260812T204543.545080Z",
+      "classification": "T3_FULL3D_DIRECT_AUTHORITY_ESTABLISHED",
+      "status": "worker_exit0",
+      "preserved": true
+    }
+  ],
+  "a1_gates": {
+    "direct_solve_success": {"actual": true, "limit": true, "pass": true},
+    "true_relative_residual": {
+      "actual": 3.512831334578471e-11,
+      "field": "linear_system_relative_residual",
+      "limit": "<=1e-9",
+      "pass": true
+    },
+    "R_T_A_A_volume_finite": {"actual": true, "limit": "all finite", "pass": true},
+    "energy_closure": {
+      "actual": 1.0509371151101732e-12,
+      "field": "energy_closure_error_port_volume",
+      "limit": "abs<=1e-5",
+      "pass": true
+    },
+    "all_propagating_mode_keys_unique": {
+      "actual": "604 unique keys / 604 propagating modes",
+      "limit": "unique",
+      "pass": true
+    },
+    "selected_E_H_export": {
+      "actual": "five planes z=10,30,60,90,110 nm",
+      "limit": "all requested planes present",
+      "pass": true
+    },
+    "process_tree_telemetry": {
+      "actual": "measured; 920 attempted, 918 complete smaps samples",
+      "limit": "complete samples > 0",
+      "pass": true
+    },
+    "swap": {"actual_mib": 0.0, "limit": 0.0, "pass": true}
+  },
+  "mesh_and_linear_algebra": {
+    "cells": 252,
+    "full_dofs": 173802,
+    "active_trace_rows": 51192,
+    "condensed_rows": 51796,
+    "auxiliary_rows": 604,
+    "condensed_matrix_nnz_used": 43283050,
+    "condensed_matrix_nnz_allocated": 47719324,
+    "factor_matrix_nnz": 217041864,
+    "factor_nnz_source": "stage4_dtn_factor_inventory.matrix_stats.matrix_nnz_used and MUMPS INFOG(9)",
+    "mumps_ooc_enabled": false
+  },
+  "observables": {
+    "linear_system_relative_residual": 3.512831334578471e-11,
+    "solver_residual_norm": 0.0,
+    "reduced_trace_dtn_residual_norm": 1.1424520919243829e-09,
+    "eliminated_cell_interior_residual_norm": 8.520002072297783e-11,
+    "eliminated_cell_interior_max_abs_residual": 3.5084487262975876e-12,
+    "R": 0.9094973679084956,
+    "T": 0.0008705857370571771,
+    "A_balance": 0.08963204635444727,
+    "A_volume": 0.08963204635549822,
+    "closure": 1.0509371151101732e-12,
+    "R00_s": 0.9072440458558859,
+    "R00_p": 1.9623718607831533e-24,
+    "official_result": true,
+    "full_operator_residual_method": "explicit reduced trace+DtN Mat action combined with matrix-free dolfinx_mpc UFL action projected onto every active eliminated cell-interior test space"
+  },
+  "inventory_authority": {
+    "classification": "exact_component_computed_from_resolved_task039_dat",
+    "source_record": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_t2_a0_preflight_v1.json",
+    "canonical_sha256": "296c9e74d0a15c0dd2671e54fa7de2709c5f19f0c9f8665ffc4d35d740d4faea",
+    "exact_match_to_t2": true,
+    "key_shape": ["side", "m", "n", "polarization"],
+    "count": 604,
+    "counts": {
+      "bottom": 300,
+      "top": 304,
+      "S": 302,
+      "P": 302,
+      "bottom_S": 150,
+      "bottom_P": 150,
+      "top_S": 152,
+      "top_P": 152,
+      "propagating": 604,
+      "nonpropagating": 0,
+      "rayleigh_warning": 0,
+      "unique_keys": 604
+    },
+    "full_order_raw": {
+      "path": "results/task039_5nm_full3d_direct/task039_5nm_full3d_direct_p6h10_mpi8__full3d_direct__mpi8__Mna/20260812T204543.545080Z/numerical_output/dtn_port_diffraction_orders_3d.json",
+      "sha256": "6d2ed0911a07b0fde09892e553fb7ed5c15aeec5d0b04653967e2f81ac7185a0",
+      "order_count": 604
+    },
+    "reporting_order_raw": {
+      "path": "results/task039_5nm_full3d_direct/task039_5nm_full3d_direct_p6h10_mpi8__full3d_direct__mpi8__Mna/20260812T204543.545080Z/numerical_output/diffraction_orders_3d.json",
+      "sha256": "fec66d6f0e050fa9561bde0da3d13b8f54d9ce0ad76af893623af22f603bf60e",
+      "order_count": 50,
+      "reporting_bounds": [2, 2],
+      "is_selection_authority": false
+    }
+  },
+  "significant_channels": {
+    "threshold": 1e-8,
+    "normalization": "incident_power",
+    "field": "power_ratio",
+    "count": 33,
+    "channels": [
+      {"key": ["top", -19, 0, "s"], "power_ratio": 0.00019232766346069592, "R": 0.00019232766346069592, "T": 0.0, "outgoing_amplitude": [-0.008797801017013723, 0.002338144359541718], "power_carrying": true},
+      {"key": ["top", -18, 0, "s"], "power_ratio": 0.0016534115115998257, "R": 0.0016534115115998257, "T": 0.0, "outgoing_amplitude": [0.014802495156531802, -0.01663125171842399], "power_carrying": true},
+      {"key": ["top", -17, 0, "s"], "power_ratio": 9.161278852551331e-06, "R": 9.161278852551331e-06, "T": 0.0, "outgoing_amplitude": [6.960470128571882e-05, 0.0015070730807189398], "power_carrying": true},
+      {"key": ["top", -16, 0, "s"], "power_ratio": 3.881986977628754e-07, "R": 3.881986977628754e-07, "T": 0.0, "outgoing_amplitude": [-0.00025485532629404464, 0.00014336499423022803], "power_carrying": true},
+      {"key": ["top", -14, 0, "s"], "power_ratio": 6.930253829919881e-08, "R": 6.930253829919881e-08, "T": 0.0, "outgoing_amplitude": [0.00011182853521181072, -2.6883281835437044e-05], "power_carrying": true},
+      {"key": ["top", -13, 0, "s"], "power_ratio": 9.469968054769754e-08, "R": 9.469968054769754e-08, "T": 0.0, "outgoing_amplitude": [-0.00013162963666824858, 1.1373842896158548e-06], "power_carrying": true},
+      {"key": ["top", -11, 0, "s"], "power_ratio": 5.115298570484739e-08, "R": 5.115298570484739e-08, "T": 0.0, "outgoing_amplitude": [8.746803037691201e-05, -3.5937339323344256e-05], "power_carrying": true},
+      {"key": ["top", -10, 0, "s"], "power_ratio": 1.2132578866528015e-07, "R": 1.2132578866528015e-07, "T": 0.0, "outgoing_amplitude": [8.674693318560199e-06, 0.00014489714806014979], "power_carrying": true},
+      {"key": ["top", -8, 0, "s"], "power_ratio": 2.0302936171583487e-07, "R": 2.0302936171583487e-07, "T": 0.0, "outgoing_amplitude": [-7.854117709595322e-05, -0.00017235108418028585], "power_carrying": true},
+      {"key": ["top", -7, 0, "s"], "power_ratio": 4.1531311102549764e-07, "R": 4.1531311102549764e-07, "T": 0.0, "outgoing_amplitude": [3.390704097277495e-05, -0.00027218473202350965], "power_carrying": true},
+      {"key": ["top", -6, 0, "s"], "power_ratio": 5.014726826811483e-08, "R": 5.014726826811483e-08, "T": 0.0, "outgoing_amplitude": [9.599939448754753e-05, -1.4784539784442504e-05], "power_carrying": true},
+      {"key": ["top", -5, 0, "s"], "power_ratio": 7.120944098039833e-07, "R": 7.120944098039833e-07, "T": 0.0, "outgoing_amplitude": [-0.00019415842394494823, 0.0003219977092717889], "power_carrying": true},
+      {"key": ["top", -4, 0, "s"], "power_ratio": 1.2748097449361044e-06, "R": 1.2748097449361044e-06, "T": 0.0, "outgoing_amplitude": [-0.00032786783172686465, 0.00040669663844284764], "power_carrying": true},
+      {"key": ["top", -2, 0, "s"], "power_ratio": 3.0502379485827094e-05, "R": 3.0502379485827094e-05, "T": 0.0, "outgoing_amplitude": [-0.002559695435668094, 0.0014122993910360559], "power_carrying": true},
+      {"key": ["top", -1, 0, "s"], "power_ratio": 0.00036452148030993606, "R": 0.00036452148030993606, "T": 0.0, "outgoing_amplitude": [-0.003901415310563559, -0.010982958591878329], "power_carrying": true},
+      {"key": ["top", 0, 0, "s"], "power_ratio": 0.9072440458558859, "R": 0.9072440458558859, "T": 0.0, "outgoing_amplitude": [0.6971232813162448, -0.6490479000064331], "power_carrying": true},
+      {"key": ["bottom", -19, 0, "s"], "power_ratio": 3.255400030332558e-05, "R": 0.0, "T": 3.255400030332558e-05, "outgoing_amplitude": [0.0014792545247010827, 0.0041350481017485684], "power_carrying": true},
+      {"key": ["bottom", -18, 0, "s"], "power_ratio": 0.0006317664897669709, "R": 0.0, "T": 0.0006317664897669709, "outgoing_amplitude": [-0.006493932661287024, 0.013833556909448543], "power_carrying": true},
+      {"key": ["bottom", -17, 0, "s"], "power_ratio": 5.9243101003561765e-06, "R": 0.0, "T": 5.9243101003561765e-06, "outgoing_amplitude": [0.001298167521659095, -0.00024374061701172025], "power_carrying": true},
+      {"key": ["bottom", -16, 0, "s"], "power_ratio": 2.713446320161331e-07, "R": 0.0, "T": 2.713446320161331e-07, "outgoing_amplitude": [-0.00023167228831958027, -0.00012530841899829602], "power_carrying": true},
+      {"key": ["bottom", -14, 0, "s"], "power_ratio": 8.068530604301381e-08, "R": 0.0, "T": 8.068530604301381e-08, "outgoing_amplitude": [-0.0001119537719084614, -7.047042689866539e-05], "power_carrying": true},
+      {"key": ["bottom", -13, 0, "s"], "power_ratio": 5.7095442933134255e-08, "R": 0.0, "T": 5.7095442933134255e-08, "outgoing_amplitude": [4.321458474808945e-05, -9.968062558716347e-05], "power_carrying": true},
+      {"key": ["bottom", -11, 0, "s"], "power_ratio": 4.521860551065168e-08, "R": 0.0, "T": 4.521860551065168e-08, "outgoing_amplitude": [8.848325564808374e-05, 3.240909043628411e-05], "power_carrying": true},
+      {"key": ["bottom", -10, 0, "s"], "power_ratio": 7.313497203712497e-08, "R": 0.0, "T": 7.313497203712497e-08, "outgoing_amplitude": [-2.767151948080636e-05, -0.00011614813944267752], "power_carrying": true},
+      {"key": ["bottom", -9, 0, "s"], "power_ratio": 1.2932138564203244e-08, "R": 0.0, "T": 1.2932138564203244e-08, "outgoing_amplitude": [-4.9541566311551e-05, -8.74009516721248e-06], "power_carrying": true},
+      {"key": ["bottom", -8, 0, "s"], "power_ratio": 8.735466706389248e-08, "R": 0.0, "T": 8.735466706389248e-08, "outgoing_amplitude": [-0.00012398815648269167, 4.45923469887272e-05], "power_carrying": true},
+      {"key": ["bottom", -7, 0, "s"], "power_ratio": 2.788937797481952e-07, "R": 0.0, "T": 2.788937797481952e-07, "outgoing_amplitude": [-0.00021826231991936578, 9.679976577235645e-05], "power_carrying": true},
+      {"key": ["bottom", -5, 0, "s"], "power_ratio": 4.4388973744852257e-07, "R": 0.0, "T": 4.4388973744852257e-07, "outgoing_amplitude": [-0.00015666885225937096, 0.0002759496917352385], "power_carrying": true},
+      {"key": ["bottom", -4, 0, "s"], "power_ratio": 1.3001859926041127e-06, "R": 0.0, "T": 1.3001859926041127e-06, "outgoing_amplitude": [-0.0005669193289580028, -1.471429723387458e-05], "power_carrying": true},
+      {"key": ["bottom", -3, 0, "s"], "power_ratio": 1.24071455815406e-07, "R": 0.0, "T": 1.24071455815406e-07, "outgoing_amplitude": [0.00012645438285373593, 0.00013706861627091248], "power_carrying": true},
+      {"key": ["bottom", -2, 0, "s"], "power_ratio": 9.26628541930499e-06, "R": 0.0, "T": 9.26628541930499e-06, "outgoing_amplitude": [-0.0009410401821338277, -0.0015057297899940599], "power_carrying": true},
+      {"key": ["bottom", -1, 0, "s"], "power_ratio": 0.00018779759342113967, "R": 0.0, "T": 0.00018779759342113967, "outgoing_amplitude": [0.0029160290559127255, 0.00911229120729074], "power_carrying": true},
+      {"key": ["bottom", 0, 0, "s"], "power_ratio": 4.881887572554243e-07, "R": 0.0, "T": 4.881887572554243e-07, "outgoing_amplitude": [0.0010688899532542713, 0.0004534702199462637], "power_carrying": true}
+    ]
+  },
+  "selected_EH": {
+    "json_path": "results/task039_5nm_full3d_direct/task039_5nm_full3d_direct_p6h10_mpi8__full3d_direct__mpi8__Mna/20260812T204543.545080Z/numerical_output/full3d_reference_samples.json",
+    "json_sha256": "cb5da8a6c4887c5c4b4f3c050a76d1916d3648e40a1a6f43e5a7f00f32fd198a",
+    "npz_path": "results/task039_5nm_full3d_direct/task039_5nm_full3d_direct_p6h10_mpi8__full3d_direct__mpi8__Mna/20260812T204543.545080Z/numerical_output/full3d_reference_samples.npz",
+    "npz_sha256": "1602c66efcb69c070dbc2d71ba6e0166d269a10068fe017139c597c1d5edf681",
+    "schema_version": 1,
+    "shape": [5, 20, 40, 3],
+    "point_count": 4000,
+    "z_nm": [10.0, 30.0, 60.0, 90.0, 110.0],
+    "max_abs_E_V_per_m": [0.03070066880223171, 0.029365351134436467, 0.03523485649078416, 0.08880291901307337, 0.41793512732453364],
+    "max_abs_H_A_per_m": [7.104643950481691e-05, 7.465564592881413e-05, 8.632105441161256e-05, 0.00024756387697772326, 0.0012229082784090302]
+  },
+  "canonical": {
+    "summary_key": "full3d_direct_canonical_export",
+    "status": "completed",
+    "schema_version": "task037.canonical-vector-manifest.v1",
+    "roles": {
+      "active_trace": {
+        "manifest": "results/task039_5nm_full3d_direct/task039_5nm_full3d_direct_p6h10_mpi8__full3d_direct__mpi8__Mna/20260812T204543.545080Z/numerical_output/task037_m3a_active_trace_canonical_manifest.json",
+        "manifest_sha256": "f6603ab7e648bf3facf9de46b545f57ddc6eecebbf0d0d814236a3bee30d6b84",
+        "packet_sum": 60402,
+        "duplicates": 0,
+        "shards": [
+          {"rank": 0, "filename": "task037_m3a_active_trace_canonical_rank0000.jsonl", "sha256": "a29656de43f0986a5b35f4ba040b38c0443be35496aaf9c517126123fac50a50", "packet_count": 7686, "schema": "task037.canonical-vector-shard.v1"},
+          {"rank": 1, "filename": "task037_m3a_active_trace_canonical_rank0001.jsonl", "sha256": "833e410f4b2984e053887a59e393cc8984eeaef478adf3735184d458a0f54555", "packet_count": 7296, "schema": "task037.canonical-vector-shard.v1"},
+          {"rank": 2, "filename": "task037_m3a_active_trace_canonical_rank0002.jsonl", "sha256": "456801676c89fd2cf58f510b70c803695e285330c8616b9ae98659ce5477650f", "packet_count": 7338, "schema": "task037.canonical-vector-shard.v1"},
+          {"rank": 3, "filename": "task037_m3a_active_trace_canonical_rank0003.jsonl", "sha256": "9e4919a22982d1611a0c1d7d3802d68ea409667566c3ab422f729422167c7c9d", "packet_count": 7812, "schema": "task037.canonical-vector-shard.v1"},
+          {"rank": 4, "filename": "task037_m3a_active_trace_canonical_rank0004.jsonl", "sha256": "4ce3dcb231adf4c030f758eb2664c7097aafecd92b491d03e5c2c91157c12f4f", "packet_count": 7566, "schema": "task037.canonical-vector-shard.v1"},
+          {"rank": 5, "filename": "task037_m3a_active_trace_canonical_rank0005.jsonl", "sha256": "40a66eb1cbf8e7e7f433774ff8529a2ba127040cdb6e13a1d33855dc79c06b9f", "packet_count": 7404, "schema": "task037.canonical-vector-shard.v1"},
+          {"rank": 6, "filename": "task037_m3a_active_trace_canonical_rank0006.jsonl", "sha256": "eff510b793e24d0c0397192bc2a9a9587adb78d0b1e22df0e9ad13a62f42c682", "packet_count": 7590, "schema": "task037.canonical-vector-shard.v1"},
+          {"rank": 7, "filename": "task037_m3a_active_trace_canonical_rank0007.jsonl", "sha256": "cb04208cb02d53c8d267ad589a716344b33b52ff27048fef4fd3edc1d7b1278e", "packet_count": 7710, "schema": "task037.canonical-vector-shard.v1"}
+        ]
+      },
+      "full_fe": {
+        "manifest": "results/task039_5nm_full3d_direct/task039_5nm_full3d_direct_p6h10_mpi8__full3d_direct__mpi8__Mna/20260812T204543.545080Z/numerical_output/task037_m3a_full_fe_canonical_manifest.json",
+        "manifest_sha256": "2b32c23b457d2e5edd3befa159a28ca97b93babf67dfec0ea4588998b820e0a5",
+        "packet_sum": 173802,
+        "duplicates": 0,
+        "shards": [
+          {"rank": 0, "filename": "task037_m3a_full_fe_canonical_rank0000.jsonl", "sha256": "fd5821dc86b5e43a68b62a3a4ae25c174cc6acbdb133197cb220976014efdae4", "packet_count": 21636, "schema": "task037.canonical-vector-shard.v1"},
+          {"rank": 1, "filename": "task037_m3a_full_fe_canonical_rank0001.jsonl", "sha256": "56bbf6d70330533c322a976b967a79839028e008c1081c060ca5e61c2e6401b8", "packet_count": 21696, "schema": "task037.canonical-vector-shard.v1"},
+          {"rank": 2, "filename": "task037_m3a_full_fe_canonical_rank0002.jsonl", "sha256": "00e811bf182bf10ecb1377fc75e9feb98d79393eb444ac044de39ec05c5cea18", "packet_count": 21288, "schema": "task037.canonical-vector-shard.v1"},
+          {"rank": 3, "filename": "task037_m3a_full_fe_canonical_rank0003.jsonl", "sha256": "d3f93347e6c8f6183535ce688dbc0ebbe8770c76cfd13324ebfd7865d3bc9366", "packet_count": 22212, "schema": "task037.canonical-vector-shard.v1"},
+          {"rank": 4, "filename": "task037_m3a_full_fe_canonical_rank0004.jsonl", "sha256": "7eb7230d9459fc66fb88465956f952417806a7311269382f5c9052ef1be65337", "packet_count": 21516, "schema": "task037.canonical-vector-shard.v1"},
+          {"rank": 5, "filename": "task037_m3a_full_fe_canonical_rank0005.jsonl", "sha256": "0a9fd592e4c5e3883330719121c43b76d992ec96ded5c115d14367d24493b559", "packet_count": 21804, "schema": "task037.canonical-vector-shard.v1"},
+          {"rank": 6, "filename": "task037_m3a_full_fe_canonical_rank0006.jsonl", "sha256": "88875bb0282b49171718b70033b8c9c61f2642da7135e00011224de6b2626875", "packet_count": 21540, "schema": "task037.canonical-vector-shard.v1"},
+          {"rank": 7, "filename": "task037_m3a_full_fe_canonical_rank0007.jsonl", "sha256": "8ce0d791ad0414c27961ae07b324417589cc9d41f0702313ed5d1dfd38f9c99d", "packet_count": 22110, "schema": "task037.canonical-vector-shard.v1"}
+        ]
+      }
+    }
+  },
+  "resources": {
+    "process_tree_peak_rss_mib": 15965.453125,
+    "peak_pss_mib": 13932.458984375,
+    "peak_uss_mib": 13611.3515625,
+    "peak_semantics": "per-metric simultaneous process-tree peak across complete smaps samples; metrics may peak at different samples",
+    "sample_count": 920,
+    "smaps_attempted_sample_count": 920,
+    "smaps_complete_sample_count": 918,
+    "telemetry_status": "measured",
+    "swap_mib": 0.0,
+    "warning_triggered": false,
+    "effective_hard_stop_gib": 205.2591751098633,
+    "configured_hard_stop_gib": 220.0,
+    "warning_gib": 180.0,
+    "selected_capacity_gib": 228.0657501220703,
+    "solver_rank_historical_rss_upper_bound_mib": 15438.6640625,
+    "solver_rank_rss_semantics": "sum_rank_historical_peaks_upper_bound_not_simultaneous"
+  },
+  "timings": {
+    "start_time": "2026-08-12T20:45:43.545529+00:00",
+    "end_time": "2026-08-12T20:50:34.025876+00:00",
+    "outer_wall_seconds": 290.480347,
+    "numerical_elapsed_seconds": 283.03604832617566,
+    "dtn_assembly_seconds": 91.26821997994557,
+    "ksp_setup_seconds": 129.60878405510448,
+    "ksp_solve_seconds": 0.19913547299802303,
+    "postprocess_seconds": 8.928811766207218,
+    "diffraction_postprocess_seconds": 2.052265471080318,
+    "volume_absorption_postprocess_seconds": 0.07608551904559135
+  },
+  "raw_hashes": {
+    "run_summary.json": "c8b4d0ab14b96665cb07e8a51bd479f3f26c14be552a98acf80f5b250df697cb",
+    "run_manifest.json": "3aa7e4c1061fbbe58dbbe71dee2fde06dabef3a8106dd1783e8a9742ec7fce26",
+    "numerical_output/run_summary.json": "8e99f51fab57a184b393927c22a4be0b2b48b45939be480540c3f0fbf1c01ce0",
+    "numerical_output/dtn_port_diffraction_orders_3d.json": "6d2ed0911a07b0fde09892e553fb7ed5c15aeec5d0b04653967e2f81ac7185a0",
+    "numerical_output/dtn_port_power_metrics_3d.json": "2b3d7b06936bf415105268b96300e23cf2341fd5c9e18af1f9787aaffb1bb7af",
+    "numerical_output/dtn_auxiliary_amplitudes_3d.json": "319974ca55529c367fe462b15d403dab435de54ee770439cf5feb29b6b7cdc07",
+    "numerical_output/diffraction_orders_3d.json": "fec66d6f0e050fa9561bde0da3d13b8f54d9ce0ad76af893623af22f603bf60e",
+    "numerical_output/full3d_reference_samples.json": "cb5da8a6c4887c5c4b4f3c050a76d1916d3648e40a1a6f43e5a7f00f32fd198a",
+    "numerical_output/full3d_reference_samples.npz": "1602c66efcb69c070dbc2d71ba6e0166d269a10068fe017139c597c1d5edf681",
+    "numerical_output/progress_3d.jsonl": "05405559b994476c905be0a9a749a9b60bdacc911426c990ca84e40e956f1ba5",
+    "worker_stdout.txt": "8ccdf1980ec60b3b8e8691e0d77a45aae0cfdfe547715ba7f9bd9f3feb70aec9"
+  }
+}

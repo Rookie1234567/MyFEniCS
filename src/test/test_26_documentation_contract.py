@@ -364,7 +364,17 @@ class DocumentationContractTests(unittest.TestCase):
                     self.assertTrue((folder / name).is_file(), name)
                 config = _load(folder / "config.json")
                 self.assertEqual(config["phases"]["T2_A0"]["status"], "completed")
-                for phase in ("T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10"):
+                self.assertEqual(config["phases"]["T3"]["status"], "completed")
+                self.assertEqual(
+                    config["phases"]["T3"]["record"],
+                    "records/task039_t3_full3d_direct_mpi8_v1.json",
+                )
+                self.assertEqual(
+                    config["phases"]["T3"]["classification"],
+                    "T3_FULL3D_DIRECT_AUTHORITY_ESTABLISHED",
+                )
+                self.assertTrue(config["phases"]["T3"]["pde_launched"])
+                for phase in ("T4", "T5", "T6", "T7", "T8", "T9", "T10"):
                     self.assertEqual(config["phases"][phase]["status"], "not_run")
                     self.assertEqual(config["phases"][phase]["plan"], "planned")
                 command = _read(folder / "test_command.txt")

@@ -29,7 +29,12 @@
   "inherited_input_evidence": "records/inherited_p6h10_topology_v1.json",
   "phases": {
     "T2_A0": {"status": "completed", "record": "records/task039_t2_a0_preflight_v1.json"},
-    "T3": {"status": "not_run", "plan": "planned"},
+    "T3": {
+      "status": "completed",
+      "record": "records/task039_t3_full3d_direct_mpi8_v1.json",
+      "classification": "T3_FULL3D_DIRECT_AUTHORITY_ESTABLISHED",
+      "pde_launched": true
+    },
     "T4": {"status": "not_run", "plan": "planned"},
     "T5": {"status": "not_run", "plan": "planned"},
     "T6": {"status": "not_run", "plan": "planned"},

@@ -22,7 +22,7 @@ inventory 只保存在 [T2 A0 record](records/task039_t2_a0_preflight_v1.json)�
 | 阶段 | 状态 | 证据/边界 |
 | --- | --- | --- |
 | T2 A0 | `completed` | 纯 Python preflight record；无 formal PDE |
-| T3 | `not_run` / `planned` | Full3D direct anchor |
+| T3 | `completed` | [Full3D direct MPI8 authority record](records/task039_t3_full3d_direct_mpi8_v1.json) |
 | T4 | `not_run` / `planned` | Full3D iterative anchor |
 | T5 | `not_run` / `planned` | Hybrid direct M selection |
 | T6 | `not_run` / `planned` | Hybrid iterative candidate |
@@ -31,5 +31,6 @@ inventory 只保存在 [T2 A0 record](records/task039_t2_a0_preflight_v1.json)�
 | T9 | `not_run` / `planned` | 0.7 nm component-only feasibility |
 | T10 | `not_run` / `planned` | final tests, outcomes and response |
 
-`config.json`、`schema.json` 和 `expected.json` 只描述这个计划与 A0 状态；它们
-不构成数值结果，也不允许通过 CLI 覆盖 dat 的物理、solver 或 MPI 字段。
+`config.json`、`schema.json` 和 `expected.json` 只描述这个计划与已绑定的 T2/T3
+compact evidence；它们不允许通过 CLI 覆盖 dat 的物理、solver 或 MPI 字段。T3
+raw results 仍在 ignored 目录，record 只保存可审查字段和 SHA256。

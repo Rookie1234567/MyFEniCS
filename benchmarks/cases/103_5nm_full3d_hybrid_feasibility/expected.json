@@ -8,5 +8,11 @@
     "external_mode_count": 604,
     "external_inventory_is_single_authority": true
   },
-  "not_run": ["T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10"]
+  "t3": {
+    "status": "completed",
+    "record": "records/task039_t3_full3d_direct_mpi8_v1.json",
+    "classification": "T3_FULL3D_DIRECT_AUTHORITY_ESTABLISHED",
+    "pde_launched": true
+  },
+  "not_run": ["T4", "T5", "T6", "T7", "T8", "T9", "T10"]
 }
