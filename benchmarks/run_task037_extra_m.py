@@ -87,6 +87,8 @@ M2_SOURCE_LABELS = (
     "checkerboard/high-frequency",
     "physical-RHS-like",
 )
+M2_FORM_REUSE_ARTIFACT = "m2_form_reuse.json"
+M2_FORM_REUSE_SCHEMA = f"{M2_SCHEMA}.form-reuse.v1"
 M1_EVENTS = (
     "authority_validated",
     "mesh_ready",
@@ -1899,6 +1901,7 @@ def _m2_recorded_artifacts(run_dir: Path) -> dict[str, dict[str, Any]]:
         "stage_root_pid.json",
         "m2_progress.jsonl",
         "m2_stdout.txt",
+        M2_FORM_REUSE_ARTIFACT,
         "m2_worker_summary.json",
         "m2_timeline.jsonl",
         "m2_root_pid.json",
@@ -1913,6 +1916,38 @@ def _m2_recorded_artifacts(run_dir: Path) -> dict[str, dict[str, Any]]:
         "m2_source_actions.npy",
     ]
     return {name: _artifact(run_dir, name) for name in names}
+
+
+def _m2_write_form_reuse(
+    run_dir: Path,
+    source: Mapping[str, Any],
+    stage_summary: Mapping[str, Any],
+    form_record: Mapping[str, Any],
+    cache_before: list[dict[str, Any]],
+    cache_after: list[dict[str, Any]],
+) -> dict[str, Any]:
+    checks = {
+        "code_state_hit": form_record.get("code_state") == "hit_no_new_decl_impl",
+        "cache_unchanged": cache_before == cache_after,
+        "forms_match": bool(_h2b_forms_match(stage_summary.get("form"), form_record, run_dir)),
+    }
+    payload = _attach_evidence(
+        {
+            "schema": M2_FORM_REUSE_SCHEMA,
+            "phase": "online",
+            "source": _plain(source),
+            "stage_manifest_sha256": _sha256_file(run_dir / "stage_summary.json"),
+            "online_form": _plain(form_record),
+            "cache": {
+                "before": _plain(cache_before),
+                "after": _plain(cache_after),
+            },
+            "checks": checks,
+            "all_pass": all(value is True for value in checks.values()),
+        }
+    )
+    _write_json(run_dir / M2_FORM_REUSE_ARTIFACT, payload)
+    return payload
 
 
 def _m2_prepare_p0_patch(h2a: Any, function_space: Any, mesh_data: Any, cfg: Any, floquet: Any, run_dir: Path) -> dict[str, Any]:
@@ -2094,6 +2129,7 @@ def _run_m2_worker(run_dir: Path) -> int:
     stage_summary: Mapping[str, Any] | None = None
     cache_before: list[dict[str, Any]] | None = None
     cache_after: list[dict[str, Any]] | None = None
+    form_reuse: dict[str, Any] | None = None
     try:
         _m2_mark(run_dir, "authority_validated", started)
         stage_summary = _read_json(stage_path)
@@ -2133,12 +2169,22 @@ def _run_m2_worker(run_dir: Path) -> int:
             "b0",
         )
         cache_after = _h2b_cache_snapshot(cache_dir)
-        if (
-            form_record.get("code_state") != "hit_no_new_decl_impl"
-            or cache_before != cache_after
-            or not _h2b_forms_match(stage_summary["form"], form_record, run_dir)
-        ):
-            raise ValueError("M2 online B0 form did not reuse the isolated JIT stage")
+        form_reuse = _m2_write_form_reuse(
+            run_dir,
+            _clean_source(),
+            stage_summary,
+            form_record,
+            cache_before,
+            cache_after,
+        )
+        if form_reuse["all_pass"] is not True:
+            checks = form_reuse["checks"]
+            raise ValueError(
+                "M2 online B0 form reuse failed: "
+                f"code_state_hit={checks['code_state_hit']}, "
+                f"cache_unchanged={checks['cache_unchanged']}, "
+                f"forms_match={checks['forms_match']}"
+            )
         _m2_mark(run_dir, "b0_action_ready", started)
         prepared = _m2_prepare_p0_patch(_lazy_h2a(), p6_space, mesh_data, cfg, floquet6, run_dir)
         _m2_mark(run_dir, "p0_authority_ready", started, touching_cell_count=19)
@@ -2229,6 +2275,7 @@ def _run_m2_worker(run_dir: Path) -> int:
         _m2_save_array(run_dir, "m2_source_corrections.npy", np.stack(correction_values))
         _m2_save_array(run_dir, "m2_source_actions.npy", np.stack(action_values))
         source_end = _clean_source()
+        form_reuse_artifact = _artifact(run_dir, M2_FORM_REUSE_ARTIFACT)
         payload = _attach_evidence({
             "schema": M2_WORKER_SCHEMA,
             "status": "measurement_complete",
@@ -2278,6 +2325,11 @@ def _run_m2_worker(run_dir: Path) -> int:
                     "form_jit_cache_hit": True,
                     "c_source_regeneration": False,
                     "compiler_descendant_pids": [],
+                },
+                "form_reuse": {
+                    "artifact_sha256": form_reuse_artifact.get("sha256"),
+                    "checks": form_reuse["checks"] if form_reuse is not None else None,
+                    "all_pass": form_reuse["all_pass"] if form_reuse is not None else None,
                 },
                 "stage_manifest_sha256": _sha256_file(stage_path),
                 "materialization": _m2_identity(),
@@ -2435,6 +2487,7 @@ def _m2_check_raw(run_dir: Path, checker_source: Mapping[str, Any]) -> dict[str,
         watchdog = _read_json(run_dir / "m2_watchdog_summary.json")
         stage = _read_json(run_dir / "stage_summary.json")
         worker = _read_json(run_dir / "m2_worker_summary.json")
+        form_reuse = _read_json(run_dir / M2_FORM_REUSE_ARTIFACT)
     except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
         return {
             "schema": M2_CHECK_SCHEMA,
@@ -2543,10 +2596,66 @@ def _m2_check_raw(run_dir: Path, checker_source: Mapping[str, Any]) -> dict[str,
         stage.get("form"),
         run_dir,
     )
+    expected_form_reuse = {
+        "code_state_hit": (
+            isinstance(worker.get("form"), Mapping)
+            and worker["form"].get("code_state") == "hit_no_new_decl_impl"
+        ),
+        "cache_unchanged": (
+            isinstance(measurement, Mapping)
+            and isinstance(measurement.get("cache"), Mapping)
+            and measurement["cache"].get("before") == measurement["cache"].get("after")
+        ),
+        "forms_match": (
+            isinstance(stage.get("form"), Mapping)
+            and isinstance(form_reuse, Mapping)
+            and isinstance(form_reuse.get("online_form"), Mapping)
+            and _h2b_forms_match(stage["form"], form_reuse["online_form"], run_dir)
+        ),
+    }
+    form_artifact = _artifact(run_dir, M2_FORM_REUSE_ARTIFACT)
+    sidecar_cache = form_reuse.get("cache") if isinstance(form_reuse, Mapping) else None
+    worker_cache = measurement.get("cache") if isinstance(measurement, Mapping) else None
+    worker_binding = measurement.get("form_reuse") if isinstance(measurement, Mapping) else None
+    raw_artifacts = watchdog.get("raw_artifacts")
+    checks["form_reuse"] = bool(
+        isinstance(form_reuse, Mapping)
+        and form_reuse.get("schema") == M2_FORM_REUSE_SCHEMA
+        and form_reuse.get("phase") == "online"
+        and _evidence_valid(form_reuse)
+        and _source_valid(form_reuse.get("source"))
+        and form_reuse.get("source") == worker.get("source_at_start")
+        and form_reuse.get("source") == worker.get("source_at_end")
+        and form_reuse.get("stage_manifest_sha256") == _sha256_file(run_dir / "stage_summary.json")
+        and form_reuse.get("stage_manifest_sha256") == measurement.get("stage_manifest_sha256")
+        if isinstance(measurement, Mapping)
+        else False
+    )
+    checks["form_reuse"] = bool(
+        checks["form_reuse"]
+        and form_reuse.get("online_form") == worker.get("form")
+        and isinstance(sidecar_cache, Mapping)
+        and isinstance(worker_cache, Mapping)
+        and sidecar_cache.get("before") == worker_cache.get("before")
+        and sidecar_cache.get("after") == worker_cache.get("after")
+        and form_reuse.get("checks") == expected_form_reuse
+        and form_reuse.get("all_pass") is True
+        and isinstance(worker_binding, Mapping)
+        and worker_binding.get("artifact_sha256") == form_artifact.get("sha256")
+        and worker_binding.get("checks") == expected_form_reuse
+        and worker_binding.get("all_pass") is True
+        and form_artifact.get("present") is True
+        and isinstance(form_artifact.get("sha256"), str)
+        and isinstance(raw_artifacts, Mapping)
+        and raw_artifacts.get(M2_FORM_REUSE_ARTIFACT) == form_artifact
+        and all(value is True for value in expected_form_reuse.values())
+    )
     if not checks["form_identity"]:
         problems.append("form_identity")
     if not checks["online_cache"]:
         problems.append("online_cache")
+    if not checks["form_reuse"]:
+        problems.append("form_reuse")
     current_authority = None
     try:
         current_authority = _h2b_p1_authority()

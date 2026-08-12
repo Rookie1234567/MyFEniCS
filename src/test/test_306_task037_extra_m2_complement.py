@@ -155,6 +155,135 @@ def test_m2_online_cache_and_compiler_contract(monkeypatch, tmp_path) -> None:
     ) is False
 
 
+def _m2_form_reuse_source() -> dict[str, object]:
+    return {
+        "source_commit_full_sha": "a" * 40,
+        "tracked_source_dirty": False,
+        "source_worktree_dirty": False,
+        "nonignored_untracked_paths": [],
+        "worktree_status_porcelain": [],
+        "git_error": None,
+    }
+
+
+def _m2_form_reuse_form(code_state: str = "hit_no_new_decl_impl") -> dict[str, object]:
+    return {
+        "role": "b0",
+        "ufl_signature": "ufl",
+        "ufcx_signature": "ufcx",
+        "module_name": "libffcx_forms_demo",
+        "ffcx_signature_stem": "demo",
+        "code_state": code_state,
+        "jit_options": {"cache_dir": "/tmp/jit_cache", "cffi_extra_compile_args": []},
+        "form_compiler_options": {"scalar_type": "complex128"},
+        "proxy_identity": {"operator": "B0"},
+        "element_signature": ["N1E", 6],
+        "cache_files": [{"path": "module.so", "bytes": 3, "mtime_ns": 7, "sha256": "a" * 64}],
+    }
+
+
+def _m2_form_reuse_fixture(tmp_path):
+    source = _m2_form_reuse_source()
+    stage_form = _m2_form_reuse_form("cold_decl_impl_generated")
+    online_form = _m2_form_reuse_form()
+    cache = [{"path": "module.so", "bytes": 3, "mtime_ns": 7, "sha256": "a" * 64}]
+    (tmp_path / "stage_summary.json").write_text("{}\n", encoding="utf-8")
+    return source, stage_form, online_form, cache
+
+
+def test_m2_form_reuse_sidecar_records_each_gate(monkeypatch, tmp_path) -> None:
+    source, stage_form, online_form, cache = _m2_form_reuse_fixture(tmp_path)
+    monkeypatch.setattr(m2_runner, "_h2b_forms_match", lambda *_args: True)
+
+    sidecar = m2_runner._m2_write_form_reuse(
+        tmp_path,
+        source,
+        {"form": stage_form},
+        online_form,
+        cache,
+        cache,
+    )
+    assert sidecar["checks"] == {
+        "code_state_hit": True,
+        "cache_unchanged": True,
+        "forms_match": True,
+    }
+    assert sidecar["all_pass"] is True
+    assert m2_runner._evidence_valid(sidecar)
+    assert json.loads((tmp_path / m2_runner.M2_FORM_REUSE_ARTIFACT).read_text())["all_pass"] is True
+
+    for failure, key, form, after in (
+        ("code", "code_state_hit", _m2_form_reuse_form("cold_decl_impl_generated"), cache),
+        ("cache", "cache_unchanged", online_form, []),
+        ("forms", "forms_match", online_form, cache),
+    ):
+        monkeypatch.setattr(m2_runner, "_h2b_forms_match", lambda *_args, ok=failure != "forms": ok)
+        failed = m2_runner._m2_write_form_reuse(
+            tmp_path,
+            source,
+            {"form": stage_form},
+            form,
+            cache,
+            after,
+        )
+        assert failed["checks"][key] is False
+        assert failed["all_pass"] is False
+
+
+def test_m2_checker_contract_rejects_tampered_sidecar(monkeypatch, tmp_path) -> None:
+    source, stage_form, online_form, cache = _m2_form_reuse_fixture(tmp_path)
+    monkeypatch.setattr(m2_runner, "_h2b_forms_match", lambda *_args: True)
+    sidecar = m2_runner._m2_write_form_reuse(
+        tmp_path,
+        source,
+        {"form": stage_form},
+        online_form,
+        cache,
+        cache,
+    )
+    artifact = {"present": True, "sha256": "c" * 64}
+    measurement = {
+        "cache": {"before": cache, "after": cache},
+        "stage_manifest_sha256": sidecar["stage_manifest_sha256"],
+        "form_reuse": {
+            "artifact_sha256": artifact["sha256"],
+            "checks": sidecar["checks"],
+            "all_pass": True,
+        },
+    }
+    stage = {"form": stage_form}
+    worker = {
+        "source_at_start": source,
+        "source_at_end": source,
+        "form": online_form,
+        "measurement": measurement,
+    }
+    watchdog = {
+        "raw_artifacts": {m2_runner.M2_FORM_REUSE_ARTIFACT: artifact},
+    }
+    documents = {
+        "m2_form_reuse.json": sidecar,
+        "stage_summary.json": stage,
+        "m2_worker_summary.json": worker,
+        "m2_watchdog_summary.json": watchdog,
+    }
+    monkeypatch.setattr(m2_runner, "_read_json", lambda path: documents[path.name])
+    monkeypatch.setattr(m2_runner, "_artifact", lambda _run_dir, name: artifact)
+    monkeypatch.setattr(m2_runner, "_m2_recorded_artifacts", lambda _run_dir: watchdog["raw_artifacts"])
+    monkeypatch.setattr(m2_runner, "_evidence_valid", lambda _value: True)
+    monkeypatch.setattr(m2_runner, "_m2_stage_gate_valid", lambda *_args: True)
+    monkeypatch.setattr(m2_runner, "_m2_stage_summary_valid", lambda *_args: True)
+    monkeypatch.setattr(m2_runner, "_m2_online_cache_valid", lambda *_args: True)
+    monkeypatch.setattr(m2_runner, "_h2b_p1_authority", lambda: {"p0": {}})
+    accepted = m2_runner._m2_check_raw(tmp_path, source)
+    assert accepted["checks"]["form_reuse"] is True
+
+    tampered = dict(sidecar, checks=dict(sidecar["checks"], forms_match=False), all_pass=True)
+    documents["m2_form_reuse.json"] = tampered
+    rejected = m2_runner._m2_check_raw(tmp_path, source)
+    assert rejected["checks"]["form_reuse"] is False
+
+
 def test_m2_checker_source_scope_is_fail_closed() -> None:
     source = {
         "finite": True,
