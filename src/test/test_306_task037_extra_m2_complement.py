@@ -22,6 +22,7 @@ from src.solvers.hcurl_h2b_block_smoother import _p0_numeric_sha
 def test_m2_runner_helper_ownership_and_cli(monkeypatch) -> None:
     """Exercise the M2-to-H2B helper bindings without entering a worker."""
 
+    assert m2_runner.M2_TIMEOUT_SECONDS == 3_600.0
     assert m2_runner._lazy_h2a is h2b_runner._lazy_h2a
     assert m2_runner._h2b_build_b0_form is h2b_runner._build_b0_form
     assert m2_runner._h2b_expected_jit_options is h2b_runner._expected_jit_options
