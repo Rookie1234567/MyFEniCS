@@ -4,6 +4,8 @@
 
 本文说明如何在 PyCharm Professional 中切换到当前 Maxwell/Floquet 算例需要的新 Docker 环境。
 
+> **历史资料说明：** 本文保留 Docker/PyCharm 环境操作记录；旧 module runner 和独立 wrapper 已移除。当前普通入口是 `python scripts/run_case.py <one-case.dat>`，参数与示例见 [`input/README.md`](../../input/README.md)。manual 与 `mpc_official` 必须分别写在两个独立 dat 的 `[method] constraint_backend` 中。
+
 正确流程是：
 
 ```text
@@ -182,69 +184,29 @@ Docker Compose (dolfinx)
 
 ## 5. 运行配置怎么填
 
-进入：
+本文原先的 module 配置仅是历史记录；不要再把已删除的旧 runner 填入 PyCharm。当前运行配置应调用唯一 public command：
 
 ```text
-Run -> Edit Configurations...
+python scripts/run_case.py input/path/to/case.dat
 ```
 
-新建一个 Python 配置。
+将 manual 与 `mpc_official` 作为两个独立 dat 示例保存，分别在 `[method]` 中写入：
 
-推荐运行整个双版本对比：
-
-```text
-Module name:
-fenics_vector_maxwell_floquet_demo_v2_parallel.src.main
-
-Parameters:
---constraint-backend both
+```toml
+constraint_backend = "manual"
 ```
 
-解释器选择：
+或：
 
-```text
-Docker Compose (dolfinx_mpc complex)
+```toml
+constraint_backend = "mpc_official"
 ```
 
-工作目录：
-
-```text
-C:\Users\admin\Desktop\Code
-```
-
-如果 PyCharm 显示的是容器路径，就填：
-
-```text
-/work
-```
-
-一般不需要在 Run Configuration 里再手动填 complex 环境变量，因为它们已经写在 `docker-compose.yml` 的 `dolfinx_mpc` 服务中。
+不要在命令行追加物理、solver、MPI 或 backend override；Docker/PyCharm 环境细节只用于历史环境复现。
 
 ## 6. 只运行某一个版本
 
-只运行官方 `dolfinx_mpc` 版本：
-
-```text
-Module name:
-fenics_vector_maxwell_floquet_demo_v2_parallel.src.runners.run_grating_mpc_official
-```
-
-只运行手写矩阵版本：
-
-```text
-Module name:
-fenics_vector_maxwell_floquet_demo_v2_parallel.src.runners.run_grating_manual
-```
-
-双版本对比仍推荐：
-
-```text
-Module name:
-fenics_vector_maxwell_floquet_demo_v2_parallel.src.main
-
-Parameters:
---constraint-backend both
-```
+“某一个版本”现在由所选 dat 的 `method.constraint_backend` 和其他公开字段决定，而不是由 Python module 名称决定。完整键、适用性和当前模板见 [`input/README.md`](../../input/README.md)。
 
 ## 7. 验证 PyCharm 解释器是否选对
 
@@ -367,64 +329,10 @@ PETSc.ScalarType == numpy.complex128
 
 ## 11. 用 PyCharm 运行当前算例
 
-PyCharm 解释器仍然选择同一个 Docker Compose 服务：
+PyCharm/Docker 解释器仍可按本文前述历史环境步骤配置，但运行目标应是仓库根目录中的 public command：
 
 ```text
-Service: dolfinx_mpc
-Python path: /usr/bin/python3
+python scripts/run_case.py input/path/to/case.dat
 ```
 
-现在推荐在运行配置里直接选择脚本文件：
-
-```text
-C:\Users\admin\Desktop\Code\fenics_vector_maxwell_floquet_demo_v2_parallel\src\main.py
-```
-
-然后运行参数可以留空。你需要改的选择放在 `main.py` 文件开头，例如：
-
-```python
-CALCULATION_METHOD = "scattered"
-CONSTRAINT_BACKEND = "mpc_official"
-SCATTERING_BACKGROUND = "layered"
-PORT_BOUNDARY_MODEL = "robin"
-COMPUTE_POWER_METRICS = True
-```
-
-如果要跑端口总场法，改成：
-
-```python
-CALCULATION_METHOD = "port"
-CONSTRAINT_BACKEND = "mpc_official"
-PORT_BOUNDARY_MODEL = "robin"
-```
-
-默认每次运行都会在：
-
-```text
-fenics_vector_maxwell_floquet_demo_v2_parallel/results/
-```
-
-下面生成新的 `2D_grating_*_YYYYMMDD_HHMMSS` 文件夹。这样在 PyCharm 中反复运行也不会覆盖上一轮结果。
-现在 v2 的新结果目录已改成更短的名字，例如：
-
-```text
-2D_grating_sc_lay_p2_h25p0_t85p0_mpc_YYYYMMDD_HHMMSS
-```
-
-如果只运行一个 case，`.vtu`、`power_metrics.json`、`run_summary.json` 会直接在这个目录下；一次运行多个 case 时才会建立短子目录。
-
-如果想在 PyCharm 里运行更接近 COMSOL 多衍射级次周期端口的 DtN 版本，可以改 `main.py`：
-
-```python
-CALCULATION_METHOD = "port"
-CONSTRAINT_BACKEND = "manual"
-PORT_BOUNDARY_MODEL = "dtn"
-```
-
-这里暂时不要选 `--constraint-backend both`，因为多级次 Fourier 端口目前只在手写矩阵后端中实现。
-
-更多 PyCharm 入口说明见：
-
-```text
-pycharm_main_run_guide.md
-```
+结果目录、`--validate-only`、`--dry-run` 和完整参数说明以 [`input/README.md`](../../input/README.md) 为准；不要修改 `main.py` 或通过 CLI 覆盖 dat。

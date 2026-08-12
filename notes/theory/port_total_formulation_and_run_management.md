@@ -1,5 +1,7 @@
 # 周期端口总场法、唯一结果目录与代码更新说明
 
+> **历史资料说明：** 本文保留旧端口法理论、结果和命令记录；旧独立 runner 已移除。当前普通入口只有 `python scripts/run_case.py <one-case.dat>`，完整参数见 [`input/README.md`](../../input/README.md)。manual 与 `mpc_official` 必须分别由两个独立 dat 的 `[method] constraint_backend` 选择。
+
 本文记录 2026-06-09 新增的功能。新增内容是在原有散射场方法之外，再补充一种更接近 COMSOL 周期端口思路的总场端口法。
 
 ## 1. 本次新增功能概览
@@ -597,15 +599,14 @@ results/run_air_substrate_grating_port_total_20260609_012821
 
 ## 21. 当前推荐工作流
 
-如果要和 COMSOL 对比，建议按下面顺序：
+本节旧 CLI 顺序是历史记录。当前与 COMSOL 对比时，先选择一个完整 dat，再运行：
 
 ```text
-1. 先用 --formulation port_total --constraint-backend manual 快速跑通
-2. 在 ParaView 中比较 E_total_abs
-3. 再用 --constraint-backend both 检查官方 MPC 和手写矩阵版一致性
-4. 如果和 COMSOL 仍有明显差异，检查 COMSOL 是否启用了多个衍射级次端口
-5. 若启用多级次，使用 --port-order-count N，并让 N 对齐 COMSOL 的 diffraction orders
+python scripts/run_case.py input/path/to/case.dat
 ```
+
+比较 manual 与 `mpc_official` 时，使用两份分别设置
+`method.constraint_backend` 的 dat；不要通过旧 CLI 或 wrapper 改写物理输入。
 
 对于旧散射场法：
 
@@ -614,30 +615,23 @@ scattered + layered 仍然适合做背景场散射解释
 port_total 更适合对照 COMSOL 的端口激励图
 ```
 
-## 22. 老入口脚本的结果目录也已更新
+## 22. 老入口脚本的结果目录（历史记录）
 
-除了 `run_cases.py`，两个单独入口脚本也已经改成每次生成唯一结果目录：
-
-```text
-src/runners/run_grating_manual.py
-src/runners/run_grating_mpc_official.py
-```
-
-它们的物理功能没有改变：
+旧版曾有两个独立入口脚本并分别生成唯一结果目录；它们现在已经移除：
 
 ```text
-run_grating_manual.py        只运行手写矩阵 Floquet 约束版
-run_grating_mpc_official.py  只运行官方 dolfinx_mpc 约束版
+旧版 manual runner
+旧版 mpc_official runner
 ```
 
-改变的只是输出位置。以前会写到固定目录，现在会写到类似：
+对应的物理后端没有从当前能力中删除，而是迁移到独立 dat 的 `[method]` 配置：
 
 ```text
-results/air_substrate_grating_manual_YYYYMMDD_HHMMSS/
-results/air_substrate_grating_mpc_official_YYYYMMDD_HHMMSS/
+constraint_backend = "manual"
+constraint_backend = "mpc_official"
 ```
 
-这样即使你在 PyCharm 里反复点击 Run，也不会把上一轮图片和 `fields_for_paraview.vtu` 覆盖掉。
+两份配置必须分别保存为完整 `.dat` 文件，并通过 `scripts/run_case.py` 运行；结果目录和 provenance 由当前 launcher 管理。
 
 ## 23. 多衍射级次 Fourier 周期端口
 
