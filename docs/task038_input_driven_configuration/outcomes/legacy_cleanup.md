@@ -2,9 +2,9 @@
 
 ## 1. 范围与身份
 
-本记录是 T9 的 pre-commit evidence。T8 source SHA 为
-`7f57f7a7dab45c7c8cae67bf0f5271db110aa339`；T9 当前审计基线仍为该 SHA，最终
-提交 SHA 留待 T10 收口后补写。本轮只删除已由全仓调用图证明不可达的旧副本，
+本记录保留 T9 阶段的 pre-commit evidence。T8 source SHA 为
+`7f57f7a7dab45c7c8cae67bf0f5271db110aa339`；T9 审计基线为该 SHA。T9 四提交与
+T9 分支状态见 §7。本轮只删除已由全仓调用图证明不可达的旧副本，
 并把当前导航改成显式 `.dat` 入口；不运行 PDE/MPI，不改求解器数学或 retained
 research/history replay。
 
@@ -54,15 +54,35 @@ runner/solver，因此不会改变求解流程。
 入口不再教用户修改 ACTIVE、Python dataclass 或给 public dat 追加
 `--results-root`/物理 override。
 
-31/32 保留显式 `src.main --preset` 的六项 retained research/history replay
+当前导航仍保留六项显式 research/history replay
 和资源警告。五个较长旧教程只增加当前入口 banner，正文作为历史资料保留；旧
 task/report/test 文档没有批量改写。
 
-## 6. T9 Gate（pre-commit）
+## 6. T9 Gate（历史 pre-commit 记录）
 
 实际结果：focused documentation/preset suite 为 **295 passed、2 skipped**；Ruff
-check、Ruff format check、compileall、`check_benchmarks --no-write`（302/302）、
+check、T9 阶段规定的定向 Ruff format check、compileall、`check_benchmarks --no-write`（302/302）、
 JSON parse、98 条 Markdown 相对链接和 `git diff --check` 均通过。一次并行启动
 曾触发 PMIx segfault，但没有有效测试结果；随后改为串行 qualified activation
-后通过。未运行 PDE、MPI formal 或 full pytest。T8/T9 source identity 绑定上述
-SHA，最终 commit SHA 由后续提交写入，避免在 pre-commit 文档中制造自引用。
+后通过。T9 阶段未运行 PDE、MPI formal 或 full pytest；T10 最终 full Gate
+已在 `test_summary.md` 与 `summary.md` 记录。本节仍是 T9 阶段快照，最终提交
+状态见 §7。
+T9 的定向 format 结果不等同于 T10 扩大审计：T10 对 base..de2e 的 30 个 A/C/M
+Python 文件复核为 27 个通过、3 个 base/current 均不合格，按 accepted inherited
+formatting qualification 记录，详见 `test_summary.md`。
+
+## 7. T10 回填的 T9 四提交与最终身份
+
+| 顺序 | commit | 内容 |
+|---|---|---|
+| A | `56d9c6b4a58842effd86fccf2b69ba99f1e02bd9` | retire direct `src.main` runner facade |
+| B | `815d7b653062d0dfcdbc9caef28b7b0bbc3b4202` | remove unreachable legacy 3D modules |
+| C | `2378718d41ca8aa5ae8885fe8d961cb5febbb650` | migrate current guides to dat inputs |
+| D | `de2e1880fa90a442996ada58ea321c774752a5ca` | record legacy cleanup |
+
+T9 最终 HEAD、local tracking ref、remote branch 均为
+`de2e1880fa90a442996ada58ea321c774752a5ca`，ahead/behind=`0/0`，worktree clean。
+这四个提交未触碰 canonical Task37 worktree，也未合并或推送 master。并行 PMIx
+尝试的 segfault 仍是无有效结果的诊断事实；串行 qualified pure Gate 的
+295 passed/2 skipped 与 302/302 benchmark check 才是 T9 Gate 结果。T10 的
+full Gate 另见 `test_summary.md`，不由 T9 阶段记录代替。

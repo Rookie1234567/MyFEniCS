@@ -56,4 +56,12 @@ B1–B2 的唯一共享数值差是 `mean_poynting_W_per_m2[1]` 的浮点舍入�
 | MPI1 iterative official | 未正式运行 | [`input/official/grazing1_phi0_hybrid_iterative_m120_mpi1.dat`](../../../input/official/grazing1_phi0_hybrid_iterative_m120_mpi1.dat) 只做 validate/dry-run |
 | reporting / DtN | 两者独立 | 测试实值：outgoing modes 保持 `(0,0)`；reporting 枚举由 `5x5` 改为 `3x3` |
 | TE DtN | fail-closed | 2D TE + DtN 当前只允许 `zero_order`；TM explicit/auxiliary 的 `auto_propagating` 未降级 |
-| 后续范围 | T7 停止 | 本轮未跑 MPI2/4、Full3D official、Hybrid direct/iterative 新 PDE，未进入 T8 |
+| 后续范围 | 历史 T7 阶段边界 | 当时本轮未跑 MPI2/4、Full3D official、Hybrid direct/iterative 新 PDE；T8/T9 已在后续阶段完成 |
+
+## 5. T8/T9 最终状态
+
+T8 已把 11 个 migrated 名称收敛为 `MIGRATED_PRESET_DATS` 的薄 `src.main --preset` alias；alias 直接调用同一 dat 入口，不再复制 Python 物理值。无参数、直接 `2d/3d` facade 和未知参数不会静默 dispatch；6 个 retained research/history preset 仍保留原 factory、parser、资源提示和 replay 行为。
+
+T9 已完成当前导航收敛和五个不可达旧 3D 模块删除。benchmark caller 已改为保持原 method/physics/MPI 身份的 dat 或内部 replay 命令；Case010 的 MPI2 独立 dat 只用于 identity/validate contract，不在本轮新增 PDE。`legacy_cleanup.md` 记录删除理由、调用图、保留依赖和最终提交。
+
+因此本报告的 T7 迁移结论不是“尚未进入 T8”；当前结论是 11 项已迁移、6 项明确保留、T8/T9 已完成。T10 只补最终汇总、测试与发布边界，不改写本节的历史 PDE 数值。
