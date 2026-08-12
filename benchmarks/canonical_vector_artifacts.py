@@ -151,9 +151,12 @@ def canonical_shard_manifest(
     mpi_size: int,
     shard_metadata: Iterable[dict[str, Any]],
     extractor_audit: dict[str, Any],
+    duplicate_detection: str = "worker_reported",
 ) -> dict[str, Any]:
     shards = tuple(shard_metadata)
-    return {
+    if duplicate_detection not in {"worker_reported", "checker_recomputed_from_shards"}:
+        raise ValueError("unsupported canonical duplicate-detection mode")
+    manifest = {
         "schema_version": MANIFEST_SCHEMA,
         "role": role,
         "mpi_size": int(mpi_size),
@@ -162,12 +165,17 @@ def canonical_shard_manifest(
         "global_summed_packet_count": int(
             sum(int(item["packet_count"]) for item in shards)
         ),
-        "summed_local_duplicate_count": int(
-            sum(int(item.get("local_duplicate_count", 0)) for item in shards)
+        "summed_local_duplicate_count": (
+            None
+            if duplicate_detection == "checker_recomputed_from_shards"
+            else int(sum(int(item.get("local_duplicate_count", 0)) for item in shards))
         ),
         "per_rank_shards": list(shards),
         "extractor_audit": extractor_audit,
     }
+    if duplicate_detection == "checker_recomputed_from_shards":
+        manifest["duplicate_detection"] = duplicate_detection
+    return manifest
 
 
 def write_canonical_manifest(path: Path, manifest: dict[str, Any]) -> str:

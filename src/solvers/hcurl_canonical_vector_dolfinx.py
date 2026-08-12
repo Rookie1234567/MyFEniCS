@@ -41,6 +41,7 @@ from .hcurl_canonical_vector import (
 __all__ = (
     "extract_canonical_active_trace_packets",
     "extract_canonical_full_fe_packets",
+    "iter_canonical_full_fe_owner_packets",
     "iter_canonical_full_fe_dual_packets",
     "reconstruct_canonical_active_trace_vector",
     "reconstruct_canonical_full_fe_function",
@@ -410,6 +411,129 @@ def iter_canonical_full_fe_dual_packets(
                         yield canonical_packet(
                             canonical_key(
                                 role="full_fe_dual",
+                                entity_dimension=3,
+                                physical_entity=physical_key,
+                                entity_local_basis_index=basis,
+                                orientation_state=("canonical_cell", "Tt_apply"),
+                            ),
+                            stored[int(position)],
+                        )
+    finally:
+        extended.destroy()
+
+
+def iter_canonical_full_fe_owner_packets(
+    function_space,
+    mpc,
+    recovered_vec,
+    floquet_data,
+    *,
+    geometry_tolerance: float | None = None,
+) -> Iterator[CanonicalPacket]:
+    """Stream owner-local primal full-FE packets without numeric gather.
+
+    This is the primal counterpart of
+    :func:`iter_canonical_full_fe_dual_packets`.  It uses one temporary
+    owner/ghost extended Vec and the already-built MPC relation; canonical
+    shard metadata may be gathered by the caller, but coefficient values stay
+    on their owning rank.
+    """
+
+    if mpc is None:
+        raise ValueError("full-FE owner packets require finalized MPC metadata")
+    degree, _trace_positions, interior_positions = _space_data(function_space)
+    topology, cell_info, owned_cells = _topology_data(function_space)
+    tolerance = _resolve_geometry_tolerance(function_space, geometry_tolerance)
+    element_data = function_space.element
+    layout = function_space.dofmap.dof_layout
+    vector = (
+        recovered_vec
+        if isinstance(recovered_vec, PETSc.Vec)
+        else recovered_vec.x.petsc_vec
+    )
+    vector_index_map = mpc.function_space.dofmap.index_map
+    owned_size = int(function_space.dofmap.index_map.size_local)
+    if int(vector_index_map.size_local) != owned_size:
+        raise RuntimeError("MPC extended vector changed owned full-FE rows")
+    source_values = np.asarray(vector.getArray(readonly=True))
+    if source_values.size != owned_size:
+        raise RuntimeError("full-FE owner source has an incompatible owned layout")
+    extended = create_vector(
+        [(vector_index_map, mpc.function_space.dofmap.index_map_bs)]
+    )
+    relations = _floquet_relations(floquet_data)
+    stored = np.empty(int(element_data.space_dimension), dtype=np.complex128)
+    try:
+        with extended.localForm() as local:
+            local.set(0.0)
+            local.array_w[:owned_size] = source_values
+        extended.ghostUpdate(
+            addv=PETSc.InsertMode.INSERT_VALUES,
+            mode=PETSc.ScatterMode.FORWARD,
+        )
+        with extended.localForm() as local:
+            local_values = local.array_r
+            for dimension in (1, 2):
+                cell_to_entity = topology.connectivity(topology.dim, dimension)
+                for entity, cell in _owned_entity_incidents(function_space, dimension):
+                    local_entities = np.asarray(
+                        cell_to_entity.links(cell), dtype=np.int32
+                    )
+                    matches = np.flatnonzero(local_entities == int(entity))
+                    if matches.size != 1:
+                        raise RuntimeError("entity incidence is not unique")
+                    positions = np.asarray(
+                        layout.entity_dofs(dimension, int(matches[0])),
+                        dtype=np.int32,
+                    )
+                    local_dofs = np.asarray(
+                        function_space.dofmap.cell_dofs(cell), dtype=np.int32
+                    )[positions]
+                    values = np.asarray(
+                        local_values[local_dofs], dtype=np.complex128
+                    )
+                    coords = _entity_coordinates(function_space, dimension, entity)
+                    (
+                        canonical_values,
+                        physical_key,
+                        floquet_master,
+                        phase,
+                        state,
+                    ) = _canonical_entity_values(
+                        values, coords, dimension, degree, tolerance, relations
+                    )
+                    for basis, value in enumerate(canonical_values):
+                        yield canonical_packet(
+                            canonical_key(
+                                role="full_fe",
+                                entity_dimension=dimension,
+                                physical_entity=physical_key,
+                                entity_local_basis_index=basis,
+                                orientation_state=state,
+                                floquet_master=floquet_master,
+                                floquet_coefficient=phase,
+                            ),
+                            value,
+                        )
+            for cell in range(int(owned_cells[0])):
+                local_dofs = np.asarray(
+                    function_space.dofmap.cell_dofs(cell), dtype=np.int32
+                )
+                stored[:] = local_values[local_dofs]
+                element_data.Tt_apply(
+                    stored,
+                    np.asarray([cell_info[cell]], dtype=np.uint32),
+                    1,
+                )
+                physical_key = canonical_entity_key(
+                    _entity_coordinates(function_space, 3, cell), tolerance
+                )
+                for basis, position in enumerate(interior_positions):
+                    local_dof = int(local_dofs[int(position)])
+                    if local_dof < owned_size:
+                        yield canonical_packet(
+                            canonical_key(
+                                role="full_fe",
                                 entity_dimension=3,
                                 physical_entity=physical_key,
                                 entity_local_basis_index=basis,
