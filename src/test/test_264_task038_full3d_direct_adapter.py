@@ -63,6 +63,7 @@ def test_small_smoke_matches_old_target_stage4_factory():
     from src.common.config_3d import target_stage4_config
 
     specification = load_and_resolve(SMOKE)
+    assert specification.output["export_canonical_vectors"] is False
     dat_cfg = simulation_config_3d_from_normalized(specification.as_jsonable())
     old_cfg = target_stage4_config(degree=2, h_nm=100.0)
     old_cfg.matrix_diagnostics_assemble_only = False
