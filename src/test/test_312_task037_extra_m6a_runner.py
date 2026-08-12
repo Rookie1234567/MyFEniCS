@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import inspect
 import json
 from pathlib import Path
 import sys
@@ -218,12 +219,18 @@ def test_m6a_direct_phase_groups_reuse_two_components_per_pass(
 
     monkeypatch.setattr(m6, "_component_owned_values", fake_component)
     assemblers = {("top", 0): "component0", ("top", 1): "component1"}
-    for _ in range(2):
-        first, second = m6._fresh_phase_components(assemblers, modes, groups[0][1], None)
-        del first, second
-    first, second = m6._fresh_phase_components(assemblers, modes, groups[1][1], None)
-    del first, second
-    assert calls == ["component0", "component1", "component0", "component1", "component0", "component1"]
+    for _pass in range(2):
+        for _key, indices in groups:
+            first, second = m6._fresh_phase_components(assemblers, modes, indices, None)
+            del first, second
+    assert calls == [
+        "component0", "component1", "component0", "component1",
+        "component0", "component1", "component0", "component1",
+    ]
+    direct_source = inspect.getsource(m6._direct_surface_pass)
+    assert "_surface_assemblers" not in direct_source
+    assert "fem.form" not in direct_source
+    assert "_assemble_mpc_form_vector" in direct_source
 
 
 def test_m6a_progress_and_mode_manifest_are_file_bound(tmp_path: Path) -> None:
@@ -277,6 +284,10 @@ def test_m6a_phase_fixture_and_gate_tamper_fail_closed(tmp_path: Path, monkeypat
     monkeypatch.setattr(m6, "_load_owned_vector", lambda *_args, **_kwargs: zero if _args[2] == m6.M6A_GLOBAL_ROWS else small)
     monkeypatch.setattr(m6, "_canonical_record", lambda *_args, **_kwargs: ({}, tuple()))
     monkeypatch.setattr(m6, "_h2b_module", lambda: type("FakeH2B", (), {"_cache_snapshot": staticmethod(lambda _path: {"files": []})})())
+    (tmp_path / "m6a_stage_summary.json").write_text(
+        json.dumps({"surface_forms": {"cache_inventory": {"files": []}}}),
+        encoding="utf-8",
+    )
     audit = {
         "fine_space": "uncondensed_fullspace",
         "condensation": False,
@@ -307,7 +318,19 @@ def test_m6a_phase_fixture_and_gate_tamper_fail_closed(tmp_path: Path, monkeypat
         "p6": {"global_cells": 252, "local_cells": 252, "local_nloc": 882, "global_rows": m6.M6A_GLOBAL_ROWS, "constraint_count": 9210},
         "local_cells_by_rank": [252],
         "events": list(m6.M6A_EVENTS),
-        "cache": {"before": {"files": []}, "after": {"files": []}, "unchanged": True},
+        "cache": {
+            "stage": {"files": []},
+            "before": {"files": []},
+            "after": {"files": []},
+            "final": {"files": []},
+            "unchanged": True,
+        },
+        "form": {
+            "component_count": 4,
+            "incident_form_count": 1,
+            "mode_count": 80,
+            "cache_inventory": {"files": []},
+        },
         "action_audit": audit,
         "arrays": records,
         "metrics": {key: 0.0 for key in ("candidate_direct_action_relative_error", "candidate_direct_physical_rhs_relative_error", "candidate_direct_recovery_relative_error", "candidate_repeat_action_relative_error", "candidate_repeat_recovery_relative_error")} | {"finite": True},
@@ -441,3 +464,102 @@ def test_m6a_controlled_stop_records_missing_mpi2_artifacts(
     assert m6._watchdog(tmp_path / "run") == 1
     payload = captured["value"]
     assert payload["raw_artifacts"]["mpi2_worker_summary.json"]["present"] is False
+
+
+def test_m6a_checker_reports_partial_controlled_stop_without_keyerror(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = _clean_source()
+    runtime = _runtime(1)
+    stage_surface = {"cache_inventory": {"files": []}}
+    stage = m6._attach_evidence(
+        {
+            "schema": m6.M6A_STAGE_SCHEMA,
+            "status": "measurement_complete",
+            "scope": m6._m6a_scope(),
+            "source_at_start": source,
+            "source_at_end": source,
+            "runtime_identity": runtime,
+            "runtime_identity_by_rank": [runtime],
+            "surface_forms": stage_surface,
+        }
+    )
+    stage_path = tmp_path / "m6a_stage_summary.json"
+    stage_path.write_text(json.dumps(stage), encoding="utf-8")
+    measurement = {"form": stage_surface}
+    mpi1 = m6._attach_evidence(
+        {
+            "schema": m6.M6A_WORKER_SCHEMA,
+            "status": "measurement_complete",
+            "source_at_start": source,
+            "source_at_end": source,
+            "runtime_identity": runtime,
+            "measurement": measurement,
+        }
+    )
+    (tmp_path / "mpi1_worker_summary.json").write_text(
+        json.dumps(mpi1), encoding="utf-8"
+    )
+    executable = runtime["sys_executable"]
+    process = {
+        "status": "measurement_complete",
+        "return_code": 0,
+        "termination": None,
+        "processes_gone": True,
+        "peak_rss_bytes": 1,
+        "swap_bytes": 0,
+    }
+    watchdog = m6._attach_evidence(
+        {
+            "schema": m6.M6A_WATCHDOG_SCHEMA,
+            "status": "controlled_stop",
+            "route": "M6A",
+            "scope": m6._m6a_scope(),
+            "source_at_start": source,
+            "source_at_end": source,
+            "prediction": {
+                "predicted_live_set_bytes": m6.M6A_PREDICTED_LIVE_SET_BYTES,
+                "limit_bytes": m6.M6A_PREDICTED_LIVE_SET_LIMIT_BYTES,
+                "is_measurement": False,
+            },
+            "commands": {
+                "stage": m6._stage_command(executable, tmp_path),
+                "mpi1": m6._worker_command(executable, tmp_path, "mpi1", 1),
+                "mpi2": m6._worker_command(executable, tmp_path, "mpi2", 2),
+            },
+            "stage": process,
+            "stage_summary": m6._artifact(tmp_path, "m6a_stage_summary.json"),
+            "stage_resource": {"processes_gone": True},
+            "phases": {
+                "mpi1": process,
+                "mpi2": {"status": "not_run_by_gate", "reason": "mpi1_gate_failed"},
+            },
+            "phase_resource": {"mpi1": {"processes_gone": True}},
+            "raw_artifacts": {},
+        }
+    )
+    (tmp_path / "m6a_watchdog_summary.json").write_text(
+        json.dumps(watchdog), encoding="utf-8"
+    )
+
+    class FakeH2B:
+        @staticmethod
+        def _timeline_metrics(_path: Path, phase: str) -> dict[str, object]:
+            return {
+                "peak_rss_bytes": 1,
+                "swap_bytes": 0,
+                "compiler_descendant_pids": [] if phase == "stage" else [1234],
+            }
+
+    monkeypatch.setattr(m6, "_h2b_module", lambda: FakeH2B())
+    monkeypatch.setattr(m6, "_stage_summary_valid", lambda *_args: True)
+    monkeypatch.setattr(m6, "_phase_check", lambda *_args, **_kwargs: ({"numeric": True}, {"metrics": {}}))
+    monkeypatch.setattr(m6, "_raw_artifacts", lambda _run_dir: {})
+
+    result = m6._check_raw(tmp_path)
+    assert result["pass"] is False
+    assert result["checks"]["stage"] is True
+    assert result["checks"]["mpi1"] is True
+    assert result["checks"]["mpi2"] is False
+    assert "mpi2_not_run_by_gate" in result["problems"]
+    assert "mpi1_compiler_descendants" in result["problems"]

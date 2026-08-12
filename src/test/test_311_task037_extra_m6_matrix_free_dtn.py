@@ -158,7 +158,7 @@ def test_m6a_identity_h_carrier_action_and_exact_layout() -> None:
     assert audit["petsc_object_overhead_included"] is False
     assert audit["retained_bytes"] == sum(audit["retained_components_bytes"].values())
     assert audit["bounded_work_bytes"] == 2 * 2 * np.dtype(np.complex128).itemsize
-    assert audit["bounded_work_bytes_global_sum"] == audit["bounded_work_bytes"]
+    assert audit["bounded_work_bytes_global_sum"] == comm.size * audit["bounded_work_bytes"]
     assert audit["retained_plus_work_local_bytes"] == audit["retained_plus_work_bytes"]
     assert hashlib.sha256(carrier.mode_manifest_bytes).hexdigest() == audit[
         "mode_manifest_sha256"

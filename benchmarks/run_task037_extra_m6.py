@@ -602,6 +602,7 @@ def _surface_identity(cache_dir: Path, modes: Sequence[Any]) -> dict[str, Any]:
     h2b = _h2b_module()
     return {
         "component_count": 4,
+        "incident_form_count": 1,
         "components": [
             {"side": side, "component": component}
             for side in ("top", "bottom")
@@ -752,18 +753,15 @@ def _direct_surface_pass(
     modes: Sequence[Any],
     mpc: Any,
     cfg: Any,
-    mesh_data: Any,
-    function_space: Any,
     source: Any,
     projections: Sequence[complex],
-    cache_dir: Path,
+    assemblers: Mapping[tuple[str, int], Any],
+    incident_form: Any,
 ) -> tuple[Any, Any, Any, Any]:
-    import gc
     import numpy as np
     from mpi4py import MPI
     from src.solvers.dtn_port_3d import (
-        _assemble_mpc_vector,
-        _incident_top_traction_form,
+        _assemble_mpc_form_vector,
         _mode_projection_denominator,
         _traction_vector,
     )
@@ -771,44 +769,35 @@ def _direct_surface_pass(
     source_values = np.asarray(source.getArray(readonly=True), dtype=np.complex128).copy()
     comm = source.getComm().tompi4py()
     local_modal = np.zeros(len(modes), dtype=np.complex128)
-    assemblers = _surface_assemblers(function_space, mesh_data, cfg, modes, cache_dir)
     phase_groups = _mode_phase_groups(modes)
-    try:
-        for _key, indices in phase_groups:
-            first, second = _fresh_phase_components(assemblers, modes, indices, mpc)
-            try:
-                for index in indices:
-                    mode = modes[index]
-                    ell = mode.e_vector[0] * first + mode.e_vector[1] * second
-                    denominator = _mode_projection_denominator(mode, cfg)
-                    local_modal[index] = np.dot(-np.conjugate(ell) / denominator, source_values)
-                    del ell
-            finally:
-                del first, second
-        modal = np.empty_like(local_modal)
-        comm.Allreduce(local_modal, modal, op=MPI.SUM)
-        direct_action = np.zeros_like(source_values)
-        direct_rhs_correction = np.zeros_like(source_values)
-        for _key, indices in phase_groups:
-            first, second = _fresh_phase_components(assemblers, modes, indices, mpc)
-            try:
-                for index in indices:
-                    mode = modes[index]
-                    traction = _traction_vector(mode, cfg)
-                    traction_values = traction[0] * first + traction[1] * second
-                    direct_action += modal[index] * traction_values
-                    direct_rhs_correction -= projections[index] * traction_values
-                    del traction_values
-            finally:
-                del first, second
-    finally:
-        del assemblers
-        gc.collect()
-    base_vector = _assemble_mpc_vector(
-        _incident_top_traction_form(function_space, mesh_data, cfg),
-        mpc,
-        jit_options=_h2b_module()._expected_jit_options(cache_dir),
-    )
+    for _key, indices in phase_groups:
+        first, second = _fresh_phase_components(assemblers, modes, indices, mpc)
+        try:
+            for index in indices:
+                mode = modes[index]
+                ell = mode.e_vector[0] * first + mode.e_vector[1] * second
+                denominator = _mode_projection_denominator(mode, cfg)
+                local_modal[index] = np.dot(-np.conjugate(ell) / denominator, source_values)
+                del ell
+        finally:
+            del first, second
+    modal = np.empty_like(local_modal)
+    comm.Allreduce(local_modal, modal, op=MPI.SUM)
+    direct_action = np.zeros_like(source_values)
+    direct_rhs_correction = np.zeros_like(source_values)
+    for _key, indices in phase_groups:
+        first, second = _fresh_phase_components(assemblers, modes, indices, mpc)
+        try:
+            for index in indices:
+                mode = modes[index]
+                traction = _traction_vector(mode, cfg)
+                traction_values = traction[0] * first + traction[1] * second
+                direct_action += modal[index] * traction_values
+                direct_rhs_correction -= projections[index] * traction_values
+                del traction_values
+        finally:
+            del first, second
+    base_vector = _assemble_mpc_form_vector(incident_form, mpc)
     try:
         base = np.asarray(base_vector.getArray(readonly=True), dtype=np.complex128).copy()
     finally:
@@ -854,6 +843,9 @@ def _online_worker(run_dir: Path, phase: str, expected_mpi_size: int) -> int:
     repeat = None
     base = None
     candidate_rhs = None
+    assemblers = None
+    incident_form = None
+    cache_final = None
     try:
         with (
             progress_path.open("w", encoding="utf-8")
@@ -883,9 +875,23 @@ def _online_worker(run_dir: Path, phase: str, expected_mpi_size: int) -> int:
             cache_dir = run_dir / "jit_cache"
             cache_before = h2b._cache_snapshot(cache_dir)
             assemblers = _surface_assemblers(function_space, mesh_data, cfg, modes, cache_dir)
+            from dolfinx import fem
+            from src.solvers.dtn_port_3d import (
+                _assemble_mpc_form_vector,
+                _incident_top_traction_form,
+            )
+
+            incident_form = fem.form(
+                _incident_top_traction_form(function_space, mesh_data, cfg),
+                jit_options=h2b._expected_jit_options(cache_dir),
+            )
             form_identity = _surface_identity(cache_dir, modes)
             cache_after = h2b._cache_snapshot(cache_dir)
-            if cache_before != cache_after or form_identity != stage["surface_forms"]:
+            if (
+                cache_before != stage["surface_forms"]["cache_inventory"]
+                or cache_after != stage["surface_forms"]["cache_inventory"]
+                or form_identity != stage["surface_forms"]
+            ):
                 raise ValueError("M6A online surface forms changed staged cache")
             _mark(markers, phase, "surface_cache_ready", started)
             from src.solvers.hcurl_fullspace_dtn import (
@@ -900,8 +906,6 @@ def _online_worker(run_dir: Path, phase: str, expected_mpi_size: int) -> int:
                 expected_mode_count=M6A_MODE_COUNT,
             )
             action = build_fullspace_dtn_action(carrier, comm=comm)
-            del assemblers
-            gc.collect()
             _mark(markers, phase, "carrier_ready", started, mode_manifest_sha256=action.audit["mode_manifest_sha256"])
             from benchmarks.run_task037_extra_m import _floquet_compatible_p6_dual, _function_to_mpc_vector
             from dolfinx import fem
@@ -948,12 +952,7 @@ def _online_worker(run_dir: Path, phase: str, expected_mpi_size: int) -> int:
                 __import__("src.solvers.dtn_port_3d", fromlist=["_incident_projection_onto_top_mode"])._incident_projection_onto_top_mode(mode, cfg)
                 for mode in modes
             )
-            from src.solvers.dtn_port_3d import _assemble_mpc_vector, _incident_top_traction_form
-            base_vec = _assemble_mpc_vector(
-                _incident_top_traction_form(function_space, mesh_data, cfg),
-                floquet.mpc,
-                jit_options=h2b._expected_jit_options(cache_dir),
-            )
+            base_vec = _assemble_mpc_form_vector(incident_form, floquet.mpc)
             try:
                 base_values = np.asarray(base_vec.getArray(readonly=True), dtype=np.complex128).copy()
             finally:
@@ -970,11 +969,10 @@ def _online_worker(run_dir: Path, phase: str, expected_mpi_size: int) -> int:
                 modes,
                 floquet.mpc,
                 cfg,
-                mesh_data,
-                function_space,
                 source,
                 projections,
-                cache_dir,
+                assemblers,
+                incident_form,
             )
             _mark(markers, phase, "direct_ready", started)
             candidate_action = np.asarray(target.getArray(readonly=True), dtype=np.complex128).copy()
@@ -1006,6 +1004,7 @@ def _online_worker(run_dir: Path, phase: str, expected_mpi_size: int) -> int:
                 arrays["direct_recovery"] = [_save_global_small_array(run_dir, f"{phase}_direct_recovery", direct_recovery)]
                 arrays["repeat_recovery"] = [_save_global_small_array(run_dir, f"{phase}_repeat_recovery", repeat_recovery)]
             arrays = comm.bcast(arrays if comm.rank == 0 else None, root=0)
+            cache_final = h2b._cache_snapshot(cache_dir)
             action_error = _relative_local(candidate_action, direct_action, comm)
             rhs_error = _relative_local(candidate_rhs_values, direct_rhs, comm)
             recovery_error = float(np.linalg.norm(recovery - direct_recovery) / max(np.linalg.norm(direct_recovery), 1.0e-300))
@@ -1031,7 +1030,13 @@ def _online_worker(run_dir: Path, phase: str, expected_mpi_size: int) -> int:
                     **dict(action.audit),
                 },
                 "form": form_identity,
-                "cache": {"before": cache_before, "after": cache_after, "unchanged": cache_before == cache_after},
+                "cache": {
+                    "stage": stage["surface_forms"]["cache_inventory"],
+                    "before": cache_before,
+                    "after": cache_after,
+                    "final": cache_final,
+                    "unchanged": cache_before == cache_after == cache_final,
+                },
                 "mode_manifest_sha256": action.audit["mode_manifest_sha256"],
                 "mode_manifest_sha_by_rank": mode_manifest_sha_by_rank,
                 "mode_manifest": mode_manifest_record,
@@ -1058,6 +1063,8 @@ def _online_worker(run_dir: Path, phase: str, expected_mpi_size: int) -> int:
                 item.destroy()
         if action is not None:
             action.destroy()
+        del assemblers, incident_form
+        gc.collect()
     source_end = h2b._light_source()
     status = "measurement_complete" if error is None and measurement is not None else "gate_failed"
     summary = _attach_evidence(
@@ -1136,6 +1143,7 @@ def _stage_summary_valid(run_dir: Path, stage: Mapping[str, Any]) -> bool:
             and local_cells == [M6A_GLOBAL_CELLS]
             and stage["events"] == list(M6A_STAGE_EVENTS)
             and surface_forms["component_count"] == 4
+            and surface_forms["incident_form_count"] == 1
             and surface_forms["mode_count"] == M6A_MODE_COUNT
             and isinstance(surface_forms["cache_inventory"], list)
             and surface_forms["cache_inventory"]
@@ -1469,9 +1477,10 @@ def _phase_check(
         cache = measurement["cache"]
         h2b = _h2b_module()
         checks["cache"] = bool(
-            cache["before"] == cache["after"]
+            cache["stage"] == _read_json(run_dir / "m6a_stage_summary.json")["surface_forms"]["cache_inventory"]
+            and cache["before"] == cache["after"] == cache["final"] == cache["stage"]
             and cache["unchanged"] is True
-            and cache["after"] == h2b._cache_snapshot(run_dir / "jit_cache")
+            and cache["final"] == h2b._cache_snapshot(run_dir / "jit_cache")
         )
         audit = measurement["action_audit"]
         required_audit = {
@@ -1651,6 +1660,9 @@ def _check_raw(run_dir: Path) -> dict[str, Any]:
         "raw_artifacts": False,
     }
     problems: list[str] = []
+    phase_checks: dict[str, dict[str, bool]] = {}
+    phase_details: dict[str, dict[str, Any]] = {}
+    recovery_error: float | None = None
     try:
         watchdog = _read_json(run_dir / "m6a_watchdog_summary.json")
         checks["watchdog"] = bool(
@@ -1679,21 +1691,31 @@ def _check_raw(run_dir: Path) -> dict[str, Any]:
             and prediction["limit_bytes"] == M6A_PREDICTED_LIVE_SET_LIMIT_BYTES
             and prediction["predicted_live_set_bytes"] <= M6A_PREDICTED_LIVE_SET_LIMIT_BYTES
         )
+        phases = watchdog.get("phases", {})
+        phase_resources = watchdog.get("phase_resource", {})
         lifecycle_records = [
-            ("stage", watchdog["stage"], watchdog["stage_resource"]),
-            ("mpi1", watchdog["phases"]["mpi1"], watchdog["phase_resource"]["mpi1"]),
-            ("mpi2", watchdog["phases"]["mpi2"], watchdog["phase_resource"]["mpi2"]),
+            ("stage", watchdog.get("stage"), watchdog.get("stage_resource")),
+            ("mpi1", phases.get("mpi1"), phase_resources.get("mpi1")),
+            ("mpi2", phases.get("mpi2"), phase_resources.get("mpi2")),
         ]
         lifecycle_ok = True
         h2b = _h2b_module()
         for name, process, resource in lifecycle_records:
             if not isinstance(process, Mapping) or not isinstance(resource, Mapping):
                 lifecycle_ok = False
+                if name == "mpi2":
+                    problems.append("mpi2_not_run_by_gate")
                 continue
             if name in {"mpi1", "mpi2"} and process.get("status") == "not_run_by_gate":
                 lifecycle_ok = False
+                problems.append(f"{name}_not_run_by_gate")
                 continue
-            timeline = h2b._timeline_metrics(run_dir / f"{name}_timeline.jsonl", name)
+            try:
+                timeline = h2b._timeline_metrics(run_dir / f"{name}_timeline.jsonl", name)
+            except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
+                lifecycle_ok = False
+                problems.append(f"{name}_timeline:{type(exc).__name__}:{exc}")
+                continue
             lifecycle_ok = lifecycle_ok and (
                 process.get("return_code") == 0
                 and process.get("termination") is None
@@ -1705,76 +1727,120 @@ def _check_raw(run_dir: Path) -> dict[str, Any]:
                 and int(timeline["swap_bytes"]) == M6A_SWAP_LIMIT_BYTES
             )
             if name in {"mpi1", "mpi2"}:
+                if timeline["compiler_descendant_pids"]:
+                    lifecycle_ok = False
+                    problems.append(f"{name}_compiler_descendants")
                 lifecycle_ok = lifecycle_ok and timeline["compiler_descendant_pids"] == []
         checks["lifecycle"] = lifecycle_ok
-        phase_summaries = {phase: _read_json(run_dir / f"{phase}_worker_summary.json") for phase in ("mpi1", "mpi2")}
+        phase_summaries: dict[str, dict[str, Any] | None] = {}
+        for phase in ("mpi1", "mpi2"):
+            summary_path = run_dir / f"{phase}_worker_summary.json"
+            if summary_path.is_file():
+                try:
+                    phase_summaries[phase] = _read_json(summary_path)
+                except (OSError, ValueError, json.JSONDecodeError) as exc:
+                    phase_summaries[phase] = None
+                    problems.append(f"{phase}_summary:{type(exc).__name__}:{exc}")
+            else:
+                phase_summaries[phase] = None
+                problems.append(f"{phase}_not_run_by_gate")
         stage_source_sha = stage["source_at_start"]["source_commit_full_sha"]
         watchdog_source_sha = watchdog["source_at_start"]["source_commit_full_sha"]
         checks["source_stability"] = (
             _source_pair_valid(watchdog["source_at_start"], watchdog["source_at_end"])
             and _source_pair_valid(stage["source_at_start"], stage["source_at_end"])
             and stage_source_sha == watchdog_source_sha
+            and all(phase_summaries[phase] is not None for phase in ("mpi1", "mpi2"))
             and all(
                 _source_pair_valid(item["source_at_start"], item["source_at_end"])
                 and item["source_at_start"]["source_commit_full_sha"] == watchdog_source_sha
                 for item in phase_summaries.values()
+                if item is not None
             )
         )
-        for item in phase_summaries.values():
+        for phase, item in phase_summaries.items():
+            if item is None:
+                continue
             measurement = item.get("measurement")
             if not isinstance(measurement, Mapping) or measurement.get("form") != stage.get("surface_forms"):
                 raise ValueError("online surface form/cache identity differs from stage")
         checks["progress"] = bool(
             _progress_valid(run_dir / "m6a_stage_progress.jsonl", "stage", M6A_STAGE_EVENTS)
-            and _progress_valid(run_dir / "mpi1_progress.jsonl", "mpi1", M6A_EVENTS)
-            and _progress_valid(run_dir / "mpi2_progress.jsonl", "mpi2", M6A_EVENTS)
+            and all(
+                phase_summaries[phase] is not None
+                and _progress_valid(run_dir / f"{phase}_progress.jsonl", phase, M6A_EVENTS)
+                for phase in ("mpi1", "mpi2")
+            )
         )
-        phase_checks = {}
-        phase_details = {}
         for phase, size in (("mpi1", 1), ("mpi2", 2)):
-            phase_checks[phase], phase_details[phase] = _phase_check(run_dir, phase_summaries[phase], phase=phase, expected_mpi_size=size)
-        checks["mpi1"] = all(phase_checks["mpi1"].values())
-        checks["mpi2"] = all(phase_checks["mpi2"].values())
-        from src.solvers.hcurl_canonical_vector import compare_canonical_packets
-        for key, path in (
-            ("cross_mpi_source", ("source", "source_primal")),
-            ("cross_mpi_action", ("canonical", "candidate_action_dual")),
-            ("cross_mpi_rhs", ("canonical", "candidate_physical_rhs_dual")),
-        ):
-            left_measurement = phase_summaries["mpi1"]["measurement"]
-            right_measurement = phase_summaries["mpi2"]["measurement"]
-            left_record = left_measurement[path[0]]["canonical"] if path[0] == "source" else left_measurement[path[0]][path[1]]
-            right_record = right_measurement[path[0]]["canonical"] if path[0] == "source" else right_measurement[path[0]][path[1]]
-            _left_manifest, left_packets = _canonical_record(
-                run_dir, left_record, path[1], expected_mpi_size=1
+            if phase_summaries[phase] is None:
+                phase_checks[phase] = {
+                    key: False
+                    for key in (
+                        "schema", "source", "runtime", "scope", "p6", "events",
+                        "cache", "audit", "arrays", "canonical", "mode_manifest", "numeric",
+                    )
+                }
+                phase_details[phase] = {"status": "not_run_by_gate", "problems": ["summary_missing"]}
+            else:
+                phase_checks[phase], phase_details[phase] = _phase_check(
+                    run_dir, phase_summaries[phase], phase=phase, expected_mpi_size=size
+                )
+            checks[phase] = all(phase_checks[phase].values())
+        if phase_summaries["mpi1"] is not None and phase_summaries["mpi2"] is not None:
+            from src.solvers.hcurl_canonical_vector import compare_canonical_packets
+
+            for key, path in (
+                ("cross_mpi_source", ("source", "source_primal")),
+                ("cross_mpi_action", ("canonical", "candidate_action_dual")),
+                ("cross_mpi_rhs", ("canonical", "candidate_physical_rhs_dual")),
+            ):
+                left_measurement = phase_summaries["mpi1"]["measurement"]
+                right_measurement = phase_summaries["mpi2"]["measurement"]
+                left_record = left_measurement[path[0]]["canonical"] if path[0] == "source" else left_measurement[path[0]][path[1]]
+                right_record = right_measurement[path[0]]["canonical"] if path[0] == "source" else right_measurement[path[0]][path[1]]
+                _left_manifest, left_packets = _canonical_record(
+                    run_dir, left_record, path[1], expected_mpi_size=1
+                )
+                _right_manifest, right_packets = _canonical_record(
+                    run_dir, right_record, path[1], expected_mpi_size=2
+                )
+                comparison = compare_canonical_packets(
+                    left_packets, right_packets, relative_tolerance=1.0e-12
+                )
+                checks[key] = comparison["pass"]
+                del left_packets, right_packets
+            import numpy as np
+
+            left_recovery = np.asarray(phase_details["mpi1"]["candidate_recovery"], dtype=np.complex128)
+            right_recovery = np.asarray(phase_details["mpi2"]["candidate_recovery"], dtype=np.complex128)
+            recovery_error = float(np.linalg.norm(left_recovery - right_recovery) / max(np.linalg.norm(right_recovery), 1.0e-300))
+            checks["cross_mpi_recovery"] = recovery_error <= 1.0e-12
+            checks["mode_manifest"] = bool(
+                phase_summaries["mpi1"]["measurement"]["mode_manifest_sha256"]
+                == phase_summaries["mpi2"]["measurement"]["mode_manifest_sha256"]
+                and phase_summaries["mpi1"]["measurement"]["mode_manifest_sha_by_rank"]
+                == [phase_summaries["mpi1"]["measurement"]["mode_manifest_sha256"]]
+                and phase_summaries["mpi2"]["measurement"]["mode_manifest_sha_by_rank"]
+                == [phase_summaries["mpi2"]["measurement"]["mode_manifest_sha256"]] * 2
             )
-            _right_manifest, right_packets = _canonical_record(
-                run_dir, right_record, path[1], expected_mpi_size=2
-            )
-            comparison = compare_canonical_packets(
-                left_packets, right_packets, relative_tolerance=1.0e-12
-            )
-            checks[key] = comparison["pass"]
-            del left_packets, right_packets
-        import numpy as np
-        left_recovery = np.asarray(phase_details["mpi1"]["candidate_recovery"], dtype=np.complex128)
-        right_recovery = np.asarray(phase_details["mpi2"]["candidate_recovery"], dtype=np.complex128)
-        recovery_error = float(np.linalg.norm(left_recovery - right_recovery) / max(np.linalg.norm(right_recovery), 1.0e-300))
-        checks["cross_mpi_recovery"] = recovery_error <= 1.0e-12
-        checks["mode_manifest"] = bool(
-            phase_summaries["mpi1"]["measurement"]["mode_manifest_sha256"]
-            == phase_summaries["mpi2"]["measurement"]["mode_manifest_sha256"]
-            and phase_summaries["mpi1"]["measurement"]["mode_manifest_sha_by_rank"]
-            == [phase_summaries["mpi1"]["measurement"]["mode_manifest_sha256"]]
-            and phase_summaries["mpi2"]["measurement"]["mode_manifest_sha_by_rank"]
-            == [phase_summaries["mpi2"]["measurement"]["mode_manifest_sha256"]] * 2
-        )
+        else:
+            problems.append("cross_mpi_not_run_by_gate")
         expected_artifacts = _raw_artifacts(run_dir)
-        expected_direct = set(expected_artifacts) | {"m6a_watchdog_summary.json"}
+        expected_direct = {
+            name for name, record in expected_artifacts.items() if record["present"]
+        } | {"m6a_watchdog_summary.json"}
         actual_direct = {path.name for path in run_dir.iterdir() if path.is_file()}
         checks["raw_artifacts"] = bool(
             watchdog["raw_artifacts"] == expected_artifacts
             and actual_direct == expected_direct
+            and all(
+                record["present"] is True
+                and (run_dir / name).is_file()
+                or record["present"] is False
+                and not (run_dir / name).exists()
+                for name, record in expected_artifacts.items()
+            )
         )
         if not all(checks.values()):
             problems.append("one_or_more_m6a_checks_failed")
@@ -1786,7 +1852,10 @@ def _check_raw(run_dir: Path) -> dict[str, Any]:
             "checks": checks,
             "problems": problems,
             "phase_checks": phase_checks,
-            "phase_measurements": {phase: {"metrics": phase_details[phase].get("metrics")} for phase in ("mpi1", "mpi2")},
+            "phase_measurements": {
+                phase: {"metrics": phase_details[phase].get("metrics"), "status": phase_details[phase].get("status")}
+                for phase in ("mpi1", "mpi2")
+            },
             "cross_mpi_recovery_relative_error": recovery_error,
             "source_sha256": watchdog["source_at_start"]["source_commit_full_sha"],
         }
