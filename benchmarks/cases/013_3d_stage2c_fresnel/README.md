@@ -11,9 +11,9 @@
 | 7. 波长/角度/偏振 | 633 nm normal smoke；代码支持 s/p oblique |
 | 8. 边界 | x/y Floquet、z PML |
 | 9. FE/网格 | N1curl p1，h300 nm smoke |
-| 10. PyCharm preset | `3d_stage2c_fresnel_smoke` |
+| 10. Task38 input | [`input/smoke/3d_stage2c_fresnel_smoke.dat`](../../../input/smoke/3d_stage2c_fresnel_smoke.dat) |
 | 11. 参数表 | quick start 23 |
-| 12. 精确命令 | `python src/main.py --preset 3d_stage2c_fresnel_smoke` |
+| 12. 精确命令 | `python scripts/run_case.py input/smoke/3d_stage2c_fresnel_smoke.dat` |
 | 13. 调用链 | Stage2C -> analytic_fields_3d -> incident-scattered flow |
 | 14. 理论 | Maxwell、PML、Stage ladder |
 | 15. 求解器 | ordinary direct |
@@ -35,12 +35,13 @@ air/substrate 平界面加入材料跳变和 Fresnel analytic background，再�
 
 ## PyCharm
 
-选择 `3d_stage2c_fresnel_smoke`。自定义 complex index 时先核对 `exp(-i omega t)` 与 `Im(epsilon)>0`，并确保 interface z 恰落在网格面。
+使用 [`input/smoke/3d_stage2c_fresnel_smoke.dat`](../../../input/smoke/3d_stage2c_fresnel_smoke.dat)。自定义 complex index 时先核对 `exp(-i omega t)` 与 `Im(epsilon)>0`，并确保 interface z 恰落在网格面。
 
 ## CLI 或测试
 
 ```text
 sh benchmarks/cases/013_3d_stage2c_fresnel/run.sh
+python scripts/run_case.py input/smoke/3d_stage2c_fresnel_smoke.dat
 python -m unittest src.test.test_09_fresnel_pml src.test.test_10_stage2_combined
 ```
 

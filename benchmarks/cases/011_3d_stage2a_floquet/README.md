@@ -11,9 +11,9 @@
 | 7. 波长/角度/偏振 | 633 nm，normal smoke；测试含 oblique |
 | 8. 边界 | x/y Floquet，z 解析 reference boundary |
 | 9. FE/网格 | N1curl p1 preset；p2 由 test17 |
-| 10. PyCharm preset | `3d_stage2a_floquet_smoke` |
+| 10. Task38 input | [`input/smoke/3d_stage2a_floquet_smoke.dat`](../../../input/smoke/3d_stage2a_floquet_smoke.dat) |
 | 11. 参数表 | quick start 21 |
-| 12. 精确命令 | `python src/main.py --preset 3d_stage2a_floquet_smoke` |
+| 12. 精确命令 | `python scripts/run_case.py input/smoke/3d_stage2a_floquet_smoke.dat` |
 | 13. 调用链 | Stage2A wrapper -> floquet_3d -> common flow |
 | 14. 理论 | `floquet_periodicity.md` |
 | 15. 求解器 | ordinary direct |
@@ -35,12 +35,13 @@
 
 ## PyCharm
 
-选择 `3d_stage2a_floquet_smoke`，Working directory 为仓库根。调 oblique 入射时同时检查 `incident_theta_deg`、`incident_phi_deg`、polarization 和 `dot(k,p)`；只改一个 phase 字符串会绕过配置派生关系。
+使用仓库根目录下的 [`input/smoke/3d_stage2a_floquet_smoke.dat`](../../../input/smoke/3d_stage2a_floquet_smoke.dat)。调 oblique 入射时同时修改 dat 中的角度、polarization 和相关物理字段；不要只改 phase 字符串绕过配置派生关系。
 
 ## CLI 或测试
 
 ```text
 sh benchmarks/cases/011_3d_stage2a_floquet/run.sh
+python scripts/run_case.py input/smoke/3d_stage2a_floquet_smoke.dat
 python -m unittest src.test.test_05_floquet_dof_constraints src.test.test_06_airbox_double_floquet_pde
 ```
 

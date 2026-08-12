@@ -1,7 +1,7 @@
 {
   "case_id": "020_3d_stage4a_flat_dtn",
   "status": "test_backed_energy_sanity",
-  "preset": "3d_stage4a_flat_layer_direct",
+  "input_dat": "input/smoke/3d_stage4a_flat_layer_direct.dat",
   "geometry_nm": [10.0, 10.0, 10.0],
   "air_height_nm": 5.0,
   "substrate_thickness_nm": 5.0,

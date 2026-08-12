@@ -11,9 +11,9 @@
 | 7. 波长/角度/偏振 | 633 nm，normal smoke |
 | 8. 边界 | x/y Floquet，z PML |
 | 9. FE/网格 | N1curl p1，h300 nm smoke |
-| 10. PyCharm preset | `3d_stage2b_pml_smoke` |
+| 10. Task38 input | [`input/smoke/3d_stage2b_pml_smoke.dat`](../../../input/smoke/3d_stage2b_pml_smoke.dat) |
 | 11. 参数表 | quick start 22 |
-| 12. 精确命令 | `python src/main.py --preset 3d_stage2b_pml_smoke` |
+| 12. 精确命令 | `python scripts/run_case.py input/smoke/3d_stage2b_pml_smoke.dat` |
 | 13. 调用链 | Stage2B -> pml_3d/common_3d_forms -> common flow |
 | 14. 理论 | `pml_robin_and_open_boundaries.md` |
 | 15. 求解器 | ordinary direct |
@@ -35,12 +35,13 @@
 
 ## PyCharm
 
-选择 `3d_stage2b_pml_smoke`。修改时同时记录 physical height、PML thickness、`pml_alpha` 和 h；否则无法判断衰减变化来自物理长度还是离散。
+使用 [`input/smoke/3d_stage2b_pml_smoke.dat`](../../../input/smoke/3d_stage2b_pml_smoke.dat)。修改时同时记录 physical height、PML thickness、`pml_alpha` 和 h；否则无法判断衰减变化来自物理长度还是离散。
 
 ## CLI 或测试
 
 ```text
 sh benchmarks/cases/012_3d_stage2b_pml/run.sh
+python scripts/run_case.py input/smoke/3d_stage2b_pml_smoke.dat
 python -m unittest src.test.test_02_pml_tensor src.test.test_07_pml_airbox_decay
 ```
 

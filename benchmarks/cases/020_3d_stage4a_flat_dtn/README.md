@@ -11,9 +11,9 @@
 | 7. 波长/角度/偏振 | 13.5 nm、normal、默认 polarization |
 | 8. 边界 | x/y Floquet，top/bottom zero-order auxiliary DtN |
 | 9. FE/网格 | N1curl p1，h2 nm preset |
-| 10. PyCharm preset | `3d_stage4a_flat_layer_direct` |
+| 10. Task38 input | [`input/smoke/3d_stage4a_flat_layer_direct.dat`](../../../input/smoke/3d_stage4a_flat_layer_direct.dat) |
 | 11. 参数表 | quick start 30 |
-| 12. 精确命令 | `python src/main.py --preset 3d_stage4a_flat_layer_direct` |
+| 12. 精确命令 | `python scripts/run_case.py input/smoke/3d_stage4a_flat_layer_direct.dat` |
 | 13. 调用链 | Stage4A -> dtn_port_3d -> flat reference/rta_3d |
 | 14. 理论 | DtN、RTA、Stage ladder |
 | 15. 求解器 | ordinary direct |
@@ -35,13 +35,13 @@
 
 ## PyCharm
 
-选择 `3d_stage4a_flat_layer_direct`。这是轻量 direct sanity，可普通 PyCharm Run；若解释器不是 complex PETSc，程序会在建网格前失败。
+使用 [`input/smoke/3d_stage4a_flat_layer_direct.dat`](../../../input/smoke/3d_stage4a_flat_layer_direct.dat)。这是轻量 direct sanity；若解释器不是 complex PETSc，程序会在建网格前失败。不要依赖 `src/main.py` 的隐式 preset。
 
 ## CLI 或测试
 
 ```text
 sh benchmarks/cases/020_3d_stage4a_flat_dtn/run.sh
-python src/main.py --preset 3d_stage4a_flat_layer_direct
+python scripts/run_case.py input/smoke/3d_stage4a_flat_layer_direct.dat
 ```
 
 ## 代码路径与理论
