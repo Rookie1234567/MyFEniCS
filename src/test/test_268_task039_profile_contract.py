@@ -20,6 +20,7 @@ from src.io.input_validation import (
     simulation_config_3d_from_normalized,
 )
 from src.io.execution_plan import dry_run_payload, method_adapter_identity
+from src.postprocessing.diffraction_3d import _probe_z_locations
 from src.runners.task038_input_worker import _dispatch_resolved_payload
 from src.runners.task038_launcher import task039_resource_ledger
 from src.runners import task038_launcher as launcher
@@ -89,6 +90,21 @@ def test_task039_material_provenance_is_not_added_to_ordinary_inputs():
 
     assert "material_provenance" not in ordinary.derived
     assert "air_name" not in ordinary.materials
+
+
+def test_task039_probe_fraction_places_diffraction_probes_in_uniform_layers():
+    expected_reference_planes = (10.0, 30.0, 60.0, 90.0, 110.0)
+
+    for path in TASK039_INPUTS:
+        spec = load_and_resolve(path)
+        cfg = simulation_config_3d_from_normalized(spec.as_jsonable())
+        top_z, bottom_z = _probe_z_locations(cfg)
+
+        assert top_z == 127.5
+        assert bottom_z == -7.5
+        assert cfg.grating_z_max < top_z < cfg.physical_z_max
+        assert cfg.physical_z_min < bottom_z < cfg.interface_z
+        assert cfg.full3d_reference_plane_z == expected_reference_planes
 
 
 @pytest.mark.parametrize(

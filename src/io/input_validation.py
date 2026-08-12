@@ -554,8 +554,6 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
         ("output", "sample_count_y", 20),
         ("output", "diffraction_sample_count_x", 32),
         ("output", "diffraction_sample_count_y", 32),
-        ("output", "top_probe_z_nm", 110.0),
-        ("output", "bottom_probe_z_nm", 10.0),
         ("output", "probe_fraction", 0.75),
         ("output", "diffraction_order_max_m", 2),
         ("output", "diffraction_order_max_n", 2),

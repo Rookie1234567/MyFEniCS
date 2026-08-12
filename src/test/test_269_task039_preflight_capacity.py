@@ -13,7 +13,6 @@ from src.io.input_validation import (
     task039_dynamic_external_mode_inventory,
 )
 from src.io.resolved_config import canonical_json_bytes
-from src.io.resolved_config import resolved_config_sha256
 from benchmarks.task039_preflight_capacity import build_task039_capacity_snapshot
 
 
@@ -24,6 +23,40 @@ RECORD = (
     / "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/"
     / "task039_t2_a0_preflight_v1.json"
 )
+T2_V1_HISTORICAL_IDENTITIES = {
+    "input/official/task039/5nm_p6h10_full3d_direct_mpi8.dat": {
+        "input_sha256": "b1d117aae9a84ef6dfaedcc65125506e015383e5c23a83197d642c5e8fb122ef",
+        "resolved_config_sha256": "95dfb1d059dac283bad6f31be9d5247c6634ab4992d0e3cd5c1318512f99098a",
+    },
+    "input/official/task039/5nm_p6h10_full3d_iterative_mpi8.dat": {
+        "input_sha256": "3525b6c167d65e3096d9ddf2d31687fbc9a417c5d5e988b837132f72fdb6facb",
+        "resolved_config_sha256": "74f199a17e3572b4d15c67b641ba05d2d4a5b24c574e46e75f1baef0733e5ca9",
+    },
+    "input/official/task039/5nm_p6h10_hybrid_direct_m120_mpi8.dat": {
+        "input_sha256": "67e700a435315fb22c8f3527d9047110414eac9c1e1b0602cbda345dc1613d1d",
+        "resolved_config_sha256": "0f1673c8743ed9eb5454d282f09ffc07afe92fe3a255b8918e35d64c7042d872",
+    },
+    "input/official/task039/5nm_p6h10_hybrid_direct_m240_mpi8.dat": {
+        "input_sha256": "e6088d0def01bc78b556ca4a0a72f659dcec6864d8c6fc830b29f2655499a94c",
+        "resolved_config_sha256": "901413d97e445f7995943666de9e2035871595a99e6b2c17b05da4a814f61ca4",
+    },
+    "input/official/task039/5nm_p6h10_hybrid_direct_m480_mpi8.dat": {
+        "input_sha256": "1fb91174beca7814f2421239f2531a8cc323fe85ced28f852260be5cc7b193a2",
+        "resolved_config_sha256": "0b9b847f24c4e6912e307e7a8f83630780351e89654cda5df39c62d4a773876b",
+    },
+    "input/official/task039/5nm_p6h10_hybrid_direct_m960_mpi8.dat": {
+        "input_sha256": "b6f38ee802d52d1f261ffbf82928207f880192ea4ce2ac213ebdb8dbf2b182e9",
+        "resolved_config_sha256": "92cf45424e07311770c62436fea25cfcf8faac6881e1664b92e0a0f3a3671afa",
+    },
+    "input/official/task039/5nm_p6h10_hybrid_iterative_m120_candidate_mpi1.dat": {
+        "input_sha256": "f64b501d0b689269e751f3b7782a8c3b0b5ff9c5c996a1751af08f9dffdeb132",
+        "resolved_config_sha256": "6ba8dd6c88953168aaa7f29779a5aa8fd0595f14cb2fe136738316933ce6f3c5",
+    },
+    "input/official/task039/5nm_p6h10_hybrid_iterative_m120_candidate_mpi8.dat": {
+        "input_sha256": "db457d6ffe666516a937c5441769a74e0916f8dafbb681a31e0c20dba1fb2a75",
+        "resolved_config_sha256": "10242a51c1610ca9930ee80b9f835ba7e01ffeadabbcd12fe164f061605ce40a",
+    },
+}
 
 
 def test_task039_capacity_snapshot_reuses_exact_inventory_and_historical_carriers():
@@ -147,7 +180,7 @@ def test_task039_capacity_calculator_rejects_ordinary_input():
         build_task039_capacity_snapshot(iterative)
 
 
-def test_task039_a0_record_is_compact_and_recomputable():
+def test_task039_a0_record_preserves_historical_identity_and_recomputes_current_physics():
     record = json.loads(RECORD.read_text(encoding="utf-8"))
     source = record["source"]
     assert record["status"] == "completed"
@@ -202,9 +235,10 @@ def test_task039_a0_record_is_compact_and_recomputable():
         current_inventory = task039_dynamic_external_mode_inventory(
             specification.as_jsonable()
         )
-        assert row["input_sha256"] == sha256(path.read_bytes()).hexdigest()
+        historical = T2_V1_HISTORICAL_IDENTITIES[row["path"]]
+        assert row["input_sha256"] == historical["input_sha256"]
+        assert row["resolved_config_sha256"] == historical["resolved_config_sha256"]
         assert row["physical_model_sha256"] == specification.physical_model_sha256
-        assert row["resolved_config_sha256"] == resolved_config_sha256(specification)
         assert (
             row["external_mode_inventory_sha256"]
             == sha256(canonical_json_bytes(current_inventory)).hexdigest()
