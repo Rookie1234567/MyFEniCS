@@ -630,7 +630,6 @@ def stream_write_h2b_m6b_shifted_lu_patch_store(
     rows = np.ascontiguousarray(np.asarray(cell_independent_global_rows, dtype=np.int64))
     files: dict[str, dict[str, Any]] = {}
     factor_records: list[dict[str, Any]] = []
-    factor_by_matrix: dict[str, int] = {}
     observed_records: list[dict[str, Any]] = []
     max_live_patch_matrix_count = 0
     max_live_lu_factor_count = 0
@@ -656,37 +655,32 @@ def stream_write_h2b_m6b_shifted_lu_patch_store(
         expected_matrix_sha = record.get("expected_matrix_sha256")
         if expected_matrix_sha is not None and expected_matrix_sha != matrix_sha:
             raise ValueError("M6B streamed matrix SHA does not match repeat authority")
-        factor_id = factor_by_matrix.get(matrix_sha)
-        if factor_id is None:
-            factor = build_h2b_m6b_shifted_lu_factor(
-                values,
-                matrix_sha256=matrix_sha,
-                task037_extra_m6b=True,
-            )
-            factor_id = len(factor_records)
-            factor_by_matrix[matrix_sha] = factor_id
-            max_live_lu_factor_count = max(max_live_lu_factor_count, 1)
-            lu_path = f"factor_{factor_id}_lu.npy"
-            pivot_path = f"factor_{factor_id}_pivots.npy"
-            files[lu_path] = _write_array(root, lu_path, factor.lu)
-            files[pivot_path] = _write_array(root, pivot_path, factor.pivots)
-            factor_records.append(
-                {
-                    "factor_id": factor_id,
-                    "n": int(factor.n),
-                    "beta": float(factor.beta),
-                    "lu_path": lu_path,
-                    "pivot_path": pivot_path,
-                    "matrix_sha256": matrix_sha,
-                    "factor_sha256": factor.factor_sha256,
-                    "factorization_info": int(factor.factorization_info),
-                    "factor_nbytes": factor.factor_nbytes,
-                }
-            )
-            factor_sha = factor.factor_sha256
-            del factor
-        else:
-            factor_sha = factor_records[factor_id]["factor_sha256"]
+        factor = build_h2b_m6b_shifted_lu_factor(
+            values,
+            matrix_sha256=matrix_sha,
+            task037_extra_m6b=True,
+        )
+        factor_id = len(factor_records)
+        max_live_lu_factor_count = max(max_live_lu_factor_count, 1)
+        lu_path = f"factor_{factor_id}_lu.npy"
+        pivot_path = f"factor_{factor_id}_pivots.npy"
+        files[lu_path] = _write_array(root, lu_path, factor.lu)
+        files[pivot_path] = _write_array(root, pivot_path, factor.pivots)
+        factor_records.append(
+            {
+                "factor_id": factor_id,
+                "n": int(factor.n),
+                "beta": float(factor.beta),
+                "lu_path": lu_path,
+                "pivot_path": pivot_path,
+                "matrix_sha256": matrix_sha,
+                "factor_sha256": factor.factor_sha256,
+                "factorization_info": int(factor.factorization_info),
+                "factor_nbytes": factor.factor_nbytes,
+            }
+        )
+        factor_sha = factor.factor_sha256
+        del factor
         expected_factor_sha = record.get("expected_factor_sha256")
         if expected_factor_sha is not None and expected_factor_sha != factor_sha:
             raise ValueError("M6B streamed factor SHA does not match repeat authority")

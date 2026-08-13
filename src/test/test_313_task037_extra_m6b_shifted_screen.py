@@ -209,6 +209,41 @@ def test_m6b_stream_writer_binds_repeat_matrix_and_factor_sha(tmp_path: Path):
         )
 
 
+def test_m6b_stream_writer_does_not_deduplicate_neighborhood_factors(
+    tmp_path: Path,
+):
+    matrix = np.eye(882, dtype=np.complex128) * (2.0 + 0.25j)
+    neighborhoods = (
+        {"neighborhood_id": 0, "key_sha256": "5" * 64},
+        {"neighborhood_id": 1, "key_sha256": "6" * 64},
+    )
+
+    def records():
+        yield neighborhoods[0], matrix
+        yield neighborhoods[1], matrix
+
+    manifest = stream_write_h2b_m6b_shifted_lu_patch_store(
+        records(),
+        tmp_path / "duplicate_matrix_store",
+        np.asarray([0, 1], dtype=np.int32),
+        np.asarray([0, 882, 1764], dtype=np.int64),
+        np.arange(1764, dtype=np.int64),
+        neighborhoods=neighborhoods,
+        identity={"source_provenance": "test", "beta": 1.0},
+        expected_factor_count=2,
+        expected_neighborhood_count=2,
+        task037_extra_m6b=True,
+    )
+    payload = json.loads(manifest.read_text(encoding="utf-8"))
+    factors = payload["factors"]
+    observed = payload["neighborhoods"]
+    assert [item["factor_id"] for item in factors] == [0, 1]
+    assert [item["factor_id"] for item in observed] == [0, 1]
+    assert factors[0]["lu_path"] != factors[1]["lu_path"]
+    assert factors[0]["pivot_path"] != factors[1]["pivot_path"]
+    assert payload["audit"]["factor_count"] == 2
+
+
 def test_m6b_nonhermitian_pc_uses_conjugate_omega_and_one_shifted_action(tmp_path: Path):
     store = _store(tmp_path)
     global_matrix = np.asarray(
