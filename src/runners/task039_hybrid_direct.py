@@ -391,6 +391,7 @@ def _default_runner(
         canonical_export_prefix=canonical_export_prefix,
         external_mode_inventory=external_mode_inventory,
         exact_one_cell_work_dir=exact_one_cell_work_dir,
+        qep_solver_tolerance=1.0e-12,
     )
 
 

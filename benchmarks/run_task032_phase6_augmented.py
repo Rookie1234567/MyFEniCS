@@ -1183,6 +1183,7 @@ def main(
     canonical_export_prefix: str | None = None,
     external_mode_inventory: Mapping[str, Any] | None = None,
     exact_one_cell_work_dir: str | Path | None = None,
+    qep_solver_tolerance: float = 1.0e-10,
 ) -> dict[str, Any]:
     command_argv = list(sys.argv[1:] if argv is None else argv)
     allow_task039 = bool(
@@ -1594,6 +1595,7 @@ def main(
             operators,
             target=target,
             requested_modes=candidate_modes,
+            tolerance=qep_solver_tolerance,
         )
         progress("Task32 Phase6: positive right QEP modes complete")
         positive_right, positive_selection = select_passive_direction_modes(
@@ -1628,6 +1630,7 @@ def main(
             positive_right,
             adjoint_target=np.conj(target),
             requested_left_modes=candidate_modes,
+            qep_solver_tolerance=qep_solver_tolerance,
             near_degenerate_tolerance=args.near_degenerate_tolerance,
             block_rotation_tolerance=args.block_rotation_tolerance,
             poynting_evaluator=poynting_evaluator,
@@ -1638,6 +1641,7 @@ def main(
             operators,
             target=-target,
             requested_modes=candidate_modes,
+            tolerance=qep_solver_tolerance,
         )
         progress("Task32 Phase6: negative right QEP modes complete")
         negative_right, negative_selection = select_passive_direction_modes(
@@ -1671,6 +1675,7 @@ def main(
             negative_right,
             adjoint_target=-np.conj(target),
             requested_left_modes=candidate_modes,
+            qep_solver_tolerance=qep_solver_tolerance,
             near_degenerate_tolerance=args.near_degenerate_tolerance,
             block_rotation_tolerance=args.block_rotation_tolerance,
             poynting_evaluator=poynting_evaluator,

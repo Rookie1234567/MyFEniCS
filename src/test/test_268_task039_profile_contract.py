@@ -1063,6 +1063,23 @@ def test_task039_default_runner_passes_run_scoped_exact_traction_directory(
     assert captured["kwargs"]["exact_one_cell_work_dir"] == (
         tmp_path.resolve() / "numerical_output" / "exact_one_cell"
     )
+    assert captured["kwargs"]["qep_solver_tolerance"] == 1.0e-12
+
+
+def test_task039_qep_tolerance_seams_keep_ordinary_defaults():
+    from benchmarks import run_task032_phase6_augmented as benchmark
+    from src.modes import mode_classification
+
+    assert (
+        inspect.signature(benchmark.main).parameters["qep_solver_tolerance"].default
+        == 1.0e-10
+    )
+    assert (
+        inspect.signature(mode_classification.build_biorthogonal_mode_basis)
+        .parameters["qep_solver_tolerance"]
+        .default
+        == 1.0e-10
+    )
 
 
 def test_task039_full3d_iterative_passes_resolved_cfg_and_frozen_solver_budget(

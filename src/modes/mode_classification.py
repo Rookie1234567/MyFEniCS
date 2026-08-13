@@ -771,6 +771,7 @@ def build_biorthogonal_mode_basis(
     relative_flux_tolerance: float = 1.0e-8,
     absolute_flux_tolerance: float = 1.0e-12,
     beta_imag_tolerance: float = 1.0e-10,
+    qep_solver_tolerance: float = 1.0e-10,
     near_degenerate_tolerance: float = 1.0e-6,
     block_rotation_tolerance: float = 1.0e-6,
     maximum_overlap_condition: float = 1.0e12,
@@ -828,6 +829,7 @@ def build_biorthogonal_mode_basis(
             adjoint_operators,
             target=complex(adjoint_target),
             requested_modes=requested,
+            tolerance=qep_solver_tolerance,
         )
         if log is not None:
             log("Task32 mode basis: adjoint QEP solve returned")
