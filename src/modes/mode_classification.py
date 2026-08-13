@@ -421,11 +421,6 @@ def _joint_near_degenerate_groups(
     """Merge beta-near groups whose normalized left/right blocks still couple."""
 
     values = np.asarray(biorthogonality, dtype=np.complex128)
-    group_of = {
-        int(index): group_id
-        for group_id, indices in enumerate(groups)
-        for index in indices
-    }
     parents = list(range(len(groups)))
 
     def find(index: int) -> int:
@@ -453,30 +448,43 @@ def _joint_near_degenerate_groups(
             if joins:
                 union(first_group, second_group)
 
-    audit = _near_degenerate_partition_audit(
-        betas,
-        groups,
-        values,
-        near_degenerate_tolerance=near_degenerate_tolerance,
-        block_rotation_tolerance=block_rotation_tolerance,
-    )
-    if (
-        not audit["pass"]
-        and audit["status"] == "near_degenerate_block_partition_split"
-        and audit["worst_cross_block_is_near_degenerate_candidate"]
-    ):
-        first_group, second_group = audit["worst_cross_block_group_ids"]
-        union(int(first_group), int(second_group))
-
-    components: dict[int, list[int]] = {}
-    for index in range(len(betas)):
-        components.setdefault(find(group_of[index]), []).append(int(index))
-    return tuple(
-        sorted(
-            (tuple(indices) for indices in components.values()),
-            key=lambda indices: indices[0],
+    def current_components() -> tuple[tuple[int, ...], tuple[tuple[int, ...], ...]]:
+        grouped: dict[int, list[int]] = {}
+        for group_id, indices in enumerate(groups):
+            grouped.setdefault(find(group_id), []).extend(
+                int(index) for index in indices
+            )
+        ordered = sorted(grouped.items(), key=lambda item: item[1][0])
+        return tuple(int(root) for root, _indices in ordered), tuple(
+            tuple(indices) for _root, indices in ordered
         )
-    )
+
+    while True:
+        component_roots, components = current_components()
+        audit_values = values.copy()
+        for component in components:
+            indices = np.asarray(component, dtype=np.intp)
+            audit_values[np.ix_(indices, indices)] = np.eye(
+                len(indices), dtype=np.complex128
+            )
+        audit = _near_degenerate_partition_audit(
+            betas,
+            components,
+            audit_values,
+            near_degenerate_tolerance=near_degenerate_tolerance,
+            block_rotation_tolerance=block_rotation_tolerance,
+        )
+        if not (
+            audit["status"] == "near_degenerate_block_partition_split"
+            and audit["worst_cross_block_is_near_degenerate_candidate"]
+        ):
+            break
+        first_group, second_group = audit["worst_cross_block_group_ids"]
+        first_root = component_roots[int(first_group)]
+        second_root = component_roots[int(second_group)]
+        union(first_root, second_root)
+
+    return components
 
 
 def _joint_subspace_inverse(

@@ -165,6 +165,42 @@ class HybridInterfaceAuditTests(unittest.TestCase):
         self.assertFalse(audit["pass"])
         self.assertEqual(audit["status"], "cross_block_biorthogonality_failure")
 
+    def test_joint_groups_close_cumulative_near_degenerate_blocks(self):
+        betas = tuple(0.5 + (0.1 + index * 1.0e-7) * 1j for index in range(4))
+        groups = tuple((index,) for index in range(4))
+        overlap = np.eye(4, dtype=np.complex128)
+        overlap[0, 1:] = 0.6e-6
+
+        one_merge_values = overlap.copy()
+        one_merge_values[np.ix_((0, 1), (0, 1))] = np.eye(2, dtype=np.complex128)
+        one_merge_audit = _near_degenerate_partition_audit(
+            betas,
+            ((0, 1), (2,), (3,)),
+            one_merge_values,
+            near_degenerate_tolerance=1.0e-6,
+            block_rotation_tolerance=1.0e-6,
+        )
+        self.assertGreater(one_merge_audit["biorthogonality_identity_row_norm"], 1.0e-6)
+
+        joint = _joint_near_degenerate_groups(
+            betas,
+            groups,
+            overlap,
+            near_degenerate_tolerance=1.0e-6,
+            block_rotation_tolerance=1.0e-6,
+        )
+        self.assertEqual(joint, ((0, 1, 2), (3,)))
+        closed_values = overlap.copy()
+        closed_values[np.ix_((0, 1, 2), (0, 1, 2))] = np.eye(3, dtype=np.complex128)
+        closed_audit = _near_degenerate_partition_audit(
+            betas,
+            joint,
+            closed_values,
+            near_degenerate_tolerance=1.0e-6,
+            block_rotation_tolerance=1.0e-6,
+        )
+        self.assertLessEqual(closed_audit["biorthogonality_identity_row_norm"], 1.0e-6)
+
 
 if __name__ == "__main__":
     unittest.main()
