@@ -1,4 +1,4 @@
-"""Research-only cold storage for the fixed ``beta=1`` M6B patch operator.
+"""Research-only cold storage for the fixed-beta M6B patch operator.
 
 The shifted local operator is complex and generally non-Hermitian.  It is
 therefore stored as a SciPy/LAPACK ``zgetrf`` LU factor with int32 pivots,
@@ -23,6 +23,7 @@ from scipy.linalg import lapack
 
 __all__ = (
     "M6B_SHIFTED_LU_STORE_SCHEMA",
+    "M6B_ALLOWED_SHIFTED_BETAS",
     "M6B_SHIFTED_BETA",
     "M6B_SHIFTED_FACTOR_COUNT",
     "M6B_SHIFTED_CELL_COUNT",
@@ -41,6 +42,7 @@ __all__ = (
 
 
 M6B_SHIFTED_LU_STORE_SCHEMA = "task037.extra.h2b.m6b.shifted-lu-store.v1"
+M6B_ALLOWED_SHIFTED_BETAS = (0.5, 1.0)
 M6B_SHIFTED_BETA = 1.0
 M6B_SHIFTED_FACTOR_COUNT = 84
 M6B_SHIFTED_CELL_COUNT = 252
@@ -48,6 +50,16 @@ M6B_SHIFTED_NLOC = 882
 M6B_SHIFTED_RETAINED_LIMIT_BYTES = 1_100_000_000
 _COMPLEX128_BYTES = np.dtype(np.complex128).itemsize
 _SHA_HEX = frozenset("0123456789abcdef")
+
+
+def _validate_shifted_beta(beta: Any) -> float:
+    try:
+        value = float(beta)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("M6B shifted beta is not allowed") from exc
+    if not np.isfinite(value) or value not in M6B_ALLOWED_SHIFTED_BETAS:
+        raise ValueError("M6B shifted beta must be exactly 0.5 or 1")
+    return value
 
 
 def _jsonable(value: Any) -> Any:
@@ -164,8 +176,7 @@ class H2BM6BShiftedLUFactor:
             or np.any(pivots >= self.n)
         ):
             raise ValueError("M6B shifted LU factor arrays are invalid")
-        if float(self.beta) != M6B_SHIFTED_BETA:
-            raise ValueError("M6B shifted factor beta is not the fixed beta=1")
+        beta = _validate_shifted_beta(self.beta)
         if not _valid_sha(self.matrix_sha256):
             raise ValueError("M6B source matrix SHA is invalid")
         if type(self.factorization_info) is not int or self.factorization_info != 0:
@@ -177,6 +188,7 @@ class H2BM6BShiftedLUFactor:
         pivots.setflags(write=False)
         object.__setattr__(self, "lu", lu)
         object.__setattr__(self, "pivots", pivots)
+        object.__setattr__(self, "beta", beta)
         object.__setattr__(self, "factor_sha256", digest)
 
     @property
@@ -264,6 +276,7 @@ def build_h2b_m6b_shifted_lu_factor(
 
     if task037_extra_m6b is not True:
         raise ValueError("M6B shifted LU requires explicit research opt-in")
+    beta_value = _validate_shifted_beta(beta)
     values = np.asarray(matrix)
     if (
         values.dtype != np.dtype(np.complex128)
@@ -287,7 +300,7 @@ def build_h2b_m6b_shifted_lu_factor(
         np.asarray(factor_values, dtype=np.complex128, order="C"),
         np.asarray(pivots, dtype=np.int32, order="C"),
         int(values.shape[0]),
-        beta=float(beta),
+        beta=beta_value,
         matrix_sha256=observed_matrix_sha,
         factorization_info=int(info),
     )
@@ -541,10 +554,19 @@ def write_h2b_m6b_shifted_lu_patch_store(
     store: H2BM6BShiftedLUPatchStore,
     directory: str | Path,
     *,
+    beta: float = M6B_SHIFTED_BETA,
     task037_extra_m6b: bool = False,
 ) -> Path:
     if task037_extra_m6b is not True:
         raise ValueError("M6B shifted store requires explicit research opt-in")
+    beta_value = _validate_shifted_beta(beta)
+    store_beta = _validate_shifted_beta(store.audit["beta"])
+    if beta_value != store_beta:
+        raise ValueError("M6B store beta does not match writer beta")
+    if "beta" in store.identity and _validate_shifted_beta(
+        store.identity["beta"]
+    ) != store_beta:
+        raise ValueError("M6B store identity beta does not match factor beta")
     root = Path(directory)
     root.mkdir(parents=True, exist_ok=True)
     files: dict[str, dict[str, Any]] = {}
@@ -582,7 +604,7 @@ def write_h2b_m6b_shifted_lu_patch_store(
     manifest: dict[str, Any] = {
         "schema": M6B_SHIFTED_LU_STORE_SCHEMA,
         "task037_extra_m6b": True,
-        "beta": M6B_SHIFTED_BETA,
+        "beta": beta_value,
         "identity": _jsonable(store.identity),
         "factors": factors,
         "neighborhoods": [_jsonable(item) for item in store.neighborhoods],
@@ -606,6 +628,7 @@ def stream_write_h2b_m6b_shifted_lu_patch_store(
     *,
     neighborhoods: Any,
     identity: Mapping[str, Any],
+    beta: float = M6B_SHIFTED_BETA,
     expected_factor_count: int | None = None,
     expected_neighborhood_count: int | None = None,
     task037_extra_m6b: bool = False,
@@ -620,6 +643,11 @@ def stream_write_h2b_m6b_shifted_lu_patch_store(
 
     if task037_extra_m6b is not True:
         raise ValueError("M6B shifted store requires explicit research opt-in")
+    beta_value = _validate_shifted_beta(beta)
+    if "beta" in identity and _validate_shifted_beta(
+        identity["beta"]
+    ) != beta_value:
+        raise ValueError("M6B streamed identity beta does not match writer beta")
     root = Path(directory)
     root.mkdir(parents=True, exist_ok=True)
     records = tuple(dict(item) for item in neighborhoods)
@@ -657,6 +685,7 @@ def stream_write_h2b_m6b_shifted_lu_patch_store(
             raise ValueError("M6B streamed matrix SHA does not match repeat authority")
         factor = build_h2b_m6b_shifted_lu_factor(
             values,
+            beta=beta_value,
             matrix_sha256=matrix_sha,
             task037_extra_m6b=True,
         )
@@ -738,7 +767,7 @@ def stream_write_h2b_m6b_shifted_lu_patch_store(
     }
     audit = {
         "schema": M6B_SHIFTED_LU_STORE_SCHEMA,
-        "beta": M6B_SHIFTED_BETA,
+        "beta": beta_value,
         "factor_order": M6B_SHIFTED_NLOC,
         "factor_count": len(factor_records),
         "neighborhood_count": len(observed_records),
@@ -770,7 +799,7 @@ def stream_write_h2b_m6b_shifted_lu_patch_store(
     manifest: dict[str, Any] = {
         "schema": M6B_SHIFTED_LU_STORE_SCHEMA,
         "task037_extra_m6b": True,
-        "beta": M6B_SHIFTED_BETA,
+        "beta": beta_value,
         "identity": _jsonable(identity),
         "factors": factor_records,
         "neighborhoods": [_jsonable(item) for item in observed_records],
@@ -831,7 +860,6 @@ def load_h2b_m6b_shifted_lu_patch_store(
         not isinstance(manifest, Mapping)
         or manifest.get("schema") != M6B_SHIFTED_LU_STORE_SCHEMA
         or manifest.get("task037_extra_m6b") is not True
-        or manifest.get("beta") != M6B_SHIFTED_BETA
         or manifest.get("evidence_sha256")
         != _json_sha256(
             {
@@ -842,6 +870,7 @@ def load_h2b_m6b_shifted_lu_patch_store(
         )
     ):
         raise ValueError("M6B shifted manifest schema/evidence is invalid")
+    manifest_beta = _validate_shifted_beta(manifest.get("beta"))
     root = manifest_file.parent
     files = manifest.get("files")
     factor_records = manifest.get("factors")
@@ -856,6 +885,10 @@ def load_h2b_m6b_shifted_lu_patch_store(
         or not isinstance(identity, Mapping)
     ):
         raise ValueError("M6B shifted manifest sections are incomplete")
+    if "beta" in identity and _validate_shifted_beta(
+        identity["beta"]
+    ) != manifest_beta:
+        raise ValueError("M6B shifted identity beta does not match manifest beta")
     factors: list[H2BM6BShiftedLUFactor] = []
     referenced: list[str] = []
     for expected_id, record in enumerate(factor_records):
@@ -867,7 +900,7 @@ def load_h2b_m6b_shifted_lu_patch_store(
         if (
             type(n) is not int
             or n <= 0
-            or record.get("beta") != M6B_SHIFTED_BETA
+            or record.get("beta") != manifest_beta
             or lu.shape != (n, n)
             or lu.dtype != np.dtype(np.complex128)
             or pivots.shape != (n,)
@@ -884,7 +917,7 @@ def load_h2b_m6b_shifted_lu_patch_store(
                 lu,
                 pivots,
                 n,
-                beta=M6B_SHIFTED_BETA,
+                beta=manifest_beta,
                 matrix_sha256=record["matrix_sha256"],
                 factor_sha256=record["factor_sha256"],
                 factorization_info=0,

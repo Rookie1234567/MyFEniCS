@@ -20,6 +20,7 @@ import benchmarks.run_task037_extra_m6b as runner
 from src.solvers.hcurl_h2b_m6b_shifted_lu_store import (
     H2BM6BShiftedLUFactor,
     H2BM6BShiftedLUPatchStore,
+    M6B_ALLOWED_SHIFTED_BETAS,
     build_h2b_m6b_shifted_lu_factor,
     build_h2b_m6b_shifted_lu_patch_store,
     load_h2b_m6b_shifted_lu_patch_store,
@@ -121,6 +122,58 @@ def _single_cell_store(tmp_path: Path) -> H2BM6BShiftedLUPatchStore:
     )
 
 
+def test_m6b_beta_half_store_roundtrip_and_pc_identity(tmp_path: Path):
+    assert M6B_ALLOWED_SHIFTED_BETAS == (0.5, 1.0)
+    matrix = _local_matrix()
+    factor = build_h2b_m6b_shifted_lu_factor(
+        matrix, beta=0.5, task037_extra_m6b=True
+    )
+    store = build_h2b_m6b_shifted_lu_patch_store(
+        (factor,),
+        ({
+            "neighborhood_id": 0,
+            "key_sha256": "7" * 64,
+            "cell_ordinals": [0],
+            "multiplicity": 1,
+            "factor_id": 0,
+        },),
+        np.asarray([0], dtype=np.int32),
+        np.asarray([0, 3], dtype=np.int64),
+        np.asarray([0, 1, 2], dtype=np.int64),
+        identity={"source_provenance": "beta-half", "beta": 0.5},
+        task037_extra_m6b=True,
+    )
+    manifest = write_h2b_m6b_shifted_lu_patch_store(
+        store, tmp_path / "beta_half_store", beta=0.5, task037_extra_m6b=True
+    )
+    payload = json.loads(manifest.read_text(encoding="utf-8"))
+    assert payload["beta"] == 0.5
+    assert payload["audit"]["beta"] == 0.5
+    assert payload["factors"][0]["beta"] == 0.5
+    loaded = load_h2b_m6b_shifted_lu_patch_store(
+        manifest, task037_extra_m6b=True
+    )
+    assert loaded.audit["beta"] == 0.5
+    pc = H2BM6BShiftedPatchPC(
+        loaded,
+        global_row_count=3,
+        shifted_action=lambda values: np.array(values, dtype=np.complex128, copy=True),
+        task037_extra_m6b=True,
+    )
+    assert pc.audit["beta"] == 0.5
+    with pytest.raises(ValueError, match="writer beta"):
+        write_h2b_m6b_shifted_lu_patch_store(
+            loaded,
+            tmp_path / "beta_mismatch",
+            beta=1.0,
+            task037_extra_m6b=True,
+        )
+    with pytest.raises(ValueError, match="0.5 or 1"):
+        build_h2b_m6b_shifted_lu_factor(
+            matrix, beta=0.25, task037_extra_m6b=True
+        )
+
+
 def test_m6b_zgetrf_roundtrip_and_exact_factor_bytes(tmp_path: Path):
     matrix = _local_matrix()
     factor = build_h2b_m6b_shifted_lu_factor(
@@ -129,6 +182,7 @@ def test_m6b_zgetrf_roundtrip_and_exact_factor_bytes(tmp_path: Path):
     rhs = np.asarray([1.0 + 0.2j, -0.3 + 0.4j, 0.5 - 0.1j], dtype=np.complex128)
     solution = factor.solve(rhs)
     assert np.linalg.norm(matrix @ solution - rhs) <= 1.0e-12
+    assert factor.beta == 1.0
     assert factor.factorization_info == 0
     assert factor.factor_nbytes == shifted_lu_factor_nbytes(3)
     assert factor.audit_jsonable()["full_dense_patch_matrix_retained"] is False
@@ -139,11 +193,13 @@ def test_m6b_cold_store_is_mmap_readonly_and_factor_is_shared(tmp_path: Path):
     store = _store(tmp_path)
     assert store.factor_for_cell(0) is store.factor_for_cell(1)
     factor = store.factor_for_cell(0)
+    assert factor.beta == 1.0
     assert isinstance(factor.lu.base, np.memmap)
     assert isinstance(factor.pivots.base, np.memmap)
     assert factor.lu.flags.writeable is False
     assert factor.pivots.flags.writeable is False
     audit = store.audit_jsonable()
+    assert audit["beta"] == 1.0
     assert audit["factor_count"] == 1
     assert audit["factor_reuse_count"] == 1
     assert audit["factor_copy_count"] == 0
@@ -154,7 +210,7 @@ def test_m6b_cold_store_is_mmap_readonly_and_factor_is_shared(tmp_path: Path):
 def test_m6b_stream_writer_binds_repeat_matrix_and_factor_sha(tmp_path: Path):
     matrix = np.eye(882, dtype=np.complex128) * (2.0 + 0.25j)
     factor = build_h2b_m6b_shifted_lu_factor(
-        matrix, task037_extra_m6b=True
+        matrix, beta=0.5, task037_extra_m6b=True
     )
     record = {
         "neighborhood_id": 0,
@@ -178,7 +234,8 @@ def test_m6b_stream_writer_binds_repeat_matrix_and_factor_sha(tmp_path: Path):
         neighborhoods=(
             {"neighborhood_id": 0, "key_sha256": "3" * 64},
         ),
-        identity={"source_provenance": "test", "beta": 1.0},
+        identity={"source_provenance": "test", "beta": 0.5},
+        beta=0.5,
         expected_factor_count=1,
         expected_neighborhood_count=1,
         task037_extra_m6b=True,
@@ -203,7 +260,8 @@ def test_m6b_stream_writer_binds_repeat_matrix_and_factor_sha(tmp_path: Path):
             neighborhoods=(
                 {"neighborhood_id": 0, "key_sha256": "3" * 64},
             ),
-            identity={"source_provenance": "test", "beta": 1.0},
+            identity={"source_provenance": "test", "beta": 0.5},
+            beta=0.5,
             expected_factor_count=1,
             expected_neighborhood_count=1,
             task037_extra_m6b=True,
@@ -515,7 +573,11 @@ def test_m6b_shared_volume_form_matches_physical_and_shifted_mass(tmp_path: Path
     new1, epsilon1, abs_epsilon1, beta1, coverage1 = build_m6b_volume_form(
         function_space, mesh_data, cfg, beta=1.0
     )
+    new05, epsilon05, abs_epsilon05, beta05, coverage05 = build_m6b_volume_form(
+        function_space, mesh_data, cfg, beta=0.5
+    )
     assert coverage0 == coverage1
+    assert coverage0 == coverage05
     assert coverage0["owned_cell_count"] == cell_count
     assert coverage0["complete"] is True
     air_only_tags = mesh.meshtags(
@@ -535,12 +597,17 @@ def test_m6b_shared_volume_form_matches_physical_and_shifted_mass(tmp_path: Path
     }
     compiled0 = fem.form(new0, jit_options=jit_options)
     compiled1 = fem.form(new1, jit_options=jit_options)
+    compiled05 = fem.form(new05, jit_options=jit_options)
     state0, _ = h2b._form_code_state(compiled0.code)
     state1, _ = h2b._form_code_state(compiled1.code)
+    state05, _ = h2b._form_code_state(compiled05.code)
     assert new0.signature() == new1.signature()
+    assert new0.signature() == new05.signature()
     assert compiled0.module.__name__ == compiled1.module.__name__
+    assert compiled0.module.__name__ == compiled05.module.__name__
     assert state0 == "cold_decl_impl_generated"
     assert state1 == "hit_no_new_decl_impl"
+    assert state05 == "hit_no_new_decl_impl"
     old_form = fem.form(old_ufl, jit_options=h2b._expected_jit_options(old_cache))
     delta_ufl = (
         PETSc.ScalarType(1j * float(cfg.k0) ** 2)
@@ -554,11 +621,11 @@ def test_m6b_shared_volume_form_matches_physical_and_shifted_mass(tmp_path: Path
     )
     matrices = [
         fem_petsc.assemble_matrix(form)
-        for form in (old_form, compiled0, compiled1, delta_form)
+        for form in (old_form, compiled0, compiled1, compiled05, delta_form)
     ]
     for matrix in matrices:
         matrix.assemble()
-    old_matrix, new0_matrix, new1_matrix, delta_matrix = matrices
+    old_matrix, new0_matrix, new1_matrix, new05_matrix, delta_matrix = matrices
     source = old_matrix.createVecRight()
     observed = old_matrix.createVecLeft()
     expected = old_matrix.createVecLeft()
@@ -580,13 +647,20 @@ def test_m6b_shared_volume_form_matches_physical_and_shifted_mass(tmp_path: Path
         difference.axpy(-1.0, expected)
         difference.axpy(-1.0, delta)
         assert difference.norm() / max(delta.norm(), 1.0e-30) <= 1.0e-11
+        new05_matrix.mult(source, observed)
+        new0_matrix.mult(source, expected)
+        delta_matrix.mult(source, delta)
+        observed.copy(result=difference)
+        difference.axpy(-1.0, expected)
+        difference.axpy(-0.5, delta)
+        assert difference.norm() / max(delta.norm(), 1.0e-30) <= 1.0e-11
     finally:
         for vector in (source, observed, expected, delta, difference):
             vector.destroy()
         for matrix in matrices:
             matrix.destroy()
-    with pytest.raises(ValueError, match="exactly 0 or 1"):
-        build_m6b_volume_form(function_space, mesh_data, cfg, beta=0.5)
+    with pytest.raises(ValueError, match="exactly 0, 0.5 or 1"):
+        build_m6b_volume_form(function_space, mesh_data, cfg, beta=0.25)
     with pytest.raises(ValueError, match="no-PML"):
         build_m6b_volume_form(
             function_space,
@@ -628,7 +702,10 @@ def test_m6b_shared_kernel_identity_is_phase_and_signature_bound():
         "code_state": "cold_decl_impl_generated",
     }
     shifted = dict(
-        outer, role="shifted_volume", beta=1.0, code_state="hit_no_new_decl_impl"
+        outer,
+        role="shifted_volume",
+        beta=runner.M6B_BETA,
+        code_state="hit_no_new_decl_impl",
     )
     identity = runner._m6b_shared_kernel_identity(
         outer, shifted, cfg, phase="stage"
@@ -643,7 +720,7 @@ def test_m6b_shared_kernel_identity_is_phase_and_signature_bound():
         "code_state": "cold_decl_impl_generated",
         "operator_identity": "wrong-operator",
         "representation": "wrong-representation",
-        "beta": 0.5,
+        "beta": 0.25,
         "beta_runtime_parameter": "python_float",
     }.items():
         tampered = dict(shifted)
@@ -657,6 +734,16 @@ def test_m6b_shared_kernel_identity_is_phase_and_signature_bound():
     assert runner._m6b_form_records_bound(
         outer, shifted, bad_physics, phase="stage"
     ) is False
+
+
+def test_m6b_runner_fixes_beta_half_without_beta_cli():
+    assert runner.M6B_BETA == 0.5
+    parser_source = inspect.getsource(runner._parser)
+    assert "--beta" not in parser_source
+    assert "beta_values" not in parser_source
+    assert runner._parser().parse_args(
+        ["m6b-worker", "--run-dir", "synthetic-run"]
+    ).command == "m6b-worker"
 
 
 def test_m6b_form_record_removes_inherited_proxy_identity():
@@ -756,7 +843,7 @@ def _valid_worker_payload() -> dict[str, object]:
         "online": dict(lifecycle),
         "factor_store": {
             "schema": "task037.extra.h2b.m6b.shifted-lu-store.v1",
-            "beta": 1.0,
+            "beta": runner.M6B_BETA,
             "factor_order": 882,
             "factor_count": 84,
             "cell_count": 252,
@@ -825,7 +912,7 @@ def _valid_worker_payload() -> dict[str, object]:
     }
     pc_audit = {
         "schema": "task037.extra.h2b.m6b.shifted-patch-pc.v1",
-        "beta": 1.0,
+        "beta": runner.M6B_BETA,
         "unique_factor_count": 84,
         "solve_count_per_apply": 84,
         "factor_reuse_count": 168,
@@ -867,7 +954,7 @@ def _valid_worker_payload() -> dict[str, object]:
         },
         "beta_runtime_parameter": "fem.Constant",
         "outer_beta": 0.0,
-        "shifted_beta": 1.0,
+        "shifted_beta": runner.M6B_BETA,
         "module_name": "libffcx_forms_synthetic",
         "ufl_signature": "synthetic-shared-ufl",
         "ufcx_signature": "synthetic-shared-ufcx",
@@ -888,7 +975,7 @@ def _valid_worker_payload() -> dict[str, object]:
         "ufcx_signature": shared_kernel["ufcx_signature"],
         "code_state": "hit_no_new_decl_impl",
     }
-    shifted_form = dict(outer_form, role="shifted_volume", beta=1.0)
+    shifted_form = dict(outer_form, role="shifted_volume", beta=runner.M6B_BETA)
     material_tag_coverage = {
         "owned_cell_count": runner.M6B_GLOBAL_CELLS,
         "allowed_tag_values": {"air": 1, "substrate": 2, "grating": 3},
@@ -963,7 +1050,7 @@ def test_m6b_nonnegative_evidence_quantities_fail_closed():
             "reconstruction_count": 24,
             "fresh_B_beta_class_count": 24,
             "fresh_B_beta_matrix_count": 24,
-            "operator_identity": "B_beta=Kcurl-k0^2*M_epsilon+i*k0^2*M_abs_epsilon",
+            "operator_identity": runner.M6B_SHIFTED_OPERATOR,
             "numeric_matrix_source": "fresh_transformed_B_beta_class_block",
             "r2_numeric_store_used_for_blocks": False,
             "global_matrix_materialized": False,
@@ -1043,7 +1130,7 @@ def test_m6b_builder_and_online_require_stage_kernel(monkeypatch):
             "reconstruction_count": 24,
             "fresh_B_beta_class_count": 24,
             "fresh_B_beta_matrix_count": 24,
-            "operator_identity": "B_beta=Kcurl-k0^2*M_epsilon+i*k0^2*M_abs_epsilon",
+            "operator_identity": runner.M6B_SHIFTED_OPERATOR,
             "numeric_matrix_source": "fresh_transformed_B_beta_class_block",
             "r2_numeric_store_used_for_blocks": False,
             "global_matrix_materialized": False,

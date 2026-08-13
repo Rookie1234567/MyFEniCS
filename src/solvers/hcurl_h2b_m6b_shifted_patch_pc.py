@@ -1,8 +1,9 @@
 """M6B shifted full-space PC and PETSc adapters.
 
-The fixed ``beta=1`` patch operator is non-Hermitian.  The PC therefore uses
-the ordinary complex inner product to choose one residual-minimizing scalar
-after an additive row-complete LU correction.  It performs one matrix-free
+The allowed ``beta=0.5`` and ``beta=1`` patch operators are non-Hermitian.
+The PC therefore uses the ordinary complex inner product to choose one
+residual-minimizing scalar after an additive row-complete LU correction.  It
+performs one matrix-free
 shifted action per apply and retains no cell solution or assembled matrix.
 """
 
@@ -18,6 +19,7 @@ from petsc4py import PETSc
 
 from .hcurl_h2b_m6b_shifted_lu_store import (
     H2BM6BShiftedLUPatchStore,
+    M6B_ALLOWED_SHIFTED_BETAS,
     M6B_SHIFTED_LU_STORE_SCHEMA,
 )
 
@@ -121,12 +123,14 @@ def build_m6b_volume_form(
     """
 
     beta_value = float(beta)
-    if beta_value not in (0.0, 1.0):
-        raise ValueError("M6B volume form beta is fixed to exactly 0 or 1")
+    if beta_value != 0.0 and beta_value not in M6B_ALLOWED_SHIFTED_BETAS:
+        raise ValueError("M6B volume form beta is fixed to exactly 0, 0.5 or 1")
     if bool(cfg.use_pml) or float(cfg.pml_top_thickness) != 0.0 or float(
         cfg.pml_bottom_thickness
     ) != 0.0 or float(cfg.divergence_penalty) != 0.0:
-        raise ValueError("M6B shared volume form requires fixed no-PML zero-divergence physics")
+        raise ValueError(
+            "M6B shared volume form requires fixed no-PML zero-divergence physics"
+        )
     import ufl
     from dolfinx import fem
     from petsc4py import PETSc
@@ -207,9 +211,10 @@ class H2BM6BShiftedPatchPC:
         if not callable(shifted_action):
             raise TypeError("M6B shifted action must be callable")
         store_audit = factor_store.audit
+        store_beta = store_audit.get("beta")
         if (
             store_audit.get("schema") != M6B_SHIFTED_LU_STORE_SCHEMA
-            or store_audit.get("beta") != 1.0
+            or store_beta not in M6B_ALLOWED_SHIFTED_BETAS
             or store_audit.get("full_dense_patch_matrix_retained") is not False
             or store_audit.get("factor_copy_count") != 0
             or store_audit.get("retained_total_gate") is not True
@@ -217,6 +222,7 @@ class H2BM6BShiftedPatchPC:
         ):
             raise ValueError("M6B shifted PC requires a closed LU store")
         self._store = factor_store
+        self._beta = float(store_beta)
         self._global_row_count = global_row_count
         self._shifted_action = shifted_action
         self._cell_count = int(factor_store.cell_neighborhood_ids.size)
@@ -311,7 +317,7 @@ class H2BM6BShiftedPatchPC:
         }
         return {
             "schema": M6B_SHIFTED_PC_SCHEMA,
-            "beta": 1.0,
+            "beta": self._beta,
             "global_row_count": self._global_row_count,
             "cell_count": self._cell_count,
             "unique_factor_count": int(store_audit["factor_count"]),

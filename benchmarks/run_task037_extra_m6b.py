@@ -30,9 +30,12 @@ M6B_GLOBAL_CELLS = 252
 M6B_LOCAL_NLOC = 882
 M6B_GLOBAL_ROWS = 173_802
 M6B_CONSTRAINTS = 9_210
-M6B_BETA = 1.0
+M6B_BETA = 0.5
 M6B_SHARED_VOLUME_OPERATOR = (
     "C-k0^2*M_epsilon+i*beta*k0^2*M_abs_epsilon"
+)
+M6B_SHIFTED_OPERATOR = (
+    "B_beta=Kcurl-k0^2*M_epsilon+i*beta*k0^2*M_abs_epsilon"
 )
 M6B_SHARED_VOLUME_REPRESENTATION = "exact_DG0_single_integral"
 M6B_SHARED_VOLUME_SCHEMA = "task037.extra.h2b.m6b.shared-volume.v1"
@@ -184,7 +187,7 @@ def _m6b_scope(*, phase: str | None = None) -> dict[str, Any]:
         "factor_count": M6B_FACTOR_COUNT,
         "factor_reuse_count": M6B_FACTOR_REUSE,
         "operator": "A=Kcurl-k0^2*M_epsilon+A_DtN",
-        "shifted_operator": "B_beta=Kcurl-k0^2*M_epsilon+i*beta*k0^2*M_abs_epsilon",
+        "shifted_operator": M6B_SHIFTED_OPERATOR,
         "fine_space": "uncondensed_fullspace",
         "global_matrix": False,
         "static_condensation": False,
@@ -451,8 +454,7 @@ def _m6b_builder_summary_valid(value: Any) -> bool:
         and class_audit.get("reconstruction_count") == 24
         and class_audit.get("fresh_B_beta_class_count") == 24
         and class_audit.get("fresh_B_beta_matrix_count") == 24
-        and class_audit.get("operator_identity")
-        == "B_beta=Kcurl-k0^2*M_epsilon+i*k0^2*M_abs_epsilon"
+        and class_audit.get("operator_identity") == M6B_SHIFTED_OPERATOR
         and class_audit.get("numeric_matrix_source")
         == "fresh_transformed_B_beta_class_block"
         and class_audit.get("r2_numeric_store_used_for_blocks") is False
@@ -841,7 +843,7 @@ def _m6b_shared_kernel_identity(
         raise ValueError("M6B shared volume form identity is incomplete")
     if (
         outer["beta"] != 0.0
-        or shifted["beta"] != 1.0
+        or shifted["beta"] != M6B_BETA
         or outer["beta_runtime_parameter"] != "fem.Constant"
         or shifted["beta_runtime_parameter"] != "fem.Constant"
         or outer["operator_identity"] != M6B_SHARED_VOLUME_OPERATOR
@@ -852,7 +854,7 @@ def _m6b_shared_kernel_identity(
         or outer["ufl_signature"] != shifted["ufl_signature"]
         or outer["ufcx_signature"] != shifted["ufcx_signature"]
     ):
-        raise ValueError("M6B beta-zero/beta-one shared kernel identity changed")
+        raise ValueError("M6B physical/shifted shared kernel identity changed")
     return {
         "schema": M6B_SHARED_VOLUME_SCHEMA,
         "phase": str(phase),
@@ -861,7 +863,7 @@ def _m6b_shared_kernel_identity(
         "fixed_physics": fixed_physics,
         "beta_runtime_parameter": "fem.Constant",
         "outer_beta": 0.0,
-        "shifted_beta": 1.0,
+        "shifted_beta": M6B_BETA,
         "module_name": outer["module_name"],
         "ufl_signature": outer["ufl_signature"],
         "ufcx_signature": outer["ufcx_signature"],
@@ -922,7 +924,7 @@ def _m6b_shared_kernel_valid(value: Any, *, phase: str) -> bool:
         and physics["material_representation"] == "DG0_epsilon_and_abs_epsilon"
         and value["beta_runtime_parameter"] == "fem.Constant"
         and value["outer_beta"] == 0.0
-        and value["shifted_beta"] == 1.0
+        and value["shifted_beta"] == M6B_BETA
         and isinstance(value["module_name"], str)
         and value["module_name"].startswith("libffcx_forms_")
         and isinstance(value["ufl_signature"], str)
@@ -999,7 +1001,7 @@ def _m6b_form_records_bound(
             shifted,
             shared,
             role="shifted_volume",
-            beta=1.0,
+            beta=M6B_BETA,
             code_state="hit_no_new_decl_impl",
             shared_phase=phase,
         )
@@ -1532,9 +1534,7 @@ def _run_m6b_builder(run_dir: Path) -> int:
             )
             class_block_audit.update(
                 {
-                    "operator_identity": (
-                        "B_beta=Kcurl-k0^2*M_epsilon+i*k0^2*M_abs_epsilon"
-                    ),
+                    "operator_identity": M6B_SHIFTED_OPERATOR,
                     "numeric_matrix_source": "fresh_transformed_B_beta_class_block",
                     "retained_class_block_bytes": int(
                         class_authority.audit["retained_payload_bytes"]
@@ -1581,7 +1581,7 @@ def _run_m6b_builder(run_dir: Path) -> int:
                 fresh_class_records,
                 class_inventory,
                 {
-                    "operator": "B_beta=Kcurl-k0^2*M_epsilon+i*k0^2*M_abs_epsilon",
+                    "operator": M6B_SHIFTED_OPERATOR,
                     "numeric_matrix_source": "fresh_transformed_B_beta_class_block",
                 },
                 task037_extra_h2b=True,
@@ -1621,6 +1621,7 @@ def _run_m6b_builder(run_dir: Path) -> int:
                     if neighborhood.neighborhood_id in {0, 42, 83}:
                         first_factor = build_h2b_m6b_shifted_lu_factor(
                             first_matrix,
+                            beta=M6B_BETA,
                             matrix_sha256=matrix_sha,
                             task037_extra_m6b=True,
                         )
@@ -1634,6 +1635,7 @@ def _run_m6b_builder(run_dir: Path) -> int:
                         repeat_matrix_sha = repeat["matrix_sha256"]
                         repeat_factor = build_h2b_m6b_shifted_lu_factor(
                             repeat_matrix,
+                            beta=M6B_BETA,
                             matrix_sha256=repeat_matrix_sha,
                             task037_extra_m6b=True,
                         )
@@ -1702,8 +1704,9 @@ def _run_m6b_builder(run_dir: Path) -> int:
                     "r2_role": "topology_and_class_identity_only",
                     "r2_numeric_store_used_for_blocks": False,
                     "beta": M6B_BETA,
-                    "operator": "B_beta=Kcurl-k0^2*M_epsilon+i*k0^2*M_abs_epsilon",
+                    "operator": M6B_SHIFTED_OPERATOR,
                 },
+                beta=M6B_BETA,
                 expected_factor_count=M6B_FACTOR_COUNT,
                 expected_neighborhood_count=M6B_FACTOR_COUNT,
                 task037_extra_m6b=True,
