@@ -1181,7 +1181,7 @@ def _field_pair(left: Mapping[str, Any], right: Mapping[str, Any]) -> dict[str, 
                     ),
                     "mandatory_threshold": mandatory_threshold,
                     "strong_threshold": strong_threshold,
-                    "mandatory_pass": (
+                    "mandatory_pass": bool(
                         np.linalg.norm(a[p, ..., c] - b[p, ..., c])
                         / max(
                             float(np.linalg.norm(a[p, ..., c])),
@@ -1190,7 +1190,7 @@ def _field_pair(left: Mapping[str, Any], right: Mapping[str, Any]) -> dict[str, 
                         )
                         <= mandatory_threshold
                     ),
-                    "strong_pass": (
+                    "strong_pass": bool(
                         np.linalg.norm(a[p, ..., c] - b[p, ..., c])
                         / max(
                             float(np.linalg.norm(a[p, ..., c])),

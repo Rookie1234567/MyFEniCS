@@ -241,6 +241,18 @@ def test_compare_calls_only_existing_h_checker(
     assert len(called) == 1
     assert result["source"] == "diagnose_h_paths"
     assert result["comparison"]["classification"] == "M480_H_DISCREPANCY_UNRESOLVED"
+    monkeypatch.undo()
+    output = tmp_path / "comparison.json"
+    diagnostic.compare_payloads(hpath, fpath, output=output)
+    written = json.loads(output.read_text(encoding="utf-8"))
+    assert (
+        type(
+            written["comparison"]["comparisons"]["native_vs_full3d"]["E_V_per_m"][
+                "per_plane_component"
+            ][0][0]["mandatory_pass"]
+        )
+        is bool
+    )
 
 
 def test_replay_contract_has_no_solver_or_assembly_runner_calls() -> None:
