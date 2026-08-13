@@ -1,0 +1,219 @@
+{
+  "schema_version": "task039.e3-h6-full3d-direct-preflight.v1",
+  "stage": "E3",
+  "status": "ready_to_launch",
+  "classification": "preflight_pass",
+  "formal_pde_launched": false,
+  "blocking_reasons": [],
+  "source": {
+    "branch": "codex/20260812-task39-5nm-hybrid-0p7nm-feasibility",
+    "source_commit_sha": "d6f96c822ec4e782e27378eeba0e568e68da8eb2",
+    "head": "d6f96c822ec4e782e27378eeba0e568e68da8eb2",
+    "upstream": "d6f96c822ec4e782e27378eeba0e568e68da8eb2",
+    "ahead_behind": "0/0",
+    "worktree_clean_before_record": true
+  },
+  "input": {
+    "path": "input/official/task039/5nm_p6h6_full3d_direct_mpi8.dat",
+    "sha256": "f5679f7c2e9177ed4fd81f5108ed30f95243d688166d6b09042df96c4ef56fbd",
+    "resolved_config_sha256": "77bee6d6ad256313771364576dafc550580c2c89bb21b4eb1b1b478622231ada",
+    "physical_model_sha256": "873e5a23e18b36222b8b3eecd8cd0c05823c874924d49c60c5641c03cbe63764",
+    "model_id": "task039_5nm_full3d_direct",
+    "method": "full3d_direct",
+    "adapter": "task038.full3d_direct",
+    "solver": "direct/MUMPS",
+    "mesh_target_nm": 6.0,
+    "wavelength_nm": 5.0,
+    "nedelec_degree": 6,
+    "polarization": "S",
+    "grazing_angle_deg": 10.0,
+    "azimuth_deg": 0.0,
+    "assembly_backend": "assembly_time_static_condensed",
+    "mpi_size": 8,
+    "external_inventory_required": 604,
+    "execution_contract": {
+      "warning_memory_gib": 170.0,
+      "configured_hard_memory_gib": 195.0,
+      "effective_hard_formula": "min(195.0, 0.90 * selected_finite_limit_gib)",
+      "effective_hard_memory_gib": 195.0,
+      "timeout_seconds": 21600,
+      "require_zero_swap": true
+    }
+  },
+  "input_checks": {
+    "validate_only": {
+      "command": "python scripts/run_case.py --validate-only input/official/task039/5nm_p6h6_full3d_direct_mpi8.dat",
+      "exit": 0,
+      "status": "valid"
+    },
+    "dry_run": {
+      "command": "python scripts/run_case.py --dry-run input/official/task039/5nm_p6h6_full3d_direct_mpi8.dat",
+      "exit": 0,
+      "status": "valid",
+      "pde_launched": false
+    },
+    "abi": {
+      "qualified_activation": 1,
+      "python": "/home/Projects/MyFEniCS/.venv/bin/python",
+      "petsc_scalar": "complex128",
+      "petsc_int": "int32",
+      "linux_abi_stack": true
+    },
+    "concurrent_heavy_processes": {
+      "status": "none_observed",
+      "probe": "read-only process snapshot found no active MPI/PDE/heavy Task39 job"
+    }
+  },
+  "external_inventory": {
+    "count": 604,
+    "canonical_sha256": "296c9e74d0a15c0dd2671e54fa7de2709c5f19f0c9f8665ffc4d35d740d4faea",
+    "key_sha256": "56e869d715ebf717f66996b335845de609ef08999ee70ec0b70e10565a7a0299",
+    "keys_exact_and_unique": true,
+    "key_shape": ["side", "m", "n", "polarization"],
+    "counts": {
+      "bottom": 300,
+      "top": 304,
+      "propagating": 604,
+      "nonpropagating": 0,
+      "rayleigh_warning": 0,
+      "polarization": {"S": 302, "P": 302}
+    },
+    "source": "src.io.input_validation.task039_air_side_external_mode_inventory"
+  },
+  "mesh_only_capacity": {
+    "classification": "measured_mesh_topology",
+    "probe": {
+      "root": "results/task039_e3_h6_preflight_mesh_only/20260813T145300Z",
+      "method": "build_airbox_mesh_3d + _create_nedelec_space + build_double_floquet_mpc",
+      "matrix_assembly": false,
+      "solve": false,
+      "mpi_size": 1
+    },
+    "axis_cells": [9, 5, 24],
+    "cells": 1080,
+    "full_fe_dofs": 727500,
+    "floquet_constraint_mode": "topological_trace_p6",
+    "floquet_constraints": 24420,
+    "floquet_raw_map_nnz": 24420,
+    "interior_dofs_per_cell": 450,
+    "active_rows_before_static_condensation": 703080,
+    "active_trace_rows": 217080,
+    "assembled_rows_with_604": 217684,
+    "topology_formula": "full_fe_dofs - floquet_constraints - cells * interior_dofs_per_cell = active_trace_rows; active_trace_rows + 604 = assembled_rows_with_604",
+    "entity_dof_source": "Basix Nedelec p6 hexahedron entity_dofs[3][0]",
+    "constraint_counts": {
+      "x": 8670,
+      "y": 15606,
+      "corner": 144,
+      "edge": 4260,
+      "face": 20160,
+      "max_masters": 1
+    },
+    "constraint_memory_estimate_mb": 0.8383941650390625,
+    "h10_anchor_reproduction": {
+      "anchor_cells": 252,
+      "anchor_full_fe_dofs": 173802,
+      "anchor_floquet_constraints": 9210,
+      "anchor_interior_dofs_per_cell": 450,
+      "anchor_active_trace_rows": 51192,
+      "formula_reproduced": true
+    }
+  },
+  "capacity_prediction": {
+    "classification": "derived_adjacent_mesh_calibration",
+    "anchor": {
+      "record": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_e2_h7p5_full3d_direct_result_v1.json",
+      "raw_run": "results/task039_5nm_full3d_direct/task039_5nm_full3d_direct_p6h7p5_mpi8__full3d_direct__mpi8__Mna/20260813T125001.607954Z",
+      "mesh_target_nm": 7.5,
+      "cells": 720,
+      "assembled_rows": 145756,
+      "matrix_nnz": 122237892,
+      "factor_nnz": 761335240,
+      "process_tree_peak_rss_mib": 35877.375,
+      "process_tree_peak_pss_mib": 33805.8701171875,
+      "process_tree_peak_uss_mib": 33485.359375,
+      "wall_seconds": 1015.7625401068944
+    },
+    "ratios": {
+      "mesh_ratio": "7.5/6",
+      "cell_ratio": 1.5,
+      "assembled_row_ratio": 1.493482258020253,
+      "full_dof_ratio": 1.490564877988813,
+      "upper_h_minus_4_ratio": 2.44140625
+    },
+    "formula": "structural upper = h7p5_measured * (7.5/6)^4; resource upper (RSS/PSS/USS/wall) = h7p5_measured * (7.5/6)^4 * 1.25 workspace/runtime safety; lower = h7p5_measured * (h6_cells/h7p5_cells)",
+    "matrix_nnz_range": [183356838.0, 298432353.515625],
+    "factor_nnz_range": [1142002860.0, 1858728613.28125],
+    "factor_values_only_bytes_range": [18272045760.0, 29739657812.5],
+    "factor_values_only_gib_range": [17.019336223602295, 27.710631728172302],
+    "factor_bytes_semantics": "complex128 values-only envelope; sparse indices, pivot/workspace and MUMPS overhead excluded",
+    "process_tree_peak_rss_gib_range": [52.55474853515625, 106.92290961742401],
+    "process_tree_peak_pss_gib_range": [49.52031755447388, 100.7493439828977],
+    "process_tree_peak_uss_gib_range": [49.050819396972656, 99.79414753615856],
+    "wall_seconds_range": [1523.6438101603417, 3099.8612674160595],
+    "workspace_runtime_safety_factor": 1.25,
+    "peak_range_semantics": "derived conservative engineering range; upper includes 25% workspace/runtime allowance and is the launch Gate",
+    "uncertainty": "factor/workspace/runtime remain derived; no h6 matrix assembly or MUMPS symbolic/analysis was run"
+  },
+  "resource_snapshot": {
+    "physical_memory_gib": 256.0,
+    "selected_finite_limit_gib": 228.0657501220703,
+    "mem_available_gib": 211.5745391845703,
+    "effective_hard_gib": 195.0,
+    "warning_gib": 170.0,
+    "swap_total_gib": 32.0,
+    "swap_used_gib": 0.0,
+    "swap_gate": "any formal swap use is immediate failure",
+    "disk_free_gib": 720.2562599182129,
+    "disk_required_gib": 3.0,
+    "disk_required_classification": "derived_conservative",
+    "disk_required_formula": "ceil(444408267 B * (727500/488070) * 4 / 2^30)",
+    "disk_measurement": "read-only host snapshot; no formal job cgroup"
+  },
+  "mumps_symbolic_analysis": {
+    "symbolic": "not_available",
+    "analysis": "not_available",
+    "status": "nonblocking_not_available",
+    "reason": "no h6 matrix assembly or MUMPS symbolic/analysis probe was run during this preflight",
+    "h6_gate_effect": "nonblocking"
+  },
+  "review_preflight": {
+    "mesh_target_nm": 6.0,
+    "selected_limit_gib": 228.0657501220703,
+    "effective_hard_gib": 195.0,
+    "warning_gib": 170.0,
+    "mesh_gate": {
+      "status": "ready",
+      "pass": true,
+      "classification": "measured_mesh_topology_plus_derived_capacity"
+    },
+    "prediction": {
+      "upper_bound_gib": 106.92290961742401,
+      "threshold_gib": 195.0,
+      "status": "predicted",
+      "classification": "derived",
+      "pass": true
+    },
+    "symbolic_analysis": {
+      "status": "nonblocking_not_available",
+      "classification": "not_available",
+      "pass": true
+    },
+    "disk_sufficient": {
+      "status": "pass",
+      "classification": "derived_conservative",
+      "free_gib": 720.2562599182129,
+      "required_gib": 3.0,
+      "pass": true
+    },
+    "swap_zero": {
+      "status": "pass",
+      "classification": "measured",
+      "swap_used_gib": 0.0,
+      "pass": true
+    },
+    "all_pass": true,
+    "classification": "preflight_pass"
+  },
+  "next_action": "Ready for supervisor approval of exactly one E3 h6 formal PDE; no formal launch was performed. h5 and later stages remain untouched."
+}
