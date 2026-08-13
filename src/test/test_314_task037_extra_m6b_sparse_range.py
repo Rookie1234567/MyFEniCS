@@ -663,3 +663,41 @@ def test_m6b_w2_w0_authority_file_and_tamper_fail_closed(tmp_path: Path, monkeyp
     tampered = deepcopy(payload)
     tampered["basis"]["manifest_sha256"] = "0" * 64
     assert runner._m6b_w2_w0_payload_valid(tampered) is False
+
+
+def test_m6b_w2_factor_manifest_requires_nested_audit():
+    materialization = {
+        key: False
+        for key in (
+            "global_constraint_matrix",
+            "global_matrix",
+            "patch_matrices",
+            "per_cell_factor",
+            "schur",
+            "slab_factor",
+            "static_condensation",
+            "trace_slab",
+        )
+    }
+    payload = {
+        "schema": "task037.extra.h2b.m6b.shifted-lu-store.v1",
+        "beta": 1.0,
+        "audit": {
+            "schema": "task037.extra.h2b.m6b.shifted-lu-store.v1",
+            "beta": 1.0,
+            "factor_count": 84,
+            "cell_count": 252,
+            "factor_order": 882,
+            "factor_reuse_count": 168,
+            "factor_payload_bytes": runner.M6B_FACTOR_PAYLOAD_BYTES,
+            "retained_total_gate": True,
+            "materialization_identity": materialization,
+        },
+    }
+    assert runner._m6b_w2_factor_manifest_valid(payload) is True
+    top_level_only = deepcopy(payload)
+    top_level_only.update(top_level_only.pop("audit"))
+    assert runner._m6b_w2_factor_manifest_valid(top_level_only) is False
+    missing_audit = deepcopy(payload)
+    del missing_audit["audit"]
+    assert runner._m6b_w2_factor_manifest_valid(missing_audit) is False

@@ -3219,11 +3219,7 @@ def _m6b_w2_authority_record(
     if not (
         _evidence_valid(factor)
         and _evidence_valid(wave)
-        and factor_payload.get("schema")
-        == "task037.extra.h2b.m6b.shifted-lu-store.v1"
-        and factor_payload.get("factor_count") == M6B_FACTOR_COUNT
-        and factor_payload.get("cell_count") == M6B_GLOBAL_CELLS
-        and factor_payload.get("beta") == M6B_W2_SHIFTED_BETA
+        and _m6b_w2_factor_manifest_valid(factor_payload)
         and wave_payload.get("schema")
         == "task037.extra.m6b.sparse-range-store.v2"
         and wave_payload.get("global_rows") == M6B_GLOBAL_ROWS
@@ -3277,6 +3273,42 @@ def _m6b_w2_authority_record(
         "factor_compiler": factor.get("runtime_identity", {}).get("compiler"),
         "jit_source": str(jit_cache_source),
     }
+
+
+def _m6b_w2_factor_manifest_valid(value: Any) -> bool:
+    """Validate the frozen beta=1 factor manifest's nested audit contract."""
+
+    if not isinstance(value, Mapping):
+        return False
+    audit = value.get("audit")
+    if not isinstance(audit, Mapping):
+        return False
+    materialization = audit.get("materialization_identity")
+    if not isinstance(materialization, Mapping):
+        return False
+    return (
+        value.get("schema") == "task037.extra.h2b.m6b.shifted-lu-store.v1"
+        and value.get("beta") == 1.0
+        and audit.get("schema")
+        == "task037.extra.h2b.m6b.shifted-lu-store.v1"
+        and audit.get("beta") == 1.0
+        and audit.get("factor_count") == M6B_FACTOR_COUNT
+        and audit.get("cell_count") == M6B_GLOBAL_CELLS
+        and audit.get("factor_order") == 882
+        and audit.get("factor_reuse_count") == M6B_FACTOR_REUSE
+        and audit.get("factor_payload_bytes") == M6B_FACTOR_PAYLOAD_BYTES
+        and audit.get("retained_total_gate") is True
+        and all(materialization.get(key) is False for key in (
+            "global_constraint_matrix",
+            "global_matrix",
+            "patch_matrices",
+            "per_cell_factor",
+            "schur",
+            "slab_factor",
+            "static_condensation",
+            "trace_slab",
+        ))
+    )
 
 
 def _run_m6b_w2_diagnostic(
