@@ -67,6 +67,10 @@ M6B_PREDICTED_LIVE_SET_BYTES = sum(
         M6B_FIXED_RUNTIME_RESERVE_BYTES,
     )
 )
+M6B_W1_SCHEMA = "task037.extra.m6b.sparse-range-builder.v1"
+M6B_W1_BASE_PREDICTED_LIVE_SET_BYTES = 1_657_665_813
+M6B_W1_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_750_000_000
+M6B_W1_BUILDER_RSS_LIMIT_BYTES = 1_500_000_000
 M6B_STAGE_EVENTS = (
     "authority_validated",
     "mesh_ready",
@@ -780,6 +784,305 @@ def _m6b_emit(stream: Any, phase: str, event: str, started: float, **extra: Any)
     stream.write(json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n")
     stream.flush()
     print(json.dumps(payload, sort_keys=True), flush=True)
+
+
+def _run_m6b_w1_builder(run_dir: Path, jit_cache_source: Path) -> int:
+    """Build the W1 sparse ``Z``/``A Z`` carrier without running a screen."""
+
+    import gc
+    import shutil
+    import time
+    from types import SimpleNamespace
+
+    import numpy as np
+    from mpi4py import MPI
+
+    h2b = __import__("benchmarks.run_task037_extra_h2b", fromlist=["*"])
+    m6a = __import__("benchmarks.run_task037_extra_m6", fromlist=["*"])
+    from benchmarks.run_workstation_iterative import _fixed_floquet_hat_basis
+    from src.solvers.hcurl_fullspace_dtn import (
+        build_fullspace_dtn_action,
+        build_fullspace_dtn_carrier_from_surface,
+    )
+    from src.solvers.hcurl_h2b_m6b_shifted_patch_pc import (
+        build_m6b_outer_mat,
+        build_m6b_volume_form,
+    )
+    from src.solvers.hcurl_m6b_sparse_range import (
+        M6B_W1_W0_AZ_COLUMN_SHA256_AGGREGATE,
+        M6B_W1_W0_BASIS_MANIFEST_SHA256,
+        M6B_W1_W0_ORACLE_EXECUTION_SOURCE_SHA,
+        M6B_W1_W0_ORACLE_OUTPUT_SHA256,
+        M6B_W1_W0_RESIDUAL_SOURCE_SHA,
+        SparseM6BRangeCarrier,
+        basis_manifest_from_vectors,
+        load_sparse_m6b_range_carrier,
+        validate_w0_authority,
+    )
+    from src.solvers.hcurl_rank_one_mpc_action import build_task037_extra_h1r2_mpc_action
+
+    run_dir = Path(run_dir).resolve()
+    jit_cache_source = Path(jit_cache_source).resolve()
+    if run_dir.exists():
+        raise FileExistsError(f"W1 builder refuses existing directory: {run_dir}")
+    if not jit_cache_source.is_dir():
+        raise FileNotFoundError(f"W1 JIT cache source is missing: {jit_cache_source}")
+    if MPI.COMM_WORLD.size != 1:
+        raise RuntimeError("W1 sparse range builder is fixed to MPI1")
+    run_dir.mkdir(parents=True)
+    cache_dir = run_dir / "jit_cache"
+    shutil.copytree(jit_cache_source, cache_dir)
+    started = time.perf_counter()
+    progress_path = run_dir / "w1_builder_progress.jsonl"
+
+    def emit(event: str, **extra: Any) -> None:
+        payload = {
+            "schema": f"{M6B_W1_SCHEMA}.progress.v1",
+            "phase": "w1_builder",
+            "event": event,
+            "elapsed_wall_seconds": float(time.perf_counter() - started),
+            **extra,
+        }
+        with progress_path.open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n")
+            stream.flush()
+        print(json.dumps(payload, sort_keys=True), flush=True)
+
+    def cache_record(path: Path) -> dict[str, Any]:
+        entries = h2b._cache_snapshot(path)
+        content_entries = [
+            {
+                "path": item["path"],
+                "bytes": item["bytes"],
+                "sha256": item["sha256"],
+            }
+            for item in entries
+        ]
+        inventory_sha = hashlib.sha256(
+            h2b._canonical_json({"entries": content_entries})
+        ).hexdigest()
+        return {"entries": entries, "inventory_sha256": inventory_sha}
+
+    emit("cache_ready", source=str(jit_cache_source))
+    source_cache_before = cache_record(jit_cache_source)
+    target_cache_before = cache_record(cache_dir)
+    if target_cache_before["inventory_sha256"] != source_cache_before["inventory_sha256"]:
+        raise ValueError("W1 copied JIT cache differs from source")
+    cfg = mesh_data = function_space = floquet = None
+    physical_action = dtn_action = outer_mat = outer_context = None
+    surface_assemblers = None
+    volume_ufl = epsilon = abs_epsilon = beta = None
+    template = None
+    try:
+        cfg, mesh_data, function_space, floquet, modes = m6a._production_objects(
+            run_dir, mesh_name="m6b_w1_mesh"
+        )
+        physical_ufl, epsilon, abs_epsilon, beta, tag_coverage = build_m6b_volume_form(
+            function_space, mesh_data, cfg, beta=0.0
+        )
+        volume_ufl = physical_ufl
+        physical_action = build_task037_extra_h1r2_mpc_action(
+            physical_ufl,
+            floquet.mpc,
+            task037_extra_h1r2=True,
+            jit_options=h2b._expected_jit_options(cache_dir),
+        )
+        surface_assemblers = m6a._surface_assemblers(
+            function_space, mesh_data, cfg, modes, cache_dir
+        )
+        target_cache_after_forms = cache_record(cache_dir)
+        if target_cache_after_forms["inventory_sha256"] != target_cache_before["inventory_sha256"]:
+            raise ValueError("W1 isolated JIT cache changed during form construction")
+        if cache_record(jit_cache_source)["inventory_sha256"] != source_cache_before["inventory_sha256"]:
+            raise ValueError("W1 JIT cache source changed during form construction")
+        emit("forms_ready", cache_inventory_sha256=target_cache_after_forms["inventory_sha256"])
+        carrier = build_fullspace_dtn_carrier_from_surface(
+            modes,
+            surface_assemblers,
+            floquet.mpc,
+            cfg,
+            expected_mode_count=80,
+        )
+        dtn_action = build_fullspace_dtn_action(carrier, comm=MPI.COMM_WORLD)
+        outer_mat, outer_context = build_m6b_outer_mat(
+            physical_action,
+            dtn_action,
+            owned_rows=M6B_GLOBAL_ROWS,
+            global_rows=M6B_GLOBAL_ROWS,
+            comm=MPI.COMM_WORLD,
+        )
+        template = outer_mat.createVecRight()
+
+        def basis_progress(completed: int, total: int) -> None:
+            if completed % 5 == 0 or completed == total:
+                emit("basis_progress", completed=completed, total=total)
+
+        basis = tuple(
+            _fixed_floquet_hat_basis(
+                SimpleNamespace(cfg=cfg, V=function_space, floquet_data=floquet),
+                outer_mat,
+                coarse_slabs=24,
+                progress=basis_progress,
+            )
+        )
+        if len(basis) != 75:
+            raise ValueError("W1 fixed basis rank is not 75")
+        basis_manifest = basis_manifest_from_vectors(basis)
+        basis_manifest_sha256 = hashlib.sha256(
+            json.dumps(
+                basis_manifest,
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            ).encode("utf-8")
+        ).hexdigest()
+        if basis_manifest_sha256 != M6B_W1_W0_BASIS_MANIFEST_SHA256:
+            raise ValueError("W1 basis manifest differs from frozen W0 authority")
+        emit("basis_ready", completed=75, total=75, basis_manifest_sha256=basis_manifest_sha256)
+        ownership = tuple(int(value) for value in template.getOwnershipRange())
+
+        action_count = [0]
+
+        def apply_column(vector: Any) -> np.ndarray:
+            z = template.duplicate()
+            represented = template.duplicate()
+            try:
+                local = z.getArray()
+                local[:] = 0.0
+                rows = np.asarray(vector.indices, dtype=np.int64)
+                start, end = ownership
+                if rows.size and (rows.min() < start or rows.max() >= end):
+                    raise ValueError("W1 fixed basis row is outside ownership")
+                local[rows - start] = np.asarray(vector.values, dtype=np.complex128)
+                outer_mat.mult(z, represented)
+                action_count[0] += 1
+                if action_count[0] % 5 == 0 or action_count[0] == 75:
+                    emit("az_progress", completed=action_count[0], total=75)
+                return np.array(
+                    represented.getArray(readonly=True),
+                    dtype=np.complex128,
+                    copy=True,
+                )
+            finally:
+                represented.destroy()
+                z.destroy()
+
+        identity = {
+            "source_sha": h2b._light_source()["source_commit_full_sha"],
+            "operator_identity": "A=Kcurl-k0^2*M_epsilon+A_DtN",
+            "basis_manifest_sha256": basis_manifest_sha256,
+            "basis_manifest": basis_manifest,
+            "basis_helper": "benchmarks.run_workstation_iterative._fixed_floquet_hat_basis",
+            "coarse_slabs": 24,
+            "w0_az_column_sha256_aggregate": M6B_W1_W0_AZ_COLUMN_SHA256_AGGREGATE,
+            "w0_oracle_output_sha256": M6B_W1_W0_ORACLE_OUTPUT_SHA256,
+            "w0_residual_source_sha": M6B_W1_W0_RESIDUAL_SOURCE_SHA,
+            "w0_oracle_execution_source_sha": M6B_W1_W0_ORACLE_EXECUTION_SOURCE_SHA,
+            "fine_space": "uncondensed_fullspace",
+            "global_matrix": False,
+            "static_condensation": False,
+            "trace_slab_pc": False,
+        }
+        carrier = SparseM6BRangeCarrier.from_action(
+            basis,
+            apply_column,
+            global_rows=M6B_GLOBAL_ROWS,
+            ownership_range=ownership,
+            comm=MPI.COMM_WORLD,
+            identity=identity,
+        )
+        validate_w0_authority(identity, carrier.audit["v_column_sha256_aggregate"])
+        emit(
+            "az_ready",
+            completed=75,
+            total=75,
+            v_column_sha256_aggregate=carrier.audit["v_column_sha256_aggregate"],
+        )
+        manifest_path = carrier.save(run_dir / "sparse_range_store")
+        del carrier
+        gc.collect()
+        loaded = load_sparse_m6b_range_carrier(manifest_path)
+        audit = loaded.audit
+        final_cache = cache_record(cache_dir)
+        source_cache_after = cache_record(jit_cache_source)
+        if (
+            final_cache["inventory_sha256"] != target_cache_before["inventory_sha256"]
+            or source_cache_after["inventory_sha256"] != source_cache_before["inventory_sha256"]
+        ):
+            raise ValueError("W1 JIT cache changed after form construction")
+        emit("store_ready", manifest=str(manifest_path))
+        predicted = int(
+            M6B_W1_BASE_PREDICTED_LIVE_SET_BYTES
+            + audit["retained_total_bytes"]
+            + audit["bounded_work_bytes"]
+        )
+        if predicted > M6B_W1_PREDICTED_LIVE_SET_LIMIT_BYTES:
+            raise ValueError("W1 derived live-set prediction exceeds fixed limit")
+        summary = {
+            "schema": M6B_W1_SCHEMA,
+            "status": "measurement_complete",
+            "formal_pass": False,
+            "pde_pass": False,
+            "qualification": "not_run",
+            "source": h2b._light_source(),
+            "scope": {
+                "global_rows": M6B_GLOBAL_ROWS,
+                "columns": 75,
+                "operator_identity": identity["operator_identity"],
+                "fine_space": identity["fine_space"],
+                "global_matrix": False,
+                "static_condensation": False,
+                "trace_slab_pc": False,
+                "ordinary_default": False,
+            },
+            "basis_manifest_sha256": basis_manifest_sha256,
+            "store_manifest": str(manifest_path),
+            "carrier_audit": audit,
+            "jit_cache": {
+                "source": str(jit_cache_source),
+                "target": str(cache_dir),
+                "source_before": source_cache_before,
+                "target_before": target_cache_before,
+                "target_after": final_cache,
+                "source_after": source_cache_after,
+                "source_unchanged": source_cache_after == source_cache_before,
+                "target_unchanged": final_cache == target_cache_before,
+                "inventory_sha256": final_cache["inventory_sha256"],
+            },
+            "predicted_live_set": {
+                "base_bytes": M6B_W1_BASE_PREDICTED_LIVE_SET_BYTES,
+                "coarse_retained_bytes": audit["retained_total_bytes"],
+                "coarse_bounded_work_bytes": audit["bounded_work_bytes"],
+                "predicted_bytes": predicted,
+                "limit_bytes": M6B_W1_PREDICTED_LIVE_SET_LIMIT_BYTES,
+                "gate": True,
+                "is_measurement": False,
+            },
+            "builder_peak_limit_bytes": M6B_W1_BUILDER_RSS_LIMIT_BYTES,
+            "swap_limit_bytes": 0,
+            "elapsed_wall_seconds": float(time.perf_counter() - started),
+        }
+        emit("summary_ready", qualification="not_run")
+        _write_json(run_dir / "w1_builder_summary.json", _attach_evidence(summary))
+        return 0
+    finally:
+        if template is not None:
+            template.destroy()
+        if outer_mat is not None:
+            outer_mat.destroy()
+        if outer_context is not None:
+            outer_context.destroy()
+        if dtn_action is not None:
+            dtn_action.destroy()
+        if physical_action is not None:
+            physical_action.destroy()
+        if surface_assemblers is not None:
+            for assembler in surface_assemblers.values():
+                destroy = getattr(assembler, "destroy", None)
+                if destroy is not None:
+                    destroy()
+        del volume_ufl, epsilon, abs_epsilon, beta
+        gc.collect()
 
 
 def _m6b_form_record(
@@ -3026,9 +3329,17 @@ def _check_command(run_dir: Path, output: Path) -> int:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
-    for command in ("m6b-stage-worker", "m6b-builder", "m6b-worker", "m6b-watchdog"):
+    for command in (
+        "m6b-stage-worker",
+        "m6b-builder",
+        "m6b-worker",
+        "m6b-watchdog",
+        "m6b-w1-builder",
+    ):
         item = sub.add_parser(command)
         item.add_argument("--run-dir", required=True)
+        if command == "m6b-w1-builder":
+            item.add_argument("--jit-cache-source", required=True)
     check = sub.add_parser("m6b-check")
     check.add_argument("--run-dir", required=True)
     check.add_argument("--output", required=True)
@@ -3048,6 +3359,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _run_m6b_online_worker(run_dir)
     if args.command == "m6b-watchdog":
         return _run_m6b_watchdog(run_dir)
+    if args.command == "m6b-w1-builder":
+        return _run_m6b_w1_builder(run_dir, Path(args.jit_cache_source).resolve())
     raise ValueError(f"unknown M6B command: {args.command}")
 
 
