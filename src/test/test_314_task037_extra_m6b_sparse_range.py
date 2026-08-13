@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import shutil
+from copy import deepcopy
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -16,6 +17,16 @@ from src.solvers.hcurl_fullspace_dtn import (
     FullspaceDtnCarrier,
     FullspaceDtnModeEntries,
     build_fullspace_dtn_action,
+)
+from src.solvers.hcurl_h2b_m6b_shifted_patch_pc import (
+    H2BM6BShiftedPatchPC,
+    H2BM6BShiftedRangePC,
+)
+from src.solvers.hcurl_h2b_m6b_shifted_lu_store import (
+    build_h2b_m6b_shifted_lu_factor,
+    build_h2b_m6b_shifted_lu_patch_store,
+    load_h2b_m6b_shifted_lu_patch_store,
+    write_h2b_m6b_shifted_lu_patch_store,
 )
 from src.solvers.hcurl_m6b_sparse_range import (
     M6B_W1_NORMAL_CLOSURE_LIMIT,
@@ -401,3 +412,254 @@ def test_m6b_fullspace_dtn_adjoint_identity():
         y.destroy()
         x.destroy()
         action.destroy()
+
+
+def _w2_local_store(tmp_path: Path):
+    factor = build_h2b_m6b_shifted_lu_factor(
+        np.eye(90, dtype=np.complex128), task037_extra_m6b=True
+    )
+    store = build_h2b_m6b_shifted_lu_patch_store(
+        (factor,),
+        ({
+            "neighborhood_id": 0,
+            "key_sha256": "8" * 64,
+            "cell_ordinals": [0],
+            "multiplicity": 1,
+            "factor_id": 0,
+        },),
+        np.asarray([0], dtype=np.int32),
+        np.asarray([0, 90], dtype=np.int64),
+        np.arange(90, dtype=np.int64),
+        identity={"source_provenance": "w2-synthetic", "beta": 1.0},
+        task037_extra_m6b=True,
+    )
+    manifest = write_h2b_m6b_shifted_lu_patch_store(
+        store, tmp_path / "w2_local_store", task037_extra_m6b=True
+    )
+    return load_h2b_m6b_shifted_lu_patch_store(
+        manifest, task037_extra_m6b=True
+    )
+
+
+def test_m6b_w2_local_then_range_synthetic_is_exact_and_repeatable(tmp_path: Path):
+    basis = _basis()
+
+    def identity_action(vector: SimpleNamespace) -> np.ndarray:
+        values = np.zeros(90, dtype=np.complex128)
+        values[vector.indices] = vector.values
+        return values
+
+    carrier = SparseM6BRangeCarrier.from_action(
+        basis,
+        identity_action,
+        hermitian_action=lambda values: np.asarray(values, dtype=np.complex128),
+        global_rows=90,
+        ownership_range=(0, 90),
+        comm=MPI.COMM_SELF,
+        identity=_identity(basis),
+    )
+    local = H2BM6BShiftedPatchPC(
+        _w2_local_store(tmp_path),
+        global_row_count=90,
+        shifted_action=lambda values: np.asarray(2.0 * values, dtype=np.complex128),
+        task037_extra_m6b=True,
+    )
+    composite = H2BM6BShiftedRangePC(
+        local,
+        carrier,
+        lambda values: np.array(values, dtype=np.complex128, copy=True),
+        global_row_count=90,
+        task037_extra_m6b=True,
+    )
+    rhs = np.zeros(90, dtype=np.complex128)
+    rhs[:75] = np.arange(75, dtype=np.float64) + 1j * (1.0 + np.arange(75))
+    correction, measurement = composite.apply_with_measurement(rhs)
+    repeat, repeat_measurement = composite.apply_with_measurement(rhs)
+    production = composite.apply(rhs)
+    local_correction = local.apply(rhs)
+    expected = local_correction + carrier.apply(rhs - local_correction)
+    assert np.array_equal(correction, production)
+    assert np.array_equal(correction, expected)
+    assert not np.array_equal(local_correction, rhs)
+    assert np.array_equal(correction, repeat)
+    assert measurement == repeat_measurement
+    assert measurement["rho_local_only"] == pytest.approx(0.5)
+    assert measurement["rho_composed"] <= measurement["rho_local_only"] + 1.0e-12
+    assert measurement["linear_action_closure"] <= 1.0e-11
+    assert measurement["normal_projected_component_ratio"] <= 1.0e-11
+    assert measurement["action_counts"] == {
+        "local_apply": 1,
+        "physical_outer_action": 5,
+        "range_apply": 3,
+    }
+    audit = composite.audit
+    assert audit["fixed_order"] == "local_then_physical_residual_then_range"
+    assert audit["composition_incremental_bytes"] == 2 * 90 * 16
+    assert audit["local_bounded_work_bytes"] == local.audit[
+        "bounded_apply_workspace_bytes"
+    ]
+    assert audit["bounded_work_bytes"] == max(
+        audit["local_bounded_work_bytes"],
+        audit["range_bounded_work_bytes"] + audit["composition_incremental_bytes"],
+    )
+    assert audit["global_matrix"] is False
+    assert audit["static_condensation"] is False
+    assert audit["trace_slab_pc"] is False
+
+
+def test_m6b_w2_rejects_non_beta_one_local_pc(tmp_path: Path):
+    local = H2BM6BShiftedPatchPC(
+        _w2_local_store(tmp_path / "bad"),
+        global_row_count=90,
+        shifted_action=lambda values: np.asarray(values, dtype=np.complex128),
+        task037_extra_m6b=True,
+    )
+    local._audit["beta"] = 0.5
+    carrier, _operator, _basis_value = _carrier()
+    with pytest.raises(ValueError, match="carrier identity"):
+        H2BM6BShiftedRangePC(
+            local,
+            carrier,
+            lambda values: np.asarray(values, dtype=np.complex128),
+            global_row_count=90,
+            task037_extra_m6b=True,
+        )
+
+
+def test_m6b_w2_parser_and_fixed_gate_fail_closed():
+    parser_prefix = [
+        "m6b-w2-diagnostic",
+        "--run-dir",
+        "/tmp/w2",
+        "--factor-authority-dir",
+        "/tmp/factor",
+        "--wave-authority-dir",
+        "/tmp/wave",
+        "--jit-cache-source",
+        "/tmp/jit",
+    ]
+    with pytest.raises(SystemExit):
+        runner._parser().parse_args(parser_prefix)
+    with pytest.raises(SystemExit):
+        runner._parser().parse_args(
+            parser_prefix
+            + [
+                "--expected-source-sha",
+                "A" * 40,
+                "--w0-authority-file",
+                "/tmp/w0.json",
+            ]
+        )
+    args = runner._parser().parse_args(
+        parser_prefix
+        + [
+            "--expected-source-sha",
+            "a" * 40,
+            "--w0-authority-file",
+            "/tmp/w0.json",
+        ]
+    )
+    assert args.command == "m6b-w2-diagnostic"
+    assert args.expected_source_sha == "a" * 40
+    assert args.w0_authority_file == "/tmp/w0.json"
+    measurements = {}
+    for key in ("20", "100", "150", "200"):
+        measurements[key] = {
+            "schema": "task037.extra.h2b.m6b.shifted-range-pc.v1",
+            "iteration": int(key),
+            "residual_array_sha256": runner.M6B_W2_RESIDUAL_ARRAY_SHAS[key],
+            "residual_artifact": {
+                "path": f"m6b_iter{key}_residual.npy",
+                "absolute_path": f"/tmp/m6b_iter{key}_residual.npy",
+                "present": True,
+                "bytes": 1,
+                "sha256": "c" * 64,
+            },
+            "finite": True,
+            "rho_local_only": 1.0,
+            "rho_range_only": runner.M6B_W2_RANGE_RHO_AUTHORITY[key],
+            "rho_composed": 0.5,
+            "linear_action_closure": 0.0,
+            "normal_projected_component_ratio": 0.0,
+            "action_counts": {
+                "local_apply": 1,
+                "physical_outer_action": 5,
+                "range_apply": 3,
+            },
+            "final_correction_sha256": "a" * 64,
+            "correction_sha256": "a" * 64,
+            "repeat_correction_sha256": "a" * 64,
+            "repeat_identical": True,
+        }
+        for field in (
+            "rhs_sha256",
+            "local_correction_sha256",
+            "local_action_sha256",
+            "local_residual_sha256",
+            "range_only_correction_sha256",
+            "range_only_action_sha256",
+            "range_correction_sha256",
+            "range_action_sha256",
+            "final_action_sha256",
+            "final_residual_sha256",
+            "final_range_correction_sha256",
+            "final_range_action_sha256",
+        ):
+            measurements[key][field] = "a" * 64
+        measurements[key]["rhs_sha256"] = "a" * 64
+    assert runner._m6b_w2_gate(measurements)["pass"] is True
+    missing = dict(measurements)
+    missing.pop("100")
+    assert runner._m6b_w2_gate(missing)["pass"] is False
+    nonfinite = {key: dict(value) for key, value in measurements.items()}
+    nonfinite["20"]["rho_composed"] = float("nan")
+    assert runner._m6b_w2_gate(nonfinite)["pass"] is False
+
+
+def test_m6b_w2_w0_authority_file_and_tamper_fail_closed(tmp_path: Path, monkeypatch):
+    payload = {
+        "schema": "task037.m6b.wave_range_az_oracle.v1",
+        "formal_pass": False,
+        "pde_pass": False,
+        "full_pde_qualifies": False,
+        "raw_unchanged": True,
+        "source": {
+            "residual_producer_source": runner.M6B_W2_RESIDUAL_SOURCE_SHA,
+            "oracle_execution_source": runner.M6B_W2_W0_ORACLE_SOURCE_SHA,
+            "git": {
+                "branch": "codex/20260806-task37-iterative-extra-development",
+                "head": runner.M6B_W2_W0_ORACLE_SOURCE_SHA,
+                "upstream": runner.M6B_W2_W0_ORACLE_SOURCE_SHA,
+                "ahead": 0,
+                "behind": 0,
+                "clean": True,
+            },
+        },
+        "basis": {
+            "manifest_sha256": runner.M6B_W2_W0_BASIS_MANIFEST_SHA256,
+            "az_column_sha256_aggregate": (
+                runner.M6B_W2_W0_AZ_COLUMN_SHA256_AGGREGATE
+            ),
+        },
+        "range_projection": {
+            "checkpoints": {
+                key: {
+                    "iteration": int(key),
+                    "finite": True,
+                    "rho_range": runner.M6B_W2_W0_RANGE_RHO_AUTHORITY[key],
+                }
+                for key in ("20", "100", "150", "200")
+            }
+        },
+    }
+    payload = runner._attach_evidence(payload)
+    path = tmp_path / "w0.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    monkeypatch.setattr(
+        runner, "_sha256_file", lambda _path: runner.M6B_W2_W0_OUTPUT_SHA256
+    )
+    record = runner._m6b_w2_w0_authority_record(path)
+    assert record["file_artifact"]["path"] == str(path.resolve())
+    tampered = deepcopy(payload)
+    tampered["basis"]["manifest_sha256"] = "0" * 64
+    assert runner._m6b_w2_w0_payload_valid(tampered) is False

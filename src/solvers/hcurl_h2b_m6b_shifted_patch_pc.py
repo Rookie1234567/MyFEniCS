@@ -22,6 +22,7 @@ from .hcurl_h2b_m6b_shifted_lu_store import (
     M6B_ALLOWED_SHIFTED_BETAS,
     M6B_SHIFTED_LU_STORE_SCHEMA,
 )
+from .hcurl_m6b_sparse_range import SparseM6BRangeCarrier
 
 __all__ = (
     "M6B_SHIFTED_PC_SCHEMA",
@@ -37,6 +38,7 @@ __all__ = (
     "m6b_shifted_local_matrix",
     "m6b_material_tag_coverage",
     "H2BM6BShiftedPatchPC",
+    "H2BM6BShiftedRangePC",
     "M6BShiftedPCContext",
     "M6BOuterMatPythonContext",
     "M6BScreenCheckpointWriter",
@@ -50,6 +52,7 @@ __all__ = (
 
 
 M6B_SHIFTED_PC_SCHEMA = "task037.extra.h2b.m6b.shifted-patch-pc.v1"
+M6B_W2_RANGE_PC_SCHEMA = "task037.extra.h2b.m6b.shifted-range-pc.v1"
 M6B_FIXED_SCREEN_ITERATIONS = (20, 100, 150, 200)
 M6B_FIXED_RESTART = 20
 M6B_FIXED_MAX_IT = 200
@@ -464,6 +467,249 @@ class H2BM6BShiftedPatchPC:
     def apply(self, rhs: np.ndarray) -> np.ndarray:
         correction, _measurement = self._apply_core(rhs, with_measurement=False)
         return correction
+
+
+class H2BM6BShiftedRangePC:
+    """Fixed W2 local-then-range residual diagnostic composition.
+
+    The production path has exactly three numerical operations: one beta=1
+    local correction, one physical outer action on that correction, and one
+    ``A^H`` range correction of the resulting residual.  The richer
+    ``apply_with_measurement`` method is deliberately diagnostic-only and
+    performs the additional fixed probes needed to report the W2 evidence.
+    """
+
+    def __init__(
+        self,
+        local_pc: H2BM6BShiftedPatchPC,
+        range_carrier: SparseM6BRangeCarrier,
+        physical_outer_action: Callable[[np.ndarray], np.ndarray],
+        *,
+        global_row_count: int,
+        task037_extra_m6b: bool = False,
+    ) -> None:
+        if task037_extra_m6b is not True:
+            raise ValueError("M6B W2 requires explicit research opt-in")
+        if not isinstance(local_pc, H2BM6BShiftedPatchPC):
+            raise TypeError("M6B W2 requires the shifted local PC")
+        if not isinstance(range_carrier, SparseM6BRangeCarrier):
+            raise TypeError("M6B W2 requires the sparse range carrier")
+        if type(global_row_count) is not int or global_row_count <= 0:
+            raise ValueError("M6B W2 global row count is invalid")
+        if not callable(physical_outer_action):
+            raise TypeError("M6B W2 requires a physical outer action")
+        range_audit = range_carrier.audit
+        local_audit = local_pc.audit
+        if (
+            range_carrier.global_rows != global_row_count
+            or range_audit["mpi_scope"] != "MPI1"
+            or range_audit["dense_nrows_x_columns_retained"] is not False
+            or range_audit["az_v_retained"] is not False
+            or range_audit["retained_az_bytes"] != 0
+            or local_audit["fine_space"] != "uncondensed_fullspace"
+            or local_audit["beta"] != 1.0
+        ):
+            raise ValueError("M6B W2 carrier identity is not closed")
+        self._local_pc = local_pc
+        self._range_carrier = range_carrier
+        self._physical_outer_action = physical_outer_action
+        self._global_row_count = global_row_count
+        self._apply_count = 0
+        self._audit = self._make_audit(local_audit, range_audit)
+
+    def _make_audit(
+        self,
+        local_audit: Mapping[str, Any],
+        range_audit: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        local_retained = int(local_audit["retained_store_total_bytes"])
+        range_retained = int(range_audit["retained_total_bytes"])
+        local_work = int(local_audit["bounded_apply_workspace_bytes"])
+        range_work = int(range_audit["bounded_work_bytes"])
+        composition_incremental = int(
+            2 * self._global_row_count * _COMPLEX128_BYTES
+        )
+        retained = local_retained + range_retained
+        range_plus_composition = range_work + composition_incremental
+        bounded = max(local_work, range_plus_composition)
+        return {
+            "schema": M6B_W2_RANGE_PC_SCHEMA,
+            "task037_extra_m6b": True,
+            "fixed_order": "local_then_physical_residual_then_range",
+            "scan": False,
+            "global_row_count": self._global_row_count,
+            "fine_space": "uncondensed_fullspace",
+            "local_beta": float(local_audit["beta"]),
+            "local_retained_payload_bytes": local_retained,
+            "range_retained_payload_bytes": range_retained,
+            "local_bounded_work_bytes": local_work,
+            "range_bounded_work_bytes": range_work,
+            "range_plus_composition_bounded_work_bytes": range_plus_composition,
+            "composition_incremental_bytes": composition_incremental,
+            "composition_incremental_is_derived": True,
+            "retained_payload_bytes": retained,
+            "bounded_work_bytes": bounded,
+            "retained_plus_work_bytes": retained + bounded,
+            "memory_prediction_is_measurement": False,
+            "range_retained_plus_work_bytes": int(
+                range_audit["retained_plus_work_bytes"]
+            ),
+            "production_action_counts": {
+                "local_apply": 1,
+                "physical_outer_action": 1,
+                "range_apply": 1,
+            },
+            "global_matrix": False,
+            "global_constraint_matrix": False,
+            "patch_matrices": False,
+            "per_cell_factor": False,
+            "static_condensation": False,
+            "trace_slab_pc": False,
+            "schur": False,
+            "slab_factor": False,
+            "explicit_C_materialized_count": 0,
+            "explicit_D_materialized_count": 0,
+            "ordinary_default_changed": False,
+        }
+
+    @property
+    def audit(self) -> dict[str, Any]:
+        return dict(self._audit)
+
+    @property
+    def apply_count(self) -> int:
+        return self._apply_count
+
+    def _physical_action(self, values: np.ndarray) -> np.ndarray:
+        result = np.asarray(self._physical_outer_action(values))
+        return _finite_vector(result, self._global_row_count, "physical outer action")
+
+    def _apply_core(self, rhs: np.ndarray) -> np.ndarray:
+        residual_rhs = _finite_vector(rhs, self._global_row_count, "W2 RHS")
+        local = np.ascontiguousarray(
+            self._local_pc.apply(residual_rhs), dtype=np.complex128
+        )
+        local_action = self._physical_action(local)
+        local_residual = np.ascontiguousarray(
+            residual_rhs - local_action, dtype=np.complex128
+        )
+        del local_action
+        coarse = np.ascontiguousarray(
+            self._range_carrier.apply(local_residual), dtype=np.complex128
+        )
+        np.add(local, coarse, out=local)
+        del coarse, local_residual
+        self._apply_count += 1
+        return local
+
+    def apply(self, rhs: np.ndarray) -> np.ndarray:
+        """Apply the fixed local -> physical residual -> range composition."""
+
+        return self._apply_core(rhs)
+
+    def apply_with_measurement(
+        self, rhs: np.ndarray
+    ) -> tuple[np.ndarray, dict[str, Any]]:
+        """Run the fixed W2 measurement probes without retaining their arrays."""
+
+        residual_rhs = _finite_vector(rhs, self._global_row_count, "W2 RHS")
+        rhs_norm = float(np.linalg.norm(residual_rhs))
+        norm_scale = max(rhs_norm, np.finfo(float).tiny)
+        local = np.ascontiguousarray(
+            self._local_pc.apply(residual_rhs), dtype=np.complex128
+        )
+        local_action = self._physical_action(local)
+        local_residual = np.ascontiguousarray(
+            residual_rhs - local_action, dtype=np.complex128
+        )
+        local_rho = float(np.linalg.norm(local_residual) / norm_scale)
+
+        range_only = np.ascontiguousarray(
+            self._range_carrier.apply(residual_rhs), dtype=np.complex128
+        )
+        range_only_action = self._physical_action(range_only)
+        range_only_residual = np.ascontiguousarray(
+            residual_rhs - range_only_action, dtype=np.complex128
+        )
+        range_only_rho = float(np.linalg.norm(range_only_residual) / norm_scale)
+
+        coarse = np.ascontiguousarray(
+            self._range_carrier.apply(local_residual), dtype=np.complex128
+        )
+        coarse_action = self._physical_action(coarse)
+        final = np.array(local, dtype=np.complex128, copy=True)
+        np.add(final, coarse, out=final)
+        final_action = self._physical_action(final)
+        final_residual = np.ascontiguousarray(
+            residual_rhs - final_action, dtype=np.complex128
+        )
+        composed_rho = float(np.linalg.norm(final_residual) / norm_scale)
+        linear_closure = float(
+            np.linalg.norm(final_action - local_action - coarse_action)
+            / max(float(np.linalg.norm(final_action)), np.finfo(float).tiny)
+        )
+        final_range = np.ascontiguousarray(
+            self._range_carrier.apply(final_residual), dtype=np.complex128
+        )
+        final_range_action = self._physical_action(final_range)
+        normal_ratio = float(np.linalg.norm(final_range_action) / norm_scale)
+        arrays = (
+            residual_rhs,
+            local,
+            local_action,
+            local_residual,
+            range_only,
+            range_only_action,
+            range_only_residual,
+            coarse,
+            coarse_action,
+            final_action,
+            final_residual,
+            final_range,
+            final_range_action,
+        )
+        finite = bool(all(np.all(np.isfinite(value)) for value in arrays))
+        measurement = {
+            "schema": M6B_W2_RANGE_PC_SCHEMA,
+            "finite": finite,
+            "rhs_sha256": _array_sha256(residual_rhs),
+            "local_correction_sha256": _array_sha256(local),
+            "local_action_sha256": _array_sha256(local_action),
+            "local_residual_sha256": _array_sha256(local_residual),
+            "range_only_correction_sha256": _array_sha256(range_only),
+            "range_only_action_sha256": _array_sha256(range_only_action),
+            "range_correction_sha256": _array_sha256(coarse),
+            "range_action_sha256": _array_sha256(coarse_action),
+            "final_correction_sha256": _array_sha256(final),
+            "final_action_sha256": _array_sha256(final_action),
+            "final_residual_sha256": _array_sha256(final_residual),
+            "final_range_correction_sha256": _array_sha256(final_range),
+            "final_range_action_sha256": _array_sha256(final_range_action),
+            "rho_local_only": local_rho,
+            "rho_range_only": range_only_rho,
+            "rho_composed": composed_rho,
+            "linear_action_closure": linear_closure,
+            "normal_projected_component_ratio": normal_ratio,
+            "norms": {
+                "rhs": rhs_norm,
+                "local_correction": float(np.linalg.norm(local)),
+                "range_correction": float(np.linalg.norm(coarse)),
+                "composed_correction": float(np.linalg.norm(final)),
+                "final_residual": float(np.linalg.norm(final_residual)),
+                "final_range_action": float(np.linalg.norm(final_range_action)),
+            },
+            "action_counts": {
+                "local_apply": 1,
+                "physical_outer_action": 5,
+                "range_apply": 3,
+            },
+            "production_action_counts": dict(
+                self._audit["production_action_counts"]
+            ),
+        }
+        del arrays
+        self._apply_count += 1
+        return final, measurement
 
 
 class M6BShiftedPCContext:

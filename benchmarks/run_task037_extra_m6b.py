@@ -71,6 +71,56 @@ M6B_W1_SCHEMA = "task037.extra.m6b.sparse-range-builder.v2"
 M6B_W1_BASE_PREDICTED_LIVE_SET_BYTES = 1_657_665_813
 M6B_W1_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_750_000_000
 M6B_W1_BUILDER_RSS_LIMIT_BYTES = 1_500_000_000
+M6B_W2_SCHEMA = "task037.extra.m6b.local-range-diagnostic.v1"
+M6B_W2_SHIFTED_BETA = 1.0
+M6B_W2_FIXED_RESIDUAL_ITERATIONS = (20, 100, 150, 200)
+M6B_W2_FACTOR_MANIFEST_SHA256 = (
+    "5394db24e96f611870c104fe7367e15163cb89a2943cd455f5c69e39eadf7363"
+)
+M6B_W2_RESIDUAL_SOURCE_SHA = (
+    "d98254fecddc41940f50f72753ec9f0f80407793"
+)
+M6B_W2_W0_OUTPUT_SHA256 = (
+    "acef3e163057fb60db50e9362d9303a8275555a93027258bfbbbc4b001ff3568"
+)
+M6B_W2_W0_ORACLE_SOURCE_SHA = (
+    "5e7f9d42eaf994440655fde9f79eb85e2f2745b9"
+)
+M6B_W2_W0_BASIS_MANIFEST_SHA256 = (
+    "ce3e38f7fa8be3dc704163d744eee8cecc3265b5872664d893b990c2845b765c"
+)
+M6B_W2_W0_AZ_COLUMN_SHA256_AGGREGATE = (
+    "4eaee22f49fcac7546e93fdc59237949579e93c20af604eefd396c4f7fedccce"
+)
+M6B_W2_WAVE_MANIFEST_SHA256 = (
+    "5052b8988ae58107afcdc1bc792aef377b4bd12f598376e1c4089b148ef62d78"
+)
+M6B_W2_WAVE_SOURCE_SHA = "e2f99a38d9ba2c7b26ca6cdb37a1a4f9310aebfd"
+M6B_W2_JIT_INVENTORY_SHA256 = (
+    "89b34d252e15883d675fe37e207578d93310a1b43516dc6f4280923c46f6f688"
+)
+M6B_W2_RESIDUAL_ARRAY_SHAS = {
+    "20": "5901f92d16d5dec20aeb4b5fed61768f639f9fd8072061e3f29ade7e39301070",
+    "100": "0ff1d3badbe98c1d33ac2d4c6ddfe1d8a40ca2986ef414bb42282228cd8b630c",
+    "150": "1185adf461814c1dce932433ab9bafaccfcfa4217ea130e638b30fad1560db17",
+    "200": "16c86eaf01d7eef9f02f51b27ae120e5c9c5ae00c56e5426b8e6a8e56d568ed3",
+}
+M6B_W2_RANGE_RHO_AUTHORITY = {
+    "20": 0.8502163662584745,
+    "100": 0.8663708224767056,
+    "150": 0.8671486245194239,
+    "200": 0.8665579730254086,
+}
+M6B_W2_W0_RANGE_RHO_AUTHORITY = M6B_W2_RANGE_RHO_AUTHORITY
+M6B_W2_BASE_PREDICTED_LIVE_SET_BYTES = 1_698_273_595
+M6B_W2_EXTERNAL_RESIDUAL_BYTES = 2_780_832
+M6B_W2_COMPOSITION_INCREMENTAL_BYTES = 5_561_664
+M6B_W2_PREDICTED_LIVE_SET_BYTES = (
+    M6B_W2_BASE_PREDICTED_LIVE_SET_BYTES
+    + M6B_W2_EXTERNAL_RESIDUAL_BYTES
+    + M6B_W2_COMPOSITION_INCREMENTAL_BYTES
+)
+M6B_W2_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_750_000_000
 M6B_STAGE_EVENTS = (
     "authority_validated",
     "mesh_ready",
@@ -276,6 +326,257 @@ def _finite_number(value: Any) -> bool:
         and not isinstance(value, bool)
         and math.isfinite(float(value))
     )
+
+
+def _m6b_w2_scope(*, phase: str = "w2_diagnostic") -> dict[str, Any]:
+    return {
+        "degree": M6B_DEGREE,
+        "h_nm": M6B_H_NM,
+        "global_cells": M6B_GLOBAL_CELLS,
+        "local_cells": M6B_GLOBAL_CELLS,
+        "local_nloc": M6B_LOCAL_NLOC,
+        "global_rows": M6B_GLOBAL_ROWS,
+        "constraint_count": M6B_CONSTRAINTS,
+        "factor_count": M6B_FACTOR_COUNT,
+        "factor_reuse_count": M6B_FACTOR_REUSE,
+        "beta": M6B_W2_SHIFTED_BETA,
+        "operator": "A=Kcurl-k0^2*M_epsilon+A_DtN",
+        "shifted_operator": M6B_SHIFTED_OPERATOR,
+        "fine_space": "uncondensed_fullspace",
+        "global_matrix": False,
+        "static_condensation": False,
+        "trace_slab_pc": False,
+        "ordinary_default": False,
+        "mpi_size": 1,
+        "fixed_order": "local_then_physical_residual_then_range",
+        "scan": False,
+        "phase": phase,
+    }
+
+
+def _m6b_w2_sha_valid(value: Any) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and value == value.lower()
+        and all(char in "0123456789abcdef" for char in value)
+    )
+
+
+def _m6b_w2_source_sha_valid(value: Any) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 40
+        and value == value.lower()
+        and all(char in "0123456789abcdef" for char in value)
+    )
+
+
+def _m6b_w2_source_sha_argument(value: str) -> str:
+    if not _m6b_w2_source_sha_valid(value):
+        raise argparse.ArgumentTypeError(
+            "expected a 40-character lowercase source commit SHA"
+        )
+    return value
+
+
+def _m6b_w2_source_identity_valid(value: Any, expected_sha: str) -> bool:
+    required = {
+        "source_commit_full_sha",
+        "tracked_source_dirty",
+        "source_worktree_dirty",
+        "nonignored_untracked_paths",
+        "worktree_status_porcelain",
+        "git_error",
+    }
+    return bool(
+        _m6b_w2_source_sha_valid(expected_sha)
+        and isinstance(value, Mapping)
+        and required <= set(value)
+        and value["source_commit_full_sha"] == expected_sha
+        and value["tracked_source_dirty"] is False
+        and value["source_worktree_dirty"] is False
+        and value["nonignored_untracked_paths"] == []
+        and value["worktree_status_porcelain"] == []
+        and value["git_error"] is None
+    )
+
+
+def _m6b_w2_residual_artifact_valid(value: Any, iteration: int) -> bool:
+    required = {"path", "absolute_path", "bytes", "sha256", "present"}
+    if not isinstance(value, Mapping) or not required <= set(value):
+        return False
+    path = value["path"]
+    absolute_path = value["absolute_path"]
+    return bool(
+        value["present"] is True
+        and path == f"m6b_iter{iteration}_residual.npy"
+        and isinstance(absolute_path, str)
+        and Path(absolute_path).is_absolute()
+        and Path(absolute_path).name == path
+        and type(value["bytes"]) is int
+        and value["bytes"] > 0
+        and _m6b_w2_sha_valid(value["sha256"])
+    )
+
+
+def _m6b_w2_measurement_valid(value: Any) -> bool:
+    required = {
+        "schema",
+        "iteration",
+        "residual_array_sha256",
+        "residual_artifact",
+        "finite",
+        "rho_local_only",
+        "rho_range_only",
+        "rho_composed",
+        "linear_action_closure",
+        "normal_projected_component_ratio",
+        "action_counts",
+        "repeat_identical",
+        "correction_sha256",
+        "repeat_correction_sha256",
+        "rhs_sha256",
+        "local_correction_sha256",
+        "local_action_sha256",
+        "local_residual_sha256",
+        "range_only_correction_sha256",
+        "range_only_action_sha256",
+        "range_correction_sha256",
+        "range_action_sha256",
+        "final_correction_sha256",
+        "final_action_sha256",
+        "final_residual_sha256",
+        "final_range_correction_sha256",
+        "final_range_action_sha256",
+    }
+    if not isinstance(value, Mapping) or not required <= set(value):
+        return False
+    action_counts = value["action_counts"]
+    action_count_keys = {
+        "local_apply",
+        "physical_outer_action",
+        "range_apply",
+    }
+    if not (
+        isinstance(action_counts, Mapping)
+        and action_count_keys <= set(action_counts)
+        and action_counts["local_apply"] == 1
+        and action_counts["physical_outer_action"] == 5
+        and action_counts["range_apply"] == 3
+    ):
+        return False
+    quantities = (
+        "rho_local_only",
+        "rho_range_only",
+        "rho_composed",
+        "linear_action_closure",
+        "normal_projected_component_ratio",
+    )
+    hash_fields = tuple(key for key in required if key.endswith("_sha256"))
+    return bool(
+        value["schema"] == "task037.extra.h2b.m6b.shifted-range-pc.v1"
+        and type(value["iteration"]) is int
+        and _m6b_w2_sha_valid(value["residual_array_sha256"])
+        and _m6b_w2_residual_artifact_valid(
+            value["residual_artifact"], value["iteration"]
+        )
+        and value["finite"] is True
+        and value["repeat_identical"] is True
+        and all(_m6b_w2_sha_valid(value[key]) for key in hash_fields)
+        and all(
+            _finite_number(value[key]) and float(value[key]) >= 0.0
+            for key in quantities
+        )
+    )
+
+
+def _m6b_w2_gate(measurements: Any) -> dict[str, Any]:
+    checks = {
+        "fixed_iterations": False,
+        "residual_artifacts": False,
+        "finite_deterministic": False,
+        "range_authority": False,
+        "linear_action_closure": False,
+        "normal_projected_component": False,
+        "composed_not_worse": False,
+        "composed_rho_gate": False,
+    }
+    problems: list[str] = []
+    expected_keys = {str(item) for item in M6B_W2_FIXED_RESIDUAL_ITERATIONS}
+    if not isinstance(measurements, Mapping) or set(measurements) != expected_keys:
+        problems.append("fixed_iterations")
+        return {"pass": False, "checks": checks, "problems": problems}
+    checks["fixed_iterations"] = True
+    valid = all(_m6b_w2_measurement_valid(measurements[key]) for key in expected_keys)
+    checks["fixed_iterations"] = bool(
+        valid
+        and all(
+            measurements[key]["iteration"] == int(key)
+            for key in expected_keys
+        )
+    )
+    checks["residual_artifacts"] = bool(
+        valid
+        and all(
+            measurements[key]["residual_array_sha256"]
+            == M6B_W2_RESIDUAL_ARRAY_SHAS[key]
+            and _m6b_w2_residual_artifact_valid(
+                measurements[key]["residual_artifact"], int(key)
+            )
+            for key in expected_keys
+        )
+    )
+    checks["finite_deterministic"] = bool(
+        valid
+        and all(
+            measurements[key]["repeat_identical"] is True
+            and measurements[key]["correction_sha256"]
+            == measurements[key]["repeat_correction_sha256"]
+            and measurements[key]["correction_sha256"]
+            == measurements[key]["final_correction_sha256"]
+            for key in expected_keys
+        )
+    )
+    checks["range_authority"] = bool(
+        valid
+        and all(
+            abs(
+                float(measurements[key]["rho_range_only"])
+                - M6B_W2_RANGE_RHO_AUTHORITY[key]
+            )
+            <= 1.0e-11
+            for key in expected_keys
+        )
+    )
+    checks["linear_action_closure"] = bool(
+        valid
+        and all(
+            float(measurements[key]["linear_action_closure"]) <= 1.0e-11
+            for key in expected_keys
+        )
+    )
+    checks["normal_projected_component"] = bool(
+        valid
+        and all(
+            float(measurements[key]["normal_projected_component_ratio"]) <= 1.0e-11
+            for key in expected_keys
+        )
+    )
+    checks["composed_not_worse"] = bool(
+        valid
+        and all(
+            float(measurements[key]["rho_composed"])
+            <= float(measurements[key]["rho_local_only"]) + 1.0e-12
+            for key in expected_keys
+        )
+    )
+    checks["composed_rho_gate"] = bool(
+        valid
+        and all(float(measurements[key]["rho_composed"]) <= 0.90 for key in expected_keys)
+    )
+    problems.extend(key for key, passed in checks.items() if not passed)
+    return {"pass": not problems, "checks": checks, "problems": problems}
 
 
 def _m6b_factor_audit_valid(value: Any, *, loaded: bool) -> bool:
@@ -2780,6 +3081,587 @@ def _run_m6b_online_worker(run_dir: Path) -> int:
     return 0 if status == "measurement_complete" else 1
 
 
+def _m6b_w2_array_sha256(value: Any) -> str:
+    import numpy as np
+
+    array = np.asarray(value)
+    digest = hashlib.sha256()
+    digest.update(np.asarray(array.shape, dtype=np.int64).tobytes())
+    digest.update(str(array.dtype).encode("ascii"))
+    digest.update(np.ascontiguousarray(array).tobytes())
+    return digest.hexdigest()
+
+
+def _m6b_w2_cache_record(h2b: Any, path: Path) -> dict[str, Any]:
+    entries = h2b._cache_snapshot(path)
+    content_entries = [
+        {
+            "path": item["path"],
+            "bytes": int(item["bytes"]),
+            "sha256": item["sha256"],
+        }
+        for item in entries
+    ]
+    return {
+        "entries": content_entries,
+        "inventory_sha256": hashlib.sha256(
+            h2b._canonical_json({"entries": content_entries})
+        ).hexdigest(),
+    }
+
+
+def _m6b_w2_w0_payload_valid(value: Any) -> bool:
+    if not isinstance(value, Mapping):
+        return False
+    source = value.get("source")
+    basis = value.get("basis")
+    range_projection = value.get("range_projection")
+    source_git = source.get("git") if isinstance(source, Mapping) else None
+    checkpoints = (
+        range_projection.get("checkpoints")
+        if isinstance(range_projection, Mapping)
+        else None
+    )
+    if not (
+        _evidence_valid(value)
+        and value.get("schema") == "task037.m6b.wave_range_az_oracle.v1"
+        and value.get("formal_pass") is False
+        and value.get("pde_pass") is False
+        and value.get("full_pde_qualifies") is False
+        and value.get("raw_unchanged") is True
+        and isinstance(source, Mapping)
+        and source.get("residual_producer_source") == M6B_W2_RESIDUAL_SOURCE_SHA
+        and source.get("oracle_execution_source") == M6B_W2_W0_ORACLE_SOURCE_SHA
+        and isinstance(source_git, Mapping)
+        and source_git.get("branch")
+        == "codex/20260806-task37-iterative-extra-development"
+        and source_git.get("head") == M6B_W2_W0_ORACLE_SOURCE_SHA
+        and source_git.get("upstream") == M6B_W2_W0_ORACLE_SOURCE_SHA
+        and source_git.get("ahead") == 0
+        and source_git.get("behind") == 0
+        and source_git.get("clean") is True
+        and isinstance(basis, Mapping)
+        and basis.get("manifest_sha256") == M6B_W2_W0_BASIS_MANIFEST_SHA256
+        and basis.get("az_column_sha256_aggregate")
+        == M6B_W2_W0_AZ_COLUMN_SHA256_AGGREGATE
+        and isinstance(checkpoints, Mapping)
+        and set(checkpoints) == {
+            str(item) for item in M6B_W2_FIXED_RESIDUAL_ITERATIONS
+        }
+    ):
+        return False
+    return all(
+        isinstance(checkpoints[key], Mapping)
+        and checkpoints[key].get("iteration") == int(key)
+        and checkpoints[key].get("finite") is True
+        and _finite_number(checkpoints[key].get("rho_range"))
+        and checkpoints[key]["rho_range"] == M6B_W2_W0_RANGE_RHO_AUTHORITY[key]
+        for key in checkpoints
+    )
+
+
+def _m6b_w2_w0_authority_record(path: Path) -> dict[str, Any]:
+    path = Path(path).resolve()
+    if not path.is_file():
+        raise FileNotFoundError(f"M6B W0 authority file is missing: {path}")
+    file_sha256 = _sha256_file(path)
+    if file_sha256 != M6B_W2_W0_OUTPUT_SHA256:
+        raise ValueError("M6B W0 authority file SHA differs")
+    payload = _read_json(path)
+    if not _m6b_w2_w0_payload_valid(payload):
+        raise ValueError("M6B W0 authority payload is not closed")
+    return {
+        "file_artifact": {
+            "path": str(path),
+            "present": True,
+            "bytes": int(path.stat().st_size),
+            "sha256": file_sha256,
+        },
+        "schema": payload["schema"],
+        "evidence_sha256": payload["evidence_sha256"],
+        "residual_producer_source": payload["source"][
+            "residual_producer_source"
+        ],
+        "oracle_execution_source": payload["source"]["oracle_execution_source"],
+        "basis_manifest_sha256": payload["basis"]["manifest_sha256"],
+        "az_column_sha256_aggregate": payload["basis"][
+            "az_column_sha256_aggregate"
+        ],
+        "range_rho": {
+            key: payload["range_projection"]["checkpoints"][key]["rho_range"]
+            for key in sorted(payload["range_projection"]["checkpoints"])
+        },
+    }
+
+
+def _m6b_w2_authority_record(
+    factor_authority_dir: Path,
+    wave_authority_dir: Path,
+    jit_cache_source: Path,
+    w0_authority_file: Path,
+) -> dict[str, Any]:
+    factor_manifest = factor_authority_dir / "shifted_lu_store" / "manifest.json"
+    wave_manifest = wave_authority_dir / "sparse_range_store" / "manifest.json"
+    factor_summary = factor_authority_dir / "m6b_builder_summary.json"
+    wave_summary = wave_authority_dir / "w1_builder_summary.json"
+    required = (factor_manifest, wave_manifest, factor_summary, wave_summary)
+    if any(not path.is_file() for path in required) or not jit_cache_source.is_dir():
+        raise FileNotFoundError("M6B W2 authority artifact is missing")
+    w0_authority = _m6b_w2_w0_authority_record(w0_authority_file)
+    if _sha256_file(factor_manifest) != M6B_W2_FACTOR_MANIFEST_SHA256:
+        raise ValueError("M6B W2 factor manifest authority differs")
+    if _sha256_file(wave_manifest) != M6B_W2_WAVE_MANIFEST_SHA256:
+        raise ValueError("M6B W2 sparse range manifest authority differs")
+    factor = _read_json(factor_summary)
+    wave = _read_json(wave_summary)
+    factor_payload = _read_json(factor_manifest)
+    wave_payload = _read_json(wave_manifest)
+    if not (
+        _evidence_valid(factor)
+        and _evidence_valid(wave)
+        and factor_payload.get("schema")
+        == "task037.extra.h2b.m6b.shifted-lu-store.v1"
+        and factor_payload.get("factor_count") == M6B_FACTOR_COUNT
+        and factor_payload.get("cell_count") == M6B_GLOBAL_CELLS
+        and factor_payload.get("beta") == M6B_W2_SHIFTED_BETA
+        and wave_payload.get("schema")
+        == "task037.extra.m6b.sparse-range-store.v2"
+        and wave_payload.get("global_rows") == M6B_GLOBAL_ROWS
+        and wave_payload.get("columns") == 75
+        and wave_payload.get("az_v_retained") is False
+        and wave_payload.get("retained_az_bytes") == 0
+    ):
+        raise ValueError("M6B W2 store schema or evidence is not closed")
+    factor_start = factor.get("source_at_start")
+    factor_end = factor.get("source_at_end")
+    wave_source = wave.get("source")
+    if not (
+        isinstance(factor_start, Mapping)
+        and isinstance(factor_end, Mapping)
+        and factor_start.get("source_commit_full_sha") == M6B_W2_RESIDUAL_SOURCE_SHA
+        and factor_end.get("source_commit_full_sha") == M6B_W2_RESIDUAL_SOURCE_SHA
+        and factor_start.get("tracked_source_dirty") is False
+        and factor_end.get("tracked_source_dirty") is False
+        and isinstance(wave_source, Mapping)
+        and wave_source.get("source_commit_full_sha") == M6B_W2_WAVE_SOURCE_SHA
+        and wave_source.get("source_worktree_dirty") is False
+        and wave.get("basis_manifest_sha256") == M6B_W2_W0_BASIS_MANIFEST_SHA256
+        and isinstance(wave.get("carrier_audit"), Mapping)
+        and wave["carrier_audit"].get("az_column_sha256_aggregate")
+        == M6B_W2_W0_AZ_COLUMN_SHA256_AGGREGATE
+        and wave["carrier_audit"].get("az_v_retained") is False
+        and wave["carrier_audit"].get("retained_az_bytes") == 0
+    ):
+        raise ValueError("M6B W2 authority provenance is not closed")
+    return {
+        "factor_manifest": _artifact(
+            factor_authority_dir, "shifted_lu_store/manifest.json"
+        ),
+        "wave_manifest": _artifact(
+            wave_authority_dir, "sparse_range_store/manifest.json"
+        ),
+        "factor_builder_summary": _artifact(
+            factor_authority_dir, "m6b_builder_summary.json"
+        ),
+        "wave_builder_summary": _artifact(
+            wave_authority_dir, "w1_builder_summary.json"
+        ),
+        "factor_source_sha": M6B_W2_RESIDUAL_SOURCE_SHA,
+        "wave_source_sha": M6B_W2_WAVE_SOURCE_SHA,
+        "w0_authority": w0_authority,
+        "w0_output_sha256": M6B_W2_W0_OUTPUT_SHA256,
+        "basis_manifest_sha256": wave["basis_manifest_sha256"],
+        "az_column_sha256_aggregate": wave["carrier_audit"][
+            "az_column_sha256_aggregate"
+        ],
+        "factor_compiler": factor.get("runtime_identity", {}).get("compiler"),
+        "jit_source": str(jit_cache_source),
+    }
+
+
+def _run_m6b_w2_diagnostic(
+    run_dir: Path,
+    factor_authority_dir: Path,
+    wave_authority_dir: Path,
+    jit_cache_source: Path,
+    expected_source_sha: str,
+    w0_authority_file: Path,
+) -> int:
+    import gc
+    import shutil
+    import time
+
+    import numpy as np
+    from mpi4py import MPI
+    from petsc4py import PETSc
+    import ufl
+
+    h2b = __import__("benchmarks.run_task037_extra_h2b", fromlist=["*"])
+    h2a = h2b._lazy_h2a()
+    m6a = __import__("benchmarks.run_task037_extra_m6", fromlist=["*"])
+    from src.solvers.hcurl_fullspace_dtn import (
+        build_fullspace_dtn_action,
+        build_fullspace_dtn_carrier_from_surface,
+    )
+    from src.solvers.hcurl_h2b_m6b_shifted_lu_store import (
+        load_h2b_m6b_shifted_lu_patch_store,
+    )
+    from src.solvers.hcurl_h2b_m6b_shifted_patch_pc import (
+        H2BM6BShiftedPatchPC,
+        H2BM6BShiftedRangePC,
+        build_m6b_outer_mat,
+        build_m6b_volume_form,
+    )
+    from src.solvers.hcurl_m6b_sparse_range import (
+        load_sparse_m6b_range_carrier,
+    )
+    from src.solvers.hcurl_rank_one_mpc_action import (
+        build_task037_extra_h1r2_mpc_action,
+    )
+
+    run_dir = Path(run_dir).resolve()
+    factor_authority_dir = Path(factor_authority_dir).resolve()
+    wave_authority_dir = Path(wave_authority_dir).resolve()
+    jit_cache_source = Path(jit_cache_source).resolve()
+    w0_authority_file = Path(w0_authority_file).resolve()
+    if run_dir.exists():
+        raise FileExistsError(f"M6B W2 refuses an existing run directory: {run_dir}")
+    if MPI.COMM_WORLD.size != 1:
+        raise RuntimeError("M6B W2 diagnostic is fixed to MPI1")
+    if not _m6b_w2_source_sha_valid(expected_source_sha):
+        raise ValueError("M6B W2 expected source SHA is invalid")
+    authority = _m6b_w2_authority_record(
+        factor_authority_dir,
+        wave_authority_dir,
+        jit_cache_source,
+        w0_authority_file,
+    )
+    run_dir.mkdir(parents=True)
+    cache_dir = run_dir / "jit_cache"
+    shutil.copytree(jit_cache_source, cache_dir)
+    started = time.perf_counter()
+    progress_path = run_dir / "m6b_w2_progress.jsonl"
+    summary_path = run_dir / "m6b_w2_summary.json"
+    source_start = h2b._light_source()
+    status = "gate_failed"
+    error: str | None = None
+    measurements: dict[str, Any] = {}
+    runtime: dict[str, Any] | None = None
+    p6: dict[str, Any] | None = None
+    cache_before: dict[str, Any] | None = None
+    cache_after: dict[str, Any] | None = None
+    cache_final: dict[str, Any] | None = None
+    source_cache_before: dict[str, Any] | None = None
+    source_cache_after: dict[str, Any] | None = None
+    source_cache_final: dict[str, Any] | None = None
+    store = None
+    range_carrier = None
+    local_pc = None
+    outer_mat = None
+    outer_context = None
+    physical_action = None
+    shifted_action = None
+    adjoint_action = None
+    dtn_action = None
+    shifted_vec = None
+    template = None
+    physical_ufl = shifted_ufl = adjoint_ufl = None
+    epsilon0 = abs_epsilon0 = beta0 = None
+    epsilon1 = abs_epsilon1 = beta1 = None
+
+    def emit(event: str, **extra: Any) -> None:
+        payload = {
+            "schema": f"{M6B_W2_SCHEMA}.progress.v1",
+            "phase": "w2_diagnostic",
+            "event": event,
+            "elapsed_wall_seconds": float(time.perf_counter() - started),
+            **extra,
+        }
+        with progress_path.open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n")
+            stream.flush()
+        print(json.dumps(payload, sort_keys=True), flush=True)
+
+    try:
+        if not _m6b_w2_source_identity_valid(source_start, expected_source_sha):
+            raise ValueError("M6B W2 execution source is not the expected clean source")
+        source_cache_before = _m6b_w2_cache_record(h2b, jit_cache_source)
+        if source_cache_before["inventory_sha256"] != M6B_W2_JIT_INVENTORY_SHA256:
+            raise ValueError("M6B W2 JIT source inventory authority differs")
+        cache_before = _m6b_w2_cache_record(h2b, cache_dir)
+        if (
+            not cache_before["entries"]
+            or cache_before["inventory_sha256"]
+            != source_cache_before["inventory_sha256"]
+        ):
+            raise ValueError("M6B W2 copied JIT cache differs from source")
+        emit("authority_validated", **authority)
+        cfg, mesh_data, function_space, floquet, modes = m6a._production_objects(
+            run_dir, mesh_name="m6b_w2_mesh"
+        )
+        p6 = _m6b_p6_identity(mesh_data, function_space, floquet)
+        if not _m6b_expected_p6(p6):
+            raise ValueError("M6B W2 p6 identity differs")
+        if not isinstance(authority["factor_compiler"], Mapping):
+            raise ValueError("M6B W2 factor compiler identity is missing")
+        runtime = _m6b_runtime_identity(
+            h2b,
+            h2a,
+            MPI.COMM_WORLD,
+            compiler_probe=False,
+            compiler=authority["factor_compiler"],
+        )
+        emit("mesh_ready", p6=p6)
+        emit("space_ready")
+        emit("floquet_mpc_ready")
+        jit_options = h2b._expected_jit_options(cache_dir)
+        physical_ufl, epsilon0, abs_epsilon0, beta0, tag_coverage = build_m6b_volume_form(
+            function_space, mesh_data, cfg, beta=0.0
+        )
+        shifted_ufl, epsilon1, abs_epsilon1, beta1, shifted_coverage = build_m6b_volume_form(
+            function_space, mesh_data, cfg, beta=1.0
+        )
+        if shifted_coverage != tag_coverage:
+            raise ValueError("M6B W2 material tag coverage changed")
+        physical_action = build_task037_extra_h1r2_mpc_action(
+            physical_ufl, floquet.mpc, task037_extra_h1r2=True, jit_options=jit_options
+        )
+        shifted_action = build_task037_extra_h1r2_mpc_action(
+            shifted_ufl, floquet.mpc, task037_extra_h1r2=True, jit_options=jit_options
+        )
+        adjoint_ufl = ufl.adjoint(physical_ufl)
+        adjoint_action = build_task037_extra_h1r2_mpc_action(
+            adjoint_ufl, floquet.mpc, task037_extra_h1r2=True, jit_options=jit_options
+        )
+        surface_assemblers = m6a._surface_assemblers(
+            function_space, mesh_data, cfg, modes, cache_dir
+        )
+        cache_after = _m6b_w2_cache_record(h2b, cache_dir)
+        source_cache_after = _m6b_w2_cache_record(h2b, jit_cache_source)
+        if (
+            cache_after["inventory_sha256"] != cache_before["inventory_sha256"]
+            or source_cache_after["inventory_sha256"]
+            != source_cache_before["inventory_sha256"]
+        ):
+            raise ValueError("M6B W2 form construction changed the frozen cache")
+        emit("cache_ready", inventory_sha256=cache_after["inventory_sha256"])
+        carrier = build_fullspace_dtn_carrier_from_surface(
+            modes, surface_assemblers, floquet.mpc, cfg, expected_mode_count=80
+        )
+        dtn_action = build_fullspace_dtn_action(carrier, comm=MPI.COMM_WORLD)
+        outer_mat, outer_context = build_m6b_outer_mat(
+            physical_action,
+            dtn_action,
+            owned_rows=M6B_GLOBAL_ROWS,
+            global_rows=M6B_GLOBAL_ROWS,
+            comm=MPI.COMM_WORLD,
+            volume_hermitian_action=adjoint_action,
+        )
+        template = outer_mat.createVecRight()
+
+        def outer_numpy(values: np.ndarray, *, hermitian: bool = False) -> np.ndarray:
+            source = template.duplicate()
+            target = template.duplicate()
+            try:
+                np.copyto(source.getArray(), values)
+                if hermitian:
+                    outer_context.apply_hermitian(source, target)
+                else:
+                    outer_mat.mult(source, target)
+                return np.array(
+                    target.getArray(readonly=True), dtype=np.complex128, copy=True
+                )
+            finally:
+                target.destroy()
+                source.destroy()
+
+        shifted_vec = shifted_action.output_vector.duplicate()
+
+        def shifted_numpy(values: np.ndarray) -> np.ndarray:
+            with shifted_vec.localForm() as local:
+                local.set(0.0)
+                local.array_w[: values.size] = values
+            shifted_vec.ghostUpdate(
+                addv=PETSc.InsertMode.INSERT_VALUES,
+                mode=PETSc.ScatterMode.FORWARD,
+            )
+            result = shifted_action.mult(shifted_vec)
+            return np.array(
+                result.getArray(readonly=True), dtype=np.complex128, copy=True
+            )
+
+        store = load_h2b_m6b_shifted_lu_patch_store(
+            factor_authority_dir / "shifted_lu_store" / "manifest.json",
+            task037_extra_m6b=True,
+        )
+        local_pc = H2BM6BShiftedPatchPC(
+            store,
+            global_row_count=M6B_GLOBAL_ROWS,
+            shifted_action=shifted_numpy,
+            slave_identity_rows=np.asarray(floquet.mpc.slaves, dtype=np.int64),
+            task037_extra_m6b=True,
+        )
+        range_carrier = load_sparse_m6b_range_carrier(
+            wave_authority_dir / "sparse_range_store" / "manifest.json",
+            comm=MPI.COMM_WORLD,
+            hermitian_action=lambda values: outer_numpy(values, hermitian=True),
+        )
+        w2_pc = H2BM6BShiftedRangePC(
+            local_pc,
+            range_carrier,
+            lambda values: outer_numpy(values),
+            global_row_count=M6B_GLOBAL_ROWS,
+            task037_extra_m6b=True,
+        )
+        emit("outer_and_carriers_ready", range_audit=range_carrier.audit)
+        for key in ("20", "100", "150", "200"):
+            residual_path = factor_authority_dir / f"m6b_iter{key}_residual.npy"
+            residual = np.load(residual_path, allow_pickle=False)
+            if (
+                residual.dtype != np.dtype(np.complex128)
+                or residual.shape != (M6B_GLOBAL_ROWS,)
+                or not np.all(np.isfinite(residual))
+                or _m6b_w2_array_sha256(residual) != M6B_W2_RESIDUAL_ARRAY_SHAS[key]
+            ):
+                raise ValueError(f"M6B W2 residual authority is invalid: {key}")
+            first, first_measurement = w2_pc.apply_with_measurement(residual)
+            second, second_measurement = w2_pc.apply_with_measurement(residual)
+            record = dict(first_measurement)
+            record.update(
+                {
+                    "iteration": int(key),
+                    "residual_array_sha256": M6B_W2_RESIDUAL_ARRAY_SHAS[key],
+                    "residual_artifact": {
+                        **_artifact(
+                            factor_authority_dir,
+                            f"m6b_iter{key}_residual.npy",
+                        ),
+                        "absolute_path": str(residual_path),
+                    },
+                    "correction_sha256": first_measurement["final_correction_sha256"],
+                    "repeat_correction_sha256": second_measurement[
+                        "final_correction_sha256"
+                    ],
+                    "repeat_identical": bool(
+                        np.array_equal(first, second)
+                        and first_measurement == second_measurement
+                    ),
+                }
+            )
+            measurements[key] = record
+            del residual, first, second, first_measurement, second_measurement
+            emit("residual_complete", iteration=int(key), **{
+                "rho_range_only": record["rho_range_only"],
+                "rho_composed": record["rho_composed"],
+            })
+        gate = _m6b_w2_gate(measurements)
+        cache_final = _m6b_w2_cache_record(h2b, cache_dir)
+        source_cache_final = _m6b_w2_cache_record(h2b, jit_cache_source)
+        if (
+            cache_final != cache_after
+            or source_cache_final["inventory_sha256"]
+            != source_cache_before["inventory_sha256"]
+        ):
+            raise ValueError("M6B W2 cache changed after diagnostic actions")
+        status = "diagnostic_complete" if gate["pass"] else "gate_failed"
+        emit("summary_ready", status=status, gate=gate)
+    except FloatingPointError as exc:
+        error = f"{type(exc).__name__}: {exc}"
+    except h2b._worker_error_types() as exc:
+        error = f"{type(exc).__name__}: {exc}"
+    finally:
+        if shifted_vec is not None:
+            shifted_vec.destroy()
+        if template is not None:
+            template.destroy()
+        if outer_mat is not None:
+            outer_mat.destroy()
+        if outer_context is not None:
+            outer_context.destroy()
+        if physical_action is not None:
+            physical_action.destroy()
+        if shifted_action is not None:
+            shifted_action.destroy()
+        if adjoint_action is not None:
+            adjoint_action.destroy()
+        if dtn_action is not None:
+            dtn_action.destroy()
+        del physical_ufl, shifted_ufl, adjoint_ufl
+        del epsilon0, abs_epsilon0, beta0, epsilon1, abs_epsilon1, beta1
+        gc.collect()
+    source_end = h2b._light_source()
+    if error is None and not (
+        _m6b_w2_source_identity_valid(source_end, expected_source_sha)
+    ):
+        error = "M6B W2 execution source changed during diagnostic"
+    gate = _m6b_w2_gate(measurements) if error is None else {
+        "pass": False,
+        "checks": {},
+        "problems": ["worker_error"],
+    }
+    summary = _attach_evidence(
+        {
+            "schema": M6B_W2_SCHEMA,
+            "status": status if error is None else "gate_failed",
+            "scope": _m6b_w2_scope(),
+            "expected_source_sha": expected_source_sha,
+            "source_at_start": source_start,
+            "source_at_end": source_end,
+            "runtime_identity": runtime,
+            "p6": p6,
+            "authority": authority,
+            "jit_cache": {
+                "source_inventory_sha256": M6B_W2_JIT_INVENTORY_SHA256,
+                "source_before": source_cache_before,
+                "source_after": source_cache_after,
+                "source_final": source_cache_final,
+                "before": cache_before,
+                "after": cache_after,
+                "final": cache_final,
+                "unchanged": cache_before == cache_after == cache_final,
+            },
+            "measurements": measurements,
+            "gate": gate,
+            "factor_store_audit": store.audit_jsonable() if store is not None else None,
+            "range_store_audit": range_carrier.audit if range_carrier is not None else None,
+            "pc_audit": (
+                w2_pc.audit
+                if "w2_pc" in locals() and w2_pc is not None
+                else None
+            ),
+            "predicted_live_set": {
+                "base_bytes": M6B_W2_BASE_PREDICTED_LIVE_SET_BYTES,
+                "external_residual_bytes": M6B_W2_EXTERNAL_RESIDUAL_BYTES,
+                "composition_incremental_bytes": M6B_W2_COMPOSITION_INCREMENTAL_BYTES,
+                "predicted_bytes": M6B_W2_PREDICTED_LIVE_SET_BYTES,
+                "limit_bytes": M6B_W2_PREDICTED_LIVE_SET_LIMIT_BYTES,
+                "gate": M6B_W2_PREDICTED_LIVE_SET_BYTES
+                <= M6B_W2_PREDICTED_LIVE_SET_LIMIT_BYTES,
+                "is_measurement": False,
+                "derived_not_measured": True,
+                "prediction_scope": "production_apply_not_diagnostic_measurement",
+                "basis": "W1A predicted plus one frozen residual and W2 composition increment",
+            },
+            "architecture": {
+                "fine_space": "uncondensed_fullspace",
+                "global_matrix": False,
+                "static_condensation": False,
+                "trace_slab_pc": False,
+                "pde_pass": False,
+                "formal_pass": False,
+            },
+            "error": error,
+            "formal_pass": False,
+            "diagnostic_numeric_pass": bool(error is None and gate["pass"]),
+            "w2_pass": False,
+            "pde_pass": False,
+            "elapsed_wall_seconds": float(time.perf_counter() - started),
+        }
+    )
+    _write_json(summary_path, summary)
+    return 0 if summary["diagnostic_numeric_pass"] else 1
+
+
 def _m6b_command(command: str, run_dir: Path) -> list[str]:
     if command not in {"m6b-stage-worker", "m6b-builder", "m6b-worker"}:
         raise ValueError("M6B command identity is invalid")
@@ -3633,11 +4515,22 @@ def _parser() -> argparse.ArgumentParser:
         "m6b-worker",
         "m6b-watchdog",
         "m6b-w1-builder",
+        "m6b-w2-diagnostic",
     ):
         item = sub.add_parser(command)
         item.add_argument("--run-dir", required=True)
         if command == "m6b-w1-builder":
             item.add_argument("--jit-cache-source", required=True)
+        if command == "m6b-w2-diagnostic":
+            item.add_argument("--factor-authority-dir", required=True)
+            item.add_argument("--wave-authority-dir", required=True)
+            item.add_argument("--jit-cache-source", required=True)
+            item.add_argument(
+                "--expected-source-sha",
+                required=True,
+                type=_m6b_w2_source_sha_argument,
+            )
+            item.add_argument("--w0-authority-file", required=True)
     check = sub.add_parser("m6b-check")
     check.add_argument("--run-dir", required=True)
     check.add_argument("--output", required=True)
@@ -3659,6 +4552,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _run_m6b_watchdog(run_dir)
     if args.command == "m6b-w1-builder":
         return _run_m6b_w1_builder(run_dir, Path(args.jit_cache_source).resolve())
+    if args.command == "m6b-w2-diagnostic":
+        return _run_m6b_w2_diagnostic(
+            run_dir,
+            Path(args.factor_authority_dir).resolve(),
+            Path(args.wave_authority_dir).resolve(),
+            Path(args.jit_cache_source).resolve(),
+            args.expected_source_sha,
+            Path(args.w0_authority_file).resolve(),
+        )
     raise ValueError(f"unknown M6B command: {args.command}")
 
 
