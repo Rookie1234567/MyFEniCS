@@ -31,6 +31,11 @@ M6B_LOCAL_NLOC = 882
 M6B_GLOBAL_ROWS = 173_802
 M6B_CONSTRAINTS = 9_210
 M6B_BETA = 1.0
+M6B_SHARED_VOLUME_OPERATOR = (
+    "C-k0^2*M_epsilon+i*beta*k0^2*M_abs_epsilon"
+)
+M6B_SHARED_VOLUME_REPRESENTATION = "exact_DG0_single_integral"
+M6B_SHARED_VOLUME_SCHEMA = "task037.extra.h2b.m6b.shared-volume.v1"
 M6B_FACTOR_COUNT = 84
 M6B_FACTOR_REUSE = 168
 M6B_RETAINED_TOTAL_LIMIT_BYTES = 1_100_000_000
@@ -430,6 +435,8 @@ def _m6b_builder_summary_valid(value: Any) -> bool:
     sample = value.get("sample_patch_action_closure")
     class_audit = value.get("class_block_audit")
     cache = value.get("cache")
+    form = value.get("form")
+    shared_kernel = value.get("shared_volume_kernel")
     return bool(
         isinstance(sample, Mapping)
         and set(sample) == {"0", "42", "83"}
@@ -454,6 +461,18 @@ def _m6b_builder_summary_valid(value: Any) -> bool:
         and all(key in cache for key in ("stage", "before", "after", "unchanged"))
         and cache["stage"] == cache["before"] == cache["after"]
         and cache["unchanged"] is True
+        and _m6b_shared_kernel_valid(shared_kernel, phase="builder")
+        and _m6b_form_record_bound(
+            form,
+            shared_kernel,
+            role="shifted_volume",
+            beta=M6B_BETA,
+            code_state="hit_no_new_decl_impl",
+            shared_phase="stage",
+        )
+        and _m6b_material_tag_coverage_valid(
+            value.get("material_tag_coverage"), owned_cells=M6B_GLOBAL_CELLS
+        )
     )
 
 
@@ -553,6 +572,8 @@ def _m6b_check_payload(value: Any) -> dict[str, Any]:
         "pc_repeat": False,
         "phase_source_identity": False,
         "pc_audit": False,
+        "shared_volume_kernel": False,
+        "material_tag_coverage": False,
     }
     problems: list[str] = []
     if not isinstance(value, Mapping):
@@ -692,6 +713,32 @@ def _m6b_check_payload(value: Any) -> dict[str, Any]:
         )
     )
     online_measurement = value.get("online_measurement")
+    shared_kernel = (
+        online_measurement.get("shared_volume_kernel")
+        if isinstance(online_measurement, Mapping)
+        else None
+    )
+    online_form = (
+        online_measurement.get("form")
+        if isinstance(online_measurement, Mapping)
+        else None
+    )
+    checks["shared_volume_kernel"] = bool(
+        _m6b_shared_kernel_valid(shared_kernel, phase="mpi1")
+        and isinstance(online_form, Mapping)
+        and _m6b_form_records_bound(
+            online_form.get("outer_volume"),
+            online_form.get("shifted_volume"),
+            shared_kernel,
+            phase="mpi1",
+        )
+    )
+    checks["material_tag_coverage"] = _m6b_material_tag_coverage_valid(
+        online_measurement.get("material_tag_coverage")
+        if isinstance(online_measurement, Mapping)
+        else None,
+        owned_cells=M6B_GLOBAL_CELLS,
+    )
     checks["pc_audit"] = bool(
         isinstance(online_measurement, Mapping)
         and _m6b_pc_audit_valid(online_measurement.get("pc_audit"))
@@ -733,6 +780,7 @@ def _m6b_form_record(
     cfg: Any,
     function_space: Any,
     role: str,
+    beta: float,
 ) -> dict[str, Any]:
     record = h2b._form_record(
         action._action_form,
@@ -742,9 +790,243 @@ def _m6b_form_record(
         function_space,
         role,
     )
+    record.pop("proxy_identity", None)
     record["role"] = role
-    record["operator_identity"] = role
+    record["beta"] = float(beta)
+    record["beta_runtime_parameter"] = "fem.Constant"
+    record["operator_identity"] = M6B_SHARED_VOLUME_OPERATOR
+    record["representation"] = M6B_SHARED_VOLUME_REPRESENTATION
     return record
+
+
+def _m6b_fixed_physics_identity(cfg: Any) -> dict[str, Any]:
+    identity = {
+        "use_pml": bool(cfg.use_pml),
+        "pml_top_thickness": float(cfg.pml_top_thickness),
+        "pml_bottom_thickness": float(cfg.pml_bottom_thickness),
+        "divergence_penalty": float(cfg.divergence_penalty),
+        "material_representation": "DG0_epsilon_and_abs_epsilon",
+    }
+    if (
+        identity["use_pml"]
+        or identity["pml_top_thickness"] != 0.0
+        or identity["pml_bottom_thickness"] != 0.0
+        or identity["divergence_penalty"] != 0.0
+    ):
+        raise ValueError("M6B shared volume physics is not the fixed no-PML contract")
+    return identity
+
+
+def _m6b_shared_kernel_identity(
+    outer: Mapping[str, Any],
+    shifted: Mapping[str, Any],
+    cfg: Any,
+    *,
+    phase: str,
+) -> dict[str, Any]:
+    fixed_physics = _m6b_fixed_physics_identity(cfg)
+    required = (
+        "beta",
+        "beta_runtime_parameter",
+        "operator_identity",
+        "representation",
+        "module_name",
+        "ufl_signature",
+        "ufcx_signature",
+        "code_state",
+    )
+    if not isinstance(outer, Mapping) or not isinstance(shifted, Mapping):
+        raise ValueError("M6B shared volume form records are incomplete")
+    if any(key not in outer or key not in shifted for key in required):
+        raise ValueError("M6B shared volume form identity is incomplete")
+    if (
+        outer["beta"] != 0.0
+        or shifted["beta"] != 1.0
+        or outer["beta_runtime_parameter"] != "fem.Constant"
+        or shifted["beta_runtime_parameter"] != "fem.Constant"
+        or outer["operator_identity"] != M6B_SHARED_VOLUME_OPERATOR
+        or shifted["operator_identity"] != M6B_SHARED_VOLUME_OPERATOR
+        or outer["representation"] != M6B_SHARED_VOLUME_REPRESENTATION
+        or shifted["representation"] != M6B_SHARED_VOLUME_REPRESENTATION
+        or outer["module_name"] != shifted["module_name"]
+        or outer["ufl_signature"] != shifted["ufl_signature"]
+        or outer["ufcx_signature"] != shifted["ufcx_signature"]
+    ):
+        raise ValueError("M6B beta-zero/beta-one shared kernel identity changed")
+    return {
+        "schema": M6B_SHARED_VOLUME_SCHEMA,
+        "phase": str(phase),
+        "operator_identity": M6B_SHARED_VOLUME_OPERATOR,
+        "representation": M6B_SHARED_VOLUME_REPRESENTATION,
+        "fixed_physics": fixed_physics,
+        "beta_runtime_parameter": "fem.Constant",
+        "outer_beta": 0.0,
+        "shifted_beta": 1.0,
+        "module_name": outer["module_name"],
+        "ufl_signature": outer["ufl_signature"],
+        "ufcx_signature": outer["ufcx_signature"],
+        "outer_code_state": outer["code_state"],
+        "shifted_code_state": shifted["code_state"],
+        "same_module": True,
+        "same_ufl_signature": True,
+        "same_ufcx_signature": True,
+    }
+
+
+def _m6b_shared_kernel_valid(value: Any, *, phase: str) -> bool:
+    required = {
+        "schema",
+        "phase",
+        "operator_identity",
+        "representation",
+        "fixed_physics",
+        "beta_runtime_parameter",
+        "outer_beta",
+        "shifted_beta",
+        "module_name",
+        "ufl_signature",
+        "ufcx_signature",
+        "outer_code_state",
+        "shifted_code_state",
+        "same_module",
+        "same_ufl_signature",
+        "same_ufcx_signature",
+    }
+    if phase not in {"stage", "builder", "mpi1"}:
+        return False
+    if not isinstance(value, Mapping) or set(value) != required:
+        return False
+    physics = value["fixed_physics"]
+    expected_outer_state = "cold_decl_impl_generated"
+    expected_shifted_state = "hit_no_new_decl_impl"
+    if phase == "mpi1":
+        expected_outer_state = expected_shifted_state
+    return bool(
+        value["schema"] == M6B_SHARED_VOLUME_SCHEMA
+        and value["phase"] == ("stage" if phase == "builder" else phase)
+        and value["operator_identity"] == M6B_SHARED_VOLUME_OPERATOR
+        and value["representation"] == M6B_SHARED_VOLUME_REPRESENTATION
+        and isinstance(physics, Mapping)
+        and set(physics)
+        == {
+            "use_pml",
+            "pml_top_thickness",
+            "pml_bottom_thickness",
+            "divergence_penalty",
+            "material_representation",
+        }
+        and physics["use_pml"] is False
+        and physics["pml_top_thickness"] == 0.0
+        and physics["pml_bottom_thickness"] == 0.0
+        and physics["divergence_penalty"] == 0.0
+        and physics["material_representation"] == "DG0_epsilon_and_abs_epsilon"
+        and value["beta_runtime_parameter"] == "fem.Constant"
+        and value["outer_beta"] == 0.0
+        and value["shifted_beta"] == 1.0
+        and isinstance(value["module_name"], str)
+        and value["module_name"].startswith("libffcx_forms_")
+        and isinstance(value["ufl_signature"], str)
+        and bool(value["ufl_signature"])
+        and isinstance(value["ufcx_signature"], str)
+        and bool(value["ufcx_signature"])
+        and value["outer_code_state"] == expected_outer_state
+        and value["shifted_code_state"] == expected_shifted_state
+        and value["same_module"] is True
+        and value["same_ufl_signature"] is True
+        and value["same_ufcx_signature"] is True
+    )
+
+
+def _m6b_form_record_bound(
+    record: Any,
+    shared: Any,
+    *,
+    role: str,
+    beta: float,
+    code_state: str,
+    shared_phase: str = "stage",
+) -> bool:
+    if not _m6b_shared_kernel_valid(shared, phase=shared_phase):
+        return False
+    if not isinstance(record, Mapping):
+        return False
+    required = {
+        "role",
+        "beta",
+        "beta_runtime_parameter",
+        "operator_identity",
+        "representation",
+        "module_name",
+        "ufl_signature",
+        "ufcx_signature",
+        "code_state",
+    }
+    if not required.issubset(record):
+        return False
+    return bool(
+        record["role"] == role
+        and record["beta"] == beta
+        and record["beta_runtime_parameter"] == "fem.Constant"
+        and record["operator_identity"] == shared["operator_identity"]
+        and record["representation"] == shared["representation"]
+        and record["module_name"] == shared["module_name"]
+        and record["ufl_signature"] == shared["ufl_signature"]
+        and record["ufcx_signature"] == shared["ufcx_signature"]
+        and record["code_state"] == code_state
+    )
+
+
+def _m6b_form_records_bound(
+    outer: Any,
+    shifted: Any,
+    shared: Any,
+    *,
+    phase: str,
+) -> bool:
+    if phase not in {"stage", "mpi1"}:
+        return False
+    outer_state = "cold_decl_impl_generated" if phase == "stage" else "hit_no_new_decl_impl"
+    return bool(
+        _m6b_form_record_bound(
+            outer,
+            shared,
+            role="outer_volume",
+            beta=0.0,
+            code_state=outer_state,
+            shared_phase=phase,
+        )
+        and _m6b_form_record_bound(
+            shifted,
+            shared,
+            role="shifted_volume",
+            beta=1.0,
+            code_state="hit_no_new_decl_impl",
+            shared_phase=phase,
+        )
+    )
+
+
+def _m6b_material_tag_coverage_valid(value: Any, *, owned_cells: int) -> bool:
+    return bool(
+        isinstance(value, Mapping)
+        and set(value) == {
+            "owned_cell_count",
+            "allowed_tag_values",
+            "tag_counts",
+            "complete",
+        }
+        and value["owned_cell_count"] == owned_cells
+        and value["allowed_tag_values"] == {"air": 1, "substrate": 2, "grating": 3}
+        and isinstance(value["tag_counts"], Mapping)
+        and set(value["tag_counts"]) == {"air", "substrate", "grating"}
+        and all(
+            type(value["tag_counts"][key]) is int
+            and value["tag_counts"][key] >= 0
+            for key in value["tag_counts"]
+        )
+        and sum(value["tag_counts"].values()) == owned_cells
+        and value["complete"] is True
+    )
 
 
 def _m6b_runtime_identity(
@@ -835,10 +1117,9 @@ def _run_m6b_stage_worker(run_dir: Path) -> int:
     h2a = h2b._lazy_h2a()
     m6a = __import__("benchmarks.run_task037_extra_m6", fromlist=["*"])
     from dolfinx import fem
-    from src.solvers.common_3d_forms import _build_variational_forms
     from src.solvers.dtn_port_3d import _incident_top_traction_form
     from src.solvers.hcurl_rank_one_mpc_action import build_task037_extra_h1r2_mpc_action
-    from src.solvers.hcurl_h2b_m6b_shifted_patch_pc import build_m6b_shifted_form
+    from src.solvers.hcurl_h2b_m6b_shifted_patch_pc import build_m6b_volume_form
 
     comm = MPI.COMM_WORLD
     if comm.size != 1:
@@ -872,11 +1153,10 @@ def _run_m6b_stage_worker(run_dir: Path) -> int:
                 function_space, mesh_data, cfg, cache_dir=cache_dir
             )
             _m6b_emit(markers, "stage", "proxy_forms_ready", started)
-            physical_ufl, _physical_rhs = _build_variational_forms(
-                mesh_data.mesh, mesh_data, cfg, function_space
-            )
-            shifted_ufl, epsilon, abs_epsilon = build_m6b_shifted_form(
-                function_space, mesh_data, cfg, beta=M6B_BETA
+            del proxy_forms
+            gc.collect()
+            physical_ufl, epsilon0, abs_epsilon0, beta0, tag_coverage = build_m6b_volume_form(
+                function_space, mesh_data, cfg, beta=0.0
             )
             jit_options = h2b._expected_jit_options(cache_dir)
             physical_action = build_task037_extra_h1r2_mpc_action(
@@ -886,11 +1166,23 @@ def _run_m6b_stage_worker(run_dir: Path) -> int:
                 jit_options=jit_options,
             )
             physical_record = _m6b_form_record(
-                h2b, physical_action, cache_dir, cfg, function_space, "outer_volume"
+                h2b,
+                physical_action,
+                cache_dir,
+                cfg,
+                function_space,
+                "outer_volume",
+                0.0,
             )
             physical_action.destroy()
-            del physical_action
+            del physical_action, physical_ufl, epsilon0, abs_epsilon0, beta0
+            gc.collect()
             _m6b_emit(markers, "stage", "outer_form_ready", started)
+            shifted_ufl, epsilon1, abs_epsilon1, beta1, shifted_tag_coverage = build_m6b_volume_form(
+                function_space, mesh_data, cfg, beta=M6B_BETA
+            )
+            if shifted_tag_coverage != tag_coverage:
+                raise ValueError("M6B shared volume material tag coverage changed")
             shifted_action = build_task037_extra_h1r2_mpc_action(
                 shifted_ufl,
                 floquet.mpc,
@@ -898,11 +1190,24 @@ def _run_m6b_stage_worker(run_dir: Path) -> int:
                 jit_options=jit_options,
             )
             shifted_record = _m6b_form_record(
-                h2b, shifted_action, cache_dir, cfg, function_space, "shifted_volume"
+                h2b,
+                shifted_action,
+                cache_dir,
+                cfg,
+                function_space,
+                "shifted_volume",
+                M6B_BETA,
             )
             shifted_action.destroy()
-            del shifted_action
+            del shifted_action, shifted_ufl, epsilon1, abs_epsilon1, beta1
+            gc.collect()
             _m6b_emit(markers, "stage", "shifted_form_ready", started)
+            shared_volume_kernel = _m6b_shared_kernel_identity(
+                physical_record,
+                shifted_record,
+                cfg,
+                phase="stage",
+            )
             assemblers = m6a._surface_assemblers(
                 function_space, mesh_data, cfg, modes, cache_dir
             )
@@ -915,6 +1220,8 @@ def _run_m6b_stage_worker(run_dir: Path) -> int:
             forms = {
                 "outer_volume": physical_record,
                 "shifted_volume": shifted_record,
+                "shared_volume_kernel": shared_volume_kernel,
+                "material_tag_coverage": tag_coverage,
                 "surface": surface_identity,
                 "incident_form_count": 1,
                 "cache_inventory": cache_inventory,
@@ -925,8 +1232,8 @@ def _run_m6b_stage_worker(run_dir: Path) -> int:
             runtime = _m6b_runtime_identity(h2b, h2a, comm, compiler_probe=True)
             _m6b_emit(markers, "stage", "surface_forms_ready", started)
             _m6b_emit(markers, "stage", "summary_ready", started)
-            del assemblers, incident_form, proxy_forms, epsilon, abs_epsilon
-            del physical_ufl, shifted_ufl, mesh_data, function_space, floquet, modes, cfg
+            del assemblers, incident_form
+            del mesh_data, function_space, floquet, modes, cfg
             gc.collect()
             status = "measurement_complete"
     except h2b._worker_error_types() as exc:
@@ -1014,7 +1321,7 @@ def _run_m6b_builder(run_dir: Path) -> int:
         build_h2b_m6b_shifted_lu_factor,
         stream_write_h2b_m6b_shifted_lu_patch_store,
     )
-    from src.solvers.hcurl_h2b_m6b_shifted_patch_pc import build_m6b_shifted_form
+    from src.solvers.hcurl_h2b_m6b_shifted_patch_pc import build_m6b_volume_form
     from src.solvers.hcurl_h2b_p1_factor_store import (
         H2BP1ClassBlockAuthority,
         discover_h2b_p1_neighborhoods,
@@ -1046,9 +1353,15 @@ def _run_m6b_builder(run_dir: Path) -> int:
     store_audit: dict[str, Any] | None = None
     sample_closure: dict[str, float] = {}
     class_block_audit: dict[str, Any] | None = None
+    shared_volume_kernel: dict[str, Any] | None = None
+    tag_coverage: dict[str, Any] | None = None
     cache_before: Any = None
     cache_after: Any = None
     shifted_action = None
+    shifted_ufl = None
+    epsilon = None
+    abs_epsilon = None
+    beta_constant = None
     source_vec = None
     try:
         with progress_path.open("w", encoding="utf-8") as markers:
@@ -1072,7 +1385,7 @@ def _run_m6b_builder(run_dir: Path) -> int:
             _m6b_emit(markers, "builder", "floquet_mpc_ready", started)
             cache_dir = run_dir / "jit_cache"
             cache_before = h2b._cache_snapshot(cache_dir)
-            shifted_ufl, epsilon, abs_epsilon = build_m6b_shifted_form(
+            shifted_ufl, epsilon, abs_epsilon, beta_constant, tag_coverage = build_m6b_volume_form(
                 function_space, mesh_data, cfg, beta=M6B_BETA
             )
             shifted_action = __import__(
@@ -1085,8 +1398,22 @@ def _run_m6b_builder(run_dir: Path) -> int:
                 jit_options=h2b._expected_jit_options(cache_dir),
             )
             form_record = _m6b_form_record(
-                h2b, shifted_action, cache_dir, cfg, function_space, "shifted_volume"
+                h2b,
+                shifted_action,
+                cache_dir,
+                cfg,
+                function_space,
+                "shifted_volume",
+                M6B_BETA,
             )
+            shared_volume_kernel = _m6b_shared_kernel_identity(
+                stage["forms"]["outer_volume"],
+                form_record,
+                cfg,
+                phase="stage",
+            )
+            if shared_volume_kernel != stage["forms"].get("shared_volume_kernel"):
+                raise ValueError("M6B builder shared volume identity differs from stage")
             authority = h2b._authority()
             r2_store = load_h2a_r2_factor_store(
                 h2b.H2B_R2_MANIFEST, task037_extra_h2a_r2=True
@@ -1389,7 +1716,6 @@ def _run_m6b_builder(run_dir: Path) -> int:
             _m6b_emit(markers, "builder", "factor_store_ready", started)
             _m6b_emit(markers, "builder", "summary_ready", started)
             del class_authority, fresh_class_records, proxy_forms
-            gc.collect()
             runtime = _m6b_runtime_identity(h2b, h2a, comm, compiler_probe=False, compiler=stage["runtime_identity"]["compiler"])
             status = "measurement_complete"
     except h2b._worker_error_types() as exc:
@@ -1400,6 +1726,8 @@ def _run_m6b_builder(run_dir: Path) -> int:
                 item.destroy()
         if shifted_action is not None:
             shifted_action.destroy()
+        del shifted_ufl, epsilon, abs_epsilon, beta_constant
+        gc.collect()
     source_end = h2b._light_source()
     payload = _attach_evidence(
         {
@@ -1409,6 +1737,8 @@ def _run_m6b_builder(run_dir: Path) -> int:
             "events": list(M6B_BUILDER_EVENTS),
             "p6": p6,
             "form": form_record,
+            "shared_volume_kernel": shared_volume_kernel if form_record else None,
+            "material_tag_coverage": tag_coverage,
             "cache": {
                 "stage": stage["forms"]["cache_inventory"],
                 "before": cache_before,
@@ -1444,7 +1774,6 @@ def _run_m6b_online_worker(run_dir: Path) -> int:
     h2a = h2b._lazy_h2a()
     m6a = __import__("benchmarks.run_task037_extra_m6", fromlist=["*"])
     from dolfinx import fem
-    from src.solvers.common_3d_forms import _build_variational_forms
     from src.solvers.dtn_port_3d import _assemble_mpc_form_vector, _incident_top_traction_form
     from src.solvers.hcurl_fullspace_dtn import (
         build_fullspace_dtn_action,
@@ -1457,7 +1786,7 @@ def _run_m6b_online_worker(run_dir: Path) -> int:
         H2BM6BShiftedPatchPC,
         M6BShiftedPCContext,
         build_m6b_outer_mat,
-        build_m6b_shifted_form,
+        build_m6b_volume_form,
         compose_m6b_physical_rhs,
         run_m6b_right_fgmres_screen,
     )
@@ -1488,6 +1817,14 @@ def _run_m6b_online_worker(run_dir: Path) -> int:
     shifted_vec = None
     rhs_vec = None
     base_vec = None
+    physical_ufl = None
+    shifted_ufl = None
+    epsilon0 = None
+    abs_epsilon0 = None
+    beta0 = None
+    epsilon1 = None
+    abs_epsilon1 = None
+    beta1 = None
     try:
         with progress_path.open("w", encoding="utf-8") as markers:
             stage = h2b._read_json(run_dir / "m6b_stage_summary.json")
@@ -1512,12 +1849,14 @@ def _run_m6b_online_worker(run_dir: Path) -> int:
             _m6b_emit(markers, "mpi1", "floquet_mpc_ready", started)
             cache_dir = run_dir / "jit_cache"
             cache_before = h2b._cache_snapshot(cache_dir)
-            physical_ufl, _physical_rhs = _build_variational_forms(
-                mesh_data.mesh, mesh_data, cfg, function_space
+            physical_ufl, epsilon0, abs_epsilon0, beta0, tag_coverage = build_m6b_volume_form(
+                function_space, mesh_data, cfg, beta=0.0
             )
-            shifted_ufl, _epsilon, _abs_epsilon = build_m6b_shifted_form(
+            shifted_ufl, epsilon1, abs_epsilon1, beta1, shifted_tag_coverage = build_m6b_volume_form(
                 function_space, mesh_data, cfg, beta=M6B_BETA
             )
+            if shifted_tag_coverage != tag_coverage:
+                raise ValueError("M6B shared volume material tag coverage changed")
             jit_options = h2b._expected_jit_options(cache_dir)
             physical_action = build_task037_extra_h1r2_mpc_action(
                 physical_ufl,
@@ -1541,6 +1880,45 @@ def _run_m6b_online_worker(run_dir: Path) -> int:
             cache_after = h2b._cache_snapshot(cache_dir)
             if cache_after != stage.get("forms", {}).get("cache_inventory"):
                 raise ValueError("M6B online form/cache identity changed")
+            outer_record = _m6b_form_record(
+                h2b,
+                physical_action,
+                cache_dir,
+                cfg,
+                function_space,
+                "outer_volume",
+                0.0,
+            )
+            shifted_record = _m6b_form_record(
+                h2b,
+                shifted_action,
+                cache_dir,
+                cfg,
+                function_space,
+                "shifted_volume",
+                M6B_BETA,
+            )
+            shared_volume_kernel = _m6b_shared_kernel_identity(
+                outer_record,
+                shifted_record,
+                cfg,
+                phase="mpi1",
+            )
+            stage_kernel = stage.get("forms", {}).get("shared_volume_kernel")
+            if not _m6b_shared_kernel_valid(stage_kernel, phase="stage"):
+                raise ValueError("M6B stage shared volume identity is invalid")
+            if any(
+                shared_volume_kernel[key] != stage_kernel[key]
+                for key in (
+                    "operator_identity",
+                    "representation",
+                    "fixed_physics",
+                    "module_name",
+                    "ufl_signature",
+                    "ufcx_signature",
+                )
+            ):
+                raise ValueError("M6B online shared volume identity differs from stage")
             runtime = _m6b_runtime_identity(
                 h2b,
                 h2a,
@@ -1711,25 +2089,14 @@ def _run_m6b_online_worker(run_dir: Path) -> int:
                 "shifted_action_audit": dict(shifted_action.audit),
                 "dtn_action_audit": dict(dtn_action.audit),
                 "pc_audit": pc_core.audit,
+                "material_tag_coverage": tag_coverage,
                 "pc_repeat": repeat_probe,
                 "m6b_store_audit": store.audit_jsonable(),
+                "shared_volume_kernel": shared_volume_kernel,
                 "form": {
-                    "outer_volume": h2b._form_record(
-                        physical_action._action_form,
-                        physical_action._action_ufl,
-                        cache_dir,
-                        cfg,
-                        function_space,
-                        "outer_volume",
-                    ),
-                    "shifted_volume": h2b._form_record(
-                        shifted_action._action_form,
-                        shifted_action._action_ufl,
-                        cache_dir,
-                        cfg,
-                        function_space,
-                        "shifted_volume",
-                    ),
+                    "outer_volume": outer_record,
+                    "shifted_volume": shifted_record,
+                    "shared_volume_kernel": shared_volume_kernel,
                     "surface": m6a._surface_identity(cache_dir, modes),
                 },
                 "cache": {
@@ -1775,6 +2142,9 @@ def _run_m6b_online_worker(run_dir: Path) -> int:
             physical_action.destroy()
         if shifted_action is not None:
             shifted_action.destroy()
+        del physical_ufl, shifted_ufl, epsilon0, abs_epsilon0, beta0
+        del epsilon1, abs_epsilon1, beta1
+        gc.collect()
         if dtn_action is not None:
             dtn_action.destroy()
     source_end = h2b._light_source()
@@ -1857,7 +2227,10 @@ def _m6b_phase_gate(
     compiler_must_be_empty: bool,
     timeout_seconds: float,
     stage_cache: Any = None,
+    stage_kernel: Any = None,
 ) -> bool:
+    if monitor_phase not in {"stage", "builder", "online"}:
+        return False
     if not isinstance(summary, Mapping) or not _evidence_valid(summary):
         return False
     expected_schema = {
@@ -1918,16 +2291,27 @@ def _m6b_phase_gate(
             and isinstance(forms.get("cache_inventory"), list)
             and forms["cache_inventory"]
             == h2b._cache_snapshot(run_dir / "jit_cache")
+            and _m6b_form_records_bound(
+                forms.get("outer_volume"),
+                forms.get("shifted_volume"),
+                forms.get("shared_volume_kernel"),
+                phase="stage",
+            )
+            and _m6b_material_tag_coverage_valid(
+                forms.get("material_tag_coverage"), owned_cells=M6B_GLOBAL_CELLS
+            )
         )
     if monitor_phase == "builder":
         cache = summary.get("cache")
         return bool(
             isinstance(cache, Mapping)
             and isinstance(stage_cache, list)
+            and isinstance(stage_kernel, Mapping)
             and cache.get("before") == stage_cache == cache.get("after")
             and cache.get("unchanged") is True
             and _m6b_builder_factor_audit_valid(summary.get("factor_audit"))
             and _m6b_builder_summary_valid(summary)
+            and summary.get("shared_volume_kernel") == stage_kernel
             and summary.get("factor_store") is not None
         )
     measurement = summary.get("measurement")
@@ -1937,6 +2321,7 @@ def _m6b_phase_gate(
     return bool(
         isinstance(cache, Mapping)
         and isinstance(stage_cache, list)
+        and isinstance(stage_kernel, Mapping)
         and cache.get("stage") == stage_cache
         and cache.get("before") == stage_cache
         and cache.get("after") == stage_cache
@@ -1946,6 +2331,30 @@ def _m6b_phase_gate(
         and _m6b_screen_metadata_valid(measurement["screen"])
         and measurement.get("finite") is True
         and _m6b_loaded_factor_audit_valid(measurement.get("m6b_store_audit"))
+        and _m6b_form_records_bound(
+            measurement.get("form", {}).get("outer_volume")
+            if isinstance(measurement.get("form"), Mapping)
+            else None,
+            measurement.get("form", {}).get("shifted_volume")
+            if isinstance(measurement.get("form"), Mapping)
+            else None,
+            measurement.get("shared_volume_kernel"),
+            phase="mpi1",
+        )
+        and _m6b_material_tag_coverage_valid(
+            measurement.get("material_tag_coverage"), owned_cells=M6B_GLOBAL_CELLS
+        )
+        and all(
+            measurement["shared_volume_kernel"][key] == stage_kernel[key]
+            for key in (
+                "operator_identity",
+                "representation",
+                "fixed_physics",
+                "module_name",
+                "ufl_signature",
+                "ufcx_signature",
+            )
+        )
         and isinstance(measurement.get("rhs_binding"), Mapping)
         and isinstance(measurement["rhs_binding"].get("canonical"), Mapping)
     )
@@ -2105,6 +2514,9 @@ def _run_m6b_watchdog(run_dir: Path) -> int:
                 compiler_must_be_empty=True,
                 timeout_seconds=M6B_BUILDER_TIMEOUT_SECONDS,
                 stage_cache=stage_cache,
+                stage_kernel=stage_summary.get("forms", {}).get(
+                    "shared_volume_kernel"
+                ),
             )
         else:
             phase_gates["builder"] = False
@@ -2147,6 +2559,9 @@ def _run_m6b_watchdog(run_dir: Path) -> int:
                     compiler_must_be_empty=True,
                     timeout_seconds=M6B_ONLINE_TIMEOUT_SECONDS,
                     stage_cache=stage_cache,
+                    stage_kernel=stage_summary.get("forms", {}).get(
+                        "shared_volume_kernel"
+                    ),
                 )
             else:
                 phase_gates["online"] = False
@@ -2336,6 +2751,8 @@ def _check_command(run_dir: Path, output: Path) -> int:
         "watchdog_phase_source_identity": False,
         "worker_phase_source_identity": False,
         "checker_source_identity": False,
+        "shared_volume_kernel": False,
+        "material_tag_coverage": False,
     }
     problems: list[str] = []
     watchdog_path = run_dir / "m6b_watchdog_summary.json"
@@ -2419,6 +2836,82 @@ def _check_command(run_dir: Path, output: Path) -> int:
         )
         checks["builder_summary"] = _m6b_builder_summary_valid(
             builder_summary_for_check
+        )
+        stage_kernel_for_check = (
+            stage_summary_for_check.get("forms", {}).get("shared_volume_kernel")
+            if isinstance(stage_summary_for_check.get("forms"), Mapping)
+            else None
+        )
+        builder_kernel_for_check = builder_summary_for_check.get(
+            "shared_volume_kernel"
+        )
+        online_measurement_for_check = online_summary_for_check.get("measurement")
+        online_kernel_for_check = (
+            online_measurement_for_check.get("shared_volume_kernel")
+            if isinstance(online_measurement_for_check, Mapping)
+            else None
+        )
+        stage_forms_for_check = stage_summary_for_check.get("forms")
+        online_forms_for_check = (
+            online_measurement_for_check.get("form")
+            if isinstance(online_measurement_for_check, Mapping)
+            else None
+        )
+        identity_keys = (
+            "operator_identity",
+            "representation",
+            "fixed_physics",
+            "module_name",
+            "ufl_signature",
+            "ufcx_signature",
+        )
+        checks["shared_volume_kernel"] = bool(
+            _m6b_shared_kernel_valid(stage_kernel_for_check, phase="stage")
+            and _m6b_shared_kernel_valid(builder_kernel_for_check, phase="builder")
+            and _m6b_shared_kernel_valid(online_kernel_for_check, phase="mpi1")
+            and isinstance(stage_forms_for_check, Mapping)
+            and _m6b_form_records_bound(
+                stage_forms_for_check.get("outer_volume"),
+                stage_forms_for_check.get("shifted_volume"),
+                stage_kernel_for_check,
+                phase="stage",
+            )
+            and _m6b_form_record_bound(
+                builder_summary_for_check.get("form"),
+                builder_kernel_for_check,
+                role="shifted_volume",
+                beta=M6B_BETA,
+                code_state="hit_no_new_decl_impl",
+                shared_phase="stage",
+            )
+            and isinstance(online_forms_for_check, Mapping)
+            and _m6b_form_records_bound(
+                online_forms_for_check.get("outer_volume"),
+                online_forms_for_check.get("shifted_volume"),
+                online_kernel_for_check,
+                phase="mpi1",
+            )
+            and builder_kernel_for_check == stage_kernel_for_check
+            and all(
+                online_kernel_for_check[key] == stage_kernel_for_check[key]
+                for key in identity_keys
+            )
+        )
+        checks["material_tag_coverage"] = bool(
+            isinstance(stage_forms_for_check, Mapping)
+            and _m6b_material_tag_coverage_valid(
+                stage_forms_for_check.get("material_tag_coverage"),
+                owned_cells=M6B_GLOBAL_CELLS,
+            )
+            and _m6b_material_tag_coverage_valid(
+                builder_summary_for_check.get("material_tag_coverage"),
+                owned_cells=M6B_GLOBAL_CELLS,
+            )
+            and isinstance(online_measurement_for_check, Mapping)
+            and _m6b_material_tag_coverage_valid(
+                online_measurement_for_check.get("material_tag_coverage"),
+                owned_cells=M6B_GLOBAL_CELLS,
+            )
         )
         phase_records = watchdog["phases"]
         phase_specs = (

@@ -30,11 +30,14 @@ __all__ = (
     "M6B_POU_CLOSURE_LIMIT",
     "M6B_SCREEN_RHO_LIMITS",
     "M6B_IMPROVEMENT_LIMIT",
+    "M6B_SHARED_VOLUME_OPERATOR",
+    "M6B_SHARED_VOLUME_REPRESENTATION",
+    "m6b_material_tag_coverage",
     "H2BM6BShiftedPatchPC",
     "M6BShiftedPCContext",
     "M6BOuterMatPythonContext",
     "M6BScreenCheckpointWriter",
-    "build_m6b_shifted_form",
+    "build_m6b_volume_form",
     "build_m6b_outer_mat",
     "compose_m6b_physical_rhs",
     "recover_m6b_auxiliary",
@@ -55,32 +58,82 @@ M6B_SCREEN_RHO_LIMITS = {
     "iteration200": 0.08,
 }
 M6B_IMPROVEMENT_LIMIT = 0.15
+M6B_SHARED_VOLUME_OPERATOR = (
+    "C-k0^2*M_epsilon+i*beta*k0^2*M_abs_epsilon"
+)
+M6B_SHARED_VOLUME_REPRESENTATION = "exact_DG0_single_integral"
 _COMPLEX128_BYTES = np.dtype(np.complex128).itemsize
 
 
-def build_m6b_shifted_form(
+def m6b_material_tag_coverage(mesh_data: Any, cfg: Any) -> dict[str, Any]:
+    """Validate and summarize the fixed air/substrate/grating cell tags."""
+
+    mesh = mesh_data.mesh
+    owned_cells = int(mesh.topology.index_map(mesh.topology.dim).size_local)
+    indices = np.asarray(mesh_data.cell_tags.indices, dtype=np.int64)
+    values = np.asarray(mesh_data.cell_tags.values, dtype=np.int64)
+    if indices.ndim != 1 or values.ndim != 1 or indices.size != values.size:
+        raise ValueError("M6B material cell tags have an invalid layout")
+    owned = (indices >= 0) & (indices < owned_cells)
+    owned_indices = indices[owned]
+    owned_values = values[owned]
+    if (
+        owned_cells <= 0
+        or owned_indices.size != owned_cells
+        or np.unique(owned_indices).size != owned_cells
+        or not np.array_equal(np.sort(owned_indices), np.arange(owned_cells))
+    ):
+        raise ValueError("M6B material cell tags do not cover each owned cell exactly once")
+    tag_values = {
+        "air": int(cfg.tags.air),
+        "substrate": int(cfg.tags.substrate),
+        "grating": int(cfg.tags.grating),
+    }
+    allowed = set(tag_values.values())
+    observed = {int(value) for value in np.unique(owned_values)}
+    if not observed or not observed.issubset(allowed):
+        raise ValueError("M6B material cell tags are outside air/substrate/grating")
+    return {
+        "owned_cell_count": owned_cells,
+        "allowed_tag_values": tag_values,
+        "tag_counts": {
+            name: int(np.count_nonzero(owned_values == value))
+            for name, value in tag_values.items()
+        },
+        "complete": True,
+    }
+
+
+def build_m6b_volume_form(
     function_space: Any,
     mesh_data: Any,
     cfg: Any,
     *,
     beta: float = 1.0,
-) -> tuple[Any, Any, Any]:
-    """Build the fixed non-Hermitian ``B_beta`` UFL form and its coefficients.
+) -> tuple[Any, Any, Any, Any, dict[str, Any]]:
+    """Build the fixed DG0 single-integral physical/shifted volume form.
 
-    The physical mass coefficient and its absolute-value shift are returned
-    so the caller can keep them alive for the compiled form.  This is the only
-    production form builder in the M6B core; no matrix or local patch is
-    assembled here.
+    ``beta`` is a runtime scalar coefficient so beta zero and one have the
+    same UFL/FFCx structure and module identity.  The two DG0 coefficients and
+    the Constant are returned so callers keep them alive for the compiled
+    action.  The fixed target has no PML or divergence term; those cases are
+    intentionally rejected rather than represented by a different kernel.
     """
 
-    if float(beta) != 1.0:
-        raise ValueError("M6B shifted form is fixed to beta=1")
+    beta_value = float(beta)
+    if beta_value not in (0.0, 1.0):
+        raise ValueError("M6B volume form beta is fixed to exactly 0 or 1")
+    if bool(cfg.use_pml) or float(cfg.pml_top_thickness) != 0.0 or float(
+        cfg.pml_bottom_thickness
+    ) != 0.0 or float(cfg.divergence_penalty) != 0.0:
+        raise ValueError("M6B shared volume form requires fixed no-PML zero-divergence physics")
     import ufl
     from dolfinx import fem
     from petsc4py import PETSc
 
     from src.common.materials import relative_permittivity
 
+    tag_coverage = m6b_material_tag_coverage(mesh_data, cfg)
     u = ufl.TrialFunction(function_space)
     v = ufl.TestFunction(function_space)
     dx = ufl.Measure("dx", domain=mesh_data.mesh)
@@ -88,15 +141,17 @@ def build_m6b_shifted_form(
     abs_epsilon = fem.Function(epsilon.function_space)
     abs_epsilon.x.array[:] = np.abs(epsilon.x.array)
     abs_epsilon.x.scatter_forward()
+    beta_constant = fem.Constant(mesh_data.mesh, PETSc.ScalarType(beta_value))
     mass = ufl.inner(u, v)
-    shifted = (
+    volume = (
         PETSc.ScalarType(1.0 / cfg.mu_r) * ufl.inner(ufl.curl(u), ufl.curl(v))
         - PETSc.ScalarType(float(cfg.k0) ** 2) * epsilon * mass
-        + PETSc.ScalarType(1j * float(beta) * float(cfg.k0) ** 2)
+        + PETSc.ScalarType(1j * float(cfg.k0) ** 2)
+        * beta_constant
         * abs_epsilon
         * mass
     ) * dx
-    return shifted, epsilon, abs_epsilon
+    return volume, epsilon, abs_epsilon, beta_constant, tag_coverage
 
 
 def _array_sha256(value: np.ndarray) -> str:

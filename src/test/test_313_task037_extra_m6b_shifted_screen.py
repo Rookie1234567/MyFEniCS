@@ -3,9 +3,16 @@ from __future__ import annotations
 import copy
 import json
 from pathlib import Path
+from types import SimpleNamespace
+from dataclasses import replace
 
 import numpy as np
 import pytest
+import ufl
+from basix.ufl import element
+from dolfinx import default_real_type, fem, mesh
+from dolfinx.fem import petsc as fem_petsc
+from mpi4py import MPI
 from petsc4py import PETSc
 
 import benchmarks.run_task037_extra_m6b as runner
@@ -24,9 +31,13 @@ from src.solvers.hcurl_h2b_m6b_shifted_patch_pc import (
     M6BOuterMatPythonContext,
     M6BShiftedPCContext,
     build_m6b_outer_mat,
+    build_m6b_volume_form,
     compose_m6b_physical_rhs,
     evaluate_m6b_screen_gate,
+    m6b_material_tag_coverage,
 )
+from src.common.config_3d import target_stage4_config
+from src.solvers.common_3d_forms import _build_variational_forms
 
 
 def _local_matrix() -> np.ndarray:
@@ -404,6 +415,228 @@ def test_m6b_petsc_pc_context_uses_unmeasured_core_apply():
         source.destroy()
 
 
+def test_m6b_shared_volume_form_matches_physical_and_shifted_mass(tmp_path: Path):
+    cfg = target_stage4_config(degree=1, h_nm=10.0)
+    msh = mesh.create_unit_cube(
+        MPI.COMM_SELF,
+        2,
+        2,
+        2,
+        cell_type=mesh.CellType.hexahedron,
+    )
+    cell_count = int(msh.topology.index_map(msh.topology.dim).size_local)
+    tags = np.asarray(
+        [cfg.tags.air, cfg.tags.substrate, cfg.tags.grating] * 3,
+        dtype=np.int32,
+    )[:cell_count]
+    cell_tags = mesh.meshtags(
+        msh,
+        msh.topology.dim,
+        np.arange(cell_count, dtype=np.int32),
+        tags,
+    )
+    facet_tags = mesh.meshtags(
+        msh,
+        msh.topology.dim - 1,
+        np.empty(0, dtype=np.int32),
+        np.empty(0, dtype=np.int32),
+    )
+    mesh_data = SimpleNamespace(mesh=msh, cell_tags=cell_tags, facet_tags=facet_tags)
+    function_space = fem.functionspace(
+        msh,
+        element("N1curl", msh.basix_cell(), 1, dtype=default_real_type),
+    )
+    old_ufl, _ = _build_variational_forms(msh, mesh_data, cfg, function_space)
+    shared_cache = tmp_path / "shared"
+    old_cache = tmp_path / "old"
+    shared_cache.mkdir()
+    old_cache.mkdir()
+    (tmp_path / "delta").mkdir()
+    import benchmarks.run_task037_extra_h2b as h2b
+
+    jit_options = h2b._expected_jit_options(shared_cache)
+    new0, epsilon0, abs_epsilon0, beta0, coverage0 = build_m6b_volume_form(
+        function_space, mesh_data, cfg, beta=0.0
+    )
+    new1, epsilon1, abs_epsilon1, beta1, coverage1 = build_m6b_volume_form(
+        function_space, mesh_data, cfg, beta=1.0
+    )
+    assert coverage0 == coverage1
+    assert coverage0["owned_cell_count"] == cell_count
+    assert coverage0["complete"] is True
+    air_only_tags = mesh.meshtags(
+        msh,
+        msh.topology.dim,
+        np.arange(cell_count, dtype=np.int32),
+        np.full(cell_count, cfg.tags.air, dtype=np.int32),
+    )
+    air_only_data = SimpleNamespace(
+        mesh=msh, cell_tags=air_only_tags, facet_tags=facet_tags
+    )
+    air_only_coverage = m6b_material_tag_coverage(air_only_data, cfg)
+    assert air_only_coverage["tag_counts"] == {
+        "air": cell_count,
+        "substrate": 0,
+        "grating": 0,
+    }
+    compiled0 = fem.form(new0, jit_options=jit_options)
+    compiled1 = fem.form(new1, jit_options=jit_options)
+    state0, _ = h2b._form_code_state(compiled0.code)
+    state1, _ = h2b._form_code_state(compiled1.code)
+    assert new0.signature() == new1.signature()
+    assert compiled0.module.__name__ == compiled1.module.__name__
+    assert state0 == "cold_decl_impl_generated"
+    assert state1 == "hit_no_new_decl_impl"
+    old_form = fem.form(old_ufl, jit_options=h2b._expected_jit_options(old_cache))
+    delta_ufl = (
+        PETSc.ScalarType(1j * float(cfg.k0) ** 2)
+        * beta1
+        * abs_epsilon0
+        * ufl.inner(ufl.TrialFunction(function_space), ufl.TestFunction(function_space))
+        * ufl.Measure("dx", domain=msh)
+    )
+    delta_form = fem.form(
+        delta_ufl, jit_options=h2b._expected_jit_options(tmp_path / "delta")
+    )
+    matrices = [
+        fem_petsc.assemble_matrix(form)
+        for form in (old_form, compiled0, compiled1, delta_form)
+    ]
+    for matrix in matrices:
+        matrix.assemble()
+    old_matrix, new0_matrix, new1_matrix, delta_matrix = matrices
+    source = old_matrix.createVecRight()
+    observed = old_matrix.createVecLeft()
+    expected = old_matrix.createVecLeft()
+    delta = old_matrix.createVecLeft()
+    difference = old_matrix.createVecLeft()
+    try:
+        local = source.getArray()
+        ids = np.arange(local.size, dtype=np.float64)
+        local[:] = (1.0 + 0.013 * ids) + 1j * (0.35 - 0.007 * ids)
+        old_matrix.mult(source, expected)
+        new0_matrix.mult(source, observed)
+        expected.copy(result=difference)
+        difference.axpy(-1.0, observed)
+        assert difference.norm() / max(expected.norm(), 1.0e-30) <= 1.0e-11
+        new1_matrix.mult(source, observed)
+        new0_matrix.mult(source, expected)
+        delta_matrix.mult(source, delta)
+        observed.copy(result=difference)
+        difference.axpy(-1.0, expected)
+        difference.axpy(-1.0, delta)
+        assert difference.norm() / max(delta.norm(), 1.0e-30) <= 1.0e-11
+    finally:
+        for vector in (source, observed, expected, delta, difference):
+            vector.destroy()
+        for matrix in matrices:
+            matrix.destroy()
+    with pytest.raises(ValueError, match="exactly 0 or 1"):
+        build_m6b_volume_form(function_space, mesh_data, cfg, beta=0.5)
+    with pytest.raises(ValueError, match="no-PML"):
+        build_m6b_volume_form(
+            function_space,
+            mesh_data,
+            replace(cfg, use_pml=True),
+            beta=0.0,
+        )
+    bad_cell_tags = mesh.meshtags(
+        msh,
+        msh.topology.dim,
+        np.arange(cell_count - 1, dtype=np.int32),
+        tags[:-1],
+    )
+    bad_mesh_data = SimpleNamespace(
+        mesh=msh, cell_tags=bad_cell_tags, facet_tags=facet_tags
+    )
+    with pytest.raises(ValueError, match="cover"):
+        build_m6b_volume_form(
+            function_space, bad_mesh_data, cfg, beta=0.0
+        )
+
+
+def test_m6b_shared_kernel_identity_is_phase_and_signature_bound():
+    cfg = SimpleNamespace(
+        use_pml=False,
+        pml_top_thickness=0.0,
+        pml_bottom_thickness=0.0,
+        divergence_penalty=0.0,
+    )
+    outer = {
+        "role": "outer_volume",
+        "beta": 0.0,
+        "beta_runtime_parameter": "fem.Constant",
+        "operator_identity": runner.M6B_SHARED_VOLUME_OPERATOR,
+        "representation": runner.M6B_SHARED_VOLUME_REPRESENTATION,
+        "module_name": "libffcx_forms_synthetic",
+        "ufl_signature": "shared-ufl",
+        "ufcx_signature": "shared-ufcx",
+        "code_state": "cold_decl_impl_generated",
+    }
+    shifted = dict(
+        outer, role="shifted_volume", beta=1.0, code_state="hit_no_new_decl_impl"
+    )
+    identity = runner._m6b_shared_kernel_identity(
+        outer, shifted, cfg, phase="stage"
+    )
+    assert runner._m6b_shared_kernel_valid(identity, phase="stage") is True
+    assert runner._m6b_form_records_bound(outer, shifted, identity, phase="stage") is True
+    assert runner._m6b_shared_kernel_valid(identity, phase="unknown") is False
+    for field, bad_value in {
+        "module_name": "libffcx_forms_other",
+        "ufl_signature": "different-ufl",
+        "ufcx_signature": "different-ufcx",
+        "code_state": "cold_decl_impl_generated",
+        "operator_identity": "wrong-operator",
+        "representation": "wrong-representation",
+        "beta": 0.5,
+        "beta_runtime_parameter": "python_float",
+    }.items():
+        tampered = dict(shifted)
+        tampered[field] = bad_value
+        assert (
+            runner._m6b_form_records_bound(outer, tampered, identity, phase="stage")
+            is False
+        )
+    bad_physics = copy.deepcopy(identity)
+    bad_physics["fixed_physics"]["use_pml"] = True
+    assert runner._m6b_form_records_bound(
+        outer, shifted, bad_physics, phase="stage"
+    ) is False
+
+
+def test_m6b_form_record_removes_inherited_proxy_identity():
+    class FakeH2B:
+        @staticmethod
+        def _form_record(*_args):
+            return {
+                "proxy_identity": {"operator": "B0"},
+                "module_name": "libffcx_forms_synthetic",
+                "ufl_signature": "synthetic-ufl",
+                "ufcx_signature": "synthetic-ufcx",
+            }
+
+    action = SimpleNamespace(_action_form=object(), _action_ufl=object())
+    record = runner._m6b_form_record(
+        FakeH2B(),
+        action,
+        Path("/tmp/m6b-form-record-test-cache"),
+        SimpleNamespace(),
+        SimpleNamespace(),
+        "outer_volume",
+        0.0,
+    )
+    assert "proxy_identity" not in record
+    assert record["role"] == "outer_volume"
+    assert record["beta"] == 0.0
+    assert record["beta_runtime_parameter"] == "fem.Constant"
+    assert record["operator_identity"] == runner.M6B_SHARED_VOLUME_OPERATOR
+    assert record["representation"] == runner.M6B_SHARED_VOLUME_REPRESENTATION
+    assert record["module_name"] == "libffcx_forms_synthetic"
+    assert record["ufl_signature"] == "synthetic-ufl"
+    assert record["ufcx_signature"] == "synthetic-ufcx"
+
+
 def _valid_worker_payload() -> dict[str, object]:
     lifecycle = {
         "return_code": 0,
@@ -566,9 +799,58 @@ def _valid_worker_payload() -> dict[str, object]:
         "phase_names": ["stage", "builder", "online", "watchdog"],
         "all_tracked_source_clean": True,
     }
+    shared_kernel = {
+        "schema": runner.M6B_SHARED_VOLUME_SCHEMA,
+        "phase": "mpi1",
+        "operator_identity": runner.M6B_SHARED_VOLUME_OPERATOR,
+        "representation": runner.M6B_SHARED_VOLUME_REPRESENTATION,
+        "fixed_physics": {
+            "use_pml": False,
+            "pml_top_thickness": 0.0,
+            "pml_bottom_thickness": 0.0,
+            "divergence_penalty": 0.0,
+            "material_representation": "DG0_epsilon_and_abs_epsilon",
+        },
+        "beta_runtime_parameter": "fem.Constant",
+        "outer_beta": 0.0,
+        "shifted_beta": 1.0,
+        "module_name": "libffcx_forms_synthetic",
+        "ufl_signature": "synthetic-shared-ufl",
+        "ufcx_signature": "synthetic-shared-ufcx",
+        "outer_code_state": "hit_no_new_decl_impl",
+        "shifted_code_state": "hit_no_new_decl_impl",
+        "same_module": True,
+        "same_ufl_signature": True,
+        "same_ufcx_signature": True,
+    }
+    outer_form = {
+        "role": "outer_volume",
+        "beta": 0.0,
+        "beta_runtime_parameter": "fem.Constant",
+        "operator_identity": runner.M6B_SHARED_VOLUME_OPERATOR,
+        "representation": runner.M6B_SHARED_VOLUME_REPRESENTATION,
+        "module_name": shared_kernel["module_name"],
+        "ufl_signature": shared_kernel["ufl_signature"],
+        "ufcx_signature": shared_kernel["ufcx_signature"],
+        "code_state": "hit_no_new_decl_impl",
+    }
+    shifted_form = dict(outer_form, role="shifted_volume", beta=1.0)
+    material_tag_coverage = {
+        "owned_cell_count": runner.M6B_GLOBAL_CELLS,
+        "allowed_tag_values": {"air": 1, "substrate": 2, "grating": 3},
+        "tag_counts": {"air": 84, "substrate": 84, "grating": 84},
+        "complete": True,
+    }
     payload["online_measurement"] = {
         "screen": copy.deepcopy(screen_metadata),
         "pc_audit": pc_audit,
+        "shared_volume_kernel": shared_kernel,
+        "form": {
+            "outer_volume": outer_form,
+            "shifted_volume": shifted_form,
+            "shared_volume_kernel": shared_kernel,
+        },
+        "material_tag_coverage": material_tag_coverage,
     }
     return payload
 
@@ -603,6 +885,22 @@ def test_m6b_nonnegative_evidence_quantities_fail_closed():
     bad_screen["20"]["true_relative_residual"] = -1.0
     assert runner._m6b_screen_valid(bad_screen) is False
 
+    cfg = SimpleNamespace(
+        use_pml=False,
+        pml_top_thickness=0.0,
+        pml_bottom_thickness=0.0,
+        divergence_penalty=0.0,
+    )
+    online_form = valid["online_measurement"]["form"]
+    builder_outer = dict(
+        online_form["outer_volume"], code_state="cold_decl_impl_generated"
+    )
+    builder_shifted = dict(
+        online_form["shifted_volume"], code_state="hit_no_new_decl_impl"
+    )
+    builder_shared = runner._m6b_shared_kernel_identity(
+        builder_outer, builder_shifted, cfg, phase="stage"
+    )
     builder = {
         "sample_patch_action_closure": {"0": 0.0, "42": 0.0, "83": 0.0},
         "class_block_audit": {
@@ -617,7 +915,13 @@ def test_m6b_nonnegative_evidence_quantities_fail_closed():
             "global_matrix_materialized": False,
         },
         "cache": {"stage": [], "before": [], "after": [], "unchanged": True},
+        "form": builder_shifted,
+        "shared_volume_kernel": builder_shared,
+        "material_tag_coverage": valid["online_measurement"][
+            "material_tag_coverage"
+        ],
     }
+    assert runner._m6b_builder_summary_valid(builder) is True
     builder["sample_patch_action_closure"]["42"] = -1.0
     assert runner._m6b_builder_summary_valid(builder) is False
 
@@ -632,12 +936,111 @@ def test_m6b_nonnegative_evidence_quantities_fail_closed():
 
 
 def test_m6b_progress_constants_keep_dependency_order():
+    assert runner.M6B_STAGE_EVENTS.index("proxy_forms_ready") < runner.M6B_STAGE_EVENTS.index(
+        "outer_form_ready"
+    ) < runner.M6B_STAGE_EVENTS.index("shifted_form_ready") < runner.M6B_STAGE_EVENTS.index(
+        "surface_forms_ready"
+    )
     assert runner.M6B_BUILDER_EVENTS.index("class_expansion_ready") < runner.M6B_BUILDER_EVENTS.index(
         "class_blocks_ready"
     ) < runner.M6B_BUILDER_EVENTS.index("neighborhood_ready")
     assert runner.M6B_ONLINE_EVENTS.index("cache_ready") < runner.M6B_ONLINE_EVENTS.index(
         "store_ready"
     )
+
+
+def test_m6b_builder_and_online_require_stage_kernel(monkeypatch):
+    valid = _valid_worker_payload()
+    cfg = SimpleNamespace(
+        use_pml=False,
+        pml_top_thickness=0.0,
+        pml_bottom_thickness=0.0,
+        divergence_penalty=0.0,
+    )
+    online_form = valid["online_measurement"]["form"]
+    builder_outer = dict(
+        online_form["outer_volume"], code_state="cold_decl_impl_generated"
+    )
+    builder_shifted = dict(
+        online_form["shifted_volume"], code_state="hit_no_new_decl_impl"
+    )
+    builder_shared = runner._m6b_shared_kernel_identity(
+        builder_outer, builder_shifted, cfg, phase="stage"
+    )
+    builder = {
+        "schema": runner.M6B_BUILDER_SCHEMA,
+        "scope": runner._m6b_scope(phase="builder"),
+        "status": "measurement_complete",
+        "p6": valid["p6"],
+        "runtime_identity": valid["runtime_identity"],
+        "source_at_start": valid["source_at_start"],
+        "source_at_end": valid["source_at_end"],
+        "cache": {"stage": [], "before": [], "after": [], "unchanged": True},
+        "factor_store": valid["factor_store"],
+        "factor_audit": valid["builder_factor_audit"],
+        "form": builder_shifted,
+        "shared_volume_kernel": builder_shared,
+        "material_tag_coverage": valid["online_measurement"][
+            "material_tag_coverage"
+        ],
+        "class_block_audit": {
+            "class_count": 24,
+            "factor_count": 24,
+            "reconstruction_count": 24,
+            "fresh_B_beta_class_count": 24,
+            "fresh_B_beta_matrix_count": 24,
+            "operator_identity": "B_beta=Kcurl-k0^2*M_epsilon+i*k0^2*M_abs_epsilon",
+            "numeric_matrix_source": "fresh_transformed_B_beta_class_block",
+            "r2_numeric_store_used_for_blocks": False,
+            "global_matrix_materialized": False,
+        },
+        "sample_patch_action_closure": {"0": 0.0, "42": 0.0, "83": 0.0},
+    }
+    online = copy.deepcopy(valid)
+    online["status"] = "measurement_complete"
+    process = {
+        "timeline_metrics": {"peak_rss_bytes": 1, "swap_bytes": 0},
+        "peak_rss_bytes": 1,
+        "swap_bytes": 0,
+        "processes_gone": True,
+        "timeout_seconds": runner.M6B_BUILDER_TIMEOUT_SECONDS,
+    }
+    import benchmarks.run_task037_extra_h2b as h2b
+
+    monkeypatch.setattr(runner, "_evidence_valid", lambda _value: True)
+    monkeypatch.setattr(runner, "_m6b_lifecycle_valid", lambda *_args, **_kwargs: True)
+    monkeypatch.setattr(runner, "_m6b_progress_valid", lambda *_args, **_kwargs: True)
+    monkeypatch.setattr(runner, "_m6b_expected_p6", lambda _value: True)
+    monkeypatch.setattr(h2b, "_runtime_valid", lambda _value: True)
+    monkeypatch.setattr(h2b, "_source_pair_valid", lambda *_args: True)
+    monkeypatch.setattr(h2b, "_cache_snapshot", lambda _path: [])
+    assert runner._m6b_phase_gate(
+        h2b,
+        Path("."),
+        builder,
+        process,
+        monitor_phase="builder",
+        progress_phase="builder",
+        expected_events=runner.M6B_BUILDER_EVENTS,
+        compiler_must_be_empty=True,
+        timeout_seconds=runner.M6B_BUILDER_TIMEOUT_SECONDS,
+        stage_cache=[],
+        stage_kernel=None,
+    ) is False
+    process["timeout_seconds"] = runner.M6B_ONLINE_TIMEOUT_SECONDS
+    assert runner._m6b_phase_gate(
+        h2b,
+        Path("."),
+        online,
+        process,
+        monitor_phase="online",
+        progress_phase="mpi1",
+        expected_events=runner.M6B_ONLINE_EVENTS,
+        compiler_must_be_empty=True,
+        timeout_seconds=runner.M6B_ONLINE_TIMEOUT_SECONDS,
+        stage_cache=[],
+        stage_kernel=None,
+    ) is False
 
 
 def test_m6b_builder_and_loaded_audits_are_distinct_producer_shapes():
