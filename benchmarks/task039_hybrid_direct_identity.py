@@ -702,8 +702,11 @@ def _load_hybrid(run_dir: str | Path) -> dict[str, Any]:
 def _raw_full3d(run_dir: str | Path) -> dict[str, Any]:
     from benchmarks.task039_full3d_identity import _load_run
 
-    raw = _load_run(run_dir, "direct")
+    raw = _load_run(run_dir, "direct", expected_mesh_target_size=None)
     numeric = raw["numeric"]
+    mesh_target_size = _finite(
+        numeric.get("mesh_target_size"), "Full3D mesh_target_size"
+    )
     orders = raw["orders"]["rows"]
     inventory_keys = set(raw["inventory"]["keys"])
     if (
@@ -715,6 +718,7 @@ def _raw_full3d(run_dir: str | Path) -> dict[str, Any]:
     return {
         "source_sha": raw["manifest"]["source_sha"],
         "physical_model_sha256": raw["manifest"]["physical_model_sha256"],
+        "mesh_target_size": mesh_target_size,
         "inventory": raw["inventory"],
         "orders": orders,
         "fields": raw["reference"]["arrays"],
@@ -936,6 +940,7 @@ def _compare_full3d(
         },
     }
     return {
+        "reference_mesh_target_nm": full["mesh_target_size"],
         "observables": observables,
         "energy_closure": closure,
         "orders": orders,

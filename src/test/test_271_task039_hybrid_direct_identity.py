@@ -290,7 +290,13 @@ def positive_runs(
     _write_hybrid(hybrid_m240, inventory, 240)
     full3d.mkdir()
 
-    def fake_load_run(_run_dir: Path, _role: str) -> dict[str, object]:
+    def fake_load_run(
+        _run_dir: Path,
+        _role: str,
+        *,
+        expected_mesh_target_size: float | None = 10.0,
+    ) -> dict[str, object]:
+        assert expected_mesh_target_size is None
         keys = tuple(
             (item["side"], item["m"], item["n"], item["polarization"])
             for item in inventory["keys"]
@@ -314,6 +320,7 @@ def positive_runs(
                 "A_balance": 0.4,
                 "A_volume_total": 0.4,
                 "energy_closure_error_port_volume": 2.0e-8,
+                "mesh_target_size": 6.0,
             },
             "inventory": {"keys": keys},
             "orders": {"rows": orders},
@@ -375,6 +382,7 @@ def test_own_adjacent_and_full3d_positive_with_augmented_telemetry(
     assert (
         result["comparisons"]["full3d_diagnostic"]["coordinates_exact"]["pass"] is True
     )
+    assert result["comparisons"]["full3d_diagnostic"]["reference_mesh_target_nm"] == 6.0
     assert result["comparisons"]["full3d_diagnostic"]["orders"]["keys_exact"] is True
 
 
