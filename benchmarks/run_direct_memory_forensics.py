@@ -179,23 +179,29 @@ def _read_thread_runtime(path: Path) -> dict[str, Any] | None:
         if not task.name.isdigit():
             continue
         try:
-            name = (task / "comm").read_text(
-                encoding="utf-8",
-                errors="ignore",
-            ).strip()
+            name = (
+                (task / "comm")
+                .read_text(
+                    encoding="utf-8",
+                    errors="ignore",
+                )
+                .strip()
+            )
         except OSError:
             name = "unreadable"
         try:
-            wchan = (task / "wchan").read_text(
-                encoding="utf-8",
-                errors="ignore",
-            ).strip()
+            wchan = (
+                (task / "wchan")
+                .read_text(
+                    encoding="utf-8",
+                    errors="ignore",
+                )
+                .strip()
+            )
         except OSError:
             wchan = "unreadable"
         name_counts[name or "empty"] = name_counts.get(name or "empty", 0) + 1
-        wchan_counts[wchan or "empty"] = (
-            wchan_counts.get(wchan or "empty", 0) + 1
-        )
+        wchan_counts[wchan or "empty"] = wchan_counts.get(wchan or "empty", 0) + 1
     parallel_library_tokens = (
         "blas",
         "lapack",
@@ -210,10 +216,14 @@ def _read_thread_runtime(path: Path) -> dict[str, Any] | None:
     )
     libraries: set[str] = set()
     try:
-        map_lines = (path / "maps").read_text(
-            encoding="utf-8",
-            errors="ignore",
-        ).splitlines()
+        map_lines = (
+            (path / "maps")
+            .read_text(
+                encoding="utf-8",
+                errors="ignore",
+            )
+            .splitlines()
+        )
     except OSError:
         map_lines = []
     for line in map_lines:
@@ -284,7 +294,9 @@ def _read_processes() -> dict[int, dict[str, Any]]:
             cmdline = ""
         io_fields: dict[str, int] = {}
         try:
-            for line in (entry / "io").read_text(encoding="utf-8", errors="ignore").splitlines():
+            for line in (
+                (entry / "io").read_text(encoding="utf-8", errors="ignore").splitlines()
+            ):
                 if ":" not in line:
                     continue
                 key, value = line.split(":", 1)
@@ -328,9 +340,7 @@ def _read_processes() -> dict[int, dict[str, Any]]:
                 if rank is not None:
                     break
         smaps_rollup = (
-            _read_smaps_rollup(entry / "smaps_rollup")
-            if rank is not None
-            else None
+            _read_smaps_rollup(entry / "smaps_rollup") if rank is not None else None
         )
         thread_runtime = (
             _read_thread_runtime(entry)
@@ -419,15 +429,12 @@ def _sample(root_pid: int, progress_path: Path, elapsed: float) -> dict[str, Any
                 "thread_runtime": item["thread_runtime"],
             }
             for item in processes.values()
-            if item["worker_rank"] is not None
-            and item["pid"] in tree
+            if item["worker_rank"] is not None and item["pid"] in tree
         ),
         key=lambda item: (item["rank"], item["pid"]),
     )
     readable_smaps = [
-        item
-        for item in worker_ranks
-        if isinstance(item.get("smaps_rollup"), dict)
+        item for item in worker_ranks if isinstance(item.get("smaps_rollup"), dict)
     ]
     stage, stage_status = _latest_stage(progress_path)
     pswpin, pswpout = _vmstat_swap_pages()
@@ -441,20 +448,16 @@ def _sample(root_pid: int, progress_path: Path, elapsed: float) -> dict[str, Any
         "stage_status": stage_status,
         "worker_rank_rss_sum_mb": sum(item["rss_mb"] for item in worker_ranks),
         "worker_rank_pss_sum_mb": sum(
-            item["smaps_rollup"]["pss_mb"]
-            for item in readable_smaps
+            item["smaps_rollup"]["pss_mb"] for item in readable_smaps
         ),
         "worker_rank_uss_sum_mb": sum(
-            item["smaps_rollup"]["uss_mb"]
-            for item in readable_smaps
+            item["smaps_rollup"]["uss_mb"] for item in readable_smaps
         ),
         "worker_rank_shared_sum_mb": sum(
-            item["smaps_rollup"]["shared_mb"]
-            for item in readable_smaps
+            item["smaps_rollup"]["shared_mb"] for item in readable_smaps
         ),
         "worker_rank_smaps_swap_sum_mb": sum(
-            item["smaps_rollup"]["swap_mb"]
-            for item in readable_smaps
+            item["smaps_rollup"]["swap_mb"] for item in readable_smaps
         ),
         "mpi_process_tree_rss_mb": sum(
             processes[pid]["rss_mb"] for pid in tree if pid in processes
@@ -644,13 +647,10 @@ def _enrich_factor_inventory(
                 + float(int(factor_rows) + 1) * 8.0
             )
             / (1024.0 * 1024.0)
-            if isinstance(factor_rows, (int, float))
-            and int(factor_rows) >= 0
+            if isinstance(factor_rows, (int, float)) and int(factor_rows) >= 0
             else None
         )
-        factor_estimate_source = (
-            "corrected_factor_nnz_complex128_int64_csr_estimate"
-        )
+        factor_estimate_source = "corrected_factor_nnz_complex128_int64_csr_estimate"
     augmented_estimate = augmented_stats.get("matrix_memory_estimate_mb")
     enriched["derived_ratios"] = {
         "factor_to_augmented_nnz_ratio": (
@@ -879,24 +879,26 @@ def _run_parent(args: argparse.Namespace) -> int:
     ]
     if args.cpu_affinity:
         mpi_command.extend(["--bind-to", "none"])
-    mpi_command.extend([
-        "-n",
-        str(args.mpi_size),
-        sys.executable,
-        "-m",
-        "benchmarks.run_direct_memory_forensics",
-        "--worker",
-        "--h-nm",
-        str(args.h_nm),
-        "--profile",
-        args.profile,
-        "--threads-per-rank",
-        str(args.threads_per_rank),
-        "--run-dir",
-        str(run_dir),
-        "--petsc-options-json",
-        args.petsc_options_json,
-    ])
+    mpi_command.extend(
+        [
+            "-n",
+            str(args.mpi_size),
+            sys.executable,
+            "-m",
+            "benchmarks.run_direct_memory_forensics",
+            "--worker",
+            "--h-nm",
+            str(args.h_nm),
+            "--profile",
+            args.profile,
+            "--threads-per-rank",
+            str(args.threads_per_rank),
+            "--run-dir",
+            str(run_dir),
+            "--petsc-options-json",
+            args.petsc_options_json,
+        ]
+    )
     command = (
         ["taskset", "-c", args.cpu_affinity, *mpi_command]
         if args.cpu_affinity

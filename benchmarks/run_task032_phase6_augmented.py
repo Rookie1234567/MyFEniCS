@@ -239,9 +239,7 @@ def _verify_source_stable_at_end(
 ) -> None:
     """Require the same tracked-source state at the end of a formal shard."""
 
-    end = _source_provenance(
-        comm, verified_clean_sha, allow_dirty_research
-    )
+    end = _source_provenance(comm, verified_clean_sha, allow_dirty_research)
     if end["commit_sha"] != start["commit_sha"]:
         raise SystemExit("Tracked source HEAD changed during the Hybrid run.")
     if not allow_dirty_research and end["tracked_source_dirty"]:
@@ -315,9 +313,7 @@ def _basis_summary(basis) -> dict[str, Any]:
     return {
         "mode_count": len(basis.modes),
         "max_biorthogonality_identity_error": basis.max_identity_error,
-        "max_biorthogonality_entry_identity_error": (
-            basis.max_entry_identity_error
-        ),
+        "max_biorthogonality_entry_identity_error": (basis.max_entry_identity_error),
         "biorthogonality_identity_diagnostics": {
             "worst_row_index": worst_row,
             "worst_row_sum": float(row_sums[worst_row]),
@@ -342,9 +338,7 @@ def _basis_summary(basis) -> dict[str, Any]:
         "betas_per_nm": [_complex_json(mode.beta) for mode in basis.modes],
         "directions": [mode.direction for mode in basis.modes],
         "kinds": [mode.kind for mode in basis.modes],
-        "passive_branch_valid": [
-            mode.passive_branch_valid for mode in basis.modes
-        ],
+        "passive_branch_valid": [mode.passive_branch_valid for mode in basis.modes],
         "polynomial_relative_residuals": [
             mode.right.polynomial_relative_residual for mode in basis.modes
         ],
@@ -434,9 +428,7 @@ def _normalize_full3d_reference_record(
         run_root = archive.parent.relative_to(ROOT)
         commit_sha = str(source["commit_sha"]).lower()
         polarization_kind = str(solver["polarization_kind"]).lower()
-        archive_sha256 = str(
-            solver["full3d_reference_archive_sha256"]
-        ).lower()
+        archive_sha256 = str(solver["full3d_reference_archive_sha256"]).lower()
         finite_results = (
             solver["linear_system_relative_residual"],
             solver["R_total"],
@@ -464,15 +456,9 @@ def _normalize_full3d_reference_record(
             and metadata.name == "full3d_reference_samples.json"
             and metadata.parent == archive.parent
             and len(commit_sha) == 40
-            and all(
-                character in "0123456789abcdef"
-                for character in commit_sha
-            )
+            and all(character in "0123456789abcdef" for character in commit_sha)
             and len(archive_sha256) == 64
-            and all(
-                character in "0123456789abcdef"
-                for character in archive_sha256
-            )
+            and all(character in "0123456789abcdef" for character in archive_sha256)
             and all(np.isfinite(float(value)) for value in finite_results)
         )
     except (KeyError, TypeError, ValueError, OSError) as error:
@@ -552,14 +538,11 @@ def _validate_case080_reference_identity(
         identity_valid = (
             physical_model["nedelec_degree"] == degree
             and abs(float(physical_model["mesh_h_nm"]) - h_nm) <= 1.0e-12
-            and abs(float(physical_model["incident_grazing_deg"]) - 10.0)
-            <= 1.0e-12
-            and abs(float(physical_model["incident_theta_deg"]) - 80.0)
-            <= 1.0e-12
+            and abs(float(physical_model["incident_grazing_deg"]) - 10.0) <= 1.0e-12
+            and abs(float(physical_model["incident_theta_deg"]) - 80.0) <= 1.0e-12
             and abs(float(physical_model["incident_phi_deg"])) <= 1.0e-12
             and physical_model["polarization_kind"] == polarization_kind
-            and abs(float(physical_model["wavelength_nm"]) - 13.5)
-            <= 1.0e-12
+            and abs(float(physical_model["wavelength_nm"]) - 13.5) <= 1.0e-12
             and qualification["phase1_reference_pass"] is True
             and metadata["git_dirty"] is False
             and metadata["tracked_source_dirty"] is False
@@ -584,9 +567,7 @@ def _load_case080_reference(
     *,
     polarization_kind: str = "s",
 ) -> tuple[Path, dict[str, Any]] | None:
-    reference_path = _case080_reference_path(
-        degree, h_nm, reference_by_degree_and_h
-    )
+    reference_path = _case080_reference_path(degree, h_nm, reference_by_degree_and_h)
     if reference_path is None:
         return None
     if not reference_path.exists():
@@ -599,9 +580,7 @@ def _load_case080_reference(
         raise RuntimeError(
             f"Cannot load pinned Case080 reference record: {reference_path}"
         ) from error
-    reference = _normalize_full3d_reference_record(
-        reference, path=reference_path
-    )
+    reference = _normalize_full3d_reference_record(reference, path=reference_path)
     _validate_case080_reference_identity(
         reference,
         degree=degree,
@@ -623,15 +602,11 @@ def _reference_comparison(
     return {
         "reference_file": str(reference_path.relative_to(ROOT)),
         "reference_commit_sha": reference["metadata"]["commit_sha"],
-        "reference_grid_converged": reference["qualification"][
-            "grid_converged"
-        ],
+        "reference_grid_converged": reference["qualification"]["grid_converged"],
         "hybrid_minus_full3d": {
             "R_total": float(port_power["R_total"] - results["R_total"]),
             "T_total": float(port_power["T_total"] - results["T_total"]),
-            "A_balance": float(
-                port_power["A_balance"] - results["A_balance"]
-            ),
+            "A_balance": float(port_power["A_balance"] - results["A_balance"]),
         },
         "full3d": {
             "R_total": results["R_total"],
@@ -671,7 +646,9 @@ def _reference_archive(
     return archive, record_path, record
 
 
-def _reference_sampling_grid(cfg: Any, bottom_interface_nm: float, top_interface_nm: float):
+def _reference_sampling_grid(
+    cfg: Any, bottom_interface_nm: float, top_interface_nm: float
+):
     """Use requested reference sampling while preserving ordinary defaults."""
 
     sample_x = cfg.x_min + (
@@ -789,8 +766,7 @@ def _task039_direct_payload(
         for key, shape in expected_shapes.items():
             if arrays[key].shape != shape:
                 raise RuntimeError(
-                    f"Task39 direct payload {key} shape {arrays[key].shape} "
-                    f"!= {shape}."
+                    f"Task39 direct payload {key} shape {arrays[key].shape} != {shape}."
                 )
         if not np.array_equal(
             arrays["z_nm"], np.asarray([10, 30, 60, 90, 110], dtype=np.float64)
@@ -1044,16 +1020,14 @@ def _parse_args(
             and args.candidate_modes == 2 * args.requested_modes
             and args.solver_path == "modal-schur-memory-minimal"
             and not args.compare_modal_schur
-            and args.stage4_full3d_assembly_backend
-            in TASK035C_P6_H10_BACKENDS
+            and args.stage4_full3d_assembly_backend in TASK035C_P6_H10_BACKENDS
             and math.isclose(args.bottom_interface_nm, 10.0)
             and math.isclose(args.top_interface_nm, 110.0)
             and args.graded_reference_h is None
             and math.isclose(args.incident_grazing_deg, 10.0)
             and args.polarization_kind == "s"
             and args.internal_propagation_model == "full3d_uniform_cg"
-            and args.internal_traction_model
-            == "scalar_cg_discrete_derivative"
+            and args.internal_traction_model == "scalar_cg_discrete_derivative"
             and args.full3d_reference is not None
             and valid_hex_digest(args.full3d_reference_sha256, 64)
             and args.task035c_p6_preflight_authority is not None
@@ -1075,10 +1049,7 @@ def _parse_args(
         or args.task035c_p6_preflight_sha256 is not None
         or args.full3d_reference_sha256 is not None
     ):
-        parser.error(
-            "Task035c authority SHA arguments require "
-            "--task035c-p6-h10-gate."
-        )
+        parser.error("Task035c authority SHA arguments require --task035c-p6-h10-gate.")
     return args
 
 
@@ -1119,10 +1090,7 @@ def _task035c_worker_authority_gate(
         authority_relative = None
     authority_is_tracked = bool(
         authority_relative is not None
-        and _git(
-            "ls-files", "--error-unmatch", "--", authority_relative
-        )
-        is not None
+        and _git("ls-files", "--error-unmatch", "--", authority_relative) is not None
     )
     preflight_gate = task035c_p6_h10_preflight_authority_gate(
         authority if isinstance(authority, dict) else None,
@@ -1169,9 +1137,7 @@ def _task035c_worker_authority_gate(
         ),
     ]
     if not gate["pass"]:
-        raise SystemExit(
-            f"Task035c p6/h10 worker authority failed: {gate['failures']}"
-        )
+        raise SystemExit(f"Task035c p6/h10 worker authority failed: {gate['failures']}")
     return gate
 
 
@@ -1193,21 +1159,13 @@ def main(
     args = _parse_args(argv, allow_task039=allow_task039)
     if args.h_nm <= 0.0:
         raise SystemExit("--h-nm must be positive.")
-    modal_h_nm = (
-        float(args.h_nm)
-        if args.modal_h_nm is None
-        else float(args.modal_h_nm)
-    )
+    modal_h_nm = float(args.h_nm) if args.modal_h_nm is None else float(args.modal_h_nm)
     modal_degree = (
-        int(args.degree)
-        if args.modal_degree is None
-        else int(args.modal_degree)
+        int(args.degree) if args.modal_degree is None else int(args.modal_degree)
     )
     if modal_h_nm <= 0.0:
         raise SystemExit("--modal-h-nm must be positive.")
-    if not (
-        0.0 < args.bottom_interface_nm < args.top_interface_nm < 120.0
-    ):
+    if not (0.0 < args.bottom_interface_nm < args.top_interface_nm < 120.0):
         raise SystemExit(
             "Task33 buffer interfaces must satisfy "
             "0 < bottom-interface-nm < top-interface-nm < 120."
@@ -1220,10 +1178,7 @@ def main(
             )
         if args.degree not in (2, 3):
             raise SystemExit("The Task034 fixed-p graded path is restricted to p2/p3.")
-        if (
-            args.bottom_interface_nm != 10.0
-            or args.top_interface_nm != 110.0
-        ):
+        if args.bottom_interface_nm != 10.0 or args.top_interface_nm != 110.0:
             raise SystemExit(
                 "The first Task033 graded path is qualified only at the "
                 "reviewed 10/110 nm matching interfaces."
@@ -1277,13 +1232,8 @@ def main(
     provenance = _source_provenance(
         comm, args.verified_clean_sha, args.allow_dirty_research
     )
-    if (
-        args.task035c_p6_h10_gate
-        and comm.size not in TASK035C_P6_H10_MPI_SIZES
-    ):
-        raise SystemExit(
-            "Task035c p6/h10 Hybrid is restricted to MPI1/2/4/8."
-        )
+    if args.task035c_p6_h10_gate and comm.size not in TASK035C_P6_H10_MPI_SIZES:
+        raise SystemExit("Task035c p6/h10 Hybrid is restricted to MPI1/2/4/8.")
     task035c_p6_gate = _task035c_worker_authority_gate(
         args,
         current_source_sha=provenance.get("commit_sha"),
@@ -1318,9 +1268,7 @@ def main(
     timings: dict[str, float] = {}
     if config_override is None:
         cfg = target_stage4_config(degree=args.degree, h_nm=args.h_nm)
-        cfg.stage4_full3d_assembly_backend = (
-            args.stage4_full3d_assembly_backend
-        )
+        cfg.stage4_full3d_assembly_backend = args.stage4_full3d_assembly_backend
         cfg.matrix_diagnostics_assemble_only = False
         cfg.matrix_diagnostics_factorization_only = False
         cfg.incident_theta_deg = 90.0 - float(args.incident_grazing_deg)
@@ -1339,12 +1287,9 @@ def main(
             or not np.isclose(cfg.mesh_target_size, args.h_nm)
             or modal_degree != cfg.nedelec_degree
             or not np.isclose(modal_h_nm, cfg.mesh_target_size)
-            or not np.isclose(
-                cfg.incident_theta_deg, 90.0 - args.incident_grazing_deg
-            )
+            or not np.isclose(cfg.incident_theta_deg, 90.0 - args.incident_grazing_deg)
             or cfg.polarization_kind != args.polarization_kind
-            or cfg.stage4_full3d_assembly_backend
-            != args.stage4_full3d_assembly_backend
+            or cfg.stage4_full3d_assembly_backend != args.stage4_full3d_assembly_backend
         ):
             raise SystemExit(
                 "Task38 config override does not match the explicit runner argv."
@@ -1389,9 +1334,7 @@ def main(
             "h_nm": args.h_nm,
             "modal_degree": modal_degree,
             "modal_h_nm": modal_h_nm,
-            "internal_propagation_model": (
-                args.internal_propagation_model
-            ),
+            "internal_propagation_model": (args.internal_propagation_model),
             "internal_traction_model": args.internal_traction_model,
             "discrete_axial_qualification_scope": (
                 _discrete_axial_qualification_scope(
@@ -1427,16 +1370,10 @@ def main(
             "numerically_infinite_candidate_count": (
                 selection.numerically_infinite_candidate_count
             ),
-            "finite_spectrum_abs_beta_h_cutoff": (
-                NUMERICAL_INFINITY_BETA_H_CUTOFF
-            ),
-            "finite_spectrum_abs_beta_cutoff_per_nm": (
-                selection.abs_beta_cutoff
-            ),
+            "finite_spectrum_abs_beta_h_cutoff": (NUMERICAL_INFINITY_BETA_H_CUTOFF),
+            "finite_spectrum_abs_beta_cutoff_per_nm": (selection.abs_beta_cutoff),
             "first_rejected_numerical_infinity_beta_per_nm": (
-                selection_record[
-                    "first_rejected_numerical_infinity_beta_per_nm"
-                ]
+                selection_record["first_rejected_numerical_infinity_beta_per_nm"]
             ),
             "leading_coefficient_singular_by_design": (
                 operators.leading_coefficient_singular_by_design
@@ -1464,9 +1401,7 @@ def main(
                 "internal_propagation_model_requested": (
                     args.internal_propagation_model
                 ),
-                "internal_traction_model_requested": (
-                    args.internal_traction_model
-                ),
+                "internal_traction_model_requested": (args.internal_traction_model),
                 "stage4_full3d_assembly_backend_requested": (
                     args.stage4_full3d_assembly_backend
                 ),
@@ -1488,9 +1423,7 @@ def main(
                 "coefficient_degree": operators.coefficient_degree,
                 "quadrature_degree": operators.quadrature_degree,
                 "quadrature_policy": operators.quadrature_policy,
-                f"{direction}_solver_converged_modes": (
-                    solver_report.converged_modes
-                ),
+                f"{direction}_solver_converged_modes": (solver_report.converged_modes),
                 f"{direction}_directional_selection": selection_record,
             },
             "hybrid_system": {
@@ -1560,8 +1493,8 @@ def main(
                 coarse_factor=args.graded_coarse_factor,
                 comm_size=comm.size,
             )
-            graded_bottom_mesh, graded_top_mesh = (
-                build_task034_graded_local_mesh_pair(cfg, graded_plan)
+            graded_bottom_mesh, graded_top_mesh = build_task034_graded_local_mesh_pair(
+                cfg, graded_plan
             )
             cross_section = build_matching_cross_section(
                 cfg,
@@ -1577,16 +1510,10 @@ def main(
         spaces = build_cross_section_spaces(
             cross_section, transverse_degree=modal_degree
         )
-        operators = assemble_quadratic_beta_operators(
-            modal_cfg, cross_section, spaces
-        )
-        poynting_evaluator = PoyntingFluxEvaluator(
-            modal_cfg, cross_section, spaces
-        )
+        operators = assemble_quadratic_beta_operators(modal_cfg, cross_section, spaces)
+        poynting_evaluator = PoyntingFluxEvaluator(modal_cfg, cross_section, spaces)
         target = analytic_homogeneous_beta(modal_cfg, modal_cfg.n_air)
-        timings["cross_section_and_qep_assembly"] = _max_elapsed(
-            comm, started
-        )
+        timings["cross_section_and_qep_assembly"] = _max_elapsed(comm, started)
         progress("Task32 Phase6: cross-section QEP assembled")
 
         mark_stage("cross_section_eigen_solve")
@@ -1603,9 +1530,7 @@ def main(
             desired_direction="forward",
             requested_modes=args.requested_modes,
             poynting_evaluator=poynting_evaluator,
-            maximum_abs_beta=(
-                NUMERICAL_INFINITY_BETA_H_CUTOFF / modal_h_nm
-            ),
+            maximum_abs_beta=(NUMERICAL_INFINITY_BETA_H_CUTOFF / modal_h_nm),
         )
         if len(positive_right) != args.requested_modes:
             for mode in positive_right:
@@ -1649,9 +1574,7 @@ def main(
             desired_direction="backward",
             requested_modes=args.requested_modes,
             poynting_evaluator=poynting_evaluator,
-            maximum_abs_beta=(
-                NUMERICAL_INFINITY_BETA_H_CUTOFF / modal_h_nm
-            ),
+            maximum_abs_beta=(NUMERICAL_INFINITY_BETA_H_CUTOFF / modal_h_nm),
         )
         if len(negative_right) != args.requested_modes:
             for mode in negative_right:
@@ -1743,9 +1666,7 @@ def main(
         started = time.perf_counter()
         if args.solver_path == "augmented":
             mark_stage("augmented_matrix_and_factor")
-            system = build_hybrid_augmented_direct_system(
-                bottom, top, coupling
-            )
+            system = build_hybrid_augmented_direct_system(bottom, top, coupling)
             timings["primary_system_build"] = _max_elapsed(comm, started)
             timings["monolithic_assembly"] = timings["primary_system_build"]
             progress("Task32 Phase6: monolithic augmented AIJ complete")
@@ -1813,8 +1734,7 @@ def main(
             )
             rta_delta = {
                 key: float(
-                    schur_validation["port_power"][key]
-                    - validation["port_power"][key]
+                    schur_validation["port_power"][key] - validation["port_power"][key]
                 )
                 for key in ("R_total", "T_total", "A_balance")
             }
@@ -1827,8 +1747,7 @@ def main(
                     <= 1.0e-9
                 ),
                 "top_solution_relative_error_le_1e-9": (
-                    _relative_vector_error(schur_solution.top, solution.top)
-                    <= 1.0e-9
+                    _relative_vector_error(schur_solution.top, solution.top) <= 1.0e-9
                 ),
                 "modal_schur_full_residual_le_1e-9": (
                     schur_solution.relative_residual <= 1.0e-9
@@ -1846,16 +1765,10 @@ def main(
                 ),
             }
             modal_schur_comparison = {
-                "status": (
-                    "pass" if all(comparison_gates.values()) else "failed"
-                ),
+                "status": ("pass" if all(comparison_gates.values()) else "failed"),
                 "comparison_solver_path": comparison_solver_path,
-                "comparison_solver_path_argument": (
-                    args.comparison_solver_path
-                ),
-                "comparison_lifecycle_strategy": (
-                    schur_system.lifecycle_strategy
-                ),
+                "comparison_solver_path_argument": (args.comparison_solver_path),
+                "comparison_lifecycle_strategy": (schur_system.lifecycle_strategy),
                 "multi_rhs_count": schur_system.multi_rhs_count,
                 "modal_schur_shape": list(schur_system.modal_schur.shape),
                 "modal_schur_bytes": int(schur_system.modal_schur.nbytes),
@@ -1906,17 +1819,12 @@ def main(
                 ),
             }
             progress(
-                "Task32 Phase7: "
-                f"{comparison_solver_path} direct comparison complete"
+                f"Task32 Phase7: {comparison_solver_path} direct comparison complete"
             )
         pinned_reference_case = (
             use_case080_reference
-            and
-            abs(args.incident_grazing_deg - 10.0) <= 1.0e-12
-            and (
-                args.polarization_kind == "s"
-                or args.full3d_reference is not None
-            )
+            and abs(args.incident_grazing_deg - 10.0) <= 1.0e-12
+            and (args.polarization_kind == "s" or args.full3d_reference is not None)
         )
         explicit_reference = args.full3d_reference
         if explicit_reference is not None and not explicit_reference.is_absolute():
@@ -1942,9 +1850,7 @@ def main(
             else None
         )
         reference_archive = (
-            _reference_archive(loaded_reference)
-            if pinned_reference_case
-            else None
+            _reference_archive(loaded_reference) if pinned_reference_case else None
         )
         if reference_archive is not None:
             archive_path, reference_record_path, reference_record = reference_archive
@@ -1969,20 +1875,14 @@ def main(
             bottom_z_nm=args.bottom_interface_nm,
             top_z_nm=args.top_interface_nm,
             propagation=coupling.propagation,
-            positive_traction_beta_per_nm=(
-                coupling.positive_traction_beta_per_nm
-            ),
-            negative_traction_beta_per_nm=(
-                coupling.negative_traction_beta_per_nm
-            ),
+            positive_traction_beta_per_nm=(coupling.positive_traction_beta_per_nm),
+            negative_traction_beta_per_nm=(coupling.negative_traction_beta_per_nm),
         )
         reconstruction_traction_betas = reconstructor.traction_beta_per_nm
         trace_modal_oracle = None
         if reference_archive is not None:
             mark_stage("full3d_trace_modal_oracle")
-            trace_modal_oracle = reconstructor.full3d_trace_modal_oracle(
-                archive_path
-            )
+            trace_modal_oracle = reconstructor.full3d_trace_modal_oracle(archive_path)
             mark_stage("middle_plane_reconstruction")
         selected_planes = reconstructor.selected_planes(
             solution.modal_amplitudes,
@@ -2040,15 +1940,12 @@ def main(
                         reference_record["metadata"]["commit_sha"]
                     ).lower(),
                     "reference_binding_verified": (
-                        expected_reference_npz_sha256
-                        == observed_reference_npz_sha256
+                        expected_reference_npz_sha256 == observed_reference_npz_sha256
                     ),
                 }
             )
         absorption["R_plus_T_plus_A_volume"] = float(
-            port_power["R_total"]
-            + port_power["T_total"]
-            + absorption["A_volume_total"]
+            port_power["R_total"] + port_power["T_total"] + absorption["A_volume_total"]
         )
         absorption["energy_closure_error"] = float(
             absorption["R_plus_T_plus_A_volume"] - 1.0
@@ -2095,7 +1992,9 @@ def main(
         if task039_direct_payload is not None:
             physical_fields["task039_direct_payload"] = task039_direct_payload
         timings["physical_field_reconstruction"] = _max_elapsed(comm, started)
-        progress("Task32 Phase6: physical interface/absorption/selected-plane reconstruction complete")
+        progress(
+            "Task32 Phase6: physical interface/absorption/selected-plane reconstruction complete"
+        )
         if canonical_export_prefix is not None:
             if external_mode_inventory is None:
                 raise RuntimeError(
@@ -2116,8 +2015,7 @@ def main(
             and all(mode.passive_branch_valid for mode in negative.modes)
         )
         reciprocal_valid = len(pairs) == args.requested_modes and all(
-            pair.opposite_direction and pair.passive_branches_valid
-            for pair in pairs
+            pair.opposite_direction and pair.passive_branches_valid for pair in pairs
         )
         forward_factors = np.asarray(
             coupling.propagation.forward.factors, dtype=np.complex128
@@ -2137,8 +2035,7 @@ def main(
             "requested_forward_and_backward_passive_bases": directions_valid,
             "reciprocal_pairing_complete": reciprocal_valid,
             "biorthogonality_identity_error_le_1e-6": (
-                max(positive.max_identity_error, negative.max_identity_error)
-                <= 1.0e-6
+                max(positive.max_identity_error, negative.max_identity_error) <= 1.0e-6
             ),
             "right_and_left_qep_residuals_le_1e-8": (
                 max(
@@ -2175,9 +2072,7 @@ def main(
                 solution.relative_residual <= 1.0e-9
             ),
             "interface_e_projection_relative_residual_le_1e-8": (
-                validation["interface_e_projection"][
-                    "combined_relative_residual"
-                ]
+                validation["interface_e_projection"]["combined_relative_residual"]
                 <= 1.0e-8
             ),
             "fe_modal_traction_equilibrium_relative_residual_le_1e-8": (
@@ -2223,15 +2118,11 @@ def main(
                         <= 1.0e-9
                     ),
                     "condensed_full_surface_mode_matrix_not_retained": all(
-                        not item.streaming_audit[
-                            "full_surface_mode_matrix_retained"
-                        ]
+                        not item.streaming_audit["full_surface_mode_matrix_retained"]
                         for item in recovered_sides
                     ),
                     "condensed_full_global_matrix_not_allocated": all(
-                        not item.streaming_audit[
-                            "full_global_matrix_allocated"
-                        ]
+                        not item.streaming_audit["full_global_matrix_allocated"]
                         for item in recovered_sides
                     ),
                 }
@@ -2245,8 +2136,8 @@ def main(
                 .get("relative_dual")
                 for side in ("bottom", "top")
             ]
-            exact_traction_pass, _exact_traction_role = (
-                _exact_traction_gate({}, exact_traction_values, 1.0e-8)
+            exact_traction_pass, _exact_traction_role = _exact_traction_gate(
+                {}, exact_traction_values, 1.0e-8
             )
             gates.update(
                 {
@@ -2261,25 +2152,20 @@ def main(
                     ),
                     "diagnostic_sampled_traction_density_l2_proxy_le_1e-2": (
                         max(
-                            interface_physical[side][
-                                "traction_density_l2_proxy"
-                            ]["relative_l2"]
+                            interface_physical[side]["traction_density_l2_proxy"][
+                                "relative_l2"
+                            ]
                             for side in ("bottom", "top")
                         )
                         <= 1.0e-2
                     ),
-                    "assembled_interface_h_t_exact_dual_le_1e-8": (
-                        exact_traction_pass
-                    ),
+                    "assembled_interface_h_t_exact_dual_le_1e-8": (exact_traction_pass),
                     "volume_energy_closure_abs_le_1e-5": (
-                        abs(absorption_physical["energy_closure_error"])
-                        <= 1.0e-5
+                        abs(absorption_physical["energy_closure_error"]) <= 1.0e-5
                     ),
                 }
             )
-            planes_physical = physical_fields[
-                "selected_plane_full3d_comparison"
-            ]
+            planes_physical = physical_fields["selected_plane_full3d_comparison"]
             if planes_physical is not None:
                 gates.update(
                     {
@@ -2292,15 +2178,11 @@ def main(
                             <= 1.0e-5
                         ),
                         "middle_plane_e_relative_l2_le_5e-3": (
-                            planes_physical[
-                                "max_middle_plane_electric_relative_l2"
-                            ]
+                            planes_physical["max_middle_plane_electric_relative_l2"]
                             <= 5.0e-3
                         ),
                         "middle_plane_h_relative_l2_le_5e-3": (
-                            planes_physical[
-                                "max_middle_plane_magnetic_relative_l2"
-                            ]
+                            planes_physical["max_middle_plane_magnetic_relative_l2"]
                             <= 5.0e-3
                         ),
                     }
@@ -2348,12 +2230,8 @@ def main(
             not task33_variant or args.requested_modes >= 80
         )
         projection_stats = {
-            "bottom": _petsc_matrix_stats(
-                coupling.bottom.projection, assemble=False
-            ),
-            "top": _petsc_matrix_stats(
-                coupling.top.projection, assemble=False
-            ),
+            "bottom": _petsc_matrix_stats(coupling.bottom.projection, assemble=False),
+            "top": _petsc_matrix_stats(coupling.top.projection, assemble=False),
         }
         factor_inventory = (
             {"augmented": _petsc_factor_inventory(solution.ksp)}
@@ -2361,9 +2239,7 @@ def main(
             else primary_schur_system.factor_inventory
         )
         full_vector_size = int(positive.modes[0].right.right_full.getSize())
-        reduced_vector_size = int(
-            positive.modes[0].right.right_reduced.getSize()
-        )
+        reduced_vector_size = int(positive.modes[0].right.right_reduced.getSize())
         eigenvector_bytes = int(
             2
             * args.requested_modes
@@ -2372,9 +2248,7 @@ def main(
             * np.dtype(PETSc.ScalarType).itemsize
         )
         active_column_counts = {
-            "bottom": distributed_active_column_count(
-                coupling.bottom.projection
-            ),
+            "bottom": distributed_active_column_count(coupling.bottom.projection),
             "top": distributed_active_column_count(coupling.top.projection),
         }
         object_payload_ledger = {
@@ -2385,8 +2259,7 @@ def main(
                 for side, result in active_column_counts.items()
             },
             "interface_active_column_count_diagnostics": {
-                side: result.to_dict()
-                for side, result in active_column_counts.items()
+                side: result.to_dict() for side, result in active_column_counts.items()
             },
             "mode_count_per_direction": args.requested_modes,
             "retained_right_left_eigenvector_bytes": eigenvector_bytes,
@@ -2451,9 +2324,7 @@ def main(
                 "internal_propagation_model_requested": (
                     args.internal_propagation_model
                 ),
-                "internal_traction_model_requested": (
-                    args.internal_traction_model
-                ),
+                "internal_traction_model_requested": (args.internal_traction_model),
                 "stage4_full3d_assembly_backend_requested": (
                     args.stage4_full3d_assembly_backend
                 ),
@@ -2479,9 +2350,7 @@ def main(
                 "h_nm": args.h_nm,
                 "modal_degree": modal_degree,
                 "modal_h_nm": modal_h_nm,
-                "internal_propagation_model": (
-                    args.internal_propagation_model
-                ),
+                "internal_propagation_model": (args.internal_propagation_model),
                 "internal_traction_model": args.internal_traction_model,
                 "discrete_axial_qualification_scope": (
                     _discrete_axial_qualification_scope(
@@ -2495,9 +2364,7 @@ def main(
                 "block_rotation_tolerance": args.block_rotation_tolerance,
                 "bottom_interface_nm": args.bottom_interface_nm,
                 "top_interface_nm": args.top_interface_nm,
-                "middle_length_nm": (
-                    args.top_interface_nm - args.bottom_interface_nm
-                ),
+                "middle_length_nm": (args.top_interface_nm - args.bottom_interface_nm),
                 "wavelength_nm": cfg.lambda0,
                 "incident_grazing_deg": 90.0 - cfg.incident_theta_deg,
                 "polarization_kind": cfg.polarization_kind,
@@ -2511,9 +2378,7 @@ def main(
                     args.graded_profile if graded_plan is not None else None
                 ),
                 "graded_coarse_factor": (
-                    args.graded_coarse_factor
-                    if graded_plan is not None
-                    else None
+                    args.graded_coarse_factor if graded_plan is not None else None
                 ),
                 "graded_plan_hash": (
                     graded_plan.plan_hash if graded_plan is not None else None
@@ -2531,12 +2396,8 @@ def main(
                 "coefficient_degree": operators.coefficient_degree,
                 "quadrature_degree": operators.quadrature_degree,
                 "quadrature_policy": operators.quadrature_policy,
-                "positive_solver_converged_modes": (
-                    positive_report.converged_modes
-                ),
-                "negative_solver_converged_modes": (
-                    negative_report.converged_modes
-                ),
+                "positive_solver_converged_modes": (positive_report.converged_modes),
+                "negative_solver_converged_modes": (negative_report.converged_modes),
                 "positive_directional_selection": (
                     _directional_selection_summary(positive_selection)
                 ),
@@ -2552,9 +2413,7 @@ def main(
                         "relative_beta_error": pair.relative_beta_error,
                         "electric_mass_overlap": pair.electric_mass_overlap,
                         "opposite_direction": pair.opposite_direction,
-                        "passive_branches_valid": (
-                            pair.passive_branches_valid
-                        ),
+                        "passive_branches_valid": (pair.passive_branches_valid),
                     }
                     for pair in pairs
                 ],
@@ -2564,23 +2423,15 @@ def main(
                 "matrix_size": (
                     list(system.A.getSize()) if system is not None else None
                 ),
-                "matrix_stats": (
-                    system.matrix_stats if system is not None else None
-                ),
-                "block_shapes": (
-                    system.block_shapes if system is not None else None
-                ),
+                "matrix_stats": (system.matrix_stats if system is not None else None),
+                "block_shapes": (system.block_shapes if system is not None else None),
                 "inserted_nnz_by_block": (
                     system.inserted_nnz_by_block if system is not None else None
                 ),
                 "bottom_global_size": bottom.global_size,
                 "top_global_size": top.global_size,
-                "assembly_backend_requested": (
-                    args.stage4_full3d_assembly_backend
-                ),
-                "bottom_assembly_backend_actual": (
-                    bottom.assembly_backend_actual
-                ),
+                "assembly_backend_requested": (args.stage4_full3d_assembly_backend),
+                "bottom_assembly_backend_actual": (bottom.assembly_backend_actual),
                 "top_assembly_backend_actual": top.assembly_backend_actual,
                 "bottom_assembly_backend_qualification": (
                     bottom.assembly_backend_qualification
@@ -2603,8 +2454,7 @@ def main(
                 "bottom_local_mesh_cells": list(bottom.local_mesh.mesh_cells),
                 "top_local_mesh_cells": list(top.local_mesh.mesh_cells),
                 "bottom_local_thickness_nm": (
-                    bottom.local_mesh.interface_z_nm
-                    - bottom.local_mesh.external_z_nm
+                    bottom.local_mesh.interface_z_nm - bottom.local_mesh.external_z_nm
                 ),
                 "top_local_thickness_nm": (
                     top.local_mesh.external_z_nm - top.local_mesh.interface_z_nm
@@ -2677,9 +2527,7 @@ def main(
                     "max_factor_magnitude": float(
                         coupling.propagation.max_factor_magnitude
                     ),
-                    "passivity_valid": bool(
-                        coupling.propagation.passivity_valid
-                    ),
+                    "passivity_valid": bool(coupling.propagation.passivity_valid),
                 },
                 "qep_to_interface_quadrature_degree": (
                     coupling.interface_quadrature_degree
@@ -2687,14 +2535,10 @@ def main(
                 "cell_interior_modal_correction_norms": {
                     side: {
                         "positive_frobenius": float(
-                            np.linalg.norm(
-                                block.positive_interior_correction
-                            )
+                            np.linalg.norm(block.positive_interior_correction)
                         ),
                         "negative_frobenius": float(
-                            np.linalg.norm(
-                                block.negative_interior_correction
-                            )
+                            np.linalg.norm(block.negative_interior_correction)
                         ),
                         "modal_rhs_l2": float(
                             np.linalg.norm(block.modal_rhs_correction)
@@ -2707,9 +2551,7 @@ def main(
                 },
                 "tangential_surface_trace_only_audit": {
                     side: {
-                        "verified": bool(
-                            block.tangential_surface_trace_only_verified
-                        ),
+                        "verified": bool(block.tangential_surface_trace_only_verified),
                         "pairwise_interior_schur_evaluated": bool(
                             block.interior_modal_pairwise_schur_evaluated
                         ),
@@ -2732,9 +2574,7 @@ def main(
                     if system is not None
                     else primary_schur_system.dense_interface_square_formed
                 ),
-                "full_field_or_mode_gathered": (
-                    coupling.full_field_or_mode_gathered
-                ),
+                "full_field_or_mode_gathered": (coupling.full_field_or_mode_gathered),
                 "modal_schur": (
                     None
                     if primary_schur_system is None
@@ -2752,9 +2592,7 @@ def main(
                         "multi_rhs_solve_seconds": (
                             primary_schur_system.multi_rhs_solve_seconds
                         ),
-                        "lifecycle_strategy": (
-                            primary_schur_system.lifecycle_strategy
-                        ),
+                        "lifecycle_strategy": (primary_schur_system.lifecycle_strategy),
                         "recovery_refactor_required": (
                             primary_schur_system.recovery_refactor_required
                         ),
@@ -2767,9 +2605,7 @@ def main(
                 "true_relative_residual": solution.relative_residual,
                 "setup_seconds": getattr(solution, "setup_seconds", None),
                 "solve_seconds": getattr(solution, "solve_seconds", None),
-                "modal_solve_seconds": getattr(
-                    solution, "modal_solve_seconds", None
-                ),
+                "modal_solve_seconds": getattr(solution, "modal_solve_seconds", None),
                 "recovery_seconds": getattr(solution, "recovery_seconds", None),
                 "recovery_factor_setup_seconds": getattr(
                     solution, "recovery_factor_setup_seconds", {}
@@ -2778,15 +2614,11 @@ def main(
                     None
                     if solution.bottom_recovered is None
                     else {
-                        "recovery": (
-                            solution.bottom_recovered.recovery_audit
-                        ),
+                        "recovery": (solution.bottom_recovered.recovery_audit),
                         "full_operator_residual": (
                             solution.bottom_recovered.full_operator_residual
                         ),
-                        "streaming": (
-                            solution.bottom_recovered.streaming_audit
-                        ),
+                        "streaming": (solution.bottom_recovered.streaming_audit),
                     }
                 ),
                 "top_static_recovery": (

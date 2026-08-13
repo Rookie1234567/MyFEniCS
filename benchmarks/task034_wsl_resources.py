@@ -94,7 +94,10 @@ def vmstat_swap_pages() -> dict[str, int | None]:
                 values[fields[0]] = int(fields[1])
             except ValueError:
                 pass
-    return {"pswpin_pages": values.get("pswpin"), "pswpout_pages": values.get("pswpout")}
+    return {
+        "pswpin_pages": values.get("pswpin"),
+        "pswpout_pages": values.get("pswpout"),
+    }
 
 
 def wsl_memory_snapshot() -> dict[str, int | None]:
@@ -120,9 +123,7 @@ def effective_memory_limit(
     available = memory["mem_available_bytes"]
     candidates = {
         "user_limit_bytes": int(user_limit_gib * GIB),
-        "wsl_total_85_percent_bytes": (
-            None if total is None else int(0.85 * total)
-        ),
+        "wsl_total_85_percent_bytes": (None if total is None else int(0.85 * total)),
         "available_minus_reserve_bytes": (
             None if available is None else max(0, available - int(reserve_gib * GIB))
         ),
@@ -240,9 +241,11 @@ def process_tree_sample(root_pid: int) -> ProcessTreeSample:
             continue
         pid = int(entry.name)
         try:
-            lines = (entry / "status").read_text(
-                encoding="utf-8", errors="ignore"
-            ).splitlines()
+            lines = (
+                (entry / "status")
+                .read_text(encoding="utf-8", errors="ignore")
+                .splitlines()
+            )
         except OSError:
             continue
         fields = {
@@ -308,18 +311,14 @@ def resource_authority_sample(
     process_tree = process_tree_sample(root_pid)
     cgroup = cgroup_snapshot(root_pid)
     dedicated_current = (
-        cgroup["memory_current_bytes"]
-        if cgroup["dedicated_job_cgroup"]
-        else None
+        cgroup["memory_current_bytes"] if cgroup["dedicated_job_cgroup"] else None
     )
     memory_authority = max(
         process_tree.rss_bytes,
         int(dedicated_current or 0),
     )
     dedicated_swap = (
-        cgroup["swap_current_bytes"]
-        if cgroup["dedicated_job_cgroup"]
-        else None
+        cgroup["swap_current_bytes"] if cgroup["dedicated_job_cgroup"] else None
     )
     job_no_swap = bool(
         process_tree.all_status_readable
