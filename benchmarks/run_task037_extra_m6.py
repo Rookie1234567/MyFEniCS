@@ -1164,7 +1164,12 @@ def _phase_worker_gate(
         checks, details = _phase_check(
             run_dir, summary, phase=phase, expected_mpi_size=expected_mpi_size
         )
-        return all(checks.values()), {"checks": checks, "details": details}
+        safe_details = {
+            key: details[key]
+            for key in ("metrics", "problems")
+            if isinstance(details, Mapping) and key in details
+        }
+        return all(checks.values()), {"checks": checks, "details": safe_details}
     except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
         return False, {"checks": {}, "error": f"{type(exc).__name__}: {exc}"}
 

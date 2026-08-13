@@ -422,6 +422,103 @@ def test_m6a_watchdog_locks_mpi2_after_mpi1_worker_gate(
     assert calls == ["stage", "mpi1"]
 
 
+def test_m6a_phase_worker_gate_drops_complex_recovery_details(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(m6, "_read_json", lambda _path: {})
+    monkeypatch.setattr(
+        m6,
+        "_phase_check",
+        lambda *_args, **_kwargs: (
+            {"numeric": True},
+            {
+                "metrics": {"candidate_direct_action_relative_error": 0.0},
+                "problems": [],
+                "candidate_recovery": [1.0 + 2.0j],
+            },
+        ),
+    )
+
+    passed, gate = m6._phase_worker_gate(tmp_path, "mpi1", 1)
+
+    assert passed is True
+    assert gate["checks"] == {"numeric": True}
+    assert gate["details"] == {
+        "metrics": {"candidate_direct_action_relative_error": 0.0},
+        "problems": [],
+    }
+    assert "candidate_recovery" not in gate["details"]
+    json.dumps(gate)
+
+
+def test_m6a_watchdog_serializes_successful_worker_gate_details(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = _clean_source()
+    stage = {
+        "status": "measurement_complete",
+        "scope": m6._m6a_scope(),
+        "source_at_start": source,
+        "source_at_end": source,
+    }
+    calls: list[str] = []
+    captured: dict[str, object] = {}
+
+    class FakeH2B:
+        @staticmethod
+        def _light_source() -> dict[str, object]:
+            return source
+
+        @staticmethod
+        def _worker_executable() -> str:
+            return "/venv/bin/python"
+
+        @staticmethod
+        def _monitor_phase(_run_dir, phase, _command, _timeout, _limit):
+            calls.append(phase)
+            return {
+                "status": "measurement_complete",
+                "return_code": 0,
+                "termination": None,
+                "peak_rss_bytes": 1,
+                "swap_bytes": 0,
+            }
+
+    monkeypatch.setattr(m6, "_h2b_module", lambda: FakeH2B())
+    monkeypatch.setattr(m6, "_read_json", lambda _path: stage)
+    monkeypatch.setattr(m6, "_stage_allows_online", lambda *_args: True)
+    monkeypatch.setattr(m6, "_stage_summary_valid", lambda *_args: True)
+    monkeypatch.setattr(
+        m6,
+        "_process_gate",
+        lambda *_args, **_kwargs: (True, {"processes_gone": True}),
+    )
+    monkeypatch.setattr(
+        m6,
+        "_phase_worker_gate",
+        lambda *_args: (
+            True,
+            {
+                "checks": {"numeric": True},
+                "details": {"metrics": {"error": 0.0}, "problems": []},
+            },
+        ),
+    )
+    monkeypatch.setattr(m6, "_raw_artifacts", lambda _run_dir: {})
+    monkeypatch.setattr(
+        m6,
+        "_write_json",
+        lambda path, value: captured.update({"path": path, "value": value}),
+    )
+
+    assert m6._watchdog(tmp_path / "run") == 0
+    payload = captured["value"]
+    json.dumps(payload)
+    assert calls == ["stage", "mpi1", "mpi2"]
+    assert payload["status"] == "measurement_complete"
+    assert "candidate_recovery" not in payload["phases"]["mpi1"]["worker_gate"]["details"]
+
+
 def test_m6a_controlled_stop_records_missing_mpi2_artifacts(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
