@@ -11,6 +11,8 @@ from typing import Any, Callable, Mapping
 import numpy as np
 
 from src.io.input_validation import (
+    TASK039_E7_TRACE_FAMILY_SHA256,
+    TASK039_M960_TRACE_GATE_POLICY,
     simulation_config_3d_from_normalized,
     task039_dynamic_external_mode_inventory,
     task039_model_id_matches,
@@ -383,19 +385,31 @@ def _default_runner(
     exact_one_cell_work_dir: Path,
     trace_audit_capture_dir: str | Path | None = None,
     trace_audit_metadata: Mapping[str, Any] | None = None,
+    canonical_trace_gate_policy: str | None = None,
+    canonical_trace_family_sha256: str | None = None,
 ) -> Mapping[str, Any]:
     from benchmarks.run_task032_phase6_augmented import main
 
+    kwargs: dict[str, Any] = {
+        "config_override": cfg,
+        "use_case080_reference": False,
+        "canonical_export_prefix": canonical_export_prefix,
+        "external_mode_inventory": external_mode_inventory,
+        "exact_one_cell_work_dir": exact_one_cell_work_dir,
+        "qep_solver_tolerance": 1.0e-12,
+        "trace_audit_capture_dir": trace_audit_capture_dir,
+        "trace_audit_metadata": trace_audit_metadata,
+    }
+    if canonical_trace_gate_policy is not None:
+        kwargs.update(
+            {
+                "canonical_trace_gate_policy": canonical_trace_gate_policy,
+                "canonical_trace_family_sha256": canonical_trace_family_sha256,
+            }
+        )
     return main(
         argv,
-        config_override=cfg,
-        use_case080_reference=False,
-        canonical_export_prefix=canonical_export_prefix,
-        external_mode_inventory=external_mode_inventory,
-        exact_one_cell_work_dir=exact_one_cell_work_dir,
-        qep_solver_tolerance=1.0e-12,
-        trace_audit_capture_dir=trace_audit_capture_dir,
-        trace_audit_metadata=trace_audit_metadata,
+        **kwargs,
     )
 
 
@@ -417,6 +431,9 @@ def run_task039_hybrid_direct(
         raise ValueError("Task39 Hybrid direct requires a task039_5nm model_id")
     if resolved_payload.get("method", {}).get("kind") != "hybrid_direct":
         raise ValueError("Task39 Hybrid direct requires method.kind=hybrid_direct")
+    method = resolved_payload["method"]
+    canonical_trace_gate_policy = method.get("canonical_trace_gate_policy")
+    canonical_trace_family_sha256 = method.get("canonical_trace_family_sha256")
     if (
         source_sha is None
         or len(source_sha) != 40
@@ -430,7 +447,11 @@ def run_task039_hybrid_direct(
     if profile_errors:
         path, message = profile_errors[0]
         raise ValueError(f"{path}: {message}")
-
+    if canonical_trace_gate_policy is not None and (
+        canonical_trace_gate_policy != TASK039_M960_TRACE_GATE_POLICY
+        or canonical_trace_family_sha256 != TASK039_E7_TRACE_FAMILY_SHA256
+    ):
+        raise ValueError("Task039 canonical trace Gate provenance is not approved.")
     cfg = simulation_config_3d_from_normalized(resolved_payload)
     if cfg.stage_case != "stage4_block_grating" or not cfg.use_floquet_xy:
         raise ValueError("Task39 Hybrid direct requires the Stage4 dual-Floquet config")
@@ -460,6 +481,8 @@ def run_task039_hybrid_direct(
                 **dict(trace_audit_metadata or {}),
                 "source_commit_sha": source_sha,
             },
+            canonical_trace_gate_policy=canonical_trace_gate_policy,
+            canonical_trace_family_sha256=canonical_trace_family_sha256,
         )
     else:
         if trace_audit_capture_dir is not None:
@@ -475,6 +498,17 @@ def run_task039_hybrid_direct(
             "external_mode_inventory": expected_inventory,
             "numerical_output_directory": str(numerical_output),
         }
+    if canonical_trace_gate_policy is not None:
+        record = dict(record)
+        provenance = dict(record.get("provenance") or {})
+        provenance.update(
+            {
+                "canonical_trace_gate_policy": canonical_trace_gate_policy,
+                "canonical_trace_family_sha256": canonical_trace_family_sha256,
+                "family_record_source": "tracked_compact_record",
+            }
+        )
+        record["provenance"] = provenance
     if trace_audit_capture_dir is not None:
         if record.get("status") != "controlled_stop":
             return {

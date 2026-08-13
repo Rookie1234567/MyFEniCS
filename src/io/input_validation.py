@@ -245,6 +245,10 @@ _TASK039_BETA = 0.00435380777
 _TASK039_N = (0.99396854453, 0.00435380777)
 _TASK039_EPSILON_R = (0.9879545118729887, 0.00865509594462061)
 _TASK039_MODE_CANDIDATES = (120, 240, 480, 960)
+TASK039_M960_TRACE_GATE_POLICY = "task039_m960_backward_stable_v1"
+TASK039_E7_TRACE_FAMILY_SHA256 = (
+    "5fd8351050fb4849b87084de9465b218745805ecda7e4a83109bcd7a472aaedd"
+)
 _TASK039_MODEL_ID_PATTERNS = {
     "full3d_direct": r"task039_5nm_full3d_direct",
     "full3d_iterative": r"task039_5nm_full3d_iterative",
@@ -719,6 +723,34 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
             method.get("traction_model"),
         ) != ("full3d_uniform_cg", "full3d_one_cell_exact_schur"):
             errors.append(("method", "Task39 Hybrid requires the full3d exact pair"))
+    policy = method.get("canonical_trace_gate_policy")
+    family_sha = method.get("canonical_trace_family_sha256")
+    if policy is not None or family_sha is not None:
+        if not (
+            kind == "hybrid_direct"
+            and method.get("requested_modes_per_direction") == 960
+            and config["execution"].get("mpi_size") == 8
+        ):
+            errors.append(
+                (
+                    "method.canonical_trace_gate_policy",
+                    "Task039 trace Gate is restricted to Hybrid direct M960 MPI8",
+                )
+            )
+        if policy != TASK039_M960_TRACE_GATE_POLICY:
+            errors.append(
+                (
+                    "method.canonical_trace_gate_policy",
+                    f"must equal {TASK039_M960_TRACE_GATE_POLICY!r}",
+                )
+            )
+        if family_sha != TASK039_E7_TRACE_FAMILY_SHA256:
+            errors.append(
+                (
+                    "method.canonical_trace_family_sha256",
+                    "must equal the approved Task39 E7 family record SHA256",
+                )
+            )
     return errors
 
 
@@ -862,6 +894,14 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
     kind = method["kind"]
     geometry_kind = geometry["geometry_kind"]
     model_id = str(config.get("model_id", ""))
+    if (
+        method.get("canonical_trace_gate_policy") is not None
+        or method.get("canonical_trace_family_sha256") is not None
+    ) and not _is_task039_candidate(config):
+        raise _error(
+            "method.canonical_trace_gate_policy",
+            "Task039 canonical trace Gate fields are not valid for this model",
+        )
     if model_id.startswith("task039_"):
         if model_id.startswith("task039_0p7nm"):
             if incidence.get("wavelength_nm") != 0.7:

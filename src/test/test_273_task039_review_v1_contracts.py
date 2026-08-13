@@ -25,7 +25,11 @@ from benchmarks.task039_memory_telemetry import (
 from benchmarks.run_direct_memory_forensics import _latest_stage
 from benchmarks.task037c_robustness import profile_record
 from src.io import load_and_resolve
-from src.io.input_validation import task039_profile_errors
+from src.io.input_validation import (
+    TASK039_E7_TRACE_FAMILY_SHA256,
+    task039_profile_errors,
+)
+from src.coupling.hybrid_internal_modes import _canonical_trace_consistency_audit
 from src.runners.task039_hybrid_iterative import (
     _RESIDUAL_KEYS,
     make_task039_hybrid_iterative_profile,
@@ -76,6 +80,27 @@ def test_task039_grid_budget_rejects_old_limit_and_h10_stays_legacy() -> None:
         path == "execution.warning_memory_gib"
         for path, _message in task039_profile_errors(h10)
     )
+
+
+@pytest.mark.parametrize(
+    ("mutation", "value"),
+    (
+        ("canonical_trace_family_sha256", "0" * 64),
+        ("canonical_trace_gate_policy", "wrong_policy"),
+        ("mpi_size", 4),
+    ),
+)
+def test_task039_m960_trace_policy_rejects_bad_family_policy_or_mpi(
+    mutation: str, value
+):
+    payload = load_and_resolve(
+        ROOT / "input/official/task039/5nm_p6h10_hybrid_direct_m960_mpi8.dat"
+    ).as_jsonable()
+    if mutation == "mpi_size":
+        payload["execution"][mutation] = value
+    else:
+        payload["method"][mutation] = value
+    assert task039_profile_errors(payload)
 
 
 @pytest.mark.parametrize("mpi_size", (8, 1))
@@ -566,6 +591,104 @@ def _m960_payload() -> dict[str, object]:
             }
         ],
     }
+
+
+def _online_m960_matrices(
+    *,
+    raw_delta: float = 2.0e-11,
+    representation_delta: float = 0.0,
+    nonfinite: bool = False,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    identity = np.eye(960, dtype=np.complex128)
+    raw = identity.copy()
+    canonical = identity.copy()
+    raw[0, 1] = raw_delta
+    canonical[0, 1] = representation_delta
+    if nonfinite:
+        raw[0, 0] = np.nan + 0.0j
+    return identity, raw, canonical, identity
+
+
+def test_task039_m960_online_policy_matches_offline_trace_formula():
+    gram, raw, canonical, mapping = _online_m960_matrices()
+    online_fixed = _canonical_trace_consistency_audit(gram, raw, canonical, mapping)
+    online = _canonical_trace_consistency_audit(
+        gram,
+        raw,
+        canonical,
+        mapping,
+        canonical_trace_gate_policy="task039_m960_backward_stable_v1",
+        canonical_trace_family_sha256=TASK039_E7_TRACE_FAMILY_SHA256,
+    )
+    payload = {
+        "raw_negative_overlap": raw,
+        "canonical_negative_overlap": canonical,
+        "surface_gram": gram,
+        "canonical_mapping": mapping,
+        "repeat_raw_overlap": raw,
+        "repeat_surface_gram": gram,
+        "repeat_canonical_mapping": mapping,
+        "repeat_canonical_negative_overlap": canonical,
+        "column_keys": [[index, "backward", float(index), 0.0] for index in range(960)],
+        "column_sign_order_exact": True,
+        "raw_artifact_exact": True,
+    }
+    offline = audit_m960_trace(payload, evaluate_historical=False)
+
+    assert online_fixed["pass"] is False
+    assert online["pass"] is True
+    assert online["raw_consistency_error"] == pytest.approx(
+        offline["raw_forward_error"]
+    )
+    assert online["canonical_representation_error"] == pytest.approx(
+        offline["representation_error"]
+    )
+    assert online["backward_error_eta"] == pytest.approx(offline["backward_error_eta"])
+    assert online["dynamic_backward_error_limit"] == pytest.approx(
+        offline["dynamic_backward_error_limit"]
+    )
+    assert online["family_sha256"] == TASK039_E7_TRACE_FAMILY_SHA256
+
+
+@pytest.mark.parametrize(
+    ("raw_delta", "representation_delta", "nonfinite"),
+    (
+        (2.0e-9, 0.0, False),
+        (0.0, 2.0e-12, False),
+        (5.0e-11, 0.0, False),
+        (0.0, 0.0, True),
+    ),
+)
+def test_task039_m960_online_policy_rejects_each_gate_failure(
+    raw_delta: float, representation_delta: float, nonfinite: bool
+):
+    gram, raw, canonical, mapping = _online_m960_matrices(
+        raw_delta=raw_delta,
+        representation_delta=representation_delta,
+        nonfinite=nonfinite,
+    )
+    result = _canonical_trace_consistency_audit(
+        gram,
+        raw,
+        canonical,
+        mapping,
+        canonical_trace_gate_policy="task039_m960_backward_stable_v1",
+        canonical_trace_family_sha256=TASK039_E7_TRACE_FAMILY_SHA256,
+    )
+    assert result["pass"] is False
+
+
+def test_task039_m960_policy_rejects_wrong_dimension_and_default_path_stays_fixed():
+    identity = np.eye(3, dtype=np.complex128)
+    with pytest.raises(ValueError, match="960x960"):
+        _canonical_trace_consistency_audit(
+            identity,
+            identity,
+            identity,
+            identity,
+            canonical_trace_gate_policy="task039_m960_backward_stable_v1",
+            canonical_trace_family_sha256=TASK039_E7_TRACE_FAMILY_SHA256,
+        )
 
 
 def test_task039_m960_trace_audit_recomputes_backward_error_without_relaxing_gate() -> (

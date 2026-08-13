@@ -45,6 +45,11 @@ from .modal_trace_projection import (
 )
 
 
+_TASK039_E7_TRACE_FAMILY_SHA256 = (
+    "5fd8351050fb4849b87084de9465b218745805ecda7e4a83109bcd7a472aaedd"
+)
+
+
 @dataclass
 class HybridInterfaceModeBlocks:
     """Sparse FE/modal blocks for one internal interface."""
@@ -69,6 +74,7 @@ class HybridInterfaceModeBlocks:
     full_field_or_mode_gathered: bool = False
     canonical_trace_raw_consistency_error: float = 0.0
     canonical_trace_representation_error: float = 0.0
+    canonical_trace_gate: dict[str, object] | None = None
     quadrature_coefficient_degree: int = 0
     surface_reduction_audits: tuple[dict[str, object], ...] = ()
 
@@ -656,6 +662,8 @@ def _canonical_trace_consistency_audit(
     canonical_mapping: np.ndarray,
     *,
     tolerance: float = 1.0e-12,
+    canonical_trace_gate_policy: str | None = None,
+    canonical_trace_family_sha256: str | None = None,
 ) -> dict[str, object]:
     """Audit raw and canonical reciprocal traces in one coordinate system."""
 
@@ -694,18 +702,67 @@ def _canonical_trace_consistency_audit(
         representation_error = float(
             np.linalg.norm(canonical - expected, ord=np.inf) / canonical_scale
         )
-    passed = bool(
-        np.isfinite(tolerance)
-        and tolerance >= 0.0
-        and raw_error <= tolerance
-        and representation_error <= tolerance
-    )
-    return {
-        "pass": passed,
+    result = {
+        "pass": bool(
+            np.isfinite(tolerance)
+            and tolerance >= 0.0
+            and raw_error <= tolerance
+            and representation_error <= tolerance
+        ),
         "tolerance": float(tolerance),
         "raw_consistency_error": raw_error,
         "canonical_representation_error": representation_error,
     }
+    if canonical_trace_gate_policy is None:
+        return result
+    if canonical_trace_gate_policy != "task039_m960_backward_stable_v1":
+        raise ValueError(
+            "Unsupported canonical trace Gate policy; ordinary fixed 1e-12 "
+            "behavior is the only default."
+        )
+    if gram.shape != (960, 960):
+        raise ValueError("Task039 M960 canonical trace Gate requires a 960x960 matrix.")
+    if canonical_trace_family_sha256 != _TASK039_E7_TRACE_FAMILY_SHA256:
+        raise ValueError(
+            "Task039 M960 canonical trace Gate requires the approved family SHA256."
+        )
+    finite = all(
+        np.isfinite(values).all()
+        for values in (gram, raw, canonical, mapping, expected)
+    )
+    tiny = np.finfo(np.float64).tiny
+    eta_denominator = (
+        float(np.linalg.norm(raw, ord=np.inf))
+        + float(np.linalg.norm(gram, ord=np.inf))
+        * float(np.linalg.norm(mapping, ord=np.inf))
+        + tiny
+        if finite
+        else float("inf")
+    )
+    eta = (
+        float(np.linalg.norm(raw - expected, ord=np.inf) / eta_denominator)
+        if finite
+        else float("inf")
+    )
+    dynamic_limit = float(100.0 * np.finfo(np.float64).eps * gram.shape[0])
+    result.update(
+        {
+            "pass": bool(
+                finite
+                and raw_error <= 1.0e-9
+                and representation_error <= 1.0e-12
+                and eta <= dynamic_limit
+            ),
+            "policy": canonical_trace_gate_policy,
+            "backward_error_eta": eta,
+            "backward_error_denominator": eta_denominator,
+            "dynamic_backward_error_limit": dynamic_limit,
+            "family_sha256": canonical_trace_family_sha256,
+            "family_provenance": "tracked_compact_record:task039_e7_trace_family_v1.json",
+            "finite_all_trace_arrays": finite,
+        }
+    )
+    return result
 
 
 class _ReusableModeTractionEvaluator:
@@ -1052,6 +1109,8 @@ def _build_projection_matrix(
     surface_load: _ReusableInterfaceSurfaceLoad,
     trace_lifter: _ReusableInterfaceLifter,
     log=None,
+    canonical_trace_gate_policy: str | None = None,
+    canonical_trace_family_sha256: str | None = None,
 ) -> tuple[
     PETSc.Mat,
     int,
@@ -1063,6 +1122,7 @@ def _build_projection_matrix(
     np.ndarray,
     float,
     float,
+    dict[str, object] | None,
 ]:
     comm = system.local_mesh.mesh.comm
     mode_count = len(projection.left_traces)
@@ -1115,19 +1175,30 @@ def _build_projection_matrix(
         negative_raw,
         canonical_negative_raw,
         canonical_negative_mapping,
+        canonical_trace_gate_policy=canonical_trace_gate_policy,
+        canonical_trace_family_sha256=canonical_trace_family_sha256,
     )
     if not trace_audit["pass"]:
         matrix.destroy()
         for entries in raw_entries:
             if entries.full_vector is not None:
                 entries.full_vector.destroy()
+        if canonical_trace_gate_policy is None:
+            raise RuntimeError(
+                "Canonicalized negative trace surface integrals disagree: "
+                f"raw_relative_error="
+                f"{trace_audit['raw_consistency_error']:.3e}, "
+                f"representation_relative_error="
+                f"{trace_audit['canonical_representation_error']:.3e}, "
+                f"limit={trace_audit['tolerance']:.3e}."
+            )
         raise RuntimeError(
-            "Canonicalized negative trace surface integrals disagree: "
-            f"raw_relative_error="
-            f"{trace_audit['raw_consistency_error']:.3e}, "
-            f"representation_relative_error="
-            f"{trace_audit['canonical_representation_error']:.3e}, "
-            f"limit={trace_audit['tolerance']:.3e}."
+            "Task039 canonical trace Gate failed: "
+            f"policy={trace_audit['policy']!r}, "
+            f"raw_forward={trace_audit['raw_consistency_error']:.3e}, "
+            f"representation={trace_audit['canonical_representation_error']:.3e}, "
+            f"backward_eta={trace_audit['backward_error_eta']:.3e}, "
+            f"dynamic_limit={trace_audit['dynamic_backward_error_limit']:.3e}."
         )
     negative_mapping = canonical_negative_mapping.copy()
     for row in range(mode_count):
@@ -1184,6 +1255,7 @@ def _build_projection_matrix(
         modal_rhs_correction,
         float(trace_audit["raw_consistency_error"]),
         float(trace_audit["canonical_representation_error"]),
+        dict(trace_audit) if canonical_trace_gate_policy is not None else None,
     )
 
 
@@ -1284,6 +1356,8 @@ def _build_interface_blocks(
     negative_traction_beta_per_nm: Sequence[complex],
     traction_override: tuple[PETSc.Mat, PETSc.Mat] | None = None,
     log=None,
+    canonical_trace_gate_policy: str | None = None,
+    canonical_trace_family_sha256: str | None = None,
 ) -> HybridInterfaceModeBlocks:
     if log is not None:
         log(f"Task32 {system.side}: compiling reusable interface surface form")
@@ -1311,6 +1385,7 @@ def _build_interface_blocks(
             modal_rhs_correction,
             canonical_trace_raw_consistency_error,
             canonical_trace_representation_error,
+            canonical_trace_gate,
         ) = _build_projection_matrix(
             system,
             projection,
@@ -1320,6 +1395,8 @@ def _build_interface_blocks(
             surface_load,
             trace_lifter,
             log,
+            canonical_trace_gate_policy,
+            canonical_trace_family_sha256,
         )
         if traction_override is None:
             if traction_evaluator is None:
@@ -1406,6 +1483,7 @@ def _build_interface_blocks(
         full_surface_mode_vectors_retained=False,
         canonical_trace_raw_consistency_error=(canonical_trace_raw_consistency_error),
         canonical_trace_representation_error=(canonical_trace_representation_error),
+        canonical_trace_gate=canonical_trace_gate,
         quadrature_coefficient_degree=(
             surface_load.quadrature_policy.coefficient_degree
         ),
@@ -1425,6 +1503,8 @@ def build_hybrid_internal_mode_coupling(
     propagation_model: AxialPropagationModel = "continuous_beta",
     modal_traction_model: ModalTractionModel = "continuous_qep_beta",
     exact_one_cell_work_dir=None,
+    canonical_trace_gate_policy: str | None = None,
+    canonical_trace_family_sha256: str | None = None,
     log=None,
 ) -> HybridInternalModeCoupling:
     """Build sparse internal-interface blocks without assembling the full solve."""
@@ -1615,6 +1695,8 @@ def build_hybrid_internal_mode_coupling(
             negative_traction_beta,
             bottom_override,
             log,
+            canonical_trace_gate_policy,
+            canonical_trace_family_sha256,
         )
         if exact_traction_overrides is not None:
             pending_exact_overrides.pop("bottom")
@@ -1635,6 +1717,8 @@ def build_hybrid_internal_mode_coupling(
             negative_traction_beta,
             top_override,
             log,
+            canonical_trace_gate_policy,
+            canonical_trace_family_sha256,
         )
         if exact_traction_overrides is not None:
             pending_exact_overrides.pop("top")

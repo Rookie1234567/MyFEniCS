@@ -1,0 +1,211 @@
+{
+  "schema": "task039.review-v1.m960-trace-family-compact.v1",
+  "status": "pass",
+  "family_pass": true,
+  "classification": "M960_TRACE_AUTHORITY_NUMERICAL_AUDIT_PASS",
+  "family_record_sha256": "5fd8351050fb4849b87084de9465b218745805ecda7e4a83109bcd7a472aaedd",
+  "family_record_bytes": 2372242,
+  "source_capture_sha": "34bca037870cc4d7d132dcfbec71981a867213b8",
+  "family_aggregator_source_sha": "697955b5799464e904f956d4d4d095d905c4a173",
+  "family_aggregator_source_sha_role": "family aggregator parent; policy seam is a later working-tree change",
+  "physical_model_sha256": "db52c70d667caa726e2b2e04b646402415a377fa7bbcef42c87ffc816b9b2a7a",
+  "mpi_size": 8,
+  "external_mode_inventory_count": 604,
+  "family_modes": [120, 240, 480, 960],
+  "historical_sign_order_exact": true,
+  "historical_repeat_gate": true,
+  "all_matrices_finite": true,
+  "raw_artifact_exact": true,
+  "repeat_matrix_difference_exact": true,
+  "historical_m120_m240_m480_valid": true,
+  "records": {
+    "120": {
+      "evidence_root": "results/task039_5nm_hybrid_direct_m120/task039_5nm_hybrid_direct_p6h10_m120_mpi8__hybrid_direct__mpi8__M120/20260813T175049.185975Z/numerical_output/task039_trace_audit",
+      "json_sha256": "51ae829bdbee71ac22dfc365b901f5a5d0843e1fd36fe0b0dea456255348f956",
+      "json_bytes": 210315,
+      "npz_sha256": "4d3d4eb21f6240ef359f89a085515f705087cd7f0a4eb5596d14294f6c313f20",
+      "npz_bytes": 3690986,
+      "identity": {
+        "source_commit_sha": "34bca037870cc4d7d132dcfbec71981a867213b8",
+        "input_sha256": "43edd5705889272609e02d0c1a43d564796a9216fc7bffa32d3278032eac3a62",
+        "resolved_config_sha256": "ea9d9a67c94e425d6ffce9ba62f08a010c98319bd24ada3cb9c8102b14bc77a9",
+        "physical_model_sha256": "db52c70d667caa726e2b2e04b646402415a377fa7bbcef42c87ffc816b9b2a7a",
+        "mpi_size": 8
+      },
+      "sign_order_exact": true,
+      "audits": {
+        "bottom": {
+          "dimension": 120,
+          "pass": true,
+          "gram_condition": 4349.662436916892,
+          "raw_forward_error": 2.2200058961712635e-15,
+          "representation_error": 1.048192422799651e-15,
+          "backward_error_eta": 8.76422928477662e-16,
+          "dynamic_backward_error_limit": 2.6645352591003757e-12,
+          "repeat_backward_error_eta": 8.76422928477662e-16,
+          "repeat_raw_forward_error": 2.2200058961712635e-15,
+          "repeat_representation_error": 1.048192422799651e-15,
+          "worst_column": 102,
+          "worst_column_key": [102, "backward", -0.006833224139309951, -0.3704483696515124],
+          "worst_column_relative_error": 1.7483143524405842e-14
+        },
+        "top": {
+          "dimension": 120,
+          "pass": true,
+          "gram_condition": 4323.957338029279,
+          "raw_forward_error": 1.4802540843851344e-15,
+          "representation_error": 8.836864998245635e-16,
+          "backward_error_eta": 5.843808768567323e-16,
+          "dynamic_backward_error_limit": 2.6645352591003757e-12,
+          "repeat_backward_error_eta": 5.843808768567323e-16,
+          "repeat_raw_forward_error": 1.4802540843851344e-15,
+          "repeat_representation_error": 8.836864998245635e-16,
+          "worst_column": 102,
+          "worst_column_key": [102, "backward", -0.006833224139309951, -0.3704483696515124],
+          "worst_column_relative_error": 1.3157697042686623e-14
+        }
+      }
+    },
+    "240": {
+      "evidence_root": "results/task039_5nm_hybrid_direct_m240/task039_5nm_hybrid_direct_p6h10_m240_mpi8__hybrid_direct__mpi8__M240/20260813T180424.452730Z/numerical_output/task039_trace_audit",
+      "json_sha256": "e65e7598ddc71a497e340d2227123286cbd998cde0aad8e030af4428462aa961",
+      "json_bytes": 397849,
+      "npz_sha256": "c37af5026801e0836af3366db60db26fd00e672910f7aba13d333862d58fbdb8",
+      "npz_bytes": 14750186,
+      "identity": {
+        "source_commit_sha": "34bca037870cc4d7d132dcfbec71981a867213b8",
+        "input_sha256": "b231f760943672ecafcf3fb82abf6cde4b2c79a87d2324b9452a7df72f53b4cd",
+        "resolved_config_sha256": "2fb59ed608826b8b0757a233af88635e08d6aae08404659595891f9f55e6beb7",
+        "physical_model_sha256": "db52c70d667caa726e2b2e04b646402415a377fa7bbcef42c87ffc816b9b2a7a",
+        "mpi_size": 8
+      },
+      "sign_order_exact": true,
+      "audits": {
+        "bottom": {
+          "dimension": 240,
+          "pass": true,
+          "gram_condition": 17231.369174890144,
+          "raw_forward_error": 1.8884328556728277e-13,
+          "representation_error": 1.2160384176616743e-15,
+          "backward_error_eta": 6.308897015854184e-14,
+          "dynamic_backward_error_limit": 5.329070518200751e-12,
+          "repeat_backward_error_eta": 6.308897015854184e-14,
+          "repeat_raw_forward_error": 1.8884328556728277e-13,
+          "repeat_representation_error": 1.2160384176616743e-15,
+          "worst_column": 238,
+          "worst_column_key": [238, "backward", -0.0035754371414832287, -0.6596082501944871],
+          "worst_column_relative_error": 3.9388700303205436e-11
+        },
+        "top": {
+          "dimension": 240,
+          "pass": true,
+          "gram_condition": 17130.231307683873,
+          "raw_forward_error": 6.807108561496783e-14,
+          "representation_error": 1.2877480980821612e-15,
+          "backward_error_eta": 2.2742327917039976e-14,
+          "dynamic_backward_error_limit": 5.329070518200751e-12,
+          "repeat_backward_error_eta": 2.2742327917039976e-14,
+          "repeat_raw_forward_error": 6.807108561496783e-14,
+          "repeat_representation_error": 1.2877480980821612e-15,
+          "worst_column": 238,
+          "worst_column_key": [238, "backward", -0.0035754371414832287, -0.6596082501944871],
+          "worst_column_relative_error": 1.8502200194454954e-11
+        }
+      }
+    },
+    "480": {
+      "evidence_root": "results/task039_5nm_hybrid_direct_m480/task039_5nm_hybrid_direct_p6h10_m480_mpi8__hybrid_direct__mpi8__M480/20260813T181802.639679Z/numerical_output/task039_trace_audit",
+      "json_sha256": "12c80d562bb59acdfad63098d1fe73416a80e092cdb6bd3a89615de3eee76417",
+      "json_bytes": 774881,
+      "npz_sha256": "6de4de30863e193656a1378be065834d16d3c7f13d61852c78b566196ca1be73",
+      "npz_bytes": 58986986,
+      "identity": {
+        "source_commit_sha": "34bca037870cc4d7d132dcfbec71981a867213b8",
+        "input_sha256": "5db2607496e3fe195f719c4b217fdaae3bee7e311007e564345c0a2dff8395bc",
+        "resolved_config_sha256": "21c09027cc7a9ab7c92b3a98cc1f2fa9f452e282d7327f98d54ff56bfa628a85",
+        "physical_model_sha256": "db52c70d667caa726e2b2e04b646402415a377fa7bbcef42c87ffc816b9b2a7a",
+        "mpi_size": 8
+      },
+      "sign_order_exact": true,
+      "audits": {
+        "bottom": {
+          "dimension": 480,
+          "pass": true,
+          "gram_condition": 69451.71127232486,
+          "raw_forward_error": 2.18311718544455e-12,
+          "representation_error": 3.702078769833273e-15,
+          "backward_error_eta": 4.2267167272905193e-13,
+          "dynamic_backward_error_limit": 1.0658141036401503e-11,
+          "repeat_backward_error_eta": 4.2267167272905193e-13,
+          "repeat_raw_forward_error": 2.18311718544455e-12,
+          "repeat_representation_error": 3.702078769833273e-15,
+          "worst_column": 478,
+          "worst_column_key": [478, "backward", -0.0022866577722946424, -1.0202010738700373],
+          "worst_column_relative_error": 2.776369894271355e-10
+        },
+        "top": {
+          "dimension": 480,
+          "pass": true,
+          "gram_condition": 69069.19431680038,
+          "raw_forward_error": 1.0390734865991334e-12,
+          "representation_error": 3.600607904991419e-15,
+          "backward_error_eta": 2.0088475292292715e-13,
+          "dynamic_backward_error_limit": 1.0658141036401503e-11,
+          "repeat_backward_error_eta": 2.0088475292292715e-13,
+          "repeat_raw_forward_error": 1.0390734865991334e-12,
+          "repeat_representation_error": 3.600607904991419e-15,
+          "worst_column": 478,
+          "worst_column_key": [478, "backward", -0.0022866577722946424, -1.0202010738700373],
+          "worst_column_relative_error": 1.3510115447206914e-10
+        }
+      }
+    },
+    "960": {
+      "evidence_root": "results/task039_5nm_hybrid_direct_m960/task039_5nm_hybrid_direct_p6h10_m960_mpi8__hybrid_direct__mpi8__M960/20260813T185149.374768Z/numerical_output/task039_trace_audit",
+      "json_sha256": "631832f3e3a444ee9b7523ebed9ccd9887a293503d3679f4ca89ba5385d5d043",
+      "json_bytes": 1522867,
+      "npz_sha256": "39a68c305da4dcf679bdb9b1cbf61c2e5fa2e037d8c9df82d5f4d6a8d0619f68",
+      "npz_bytes": 235934186,
+      "identity": {
+        "source_commit_sha": "34bca037870cc4d7d132dcfbec71981a867213b8",
+        "input_sha256": "1e7af6436b8999f253a73ae6f791cf346ac652e351a413897b9e56ca71f005b7",
+        "resolved_config_sha256": "36f191ae80c2df664c5260cad784bb726f235be5bf97c9248d1625dd03f0d684",
+        "physical_model_sha256": "db52c70d667caa726e2b2e04b646402415a377fa7bbcef42c87ffc816b9b2a7a",
+        "mpi_size": 8
+      },
+      "sign_order_exact": true,
+      "audits": {
+        "bottom": {
+          "dimension": 960,
+          "pass": true,
+          "gram_condition": 986240.5978076224,
+          "raw_forward_error": 1.5916355376493047e-11,
+          "representation_error": 1.484158937988361e-14,
+          "backward_error_eta": 2.836735006072722e-12,
+          "dynamic_backward_error_limit": 2.1316282072803006e-11,
+          "repeat_backward_error_eta": 2.836735006072722e-12,
+          "repeat_raw_forward_error": 1.5916355376493047e-11,
+          "repeat_representation_error": 1.484158937988361e-14,
+          "worst_column": 934,
+          "worst_column_key": [934, "backward", -0.0001713711617936653, -3.3098121238863385],
+          "worst_column_relative_error": 2.0113157733178033e-09
+        },
+        "top": {
+          "dimension": 960,
+          "pass": true,
+          "gram_condition": 2089283.8721090315,
+          "raw_forward_error": 1.2230410154972068e-11,
+          "representation_error": 1.3355777810830438e-14,
+          "backward_error_eta": 2.268019639470691e-12,
+          "dynamic_backward_error_limit": 2.1316282072803006e-11,
+          "repeat_backward_error_eta": 2.268019639470691e-12,
+          "repeat_raw_forward_error": 1.2230410154972068e-11,
+          "repeat_representation_error": 1.3355777810830438e-14,
+          "worst_column": 935,
+          "worst_column_key": [935, "backward", -0.00017137116177401435, -3.3098121238864713],
+          "worst_column_relative_error": 1.5231843752673676e-09
+        }
+      }
+    }
+  }
+}

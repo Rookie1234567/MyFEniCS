@@ -847,6 +847,25 @@ FIELD_SPECS: Final = (
             "full3d_one_cell_exact_schur",
         ),
     ),
+    _f(
+        "method.canonical_trace_gate_policy",
+        "enum",
+        "none",
+        _HYBRID_METHODS,
+        "仅 Task39 M960 使用的 canonical trace research Gate",
+        "canonical_trace_gate_policy",
+        '"task039_m960_backward_stable_v1"',
+        allowed=("task039_m960_backward_stable_v1",),
+    ),
+    _f(
+        "method.canonical_trace_family_sha256",
+        "string",
+        "sha256",
+        _HYBRID_METHODS,
+        "已审四档 trace family compact record 的 SHA256",
+        "canonical_trace_family_sha256",
+        '"<64 hex characters>"',
+    ),
     # solver
     _f(
         "solver.direct_solver_profile",

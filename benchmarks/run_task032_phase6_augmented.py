@@ -282,6 +282,27 @@ def _complex_json(value: complex) -> list[float]:
     return [float(number.real), float(number.imag)]
 
 
+def _task039_canonical_trace_gate_record(
+    coupling: Any, policy: str, family_sha: str | None
+) -> dict[str, Any]:
+    sides: dict[str, Any] = {}
+    for side, block in (("bottom", coupling.bottom), ("top", coupling.top)):
+        gate = block.canonical_trace_gate
+        if gate is None:
+            raise RuntimeError(f"Missing {side} Task039 canonical trace Gate audit.")
+        sides[side] = {
+            "raw_forward": float(gate["raw_consistency_error"]),
+            "representation": float(gate["canonical_representation_error"]),
+            "backward_eta": float(gate["backward_error_eta"]),
+            "dynamic_limit": float(gate["dynamic_backward_error_limit"]),
+            "finite": bool(gate["finite_all_trace_arrays"]),
+            "policy": gate["policy"],
+            "family_sha": gate["family_sha256"],
+            "trace_gram_condition": float(block.trace_gram_condition),
+        }
+    return {"policy": policy, "family_sha": family_sha, "sides": sides}
+
+
 def _json_default(value):
     if isinstance(value, complex):
         return _complex_json(value)
@@ -1337,6 +1358,8 @@ def main(
     qep_solver_tolerance: float = 1.0e-10,
     trace_audit_capture_dir: str | Path | None = None,
     trace_audit_metadata: Mapping[str, Any] | None = None,
+    canonical_trace_gate_policy: str | None = None,
+    canonical_trace_family_sha256: str | None = None,
 ) -> dict[str, Any]:
     command_argv = list(sys.argv[1:] if argv is None else argv)
     allow_task039 = bool(
@@ -1982,6 +2005,8 @@ def main(
             propagation_model=args.internal_propagation_model,
             modal_traction_model=args.internal_traction_model,
             exact_one_cell_work_dir=exact_one_cell_work_dir,
+            canonical_trace_gate_policy=canonical_trace_gate_policy,
+            canonical_trace_family_sha256=canonical_trace_family_sha256,
             log=progress,
         )
         timings["internal_modal_coupling"] = _max_elapsed(comm, started)
@@ -3131,6 +3156,10 @@ def main(
                 "per-rank ru_maxrss historical peaks; not simultaneous RSS"
             ),
         }
+        if canonical_trace_gate_policy is not None:
+            record["canonical_trace_gate"] = _task039_canonical_trace_gate_record(
+                coupling, canonical_trace_gate_policy, canonical_trace_family_sha256
+            )
         if opt_in_canonical_exports is not None:
             record["canonical_exports"] = opt_in_canonical_exports
     except _Task039TraceAuditStop as stopped:

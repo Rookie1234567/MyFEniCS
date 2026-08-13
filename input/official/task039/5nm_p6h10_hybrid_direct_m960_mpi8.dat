@@ -57,6 +57,8 @@ top_interface_nm = 110.0
 requested_modes_per_direction = 960
 propagation_model = "full3d_uniform_cg"
 traction_model = "full3d_one_cell_exact_schur"
+canonical_trace_gate_policy = "task039_m960_backward_stable_v1"
+canonical_trace_family_sha256 = "5fd8351050fb4849b87084de9465b218745805ecda7e4a83109bcd7a472aaedd"
 
 [solver]
 direct_solver_profile = "default"

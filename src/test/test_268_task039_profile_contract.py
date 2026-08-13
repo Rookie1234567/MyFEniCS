@@ -16,6 +16,8 @@ from benchmarks.run_task032_phase6_augmented import _parse_args
 from src.io.input_loader import InputError
 from src.common.modes_3d import outgoing_port_modes_3d
 from src.io.input_validation import (
+    TASK039_E7_TRACE_FAMILY_SHA256,
+    TASK039_M960_TRACE_GATE_POLICY,
     task039_07nm_launch_error,
     task039_air_side_external_mode_inventory,
     task039_dynamic_external_mode_inventory,
@@ -570,20 +572,17 @@ def test_task039_h_diagnostic_writer_is_m480_only_and_hash_bound(tmp_path: Path)
         comm=MPI.COMM_SELF,
     )
     assert descriptor["schema"] == "task039.hybrid-h-diagnostic.v1"
-    assert descriptor["curl_source"] == (
-        "complete_reconstructed_field_analytic_or_fe"
-    )
+    assert descriptor["curl_source"] == ("complete_reconstructed_field_analytic_or_fe")
     assert descriptor["keys"] == list(_TASK039_H_DIAGNOSTIC_KEYS)
     payload_path = tmp_path / descriptor["path"]
     metadata_path = tmp_path / descriptor["metadata_path"]
     assert payload_path.exists()
     assert metadata_path.exists()
-    assert hashlib.sha256(payload_path.read_bytes()).hexdigest() == descriptor[
-        "sha256"
-    ]
-    assert hashlib.sha256(metadata_path.read_bytes()).hexdigest() == descriptor[
-        "metadata_sha256"
-    ]
+    assert hashlib.sha256(payload_path.read_bytes()).hexdigest() == descriptor["sha256"]
+    assert (
+        hashlib.sha256(metadata_path.read_bytes()).hexdigest()
+        == descriptor["metadata_sha256"]
+    )
     assert metadata_path.stat().st_size == descriptor["metadata_bytes"]
     with np.load(payload_path, allow_pickle=False) as archive:
         assert archive.files == list(_TASK039_H_DIAGNOSTIC_KEYS)
@@ -1184,6 +1183,116 @@ def test_task039_default_runner_passes_run_scoped_exact_traction_directory(
         tmp_path.resolve() / "numerical_output" / "exact_one_cell"
     )
     assert captured["kwargs"]["qep_solver_tolerance"] == 1.0e-12
+
+
+def test_task039_m960_default_runner_forwards_trace_gate_and_provenance(
+    monkeypatch, tmp_path: Path
+):
+    specification = load_and_resolve(TASK039 / "5nm_p6h10_hybrid_direct_m960_mpi8.dat")
+    from benchmarks import run_task032_phase6_augmented as benchmark
+
+    captured = {}
+
+    def fake_main(_argv, **kwargs):
+        captured.update(kwargs=kwargs)
+        return _task039_direct_record(
+            kwargs["external_mode_inventory"],
+            _task039_test_payload(tmp_path, 1920),
+            internal_unknown_count=1920,
+        )
+
+    monkeypatch.setattr(benchmark, "main", fake_main)
+    result = run_task039_hybrid_direct(
+        specification.as_jsonable(),
+        tmp_path,
+        source_sha="a" * 40,
+    )
+
+    assert result["passed"] is True
+    assert captured["kwargs"]["canonical_trace_gate_policy"] == (
+        TASK039_M960_TRACE_GATE_POLICY
+    )
+    assert captured["kwargs"]["canonical_trace_family_sha256"] == (
+        TASK039_E7_TRACE_FAMILY_SHA256
+    )
+    assert result["record"]["provenance"]["canonical_trace_family_sha256"] == (
+        TASK039_E7_TRACE_FAMILY_SHA256
+    )
+
+
+def test_task039_m960_record_preserves_current_side_gate_scalars():
+    from benchmarks.run_task032_phase6_augmented import (
+        _task039_canonical_trace_gate_record,
+    )
+
+    def block(raw, condition):
+        return SimpleNamespace(
+            trace_gram_condition=condition,
+            canonical_trace_gate={
+                "raw_consistency_error": raw,
+                "canonical_representation_error": 2.0e-15,
+                "backward_error_eta": 3.0e-17,
+                "dynamic_backward_error_limit": 2.1e-11,
+                "finite_all_trace_arrays": True,
+                "policy": TASK039_M960_TRACE_GATE_POLICY,
+                "family_sha256": TASK039_E7_TRACE_FAMILY_SHA256,
+            },
+        )
+
+    record = _task039_canonical_trace_gate_record(
+        SimpleNamespace(bottom=block(1.0e-13, 1.1), top=block(2.0e-13, 1.2)),
+        TASK039_M960_TRACE_GATE_POLICY,
+        TASK039_E7_TRACE_FAMILY_SHA256,
+    )
+
+    assert record["policy"] == TASK039_M960_TRACE_GATE_POLICY
+    assert record["family_sha"] == TASK039_E7_TRACE_FAMILY_SHA256
+    assert record["sides"]["bottom"]["raw_forward"] == pytest.approx(1.0e-13)
+    assert record["sides"]["top"]["trace_gram_condition"] == pytest.approx(1.2)
+    assert record["sides"]["bottom"]["finite"] is True
+
+
+def test_task039_trace_gate_fields_are_m960_only_and_ordinary_defaults_unchanged(
+    tmp_path: Path,
+):
+    m960 = load_and_resolve(
+        TASK039 / "5nm_p6h10_hybrid_direct_m960_mpi8.dat"
+    ).as_jsonable()
+    assert m960["method"]["canonical_trace_gate_policy"] == (
+        TASK039_M960_TRACE_GATE_POLICY
+    )
+    assert m960["method"]["canonical_trace_family_sha256"] == (
+        TASK039_E7_TRACE_FAMILY_SHA256
+    )
+    m120 = load_and_resolve(
+        TASK039 / "5nm_p6h10_hybrid_direct_m120_mpi8.dat"
+    ).as_jsonable()
+    assert "canonical_trace_gate_policy" not in m120["method"]
+    assert "canonical_trace_family_sha256" not in m120["method"]
+
+    source = (TASK039 / "5nm_p6h10_hybrid_direct_m120_mpi8.dat").read_text(
+        encoding="utf-8"
+    )
+    path = tmp_path / "m120_trace_policy.dat"
+    path.write_text(
+        source.replace(
+            'traction_model = "full3d_one_cell_exact_schur"\n',
+            'traction_model = "full3d_one_cell_exact_schur"\n'
+            + f'canonical_trace_gate_policy = "{TASK039_M960_TRACE_GATE_POLICY}"\n'
+            + f'canonical_trace_family_sha256 = "{TASK039_E7_TRACE_FAMILY_SHA256}"\n',
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(InputError, match="M960 MPI8"):
+        load_and_resolve(path)
+
+
+def test_task039_augmented_trace_gate_parameters_default_none():
+    from benchmarks import run_task032_phase6_augmented as benchmark
+
+    signature = inspect.signature(benchmark.main)
+    assert signature.parameters["canonical_trace_gate_policy"].default is None
+    assert signature.parameters["canonical_trace_family_sha256"].default is None
 
 
 def test_task039_qep_tolerance_seams_keep_ordinary_defaults():
