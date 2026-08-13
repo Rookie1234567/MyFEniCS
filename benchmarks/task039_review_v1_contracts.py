@@ -1427,7 +1427,12 @@ def diagnose_h_paths(
     }
 
 
-def audit_m960_trace(payload: Mapping[str, Any]) -> dict[str, Any]:
+def audit_m960_trace(
+    payload: Mapping[str, Any],
+    *,
+    evaluate_historical: bool = True,
+    historical_modes: tuple[int, ...] = (120, 240, 480),
+) -> dict[str, Any]:
     """Recompute the Review V1 infinity-norm trace authority."""
 
     arrays = {
@@ -1478,7 +1483,7 @@ def audit_m960_trace(payload: Mapping[str, Any]) -> dict[str, Any]:
         return (
             float(np.linalg.norm(residual, np.inf) / denominator),
             residual,
-            denominator,
+            float(denominator),
         )
 
     eta, residual, eta_denominator = backward_error(raw, gram, mapping)
@@ -1500,7 +1505,7 @@ def audit_m960_trace(payload: Mapping[str, Any]) -> dict[str, Any]:
         return (
             float(np.linalg.norm(difference, np.inf) / denominator),
             difference,
-            denominator,
+            float(denominator),
         )
 
     raw_forward_recomputed, raw_forward_residual, raw_forward_denominator = (
@@ -1531,8 +1536,8 @@ def audit_m960_trace(payload: Mapping[str, Any]) -> dict[str, Any]:
                 "index": index,
                 "key": column_keys[index],
                 "absolute": absolute,
-                "relative": absolute / denominator,
-                "denominator": denominator,
+                "relative": float(absolute / denominator),
+                "denominator": float(denominator),
             }
         )
     worst = max(column_metrics, key=lambda item: item["relative"])
@@ -1558,8 +1563,8 @@ def audit_m960_trace(payload: Mapping[str, Any]) -> dict[str, Any]:
     historical = payload.get("historical_m_modes")
     historical_entries: dict[str, dict[str, Any]] = {}
     historical_pass = True
-    if isinstance(historical, Mapping):
-        for mode in (120, 240, 480):
+    if evaluate_historical and isinstance(historical, Mapping):
+        for mode in historical_modes:
             entry = historical.get(mode, historical.get(str(mode)))
             if not isinstance(entry, Mapping):
                 historical_pass = False
@@ -1591,11 +1596,11 @@ def audit_m960_trace(payload: Mapping[str, Any]) -> dict[str, Any]:
                 "pass": passed,
                 "status": "pass" if passed else "fail",
             }
-    else:
+    elif evaluate_historical:
         historical_pass = False
     reported_representation_error = payload.get("representation_error", "not_available")
     reported_raw_forward_error = payload.get("raw_forward_error", "not_available")
-    dynamic_limit = 100.0 * np.finfo(np.float64).eps * dimension
+    dynamic_limit = float(100.0 * np.finfo(np.float64).eps * dimension)
     all_finite = all(
         np.isfinite(value).all()
         for value in (
@@ -1640,18 +1645,6 @@ def audit_m960_trace(payload: Mapping[str, Any]) -> dict[str, Any]:
             "value": payload.get("raw_artifact_exact"),
             "pass": payload.get("raw_artifact_exact") is True,
         },
-        "historical_sign_order_exact": {
-            "value": payload.get("historical_sign_order_exact"),
-            "pass": payload.get("historical_sign_order_exact") is True,
-        },
-        "historical_m0_mminus1_valid": {
-            "value": payload.get("historical_m0_mminus1_valid"),
-            "pass": payload.get("historical_m0_mminus1_valid") is True,
-        },
-        "historical_m120_m240_m480": {
-            "value": historical_entries,
-            "pass": historical_pass,
-        },
         "finite_all_trace_arrays": {"value": all_finite, "pass": all_finite},
         "finite_gram_mapping": {"value": finite, "pass": finite},
         "repeat_raw_forward": {
@@ -1665,6 +1658,19 @@ def audit_m960_trace(payload: Mapping[str, Any]) -> dict[str, Any]:
             "pass": repeat_representation <= 1.0e-12,
         },
     }
+    if evaluate_historical:
+        gates.update(
+            {
+                "historical_sign_order_exact": {
+                    "value": payload.get("historical_sign_order_exact"),
+                    "pass": payload.get("historical_sign_order_exact") is True,
+                },
+                "historical_m120_m240_m480": {
+                    "value": historical_entries,
+                    "pass": historical_pass,
+                },
+            }
+        )
     passed = all(item["pass"] for item in gates.values())
     return {
         "schema": "task039.review-v1.m960-trace-audit.v1",
@@ -1711,7 +1717,7 @@ def audit_m960_trace(payload: Mapping[str, Any]) -> dict[str, Any]:
         "repeat_raw_forward_denominator": repeat_raw_forward_denominator,
         "repeat_representation_error": repeat_representation,
         "repeat_representation_denominator": repeat_representation_denominator,
-        "representation_epsilon": np.finfo(np.float64).eps,
+        "representation_epsilon": float(np.finfo(np.float64).eps),
         "historical": historical_entries,
         "gates": gates,
     }

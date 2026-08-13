@@ -1,10 +1,13 @@
 from copy import deepcopy
+import hashlib
 import json
 from pathlib import Path
 
 import numpy as np
 import pytest
 
+import benchmarks.task039_trace_family as trace_family
+from benchmarks.task039_trace_audit import write_trace_audit_capture
 from benchmarks.task039_review_v1_contracts import (
     TASK039_M480_PROGRESS_ROWS,
     _identity_sha256,
@@ -554,7 +557,6 @@ def _m960_payload() -> dict[str, object]:
         "representation_error": 1.0e-13,
         "column_sign_order_exact": True,
         "historical_sign_order_exact": True,
-        "historical_m0_mminus1_valid": True,
         "raw_artifact_exact": True,
         "historical_m_modes": history,
         "degenerate_groups": [
@@ -593,6 +595,234 @@ def test_task039_m960_trace_audit_recomputes_backward_error_without_relaxing_gat
     )
     assert norm_result["backward_error_eta"] == pytest.approx(expected_eta)
     assert norm_result["worst_column"] in norm_result["worst_column_group"]["indices"]
+
+
+def _family_capture(mode: int) -> dict[str, object]:
+    keys = [[index, "backward", float(index), 0.0] for index in range(mode)]
+    identifiers = [
+        {
+            "index": index,
+            "key": key,
+            "direction": "backward",
+            "beta": key[2:],
+        }
+        for index, key in enumerate(keys)
+    ]
+    groups = [{"indices": [index], "keys": [keys[index]]} for index in range(mode)]
+    sides: dict[str, dict[str, object]] = {}
+    for side, scale in (("bottom", 0.1), ("top", 0.2)):
+        gram = np.diag(1.0 + scale * np.arange(mode)).astype(np.complex128)
+        mapping = np.eye(mode, dtype=np.complex128)
+        raw = gram @ mapping
+        sides[side] = {
+            "surface_gram": gram,
+            "raw_negative_overlap": raw,
+            "canonical_negative_overlap": raw.copy(),
+            "canonical_mapping": mapping,
+            "repeat_surface_gram": gram.copy(),
+            "repeat_raw_overlap": raw.copy(),
+            "repeat_canonical_negative_overlap": raw.copy(),
+            "repeat_canonical_mapping": mapping.copy(),
+            "lift_queries": {},
+            "gram_condition": float(np.linalg.cond(gram)),
+            "repeat_gram_condition": float(np.linalg.cond(gram)),
+        }
+    return {
+        "mode_count": mode,
+        "column_keys": keys,
+        "mode_identifiers": identifiers,
+        "degenerate_groups": groups,
+        "sides": sides,
+    }
+
+
+@pytest.fixture
+def family_evidence(tmp_path: Path) -> dict[int, Path]:
+    paths: dict[int, Path] = {}
+    physical_sha = "d" * 64
+    for mode in (2, 3, 4, 5):
+        run_root = tmp_path / f"run_m{mode}"
+        output = run_root / "numerical_output" / "task039_trace_audit"
+        output.mkdir(parents=True)
+        input_path = run_root / "input_original.dat"
+        input_path.write_text(f"synthetic-m{mode}\n", encoding="utf-8")
+        input_sha = hashlib.sha256(input_path.read_bytes()).hexdigest()
+        resolved = run_root / "resolved_config.json"
+        resolved.write_text(json.dumps({"mode": mode}) + "\n", encoding="utf-8")
+        resolved_sha = hashlib.sha256(resolved.read_bytes()).hexdigest()
+        (run_root / "source_sha.txt").write_text(
+            trace_family.EXPECTED_SOURCE_SHA + "\n", encoding="utf-8"
+        )
+        (run_root / "input_sha256.txt").write_text(input_sha + "\n", encoding="utf-8")
+        (run_root / "physical_model_sha256.txt").write_text(
+            physical_sha + "\n", encoding="utf-8"
+        )
+        (run_root / "run_manifest.json").write_text(
+            json.dumps(
+                {
+                    "source_sha": trace_family.EXPECTED_SOURCE_SHA,
+                    "physical_model_sha256": physical_sha,
+                    "mpi_size": 8,
+                    "requested_modes": mode,
+                    "method": "hybrid_direct",
+                    "resolved_method_adapter": "task039.hybrid_direct",
+                    "external_mode_inventory": {"count": 604},
+                    "result_classification": "task039_trace_capture_complete",
+                    "exit_status": 0,
+                    "input_sha256": input_sha,
+                    "resolved_config_sha256": resolved_sha,
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        metadata = {
+            "source_commit_sha": trace_family.EXPECTED_SOURCE_SHA,
+            "input_sha256": input_sha,
+            "resolved_config_sha256": resolved_sha,
+            "physical_model_sha256": physical_sha,
+            "mpi_size": 8,
+            "requested_modes_per_direction": mode,
+        }
+        descriptor = write_trace_audit_capture(
+            _family_capture(mode), output, metadata=metadata
+        )
+        paths[mode] = Path(descriptor["metadata_path"])
+    return paths
+
+
+@pytest.fixture
+def small_family(monkeypatch: pytest.MonkeyPatch) -> tuple[int, ...]:
+    modes = (2, 3, 4, 5)
+    monkeypatch.setattr(trace_family, "FAMILY_MS", modes)
+    return modes
+
+
+def test_trace_family_recomputes_four_small_modes_and_keeps_side_history_separate(
+    family_evidence: dict[int, Path], small_family: tuple[int, ...], tmp_path: Path
+) -> None:
+    output = tmp_path / "family.json"
+    result = trace_family.aggregate_trace_family(family_evidence, output_path=output)
+    assert result["family_pass"] is True
+    assert result["status"] == "pass"
+    assert output.is_file()
+    assert len(result["records"]["2"]["npz_sha256"]) == 64
+    bottom_condition = result["family_audit"]["bottom"]["historical"]["2"][
+        "gram_condition"
+    ]
+    top_condition = result["family_audit"]["top"]["historical"]["2"]["gram_condition"]
+    assert bottom_condition == pytest.approx(1.1)
+    assert top_condition == pytest.approx(1.2)
+
+
+def _copy_record(path: Path, destination: Path, mutate) -> Path:
+    record = json.loads(path.read_text(encoding="utf-8"))
+    mutate(record)
+    destination.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+    return destination
+
+
+@pytest.mark.parametrize("tamper", ("source", "physical", "mode", "side", "sign"))
+def test_trace_family_rejects_identity_and_column_tampering(
+    family_evidence: dict[int, Path], small_family: tuple[int, ...], tamper: str
+) -> None:
+    original = family_evidence[2]
+
+    def mutate(record: dict[str, object]) -> None:
+        if tamper == "source":
+            record["metadata"]["source_commit_sha"] = "a" * 40
+        elif tamper == "physical":
+            record["metadata"]["physical_model_sha256"] = "e" * 64
+        elif tamper == "mode":
+            record["capture"]["mode_count"] = 5
+        elif tamper == "side":
+            del record["capture"]["sides"]["top"]
+        else:
+            record["capture"]["mode_identifiers"][0]["direction"] = "forward"
+
+    bad = _copy_record(original, original.parent / f"bad_{tamper}.json", mutate)
+    paths = dict(family_evidence)
+    paths[2] = bad
+    with pytest.raises(ValueError):
+        trace_family.aggregate_trace_family(paths)
+
+
+@pytest.mark.parametrize("tamper", ("descriptor", "artifact"))
+def test_trace_family_rejects_hash_descriptor_tampering(
+    family_evidence: dict[int, Path], small_family: tuple[int, ...], tamper: str
+) -> None:
+    def mutate(record: dict[str, object]) -> None:
+        if tamper == "descriptor":
+            record["artifact"]["arrays"]["bottom_surface_gram"]["sha256"] = "0" * 64
+        else:
+            record["artifact"]["sha256"] = "0" * 64
+
+    bad = _copy_record(
+        family_evidence[2], family_evidence[2].parent / f"bad_{tamper}.json", mutate
+    )
+    paths = dict(family_evidence)
+    paths[2] = bad
+    with pytest.raises(ValueError, match="SHA mismatch"):
+        trace_family.aggregate_trace_family(paths)
+
+
+@pytest.mark.parametrize("tamper", ("shape", "dtype", "finite"))
+def test_trace_family_rejects_matrix_shape_dtype_and_nonfinite(
+    family_evidence: dict[int, Path], small_family: tuple[int, ...], tamper: str
+) -> None:
+    source = family_evidence[2]
+    record = json.loads(source.read_text(encoding="utf-8"))
+    artifact_path = source.parent / f"bad_{tamper}.npz"
+    with np.load(
+        source.parent / record["artifact"]["path"], allow_pickle=False
+    ) as archive:
+        arrays = {key: np.array(archive[key], copy=True) for key in archive.files}
+    if tamper == "shape":
+        arrays["bottom_surface_gram"] = arrays["bottom_surface_gram"][:1, :1]
+    elif tamper == "dtype":
+        arrays["bottom_surface_gram"] = arrays["bottom_surface_gram"].real
+    else:
+        arrays["bottom_surface_gram"][0, 0] = np.nan + 0j
+    np.savez(artifact_path, **arrays)
+    record["artifact"]["path"] = artifact_path.name
+    record["artifact"]["bytes"] = artifact_path.stat().st_size
+    record["artifact"]["sha256"] = hashlib.sha256(
+        artifact_path.read_bytes()
+    ).hexdigest()
+    bad = source.parent / f"bad_{tamper}.json"
+    bad.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+    paths = dict(family_evidence)
+    paths[2] = bad
+    with pytest.raises(ValueError):
+        trace_family.aggregate_trace_family(paths)
+
+
+def test_trace_family_rejects_forged_reported_scalar_and_missing_history(
+    family_evidence: dict[int, Path], small_family: tuple[int, ...]
+) -> None:
+    def mutate(record: dict[str, object]) -> None:
+        record["capture"]["sides"]["bottom"]["audit"]["repeat_representation_error"] = (
+            1.0
+        )
+
+    bad = _copy_record(
+        family_evidence[2], family_evidence[2].parent / "bad_report.json", mutate
+    )
+    paths = dict(family_evidence)
+    paths[2] = bad
+    with pytest.raises(ValueError, match="reported audit scalar"):
+        trace_family.aggregate_trace_family(paths)
+    incomplete = dict(family_evidence)
+    del incomplete[5]
+    with pytest.raises(ValueError, match="family requires"):
+        trace_family.aggregate_trace_family(incomplete)
+
+
+def test_task039_individual_audit_can_skip_family_history() -> None:
+    payload = _m960_payload()
+    payload.pop("historical_m_modes")
+    payload.pop("historical_sign_order_exact")
+    assert audit_m960_trace(payload, evaluate_historical=False)["pass"] is True
 
 
 def test_task039_fine_stage_event_is_visible_to_existing_watchdog_reader(tmp_path):

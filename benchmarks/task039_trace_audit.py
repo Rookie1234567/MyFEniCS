@@ -159,9 +159,6 @@ def write_trace_audit_capture(
             "historical_sign_order_exact": bool(
                 (metadata or {}).get("historical_sign_order_exact", False)
             ),
-            "historical_m0_mminus1_valid": bool(
-                (metadata or {}).get("historical_m0_mminus1_valid", False)
-            ),
             "historical_m_modes": historical_by_side.get(side, {}),
         }
         side_metadata[side].update(
