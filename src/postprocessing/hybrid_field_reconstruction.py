@@ -12,6 +12,7 @@ from mpi4py import MPI
 from petsc4py import PETSc
 
 from ..common.config_3d import SimulationConfig3D
+from ..common.units import VACUUM_C, VACUUM_ETA0
 from ..modes.cross_section_spaces import CrossSectionMesh, CrossSectionSpaces
 from ..modes.mode_classification import BiorthogonalModeBasis
 from ..modes.stable_propagation import TwoSidedPropagation
@@ -50,6 +51,28 @@ def relative_sample_error(actual: np.ndarray, expected: np.ndarray) -> dict[str,
     }
 
 
+def sampled_plane_flux_and_vacuum_energy(
+    electric: np.ndarray, magnetic: np.ndarray
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return sampled +z Poynting flux and vacuum-weighted plane energy proxy."""
+
+    e_field = np.asarray(electric, dtype=np.complex128)
+    h_field = np.asarray(magnetic, dtype=np.complex128)
+    if e_field.shape != h_field.shape or e_field.ndim != 4 or e_field.shape[-1] != 3:
+        raise ValueError("Sampled E/H arrays must have shape (z, y, x, 3).")
+    if not np.all(np.isfinite(e_field)) or not np.all(np.isfinite(h_field)):
+        raise ValueError("Sampled E/H arrays must be finite.")
+    plane_average_axes = (1, 2)
+    flux = 0.5 * np.real(np.cross(e_field, np.conj(h_field))[..., 2])
+    epsilon_0 = 1.0 / (VACUUM_C * VACUUM_ETA0)
+    mu_0 = VACUUM_ETA0 / VACUUM_C
+    energy = 0.25 * (
+        epsilon_0 * np.sum(np.abs(e_field) ** 2, axis=-1)
+        + mu_0 * np.sum(np.abs(h_field) ** 2, axis=-1)
+    )
+    return flux.mean(axis=plane_average_axes), energy.mean(axis=plane_average_axes)
+
+
 def _interpolation_points(space) -> np.ndarray:
     points = space.element.interpolation_points
     return points() if callable(points) else points
@@ -81,6 +104,60 @@ def _validated_traction_beta_pair(
     ):
         raise ValueError("Traction beta arrays must contain only finite values.")
     return positive_array.copy(), negative_array.copy()
+
+
+def element_safe_middle_offsets(
+    axis_plan: object,
+    bottom_z_nm: float = 10.0,
+    top_z_nm: float = 110.0,
+) -> tuple[dict[str, object], dict[str, object]]:
+    """Return midpoint samples from the first and last real middle-z cells."""
+
+    z_values = np.asarray(getattr(axis_plan, "z_values"), dtype=np.float64)
+    if (
+        z_values.ndim != 1
+        or len(z_values) < 3
+        or not np.all(np.isfinite(z_values))
+        or np.any(np.diff(z_values) <= 0.0)
+    ):
+        raise ValueError("axis_plan.z_values must be a finite increasing axis.")
+    bottom = float(bottom_z_nm)
+    top = float(top_z_nm)
+    if not bottom < top:
+        raise ValueError("The middle-z interval must have positive length.")
+    atol = 1.0e-10 * max(abs(bottom), abs(top), 1.0)
+    bottom_matches = np.flatnonzero(
+        np.isclose(z_values, bottom, rtol=0.0, atol=atol)
+    )
+    top_matches = np.flatnonzero(np.isclose(z_values, top, rtol=0.0, atol=atol))
+    if len(bottom_matches) != 1 or len(top_matches) != 1:
+        raise ValueError("Both interfaces must occur exactly once on the z axis.")
+    bottom_cell = int(bottom_matches[0])
+    top_cell = int(top_matches[0]) - 1
+    if (
+        bottom_cell >= len(z_values) - 1
+        or top_cell < 0
+        or bottom_cell >= top_cell
+        or z_values[bottom_cell + 1] > top + atol
+        or z_values[top_cell] < bottom - atol
+    ):
+        raise ValueError("The interface-adjacent middle z cells are unavailable.")
+
+    def sample(cell_index: int, role: str, interface: float) -> dict[str, object]:
+        z_nm = float(0.5 * (z_values[cell_index] + z_values[cell_index + 1]))
+        return {
+            "z_nm": z_nm,
+            "role": role,
+            "element_id": int(cell_index),
+            "slab_index": int(cell_index),
+            "distance_from_interface_nm": float(abs(z_nm - interface)),
+            "source": "mesh_element_interior_midpoint",
+        }
+
+    return (
+        sample(bottom_cell, "bottom_element_safe_offset", bottom),
+        sample(top_cell, "top_element_safe_offset", top),
+    )
 
 
 def _sample_distributed_2d(function, points_xy: np.ndarray) -> np.ndarray:
@@ -341,14 +418,22 @@ class ModalFieldReconstructor:
         )
 
     def _sample_mode_bases(
-        self, points: np.ndarray
+        self,
+        points: np.ndarray,
+        *,
+        magnetic_betas: Sequence[complex] | None = None,
     ) -> tuple[np.ndarray, np.ndarray]:
         electric_rows = []
         magnetic_rows = []
-        magnetic_betas = self._magnetic_traction_betas()
+        if magnetic_betas is None:
+            selected_magnetic_betas = self._magnetic_traction_betas()
+        else:
+            selected_magnetic_betas = np.asarray(magnetic_betas, dtype=np.complex128)
+            if selected_magnetic_betas.shape != (len(self._modes),):
+                raise ValueError("Magnetic beta override must match all modes.")
         for mode, magnetic_beta in zip(
             self._modes,
-            magnetic_betas,
+            selected_magnetic_betas,
             strict=True,
         ):
             mode.right.right_full.copy(self._sample_source.x.petsc_vec)
@@ -449,6 +534,44 @@ class ModalFieldReconstructor:
         yy, xx = np.meshgrid(y_values, x_values, indexing="ij")
         points = np.column_stack((xx.ravel(), yy.ravel()))
         electric_basis, magnetic_basis = self._sample_mode_bases(points)
+        electric = []
+        magnetic = []
+        for value in z_values:
+            coefficients = self.coefficients_at_z(modal_amplitudes, float(value))
+            electric.append(np.einsum("m,mnc->nc", coefficients, electric_basis))
+            magnetic.append(np.einsum("m,mnc->nc", coefficients, magnetic_basis))
+        shape = (len(z_values), len(y_values), len(x_values), 3)
+        return ModalPlaneSamples(
+            x_nm=x_values,
+            y_nm=y_values,
+            z_nm=z_values,
+            electric_V_per_m=(
+                self.cfg.electric_field_scale_V_per_m
+                * np.asarray(electric, dtype=np.complex128).reshape(shape)
+            ),
+            magnetic_A_per_m=np.asarray(magnetic, dtype=np.complex128).reshape(shape),
+        )
+
+    def selected_planes_from_curl_e(
+        self,
+        modal_amplitudes: Sequence[complex],
+        x_nm: Sequence[float],
+        y_nm: Sequence[float],
+        z_nm: Sequence[float],
+    ) -> ModalPlaneSamples:
+        """Opt-in planes whose H uses propagation-beta curl(E), not traction beta."""
+
+        x_values = np.asarray(x_nm, dtype=np.float64)
+        y_values = np.asarray(y_nm, dtype=np.float64)
+        z_values = np.asarray(z_nm, dtype=np.float64)
+        if x_values.ndim != 1 or y_values.ndim != 1 or z_values.ndim != 1:
+            raise ValueError("Selected-plane coordinates must be one-dimensional.")
+        yy, xx = np.meshgrid(y_values, x_values, indexing="ij")
+        points = np.column_stack((xx.ravel(), yy.ravel()))
+        propagation_betas = np.concatenate(self._effective_propagation_betas())
+        electric_basis, magnetic_basis = self._sample_mode_bases(
+            points, magnetic_betas=propagation_betas
+        )
         electric = []
         magnetic = []
         for value in z_values:

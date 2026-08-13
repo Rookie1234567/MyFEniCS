@@ -1,5 +1,6 @@
 """Pure Task39 material and finite-profile contracts (no solver launch)."""
 
+import ast
 import hashlib
 from pathlib import Path
 from math import isclose, pi
@@ -505,6 +506,118 @@ def test_task039_direct_payload_writer_persists_exact_npz_keys(tmp_path: Path):
     ]
     with np.load(tmp_path / descriptor["path"], allow_pickle=False) as archive:
         assert archive.files == descriptor["keys"]
+        assert archive["z_nm"].shape == (5,)
+        assert archive["E_V_per_m"].shape == (5, 20, 40, 3)
+        assert archive["H_A_per_m"].shape == (5, 20, 40, 3)
+
+
+def test_task039_h_diagnostic_writer_is_m480_only_and_hash_bound(tmp_path: Path):
+    from benchmarks.run_task032_phase6_augmented import (
+        _TASK039_H_DIAGNOSTIC_KEYS,
+        _task039_h_diagnostic_enabled,
+        _task039_h_diagnostic_payload,
+    )
+
+    assert _task039_h_diagnostic_enabled("task039_direct", 480)
+    assert not _task039_h_diagnostic_enabled("task039_direct", 240)
+    assert not _task039_h_diagnostic_enabled(None, 480)
+    shape = (7, 20, 40, 3)
+    native = SimpleNamespace(
+        electric_V_per_m=np.zeros(shape, dtype=np.complex128),
+        magnetic_A_per_m=np.zeros(shape, dtype=np.complex128),
+    )
+    curl_e = SimpleNamespace(
+        electric_V_per_m=np.ones(shape, dtype=np.complex128),
+        magnetic_A_per_m=np.ones(shape, dtype=np.complex128),
+    )
+    z_nm = np.asarray([10.0, 15.0, 30.0, 60.0, 90.0, 105.0, 110.0])
+    offsets = {
+        "source": "mesh_element_interior",
+        "bottom": {
+            "role": "bottom_element_safe_offset",
+            "element_id": 1,
+            "slab_index": 1,
+            "z_nm": 15.0,
+            "distance_from_interface_nm": 5.0,
+            "source": "mesh_element_interior_midpoint",
+        },
+        "top": {
+            "role": "top_element_safe_offset",
+            "element_id": 5,
+            "slab_index": 5,
+            "z_nm": 105.0,
+            "distance_from_interface_nm": 5.0,
+            "source": "mesh_element_interior_midpoint",
+        },
+    }
+    descriptor = _task039_h_diagnostic_payload(
+        native_planes=native,
+        curl_e_planes=curl_e,
+        sample_x=np.arange(40, dtype=np.float64),
+        sample_y=np.arange(20, dtype=np.float64),
+        sample_z=z_nm,
+        plane_roles=[
+            "interface_bottom",
+            "bottom_element_safe_offset",
+            "lower_reference",
+            "middle_reference",
+            "upper_reference",
+            "top_element_safe_offset",
+            "interface_top",
+        ],
+        offset_provenance=offsets,
+        run_dir=tmp_path,
+        comm=MPI.COMM_SELF,
+    )
+    assert descriptor["schema"] == "task039.hybrid-h-diagnostic.v1"
+    assert descriptor["curl_source"] == (
+        "complete_reconstructed_field_analytic_or_fe"
+    )
+    assert descriptor["keys"] == list(_TASK039_H_DIAGNOSTIC_KEYS)
+    payload_path = tmp_path / descriptor["path"]
+    metadata_path = tmp_path / descriptor["metadata_path"]
+    assert payload_path.exists()
+    assert metadata_path.exists()
+    assert hashlib.sha256(payload_path.read_bytes()).hexdigest() == descriptor[
+        "sha256"
+    ]
+    assert hashlib.sha256(metadata_path.read_bytes()).hexdigest() == descriptor[
+        "metadata_sha256"
+    ]
+    assert metadata_path.stat().st_size == descriptor["metadata_bytes"]
+    with np.load(payload_path, allow_pickle=False) as archive:
+        assert archive.files == list(_TASK039_H_DIAGNOSTIC_KEYS)
+        assert archive["native_E_V_per_m"].shape == shape
+        assert archive["native_flux"].shape == (7,)
+    assert descriptor["arrays"]["curlE_H_A_per_m"]["finite"] is True
+
+
+def test_task039_h_diagnostic_non_m480_guard_is_writer_free():
+    from benchmarks import run_task032_phase6_augmented as benchmark
+
+    assert not benchmark._task039_h_diagnostic_enabled("task039_direct", 240)
+    tree = ast.parse(inspect.getsource(benchmark.main))
+    writer_calls = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "_task039_h_diagnostic_payload"
+    ]
+    guards = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.If)
+        and isinstance(node.test, ast.Call)
+        and isinstance(node.test.func, ast.Name)
+        and node.test.func.id == "_task039_h_diagnostic_enabled"
+    ]
+    assert len(writer_calls) == 1
+    assert len(guards) == 1
+    guarded_ids = {
+        id(child) for statement in guards[0].body for child in ast.walk(statement)
+    }
+    assert id(writer_calls[0]) in guarded_ids
 
 
 def _task039_direct_record(inventory, payload, internal_unknown_count: int = 240):

@@ -69,8 +69,10 @@ from src.modes.quadratic_beta_eigenproblem import (
 from src.postprocessing.hybrid_field_reconstruction import (
     ModalFieldReconstructor,
     compare_selected_planes_to_reference,
+    element_safe_middle_offsets,
     hybrid_volume_absorption,
     interface_field_continuity,
+    sampled_plane_flux_and_vacuum_energy,
 )
 from src.solvers.hybrid_fem_modal_augmented_direct import (
     build_hybrid_augmented_direct_system,
@@ -803,6 +805,147 @@ def _task039_direct_payload(
                 for key, value in arrays.items()
             },
         }
+    return comm.bcast(descriptor, root=0)
+
+
+def _task039_h_diagnostic_enabled(
+    canonical_export_prefix: str | None, requested_modes: int
+) -> bool:
+    return canonical_export_prefix == "task039_direct" and requested_modes == 480
+
+
+_TASK039_H_DIAGNOSTIC_KEYS = (
+    "x_nm",
+    "y_nm",
+    "z_nm",
+    "native_E_V_per_m",
+    "native_H_A_per_m",
+    "curlE_E_V_per_m",
+    "curlE_H_A_per_m",
+    "native_flux",
+    "curlE_flux",
+    "native_energy",
+    "curlE_energy",
+)
+
+
+def _task039_h_diagnostic_payload(
+    *,
+    native_planes: Any,
+    curl_e_planes: Any,
+    sample_x: np.ndarray,
+    sample_y: np.ndarray,
+    sample_z: np.ndarray,
+    plane_roles: list[str],
+    offset_provenance: Mapping[str, Any],
+    run_dir: Path,
+    comm: MPI.Intracomm,
+) -> dict[str, Any]:
+    """Persist the opt-in native/curl-E seven-plane diagnostic payload."""
+
+    descriptor = None
+    if comm.rank == 0:
+        arrays = {
+            "x_nm": np.asarray(sample_x, dtype=np.float64),
+            "y_nm": np.asarray(sample_y, dtype=np.float64),
+            "z_nm": np.asarray(sample_z, dtype=np.float64),
+            "native_E_V_per_m": np.asarray(
+                native_planes.electric_V_per_m, dtype=np.complex128
+            ),
+            "native_H_A_per_m": np.asarray(
+                native_planes.magnetic_A_per_m, dtype=np.complex128
+            ),
+            "curlE_E_V_per_m": np.asarray(
+                curl_e_planes.electric_V_per_m, dtype=np.complex128
+            ),
+            "curlE_H_A_per_m": np.asarray(
+                curl_e_planes.magnetic_A_per_m, dtype=np.complex128
+            ),
+        }
+        native_flux, native_energy = sampled_plane_flux_and_vacuum_energy(
+            arrays["native_E_V_per_m"], arrays["native_H_A_per_m"]
+        )
+        curl_flux, curl_energy = sampled_plane_flux_and_vacuum_energy(
+            arrays["curlE_E_V_per_m"], arrays["curlE_H_A_per_m"]
+        )
+        arrays.update(
+            native_flux=native_flux,
+            curlE_flux=curl_flux,
+            native_energy=native_energy,
+            curlE_energy=curl_energy,
+        )
+        field_shape = (7, 20, 40, 3)
+        if any(
+            arrays[key].shape != field_shape
+            for key in (
+                "native_E_V_per_m",
+                "native_H_A_per_m",
+                "curlE_E_V_per_m",
+                "curlE_H_A_per_m",
+            )
+        ):
+            raise RuntimeError("Task039 H diagnostic fields have an unexpected shape.")
+        if (
+            arrays["x_nm"].shape != (40,)
+            or arrays["y_nm"].shape != (20,)
+            or len(plane_roles) != 7
+            or len(arrays["z_nm"]) != 7
+        ):
+            raise RuntimeError("Task039 H diagnostic requires seven ordered planes.")
+        if (
+            not np.isclose(arrays["z_nm"][0], 10.0)
+            or not np.isclose(arrays["z_nm"][-1], 110.0)
+            or not np.all(np.diff(arrays["z_nm"]) > 0.0)
+        ):
+            raise RuntimeError("Task039 H diagnostic z planes must be increasing.")
+        if any(not np.all(np.isfinite(value)) for value in arrays.values()):
+            raise RuntimeError("Task039 H diagnostic payload contains non-finite data.")
+        if offset_provenance.get("source") != "mesh_element_interior":
+            raise RuntimeError("Task039 H diagnostic offset provenance is invalid.")
+        run_dir.mkdir(parents=True, exist_ok=True)
+        payload_path = run_dir / "task039_h_diagnostic_payload.npz"
+        metadata_path = run_dir / "task039_h_diagnostic_payload.json"
+        np.savez(payload_path, **arrays)
+        descriptor = {
+            "schema": "task039.hybrid-h-diagnostic.v1",
+            "path": payload_path.name,
+            "metadata_path": metadata_path.name,
+            "sha256": _sha256(payload_path),
+            "bytes": payload_path.stat().st_size,
+            "keys": list(_TASK039_H_DIAGNOSTIC_KEYS),
+            "plane_roles": list(plane_roles),
+            "offset_provenance": dict(offset_provenance),
+            "curl_source": "complete_reconstructed_field_analytic_or_fe",
+            "ordinary_path_changed": False,
+            "solver_equation_unchanged": True,
+            "flux": {
+                "formula": "0.5*Re((E x conj(H))_z)",
+                "units": "W_per_m2",
+                "sampling": "mean over x/y samples per plane",
+            },
+            "energy": {
+                "formula": "0.25*(epsilon0*|E|^2+mu0*|H|^2)",
+                "units": "J_per_m3",
+                "kind": "vacuum_weighted_field_energy_proxy",
+                "volume_integral": False,
+            },
+            "arrays": {
+                key: {
+                    "shape": list(value.shape),
+                    "dtype": str(value.dtype),
+                    "bytes": int(value.nbytes),
+                    "sha256": _task039_array_sha256(value),
+                    "finite": True,
+                }
+                for key, value in arrays.items()
+            },
+        }
+        metadata_path.write_text(
+            json.dumps(descriptor, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        descriptor["metadata_sha256"] = _sha256(metadata_path)
+        descriptor["metadata_bytes"] = metadata_path.stat().st_size
     return comm.bcast(descriptor, root=0)
 
 
@@ -1968,6 +2111,64 @@ def main(
             sample_y,
             sample_z,
         )
+        task039_h_diagnostic_payload = None
+        if _task039_h_diagnostic_enabled(
+            canonical_export_prefix, args.requested_modes
+        ):
+            bottom_offset, top_offset = element_safe_middle_offsets(
+                cross_section.axis_plan,
+                args.bottom_interface_nm,
+                args.top_interface_nm,
+            )
+            diagnostic_z = np.asarray(
+                [
+                    args.bottom_interface_nm,
+                    bottom_offset["z_nm"],
+                    30.0,
+                    60.0,
+                    90.0,
+                    top_offset["z_nm"],
+                    args.top_interface_nm,
+                ],
+                dtype=np.float64,
+            )
+            diagnostic_roles = [
+                "interface_bottom",
+                "bottom_element_safe_offset",
+                "lower_reference",
+                "middle_reference",
+                "upper_reference",
+                "top_element_safe_offset",
+                "interface_top",
+            ]
+            diagnostic_provenance = {
+                "source": "mesh_element_interior",
+                "bottom": bottom_offset,
+                "top": top_offset,
+            }
+            native_diagnostic = reconstructor.selected_planes(
+                solution.modal_amplitudes,
+                sample_x,
+                sample_y,
+                diagnostic_z,
+            )
+            curl_e_diagnostic = reconstructor.selected_planes_from_curl_e(
+                solution.modal_amplitudes,
+                sample_x,
+                sample_y,
+                diagnostic_z,
+            )
+            task039_h_diagnostic_payload = _task039_h_diagnostic_payload(
+                native_planes=native_diagnostic,
+                curl_e_planes=curl_e_diagnostic,
+                sample_x=sample_x,
+                sample_y=sample_y,
+                sample_z=diagnostic_z,
+                plane_roles=diagnostic_roles,
+                offset_provenance=diagnostic_provenance,
+                run_dir=args.output.parent,
+                comm=comm,
+            )
         task039_mark_stage(
             "field_reconstruction_peak",
             detail={"marker_semantics": "lifecycle boundary, not an RSS/PSS/USS peak"},
@@ -2073,6 +2274,10 @@ def main(
         }
         if task039_direct_payload is not None:
             physical_fields["task039_direct_payload"] = task039_direct_payload
+        if task039_h_diagnostic_payload is not None:
+            physical_fields["task039_h_diagnostic_payload"] = (
+                task039_h_diagnostic_payload
+            )
         timings["physical_field_reconstruction"] = _max_elapsed(comm, started)
         progress(
             "Task32 Phase6: physical interface/absorption/selected-plane reconstruction complete"
