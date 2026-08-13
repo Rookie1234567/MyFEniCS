@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import inspect
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -242,6 +243,24 @@ def test_m6b_stream_writer_does_not_deduplicate_neighborhood_factors(
     assert factors[0]["lu_path"] != factors[1]["lu_path"]
     assert factors[0]["pivot_path"] != factors[1]["pivot_path"]
     assert payload["audit"]["factor_count"] == 2
+
+
+def test_m6b_rhs_canonical_writer_uses_three_argument_api():
+    signature = inspect.signature(
+        __import__(
+            "src.solvers.hcurl_canonical_vector_dolfinx",
+            fromlist=["iter_canonical_full_fe_dual_packets"],
+        ).iter_canonical_full_fe_dual_packets
+    )
+    assert list(signature.parameters)[0:3] == [
+        "function_space",
+        "mpc",
+        "recovered_vec",
+    ]
+    assert list(signature.parameters)[3] == "geometry_tolerance"
+    source = inspect.getsource(runner._run_m6b_online_worker)
+    assert "dual_iterator(function_space, floquet.mpc, rhs_vec)," in source
+    assert "dual_iterator(function_space, floquet.mpc, rhs_vec, floquet)" not in source
 
 
 def test_m6b_nonhermitian_pc_uses_conjugate_omega_and_one_shifted_action(tmp_path: Path):

@@ -1967,7 +1967,7 @@ def _run_m6b_online_worker(run_dir: Path) -> int:
                 run_dir,
                 "mpi1",
                 "candidate_physical_rhs_dual",
-                dual_iterator(function_space, floquet.mpc, rhs_vec, floquet),
+                dual_iterator(function_space, floquet.mpc, rhs_vec),
                 rank=comm.rank,
                 mpi_size=comm.size,
                 ownership_range=ownership,
