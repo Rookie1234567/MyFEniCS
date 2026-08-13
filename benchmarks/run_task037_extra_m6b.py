@@ -67,7 +67,7 @@ M6B_PREDICTED_LIVE_SET_BYTES = sum(
         M6B_FIXED_RUNTIME_RESERVE_BYTES,
     )
 )
-M6B_W1_SCHEMA = "task037.extra.m6b.sparse-range-builder.v1"
+M6B_W1_SCHEMA = "task037.extra.m6b.sparse-range-builder.v2"
 M6B_W1_BASE_PREDICTED_LIVE_SET_BYTES = 1_657_665_813
 M6B_W1_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_750_000_000
 M6B_W1_BUILDER_RSS_LIMIT_BYTES = 1_500_000_000
@@ -786,6 +786,55 @@ def _m6b_emit(stream: Any, phase: str, event: str, started: float, **extra: Any)
     print(json.dumps(payload, sort_keys=True), flush=True)
 
 
+def _m6b_w1_cache_deltas(
+    target_before: Mapping[str, Any],
+    target_after_forward: Mapping[str, Any],
+    target_after_adjoint: Mapping[str, Any],
+    target_after_surface: Mapping[str, Any],
+    target_final: Mapping[str, Any],
+) -> dict[str, dict[str, list[dict[str, Any]]]]:
+    """Classify W1 target-cache content changes between fixed lifecycle points."""
+
+    def delta(before: Mapping[str, Any], after: Mapping[str, Any]) -> dict[str, list[dict[str, Any]]]:
+        before_by_path = {
+            item["path"]: {
+                "path": item["path"],
+                "bytes": int(item["bytes"]),
+                "sha256": item["sha256"],
+            }
+            for item in before["entries"]
+        }
+        after_by_path = {
+            item["path"]: {
+                "path": item["path"],
+                "bytes": int(item["bytes"]),
+                "sha256": item["sha256"],
+            }
+            for item in after["entries"]
+        }
+        added = [after_by_path[path] for path in sorted(after_by_path.keys() - before_by_path.keys())]
+        removed = [before_by_path[path] for path in sorted(before_by_path.keys() - after_by_path.keys())]
+        changed = [
+            {
+                "path": path,
+                "before": before_by_path[path],
+                "after": after_by_path[path],
+            }
+            for path in sorted(before_by_path.keys() & after_by_path.keys())
+            if before_by_path[path] != after_by_path[path]
+        ]
+        return {"added": added, "removed": removed, "changed": changed}
+
+    return {
+        "forward_delta": delta(target_before, target_after_forward),
+        "adjoint_staging_delta": delta(
+            target_after_forward, target_after_adjoint
+        ),
+        "surface_delta": delta(target_after_adjoint, target_after_surface),
+        "final_delta": delta(target_after_surface, target_final),
+    }
+
+
 def _run_m6b_w1_builder(run_dir: Path, jit_cache_source: Path) -> int:
     """Build the W1 sparse ``Z``/``A Z`` carrier without running a screen."""
 
@@ -796,6 +845,7 @@ def _run_m6b_w1_builder(run_dir: Path, jit_cache_source: Path) -> int:
 
     import numpy as np
     from mpi4py import MPI
+    import ufl
 
     h2b = __import__("benchmarks.run_task037_extra_h2b", fromlist=["*"])
     m6a = __import__("benchmarks.run_task037_extra_m6", fromlist=["*"])
@@ -861,7 +911,7 @@ def _run_m6b_w1_builder(run_dir: Path, jit_cache_source: Path) -> int:
         inventory_sha = hashlib.sha256(
             h2b._canonical_json({"entries": content_entries})
         ).hexdigest()
-        return {"entries": entries, "inventory_sha256": inventory_sha}
+        return {"entries": content_entries, "inventory_sha256": inventory_sha}
 
     emit("cache_ready", source=str(jit_cache_source))
     source_cache_before = cache_record(jit_cache_source)
@@ -869,9 +919,9 @@ def _run_m6b_w1_builder(run_dir: Path, jit_cache_source: Path) -> int:
     if target_cache_before["inventory_sha256"] != source_cache_before["inventory_sha256"]:
         raise ValueError("W1 copied JIT cache differs from source")
     cfg = mesh_data = function_space = floquet = None
-    physical_action = dtn_action = outer_mat = outer_context = None
+    physical_action = adjoint_physical_action = dtn_action = outer_mat = outer_context = None
     surface_assemblers = None
-    volume_ufl = epsilon = abs_epsilon = beta = None
+    volume_ufl = adjoint_ufl = epsilon = abs_epsilon = beta = None
     template = None
     try:
         cfg, mesh_data, function_space, floquet, modes = m6a._production_objects(
@@ -887,15 +937,45 @@ def _run_m6b_w1_builder(run_dir: Path, jit_cache_source: Path) -> int:
             task037_extra_h1r2=True,
             jit_options=h2b._expected_jit_options(cache_dir),
         )
+        target_cache_after_forward = cache_record(cache_dir)
+        source_cache_after_forward = cache_record(jit_cache_source)
+        if (
+            target_cache_after_forward["inventory_sha256"]
+            != target_cache_before["inventory_sha256"]
+            or source_cache_after_forward["inventory_sha256"]
+            != source_cache_before["inventory_sha256"]
+        ):
+            raise ValueError("W1 physical forward action changed the JIT cache")
+        adjoint_ufl = ufl.adjoint(physical_ufl)
+        adjoint_physical_action = build_task037_extra_h1r2_mpc_action(
+            adjoint_ufl,
+            floquet.mpc,
+            task037_extra_h1r2=True,
+            jit_options=h2b._expected_jit_options(cache_dir),
+        )
+        target_cache_after_adjoint = cache_record(cache_dir)
+        source_cache_after_adjoint = cache_record(jit_cache_source)
+        if source_cache_after_adjoint["inventory_sha256"] != source_cache_before[
+            "inventory_sha256"
+        ]:
+            raise ValueError("W1 adjoint action changed the source JIT cache")
         surface_assemblers = m6a._surface_assemblers(
             function_space, mesh_data, cfg, modes, cache_dir
         )
-        target_cache_after_forms = cache_record(cache_dir)
-        if target_cache_after_forms["inventory_sha256"] != target_cache_before["inventory_sha256"]:
-            raise ValueError("W1 isolated JIT cache changed during form construction")
-        if cache_record(jit_cache_source)["inventory_sha256"] != source_cache_before["inventory_sha256"]:
-            raise ValueError("W1 JIT cache source changed during form construction")
-        emit("forms_ready", cache_inventory_sha256=target_cache_after_forms["inventory_sha256"])
+        target_cache_after_surface = cache_record(cache_dir)
+        source_cache_after_surface = cache_record(jit_cache_source)
+        if (
+            target_cache_after_surface["inventory_sha256"]
+            != target_cache_after_adjoint["inventory_sha256"]
+            or source_cache_after_surface["inventory_sha256"]
+            != source_cache_before["inventory_sha256"]
+        ):
+            raise ValueError("W1 surface forms changed the frozen JIT cache")
+        emit(
+            "forms_ready",
+            cache_inventory_sha256=target_cache_after_surface["inventory_sha256"],
+            adjoint_form_staged=True,
+        )
         carrier = build_fullspace_dtn_carrier_from_surface(
             modes,
             surface_assemblers,
@@ -910,8 +990,117 @@ def _run_m6b_w1_builder(run_dir: Path, jit_cache_source: Path) -> int:
             owned_rows=M6B_GLOBAL_ROWS,
             global_rows=M6B_GLOBAL_ROWS,
             comm=MPI.COMM_WORLD,
+            volume_hermitian_action=adjoint_physical_action,
         )
         template = outer_mat.createVecRight()
+        ownership = tuple(int(value) for value in template.getOwnershipRange())
+        local_rows = ownership[1] - ownership[0]
+
+        def apply_local(values: np.ndarray, *, hermitian: bool = False) -> np.ndarray:
+            values = np.asarray(values, dtype=np.complex128)
+            if (
+                values.ndim != 1
+                or values.size != local_rows
+                or not np.all(np.isfinite(values))
+            ):
+                raise ValueError("W1 outer probe has an invalid owned layout")
+            source = template.duplicate()
+            result = template.duplicate()
+            try:
+                np.copyto(source.getArray(), values)
+                if hermitian:
+                    outer_context.apply_hermitian(source, result)
+                else:
+                    outer_mat.mult(source, result)
+                return np.array(
+                    result.getArray(readonly=True),
+                    dtype=np.complex128,
+                    copy=True,
+                )
+            finally:
+                result.destroy()
+                source.destroy()
+
+        probe_index = np.arange(local_rows, dtype=np.float64)
+        x_values = 0.125 + 1.0e-6 * probe_index + 1j * (
+            0.25 - 2.0e-6 * probe_index
+        )
+        y_values = -0.375 + 1.5e-6 * probe_index + 1j * (
+            0.5 - 1.0e-6 * probe_index
+        )
+        x_before = x_values.copy()
+        y_before = y_values.copy()
+        forward_values = apply_local(x_values)
+        adjoint_values = apply_local(y_values, hermitian=True)
+        adjoint_repeat = apply_local(y_values, hermitian=True)
+        lhs = np.vdot(forward_values, y_values)
+        rhs = np.vdot(x_values, adjoint_values)
+        inner_product_defect = float(
+            abs(lhs - rhs) / max(abs(lhs), abs(rhs), np.finfo(float).tiny)
+        )
+        adjoint_finite = bool(
+            np.all(np.isfinite(forward_values))
+            and np.all(np.isfinite(adjoint_values))
+            and np.all(np.isfinite(adjoint_repeat))
+        )
+        adjoint_repeat_equal = bool(np.array_equal(adjoint_values, adjoint_repeat))
+        probe_sources_unchanged = bool(
+            np.array_equal(x_values, x_before)
+            and np.array_equal(y_values, y_before)
+        )
+        adjoint_identity = {
+            "schema": "task037.extra.m6b.w1.adjoint-identity.v1",
+            "relative_inner_product_defect": inner_product_defect,
+            "limit": 1.0e-11,
+            "finite": adjoint_finite,
+            "repeat_equal": adjoint_repeat_equal,
+            "source_unchanged": probe_sources_unchanged,
+            "forward_action_count": 1,
+            "adjoint_action_count": 1,
+            "adjoint_repeat_action_count": 1,
+            "adjoint_total_action_count": 2,
+            "outer_forward_apply_count": int(outer_context.apply_count),
+            "outer_adjoint_apply_count": int(
+                outer_context.audit["hermitian_apply_count"]
+            ),
+            "volume_forward_action_count": int(physical_action.audit["apply_count"]),
+            "volume_adjoint_action_count": int(
+                adjoint_physical_action.audit["apply_count"]
+            ),
+            "lhs_abs": float(abs(lhs)),
+            "rhs_abs": float(abs(rhs)),
+            "lhs_real": float(lhs.real),
+            "lhs_imag": float(lhs.imag),
+            "rhs_real": float(rhs.real),
+            "rhs_imag": float(rhs.imag),
+            "repeat_max_abs_diff": float(
+                np.max(np.abs(adjoint_values - adjoint_repeat))
+            ),
+        }
+        if not (
+            adjoint_finite
+            and adjoint_repeat_equal
+            and probe_sources_unchanged
+            and inner_product_defect <= adjoint_identity["limit"]
+        ):
+            raise ValueError("W1 full-space adjoint identity Gate failed")
+        emit(
+            "adjoint_identity_ready",
+            relative_inner_product_defect=inner_product_defect,
+            forward_action_count=1,
+            adjoint_action_count=1,
+            repeat_action_count=1,
+        )
+        del (
+            probe_index,
+            x_values,
+            y_values,
+            x_before,
+            y_before,
+            forward_values,
+            adjoint_values,
+            adjoint_repeat,
+        )
 
         def basis_progress(completed: int, total: int) -> None:
             if completed % 5 == 0 or completed == total:
@@ -939,33 +1128,24 @@ def _run_m6b_w1_builder(run_dir: Path, jit_cache_source: Path) -> int:
         if basis_manifest_sha256 != M6B_W1_W0_BASIS_MANIFEST_SHA256:
             raise ValueError("W1 basis manifest differs from frozen W0 authority")
         emit("basis_ready", completed=75, total=75, basis_manifest_sha256=basis_manifest_sha256)
-        ownership = tuple(int(value) for value in template.getOwnershipRange())
 
         action_count = [0]
 
         def apply_column(vector: Any) -> np.ndarray:
-            z = template.duplicate()
-            represented = template.duplicate()
-            try:
-                local = z.getArray()
-                local[:] = 0.0
-                rows = np.asarray(vector.indices, dtype=np.int64)
-                start, end = ownership
-                if rows.size and (rows.min() < start or rows.max() >= end):
-                    raise ValueError("W1 fixed basis row is outside ownership")
-                local[rows - start] = np.asarray(vector.values, dtype=np.complex128)
-                outer_mat.mult(z, represented)
-                action_count[0] += 1
-                if action_count[0] % 5 == 0 or action_count[0] == 75:
-                    emit("az_progress", completed=action_count[0], total=75)
-                return np.array(
-                    represented.getArray(readonly=True),
-                    dtype=np.complex128,
-                    copy=True,
-                )
-            finally:
-                represented.destroy()
-                z.destroy()
+            local = np.zeros(local_rows, dtype=np.complex128)
+            rows = np.asarray(vector.indices, dtype=np.int64)
+            start, end = ownership
+            if rows.size and (rows.min() < start or rows.max() >= end):
+                raise ValueError("W1 fixed basis row is outside ownership")
+            local[rows - start] = np.asarray(vector.values, dtype=np.complex128)
+            represented = apply_local(local)
+            action_count[0] += 1
+            if action_count[0] % 5 == 0 or action_count[0] == 75:
+                emit("az_progress", completed=action_count[0], total=75)
+            return represented
+
+        def apply_hermitian_column(values: np.ndarray) -> np.ndarray:
+            return apply_local(values, hermitian=True)
 
         identity = {
             "source_sha": h2b._light_source()["source_commit_full_sha"],
@@ -986,38 +1166,115 @@ def _run_m6b_w1_builder(run_dir: Path, jit_cache_source: Path) -> int:
         carrier = SparseM6BRangeCarrier.from_action(
             basis,
             apply_column,
+            hermitian_action=apply_hermitian_column,
             global_rows=M6B_GLOBAL_ROWS,
             ownership_range=ownership,
             comm=MPI.COMM_WORLD,
             identity=identity,
         )
-        validate_w0_authority(identity, carrier.audit["v_column_sha256_aggregate"])
+        validate_w0_authority(identity, carrier.audit["az_column_sha256_aggregate"])
         emit(
             "az_ready",
             completed=75,
             total=75,
-            v_column_sha256_aggregate=carrier.audit["v_column_sha256_aggregate"],
+            az_column_sha256_aggregate=carrier.audit["az_column_sha256_aggregate"],
         )
         manifest_path = carrier.save(run_dir / "sparse_range_store")
         del carrier
         gc.collect()
-        loaded = load_sparse_m6b_range_carrier(manifest_path)
+        loaded = load_sparse_m6b_range_carrier(
+            manifest_path,
+            hermitian_action=apply_hermitian_column,
+        )
         audit = loaded.audit
         final_cache = cache_record(cache_dir)
         source_cache_after = cache_record(jit_cache_source)
         if (
-            final_cache["inventory_sha256"] != target_cache_before["inventory_sha256"]
-            or source_cache_after["inventory_sha256"] != source_cache_before["inventory_sha256"]
+            final_cache["inventory_sha256"]
+            != target_cache_after_surface["inventory_sha256"]
+            or source_cache_after["inventory_sha256"]
+            != source_cache_before["inventory_sha256"]
         ):
             raise ValueError("W1 JIT cache changed after form construction")
+        cache_deltas = _m6b_w1_cache_deltas(
+            target_cache_before,
+            target_cache_after_forward,
+            target_cache_after_adjoint,
+            target_cache_after_surface,
+            final_cache,
+        )
         emit("store_ready", manifest=str(manifest_path))
         predicted = int(
             M6B_W1_BASE_PREDICTED_LIVE_SET_BYTES
             + audit["retained_total_bytes"]
             + audit["bounded_work_bytes"]
+            + int(adjoint_physical_action.audit["retained_numeric_payload_global_max_bytes"])
+            + int(adjoint_physical_action.audit["per_apply_bounded_temporary_bytes"])
         )
         if predicted > M6B_W1_PREDICTED_LIVE_SET_LIMIT_BYTES:
             raise ValueError("W1 derived live-set prediction exceeds fixed limit")
+        full_vector_bytes = int(local_rows * np.dtype(np.complex128).itemsize)
+        dtn_work_bytes = full_vector_bytes
+        carrier_bounded_work_bytes = int(audit["bounded_work_bytes"])
+        adjoint_packed_work_bytes = int(
+            adjoint_physical_action.audit["per_apply_bounded_temporary_bytes"]
+        )
+        phase_pack_incremental = int(
+            2 * full_vector_bytes + adjoint_packed_work_bytes
+        )
+        phase_copy_incremental = int(3 * full_vector_bytes)
+        phase_post_incremental = carrier_bounded_work_bytes
+        worst_phase_incremental = max(
+            phase_pack_incremental,
+            phase_copy_incremental,
+            phase_post_incremental,
+        )
+        predicted_incremental_work_bytes = int(
+            carrier_bounded_work_bytes + adjoint_packed_work_bytes
+        )
+        incremental_work_excess_over_worst_phase_bytes = int(
+            predicted_incremental_work_bytes - worst_phase_incremental
+        )
+        reserve_remaining_after_dtn_bytes = int(
+            M6B_FIXED_RUNTIME_RESERVE_BYTES - dtn_work_bytes
+        )
+        lifecycle_basis = {
+            "basis": "derived_not_measured",
+            "full_owned_vector_bytes": full_vector_bytes,
+            "callback_petsc_source_target_bytes": int(2 * full_vector_bytes),
+            "callback_return_ndarray_copy_bytes": full_vector_bytes,
+            "callback_peak_transient_bytes": int(3 * full_vector_bytes),
+            "post_callback_adjoint_ndarray_and_correction_bytes": int(
+                2 * full_vector_bytes
+            ),
+            "dtn_fe_target_work_bytes": dtn_work_bytes,
+            "dtn_fe_target_work_coverage": "fixed_runtime_reserve_bytes",
+            "dtn_fe_target_work_covered": (
+                dtn_work_bytes <= M6B_FIXED_RUNTIME_RESERVE_BYTES
+            ),
+            "reserve_remaining_after_dtn_bytes": reserve_remaining_after_dtn_bytes,
+            "carrier_bounded_work_bytes": carrier_bounded_work_bytes,
+            "adjoint_packed_work_bytes": adjoint_packed_work_bytes,
+            "phase_pack_incremental": phase_pack_incremental,
+            "phase_copy_incremental": phase_copy_incremental,
+            "phase_post_incremental": phase_post_incremental,
+            "worst_phase_incremental": worst_phase_incremental,
+            "predicted_incremental_work_bytes": predicted_incremental_work_bytes,
+            "incremental_work_excess_over_worst_phase_bytes": (
+                incremental_work_excess_over_worst_phase_bytes
+            ),
+            "incremental_formula_is_conservative": True,
+            "dtn_not_in_incremental_formula": True,
+            "worst_overlap_formula": (
+                "worst_phase_incremental=max(phase_pack_incremental,"
+                "phase_copy_incremental,phase_post_incremental); "
+                "predicted_incremental_work_bytes=phase_post_incremental+"
+                "adjoint_packed_work_bytes; dtn_fe_target_work_bytes is "
+                "covered by base fixed_runtime_reserve_bytes and is not added "
+                "to the incremental formula"
+            ),
+            "post_callback_vectors_not_simultaneous_with_callback_vectors": True,
+        }
         summary = {
             "schema": M6B_W1_SCHEMA,
             "status": "measurement_complete",
@@ -1043,16 +1300,55 @@ def _run_m6b_w1_builder(run_dir: Path, jit_cache_source: Path) -> int:
                 "target": str(cache_dir),
                 "source_before": source_cache_before,
                 "target_before": target_cache_before,
-                "target_after": final_cache,
-                "source_after": source_cache_after,
-                "source_unchanged": source_cache_after == source_cache_before,
-                "target_unchanged": final_cache == target_cache_before,
+                "target_after_forward": target_cache_after_forward,
+                "target_after_adjoint": target_cache_after_adjoint,
+                "target_after_surface": target_cache_after_surface,
+                "target_final": final_cache,
+                "source_after_forward": source_cache_after_forward,
+                "source_after_adjoint": source_cache_after_adjoint,
+                "source_after_surface": source_cache_after_surface,
+                "source_final": source_cache_after,
+                "forward_cache_reused": (
+                    target_cache_after_forward == target_cache_before
+                ),
+                "adjoint_staging_changed_cache": (
+                    target_cache_after_adjoint != target_cache_after_forward
+                ),
+                "surface_cache_reused_after_adjoint": (
+                    target_cache_after_surface == target_cache_after_adjoint
+                ),
+                "target_frozen_unchanged": (
+                    final_cache == target_cache_after_surface
+                ),
+                "source_unchanged": all(
+                    record == source_cache_before
+                    for record in (
+                        source_cache_after_forward,
+                        source_cache_after_adjoint,
+                        source_cache_after_surface,
+                        source_cache_after,
+                    )
+                ),
+                "forward_delta": cache_deltas["forward_delta"],
+                "adjoint_staging_delta": cache_deltas["adjoint_staging_delta"],
+                "surface_delta": cache_deltas["surface_delta"],
+                "final_delta": cache_deltas["final_delta"],
                 "inventory_sha256": final_cache["inventory_sha256"],
             },
+            "adjoint_identity": adjoint_identity,
+            "memory_lifecycle": lifecycle_basis,
             "predicted_live_set": {
                 "base_bytes": M6B_W1_BASE_PREDICTED_LIVE_SET_BYTES,
                 "coarse_retained_bytes": audit["retained_total_bytes"],
                 "coarse_bounded_work_bytes": audit["bounded_work_bytes"],
+                "adjoint_volume_action_payload_bytes": int(
+                    adjoint_physical_action.audit["retained_numeric_payload_global_max_bytes"]
+                ),
+                "adjoint_volume_action_work_bytes": int(
+                    adjoint_physical_action.audit["per_apply_bounded_temporary_bytes"]
+                ),
+                "adjoint_identity_forward_count": 1,
+                "adjoint_identity_adjoint_count": 2,
                 "predicted_bytes": predicted,
                 "limit_bytes": M6B_W1_PREDICTED_LIVE_SET_LIMIT_BYTES,
                 "gate": True,
@@ -1076,12 +1372,14 @@ def _run_m6b_w1_builder(run_dir: Path, jit_cache_source: Path) -> int:
             dtn_action.destroy()
         if physical_action is not None:
             physical_action.destroy()
+        if adjoint_physical_action is not None:
+            adjoint_physical_action.destroy()
         if surface_assemblers is not None:
             for assembler in surface_assemblers.values():
                 destroy = getattr(assembler, "destroy", None)
                 if destroy is not None:
                     destroy()
-        del volume_ufl, epsilon, abs_epsilon, beta
+        del volume_ufl, adjoint_ufl, epsilon, abs_epsilon, beta
         gc.collect()
 
 

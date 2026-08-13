@@ -503,17 +503,31 @@ class M6BShiftedPCContext:
 class M6BOuterMatPythonContext:
     """One matrix-free outer ``A_volume + A_DtN`` MatPython action."""
 
-    def __init__(self, volume_action: Any, dtn_action: Any, *, owned_rows: int, global_rows: int) -> None:
+    def __init__(
+        self,
+        volume_action: Any,
+        dtn_action: Any,
+        *,
+        owned_rows: int,
+        global_rows: int,
+        volume_hermitian_action: Any | None = None,
+    ) -> None:
         if not callable(getattr(volume_action, "mult", None)):
             raise TypeError("M6B volume action must provide mult")
         if not callable(getattr(dtn_action, "apply", None)):
             raise TypeError("M6B DtN action must provide apply")
+        if volume_hermitian_action is not None and not callable(
+            getattr(volume_hermitian_action, "mult", None)
+        ):
+            raise TypeError("M6B adjoint volume action must provide mult")
         self._volume_action = volume_action
+        self._volume_hermitian_action = volume_hermitian_action
         self._dtn_action = dtn_action
         self._owned_rows = int(owned_rows)
         self._global_rows = int(global_rows)
         self._dtn_work: PETSc.Vec | None = None
         self._apply_count = 0
+        self._hermitian_apply_count = 0
 
     def mult(self, _matrix: PETSc.Mat, source: PETSc.Vec, target: PETSc.Vec) -> None:
         if source.getLocalSize() != self._owned_rows or source.getSize() != self._global_rows:
@@ -542,6 +556,41 @@ class M6BOuterMatPythonContext:
         del volume_result, volume_values, dtn_values, target_values
         self._apply_count += 1
 
+    def apply_hermitian(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        if self._volume_hermitian_action is None:
+            raise RuntimeError("M6B adjoint volume action is not configured")
+        if not callable(getattr(self._dtn_action, "apply_hermitian", None)):
+            raise RuntimeError("M6B DtN action does not provide apply_hermitian")
+        if source.getLocalSize() != self._owned_rows or source.getSize() != self._global_rows:
+            raise ValueError("M6B adjoint outer source layout is invalid")
+        if target.getLocalSize() != self._owned_rows:
+            raise ValueError("M6B adjoint outer target layout is invalid")
+        if self._dtn_work is None:
+            self._dtn_work = source.duplicate()
+        volume_result = self._volume_hermitian_action.mult(source)
+        volume_values = np.asarray(
+            volume_result.getArray(readonly=True), dtype=np.complex128
+        )
+        if volume_values.size != self._owned_rows or not np.all(np.isfinite(volume_values)):
+            raise ValueError("M6B adjoint volume action returned an invalid layout")
+        target_values = target.getArray()
+        np.copyto(target_values, volume_values)
+        self._dtn_action.apply_hermitian(source, self._dtn_work)
+        dtn_values = np.asarray(
+            self._dtn_work.getArray(readonly=True), dtype=np.complex128
+        )
+        if dtn_values.size != self._owned_rows or not np.all(np.isfinite(dtn_values)):
+            raise ValueError("M6B adjoint DtN action returned an invalid layout")
+        target_values += dtn_values
+        target.assemble()
+        del volume_result, volume_values, dtn_values, target_values
+        self._hermitian_apply_count += 1
+
+    def multHermitian(
+        self, _matrix: PETSc.Mat, source: PETSc.Vec, target: PETSc.Vec
+    ) -> None:
+        self.apply_hermitian(source, target)
+
     @property
     def apply_count(self) -> int:
         return self._apply_count
@@ -560,6 +609,8 @@ class M6BOuterMatPythonContext:
             "owned_rows": self._owned_rows,
             "global_rows": self._global_rows,
             "apply_count": self._apply_count,
+            "hermitian_action_available": self._volume_hermitian_action is not None,
+            "hermitian_apply_count": self._hermitian_apply_count,
         }
 
     def destroy(self, _matrix: Any = None) -> None:
@@ -575,12 +626,14 @@ def build_m6b_outer_mat(
     owned_rows: int,
     global_rows: int,
     comm: Any,
+    volume_hermitian_action: Any | None = None,
 ) -> tuple[PETSc.Mat, M6BOuterMatPythonContext]:
     context = M6BOuterMatPythonContext(
         volume_action,
         dtn_action,
         owned_rows=owned_rows,
         global_rows=global_rows,
+        volume_hermitian_action=volume_hermitian_action,
     )
     matrix = PETSc.Mat().createPython(
         ((owned_rows, global_rows), (owned_rows, global_rows)),

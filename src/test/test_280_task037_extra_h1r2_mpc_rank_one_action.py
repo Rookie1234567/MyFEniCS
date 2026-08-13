@@ -382,6 +382,75 @@ def test_h1r2_mpc_rank_one_p2_minimal_case():
     assert result["degree"] == 2
 
 
+def test_h1r2_mpc_rank_one_complex_floquet_adjoint_identity():
+    """Qualify the exact UFL-adjoint path on the nontrivial MPC fixture."""
+
+    cfg, mesh_data, function_space, cell_tags, tags, floquet, _ = _build_case(
+        2, MPI.COMM_SELF
+    )
+    del cfg, mesh_data, tags
+    bilinear = _bilinear_form(function_space, cell_tags)
+    adjoint_bilinear = ufl.adjoint(bilinear)
+    assembled = dolfinx_mpc.assemble_matrix(
+        fem.form(bilinear), floquet.mpc, diagval=PETSc.ScalarType(1.0)
+    )
+    assembled.assemble()
+    forward = build_task037_extra_h1r2_mpc_action(
+        bilinear, floquet.mpc, task037_extra_h1r2=True
+    )
+    adjoint = build_task037_extra_h1r2_mpc_action(
+        adjoint_bilinear, floquet.mpc, task037_extra_h1r2=True
+    )
+    sources = [_source(function_space, floquet.mpc, variant) for variant in (0, 1)]
+    try:
+        assert abs(complex(floquet.phase_x) - 1.0) > 1.0e-12
+        assert abs(complex(floquet.phase_y) - 1.0) > 1.0e-12
+        assert int(floquet.num_edge_constraints) > 0
+        assert int(floquet.num_face_constraints) > 0
+        before = [np.array(source.getArray(readonly=True), copy=True) for source in sources]
+        for source, source_before in zip(sources, before, strict=True):
+            expected = assembled.createVecLeft()
+            try:
+                assembled.multHermitian(source, expected)
+                observed = np.array(adjoint.mult(source), copy=True)
+                repeated = np.array(adjoint.mult(source), copy=True)
+                expected_values = np.asarray(expected.getArray(readonly=True))
+                relative_error = np.linalg.norm(observed - expected_values) / max(
+                    np.linalg.norm(expected_values), np.finfo(float).tiny
+                )
+                assert np.isfinite(relative_error)
+                assert relative_error <= _TOLERANCE
+                assert np.array_equal(observed, repeated)
+                assert np.all(np.isfinite(observed))
+                np.testing.assert_array_equal(
+                    source.getArray(readonly=True), source_before
+                )
+            finally:
+                expected.destroy()
+
+        x_values = before[0]
+        y_values = before[1]
+        ax = np.array(forward.mult(sources[0]), copy=True)
+        ahy = np.array(adjoint.mult(sources[1]), copy=True)
+        lhs = np.vdot(ax, y_values)
+        rhs = np.vdot(x_values, ahy)
+        defect = abs(lhs - rhs) / max(abs(lhs), np.finfo(float).tiny)
+        assert np.isfinite(defect)
+        assert defect <= _TOLERANCE
+        np.testing.assert_array_equal(
+            sources[0].getArray(readonly=True), x_values
+        )
+        np.testing.assert_array_equal(
+            sources[1].getArray(readonly=True), y_values
+        )
+    finally:
+        for source in sources:
+            source.destroy()
+        adjoint.destroy()
+        forward.destroy()
+        assembled.destroy()
+
+
 def test_h1r2_action_form_options_are_explicit_without_changing_default_call(
     monkeypatch,
 ):

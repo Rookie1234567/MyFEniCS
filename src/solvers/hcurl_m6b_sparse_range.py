@@ -1,10 +1,9 @@
 """Sparse least-squares range carrier for the fixed 75D W1 diagnostic.
 
-The carrier represents ``Z`` and ``V=A Z`` as owner-local CSC columns.  It
-keeps only the sparse columns and the 75-by-75 upper Cholesky factor ``R``;
-there is no retained dense ``nrows-by-75`` array.  Applying the carrier
-projects a right-hand side onto ``range(V)`` and returns both ``Z c`` and
-``V c``.
+The persistent carrier stores only owner-local CSC columns of ``Z`` and the
+75-by-75 upper Cholesky factor ``R`` of ``(A Z)^H (A Z)``.  The forward
+``A Z`` columns are builder-only transient data.  Applying the carrier uses
+the explicit ``A^H`` action to form ``Z^H A^H r`` and returns only ``Z c``.
 """
 
 from __future__ import annotations
@@ -35,7 +34,7 @@ __all__ = (
 )
 
 
-M6B_W1_RANGE_STORE_SCHEMA = "task037.extra.m6b.sparse-range-store.v1"
+M6B_W1_RANGE_STORE_SCHEMA = "task037.extra.m6b.sparse-range-store.v2"
 M6B_W1_RANGE_COLUMNS = 75
 M6B_W1_NORMAL_CLOSURE_LIMIT = 1.0e-11
 M6B_W1_W0_BASIS_MANIFEST_SHA256 = (
@@ -58,9 +57,6 @@ _ARRAY_NAMES = (
     "z_data",
     "z_indices",
     "z_indptr",
-    "v_data",
-    "v_indices",
-    "v_indptr",
     "r_factor",
 )
 
@@ -194,7 +190,7 @@ def basis_manifest_from_vectors(basis: Sequence[Any]) -> list[dict[str, Any]]:
 
 
 def validate_w0_authority(
-    identity: Mapping[str, Any], v_column_sha256_aggregate: str
+    identity: Mapping[str, Any], az_column_sha256_aggregate: str
 ) -> None:
     """Require the fixed W0 range(AZ) diagnostic identity."""
 
@@ -203,7 +199,7 @@ def validate_w0_authority(
         "W1 basis identity differs from frozen W0 authority",
     )
     _require(
-        v_column_sha256_aggregate == M6B_W1_W0_AZ_COLUMN_SHA256_AGGREGATE,
+        az_column_sha256_aggregate == M6B_W1_W0_AZ_COLUMN_SHA256_AGGREGATE,
         "W1 AZ column identity differs from frozen W0 authority",
     )
     for key, expected in (
@@ -399,7 +395,7 @@ def _validate_factor_audit(
 
 
 class SparseM6BRangeCarrier:
-    """Owner-local sparse ``Z``/``V`` carrier with least-squares apply."""
+    """Owner-local sparse ``Z`` carrier with exact ``A^H`` least-squares apply."""
 
     def __init__(
         self,
@@ -407,14 +403,12 @@ class SparseM6BRangeCarrier:
         z_data: np.ndarray,
         z_indices: np.ndarray,
         z_indptr: np.ndarray,
-        v_data: np.ndarray,
-        v_indices: np.ndarray,
-        v_indptr: np.ndarray,
         r_factor: np.ndarray,
         global_rows: int,
         ownership_range: tuple[int, int],
         comm: Any,
         manifest: Mapping[str, Any],
+        hermitian_action: Callable[[np.ndarray], np.ndarray],
         manifest_path: Path | None = None,
     ) -> None:
         _require(type(global_rows) is int and global_rows > 0, "W1 global row count is invalid")
@@ -425,7 +419,7 @@ class SparseM6BRangeCarrier:
         _require(0 <= start < end <= global_rows, "W1 ownership range is invalid")
         local_rows = end - start
         _validate_csc_arrays(z_data, z_indices, z_indptr, local_rows, "Z")
-        _validate_csc_arrays(v_data, v_indices, v_indptr, local_rows, "V")
+        _require(callable(hermitian_action), "W1 A^H action is missing")
         _require(
             r_factor.dtype == _COMPLEX128
             and r_factor.shape == (M6B_W1_RANGE_COLUMNS, M6B_W1_RANGE_COLUMNS)
@@ -442,12 +436,26 @@ class SparseM6BRangeCarrier:
         _require(tuple(manifest["ownership_range"]) == (start, end), "W1 ownership binding differs")
         factor_audit = manifest.get("factor_audit")
         _validate_factor_audit(factor_audit, r_factor)
+        az_column_sha256 = manifest.get("az_column_sha256")
+        _require(
+            isinstance(az_column_sha256, list)
+            and len(az_column_sha256) == M6B_W1_RANGE_COLUMNS
+            and all(isinstance(item, str) and len(item) == 64 for item in az_column_sha256),
+            "W1 AZ column identity is incomplete",
+        )
+        _require(
+            manifest.get("az_column_sha256_aggregate") == _json_sha256(az_column_sha256),
+            "W1 AZ column identity aggregate mismatch",
+        )
+        _require(
+            manifest.get("az_v_retained") is False
+            and manifest.get("retained_az_bytes") == 0
+            and manifest.get("dense_nrows_x_columns_retained") is False,
+            "W1 AZ retention contract is invalid",
+        )
         self.z_data = z_data
         self.z_indices = z_indices
         self.z_indptr = z_indptr
-        self.v_data = v_data
-        self.v_indices = v_indices
-        self.v_indptr = v_indptr
         self.r_factor = r_factor
         self.global_rows = global_rows
         self.ownership_range = (start, end)
@@ -461,6 +469,7 @@ class SparseM6BRangeCarrier:
         self._factor_audit = dict(factor_audit)
         self._numerical_rank = int(factor_audit["rank"])
         self._normal_closure = float(factor_audit["normal_closure"])
+        self._hermitian_action = hermitian_action
 
     @classmethod
     def from_action(
@@ -468,13 +477,16 @@ class SparseM6BRangeCarrier:
         basis: Sequence[Any],
         action: Callable[[Any], np.ndarray],
         *,
+        hermitian_action: Callable[[np.ndarray], np.ndarray],
         global_rows: int,
         ownership_range: tuple[int, int],
         comm: Any,
         identity: Mapping[str, Any],
     ) -> "SparseM6BRangeCarrier":
         if not callable(action):
-            raise TypeError("W1 represented action must be callable")
+            raise TypeError("W1 forward action must be callable")
+        if not callable(hermitian_action):
+            raise TypeError("W1 A^H action must be callable")
         _require(
             int(comm.Get_size()) == 1 and int(comm.Get_rank()) == 0,
             "W1 store is fixed to MPI1",
@@ -485,35 +497,37 @@ class SparseM6BRangeCarrier:
         z_data, z_indices, z_indptr = _basis_columns(basis, (start, end))
         indices_parts: list[np.ndarray] = []
         data_parts: list[np.ndarray] = []
-        v_indptr = np.zeros(M6B_W1_RANGE_COLUMNS + 1, dtype=_INDEX_DTYPE)
+        az_indptr = np.zeros(M6B_W1_RANGE_COLUMNS + 1, dtype=_INDEX_DTYPE)
         column_sha256: list[str] = []
         for column, vector in enumerate(basis):
-            observed = _validate_local_column(action(vector), local_rows, f"V[{column}]")
+            observed = _validate_local_column(action(vector), local_rows, f"AZ[{column}]")
             column_sha256.append(_array_sha256(observed))
             positions = np.flatnonzero(observed != 0.0).astype(_INDEX_DTYPE, copy=False)
             indices_parts.append(positions)
             data_parts.append(np.asarray(observed[positions], dtype=np.complex128).copy())
-            v_indptr[column + 1] = v_indptr[column] + positions.size
-        v_indices = (
+            az_indptr[column + 1] = az_indptr[column] + positions.size
+        az_indices = (
             np.concatenate(indices_parts).astype(_INDEX_DTYPE, copy=False)
-            if v_indptr[-1]
+            if az_indptr[-1]
             else np.empty(0, dtype=_INDEX_DTYPE)
         )
-        v_data = (
+        az_data = (
             np.concatenate(data_parts).astype(np.complex128, copy=False)
-            if v_indptr[-1]
+            if az_indptr[-1]
             else np.empty(0, dtype=np.complex128)
         )
+        del indices_parts, data_parts
         identity_json = _validate_identity(identity, identity["basis_manifest"])
         import scipy.sparse as sp
 
-        v_matrix = sp.csc_matrix(
-            (v_data, v_indices, v_indptr),
+        az_matrix = sp.csc_matrix(
+            (az_data, az_indices, az_indptr),
             shape=(local_rows, M6B_W1_RANGE_COLUMNS),
             copy=False,
         )
-        gram = np.asarray(v_matrix.conjugate().transpose().dot(v_matrix).toarray(), dtype=np.complex128)
-        del v_matrix
+        gram = np.asarray(az_matrix.conjugate().transpose().dot(az_matrix).toarray(), dtype=np.complex128)
+        del az_matrix
+        del az_data, az_indices, az_indptr
         gram_hermitian_defect = float(
             np.linalg.norm(gram - gram.conjugate().T)
             / max(float(np.linalg.norm(gram)), np.finfo(float).tiny)
@@ -553,21 +567,22 @@ class SparseM6BRangeCarrier:
             "rank": 0,
             "identity": identity_json,
             "factor_audit": factor_audit,
-            "v_column_sha256": column_sha256,
-            "v_column_sha256_aggregate": _json_sha256(column_sha256),
+            "az_column_sha256": column_sha256,
+            "az_column_sha256_aggregate": _json_sha256(column_sha256),
+            "az_v_retained": False,
+            "retained_az_bytes": 0,
+            "dense_nrows_x_columns_retained": False,
         }
         return cls(
             z_data=z_data,
             z_indices=z_indices,
             z_indptr=z_indptr,
-            v_data=v_data,
-            v_indices=v_indices,
-            v_indptr=v_indptr,
             r_factor=r_factor,
             global_rows=global_rows,
             ownership_range=(start, end),
             comm=comm,
             manifest=manifest,
+            hermitian_action=hermitian_action,
         )
 
     @property
@@ -584,9 +599,6 @@ class SparseM6BRangeCarrier:
             self.z_data.nbytes
             + self.z_indices.nbytes
             + self.z_indptr.nbytes
-            + self.v_data.nbytes
-            + self.v_indices.nbytes
-            + self.v_indptr.nbytes
             + self.r_factor.nbytes
         )
         bounded_components = {
@@ -594,11 +606,8 @@ class SparseM6BRangeCarrier:
             "three_75d_solver_vectors_bytes": int(3 * M6B_W1_RANGE_COLUMNS * _COMPLEX128.itemsize),
         }
         max_z_column_nnz = int(np.max(np.diff(self.z_indptr)))
-        max_v_column_nnz = int(np.max(np.diff(self.v_indptr)))
         bounded_components["two_max_sparse_column_temporaries_bytes"] = int(
-            2
-            * max(max_z_column_nnz, max_v_column_nnz)
-            * _COMPLEX128.itemsize
+            2 * max_z_column_nnz * _COMPLEX128.itemsize
         )
         bounded_work = int(sum(bounded_components.values()))
         retained = int(numeric_payload + self._manifest_file_bytes)
@@ -614,35 +623,31 @@ class SparseM6BRangeCarrier:
             "source_sha": self._manifest["identity"]["source_sha"],
             "operator_identity": self._manifest["identity"]["operator_identity"],
             "basis_manifest_sha256": self._manifest["identity"]["basis_manifest_sha256"],
-            "v_column_sha256_aggregate": self._manifest["v_column_sha256_aggregate"],
+            "az_column_sha256_aggregate": self._manifest["az_column_sha256_aggregate"],
+            "az_column_count": M6B_W1_RANGE_COLUMNS,
+            "az_v_retained": False,
+            "retained_az_bytes": 0,
+            "forward_az_action_persisted": False,
+            "hermitian_action_required": True,
+            "operator_hermitian_assumed": False,
+            "represented_action_retained": False,
+            "mpi_size": 1,
             "mmap_readonly": bool(
                 self._manifest_file_bytes > 0
                 and all(
                     isinstance(value, np.memmap)
                     and not value.flags.writeable
-                    for value in (
-                        self.z_data,
-                        self.z_indices,
-                        self.z_indptr,
-                        self.v_data,
-                        self.v_indices,
-                        self.v_indptr,
-                        self.r_factor,
-                    )
+                    for value in (self.z_data, self.z_indices, self.z_indptr, self.r_factor)
                 )
             ),
             "retained_components": {
                 "z_csc_arrays_bytes": int(
                     self.z_data.nbytes + self.z_indices.nbytes + self.z_indptr.nbytes
                 ),
-                "v_csc_arrays_bytes": int(
-                    self.v_data.nbytes + self.v_indices.nbytes + self.v_indptr.nbytes
-                ),
                 "r_factor_bytes": int(self.r_factor.nbytes),
                 "manifest_file_bytes": self._manifest_file_bytes,
             },
             "max_z_column_nnz": max_z_column_nnz,
-            "max_v_column_nnz": max_v_column_nnz,
             "retained_numeric_payload_bytes": numeric_payload,
             "retained_total_bytes": retained,
             "bounded_work_components": bounded_components,
@@ -653,15 +658,18 @@ class SparseM6BRangeCarrier:
             "explicit_global_matrix_materialized": False,
         }
 
-    def apply(self, rhs: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    def apply(self, rhs: np.ndarray) -> np.ndarray:
         values = _validate_local_column(rhs, self.local_rows, "RHS")
+        adjoint_values = _validate_local_column(
+            self._hermitian_action(values), self.local_rows, "A^H RHS"
+        )
         h = np.empty(M6B_W1_RANGE_COLUMNS, dtype=np.complex128)
-        for column, (first, last) in enumerate(zip(self.v_indptr[:-1], self.v_indptr[1:], strict=True)):
+        for column, (first, last) in enumerate(zip(self.z_indptr[:-1], self.z_indptr[1:], strict=True)):
             first_index = int(first)
             last_index = int(last)
             h[column] = np.vdot(
-                self.v_data[first_index:last_index],
-                values[self.v_indices[first_index:last_index]],
+                self.z_data[first_index:last_index],
+                adjoint_values[self.z_indices[first_index:last_index]],
             )
         self.comm.Allreduce(MPI.IN_PLACE, h, op=MPI.SUM)
         y = solve_triangular(
@@ -675,20 +683,13 @@ class SparseM6BRangeCarrier:
             self.r_factor, y, lower=False, check_finite=False
         )
         correction = np.zeros(self.local_rows, dtype=np.complex128)
-        represented = np.zeros(self.local_rows, dtype=np.complex128)
         for column, (first, last) in enumerate(zip(self.z_indptr[:-1], self.z_indptr[1:], strict=True)):
             first_index = int(first)
             last_index = int(last)
             indices = self.z_indices[first_index:last_index]
             correction[indices] += self.z_data[first_index:last_index] * coefficients[column]
-        for column, (first, last) in enumerate(zip(self.v_indptr[:-1], self.v_indptr[1:], strict=True)):
-            first_index = int(first)
-            last_index = int(last)
-            indices = self.v_indices[first_index:last_index]
-            represented[indices] += self.v_data[first_index:last_index] * coefficients[column]
         _require(np.all(np.isfinite(correction)), "W1 correction is nonfinite")
-        _require(np.all(np.isfinite(represented)), "W1 represented action is nonfinite")
-        return correction, represented
+        return correction
 
     def save(self, directory: Path) -> Path:
         directory = Path(directory)
@@ -699,9 +700,6 @@ class SparseM6BRangeCarrier:
             "z_data": self.z_data,
             "z_indices": self.z_indices,
             "z_indptr": self.z_indptr,
-            "v_data": self.v_data,
-            "v_indices": self.v_indices,
-            "v_indptr": self.v_indptr,
             "r_factor": self.r_factor,
         }
         descriptors: dict[str, Any] = {}
@@ -740,9 +738,12 @@ def _load_array(directory: Path, entry: Mapping[str, Any], name: str) -> np.ndar
 
 
 def load_sparse_m6b_range_carrier(
-    manifest_path: Path, *, comm: Any = MPI.COMM_WORLD
+    manifest_path: Path,
+    *,
+    comm: Any = MPI.COMM_WORLD,
+    hermitian_action: Callable[[np.ndarray], np.ndarray],
 ) -> SparseM6BRangeCarrier:
-    """Load the seven independent arrays as read-only mmap views."""
+    """Load the Z/R arrays as read-only mmap views for an explicit ``A^H`` action."""
 
     manifest_path = Path(manifest_path)
     _require(manifest_path.name == "manifest.json", "W1 manifest name is fixed")
@@ -757,8 +758,13 @@ def load_sparse_m6b_range_carrier(
         "W1 manifest evidence SHA mismatch",
     )
     _require(set(manifest.get("arrays", {})) == set(_ARRAY_NAMES), "W1 manifest array set is incomplete")
-    actual_files = {path.name for path in directory.iterdir() if path.is_file()}
-    _require(actual_files == {"manifest.json", *(f"{name}.npy" for name in _ARRAY_NAMES)}, "W1 store file set is not exact")
+    expected_files = {"manifest.json", *(f"{name}.npy" for name in _ARRAY_NAMES)}
+    actual_files = {path.name for path in directory.iterdir()}
+    _require(actual_files == expected_files, "W1 store file set is not exact")
+    _require(
+        all((directory / name).is_file() for name in expected_files),
+        "W1 store file set contains a non-file entry",
+    )
     arrays = {
         name: _load_array(directory, manifest["arrays"][name], name) for name in _ARRAY_NAMES
     }
@@ -766,13 +772,11 @@ def load_sparse_m6b_range_carrier(
         z_data=arrays["z_data"],
         z_indices=arrays["z_indices"],
         z_indptr=arrays["z_indptr"],
-        v_data=arrays["v_data"],
-        v_indices=arrays["v_indices"],
-        v_indptr=arrays["v_indptr"],
         r_factor=arrays["r_factor"],
         global_rows=int(manifest["global_rows"]),
         ownership_range=tuple(manifest["ownership_range"]),
         comm=comm,
         manifest=manifest,
+        hermitian_action=hermitian_action,
         manifest_path=manifest_path,
     )

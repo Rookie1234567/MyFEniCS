@@ -438,6 +438,9 @@ class _Dtn:
     def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         target.getArray()[:] = 2.0 * source.getArray(readonly=True)
 
+    def apply_hermitian(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        target.getArray()[:] = (3.0 - 0.5j) * source.getArray(readonly=True)
+
     def compose_physical_rhs(self, base: PETSc.Vec, amplitudes: np.ndarray, target: PETSc.Vec) -> None:
         target.getArray()[:] = base.getArray(readonly=True) + amplitudes[0]
 
@@ -477,6 +480,37 @@ def test_m6b_outer_sum_and_complete_physical_rhs_without_global_matrix():
         target.destroy()
         source.destroy()
         context.destroy()
+        volume.output.destroy()
+
+
+def test_m6b_outer_hermitian_adapter_composes_volume_and_dtn():
+    volume = _Volume(np.asarray([1.0 + 0.1j, 2.0 - 0.2j]))
+    adjoint_volume = _Volume(np.asarray([4.0 - 0.3j, 5.0 + 0.4j]))
+    dtn = _Dtn()
+    context = M6BOuterMatPythonContext(
+        volume,
+        dtn,
+        owned_rows=2,
+        global_rows=2,
+        volume_hermitian_action=adjoint_volume,
+    )
+    source = PETSc.Vec().createSeq(2, comm=PETSc.COMM_SELF)
+    target = source.duplicate()
+    try:
+        source.getArray()[:] = [1.0 + 0.2j, -0.5 + 0.1j]
+        context.apply_hermitian(source, target)
+        assert np.allclose(
+            target.getArray(readonly=True),
+            adjoint_volume.values * source.getArray(readonly=True)
+            + (3.0 - 0.5j) * source.getArray(readonly=True),
+        )
+        assert context.audit["hermitian_action_available"] is True
+        assert context.audit["hermitian_apply_count"] == 1
+    finally:
+        target.destroy()
+        source.destroy()
+        context.destroy()
+        adjoint_volume.output.destroy()
         volume.output.destroy()
 
 

@@ -422,6 +422,7 @@ class FullspaceDtnAction:
             carrier._retained_bytes + self._work_bytes,
         )
         self._apply_count = 0
+        self._hermitian_apply_count = 0
         self._destroyed = False
 
     @property
@@ -449,6 +450,25 @@ class FullspaceDtnAction:
         self.comm.Allreduce(self._local_modal, self._global_modal, op=MPI.SUM)
         return self._global_modal
 
+    def _adjoint_modal_values(self, source: PETSc.Vec) -> np.ndarray:
+        start, end = self.carrier.ownership_range
+        source_values = np.asarray(source.getArray(readonly=True), dtype=np.complex128)
+        if (
+            source_values.size != end - start
+            or source.getSize() != self.carrier.global_rows
+            or tuple(map(int, source.getOwnershipRange())) != (start, end)
+        ):
+            raise ValueError("DtN adjoint source has an incompatible owned/global layout")
+        self._local_modal.fill(0.0)
+        for index, item in enumerate(self.carrier.entries):
+            if item.c_rows.size:
+                self._local_modal[index] = np.vdot(
+                    item.c_values,
+                    source_values[item.c_rows - start],
+                )
+        self.comm.Allreduce(self._local_modal, self._global_modal, op=MPI.SUM)
+        return self._global_modal
+
     def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         modal = self._modal_values(source)
         start, end = self.carrier.ownership_range
@@ -464,6 +484,26 @@ class FullspaceDtnAction:
             if item.c_rows.size:
                 target_values[item.c_rows - start] += -modal[index] * item.c_values
         self._apply_count += 1
+
+    def apply_hermitian(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        """Apply the exact Euclidean Hermitian adjoint ``-conj(D) C^H``."""
+
+        modal = self._adjoint_modal_values(source)
+        start, end = self.carrier.ownership_range
+        target_values = np.asarray(target.getArray(), dtype=np.complex128)
+        if (
+            target_values.size != end - start
+            or target.getSize() != self.carrier.global_rows
+            or tuple(map(int, target.getOwnershipRange())) != (start, end)
+        ):
+            raise ValueError("DtN adjoint target has an incompatible owned/global layout")
+        target_values.fill(0.0)
+        for index, item in enumerate(self.carrier.entries):
+            if item.d_rows.size:
+                target_values[item.d_rows - start] += (
+                    -np.conjugate(item.d_values) * modal[index]
+                )
+        self._hermitian_apply_count += 1
 
     def recover_auxiliary(self, source: PETSc.Vec) -> np.ndarray:
         """Return ``a=-D u`` for the fixed ``b_aux=0`` auxiliary convention."""
@@ -529,6 +569,9 @@ class FullspaceDtnAction:
     def mult(self, _matrix: PETSc.Mat, source: PETSc.Vec, target: PETSc.Vec) -> None:
         self.apply(source, target)
 
+    def multHermitian(self, _matrix: PETSc.Mat, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        self.apply_hermitian(source, target)
+
     @property
     def apply_count(self) -> int:
         return self._apply_count
@@ -559,7 +602,9 @@ class FullspaceDtnAction:
                     <= M6_RETAINED_PLUS_WORK_LIMIT_BYTES
                 ),
                 "apply_count": self._apply_count,
+                "hermitian_apply_count": self._hermitian_apply_count,
                 "modal_allreduce_count_per_apply": 1,
+                "modal_allreduce_count_per_hermitian_apply": 1,
                 "fe_sized_allgather": False,
                 "matrix_type": "python_action_only",
             }
