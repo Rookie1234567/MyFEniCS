@@ -1182,6 +1182,7 @@ def main(
     use_case080_reference: bool = True,
     canonical_export_prefix: str | None = None,
     external_mode_inventory: Mapping[str, Any] | None = None,
+    exact_one_cell_work_dir: str | Path | None = None,
 ) -> dict[str, Any]:
     command_argv = list(sys.argv[1:] if argv is None else argv)
     allow_task039 = bool(
@@ -1729,6 +1730,7 @@ def main(
             length_nm=args.top_interface_nm - args.bottom_interface_nm,
             propagation_model=args.internal_propagation_model,
             modal_traction_model=args.internal_traction_model,
+            exact_one_cell_work_dir=exact_one_cell_work_dir,
             log=progress,
         )
         timings["internal_modal_coupling"] = _max_elapsed(comm, started)

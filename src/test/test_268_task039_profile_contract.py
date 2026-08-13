@@ -1012,6 +1012,7 @@ def test_task039_identity_dispatch_and_legacy_seam_defaults_are_explicit(
     signature = inspect.signature(benchmark.main)
     assert signature.parameters["canonical_export_prefix"].default is None
     assert signature.parameters["external_mode_inventory"].default is None
+    assert signature.parameters["exact_one_cell_work_dir"].default is None
     with pytest.raises(SystemExit):
         _parse_args(["--internal-traction-model", "full3d_one_cell_exact_schur"])
 
@@ -1034,6 +1035,34 @@ def test_task039_identity_dispatch_and_legacy_seam_defaults_are_explicit(
     assert status == 0
     assert errors == []
     assert captured["kwargs"]["source_sha"] == "c" * 40
+
+
+def test_task039_default_runner_passes_run_scoped_exact_traction_directory(
+    monkeypatch, tmp_path: Path
+):
+    specification = load_and_resolve(TASK039 / "5nm_p6h10_hybrid_direct_m120_mpi8.dat")
+    from benchmarks import run_task032_phase6_augmented as benchmark
+
+    captured = {}
+
+    def fake_main(_argv, **kwargs):
+        captured.update(kwargs=kwargs)
+        return _task039_direct_record(
+            kwargs["external_mode_inventory"],
+            _task039_test_payload(tmp_path),
+        )
+
+    monkeypatch.setattr(benchmark, "main", fake_main)
+    result = run_task039_hybrid_direct(
+        specification.as_jsonable(),
+        tmp_path,
+        source_sha="a" * 40,
+    )
+
+    assert result["passed"] is True
+    assert captured["kwargs"]["exact_one_cell_work_dir"] == (
+        tmp_path.resolve() / "numerical_output" / "exact_one_cell"
+    )
 
 
 def test_task039_full3d_iterative_passes_resolved_cfg_and_frozen_solver_budget(

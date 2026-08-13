@@ -380,6 +380,7 @@ def _default_runner(
     cfg: Any,
     canonical_export_prefix: str,
     external_mode_inventory: Mapping[str, Any],
+    exact_one_cell_work_dir: Path,
 ) -> Mapping[str, Any]:
     from benchmarks.run_task032_phase6_augmented import main
 
@@ -389,6 +390,7 @@ def _default_runner(
         use_case080_reference=False,
         canonical_export_prefix=canonical_export_prefix,
         external_mode_inventory=external_mode_inventory,
+        exact_one_cell_work_dir=exact_one_cell_work_dir,
     )
 
 
@@ -432,8 +434,16 @@ def run_task039_hybrid_direct(
     argv = _append_source_attestation(
         _argv_for_payload(resolved_payload, output_record), source_sha
     )
-    invoke = runner or _default_runner
-    record = invoke(argv, cfg, "task039_direct", inventory)
+    if runner is None:
+        record = _default_runner(
+            argv,
+            cfg,
+            "task039_direct",
+            inventory,
+            numerical_output / "exact_one_cell",
+        )
+    else:
+        record = runner(argv, cfg, "task039_direct", inventory)
     if not isinstance(record, Mapping):
         return {
             "passed": False,
