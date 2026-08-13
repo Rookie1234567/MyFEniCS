@@ -120,24 +120,27 @@ def _payload(numeric_dir: Path, inventory: dict[str, object]) -> dict[str, objec
     }
 
 
-def _canonical_role(numeric_dir: Path, role: str) -> dict[str, object]:
+def _canonical_role(numeric_dir: Path, side: str, role: str) -> dict[str, object]:
     role_dir = numeric_dir / "canonical"
     role_dir.mkdir(exist_ok=True)
-    packets = [((role, index), complex(index + 1, index / 10)) for index in range(32)]
+    manifest_role = f"{side}_{role}"
+    packets = [
+        ((manifest_role, index), complex(index + 1, index / 10)) for index in range(32)
+    ]
     shards = []
     for rank in range(8):
-        path = role_dir / f"{role}_rank{rank}.jsonl"
+        path = role_dir / f"{manifest_role}_rank{rank}.jsonl"
         metadata = write_canonical_packet_shard(
             path, packets[rank::8], audit_packets=True
         )
         shards.append({**metadata, "rank": rank})
     manifest = canonical_shard_manifest(
-        role=role,
+        role=manifest_role,
         mpi_size=8,
         shard_metadata=shards,
         extractor_audit={"by_rank": [{} for _ in range(8)]},
     )
-    path = role_dir / f"{role}.manifest.json"
+    path = role_dir / f"{manifest_role}.manifest.json"
     digest = write_canonical_manifest(path, manifest)
     return {
         "pass": True,
@@ -151,8 +154,14 @@ def _write_hybrid(root: Path, inventory: dict[str, object], mode: int) -> None:
     numeric_dir = root / "numerical_output"
     numeric_dir.mkdir(parents=True)
     payload_descriptor = _payload(numeric_dir, inventory)
-    canonical_roles = {
-        role: _canonical_role(numeric_dir, role) for role in ("active_trace", "full_fe")
+    canonical_exports = {
+        side: {
+            "roles": {
+                role: _canonical_role(numeric_dir, side, role)
+                for role in ("active_trace", "full_fe")
+            }
+        }
+        for side in ("bottom", "top")
     }
     numeric = {
         "case": {
@@ -235,7 +244,7 @@ def _write_hybrid(root: Path, inventory: dict[str, object], mode: int) -> None:
             )
         },
         "canonical_exports": {
-            side: {"roles": canonical_roles} for side in ("bottom", "top")
+            **canonical_exports,
         },
     }
     source_sha = "a" * 40
@@ -367,6 +376,25 @@ def test_own_adjacent_and_full3d_positive_with_augmented_telemetry(
         result["comparisons"]["full3d_diagnostic"]["coordinates_exact"]["pass"] is True
     )
     assert result["comparisons"]["full3d_diagnostic"]["orders"]["keys_exact"] is True
+
+
+def test_canonical_role_requires_side_prefix(
+    positive_runs: tuple[Path, Path, Path, Path],
+) -> None:
+    hybrid, _adjacent, _full3d, _record = positive_runs
+    summary_path = hybrid / "numerical_output" / "run_summary.json"
+    numeric = json.loads(summary_path.read_text(encoding="utf-8"))
+    descriptor = numeric["canonical_exports"]["bottom"]["roles"]["active_trace"]
+    manifest_path = hybrid / "numerical_output" / descriptor["manifest"]
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["role"] = "active_trace"
+    _write_json(manifest_path, manifest)
+    descriptor["manifest_sha256"] = hashlib.sha256(
+        manifest_path.read_bytes()
+    ).hexdigest()
+    _write_json(summary_path, numeric)
+    result = check_hybrid_direct_identity(hybrid)
+    assert result["pass"] is False
 
 
 def test_exact_order_key_mismatch_fails(

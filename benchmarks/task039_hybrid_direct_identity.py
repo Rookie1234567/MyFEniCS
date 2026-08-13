@@ -315,7 +315,10 @@ def _canonical_entries(numeric_dir: Path, numeric: Mapping[str, Any]) -> dict[st
                 raise IdentityCheckError(
                     f"cannot read Task39 canonical {side}.{role}"
                 ) from exc
-            if manifest.get("role") != role or manifest.get("mpi_size") != 8:
+            if (
+                manifest.get("role") != f"{side}_{role}"
+                or manifest.get("mpi_size") != 8
+            ):
                 _fail(f"Task39 canonical {side}.{role} manifest identity is invalid")
             shards = manifest.get("per_rank_shards")
             if not isinstance(shards, list) or len(shards) != 8:
