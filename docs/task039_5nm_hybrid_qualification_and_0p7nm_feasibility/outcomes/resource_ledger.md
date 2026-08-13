@@ -72,3 +72,22 @@ RSS、PSS、USS 的峰值可能出现在不同完整 sample，不能合并成同
 内存向量。T4 的 `task039_m3a_core_audit.json` 是独立 raw audit；其未嵌入
 summary 的证据缺口单独记录，不改变数值负分类。详细 raw 路径和 SHA 见
 [T4 negative record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_t4_full3d_iterative_mpi8_negative_v1.json)。
+
+## 5. T5 Hybrid direct M-convergence measured resources
+
+T5 四次正式候选均使用既有 0.25 s watchdog。下表的 RSS/PSS/USS 是同一进程树在
+完整可读 sample 上分别取出的独立峰值；它们可能来自不同 sample。PSS/USS 是诊断
+覆盖，不参与 hard-stop。四次候选均 `swap=0`，没有发生 warning 或资源终止。
+
+| M | outer wall (s) | simultaneous process-tree RSS (MiB) | independent PSS (MiB) | independent USS (MiB) | swap (MiB) | smaps attempted/complete |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 120 | 432.931447 | 8929.0625 | 7154.639648 | 6870.980469 | 0 | 1443/1439 |
+| 240 | 815.862600 | 10999.851563 | 9222.426758 | 8938.285156 | 0 | 2642/2640 |
+| 480 | 1468.884482 | 22798.082031 | 21039.913086 | 20758.953125 | 0 | 4368/4365 |
+| 960 | 4812.858962 | 22536.339844 | 21407.276367 | 21222.859375 | 0 | 12594/12592 |
+
+M960 在 canonicalized negative trace authority 处以
+`raw_relative_error=1.678e-11 > 1e-12` 停止；其资源是一次真实 authority negative
+run 的 measured telemetry，不是成功求解的资源上限。T5 的完整身份、阶段时间和每次
+raw file SHA 见
+[T5 Hybrid direct convergence record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_t5_hybrid_direct_m_convergence_v1.json)。
