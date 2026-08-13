@@ -2171,7 +2171,7 @@ def _m6b_command(command: str, run_dir: Path) -> list[str]:
     if command not in {"m6b-stage-worker", "m6b-builder", "m6b-worker"}:
         raise ValueError("M6B command identity is invalid")
     return [
-        str(Path(sys.executable).resolve()),
+        os.path.abspath(sys.executable),
         "-m",
         "benchmarks.run_task037_extra_m6b",
         command,

@@ -1128,3 +1128,25 @@ def test_m6b_scope_prediction_and_parser_are_fixed():
     assert parser.parse_args(
         ["m6b-check", "--run-dir", "/tmp/m6b", "--output", "/tmp/m6b.json"]
     ).command == "m6b-check"
+
+
+def test_m6b_command_preserves_qualified_interpreter_symlink(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    resolved_interpreter = Path(runner.sys.executable).resolve()
+    qualified_link = tmp_path / ".venv" / "bin" / "python"
+    qualified_link.parent.mkdir(parents=True)
+    qualified_link.symlink_to(resolved_interpreter)
+    monkeypatch.setattr(runner.sys, "executable", str(qualified_link))
+
+    command = runner._m6b_command("m6b-worker", tmp_path / "run")
+
+    assert command[0] == str(qualified_link)
+    assert command[0] != str(resolved_interpreter)
+    assert command[1:5] == [
+        "-m",
+        "benchmarks.run_task037_extra_m6b",
+        "m6b-worker",
+        "--run-dir",
+    ]
+    assert command[5] == str((tmp_path / "run").resolve())
