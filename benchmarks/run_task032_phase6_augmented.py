@@ -50,6 +50,7 @@ from src.common.distributed_matrix_diagnostics import (
 )
 from src.coupling.hybrid_internal_modes import (
     build_hybrid_internal_mode_coupling,
+    capture_hybrid_trace_audit,
 )
 from src.modes.cross_section_spaces import (
     build_cross_section_spaces,
@@ -123,6 +124,14 @@ REFERENCE_BY_DEGREE_AND_H = {
     / "stage3_p3_h5"
     / "full3d_reference.json",
 }
+
+
+class _Task039TraceAuditStop(RuntimeError):
+    """Internal controlled stop for the explicit research capture lane."""
+
+    def __init__(self, record: dict[str, Any]):
+        super().__init__("Task039 trace audit evidence captured.")
+        self.record = record
 
 
 def _discrete_axial_qualification_scope(
@@ -1288,6 +1297,35 @@ def _task035c_worker_authority_gate(
     return gate
 
 
+def _task039_write_trace_capture_mpi(
+    comm: Any,
+    capture: Mapping[str, Any],
+    output_dir: str | Path,
+    metadata: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Write the research capture on rank zero and broadcast one result."""
+
+    result: dict[str, Any] | None = None
+    if comm.rank == 0:
+        from benchmarks.task039_trace_audit import write_trace_audit_capture
+
+        try:
+            result = {
+                "ok": True,
+                "descriptor": write_trace_audit_capture(
+                    capture, output_dir, metadata=metadata
+                ),
+            }
+        except Exception as error:
+            result = {"ok": False, "error": f"{type(error).__name__}: {error}"}
+    result = comm.bcast(result, root=0)
+    if not result["ok"]:
+        raise RuntimeError(
+            f"Task039 trace evidence writer failed on rank 0: {result['error']}"
+        )
+    return result["descriptor"]
+
+
 def main(
     argv: list[str] | None = None,
     *,
@@ -1297,6 +1335,8 @@ def main(
     external_mode_inventory: Mapping[str, Any] | None = None,
     exact_one_cell_work_dir: str | Path | None = None,
     qep_solver_tolerance: float = 1.0e-10,
+    trace_audit_capture_dir: str | Path | None = None,
+    trace_audit_metadata: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     command_argv = list(sys.argv[1:] if argv is None else argv)
     allow_task039 = bool(
@@ -1836,6 +1876,99 @@ def main(
         timings["two_local_fem_dtn_systems"] = _max_elapsed(comm, started)
         progress("Task32 Phase6: bottom/top local FEM-DtN systems complete")
 
+        if trace_audit_capture_dir is not None:
+            if canonical_export_prefix != "task039_direct":
+                raise ValueError(
+                    "Trace audit capture requires the explicit Task039 direct opt-in."
+                )
+            if args.requested_modes not in (120, 240, 480, 960):
+                raise ValueError("Trace audit capture supports only M=120/240/480/960.")
+            capture = capture_hybrid_trace_audit(
+                spaces,
+                positive,
+                negative,
+                bottom,
+                top,
+                log=progress,
+            )
+            stage_event_path = args.memory_stages
+            stage_ledger_path = (
+                None
+                if stage_event_path is None
+                else stage_event_path.with_name(
+                    stage_event_path.stem + ".task039_e10.json"
+                )
+            )
+            descriptor = _task039_write_trace_capture_mpi(
+                comm,
+                capture,
+                trace_audit_capture_dir,
+                {
+                    "requested_modes_per_direction": args.requested_modes,
+                    "mesh_target_size_nm": float(args.h_nm),
+                    "mpi_size": comm.size,
+                    "trace_audit_stage_events": {
+                        "event_path": (
+                            None if stage_event_path is None else str(stage_event_path)
+                        ),
+                        "e10_ledger_path": (
+                            None
+                            if stage_ledger_path is None
+                            else str(stage_ledger_path)
+                        ),
+                    },
+                    **dict(trace_audit_metadata or {}),
+                },
+            )
+            task039_mark_stage(
+                "canonical_negative_traces_ready",
+                detail={
+                    "source": "research_trace_capture",
+                    "marker_semantics": "captured audit arrays; not a solver-ready trace",
+                },
+            )
+            task039_mark_stage(
+                "projection_matrices_ready",
+                detail={
+                    "source": "research_trace_capture",
+                    "marker_semantics": "captured Gram/raw/canonical arrays only",
+                },
+            )
+            task039_mark_stage(
+                "local_fe_dtn_systems_ready",
+                detail={
+                    "source": "systems_assembled_before_capture",
+                    "marker_semantics": "ordered capture boundary; not a new build",
+                },
+            )
+            record = {
+                "schema": "task039.review-v1.m960-trace-controlled-stop.v1",
+                "status": "controlled_stop",
+                "trace_audit_capture": descriptor,
+                "trace_audit_stage_events": {
+                    "event_path": (
+                        None if stage_event_path is None else str(stage_event_path)
+                    ),
+                    "e10_ledger_path": (
+                        None if stage_ledger_path is None else str(stage_ledger_path)
+                    ),
+                },
+                "provenance": provenance,
+                "case": {
+                    "requested_modes_per_direction": args.requested_modes,
+                    "mesh_target_size_nm": float(args.h_nm),
+                    "nedelec_degree": int(args.degree),
+                },
+                "qualification": {
+                    "integration_pass": False,
+                    "official_record": False,
+                    "trace_capture_only": True,
+                    "solve_entered": False,
+                    "exact_traction_entered": False,
+                },
+            }
+            raise _Task039TraceAuditStop(record)
+
         mark_stage("interface_projection_and_coupling")
         started = time.perf_counter()
         coupling = build_hybrid_internal_mode_coupling(
@@ -1872,7 +2005,6 @@ def main(
                 "marker_emitted_at_ordered_coupling_boundary": True,
             },
         )
-
         started = time.perf_counter()
         if args.solver_path == "augmented":
             mark_stage("augmented_matrix_and_factor")
@@ -2112,9 +2244,7 @@ def main(
             sample_z,
         )
         task039_h_diagnostic_payload = None
-        if _task039_h_diagnostic_enabled(
-            canonical_export_prefix, args.requested_modes
-        ):
+        if _task039_h_diagnostic_enabled(canonical_export_prefix, args.requested_modes):
             bottom_offset, top_offset = element_safe_middle_offsets(
                 cross_section.axis_plan,
                 args.bottom_interface_nm,
@@ -3003,6 +3133,8 @@ def main(
         }
         if opt_in_canonical_exports is not None:
             record["canonical_exports"] = opt_in_canonical_exports
+    except _Task039TraceAuditStop as stopped:
+        record = stopped.record
     except _ModalBasisCapacityStop:
         pass
     finally:
@@ -3076,6 +3208,8 @@ def main(
         print(f"Task32 Phase6 record: {args.output}", flush=True)
         print(f"Task32 Phase6 status: {record['status']}", flush=True)
     comm.barrier()
+    if record.get("status") == "controlled_stop":
+        return record
     if not record["qualification"]["integration_pass"]:
         raise SystemExit(2)
     return record

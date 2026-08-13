@@ -57,6 +57,7 @@ class ExecutionPlan:
     adapter_identity: str
     adapter_available: bool
     contract_probe: bool
+    task039_trace_audit: bool
     expected_output_directory: Path
     expected_resolved_config: Path
     expected_manifest: Path
@@ -110,6 +111,7 @@ def build_execution_plan(
     mpiexec_command: str | None = None,
     adapter_identity: str | None = None,
     contract_probe: bool = False,
+    task039_trace_audit: bool = False,
 ) -> ExecutionPlan:
     """Build the private worker argv without shell interpolation or overrides."""
 
@@ -117,6 +119,8 @@ def build_execution_plan(
     executable = Path(os.path.abspath(python_executable or sys.executable))
     method = str(specification.method["kind"])
     model_id = str(specification.identity.get("model_id", ""))
+    if task039_trace_audit and contract_probe:
+        raise InputError("Task039 trace audit cannot be combined with contract probe")
     if contract_probe:
         if adapter_identity != CONTRACT_PROBE_ADAPTER:
             raise InputError(
@@ -132,6 +136,10 @@ def build_execution_plan(
 
     mpi_size = int(specification.execution["mpi_size"])
     requested_modes = specification.method.get("requested_modes_per_direction")
+    if task039_trace_audit and not task039_model_id_matches(
+        "hybrid_direct", model_id, requested_modes
+    ):
+        raise InputError("Task039 trace audit requires hybrid_direct M=120/240/480/960")
     resolved_path = run_directory / "resolved_config.json"
     manifest_path = run_directory / "run_manifest.json"
     mpiexec = mpiexec_command or shutil.which("mpiexec") or "mpiexec"
@@ -165,6 +173,8 @@ def build_execution_plan(
     ]
     if contract_probe:
         argv.append("--contract-probe")
+    if task039_trace_audit:
+        argv.append("--task039-trace-audit")
     return ExecutionPlan(
         argv=tuple(argv),
         shell=False,
@@ -179,6 +189,7 @@ def build_execution_plan(
         adapter_identity=adapter,
         adapter_available=available,
         contract_probe=contract_probe,
+        task039_trace_audit=task039_trace_audit,
         expected_output_directory=run_directory,
         expected_resolved_config=resolved_path,
         expected_manifest=manifest_path,

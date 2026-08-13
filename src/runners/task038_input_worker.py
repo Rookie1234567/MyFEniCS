@@ -180,6 +180,9 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--expected-output-directory", type=Path, required=True)
     parser.add_argument("--resolved-config-sha256", required=True)
     parser.add_argument("--contract-probe", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument(
+        "--task039-trace-audit", action="store_true", help=argparse.SUPPRESS
+    )
     return parser
 
 
@@ -189,6 +192,8 @@ def _dispatch_resolved_payload(
     expected_method: str,
     output_directory: Path,
     expected_source_sha: str | None = None,
+    expected_resolved_config_sha256: str | None = None,
+    task039_trace_audit: bool = False,
 ) -> tuple[int, list[str]]:
     """Dispatch the already validated payload without rereading its input."""
 
@@ -228,6 +233,22 @@ def _dispatch_resolved_payload(
                     payload,
                     directory,
                     source_sha=expected_source_sha,
+                    trace_audit_capture_dir=(
+                        directory / "numerical_output" / "task039_trace_audit"
+                        if task039_trace_audit
+                        else None
+                    ),
+                    trace_audit_metadata=(
+                        {
+                            "input_sha256": payload["provenance"]["input_sha256"],
+                            "physical_model_sha256": payload["provenance"][
+                                "physical_model_sha256"
+                            ],
+                            "resolved_config_sha256": expected_resolved_config_sha256,
+                        }
+                        if task039_trace_audit
+                        else None
+                    ),
                 )
 
             label = "Task39 Hybrid direct"
@@ -308,6 +329,24 @@ def main(argv: list[str] | None = None) -> int:
             for error in errors:
                 print(f"Task38 worker contract error: {error}")
         return 2
+    if args.task039_trace_audit and args.contract_probe:
+        if comm.rank == 0:
+            print(
+                "Task039 trace audit cannot be combined with contract probe",
+                flush=True,
+            )
+        return 2
+    if args.task039_trace_audit and not task039_model_id_matches(
+        "hybrid_direct",
+        str(resolved_payload.get("model_id", "")),
+        resolved_payload.get("method", {}).get("requested_modes_per_direction"),
+    ):
+        if comm.rank == 0:
+            print(
+                "Task039 trace audit requires hybrid_direct M=120/240/480/960",
+                flush=True,
+            )
+        return 2
     if args.contract_probe:
         comm.Barrier()
         if comm.rank == 0:
@@ -328,6 +367,8 @@ def main(argv: list[str] | None = None) -> int:
         expected_method=args.expected_method,
         output_directory=args.expected_output_directory,
         expected_source_sha=args.expected_source_sha,
+        expected_resolved_config_sha256=args.resolved_config_sha256,
+        task039_trace_audit=args.task039_trace_audit,
     )
     if exit_status != 0:
         if comm.rank == 0:

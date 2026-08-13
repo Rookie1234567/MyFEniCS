@@ -381,6 +381,8 @@ def _default_runner(
     canonical_export_prefix: str,
     external_mode_inventory: Mapping[str, Any],
     exact_one_cell_work_dir: Path,
+    trace_audit_capture_dir: str | Path | None = None,
+    trace_audit_metadata: Mapping[str, Any] | None = None,
 ) -> Mapping[str, Any]:
     from benchmarks.run_task032_phase6_augmented import main
 
@@ -392,6 +394,8 @@ def _default_runner(
         external_mode_inventory=external_mode_inventory,
         exact_one_cell_work_dir=exact_one_cell_work_dir,
         qep_solver_tolerance=1.0e-12,
+        trace_audit_capture_dir=trace_audit_capture_dir,
+        trace_audit_metadata=trace_audit_metadata,
     )
 
 
@@ -401,6 +405,8 @@ def run_task039_hybrid_direct(
     *,
     runner: Task039Runner | None = None,
     source_sha: str | None = None,
+    trace_audit_capture_dir: str | Path | None = None,
+    trace_audit_metadata: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run one finite Task39 p6/h10 Hybrid-direct profile."""
 
@@ -435,6 +441,13 @@ def run_task039_hybrid_direct(
     argv = _append_source_attestation(
         _argv_for_payload(resolved_payload, output_record), source_sha
     )
+    if trace_audit_capture_dir is not None:
+        argv.extend(
+            [
+                "--memory-stages",
+                str(numerical_output / "task039_trace_audit_stages.jsonl"),
+            ]
+        )
     if runner is None:
         record = _default_runner(
             argv,
@@ -442,8 +455,15 @@ def run_task039_hybrid_direct(
             "task039_direct",
             inventory,
             numerical_output / "exact_one_cell",
+            trace_audit_capture_dir,
+            {
+                **dict(trace_audit_metadata or {}),
+                "source_commit_sha": source_sha,
+            },
         )
     else:
+        if trace_audit_capture_dir is not None:
+            raise ValueError("Trace audit capture requires the default Task039 runner.")
         record = runner(argv, cfg, "task039_direct", inventory)
     if not isinstance(record, Mapping):
         return {
@@ -454,6 +474,38 @@ def run_task039_hybrid_direct(
             "argv": argv,
             "external_mode_inventory": expected_inventory,
             "numerical_output_directory": str(numerical_output),
+        }
+    if trace_audit_capture_dir is not None:
+        if record.get("status") != "controlled_stop":
+            return {
+                "passed": False,
+                "errors": ["Task039 trace capture did not controlled-stop"],
+                "record": record,
+                "summary": record,
+                "argv": argv,
+                "external_mode_inventory": expected_inventory,
+                "numerical_output_directory": str(numerical_output),
+                "result_classification": "task039_trace_capture_failed",
+                "solver_qualified": False,
+            }
+        capture = record.get("trace_audit_capture", {})
+        errors = []
+        if capture.get("individual_capture_complete") is not True:
+            errors.append("Task039 trace capture did not complete both endcaps")
+        return {
+            "passed": not errors,
+            "errors": errors,
+            "record": record,
+            "summary": record,
+            "argv": argv,
+            "external_mode_inventory": expected_inventory,
+            "numerical_output_directory": str(numerical_output),
+            "result_classification": (
+                "task039_trace_capture_complete"
+                if not errors
+                else "task039_trace_capture_failed"
+            ),
+            "solver_qualified": False,
         }
     errors = _authority_errors(record, expected_inventory, numerical_output)
     return {

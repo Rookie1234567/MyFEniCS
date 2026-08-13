@@ -420,6 +420,8 @@ def _run_worker(
     if classification is None:
         if exit_status == 0 and plan.contract_probe:
             classification = "contract_probe_pass"
+        elif exit_status == 0 and plan.task039_trace_audit:
+            classification = "task039_trace_capture_complete"
         else:
             classification = "worker_exit0" if exit_status == 0 else "worker_nonzero"
     resource_authority = {
@@ -469,6 +471,7 @@ def launch_specification(
     contract_probe: bool = False,
     python_executable: str | Path | None = None,
     mpiexec_command: str | None = None,
+    task039_trace_audit: bool = False,
     popen_factory: PopenFactory = subprocess.Popen,
     sample_factory: SampleFactory = resource_authority_sample,
     terminate_factory: TerminateFactory = terminate_process_tree,
@@ -519,6 +522,7 @@ def launch_specification(
         mpiexec_command=mpiexec_command,
         adapter_identity=adapter,
         contract_probe=contract_probe,
+        task039_trace_audit=task039_trace_audit,
     )
     if not plan.adapter_available:
         result = {

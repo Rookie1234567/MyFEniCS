@@ -144,12 +144,8 @@ class _DistributedTwoDimensionalEvaluator:
         comm = msh.comm
         local_x = np.unique(np.asarray(msh.geometry.x[:, 0], dtype=np.float64))
         local_y = np.unique(np.asarray(msh.geometry.x[:, 1], dtype=np.float64))
-        self.x_values = np.unique(
-            np.concatenate(comm.allgather(local_x))
-        )
-        self.y_values = np.unique(
-            np.concatenate(comm.allgather(local_y))
-        )
+        self.x_values = np.unique(np.concatenate(comm.allgather(local_x)))
+        self.y_values = np.unique(np.concatenate(comm.allgather(local_y)))
         if len(self.x_values) < 2 or len(self.y_values) < 2:
             raise RuntimeError("The matched cross-section has no structured cells.")
         self.tolerance = max(
@@ -265,7 +261,9 @@ class _DistributedTwoDimensionalEvaluator:
             if self._cached_points.shape != points.shape or not np.allclose(
                 self._cached_points, points, rtol=0.0, atol=1.0e-13
             ):
-                raise RuntimeError("Cached 2D-to-3D interpolation points changed ordering.")
+                raise RuntimeError(
+                    "Cached 2D-to-3D interpolation points changed ordering."
+                )
             if not np.array_equal(self._cached_cell_keys, routed_keys):
                 raise RuntimeError("Cached 2D-to-3D source-cell routing changed.")
         comm = self.source.function_space.mesh.comm
@@ -294,13 +292,9 @@ class _DistributedTwoDimensionalEvaluator:
             else np.empty((0, 2), dtype=PETSc.ScalarType)
         )
         self.local_source_evaluations += len(values)
-        send: list[list[tuple[int, complex, complex]]] = [
-            [] for _ in range(comm.size)
-        ]
+        send: list[list[tuple[int, complex, complex]]] = [[] for _ in range(comm.size)]
         for (requester, index), value in zip(destinations, values):
-            send[requester].append(
-                (index, complex(value[0]), complex(value[1]))
-            )
+            send[requester].append((index, complex(value[0]), complex(value[1])))
         received = comm.alltoall(send)
         result = np.zeros((len(points), 3), dtype=PETSc.ScalarType)
         resolved = np.zeros(len(points), dtype=bool)
@@ -431,10 +425,7 @@ class _ReusableInterfaceLifter:
         # mesh can place several source cells under one local-FE interface
         # cell.
         return np.asarray(
-            [
-                evaluator._cell_key(float(point[0]), float(point[1]))
-                for point in points
-            ],
+            [evaluator._cell_key(float(point[0]), float(point[1])) for point in points],
             dtype=np.int64,
         ).reshape(-1, 2)
 
@@ -455,14 +446,11 @@ class _ReusableInterfaceLifter:
 
         def cached_values(x: np.ndarray) -> np.ndarray:
             coordinates = np.asarray(x, dtype=np.float64)
-            if (
-                coordinates.shape != self.interpolation_points.shape
-                or not np.allclose(
-                    coordinates,
-                    self.interpolation_points,
-                    rtol=0.0,
-                    atol=1.0e-13,
-                )
+            if coordinates.shape != self.interpolation_points.shape or not np.allclose(
+                coordinates,
+                self.interpolation_points,
+                rtol=0.0,
+                atol=1.0e-13,
             ):
                 raise RuntimeError(
                     "DOLFINx interpolation points changed after collective evaluation."
@@ -546,21 +534,15 @@ class _ReusableInterfaceSurfaceLoad:
         overlap_vector = _assemble_mpc_form_vector(
             self.form, self.system.floquet_data.mpc
         )
-        overlap_rows, overlap_values = _vec_nonzero_owned_entries(
-            overlap_vector
-        )
+        overlap_rows, overlap_values = _vec_nonzero_owned_entries(overlap_vector)
         if self.system.static_condensation is None:
             self.reduction_audits.append(
                 {
                     "side": self.system.side,
                     "role": role,
                     "source_name": str(source.name),
-                    "quadrature_degree": (
-                        self.quadrature_policy.selected_degree
-                    ),
-                    "coefficient_degree": (
-                        self.quadrature_policy.coefficient_degree
-                    ),
+                    "quadrature_degree": (self.quadrature_policy.selected_degree),
+                    "coefficient_degree": (self.quadrature_policy.coefficient_degree),
                     "status": "not_applicable_no_static_reduction",
                     "pass": True,
                 }
@@ -584,8 +566,7 @@ class _ReusableInterfaceSurfaceLoad:
         }
         try:
             reduced = (
-                self.system.static_condensation
-                .reduce_tangential_surface_mpc_vector(
+                self.system.static_condensation.reduce_tangential_surface_mpc_vector(
                     overlap_vector,
                     audit=reduction_audit,
                 )
@@ -689,7 +670,9 @@ def _canonical_trace_consistency_audit(
         or canonical.shape != gram.shape
         or mapping.shape != gram.shape
     ):
-        raise ValueError("Canonical trace audit matrices must have equal square shapes.")
+        raise ValueError(
+            "Canonical trace audit matrices must have equal square shapes."
+        )
     expected = gram @ mapping
     if not all(
         np.all(np.isfinite(values))
@@ -709,8 +692,7 @@ def _canonical_trace_consistency_audit(
         )
         raw_error = float(np.linalg.norm(raw - expected, ord=np.inf) / raw_scale)
         representation_error = float(
-            np.linalg.norm(canonical - expected, ord=np.inf)
-            / canonical_scale
+            np.linalg.norm(canonical - expected, ord=np.inf) / canonical_scale
         )
     passed = bool(
         np.isfinite(tolerance)
@@ -738,10 +720,8 @@ class _ReusableModeTractionEvaluator:
         Et, Ez = ufl.split(self.field)
         traction_expr = ufl.as_vector(
             (
-                self.sign
-                * (PETSc.ScalarType(1j) * self.beta * Et[0] - Ez.dx(0)),
-                self.sign
-                * (-Ez.dx(1) + PETSc.ScalarType(1j) * self.beta * Et[1]),
+                self.sign * (PETSc.ScalarType(1j) * self.beta * Et[0] - Ez.dx(0)),
+                self.sign * (-Ez.dx(1) + PETSc.ScalarType(1j) * self.beta * Et[1]),
             )
         )
         self.traction_space = fem.functionspace(
@@ -822,6 +802,247 @@ def _create_rectangular_aij(
     return matrix
 
 
+def _assemble_canonical_trace_overlaps(
+    system: HybridLocalDtnSystem,
+    projection: ModalTraceProjection,
+    raw_negative_traces: Sequence[fem.Function],
+    canonical_negative_traces: Sequence[fem.Function],
+    surface_load: _ReusableInterfaceSurfaceLoad,
+    trace_lifter: _ReusableInterfaceLifter,
+    log=None,
+) -> tuple[
+    list[_InterfaceSurfaceLoadEntries],
+    int,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+]:
+    """Assemble one independent surface-load/lift overlap pass."""
+
+    comm = system.local_mesh.mesh.comm
+    mode_count = len(projection.left_traces)
+    raw_entries = []
+    try:
+        for index, left in enumerate(projection.left_traces):
+            if log is not None:
+                log(
+                    f"Task32 {system.side}: assembling left surface load "
+                    f"{index + 1}/{mode_count}"
+                )
+            raw_entries.append(
+                surface_load.assemble(
+                    left,
+                    role=f"row_functional_mode_{index}",
+                )
+            )
+        lift_queries = 0
+
+        def raw_overlap_matrix(traces: Sequence[fem.Function]) -> np.ndarray:
+            nonlocal lift_queries
+            values = np.empty((len(raw_entries), len(traces)), dtype=np.complex128)
+            for column, trace in enumerate(traces):
+                if log is not None:
+                    log(
+                        f"Task32 {system.side}: lifting projection trace "
+                        f"{column + 1}/{len(traces)}"
+                    )
+                field, queries = trace_lifter.lift(trace)
+                lift_queries += queries
+                system.floquet_data.mpc.homogenize(field)
+                field.x.scatter_forward()
+                field_vector = field.x.petsc_vec
+                for row, entries in enumerate(raw_entries):
+                    columns = entries.overlap_rows
+                    coefficients = entries.overlap_values
+                    local = (
+                        complex(
+                            np.vdot(
+                                coefficients,
+                                field_vector.getValues(columns),
+                            )
+                        )
+                        if len(columns)
+                        else 0.0 + 0.0j
+                    )
+                    values[row, column] = complex(comm.allreduce(local, op=MPI.SUM))
+            return values
+
+        return (
+            raw_entries,
+            lift_queries,
+            raw_overlap_matrix(projection.right_traces),
+            raw_overlap_matrix(raw_negative_traces),
+            raw_overlap_matrix(canonical_negative_traces),
+        )
+    except Exception:
+        for entries in raw_entries:
+            if entries.full_vector is not None:
+                entries.full_vector.destroy()
+        raise
+
+
+def capture_hybrid_trace_audit(
+    spaces: CrossSectionSpaces,
+    positive_basis: BiorthogonalModeBasis,
+    negative_basis: BiorthogonalModeBasis,
+    bottom_system: HybridLocalDtnSystem,
+    top_system: HybridLocalDtnSystem,
+    log=None,
+) -> dict[str, object]:
+    """Capture independent bottom/top trace matrices without building traction.
+
+    This is a research-only seam.  It performs two fresh surface-load/lift
+    passes per endcap and returns NumPy evidence before any exact-cell
+    traction, augmented operator, solve, or field reconstruction is entered.
+    """
+
+    mode_count = len(positive_basis.modes)
+    if mode_count == 0 or len(negative_basis.modes) != mode_count:
+        raise ValueError("Trace audit requires equal nonzero positive/negative bases.")
+    if bottom_system.side != "bottom" or top_system.side != "top":
+        raise ValueError("Trace audit systems must be ordered bottom, top.")
+    projection = ModalTraceProjection(spaces, positive_basis)
+    raw_negative_traces: list[fem.Function] = []
+    canonical_negative_traces: list[fem.Function] = []
+    repeat_canonical_traces: list[fem.Function] = []
+    try:
+        for column, mode in enumerate(negative_basis.modes):
+            raw_negative_traces.append(
+                _trace_from_full_mode_vector(
+                    mode.right.right_full,
+                    spaces,
+                    name=f"task039_audit_negative_trace_{column}",
+                )
+            )
+        canonical_mapping = np.column_stack(
+            [projection.project(trace) for trace in raw_negative_traces]
+        )
+        sides: dict[str, object] = {}
+
+        def assemble_pass(canonical_traces, mapping, system):
+            entries = []
+            try:
+                surface_load = _ReusableInterfaceSurfaceLoad(system)
+                trace_lifter = _ReusableInterfaceLifter(system, target_space=system.V)
+                entries, queries, gram, raw, canonical = (
+                    _assemble_canonical_trace_overlaps(
+                        system,
+                        projection,
+                        raw_negative_traces,
+                        canonical_traces,
+                        surface_load,
+                        trace_lifter,
+                        log,
+                    )
+                )
+                return {
+                    "surface_gram": gram,
+                    "raw_negative_overlap": raw,
+                    "canonical_negative_overlap": canonical,
+                    "lift_queries": int(queries),
+                    "gram_condition": float(np.linalg.cond(gram)),
+                    "mapping": mapping.copy(),
+                }
+            finally:
+                for entry in entries:
+                    if entry.full_vector is not None:
+                        entry.full_vector.destroy()
+
+        canonical_negative_traces = _canonicalized_negative_traces(
+            projection, canonical_mapping
+        )
+        for system in (bottom_system, top_system):
+            sides[system.side] = {
+                "first": assemble_pass(
+                    canonical_negative_traces, canonical_mapping, system
+                )
+            }
+        canonical_negative_traces = []
+
+        repeat_mapping = np.column_stack(
+            [projection.project(trace) for trace in raw_negative_traces]
+        )
+        repeat_canonical_traces = _canonicalized_negative_traces(
+            projection, repeat_mapping
+        )
+        for system in (bottom_system, top_system):
+            sides[system.side]["repeat"] = assemble_pass(
+                repeat_canonical_traces, repeat_mapping, system
+            )
+        repeat_canonical_traces = []
+        for side, side_passes in sides.items():
+            first = side_passes["first"]
+            repeat = side_passes["repeat"]
+            sides[side] = {
+                "surface_gram": first["surface_gram"],
+                "raw_negative_overlap": first["raw_negative_overlap"],
+                "canonical_negative_overlap": first["canonical_negative_overlap"],
+                "canonical_mapping": first["mapping"],
+                "repeat_surface_gram": repeat["surface_gram"],
+                "repeat_raw_overlap": repeat["raw_negative_overlap"],
+                "repeat_canonical_negative_overlap": repeat[
+                    "canonical_negative_overlap"
+                ],
+                "repeat_canonical_mapping": repeat["mapping"],
+                "lift_queries": {
+                    "first": first["lift_queries"],
+                    "repeat": repeat["lift_queries"],
+                },
+                "gram_condition": first["gram_condition"],
+                "repeat_gram_condition": repeat["gram_condition"],
+                "audit": _canonical_trace_consistency_audit(
+                    first["surface_gram"],
+                    first["raw_negative_overlap"],
+                    first["canonical_negative_overlap"],
+                    first["mapping"],
+                ),
+                "repeat_audit": _canonical_trace_consistency_audit(
+                    repeat["surface_gram"],
+                    repeat["raw_negative_overlap"],
+                    repeat["canonical_negative_overlap"],
+                    repeat["mapping"],
+                ),
+            }
+        column_keys = [
+            [
+                index,
+                str(mode.direction),
+                float(mode.beta.real),
+                float(mode.beta.imag),
+            ]
+            for index, mode in enumerate(negative_basis.modes)
+        ]
+        return {
+            "schema": "task039.review-v1.m960-trace-capture.v1",
+            "mode_count": mode_count,
+            "column_keys": column_keys,
+            "mode_identifiers": [
+                {
+                    "index": index,
+                    "key": column_keys[index],
+                    "direction": mode.direction,
+                    "beta": [float(mode.beta.real), float(mode.beta.imag)],
+                }
+                for index, mode in enumerate(negative_basis.modes)
+            ],
+            "degenerate_groups": [
+                {
+                    "indices": list(group.indices),
+                    "keys": [column_keys[index] for index in group.indices],
+                    "beta_center": [
+                        float(group.beta_center.real),
+                        float(group.beta_center.imag),
+                    ],
+                    "max_relative_beta_spread": float(group.max_relative_beta_spread),
+                }
+                for group in negative_basis.groups
+            ],
+            "sides": sides,
+        }
+    finally:
+        projection.destroy()
+
+
 def _build_projection_matrix(
     system: HybridLocalDtnSystem,
     projection: ModalTraceProjection,
@@ -853,67 +1074,25 @@ def _build_projection_matrix(
         global_cols=system.global_size,
         local_cols=system.A.getLocalSize()[1],
     )
-    raw_entries = []
     try:
-        for index, left in enumerate(projection.left_traces):
-            if log is not None:
-                log(
-                    f"Task32 {system.side}: assembling left surface load "
-                    f"{index + 1}/{mode_count}"
-                )
-            raw_entries.append(
-                surface_load.assemble(
-                    left,
-                    role=f"row_functional_mode_{index}",
-                )
-            )
+        (
+            raw_entries,
+            lift_queries,
+            surface_gram,
+            negative_raw,
+            canonical_negative_raw,
+        ) = _assemble_canonical_trace_overlaps(
+            system,
+            projection,
+            raw_negative_traces,
+            canonical_negative_traces,
+            surface_load,
+            trace_lifter,
+            log,
+        )
     except Exception:
-        for entries in raw_entries:
-            if entries.full_vector is not None:
-                entries.full_vector.destroy()
         matrix.destroy()
         raise
-    lift_queries = 0
-
-    def raw_overlap_matrix(traces: Sequence[fem.Function]) -> np.ndarray:
-        nonlocal lift_queries
-        values = np.empty(
-            (len(raw_entries), len(traces)), dtype=np.complex128
-        )
-        for column, trace in enumerate(traces):
-            if log is not None:
-                log(
-                    f"Task32 {system.side}: lifting projection trace "
-                    f"{column + 1}/{len(traces)}"
-                )
-            field, queries = trace_lifter.lift(trace)
-            lift_queries += queries
-            system.floquet_data.mpc.homogenize(field)
-            field.x.scatter_forward()
-            field_vector = field.x.petsc_vec
-            for row, entries in enumerate(raw_entries):
-                columns = entries.overlap_rows
-                coefficients = entries.overlap_values
-                local = (
-                    complex(
-                        np.vdot(
-                            coefficients,
-                            field_vector.getValues(columns),
-                        )
-                    )
-                    if len(columns)
-                    else 0.0 + 0.0j
-                )
-                values[row, column] = complex(
-                    comm.allreduce(local, op=MPI.SUM)
-                )
-        return values
-
-    surface_gram = raw_overlap_matrix(projection.right_traces)
-    negative_raw = raw_overlap_matrix(raw_negative_traces)
-    canonical_negative_raw = raw_overlap_matrix(
-        canonical_negative_traces
-    )
     gram_condition = float(np.linalg.cond(surface_gram))
     if not np.isfinite(gram_condition) or gram_condition > 1.0e12:
         matrix.destroy()
@@ -973,8 +1152,7 @@ def _build_projection_matrix(
         modal_rhs_correction = np.zeros(mode_count, dtype=np.complex128)
     else:
         if not all(
-            entries.tangential_surface_trace_only_verified
-            for entries in raw_entries
+            entries.tangential_surface_trace_only_verified for entries in raw_entries
         ):
             matrix.destroy()
             for vector in full_left_vectors:
@@ -1052,8 +1230,7 @@ def _build_traction_matrix(
                 if system.static_condensation is None:
                     entries.full_vector.destroy()
                     raise RuntimeError(
-                        "Standard Hybrid traction unexpectedly retained a "
-                        "full vector."
+                        "Standard Hybrid traction unexpectedly retained a full vector."
                     )
                 try:
                     for row, left_vector in enumerate(full_left_vectors):
@@ -1079,9 +1256,7 @@ def _build_traction_matrix(
                 matrix.setValues(
                     entries.matrix_rows,
                     np.asarray([column], dtype=PETSc.IntType),
-                    (-entries.matrix_values).reshape(
-                        (len(entries.matrix_rows), 1)
-                    ),
+                    (-entries.matrix_values).reshape((len(entries.matrix_rows), 1)),
                     addv=PETSc.InsertMode.ADD_VALUES,
                 )
     except Exception:
@@ -1213,17 +1388,13 @@ def _build_interface_blocks(
         positive_traction=positive_traction,
         negative_traction=negative_traction,
         negative_trace_to_positive=negative_mapping.copy(),
-        inverse_trace_gram=np.asarray(
-            inverse_gram, dtype=np.complex128
-        ).copy(),
+        inverse_trace_gram=np.asarray(inverse_gram, dtype=np.complex128).copy(),
         trace_gram_condition=trace_gram_condition,
         positive_projection_identity_error=positive_identity_error,
         local_fem_outward_normal_sign=(
             system.local_mesh.local_interface_outward_normal_sign
         ),
-        lifted_query_points=(
-            projection_queries + positive_queries + negative_queries
-        ),
+        lifted_query_points=(projection_queries + positive_queries + negative_queries),
         quadrature_degree=surface_load.quadrature_policy.selected_degree,
         positive_interior_correction=positive_interior_correction,
         negative_interior_correction=negative_interior_correction,
@@ -1233,12 +1404,8 @@ def _build_interface_blocks(
         ),
         interior_modal_pairwise_schur_evaluated=False,
         full_surface_mode_vectors_retained=False,
-        canonical_trace_raw_consistency_error=(
-            canonical_trace_raw_consistency_error
-        ),
-        canonical_trace_representation_error=(
-            canonical_trace_representation_error
-        ),
+        canonical_trace_raw_consistency_error=(canonical_trace_raw_consistency_error),
+        canonical_trace_representation_error=(canonical_trace_representation_error),
         quadrature_coefficient_degree=(
             surface_load.quadrature_policy.coefficient_degree
         ),
@@ -1264,16 +1431,13 @@ def build_hybrid_internal_mode_coupling(
 
     if bottom_system.side != "bottom" or top_system.side != "top":
         raise ValueError("Hybrid local systems must be ordered bottom, top.")
-    if (
-        bottom_system.assembly_backend_actual
-        != top_system.assembly_backend_actual
-    ):
-        raise ValueError(
-            "Hybrid bottom/top local assembly backends must match."
-        )
+    if bottom_system.assembly_backend_actual != top_system.assembly_backend_actual:
+        raise ValueError("Hybrid bottom/top local assembly backends must match.")
     mode_count = len(positive_basis.modes)
     if mode_count == 0 or len(negative_basis.modes) != mode_count:
-        raise ValueError("Positive and negative internal bases need equal nonzero size.")
+        raise ValueError(
+            "Positive and negative internal bases need equal nonzero size."
+        )
     if any(mode.direction != "forward" for mode in positive_basis.modes):
         raise ValueError("The positive internal basis must contain forward modes.")
     if any(mode.direction != "backward" for mode in negative_basis.modes):
@@ -1455,9 +1619,7 @@ def build_hybrid_internal_mode_coupling(
         if exact_traction_overrides is not None:
             pending_exact_overrides.pop("bottom")
         top_override = (
-            None
-            if exact_traction_overrides is None
-            else pending_exact_overrides["top"]
+            None if exact_traction_overrides is None else pending_exact_overrides["top"]
         )
         top = _build_interface_blocks(
             top_system,
@@ -1482,8 +1644,7 @@ def build_hybrid_internal_mode_coupling(
         )
         bottom_top_error = float(
             np.linalg.norm(
-                bottom.negative_trace_to_positive
-                - top.negative_trace_to_positive,
+                bottom.negative_trace_to_positive - top.negative_trace_to_positive,
                 ord=np.inf,
             )
             / mapping_scale
@@ -1491,8 +1652,7 @@ def build_hybrid_internal_mode_coupling(
         canonical_error = max(
             float(
                 np.linalg.norm(
-                    block.negative_trace_to_positive
-                    - canonical_negative_mapping,
+                    block.negative_trace_to_positive - canonical_negative_mapping,
                     ord=np.inf,
                 )
                 / mapping_scale
@@ -1508,9 +1668,7 @@ def build_hybrid_internal_mode_coupling(
                             - canonical_negative_mapping[:, column]
                         )
                         / max(
-                            np.linalg.norm(
-                                canonical_negative_mapping[:, column]
-                            ),
+                            np.linalg.norm(canonical_negative_mapping[:, column]),
                             1.0e-30,
                         )
                     )
@@ -1535,18 +1693,12 @@ def build_hybrid_internal_mode_coupling(
                 f"canonical={canonical_error:.3e}."
             )
         negative_mapping = 0.5 * (
-            bottom.negative_trace_to_positive
-            + top.negative_trace_to_positive
+            bottom.negative_trace_to_positive + top.negative_trace_to_positive
         )
         if bottom.quadrature_degree != top.quadrature_degree:
             raise RuntimeError("Bottom/top interface quadrature policies disagree.")
-        if (
-            bottom.quadrature_coefficient_degree
-            != top.quadrature_coefficient_degree
-        ):
-            raise RuntimeError(
-                "Bottom/top interface coefficient degrees disagree."
-            )
+        if bottom.quadrature_coefficient_degree != top.quadrature_coefficient_degree:
+            raise RuntimeError("Bottom/top interface coefficient degrees disagree.")
         return HybridInternalModeCoupling(
             projection=projection,
             bottom=bottom,
