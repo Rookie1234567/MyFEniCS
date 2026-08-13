@@ -7,6 +7,7 @@ enter a solver, assemble a matrix, or call a Full3D runner.
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 from pathlib import Path
@@ -86,6 +87,39 @@ def _json(path: Path) -> dict[str, Any]:
 def _require(value: bool, message: str) -> None:
     if not value:
         raise ReplayIdentityError(message)
+
+
+def _normalized_replay_identity(
+    replayed: Mapping[str, Any], archived: Mapping[str, Any]
+) -> dict[str, str]:
+    replayed_provenance = replayed.get("provenance")
+    archived_provenance = archived.get("provenance")
+    _require(
+        isinstance(replayed_provenance, Mapping)
+        and isinstance(archived_provenance, Mapping),
+        "resolved config provenance is missing",
+    )
+    replay_source = replayed_provenance.get("source_path")
+    archived_source = archived_provenance.get("source_path")
+    _require(
+        isinstance(replay_source, str)
+        and bool(replay_source)
+        and isinstance(archived_source, str)
+        and bool(archived_source),
+        "resolved config provenance source_path is invalid",
+    )
+    normalized = copy.deepcopy(dict(replayed))
+    normalized["provenance"] = copy.deepcopy(dict(replayed_provenance))
+    normalized["provenance"]["source_path"] = archived_source
+    return {
+        "status": "pass",
+        "normalization": "provenance.source_path_only",
+        "archived_source_path": archived_source,
+        "replay_source_path": replay_source,
+        "normalized_sha256": hashlib.sha256(
+            canonical_json_bytes(normalized) + b"\n"
+        ).hexdigest(),
+    }
 
 
 def _require_mpi8(comm: Any) -> None:
@@ -341,11 +375,14 @@ def _load_replay_authority(root: Path, rank: int) -> dict[str, Any]:
         specification.execution.get("mpi_size") == 8,
         "input execution MPI size is not 8",
     )
-    resolved_bytes = canonical_json_bytes(specification.as_jsonable()) + b"\n"
+    resolved_replay_identity = _normalized_replay_identity(
+        specification.as_jsonable(), resolved
+    )
     _require(
-        hashlib.sha256(resolved_bytes).hexdigest()
-        == manifest["resolved_config_sha256"],
-        "input resolution does not reproduce resolved_config.json",
+        resolved_replay_identity["normalized_sha256"]
+        == manifest["resolved_config_sha256"]
+        == _sha256(resolved_path),
+        "normalized input resolution does not reproduce resolved_config.json",
     )
     _require(
         resolved.get("provenance", {}).get("physical_model_sha256")
@@ -370,6 +407,7 @@ def _load_replay_authority(root: Path, rank: int) -> dict[str, Any]:
         "numeric": numeric,
         "resolved": resolved,
         "specification": specification,
+        "resolved_replay_identity": resolved_replay_identity,
         "reference": reference,
         "reference_arrays": reference_arrays,
         "canonical": canonical,
@@ -622,6 +660,7 @@ def replay_full3d(
             "old_five_plane_identity": old_identity,
             "canonical_shard_verification": gathered_shards,
             "canonical_reconstruction_verification": reconstruction_status,
+            "resolved_replay_identity": authority["resolved_replay_identity"],
             "artifacts": authority["artifacts"],
         }
         if comm.rank == 0:
@@ -669,6 +708,7 @@ def replay_full3d(
             "old_five_plane_identity": old_identity,
             "canonical_shard_verification": gathered_shards,
             "canonical_reconstruction_verification": reconstruction_status,
+            "resolved_replay_identity": authority["resolved_replay_identity"],
             "t3_artifacts": authority["artifacts"],
         },
     )
@@ -677,6 +717,7 @@ def replay_full3d(
         "status": "qualified",
         "payload": descriptor,
         "old_five_plane_identity": old_identity,
+        "resolved_replay_identity": authority["resolved_replay_identity"],
         "t3_artifacts": authority["artifacts"],
     }
     (Path(output_dir) / "replay_summary.json").write_text(

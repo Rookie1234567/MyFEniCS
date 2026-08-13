@@ -142,6 +142,32 @@ def test_old_five_plane_identity_passes_and_fails() -> None:
     )["pass"]
 
 
+def test_replay_identity_normalizes_only_source_path() -> None:
+    archived = {
+        "method": {"kind": "full3d_direct"},
+        "geometry": {"wavelength_nm": 5.0},
+        "provenance": {"source_path": "/official/input.dat"},
+    }
+    replayed = {
+        "method": {"kind": "full3d_direct"},
+        "geometry": {"wavelength_nm": 5.0},
+        "provenance": {"source_path": "/raw/input_original.dat"},
+    }
+    identity = diagnostic._normalized_replay_identity(replayed, archived)
+    expected = hashlib.sha256(
+        diagnostic.canonical_json_bytes(archived) + b"\n"
+    ).hexdigest()
+    assert identity["status"] == "pass"
+    assert identity["normalization"] == "provenance.source_path_only"
+    assert identity["normalized_sha256"] == expected
+    changed = dict(replayed)
+    changed["method"] = {"kind": "full3d_iterative"}
+    assert (
+        diagnostic._normalized_replay_identity(changed, archived)["normalized_sha256"]
+        != expected
+    )
+
+
 def test_payload_metadata_hash_and_mapping(tmp_path: Path) -> None:
     hybrid = _hybrid_arrays()
     path = _write_payload(
