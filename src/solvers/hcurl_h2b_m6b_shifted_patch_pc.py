@@ -34,6 +34,7 @@ __all__ = (
     "M6B_IMPROVEMENT_LIMIT",
     "M6B_SHARED_VOLUME_OPERATOR",
     "M6B_SHARED_VOLUME_REPRESENTATION",
+    "m6b_shifted_local_matrix",
     "m6b_material_tag_coverage",
     "H2BM6BShiftedPatchPC",
     "M6BShiftedPCContext",
@@ -65,6 +66,28 @@ M6B_SHARED_VOLUME_OPERATOR = (
 )
 M6B_SHARED_VOLUME_REPRESENTATION = "exact_DG0_single_integral"
 _COMPLEX128_BYTES = np.dtype(np.complex128).itemsize
+
+
+def m6b_shifted_local_matrix(
+    curl_tensor: np.ndarray,
+    mass_tensor: np.ndarray,
+    epsilon: complex,
+    k0: float,
+    beta: float,
+) -> np.ndarray:
+    """Form the fixed non-Hermitian local ``B_beta`` class matrix."""
+
+    beta_value = float(beta)
+    if beta_value not in M6B_ALLOWED_SHIFTED_BETAS:
+        raise ValueError("M6B shifted local beta must be exactly 0.5 or 1")
+    return np.asarray(
+        curl_tensor
+        + float(k0) ** 2
+        * (-complex(epsilon) + 1j * beta_value * abs(complex(epsilon)))
+        * mass_tensor,
+        dtype=np.complex128,
+        order="C",
+    )
 
 
 def m6b_material_tag_coverage(mesh_data: Any, cfg: Any) -> dict[str, Any]:

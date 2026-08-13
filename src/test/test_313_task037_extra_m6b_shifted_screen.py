@@ -36,6 +36,7 @@ from src.solvers.hcurl_h2b_m6b_shifted_patch_pc import (
     build_m6b_volume_form,
     compose_m6b_physical_rhs,
     evaluate_m6b_screen_gate,
+    m6b_shifted_local_matrix,
     m6b_material_tag_coverage,
 )
 from src.common.config_3d import target_stage4_config
@@ -744,6 +745,22 @@ def test_m6b_runner_fixes_beta_half_without_beta_cli():
     assert runner._parser().parse_args(
         ["m6b-worker", "--run-dir", "synthetic-run"]
     ).command == "m6b-worker"
+
+
+def test_m6b_local_matrix_uses_beta_half_coefficient():
+    curl = np.asarray([[2.0 + 0.2j, 0.1 - 0.3j]], dtype=np.complex128)
+    mass = np.asarray([[0.5 - 0.1j, 0.2 + 0.4j]], dtype=np.complex128)
+    epsilon = 2.0 + 0.75j
+    k0 = 3.0
+    observed = m6b_shifted_local_matrix(
+        curl, mass, epsilon, k0, runner.M6B_BETA
+    )
+    expected = curl + k0**2 * (
+        -epsilon + 1j * runner.M6B_BETA * abs(epsilon)
+    ) * mass
+    beta_one = m6b_shifted_local_matrix(curl, mass, epsilon, k0, 1.0)
+    assert np.allclose(observed, expected, rtol=0.0, atol=1.0e-14)
+    assert not np.allclose(observed, beta_one, rtol=0.0, atol=1.0e-14)
 
 
 def test_m6b_form_record_removes_inherited_proxy_identity():

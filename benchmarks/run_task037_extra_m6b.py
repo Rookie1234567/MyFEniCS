@@ -1323,7 +1323,10 @@ def _run_m6b_builder(run_dir: Path) -> int:
         build_h2b_m6b_shifted_lu_factor,
         stream_write_h2b_m6b_shifted_lu_patch_store,
     )
-    from src.solvers.hcurl_h2b_m6b_shifted_patch_pc import build_m6b_volume_form
+    from src.solvers.hcurl_h2b_m6b_shifted_patch_pc import (
+        build_m6b_volume_form,
+        m6b_shifted_local_matrix,
+    )
     from src.solvers.hcurl_h2b_p1_factor_store import (
         H2BP1ClassBlockAuthority,
         discover_h2b_p1_neighborhoods,
@@ -1501,13 +1504,12 @@ def _run_m6b_builder(run_dir: Path) -> int:
                 if widths != mass_widths or cell_info != mass_info:
                     raise ValueError("M6B curl/mass tensor identity mismatch")
                 epsilon_value = h2a._material_epsilon(cfg, tag)
-                local = np.asarray(
-                    curl
-                    + float(cfg.k0) ** 2
-                    * (-complex(epsilon_value) + 1j * abs(complex(epsilon_value)))
-                    * mass,
-                    dtype=np.complex128,
-                    order="C",
+                local = m6b_shifted_local_matrix(
+                    curl,
+                    mass,
+                    epsilon_value,
+                    cfg.k0,
+                    M6B_BETA,
                 )
                 transformed = build_h2a_r2_transformed_block(
                     local, expansions[class_id]
