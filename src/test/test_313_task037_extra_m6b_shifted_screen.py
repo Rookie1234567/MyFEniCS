@@ -1037,10 +1037,33 @@ def test_m6b_checker_and_screen_gate_fail_closed_on_missing_or_tampered_keys():
     assert runner._m6b_check_payload(bad_phase_source)["pass"] is False
 
 
+def test_m6b_screen_structure_is_separate_from_performance_gate():
+    valid = _valid_worker_payload()
+    negative = copy.deepcopy(valid)
+    for key in ("20", "100", "150", "200"):
+        negative["screen"][key]["true_relative_residual"] = 0.70
+    negative["screen_metadata"]["samples"] = copy.deepcopy(negative["screen"])
+    samples = negative["screen"]
+    assert runner._m6b_screen_structure_valid(samples) is True
+    assert runner._m6b_screen_metadata_valid(negative["screen_metadata"]) is True
+    assert runner._m6b_screen_valid(samples) is False
+    checked = runner._m6b_check_payload(negative)
+    assert checked["checks"]["screen"] is False
+    assert checked["pass"] is False
+
+    missing = copy.deepcopy(samples)
+    del missing["20"]
+    assert runner._m6b_screen_structure_valid(missing) is False
+    nonfinite = copy.deepcopy(samples)
+    nonfinite["20"]["true_relative_residual"] = np.nan
+    assert runner._m6b_screen_structure_valid(nonfinite) is False
+
+
 def test_m6b_nonnegative_evidence_quantities_fail_closed():
     valid = _valid_worker_payload()
     bad_screen = copy.deepcopy(valid["screen"])
     bad_screen["20"]["true_relative_residual"] = -1.0
+    assert runner._m6b_screen_structure_valid(bad_screen) is False
     assert runner._m6b_screen_valid(bad_screen) is False
 
     cfg = SimpleNamespace(

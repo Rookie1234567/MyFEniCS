@@ -382,19 +382,26 @@ def _m6b_lifecycle_valid(
     )
 
 
-def _m6b_screen_valid(value: Any) -> bool:
-    if not isinstance(value, Mapping) or set(value) != {str(item) for item in M6B_SCREEN_ITERATIONS}:
+def _m6b_screen_structure_valid(value: Any) -> bool:
+    if not isinstance(value, Mapping) or set(value) != {
+        str(item) for item in M6B_SCREEN_ITERATIONS
+    }:
         return False
-    residuals: dict[str, float] = {}
-    for key in sorted(value, key=int):
-        item = value[key]
-        if (
-            not isinstance(item, Mapping)
-            or not _finite_number(item.get("true_relative_residual"))
-            or float(item["true_relative_residual"]) < 0.0
-        ):
-            return False
-        residuals[key] = float(item["true_relative_residual"])
+    return all(
+        isinstance(value[key], Mapping)
+        and _finite_number(value[key].get("true_relative_residual"))
+        and float(value[key]["true_relative_residual"]) >= 0.0
+        for key in value
+    )
+
+
+def _m6b_screen_valid(value: Any) -> bool:
+    if not _m6b_screen_structure_valid(value):
+        return False
+    residuals = {
+        key: float(value[key]["true_relative_residual"])
+        for key in value
+    }
     return bool(
         residuals["20"] <= M6B_SCREEN_RHO_LIMITS["20"]
         and residuals["100"] <= M6B_SCREEN_RHO_LIMITS["100"]
@@ -428,7 +435,7 @@ def _m6b_screen_metadata_valid(value: Any) -> bool:
         and value.get("pc_apply_count") > 0
         and value.get("sample_action_count") == len(M6B_SCREEN_ITERATIONS)
         and isinstance(samples, Mapping)
-        and _m6b_screen_valid(samples)
+        and _m6b_screen_structure_valid(samples)
     )
 
 
