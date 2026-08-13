@@ -5,7 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from benchmarks.task039_0p7nm_feasibility import build_task039_0p7nm_audit
+from benchmarks.task039_0p7nm_feasibility import (
+    _render_markdown,
+    build_task039_0p7nm_audit,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -42,6 +45,7 @@ def test_task039_0p7nm_air_inventory_and_component_boundaries():
     assert scenario_b["global_active_trace_rows"] == 51192000
     assert scenario_b["endcap_surface_trace_rows_per_side"] == 842400
     assert scenario_b["budget"]["factor_lower_exceeds_256_gib"] is True
+    assert scenario_b["factor_nnz_range"] == [217041864000, 2170418640000]
     assert scenario_b["budget"]["global_W_exceeds_effective_hard_stop"] is True
     assert (
         scenario_b["external"]["hybrid_known_air_endcap_W_bytes_lower_bound"]
@@ -55,6 +59,16 @@ def test_task039_0p7nm_air_inventory_and_component_boundaries():
     )
     assert scenario_b["external"]["global_trace"]["W_GiB_complex128"] > 12000
     assert scenario_b["external"]["hybrid_endcap_per_side"]["W_GiB_complex128"] > 200
+    endcap = scenario_b["external"]["hybrid_endcap_per_side"]
+    assert endcap["O_N3_time_relative_to_604_channels"] == pytest.approx(
+        18693.4625, rel=1e-6
+    )
+    assert endcap["K_factor_time_seconds"]["status"] == "not_established"
+    two_side = scenario_b["external"]["hybrid_two_endcap_W_status"]
+    assert two_side["authority"] == "not_established"
+    assert two_side["status"] == "pending_substrate_material"
+    assert two_side["conditional_equal_air_example_bytes"] == 432117504000
+    assert two_side["classification"] == "conditional_example_not_authority"
     resident = scenario_b["external"][
         "hybrid_known_air_endcap_resident_W_plus_K_LU_GiB_range"
     ]
@@ -105,6 +119,11 @@ def test_task039_0p7nm_air_inventory_and_component_boundaries():
     assert detail["hybrid_two_endcap_W"]["classification"].endswith("REDESIGN")
     assert detail["hybrid_two_endcap_W"]["status"] == "pending_substrate_material"
     assert detail["hybrid_two_endcap_W"]["conservative_upper_below_hard_stop"] is False
+    markdown = _render_markdown(record)
+    assert "18,693" in markdown
+    assert "not_established" in markdown
+    assert "402.44" in markdown
+    assert "conditional" in markdown
 
 
 def test_task039_0p7nm_does_not_claim_a_plausible_current_architecture():

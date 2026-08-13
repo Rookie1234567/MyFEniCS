@@ -113,6 +113,10 @@ def _external_estimates(air: dict[str, Any], trace_rows: int) -> dict[str, Any]:
         "K_LU_GiB_range_complex128": [_gib(k_bytes), _gib(2 * k_bytes)],
         "K_LU_assumption": "dense LU uses one to two dense complex128 K copies; pivot/workspace not measured",
         "O_N3_time_relative_to_604_channels": (channels / 604) ** 3,
+        "K_factor_time_seconds": {
+            "status": "not_established",
+            "reason": "no isolated measured 604-channel K-factor timing baseline; O(N^3) ratio alone cannot determine seconds",
+        },
         "classification": "derived_estimate",
     }
 
@@ -123,7 +127,7 @@ def _scenario_b(
     volume_scale = (10.0 / 1.0) ** 3
     surface_scale = (10.0 / 1.0) ** 2
     factor_lower_nnz = int(base["factor_nnz"] * volume_scale)
-    factor_upper_nnz = int(base["factor_nnz"] * volume_scale ** (4 / 3))
+    factor_upper_nnz = round(base["factor_nnz"] * volume_scale ** (4 / 3))
     matrix_nnz = int(base["matrix_nnz"] * volume_scale)
     factor_bytes = [factor_lower_nnz * 16, factor_upper_nnz * 16]
     full_trace = int(base["global_active_trace_rows"] * volume_scale)
@@ -167,6 +171,18 @@ def _scenario_b(
             "global_trace": _external_estimates(air, full_trace),
             "hybrid_endcap_per_side": endcap_external,
             "hybrid_two_endcap_status": "pending_substrate_material",
+            "hybrid_two_endcap_W_status": {
+                "authority": "not_established",
+                "status": "pending_substrate_material",
+                "conditional_equal_air_example_bytes": 2
+                * endcap_trace
+                * air["count"]
+                * 16,
+                "conditional_equal_air_example_GiB": _gib(
+                    2 * endcap_trace * air["count"] * 16
+                ),
+                "classification": "conditional_example_not_authority",
+            },
             "hybrid_known_air_endcap_W_bytes_lower_bound": endcap_trace
             * air["count"]
             * 16,
@@ -277,6 +293,8 @@ def _render_markdown(record: dict[str, Any]) -> str:
     endcap_resident = b["external"][
         "hybrid_known_air_endcap_resident_W_plus_K_LU_GiB_range"
     ]
+    two_side = b["external"]["hybrid_two_endcap_W_status"]
+    k_factor_time = endcap_ext["K_factor_time_seconds"]
     hard_stop = record["resource_budget"]["effective_hard_stop_gib"]
     internal = record["internal_modal_models"]
     accepted_models = internal["accepted_13p5_M120_models"]
@@ -327,6 +345,14 @@ N_{{FE}}\\propto h^{{-3}},\\qquad n_{{\\Gamma,\\mathrm{{endcap}}}}\\propto h^{{-
 |---|---:|---:|---:|---:|
 | Full3D/global hypothetical | {ext["trace_rows"]} | {ext["W_GiB_complex128"]:.2f} GiB | {ext["K_GiB_complex128"]:.2f} GiB | {ext["K_LU_GiB_range_complex128"][0]:.2f}–{ext["K_LU_GiB_range_complex128"][1]:.2f} GiB |
 | Hybrid per-air-side endcap | {endcap_ext["trace_rows"]} | {endcap_ext["W_GiB_complex128"]:.2f} GiB | {endcap_ext["K_GiB_complex128"]:.2f} GiB | {endcap_ext["K_LU_GiB_range_complex128"][0]:.2f}–{endcap_ext["K_LU_GiB_range_complex128"][1]:.2f} GiB |
+
+Hybrid 双端 W 的 authority 为 `{two_side["authority"]}/{two_side["status"]}`。假设 substrate
+与 air 相同的 conditional example 为 `{two_side["conditional_equal_air_example_bytes"]}`
+bytes（`{two_side["conditional_equal_air_example_GiB"]:.2f}` GiB）；它不是 authority、无条件
+lower bound，也不能替代缺失的 substrate material。16030-channel K factor 相对于
+604-channel dense K factor 的 O(N^3) engineering ratio 为
+`{endcap_ext["O_N3_time_relative_to_604_channels"]:,.0f}x`。K factor 的绝对秒数为
+`{k_factor_time["status"]}`，原因是 {k_factor_time["reason"]}。
 
 Full3D/global 的 W 是全局 hypothetical capacity，不是 Hybrid endcap authority。已知 top-air endcap 的 W 是 `{endcap_ext["W_GiB_complex128"]:.2f}` GiB；把已定义的 1–2 份 K-LU 计入 resident component 后，known air-side endcap 的 `{endcap_resident[0]:.3f}–{endcap_resident[1]:.3f}` GiB range 与 effective hard stop `{hard_stop:.3f}` GiB 比较：lower 仅余 `{b["external"]["hybrid_known_air_endcap_lower_margin_gib"]:.3f}` GiB，upper 已超限。完整 two-endcap status 仍为 `pending_substrate_material`；由于 substrate、indices、pivot、workspace 和其他 solver 对象尚未计入，不能给出低于 hard stop 的保守上界，external redesign 分类成立。K-LU 是 complex128 value-only 组件估计，不含 indices、pivot 或 workspace。
 
