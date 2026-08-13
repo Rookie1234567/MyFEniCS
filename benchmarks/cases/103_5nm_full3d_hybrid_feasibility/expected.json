@@ -57,10 +57,10 @@
     "reason": "component-only air-side enumeration and derived capacity audit"
   },
   "t10": {
-    "status": "in_progress",
-    "plan": "pending_final_gates",
+    "status": "completed_with_cancelled_gate",
+    "plan": "closed",
     "record": "not_available",
-    "reason": "Stage A documents drafted; final Task-focused/static/full-test gates remain pending"
+    "reason": "T10 B1 focused/static/documentation gates passed; repository full pytest cancelled/not_run by user cost override on 2026-08-12"
   },
   "not_run": ["T6", "T7", "T8"]
 }

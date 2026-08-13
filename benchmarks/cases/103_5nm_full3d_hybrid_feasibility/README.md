@@ -31,7 +31,7 @@ inventory 只保存在 [T2 A0 record](records/task039_t2_a0_preflight_v1.json)�
 | T7 | `not_run` / `blocked` | T4 Full3D iterative negative and T5 M_robust_h10 absent block h7.5 reference; no accuracy-qualified h fit |
 | T8 | `not_run` / `blocked` | T7/T4 prerequisite and M_robust_h10 absent; h5/MPI1 not started |
 | T9 | `completed` | [0.7 nm component-only record](records/task039_t9_0p7nm_feasibility_v1.json); five component classifications; no full PDE |
-| T10 | `in_progress` / `pending_final_gates` | [Stage A summary](../../../docs/task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/summary.md); final tests and response review pending |
+| T10 | `completed` | [Final summary](../../../docs/task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/summary.md)、[test summary](../../../docs/task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/test_summary.md)、[response](../../../docs/task039_5nm_hybrid_qualification_and_0p7nm_feasibility/response_v1.md)；repository full pytest `cancelled / not_run` |
 
 `config.json`、`schema.json` 是 T0 frozen launch scaffold，不是最终 outcome authority；
 `expected.json` 只登记阶段证据索引，最终结论以 compact records 和 outcomes 为准。

@@ -1,4 +1,4 @@
-# Task39 执行回应（T10 Stage A 草稿）
+# Task39 执行回应
 
 ## 任务范围与执行结果
 
@@ -17,7 +17,7 @@ compact records 和 outcomes，不读取 ignored raw 来补写缺失数字。
 | T6 | MPI8/MPI1 not_run | [T6 boundary](outcomes/hybrid_iterative_mpi8_mpi1.md) |
 | T7/T8 | not_run/blocked | [grid boundary](outcomes/grid_convergence.md) |
 | T9 | component-only 0.7 nm feasibility completed; no full PDE | [T9 outcome](outcomes/feasibility_0p7nm.md) |
-| T10 | Stage A docs drafted; final gates pending | [test summary](outcomes/test_summary.md) |
+| T10 | scientific execution closed; repository full pytest `cancelled / not_run` by user cost override | [test summary](outcomes/test_summary.md) |
 
 ## 结论边界
 
@@ -58,7 +58,10 @@ canonical、DoF/rows/NNZ、RSS/PSS/USS/swap 和阶段 wall 的入口见
 [T5 outcome](outcomes/hybrid_m_convergence.md) 和
 [resource ledger](outcomes/resource_ledger.md)。
 
-T10 Stage A 尚未运行 final Task-focused suite、MPI1/2/4 launcher contract、最终静态
-Gate、`check_benchmarks --no-write` 或 repository `python -m pytest -q`；这些均保持
-`pending`。本执行未运行完整 0.7 nm PDE，未恢复 neural/learned 路线，未修改 master，
-未创建其他分支或 worktree。待主对话审查后，再决定是否仅运行任务书允许的最终 Gate。
+T10 B1 已完成 ABI、Task39 focused、MPI1/2/4 tiny DtN、Ruff、changed-Python
+format-check、compileall、`check_benchmarks --no-write` 和文档轻检查；最终 code/static
+parent SHA 为 `b737c62149186356a1c07c267f473e360274cc8a`。首轮 focused 包装丢失 final
+exit/summary，随后同一命令正式重跑通过；误下发的全目录 format probe 仅暴露 247 个历史
+文件，未批量格式化，最终 31-file scoped Gate 通过。本执行未运行完整 0.7 nm PDE，未恢复
+neural/learned 路线，未修改 master，未创建其他分支或 worktree；repository full pytest
+因用户于 2026-08-12 为节省时间取消，保持 `cancelled / not_run`。

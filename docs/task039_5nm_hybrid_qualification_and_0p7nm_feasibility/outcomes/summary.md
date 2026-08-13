@@ -1,4 +1,4 @@
-# Task39 最终结果摘要（T10 Stage A 草稿）
+# Task39 最终结果摘要
 
 ## 18.1 p6/h10 fixed-grid
 
@@ -97,5 +97,8 @@ HYBRID_DIRECT_DIAGNOSTIC_FAIL
 
 禁止使用 `TASK039_5NM_FULL3D_HYBRID_ACCURACY_AND_MEMORY_QUALIFIED`、
 `TASK039_ITERATIVE_SOLVER_PASS_HYBRID_MODEL_FAIL_AT_5NM` 或
-`CURRENT_ARCHITECTURE_PLAUSIBLE`。T10 final tests、T6–T8、h7.5/h5 和完整 0.7 nm
-PDE 仍未运行。
+`CURRENT_ARCHITECTURE_PLAUSIBLE`。T6–T8、h7.5/h5 和完整 0.7 nm PDE 仍为
+`not_run`；repository full pytest 为用户成本覆盖取消的 `cancelled / not_run`，不是 pass
+或 zero failures。T10 B1 的 code/static parent SHA 为
+`b737c62149186356a1c07c267f473e360274cc8a`；docs-only closeout 不改变 Python、config
+或 schema。
