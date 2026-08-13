@@ -37,3 +37,18 @@ master，也没有创建其他分支或 worktree。首轮 focused pytest 包装�
 247 个历史文件需格式化，未批量修改，最终以权威 31-file changed-Python scoped Gate 通过。
 代码和静态检查的最终 parent SHA 为 `b737c62149186356a1c07c267f473e360274cc8a`；本次
 docs-only closeout 不改变 Python、config 或 schema。
+
+## E6 Review V1 H-field diagnostic closeout
+
+| 检查/证据 | 状态 | 说明 |
+| --- | --- | --- |
+| E6 implementation regression | `pass` | `test_273_task039_review_v1_contracts.py` + `test_274_task039_h_field_diagnostic.py`：22 passed |
+| changed Python Ruff check/format/compileall/diff-check | `pass` | 仅 E6 序列化修复涉及的两文件；commit `af75d8c73c72cd9340191f7fb332227496e62509` |
+| offline Hybrid/Full3D comparison | `pass` | `diagnostic_complete=true`、`numeric_gate_pass=true`；classification=`M480_H_DISCREPANCY_UNRESOLVED` |
+| comparison payload identity | `pass` | Hybrid/Full3D payload、metadata 和 output SHA 见 E6 outcome |
+| M480 Hybrid direct MPI8 diagnostic rerun | `completed exactly once` | 按 Review 冻结合同执行；最终 compare 消费该次 payload |
+| Full3D new solve | `not_run` | 仅进行了既有 canonical replay |
+| E7 | `not_run` | E6 结束后停下，未进入下一阶段 |
+
+`pass` 在上表表示实现/离线比较命令成功，不表示 Full3D 或 production validation 成功；
+历史 T3–T5 negative/qualification 边界保持不变。

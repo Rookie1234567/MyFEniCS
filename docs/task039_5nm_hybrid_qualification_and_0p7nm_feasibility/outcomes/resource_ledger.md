@@ -124,3 +124,22 @@ T9 的 16030-channel dense K factor 相对于 604-channel baseline 只有约 `18
 authority 为 `not_established/pending_substrate_material`；若假设 substrate 与 air
 相同，conditional example 为 `432117504000` bytes（约 `402.44` GiB），不属于
 authority、无条件 lower bound 或 substrate 替代。
+
+## 7. E6 M480 H-field diagnostic measured resources
+
+E6 消费的 Hybrid raw 是唯一一次 Review V1 M480 direct H diagnostic rerun；Full3D 一侧
+只做 canonical replay 和采样，没有重新组装或求解。因此下表的 Hybrid 数值是 formal
+run 的 simultaneous process-tree 监测结果，PSS/USS 仍是独立峰值，不能拼成同一时刻的
+内存向量；Full3D replay 的求解资源为 `not_available/not_applicable`。
+
+| 项目 | 值 | 分类/口径 |
+| --- | ---: | --- |
+| Hybrid M480 numerical elapsed | `1500.0791483931243 s` | measured |
+| Hybrid process-tree RSS/PSS/USS | `22785.6796875 / 21028.330078 / 20747.875 MiB` | measured independent peaks |
+| Hybrid process-tree swap | `0 MiB` | measured; zero-swap pass |
+| Full3D replay assembly/solve | `false / false` | replay contract; no matrix assembly or linear solve |
+| Full3D replay process-tree peak | `not_available` | not a formal solve; no resource authority inferred |
+
+E6 的 raw payload、metadata、Full3D replay payload/metadata 和 comparison JSON 的完整 SHA
+以及路径见 [E6 H diagnostic outcome](m480_h_field_diagnostic.md)。这些证据不覆盖、也不
+改写 T3–T5 的既有资源账本；E6 不进入 E7。

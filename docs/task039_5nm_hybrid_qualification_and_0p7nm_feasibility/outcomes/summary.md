@@ -102,3 +102,21 @@ HYBRID_DIRECT_DIAGNOSTIC_FAIL
 或 zero failures。T10 B1 的 code/static parent SHA 为
 `b737c62149186356a1c07c267f473e360274cc8a`；docs-only closeout 不改变 Python、config
 或 schema。
+
+## E6 Review V1：M480 H-field diagnostic
+
+这一步把 Hybrid 的既有 native 磁场、由完整重构电场解析求旋度得到的 `curlE` 磁场，
+以及从 T3 canonical shard 离线恢复的 Full3D 磁场放在同一组七个平面上比较。它回答
+“差异是否只来自 H 的后处理路径”，不回答生产模型是否已经被验证。
+
+| 比较 | E relative L2 | H relative L2 | flux/energy Gate | 结论 |
+| --- | ---: | ---: | --- | --- |
+| native vs curlE | 0 | `0.0010876471954123718` | mandatory/strong pass | 两种 Hybrid H 路径接近但不完全相同 |
+| curlE vs Full3D | `0.0008277153668860366` | `0.007498197526364605` | mandatory/strong pass | Full3D 对照差异保留 |
+| native vs Full3D | `0.0008277153668860366` | `0.007797760173875772` | mandatory/strong pass | Full3D 对照差异保留 |
+
+E6 checker 的 `numeric_gate_pass=true` 和 `diagnostic_complete=true`，但正式分类仍为
+`M480_H_DISCREPANCY_UNRESOLVED`：三个特殊因果分支都没有被充分证据命中。这个分类
+与数值阈值通过不矛盾。Raw 的 `physical_augmented_direct_pass=false`、`official_record=false`
+和 sampled traction-density proxy `false` 原样保留；exact traction Gate 已通过。
+完整七平面和逐分量证据见 [E6 H diagnostic outcome](m480_h_field_diagnostic.md)。
