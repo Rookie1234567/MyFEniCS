@@ -1,0 +1,178 @@
+{
+  "schema_version": "task039.e2-h7p5-full3d-direct-result.v1",
+  "record_id": "task039_e2_h7p5_full3d_direct_mpi8_result_v1",
+  "status": "completed",
+  "classification": "5NM_FULL3D_DIRECT_H7P5_AUTHORITY_ESTABLISHED",
+  "scope": "fixed-grid h7.5 Full3D direct authority; no h-convergence or production claim",
+  "formal_pde_launched": true,
+  "command": "source scripts/activate_myfenics_wsl.sh && python scripts/run_case.py input/official/task039/5nm_p6h7p5_full3d_direct_mpi8.dat",
+  "source": {
+    "branch": "codex/20260812-task39-5nm-hybrid-0p7nm-feasibility",
+    "head_sha": "e2ea60897dc3c0536f517421a73434c64ef9604f",
+    "clean_at_launch": true,
+    "source_commit_sha": "e2ea60897dc3c0536f517421a73434c64ef9604f"
+  },
+  "input": {
+    "path": "input/official/task039/5nm_p6h7p5_full3d_direct_mpi8.dat",
+    "sha256": "06c877eb1b5f7cb6e4997e93aa3b0f80af546f7f3e1d454e9b1fa8c66e4ababc",
+    "wavelength_nm": 5.0,
+    "degree": 6,
+    "h_nm": 7.5,
+    "polarization": "s",
+    "grazing_deg": 10.0,
+    "theta_deg": 80.0,
+    "phi_deg": 0.0,
+    "mpi": 8,
+    "method": "full3d_direct",
+    "assembly_backend": "assembly_time_static_condensed"
+  },
+  "resolved": {
+    "path": "results/task039_5nm_full3d_direct/task039_5nm_full3d_direct_p6h7p5_mpi8__full3d_direct__mpi8__Mna/20260813T125001.607954Z/resolved_config.json",
+    "sha256": "5ab38f67be48a9246a5104ba17b4378e8c356b80b4bce705d9b6d2ee68418b13"
+  },
+  "physical": {
+    "sha256": "720602340b400b27a6cf3348816c675566c11e40b9c0c92fae0f8ba6dd2e187c",
+    "identity": "5nm/p6/h7.5/S/theta80/phi0/full3d_direct/assembly_time_static_condensed"
+  },
+  "preflight_record": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_e2_h7p5_full3d_direct_preflight_v1.json",
+  "raw_run_directory": "results/task039_5nm_full3d_direct/task039_5nm_full3d_direct_p6h7p5_mpi8__full3d_direct__mpi8__Mna/20260813T125001.607954Z",
+  "run": {
+    "run_id": "task039_5nm_full3d_direct_p6h7p5_mpi8",
+    "status": "finished",
+    "exit_status": 0,
+    "result_classification": "worker_exit0",
+    "adapter": "task038.full3d_direct",
+    "manifest_model_id": "task039_5nm_full3d_direct"
+  },
+  "a1_gates": {
+    "direct_solve_success": {"actual": "finished/exit0/official_result=true", "limit": "required", "pass": true},
+    "true_relative_residual": {"actual": 7.297573992945082e-11, "field": "linear_system_relative_residual", "limit": "<=1e-9", "pass": true},
+    "R_T_A_A_volume_finite": {"actual": true, "limit": "all four finite", "pass": true},
+    "energy_closure": {"actual": 8.44213587924969e-13, "field": "energy_closure_error_port_volume", "limit": "abs<=1e-5", "pass": true},
+    "dynamic_orders": {"actual": "604 rows / 604 unique keys / 604 propagating / Rayleigh warnings=0", "limit": "exact dynamic inventory", "pass": true},
+    "dynamic_significant_set_exported": {"actual": 38, "limit": ">=33", "pass": true},
+    "selected_E_H_export": {"actual": "finite complex128 arrays, shape [5,20,40,3], z=[10,30,60,90,110] nm", "limit": "all requested planes and coordinates", "pass": true},
+    "resource_authority": {"actual": "measured RSS/PSS/USS with 2615 complete smaps samples", "limit": "complete samples>0", "pass": true},
+    "swap": {"actual_mib": 0.0, "limit": 0.0, "pass": true}
+  },
+  "mesh_and_linear_algebra": {
+    "cells": 720,
+    "full_fe_dofs": 488070,
+    "active_trace_rows": 145152,
+    "assembled_rows": 145756,
+    "auxiliary_rows": 604,
+    "matrix_nnz_used": 122237892,
+    "matrix_nnz_allocated": 131199868,
+    "factor_nnz": 761335240,
+    "factor_solver": "mumps",
+    "global_A_materialized": true,
+    "global_F_materialized": true,
+    "mumps_ooc_enabled": false
+  },
+  "observables": {
+    "R": 0.001362582383157172,
+    "T": 0.027073280562035278,
+    "A_balance": 0.9715641370548076,
+    "A_volume": 0.9715641370556518,
+    "closure": 8.44213587924969e-13,
+    "closure_relation": "R+T+A_volume=1.0000000000008442"
+  },
+  "inventory_authority": {
+    "source": "run_manifest.external_mode_inventory",
+    "numeric_inventory_available": false,
+    "numeric_inventory_status": "not_applicable; numerical summary has no external_mode_inventory",
+    "canonical_sha256": "296c9e74d0a15c0dd2671e54fa7de2709c5f19f0c9f8665ffc4d35d740d4faea",
+    "count": 604,
+    "counts": {"bottom": 300, "top": 304, "S": 302, "P": 302, "propagating": 604, "nonpropagating": 0, "rayleigh_warning": 0},
+    "key_shape": ["side", "m", "n", "polarization"],
+    "keys_exact_and_unique": true
+  },
+  "orders": {
+    "raw_path": "results/task039_5nm_full3d_direct/task039_5nm_full3d_direct_p6h7p5_mpi8__full3d_direct__mpi8__Mna/20260813T125001.607954Z/numerical_output/dtn_port_diffraction_orders_3d.json",
+    "count": 604,
+    "unique_key_count": 604,
+    "key_sha256": "b3c016c31ce60c7b11f212a13f02a2a119bac6fa83d6194ab6ffd3de6caed59f",
+    "significant_floor": 1e-08,
+    "normalization": "incident_power",
+    "significant_count": 38,
+    "significant_key_sha256": "af5ac02ad485c958b8a196e41b7e229774132dd8b6c88f18b288ab168b7f48ad",
+    "significant_keys": [
+      ["top", -19, 0, "s"], ["top", -18, 0, "s"], ["top", -17, 0, "s"], ["top", -16, 0, "s"], ["top", -15, 0, "s"], ["top", -14, 0, "s"], ["top", -13, 0, "s"], ["top", -12, 0, "s"], ["top", -11, 0, "s"], ["top", -10, 0, "s"], ["top", -9, 0, "s"], ["top", -8, 0, "s"], ["top", -7, 0, "s"], ["top", -5, 0, "s"], ["top", -4, 0, "s"], ["top", -2, 0, "s"], ["top", -1, 0, "s"], ["top", 0, 0, "s"],
+      ["bottom", -19, 0, "s"], ["bottom", -18, 0, "s"], ["bottom", -17, 0, "s"], ["bottom", -16, 0, "s"], ["bottom", -15, 0, "s"], ["bottom", -14, 0, "s"], ["bottom", -13, 0, "s"], ["bottom", -12, 0, "s"], ["bottom", -11, 0, "s"], ["bottom", -10, 0, "s"], ["bottom", -9, 0, "s"], ["bottom", -8, 0, "s"], ["bottom", -7, 0, "s"], ["bottom", -6, 0, "s"], ["bottom", -5, 0, "s"], ["bottom", -4, 0, "s"], ["bottom", -3, 0, "s"], ["bottom", -2, 0, "s"], ["bottom", -1, 0, "s"], ["bottom", 0, 0, "s"]
+    ],
+    "max_power_ratio": 0.02682863973766474,
+    "propagating_count": 604,
+    "rayleigh_warning_count": 0
+  },
+  "selected_EH": {
+    "json_path": "results/task039_5nm_full3d_direct/task039_5nm_full3d_direct_p6h7p5_mpi8__full3d_direct__mpi8__Mna/20260813T125001.607954Z/numerical_output/full3d_reference_samples.json",
+    "json_sha256": "51c14aee01375abc581102e4e729264f79bac38ecfe7e9929ed59660a009df9d",
+    "npz_path": "results/task039_5nm_full3d_direct/task039_5nm_full3d_direct_p6h7p5_mpi8__full3d_direct__mpi8__Mna/20260813T125001.607954Z/numerical_output/full3d_reference_samples.npz",
+    "npz_sha256": "cfde95eb8898041a7a4c38599f5b1dfe04e9ad1903a88edb3f42473fe659d86e",
+    "shape": [5, 20, 40, 3],
+    "dtype": {"E": "complex128", "H": "complex128", "x_nm": "float64", "y_nm": "float64", "z_nm": "float64"},
+    "coordinates_shape": {"x_nm": [40], "y_nm": [20], "z_nm": [5]},
+    "z_nm": [10.0, 30.0, 60.0, 90.0, 110.0],
+    "finite": true,
+    "E_sha256": "77f23ccd834ba7f1aa9bec58d5352154edd91210f9a6a44891339e5b527f3703",
+    "H_sha256": "cd242855b9a2d6754dd06b2bf7d8b7fbd46ff0c506e38dd8594b3140f7b6604f",
+    "coordinate_sha256": {"x_nm": "45d85d9755c4fd6ada4eeecec263f3e88f248056a9dbf5e1d098c5e7ee6b38ed", "y_nm": "5ddc35b3fe2c2324d0e76c6924b9bc5228cafbe0c8fcc2e8b377123796389663", "z_nm": "afa7f7625860aa6cf3455f9170ff065caf122ecca9716135b20f64a0b994faec"},
+    "max_abs_E_by_z": [0.28020065110724995, 0.3973758865252975, 0.5433355055104278, 0.7440515630362893, 0.9799651051971888],
+    "max_abs_H_by_z": [0.0007481762207850787, 0.001062970577676167, 0.0014535492698105768, 0.001999662635622321, 0.0026286441872902197]
+  },
+  "canonical": {
+    "status": "completed",
+    "roles": {
+      "active_trace": {"manifest": "results/task039_5nm_full3d_direct/task039_5nm_full3d_direct_p6h7p5_mpi8__full3d_direct__mpi8__Mna/20260813T125001.607954Z/numerical_output/task037_m3a_active_trace_canonical_manifest.json", "manifest_sha256": "353d857bf1d1a0088de99d483edc842680c2e4f3a43c3f02684d4a4cd683e50f", "shards": 8, "global_summed_packet_count": 164070, "schema_version": "task037.canonical-vector-manifest.v1"},
+      "full_fe": {"manifest": "results/task039_5nm_full3d_direct/task039_5nm_full3d_direct_p6h7p5_mpi8__full3d_direct__mpi8__Mna/20260813T125001.607954Z/numerical_output/task037_m3a_full_fe_canonical_manifest.json", "manifest_sha256": "5b106275ba14fed12aa0460649b7992003981f45777cefbb76ef1f73d9d34fca", "shards": 8, "global_summed_packet_count": 488070, "schema_version": "task037.canonical-vector-manifest.v1"}
+    }
+  },
+  "resources": {
+    "status": "measured",
+    "process_tree_peak_rss_mib": 35877.375,
+    "peak_pss_mib": 33805.8701171875,
+    "peak_uss_mib": 33485.359375,
+    "peak_semantics": "per-metric simultaneous process-tree peak across complete smaps samples; RSS/PSS/USS peaks may occur at different samples",
+    "sample_count": 2616,
+    "smaps_attempted_sample_count": 2618,
+    "smaps_complete_sample_count": 2615,
+    "swap_mib": 0.0,
+    "zero_swap_observed": true,
+    "warning_triggered": false,
+    "configured_warning_gib": 170.0,
+    "configured_hard_gib": 195.0,
+    "effective_hard_gib": 195.0,
+    "selected_capacity_gib": 228.0657501220703
+  },
+  "timings": {
+    "outer_wall_seconds": 1015.7625401068944,
+    "numerical_elapsed_seconds": 1015.7625401068944,
+    "mesh_build": 2.697647979017347,
+    "function_space_setup": 1.7250231369398534,
+    "dtn_assembly_and_solve": 988.8405016008765,
+    "dtn_ksp_setup": 791.1309719388373,
+    "dtn_ksp_solve": 0.6752749129664153,
+    "cell_static_condensation_recovery": 0.3479458137881011,
+    "postprocess": 16.331044433172792,
+    "diffraction_postprocess": 2.4233552769292146,
+    "volume_absorption_postprocess": 0.22983037284575403
+  },
+  "raw_hashes": {
+    "run_manifest.json": "7194084444bebed0f7352e6122569f1d4238c876a862074dfc03bec95a904f52",
+    "run_summary.json": "4cfb3eea0ad0f25c4599fae29b3f857ce1dc1fa4201f512ebdba53fc105b05af",
+    "resolved_config.json": "5ab38f67be48a9246a5104ba17b4378e8c356b80b4bce705d9b6d2ee68418b13",
+    "input_original.dat": "06c877eb1b5f7cb6e4997e93aa3b0f80af546f7f3e1d454e9b1fa8c66e4ababc",
+    "numerical_output/run_summary.json": "978cdbdd93ace6626abe11687a33c27a4443db5cf65840135203c0c9b7eb2c4b",
+    "numerical_output/dtn_port_diffraction_orders_3d.json": "8fbce0b621e8d980763accb9b8d44e4c5dc220af8ee936a49fa0478fa8e1da5f",
+    "numerical_output/dtn_port_power_metrics_3d.json": "60a8ad5aba3ea9265ac13dc13250c3b662d13aab7919c2fe37253bcf67121956",
+    "numerical_output/dtn_auxiliary_amplitudes_3d.json": "5f014ddeab19e6f0beea8c2e4d31bd9eafa3336072b71a14511c5780272299f0",
+    "numerical_output/full3d_reference_samples.json": "51c14aee01375abc581102e4e729264f79bac38ecfe7e9929ed59660a009df9d",
+    "numerical_output/full3d_reference_samples.npz": "cfde95eb8898041a7a4c38599f5b1dfe04e9ad1903a88edb3f42473fe659d86e",
+    "numerical_output/progress_3d.jsonl": "5a1c9f9f77180464aa02d2241b2373e87045c51bcd7736e6776c67d1595618b0",
+    "worker_stdout.txt": "44ae1eb87670644d882d407e9251bae7c6763667f9993d20e5239529ff04744a"
+  },
+  "limitations": [
+    "This record establishes the h7.5 fixed-grid Full3D direct authority only; h10↔h7.5 and h7.5↔h6 grid-convergence decisions are not established.",
+    "Raw artifacts remain in ignored results/ and are not tracked by this record."
+  ]
+}
