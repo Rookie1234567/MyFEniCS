@@ -91,3 +91,36 @@ M960 在 canonicalized negative trace authority 处以
 run 的 measured telemetry，不是成功求解的资源上限。T5 的完整身份、阶段时间和每次
 raw file SHA 见
 [T5 Hybrid direct convergence record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_t5_hybrid_direct_m_convergence_v1.json)。
+
+## 6. T9 0.7 nm component-only feasibility
+
+T9 只运行了已提交的纯组件生成器
+[`task039_0p7nm_feasibility.py`](../../../benchmarks/task039_0p7nm_feasibility.py)，
+没有创建网格、组装矩阵、启动 MPI/PDE，也没有读取 ignored raw。完整紧凑证据见
+[T9 record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_t9_0p7nm_feasibility_v1.json)
+和
+[T9 feasibility report](feasibility_0p7nm.md)。
+
+| 项目 | 值 | 分类与边界 |
+| --- | ---: | --- |
+| 空气侧 inventory | 8015 spatial `(m,n)` / 16030 S/P channels；key SHA `28cf61cebf8656b207a5128cc98dda4e0bfcaad4cdb1fe1b784b33bcacd14e4d` | exact component-computed；substrate pending |
+| p6/h1 global active trace | 51,192,000 | derived `h^-3` engineering estimate |
+| p6/h1 endcap trace per side | 842,400 | derived `h^-2` engineering estimate |
+| factor values-only envelope | 3234.18–32341.76 GiB | complex128 values only；不含 indices、metadata、workspace |
+| known air-side endcap `W+K_LU` | 205.049–208.878 GiB | derived range；effective hard stop 205.259 GiB，upper exceeds；不是完整 two-endcap measurement |
+| two-endcap status | `pending_substrate_material` | substrate、indices、pivot、workspace 和其他 solver 对象未计入 |
+| preflight capacity | 256 GiB physical；selected 228.0657501220703 GiB；warning 180 GiB；effective hard 205.2591751098633 GiB | measured preflight capacity + derived threshold；不是 0.7 nm PDE job telemetry |
+| preflight process-tree swap | 0 MiB | measured preflight；不等同于不存在的 0.7 nm formal job |
+
+上述 W、K、FE 和 factor 数字都是 tracked evidence 上的 derived estimates，不能与
+T3–T5 的 simultaneous process-tree RSS/PSS/USS measured peak 混称。0.7 nm 材料常数
+缺失，最终保持 `0P7NM_MATERIAL_INPUT_INCOMPLETE`；同时保留 factor/cache、external
+DtN/Woodbury、internal modal Schur 和 convergence-risk 分类，不能升级为
+`CURRENT_ARCHITECTURE_PLAUSIBLE`。
+
+T9 的 16030-channel dense K factor 相对于 604-channel baseline 只有约 `18,693x`
+的 O(N^3) engineering ratio；absolute K-factor seconds 为 `not_established`，因为
+没有 isolated measured 604-channel K-factor timing baseline。完整 two-endcap W 的
+authority 为 `not_established/pending_substrate_material`；若假设 substrate 与 air
+相同，conditional example 为 `432117504000` bytes（约 `402.44` GiB），不属于
+authority、无条件 lower bound 或 substrate 替代。

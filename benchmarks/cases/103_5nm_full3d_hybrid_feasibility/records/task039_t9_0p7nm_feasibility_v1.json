@@ -1,0 +1,458 @@
+{
+  "schema_version": "task039.t9.0p7nm.component.v1",
+  "record_id": "task039_t9_0p7nm_feasibility_v1",
+  "classification": [
+    "0P7NM_MATERIAL_INPUT_INCOMPLETE",
+    "0P7NM_FE_FACTOR_OR_CACHE_EXCEEDS_256GIB_BUDGET",
+    "0P7NM_REQUIRES_EXTERNAL_DTN_WOODBURY_REDESIGN",
+    "0P7NM_REQUIRES_INTERNAL_MODAL_SCHUR_REDESIGN",
+    "0P7NM_CONVERGENCE_RISK_UNRESOLVED"
+  ],
+  "production_validation_allowed": false,
+  "full_pde": {
+    "allowed": false,
+    "launch_error": "0P7NM_MATERIAL_INPUT_INCOMPLETE",
+    "substrate_material": "pending"
+  },
+  "source": {
+    "generator": "benchmarks/task039_0p7nm_feasibility.py",
+    "source_sha": "60d2b3caa2bc5ea71be047718eace690e5638d2b",
+    "input": {
+      "path": "input/official/task039/5nm_p6h10_full3d_direct_mpi8.dat",
+      "input_sha256": "e8b60ba70daa2074c21603d463790a28c881d35d7bd17b2b8315fef0318007b6",
+      "resolved_config_sha256": "5e755e7499ada74c5cb5ec33a26afd87ba46820914d0c8bfddbe5bc387bb56bf",
+      "physical_model_sha256": "db52c70d667caa726e2b2e04b646402415a377fa7bbcef42c87ffc816b9b2a7a"
+    },
+    "compact_records": {
+      "task039_t2_a0_preflight_v1.json": {
+        "path": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_t2_a0_preflight_v1.json",
+        "sha256": "f006fb572cda96a2a25011c80b80d9c9d1efca4d6ed7e48b9b8cb05e72b53862"
+      },
+      "task039_t3_full3d_direct_mpi8_v1.json": {
+        "path": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_t3_full3d_direct_mpi8_v1.json",
+        "sha256": "96eab270e8f55804cd1596215c327185754a39453dfda57fe56bf59199ef5460"
+      },
+      "task039_t4_full3d_iterative_mpi8_negative_v1.json": {
+        "path": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_t4_full3d_iterative_mpi8_negative_v1.json",
+        "sha256": "7a7d732a4e4980c4a4aa7c1b2f35cc66f10576a07a42f7b1142550b410a050bc"
+      },
+      "task039_t5_hybrid_direct_m_convergence_v1.json": {
+        "path": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_t5_hybrid_direct_m_convergence_v1.json",
+        "sha256": "9cab06e12a6958a7f187560f93f205c787b760d77ccfa9d808d1d5811f189165"
+      }
+    }
+  },
+  "air_side_inventory": {
+    "selection": "top_air_only_dynamic_physical_propagation_inventory",
+    "source": "outgoing_port_modes_3d",
+    "wavelength_nm": 0.7,
+    "air_n": [
+      1.0,
+      0.0
+    ],
+    "material_status": "0P7NM_MATERIAL_INPUT_INCOMPLETE",
+    "substrate_status": "pending",
+    "full_pde_allowed": false,
+    "full_pde_error": "0P7NM_MATERIAL_INPUT_INCOMPLETE",
+    "count": 16030,
+    "key_shape": [
+      "side",
+      "m",
+      "n",
+      "polarization"
+    ],
+    "key_sha256": "28cf61cebf8656b207a5128cc98dda4e0bfcaad4cdb1fe1b784b33bcacd14e4d",
+    "spatial_count": 8015,
+    "m_bounds": [
+      -141,
+      1
+    ],
+    "n_bounds": [
+      -35,
+      35
+    ],
+    "polarization_counts": {
+      "top": {
+        "S": 8015,
+        "P": 8015
+      }
+    },
+    "propagating_count": 16030,
+    "nonpropagating_count": 0,
+    "rayleigh_warning_count": 0,
+    "near_cutoff_status": "not_separately_defined_by_authority",
+    "zero_order_retained": true
+  },
+  "inherited_5nm_measurements": {
+    "cells": 252,
+    "full_fe_dofs": 173802,
+    "global_active_trace_rows": 51192,
+    "endcap_surface_trace_rows": 8424,
+    "matrix_nnz": 43283050,
+    "factor_nnz": 217041864
+  },
+  "resource_budget": {
+    "physical_memory_gib": 256.0,
+    "warning_gib": 180.0,
+    "configured_hard_stop_gib": 220.0,
+    "selected_limit_gib": 228.0657501220703,
+    "effective_hard_stop_gib": 205.2591751098633,
+    "swap_preflight_mib": 0.0,
+    "classification": "measured_preflight_capacity_plus_derived_threshold"
+  },
+  "fe_scenarios": {
+    "A_accuracy_qualified_h_over_lambda": {
+      "status": "not_instantiated",
+      "reason": "T7/T8 not_run; no 5 nm accuracy-qualified h fit points",
+      "formula": "h_0.7_A = h_5_qualified * 0.7 / 5.0",
+      "estimates": "insufficient_fit_points"
+    },
+    "B_p6_h1": {
+      "label": "p6/h1 engineering scaling",
+      "status": "derived_estimate_not_accuracy_qualified",
+      "measured_fit_points": 1,
+      "fit_point": {
+        "h_nm": 10.0,
+        "source": "T3/T2 tracked compact evidence"
+      },
+      "assumptions": [
+        "volume quantities use h^-3 from the sole h10 point",
+        "surface trace quantities use h^-2 from the sole h10 point",
+        "same-fill direct-factor lower bound uses h^-3",
+        "3D nested-dissection upper envelope uses N^(4/3), hence h^-4",
+        "factor bytes are complex128 values-only envelopes; sparse indices, factor metadata, and workspace are excluded"
+      ],
+      "scale": {
+        "volume_h_minus_3": 1000.0,
+        "surface_h_minus_2": 100.0
+      },
+      "cells": 252000,
+      "full_fe_dofs": 173802000,
+      "global_active_trace_rows": 51192000,
+      "endcap_surface_trace_rows_per_side": 842400,
+      "matrix_nnz": 43283050000,
+      "matrix_nnz_classification": "derived_estimate",
+      "factor_nnz_range": [
+        217041864000,
+        2170418640000
+      ],
+      "factor_bytes_range_complex128": [
+        3472669824000,
+        34726698240000
+      ],
+      "factor_GiB_range_complex128": [
+        3234.1758012771606,
+        32341.758012771606
+      ],
+      "matrix_free_action_cache": {
+        "status": "not_established",
+        "reason": "no p6/h1 cache/action carrier; T3 is direct assembly evidence"
+      },
+      "mpi_process_tree_range": {
+        "MPI1": "not_established_no_h1_measurement",
+        "MPI8": "not_established_no_h1_measurement"
+      },
+      "external": {
+        "global_trace": {
+          "trace_rows": 51192000,
+          "N_air": 16030,
+          "W_bytes_complex128": 13129724160000,
+          "W_GiB_complex128": 12228.008508682251,
+          "K_bytes_complex128": 4111374400,
+          "K_GiB_complex128": 3.829015791416168,
+          "K_LU_bytes_range_complex128": [
+            4111374400,
+            8222748800
+          ],
+          "K_LU_GiB_range_complex128": [
+            3.829015791416168,
+            7.658031582832336
+          ],
+          "K_LU_assumption": "dense LU uses one to two dense complex128 K copies; pivot/workspace not measured",
+          "O_N3_time_relative_to_604_channels": 18693.462504077168,
+          "K_factor_time_seconds": {
+            "status": "not_established",
+            "reason": "no isolated measured 604-channel K-factor timing baseline; O(N^3) ratio alone cannot determine seconds"
+          },
+          "classification": "derived_estimate"
+        },
+        "hybrid_endcap_per_side": {
+          "trace_rows": 842400,
+          "N_air": 16030,
+          "W_bytes_complex128": 216058752000,
+          "W_GiB_complex128": 201.22039318084717,
+          "K_bytes_complex128": 4111374400,
+          "K_GiB_complex128": 3.829015791416168,
+          "K_LU_bytes_range_complex128": [
+            4111374400,
+            8222748800
+          ],
+          "K_LU_GiB_range_complex128": [
+            3.829015791416168,
+            7.658031582832336
+          ],
+          "K_LU_assumption": "dense LU uses one to two dense complex128 K copies; pivot/workspace not measured",
+          "O_N3_time_relative_to_604_channels": 18693.462504077168,
+          "K_factor_time_seconds": {
+            "status": "not_established",
+            "reason": "no isolated measured 604-channel K-factor timing baseline; O(N^3) ratio alone cannot determine seconds"
+          },
+          "classification": "derived_estimate"
+        },
+        "hybrid_two_endcap_status": "pending_substrate_material",
+        "hybrid_two_endcap_W_status": {
+          "authority": "not_established",
+          "status": "pending_substrate_material",
+          "conditional_equal_air_example_bytes": 432117504000,
+          "conditional_equal_air_example_GiB": 402.44078636169434,
+          "classification": "conditional_example_not_authority"
+        },
+        "hybrid_known_air_endcap_W_bytes_lower_bound": 216058752000,
+        "hybrid_known_air_endcap_if_substrate_equal_air_example_bytes": 432117504000,
+        "two_side_lower_bound_note": "only the known air-side component is an unconditional lower bound; equal-air doubling is conditional",
+        "hybrid_known_air_endcap_resident_W_plus_K_LU_GiB_range": [
+          205.04940897226334,
+          208.8784247636795
+        ],
+        "hybrid_known_air_endcap_effective_hard_stop_gib": 205.2591751098633,
+        "hybrid_known_air_endcap_lower_margin_gib": 0.20976613759995644,
+        "hybrid_known_air_endcap_upper_exceeds_effective_hard_stop": true,
+        "hybrid_two_endcap_conservative_upper_below_hard_stop": false
+      },
+      "budget": {
+        "physical_memory_gib": 256.0,
+        "effective_hard_stop_gib": 205.2591751098633,
+        "factor_upper_gib": 32341.758012771606,
+        "factor_lower_exceeds_256_gib": true,
+        "global_W_exceeds_256_gib": true,
+        "global_W_exceeds_effective_hard_stop": true
+      }
+    }
+  },
+  "external_dtn_woodbury": {
+    "air_channel_count": 16030,
+    "substrate_side": "pending_0P7NM_MATERIAL_INPUT_INCOMPLETE",
+    "scenario_A": "not_instantiated",
+    "classification_detail": {
+      "full3d_global_W": {
+        "classification": "illustrative_not_hybrid_authority",
+        "basis": "global-trace W is a Full3D/global hypothetical capacity only"
+      },
+      "hybrid_two_endcap_W": {
+        "classification": "0P7NM_REQUIRES_EXTERNAL_DTN_WOODBURY_REDESIGN",
+        "basis": "known air-side endcap resident upper exceeds the effective hard stop before unknown substrate and other objects",
+        "status": "pending_substrate_material",
+        "known_air_endcap_resident_W_plus_K_LU_GiB_range": [
+          205.04940897226334,
+          208.8784247636795
+        ],
+        "effective_hard_stop_gib": 205.2591751098633,
+        "known_air_endcap_lower_margin_gib": 0.20976613759995644,
+        "known_air_endcap_upper_exceeds_effective_hard_stop": true,
+        "conservative_upper_below_hard_stop": false
+      }
+    },
+    "scenario_B": {
+      "global_trace": {
+        "trace_rows": 51192000,
+        "N_air": 16030,
+        "W_bytes_complex128": 13129724160000,
+        "W_GiB_complex128": 12228.008508682251,
+        "K_bytes_complex128": 4111374400,
+        "K_GiB_complex128": 3.829015791416168,
+        "K_LU_bytes_range_complex128": [
+          4111374400,
+          8222748800
+        ],
+        "K_LU_GiB_range_complex128": [
+          3.829015791416168,
+          7.658031582832336
+        ],
+        "K_LU_assumption": "dense LU uses one to two dense complex128 K copies; pivot/workspace not measured",
+        "O_N3_time_relative_to_604_channels": 18693.462504077168,
+        "K_factor_time_seconds": {
+          "status": "not_established",
+          "reason": "no isolated measured 604-channel K-factor timing baseline; O(N^3) ratio alone cannot determine seconds"
+        },
+        "classification": "derived_estimate"
+      },
+      "hybrid_endcap_per_side": {
+        "trace_rows": 842400,
+        "N_air": 16030,
+        "W_bytes_complex128": 216058752000,
+        "W_GiB_complex128": 201.22039318084717,
+        "K_bytes_complex128": 4111374400,
+        "K_GiB_complex128": 3.829015791416168,
+        "K_LU_bytes_range_complex128": [
+          4111374400,
+          8222748800
+        ],
+        "K_LU_GiB_range_complex128": [
+          3.829015791416168,
+          7.658031582832336
+        ],
+        "K_LU_assumption": "dense LU uses one to two dense complex128 K copies; pivot/workspace not measured",
+        "O_N3_time_relative_to_604_channels": 18693.462504077168,
+        "K_factor_time_seconds": {
+          "status": "not_established",
+          "reason": "no isolated measured 604-channel K-factor timing baseline; O(N^3) ratio alone cannot determine seconds"
+        },
+        "classification": "derived_estimate"
+      },
+      "hybrid_two_endcap_status": "pending_substrate_material",
+      "hybrid_two_endcap_W_status": {
+        "authority": "not_established",
+        "status": "pending_substrate_material",
+        "conditional_equal_air_example_bytes": 432117504000,
+        "conditional_equal_air_example_GiB": 402.44078636169434,
+        "classification": "conditional_example_not_authority"
+      },
+      "hybrid_known_air_endcap_W_bytes_lower_bound": 216058752000,
+      "hybrid_known_air_endcap_if_substrate_equal_air_example_bytes": 432117504000,
+      "two_side_lower_bound_note": "only the known air-side component is an unconditional lower bound; equal-air doubling is conditional",
+      "hybrid_known_air_endcap_resident_W_plus_K_LU_GiB_range": [
+        205.04940897226334,
+        208.8784247636795
+      ],
+      "hybrid_known_air_endcap_effective_hard_stop_gib": 205.2591751098633,
+      "hybrid_known_air_endcap_lower_margin_gib": 0.20976613759995644,
+      "hybrid_known_air_endcap_upper_exceeds_effective_hard_stop": true,
+      "hybrid_two_endcap_conservative_upper_below_hard_stop": false
+    }
+  },
+  "internal_modal_models": {
+    "accepted_13p5_requested_M": 120,
+    "accepted_13p5_source": "benchmarks/cases/102_hybrid_iterative_robustness/records/task037c_mpi8_three_way_qualification_v1.json",
+    "five_nm_M_robust_h10": "not_established",
+    "M960_status": "failed_before_solution_formation_lower_bound_only",
+    "M960_two_M_lower_bound": 1920,
+    "M480_measured_anchor": {
+      "basis_bytes": 122787840,
+      "coupling_bytes": 29867536.0,
+      "modal_schur_dimensions": [
+        960,
+        960
+      ],
+      "modal_schur_storage": {
+        "bytes": 0,
+        "state": "not_materialized"
+      }
+    },
+    "wavelength_ratio_13p5_to_0p7": 19.28571428571429,
+    "wavelength_ratio_5_to_0p7": 7.142857142857143,
+    "h1_surface_scale_h_minus_2": 100,
+    "accepted_13p5_M120_models": {
+      "M_proportional_to_1_over_lambda": {
+        "seed_M": 120,
+        "seed_label": "accepted_13p5_M120",
+        "M_estimate": 2315,
+        "two_M_modal_unknowns": 4630,
+        "anchor_basis_bytes_M480_h10": 122787840,
+        "anchor_coupling_bytes_M480_h10": 29867536.0,
+        "h1_surface_scale_h_minus_2": 100,
+        "basis_bytes_estimate": 59219552000,
+        "coupling_bytes_estimate": 14404863717,
+        "scaling_assumption": "T5 M480/h10 measured per-M bytes * (M_est/480) * (10/1)^2; h1 engineering estimate",
+        "dense_modal_schur_bytes_estimate": 342990400,
+        "dense_modal_schur_LU_bytes_estimate": 685980800,
+        "O_M3_factor_time_relative_to_seed": 7179.748770254631,
+        "classification": "conservative_model_not_measured"
+      },
+      "M_proportional_to_1_over_lambda_squared": {
+        "seed_M": 120,
+        "seed_label": "accepted_13p5_M120",
+        "M_estimate": 44633,
+        "two_M_modal_unknowns": 89266,
+        "anchor_basis_bytes_M480_h10": 122787840,
+        "anchor_coupling_bytes_M480_h10": 29867536.0,
+        "h1_surface_scale_h_minus_2": 100,
+        "basis_bytes_estimate": 1141747846400,
+        "coupling_bytes_estimate": 277724527977,
+        "scaling_assumption": "T5 M480/h10 measured per-M bytes * (M_est/480) * (10/1)^2; h1 engineering estimate",
+        "dense_modal_schur_bytes_estimate": 127494700096,
+        "dense_modal_schur_LU_bytes_estimate": 254989400192,
+        "O_M3_factor_time_relative_to_seed": 51454634.597301506,
+        "classification": "conservative_model_not_measured"
+      }
+    },
+    "failed_5nm_M960_lower_bound_models": {
+      "M_proportional_to_1_over_lambda": {
+        "seed_M": 960,
+        "seed_label": "failed_5nm_M960_lower_bound_only",
+        "M_estimate": 6858,
+        "two_M_modal_unknowns": 13716,
+        "anchor_basis_bytes_M480_h10": 122787840,
+        "anchor_coupling_bytes_M480_h10": 29867536.0,
+        "h1_surface_scale_h_minus_2": 100,
+        "basis_bytes_estimate": 175433126400,
+        "coupling_bytes_estimate": 42673242060,
+        "scaling_assumption": "T5 M480/h10 measured per-M bytes * (M_est/480) * (10/1)^2; h1 engineering estimate",
+        "dense_modal_schur_bytes_estimate": 3010058496,
+        "dense_modal_schur_LU_bytes_estimate": 6020116992,
+        "O_M3_factor_time_relative_to_seed": 364.56816577148436,
+        "classification": "conservative_model_not_measured"
+      },
+      "M_proportional_to_1_over_lambda_squared": {
+        "seed_M": 960,
+        "seed_label": "failed_5nm_M960_lower_bound_only",
+        "M_estimate": 48980,
+        "two_M_modal_unknowns": 97960,
+        "anchor_basis_bytes_M480_h10": 122787840,
+        "anchor_coupling_bytes_M480_h10": 29867536.0,
+        "h1_surface_scale_h_minus_2": 100,
+        "basis_bytes_estimate": 1252947584000,
+        "coupling_bytes_estimate": 304773315267,
+        "scaling_assumption": "T5 M480/h10 measured per-M bytes * (M_est/480) * (10/1)^2; h1 engineering estimate",
+        "dense_modal_schur_bytes_estimate": 153538585600,
+        "dense_modal_schur_LU_bytes_estimate": 307077171200,
+        "O_M3_factor_time_relative_to_seed": 132813.62891529227,
+        "classification": "conservative_model_not_measured"
+      }
+    },
+    "modal_schur_condition_and_LU": {
+      "status": "not_established",
+      "reason": "5 nm augmented direct carriers do not materialize a modal Schur or LU; values above are conditional dense estimates"
+    }
+  },
+  "convergence": {
+    "accepted_13p5": {
+      "record": "benchmarks/cases/102_hybrid_iterative_robustness/records/task037c_mpi8_three_way_qualification_v1.json",
+      "iterations_by_phi": [
+        {
+          "phi_deg": 0.0,
+          "iterations": 1771,
+          "reported_residual": 3.061697359384168e-09
+        },
+        {
+          "phi_deg": -5.0,
+          "iterations": 3945,
+          "reported_residual": 3.163761941358598e-09
+        },
+        {
+          "phi_deg": 5.0,
+          "iterations": 2832,
+          "reported_residual": 3.4291679160959187e-09
+        }
+      ],
+      "iterations_min": 1771,
+      "iterations_max": 3945,
+      "status": "accepted_research_only_reference"
+    },
+    "five_nm_full3d_iterative": {
+      "record": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_t4_full3d_iterative_mpi8_negative_v1.json",
+      "iterations": 4000,
+      "reported_residual": 0.1552648200050503,
+      "status": "negative_at_max_it"
+    },
+    "hybrid_iterative_task39": {
+      "status": "not_run"
+    },
+    "0p7nm_iteration_range": "unbounded/not_established"
+  },
+  "evidence_boundary": {
+    "read": "tracked dat and compact records only",
+    "ignored_raw_read": false,
+    "complete_0p7nm_pde": "forbidden",
+    "material_guess": false
+  }
+}
