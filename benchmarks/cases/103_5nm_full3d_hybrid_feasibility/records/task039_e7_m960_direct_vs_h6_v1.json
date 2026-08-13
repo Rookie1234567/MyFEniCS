@@ -1,0 +1,1091 @@
+{
+  "blocked_by": "T4_5NM_FULL3D_ITERATIVE_NUMERICAL_NEGATIVE_AT_P6H10",
+  "classification": "HYBRID_DIRECT_DIAGNOSTIC_FAIL",
+  "comparisons": {
+    "adjacent": {
+      "pass": true,
+      "status": "not_run"
+    },
+    "full3d_diagnostic": {
+      "coordinates_exact": {
+        "fields": {
+          "x_nm": {
+            "exact": true,
+            "left_dtype": "float64",
+            "left_shape": [
+              40
+            ],
+            "right_dtype": "float64",
+            "right_shape": [
+              40
+            ]
+          },
+          "y_nm": {
+            "exact": true,
+            "left_dtype": "float64",
+            "left_shape": [
+              20
+            ],
+            "right_dtype": "float64",
+            "right_shape": [
+              20
+            ]
+          },
+          "z_nm": {
+            "exact": true,
+            "left_dtype": "float64",
+            "left_shape": [
+              5
+            ],
+            "right_dtype": "float64",
+            "right_shape": [
+              5
+            ]
+          }
+        },
+        "pass": true
+      },
+      "energy_closure": {
+        "full3d": {
+          "pass": true,
+          "threshold": 1e-05,
+          "value": -3.0365709946522657e-12
+        },
+        "hybrid": {
+          "pass": true,
+          "threshold": 1e-05,
+          "value": 1.1485794890742085e-06
+        }
+      },
+      "observables": {
+        "pass": false,
+        "values": {
+          "A_balance": {
+            "abs_delta": 0.8819325192791914,
+            "left": 0.0896320463463772,
+            "pass": false,
+            "right": 0.9715645656255686,
+            "threshold": 1e-05
+          },
+          "A_volume": {
+            "abs_delta": 0.8819313706966657,
+            "left": 0.08963319492586634,
+            "pass": false,
+            "right": 0.971564565622532,
+            "threshold": 1e-05
+          },
+          "R_total": {
+            "abs_delta": 0.9081354024268492,
+            "left": 0.9094973679165264,
+            "pass": false,
+            "right": 0.0013619654896771616,
+            "threshold": 1e-05
+          },
+          "T_total": {
+            "abs_delta": 0.02620288314765782,
+            "left": 0.0008705857370964508,
+            "pass": false,
+            "right": 0.02707346888475427,
+            "threshold": 1e-05
+          }
+        }
+      },
+      "orders": {
+        "failures": [
+          {
+            "amplitude_relative_delta": 1.1806481280936387,
+            "key": [
+              "bottom",
+              -19,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.967351990641613
+          },
+          {
+            "amplitude_relative_delta": 1.0159109651104756,
+            "key": [
+              "bottom",
+              -18,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.9996617674672094
+          },
+          {
+            "amplitude_relative_delta": 1.102328180961054,
+            "key": [
+              "bottom",
+              -17,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.9874707347641432
+          },
+          {
+            "amplitude_relative_delta": 1.5782045228859471,
+            "key": [
+              "bottom",
+              -16,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.6576721485869254
+          },
+          {
+            "amplitude_relative_delta": 1.350974565419101,
+            "key": [
+              "bottom",
+              -15,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.8656025301777852
+          },
+          {
+            "amplitude_relative_delta": 0.6443567663906392,
+            "key": [
+              "bottom",
+              -14,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.46658507537627997
+          },
+          {
+            "amplitude_relative_delta": 0.5518999449753413,
+            "key": [
+              "bottom",
+              -13,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.45531148963766466
+          },
+          {
+            "amplitude_relative_delta": 1.1402144106361105,
+            "key": [
+              "bottom",
+              -12,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.8010164149903357
+          },
+          {
+            "amplitude_relative_delta": 1.5737049112452712,
+            "key": [
+              "bottom",
+              -11,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.42603088778095083
+          },
+          {
+            "amplitude_relative_delta": 1.82730687701867,
+            "key": [
+              "bottom",
+              -10,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.3036135362917474
+          },
+          {
+            "amplitude_relative_delta": 1.4890323914515071,
+            "key": [
+              "bottom",
+              -9,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.6118467062393717
+          },
+          {
+            "amplitude_relative_delta": 1.3775096893007115,
+            "key": [
+              "bottom",
+              -8,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.5799941048805451
+          },
+          {
+            "amplitude_relative_delta": 1.360708548636298,
+            "key": [
+              "bottom",
+              -7,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.3813667132632141
+          },
+          {
+            "amplitude_relative_delta": 0.7926435491499554,
+            "key": [
+              "bottom",
+              -6,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.9032598680061141
+          },
+          {
+            "amplitude_relative_delta": 0.6172979508917731,
+            "key": [
+              "bottom",
+              -5,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.28938169044319434
+          },
+          {
+            "amplitude_relative_delta": 1.4538473366371505,
+            "key": [
+              "bottom",
+              -4,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.7300488125076022
+          },
+          {
+            "amplitude_relative_delta": 1.7373307228239339,
+            "key": [
+              "bottom",
+              -3,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.4347183015743313
+          },
+          {
+            "amplitude_relative_delta": 1.7456256550180633,
+            "key": [
+              "bottom",
+              -2,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.19726031162271257
+          },
+          {
+            "amplitude_relative_delta": 1.6811337098621353,
+            "key": [
+              "bottom",
+              -1,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.1797582351731576
+          },
+          {
+            "amplitude_relative_delta": 1.0039088981538162,
+            "key": [
+              "bottom",
+              0,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.999981803588211
+          },
+          {
+            "amplitude_relative_delta": 1.062919889220061,
+            "key": [
+              "top",
+              -19,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.9952713243991766
+          },
+          {
+            "amplitude_relative_delta": 1.015261439454649,
+            "key": [
+              "top",
+              -18,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.9997582800527858
+          },
+          {
+            "amplitude_relative_delta": 0.9773504678008421,
+            "key": [
+              "top",
+              -17,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.9852713243505573
+          },
+          {
+            "amplitude_relative_delta": 1.7057208522246798,
+            "key": [
+              "top",
+              -16,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.4000418923665788
+          },
+          {
+            "amplitude_relative_delta": 1.6057698730832404,
+            "key": [
+              "top",
+              -15,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.5631300518330937
+          },
+          {
+            "amplitude_relative_delta": 1.7166595117514196,
+            "key": [
+              "top",
+              -14,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.4371958470032545
+          },
+          {
+            "amplitude_relative_delta": 1.6044439013117837,
+            "key": [
+              "top",
+              -13,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.6131047598261292
+          },
+          {
+            "amplitude_relative_delta": 1.4377854535768404,
+            "key": [
+              "top",
+              -12,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.7641885146288246
+          },
+          {
+            "amplitude_relative_delta": 1.5046497067680136,
+            "key": [
+              "top",
+              -11,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.7248637742581076
+          },
+          {
+            "amplitude_relative_delta": 1.6869703747789817,
+            "key": [
+              "top",
+              -10,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.5258330829157924
+          },
+          {
+            "amplitude_relative_delta": 1.1818752697776698,
+            "key": [
+              "top",
+              -9,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.9103347331837238
+          },
+          {
+            "amplitude_relative_delta": 1.7324492318389713,
+            "key": [
+              "top",
+              -8,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.4119808488826007
+          },
+          {
+            "amplitude_relative_delta": 1.8791270370301127,
+            "key": [
+              "top",
+              -7,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.22356989537071348
+          },
+          {
+            "amplitude_relative_delta": 1.1215092058430742,
+            "key": [
+              "top",
+              -6,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.9414781650255791
+          },
+          {
+            "amplitude_relative_delta": 1.769238027130041,
+            "key": [
+              "top",
+              -5,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.3289491527598086
+          },
+          {
+            "amplitude_relative_delta": 1.6190297456689853,
+            "key": [
+              "top",
+              -4,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.3834163578982753
+          },
+          {
+            "amplitude_relative_delta": 1.8325284278822682,
+            "key": [
+              "top",
+              -2,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.25429220478876036
+          },
+          {
+            "amplitude_relative_delta": 1.4214379846576992,
+            "key": [
+              "top",
+              -1,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.6962313948664662
+          },
+          {
+            "amplitude_relative_delta": 1.0203561641941785,
+            "key": [
+              "top",
+              0,
+              0,
+              "s"
+            ],
+            "power_relative_delta": 0.9986531412813898
+          }
+        ],
+        "keys_exact": true,
+        "max_amplitude_relative_delta": 1.8791270370301127,
+        "max_power_relative_delta": 0.999981803588211,
+        "normalization": "incident_power",
+        "pass": false,
+        "relative_delta_threshold": 0.0001,
+        "significant_count": 39,
+        "threshold": 1e-08
+      },
+      "pass": false,
+      "physical_model_sha256": {
+        "full3d": "873e5a23e18b36222b8b3eecd8cd0c05823c874924d49c60c5641c03cbe63764",
+        "hybrid": "db52c70d667caa726e2b2e04b646402415a377fa7bbcef42c87ffc816b9b2a7a",
+        "pass": false
+      },
+      "reference_mesh_target_nm": 6.0,
+      "selected_EH": {
+        "fields": {
+          "E_V_per_m": {
+            "overall_pass": true,
+            "overall_relative_l2": 1.125314426657929,
+            "overall_threshold": null,
+            "pass": false,
+            "planes": [
+              {
+                "pass": false,
+                "relative_l2": 1.0030998687718538,
+                "threshold": 0.005,
+                "z_nm": 10.0
+              },
+              {
+                "pass": true,
+                "relative_l2": 1.0024953451905807,
+                "threshold": null,
+                "z_nm": 30.0
+              },
+              {
+                "pass": false,
+                "relative_l2": 0.9958370778529473,
+                "threshold": 0.005,
+                "z_nm": 60.0
+              },
+              {
+                "pass": true,
+                "relative_l2": 0.9825912312488704,
+                "threshold": null,
+                "z_nm": 90.0
+              },
+              {
+                "pass": false,
+                "relative_l2": 1.2621414251576641,
+                "threshold": 0.005,
+                "z_nm": 110.0
+              }
+            ]
+          },
+          "H_A_per_m": {
+            "overall_pass": true,
+            "overall_relative_l2": 1.1245059459338125,
+            "overall_threshold": null,
+            "pass": false,
+            "planes": [
+              {
+                "pass": false,
+                "relative_l2": 1.0027961930785243,
+                "threshold": 0.01,
+                "z_nm": 10.0
+              },
+              {
+                "pass": true,
+                "relative_l2": 1.0023765801670717,
+                "threshold": null,
+                "z_nm": 30.0
+              },
+              {
+                "pass": false,
+                "relative_l2": 0.9960259275159068,
+                "threshold": 0.005,
+                "z_nm": 60.0
+              },
+              {
+                "pass": true,
+                "relative_l2": 0.9823075800387557,
+                "threshold": null,
+                "z_nm": 90.0
+              },
+              {
+                "pass": false,
+                "relative_l2": 1.2610038926039746,
+                "threshold": 0.01,
+                "z_nm": 110.0
+              }
+            ]
+          }
+        },
+        "pass": false,
+        "planes_nm": [
+          10.0,
+          30.0,
+          60.0,
+          90.0,
+          110.0
+        ]
+      }
+    }
+  },
+  "full3d_comparison_role": "diagnostic_against_direct_authority",
+  "own": {
+    "canonical": {
+      "bottom.active_trace": {
+        "manifest": {
+          "label": "canonical bottom.active_trace",
+          "path": "/home/Projects/MyFEniCS/results/task039_5nm_hybrid_direct_m960/task039_5nm_hybrid_direct_p6h10_m960_mpi8__hybrid_direct__mpi8__M960/20260813T214509.450065Z/numerical_output/task039_direct_bottom_active_trace_canonical_manifest.json",
+          "sha256": "07cd3f180a743f6989e53af1823c014253cf53782b6e014f8770febe1a57cb38"
+        },
+        "packet_count": 9786,
+        "shard_count": 8
+      },
+      "bottom.full_fe": {
+        "manifest": {
+          "label": "canonical bottom.full_fe",
+          "path": "/home/Projects/MyFEniCS/results/task039_5nm_hybrid_direct_m960/task039_5nm_hybrid_direct_p6h10_m960_mpi8__hybrid_direct__mpi8__M960/20260813T214509.450065Z/numerical_output/task039_direct_bottom_full_fe_canonical_manifest.json",
+          "sha256": "adf86937c231ce81817ff9af480065fb8f08323dbdd7f894f25fe55a26be7749"
+        },
+        "packet_count": 25986,
+        "shard_count": 8
+      },
+      "top.active_trace": {
+        "manifest": {
+          "label": "canonical top.active_trace",
+          "path": "/home/Projects/MyFEniCS/results/task039_5nm_hybrid_direct_m960/task039_5nm_hybrid_direct_p6h10_m960_mpi8__hybrid_direct__mpi8__M960/20260813T214509.450065Z/numerical_output/task039_direct_top_active_trace_canonical_manifest.json",
+          "sha256": "8c5fc9ef91c46243b0476c9b6c30a7a8bfaa3ff5b736b3223e307d31c5a64e43"
+        },
+        "packet_count": 9786,
+        "shard_count": 8
+      },
+      "top.full_fe": {
+        "manifest": {
+          "label": "canonical top.full_fe",
+          "path": "/home/Projects/MyFEniCS/results/task039_5nm_hybrid_direct_m960/task039_5nm_hybrid_direct_p6h10_m960_mpi8__hybrid_direct__mpi8__M960/20260813T214509.450065Z/numerical_output/task039_direct_top_full_fe_canonical_manifest.json",
+          "sha256": "8212ed18ac3780cef3697b6bc942bef726a4e890983abbc3b294b2453be46464"
+        },
+        "packet_count": 25986,
+        "shard_count": 8
+      }
+    },
+    "closure": 1.1485794890742085e-06,
+    "input_sha256": "1e46b066ecd90c1db02fc22d648ae1f297238e09a9d0caa34522118b25b8de04",
+    "inventory": {
+      "canonical_sha256": "296c9e74d0a15c0dd2671e54fa7de2709c5f19f0c9f8665ffc4d35d740d4faea",
+      "count": 604,
+      "counts": {
+        "nonpropagating": 0,
+        "per_side": {
+          "bottom": 300,
+          "top": 304
+        },
+        "polarization": {
+          "P": 302,
+          "S": 302
+        },
+        "polarization_per_side": {
+          "bottom": {
+            "P": 150,
+            "S": 150
+          },
+          "top": {
+            "P": 152,
+            "S": 152
+          }
+        },
+        "propagating": 604,
+        "rayleigh_warning": 0,
+        "unique_spatial_mn": 152,
+        "unique_spatial_mn_per_side": {
+          "bottom": 150,
+          "top": 152
+        }
+      },
+      "key_sha256": "56e869d715ebf717f66996b335845de609ef08999ee70ec0b70e10565a7a0299",
+      "numeric_inventory_exact": true
+    },
+    "mode_evidence": {
+      "factor_inventory_components": {
+        "augmented": {
+          "available": true,
+          "factor_nnz_corrected": null,
+          "factor_nnz_corrected_source": null,
+          "factor_solver_type": "mumps",
+          "limitations": [
+            "MUMPS INFOG/RINFOG values are stored by raw index; only negative INFOG(9) receives the documented million-entry correction."
+          ],
+          "matrix_stats": {
+            "matrix_average_allocated_nnz_per_row": 3785.3018790006195,
+            "matrix_average_nnz_per_row": 3785.3018790006195,
+            "matrix_cols": 19372,
+            "matrix_column_block_size": 1,
+            "matrix_column_ownership_range": [
+              0,
+              2580
+            ],
+            "matrix_local_cols": 2580,
+            "matrix_local_rows": 2580,
+            "matrix_mallocs": 0.0,
+            "matrix_maximum_nnz_per_row": null,
+            "matrix_memory_bytes": 0.0,
+            "matrix_memory_estimate_bytes": 1760047816.0,
+            "matrix_memory_estimate_mb": 1678.5123977661133,
+            "matrix_memory_mb": 0.0,
+            "matrix_nnz_allocated": 73328868.0,
+            "matrix_nnz_unneeded": 0.0,
+            "matrix_nnz_used": 73328868.0,
+            "matrix_norm_frobenius": null,
+            "matrix_norm_infinity": null,
+            "matrix_petsc_info": {
+              "assemblies": 0.0,
+              "block_size": 1.0,
+              "factor_mallocs": 0.0,
+              "fill_ratio_given": 0.0,
+              "fill_ratio_needed": 0.0,
+              "mallocs": 0.0,
+              "memory": 0.0,
+              "nz_allocated": 73328868.0,
+              "nz_unneeded": 0.0,
+              "nz_used": 73328868.0
+            },
+            "matrix_petsc_info_global_sum": {
+              "assemblies": 0.0,
+              "block_size": 1.0,
+              "factor_mallocs": 0.0,
+              "fill_ratio_given": 0.0,
+              "fill_ratio_needed": 0.0,
+              "mallocs": 0.0,
+              "memory": 0.0,
+              "nz_allocated": 73328868.0,
+              "nz_unneeded": 0.0,
+              "nz_used": 73328868.0
+            },
+            "matrix_row_block_size": 1,
+            "matrix_row_ownership_range": [
+              0,
+              2580
+            ],
+            "matrix_rows": 19372,
+            "matrix_type": "mumps"
+          },
+          "mumps_api_available": true,
+          "mumps_raw_infog": {
+            "1": 0,
+            "10": 396959,
+            "11": 3954,
+            "12": 82,
+            "13": 0,
+            "14": 12,
+            "15": 0,
+            "16": 573,
+            "17": 4016,
+            "18": 573,
+            "19": 4016,
+            "2": 0,
+            "20": 73328868,
+            "21": 524,
+            "22": 3489,
+            "23": 0,
+            "24": 1,
+            "25": 0,
+            "26": 553,
+            "27": 3544,
+            "28": 0,
+            "29": 73293084,
+            "3": 73404042,
+            "30": 393,
+            "31": 2592,
+            "32": 1,
+            "33": 7,
+            "34": 0,
+            "35": 73293084,
+            "36": 0,
+            "37": 0,
+            "38": 0,
+            "39": 0,
+            "4": 406949,
+            "40": 0,
+            "5": 3954,
+            "6": 94,
+            "7": 4,
+            "8": -1,
+            "9": 73293084
+          },
+          "mumps_raw_rinfog": {
+            "1": 169754212397.0,
+            "10": 0.0,
+            "11": 0.0,
+            "12": 0.0,
+            "13": 0.0,
+            "14": 0.0,
+            "15": 1174.464672,
+            "16": 0.0,
+            "17": 1177.736868,
+            "18": 2341.301832,
+            "19": 4.1182469682529475e-05,
+            "2": 206383972.0,
+            "20": 4.1182469682529475e-05,
+            "3": 169553804105.0,
+            "4": 0.0,
+            "5": 0.0,
+            "6": 0.0,
+            "7": 0.0,
+            "8": 0.0,
+            "9": 0.0
+          }
+        }
+      },
+      "metrics": {
+        "H_modal_shape": [
+          1920,
+          1920
+        ],
+        "basis_bytes": 245575680,
+        "coupling_bytes": 60218896.0,
+        "coupling_bytes_classification": "derived_sum_of_projection_components",
+        "coupling_bytes_derived_sum": 60218896.0,
+        "modal_lu_storage_bytes": "not_applicable_augmented_direct",
+        "modal_schur_condition": "not_applicable_augmented_direct",
+        "modal_schur_shape": null,
+        "modal_schur_storage_bytes": 0,
+        "phase_wall_seconds": {
+          "cross_section_and_qep_assembly": 0.5585029900539666,
+          "internal_modal_coupling": 2230.754020082997,
+          "monolithic_assembly": 11.34478113683872,
+          "physical_field_reconstruction": 102.98494516988285,
+          "positive_and_negative_biorthogonal_bases": 2753.109449421987,
+          "primary_system_build": 11.34478113683872,
+          "total": 5332.772663516924,
+          "two_local_fem_dtn_systems": 178.08423154591583
+        },
+        "projection_coupling_matrix_bytes": {
+          "bottom": 29867528.0,
+          "top": 30351368.0
+        },
+        "qep_full_shape": [
+          2053,
+          2053
+        ],
+        "qep_reduced_shape": [
+          1944,
+          1944
+        ],
+        "retained_right_left_eigenvector_bytes": 245575680
+      },
+      "modal_schur_state": "not_materialized",
+      "mode_counts": {
+        "external_counts": {
+          "nonpropagating": 0,
+          "per_side": {
+            "bottom": 300,
+            "top": 304
+          },
+          "polarization": {
+            "P": 302,
+            "S": 302
+          },
+          "polarization_per_side": {
+            "bottom": {
+              "P": 150,
+              "S": 150
+            },
+            "top": {
+              "P": 152,
+              "S": 152
+            }
+          },
+          "propagating": 604,
+          "rayleigh_warning": 0,
+          "unique_spatial_mn": 152,
+          "unique_spatial_mn_per_side": {
+            "bottom": 150,
+            "top": 152
+          }
+        },
+        "external_nonpropagating": 0,
+        "external_propagating": 604,
+        "negative_candidate_modes": 1920,
+        "negative_direction_counts": {
+          "ambiguous": 0,
+          "backward": 960,
+          "forward": 960
+        },
+        "negative_finite_candidate_count": 1920,
+        "negative_numerically_infinite_candidate_count": 0,
+        "negative_passive_candidate_count": 1920,
+        "negative_requested_modes": 960,
+        "negative_selected_modes": 960,
+        "positive_candidate_modes": 1920,
+        "positive_direction_counts": {
+          "ambiguous": 0,
+          "backward": 960,
+          "forward": 960
+        },
+        "positive_finite_candidate_count": 1920,
+        "positive_numerically_infinite_candidate_count": 0,
+        "positive_passive_candidate_count": 1920,
+        "positive_requested_modes": 960,
+        "positive_selected_modes": 960
+      },
+      "optional_unavailable": [
+        "modal_schur_shape"
+      ],
+      "pass": true,
+      "projection_matrix_components": {
+        "bottom": {
+          "matrix_cols": 8724,
+          "matrix_memory_estimate_bytes": 29867528.0,
+          "matrix_memory_estimate_mb": 28.48389434814453,
+          "matrix_nnz_used": 1244160.0,
+          "matrix_rows": 960,
+          "matrix_type": "mpiaij"
+        },
+        "top": {
+          "matrix_cols": 8728,
+          "matrix_memory_estimate_bytes": 30351368.0,
+          "matrix_memory_estimate_mb": 28.94532012939453,
+          "matrix_nnz_used": 1264320.0,
+          "matrix_rows": 960,
+          "matrix_type": "mpiaij"
+        }
+      }
+    },
+    "model_id": "task039_5nm_hybrid_direct_m960",
+    "observables": {
+      "A_balance": 0.0896320463463772,
+      "A_volume": 0.08963319492586634,
+      "R_total": 0.9094973679165264,
+      "T_total": 0.0008705857370964508
+    },
+    "pass": true,
+    "payload": {
+      "artifact": {
+        "label": "task039_direct_payload.npz",
+        "path": "/home/Projects/MyFEniCS/results/task039_5nm_hybrid_direct_m960/task039_5nm_hybrid_direct_p6h10_m960_mpi8__hybrid_direct__mpi8__M960/20260813T214509.450065Z/numerical_output/task039_direct_payload.npz",
+        "sha256": "2848885ea1224c80c1af997d379db96c667603ef3ed3aecf04d36faacb2b5f9d"
+      },
+      "descriptor": {
+        "arrays": {
+          "E_V_per_m": {
+            "bytes": 192000,
+            "dtype": "complex128",
+            "finite": true,
+            "sha256": "a07dfa5da3c3f398d43b1a39009f0316fef15e88ffe23218f5e3f818812b72df",
+            "shape": [
+              5,
+              20,
+              40,
+              3
+            ]
+          },
+          "H_A_per_m": {
+            "bytes": 192000,
+            "dtype": "complex128",
+            "finite": true,
+            "sha256": "e2a82944693e1ccb1c52978c38269aa55080150fd7ec503c761dfd8c60306d54",
+            "shape": [
+              5,
+              20,
+              40,
+              3
+            ]
+          },
+          "bottom_q": {
+            "bytes": 4800,
+            "dtype": "complex128",
+            "finite": true,
+            "sha256": "1ac1985abbd5d063108d07d60ad1d74d48b917bea5f743f8db93026429b40776",
+            "shape": [
+              300
+            ]
+          },
+          "modal_amplitudes": {
+            "bytes": 30720,
+            "dtype": "complex128",
+            "finite": true,
+            "sha256": "d3df5d8e26e603507dcf879f6900b69bbe05c99fb3927598b55b75ce0a71eeee",
+            "shape": [
+              1920
+            ]
+          },
+          "top_q": {
+            "bytes": 4864,
+            "dtype": "complex128",
+            "finite": true,
+            "sha256": "3bc52279bff9f6cfba60668108e1f3bd213e015e72ba03d24a6cdd340f11af95",
+            "shape": [
+              304
+            ]
+          },
+          "x_nm": {
+            "bytes": 320,
+            "dtype": "float64",
+            "finite": true,
+            "sha256": "45d85d9755c4fd6ada4eeecec263f3e88f248056a9dbf5e1d098c5e7ee6b38ed",
+            "shape": [
+              40
+            ]
+          },
+          "y_nm": {
+            "bytes": 160,
+            "dtype": "float64",
+            "finite": true,
+            "sha256": "5ddc35b3fe2c2324d0e76c6924b9bc5228cafbe0c8fcc2e8b377123796389663",
+            "shape": [
+              20
+            ]
+          },
+          "z_nm": {
+            "bytes": 40,
+            "dtype": "float64",
+            "finite": true,
+            "sha256": "afa7f7625860aa6cf3455f9170ff065caf122ecca9716135b20f64a0b994faec",
+            "shape": [
+              5
+            ]
+          }
+        },
+        "bytes": 426900,
+        "keys": [
+          "x_nm",
+          "y_nm",
+          "z_nm",
+          "E_V_per_m",
+          "H_A_per_m",
+          "modal_amplitudes",
+          "bottom_q",
+          "top_q"
+        ],
+        "path": "task039_direct_payload.npz",
+        "schema": "task039.hybrid-direct-payload.v1",
+        "sha256": "2848885ea1224c80c1af997d379db96c667603ef3ed3aecf04d36faacb2b5f9d"
+      }
+    },
+    "physical_model_sha256": "db52c70d667caa726e2b2e04b646402415a377fa7bbcef42c87ffc816b9b2a7a",
+    "projection": 5.78940849787336e-13,
+    "qualification": {
+      "integration_pass": true,
+      "mode_count_converged": false,
+      "official_record": false
+    },
+    "requested_modes": 960,
+    "residual": 1.6797118438025696e-11,
+    "resolved_config_sha256": "8fa7f2dc4e6584eb8c37c21085441b0812dcc54458f5b2c9283ab3954a554efe",
+    "resources": {
+      "pss_mb": 69746.0888671875,
+      "raw": {
+        "memory_authority_peak_mb": 71502.58203125,
+        "peak_pss_mb": 69746.0888671875,
+        "peak_semantics": "per-metric simultaneous process-tree peak across complete smaps samples; RSS/PSS/USS peaks may occur at different samples",
+        "peak_uss_mb": 69465.1015625,
+        "process_tree_peak_rss_mb": 71502.58203125,
+        "process_tree_peak_swap_mb": 0.0,
+        "require_zero_swap": true,
+        "sample_count": 13164,
+        "smaps_attempted_sample_count": 13165,
+        "smaps_complete_sample_count": 13163,
+        "status": "measured",
+        "task039_memory_budget": {
+          "actual_available_gib": {
+            "classification": "measured",
+            "value": 228.0657501220703
+          },
+          "configured_terminate_memory_gib": 220.0,
+          "configured_warning_memory_gib": 180.0,
+          "effective_terminate_memory_gib": 205.2591751098633,
+          "hard_stop_memory_gib": {
+            "classification": "derived",
+            "source_classification": "measured",
+            "value": 205.2591751098633
+          },
+          "source": {
+            "cgroup_memory_max_bytes": null,
+            "classification": "measured",
+            "selected": "wsl_mem_total",
+            "wsl_mem_total_bytes": 244883734528
+          },
+          "warning_memory_gib": {
+            "classification": "contract",
+            "value": 180.0
+          }
+        },
+        "telemetry_status": "measured",
+        "warning_triggered": false,
+        "zero_swap_observed": true
+      },
+      "rss_mb": 71502.58203125,
+      "swap_mb": 0.0,
+      "swap_pass": true,
+      "uss_mb": 69465.1015625
+    },
+    "source_sha": "d66c3a64176897a90fc1ea04298c6b804bafa8aa",
+    "traction": {
+      "bottom": 3.835312255821973e-12,
+      "top": 1.6724358567686057e-11
+    }
+  },
+  "pass": false,
+  "production_validation_allowed": false,
+  "schema_version": "task039.hybrid-direct-identity.v1"
+}
