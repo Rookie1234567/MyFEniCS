@@ -14,5 +14,53 @@
     "classification": "T3_FULL3D_DIRECT_AUTHORITY_ESTABLISHED",
     "pde_launched": true
   },
-  "not_run": ["T4", "T5", "T6", "T7", "T8", "T9", "T10"]
+  "t4": {
+    "status": "completed_negative",
+    "record": "records/task039_t4_full3d_iterative_mpi8_negative_v1.json",
+    "classification": "5NM_FULL3D_ITERATIVE_NUMERICAL_NEGATIVE_AT_P6H10",
+    "pde_launched": true,
+    "reason": "4000 iterations ended DIVERGED_MAX_IT with reported residual 0.1552648200050503"
+  },
+  "t5": {
+    "status": "completed_negative",
+    "record": "records/task039_t5_hybrid_direct_m_convergence_v1.json",
+    "classification": "5NM_HYBRID_MODEL_NOT_ESTABLISHED_BY_M960_AT_P6H10",
+    "pde_launched": true,
+    "reason": "M120/M240 own E Gate failed, M480 Full3D H diagnostic failed, and M960 failed before solution formation"
+  },
+  "t6": {
+    "status": "not_run",
+    "plan": "blocked",
+    "reason": "M_robust_h10 not established and no legal M960 direct observable/reference"
+  },
+  "t7": {
+    "status": "not_run",
+    "plan": "blocked",
+    "reason": "T4 Full3D iterative negative (4000-step residual 0.1552648200050503) and T5 M_robust_h10 absent block the h7.5 reference chain"
+  },
+  "t8": {
+    "status": "not_run",
+    "plan": "blocked",
+    "reason": "T4 Full3D iterative negative (4000-step residual 0.1552648200050503) and T5 M_robust_h10 absent block h5 and MPI1 prerequisites"
+  },
+  "t9": {
+    "status": "completed",
+    "record": "records/task039_t9_0p7nm_feasibility_v1.json",
+    "classification": [
+      "0P7NM_MATERIAL_INPUT_INCOMPLETE",
+      "0P7NM_FE_FACTOR_OR_CACHE_EXCEEDS_256GIB_BUDGET",
+      "0P7NM_REQUIRES_EXTERNAL_DTN_WOODBURY_REDESIGN",
+      "0P7NM_REQUIRES_INTERNAL_MODAL_SCHUR_REDESIGN",
+      "0P7NM_CONVERGENCE_RISK_UNRESOLVED"
+    ],
+    "pde_launched": false,
+    "reason": "component-only air-side enumeration and derived capacity audit"
+  },
+  "t10": {
+    "status": "in_progress",
+    "plan": "pending_final_gates",
+    "record": "not_available",
+    "reason": "Stage A documents drafted; final Task-focused/static/full-test gates remain pending"
+  },
+  "not_run": ["T6", "T7", "T8"]
 }
