@@ -1,0 +1,200 @@
+{
+  "schema_version": "task039.e2-h7p5-full3d-direct-preflight.v1",
+  "stage": "E2",
+  "status": "ready_to_launch",
+  "classification": "preflight_pass",
+  "formal_pde_launched": false,
+  "blocking_reasons": [],
+  "source": {
+    "branch": "codex/20260812-task39-5nm-hybrid-0p7nm-feasibility",
+    "commit_sha": "65f248740d70fba997fcc52bb4e309bec748287a",
+    "worktree_clean": true,
+    "upstream_ahead_behind": "0/0"
+  },
+  "input": {
+    "path": "input/official/task039/5nm_p6h7p5_full3d_direct_mpi8.dat",
+    "sha256": "06c877eb1b5f7cb6e4997e93aa3b0f80af546f7f3e1d454e9b1fa8c66e4ababc",
+    "resolved_config_sha256": "5ab38f67be48a9246a5104ba17b4378e8c356b80b4bce705d9b6d2ee68418b13",
+    "physical_model_sha256": "720602340b400b27a6cf3348816c675566c11e40b9c0c92fae0f8ba6dd2e187c",
+    "model_id": "task039_5nm_full3d_direct",
+    "method": "full3d_direct",
+    "solver": "direct/MUMPS",
+    "mesh_target_nm": 7.5,
+    "wavelength_nm": 5.0,
+    "nedelec_degree": 6,
+    "polarization": "S",
+    "grazing_angle_deg": 10.0,
+    "azimuth_deg": 0.0,
+    "assembly_backend": "assembly_time_static_condensed",
+    "mpi_size": 8,
+    "execution_contract": {
+      "warning_memory_gib": 170.0,
+      "configured_hard_memory_gib": 195.0,
+      "effective_hard_formula": "min(195.0, 0.90 * selected_finite_limit_gib)",
+      "effective_hard_memory_gib": 195.0,
+      "timeout_seconds": 21600,
+      "require_zero_swap": true
+    }
+  },
+  "input_checks": {
+    "validate_only": {
+      "command": "python scripts/run_case.py --validate-only input/official/task039/5nm_p6h7p5_full3d_direct_mpi8.dat",
+      "exit": 0,
+      "status": "valid"
+    },
+    "dry_run": {
+      "command": "python scripts/run_case.py --dry-run input/official/task039/5nm_p6h7p5_full3d_direct_mpi8.dat",
+      "exit": 0,
+      "status": "valid",
+      "pde_launched": false
+    },
+    "abi": {
+      "qualified_activation": 1,
+      "python": "/home/Projects/MyFEniCS/.venv/bin/python",
+      "petsc_scalar": "complex128",
+      "petsc_int": "int32",
+      "linux_abi_stack": true
+    },
+    "concurrent_heavy_processes": {
+      "status": "none_observed",
+      "probe": "ps snapshot found no mpiexec, run_case, task038_input_worker, dolfinx, or active Python heavy job"
+    }
+  },
+  "external_inventory": {
+    "count": 604,
+    "canonical_sha256": "296c9e74d0a15c0dd2671e54fa7de2709c5f19f0c9f8665ffc4d35d740d4faea",
+    "keys_exact_and_unique": true,
+    "key_shape": ["side", "m", "n", "polarization"],
+    "counts": {
+      "bottom": 300,
+      "top": 304,
+      "propagating": 604,
+      "nonpropagating": 0,
+      "rayleigh_warning": 0,
+      "unique_spatial_mn": 152,
+      "polarization": {"S": 302, "P": 302}
+    },
+    "source": "outgoing_port_modes_3d/dynamic_physical_propagation_inventory"
+  },
+  "mesh_only_capacity": {
+    "classification": "derived_from_T3_h10_measured_anchor",
+    "measured_anchor": {
+      "record": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_t3_full3d_direct_mpi8_v1.json",
+      "record_sha256": "96eab270e8f55804cd1596215c327185754a39453dfda57fe56bf59199ef5460",
+      "mesh_nm": 10.0,
+      "cells": 252,
+      "full_dofs": 173802,
+      "active_trace_rows": 51192,
+      "condensed_rows": 51796,
+      "condensed_matrix_nnz_used": 43283050,
+      "factor_nnz": 217041864,
+      "process_tree_peak_rss_mib": 15965.453125,
+      "axis_cells": [6, 3, 14],
+      "interior_dofs_per_cell": 450,
+      "floquet_constraints": 9210,
+      "active_trace_after_cell_interior": 51192,
+      "assembled_rows_with_604": 51796,
+      "topology_anchor_exact": true
+    },
+    "measured_mesh_only": {
+      "axis_cells": [9, 4, 20],
+      "cells": 720,
+      "full_fe_dofs": 488070,
+      "floquet_constraint_mode": "topological_trace_p6",
+      "floquet_constraints": 18918,
+      "floquet_raw_map_nnz": 18918,
+      "interior_dofs_per_cell": 450,
+      "active_rows_after_floquet_before_static_condensation": 469152,
+      "active_trace_after_cell_interior": 145152,
+      "assembled_rows_with_604": 145756,
+      "static_condensed_active_trace_rows": 145152,
+      "classification": "measured_mesh_topology/derived_exact_from_entity_topology",
+      "probe": "existing build_airbox_mesh_3d + _create_nedelec_space + build_double_floquet_mpc; no matrix assembly or solve"
+    },
+    "derived_estimates": {
+      "volume_h_minus_3": 2.37037037037037,
+      "factor_upper_h_minus_4": 3.160493827160493,
+      "assembled_rows": 145756,
+      "assembled_nnz_estimate": 102596860,
+      "predicted_factor_nnz_range": [514469604, 685959472],
+      "predicted_factor_values_only_bytes_range": [8231513664, 10975351552],
+      "predicted_factor_values_only_gib_range": [7.666194498538971, 10.221592664718628],
+      "factor_bytes_semantics": "complex128 values-only envelope; indices, pivot/workspace and MUMPS overhead excluded",
+      "predicted_process_tree_peak_range_gib": [36.95706745090827, 61.595112418180456],
+      "peak_range_semantics": "derived conservative engineering range; lower uses factor-NNZ lower ratio, upper uses factor-NNZ upper ratio plus 1.25 workspace/runtime safety",
+      "formula": "lower=T3_peak*(514469604/217041864); upper=T3_peak*(685959472/217041864)*1.25",
+      "workspace_runtime_safety_factor": 1.25,
+      "uncertainty": "factor/workspace/runtime remain derived; MUMPS symbolic/analysis was not run",
+      "matrix_free_cache_action": "not_available",
+      "mpi1_process_tree": "not_available",
+      "mpi8_process_tree": "not_available"
+    }
+  },
+  "resource_snapshot": {
+    "physical_memory_gib": 256.0,
+    "selected_finite_limit_gib": 228.0657501220703,
+    "mem_available_gib": 211.5745391845703,
+    "effective_hard_gib": 195.0,
+    "warning_gib": 170.0,
+    "swap_total_gib": 32.0,
+    "swap_used_gib": 0.0,
+    "swap_gate": "any formal swap use is immediate failure",
+    "disk_free_gib": 720.6708450317383,
+    "disk_required_gib": 2.0,
+    "disk_required_classification": "derived_conservative",
+    "disk_required_formula": "ceil(164979903 B * (488070/173802) * 4 / 2^30)",
+    "h10_raw_directory": "results/task039_5nm_full3d_direct/task039_5nm_full3d_direct_p6h10_mpi8__full3d_direct__mpi8__Mna/20260812T204543.545080Z",
+    "h10_raw_directory_bytes": 164979903,
+    "h10_to_h7p5_full_dof_ratio": 2.8081955328477233,
+    "disk_sufficient": true,
+    "measurement_context": "read-only host snapshot; no formal job cgroup"
+  },
+  "mumps_symbolic_analysis": {
+    "symbolic": "not_available",
+    "analysis": "not_available",
+    "classification": "not_available",
+    "reason": "no h7.5 mesh assembly or MUMPS analysis was run during this preflight"
+  },
+  "review_preflight": {
+    "mesh_target_nm": 7.5,
+    "selected_limit_gib": 228.0657501220703,
+    "effective_hard_gib": 195.0,
+    "prediction": {
+      "range_gib": [36.95706745090827, 61.595112418180456],
+      "upper_bound_gib": 61.595112418180456,
+      "threshold_gib": 195.0,
+      "status": "predicted",
+      "classification": "derived",
+      "pass": true
+    },
+    "gates": {
+      "input_identity": {"status": "pass", "classification": "measured"},
+      "capacity_snapshot": {"status": "pass", "classification": "measured"},
+      "capacity_fields": {
+        "status": "pass",
+        "classification": "measured_mesh_topology_plus_derived_capacity",
+        "pass": true,
+        "reason": "mesh/space/Floquet topology measured; rows/NNZ/factor fields are named derived estimates"
+      },
+      "selected_limit_finite": {"status": "pass", "classification": "measured"},
+      "predicted_peak": {"status": "pass", "classification": "derived"},
+      "symbolic_analysis": {
+        "status": "nonblocking_not_available",
+        "classification": "not_available",
+        "pass": true
+      },
+      "disk_sufficient": {
+        "status": "pass",
+        "classification": "derived_conservative",
+        "pass": true,
+        "reason": "720.6708450317383 GiB free >= 2.0 GiB conservative requirement"
+      },
+      "swap_zero": {"status": "pass", "classification": "measured"}
+    },
+    "mesh_gate": "ready",
+    "h5_extra_gate": "not_applicable",
+    "all_pass": true,
+    "classification": "preflight_pass"
+  },
+  "next_action": "Ready for supervisor approval of exactly one h7.5 formal PDE; no formal launch was performed. h6/h5 remain untouched."
+}
