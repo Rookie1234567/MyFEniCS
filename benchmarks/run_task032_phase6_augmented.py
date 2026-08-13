@@ -32,6 +32,10 @@ from benchmarks.task035c_p6_h10_gates import (
     task035c_p6_h10_preflight_authority_gate,
     valid_hex_digest,
 )
+from benchmarks.task039_memory_telemetry import (
+    task039_e10_ledger,
+    task039_e10_stage_event,
+)
 from benchmarks.task032_final_gates import (
     _all_formal_true,
     _exact_traction_gate,
@@ -1247,18 +1251,39 @@ def main(
 
     def mark_stage(stage: str) -> None:
         if comm.rank == 0 and args.memory_stages is not None:
+            elapsed = time.perf_counter() - total_started
+            payload = {
+                "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+                "stage": stage,
+                "elapsed_seconds": elapsed,
+            }
             with args.memory_stages.open("a", encoding="utf-8") as stream:
-                stream.write(
-                    json.dumps(
-                        {
-                            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-                            "stage": stage,
-                            "elapsed_seconds": time.perf_counter() - total_started,
-                        },
-                        ensure_ascii=False,
-                    )
-                    + "\n"
-                )
+                stream.write(json.dumps(payload, ensure_ascii=False) + "\n")
+
+    task039_e10_events: list[dict[str, Any]] = []
+
+    def task039_mark_stage(
+        stage: str, *, detail: Mapping[str, Any] | None = None
+    ) -> None:
+        if (
+            canonical_export_prefix != "task039_direct"
+            or comm.rank != 0
+            or args.memory_stages is None
+        ):
+            return
+        event = task039_e10_stage_event(
+            stage,
+            elapsed_seconds=time.perf_counter() - total_started,
+            detail=detail,
+        )
+        task039_e10_events.append(event)
+        with args.memory_stages.open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(event, ensure_ascii=False) + "\n")
+        event_path = args.memory_stages.with_name(
+            args.memory_stages.stem + ".task039_e10.jsonl"
+        )
+        with event_path.open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(event, ensure_ascii=False) + "\n")
 
     def progress(message: str) -> None:
         if comm.rank == 0:
@@ -1511,6 +1536,8 @@ def main(
             cross_section, transverse_degree=modal_degree
         )
         operators = assemble_quadratic_beta_operators(modal_cfg, cross_section, spaces)
+        task039_mark_stage("mesh_spaces_ready")
+        task039_mark_stage("qep_matrices_ready")
         poynting_evaluator = PoyntingFluxEvaluator(modal_cfg, cross_section, spaces)
         target = analytic_homogeneous_beta(modal_cfg, modal_cfg.n_air)
         timings["cross_section_and_qep_assembly"] = _max_elapsed(comm, started)
@@ -1518,6 +1545,15 @@ def main(
 
         mark_stage("cross_section_eigen_solve")
         started = time.perf_counter()
+        task039_mark_stage(
+            "positive_qep_solve_peak",
+            detail={
+                "marker_semantics": (
+                    "solve interval boundary; peak is derived from subsequent "
+                    "watchdog interval samples, not this marker"
+                )
+            },
+        )
         positive_right, positive_report = solve_quadratic_beta_modes(
             operators,
             target=target,
@@ -1562,6 +1598,15 @@ def main(
             log=progress,
         )
         progress("Task32 Phase6: positive adjoint basis complete")
+        task039_mark_stage(
+            "negative_qep_solve_peak",
+            detail={
+                "marker_semantics": (
+                    "solve interval boundary; peak is derived from subsequent "
+                    "watchdog interval samples, not this marker"
+                )
+            },
+        )
         negative_right, negative_report = solve_quadratic_beta_modes(
             operators,
             target=-target,
@@ -1590,6 +1635,7 @@ def main(
                 "Negative finite candidate pool did not deliver enough passive "
                 f"backward modes: {negative_selection.direction_counts}."
             )
+        task039_mark_stage("raw_candidate_eigenvectors_ready")
         negative = build_biorthogonal_mode_basis(
             modal_cfg,
             cross_section,
@@ -1604,6 +1650,7 @@ def main(
             poynting_evaluator=poynting_evaluator,
             log=progress,
         )
+        task039_mark_stage("selected_biorthogonal_bases_ready")
         progress("Task32 Phase6: negative adjoint basis complete")
         progress(
             "Task32 Phase6: delivered basis counts "
@@ -1662,6 +1709,26 @@ def main(
             log=progress,
         )
         timings["internal_modal_coupling"] = _max_elapsed(comm, started)
+        task039_mark_stage(
+            "canonical_negative_traces_ready",
+            detail={
+                "source": "coupling_complete_boundary",
+                "marker_semantics": "coupling-complete boundary; not an RSS/PSS/USS peak",
+            },
+        )
+        task039_mark_stage(
+            "projection_matrices_ready", detail={"source": "coupling_output"}
+        )
+        task039_mark_stage(
+            "traction_matrices_ready", detail={"source": "coupling_output"}
+        )
+        task039_mark_stage(
+            "local_fe_dtn_systems_ready",
+            detail={
+                "source": "local_systems_built_before_coupling",
+                "marker_emitted_at_ordered_coupling_boundary": True,
+            },
+        )
 
         started = time.perf_counter()
         if args.solver_path == "augmented":
@@ -1669,12 +1736,17 @@ def main(
             system = build_hybrid_augmented_direct_system(bottom, top, coupling)
             timings["primary_system_build"] = _max_elapsed(comm, started)
             timings["monolithic_assembly"] = timings["primary_system_build"]
+            task039_mark_stage("hybrid_augmented_operator_ready")
             progress("Task32 Phase6: monolithic augmented AIJ complete")
             solution = solve_hybrid_augmented_direct(
                 system,
                 bottom,
                 top,
                 coupling,
+            )
+            task039_mark_stage(
+                "direct_factor_or_iterative_side_factors_ready",
+                detail={"source": "solution_ksp_holds_factor"},
             )
         else:
             builder = (
@@ -1686,6 +1758,8 @@ def main(
                 bottom, top, coupling, stage_callback=mark_stage
             )
             timings["primary_system_build"] = _max_elapsed(comm, started)
+            task039_mark_stage("direct_factor_or_iterative_side_factors_ready")
+            task039_mark_stage("modal_schur_ready")
             progress(
                 "Task32 Phase10: standalone "
                 f"{primary_schur_system.lifecycle_strategy} Schur system complete"
@@ -1865,6 +1939,10 @@ def main(
                 args.top_interface_nm,
             )
         mark_stage("middle_plane_reconstruction")
+        task039_mark_stage(
+            "field_reconstruction_start",
+            detail={"marker_semantics": "lifecycle boundary, not an RSS/PSS/USS peak"},
+        )
         started = time.perf_counter()
         reconstructor = ModalFieldReconstructor(
             cfg,
@@ -1889,6 +1967,10 @@ def main(
             sample_x,
             sample_y,
             sample_z,
+        )
+        task039_mark_stage(
+            "field_reconstruction_peak",
+            detail={"marker_semantics": "lifecycle boundary, not an RSS/PSS/USS peak"},
         )
         interface_samples = reconstructor.selected_planes(
             solution.modal_amplitudes,
@@ -2007,6 +2089,14 @@ def main(
                 comm=comm,
                 prefix=canonical_export_prefix,
             )
+        task039_mark_stage(
+            "postprocess_peak",
+            detail={
+                "marker_semantics": (
+                    "elapsed lifecycle boundary; not an RSS/PSS/USS peak"
+                )
+            },
+        )
         mark_stage("record_and_release")
         directions_valid = (
             all(mode.direction == "forward" for mode in positive.modes)
@@ -2732,9 +2822,45 @@ def main(
             negative.destroy()
         if operators is not None:
             operators.destroy()
+        if record is not None and any(
+            item is not None for item in (positive, negative, operators)
+        ):
+            task039_mark_stage(
+                "all_modal_qep_temporaries_released",
+                detail={"after_destroy": True},
+            )
+        if record is not None and any(
+            item is not None
+            for item in (
+                schur_solution,
+                schur_system,
+                solution,
+                primary_schur_system,
+                system,
+                coupling,
+                bottom,
+                top,
+                positive,
+                negative,
+                operators,
+            )
+        ):
+            task039_mark_stage("final_cleanup", detail={"after_destroy": True})
 
     if record is not None and external_mode_inventory is not None:
         record["external_mode_inventory"] = dict(external_mode_inventory)
+    if (
+        canonical_export_prefix == "task039_direct"
+        and comm.rank == 0
+        and args.memory_stages is not None
+    ):
+        ledger_path = args.memory_stages.with_name(
+            args.memory_stages.stem + ".task039_e10.json"
+        )
+        ledger_path.write_text(
+            json.dumps(task039_e10_ledger(task039_e10_events), ensure_ascii=False),
+            encoding="utf-8",
+        )
     if comm.rank == 0:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(

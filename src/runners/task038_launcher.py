@@ -11,7 +11,7 @@ import time
 from datetime import datetime, timezone
 from functools import partial
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Mapping
 
 from benchmarks.task034_wsl_resources import (
     cgroup_snapshot,
@@ -46,12 +46,16 @@ def task039_resource_ledger(
     observed_process_tree_gib: float,
     observed_swap_gib: float,
     available_classification: str = "measured",
+    configured_warning_gib: float = 180.0,
+    configured_terminate_gib: float = 220.0,
 ) -> dict[str, Any]:
     """Return the Task39 resource decision using the existing launcher sample."""
 
     available = float(actual_available_gib)
     observed = float(observed_process_tree_gib)
     swap = float(observed_swap_gib)
+    configured_warning = float(configured_warning_gib)
+    configured_terminate = float(configured_terminate_gib)
     if (
         not math.isfinite(available)
         or available <= 0.0
@@ -59,11 +63,15 @@ def task039_resource_ledger(
         or observed < 0.0
         or not math.isfinite(swap)
         or swap < 0.0
+        or not math.isfinite(configured_warning)
+        or configured_warning < 0.0
+        or not math.isfinite(configured_terminate)
+        or configured_terminate <= 0.0
     ):
         raise ValueError("Task39 resource samples must be finite and non-negative")
     if available_classification not in {"measured", "estimated"}:
         raise ValueError("available_classification must be measured or estimated")
-    hard_stop = min(220.0, 0.90 * available)
+    hard_stop = min(configured_terminate, 0.90 * available)
     stop_reason = None
     if swap > 0.0:
         stop_reason = "swap_policy_violation"
@@ -71,7 +79,7 @@ def task039_resource_ledger(
         stop_reason = "memory_hard_stop"
     return {
         "warning_memory_gib": {
-            "value": 180.0,
+            "value": configured_warning,
             "classification": "contract",
         },
         "hard_stop_memory_gib": {
@@ -91,12 +99,17 @@ def task039_resource_ledger(
             "value": swap,
             "classification": "measured",
         },
+        "configured_warning_memory_gib": configured_warning,
+        "configured_terminate_memory_gib": configured_terminate,
+        "effective_terminate_memory_gib": hard_stop,
         "stop": stop_reason is not None,
         "stop_reason": stop_reason,
     }
 
 
-def _task039_memory_budget() -> dict[str, Any]:
+def _task039_memory_budget(
+    execution: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
     """Read the finite WSL/cgroup capacity used by the Task39 hard stop."""
 
     memory = wsl_memory_snapshot()
@@ -114,11 +127,19 @@ def _task039_memory_budget() -> dict[str, Any]:
         )
     source_name, limit_bytes = min(candidates, key=lambda item: item[1])
     actual_limit_gib = limit_bytes / 1024**3
+    configured_warning = (
+        180.0 if execution is None else float(execution["warning_memory_gib"])
+    )
+    configured_terminate = (
+        220.0 if execution is None else float(execution["terminate_memory_gib"])
+    )
     ledger = task039_resource_ledger(
         actual_limit_gib,
         observed_process_tree_gib=0.0,
         observed_swap_gib=0.0,
         available_classification="measured",
+        configured_warning_gib=configured_warning,
+        configured_terminate_gib=configured_terminate,
     )
     ledger.pop("observed_process_tree_gib", None)
     ledger.pop("observed_swap_gib", None)
@@ -130,8 +151,6 @@ def _task039_memory_budget() -> dict[str, Any]:
         "cgroup_memory_max_bytes": cgroup_limit,
         "classification": "measured",
     }
-    ledger["configured_terminate_memory_gib"] = 220.0
-    ledger["effective_terminate_memory_gib"] = ledger["hard_stop_memory_gib"]["value"]
     return ledger
 
 
@@ -326,8 +345,8 @@ def _run_worker(
     method = str(specification.method.get("kind", ""))
     requested_modes = specification.method.get("requested_modes_per_direction")
     if task039_model_id_matches(method, model_id, requested_modes):
-        task039_budget = _task039_memory_budget()
-        warning_limit = 180.0 * 1024**3
+        task039_budget = _task039_memory_budget(execution)
+        warning_limit = float(task039_budget["configured_warning_memory_gib"]) * 1024**3
         terminate_limit = (
             float(task039_budget["effective_terminate_memory_gib"]) * 1024**3
         )

@@ -528,7 +528,6 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
         ("incidence", "electric_amplitude", 1.0),
         ("discretization", "nedelec_degree", 6),
         ("discretization", "visualization_degree", 6),
-        ("discretization", "mesh_target_nm", 10.0),
         ("discretization", "mesh_cell_type", "hexahedron"),
         ("discretization", "mesh_spacing_mode", "boundary_fitted"),
         ("discretization", "assembly_backend", "assembly_time_static_condensed"),
@@ -541,8 +540,6 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
         ("boundary", "dtn_assembly", "auxiliary"),
         ("boundary", "use_pml", False),
         ("boundary", "pml_alpha", 5.0),
-        ("execution", "warning_memory_gib", 180.0),
-        ("execution", "terminate_memory_gib", 220.0),
         ("execution", "timeout_seconds", 21600),
         ("execution", "require_zero_swap", True),
         ("output", "export_fields", True),
@@ -563,6 +560,46 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
         actual = config[section].get(key)
         if not _same_profile_value(actual, expected_value):
             errors.append((f"{section}.{key}", f"Task39 requires {expected_value!r}"))
+    mesh_target_nm = config["discretization"].get("mesh_target_nm")
+    allowed_mesh_targets = (10.0, 7.5, 6.0, 5.0) if kind == "full3d_direct" else (10.0,)
+    if not any(
+        isinstance(mesh_target_nm, (int, float))
+        and isclose(float(mesh_target_nm), target, rel_tol=0.0, abs_tol=1.0e-12)
+        for target in allowed_mesh_targets
+    ):
+        errors.append(
+            (
+                "discretization.mesh_target_nm",
+                f"Task39 {kind} allows only {allowed_mesh_targets!r}",
+            )
+        )
+    grid_direct = kind == "full3d_direct" and any(
+        isinstance(mesh_target_nm, (int, float))
+        and isclose(float(mesh_target_nm), target, rel_tol=0.0, abs_tol=1.0e-12)
+        for target in (7.5, 6.0, 5.0)
+    )
+    m480_mpi1_solver_only = (
+        kind == "hybrid_iterative"
+        and config["execution"].get("mpi_size") == 1
+        and method.get("requested_modes_per_direction") == 480
+    )
+    expected_warning = (
+        45.0 if m480_mpi1_solver_only else 170.0 if grid_direct else 180.0
+    )
+    expected_termination = (
+        48.0 if m480_mpi1_solver_only else 195.0 if grid_direct else 220.0
+    )
+    for key, expected_value in (
+        ("warning_memory_gib", expected_warning),
+        ("terminate_memory_gib", expected_termination),
+    ):
+        if config["execution"].get(key) != expected_value:
+            errors.append(
+                (
+                    f"execution.{key}",
+                    f"Task39 requires {expected_value!r} for this mesh/profile",
+                )
+            )
     provenance = task039_material_provenance(config)
     if provenance is None:
         errors.append(

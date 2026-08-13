@@ -45,7 +45,7 @@ TASK039_INPUTS = tuple(sorted(TASK039.glob("*.dat")))
 def test_task039_inputs_are_numeric_finite_profiles_and_share_physics():
     specs = [load_and_resolve(path) for path in TASK039_INPUTS]
 
-    assert len(specs) == 8
+    assert len(specs) == 13
     assert {spec.method["kind"] for spec in specs} == {
         "full3d_direct",
         "full3d_iterative",
@@ -60,7 +60,11 @@ def test_task039_inputs_are_numeric_finite_profiles_and_share_physics():
         480,
         960,
     }
-    assert len({spec.physical_model_sha256 for spec in specs}) == 1
+    h10 = [spec for spec in specs if spec.discretization["mesh_target_nm"] == 10.0]
+    grid = [spec for spec in specs if spec.discretization["mesh_target_nm"] != 10.0]
+    assert len({spec.physical_model_sha256 for spec in h10}) == 1
+    assert {spec.method["kind"] for spec in grid} == {"full3d_direct"}
+    assert len({spec.physical_model_sha256 for spec in grid}) == 3
 
     for spec in specs:
         provenance = spec.derived["material_provenance"]
@@ -294,10 +298,13 @@ def test_task039_launcher_uses_effective_budget_before_worker_sampling(
 ):
     spec = load_and_resolve(TASK039 / "5nm_p6h10_full3d_direct_mpi8.dat")
     budget = {
+        "configured_warning_memory_gib": 180.0,
         "effective_terminate_memory_gib": 1.0,
         "source": {"selected": "injected-test-limit"},
     }
-    monkeypatch.setattr(launcher, "_task039_memory_budget", lambda: budget)
+    monkeypatch.setattr(
+        launcher, "_task039_memory_budget", lambda _execution=None: budget
+    )
 
     class FakeProcess:
         pid = 12345

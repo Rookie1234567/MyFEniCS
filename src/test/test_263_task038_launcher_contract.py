@@ -421,6 +421,37 @@ def test_unreadable_resource_sample_is_not_zero_swap_authority(tmp_path):
     assert authority["zero_swap_observed"] is None
 
 
+@pytest.mark.parametrize(
+    ("relative_input", "warning_gib", "terminate_gib"),
+    (
+        ("5nm_p6h7p5_full3d_direct_mpi8.dat", 170.0, 195.0),
+        ("5nm_p6h10_hybrid_iterative_m480_solver_only_mpi1.dat", 45.0, 48.0),
+        ("5nm_p6h10_full3d_direct_mpi8.dat", 180.0, 220.0),
+    ),
+)
+def test_task039_budget_uses_profile_execution_limits(
+    monkeypatch, relative_input, warning_gib, terminate_gib
+):
+    monkeypatch.setattr(
+        launcher,
+        "wsl_memory_snapshot",
+        lambda: {"mem_total_bytes": 256 * 1024**3},
+    )
+    monkeypatch.setattr(
+        launcher,
+        "cgroup_snapshot",
+        lambda _scope: {"memory_limit_bytes": None},
+    )
+    specification = load_and_resolve(ROOT / "input/official/task039" / relative_input)
+    budget = launcher._task039_memory_budget(specification.execution)
+    assert budget["configured_warning_memory_gib"] == warning_gib
+    assert budget["configured_terminate_memory_gib"] == terminate_gib
+    assert budget["effective_terminate_memory_gib"] == pytest.approx(
+        min(terminate_gib, 0.90 * 256.0)
+    )
+    assert budget["warning_memory_gib"]["value"] == warning_gib
+
+
 def test_smaps_rollup_requires_pss_rss_and_private_fields(tmp_path):
     path = tmp_path / "smaps_rollup"
     path.write_text(
@@ -495,7 +526,10 @@ def test_task039_launcher_tracks_independent_smaps_peaks(monkeypatch, tmp_path):
     monkeypatch.setattr(
         launcher,
         "_task039_memory_budget",
-        lambda: {"effective_terminate_memory_gib": 220.0},
+        lambda _execution=None: {
+            "configured_warning_memory_gib": 180.0,
+            "effective_terminate_memory_gib": 220.0,
+        },
     )
     samples = iter(
         (
@@ -529,7 +563,10 @@ def test_task039_pss_uss_do_not_trigger_memory_termination(monkeypatch, tmp_path
     monkeypatch.setattr(
         launcher,
         "_task039_memory_budget",
-        lambda: {"effective_terminate_memory_gib": 1.0},
+        lambda _execution=None: {
+            "configured_warning_memory_gib": 180.0,
+            "effective_terminate_memory_gib": 1.0,
+        },
     )
     terminated = []
     result = launch_specification(
@@ -558,7 +595,10 @@ def test_task039_zero_complete_smaps_is_incomplete_not_zero(monkeypatch, tmp_pat
     monkeypatch.setattr(
         launcher,
         "_task039_memory_budget",
-        lambda: {"effective_terminate_memory_gib": 220.0},
+        lambda _execution=None: {
+            "configured_warning_memory_gib": 180.0,
+            "effective_terminate_memory_gib": 220.0,
+        },
     )
     result = launch_specification(
         specification,

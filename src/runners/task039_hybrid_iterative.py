@@ -142,7 +142,7 @@ def _record_order_keys(
     return set(keys), len(keys) == len(set(keys))
 
 
-def _authority_errors(
+def task039_hybrid_iterative_authority_errors(
     record: Mapping[str, Any],
     *,
     source_sha: str,
@@ -433,7 +433,7 @@ def run_task039_hybrid_iterative(
         errors.append("Task39 Hybrid iterative runner did not return a record")
     else:
         errors.extend(
-            _authority_errors(
+            task039_hybrid_iterative_authority_errors(
                 record,
                 source_sha=source_sha,
                 profile=profile,
@@ -456,6 +456,7 @@ __all__ = [
     "TASK039_HYBRID_ITERATIVE_MPI",
     "TASK039_HYBRID_ITERATIVE_MODES",
     "Task39HybridIterativeProfile",
+    "task039_hybrid_iterative_authority_errors",
     "make_task039_hybrid_iterative_profile",
     "run_task039_hybrid_iterative",
 ]

@@ -342,7 +342,12 @@ def _load_canonical(
     return {"summary_key": key, "roles": result}
 
 
-def _load_run(run_dir: str | Path, role: str) -> dict[str, Any]:
+def _load_run(
+    run_dir: str | Path,
+    role: str,
+    *,
+    expected_mesh_target_size: float | None = 10.0,
+) -> dict[str, Any]:
     root = Path(run_dir).resolve()
     numeric_dir = root / "numerical_output"
     manifest_path, outer_path, numeric_path = (
@@ -383,17 +388,19 @@ def _load_run(run_dir: str | Path, role: str) -> dict[str, Any]:
             _fail(f"manifest.{key} is not a valid identity SHA")
     _exact(manifest.get("mpi_size"), 8, "manifest.mpi_size")
     _exact(numeric.get("mpi_size"), 8, "numerical.mpi_size")
-    for key, expected in {
+    expected_numerical = {
         "lambda0_nm": 5.0,
         "nedelec_degree": 6,
-        "mesh_target_size": 10.0,
         "polarization_kind": "s",
         "incident_theta_deg": 80.0,
         "incident_phi_deg": 0.0,
         "stage4_full3d_assembly_backend_actual": "assembly_time_static_condensed",
         "stage4_dtn_order_policy": "auto_propagating",
         "dtn_port_mode_count": 604,
-    }.items():
+    }
+    if expected_mesh_target_size is not None:
+        expected_numerical["mesh_target_size"] = expected_mesh_target_size
+    for key, expected in expected_numerical.items():
         _exact(numeric.get(key), expected, f"numerical.{key}")
     inventory = _inventory(manifest, numeric)
     orders = _load_orders(numeric_dir, set(inventory["keys"]))
