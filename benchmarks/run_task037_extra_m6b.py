@@ -169,6 +169,19 @@ M6B_W4_KSP_TO_PC_BUDGET = dict(
 )
 M6B_W4_PREDICTED_LIVE_SET_BYTES = 1_723_301_083
 M6B_W4_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_750_000_000
+M6B_W5_SCHEMA = "task037.extra.m6b.disk-fgmres-screen.v1"
+M6B_W5_CORE_SCHEMA = "task037.extra.h2b.m6b.disk-fgmres-screen.v1"
+M6B_W5_PHASE = "w5_disk_fgmres_screen"
+M6B_W5_BETA = 1.0
+M6B_W5_STEADY_CALIBRATION_BYTES = 1_599_762_432
+M6B_W5_CORE_INCREMENT_BYTES = 67_108_864
+M6B_W5_PREDICTED_LIVE_SET_BYTES = (
+    M6B_W5_STEADY_CALIBRATION_BYTES + M6B_W5_CORE_INCREMENT_BYTES
+)
+M6B_W5_SCRATCH_V_BYTES = 558_947_232
+M6B_W5_SCRATCH_Z_BYTES = 556_166_400
+M6B_W5_SCRATCH_BYTES = 1_115_113_632
+M6B_W5_FULL_VECTOR_BUFFER_LIMIT_BYTES = 64 * 1024 * 1024
 M6B_W3_PRODUCTION_ACTION_COUNT = {
     "local_apply": 1,
     "physical_outer_action": 3,
@@ -327,6 +340,7 @@ def _m6b_scope(*, phase: str | None = None) -> dict[str, Any]:
         "shifted_operator": M6B_SHIFTED_OPERATOR,
         "fine_space": "uncondensed_fullspace",
         "global_matrix": False,
+        "augmented_matrix": False,
         "static_condensation": False,
         "trace_slab_pc": False,
         "ordinary_default": False,
@@ -668,6 +682,81 @@ def _m6b_w4_scope() -> dict[str, Any]:
         "screen_improvement_limit": M6B_IMPROVEMENT_LIMIT,
         "production_action_counts": dict(M6B_W3_PRODUCTION_ACTION_COUNT),
         "predicted_live_set": _m6b_w4_predicted_live_set(),
+        "formal_pass": False,
+        "pde_pass": False,
+    }
+
+
+def _m6b_w5_predicted_live_set() -> dict[str, Any]:
+    components = {
+        "w4_steady_process_tree_calibration_bytes": M6B_W5_STEADY_CALIBRATION_BYTES,
+        "disk_fgmres_core_full_vector_upper_bound_bytes": (
+            M6B_W5_CORE_INCREMENT_BYTES
+        ),
+    }
+    total = int(sum(components.values()))
+    return {
+        "components": components,
+        "predicted_live_set_bytes": total,
+        "limit_bytes": M6B_PREDICTED_LIVE_SET_LIMIT_BYTES,
+        "gate": total <= M6B_PREDICTED_LIVE_SET_LIMIT_BYTES,
+        "derived_not_measured": True,
+        "is_measurement": False,
+        "prediction_scope": "production_disk_fgmres_screen_not_measurement",
+        "steady_calibration_source": "W4_steady_solver_process_tree",
+        "w4_postsolve_fork_peak_bytes": 3_185_201_152,
+        "w4_postsolve_fork_is_steady_calibration": False,
+        "core_full_vector_buffer_limit_bytes": M6B_W5_FULL_VECTOR_BUFFER_LIMIT_BYTES,
+        "pde_strict_peak_limit_bytes": 2_000_000_000,
+        "watchdog_peak_limit_bytes": M6B_WATCHDOG_RSS_LIMIT_BYTES,
+        "completion_peak_limit_bytes": M6B_ONLINE_COMPLETION_RSS_LIMIT_BYTES,
+        "swap_limit_bytes": M6B_SWAP_LIMIT_BYTES,
+        "scratch": {
+            "v_bytes": M6B_W5_SCRATCH_V_BYTES,
+            "z_bytes": M6B_W5_SCRATCH_Z_BYTES,
+            "total_bytes": M6B_W5_SCRATCH_BYTES,
+            "counts_as_process_rss": False,
+        },
+    }
+
+
+def _m6b_w5_scope() -> dict[str, Any]:
+    return {
+        "schema": M6B_W5_SCHEMA,
+        "degree": M6B_DEGREE,
+        "h_nm": M6B_H_NM,
+        "global_cells": M6B_GLOBAL_CELLS,
+        "local_cells": M6B_GLOBAL_CELLS,
+        "local_nloc": M6B_LOCAL_NLOC,
+        "global_rows": M6B_GLOBAL_ROWS,
+        "constraint_count": M6B_CONSTRAINTS,
+        "factor_count": M6B_FACTOR_COUNT,
+        "factor_reuse_count": M6B_FACTOR_REUSE,
+        "beta": M6B_W5_BETA,
+        "operator": "A=Kcurl-k0^2*M_epsilon+A_DtN",
+        "shifted_operator": M6B_SHIFTED_OPERATOR,
+        "fine_space": "uncondensed_fullspace",
+        "global_matrix": False,
+        "augmented_matrix": False,
+        "static_condensation": False,
+        "trace_slab_pc": False,
+        "schur": False,
+        "explicit_C_materialized_count": 0,
+        "explicit_D_materialized_count": 0,
+        "dtn_matrix_free": True,
+        "ordinary_default": False,
+        "mpi_size": 1,
+        "phase": M6B_W5_PHASE,
+        "solver": "disk_fgmres",
+        "petsc_ksp_used": False,
+        "right_side": True,
+        "two_pass_mgs": True,
+        "cycle": "fixed_one_200_step_cycle",
+        "checkpoint_axis": "krylov_iteration",
+        "screen_iterations": [20, 100, 150, 200],
+        "screen_rho_limits": dict(M6B_SCREEN_RHO_LIMITS),
+        "screen_improvement_limit": M6B_IMPROVEMENT_LIMIT,
+        "predicted_live_set": _m6b_w5_predicted_live_set(),
         "formal_pass": False,
         "pde_pass": False,
     }
@@ -1519,6 +1608,181 @@ def _m6b_w4_screen_metadata_valid(value: Any) -> bool:
         ):
             return False
     return True
+
+
+def _m6b_w5_screen_metadata_valid(value: Any) -> bool:
+    required = {
+        "schema",
+        "rows",
+        "solver",
+        "petsc_ksp_used",
+        "side",
+        "two_pass_mgs",
+        "cycle",
+        "max_steps",
+        "iterations",
+        "checkpoint_iterations",
+        "true_residual_authority",
+        "estimated_residual_is_diagnostic_only",
+        "happy_breakdown",
+        "samples",
+        "numeric_gate",
+        "core_audit",
+        "scratch",
+        "action_count",
+        "pc_count",
+        "read_write_counts",
+    }
+    if not isinstance(value, Mapping) or not required.issubset(value):
+        return False
+    if not (
+        value["schema"] == M6B_W5_CORE_SCHEMA
+        and value["rows"] == M6B_GLOBAL_ROWS
+        and value["solver"] == "disk_backed_flexible_gmres"
+        and value["petsc_ksp_used"] is False
+        and value["side"] == "right"
+        and value["two_pass_mgs"] is True
+        and value["cycle"] == "fixed_one_200_step_cycle"
+        and value["max_steps"] == 200
+        and value["iterations"] == 200
+        and value["checkpoint_iterations"] == [20, 100, 150, 200]
+        and value["true_residual_authority"] == "rhs-outer_action"
+        and value["estimated_residual_is_diagnostic_only"] is True
+        and value["happy_breakdown"] is False
+    ):
+        return False
+    samples = value["samples"]
+    if not isinstance(samples, Mapping) or set(samples) != {
+        "20",
+        "100",
+        "150",
+        "200",
+    }:
+        return False
+    for key in samples:
+        item = samples[key]
+        if not isinstance(item, Mapping) or not {
+            "iteration",
+            "true_relative_residual",
+            "estimated_residual_norm",
+            "estimated_residual_is_diagnostic_only",
+            "artifacts",
+        }.issubset(item):
+            return False
+        if not (
+            item["iteration"] == int(key)
+            and _finite_number(item["true_relative_residual"])
+            and float(item["true_relative_residual"]) >= 0.0
+            and _finite_number(item["estimated_residual_norm"])
+            and item["estimated_residual_is_diagnostic_only"] is True
+        ):
+            return False
+        artifacts = item["artifacts"]
+        if not isinstance(artifacts, Mapping) or set(artifacts) != {
+            "solution",
+            "outer_action",
+            "residual",
+            "rhs",
+        }:
+            return False
+        for artifact in artifacts.values():
+            if not isinstance(artifact, Mapping) or not {
+                "path",
+                "bytes",
+                "sha256",
+                "array_sha256",
+            }.issubset(artifact):
+                return False
+    core = value["core_audit"]
+    if not isinstance(core, Mapping) or not {
+        "algorithm",
+        "rows",
+        "dtype",
+        "action_count",
+        "pc_count",
+        "initial_action_count",
+        "orthogonalization_passes",
+        "happy_breakdown",
+        "retained_full_vector_count",
+        "iterations",
+        "checkpoint_set_complete",
+        "checkpoint_count",
+        "bounded_full_vector_bytes",
+        "bounded_full_vector_gate",
+        "mmap",
+        "basis_in_memory",
+        "scratch_bytes",
+        "v_basis",
+        "z_basis",
+    }.issubset(core):
+        return False
+    if not (
+        core["algorithm"] == "right_flexible_gmres"
+        and core["rows"] == M6B_GLOBAL_ROWS
+        and core["dtype"] == "complex128"
+        and core["action_count"] == 204
+        and core["pc_count"] == 200
+        and core["initial_action_count"] == 0
+        and core["orthogonalization_passes"] == 2
+        and core["happy_breakdown"] is False
+        and core["retained_full_vector_count"] == 1
+        and core["iterations"] == 200
+        and core["checkpoint_set_complete"] is True
+        and core["checkpoint_count"] == 4
+        and core["bounded_full_vector_bytes"] <= M6B_W5_FULL_VECTOR_BUFFER_LIMIT_BYTES
+        and core["bounded_full_vector_gate"] is True
+        and core["mmap"] is False
+        and core["basis_in_memory"] is False
+        and core["scratch_bytes"] == M6B_W5_SCRATCH_BYTES
+    ):
+        return False
+    for name, capacity, written in (
+        ("v_basis", 201, 201),
+        ("z_basis", 200, 200),
+    ):
+        basis = core[name]
+        if not isinstance(basis, Mapping) or not {
+            "rows",
+            "dtype",
+            "capacity",
+            "written_count",
+            "read_count",
+            "write_count",
+            "allocated_bytes",
+            "mmap",
+        }.issubset(basis):
+            return False
+        if not (
+            basis["rows"] == M6B_GLOBAL_ROWS
+            and basis["dtype"] == "complex128"
+            and basis["capacity"] == capacity
+            and basis["written_count"] == written
+            and basis["read_count"] == (40200 if name == "v_basis" else 470)
+            and basis["write_count"] == written
+            and basis["allocated_bytes"]
+            == (558_947_232 if name == "v_basis" else 556_166_400)
+            and basis["mmap"] is False
+        ):
+            return False
+    scratch = value["scratch"]
+    return bool(
+        isinstance(scratch, Mapping)
+        and scratch.get("bytes") == M6B_W5_SCRATCH_BYTES
+        and scratch.get("mmap") is False
+        and scratch.get("basis_in_memory") is False
+        and isinstance(value["numeric_gate"], Mapping)
+        and type(value["action_count"]) is int
+        and value["action_count"] == 204
+        and type(value["pc_count"]) is int
+        and value["pc_count"] == 200
+        and isinstance(value["read_write_counts"], Mapping)
+        and isinstance(value["read_write_counts"].get("v_basis"), Mapping)
+        and isinstance(value["read_write_counts"].get("z_basis"), Mapping)
+        and value["read_write_counts"]["v_basis"].get("read_count") == 40200
+        and value["read_write_counts"]["v_basis"].get("write_count") == 201
+        and value["read_write_counts"]["z_basis"].get("read_count") == 470
+        and value["read_write_counts"]["z_basis"].get("write_count") == 200
+    )
 
 
 def _m6b_builder_summary_valid(value: Any) -> bool:
@@ -4162,6 +4426,7 @@ def _run_m6b_w2_diagnostic(
         build_m6b_outer_mat,
         build_m6b_volume_form,
         compose_m6b_physical_rhs,
+        run_m6b_disk_backed_right_fgmres_screen,
     )
     from src.solvers.dtn_port_3d import (
         _assemble_mpc_form_vector,
@@ -4180,12 +4445,18 @@ def _run_m6b_w2_diagnostic(
     wave_authority_dir = Path(wave_authority_dir).resolve()
     jit_cache_source = Path(jit_cache_source).resolve()
     w0_authority_file = Path(w0_authority_file).resolve()
-    if solver not in {"fgmres", "fbcgs"}:
+    if solver not in {"fgmres", "fbcgs", "disk_fgmres"}:
         raise ValueError("M6B screen solver is not fixed")
     if solver == "fbcgs" and (
         not screen or not projected or shifted_beta != M6B_W4_BETA
     ):
         raise ValueError("M6B W4 FBCGS requires the fixed beta=1 projected screen")
+    if solver == "disk_fgmres" and (
+        not screen or not projected or shifted_beta != M6B_W5_BETA
+    ):
+        raise ValueError(
+            "M6B W5 disk FGMRES requires the fixed beta=1 projected screen"
+        )
     if screen and not projected:
         raise ValueError("M6B W3 screen requires the projected range PC")
     if shifted_beta not in (M6B_W2_SHIFTED_BETA, M6B_W3_BETA05):
@@ -4214,7 +4485,12 @@ def _run_m6b_w2_diagnostic(
     shutil.copytree(jit_cache_source, cache_dir)
     started = time.perf_counter()
     if screen:
-        if solver == "fbcgs":
+        if solver == "disk_fgmres":
+            screen_schema = M6B_W5_SCHEMA
+            phase_name = M6B_W5_PHASE
+            progress_path = run_dir / "m6b_w5_progress.jsonl"
+            summary_path = run_dir / "m6b_w5_summary.json"
+        elif solver == "fbcgs":
             screen_schema = M6B_W4_SCHEMA
             phase_name = M6B_W4_PHASE
             progress_path = run_dir / "m6b_w4_progress.jsonl"
@@ -4303,7 +4579,9 @@ def _run_m6b_w2_diagnostic(
             raise ValueError("M6B W2 copied JIT cache differs from source")
         emit("authority_validated", **authority)
         mesh_name = (
-            "m6b_w4_mesh"
+            "m6b_w5_mesh"
+            if solver == "disk_fgmres"
+            else "m6b_w4_mesh"
             if solver == "fbcgs"
             else "m6b_w2r_mesh"
             if projected
@@ -4505,6 +4783,8 @@ def _run_m6b_w2_diagnostic(
                 ksp_iterations=(
                     list(M6B_W4_KSP_ITERATIONS)
                     if solver == "fbcgs"
+                    else []
+                    if solver == "disk_fgmres"
                     else list(M6B_SCREEN_ITERATIONS)
                 ),
                 pc_apply_budgets=(
@@ -4513,25 +4793,60 @@ def _run_m6b_w2_diagnostic(
                     else list(M6B_SCREEN_ITERATIONS)
                 ),
                 checkpoint_axis=(
-                    "pc_apply_budget" if solver == "fbcgs" else "ksp_iteration"
+                    "pc_apply_budget"
+                    if solver == "fbcgs"
+                    else "krylov_iteration"
+                    if solver == "disk_fgmres"
+                    else "ksp_iteration"
                 ),
                 fixed_screen=True,
             )
-            pc_context, screen_result = _m6b_w3_screen_orchestration(
-                projected_pc=w2_pc,
-                outer_mat=outer_mat,
-                outer_context=outer_context,
-                rhs_vec=rhs_vec,
-                checkpoint_dir=run_dir,
-                solver=solver,
-                checkpoint_observer=lambda metadata: emit(
-                    "checkpoint_ready", **metadata
-                ),
-            )
+            if solver == "disk_fgmres":
+                rhs_numpy = np.array(
+                    rhs_vec.getArray(readonly=True), dtype=np.complex128, copy=True
+                )
+                disk_pc_apply_count = 0
+
+                def disk_right_pc(values: np.ndarray) -> np.ndarray:
+                    nonlocal disk_pc_apply_count
+                    result = w2_pc.apply(values)
+                    disk_pc_apply_count += 1
+                    if disk_pc_apply_count % 10 == 0:
+                        emit(
+                            "krylov_progress",
+                            pc_apply_count=disk_pc_apply_count,
+                            completed_pc_applies=disk_pc_apply_count,
+                            max_pc_applies=200,
+                        )
+                    return result
+
+                screen_result = run_m6b_disk_backed_right_fgmres_screen(
+                    outer_numpy,
+                    disk_right_pc,
+                    rhs_numpy,
+                    checkpoint_dir=run_dir,
+                    scratch_dir=run_dir / "krylov_scratch",
+                    observer=lambda metadata: emit("checkpoint_ready", **metadata),
+                )
+                del rhs_numpy
+            else:
+                pc_context, screen_result = _m6b_w3_screen_orchestration(
+                    projected_pc=w2_pc,
+                    outer_mat=outer_mat,
+                    outer_context=outer_context,
+                    rhs_vec=rhs_vec,
+                    checkpoint_dir=run_dir,
+                    solver=solver,
+                    checkpoint_observer=lambda metadata: emit(
+                        "checkpoint_ready", **metadata
+                    ),
+                )
             samples = screen_result.get("samples")
             metadata_valid = (
                 _m6b_w4_screen_metadata_valid(screen_result)
                 if solver == "fbcgs"
+                else _m6b_w5_screen_metadata_valid(screen_result)
+                if solver == "disk_fgmres"
                 else _m6b_screen_metadata_valid(screen_result)
             )
             if not metadata_valid:
@@ -4708,7 +5023,9 @@ def _run_m6b_w2_diagnostic(
         "schema": screen_schema if screen else (M6B_W2R_SCHEMA if projected else M6B_W2_SCHEMA),
         "status": status if error is None else "gate_failed",
         "scope": (
-            _m6b_w4_scope()
+            _m6b_w5_scope()
+            if screen and solver == "disk_fgmres"
+            else _m6b_w4_scope()
             if screen and solver == "fbcgs"
             else _m6b_w3_scope(phase=phase_name, shifted_beta=shifted_beta)
             if screen
@@ -4740,7 +5057,9 @@ def _run_m6b_w2_diagnostic(
             else None
         ),
         "predicted_live_set": (
-            _m6b_w4_predicted_live_set()
+            _m6b_w5_predicted_live_set()
+            if screen and solver == "disk_fgmres"
+            else _m6b_w4_predicted_live_set()
             if screen and solver == "fbcgs"
             else _m6b_w3_predicted_live_set()
             if screen
@@ -4793,7 +5112,10 @@ def _run_m6b_w2_diagnostic(
                 "formal_pass": False,
             },
         }
-        if solver == "fbcgs":
+        if solver == "disk_fgmres":
+            screen_fields["w5_pass"] = False
+            screen_fields["architecture"]["dtn_matrix_free"] = True
+        elif solver == "fbcgs":
             screen_fields["w4_pass"] = False
             screen_fields["architecture"]["dtn_matrix_free"] = True
         else:
@@ -4904,6 +5226,30 @@ def _run_m6b_w4_fbcgs_screen(
         screen=True,
         shifted_beta=M6B_W4_BETA,
         solver="fbcgs",
+    )
+
+
+def _run_m6b_w5_disk_fgmres_screen(
+    run_dir: Path,
+    factor_authority_dir: Path,
+    wave_authority_dir: Path,
+    jit_cache_source: Path,
+    expected_source_sha: str,
+    w0_authority_file: Path,
+) -> int:
+    """Run the fixed beta=1 disk-backed flexible-GMRES screen."""
+
+    return _run_m6b_w2_diagnostic(
+        run_dir,
+        factor_authority_dir,
+        wave_authority_dir,
+        jit_cache_source,
+        expected_source_sha,
+        w0_authority_file,
+        projected=True,
+        screen=True,
+        shifted_beta=M6B_W5_BETA,
+        solver="disk_fgmres",
     )
 
 
@@ -5765,6 +6111,7 @@ def _parser() -> argparse.ArgumentParser:
         "m6b-w3-screen",
         "m6b-w3-beta05-screen",
         "m6b-w4-fbcgs-screen",
+        "m6b-w5-disk-fgmres-screen",
     ):
         item = sub.add_parser(command)
         item.add_argument("--run-dir", required=True)
@@ -5776,6 +6123,7 @@ def _parser() -> argparse.ArgumentParser:
             "m6b-w3-screen",
             "m6b-w3-beta05-screen",
             "m6b-w4-fbcgs-screen",
+            "m6b-w5-disk-fgmres-screen",
         }:
             item.add_argument("--factor-authority-dir", required=True)
             item.add_argument("--wave-authority-dir", required=True)
@@ -5845,6 +6193,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.command == "m6b-w4-fbcgs-screen":
         return _run_m6b_w4_fbcgs_screen(
+            run_dir,
+            Path(args.factor_authority_dir).resolve(),
+            Path(args.wave_authority_dir).resolve(),
+            Path(args.jit_cache_source).resolve(),
+            args.expected_source_sha,
+            Path(args.w0_authority_file).resolve(),
+        )
+    if args.command == "m6b-w5-disk-fgmres-screen":
+        return _run_m6b_w5_disk_fgmres_screen(
             run_dir,
             Path(args.factor_authority_dir).resolve(),
             Path(args.wave_authority_dir).resolve(),

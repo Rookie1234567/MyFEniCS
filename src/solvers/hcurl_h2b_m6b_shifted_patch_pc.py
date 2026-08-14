@@ -32,6 +32,7 @@ __all__ = (
     "M6B_W4_SCHEMA",
     "M6B_W4_KSP_ITERATIONS",
     "M6B_W4_PC_APPLY_BUDGETS",
+    "M6B_W5_SCHEMA",
     "M6B_ONLINE_RSS_LIMIT_BYTES",
     "M6B_POU_CLOSURE_LIMIT",
     "M6B_SCREEN_RHO_LIMITS",
@@ -55,6 +56,7 @@ __all__ = (
     "evaluate_m6b_screen_gate",
     "evaluate_m6b_numeric_screen_gate",
     "run_m6b_right_fgmres_screen",
+    "run_m6b_disk_backed_right_fgmres_screen",
     "run_m6b_right_fbcgs_screen",
 )
 
@@ -68,6 +70,7 @@ M6B_FIXED_MAX_IT = 200
 M6B_W4_SCHEMA = "task037.extra.h2b.m6b.fbcgs-screen.v1"
 M6B_W4_KSP_ITERATIONS = (10, 50, 75, 100)
 M6B_W4_PC_APPLY_BUDGETS = (20, 100, 150, 200)
+M6B_W5_SCHEMA = "task037.extra.h2b.m6b.disk-fgmres-screen.v1"
 M6B_W4_KSP_TO_PC_BUDGET = dict(
     zip(M6B_W4_KSP_ITERATIONS, M6B_W4_PC_APPLY_BUDGETS)
 )
@@ -1333,6 +1336,44 @@ class M6BScreenCheckpointWriter:
             "dtype": str(array.dtype),
         }
 
+    def _write_arrays(
+        self, iteration: int, arrays: Mapping[str, np.ndarray]
+    ) -> dict[str, Any]:
+        if iteration not in M6B_FIXED_SCREEN_ITERATIONS:
+            raise ValueError("M6B checkpoint iteration is not fixed")
+        required = {"solution", "outer_action", "residual", "rhs"}
+        if set(arrays) != required:
+            raise ValueError("M6B checkpoint arrays are incomplete")
+        shape: tuple[int, ...] | None = None
+        for name, values in arrays.items():
+            array = np.asarray(values)
+            if (
+                array.ndim != 1
+                or array.dtype != np.dtype(np.complex128)
+                or not array.flags.c_contiguous
+                or (shape is not None and array.shape != shape)
+                or not np.all(np.isfinite(array))
+            ):
+                raise ValueError(f"M6B checkpoint array is invalid: {name}")
+            shape = array.shape
+        artifacts = {
+            name: self._write(
+                self._run_dir / f"m6b_iter{iteration}_{name}.npy", values
+            )
+            for name, values in arrays.items()
+        }
+        residual = np.asarray(arrays["residual"])
+        rhs = np.asarray(arrays["rhs"])
+        relative = float(
+            np.linalg.norm(residual)
+            / max(np.linalg.norm(rhs), np.finfo(float).tiny)
+        )
+        return {
+            "iteration": int(iteration),
+            "true_relative_residual": relative,
+            "artifacts": artifacts,
+        }
+
     def write_checkpoint(
         self,
         iteration: int,
@@ -1342,27 +1383,31 @@ class M6BScreenCheckpointWriter:
         residual: PETSc.Vec,
         rhs: PETSc.Vec,
     ) -> dict[str, Any]:
-        if iteration not in M6B_FIXED_SCREEN_ITERATIONS:
-            raise ValueError("M6B checkpoint iteration is not fixed")
         arrays = {
-            "solution": np.array(solution.getArray(readonly=True), dtype=np.complex128, copy=True),
-            "outer_action": np.array(outer_action.getArray(readonly=True), dtype=np.complex128, copy=True),
-            "residual": np.array(residual.getArray(readonly=True), dtype=np.complex128, copy=True),
-            "rhs": np.array(rhs.getArray(readonly=True), dtype=np.complex128, copy=True),
+            "solution": np.asarray(solution.getArray(readonly=True)),
+            "outer_action": np.asarray(outer_action.getArray(readonly=True)),
+            "residual": np.asarray(residual.getArray(readonly=True)),
+            "rhs": np.asarray(rhs.getArray(readonly=True)),
         }
-        artifacts = {
-            name: self._write(self._run_dir / f"m6b_iter{iteration}_{name}.npy", value)
-            for name, value in arrays.items()
+        return self._write_arrays(iteration, arrays)
+
+    def write_numpy_checkpoint(
+        self,
+        iteration: int,
+        *,
+        solution: np.ndarray,
+        outer_action: np.ndarray,
+        residual: np.ndarray,
+        rhs: np.ndarray,
+    ) -> dict[str, Any]:
+        """Write one checkpoint from the disk-cycle NumPy callback path."""
+        arrays = {
+            "solution": np.asarray(solution),
+            "outer_action": np.asarray(outer_action),
+            "residual": np.asarray(residual),
+            "rhs": np.asarray(rhs),
         }
-        relative = float(
-            np.linalg.norm(arrays["residual"])
-            / max(np.linalg.norm(arrays["rhs"]), np.finfo(float).tiny)
-        )
-        return {
-            "iteration": int(iteration),
-            "true_relative_residual": relative,
-            "artifacts": artifacts,
-        }
+        return self._write_arrays(iteration, arrays)
 
 
 def _m6b_numeric_screen_core(samples: Mapping[str, Any]) -> dict[str, Any]:
@@ -1449,6 +1494,113 @@ def evaluate_m6b_numeric_screen_gate(samples: Mapping[str, Any]) -> dict[str, An
     result = _m6b_numeric_screen_core(samples)
     result["resource_gate"] = None
     return result
+
+
+def run_m6b_disk_backed_right_fgmres_screen(
+    action: Callable[[np.ndarray], np.ndarray],
+    right_pc: Callable[[np.ndarray], np.ndarray],
+    rhs: np.ndarray,
+    *,
+    checkpoint_dir: Path,
+    scratch_dir: Path,
+    observer: Callable[[Mapping[str, Any]], None] | None = None,
+) -> dict[str, Any]:
+    """Run the fixed one-cycle disk-backed NumPy screen."""
+
+    from .disk_backed_flexible_gmres import DiskBackedFlexibleGMRES
+
+    rhs = _finite_vector(rhs, int(np.asarray(rhs).size), "disk FGMRES RHS")
+    writer = M6BScreenCheckpointWriter(checkpoint_dir)
+    samples: dict[str, Any] = {}
+
+    def checkpoint_observer(event: Mapping[str, Any]) -> None:
+        iteration = int(event["iteration"])
+        checkpoint = writer.write_numpy_checkpoint(
+            iteration,
+            solution=event["solution"],
+            outer_action=event["action"],
+            residual=event["residual"],
+            rhs=event["rhs"],
+        )
+        checkpoint["estimated_residual_norm"] = float(
+            event["estimated_residual_norm"]
+        )
+        checkpoint["estimated_residual_is_diagnostic_only"] = True
+        samples[str(iteration)] = checkpoint
+        if observer is not None:
+            observer(
+                {
+                    "iteration": iteration,
+                    "true_relative_residual": checkpoint[
+                        "true_relative_residual"
+                    ],
+                    "estimated_residual_norm": checkpoint[
+                        "estimated_residual_norm"
+                    ],
+                    "estimated_residual_is_diagnostic_only": True,
+                    "artifacts": {
+                        name: {
+                            field: artifact[field]
+                            for field in (
+                                "path",
+                                "bytes",
+                                "sha256",
+                                "array_sha256",
+                            )
+                        }
+                        for name, artifact in checkpoint["artifacts"].items()
+                    },
+                }
+            )
+
+    solver = DiskBackedFlexibleGMRES(
+        action,
+        right_pc,
+        max_steps=200,
+        checkpoints=(20, 100, 150, 200),
+    )
+    result = solver.solve(
+        rhs,
+        scratch_dir=scratch_dir,
+        observer=checkpoint_observer,
+    )
+    core_audit = dict(result.audit)
+    return {
+        "schema": M6B_W5_SCHEMA,
+        "rows": int(rhs.size),
+        "solver": "disk_backed_flexible_gmres",
+        "petsc_ksp_used": False,
+        "side": "right",
+        "two_pass_mgs": True,
+        "cycle": "fixed_one_200_step_cycle",
+        "max_steps": 200,
+        "iterations": int(result.iterations),
+        "checkpoint_iterations": [20, 100, 150, 200],
+        "true_residual_authority": "rhs-outer_action",
+        "estimated_residual_is_diagnostic_only": True,
+        "happy_breakdown": bool(result.happy_breakdown),
+        "samples": samples,
+        "numeric_gate": evaluate_m6b_numeric_screen_gate(samples),
+        "core_audit": core_audit,
+        "scratch": {
+            "bytes": core_audit["scratch_bytes"],
+            "paths": dict(core_audit["scratch_paths"]),
+            "mmap": False,
+            "basis_in_memory": False,
+        },
+        "action_count": core_audit["action_count"],
+        "pc_count": core_audit["pc_count"],
+        "read_write_counts": {
+            "v_basis": {
+                "read_count": core_audit["v_basis"]["read_count"],
+                "write_count": core_audit["v_basis"]["write_count"],
+            },
+            "z_basis": {
+                "read_count": core_audit["z_basis"]["read_count"],
+                "write_count": core_audit["z_basis"]["write_count"],
+            },
+        },
+    }
 
 
 def run_m6b_right_fgmres_screen(
