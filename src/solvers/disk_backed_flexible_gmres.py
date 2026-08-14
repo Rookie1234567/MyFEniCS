@@ -18,6 +18,7 @@ import numpy as np
 
 
 __all__ = [
+    "RawPositionalColumnStore",
     "DiskBackedFlexibleGMRES",
     "DiskBackedFlexibleGMRESResult",
 ]
@@ -66,7 +67,7 @@ def _positional_transfer(
         buffer[...] = contiguous
 
 
-class _RawBasisFile:
+class RawPositionalColumnStore:
     def __init__(self, path: Path, rows: int, capacity: int) -> None:
         self.path = path
         self.rows = rows
@@ -84,6 +85,28 @@ class _RawBasisFile:
         self.bytes_read = 0
         self.bytes_written = 0
         self._closed = False
+
+    @classmethod
+    def open_readonly(cls, path: Path, rows: int, capacity: int) -> "RawPositionalColumnStore":
+        path = Path(path)
+        if not path.is_file():
+            raise FileNotFoundError(path)
+        expected_bytes = rows * capacity * _COMPLEX128_BYTES
+        if path.stat().st_size != expected_bytes:
+            raise ValueError("raw positional column file size is invalid")
+        result = object.__new__(cls)
+        result.path = path
+        result.rows = rows
+        result.capacity = capacity
+        result._file_descriptor = os.open(path, os.O_RDONLY)
+        result.allocated_bytes = expected_bytes
+        result.written_count = capacity
+        result.read_count = 0
+        result.write_count = 0
+        result.bytes_read = 0
+        result.bytes_written = 0
+        result._closed = False
+        return result
 
     def write_column(self, index: int, values: np.ndarray) -> None:
         if index != self.written_count or index >= self.capacity:
@@ -224,8 +247,8 @@ class DiskBackedFlexibleGMRES:
 
         scratch = Path(scratch_dir)
         scratch.mkdir(parents=False, exist_ok=False)
-        v_store: _RawBasisFile | None = None
-        z_store: _RawBasisFile | None = None
+        v_store: RawPositionalColumnStore | None = None
+        z_store: RawPositionalColumnStore | None = None
         action_count = 0
         pc_count = 0
         initial_action_count = 0
@@ -313,8 +336,8 @@ class DiskBackedFlexibleGMRES:
             }
 
         try:
-            v_store = _RawBasisFile(scratch / "v_basis.bin", rows, self.max_steps + 1)
-            z_store = _RawBasisFile(scratch / "z_basis.bin", rows, self.max_steps)
+            v_store = RawPositionalColumnStore(scratch / "v_basis.bin", rows, self.max_steps + 1)
+            z_store = RawPositionalColumnStore(scratch / "z_basis.bin", rows, self.max_steps)
 
             rhs_norm = float(np.linalg.norm(rhs_values))
             if initial_solution_provided:

@@ -200,6 +200,34 @@ M6B_W5_WATCHDOG_ARTIFACT_NAMES = (
     "w5_disk_fgmres_screen_stdout.txt",
     "w5_disk_fgmres_screen_timeline.jsonl",
 )
+M6B_W6A_SCHEMA = "task037.extra.m6b.w6a.multi-order-range.builder.v1"
+M6B_W6A_PHASE = "w6a_multi_order_range_builder"
+M6B_W6A_CORE_SCHEMA = "task037.extra.m6b.w6a.multi-order-range.v1"
+M6B_W6A_LEGACY_COLUMNS = 75
+M6B_W6A_ADDED_COLUMNS = 315
+M6B_W6A_COLUMNS = 390
+M6B_W6A_ORDERS = (-7, -6, -5, -4, -3, -2, -1)
+M6B_W6A_Z_PLANES = 15
+M6B_W6A_COMPONENTS = 3
+M6B_W6A_NORMAL_CLOSURE_LIMIT = 1.0e-11
+M6B_W6A_RHO_LIMIT = 0.70
+M6B_W6A_IMPROVEMENT_LIMIT = 0.15
+M6B_W6A_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_750_000_000
+M6B_W6A_EVENTS = (
+    "authority_validated",
+    "mesh_ready",
+    "space_ready",
+    "floquet_mpc_ready",
+    "cache_ready",
+    "outer_ready",
+    "legacy_basis_ready",
+)
+M6B_W6A_TRAILING_EVENTS = (
+    "az_ready",
+    "gram_ready",
+    "residuals_ready",
+    "summary_ready",
+)
 M6B_W3_PRODUCTION_ACTION_COUNT = {
     "local_apply": 1,
     "physical_outer_action": 3,
@@ -777,6 +805,173 @@ def _m6b_w5_scope() -> dict[str, Any]:
         "predicted_live_set": _m6b_w5_predicted_live_set(),
         "formal_pass": False,
         "pde_pass": False,
+    }
+
+
+def _m6b_w6a_predicted_live_set(
+    *,
+    old_retained_bytes: int,
+    new_retained_bytes: int,
+    old_work_bytes: int,
+    new_work_bytes: int,
+) -> dict[str, Any]:
+    values = (old_retained_bytes, new_retained_bytes, old_work_bytes, new_work_bytes)
+    if any(type(value) is not int or value < 0 for value in values):
+        raise ValueError("W6A retained/work bytes must be nonnegative integers")
+    retained_delta = new_retained_bytes - old_retained_bytes
+    work_delta = new_work_bytes - old_work_bytes
+    if retained_delta < 0 or work_delta < 0:
+        raise ValueError("W6A new-minus-old deltas must be nonnegative")
+    total = int(M6B_W5_EXPECTED_PROCESS_PEAK_BYTES + retained_delta + work_delta)
+    return {
+        "base_measured_w5_peak_bytes": M6B_W5_EXPECTED_PROCESS_PEAK_BYTES,
+        "old_retained_bytes": old_retained_bytes,
+        "new_retained_bytes": new_retained_bytes,
+        "old_work_bytes": old_work_bytes,
+        "new_work_bytes": new_work_bytes,
+        "new_minus_old_retained_bytes": retained_delta,
+        "new_minus_old_work_bytes": work_delta,
+        "predicted_live_set_bytes": total,
+        "limit_bytes": M6B_W6A_PREDICTED_LIVE_SET_LIMIT_BYTES,
+        "gate": total <= M6B_W6A_PREDICTED_LIVE_SET_LIMIT_BYTES,
+        "derived_not_measured": True,
+        "is_measurement": False,
+        "prediction_scope": "production_w6a_carrier_not_formal_measurement",
+    }
+
+
+def _m6b_w6a_scope(*, prediction: Mapping[str, Any]) -> dict[str, Any]:
+    if not isinstance(prediction, Mapping):
+        raise ValueError("W6A prediction is missing")
+    return {
+        "schema": M6B_W6A_SCHEMA,
+        "phase": M6B_W6A_PHASE,
+        "degree": M6B_DEGREE,
+        "h_nm": M6B_H_NM,
+        "global_cells": M6B_GLOBAL_CELLS,
+        "global_rows": M6B_GLOBAL_ROWS,
+        "factor_count": M6B_FACTOR_COUNT,
+        "factor_reuse_count": M6B_FACTOR_REUSE,
+        "beta": 1.0,
+        "fine_space": "uncondensed_fullspace",
+        "operator": "A=Kcurl-k0^2*M_epsilon+A_DtN",
+        "global_matrix": False,
+        "augmented_matrix": False,
+        "static_condensation": False,
+        "trace_slab_pc": False,
+        "schur": False,
+        "explicit_C_materialized_count": 0,
+        "explicit_D_materialized_count": 0,
+        "dtn_matrix_free": True,
+        "mpi_size": 1,
+        "columns": M6B_W6A_COLUMNS,
+        "legacy_columns": M6B_W6A_LEGACY_COLUMNS,
+        "added_columns": M6B_W6A_ADDED_COLUMNS,
+        "diffraction_orders": list(M6B_W6A_ORDERS),
+        "z_planes": M6B_W6A_Z_PLANES,
+        "components": M6B_W6A_COMPONENTS,
+        "column_order": "legacy75_then_m_ascending_z_ascending_component_0_1_2",
+        "phase_formula": "exp(i*((kx+2*pi*m/period_x)*x+ky*y))",
+        "fixed_order": True,
+        "scan": False,
+        "az_builder_only": True,
+        "az_production_retained": False,
+        "dense_z_retained": False,
+        "dense_az_retained": False,
+        "predicted_live_set": dict(prediction),
+        "formal_pass": False,
+        "pde_pass": False,
+    }
+
+
+def _m6b_w6a_progress_emit(
+    path: Path, event: str, *, elapsed_wall_seconds: float, **fields: Any
+) -> None:
+    if not _finite_number(elapsed_wall_seconds):
+        raise ValueError("W6A progress elapsed time is invalid")
+    record = {
+        "schema": f"{M6B_W6A_SCHEMA}.progress.v1",
+        "phase": M6B_W6A_PHASE,
+        "event": event,
+        "elapsed_wall_seconds": float(elapsed_wall_seconds),
+        **fields,
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as stream:
+        stream.write(_canonical_json(record).decode("utf-8") + "\n")
+        stream.flush()
+
+
+def _m6b_w6a_progress_valid(path: Path) -> dict[str, Any]:
+    try:
+        records = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+    except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        return {"pass": False, "problems": [f"progress_read:{type(exc).__name__}"]}
+    expected_events: list[str] = list(M6B_W6A_EVENTS)
+    expected_events.extend("column_progress" for _ in range(M6B_W6A_COLUMNS))
+    expected_events.extend(M6B_W6A_TRAILING_EVENTS)
+    problems: list[str] = []
+    if len(records) != len(expected_events):
+        problems.append("progress_event_count")
+    for index, event in enumerate(expected_events):
+        record = records[index] if index < len(records) else None
+        if not isinstance(record, Mapping) or record.get("event") != event:
+            problems.append(f"progress_event_{index}")
+            continue
+        if record.get("schema") != f"{M6B_W6A_SCHEMA}.progress.v1" or record.get("phase") != M6B_W6A_PHASE:
+            problems.append(f"progress_identity_{index}")
+        if not _finite_number(record.get("elapsed_wall_seconds")):
+            problems.append(f"progress_elapsed_{index}")
+        if event == "column_progress":
+            completed = index - len(M6B_W6A_EVENTS) + 1
+            if record.get("completed_columns") != completed or record.get("total_columns") != M6B_W6A_COLUMNS:
+                problems.append(f"progress_column_{completed}")
+    return {
+        "pass": not problems,
+        "problems": problems,
+        "record_count": len(records),
+        "events": [record.get("event") if isinstance(record, Mapping) else None for record in records],
+    }
+
+
+def _m6b_w6a_numeric_gate(residuals: Any) -> dict[str, Any]:
+    required = {"20", "100", "150", "200"}
+    checks = {
+        f"rho390_le_rho75_{iteration}": False for iteration in sorted(required, key=int)
+    }
+    checks.update({"rho390_iter200": False, "improvement_vs_rho75": False})
+    observed: dict[str, dict[str, float]] = {}
+    problems: list[str] = []
+    if not isinstance(residuals, Mapping) or set(residuals) != required:
+        problems.append("residual_checkpoint_set")
+    else:
+        for iteration in sorted(required, key=int):
+            item = residuals[iteration]
+            if not isinstance(item, Mapping) or set(item) != {"rho75", "rho390"}:
+                problems.append(f"residual_{iteration}_shape")
+                continue
+            rho75 = item["rho75"]
+            rho390 = item["rho390"]
+            if not (_finite_number(rho75) and _finite_number(rho390)) or rho75 < 0.0 or rho390 < 0.0:
+                problems.append(f"residual_{iteration}_finite")
+                continue
+            observed[iteration] = {"rho75": float(rho75), "rho390": float(rho390)}
+            checks[f"rho390_le_rho75_{iteration}"] = rho390 <= rho75 + 1.0e-12
+    if "200" in observed:
+        checks["rho390_iter200"] = observed["200"]["rho390"] <= M6B_W6A_RHO_LIMIT
+        rho75 = observed["200"]["rho75"]
+        if rho75 > 0.0:
+            checks["improvement_vs_rho75"] = (
+                1.0 - observed["200"]["rho390"] / rho75
+            ) >= M6B_W6A_IMPROVEMENT_LIMIT
+        else:
+            problems.append("rho75_iter200_zero")
+    problems.extend(key for key, passed in checks.items() if not passed)
+    return {
+        "checks": checks,
+        "observed": observed,
+        "problems": sorted(set(problems)),
+        "pass": not problems and all(checks.values()),
     }
 
 
@@ -6488,6 +6683,187 @@ def _m6b_w5_check_command(
     }
     _write_json(output, _attach_evidence(result))
     return 0 if result["pass"] else 1
+
+
+def _m6b_w6a_check_command(
+    raw_dir: Path,
+    legacy_store_dir: Path,
+    output: Path,
+    expected_source_sha: str,
+) -> int:
+    checks = {
+        "summary": False,
+        "source": False,
+        "scope": False,
+        "prediction": False,
+        "progress": False,
+        "store": False,
+        "residual_artifacts": False,
+    }
+    problems: list[str] = []
+    summary: dict[str, Any] | None = None
+    try:
+        summary = _read_json(raw_dir / "w6a_summary.json")
+    except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        problems.append(f"summary_read:{type(exc).__name__}")
+    if isinstance(summary, Mapping):
+        checks["summary"] = bool(
+            summary.get("schema") == M6B_W6A_SCHEMA
+            and _evidence_valid(summary)
+            and summary.get("status") in {"diagnostic_complete", "gate_failed"}
+            and summary.get("formal_pass") is False
+            and summary.get("pde_pass") is False
+        )
+        source_start = summary.get("source_at_start")
+        source_end = summary.get("source_at_end")
+        checks["source"] = bool(
+            isinstance(source_start, Mapping)
+            and isinstance(source_end, Mapping)
+            and source_start.get("source_commit_full_sha") == expected_source_sha
+            and source_end.get("source_commit_full_sha") == expected_source_sha
+            and source_start.get("tracked_source_dirty") is False
+            and source_end.get("tracked_source_dirty") is False
+            and source_start.get("worktree_status_porcelain") == []
+            and source_end.get("worktree_status_porcelain") == []
+        )
+        prediction = summary.get("prediction")
+        if isinstance(prediction, Mapping):
+            prediction_keys = (
+                "old_retained_bytes",
+                "new_retained_bytes",
+                "old_work_bytes",
+                "new_work_bytes",
+            )
+            if all(type(prediction.get(key)) is int for key in prediction_keys):
+                try:
+                    recomputed = _m6b_w6a_predicted_live_set(
+                        old_retained_bytes=prediction["old_retained_bytes"],
+                        new_retained_bytes=prediction["new_retained_bytes"],
+                        old_work_bytes=prediction["old_work_bytes"],
+                        new_work_bytes=prediction["new_work_bytes"],
+                    )
+                    checks["prediction"] = prediction == recomputed
+                    checks["scope"] = summary.get("scope") == _m6b_w6a_scope(
+                        prediction=recomputed
+                    )
+                except (TypeError, ValueError):
+                    checks["prediction"] = False
+                    checks["scope"] = False
+        progress_record = summary.get("progress_artifact")
+        if isinstance(progress_record, Mapping) and progress_record.get("path") == "w6a_progress.jsonl":
+            actual = _artifact(raw_dir, "w6a_progress.jsonl")
+            checks["progress"] = bool(
+                actual == progress_record
+                and _m6b_w6a_progress_valid(raw_dir / "w6a_progress.jsonl").get("pass") is True
+            )
+        manifest_record = summary.get("store_manifest_artifact")
+        if isinstance(manifest_record, Mapping) and manifest_record.get("path") == "sparse_range_store/manifest.json":
+            actual = _artifact(raw_dir, "sparse_range_store/manifest.json")
+            if actual == manifest_record:
+                from src.solvers.hcurl_m6b_w6a_multi_order_range import validate_w6a_store
+
+                checks["store"] = validate_w6a_store(
+                    raw_dir / "sparse_range_store/manifest.json",
+                    legacy_store_dir=legacy_store_dir,
+                ).get("pass") is True
+        residual_artifacts = summary.get("residual_artifacts")
+        if isinstance(residual_artifacts, Mapping) and set(residual_artifacts) == {
+            "20", "100", "150", "200"
+        }:
+            import numpy as np
+
+            valid_artifacts = True
+            for iteration, record in residual_artifacts.items():
+                expected_name = f"m6b_w6a_residual_iter{int(iteration)}.npy"
+                path = raw_dir / expected_name
+                if (
+                    not isinstance(record, Mapping)
+                    or record.get("path") != expected_name
+                    or _artifact(raw_dir, expected_name).get("present") is not True
+                    or _artifact(raw_dir, expected_name).get("sha256") != record.get("sha256")
+                ):
+                    valid_artifacts = False
+                    continue
+                try:
+                    array = np.load(path, allow_pickle=False, mmap_mode="r")
+                    valid_artifacts = valid_artifacts and bool(
+                        array.dtype == np.dtype(np.complex128)
+                        and list(array.shape) == [M6B_GLOBAL_ROWS]
+                        and np.all(np.isfinite(array))
+                        and _m6b_w2_array_sha256(array) == record.get("array_sha256")
+                    )
+                except (OSError, TypeError, ValueError):
+                    valid_artifacts = False
+            checks["residual_artifacts"] = valid_artifacts
+    execution_ok = all(checks.values())
+    numeric: dict[str, Any] = {
+        "checks": {},
+        "observed": {},
+        "problems": ["execution_evidence_incomplete"],
+        "pass": False,
+    }
+    if execution_ok:
+        try:
+            from src.solvers.hcurl_m6b_w6a_multi_order_range import (
+                W6AMultiOrderRangeDiagnostic,
+            )
+
+            store = W6AMultiOrderRangeDiagnostic.load(
+                raw_dir / "sparse_range_store/manifest.json",
+                legacy_store_dir=legacy_store_dir,
+            )
+            try:
+                import numpy as np
+
+                residuals: dict[str, dict[str, float]] = {}
+                for iteration in ("20", "100", "150", "200"):
+                    array = np.load(
+                        raw_dir / f"m6b_w6a_residual_iter{int(iteration)}.npy",
+                        allow_pickle=False,
+                        mmap_mode="r",
+                    )
+                    result = store.compare_range_orders(array)
+                    residuals[iteration] = {
+                        "rho75": float(result["rho75"]),
+                        "rho390": float(result["rho390"]),
+                    }
+                numeric = _m6b_w6a_numeric_gate(residuals)
+            finally:
+                store.close()
+        except (ImportError, OSError, TypeError, ValueError, KeyError) as exc:
+            numeric = {
+                "checks": {},
+                "observed": {},
+                "problems": [f"range_recompute:{type(exc).__name__}"],
+                "pass": False,
+            }
+    else:
+        problems.extend(key for key, passed in checks.items() if not passed)
+    classification = (
+        "PRE_FORMAL_PASS"
+        if execution_ok and numeric["pass"]
+        else "NUMERIC_FAIL"
+        if execution_ok
+        else "EXECUTION_FAIL"
+    )
+    result = {
+        "schema": "task037.extra.m6b.w6a.multi-order-range.check.v1",
+        "status": "diagnostic_complete" if execution_ok else "execution_failed",
+        "classification": classification,
+        "execution_evidence_ok": execution_ok,
+        "formal_qualification": "not_run",
+        "checks": checks,
+        "numeric": numeric,
+        "problems": sorted(set(problems + list(numeric.get("problems", [])))),
+        "producer_source_sha": expected_source_sha,
+        "checker_source_sha": None,
+        "formal_pass": False,
+        "pde_pass": False,
+    }
+    _write_json(output, _attach_evidence(result))
+    return 0 if classification == "PRE_FORMAL_PASS" else 1
+
+
 def _check_command(run_dir: Path, output: Path) -> int:
     checks: dict[str, bool] = {
         "watchdog": False,
@@ -6812,6 +7188,15 @@ def _parser() -> argparse.ArgumentParser:
         required=True,
         type=_m6b_w2_source_sha_argument,
     )
+    w6a_check = sub.add_parser("m6b-w6a-check")
+    w6a_check.add_argument("--raw-dir", required=True)
+    w6a_check.add_argument("--legacy-store-dir", required=True)
+    w6a_check.add_argument("--output", required=True)
+    w6a_check.add_argument(
+        "--expected-source-sha",
+        required=True,
+        type=_m6b_w2_source_sha_argument,
+    )
     return parser
 
 
@@ -6823,6 +7208,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             Path(args.watchdog_summary).resolve(),
             Path(args.output).resolve(),
             args.expected_producer_sha,
+        )
+    if args.command == "m6b-w6a-check":
+        return _m6b_w6a_check_command(
+            Path(args.raw_dir).resolve(),
+            Path(args.legacy_store_dir).resolve(),
+            Path(args.output).resolve(),
+            args.expected_source_sha,
         )
     run_dir = Path(args.run_dir).resolve()
     if args.command == "m6b-check":
