@@ -1,0 +1,71 @@
+{
+  "schema_version": "task039.e7-m960-direct-result-compact.v2",
+  "record_id": "task039_e7_m960_direct_result_v1",
+  "classification": "physical_integration_pass_mode_convergence_pending",
+  "source_identity": {
+    "run_directory": "results/task039_5nm_hybrid_direct_m960/task039_5nm_hybrid_direct_p6h10_m960_mpi8__hybrid_direct__mpi8__M960/20260813T214509.450065Z",
+    "source_commit_sha": "d66c3a64176897a90fc1ea04298c6b804bafa8aa",
+    "input_sha256": "1e46b066ecd90c1db02fc22d648ae1f297238e09a9d0caa34522118b25b8de04",
+    "resolved_config_sha256": "8fa7f2dc4e6584eb8c37c21085441b0812dcc54458f5b2c9283ab3954a554efe",
+    "physical_model_sha256": "db52c70d667caa726e2b2e04b646402415a377fa7bbcef42c87ffc816b9b2a7a",
+    "method": "hybrid_direct",
+    "requested_modes": 960,
+    "mpi_size": 8,
+    "external_inventory": {"count": 604, "bottom": 300, "top": 304, "key_set_exact": true}
+  },
+  "evidence": {
+    "artifact_hashes": {
+      "run_manifest.json": {"sha256": "97e4819464163e3000ddff904fa2177651bff782bc5dba87f0d770e55fd96a9e", "bytes": 112971},
+      "run_summary.json": {"sha256": "72325915b2fddce5235137398309e7409142abc097b990c3e25ded1b2ea002f5", "bytes": 1634},
+      "resolved_config.json": {"sha256": "8fa7f2dc4e6584eb8c37c21085441b0812dcc54458f5b2c9283ab3954a554efe", "bytes": 116063},
+      "numerical_output/run_summary.json": {"sha256": "dc4c5d8a6b4e36ec454a9d9e8ee4d1fc8298375de98bfb3817177b733a5e8398", "bytes": 2813114},
+      "task039_direct_payload.npz": {"sha256": "2848885ea1224c80c1af997d379db96c667603ef3ed3aecf04d36faacb2b5f9d", "bytes": 426900},
+      "worker_stdout.txt": {"sha256": "b5d299b2012762032ecd28eb3981cac0e4500a190e8554105d458bdfb1d881cc", "bytes": 366891}
+    },
+    "qep": {"positive": {"requested": 960, "candidate": 1920, "converged": 1960, "delivered": 960, "groups": 578}, "negative": {"requested": 960, "candidate": 1920, "converged": 1960, "delivered": 960, "groups": 577}, "reduced_dimensions": [1944, 1944]},
+    "observables": {"R": 0.9094973679165264, "T": 0.0008705857370964508, "A_balance": 0.0896320463463772, "A_volume": 0.08963319492586634, "closure": 1.1485794890742085e-6},
+    "timing_seconds_max_rank": {"cross_section_and_qep_assembly_seconds": 0.5585029900539666, "positive_negative_biorthogonal_bases_seconds": 2753.109449421987, "local_fe_dtn": 178.08423154591583, "modal_coupling": 2230.754020082997, "system_build": 11.34478113683872, "field_reconstruction": 102.98494516988285, "total": 5332.772663516924},
+    "object_capacity": {"basis_bytes": 245575680, "coupling_bytes": 60218896, "projection_estimate_bytes": {"bottom": 29867528, "top": 30351368}, "augmented_rows": 19372, "augmented_matrix_nnz": 73328868, "augmented_matrix_memory_estimate_bytes": 1760047816, "modal_schur": "not_materialized", "factor_resident_bytes": "not_available"},
+    "comparison_records": {
+      "m480_h10": {"path": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_e7_m960_direct_vs_m480_h10_v1.json", "sha256": "af98ef2477e864c4b647c15848c9f901f3267f00e00fa23d31427ca30c44f66a", "own_pass": true, "adjacent_pass": true, "full3d_pass": false, "H_overall": 0.008767472234175493, "H_z10": 0.061668840851195325, "H_z60": 0.059958736128968654},
+      "h6": {"path": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_e7_m960_direct_vs_h6_v1.json", "sha256": "c5ae52ba086a69b5848416cb6b3e56f1c72f49aac6ae730714e1ceb1ae2e7f91", "reference_mesh_target_nm": 6.0, "own_pass": true, "keys_exact": true, "full3d_pass": false}
+    },
+    "family_attestation": {"path": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_e7_m960_trace_family_v1.json", "compact_file_sha256": "9530ab4259db2f8a8ccda7b69edcac50e4fa9fce06f56b2ec9c1d3a6d2a0cae0", "compact_file_bytes": 10600, "raw_family_record_sha256": "5fd8351050fb4849b87084de9465b218745805ecda7e4a83109bcd7a472aaedd", "raw_family_record_bytes": 2372242, "family_pass": true, "historical_m120_m240_m480_valid": true, "sign_order_exact": true, "repeat_gate": true},
+    "cleanup_carrier": {"full_global_matrix_allocated": false, "full_surface_mode_matrix_retained": false, "dense_interface_square_formed": false, "modal_schur_bytes": 0, "ordered_destroy_events": "not_available"}
+  },
+  "gates": {
+    "true_residual": {"value": 1.6797118438025696e-11, "limit": 1e-9, "pass": true},
+    "interface_projection": {"value": 5.78940849787336e-13, "limit": 1e-8, "pass": true},
+    "exact_traction": {"bottom": 3.835312255821973e-12, "top": 1.6724358567686057e-11, "limit": 1e-8, "pass": true},
+    "canonical_trace": {"policy": "task039_m960_backward_stable_v1", "family_sha256": "5fd8351050fb4849b87084de9465b218745805ecda7e4a83109bcd7a472aaedd", "bottom": {"raw_forward": 1.0879933401210344e-11, "representation": 8.94679331987499e-15, "eta": 1.914662709534407e-12, "limit": 2.1316282072803006e-11, "gram_condition": 987468.0130294263, "pass": true}, "top": {"raw_forward": 9.59989838103603e-12, "representation": 8.999275120824919e-15, "eta": 1.7011564889367202e-12, "limit": 2.1316282072803006e-11, "gram_condition": 2094742.6666796694, "pass": true}},
+    "rta_and_closure": true,
+    "integration_pass": true,
+    "physical_field_gates_pass": true,
+    "sampled_traction_density_proxy": {"pass": false, "role": "diagnostic_proxy_only", "does_not_override_exact_variational_traction": true},
+    "official_record": {"value": false, "reason": "M convergence/model validation pending; not an own M960 numerical failure"},
+    "mode_count_converged": false
+  },
+  "resource": {
+    "peak_rss_mib": 71502.58203125,
+    "peak_pss_mib": 69746.0888671875,
+    "peak_uss_mib": 69465.1015625,
+    "peak_swap_mib": 0.0,
+    "classification": "measured global process-tree peak",
+    "peak_semantics": "per-metric simultaneous peak across complete smaps samples; metrics may occur at different samples",
+    "smaps_samples": {"attempted": 13165, "complete": 13163},
+    "selected_memory_gib": 228.0657501220703,
+    "warning_gib": 180.0,
+    "configured_terminate_gib": 220.0,
+    "effective_hard_stop_gib": 205.2591751098633,
+    "hard_stop_classification": "derived from measured selected memory",
+    "zero_swap_observed": true,
+    "stage_aligned_rss_pss_uss": "not_available"
+  },
+  "limitations": [
+    "No persisted memory_stages.jsonl, Task39 stage-event JSONL, or E10 ledger exists for this formal run; stdout gives boundaries only, not stage-aligned simultaneous peaks.",
+    "Object capacities are reported/derived component values, not a resident-memory sum; factor resident bytes and corrected factor NNZ are not_available.",
+    "h6 is best-available discrete only; E5 reference_established=false and physics_except_mesh_exact=true, so its mesh-dependent physical SHA difference is expected.",
+    "sampled traction-density proxy failure is retained and does not override exact variational conormal traction pass; official_record=false records M validation pending."
+  ],
+  "provenance": {"evidence_level": {"identity": "measured", "own_gates": "measured", "object_capacity": "reported_or_derived", "stage_attribution": "not_available"}, "telemetry_module": "benchmarks/task039_memory_telemetry.py", "telemetry_module_sha256": "e815b36593e18525c5c3c456f31a32ffb8b70738c03009bf84a12ed2d6a63bf5"}
+}

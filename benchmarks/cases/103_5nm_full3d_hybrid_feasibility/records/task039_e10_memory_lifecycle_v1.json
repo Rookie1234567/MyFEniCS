@@ -1,0 +1,63 @@
+{
+  "schema_version": "task039.e10-memory-lifecycle-compact.v2",
+  "record_id": "task039_e10_memory_lifecycle_v1",
+  "classification": "E10_MEMORY_GLOBAL_PEAK_MEASURED_STAGE_ATTRIBUTION_NOT_AVAILABLE",
+  "source_identity": {
+    "run_directory": "results/task039_5nm_hybrid_direct_m960/task039_5nm_hybrid_direct_p6h10_m960_mpi8__hybrid_direct__mpi8__M960/20260813T214509.450065Z",
+    "source_commit_sha": "d66c3a64176897a90fc1ea04298c6b804bafa8aa",
+    "input_sha256": "1e46b066ecd90c1db02fc22d648ae1f297238e09a9d0caa34522118b25b8de04",
+    "resolved_config_sha256": "8fa7f2dc4e6584eb8c37c21085441b0812dcc54458f5b2c9283ab3954a554efe",
+    "physical_model_sha256": "db52c70d667caa726e2b2e04b646402415a377fa7bbcef42c87ffc816b9b2a7a",
+    "mpi_size": 8
+  },
+  "evidence": {
+    "formal_summary_hashes": {"run_manifest": "97e4819464163e3000ddff904fa2177651bff782bc5dba87f0d770e55fd96a9e", "outer_run_summary": "72325915b2fddce5235137398309e7409142abc097b990c3e25ded1b2ea002f5", "numerical_run_summary": "dc4c5d8a6b4e36ec454a9d9e8ee4d1fc8298375de98bfb3817177b733a5e8398", "worker_stdout": "b5d299b2012762032ecd28eb3981cac0e4500a190e8554105d458bdfb1d881cc"},
+    "telemetry_module": {"path": "benchmarks/task039_memory_telemetry.py", "sha256": "e815b36593e18525c5c3c456f31a32ffb8b70738c03009bf84a12ed2d6a63bf5", "stage_count": 18},
+    "stage_order": ["mesh_spaces_ready", "qep_matrices_ready", "positive_qep_solve_peak", "negative_qep_solve_peak", "raw_candidate_eigenvectors_ready", "selected_biorthogonal_bases_ready", "canonical_negative_traces_ready", "projection_matrices_ready", "traction_matrices_ready", "local_fe_dtn_systems_ready", "hybrid_augmented_operator_ready", "direct_factor_or_iterative_side_factors_ready", "modal_schur_ready", "field_reconstruction_start", "field_reconstruction_peak", "postprocess_peak", "all_modal_qep_temporaries_released", "final_cleanup"],
+    "artifact_presence": {"memory_stages_jsonl": "not_available", "task039_stage_event_jsonl": "not_available", "e10_ledger": "not_available", "aggregate_smaps_samples": {"attempted": 13165, "complete": 13163}},
+    "historical_rss_series": {
+      "M120": {"rss_gib": 8.720, "rss_classification": "measured", "pss": "not_available", "uss": "not_available", "stage_snapshots": "not_available", "source_record": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_t5_hybrid_direct_m_convergence_v1.json", "source_record_sha256": "9cab06e12a6958a7f187560f93f205c787b760d77ccfa9d808d1d5811f189165"},
+      "M240": {"rss_gib": 10.742, "rss_classification": "measured", "pss": "not_available", "uss": "not_available", "stage_snapshots": "not_available", "source_record": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_t5_hybrid_direct_m_convergence_v1.json", "source_record_sha256": "9cab06e12a6958a7f187560f93f205c787b760d77ccfa9d808d1d5811f189165"},
+      "M480": {"rss_gib": 22.264, "rss_classification": "measured", "pss": "not_available", "uss": "not_available", "stage_snapshots": "not_available", "source_record": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_t5_hybrid_direct_m_convergence_v1.json", "source_record_sha256": "9cab06e12a6958a7f187560f93f205c787b760d77ccfa9d808d1d5811f189165"},
+      "M960_trace_audit_prior": {"rss_gib": 22.008, "rss_classification": "measured", "pss": "not_available", "uss": "not_available", "stage_snapshots": "not_available", "source_record": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_t5_hybrid_direct_m_convergence_v1.json", "source_record_sha256": "9cab06e12a6958a7f187560f93f205c787b760d77ccfa9d808d1d5811f189165", "note": "prior audit/pre-solution"},
+      "M960_formal_direct": {"rss_mib": 71502.58203125, "pss_mib": 69746.0888671875, "uss_mib": 69465.1015625, "rss_pss_uss_classification": "measured", "stage_snapshots": "not_available", "source_record": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_e7_m960_direct_result_v1.json", "source_artifact": "results/task039_5nm_hybrid_direct_m960/task039_5nm_hybrid_direct_p6h10_m960_mpi8__hybrid_direct__mpi8__M960/20260813T214509.450065Z/run_summary.json", "source_artifact_sha256": "72325915b2fddce5235137398309e7409142abc097b990c3e25ded1b2ea002f5", "source_artifact_bytes": 1634}
+    }
+  },
+  "gates": {
+    "stage_aligned_process_tree_snapshots": {"pass": false, "status": "not_available", "reason": "formal run persisted global resource authority but no stage snapshots"},
+    "cleanup_order_proven": {"pass": false, "status": "not_available", "reason": "completion/exit0 is not an ordered destroy proof"},
+    "object_lifecycle_carrier": {"full_global_matrix_allocated": false, "full_surface_mode_matrix_retained": false, "dense_interface_square_formed": false, "modal_schur_bytes": 0, "factor_resident_bytes": "not_available"}
+  },
+  "resource": {
+    "peak_rss_mib": {"value": 71502.58203125, "classification": "measured"},
+    "peak_pss_mib": {"value": 69746.0888671875, "classification": "measured"},
+    "peak_uss_mib": {"value": 69465.1015625, "classification": "measured"},
+    "peak_swap_mib": {"value": 0.0, "classification": "measured"},
+    "selected_memory_gib": {"value": 228.0657501220703, "classification": "measured"},
+    "warning_gib": {"value": 180.0, "classification": "contract"},
+    "configured_terminate_gib": {"value": 220.0, "classification": "contract"},
+    "effective_hard_stop_gib": {"value": 205.2591751098633, "classification": "derived"},
+    "zero_swap_observed": true,
+    "peak_semantics": "per-metric simultaneous process-tree peaks across complete smaps samples; no phase attribution"
+  },
+  "limitations": [
+    "The 18-node telemetry contract exists in task039_memory_telemetry.py, but this formal M960 carrier did not persist its stage-event JSONL or ledger; every stage memory value is therefore not_available.",
+    "stdout markers are elapsed boundaries only and are not RSS/PSS/USS peaks. Reported basis/projection/coupling/factor statistics cannot be added into a resident total.",
+    "No new telemetry wiring or M960 rerun is authorized for this evidence closeout. h6 remains best-available discrete, E5 did not establish convergence, and sampled traction proxy remains separate from exact traction."
+  ],
+  "provenance": {
+    "evidence_level": "measured global peak + measured/derived carrier capacities + not_available stage attribution",
+    "formal_result_record": "task039_e7_m960_direct_result_v1.json",
+    "source_commit_sha": "d66c3a64176897a90fc1ea04298c6b804bafa8aa",
+    "attribution_taxonomy": {
+      "determined": "UNATTRIBUTED_RUNTIME_OR_ALLOCATOR_HIGH_WATER",
+      "evidence_level": "global_peak_measured_stage_attribution_not_available",
+      "LIFECYCLE_OVERLAP_DOMINANT": "hypothesis_not_established",
+      "QEP_WORKSPACE_DOMINANT": "not_established",
+      "MODE_OBJECT_REPLICATION_DOMINANT": "not_established",
+      "COUPLING_ASSEMBLY_DOMINANT": "not_established",
+      "LOCAL_FE_FACTOR_DOMINANT": "not_established",
+      "MODAL_SCHUR_DOMINANT": "not_established"
+    }
+  }
+}
