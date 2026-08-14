@@ -10,6 +10,8 @@ from benchmarks.task039_memory_telemetry import (
     TASK039_E10_STAGE_ORDER,
     TASK039_V2_H5_STAGE_ORDER,
     task039_h5_memory_object_ledger,
+    task039_h5_hybrid_direct_formal_profile,
+    task039_h5_hybrid_iterative_formal_profile,
     task039_read_new_markers,
     task039_stage_target,
     task039_v2_h5_stage_event,
@@ -22,6 +24,7 @@ from src.runners import task039_hybrid_direct as adapter
 
 ROOT = Path(__file__).resolve().parents[2]
 H5_HYBRID = ROOT / "input/official/task039/5nm_p6h5_hybrid_direct_m480_mpi8.dat"
+H5_ITERATIVE = ROOT / "input/official/task039/5nm_p6h5_hybrid_iterative_m480_mpi8.dat"
 
 
 class _FinishedProcess:
@@ -58,9 +61,9 @@ def _plan(spec, run_directory):
         shell=False,
         executable=Path("/fake/python"),
         worker_module="fake",
-        method="hybrid_direct",
+        method=str(spec.method["kind"]),
         mpi_size=8,
-        requested_modes=480,
+        requested_modes=int(spec.method["requested_modes_per_direction"]),
         physical_model_sha256=spec.physical_model_sha256,
         input_sha256=spec.input_sha256,
         source_sha="a" * 40,
@@ -72,6 +75,22 @@ def _plan(spec, run_directory):
         expected_resolved_config=run_directory / "resolved_config.json",
         expected_manifest=run_directory / "run_manifest.json",
     )
+
+
+def test_h5_formal_telemetry_predicates_are_narrow():
+    direct = load_and_resolve(H5_HYBRID).as_jsonable()
+    iterative = load_and_resolve(H5_ITERATIVE).as_jsonable()
+    assert task039_h5_hybrid_direct_formal_profile(direct)
+    assert not task039_h5_hybrid_direct_formal_profile(iterative)
+    assert task039_h5_hybrid_iterative_formal_profile(iterative)
+    assert not task039_h5_hybrid_iterative_formal_profile(direct)
+    iterative["execution"]["mpi_size"] = 1
+    assert not task039_h5_hybrid_iterative_formal_profile(iterative)
+    ordinary = load_and_resolve(
+        ROOT / "input/templates/full3d_direct_example.dat"
+    ).as_jsonable()
+    assert not task039_h5_hybrid_direct_formal_profile(ordinary)
+    assert not task039_h5_hybrid_iterative_formal_profile(ordinary)
 
 
 def test_v2_stage_event_order_and_missing_capacity():
@@ -238,6 +257,85 @@ def test_formal_h5_incomplete_smaps_never_becomes_zero(tmp_path, monkeypatch):
     assert sample["uss_bytes"] is None
     assert sample["sample_status"] == "measured"
     assert task039_h5_memory_object_ledger({})["status"] == "not_available"
+
+
+def test_formal_h5_iterative_preserves_worker_stage_file_and_writes_samples(
+    tmp_path, monkeypatch
+):
+    spec = replace(load_and_resolve(H5_ITERATIVE), expected_output_parent=tmp_path)
+    run_directory = tmp_path / "run"
+    stages_path = run_directory / "numerical_output/memory_stages.jsonl"
+    stages_path.parent.mkdir(parents=True)
+    stages_path.write_text('{"stage":"setup"}\n{"stage":"solve"}\n')
+    monkeypatch.setattr(
+        launcher,
+        "_task039_memory_budget",
+        lambda _execution: {
+            "configured_warning_memory_gib": 170.0,
+            "configured_critical_memory_gib": 195.0,
+            "absolute_terminate_memory_bytes": 224000000000,
+            "effective_terminate_memory_gib": 208.6162567138672,
+        },
+    )
+    result = launcher._run_worker(
+        _plan(spec, run_directory),
+        spec,
+        run_directory,
+        popen_factory=lambda *_args, **_kwargs: _FinishedProcess(),
+        sample_factory=lambda _pid: _authority(),
+        terminate_factory=lambda _process: {"requested": True},
+        monotonic=lambda: 0.0,
+        sleep=lambda _seconds: None,
+        poll_interval=0.25,
+    )
+    numerical_output = run_directory / "numerical_output"
+    assert (numerical_output / "process_tree_samples.jsonl").is_file()
+    assert stages_path.read_text() == '{"stage":"setup"}\n{"stage":"solve"}\n'
+    assert (numerical_output / "memory_object_ledger.json").is_file()
+    assert (
+        result["resource_authority"]["v2_h5_formal_telemetry"][
+            "process_tree_sample_count"
+        ]
+        == 1
+    )
+    assert (
+        result["resource_authority"]["v2_h5_formal_telemetry"]["raw_marker_path"]
+        is None
+    )
+    assert (
+        result["resource_authority"]["v2_h5_formal_telemetry"]["stage_source"]
+        == "worker_existing_memory_stages"
+    )
+
+
+def test_launcher_failure_and_nonzero_worker_are_persisted(tmp_path, monkeypatch):
+    spec = replace(load_and_resolve(H5_HYBRID), expected_output_parent=tmp_path)
+    monkeypatch.setattr(
+        launcher,
+        "build_execution_plan",
+        lambda _spec, run_directory, **_kwargs: _plan(spec, run_directory),
+    )
+    monkeypatch.setattr(
+        launcher,
+        "_run_worker",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            RuntimeError("fake worker failure")
+        ),
+    )
+    result = launcher.launch_specification(
+        spec,
+        source_sha="a" * 40,
+        timestamp="launcher-failure",
+        python_executable="/fake/python",
+        mpiexec_command="/fake/mpiexec",
+    )
+    run_directory = Path(result["run_directory"])
+    summary = json.loads((run_directory / "run_summary.json").read_text())
+    manifest = json.loads((run_directory / "run_manifest.json").read_text())
+    assert result["result_classification"] == "launcher_failure"
+    assert summary["error_type"] == "RuntimeError"
+    assert manifest["status"] == "finished"
+    assert manifest["exit_status"] is None
 
 
 def test_h5_object_ledger_compacts_nested_factor_and_field_payload():

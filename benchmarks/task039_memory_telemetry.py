@@ -95,6 +95,28 @@ def task039_h5_hybrid_direct_formal_profile(
     )
 
 
+def task039_h5_hybrid_iterative_formal_profile(
+    payload: Mapping[str, Any],
+) -> bool:
+    """Return true only for the opt-in V2 h5 Hybrid-iterative profile."""
+
+    method = payload.get("method")
+    discretization = payload.get("discretization")
+    execution = payload.get("execution")
+    identity = payload.get("identity", payload)
+    model_id = identity.get("model_id") if isinstance(identity, Mapping) else None
+    return bool(
+        isinstance(method, Mapping)
+        and method.get("kind") == "hybrid_iterative"
+        and method.get("requested_modes_per_direction") == 480
+        and model_id == "task039_5nm_hybrid_iterative_m480_candidate"
+        and isinstance(discretization, Mapping)
+        and float(discretization.get("mesh_target_nm", float("nan"))) == 5.0
+        and isinstance(execution, Mapping)
+        and execution.get("mpi_size") == 8
+    )
+
+
 def task039_v2_h5_stage_event(
     stage: str,
     *,
@@ -362,6 +384,7 @@ __all__ = [
     "task039_e10_ledger",
     "task039_e10_stage_event",
     "task039_h5_hybrid_direct_formal_profile",
+    "task039_h5_hybrid_iterative_formal_profile",
     "task039_h5_memory_object_ledger",
     "task039_read_new_markers",
     "task039_stage_target",
