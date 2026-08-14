@@ -25,7 +25,9 @@ class TestTask032HybridFieldReconstruction(unittest.TestCase):
         second = 1.01 * first
         forward = relative_sample_error(first, second)
         backward = relative_sample_error(second, first)
-        self.assertAlmostEqual(forward["relative_l2"], backward["relative_l2"], places=15)
+        self.assertAlmostEqual(
+            forward["relative_l2"], backward["relative_l2"], places=15
+        )
         self.assertGreater(forward["max_pointwise_absolute"], 0.0)
 
     def test_two_sided_coefficients_use_only_decaying_directions(self) -> None:
@@ -76,18 +78,14 @@ class TestTask032HybridFieldReconstruction(unittest.TestCase):
         curl_e = reconstructor.selected_planes_from_curl_e(
             [1.0, 1.0], [0.0], [0.0], [60.0]
         )
-        self.assertFalse(
-            np.allclose(native.magnetic_A_per_m, curl_e.magnetic_A_per_m)
-        )
+        self.assertFalse(np.allclose(native.magnetic_A_per_m, curl_e.magnetic_A_per_m))
         reconstructor._positive_traction_beta = (
             reconstructor._positive_propagation_beta.copy()
         )
         reconstructor._negative_traction_beta = (
             reconstructor._negative_propagation_beta.copy()
         )
-        native_equal = reconstructor.selected_planes(
-            [1.0, 1.0], [0.0], [0.0], [60.0]
-        )
+        native_equal = reconstructor.selected_planes([1.0, 1.0], [0.0], [0.0], [60.0])
         curl_equal = reconstructor.selected_planes_from_curl_e(
             [1.0, 1.0], [0.0], [0.0], [60.0]
         )
@@ -97,9 +95,7 @@ class TestTask032HybridFieldReconstruction(unittest.TestCase):
 
     def test_element_safe_offsets_use_real_axis_cell_midpoints(self) -> None:
         axis_plan = SimpleNamespace(
-            z_values=np.asarray(
-                [0.0, 10.0, 20.0, 40.0, 70.0, 100.0, 110.0, 120.0]
-            )
+            z_values=np.asarray([0.0, 10.0, 20.0, 40.0, 70.0, 100.0, 110.0, 120.0])
         )
         bottom, top = element_safe_middle_offsets(axis_plan)
         self.assertEqual(bottom["role"], "bottom_element_safe_offset")
@@ -125,15 +121,15 @@ class TestTask032HybridFieldReconstruction(unittest.TestCase):
         self.assertEqual(flux.tolist(), [3.0])
         epsilon_0 = 1.0 / (VACUUM_C * VACUUM_ETA0)
         mu_0 = VACUUM_ETA0 / VACUUM_C
-        self.assertAlmostEqual(
-            energy[0], 0.25 * (4.0 * epsilon_0 + 9.0 * mu_0)
-        )
+        self.assertAlmostEqual(energy[0], 0.25 * (4.0 * epsilon_0 + 9.0 * mu_0))
 
     def test_selected_plane_reference_comparison_round_trip(self) -> None:
         x = np.asarray([0.25, 0.75])
         y = np.asarray([0.5])
         z = np.asarray([10.0, 30.0, 110.0])
-        electric = np.arange(18, dtype=np.float64).reshape((3, 1, 2, 3)).astype(np.complex128)
+        electric = (
+            np.arange(18, dtype=np.float64).reshape((3, 1, 2, 3)).astype(np.complex128)
+        )
         magnetic = (0.1j * electric).astype(np.complex128)
         samples = ModalPlaneSamples(x, y, z, electric, magnetic)
         with tempfile.TemporaryDirectory() as directory:
@@ -153,9 +149,7 @@ class TestTask032HybridFieldReconstruction(unittest.TestCase):
 
     def test_full3d_trace_oracle_separates_fit_from_propagation(self) -> None:
         reconstructor = ModalFieldReconstructor.__new__(ModalFieldReconstructor)
-        reconstructor.cfg = SimpleNamespace(
-            electric_field_scale_V_per_m=1.0
-        )
+        reconstructor.cfg = SimpleNamespace(electric_field_scale_V_per_m=1.0)
         reconstructor.cross_section = SimpleNamespace(
             mesh=SimpleNamespace(comm=MPI.COMM_SELF)
         )
@@ -172,12 +166,8 @@ class TestTask032HybridFieldReconstruction(unittest.TestCase):
             *reconstructor.negative.modes,
         )
         reconstructor.propagation_model = "full3d_uniform_cg"
-        reconstructor._positive_propagation_beta = np.asarray(
-            [0.011 + 0.0j]
-        )
-        reconstructor._negative_propagation_beta = np.asarray(
-            [-0.019 + 0.0j]
-        )
+        reconstructor._positive_propagation_beta = np.asarray([0.011 + 0.0j])
+        reconstructor._negative_propagation_beta = np.asarray([-0.019 + 0.0j])
         electric_basis = np.zeros((2, 2, 3), dtype=np.complex128)
         magnetic_basis = np.zeros((2, 2, 3), dtype=np.complex128)
         electric_basis[0, 0, 0] = 1.0
@@ -236,21 +226,17 @@ class TestTask032HybridFieldReconstruction(unittest.TestCase):
         )
         propagation = report["continuous_propagation"]
         self.assertLess(
-            propagation["forward_bottom_to_top"][
-                "coefficient_relative_l2"
-            ],
+            propagation["forward_bottom_to_top"]["coefficient_relative_l2"],
             1.0e-12,
         )
         self.assertLess(
-            propagation["backward_top_to_bottom"][
-                "coefficient_relative_l2"
-            ],
+            propagation["backward_top_to_bottom"]["coefficient_relative_l2"],
             1.0e-12,
         )
         self.assertLess(
-            propagation["stable_two_sided_reconstruction"][
-                "top_magnetic_tangential"
-            ]["relative_l2"],
+            propagation["stable_two_sided_reconstruction"]["top_magnetic_tangential"][
+                "relative_l2"
+            ],
             1.0e-12,
         )
         self.assertEqual(

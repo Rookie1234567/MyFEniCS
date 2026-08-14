@@ -42,7 +42,11 @@ def relative_sample_error(actual: np.ndarray, expected: np.ndarray) -> dict[str,
         raise ValueError(f"Sample shapes differ: {first.shape} != {second.shape}.")
     difference = first - second
     scale = max(float(np.linalg.norm(first)), float(np.linalg.norm(second)), 1.0e-30)
-    point_norm = np.linalg.norm(difference, axis=-1) if difference.ndim > 1 else np.abs(difference)
+    point_norm = (
+        np.linalg.norm(difference, axis=-1)
+        if difference.ndim > 1
+        else np.abs(difference)
+    )
     return {
         "relative_l2": float(np.linalg.norm(difference) / scale),
         "absolute_l2": float(np.linalg.norm(difference)),
@@ -91,16 +95,12 @@ def _validated_traction_beta_pair(
         )
     positive_array = np.asarray(positive, dtype=np.complex128)
     negative_array = np.asarray(negative, dtype=np.complex128)
-    if (
-        positive_array.shape != (mode_count,)
-        or negative_array.shape != (mode_count,)
-    ):
+    if positive_array.shape != (mode_count,) or negative_array.shape != (mode_count,):
         raise ValueError(
             "Traction beta arrays must match each directional modal basis."
         )
     if not (
-        np.all(np.isfinite(positive_array))
-        and np.all(np.isfinite(negative_array))
+        np.all(np.isfinite(positive_array)) and np.all(np.isfinite(negative_array))
     ):
         raise ValueError("Traction beta arrays must contain only finite values.")
     return positive_array.copy(), negative_array.copy()
@@ -126,9 +126,7 @@ def element_safe_middle_offsets(
     if not bottom < top:
         raise ValueError("The middle-z interval must have positive length.")
     atol = 1.0e-10 * max(abs(bottom), abs(top), 1.0)
-    bottom_matches = np.flatnonzero(
-        np.isclose(z_values, bottom, rtol=0.0, atol=atol)
-    )
+    bottom_matches = np.flatnonzero(np.isclose(z_values, bottom, rtol=0.0, atol=atol))
     top_matches = np.flatnonzero(np.isclose(z_values, top, rtol=0.0, atol=atol))
     if len(bottom_matches) != 1 or len(top_matches) != 1:
         raise ValueError("Both interfaces must occur exactly once on the z axis.")
@@ -209,7 +207,9 @@ def _sample_distributed_2d(function, points_xy: np.ndarray) -> np.ndarray:
     filled_from_owned = np.zeros(len(points), dtype=bool)
     for indices, owned_flags, packet_values in packets:
         for row, point_index in enumerate(indices):
-            if not filled[point_index] or (owned_flags[row] and not filled_from_owned[point_index]):
+            if not filled[point_index] or (
+                owned_flags[row] and not filled_from_owned[point_index]
+            ):
                 values[point_index] = packet_values[row]
                 filled[point_index] = True
                 filled_from_owned[point_index] = owned_flags[row]
@@ -235,7 +235,9 @@ def assign_local_total_electric_field(
             )
         return augmented_solution
     if augmented_solution.getSize() != system.global_size:
-        raise ValueError("Local augmented solution and Hybrid local system sizes differ.")
+        raise ValueError(
+            "Local augmented solution and Hybrid local system sizes differ."
+        )
     return _assign_fe_solution_from_augmented(
         augmented_solution,
         system.floquet_data,
@@ -316,9 +318,7 @@ class ModalFieldReconstructor:
                 propagation.forward.mode_count != count
                 or propagation.backward.mode_count != count
             ):
-                raise ValueError(
-                    "Propagation and modal reconstruction sizes differ."
-                )
+                raise ValueError("Propagation and modal reconstruction sizes differ.")
             self.propagation_model = propagation.propagation_model
             self._positive_propagation_beta = np.asarray(
                 propagation.forward.effective_beta_per_nm,
@@ -362,9 +362,7 @@ class ModalFieldReconstructor:
         self._sample_longitudinal = fem.Function(
             spaces.longitudinal, name="task032_middle_mode_sample_Ez"
         )
-        self._magnetic_beta = fem.Constant(
-            msh, PETSc.ScalarType(0.0 + 0.0j)
-        )
+        self._magnetic_beta = fem.Constant(msh, PETSc.ScalarType(0.0 + 0.0j))
         source_Et, source_Ez = ufl.split(self._sample_source)
         inverse_i_k_mu = self.cfg.magnetic_field_scale_A_per_m / (
             1j * self.cfg.k0 * self.cfg.mu_r
@@ -449,19 +447,13 @@ class ModalFieldReconstructor:
             electric_rows.append(
                 np.column_stack(
                     (
-                        _sample_distributed_2d(
-                            self._sample_transverse, points
-                        )[:, :2],
-                        _sample_distributed_2d(
-                            self._sample_longitudinal, points
-                        )[:, 0],
+                        _sample_distributed_2d(self._sample_transverse, points)[:, :2],
+                        _sample_distributed_2d(self._sample_longitudinal, points)[:, 0],
                     )
                 )
             )
             try:
-                self._magnetic_beta.value[...] = PETSc.ScalarType(
-                    magnetic_beta
-                )
+                self._magnetic_beta.value[...] = PETSc.ScalarType(magnetic_beta)
             except Exception:
                 self._magnetic_beta.value = PETSc.ScalarType(magnetic_beta)
             self._magnetic_scratch.interpolate(self._magnetic_expression)
@@ -505,17 +497,9 @@ class ModalFieldReconstructor:
         return np.concatenate(
             (
                 modal[:count]
-                * np.exp(
-                    1j
-                    * positive_beta
-                    * (float(z_nm) - self.bottom_z_nm)
-                ),
+                * np.exp(1j * positive_beta * (float(z_nm) - self.bottom_z_nm)),
                 modal[count:]
-                * np.exp(
-                    1j
-                    * negative_beta
-                    * (float(z_nm) - self.top_z_nm)
-                ),
+                * np.exp(1j * negative_beta * (float(z_nm) - self.top_z_nm)),
             )
         )
 
@@ -628,17 +612,10 @@ class ModalFieldReconstructor:
         yy, xx = np.meshgrid(y_nm, x_nm, indexing="ij")
         points = np.column_stack((xx.ravel(), yy.ravel()))
         electric_basis, magnetic_basis = self._sample_mode_bases(points)
-        electric_basis = (
-            self.cfg.electric_field_scale_V_per_m
-            * electric_basis[..., :2]
-        )
+        electric_basis = self.cfg.electric_field_scale_V_per_m * electric_basis[..., :2]
         magnetic_basis = magnetic_basis[..., :2]
-        electric_matrix = electric_basis.reshape(
-            len(electric_basis), -1
-        ).T
-        magnetic_matrix = magnetic_basis.reshape(
-            len(magnetic_basis), -1
-        ).T
+        electric_matrix = electric_basis.reshape(len(electric_basis), -1).T
+        magnetic_matrix = magnetic_basis.reshape(len(magnetic_basis), -1).T
         interface_indices = {
             "bottom": int(bottom_matches[0]),
             "top": int(top_matches[0]),
@@ -672,12 +649,12 @@ class ModalFieldReconstructor:
                 joint_target,
                 rcond=1.0e-10,
             )
-            reconstructed_electric = (
-                electric_matrix @ coefficients
-            ).reshape(electric[index, ..., :2].shape)
-            reconstructed_magnetic = (
-                magnetic_matrix @ coefficients
-            ).reshape(magnetic[index, ..., :2].shape)
+            reconstructed_electric = (electric_matrix @ coefficients).reshape(
+                electric[index, ..., :2].shape
+            )
+            reconstructed_magnetic = (magnetic_matrix @ coefficients).reshape(
+                magnetic[index, ..., :2].shape
+            )
             condition = (
                 float(singular_values[0] / singular_values[-1])
                 if len(singular_values) and singular_values[-1] > 0.0
@@ -701,17 +678,13 @@ class ModalFieldReconstructor:
         comm = self.cross_section.mesh.comm
         payload = None
         if comm.rank == 0:
-            bottom_coefficients, bottom_fit = fit(
-                interface_indices["bottom"]
-            )
+            bottom_coefficients, bottom_fit = fit(interface_indices["bottom"])
             top_coefficients, top_fit = fit(interface_indices["top"])
             original_beta = np.asarray(
                 [mode.beta for mode in self._modes],
                 dtype=np.complex128,
             )
-            positive_beta, negative_beta = (
-                self._effective_propagation_betas()
-            )
+            positive_beta, negative_beta = self._effective_propagation_betas()
             effective_beta = np.concatenate(
                 (
                     positive_beta,
@@ -720,18 +693,10 @@ class ModalFieldReconstructor:
             )
             length_nm = self.top_z_nm - self.bottom_z_nm
             count = self.mode_count_per_direction
-            forward_factors = np.exp(
-                1j * original_beta[:count] * length_nm
-            )
-            backward_factors = np.exp(
-                -1j * original_beta[count:] * length_nm
-            )
-            predicted_top_forward = (
-                bottom_coefficients[:count] * forward_factors
-            )
-            predicted_bottom_backward = (
-                top_coefficients[count:] * backward_factors
-            )
+            forward_factors = np.exp(1j * original_beta[:count] * length_nm)
+            backward_factors = np.exp(-1j * original_beta[count:] * length_nm)
+            predicted_top_forward = bottom_coefficients[:count] * forward_factors
+            predicted_bottom_backward = top_coefficients[count:] * backward_factors
             stable_top_coefficients = np.concatenate(
                 (predicted_top_forward, top_coefficients[count:])
             )
@@ -785,12 +750,8 @@ class ModalFieldReconstructor:
                                 float(mode_beta[local_index].real),
                                 float(mode_beta[local_index].imag),
                             ],
-                            "predicted_coefficient_abs": float(
-                                abs(predicted_value)
-                            ),
-                            "projected_coefficient_abs": float(
-                                abs(observed_value)
-                            ),
+                            "predicted_coefficient_abs": float(abs(predicted_value)),
+                            "projected_coefficient_abs": float(abs(observed_value)),
                             "phase_delta_rad": float(
                                 np.angle(observed_value / predicted_value)
                                 if abs(predicted_value) > 1.0e-30
@@ -831,12 +792,8 @@ class ModalFieldReconstructor:
                 float(np.max(np.abs(backward_factors), initial=0.0)),
                 1.0e-30,
             )
-            selected_forward_factors = np.exp(
-                1j * effective_beta[:count] * length_nm
-            )
-            selected_backward_factors = np.exp(
-                -1j * effective_beta[count:] * length_nm
-            )
+            selected_forward_factors = np.exp(1j * effective_beta[:count] * length_nm)
+            selected_backward_factors = np.exp(-1j * effective_beta[count:] * length_nm)
             selected_top_forward = (
                 bottom_coefficients[:count] * selected_forward_factors
             )
@@ -908,20 +865,14 @@ class ModalFieldReconstructor:
                     ),
                 },
                 "max_stable_factor_magnitude": max(
-                    float(
-                        np.max(np.abs(selected_forward_factors), initial=0.0)
-                    ),
-                    float(
-                        np.max(np.abs(selected_backward_factors), initial=0.0)
-                    ),
+                    float(np.max(np.abs(selected_forward_factors), initial=0.0)),
+                    float(np.max(np.abs(selected_backward_factors), initial=0.0)),
                     1.0e-30,
                 ),
                 "diagnostic_uses_growing_inverse_factors": False,
             }
             payload = {
-                "schema_version": (
-                    "task035c.sampled-full3d-trace-modal-oracle.v2"
-                ),
+                "schema_version": ("task035c.sampled-full3d-trace-modal-oracle.v2"),
                 "status": "measured_sampled_oracle",
                 "reference_npz": str(reference_npz),
                 "sample_grid_shape_y_x": [len(y_nm), len(x_nm)],
@@ -979,8 +930,7 @@ class ModalFieldReconstructor:
             raise ValueError("At least second-order Gauss quadrature is required.")
         axis = np.asarray(self.cross_section.axis_plan.z_values, dtype=np.float64)
         interior = axis[
-            (axis > self.bottom_z_nm + 1.0e-12)
-            & (axis < self.top_z_nm - 1.0e-12)
+            (axis > self.bottom_z_nm + 1.0e-12) & (axis < self.top_z_nm - 1.0e-12)
         ]
         breaks = np.concatenate(([self.bottom_z_nm], interior, [self.top_z_nm]))
         nodes, weights = np.polynomial.legendre.leggauss(int(gauss_order))
@@ -998,7 +948,9 @@ class ModalFieldReconstructor:
                         PETSc.ScalarType(coefficient), mode.right.right_full
                     )
                 self._total.x.scatter_forward()
-                cross_section_power = complex(fem.assemble_scalar(self._absorption_form))
+                cross_section_power = complex(
+                    fem.assemble_scalar(self._absorption_form)
+                )
                 local_integral += half * float(weight) * float(cross_section_power.real)
                 evaluations += 1
         total = float(
@@ -1026,7 +978,9 @@ def interface_field_continuity(
         modal_samples.z_nm,
         [bottom_system.local_mesh.interface_z_nm, top_system.local_mesh.interface_z_nm],
     ):
-        raise ValueError("Interface continuity requires modal samples at bottom and top interfaces.")
+        raise ValueError(
+            "Interface continuity requires modal samples at bottom and top interfaces."
+        )
     yy, xx = np.meshgrid(modal_samples.y_nm, modal_samples.x_nm, indexing="ij")
     reports: dict[str, object] = {}
     for index, (side, system, vector, z_side) in enumerate(
@@ -1054,7 +1008,9 @@ def interface_field_continuity(
         reports[side] = {
             "local_trace_side": "negative_z" if z_side < 0 else "positive_z",
             "modal_trace_side": "positive_z" if side == "bottom" else "negative_z",
-            "electric_tangential": relative_sample_error(local_e[..., :2], modal_e[..., :2]),
+            "electric_tangential": relative_sample_error(
+                local_e[..., :2], modal_e[..., :2]
+            ),
             "traction_density_l2_proxy": {
                 **relative_sample_error(local_h[..., :2], modal_h[..., :2]),
                 "authority": "diagnostic_only",

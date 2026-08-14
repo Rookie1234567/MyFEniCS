@@ -289,8 +289,10 @@ def test_task039_trace_lane_records_stage_path_and_keeps_source_last(
     ).as_jsonable()
     captured = {}
 
-    def fake_runner(*args):
+    def fake_runner(*args, canonical_trace_gate_policy, canonical_trace_family_sha256):
         captured["args"] = args
+        captured["canonical_trace_gate_policy"] = canonical_trace_gate_policy
+        captured["canonical_trace_family_sha256"] = canonical_trace_family_sha256
         return {
             "status": "controlled_stop",
             "trace_audit_capture": {"individual_capture_complete": True},
@@ -311,6 +313,8 @@ def test_task039_trace_lane_records_stage_path_and_keeps_source_last(
         str(tmp_path / "numerical_output" / "task039_trace_audit_stages.jsonl"),
     ]
     assert captured["args"][-1]["source_commit_sha"] == "a" * 40
+    assert captured["canonical_trace_gate_policy"] is None
+    assert captured["canonical_trace_family_sha256"] is None
 
 
 def test_execution_plan_trace_flag_is_task039_only(tmp_path: Path):
