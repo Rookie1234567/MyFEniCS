@@ -14,7 +14,7 @@ import math
 import os
 from pathlib import Path
 import sys
-from typing import Any, Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -135,6 +135,44 @@ M6B_W2R_PREDICTED_LIVE_SET_BYTES = (
     + M6B_W2R_PROJECTED_INCREMENTAL_BYTES
 )
 M6B_W2R_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_750_000_000
+M6B_W3_SCHEMA = "task037.extra.m6b.fixed-time-harmonic-screen.v1"
+M6B_W3_PHASE = "w3_screen"
+M6B_W3_BETA = 1.0
+M6B_W3_COMPACT_PATH = (
+    "benchmarks/cases/101_task37_extra_development/records/"
+    "m6b_w2r_projected_range_diagnostic.json"
+)
+M6B_W3_COMPACT_FILE_SHA256 = (
+    "00c24c9ee08f7151f905b5fd53367a6be978b721407ee135bf9f68bec89eb9cb"
+)
+M6B_W3_W2R_SOURCE_SHA = "1cdcb19ac5b96c8bf5b3dd8633a01a67bbc81b45"
+M6B_W3_RESTART = 20
+M6B_W3_MAX_IT = 200
+M6B_W3_PRODUCTION_ACTION_COUNT = {
+    "local_apply": 1,
+    "physical_outer_action": 3,
+    "range_apply": 2,
+}
+M6B_W3_M5_100_STEP_WALL_SECONDS = 1185.652239
+M6B_W3_W2R_FOUR_DIAGNOSTIC_WALL_SECONDS = 402.4505279730074
+M6B_W3_DIAGNOSTIC_ACTIONS_PER_RESIDUAL = 9
+M6B_W3_ITERATION_ACTION_CLASSES = sum(M6B_W3_PRODUCTION_ACTION_COUNT.values()) + 1
+M6B_W3_FULL_VECTOR_BYTES = M6B_GLOBAL_ROWS * 16
+M6B_W3_FGMRES_V_VECTORS = M6B_W3_RESTART + 1
+M6B_W3_FGMRES_Z_VECTORS = M6B_W3_RESTART
+M6B_W3_FGMRES_V_BYTES = M6B_W3_FGMRES_V_VECTORS * M6B_W3_FULL_VECTOR_BYTES
+M6B_W3_FGMRES_Z_BYTES = M6B_W3_FGMRES_Z_VECTORS * M6B_W3_FULL_VECTOR_BYTES
+M6B_W3_FGMRES_THEORETICAL_BYTES = M6B_W3_FGMRES_V_BYTES + M6B_W3_FGMRES_Z_BYTES
+M6B_W3_INHERITED_RESERVE_BYTES = M6B_FIXED_RUNTIME_RESERVE_BYTES
+# The W2R/W1A base is calibrated from the M5 restart=20 FGMRES process peak;
+# the V(m+1) and flexible Z(m) vectors are therefore lifecycle evidence already
+# covered by that base, not an additive second copy in this prediction.
+M6B_W3_UNCOVERED_KRYLOV_BYTES = 0
+M6B_W3_PREDICTED_LIVE_SET_BYTES = (
+    M6B_W2R_PREDICTED_LIVE_SET_BYTES + M6B_W3_UNCOVERED_KRYLOV_BYTES
+)
+M6B_W3_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_750_000_000
+M6B_W3_RUNTIME_TIMEOUT_SECONDS = 19_200.0
 M6B_W2R_OLD_NEGATIVE_SOURCE_SHA = (
     "64e479404ce30384e49aad58ada573fb9cdf8d62"
 )
@@ -423,6 +461,188 @@ def _m6b_w2r_predicted_live_set() -> dict[str, Any]:
             "dtn_base_reserve_in_base": True,
         },
         "basis": "W1A base plus external residual and eight full-space vectors",
+    }
+
+
+def _m6b_w3_runtime_prediction() -> dict[str, Any]:
+    conservative_w3_iteration_seconds = (
+        M6B_W3_W2R_FOUR_DIAGNOSTIC_WALL_SECONDS / 4.0
+        * M6B_W3_ITERATION_ACTION_CLASSES
+        / M6B_W3_DIAGNOSTIC_ACTIONS_PER_RESIDUAL
+    )
+    scaled_w3_seconds = 200.0 * conservative_w3_iteration_seconds
+    scaled_m5_seconds = 2.0 * M6B_W3_M5_100_STEP_WALL_SECONDS
+    derived_seconds = max(scaled_w3_seconds, scaled_m5_seconds)
+    timeout_seconds = math.ceil(1.2 * derived_seconds / 600.0) * 600.0
+    if timeout_seconds != M6B_W3_RUNTIME_TIMEOUT_SECONDS:
+        raise AssertionError("M6B W3 runtime authority is inconsistent")
+    return {
+        "m5_100_step_wall_seconds": M6B_W3_M5_100_STEP_WALL_SECONDS,
+        "w2r_four_diagnostic_wall_seconds": M6B_W3_W2R_FOUR_DIAGNOSTIC_WALL_SECONDS,
+        "conservative_w3_iteration_seconds": conservative_w3_iteration_seconds,
+        "scaled_m5_200_step_seconds": scaled_m5_seconds,
+        "scaled_w3_200_iteration_seconds": scaled_w3_seconds,
+        "action_classes_per_iteration": M6B_W3_ITERATION_ACTION_CLASSES,
+        "action_class_basis": (
+            "one outer A plus six projected-PC actions; the two range actions "
+            "include the A^H modal projection"
+        ),
+        "reserve_fraction": 1.2,
+        "derived_timeout_seconds": timeout_seconds,
+        "w2r_wall_basis": {
+            "two_diagnostic_repeats_per_residual": True,
+            "checkpoint_pair_wall_included_as_reserve": True,
+            "derived_not_measurement": True,
+        },
+        "prediction_not_measurement": True,
+    }
+
+
+def _m6b_w3_predicted_live_set() -> dict[str, Any]:
+    inherited = _m6b_w2r_predicted_live_set()
+    components = {
+        "w2r_production_live_set_bytes": M6B_W2R_PREDICTED_LIVE_SET_BYTES,
+        "w3_uncovered_incremental_bytes": M6B_W3_UNCOVERED_KRYLOV_BYTES,
+    }
+    total = int(M6B_W3_PREDICTED_LIVE_SET_BYTES)
+    return {
+        "components": components,
+        "predicted_live_set_bytes": total,
+        "limit_bytes": M6B_W3_PREDICTED_LIVE_SET_LIMIT_BYTES,
+        "gate": total <= M6B_W3_PREDICTED_LIVE_SET_LIMIT_BYTES,
+        "derived_not_measured": True,
+        "is_measurement": False,
+        "prediction_scope": "production_screen_not_diagnostic_measurement",
+        "restart_set": M6B_W3_RESTART,
+        "fgmres_v_vectors": M6B_W3_FGMRES_V_VECTORS,
+        "fgmres_z_vectors": M6B_W3_FGMRES_Z_VECTORS,
+        "fgmres_v_bytes": M6B_W3_FGMRES_V_BYTES,
+        "fgmres_z_bytes": M6B_W3_FGMRES_Z_BYTES,
+        "fgmres_theoretical_bytes": M6B_W3_FGMRES_THEORETICAL_BYTES,
+        "fgmres_lifecycle_calibrated_in_w2r_base": True,
+        "inherited_fixed_runtime_reserve_bytes": M6B_W3_INHERITED_RESERVE_BYTES,
+        "no_double_count": True,
+        "inherited_w2r_components": inherited["components"],
+        "inherited_range_store_dtn_and_external_residual": True,
+    }
+
+
+def _m6b_w3_scope(*, phase: str = M6B_W3_PHASE) -> dict[str, Any]:
+    return {
+        "degree": M6B_DEGREE,
+        "h_nm": M6B_H_NM,
+        "global_cells": M6B_GLOBAL_CELLS,
+        "local_cells": M6B_GLOBAL_CELLS,
+        "local_nloc": M6B_LOCAL_NLOC,
+        "global_rows": M6B_GLOBAL_ROWS,
+        "constraint_count": M6B_CONSTRAINTS,
+        "beta": M6B_W3_BETA,
+        "factor_count": M6B_FACTOR_COUNT,
+        "factor_reuse_count": M6B_FACTOR_REUSE,
+        "operator": "A=Kcurl-k0^2*M_epsilon+A_DtN",
+        "shifted_operator": M6B_SHIFTED_OPERATOR,
+        "fine_space": "uncondensed_fullspace",
+        "global_matrix": False,
+        "static_condensation": False,
+        "trace_slab_pc": False,
+        "ordinary_default": False,
+        "mpi_size": 1,
+        "phase": phase,
+        "fixed_order": "right_fgmres_with_projected_range_pc",
+        "scan": False,
+        "screen_iterations": list(M6B_SCREEN_ITERATIONS),
+        "screen_rho_limits": dict(M6B_SCREEN_RHO_LIMITS),
+        "screen_improvement_limit": M6B_IMPROVEMENT_LIMIT,
+        "restart_set": M6B_W3_RESTART,
+        "max_it": M6B_W3_MAX_IT,
+        "rtol": 0.0,
+        "atol": 0.0,
+        "norm_type": "unpreconditioned",
+        "pc_side": "right",
+        "production_action_counts": dict(M6B_W3_PRODUCTION_ACTION_COUNT),
+        "predicted_live_set": _m6b_w3_predicted_live_set(),
+        "runtime_prediction": _m6b_w3_runtime_prediction(),
+        "formal_pass": False,
+        "pde_pass": False,
+    }
+
+
+def _m6b_w3_screen_orchestration(
+    *,
+    projected_pc: Any,
+    outer_mat: Any,
+    outer_context: Any,
+    rhs_vec: Any,
+    checkpoint_dir: Path,
+    checkpoint_observer: Callable[[Mapping[str, Any]], None] | None = None,
+) -> tuple[Any, dict[str, Any]]:
+    """Connect the projected production PC and fixed screen after RHS setup."""
+
+    from src.solvers.hcurl_h2b_m6b_shifted_patch_pc import (
+        M6BShiftedPCContext,
+        run_m6b_right_fgmres_screen,
+    )
+
+    audit = getattr(projected_pc, "audit", None)
+    if not isinstance(audit, Mapping) or audit.get("fixed_order") != "projected_range_complement":
+        raise ValueError("M6B W3 requires the projected range production PC")
+    pc_context = M6BShiftedPCContext(projected_pc)
+    screen = run_m6b_right_fgmres_screen(
+        outer_mat,
+        rhs_vec,
+        pc_context=pc_context,
+        checkpoint_dir=checkpoint_dir,
+        operator_context=outer_context,
+        checkpoint_observer=checkpoint_observer,
+    )
+    return pc_context, screen
+
+
+def _m6b_worker_numeric_pass_fields(
+    *, screen: bool, error: str | None, gate: Mapping[str, Any]
+) -> tuple[bool, bool]:
+    """Separate W3 screen status from the W2/W2R diagnostic status."""
+
+    passed = bool(error is None and gate["pass"])
+    return bool(not screen and passed), bool(screen and passed)
+
+
+def _m6b_w2r_positive_record() -> dict[str, Any]:
+    path = ROOT / M6B_W3_COMPACT_PATH
+    if not path.is_file() or _sha256_file(path) != M6B_W3_COMPACT_FILE_SHA256:
+        raise ValueError("M6B W2R positive compact authority differs")
+    value = _read_json(path)
+    checks = value.get("checks")
+    worker = value.get("worker")
+    watchdog = value.get("watchdog")
+    source = value.get("source")
+    if not (
+        value.get("schema") == "task037.extra.m6b.w2r.projected-range.compact.v1"
+        and _evidence_valid(value)
+        and value.get("status") == "diagnostic_pass"
+        and value.get("pde_pass") is False
+        and isinstance(checks, Mapping)
+        and checks
+        and all(item is True for item in checks.values())
+        and isinstance(worker, Mapping)
+        and worker.get("diagnostic_numeric_pass") is True
+        and worker.get("w2r_pass") is False
+        and worker.get("formal_pass") is False
+        and isinstance(watchdog, Mapping)
+        and watchdog.get("formal_pass") is True
+        and watchdog.get("w2r_pass") is True
+        and watchdog.get("pde_pass") is False
+        and isinstance(source, Mapping)
+        and source.get("commit_full_sha") == M6B_W3_W2R_SOURCE_SHA
+    ):
+        raise ValueError("M6B W2R positive compact authority is not closed")
+    return {
+        "path": str(path),
+        "sha256": M6B_W3_COMPACT_FILE_SHA256,
+        "evidence_sha256": value["evidence_sha256"],
+        "source_sha": source["commit_full_sha"],
+        "watchdog_formal_pass": True,
+        "worker_diagnostic_numeric_pass": True,
     }
 
 
@@ -3683,12 +3903,14 @@ def _run_m6b_w2_diagnostic(
     w0_authority_file: Path,
     *,
     projected: bool = False,
+    screen: bool = False,
 ) -> int:
     import gc
     import shutil
     import time
 
     import numpy as np
+    from dolfinx import fem
     from mpi4py import MPI
     from petsc4py import PETSc
     import ufl
@@ -3707,8 +3929,15 @@ def _run_m6b_w2_diagnostic(
         H2BM6BProjectedRangePC,
         H2BM6BShiftedPatchPC,
         H2BM6BShiftedRangePC,
+        M6BNumpyOuterActionBridge,
         build_m6b_outer_mat,
         build_m6b_volume_form,
+        compose_m6b_physical_rhs,
+    )
+    from src.solvers.dtn_port_3d import (
+        _assemble_mpc_form_vector,
+        _incident_projection_onto_top_mode,
+        _incident_top_traction_form,
     )
     from src.solvers.hcurl_m6b_sparse_range import (
         load_sparse_m6b_range_carrier,
@@ -3722,6 +3951,8 @@ def _run_m6b_w2_diagnostic(
     wave_authority_dir = Path(wave_authority_dir).resolve()
     jit_cache_source = Path(jit_cache_source).resolve()
     w0_authority_file = Path(w0_authority_file).resolve()
+    if screen and not projected:
+        raise ValueError("M6B W3 screen requires the projected range PC")
     if run_dir.exists():
         raise FileExistsError(f"M6B W2 refuses an existing run directory: {run_dir}")
     if MPI.COMM_WORLD.size != 1:
@@ -3734,19 +3965,27 @@ def _run_m6b_w2_diagnostic(
         jit_cache_source,
         w0_authority_file,
     )
-    w2r_negative_authority = (
-        _m6b_w2r_old_negative_record() if projected else None
-    )
+    w2r_negative_authority = _m6b_w2r_old_negative_record() if (projected or screen) else None
+    w2r_positive_authority = _m6b_w2r_positive_record() if screen else None
     run_dir.mkdir(parents=True)
     cache_dir = run_dir / "jit_cache"
     shutil.copytree(jit_cache_source, cache_dir)
     started = time.perf_counter()
-    if projected:
+    if screen:
+        progress_path = run_dir / "m6b_w3_progress.jsonl"
+        summary_path = run_dir / "m6b_w3_summary.json"
+        progress_schema = f"{M6B_W3_SCHEMA}.progress.v1"
+        phase_name = M6B_W3_PHASE
+    elif projected:
         progress_path = run_dir / "m6b_w2r_progress.jsonl"
         summary_path = run_dir / "m6b_w2r_summary.json"
+        progress_schema = f"{M6B_W2R_SCHEMA}.progress.v1"
+        phase_name = "w2r_diagnostic"
     else:
         progress_path = run_dir / "m6b_w2_progress.jsonl"
         summary_path = run_dir / "m6b_w2_summary.json"
+        progress_schema = f"{M6B_W2_SCHEMA}.progress.v1"
+        phase_name = "w2_diagnostic"
     source_start = h2b._light_source()
     status = "gate_failed"
     error: str | None = None
@@ -3764,6 +4003,7 @@ def _run_m6b_w2_diagnostic(
     local_pc = None
     outer_mat = None
     outer_context = None
+    outer_bridge = None
     physical_action = None
     shifted_action = None
     adjoint_action = None
@@ -3773,11 +4013,18 @@ def _run_m6b_w2_diagnostic(
     physical_ufl = shifted_ufl = adjoint_ufl = None
     epsilon0 = abs_epsilon0 = beta0 = None
     epsilon1 = abs_epsilon1 = beta1 = None
+    base_vec = rhs_vec = None
+    incident_form = None
+    rhs_manifest = None
+    screen_result = None
+    shared_volume_kernel = None
+    outer_record = None
+    shifted_record = None
 
     def emit(event: str, **extra: Any) -> None:
         payload = {
-            "schema": f"{M6B_W2R_SCHEMA if projected else M6B_W2_SCHEMA}.progress.v1",
-            "phase": "w2r_diagnostic" if projected else "w2_diagnostic",
+            "schema": progress_schema,
+            "phase": phase_name,
             "event": event,
             "elapsed_wall_seconds": float(time.perf_counter() - started),
             **extra,
@@ -3841,6 +4088,11 @@ def _run_m6b_w2_diagnostic(
         surface_assemblers = m6a._surface_assemblers(
             function_space, mesh_data, cfg, modes, cache_dir
         )
+        if screen:
+            incident_form = fem.form(
+                _incident_top_traction_form(function_space, mesh_data, cfg),
+                jit_options=jit_options,
+            )
         cache_after = _m6b_w2_cache_record(h2b, cache_dir)
         source_cache_after = _m6b_w2_cache_record(h2b, jit_cache_source)
         if (
@@ -3863,22 +4115,14 @@ def _run_m6b_w2_diagnostic(
             volume_hermitian_action=adjoint_action,
         )
         template = outer_mat.createVecRight()
+        outer_bridge = M6BNumpyOuterActionBridge(outer_context, template)
 
         def outer_numpy(values: np.ndarray, *, hermitian: bool = False) -> np.ndarray:
-            source = template.duplicate()
-            target = template.duplicate()
-            try:
-                np.copyto(source.getArray(), values)
-                if hermitian:
-                    outer_context.apply_hermitian(source, target)
-                else:
-                    outer_mat.mult(source, target)
-                return np.array(
-                    target.getArray(readonly=True), dtype=np.complex128, copy=True
-                )
-            finally:
-                target.destroy()
-                source.destroy()
+            return (
+                outer_bridge.apply_hermitian(values)
+                if hermitian
+                else outer_bridge.apply(values)
+            )
 
         shifted_vec = shifted_action.output_vector.duplicate()
 
@@ -3928,48 +4172,154 @@ def _run_m6b_w2_diagnostic(
                 task037_extra_m6b=True,
             )
         emit("outer_and_carriers_ready", range_audit=range_carrier.audit)
-        for key in ("20", "100", "150", "200"):
-            residual_path = factor_authority_dir / f"m6b_iter{key}_residual.npy"
-            residual = np.load(residual_path, allow_pickle=False)
-            if (
-                residual.dtype != np.dtype(np.complex128)
-                or residual.shape != (M6B_GLOBAL_ROWS,)
-                or not np.all(np.isfinite(residual))
-                or _m6b_w2_array_sha256(residual) != M6B_W2_RESIDUAL_ARRAY_SHAS[key]
-            ):
-                raise ValueError(f"M6B W2 residual authority is invalid: {key}")
-            first, first_measurement = w2_pc.apply_with_measurement(residual)
-            second, second_measurement = w2_pc.apply_with_measurement(residual)
-            record = dict(first_measurement)
-            record.update(
-                {
-                    "iteration": int(key),
-                    "residual_array_sha256": M6B_W2_RESIDUAL_ARRAY_SHAS[key],
-                    "residual_artifact": {
-                        **_artifact(
-                            factor_authority_dir,
-                            f"m6b_iter{key}_residual.npy",
-                        ),
-                        "absolute_path": str(residual_path),
-                    },
-                    "correction_sha256": first_measurement["final_correction_sha256"],
-                    "repeat_correction_sha256": second_measurement[
-                        "final_correction_sha256"
-                    ],
-                    "repeat_identical": bool(
-                        np.array_equal(first, second)
-                        and first_measurement == second_measurement
-                    ),
-                }
+        if screen:
+            outer_record = _m6b_form_record(
+                h2b,
+                physical_action,
+                cache_dir,
+                cfg,
+                function_space,
+                "outer_volume",
+                0.0,
             )
-            measurements[key] = record
-            del residual, first, second, first_measurement, second_measurement
-            event_values = {"rho_range_only": record["rho_range_only"]}
-            event_values["rho_projected" if projected else "rho_composed"] = record[
-                "rho_projected" if projected else "rho_composed"
-            ]
-            emit("residual_complete", iteration=int(key), **event_values)
-        gate = _m6b_w2r_gate(measurements) if projected else _m6b_w2_gate(measurements)
+            shifted_record = _m6b_form_record(
+                h2b,
+                shifted_action,
+                cache_dir,
+                cfg,
+                function_space,
+                "shifted_volume",
+                M6B_W3_BETA,
+            )
+            shared_volume_kernel = _m6b_shared_kernel_identity(
+                outer_record, shifted_record, cfg, phase="mpi1"
+            )
+            base_vec = _assemble_mpc_form_vector(incident_form, floquet.mpc)
+            rhs_vec = base_vec.duplicate()
+            projections = tuple(
+                _incident_projection_onto_top_mode(mode, cfg) for mode in modes
+            )
+            compose_m6b_physical_rhs(dtn_action, base_vec, projections, rhs_vec)
+            emit("rhs_ready", mode_count=80)
+            ownership = tuple(
+                int(value) for value in function_space.dofmap.index_map.local_range
+            )
+            dual_iterator = __import__(
+                "src.solvers.hcurl_canonical_vector_dolfinx",
+                fromlist=["iter_canonical_full_fe_dual_packets"],
+            ).iter_canonical_full_fe_dual_packets
+            rhs_manifest = m6a._write_canonical_role(
+                run_dir,
+                "mpi1",
+                "candidate_physical_rhs_dual",
+                dual_iterator(function_space, floquet.mpc, rhs_vec),
+                rank=MPI.COMM_WORLD.rank,
+                mpi_size=MPI.COMM_WORLD.size,
+                ownership_range=ownership,
+                comm=MPI.COMM_WORLD,
+            )
+            emit(
+                "screen_started",
+                iterations=list(M6B_SCREEN_ITERATIONS),
+                fixed_screen=True,
+            )
+            pc_context, screen_result = _m6b_w3_screen_orchestration(
+                projected_pc=w2_pc,
+                outer_mat=outer_mat,
+                outer_context=outer_context,
+                rhs_vec=rhs_vec,
+                checkpoint_dir=run_dir,
+                checkpoint_observer=lambda metadata: emit(
+                    "checkpoint_ready", **metadata
+                ),
+            )
+            samples = screen_result.get("samples")
+            if not _m6b_screen_metadata_valid(screen_result):
+                raise ValueError("M6B W3 screen samples are incomplete or nonfinite")
+            gate = evaluate_m6b_numeric_screen_gate(samples)
+            measurements["screen"] = {
+                "screen": screen_result,
+                "screen_gate": gate,
+                "rhs_binding": {
+                    "definition": (
+                        "fresh M6A incident top traction plus fixed outgoing-mode projections"
+                    ),
+                    "mode_count": 80,
+                    "canonical": rhs_manifest,
+                },
+                "outer_action_audit": outer_context.audit,
+                "volume_action_audit": dict(physical_action.audit),
+                "shifted_action_audit": dict(shifted_action.audit),
+                "dtn_action_audit": dict(dtn_action.audit),
+                "pc_audit": w2_pc.audit,
+                "outer_numpy_bridge": outer_bridge.audit,
+                "range_store_audit": range_carrier.audit,
+                "m6b_store_audit": store.audit_jsonable(),
+                "material_tag_coverage": tag_coverage,
+                "shared_volume_kernel": shared_volume_kernel,
+                "form": {
+                    "outer_volume": outer_record,
+                    "shifted_volume": shifted_record,
+                    "shared_volume_kernel": shared_volume_kernel,
+                    "surface": m6a._surface_identity(cache_dir, modes),
+                },
+                "architecture": {
+                    "fine_space": "uncondensed_fullspace",
+                    "global_matrix": False,
+                    "augmented_matrix": False,
+                    "static_condensation": False,
+                    "trace_slab_pc": False,
+                    "schur": False,
+                    "explicit_C_materialized_count": 0,
+                    "explicit_D_materialized_count": 0,
+                    "pde": False,
+                },
+            }
+            status = "screen_complete" if gate["pass"] else "gate_failed"
+            emit("screen_ready", gate=gate, iterations=screen_result["iterations"])
+        else:
+            for key in ("20", "100", "150", "200"):
+                residual_path = factor_authority_dir / f"m6b_iter{key}_residual.npy"
+                residual = np.load(residual_path, allow_pickle=False)
+                if (
+                    residual.dtype != np.dtype(np.complex128)
+                    or residual.shape != (M6B_GLOBAL_ROWS,)
+                    or not np.all(np.isfinite(residual))
+                    or _m6b_w2_array_sha256(residual) != M6B_W2_RESIDUAL_ARRAY_SHAS[key]
+                ):
+                    raise ValueError(f"M6B W2 residual authority is invalid: {key}")
+                first, first_measurement = w2_pc.apply_with_measurement(residual)
+                second, second_measurement = w2_pc.apply_with_measurement(residual)
+                record = dict(first_measurement)
+                record.update(
+                    {
+                        "iteration": int(key),
+                        "residual_array_sha256": M6B_W2_RESIDUAL_ARRAY_SHAS[key],
+                        "residual_artifact": {
+                            **_artifact(
+                                factor_authority_dir,
+                                f"m6b_iter{key}_residual.npy",
+                            ),
+                            "absolute_path": str(residual_path),
+                        },
+                        "correction_sha256": first_measurement["final_correction_sha256"],
+                        "repeat_correction_sha256": second_measurement[
+                            "final_correction_sha256"
+                        ],
+                        "repeat_identical": bool(
+                            np.array_equal(first, second)
+                            and first_measurement == second_measurement
+                        ),
+                    }
+                )
+                measurements[key] = record
+                del residual, first, second, first_measurement, second_measurement
+                event_values = {"rho_range_only": record["rho_range_only"]}
+                event_values["rho_projected" if projected else "rho_composed"] = record[
+                    "rho_projected" if projected else "rho_composed"
+                ]
+                emit("residual_complete", iteration=int(key), **event_values)
+            gate = _m6b_w2r_gate(measurements) if projected else _m6b_w2_gate(measurements)
         cache_final = _m6b_w2_cache_record(h2b, cache_dir)
         source_cache_final = _m6b_w2_cache_record(h2b, jit_cache_source)
         if (
@@ -3978,15 +4328,25 @@ def _run_m6b_w2_diagnostic(
             != source_cache_before["inventory_sha256"]
         ):
             raise ValueError("M6B W2 cache changed after diagnostic actions")
-        status = "diagnostic_complete" if gate["pass"] else "gate_failed"
+        status = (
+            ("screen_complete" if screen else "diagnostic_complete")
+            if gate["pass"]
+            else "gate_failed"
+        )
         emit("summary_ready", status=status, gate=gate)
     except FloatingPointError as exc:
         error = f"{type(exc).__name__}: {exc}"
     except h2b._worker_error_types() as exc:
         error = f"{type(exc).__name__}: {exc}"
     finally:
+        if rhs_vec is not None:
+            rhs_vec.destroy()
+        if base_vec is not None:
+            base_vec.destroy()
         if shifted_vec is not None:
             shifted_vec.destroy()
+        if outer_bridge is not None:
+            outer_bridge.destroy()
         if template is not None:
             template.destroy()
         if outer_mat is not None:
@@ -4001,6 +4361,7 @@ def _run_m6b_w2_diagnostic(
             adjoint_action.destroy()
         if dtn_action is not None:
             dtn_action.destroy()
+        del incident_form
         del physical_ufl, shifted_ufl, adjoint_ufl
         del epsilon0, abs_epsilon0, beta0, epsilon1, abs_epsilon1, beta1
         gc.collect()
@@ -4010,7 +4371,13 @@ def _run_m6b_w2_diagnostic(
     ):
         error = "M6B W2 execution source changed during diagnostic"
     gate = (
-        (_m6b_w2r_gate(measurements) if projected else _m6b_w2_gate(measurements))
+        (
+            evaluate_m6b_numeric_screen_gate(
+                screen_result.get("samples") if isinstance(screen_result, Mapping) else None
+            )
+            if screen
+            else (_m6b_w2r_gate(measurements) if projected else _m6b_w2_gate(measurements))
+        )
         if error is None
         else {
             "pass": False,
@@ -4018,10 +4385,21 @@ def _run_m6b_w2_diagnostic(
             "problems": ["worker_error"],
         }
     )
+    if error is not None:
+        status = "gate_failed"
+    diagnostic_numeric_pass, screen_numeric_pass = _m6b_worker_numeric_pass_fields(
+        screen=screen,
+        error=error,
+        gate=gate,
+    )
     summary_payload = {
-        "schema": M6B_W2R_SCHEMA if projected else M6B_W2_SCHEMA,
+        "schema": M6B_W3_SCHEMA if screen else (M6B_W2R_SCHEMA if projected else M6B_W2_SCHEMA),
         "status": status if error is None else "gate_failed",
-        "scope": _m6b_w2r_scope() if projected else _m6b_w2_scope(),
+        "scope": (
+            _m6b_w3_scope()
+            if screen
+            else (_m6b_w2r_scope() if projected else _m6b_w2_scope())
+        ),
         "expected_source_sha": expected_source_sha,
         "source_at_start": source_start,
         "source_at_end": source_end,
@@ -4047,9 +4425,10 @@ def _run_m6b_w2_diagnostic(
             if "w2_pc" in locals() and w2_pc is not None
             else None
         ),
-        "predicted_live_set": _m6b_w2r_predicted_live_set()
-        if projected
-        else {
+        "predicted_live_set": (
+            _m6b_w3_predicted_live_set()
+            if screen
+            else (_m6b_w2r_predicted_live_set() if projected else {
             "base_bytes": M6B_W2_BASE_PREDICTED_LIVE_SET_BYTES,
             "external_residual_bytes": M6B_W2_EXTERNAL_RESIDUAL_BYTES,
             "composition_incremental_bytes": M6B_W2_COMPOSITION_INCREMENTAL_BYTES,
@@ -4061,7 +4440,8 @@ def _run_m6b_w2_diagnostic(
             "derived_not_measured": True,
             "prediction_scope": "production_apply_not_diagnostic_measurement",
             "basis": "W1A predicted plus one frozen residual and W2 composition increment",
-        },
+            })
+        ),
         "architecture": {
             "fine_space": "uncondensed_fullspace",
             "global_matrix": False,
@@ -4072,11 +4452,35 @@ def _run_m6b_w2_diagnostic(
         },
         "error": error,
         "formal_pass": False,
-        "diagnostic_numeric_pass": bool(error is None and gate["pass"]),
+        "diagnostic_numeric_pass": diagnostic_numeric_pass,
         "pde_pass": False,
         "elapsed_wall_seconds": float(time.perf_counter() - started),
     }
-    if projected:
+    if screen:
+        summary_payload.update(
+            {
+                "screen": screen_result,
+                "screen_gate": gate,
+                "w2r_negative_authority": w2r_negative_authority,
+                "w2r_positive_authority": w2r_positive_authority,
+                "w3_pass": False,
+                "screen_numeric_pass": screen_numeric_pass,
+                "formal_pass": False,
+                "architecture": {
+                    "fine_space": "uncondensed_fullspace",
+                    "global_matrix": False,
+                    "augmented_matrix": False,
+                    "static_condensation": False,
+                    "trace_slab_pc": False,
+                    "schur": False,
+                    "explicit_C_materialized_count": 0,
+                    "explicit_D_materialized_count": 0,
+                    "pde_pass": False,
+                    "formal_pass": False,
+                },
+            }
+        )
+    elif projected:
         summary_payload.update(
             {
                 "w2r_negative_authority": w2r_negative_authority,
@@ -4087,7 +4491,11 @@ def _run_m6b_w2_diagnostic(
         summary_payload["w2_pass"] = False
     summary = _attach_evidence(summary_payload)
     _write_json(summary_path, summary)
-    return 0 if summary["diagnostic_numeric_pass"] else 1
+    return 0 if (
+        summary["screen_numeric_pass"]
+        if screen
+        else summary["diagnostic_numeric_pass"]
+    ) else 1
 
 
 def _run_m6b_w2r_diagnostic(
@@ -4106,6 +4514,28 @@ def _run_m6b_w2r_diagnostic(
         expected_source_sha,
         w0_authority_file,
         projected=True,
+    )
+
+
+def _run_m6b_w3_screen(
+    run_dir: Path,
+    factor_authority_dir: Path,
+    wave_authority_dir: Path,
+    jit_cache_source: Path,
+    expected_source_sha: str,
+    w0_authority_file: Path,
+) -> int:
+    """Run the fixed beta=1 time-harmonic screen with the W2R production PC."""
+
+    return _run_m6b_w2_diagnostic(
+        run_dir,
+        factor_authority_dir,
+        wave_authority_dir,
+        jit_cache_source,
+        expected_source_sha,
+        w0_authority_file,
+        projected=True,
+        screen=True,
     )
 
 
@@ -4964,12 +5394,17 @@ def _parser() -> argparse.ArgumentParser:
         "m6b-w1-builder",
         "m6b-w2-diagnostic",
         "m6b-w2r-diagnostic",
+        "m6b-w3-screen",
     ):
         item = sub.add_parser(command)
         item.add_argument("--run-dir", required=True)
         if command == "m6b-w1-builder":
             item.add_argument("--jit-cache-source", required=True)
-        if command in {"m6b-w2-diagnostic", "m6b-w2r-diagnostic"}:
+        if command in {
+            "m6b-w2-diagnostic",
+            "m6b-w2r-diagnostic",
+            "m6b-w3-screen",
+        }:
             item.add_argument("--factor-authority-dir", required=True)
             item.add_argument("--wave-authority-dir", required=True)
             item.add_argument("--jit-cache-source", required=True)
@@ -5011,6 +5446,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.command == "m6b-w2r-diagnostic":
         return _run_m6b_w2r_diagnostic(
+            run_dir,
+            Path(args.factor_authority_dir).resolve(),
+            Path(args.wave_authority_dir).resolve(),
+            Path(args.jit_cache_source).resolve(),
+            args.expected_source_sha,
+            Path(args.w0_authority_file).resolve(),
+        )
+    if args.command == "m6b-w3-screen":
+        return _run_m6b_w3_screen(
             run_dir,
             Path(args.factor_authority_dir).resolve(),
             Path(args.wave_authority_dir).resolve(),

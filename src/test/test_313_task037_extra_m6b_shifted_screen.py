@@ -30,14 +30,17 @@ from src.solvers.hcurl_h2b_m6b_shifted_lu_store import (
 )
 from src.solvers.hcurl_h2b_m6b_shifted_patch_pc import (
     H2BM6BShiftedPatchPC,
+    M6BNumpyOuterActionBridge,
     M6BOuterMatPythonContext,
     M6BShiftedPCContext,
     build_m6b_outer_mat,
     build_m6b_volume_form,
     compose_m6b_physical_rhs,
     evaluate_m6b_screen_gate,
+    evaluate_m6b_numeric_screen_gate,
     m6b_shifted_local_matrix,
     m6b_material_tag_coverage,
+    run_m6b_right_fgmres_screen,
 )
 from src.common.config_3d import target_stage4_config
 from src.solvers.common_3d_forms import _build_variational_forms
@@ -512,6 +515,84 @@ def test_m6b_outer_hermitian_adapter_composes_volume_and_dtn():
         context.destroy()
         adjoint_volume.output.destroy()
         volume.output.destroy()
+
+
+def test_m6b_numpy_outer_bridge_reuses_fixed_work_vectors_and_adjoint_values():
+    volume = _Volume(np.asarray([1.0 + 0.1j, 2.0 - 0.2j]))
+    adjoint_volume = _Volume(np.asarray([4.0 - 0.3j, 5.0 + 0.4j]))
+    context = M6BOuterMatPythonContext(
+        volume,
+        _Dtn(),
+        owned_rows=2,
+        global_rows=2,
+        volume_hermitian_action=adjoint_volume,
+    )
+    template = PETSc.Vec().createSeq(2, comm=PETSc.COMM_SELF)
+    bridge = M6BNumpyOuterActionBridge(context, template)
+    values = np.asarray([1.0 + 0.2j, -0.5 + 0.1j], dtype=np.complex128)
+    try:
+        expected = volume.values * values + 2.0 * values
+        expected_adjoint = adjoint_volume.values * values + (3.0 - 0.5j) * values
+        assert np.allclose(bridge.apply(values), expected)
+        assert np.allclose(bridge.apply(values), expected)
+        assert np.allclose(bridge.apply_hermitian(values), expected_adjoint)
+        assert bridge.audit["vector_create_count"] == 2
+        assert bridge.audit["per_apply_vec_creation"] == 0
+        assert bridge.audit["forward_apply_count"] == 2
+        assert bridge.audit["hermitian_apply_count"] == 1
+    finally:
+        bridge.destroy()
+        template.destroy()
+        context.destroy()
+        adjoint_volume.output.destroy()
+        volume.output.destroy()
+
+
+def test_m6b_screen_checkpoint_observer_is_fixed_and_optional(tmp_path: Path):
+    class Core:
+        audit = {"fixed_order": "projected_range_complement"}
+
+        def apply(self, values):
+            return np.array(values, dtype=np.complex128, copy=True)
+
+    rows = 256
+    operator = PETSc.Mat().createAIJ([rows, rows], comm=PETSc.COMM_SELF)
+    operator.setUp()
+    operator.setValues(
+        list(range(rows)),
+        list(range(rows)),
+        np.diag(np.linspace(1.0, 2.0, rows)).astype(np.complex128),
+    )
+    operator.assemble()
+    rhs = PETSc.Vec().createSeq(rows, comm=PETSc.COMM_SELF)
+    rhs.getArray()[:] = np.exp(1j * np.linspace(0.0, 1.0, rows))
+    observed: list[dict[str, object]] = []
+    try:
+        result = run_m6b_right_fgmres_screen(
+            operator,
+            rhs,
+            pc_context=M6BShiftedPCContext(Core()),
+            checkpoint_dir=tmp_path / "observed",
+            checkpoint_observer=observed.append,
+        )
+        assert list(map(int, result["samples"])) == [20, 100, 150, 200]
+        assert [item["iteration"] for item in observed] == [20, 100, 150, 200]
+        assert all(
+            set(item) == {"iteration", "true_relative_residual", "artifacts"}
+            and set(item["artifacts"]["rhs"])
+            == {"path", "bytes", "sha256", "array_sha256"}
+            for item in observed
+        )
+        default_result = run_m6b_right_fgmres_screen(
+            operator,
+            rhs,
+            pc_context=M6BShiftedPCContext(Core()),
+            checkpoint_dir=tmp_path / "default",
+        )
+        assert list(map(int, default_result["samples"])) == [20, 100, 150, 200]
+    finally:
+        rhs.destroy()
+        operator.destroy()
 
 
 def test_m6b_outer_mat_destroy_callback_is_idempotent_and_preserves_borrowed_output():
@@ -1365,3 +1446,174 @@ def test_m6b_command_preserves_qualified_interpreter_symlink(
         "--run-dir",
     ]
     assert command[5] == str((tmp_path / "run").resolve())
+
+
+def test_m6b_w3_fixed_screen_contract_and_w2r_authority():
+    parser = runner._parser()
+    args = parser.parse_args(
+        [
+            "m6b-w3-screen",
+            "--run-dir",
+            "/tmp/m6b-w3",
+            "--factor-authority-dir",
+            "/tmp/factor",
+            "--wave-authority-dir",
+            "/tmp/wave",
+            "--jit-cache-source",
+            "/tmp/jit",
+            "--expected-source-sha",
+            "a" * 40,
+            "--w0-authority-file",
+            "/tmp/w0.json",
+        ]
+    )
+    assert args.command == "m6b-w3-screen"
+    scope = runner._m6b_w3_scope()
+    assert scope["beta"] == 1.0
+    assert scope["pc_side"] == "right"
+    assert scope["restart_set"] == 20
+    assert scope["max_it"] == 200
+    assert scope["rtol"] == scope["atol"] == 0.0
+    prediction = runner._m6b_w3_predicted_live_set()
+    assert prediction["predicted_live_set_bytes"] == 1_723_301_083
+    assert prediction["gate"] is True
+    assert prediction["derived_not_measured"] is True
+    assert prediction["fgmres_v_vectors"] == 21
+    assert prediction["fgmres_z_vectors"] == 20
+    assert prediction["fgmres_lifecycle_calibrated_in_w2r_base"] is True
+    runtime = runner._m6b_w3_runtime_prediction()
+    assert runtime["derived_timeout_seconds"] == 19_200.0
+    assert "conservative_w3_iteration_seconds" in runtime
+    assert "w2r_production_apply_seconds" not in runtime
+    assert runtime["w2r_wall_basis"]["two_diagnostic_repeats_per_residual"] is True
+    authority = runner._m6b_w2r_positive_record()
+    assert authority["watchdog_formal_pass"] is True
+
+    samples = _valid_worker_payload()["screen"]
+    assert evaluate_m6b_numeric_screen_gate(samples)["pass"] is True
+    negative = copy.deepcopy(samples)
+    negative["200"]["true_relative_residual"] = 0.50
+    assert evaluate_m6b_numeric_screen_gate(negative)["pass"] is False
+
+    diagnostic_pass, screen_pass = runner._m6b_worker_numeric_pass_fields(
+        screen=True, error=None, gate={"pass": True}
+    )
+    assert diagnostic_pass is False
+    assert screen_pass is True
+    diagnostic_pass, screen_pass = runner._m6b_worker_numeric_pass_fields(
+        screen=True, error=None, gate={"pass": False}
+    )
+    assert diagnostic_pass is False
+    assert screen_pass is False
+    diagnostic_pass, screen_pass = runner._m6b_worker_numeric_pass_fields(
+        screen=False, error=None, gate={"pass": True}
+    )
+    assert diagnostic_pass is True
+    assert screen_pass is False
+
+
+def test_m6b_w3_orchestration_uses_projected_production_pc_and_rhs_dtn(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    class ProjectedCore:
+        audit = {"fixed_order": "projected_range_complement"}
+
+        def __init__(self):
+            self.apply_calls = 0
+            self.measurement_calls = 0
+
+        def apply(self, values):
+            self.apply_calls += 1
+            return np.array(values, dtype=np.complex128, copy=True)
+
+        def apply_with_measurement(self, _values):
+            self.measurement_calls += 1
+            raise AssertionError("W3 production screen must not collect diagnostics")
+
+    class Dtn:
+        def __init__(self):
+            self.compose_calls = 0
+
+        def compose_physical_rhs(self, base, amplitudes, target):
+            self.compose_calls += 1
+            target.getArray()[:] = base.getArray(readonly=True) + amplitudes[0]
+
+    core = ProjectedCore()
+    dtn = Dtn()
+    base = PETSc.Vec().createSeq(2, comm=PETSc.COMM_SELF)
+    rhs = base.duplicate()
+    base.getArray()[:] = [1.0 + 0.5j, -0.25 + 0.1j]
+    captured = {}
+    observed = []
+
+    import src.solvers.hcurl_h2b_m6b_shifted_patch_pc as pc_module
+
+    def fake_screen(
+        operator,
+        rhs_vec,
+        *,
+        pc_context,
+        checkpoint_dir,
+        operator_context,
+        checkpoint_observer=None,
+    ):
+        captured["pc_context"] = pc_context
+        assert checkpoint_observer is not None
+        checkpoint_observer({"iteration": 20, "artifacts": {}})
+        assert np.allclose(
+            rhs_vec.getArray(readonly=True),
+            base.getArray(readonly=True) + 0.1 + 0.2j,
+        )
+        source = PETSc.Vec().createSeq(2, comm=PETSc.COMM_SELF)
+        target = source.duplicate()
+        try:
+            source.getArray()[:] = [0.25 - 0.2j, 0.75 + 0.3j]
+            pc_context.apply(None, source, target)
+        finally:
+            target.destroy()
+            source.destroy()
+        return {"samples": _valid_worker_payload()["screen"], "iterations": 200}
+
+    monkeypatch.setattr(pc_module, "run_m6b_right_fgmres_screen", fake_screen)
+    try:
+        pc_module.compose_m6b_physical_rhs(
+            dtn,
+            base,
+            np.asarray([0.1 + 0.2j], dtype=np.complex128),
+            rhs,
+        )
+        pc_context, screen = runner._m6b_w3_screen_orchestration(
+            projected_pc=core,
+            outer_mat=object(),
+            outer_context=object(),
+            rhs_vec=rhs,
+            checkpoint_dir=tmp_path,
+            checkpoint_observer=observed.append,
+        )
+        assert captured["pc_context"] is pc_context
+        assert core.apply_calls == 1
+        assert core.measurement_calls == 0
+        assert dtn.compose_calls == 1
+        assert np.allclose(rhs.getArray(readonly=True), base.getArray(readonly=True) + 0.1 + 0.2j)
+        assert screen["iterations"] == 200
+        assert observed == [{"iteration": 20, "artifacts": {}}]
+    finally:
+        rhs.destroy()
+        base.destroy()
+
+    flags = {}
+
+    def fake_w2(*args, **kwargs):
+        flags.update(kwargs)
+        return 17
+
+    monkeypatch.setattr(runner, "_run_m6b_w2_diagnostic", fake_w2)
+    assert runner._run_m6b_w3_screen(
+        tmp_path / "run",
+        tmp_path / "factor",
+        tmp_path / "wave",
+        tmp_path / "jit",
+        "a" * 40,
+        tmp_path / "w0.json",
+    ) == 17
+    assert flags == {"projected": True, "screen": True}

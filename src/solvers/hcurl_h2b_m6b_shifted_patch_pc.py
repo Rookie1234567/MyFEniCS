@@ -43,12 +43,14 @@ __all__ = (
     "H2BM6BProjectedRangePC",
     "M6BShiftedPCContext",
     "M6BOuterMatPythonContext",
+    "M6BNumpyOuterActionBridge",
     "M6BScreenCheckpointWriter",
     "build_m6b_volume_form",
     "build_m6b_outer_mat",
     "compose_m6b_physical_rhs",
     "recover_m6b_auxiliary",
     "evaluate_m6b_screen_gate",
+    "evaluate_m6b_numeric_screen_gate",
     "run_m6b_right_fgmres_screen",
 )
 
@@ -1169,6 +1171,87 @@ class M6BOuterMatPythonContext:
             self._dtn_work = None
 
 
+class M6BNumpyOuterActionBridge:
+    """Reuse fixed PETSc work vectors for synchronous NumPy outer actions.
+
+    The returned NumPy array is a copy of the PETSc target.  The source and
+    target vectors are owned by this bridge and are borrowed only during one
+    call; no action-owned borrowed output is destroyed here.
+    """
+
+    def __init__(
+        self,
+        context: M6BOuterMatPythonContext,
+        template: PETSc.Vec,
+    ) -> None:
+        if not isinstance(context, M6BOuterMatPythonContext):
+            raise TypeError("M6B NumPy bridge requires the outer context")
+        self._context = context
+        self._source = template.duplicate()
+        self._target = template.duplicate()
+        self._local_rows = int(template.getLocalSize())
+        self._global_rows = int(template.getSize())
+        self._apply_count = 0
+        self._hermitian_apply_count = 0
+        self._vector_create_count = 2
+        self._destroyed = False
+
+    def _input(self, values: np.ndarray) -> np.ndarray:
+        if self._destroyed:
+            raise RuntimeError("M6B NumPy outer bridge is destroyed")
+        array = np.asarray(values, dtype=np.complex128)
+        if (
+            array.ndim != 1
+            or array.size != self._local_rows
+            or not np.all(np.isfinite(array))
+        ):
+            raise ValueError("M6B NumPy outer bridge input has invalid layout")
+        np.copyto(self._source.getArray(), array)
+        return array
+
+    def apply(self, values: np.ndarray) -> np.ndarray:
+        self._input(values)
+        self._context.mult(None, self._source, self._target)
+        result = np.array(
+            self._target.getArray(readonly=True), dtype=np.complex128, copy=True
+        )
+        if not np.all(np.isfinite(result)):
+            raise FloatingPointError("M6B NumPy outer action is nonfinite")
+        self._apply_count += 1
+        return result
+
+    def apply_hermitian(self, values: np.ndarray) -> np.ndarray:
+        self._input(values)
+        self._context.apply_hermitian(self._source, self._target)
+        result = np.array(
+            self._target.getArray(readonly=True), dtype=np.complex128, copy=True
+        )
+        if not np.all(np.isfinite(result)):
+            raise FloatingPointError("M6B NumPy adjoint action is nonfinite")
+        self._hermitian_apply_count += 1
+        return result
+
+    @property
+    def audit(self) -> dict[str, Any]:
+        return {
+            "schema": "task037.extra.m6b.numpy-outer-bridge.v1",
+            "owned_rows": self._local_rows,
+            "global_rows": self._global_rows,
+            "vector_create_count": self._vector_create_count,
+            "forward_apply_count": self._apply_count,
+            "hermitian_apply_count": self._hermitian_apply_count,
+            "fixed_work_vectors": 2,
+            "per_apply_vec_creation": 0,
+        }
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self._target.destroy()
+        self._source.destroy()
+        self._destroyed = True
+
+
 def build_m6b_outer_mat(
     volume_action: Any,
     dtn_action: Any,
@@ -1269,14 +1352,8 @@ class M6BScreenCheckpointWriter:
         }
 
 
-def evaluate_m6b_screen_gate(
-    samples: Mapping[str, Any],
-    *,
-    online_peak_rss_bytes: int,
-    online_swap_bytes: int,
-    processes_gone: bool,
-) -> dict[str, Any]:
-    """Recompute the fixed screen gates with missing data failing closed."""
+def _m6b_numeric_screen_core(samples: Mapping[str, Any]) -> dict[str, Any]:
+    """Recompute only the fixed checkpoint and performance predicates."""
 
     required = {str(value) for value in M6B_FIXED_SCREEN_ITERATIONS}
     problems: list[str] = []
@@ -1287,7 +1364,12 @@ def evaluate_m6b_screen_gate(
         for key in sorted(required, key=int):
             item = samples[key]
             value = item.get("true_relative_residual") if isinstance(item, Mapping) else None
-            if isinstance(value, bool) or not isinstance(value, (int, float)) or not np.isfinite(value):
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not np.isfinite(value)
+                or float(value) < 0.0
+            ):
                 problems.append(f"checkpoint_{key}")
             else:
                 values[key] = float(value)
@@ -1301,6 +1383,33 @@ def evaluate_m6b_screen_gate(
         improvement = 1.0 - values["200"] / values["150"] if values["150"] > 0.0 else -np.inf
         if not np.isfinite(improvement) or improvement < M6B_IMPROVEMENT_LIMIT:
             problems.append("true_residual_150_to_200_improvement")
+    return {
+        "pass": not problems,
+        "problems": problems,
+        "true_residuals": values,
+        "improvement_150_to_200": (
+            None
+            if "150" not in values or "200" not in values
+            else 1.0 - values["200"] / values["150"]
+        ),
+        "limits": {
+            **M6B_SCREEN_RHO_LIMITS,
+            "improvement_150_to_200": M6B_IMPROVEMENT_LIMIT,
+        },
+    }
+
+
+def evaluate_m6b_screen_gate(
+    samples: Mapping[str, Any],
+    *,
+    online_peak_rss_bytes: int,
+    online_swap_bytes: int,
+    processes_gone: bool,
+) -> dict[str, Any]:
+    """Recompute numeric and resource gates with missing data failing closed."""
+
+    numeric = _m6b_numeric_screen_core(samples)
+    problems = list(numeric["problems"])
     resource = (
         type(online_peak_rss_bytes) is int
         and online_peak_rss_bytes < M6B_ONLINE_RSS_LIMIT_BYTES
@@ -1312,19 +1421,21 @@ def evaluate_m6b_screen_gate(
     return {
         "pass": not problems,
         "problems": problems,
-        "true_residuals": values,
-        "improvement_150_to_200": (
-            None
-            if "150" not in values or "200" not in values
-            else 1.0 - values["200"] / values["150"]
-        ),
+        "true_residuals": numeric["true_residuals"],
+        "improvement_150_to_200": numeric["improvement_150_to_200"],
         "resource_gate": resource,
         "limits": {
-            **M6B_SCREEN_RHO_LIMITS,
-            "improvement_150_to_200": M6B_IMPROVEMENT_LIMIT,
+            **numeric["limits"],
             "online_peak_rss_bytes": M6B_ONLINE_RSS_LIMIT_BYTES,
         },
     }
+
+
+def evaluate_m6b_numeric_screen_gate(samples: Mapping[str, Any]) -> dict[str, Any]:
+    """Evaluate the fixed numeric screen without claiming a resource Gate."""
+    result = _m6b_numeric_screen_core(samples)
+    result["resource_gate"] = None
+    return result
 
 
 def run_m6b_right_fgmres_screen(
@@ -1334,6 +1445,7 @@ def run_m6b_right_fgmres_screen(
     pc_context: M6BShiftedPCContext,
     checkpoint_dir: Path,
     operator_context: Any | None = None,
+    checkpoint_observer: Callable[[Mapping[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     """Run fixed right-FGMRES and checkpoint explicit true residuals."""
 
@@ -1382,6 +1494,27 @@ def run_m6b_right_fgmres_screen(
                 float(reported) if np.isfinite(reported) else None
             )
             samples[key] = checkpoint
+            if checkpoint_observer is not None:
+                checkpoint_observer(
+                    {
+                        "iteration": checkpoint["iteration"],
+                        "true_relative_residual": checkpoint[
+                            "true_relative_residual"
+                        ],
+                        "artifacts": {
+                            name: {
+                                field: artifact[field]
+                                for field in (
+                                    "path",
+                                    "bytes",
+                                    "sha256",
+                                    "array_sha256",
+                                )
+                            }
+                            for name, artifact in checkpoint["artifacts"].items()
+                        },
+                    }
+                )
 
         ksp.setMonitor(
             lambda current, iteration, reported: sample(
