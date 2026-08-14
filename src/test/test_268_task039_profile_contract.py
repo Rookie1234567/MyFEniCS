@@ -149,6 +149,63 @@ def test_task039_invalid_finite_profile_is_rejected(
         load_and_resolve(path)
 
 
+def test_task039_h5_full3d_direct_requires_exact_absolute_termination_bytes(
+    tmp_path: Path,
+):
+    h5_path = TASK039 / "5nm_p6h5_full3d_direct_mpi8.dat"
+    specification = load_and_resolve(h5_path)
+    assert specification.execution["absolute_terminate_memory_bytes"] == 224_000_000_000
+
+    missing = tmp_path / "h5-missing.dat"
+    missing.write_text(
+        h5_path.read_text(encoding="utf-8").replace(
+            "absolute_terminate_memory_bytes = 224000000000\n", ""
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(InputError, match="absolute_terminate_memory_bytes"):
+        load_and_resolve(missing)
+
+    invalid = tmp_path / "h5-invalid.dat"
+    invalid.write_text(
+        h5_path.read_text(encoding="utf-8").replace(
+            "absolute_terminate_memory_bytes = 224000000000",
+            "absolute_terminate_memory_bytes = 0",
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(InputError, match="positive integer"):
+        load_and_resolve(invalid)
+
+
+@pytest.mark.parametrize(
+    "filename",
+    (
+        "5nm_p6h7p5_full3d_direct_mpi8.dat",
+        "5nm_p6h10_full3d_direct_mpi8.dat",
+    ),
+)
+def test_task039_absolute_termination_is_rejected_outside_h5_direct(
+    tmp_path: Path, filename: str
+):
+    source = (TASK039 / filename).read_text(encoding="utf-8")
+    changed = source.replace(
+        "terminate_memory_gib = 195.0"
+        if "h7p5" in filename
+        else "terminate_memory_gib = 220.0",
+        (
+            "terminate_memory_gib = 195.0\nabsolute_terminate_memory_bytes = 224000000000"
+            if "h7p5" in filename
+            else "terminate_memory_gib = 220.0\nabsolute_terminate_memory_bytes = 224000000000"
+        ),
+    )
+    path = tmp_path / filename
+    path.write_text(changed, encoding="utf-8")
+
+    with pytest.raises(InputError, match="absolute_terminate_memory_bytes"):
+        load_and_resolve(path)
+
+
 def test_task039_hybrid_iterative_candidate_is_numeric_not_m_robust():
     path = TASK039 / "5nm_p6h10_hybrid_iterative_m120_candidate_mpi8.dat"
     source = path.read_text(encoding="utf-8")

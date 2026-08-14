@@ -1053,6 +1053,16 @@ FIELD_SPECS: Final = (
         constraints=("> warning_memory_gib",),
     ),
     _f(
+        "execution.absolute_terminate_memory_bytes",
+        "integer",
+        "bytes",
+        ("full3d_direct",),
+        "显式绝对进程树内存终止上限；存在时 terminate_memory_gib 仅为 critical checkpoint，缺失时沿用 GiB 旧策略",
+        "absolute_terminate_memory_bytes",
+        "224000000000",
+        constraints=("> 0; optional byte-based termination policy",),
+    ),
+    _f(
         "execution.timeout_seconds",
         "integer",
         "seconds",

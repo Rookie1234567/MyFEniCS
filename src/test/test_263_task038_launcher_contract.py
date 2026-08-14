@@ -10,6 +10,7 @@ import subprocess
 import sys
 from dataclasses import replace
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -30,6 +31,7 @@ from src.runners.task038_launcher import _run_worker, _swap_bytes, launch_specif
 ROOT = Path(__file__).resolve().parents[2]
 TEMPLATE = ROOT / "input/templates/full3d_direct_example.dat"
 TASK039_DIRECT = ROOT / "input/official/task039/5nm_p6h10_full3d_direct_mpi8.dat"
+TASK039_H5_DIRECT = ROOT / "input/official/task039/5nm_p6h5_full3d_direct_mpi8.dat"
 SOURCE_SHA = "a" * 40
 REQUIRED_FILES = {
     "input_original.dat",
@@ -450,6 +452,163 @@ def test_task039_budget_uses_profile_execution_limits(
         min(terminate_gib, 0.90 * 256.0)
     )
     assert budget["warning_memory_gib"]["value"] == warning_gib
+
+
+def test_task039_h5_absolute_budget_uses_contract_bytes_and_critical_checkpoint(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        launcher,
+        "wsl_memory_snapshot",
+        lambda: {"mem_total_bytes": 256 * 1024**3},
+    )
+    monkeypatch.setattr(
+        launcher,
+        "cgroup_snapshot",
+        lambda _scope: {"memory_limit_bytes": None},
+    )
+    specification = load_and_resolve(TASK039_H5_DIRECT)
+    budget = launcher._task039_memory_budget(specification.execution)
+
+    assert budget["memory_termination_policy"] == "absolute_bytes"
+    assert budget["configured_critical_memory_gib"] == 195.0
+    assert budget["absolute_terminate_memory_bytes"] == 224_000_000_000
+    assert budget["effective_terminate_memory_gib"] == pytest.approx(
+        224_000_000_000 / 1024**3
+    )
+    assert budget["hard_stop_memory_gib"]["classification"] == "contract"
+
+
+def _run_h5_worker(
+    tmp_path: Path,
+    specification,
+    sample,
+    *,
+    poll_interval=0.0,
+    terminated=None,
+):
+    plan = SimpleNamespace(
+        argv=("/opt/fake-worker",),
+        contract_probe=False,
+        task039_trace_audit=False,
+    )
+    process = _SequenceProcess()
+    run_directory = tmp_path / "h5-worker"
+    run_directory.mkdir()
+    terminated = [] if terminated is None else terminated
+    result = launcher._run_worker(
+        plan,
+        specification,
+        run_directory,
+        popen_factory=lambda *_args, **_kwargs: process,
+        sample_factory=lambda _pid: sample,
+        terminate_factory=lambda member: (
+            terminated.append(member)
+            or setattr(member, "returncode", -9)
+            or {"requested": True}
+        ),
+        monotonic=lambda: 0.0,
+        sleep=lambda _seconds: None,
+        poll_interval=poll_interval,
+    )
+    return result, terminated
+
+
+def test_task039_h5_critical_checkpoint_does_not_stop_before_absolute_hard_stop(
+    monkeypatch, tmp_path
+):
+    monkeypatch.setattr(
+        launcher,
+        "wsl_memory_snapshot",
+        lambda: {"mem_total_bytes": 256 * 1024**3},
+    )
+    monkeypatch.setattr(
+        launcher,
+        "cgroup_snapshot",
+        lambda _scope: {"memory_limit_bytes": None},
+    )
+    specification = load_and_resolve(TASK039_H5_DIRECT)
+    result, terminated = _run_h5_worker(
+        tmp_path,
+        specification,
+        _authority(memory=195 * 1024**3),
+    )
+
+    assert terminated == []
+    assert result["exit_status"] == 0
+    authority = result["resource_authority"]
+    assert authority["critical_checkpoint_crossed"] is True
+    assert authority["absolute_terminate_memory_bytes"] == 224_000_000_000
+
+
+@pytest.mark.parametrize(
+    ("memory", "swap", "classification"),
+    (
+        (224_000_000_000, 0, "memory_terminate"),
+        (224_000_000_000, 1, "swap_policy_violation"),
+    ),
+)
+def test_task039_h5_absolute_hard_stop_and_swap_precedence(
+    monkeypatch, tmp_path, memory, swap, classification
+):
+    monkeypatch.setattr(
+        launcher,
+        "wsl_memory_snapshot",
+        lambda: {"mem_total_bytes": 256 * 1024**3},
+    )
+    monkeypatch.setattr(
+        launcher,
+        "cgroup_snapshot",
+        lambda _scope: {"memory_limit_bytes": None},
+    )
+    specification = load_and_resolve(TASK039_H5_DIRECT)
+    result, terminated = _run_h5_worker(
+        tmp_path,
+        specification,
+        _authority(memory=memory, swap=swap),
+    )
+
+    assert result["result_classification"] == classification
+    assert terminated
+
+
+def test_task039_h5_absolute_policy_rejects_slow_poll_before_worker_launch(
+    monkeypatch, tmp_path
+):
+    monkeypatch.setattr(
+        launcher,
+        "wsl_memory_snapshot",
+        lambda: {"mem_total_bytes": 256 * 1024**3},
+    )
+    monkeypatch.setattr(
+        launcher,
+        "cgroup_snapshot",
+        lambda _scope: {"memory_limit_bytes": None},
+    )
+    specification = load_and_resolve(TASK039_H5_DIRECT)
+    plan = SimpleNamespace(
+        argv=("/opt/fake-worker",),
+        contract_probe=False,
+        task039_trace_audit=False,
+    )
+    run_directory = tmp_path / "slow-poll"
+    run_directory.mkdir()
+
+    def fail_popen(*_args, **_kwargs):
+        pytest.fail("worker must not launch with poll_interval > 0.25")
+
+    with pytest.raises(InputError, match="poll_interval"):
+        launcher._run_worker(
+            plan,
+            specification,
+            run_directory,
+            popen_factory=fail_popen,
+            sample_factory=lambda _pid: _authority(),
+            terminate_factory=lambda _process: {"requested": True},
+            monotonic=lambda: 0.0,
+            sleep=lambda _seconds: None,
+            poll_interval=0.3,
+        )
 
 
 def test_smaps_rollup_requires_pss_rss_and_private_fields(tmp_path):

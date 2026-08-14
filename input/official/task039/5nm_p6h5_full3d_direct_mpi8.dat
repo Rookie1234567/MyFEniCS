@@ -61,6 +61,7 @@ linear_solver = "direct"
 mpi_size = 8
 warning_memory_gib = 170.0
 terminate_memory_gib = 195.0
+absolute_terminate_memory_bytes = 224000000000
 timeout_seconds = 21600
 require_zero_swap = true
 

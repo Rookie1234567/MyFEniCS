@@ -48,6 +48,7 @@ def task039_resource_ledger(
     available_classification: str = "measured",
     configured_warning_gib: float = 180.0,
     configured_terminate_gib: float = 220.0,
+    absolute_terminate_memory_bytes: int | None = None,
 ) -> dict[str, Any]:
     """Return the Task39 resource decision using the existing launcher sample."""
 
@@ -56,6 +57,12 @@ def task039_resource_ledger(
     swap = float(observed_swap_gib)
     configured_warning = float(configured_warning_gib)
     configured_terminate = float(configured_terminate_gib)
+    if absolute_terminate_memory_bytes is not None and (
+        isinstance(absolute_terminate_memory_bytes, bool)
+        or not isinstance(absolute_terminate_memory_bytes, int)
+        or absolute_terminate_memory_bytes <= 0
+    ):
+        raise ValueError("absolute termination must be a positive integer byte count")
     if (
         not math.isfinite(available)
         or available <= 0.0
@@ -71,20 +78,35 @@ def task039_resource_ledger(
         raise ValueError("Task39 resource samples must be finite and non-negative")
     if available_classification not in {"measured", "estimated"}:
         raise ValueError("available_classification must be measured or estimated")
-    hard_stop = min(configured_terminate, 0.90 * available)
+    absolute_terminate_gib = (
+        None
+        if absolute_terminate_memory_bytes is None
+        else absolute_terminate_memory_bytes / 1024**3
+    )
+    hard_stop = (
+        min(configured_terminate, 0.90 * available)
+        if absolute_terminate_gib is None
+        else absolute_terminate_gib
+    )
     stop_reason = None
     if swap > 0.0:
         stop_reason = "swap_policy_violation"
-    elif observed >= hard_stop:
+    elif (
+        observed >= hard_stop
+        if absolute_terminate_gib is None
+        else observed * 1024**3 >= absolute_terminate_memory_bytes
+    ):
         stop_reason = "memory_hard_stop"
-    return {
+    ledger = {
         "warning_memory_gib": {
             "value": configured_warning,
             "classification": "contract",
         },
         "hard_stop_memory_gib": {
             "value": hard_stop,
-            "classification": "derived",
+            "classification": "contract"
+            if absolute_terminate_memory_bytes is not None
+            else "derived",
             "source_classification": available_classification,
         },
         "actual_available_gib": {
@@ -105,6 +127,17 @@ def task039_resource_ledger(
         "stop": stop_reason is not None,
         "stop_reason": stop_reason,
     }
+    if absolute_terminate_memory_bytes is not None:
+        ledger.update(
+            {
+                "memory_termination_policy": "absolute_bytes",
+                "configured_critical_memory_gib": configured_terminate,
+                "critical_checkpoint_crossed": observed >= configured_terminate,
+                "absolute_terminate_memory_bytes": absolute_terminate_memory_bytes,
+                "effective_hard_stop_memory_bytes": absolute_terminate_memory_bytes,
+            }
+        )
+    return ledger
 
 
 def _task039_memory_budget(
@@ -133,6 +166,9 @@ def _task039_memory_budget(
     configured_terminate = (
         220.0 if execution is None else float(execution["terminate_memory_gib"])
     )
+    absolute_terminate_memory_bytes = (
+        None if execution is None else execution.get("absolute_terminate_memory_bytes")
+    )
     ledger = task039_resource_ledger(
         actual_limit_gib,
         observed_process_tree_gib=0.0,
@@ -140,6 +176,7 @@ def _task039_memory_budget(
         available_classification="measured",
         configured_warning_gib=configured_warning,
         configured_terminate_gib=configured_terminate,
+        absolute_terminate_memory_bytes=absolute_terminate_memory_bytes,
     )
     ledger.pop("observed_process_tree_gib", None)
     ledger.pop("observed_swap_gib", None)
@@ -347,9 +384,26 @@ def _run_worker(
     if task039_model_id_matches(method, model_id, requested_modes):
         task039_budget = _task039_memory_budget(execution)
         warning_limit = float(task039_budget["configured_warning_memory_gib"]) * 1024**3
-        terminate_limit = (
-            float(task039_budget["effective_terminate_memory_gib"]) * 1024**3
+        absolute_terminate_memory_bytes = task039_budget.get(
+            "absolute_terminate_memory_bytes"
         )
+        if absolute_terminate_memory_bytes is None:
+            terminate_limit = (
+                float(task039_budget["effective_terminate_memory_gib"]) * 1024**3
+            )
+            critical_limit = None
+        else:
+            if not math.isfinite(poll_interval) or poll_interval > 0.25:
+                raise InputError(
+                    "absolute byte termination requires poll_interval <= 0.25 seconds"
+                )
+            terminate_limit = float(absolute_terminate_memory_bytes)
+            critical_limit = (
+                float(task039_budget["configured_critical_memory_gib"]) * 1024**3
+            )
+    else:
+        absolute_terminate_memory_bytes = None
+        critical_limit = None
     timeout = float(execution["timeout_seconds"])
     sample_count = 0
     peak_authority = 0
@@ -357,6 +411,8 @@ def _run_worker(
     peak_swap = 0
     zero_swap_observed = True
     warning_triggered = False
+    critical_checkpoint_crossed = False
+    critical_checkpoint_first_bytes = None
     peak_pss = None
     peak_uss = None
     smaps_attempted_sample_count = 0
@@ -398,6 +454,13 @@ def _run_worker(
                 peak_swap = max(peak_swap, swap_bytes)
                 zero_swap_observed = zero_swap_observed and swap_bytes == 0
                 warning_triggered = warning_triggered or memory >= warning_limit
+                if (
+                    critical_limit is not None
+                    and memory >= critical_limit
+                    and not critical_checkpoint_crossed
+                ):
+                    critical_checkpoint_crossed = True
+                    critical_checkpoint_first_bytes = memory
                 if execution["require_zero_swap"] and swap_bytes > 0:
                     termination = terminate_factory(process)
                     classification = "swap_policy_violation"
@@ -436,6 +499,22 @@ def _run_worker(
     }
     if task039_budget is not None:
         resource_authority["task039_memory_budget"] = task039_budget
+        if absolute_terminate_memory_bytes is not None:
+            resource_authority.update(
+                {
+                    "memory_termination_policy": "absolute_bytes",
+                    "configured_critical_memory_gib": task039_budget[
+                        "configured_critical_memory_gib"
+                    ],
+                    "critical_checkpoint_crossed": critical_checkpoint_crossed,
+                    "critical_checkpoint_first_bytes": critical_checkpoint_first_bytes,
+                    "absolute_terminate_memory_bytes": absolute_terminate_memory_bytes,
+                    "effective_hard_stop_memory_gib": (
+                        absolute_terminate_memory_bytes / 1024**3
+                    ),
+                    "poll_interval_seconds": poll_interval,
+                }
+            )
         resource_authority.update(
             {
                 "peak_pss_mb": (None if peak_pss is None else peak_pss / 1024**2),

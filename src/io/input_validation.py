@@ -582,6 +582,28 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
         and isclose(float(mesh_target_nm), target, rel_tol=0.0, abs_tol=1.0e-12)
         for target in (7.5, 6.0, 5.0)
     )
+    h5_direct = (
+        kind == "full3d_direct"
+        and isinstance(mesh_target_nm, (int, float))
+        and isclose(float(mesh_target_nm), 5.0, rel_tol=0.0, abs_tol=1.0e-12)
+    )
+    absolute_terminate_memory_bytes = config["execution"].get(
+        "absolute_terminate_memory_bytes"
+    )
+    if h5_direct and absolute_terminate_memory_bytes != 224_000_000_000:
+        errors.append(
+            (
+                "execution.absolute_terminate_memory_bytes",
+                "Task39 p6/h5 full3d_direct requires exact 224000000000",
+            )
+        )
+    elif not h5_direct and absolute_terminate_memory_bytes is not None:
+        errors.append(
+            (
+                "execution.absolute_terminate_memory_bytes",
+                "Task39 absolute byte termination is enabled only for p6/h5 full3d_direct",
+            )
+        )
     m480_mpi1_solver_only = (
         kind == "hybrid_iterative"
         and config["execution"].get("mpi_size") == 1
@@ -891,6 +913,16 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
     solver = config["solver"]
     execution = config["execution"]
     output = config["output"]
+    absolute_terminate_memory_bytes = execution.get("absolute_terminate_memory_bytes")
+    if absolute_terminate_memory_bytes is not None and (
+        isinstance(absolute_terminate_memory_bytes, bool)
+        or not isinstance(absolute_terminate_memory_bytes, int)
+        or absolute_terminate_memory_bytes <= 0
+    ):
+        raise _error(
+            "execution.absolute_terminate_memory_bytes",
+            "must be a positive integer when supplied",
+        )
     kind = method["kind"]
     geometry_kind = geometry["geometry_kind"]
     model_id = str(config.get("model_id", ""))
