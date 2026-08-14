@@ -231,6 +231,12 @@ M6B_W6A_W5_SOURCE_SHA = "41cbbd454eb8336d9ea5378ed618447acfc60aac"
 M6B_W6A_W5_COMPACT_FILE_SHA256 = (
     "fa9d92d84ba010a6f5f8effd18b0205e8d1b592382f3633b247a65fe8dbf91e5"
 )
+M6B_W6B_S0_W6A_SUMMARY_FILE_SHA256 = (
+    "b90cda13e46dedcc853387a65ba94882405f90cf7abeea0e32ef949751a7acbd"
+)
+M6B_W6B_S0_W6A_PRODUCER_SOURCE_SHA = (
+    "21982b739deac94d80a5048c58f5dabd96d434bd"
+)
 M6B_W6A_MANIFEST_RESERVE_BYTES = 1_000_000
 M6B_W6A_EVENTS = (
     "authority_validated",
@@ -2034,6 +2040,107 @@ def _run_m6b_w6a_watchdog(
     }
     _write_json(watchdog_dir / "w6a_watchdog_summary.json", _attach_evidence(payload))
     return 0 if payload["status"] == "measurement_complete" else 1
+
+
+def _run_m6b_w6b_s0(
+    w6a_raw_dir: Path,
+    w5_raw_dir: Path,
+    output: Path,
+    expected_source_sha: str,
+) -> int:
+    """Run the fixed read-only W6B-S0 diagnosis on frozen W6A scratch."""
+
+    import time
+
+    if output.exists():
+        raise FileExistsError(f"W6B-S0 output already exists: {output}")
+    h2b = __import__("benchmarks.run_task037_extra_h2b", fromlist=["*"])
+    source_start = h2b._light_source()
+    if (
+        source_start.get("source_commit_full_sha") != expected_source_sha
+        or not _m6b_w6a_source_valid(source_start)
+    ):
+        raise RuntimeError("W6B-S0 source identity is not clean or expected")
+    w5_authority = _m6b_w6a_w5_compact_authority()
+    w6a_summary_path = Path(w6a_raw_dir).resolve() / "w6a_summary.json"
+    w6a_summary = _read_json(w6a_summary_path)
+    w6a_summary_artifact = _artifact(Path(w6a_raw_dir).resolve(), "w6a_summary.json")
+    residual_artifacts = w6a_summary.get("residual_artifacts")
+    if not (
+        _m6b_w6b_s0_w6a_summary_authority_valid(
+            w6a_summary, w6a_summary_artifact
+        )
+        and _m6b_w6a_w5_residual_files_valid(
+            residual_artifacts,
+            Path(w6a_raw_dir).resolve(),
+            Path(w5_raw_dir).resolve(),
+            compact_record=w5_authority["record"],
+        )
+    ):
+        raise RuntimeError("W6B-S0 frozen W5 residual authority is not closed")
+    from src.solvers.hcurl_m6b_w6b_s0_spectral import run_w6b_s0
+
+    started = time.perf_counter()
+    result = run_w6b_s0(
+        w6a_raw_dir,
+        w5_raw_dir,
+        expected_source_sha=expected_source_sha,
+    )
+    source_end = h2b._light_source()
+    source_ok = bool(
+        _m6b_w6a_source_valid(source_end)
+        and source_end.get("source_commit_full_sha") == expected_source_sha
+    )
+    result["source_at_start"] = source_start
+    result["source_at_end"] = source_end
+    result["source_clean"] = source_ok
+    result["frozen_w5_compact_authority"] = {
+        "path": w5_authority["path"],
+        "file_sha256": w5_authority["file_sha256"],
+        "producer_source_sha": M6B_W6A_W5_SOURCE_SHA,
+    }
+    result["frozen_w6a_producer_authority"] = {
+        "summary_artifact": w6a_summary_artifact,
+        "producer_source_sha": M6B_W6B_S0_W6A_PRODUCER_SOURCE_SHA,
+        "status": w6a_summary["status"],
+        "numeric_gate_pass": w6a_summary["numeric_gate"]["pass"],
+    }
+    result["elapsed_wall_seconds"] = float(time.perf_counter() - started)
+    result["diagnostic_pass"] = bool(result["diagnostic_pass"] and source_ok)
+    result["status"] = (
+        "diagnostic_complete" if result["diagnostic_pass"] else "gate_failed"
+    )
+    _write_json(output, _attach_evidence(result))
+    return 0 if result["diagnostic_pass"] else 1
+
+
+def _m6b_w6b_s0_w6a_summary_authority_valid(
+    summary: Any, artifact: Any
+) -> bool:
+    if not (
+        isinstance(summary, Mapping)
+        and isinstance(artifact, Mapping)
+        and artifact.get("present") is True
+        and artifact.get("path") == "w6a_summary.json"
+        and artifact.get("sha256") == M6B_W6B_S0_W6A_SUMMARY_FILE_SHA256
+        and summary.get("schema") == M6B_W6A_SCHEMA
+        and _evidence_valid(summary)
+        and summary.get("status") == "gate_failed"
+    ):
+        return False
+    numeric_gate = summary.get("numeric_gate")
+    source_start = summary.get("source_at_start")
+    source_end = summary.get("source_at_end")
+    return bool(
+        isinstance(numeric_gate, Mapping)
+        and numeric_gate.get("pass") is False
+        and _m6b_w6a_source_valid(source_start)
+        and _m6b_w6a_source_valid(source_end)
+        and source_start.get("source_commit_full_sha")
+        == M6B_W6B_S0_W6A_PRODUCER_SOURCE_SHA
+        and source_end.get("source_commit_full_sha")
+        == M6B_W6B_S0_W6A_PRODUCER_SOURCE_SHA
+    )
 
 
 def _m6b_w3_numeric_gate(
@@ -8677,6 +8784,15 @@ def _parser() -> argparse.ArgumentParser:
         required=True,
         type=_m6b_w2_source_sha_argument,
     )
+    w6b_s0 = sub.add_parser("m6b-w6b-s0")
+    w6b_s0.add_argument("--w6a-raw-dir", required=True)
+    w6b_s0.add_argument("--w5-raw-dir", required=True)
+    w6b_s0.add_argument("--output", required=True)
+    w6b_s0.add_argument(
+        "--expected-source-sha",
+        required=True,
+        type=_m6b_w2_source_sha_argument,
+    )
     return parser
 
 
@@ -8703,6 +8819,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             Path(args.legacy_store_dir).resolve(),
             Path(args.w5_raw_dir).resolve(),
             Path(args.jit_cache_source).resolve(),
+            Path(args.output).resolve(),
+            args.expected_source_sha,
+        )
+    if args.command == "m6b-w6b-s0":
+        return _run_m6b_w6b_s0(
+            Path(args.w6a_raw_dir).resolve(),
+            Path(args.w5_raw_dir).resolve(),
             Path(args.output).resolve(),
             args.expected_source_sha,
         )
