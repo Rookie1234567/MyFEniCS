@@ -528,7 +528,7 @@ def _mode_metrics(
     }
 
 
-def _load_hybrid(run_dir: str | Path) -> dict[str, Any]:
+def _load_hybrid(run_dir: str | Path, *, expected_h_nm: float = 10.0) -> dict[str, Any]:
     root = Path(run_dir).resolve()
     numeric_dir = root / "numerical_output"
     manifest_path, outer_path, numeric_path = (
@@ -582,12 +582,14 @@ def _load_hybrid(run_dir: str | Path) -> dict[str, Any]:
     for key, expected in (
         ("wavelength_nm", 5.0),
         ("degree", 6),
-        ("h_nm", 10.0),
+        ("h_nm", expected_h_nm),
         ("polarization_kind", "s"),
         ("incident_grazing_deg", 10.0),
     ):
         if case.get(key) != expected:
-            _fail(f"numeric.case.{key} does not match p6/h10 Task39 contract")
+            _fail(
+                f"numeric.case.{key} does not match p6/h{expected_h_nm:g} Task39 contract"
+            )
     inventory = _parse_inventory(manifest.get("external_mode_inventory"), "manifest")
     numeric_inventory = numeric.get("external_mode_inventory")
     numeric_inventory_exact: bool | str = "not_applicable"
@@ -956,6 +958,292 @@ def _compare_full3d(
     }
 
 
+def _v2_array(arrays: Mapping[str, Any], name: str, label: str) -> np.ndarray:
+    if name not in arrays:
+        _fail(f"{label} is missing {name}")
+    value = np.asarray(arrays[name])
+    if not np.isfinite(value).all():
+        _fail(f"{label}.{name} is not finite")
+    return value
+
+
+def _v2_selected_fields(
+    left: Mapping[str, Any], right: Mapping[str, Any]
+) -> dict[str, Any]:
+    fields: dict[str, Any] = {}
+    for name, overall_limit, plane_limit in (
+        ("E_V_per_m", 5.0e-3, 1.0e-2),
+        ("H_A_per_m", 1.0e-2, 5.0e-2),
+    ):
+        left_array = _v2_array(left, name, "hybrid payload")
+        right_array = _v2_array(right, name, "Full3D payload")
+        if (
+            left_array.shape != right_array.shape
+            or left_array.ndim != 4
+            or left_array.shape[0] != 5
+            or left_array.shape[-1] != 3
+        ):
+            _fail(f"same-grid {name} shape mismatch")
+        delta = float(np.linalg.norm(left_array - right_array))
+        denominator = max(
+            float(np.linalg.norm(left_array)),
+            float(np.linalg.norm(right_array)),
+            1.0e-30,
+        )
+        planes = []
+        for index, z_nm in enumerate((10.0, 30.0, 60.0, 90.0, 110.0)):
+            left_plane = left_array[index]
+            right_plane = right_array[index]
+            plane_abs = float(np.linalg.norm(left_plane - right_plane))
+            plane_denominator = max(
+                float(np.linalg.norm(left_plane)),
+                float(np.linalg.norm(right_plane)),
+                1.0e-30,
+            )
+            plane_relative = plane_abs / plane_denominator
+            planes.append(
+                {
+                    "z_nm": z_nm,
+                    "absolute_l2": plane_abs,
+                    "denominator": plane_denominator,
+                    "relative_l2": plane_relative,
+                    "limit": plane_limit,
+                    "pass": plane_relative <= plane_limit,
+                }
+            )
+        relative = delta / denominator
+        fields[name] = {
+            "absolute_l2": delta,
+            "denominator": denominator,
+            "relative_l2": relative,
+            "limit": overall_limit,
+            "pass": relative <= overall_limit
+            and all(plane["pass"] for plane in planes),
+            "planes": planes,
+        }
+    return {"fields": fields, "pass": all(item["pass"] for item in fields.values())}
+
+
+def _v2_normal_flux(arrays: Mapping[str, Any], label: str) -> np.ndarray:
+    electric = _v2_array(arrays, "E_V_per_m", label)
+    magnetic = _v2_array(arrays, "H_A_per_m", label)
+    if electric.shape != magnetic.shape or electric.ndim != 4:
+        _fail(f"{label} E/H shape mismatch for normal flux")
+    flux = 0.5 * np.real(np.cross(electric, np.conjugate(magnetic), axis=-1)[..., 2])
+    return np.asarray(flux.mean(axis=(1, 2)), dtype=np.float64)
+
+
+def _v2_order_comparison(
+    left: Mapping[Any, Any], right: Mapping[Any, Any]
+) -> dict[str, Any]:
+    keys_exact = set(left) == set(right) and len(left) == 604
+    if not keys_exact:
+        return {
+            "keys_exact": False,
+            "left_count": len(left),
+            "right_count": len(right),
+            "primary_rows": [],
+            "weak_rows": [],
+            "below_weak_floor_count": 0,
+            "primary_pass": False,
+            "weak_pass": False,
+            "full_channel_pass": False,
+            "power_weighted_pass": False,
+            "pass": False,
+        }
+    primary_rows: list[dict[str, Any]] = []
+    weak_rows: list[dict[str, Any]] = []
+    below_weak_floor_count = 0
+    weighted_numerator = 0.0
+    weighted_denominator = 0.0
+    for key in sorted(left):
+        left_power = _finite(left[key]["power_ratio"], "hybrid order power")
+        right_power = _finite(right[key]["power_ratio"], "Full3D order power")
+        left_amplitude = left[key]["outgoing_amplitude"]
+        right_amplitude = right[key]["outgoing_amplitude"]
+        power_denominator = max(left_power, right_power, 1.0e-30)
+        amplitude_denominator = max(abs(left_amplitude), abs(right_amplitude), 1.0e-30)
+        power_absolute = abs(left_power - right_power)
+        amplitude_absolute = abs(left_amplitude - right_amplitude)
+        power_relative = power_absolute / power_denominator
+        amplitude_relative = amplitude_absolute / amplitude_denominator
+        max_power = max(left_power, right_power)
+        weighted_numerator += power_absolute
+        weighted_denominator += max_power
+        row = {
+            "key": list(key),
+            "left_power": left_power,
+            "right_power": right_power,
+            "power_absolute_delta": power_absolute,
+            "power_denominator": power_denominator,
+            "power_relative_delta": power_relative,
+            "power_limit": 1.0e-3,
+            "left_amplitude": [left_amplitude.real, left_amplitude.imag],
+            "right_amplitude": [right_amplitude.real, right_amplitude.imag],
+            "amplitude_absolute_delta": amplitude_absolute,
+            "amplitude_denominator": amplitude_denominator,
+            "amplitude_relative_delta": amplitude_relative,
+            "amplitude_limit": 1.0e-3,
+            "wrapped_phase_delta_rad": float(
+                np.angle(
+                    np.exp(1j * (np.angle(left_amplitude) - np.angle(right_amplitude)))
+                )
+            )
+            if left_amplitude != 0 and right_amplitude != 0
+            else 0.0,
+        }
+        row["pass"] = power_relative <= 1.0e-3 and amplitude_relative <= 1.0e-3
+        if max_power >= 1.0e-6:
+            primary_rows.append(row)
+        elif max_power >= 1.0e-8:
+            weak_rows.append(row)
+        else:
+            below_weak_floor_count += 1
+    weighted_denominator = max(weighted_denominator, 1.0e-30)
+    power_weighted = weighted_numerator / weighted_denominator
+    primary_pass = bool(primary_rows) and all(row["pass"] for row in primary_rows)
+    weak_pass = all(row["pass"] for row in weak_rows)
+    full_channel_pass = primary_pass and weak_pass
+    return {
+        "keys_exact": True,
+        "primary_count": len(primary_rows),
+        "weak_count": len(weak_rows),
+        "below_weak_floor_count": below_weak_floor_count,
+        "primary_rows": primary_rows,
+        "weak_rows": weak_rows,
+        "power_weighted": power_weighted,
+        "power_weighted_numerator": weighted_numerator,
+        "power_weighted_denominator": weighted_denominator,
+        "power_weighted_limit": 1.0e-4,
+        "power_weighted_pass": power_weighted <= 1.0e-4,
+        "primary_pass": primary_pass,
+        "weak_pass": weak_pass,
+        "full_channel_pass": full_channel_pass,
+        "pass": primary_pass and power_weighted <= 1.0e-4,
+    }
+
+
+def _compare_h5_hybrid_full3d_data(
+    hybrid: Mapping[str, Any], full: Mapping[str, Any]
+) -> dict[str, Any]:
+    hybrid_keys = set(hybrid["inventory"]["keys"])
+    full_keys = set(full["inventory"]["keys"])
+    inventory = {
+        "hybrid_count": len(hybrid_keys),
+        "full3d_count": len(full_keys),
+        "hybrid_key_sha256": _key_sha(tuple(hybrid_keys)),
+        "full3d_key_sha256": _key_sha(tuple(full_keys)),
+        "pass": len(hybrid_keys) == 604 and hybrid_keys == full_keys,
+    }
+    observables = _compare_observables(
+        hybrid["observables"], full["observables"], 1.0e-5
+    )
+    closure = {
+        "hybrid": {
+            "actual": hybrid["closure"],
+            "limit": 1.0e-5,
+            "pass": abs(hybrid["closure"]) <= 1.0e-5,
+        },
+        "full3d": {
+            "actual": full["closure"],
+            "limit": 1.0e-5,
+            "pass": abs(full["closure"]) <= 1.0e-5,
+        },
+    }
+    hybrid_arrays = hybrid["payload"]["arrays"]
+    full_arrays = full["fields"]
+    coordinates = _coordinates_exact(hybrid_arrays, full["coordinates"])
+    fields = _v2_selected_fields(hybrid_arrays, full_arrays)
+    hybrid_flux = _v2_normal_flux(hybrid_arrays, "hybrid payload")
+    full_flux = _v2_normal_flux(full_arrays, "Full3D payload")
+    flux_absolute = float(np.linalg.norm(hybrid_flux - full_flux))
+    flux_denominator = max(
+        float(np.linalg.norm(hybrid_flux)), float(np.linalg.norm(full_flux)), 1.0e-30
+    )
+    flux_relative = flux_absolute / flux_denominator
+    flux = {
+        "formula": "||flux_hybrid-flux_full3d||2/max(||flux_hybrid||2,||flux_full3d||2,1e-30)",
+        "hybrid_per_plane": hybrid_flux.tolist(),
+        "full3d_per_plane": full_flux.tolist(),
+        "absolute_l2": flux_absolute,
+        "denominator": flux_denominator,
+        "relative_delta": flux_relative,
+        "limit": 1.0e-4,
+        "pass": flux_relative <= 1.0e-4,
+    }
+    orders = _v2_order_comparison(hybrid["orders"], full["orders"])
+    primary_pass = (
+        all(
+            item["pass"]
+            for item in (
+                inventory,
+                observables,
+                closure["hybrid"],
+                coordinates,
+                fields,
+                flux,
+            )
+        )
+        and orders["pass"]
+    )
+    return {
+        "schema_version": "task039.v2-h5-hybrid-full3d-same-grid.v1",
+        "inventory": inventory,
+        "observables": observables,
+        "closure": closure,
+        "coordinates": coordinates,
+        "selected_EH": fields,
+        "normal_flux": flux,
+        "orders": orders,
+        "primary_pass": primary_pass,
+        "classification": (
+            "H5_M480_HYBRID_DIRECT_SAME_GRID_PASS"
+            if primary_pass
+            else "H5_M480_HYBRID_MODEL_FAIL"
+        ),
+        "pass": primary_pass,
+    }
+
+
+def _v2_physical_model_identity(
+    hybrid: Mapping[str, Any], full: Mapping[str, Any]
+) -> dict[str, Any]:
+    hybrid_sha = hybrid["manifest"]["physical_model_sha256"]
+    full_sha = full["physical_model_sha256"]
+    return {
+        "hybrid_physical_model_sha256": hybrid_sha,
+        "full3d_physical_model_sha256": full_sha,
+        "pass": hybrid_sha == full_sha,
+    }
+
+
+def compare_h5_hybrid_direct_full3d(
+    hybrid_run_dir: str | Path, full3d_run_dir: str | Path
+) -> dict[str, Any]:
+    """Compare the frozen h5 Hybrid M480 and Full3D runs offline only."""
+
+    hybrid = _load_hybrid(hybrid_run_dir, expected_h_nm=5.0)
+    full = _raw_full3d(full3d_run_dir)
+    result = _compare_h5_hybrid_full3d_data(hybrid, full)
+    physical = _v2_physical_model_identity(hybrid, full)
+    result["physical_model_identity"] = physical
+    if not physical["pass"]:
+        result["primary_pass"] = False
+        result["pass"] = False
+        result["classification"] = "H5_M480_HYBRID_MODEL_FAIL"
+    result["source"] = {
+        "hybrid_run_directory": str(Path(hybrid_run_dir).resolve()),
+        "full3d_run_directory": str(Path(full3d_run_dir).resolve()),
+        "hybrid_source_sha": hybrid["manifest"]["source_sha"],
+        "full3d_source_sha": full["source_sha"],
+        "hybrid_physical_model_sha256": hybrid["manifest"]["physical_model_sha256"],
+        "full3d_physical_model_sha256": full["physical_model_sha256"],
+        "hybrid_payload": hybrid["payload"]["artifact"],
+        "full3d_artifacts": full["artifacts"],
+    }
+    return result
+
+
 def check_hybrid_direct_identity(
     hybrid_run_dir: str | Path,
     *,
@@ -1079,7 +1367,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     return 0 if result["pass"] else 1
 
 
-__all__ = ["check_hybrid_direct_identity", "main"]
+__all__ = ["check_hybrid_direct_identity", "compare_h5_hybrid_direct_full3d", "main"]
 
 
 if __name__ == "__main__":

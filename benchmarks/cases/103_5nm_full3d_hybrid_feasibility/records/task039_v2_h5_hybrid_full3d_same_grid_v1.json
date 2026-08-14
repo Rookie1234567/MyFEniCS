@@ -1,0 +1,200 @@
+{
+  "schema_version": "task039.v2-6.h5-hybrid-full3d-same-grid.v1",
+  "record_id": "task039_v2_h5_hybrid_full3d_same_grid_v1",
+  "classification": "H5_M480_HYBRID_MODEL_FAIL",
+  "source_identity": {
+    "checker": "benchmarks/task039_hybrid_direct_identity.py::compare_h5_hybrid_direct_full3d",
+    "checker_parent_commit_sha": "e58dfc6cc8d01c39e83f20cafdb52669809d50a9",
+    "checker_worktree_state": "reviewed_uncommitted_v2_6_comparator_diff",
+    "hybrid_source_commit_sha": "e58dfc6cc8d01c39e83f20cafdb52669809d50a9",
+    "full3d_source_commit_sha": "048b9937b4ecdc2c6db87663735718e8525bb926",
+    "method_pair": ["hybrid_direct", "full3d_direct"],
+    "mesh_target_nm": 5.0,
+    "wavelength_nm": 5.0,
+    "degree": 6,
+    "polarization": "s",
+    "incident_grazing_deg": 10.0,
+    "requested_modes_per_direction": 480,
+    "mpi_size": 8,
+    "physical_model_sha256": "e35907c72ab97069d9ab66958fd00787f98dea08dce1aa6f64c053b7bda46cdb",
+    "external_inventory": {
+      "count": 604,
+      "unique": 604,
+      "bottom": 300,
+      "top": 304,
+      "key_sha256": "56e869d715ebf717f66996b335845de609ef08999ee70ec0b70e10565a7a0299"
+    },
+    "coordinates": {
+      "x_shape": [40],
+      "y_shape": [20],
+      "z_nm": [10.0, 30.0, 60.0, 90.0, 110.0],
+      "exact_between_runs": true
+    }
+  },
+  "evidence": {
+    "hybrid_run_root": "results/task039_5nm_hybrid_direct_m480/task039_5nm_hybrid_direct_p6h5_mpi8__hybrid_direct__mpi8__M480/20260814T113034.312872Z",
+    "full3d_run_root": "results/task039_5nm_full3d_direct/task039_5nm_full3d_direct_p6h5_mpi8__full3d_direct__mpi8__Mna/20260814T062500.154546Z",
+    "hybrid_task039_direct_payload_sha256": "9bbce283ca6ac93f622019d01ec0103f846558bc862c53b352972415394380e5",
+    "full3d_reference_npz_sha256": "04dcf18cb69f9d1bc48312db51aadb710de267aab44d0ea944eb5ca3e6ac2192",
+    "full3d_reference_json_sha256": "5ff2e0f34deae8ad33be1eb975193326a7a58a4373f3a8c1b0574ab79071f6d8",
+    "full3d_run_manifest_sha256": "2970d1bf67319491b1a65fd3134129f7a8e33bcb05f8b8326546559b427b344d",
+    "comparison_invocations": 2,
+    "initial_comparison_output_sha256": "14fe7f6e534aeaf522c5312ee6d787a60b5b7522fc7b1abf67a378a6fd306c8a",
+    "initial_comparison_output_bytes": 45125,
+    "comparison_output_sha256": "5b3e0b6467ad6792ba80baa0410c138770287ae87b8ee786262d72ce4648ef74",
+    "comparison_output_bytes": 45388,
+    "comparison_output_retention": "temporary qualified-shell rerun; gates copied here without raw arrays"
+  },
+  "gates": {
+    "identity": {
+      "physical_model_sha256_exact": true,
+      "physical_model_identity": {
+        "hybrid": "e35907c72ab97069d9ab66958fd00787f98dea08dce1aa6f64c053b7bda46cdb",
+        "full3d": "e35907c72ab97069d9ab66958fd00787f98dea08dce1aa6f64c053b7bda46cdb",
+        "pass": true
+      },
+      "external_keys_exact_unique": true,
+      "coordinates_exact": true,
+      "pass": true
+    },
+    "observables": {
+      "limit": "max absolute delta <= 1e-5",
+      "R_total": {"hybrid": 0.0020246154111443217, "full3d": 0.0020255498177907264, "absolute_delta": 9.344066464046612e-07, "pass": true},
+      "T_total": {"hybrid": 0.0284533962951317, "full3d": 0.02845408887668467, "absolute_delta": 6.925815529724988e-07, "pass": true},
+      "A_balance": {"hybrid": 0.969521988293724, "full3d": 0.9695203613055247, "absolute_delta": 1.626988199388002e-06, "pass": true},
+      "A_volume": {"hybrid": 0.9695248297964774, "full3d": 0.9695203613041327, "absolute_delta": 4.468492344700259e-06, "pass": true},
+      "pass": true
+    },
+    "closure": {
+      "limit": "absolute value <= 1e-5",
+      "hybrid": {"actual": 2.8415027533146286e-06, "pass": true},
+      "full3d": {"actual": -1.3919976282750213e-12, "pass": true},
+      "pass": true
+    },
+    "selected_fields": {
+      "overall": {
+        "E_V_per_m": {"actual_relative_l2": 0.0007299949125251706, "limit": 0.005, "pass": true},
+        "H_A_per_m": {"actual_relative_l2": 0.0006429897172818461, "limit": 0.01, "pass": true}
+      },
+      "per_plane": {
+        "E_V_per_m": [0.0015682443351365644, 0.001287866544234964, 0.0009010144991527193, 0.0005899341622614838, 0.00046649945715221473],
+        "H_A_per_m": [0.0013271949009123452, 0.0008530111221997552, 0.00072987837266314, 0.0005971231499292306, 0.0004975019153774404],
+        "z_nm": [10.0, 30.0, 60.0, 90.0, 110.0],
+        "limits": {"E_V_per_m": 0.01, "H_A_per_m": 0.05},
+        "pass": true
+      },
+      "pass": true
+    },
+    "normal_flux": {
+      "formula": "||flux_hybrid-flux_full3d||2/max(||flux_hybrid||2,||flux_full3d||2,1e-30)",
+      "actual_relative_delta": 3.518722953879656e-06,
+      "limit": 0.0001,
+      "pass": true
+    },
+    "orders": {
+      "definition": "primary=max(hybrid_power,full3d_power)>=1e-6; weak=1e-8<=max(power)<1e-6; below floor is counted only",
+      "power_normalization": "abs(hybrid_power-full3d_power)/max(hybrid_power,full3d_power,1e-30)",
+      "amplitude_normalization": "abs(hybrid_amplitude-full3d_amplitude)/max(abs(hybrid_amplitude),abs(full3d_amplitude),1e-30)",
+      "primary_set_count": 9,
+      "primary_failed_count": 5,
+      "weak_set_count": 30,
+      "weak_failed_count": 29,
+      "below_weak_floor_count": 565,
+      "per_row_power_limit": 0.001,
+      "per_row_amplitude_limit": 0.001,
+      "power_weighted_aggregate": {
+        "formula": "sum(abs(hybrid_power-full3d_power))/sum(max(hybrid_power,full3d_power)) over all 604 keys",
+        "actual": 8.685769179308791e-05,
+        "limit": 0.0001,
+        "pass": true
+      },
+      "primary_pass": false,
+      "weak_pass": false,
+      "full_channel_pass": false,
+      "pass": false
+    },
+    "failed_gate_worst_cases": {
+      "primary_power_relative": {
+        "key": ["top", -4, 0, "s"],
+        "hybrid_power": 2.277457427053757e-06,
+        "full3d_power": 2.399090101156873e-06,
+        "absolute_delta": 1.2163267410311607e-07,
+        "denominator": 2.399090101156873e-06,
+        "actual_relative": 0.0506995023006694,
+        "limit": 0.001,
+        "hybrid_amplitude": [-0.00021999040082677657, -0.0006626773195301087],
+        "full3d_amplitude": [-0.00011982354950917974, -0.0007065531263266072],
+        "amplitude_absolute_delta": 0.00010935485597322696,
+        "amplitude_denominator": 0.0007166414747549024,
+        "amplitude_relative": 0.15259353501780965,
+        "normalization": "power and amplitude denominators as stated above"
+      },
+      "primary_amplitude_relative": {
+        "key": ["top", -4, 0, "s"],
+        "hybrid_power": 2.277457427053757e-06,
+        "full3d_power": 2.399090101156873e-06,
+        "power_absolute_delta": 1.2163267410311607e-07,
+        "power_denominator": 2.399090101156873e-06,
+        "power_relative": 0.0506995023006694,
+        "limit": 0.001,
+        "hybrid_amplitude": [-0.00021999040082677657, -0.0006626773195301087],
+        "full3d_amplitude": [-0.00011982354950917974, -0.0007065531263266072],
+        "absolute_delta": 0.00010935485597322696,
+        "denominator": 0.0007166414747549024,
+        "actual_relative": 0.15259353501780965,
+        "normalization": "abs(hybrid_amplitude-full3d_amplitude)/max(abs(hybrid_amplitude),abs(full3d_amplitude),1e-30)"
+      },
+      "weak_power_relative": {
+        "key": ["bottom", -8, 0, "s"],
+        "hybrid_power": 1.4017587020035848e-09,
+        "full3d_power": 2.4467416032725386e-07,
+        "absolute_delta": 2.432724016252503e-07,
+        "denominator": 2.4467416032725386e-07,
+        "actual_relative": 0.9942709164705881,
+        "limit": 0.001,
+        "hybrid_amplitude": [7.985501495704993e-06, -1.4657015487872997e-05],
+        "full3d_amplitude": [4.006668809420057e-05, -0.00021684808153630126],
+        "amplitude_absolute_delta": 0.00020472036958585086,
+        "amplitude_denominator": 0.00022051854788387375,
+        "amplitude_relative": 0.9283589591459568,
+        "normalization": "power and amplitude denominators as stated above"
+      },
+      "weak_amplitude_relative": {
+        "key": ["top", -9, 0, "s"],
+        "hybrid_power": 5.351979540282816e-09,
+        "full3d_power": 1.5714511884073508e-08,
+        "power_absolute_delta": 1.0362532343790692e-08,
+        "power_denominator": 1.5714511884073508e-08,
+        "power_relative": 0.659424385576558,
+        "limit": 0.001,
+        "hybrid_amplitude": [6.345928560119753e-06, 2.9873917902622752e-05],
+        "full3d_amplitude": [2.969369787308809e-05, -4.309230962375788e-05],
+        "absolute_delta": 7.661063040677275e-05,
+        "denominator": 5.233223521012696e-05,
+        "actual_relative": 1.4639281142714806,
+        "normalization": "abs(hybrid_amplitude-full3d_amplitude)/max(abs(hybrid_amplitude),abs(full3d_amplitude),1e-30)"
+      }
+    },
+    "primary_pass": false,
+    "pass": false
+  },
+  "resource": {
+    "hybrid_h5": {"rss_mib": 86744.54296875, "pss_mib": 85040.2392578125, "uss_mib": 84748.19921875, "swap_mib": 0.0, "classification": "measured_independent_process_tree_peaks"},
+    "full3d_h5": {"rss_mib": 92491.328125, "pss_mib": 90440.78515625, "uss_mib": 90103.5390625, "swap_mib": 0.0, "classification": "measured_independent_process_tree_peaks"},
+    "object_sums_are_not_rss": true,
+    "v2_7": "condition_overridden_by_user_for_diagnostic_only; not run in this V2-6 turn"
+  },
+  "limitations": [
+    "Both h5 own solves passed; this record is a same-grid model comparison and does not qualify Hybrid physical authority.",
+    "The primary modal-order Gate fails on five primary channels and the weak set fails on 29 channels; all failures and worst keys are retained above.",
+    "The Full3D and Hybrid source commits differ, while the resolved physical model SHA and h5 equation identity are exact.",
+    "V2-7 may proceed only for diagnostic comparison under the user override; it must not be interpreted as an h5 Hybrid pass or production qualification."
+  ],
+  "provenance": {
+    "offline_only": true,
+    "pde_or_mpi_started": false,
+    "ordinary_defaults_changed": false,
+    "raw_artifacts_modified": false,
+    "v2_6_gate_contract_unchanged": true
+  }
+}
