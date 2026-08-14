@@ -12,7 +12,7 @@ from petsc4py import PETSc
 
 from ..common.config_3d import ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
 from ..constraints.floquet_3d import build_double_floquet_mpc
-from ..geometry.mesh_builder_3d import build_airbox_mesh_3d
+from ..geometry.mesh_builder_3d import build_airbox_mesh_3d, stage4_axis_plan
 from ..solvers.common_3d_forms import _build_variational_forms
 from ..solvers.common_3d_solve import _create_nedelec_space
 from ..solvers.hcurl_assembly_time_condensation import (
@@ -35,7 +35,9 @@ class ExactOneCellMatrixBuild:
     audit: dict[str, Any]
 
 
-def _one_cell_config(cfg):
+def _one_cell_config(cfg, comm_size: int):
+    source_plan = stage4_axis_plan(cfg, int(comm_size))
+    source_x_cells, source_y_cells, _ = source_plan.mesh_cells_resolved
     return replace(
         cfg,
         case_name=f"{cfg.case_name}_exact_one_cell",
@@ -45,7 +47,7 @@ def _one_cell_config(cfg):
         substrate_thickness=0.0,
         interface_z=0.0,
         grating_height=10.0,
-        mesh_axis_cell_counts=(6, 3, 1),
+        mesh_axis_cell_counts=(source_x_cells, source_y_cells, 1),
         mesh_axis_z_values=(0.0, 10.0),
         mesh_axis_z_profile="task037c_x3_uniform_10nm_one_cell",
         mesh_cell_type="hexahedron",
@@ -175,10 +177,10 @@ def build_exact_one_cell_traction_matrices(
     if comm.rank == 0:
         work_dir.mkdir(parents=True, exist_ok=True)
     comm.Barrier()
-    one_cfg = _one_cell_config(cfg)
     mesh_data = V = floquet = condensed = action = None
     matrices: dict[str, tuple[PETSc.Mat, PETSc.Mat]] = {}
     try:
+        one_cfg = _one_cell_config(cfg, comm.size)
         mesh_data = build_airbox_mesh_3d(one_cfg, work_dir / "mesh")
         V = _create_nedelec_space(mesh_data.mesh, one_cfg)
         bilinear, _ = _build_variational_forms(mesh_data.mesh, mesh_data, one_cfg, V)

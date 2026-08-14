@@ -10,7 +10,6 @@ from basix.ufl import element
 from dolfinx import default_real_type, fem, mesh
 from mpi4py import MPI
 
-from benchmarks.run_task037c_exact_traction_column_audit import _one_cell_config
 from src.constraints.high_order_floquet_trace import face_coefficient_transform
 from src.coupling.hybrid_one_cell_exact_traction import (
     EXACT_ONE_CELL_TRACTION_MODEL,
@@ -30,6 +29,7 @@ from src.coupling.hybrid_internal_modes import _destroy_pending_exact_overrides
 from src.common.config_3d import target_stage4_config
 from src.constraints.floquet_3d import build_double_floquet_mpc
 from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
+from src.geometry.mesh_builder_3d import stage4_axis_plan
 from src.modes.cross_section_spaces import (
     build_cross_section_spaces,
     build_matching_cross_section,
@@ -56,14 +56,29 @@ def test_exact_model_is_explicit_and_not_production_qualified() -> None:
     assert exact_model_record(False)["model"] == "ordinary_default"
 
 
-def test_exact_builder_uses_frozen_ten_nm_one_cell_config() -> None:
-    cfg = target_stage4_config(degree=6, h_nm=10.0)
-    one_cell = build_one_cell_config(cfg)
+@pytest.mark.parametrize(
+    ("h_nm", "expected_xy_cells"),
+    [(10.0, (6, 3)), (5.0, (12, 5))],
+)
+def test_exact_builder_matches_source_xy_axis_plan(
+    h_nm: float, expected_xy_cells: tuple[int, int]
+) -> None:
+    cfg = target_stage4_config(degree=6, h_nm=h_nm)
+    comm_size = MPI.COMM_WORLD.size
+    source_plan = stage4_axis_plan(cfg, comm_size)
+    one_cell = build_one_cell_config(cfg, comm_size)
+    one_cell_plan = stage4_axis_plan(one_cell, comm_size)
+
     assert one_cell.z_min == 0.0
     assert one_cell.z_max == 10.0
-    assert one_cell.mesh_axis_cell_counts == (6, 3, 1)
+    assert one_cell.mesh_axis_cell_counts == (*expected_xy_cells, 1)
     assert one_cell.mesh_axis_z_values == (0.0, 10.0)
     assert one_cell.mesh_axis_z_profile == "task037c_x3_uniform_10nm_one_cell"
+    assert source_plan.mesh_cells_resolved[:2] == expected_xy_cells
+    assert one_cell_plan.mesh_cells_resolved == (*expected_xy_cells, 1)
+    np.testing.assert_allclose(one_cell_plan.x_values, source_plan.x_values)
+    np.testing.assert_allclose(one_cell_plan.y_values, source_plan.y_values)
+    np.testing.assert_allclose(one_cell_plan.z_values, (0.0, 10.0))
 
 
 def test_exact_blocks_split_each_local_amplitude_and_keep_sign_contract() -> None:
@@ -224,6 +239,23 @@ def test_row_identity_and_embedding_are_ordered_and_fail_closed() -> None:
     assert np.count_nonzero(embedded[[0, 2, 3, 5]]) == 0
 
 
+def test_endpoint_transfer_rejects_row_count_mismatch() -> None:
+    with pytest.raises(ValueError, match="Source/target endpoint row counts differ"):
+        transfer_congruent_endpoint_columns(
+            np.ones((2, 1), dtype=np.complex128),
+            None,
+            None,
+            None,
+            [0, 1],
+            None,
+            None,
+            None,
+            [0, 1, 2],
+            source_endpoint="left",
+            target_endpoint="right",
+        )
+
+
 def test_row_identity_rejects_material_difference() -> None:
     exact = np.eye(2, dtype=np.complex128)
     with pytest.raises(RuntimeError, match="identity failed"):
@@ -281,7 +313,9 @@ def test_pending_exact_override_cleanup_only_releases_unclaimed_pairs() -> None:
 def test_real_p2_double_floquet_endpoint_and_local_interface_identity(tmp_path) -> None:
     """Compare independent bottom/middle/top p2 H(curl) Floquet boxes."""
 
-    base = _one_cell_config(target_stage4_config(degree=2, h_nm=10.0))
+    base = build_one_cell_config(
+        target_stage4_config(degree=2, h_nm=10.0), MPI.COMM_WORLD.size
+    )
     comm = MPI.COMM_WORLD
 
     def box_config(label: str, z0: float, z1: float):
