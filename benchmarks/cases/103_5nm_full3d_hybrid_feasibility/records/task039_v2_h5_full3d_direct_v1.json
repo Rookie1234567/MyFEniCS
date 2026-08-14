@@ -1,0 +1,189 @@
+{
+  "schema_version": "task039.v2-2.full3d-direct-authority.v1",
+  "record_id": "task039_v2_h5_full3d_direct_v1",
+  "classification": "TASK039_V2_H5_FULL3D_DIRECT_DISCRETE_AUTHORITY",
+  "status": "pass",
+  "source_identity": {
+    "source_commit_sha": "048b9937b4ecdc2c6db87663735718e8525bb926",
+    "run_root": "results/task039_5nm_full3d_direct/task039_5nm_full3d_direct_p6h5_mpi8__full3d_direct__mpi8__Mna/20260814T062500.154546Z",
+    "run_manifest_sha256": "2970d1bf67319491b1a65fd3134129f7a8e33bcb05f8b8326546559b427b344d",
+    "input_path": "input/official/task039/5nm_p6h5_full3d_direct_mpi8.dat",
+    "input_sha256": "9432de4711d6ceb60b840532dd4038ed02579fc1b55ca6632308c56f5c34aecb",
+    "resolved_config_sha256": "a8e17b3fc40be6b0e9dc2c61c83857cb4ceae38a3325ad281fca940811e854f0",
+    "physical_model_sha256": "e35907c72ab97069d9ab66958fd00787f98dea08dce1aa6f64c053b7bda46cdb",
+    "method": "full3d_direct",
+    "model_id": "task039_5nm_full3d_direct",
+    "run_id": "task039_full3d_direct_p6h5_mpi8",
+    "mesh_target_nm": 5.0,
+    "nedelec_degree": 6,
+    "mpi_size": 8,
+    "external_mode_inventory": {
+      "count": 604,
+      "bottom": 300,
+      "top": 304,
+      "unique_surface_orders_total": 302,
+      "top_unique_spatial_mn": 152,
+      "bottom_unique_spatial_mn": 150,
+      "rayleigh_warning": 0
+    }
+  },
+  "evidence": {
+    "classification_source": {
+      "launcher_root_run_summary": "run_summary.json",
+      "numerical_output_run_summary": "numerical_output/run_summary.json"
+    },
+    "run_summary_sha256": "ba1efdf6c29a00223ed40abab07a9cd67df598b34ed78328a02defb369163487",
+    "numerical_run_summary_sha256": "8a70a2f49c23ad006c3dee79c39e68b789c138d5f6fd85a9f19d1c354290e7e7",
+    "dtn_port_power_metrics_sha256": "fdc01e0cb0aa57af3ea766d453ec8b700ef8ff81ae376bc6fd01c04cb1013f8e",
+    "diagnostic_diffraction_orders_sha256": "6b6953e2ffa46d4bae3c290f229cba5601246a192807cc29ca9255d57db7a1cb",
+    "official_dtn_port_diffraction_orders_sha256": "575da9de5405028baf8bf28b2335c1348ec5e4428ead4eb11a77373e8989670e",
+    "dtn_auxiliary_amplitudes_sha256": "df1c8d61cdbc65b787221b9afa1814e90b14208ae757ff00714d9beedc2ca3ed",
+    "official_metric_source": "numerical_output/dtn_port_power_metrics_3d.json",
+    "diagnostic_metric_sources": [
+      "numerical_output/power_metrics_3d.json",
+      "numerical_output/diffraction_orders_3d.json"
+    ],
+    "field_payload": {
+      "npz_path": "numerical_output/full3d_reference_samples.npz",
+      "npz_sha256": "04dcf18cb69f9d1bc48312db51aadb710de267aab44d0ea944eb5ca3e6ac2192",
+      "metadata_path": "numerical_output/full3d_reference_samples.json",
+      "metadata_sha256": "5ff2e0f34deae8ad33be1eb975193326a7a58a4373f3a8c1b0574ab79071f6d8",
+      "planes_nm": [10.0, 30.0, 60.0, 90.0, 110.0],
+      "expected_plane_count": 5,
+      "actual_plane_count": 5,
+      "E_shape": [5, 20, 40, 3],
+      "H_shape": [5, 20, 40, 3],
+      "dtype": "complex128",
+      "finite": true,
+      "per_plane_audit_status": "finite_pass"
+    },
+    "canonical_export": {
+      "status": "completed",
+      "active_trace": {
+        "manifest_path": "numerical_output/task037_m3a_active_trace_canonical_manifest.json",
+        "manifest_sha256": "12e3bfa2987c222d7c3772d4e7f463cb1c24b8fc036314d32288586390c064ae",
+        "packet_count": 371502,
+        "rank_shards": 8,
+        "duplicate_count": 0,
+        "dtype": "complex128"
+      },
+      "full_fe": {
+        "manifest_path": "numerical_output/task037_m3a_full_fe_canonical_manifest.json",
+        "manifest_sha256": "42351b0284f55b2d442b0a6aff0a0690611406c7ff88ee6475f4c89f08cb15b9",
+        "packet_count": 1127502,
+        "rank_shards": 8,
+        "duplicate_count": 0,
+        "dtype": "complex128"
+      }
+    }
+  },
+  "gates": {
+    "launcher_exit": {
+      "exit_status": 0,
+      "result_classification": "worker_exit0",
+      "pass": true
+    },
+    "official_result": {"actual": true, "pass": true},
+    "case_status": {"actual": "completed", "pass": true},
+    "true_relative_residual": {
+      "actual": 1.1426908495328136e-10,
+      "limit": 1.0e-9,
+      "pass": true
+    },
+    "official_dtn_port_rta": {
+      "R_total": 0.0020255498177907264,
+      "T_total": 0.02845408887668467,
+      "A_balance": 0.9695203613055247,
+      "A_volume_total": 0.9695203613041327,
+      "R_plus_T_plus_A_volume": 0.999999999998608,
+      "finite": true
+    },
+    "closure": {
+      "actual": -1.3919976282750213e-12,
+      "absolute_limit": 1.0e-5,
+      "pass": true
+    },
+    "modal_inventory": {
+      "count": 604,
+      "unique": 604,
+      "finite_beta": true,
+      "amplitudes_all_finite": true,
+      "bottom": 300,
+      "top": 304,
+      "pass": true
+    },
+    "selected_E_H": {
+      "expected_entries": 5,
+      "actual_E_entries": 5,
+      "actual_H_entries": 5,
+      "per_plane_finite": true,
+      "audit_status": "finite_pass",
+      "pass": true
+    },
+    "canonical_active_and_full": {
+      "active_trace_pass": true,
+      "full_fe_pass": true,
+      "all_rank_shards_present": true,
+      "duplicates": 0,
+      "pass": true
+    }
+  },
+  "resource": {
+    "classification": "measured",
+    "process_tree_peak_rss_mib": 92491.328125,
+    "process_tree_peak_pss_mib": 90440.78515625,
+    "process_tree_peak_uss_mib": 90103.5390625,
+    "process_tree_peak_swap_mib": 0.0,
+    "warning_triggered": false,
+    "critical_checkpoint_crossed": false,
+    "configured_warning_gib": 170.0,
+    "configured_critical_gib": 195.0,
+    "absolute_terminate_memory_bytes": 224000000000,
+    "effective_hard_stop_gib": 208.6162567138672,
+    "poll_interval_seconds": 0.25,
+    "zero_swap_observed": true
+  },
+  "timings_seconds": {
+    "mesh_build": 0.6833182310001575,
+    "function_space_setup": 1.7217883519997486,
+    "floquet_total": 5.580942272999891,
+    "stage4_assembly_total_build": 120.75867747800021,
+    "base_matrix_assembly": 234.89747886499936,
+    "ksp_setup_factorization": 4748.209038352999,
+    "ksp_solve": 2.743420086999322,
+    "cell_static_condensation_recovery": 0.8409323149990087,
+    "postprocess": 61.98816714599889,
+    "numerical_elapsed": 5330.2902718020005
+  },
+  "matrix_and_dofs": {
+    "classification": "measured",
+    "mesh_cells": 1680,
+    "full_fe_dofs": 1127502,
+    "active_trace_dofs": 336960,
+    "assembled_rows_with_auxiliary": 337564,
+    "condensed_matrix_nnz_used": 283210150,
+    "condensed_matrix_nnz_allocated": 298136764,
+    "factor_telemetry": {
+      "classification": "measured_telemetry_with_int32_overflow",
+      "raw_matrix_nnz_used": -1697967296,
+      "raw_matrix_nnz_allocated": -1697967296,
+      "raw_mumps_infog_3": -2598,
+      "raw_mumps_infog_9": -2597,
+      "factor_nnz_corrected": 2597000000,
+      "correction_source": "mumps_infog_9_negative_millions",
+      "used_as_own_gate": false
+    }
+  },
+  "limitations": [
+    "这是 h5 Full3D discrete authority 的 own-Gate 记录，不是 h6-vs-h5 convergence 证明。",
+    "physical_benchmark_candidate=false 且 validation_role=numerical_sanity_only；V2-3 尚未运行。",
+    "factor telemetry 的负数是 int32 溢出表示；factor_nnz_corrected 作为遥测保留，未修复或重跑。",
+    "逐平面原始 metadata 未提供 status 字段；finite_pass 是本次只读审计从数组重算的状态。"
+  ],
+  "provenance": {
+    "raw_artifacts_ignored": true,
+    "audit_mode": "read_only_post_run_authority_audit",
+    "no_v2_3_comparison": true,
+    "no_additional_pde": true
+  }
+}

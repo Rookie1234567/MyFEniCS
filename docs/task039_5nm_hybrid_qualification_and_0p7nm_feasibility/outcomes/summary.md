@@ -124,8 +124,10 @@ E6 checker 的 `numeric_gate_pass=true` 和 `diagnostic_complete=true`，但正�
 
 ## Review V1 extension closeout
 
-本节是首轮 T3–T10 历史表之后的扩展结果；首轮 M960 在 T5 的 pre-solution negative
-记录仍保留，下面的 M960 是 Review V1 E7 唯一一次冻结 direct rerun，不能互相覆盖。
+本节是首轮 T3–T10 历史表之后的扩展结果；§18.1–§18.5 中的 h5 `not_run` 条目是不可改写的
+historical snapshot，已由下方 Review V2 V2-2 current status supersede，不应解读为当前 h5
+状态。首轮 M960 在 T5 的 pre-solution negative 记录仍保留，下面的 M960 是 Review V1 E7
+唯一一次冻结 direct rerun，不能互相覆盖。
 
 ### E5–E7 结果
 
@@ -182,10 +184,37 @@ factor、modal Schur dominant 均 not_established。完整说明见
 | --- | --- | --- |
 | V2-0 inherited audit | `completed` | h10 仅为 `historical_underresolved_stress_anchor_only`，禁止作 Full3D 5nm reference、Hybrid physical authority 或 0.7 nm mesh-scaling |
 | V2-1 h5 readiness | `pass_with_formal_run_pending` | validate/dry-run、604 keys、资源与 ABI 通过；整数运行时 factor 路径仍 `not_established` |
-| V2-2 h5 Full3D direct | `not_run` | 未启动正式 PDE |
-| V2-3 comparison | `not_run` | 等待 h5 own result；不预写收敛结论 |
+| V2-2 h5 Full3D direct | `pass` | 唯一正式 run 的 own Gate 通过；h5 是 Full3D discrete authority，不宣称收敛 |
+| V2-3 comparison | `pending / not_run` | 尚未授权；不把 h6-vs-h5 写成 convergence |
 
 V2-1 的用户覆盖 watchdog 为 warning `170 GiB`、critical `195 GiB`（只记录 crossing）和
 absolute hard `224000000000 bytes`，任意 swap 立即停止；195 GiB 不再单凭预测阻止启动。
 详情见 [h5 readiness](full3d_h5_direct_and_convergence.md)、[V2-1 record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h5_full3d_readiness_v1.json)
 和 [resource ledger](resource_ledger.md)。
+
+### Review V2 V2-2：h5 Full3D discrete authority
+
+V2-2 只运行了一次冻结的 p6/h5、5 nm、Full3D direct、MPI8 formal case。`official_result=true`、
+`case_status=completed`、true relative residual=`1.1426908495328136e-10`，official dtn-port
+R/T/A_balance/A_volume=`0.0020255498177907264 / 0.02845408887668467 /
+0.9695203613055247 / 0.9695203613041327`，closure=`-1.3919976282750213e-12`。
+604 keys 为 exact unique（bottom/top=`300/304`），beta 与 amplitudes 均 finite；5 个选定平面的 E/H 均 finite；active/full
+canonical export 分别为 `371502/1127502` packets，各 8 rank shards、duplicates=0。
+
+| 资源 / 时间 | measured 值 | 口径 |
+| --- | ---: | --- |
+| process-tree RSS/PSS/USS | `92491.328 / 90440.785 / 90103.539 MiB` | 独立峰值；不能视为同一采样点向量 |
+| swap / warning / critical | `0 MiB / false / false` | warning 170 GiB；critical 195 GiB 仅记录 crossing |
+| absolute hard | `224000000000 bytes`（约 `208.6162567138672 GiB`） | 用户覆盖的 contract hard stop |
+| KSP setup/factorization / solve | `4748.209038352999 / 2.743420086999322 s` | measured |
+| numerical elapsed | `5330.2902718020005 s` | measured |
+
+矩阵口径为 cells=`1680`、full FE DoFs=`1127502`、active trace=`336960`、assembled rows with auxiliary=`337564`，
+condensed NNZ used/allocated=`283210150/298136764`。因子遥测的 raw int32 溢出
+（INFOG(9)=`-2597`、raw matrix NNZ=`-1697967296`）和 `factor_nnz_corrected=2597000000`
+均原样保留，未修复或重跑。完整身份、artifact SHA 和 own-Gate 字段见
+[V2-2 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h5_full3d_direct_v1.json)。
+
+本节不改变 h10 的 `historical_underresolved_stress_anchor_only` 边界；h5 仍不是
+h6-vs-h5 convergence reference，V2-3 保持 `pending / not_run`，完整 repository pytest 仍为
+`cancelled / not_run`。

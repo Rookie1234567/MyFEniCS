@@ -189,4 +189,30 @@ solve 或正式峰值，因此下表不能当作运行实测。
 
 记录与容量公式见 [V2-1 readiness record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h5_full3d_readiness_v1.json)
 和 [h5 readiness outcome](full3d_h5_direct_and_convergence.md)。旧路径缺失该字段时仍保持原有
-`min(terminate, 0.90×selected)` 行为；V2-2 formal run 与 V2-3 comparison 仍 not_run。
+`min(terminate, 0.90×selected)` 行为；这句话记录的是 V2-1 时点；当前 V2-2 formal run 已完成，
+V2-3 comparison 仍 `pending / not_run`。
+
+## 10. Review V2 V2-2：h5 Full3D direct measured authority
+
+V2-2 是唯一一次冻结的 h5 Full3D direct MPI8 formal run；下表全部来自该 run 的 launcher
+watchdog 或 numerical output。它们是 measured simultaneous process-tree/独立指标，不是预测，
+也不构成 h6-vs-h5 convergence。
+
+| 项目 | measured 值 | 口径 |
+| --- | ---: | --- |
+| process-tree RSS/PSS/USS peak | `92491.328 / 90440.785 / 90103.539 MiB` | 独立峰值；不可拼成同一时刻向量 |
+| process-tree swap peak | `0 MiB` | zero-swap Gate pass |
+| warning / critical crossing | `false / false` | warning 170 GiB；critical 195 GiB 只记录 crossing |
+| absolute hard / poll | `224000000000 bytes / 0.25 s` | 用户覆盖 hard；全程快速采样 |
+| stage4 build / KSP setup / KSP solve | `120.759 / 4748.209 / 2.743 s` | measured |
+| postprocess / total numerical | `61.988 / 5330.290 s` | measured |
+
+矩阵与对象口径为 cells=`1680`、full FE DoFs=`1127502`、active trace=`336960`、assembled
+rows with auxiliary=`337564`，condensed NNZ used/allocated=`283210150/298136764`。MUMPS
+raw factor telemetry 的 signed-int32 表示为 raw matrix NNZ=`-1697967296`、INFOG(9)=`-2597`；
+`factor_nnz_corrected=2597000000` 仅为校正后的遥测字段，未修复运行时或重跑。完整身份、
+artifact hashes、604 inventory、canonical packets 和 own-Gate 见
+[V2-2 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h5_full3d_direct_v1.json)。
+
+V2-2 own-Gate 为 pass；h5 只建立 Full3D h5 discrete authority。h10 仍为
+`historical_underresolved_stress_anchor_only`，V2-3 保持 `pending / not_run`。

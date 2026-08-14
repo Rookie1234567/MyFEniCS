@@ -13,8 +13,8 @@ V2-1 是正式运行前的资格检查，不是 h5 求解结果。当前代码�
 | host capacity | pass | MemAvailable=224.432 GiB；disk free=772.330 GiB；swap used=0 |
 | watchdog policy | pass | warning 170 GiB；critical 195 GiB；absolute termination=224000000000 bytes |
 | integer-width audit | conditional | matrix rows/NNZ低于32位；factor NNZ预测超过32位，但 MUMPS 计数字段为64位 |
-| h5 formal own Gate | not_run | V2-2 formal run 尚未启动；V2-1 完成后可按本轮唯一授权运行 |
-| h5 grid comparison | not_run | V2-3 等待 V2-2 own result |
+| h5 formal own Gate | pass | V2-2 唯一正式 run 完成；own residual、official dtn-port、604 keys、字段和资源 Gate 通过 |
+| h5 grid comparison | pending / not_run | V2-3 尚未授权；不把 h5 与 h6 拼成收敛结论 |
 
 完整机器字段与测试入口见 [V2-1 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h5_full3d_readiness_v1.json)。
 
@@ -70,8 +70,38 @@ reference、Hybrid physical authority、accuracy-qualified 结论或 0.7 nm mesh
 | 阶段 | 状态 | 原因 |
 | --- | --- | --- |
 | V2-1 readiness | conditional pass | 本页及 compact record 已完成 |
-| V2-2 h5 Full3D direct + own Gate | not_run | 尚未启动正式 PDE |
-| V2-3 h5 comparison / convergence | not_run | 必须等待 V2-2 正式结果 |
+| V2-2 h5 Full3D direct + own Gate | pass | h5 Full3D discrete authority 已建立；不等于网格收敛 |
+| V2-3 h5 comparison / convergence | pending / not_run | 尚未授权，等待后续明确拆解 |
 
 历史结论和 Review V2 inherited audit 仍见 [summary](summary.md)、[resource ledger](resource_ledger.md)
 与 [V2-0 audit](review_v2_inherited_audit.md)。
+
+## V2-2：h5 Full3D direct 正式 own-Gate
+
+V2-2 按冻结的 p6/h5、5 nm、Full3D direct、MPI8 输入只运行一次。正式 worker 以
+`exit_status=0` 完成；本节的 PASS 只表示这次 h5 离散运行自身的资格 Gate 通过，不能把
+h5 称为 h6-vs-h5 convergence reference，也没有启动 V2-3。
+
+| Gate / 观测 | measured 结果 | 状态与边界 |
+| --- | ---: | --- |
+| true relative residual | `1.1426908495328136e-10`（limit `1e-9`） | pass |
+| official dtn-port R/T/A_balance/A_volume | `0.0020255498177907264 / 0.02845408887668467 / 0.9695203613055247 / 0.9695203613041327` | official；不使用 diagnostic EH Fourier/采样 net-flux 代替 |
+| closure | `-1.3919976282750213e-12`（absolute limit `1e-5`） | pass |
+| dynamic external inventory | `604` exact unique；bottom/top=`300/304`；beta 与 amplitudes 全部 finite | pass |
+| selected E/H | 5 planes `[10,30,60,90,110]`；E/H shape=`[5,20,40,3]`；complex128、finite | pass；per-plane `finite_pass` 为数组重算状态 |
+| canonical export | active trace `371502` packets；full FE `1127502` packets；各 8 shards、duplicates=0 | pass |
+| official result identity | `official_result=true`、`case_status=completed`、classification=`worker_exit0` | run-level pass；`physical_benchmark_candidate=false` 仍保留 |
+
+资源 watchdog 的 measured process-tree 峰值为 RSS/PSS/USS=`92491.328 / 90440.785 /
+90103.539 MiB`，swap=`0 MiB`；warning=`170 GiB`、critical checkpoint=`195 GiB` 均未
+cross，absolute hard=`224000000000 bytes`（约 `208.6162567138672 GiB`）未触发。数值耗时
+为 `5330.2902718020005 s`，其中 KSP setup/factorization=`4748.209038352999 s`，KSP
+solve=`2.743420086999322 s`，postprocess=`61.98816714599889 s`。
+
+本次 measured mesh/矩阵口径为 cells=`1680`、full FE DoFs=`1127502`、active trace=`336960`、
+assembled rows with auxiliary=`337564`，condensed matrix NNZ used/allocated=`283210150/298136764`。MUMPS
+因子遥测保留 raw int32 溢出：raw INFOG(9)=`-2597`、raw matrix NNZ=`-1697967296`；修正显示
+`factor_nnz_corrected=2597000000`，仅作为 telemetry，不修改运行结果、不触发重跑。
+
+完整 compact authority、输入/源码/解析配置/物理身份和 artifact SHA 见
+[V2-2 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h5_full3d_direct_v1.json)。

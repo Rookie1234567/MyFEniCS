@@ -18,7 +18,7 @@ T9 的生成器只读取 tracked dat 和 compact records，没有创建 mesh、�
 MPI/PDE 或读取 ignored raw。详细分类和容量边界见
 [0.7 nm outcome](feasibility_0p7nm.md)。
 
-## T10 结项边界
+## T10 结项边界（历史快照）
 
 以下结果如实保留：
 
@@ -90,6 +90,24 @@ Gate；它们不改写上面的历史 T10 B1 结果。全仓 `python -m pytest -
 | compact JSON | `17 parsed` | Task39 records |
 | 文档合同 | `7/7 pass` | 相对链接、fenced math、表格列数 |
 | `git diff --check` | `pass` | 当前工作树 |
+
+## Review V2 V2-2 formal own-Gate
+
+本轮只收口已完成的唯一 h5 Full3D direct MPI8 formal run及其 compact evidence；没有重新
+运行 pytest、MPI fixture 或 PDE，也没有进入 V2-3。
+
+| 检查/证据 | 状态 | 口径 |
+| --- | --- | --- |
+| h5 formal worker | `pass` | `exit_status=0`、`official_result=true`、true relative residual=`1.1426908495328136e-10` |
+| official dtn-port own Gate | `pass` | R/T/A_balance/A_volume、closure、604 keys、E/H、canonical export 均通过 |
+| watchdog | `pass` | RSS/PSS/USS=`92491.328/90440.785/90103.539 MiB`；swap=`0`；未跨 warning/critical/hard |
+| compact JSON / 文档轻量检查 | `pass` | 本次 V2-2 evidence/docs closeout 的 parse、链接、math/table、benchmark no-write、diff-check |
+| Task39 focused pytest / full pytest | `not_run / cancelled` | 本轮未运行；全仓 pytest 延续用户成本覆盖，不声称 zero failures |
+| V2-3 comparison | `pending / not_run` | 尚未授权；h5 不称 convergence reference |
+
+完整 machine identity、artifact SHA 和 measured/derived 边界见
+[V2-2 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h5_full3d_direct_v1.json)
+与 [h5 direct outcome](full3d_h5_direct_and_convergence.md)。
 | 全仓 repository pytest | `cancelled / not_run` | 用户成本覆盖；不代表 pass 或 zero failures |
 
 ## Review V2 V2-1 light Gate
