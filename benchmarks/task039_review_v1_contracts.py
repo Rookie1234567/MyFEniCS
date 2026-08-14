@@ -884,6 +884,301 @@ def compare_full3d_grid_views(
     }
 
 
+TASK039_V2_PRIMARY_POWER_FLOOR = 1.0e-6
+TASK039_V2_WEAK_POWER_FLOOR = TASK039_GRID_SIGNIFICANCE_FLOOR
+TASK039_V2_OBSERVABLE_LIMIT = 1.0e-5
+TASK039_V2_E_LIMIT, TASK039_V2_H_LIMIT = 2.0e-3, 5.0e-3
+TASK039_V2_ORDER_LIMIT = 1.0e-3
+TASK039_V2_POWER_WEIGHTED_LIMIT = 1.0e-4
+TASK039_V2_AMPLITUDE_WEIGHTED_LIMIT = 1.0e-3
+
+
+def _v2_grid_identity(
+    view: Mapping[str, Any], label: str
+) -> tuple[Mapping[str, Any], str, set[tuple[str, int, int, str]]]:
+    identity = view.get("physics_except_mesh_identity")
+    if not isinstance(identity, Mapping):
+        raise ValueError(f"{label} physics-except-mesh identity is missing")
+    computed = _identity_sha256(identity)
+    if view.get("physics_except_mesh_sha256") != computed:
+        raise ValueError(f"{label} physics-except-mesh hash is stale")
+    keys = _mode_keys(view.get("mode_keys"))
+    if len(keys) != 604:
+        raise ValueError(f"{label} must contain 604 unique mode keys")
+    return identity, computed, keys
+
+
+def _v2_grid_orders(
+    view: Mapping[str, Any],
+    keys: set[tuple[str, int, int, str]],
+    label: str,
+) -> dict[tuple[str, int, int, str], tuple[float, complex]]:
+    orders = view.get("orders")
+    if not isinstance(orders, Mapping) or set(orders) != keys:
+        raise ValueError(f"{label} diffraction orders do not match 604 keys")
+    result: dict[tuple[str, int, int, str], tuple[float, complex]] = {}
+    for key in sorted(keys):
+        row = orders[key]
+        if not isinstance(row, Mapping):
+            raise ValueError(f"{label} order {key!r} is not an object")
+        power = _number(row["power_ratio"], f"{label} {key} power")
+        amplitude = complex(row["outgoing_amplitude"])
+        if not np.isfinite(amplitude.real) or not np.isfinite(amplitude.imag):
+            raise ValueError(f"{label} {key} amplitude is not finite")
+        result[key] = (power, amplitude)
+    return result
+
+
+def _v2_scalar_pair(left: float, right: float, limit: float) -> dict[str, Any]:
+    delta = abs(left - right)
+    return {
+        "h6": left,
+        "h5": right,
+        "abs_delta": delta,
+        "limit": limit,
+        "pass": delta <= limit,
+    }
+
+
+def _v2_order_row(
+    key: tuple[str, int, int, str],
+    h6: tuple[float, complex],
+    h5: tuple[float, complex],
+) -> dict[str, Any]:
+    power6, amplitude6 = h6
+    power5, amplitude5 = h5
+    power_delta = abs(power6 - power5)
+    power_relative, power_denominator = _relative(power6, power5)
+    amplitude_delta = abs(amplitude6 - amplitude5)
+    amplitude_relative, amplitude_denominator = _complex_relative(
+        amplitude6, amplitude5
+    )
+    phase_delta = 0.0
+    if amplitude6 != 0.0 and amplitude5 != 0.0:
+        phase_delta = float(np.angle(amplitude6 * np.conj(amplitude5)))
+    max_power = max(power6, power5)
+    category = (
+        "primary"
+        if max_power >= TASK039_V2_PRIMARY_POWER_FLOOR
+        else "weak"
+        if max_power >= TASK039_V2_WEAK_POWER_FLOOR
+        else "below_floor"
+    )
+    return {
+        "key": list(key),
+        "category": category,
+        "power_h6": power6,
+        "power_h5": power5,
+        "power_abs_delta": power_delta,
+        "power_relative_delta": power_relative,
+        "power_denominator": power_denominator,
+        "amplitude_h6": [float(amplitude6.real), float(amplitude6.imag)],
+        "amplitude_h5": [float(amplitude5.real), float(amplitude5.imag)],
+        "amplitude_abs_delta": float(amplitude_delta),
+        "amplitude_relative_delta": amplitude_relative,
+        "amplitude_denominator": amplitude_denominator,
+        "wrapped_phase_delta_rad": phase_delta,
+        "pass": power_relative <= TASK039_V2_ORDER_LIMIT
+        and amplitude_relative <= TASK039_V2_ORDER_LIMIT,
+    }
+
+
+def compare_full3d_grid_views_v2(
+    h6: Mapping[str, Any], h5: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Apply the Review V2 primary/full-channel two-tier h6-vs-h5 gates."""
+
+    h6_identity, h6_identity_sha, h6_keys = _v2_grid_identity(h6, "h6")
+    h5_identity, h5_identity_sha, h5_keys = _v2_grid_identity(h5, "h5")
+    h6_orders = _v2_grid_orders(h6, h6_keys, "h6")
+    h5_orders = _v2_grid_orders(h5, h5_keys, "h5")
+    keys_exact = h6_keys == h5_keys
+    identity_exact = h6_identity == h5_identity
+
+    coordinate_pairs = {
+        name: (np.asarray(h6["coordinates"][name]), np.asarray(h5["coordinates"][name]))
+        for name in ("x_nm", "y_nm", "z_nm")
+    }
+    coordinates_exact = all(
+        np.array_equal(left, right) for left, right in coordinate_pairs.values()
+    )
+    coordinates = {
+        name: {"shape": list(left.shape), "exact": bool(np.array_equal(left, right))}
+        for name, (left, right) in coordinate_pairs.items()
+    }
+    observables = {
+        name: _v2_scalar_pair(
+            _number(h6["observables"][name], f"h6 {name}"),
+            _number(h5["observables"][name], f"h5 {name}"),
+            TASK039_V2_OBSERVABLE_LIMIT,
+        )
+        for name in ("R_total", "T_total", "A_balance", "A_volume")
+    }
+    closure: dict[str, Any] = {}
+    for label, view in (("h6", h6), ("h5", h5)):
+        value = _number(view["closure"], f"{label} closure")
+        closure[label] = {
+            "value": value,
+            "abs_value": abs(value),
+            "limit": TASK039_V2_OBSERVABLE_LIMIT,
+            "pass": abs(value) <= TASK039_V2_OBSERVABLE_LIMIT,
+        }
+
+    fields: dict[str, Any] = {}
+    for name, limit in (
+        ("E_V_per_m", TASK039_V2_E_LIMIT),
+        ("H_A_per_m", TASK039_V2_H_LIMIT),
+    ):
+        metrics = _field_metrics(
+            _array(h6["fields"][name], f"h6 {name}"),
+            _array(h5["fields"][name], f"h5 {name}"),
+        )
+        metrics["limit"] = limit
+        metrics["pass"] = coordinates_exact and metrics["relative_l2"] <= limit
+        fields[name] = metrics
+
+    rows = [
+        _v2_order_row(key, h6_orders[key], h5_orders[key])
+        for key in sorted(h6_keys & h5_keys)
+    ]
+    primary_rows = [row for row in rows if row["category"] == "primary"]
+    weak_rows = [row for row in rows if row["category"] == "weak"]
+    full_channel_rows = primary_rows + weak_rows
+    below_floor_count = sum(row["category"] == "below_floor" for row in rows)
+    primary_order_pass = bool(primary_rows) and all(row["pass"] for row in primary_rows)
+    weak_order_pass = all(row["pass"] for row in weak_rows)
+    full_channel_failures = [row["key"] for row in full_channel_rows if not row["pass"]]
+    full_channel_order_pass = not full_channel_failures
+
+    power_abs_sum = sum(row["power_abs_delta"] for row in rows)
+    power_denominator = max(
+        sum(max(row["power_h6"], row["power_h5"]) for row in rows), 1.0e-30
+    )
+    power_weighted = power_abs_sum / power_denominator
+    amplitude_difference = np.asarray(
+        [complex(*row["amplitude_h6"]) - complex(*row["amplitude_h5"]) for row in rows],
+        dtype=np.complex128,
+    )
+    amplitude_h6 = np.asarray(
+        [complex(*row["amplitude_h6"]) for row in rows], dtype=np.complex128
+    )
+    amplitude_h5 = np.asarray(
+        [complex(*row["amplitude_h5"]) for row in rows], dtype=np.complex128
+    )
+    amplitude_denominator = max(
+        float(np.linalg.norm(amplitude_h6)),
+        float(np.linalg.norm(amplitude_h5)),
+        1.0e-30,
+    )
+    amplitude_weighted = float(np.linalg.norm(amplitude_difference)) / (
+        amplitude_denominator
+    )
+    aggregate = {
+        "power_weighted": {
+            "numerator": power_abs_sum,
+            "denominator": power_denominator,
+            "value": power_weighted,
+            "limit": TASK039_V2_POWER_WEIGHTED_LIMIT,
+            "pass": power_weighted <= TASK039_V2_POWER_WEIGHTED_LIMIT,
+            "formula": "sum(abs(p_h6-p_h5))/sum(max(p_h6,p_h5))",
+        },
+        "amplitude_weighted_L2": {
+            "numerator": float(np.linalg.norm(amplitude_difference)),
+            "denominator": amplitude_denominator,
+            "value": amplitude_weighted,
+            "limit": TASK039_V2_AMPLITUDE_WEIGHTED_LIMIT,
+            "pass": amplitude_weighted <= TASK039_V2_AMPLITUDE_WEIGHTED_LIMIT,
+            "formula": "norm2(a_h6-a_h5)/max(norm2(a_h6),norm2(a_h5),1e-30)",
+        },
+    }
+    primary_pass = (
+        identity_exact
+        and keys_exact
+        and coordinates_exact
+        and all(item["pass"] for item in observables.values())
+        and all(item["pass"] for item in closure.values())
+        and all(item["pass"] for item in fields.values())
+        and primary_order_pass
+        and aggregate["power_weighted"]["pass"]
+        and aggregate["amplitude_weighted_L2"]["pass"]
+    )
+    classification = (
+        "FULL3D_DIRECT_5NM_PRIMARY_REFERENCE_ESTABLISHED_AT_P6H5"
+        if primary_pass
+        else "FULL3D_DIRECT_5NM_REFERENCE_NOT_CONVERGED_AT_P6H5"
+    )
+    h5_role = (
+        "primary_physical_reference"
+        if primary_pass
+        else "best_available_discrete_authority_only"
+    )
+    classification_flags: list[str] = []
+    if primary_pass and not full_channel_order_pass:
+        classification_flags.append("FULL_CHANNEL_WEAK_ORDER_CONVERGENCE_PENDING")
+    if primary_pass and full_channel_order_pass:
+        classification_flags.append(
+            "FULL3D_DIRECT_5NM_FULL_CHANNEL_REFERENCE_ESTABLISHED_AT_P6H5"
+        )
+    return {
+        "schema": "task039.review-v2.full3d-two-tier-grid-comparison.v1",
+        "pass": primary_pass,
+        "primary_pass": primary_pass,
+        "classification": classification,
+        "h5_role": h5_role,
+        "classification_flags": classification_flags,
+        "mesh_pair": {
+            "h6_nm": h6.get("mesh_target_nm"),
+            "h5_nm": h5.get("mesh_target_nm"),
+        },
+        "identity": {
+            "physics_except_mesh_exact": identity_exact,
+            "h6_sha256": h6_identity_sha,
+            "h5_sha256": h5_identity_sha,
+            "physical_model_sha256": {
+                "h6": h6.get("physical_model_sha256"),
+                "h5": h5.get("physical_model_sha256"),
+            },
+        },
+        "mode_keys": {
+            "h6_count": len(h6_keys),
+            "h5_count": len(h5_keys),
+            "exact": keys_exact,
+        },
+        "coordinates": {"exact": coordinates_exact, "values": coordinates},
+        "observables": observables,
+        "closure": closure,
+        "fields": fields,
+        "primary_orders": {
+            "count": len(primary_rows),
+            "rows": primary_rows,
+            "pass": primary_order_pass,
+        },
+        "weak_orders": {
+            "count": len(weak_rows),
+            "rows": weak_rows,
+            "pass": weak_order_pass,
+        },
+        "below_1e-8_count": below_floor_count,
+        "full_channel_order_gate": {
+            "threshold": TASK039_V2_WEAK_POWER_FLOOR,
+            "limit": TASK039_V2_ORDER_LIMIT,
+            "count": len(full_channel_rows),
+            "failures": full_channel_failures,
+            "pass": full_channel_order_pass,
+        },
+        "aggregate": aggregate,
+        "gates": {
+            "primary_observables": all(item["pass"] for item in observables.values()),
+            "closure": all(item["pass"] for item in closure.values()),
+            "selected_fields": all(item["pass"] for item in fields.values()),
+            "primary_orders": primary_order_pass,
+            "all_604_aggregate": aggregate["power_weighted"]["pass"]
+            and aggregate["amplitude_weighted_L2"]["pass"],
+        },
+        "source": {"h6": h6.get("source"), "h5": h5.get("source")},
+    }
+
+
 def check_m480_hybrid_iterative(
     record: Mapping[str, Any],
     direct_reference: Mapping[str, Any],
@@ -1729,6 +2024,7 @@ __all__ = [
     "audit_m960_trace",
     "check_m480_hybrid_iterative",
     "compare_full3d_grid_views",
+    "compare_full3d_grid_views_v2",
     "diagnose_h_paths",
     "load_full3d_grid_view",
     "mesh_resource_preflight",
