@@ -68,3 +68,21 @@ W5 将 Krylov 基向量放到外部 scratch 文件，减少常驻进程内存；
 
 W5 compact checker 为 RC1 的预期负结果，记录在
 `benchmarks/cases/101_task37_extra_development/records/m6b_w5_disk_fgmres_screen.json`。full time-harmonic PDE、official RTA、direct-authority physics comparison 和最终 PDE `<2,000,000,000 B` 目标本轮均未运行。用户已授权继续针对具体收敛问题研究，但没有放宽 2GB、swap=0、true residual 或物理一致性 Gate；冻结的 W5 raw/watchdog 和更早负结果均保持不变。
+
+## W6B-S0 固定多阶基的离线诊断
+
+W6B-S0 只读取 W6A 的 390 列 `AZ` 磁盘 scratch 和四个冻结 W5 residual，比较旧 75 列与固定追加的 `n=0, m=-7..-1` 列集合。它没有重新生成 FE 函数、调用 physical/DtN action、运行 KSP 或 PDE；因此这里只能说明残差与已生成列空间的关系，不能称为 formal W6A Gate 或 PDE 结果。
+
+| 项目 | W6B-S0 结果 |
+| --- | --- |
+| classification | `DIAGNOSTIC_ONLY` |
+| full390 rho（20/100/150/200） | `0.9703655744743773 / 0.9818418639331844 / 0.980066335096579 / 0.9764446942793938` |
+| iter200 相对 legacy75 改善 | `0.0235440355720149`，低于 `0.15` |
+| 进程树峰值 / swap | `196,874,240 B / 0`（离线诊断实测） |
+| AZ scratch | `1,084,524,480 B`，磁盘占用，不计作 RSS |
+| formal / PDE / official RTA | `false / false / false` |
+
+W6A 正式数值 Gate 已经给出 `rho390@200=0.9764446942793935`、相对改善 `0.023544035572015565` 的负结果；W6B-S0 在约 `4.6e-15` 内重算复现。iter200 的 component=1 追加组是主要信号（`rho=0.9767683658573292`），component=0 和 component=2 的收益很小；按固定阶次累计，完整 `m=-7..-1` 仍只达到约 `2.35%` 的改善。因此现有数据不足以支持“仅继续加入 n=±1 就能达到 0.70”这一假设，本轮不启动新的大规模 builder 或外层 screen。
+
+compact 证据为
+`benchmarks/cases/101_task37_extra_development/records/m6b_w6b_s0_5c34906_spectral_diagnostic.json`，file SHA `1a4e34e4f50d633986ef68c88222edab3a4f3bb1d247033a3389e98cc4be2a90`，embedded evidence `333d2dfb0822b21d24fc97ec0b7dc63325179051d14a7c977a674944acecf280`。W6B raw 和 watchdog 只读绑定，旧 W5/W6A 负结果保持不变；full PDE、field/RTA、direct comparison 和最终 PDE 内存目标仍未运行。

@@ -337,3 +337,25 @@ W5 把 Krylov 基向量放入外部 scratch 文件，避免这些大向量长期
 | 150→200 | `0.17223578573793497` | `>=0.15`，PASS |
 
 因此 W5 的 disk-backed 实现通过了资源与证据边界，但没有通过最终屏幕数值 Gate。full PDE、official RTA、direct comparison 和最终 PDE 内存目标仍未运行。用户已明确授权继续研究具体收敛问题，但 2GB/swap、true residual 和 physics Gate 均保持不变；本段不改写任何旧 raw 或历史负结果。
+
+## W6B-S0：固定多衍射阶次的离线谱诊断
+
+W6B-S0 不是新的 PDE 或外层屏幕，而是对 W6A 已经写入磁盘的 `AZ` 列做一次只读分析。它逐列读取 390 个 `AZ` 结果，计算冻结 W5 四个残差在不同固定列集合上的最小二乘投影；因此不重新调用有限元、DtN 或物理 action，也不把 390 列 dense 数组装进进程内存。这个诊断回答的是“现有固定基空间能捕获多少残差”，不能替代正式 builder 或 screen Gate。
+
+W6B-S0 严格使用旧 75 列和追加的 `n=0, m=-7..-1` 315 列，集合顺序、W1A 前 75 列、W6A Gram/R 和 W5 residual 都由 hash 绑定。四个 checkpoint 的 full390 结果如下；`rho` 越小表示投影后剩余误差越小。
+
+| checkpoint | legacy75 rho | full390 rho | 相对改善 |
+| ---: | ---: | ---: | ---: |
+| 20 | `0.999860490222292` | `0.9703655744743773` | `0.029499031151193122` |
+| 100 | `0.9999547234536721` | `0.9818418639331844` | `0.018113679645343272` |
+| 150 | `0.9999695769032534` | `0.980066335096579` | `0.019903847343347714` |
+| 200 | `0.9999884581087096` | `0.9764446942793938` | `0.0235440355720149` |
+
+W6A 正式 builder 的同一 full390 authority 是 `rho200=0.9764446942793935`、相对改善 `0.023544035572015565`；W6B-S0 的重算在 `4.6e-15` 量级内复现它。因此，W6A 的正式数值负结论没有被改写：`rho200<=0.70` 和相对改善 `>=15%` 都没有达到。
+
+在 iter200 的固定分组诊断中，component=1 组的 `rho=0.9767683658573292`，而 component=0/2 组分别为 `0.999839662583103/0.9998561976667579`；按累计阶次加入时，`m=-7` 到完整 `m=-7..-1` 的相对改善依次为 `0.006090289557553752`、`0.021118084439869955`、`0.02145475948567266`、`0.021629646857424523`、`0.021680935756698716`、`0.022015382427173824`、`0.0235440355720149`。这说明当前新增 n=0 横向阶次的有效信号主要集中在一个分量，整体增益仍很小。它不能证明加入 n=±1 就能达到 `rho<=0.70`，所以本轮没有据此启动新的大 builder 或参数扫描。
+
+该离线诊断的 watchdog 进程树峰值为 `196,874,240 B`、swap 为 `0`；AZ scratch 占用 `1,084,524,480 B`，这是磁盘空间，不是 RSS。W6B-S0 的分类是 `DIAGNOSTIC_ONLY`，`formal_pass=false`、`pde_pass=false`、`official_rta=false`，没有运行 full PDE、field recovery、official RTA 或 direct-authority physics comparison。
+
+证据索引：compact 文件
+`benchmarks/cases/101_task37_extra_development/records/m6b_w6b_s0_5c34906_spectral_diagnostic.json`，file SHA `1a4e34e4f50d633986ef68c88222edab3a4f3bb1d247033a3389e98cc4be2a90`，embedded evidence `333d2dfb0822b21d24fc97ec0b7dc63325179051d14a7c977a674944acecf280`；W6B raw SHA `e0c5870c8e7cc7bfb65df9e1ae70ae688c7fa0e2e83bd629ba063d4daef54f23`；watchdog summary SHA `f7d74fc293c802792e186d987c71f3eea5412d78a7d8b4369ae09ffffcd88979`。W6A/W5 原始证据保持冻结且未改写。
