@@ -6152,9 +6152,6 @@ def _run_m6b_w2_diagnostic(
     solver: str = "fgmres",
     initial_solution: Any | None = None,
     continuation_authority: Mapping[str, Any] | None = None,
-    continuation_rhs: Any | None = None,
-    continuation_outer_action: Any | None = None,
-    continuation_residual: Any | None = None,
 ) -> int:
     import gc
     import shutil
@@ -6584,6 +6581,15 @@ def _run_m6b_w2_diagnostic(
                     rhs_vec.getArray(readonly=True), dtype=np.complex128, copy=True
                 )
                 if solver == "disk_fgmres_restart":
+                    if not isinstance(continuation_authority, dict):
+                        raise ValueError("M6B W7-S1 continuation payload is missing")
+                    continuation_rhs = continuation_authority.pop("frozen_rhs", None)
+                    continuation_outer_action = continuation_authority.pop(
+                        "frozen_outer_action", None
+                    )
+                    continuation_residual = continuation_authority.pop(
+                        "frozen_residual", None
+                    )
                     if not isinstance(continuation_rhs, np.ndarray):
                         raise ValueError("M6B W7-S1 frozen RHS is missing")
                     if (
@@ -7162,9 +7168,6 @@ def _run_m6b_w7_s1_screen(
 
     continuation = _m6b_w7_s1_load_w5_authority(w5_compact_path, w5_raw_dir)
     initial_solution = continuation.pop("initial_solution")
-    frozen_rhs = continuation.pop("frozen_rhs")
-    frozen_outer_action = continuation.pop("frozen_outer_action")
-    frozen_residual = continuation.pop("frozen_residual")
     try:
         return _run_m6b_w2_diagnostic(
             run_dir,
@@ -7179,12 +7182,9 @@ def _run_m6b_w7_s1_screen(
             solver="disk_fgmres_restart",
             initial_solution=initial_solution,
             continuation_authority=continuation,
-            continuation_rhs=frozen_rhs,
-            continuation_outer_action=frozen_outer_action,
-            continuation_residual=frozen_residual,
         )
     finally:
-        del initial_solution, frozen_rhs, frozen_outer_action, frozen_residual
+        del initial_solution
 
 
 def _m6b_command(command: str, run_dir: Path) -> list[str]:

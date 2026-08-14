@@ -181,6 +181,10 @@ def test_w7_parser_and_fixed_dispatch(monkeypatch, tmp_path):
 
     def fake_worker(*_args, **kwargs):
         captured.update(kwargs)
+        payload = kwargs["continuation_authority"]
+        for key in ("frozen_rhs", "frozen_outer_action", "frozen_residual"):
+            payload.pop(key)
+        captured["payload_after_precheck"] = payload
         return 19
 
     monkeypatch.setattr(runner, "_m6b_w7_s1_load_w5_authority", fake_authority)
@@ -197,9 +201,10 @@ def test_w7_parser_and_fixed_dispatch(monkeypatch, tmp_path):
     ) == 19
     assert captured["solver"] == "disk_fgmres_restart"
     assert captured["initial_solution"].shape == (3,)
-    assert captured["continuation_rhs"].shape == (3,)
-    assert captured["continuation_outer_action"].shape == (3,)
-    assert captured["continuation_residual"].shape == (3,)
+    assert captured["payload_after_precheck"]["frozen_iteration"] == 200
+    assert "frozen_rhs" not in captured["payload_after_precheck"]
+    assert "frozen_outer_action" not in captured["payload_after_precheck"]
+    assert "frozen_residual" not in captured["payload_after_precheck"]
     assert captured["projected"] is True
     assert captured["screen"] is True
 
