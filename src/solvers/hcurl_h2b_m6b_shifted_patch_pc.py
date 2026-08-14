@@ -1678,6 +1678,7 @@ def run_m6b_right_fbcgs_screen(
         )
         ksp.solve(rhs, solution)
         actual_iterations = int(ksp.getIterationNumber())
+        sample(ksp, actual_iterations, float(ksp.getResidualNorm()))
         expected_pc_applies = 2 * actual_iterations
         if set(samples) != {str(value) for value in M6B_W4_PC_APPLY_BUDGETS}:
             raise ValueError("M6B FBCGS checkpoint set is incomplete")

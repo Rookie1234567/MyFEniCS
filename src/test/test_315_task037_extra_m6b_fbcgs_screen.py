@@ -184,6 +184,13 @@ def test_m6b_w4_direct_x_writer_and_apply_budget_contract(tmp_path):
         matrix.destroy()
 
 
+def test_m6b_w4_postsolve_sample_precedes_completeness_check():
+    source = inspect.getsource(run_m6b_right_fbcgs_screen)
+    assert source.index("ksp.solve(rhs, solution)") < source.index(
+        "sample(ksp, actual_iterations"
+    ) < source.index("if set(samples)")
+
+
 def test_m6b_w4_metadata_and_numeric_gates_fail_closed():
     valid = {
         str(budget): {

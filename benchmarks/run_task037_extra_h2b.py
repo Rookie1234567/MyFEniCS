@@ -16,6 +16,7 @@ import math
 import os
 from pathlib import Path
 import statistics
+import shutil
 import subprocess
 import sys
 import time
@@ -2012,8 +2013,12 @@ def _source_pair(h2a: Any) -> dict[str, Any]:
 
 
 def _light_source() -> dict[str, Any]:
+    git_executable = shutil.which("git")
+    if git_executable is None:
+        raise FileNotFoundError("git executable was not found")
+    git_executable = os.path.abspath(git_executable)
     command = [
-        "git",
+        git_executable,
         "--git-dir",
         str(ROOT / ".git-codex"),
         "--work-tree",
@@ -2021,10 +2026,16 @@ def _light_source() -> dict[str, Any]:
         "rev-parse",
         "HEAD",
     ]
-    result = subprocess.run(command, check=True, capture_output=True, text=True)
+    result = subprocess.run(
+        command,
+        check=True,
+        capture_output=True,
+        text=True,
+        close_fds=False,
+    )
     status = subprocess.run(
         [
-            "git",
+            git_executable,
             "--git-dir",
             str(ROOT / ".git-codex"),
             "--work-tree",
@@ -2036,6 +2047,7 @@ def _light_source() -> dict[str, Any]:
         check=True,
         capture_output=True,
         text=True,
+        close_fds=False,
     )
     lines = [line for line in status.stdout.splitlines() if line.strip()]
     untracked = [line[3:] for line in lines if line.startswith("?? ") and len(line) > 3]
