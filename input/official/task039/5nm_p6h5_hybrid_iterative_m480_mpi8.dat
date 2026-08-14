@@ -1,0 +1,99 @@
+schema_version = 1
+model_id = "task039_5nm_hybrid_iterative_m480_candidate"
+run_id = "task039_5nm_hybrid_iterative_p6h5_m480_mpi8"
+comparison_group = "task039_5nm_p6h5"
+dimension = 3
+
+[geometry]
+geometry_kind = "rectangular_block_grating"
+period_x_nm = 50.0
+period_y_nm = 25.0
+z_min_nm = -10.0
+z_max_nm = 130.0
+interface_z_nm = 0.0
+air_height_nm = 130.0
+substrate_thickness_nm = 10.0
+grating_width_x_nm = 17.0
+grating_width_y_nm = 25.0
+grating_height_nm = 120.0
+
+[materials]
+n_air = [1.0, 0.0]
+mu_r = [1.0, 0.0]
+substrate_name = "Task39 5nm material"
+n_substrate = [0.99396854453, 0.00435380777]
+grating_name = "Task39 5nm material"
+n_grating = [0.99396854453, 0.00435380777]
+
+[incidence]
+wavelength_nm = 5.0
+grazing_angle_deg = 10.0
+azimuth_deg = 0.0
+polarization = "s"
+electric_amplitude = 1.0
+
+[discretization]
+nedelec_degree = 6
+visualization_degree = 6
+mesh_target_nm = 5.0
+mesh_cell_type = "hexahedron"
+mesh_spacing_mode = "boundary_fitted"
+assembly_backend = "assembly_time_static_condensed"
+floquet_constraint_mode = "auto"
+
+[boundary]
+use_floquet_x = true
+use_floquet_y = true
+vertical_boundary = "dtn_port"
+scattering_background = "layered"
+dtn_order_policy = "auto_propagating"
+dtn_assembly = "auxiliary"
+use_pml = false
+pml_alpha = 5.0
+
+[method]
+kind = "hybrid_iterative"
+bottom_interface_nm = 10.0
+top_interface_nm = 110.0
+requested_modes_per_direction = 480
+propagation_model = "full3d_uniform_cg"
+traction_model = "full3d_one_cell_exact_schur"
+
+[solver]
+linear_solver = "fgmres"
+preconditioner = "hybrid_block_ldu_ilu0_dtn_woodbury"
+restart = 90
+max_iterations = 6000
+relative_tolerance = 5.0e-9
+absolute_tolerance = 0.0
+initial_guess = "zero"
+ilu_level = 0
+ilu_shift = 0.1
+subdomain_count_per_endcap = 1
+overlap_fraction = 0.0
+side_residual_correction_steps = 2
+
+[execution]
+mpi_size = 8
+warning_memory_gib = 170.0
+terminate_memory_gib = 195.0
+absolute_terminate_memory_bytes = 224000000000
+timeout_seconds = 21600
+require_zero_swap = true
+
+[output]
+results_root = "results"
+unique_output = true
+export_fields = true
+export_diffraction_orders = true
+export_canonical_vectors = true
+export_modal_amplitudes = true
+export_reference_planes = true
+reference_plane_z_nm = [10.0, 30.0, 60.0, 90.0, 110.0]
+sample_count_x = 40
+sample_count_y = 20
+diffraction_sample_count_x = 32
+diffraction_sample_count_y = 32
+probe_fraction = 0.75
+diffraction_order_max_m = 2
+diffraction_order_max_n = 2

@@ -250,8 +250,12 @@ def test_task039_resolved_identity_excludes_only_mesh_target() -> None:
     ) != _resolved_physics_identity(changed_material, inventory)
 
 
-def _m480_record(reference: dict[str, object]) -> dict[str, object]:
-    profile = make_task039_hybrid_iterative_profile(480, 8)
+def _m480_record(
+    reference: dict[str, object], mesh_target_nm: float = 10.0
+) -> dict[str, object]:
+    profile = make_task039_hybrid_iterative_profile(
+        480, 8, mesh_target_nm=mesh_target_nm
+    )
     keys = _mode_keys()
     inventory = {
         "keys": [dict(zip(("side", "m", "n", "polarization"), key)) for key in keys]
@@ -437,12 +441,15 @@ def test_task039_m480_solver_only_contract_blocks_full3d_qualification() -> None
     )
 
 
-def test_task039_m480_checker_accepts_minimal_online_builder_shape() -> None:
+@pytest.mark.parametrize("mesh_target_nm", (10.0, 5.0))
+def test_task039_m480_checker_accepts_minimal_online_builder_shape(
+    mesh_target_nm: float,
+) -> None:
     reference = _grid_view()
     reference["equation_identity_sha256"] = _identity_sha256(
         reference["equation_identity"]
     )
-    record = _m480_record(reference)
+    record = _m480_record(reference, mesh_target_nm)
     assert "operator_contract" not in record
     assert "solver_authority" not in record
     assert "integration_pass" not in record["physics"]
@@ -479,6 +486,9 @@ def test_task039_m480_checker_accepts_minimal_online_builder_shape() -> None:
         comparison_payload=comparison_payload,
     )
     assert result["pass"] is True
+    assert result["profile_errors"] == []
+    assert record["profile"]["h_nm"] == mesh_target_nm
+    assert record["profile"]["modal_h_nm"] == mesh_target_nm
 
 
 def _h_path() -> dict[str, object]:

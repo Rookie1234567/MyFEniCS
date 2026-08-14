@@ -61,11 +61,14 @@ TASK039_HYBRID_ITERATIVE_PROFILE = Task39HybridIterativeProfile()
 def make_task039_hybrid_iterative_profile(
     requested_modes: int,
     mpi_size: int,
+    *,
+    mesh_target_nm: float = 10.0,
 ) -> Task39HybridIterativeProfile:
     """Build only the finite numeric M/MPI choices accepted by Task39."""
 
     modes = int(requested_modes)
     mpi = int(mpi_size)
+    mesh = float(mesh_target_nm)
     if modes not in TASK039_HYBRID_ITERATIVE_MODES:
         raise ValueError(
             "Task39 Hybrid iterative modes must be one of "
@@ -75,11 +78,23 @@ def make_task039_hybrid_iterative_profile(
         raise ValueError(
             f"Task39 Hybrid iterative MPI must be one of {TASK039_HYBRID_ITERATIVE_MPI}"
         )
+    if mesh not in (10.0, 5.0):
+        raise ValueError("Task39 Hybrid iterative mesh must be 10.0 or 5.0 nm")
+    if mesh == 5.0 and (modes != 480 or mpi != 8):
+        raise ValueError("Task39 h5 Hybrid iterative requires M480 and MPI8")
+    profile_id = (
+        "task039.hybrid_iterative.p6-h5.v1"
+        if mesh == 5.0
+        else "task039.hybrid_iterative.p6-h10.v1"
+    )
     return replace(
         TASK039_HYBRID_ITERATIVE_PROFILE,
+        profile_id=profile_id,
         requested_modes=modes,
         candidate_modes=2 * modes,
         mpi_size=mpi,
+        h_nm=mesh,
+        modal_h_nm=mesh,
     )
 
 
@@ -397,6 +412,7 @@ def run_task039_hybrid_iterative(
     profile = make_task039_hybrid_iterative_profile(
         int(method["requested_modes_per_direction"]),
         int(resolved_payload["execution"]["mpi_size"]),
+        mesh_target_nm=float(resolved_payload["discretization"]["mesh_target_nm"]),
     )
     inventory = task039_dynamic_external_mode_inventory(resolved_payload)
     expected_inventory = deepcopy(inventory)

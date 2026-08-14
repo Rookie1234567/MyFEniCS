@@ -569,7 +569,7 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
         (10.0, 7.5, 6.0, 5.0)
         if kind == "full3d_direct"
         else (10.0, 5.0)
-        if kind == "hybrid_direct"
+        if kind in {"hybrid_direct", "hybrid_iterative"}
         else (10.0,)
     )
     if not any(
@@ -593,6 +593,11 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
         and isinstance(mesh_target_nm, (int, float))
         and isclose(float(mesh_target_nm), 5.0, rel_tol=0.0, abs_tol=1.0e-12)
     )
+    h5_iterative = (
+        kind == "hybrid_iterative"
+        and isinstance(mesh_target_nm, (int, float))
+        and isclose(float(mesh_target_nm), 5.0, rel_tol=0.0, abs_tol=1.0e-12)
+    )
     if (
         kind == "hybrid_direct"
         and h5_direct
@@ -604,29 +609,46 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
                 "Task39 h5 Hybrid direct requires M=480",
             )
         )
+    if h5_iterative:
+        if method.get("requested_modes_per_direction") != 480:
+            errors.append(
+                (
+                    "method.requested_modes_per_direction",
+                    "Task39 h5 Hybrid iterative requires M=480",
+                )
+            )
+        if config["execution"].get("mpi_size") != 8:
+            errors.append(
+                (
+                    "execution.mpi_size",
+                    "Task39 h5 Hybrid iterative requires MPI8",
+                )
+            )
     absolute_terminate_memory_bytes = config["execution"].get(
         "absolute_terminate_memory_bytes"
     )
-    if h5_direct and absolute_terminate_memory_bytes != 224_000_000_000:
+    h5_absolute_profile = h5_direct or h5_iterative
+    if h5_absolute_profile and absolute_terminate_memory_bytes != 224_000_000_000:
         errors.append(
             (
                 "execution.absolute_terminate_memory_bytes",
-                "Task39 p6/h5 direct requires exact 224000000000",
+                "Task39 p6/h5 direct or Hybrid iterative requires exact 224000000000",
             )
         )
-    elif not h5_direct and absolute_terminate_memory_bytes is not None:
+    elif not h5_absolute_profile and absolute_terminate_memory_bytes is not None:
         errors.append(
             (
                 "execution.absolute_terminate_memory_bytes",
-                "Task39 absolute byte termination is enabled only for p6/h5 direct",
+                "Task39 absolute byte termination is enabled only for p6/h5 profiles",
             )
         )
     m480_mpi1_solver_only = (
         kind == "hybrid_iterative"
         and config["execution"].get("mpi_size") == 1
         and method.get("requested_modes_per_direction") == 480
+        and not h5_iterative
     )
-    review_direct_budget = grid_direct or h5_direct
+    review_direct_budget = grid_direct or h5_absolute_profile
     expected_warning = (
         45.0 if m480_mpi1_solver_only else 170.0 if review_direct_budget else 180.0
     )

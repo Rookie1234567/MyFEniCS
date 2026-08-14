@@ -50,7 +50,7 @@ TASK039_INPUTS = tuple(sorted(TASK039.glob("*.dat")))
 def test_task039_inputs_are_numeric_finite_profiles_and_share_physics():
     specs = [load_and_resolve(path) for path in TASK039_INPUTS]
 
-    assert len(specs) == 14
+    assert len(specs) == 15
     assert {spec.method["kind"] for spec in specs} == {
         "full3d_direct",
         "full3d_iterative",
@@ -87,6 +87,25 @@ def test_task039_inputs_are_numeric_finite_profiles_and_share_physics():
     assert h5_hybrid.execution["warning_memory_gib"] == 170.0
     assert h5_hybrid.execution["terminate_memory_gib"] == 195.0
     assert h5_hybrid.execution["absolute_terminate_memory_bytes"] == 224_000_000_000
+    h5_iterative = next(
+        spec
+        for spec in specs
+        if spec.method["kind"] == "hybrid_iterative"
+        and spec.discretization["mesh_target_nm"] == 5.0
+    )
+    assert h5_iterative.identity["model_id"] == (
+        "task039_5nm_hybrid_iterative_m480_candidate"
+    )
+    assert h5_iterative.method["requested_modes_per_direction"] == 480
+    assert h5_iterative.execution["mpi_size"] == 8
+    assert h5_iterative.execution["warning_memory_gib"] == 170.0
+    assert h5_iterative.execution["terminate_memory_gib"] == 195.0
+    assert h5_iterative.execution["absolute_terminate_memory_bytes"] == 224_000_000_000
+    assert h5_iterative.solver["restart"] == 90
+    assert h5_iterative.solver["max_iterations"] == 6000
+    assert h5_iterative.solver["relative_tolerance"] == 5.0e-9
+    assert h5_iterative.solver["initial_guess"] == "zero"
+    assert h5_iterative.physical_model_sha256 == h5_hybrid.physical_model_sha256
     h10_hybrid = next(
         spec
         for spec in specs
@@ -264,6 +283,26 @@ def test_task039_hybrid_iterative_candidate_is_numeric_not_m_robust():
     assert spec.method["requested_modes_per_direction"] == 120
     assert spec.method["kind"] == "hybrid_iterative"
     assert spec.output["export_canonical_vectors"] is True
+
+
+@pytest.mark.parametrize(
+    ("section", "key", "value"),
+    (
+        ("method", "requested_modes_per_direction", 240),
+        ("execution", "mpi_size", 1),
+        ("discretization", "mesh_target_nm", 7.5),
+        ("execution", "absolute_terminate_memory_bytes", 223_000_000_000),
+    ),
+)
+def test_task039_h5_hybrid_iterative_rejects_scope_mutations(
+    section: str, key: str, value: object
+):
+    specification = load_and_resolve(
+        TASK039 / "5nm_p6h5_hybrid_iterative_m480_mpi8.dat"
+    )
+    payload = specification.as_jsonable()
+    payload[section][key] = value
+    assert task039_profile_errors(payload)
 
 
 def test_task039_dynamic_outgoing_inventory_is_independent_of_reporting_bounds():
@@ -924,6 +963,45 @@ def test_task039_hybrid_iterative_passes_cfg_profile_and_inventory_to_runner(
     assert captured["inventory"]["count"] > 40
     assert captured["argv"][captured["argv"].index("--requested-modes") + 1] == "120"
     assert captured["argv"][captured["argv"].index("--mpi-size") + 1] == str(mpi_size)
+
+
+def test_task039_h5_hybrid_iterative_passes_mesh_profile_and_two_pass_to_runner(
+    tmp_path: Path,
+):
+    specification = load_and_resolve(
+        TASK039 / "5nm_p6h5_hybrid_iterative_m480_mpi8.dat"
+    )
+    captured = {}
+
+    def fake_runner(argv, cfg, modal_cfg, profile, inventory):
+        captured.update(
+            argv=argv,
+            cfg=cfg,
+            modal_cfg=modal_cfg,
+            profile=profile,
+            inventory=inventory,
+        )
+        return _task039_iterative_record(profile, inventory, "f" * 40)
+
+    result = run_task039_hybrid_iterative(
+        specification.as_jsonable(),
+        tmp_path,
+        runner=fake_runner,
+        source_sha="f" * 40,
+    )
+    assert result["passed"] is True
+    assert captured["cfg"].mesh_target_size == 5.0
+    assert captured["modal_cfg"].mesh_target_size == 5.0
+    assert captured["profile"].profile_id == "task039.hybrid_iterative.p6-h5.v1"
+    assert captured["profile"].h_nm == 5.0
+    assert captured["profile"].modal_h_nm == 5.0
+    assert captured["profile"].degree == 6
+    assert captured["profile"].modal_degree == 6
+    assert captured["profile"].requested_modes == 480
+    assert captured["profile"].candidate_modes == 960
+    assert captured["profile"].mpi_size == 8
+    assert captured["inventory"]["count"] == 604
+    assert "--task037c-two-pass-side-correction" in captured["argv"]
 
 
 @pytest.mark.parametrize(

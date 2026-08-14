@@ -1202,10 +1202,16 @@ def check_m480_hybrid_iterative(
         profile_errors.append("profile.mpi_size must be MPI1 or MPI8")
         profile = None
     else:
-        profile = make_task039_hybrid_iterative_profile(
-            480, int(profile_data["mpi_size"])
-        )
-        if profile_record(profile) != dict(profile_data):
+        try:
+            profile = make_task039_hybrid_iterative_profile(
+                480,
+                int(profile_data["mpi_size"]),
+                mesh_target_nm=float(profile_data.get("h_nm", 10.0)),
+            )
+        except (TypeError, ValueError) as exc:
+            profile_errors.append(f"M480 iterative profile mesh is invalid: {exc}")
+            profile = None
+        if profile is not None and profile_record(profile) != dict(profile_data):
             profile_errors.append("M480 iterative profile is not exact")
     if (
         profile is not None
