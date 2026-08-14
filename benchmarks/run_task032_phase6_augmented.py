@@ -35,6 +35,9 @@ from benchmarks.task035c_p6_h10_gates import (
 from benchmarks.task039_memory_telemetry import (
     task039_e10_ledger,
     task039_e10_stage_event,
+    task039_stage_target,
+    task039_v2_h5_stage_event,
+    task039_write_memory_object_ledger,
 )
 from benchmarks.task032_final_gates import (
     _all_formal_true,
@@ -1360,6 +1363,7 @@ def main(
     trace_audit_metadata: Mapping[str, Any] | None = None,
     canonical_trace_gate_policy: str | None = None,
     canonical_trace_family_sha256: str | None = None,
+    task039_stage_marker_path: str | Path | None = None,
 ) -> dict[str, Any]:
     command_argv = list(sys.argv[1:] if argv is None else argv)
     allow_task039 = bool(
@@ -1453,6 +1457,12 @@ def main(
     if comm.rank == 0 and args.memory_stages is not None:
         args.memory_stages.parent.mkdir(parents=True, exist_ok=True)
         args.memory_stages.unlink(missing_ok=True)
+    formal_stage_marker_path = (
+        None if task039_stage_marker_path is None else Path(task039_stage_marker_path)
+    )
+    if comm.rank == 0 and formal_stage_marker_path is not None:
+        formal_stage_marker_path.parent.mkdir(parents=True, exist_ok=True)
+        formal_stage_marker_path.unlink(missing_ok=True)
     comm.barrier()
 
     def mark_stage(stage: str) -> None:
@@ -1471,31 +1481,60 @@ def main(
     def task039_mark_stage(
         stage: str, *, detail: Mapping[str, Any] | None = None
     ) -> None:
-        if (
-            canonical_export_prefix != "task039_direct"
-            or comm.rank != 0
-            or args.memory_stages is None
-        ):
+        if canonical_export_prefix != "task039_direct" or comm.rank != 0:
+            return
+        elapsed = time.perf_counter() - total_started
+        target_stage = task039_stage_target(
+            stage, formal_v2_h5=formal_stage_marker_path is not None
+        )
+        if target_stage is None:
+            return
+        if formal_stage_marker_path is not None:
+            formal_detail = dict(detail or {})
+            if stage in {"positive_qep_solve_peak", "negative_qep_solve_peak"}:
+                formal_detail.update(
+                    {
+                        "marker_is_interval_start": True,
+                        "marker_semantics": (
+                            "solve interval start; marker is not a peak value"
+                        ),
+                        "peak_source": "subsequent_0.25s_process_tree_samples",
+                    }
+                )
+            event = task039_v2_h5_stage_event(
+                target_stage,
+                elapsed_seconds=elapsed,
+                detail=formal_detail,
+            )
+            with formal_stage_marker_path.open("a", encoding="utf-8") as stream:
+                stream.write(json.dumps(event, ensure_ascii=False) + "\n")
+                stream.flush()
+            return
+        if args.memory_stages is None:
             return
         event = task039_e10_stage_event(
-            stage,
-            elapsed_seconds=time.perf_counter() - total_started,
-            detail=detail,
+            target_stage, elapsed_seconds=elapsed, detail=detail
         )
         task039_e10_events.append(event)
         with args.memory_stages.open("a", encoding="utf-8") as stream:
             stream.write(json.dumps(event, ensure_ascii=False) + "\n")
+            stream.flush()
         event_path = args.memory_stages.with_name(
             args.memory_stages.stem + ".task039_e10.jsonl"
         )
         with event_path.open("a", encoding="utf-8") as stream:
             stream.write(json.dumps(event, ensure_ascii=False) + "\n")
+            stream.flush()
 
     def progress(message: str) -> None:
         if comm.rank == 0:
             print(message, flush=True)
 
     total_started = time.perf_counter()
+    task039_mark_stage(
+        "baseline_before_mesh",
+        detail={"marker_semantics": "formal lifecycle start; not a memory peak"},
+    )
     timings: dict[str, float] = {}
     if config_override is None:
         cfg = target_stage4_config(degree=args.degree, h_nm=args.h_nm)
@@ -2037,6 +2076,14 @@ def main(
             timings["primary_system_build"] = _max_elapsed(comm, started)
             timings["monolithic_assembly"] = timings["primary_system_build"]
             task039_mark_stage("hybrid_augmented_operator_ready")
+            task039_mark_stage(
+                "mumps_analysis_ready_when_available",
+                detail={
+                    "status": "not_available",
+                    "classification": "not_available",
+                    "reason": "runner exposes no separate analysis-only snapshot",
+                },
+            )
             progress("Task32 Phase6: monolithic augmented AIJ complete")
             solution = solve_hybrid_augmented_direct(
                 system,
@@ -2048,6 +2095,7 @@ def main(
                 "direct_factor_or_iterative_side_factors_ready",
                 detail={"source": "solution_ksp_holds_factor"},
             )
+            task039_mark_stage("solution_ready")
         else:
             builder = (
                 build_hybrid_modal_schur_direct_system
@@ -3234,6 +3282,10 @@ def main(
             + "\n",
             encoding="utf-8",
         )
+        if formal_stage_marker_path is not None:
+            task039_write_memory_object_ledger(
+                args.output.parent / "memory_object_ledger.json", record
+            )
         print(f"Task32 Phase6 record: {args.output}", flush=True)
         print(f"Task32 Phase6 status: {record['status']}", flush=True)
     comm.barrier()

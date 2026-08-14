@@ -565,7 +565,13 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
         if not _same_profile_value(actual, expected_value):
             errors.append((f"{section}.{key}", f"Task39 requires {expected_value!r}"))
     mesh_target_nm = config["discretization"].get("mesh_target_nm")
-    allowed_mesh_targets = (10.0, 7.5, 6.0, 5.0) if kind == "full3d_direct" else (10.0,)
+    allowed_mesh_targets = (
+        (10.0, 7.5, 6.0, 5.0)
+        if kind == "full3d_direct"
+        else (10.0, 5.0)
+        if kind == "hybrid_direct"
+        else (10.0,)
+    )
     if not any(
         isinstance(mesh_target_nm, (int, float))
         and isclose(float(mesh_target_nm), target, rel_tol=0.0, abs_tol=1.0e-12)
@@ -583,10 +589,21 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
         for target in (7.5, 6.0, 5.0)
     )
     h5_direct = (
-        kind == "full3d_direct"
+        kind in {"full3d_direct", "hybrid_direct"}
         and isinstance(mesh_target_nm, (int, float))
         and isclose(float(mesh_target_nm), 5.0, rel_tol=0.0, abs_tol=1.0e-12)
     )
+    if (
+        kind == "hybrid_direct"
+        and h5_direct
+        and method.get("requested_modes_per_direction") != 480
+    ):
+        errors.append(
+            (
+                "method.requested_modes_per_direction",
+                "Task39 h5 Hybrid direct requires M=480",
+            )
+        )
     absolute_terminate_memory_bytes = config["execution"].get(
         "absolute_terminate_memory_bytes"
     )
@@ -594,14 +611,14 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
         errors.append(
             (
                 "execution.absolute_terminate_memory_bytes",
-                "Task39 p6/h5 full3d_direct requires exact 224000000000",
+                "Task39 p6/h5 direct requires exact 224000000000",
             )
         )
     elif not h5_direct and absolute_terminate_memory_bytes is not None:
         errors.append(
             (
                 "execution.absolute_terminate_memory_bytes",
-                "Task39 absolute byte termination is enabled only for p6/h5 full3d_direct",
+                "Task39 absolute byte termination is enabled only for p6/h5 direct",
             )
         )
     m480_mpi1_solver_only = (
@@ -609,11 +626,12 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
         and config["execution"].get("mpi_size") == 1
         and method.get("requested_modes_per_direction") == 480
     )
+    review_direct_budget = grid_direct or h5_direct
     expected_warning = (
-        45.0 if m480_mpi1_solver_only else 170.0 if grid_direct else 180.0
+        45.0 if m480_mpi1_solver_only else 170.0 if review_direct_budget else 180.0
     )
     expected_termination = (
-        48.0 if m480_mpi1_solver_only else 195.0 if grid_direct else 220.0
+        48.0 if m480_mpi1_solver_only else 195.0 if review_direct_budget else 220.0
     )
     for key, expected_value in (
         ("warning_memory_gib", expected_warning),

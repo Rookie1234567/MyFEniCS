@@ -22,6 +22,9 @@ from src.runners.task038_hybrid_direct import (
     _append_source_attestation,
     _argv_for_payload,
 )
+from benchmarks.task039_memory_telemetry import (
+    task039_h5_hybrid_direct_formal_profile,
+)
 
 
 Task039Runner = Callable[[list[str], Any, str, Mapping[str, Any]], Mapping[str, Any]]
@@ -387,6 +390,7 @@ def _default_runner(
     trace_audit_metadata: Mapping[str, Any] | None = None,
     canonical_trace_gate_policy: str | None = None,
     canonical_trace_family_sha256: str | None = None,
+    task039_stage_marker_path: str | Path | None = None,
 ) -> Mapping[str, Any]:
     from benchmarks.run_task032_phase6_augmented import main
 
@@ -399,6 +403,7 @@ def _default_runner(
         "qep_solver_tolerance": 1.0e-12,
         "trace_audit_capture_dir": trace_audit_capture_dir,
         "trace_audit_metadata": trace_audit_metadata,
+        "task039_stage_marker_path": task039_stage_marker_path,
     }
     if canonical_trace_gate_policy is not None:
         kwargs.update(
@@ -422,7 +427,7 @@ def run_task039_hybrid_direct(
     trace_audit_capture_dir: str | Path | None = None,
     trace_audit_metadata: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Run one finite Task39 p6/h10 Hybrid-direct profile."""
+    """Run one finite Task39 Hybrid-direct profile."""
 
     if resolved_payload.get("dimension") != 3:
         raise ValueError("Task39 Hybrid direct requires dimension=3")
@@ -459,6 +464,11 @@ def run_task039_hybrid_direct(
     expected_inventory = deepcopy(inventory)
     numerical_output = Path(run_directory).resolve() / "numerical_output"
     output_record = numerical_output / "run_summary.json"
+    formal_stage_marker_path = None
+    if trace_audit_capture_dir is None and task039_h5_hybrid_direct_formal_profile(
+        resolved_payload
+    ):
+        formal_stage_marker_path = numerical_output / "memory_stage_markers.raw.jsonl"
     argv = _append_source_attestation(
         _argv_for_payload(resolved_payload, output_record), source_sha
     )
@@ -483,6 +493,7 @@ def run_task039_hybrid_direct(
             },
             canonical_trace_gate_policy=canonical_trace_gate_policy,
             canonical_trace_family_sha256=canonical_trace_family_sha256,
+            task039_stage_marker_path=formal_stage_marker_path,
         )
     else:
         if trace_audit_capture_dir is not None:

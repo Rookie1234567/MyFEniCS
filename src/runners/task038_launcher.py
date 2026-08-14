@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import platform
 import math
@@ -21,6 +22,10 @@ from benchmarks.task034_wsl_resources import (
 from benchmarks.watchdog_process_control import (
     terminate_process_tree,
     worker_process_group_popen_kwargs,
+)
+from benchmarks.task039_memory_telemetry import (
+    task039_h5_hybrid_direct_formal_profile,
+    task039_read_new_markers,
 )
 
 from src.io.execution_plan import (
@@ -381,6 +386,7 @@ def _run_worker(
     model_id = str(specification.identity.get("model_id", ""))
     method = str(specification.method.get("kind", ""))
     requested_modes = specification.method.get("requested_modes_per_direction")
+    formal_v2_h5 = task039_h5_hybrid_direct_formal_profile(specification.as_jsonable())
     if task039_model_id_matches(method, model_id, requested_modes):
         task039_budget = _task039_memory_budget(execution)
         warning_limit = float(task039_budget["configured_warning_memory_gib"]) * 1024**3
@@ -419,66 +425,179 @@ def _run_worker(
     smaps_complete_sample_count = 0
     termination: dict[str, Any] | None = None
     classification: str | None = None
+    formal_samples_path = (
+        run_directory / "numerical_output" / "process_tree_samples.jsonl"
+    )
+    formal_stages_path = run_directory / "numerical_output" / "memory_stages.jsonl"
+    formal_markers_path = (
+        run_directory / "numerical_output" / "memory_stage_markers.raw.jsonl"
+    )
+    formal_object_ledger_path = (
+        run_directory / "numerical_output" / "memory_object_ledger.json"
+    )
+    formal_sample_stream = None
+    formal_stage_stream = None
+    formal_marker_offset = 0
+    formal_aligned_stage_count = 0
+    formal_written_sample_count = 0
+    formal_last_sample: dict[str, Any] | None = None
+
+    def _formal_sample(authority: Mapping[str, Any], elapsed: float) -> dict[str, Any]:
+        process_tree = authority.get("process_tree", {})
+        smaps = process_tree.get("smaps")
+        pss = uss = None
+        if isinstance(smaps, Mapping) and smaps.get("complete") is True:
+            if isinstance(smaps.get("pss_bytes"), int):
+                pss = smaps["pss_bytes"]
+            if isinstance(smaps.get("uss_bytes"), int):
+                uss = smaps["uss_bytes"]
+        rss = process_tree.get("rss_bytes")
+        rss = rss if isinstance(rss, int) else None
+        swap = _swap_bytes(dict(authority))
+        return {
+            "schema": "task039.v2-process-tree-sample.v1",
+            "timestamp_utc": _now(),
+            "elapsed_seconds": elapsed,
+            "pid": process_tree.get("root_pid"),
+            "memory_authority_bytes": authority.get("memory_authority_bytes"),
+            "rss_bytes": rss,
+            "pss_bytes": pss,
+            "uss_bytes": uss,
+            "swap_bytes": swap,
+            "sample_status": (
+                "measured" if _authority_readable(dict(authority)) else "not_available"
+            ),
+        }
+
+    def _align_formal_markers(sample: dict[str, Any] | None) -> None:
+        nonlocal formal_marker_offset, formal_aligned_stage_count
+        if not formal_v2_h5 or formal_stage_stream is None:
+            return
+        markers, formal_marker_offset = task039_read_new_markers(
+            formal_markers_path, formal_marker_offset
+        )
+        for marker in markers:
+            row = {
+                "schema": "task039.v2-memory-stage-alignment.v1",
+                "stage": marker.get("stage"),
+                "stage_index": marker.get("stage_index"),
+                "marker_elapsed_seconds": marker.get("elapsed_seconds"),
+                "sample_elapsed_seconds": (
+                    None if sample is None else sample.get("elapsed_seconds")
+                ),
+                "marker_sample_delta_seconds": (
+                    None
+                    if sample is None
+                    else float(sample["elapsed_seconds"])
+                    - float(marker["elapsed_seconds"])
+                ),
+                "rss_bytes": None if sample is None else sample.get("rss_bytes"),
+                "pss_bytes": None if sample is None else sample.get("pss_bytes"),
+                "uss_bytes": None if sample is None else sample.get("uss_bytes"),
+                "swap_bytes": None if sample is None else sample.get("swap_bytes"),
+                "sample_status": (
+                    "not_available" if sample is None else sample.get("sample_status")
+                ),
+                "marker_detail": marker.get("detail"),
+                "object_capacity": marker.get("object_capacity"),
+            }
+            formal_stage_stream.write(json.dumps(row, ensure_ascii=False) + "\n")
+            formal_stage_stream.flush()
+            formal_aligned_stage_count += 1
+
     started = monotonic()
     stdout_path = run_directory / "worker_stdout.txt"
-    with stdout_path.open("w", encoding="utf-8") as stdout:
-        process = popen_factory(
-            list(plan.argv),
-            shell=False,
-            cwd=Path(__file__).resolve().parents[2],
-            stdout=stdout,
-            stderr=subprocess.STDOUT,
-            text=True,
-            **worker_process_group_popen_kwargs(),
+    if formal_v2_h5:
+        formal_samples_path.parent.mkdir(parents=True, exist_ok=True)
+        formal_samples_path.unlink(missing_ok=True)
+        formal_stages_path.unlink(missing_ok=True)
+        formal_sample_stream = formal_samples_path.open("a", encoding="utf-8")
+        formal_stage_stream = formal_stages_path.open("a", encoding="utf-8")
+    try:
+        with stdout_path.open("w", encoding="utf-8") as stdout:
+            process = popen_factory(
+                list(plan.argv),
+                shell=False,
+                cwd=Path(__file__).resolve().parents[2],
+                stdout=stdout,
+                stderr=subprocess.STDOUT,
+                text=True,
+                **worker_process_group_popen_kwargs(),
+            )
+            while True:
+                authority = sample_factory(process.pid)
+                if formal_v2_h5:
+                    formal_written_sample_count += 1
+                    formal_last_sample = _formal_sample(
+                        authority, monotonic() - started
+                    )
+                    formal_sample_stream.write(
+                        json.dumps(formal_last_sample, ensure_ascii=False) + "\n"
+                    )
+                    formal_sample_stream.flush()
+                    _align_formal_markers(formal_last_sample)
+                process_tree = authority.get("process_tree", {})
+                smaps = process_tree.get("smaps")
+                if isinstance(smaps, dict):
+                    smaps_attempted_sample_count += 1
+                    if smaps.get("complete") is True:
+                        pss = smaps.get("pss_bytes")
+                        uss = smaps.get("uss_bytes")
+                        if isinstance(pss, int) and isinstance(uss, int):
+                            smaps_complete_sample_count += 1
+                            peak_pss = pss if peak_pss is None else max(peak_pss, pss)
+                            peak_uss = uss if peak_uss is None else max(peak_uss, uss)
+                if _authority_readable(authority):
+                    sample_count += 1
+                    memory = int(authority.get("memory_authority_bytes") or 0)
+                    process_tree_rss = int(process_tree.get("rss_bytes") or 0)
+                    swap_bytes = _swap_bytes(authority)
+                    peak_authority = max(peak_authority, memory)
+                    peak_process_tree = max(peak_process_tree, process_tree_rss)
+                    peak_swap = max(peak_swap, swap_bytes)
+                    zero_swap_observed = zero_swap_observed and swap_bytes == 0
+                    warning_triggered = warning_triggered or memory >= warning_limit
+                    if (
+                        critical_limit is not None
+                        and memory >= critical_limit
+                        and not critical_checkpoint_crossed
+                    ):
+                        critical_checkpoint_crossed = True
+                        critical_checkpoint_first_bytes = memory
+                    if execution["require_zero_swap"] and swap_bytes > 0:
+                        termination = terminate_factory(process)
+                        classification = "swap_policy_violation"
+                    elif memory >= terminate_limit:
+                        termination = terminate_factory(process)
+                        classification = "memory_terminate"
+                if classification is not None:
+                    break
+                if process.poll() is not None:
+                    break
+                if monotonic() - started >= timeout:
+                    termination = terminate_factory(process)
+                    classification = "timeout"
+                    break
+                sleep(poll_interval)
+            if process.poll() is None:
+                process.wait()
+            exit_status = process.poll()
+        _align_formal_markers(formal_last_sample)
+    finally:
+        if formal_sample_stream is not None:
+            formal_sample_stream.close()
+        if formal_stage_stream is not None:
+            formal_stage_stream.close()
+    if formal_v2_h5 and not formal_object_ledger_path.exists():
+        _write_json(
+            formal_object_ledger_path,
+            {
+                "schema": "task039.memory-object-ledger.v1",
+                "status": "not_available",
+                "classification": "worker_did_not_persist_record",
+                "objects": {},
+            },
         )
-        while True:
-            authority = sample_factory(process.pid)
-            process_tree = authority.get("process_tree", {})
-            smaps = process_tree.get("smaps")
-            if isinstance(smaps, dict):
-                smaps_attempted_sample_count += 1
-                if smaps.get("complete") is True:
-                    pss = smaps.get("pss_bytes")
-                    uss = smaps.get("uss_bytes")
-                    if isinstance(pss, int) and isinstance(uss, int):
-                        smaps_complete_sample_count += 1
-                        peak_pss = pss if peak_pss is None else max(peak_pss, pss)
-                        peak_uss = uss if peak_uss is None else max(peak_uss, uss)
-            if _authority_readable(authority):
-                sample_count += 1
-                memory = int(authority.get("memory_authority_bytes") or 0)
-                process_tree_rss = int(process_tree.get("rss_bytes") or 0)
-                swap_bytes = _swap_bytes(authority)
-                peak_authority = max(peak_authority, memory)
-                peak_process_tree = max(peak_process_tree, process_tree_rss)
-                peak_swap = max(peak_swap, swap_bytes)
-                zero_swap_observed = zero_swap_observed and swap_bytes == 0
-                warning_triggered = warning_triggered or memory >= warning_limit
-                if (
-                    critical_limit is not None
-                    and memory >= critical_limit
-                    and not critical_checkpoint_crossed
-                ):
-                    critical_checkpoint_crossed = True
-                    critical_checkpoint_first_bytes = memory
-                if execution["require_zero_swap"] and swap_bytes > 0:
-                    termination = terminate_factory(process)
-                    classification = "swap_policy_violation"
-                elif memory >= terminate_limit:
-                    termination = terminate_factory(process)
-                    classification = "memory_terminate"
-            if classification is not None:
-                break
-            if process.poll() is not None:
-                break
-            if monotonic() - started >= timeout:
-                termination = terminate_factory(process)
-                classification = "timeout"
-                break
-            sleep(poll_interval)
-        if process.poll() is None:
-            process.wait()
-        exit_status = process.poll()
 
     if classification is None:
         if exit_status == 0 and plan.contract_probe:
@@ -534,6 +653,16 @@ def _run_worker(
                 ),
             }
         )
+    if formal_v2_h5:
+        resource_authority["v2_h5_formal_telemetry"] = {
+            "raw_marker_path": str(formal_markers_path),
+            "process_tree_samples_path": str(formal_samples_path),
+            "memory_stages_path": str(formal_stages_path),
+            "memory_object_ledger_path": str(formal_object_ledger_path),
+            "sample_count": sample_count,
+            "process_tree_sample_count": formal_written_sample_count,
+            "aligned_stage_count": formal_aligned_stage_count,
+        }
     return {
         "exit_status": exit_status,
         "result_classification": classification,

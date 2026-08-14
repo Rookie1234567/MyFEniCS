@@ -2,6 +2,7 @@
 
 import ast
 import hashlib
+from copy import deepcopy
 from pathlib import Path
 from math import isclose, pi
 import inspect
@@ -21,6 +22,7 @@ from src.io.input_validation import (
     task039_07nm_launch_error,
     task039_air_side_external_mode_inventory,
     task039_dynamic_external_mode_inventory,
+    task039_profile_errors,
     load_and_resolve,
     simulation_config_3d_from_normalized,
 )
@@ -48,7 +50,7 @@ TASK039_INPUTS = tuple(sorted(TASK039.glob("*.dat")))
 def test_task039_inputs_are_numeric_finite_profiles_and_share_physics():
     specs = [load_and_resolve(path) for path in TASK039_INPUTS]
 
-    assert len(specs) == 13
+    assert len(specs) == 14
     assert {spec.method["kind"] for spec in specs} == {
         "full3d_direct",
         "full3d_iterative",
@@ -64,10 +66,37 @@ def test_task039_inputs_are_numeric_finite_profiles_and_share_physics():
         960,
     }
     h10 = [spec for spec in specs if spec.discretization["mesh_target_nm"] == 10.0]
-    grid = [spec for spec in specs if spec.discretization["mesh_target_nm"] != 10.0]
+    grid = [
+        spec
+        for spec in specs
+        if spec.discretization["mesh_target_nm"] != 10.0
+        and spec.method["kind"] == "full3d_direct"
+    ]
     assert len({spec.physical_model_sha256 for spec in h10}) == 1
     assert {spec.method["kind"] for spec in grid} == {"full3d_direct"}
     assert len({spec.physical_model_sha256 for spec in grid}) == 3
+    h5_hybrid = next(
+        spec
+        for spec in specs
+        if spec.method["kind"] == "hybrid_direct"
+        and spec.discretization["mesh_target_nm"] == 5.0
+    )
+    assert h5_hybrid.identity["model_id"] == "task039_5nm_hybrid_direct_m480"
+    assert h5_hybrid.method["requested_modes_per_direction"] == 480
+    assert h5_hybrid.execution["mpi_size"] == 8
+    assert h5_hybrid.execution["warning_memory_gib"] == 170.0
+    assert h5_hybrid.execution["terminate_memory_gib"] == 195.0
+    assert h5_hybrid.execution["absolute_terminate_memory_bytes"] == 224_000_000_000
+    h10_hybrid = next(
+        spec
+        for spec in specs
+        if spec.method["kind"] == "hybrid_direct"
+        and spec.discretization["mesh_target_nm"] == 10.0
+        and spec.method["requested_modes_per_direction"] == 480
+    )
+    assert h10_hybrid.execution["warning_memory_gib"] == 180.0
+    assert h10_hybrid.execution["terminate_memory_gib"] == 220.0
+    assert "absolute_terminate_memory_bytes" not in h10_hybrid.execution
 
     for spec in specs:
         provenance = spec.derived["material_provenance"]
@@ -176,6 +205,26 @@ def test_task039_h5_full3d_direct_requires_exact_absolute_termination_bytes(
     )
     with pytest.raises(InputError, match="positive integer"):
         load_and_resolve(invalid)
+
+
+@pytest.mark.parametrize("mode", [120, 240, 960])
+def test_task039_h5_hybrid_direct_is_frozen_to_m480(mode):
+    specification = load_and_resolve(TASK039 / "5nm_p6h5_hybrid_direct_m480_mpi8.dat")
+    config = deepcopy(specification.as_jsonable())
+    config["model_id"] = f"task039_5nm_hybrid_direct_m{mode}"
+    config["method"]["requested_modes_per_direction"] = mode
+    errors = task039_profile_errors(config)
+    assert any(
+        path == "method.requested_modes_per_direction" for path, _message in errors
+    )
+
+
+def test_task039_h10_hybrid_modes_keep_the_historical_candidate_set():
+    for mode in (120, 240, 480, 960):
+        config = load_and_resolve(
+            TASK039 / f"5nm_p6h10_hybrid_direct_m{mode}_mpi8.dat"
+        ).as_jsonable()
+        assert not task039_profile_errors(config)
 
 
 @pytest.mark.parametrize(
