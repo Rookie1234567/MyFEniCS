@@ -2317,7 +2317,10 @@ def _m6b_shared_kernel_identity(
     cfg: Any,
     *,
     phase: str,
+    shifted_beta: float = M6B_BETA,
 ) -> dict[str, Any]:
+    if shifted_beta not in (M6B_BETA, M6B_W3_BETA):
+        raise ValueError("M6B shifted shared-kernel beta is not fixed")
     fixed_physics = _m6b_fixed_physics_identity(cfg)
     required = (
         "beta",
@@ -2335,7 +2338,7 @@ def _m6b_shared_kernel_identity(
         raise ValueError("M6B shared volume form identity is incomplete")
     if (
         outer["beta"] != 0.0
-        or shifted["beta"] != M6B_BETA
+        or shifted["beta"] != shifted_beta
         or outer["beta_runtime_parameter"] != "fem.Constant"
         or shifted["beta_runtime_parameter"] != "fem.Constant"
         or outer["operator_identity"] != M6B_SHARED_VOLUME_OPERATOR
@@ -2355,7 +2358,7 @@ def _m6b_shared_kernel_identity(
         "fixed_physics": fixed_physics,
         "beta_runtime_parameter": "fem.Constant",
         "outer_beta": 0.0,
-        "shifted_beta": M6B_BETA,
+        "shifted_beta": shifted_beta,
         "module_name": outer["module_name"],
         "ufl_signature": outer["ufl_signature"],
         "ufcx_signature": outer["ufcx_signature"],
@@ -2367,7 +2370,11 @@ def _m6b_shared_kernel_identity(
     }
 
 
-def _m6b_shared_kernel_valid(value: Any, *, phase: str) -> bool:
+def _m6b_shared_kernel_valid(
+    value: Any, *, phase: str, shifted_beta: float = M6B_BETA
+) -> bool:
+    if shifted_beta not in (M6B_BETA, M6B_W3_BETA):
+        return False
     required = {
         "schema",
         "phase",
@@ -2416,7 +2423,7 @@ def _m6b_shared_kernel_valid(value: Any, *, phase: str) -> bool:
         and physics["material_representation"] == "DG0_epsilon_and_abs_epsilon"
         and value["beta_runtime_parameter"] == "fem.Constant"
         and value["outer_beta"] == 0.0
-        and value["shifted_beta"] == M6B_BETA
+        and value["shifted_beta"] == shifted_beta
         and isinstance(value["module_name"], str)
         and value["module_name"].startswith("libffcx_forms_")
         and isinstance(value["ufl_signature"], str)
@@ -2439,8 +2446,11 @@ def _m6b_form_record_bound(
     beta: float,
     code_state: str,
     shared_phase: str = "stage",
+    shared_shifted_beta: float = M6B_BETA,
 ) -> bool:
-    if not _m6b_shared_kernel_valid(shared, phase=shared_phase):
+    if not _m6b_shared_kernel_valid(
+        shared, phase=shared_phase, shifted_beta=shared_shifted_beta
+    ):
         return False
     if not isinstance(record, Mapping):
         return False
@@ -2476,6 +2486,7 @@ def _m6b_form_records_bound(
     shared: Any,
     *,
     phase: str,
+    shifted_beta: float = M6B_BETA,
 ) -> bool:
     if phase not in {"stage", "mpi1"}:
         return False
@@ -2488,14 +2499,16 @@ def _m6b_form_records_bound(
             beta=0.0,
             code_state=outer_state,
             shared_phase=phase,
+            shared_shifted_beta=shifted_beta,
         )
         and _m6b_form_record_bound(
             shifted,
             shared,
             role="shifted_volume",
-            beta=M6B_BETA,
+            beta=shifted_beta,
             code_state="hit_no_new_decl_impl",
             shared_phase=phase,
+            shared_shifted_beta=shifted_beta,
         )
     )
 
@@ -4192,8 +4205,27 @@ def _run_m6b_w2_diagnostic(
                 M6B_W3_BETA,
             )
             shared_volume_kernel = _m6b_shared_kernel_identity(
-                outer_record, shifted_record, cfg, phase="mpi1"
+                outer_record,
+                shifted_record,
+                cfg,
+                phase="mpi1",
+                shifted_beta=M6B_W3_BETA,
             )
+            if not (
+                _m6b_shared_kernel_valid(
+                    shared_volume_kernel,
+                    phase="mpi1",
+                    shifted_beta=M6B_W3_BETA,
+                )
+                and _m6b_form_records_bound(
+                    outer_record,
+                    shifted_record,
+                    shared_volume_kernel,
+                    phase="mpi1",
+                    shifted_beta=M6B_W3_BETA,
+                )
+            ):
+                raise ValueError("M6B W3 shared volume form binding is invalid")
             base_vec = _assemble_mpc_form_vector(incident_form, floquet.mpc)
             rhs_vec = base_vec.duplicate()
             projections = tuple(

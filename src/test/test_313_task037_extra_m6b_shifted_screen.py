@@ -829,6 +829,42 @@ def test_m6b_shared_kernel_identity_is_phase_and_signature_bound():
     assert runner._m6b_shared_kernel_valid(identity, phase="stage") is True
     assert runner._m6b_form_records_bound(outer, shifted, identity, phase="stage") is True
     assert runner._m6b_shared_kernel_valid(identity, phase="unknown") is False
+    mpi1_outer = dict(outer, code_state="hit_no_new_decl_impl")
+    mpi1_shifted = dict(
+        mpi1_outer,
+        role="shifted_volume",
+        beta=1.0,
+        code_state="hit_no_new_decl_impl",
+    )
+    mpi1_identity = runner._m6b_shared_kernel_identity(
+        mpi1_outer,
+        mpi1_shifted,
+        cfg,
+        phase="mpi1",
+        shifted_beta=1.0,
+    )
+    assert runner._m6b_shared_kernel_valid(
+        mpi1_identity, phase="mpi1", shifted_beta=1.0
+    ) is True
+    assert runner._m6b_form_records_bound(
+        mpi1_outer,
+        mpi1_shifted,
+        mpi1_identity,
+        phase="mpi1",
+        shifted_beta=1.0,
+    ) is True
+    assert runner._m6b_shared_kernel_valid(mpi1_identity, phase="mpi1") is False
+    assert runner._m6b_form_records_bound(
+        mpi1_outer, mpi1_shifted, mpi1_identity, phase="mpi1"
+    ) is False
+    tampered_mpi1 = dict(mpi1_shifted, beta=0.5)
+    assert runner._m6b_form_records_bound(
+        mpi1_outer,
+        tampered_mpi1,
+        mpi1_identity,
+        phase="mpi1",
+        shifted_beta=1.0,
+    ) is False
     for field, bad_value in {
         "module_name": "libffcx_forms_other",
         "ufl_signature": "different-ufl",
