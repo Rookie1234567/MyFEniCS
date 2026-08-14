@@ -600,6 +600,10 @@ def _m6b_w3_numeric_gate(
     return evaluate_m6b_numeric_screen_gate(samples)
 
 
+def _m6b_screen_audit_jsonable(h2a: Any, value: Any) -> Any:
+    return h2a._jsonable(value)
+
+
 def _m6b_w3_screen_orchestration(
     *,
     projected_pc: Any,
@@ -4346,13 +4350,25 @@ def _run_m6b_w2_diagnostic(
                     "mode_count": 80,
                     "canonical": rhs_manifest,
                 },
-                "outer_action_audit": outer_context.audit,
-                "volume_action_audit": dict(physical_action.audit),
-                "shifted_action_audit": dict(shifted_action.audit),
-                "dtn_action_audit": dict(dtn_action.audit),
-                "pc_audit": w2_pc.audit,
-                "outer_numpy_bridge": outer_bridge.audit,
-                "range_store_audit": range_carrier.audit,
+                "outer_action_audit": _m6b_screen_audit_jsonable(
+                    h2a, outer_context.audit
+                ),
+                "volume_action_audit": _m6b_screen_audit_jsonable(
+                    h2a, physical_action.audit
+                ),
+                "shifted_action_audit": _m6b_screen_audit_jsonable(
+                    h2a, shifted_action.audit
+                ),
+                "dtn_action_audit": _m6b_screen_audit_jsonable(
+                    h2a, dtn_action.audit
+                ),
+                "pc_audit": _m6b_screen_audit_jsonable(h2a, w2_pc.audit),
+                "outer_numpy_bridge": _m6b_screen_audit_jsonable(
+                    h2a, outer_bridge.audit
+                ),
+                "range_store_audit": _m6b_screen_audit_jsonable(
+                    h2a, range_carrier.audit
+                ),
                 "m6b_store_audit": store.audit_jsonable(),
                 "material_tag_coverage": tag_coverage,
                 "shared_volume_kernel": shared_volume_kernel,

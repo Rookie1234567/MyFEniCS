@@ -4,7 +4,7 @@ import copy
 import inspect
 import json
 from pathlib import Path
-from types import SimpleNamespace
+from types import MappingProxyType, SimpleNamespace
 from dataclasses import replace
 
 import numpy as np
@@ -1597,6 +1597,23 @@ def test_m6b_w3_lazy_numeric_gate_preserves_run2_negative_evidence():
     missing = copy.deepcopy(run2)
     del missing["150"]
     assert runner._m6b_w3_numeric_gate(missing)["pass"] is False
+
+
+def test_m6b_screen_audit_nested_mappingproxy_is_evidence_jsonable():
+    import benchmarks.run_task037_extra_h2 as h2a
+
+    audit = MappingProxyType(
+        {
+            "outer": MappingProxyType(
+                {"retained_numeric_payload_components": MappingProxyType({"x": 16})}
+            )
+        }
+    )
+    record = runner._m6b_screen_audit_jsonable(h2a, audit)
+    attached = runner._attach_evidence(
+        {"measurement": {"volume_action_audit": record}}
+    )
+    json.dumps(attached, sort_keys=True, allow_nan=False)
 
 
 def test_m6b_w3_orchestration_uses_projected_production_pc_and_rhs_dtn(
