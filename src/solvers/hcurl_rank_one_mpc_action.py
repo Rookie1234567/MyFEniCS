@@ -187,6 +187,8 @@ class HcurlRankOneMpcAction:
             "global_matrix_materialized": False,
             "global_constraint_matrix_materialized": False,
             "global_condensed_schur_materialized": False,
+            "explicit_C_materialized_count": 0,
+            "explicit_D_materialized_count": 0,
             "retained_dense_cell_tensor_count": 0,
             "dense_cell_tensor_materialized_per_apply": False,
             "cell_metadata_retained": False,

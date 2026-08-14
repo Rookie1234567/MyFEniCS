@@ -467,12 +467,13 @@ def test_w6a_jit_and_w5_authority_tamper_fail_closed(tmp_path, monkeypatch):
         np.save(raw_dir / copy_name, values)
         source_artifact = runner._artifact(w5_dir, source_name)
         copy_artifact = runner._artifact(raw_dir, copy_name)
+        authority_array_sha = runner._m6b_w6a_w5_legacy_raw_array_sha256(values)
         array_sha = runner._m6b_w2_array_sha256(values)
         compact_samples[str(iteration)] = {
             "artifacts": {
                 "residual": {
                     **source_artifact,
-                    "array_sha256": array_sha,
+                    "array_sha256": authority_array_sha,
                     "dtype": "complex128",
                     "shape": [runner.M6B_GLOBAL_ROWS],
                 }
@@ -503,12 +504,32 @@ def test_w6a_jit_and_w5_authority_tamper_fail_closed(tmp_path, monkeypatch):
     assert runner._m6b_w6a_w5_residual_files_valid(
         records, raw_dir, w5_dir, compact_record=compact
     )
+    wrong_hash_compact = copy.deepcopy(compact)
+    for sample in wrong_hash_compact["screen"]["samples"].values():
+        sample["artifacts"]["residual"]["array_sha256"] = array_sha
+    wrong_hash_compact = runner._attach_evidence(wrong_hash_compact)
+    assert not runner._m6b_w6a_w5_residual_files_valid(
+        records, raw_dir, w5_dir, compact_record=wrong_hash_compact
+    )
     tampered = np.zeros(runner.M6B_GLOBAL_ROWS, dtype=np.complex128)
     tampered[0] = 1.0
     np.save(w5_dir / "m6b_iter20_residual.npy", tampered)
     assert not runner._m6b_w6a_w5_residual_files_valid(
         records, raw_dir, w5_dir, compact_record=compact
     )
+
+
+def test_w6a_action_audit_requires_explicit_dtn_materialization_counts():
+    summary, *_ = _formal_gate_fixture()
+    action = summary["action_audit"]
+    assert runner._m6b_w6a_action_audit_valid(action)
+    for section in ("outer_context", "physical_action", "dtn_action"):
+        missing = copy.deepcopy(action)
+        del missing[section]["explicit_C_materialized_count"]
+        assert not runner._m6b_w6a_action_audit_valid(missing)
+        nonzero = copy.deepcopy(action)
+        nonzero[section]["explicit_D_materialized_count"] = 1
+        assert not runner._m6b_w6a_action_audit_valid(nonzero)
 
 
 def test_w6a_w5_compact_hash_authority_fail_closed(monkeypatch):

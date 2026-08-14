@@ -254,6 +254,8 @@ def _run_case(
             "per_apply_bounded_temporary_bytes"
         ]
         assert audit["apply_count"] == 4
+        assert audit["explicit_C_materialized_count"] == 0
+        assert audit["explicit_D_materialized_count"] == 0
         assert audit["global_matrix_materialized"] is False
         assert audit["global_constraint_matrix_materialized"] is False
         assert audit["global_condensed_schur_materialized"] is False

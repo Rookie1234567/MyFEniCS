@@ -5459,6 +5459,17 @@ def _m6b_w2_array_sha256(value: Any) -> str:
     return digest.hexdigest()
 
 
+def _m6b_w6a_w5_legacy_raw_array_sha256(value: Any) -> str:
+    """Hash the raw contiguous bytes used by the frozen W5 compact record."""
+
+    import numpy as np
+
+    array = np.asarray(value)
+    return hashlib.sha256(
+        np.ascontiguousarray(array).tobytes(order="C")
+    ).hexdigest()
+
+
 def _m6b_w2_cache_record(h2b: Any, path: Path) -> dict[str, Any]:
     entries = h2b._cache_snapshot(path)
     content_entries = [
@@ -8006,6 +8017,9 @@ def _m6b_w6a_w5_residual_files_valid(
             copy_values = np.load(
                 raw_dir / copy_name, allow_pickle=False, mmap_mode="r"
             )
+            authority_array_sha256 = _m6b_w6a_w5_legacy_raw_array_sha256(
+                source_values
+            )
             source_array_sha256 = _m6b_w2_array_sha256(source_values)
             copy_array_sha256 = _m6b_w2_array_sha256(copy_values)
             authority_ok = bool(
@@ -8013,7 +8027,7 @@ def _m6b_w6a_w5_residual_files_valid(
                 and authority.get("path") == source_name
                 and authority.get("bytes") == source_artifact.get("bytes")
                 and authority.get("sha256") == source_artifact.get("sha256")
-                and authority.get("array_sha256") == source_array_sha256
+                and authority.get("array_sha256") == authority_array_sha256
                 and authority.get("dtype") == "complex128"
                 and authority.get("shape") == [M6B_GLOBAL_ROWS]
             )
