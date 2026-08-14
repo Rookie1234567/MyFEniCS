@@ -316,7 +316,7 @@ M6A run1 的 online-JIT/cache lifecycle negative 和 run2 的 watchdog-JSON seri
 
 ## 未运行项与硬停止
 
-M1 v2 已通过；M2 已完成正式运行但因 checkerboard 数值 Gate 失败而 `NOT_QUALIFIED`；M3Y 已由用户明确越锁授权并正式通过；M4Y 已正式运行但因 checkerboard 数值 Gate 失败而 `FORMAL_NUMERIC_FAIL / NOT_QUALIFIED`；M5 第一屏和 M6A action/DtN 已正式通过。当前仍未运行的是 M6B、time-harmonic PDE、official field/RTA、direct-authority physics comparison 和 PDE process-tree RSS，均为 `not_run_yet`/`not_measured`。75D coarse 因 M5 iter100 true residual 已低于 `1e-8` 且没有传播型平台而 `not_needed/not_run`。尚不能声称达成 MPI1 full PDE RSS 严格小于 2,000,000,000 B、swap=0 且直接法物理对照通过的最终目标。
+M1 v2 已通过；M2 已完成正式运行但因 checkerboard 数值 Gate 失败而 `NOT_QUALIFIED`；M3Y 已由用户明确越锁授权并正式通过；M4Y 已正式运行但因 checkerboard 数值 Gate 失败而 `FORMAL_NUMERIC_FAIL / NOT_QUALIFIED`；M5 第一屏和 M6A action/DtN 已正式通过。M6B/W5 disk screen 已正式运行但为 `NUMERIC_FAIL / NOT_QUALIFIED`；full PDE、official field/RTA、direct-authority physics comparison 和 PDE process-tree RSS 仍为 `not_run_yet`/`not_measured`。75D coarse 的 `not_needed/not_run` 只属于旧 M5 coercive screen 结论，不能外推为当前 time-harmonic W5 不需要 coarse。尚不能声称达成 MPI1 full PDE RSS 严格小于 2,000,000,000 B、swap=0 且直接法物理对照通过的最终目标。
 
 M2 与 M4Y 的数值 Gate 失败均保持原始负结论；用户之后的明确授权已开启 M3Y、M4Y 以及后续 M5/M6 正式研究，但没有把任何失败改写为通过，也没有放宽 Gate。M1/M2/M3Y/M4Y/M5/M6A compact、所有早期执行失败 raw 和 M4Y-W 诊断均保留；没有新分支、PR、master/default 修改。研究代码和历史负结果保留，ordinary default 不变。
 

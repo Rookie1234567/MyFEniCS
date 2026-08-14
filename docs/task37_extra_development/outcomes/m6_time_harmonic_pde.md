@@ -51,7 +51,7 @@ M6A run1 的 online-JIT/cache lifecycle negative 与 run2 的 watchdog JSON seri
 | checker embedded evidence | `9a412106a6428c1555b58945eeda6a5b1294bd0e1e85bc763c6c46a7314f30a4` |
 | tracked compact | `benchmarks/cases/101_task37_extra_development/records/m6a_fullspace_matrix_free_dtn.json`；byte-for-byte copy of external checker |
 
-M6B、time-harmonic operator、field/RTA、direct-authority physics comparison 和最终 PDE RSS 仍等待后续阶段；不能把 M6A 的 action peak 当作 PDE peak。
+M6A 的 action peak 不能当作 PDE peak；W5 time-harmonic screen 已正式运行，但 full PDE、field/RTA、direct-authority physics comparison 和最终 PDE RSS 仍等待后续阶段。
 
 ## W5 disk-backed time-harmonic screen（正式负结果）
 
