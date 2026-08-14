@@ -171,6 +171,7 @@ M6B_W4_PREDICTED_LIVE_SET_BYTES = 1_723_301_083
 M6B_W4_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_750_000_000
 M6B_W5_SCHEMA = "task037.extra.m6b.disk-fgmres-screen.v1"
 M6B_W5_CORE_SCHEMA = "task037.extra.h2b.m6b.disk-fgmres-screen.v1"
+M6B_W5_CHECK_SCHEMA = "task037.extra.m6b.disk-fgmres-screen.check.v1"
 M6B_W5_PHASE = "w5_disk_fgmres_screen"
 M6B_W5_BETA = 1.0
 M6B_W5_STEADY_CALIBRATION_BYTES = 1_599_762_432
@@ -182,6 +183,23 @@ M6B_W5_SCRATCH_V_BYTES = 558_947_232
 M6B_W5_SCRATCH_Z_BYTES = 556_166_400
 M6B_W5_SCRATCH_BYTES = 1_115_113_632
 M6B_W5_FULL_VECTOR_BUFFER_LIMIT_BYTES = 64 * 1024 * 1024
+M6B_W5_EXPECTED_PROCESS_PEAK_BYTES = 1_607_802_880
+M6B_W5_RAW_ARTIFACT_NAMES = tuple(
+    [
+        "m6b_w5_summary.json",
+        "m6b_w5_progress.jsonl",
+    ]
+    + [
+        f"m6b_iter{iteration}_{name}.npy"
+        for iteration in (20, 100, 150, 200)
+        for name in ("solution", "outer_action", "residual", "rhs")
+    ]
+)
+M6B_W5_WATCHDOG_ARTIFACT_NAMES = (
+    "w5_disk_fgmres_screen_root_pid.json",
+    "w5_disk_fgmres_screen_stdout.txt",
+    "w5_disk_fgmres_screen_timeline.jsonl",
+)
 M6B_W3_PRODUCTION_ACTION_COUNT = {
     "local_apply": 1,
     "physical_outer_action": 3,
@@ -5822,6 +5840,699 @@ def _m6b_checkpoint_recompute(run_dir: Path, screen: Any) -> dict[str, Any]:
     return {"pass": not problems, "problems": problems, "residuals": residuals}
 
 
+def _m6b_w5_numeric_gate(residuals: Any) -> dict[str, Any]:
+    checks = {
+        "true_residual_iter20": False,
+        "true_residual_iter100": False,
+        "true_residual_iter200": False,
+        "improvement_150_to_200": False,
+    }
+    observed: dict[str, float] = {}
+    if isinstance(residuals, Mapping):
+        for key in ("20", "100", "150", "200"):
+            if key in residuals and _finite_number(residuals[key]):
+                value = float(residuals[key])
+                if value >= 0.0:
+                    observed[key] = value
+    checks["true_residual_iter20"] = (
+        "20" in observed and observed["20"] <= M6B_SCREEN_RHO_LIMITS["20"]
+    )
+    checks["true_residual_iter100"] = (
+        "100" in observed and observed["100"] <= M6B_SCREEN_RHO_LIMITS["100"]
+    )
+    checks["true_residual_iter200"] = (
+        "200" in observed and observed["200"] <= M6B_SCREEN_RHO_LIMITS["200"]
+    )
+    improvement = None
+    if "150" in observed and "200" in observed and observed["150"] > 0.0:
+        improvement = 1.0 - observed["200"] / observed["150"]
+        checks["improvement_150_to_200"] = bool(
+            math.isfinite(improvement)
+            and improvement >= M6B_IMPROVEMENT_LIMIT
+        )
+    problems = [name for name, passed in checks.items() if not passed]
+    result: dict[str, Any] = {
+        "true_residuals": observed,
+        "limits": {
+            "iteration20": M6B_SCREEN_RHO_LIMITS["20"],
+            "iteration100": M6B_SCREEN_RHO_LIMITS["100"],
+            "iteration200": M6B_SCREEN_RHO_LIMITS["200"],
+            "improvement_150_to_200": M6B_IMPROVEMENT_LIMIT,
+        },
+        "checks": checks,
+        "problems": problems,
+        "pass": not problems,
+    }
+    if improvement is not None and math.isfinite(improvement):
+        result["improvement_150_to_200"] = float(improvement)
+    return result
+
+
+def _m6b_w5_checkpoint_evidence(
+    raw_dir: Path, screen: Any
+) -> dict[str, Any]:
+    if not isinstance(screen, Mapping):
+        return {
+            "pass": False,
+            "problems": ["screen_metadata"],
+            "checkpoint_recompute": {
+                "pass": False,
+                "problems": ["screen_metadata"],
+                "residuals": {},
+            },
+            "artifacts": {},
+        }
+    samples = screen.get("samples")
+    recompute = _m6b_checkpoint_recompute(raw_dir, samples)
+    artifacts: dict[str, Any] = {}
+    if isinstance(samples, Mapping):
+        for iteration in M6B_SCREEN_ITERATIONS:
+            item = samples.get(str(iteration))
+            if not isinstance(item, Mapping) or not isinstance(
+                item.get("artifacts"), Mapping
+            ):
+                continue
+            artifacts[str(iteration)] = {
+                name: _artifact(raw_dir, record["path"])
+                for name, record in item["artifacts"].items()
+                if isinstance(record, Mapping) and isinstance(record.get("path"), str)
+            }
+    return {
+        "pass": recompute["pass"] is True,
+        "problems": list(recompute["problems"]),
+        "checkpoint_recompute": recompute,
+        "artifacts": artifacts,
+    }
+
+
+def _m6b_w5_progress_valid(path: Path, screen: Any) -> dict[str, Any]:
+    fixed = (
+        "authority_validated",
+        "mesh_ready",
+        "space_ready",
+        "floquet_mpc_ready",
+        "cache_ready",
+        "outer_and_carriers_ready",
+        "rhs_ready",
+        "screen_started",
+    )
+    try:
+        records = [json.loads(line) for line in path.read_text().splitlines()]
+    except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        return {"pass": False, "problems": [f"progress_read:{type(exc).__name__}"]}
+    if not isinstance(screen, Mapping) or not isinstance(
+        screen.get("samples"), Mapping
+    ):
+        return {"pass": False, "problems": ["progress_screen"]}
+    samples = screen["samples"]
+    problems: list[str] = []
+    position = 0
+    for event in fixed:
+        if position >= len(records) or not isinstance(records[position], Mapping):
+            problems.append(f"progress_{event}")
+        elif records[position].get("event") != event:
+            problems.append(f"progress_order_{event}")
+        position += 1
+    for count in range(10, 201, 10):
+        if position >= len(records) or not isinstance(records[position], Mapping):
+            problems.append(f"progress_krylov_{count}")
+            position += 1
+            continue
+        record = records[position]
+        if not (
+            record.get("event") == "krylov_progress"
+            and record.get("pc_apply_count") == count
+            and record.get("completed_pc_applies") == count
+            and record.get("max_pc_applies") == 200
+        ):
+            problems.append(f"progress_krylov_{count}")
+        position += 1
+        if count not in M6B_SCREEN_ITERATIONS:
+            continue
+        if position >= len(records) or not isinstance(records[position], Mapping):
+            problems.append(f"progress_checkpoint_{count}")
+            position += 1
+            continue
+        checkpoint = records[position]
+        sample = samples.get(str(count))
+        sample_artifacts = sample.get("artifacts") if isinstance(sample, Mapping) else None
+        artifact_ok = isinstance(sample_artifacts, Mapping)
+        if artifact_ok:
+            checkpoint_artifacts = checkpoint.get("artifacts")
+            artifact_ok = isinstance(checkpoint_artifacts, Mapping)
+            for name in ("solution", "outer_action", "residual", "rhs"):
+                progress_artifact = (
+                    checkpoint_artifacts.get(name)
+                    if isinstance(checkpoint_artifacts, Mapping)
+                    else None
+                )
+                sample_artifact = sample_artifacts.get(name)
+                artifact_ok = artifact_ok and isinstance(progress_artifact, Mapping)
+                artifact_ok = artifact_ok and isinstance(sample_artifact, Mapping)
+                if artifact_ok:
+                    artifact_ok = all(
+                        progress_artifact.get(field) == sample_artifact.get(field)
+                        for field in ("path", "bytes", "sha256", "array_sha256")
+                    )
+        if not (
+            checkpoint.get("event") == "checkpoint_ready"
+            and checkpoint.get("iteration") == count
+            and _finite_number(checkpoint.get("true_relative_residual"))
+            and isinstance(checkpoint.get("artifacts"), Mapping)
+            and artifact_ok
+        ):
+            problems.append(f"progress_checkpoint_{count}")
+        position += 1
+    for event in ("screen_ready", "summary_ready"):
+        if position >= len(records) or not isinstance(records[position], Mapping):
+            problems.append(f"progress_{event}")
+        elif records[position].get("event") != event:
+            problems.append(f"progress_order_{event}")
+        position += 1
+    if position != len(records):
+        problems.append("progress_event_count")
+    return {
+        "pass": not problems,
+        "problems": problems,
+        "record_count": len(records),
+        "events": [record.get("event") for record in records],
+    }
+
+
+def _m6b_w5_file_artifact_valid(value: Any, base_dir: Path) -> bool:
+    if not isinstance(value, Mapping) or not {
+        "path",
+        "present",
+        "bytes",
+        "sha256",
+    }.issubset(value):
+        return False
+    if (
+        value["present"] is not True
+        or type(value["bytes"]) is not int
+        or value["bytes"] <= 0
+        or not isinstance(value["path"], str)
+        or not isinstance(value["sha256"], str)
+        or len(value["sha256"]) != 64
+    ):
+        return False
+    path = Path(value["path"])
+    if not path.is_absolute():
+        path = base_dir / path
+    try:
+        return (
+            path.is_file()
+            and path.stat().st_size == value["bytes"]
+            and _sha256_file(path) == value["sha256"]
+        )
+    except OSError:
+        return False
+
+
+def _m6b_w5_inventory_valid(value: Any, base_dir: Path) -> bool:
+    if not isinstance(value, Mapping) or set(value) != {
+        "raw",
+        "watchdog",
+        "preflight_v3",
+        "wrapper",
+    }:
+        return False
+    groups = {
+        "raw": set(M6B_W5_RAW_ARTIFACT_NAMES),
+        "watchdog": set(M6B_W5_WATCHDOG_ARTIFACT_NAMES),
+        "preflight_v3": {"preflight"},
+        "wrapper": {"wrapper"},
+    }
+    for group, names in groups.items():
+        records = value[group]
+        if not isinstance(records, Mapping) or set(records) != names:
+            return False
+        if not all(
+            _m6b_w5_file_artifact_valid(record, base_dir)
+            for record in records.values()
+        ):
+            return False
+    return True
+
+
+def _m6b_w5_source_valid(value: Any, expected_sha: str) -> bool:
+    return bool(
+        isinstance(value, Mapping)
+        and value.get("source_commit_full_sha") == expected_sha
+        and value.get("source_worktree_dirty") is False
+        and value.get("tracked_source_dirty") is False
+        and value.get("nonignored_untracked_paths") == []
+        and value.get("worktree_status_porcelain") == []
+        and value.get("git_error") is None
+    )
+
+
+def _m6b_w5_runtime_valid(value: Any) -> bool:
+    if not isinstance(value, Mapping) or not {
+        "qualified_activation",
+        "petsc_scalar_type",
+        "petsc_int_type",
+        "mpi_size",
+        "linux_abi",
+        "sys_executable",
+        "threads",
+        "package_paths",
+    }.issubset(value):
+        return False
+    threads = value["threads"]
+    paths = value["package_paths"]
+    return bool(
+        value["qualified_activation"] == "1"
+        and value["petsc_scalar_type"] == "complex128"
+        and value["petsc_int_type"] == "int32"
+        and value["mpi_size"] == 1
+        and value["linux_abi"] is True
+        and isinstance(value["sys_executable"], str)
+        and ".venv" in value["sys_executable"]
+        and isinstance(threads, Mapping)
+        and all(threads.get(name) == "1" for name in (
+            "OMP_NUM_THREADS",
+            "OPENBLAS_NUM_THREADS",
+            "MKL_NUM_THREADS",
+            "NUMEXPR_NUM_THREADS",
+        ))
+        and isinstance(paths, Mapping)
+        and all(
+            isinstance(path, str) and "/mnt/c" not in path
+            for path in paths.values()
+        )
+    )
+
+
+def _m6b_w5_authority_valid(value: Any) -> bool:
+    if not isinstance(value, Mapping):
+        return False
+    factor = value.get("factor_manifest")
+    wave = value.get("wave_manifest")
+    w0 = value.get("w0_authority")
+    w0_artifact = w0.get("file_artifact") if isinstance(w0, Mapping) else None
+    return bool(
+        value.get("factor_beta") == 1.0
+        and value.get("factor_source_sha") == M6B_W2_RESIDUAL_SOURCE_SHA
+        and isinstance(factor, Mapping)
+        and factor.get("sha256") == M6B_W2_FACTOR_MANIFEST_SHA256
+        and isinstance(wave, Mapping)
+        and wave.get("sha256") == M6B_W2_WAVE_MANIFEST_SHA256
+        and value.get("wave_source_sha") == M6B_W2_WAVE_SOURCE_SHA
+        and isinstance(w0, Mapping)
+        and w0.get("schema") == "task037.m6b.wave_range_az_oracle.v1"
+        and isinstance(w0_artifact, Mapping)
+        and w0_artifact.get("sha256") == M6B_W2_W0_OUTPUT_SHA256
+        and w0.get("basis_manifest_sha256") == M6B_W2_W0_BASIS_MANIFEST_SHA256
+        and w0.get("az_column_sha256_aggregate")
+        == M6B_W2_W0_AZ_COLUMN_SHA256_AGGREGATE
+    )
+
+
+def _m6b_w5_architecture_valid(value: Any) -> bool:
+    return bool(
+        isinstance(value, Mapping)
+        and set(value)
+        == {
+            "fine_space",
+            "global_matrix",
+            "augmented_matrix",
+            "static_condensation",
+            "trace_slab_pc",
+            "dtn_matrix_free",
+            "schur",
+            "explicit_C_materialized_count",
+            "explicit_D_materialized_count",
+            "pde",
+        }
+        and value["fine_space"] == "uncondensed_fullspace"
+        and value["global_matrix"] is False
+        and value["augmented_matrix"] is False
+        and value["static_condensation"] is False
+        and value["trace_slab_pc"] is False
+        and value["dtn_matrix_free"] is True
+        and value["schur"] is False
+        and value["explicit_C_materialized_count"] == 0
+        and value["explicit_D_materialized_count"] == 0
+        and value["pde"] is False
+    )
+
+
+def _m6b_w5_form_binding_valid(measurement: Any) -> bool:
+    if not isinstance(measurement, Mapping):
+        return False
+    form = measurement.get("form")
+    shared = measurement.get("shared_volume_kernel")
+    return bool(
+        isinstance(form, Mapping)
+        and isinstance(shared, Mapping)
+        and _m6b_shared_kernel_valid(shared, phase="mpi1", shifted_beta=1.0)
+        and _m6b_form_records_bound(
+            form.get("outer_volume"),
+            form.get("shifted_volume"),
+            shared,
+            phase="mpi1",
+            shifted_beta=1.0,
+        )
+    )
+
+
+def _m6b_w5_pc_audit_valid(value: Any) -> bool:
+    if not isinstance(value, Mapping):
+        return False
+    materialization = (
+        "global_matrix",
+        "global_constraint_matrix",
+        "patch_matrices",
+        "per_cell_factor",
+        "static_condensation",
+        "trace_slab_pc",
+        "schur",
+        "slab_factor",
+    )
+    counts = value.get("production_action_counts")
+    return bool(
+        value.get("schema") == "task037.extra.h2b.m6b.projected-range-pc.v1"
+        and value.get("local_beta") == 1.0
+        and value.get("fixed_order") == "projected_range_complement"
+        and value.get("scan") is False
+        and isinstance(counts, Mapping)
+        and counts == {"local_apply": 1, "physical_outer_action": 3, "range_apply": 2}
+        and value.get("fine_space") == "uncondensed_fullspace"
+        and all(value.get(name) is False for name in materialization)
+    )
+
+
+def _m6b_w5_worker_checks(worker: Any, expected_sha: str) -> dict[str, bool]:
+    checks = {
+        "worker_schema": False,
+        "worker_scope": False,
+        "worker_source": False,
+        "screen_metadata": False,
+        "runtime_identity": False,
+        "jit_identity": False,
+        "authority": False,
+        "architecture": False,
+        "form_binding": False,
+        "pc_binding": False,
+        "status_layering": False,
+    }
+    if not isinstance(worker, Mapping):
+        return checks
+    checks["worker_schema"] = worker.get("schema") == M6B_W5_SCHEMA
+    checks["worker_scope"] = worker.get("scope") == _m6b_w5_scope()
+    checks["worker_source"] = (
+        worker.get("expected_source_sha") == expected_sha
+        and _m6b_w5_source_valid(worker.get("source_at_start"), expected_sha)
+        and _m6b_w5_source_valid(worker.get("source_at_end"), expected_sha)
+    )
+    screen = worker.get("screen")
+    checks["screen_metadata"] = _m6b_w5_screen_metadata_valid(screen)
+    checks["runtime_identity"] = _m6b_w5_runtime_valid(
+        worker.get("runtime_identity")
+    )
+    jit = worker.get("jit_cache")
+    checks["jit_identity"] = bool(
+        isinstance(jit, Mapping)
+        and jit.get("source_inventory_sha256") == M6B_W2_JIT_INVENTORY_SHA256
+        and jit.get("unchanged") is True
+        and all(
+            isinstance(jit.get(name), Mapping)
+            and jit[name].get("inventory_sha256") == M6B_W2_JIT_INVENTORY_SHA256
+            for name in ("before", "after", "final", "source_before", "source_final")
+        )
+    )
+    checks["authority"] = _m6b_w5_authority_valid(worker.get("authority"))
+    checks["architecture"] = _m6b_w5_architecture_valid(
+        worker.get("architecture")
+    )
+    measurement = (
+        worker.get("measurements", {}).get("screen")
+        if isinstance(worker.get("measurements"), Mapping)
+        else None
+    )
+    checks["form_binding"] = _m6b_w5_form_binding_valid(measurement)
+    checks["pc_binding"] = _m6b_w5_pc_audit_valid(
+        measurement.get("pc_audit") if isinstance(measurement, Mapping) else None
+    )
+    checks["status_layering"] = (
+        worker.get("status") == "gate_failed"
+        and worker.get("error") is None
+        and worker.get("diagnostic_numeric_pass") is False
+        and worker.get("screen_numeric_pass") is False
+        and worker.get("w5_pass") is False
+        and worker.get("formal_pass") is False
+        and worker.get("pde_pass") is False
+        and worker.get("official_rta") is None
+    )
+    return checks
+
+
+def _m6b_w5_timeline_valid(
+    watchdog: Any, watchdog_dir: Path
+) -> dict[str, Any]:
+    result: dict[str, Any] = {
+        "pass": False,
+        "records": 0,
+        "peak_rss_bytes": None,
+        "swap_bytes": None,
+        "compiler_descendant_pids": None,
+    }
+    try:
+        artifacts = watchdog["watchdog_artifacts"]
+        record = artifacts["w5_disk_fgmres_screen_timeline.jsonl"]
+        timeline_path = Path(record["path"])
+        if not timeline_path.is_absolute():
+            timeline_path = watchdog_dir / timeline_path
+        lines = timeline_path.read_text().splitlines()
+        records = [json.loads(line) for line in lines]
+        rss_values = [record["rss_bytes"] for record in records]
+        swap_values = [record["swap_bytes"] for record in records]
+        compiler_values = [record["compiler_descendant_pids"] for record in records]
+        peak = max(rss_values)
+        swap = max(swap_values)
+        compiler = sorted({pid for values in compiler_values for pid in values})
+        result.update(
+            {
+                "pass": bool(
+                    records
+                    and all(isinstance(value, int) for value in rss_values)
+                    and all(value == 0 for value in swap_values)
+                    and all(values == [] for values in compiler_values)
+                    and peak == M6B_W5_EXPECTED_PROCESS_PEAK_BYTES
+                    and swap == 0
+                ),
+                "records": len(records),
+                "peak_rss_bytes": peak,
+                "swap_bytes": swap,
+                "compiler_descendant_pids": compiler,
+            }
+        )
+    except (KeyError, OSError, TypeError, ValueError, json.JSONDecodeError):
+        return result
+    return result
+
+
+def _m6b_w5_check_command(
+    raw_dir: Path,
+    watchdog_path: Path,
+    output: Path,
+    expected_producer_sha: str,
+) -> int:
+    try:
+        checker_h2b = __import__(
+            "benchmarks.run_task037_extra_h2b", fromlist=["_light_source"]
+        )
+        checker_source_start = checker_h2b._light_source()
+    except (ImportError, OSError, RuntimeError, TypeError, ValueError) as exc:
+        checker_h2b = None
+        checker_source_start = None
+        checker_source_error = f"{type(exc).__name__}: {exc}"
+    else:
+        checker_source_error = None
+    worker: dict[str, Any] | None = None
+    watchdog: dict[str, Any] | None = None
+    read_error = None
+    try:
+        worker = _read_json(raw_dir / "m6b_w5_summary.json")
+        watchdog = _read_json(watchdog_path)
+    except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        read_error = f"{type(exc).__name__}: {exc}"
+    worker_checks = _m6b_w5_worker_checks(worker, expected_producer_sha)
+    checks: dict[str, bool] = {
+        **worker_checks,
+        "raw_evidence": bool(worker is not None and _evidence_valid(worker)),
+        "watchdog_schema": False,
+        "watchdog_evidence": bool(
+            watchdog is not None and _evidence_valid(watchdog)
+        ),
+        "source_binding": False,
+        "prediction": False,
+        "artifact_inventory": False,
+        "progress": False,
+        "checkpoint_recompute": False,
+        "process": False,
+        "timeline": False,
+        "watchdog_status": False,
+        "checker_source": False,
+    }
+    checkpoint: dict[str, Any] = {
+        "pass": False,
+        "problems": ["worker_missing"],
+        "checkpoint_recompute": {
+            "pass": False,
+            "problems": ["worker_missing"],
+            "residuals": {},
+        },
+        "artifacts": {},
+    }
+    progress: dict[str, Any] = {"pass": False, "problems": ["worker_missing"]}
+    timeline: dict[str, Any] = {
+        "pass": False,
+        "records": 0,
+        "peak_rss_bytes": None,
+        "swap_bytes": None,
+        "compiler_descendant_pids": None,
+    }
+    numeric = _m6b_w5_numeric_gate({})
+    if worker is not None and isinstance(worker.get("screen"), Mapping):
+        checkpoint = _m6b_w5_checkpoint_evidence(raw_dir, worker["screen"])
+        progress = _m6b_w5_progress_valid(
+            raw_dir / "m6b_w5_progress.jsonl", worker["screen"]
+        )
+        numeric = _m6b_w5_numeric_gate(
+            checkpoint["checkpoint_recompute"].get("residuals")
+        )
+        checks["checkpoint_recompute"] = checkpoint["pass"] is True
+        checks["progress"] = progress["pass"] is True
+    if watchdog is not None:
+        watchdog_dir = watchdog_path.parent
+        checks["watchdog_schema"] = (
+            watchdog.get("schema") == "task037.extra.m6b.w5.disk-fgmres.watchdog.v1"
+        )
+        inventory = watchdog.get("artifact_inventory")
+        checks["artifact_inventory"] = _m6b_w5_inventory_valid(
+            inventory, watchdog_dir
+        )
+        source = watchdog.get("source")
+        checks["source_binding"] = bool(
+            isinstance(source, Mapping)
+            and source.get("expected_sha") == expected_producer_sha
+            and _m6b_w5_source_valid(source.get("start"), expected_producer_sha)
+            and _m6b_w5_source_valid(source.get("end"), expected_producer_sha)
+            and watchdog.get("source_end_clean") is True
+            and worker_checks["worker_source"]
+        )
+        checks["prediction"] = (
+            watchdog.get("prediction") == _m6b_w5_predicted_live_set()
+            and isinstance(worker, Mapping)
+            and worker.get("predicted_live_set") == _m6b_w5_predicted_live_set()
+        )
+        process = watchdog.get("process")
+        drain = watchdog.get("drain")
+        checks["process"] = bool(
+            isinstance(process, Mapping)
+            and process.get("return_code") == 1
+            and process.get("termination") is None
+            and process.get("peak_rss_bytes") == M6B_W5_EXPECTED_PROCESS_PEAK_BYTES
+            and process.get("swap_bytes") == 0
+            and isinstance(drain, Mapping)
+            and drain.get("gone") is True
+            and watchdog.get("resource_limits")
+            == {
+                "timeout_seconds": 19200.0,
+                "watchdog_rss_bytes": M6B_WATCHDOG_RSS_LIMIT_BYTES,
+                "completion_peak_rss_bytes": M6B_ONLINE_COMPLETION_RSS_LIMIT_BYTES,
+                "swap_bytes": 0,
+                "pde_strict_peak_bytes": 2_000_000_000,
+            }
+        )
+        timeline = _m6b_w5_timeline_valid(watchdog, watchdog_dir)
+        checks["timeline"] = bool(
+            timeline["pass"] is True
+            and isinstance(process, Mapping)
+            and timeline["peak_rss_bytes"] == process.get("peak_rss_bytes")
+            and timeline["swap_bytes"] == process.get("swap_bytes") == 0
+            and timeline["compiler_descendant_pids"] == []
+            and isinstance(watchdog.get("timeline"), Mapping)
+            and watchdog["timeline"].get("records") == timeline["records"]
+        )
+        checks["watchdog_status"] = bool(
+            watchdog.get("status") == "gate_failed"
+            and watchdog.get("classification") == "NUMERIC_FAIL"
+            and watchdog.get("w5_pass") is False
+            and watchdog.get("formal_pass") is False
+            and watchdog.get("pde_pass") is False
+            and watchdog.get("official_rta") is False
+            and watchdog.get("jit_unchanged") is True
+            and watchdog.get("monitor_error") is None
+        )
+    if checker_h2b is not None and checker_source_start is not None:
+        try:
+            checker_source_end = checker_h2b._light_source()
+        except (OSError, RuntimeError, TypeError, ValueError) as exc:
+            checker_source_end = None
+            checker_source_error = f"{type(exc).__name__}: {exc}"
+        checks["checker_source"] = bool(
+            isinstance(checker_source_end, Mapping)
+            and checker_h2b._source_pair_valid(
+                checker_source_start, checker_source_end
+            )
+        )
+    else:
+        checker_source_end = None
+    evidence_complete = all(checks.values())
+    if not evidence_complete:
+        classification = "EXECUTION_FAIL"
+    elif not checks["process"] or not checks["timeline"]:
+        classification = "RESOURCE_OR_EVIDENCE_FAIL"
+    elif not numeric["pass"]:
+        classification = "NUMERIC_FAIL"
+    else:
+        classification = "PASS"
+    problems = [name for name, passed in checks.items() if not passed]
+    problems.extend(numeric["problems"])
+    result: dict[str, Any] = {
+        "schema": M6B_W5_CHECK_SCHEMA,
+        "status": "pass" if classification == "PASS" else "gate_failed",
+        "pass": classification == "PASS",
+        "classification": classification,
+        "evidence_complete": evidence_complete,
+        "producer_source_sha": expected_producer_sha,
+        "checker_source": {
+            "start": checker_source_start,
+            "end": checker_source_end,
+            "error": checker_source_error,
+        },
+        "checks": checks,
+        "problems": sorted(set(problems + ([read_error] if read_error else []))),
+        "numeric_gate": numeric,
+        "checkpoint_recompute": checkpoint["checkpoint_recompute"],
+        "checkpoint_artifacts": checkpoint["artifacts"],
+        "progress": progress,
+        "timeline": timeline,
+        "prediction": None if watchdog is None else watchdog.get("prediction"),
+        "process": None if watchdog is None else watchdog.get("process"),
+        "drain": None if watchdog is None else watchdog.get("drain"),
+        "raw_worker_artifact": _artifact(raw_dir, "m6b_w5_summary.json"),
+        "raw_progress_artifact": _artifact(raw_dir, "m6b_w5_progress.jsonl"),
+        "watchdog_artifact": _artifact(watchdog_path.parent, watchdog_path.name),
+        "artifact_inventory": None
+        if watchdog is None
+        else watchdog.get("artifact_inventory"),
+        "screen": None if worker is None else worker.get("screen"),
+        "architecture": None if worker is None else worker.get("architecture"),
+        "jit_identity": None if worker is None else worker.get("jit_cache"),
+        "authority": None if worker is None else worker.get("authority"),
+        "formal_pass": False,
+        "w5_pass": False,
+        "pde_pass": False,
+        "official_rta": False,
+    }
+    _write_json(output, _attach_evidence(result))
+    return 0 if result["pass"] else 1
+
+
 def _check_command(run_dir: Path, output: Path) -> int:
     checks: dict[str, bool] = {
         "watchdog": False,
@@ -6137,11 +6848,27 @@ def _parser() -> argparse.ArgumentParser:
     check = sub.add_parser("m6b-check")
     check.add_argument("--run-dir", required=True)
     check.add_argument("--output", required=True)
+    w5_check = sub.add_parser("m6b-w5-check")
+    w5_check.add_argument("--raw-dir", required=True)
+    w5_check.add_argument("--watchdog-summary", required=True)
+    w5_check.add_argument("--output", required=True)
+    w5_check.add_argument(
+        "--expected-producer-sha",
+        required=True,
+        type=_m6b_w2_source_sha_argument,
+    )
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    if args.command == "m6b-w5-check":
+        return _m6b_w5_check_command(
+            Path(args.raw_dir).resolve(),
+            Path(args.watchdog_summary).resolve(),
+            Path(args.output).resolve(),
+            args.expected_producer_sha,
+        )
     run_dir = Path(args.run_dir).resolve()
     if args.command == "m6b-check":
         return _check_command(run_dir, Path(args.output).resolve())
