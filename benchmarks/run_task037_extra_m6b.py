@@ -200,6 +200,42 @@ M6B_W5_WATCHDOG_ARTIFACT_NAMES = (
     "w5_disk_fgmres_screen_stdout.txt",
     "w5_disk_fgmres_screen_timeline.jsonl",
 )
+M6B_W7_S1_SCHEMA = "task037.extra.m6b.w7-s1.restart-disk-fgmres-screen.v1"
+M6B_W7_S1_CORE_SCHEMA = (
+    "task037.extra.h2b.m6b.w7-s1.restart-disk-fgmres-screen.v1"
+)
+M6B_W7_S1_CHECK_SCHEMA = (
+    "task037.extra.m6b.w7-s1.restart-disk-fgmres-screen.check.v1"
+)
+M6B_W7_S1_PHASE = "w7_s1_restart_disk_fgmres_screen"
+M6B_W7_S1_LOCAL_ITERATIONS = (20, 100, 150, 200)
+M6B_W7_S1_CUMULATIVE_ITERATIONS = (220, 300, 350, 400)
+M6B_W7_S1_W5_COMPACT_RELATIVE_PATH = (
+    "benchmarks/cases/101_task37_extra_development/records/"
+    "m6b_w5_disk_fgmres_screen.json"
+)
+M6B_W7_S1_W5_COMPACT_FILE_SHA256 = (
+    "fa9d92d84ba010a6f5f8effd18b0205e8d1b592382f3633b247a65fe8dbf91e5"
+)
+M6B_W7_S1_W5_SOURCE_SHA = (
+    "41cbbd454eb8336d9ea5378ed618447acfc60aac"
+)
+M6B_W7_S1_INITIAL_RHO = 0.12750559935416836
+M6B_W7_S1_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_750_000_000
+M6B_W7_S1_W5_CALIBRATED_PEAK_BYTES = 1_608_527_872
+M6B_W7_S1_RAW_ARTIFACT_NAMES = tuple(
+    ["m6b_w7_s1_summary.json", "m6b_w7_s1_progress.jsonl"]
+    + [
+        f"m6b_iter{iteration}_{name}.npy"
+        for iteration in M6B_W7_S1_LOCAL_ITERATIONS
+        for name in ("solution", "outer_action", "residual", "rhs")
+    ]
+)
+M6B_W7_S1_WATCHDOG_ARTIFACT_NAMES = (
+    "w7_s1_restart_disk_fgmres_screen_root_pid.json",
+    "w7_s1_restart_disk_fgmres_screen_stdout.txt",
+    "w7_s1_restart_disk_fgmres_screen_timeline.jsonl",
+)
 M6B_W6A_SCHEMA = "task037.extra.m6b.w6a.multi-order-range.builder.v1"
 M6B_W6A_PHASE = "w6a_multi_order_range_builder"
 M6B_W6A_CORE_SCHEMA = "task037.extra.m6b.w6a.multi-order-range.v1"
@@ -830,6 +866,247 @@ def _m6b_w5_scope() -> dict[str, Any]:
         "predicted_live_set": _m6b_w5_predicted_live_set(),
         "formal_pass": False,
         "pde_pass": False,
+    }
+
+
+def _m6b_w7_s1_predicted_live_set() -> dict[str, Any]:
+    components = {
+        "w5_steady_calibration_bytes": M6B_W5_STEADY_CALIBRATION_BYTES,
+        "disk_fgmres_core_full_vector_upper_bound_bytes": (
+            M6B_W5_CORE_INCREMENT_BYTES
+        ),
+    }
+    total = int(sum(components.values()))
+    return {
+        "components": components,
+        "predicted_live_set_bytes": total,
+        "limit_bytes": M6B_W7_S1_PREDICTED_LIVE_SET_LIMIT_BYTES,
+        "gate": total <= M6B_W7_S1_PREDICTED_LIVE_SET_LIMIT_BYTES,
+        "derived_not_measured": True,
+        "is_measurement": False,
+        "prediction_scope": "production_w7_s1_restart_cycle_reuses_w5_bound",
+        "w5_historical_process_tree_peak_bytes": M6B_W7_S1_W5_CALIBRATED_PEAK_BYTES,
+        "w5_historical_peak_is_not_prediction_component": True,
+        "pde_strict_peak_limit_bytes": 2_000_000_000,
+        "watchdog_peak_limit_bytes": M6B_WATCHDOG_RSS_LIMIT_BYTES,
+        "completion_peak_limit_bytes": M6B_ONLINE_COMPLETION_RSS_LIMIT_BYTES,
+        "swap_limit_bytes": M6B_SWAP_LIMIT_BYTES,
+        "scratch": {
+            "v_bytes": M6B_W5_SCRATCH_V_BYTES,
+            "z_bytes": M6B_W5_SCRATCH_Z_BYTES,
+            "total_bytes": M6B_W5_SCRATCH_BYTES,
+            "counts_as_process_rss": False,
+        },
+    }
+
+
+def _m6b_w7_s1_scope() -> dict[str, Any]:
+    scope = _m6b_w5_scope()
+    scope.update(
+        {
+            "schema": M6B_W7_S1_SCHEMA,
+            "phase": M6B_W7_S1_PHASE,
+            "solver": "disk_fgmres_restart",
+            "cycle": "fixed_restart_continuation_from_w5_iter200",
+            "checkpoint_axis": "local_cycle_iteration",
+            "screen_iterations": list(M6B_W7_S1_LOCAL_ITERATIONS),
+            "cumulative_checkpoint_iterations": list(
+                M6B_W7_S1_CUMULATIVE_ITERATIONS
+            ),
+            "initial_solution_provided": True,
+            "initial_solution_authority": "W5_iter200_solution",
+            "predicted_live_set": _m6b_w7_s1_predicted_live_set(),
+            "formal_pass": False,
+            "pde_pass": False,
+        }
+    )
+    return scope
+
+
+def _m6b_w7_s1_numeric_gate(
+    samples: Any, *, recomputed_residuals: Mapping[str, Any] | None = None
+) -> dict[str, Any]:
+    required = {str(value) for value in M6B_W7_S1_LOCAL_ITERATIONS}
+    checks = {
+        "checkpoint_set": False,
+        "local_cumulative_mapping": False,
+        "finite_true_residuals": False,
+        "monotone_nonincreasing": False,
+        "cumulative400_le_0.08": False,
+        "improvement_350_to_400_ge_0.15": False,
+    }
+    values: dict[str, float] = {}
+    problems: list[str] = []
+    if not isinstance(samples, Mapping) or set(samples) != required:
+        problems.append("checkpoint_set")
+    else:
+        checks["checkpoint_set"] = True
+        for local, cumulative in zip(
+            M6B_W7_S1_LOCAL_ITERATIONS, M6B_W7_S1_CUMULATIVE_ITERATIONS
+        ):
+            item = samples[str(local)]
+            observed = (
+                recomputed_residuals.get(str(local))
+                if isinstance(recomputed_residuals, Mapping)
+                else item.get("true_relative_residual")
+                if isinstance(item, Mapping)
+                else None
+            )
+            if (
+                not isinstance(item, Mapping)
+                or item.get("iteration") != local
+                or item.get("local_iteration") != local
+                or item.get("cumulative_iteration") != cumulative
+                or not _finite_number(observed)
+                or float(observed) < 0.0
+            ):
+                problems.append(f"checkpoint_{local}")
+                continue
+            values[str(local)] = float(observed)
+        checks["local_cumulative_mapping"] = not any(
+            problem.startswith("checkpoint_") for problem in problems
+        )
+        checks["finite_true_residuals"] = set(values) == required
+    if set(values) == required:
+        sequence = [values[str(local)] for local in M6B_W7_S1_LOCAL_ITERATIONS]
+        checks["monotone_nonincreasing"] = all(
+            right <= left + 1.0e-12 for left, right in zip(sequence, sequence[1:])
+        )
+        # Monotonicity is retained as a diagnostic; the W7-S1 hard numeric
+        # gate is the cumulative-400 residual only.
+        checks["cumulative400_le_0.08"] = values["200"] <= 0.08
+        if not checks["cumulative400_le_0.08"]:
+            problems.append("cumulative400_true_residual")
+        improvement = 1.0 - values["200"] / values["150"]
+        checks["improvement_350_to_400_ge_0.15"] = bool(
+            math.isfinite(improvement) and improvement >= 0.15
+        )
+    else:
+        improvement = None
+    return {
+        "pass": not problems,
+        "problems": sorted(set(problems)),
+        "true_residuals": values,
+        "cumulative_true_residuals": {
+            str(cumulative): values[str(local)]
+            for local, cumulative in zip(
+                M6B_W7_S1_LOCAL_ITERATIONS,
+                M6B_W7_S1_CUMULATIVE_ITERATIONS,
+            )
+            if str(local) in values
+        },
+        "improvement_350_to_400": improvement,
+        "checks": checks,
+        "limits": {
+            "cumulative400_true_residual": 0.08,
+            "improvement_350_to_400": 0.15,
+        },
+    }
+
+
+def _m6b_w7_s1_load_w5_authority(
+    compact_path: Path, w5_raw_dir: Path
+) -> dict[str, Any]:
+    import numpy as np
+
+    compact_path = Path(compact_path).resolve()
+    w5_raw_dir = Path(w5_raw_dir).resolve()
+    expected_compact = (ROOT / M6B_W7_S1_W5_COMPACT_RELATIVE_PATH).resolve()
+    if compact_path != expected_compact:
+        raise ValueError("W7-S1 W5 compact path is not the frozen authority")
+    compact_artifact = _artifact(ROOT, M6B_W7_S1_W5_COMPACT_RELATIVE_PATH)
+    compact = _read_json(compact_path)
+    if not (
+        compact_artifact.get("present") is True
+        and compact_artifact.get("sha256") == M6B_W7_S1_W5_COMPACT_FILE_SHA256
+        and _evidence_valid(compact)
+        and compact.get("classification") == "NUMERIC_FAIL"
+        and compact.get("producer_source_sha") == M6B_W7_S1_W5_SOURCE_SHA
+        and compact.get("pass") is False
+        and compact.get("numeric_ok") is False
+    ):
+        raise ValueError("W7-S1 W5 compact authority is not closed")
+    samples = compact.get("screen", {}).get("samples")
+    if not isinstance(samples, Mapping) or "200" not in samples:
+        raise ValueError("W7-S1 W5 iter200 authority is missing")
+    initial_solution = None
+    frozen_rhs = None
+    sample_artifacts: dict[str, Any] = {}
+    iteration = 200
+    sample = samples[str(iteration)]
+    artifacts = sample.get("artifacts") if isinstance(sample, Mapping) else None
+    if not isinstance(artifacts, Mapping) or set(artifacts) != {
+        "solution", "outer_action", "residual", "rhs"
+    }:
+        raise ValueError("W7-S1 W5 iter200 artifacts are incomplete")
+    sample_artifacts[str(iteration)] = {}
+    arrays: dict[str, np.ndarray] = {}
+    try:
+        for name in ("solution", "outer_action", "residual", "rhs"):
+            record = artifacts[name]
+            file_name = f"m6b_iter{iteration}_{name}.npy"
+            if not isinstance(record, Mapping) or record.get("path") != file_name:
+                raise ValueError(f"W7-S1 W5 artifact path is invalid: {file_name}")
+            actual = _artifact(w5_raw_dir, file_name)
+            if not (
+                actual.get("present") is True
+                and actual.get("sha256") == record.get("sha256")
+                and actual.get("bytes") == record.get("bytes")
+            ):
+                raise ValueError(f"W7-S1 W5 file artifact differs: {file_name}")
+            values = np.load(
+                w5_raw_dir / file_name, allow_pickle=False, mmap_mode="r"
+            )
+            if not (
+                values.dtype == np.dtype(np.complex128)
+                and values.shape == (M6B_GLOBAL_ROWS,)
+                and np.all(np.isfinite(values))
+                and _m6b_w6a_w5_legacy_raw_array_sha256(values)
+                == record.get("array_sha256")
+            ):
+                raise ValueError(f"W7-S1 W5 array artifact differs: {file_name}")
+            arrays[name] = values
+            sample_artifacts[str(iteration)][name] = {
+                "path": file_name,
+                "file_sha256": actual["sha256"],
+                "array_sha256": record["array_sha256"],
+                "bytes": actual["bytes"],
+            }
+        expected_residual = arrays["rhs"] - arrays["outer_action"]
+        closure = float(
+            np.linalg.norm(expected_residual - arrays["residual"])
+            / max(np.linalg.norm(arrays["rhs"]), np.finfo(float).tiny)
+        )
+        rho = float(
+            np.linalg.norm(arrays["residual"])
+            / max(np.linalg.norm(arrays["rhs"]), np.finfo(float).tiny)
+        )
+        if (
+            closure > 1.0e-12
+            or not _finite_number(sample.get("true_relative_residual"))
+            or abs(rho - float(sample["true_relative_residual"])) > 1.0e-12
+            or abs(rho - M6B_W7_S1_INITIAL_RHO) > 1.0e-12
+        ):
+            raise ValueError("W7-S1 frozen W5 iter200 residual authority differs")
+        initial_solution = np.array(arrays["solution"], copy=True)
+        frozen_rhs = np.array(arrays["rhs"], copy=True)
+    finally:
+        del arrays
+
+    if initial_solution is None or frozen_rhs is None:
+        raise ValueError("W7-S1 initial W5 arrays are missing")
+    return {
+        "compact": {
+            "path": str(compact_path),
+            "file_sha256": compact_artifact["sha256"],
+            "producer_source_sha": M6B_W7_S1_W5_SOURCE_SHA,
+        },
+        "raw_dir": str(w5_raw_dir),
+        "samples": sample_artifacts,
+        "frozen_iteration": 200,
+        "frozen_true_relative_residual": M6B_W7_S1_INITIAL_RHO,
+        "initial_solution": initial_solution,
+        "frozen_rhs": frozen_rhs,
     }
 
 
@@ -2991,7 +3268,14 @@ def _m6b_w4_screen_metadata_valid(value: Any) -> bool:
     return True
 
 
-def _m6b_w5_screen_metadata_valid(value: Any) -> bool:
+def _m6b_w5_screen_metadata_valid(
+    value: Any,
+    *,
+    expected_schema: str = M6B_W5_CORE_SCHEMA,
+    expected_action_count: int = 204,
+    expected_initial_action_count: int = 0,
+    expected_cycle: str = "fixed_one_200_step_cycle",
+) -> bool:
     required = {
         "schema",
         "rows",
@@ -3017,13 +3301,13 @@ def _m6b_w5_screen_metadata_valid(value: Any) -> bool:
     if not isinstance(value, Mapping) or not required.issubset(value):
         return False
     if not (
-        value["schema"] == M6B_W5_CORE_SCHEMA
+        value["schema"] == expected_schema
         and value["rows"] == M6B_GLOBAL_ROWS
         and value["solver"] == "disk_backed_flexible_gmres"
         and value["petsc_ksp_used"] is False
         and value["side"] == "right"
         and value["two_pass_mgs"] is True
-        and value["cycle"] == "fixed_one_200_step_cycle"
+        and value["cycle"] == expected_cycle
         and value["max_steps"] == 200
         and value["iterations"] == 200
         and value["checkpoint_iterations"] == [20, 100, 150, 200]
@@ -3101,9 +3385,9 @@ def _m6b_w5_screen_metadata_valid(value: Any) -> bool:
         core["algorithm"] == "right_flexible_gmres"
         and core["rows"] == M6B_GLOBAL_ROWS
         and core["dtype"] == "complex128"
-        and core["action_count"] == 204
+        and core["action_count"] == expected_action_count
         and core["pc_count"] == 200
-        and core["initial_action_count"] == 0
+        and core["initial_action_count"] == expected_initial_action_count
         and core["orthogonalization_passes"] == 2
         and core["happy_breakdown"] is False
         and core["retained_full_vector_count"] == 1
@@ -3153,7 +3437,7 @@ def _m6b_w5_screen_metadata_valid(value: Any) -> bool:
         and scratch.get("basis_in_memory") is False
         and isinstance(value["numeric_gate"], Mapping)
         and type(value["action_count"]) is int
-        and value["action_count"] == 204
+        and value["action_count"] == expected_action_count
         and type(value["pc_count"]) is int
         and value["pc_count"] == 200
         and isinstance(value["read_write_counts"], Mapping)
@@ -3163,6 +3447,33 @@ def _m6b_w5_screen_metadata_valid(value: Any) -> bool:
         and value["read_write_counts"]["v_basis"].get("write_count") == 201
         and value["read_write_counts"]["z_basis"].get("read_count") == 470
         and value["read_write_counts"]["z_basis"].get("write_count") == 200
+    )
+
+
+def _m6b_w7_s1_screen_metadata_valid(value: Any) -> bool:
+    if not _m6b_w5_screen_metadata_valid(
+        value,
+        expected_schema=M6B_W7_S1_CORE_SCHEMA,
+        expected_action_count=205,
+        expected_initial_action_count=1,
+        expected_cycle="fixed_one_200_step_restart_cycle",
+    ):
+        return False
+    if not (
+        value.get("checkpoint_axis") == "local_cycle_iteration"
+        and value.get("cumulative_checkpoint_iterations")
+        == list(M6B_W7_S1_CUMULATIVE_ITERATIONS)
+        and value.get("initial_solution_provided") is True
+        and isinstance(value.get("continuation_authority"), Mapping)
+    ):
+        return False
+    samples = value["samples"]
+    return all(
+        samples[str(local)].get("local_iteration") == local
+        and samples[str(local)].get("cumulative_iteration") == cumulative
+        for local, cumulative in zip(
+            M6B_W7_S1_LOCAL_ITERATIONS, M6B_W7_S1_CUMULATIVE_ITERATIONS
+        )
     )
 
 
@@ -5828,6 +6139,9 @@ def _run_m6b_w2_diagnostic(
     factor_manifest_sha256: str = M6B_W2_FACTOR_MANIFEST_SHA256,
     factor_source_sha: str = M6B_W2_RESIDUAL_SOURCE_SHA,
     solver: str = "fgmres",
+    initial_solution: Any | None = None,
+    continuation_authority: Mapping[str, Any] | None = None,
+    continuation_rhs: Any | None = None,
 ) -> int:
     import gc
     import shutil
@@ -5876,18 +6190,24 @@ def _run_m6b_w2_diagnostic(
     wave_authority_dir = Path(wave_authority_dir).resolve()
     jit_cache_source = Path(jit_cache_source).resolve()
     w0_authority_file = Path(w0_authority_file).resolve()
-    if solver not in {"fgmres", "fbcgs", "disk_fgmres"}:
+    if solver not in {"fgmres", "fbcgs", "disk_fgmres", "disk_fgmres_restart"}:
         raise ValueError("M6B screen solver is not fixed")
     if solver == "fbcgs" and (
         not screen or not projected or shifted_beta != M6B_W4_BETA
     ):
         raise ValueError("M6B W4 FBCGS requires the fixed beta=1 projected screen")
-    if solver == "disk_fgmres" and (
+    if solver in {"disk_fgmres", "disk_fgmres_restart"} and (
         not screen or not projected or shifted_beta != M6B_W5_BETA
     ):
         raise ValueError(
             "M6B W5 disk FGMRES requires the fixed beta=1 projected screen"
         )
+    if solver == "disk_fgmres_restart" and (
+        initial_solution is None
+        or not isinstance(continuation_authority, Mapping)
+        or continuation_rhs is None
+    ):
+        raise ValueError("M6B W7-S1 requires the frozen W5 continuation authority")
     if screen and not projected:
         raise ValueError("M6B W3 screen requires the projected range PC")
     if shifted_beta not in (M6B_W2_SHIFTED_BETA, M6B_W3_BETA05):
@@ -5916,7 +6236,12 @@ def _run_m6b_w2_diagnostic(
     shutil.copytree(jit_cache_source, cache_dir)
     started = time.perf_counter()
     if screen:
-        if solver == "disk_fgmres":
+        if solver == "disk_fgmres_restart":
+            screen_schema = M6B_W7_S1_SCHEMA
+            phase_name = M6B_W7_S1_PHASE
+            progress_path = run_dir / "m6b_w7_s1_progress.jsonl"
+            summary_path = run_dir / "m6b_w7_s1_summary.json"
+        elif solver == "disk_fgmres":
             screen_schema = M6B_W5_SCHEMA
             phase_name = M6B_W5_PHASE
             progress_path = run_dir / "m6b_w5_progress.jsonl"
@@ -6010,7 +6335,9 @@ def _run_m6b_w2_diagnostic(
             raise ValueError("M6B W2 copied JIT cache differs from source")
         emit("authority_validated", **authority)
         mesh_name = (
-            "m6b_w5_mesh"
+            "m6b_w7_s1_mesh"
+            if solver == "disk_fgmres_restart"
+            else "m6b_w5_mesh"
             if solver == "disk_fgmres"
             else "m6b_w4_mesh"
             if solver == "fbcgs"
@@ -6215,7 +6542,7 @@ def _run_m6b_w2_diagnostic(
                     list(M6B_W4_KSP_ITERATIONS)
                     if solver == "fbcgs"
                     else []
-                    if solver == "disk_fgmres"
+                    if solver in {"disk_fgmres", "disk_fgmres_restart"}
                     else list(M6B_SCREEN_ITERATIONS)
                 ),
                 pc_apply_budgets=(
@@ -6226,16 +6553,62 @@ def _run_m6b_w2_diagnostic(
                 checkpoint_axis=(
                     "pc_apply_budget"
                     if solver == "fbcgs"
+                    else "local_cycle_iteration"
+                    if solver == "disk_fgmres_restart"
                     else "krylov_iteration"
                     if solver == "disk_fgmres"
                     else "ksp_iteration"
                 ),
+                cumulative_checkpoint_iterations=(
+                    list(M6B_W7_S1_CUMULATIVE_ITERATIONS)
+                    if solver == "disk_fgmres_restart"
+                    else []
+                ),
                 fixed_screen=True,
             )
-            if solver == "disk_fgmres":
+            if solver in {"disk_fgmres", "disk_fgmres_restart"}:
                 rhs_numpy = np.array(
                     rhs_vec.getArray(readonly=True), dtype=np.complex128, copy=True
                 )
+                if solver == "disk_fgmres_restart":
+                    if not isinstance(continuation_rhs, np.ndarray):
+                        raise ValueError("M6B W7-S1 frozen RHS is missing")
+                    if (
+                        continuation_rhs.shape != rhs_numpy.shape
+                        or continuation_rhs.dtype != np.dtype(np.complex128)
+                        or not np.array_equal(continuation_rhs, rhs_numpy)
+                    ):
+                        raise ValueError("M6B W7-S1 RHS differs from frozen W5")
+                    initial_action = outer_numpy(initial_solution)
+                    initial_residual = rhs_numpy - initial_action
+                    initial_rho = float(
+                        np.linalg.norm(initial_residual)
+                        / max(np.linalg.norm(rhs_numpy), np.finfo(float).tiny)
+                    )
+                    if (
+                        not np.all(np.isfinite(initial_action))
+                        or not np.all(np.isfinite(initial_residual))
+                        or not math.isfinite(initial_rho)
+                        or abs(initial_rho - M6B_W7_S1_INITIAL_RHO) > 1.0e-12
+                    ):
+                        raise ValueError("M6B W7-S1 initial residual authority differs")
+                    continuation_authority = dict(continuation_authority)
+                    continuation_authority["initial_check"] = {
+                        "initial_solution_provided": True,
+                        "initial_action_count": 1,
+                        "rhs_equal_to_frozen_w5": True,
+                        "initial_true_relative_residual": initial_rho,
+                        "frozen_true_relative_residual": M6B_W7_S1_INITIAL_RHO,
+                        "relative_closure": abs(
+                            initial_rho - M6B_W7_S1_INITIAL_RHO
+                        ),
+                        "absolute_closure": abs(
+                            initial_rho - M6B_W7_S1_INITIAL_RHO
+                        ),
+                        "finite": True,
+                    }
+                    del initial_action, initial_residual
+                    continuation_rhs = None
                 disk_pc_apply_count = 0
 
                 def disk_right_pc(values: np.ndarray) -> np.ndarray:
@@ -6257,8 +6630,36 @@ def _run_m6b_w2_diagnostic(
                     rhs_numpy,
                     checkpoint_dir=run_dir,
                     scratch_dir=run_dir / "krylov_scratch",
+                    initial_solution=initial_solution
+                    if solver == "disk_fgmres_restart"
+                    else None,
+                    schema=(
+                        M6B_W7_S1_CORE_SCHEMA
+                        if solver == "disk_fgmres_restart"
+                        else M6B_W5_CORE_SCHEMA
+                    ),
                     observer=lambda metadata: emit("checkpoint_ready", **metadata),
                 )
+                if solver == "disk_fgmres_restart":
+                    screen_result["cycle"] = "fixed_one_200_step_restart_cycle"
+                    screen_result["checkpoint_axis"] = "local_cycle_iteration"
+                    screen_result["cumulative_checkpoint_iterations"] = list(
+                        M6B_W7_S1_CUMULATIVE_ITERATIONS
+                    )
+                    screen_result["initial_solution_provided"] = True
+                    screen_result["continuation_authority"] = continuation_authority
+                    for local, cumulative in zip(
+                        M6B_W7_S1_LOCAL_ITERATIONS,
+                        M6B_W7_S1_CUMULATIVE_ITERATIONS,
+                    ):
+                        screen_result["samples"][str(local)].update(
+                            {
+                                "local_iteration": local,
+                                "cumulative_iteration": cumulative,
+                                "checkpoint_axis": "local_cycle_iteration",
+                            }
+                        )
+                    initial_solution = None
                 del rhs_numpy
             else:
                 pc_context, screen_result = _m6b_w3_screen_orchestration(
@@ -6278,11 +6679,18 @@ def _run_m6b_w2_diagnostic(
                 if solver == "fbcgs"
                 else _m6b_w5_screen_metadata_valid(screen_result)
                 if solver == "disk_fgmres"
+                else _m6b_w7_s1_screen_metadata_valid(screen_result)
+                if solver == "disk_fgmres_restart"
                 else _m6b_screen_metadata_valid(screen_result)
             )
             if not metadata_valid:
                 raise ValueError("M6B screen samples are incomplete or nonfinite")
-            gate = _m6b_w3_numeric_gate(samples)
+            gate = (
+                _m6b_w7_s1_numeric_gate(samples)
+                if solver == "disk_fgmres_restart"
+                else _m6b_w3_numeric_gate(samples)
+            )
+            screen_result["numeric_gate"] = gate
             measurements["screen"] = {
                 "screen": screen_result,
                 "screen_gate": gate,
@@ -6430,7 +6838,11 @@ def _run_m6b_w2_diagnostic(
         error = "M6B W2 execution source changed during diagnostic"
     gate = (
         (
-            _m6b_w3_numeric_gate(
+            _m6b_w7_s1_numeric_gate(
+                screen_result.get("samples") if isinstance(screen_result, Mapping) else None
+            )
+            if screen and solver == "disk_fgmres_restart"
+            else _m6b_w3_numeric_gate(
                 screen_result.get("samples") if isinstance(screen_result, Mapping) else None
             )
             if screen
@@ -6454,7 +6866,9 @@ def _run_m6b_w2_diagnostic(
         "schema": screen_schema if screen else (M6B_W2R_SCHEMA if projected else M6B_W2_SCHEMA),
         "status": status if error is None else "gate_failed",
         "scope": (
-            _m6b_w5_scope()
+            _m6b_w7_s1_scope()
+            if screen and solver == "disk_fgmres_restart"
+            else _m6b_w5_scope()
             if screen and solver == "disk_fgmres"
             else _m6b_w4_scope()
             if screen and solver == "fbcgs"
@@ -6488,7 +6902,9 @@ def _run_m6b_w2_diagnostic(
             else None
         ),
         "predicted_live_set": (
-            _m6b_w5_predicted_live_set()
+            _m6b_w7_s1_predicted_live_set()
+            if screen and solver == "disk_fgmres_restart"
+            else _m6b_w5_predicted_live_set()
             if screen and solver == "disk_fgmres"
             else _m6b_w4_predicted_live_set()
             if screen and solver == "fbcgs"
@@ -6543,7 +6959,10 @@ def _run_m6b_w2_diagnostic(
                 "formal_pass": False,
             },
         }
-        if solver == "disk_fgmres":
+        if solver == "disk_fgmres_restart":
+            screen_fields["w7_s1_pass"] = False
+            screen_fields["architecture"]["dtn_matrix_free"] = True
+        elif solver == "disk_fgmres":
             screen_fields["w5_pass"] = False
             screen_fields["architecture"]["dtn_matrix_free"] = True
         elif solver == "fbcgs":
@@ -6682,6 +7101,41 @@ def _run_m6b_w5_disk_fgmres_screen(
         shifted_beta=M6B_W5_BETA,
         solver="disk_fgmres",
     )
+
+
+def _run_m6b_w7_s1_screen(
+    run_dir: Path,
+    factor_authority_dir: Path,
+    wave_authority_dir: Path,
+    jit_cache_source: Path,
+    expected_source_sha: str,
+    w0_authority_file: Path,
+    w5_compact_path: Path,
+    w5_raw_dir: Path,
+) -> int:
+    """Run one fixed 200-step continuation cycle from frozen W5 iter200."""
+
+    continuation = _m6b_w7_s1_load_w5_authority(w5_compact_path, w5_raw_dir)
+    initial_solution = continuation.pop("initial_solution")
+    frozen_rhs = continuation.pop("frozen_rhs")
+    try:
+        return _run_m6b_w2_diagnostic(
+            run_dir,
+            factor_authority_dir,
+            wave_authority_dir,
+            jit_cache_source,
+            expected_source_sha,
+            w0_authority_file,
+            projected=True,
+            screen=True,
+            shifted_beta=M6B_W5_BETA,
+            solver="disk_fgmres_restart",
+            initial_solution=initial_solution,
+            continuation_authority=continuation,
+            continuation_rhs=frozen_rhs,
+        )
+    finally:
+        del initial_solution, frozen_rhs
 
 
 def _m6b_command(command: str, run_dir: Path) -> list[str]:
@@ -7394,7 +7848,13 @@ def _m6b_w5_progress_valid(path: Path, screen: Any) -> dict[str, Any]:
     }
 
 
-def _m6b_w5_timeline_valid(watchdog: Any, watchdog_dir: Path) -> dict[str, Any]:
+def _m6b_w5_timeline_valid(
+    watchdog: Any,
+    watchdog_dir: Path,
+    *,
+    timeline_name: str = "w5_disk_fgmres_screen_timeline.jsonl",
+    expected_peak: int | None = M6B_W5_EXPECTED_PROCESS_PEAK_BYTES,
+) -> dict[str, Any]:
     result: dict[str, Any] = {
         "pass": False,
         "records": 0,
@@ -7403,9 +7863,7 @@ def _m6b_w5_timeline_valid(watchdog: Any, watchdog_dir: Path) -> dict[str, Any]:
         "compiler_descendant_pids": None,
     }
     try:
-        record = watchdog["watchdog_artifacts"][
-            "w5_disk_fgmres_screen_timeline.jsonl"
-        ]
+        record = watchdog["watchdog_artifacts"][timeline_name]
         timeline_path = Path(record["path"])
         if not timeline_path.is_absolute():
             timeline_path = watchdog_dir / timeline_path
@@ -7423,7 +7881,7 @@ def _m6b_w5_timeline_valid(watchdog: Any, watchdog_dir: Path) -> dict[str, Any]:
                     and all(type(value) is int for value in rss)
                     and all(value == 0 for value in swaps)
                     and all(value == [] for value in compiler)
-                    and max(rss) == M6B_W5_EXPECTED_PROCESS_PEAK_BYTES
+                    and (expected_peak is None or max(rss) == expected_peak)
                     and max(swaps) == 0
                 ),
                 "records": len(records),
@@ -8082,6 +8540,339 @@ def _m6b_w6a_check_command(
     return 0 if classification == "PRE_FORMAL_PASS" else 1
 
 
+def _m6b_w7_s1_progress_valid(path: Path, screen: Any) -> dict[str, Any]:
+    base = _m6b_w5_progress_valid(path, screen)
+    if base.get("pass") is not True:
+        return base
+    try:
+        records = [
+            json.loads(line)
+            for line in path.read_text(encoding="utf-8").splitlines()
+        ]
+    except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        return {"pass": False, "problems": [f"progress_read:{type(exc).__name__}"]}
+    observed = [
+        (record.get("iteration"), record.get("cumulative_iteration"))
+        for record in records
+        if isinstance(record, Mapping) and record.get("event") == "checkpoint_ready"
+    ]
+    expected = list(
+        zip(M6B_W7_S1_LOCAL_ITERATIONS, M6B_W7_S1_CUMULATIVE_ITERATIONS)
+    )
+    return {
+        **base,
+        "pass": observed == expected,
+        "problems": list(base.get("problems", []))
+        + ([] if observed == expected else ["progress_checkpoint_mapping"]),
+    }
+
+
+def _m6b_w7_s1_artifact_inventory_valid(
+    inventory: Any, raw_dir: Path, watchdog_dir: Path
+) -> bool:
+    if not isinstance(inventory, Mapping):
+        return False
+    raw_inventory = inventory.get("raw")
+    watchdog_inventory = inventory.get("watchdog")
+    if not isinstance(raw_inventory, Mapping) or not isinstance(
+        watchdog_inventory, Mapping
+    ):
+        return False
+    for name in M6B_W7_S1_RAW_ARTIFACT_NAMES:
+        actual = _artifact(raw_dir, name)
+        if actual.get("present") is not True or raw_inventory.get(name) != actual:
+            return False
+    for name in M6B_W7_S1_WATCHDOG_ARTIFACT_NAMES:
+        actual = _artifact(watchdog_dir, name)
+        if (
+            actual.get("present") is not True
+            or watchdog_inventory.get(name) != actual
+        ):
+            return False
+    return True
+
+
+def _m6b_w7_s1_check_command(
+    raw_dir: Path,
+    watchdog_path: Path,
+    w5_compact_path: Path,
+    w5_raw_dir: Path,
+    jit_cache_source: Path,
+    output: Path,
+    expected_source_sha: str,
+) -> int:
+    checker_h2b = None
+    checker_source_start: Mapping[str, Any] | None = None
+    checker_source_end: Mapping[str, Any] | None = None
+    raw_dir = Path(raw_dir).resolve()
+    watchdog_path = Path(watchdog_path).resolve()
+    watchdog_dir = watchdog_path.parent
+    try:
+        checker_h2b = __import__(
+            "benchmarks.run_task037_extra_h2b", fromlist=["_light_source"]
+        )
+        checker_source_start = checker_h2b._light_source()
+    except (ImportError, OSError, RuntimeError, TypeError, ValueError):
+        checker_source_start = None
+    problems: list[str] = []
+    try:
+        worker = _read_json(raw_dir / "m6b_w7_s1_summary.json")
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        worker = None
+        problems.append("worker_summary")
+    try:
+        watchdog = _read_json(watchdog_path)
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        watchdog = None
+        problems.append("watchdog_summary")
+    try:
+        continuation = _m6b_w7_s1_load_w5_authority(
+            w5_compact_path, w5_raw_dir
+        )
+        del continuation["initial_solution"], continuation["frozen_rhs"]
+    except (OSError, TypeError, ValueError, KeyError, json.JSONDecodeError) as exc:
+        continuation = None
+        problems.append(f"w5_authority:{type(exc).__name__}")
+
+    screen = worker.get("screen") if isinstance(worker, Mapping) else None
+    continuation_record = (
+        screen.get("continuation_authority")
+        if isinstance(screen, Mapping)
+        else None
+    )
+    initial_check = (
+        continuation_record.get("initial_check")
+        if isinstance(continuation_record, Mapping)
+        else None
+    )
+    watchdog_start = (
+        watchdog.get("source_at_start") if isinstance(watchdog, Mapping) else None
+    )
+    watchdog_end = (
+        watchdog.get("source_at_end") if isinstance(watchdog, Mapping) else None
+    )
+    execution_checks = {
+        "worker_evidence": bool(
+            isinstance(worker, Mapping)
+            and _evidence_valid(worker)
+            and worker.get("schema") == M6B_W7_S1_SCHEMA
+        ),
+        "source": bool(
+            isinstance(worker, Mapping)
+            and _m6b_w2_source_identity_valid(
+                worker.get("source_at_start"), expected_source_sha
+            )
+            and _m6b_w2_source_identity_valid(
+                worker.get("source_at_end"), expected_source_sha
+            )
+        ),
+        "scope": isinstance(worker, Mapping)
+        and worker.get("scope") == _m6b_w7_s1_scope(),
+        "screen_metadata": _m6b_w7_s1_screen_metadata_valid(screen),
+        "prediction": isinstance(worker, Mapping)
+        and worker.get("predicted_live_set")
+        == _m6b_w7_s1_predicted_live_set(),
+        "status_layering": bool(
+            isinstance(worker, Mapping)
+            and worker.get("diagnostic_numeric_pass") is False
+            and worker.get("w7_s1_pass") is False
+            and worker.get("formal_pass") is False
+            and worker.get("pde_pass") is False
+        ),
+        "architecture": bool(
+            isinstance(worker, Mapping)
+            and isinstance(worker.get("architecture"), Mapping)
+            and worker["architecture"].get("fine_space")
+            == "uncondensed_fullspace"
+            and worker["architecture"].get("dtn_matrix_free") is True
+            and all(
+                worker["architecture"].get(name) is False
+                for name in (
+                    "global_matrix",
+                    "augmented_matrix",
+                    "static_condensation",
+                    "trace_slab_pc",
+                    "schur",
+                )
+            )
+        ),
+        "continuation": bool(
+            continuation is not None
+            and isinstance(continuation_record, Mapping)
+            and continuation_record.get("compact")
+            == continuation["compact"]
+            and continuation_record.get("frozen_iteration") == 200
+            and isinstance(initial_check, Mapping)
+            and initial_check.get("initial_solution_provided") is True
+            and initial_check.get("initial_action_count") == 1
+            and initial_check.get("rhs_equal_to_frozen_w5") is True
+            and _finite_number(initial_check.get("absolute_closure"))
+            and initial_check.get("absolute_closure") <= 1.0e-12
+        ),
+    }
+    recompute = _m6b_checkpoint_recompute(
+        raw_dir, screen if isinstance(screen, Mapping) else None
+    )
+    numeric = _m6b_w7_s1_numeric_gate(
+        screen,
+        recomputed_residuals=recompute.get("residuals")
+        if isinstance(recompute, Mapping) and recompute.get("pass") is True
+        else None,
+    )
+    execution_checks["checkpoint_recompute"] = recompute.get("pass") is True
+    execution_checks["progress"] = _m6b_w5_progress_valid(
+        raw_dir / "m6b_w7_s1_progress.jsonl", screen
+    ).get("pass") is True
+    jit = worker.get("jit_cache") if isinstance(worker, Mapping) else None
+    jit_identity_ok = False
+    if checker_h2b is not None and isinstance(jit, Mapping):
+        try:
+            source_now = _m6b_w2_cache_record(
+                checker_h2b, Path(jit_cache_source).resolve()
+            )
+            target_now = _m6b_w2_cache_record(
+                checker_h2b, raw_dir / "jit_cache"
+            )
+            jit_identity_ok = bool(
+                jit.get("source_inventory_sha256") == M6B_W2_JIT_INVENTORY_SHA256
+                and jit.get("source_before")
+                == jit.get("source_after")
+                == jit.get("source_final")
+                == source_now
+                and jit.get("before")
+                == jit.get("after")
+                == jit.get("final")
+                == target_now
+                and jit.get("unchanged") is True
+                and source_now == target_now
+            )
+        except (OSError, TypeError, ValueError, KeyError):
+            jit_identity_ok = False
+    execution_checks["jit_identity"] = jit_identity_ok
+    if checker_h2b is not None and checker_source_start is not None:
+        try:
+            checker_source_end = checker_h2b._light_source()
+        except (OSError, RuntimeError, TypeError, ValueError):
+            checker_source_end = None
+    execution_checks["checker_source"] = bool(
+        _m6b_w2_source_identity_valid(checker_source_start, expected_source_sha)
+        and _m6b_w2_source_identity_valid(checker_source_end, expected_source_sha)
+    )
+    execution_evidence_ok = all(execution_checks.values())
+
+    process = watchdog.get("process") if isinstance(watchdog, Mapping) else None
+    drain = watchdog.get("drain") if isinstance(watchdog, Mapping) else None
+    timeline = _m6b_w5_timeline_valid(
+        watchdog,
+        watchdog_dir,
+        timeline_name="w7_s1_restart_disk_fgmres_screen_timeline.jsonl",
+        expected_peak=None,
+    )
+    resource_checks = {
+        "artifact_inventory": _m6b_w7_s1_artifact_inventory_valid(
+            watchdog.get("artifact_inventory")
+            if isinstance(watchdog, Mapping)
+            else None,
+            raw_dir,
+            watchdog_dir,
+        ),
+        "process": bool(
+            isinstance(process, Mapping)
+            and process.get("return_code") in (0, 1)
+            and process.get("termination") is None
+            and type(process.get("peak_rss_bytes")) is int
+            and process["peak_rss_bytes"] < M6B_ONLINE_COMPLETION_RSS_LIMIT_BYTES
+            and process.get("swap_bytes") == 0
+            and isinstance(drain, Mapping)
+            and drain.get("gone") is True
+        ),
+        "timeline": bool(
+            timeline["pass"] is True
+            and isinstance(process, Mapping)
+            and timeline["peak_rss_bytes"] == process.get("peak_rss_bytes")
+            and timeline["swap_bytes"] == process.get("swap_bytes") == 0
+            and timeline["compiler_descendant_pids"] == []
+        ),
+        "watchdog": bool(
+            isinstance(watchdog, Mapping)
+            and _evidence_valid(watchdog)
+            and watchdog.get("schema")
+            == "task037.extra.m6b.w7-s1.watchdog.v1"
+            and watchdog.get("phase") == M6B_W7_S1_PHASE
+            and isinstance(watchdog_start, Mapping)
+            and _m6b_w2_source_identity_valid(
+                watchdog_start, expected_source_sha
+            )
+            and isinstance(watchdog_end, Mapping)
+            and _m6b_w2_source_identity_valid(watchdog_end, expected_source_sha)
+            and watchdog.get("termination") is None
+            and watchdog.get("monitor_error") is None
+            and watchdog.get("resource_limits") == {
+                "timeout_seconds": 7200.0,
+                "watchdog_rss_bytes": M6B_WATCHDOG_RSS_LIMIT_BYTES,
+                "completion_peak_rss_bytes": M6B_ONLINE_COMPLETION_RSS_LIMIT_BYTES,
+                "swap_bytes": 0,
+                "pde_strict_peak_bytes": 2_000_000_000,
+            }
+            and watchdog.get("formal_pass") is False
+            and watchdog.get("pde_pass") is False
+        ),
+    }
+    resource_evidence_ok = all(resource_checks.values())
+    numeric_ok = numeric["pass"] is True
+    if not execution_evidence_ok:
+        classification = "EXECUTION_FAIL"
+    elif not resource_evidence_ok:
+        classification = "RESOURCE_OR_EVIDENCE_FAIL"
+    elif not numeric_ok:
+        classification = "NUMERIC_FAIL"
+    else:
+        classification = "PASS"
+    result = {
+        "schema": M6B_W7_S1_CHECK_SCHEMA,
+        "status": "pass" if classification == "PASS" else "gate_failed",
+        "pass": classification == "PASS",
+        "classification": classification,
+        "execution_evidence_ok": execution_evidence_ok,
+        "resource_evidence_ok": resource_evidence_ok,
+        "numeric_ok": numeric_ok,
+        "checks": {**execution_checks, **resource_checks},
+        "problems": sorted(
+            set(
+                problems
+                + [name for name, passed in execution_checks.items() if not passed]
+                + [name for name, passed in resource_checks.items() if not passed]
+                + numeric["problems"]
+            )
+        ),
+        "numeric_gate": numeric,
+        "checkpoint_recompute": recompute,
+        "process": process,
+        "drain": drain,
+        "timeline": timeline,
+        "prediction": worker.get("predicted_live_set")
+        if isinstance(worker, Mapping)
+        else None,
+        "producer_source_sha": expected_source_sha,
+        "checker_source": {
+            "start": checker_source_start,
+            "end": checker_source_end,
+        },
+        "raw_worker_artifact": _artifact(raw_dir, "m6b_w7_s1_summary.json"),
+        "raw_progress_artifact": _artifact(raw_dir, "m6b_w7_s1_progress.jsonl"),
+        "watchdog_artifact": _artifact(watchdog_dir, watchdog_path.name),
+        "artifact_inventory": watchdog.get("artifact_inventory")
+        if isinstance(watchdog, Mapping)
+        else None,
+        "formal_pass": False,
+        "w7_s1_pass": classification == "PASS",
+        "pde_pass": False,
+        "official_rta": False,
+    }
+    _write_json(output, _attach_evidence(result))
+    return 0 if result["pass"] else 1
+
+
 def _m6b_w6a_w5_residual_files_valid(
     residual_artifacts: Any,
     raw_dir: Path,
@@ -8708,6 +9499,7 @@ def _parser() -> argparse.ArgumentParser:
         "m6b-w3-beta05-screen",
         "m6b-w4-fbcgs-screen",
         "m6b-w5-disk-fgmres-screen",
+        "m6b-w7-s1-screen",
         "m6b-w6a-builder",
         "m6b-w6a-watchdog",
     ):
@@ -8741,6 +9533,7 @@ def _parser() -> argparse.ArgumentParser:
             "m6b-w3-beta05-screen",
             "m6b-w4-fbcgs-screen",
             "m6b-w5-disk-fgmres-screen",
+            "m6b-w7-s1-screen",
         }:
             item.add_argument("--factor-authority-dir", required=True)
             item.add_argument("--wave-authority-dir", required=True)
@@ -8751,6 +9544,9 @@ def _parser() -> argparse.ArgumentParser:
                 type=_m6b_w2_source_sha_argument,
             )
             item.add_argument("--w0-authority-file", required=True)
+            if command == "m6b-w7-s1-screen":
+                item.add_argument("--w5-compact", required=True)
+                item.add_argument("--w5-raw-dir", required=True)
     check = sub.add_parser("m6b-check")
     check.add_argument("--run-dir", required=True)
     check.add_argument("--output", required=True)
@@ -8760,6 +9556,18 @@ def _parser() -> argparse.ArgumentParser:
     w5_check.add_argument("--output", required=True)
     w5_check.add_argument(
         "--expected-producer-sha",
+        required=True,
+        type=_m6b_w2_source_sha_argument,
+    )
+    w7_check = sub.add_parser("m6b-w7-s1-check")
+    w7_check.add_argument("--raw-dir", required=True)
+    w7_check.add_argument("--watchdog-summary", required=True)
+    w7_check.add_argument("--w5-compact", required=True)
+    w7_check.add_argument("--w5-raw-dir", required=True)
+    w7_check.add_argument("--jit-cache-source", required=True)
+    w7_check.add_argument("--output", required=True)
+    w7_check.add_argument(
+        "--expected-source-sha",
         required=True,
         type=_m6b_w2_source_sha_argument,
     )
@@ -8804,6 +9612,16 @@ def main(argv: Sequence[str] | None = None) -> int:
             Path(args.watchdog_summary).resolve(),
             Path(args.output).resolve(),
             args.expected_producer_sha,
+        )
+    if args.command == "m6b-w7-s1-check":
+        return _m6b_w7_s1_check_command(
+            Path(args.raw_dir).resolve(),
+            Path(args.watchdog_summary).resolve(),
+            Path(args.w5_compact).resolve(),
+            Path(args.w5_raw_dir).resolve(),
+            Path(args.jit_cache_source).resolve(),
+            Path(args.output).resolve(),
+            args.expected_source_sha,
         )
     if args.command == "m6b-w6a-check":
         return _m6b_w6a_check_command(
@@ -8912,6 +9730,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             Path(args.jit_cache_source).resolve(),
             args.expected_source_sha,
             Path(args.w0_authority_file).resolve(),
+        )
+    if args.command == "m6b-w7-s1-screen":
+        return _run_m6b_w7_s1_screen(
+            run_dir,
+            Path(args.factor_authority_dir).resolve(),
+            Path(args.wave_authority_dir).resolve(),
+            Path(args.jit_cache_source).resolve(),
+            args.expected_source_sha,
+            Path(args.w0_authority_file).resolve(),
+            Path(args.w5_compact).resolve(),
+            Path(args.w5_raw_dir).resolve(),
         )
     raise ValueError(f"unknown M6B command: {args.command}")
 

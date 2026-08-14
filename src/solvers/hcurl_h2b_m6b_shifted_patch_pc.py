@@ -1503,6 +1503,8 @@ def run_m6b_disk_backed_right_fgmres_screen(
     *,
     checkpoint_dir: Path,
     scratch_dir: Path,
+    initial_solution: np.ndarray | None = None,
+    schema: str = M6B_W5_SCHEMA,
     observer: Callable[[Mapping[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     """Run the fixed one-cycle disk-backed NumPy screen."""
@@ -1562,11 +1564,12 @@ def run_m6b_disk_backed_right_fgmres_screen(
     result = solver.solve(
         rhs,
         scratch_dir=scratch_dir,
+        initial_solution=initial_solution,
         observer=checkpoint_observer,
     )
     core_audit = dict(result.audit)
     return {
-        "schema": M6B_W5_SCHEMA,
+        "schema": schema,
         "rows": int(rhs.size),
         "solver": "disk_backed_flexible_gmres",
         "petsc_ksp_used": False,
