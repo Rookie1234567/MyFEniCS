@@ -1,10 +1,11 @@
 # Review V2：h5 Full3D direct readiness
 
-## V2-1 结论
+## V2-1 结论（历史 readiness 时点）
 
-V2-1 是正式运行前的资格检查，不是 h5 求解结果。当前代码已提交于
+以下是 V2-1 正式运行前的资格检查历史快照，不是 h5 求解结果。当时代码已提交于
 `c26debf71d2a7b76bcf9b9715412063682b091b0`；validate-only、dry-run、ABI、资源、整数宽度和
-轻量测试均通过，因此状态为 **conditional ready**。唯一正式 h5 PDE 仍未运行。
+轻量测试均通过，因此当时状态为 **conditional ready**，且当时未运行正式 h5 PDE。该历史状态现已
+由下方 V2-2/V2-3 current status supersede。
 
 | Gate | 当前状态 | 证据口径 |
 | --- | --- | --- |
@@ -14,7 +15,7 @@ V2-1 是正式运行前的资格检查，不是 h5 求解结果。当前代码�
 | watchdog policy | pass | warning 170 GiB；critical 195 GiB；absolute termination=224000000000 bytes |
 | integer-width audit | conditional | matrix rows/NNZ低于32位；factor NNZ预测超过32位，但 MUMPS 计数字段为64位 |
 | h5 formal own Gate | pass | V2-2 唯一正式 run 完成；own residual、official dtn-port、604 keys、字段和资源 Gate 通过 |
-| h5 grid comparison | pending / not_run | V2-3 尚未授权；不把 h5 与 h6 拼成收敛结论 |
+| h5 grid comparison | completed / negative | V2-3 离线比较已完成；primary 未通过，不把 h5 与 h6 拼成收敛结论 |
 
 完整机器字段与测试入口见 [V2-1 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h5_full3d_readiness_v1.json)。
 
@@ -71,7 +72,7 @@ reference、Hybrid physical authority、accuracy-qualified 结论或 0.7 nm mesh
 | --- | --- | --- |
 | V2-1 readiness | conditional pass | 本页及 compact record 已完成 |
 | V2-2 h5 Full3D direct + own Gate | pass | h5 Full3D discrete authority 已建立；不等于网格收敛 |
-| V2-3 h5 comparison / convergence | pending / not_run | 尚未授权，等待后续明确拆解 |
+| V2-3 h5 comparison / convergence | completed / negative | 两层离线 comparator 已完成；h5 仍是 best available discrete authority |
 
 历史结论和 Review V2 inherited audit 仍见 [summary](summary.md)、[resource ledger](resource_ledger.md)
 与 [V2-0 audit](review_v2_inherited_audit.md)。
@@ -80,7 +81,7 @@ reference、Hybrid physical authority、accuracy-qualified 结论或 0.7 nm mesh
 
 V2-2 按冻结的 p6/h5、5 nm、Full3D direct、MPI8 输入只运行一次。正式 worker 以
 `exit_status=0` 完成；本节的 PASS 只表示这次 h5 离散运行自身的资格 Gate 通过，不能把
-h5 称为 h6-vs-h5 convergence reference，也没有启动 V2-3。
+h5 称为 h6-vs-h5 convergence reference；V2-3 随后仅以离线 comparator 完成，未启动新 PDE/MPI。
 
 | Gate / 观测 | measured 结果 | 状态与边界 |
 | --- | ---: | --- |
@@ -105,3 +106,29 @@ assembled rows with auxiliary=`337564`，condensed matrix NNZ used/allocated=`28
 
 完整 compact authority、输入/源码/解析配置/物理身份和 artifact SHA 见
 [V2-2 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h5_full3d_direct_v1.json)。
+
+## V2-3：h6-vs-h5 offline two-tier comparison
+
+本轮只读取既有 h6/h5 raw authority，各调用一次 loader 并执行一次离线 comparator；没有
+启动 PDE/MPI，也没有调阈值。physics-except-mesh identity、604 keys、selected coordinates
+和两侧 closure 通过，但 primary Gate 未通过，因此 h5 不能升级为收敛参考。
+
+本次 comparator 的代码/测试来源为 `d63f37b213c11aa3f965fec066074451e06ca57c`，正式 comparator
+调用次数为 `1`；record 保留该次完整 compact 输出，不包含 raw matrix/field artifact。
+
+| Gate | 实际结果 | 限值 / 状态 |
+| --- | ---: | --- |
+| R/T/A_balance/A_volume max absolute delta | `0.0020442043200439297` | `<=1e-5`；fail |
+| h6 / h5 closure absolute | `3.0365709946522657e-12 / 1.3919976282750213e-12` | 各 `<=1e-5`；pass |
+| selected E/H overall relative L2 | `0.14450862376996956 / 0.14701895099975776` | `E<=2e-3`、`H<=5e-3`；fail |
+| primary orders | `10`；max power/amplitude=`0.3673545224476542 / 0.3905831132869025` | 各 `<=1e-3`；fail |
+| all-604 weighted aggregate | power=`0.07101046038911143`；amplitude=`0.3868889801657988` | `<=1e-4 / <=1e-3`；fail |
+| weak / below `1e-8` | `29 fail / 565 counted` | weak rows complete；below only counted |
+
+正式分类为 `FULL3D_DIRECT_5NM_REFERENCE_NOT_CONVERGED_AT_P6H5`，h5 role 为
+`best_available_discrete_authority_only`。h5 own-Gate 仍通过；本节仅说明 h6/h5 离线
+离散比较未达到 V2 primary convergence contract。完整弱通道 metrics、实际分母、公式和
+artifact identity 见
+[V2-3 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h6_h5_two_tier_convergence_v1.json)。
+该网格收敛负结果不阻止 Review V2 已授权的 V2-4/V2-5 同一 h5 网格 Full3D-vs-Hybrid direct
+诊断；也不得预先宣称 Hybrid pass。

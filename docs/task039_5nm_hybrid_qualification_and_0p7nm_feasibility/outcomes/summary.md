@@ -183,9 +183,9 @@ factor、modal Schur dominant 均 not_established。完整说明见
 | 阶段 | 状态 | 结论与边界 |
 | --- | --- | --- |
 | V2-0 inherited audit | `completed` | h10 仅为 `historical_underresolved_stress_anchor_only`，禁止作 Full3D 5nm reference、Hybrid physical authority 或 0.7 nm mesh-scaling |
-| V2-1 h5 readiness | `pass_with_formal_run_pending` | validate/dry-run、604 keys、资源与 ABI 通过；整数运行时 factor 路径仍 `not_established` |
+| V2-1 h5 readiness | `historical V2-1 status: pass_with_formal_run_pending` | validate/dry-run、604 keys、资源与 ABI 通过；整数运行时 factor 路径仍 `not_established`；已由下方 V2-2/V2-3 current status supersede |
 | V2-2 h5 Full3D direct | `pass` | 唯一正式 run 的 own Gate 通过；h5 是 Full3D discrete authority，不宣称收敛 |
-| V2-3 comparison | `pending / not_run` | 尚未授权；不把 h6-vs-h5 写成 convergence |
+| V2-3 comparison | `completed / negative` | 离线 primary 未通过；不把 h6-vs-h5 写成 convergence |
 
 V2-1 的用户覆盖 watchdog 为 warning `170 GiB`、critical `195 GiB`（只记录 crossing）和
 absolute hard `224000000000 bytes`，任意 swap 立即停止；195 GiB 不再单凭预测阻止启动。
@@ -216,5 +216,28 @@ condensed NNZ used/allocated=`283210150/298136764`。因子遥测的 raw int32 �
 [V2-2 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h5_full3d_direct_v1.json)。
 
 本节不改变 h10 的 `historical_underresolved_stress_anchor_only` 边界；h5 仍不是
-h6-vs-h5 convergence reference，V2-3 保持 `pending / not_run`，完整 repository pytest 仍为
+h6-vs-h5 convergence reference，V2-3 已完成且为 `negative`，完整 repository pytest 仍为
 `cancelled / not_run`。
+
+### Review V2 V2-3：h6-vs-h5 two-tier offline comparison
+
+既有 h6/h5 raw authority 已各读取一次并完成一次离线 comparator；没有重跑 PDE/MPI。
+identity、604 keys、selected coordinates、closure 通过；R/T/A、E/H、primary orders 和
+all-604 aggregate 未通过。h5 保持 `best_available_discrete_authority_only`，不称收敛参考。
+
+本次 comparator 的代码/测试来源为 `d63f37b213c11aa3f965fec066074451e06ca57c`，正式 comparator
+调用次数为 `1`；compact record 保留完整逐级诊断，raw matrix/field artifact 未进入 Git。
+
+| 当前 Gate | 实际结果 | 限值 / 状态 |
+| --- | ---: | --- |
+| observables max abs delta | `0.0020442043200439297` | `<=1e-5`；fail |
+| closure h6 / h5 | `3.0365709946522657e-12 / 1.3919976282750213e-12` | 各 `<=1e-5`；pass |
+| selected E / H relative L2 | `0.14450862376996956 / 0.14701895099975776` | `2e-3 / 5e-3`；fail |
+| primary orders max power / amplitude | `0.3673545224476542 / 0.3905831132869025` | `<=1e-3`；fail |
+| all-604 weighted power / amplitude | `0.07101046038911143 / 0.3868889801657988` | `<=1e-4 / <=1e-3`；fail |
+| weak / below `1e-8` | `29 fail / 565 counted` | weak rows retained in record |
+
+正式分类为 `FULL3D_DIRECT_5NM_REFERENCE_NOT_CONVERGED_AT_P6H5`，h5 role 为
+`best_available_discrete_authority_only`；完整逐级诊断和来源路径见
+[V2-3 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h6_h5_two_tier_convergence_v1.json)
+与 [V2-3 Full3D outcome](full3d_h5_direct_and_convergence.md)。

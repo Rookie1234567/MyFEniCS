@@ -94,7 +94,8 @@ Gate；它们不改写上面的历史 T10 B1 结果。全仓 `python -m pytest -
 ## Review V2 V2-2 formal own-Gate
 
 本轮只收口已完成的唯一 h5 Full3D direct MPI8 formal run及其 compact evidence；没有重新
-运行 pytest、MPI fixture 或 PDE，也没有进入 V2-3。
+运行 pytest、MPI fixture 或 PDE；V2-2 closeout 本身没有运行 V2-3，随后 V2-3 已以离线
+comparator 完成。
 
 | 检查/证据 | 状态 | 口径 |
 | --- | --- | --- |
@@ -103,12 +104,11 @@ Gate；它们不改写上面的历史 T10 B1 结果。全仓 `python -m pytest -
 | watchdog | `pass` | RSS/PSS/USS=`92491.328/90440.785/90103.539 MiB`；swap=`0`；未跨 warning/critical/hard |
 | compact JSON / 文档轻量检查 | `pass` | 本次 V2-2 evidence/docs closeout 的 parse、链接、math/table、benchmark no-write、diff-check |
 | Task39 focused pytest / full pytest | `not_run / cancelled` | 本轮未运行；全仓 pytest 延续用户成本覆盖，不声称 zero failures |
-| V2-3 comparison | `pending / not_run` | 尚未授权；h5 不称 convergence reference |
+| V2-3 comparison | `completed / negative` | 一次离线 h6-vs-h5 comparator；primary 未通过，h5 不称 convergence reference |
 
 完整 machine identity、artifact SHA 和 measured/derived 边界见
 [V2-2 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h5_full3d_direct_v1.json)
 与 [h5 direct outcome](full3d_h5_direct_and_convergence.md)。
-| 全仓 repository pytest | `cancelled / not_run` | 用户成本覆盖；不代表 pass 或 zero failures |
 
 ## Review V2 V2-1 light Gate
 
@@ -125,3 +125,20 @@ T10 B1 的历史测试行。V2-1 没有启动正式 h5 PDE，full repository pyt
 | Ruff check / format-check | `5/5 pass` | c26 修改的 5 个 Python 文件 |
 | compileall | `pass` | `src/io src/runners src/test` |
 | benchmark / JSON / docs / diff | `302/302 pass`；其余 `pass` | `check_benchmarks --no-write`；JSON、链接/公式/表格检查与 `git diff --check` |
+
+## Review V2 V2-3 offline h6-vs-h5 comparator
+
+本轮只读取既有 h6/h5 raw authority，各调用一次 loader 并执行一次 V2 two-tier comparator；没有
+启动 PDE/MPI，也没有调阈值。`primary_pass=false` 是真实科学负结果，不是实现错误。
+
+| 检查 | 结果 | 口径 |
+|---|---|---|
+| identity / 604 keys / selected coordinates | `pass` | physics-except-mesh exact；两侧 604 unique exact；坐标 exact |
+| primary observables / closure | `fail / pass` | R/T/A 四项均超过 `1e-5`；两侧 closure 均小于 `1e-5` |
+| selected E/H overall | `fail` | E relative L2=`0.14450862376996956`；H=`0.14701895099975776` |
+| primary order / all-604 aggregate | `fail` | 10 primary；weighted power=`0.07101046038911143`；amplitude=`0.3868889801657988` |
+| weak / below `1e-8` | `29 fail / 565 counted` | weak 行逐条保留在 compact record；弱通道不单独改变 primary 规则 |
+| classification / h5 role | `not_converged` | `FULL3D_DIRECT_5NM_REFERENCE_NOT_CONVERGED_AT_P6H5`；`best_available_discrete_authority_only` |
+
+完整 weak rows、实际分母、公式和 artifact identity 见
+[V2-3 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h6_h5_two_tier_convergence_v1.json)。
