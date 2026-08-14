@@ -6215,8 +6215,9 @@ def _run_m6b_w2_diagnostic(
         )
     if solver == "disk_fgmres_restart" and (
         initial_solution is None
-        or not isinstance(continuation_authority, Mapping)
-        or continuation_rhs is None
+        or not isinstance(initial_solution, np.ndarray)
+        or initial_solution.size == 0
+        or not isinstance(continuation_authority, dict)
     ):
         raise ValueError("M6B W7-S1 requires the frozen W5 continuation authority")
     if screen and not projected:

@@ -210,6 +210,26 @@ def test_w7_parser_and_fixed_dispatch(monkeypatch, tmp_path):
     assert captured["screen"] is True
 
 
+def test_w7_restart_entry_guard_reaches_existing_run_check(tmp_path):
+    run_dir = tmp_path / "existing"
+    run_dir.mkdir()
+    with pytest.raises(FileExistsError, match="existing run directory"):
+        runner._run_m6b_w2_diagnostic(
+            run_dir,
+            tmp_path / "factor",
+            tmp_path / "wave",
+            tmp_path / "jit",
+            "a" * 40,
+            tmp_path / "w0.json",
+            projected=True,
+            screen=True,
+            shifted_beta=runner.M6B_W5_BETA,
+            solver="disk_fgmres_restart",
+            initial_solution=np.ones(3, dtype=np.complex128),
+            continuation_authority={},
+        )
+
+
 def test_w7_checkpoint_checker_rejects_wrong_file_hash(tmp_path):
     raw = tmp_path / "raw"
     raw.mkdir()
