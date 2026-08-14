@@ -1101,6 +1101,7 @@ def test_task039_hybrid_iterative_rejects_model_m_mismatch(tmp_path: Path):
         ("5nm_p6h10_hybrid_direct_m240_mpi8.dat", 240),
         ("5nm_p6h10_hybrid_direct_m480_mpi8.dat", 480),
         ("5nm_p6h10_hybrid_direct_m960_mpi8.dat", 960),
+        ("5nm_p6h5_hybrid_direct_m480_mpi8.dat", 480),
     ),
 )
 def test_task039_hybrid_direct_passes_finite_cfg_and_inventory_to_runner(
@@ -1160,6 +1161,12 @@ def test_task039_hybrid_direct_passes_finite_cfg_and_inventory_to_runner(
             [*captured["argv"], "--allow-dirty-research"],
             allow_task039=True,
         )
+    if filename == "5nm_p6h5_hybrid_direct_m480_mpi8.dat":
+        near_miss = list(captured["argv"])
+        near_miss[near_miss.index("--requested-modes") + 1] = "240"
+        near_miss[near_miss.index("--candidate-modes") + 1] = "480"
+        with pytest.raises(SystemExit):
+            _parse_args(near_miss, allow_task039=True)
 
 
 def test_task039_hybrid_direct_rejects_model_m_mismatch(tmp_path: Path):

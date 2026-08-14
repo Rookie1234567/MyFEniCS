@@ -1159,11 +1159,20 @@ def _parse_args(
             not args.task035c_p6_h10_gate
             and not args.allow_dirty_research
             and args.degree == 6
-            and np.isclose(args.h_nm, 10.0)
             and args.modal_degree == 6
             and args.modal_h_nm is not None
-            and np.isclose(args.modal_h_nm, 10.0)
-            and args.requested_modes in (120, 240, 480, 960)
+            and (
+                (
+                    np.isclose(args.h_nm, 10.0)
+                    and np.isclose(args.modal_h_nm, 10.0)
+                    and args.requested_modes in (120, 240, 480, 960)
+                )
+                or (
+                    np.isclose(args.h_nm, 5.0)
+                    and np.isclose(args.modal_h_nm, 5.0)
+                    and args.requested_modes == 480
+                )
+            )
             and args.candidate_modes == 2 * args.requested_modes
             and args.solver_path == "augmented"
             and not args.compare_modal_schur
@@ -1184,9 +1193,11 @@ def _parse_args(
         )
         if not scoped:
             parser.error(
-                "Task39 p6/h10 Hybrid direct is restricted to numeric M120/240/480/960, "
-                "2M candidates, static-condensed full3d_uniform_cg, exact one-cell "
-                "traction, 10/110 interfaces, and a clean verified source."
+                "Task39 Hybrid direct is restricted to historical p6/h10 with "
+                "modal h10 and numeric M120/240/480/960, or formal p6/h5 with "
+                "modal h5 and M480; both require 2M candidates, static-condensed "
+                "full3d_uniform_cg, exact one-cell traction, 10/110 interfaces, "
+                "and a clean verified source."
             )
         return args
     if args.task035c_p6_h10_gate:
