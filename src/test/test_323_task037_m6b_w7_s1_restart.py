@@ -129,7 +129,14 @@ def test_w7_frozen_w5_iter200_authority_and_hash_fail_closed(monkeypatch):
     assert authority["frozen_iteration"] == 200
     assert authority["initial_solution"].shape == (runner.M6B_GLOBAL_ROWS,)
     assert authority["frozen_rhs"].shape == (runner.M6B_GLOBAL_ROWS,)
-    del authority["initial_solution"], authority["frozen_rhs"]
+    assert authority["frozen_outer_action"].shape == (runner.M6B_GLOBAL_ROWS,)
+    assert authority["frozen_residual"].shape == (runner.M6B_GLOBAL_ROWS,)
+    del (
+        authority["initial_solution"],
+        authority["frozen_rhs"],
+        authority["frozen_outer_action"],
+        authority["frozen_residual"],
+    )
 
     monkeypatch.setattr(runner, "M6B_W7_S1_W5_COMPACT_FILE_SHA256", "0" * 64)
     with pytest.raises(ValueError, match="compact authority"):
@@ -168,6 +175,8 @@ def test_w7_parser_and_fixed_dispatch(monkeypatch, tmp_path):
             "frozen_iteration": 200,
             "initial_solution": np.ones(3, dtype=np.complex128),
             "frozen_rhs": np.ones(3, dtype=np.complex128),
+            "frozen_outer_action": np.ones(3, dtype=np.complex128),
+            "frozen_residual": np.ones(3, dtype=np.complex128),
         }
 
     def fake_worker(*_args, **kwargs):
@@ -189,6 +198,8 @@ def test_w7_parser_and_fixed_dispatch(monkeypatch, tmp_path):
     assert captured["solver"] == "disk_fgmres_restart"
     assert captured["initial_solution"].shape == (3,)
     assert captured["continuation_rhs"].shape == (3,)
+    assert captured["continuation_outer_action"].shape == (3,)
+    assert captured["continuation_residual"].shape == (3,)
     assert captured["projected"] is True
     assert captured["screen"] is True
 

@@ -1031,6 +1031,8 @@ def _m6b_w7_s1_load_w5_authority(
         raise ValueError("W7-S1 W5 iter200 authority is missing")
     initial_solution = None
     frozen_rhs = None
+    frozen_outer_action = None
+    frozen_residual = None
     sample_artifacts: dict[str, Any] = {}
     iteration = 200
     sample = samples[str(iteration)]
@@ -1090,10 +1092,17 @@ def _m6b_w7_s1_load_w5_authority(
             raise ValueError("W7-S1 frozen W5 iter200 residual authority differs")
         initial_solution = np.array(arrays["solution"], copy=True)
         frozen_rhs = np.array(arrays["rhs"], copy=True)
+        frozen_outer_action = np.array(arrays["outer_action"], copy=True)
+        frozen_residual = np.array(arrays["residual"], copy=True)
     finally:
         del arrays
 
-    if initial_solution is None or frozen_rhs is None:
+    if (
+        initial_solution is None
+        or frozen_rhs is None
+        or frozen_outer_action is None
+        or frozen_residual is None
+    ):
         raise ValueError("W7-S1 initial W5 arrays are missing")
     return {
         "compact": {
@@ -1107,6 +1116,8 @@ def _m6b_w7_s1_load_w5_authority(
         "frozen_true_relative_residual": M6B_W7_S1_INITIAL_RHO,
         "initial_solution": initial_solution,
         "frozen_rhs": frozen_rhs,
+        "frozen_outer_action": frozen_outer_action,
+        "frozen_residual": frozen_residual,
     }
 
 
@@ -6142,6 +6153,8 @@ def _run_m6b_w2_diagnostic(
     initial_solution: Any | None = None,
     continuation_authority: Mapping[str, Any] | None = None,
     continuation_rhs: Any | None = None,
+    continuation_outer_action: Any | None = None,
+    continuation_residual: Any | None = None,
 ) -> int:
     import gc
     import shutil
@@ -6579,36 +6592,68 @@ def _run_m6b_w2_diagnostic(
                         or not np.array_equal(continuation_rhs, rhs_numpy)
                     ):
                         raise ValueError("M6B W7-S1 RHS differs from frozen W5")
+                    if not isinstance(continuation_outer_action, np.ndarray) or not isinstance(
+                        continuation_residual, np.ndarray
+                    ):
+                        raise ValueError("M6B W7-S1 frozen action/residual is missing")
                     initial_action = outer_numpy(initial_solution)
+                    repeated_action = outer_numpy(initial_solution)
                     initial_residual = rhs_numpy - initial_action
+                    denominator = max(
+                        np.linalg.norm(continuation_outer_action),
+                        np.finfo(float).tiny,
+                    )
+                    action_repeat_error = float(
+                        np.linalg.norm(repeated_action - initial_action) / denominator
+                    )
+                    action_frozen_error = float(
+                        np.linalg.norm(initial_action - continuation_outer_action)
+                        / denominator
+                    )
+                    residual_frozen_error = float(
+                        np.linalg.norm(initial_residual - continuation_residual)
+                        / max(np.linalg.norm(continuation_residual), np.finfo(float).tiny)
+                    )
                     initial_rho = float(
                         np.linalg.norm(initial_residual)
                         / max(np.linalg.norm(rhs_numpy), np.finfo(float).tiny)
                     )
                     if (
                         not np.all(np.isfinite(initial_action))
+                        or not np.all(np.isfinite(repeated_action))
                         or not np.all(np.isfinite(initial_residual))
+                        or not np.all(np.isfinite(continuation_outer_action))
+                        or not np.all(np.isfinite(continuation_residual))
                         or not math.isfinite(initial_rho)
+                        or not math.isfinite(action_repeat_error)
+                        or not math.isfinite(action_frozen_error)
+                        or not math.isfinite(residual_frozen_error)
+                        or action_repeat_error > 1.0e-15
+                        or action_frozen_error > 1.0e-12
+                        or residual_frozen_error > 1.0e-12
                         or abs(initial_rho - M6B_W7_S1_INITIAL_RHO) > 1.0e-12
                     ):
                         raise ValueError("M6B W7-S1 initial residual authority differs")
                     continuation_authority = dict(continuation_authority)
                     continuation_authority["initial_check"] = {
                         "initial_solution_provided": True,
-                        "initial_action_count": 1,
+                        "precheck_action_count": 2,
+                        "core_initial_action_count": 1,
                         "rhs_equal_to_frozen_w5": True,
                         "initial_true_relative_residual": initial_rho,
                         "frozen_true_relative_residual": M6B_W7_S1_INITIAL_RHO,
-                        "relative_closure": abs(
-                            initial_rho - M6B_W7_S1_INITIAL_RHO
-                        ),
-                        "absolute_closure": abs(
+                        "repeat_relative_error": action_repeat_error,
+                        "frozen_action_relative_error": action_frozen_error,
+                        "frozen_residual_relative_error": residual_frozen_error,
+                        "rho_absolute_error": abs(
                             initial_rho - M6B_W7_S1_INITIAL_RHO
                         ),
                         "finite": True,
                     }
-                    del initial_action, initial_residual
+                    del initial_action, repeated_action, initial_residual
                     continuation_rhs = None
+                    continuation_outer_action = None
+                    continuation_residual = None
                 disk_pc_apply_count = 0
 
                 def disk_right_pc(values: np.ndarray) -> np.ndarray:
@@ -7118,6 +7163,8 @@ def _run_m6b_w7_s1_screen(
     continuation = _m6b_w7_s1_load_w5_authority(w5_compact_path, w5_raw_dir)
     initial_solution = continuation.pop("initial_solution")
     frozen_rhs = continuation.pop("frozen_rhs")
+    frozen_outer_action = continuation.pop("frozen_outer_action")
+    frozen_residual = continuation.pop("frozen_residual")
     try:
         return _run_m6b_w2_diagnostic(
             run_dir,
@@ -7133,9 +7180,11 @@ def _run_m6b_w7_s1_screen(
             initial_solution=initial_solution,
             continuation_authority=continuation,
             continuation_rhs=frozen_rhs,
+            continuation_outer_action=frozen_outer_action,
+            continuation_residual=frozen_residual,
         )
     finally:
-        del initial_solution, frozen_rhs
+        del initial_solution, frozen_rhs, frozen_outer_action, frozen_residual
 
 
 def _m6b_command(command: str, run_dir: Path) -> list[str]:
@@ -8629,7 +8678,12 @@ def _m6b_w7_s1_check_command(
         continuation = _m6b_w7_s1_load_w5_authority(
             w5_compact_path, w5_raw_dir
         )
-        del continuation["initial_solution"], continuation["frozen_rhs"]
+        del (
+            continuation["initial_solution"],
+            continuation["frozen_rhs"],
+            continuation["frozen_outer_action"],
+            continuation["frozen_residual"],
+        )
     except (OSError, TypeError, ValueError, KeyError, json.JSONDecodeError) as exc:
         continuation = None
         problems.append(f"w5_authority:{type(exc).__name__}")
@@ -8704,10 +8758,17 @@ def _m6b_w7_s1_check_command(
             and continuation_record.get("frozen_iteration") == 200
             and isinstance(initial_check, Mapping)
             and initial_check.get("initial_solution_provided") is True
-            and initial_check.get("initial_action_count") == 1
+            and initial_check.get("precheck_action_count") == 2
+            and initial_check.get("core_initial_action_count") == 1
             and initial_check.get("rhs_equal_to_frozen_w5") is True
-            and _finite_number(initial_check.get("absolute_closure"))
-            and initial_check.get("absolute_closure") <= 1.0e-12
+            and _finite_number(initial_check.get("repeat_relative_error"))
+            and initial_check.get("repeat_relative_error") <= 1.0e-15
+            and _finite_number(initial_check.get("frozen_action_relative_error"))
+            and initial_check.get("frozen_action_relative_error") <= 1.0e-12
+            and _finite_number(initial_check.get("frozen_residual_relative_error"))
+            and initial_check.get("frozen_residual_relative_error") <= 1.0e-12
+            and _finite_number(initial_check.get("rho_absolute_error"))
+            and initial_check.get("rho_absolute_error") <= 1.0e-12
         ),
     }
     recompute = _m6b_checkpoint_recompute(
