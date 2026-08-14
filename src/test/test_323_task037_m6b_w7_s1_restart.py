@@ -165,6 +165,7 @@ def test_w7_parser_and_fixed_dispatch(monkeypatch, tmp_path):
     assert runner._m6b_w7_s1_predicted_live_set()["predicted_live_set_bytes"] == (
         1_666_871_296
     )
+    assert runner.M6B_W7_S1_TIMEOUT_SECONDS == 10_800.0
 
     captured = {}
 

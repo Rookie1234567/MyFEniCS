@@ -208,6 +208,7 @@ M6B_W7_S1_CHECK_SCHEMA = (
     "task037.extra.m6b.w7-s1.restart-disk-fgmres-screen.check.v1"
 )
 M6B_W7_S1_PHASE = "w7_s1_restart_disk_fgmres_screen"
+M6B_W7_S1_TIMEOUT_SECONDS = 10_800.0
 M6B_W7_S1_LOCAL_ITERATIONS = (20, 100, 150, 200)
 M6B_W7_S1_CUMULATIVE_ITERATIONS = (220, 300, 350, 400)
 M6B_W7_S1_W5_COMPACT_RELATIVE_PATH = (
@@ -8869,7 +8870,7 @@ def _m6b_w7_s1_check_command(
             and watchdog.get("termination") is None
             and watchdog.get("monitor_error") is None
             and watchdog.get("resource_limits") == {
-                "timeout_seconds": 7200.0,
+                "timeout_seconds": M6B_W7_S1_TIMEOUT_SECONDS,
                 "watchdog_rss_bytes": M6B_WATCHDOG_RSS_LIMIT_BYTES,
                 "completion_peak_rss_bytes": M6B_ONLINE_COMPLETION_RSS_LIMIT_BYTES,
                 "swap_bytes": 0,
