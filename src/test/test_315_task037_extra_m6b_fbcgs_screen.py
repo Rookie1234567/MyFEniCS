@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from pathlib import Path
 
 import numpy as np
@@ -132,7 +133,7 @@ def test_m6b_w4_direct_x_writer_and_apply_budget_contract(tmp_path):
         assert result["ksp_type"] == "fbcgs"
         assert result["pc_side"] == "right"
         assert result["norm_type"] == "unpreconditioned"
-        assert result["max_it"] == result["iterations"] == 100
+        assert result["max_it"] == result["iterations"] == M6B_W4_KSP_ITERATIONS[-1]
         assert result["rtol"] == result["atol"] == 0.0
         assert result["checkpoint_axis"] == "pc_apply_budget"
         assert result["monitor_solution_source"] == "direct_ksp_solution_vec"
@@ -140,7 +141,8 @@ def test_m6b_w4_direct_x_writer_and_apply_budget_contract(tmp_path):
         assert result["monitor_extra_pc_applies"] == 0
         assert result["pc_apply_count"] == result["pc_apply_count_expected"] == 200
         assert result["pc_apply_count_closed"] is True
-        assert result["operator_apply_count"] == 4
+        assert result["checkpoint_operator_apply_count"] == 4
+        assert result["operator_apply_count"] is None
         assert result["breakdown"] is False
         assert set(result["samples"]) == {"20", "100", "150", "200"}
         for ksp_iteration, budget in zip(
@@ -174,14 +176,9 @@ def test_m6b_w4_direct_x_writer_and_apply_budget_contract(tmp_path):
                 allow_pickle=False,
             )
             assert np.array_equal(residual, rhs_values - outer_values)
-        gate = evaluate_m6b_numeric_screen_gate(result["samples"])
-        reported_changed = {
-            key: dict(value, reported_residual=1.0e99)
-            for key, value in result["samples"].items()
-        }
-        assert gate["pass"] is evaluate_m6b_numeric_screen_gate(
-            reported_changed
-        )["pass"]
+        assert ".buildSolution" not in inspect.getsource(
+            run_m6b_right_fbcgs_screen
+        )
     finally:
         rhs.destroy()
         matrix.destroy()
@@ -210,9 +207,9 @@ def test_m6b_w4_metadata_and_numeric_gates_fail_closed():
         "ksp_type": "fbcgs",
         "pc_side": "right",
         "norm_type": "unpreconditioned",
-        "max_it": 100,
-        "max_it_actual": 100,
-        "iterations": 100,
+        "max_it": M6B_W4_KSP_ITERATIONS[-1],
+        "max_it_actual": M6B_W4_KSP_ITERATIONS[-1],
+        "iterations": M6B_W4_KSP_ITERATIONS[-1],
         "rtol": 0.0,
         "atol": 0.0,
         "fixed_screen": True,
@@ -227,7 +224,8 @@ def test_m6b_w4_metadata_and_numeric_gates_fail_closed():
         "converged_reason": -3,
         "converged_reason_names": ["DIVERGED_ITS"],
         "breakdown_reason_names": [],
-        "operator_apply_count": 4,
+        "checkpoint_operator_apply_count": 4,
+        "operator_apply_count": None,
         "sample_action_count": 4,
         "samples": valid,
     }

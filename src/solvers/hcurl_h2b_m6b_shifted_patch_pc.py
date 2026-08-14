@@ -1594,7 +1594,9 @@ def run_m6b_right_fbcgs_screen(
         ksp.setType("fbcgs")
         ksp.setPCSide(PETSc.PC.Side.RIGHT)
         ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED)
-        ksp.setTolerances(rtol=0.0, atol=0.0, max_it=100)
+        ksp.setTolerances(
+            rtol=0.0, atol=0.0, max_it=M6B_W4_KSP_ITERATIONS[-1]
+        )
         pc = ksp.getPC()
         pc.setType(PETSc.PC.Type.PYTHON)
         pc.setPythonContext(pc_context)
@@ -1608,7 +1610,7 @@ def run_m6b_right_fbcgs_screen(
             raise ValueError("M6B FBCGS norm type was not retained")
         if float(actual_rtol) != 0.0 or float(actual_atol) != 0.0:
             raise ValueError("M6B FBCGS tolerances were not retained")
-        if int(actual_max_it) != 100:
+        if int(actual_max_it) != M6B_W4_KSP_ITERATIONS[-1]:
             raise ValueError("M6B FBCGS max_it was not retained")
 
         def sample(_current: PETSc.KSP, iteration: int, reported: float) -> None:
@@ -1709,7 +1711,7 @@ def run_m6b_right_fbcgs_screen(
             "ksp_type": "fbcgs",
             "pc_side": "right",
             "norm_type": "unpreconditioned",
-            "max_it": 100,
+            "max_it": M6B_W4_KSP_ITERATIONS[-1],
             "max_it_actual": int(actual_max_it),
             "rtol": float(actual_rtol),
             "atol": float(actual_atol),
@@ -1730,7 +1732,12 @@ def run_m6b_right_fbcgs_screen(
             "pc_apply_count": int(pc_context.apply_count),
             "pc_apply_count_expected": expected_pc_applies,
             "pc_apply_count_closed": True,
-            "operator_apply_count": operator_apply_count,
+            "checkpoint_operator_apply_count": operator_apply_count,
+            "operator_apply_count": (
+                None
+                if operator_context is None
+                else int(operator_context.apply_count)
+            ),
             "operator_context_apply_count": (
                 None
                 if operator_context is None

@@ -654,7 +654,7 @@ def _m6b_w4_scope() -> dict[str, Any]:
         "norm_type": "unpreconditioned",
         "rtol": 0.0,
         "atol": 0.0,
-        "max_it": 100,
+        "max_it": M6B_W4_KSP_ITERATIONS[-1],
         "fixed_order": "right_fbcgs_direct_solution_vec",
         "scan": False,
         "checkpoint_axis": "pc_apply_budget",
@@ -1465,9 +1465,9 @@ def _m6b_w4_screen_metadata_valid(value: Any) -> bool:
         and value.get("ksp_type") == "fbcgs"
         and value.get("pc_side") == "right"
         and value.get("norm_type") == "unpreconditioned"
-        and value.get("max_it") == 100
-        and value.get("max_it_actual") == 100
-        and value.get("iterations") == 100
+        and value.get("max_it") == M6B_W4_KSP_ITERATIONS[-1]
+        and value.get("max_it_actual") == M6B_W4_KSP_ITERATIONS[-1]
+        and value.get("iterations") == M6B_W4_KSP_ITERATIONS[-1]
         and value.get("rtol") == 0.0
         and value.get("atol") == 0.0
         and value.get("fixed_screen") is True
@@ -1482,7 +1482,17 @@ def _m6b_w4_screen_metadata_valid(value: Any) -> bool:
         and type(value.get("converged_reason")) is int
         and isinstance(value.get("converged_reason_names"), list)
         and isinstance(value.get("breakdown_reason_names"), list)
-        and value.get("operator_apply_count") == len(M6B_W4_PC_APPLY_BUDGETS)
+        and "operator_apply_count" in value
+        and (
+            value.get("operator_apply_count") is None
+            or (
+                type(value.get("operator_apply_count")) is int
+                and value.get("operator_apply_count") > 0
+            )
+        )
+        and value.get("checkpoint_operator_apply_count") == len(
+            M6B_W4_PC_APPLY_BUDGETS
+        )
         and value.get("sample_action_count") == len(M6B_W4_PC_APPLY_BUDGETS)
         and isinstance(samples, Mapping)
         and set(samples) == {str(item) for item in M6B_W4_PC_APPLY_BUDGETS}
