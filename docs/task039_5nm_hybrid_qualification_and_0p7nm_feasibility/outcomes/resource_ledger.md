@@ -171,3 +171,22 @@ E10 attribution taxonomy 的确定项只有
 hypothesis/not_established；QEP workspace、mode replication、coupling assembly、local
 FE factor 和 modal Schur dominant 均为 not_established。没有据此开发新的 PC、modal
 matrix-free、压缩或 owner-only 生命周期重构。
+
+## 9. Review V2 V2-1：h5 Full3D direct readiness
+
+V2-1 绑定 code/input source commit `c26debf71d2a7b76bcf9b9715412063682b091b0`，仅完成
+h5 的 validate/dry-run 与资源、整数宽度和启动前身份审计；没有 h5 assembly、factorization、
+solve 或正式峰值，因此下表不能当作运行实测。
+
+| 项目 | 结果 | 口径 |
+| --- | --- | --- |
+| MemTotal / MemAvailable | `228.066 / 224.432 GiB` | measured；启动条件 MemAvailable≥200 GiB |
+| swap / disk free | `0 / 772.330 GiB` | measured；swap immediate stop，disk≥20 GiB |
+| warning / critical / absolute hard | `170 / 195 GiB / 224000000000 bytes` | 195 只作 critical checkpoint；hard 为用户 override |
+| h5 predicted peak | RSS `90.085–150.108 GiB` | derived estimate；未把预测写成 measured |
+| validate / dry-run / inventory | `pass / pass / 604` | 未启动 worker/PDE |
+| MUMPS integer risk | `conditional` | PETSc row index 32-bit；MUMPS nnz counters 64-bit；runtime factor path not_established |
+
+记录与容量公式见 [V2-1 readiness record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h5_full3d_readiness_v1.json)
+和 [h5 readiness outcome](full3d_h5_direct_and_convergence.md)。旧路径缺失该字段时仍保持原有
+`min(terminate, 0.90×selected)` 行为；V2-2 formal run 与 V2-3 comparison 仍 not_run。

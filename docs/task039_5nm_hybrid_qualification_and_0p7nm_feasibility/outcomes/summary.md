@@ -175,3 +175,17 @@ hypothesis/not_established，其余 QEP workspace、mode replication、coupling�
 factor、modal Schur dominant 均 not_established。完整说明见
 [M960 numerical audit](m960_trace_numerical_audit.md)、[iterative boundary](m480_hybrid_iterative_solver_diagnostic.md)
 和 [memory forensics](memory_lifecycle_forensics.md)。
+
+### Review V2 progress：V2-0 / V2-1
+
+| 阶段 | 状态 | 结论与边界 |
+| --- | --- | --- |
+| V2-0 inherited audit | `completed` | h10 仅为 `historical_underresolved_stress_anchor_only`，禁止作 Full3D 5nm reference、Hybrid physical authority 或 0.7 nm mesh-scaling |
+| V2-1 h5 readiness | `pass_with_formal_run_pending` | validate/dry-run、604 keys、资源与 ABI 通过；整数运行时 factor 路径仍 `not_established` |
+| V2-2 h5 Full3D direct | `not_run` | 未启动正式 PDE |
+| V2-3 comparison | `not_run` | 等待 h5 own result；不预写收敛结论 |
+
+V2-1 的用户覆盖 watchdog 为 warning `170 GiB`、critical `195 GiB`（只记录 crossing）和
+absolute hard `224000000000 bytes`，任意 swap 立即停止；195 GiB 不再单凭预测阻止启动。
+详情见 [h5 readiness](full3d_h5_direct_and_convergence.md)、[V2-1 record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h5_full3d_readiness_v1.json)
+和 [resource ledger](resource_ledger.md)。

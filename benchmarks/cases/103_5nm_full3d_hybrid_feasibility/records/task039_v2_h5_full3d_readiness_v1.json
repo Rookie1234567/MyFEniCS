@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "record_id": "task039_v2_h5_full3d_readiness_v1",
+  "stage": "V2-1",
+  "status": "pass_with_formal_run_pending",
+  "classification": "V2_1_READY_FOR_SINGLE_H5_FULL3D_DIRECT_RUN_CONDITIONAL",
+  "source_identity": {
+    "source_commit_sha": "c26debf71d2a7b76bcf9b9715412063682b091b0",
+    "branch": "codex/20260812-task39-5nm-hybrid-0p7nm-feasibility",
+    "worktree_at_preflight": "clean",
+    "ordinary_defaults_changed": false
+  },
+  "input": {
+    "path": "input/official/task039/5nm_p6h5_full3d_direct_mpi8.dat",
+    "input_sha256": "9432de4711d6ceb60b840532dd4038ed02579fc1b55ca6632308c56f5c34aecb",
+    "resolved_config_sha256": "a8e17b3fc40be6b0e9dc2c61c83857cb4ceae38a3325ad281fca940811e854f0",
+    "physical_model_sha256": "e35907c72ab97069d9ab66958fd00787f98dea08dce1aa6f64c053b7bda46cdb",
+    "method": "full3d_direct",
+    "dimension": 3,
+    "mesh_target_nm": 5.0,
+    "wavelength_nm": 5.0,
+    "polarization": "S",
+    "grazing_angle_deg": 10.0,
+    "nedelec_degree": 6,
+    "mpi_size": 8,
+    "solver": "direct/MUMPS"
+  },
+  "abi": {
+    "qualified_activation": 1,
+    "python": "/home/Projects/MyFEniCS/.venv/bin/python",
+    "petsc_version": "3.19.6",
+    "petsc_scalar": "complex128",
+    "petsc_int": "int32",
+    "petsc_index_size_bits": 32,
+    "linux_abi_stack": true,
+    "modules": {
+      "petsc4py": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/petsc4py/__init__.py",
+      "slepc4py": "/usr/lib/slepcdir/slepc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/slepc4py/__init__.py",
+      "dolfinx": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/dolfinx/__init__.py",
+      "mpi4py": "/usr/lib/python3/dist-packages/mpi4py/__init__.py"
+    }
+  },
+  "integer_width": {
+    "petsc_index_size_bits": 32,
+    "mumps_header": "/usr/include/zmumps_c.h",
+    "mumps_version": "5.6.2",
+    "mumps_int_mode": "MUMPS_INTSIZE32",
+    "mumps_int": "int / 32-bit",
+    "mumps_int8": "int64_t / 64-bit",
+    "mumps_nnz_fields": ["nnz", "nnz_loc"],
+    "mumps_nnz_field_width": "MUMPS_INT8 / 64-bit",
+    "rows_below_int32": true,
+    "matrix_nnz_below_int32": true,
+    "factor_nnz_exceeds_int32": true,
+    "conclusion": "factor NNZ > INT32_MAX is not an automatic blocker because MUMPS nnz counters are 64-bit; runtime factor internal index/workspace compatibility remains not_established"
+  },
+  "external_inventory": {
+    "source": "src.io.input_validation.task039_dynamic_external_mode_inventory",
+    "count": 604,
+    "keys_exact_unique": true,
+    "bottom": 300,
+    "top": 304,
+    "propagating": 604,
+    "nonpropagating": 0,
+    "rayleigh_warning": 0,
+    "key_shape": ["side", "m", "n", "polarization"]
+  },
+  "preflight": {
+    "validate_only": {"exit": 0, "status": "valid"},
+    "dry_run": {"exit": 0, "pde_launched": false, "mpi_size": 8, "inventory_count": 604},
+    "formal_pde_launched": false,
+    "concurrent_heavy_processes": "none_observed",
+    "disk_required_gib": 20.0,
+    "disk_gate": "pass"
+  },
+  "mesh_and_capacity": {
+    "classification": "measured_mesh_topology_plus_derived_capacity",
+    "mesh_topology": {
+      "classification": "measured_reused_from_e4_probe",
+      "cells": 1680,
+      "full_fe_dofs": 1127502,
+      "floquet_constraints": 34542,
+      "interior_dofs_per_cell": 450,
+      "active_trace_rows": 336960,
+      "assembled_rows_with_604": 337564
+    },
+    "matrix_nnz_range": [284060255, 378660436],
+    "predicted_factor_nnz_range": [2336792702, 3115011438],
+    "factor_values_memory_gib_range": [52.23391002251042, 69.6292944574356],
+    "predicted_process_tree_peak_gib": {
+      "rss": [90.08546193440755, 150.1081182861328],
+      "pss": [86.9364668528239, 144.86099276733398],
+      "uss": [86.44956800672743, 144.04968017578125]
+    },
+    "prediction_source": "E4 h6-calibrated derived ranges; no h5 matrix/factor run",
+    "factor_values_semantics": "complex128 values-only envelope; excludes sparse indices, metadata, pivot/workspace and MUMPS overhead"
+  },
+  "resource": {
+    "selected_finite_limit": {"bytes": 244883730432, "gib": 228.06574630737305, "source": "/proc/meminfo:MemTotal", "classification": "measured"},
+    "mem_available": {"bytes": 240982233088, "gib": 224.43219375610352, "minimum_gib": 200.0, "pass": true, "classification": "measured"},
+    "swap": {"total_bytes": 34359738368, "used_bytes": 0, "classification": "measured", "zero_swap_pass": true},
+    "disk_free": {"bytes": 829283360768, "gib": 772.3303146362305, "minimum_gib": 20.0, "pass": true, "classification": "measured"},
+    "cgroup_limit": {"status": "not_available", "reason": "read-only cgroup files did not expose a finite limit"},
+    "watchdog_policy": {
+      "warning_gib": 170.0,
+      "critical_checkpoint_gib": 195.0,
+      "critical_checkpoint_stops": false,
+      "absolute_terminate_memory_bytes": 224000000000,
+      "absolute_terminate_gib_derived": 208.6162567138672,
+      "poll_interval_max_seconds": 0.25,
+      "swap_policy": "any swap use terminates immediately",
+      "policy_classification": "user_overrides_review_hard_stop"
+    }
+  },
+  "tests": {
+    "focused_263_268_269_273": "135 passed",
+    "mpi_tiny_dtn": {"mpi1": "1 passed", "mpi2": "2 ranks, 1 passed each", "mpi4": "4 ranks, 1 passed each"},
+    "ruff": {"changed_python_files": 5, "check": "pass", "format_check": "pass"},
+    "compileall": "pass (src/io, src/runners, src/test)",
+    "check_benchmarks": "302/302 passed",
+    "full_repository_pytest": "not_run"
+  },
+  "limitations": [
+    "No h5 matrix assembly, MUMPS symbolic/analysis, factorization, solve or formal peak was run.",
+    "Runtime factor internal integer/index/workspace compatibility remains not_established.",
+    "cgroup finite limit was not independently readable; selected MemTotal and MemAvailable are measured host values.",
+    "V2-2 formal h5 own Gate is not_run; V2-3 grid comparison is not_run.",
+    "h10 remains historical_underresolved_stress_anchor_only and is not a Full3D reference, Hybrid physical authority, accuracy-qualified result or 0.7 nm mesh-scaling anchor."
+  ],
+  "provenance": {
+    "e4_record": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_e4_h5_full3d_direct_preflight_v1.json",
+    "e4_record_sha256": "fa57ed07c540b9f98334e565d3cc1f3153d39a897a2992367c2b745439ad6054",
+    "e4_record_bytes": 11373
+  }
+}

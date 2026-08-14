@@ -91,3 +91,19 @@ Gate；它们不改写上面的历史 T10 B1 结果。全仓 `python -m pytest -
 | 文档合同 | `7/7 pass` | 相对链接、fenced math、表格列数 |
 | `git diff --check` | `pass` | 当前工作树 |
 | 全仓 repository pytest | `cancelled / not_run` | 用户成本覆盖；不代表 pass 或 zero failures |
+
+## Review V2 V2-1 light Gate
+
+以下结果绑定 code/input source commit `c26debf71d2a7b76bcf9b9715412063682b091b0`；不改写此前
+T10 B1 的历史测试行。V2-1 没有启动正式 h5 PDE，full repository pytest 仍为
+`cancelled / not_run`。
+
+| 检查 | 结果 | 口径 |
+| --- | --- | --- |
+| ABI / integer / resource preflight | `pass` | complex128/int32；MUMPS 5.6.2；MemAvailable `224.432 GiB`；swap `0`；disk `772.330 GiB` |
+| focused `test_263/268/269/273` | `135 passed` | qualified activation；单次 focused suite |
+| MPI tiny DtN | `pass` | MPI1 `1`、MPI2 两 rank 各 `1`、MPI4 四 rank 各 `1` |
+| h5 validate / dry-run | `2/2 pass` | 604 keys exact；未启动 worker/PDE |
+| Ruff check / format-check | `5/5 pass` | c26 修改的 5 个 Python 文件 |
+| compileall | `pass` | `src/io src/runners src/test` |
+| benchmark / JSON / docs / diff | `302/302 pass`；其余 `pass` | `check_benchmarks --no-write`；JSON、链接/公式/表格检查与 `git diff --check` |
