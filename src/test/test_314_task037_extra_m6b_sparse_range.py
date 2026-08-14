@@ -623,6 +623,24 @@ def test_m6b_w2r_projected_range_complement_is_exact_and_fail_closed(
         task037_extra_m6b=True,
     )
     bad_local._audit["beta"] = 0.5
+    accepted_beta05 = H2BM6BProjectedRangePC(
+        bad_local,
+        carrier,
+        lambda values: np.asarray(values, dtype=np.complex128),
+        global_row_count=90,
+        task037_extra_m6b=True,
+        expected_local_beta=0.5,
+    )
+    assert accepted_beta05.audit["local_beta"] == 0.5
+    with pytest.raises(ValueError, match="expected beta"):
+        H2BM6BProjectedRangePC(
+            bad_local,
+            carrier,
+            lambda values: np.asarray(values, dtype=np.complex128),
+            global_row_count=90,
+            task037_extra_m6b=True,
+            expected_local_beta=0.75,
+        )
     with pytest.raises(ValueError, match="carrier identity"):
         H2BM6BProjectedRangePC(
             bad_local,
@@ -989,6 +1007,16 @@ def test_m6b_w2_factor_manifest_requires_nested_audit():
         },
     }
     assert runner._m6b_w2_factor_manifest_valid(payload) is True
+    beta05 = deepcopy(payload)
+    beta05["beta"] = 0.5
+    beta05["audit"]["beta"] = 0.5
+    assert runner._m6b_w2_factor_manifest_valid(
+        beta05, expected_beta=runner.M6B_W3_BETA05
+    ) is True
+    assert runner._m6b_w2_factor_manifest_valid(beta05) is False
+    assert runner._m6b_w2_factor_manifest_valid(
+        beta05, expected_beta=0.75
+    ) is False
     top_level_only = deepcopy(payload)
     top_level_only.update(top_level_only.pop("audit"))
     assert runner._m6b_w2_factor_manifest_valid(top_level_only) is False

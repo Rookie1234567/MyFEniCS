@@ -1504,6 +1504,24 @@ def test_m6b_w3_fixed_screen_contract_and_w2r_authority():
         ]
     )
     assert args.command == "m6b-w3-screen"
+    beta05 = parser.parse_args(
+        [
+            "m6b-w3-beta05-screen",
+            "--run-dir",
+            "/tmp/m6b-w3-beta05",
+            "--factor-authority-dir",
+            "/tmp/factor-beta05",
+            "--wave-authority-dir",
+            "/tmp/wave-beta05",
+            "--jit-cache-source",
+            "/tmp/jit-beta05",
+            "--expected-source-sha",
+            "b" * 40,
+            "--w0-authority-file",
+            "/tmp/w0-beta05.json",
+        ]
+    )
+    assert beta05.command == "m6b-w3-beta05-screen"
     scope = runner._m6b_w3_scope()
     assert scope["beta"] == 1.0
     assert scope["pc_side"] == "right"
@@ -1546,6 +1564,12 @@ def test_m6b_w3_fixed_screen_contract_and_w2r_authority():
     )
     assert diagnostic_pass is True
     assert screen_pass is False
+
+    beta05_scope = runner._m6b_w3_scope(shifted_beta=runner.M6B_W3_BETA05)
+    assert beta05_scope["beta"] == 0.5
+    assert beta05_scope["phase"] == runner.M6B_W3_BETA05_PHASE
+    with pytest.raises(ValueError, match="not fixed"):
+        runner._m6b_w3_scope(shifted_beta=0.75)
 
 
 def test_m6b_w3_lazy_numeric_gate_preserves_run2_negative_evidence():
@@ -1680,3 +1704,20 @@ def test_m6b_w3_orchestration_uses_projected_production_pc_and_rhs_dtn(
         tmp_path / "w0.json",
     ) == 17
     assert flags == {"projected": True, "screen": True}
+
+    flags.clear()
+    assert runner._run_m6b_w3_beta05_screen(
+        tmp_path / "run-beta05",
+        tmp_path / "factor-beta05",
+        tmp_path / "wave-beta05",
+        tmp_path / "jit-beta05",
+        "b" * 40,
+        tmp_path / "w0-beta05.json",
+    ) == 17
+    assert flags == {
+        "projected": True,
+        "screen": True,
+        "shifted_beta": runner.M6B_W3_BETA05,
+        "factor_manifest_sha256": runner.M6B_W3_BETA05_FACTOR_MANIFEST_SHA256,
+        "factor_source_sha": runner.M6B_W3_BETA05_FACTOR_SOURCE_SHA,
+    }

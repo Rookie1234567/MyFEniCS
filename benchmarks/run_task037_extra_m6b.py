@@ -138,6 +138,17 @@ M6B_W2R_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_750_000_000
 M6B_W3_SCHEMA = "task037.extra.m6b.fixed-time-harmonic-screen.v1"
 M6B_W3_PHASE = "w3_screen"
 M6B_W3_BETA = 1.0
+M6B_W3_BETA05_SCHEMA = (
+    "task037.extra.m6b.fixed-time-harmonic-screen-beta05.v1"
+)
+M6B_W3_BETA05_PHASE = "w3_beta05_screen"
+M6B_W3_BETA05 = 0.5
+M6B_W3_BETA05_FACTOR_MANIFEST_SHA256 = (
+    "0d9ef8c8ad788c6f8f037d01054a9e21c091ebe68595ebbf77aaef496289f823"
+)
+M6B_W3_BETA05_FACTOR_SOURCE_SHA = (
+    "2a0c279cf953cc4ac34a18a4c24dfc2c009ada56"
+)
 M6B_W3_COMPACT_PATH = (
     "benchmarks/cases/101_task37_extra_development/records/"
     "m6b_w2r_projected_range_diagnostic.json"
@@ -527,7 +538,19 @@ def _m6b_w3_predicted_live_set() -> dict[str, Any]:
     }
 
 
-def _m6b_w3_scope(*, phase: str = M6B_W3_PHASE) -> dict[str, Any]:
+def _m6b_w3_scope(
+    *, phase: str | None = None, shifted_beta: float = M6B_W3_BETA
+) -> dict[str, Any]:
+    expected_phase = (
+        M6B_W3_PHASE
+        if shifted_beta == M6B_W3_BETA
+        else M6B_W3_BETA05_PHASE
+        if shifted_beta == M6B_W3_BETA05
+        else None
+    )
+    if expected_phase is None or (phase is not None and phase != expected_phase):
+        raise ValueError("M6B W3 screen beta/phase pair is not fixed")
+    phase = expected_phase
     return {
         "degree": M6B_DEGREE,
         "h_nm": M6B_H_NM,
@@ -536,7 +559,7 @@ def _m6b_w3_scope(*, phase: str = M6B_W3_PHASE) -> dict[str, Any]:
         "local_nloc": M6B_LOCAL_NLOC,
         "global_rows": M6B_GLOBAL_ROWS,
         "constraint_count": M6B_CONSTRAINTS,
-        "beta": M6B_W3_BETA,
+        "beta": shifted_beta,
         "factor_count": M6B_FACTOR_COUNT,
         "factor_reuse_count": M6B_FACTOR_REUSE,
         "operator": "A=Kcurl-k0^2*M_epsilon+A_DtN",
@@ -3805,7 +3828,17 @@ def _m6b_w2_authority_record(
     wave_authority_dir: Path,
     jit_cache_source: Path,
     w0_authority_file: Path,
+    *,
+    expected_beta: float = M6B_W2_SHIFTED_BETA,
+    factor_manifest_sha256: str = M6B_W2_FACTOR_MANIFEST_SHA256,
+    factor_source_sha: str = M6B_W2_RESIDUAL_SOURCE_SHA,
 ) -> dict[str, Any]:
+    if expected_beta not in (M6B_W2_SHIFTED_BETA, M6B_W3_BETA05):
+        raise ValueError("M6B factor authority beta is not fixed")
+    if not _m6b_w2_sha_valid(factor_manifest_sha256):
+        raise ValueError("M6B factor manifest SHA is invalid")
+    if not _m6b_w2_source_sha_valid(factor_source_sha):
+        raise ValueError("M6B factor source SHA is invalid")
     factor_manifest = factor_authority_dir / "shifted_lu_store" / "manifest.json"
     wave_manifest = wave_authority_dir / "sparse_range_store" / "manifest.json"
     factor_summary = factor_authority_dir / "m6b_builder_summary.json"
@@ -3814,7 +3847,7 @@ def _m6b_w2_authority_record(
     if any(not path.is_file() for path in required) or not jit_cache_source.is_dir():
         raise FileNotFoundError("M6B W2 authority artifact is missing")
     w0_authority = _m6b_w2_w0_authority_record(w0_authority_file)
-    if _sha256_file(factor_manifest) != M6B_W2_FACTOR_MANIFEST_SHA256:
+    if _sha256_file(factor_manifest) != factor_manifest_sha256:
         raise ValueError("M6B W2 factor manifest authority differs")
     if _sha256_file(wave_manifest) != M6B_W2_WAVE_MANIFEST_SHA256:
         raise ValueError("M6B W2 sparse range manifest authority differs")
@@ -3825,7 +3858,9 @@ def _m6b_w2_authority_record(
     if not (
         _evidence_valid(factor)
         and _evidence_valid(wave)
-        and _m6b_w2_factor_manifest_valid(factor_payload)
+        and _m6b_w2_factor_manifest_valid(
+            factor_payload, expected_beta=expected_beta
+        )
         and wave_payload.get("schema")
         == "task037.extra.m6b.sparse-range-store.v2"
         and wave_payload.get("global_rows") == M6B_GLOBAL_ROWS
@@ -3840,8 +3875,8 @@ def _m6b_w2_authority_record(
     if not (
         isinstance(factor_start, Mapping)
         and isinstance(factor_end, Mapping)
-        and factor_start.get("source_commit_full_sha") == M6B_W2_RESIDUAL_SOURCE_SHA
-        and factor_end.get("source_commit_full_sha") == M6B_W2_RESIDUAL_SOURCE_SHA
+        and factor_start.get("source_commit_full_sha") == factor_source_sha
+        and factor_end.get("source_commit_full_sha") == factor_source_sha
         and factor_start.get("tracked_source_dirty") is False
         and factor_end.get("tracked_source_dirty") is False
         and isinstance(wave_source, Mapping)
@@ -3868,7 +3903,8 @@ def _m6b_w2_authority_record(
         "wave_builder_summary": _artifact(
             wave_authority_dir, "w1_builder_summary.json"
         ),
-        "factor_source_sha": M6B_W2_RESIDUAL_SOURCE_SHA,
+        "factor_source_sha": factor_source_sha,
+        "factor_beta": expected_beta,
         "wave_source_sha": M6B_W2_WAVE_SOURCE_SHA,
         "w0_authority": w0_authority,
         "w0_output_sha256": M6B_W2_W0_OUTPUT_SHA256,
@@ -3881,8 +3917,13 @@ def _m6b_w2_authority_record(
     }
 
 
-def _m6b_w2_factor_manifest_valid(value: Any) -> bool:
-    """Validate the frozen beta=1 factor manifest's nested audit contract."""
+def _m6b_w2_factor_manifest_valid(
+    value: Any, *, expected_beta: float = M6B_W2_SHIFTED_BETA
+) -> bool:
+    """Validate one of the two fixed shifted-factor manifest contracts."""
+
+    if expected_beta not in (M6B_W2_SHIFTED_BETA, M6B_W3_BETA05):
+        return False
 
     if not isinstance(value, Mapping):
         return False
@@ -3894,10 +3935,10 @@ def _m6b_w2_factor_manifest_valid(value: Any) -> bool:
         return False
     return (
         value.get("schema") == "task037.extra.h2b.m6b.shifted-lu-store.v1"
-        and value.get("beta") == 1.0
+        and value.get("beta") == expected_beta
         and audit.get("schema")
         == "task037.extra.h2b.m6b.shifted-lu-store.v1"
-        and audit.get("beta") == 1.0
+        and audit.get("beta") == expected_beta
         and audit.get("factor_count") == M6B_FACTOR_COUNT
         and audit.get("cell_count") == M6B_GLOBAL_CELLS
         and audit.get("factor_order") == 882
@@ -3927,6 +3968,9 @@ def _run_m6b_w2_diagnostic(
     *,
     projected: bool = False,
     screen: bool = False,
+    shifted_beta: float = M6B_W2_SHIFTED_BETA,
+    factor_manifest_sha256: str = M6B_W2_FACTOR_MANIFEST_SHA256,
+    factor_source_sha: str = M6B_W2_RESIDUAL_SOURCE_SHA,
 ) -> int:
     import gc
     import shutil
@@ -3976,6 +4020,10 @@ def _run_m6b_w2_diagnostic(
     w0_authority_file = Path(w0_authority_file).resolve()
     if screen and not projected:
         raise ValueError("M6B W3 screen requires the projected range PC")
+    if shifted_beta not in (M6B_W2_SHIFTED_BETA, M6B_W3_BETA05):
+        raise ValueError("M6B shifted screen beta is not fixed")
+    if not screen and shifted_beta != M6B_W2_SHIFTED_BETA:
+        raise ValueError("M6B W2 and W2R remain fixed at beta=1")
     if run_dir.exists():
         raise FileExistsError(f"M6B W2 refuses an existing run directory: {run_dir}")
     if MPI.COMM_WORLD.size != 1:
@@ -3987,6 +4035,9 @@ def _run_m6b_w2_diagnostic(
         wave_authority_dir,
         jit_cache_source,
         w0_authority_file,
+        expected_beta=shifted_beta,
+        factor_manifest_sha256=factor_manifest_sha256,
+        factor_source_sha=factor_source_sha,
     )
     w2r_negative_authority = _m6b_w2r_old_negative_record() if (projected or screen) else None
     w2r_positive_authority = _m6b_w2r_positive_record() if screen else None
@@ -3995,10 +4046,15 @@ def _run_m6b_w2_diagnostic(
     shutil.copytree(jit_cache_source, cache_dir)
     started = time.perf_counter()
     if screen:
+        if shifted_beta == M6B_W3_BETA:
+            screen_schema = M6B_W3_SCHEMA
+            phase_name = M6B_W3_PHASE
+        else:
+            screen_schema = M6B_W3_BETA05_SCHEMA
+            phase_name = M6B_W3_BETA05_PHASE
         progress_path = run_dir / "m6b_w3_progress.jsonl"
         summary_path = run_dir / "m6b_w3_summary.json"
-        progress_schema = f"{M6B_W3_SCHEMA}.progress.v1"
-        phase_name = M6B_W3_PHASE
+        progress_schema = f"{screen_schema}.progress.v1"
     elif projected:
         progress_path = run_dir / "m6b_w2r_progress.jsonl"
         summary_path = run_dir / "m6b_w2r_summary.json"
@@ -4094,7 +4150,7 @@ def _run_m6b_w2_diagnostic(
             function_space, mesh_data, cfg, beta=0.0
         )
         shifted_ufl, epsilon1, abs_epsilon1, beta1, shifted_coverage = build_m6b_volume_form(
-            function_space, mesh_data, cfg, beta=1.0
+            function_space, mesh_data, cfg, beta=shifted_beta
         )
         if shifted_coverage != tag_coverage:
             raise ValueError("M6B W2 material tag coverage changed")
@@ -4185,6 +4241,7 @@ def _run_m6b_w2_diagnostic(
                 lambda values: outer_numpy(values),
                 global_row_count=M6B_GLOBAL_ROWS,
                 task037_extra_m6b=True,
+                expected_local_beta=shifted_beta,
             )
         else:
             w2_pc = H2BM6BShiftedRangePC(
@@ -4212,27 +4269,27 @@ def _run_m6b_w2_diagnostic(
                 cfg,
                 function_space,
                 "shifted_volume",
-                M6B_W3_BETA,
+                shifted_beta,
             )
             shared_volume_kernel = _m6b_shared_kernel_identity(
                 outer_record,
                 shifted_record,
                 cfg,
                 phase="mpi1",
-                shifted_beta=M6B_W3_BETA,
+                shifted_beta=shifted_beta,
             )
             if not (
                 _m6b_shared_kernel_valid(
                     shared_volume_kernel,
                     phase="mpi1",
-                    shifted_beta=M6B_W3_BETA,
+                    shifted_beta=shifted_beta,
                 )
                 and _m6b_form_records_bound(
                     outer_record,
                     shifted_record,
                     shared_volume_kernel,
                     phase="mpi1",
-                    shifted_beta=M6B_W3_BETA,
+                    shifted_beta=shifted_beta,
                 )
             ):
                 raise ValueError("M6B W3 shared volume form binding is invalid")
@@ -4435,10 +4492,10 @@ def _run_m6b_w2_diagnostic(
         gate=gate,
     )
     summary_payload = {
-        "schema": M6B_W3_SCHEMA if screen else (M6B_W2R_SCHEMA if projected else M6B_W2_SCHEMA),
+        "schema": screen_schema if screen else (M6B_W2R_SCHEMA if projected else M6B_W2_SCHEMA),
         "status": status if error is None else "gate_failed",
         "scope": (
-            _m6b_w3_scope()
+            _m6b_w3_scope(phase=phase_name, shifted_beta=shifted_beta)
             if screen
             else (_m6b_w2r_scope() if projected else _m6b_w2_scope())
         ),
@@ -4578,6 +4635,31 @@ def _run_m6b_w3_screen(
         w0_authority_file,
         projected=True,
         screen=True,
+    )
+
+
+def _run_m6b_w3_beta05_screen(
+    run_dir: Path,
+    factor_authority_dir: Path,
+    wave_authority_dir: Path,
+    jit_cache_source: Path,
+    expected_source_sha: str,
+    w0_authority_file: Path,
+) -> int:
+    """Run the fixed beta=0.5 time-harmonic screen with the W2R PC."""
+
+    return _run_m6b_w2_diagnostic(
+        run_dir,
+        factor_authority_dir,
+        wave_authority_dir,
+        jit_cache_source,
+        expected_source_sha,
+        w0_authority_file,
+        projected=True,
+        screen=True,
+        shifted_beta=M6B_W3_BETA05,
+        factor_manifest_sha256=M6B_W3_BETA05_FACTOR_MANIFEST_SHA256,
+        factor_source_sha=M6B_W3_BETA05_FACTOR_SOURCE_SHA,
     )
 
 
@@ -5437,6 +5519,7 @@ def _parser() -> argparse.ArgumentParser:
         "m6b-w2-diagnostic",
         "m6b-w2r-diagnostic",
         "m6b-w3-screen",
+        "m6b-w3-beta05-screen",
     ):
         item = sub.add_parser(command)
         item.add_argument("--run-dir", required=True)
@@ -5446,6 +5529,7 @@ def _parser() -> argparse.ArgumentParser:
             "m6b-w2-diagnostic",
             "m6b-w2r-diagnostic",
             "m6b-w3-screen",
+            "m6b-w3-beta05-screen",
         }:
             item.add_argument("--factor-authority-dir", required=True)
             item.add_argument("--wave-authority-dir", required=True)
@@ -5497,6 +5581,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.command == "m6b-w3-screen":
         return _run_m6b_w3_screen(
+            run_dir,
+            Path(args.factor_authority_dir).resolve(),
+            Path(args.wave_authority_dir).resolve(),
+            Path(args.jit_cache_source).resolve(),
+            args.expected_source_sha,
+            Path(args.w0_authority_file).resolve(),
+        )
+    if args.command == "m6b-w3-beta05-screen":
+        return _run_m6b_w3_beta05_screen(
             run_dir,
             Path(args.factor_authority_dir).resolve(),
             Path(args.wave_authority_dir).resolve(),

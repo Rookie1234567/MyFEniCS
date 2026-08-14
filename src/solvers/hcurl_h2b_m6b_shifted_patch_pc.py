@@ -720,7 +720,7 @@ class H2BM6BShiftedRangePC:
 class H2BM6BProjectedRangePC:
     """Fixed W2R range-complement residual-minimizing composition.
 
-    For ``l=L_beta1(r)``, ``p=A l`` and ``C`` the fixed ``A^H`` range
+    For ``l=L_beta(r)``, ``p=A l`` and ``C`` the fixed ``A^H`` range
     carrier, this class forms ``c_r=C(r)``, ``c_p=C(p)`` and minimizes the
     residual on the complement of ``range(AZ)`` with one complex scalar.
     The production path uses one local solve, three physical actions and two
@@ -735,6 +735,7 @@ class H2BM6BProjectedRangePC:
         *,
         global_row_count: int,
         task037_extra_m6b: bool = False,
+        expected_local_beta: float = 1.0,
     ) -> None:
         if task037_extra_m6b is not True:
             raise ValueError("M6B W2R requires explicit research opt-in")
@@ -746,6 +747,8 @@ class H2BM6BProjectedRangePC:
             raise ValueError("M6B W2R global row count is invalid")
         if not callable(physical_outer_action):
             raise TypeError("M6B W2R requires a physical outer action")
+        if expected_local_beta not in M6B_ALLOWED_SHIFTED_BETAS:
+            raise ValueError("M6B W2R expected beta is not fixed")
         local_audit = local_pc.audit
         range_audit = range_carrier.audit
         if (
@@ -755,7 +758,7 @@ class H2BM6BProjectedRangePC:
             or range_audit.get("az_v_retained") is not False
             or range_audit.get("retained_az_bytes") != 0
             or local_audit.get("fine_space") != "uncondensed_fullspace"
-            or local_audit.get("beta") != 1.0
+            or local_audit.get("beta") != expected_local_beta
         ):
             raise ValueError("M6B W2R carrier identity is not closed")
         self._local_pc = local_pc
