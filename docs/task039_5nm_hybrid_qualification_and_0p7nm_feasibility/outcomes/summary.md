@@ -242,7 +242,7 @@ all-604 aggregate 未通过。h5 保持 `best_available_discrete_authority_only`
 [V2-3 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h6_h5_two_tier_convergence_v1.json)
 与 [V2-3 Full3D outcome](full3d_h5_direct_and_convergence.md)。
 
-### Review V2 V2-4：h5 Hybrid direct readiness
+### Review V2 V2-4：h5 Hybrid direct readiness（historical snapshot）
 
 V2-4 仅完成 clean-SHA、ABI、资源、输入 validate/dry-run 和 604-key preflight；没有
 QEP、local FE、augmented、factor 或 PDE。MemAvailable=`225.03710174560547 GiB`、
@@ -250,7 +250,29 @@ swap used=`0`、disk free=`808005708 KiB`，readiness/launch eligibility=`true`
 （conditional）。h5 Hybrid 的 rows/NNZ/factor/RSS 都是由 h10 Hybrid、h10 Full3D 和
 h5 Full3D measured anchors 推导的中心值与保守区间，不是 measured formal result。
 
-V2-5 formal h5 Hybrid direct=`not_run`；整数 ABI 已知的 row/order=`int32`、NNZ
-counter=`int64`，但 runtime factor 内部路径仍 `not_established`。详见
+V2-5 formal h5 Hybrid direct=`not_run` 是 V2-4 readiness 时点的历史状态；随后 V2-5
+own run 已完成、V2-6 为 `H5_M480_HYBRID_MODEL_FAIL`，详见下方 current closeout。
+当时的整数 ABI 已知 row/order=`int32`、NNZ counter=`int64`，runtime factor 内部路径仍
+`not_established`。详见
 [h5 Hybrid readiness](h5_hybrid_direct_readiness.md) 和
 [compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h5_hybrid_direct_readiness_v1.json)。
+
+### Review V2 V2-7/V2-8 current closeout
+
+下表是当前状态，覆盖并更新本页较早的 V2-7 `not_run` 历史快照；首轮 T3–T10 和
+V2-6 负结果均保留。V2-7 只在用户覆盖下作为 diagnostic 运行，不能提升 Hybrid
+物理资格。
+
+| 阶段/模型 | current status | measured result / boundary | evidence |
+| --- | --- | --- | --- |
+| V2-6 h5 Hybrid direct vs Full3D | `H5_M480_HYBRID_MODEL_FAIL` | 9 primary 中 5 fail；weak 30 中 29 fail；weighted power `8.685769e-5` 通过但不否决 primary | [V2-6 outcome](h5_hybrid_direct_memory_attribution.md) |
+| V2-7 h5 Hybrid iterative M480 MPI8 | `H5_M480_HYBRID_ITERATIVE_SOLVER_FAIL` | `6000` iterations，`DIVERGED_MAX_IT`；global/bottom/top residual `0.9679803826/0.9882585936/0.9641613365`，limit `5e-9` | [V2-7 record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h5_hybrid_iterative_m480_v1.json) |
+| V2-7 user status | `overridden_by_user_for_diagnostic_only` | 不是 Hybrid physical qualification；未进入 MPI1/M960/M>480 | [V2-7 outcome](h5_hybrid_iterative_m480_mpi8.md) |
+| V2-7 resource | measured negative-run comparison | RSS/PSS/USS `83155.316/82055.122/81869.0 MiB`，swap `0`；较 h5 direct RSS 少 `4.1376972771%`，低于 meaningful 20% | [V2-7 outcome](h5_hybrid_iterative_m480_mpi8.md) |
+| V2-8 iterative-vs-direct physics | `not_run_not_applicable` | residual Gate 未通过，未形成合法 recovery/physics/RTA/field | [V2-7 record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h5_hybrid_iterative_m480_v1.json) |
+
+最终并列边界仍包括 `FULL3D_DIRECT_5NM_REFERENCE_NOT_CONVERGED_AT_P6H5`、
+`H5_M480_HYBRID_MODEL_FAIL`、`H5_M480_HYBRID_ITERATIVE_SOLVER_FAIL`、
+`TASK039_FULL3D_ITERATIVE_WAVELENGTH_ROBUSTNESS_FAIL_AT_5NM` 以及既有 0.7 nm
+材料、factor/cache、external DtN、modal Schur 和 convergence-risk 分类。
+不存在 `TASK039_5NM_FULL3D_HYBRID_ACCURACY_AND_MEMORY_QUALIFIED` 或 Hybrid physical pass。

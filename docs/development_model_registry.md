@@ -1388,6 +1388,24 @@ outcomes。完整证据固定在
 
 ---
 
+# 3.41 Task039 Review V2：h5 Hybrid iterative diagnostic closeout
+
+Task039 V2-7 在用户明确的 `overridden_by_user_for_diagnostic_only` 覆盖下运行一次
+h5/p6、M480、MPI8 Hybrid iterative。它用于判断冻结的迭代器是否在 6000 步内达到
+全局与两侧 FE 真残差，不是新的物理资格或网格收敛参考。运行以
+`DIVERGED_MAX_IT` 结束；modal 子问题虽通过，但 global/bottom/top residual
+`0.9679803826/0.9882585936/0.9641613365` 均远超 `5e-9`，没有合法 field/RTA
+或 iterative-vs-direct physics comparison。资源峰值与 h5 direct 的差异只作失败运行
+的 measured resource comparison，不把对象容量相加为 RSS。
+
+| Model ID | 身份/数据身份 | 算法/规模 | 总量/资源 | 结论/status | evidence |
+|---|---|---|---|---|---|
+| `task039_v2_h5_hybrid_iterative_m480` | source `be5be4680065268303070bfb10c29f4511d483eb`；5 nm、p6/h5、S、10°、M480、MPI8；external inventory manifest=604 | exact monolithic matrix-free Hybrid；right FGMRES；restart90/max_it6000；whole-endcap ILU0 + dynamic DtN Woodbury；nested KSP false；direct factors 0/0 | true residual global/bottom/top=`0.9679803826/0.9882585936/0.9641613365`；modal=`4.861832e-12`；RSS/PSS/USS=`83155.316/82055.122/81869.0 MiB`；swap 0；wall `17187.881117 s` | `H5_M480_HYBRID_ITERATIVE_SOLVER_FAIL`; recovery/physics/RTA not entered；diagnostic-only | [compact record](../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h5_hybrid_iterative_m480_v1.json)、[outcome](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/h5_hybrid_iterative_m480_mpi8.md) |
+
+V2-6 的 `H5_M480_HYBRID_MODEL_FAIL` 原样保留；h10 仍是
+`historical_underresolved_stress_anchor_only`，不是 Full3D/Hybrid accuracy authority
+或 0.7 nm scaling anchor。MPI1、M960、M>480、新 PC 和完整 0.7 nm PDE 均未运行。
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。

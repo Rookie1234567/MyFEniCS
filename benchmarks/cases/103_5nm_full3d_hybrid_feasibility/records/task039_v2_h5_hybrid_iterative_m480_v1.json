@@ -1,0 +1,114 @@
+{
+  "schema_version": "task039.v2-8.h5-hybrid-iterative-m480.v1",
+  "record_id": "task039_v2_h5_hybrid_iterative_m480_v1",
+  "classification": "H5_M480_HYBRID_ITERATIVE_SOLVER_FAIL",
+  "execution_status": "overridden_by_user_for_diagnostic_only",
+  "source_identity": {
+    "run_source_commit_sha": "be5be4680065268303070bfb10c29f4511d483eb",
+    "current_pushed_telemetry_patch_sha": "29ead2cda47a88bd312913a6101826eaba977f9b",
+    "input_sha256": "073f72923b9befb41aa35de8c6b4e8fb10ea5dcde82d166672b4e7805973dcda",
+    "resolved_config_sha256": "5be937196aabeb524ddde04153f2b290abcbfcdd539bf39d169fde9a6fe84ab4",
+    "physical_model_sha256": "e35907c72ab97069d9ab66958fd00787f98dea08dce1aa6f64c053b7bda46cdb",
+    "method": "hybrid_iterative",
+    "mesh_target_nm": 5.0,
+    "wavelength_nm": 5.0,
+    "degree": 6,
+    "polarization": "S",
+    "incident_grazing_deg": 10.0,
+    "requested_modes_per_direction": 480,
+    "candidate_modes": 960,
+    "mpi_size": 8,
+    "external_mode_inventory_count": 604,
+    "profile_id": "task039.hybrid_iterative.p6-h5.v1"
+  },
+  "evidence": {
+    "run_directory": "results/task039_5nm_hybrid_iterative_m480_candidate/task039_5nm_hybrid_iterative_p6h5_m480_mpi8__hybrid_iterative__mpi8__M480/20260814T134138.138043Z",
+    "run_manifest": {"path": "run_manifest.json", "bytes": 113280, "sha256": "33d6c8c6a436b49010406dbc8b7126bfbc36b6a79b39d2c928e275163cdc7526"},
+    "run_summary": {"path": "run_summary.json", "bytes": 2171, "sha256": "77ccaac4dab590347f15873ecc8a8a453e6a966b4e9b77509dc9f1bfc1a19ada"},
+    "resolved_config": {"path": "resolved_config.json", "bytes": 116233, "sha256": "5be937196aabeb524ddde04153f2b290abcbfcdd539bf39d169fde9a6fe84ab4"},
+    "online_record": {"path": "numerical_output/online_record.json", "bytes": 4157558, "sha256": "f477aca449ce7663491de076047030e3174dbde23aee8e1562a900731620e963"},
+    "worker_stdout": {"path": "worker_stdout.txt", "bytes": 186745, "sha256": "8e41e40a8b9a66d5e0600889abdcb497711d7ff923116c36abe1e6ca030c48ee"},
+    "memory_stages": {"path": "numerical_output/memory_stages.jsonl", "bytes": 144, "sha256": "ea8cc22321d1ac04f671e85b3fc361b0e814542d57d99b31e01ab6a15c034403"},
+    "missing_artifacts": ["numerical_output/process_tree_samples.jsonl", "numerical_output/memory_object_ledger.json"]
+  },
+  "gates": {
+    "launcher": {"exit_status": 4, "run_status": "finished", "result_classification": "worker_nonzero", "pass": false, "failure_origin": "worker numerical qualification"},
+    "linear": {
+      "reason": "DIVERGED_MAX_IT",
+      "iterations": 6000,
+      "iteration_limit": 6000,
+      "reported_relative_residual": 0.9679803825849653,
+      "global_true_relative_residual": 0.9679803825849654,
+      "bottom_true_relative_residual": 0.9882585935946882,
+      "top_true_relative_residual": 0.9641613365401176,
+      "modal_true_relative_residual": 4.861832264924273e-12,
+      "limit": 5e-9,
+      "modal_pass": true,
+      "five_residual_pass": false
+    },
+    "interface_projection": {"actual": null, "limit": 1e-8, "status": "not_available", "pass": false},
+    "exact_traction": {"bottom": null, "top": null, "limit": 1e-8, "status": "not_available", "pass": false},
+    "external_q_identity": {"actual": null, "limit": 1e-10, "status": "not_available", "pass": false},
+    "physical_outputs": {"R": null, "T": null, "A_balance": null, "A_volume": null, "closure": null, "status": "not_available_before_recovery", "pass": false},
+    "external_keys": {"manifest_count": 604, "valid_output_count": null, "unique": null, "status": "manifest identity present; valid recovered output absent", "pass": false},
+    "fields_and_canonical": {"selected_E_H": "not_available", "canonical_active_full": "not_available", "pass": false},
+    "lifecycle": {"observed_stages": ["setup", "solve"], "expected_stage_count": 18, "observed_stage_count": 2, "postsolve_recovery_physics": "not_entered", "pass": false},
+    "resource_stop": {"swap_mib": 0.0, "warning_triggered": false, "critical_checkpoint_crossed": false, "absolute_hard_bytes": 224000000000, "hard_stop_triggered": false, "pass": true}
+  },
+  "solver_inventory": {
+    "matrix_free": true,
+    "global_size": 104640,
+    "modal_count": 960,
+    "global_A_materialized": false,
+    "bottom_top_A_assembled": false,
+    "direct_factor_count": {"bottom": 0, "top": 0},
+    "fixed_ilu_factor_count": {"bottom": 1, "top": 1},
+    "nested_ksp_created": false,
+    "direct_fallback": "not_observed_before_numerical_stop",
+    "modal_schur_condition": 2601651.7564810147,
+    "bottom_K_condition": 19.5832,
+    "top_K_condition": 372.1533
+  },
+  "resource": {
+    "rss_mib": 83155.31640625,
+    "pss_mib": 82055.1220703125,
+    "uss_mib": 81869.0,
+    "swap_mib": 0.0,
+    "sample_count": 47810,
+    "smaps_attempted": 47810,
+    "smaps_complete": 47809,
+    "warning_memory_gib": 170.0,
+    "critical_memory_gib": 195.0,
+    "absolute_hard_bytes": 224000000000,
+    "effective_hard_memory_gib": 208.6162567138672,
+    "classification": "measured_independent_process_tree_peaks"
+  },
+  "timing": {
+    "start_utc": "2026-08-14T13:41:38.138290+00:00",
+    "end_utc": "2026-08-14T18:28:06.019407+00:00",
+    "outer_wall_seconds": 17187.881117,
+    "setup_to_solve_marker_seconds": 2828.492227,
+    "linear_solve_seconds": 14358.243030897,
+    "solver_internal_total_seconds": 12402.911988148,
+    "recovery_seconds": null,
+    "recovery_status": "not_entered"
+  },
+  "comparisons": {
+    "iterative_vs_direct_physics": {"status": "not_run_not_applicable", "reason": "no valid iterative recovery/physics/RTA output survived the residual Gate"},
+    "h5_hybrid_direct_resource_anchor": {
+      "run_record": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h5_hybrid_full3d_same_grid_v1.json",
+      "direct_rss_mib": 86744.54296875,
+      "iterative_rss_mib": 83155.31640625,
+      "rss_difference_mib": 3589.2265625,
+      "rss_saving_fraction": 0.041376972771,
+      "classification": "RSS_iterative_less_than_direct; below_meaningful_20_percent_saving"
+    }
+  },
+  "limitations": [
+    "The user override authorized V2-7 for diagnostic evidence only; it does not qualify the h5 Hybrid model.",
+    "V2-6 remains H5_M480_HYBRID_MODEL_FAIL: 5 of 9 primary rows and 29 of 30 weak rows failed, despite the all-604 weighted power aggregate passing.",
+    "No iterative-vs-direct physics comparison is reported because recovery and physical outputs were never validly produced.",
+    "The raw run predates the pushed telemetry patch; missing process_tree_samples and memory_object_ledger are therefore not a regression claim against 29ead2c."
+  ],
+  "provenance": {"raw_artifacts_modified": false, "new_heavy_run_after_completion": false, "ordinary_defaults_changed": false, "v2_6_classification_preserved": true, "full3d_h5_own_authority_preserved": true, "repository_full_pytest": "cancelled_not_run"}
+}

@@ -151,4 +151,19 @@ T10 B1 的历史测试行。V2-1 没有启动正式 h5 PDE，full repository pyt
 | h5 Hybrid validate / dry-run | `2/2 pass` | 604 exact；未启动 worker/PDE |
 | resource preflight | `pass` | MemAvailable `225.037 GiB`、swap used `0`、disk `808005708 KiB` |
 | readiness decision | `conditional launch_eligible=true` | 预测为 derived；runtime factor safety not_established |
-| V2-5 formal h5 Hybrid direct | `not_run` | 需单独授权；本轮没有 MPI/PDE/QEP/assembly/factor |
+| V2-5 formal h5 Hybrid direct | `not_run`（V2-4 historical snapshot） | 随后 V2-5 已完成；当前 own pass 与 V2-6 model fail 见 V2-8 closeout |
+
+### Review V2 V2-8 docs/evidence closeout
+
+本阶段只读取已完成的 V2-7 raw，未运行 PDE/MPI、未修改 Python、未运行 full pytest。
+V2-7 的 own numerical result 是真实负结果；以下为本次 compact/docs 收口检查，不是
+solver qualification：
+
+| 检查 | 状态 |
+| --- | --- |
+| V2-7 raw/compact JSON parse | pass; 23 Task39 compact records parsed |
+| document link/math/table/control checks | pass; 7 changed/affected documents |
+| `check_benchmarks.py --no-write` | pass; 302/302 |
+| `git diff --check` | pass |
+| Python Ruff/compileall | not_run；本轮无 Python 修改 |
+| repository full pytest | cancelled / not_run |

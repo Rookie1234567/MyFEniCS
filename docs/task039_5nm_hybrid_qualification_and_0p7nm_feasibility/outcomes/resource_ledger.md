@@ -217,7 +217,7 @@ artifact hashes、604 inventory、canonical packets 和 own-Gate 见
 V2-2 own-Gate 为 pass；h5 只建立 Full3D h5 discrete authority。h10 仍为
 `historical_underresolved_stress_anchor_only`；V2-3 已完成 negative，h5 仅为 `best_available_discrete_authority_only`，详见 [V2-3 record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h6_h5_two_tier_convergence_v1.json) 与 [V2-3 outcome](full3d_h5_direct_and_convergence.md)。
 
-## 11. Review V2 V2-4：h5 Hybrid direct readiness
+## 11. Review V2 V2-4：h5 Hybrid direct readiness（historical snapshot）
 
 本节是启动前证据，不是 formal run。h5 Hybrid M480 的 cross-section、FE/P/T、augmented、
 factor 和 RSS/PSS/USS 均为 derived prediction；唯一 measured 的是当前资源快照与
@@ -227,5 +227,26 @@ h10 Hybrid、h10/h5 Full3D 锚点。中心值和 `0.8–1.25` 保守区间、公
 用户覆盖 watchdog 为 warning=`170 GiB`、critical=`195 GiB`（只记录 crossing）、
 absolute hard=`224000000000 bytes`、poll=`<=0.25 s`、any swap immediate stop。
 当前 MemAvailable=`225.03710174560547 GiB`、swap used=`0`、disk free=`808005708 KiB`，
-readiness=`conditional launch_eligible=true`。V2-5 尚未运行，不能把任何预测写成
-measured peak、factor success 或 Hybrid authority。
+readiness=`conditional launch_eligible=true`。在该 readiness 时点 V2-5 尚未运行；该历史
+状态随后被 V2-5 formal own pass、V2-6 model fail 和 V2-7 current result supersede，
+不能把 readiness 预测写成 measured peak、factor success 或 Hybrid authority。
+
+## 12. Review V2 V2-7：h5 Hybrid iterative negative resource record
+
+V2-7 是用户覆盖下唯一一次 h5 Hybrid iterative M480 MPI8 diagnostic。它在 6000 步
+`DIVERGED_MAX_IT` 后结束；下表只记录同时进程树峰值，不能把失败运行的资源优势当作
+数值资格。RSS/PSS/USS 是分别取峰值，不能拼成同一采样点的内存向量。
+
+| case | RSS peak (MiB) | PSS peak (MiB) | USS peak (MiB) | swap | total wall (s) | result |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| h5 Hybrid direct M480 | `86744.54296875` | `85040.2392578125` | `84748.19921875` | `0` | `3556.791949` | own pass; V2-6 model fail |
+| h5 Hybrid iterative M480 | `83155.31640625` | `82055.1220703125` | `81869.0` | `0` | `17187.881117` | solver fail at max_it |
+
+Iterative RSS 比 direct 少 `3589.2265625 MiB`，相对 `4.1376972771%`；按 Review
+分类这不是 meaningful `>=20%` saving。两次运行分别 measured，不将对象容量相加到
+process-tree peak。iterative 的 stage marker 只有 setup/solve，recovery 未进入。
+
+本次 raw 绑定旧 source `be5be4680065268303070bfb10c29f4511d483eb`，所以没有
+`process_tree_samples.jsonl` 和 `memory_object_ledger.json`；该缺失不否定已推送的
+`29ead2cda47a88bd312913a6101826eaba977f9b` telemetry patch。详细 artifact hash 和
+缺失字段见 [V2-7 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h5_hybrid_iterative_m480_v1.json)。
