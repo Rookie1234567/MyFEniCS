@@ -99,7 +99,7 @@
     "source_clean": true,
     "worker_not_pde": true
   },
-  "evidence_sha256": "51a43c8bc810aae012843c386632b14b30ac078b40233d7d261caab3eecf8edf",
+  "evidence_sha256": "d0ab768e922bd5c8ef1615d9a6ccc1620ca29ac09c5f70c933dbeaac6cd14efb",
   "measurements": {
     "action_counts": {
       "diagnostic": {
@@ -158,6 +158,7 @@
     "gate_checks": {
       "complement_optimality": true,
       "finite_deterministic": true,
+      "fixed_iterations": true,
       "linear_action_closure": true,
       "normal_projected_component": true,
       "projected_not_worse": true,
