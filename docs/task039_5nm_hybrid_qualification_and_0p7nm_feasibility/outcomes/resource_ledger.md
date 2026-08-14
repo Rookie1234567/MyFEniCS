@@ -143,3 +143,31 @@ run 的 simultaneous process-tree 监测结果，PSS/USS 仍是独立峰值，�
 E6 的 raw payload、metadata、Full3D replay payload/metadata 和 comparison JSON 的完整 SHA
 以及路径见 [E6 H diagnostic outcome](m480_h_field_diagnostic.md)。这些证据不覆盖、也不
 改写 T3–T5 的既有资源账本；E6 不进入 E7。
+
+## 8. Review V1 E7/E10：M960 direct 与生命周期边界
+
+E7 的唯一正式 M960 direct run 使用独立的全程 watchdog。其 global process-tree
+RSS/PSS/USS 峰值为 `71502.582 / 69746.089 / 69465.102 MiB`，swap 为 `0 MiB`，
+smaps attempted/complete 为 `13165/13163`。这些是 measured independent peaks，不能
+解释成同一采样点的三维内存向量。
+
+| 运行 | RSS | PSS / USS | stage-aligned snapshot | 分类 |
+| --- | ---: | --- | --- | --- |
+| M120 | `8.720 GiB` | not_available in E10 series | not_available | T5 measured RSS |
+| M240 | `10.742 GiB` | not_available in E10 series | not_available | T5 measured RSS |
+| M480 | `22.264 GiB` | not_available in E10 series | not_available | T5 measured RSS |
+| M960 prior trace | `22.008 GiB` | not_available | not_available | T5 pre-solution measured RSS |
+| M960 formal direct | `71502.582 MiB` (`69.827 GiB`) | `69746.089 / 69465.102 MiB` | not_available | E7 measured global peak |
+
+正式 M960 的 stage-event JSONL、memory_stages JSONL 和 E10 ledger 均未持久化；stdout
+只能提供 elapsed boundary，不是阶段 RSS/PSS/USS 峰值。对象容量仍须分开阅读：basis、
+coupling、projection 和 augmented estimates 不能相加冒充 resident process-tree peak，
+modal Schur 未 materialize，factor resident bytes not_available。详见
+[E10 memory forensics](memory_lifecycle_forensics.md) 与
+[E10 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_e10_memory_lifecycle_v1.json)。
+
+E10 attribution taxonomy 的确定项只有
+`UNATTRIBUTED_RUNTIME_OR_ALLOCATOR_HIGH_WATER`。`LIFECYCLE_OVERLAP_DOMINANT` 最多为
+hypothesis/not_established；QEP workspace、mode replication、coupling assembly、local
+FE factor 和 modal Schur dominant 均为 not_established。没有据此开发新的 PC、modal
+matrix-free、压缩或 owner-only 生命周期重构。

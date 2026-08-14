@@ -100,8 +100,9 @@ HYBRID_DIRECT_DIAGNOSTIC_FAIL
 `CURRENT_ARCHITECTURE_PLAUSIBLE`。T6–T8、h7.5/h5 和完整 0.7 nm PDE 仍为
 `not_run`；repository full pytest 为用户成本覆盖取消的 `cancelled / not_run`，不是 pass
 或 zero failures。T10 B1 的 code/static parent SHA 为
-`b737c62149186356a1c07c267f473e360274cc8a`；docs-only closeout 不改变 Python、config
-或 schema。
+`b737c62149186356a1c07c267f473e360274cc8a`；后续最终 docs-only closeout 不再改变
+Python、config 或 schema；Review V1 最终轻量 Gate 对应已提交的 A commit
+`36c729f7ae197d08f92e044907d0cb723f9fd43c`。
 
 ## E6 Review V1：M480 H-field diagnostic
 
@@ -120,3 +121,57 @@ E6 checker 的 `numeric_gate_pass=true` 和 `diagnostic_complete=true`，但正�
 与数值阈值通过不矛盾。Raw 的 `physical_augmented_direct_pass=false`、`official_record=false`
 和 sampled traction-density proxy `false` 原样保留；exact traction Gate 已通过。
 完整七平面和逐分量证据见 [E6 H diagnostic outcome](m480_h_field_diagnostic.md)。
+
+## Review V1 extension closeout
+
+本节是首轮 T3–T10 历史表之后的扩展结果；首轮 M960 在 T5 的 pre-solution negative
+记录仍保留，下面的 M960 是 Review V1 E7 唯一一次冻结 direct rerun，不能互相覆盖。
+
+### E5–E7 结果
+
+| 主题 | measured / derived 结果 | 正式边界 |
+| --- | --- | --- |
+| Full3D direct | h10、h7.5、h6 own solve pass；h5 `not_run_by_resource_policy` | 网格 mandatory/strong 未收敛；`FULL3D_DIRECT_5NM_REFERENCE_NOT_CONVERGED_WITHIN_RESOURCE_BUDGET` |
+| Full3D reference | h6 为 `best_available_discrete_reference` | 不是 continuum/refined authority；E5 `reference_established=false` |
+| M480 H diagnostic | numeric Gate pass；三路径比较已完成 | `M480_H_DISCREPANCY_UNRESOLVED` |
+| M960 trace family | M120/240/480/960 两侧 finite、sign/order、repeat 和 backward Gate pass | family classification=`M960_TRACE_AUTHORITY_NUMERICAL_AUDIT_PASS` |
+| M960 formal direct | residual `1.679e-11`、projection `5.789e-13`、traction bottom/top `3.835e-12/1.672e-11`、closure `1.149e-6` | own Gate pass；`official_record=false` 仅表示 M/model qualification pending |
+
+### M960 formal direct 与比较
+
+| 项目 | 值 |
+| --- | --- |
+| R/T/A_balance/A_volume | `0.9094973679165264 / 0.0008705857370964508 / 0.0896320463463772 / 0.08963319492586634` |
+| external keys | `604` exact；bottom/top `300/304` |
+| numerical wall | `5332.772663516924 s` |
+| RSS/PSS/USS | `71502.582 / 69746.089 / 69465.102 MiB`，独立峰值 |
+| swap | `0 MiB` |
+| M480 vs M960 | totals、33 significant power/amplitude、selected E/H 全部通过 |
+| M960 vs Full3D h10 | H z=10 `0.0616688409`、z=60 `0.0599587361` 失败 |
+| M960 vs Full3D h6 | 差异大；h6 不是已建立 reference |
+
+h6 的 mesh-dependent physical SHA 与 h10 不同是预期；E5 已独立证明
+`physics_except_mesh_exact=true`，不能将其写成物理合同错误。M960 与 Full3D 的 H 失败
+也不撤销 M480 H diagnostic 的 `M480_H_DISCREPANCY_UNRESOLVED` 分类。
+
+### E8–E10 停止与内存
+
+E8/E9 均为 `not_run_by_review_v1_7p3_stop_after_m960_direct`。这表示 Review §7.3
+要求的受控停止，不表示 Hybrid iterative 成功或失败；首轮 T6 的 iterative 未运行
+事实保持不变。
+
+| M / 运行 | RSS | PSS / USS | stage-aligned snapshot |
+| --- | ---: | --- | --- |
+| M120 | `8.720 GiB` | not_available in E10 series | not_available |
+| M240 | `10.742 GiB` | not_available in E10 series | not_available |
+| M480 | `22.264 GiB` | not_available in E10 series | not_available |
+| M960 prior trace | `22.008 GiB` | not_available | not_available |
+| M960 formal direct | `71502.582 MiB` (`69.827 GiB`) | `69746.089 / 69465.102 MiB` measured | not_available |
+
+formal direct 只有全局 process-tree peak，没有 stage-aligned snapshot；basis、coupling、
+projection 或 factor 容量不能相加冒充 resident RSS。E10 仅确定
+`UNATTRIBUTED_RUNTIME_OR_ALLOCATOR_HIGH_WATER`；`LIFECYCLE_OVERLAP_DOMINANT` 只是
+hypothesis/not_established，其余 QEP workspace、mode replication、coupling、local
+factor、modal Schur dominant 均 not_established。完整说明见
+[M960 numerical audit](m960_trace_numerical_audit.md)、[iterative boundary](m480_hybrid_iterative_solver_diagnostic.md)
+和 [memory forensics](memory_lifecycle_forensics.md)。
