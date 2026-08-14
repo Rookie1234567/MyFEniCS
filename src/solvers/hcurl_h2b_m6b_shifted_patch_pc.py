@@ -29,6 +29,9 @@ __all__ = (
     "M6B_FIXED_SCREEN_ITERATIONS",
     "M6B_FIXED_RESTART",
     "M6B_FIXED_MAX_IT",
+    "M6B_W4_SCHEMA",
+    "M6B_W4_KSP_ITERATIONS",
+    "M6B_W4_PC_APPLY_BUDGETS",
     "M6B_ONLINE_RSS_LIMIT_BYTES",
     "M6B_POU_CLOSURE_LIMIT",
     "M6B_SCREEN_RHO_LIMITS",
@@ -52,6 +55,7 @@ __all__ = (
     "evaluate_m6b_screen_gate",
     "evaluate_m6b_numeric_screen_gate",
     "run_m6b_right_fgmres_screen",
+    "run_m6b_right_fbcgs_screen",
 )
 
 
@@ -61,6 +65,12 @@ M6B_W2R_RANGE_PC_SCHEMA = "task037.extra.h2b.m6b.projected-range-pc.v1"
 M6B_FIXED_SCREEN_ITERATIONS = (20, 100, 150, 200)
 M6B_FIXED_RESTART = 20
 M6B_FIXED_MAX_IT = 200
+M6B_W4_SCHEMA = "task037.extra.h2b.m6b.fbcgs-screen.v1"
+M6B_W4_KSP_ITERATIONS = (10, 50, 75, 100)
+M6B_W4_PC_APPLY_BUDGETS = (20, 100, 150, 200)
+M6B_W4_KSP_TO_PC_BUDGET = dict(
+    zip(M6B_W4_KSP_ITERATIONS, M6B_W4_PC_APPLY_BUDGETS)
+)
 M6B_ONLINE_RSS_LIMIT_BYTES = 1_900_000_000
 M6B_POU_CLOSURE_LIMIT = 1.0e-14
 M6B_SCREEN_RHO_LIMITS = {
@@ -1550,5 +1560,187 @@ def run_m6b_right_fgmres_screen(
         ksp.destroy()
         solution.destroy()
         monitor_solution.destroy()
+        action_work.destroy()
+        residual_work.destroy()
+
+
+def run_m6b_right_fbcgs_screen(
+    operator: PETSc.Mat,
+    rhs: PETSc.Vec,
+    *,
+    pc_context: M6BShiftedPCContext,
+    checkpoint_dir: Path,
+    operator_context: Any | None = None,
+    checkpoint_observer: Callable[[Mapping[str, Any]], None] | None = None,
+) -> dict[str, Any]:
+    """Run fixed right-FBCGS using the direct KSP solution Vec at checkpoints."""
+
+    rows = int(rhs.getSize())
+    if operator.getSize() != (rows, rows):
+        raise ValueError("M6B outer operator and RHS sizes differ")
+    writer = M6BScreenCheckpointWriter(checkpoint_dir)
+    solution = operator.createVecRight()
+    action_work = operator.createVecLeft()
+    residual_work = rhs.duplicate()
+    rhs_norm = float(rhs.norm())
+    if not np.isfinite(rhs_norm) or rhs_norm <= 0.0:
+        raise ValueError("M6B RHS norm must be positive")
+    samples: dict[str, Any] = {}
+    operator_apply_count = 0
+    ksp = PETSc.KSP().create(rhs.getComm())
+    try:
+        solution.set(0.0)
+        ksp.setOperators(operator)
+        ksp.setType("fbcgs")
+        ksp.setPCSide(PETSc.PC.Side.RIGHT)
+        ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED)
+        ksp.setTolerances(rtol=0.0, atol=0.0, max_it=100)
+        pc = ksp.getPC()
+        pc.setType(PETSc.PC.Type.PYTHON)
+        pc.setPythonContext(pc_context)
+        ksp.setUp()
+        actual_rtol, actual_atol, _actual_dtol, actual_max_it = ksp.getTolerances()
+        if ksp.getType() != "fbcgs":
+            raise ValueError("M6B FBCGS KSP type was not retained")
+        if ksp.getPCSide() != PETSc.PC.Side.RIGHT:
+            raise ValueError("M6B FBCGS PC side was not retained")
+        if ksp.getNormType() != PETSc.KSP.NormType.UNPRECONDITIONED:
+            raise ValueError("M6B FBCGS norm type was not retained")
+        if float(actual_rtol) != 0.0 or float(actual_atol) != 0.0:
+            raise ValueError("M6B FBCGS tolerances were not retained")
+        if int(actual_max_it) != 100:
+            raise ValueError("M6B FBCGS max_it was not retained")
+
+        def sample(_current: PETSc.KSP, iteration: int, reported: float) -> None:
+            nonlocal operator_apply_count
+            if iteration not in M6B_W4_KSP_TO_PC_BUDGET:
+                return
+            budget = M6B_W4_KSP_TO_PC_BUDGET[iteration]
+            key = str(budget)
+            if key in samples:
+                return
+            if int(pc_context.apply_count) != budget:
+                raise ValueError("M6B FBCGS PC apply budget is not closed")
+            operator.mult(solution, action_work)
+            operator_apply_count += 1
+            residual_work.waxpy(PETSc.ScalarType(-1.0), action_work, rhs)
+            checkpoint = writer.write_checkpoint(
+                budget,
+                solution=solution,
+                outer_action=action_work,
+                residual=residual_work,
+                rhs=rhs,
+            )
+            checkpoint.update(
+                {
+                    "ksp_iteration": int(iteration),
+                    "pc_apply_budget": int(budget),
+                    "checkpoint_axis": "pc_apply_budget",
+                    "iteration_label_is_pc_apply_budget": True,
+                    "reported_residual": (
+                        float(reported) if np.isfinite(reported) else None
+                    ),
+                    "reported_residual_is_diagnostic_only": True,
+                    "pc_apply_count": int(pc_context.apply_count),
+                }
+            )
+            samples[key] = checkpoint
+            if checkpoint_observer is not None:
+                checkpoint_observer(
+                    {
+                        "iteration": int(budget),
+                        "ksp_iteration": int(iteration),
+                        "pc_apply_budget": int(budget),
+                        "true_relative_residual": checkpoint[
+                            "true_relative_residual"
+                        ],
+                        "artifacts": {
+                            name: {
+                                field: artifact[field]
+                                for field in (
+                                    "path",
+                                    "bytes",
+                                    "sha256",
+                                    "array_sha256",
+                                )
+                            }
+                            for name, artifact in checkpoint["artifacts"].items()
+                        },
+                    }
+                )
+
+        ksp.setMonitor(
+            lambda current, iteration, reported: sample(
+                current, int(iteration), float(reported)
+            )
+        )
+        ksp.solve(rhs, solution)
+        actual_iterations = int(ksp.getIterationNumber())
+        expected_pc_applies = 2 * actual_iterations
+        if set(samples) != {str(value) for value in M6B_W4_PC_APPLY_BUDGETS}:
+            raise ValueError("M6B FBCGS checkpoint set is incomplete")
+        if int(pc_context.apply_count) != expected_pc_applies:
+            raise ValueError("M6B FBCGS total PC apply count is not 2 per iteration")
+        reason_value = int(ksp.getConvergedReason())
+        reason_names = []
+        breakdown_names = []
+        breakdown_values = set()
+        for name in dir(PETSc.KSP.ConvergedReason):
+            if name.startswith("_"):
+                continue
+            try:
+                value = int(getattr(PETSc.KSP.ConvergedReason, name))
+            except (TypeError, ValueError):
+                continue
+            if value == reason_value:
+                reason_names.append(name)
+            if "BREAKDOWN" in name:
+                breakdown_names.append(name)
+                breakdown_values.add(value)
+        breakdown = bool(
+            reason_value in breakdown_values
+            or any("BREAKDOWN" in name for name in reason_names)
+        )
+        if breakdown:
+            raise ValueError("M6B FBCGS breakdown reason was observed")
+        return {
+            "schema": M6B_W4_SCHEMA,
+            "rows": rows,
+            "ksp_type": "fbcgs",
+            "pc_side": "right",
+            "norm_type": "unpreconditioned",
+            "max_it": 100,
+            "max_it_actual": int(actual_max_it),
+            "rtol": float(actual_rtol),
+            "atol": float(actual_atol),
+            "iterations": actual_iterations,
+            "converged_reason": reason_value,
+            "converged_reason_names": reason_names,
+            "breakdown": breakdown,
+            "breakdown_reason_names": breakdown_names,
+            "samples": samples,
+            "fixed_screen": True,
+            "checkpoint_axis": "pc_apply_budget",
+            "ksp_checkpoint_iterations": list(M6B_W4_KSP_ITERATIONS),
+            "pc_apply_budgets": list(M6B_W4_PC_APPLY_BUDGETS),
+            "ksp_iteration_to_pc_apply_budget": dict(M6B_W4_KSP_TO_PC_BUDGET),
+            "monitor_solution_source": "direct_ksp_solution_vec",
+            "buildSolution_called": False,
+            "monitor_extra_pc_applies": 0,
+            "pc_apply_count": int(pc_context.apply_count),
+            "pc_apply_count_expected": expected_pc_applies,
+            "pc_apply_count_closed": True,
+            "operator_apply_count": operator_apply_count,
+            "operator_context_apply_count": (
+                None
+                if operator_context is None
+                else operator_context.apply_count
+            ),
+            "sample_action_count": len(samples),
+            "reported_residual_is_diagnostic_only": True,
+        }
+    finally:
+        ksp.destroy()
+        solution.destroy()
         action_work.destroy()
         residual_work.destroy()

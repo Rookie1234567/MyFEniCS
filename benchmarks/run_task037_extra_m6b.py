@@ -159,6 +159,16 @@ M6B_W3_COMPACT_FILE_SHA256 = (
 M6B_W3_W2R_SOURCE_SHA = "1cdcb19ac5b96c8bf5b3dd8633a01a67bbc81b45"
 M6B_W3_RESTART = 20
 M6B_W3_MAX_IT = 200
+M6B_W4_SCHEMA = "task037.extra.m6b.fixed-time-harmonic-fbcgs-screen.v1"
+M6B_W4_PHASE = "w4_fbcgs_screen"
+M6B_W4_BETA = 1.0
+M6B_W4_KSP_ITERATIONS = (10, 50, 75, 100)
+M6B_W4_PC_APPLY_BUDGETS = (20, 100, 150, 200)
+M6B_W4_KSP_TO_PC_BUDGET = dict(
+    zip(M6B_W4_KSP_ITERATIONS, M6B_W4_PC_APPLY_BUDGETS)
+)
+M6B_W4_PREDICTED_LIVE_SET_BYTES = 1_723_301_083
+M6B_W4_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_750_000_000
 M6B_W3_PRODUCTION_ACTION_COUNT = {
     "local_apply": 1,
     "physical_outer_action": 3,
@@ -590,6 +600,79 @@ def _m6b_w3_scope(
     }
 
 
+def _m6b_w4_predicted_live_set() -> dict[str, Any]:
+    inherited = _m6b_w3_predicted_live_set()
+    return {
+        "components": dict(inherited["components"]),
+        "predicted_live_set_bytes": M6B_W4_PREDICTED_LIVE_SET_BYTES,
+        "limit_bytes": M6B_W4_PREDICTED_LIVE_SET_LIMIT_BYTES,
+        "gate": M6B_W4_PREDICTED_LIVE_SET_BYTES
+        <= M6B_W4_PREDICTED_LIVE_SET_LIMIT_BYTES,
+        "derived_not_measured": True,
+        "is_measurement": False,
+        "prediction_scope": "production_fbcgs_screen_not_diagnostic_measurement",
+        "solver": "fbcgs",
+        "restart": "not_applicable_fixed_fbcgs",
+        "lifecycle_bound_reused_from_w3": True,
+        "inherited_w3_bound_bytes": inherited["predicted_live_set_bytes"],
+        "pde_strict_peak_limit_bytes": 2_000_000_000,
+        "completion_peak_limit_bytes": M6B_ONLINE_COMPLETION_RSS_LIMIT_BYTES,
+        "watchdog_peak_limit_bytes": M6B_WATCHDOG_RSS_LIMIT_BYTES,
+        "swap_limit_bytes": M6B_SWAP_LIMIT_BYTES,
+    }
+
+
+def _m6b_w4_scope() -> dict[str, Any]:
+    return {
+        "schema": M6B_W4_SCHEMA,
+        "degree": M6B_DEGREE,
+        "h_nm": M6B_H_NM,
+        "global_cells": M6B_GLOBAL_CELLS,
+        "local_cells": M6B_GLOBAL_CELLS,
+        "local_nloc": M6B_LOCAL_NLOC,
+        "global_rows": M6B_GLOBAL_ROWS,
+        "constraint_count": M6B_CONSTRAINTS,
+        "beta": M6B_W4_BETA,
+        "factor_count": M6B_FACTOR_COUNT,
+        "factor_reuse_count": M6B_FACTOR_REUSE,
+        "operator": "A=Kcurl-k0^2*M_epsilon+A_DtN",
+        "shifted_operator": M6B_SHIFTED_OPERATOR,
+        "fine_space": "uncondensed_fullspace",
+        "global_matrix": False,
+        "augmented_matrix": False,
+        "static_condensation": False,
+        "trace_slab_pc": False,
+        "schur": False,
+        "explicit_C_materialized_count": 0,
+        "explicit_D_materialized_count": 0,
+        "dtn_matrix_free": True,
+        "ordinary_default": False,
+        "mpi_size": 1,
+        "phase": M6B_W4_PHASE,
+        "solver": "fbcgs",
+        "pc_side": "right",
+        "norm_type": "unpreconditioned",
+        "rtol": 0.0,
+        "atol": 0.0,
+        "max_it": 100,
+        "fixed_order": "right_fbcgs_direct_solution_vec",
+        "scan": False,
+        "checkpoint_axis": "pc_apply_budget",
+        "monitor_solution_source": "direct_ksp_solution_vec",
+        "buildSolution": False,
+        "ksp_checkpoint_iterations": list(M6B_W4_KSP_ITERATIONS),
+        "pc_apply_budgets": list(M6B_W4_PC_APPLY_BUDGETS),
+        "ksp_iteration_to_pc_apply_budget": dict(M6B_W4_KSP_TO_PC_BUDGET),
+        "screen_iterations": list(M6B_W4_PC_APPLY_BUDGETS),
+        "screen_rho_limits": dict(M6B_SCREEN_RHO_LIMITS),
+        "screen_improvement_limit": M6B_IMPROVEMENT_LIMIT,
+        "production_action_counts": dict(M6B_W3_PRODUCTION_ACTION_COUNT),
+        "predicted_live_set": _m6b_w4_predicted_live_set(),
+        "formal_pass": False,
+        "pde_pass": False,
+    }
+
+
 def _m6b_w3_numeric_gate(
     samples: Mapping[str, Any] | None,
 ) -> dict[str, Any]:
@@ -611,12 +694,14 @@ def _m6b_w3_screen_orchestration(
     outer_context: Any,
     rhs_vec: Any,
     checkpoint_dir: Path,
+    solver: str = "fgmres",
     checkpoint_observer: Callable[[Mapping[str, Any]], None] | None = None,
 ) -> tuple[Any, dict[str, Any]]:
     """Connect the projected production PC and fixed screen after RHS setup."""
 
     from src.solvers.hcurl_h2b_m6b_shifted_patch_pc import (
         M6BShiftedPCContext,
+        run_m6b_right_fbcgs_screen,
         run_m6b_right_fgmres_screen,
     )
 
@@ -624,7 +709,13 @@ def _m6b_w3_screen_orchestration(
     if not isinstance(audit, Mapping) or audit.get("fixed_order") != "projected_range_complement":
         raise ValueError("M6B W3 requires the projected range production PC")
     pc_context = M6BShiftedPCContext(projected_pc)
-    screen = run_m6b_right_fgmres_screen(
+    if solver == "fgmres":
+        screen_runner = run_m6b_right_fgmres_screen
+    elif solver == "fbcgs":
+        screen_runner = run_m6b_right_fbcgs_screen
+    else:
+        raise ValueError("M6B screen solver is not fixed")
+    screen = screen_runner(
         outer_mat,
         rhs_vec,
         pc_context=pc_context,
@@ -1362,6 +1453,62 @@ def _m6b_screen_metadata_valid(value: Any) -> bool:
         and isinstance(samples, Mapping)
         and _m6b_screen_structure_valid(samples)
     )
+
+
+def _m6b_w4_screen_metadata_valid(value: Any) -> bool:
+    if not isinstance(value, Mapping):
+        return False
+    samples = value.get("samples")
+    if not (
+        value.get("schema") == "task037.extra.h2b.m6b.fbcgs-screen.v1"
+        and value.get("rows") == M6B_GLOBAL_ROWS
+        and value.get("ksp_type") == "fbcgs"
+        and value.get("pc_side") == "right"
+        and value.get("norm_type") == "unpreconditioned"
+        and value.get("max_it") == 100
+        and value.get("max_it_actual") == 100
+        and value.get("iterations") == 100
+        and value.get("rtol") == 0.0
+        and value.get("atol") == 0.0
+        and value.get("fixed_screen") is True
+        and value.get("checkpoint_axis") == "pc_apply_budget"
+        and value.get("monitor_solution_source") == "direct_ksp_solution_vec"
+        and value.get("buildSolution_called") is False
+        and value.get("monitor_extra_pc_applies") == 0
+        and value.get("pc_apply_count") == 200
+        and value.get("pc_apply_count_expected") == 200
+        and value.get("pc_apply_count_closed") is True
+        and value.get("breakdown") is False
+        and type(value.get("converged_reason")) is int
+        and isinstance(value.get("converged_reason_names"), list)
+        and isinstance(value.get("breakdown_reason_names"), list)
+        and value.get("operator_apply_count") == len(M6B_W4_PC_APPLY_BUDGETS)
+        and value.get("sample_action_count") == len(M6B_W4_PC_APPLY_BUDGETS)
+        and isinstance(samples, Mapping)
+        and set(samples) == {str(item) for item in M6B_W4_PC_APPLY_BUDGETS}
+    ):
+        return False
+    for ksp_iteration, budget in M6B_W4_KSP_TO_PC_BUDGET.items():
+        item = samples.get(str(budget))
+        if not isinstance(item, Mapping):
+            return False
+        value = item.get("true_relative_residual")
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(value)
+            or float(value) < 0.0
+            or item.get("iteration") != budget
+            or item.get("ksp_iteration") != ksp_iteration
+            or item.get("pc_apply_budget") != budget
+            or item.get("checkpoint_axis") != "pc_apply_budget"
+            or item.get("iteration_label_is_pc_apply_budget") is not True
+            or item.get("pc_apply_count") != budget
+            or item.get("reported_residual_is_diagnostic_only") is not True
+            or not isinstance(item.get("artifacts"), Mapping)
+        ):
+            return False
+    return True
 
 
 def _m6b_builder_summary_valid(value: Any) -> bool:
@@ -3975,6 +4122,7 @@ def _run_m6b_w2_diagnostic(
     shifted_beta: float = M6B_W2_SHIFTED_BETA,
     factor_manifest_sha256: str = M6B_W2_FACTOR_MANIFEST_SHA256,
     factor_source_sha: str = M6B_W2_RESIDUAL_SOURCE_SHA,
+    solver: str = "fgmres",
 ) -> int:
     import gc
     import shutil
@@ -4022,6 +4170,12 @@ def _run_m6b_w2_diagnostic(
     wave_authority_dir = Path(wave_authority_dir).resolve()
     jit_cache_source = Path(jit_cache_source).resolve()
     w0_authority_file = Path(w0_authority_file).resolve()
+    if solver not in {"fgmres", "fbcgs"}:
+        raise ValueError("M6B screen solver is not fixed")
+    if solver == "fbcgs" and (
+        not screen or not projected or shifted_beta != M6B_W4_BETA
+    ):
+        raise ValueError("M6B W4 FBCGS requires the fixed beta=1 projected screen")
     if screen and not projected:
         raise ValueError("M6B W3 screen requires the projected range PC")
     if shifted_beta not in (M6B_W2_SHIFTED_BETA, M6B_W3_BETA05):
@@ -4050,14 +4204,21 @@ def _run_m6b_w2_diagnostic(
     shutil.copytree(jit_cache_source, cache_dir)
     started = time.perf_counter()
     if screen:
-        if shifted_beta == M6B_W3_BETA:
+        if solver == "fbcgs":
+            screen_schema = M6B_W4_SCHEMA
+            phase_name = M6B_W4_PHASE
+            progress_path = run_dir / "m6b_w4_progress.jsonl"
+            summary_path = run_dir / "m6b_w4_summary.json"
+        elif shifted_beta == M6B_W3_BETA:
             screen_schema = M6B_W3_SCHEMA
             phase_name = M6B_W3_PHASE
+            progress_path = run_dir / "m6b_w3_progress.jsonl"
+            summary_path = run_dir / "m6b_w3_summary.json"
         else:
             screen_schema = M6B_W3_BETA05_SCHEMA
             phase_name = M6B_W3_BETA05_PHASE
-        progress_path = run_dir / "m6b_w3_progress.jsonl"
-        summary_path = run_dir / "m6b_w3_summary.json"
+            progress_path = run_dir / "m6b_w3_progress.jsonl"
+            summary_path = run_dir / "m6b_w3_summary.json"
         progress_schema = f"{screen_schema}.progress.v1"
     elif projected:
         progress_path = run_dir / "m6b_w2r_progress.jsonl"
@@ -4131,8 +4292,15 @@ def _run_m6b_w2_diagnostic(
         ):
             raise ValueError("M6B W2 copied JIT cache differs from source")
         emit("authority_validated", **authority)
+        mesh_name = (
+            "m6b_w4_mesh"
+            if solver == "fbcgs"
+            else "m6b_w2r_mesh"
+            if projected
+            else "m6b_w2_mesh"
+        )
         cfg, mesh_data, function_space, floquet, modes = m6a._production_objects(
-            run_dir, mesh_name="m6b_w2r_mesh" if projected else "m6b_w2_mesh"
+            run_dir, mesh_name=mesh_name
         )
         p6 = _m6b_p6_identity(mesh_data, function_space, floquet)
         if not _m6b_expected_p6(p6):
@@ -4323,7 +4491,20 @@ def _run_m6b_w2_diagnostic(
             )
             emit(
                 "screen_started",
-                iterations=list(M6B_SCREEN_ITERATIONS),
+                solver=solver,
+                ksp_iterations=(
+                    list(M6B_W4_KSP_ITERATIONS)
+                    if solver == "fbcgs"
+                    else list(M6B_SCREEN_ITERATIONS)
+                ),
+                pc_apply_budgets=(
+                    list(M6B_W4_PC_APPLY_BUDGETS)
+                    if solver == "fbcgs"
+                    else list(M6B_SCREEN_ITERATIONS)
+                ),
+                checkpoint_axis=(
+                    "pc_apply_budget" if solver == "fbcgs" else "ksp_iteration"
+                ),
                 fixed_screen=True,
             )
             pc_context, screen_result = _m6b_w3_screen_orchestration(
@@ -4332,13 +4513,19 @@ def _run_m6b_w2_diagnostic(
                 outer_context=outer_context,
                 rhs_vec=rhs_vec,
                 checkpoint_dir=run_dir,
+                solver=solver,
                 checkpoint_observer=lambda metadata: emit(
                     "checkpoint_ready", **metadata
                 ),
             )
             samples = screen_result.get("samples")
-            if not _m6b_screen_metadata_valid(screen_result):
-                raise ValueError("M6B W3 screen samples are incomplete or nonfinite")
+            metadata_valid = (
+                _m6b_w4_screen_metadata_valid(screen_result)
+                if solver == "fbcgs"
+                else _m6b_screen_metadata_valid(screen_result)
+            )
+            if not metadata_valid:
+                raise ValueError("M6B screen samples are incomplete or nonfinite")
             gate = _m6b_w3_numeric_gate(samples)
             measurements["screen"] = {
                 "screen": screen_result,
@@ -4511,7 +4698,9 @@ def _run_m6b_w2_diagnostic(
         "schema": screen_schema if screen else (M6B_W2R_SCHEMA if projected else M6B_W2_SCHEMA),
         "status": status if error is None else "gate_failed",
         "scope": (
-            _m6b_w3_scope(phase=phase_name, shifted_beta=shifted_beta)
+            _m6b_w4_scope()
+            if screen and solver == "fbcgs"
+            else _m6b_w3_scope(phase=phase_name, shifted_beta=shifted_beta)
             if screen
             else (_m6b_w2r_scope() if projected else _m6b_w2_scope())
         ),
@@ -4541,7 +4730,9 @@ def _run_m6b_w2_diagnostic(
             else None
         ),
         "predicted_live_set": (
-            _m6b_w3_predicted_live_set()
+            _m6b_w4_predicted_live_set()
+            if screen and solver == "fbcgs"
+            else _m6b_w3_predicted_live_set()
             if screen
             else (_m6b_w2r_predicted_live_set() if projected else {
             "base_bytes": M6B_W2_BASE_PREDICTED_LIVE_SET_BYTES,
@@ -4572,29 +4763,32 @@ def _run_m6b_w2_diagnostic(
         "elapsed_wall_seconds": float(time.perf_counter() - started),
     }
     if screen:
-        summary_payload.update(
-            {
-                "screen": screen_result,
-                "screen_gate": gate,
-                "w2r_negative_authority": w2r_negative_authority,
-                "w2r_positive_authority": w2r_positive_authority,
-                "w3_pass": False,
-                "screen_numeric_pass": screen_numeric_pass,
+        screen_fields = {
+            "screen": screen_result,
+            "screen_gate": gate,
+            "w2r_negative_authority": w2r_negative_authority,
+            "w2r_positive_authority": w2r_positive_authority,
+            "screen_numeric_pass": screen_numeric_pass,
+            "formal_pass": False,
+            "architecture": {
+                "fine_space": "uncondensed_fullspace",
+                "global_matrix": False,
+                "augmented_matrix": False,
+                "static_condensation": False,
+                "trace_slab_pc": False,
+                "schur": False,
+                "explicit_C_materialized_count": 0,
+                "explicit_D_materialized_count": 0,
+                "pde_pass": False,
                 "formal_pass": False,
-                "architecture": {
-                    "fine_space": "uncondensed_fullspace",
-                    "global_matrix": False,
-                    "augmented_matrix": False,
-                    "static_condensation": False,
-                    "trace_slab_pc": False,
-                    "schur": False,
-                    "explicit_C_materialized_count": 0,
-                    "explicit_D_materialized_count": 0,
-                    "pde_pass": False,
-                    "formal_pass": False,
-                },
-            }
-        )
+            },
+        }
+        if solver == "fbcgs":
+            screen_fields["w4_pass"] = False
+            screen_fields["architecture"]["dtn_matrix_free"] = True
+        else:
+            screen_fields["w3_pass"] = False
+        summary_payload.update(screen_fields)
     elif projected:
         summary_payload.update(
             {
@@ -4676,6 +4870,30 @@ def _run_m6b_w3_beta05_screen(
         shifted_beta=M6B_W3_BETA05,
         factor_manifest_sha256=M6B_W3_BETA05_FACTOR_MANIFEST_SHA256,
         factor_source_sha=M6B_W3_BETA05_FACTOR_SOURCE_SHA,
+    )
+
+
+def _run_m6b_w4_fbcgs_screen(
+    run_dir: Path,
+    factor_authority_dir: Path,
+    wave_authority_dir: Path,
+    jit_cache_source: Path,
+    expected_source_sha: str,
+    w0_authority_file: Path,
+) -> int:
+    """Run the fixed beta=1 direct-solution FBCGS screen."""
+
+    return _run_m6b_w2_diagnostic(
+        run_dir,
+        factor_authority_dir,
+        wave_authority_dir,
+        jit_cache_source,
+        expected_source_sha,
+        w0_authority_file,
+        projected=True,
+        screen=True,
+        shifted_beta=M6B_W4_BETA,
+        solver="fbcgs",
     )
 
 
@@ -5536,6 +5754,7 @@ def _parser() -> argparse.ArgumentParser:
         "m6b-w2r-diagnostic",
         "m6b-w3-screen",
         "m6b-w3-beta05-screen",
+        "m6b-w4-fbcgs-screen",
     ):
         item = sub.add_parser(command)
         item.add_argument("--run-dir", required=True)
@@ -5546,6 +5765,7 @@ def _parser() -> argparse.ArgumentParser:
             "m6b-w2r-diagnostic",
             "m6b-w3-screen",
             "m6b-w3-beta05-screen",
+            "m6b-w4-fbcgs-screen",
         }:
             item.add_argument("--factor-authority-dir", required=True)
             item.add_argument("--wave-authority-dir", required=True)
@@ -5606,6 +5826,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.command == "m6b-w3-beta05-screen":
         return _run_m6b_w3_beta05_screen(
+            run_dir,
+            Path(args.factor_authority_dir).resolve(),
+            Path(args.wave_authority_dir).resolve(),
+            Path(args.jit_cache_source).resolve(),
+            args.expected_source_sha,
+            Path(args.w0_authority_file).resolve(),
+        )
+    if args.command == "m6b-w4-fbcgs-screen":
+        return _run_m6b_w4_fbcgs_screen(
             run_dir,
             Path(args.factor_authority_dir).resolve(),
             Path(args.wave_authority_dir).resolve(),
