@@ -43,7 +43,7 @@ def _synthetic_inputs() -> tuple[tuple[w6a.W6ASparseColumn, ...], dict, np.ndarr
     return columns, {"legacy": legacy, "identity": identity}, rhs
 
 
-def _build(tmp_path: Path, name: str, monkeypatch):
+def _build(tmp_path: Path, name: str, monkeypatch, progress_events=None):
     columns, metadata, rhs = _synthetic_inputs()
     diagonal = np.asarray(
         [1.0 + 0.003j * (index + 1) for index in range(w6a.W6A_TOTAL_COLUMNS)],
@@ -71,6 +71,11 @@ def _build(tmp_path: Path, name: str, monkeypatch):
         scratch_dir=tmp_path / f"{name}_az",
         identity=metadata["identity"],
         legacy_basis=metadata["legacy"],
+        progress=(
+            None
+            if progress_events is None
+            else lambda event, _first, _second: progress_events.append(event)
+        ),
     )
     return diagnostic, rhs, metadata
 
@@ -90,7 +95,12 @@ def test_w6a_fixed_spec_phase_and_serial_range_projection(tmp_path: Path, monkey
     with pytest.raises(ValueError):
         w6a.w6a_phase(0.0, 0.0, kx=0.0, ky=0.0, period_x=0.0, order_m=0)
 
-    diagnostic, rhs, metadata = _build(tmp_path, "first", monkeypatch)
+    progress_events = []
+    diagnostic, rhs, metadata = _build(
+        tmp_path, "first", monkeypatch, progress_events=progress_events
+    )
+    assert progress_events[-6:-2] == ["repeat_ready"] * 4
+    assert progress_events[-2:] == ["az_ready", "gram_ready"]
     first_gram = np.array(diagnostic.gram, copy=True)
     try:
         result = diagnostic.compare_range_orders(rhs)
@@ -308,6 +318,15 @@ def test_w6a_runner_progress_prediction_numeric_and_parser(tmp_path: Path):
             completed_columns=completed,
             total_columns=390,
         )
+    for completed, column in enumerate(runner.M6B_W6A_REPEAT_COLUMNS, 1):
+        runner._m6b_w6a_progress_emit(
+            progress,
+            "repeat_ready",
+            elapsed_wall_seconds=0.25,
+            column_index=column,
+            completed_repeats=completed,
+            total_repeats=4,
+        )
     for event in runner.M6B_W6A_TRAILING_EVENTS:
         runner._m6b_w6a_progress_emit(progress, event, elapsed_wall_seconds=0.3)
     assert runner._m6b_w6a_progress_valid(progress)["pass"] is True
@@ -349,6 +368,15 @@ def test_w6a_checker_synthetic_preformal_pass(tmp_path: Path, monkeypatch):
             elapsed_wall_seconds=0.2,
             completed_columns=completed,
             total_columns=390,
+        )
+    for completed, column in enumerate(runner.M6B_W6A_REPEAT_COLUMNS, 1):
+        runner._m6b_w6a_progress_emit(
+            progress,
+            "repeat_ready",
+            elapsed_wall_seconds=0.25,
+            column_index=column,
+            completed_repeats=completed,
+            total_repeats=4,
         )
     for event in runner.M6B_W6A_TRAILING_EVENTS:
         runner._m6b_w6a_progress_emit(progress, event, elapsed_wall_seconds=0.3)

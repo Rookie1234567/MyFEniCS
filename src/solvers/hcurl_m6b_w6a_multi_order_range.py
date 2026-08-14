@@ -46,6 +46,9 @@ __all__ = [
     "W6ASparseColumn",
     "fixed_w6a_column_specs",
     "w6a_phase",
+    "w6a_actual_z_planes",
+    "w6a_piecewise_hat",
+    "build_w6a_added_columns_from_fe",
     "build_w6a_added_columns",
     "load_w1a_legacy_basis",
     "W6AMultiOrderRangeDiagnostic",
@@ -140,6 +143,151 @@ def w6a_phase(
     )
 
 
+def w6a_actual_z_planes(mesh_data: Any, cfg: Any) -> np.ndarray:
+    """Return the fixed 15 z planes present in the production mesh geometry."""
+
+    coordinates = np.asarray(mesh_data.mesh.geometry.x, dtype=np.float64)
+    _require(
+        coordinates.ndim == 2 and coordinates.shape[1] >= 3,
+        "W6A mesh geometry must contain xyz coordinates",
+    )
+    planes = np.unique(coordinates[:, 2])
+    _require(
+        planes.size == W6A_Z_PLANES
+        and np.all(np.isfinite(planes))
+        and np.all(np.diff(planes) > 0.0),
+        "W6A production mesh must have 15 strictly increasing z planes",
+    )
+    _require(
+        float(planes[0]) == float(cfg.domain_z_min)
+        and float(planes[-1]) == float(cfg.domain_z_max),
+        "W6A z planes do not cover the configured domain",
+    )
+    return np.ascontiguousarray(planes, dtype=np.float64)
+
+
+def w6a_piecewise_hat(
+    z: np.ndarray | float, planes: np.ndarray, plane_index: int
+) -> np.ndarray:
+    """Evaluate the nonuniform, one-sided-at-endpoints triangular hat."""
+
+    planes = np.asarray(planes, dtype=np.float64)
+    values = np.asarray(z, dtype=np.float64)
+    _require(
+        planes.ndim == 1
+        and planes.size == W6A_Z_PLANES
+        and np.all(np.isfinite(planes))
+        and np.all(np.diff(planes) > 0.0),
+        "W6A hat planes are invalid",
+    )
+    if type(plane_index) is not int or not 0 <= plane_index < planes.size:
+        raise ValueError("W6A hat plane index is invalid")
+    center = float(planes[plane_index])
+    if plane_index == 0:
+        width = float(planes[1] - center)
+        result = 1.0 - (values - center) / width
+        result = np.where(values < center, 0.0, result)
+        result = np.where(values >= planes[1], 0.0, result)
+    elif plane_index == planes.size - 1:
+        width = float(center - planes[-2])
+        result = 1.0 - (center - values) / width
+        result = np.where(values <= planes[-2], 0.0, result)
+        result = np.where(values > center, 0.0, result)
+    else:
+        left = float(center - planes[plane_index - 1])
+        right = float(planes[plane_index + 1] - center)
+        result = np.where(
+            values <= center,
+            1.0 - (center - values) / left,
+            1.0 - (values - center) / right,
+        )
+    return np.maximum(np.asarray(result, dtype=np.float64), 0.0)
+
+
+def build_w6a_added_columns_from_fe(
+    function_space: Any,
+    mesh_data: Any,
+    floquet: Any,
+    template: Any,
+    cfg: Any,
+    *,
+    ownership_range: tuple[int, int],
+) -> tuple[tuple[W6ASparseColumn, ...], dict[str, Any]]:
+    """Build the fixed 315 added columns through the real FE/MPC path."""
+
+    from dolfinx import fem
+    from src.solvers.physical_slab_two_level import compress_petsc_vector
+
+    start, end = (int(ownership_range[0]), int(ownership_range[1]))
+    _require(start == 0 and end == int(template.getSize()), "W6A FE columns require MPI1 ownership")
+    planes = w6a_actual_z_planes(mesh_data, cfg)
+    period_x = float(cfg.period_x)
+    _require(np.isfinite(period_x) and period_x > 0.0, "W6A period_x is invalid")
+    field = fem.Function(function_space)
+    vector = template.duplicate()
+    columns: list[W6ASparseColumn] = []
+    column_audit: list[dict[str, Any]] = []
+    try:
+        for spec in fixed_w6a_column_specs()[W6A_LEGACY_COLUMNS:]:
+
+            def value(x, *, spec=spec):
+                envelope = w6a_piecewise_hat(x[2], planes, spec.z_plane)
+                phase = w6a_phase(
+                    x[0],
+                    x[1],
+                    kx=complex(cfg.kx),
+                    ky=complex(cfg.ky),
+                    period_x=period_x,
+                    order_m=spec.order_m,
+                )
+                result = np.zeros((3, x.shape[1]), dtype=np.complex128)
+                result[spec.component, :] = envelope * phase
+                return result
+
+            field.interpolate(value)
+            floquet.mpc.homogenize(field)
+            source = np.asarray(
+                field.x.petsc_vec.getArray(readonly=True), dtype=np.complex128
+            )
+            target = vector.getArray()
+            _require(source.size >= target.size, "W6A FE/MPC owned prefix is too short")
+            np.copyto(target, source[: target.size])
+            vector.assemble()
+            compressed = compress_petsc_vector(vector)
+            indices = np.asarray(compressed.indices, dtype=_INDEX_DTYPE)
+            values = np.asarray(compressed.values, dtype=_COMPLEX128)
+            norm = float(np.linalg.norm(values))
+            _require(
+                np.isfinite(norm)
+                and norm > 0.0
+                and abs(norm - 1.0) <= 1.0e-11,
+                "W6A compressed FE column is not normalized",
+            )
+            columns.append(W6ASparseColumn(indices.copy(), values.copy()))
+            column_audit.append(
+                {
+                    "column_index": spec.column_index,
+                    "nnz": int(indices.size),
+                    "norm": float(np.linalg.norm(values)),
+                    "indices_array_sha256": _array_sha256(indices),
+                    "values_array_sha256": _array_sha256(values),
+                }
+            )
+    finally:
+        vector.destroy()
+        del field
+    return tuple(columns), {
+        "z_planes": planes.tolist(),
+        "domain_z_min": float(cfg.domain_z_min),
+        "domain_z_max": float(cfg.domain_z_max),
+        "z_planes_array_sha256": _array_sha256(planes),
+        "column_audit": column_audit,
+        "column_count": len(columns),
+        "fixed_order": True,
+        "dense_candidates_retained": False,
+    }
+
+
 def build_w6a_added_columns(
     make_column: Callable[[W6AColumnSpec], W6ASparseColumn],
 ) -> tuple[W6ASparseColumn, ...]:
@@ -201,13 +349,19 @@ def load_w1a_legacy_basis(store_dir: Path) -> dict[str, Any]:
         == W6A_LEGACY_AZ_COLUMN_SHA256_AGGREGATE,
         "W1A AZ authority differs",
     )
+    audit = carrier.audit
+    z_data = carrier.z_data
+    z_indices = carrier.z_indices
+    z_indptr = carrier.z_indptr
+    del carrier
     return {
         "basis_manifest_sha256": basis_manifest_sha256,
         "az_column_sha256_aggregate": manifest["az_column_sha256_aggregate"],
         "manifest_file_sha256": _file_sha256(manifest_path),
-        "z_data": carrier.z_data,
-        "z_indices": carrier.z_indices,
-        "z_indptr": carrier.z_indptr,
+        "audit": audit,
+        "z_data": z_data,
+        "z_indices": z_indices,
+        "z_indptr": z_indptr,
     }
 
 
@@ -301,6 +455,7 @@ class W6AMultiOrderRangeDiagnostic:
         identity: Mapping[str, Any],
         specs: Sequence[W6AColumnSpec] | None = None,
         legacy_basis: Mapping[str, Any] | None = None,
+        progress: Callable[[str, int, int], None] | None = None,
     ) -> "W6AMultiOrderRangeDiagnostic":
         if not callable(action):
             raise TypeError("W6A forward action must be callable")
@@ -393,6 +548,8 @@ class W6AMultiOrderRangeDiagnostic:
                 az_store.write_column(column, np.ascontiguousarray(observed))
                 column_sha256.append(_array_sha256(observed))
                 base_action_count += 1
+                if progress is not None:
+                    progress("column_progress", column + 1, W6A_TOTAL_COLUMNS)
                 del observed
                 if column == W6A_LEGACY_COLUMNS - 1:
                     legacy_z_identity["az_column_sha256_aggregate"] = _json_sha256(
@@ -418,6 +575,8 @@ class W6AMultiOrderRangeDiagnostic:
                     raise TypeError(f"W6A repeated AZ column {column} is invalid")
                 repeat_column_sha256[str(column)] = _array_sha256(observed)
                 repeat_action_count += 1
+                if progress is not None:
+                    progress("repeat_ready", column, repeat_action_count)
                 del observed
             _require(
                 all(
@@ -427,6 +586,8 @@ class W6AMultiOrderRangeDiagnostic:
                 "W6A selected AZ repeats are not exact",
             )
             del vector
+            if progress is not None:
+                progress("az_ready", W6A_TOTAL_COLUMNS, W6A_TOTAL_COLUMNS)
             gram = np.zeros((W6A_TOTAL_COLUMNS, W6A_TOTAL_COLUMNS), dtype=_COMPLEX128)
             left = np.empty(local_rows, dtype=_COMPLEX128)
             right = np.empty(local_rows, dtype=_COMPLEX128)
@@ -451,7 +612,7 @@ class W6AMultiOrderRangeDiagnostic:
             )
             if not np.isfinite(closure) or closure > W6A_NORMAL_CLOSURE_LIMIT:
                 raise ValueError("W6A factor normal closure failed")
-            return cls(
+            result = cls(
                 specs=specs,
                 z_data=data,
                 z_indices=indices,
@@ -468,6 +629,9 @@ class W6AMultiOrderRangeDiagnostic:
                 repeat_action_count=repeat_action_count,
                 repeat_column_sha256=repeat_column_sha256,
             )
+            if progress is not None:
+                progress("gram_ready", W6A_TOTAL_COLUMNS, W6A_TOTAL_COLUMNS)
+            return result
         except Exception:
             az_store.close()
             raise
