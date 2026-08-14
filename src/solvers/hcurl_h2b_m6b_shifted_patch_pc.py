@@ -35,10 +35,12 @@ __all__ = (
     "M6B_IMPROVEMENT_LIMIT",
     "M6B_SHARED_VOLUME_OPERATOR",
     "M6B_SHARED_VOLUME_REPRESENTATION",
+    "M6B_W2R_RANGE_PC_SCHEMA",
     "m6b_shifted_local_matrix",
     "m6b_material_tag_coverage",
     "H2BM6BShiftedPatchPC",
     "H2BM6BShiftedRangePC",
+    "H2BM6BProjectedRangePC",
     "M6BShiftedPCContext",
     "M6BOuterMatPythonContext",
     "M6BScreenCheckpointWriter",
@@ -53,6 +55,7 @@ __all__ = (
 
 M6B_SHIFTED_PC_SCHEMA = "task037.extra.h2b.m6b.shifted-patch-pc.v1"
 M6B_W2_RANGE_PC_SCHEMA = "task037.extra.h2b.m6b.shifted-range-pc.v1"
+M6B_W2R_RANGE_PC_SCHEMA = "task037.extra.h2b.m6b.projected-range-pc.v1"
 M6B_FIXED_SCREEN_ITERATIONS = (20, 100, 150, 200)
 M6B_FIXED_RESTART = 20
 M6B_FIXED_MAX_IT = 200
@@ -710,6 +713,307 @@ class H2BM6BShiftedRangePC:
         del arrays
         self._apply_count += 1
         return final, measurement
+
+
+class H2BM6BProjectedRangePC:
+    """Fixed W2R range-complement residual-minimizing composition.
+
+    For ``l=L_beta1(r)``, ``p=A l`` and ``C`` the fixed ``A^H`` range
+    carrier, this class forms ``c_r=C(r)``, ``c_p=C(p)`` and minimizes the
+    residual on the complement of ``range(AZ)`` with one complex scalar.
+    The production path uses one local solve, three physical actions and two
+    range actions; diagnostic probes add only the fixed final closure actions.
+    """
+
+    def __init__(
+        self,
+        local_pc: H2BM6BShiftedPatchPC,
+        range_carrier: SparseM6BRangeCarrier,
+        physical_outer_action: Callable[[np.ndarray], np.ndarray],
+        *,
+        global_row_count: int,
+        task037_extra_m6b: bool = False,
+    ) -> None:
+        if task037_extra_m6b is not True:
+            raise ValueError("M6B W2R requires explicit research opt-in")
+        if not isinstance(local_pc, H2BM6BShiftedPatchPC):
+            raise TypeError("M6B W2R requires the shifted local PC")
+        if not isinstance(range_carrier, SparseM6BRangeCarrier):
+            raise TypeError("M6B W2R requires the sparse range carrier")
+        if type(global_row_count) is not int or global_row_count <= 0:
+            raise ValueError("M6B W2R global row count is invalid")
+        if not callable(physical_outer_action):
+            raise TypeError("M6B W2R requires a physical outer action")
+        local_audit = local_pc.audit
+        range_audit = range_carrier.audit
+        if (
+            range_carrier.global_rows != global_row_count
+            or range_audit.get("mpi_scope") != "MPI1"
+            or range_audit.get("dense_nrows_x_columns_retained") is not False
+            or range_audit.get("az_v_retained") is not False
+            or range_audit.get("retained_az_bytes") != 0
+            or local_audit.get("fine_space") != "uncondensed_fullspace"
+            or local_audit.get("beta") != 1.0
+        ):
+            raise ValueError("M6B W2R carrier identity is not closed")
+        self._local_pc = local_pc
+        self._range_carrier = range_carrier
+        self._physical_outer_action = physical_outer_action
+        self._global_row_count = global_row_count
+        self._apply_count = 0
+        self._audit = self._make_audit(local_audit, range_audit)
+
+    def _make_audit(
+        self,
+        local_audit: Mapping[str, Any],
+        range_audit: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        local_retained = int(local_audit["retained_store_total_bytes"])
+        range_retained = int(range_audit["retained_total_bytes"])
+        local_work = int(local_audit["bounded_apply_workspace_bytes"])
+        range_work = int(range_audit["bounded_work_bytes"])
+        projected_full_vectors = 8
+        full_vector_bytes = int(self._global_row_count * _COMPLEX128_BYTES)
+        projected_incremental = projected_full_vectors * full_vector_bytes
+        retained = local_retained + range_retained
+        bounded = max(local_work, range_work + projected_incremental)
+        return {
+            "schema": M6B_W2R_RANGE_PC_SCHEMA,
+            "task037_extra_m6b": True,
+            "fixed_order": "projected_range_complement",
+            "scan": False,
+            "global_row_count": self._global_row_count,
+            "fine_space": "uncondensed_fullspace",
+            "local_beta": float(local_audit["beta"]),
+            "local_retained_payload_bytes": local_retained,
+            "range_retained_payload_bytes": range_retained,
+            "local_bounded_work_bytes": local_work,
+            "range_bounded_work_bytes": range_work,
+            "projected_full_vector_count": projected_full_vectors,
+            "projected_full_vector_bytes": full_vector_bytes,
+            "projected_incremental_bytes": projected_incremental,
+            "retained_payload_bytes": retained,
+            "bounded_work_bytes": bounded,
+            "retained_plus_work_bytes": retained + bounded,
+            "memory_prediction_is_measurement": False,
+            "production_action_counts": {
+                "local_apply": 1,
+                "physical_outer_action": 3,
+                "range_apply": 2,
+            },
+            "global_matrix": False,
+            "global_constraint_matrix": False,
+            "patch_matrices": False,
+            "per_cell_factor": False,
+            "static_condensation": False,
+            "trace_slab_pc": False,
+            "schur": False,
+            "slab_factor": False,
+            "explicit_C_materialized_count": 0,
+            "explicit_D_materialized_count": 0,
+            "ordinary_default_changed": False,
+        }
+
+    @property
+    def audit(self) -> dict[str, Any]:
+        return dict(self._audit)
+
+    @property
+    def apply_count(self) -> int:
+        return self._apply_count
+
+    def _physical_action(self, values: np.ndarray) -> np.ndarray:
+        result = np.asarray(self._physical_outer_action(values))
+        return _finite_vector(result, self._global_row_count, "physical outer action")
+
+    @staticmethod
+    def _projected_alpha(
+        p_perp: np.ndarray, r_perp: np.ndarray
+    ) -> tuple[complex, complex]:
+        denominator = complex(np.vdot(p_perp, p_perp))
+        if (
+            not np.isfinite(denominator.real)
+            or not np.isfinite(denominator.imag)
+            or denominator == 0.0
+        ):
+            raise FloatingPointError("M6B W2R projected denominator is invalid")
+        alpha = complex(np.vdot(p_perp, r_perp) / denominator)
+        if not np.isfinite(alpha.real) or not np.isfinite(alpha.imag):
+            raise FloatingPointError("M6B W2R projected alpha is nonfinite")
+        return alpha, denominator
+
+    def _apply_production(self, rhs: np.ndarray) -> np.ndarray:
+        residual_rhs = _finite_vector(rhs, self._global_row_count, "W2R RHS")
+        local = np.ascontiguousarray(
+            self._local_pc.apply(residual_rhs), dtype=np.complex128
+        )
+        local = _finite_vector(local, self._global_row_count, "W2R local correction")
+        local_action = self._physical_action(local)
+        range_rhs = np.ascontiguousarray(
+            self._range_carrier.apply(residual_rhs), dtype=np.complex128
+        )
+        range_action = self._physical_action(range_rhs)
+        range_local_rhs = np.ascontiguousarray(
+            self._range_carrier.apply(local_action), dtype=np.complex128
+        )
+        range_local_action = self._physical_action(range_local_rhs)
+        np.subtract(residual_rhs, range_action, out=range_action)
+        np.subtract(local_action, range_local_action, out=range_local_action)
+        alpha, _denominator = self._projected_alpha(
+            range_local_action, range_action
+        )
+        np.multiply(local, alpha, out=local)
+        correction = np.array(range_rhs, dtype=np.complex128, copy=True)
+        np.add(correction, local, out=correction)
+        np.multiply(range_local_rhs, alpha, out=range_local_rhs)
+        np.subtract(correction, range_local_rhs, out=correction)
+        correction = _finite_vector(
+            correction, self._global_row_count, "W2R correction"
+        )
+        self._apply_count += 1
+        return correction
+
+    def _apply_diagnostic_core(
+        self, rhs: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
+        residual_rhs = _finite_vector(rhs, self._global_row_count, "W2R RHS")
+        local = np.ascontiguousarray(
+            self._local_pc.apply(residual_rhs), dtype=np.complex128
+        )
+        local = _finite_vector(local, self._global_row_count, "W2R local correction")
+        local_action = self._physical_action(local)
+        range_rhs = np.ascontiguousarray(
+            self._range_carrier.apply(residual_rhs), dtype=np.complex128
+        )
+        range_action = self._physical_action(range_rhs)
+        range_local_rhs = np.ascontiguousarray(
+            self._range_carrier.apply(local_action), dtype=np.complex128
+        )
+        range_local_action = self._physical_action(range_local_rhs)
+        r_perp = np.ascontiguousarray(
+            residual_rhs - range_action, dtype=np.complex128
+        )
+        p_perp = np.ascontiguousarray(
+            local_action - range_local_action, dtype=np.complex128
+        )
+        alpha, denominator = self._projected_alpha(p_perp, r_perp)
+        correction = np.ascontiguousarray(
+            alpha * local + range_rhs - alpha * range_local_rhs,
+            dtype=np.complex128,
+        )
+        correction = _finite_vector(
+            correction, self._global_row_count, "W2R correction"
+        )
+        represented = np.ascontiguousarray(
+            alpha * local_action + range_action - alpha * range_local_action,
+            dtype=np.complex128,
+        )
+        represented = _finite_vector(
+            represented, self._global_row_count, "W2R represented action"
+        )
+        self._apply_count += 1
+        core = {
+            "alpha": alpha,
+            "denominator": denominator,
+            "local": local,
+            "local_action": local_action,
+            "range_rhs": range_rhs,
+            "range_action": range_action,
+            "range_local_rhs": range_local_rhs,
+            "range_local_action": range_local_action,
+            "r_perp": r_perp,
+            "p_perp": p_perp,
+            "rhs": residual_rhs,
+        }
+        return correction, represented, core
+
+    def apply(self, rhs: np.ndarray) -> np.ndarray:
+        return self._apply_production(rhs)
+
+    def apply_with_measurement(
+        self, rhs: np.ndarray
+    ) -> tuple[np.ndarray, dict[str, Any]]:
+        correction, represented, core = self._apply_diagnostic_core(rhs)
+        residual_rhs = core["rhs"]
+        actual_action = self._physical_action(correction)
+        final_residual = np.ascontiguousarray(
+            residual_rhs - actual_action, dtype=np.complex128
+        )
+        final_range_rhs = np.ascontiguousarray(
+            self._range_carrier.apply(final_residual), dtype=np.complex128
+        )
+        final_range_action = self._physical_action(final_range_rhs)
+        rhs_norm = float(np.linalg.norm(residual_rhs))
+        norm_scale = max(rhs_norm, np.finfo(float).tiny)
+        p_norm = float(np.linalg.norm(core["p_perp"]))
+        optimality = float(
+            abs(np.vdot(core["p_perp"], final_residual))
+            / max(p_norm * norm_scale, np.finfo(float).tiny)
+        )
+        action_closure = float(
+            np.linalg.norm(actual_action - represented)
+            / max(float(np.linalg.norm(actual_action)), np.finfo(float).tiny)
+        )
+        arrays = (
+            correction,
+            represented,
+            actual_action,
+            final_residual,
+            final_range_rhs,
+            final_range_action,
+        )
+        finite = bool(all(np.all(np.isfinite(value)) for value in arrays))
+        measurement = {
+            "schema": M6B_W2R_RANGE_PC_SCHEMA,
+            "finite": finite,
+            "rhs_sha256": _array_sha256(residual_rhs),
+            "local_correction_sha256": _array_sha256(core["local"]),
+            "local_action_sha256": _array_sha256(core["local_action"]),
+            "range_only_correction_sha256": _array_sha256(core["range_rhs"]),
+            "range_only_action_sha256": _array_sha256(core["range_action"]),
+            "range_correction_sha256": _array_sha256(core["range_local_rhs"]),
+            "range_action_sha256": _array_sha256(core["range_local_action"]),
+            "correction_sha256": _array_sha256(correction),
+            "final_correction_sha256": _array_sha256(correction),
+            "represented_action_sha256": _array_sha256(represented),
+            "final_action_sha256": _array_sha256(actual_action),
+            "final_residual_sha256": _array_sha256(final_residual),
+            "final_range_correction_sha256": _array_sha256(final_range_rhs),
+            "final_range_action_sha256": _array_sha256(final_range_action),
+            "rho_local_only": float(
+                np.linalg.norm(residual_rhs - core["local_action"]) / norm_scale
+            ),
+            "rho_range_only": float(
+                np.linalg.norm(residual_rhs - core["range_action"]) / norm_scale
+            ),
+            "rho_projected": float(np.linalg.norm(final_residual) / norm_scale),
+            "linear_action_closure": action_closure,
+            "normal_projected_component_ratio": float(
+                np.linalg.norm(final_range_action) / norm_scale
+            ),
+            "complement_optimality": optimality,
+            "alpha": [float(core["alpha"].real), float(core["alpha"].imag)],
+            "projection_denominator": [
+                float(core["denominator"].real),
+                float(core["denominator"].imag),
+            ],
+            "norms": {
+                "rhs": rhs_norm,
+                "p_perp": p_norm,
+                "final_residual": float(np.linalg.norm(final_residual)),
+                "final_range_action": float(np.linalg.norm(final_range_action)),
+            },
+            "action_counts": {
+                "local_apply": 1,
+                "physical_outer_action": 5,
+                "range_apply": 3,
+            },
+            "production_action_counts": dict(
+                self._audit["production_action_counts"]
+            ),
+        }
+        del arrays, core
+        return correction, measurement
 
 
 class M6BShiftedPCContext:

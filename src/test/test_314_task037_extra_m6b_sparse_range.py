@@ -19,6 +19,7 @@ from src.solvers.hcurl_fullspace_dtn import (
     build_fullspace_dtn_action,
 )
 from src.solvers.hcurl_h2b_m6b_shifted_patch_pc import (
+    H2BM6BProjectedRangePC,
     H2BM6BShiftedPatchPC,
     H2BM6BShiftedRangePC,
 )
@@ -507,6 +508,131 @@ def test_m6b_w2_local_then_range_synthetic_is_exact_and_repeatable(tmp_path: Pat
     assert audit["trace_slab_pc"] is False
 
 
+def test_m6b_w2r_projected_range_complement_is_exact_and_fail_closed(
+    tmp_path: Path,
+):
+    basis = _basis()
+
+    def identity_action(vector: SimpleNamespace) -> np.ndarray:
+        values = np.zeros(90, dtype=np.complex128)
+        values[vector.indices] = vector.values
+        return values
+
+    carrier = SparseM6BRangeCarrier.from_action(
+        basis,
+        identity_action,
+        hermitian_action=lambda values: np.asarray(values, dtype=np.complex128),
+        global_rows=90,
+        ownership_range=(0, 90),
+        comm=MPI.COMM_SELF,
+        identity=_identity(basis),
+    )
+    local = H2BM6BShiftedPatchPC(
+        _w2_local_store(tmp_path / "projected"),
+        global_row_count=90,
+        shifted_action=lambda values: np.asarray(2.0j * values, dtype=np.complex128),
+        task037_extra_m6b=True,
+    )
+    projected = H2BM6BProjectedRangePC(
+        local,
+        carrier,
+        lambda values: np.array(values, dtype=np.complex128, copy=True),
+        global_row_count=90,
+        task037_extra_m6b=True,
+    )
+    rhs = np.zeros(90, dtype=np.complex128)
+    rhs[:75] = np.arange(75, dtype=np.float64) + 1j * (1.0 + np.arange(75))
+    rhs[75:] = 1.0 - 0.5j
+
+    correction, measurement = projected.apply_with_measurement(rhs)
+    repeat, repeat_measurement = projected.apply_with_measurement(rhs)
+    production = projected.apply(rhs)
+    assert np.allclose(correction, rhs, rtol=0.0, atol=1.0e-13)
+    assert np.array_equal(correction, production)
+    assert np.array_equal(correction, repeat)
+    assert measurement == repeat_measurement
+    assert measurement["alpha"][0] == pytest.approx(0.0, abs=1.0e-14)
+    assert measurement["alpha"][1] == pytest.approx(2.0, abs=1.0e-14)
+    assert measurement["rho_projected"] <= measurement["rho_range_only"] + 1.0e-12
+    assert measurement["linear_action_closure"] <= 1.0e-11
+    assert measurement["normal_projected_component_ratio"] <= 1.0e-11
+    assert measurement["complement_optimality"] <= 1.0e-11
+    assert measurement["action_counts"] == {
+        "local_apply": 1,
+        "physical_outer_action": 5,
+        "range_apply": 3,
+    }
+    assert not np.array_equal(local.apply(rhs), rhs)
+    audit = projected.audit
+    assert audit["fixed_order"] == "projected_range_complement"
+    assert audit["production_action_counts"] == {
+        "local_apply": 1,
+        "physical_outer_action": 3,
+        "range_apply": 2,
+    }
+    assert audit["projected_incremental_bytes"] == 8 * 90 * 16
+    assert audit["bounded_work_bytes"] == max(
+        audit["local_bounded_work_bytes"],
+        audit["range_bounded_work_bytes"] + audit["projected_incremental_bytes"],
+    )
+    assert audit["global_matrix"] is False
+    assert audit["static_condensation"] is False
+    assert audit["trace_slab_pc"] is False
+
+    unit_basis = tuple(
+        SimpleNamespace(
+            indices=np.asarray([column], dtype=np.int64),
+            values=np.asarray([1.0 + 0.0j], dtype=np.complex128),
+            storage_bytes=32,
+        )
+        for column in range(75)
+    )
+    unit_carrier = SparseM6BRangeCarrier.from_action(
+        unit_basis,
+        identity_action,
+        hermitian_action=lambda values: np.asarray(values, dtype=np.complex128),
+        global_rows=90,
+        ownership_range=(0, 90),
+        comm=MPI.COMM_SELF,
+        identity=_identity(unit_basis),
+    )
+    zero_local = H2BM6BShiftedPatchPC(
+        _w2_local_store(tmp_path / "zero_local"),
+        global_row_count=90,
+        shifted_action=lambda values: np.asarray(2.0j * values, dtype=np.complex128),
+        task037_extra_m6b=True,
+    )
+    rhs_in_range = np.zeros(90, dtype=np.complex128)
+    rhs_in_range[:75] = 1.0 + 0.5j
+    local_probe = zero_local.apply(rhs_in_range)
+    assert np.all(np.isfinite(local_probe)) and np.linalg.norm(local_probe) > 0.0
+    projected_zero = H2BM6BProjectedRangePC(
+        zero_local,
+        unit_carrier,
+        lambda values: np.array(values, dtype=np.complex128, copy=True),
+        global_row_count=90,
+        task037_extra_m6b=True,
+    )
+    with pytest.raises(FloatingPointError, match="W2R projected denominator"):
+        projected_zero.apply(rhs_in_range)
+
+    bad_local = H2BM6BShiftedPatchPC(
+        _w2_local_store(tmp_path / "bad_beta"),
+        global_row_count=90,
+        shifted_action=lambda values: np.asarray(values, dtype=np.complex128),
+        task037_extra_m6b=True,
+    )
+    bad_local._audit["beta"] = 0.5
+    with pytest.raises(ValueError, match="carrier identity"):
+        H2BM6BProjectedRangePC(
+            bad_local,
+            carrier,
+            lambda values: np.asarray(values, dtype=np.complex128),
+            global_row_count=90,
+            task037_extra_m6b=True,
+        )
+
+
 def test_m6b_w2_rejects_non_beta_one_local_pc(tmp_path: Path):
     local = H2BM6BShiftedPatchPC(
         _w2_local_store(tmp_path / "bad"),
@@ -562,6 +688,16 @@ def test_m6b_w2_parser_and_fixed_gate_fail_closed():
     assert args.command == "m6b-w2-diagnostic"
     assert args.expected_source_sha == "a" * 40
     assert args.w0_authority_file == "/tmp/w0.json"
+    w2r_args = runner._parser().parse_args(
+        ["m6b-w2r-diagnostic", *parser_prefix[1:]]
+        + [
+            "--expected-source-sha",
+            "a" * 40,
+            "--w0-authority-file",
+            "/tmp/w0.json",
+        ]
+    )
+    assert w2r_args.command == "m6b-w2r-diagnostic"
     measurements = {}
     for key in ("20", "100", "150", "200"):
         measurements[key] = {
@@ -614,6 +750,164 @@ def test_m6b_w2_parser_and_fixed_gate_fail_closed():
     nonfinite = {key: dict(value) for key, value in measurements.items()}
     nonfinite["20"]["rho_composed"] = float("nan")
     assert runner._m6b_w2_gate(nonfinite)["pass"] is False
+
+
+def test_m6b_w2r_gate_missing_and_nonfinite_fail_closed():
+    prediction = runner._m6b_w2r_predicted_live_set()
+    assert prediction["predicted_live_set_bytes"] == 1_723_301_083
+    assert prediction["projected_full_vector_count"] == 8
+    assert prediction["is_measurement"] is False
+    assert prediction["derived_not_measured"] is True
+    assert prediction["gate"] is True
+    measurements = {}
+    hash_fields = (
+        "rhs_sha256",
+        "local_correction_sha256",
+        "local_action_sha256",
+        "range_only_correction_sha256",
+        "range_only_action_sha256",
+        "range_correction_sha256",
+        "range_action_sha256",
+        "correction_sha256",
+        "final_correction_sha256",
+        "repeat_correction_sha256",
+        "represented_action_sha256",
+        "final_action_sha256",
+        "final_residual_sha256",
+        "final_range_correction_sha256",
+        "final_range_action_sha256",
+    )
+    for key in ("20", "100", "150", "200"):
+        record = {
+            "schema": "task037.extra.h2b.m6b.projected-range-pc.v1",
+            "iteration": int(key),
+            "residual_array_sha256": runner.M6B_W2_RESIDUAL_ARRAY_SHAS[key],
+            "residual_artifact": {
+                "path": f"m6b_iter{key}_residual.npy",
+                "absolute_path": f"/tmp/m6b_iter{key}_residual.npy",
+                "bytes": 1,
+                "sha256": "c" * 64,
+                "present": True,
+            },
+            "finite": True,
+            "rho_local_only": 1.0,
+            "rho_range_only": runner.M6B_W2_RANGE_RHO_AUTHORITY[key],
+            "rho_projected": 0.5,
+            "linear_action_closure": 0.0,
+            "normal_projected_component_ratio": 0.0,
+            "complement_optimality": 0.0,
+            "alpha": [1.0, 0.0],
+            "projection_denominator": [1.0, 0.0],
+            "action_counts": {
+                "local_apply": 1,
+                "physical_outer_action": 5,
+                "range_apply": 3,
+            },
+            "repeat_identical": True,
+        }
+        record.update({field: "a" * 64 for field in hash_fields})
+        measurements[key] = record
+    assert runner._m6b_w2r_gate(measurements)["pass"] is True
+    missing = deepcopy(measurements)
+    del missing["100"]["rho_projected"]
+    assert runner._m6b_w2r_gate(missing)["pass"] is False
+    nonfinite = deepcopy(measurements)
+    nonfinite["150"]["complement_optimality"] = float("nan")
+    assert runner._m6b_w2r_gate(nonfinite)["pass"] is False
+    over_gate = deepcopy(measurements)
+    over_gate["20"]["rho_projected"] = 0.91
+    assert runner._m6b_w2r_gate(over_gate)["pass"] is False
+
+
+def test_m6b_w2r_old_negative_nested_evidence_is_fail_closed():
+    source = {
+        "source_commit_full_sha": runner.M6B_W2R_OLD_NEGATIVE_SOURCE_SHA,
+        "tracked_source_dirty": False,
+        "source_worktree_dirty": False,
+        "nonignored_untracked_paths": [],
+        "worktree_status_porcelain": [],
+        "git_error": None,
+    }
+    checks = {
+        "fixed_iterations": True,
+        "residual_artifacts": True,
+        "finite_deterministic": True,
+        "range_authority": True,
+        "linear_action_closure": True,
+        "normal_projected_component": True,
+        "composed_not_worse": True,
+        "composed_rho_gate": False,
+    }
+    raw = runner._attach_evidence(
+        {
+            "status": "gate_failed",
+            "error": None,
+            "diagnostic_numeric_pass": False,
+            "w2_pass": False,
+            "formal_pass": False,
+            "pde_pass": False,
+            "source_at_start": source,
+            "source_at_end": source,
+            "gate": {
+                "pass": False,
+                "problems": ["composed_rho_gate"],
+                "checks": checks,
+            },
+        }
+    )
+    watchdog = runner._attach_evidence(
+        {
+            "formal_pass": False,
+            "w2_pass": False,
+            "pde_pass": False,
+            "wrapper_error": None,
+            "source_start": source,
+            "source_end": source,
+            "process": {
+                "return_code": 1,
+                "termination": None,
+                "peak_rss_bytes": runner.M6B_W2R_OLD_NEGATIVE_PEAK_RSS_BYTES,
+                "swap_bytes": 0,
+            },
+            "worker_summary": {"gate": {"checks": checks}},
+        }
+    )
+    assert runner._m6b_w2r_old_negative_valid(
+        raw,
+        watchdog,
+        runner.M6B_W2R_OLD_RAW_SUMMARY_SHA256,
+        runner.M6B_W2R_OLD_WATCHDOG_SUMMARY_SHA256,
+    ) is True
+
+    missing_gate = deepcopy(watchdog)
+    del missing_gate["worker_summary"]["gate"]
+    missing_gate = runner._attach_evidence(missing_gate)
+    assert runner._m6b_w2r_old_negative_valid(
+        raw,
+        missing_gate,
+        runner.M6B_W2R_OLD_RAW_SUMMARY_SHA256,
+        runner.M6B_W2R_OLD_WATCHDOG_SUMMARY_SHA256,
+    ) is False
+
+    tampered = deepcopy(raw)
+    tampered["gate"]["checks"]["composed_rho_gate"] = True
+    tampered = runner._attach_evidence(tampered)
+    assert runner._m6b_w2r_old_negative_valid(
+        tampered,
+        watchdog,
+        runner.M6B_W2R_OLD_RAW_SUMMARY_SHA256,
+        runner.M6B_W2R_OLD_WATCHDOG_SUMMARY_SHA256,
+    ) is False
+
+    non_mapping_gate = deepcopy(watchdog)
+    non_mapping_gate["worker_summary"]["gate"] = []
+    non_mapping_gate = runner._attach_evidence(non_mapping_gate)
+    assert runner._m6b_w2r_old_negative_valid(
+        raw,
+        non_mapping_gate,
+        runner.M6B_W2R_OLD_RAW_SUMMARY_SHA256,
+        runner.M6B_W2R_OLD_WATCHDOG_SUMMARY_SHA256,
+    ) is False
 
 
 def test_m6b_w2_w0_authority_file_and_tamper_fail_closed(tmp_path: Path, monkeypatch):
