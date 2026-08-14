@@ -1,0 +1,201 @@
+{
+  "schema_version": "task039.v2-h5-hybrid-direct-readiness.v1",
+  "record_id": "task039_v2_h5_hybrid_direct_readiness_v1",
+  "classification": "TASK039_V2_H5_HYBRID_DIRECT_READINESS_CONDITIONAL",
+  "status": "preflight_pass_formal_run_not_started",
+  "launch_eligible": true,
+  "source_identity": {
+    "source_commit_sha": "d4ea422cbd48de9b5ad6c2e59615e748f2babbac",
+    "branch": "codex/20260812-task39-5nm-hybrid-0p7nm-feasibility",
+    "head_equals_upstream": true,
+    "ahead_behind": "0/0",
+    "worktree_clean_at_preflight": true,
+    "input_path": "input/official/task039/5nm_p6h5_hybrid_direct_m480_mpi8.dat",
+    "input_sha256": "576e2631615330565e28eef6637264e4fdd539a558157405f252ae230f084fa4",
+    "resolved_config_sha256": "c367a4ee9f8a459dce64ba1dd38235e1cd6e4d65893031e884777cbddbe11a60",
+    "resolved_config_identity": "derived_from_load_and_resolve_dry_run_not_a_formal_run_artifact",
+    "physical_model_sha256": "e35907c72ab97069d9ab66958fd00787f98dea08dce1aa6f64c053b7bda46cdb",
+    "model_id": "task039_5nm_hybrid_direct_m480",
+    "run_id": "task039_5nm_hybrid_direct_p6h5_mpi8",
+    "comparison_group": "task039_5nm_p6h5",
+    "method": "hybrid_direct",
+    "mesh_target_nm": 5.0,
+    "nedelec_degree": 6,
+    "interfaces_nm": [10.0, 110.0],
+    "mpi_size": 8,
+    "external_mode_inventory": {
+      "count": 604,
+      "unique": 604,
+      "bottom": 300,
+      "top": 304,
+      "unique_surface_orders_total": 302,
+      "bottom_unique_spatial_mn": 150,
+      "top_unique_spatial_mn": 152
+    }
+  },
+  "environment": {
+    "activation": "_MYFENICS_WSL_QUALIFIED_ACTIVATION=1",
+    "python": "/home/Projects/MyFEniCS/.venv/bin/python",
+    "petsc_version": "3.19.6",
+    "petsc_scalar_type": "complex128",
+    "petsc_int_type": "int32",
+    "abi_stack": "Linux WSL2; petsc4py/slepc4py/dolfinx/mpi4py from the qualified stack",
+    "mumps_version": "5.6.2",
+    "mumps_header": "/usr/include/mumps_int_def.h",
+    "mumps_intsize32": true,
+    "mumps_int": "int32/order and structural counters",
+    "mumps_int8": "int64",
+    "mumps_nnz_and_nnz_loc": "MUMPS_INT8/int64 in dmumps_c.h",
+    "integer_conclusion": "row/order path is int32; NNZ counters are int64; runtime factor internal path remains not_established"
+  },
+  "preflight": {
+    "input_validate_only": "pass",
+    "input_dry_run": "pass",
+    "dry_run_bytes": 111815,
+    "dry_run_starts_no_worker": true,
+    "timeout_seconds": 21600,
+    "warning_memory_gib": 170.0,
+    "critical_memory_gib": 195.0,
+    "absolute_terminate_memory_bytes": 224000000000,
+    "absolute_terminate_memory_gib": 208.6162567138672,
+    "poll_interval_seconds": 0.25,
+    "require_zero_swap": true,
+    "no_concurrent_heavy_process": true,
+    "known_integer_abi_unsafe": false,
+    "runtime_factor_integer_safety": "not_established_conditional",
+    "formal_v2_5_started": false
+  },
+  "resource_snapshot": {
+    "classification": "measured_preflight",
+    "mem_total_kib": 239144268,
+    "mem_total_gib": 228.0657501220703,
+    "mem_available_kib": 235968504,
+    "mem_available_gib": 225.03710174560547,
+    "mem_available_gate_gib": 200.0,
+    "swap_total_kib": 33554432,
+    "swap_used_kib": 0,
+    "selected_finite_limit_gib": 228.0657501220703,
+    "selected_limit_source": "/proc/meminfo:MemTotal",
+    "effective_absolute_hard_gib": 208.6162567138672,
+    "disk_free_kib": 808005708,
+    "disk_gate_gib": 20.0,
+    "cgroup_memory_limit": "not_available_in_current_scope",
+    "cgroup_swap_limit": "not_available_in_current_scope"
+  },
+  "historical_anchors": {
+    "h10_hybrid_m480": {
+      "run_summary": "results/task039_5nm_hybrid_direct_m480/task039_5nm_hybrid_direct_p6h10_m480_mpi8__hybrid_direct__mpi8__M480/20260813T161305.428900Z/numerical_output/run_summary.json",
+      "run_summary_sha256": "aaf17d14993da39a4bdbb619662d9540e0b4fb1a77468c2f4ae4764ebae2d02e",
+      "source_sha": "e6625b646ac606543d8ae095ba7ef210ea2428cd",
+      "input_sha256": "5db2607496e3fe195f719c4b217fdaae3bee7e311007e564345c0a2dff8395bc",
+      "resolved_config_sha256": "21c09027cc7a9ab7c92b3a98cc1f2fa9f452e282d7327f98d54ff56bfa628a85",
+      "physical_model_sha256": "db52c70d667caa726e2b2e04b646402415a377fa7bbcef42c87ffc816b9b2a7a",
+      "true_relative_residual": 9.739106890329058e-12,
+      "timing_total_seconds": 1500.0791483931243,
+      "rss_pss_uss_mib": [22785.6796875, 21028.330078, 20747.875],
+      "qep_full_reduced_shape": [[2053, 2053], [1944, 1944]],
+      "candidate_retained_per_direction": [960, 480],
+      "hybrid_augmented_rows": 18412,
+      "hybrid_augmented_nnz_used": 18261318,
+      "hybrid_factor_nnz": 60473536,
+      "hybrid_factor_matrix_estimate_bytes": 1451512168
+    },
+    "h10_full3d": {
+      "compact_record": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_t3_full3d_direct_mpi8_v1.json",
+      "compact_record_sha256": "96eab270e8f55804cd1596215c327185754a39453dfda57fe56bf59199ef5460",
+      "mesh_cells": 252,
+      "full_fe_dofs": 173802,
+      "active_trace_rows": 51192,
+      "assembled_rows_with_auxiliary": 51796,
+      "condensed_matrix_nnz_used": 43283050,
+      "factor_nnz": 217041864,
+      "rss_mib": 15965.453125
+    },
+    "h5_full3d": {
+      "compact_record": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h5_full3d_direct_v1.json",
+      "compact_record_sha256": "ed2c05ef383607667d66f29f40456c406838e414fcd60254a7ce7fa37e2cd083",
+      "raw_run_summary": "results/task039_5nm_full3d_direct/task039_5nm_full3d_direct_p6h5_mpi8__full3d_direct__mpi8__Mna/20260814T062500.154546Z/run_summary.json",
+      "raw_run_summary_sha256": "ba1efdf6c29a00223ed40abab07a9cd67df598b34ed78328a02defb369163487",
+      "mesh_cells": 1680,
+      "full_fe_dofs": 1127502,
+      "active_trace_rows": 336960,
+      "assembled_rows_with_auxiliary": 337564,
+      "condensed_matrix_nnz_used": 283210150,
+      "factor_nnz_corrected": 2597000000,
+      "rss_pss_uss_mib": [92491.328125, 90440.78515625, 90103.5390625]
+    }
+  },
+  "derived_prediction": {
+    "classification": "predicted_from_h10_hybrid_and_h10_to_h5_full3d_mesh_ratios",
+    "mesh_dof_ratio": 6.487278627403597,
+    "uncertainty_multiplier": [0.8, 1.25],
+    "formula": "h5 Hybrid estimate = h10 Hybrid measured anchor × (h5 Full3D measured / h10 Full3D measured); structural/resource range applies 0.8–1.25",
+    "cross_section_qep": {
+      "full_shape": [2053, 2053],
+      "reduced_shape": [1944, 1944],
+      "candidate_modes_per_direction": 960,
+      "retained_modes_per_direction": 480,
+      "classification": "derived_same_p6_cross_section_not_measured_h5_hybrid"
+    },
+    "endcap_rows": {
+      "bottom_full_fe_rows": {"center": 168578, "range": [134863, 210723]},
+      "top_full_fe_rows": {"center": 168578, "range": [134863, 210723]},
+      "trace_rows_before_floquet": {"center": 63485, "range": [50788, 79356]},
+      "floquet_constraint_rows": {"center": 8836, "range": [7069, 11045]},
+      "cell_interior_rows": {"center": 105094, "range": [84075, 131367]},
+      "active_trace_rows": {"center": 54649, "range": [43719, 68311]},
+      "external_auxiliary_rows": {"bottom": 300, "top": 304},
+      "local_algebra_rows": {"bottom": 54949, "top": 54953}
+    },
+    "projection_and_trace": {
+      "P_bottom_shape": [480, 54949],
+      "P_top_shape": [480, 54953],
+      "T_bottom_shape": [480, 54949],
+      "T_top_shape": [480, 54953],
+      "P_T_nnz_center_each": 4035606,
+      "P_T_nnz_range_each": [3228485, 5044508]
+    },
+    "augmented_system": {
+      "rows_center": 110862,
+      "rows_range": [89002, 138186],
+      "assembled_nnz_center": 118466258,
+      "assembled_nnz_range": [94773006, 148082822]
+    },
+    "factor_and_resident_memory": {
+      "factor_nnz_center": 723592076,
+      "factor_nnz_range": [578873661, 904490095],
+      "factor_bytes_center": 17367972385,
+      "factor_bytes_range": [13894377908, 21709965481],
+      "process_tree_rss_mib": {"center": 132002, "range": [105602, 165003]},
+      "process_tree_pss_mib": {"center": 121822, "range": [97457, 152277]},
+      "process_tree_uss_mib": {"center": 120197, "range": [96158, 150246]},
+      "classification": "derived_not_measured; stage-aligned values not available before formal run"
+    }
+  },
+  "gates": {
+    "clean_sha_and_branch": true,
+    "qualified_abi": true,
+    "mem_available_ge_200_gib": true,
+    "zero_swap_preflight": true,
+    "disk_ge_20_gib": true,
+    "input_validate_and_dry_run": true,
+    "604_keys_exact": true,
+    "known_integer_abi_unsafe": false,
+    "launch_eligible": true,
+    "v2_5_formal_run": "not_run"
+  },
+  "limitations": [
+    "No h5 Hybrid mesh/space probe, QEP eigensolve, local FE/DtN assembly, augmented assembly, factorization, or PDE was run.",
+    "All h5 Hybrid dimensions and memory values are derived predictions, not measured results.",
+    "MUMPS row/order int32 and NNZ int64 are established from headers; runtime factor internal behavior remains conditional.",
+    "Prediction above 195 GiB would be recorded as risk, not a sole blocker under the user-overridden 224000000000-byte hard stop.",
+    "V2-5 formal h5 Hybrid direct run remains not_run and requires its separate authorization."
+  ],
+  "provenance": {
+    "validate_command": "source scripts/activate_myfenics_wsl.sh && python scripts/run_case.py --validate-only input/official/task039/5nm_p6h5_hybrid_direct_m480_mpi8.dat",
+    "dry_run_command": "source scripts/activate_myfenics_wsl.sh && python scripts/run_case.py --dry-run input/official/task039/5nm_p6h5_hybrid_direct_m480_mpi8.dat",
+    "dry_run_output_bytes": 111815,
+    "no_formal_solver_started": true,
+    "raw_artifacts_added_to_git": false
+  }
+}

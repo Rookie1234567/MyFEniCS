@@ -190,7 +190,7 @@ solve 或正式峰值，因此下表不能当作运行实测。
 记录与容量公式见 [V2-1 readiness record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h5_full3d_readiness_v1.json)
 和 [h5 readiness outcome](full3d_h5_direct_and_convergence.md)。旧路径缺失该字段时仍保持原有
 `min(terminate, 0.90×selected)` 行为；这句话记录的是 V2-1 时点；当前 V2-2 formal run 已完成，
-V2-3 comparison 仍 `pending / not_run`。
+V2-3 comparison 已完成 negative，分类为 `FULL3D_DIRECT_5NM_REFERENCE_NOT_CONVERGED_AT_P6H5`；h5 仅为 `best_available_discrete_authority_only`，详见 [V2-3 record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h6_h5_two_tier_convergence_v1.json) 与 [V2-3 outcome](full3d_h5_direct_and_convergence.md)。
 
 ## 10. Review V2 V2-2：h5 Full3D direct measured authority
 
@@ -215,4 +215,17 @@ artifact hashes、604 inventory、canonical packets 和 own-Gate 见
 [V2-2 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h5_full3d_direct_v1.json)。
 
 V2-2 own-Gate 为 pass；h5 只建立 Full3D h5 discrete authority。h10 仍为
-`historical_underresolved_stress_anchor_only`，V2-3 保持 `pending / not_run`。
+`historical_underresolved_stress_anchor_only`；V2-3 已完成 negative，h5 仅为 `best_available_discrete_authority_only`，详见 [V2-3 record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h6_h5_two_tier_convergence_v1.json) 与 [V2-3 outcome](full3d_h5_direct_and_convergence.md)。
+
+## 11. Review V2 V2-4：h5 Hybrid direct readiness
+
+本节是启动前证据，不是 formal run。h5 Hybrid M480 的 cross-section、FE/P/T、augmented、
+factor 和 RSS/PSS/USS 均为 derived prediction；唯一 measured 的是当前资源快照与
+h10 Hybrid、h10/h5 Full3D 锚点。中心值和 `0.8–1.25` 保守区间、公式及 SHA 见
+[h5 Hybrid readiness](h5_hybrid_direct_readiness.md)。
+
+用户覆盖 watchdog 为 warning=`170 GiB`、critical=`195 GiB`（只记录 crossing）、
+absolute hard=`224000000000 bytes`、poll=`<=0.25 s`、any swap immediate stop。
+当前 MemAvailable=`225.03710174560547 GiB`、swap used=`0`、disk free=`808005708 KiB`，
+readiness=`conditional launch_eligible=true`。V2-5 尚未运行，不能把任何预测写成
+measured peak、factor success 或 Hybrid authority。

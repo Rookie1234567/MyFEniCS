@@ -142,3 +142,13 @@ T10 B1 的历史测试行。V2-1 没有启动正式 h5 PDE，full repository pyt
 
 完整 weak rows、实际分母、公式和 artifact identity 见
 [V2-3 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h6_h5_two_tier_convergence_v1.json)。
+
+## Review V2 V2-4 readiness light Gate
+
+| 检查 | 结果 | 口径 |
+| --- | --- | --- |
+| clean SHA / ABI / integer headers | `pass` | source `d4ea422c...`；complex128/int32；MUMPS 5.6.2，NNZ counter int64 |
+| h5 Hybrid validate / dry-run | `2/2 pass` | 604 exact；未启动 worker/PDE |
+| resource preflight | `pass` | MemAvailable `225.037 GiB`、swap used `0`、disk `808005708 KiB` |
+| readiness decision | `conditional launch_eligible=true` | 预测为 derived；runtime factor safety not_established |
+| V2-5 formal h5 Hybrid direct | `not_run` | 需单独授权；本轮没有 MPI/PDE/QEP/assembly/factor |

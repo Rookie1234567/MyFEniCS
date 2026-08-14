@@ -241,3 +241,16 @@ all-604 aggregate 未通过。h5 保持 `best_available_discrete_authority_only`
 `best_available_discrete_authority_only`；完整逐级诊断和来源路径见
 [V2-3 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h6_h5_two_tier_convergence_v1.json)
 与 [V2-3 Full3D outcome](full3d_h5_direct_and_convergence.md)。
+
+### Review V2 V2-4：h5 Hybrid direct readiness
+
+V2-4 仅完成 clean-SHA、ABI、资源、输入 validate/dry-run 和 604-key preflight；没有
+QEP、local FE、augmented、factor 或 PDE。MemAvailable=`225.03710174560547 GiB`、
+swap used=`0`、disk free=`808005708 KiB`，readiness/launch eligibility=`true`
+（conditional）。h5 Hybrid 的 rows/NNZ/factor/RSS 都是由 h10 Hybrid、h10 Full3D 和
+h5 Full3D measured anchors 推导的中心值与保守区间，不是 measured formal result。
+
+V2-5 formal h5 Hybrid direct=`not_run`；整数 ABI 已知的 row/order=`int32`、NNZ
+counter=`int64`，但 runtime factor 内部路径仍 `not_established`。详见
+[h5 Hybrid readiness](h5_hybrid_direct_readiness.md) 和
+[compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h5_hybrid_direct_readiness_v1.json)。
