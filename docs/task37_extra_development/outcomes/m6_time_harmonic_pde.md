@@ -52,3 +52,19 @@ M6A run1 的 online-JIT/cache lifecycle negative 与 run2 的 watchdog JSON seri
 | tracked compact | `benchmarks/cases/101_task37_extra_development/records/m6a_fullspace_matrix_free_dtn.json`；byte-for-byte copy of external checker |
 
 M6B、time-harmonic operator、field/RTA、direct-authority physics comparison 和最终 PDE RSS 仍等待后续阶段；不能把 M6A 的 action peak 当作 PDE peak。
+
+## W5 disk-backed time-harmonic screen（正式负结果）
+
+W5 将 Krylov 基向量放到外部 scratch 文件，减少常驻进程内存；这解决的是内存生命周期问题，不会自动改善算子谱性质或迭代收敛速度。W5 的资源和证据检查通过，但真实残差数值 Gate 未通过，因此不能作为 PDE 或 RTA 结果。
+
+| 项目 | 结果 |
+| --- | --- |
+| source / checker | producer `41cbbd454eb8336d9ea5378ed618447acfc60aac`；checker `9317e19e924e5b15297c168ea4f2271ae42172eb` |
+| classification | `NUMERIC_FAIL`；`execution_evidence_ok=true`；`resource_evidence_ok=true` |
+| peak / swap | `1,607,802,880 B` / `0` |
+| true residual 20/100/150/200 | `0.3237575899853163 / 0.18105272614044404 / 0.15403613391023072 / 0.12750559935416836` |
+| 150→200 improvement | `0.17223578573793497`，通过 `>=0.15` |
+| 数值 Gate | 20、100 和改善率通过；200 要求 `<=0.08`，实际 `0.12750559935416836`，失败 |
+
+W5 compact checker 为 RC1 的预期负结果，记录在
+`benchmarks/cases/101_task37_extra_development/records/m6b_w5_disk_fgmres_screen.json`。full time-harmonic PDE、official RTA、direct-authority physics comparison 和最终 PDE `<2,000,000,000 B` 目标本轮均未运行。用户已授权继续针对具体收敛问题研究，但没有放宽 2GB、swap=0、true residual 或物理一致性 Gate；冻结的 W5 raw/watchdog 和更早负结果均保持不变。

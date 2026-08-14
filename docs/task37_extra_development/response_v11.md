@@ -319,3 +319,21 @@ M6A run1 的 online-JIT/cache lifecycle negative 和 run2 的 watchdog-JSON seri
 M1 v2 已通过；M2 已完成正式运行但因 checkerboard 数值 Gate 失败而 `NOT_QUALIFIED`；M3Y 已由用户明确越锁授权并正式通过；M4Y 已正式运行但因 checkerboard 数值 Gate 失败而 `FORMAL_NUMERIC_FAIL / NOT_QUALIFIED`；M5 第一屏和 M6A action/DtN 已正式通过。当前仍未运行的是 M6B、time-harmonic PDE、official field/RTA、direct-authority physics comparison 和 PDE process-tree RSS，均为 `not_run_yet`/`not_measured`。75D coarse 因 M5 iter100 true residual 已低于 `1e-8` 且没有传播型平台而 `not_needed/not_run`。尚不能声称达成 MPI1 full PDE RSS 严格小于 2,000,000,000 B、swap=0 且直接法物理对照通过的最终目标。
 
 M2 与 M4Y 的数值 Gate 失败均保持原始负结论；用户之后的明确授权已开启 M3Y、M4Y 以及后续 M5/M6 正式研究，但没有把任何失败改写为通过，也没有放宽 Gate。M1/M2/M3Y/M4Y/M5/M6A compact、所有早期执行失败 raw 和 M4Y-W 诊断均保留；没有新分支、PR、master/default 修改。研究代码和历史负结果保留，ordinary default 不变。
+
+## W5 磁盘外置 Krylov 屏幕：资源通过，数值未通过
+
+W5 把 Krylov 基向量放入外部 scratch 文件，避免这些大向量长期占用进程 RSS。这只解决内存占用方式，不改变物理算子，也不等于解决谱收敛问题。
+
+本次正式屏幕的 producer SHA 是
+`41cbbd454eb8336d9ea5378ed618447acfc60aac`，checker SHA 是
+`9317e19e924e5b15297c168ea4f2271ae42172eb`。独立 checker 结果为 `RC=1`、`classification=NUMERIC_FAIL`；执行证据和资源证据均完整，峰值进程树 RSS 为 `1,607,802,880 B`，swap 为 `0`。
+
+| checkpoint | true relative residual | Gate |
+| --- | ---: | --- |
+| 20 | `0.3237575899853163` | `<=0.60`，PASS |
+| 100 | `0.18105272614044404` | `<=0.20`，PASS |
+| 150 | `0.15403613391023072` | 记录值 |
+| 200 | `0.12750559935416836` | `<=0.08`，FAIL |
+| 150→200 | `0.17223578573793497` | `>=0.15`，PASS |
+
+因此 W5 的 disk-backed 实现通过了资源与证据边界，但没有通过最终屏幕数值 Gate。full PDE、official RTA、direct comparison 和最终 PDE 内存目标仍未运行。用户已明确授权继续研究具体收敛问题，但 2GB/swap、true residual 和 physics Gate 均保持不变；本段不改写任何旧 raw 或历史负结果。
