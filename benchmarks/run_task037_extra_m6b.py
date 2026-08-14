@@ -567,6 +567,16 @@ def _m6b_w3_scope(*, phase: str = M6B_W3_PHASE) -> dict[str, Any]:
     }
 
 
+def _m6b_w3_numeric_gate(
+    samples: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    from src.solvers.hcurl_h2b_m6b_shifted_patch_pc import (
+        evaluate_m6b_numeric_screen_gate,
+    )
+
+    return evaluate_m6b_numeric_screen_gate(samples)
+
+
 def _m6b_w3_screen_orchestration(
     *,
     projected_pc: Any,
@@ -4268,7 +4278,7 @@ def _run_m6b_w2_diagnostic(
             samples = screen_result.get("samples")
             if not _m6b_screen_metadata_valid(screen_result):
                 raise ValueError("M6B W3 screen samples are incomplete or nonfinite")
-            gate = evaluate_m6b_numeric_screen_gate(samples)
+            gate = _m6b_w3_numeric_gate(samples)
             measurements["screen"] = {
                 "screen": screen_result,
                 "screen_gate": gate,
@@ -4404,7 +4414,7 @@ def _run_m6b_w2_diagnostic(
         error = "M6B W2 execution source changed during diagnostic"
     gate = (
         (
-            evaluate_m6b_numeric_screen_gate(
+            _m6b_w3_numeric_gate(
                 screen_result.get("samples") if isinstance(screen_result, Mapping) else None
             )
             if screen

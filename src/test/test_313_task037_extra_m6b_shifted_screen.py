@@ -1548,6 +1548,33 @@ def test_m6b_w3_fixed_screen_contract_and_w2r_authority():
     assert screen_pass is False
 
 
+def test_m6b_w3_lazy_numeric_gate_preserves_run2_negative_evidence():
+    positive = _valid_worker_payload()["screen"]
+    assert runner._m6b_w3_numeric_gate(positive)["pass"] is True
+
+    run2 = copy.deepcopy(positive)
+    expected = {
+        "20": 0.32375758998533327,
+        "100": 0.26981490949257725,
+        "150": 0.263903116014446,
+        "200": 0.2573324369216882,
+    }
+    for key, value in expected.items():
+        run2[key]["true_relative_residual"] = value
+    negative = runner._m6b_w3_numeric_gate(run2)
+    assert negative["pass"] is False
+    assert negative["true_residuals"] == expected
+    assert set(negative["problems"]) == {
+        "true_residual_iter100",
+        "true_residual_iter200",
+        "true_residual_150_to_200_improvement",
+    }
+
+    missing = copy.deepcopy(run2)
+    del missing["150"]
+    assert runner._m6b_w3_numeric_gate(missing)["pass"] is False
+
+
 def test_m6b_w3_orchestration_uses_projected_production_pc_and_rhs_dtn(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
