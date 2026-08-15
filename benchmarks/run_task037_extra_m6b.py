@@ -8128,9 +8128,6 @@ def _m6b_w5_check_command(
         and source_ok(worker.get("source_at_end"))
     )
     screen = worker.get("screen") if isinstance(worker, Mapping) else None
-    screen_samples = (
-        screen.get("samples") if isinstance(screen, Mapping) else None
-    )
     screen_ok = _m6b_w5_screen_metadata_valid(screen)
     recompute = _m6b_checkpoint_recompute(
         raw_dir, screen.get("samples") if isinstance(screen, Mapping) else None
@@ -8694,6 +8691,9 @@ def _m6b_w7_s1_check_command(
         problems.append(f"w5_authority:{type(exc).__name__}")
 
     screen = worker.get("screen") if isinstance(worker, Mapping) else None
+    screen_samples = (
+        screen.get("samples") if isinstance(screen, Mapping) else None
+    )
     continuation_record = (
         screen.get("continuation_authority")
         if isinstance(screen, Mapping)

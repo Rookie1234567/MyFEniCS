@@ -267,3 +267,132 @@ def test_w7_checkpoint_checker_rejects_wrong_file_hash(tmp_path):
     assert runner._m6b_checkpoint_recompute(raw, screen)["pass"] is True
     screen["200"]["artifacts"]["rhs"]["sha256"] = "0" * 64
     assert runner._m6b_checkpoint_recompute(raw, screen)["pass"] is False
+
+
+def test_w7_checker_passes_samples_to_all_recompute_paths(monkeypatch, tmp_path):
+    samples = _w7_samples((0.30, 0.20, 0.10, 0.09))
+    compact = {"path": "frozen", "file_sha256": "a" * 64}
+    continuation_record = {
+        "compact": compact,
+        "frozen_iteration": 200,
+        "initial_check": {
+            "initial_solution_provided": True,
+            "precheck_action_count": 2,
+            "core_initial_action_count": 1,
+            "rhs_equal_to_frozen_w5": True,
+            "repeat_relative_error": 0.0,
+            "frozen_action_relative_error": 0.0,
+            "frozen_residual_relative_error": 0.0,
+            "rho_absolute_error": 0.0,
+        },
+    }
+    screen = {"samples": samples, "continuation_authority": continuation_record}
+    worker = {
+        "schema": runner.M6B_W7_S1_SCHEMA,
+        "screen": screen,
+        "scope": runner._m6b_w7_s1_scope(),
+        "predicted_live_set": runner._m6b_w7_s1_predicted_live_set(),
+        "source_at_start": {},
+        "source_at_end": {},
+        "diagnostic_numeric_pass": False,
+        "w7_s1_pass": False,
+        "formal_pass": False,
+        "pde_pass": False,
+        "architecture": {
+            "fine_space": "uncondensed_fullspace",
+            "dtn_matrix_free": True,
+            "global_matrix": False,
+            "augmented_matrix": False,
+            "static_condensation": False,
+            "trace_slab_pc": False,
+            "schur": False,
+        },
+        "jit_cache": {
+            "source_inventory_sha256": runner.M6B_W2_JIT_INVENTORY_SHA256,
+            "source_before": "cache",
+            "source_after": "cache",
+            "source_final": "cache",
+            "before": "cache",
+            "after": "cache",
+            "final": "cache",
+            "unchanged": True,
+        },
+    }
+    watchdog = {
+        "artifacts": {},
+        "schema": "task037.extra.m6b.w7-s1.watchdog.v1",
+        "phase": runner.M6B_W7_S1_PHASE,
+        "source_at_start": {},
+        "source_at_end": {},
+        "process": {
+            "return_code": 1,
+            "termination": None,
+            "peak_rss_bytes": 1,
+            "swap_bytes": 0,
+        },
+        "drain": {"gone": True},
+        "resource_limits": {
+            "timeout_seconds": runner.M6B_W7_S1_TIMEOUT_SECONDS,
+            "watchdog_rss_bytes": runner.M6B_WATCHDOG_RSS_LIMIT_BYTES,
+            "completion_peak_rss_bytes": runner.M6B_ONLINE_COMPLETION_RSS_LIMIT_BYTES,
+            "swap_bytes": 0,
+            "pde_strict_peak_bytes": 2_000_000_000,
+        },
+        "monitor_error": None,
+        "formal_pass": False,
+        "pde_pass": False,
+    }
+    continuation = {
+        "compact": compact,
+        "initial_solution": np.ones(1, dtype=np.complex128),
+        "frozen_rhs": np.ones(1, dtype=np.complex128),
+        "frozen_outer_action": np.ones(1, dtype=np.complex128),
+        "frozen_residual": np.ones(1, dtype=np.complex128),
+    }
+    seen = {}
+    monkeypatch.setattr(
+        runner,
+        "_read_json",
+        lambda path: worker if path.name == "m6b_w7_s1_summary.json" else watchdog,
+    )
+    monkeypatch.setattr(runner, "_m6b_w7_s1_load_w5_authority", lambda *_: continuation)
+    monkeypatch.setattr(runner, "_evidence_valid", lambda *_: True)
+    monkeypatch.setattr(runner, "_m6b_w2_source_identity_valid", lambda *_: True)
+    monkeypatch.setattr(runner, "_m6b_w7_s1_screen_metadata_valid", lambda *_: True)
+    monkeypatch.setattr(runner, "_m6b_w2_cache_record", lambda *_: "cache")
+
+    def capture_recompute(_path, value):
+        seen["recompute"] = value
+        return {
+            "pass": True,
+            "residuals": {str(i): 0.1 for i in runner.M6B_SCREEN_ITERATIONS},
+        }
+
+    def capture_numeric(value, **_):
+        seen["numeric"] = value
+        return {"pass": True, "problems": []}
+
+    def capture_progress(_path, value):
+        seen["progress"] = value
+        return {"pass": True}
+
+    monkeypatch.setattr(runner, "_m6b_checkpoint_recompute", capture_recompute)
+    monkeypatch.setattr(runner, "_m6b_w7_s1_numeric_gate", capture_numeric)
+    monkeypatch.setattr(runner, "_m6b_w5_progress_valid", capture_progress)
+    monkeypatch.setattr(runner, "_m6b_w5_timeline_valid", lambda *_args, **_kwargs: {"pass": True, "peak_rss_bytes": 1, "swap_bytes": 0, "compiler_descendant_pids": [], "records": 1})
+    monkeypatch.setattr(runner, "_m6b_w7_s1_artifact_inventory_valid", lambda *_: True)
+    monkeypatch.setattr(runner, "_attach_evidence", lambda value: value)
+    monkeypatch.setattr(runner, "_write_json", lambda _path, value: seen.setdefault("result", value))
+    result_code = runner._m6b_w7_s1_check_command(
+        tmp_path / "raw",
+        tmp_path / "watchdog.json",
+        tmp_path / "w5.json",
+        tmp_path / "w5raw",
+        tmp_path / "jit",
+        tmp_path / "check.json",
+        "a" * 40,
+    )
+    assert result_code in (0, 1)
+    assert seen["recompute"] is samples
+    assert seen["numeric"] is samples
+    assert seen["progress"] is samples
