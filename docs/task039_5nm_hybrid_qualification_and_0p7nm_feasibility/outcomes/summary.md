@@ -276,3 +276,18 @@ V2-6 负结果均保留。V2-7 只在用户覆盖下作为 diagnostic 运行，�
 `TASK039_FULL3D_ITERATIVE_WAVELENGTH_ROBUSTNESS_FAIL_AT_5NM` 以及既有 0.7 nm
 材料、factor/cache、external DtN、modal Schur 和 convergence-risk 分类。
 不存在 `TASK039_5NM_FULL3D_HYBRID_ACCURACY_AND_MEMORY_QUALIFIED` 或 Hybrid physical pass。
+
+### Review V3：1° Full3D 网格选择（current）
+
+| 阶段 | 状态 | 结论 |
+| --- | --- | --- |
+| V3-3 h5 Full3D direct | own pass | 1°/5 nm；RSS `93.8976 GiB`；selected solver-stress anchor |
+| V3-3 h4.5 Full3D direct | own pass | RSS `125.5527 GiB`；与 h5 的 R/T/A/A_volume 差约 `1e-8` |
+| V3-4 2D↔h5/h4.5 | negative | scalar、selected E/H、main-m power fail；分类 `reduction/model-contract discrepancy pending` |
+| V3-3 h4 / h3 | not run | h4 predicted约 `201.1 GiB`，h3 `360–630 GiB`，按资源策略停止 |
+| V3-5 Hybrid direct | pending | 只做 h5 solver-stress input/profile/adapter preparation；未运行 PDE |
+
+V3-3/V3-4 的 raw 仍在 ignored results，compact 数值与 SHA 见
+[V3 Full3D outcome](v3_3d_full3d_convergence.md) 和
+[V3 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v3_3d_full3d_convergence_v1.json)。
+原有 V3-2 Q8 二维 reference 和所有 V2/T3–T10 negative 结论不改写。

@@ -250,3 +250,28 @@ process-tree peak。iterative 的 stage marker 只有 setup/solve，recovery 未
 `process_tree_samples.jsonl` 和 `memory_object_ledger.json`；该缺失不否定已推送的
 `29ead2cda47a88bd312913a6101826eaba977f9b` telemetry patch。详细 artifact hash 和
 缺失字段见 [V2-7 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h5_hybrid_iterative_m480_v1.json)。
+
+## 13. Review V3 V3-3/V3-4：1° Full3D 网格校准与资源停止
+
+这一节只记录新 1°、5 nm、S、phi=0°、MPI8 Full3D direct 的两次 formal raw。h5
+和 h4.5 own solve 均通过；两者对 Q8 二维 reference 的差异几乎不随网格改变，因而
+P2 分类为 `reduction/model-contract discrepancy pending`。完整数值、路径和 SHA 见
+[V3 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v3_3d_full3d_convergence_v1.json)
+和 [V3 outcome](v3_3d_full3d_convergence.md)。
+
+| case | RSS/PSS/USS peak (MiB) | GiB（各自峰值） | cells / rows / NNZ used | factor NNZ corrected | factor / total (s) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| h5 | 96151.168 / 94117.470 / 93793.180 | 93.8976 / 91.9116 / 91.5949 | 1680 / 337560 / 283118032 | 2753000000 | 4617.46 / 4907.30 |
+| h4.5 | 128565.934 / 126493.808 / 126173.145 | 125.5527 / 123.5291 / 123.2160 | 2376 / 476232 / 399340632 | 3938000000 | 9711.64 / 10112.04 |
+
+`*_mb` 是 KiB/1024 后的 MiB 字段，不能按 bytes 或 GiB 直接解读；对象容量也不能
+相加冒充 process-tree 峰值。两次 raw 均 swap=0、0.25 s 采样且未跨 warning/critical。
+命名的 `process_tree_samples.jsonl`、`memory_stages.jsonl`、`memory_object_ledger.json`
+在这两次 raw 中均缺失，因此 watchdog safety pass 不等于 V3-6 stage-aligned memory
+attribution Gate complete。
+按 h4.5 实测 RSS 反推 h4 为约 `201.1 GiB`，超过 Review `<190 GiB` startup gate，
+故 h4 `not_run_by_resource_policy`；h3 既有预测 `360–630 GiB`，为
+`resource_not_qualified`。预测不写成 measured，也不启动 h4/h3。
+
+后续 V3-5 只允许在 h5 solver-stress anchor 上做 Hybrid direct 准备；不能把该 anchor
+或 P2 negative 提升为 1° physical qualification。

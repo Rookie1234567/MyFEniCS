@@ -1,0 +1,216 @@
+{
+  "schema_version": "task039.v3-3.v3-4.full3d-convergence.v1",
+  "record_id": "task039_v3_3d_full3d_convergence_v1",
+  "classification": "FULL3D_1DEG_SOLVER_STRESS_ANCHOR_P2_FAIL_REDUCTION_MODEL_CONTRACT_PENDING",
+  "status": "completed_negative",
+  "scope": {
+    "physical_model": "5 nm / 1 degree grazing / phi=0 / S",
+    "full3d_method": "full3d_direct",
+    "nedelec_degree": 6,
+    "requested_modes_per_direction": 480,
+    "mpi_size": 8,
+    "interfaces_nm": [10.0, 110.0],
+    "q8_reference": "results/task039_5nm_v3_1deg_s5/task039_v3_2d_te_p8h1p5_direct_mpi1__2d_port__mpi1__Mna/20260815T024719.871186Z",
+    "p2_gate_limits": {
+      "scalar_observables_max_abs": 0.0001,
+      "closure_abs": 1.0e-5,
+      "selected_E_relative_l2": 0.005,
+      "selected_Hx_Hz_relative_l2": 0.01,
+      "main_m_power_weighted": 0.001,
+      "leakage_n_nonzero_or_p": 1.0e-6
+    }
+  },
+  "cases": {
+    "h5": {
+      "run_root": "results/task039_5nm_v3_1deg_s5_full3d/task039_v3_3d_p6h5_full3d_direct_mpi8__full3d_direct__mpi8__Mna/20260815T055152.423656Z",
+      "source_commit_sha": "5872cda24e47c750d654fa7b06d81057af5bf9fc",
+      "input_sha256": "c8be071f1c3a0745af54006a7d015ba84ce62fda438d8aeea70a6287059981f5",
+      "resolved_config_sha256": "215492227367a96f10c5663a936f234679b7dc3d406448d133e17fa5cca9fa94",
+      "run_manifest_sha256": "aec466e344f28194944679aaf3f5a42235b288c2b2520813743231583441c250",
+      "physical_model_sha256": "0462c9806f1eb0c525c3ab50fcd71e212c6d05337de49c76e7946a336ccd576d",
+      "artifacts": {
+        "root_run_summary_sha256": "44f57be46207232dad99ac66d09325104f4f9996d4d445a635265b17a2030586",
+        "numerical_run_summary_sha256": "b12bb053b54b4494550cbacdb89d99a22373a3173be9c5ef02b7fc043a3bc13a",
+        "dtn_power_sha256": "496f3fe61f3865fc412af067596144bca9614d163afb4ac6805c433c85750a9d",
+        "dtn_orders_sha256": "ca9b61c791d186f86208c584136dccaf4e11695af1ae6e783fc624d0d9de04af",
+        "dtn_amplitudes_sha256": "2ca7f6dfad786c52d210c2837e76c5513e24a79b377122da7264475b4397e647",
+        "reference_samples_json_sha256": "08bfa5ebc2eb69daf1b02fc47db269cda1b409f9efc00480e72f797afd5e1993",
+        "reference_samples_npz_sha256": "bec060babaaf3aecc3bb79b1d87c63d4e6abc7ca5402f3b65e877171a1c4eb2a"
+      },
+      "measured": {
+        "mesh_target_nm": 5.0,
+        "mesh_cells": 1680,
+        "full_fe_dofs": 1127502,
+        "active_trace_rows": 336960,
+        "assembled_rows_with_auxiliary": 337560,
+        "condensed_nnz_used": 283118032,
+        "condensed_nnz_allocated": 298007160,
+        "factor_nnz_corrected": 2753000000,
+        "factor_nnz_note": "MUMPS raw int32 telemetry overflow; corrected value is telemetry only",
+        "R_total": 0.7397397744606046,
+        "T_total": 0.0002180403471024511,
+        "A_balance": 0.260042185192293,
+        "A_volume": 0.26004218519420674,
+        "closure": 1.913802449848845e-12,
+        "true_relative_residual": 8.093867082879937e-10,
+        "numerical_elapsed_s": 4907.297470361009,
+        "factorization_s": 4617.463316719004,
+        "process_tree_peak_rss_mib": 96151.16796875,
+        "process_tree_peak_pss_mib": 94117.4697265625,
+        "process_tree_peak_uss_mib": 93793.1796875,
+        "process_tree_peak_swap_mib": 0.0,
+        "external_mode_count": 600,
+        "external_mode_propagating_count": 598,
+        "own_gate_pass": true
+      },
+      "p2_vs_q8": {
+        "comparison_json": "results/task039_5nm_v3_1deg_s5/full3d_h5_vs_q8_h1p5_reference_periodic_v4.json",
+        "comparison_sha256": "0e98b9e911712338e64638c17438e45d794290ae85de024b2079d6f0c7dba877",
+        "identity_pass": true,
+        "scalar_max_abs_delta": 0.007151107892593989,
+        "closure_pass": true,
+        "selected_E_relative_l2": 0.393686862115375,
+        "selected_Hx_relative_l2": 1.4331358621540509,
+        "selected_Hz_relative_l2": 0.35636429189427626,
+        "main_m_power_weighted": 0.009707277926174335,
+        "leakage_n_nonzero_or_p": 1.159066659458546e-22,
+        "gates": {
+          "identity": true,
+          "scalar_observables": false,
+          "closure": true,
+          "fields": false,
+          "main_m_power": false,
+          "leakage": true,
+          "overall": false
+        }
+      }
+    },
+    "h4p5": {
+      "run_root": "results/task039_5nm_v3_1deg_s5_full3d/task039_v3_3d_p6h4p5_full3d_direct_mpi8__full3d_direct__mpi8__Mna/20260815T074336.988697Z",
+      "source_commit_sha": "25e1380c084c6c019dda0b7fa80e73bdc7ca6fcb",
+      "input_sha256": "a2aba2c42764e7dc276178e95ff46e4c868c69ecad7bfa9f64c614004b3f9a1e",
+      "resolved_config_sha256": "289f3372428feda51d6a3eee0f1e6ae186ec8e36857d2b82073322b10d640be6",
+      "run_manifest_sha256": "c490d3d87167fb86e4aecf4a726ff224055464bc3a1503415b27688da379a0f1",
+      "physical_model_sha256": "e715f43eee3b39e2932ef5041a657afeb9a4f4bba40f7ab658cde3b7f8511db9",
+      "artifacts": {
+        "root_run_summary_sha256": "76d0082c61e5733b4ef7756a361baeffc5ad8ed865d6f1f69932ae8fcae5f39e",
+        "numerical_run_summary_sha256": "10fb46bf489dd69ae09088163e313e98439aa344d45c41788a2b1b2abee601b7",
+        "dtn_power_sha256": "28f92e630425abb11decbbb6988cc455982cd7f4dcfc54f39e91b397089e997d",
+        "dtn_orders_sha256": "6047fda658a91d75e448a2bf1e8bcdc565b6a89ebd28cbaa1e806e89d1270dee",
+        "dtn_amplitudes_sha256": "117e48a919c6757bd22bd5b16f7eaa6793a539d3d65f023249be401aaf3ec661",
+        "reference_samples_json_sha256": "bad790d46e9f830db8c49ecd6b7505565540d34829bf0f1069730d0025662fc4",
+        "reference_samples_npz_sha256": "8f03deb0fd118b645dc6899e7eb75c9c3f72a674943be0ef9bb09ebb2ef0221c"
+      },
+      "measured": {
+        "mesh_target_nm": 4.5,
+        "mesh_cells": 2376,
+        "full_fe_dofs": 1587906,
+        "active_trace_rows": 475632,
+        "assembled_rows_with_auxiliary": 476232,
+        "condensed_nnz_used": 399340632,
+        "condensed_nnz_allocated": 417211512,
+        "factor_nnz_corrected": 3938000000,
+        "factor_nnz_note": "MUMPS raw int32 telemetry overflow; corrected value is telemetry only",
+        "R_total": 0.7397397636658412,
+        "T_total": 0.00021804194591414243,
+        "A_balance": 0.2600421943882447,
+        "A_volume": 0.2600421943882972,
+        "closure": 5.240252676230739e-14,
+        "true_relative_residual": 2.630738817782786e-10,
+        "numerical_elapsed_s": 10112.044903399,
+        "factorization_s": 9711.643373269006,
+        "process_tree_peak_rss_mib": 128565.93359375,
+        "process_tree_peak_pss_mib": 126493.8076171875,
+        "process_tree_peak_uss_mib": 126173.14453125,
+        "process_tree_peak_swap_mib": 0.0,
+        "external_mode_count": 600,
+        "external_mode_propagating_count": 598,
+        "own_gate_pass": true
+      },
+      "p2_vs_q8": {
+        "comparison_json": "results/task039_5nm_v3_1deg_s5_full3d/task039_v3_3d_p6h4p5_full3d_direct_mpi8__full3d_direct__mpi8__Mna/20260815T074336.988697Z/h4p5_vs_q8_h1p5_reference.json",
+        "comparison_sha256": "431fcb21c029db7643f56a47780b6f4dd17ab30b70b680e1472e47eb9453b4d8",
+        "identity_pass": true,
+        "scalar_max_abs_delta": 0.007151097097830572,
+        "closure_pass": true,
+        "selected_E_relative_l2": 0.39368688614836156,
+        "selected_Hx_relative_l2": 1.4334247497768189,
+        "selected_Hz_relative_l2": 0.3563645327299797,
+        "main_m_power_weighted": 0.00970723597133708,
+        "leakage_n_nonzero_or_p": 1.3337146416640364e-23,
+        "gates": {
+          "identity": true,
+          "scalar_observables": false,
+          "closure": true,
+          "fields": false,
+          "main_m_power": false,
+          "leakage": true,
+          "overall": false
+        }
+      }
+    }
+  },
+  "h5_vs_h4p5": {
+    "comparison_type": "same_declared_1deg_physical_case_mesh_delta",
+    "measured_or_derived": "derived_from_two_formal_run_records",
+    "observable_absolute_delta_h4p5_minus_h5": {
+      "R_total": -1.079476e-8,
+      "T_total": -1.598812e-9,
+      "A_balance": -9.195952e-9,
+      "A_volume": -9.194090e-9
+    },
+      "p2_diagnostics": {
+        "main_m_power_weighted_h5": 0.009707277926174335,
+        "main_m_power_weighted_h4p5": 0.00970723597133708,
+      "q8_error_metric_absolute_delta_h5_vs_h4p5": {
+        "E_relative_l2": 2.403298656e-8,
+        "Hx_relative_l2": 2.88887622768e-4,
+        "Hz_relative_l2": 2.4083570344e-7
+      },
+      "leakage_both_below_limit": true
+    },
+    "conclusion": "h5 and h4.5 are discretely stable at about 1e-8 for scalar observables; Q8 field-error metrics are nearly unchanged."
+  },
+  "resource_decision": {
+    "memory_unit": "MiB fields are KiB/1024; GiB conversion is MiB/1024",
+    "h5_rss_gib": 93.89762496948242,
+    "h4p5_rss_gib": 125.55266952514648,
+    "h4_prediction": {
+      "classification": "predicted",
+      "formula": "h4.5 measured RSS * (4.5/4)^4",
+      "center_gib": 201.1,
+      "startup_limit_gib": 190.0,
+      "decision": "not_run_by_resource_policy"
+    },
+    "h3_prediction": {
+      "classification": "predicted",
+      "range_gib": [360.0, 630.0],
+      "decision": "resource_not_qualified"
+    },
+    "watchdog_contract": {
+      "warning_gib": 170.0,
+      "critical_checkpoint_gib": 195.0,
+      "absolute_terminate_bytes": 224000000000,
+      "absolute_terminate_gib": 208.6162567138672,
+      "poll_interval_seconds": 0.25,
+      "swap_required_mib": 0.0
+    }
+  },
+  "provenance": {
+    "checker_source_sha": "2c092b824080b7e0d75bceed320364c1af64ec69",
+    "raw_artifacts_ignored": true,
+    "formal_h5_and_h4p5_runs": 2,
+    "h4_and_h3_formal_runs": 0,
+    "telemetry_gate": {
+      "watchdog_safety_pass": true,
+      "named_process_tree_samples": "not_available",
+      "named_memory_stages": "not_available",
+      "named_memory_object_ledger": "not_available",
+      "stage_aligned_memory_attribution": "incomplete"
+    },
+    "p2_classification": "reduction/model-contract discrepancy pending",
+    "selected_anchor": "h5_best_available_solver_stress_anchor",
+    "hybrid_physical_qualification": "not_established",
+    "next_stage": "V3-5 h5 Hybrid direct preparation only; no formal Hybrid run in this record"
+  }
+}
