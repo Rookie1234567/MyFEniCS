@@ -2,6 +2,9 @@ from pathlib import Path
 
 import pytest
 import numpy as np
+from dolfinx import fem, mesh
+from mpi4py import MPI
+from types import SimpleNamespace
 
 from src.io import load_and_resolve
 from src.io.input_loader import InputError
@@ -12,8 +15,12 @@ from src.io.input_validation import (
     task039_v3_2d_auto_dtn_order_count,
 )
 from src.common.modes_3d import incident_power_3d
+from src.constraints.floquet_scalar_constraint import build_scalar_floquet_constraints
 from src.postprocessing.power_metrics import _is_propagating
-from src.solvers.solve_te_maxwell import _positive_sqrt
+from src.solvers.solve_te_maxwell import (
+    _positive_sqrt,
+    scalar_lagrange_space_identity,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -24,6 +31,11 @@ V3_CASES = (
     ("5nm_1deg_2d_te_p6h3_direct_mpi1.dat", 3.0),
     ("5nm_1deg_2d_te_p6h2_direct_mpi1.dat", 2.0),
     ("5nm_1deg_2d_te_p6h1p5_direct_mpi1.dat", 1.5),
+)
+Q8_CASES = (
+    ("5nm_1deg_2d_te_p8h3_direct_mpi1.dat", 3.0),
+    ("5nm_1deg_2d_te_p8h2_direct_mpi1.dat", 2.0),
+    ("5nm_1deg_2d_te_p8h1p5_direct_mpi1.dat", 1.5),
 )
 
 
@@ -97,6 +109,69 @@ def test_v3_auto_dtn_bound_contains_both_media():
     assert order_count != payload["output"]["diffraction_order_max_m"]
     payload["output"]["diffraction_order_max_m"] = 0
     assert task039_v3_2d_auto_dtn_order_count(payload) == order_count
+
+
+@pytest.mark.parametrize(("filename", "mesh_target"), Q8_CASES)
+def test_v3_q8_inputs_resolve_with_actual_degree(filename, mesh_target):
+    specification = load_and_resolve(V3_2D / filename)
+    assert specification.discretization["mesh_target_nm"] == mesh_target
+    assert specification.discretization["nedelec_degree"] == 8
+    assert specification.discretization["visualization_degree"] == 8
+    assert specification.method["kind"] == "2d_port"
+    assert specification.derived["port_dtn_order_count"] == 21
+
+
+def test_v3_q8_rejects_p7_instead_of_accepting_arbitrary_degree(tmp_path):
+    source = (V3_2D / Q8_CASES[0][0]).read_text(encoding="utf-8")
+    path = tmp_path / "p7.dat"
+    path.write_text(
+        source.replace("nedelec_degree = 8", "nedelec_degree = 7").replace(
+            "visualization_degree = 8", "visualization_degree = 7"
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(InputError):
+        load_and_resolve(path)
+
+
+def test_real_quadrilateral_lagrange_q6_q8_identity_and_q8_floquet_pairing():
+    msh = mesh.create_unit_square(
+        MPI.COMM_SELF, 1, 1, cell_type=mesh.CellType.quadrilateral
+    )
+    facet_dim = msh.topology.dim - 1
+    msh.topology.create_connectivity(facet_dim, msh.topology.dim)
+    exterior = mesh.exterior_facet_indices(msh.topology)
+    midpoints = mesh.compute_midpoints(msh, facet_dim, exterior)
+    left = exterior[np.isclose(midpoints[:, 0], 0.0)]
+    right = exterior[np.isclose(midpoints[:, 0], 1.0)]
+    indices = np.concatenate((left, right)).astype(np.int32)
+    values = np.concatenate(
+        (
+            np.full(len(left), 11, dtype=np.int32),
+            np.full(len(right), 12, dtype=np.int32),
+        )
+    )
+    order = np.argsort(indices)
+    tags = mesh.meshtags(msh, facet_dim, indices[order], values[order])
+    mesh_data = SimpleNamespace(mesh=msh, facet_tags=tags)
+    cfg = simulation_config_2d_from_normalized(
+        load_and_resolve(V3_2D / Q8_CASES[0][0]).as_jsonable()
+    )
+    for degree in (6, 8):
+        space = fem.functionspace(msh, ("Lagrange", degree))
+        identity = scalar_lagrange_space_identity(
+            space, degree, space.dofmap.index_map.size_global
+        )
+        assert identity["family"] == "Lagrange"
+        assert identity["cell"] == "quadrilateral"
+        assert identity["degree"] == degree
+        assert identity["variant"] == "gll_warped"
+        assert identity["space_dimension"] == (degree + 1) ** 2
+        assert identity["global_dofs"] == (degree + 1) ** 2
+        if degree == 8:
+            constraints = build_scalar_floquet_constraints(space, mesh_data, cfg)
+            assert len(constraints.slave_dofs) == len(constraints.master_dofs) == 9
+            assert constraints.max_pair_y_error <= 1.0e-12
 
 
 def test_ordinary_2d_downward_tilt_path_is_unchanged():

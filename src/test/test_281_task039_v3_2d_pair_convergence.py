@@ -16,6 +16,7 @@ def _run(
     field_shift=0.0,
     coordinate_shift=0.0,
     weak_shift=0.0,
+    degree=6,
 ):
     rows = []
     for order in range(-21, 22):
@@ -60,6 +61,13 @@ def _run(
         "physical_sha": "physical",
         "model_id": "task039_5nm_v3_1deg_s5",
         "mesh_target_nm": 5.0,
+        "degree": degree,
+        "visualization_degree": degree,
+        "space_identity": {
+            "family": "Lagrange",
+            "cell": "quadrilateral",
+            "degree": degree,
+        },
         "resolved_method": "2d_port",
         "resolved_solver": "direct",
     }
@@ -104,3 +112,8 @@ def test_all_order_weighted_gate_catches_weak_rows(monkeypatch):
     result = _compare(monkeypatch, _run(), _run(weak_shift=2e-7))
     assert not result["gates"]["all_order_weighted_power"]
     assert result["all_order_weighted_power"]["denominator"] > 0
+
+
+def test_pair_rejects_mismatched_scalar_degree(monkeypatch):
+    with pytest.raises(ValueError, match="scalar degree"):
+        _compare(monkeypatch, _run(degree=6), _run(degree=8))

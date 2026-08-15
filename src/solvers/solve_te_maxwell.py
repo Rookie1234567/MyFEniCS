@@ -57,6 +57,25 @@ def te_incident_field_function(
     return Ez_inc
 
 
+def scalar_lagrange_space_identity(
+    V, scalar_degree: int, global_dofs: int
+) -> dict[str, object]:
+    """Describe the actual scalar Lagrange/Basix space used by the TE solve."""
+
+    basix_element = V.element.basix_element
+    return {
+        "family": "Lagrange",
+        "basix_family": str(basix_element.family),
+        "cell": str(basix_element.cell_type).split(".")[-1],
+        "basix_cell_type": str(basix_element.cell_type),
+        "degree": int(basix_element.degree),
+        "requested_degree": int(scalar_degree),
+        "variant": str(basix_element.lagrange_variant).split(".")[-1],
+        "space_dimension": int(V.element.space_dimension),
+        "global_dofs": int(global_dofs),
+    }
+
+
 def te_layered_background_field_function(V, cfg: SimulationConfig) -> fem.Function:
     Ez_bg = fem.Function(V, name="Ez_background_layered")
     beta_air = _positive_sqrt((cfg.k0 * cfg.n_air) ** 2 - cfg.kx**2)
@@ -670,6 +689,10 @@ def run_te_port_case(
         "port_modes": port_modes,
         "te_field_model": "scalar Ez; physical electric field E=(0,0,Ez)",
     }
+    if cfg.case_name == "task039_5nm_v3_1deg_s5":
+        summary["scalar_space_identity"] = scalar_lagrange_space_identity(
+            V, scalar_degree, num_dofs
+        )
     if v3_selected_fields is not None:
         summary["v3_selected_fields"] = v3_selected_fields
     if solver_info["reduced_linear_residual"] is not None:

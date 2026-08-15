@@ -118,6 +118,35 @@ def _v3_2d_raw_dtn_rows(
     return raw_orders, errors
 
 
+def _v3_2d_space_identity_errors(summary: Mapping[str, Any]) -> list[str]:
+    identity = summary.get("scalar_space_identity")
+    config = summary.get("config")
+    if not isinstance(identity, Mapping) or not isinstance(config, Mapping):
+        return ["V3 2D scalar space identity is missing"]
+    degree = config.get("nedelec_degree")
+    required = {
+        "family": "Lagrange",
+        "cell": "quadrilateral",
+        "degree": degree,
+        "requested_degree": degree,
+    }
+    errors = [
+        f"V3 2D scalar space identity {key} is invalid"
+        for key, expected in required.items()
+        if identity.get(key) != expected
+    ]
+    variant = identity.get("variant")
+    if not isinstance(variant, str) or not variant or variant == "unknown":
+        errors.append("V3 2D scalar space identity variant is missing")
+    for key in ("space_dimension", "global_dofs"):
+        value = identity.get(key)
+        if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+            errors.append(f"V3 2D scalar space identity {key} is invalid")
+    if identity.get("global_dofs") != summary.get("num_scalar_dofs"):
+        errors.append("V3 2D scalar space global dofs disagree with summary")
+    return errors
+
+
 def _v3_2d_reference_record(
     payload: Mapping[str, Any], summary: Mapping[str, Any], numerical_output: Path
 ) -> Path | None:
@@ -206,6 +235,12 @@ def _v3_2d_reference_record(
         },
         "elapsed_seconds": summary.get("elapsed_seconds"),
     }
+    resolved_discretization = payload.get("discretization")
+    if isinstance(resolved_discretization, Mapping):
+        record["resolved_degree"] = resolved_discretization.get("nedelec_degree")
+    space_identity = summary.get("scalar_space_identity")
+    if isinstance(space_identity, Mapping):
+        record["space_identity"] = dict(space_identity)
     path = numerical_output / "v3_2d_reference.json"
     path.write_text(
         json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
@@ -216,7 +251,7 @@ def _v3_2d_reference_record(
 def _v3_2d_authority_errors(
     summary: Mapping[str, Any], numerical_output: Path
 ) -> list[str]:
-    errors: list[str] = []
+    errors = _v3_2d_space_identity_errors(summary)
     metrics = summary.get("dtn_port_power_metrics")
     if not isinstance(metrics, Mapping):
         return ["V3 2D DtN power metrics are missing"]

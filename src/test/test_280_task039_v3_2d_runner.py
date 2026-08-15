@@ -93,6 +93,24 @@ def _field_descriptor(tmp_path: Path):
     }
 
 
+def _space_summary():
+    return {
+        "config": {"nedelec_degree": 6},
+        "num_scalar_dofs": 49,
+        "scalar_space_identity": {
+            "family": "Lagrange",
+            "basix_family": "ElementFamily.P",
+            "cell": "quadrilateral",
+            "basix_cell_type": "CellType.quadrilateral",
+            "degree": 6,
+            "requested_degree": 6,
+            "variant": "gll_warped",
+            "space_dimension": 49,
+            "global_dofs": 49,
+        },
+    }
+
+
 def _write_dtn_files(tmp_path: Path, metrics):
     def json_default(value):
         if isinstance(value, np.generic):
@@ -177,6 +195,7 @@ def test_v3_authority_uses_dtn_observables_and_independent_closure(tmp_path):
         "dtn_port_power_metrics": metrics,
         "v3_selected_fields": descriptor,
     }
+    summary.update(_space_summary())
     assert _v3_2d_authority_errors(summary, tmp_path) == []
 
 
@@ -195,13 +214,15 @@ def test_v3_run_2d_uses_dtn_authority_and_rejects_bad_dtn_closure(tmp_path):
         }
         descriptor = _field_descriptor(output_directory)
         _write_dtn_files(output_directory, metrics)
-        return {
+        result = {
             "reduced_linear_residual": 1.0e-12,
             "power_metrics": {"R_total": float("nan")},
             "dtn_port_power_metrics": metrics,
             "v3_selected_fields": descriptor,
             "elapsed_seconds": 0.1,
         }
+        result.update(_space_summary())
+        return result
 
     passed = task038_2d.run_2d(
         specification.as_jsonable(), tmp_path / "good", solver_runner=fake_solver
@@ -243,7 +264,7 @@ def test_v3_run_2d_requires_both_dtn_artifacts(tmp_path):
 
     def missing_artifacts_solver(_cfg, output_directory, _backend):
         descriptor = _field_descriptor(output_directory)
-        return {
+        result = {
             "reduced_linear_residual": 1.0e-12,
             "power_metrics": {"R_total": float("nan")},
             "dtn_port_power_metrics": {
@@ -257,6 +278,8 @@ def test_v3_run_2d_requires_both_dtn_artifacts(tmp_path):
             },
             "v3_selected_fields": descriptor,
         }
+        result.update(_space_summary())
+        return result
 
     result = task038_2d.run_2d(
         specification.as_jsonable(),
@@ -289,12 +312,14 @@ def test_v3_run_2d_rejects_inconsistent_raw_dtn_json(tmp_path):
         raw_power_path.write_text(
             json.dumps(raw_power, indent=2) + "\n", encoding="utf-8"
         )
-        return {
+        result = {
             "reduced_linear_residual": 1.0e-12,
             "power_metrics": {"R_total": float("nan")},
             "dtn_port_power_metrics": metrics,
             "v3_selected_fields": descriptor,
         }
+        result.update(_space_summary())
+        return result
 
     result = task038_2d.run_2d(
         specification.as_jsonable(),

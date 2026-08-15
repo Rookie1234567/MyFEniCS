@@ -50,8 +50,9 @@ TASK039_INPUTS = tuple(sorted(TASK039.glob("*.dat")))
 def test_task039_inputs_are_numeric_finite_profiles_and_share_physics():
     specs = [load_and_resolve(path) for path in TASK039_INPUTS]
 
-    assert len(specs) == 15
+    assert len(specs) == 23
     assert {spec.method["kind"] for spec in specs} == {
+        "2d_port",
         "full3d_direct",
         "full3d_iterative",
         "hybrid_direct",
@@ -65,10 +66,13 @@ def test_task039_inputs_are_numeric_finite_profiles_and_share_physics():
         480,
         960,
     }
-    h10 = [spec for spec in specs if spec.discretization["mesh_target_nm"] == 10.0]
+    three_d_specs = [spec for spec in specs if spec.identity["dimension"] == 3]
+    h10 = [
+        spec for spec in three_d_specs if spec.discretization["mesh_target_nm"] == 10.0
+    ]
     grid = [
         spec
-        for spec in specs
+        for spec in three_d_specs
         if spec.discretization["mesh_target_nm"] != 10.0
         and spec.method["kind"] == "full3d_direct"
     ]
@@ -133,9 +137,17 @@ def test_task039_inputs_are_numeric_finite_profiles_and_share_physics():
         assert provenance["grating_label"] == "Task39 5nm material"
         assert provenance["imaginary_sign_preserved"] is True
         assert "epsilon" not in spec.materials
+        if spec.identity["dimension"] == 2:
+            assert spec.incidence["grazing_angle_deg"] == 1.0
+            assert spec.derived["internal"]["incident_theta_deg"] == 89.0
+            assert spec.incidence["polarization"] == "te"
+            assert spec.derived["angle_identity"]["field_component_identity"] == (
+                "2d_TE_scalar_to_3d_S_Ey"
+            )
+            continue
+        assert spec.incidence["azimuth_deg"] == 0.0
         assert spec.incidence["grazing_angle_deg"] == 10.0
         assert spec.derived["internal"]["incident_theta_deg"] == 80.0
-        assert spec.incidence["azimuth_deg"] == 0.0
         assert spec.incidence["polarization"] == "s"
         assert spec.derived["stage4_assembly_backend_audit"]["qualification"]
 
@@ -154,6 +166,8 @@ def test_task039_probe_fraction_places_diffraction_probes_in_uniform_layers():
 
     for path in TASK039_INPUTS:
         spec = load_and_resolve(path)
+        if spec.identity["dimension"] != 3:
+            continue
         cfg = simulation_config_3d_from_normalized(spec.as_jsonable())
         top_z, bottom_z = _probe_z_locations(cfg)
 

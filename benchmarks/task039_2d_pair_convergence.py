@@ -170,6 +170,15 @@ def _load_formal_run(run_directory: str | Path, label: str) -> dict[str, Any]:
         raise ValueError(f"{label} selected arrays have invalid shape or values")
 
     resolved = _json(root / "resolved_config.json", f"{label} resolved config")
+    discretization = resolved.get("discretization")
+    if not isinstance(discretization, Mapping):
+        raise ValueError(f"{label} resolved discretization is missing")
+    degree = discretization.get("nedelec_degree")
+    visualization_degree = discretization.get("visualization_degree")
+    if not isinstance(degree, int) or isinstance(degree, bool):
+        raise ValueError(f"{label} resolved scalar degree is invalid")
+    if visualization_degree != degree:
+        raise ValueError(f"{label} resolved visualization degree differs")
     identities = {}
     for name in ("source_sha", "input_sha256", "physical_model_sha256"):
         path = root / f"{name}.txt"
@@ -193,6 +202,17 @@ def _load_formal_run(run_directory: str | Path, label: str) -> dict[str, Any]:
         "input_sha": identities["input_sha256"],
         "physical_sha": identities["physical_model_sha256"],
         "mesh_target_nm": resolved.get("discretization", {}).get("mesh_target_nm"),
+        "degree": degree,
+        "visualization_degree": visualization_degree,
+        "space_identity": reference.get(
+            "space_identity",
+            {
+                "family": "Lagrange",
+                "cell": "quadrilateral",
+                "degree": degree,
+                "identity_source": "resolved_config_legacy_reference",
+            },
+        ),
         "resolved_method": resolved.get("method"),
         "resolved_solver": resolved.get("solver"),
     }
@@ -243,6 +263,8 @@ def compare_2d_pair(
     right = _load_formal_run(right_run_directory, "right")
     if left["model_id"] != right["model_id"]:
         raise ValueError("2D pair model_id values differ")
+    if left["degree"] != right["degree"]:
+        raise ValueError("2D pair scalar degree values differ")
     coordinates_exact = all(
         np.array_equal(left["fields"][key], right["fields"][key])
         for key in ("x_nm", "z_nm")
@@ -367,6 +389,9 @@ def compare_2d_pair(
             name: {
                 "root": run["root"],
                 "mesh_target_nm": run["mesh_target_nm"],
+                "degree": run["degree"],
+                "visualization_degree": run["visualization_degree"],
+                "space_identity": run["space_identity"],
                 "linear": run["reference"].get("linear"),
                 "elapsed_seconds": run["reference"].get("elapsed_seconds"),
             }
@@ -385,6 +410,7 @@ def compare_2d_pair(
             == right["resolved_method"],
             "resolved_solver_equal": left["resolved_solver"]
             == right["resolved_solver"],
+            "resolved_degree_equal": left["degree"] == right["degree"],
             "source_sha_policy": "reported_identity_not_a_convergence_gate",
         },
         "coordinates": {

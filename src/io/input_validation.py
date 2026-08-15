@@ -259,6 +259,7 @@ _TASK039_MODEL_ID_PATTERNS = {
 _TASK039_V3_2D_MODEL_ID = "task039_5nm_v3_1deg_s5"
 _TASK039_V3_3D_MODEL_ID = "task039_5nm_v3_1deg_s5_full3d"
 _TASK039_V3_2D_MESH_TARGETS = (5.0, 4.0, 3.0, 2.0, 1.5)
+_TASK039_V3_2D_DEGREES = (6, 8)
 
 
 def task039_model_id_matches(
@@ -899,8 +900,6 @@ def task039_v3_2d_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, s
         ("incidence", "wavelength_nm", 5.0),
         ("incidence", "grazing_angle_deg", 1.0),
         ("incidence", "polarization", "te"),
-        ("discretization", "nedelec_degree", 6),
-        ("discretization", "visualization_degree", 6),
         ("discretization", "mesh_cell_type", "quadrilateral"),
         ("boundary", "use_floquet_x", True),
         ("boundary", "vertical_boundary", "dtn"),
@@ -921,6 +920,22 @@ def task039_v3_2d_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, s
     for section, key, expected_value in expected:
         if not _same_profile_value(config[section].get(key), expected_value):
             errors.append((f"{section}.{key}", f"V3 2D TE requires {expected_value!r}"))
+    degree = config["discretization"].get("nedelec_degree")
+    visualization_degree = config["discretization"].get("visualization_degree")
+    if degree not in _TASK039_V3_2D_DEGREES:
+        errors.append(
+            (
+                "discretization.nedelec_degree",
+                "V3 2D TE research extension allows only degree 6 or 8",
+            )
+        )
+    if visualization_degree != degree:
+        errors.append(
+            (
+                "discretization.visualization_degree",
+                "V3 2D TE visualization_degree must equal nedelec_degree",
+            )
+        )
     mesh_target_nm = config["discretization"].get("mesh_target_nm")
     if not any(
         isinstance(mesh_target_nm, (int, float))
