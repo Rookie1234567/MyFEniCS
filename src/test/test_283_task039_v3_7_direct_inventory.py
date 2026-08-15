@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import hashlib
+from pathlib import Path
 
 import numpy as np
 import pytest
 
 from benchmarks.task039_hybrid_direct_identity import (
     IdentityCheckError,
+    _verify_canonical_shard_files,
     reconstruct_hash_bound_solution_vector,
 )
 
@@ -58,3 +60,24 @@ def test_direct_solution_reconstruction_fails_closed_without_row_mapping():
             values,
             expected_layout={"global_size": 3},
         )
+
+
+def test_canonical_shard_sha_and_presence_are_fail_closed(tmp_path: Path):
+    shard = tmp_path / "rank0000.jsonl"
+    shard.write_bytes(b"synthetic-shard\n")
+    metadata = {
+        "rank": 0,
+        "filename": shard.name,
+        "file_sha256": hashlib.sha256(shard.read_bytes()).hexdigest(),
+        "packet_count": 0,
+    }
+    verified = _verify_canonical_shard_files(tmp_path / "manifest.json", [metadata])
+    assert verified[0]["file_sha256"] == metadata["file_sha256"]
+    assert len(verified) == 1
+
+    shard.write_bytes(b"tampered\n")
+    with pytest.raises(IdentityCheckError, match="SHA"):
+        _verify_canonical_shard_files(tmp_path / "manifest.json", [metadata])
+    shard.unlink()
+    with pytest.raises(IdentityCheckError, match="missing"):
+        _verify_canonical_shard_files(tmp_path / "manifest.json", [metadata])

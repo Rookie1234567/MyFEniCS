@@ -364,6 +364,39 @@ def _canonical_entries(numeric_dir: Path, numeric: Mapping[str, Any]) -> dict[st
     return entries
 
 
+def _verify_canonical_shard_files(
+    manifest_path: Path, shards: Sequence[Mapping[str, Any]]
+) -> list[dict[str, Any]]:
+    verified: list[dict[str, Any]] = []
+    for index, shard in enumerate(shards):
+        filename = shard.get("filename")
+        expected_sha = shard.get("file_sha256")
+        if (
+            not isinstance(filename, str)
+            or not filename
+            or Path(filename).is_absolute()
+            or ".." in Path(filename).parts
+            or not isinstance(expected_sha, str)
+            or not _SHA256.fullmatch(expected_sha)
+        ):
+            _fail(f"canonical shard metadata is invalid at index {index}")
+        path = manifest_path.parent / filename
+        if not path.is_file():
+            _fail(f"canonical shard is missing at index {index}: {path}")
+        actual_sha = _sha256(path)
+        if actual_sha != expected_sha:
+            _fail(f"canonical shard SHA mismatches manifest at index {index}")
+        verified.append(
+            {
+                "rank": shard.get("rank"),
+                "filename": filename,
+                "file_sha256": actual_sha,
+                "packet_count": shard.get("packet_count"),
+            }
+        )
+    return verified
+
+
 def _resource_authority(outer: Mapping[str, Any]) -> dict[str, Any]:
     raw = outer.get("resource_authority")
     if not isinstance(raw, Mapping):
@@ -785,6 +818,7 @@ def load_task039_direct_solution_inventory(
             shards = canonical_manifest.get("per_rank_shards")
             if not isinstance(shards, list) or len(shards) != 8:
                 _fail(f"direct {side}.{role} must contain eight rank shards")
+            verified_shards = _verify_canonical_shard_files(path, shards)
             canonical[f"{side}.{role}"] = {
                 "manifest": _artifact(path, f"direct {side}.{role} manifest"),
                 "manifest_sha256": manifest_sha,
@@ -798,15 +832,8 @@ def load_task039_direct_solution_inventory(
                     "summed_local_duplicate_count"
                 ),
                 "shard_count": len(shards),
-                "shards": [
-                    {
-                        "rank": item.get("rank"),
-                        "filename": item.get("filename"),
-                        "file_sha256": item.get("file_sha256"),
-                        "packet_count": item.get("packet_count"),
-                    }
-                    for item in shards
-                ],
+                "shards": verified_shards,
+                "verified_shard_count": len(verified_shards),
                 "rows": canonical_manifest.get("rows", "not_available"),
                 "ownership": canonical_manifest.get("ownership", "not_available"),
                 "layout": canonical_manifest.get("layout", "not_available"),
@@ -837,6 +864,9 @@ def load_task039_direct_solution_inventory(
             "arrays": arrays,
         },
         "canonical": canonical,
+        "verified_shard_count": sum(
+            int(item["verified_shard_count"]) for item in canonical.values()
+        ),
         "mapping_status": mapping_status,
         "mapping_reason": (
             "verified direct_solution_mapping is present"
