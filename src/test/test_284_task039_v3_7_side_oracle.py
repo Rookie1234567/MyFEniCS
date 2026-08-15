@@ -95,7 +95,7 @@ def test_rebuild_vector_uses_current_owned_active_values(monkeypatch, tmp_path):
     )
     monkeypatch.setattr(
         "benchmarks.task039_v3_side_oracle.read_canonical_packet_shard",
-        lambda path, digest: (),
+        lambda path, digest: [{"packet": index} for index in range(4)],
     )
     monkeypatch.setattr(
         "benchmarks.task039_v3_side_oracle.reconstruct_canonical_full_fe_function",
@@ -107,7 +107,12 @@ def test_rebuild_vector_uses_current_owned_active_values(monkeypatch, tmp_path):
             f"{side}.full_fe": {
                 "manifest": {"path": str(manifest)},
                 "shards": [
-                    {"rank": 0, "filename": "rank.jsonl", "file_sha256": "a" * 64}
+                    {
+                        "rank": 0,
+                        "filename": "rank.jsonl",
+                        "file_sha256": "a" * 64,
+                        "packet_count": 4,
+                    }
                 ],
             }
             for side in ("bottom", "top")
@@ -119,6 +124,15 @@ def test_rebuild_vector_uses_current_owned_active_values(monkeypatch, tmp_path):
         )
         assert np.array_equal(vector.getArray(), np.asarray([20, 40, 20, 40, 1, 2]))
         assert audit["mapping_status"] == "canonical_full_fe_to_owned_active_trace"
+        for side in ("bottom", "top"):
+            assert audit["mapping_audit"][side] == {
+                "shard_path": str((tmp_path / "rank.jsonl").resolve()),
+                "sha256": "a" * 64,
+                "declared_packet_count": 4,
+                "actual_packet_count": 4,
+                "owned_full_fe_rows": 4,
+                "owned_active_rows": 2,
+            }
         vector.destroy()
     finally:
         bottom_a.destroy()

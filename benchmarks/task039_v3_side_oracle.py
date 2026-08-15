@@ -85,6 +85,7 @@ def rebuild_hybrid_augmented_vector(
 
     comm = layout.comm
     active: dict[str, np.ndarray] = {}
+    mapping_audit: dict[str, Any] = {}
     for side, system in (("bottom", bottom_system), ("top", top_system)):
         static = getattr(system, "static_condensation", None)
         condensed = getattr(static, "condensed", None)
@@ -94,6 +95,13 @@ def rebuild_hybrid_augmented_vector(
         packets = read_canonical_packet_shard(
             Path(selected["path"]), selected["sha256"]
         )
+        declared_packet_count = int(selected["packet_count"])
+        actual_packet_count = len(packets)
+        if actual_packet_count != declared_packet_count:
+            raise ValueError(
+                f"{side} shard packet count mismatch: "
+                f"declared={declared_packet_count}, actual={actual_packet_count}"
+            )
         field = reconstruct_canonical_full_fe_function(
             system.V,
             packets,
@@ -107,6 +115,12 @@ def rebuild_hybrid_augmented_vector(
         )
         components = np.arange(block_size, dtype=np.int64)
         global_dofs = (global_blocks[:, None] * block_size + components).reshape(-1)
+        if len(global_dofs) != actual_packet_count:
+            raise ValueError(
+                f"{side} full-FE row/packet mismatch: "
+                f"owned_full_fe_rows={len(global_dofs)}, "
+                f"actual_packets={actual_packet_count}"
+            )
         values = np.asarray(field.x.array[: len(global_dofs)], dtype=np.complex128)
         if values.shape != global_dofs.shape or not np.isfinite(values).all():
             raise ValueError(f"{side} reconstructed field is not finite")
@@ -127,6 +141,14 @@ def rebuild_hybrid_augmented_vector(
             ) from exc
         if not np.isfinite(active[side]).all():
             raise ValueError(f"{side} active trace values are not finite")
+        mapping_audit[side] = {
+            "shard_path": selected["path"],
+            "sha256": selected["sha256"],
+            "declared_packet_count": declared_packet_count,
+            "actual_packet_count": actual_packet_count,
+            "owned_full_fe_rows": int(len(global_dofs)),
+            "owned_active_rows": int(len(active[side])),
+        }
         del field
 
     vectors: dict[str, PETSc.Vec] = {}
@@ -161,6 +183,7 @@ def rebuild_hybrid_augmented_vector(
         "top_active_rows": int(len(active["top"])),
         "modal_count": int(layout.modal_count),
         "auxiliary_status": "not_in_layout_action_only",
+        "mapping_audit": mapping_audit,
     }
 
 
