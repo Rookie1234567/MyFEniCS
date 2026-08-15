@@ -1536,6 +1536,329 @@ def _v2_physical_model_identity(
     }
 
 
+def _load_v3_7_candidate_view(run_dir: str | Path) -> dict[str, Any]:
+    """Load the compact authority written by the V3-7 recovery consumer."""
+
+    root = Path(run_dir).resolve()
+    numeric_dir = root / "numerical_output"
+    authority = _json(numeric_dir / "v3_7_hybrid_authority.json")
+    if authority.get("schema") != "task039.v3-7-hybrid-authority.v1":
+        _fail("V3-7 candidate authority schema is invalid")
+    model_id = authority.get("model_id")
+    if model_id != "task039_5nm_v3_1deg_s5_hybrid_iterative_m480":
+        _fail("V3-7 candidate model identity is not the fixed h5/M480 profile")
+    source_sha = authority.get("source_sha")
+    physical_sha = authority.get("physical_model_sha256")
+    if not isinstance(source_sha, str) or not _SOURCE_SHA.fullmatch(source_sha):
+        _fail("V3-7 candidate source SHA is invalid")
+    if not isinstance(physical_sha, str) or not _SHA256.fullmatch(physical_sha):
+        _fail("V3-7 candidate physical-model SHA is invalid")
+    if authority.get("mpi_size") != 8 or authority.get("requested_modes") != 480:
+        _fail("V3-7 candidate MPI/M identity is not exact")
+    grid = authority.get("grid_payload")
+    if not isinstance(grid, Mapping):
+        _fail("V3-7 candidate grid payload descriptor is missing")
+    grid_path = _resolve(numeric_dir, grid.get("path"))
+    if not grid_path.is_file():
+        _fail(f"V3-7 candidate grid payload is missing: {grid_path}")
+    expected_keys = (
+        "x_nm",
+        "y_nm",
+        "z_nm",
+        "E_V_per_m",
+        "H_A_per_m",
+    )
+    try:
+        with np.load(grid_path, allow_pickle=False) as archive:
+            if set(archive.files) != set(expected_keys) | {
+                "modal_amplitudes",
+                "bottom_q",
+                "top_q",
+            }:
+                _fail("V3-7 candidate grid payload keys are incomplete")
+            arrays = {key: np.asarray(archive[key]).copy() for key in archive.files}
+    except (OSError, ValueError) as exc:
+        raise IdentityCheckError("cannot read V3-7 candidate grid payload") from exc
+    expected_shapes = {
+        "x_nm": (40,),
+        "y_nm": (20,),
+        "z_nm": (5,),
+        "E_V_per_m": (5, 20, 40, 3),
+        "H_A_per_m": (5, 20, 40, 3),
+    }
+    descriptors = grid.get("arrays")
+    if not isinstance(descriptors, Mapping):
+        _fail("V3-7 candidate grid array descriptors are missing")
+    for name, shape in expected_shapes.items():
+        array = arrays[name]
+        descriptor = descriptors.get(name)
+        if (
+            array.shape != shape
+            or str(array.dtype) != ("float64" if name.endswith("_nm") else "complex128")
+            or not np.isfinite(array).all()
+            or not isinstance(descriptor, Mapping)
+            or descriptor.get("shape") != list(shape)
+            or descriptor.get("dtype") != str(array.dtype)
+            or descriptor.get("sha256")
+            != hashlib.sha256(np.ascontiguousarray(array).tobytes()).hexdigest()
+        ):
+            _fail(f"V3-7 candidate grid identity is invalid for {name}")
+    if not np.array_equal(arrays["z_nm"], np.asarray(_PLANES, dtype=np.float64)):
+        _fail("V3-7 candidate z planes are not the fixed comparison planes")
+    external_inventory = authority.get("external_mode_inventory")
+    inventory = _parse_inventory(
+        external_inventory,
+        "V3-7 candidate external_mode_inventory",
+        expected_count=int(authority.get("inventory_count", 600)),
+    )
+    orders = _parse_orders(
+        authority.get("external_orders"),
+        "V3-7 candidate external_orders",
+        expected_count=inventory["count"],
+    )
+    if set(orders) != set(inventory["keys"]):
+        _fail("V3-7 candidate order keys do not match external inventory")
+    observables_raw = authority.get("observables")
+    if not isinstance(observables_raw, Mapping):
+        _fail("V3-7 candidate observables are missing")
+    observables = {
+        name: _finite(observables_raw.get(name), f"candidate.{name}")
+        for name in ("R_total", "T_total", "A_balance", "A_volume")
+    }
+    closure = _finite(authority.get("closure"), "candidate.closure")
+    traction_raw = authority.get("traction")
+    if not isinstance(traction_raw, Mapping):
+        _fail("V3-7 candidate traction is missing")
+    traction: dict[str, float] = {}
+    for side in ("bottom", "top"):
+        item = traction_raw.get(side)
+        value = (
+            item.get("relative_residual", item.get("relative_dual"))
+            if isinstance(item, Mapping)
+            else item
+        )
+        traction[side] = _finite(value, f"candidate.traction.{side}")
+    projection = _finite(
+        authority.get("interface_projection"), "candidate.interface_projection"
+    )
+    return {
+        "root": root,
+        "authority": authority,
+        "source_sha": source_sha,
+        "physical_model_sha256": physical_sha,
+        "inventory": inventory,
+        "orders": orders,
+        "payload": {
+            "arrays": arrays,
+            "artifact": {"path": str(grid_path), "sha256": _sha256(grid_path)},
+        },
+        "observables": observables,
+        "closure": closure,
+        "traction": traction,
+        "projection": projection,
+    }
+
+
+def _hybrid_authority_view(loaded: Mapping[str, Any]) -> dict[str, Any]:
+    manifest = loaded["manifest"]
+    return {
+        "inventory": loaded["inventory"],
+        "orders": loaded["orders"],
+        "payload": loaded["payload"],
+        "observables": loaded["observables"],
+        "closure": loaded["closure"],
+        "traction": loaded.get("traction", {}),
+        "projection": loaded.get("projection", "not_available"),
+        "physical_model_sha256": manifest["physical_model_sha256"],
+        "source_sha": manifest["source_sha"],
+    }
+
+
+def _compare_v3_authority_views(
+    candidate: Mapping[str, Any],
+    reference: Mapping[str, Any],
+    *,
+    reference_label: str,
+    require_candidate_own: bool = True,
+) -> dict[str, Any]:
+    candidate_arrays = candidate["payload"]["arrays"]
+    reference_arrays = reference["payload"]["arrays"]
+    physical = {
+        "candidate": candidate["physical_model_sha256"],
+        "reference": reference["physical_model_sha256"],
+        "pass": candidate["physical_model_sha256"]
+        == reference["physical_model_sha256"],
+    }
+    inventory = {
+        "candidate_count": candidate["inventory"]["count"],
+        "reference_count": reference["inventory"]["count"],
+        "candidate_key_sha256": candidate["inventory"]["key_sha256"],
+        "reference_key_sha256": reference["inventory"]["key_sha256"],
+        "pass": candidate["inventory"]["keys"] == reference["inventory"]["keys"],
+    }
+    observables = _compare_observables(
+        candidate["observables"], reference["observables"], 1.0e-4
+    )
+    closure = {
+        "candidate": {
+            "actual": candidate["closure"],
+            "limit": 1.0e-5,
+            "pass": abs(candidate["closure"]) <= 1.0e-5,
+        },
+        "reference": {
+            "actual": reference["closure"],
+            "limit": 1.0e-5,
+            "pass": abs(reference["closure"]) <= 1.0e-5,
+        },
+    }
+    coordinates = _coordinates_exact(candidate_arrays, reference_arrays)
+    field_pair = _v2_selected_fields(candidate_arrays, reference_arrays)
+    fields = _v3_overall_selected_fields(field_pair)
+    flux_left = _v2_normal_flux(candidate_arrays, "V3-7 candidate")
+    flux_right = _v2_normal_flux(reference_arrays, reference_label)
+    flux_absolute = float(np.linalg.norm(flux_left - flux_right))
+    flux_denominator = max(
+        float(np.linalg.norm(flux_left)), float(np.linalg.norm(flux_right)), 1.0e-30
+    )
+    flux = {
+        "candidate_per_plane": flux_left.tolist(),
+        "reference_per_plane": flux_right.tolist(),
+        "absolute_l2": flux_absolute,
+        "denominator": flux_denominator,
+        "relative_delta": flux_absolute / flux_denominator,
+        "limit": 1.0e-4,
+        "pass": flux_absolute / flux_denominator <= 1.0e-4,
+    }
+    orders = _v2_order_comparison(
+        candidate["orders"],
+        reference["orders"],
+        expected_count=candidate["inventory"]["count"],
+    )
+    traction: dict[str, Any] = {}
+    traction_pass = True
+    for side in ("bottom", "top"):
+        candidate_value = candidate["traction"].get(side)
+        reference_value = reference["traction"].get(side)
+        if not require_candidate_own:
+            traction[side] = {"status": "not_applicable_secondary", "pass": True}
+            continue
+        if reference_value is None:
+            traction[side] = {"status": "not_available", "pass": False}
+            traction_pass = False
+            continue
+        delta = abs(float(candidate_value) - float(reference_value))
+        item = {
+            "candidate": float(candidate_value),
+            "reference": float(reference_value),
+            "absolute_delta": delta,
+            "limit": 1.0e-8,
+            "pass": delta <= 1.0e-8
+            and abs(float(candidate_value)) <= 1.0e-8
+            and abs(float(reference_value)) <= 1.0e-8,
+        }
+        traction[side] = item
+        traction_pass = traction_pass and item["pass"]
+    all_channel = {
+        "power_weighted": orders["power_weighted"],
+        "numerator": orders["power_weighted_numerator"],
+        "denominator": orders["power_weighted_denominator"],
+        "limit": 1.0e-3,
+        "pass": orders["power_weighted"] <= 1.0e-3,
+        "channel_resolved_diagnostic_only": True,
+    }
+    integrated = {
+        "observables": observables,
+        "closure": closure,
+        "traction": traction,
+        "external_keys_exact": inventory,
+        "coordinates_exact": coordinates,
+        "selected_EH_overall": fields,
+        "selected_EH_overall_limits": {"E_V_per_m": 5.0e-3, "H_A_per_m": 1.0e-2},
+        "normal_flux": flux,
+        "all_channel_power_weighted": all_channel,
+        "reference_label": reference_label,
+        "candidate_interface_projection": (
+            {
+                "actual": candidate["projection"],
+                "limit": 1.0e-8,
+                "pass": candidate["projection"] <= 1.0e-8,
+            }
+            if require_candidate_own
+            else {"status": "not_applicable_secondary", "pass": True}
+        ),
+        "physical_model_identity": physical,
+    }
+    integrated["pass"] = bool(
+        physical["pass"]
+        and inventory["pass"]
+        and observables["pass"]
+        and all(item["pass"] for item in closure.values())
+        and traction_pass
+        and coordinates["pass"]
+        and fields["pass"]
+        and flux["pass"]
+        and all_channel["pass"]
+        and integrated["candidate_interface_projection"]["pass"]
+    )
+    return {
+        "schema_version": "task039.v3-7-hybrid-authority-comparison.v1",
+        "integrated_gate": integrated,
+        "channel_resolved_diagnostic": orders,
+        "pass": integrated["pass"],
+        "classification": (
+            "TASK039_V3_HYBRID_INTEGRATED_PHYSICS_PASS_CHANNEL_DIAGNOSTIC_PENDING"
+            if integrated["pass"]
+            else "TASK039_V3_HYBRID_INTEGRATED_PHYSICS_FAIL"
+        ),
+    }
+
+
+def compare_v3_7_hybrid_candidate_to_direct(
+    candidate_run_dir: str | Path, direct_run_dir: str | Path
+) -> dict[str, Any]:
+    """Compare candidate physics with the fixed 1-degree Hybrid-direct authority."""
+
+    candidate = _load_v3_7_candidate_view(candidate_run_dir)
+    direct_loaded = _load_hybrid(direct_run_dir, expected_h_nm=5.0)
+    if direct_loaded["contract"].get("profile") != "v3_1deg":
+        _fail("V3-7 direct authority is not the fixed 1-degree profile")
+    return _compare_v3_authority_views(
+        candidate,
+        _hybrid_authority_view(direct_loaded),
+        reference_label="fixed_1deg_hybrid_direct_authority",
+    )
+
+
+def compare_v3_7_hybrid_candidate_to_full3d(
+    candidate_run_dir: str | Path, full3d_run_dir: str | Path
+) -> dict[str, Any]:
+    """Return the same-grid Full3D result as a secondary, non-authoritative check."""
+
+    candidate = _load_v3_7_candidate_view(candidate_run_dir)
+    full = _raw_full3d(
+        full3d_run_dir, expected_inventory_count=candidate["inventory"]["count"]
+    )
+    reference = {
+        "inventory": full["inventory"],
+        "orders": full["orders"],
+        "payload": {"arrays": {**full["coordinates"], **full["fields"]}},
+        "observables": full["observables"],
+        "closure": full["closure"],
+        "traction": {},
+        "projection": "not_available",
+        "physical_model_sha256": full["physical_model_sha256"],
+        "source_sha": full["source_sha"],
+    }
+    result = _compare_v3_authority_views(
+        candidate,
+        reference,
+        reference_label="secondary_1deg_full3d_reference",
+        require_candidate_own=False,
+    )
+    result["role"] = "secondary_only_not_hybrid_authority"
+    return result
+
+
 def compare_h5_hybrid_direct_full3d(
     hybrid_run_dir: str | Path, full3d_run_dir: str | Path
 ) -> dict[str, Any]:

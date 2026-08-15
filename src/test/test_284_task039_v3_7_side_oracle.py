@@ -351,38 +351,33 @@ def test_research_explicit_f_and_oracle_lifecycle(monkeypatch):
     rhs = fixture["layout"].create_vector()
     rhs.set(1.0)
     captured = {}
+    reference = None
     try:
         reference = build_research_independent_hybrid_reference(
             fixture["bottom"], fixture["top"], fixture["coupling"]
         )
-        try:
-            assert len(condensed_rhs_calls) == 2
-            assert (
-                _relative_vec_difference(reference.bottom.b, components[0].b_fe)
-                > 1.0e-6
-            )
-            assert (
-                _relative_vec_difference(reference.bottom.b, fixture["bottom"].b)
-                <= 1.0e-12
-            )
-            assert (
-                _relative_vec_difference(reference.top.b, fixture["top"].b) <= 1.0e-12
-            )
-            assert reference.bottom.b is not fixture["bottom"].b
-        finally:
-            reference.destroy()
+        assert len(condensed_rhs_calls) == 2
+        assert _relative_vec_difference(reference.bottom.b, components[0].b_fe) > 1.0e-6
+        assert (
+            _relative_vec_difference(reference.bottom.b, fixture["bottom"].b) <= 1.0e-12
+        )
+        assert _relative_vec_difference(reference.top.b, fixture["top"].b) <= 1.0e-12
+        assert reference.bottom.b is not fixture["bottom"].b
         report = run_exact_side_lu_oracle(
             fixture["layout"],
             fixture["bottom"],
             fixture["top"],
             fixture["coupling"],
             rhs,
+            reference=reference,
             factor_solver_type=None,
             solution_consumer=lambda solution, _report: captured.setdefault(
                 "solution", np.asarray(solution.getArray()).copy()
             ),
         )
         assert report["pass"] is True
+        assert report["reference_ownership"] == "borrowed"
+        assert report["lifecycle"]["borrowed_reference_destroyed_by_oracle"] is False
         assert report["solution_handoff"] == "callback_consumed_before_cleanup"
         assert report["inventory"]["bottom_direct_factor_count"] == 1
         assert report["inventory"]["top_direct_factor_count"] == 1
@@ -393,6 +388,8 @@ def test_research_explicit_f_and_oracle_lifecycle(monkeypatch):
         assert report["lifecycle"]["solution_consumer_synchronous"] is True
         assert captured["solution"].shape == (fixture["layout"].local_size,)
     finally:
+        if reference is not None:
+            reference.destroy()
         rhs.destroy()
         for component in components:
             component.b_aux.destroy()

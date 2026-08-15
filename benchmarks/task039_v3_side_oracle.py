@@ -632,10 +632,10 @@ def run_exact_side_lu_oracle(
     restart: int = 90,
     threshold: float = 5.0e-9,
     solution_consumer: Callable[[PETSc.Vec, Mapping[str, Any]], Any] | None = None,
+    reference: Any | None = None,
 ) -> dict[str, Any]:
     """Run one exact-side oracle and consume the solution before cleanup."""
 
-    reference = None
     bottom_components = None
     top_components = None
     bottom_action = None
@@ -646,12 +646,14 @@ def run_exact_side_lu_oracle(
     result = None
     report = None
     reference_destroyed = False
+    reference_owned = reference is None
     try:
-        reference = build_research_independent_hybrid_reference(
-            bottom_system,
-            top_system,
-            coupling,
-        )
+        if reference is None:
+            reference = build_research_independent_hybrid_reference(
+                bottom_system,
+                top_system,
+                coupling,
+            )
         bottom_reference = reference.bottom
         top_reference = reference.top
         bottom_explicit = bottom_reference.F
@@ -762,6 +764,7 @@ def run_exact_side_lu_oracle(
                 "top": dict(top_reference.inventory["research_explicit_dtn"]),
             },
             "solution_handoff": "not_requested",
+            "reference_ownership": "owned" if reference_owned else "borrowed",
         }
         if numerical_pass and inventory_pass and solution_consumer is not None:
             solution_consumer(result.solution, report)
@@ -780,7 +783,7 @@ def run_exact_side_lu_oracle(
             bottom_action.destroy()
         if top_action is not None:
             top_action.destroy()
-        if reference is not None:
+        if reference is not None and reference_owned:
             reference.destroy()
             reference_destroyed = True
         if report is not None:
@@ -794,6 +797,9 @@ def run_exact_side_lu_oracle(
                     and top_action.diagnostics.get("destroyed") is True
                 ),
                 "explicit_reference_destroyed": bool(reference_destroyed),
+                "borrowed_reference_destroyed_by_oracle": bool(
+                    not reference_owned and reference_destroyed
+                ),
                 "solution_consumer_synchronous": bool(
                     report.get("solution_handoff") == "callback_consumed_before_cleanup"
                 ),

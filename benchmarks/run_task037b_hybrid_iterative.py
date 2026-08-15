@@ -248,6 +248,7 @@ class FrozenM10Physics:
     port_power: dict[str, Any]
     traction: dict[str, Any]
     interface_continuity: dict[str, Any]
+    interface_e_projection: dict[str, Any]
     absorption: dict[str, Any]
     external_orders: list[dict[str, Any]]
     order_audit: dict[str, Any]
@@ -1156,6 +1157,7 @@ def run_frozen_m10_physics(
     own_grid = None
     canonical: dict[str, Any] = {}
     cleanup: dict[str, Any] = {}
+    interface_e_projection = dict(validation["interface_e_projection"])
     canonical_pass = False
     if own_physics_pass:
         arrays = {
@@ -1237,6 +1239,7 @@ def run_frozen_m10_physics(
         port_power=port_power,
         traction=traction,
         interface_continuity=interface_continuity,
+        interface_e_projection=interface_e_projection,
         absorption=absorption,
         external_orders=external_orders,
         energy=energy,
