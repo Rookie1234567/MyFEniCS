@@ -224,9 +224,10 @@ def test_w11a_q1_100_is_only_fixed_escalation_and_failure_is_controlled() -> Non
 def test_w11a_mock_lifecycle_never_overlaps_b0_and_physical_stages() -> None:
     q = np.array([1, 0, 0, 0], dtype=np.complex128)
     architecture_source = inspect.getsource(runner._run_m6b_w11a_diagnostic)
+    finalization_source = inspect.getsource(runner._m6b_w11a_finalize_status)
     assert "architecture.clear()" in architecture_source
     assert "release_physical()" in architecture_source
-    assert '"authority_or_runtime"' in architecture_source
+    assert '"authority_or_runtime"' in finalization_source
 
     def run_case(q0_pass: bool) -> list[str]:
         active: str | None = None
@@ -318,13 +319,58 @@ def test_w11a_scope_and_prediction_are_derived_not_formal() -> None:
     prediction = runner._m6b_w11a_predicted_live_set()
     assert scope["beta"] == 0.0
     assert scope["shifted_pc_used"] is False
+    assert scope["warm_precompiled_union"] is True
+    assert scope["jit_union_file_count"] == 40
+    assert scope["runtime_compile_allowed"] is False
+    assert scope["formal_compiler_descendants_must_be_empty"] is True
     assert scope["target_used_for_construction"] is False
     assert scope["parameter_scan"] is False
     assert prediction["derived_not_measured"] is True
     assert prediction["components"]["m5_process_tree_calibrated_peak_bytes"] == 1_183_698_944
+    assert prediction["assumptions"] == {
+        "warm_precompiled_union": True,
+        "jit_union_file_count": 40,
+        "runtime_compiler_process_count": 0,
+        "formal_compiler_descendants_must_be_empty": True,
+    }
+    assert "40-file warm JIT union" in prediction["basis"]
     assert prediction["bytes"] == 1_272_714_790
     assert prediction["bytes"] == runner.M6B_W11A_PREDICTED_LIVE_SET_BYTES
     assert prediction["gate"] is True
+
+
+def test_w11a_execution_gate_rejects_post_measurement_failure() -> None:
+    core = {
+        "status": "pass",
+        "classification": "W11A_NUMERIC_PASS",
+        "checks": {"numeric": True},
+        "problems": [],
+    }
+    status, classification, checks, passed, problems = (
+        runner._m6b_w11a_finalize_status(core, "cache verify failed", None)
+    )
+    assert status == "gate_failed"
+    assert classification == "W11A_EXECUTION_FAIL_AFTER_NUMERIC"
+    assert checks["execution"] is False
+    assert passed is False
+    assert problems == ["execution"]
+
+    _, classification, checks, passed, _ = runner._m6b_w11a_finalize_status(
+        core, None, "final cache verification failed"
+    )
+    assert classification == "W11A_EXECUTION_FAIL_AFTER_NUMERIC"
+    assert checks["execution"] is False
+    assert checks["jit_cache"] is False
+    assert passed is False
+
+    status, classification, checks, passed, problems = (
+        runner._m6b_w11a_finalize_status(None, "worker failed", None)
+    )
+    assert status == "gate_failed"
+    assert classification == "W11A_EXECUTION_FAIL"
+    assert checks["execution"] is False
+    assert passed is False
+    assert problems == ["authority_or_runtime"]
 
 
 def _configure_jit_fixture(

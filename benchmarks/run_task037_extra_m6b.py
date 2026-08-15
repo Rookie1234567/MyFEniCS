@@ -1541,7 +1541,7 @@ def _m6b_w11a_stage_dual_jit_cache(
         for name in M6B_W11A_B0_JIT_FILE_NAMES:
             shutil.copy2(Path(b0_source).resolve() / name, staging / name)
         staging.rename(target)
-    except Exception:
+    except (OSError, shutil.Error):
         if staging.exists():
             shutil.rmtree(staging)
         raise
@@ -4731,6 +4731,10 @@ def _m6b_w11a_scope() -> dict[str, Any]:
         "solver": "offline_one_vector_coarse_diagnostic",
         "beta": 0.0,
         "shifted_pc_used": False,
+        "warm_precompiled_union": True,
+        "jit_union_file_count": M6B_W11A_UNION_JIT_FILE_COUNT,
+        "runtime_compile_allowed": False,
+        "formal_compiler_descendants_must_be_empty": True,
         "fine_space": "uncondensed_fullspace",
         "operator": "M6B physical volume action + matrix-free DtN80",
         "b0": "M4Y packed B0 PC, fixed FGMRES escalation 20_then_100",
@@ -4762,6 +4766,12 @@ def _m6b_w11a_predicted_live_set() -> dict[str, Any]:
         "limit_bytes": M6B_W11A_PREDICTED_LIVE_SET_LIMIT_BYTES,
         "gate": total <= M6B_W11A_PREDICTED_LIVE_SET_LIMIT_BYTES,
         "derived_not_measured": True,
+        "assumptions": {
+            "warm_precompiled_union": True,
+            "jit_union_file_count": M6B_W11A_UNION_JIT_FILE_COUNT,
+            "runtime_compiler_process_count": 0,
+            "formal_compiler_descendants_must_be_empty": True,
+        },
         "components": {
             "m5_process_tree_calibrated_peak_bytes": M6B_W11A_PRODUCTION_BASE_PEAK_BYTES,
             "retained_q_z_p_bytes": 3 * M6B_W11A_ONE_VECTOR_BYTES,
@@ -4770,8 +4780,10 @@ def _m6b_w11a_predicted_live_set() -> dict[str, Any]:
         },
         "basis": (
             "M5 maximum stage/process-tree calibration (1,183,698,944 B) "
-            "already includes the M3Y packed B0 store; only the W11A q/z/p "
-            "vectors, M6A work, and fixed reserve are additive."
+            "already includes the M3Y packed B0 store. This 1,272,714,790 B "
+            "derived bound is valid only with the 40-file warm JIT union and "
+            "zero runtime compiler descendants; only the W11A q/z/p vectors, "
+            "M6A work, and fixed reserve are additive."
         ),
     }
 
@@ -4853,6 +4865,46 @@ def _m6b_w11a_load_authorities(
     if not validate_w11a_authorities(authority):
         raise ValueError("W11A q/target authority identity is not closed")
     return {"q": q, "target": target, "authority": authority}
+
+
+def _m6b_w11a_finalize_status(
+    core_result: Mapping[str, Any] | None,
+    error: str | None,
+    jit_cache_final_error: str | None,
+) -> tuple[str, str, dict[str, Any], bool, list[str]]:
+    execution_ok = error is None and jit_cache_final_error is None
+    if core_result is None:
+        return (
+            "gate_failed",
+            "W11A_EXECUTION_FAIL",
+            {
+                "authority_or_runtime": False,
+                "jit_cache": jit_cache_final_error is None,
+                "execution": False,
+            },
+            False,
+            ["authority_or_runtime"],
+        )
+    checks = dict(core_result["checks"])
+    checks["jit_cache"] = jit_cache_final_error is None
+    checks["execution"] = execution_ok
+    problems = list(core_result["problems"])
+    if not execution_ok:
+        problems.append("execution")
+        return (
+            "gate_failed",
+            "W11A_EXECUTION_FAIL_AFTER_NUMERIC",
+            checks,
+            False,
+            problems,
+        )
+    return (
+        core_result["status"],
+        core_result["classification"],
+        checks,
+        all(checks.values()),
+        problems,
+    )
 
 
 def _run_m6b_w11a_diagnostic(
@@ -5344,21 +5396,14 @@ def _run_m6b_w11a_diagnostic(
         )
     except (OSError, TypeError, ValueError, KeyError) as exc:
         jit_cache_final_error = f"{type(exc).__name__}: {exc}"
+    if jit_cache_final_error is not None and error is None:
+        error = f"jit_cache verification: {jit_cache_final_error}"
     source_end = h2b._light_source()
-    if core_result is not None:
-        status = core_result["status"]
-        classification = core_result["classification"]
-        checks = dict(core_result["checks"])
-        checks["jit_cache"] = jit_cache_final_error is None
-        w11a_pass = all(checks.values())
-    else:
-        status = "gate_failed"
-        classification = "W11A_EXECUTION_FAIL"
-        checks = {
-            "authority_or_runtime": False,
-            "jit_cache": jit_cache_final_error is None,
-        }
-        w11a_pass = False
+    status, classification, checks, w11a_pass, problems = (
+        _m6b_w11a_finalize_status(
+            core_result, error, jit_cache_final_error
+        )
+    )
     payload = {
         "schema": M6B_W11A_SCHEMA,
         "phase": M6B_W11A_PHASE,
@@ -5383,11 +5428,7 @@ def _run_m6b_w11a_diagnostic(
         "action_audit": action_audit,
         "core": core_result,
         "checks": checks,
-        "problems": (
-            ["authority_or_runtime"]
-            if core_result is None
-            else core_result["problems"]
-        ),
+        "problems": problems,
         "physical_action_count": physical_call_count,
         "error": error,
         "source_at_start": source_start,
