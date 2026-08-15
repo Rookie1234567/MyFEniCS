@@ -4592,7 +4592,7 @@ def _m6b_w10a_numeric_gate(analysis: Mapping[str, Any], measurements: Mapping[st
     checks = {
         "rank": analysis.get("rank") == M6B_W10A_COLUMNS,
         "gram_hermitian": _finite_number(analysis.get("gram_hermitian_defect")) and analysis["gram_hermitian_defect"] <= 1.0e-11,
-        "gram_eigenvalues": (
+        "gram_eigenvalues": bool(
             analysis.get("gram_valid") is True
             and _finite_number(analysis.get("eig_min"))
             and _finite_number(analysis.get("eig_max"))

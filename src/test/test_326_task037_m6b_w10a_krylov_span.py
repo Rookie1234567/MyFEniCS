@@ -205,6 +205,55 @@ def test_w10a_parser_and_target_gate_do_not_trust_top_level_pass(tmp_path):
     assert gate["problems"] == ["target_rho"]
 
 
+def test_w10a_numpy_bool_gate_is_converted_before_evidence():
+    analysis = {
+        "rank": runner.M6B_W10A_COLUMNS,
+        "gram_hermitian_defect": 0.0,
+        "gram_valid": True,
+        "eig_min": np.float64(0.5),
+        "eig_max": np.float64(1.0),
+        "negative_eigenvalue_limit": np.float64(1.0e-12),
+        "finite": True,
+    }
+    measurements = {
+        "control_w5_iter200": {
+            "finite": True,
+            "normal_closure": 0.0,
+            "captured_energy_ratio": 1.0,
+            "captured_actionable_energy_ratio": 0.0,
+            "rho_full": 0.0,
+            "rho_optimistic": 1.0,
+        },
+        "target_w7_cumulative400": {
+            "finite": True,
+            "normal_closure": 0.0,
+            "captured_energy_ratio": 0.05,
+            "captured_actionable_energy_ratio": 0.05,
+            "rho_full": 0.99,
+            "rho_optimistic": 0.95,
+        },
+    }
+    gate = runner._m6b_w10a_numeric_gate(analysis, measurements, True)
+    assert type(gate["checks"]["gram_eigenvalues"]) is bool
+    skeleton = {
+        "schema": runner.M6B_W10A_CHECK_SCHEMA,
+        "phase": runner.M6B_W10A_PHASE,
+        "status": "gate_failed",
+        "classification": "W10A_OPTIMISTIC_TARGET_RHO_FAIL",
+        "diagnostic_only": True,
+        "formal_pass": False,
+        "pde_pass": False,
+        "official_rta": False,
+        "analysis": {"eig_min": 0.5, "eig_max": 1.0},
+        "numeric_gate": gate,
+        "checks": gate["checks"],
+        "measurements": measurements,
+    }
+    evidence = runner._attach_evidence(skeleton)
+    assert runner._evidence_valid(evidence)
+    runner._canonical_json(evidence)
+
+
 def test_w10a_captured_energy_range_is_fail_closed():
     invalid = span.project_from_gram(
         np.eye(1, dtype=np.complex128),
