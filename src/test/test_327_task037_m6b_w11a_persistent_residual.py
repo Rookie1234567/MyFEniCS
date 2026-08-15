@@ -314,7 +314,7 @@ def test_w11a_scope_and_prediction_are_derived_not_formal() -> None:
     scope = runner._m6b_w11a_scope()
     prediction = runner._m6b_w11a_predicted_live_set()
     assert scope["beta"] == 0.0
-    assert scope["shifted_pc_beta"] == 1.0
+    assert scope["shifted_pc_used"] is False
     assert scope["target_used_for_construction"] is False
     assert scope["parameter_scan"] is False
     assert prediction["derived_not_measured"] is True

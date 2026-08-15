@@ -4559,7 +4559,7 @@ def _m6b_w11a_scope() -> dict[str, Any]:
         "phase": M6B_W11A_PHASE,
         "solver": "offline_one_vector_coarse_diagnostic",
         "beta": 0.0,
-        "shifted_pc_beta": 1.0,
+        "shifted_pc_used": False,
         "fine_space": "uncondensed_fullspace",
         "operator": "M6B physical volume action + matrix-free DtN80",
         "b0": "M4Y packed B0 PC, fixed FGMRES escalation 20_then_100",
