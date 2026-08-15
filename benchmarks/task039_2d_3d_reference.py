@@ -90,6 +90,32 @@ def _field(left: np.ndarray, right: np.ndarray, limit: float) -> dict[str, Any]:
     }
 
 
+def _periodic_coordinate_reindex(
+    source_x: np.ndarray, target_x: np.ndarray, period: float
+) -> np.ndarray:
+    source = np.asarray(source_x, dtype=np.float64)
+    target = np.asarray(target_x, dtype=np.float64)
+    if source.ndim != 1 or target.ndim != 1 or source.shape != target.shape:
+        raise ValueError("periodic x coordinates have incompatible shape")
+    if not math.isfinite(period) or period <= 0.0:
+        raise ValueError("periodic x coordinate period is invalid")
+    source_mod = np.mod(source, period)
+    target_mod = np.mod(target, period)
+    source_order = np.argsort(source_mod, kind="stable")
+    target_order = np.argsort(target_mod, kind="stable")
+    source_sorted = source_mod[source_order]
+    target_sorted = target_mod[target_order]
+    if source_sorted.size > 1 and np.any(np.diff(source_sorted) <= 1.0e-12):
+        raise ValueError("periodic x coordinates contain duplicate source points")
+    if target_sorted.size > 1 and np.any(np.diff(target_sorted) <= 1.0e-12):
+        raise ValueError("periodic x coordinates contain duplicate target points")
+    if not np.allclose(source_sorted, target_sorted, rtol=0.0, atol=1.0e-12):
+        raise ValueError("2D/3D selected x coordinates are not periodic-equivalent")
+    reindex = np.empty(source_order.size, dtype=np.intp)
+    reindex[target_order] = source_order
+    return reindex
+
+
 def _load_configs(two_d: Mapping[str, Any], three_d: Mapping[str, Any]):
     cfg2 = _json(Path(two_d["root"]) / "resolved_config.json", "2D resolved config")
     cfg3 = _json(Path(three_d["root"]) / "resolved_config.json", "3D resolved config")
@@ -133,10 +159,15 @@ def _identity(
         raise ValueError("kx identity failed")
     if not kz["pass"]:
         raise ValueError("kz identity failed")
-    if not np.allclose(
-        cfg3.s_polarization_vector, (0.0, 1.0, 0.0), rtol=1e-12, atol=1e-13
+    polarization = np.asarray(cfg3.s_polarization_vector)
+    polarization_imag_tolerance = 64.0 * np.finfo(np.float64).eps
+    polarization_imag_max = float(np.max(np.abs(polarization.imag)))
+    if (
+        not np.all(np.isfinite(polarization))
+        or polarization_imag_max > polarization_imag_tolerance
+        or not np.allclose(polarization.real, (0.0, 1.0, 0.0), rtol=1e-12, atol=1e-13)
     ):
-        raise ValueError("3D S polarization is not Ey")
+        raise ValueError("3D S polarization is not real Ey")
     beta = np.sqrt((cfg2.k0 * cfg2.n_air) ** 2 - cfg2.kx**2 + 0j)
     power = _metric(
         0.5 * float(np.real(beta)) * cfg2.period_x,
@@ -154,7 +185,7 @@ def _identity(
         "polarization": "S/TE",
         "kx": kx,
         "kz": kz,
-        "s_polarization_3d": np.asarray(cfg3.s_polarization_vector).tolist(),
+        "s_polarization_3d": polarization.real.tolist(),
         "materials": materials,
         "incident_power": power,
     }
@@ -213,11 +244,12 @@ def _observables_and_closure(two_d: Mapping[str, Any], three_d: Mapping[str, Any
     }
 
 
-def _fields(two_d: Mapping[str, Any], three_d: Mapping[str, Any]) -> dict[str, Any]:
+def _fields(
+    two_d: Mapping[str, Any], three_d: Mapping[str, Any], period_x: float
+) -> dict[str, Any]:
     f2, ref = two_d["fields"], three_d["reference"]["arrays"]
     x2, z2, x3, z3 = map(np.asarray, (f2["x_nm"], f2["z_nm"], ref["x_nm"], ref["z_nm"]))
-    if x2.shape != x3.shape or not np.array_equal(x2, x3):
-        raise ValueError("2D/3D selected x coordinates are not exact")
+    x_reindex = _periodic_coordinate_reindex(x2, x3, period_x)
     i2, i3 = [], []
     for z in COMMON_Z:
         a, b = np.flatnonzero(z2 == z), np.flatnonzero(z3 == z)
@@ -236,9 +268,12 @@ def _fields(two_d: Mapping[str, Any], three_d: Mapping[str, Any]) -> dict[str, A
         raise ValueError("Full3D selected field shape or values are invalid")
     ey, hx, hz = e3[:, :, :, 1], h3[:, :, :, 0], h3[:, :, :, 2]
     ey_mean, hx_mean, hz_mean = ey.mean(axis=1), hx.mean(axis=1), hz.mean(axis=1)
-    e_gate = _field(np.asarray(f2["electric_y_V_per_m"])[i2], ey_mean, E_LIMIT)
-    hx_gate = _field(np.asarray(f2["magnetic_x_A_per_m"])[i2], hx_mean, H_LIMIT)
-    hz_gate = _field(np.asarray(f2["magnetic_z_A_per_m"])[i2], hz_mean, H_LIMIT)
+    e2 = np.asarray(f2["electric_y_V_per_m"])[i2][:, x_reindex]
+    hx2 = np.asarray(f2["magnetic_x_A_per_m"])[i2][:, x_reindex]
+    hz2 = np.asarray(f2["magnetic_z_A_per_m"])[i2][:, x_reindex]
+    e_gate = _field(e2, ey_mean, E_LIMIT)
+    hx_gate = _field(hx2, hx_mean, H_LIMIT)
+    hz_gate = _field(hz2, hz_mean, H_LIMIT)
 
     def den(a: np.ndarray) -> float:
         return max(float(np.linalg.norm(a)), 1e-30)
@@ -261,10 +296,7 @@ def _fields(two_d: Mapping[str, Any], three_d: Mapping[str, Any]) -> dict[str, A
         e3[:, :, :, 0] * np.conj(h3[:, :, :, 1])
         - e3[:, :, :, 1] * np.conj(h3[:, :, :, 0])
     ).mean(axis=1)
-    flux2 = -0.5 * np.real(
-        np.asarray(f2["electric_y_V_per_m"])[i2]
-        * np.conj(np.asarray(f2["magnetic_x_A_per_m"])[i2])
-    )
+    flux2 = -0.5 * np.real(e2 * np.conj(hx2))
     flux_absolute = float(np.linalg.norm(flux2 - flux3))
     flux_denominator = max(
         float(np.linalg.norm(flux2)), float(np.linalg.norm(flux3)), 1.0e-30
@@ -394,7 +426,10 @@ def compare_2d_3d_reference(
     cfg2, cfg3 = _load_configs(two_d, three_d)
     identity = _identity(cfg2, cfg3, two_d, three_d)
     observables, closure = _observables_and_closure(two_d, three_d)
-    fields, orders = _fields(two_d, three_d), _orders(two_d, three_d)
+    fields, orders = (
+        _fields(two_d, three_d, float(cfg3.period_x)),
+        _orders(two_d, three_d),
+    )
     gates = {
         "identity": identity["incident_power"]["pass"]
         and all(x["pass"] for x in identity["materials"].values()),

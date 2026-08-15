@@ -153,6 +153,9 @@ def test_2d_3d_identity_and_all_y_reduction_pass(patched):
 def test_incident_power_uses_relative_identity_gate(patched, monkeypatch):
     patched["cfg2"].period_x = 1.0e-10
     patched["cfg3"].period_x = 1.0e-10
+    small_period_x = np.asarray([0.0, 2.5e-11, 5.0e-11, 7.5e-11])
+    patched["two_d"]["fields"]["x_nm"] = small_period_x
+    patched["three_d"]["reference"]["arrays"]["x_nm"] = small_period_x.copy()
     expected = 0.5 * np.sqrt(0.75) * patched["cfg2"].period_x
     absolute_delta = 5.0e-13
     monkeypatch.setattr(
@@ -169,6 +172,17 @@ def test_incident_power_uses_relative_identity_gate(patched, monkeypatch):
     assert not power["pass"]
     assert result["pass"] is False
     assert result["orders"]["leakage"]["aggregate"]["pass"] is True
+
+
+def test_complex_polarization_is_json_native(patched):
+    patched["cfg3"].s_polarization_vector = np.asarray(
+        [0.0 + 0.0j, 1.0 + 0.0j, 0.0 + 0.0j], dtype=np.complex128
+    )
+    result = checker.compare_2d_3d_reference("2d", "3d")
+    assert result["identity"]["s_polarization_3d"] == [0.0, 1.0, 0.0]
+    patched["cfg3"].s_polarization_vector[1] += 1.0e-12j
+    with pytest.raises(ValueError, match="not real Ey"):
+        checker.compare_2d_3d_reference("2d", "3d")
 
 
 def test_shape_mismatch_fails_closed(patched):
@@ -239,3 +253,36 @@ def test_missing_primary_order_fails_closed(patched):
     assert result["pass"] is False
     assert result["orders"]["missing_primary_count"] == 1
     assert result["gates"]["primary_m_orders"] is False
+
+
+def test_periodic_x_shift_reindexes_fields_and_passes(patched):
+    source_x = np.asarray([-1.5, -0.5, 0.5, 1.5])
+    target_x = np.asarray([0.5, 1.5, 48.5, 49.5])
+    reindex = checker._periodic_coordinate_reindex(source_x, target_x, 50.0)
+    assert reindex.tolist() == [2, 3, 0, 1]
+    source_values = np.asarray([10.0, 20.0, 30.0, 40.0])
+    assert np.array_equal(source_values[reindex], [30.0, 40.0, 10.0, 20.0])
+    patched["two_d"]["fields"]["x_nm"] = source_x
+    patched["three_d"]["reference"]["arrays"]["x_nm"] = target_x
+    e2 = np.tile(source_values, (7, 1)).astype(np.complex128)
+    hx2 = np.tile(source_values + 1.0, (7, 1)).astype(np.complex128)
+    hz2 = np.tile(source_values + 2.0, (7, 1)).astype(np.complex128)
+    patched["two_d"]["fields"]["electric_y_V_per_m"] = e2
+    patched["two_d"]["fields"]["magnetic_x_A_per_m"] = hx2
+    patched["two_d"]["fields"]["magnetic_z_A_per_m"] = hz2
+    e3 = patched["three_d"]["reference"]["arrays"]["E_V_per_m"]
+    h3 = patched["three_d"]["reference"]["arrays"]["H_A_per_m"]
+    e3[:, :, :, 1] = source_values[reindex]
+    h3[:, :, :, 0] = source_values[reindex] + 1.0
+    h3[:, :, :, 2] = source_values[reindex] + 2.0
+    result = checker.compare_2d_3d_reference("2d", "3d")
+    assert result["pass"] is True
+
+
+def test_non_equivalent_periodic_x_coordinates_fail_closed(patched):
+    patched["two_d"]["fields"]["x_nm"] = np.asarray([-1.5, -0.5, 0.5, 1.5])
+    patched["three_d"]["reference"]["arrays"]["x_nm"] = np.asarray(
+        [0.5, 1.5, 48.5, 49.0]
+    )
+    with pytest.raises(ValueError, match="periodic-equivalent"):
+        checker.compare_2d_3d_reference("2d", "3d")
