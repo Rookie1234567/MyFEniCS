@@ -279,6 +279,44 @@ M6B_W8A_SCHEMA = "task037.extra.m6b.w8a.z-bubble-range.builder.v1"
 M6B_W8A_PHASE = "w8a_z_bubble_range_builder"
 M6B_W8A_WATCHDOG_SCHEMA = "task037.extra.m6b.w8a.watchdog.v1"
 M6B_W8A_FORMAL_CHECK_SCHEMA = "task037.extra.m6b.w8a.formal-check.v1"
+M6B_W8A_RECOVERY_SCHEMA = "task037.extra.m6b.w8a.post-numeric-recovery.v1"
+M6B_W8A_RECOVERY_PHASE = "w8a_post_numeric_recovery"
+M6B_W8A_RECOVERY_PRODUCER_SHA = "86c74a2b0339817a2c7756c9fde778be1f36f2e3"
+M6B_W8A_RECOVERY_RAW_RELATIVE_PATH = (
+    "benchmarks/artifacts/task037_extra_development/"
+    "m6b_w8a_86c74a2_builder_run1"
+)
+M6B_W8A_RECOVERY_WATCHDOG_PATH = "/tmp/task037_m6b_w8a_86c74a2_watchdog_run1"
+M6B_W8A_RECOVERY_WATCHDOG_SUMMARY_SHA256 = (
+    "5e4f0d4b9b8227215b1e2144a676ed4eb81faa1c8e5398d3fbf683e1eb15aba0"
+)
+M6B_W8A_RECOVERY_RAW_FILE_SHA256 = {
+    "w8a_progress.jsonl": "e702f68c94fc286f1e185a7908d8fc8dfcfb8aedf334fc7f504ae22bb0ef2cc5",
+    "sparse_range_store/manifest.json": "2e18282bc07d53acaa96255bec74e0afa33d0a146b774005427b6e0704f2404a",
+    "sparse_range_store/z_data.npy": "1a7d2a15fd9d8e43f7566727ffa9542802c42600fc0ef004b6380f3fa20e533c",
+    "sparse_range_store/z_indices.npy": "fb62a537df6b12dae7f65268842998b266116ae4dddaeb91b461d17b159cffd9",
+    "sparse_range_store/z_indptr.npy": "383f19295adf30e5c8dcbb48f3dc7a29e6c7b73fca4d5a5ef7522ce4aabee7a4",
+    "sparse_range_store/gram.npy": "b6fceeaeb54f841eb560362d6e9532b5c32c9c58bec41f19e495914908783250",
+    "sparse_range_store/r_factor.npy": "f23893cb0db71244095a244e61ed1732e75d88f3b247ba5c9a19ed7957032b72",
+    "az_scratch/new_columns.bin": "bf1e05cf9259e06eb0c579e25960916f982f3969a646a180a8072b0594c68f26",
+}
+M6B_W8A_RECOVERY_WATCHDOG_FILE_SHA256 = {
+    "w8a_watchdog_summary.json": M6B_W8A_RECOVERY_WATCHDOG_SUMMARY_SHA256,
+    "w8a_z_bubble_range_builder_timeline.jsonl": "dd00d8d70b58232c7a78275459ce967cac561b4b027184c0d76db5ebc735ee47",
+    "w8a_z_bubble_range_builder_stdout.txt": "ce4b14020b0f19cbc166ff4947a922a04cf5eea0129b4eb0b3cdeffd4ee12769",
+    "w8a_z_bubble_range_builder_root_pid.json": "b3ddc2774cc0c3ba3c4a1586543e3640ec80a0b7ebe6842e65d01a0ae1cb6312",
+}
+M6B_W8A_COMPANION_SCHEMA = "task037.extra.m6b.w8a.companion-probe.v1"
+M6B_W8A_COMPANION_PHASE = "w8a_companion_probe"
+M6B_W8A_COMPANION_WATCHDOG_SCHEMA = (
+    "task037.extra.m6b.w8a.companion-watchdog.v1"
+)
+M6B_W8A_COMPANION_TIMEOUT_SECONDS = 7_200.0
+M6B_W8A_COMPANION_SENTINEL_COLUMNS = (390, 459, 529)
+M6B_W8A_RECOVERY_ALLOWED_CHANGED_PATHS = frozenset({
+    "benchmarks/run_task037_extra_m6b.py",
+    "src/test/test_324_task037_m6b_w8_bubbles.py",
+})
 M6B_W8A_LEGACY_COLUMNS = 390
 M6B_W8A_ADDED_COLUMNS = 140
 M6B_W8A_COLUMNS = 530
@@ -1700,6 +1738,8 @@ def _run_m6b_w6a_builder(
                 "static_condensation": False,
                 "trace_slab_pc": False,
                 "dtn_matrix_free": True,
+                "physical_form_beta": 0.0,
+                "coarse_shifted_beta": 1.0,
             },
             legacy_basis=legacy,
             progress=progress,
@@ -1964,6 +2004,63 @@ def _m6b_w6a_fe_audit_valid(value: Any) -> bool:
             if (
                 not isinstance(record, Mapping)
                 or record.get("column_index") != M6B_W6A_LEGACY_COLUMNS + offset
+                or type(record.get("nnz")) is not int
+                or record["nnz"] <= 0
+                or not _finite_number(record.get("norm"))
+                or abs(float(record["norm"]) - 1.0) > 1.0e-12
+                or not _m6b_w6a_valid_sha(record.get("indices_array_sha256"))
+                or not _m6b_w6a_valid_sha(record.get("values_array_sha256"))
+            ):
+                return False
+        return True
+    except (ImportError, IndexError, KeyError, TypeError, ValueError):
+        return False
+
+
+def _m6b_w8a_fe_audit_valid(value: Any) -> bool:
+    try:
+        import numpy as np
+        from src.common.config_3d import target_stage4_config
+        from src.solvers.hcurl_m6b_w6a_multi_order_range import _array_sha256
+        from src.solvers.hcurl_m6b_w8a_z_bubble_range import fixed_w8a_column_specs
+
+        if not isinstance(value, Mapping) or value.get("column_count") != M6B_W8A_ADDED_COLUMNS:
+            return False
+        planes = np.asarray(value.get("z_planes"), dtype=np.float64)
+        target_cfg = target_stage4_config(degree=6, h_nm=10.0)
+        expected_planes = np.linspace(
+            float(target_cfg.domain_z_min),
+            float(target_cfg.domain_z_max),
+            M6B_W8A_INTERVALS + 1,
+            dtype=np.float64,
+        )
+        if (
+            planes.shape != (M6B_W8A_INTERVALS + 1,)
+            or not np.all(np.isfinite(planes))
+            or not np.all(np.diff(planes) > 0.0)
+            or value.get("domain_z_min") != float(target_cfg.domain_z_min)
+            or value.get("domain_z_max") != float(target_cfg.domain_z_max)
+            or not np.array_equal(planes, expected_planes)
+            or value.get("z_planes_array_sha256") != _array_sha256(planes)
+            or value.get("dense_candidates_retained") is not False
+            or value.get("fixed_order") is not True
+            or value.get("component") != M6B_W8A_COMPONENT
+            or value.get("diffraction_orders") != list(M6B_W8A_ORDERS)
+            or value.get("bubble_degrees") != list(M6B_W8A_BUBBLE_DEGREES)
+        ):
+            return False
+        records = value.get("column_audit")
+        expected = fixed_w8a_column_specs()[M6B_W8A_LEGACY_COLUMNS:]
+        if not isinstance(records, list) or len(records) != len(expected):
+            return False
+        for spec, record in zip(expected, records):
+            if (
+                not isinstance(record, Mapping)
+                or record.get("column_index") != spec.column_index
+                or record.get("order_m") != spec.order_m
+                or record.get("interval") != spec.interval
+                or record.get("bubble_degree") != spec.bubble_degree
+                or record.get("component") != spec.component
                 or type(record.get("nnz")) is not int
                 or record["nnz"] <= 0
                 or not _finite_number(record.get("norm"))
@@ -2382,6 +2479,7 @@ def _run_m6b_w8a_builder(
 
     h2b = __import__("benchmarks.run_task037_extra_h2b", fromlist=["*"])
     m6a = __import__("benchmarks.run_task037_extra_m6", fromlist=["*"])
+    from benchmarks.run_task037_extra_h2 import _jsonable
     from src.solvers.hcurl_fullspace_dtn import (
         build_fullspace_dtn_action,
         build_fullspace_dtn_carrier_from_surface,
@@ -2702,6 +2800,663 @@ def _run_m6b_w8a_builder(
         gc.collect()
 
 
+def _run_m6b_w8a_companion(
+    run_dir: Path,
+    w8a_raw_dir: Path,
+    w6a_raw_dir: Path,
+    jit_cache_source: Path,
+    expected_source_sha: str,
+) -> int:
+    """Re-establish W8A's FE/operator identity with three fixed actions."""
+
+    import gc
+    import shutil
+    import time
+
+    import numpy as np
+    from mpi4py import MPI
+
+    h2b = __import__("benchmarks.run_task037_extra_h2b", fromlist=["*"])
+    m6a = __import__("benchmarks.run_task037_extra_m6", fromlist=["*"])
+    from benchmarks.run_task037_extra_h2 import _jsonable
+    from src.solvers.hcurl_fullspace_dtn import (
+        build_fullspace_dtn_action,
+        build_fullspace_dtn_carrier_from_surface,
+    )
+    from src.solvers.hcurl_h2b_m6b_shifted_patch_pc import (
+        M6BNumpyOuterActionBridge,
+        build_m6b_outer_mat,
+        build_m6b_volume_form,
+    )
+    from src.solvers.hcurl_m6b_w8a_z_bubble_range import (
+        build_w8a_bubble_columns_from_fe,
+        _array_sha256,
+    )
+    from src.solvers.disk_backed_flexible_gmres import RawPositionalColumnStore
+    from src.solvers.hcurl_rank_one_mpc_action import build_task037_extra_h1r2_mpc_action
+
+    run_dir = Path(run_dir).resolve()
+    w8a_raw_dir = Path(w8a_raw_dir).resolve()
+    w6a_raw_dir = Path(w6a_raw_dir).resolve()
+    jit_cache_source = Path(jit_cache_source).resolve()
+    if run_dir.exists():
+        raise FileExistsError(f"W8A companion refuses existing directory: {run_dir}")
+    if MPI.COMM_WORLD.size != 1:
+        raise RuntimeError("W8A companion is fixed to MPI1")
+    if expected_source_sha == M6B_W8A_RECOVERY_PRODUCER_SHA:
+        raise ValueError("W8A companion requires a post-producer source")
+    if w8a_raw_dir != (ROOT / M6B_W8A_RECOVERY_RAW_RELATIVE_PATH).resolve():
+        raise ValueError("W8A companion requires the frozen W8A producer raw")
+    frozen_files = _m6b_w8a_recovery_artifacts(
+        w8a_raw_dir, Path(M6B_W8A_RECOVERY_WATCHDOG_PATH)
+    )
+    if frozen_files["pass"] is not True:
+        raise ValueError("W8A companion frozen producer artifacts differ")
+    w6a_authority = _m6b_w8a_w6a_authority(w6a_raw_dir)
+    _m6b_w8a_legacy_store_dir(w6a_raw_dir)
+    w5_authority = _m6b_w6a_w5_compact_authority()
+    if not jit_cache_source.is_dir():
+        raise FileNotFoundError("W8A companion JIT source is missing")
+    frozen_compiler = w5_authority["factor_compiler"]
+    h2a = h2b._lazy_h2a()
+    runtime_identity = _m6b_runtime_identity(
+        h2b,
+        h2a,
+        MPI.COMM_WORLD,
+        compiler_probe=False,
+        compiler=frozen_compiler,
+    )
+    if not _m6b_w6a_runtime_valid(runtime_identity, frozen_compiler=frozen_compiler):
+        raise RuntimeError("W8A companion runtime identity is not closed")
+    source_start = h2b._light_source()
+    if (
+        source_start.get("source_commit_full_sha") != expected_source_sha
+        or not _m6b_w6a_source_valid(source_start)
+    ):
+        raise RuntimeError("W8A companion source identity is not clean or expected")
+
+    run_dir.mkdir(parents=True)
+    cache_dir = run_dir / "jit_cache"
+    shutil.copytree(jit_cache_source, cache_dir)
+    progress_path = run_dir / "w8a_companion_progress.jsonl"
+    started = time.perf_counter()
+
+    def emit(event: str, **fields: Any) -> None:
+        _m6b_w8a_companion_progress_emit(
+            progress_path,
+            event,
+            elapsed_wall_seconds=float(time.perf_counter() - started),
+            **fields,
+        )
+        print(json.dumps({"event": event, **fields}, sort_keys=True), flush=True)
+
+    source_cache_before = _m6b_w6a_cache_record(h2b, jit_cache_source)
+    target_cache_before = _m6b_w6a_cache_record(h2b, cache_dir)
+    if (
+        source_cache_before["inventory_sha256"] != M6B_W8A_W6A_JIT_INVENTORY_SHA256
+        or source_cache_before != target_cache_before
+    ):
+        raise ValueError("W8A companion JIT cache authority differs")
+    emit("authority_validated", source_sha=expected_source_sha)
+
+    physical_action = dtn_action = outer_mat = outer_context = None
+    bridge = template = None
+    surface_assemblers = None
+    old_az_store = None
+    try:
+        cfg, mesh_data, function_space, floquet, modes = m6a._production_objects(
+            run_dir, mesh_name="m6b_w8a_companion_mesh"
+        )
+        identity = m6a._p6_identity(mesh_data, function_space, floquet)
+        expected_identity = {
+            "global_cells": M6B_GLOBAL_CELLS,
+            "local_cells": M6B_GLOBAL_CELLS,
+            "local_nloc": M6B_LOCAL_NLOC,
+            "global_rows": M6B_GLOBAL_ROWS,
+            "constraint_count": M6B_CONSTRAINTS,
+        }
+        if identity != expected_identity:
+            raise ValueError(f"W8A companion p6 identity differs: {identity}")
+        emit("mesh_ready", global_cells=identity["global_cells"])
+        emit("space_ready", global_rows=identity["global_rows"])
+        emit("floquet_mpc_ready", constraint_count=identity["constraint_count"])
+
+        physical_ufl, epsilon, abs_epsilon, beta, tag_coverage = build_m6b_volume_form(
+            function_space, mesh_data, cfg, beta=0.0
+        )
+        physical_action = build_task037_extra_h1r2_mpc_action(
+            physical_ufl,
+            floquet.mpc,
+            task037_extra_h1r2=True,
+            jit_options=h2b._expected_jit_options(cache_dir),
+        )
+        source_after_forward = _m6b_w6a_cache_record(h2b, jit_cache_source)
+        target_after_forward = _m6b_w6a_cache_record(h2b, cache_dir)
+        if source_after_forward != source_cache_before or target_after_forward != target_cache_before:
+            raise ValueError("W8A companion forward form changed the frozen JIT cache")
+        emit("cache_ready", inventory_sha256=target_after_forward["inventory_sha256"])
+        surface_assemblers = m6a._surface_assemblers(
+            function_space, mesh_data, cfg, modes, cache_dir
+        )
+        dtn_carrier = build_fullspace_dtn_carrier_from_surface(
+            modes, surface_assemblers, floquet.mpc, cfg, expected_mode_count=80
+        )
+        dtn_action = build_fullspace_dtn_action(dtn_carrier, comm=MPI.COMM_WORLD)
+        outer_mat, outer_context = build_m6b_outer_mat(
+            physical_action,
+            dtn_action,
+            owned_rows=M6B_GLOBAL_ROWS,
+            global_rows=M6B_GLOBAL_ROWS,
+            comm=MPI.COMM_WORLD,
+        )
+        template = outer_mat.createVecRight()
+        ownership = tuple(int(value) for value in template.getOwnershipRange())
+        bridge = M6BNumpyOuterActionBridge(outer_context, template)
+        emit("outer_ready", tag_coverage=tag_coverage)
+
+        emit("bubble_spec_ready", columns=M6B_W8A_ADDED_COLUMNS, intervals=M6B_W8A_INTERVALS)
+        columns, fe_audit = build_w8a_bubble_columns_from_fe(
+            function_space,
+            mesh_data,
+            floquet,
+            template,
+            cfg,
+            ownership_range=ownership,
+        )
+        if not _m6b_w8a_fe_audit_valid(fe_audit):
+            raise ValueError("W8A companion FE audit is not closed")
+        del columns
+        gc.collect()
+        emit("fe_audit_ready", column_count=M6B_W8A_ADDED_COLUMNS)
+
+        manifest = _read_json(w8a_raw_dir / "sparse_range_store/manifest.json")
+        arrays = manifest.get("arrays") if isinstance(manifest, Mapping) else None
+        if not isinstance(arrays, Mapping):
+            raise ValueError("W8A companion sparse authority is missing")
+        z_data = np.load(w8a_raw_dir / "sparse_range_store/z_data.npy", mmap_mode="r", allow_pickle=False)
+        z_indices = np.load(w8a_raw_dir / "sparse_range_store/z_indices.npy", mmap_mode="r", allow_pickle=False)
+        z_indptr = np.load(w8a_raw_dir / "sparse_range_store/z_indptr.npy", mmap_mode="r", allow_pickle=False)
+        if (
+            z_data.dtype != np.dtype(np.complex128)
+            or z_indices.dtype != np.dtype(np.int32)
+            or z_indptr.dtype != np.dtype(np.int32)
+            or z_indptr.shape != (M6B_W8A_COLUMNS + 1,)
+        ):
+            raise ValueError("W8A companion sparse authority arrays are invalid")
+        old_az_path = w8a_raw_dir / "az_scratch/new_columns.bin"
+        if _artifact(w8a_raw_dir, "az_scratch/new_columns.bin").get("sha256") != M6B_W8A_RECOVERY_RAW_FILE_SHA256["az_scratch/new_columns.bin"]:
+            raise ValueError("W8A companion old AZ scratch authority differs")
+        old_az_store = RawPositionalColumnStore.open_readonly(
+            old_az_path, M6B_GLOBAL_ROWS, M6B_W8A_ADDED_COLUMNS
+        )
+        sentinel_actions: list[dict[str, Any]] = []
+        old_az_buffer = np.empty(M6B_GLOBAL_ROWS, dtype=np.complex128)
+        for column in M6B_W8A_COMPANION_SENTINEL_COLUMNS:
+            first, last = int(z_indptr[column]), int(z_indptr[column + 1])
+            vector = np.zeros(M6B_GLOBAL_ROWS, dtype=np.complex128)
+            vector[z_indices[first:last]] = z_data[first:last]
+            observed = np.asarray(bridge.apply(vector))
+            if observed.shape != (M6B_GLOBAL_ROWS,) or observed.dtype != np.dtype(np.complex128) or not np.all(np.isfinite(observed)):
+                raise ValueError(f"W8A companion sentinel {column} is invalid")
+            old_az_store.read_column(column - M6B_W8A_LEGACY_COLUMNS, old_az_buffer)
+            relative_error = float(
+                np.linalg.norm(observed - old_az_buffer)
+                / max(np.linalg.norm(old_az_buffer), np.finfo(float).tiny)
+            )
+            if not np.isfinite(relative_error) or relative_error > 1.0e-11:
+                raise ValueError(f"W8A companion sentinel {column} differs from frozen AZ")
+            sentinel_actions.append({
+                "column_index": column,
+                "input_array_sha256": _array_sha256(vector),
+                "old_az_array_sha256": _array_sha256(old_az_buffer),
+                "output_array_sha256": _array_sha256(observed),
+                "relative_error": relative_error,
+                "finite": True,
+            })
+            del vector, observed
+        del old_az_buffer, z_data, z_indices, z_indptr, arrays, manifest
+        gc.collect()
+        emit("sentinel_ready", columns=list(M6B_W8A_COMPANION_SENTINEL_COLUMNS), action_count=3)
+
+        source_after_surface = _m6b_w6a_cache_record(h2b, jit_cache_source)
+        target_after_surface = _m6b_w6a_cache_record(h2b, cache_dir)
+        source_final = _m6b_w6a_cache_record(h2b, jit_cache_source)
+        target_final = _m6b_w6a_cache_record(h2b, cache_dir)
+        if source_after_surface != source_cache_before or target_after_surface != target_after_forward or source_final != source_after_surface or target_final != target_after_surface:
+            raise ValueError("W8A companion surface path changed the frozen JIT cache")
+        old_summary = w6a_authority["summary"]
+        manifest = _read_json(w8a_raw_dir / "sparse_range_store/manifest.json")
+        new_retained_bytes = int(
+            sum(int(manifest["arrays"][name]["nbytes"]) for name in ("z_data", "z_indices", "z_indptr", "r_factor"))
+            + M6B_W6A_MANIFEST_RESERVE_BYTES
+        )
+        prediction = _m6b_w8a_predicted_live_set(
+            old_retained_bytes=int(old_summary["carrier_audit"]["retained_z_r_bytes"]),
+            new_retained_bytes=new_retained_bytes,
+            old_work_bytes=int(old_summary["carrier_audit"]["bounded_work_bytes"]),
+            new_work_bytes=int(5 * M6B_GLOBAL_ROWS * 16),
+        )
+        source_end = h2b._light_source()
+        action_audit = {
+            "frozen_legacy_action_count": 0,
+            "new_base_action_count": 0,
+            "selected_repeat_action_count": len(M6B_W8A_COMPANION_SENTINEL_COLUMNS),
+            "total_new_action_count": len(M6B_W8A_COMPANION_SENTINEL_COLUMNS),
+            "outer_forward_apply_count": bridge.audit["forward_apply_count"],
+            "bridge": bridge.audit,
+            "outer_context": _jsonable(dict(outer_context.audit)),
+            "physical_action": _jsonable(dict(physical_action.audit)),
+            "dtn_action": _jsonable(dict(dtn_action.audit)),
+        }
+        architecture = {
+            "fine_space": "uncondensed_fullspace",
+            "global_matrix": False,
+            "augmented_matrix": False,
+            "static_condensation": False,
+            "trace_slab_pc": False,
+            "schur": False,
+            "dtn_matrix_free": True,
+            "dense_z_retained": False,
+            "dense_az_retained": False,
+            "az_builder_only": True,
+            "az_production_retained": False,
+            "explicit_C_materialized_count": 0,
+            "explicit_D_materialized_count": 0,
+        }
+        checks = {
+            "source": _m6b_w6a_source_valid(source_end) and source_end.get("source_commit_full_sha") == expected_source_sha,
+            "p6": identity == expected_identity,
+            "runtime": _m6b_w6a_runtime_valid(runtime_identity, frozen_compiler=frozen_compiler),
+            "fe": _m6b_w8a_fe_audit_valid(fe_audit),
+            "action": _m6b_w8a_action_audit_valid(action_audit, expected_new_base=0, expected_repeat=3, expected_total=3),
+            "architecture": _m6b_w8a_companion_architecture_valid(architecture),
+            "sentinel": len(sentinel_actions) == 3 and all(
+                item["finite"] and item["relative_error"] <= 1.0e-11
+                for item in sentinel_actions
+            ),
+            "prediction": prediction["gate"] is True,
+            "jit": source_final == source_cache_before and target_final == target_after_surface,
+        }
+        companion_gate_pass = all(checks.values())
+        summary = {
+            "schema": M6B_W8A_COMPANION_SCHEMA,
+            "phase": M6B_W8A_COMPANION_PHASE,
+            "status": "companion_complete" if companion_gate_pass else "gate_failed",
+            "formal_pass": False,
+            "pde_pass": False,
+            "official_rta": False,
+            "companion_gate_pass": companion_gate_pass,
+            "source_at_start": source_start,
+            "source_at_end": source_end,
+            "expected_source_sha": expected_source_sha,
+            "raw_dir": str(run_dir),
+            "watchdog_dir": None,
+            "runtime_identity": runtime_identity,
+            "p6_identity": identity,
+            "w6a_authority": w6a_authority["artifact"],
+            "w8a_raw_dir": str(w8a_raw_dir),
+            "w8a_artifacts": frozen_files["inventory"],
+            "scope": {
+                "schema": M6B_W8A_COMPANION_SCHEMA,
+                "beta": 1.0,
+                "fine_space": "uncondensed_fullspace",
+                "sentinel_columns": list(M6B_W8A_COMPANION_SENTINEL_COLUMNS),
+                "sentinel_action_count": 3,
+                "old_producer_action_count": 143,
+                "old_producer_action_count_source": "frozen_w8a_manifest_only",
+                "global_matrix": False,
+                "static_condensation": False,
+                "trace_slab_pc": False,
+                "dtn_matrix_free": True,
+            },
+            "prediction": prediction,
+            "fe_audit": fe_audit,
+            "action_audit": action_audit,
+            "architecture": architecture,
+            "sentinel_actions": sentinel_actions,
+            "checks": checks,
+            "jit_cache": {
+                "source": str(jit_cache_source),
+                "target": str(cache_dir),
+                "source_before": source_cache_before,
+                "source_after_forward": source_after_forward,
+                "source_after_surface": source_after_surface,
+                "source_final": source_final,
+                "target_before": target_cache_before,
+                "target_after_forward": target_after_forward,
+                "target_after_surface": target_after_surface,
+                "target_final": target_final,
+                "source_unchanged": source_final == source_cache_before,
+                "target_frozen_unchanged": target_final == target_after_surface,
+            },
+            "progress": None,
+            "elapsed_wall_seconds": float(time.perf_counter() - started),
+        }
+        emit("summary_ready")
+        summary["progress"] = _m6b_w8a_companion_progress_valid(progress_path)
+        _write_json(run_dir / "w8a_companion_summary.json", _attach_evidence(summary))
+        return 0 if companion_gate_pass else 1
+    finally:
+        if old_az_store is not None:
+            old_az_store.close()
+        if bridge is not None:
+            bridge.destroy()
+        if template is not None:
+            template.destroy()
+        if outer_mat is not None:
+            outer_mat.destroy()
+        if outer_context is not None:
+            outer_context.destroy()
+        if dtn_action is not None:
+            dtn_action.destroy()
+        if physical_action is not None:
+            physical_action.destroy()
+        if surface_assemblers is not None:
+            for assembler in surface_assemblers.values():
+                destroy = getattr(assembler, "destroy", None)
+                if destroy is not None:
+                    destroy()
+        gc.collect()
+
+
+def _run_m6b_w8a_companion_watchdog(
+    run_dir: Path,
+    watchdog_dir: Path,
+    w8a_raw_dir: Path,
+    w6a_raw_dir: Path,
+    jit_cache_source: Path,
+    expected_source_sha: str,
+) -> int:
+    """Run the three-action companion under the standard process monitor."""
+
+    import time
+
+    h2b = __import__("benchmarks.run_task037_extra_h2b", fromlist=["*"])
+    run_dir, watchdog_dir = Path(run_dir).resolve(), Path(watchdog_dir).resolve()
+    w8a_raw_dir = Path(w8a_raw_dir).resolve()
+    w6a_raw_dir = Path(w6a_raw_dir).resolve()
+    jit_cache_source = Path(jit_cache_source).resolve()
+    if run_dir.exists() or watchdog_dir.exists():
+        raise FileExistsError("W8A companion watchdog refuses existing paths")
+    _m6b_w8a_legacy_store_dir(w6a_raw_dir)
+    source_start = h2b._light_source()
+    if source_start.get("source_commit_full_sha") != expected_source_sha or not _m6b_w6a_source_valid(source_start):
+        raise RuntimeError("W8A companion watchdog source identity is not clean or expected")
+    watchdog_dir.mkdir(parents=True)
+    command = [
+        sys.executable, "-m", "benchmarks.run_task037_extra_m6b", "m6b-w8a-companion",
+        "--run-dir", str(run_dir), "--w8a-raw-dir", str(w8a_raw_dir),
+        "--w6a-raw-dir", str(w6a_raw_dir), "--jit-cache-source", str(jit_cache_source),
+        "--expected-source-sha", expected_source_sha,
+    ]
+    started = time.perf_counter()
+    process = h2b._monitor_phase(
+        watchdog_dir,
+        M6B_W8A_COMPANION_PHASE,
+        command,
+        M6B_W8A_COMPANION_TIMEOUT_SECONDS,
+        M6B_W8A_WATCHDOG_RSS_LIMIT_BYTES,
+    )
+    drain = h2b._bounded_process_drain(process)
+    source_end = h2b._light_source()
+    timeline_name = f"{M6B_W8A_COMPANION_PHASE}_timeline.jsonl"
+    stdout_name = f"{M6B_W8A_COMPANION_PHASE}_stdout.txt"
+    root_name = f"{M6B_W8A_COMPANION_PHASE}_root_pid.json"
+    summary = _artifact(run_dir, "w8a_companion_summary.json")
+    companion = None
+    if summary.get("present") is True:
+        companion = _read_json(run_dir / "w8a_companion_summary.json")
+    payload = {
+        "schema": M6B_W8A_COMPANION_WATCHDOG_SCHEMA,
+        "phase": M6B_W8A_COMPANION_PHASE,
+        "status": "measurement_complete" if process.get("return_code") == 0 and process.get("termination") is None else "gate_failed",
+        "process": process,
+        "drain": drain,
+        "source_at_start": source_start,
+        "source_at_end": source_end,
+        "source_end_clean": _m6b_w6a_source_valid(source_end) and source_end.get("source_commit_full_sha") == expected_source_sha,
+        "resource_limits": {
+            "timeout_seconds": M6B_W8A_COMPANION_TIMEOUT_SECONDS,
+            "watchdog_rss_bytes": M6B_W8A_WATCHDOG_RSS_LIMIT_BYTES,
+            "completion_peak_rss_bytes": M6B_W8A_BUILDER_RSS_LIMIT_BYTES,
+            "swap_bytes": M6B_SWAP_LIMIT_BYTES,
+        },
+        "raw_dir": str(run_dir),
+        "watchdog_dir": str(watchdog_dir),
+        "w8a_raw_dir": str(w8a_raw_dir),
+        "command": command,
+        "artifact_inventory": {
+            "raw": [_artifact(run_dir, name) for name in ("w8a_companion_summary.json", "w8a_companion_progress.jsonl")],
+            "watchdog": [_artifact(watchdog_dir, name) for name in (timeline_name, stdout_name, root_name)],
+        },
+        "companion_summary": summary,
+        "companion_gate_pass": bool(isinstance(companion, Mapping) and companion.get("companion_gate_pass") is True),
+        "timeline": _m6b_w8a_timeline_valid(watchdog_dir / timeline_name, phase=M6B_W8A_COMPANION_PHASE),
+        "formal_pass": False,
+        "pde_pass": False,
+        "official_rta": False,
+        "elapsed_wall_seconds": float(time.perf_counter() - started),
+    }
+    _write_json(watchdog_dir / "w8a_companion_watchdog_summary.json", _attach_evidence(payload))
+    return 0 if payload["status"] == "measurement_complete" and payload["companion_gate_pass"] else 1
+
+
+def _m6b_w8a_companion_gate(
+    companion_summary_path: Path,
+    companion_watchdog_path: Path,
+    w6a_raw_dir: Path,
+    jit_cache_source: Path,
+    expected_source_sha: str,
+) -> dict[str, Any]:
+    import numpy as np
+    from src.solvers.hcurl_m6b_w8a_z_bubble_range import _array_sha256
+
+    checks: dict[str, bool] = {}
+    summary: Mapping[str, Any] = {}
+    watchdog: Mapping[str, Any] = {}
+    try:
+        summary_value = _read_json(companion_summary_path)
+        watchdog_value = _read_json(companion_watchdog_path)
+        if isinstance(summary_value, Mapping):
+            summary = summary_value
+        if isinstance(watchdog_value, Mapping):
+            watchdog = watchdog_value
+    except (OSError, TypeError, ValueError, KeyError, json.JSONDecodeError):
+        pass
+    run_dir = Path(companion_summary_path).resolve().parent
+    watchdog_dir = Path(companion_watchdog_path).resolve().parent
+    checks["summary"] = bool(
+        _evidence_valid(summary)
+        and summary.get("schema") == M6B_W8A_COMPANION_SCHEMA
+        and summary.get("phase") == M6B_W8A_COMPANION_PHASE
+        and summary.get("status") == "companion_complete"
+        and summary.get("formal_pass") is False
+        and summary.get("pde_pass") is False
+        and summary.get("official_rta") is False
+        and summary.get("companion_gate_pass") is True
+        and summary.get("raw_dir") == str(run_dir)
+    )
+    checks["source"] = bool(
+        _m6b_w6a_source_valid(summary.get("source_at_start"))
+        and _m6b_w6a_source_valid(summary.get("source_at_end"))
+        and summary.get("source_at_start", {}).get("source_commit_full_sha") == expected_source_sha
+        and summary.get("source_at_end", {}).get("source_commit_full_sha") == expected_source_sha
+    )
+    try:
+        w5_authority = _m6b_w6a_w5_compact_authority()
+        checks["runtime"] = _m6b_w6a_runtime_valid(
+            summary.get("runtime_identity"), frozen_compiler=w5_authority["factor_compiler"]
+        )
+    except (OSError, TypeError, ValueError, KeyError, json.JSONDecodeError):
+        checks["runtime"] = False
+    checks["p6"] = summary.get("p6_identity") == {
+        "global_cells": M6B_GLOBAL_CELLS,
+        "local_cells": M6B_GLOBAL_CELLS,
+        "local_nloc": M6B_LOCAL_NLOC,
+        "global_rows": M6B_GLOBAL_ROWS,
+        "constraint_count": M6B_CONSTRAINTS,
+    }
+    checks["fe"] = _m6b_w8a_fe_audit_valid(summary.get("fe_audit"))
+    checks["architecture"] = _m6b_w8a_companion_architecture_valid(summary.get("architecture"))
+    checks["action"] = _m6b_w8a_action_audit_valid(
+        summary.get("action_audit"),
+        expected_new_base=0,
+        expected_repeat=len(M6B_W8A_COMPANION_SENTINEL_COLUMNS),
+        expected_total=len(M6B_W8A_COMPANION_SENTINEL_COLUMNS),
+    )
+    sentinel = summary.get("sentinel_actions")
+    checks["sentinel"] = bool(
+        isinstance(sentinel, list)
+        and len(sentinel) == len(M6B_W8A_COMPANION_SENTINEL_COLUMNS)
+        and [item.get("column_index") for item in sentinel if isinstance(item, Mapping)]
+        == list(M6B_W8A_COMPANION_SENTINEL_COLUMNS)
+        and all(
+            isinstance(item, Mapping)
+            and item.get("finite") is True
+            and _finite_number(item.get("relative_error"))
+            and item.get("relative_error") <= 1.0e-11
+            and _m6b_w6a_valid_sha(item.get("input_array_sha256"))
+            and _m6b_w6a_valid_sha(item.get("old_az_array_sha256"))
+            and _m6b_w6a_valid_sha(item.get("output_array_sha256"))
+            for item in sentinel
+        )
+    )
+    if checks["sentinel"]:
+        try:
+            from src.solvers.disk_backed_flexible_gmres import RawPositionalColumnStore
+
+            old_store = RawPositionalColumnStore.open_readonly(
+                Path(summary["w8a_raw_dir"]) / "az_scratch/new_columns.bin",
+                M6B_GLOBAL_ROWS,
+                M6B_W8A_ADDED_COLUMNS,
+            )
+            buffer = np.empty(M6B_GLOBAL_ROWS, dtype=np.complex128)
+            for item in sentinel:
+                old_store.read_column(
+                    int(item["column_index"]) - M6B_W8A_LEGACY_COLUMNS,
+                    buffer,
+                )
+                if item.get("old_az_array_sha256") != _array_sha256(buffer):
+                    checks["sentinel"] = False
+                    break
+                if not _finite_number(item.get("relative_error")) or item["relative_error"] > 1.0e-11:
+                    checks["sentinel"] = False
+                    break
+            del buffer
+            old_store.close()
+        except (OSError, TypeError, ValueError, KeyError, IndexError):
+            checks["sentinel"] = False
+    checks["progress"] = _m6b_w8a_companion_progress_valid(
+        run_dir / "w8a_companion_progress.jsonl"
+    )["pass"]
+    frozen_w8a = _m6b_w8a_recovery_artifacts(
+        Path(summary.get("w8a_raw_dir", "")),
+        Path(M6B_W8A_RECOVERY_WATCHDOG_PATH),
+    )
+    checks["frozen_w8a"] = bool(
+        summary.get("w8a_raw_dir") == str((ROOT / M6B_W8A_RECOVERY_RAW_RELATIVE_PATH).resolve())
+        and frozen_w8a["pass"] is True
+        and summary.get("w8a_artifacts") == frozen_w8a["inventory"]
+    )
+    checks["prediction"] = False
+    try:
+        w6a_authority = _m6b_w8a_w6a_authority(Path(w6a_raw_dir))
+        manifest = _read_json(
+            ROOT / M6B_W8A_RECOVERY_RAW_RELATIVE_PATH / "sparse_range_store/manifest.json"
+        )
+        new_retained = int(
+            sum(
+                int(manifest["arrays"][name]["nbytes"])
+                for name in ("z_data", "z_indices", "z_indptr", "r_factor")
+            )
+            + M6B_W6A_MANIFEST_RESERVE_BYTES
+        )
+        expected_prediction = _m6b_w8a_predicted_live_set(
+            old_retained_bytes=int(w6a_authority["summary"]["carrier_audit"]["retained_z_r_bytes"]),
+            new_retained_bytes=new_retained,
+            old_work_bytes=int(w6a_authority["summary"]["carrier_audit"]["bounded_work_bytes"]),
+            new_work_bytes=int(5 * M6B_GLOBAL_ROWS * 16),
+        )
+        checks["prediction"] = summary.get("prediction") == expected_prediction and expected_prediction["gate"] is True
+    except (OSError, TypeError, ValueError, KeyError, IndexError, json.JSONDecodeError):
+        checks["prediction"] = False
+    try:
+        h2b = __import__("benchmarks.run_task037_extra_h2b", fromlist=["*"])
+        target = Path(summary.get("jit_cache", {}).get("target", ""))
+        checks["jit"] = _m6b_w6a_jit_cache_valid(
+            summary.get("jit_cache"), h2b, jit_cache_source, target
+        )
+    except (OSError, TypeError, ValueError, KeyError):
+        checks["jit"] = False
+    timeline_name = f"{M6B_W8A_COMPANION_PHASE}_timeline.jsonl"
+    timeline = _m6b_w8a_timeline_valid(
+        watchdog_dir / timeline_name, phase=M6B_W8A_COMPANION_PHASE
+    )
+    expected_command = [
+        sys.executable, "-m", "benchmarks.run_task037_extra_m6b", "m6b-w8a-companion",
+        "--run-dir", str(run_dir), "--w8a-raw-dir", summary.get("w8a_raw_dir"),
+        "--w6a-raw-dir", str(Path(w6a_raw_dir).resolve()),
+        "--jit-cache-source", str(Path(jit_cache_source).resolve()),
+        "--expected-source-sha", expected_source_sha,
+    ]
+    process = watchdog.get("process")
+    checks["watchdog"] = bool(
+        _evidence_valid(watchdog)
+        and watchdog.get("schema") == M6B_W8A_COMPANION_WATCHDOG_SCHEMA
+        and watchdog.get("phase") == M6B_W8A_COMPANION_PHASE
+        and watchdog.get("status") == "measurement_complete"
+        and watchdog.get("raw_dir") == str(run_dir)
+        and watchdog.get("watchdog_dir") == str(watchdog_dir)
+        and watchdog.get("command") == expected_command
+        and _m6b_w6a_source_valid(watchdog.get("source_at_start"))
+        and _m6b_w6a_source_valid(watchdog.get("source_at_end"))
+        and watchdog.get("source_at_start", {}).get("source_commit_full_sha") == expected_source_sha
+        and watchdog.get("source_at_end", {}).get("source_commit_full_sha") == expected_source_sha
+        and watchdog.get("source_end_clean") is True
+        and watchdog.get("timeline") == timeline
+        and watchdog.get("companion_gate_pass") is True
+        and watchdog.get("resource_limits") == {
+            "timeout_seconds": M6B_W8A_COMPANION_TIMEOUT_SECONDS,
+            "watchdog_rss_bytes": M6B_W8A_WATCHDOG_RSS_LIMIT_BYTES,
+            "completion_peak_rss_bytes": M6B_W8A_BUILDER_RSS_LIMIT_BYTES,
+            "swap_bytes": M6B_SWAP_LIMIT_BYTES,
+        }
+    )
+    drain = watchdog.get("drain")
+    checks["resource"] = bool(
+        isinstance(process, Mapping)
+        and process.get("return_code") == 0
+        and process.get("termination") is None
+        and type(process.get("peak_rss_bytes")) is int
+        and process["peak_rss_bytes"] < M6B_W8A_BUILDER_RSS_LIMIT_BYTES
+        and process.get("swap_bytes") == 0
+        and isinstance(drain, Mapping)
+        and drain.get("gone") is True
+        and timeline.get("pass") is True
+        and timeline.get("peak_rss_bytes") == process.get("peak_rss_bytes")
+        and timeline.get("swap_bytes") == 0
+        and timeline.get("compiler_descendant_pids") == []
+    )
+    raw_inventory = watchdog.get("artifact_inventory", {}).get("raw")
+    watchdog_inventory = watchdog.get("artifact_inventory", {}).get("watchdog")
+    expected_raw = [_artifact(run_dir, name) for name in ("w8a_companion_summary.json", "w8a_companion_progress.jsonl")]
+    expected_watchdog = [_artifact(watchdog_dir, name) for name in (timeline_name, f"{M6B_W8A_COMPANION_PHASE}_stdout.txt", f"{M6B_W8A_COMPANION_PHASE}_root_pid.json")]
+    checks["artifacts"] = bool(
+        watchdog.get("companion_summary") == _artifact(run_dir, "w8a_companion_summary.json")
+        and raw_inventory == expected_raw
+        and watchdog_inventory == expected_watchdog
+        and all(item.get("present") is True for item in expected_raw + expected_watchdog)
+    )
+    return {
+        "checks": checks,
+        "pass": all(checks.values()),
+        "summary": summary,
+        "watchdog": watchdog,
+        "timeline": timeline,
+        "prediction": summary.get("prediction"),
+    }
+
+
 def _m6b_w8a_timeline_valid(path: Path, phase: str = M6B_W8A_PHASE) -> dict[str, Any]:
     try:
         records = [
@@ -2999,7 +3754,411 @@ def _run_m6b_w8a_formal_check(
     return 0 if result["w8a_formal_pass"] else 1
 
 
-def _m6b_w8a_action_audit_valid(value: Any) -> bool:
+def _m6b_w8a_recovery_progress_valid(path: Path) -> dict[str, Any]:
+    try:
+        records = [
+            json.loads(line)
+            for line in Path(path).read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        if len(records) != 154:
+            raise ValueError("W8A recovery progress count is invalid")
+        if any(
+            type(record) is not dict
+            or record.get("schema") != f"{M6B_W8A_SCHEMA}.progress.v1"
+            or record.get("phase") != M6B_W8A_PHASE
+            for record in records
+        ):
+            raise ValueError("W8A recovery progress identity is invalid")
+        fixed = [
+            "authority_validated", "mesh_ready", "space_ready", "floquet_mpc_ready",
+            "cache_ready", "outer_ready", "legacy_basis_ready", "bubble_spec_ready",
+        ]
+        if [record["event"] for record in records[:8]] != fixed:
+            raise ValueError("W8A recovery fixed progress order is invalid")
+        columns = records[8:148]
+        if any(
+            record.get("event") != "column_progress"
+            or record.get("completed") != index
+            or record.get("total") != M6B_W8A_ADDED_COLUMNS
+            for index, record in enumerate(columns, 1)
+        ):
+            raise ValueError("W8A recovery column progress is invalid")
+        if records[148].get("event") != "bubble_columns_ready" or records[148].get("completed") != M6B_W8A_ADDED_COLUMNS:
+            raise ValueError("W8A recovery bubble completion is invalid")
+        repeats = records[149:152]
+        if any(
+            record.get("event") != "repeat_ready"
+            or record.get("column_index") != column
+            or record.get("completed_repeats") != count
+            or record.get("total_repeats") != len(M6B_W8A_REPEAT_COLUMNS)
+            for count, (record, column) in enumerate(zip(repeats, M6B_W8A_REPEAT_COLUMNS), 1)
+        ):
+            raise ValueError("W8A recovery repeat progress is invalid")
+        if [record["event"] for record in records[152:]] != ["az_ready", "gram_ready"]:
+            raise ValueError("W8A recovery final progress is invalid")
+        return {
+            "pass": True,
+            "record_count": len(records),
+            "base_columns": M6B_W8A_ADDED_COLUMNS,
+            "repeat_columns": list(M6B_W8A_REPEAT_COLUMNS),
+            "last_event": records[-1]["event"],
+        }
+    except (OSError, TypeError, ValueError, KeyError, json.JSONDecodeError) as exc:
+        return {"pass": False, "problems": [f"{type(exc).__name__}:{exc}"]}
+
+
+def _m6b_w8a_recovery_artifacts(raw_dir: Path, watchdog_dir: Path) -> dict[str, Any]:
+    inventory: dict[str, dict[str, Any]] = {"raw": {}, "watchdog": {}}
+    checks: dict[str, bool] = {}
+    for role, root, expected in (
+        ("raw", Path(raw_dir), M6B_W8A_RECOVERY_RAW_FILE_SHA256),
+        ("watchdog", Path(watchdog_dir), M6B_W8A_RECOVERY_WATCHDOG_FILE_SHA256),
+    ):
+        role_ok = True
+        for name, sha256 in expected.items():
+            actual = _artifact(root, name)
+            inventory[role][name] = actual
+            role_ok = role_ok and actual.get("present") is True and actual.get("sha256") == sha256
+        checks[role] = role_ok
+    return {"pass": all(checks.values()), "checks": checks, "inventory": inventory}
+
+
+def _m6b_w8a_recovery_gate(
+    raw_dir: Path,
+    watchdog_dir: Path,
+    w6a_raw_dir: Path,
+    jit_cache_source: Path,
+    expected_producer_sha: str,
+    companion_summary_path: Path | None,
+    companion_watchdog_path: Path | None,
+    expected_companion_source_sha: str | None,
+) -> dict[str, Any]:
+    import numpy as np
+    from src.solvers.hcurl_m6b_w8a_z_bubble_range import (
+        W8A_SCHEMA as CORE_SCHEMA,
+        fixed_w8a_column_specs,
+        validate_w8a_store,
+    )
+
+    raw_dir = Path(raw_dir).resolve()
+    watchdog_dir = Path(watchdog_dir).resolve()
+    w6a_raw_dir = Path(w6a_raw_dir).resolve()
+    jit_cache_source = Path(jit_cache_source).resolve()
+    checks: dict[str, bool] = {
+        "producer_sha": expected_producer_sha == M6B_W8A_RECOVERY_PRODUCER_SHA,
+        "paths": raw_dir == (ROOT / M6B_W8A_RECOVERY_RAW_RELATIVE_PATH).resolve()
+        and watchdog_dir == Path(M6B_W8A_RECOVERY_WATCHDOG_PATH).resolve(),
+    }
+    artifacts = _m6b_w8a_recovery_artifacts(raw_dir, watchdog_dir)
+    checks["artifact_hashes"] = artifacts["pass"]
+    watchdog: Mapping[str, Any] = {}
+    stdout = ""
+    try:
+        value = _read_json(watchdog_dir / "w8a_watchdog_summary.json")
+        if isinstance(value, Mapping):
+            watchdog = value
+    except (OSError, TypeError, ValueError, KeyError, json.JSONDecodeError):
+        pass
+    try:
+        stdout = (watchdog_dir / "w8a_z_bubble_range_builder_stdout.txt").read_text(encoding="utf-8")
+    except OSError:
+        pass
+    independent_timeline = _m6b_w8a_timeline_valid(
+        watchdog_dir / "w8a_z_bubble_range_builder_timeline.jsonl"
+    )
+    process = watchdog.get("process")
+    drain = watchdog.get("drain")
+    source_start = watchdog.get("source_at_start")
+    source_end = watchdog.get("source_at_end")
+    checks["source"] = bool(
+        _m6b_w6a_source_valid(source_start)
+        and _m6b_w6a_source_valid(source_end)
+        and source_start.get("source_commit_full_sha") == M6B_W8A_RECOVERY_PRODUCER_SHA
+        and source_end.get("source_commit_full_sha") == M6B_W8A_RECOVERY_PRODUCER_SHA
+        and watchdog.get("source_end_clean") is True
+    )
+    checks["old_watchdog"] = bool(
+        _evidence_valid(watchdog)
+        and watchdog.get("schema") == M6B_W8A_WATCHDOG_SCHEMA
+        and watchdog.get("phase") == M6B_W8A_PHASE
+        and watchdog.get("status") == "gate_failed"
+        and watchdog.get("process", {}).get("return_code") == 1
+        and watchdog.get("process", {}).get("termination") is None
+        and watchdog.get("drain", {}).get("gone") is True
+        and watchdog.get("timeline") == independent_timeline
+    )
+    checks["resource"] = bool(
+        isinstance(process, Mapping)
+        and process.get("peak_rss_bytes", 0) < M6B_W8A_BUILDER_RSS_LIMIT_BYTES
+        and process.get("swap_bytes") == 0
+        and isinstance(drain, Mapping)
+        and drain.get("gone") is True
+        and independent_timeline.get("pass") is True
+        and independent_timeline.get("peak_rss_bytes") == process.get("peak_rss_bytes")
+        and independent_timeline.get("swap_bytes") == 0
+        and independent_timeline.get("compiler_descendant_pids") == []
+    )
+    progress = _m6b_w8a_recovery_progress_valid(raw_dir / "w8a_progress.jsonl")
+    checks["progress"] = progress["pass"] is True
+    checks["failure_boundary"] = bool(
+        '"event": "gram_ready"' in stdout
+        and "NameError: name '_jsonable' is not defined" in stdout
+        and '"event": "summary_ready"' not in stdout
+        and stdout.index('"event": "gram_ready"') < stdout.index("NameError: name '_jsonable' is not defined")
+    )
+    w6a_authority: dict[str, Any] = {}
+    try:
+        w6a_authority = _m6b_w8a_w6a_authority(w6a_raw_dir)
+        p6_identity = w6a_authority["summary"].get("p6_identity")
+        checks["w6a_authority"] = p6_identity == {
+            "global_cells": M6B_GLOBAL_CELLS,
+            "local_cells": M6B_GLOBAL_CELLS,
+            "local_nloc": M6B_LOCAL_NLOC,
+            "global_rows": M6B_GLOBAL_ROWS,
+            "constraint_count": M6B_CONSTRAINTS,
+        }
+        _m6b_w8a_legacy_store_dir(w6a_raw_dir)
+    except (OSError, TypeError, ValueError, KeyError, json.JSONDecodeError):
+        checks["w6a_authority"] = False
+    jit_inventory: dict[str, Any] = {}
+    try:
+        h2b = __import__("benchmarks.run_task037_extra_h2b", fromlist=["*"])
+        jit_inventory = _m6b_w6a_cache_record(h2b, jit_cache_source)
+        checks["jit"] = (
+            jit_cache_source == (
+                ROOT
+                / "benchmarks/artifacts/task037_extra_development/"
+                "m6b_w1a_e2f99a3_builder_run1/jit_cache"
+            ).resolve()
+            and jit_inventory.get("inventory_sha256") == M6B_W8A_W6A_JIT_INVENTORY_SHA256
+        )
+    except (OSError, TypeError, ValueError, KeyError):
+        checks["jit"] = False
+    manifest: Mapping[str, Any] = {}
+    store_validation: dict[str, Any] = {"pass": False}
+    prediction: dict[str, Any] = {}
+    retained_z_r_bytes = None
+    try:
+        manifest_value = _read_json(raw_dir / "sparse_range_store/manifest.json")
+        if isinstance(manifest_value, Mapping):
+            manifest = manifest_value
+        fixed_identity = manifest.get("identity")
+        w6a_summary = w6a_authority.get("summary", {})
+        old_store_manifest = w6a_summary.get("store_manifest_artifact")
+        old_carrier = w6a_summary.get("carrier_audit")
+        checks["fixed_identity"] = bool(
+            manifest.get("schema") == CORE_SCHEMA
+            and manifest.get("columns") == M6B_W8A_COLUMNS
+            and manifest.get("global_rows") == M6B_GLOBAL_ROWS
+            and manifest.get("ownership_range") == [0, M6B_GLOBAL_ROWS]
+            and manifest.get("column_specs") == [spec.__dict__ for spec in fixed_w8a_column_specs()]
+            and manifest.get("action_counts") == {"frozen_legacy": 0, "new_base": 140, "selected_repeat": 3, "total": 143}
+            and manifest.get("repeat_columns") == list(M6B_W8A_REPEAT_COLUMNS)
+            and manifest.get("repeat_exact") is True
+            and manifest.get("dense_z_retained") is False
+            and manifest.get("dense_az_retained") is False
+            and manifest.get("az_builder_only") is True
+            and manifest.get("az_production_retained") is False
+            and isinstance(fixed_identity, Mapping)
+            and fixed_identity.get("source_sha") == M6B_W8A_RECOVERY_PRODUCER_SHA
+            and fixed_identity.get("fine_space") == "uncondensed_fullspace"
+            and fixed_identity.get("global_matrix") is False
+            and fixed_identity.get("static_condensation") is False
+            and fixed_identity.get("trace_slab_pc") is False
+            and fixed_identity.get("dtn_matrix_free") is True
+            and isinstance(old_store_manifest, Mapping)
+            and fixed_identity.get("legacy_w6a_manifest_sha256") == old_store_manifest.get("sha256")
+            and isinstance(old_carrier, Mapping)
+            and fixed_identity.get("legacy_w6a_az_column_sha256_aggregate") == old_carrier.get("az_column_sha256_aggregate")
+        )
+        store_validation = validate_w8a_store(
+            raw_dir / "sparse_range_store/manifest.json",
+            legacy_store_dir=_m6b_w8a_legacy_store_dir(w6a_raw_dir),
+        )
+        checks["store"] = bool(
+            store_validation.get("pass") is True
+            and store_validation.get("rank") == M6B_W8A_COLUMNS
+            and store_validation.get("normal_closure", float("inf")) <= M6B_W8A_NORMAL_CLOSURE_LIMIT
+            and store_validation.get("gram_hermitian_defect", float("inf")) <= M6B_W8A_NORMAL_CLOSURE_LIMIT
+        )
+        arrays = manifest["arrays"]
+        retained_z_r_bytes = int(
+            sum(int(arrays[name]["nbytes"]) for name in ("z_data", "z_indices", "z_indptr", "r_factor"))
+        )
+        old_retained = int(w6a_summary["carrier_audit"]["retained_z_r_bytes"])
+        old_work = int(w6a_summary["carrier_audit"]["bounded_work_bytes"])
+        new_work = int(5 * M6B_GLOBAL_ROWS * 16)
+        prediction = _m6b_w8a_predicted_live_set(
+            old_retained_bytes=old_retained,
+            new_retained_bytes=retained_z_r_bytes + M6B_W6A_MANIFEST_RESERVE_BYTES,
+            old_work_bytes=old_work,
+            new_work_bytes=new_work,
+        )
+        checks["retained_payload"] = retained_z_r_bytes <= M6B_W8A_RETAINED_LIMIT_BYTES
+        checks["prediction"] = prediction["gate"] is True
+    except (OSError, TypeError, ValueError, KeyError, IndexError, json.JSONDecodeError):
+        checks["fixed_identity"] = False
+        checks["store"] = False
+        checks["retained_payload"] = False
+        checks["prediction"] = False
+    source_delta = {"pass": False, "reason": "companion source is missing"}
+    companion = {
+        "pass": False,
+        "checks": {"present": False},
+    }
+    if (
+        companion_summary_path is not None
+        and companion_watchdog_path is not None
+        and isinstance(expected_companion_source_sha, str)
+    ):
+        try:
+            companion = _m6b_w8a_companion_gate(
+                companion_summary_path,
+                companion_watchdog_path,
+                w6a_raw_dir,
+                jit_cache_source,
+                expected_companion_source_sha,
+            )
+        except (OSError, TypeError, ValueError, KeyError, IndexError, json.JSONDecodeError):
+            companion = {"pass": False, "checks": {"exception": False}}
+        source_delta = _m6b_w8a_recovery_source_delta(expected_companion_source_sha)
+    checks["companion"] = companion.get("pass") is True
+    checks["source_delta"] = source_delta.get("pass") is True
+    unavailable = ["builder_summary", "action_audit", "fe_audit", "runtime_identity"]
+    recoverable_pass = all(checks.values())
+    recovered_numeric_gate_pass = bool(
+        checks.get("fixed_identity")
+        and checks.get("store")
+        and checks.get("retained_payload")
+        and checks.get("prediction")
+    )
+    return {
+        "checks": checks,
+        "recoverable_pass": recoverable_pass,
+        "recovered_numeric_gate_pass": recovered_numeric_gate_pass,
+        "qualified_for_w8b": bool(recoverable_pass and recovered_numeric_gate_pass),
+        "progress": progress,
+        "timeline": independent_timeline,
+        "watchdog": watchdog,
+        "artifacts": artifacts,
+        "store_validation": store_validation,
+        "manifest": manifest,
+        "prediction": prediction,
+        "retained_z_r_bytes": retained_z_r_bytes,
+        "jit_inventory": jit_inventory,
+        "unavailable": unavailable,
+        "producer_measurement": {
+            "source_sha": M6B_W8A_RECOVERY_PRODUCER_SHA,
+            "raw_dir": str(raw_dir),
+            "watchdog_dir": str(watchdog_dir),
+            "watchdog_status": watchdog.get("status"),
+            "artifact_hashes": checks["artifact_hashes"],
+            "old_watchdog": checks["old_watchdog"],
+            "resource": checks["resource"],
+            "failure_boundary": checks["failure_boundary"],
+            "progress": progress,
+            "store_validation": store_validation,
+        },
+        "companion_verification": companion,
+        "source_delta": source_delta,
+    }
+
+
+def _run_m6b_w8a_recovery(
+    raw_dir: Path,
+    watchdog_dir: Path,
+    w6a_raw_dir: Path,
+    jit_cache_source: Path,
+    output: Path,
+    expected_producer_sha: str,
+    companion_summary_path: Path,
+    companion_watchdog_path: Path,
+    expected_companion_source_sha: str,
+) -> int:
+    if output.exists():
+        raise FileExistsError(f"W8A recovery output exists: {output}")
+    raw_dir = Path(raw_dir).resolve()
+    watchdog_dir = Path(watchdog_dir).resolve()
+    output = Path(output).resolve()
+    if output == raw_dir or output == watchdog_dir or output.is_relative_to(raw_dir) or output.is_relative_to(watchdog_dir):
+        raise ValueError("W8A recovery output must be outside frozen evidence")
+    gate = _m6b_w8a_recovery_gate(
+        raw_dir,
+        watchdog_dir,
+        w6a_raw_dir,
+        jit_cache_source,
+        expected_producer_sha,
+        companion_summary_path,
+        companion_watchdog_path,
+        expected_companion_source_sha,
+    )
+    h2b = __import__("benchmarks.run_task037_extra_h2b", fromlist=["*"])
+    checker_source = h2b._light_source()
+    checker_source_ok = bool(
+        _m6b_w6a_source_valid(checker_source)
+        and checker_source.get("source_commit_full_sha") == expected_companion_source_sha
+    )
+    gate["checks"]["recovery_checker_source"] = checker_source_ok
+    recoverable_pass = bool(gate["recoverable_pass"] and checker_source_ok)
+    qualified = bool(gate["qualified_for_w8b"] and checker_source_ok)
+    result = {
+        "schema": M6B_W8A_RECOVERY_SCHEMA,
+        "phase": M6B_W8A_RECOVERY_PHASE,
+        "status": "recovery_complete" if recoverable_pass else "gate_failed",
+        "classification": (
+            "RECOVERED_QUALIFIED_FOR_W8B"
+            if qualified
+            else "RECOVERED_NUMERIC_NOT_W8B"
+            if gate["recovered_numeric_gate_pass"]
+            else "RECOVERY_GATE_FAILED"
+        ),
+        "formal_pass": False,
+        "pde_pass": False,
+        "official_rta": False,
+        "original_builder_execution_pass": False,
+        "old_watchdog_status": gate["watchdog"].get("status"),
+        "recovered_numeric_gate_pass": gate["recovered_numeric_gate_pass"],
+        "qualified_for_w8b": qualified,
+        "producer_source_sha": M6B_W8A_RECOVERY_PRODUCER_SHA,
+        "companion_source_sha": expected_companion_source_sha,
+        "raw_dir": str(raw_dir),
+        "watchdog_dir": str(watchdog_dir),
+        "recovery_checker_source": checker_source,
+        "checks": gate["checks"],
+        "problems": sorted(key for key, passed in gate["checks"].items() if not passed),
+        "unavailable": gate["unavailable"],
+        "progress": gate["progress"],
+        "timeline": gate["timeline"],
+        "artifact_inventory": gate["artifacts"]["inventory"],
+        "watchdog_process": gate["watchdog"].get("process"),
+        "store_validation": gate["store_validation"],
+        "retained_z_r_bytes": gate["retained_z_r_bytes"],
+        "prediction": gate["prediction"],
+        "jit_inventory": gate["jit_inventory"],
+        "producer_measurement": gate["producer_measurement"],
+        "companion_verification": gate["companion_verification"],
+        "companion_gate_pass": gate["companion_verification"].get("pass") is True,
+        "source_delta": gate["source_delta"],
+        "recovery_semantics": {
+            "action_audit": "unavailable_not_reconstructed",
+            "fe_audit": "unavailable_not_reconstructed",
+            "runtime_identity": "unavailable_not_reconstructed",
+            "source_of_numeric_evidence": "immutable_manifest_progress_store_watchdog",
+        },
+    }
+    _write_json(output, _attach_evidence(result))
+    return 0 if qualified else 1
+
+
+def _m6b_w8a_action_audit_valid(
+    value: Any,
+    *,
+    expected_frozen_legacy: int = 0,
+    expected_new_base: int = M6B_W8A_ADDED_COLUMNS,
+    expected_repeat: int = len(M6B_W8A_REPEAT_COLUMNS),
+    expected_total: int = M6B_W8A_ADDED_COLUMNS + len(M6B_W8A_REPEAT_COLUMNS),
+) -> bool:
     if not isinstance(value, Mapping):
         return False
     bridge = value.get("bridge")
@@ -3007,18 +4166,18 @@ def _m6b_w8a_action_audit_valid(value: Any) -> bool:
     physical = value.get("physical_action")
     dtn = value.get("dtn_action")
     return bool(
-        value.get("frozen_legacy_action_count") == 0
-        and value.get("new_base_action_count") == M6B_W8A_ADDED_COLUMNS
-        and value.get("selected_repeat_action_count") == len(M6B_W8A_REPEAT_COLUMNS)
-        and value.get("total_new_action_count") == M6B_W8A_ADDED_COLUMNS + len(M6B_W8A_REPEAT_COLUMNS)
-        and value.get("outer_forward_apply_count") == 143
+        value.get("frozen_legacy_action_count") == expected_frozen_legacy
+        and value.get("new_base_action_count") == expected_new_base
+        and value.get("selected_repeat_action_count") == expected_repeat
+        and value.get("total_new_action_count") == expected_total
+        and value.get("outer_forward_apply_count") == expected_total
         and isinstance(bridge, Mapping)
         and bridge.get("fixed_work_vectors") == 2
         and bridge.get("vector_create_count") == 2
         and bridge.get("per_apply_vec_creation") == 0
-        and bridge.get("forward_apply_count") == 143
+        and bridge.get("forward_apply_count") == expected_total
         and isinstance(outer, Mapping)
-        and outer.get("apply_count") == 143
+        and outer.get("apply_count") == expected_total
         and outer.get("matrix_type") == "python_action_only"
         and outer.get("global_matrix") is False
         and outer.get("augmented_matrix") is False
@@ -3027,7 +4186,7 @@ def _m6b_w8a_action_audit_valid(value: Any) -> bool:
         and outer.get("explicit_C_materialized_count") == 0
         and outer.get("explicit_D_materialized_count") == 0
         and isinstance(physical, Mapping)
-        and physical.get("apply_count") == 143
+        and physical.get("apply_count") == expected_total
         and physical.get("global_matrix_materialized") is False
         and physical.get("global_constraint_matrix_materialized") is False
         and physical.get("global_condensed_schur_materialized") is False
@@ -3043,7 +4202,7 @@ def _m6b_w8a_action_audit_valid(value: Any) -> bool:
         and physical.get("explicit_D_materialized_count") == 0
         and physical.get("ordinary_default_changed") is False
         and isinstance(dtn, Mapping)
-        and dtn.get("apply_count") == 143
+        and dtn.get("apply_count") == expected_total
         and dtn.get("mode_count") == 80
         and dtn.get("fine_space") == "uncondensed_fullspace"
         and dtn.get("condensation") is False
@@ -3118,6 +4277,97 @@ def _m6b_w8b_load_residual(raw_dir: Path, record: Mapping[str, Any], *, array_ha
     return values
 
 
+def _m6b_w8a_w8b_authority_valid(
+    value: Any, *, w8a_raw_dir: Path, expected_source_sha: str
+) -> bool:
+    if not isinstance(value, Mapping) or not _evidence_valid(value):
+        return False
+    formal_authority = (
+        value.get("schema") == M6B_W8A_FORMAL_CHECK_SCHEMA
+        and value.get("formal_pass") is True
+        and value.get("w8a_formal_pass") is True
+        and value.get("pde_pass") is False
+        and value.get("producer_source_sha") == expected_source_sha
+        and value.get("raw_dir") == str(Path(w8a_raw_dir).resolve())
+    )
+    recovery_checks = value.get("checks")
+    recovery_authority = (
+        value.get("schema") == M6B_W8A_RECOVERY_SCHEMA
+        and value.get("status") == "recovery_complete"
+        and value.get("classification") == "RECOVERED_QUALIFIED_FOR_W8B"
+        and value.get("recovered_numeric_gate_pass") is True
+        and value.get("companion_gate_pass") is True
+        and value.get("qualified_for_w8b") is True
+        and value.get("formal_pass") is False
+        and value.get("pde_pass") is False
+        and value.get("official_rta") is False
+        and value.get("original_builder_execution_pass") is False
+        and value.get("old_watchdog_status") == "gate_failed"
+        and value.get("producer_source_sha") == M6B_W8A_RECOVERY_PRODUCER_SHA
+        and value.get("companion_source_sha") == expected_source_sha
+        and value.get("raw_dir") == str(Path(w8a_raw_dir).resolve())
+        and isinstance(recovery_checks, Mapping)
+        and {
+            "producer_sha", "paths", "artifact_hashes", "source", "old_watchdog",
+            "resource", "progress", "failure_boundary", "w6a_authority", "jit",
+            "fixed_identity", "store", "retained_payload", "prediction", "companion",
+            "source_delta", "recovery_checker_source",
+        } <= set(recovery_checks)
+        and all(item is True for item in recovery_checks.values())
+        and value.get("problems") == []
+    )
+    source_delta = value.get("source_delta")
+    companion = value.get("companion_verification")
+    producer = value.get("producer_measurement")
+    checker_source = value.get("recovery_checker_source")
+    recovery_authority = recovery_authority and bool(
+        isinstance(source_delta, Mapping)
+        and source_delta.get("pass") is True
+        and source_delta.get("ancestor") is True
+        and source_delta.get("paths_unchanged") is True
+        and source_delta.get("producer_source_sha") == M6B_W8A_RECOVERY_PRODUCER_SHA
+        and source_delta.get("current_source_sha") == expected_source_sha
+        and source_delta.get("allowlist") == sorted(M6B_W8A_RECOVERY_ALLOWED_CHANGED_PATHS)
+        and isinstance(companion, Mapping)
+        and companion.get("pass") is True
+        and isinstance(companion.get("checks"), Mapping)
+        and bool(companion["checks"])
+        and all(item is True for item in companion["checks"].values())
+        and isinstance(companion.get("summary"), Mapping)
+        and isinstance(companion["summary"].get("sentinel_actions"), list)
+        and len(companion["summary"]["sentinel_actions"])
+        == len(M6B_W8A_COMPANION_SENTINEL_COLUMNS)
+        and [
+            item.get("column_index")
+            for item in companion["summary"]["sentinel_actions"]
+            if isinstance(item, Mapping)
+        ] == list(M6B_W8A_COMPANION_SENTINEL_COLUMNS)
+        and all(
+            isinstance(item, Mapping)
+            and item.get("finite") is True
+            and _finite_number(item.get("relative_error"))
+            and item["relative_error"] <= 1.0e-11
+            and _m6b_w6a_valid_sha(item.get("old_az_array_sha256"))
+            for item in companion["summary"]["sentinel_actions"]
+        )
+        and isinstance(producer, Mapping)
+        and producer.get("source_sha") == M6B_W8A_RECOVERY_PRODUCER_SHA
+        and producer.get("watchdog_status") == "gate_failed"
+        and producer.get("artifact_hashes") is True
+        and producer.get("old_watchdog") is True
+        and producer.get("resource") is True
+        and producer.get("failure_boundary") is True
+        and isinstance(producer.get("progress"), Mapping)
+        and producer["progress"].get("pass") is True
+        and producer["progress"].get("last_event") == "gram_ready"
+        and isinstance(producer.get("store_validation"), Mapping)
+        and producer["store_validation"].get("pass") is True
+        and _m6b_w6a_source_valid(checker_source)
+        and checker_source.get("source_commit_full_sha") == expected_source_sha
+    )
+    return bool(formal_authority or recovery_authority)
+
+
 def _run_m6b_w8b_s0(
     w8a_raw_dir: Path,
     w8a_formal_output: Path,
@@ -3135,16 +4385,10 @@ def _run_m6b_w8b_s0(
     if output.exists():
         raise FileExistsError(f"W8B output exists: {output}")
     formal = _read_json(w8a_formal_output)
-    if not (
-        _evidence_valid(formal)
-        and formal.get("schema") == M6B_W8A_FORMAL_CHECK_SCHEMA
-        and formal.get("formal_pass") is True
-        and formal.get("w8a_formal_pass") is True
-        and formal.get("pde_pass") is False
-        and formal.get("producer_source_sha") == expected_source_sha
-        and formal.get("raw_dir") == str(Path(w8a_raw_dir).resolve())
+    if not _m6b_w8a_w8b_authority_valid(
+        formal, w8a_raw_dir=w8a_raw_dir, expected_source_sha=expected_source_sha
     ):
-        raise RuntimeError("W8B requires a passing W8A formal check")
+        raise RuntimeError("W8B requires a passing W8A formal or qualified recovery")
     w5 = _m6b_w6a_w5_compact_authority()
     if Path(w5_compact).resolve() != Path(w5["path"]).resolve():
         raise RuntimeError("W8B W5 compact path is not the frozen authority")
@@ -3394,6 +4638,122 @@ def _m6b_w8a_progress_valid(path: Path) -> dict[str, Any]:
         return {"pass": True, "record_count": len(records), "events": events}
     except (OSError, TypeError, ValueError, KeyError, json.JSONDecodeError) as exc:
         return {"pass": False, "problems": [f"{type(exc).__name__}:{exc}"]}
+
+
+def _m6b_w8a_companion_progress_emit(path: Path, event: str, **fields: Any) -> None:
+    record = {
+        "schema": f"{M6B_W8A_COMPANION_SCHEMA}.progress.v1",
+        "phase": M6B_W8A_COMPANION_PHASE,
+        "event": event,
+        **fields,
+    }
+    with Path(path).open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record, sort_keys=True, separators=(",", ":")) + "\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+
+
+def _m6b_w8a_companion_progress_valid(path: Path) -> dict[str, Any]:
+    expected = (
+        "authority_validated",
+        "mesh_ready",
+        "space_ready",
+        "floquet_mpc_ready",
+        "cache_ready",
+        "outer_ready",
+        "bubble_spec_ready",
+        "fe_audit_ready",
+        "sentinel_ready",
+        "summary_ready",
+    )
+    try:
+        records = [
+            json.loads(line)
+            for line in Path(path).read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        events = [record.get("event") for record in records]
+        if events != list(expected) or any(
+            type(record) is not dict
+            or record.get("schema") != f"{M6B_W8A_COMPANION_SCHEMA}.progress.v1"
+            or record.get("phase") != M6B_W8A_COMPANION_PHASE
+            for record in records
+        ):
+            raise ValueError("W8A companion progress is invalid")
+        return {"pass": True, "record_count": len(records), "events": events}
+    except (OSError, TypeError, ValueError, KeyError, json.JSONDecodeError) as exc:
+        return {"pass": False, "problems": [f"{type(exc).__name__}:{exc}"]}
+
+
+def _m6b_w8a_recovery_source_delta(current_source_sha: str) -> dict[str, Any]:
+    import shutil
+    import subprocess
+
+    result: dict[str, Any] = {
+        "producer_source_sha": M6B_W8A_RECOVERY_PRODUCER_SHA,
+        "current_source_sha": current_source_sha,
+        "allowlist": sorted(M6B_W8A_RECOVERY_ALLOWED_CHANGED_PATHS),
+        "ancestor": False,
+        "changed_paths": [],
+        "paths_unchanged": False,
+        "pass": False,
+    }
+    if not (
+        isinstance(current_source_sha, str)
+        and len(current_source_sha) == 40
+        and all(char in "0123456789abcdef" for char in current_source_sha)
+    ):
+        return result
+    git = shutil.which("git")
+    if git is None:
+        return result
+    git = os.path.abspath(git)
+    common = [git, "--git-dir", str(ROOT / ".git-codex"), "--work-tree", str(ROOT)]
+    try:
+        ancestor = subprocess.run(
+            [*common, "merge-base", "--is-ancestor", M6B_W8A_RECOVERY_PRODUCER_SHA, current_source_sha],
+            capture_output=True,
+            text=True,
+            close_fds=False,
+        )
+        changed = subprocess.run(
+            [*common, "diff", "--name-only", M6B_W8A_RECOVERY_PRODUCER_SHA, current_source_sha],
+            check=True,
+            capture_output=True,
+            text=True,
+            close_fds=False,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return result
+    paths = sorted(line for line in changed.stdout.splitlines() if line)
+    result.update({
+        "ancestor": ancestor.returncode == 0,
+        "changed_paths": paths,
+        "paths_unchanged": set(paths) <= M6B_W8A_RECOVERY_ALLOWED_CHANGED_PATHS,
+    })
+    result["pass"] = bool(result["ancestor"] and result["paths_unchanged"])
+    return result
+
+
+def _m6b_w8a_companion_architecture_valid(value: Any) -> bool:
+    if not isinstance(value, Mapping):
+        return False
+    exact = {
+        "fine_space": "uncondensed_fullspace",
+        "global_matrix": False,
+        "augmented_matrix": False,
+        "static_condensation": False,
+        "trace_slab_pc": False,
+        "schur": False,
+        "dtn_matrix_free": True,
+        "dense_z_retained": False,
+        "dense_az_retained": False,
+        "az_builder_only": True,
+        "az_production_retained": False,
+        "explicit_C_materialized_count": 0,
+        "explicit_D_materialized_count": 0,
+    }
+    return all(value.get(key) == expected for key, expected in exact.items())
 
 
 def _m6b_w8a_w6a_authority(w6a_raw_dir: Path) -> dict[str, Any]:
@@ -10749,6 +12109,8 @@ def _parser() -> argparse.ArgumentParser:
         "m6b-w6a-watchdog",
         "m6b-w8a-builder",
         "m6b-w8a-watchdog",
+        "m6b-w8a-companion",
+        "m6b-w8a-companion-watchdog",
     ):
         item = sub.add_parser(command)
         item.add_argument("--run-dir", required=True)
@@ -10783,6 +12145,25 @@ def _parser() -> argparse.ArgumentParser:
             )
         if command == "m6b-w8a-watchdog":
             item.add_argument("--watchdog-dir", required=True)
+            item.add_argument("--w6a-raw-dir", required=True)
+            item.add_argument("--jit-cache-source", required=True)
+            item.add_argument(
+                "--expected-source-sha",
+                required=True,
+                type=_m6b_w2_source_sha_argument,
+            )
+        if command == "m6b-w8a-companion":
+            item.add_argument("--w8a-raw-dir", required=True)
+            item.add_argument("--w6a-raw-dir", required=True)
+            item.add_argument("--jit-cache-source", required=True)
+            item.add_argument(
+                "--expected-source-sha",
+                required=True,
+                type=_m6b_w2_source_sha_argument,
+            )
+        if command == "m6b-w8a-companion-watchdog":
+            item.add_argument("--watchdog-dir", required=True)
+            item.add_argument("--w8a-raw-dir", required=True)
             item.add_argument("--w6a-raw-dir", required=True)
             item.add_argument("--jit-cache-source", required=True)
             item.add_argument(
@@ -10874,6 +12255,20 @@ def _parser() -> argparse.ArgumentParser:
     w8a_formal.add_argument(
         "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
     )
+    w8a_recovery = sub.add_parser("m6b-w8a-recover")
+    w8a_recovery.add_argument("--raw-dir", required=True)
+    w8a_recovery.add_argument("--watchdog-dir", required=True)
+    w8a_recovery.add_argument("--w6a-raw-dir", required=True)
+    w8a_recovery.add_argument("--jit-cache-source", required=True)
+    w8a_recovery.add_argument("--companion-summary", required=True)
+    w8a_recovery.add_argument("--companion-watchdog-summary", required=True)
+    w8a_recovery.add_argument("--output", required=True)
+    w8a_recovery.add_argument(
+        "--expected-producer-sha", required=True, type=_m6b_w2_source_sha_argument
+    )
+    w8a_recovery.add_argument(
+        "--expected-companion-source-sha", required=True, type=_m6b_w2_source_sha_argument
+    )
     w8b_s0 = sub.add_parser("m6b-w8b-s0")
     w8b_s0.add_argument("--w8a-raw-dir", required=True)
     w8b_s0.add_argument("--w8a-formal-output", required=True)
@@ -10941,6 +12336,18 @@ def main(argv: Sequence[str] | None = None) -> int:
             Path(args.output).resolve(),
             args.expected_source_sha,
         )
+    if args.command == "m6b-w8a-recover":
+        return _run_m6b_w8a_recovery(
+            Path(args.raw_dir).resolve(),
+            Path(args.watchdog_dir).resolve(),
+            Path(args.w6a_raw_dir).resolve(),
+            Path(args.jit_cache_source).resolve(),
+            Path(args.output).resolve(),
+            args.expected_producer_sha,
+            Path(args.companion_summary).resolve(),
+            Path(args.companion_watchdog_summary).resolve(),
+            args.expected_companion_source_sha,
+        )
     if args.command == "m6b-w8b-s0":
         return _run_m6b_w8b_s0(
             Path(args.w8a_raw_dir).resolve(),
@@ -10994,6 +12401,23 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _run_m6b_w8a_watchdog(
             run_dir,
             Path(args.watchdog_dir).resolve(),
+            Path(args.w6a_raw_dir).resolve(),
+            Path(args.jit_cache_source).resolve(),
+            args.expected_source_sha,
+        )
+    if args.command == "m6b-w8a-companion":
+        return _run_m6b_w8a_companion(
+            run_dir,
+            Path(args.w8a_raw_dir).resolve(),
+            Path(args.w6a_raw_dir).resolve(),
+            Path(args.jit_cache_source).resolve(),
+            args.expected_source_sha,
+        )
+    if args.command == "m6b-w8a-companion-watchdog":
+        return _run_m6b_w8a_companion_watchdog(
+            run_dir,
+            Path(args.watchdog_dir).resolve(),
+            Path(args.w8a_raw_dir).resolve(),
             Path(args.w6a_raw_dir).resolve(),
             Path(args.jit_cache_source).resolve(),
             args.expected_source_sha,

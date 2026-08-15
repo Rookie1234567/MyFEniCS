@@ -513,3 +513,191 @@ def test_w8a_artifact_inventory_recomputes_disk_descriptors(tmp_path):
     tampered = copy.deepcopy(inventory)
     tampered["raw"][0]["sha256"] = "0" * 64
     assert not runner._m6b_w8a_artifact_inventory_valid(tampered, raw, watchdog)
+
+
+def test_w8a_companion_fe_and_action_contracts_are_distinct():
+    planes = np.linspace(-10.0, 130.0, 15, dtype=np.float64)
+    records = []
+    for spec in w8.fixed_w8a_column_specs()[390:]:
+        records.append(
+            {
+                "column_index": spec.column_index,
+                "order_m": spec.order_m,
+                "interval": spec.interval,
+                "bubble_degree": spec.bubble_degree,
+                "component": spec.component,
+                "nnz": 1,
+                "norm": 1.0,
+                "indices_array_sha256": "a" * 64,
+                "values_array_sha256": "b" * 64,
+            }
+        )
+    fe_audit = {
+        "z_planes": planes.tolist(),
+        "domain_z_min": -10.0,
+        "domain_z_max": 130.0,
+        "z_planes_array_sha256": w8._array_sha256(planes),
+        "column_audit": records,
+        "column_count": 140,
+        "fixed_order": True,
+        "dense_candidates_retained": False,
+        "component": 1,
+        "diffraction_orders": [-7, -6],
+        "bubble_degrees": [2, 3, 4, 5, 6],
+    }
+    assert runner._m6b_w8a_fe_audit_valid(fe_audit)
+    fe_audit["column_audit"][0]["column_index"] = 75
+    assert not runner._m6b_w8a_fe_audit_valid(fe_audit)
+
+    companion_action = _w8a_action_audit_fixture()
+    companion_action["new_base_action_count"] = 0
+    companion_action["total_new_action_count"] = 3
+    companion_action["outer_forward_apply_count"] = 3
+    for key in ("bridge", "outer_context", "physical_action", "dtn_action"):
+        if key == "bridge":
+            companion_action[key]["forward_apply_count"] = 3
+        else:
+            companion_action[key]["apply_count"] = 3
+    assert runner._m6b_w8a_action_audit_valid(
+        companion_action, expected_new_base=0, expected_repeat=3, expected_total=3
+    )
+    companion_action["bridge"]["forward_apply_count"] = 2
+    assert not runner._m6b_w8a_action_audit_valid(
+        companion_action, expected_new_base=0, expected_repeat=3, expected_total=3
+    )
+
+
+def _qualified_w8a_recovery_fixture(tmp_path: Path) -> dict:
+    source_record = {
+        "source_commit_full_sha": "c" * 40,
+        "tracked_source_dirty": False,
+        "source_worktree_dirty": False,
+        "nonignored_untracked_paths": [],
+        "worktree_status_porcelain": [],
+        "git_error": None,
+    }
+    checks = {
+        name: True
+        for name in (
+            "producer_sha", "paths", "artifact_hashes", "source", "old_watchdog",
+            "resource", "progress", "failure_boundary", "w6a_authority", "jit",
+            "fixed_identity", "store", "retained_payload", "prediction", "companion",
+            "source_delta", "recovery_checker_source",
+        )
+    }
+    companion_checks = {name: True for name in (
+        "summary", "source", "runtime", "p6", "fe", "architecture", "action",
+        "sentinel", "progress", "frozen_w8a", "prediction", "jit", "watchdog",
+        "resource", "artifacts",
+    )}
+    sentinel_actions = [
+        {
+            "column_index": column,
+            "finite": True,
+            "relative_error": 0.0,
+            "old_az_array_sha256": "d" * 64,
+        }
+        for column in runner.M6B_W8A_COMPANION_SENTINEL_COLUMNS
+    ]
+    recovery = {
+        "schema": runner.M6B_W8A_RECOVERY_SCHEMA,
+        "status": "recovery_complete",
+        "classification": "RECOVERED_QUALIFIED_FOR_W8B",
+        "recovered_numeric_gate_pass": True,
+        "companion_gate_pass": True,
+        "qualified_for_w8b": True,
+        "formal_pass": False,
+        "pde_pass": False,
+        "official_rta": False,
+        "original_builder_execution_pass": False,
+        "old_watchdog_status": "gate_failed",
+        "producer_source_sha": runner.M6B_W8A_RECOVERY_PRODUCER_SHA,
+        "companion_source_sha": "c" * 40,
+        "raw_dir": str((tmp_path / "w8a").resolve()),
+        "checks": checks,
+        "problems": [],
+        "source_delta": {
+            "pass": True,
+            "ancestor": True,
+            "paths_unchanged": True,
+            "producer_source_sha": runner.M6B_W8A_RECOVERY_PRODUCER_SHA,
+            "current_source_sha": "c" * 40,
+            "allowlist": sorted(runner.M6B_W8A_RECOVERY_ALLOWED_CHANGED_PATHS),
+        },
+        "companion_verification": {
+            "pass": True,
+            "checks": companion_checks,
+            "summary": {"sentinel_actions": sentinel_actions},
+        },
+        "producer_measurement": {
+            "source_sha": runner.M6B_W8A_RECOVERY_PRODUCER_SHA,
+            "watchdog_status": "gate_failed",
+            "artifact_hashes": True,
+            "old_watchdog": True,
+            "resource": True,
+            "failure_boundary": True,
+            "progress": {"pass": True, "last_event": "gram_ready"},
+            "store_validation": {"pass": True},
+        },
+        "recovery_checker_source": source_record,
+    }
+    return runner._attach_evidence(recovery)
+
+
+def test_w8a_companion_parser_jsonable_recovery_and_w8b_authority(tmp_path):
+    import inspect
+    from types import MappingProxyType
+    from benchmarks.run_task037_extra_h2 import _jsonable
+
+    source = inspect.getsource(runner._run_m6b_w8a_builder)
+    assert "from benchmarks.run_task037_extra_h2 import _jsonable" in source
+    summary = runner._attach_evidence(
+        {"audit": _jsonable({"nested": MappingProxyType({"value": 1})})}
+    )
+    assert runner._evidence_valid(summary)
+
+    companion_args = runner._parser().parse_args(
+        [
+            "m6b-w8a-companion",
+            "--run-dir", str(tmp_path / "companion"),
+            "--w8a-raw-dir", str(tmp_path / "w8a"),
+            "--w6a-raw-dir", str(tmp_path / "w6a"),
+            "--jit-cache-source", str(tmp_path / "jit"),
+            "--expected-source-sha", "c" * 40,
+        ]
+    )
+    assert companion_args.command == "m6b-w8a-companion"
+    recovery = _qualified_w8a_recovery_fixture(tmp_path)
+    assert runner._m6b_w8a_w8b_authority_valid(
+        recovery, w8a_raw_dir=tmp_path / "w8a", expected_source_sha="c" * 40
+    )
+    recovery["companion_gate_pass"] = False
+    recovery = runner._attach_evidence(recovery)
+    assert not runner._m6b_w8a_w8b_authority_valid(
+        recovery, w8a_raw_dir=tmp_path / "w8a", expected_source_sha="c" * 40
+    )
+
+
+@pytest.mark.parametrize(
+    "tamper",
+    [
+        lambda value: value["checks"].update(resource=False),
+        lambda value: value["checks"].update(artifact_hashes=False),
+        lambda value: value["producer_measurement"].update(resource=False),
+        lambda value: value["producer_measurement"]["progress"].update({"pass": False}),
+        lambda value: value["producer_measurement"].update(failure_boundary=False),
+        lambda value: value["source_delta"].update({"pass": False}),
+        lambda value: value["companion_verification"]["checks"].update(sentinel=False),
+        lambda value: value["companion_verification"]["summary"]["sentinel_actions"][0].update(
+            relative_error=2.0e-11
+        ),
+        lambda value: value["recovery_checker_source"].update(source_commit_full_sha="d" * 40),
+    ],
+)
+def test_w8a_recovery_authority_rejects_nested_tamper(tmp_path, tamper):
+    value = _qualified_w8a_recovery_fixture(tmp_path)
+    tamper(value)
+    value = runner._attach_evidence(value)
+    assert not runner._m6b_w8a_w8b_authority_valid(
+        value, w8a_raw_dir=tmp_path / "w8a", expected_source_sha="c" * 40
+    )
