@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 
 import benchmarks.task039_full3d_identity as full3d_identity
+import benchmarks.task039_hybrid_direct_identity as hybrid_identity
 from benchmarks.canonical_vector_artifacts import (
     canonical_shard_manifest,
     write_canonical_manifest,
@@ -423,6 +424,7 @@ def test_own_adjacent_and_full3d_positive_with_augmented_telemetry(
     )
     assert result["comparisons"]["full3d_diagnostic"]["reference_mesh_target_nm"] == 6.0
     assert result["comparisons"]["full3d_diagnostic"]["orders"]["keys_exact"] is True
+    assert "v3_integrated_gate" not in result["comparisons"]["adjacent"]
 
 
 def test_canonical_role_requires_side_prefix(
@@ -529,3 +531,80 @@ def test_v3_model_identity_accepts_and_near_miss_rejects(tmp_path: Path) -> None
     rejected = check_hybrid_direct_identity(root)
     assert rejected["pass"] is False
     assert rejected["classification"] == "HYBRID_DIRECT_OWN_AUTHORITY_FAIL"
+
+
+def _v3_full3d_view(hybrid: dict[str, object]) -> dict[str, object]:
+    arrays = hybrid["payload"]["arrays"]
+    return {
+        "physical_model_sha256": hybrid["manifest"]["physical_model_sha256"],
+        "source_sha": "b" * 40,
+        "inventory": {"keys": tuple(hybrid["inventory"]["keys"])},
+        "orders": {key: dict(value) for key, value in hybrid["orders"].items()},
+        "fields": {name: arrays[name].copy() for name in ("E_V_per_m", "H_A_per_m")},
+        "coordinates": {name: arrays[name].copy() for name in ("x_nm", "y_nm", "z_nm")},
+        "observables": dict(hybrid["observables"]),
+        "closure": hybrid["closure"],
+        "artifacts": {},
+    }
+
+
+def test_v3_integrated_gate_ignores_channel_diagnostic_failures(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "hybrid_v3"
+    _write_hybrid(
+        root,
+        _inventory_v3(),
+        480,
+        model_id="task039_5nm_v3_1deg_s5_hybrid_direct_m480",
+        h_nm=5.0,
+        incident_grazing_deg=1.0,
+    )
+    hybrid = hybrid_identity._load_hybrid(root)
+    full = _v3_full3d_view(hybrid)
+    first_key = max(full["orders"], key=lambda key: full["orders"][key]["power_ratio"])
+    full["orders"][first_key]["outgoing_amplitude"] = 1.1 + 0.0j
+    monkeypatch.setattr(hybrid_identity, "_raw_full3d", lambda *_args, **_kwargs: full)
+
+    result = hybrid_identity.compare_h5_hybrid_direct_full3d(root, root)
+
+    assert result["classification"] == (
+        "TASK039_V3_HYBRID_INTEGRATED_PHYSICS_PASS_CHANNEL_DIAGNOSTIC_PENDING"
+    )
+    assert result["pass"] is True
+    assert result["v3_integrated_gate"]["pass"] is True
+    assert result["orders"]["primary_pass"] is False
+    assert result["orders"]["full_channel_pass"] is False
+    assert result["v3_integrated_gate"]["channel_resolved_diagnostic_only"] is True
+    assert result["v3_integrated_gate"]["selected_EH_overall_limits"] == {
+        "E_V_per_m": 5.0e-3,
+        "H_A_per_m": 1.0e-2,
+    }
+
+
+def test_v3_integrated_observable_failure_still_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "hybrid_v3"
+    _write_hybrid(
+        root,
+        _inventory_v3(),
+        480,
+        model_id="task039_5nm_v3_1deg_s5_hybrid_direct_m480",
+        h_nm=5.0,
+        incident_grazing_deg=1.0,
+    )
+    hybrid = hybrid_identity._load_hybrid(root)
+    full = _v3_full3d_view(hybrid)
+    full["observables"]["R_total"] += 2.0e-4
+    monkeypatch.setattr(hybrid_identity, "_raw_full3d", lambda *_args, **_kwargs: full)
+
+    result = hybrid_identity.compare_h5_hybrid_direct_full3d(root, root)
+
+    assert result["pass"] is False
+    assert result["classification"] == ("TASK039_V3_HYBRID_INTEGRATED_PHYSICS_FAIL")
+    gate = result["v3_integrated_gate"]
+    assert gate["observables"]["values"]["R_total"]["abs_delta"] == pytest.approx(
+        2.0e-4
+    )
+    assert gate["observables"]["values"]["R_total"]["pass"] is False

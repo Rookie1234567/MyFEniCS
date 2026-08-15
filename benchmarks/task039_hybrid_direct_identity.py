@@ -135,6 +135,7 @@ def _model_contract(value: Any) -> dict[str, Any] | None:
     if historical is not None:
         return {
             "model_id": value,
+            "profile": "historical",
             "requested_modes": int(historical.group(1)),
             "h_nm": 10.0,
             "incident_grazing_deg": 10.0,
@@ -143,6 +144,7 @@ def _model_contract(value: Any) -> dict[str, Any] | None:
     if _V3_MODEL_ID.fullmatch(value) is not None:
         return {
             "model_id": value,
+            "profile": "v3_1deg",
             "requested_modes": 480,
             "h_nm": 5.0,
             "incident_grazing_deg": 1.0,
@@ -1073,6 +1075,14 @@ def _v2_selected_fields(
     return {"fields": fields, "pass": all(item["pass"] for item in fields.values())}
 
 
+def _v3_overall_selected_fields(fields: Mapping[str, Any]) -> dict[str, Any]:
+    overall = {
+        name: {**metric, "pass": metric["relative_l2"] <= metric["limit"]}
+        for name, metric in fields["fields"].items()
+    }
+    return {"fields": overall, "pass": all(item["pass"] for item in overall.values())}
+
+
 def _v2_normal_flux(arrays: Mapping[str, Any], label: str) -> np.ndarray:
     electric = _v2_array(arrays, "E_V_per_m", label)
     magnetic = _v2_array(arrays, "H_A_per_m", label)
@@ -1232,6 +1242,84 @@ def _compare_h5_hybrid_full3d_data(
     orders = _v2_order_comparison(
         hybrid["orders"], full["orders"], expected_count=expected_count
     )
+    is_v3 = hybrid["contract"].get("profile") == "v3_1deg"
+    if is_v3:
+        integrated_observables = _compare_observables(
+            hybrid["observables"], full["observables"], 1.0e-4
+        )
+        integrated_fields = _v3_overall_selected_fields(fields)
+        own = {
+            "true_residual": {
+                "actual": hybrid["residual"],
+                "limit": 1.0e-9,
+                "pass": hybrid["residual"] <= 1.0e-9,
+            },
+            "interface_projection": {
+                "actual": hybrid["projection"],
+                "limit": 1.0e-8,
+                "pass": hybrid["projection"] <= 1.0e-8,
+            },
+            "traction_bottom": {
+                "actual": hybrid["traction"]["bottom"],
+                "limit": 1.0e-8,
+                "pass": hybrid["traction"]["bottom"] <= 1.0e-8,
+            },
+            "traction_top": {
+                "actual": hybrid["traction"]["top"],
+                "limit": 1.0e-8,
+                "pass": hybrid["traction"]["top"] <= 1.0e-8,
+            },
+        }
+        integrated_orders = {
+            "power_weighted": orders["power_weighted"],
+            "power_weighted_numerator": orders["power_weighted_numerator"],
+            "power_weighted_denominator": orders["power_weighted_denominator"],
+            "limit": 1.0e-3,
+            "pass": orders["power_weighted"] <= 1.0e-3,
+        }
+        integrated_gate = {
+            "contract": "task039.v3_1deg.integrated_physics",
+            "own": own,
+            "observables": integrated_observables,
+            "closure": closure,
+            "selected_EH_overall": integrated_fields,
+            "selected_EH_overall_limits": {
+                "E_V_per_m": 5.0e-3,
+                "H_A_per_m": 1.0e-2,
+            },
+            "normal_flux": flux,
+            "all_channel_power_weighted": integrated_orders,
+            "external_keys_exact": inventory,
+            "coordinates_exact": coordinates,
+            "channel_resolved_diagnostic_only": True,
+        }
+        integrated_gate["pass"] = (
+            all(item["pass"] for item in own.values())
+            and integrated_observables["pass"]
+            and all(item["pass"] for item in closure.values())
+            and integrated_fields["pass"]
+            and flux["pass"]
+            and integrated_orders["pass"]
+            and inventory["pass"]
+            and coordinates["pass"]
+        )
+        return {
+            "schema_version": "task039.v2-h5-hybrid-full3d-same-grid.v1",
+            "inventory": inventory,
+            "observables": observables,
+            "closure": closure,
+            "selected_EH": fields,
+            "normal_flux": flux,
+            "orders": orders,
+            "v3_integrated_gate": integrated_gate,
+            "primary_pass": integrated_gate["pass"],
+            "classification": (
+                "TASK039_V3_HYBRID_INTEGRATED_PHYSICS_PASS_CHANNEL_DIAGNOSTIC_PENDING"
+                if integrated_gate["pass"]
+                else "TASK039_V3_HYBRID_INTEGRATED_PHYSICS_FAIL"
+            ),
+            "pass": integrated_gate["pass"],
+        }
     primary_pass = (
         all(
             item["pass"]
@@ -1290,7 +1378,18 @@ def compare_h5_hybrid_direct_full3d(
     result = _compare_h5_hybrid_full3d_data(hybrid, full)
     physical = _v2_physical_model_identity(hybrid, full)
     result["physical_model_identity"] = physical
-    if not physical["pass"]:
+    if hybrid["contract"].get("profile") == "v3_1deg":
+        integrated_gate = result["v3_integrated_gate"]
+        integrated_gate["physical_model_identity"] = physical
+        integrated_gate["pass"] = integrated_gate["pass"] and physical["pass"]
+        result["primary_pass"] = integrated_gate["pass"]
+        result["pass"] = integrated_gate["pass"]
+        result["classification"] = (
+            "TASK039_V3_HYBRID_INTEGRATED_PHYSICS_PASS_CHANNEL_DIAGNOSTIC_PENDING"
+            if integrated_gate["pass"]
+            else "TASK039_V3_HYBRID_INTEGRATED_PHYSICS_FAIL"
+        )
+    elif not physical["pass"]:
         result["primary_pass"] = False
         result["pass"] = False
         result["classification"] = "H5_M480_HYBRID_MODEL_FAIL"
