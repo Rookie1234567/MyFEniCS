@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+import json
 
 import numpy as np
 import pytest
@@ -67,6 +68,13 @@ def test_w13a_core_has_one_gate_and_records_fixed_wall_and_action_contract() -> 
     }
     assert result["gate"]["pass"] is True
     assert all(result["gate"]["checks"].values())
+    assert all(type(value) is bool for value in result["gate"]["checks"].values())
+    assert all(
+        type(record[key]) is bool
+        for record in result["measurements"].values()
+        for key in ("repeat_exact", "closure_pass")
+    )
+    json.dumps(result, allow_nan=False)
     assert len(calls) == 4
     assert result["action_counts"] == {
         "local_apply": 4,

@@ -123,7 +123,9 @@ def run_w13a_projected_range_measurements(
         )
         closure_pass = first["linear_action_closure"] <= W13A_CLOSURE_LIMIT
         all_finite = all_finite and first["finite"] and second["finite"]
-        all_repeat = all_repeat and repeat_exact and np.isfinite(repeat_error)
+        all_repeat = bool(
+            all_repeat and repeat_exact and bool(np.isfinite(repeat_error))
+        )
         all_closure = all_closure and closure_pass
         for key in ("local_apply", "physical_outer_action", "range_apply"):
             total_counts[key] += first["action_counts"][key] + second["action_counts"][key]
