@@ -61,6 +61,23 @@ def _v3_2d_file_sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _v3_2d_order_contract(rows: Any) -> list[dict[str, Any]] | None:
+    fields = (
+        "order",
+        "top_propagating",
+        "bottom_propagating",
+        "reflected_Ez_real",
+        "reflected_Ez_imag",
+        "transmitted_Ez_real",
+        "transmitted_Ez_imag",
+        "R_order",
+        "T_order",
+    )
+    if not isinstance(rows, list) or any(not isinstance(row, Mapping) for row in rows):
+        return None
+    return [{key: row.get(key) for key in fields} for row in rows]
+
+
 def _v3_2d_raw_dtn_rows(
     metrics: Mapping[str, Any], numerical_output: Path
 ) -> tuple[list[Mapping[str, Any]] | None, list[str]]:
@@ -90,7 +107,11 @@ def _v3_2d_raw_dtn_rows(
             errors.append(f"V3 2D raw power field disagrees with summary: {key}")
     summary_rows = metrics.get("orders")
     raw_power_rows = raw_power.get("orders")
-    if raw_power_rows != summary_rows:
+    raw_contract = _v3_2d_order_contract(raw_power_rows)
+    summary_contract = _v3_2d_order_contract(summary_rows)
+    if raw_contract is None or summary_contract is None:
+        errors.append("V3 2D raw/summary order contract is not a list of mappings")
+    elif raw_contract != summary_contract:
         errors.append("V3 2D raw power orders disagree with summary orders")
     if raw_orders != raw_power_rows:
         errors.append("V3 2D raw diffraction orders disagree with raw power orders")

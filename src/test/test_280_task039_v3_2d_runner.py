@@ -60,6 +60,7 @@ class _OnePollProcess:
 def _order_row(order=0):
     return {
         "order": order,
+        "alpha": complex(order, 0.0),
         "top_propagating": -19 <= order <= 0,
         "bottom_propagating": -19 <= order <= -1,
         "reflected_Ez_real": 0.1,
@@ -93,11 +94,19 @@ def _field_descriptor(tmp_path: Path):
 
 
 def _write_dtn_files(tmp_path: Path, metrics):
+    def json_default(value):
+        if isinstance(value, np.generic):
+            return value.item()
+        if isinstance(value, complex):
+            return [value.real, value.imag]
+        raise TypeError(type(value).__name__)
+
     (tmp_path / "dtn_port_power_metrics.json").write_text(
-        json.dumps(metrics, indent=2) + "\n", encoding="utf-8"
+        json.dumps(metrics, indent=2, default=json_default) + "\n", encoding="utf-8"
     )
     (tmp_path / "dtn_port_diffraction_orders.json").write_text(
-        json.dumps(metrics["orders"], indent=2) + "\n", encoding="utf-8"
+        json.dumps(metrics["orders"], indent=2, default=json_default) + "\n",
+        encoding="utf-8",
     )
 
 
