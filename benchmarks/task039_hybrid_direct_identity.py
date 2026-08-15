@@ -738,6 +738,147 @@ def _load_hybrid(
     }
 
 
+def load_task039_direct_solution_inventory(
+    run_dir: str | Path,
+    *,
+    expected_source_sha: str | None = None,
+    expected_physical_model_sha256: str | None = None,
+) -> dict[str, Any]:
+    """Load hash-bound direct artifacts without inventing a row mapping."""
+
+    loaded = _load_hybrid(run_dir)
+    manifest = loaded["manifest"]
+    if (
+        expected_source_sha is not None
+        and manifest.get("source_sha") != expected_source_sha
+    ):
+        _fail("direct solution source SHA does not match the expected identity")
+    if (
+        expected_physical_model_sha256 is not None
+        and manifest.get("physical_model_sha256") != expected_physical_model_sha256
+    ):
+        _fail("direct solution physical SHA does not match the expected identity")
+    numeric_dir = Path(loaded["root"]) / "numerical_output"
+    numeric = loaded["numeric"]
+    canonical_exports = numeric.get("canonical_exports")
+    if not isinstance(canonical_exports, Mapping):
+        _fail("direct canonical export descriptors are missing")
+    canonical: dict[str, Any] = {}
+    for side in ("bottom", "top"):
+        side_descriptor = canonical_exports.get(side)
+        roles = (
+            side_descriptor.get("roles")
+            if isinstance(side_descriptor, Mapping)
+            else None
+        )
+        if not isinstance(roles, Mapping):
+            _fail(f"direct {side} canonical roles are missing")
+        for role in _CANONICAL_ROLES:
+            descriptor = roles.get(role)
+            if not isinstance(descriptor, Mapping):
+                _fail(f"direct {side}.{role} descriptor is missing")
+            path = _resolve(numeric_dir, descriptor.get("manifest"))
+            manifest_sha = descriptor.get("manifest_sha256")
+            if not isinstance(manifest_sha, str) or not _SHA256.fullmatch(manifest_sha):
+                _fail(f"direct {side}.{role} manifest SHA is invalid")
+            canonical_manifest = read_canonical_manifest(path, manifest_sha)
+            shards = canonical_manifest.get("per_rank_shards")
+            if not isinstance(shards, list) or len(shards) != 8:
+                _fail(f"direct {side}.{role} must contain eight rank shards")
+            canonical[f"{side}.{role}"] = {
+                "manifest": _artifact(path, f"direct {side}.{role} manifest"),
+                "manifest_sha256": manifest_sha,
+                "role": canonical_manifest.get("role"),
+                "mpi_size": canonical_manifest.get("mpi_size"),
+                "dtype": canonical_manifest.get("dtype"),
+                "global_summed_packet_count": canonical_manifest.get(
+                    "global_summed_packet_count"
+                ),
+                "summed_local_duplicate_count": canonical_manifest.get(
+                    "summed_local_duplicate_count"
+                ),
+                "shard_count": len(shards),
+                "shards": [
+                    {
+                        "rank": item.get("rank"),
+                        "filename": item.get("filename"),
+                        "file_sha256": item.get("file_sha256"),
+                        "packet_count": item.get("packet_count"),
+                    }
+                    for item in shards
+                ],
+                "rows": canonical_manifest.get("rows", "not_available"),
+                "ownership": canonical_manifest.get("ownership", "not_available"),
+                "layout": canonical_manifest.get("layout", "not_available"),
+            }
+    payload = loaded["payload"]
+    arrays = {
+        name: {
+            "shape": list(values.shape),
+            "dtype": str(values.dtype),
+            "bytes": int(values.nbytes),
+            "sha256": hashlib.sha256(
+                np.ascontiguousarray(values).tobytes(order="C")
+            ).hexdigest(),
+        }
+        for name, values in payload["arrays"].items()
+    }
+    mapping = numeric.get("direct_solution_mapping")
+    mapping_status = "available" if isinstance(mapping, Mapping) else "not_available"
+    return {
+        "run_root": str(loaded["root"]),
+        "source_sha": manifest["source_sha"],
+        "input_sha256": manifest["input_sha256"],
+        "resolved_config_sha256": manifest["resolved_config_sha256"],
+        "physical_model_sha256": manifest["physical_model_sha256"],
+        "mpi_size": manifest["mpi_size"],
+        "payload": {
+            "artifact": payload["artifact"],
+            "arrays": arrays,
+        },
+        "canonical": canonical,
+        "mapping_status": mapping_status,
+        "mapping_reason": (
+            "verified direct_solution_mapping is present"
+            if mapping_status == "available"
+            else "raw canonical packets have physical keys but no verified PETSc row/ownership map"
+        ),
+        "row_mapping": dict(mapping) if isinstance(mapping, Mapping) else None,
+    }
+
+
+def reconstruct_hash_bound_solution_vector(
+    inventory: Mapping[str, Any],
+    values: Sequence[complex] | np.ndarray,
+    *,
+    expected_layout: Mapping[str, Any],
+) -> np.ndarray:
+    """Reconstruct x* only when an explicit layout and value hash are bound."""
+
+    mapping = inventory.get("row_mapping")
+    if inventory.get("mapping_status") != "available" or not isinstance(
+        mapping, Mapping
+    ):
+        _fail(
+            "direct solution reconstruction is unavailable without a verified row map"
+        )
+    if mapping.get("layout") != dict(expected_layout):
+        _fail("direct solution row mapping layout does not match HybridAugmentedLayout")
+    result = np.asarray(values, dtype=np.complex128)
+    global_size = mapping.get("global_size")
+    if isinstance(global_size, bool) or not isinstance(global_size, int):
+        _fail("direct solution row mapping global_size is invalid")
+    if result.shape != (global_size,) or not np.isfinite(result).all():
+        _fail("direct solution vector shape or finite contract failed")
+    expected_sha = mapping.get("solution_sha256")
+    actual_sha = hashlib.sha256(
+        np.ascontiguousarray(result).tobytes(order="C")
+    ).hexdigest()
+    if expected_sha != actual_sha:
+        _fail("direct solution vector hash does not match the bound mapping")
+    return result.copy()
+
+
 def _raw_full3d(
     run_dir: str | Path, *, expected_inventory_count: int | None = None
 ) -> dict[str, Any]:

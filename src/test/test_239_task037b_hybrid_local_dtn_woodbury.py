@@ -12,6 +12,7 @@ from src.solvers.hybrid_local_dtn_woodbury import (
     HYBRID_DTN_WOODBURY_MODE_COUNT,
     HybridLocalDtnWoodburyFixedAction,
     HybridLocalDtnWoodburyOracle,
+    ResearchExactSideLuAction,
 )
 
 
@@ -482,3 +483,76 @@ def test_fixed_action_supports_reviewed_correction_passes(passes: int) -> None:
         C.destroy()
         D.destroy()
         H.destroy()
+
+
+def test_research_exact_side_action_matches_explicit_schur_and_releases_factor():
+    rows = 4
+    modes = 2
+    rng = np.random.default_rng(283)
+    F_dense = np.asarray(
+        [
+            [3.0 + 0.2j, 0.1, 0.0, 0.0],
+            [0.0, 2.7 - 0.1j, 0.2, 0.0],
+            [0.0, 0.0, 2.4 + 0.3j, 0.1],
+            [0.1, 0.0, 0.0, 3.2 - 0.2j],
+        ],
+        dtype=np.complex128,
+    )
+    C_dense = (
+        rng.standard_normal((rows, modes))
+        + 1j * rng.standard_normal((rows, modes)) * 0.02
+    )
+    D_dense = (
+        rng.standard_normal((modes, rows))
+        + 1j * rng.standard_normal((modes, rows)) * 0.02
+    )
+    H_dense = np.diag(np.asarray([2.0 + 0.1j, 2.7 - 0.2j]))
+    F = _matrix_from_dense(F_dense)
+    C = _matrix_from_dense(C_dense)
+    D = _matrix_from_dense(D_dense)
+    H = _matrix_from_dense(H_dense)
+    components = SimpleNamespace(F=F, C=C, D=D, H=H)
+    action = ResearchExactSideLuAction(F, components, factor_solver_type=None)
+    source_template = F.createVecRight()
+    source = _random_vector(source_template, 284)
+    source_template.destroy()
+    actual = F.createVecLeft()
+    start, end = (int(value) for value in source.getOwnershipRange())
+    rhs = np.empty(rows, dtype=np.complex128)
+    local_rhs = np.asarray(source.getArray(readonly=True), dtype=np.complex128).copy()
+    for first, last, values in MPI.COMM_WORLD.allgather((start, end, local_rhs)):
+        rhs[first:last] = values
+    expected = np.linalg.solve(
+        F_dense - C_dense @ np.linalg.solve(H_dense, D_dense),
+        rhs,
+    )
+    try:
+        expected_vec = _vector_from_values(F, expected)
+        action.apply(source, actual)
+        try:
+            assert _relative_error(actual, expected_vec) <= 1.0e-11
+        finally:
+            expected_vec.destroy()
+        diagnostics = action.diagnostics
+        assert diagnostics["direct_factor_count"] == 1
+        assert diagnostics["direct_factor_count_owned"] == 1
+        assert diagnostics["ilu_factor_count"] == 0
+        assert diagnostics["global_hybrid_direct_factor_count"] == 0
+        assert diagnostics["woodbury"]["K_rank"] == modes
+    finally:
+        actual.destroy()
+        source.destroy()
+        action.destroy()
+        assert action.diagnostics["destroyed"] is True
+        assert F.getSize() == (rows, rows)
+        C.destroy()
+        D.destroy()
+        H.destroy()
+        F.destroy()
+
+
+def _vector_from_values(matrix: PETSc.Mat, values: np.ndarray) -> PETSc.Vec:
+    vector = matrix.createVecLeft()
+    first, last = (int(value) for value in vector.getOwnershipRange())
+    vector.getArray()[:] = values[first:last]
+    return vector

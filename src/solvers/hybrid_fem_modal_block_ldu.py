@@ -24,6 +24,7 @@ __all__ = (
     "HybridBlockLduIterativeResult",
     "build_hybrid_action_modal_schur",
     "create_action_block_ldu_preconditioner",
+    "create_research_exact_side_lu_block_ldu_preconditioner",
     "multimetric_true_residual_decision",
     "solve_hybrid_block_ldu_iterative",
 )
@@ -288,6 +289,7 @@ class HybridBlockLduPreconditioner:
         bottom_action: Any,
         top_action: Any,
         action_modal_schur_system: HybridActionModalSchurSystem,
+        research_inventory: dict[str, Any] | None = None,
     ) -> None:
         self.layout = layout
         self.bottom_system = bottom_system
@@ -296,6 +298,9 @@ class HybridBlockLduPreconditioner:
         self.bottom_action = bottom_action
         self.top_action = top_action
         self.action_modal_schur_system = action_modal_schur_system
+        self._research_inventory = (
+            None if research_inventory is None else dict(research_inventory)
+        )
         self.modal_schur = action_modal_schur_system.modal_schur
         self.defer_action_modal_schur_release = False
         self._action_modal_schur_released = False
@@ -357,7 +362,7 @@ class HybridBlockLduPreconditioner:
                 top.get("ilu_factor_count", top.get("factor_count", 0)),
             )
         )
-        return {
+        result = {
             "global_A_materialized": False,
             "direct_factor_count": bottom_direct + top_direct,
             "borrowed_direct_factor_count": bottom_direct + top_direct,
@@ -378,6 +383,9 @@ class HybridBlockLduPreconditioner:
             "action_modal_schur_released": bool(self._action_modal_schur_released),
             "destroyed": bool(self._destroyed),
         }
+        if self._research_inventory is not None:
+            result.update(self._research_inventory)
+        return result
 
     def _check_layouts(self) -> None:
         expected_bottom = self.layout.bottom_local_sizes[self.layout.comm.rank]
@@ -531,6 +539,47 @@ def create_action_block_ldu_preconditioner(
             bottom_action,
             top_action,
             modal_schur,
+        )
+    except Exception:
+        modal_schur.destroy()
+        raise
+
+
+def create_research_exact_side_lu_block_ldu_preconditioner(
+    layout: HybridAugmentedLayout,
+    bottom_system: Any,
+    top_system: Any,
+    coupling: HybridInternalModeCoupling,
+    bottom_action: Any,
+    top_action: Any,
+) -> HybridBlockLduPreconditioner:
+    """Build a research-only LDU context around one exact factor per side."""
+
+    actions = {"bottom": bottom_action, "top": top_action}
+    for side, action in actions.items():
+        diagnostics = _action_diagnostics(action)
+        if diagnostics.get("research_only") is not True:
+            raise ValueError(f"Research exact-side {side} action is not opted in")
+        if _direct_factor_count(diagnostics) != 1:
+            raise ValueError(
+                f"Research exact-side {side} action needs one direct factor"
+            )
+        if diagnostics.get("global_hybrid_direct_factor_count") != 0:
+            raise ValueError("Research exact-side action cannot own a global factor")
+    modal_schur = build_hybrid_action_modal_schur(coupling, bottom_action, top_action)
+    try:
+        return HybridBlockLduPreconditioner(
+            layout,
+            bottom_system,
+            top_system,
+            coupling,
+            bottom_action,
+            top_action,
+            modal_schur,
+            research_inventory={
+                "research_only_exact_side_lu": True,
+                "global_hybrid_direct_factor_count": 0,
+            },
         )
     except Exception:
         modal_schur.destroy()

@@ -19,6 +19,9 @@ __all__ = (
     "HYBRID_DTN_WOODBURY_MODE_COUNT",
     "HybridLocalDtnWoodburyOracle",
     "HybridLocalDtnWoodburyFixedAction",
+    "ResearchExactFactorInverse",
+    "ResearchExactSideLuAction",
+    "create_research_exact_side_lu_action",
 )
 
 
@@ -230,6 +233,153 @@ class HybridLocalDtnWoodburyOracle:
         self._lu = None
         self._piv = None
         self._destroyed = True
+
+
+class ResearchExactFactorInverse:
+    """Research-only PETSc LU factor that borrows, but never destroys, ``F``."""
+
+    def __init__(
+        self,
+        matrix: PETSc.Mat,
+        *,
+        factor_solver_type: str | None = "mumps",
+    ) -> None:
+        if not isinstance(matrix, PETSc.Mat):
+            raise TypeError("Exact research factor requires a PETSc matrix")
+        if str(matrix.getType()).lower() == "python":
+            raise ValueError("Exact research factor requires an explicit F matrix")
+        if matrix.getSize()[0] != matrix.getSize()[1]:
+            raise ValueError("Exact research factor requires square F")
+        self.matrix = matrix
+        self.factor_solver_type = factor_solver_type
+        self.ksp = PETSc.KSP().create(matrix.getComm())
+        self.ksp.setOperators(matrix)
+        self.ksp.setType("preonly")
+        pc = self.ksp.getPC()
+        pc.setType("lu")
+        if factor_solver_type is not None:
+            pc.setFactorSolverType(str(factor_solver_type))
+        self.ksp.setUp()
+        self._destroyed = False
+        self._solve_count = 0
+
+    def solve(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        if self._destroyed:
+            raise RuntimeError("Exact research factor has been destroyed")
+        if source.getSize() != self.matrix.getSize()[1]:
+            raise ValueError("Exact research factor source has the wrong size")
+        if target.getSize() != self.matrix.getSize()[0]:
+            raise ValueError("Exact research factor target has the wrong size")
+        self.ksp.solve(source, target)
+        reason = int(self.ksp.getConvergedReason())
+        if reason < 0:
+            raise RuntimeError(f"Exact research LU solve failed with reason {reason}")
+        self._solve_count += 1
+
+    def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        self.solve(source, target)
+
+    @property
+    def diagnostics(self) -> dict[str, Any]:
+        return {
+            "research_only": True,
+            "operator_identity": "research_exact_side_lu",
+            "factor_solver_type": self.factor_solver_type,
+            "ksp_created": True,
+            "direct_factor_count": 0 if self._destroyed else 1,
+            "direct_factor_count_owned": 0 if self._destroyed else 1,
+            "base_factor_count": 0 if self._destroyed else 1,
+            "global_hybrid_direct_factor_count": 0,
+            "solve_count": int(self._solve_count),
+            "factor_destroyed": bool(self._destroyed),
+        }
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self.ksp.destroy()
+        self.ksp = None
+        self._destroyed = True
+
+
+class ResearchExactSideLuAction:
+    """Research-only exact F inverse plus the existing DtN Woodbury correction."""
+
+    def __init__(
+        self,
+        explicit_f: PETSc.Mat,
+        components: Any,
+        *,
+        factor_solver_type: str | None = "mumps",
+    ) -> None:
+        if getattr(components, "F", None) is not explicit_f:
+            raise ValueError("Research exact-side action must use components.F itself")
+        self.factor = ResearchExactFactorInverse(
+            explicit_f,
+            factor_solver_type=factor_solver_type,
+        )
+        try:
+            self.woodbury = HybridLocalDtnWoodburyOracle(
+                self.factor,
+                components,
+                base_identity="research_exact_F_direct",
+            )
+        except Exception:
+            self.factor.destroy()
+            raise
+        self.operator = components.F
+        self.components = components
+        self._destroyed = False
+
+    def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        if self._destroyed:
+            raise RuntimeError("Research exact-side action has been destroyed")
+        self.woodbury.apply(source, target)
+
+    def solve(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        self.apply(source, target)
+
+    @property
+    def diagnostics(self) -> dict[str, Any]:
+        factor = self.factor.diagnostics
+        woodbury = self.woodbury.diagnostics
+        return {
+            "research_only": True,
+            "operator_identity": "research_exact_side_lu_woodbury",
+            "factor_solver_type": factor["factor_solver_type"],
+            "ksp_created": True,
+            "direct_factor_count": factor["direct_factor_count"],
+            "direct_factor_count_owned": factor["direct_factor_count_owned"],
+            "ilu_factor_count": 0,
+            "global_hybrid_direct_factor_count": 0,
+            "woodbury": woodbury,
+            "apply_count": int(woodbury["apply_count"]),
+            "destroyed": bool(self._destroyed),
+        }
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self.woodbury.destroy()
+        self.factor.destroy()
+        self._destroyed = True
+
+
+def create_research_exact_side_lu_action(
+    explicit_f: PETSc.Mat,
+    components: Any,
+    *,
+    factor_solver_type: str | None = "mumps",
+) -> ResearchExactSideLuAction:
+    """Create one exact-side LU plus DtN Woodbury action for research only."""
+
+    if getattr(components, "F", None) is not explicit_f:
+        raise ValueError("Research exact-side factor must use components.F itself")
+    return ResearchExactSideLuAction(
+        explicit_f,
+        components,
+        factor_solver_type=factor_solver_type,
+    )
 
 
 class _FixedBaseApplyAdapter:

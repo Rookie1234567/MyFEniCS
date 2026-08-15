@@ -3,17 +3,21 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 from mpi4py import MPI
 from petsc4py import PETSc
 
 from src.solvers.hybrid_fem_modal_augmented_direct import (
     HybridAugmentedLayout,
+    build_hybrid_augmented_direct_system,
     internal_modal_constraint_matrix,
 )
 from src.solvers.hybrid_fem_modal_block_ldu import (
     build_hybrid_action_modal_schur,
     create_action_block_ldu_preconditioner,
+    create_research_exact_side_lu_block_ldu_preconditioner,
 )
+from src.solvers.hybrid_local_dtn_woodbury import ResearchExactSideLuAction
 
 
 class _FixedAction:
@@ -239,6 +243,23 @@ def _destroy_fixture(fixture: dict[str, object]) -> None:
     fixture["top"].A.destroy()
 
 
+def _zero_research_components(fixture: dict[str, object], system) -> SimpleNamespace:
+    row = system.A.createVecLeft()
+    column = system.A.createVecRight()
+    modal = fixture["coupling"].bottom.positive_traction.createVecRight()
+    try:
+        return SimpleNamespace(
+            F=system.A,
+            C=_matrix_from_dense(row, modal, np.zeros((4, 2), dtype=np.complex128)),
+            D=_matrix_from_dense(modal, column, np.zeros((2, 4), dtype=np.complex128)),
+            H=_matrix_from_dense(modal, modal, np.eye(2, dtype=np.complex128)),
+        )
+    finally:
+        row.destroy()
+        column.destroy()
+        modal.destroy()
+
+
 def test_action_modal_schur_is_repeated_and_borrowed():
     fixture = _tiny_fixture()
     bottom, top = _actions(fixture)
@@ -426,4 +447,82 @@ def test_action_block_apply_is_linear_and_owns_no_side_factor():
             context.destroy()
         bottom.destroy()
         top.destroy()
+        _destroy_fixture(fixture)
+
+
+def test_research_exact_side_factory_keeps_direct_and_ilu_inventories_separate():
+    fixture = _tiny_fixture()
+    components = []
+    actions = []
+    context = None
+    source = target = direct = None
+    try:
+        for system in (fixture["bottom"], fixture["top"]):
+            component = _zero_research_components(fixture, system)
+            components.append(component)
+            actions.append(
+                ResearchExactSideLuAction(
+                    system.A,
+                    component,
+                    factor_solver_type=None,
+                )
+            )
+        with pytest.raises(ValueError, match="zero borrowed direct factors"):
+            create_action_block_ldu_preconditioner(
+                fixture["layout"],
+                fixture["bottom"],
+                fixture["top"],
+                fixture["coupling"],
+                actions[0],
+                actions[1],
+            )
+        context = create_research_exact_side_lu_block_ldu_preconditioner(
+            fixture["layout"],
+            fixture["bottom"],
+            fixture["top"],
+            fixture["coupling"],
+            actions[0],
+            actions[1],
+        )
+        inventory = context.inventory
+        assert inventory["research_only_exact_side_lu"] is True
+        assert inventory["bottom_direct_factor_count"] == 1
+        assert inventory["top_direct_factor_count"] == 1
+        assert inventory["borrowed_ilu_factor_count"] == 0
+        assert inventory["global_hybrid_direct_factor_count"] == 0
+        source = fixture["layout"].create_vector()
+        target = fixture["layout"].create_vector()
+        fixture["coupling"].internal_equation_count = 4
+        values = np.asarray(
+            np.random.default_rng(285).standard_normal(fixture["layout"].global_size)
+            + 1j
+            * np.random.default_rng(286).standard_normal(fixture["layout"].global_size),
+            dtype=np.complex128,
+        )
+        first, last = (int(value) for value in source.getOwnershipRange())
+        source.getArray()[:] = values[first:last]
+        direct = build_hybrid_augmented_direct_system(
+            fixture["bottom"], fixture["top"], fixture["coupling"]
+        )
+        rows = np.arange(direct.A.getSize()[0], dtype=PETSc.IntType)
+        expected = np.linalg.solve(
+            direct.A.getValues(rows, rows), _gather_vector(source)
+        )
+        context.apply(None, source, target)
+        assert _relative_array_error(_gather_vector(target), expected) <= 1.0e-11
+    finally:
+        if direct is not None:
+            direct.destroy()
+        if target is not None:
+            target.destroy()
+        if source is not None:
+            source.destroy()
+        if context is not None:
+            context.destroy()
+        for action in actions:
+            action.destroy()
+        for component in components:
+            component.C.destroy()
+            component.D.destroy()
+            component.H.destroy()
         _destroy_fixture(fixture)
