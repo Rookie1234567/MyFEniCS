@@ -9,7 +9,7 @@ space, or a PDE/post-processing path.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 import hashlib
 from pathlib import Path
 from typing import Any
@@ -409,6 +409,8 @@ def solve_m5_b0_fixed(
     pc_context: M5M4YPCContext,
     max_it: int,
     operator_context: M5B0MatPythonContext | None = None,
+    checkpoint_observer: Callable[[int, np.ndarray], None] | None = None,
+    checkpoint_iterations: tuple[int, ...] | None = None,
 ) -> dict[str, Any]:
     """Solve one fixed 20-, 100-, or 200-step B0 cycle and audit its true residual.
 
@@ -419,6 +421,10 @@ def solve_m5_b0_fixed(
 
     if max_it not in (20, 100, 200):
         raise ValueError("B0 solve max_it must be one of fixed 20, 100, or 200")
+    if checkpoint_observer is None and checkpoint_iterations is not None:
+        raise ValueError("checkpoint iterations require a checkpoint observer")
+    if checkpoint_observer is not None and checkpoint_iterations != (20, 100, 150, 200):
+        raise ValueError("B0 trajectory checkpoints are fixed to 20/100/150/200")
     if rhs.getComm().getSize() != 1:
         raise ValueError("W11A B0 solve is fixed to MPI1")
     rows = int(rhs.getSize())
@@ -427,6 +433,8 @@ def solve_m5_b0_fixed(
     solution = operator.createVecRight()
     action_work = operator.createVecLeft()
     residual_work = rhs.duplicate()
+    monitor_solution = None
+    observed_iterations: set[int] = set()
     rhs_values = _copy_owned_array(rhs, "W11A B0 RHS")
     rhs_norm = float(np.linalg.norm(rhs_values))
     if not np.isfinite(rhs_norm) or rhs_norm <= 0.0:
@@ -447,6 +455,20 @@ def solve_m5_b0_fixed(
         pc.setType(PETSc.PC.Type.PYTHON)
         pc.setPythonContext(pc_context)
         ksp.setUp()
+        if checkpoint_observer is not None:
+            monitor_solution = operator.createVecRight()
+
+            def monitor(current: PETSc.KSP, iteration: int, _reported: float) -> None:
+                iteration = int(iteration)
+                if iteration not in checkpoint_iterations or iteration in observed_iterations:
+                    return
+                current.buildSolution(monitor_solution)
+                checkpoint_observer(
+                    iteration, _copy_owned_array(monitor_solution, "B0 checkpoint")
+                )
+                observed_iterations.add(iteration)
+
+            ksp.setMonitor(monitor)
         ksp.solve(rhs, solution)
         operator.mult(solution, action_work)
         residual_work.waxpy(PETSc.ScalarType(-1.0), action_work, rhs)
@@ -481,3 +503,5 @@ def solve_m5_b0_fixed(
         solution.destroy()
         action_work.destroy()
         residual_work.destroy()
+        if monitor_solution is not None:
+            monitor_solution.destroy()
