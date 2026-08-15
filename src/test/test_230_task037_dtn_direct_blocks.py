@@ -13,6 +13,7 @@ from src.solvers.condensed_dtn import (
     create_matrix_free_condensed_operator,
     extract_petsc_condensed_blocks,
     gather_small_petsc_matrix,
+    materialize_research_explicit_dtn_blocks,
     recover_petsc_auxiliary,
     relative_action_error,
 )
@@ -233,6 +234,7 @@ def test_direct_dtn_blocks_match_extracted_oracle_and_action_only_fine():
     ):
         direct = assembler.finish()
     matrix_free = matrix_free_assembler.finish()
+    research = materialize_research_explicit_dtn_blocks(matrix_free)
     assert direct.F is None
     assert matrix_free.F is None
     assert matrix_free_assembler.preallocation_audit["matrix_free_dtn"] is True
@@ -276,6 +278,42 @@ def test_direct_dtn_blocks_match_extracted_oracle_and_action_only_fine():
         oracle_dense = gather_small_petsc_matrix(oracle_matrix_block)
         direct_dense = gather_small_petsc_matrix(direct_matrix_block)
         np.testing.assert_allclose(oracle_dense, direct_dense, atol=1.0e-12, rtol=0.0)
+    for direct_matrix_block, research_matrix_block in (
+        (direct.C, research.C),
+        (direct.D, research.D),
+        (direct.H, research.H),
+    ):
+        assert direct_matrix_block.getSize() == research_matrix_block.getSize()
+        assert (
+            direct_matrix_block.getOwnershipRange()
+            == research_matrix_block.getOwnershipRange()
+        )
+        assert (
+            direct_matrix_block.getOwnershipRangeColumn()
+            == research_matrix_block.getOwnershipRangeColumn()
+        )
+        np.testing.assert_allclose(
+            gather_small_petsc_matrix(direct_matrix_block),
+            gather_small_petsc_matrix(research_matrix_block),
+            atol=1.0e-12,
+            rtol=0.0,
+        )
+    d_source = action_only.create_active_vector()
+    _fill_active(d_source, 2.75)
+    d_matrix_free = matrix_free.D.createVecLeft()
+    d_research = research.D.createVecLeft()
+    matrix_free.D.mult(d_source, d_matrix_free)
+    research.D.mult(d_source, d_research)
+    d_difference = d_matrix_free.copy()
+    d_difference.axpy(PETSc.ScalarType(-1.0), d_research)
+    d_relative_error = float(d_difference.norm()) / max(
+        float(d_matrix_free.norm()), 1.0e-30
+    )
+    d_difference.destroy()
+    assert d_relative_error <= 1.0e-12
+    d_research.destroy()
+    d_matrix_free.destroy()
+    d_source.destroy()
     assert oracle.b_fe.getOwnershipRange() == direct.b_fe.getOwnershipRange()
     assert oracle.b_aux.getOwnershipRange() == direct.b_aux.getOwnershipRange()
     b_fe_error = _vector_error(oracle.b_fe, direct.b_fe)
@@ -343,6 +381,7 @@ def test_direct_dtn_blocks_match_extracted_oracle_and_action_only_fine():
     matrix_free_operator.destroy()
     oracle_operator.destroy()
     fine_action.destroy()
+    research.destroy()
     direct.destroy()
     matrix_free.destroy()
     oracle.destroy()

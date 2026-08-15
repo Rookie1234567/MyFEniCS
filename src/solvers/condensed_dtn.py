@@ -116,6 +116,21 @@ class PetscCondensedBlocks:
         self.release_f()
 
 
+@dataclass
+class ResearchExplicitDtnBlocks:
+    """Explicit C/D/H matrices materialized only for research references."""
+
+    C: PETSc.Mat
+    D: PETSc.Mat
+    H: PETSc.Mat
+    audit: dict[str, Any]
+
+    def destroy(self) -> None:
+        self.H.destroy()
+        self.D.destroy()
+        self.C.destroy()
+
+
 class _MatrixFreeDtnBlockState:
     """Action-only carriers for the modal ``C`` and ``D`` blocks."""
 
@@ -181,6 +196,146 @@ class _MatrixFreeDtnMatContext:
 
     def destroy(self, _matrix: PETSc.Mat | None = None) -> None:
         return None
+
+
+def materialize_research_explicit_dtn_blocks(
+    blocks: PetscCondensedBlocks,
+) -> ResearchExplicitDtnBlocks:
+    """Materialize independent sparse C/D/H from one matrix-free Dtn state.
+
+    This is a research-only reference path.  It reads the already-built mode
+    supports from the MatPython state, uses the same distributed ownership and
+    preallocation rules as :class:`DtnBlockAssembler`, and never forms a dense
+    ``C H^-1 D`` product.
+    """
+
+    if blocks.C is None or blocks.D is None:
+        raise ValueError("research DtN materialization requires C and D matrices")
+    n_fe = int(blocks.n_fe)
+    n_aux = int(blocks.n_aux)
+    if blocks.C.getSize() != (n_fe, n_aux):
+        raise ValueError("C global size does not match condensed block dimensions")
+    if blocks.D.getSize() != (n_aux, n_fe):
+        raise ValueError("D global size does not match condensed block dimensions")
+    if blocks.H.getSize() != (n_aux, n_aux):
+        raise ValueError("H global size does not match condensed block dimensions")
+    c_context = blocks.C.getPythonContext()
+    d_context = blocks.D.getPythonContext()
+    if not isinstance(c_context, _MatrixFreeDtnMatContext) or not isinstance(
+        d_context, _MatrixFreeDtnMatContext
+    ):
+        raise ValueError("research DtN materialization requires matrix-free C/D")
+    if c_context.kind != "C" or d_context.kind != "D":
+        raise ValueError("matrix-free C/D contexts have incorrect kinds")
+    if c_context.state is not d_context.state:
+        raise ValueError("matrix-free C/D contexts do not share one state")
+    state = c_context.state
+    if state.n_aux != n_aux:
+        raise ValueError("matrix-free state auxiliary size does not match blocks")
+    modes = tuple(int(mode) for mode, *_rest in state.entries)
+    if any(mode < 0 or mode >= n_aux for mode in modes):
+        raise ValueError("matrix-free DtN entry mode is out of range")
+    if set(modes) != set(range(n_aux)):
+        raise ValueError("matrix-free DtN entries do not cover every auxiliary mode")
+    local_active = state.active_end - state.active_start
+    local_c_row_nnz = np.zeros(local_active, dtype=PETSc.IntType)
+    rows_by_mode: list[list[np.ndarray]] = [[] for _mode in range(n_aux)]
+    cols_by_mode: list[list[np.ndarray]] = [[] for _mode in range(n_aux)]
+    for mode, rows, _traction_values, cols, _ell_values in state.entries:
+        if len(rows):
+            rows_by_mode[mode].append(rows)
+        if len(cols):
+            cols_by_mode[mode].append(cols)
+    local_d_counts = np.zeros(n_aux, dtype=np.int64)
+    for mode in range(n_aux):
+        if rows_by_mode[mode]:
+            mode_rows = np.unique(np.concatenate(rows_by_mode[mode]))
+            np.add.at(
+                local_c_row_nnz,
+                mode_rows - state.active_start,
+                1,
+            )
+        if cols_by_mode[mode]:
+            local_d_counts[mode] = len(np.unique(np.concatenate(cols_by_mode[mode])))
+    all_d_counts = np.asarray(
+        state.comm.allgather(tuple(int(value) for value in local_d_counts)),
+        dtype=np.int64,
+    )
+    global_d_counts = np.sum(all_d_counts, axis=0)
+    local_aux_columns = state.n_aux if state.comm.rank == state.aux_owner else 0
+    local_aux_rows = state.n_aux if state.comm.rank == state.aux_owner else 0
+    c_diag_nnz = (
+        local_c_row_nnz
+        if state.comm.rank == state.aux_owner
+        else np.zeros_like(local_c_row_nnz)
+    )
+    c_offdiag_nnz = (
+        np.zeros_like(local_c_row_nnz)
+        if state.comm.rank == state.aux_owner
+        else local_c_row_nnz
+    )
+    d_diag_nnz = (
+        np.asarray(local_d_counts, dtype=PETSc.IntType)
+        if state.comm.rank == state.aux_owner
+        else np.zeros(0, dtype=PETSc.IntType)
+    )
+    d_offdiag_nnz = (
+        np.asarray(global_d_counts - local_d_counts, dtype=PETSc.IntType)
+        if state.comm.rank == state.aux_owner
+        else np.zeros(0, dtype=PETSc.IntType)
+    )
+    explicit_c = explicit_d = explicit_h = None
+    try:
+        explicit_c = PETSc.Mat().createAIJ(
+            size=((local_active, n_fe), (local_aux_columns, n_aux)),
+            nnz=(c_diag_nnz, c_offdiag_nnz),
+            comm=state.comm,
+        )
+        explicit_d = PETSc.Mat().createAIJ(
+            size=((local_aux_rows, n_aux), (local_active, n_fe)),
+            nnz=(d_diag_nnz, d_offdiag_nnz),
+            comm=state.comm,
+        )
+        explicit_h = blocks.H.copy()
+        for matrix in (explicit_c, explicit_d, explicit_h):
+            matrix.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR, True)
+        for mode, rows, traction_values, cols, ell_values in state.entries:
+            if len(rows):
+                explicit_c.setValues(
+                    rows,
+                    np.asarray([mode], dtype=PETSc.IntType),
+                    traction_values.reshape((-1, 1)),
+                    addv=PETSc.InsertMode.ADD_VALUES,
+                )
+            if len(cols):
+                explicit_d.setValues(
+                    np.asarray([mode], dtype=PETSc.IntType),
+                    cols,
+                    ell_values.reshape((1, -1)),
+                    addv=PETSc.InsertMode.ADD_VALUES,
+                )
+        explicit_c.assemble()
+        explicit_d.assemble()
+        explicit_h.assemble()
+        return ResearchExplicitDtnBlocks(
+            explicit_c,
+            explicit_d,
+            explicit_h,
+            {
+                "research_only": True,
+                "shared_matrix_free_state": True,
+                "n_fe": n_fe,
+                "n_aux": n_aux,
+                "c_row_nnz_local_sum": int(np.sum(local_c_row_nnz)),
+                "d_nnz_global": int(np.sum(global_d_counts)),
+                "new_nonzero_allocation_err": True,
+            },
+        )
+    except Exception:
+        for matrix in (explicit_h, explicit_d, explicit_c):
+            if matrix is not None:
+                matrix.destroy()
+        raise
 
 
 def extract_petsc_condensed_blocks(

@@ -26,6 +26,11 @@ from src.solvers.hybrid_fem_modal_block_ldu import (
 )
 from src.solvers.hybrid_fem_modal_iterative import create_hybrid_assembled_block_action
 from src.solvers.hybrid_local_dtn_woodbury import create_research_exact_side_lu_action
+from src.solvers.condensed_dtn import (
+    condensed_rhs,
+    create_matrix_free_condensed_operator,
+    materialize_research_explicit_dtn_blocks,
+)
 from src.solvers.static_local_schur_action import (
     materialize_research_explicit_fine_matrix,
 )
@@ -435,6 +440,186 @@ def _audit_explicit_f_action(
     }
 
 
+class _ResearchEliminatedSide:
+    """Own one explicit-component eliminated side reference."""
+
+    def __init__(
+        self,
+        *,
+        F: PETSc.Mat,
+        C: PETSc.Mat,
+        D: PETSc.Mat,
+        H: PETSc.Mat,
+        b: PETSc.Vec,
+        A: PETSc.Mat,
+        A_context: Any,
+        source_system: Any,
+        dtn_audit: Mapping[str, Any],
+    ) -> None:
+        self.F = F
+        self.C = C
+        self.D = D
+        self.H = H
+        self.b = b
+        self.A = A
+        self.A_context = A_context
+        self.local_mesh = source_system.local_mesh
+        self.global_size = int(A.getSize()[0])
+        self.n_fe = self.global_size
+        self.n_external_aux = 0
+        self.external_modes = list(source_system.external_modes)
+        self.inventory = {
+            "matrix_type": "python",
+            "matrix_free": True,
+            "global_A_materialized": False,
+            "global_F_materialized": True,
+            "explicit_external_c_matrix_count": 1,
+            "explicit_external_d_matrix_count": 1,
+            "direct_factor_count": 0,
+            "research_explicit_dtn": dict(dtn_audit),
+        }
+        self._destroyed = False
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self.A_context.destroy()
+        self.A.destroy()
+        self.b.destroy()
+        self.H.destroy()
+        self.D.destroy()
+        self.C.destroy()
+        self.F.destroy()
+        self._destroyed = True
+
+
+class ResearchHybridReference:
+    """Thin independent Hybrid reference built from explicit side components."""
+
+    def __init__(
+        self,
+        bottom: _ResearchEliminatedSide,
+        top: _ResearchEliminatedSide,
+        operator: PETSc.Mat,
+        operator_context: Any,
+    ) -> None:
+        self.bottom = bottom
+        self.top = top
+        self.operator = operator
+        self.operator_context = operator_context
+        self._destroyed = False
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self.operator_context.destroy()
+        self.operator.destroy()
+        self.top.destroy()
+        self.bottom.destroy()
+        self._destroyed = True
+
+
+def _build_research_eliminated_side(system: Any) -> _ResearchEliminatedSide:
+    fine = None
+    dtn = None
+    action = None
+    action_context = None
+    rhs = None
+    try:
+        fine = materialize_research_explicit_fine_matrix(
+            system.static_condensation.condensed
+        )
+        dtn = materialize_research_explicit_dtn_blocks(system.blocks)
+        blocks = SimpleNamespace(
+            F=fine,
+            C=dtn.C,
+            D=dtn.D,
+            H=dtn.H,
+            n_fe=int(fine.getSize()[0]),
+            n_aux=int(dtn.H.getSize()[0]),
+            require_f=lambda: fine,
+        )
+        action, action_context = create_matrix_free_condensed_operator(
+            blocks,
+            fine_operator=fine,
+        )
+        rhs = condensed_rhs(
+            SimpleNamespace(
+                b_fe=system.blocks.b_fe,
+                b_aux=system.blocks.b_aux,
+                C=dtn.C,
+                D=dtn.D,
+                H=dtn.H,
+            )
+        )
+        side = _ResearchEliminatedSide(
+            F=fine,
+            C=dtn.C,
+            D=dtn.D,
+            H=dtn.H,
+            b=rhs,
+            A=action,
+            A_context=action_context,
+            source_system=system,
+            dtn_audit=dtn.audit,
+        )
+        fine = None
+        dtn = None
+        action = None
+        action_context = None
+        rhs = None
+        return side
+    except Exception:
+        if action_context is not None:
+            action_context.destroy()
+        if action is not None:
+            action.destroy()
+        if rhs is not None:
+            rhs.destroy()
+        if dtn is not None:
+            dtn.destroy()
+        if fine is not None:
+            fine.destroy()
+        raise
+
+
+def build_research_independent_hybrid_reference(
+    bottom_system: Any,
+    top_system: Any,
+    coupling: Any,
+) -> ResearchHybridReference:
+    """Build explicit-component eliminated actions without a dense global matrix."""
+
+    bottom = None
+    top = None
+    operator = None
+    operator_context = None
+    try:
+        bottom = _build_research_eliminated_side(bottom_system)
+        top = _build_research_eliminated_side(top_system)
+        operator, operator_context = create_hybrid_assembled_block_action(
+            bottom,
+            top,
+            coupling,
+        )
+        reference = ResearchHybridReference(bottom, top, operator, operator_context)
+        bottom = None
+        top = None
+        operator = None
+        operator_context = None
+        return reference
+    except Exception:
+        if operator_context is not None:
+            operator_context.destroy()
+        if operator is not None:
+            operator.destroy()
+        if top is not None:
+            top.destroy()
+        if bottom is not None:
+            bottom.destroy()
+        raise
+
+
 def run_exact_side_lu_oracle(
     layout: Any,
     bottom_system: Any,
@@ -450,8 +635,7 @@ def run_exact_side_lu_oracle(
 ) -> dict[str, Any]:
     """Run one exact-side oracle and consume the solution before cleanup."""
 
-    bottom_explicit = None
-    top_explicit = None
+    reference = None
     bottom_components = None
     top_components = None
     bottom_action = None
@@ -461,26 +645,28 @@ def run_exact_side_lu_oracle(
     context = None
     result = None
     report = None
-    bottom_explicit_destroyed = False
-    top_explicit_destroyed = False
+    reference_destroyed = False
     try:
-        bottom_explicit = materialize_research_explicit_fine_matrix(
-            bottom_system.static_condensation.condensed
+        reference = build_research_independent_hybrid_reference(
+            bottom_system,
+            top_system,
+            coupling,
         )
-        top_explicit = materialize_research_explicit_fine_matrix(
-            top_system.static_condensation.condensed
-        )
+        bottom_reference = reference.bottom
+        top_reference = reference.top
+        bottom_explicit = bottom_reference.F
+        top_explicit = top_reference.F
         bottom_components = SimpleNamespace(
             F=bottom_explicit,
-            C=bottom_system.blocks.C,
-            D=bottom_system.blocks.D,
-            H=bottom_system.blocks.H,
+            C=bottom_reference.C,
+            D=bottom_reference.D,
+            H=bottom_reference.H,
         )
         top_components = SimpleNamespace(
             F=top_explicit,
-            C=top_system.blocks.C,
-            D=top_system.blocks.D,
-            H=top_system.blocks.H,
+            C=top_reference.C,
+            D=top_reference.D,
+            H=top_reference.H,
         )
         for side, system, components in (
             ("bottom", bottom_system, bottom_components),
@@ -508,7 +694,9 @@ def run_exact_side_lu_oracle(
             factor_solver_type=factor_solver_type,
         )
         operator, operator_context = create_hybrid_assembled_block_action(
-            bottom_system, top_system, coupling
+            bottom_system,
+            top_system,
+            coupling,
         )
         context = create_research_exact_side_lu_block_ldu_preconditioner(
             layout,
@@ -569,6 +757,10 @@ def run_exact_side_lu_oracle(
                 "top": int(top_components.H.getSize()[0]),
             },
             "explicit_f_action": explicit_audit,
+            "explicit_dtn_components": {
+                "bottom": dict(bottom_reference.inventory["research_explicit_dtn"]),
+                "top": dict(top_reference.inventory["research_explicit_dtn"]),
+            },
             "solution_handoff": "not_requested",
         }
         if numerical_pass and inventory_pass and solution_consumer is not None:
@@ -588,12 +780,9 @@ def run_exact_side_lu_oracle(
             bottom_action.destroy()
         if top_action is not None:
             top_action.destroy()
-        if bottom_explicit is not None:
-            bottom_explicit.destroy()
-            bottom_explicit_destroyed = True
-        if top_explicit is not None:
-            top_explicit.destroy()
-            top_explicit_destroyed = True
+        if reference is not None:
+            reference.destroy()
+            reference_destroyed = True
         if report is not None:
             report["lifecycle"] = {
                 "bottom_action_destroyed": bool(
@@ -604,9 +793,7 @@ def run_exact_side_lu_oracle(
                     top_action is not None
                     and top_action.diagnostics.get("destroyed") is True
                 ),
-                "explicit_f_destroyed": bool(
-                    bottom_explicit_destroyed and top_explicit_destroyed
-                ),
+                "explicit_reference_destroyed": bool(reference_destroyed),
                 "solution_consumer_synchronous": bool(
                     report.get("solution_handoff") == "callback_consumed_before_cleanup"
                 ),

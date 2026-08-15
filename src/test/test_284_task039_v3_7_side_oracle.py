@@ -6,7 +6,9 @@ import numpy as np
 
 from benchmarks.task039_v3_side_oracle import (
     _audit_explicit_f_action,
+    _relative_vec_difference,
     audit_hybrid_operator_identity,
+    build_research_independent_hybrid_reference,
     rebuild_hybrid_augmented_vector,
     run_exact_side_lu_oracle,
     select_current_full_fe_shard,
@@ -22,6 +24,10 @@ from src.test.test_241_task037b_hybrid_action_modal_schur import (
 )
 from src.solvers.static_local_schur_action import (
     materialize_research_explicit_fine_matrix,
+)
+from src.solvers.condensed_dtn import (
+    ResearchExplicitDtnBlocks,
+    condensed_rhs,
 )
 
 
@@ -268,6 +274,39 @@ def test_research_explicit_f_and_oracle_lifecycle(monkeypatch):
         side.static_condensation = SimpleNamespace(condensed=condensed)
         side.external_modes = [object(), object()]
         component = _zero_research_components(fixture, side)
+        row = side.A.createVecLeft()
+        modal = component.H.createVecRight()
+        component.C.destroy()
+        component.C = _matrix_from_dense(
+            row,
+            modal,
+            np.asarray(
+                [[0.15 + 0.01j, 0.0], [0.0, 0.12 - 0.02j], [0.03, 0.0], [0.0, 0.02]],
+                dtype=np.complex128,
+            ),
+        )
+        row.destroy()
+        modal.destroy()
+        component.b_fe = side.A.createVecLeft()
+        component.b_fe.set(0.25 + 0.1j)
+        component.b_aux = component.H.createVecRight()
+        if MPI.COMM_WORLD.rank == MPI.COMM_WORLD.size - 1:
+            component.b_aux.getArray()[:] = np.asarray(
+                [0.4 - 0.1j, -0.2 + 0.05j],
+                dtype=PETSc.ScalarType,
+            )
+        component.b_aux.assemble()
+        expected_rhs = condensed_rhs(
+            SimpleNamespace(
+                b_fe=component.b_fe,
+                b_aux=component.b_aux,
+                C=component.C,
+                D=component.D,
+                H=component.H,
+            )
+        )
+        side.b.getArray()[:] = expected_rhs.getArray(readonly=True)
+        expected_rhs.destroy()
         side.blocks = component
         components.append(component)
 
@@ -285,10 +324,53 @@ def test_research_explicit_f_and_oracle_lifecycle(monkeypatch):
         "benchmarks.task039_v3_side_oracle.materialize_research_explicit_fine_matrix",
         fake_materialize,
     )
+
+    def fake_materialize_dtn(blocks):
+        return ResearchExplicitDtnBlocks(
+            blocks.C.copy(),
+            blocks.D.copy(),
+            blocks.H.copy(),
+            {"research_only": True, "synthetic": True},
+        )
+
+    monkeypatch.setattr(
+        "benchmarks.task039_v3_side_oracle.materialize_research_explicit_dtn_blocks",
+        fake_materialize_dtn,
+    )
+    condensed_rhs_calls = []
+    real_condensed_rhs = condensed_rhs
+
+    def counting_condensed_rhs(blocks):
+        condensed_rhs_calls.append(True)
+        return real_condensed_rhs(blocks)
+
+    monkeypatch.setattr(
+        "benchmarks.task039_v3_side_oracle.condensed_rhs",
+        counting_condensed_rhs,
+    )
     rhs = fixture["layout"].create_vector()
     rhs.set(1.0)
     captured = {}
     try:
+        reference = build_research_independent_hybrid_reference(
+            fixture["bottom"], fixture["top"], fixture["coupling"]
+        )
+        try:
+            assert len(condensed_rhs_calls) == 2
+            assert (
+                _relative_vec_difference(reference.bottom.b, components[0].b_fe)
+                > 1.0e-6
+            )
+            assert (
+                _relative_vec_difference(reference.bottom.b, fixture["bottom"].b)
+                <= 1.0e-12
+            )
+            assert (
+                _relative_vec_difference(reference.top.b, fixture["top"].b) <= 1.0e-12
+            )
+            assert reference.bottom.b is not fixture["bottom"].b
+        finally:
+            reference.destroy()
         report = run_exact_side_lu_oracle(
             fixture["layout"],
             fixture["bottom"],
@@ -313,6 +395,8 @@ def test_research_explicit_f_and_oracle_lifecycle(monkeypatch):
     finally:
         rhs.destroy()
         for component in components:
+            component.b_aux.destroy()
+            component.b_fe.destroy()
             component.C.destroy()
             component.D.destroy()
             component.H.destroy()
