@@ -366,6 +366,31 @@ def test_w7_checker_passes_samples_to_all_recompute_paths(monkeypatch, tmp_path)
         "formal_pass": False,
         "pde_pass": False,
     }
+    raw_dir = tmp_path / "raw"
+    raw_dir.mkdir()
+    for name in runner.M6B_W7_S1_RAW_ARTIFACT_NAMES:
+        (raw_dir / name).write_bytes(b"")
+    for name in runner.M6B_W7_S1_WATCHDOG_ARTIFACT_NAMES:
+        (tmp_path / name).write_bytes(b"")
+
+    def absolute_report(root, name):
+        record = runner._artifact(root, name)
+        record["path"] = str((root / name).resolve())
+        return record
+
+    watchdog["artifacts"] = {
+        "worker_summary": absolute_report(raw_dir, "m6b_w7_s1_summary.json"),
+        "progress": absolute_report(raw_dir, "m6b_w7_s1_progress.jsonl"),
+        "root_pid": absolute_report(
+            tmp_path, "w7_s1_restart_disk_fgmres_screen_root_pid.json"
+        ),
+        "stdout": absolute_report(
+            tmp_path, "w7_s1_restart_disk_fgmres_screen_stdout.txt"
+        ),
+        "timeline": absolute_report(
+            tmp_path, "w7_s1_restart_disk_fgmres_screen_timeline.jsonl"
+        ),
+    }
     continuation = {
         "compact": compact,
         "initial_solution": np.ones(1, dtype=np.complex128),
@@ -420,3 +445,6 @@ def test_w7_checker_passes_samples_to_all_recompute_paths(monkeypatch, tmp_path)
     assert seen["recompute"] is samples
     assert seen["numeric"] is samples
     assert seen["progress"] is screen
+    assert seen["result"]["artifact_inventory"]["watchdog"][
+        "w7_s1_restart_disk_fgmres_screen_timeline.jsonl"
+    ]["path"] == "w7_s1_restart_disk_fgmres_screen_timeline.jsonl"
