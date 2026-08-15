@@ -249,8 +249,16 @@ def test_v3_7_formal_worker_injects_collective_cleanup_callback(monkeypatch) -> 
 
 
 def test_v3_7_dry_run_freezes_mpi8_worker_and_byte_watchdog(tmp_path) -> None:
-    plan = v3_7_execution_dry_run(INPUT, tmp_path / "run", source_sha="a" * 40)
+    qualified_like = tmp_path / "qualified-python"
+    qualified_like.symlink_to("/usr/bin/python3.12")
+    plan = v3_7_execution_dry_run(
+        INPUT,
+        tmp_path / "run",
+        source_sha="a" * 40,
+        python_executable=qualified_like,
+    )
     assert plan["argv"][1:3] == ["-n", "8"]
+    assert plan["argv"][3] == str(qualified_like)
     assert "--worker" in plan["argv"]
     assert "--launched-by-task038-watchdog" in plan["argv"]
     assert plan["watchdog"]["absolute_terminate_memory_bytes"] == 224000000000

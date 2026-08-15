@@ -249,7 +249,7 @@ def build_v3_7_execution_plan(
 
     payload = load_v3_7_official_payload(input_path)
     policy = v3_7_watchdog_policy(payload)
-    executable = str(Path(python_executable or sys.executable).resolve())
+    executable = str(Path(os.path.abspath(python_executable or sys.executable)))
     mpiexec = mpiexec_command or shutil.which("mpiexec") or "mpiexec"
     argv = [
         str(mpiexec),
@@ -288,6 +288,7 @@ def v3_7_execution_dry_run(
     run_directory: str | Path,
     *,
     source_sha: str,
+    python_executable: str | Path | None = None,
 ) -> dict[str, Any]:
     """Return the non-mutating pre-heavy command and watchdog contract."""
 
@@ -295,6 +296,7 @@ def v3_7_execution_dry_run(
         input_path,
         run_directory,
         source_sha=source_sha,
+        python_executable=python_executable,
     )
     argv = plan["argv"]
     if argv[1:3] != ["-n", "8"] or plan["watchdog"]["critical_action"] != (
