@@ -13,6 +13,7 @@ from src.solvers.hcurl_assembly_time_condensation import (
 )
 from src.solvers.static_local_schur_action import (
     create_static_local_schur_action,
+    materialize_research_explicit_fine_matrix,
 )
 from src.solvers.hcurl_cell_static_condensation import (
     owned_hcurl_cell_interior_dofs,
@@ -76,6 +77,28 @@ def _serial_aij(values):
     return matrix
 
 
+def _assert_materialized_matches_assembled(testcase, condensed) -> None:
+    materialized = materialize_research_explicit_fine_matrix(condensed)
+    source = condensed.matrix.createVecRight()
+    expected = condensed.matrix.createVecLeft()
+    observed = condensed.matrix.createVecLeft()
+    start, end = source.getOwnershipRange()
+    values = np.arange(start, end, dtype=np.float64)
+    source.getArray()[:] = values + 1j * (values + 1.0)
+    source.assemble()
+    condensed.matrix.mult(source, expected)
+    materialized.mult(source, observed)
+    difference = observed.copy()
+    difference.axpy(PETSc.ScalarType(-1.0), expected)
+    relative = difference.norm() / max(expected.norm(), 1.0e-30)
+    testcase.assertLess(relative, 1.0e-11)
+    difference.destroy()
+    observed.destroy()
+    expected.destroy()
+    source.destroy()
+    materialized.destroy()
+
+
 class TestTask037StaticLocalSchurAction(unittest.TestCase):
     def test_retained_action_matches_assembled_mpc_schur(self) -> None:
         _mesh, cell_tags, V, compiled = _build_fixture(MPI.COMM_SELF)
@@ -131,6 +154,7 @@ class TestTask037StaticLocalSchurAction(unittest.TestCase):
             condensed.build_audit["oriented_schur_class_count_sum"],
             len(unique_keys),
         )
+        _assert_materialized_matches_assembled(self, condensed)
 
         action, context = create_static_local_schur_action(
             condensed,
@@ -212,6 +236,7 @@ class TestTask037StaticLocalSchurAction(unittest.TestCase):
             cell_tags,
             retain_local_schur_for_matrix_free=True,
         )
+        _assert_materialized_matches_assembled(self, condensed)
         action, _context = create_static_local_schur_action(
             condensed,
             condensed.matrix,

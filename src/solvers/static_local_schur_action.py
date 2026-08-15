@@ -5,6 +5,7 @@ from petsc4py import PETSc
 
 from .hcurl_assembly_time_condensation import (
     AssemblyTimeCondensedSystem,
+    _distributed_trace_preallocation,
     _constrain_local_schur,
     _cell_trace_expansion,
 )
@@ -12,6 +13,7 @@ from .hcurl_assembly_time_condensation import (
 __all__ = (
     "create_static_local_schur_action",
     "iter_owned_constrained_schur_contributions",
+    "materialize_research_explicit_fine_matrix",
 )
 
 
@@ -48,6 +50,56 @@ def iter_owned_constrained_schur_contributions(
                 dtype=PETSc.ScalarType,
             ),
         )
+
+
+def materialize_research_explicit_fine_matrix(
+    condensed: AssemblyTimeCondensedSystem,
+) -> PETSc.Mat:
+    """Materialize the retained fine ``F`` matrix for research-only LU."""
+
+    if condensed.retained_local_schur_by_class is None:
+        raise ValueError("research explicit F requires retained local Schur data")
+    comm = condensed.comm
+    cell_active_ids = tuple(
+        np.asarray(active_ids, dtype=PETSc.IntType)
+        for _cell, active_ids, _block in iter_owned_constrained_schur_contributions(
+            condensed
+        )
+    )
+    active_counts = tuple(comm.allgather(int(condensed.owned_active_rows)))
+    diagonal_nnz, off_diagonal_nnz, _audit = _distributed_trace_preallocation(
+        comm,
+        cell_active_ids,
+        active_counts=active_counts,
+        appended_global_rows=0,
+        appended_support_owned_cell_groups=(),
+        appended_support_group_by_row=(),
+    )
+    matrix = PETSc.Mat().createAIJ(
+        size=(
+            (int(condensed.owned_active_rows), int(condensed.active_rows)),
+            (int(condensed.owned_active_rows), int(condensed.active_rows)),
+        ),
+        nnz=(diagonal_nnz if comm.size == 1 else (diagonal_nnz, off_diagonal_nnz)),
+        comm=comm,
+    )
+    matrix.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR, True)
+    try:
+        for _cell, active_ids, block in iter_owned_constrained_schur_contributions(
+            condensed
+        ):
+            ids = np.asarray(active_ids, dtype=PETSc.IntType)
+            values = np.asarray(block, dtype=PETSc.ScalarType)
+            if values.shape != (len(ids), len(ids)):
+                raise ValueError("retained Schur contribution shape is inconsistent")
+            if not np.all(np.isfinite(values)):
+                raise ValueError("retained Schur contribution is not finite")
+            matrix.setValues(ids, ids, values, addv=PETSc.InsertMode.ADD_VALUES)
+        matrix.assemble()
+        return matrix
+    except Exception:
+        matrix.destroy()
+        raise
 
 
 class _LocalSchurActionContext:

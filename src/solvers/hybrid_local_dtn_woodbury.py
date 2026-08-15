@@ -288,7 +288,6 @@ class ResearchExactFactorInverse:
             "ksp_created": True,
             "direct_factor_count": 0 if self._destroyed else 1,
             "direct_factor_count_owned": 0 if self._destroyed else 1,
-            "base_factor_count": 0 if self._destroyed else 1,
             "global_hybrid_direct_factor_count": 0,
             "solve_count": int(self._solve_count),
             "factor_destroyed": bool(self._destroyed),
