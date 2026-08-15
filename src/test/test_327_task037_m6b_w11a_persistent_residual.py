@@ -300,11 +300,14 @@ def test_w11a_parser_dispatch_has_no_action_or_pde_side_effect(monkeypatch: pyte
         "--w7-raw-dir", str(tmp_path / "w7"),
         "--m3y-manifest", str(tmp_path / "m3y.json"),
         "--jit-cache-source", str(tmp_path / "jit"),
+        "--b0-jit-cache-source", str(tmp_path / "b0-jit"),
         "--expected-source-sha", source,
     ]
     assert runner.main(command) == 17
-    assert len(observed["args"]) == 8
+    assert len(observed["args"]) == 9
+    assert observed["args"][7] == (tmp_path / "b0-jit").resolve()
     assert "run_persistent_residual_diagnostic" in runner_source
+    assert "M6B_W6A_JIT_INVENTORY_SHA256" not in runner_source
     assert "petsc4py" not in inspect.getsource(
         run_persistent_residual_diagnostic
     )
@@ -322,3 +325,152 @@ def test_w11a_scope_and_prediction_are_derived_not_formal() -> None:
     assert prediction["bytes"] == 1_272_714_790
     assert prediction["bytes"] == runner.M6B_W11A_PREDICTED_LIVE_SET_BYTES
     assert prediction["gate"] is True
+
+
+def _configure_jit_fixture(
+    monkeypatch: pytest.MonkeyPatch,
+    h2b: object,
+    physical: Path,
+    b0: Path,
+    b0_names: tuple[str, ...],
+    *,
+    union_sha: str | None = None,
+) -> None:
+    physical_record = runner._m6b_w6a_cache_record(h2b, physical)
+    b0_record = runner._m6b_w6a_cache_record(h2b, b0)
+    if union_sha is None:
+        union_sha = runner._m6b_w11a_union_cache_record(
+            h2b, physical_record, b0_record
+        )["inventory_sha256"]
+    monkeypatch.setattr(runner, "M6B_W11A_PHYSICAL_JIT_SOURCE_PATH", physical.resolve())
+    monkeypatch.setattr(runner, "M6B_W11A_B0_JIT_SOURCE_PATH", b0.resolve())
+    monkeypatch.setattr(runner, "M6B_W11A_PHYSICAL_JIT_INVENTORY_SHA256", physical_record["inventory_sha256"])
+    monkeypatch.setattr(runner, "M6B_W11A_B0_JIT_INVENTORY_SHA256", b0_record["inventory_sha256"])
+    monkeypatch.setattr(runner, "M6B_W11A_UNION_JIT_INVENTORY_SHA256", union_sha)
+    monkeypatch.setattr(runner, "M6B_W11A_PHYSICAL_JIT_FILE_COUNT", len(physical_record["entries"]))
+    monkeypatch.setattr(runner, "M6B_W11A_B0_JIT_FILE_COUNT", len(b0_record["entries"]))
+    monkeypatch.setattr(
+        runner,
+        "M6B_W11A_UNION_JIT_FILE_COUNT",
+        len(physical_record["entries"]) + len(b0_record["entries"]),
+    )
+    monkeypatch.setattr(runner, "M6B_W11A_B0_JIT_FILE_NAMES", b0_names)
+
+
+def _make_jit_fixture(
+    tmp_path: Path,
+    physical_names: tuple[str, ...] = ("a.c", "a.o"),
+    b0_names: tuple[str, ...] = ("b.c", "b.o"),
+) -> tuple[Path, Path]:
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    physical = tmp_path / "physical"
+    b0 = tmp_path / "b0"
+    physical.mkdir()
+    b0.mkdir()
+    for index, name in enumerate(physical_names):
+        (physical / name).write_bytes(f"physical-{index}".encode())
+    for index, name in enumerate(b0_names):
+        (b0 / name).write_bytes(f"b0-{index}".encode())
+    return physical, b0
+
+
+def test_w11a_dual_jit_stage_merges_atomically_and_records_union(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    h2b = __import__("benchmarks.run_task037_extra_h2b", fromlist=["*"])
+    physical, b0 = _make_jit_fixture(tmp_path)
+    b0_names = tuple(sorted(item.name for item in b0.iterdir()))
+    _configure_jit_fixture(monkeypatch, h2b, physical, b0, b0_names)
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    audit = runner._m6b_w11a_stage_dual_jit_cache(
+        h2b, run_dir, physical, b0
+    )
+    assert audit["physical_file_count"] == 2
+    assert audit["b0_file_count"] == 2
+    assert audit["union_file_count"] == 4
+    assert audit["warm_precompiled"] is True
+    assert audit["runtime_compile_allowed"] is False
+    assert audit["union_target_before"]["exists"] is False
+    assert not (run_dir / ".jit_cache_staging").exists()
+    verified = runner._m6b_w11a_verify_dual_jit_cache(
+        h2b, physical, b0, run_dir / "jit_cache", "test"
+    )
+    assert verified["target_matches_union"] is True
+    assert {p.name for p in (run_dir / "jit_cache").iterdir()} == {
+        "a.c", "a.o", "b.c", "b.o"
+    }
+
+
+def test_w11a_dual_jit_stage_rejects_inventory_missing_collision_and_existing_target(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    h2b = __import__("benchmarks.run_task037_extra_h2b", fromlist=["*"])
+    physical, b0 = _make_jit_fixture(tmp_path / "valid")
+    b0_names = tuple(sorted(item.name for item in b0.iterdir()))
+    _configure_jit_fixture(monkeypatch, h2b, physical, b0, b0_names)
+    (physical / "a.c").write_bytes(b"tampered")
+    bad_run = tmp_path / "bad_inventory"
+    bad_run.mkdir()
+    with pytest.raises(ValueError, match="inventory"):
+        runner._m6b_w11a_stage_dual_jit_cache(
+            h2b, bad_run, physical, b0
+        )
+
+    missing_physical, missing_b0 = _make_jit_fixture(
+        tmp_path / "missing", b0_names=("b.c",)
+    )
+    _configure_jit_fixture(
+        monkeypatch, h2b, missing_physical, missing_b0, b0_names
+    )
+    missing_run = tmp_path / "missing_run"
+    missing_run.mkdir()
+    with pytest.raises(ValueError, match="inventory"):
+        runner._m6b_w11a_stage_dual_jit_cache(
+            h2b, missing_run, missing_physical, missing_b0
+        )
+
+    collision_physical, collision_b0 = _make_jit_fixture(
+        tmp_path / "collision", physical_names=("b.c", "a.o")
+    )
+    collision_names = tuple(sorted(item.name for item in collision_b0.iterdir()))
+    _configure_jit_fixture(
+        monkeypatch,
+        h2b,
+        collision_physical,
+        collision_b0,
+        collision_names,
+        union_sha="0" * 64,
+    )
+    collision_run = tmp_path / "collision_run"
+    collision_run.mkdir()
+    with pytest.raises(ValueError, match="collide"):
+        runner._m6b_w11a_stage_dual_jit_cache(
+            h2b, collision_run, collision_physical, collision_b0
+        )
+
+    good_physical, good_b0 = _make_jit_fixture(tmp_path / "existing")
+    good_names = tuple(sorted(item.name for item in good_b0.iterdir()))
+    _configure_jit_fixture(monkeypatch, h2b, good_physical, good_b0, good_names)
+    existing_run = tmp_path / "existing_run"
+    existing_run.mkdir()
+    (existing_run / "jit_cache").mkdir()
+    with pytest.raises(FileExistsError):
+        runner._m6b_w11a_stage_dual_jit_cache(
+            h2b, existing_run, good_physical, good_b0
+        )
+
+
+def test_w11a_dual_jit_constants_bind_real_authorities() -> None:
+    assert runner.M6B_W11A_PHYSICAL_JIT_FILE_COUNT == 36
+    assert runner.M6B_W11A_B0_JIT_FILE_COUNT == 4
+    assert runner.M6B_W11A_UNION_JIT_FILE_COUNT == 40
+    assert runner.M6B_W11A_PHYSICAL_JIT_INVENTORY_SHA256 == (
+        "89b34d252e15883d675fe37e207578d93310a1b43516dc6f4280923c46f6f688"
+    )
+    assert runner.M6B_W11A_B0_JIT_INVENTORY_SHA256 == (
+        "370aab13593ed2014777a84c98a180815c85e07864f39e78febb3abf9b36534a"
+    )
+    assert runner.M6B_W11A_UNION_JIT_INVENTORY_SHA256 == (
+        "4a53fb7385d2e58b7448ac2d0e4feb817e1c061455c3dbde68924213e44b4be4"
+    )

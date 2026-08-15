@@ -385,6 +385,34 @@ M6B_W11A_M3Y_MANIFEST_RELATIVE_PATH = (
     "benchmarks/artifacts/task037_extra_development/"
     "m3y_404f6c6_run1/factor_store/manifest.json"
 )
+M6B_W11A_PHYSICAL_JIT_SOURCE_PATH = (
+    ROOT
+    / "benchmarks/artifacts/task037_extra_development/"
+    "m6b_w5_disk_fgmres_41cbbd4_screen_run1/jit_cache"
+).resolve()
+M6B_W11A_B0_JIT_SOURCE_PATH = (
+    ROOT
+    / "benchmarks/artifacts/task037_extra_development/"
+    "m5_a3c677f_run1/jit_cache"
+).resolve()
+M6B_W11A_PHYSICAL_JIT_INVENTORY_SHA256 = (
+    "89b34d252e15883d675fe37e207578d93310a1b43516dc6f4280923c46f6f688"
+)
+M6B_W11A_B0_JIT_INVENTORY_SHA256 = (
+    "370aab13593ed2014777a84c98a180815c85e07864f39e78febb3abf9b36534a"
+)
+M6B_W11A_UNION_JIT_INVENTORY_SHA256 = (
+    "4a53fb7385d2e58b7448ac2d0e4feb817e1c061455c3dbde68924213e44b4be4"
+)
+M6B_W11A_PHYSICAL_JIT_FILE_COUNT = 36
+M6B_W11A_B0_JIT_FILE_COUNT = 4
+M6B_W11A_UNION_JIT_FILE_COUNT = 40
+M6B_W11A_B0_JIT_FILE_NAMES = (
+    "libffcx_forms_f923c8b68cb5c67ea2df49cae4ee8265a28adb11.c",
+    "libffcx_forms_f923c8b68cb5c67ea2df49cae4ee8265a28adb11.c.cached",
+    "libffcx_forms_f923c8b68cb5c67ea2df49cae4ee8265a28adb11.cpython-312-x86_64-linux-gnu.so",
+    "libffcx_forms_f923c8b68cb5c67ea2df49cae4ee8265a28adb11.o",
+)
 M6B_W6A_EVENTS = (
     "authority_validated",
     "mesh_ready",
@@ -1422,6 +1450,149 @@ def _m6b_w6a_cache_record(h2b: Any, path: Path) -> dict[str, Any]:
         "inventory_sha256": hashlib.sha256(
             h2b._canonical_json({"entries": entries})
         ).hexdigest(),
+    }
+
+
+def _m6b_w11a_union_cache_record(
+    h2b: Any,
+    physical: Mapping[str, Any],
+    b0: Mapping[str, Any],
+) -> dict[str, Any]:
+    entries = sorted(
+        [*physical["entries"], *b0["entries"]],
+        key=lambda item: item["path"],
+    )
+    if len({item["path"] for item in entries}) != len(entries):
+        raise ValueError("W11A physical and B0 JIT cache names collide")
+    return {
+        "entries": entries,
+        "inventory_sha256": hashlib.sha256(
+            h2b._canonical_json({"entries": entries})
+        ).hexdigest(),
+    }
+
+
+def _m6b_w11a_dual_jit_snapshot(
+    h2b: Any,
+    physical_source: Path,
+    b0_source: Path,
+    target: Path | None = None,
+) -> dict[str, Any]:
+    physical_source = Path(physical_source).resolve()
+    b0_source = Path(b0_source).resolve()
+    if (
+        physical_source != M6B_W11A_PHYSICAL_JIT_SOURCE_PATH
+        or b0_source != M6B_W11A_B0_JIT_SOURCE_PATH
+    ):
+        raise ValueError("W11A JIT sources are not the frozen absolute authorities")
+    physical = _m6b_w6a_cache_record(h2b, physical_source)
+    b0 = _m6b_w6a_cache_record(h2b, b0_source)
+    if (
+        len(physical["entries"]) != M6B_W11A_PHYSICAL_JIT_FILE_COUNT
+        or physical["inventory_sha256"]
+        != M6B_W11A_PHYSICAL_JIT_INVENTORY_SHA256
+        or len(b0["entries"]) != M6B_W11A_B0_JIT_FILE_COUNT
+        or tuple(item["path"] for item in b0["entries"])
+        != M6B_W11A_B0_JIT_FILE_NAMES
+        or b0["inventory_sha256"] != M6B_W11A_B0_JIT_INVENTORY_SHA256
+    ):
+        raise ValueError("W11A JIT source inventory is not the frozen authority")
+    union = _m6b_w11a_union_cache_record(h2b, physical, b0)
+    if (
+        len(union["entries"]) != M6B_W11A_UNION_JIT_FILE_COUNT
+        or union["inventory_sha256"] != M6B_W11A_UNION_JIT_INVENTORY_SHA256
+    ):
+        raise ValueError("W11A JIT union inventory is not the frozen authority")
+    target_record = None
+    if target is not None:
+        target = Path(target).resolve()
+        if not target.is_dir():
+            raise ValueError("W11A union JIT target is missing")
+        target_record = _m6b_w6a_cache_record(h2b, target)
+        if target_record != union:
+            raise ValueError("W11A union JIT target differs from authority")
+    return {
+        "physical": physical,
+        "b0": b0,
+        "union": union,
+        "target": target_record,
+    }
+
+
+def _m6b_w11a_stage_dual_jit_cache(
+    h2b: Any,
+    run_dir: Path,
+    physical_source: Path,
+    b0_source: Path,
+) -> dict[str, Any]:
+    import shutil
+
+    run_dir = Path(run_dir).resolve()
+    target = run_dir / "jit_cache"
+    staging = run_dir / ".jit_cache_staging"
+    if target.exists() or staging.exists():
+        raise FileExistsError("W11A JIT target or staging path already exists")
+    before = _m6b_w11a_dual_jit_snapshot(
+        h2b, physical_source, b0_source
+    )
+    staging.mkdir()
+    try:
+        shutil.copytree(Path(physical_source).resolve(), staging, dirs_exist_ok=True)
+        for name in M6B_W11A_B0_JIT_FILE_NAMES:
+            shutil.copy2(Path(b0_source).resolve() / name, staging / name)
+        staging.rename(target)
+    except Exception:
+        if staging.exists():
+            shutil.rmtree(staging)
+        raise
+    after = _m6b_w11a_dual_jit_snapshot(
+        h2b, physical_source, b0_source, target
+    )
+    return {
+        "physical_source": str(Path(physical_source).resolve()),
+        "b0_source": str(Path(b0_source).resolve()),
+        "union_target": str(target.resolve()),
+        "physical_source_before": before["physical"],
+        "b0_source_before": before["b0"],
+        "union_target_before": {
+            "path": str(target.resolve()),
+            "exists": False,
+        },
+        "physical_source_final": after["physical"],
+        "b0_source_final": after["b0"],
+        "union_target_final": after["target"],
+        "physical_file_count": M6B_W11A_PHYSICAL_JIT_FILE_COUNT,
+        "b0_file_count": M6B_W11A_B0_JIT_FILE_COUNT,
+        "union_file_count": M6B_W11A_UNION_JIT_FILE_COUNT,
+        "warm_precompiled": True,
+        "runtime_compile_allowed": False,
+        "verification_stages": [],
+    }
+
+
+def _m6b_w11a_verify_dual_jit_cache(
+    h2b: Any,
+    physical_source: Path,
+    b0_source: Path,
+    target: Path,
+    stage: str,
+) -> dict[str, Any]:
+    snapshot = _m6b_w11a_dual_jit_snapshot(
+        h2b, physical_source, b0_source, target
+    )
+    return {
+        "stage": stage,
+        "physical_source_inventory_sha256": snapshot["physical"][
+            "inventory_sha256"
+        ],
+        "b0_source_inventory_sha256": snapshot["b0"]["inventory_sha256"],
+        "union_target_inventory_sha256": snapshot["target"][
+            "inventory_sha256"
+        ],
+        "physical_file_count": len(snapshot["physical"]["entries"]),
+        "b0_file_count": len(snapshot["b0"]["entries"]),
+        "union_file_count": len(snapshot["union"]["entries"]),
+        "target_matches_union": snapshot["target"] == snapshot["union"],
     }
 
 
@@ -4692,12 +4863,12 @@ def _run_m6b_w11a_diagnostic(
     w7_raw_dir: Path,
     m3y_manifest: Path,
     jit_cache_source: Path,
+    b0_jit_cache_source: Path,
     expected_source_sha: str,
 ) -> int:
     """Run the fixed W11A one-vector diagnostic without a physical solve."""
 
     import gc
-    import shutil
     import time
 
     import numpy as np
@@ -4742,6 +4913,7 @@ def _run_m6b_w11a_diagnostic(
     w7_raw_dir = Path(w7_raw_dir).resolve()
     m3y_manifest = Path(m3y_manifest).resolve()
     jit_cache_source = Path(jit_cache_source).resolve()
+    b0_jit_cache_source = Path(b0_jit_cache_source).resolve()
     if run_dir.exists():
         raise FileExistsError(f"W11A run directory already exists: {run_dir}")
     if MPI.COMM_WORLD.size != 1:
@@ -4793,14 +4965,18 @@ def _run_m6b_w11a_diagnostic(
 
     run_dir.mkdir(parents=True)
     cache_dir = run_dir / "jit_cache"
-    shutil.copytree(jit_cache_source, cache_dir)
-    source_cache = _m6b_w6a_cache_record(h2b, jit_cache_source)
-    target_cache = _m6b_w6a_cache_record(h2b, cache_dir)
-    if (
-        source_cache["inventory_sha256"] != M6B_W6A_JIT_INVENTORY_SHA256
-        or source_cache != target_cache
-    ):
-        raise ValueError("W11A copied JIT cache differs from authority")
+    jit_cache_audit = _m6b_w11a_stage_dual_jit_cache(
+        h2b, run_dir, jit_cache_source, b0_jit_cache_source
+    )
+    jit_cache_audit["verification_stages"].append(
+        _m6b_w11a_verify_dual_jit_cache(
+            h2b,
+            jit_cache_source,
+            b0_jit_cache_source,
+            cache_dir,
+            "after_stage",
+        )
+    )
 
     progress_path = run_dir / "m6b_w11a_progress.jsonl"
     summary_path = run_dir / "m6b_w11a_summary.json"
@@ -4819,8 +4995,7 @@ def _run_m6b_w11a_diagnostic(
     store = None
     physical_call_count = 0
     b0_pc_apply_count = 0
-    source_cache_final: dict[str, Any] | None = None
-    target_cache_final: dict[str, Any] | None = None
+    jit_cache_final_error: str | None = None
 
     def emit(event: str, **fields: Any) -> None:
         payload = {
@@ -4957,6 +5132,15 @@ def _run_m6b_w11a_diagnostic(
             "tag_coverage": h2a._jsonable(tag_coverage),
             "bridge": outer_bridge.audit,
         })
+        jit_cache_audit["verification_stages"].append(
+            _m6b_w11a_verify_dual_jit_cache(
+                h2b,
+                jit_cache_source,
+                b0_jit_cache_source,
+                cache_dir,
+                "after_physical_action_ready",
+            )
+        )
         emit("physical_action_ready", dtn_modes=dtn_audit["mode_count"])
 
     def ensure_b0() -> None:
@@ -4987,6 +5171,15 @@ def _run_m6b_w11a_diagnostic(
                 "b0_pc": h2a._jsonable(b0_pc.audit),
                 "m3y_store": store.audit_jsonable(),
             }
+        )
+        jit_cache_audit["verification_stages"].append(
+            _m6b_w11a_verify_dual_jit_cache(
+                h2b,
+                jit_cache_source,
+                b0_jit_cache_source,
+                cache_dir,
+                "after_b0_ready",
+            )
         )
         emit("b0_ready", factor_count=M6B_FACTOR_COUNT)
 
@@ -5086,7 +5279,19 @@ def _run_m6b_w11a_diagnostic(
         emit("mesh_ready", p6=p6)
         emit("space_ready", global_rows=p6["global_rows"])
         emit("floquet_mpc_ready", constraint_count=p6["constraint_count"])
-        emit("cache_ready", inventory_sha256=target_cache["inventory_sha256"])
+        emit(
+            "cache_ready",
+            physical_inventory_sha256=jit_cache_audit[
+                "physical_source_before"
+            ]["inventory_sha256"],
+            b0_inventory_sha256=jit_cache_audit["b0_source_before"][
+                "inventory_sha256"
+            ],
+            union_inventory_sha256=jit_cache_audit[
+                "union_target_final"
+            ]["inventory_sha256"],
+            file_count=jit_cache_audit["union_file_count"],
+        )
         ensure_b0()
         core_result = run_persistent_residual_diagnostic(
             authorities["q"],
@@ -5099,10 +5304,15 @@ def _run_m6b_w11a_diagnostic(
             counters={"b0_solver_restart": 20, "physical_ksp_used": False},
             block_size=M6B_W11A_BLOCK_SIZE,
         )
-        source_cache_final = _m6b_w6a_cache_record(h2b, jit_cache_source)
-        target_cache_final = _m6b_w6a_cache_record(h2b, cache_dir)
-        if source_cache_final != source_cache or target_cache_final != target_cache:
-            raise ValueError("W11A physical construction changed the frozen JIT cache")
+        jit_cache_audit["verification_stages"].append(
+            _m6b_w11a_verify_dual_jit_cache(
+                h2b,
+                jit_cache_source,
+                b0_jit_cache_source,
+                cache_dir,
+                "after_measurement",
+            )
+        )
         emit(
             "measurement_ready",
             selected_level=core_result.get("selected_level"),
@@ -5116,16 +5326,38 @@ def _run_m6b_w11a_diagnostic(
         if "floquet" in locals() and floquet is not None:
             h2a.clear_floquet_topology_cache()
         gc.collect()
+    try:
+        final_jit = _m6b_w11a_dual_jit_snapshot(
+            h2b, jit_cache_source, b0_jit_cache_source, cache_dir
+        )
+        jit_cache_audit["physical_source_final"] = final_jit["physical"]
+        jit_cache_audit["b0_source_final"] = final_jit["b0"]
+        jit_cache_audit["union_target_final"] = final_jit["target"]
+        jit_cache_audit["verification_stages"].append(
+            _m6b_w11a_verify_dual_jit_cache(
+                h2b,
+                jit_cache_source,
+                b0_jit_cache_source,
+                cache_dir,
+                "final",
+            )
+        )
+    except (OSError, TypeError, ValueError, KeyError) as exc:
+        jit_cache_final_error = f"{type(exc).__name__}: {exc}"
     source_end = h2b._light_source()
     if core_result is not None:
         status = core_result["status"]
         classification = core_result["classification"]
-        checks = core_result["checks"]
+        checks = dict(core_result["checks"])
+        checks["jit_cache"] = jit_cache_final_error is None
         w11a_pass = all(checks.values())
     else:
         status = "gate_failed"
         classification = "W11A_EXECUTION_FAIL"
-        checks = {"authority_or_runtime": False}
+        checks = {
+            "authority_or_runtime": False,
+            "jit_cache": jit_cache_final_error is None,
+        }
         w11a_pass = False
     payload = {
         "schema": M6B_W11A_SCHEMA,
@@ -5141,15 +5373,10 @@ def _run_m6b_w11a_diagnostic(
         "runtime_identity": runtime,
         "p6": p6,
         "jit_cache": {
-            "source": source_cache,
-            "target": target_cache,
-            "source_final": source_cache_final,
-            "target_final": target_cache_final,
-            "unchanged": bool(
-                source_cache == target_cache
-                and source_cache_final == source_cache
-                and target_cache_final == target_cache
-            ),
+            **jit_cache_audit,
+            "source_unchanged": jit_cache_final_error is None,
+            "target_frozen_unchanged": jit_cache_final_error is None,
+            "verification_error": jit_cache_final_error,
         },
         "predicted_live_set": predicted,
         "architecture": architecture,
@@ -13488,6 +13715,7 @@ def _parser() -> argparse.ArgumentParser:
     w11a.add_argument("--w7-raw-dir", required=True)
     w11a.add_argument("--m3y-manifest", required=True)
     w11a.add_argument("--jit-cache-source", required=True)
+    w11a.add_argument("--b0-jit-cache-source", required=True)
     w11a.add_argument(
         "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
     )
@@ -13597,6 +13825,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             Path(args.w7_raw_dir).resolve(),
             Path(args.m3y_manifest).resolve(),
             Path(args.jit_cache_source).resolve(),
+            Path(args.b0_jit_cache_source).resolve(),
             args.expected_source_sha,
         )
     run_dir = Path(args.run_dir).resolve()
