@@ -265,6 +265,48 @@ def test_v3_7_dry_run_freezes_mpi8_worker_and_byte_watchdog(tmp_path) -> None:
     assert plan["watchdog"]["critical_action"] == "record_checkpoint_only"
 
 
+def test_v3_7_boot_markers_bound_setup_sentinel_failure(tmp_path) -> None:
+    payload = load_v3_7_official_payload(INPUT)
+    run_directory = tmp_path / "setup-sentinel"
+
+    def setup_sentinel(*_args, **_kwargs):
+        raise RuntimeError("V3_7_SETUP_SENTINEL_REACHED")
+
+    with pytest.raises(RuntimeError, match="V3_7_SETUP_SENTINEL_REACHED"):
+        orchestration.run_task039_v3_7_diagnostic(
+            payload,
+            run_directory,
+            source_sha="a" * 40,
+            comm=MPI.COMM_SELF,
+            setup_builder=setup_sentinel,
+            inventory_loader=lambda *_args, **_kwargs: (
+                {},
+                np.zeros(960, dtype=complex),
+            ),
+            recovery_runner=lambda *_args, **_kwargs: {"pass": True},
+        )
+
+    marker_path = run_directory / "numerical_output" / "memory_stage_markers.raw.jsonl"
+    markers = [
+        json.loads(line)["stage"]
+        for line in marker_path.read_text(encoding="utf-8").splitlines()
+    ]
+    assert markers == [
+        "diagnostic_entry",
+        "profile_ready",
+        "watchdog_ready",
+        "inventory_ready",
+        "config_ready",
+        "setup_begin",
+    ]
+    ledger = json.loads(
+        (run_directory / "numerical_output" / "memory_object_ledger.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert ledger["status"] == "exception"
+
+
 def test_v3_7_direct_authority_is_not_blocked_by_full3d_secondary_error(
     tmp_path, monkeypatch
 ) -> None:

@@ -1236,20 +1236,6 @@ def run_task039_v3_7_diagnostic(
 ) -> dict[str, Any]:
     """Prepare one V3-7 diagnostic campaign; never dispatches MPI itself."""
 
-    profile = v3_7_profile_from_resolved(resolved_payload)
-    watchdog = v3_7_watchdog_policy(resolved_payload)
-    if recovery_runner is None:
-        raise ValueError(
-            "V3-7 requires an injected recovery_runner(setup, layout, snapshot, "
-            "run_dir, producer)"
-        )
-    producer, modal_amplitudes = inventory_loader(
-        resolved_payload,
-        direct_run_dir,
-    )
-    producer["consumer_source_sha"] = source_sha
-    cfg = simulation_config_3d_from_normalized(resolved_payload)
-    modal_cfg = deepcopy(cfg)
     setup = None
     reference_holder: dict[str, Any] = {}
     survey_side_vectors: dict[str, dict[str, PETSc.Vec]] = {}
@@ -1267,6 +1253,12 @@ def run_task039_v3_7_diagnostic(
     normal_return = False
     exception_raised = False
     result: dict[str, Any] | None = None
+    profile = None
+    watchdog = None
+    producer = None
+    modal_amplitudes = None
+    cfg = None
+    modal_cfg = None
     if comm.rank == 0:
         marker_path.parent.mkdir(parents=True, exist_ok=True)
         marker_stream = marker_path.open("a", encoding="utf-8")
@@ -1308,8 +1300,36 @@ def run_task039_v3_7_diagnostic(
             stage_callback(stage, detail)
         marker_callback(stage, {"source": "setup_detail_callback", **dict(detail)})
 
-    producer["_stage_callback"] = marker_callback
     try:
+        _emit_marker(marker_callback, "diagnostic_entry")
+        profile = v3_7_profile_from_resolved(resolved_payload)
+        _emit_marker(marker_callback, "profile_ready", profile_id=profile.profile_id)
+        watchdog = v3_7_watchdog_policy(resolved_payload)
+        _emit_marker(
+            marker_callback,
+            "watchdog_ready",
+            absolute_terminate_memory_bytes=V3_7_ABSOLUTE_HARD_BYTES,
+        )
+        if recovery_runner is None:
+            raise ValueError(
+                "V3-7 requires an injected recovery_runner(setup, layout, snapshot, "
+                "run_dir, producer)"
+            )
+        producer, modal_amplitudes = inventory_loader(
+            resolved_payload,
+            direct_run_dir,
+        )
+        producer["consumer_source_sha"] = source_sha
+        _emit_marker(
+            marker_callback,
+            "inventory_ready",
+            producer_source_sha=producer.get("producer_source_sha"),
+        )
+        cfg = simulation_config_3d_from_normalized(resolved_payload)
+        modal_cfg = deepcopy(cfg)
+        _emit_marker(marker_callback, "config_ready")
+        producer["_stage_callback"] = marker_callback
+        _emit_marker(marker_callback, "setup_begin")
         setup = setup_builder(
             comm,
             profile=profile,
