@@ -121,3 +121,20 @@ W7-S1 compact：`benchmarks/cases/101_task37_extra_development/records/m6b_w7_s1
 W12 的四个 checkpoint 是 `20/100/150/200`，physical action count 为 4；实际生命周期为 B0 构造、释放后才构造 physical action，再释放 physical action。两个投影阈值分别为 q `<=0.70` 和 target `<=0.90`，实际值均超限，所以没有写出 candidate `dX/dAX` 文件。它没有运行 full PDE、official field/RTA 或 direct-authority physics comparison；预测 live set 仍标为 derived/predicted，不能用来替代 process-tree 峰值。
 
 W8–W12 的 consolidated hash-bound evidence 见 [`m6b_w8_w12_consolidated_closeout.json`](../../benchmarks/cases/101_task37_extra_development/records/m6b_w8_w12_consolidated_closeout.json)，旧 raw、watchdog、临时 JSON 和既有 compact 均保持只读。完整 W8C、新 W9B、新 W10 mapping、后续 physical FGMRES 和最终 PDE `<2,000,000,000 B` 目标均为 `not_run`。
+
+## W13A：固定 ProjectedRangePC 组合的 beta 诊断
+
+ProjectedRangePC 的作用可以简单理解为：先用局部 shifted PC 处理残差，再把结果放入冻结的 75D range 做一次范围修正。W13A 只比较当前 W5 组合的 beta=1.0 和 beta=0.5，严格按 beta=1.0 → 释放 store → beta=0.5 的顺序运行；旧的 bare beta=0.5 失败路线没有重开。它是 action-only diagnostic，不是 KSP、PDE、DtN、field 或 RTA。
+
+run1 在结果序列化时遇到 `numpy.bool_`，beta=0.5 未启动；run2 的 beta=1.0 完成后，beta=0.5 被旧 beta=1 guard 拦截。两次都保留为 execution boundary evidence。run3 是修复后的完整 W13A diagnostic：process-tree peak `1,717,895,168 B`，`/usr/bin/time` MaxRSS `1,695,490,048 B`，swap `0`，termination 为 `null`，drain gone，compiler descendants 为空。运行前 prediction `1,726,081,915 B` 是 derived，不是 measured，也不是最终 PDE peak。
+
+W13B 的固定资格门是 beta=0.5 的 projected rho 必须不超过 beta=1.0 的 `95%`，即至少改善 `5%`。这个门用于判断是否值得再投入一次固定 200 步 screen；它不是 PDE 通过条件。run3 raw 的两组测量和独立重算为：
+
+| residual | beta=1.0 projected rho | beta=0.5 projected rho | beta05/beta1 | 相对改善 | 5% 资格门 |
+|---|---:|---:|---:|---:|---|
+| W5 iter200 | `0.9995565651228495` | `0.9940090684868385` | `0.9944500423191865` | `0.005549957680813455`（0.5550%） | fail |
+| W7 cumulative400 | `0.9999083283541277` | `0.9937069526556399` | `0.9937980557590761` | `0.006201944240923907`（0.6202%） | fail |
+
+两组 beta 的 range-only rho 差都是 `0.0`，通过 `<=1e-12` 的 cross-beta identity；child 的 finite、repeat、closure 和计数也通过。但两组 residual 的改善都只有约千分之五到千分之六，远低于预声明的 5% 门，因此 W13B_FIXED_200_STEP_SCREEN 锁定，不应继续花费一次 200 步 screen。W13A 的 action-only 峰值不能冒充 full PDE 资源证据；full time-harmonic PDE、official field/RTA、direct-authority physics comparison 和最终 `<2,000,000,000 B` PDE 测量仍为 `not_run`。
+
+W13A 的独立 compact 证据为 [`m6b_w13a_projected_range_composition.json`](../../benchmarks/cases/101_task37_extra_development/records/m6b_w13a_projected_range_composition.json)，保留旧 raw/watchdog 只读并逐文件绑定 SHA。

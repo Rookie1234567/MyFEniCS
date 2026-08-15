@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import inspect
 import json
+import hashlib
+import math
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -249,3 +252,66 @@ def test_w13a_keeps_projected_pc_default_behavior_and_no_heavy_dispatch() -> Non
     assert "dolfinx" not in core_source
     assert "PETSc" not in core_source
     assert "m6b-w13a-diagnostic" not in core_source
+
+
+def test_w13a_compact_recomputes_raw_gate_and_hash_bound_evidence() -> None:
+    record_path = (
+        Path(runner.ROOT)
+        / "benchmarks/cases/101_task37_extra_development/records/"
+        "m6b_w13a_projected_range_composition.json"
+    )
+    record = json.loads(record_path.read_text(encoding="utf-8"))
+    assert runner._evidence_valid(record)
+    json.dumps(record, allow_nan=False)
+    assert record["status"] == "closed_negative"
+    assert record["classification_layers"] == {
+        "w13a": "W13A_DIAGNOSTIC_EXECUTION_COMPLETE",
+        "w13b": "W13B_FIXED_IMPROVEMENT_GATE_FAIL",
+        "overall": "W13B_FIXED_IMPROVEMENT_GATE_FAIL_LOCKED",
+    }
+    assert record["formal_pass"] is False
+    assert record["pde_pass"] is False
+    assert record["official_rta"] is False
+    assert record["w13b_unlocked"] is False
+
+    for run in record["runs"].values():
+        for descriptor in run["artifacts"].values():
+            path = Path(descriptor["path"])
+            assert descriptor["present"] is True
+            assert descriptor["bytes"] == path.stat().st_size
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            assert descriptor["sha256"] == digest
+            if "embedded_evidence_sha256" in descriptor:
+                value = json.loads(path.read_text(encoding="utf-8"))
+                assert runner._evidence_valid(value)
+                assert descriptor["embedded_evidence_sha256"] == value["evidence_sha256"]
+
+    run3 = record["runs"]["run3"]
+    for role in ("w5_iter200", "w7_cumulative400"):
+        raw = {}
+        for beta in ("beta1", "beta05"):
+            summary_path = Path(run3["artifacts"][f"{beta}_summary"]["path"])
+            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+            raw[beta] = summary["measurements"]["w13a"]["measurements"][role]
+        beta1 = float(raw["beta1"]["rho_projected"])
+        beta05 = float(raw["beta05"]["rho_projected"])
+        ratio = beta05 / beta1
+        improvement = 1.0 - ratio
+        threshold = 0.95 * beta1
+        compact = run3["numeric"]["measurements"][role]
+        assert math.isclose(compact["fixed_improvement_gate"]["ratio"], ratio, abs_tol=1e-15)
+        assert math.isclose(
+            compact["fixed_improvement_gate"]["relative_improvement"],
+            improvement,
+            abs_tol=1e-15,
+        )
+        assert math.isclose(compact["fixed_improvement_gate"]["threshold"], threshold, abs_tol=1e-15)
+        assert compact["fixed_improvement_gate"]["pass"] is (beta05 <= threshold)
+        difference = abs(
+            float(raw["beta1"]["rho_range_only"])
+            - float(raw["beta05"]["rho_range_only"])
+        )
+        assert compact["cross_beta_range"]["absolute_difference"] == difference == 0.0
+    assert run3["numeric"]["fixed_improvement_gate"] is False
+    assert record["run3_recomputed"]["process_tree_peak_bytes"] == 1717895168
+    assert record["run3_recomputed"]["time_max_rss_bytes"] == 1695490048

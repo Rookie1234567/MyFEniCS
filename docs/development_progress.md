@@ -2322,4 +2322,10 @@ phase_e_unlocked = false
 
 # 48. Task037-extra W8–W12 证据收口
 
-W8–W12 将已有残差、Krylov 空间和固定 B0 trajectory 逐步作为离线或 action-only 诊断，目的是判断低内存修正方向是否值得进入下一轮 full PDE。W8B、W9A、W10A、W11A、W11B 和 W12 均保留真实负结果；W12 的 B0 residual `4.233006159940796e-09` 和 process-tree peak `1,116,065,792 B` 通过各自 Gate，但 q rho `0.8857084974811911 > 0.70`、target rho `0.9050305821821468 > 0.90`，所以分类为数值 range Gate 失败，而不是执行失败、timeout 或内存失败。full PDE、official field/RTA 和 direct-authority physics comparison 仍为 `not_run`。hash-bound 证据入口为 `benchmarks/cases/101_task37_extra_development/records/m6b_w8_w12_consolidated_closeout.json`；下一步 W13A 尚只做代码与 targeted tests，不启动 formal screen。
+W8–W12 将已有残差、Krylov 空间和固定 B0 trajectory 逐步作为离线或 action-only 诊断，目的是判断低内存修正方向是否值得进入下一轮 full PDE。W8B、W9A、W10A、W11A、W11B 和 W12 均保留真实负结果；W12 的 B0 residual `4.233006159940796e-09` 和 process-tree peak `1,116,065,792 B` 通过各自 Gate，但 q rho `0.8857084974811911 > 0.70`、target rho `0.9050305821821468 > 0.90`，所以分类为数值 range Gate 失败，而不是执行失败、timeout 或内存失败。full PDE、official field/RTA 和 direct-authority physics comparison 仍为 `not_run`。hash-bound 证据入口为 `benchmarks/cases/101_task37_extra_development/records/m6b_w8_w12_consolidated_closeout.json`；W13A 已在下一节以 action-only diagnostic 收口，W13B 仍未解锁。
+
+# 49. Task037-extra W13A ProjectedRangePC 组合诊断
+
+ProjectedRangePC 的通俗含义是：先用局部 shifted PC 处理残差，再把结果投影到冻结的 75D range 中做范围修正。W13A 固定比较 beta=1.0 与 beta=0.5，并严格顺序释放两个约 1.047 GB shifted store；旧 bare beta=0.5 失败路线没有重开。run1 是 `PRE_SERIALIZATION_EXECUTION_FAIL`，run2 是 beta05 guard 执行失败，run3 才是完整的 action-only diagnostic evidence。
+
+run3 的 W5 iter200 projected rho 从 `0.9995565651228495` 到 `0.9940090684868385`，相对改善 `0.5550%`；W7 cumulative400 从 `0.9999083283541277` 到 `0.9937069526556399`，相对改善 `0.6202%`。W13B 预先固定的解锁门要求两个 residual 都至少改善 5%，即 beta05 projected rho 不超过 beta1 的 95%；两者均失败，因此不花费新的固定 200 步 screen。run3 process-tree peak 为 `1,717,895,168 B`，swap 为 `0`；`1,726,081,915 B` 只是 derived prediction，不能当作测量或 PDE 通过。full PDE、official field/RTA、direct-authority physics comparison 和最终 `<2,000,000,000 B` PDE 测量仍为 `not_run`。hash-bound 证据入口为 `benchmarks/cases/101_task37_extra_development/records/m6b_w13a_projected_range_composition.json`。
