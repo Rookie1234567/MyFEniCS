@@ -378,7 +378,7 @@ def test_w7_checker_passes_samples_to_all_recompute_paths(monkeypatch, tmp_path)
 
     monkeypatch.setattr(runner, "_m6b_checkpoint_recompute", capture_recompute)
     monkeypatch.setattr(runner, "_m6b_w7_s1_numeric_gate", capture_numeric)
-    monkeypatch.setattr(runner, "_m6b_w5_progress_valid", capture_progress)
+    monkeypatch.setattr(runner, "_m6b_w7_s1_progress_valid", capture_progress)
     monkeypatch.setattr(runner, "_m6b_w5_timeline_valid", lambda *_args, **_kwargs: {"pass": True, "peak_rss_bytes": 1, "swap_bytes": 0, "compiler_descendant_pids": [], "records": 1})
     monkeypatch.setattr(runner, "_m6b_w7_s1_artifact_inventory_valid", lambda *_: True)
     monkeypatch.setattr(runner, "_attach_evidence", lambda value: value)
@@ -395,4 +395,4 @@ def test_w7_checker_passes_samples_to_all_recompute_paths(monkeypatch, tmp_path)
     assert result_code in (0, 1)
     assert seen["recompute"] is samples
     assert seen["numeric"] is samples
-    assert seen["progress"] is samples
+    assert seen["progress"] is screen

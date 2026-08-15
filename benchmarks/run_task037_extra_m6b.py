@@ -7914,7 +7914,7 @@ def _m6b_w5_timeline_valid(
         "compiler_descendant_pids": None,
     }
     try:
-        record = watchdog["artifacts"][timeline_name]
+        record = watchdog["artifacts"]["timeline"]
         timeline_path = Path(record["path"])
         if not timeline_path.is_absolute():
             timeline_path = watchdog_dir / timeline_path
@@ -8784,8 +8784,8 @@ def _m6b_w7_s1_check_command(
         else None,
     )
     execution_checks["checkpoint_recompute"] = recompute.get("pass") is True
-    execution_checks["progress"] = _m6b_w5_progress_valid(
-        raw_dir / "m6b_w7_s1_progress.jsonl", screen_samples
+    execution_checks["progress"] = _m6b_w7_s1_progress_valid(
+        raw_dir / "m6b_w7_s1_progress.jsonl", screen
     ).get("pass") is True
     jit = worker.get("jit_cache") if isinstance(worker, Mapping) else None
     jit_identity_ok = False
@@ -8851,8 +8851,12 @@ def _m6b_w7_s1_check_command(
             for name in M6B_W7_S1_RAW_ARTIFACT_NAMES
         }
         watchdog_inventory = {
-            name: reported_artifacts.get(name)
-            for name in M6B_W7_S1_WATCHDOG_ARTIFACT_NAMES
+            name: reported_artifacts.get(label)
+            for name, label in {
+                M6B_W7_S1_WATCHDOG_ARTIFACT_NAMES[0]: "root_pid",
+                M6B_W7_S1_WATCHDOG_ARTIFACT_NAMES[1]: "stdout",
+                M6B_W7_S1_WATCHDOG_ARTIFACT_NAMES[2]: "timeline",
+            }.items()
         }
         artifact_inventory = {
             "raw": raw_inventory,
