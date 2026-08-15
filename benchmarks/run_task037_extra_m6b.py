@@ -4396,7 +4396,12 @@ def _run_m6b_w8b_s0(
     w5_record = w5["record"]["screen"]["samples"]["200"]["artifacts"]["residual"]
     w7_record = w7["sample"]["artifacts"]["residual"]
     w5_values = _m6b_w8b_load_residual(w5_raw_dir, w5_record, array_hash=_m6b_w6a_w5_legacy_raw_array_sha256)
-    w7_values = _m6b_w8b_load_residual(w7_raw_dir, w7_record, array_hash=_m6b_w2_array_sha256)
+    w7_values = _m6b_w8b_load_residual(
+        w7_raw_dir,
+        w7_record,
+        # W7 compact/checkpoint authority uses raw contiguous array bytes.
+        array_hash=_m6b_w6a_w5_legacy_raw_array_sha256,
+    )
     from src.solvers.hcurl_m6b_w8a_z_bubble_range import W8AMultiOrderRangeDiagnostic
     legacy_store_dir = _m6b_w8b_legacy_store_dir(w6a_raw_dir)
     diagnostic = W8AMultiOrderRangeDiagnostic.load(

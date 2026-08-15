@@ -701,3 +701,32 @@ def test_w8a_recovery_authority_rejects_nested_tamper(tmp_path, tamper):
     assert not runner._m6b_w8a_w8b_authority_valid(
         value, w8a_raw_dir=tmp_path / "w8a", expected_source_sha="c" * 40
     )
+
+
+def test_w8b_w7_residual_uses_frozen_raw_byte_hash(tmp_path):
+    values = np.zeros(runner.M6B_GLOBAL_ROWS, dtype=np.complex128)
+    values[:2] = (1 + 2j, -3 + 4j)
+    path = tmp_path / "m6b_iter200_residual.npy"
+    np.save(path, values)
+    record = {
+        "path": path.name,
+        "sha256": runner._artifact(tmp_path, path.name)["sha256"],
+        "array_sha256": runner._m6b_w6a_w5_legacy_raw_array_sha256(values),
+    }
+
+    loaded = runner._m6b_w8b_load_residual(
+        tmp_path,
+        record,
+        array_hash=runner._m6b_w6a_w5_legacy_raw_array_sha256,
+    )
+    assert np.array_equal(loaded, values)
+    assert runner._m6b_w6a_w5_legacy_raw_array_sha256(values) == record["array_sha256"]
+
+    shaped_hash_record = dict(record)
+    shaped_hash_record["array_sha256"] = runner._m6b_w2_array_sha256(values)
+    with pytest.raises(ValueError):
+        runner._m6b_w8b_load_residual(
+            tmp_path,
+            shaped_hash_record,
+            array_hash=runner._m6b_w6a_w5_legacy_raw_array_sha256,
+        )
