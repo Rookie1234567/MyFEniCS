@@ -1181,7 +1181,15 @@ def _parse_args(
             and args.graded_reference_h is None
             and np.isclose(args.bottom_interface_nm, 10.0)
             and np.isclose(args.top_interface_nm, 110.0)
-            and np.isclose(args.incident_grazing_deg, 10.0)
+            and (
+                np.isclose(args.incident_grazing_deg, 10.0)
+                or (
+                    np.isclose(args.h_nm, 5.0)
+                    and np.isclose(args.modal_h_nm, 5.0)
+                    and args.requested_modes == 480
+                    and np.isclose(args.incident_grazing_deg, 1.0)
+                )
+            )
             and args.polarization_kind == "s"
             and args.internal_propagation_model == "full3d_uniform_cg"
             and args.internal_traction_model == "full3d_one_cell_exact_schur"
@@ -1195,9 +1203,9 @@ def _parse_args(
             parser.error(
                 "Task39 Hybrid direct is restricted to historical p6/h10 with "
                 "modal h10 and numeric M120/240/480/960, or formal p6/h5 with "
-                "modal h5 and M480; both require 2M candidates, static-condensed "
-                "full3d_uniform_cg, exact one-cell traction, 10/110 interfaces, "
-                "and a clean verified source."
+                "modal h5 and M480 at 10 or 1 degree; both require 2M "
+                "candidates, static-condensed full3d_uniform_cg, exact one-cell "
+                "traction, 10/110 interfaces, and a clean verified source."
             )
         return args
     if args.task035c_p6_h10_gate:

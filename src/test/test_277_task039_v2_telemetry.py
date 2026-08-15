@@ -24,6 +24,9 @@ from src.runners import task039_hybrid_direct as adapter
 
 ROOT = Path(__file__).resolve().parents[2]
 H5_HYBRID = ROOT / "input/official/task039/5nm_p6h5_hybrid_direct_m480_mpi8.dat"
+H5_V3_HYBRID = (
+    ROOT / "input/official/task039/5nm_p6h5_v3_1deg_hybrid_direct_m480_mpi8.dat"
+)
 H5_ITERATIVE = ROOT / "input/official/task039/5nm_p6h5_hybrid_iterative_m480_mpi8.dat"
 
 
@@ -79,8 +82,10 @@ def _plan(spec, run_directory):
 
 def test_h5_formal_telemetry_predicates_are_narrow():
     direct = load_and_resolve(H5_HYBRID).as_jsonable()
+    v3_direct = load_and_resolve(H5_V3_HYBRID).as_jsonable()
     iterative = load_and_resolve(H5_ITERATIVE).as_jsonable()
     assert task039_h5_hybrid_direct_formal_profile(direct)
+    assert task039_h5_hybrid_direct_formal_profile(v3_direct)
     assert not task039_h5_hybrid_direct_formal_profile(iterative)
     assert task039_h5_hybrid_iterative_formal_profile(iterative)
     assert not task039_h5_hybrid_iterative_formal_profile(direct)

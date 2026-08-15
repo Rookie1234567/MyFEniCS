@@ -253,11 +253,12 @@ _TASK039_MODEL_ID_PATTERNS = {
     "2d_port": r"task039_5nm_v3_1deg_s5",
     "full3d_direct": r"task039_(?:5nm_full3d_direct|5nm_v3_1deg_s5_full3d)",
     "full3d_iterative": r"task039_5nm_full3d_iterative",
-    "hybrid_direct": r"task039_5nm_hybrid_direct_m(120|240|480|960)",
+    "hybrid_direct": r"task039_5nm_(?:hybrid_direct|v3_1deg_s5_hybrid_direct)_m(120|240|480|960)",
     "hybrid_iterative": r"task039_5nm_hybrid_iterative_m(120|240|480|960)_candidate",
 }
 _TASK039_V3_2D_MODEL_ID = "task039_5nm_v3_1deg_s5"
 _TASK039_V3_3D_MODEL_ID = "task039_5nm_v3_1deg_s5_full3d"
+_TASK039_V3_HYBRID_DIRECT_MODEL_ID = "task039_5nm_v3_1deg_s5_hybrid_direct_m480"
 _TASK039_V3_2D_MESH_TARGETS = (5.0, 4.0, 3.0, 2.0, 1.5)
 _TASK039_V3_2D_DEGREES = (6, 8)
 
@@ -269,6 +270,12 @@ def task039_model_id_matches(
 ) -> bool:
     """Match one finite Task39 model identity and, for Hybrid, its M."""
 
+    if str(method) == "hybrid_direct" and str(model_id).startswith(
+        "task039_5nm_v3_1deg_s5_hybrid_direct_"
+    ):
+        return str(model_id) == _TASK039_V3_HYBRID_DIRECT_MODEL_ID and (
+            requested_modes is None or int(requested_modes) == 480
+        )
     pattern = _TASK039_MODEL_ID_PATTERNS.get(str(method))
     if pattern is None:
         return False
@@ -336,6 +343,7 @@ def _task039_v3_identity_enabled(config: Mapping[str, Any]) -> bool:
     return config.get("model_id") in {
         _TASK039_V3_2D_MODEL_ID,
         _TASK039_V3_3D_MODEL_ID,
+        _TASK039_V3_HYBRID_DIRECT_MODEL_ID,
     }
 
 
@@ -558,9 +566,10 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
 
     method = config["method"]
     kind = method["kind"]
+    model_id = str(config.get("model_id", ""))
     if not task039_model_id_matches(
         kind,
-        str(config.get("model_id", "")),
+        model_id,
         method.get("requested_modes_per_direction"),
     ):
         errors: list[tuple[str, str]] = [
@@ -590,7 +599,11 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
         ("materials", "substrate_name", "Task39 5nm material"),
         ("materials", "grating_name", "Task39 5nm material"),
         ("incidence", "wavelength_nm", 5.0),
-        ("incidence", "grazing_angle_deg", 10.0),
+        (
+            "incidence",
+            "grazing_angle_deg",
+            1.0 if model_id == _TASK039_V3_HYBRID_DIRECT_MODEL_ID else 10.0,
+        ),
         ("incidence", "azimuth_deg", 0.0),
         ("incidence", "polarization", "s"),
         ("incidence", "electric_amplitude", 1.0),

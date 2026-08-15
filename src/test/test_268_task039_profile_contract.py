@@ -51,7 +51,7 @@ TASK039_INPUTS = tuple(sorted(TASK039.glob("*.dat")))
 def test_task039_inputs_are_numeric_finite_profiles_and_share_physics():
     specs = [load_and_resolve(path) for path in TASK039_INPUTS]
 
-    assert len(specs) == 26
+    assert len(specs) == 27
     assert {spec.method["kind"] for spec in specs} == {
         "2d_port",
         "full3d_direct",
@@ -107,6 +107,18 @@ def test_task039_inputs_are_numeric_finite_profiles_and_share_physics():
     assert h5_hybrid.execution["warning_memory_gib"] == 170.0
     assert h5_hybrid.execution["terminate_memory_gib"] == 195.0
     assert h5_hybrid.execution["absolute_terminate_memory_bytes"] == 224_000_000_000
+    v3_hybrid = next(
+        spec
+        for spec in specs
+        if spec.identity["model_id"] == "task039_5nm_v3_1deg_s5_hybrid_direct_m480"
+    )
+    assert v3_hybrid.method["kind"] == "hybrid_direct"
+    assert v3_hybrid.incidence["grazing_angle_deg"] == 1.0
+    assert v3_hybrid.method["requested_modes_per_direction"] == 480
+    assert v3_hybrid.execution["mpi_size"] == 8
+    assert v3_hybrid.derived["angle_identity"]["field_component_identity"] == (
+        "2d_TE_scalar_to_3d_S_Ey"
+    )
     h5_iterative = next(
         spec
         for spec in specs
@@ -162,7 +174,10 @@ def test_task039_inputs_are_numeric_finite_profiles_and_share_physics():
             )
             continue
         assert spec.incidence["azimuth_deg"] == 0.0
-        if spec.identity["model_id"] == "task039_5nm_v3_1deg_s5_full3d":
+        if spec.identity["model_id"] in {
+            "task039_5nm_v3_1deg_s5_full3d",
+            "task039_5nm_v3_1deg_s5_hybrid_direct_m480",
+        }:
             assert spec.incidence["grazing_angle_deg"] == 1.0
             assert spec.derived["internal"]["incident_theta_deg"] == 89.0
             assert spec.derived["angle_identity"]["field_component_identity"] == (
@@ -627,7 +642,12 @@ def test_task039_hybrid_mode_selection_is_finite_and_not_a_campaign():
         select_task039_hybrid_mode({961: {"own": True}})
 
 
-def _task039_test_payload(tmp_path: Path, modal_count: int = 240):
+def _task039_test_payload(
+    tmp_path: Path,
+    modal_count: int = 240,
+    bottom_count: int = 300,
+    top_count: int = 304,
+):
     arrays = {
         "x_nm": np.zeros(40, dtype=np.float64),
         "y_nm": np.zeros(20, dtype=np.float64),
@@ -635,8 +655,8 @@ def _task039_test_payload(tmp_path: Path, modal_count: int = 240):
         "E_V_per_m": np.zeros((5, 20, 40, 3), dtype=np.complex128),
         "H_A_per_m": np.zeros((5, 20, 40, 3), dtype=np.complex128),
         "modal_amplitudes": np.zeros(modal_count, dtype=np.complex128),
-        "bottom_q": np.zeros(300, dtype=np.complex128),
-        "top_q": np.zeros(304, dtype=np.complex128),
+        "bottom_q": np.zeros(bottom_count, dtype=np.complex128),
+        "top_q": np.zeros(top_count, dtype=np.complex128),
     }
     keys = tuple(
         (
@@ -1315,6 +1335,44 @@ def test_task039_hybrid_direct_rejects_model_m_mismatch(tmp_path: Path):
             runner=lambda *_args: _task039_direct_record({"keys": []}),
             source_sha="a" * 40,
         )
+
+
+def test_task039_v3_h5_hybrid_direct_passes_1deg_to_runner(tmp_path: Path):
+    specification = load_and_resolve(
+        TASK039 / "5nm_p6h5_v3_1deg_hybrid_direct_m480_mpi8.dat"
+    )
+    captured = {}
+
+    def fake_runner(argv, cfg, canonical_export_prefix, external_mode_inventory):
+        captured.update(argv=argv, cfg=cfg)
+        return _task039_direct_record(
+            external_mode_inventory,
+            _task039_test_payload(tmp_path, 960, bottom_count=296),
+            internal_unknown_count=960,
+        )
+
+    result = run_task039_hybrid_direct(
+        specification.as_jsonable(),
+        tmp_path,
+        runner=fake_runner,
+        source_sha="a" * 40,
+    )
+    assert result["passed"] is True
+    assert captured["cfg"].incident_theta_deg == 89.0
+    parsed = _parse_args(captured["argv"], allow_task039=True)
+    assert parsed.incident_grazing_deg == 1.0
+    assert parsed.requested_modes == 480
+    assert parsed.candidate_modes == 960
+
+
+def test_task039_v3_hybrid_direct_rejects_non_m480_identity():
+    payload = load_and_resolve(
+        TASK039 / "5nm_p6h5_v3_1deg_hybrid_direct_m480_mpi8.dat"
+    ).as_jsonable()
+    payload["model_id"] = "task039_5nm_v3_1deg_s5_hybrid_direct_m240"
+    payload["method"]["requested_modes_per_direction"] = 240
+    errors = task039_profile_errors(payload)
+    assert any(path == "model_id" for path, _message in errors)
 
 
 @pytest.mark.parametrize(

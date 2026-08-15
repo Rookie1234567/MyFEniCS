@@ -89,7 +89,11 @@ def task039_h5_hybrid_direct_formal_profile(
         isinstance(method, Mapping)
         and method.get("kind") == "hybrid_direct"
         and method.get("requested_modes_per_direction") == 480
-        and model_id == "task039_5nm_hybrid_direct_m480"
+        and model_id
+        in {
+            "task039_5nm_hybrid_direct_m480",
+            "task039_5nm_v3_1deg_s5_hybrid_direct_m480",
+        }
         and isinstance(discretization, Mapping)
         and float(discretization.get("mesh_target_nm", float("nan"))) == 5.0
     )
