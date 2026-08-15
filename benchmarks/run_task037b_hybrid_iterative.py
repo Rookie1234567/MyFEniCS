@@ -149,6 +149,7 @@ class FrozenM10Profile:
     overlap: float = 0.0
     ilu_level: int = 0
     shift: float = 0.1
+    qep_solver_tolerance: float = 1.0e-10
     near_degenerate_tolerance: float = M10_NEAR_DEGENERATE_TOLERANCE
     block_rotation_tolerance: float = M10_BLOCK_ROTATION_TOLERANCE
     restart: int = 90
@@ -1684,6 +1685,7 @@ def build_frozen_m10_setup(
         operators,
         target=target,
         requested_modes=profile.candidate_modes,
+        tolerance=profile.qep_solver_tolerance,
     )
     positive_right, positive_selection = select_passive_direction_modes(
         positive_right,
@@ -1706,6 +1708,7 @@ def build_frozen_m10_setup(
         positive_right,
         adjoint_target=np.conj(target),
         requested_left_modes=profile.candidate_modes,
+        qep_solver_tolerance=profile.qep_solver_tolerance,
         near_degenerate_tolerance=profile.near_degenerate_tolerance,
         block_rotation_tolerance=profile.block_rotation_tolerance,
         poynting_evaluator=poynting_evaluator,
@@ -1715,6 +1718,7 @@ def build_frozen_m10_setup(
         operators,
         target=-target,
         requested_modes=profile.candidate_modes,
+        tolerance=profile.qep_solver_tolerance,
     )
     negative_right, negative_selection = select_passive_direction_modes(
         negative_right,
@@ -1737,6 +1741,7 @@ def build_frozen_m10_setup(
         negative_right,
         adjoint_target=-np.conj(target),
         requested_left_modes=profile.candidate_modes,
+        qep_solver_tolerance=profile.qep_solver_tolerance,
         near_degenerate_tolerance=profile.near_degenerate_tolerance,
         block_rotation_tolerance=profile.block_rotation_tolerance,
         poynting_evaluator=poynting_evaluator,

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import inspect
 import json
 from pathlib import Path
 
@@ -11,6 +12,8 @@ import pytest
 from mpi4py import MPI
 
 import benchmarks.task039_v3_7_orchestration as orchestration
+from benchmarks import run_task037b_hybrid_iterative as frozen_runner
+from benchmarks.task037c_robustness import Task37cProfile
 from benchmarks.task039_v3_7_orchestration import (
     V3_7_ABSOLUTE_HARD_BYTES,
     V3_7_PROFILE_ID,
@@ -30,6 +33,7 @@ from benchmarks.task039_v3_7_orchestration import (
 )
 from benchmarks.task039_hybrid_direct_identity import _parse_orders
 from src.io.input_validation import task039_dynamic_external_mode_inventory
+from src.modes.mode_classification import _near_degenerate_partition_audit
 
 
 INPUT = Path("input/official/task039/5nm_p6h5_v3_1deg_hybrid_direct_m480_mpi8.dat")
@@ -57,6 +61,37 @@ def test_v3_7_profile_is_derived_from_official_one_degree_s_input() -> None:
     wrong_polarization["incidence"] = dict(payload["incidence"], polarization="S")
     with pytest.raises(ValueError):
         validate_v3_7_resolved_identity(wrong_polarization)
+
+
+def test_qep_tolerance_is_explicit_and_profile_selected() -> None:
+    assert frozen_runner.FROZEN_M10.qep_solver_tolerance == 1.0e-10
+    assert Task37cProfile().qep_solver_tolerance == 1.0e-10
+    profile = v3_7_profile_from_resolved(load_v3_7_official_payload(INPUT))
+    assert profile.qep_solver_tolerance == 1.0e-12
+    source = inspect.getsource(frozen_runner.build_frozen_m10_setup)
+    assert source.count("\n        tolerance=profile.qep_solver_tolerance") == 2
+    assert (
+        source.count("\n        qep_solver_tolerance=profile.qep_solver_tolerance") == 2
+    )
+
+
+def test_v3_7_partition_fixture_stays_outside_near_degenerate_envelope() -> None:
+    beta_distance = 4.116479e-5
+    betas = (1.0 + 0.0j, 1.0 + beta_distance + 0.0j)
+    overlap = np.eye(2, dtype=np.complex128)
+    overlap[0, 1] = 8.443521e-6
+    audit = _near_degenerate_partition_audit(
+        betas,
+        ((0,), (1,)),
+        overlap,
+        near_degenerate_tolerance=1.0e-6,
+        block_rotation_tolerance=1.0e-6,
+    )
+    assert audit["pass"] is False
+    assert audit["status"] == "cross_block_biorthogonality_failure"
+    assert audit["worst_cross_block_is_near_degenerate_candidate"] is False
+    assert audit["max_cross_block_overlap"] == pytest.approx(8.443521e-6)
+    assert audit["worst_cross_block_relative_beta_distance"] > 1.0e-5
 
 
 def test_v3_7_watchdog_keeps_195_as_checkpoint_and_224gb_as_byte_hard_stop() -> None:

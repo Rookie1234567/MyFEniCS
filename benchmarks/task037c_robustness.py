@@ -66,6 +66,7 @@ class Task37cProfile:
     overlap: float = 0.0
     ilu_level: int = 0
     shift: float = 0.1
+    qep_solver_tolerance: float = 1.0e-10
     near_degenerate_tolerance: float = 1.0e-6
     block_rotation_tolerance: float = 1.0e-6
     restart: int = 90
