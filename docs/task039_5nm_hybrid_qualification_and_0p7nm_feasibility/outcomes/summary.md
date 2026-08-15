@@ -285,7 +285,7 @@ V2-6 负结果均保留。V2-7 只在用户覆盖下作为 diagnostic 运行，�
 | V3-3 h4.5 Full3D direct | own pass | RSS `125.5527 GiB`；与 h5 的 R/T/A/A_volume 差约 `1e-8` |
 | V3-4 2D↔h5/h4.5 | negative | scalar、selected E/H、main-m power fail；分类 `reduction/model-contract discrepancy pending` |
 | V3-3 h4 / h3 | not run | h4 predicted约 `201.1 GiB`，h3 `360–630 GiB`，按资源策略停止 |
-| V3-5 Hybrid direct | pending | 只做 h5 solver-stress input/profile/adapter preparation；未运行 PDE |
+| V3-5 Hybrid direct | `TASK039_V3_HYBRID_INTEGRATED_PHYSICS_PASS_CHANNEL_DIAGNOSTIC_PENDING` | integrated Gate 通过；逐通道保持 diagnostic pending，见 [V3-5 outcome](h5_hybrid_direct_memory_attribution.md) 与已绑定 record |
 
 V3-3/V3-4 的 raw 仍在 ignored results，compact 数值与 SHA 见
 [V3 Full3D outcome](v3_3d_full3d_convergence.md) 和
