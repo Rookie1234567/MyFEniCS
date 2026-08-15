@@ -269,6 +269,30 @@ def test_w7_checkpoint_checker_rejects_wrong_file_hash(tmp_path):
     assert runner._m6b_checkpoint_recompute(raw, screen)["pass"] is False
 
 
+def test_w5_and_w7_timeline_artifact_key_contracts(tmp_path):
+    line = '{"rss_bytes": 1, "swap_bytes": 0, "compiler_descendant_pids": []}\n'
+    w5_name = "w5_disk_fgmres_screen_timeline.jsonl"
+    w5_path = tmp_path / w5_name
+    w5_path.write_text(line, encoding="utf-8")
+    assert runner._m6b_w5_timeline_valid(
+        {"artifacts": {w5_name: {"path": str(w5_path)}}},
+        tmp_path,
+        timeline_name=w5_name,
+        expected_peak=None,
+    )["pass"] is True
+
+    w7_name = "w7_s1_restart_disk_fgmres_screen_timeline.jsonl"
+    w7_path = tmp_path / w7_name
+    w7_path.write_text(line, encoding="utf-8")
+    assert runner._m6b_w5_timeline_valid(
+        {"artifacts": {"timeline": {"path": str(w7_path)}}},
+        tmp_path,
+        timeline_name=w7_name,
+        expected_peak=None,
+        artifact_key="timeline",
+    )["pass"] is True
+
+
 def test_w7_checker_passes_samples_to_all_recompute_paths(monkeypatch, tmp_path):
     samples = _w7_samples((0.30, 0.20, 0.10, 0.09))
     compact = {"path": "frozen", "file_sha256": "a" * 64}

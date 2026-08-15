@@ -7905,6 +7905,7 @@ def _m6b_w5_timeline_valid(
     *,
     timeline_name: str = "w5_disk_fgmres_screen_timeline.jsonl",
     expected_peak: int | None = M6B_W5_EXPECTED_PROCESS_PEAK_BYTES,
+    artifact_key: str | None = None,
 ) -> dict[str, Any]:
     result: dict[str, Any] = {
         "pass": False,
@@ -7914,7 +7915,9 @@ def _m6b_w5_timeline_valid(
         "compiler_descendant_pids": None,
     }
     try:
-        record = watchdog["artifacts"]["timeline"]
+        record = watchdog["artifacts"][
+            timeline_name if artifact_key is None else artifact_key
+        ]
         timeline_path = Path(record["path"])
         if not timeline_path.is_absolute():
             timeline_path = watchdog_dir / timeline_path
@@ -8839,6 +8842,7 @@ def _m6b_w7_s1_check_command(
         watchdog_dir,
         timeline_name="w7_s1_restart_disk_fgmres_screen_timeline.jsonl",
         expected_peak=None,
+        artifact_key="timeline",
     )
     reported_artifacts = (
         watchdog.get("artifacts") if isinstance(watchdog, Mapping) else None
@@ -8850,13 +8854,14 @@ def _m6b_w7_s1_check_command(
             name: _artifact(raw_dir, name)
             for name in M6B_W7_S1_RAW_ARTIFACT_NAMES
         }
+        watchdog_artifact_labels = {
+            "w7_s1_restart_disk_fgmres_screen_root_pid.json": "root_pid",
+            "w7_s1_restart_disk_fgmres_screen_stdout.txt": "stdout",
+            "w7_s1_restart_disk_fgmres_screen_timeline.jsonl": "timeline",
+        }
         watchdog_inventory = {
             name: reported_artifacts.get(label)
-            for name, label in {
-                M6B_W7_S1_WATCHDOG_ARTIFACT_NAMES[0]: "root_pid",
-                M6B_W7_S1_WATCHDOG_ARTIFACT_NAMES[1]: "stdout",
-                M6B_W7_S1_WATCHDOG_ARTIFACT_NAMES[2]: "timeline",
-            }.items()
+            for name, label in watchdog_artifact_labels.items()
         }
         artifact_inventory = {
             "raw": raw_inventory,
