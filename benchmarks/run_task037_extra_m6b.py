@@ -363,6 +363,28 @@ M6B_W10A_BASIS_RELATIVE_PATH = "krylov_scratch/v_basis.bin"
 M6B_W10A_BASIS_BYTES = 558_947_232
 M6B_W10A_TARGET_RHO_LIMIT = 0.90
 M6B_W10A_CONTROL_RHO_LOWER = 1.0 - 1.0e-10
+M6B_W11A_SCHEMA = "task037.extra.m6b.w11a.persistent-residual-one-vector.v1"
+M6B_W11A_PHASE = "w11a_persistent_residual_one_vector"
+M6B_W11A_BLOCK_SIZE = 4_096
+M6B_W11A_TIMEOUT_SECONDS = 7_200.0
+M6B_W11A_WATCHDOG_RSS_LIMIT_BYTES = 1_950_000_000
+M6B_W11A_FORMAL_RSS_LIMIT_BYTES = 1_500_000_000
+M6B_W11A_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_500_000_000
+M6B_W11A_PRODUCTION_BASE_PEAK_BYTES = 978_083_840
+M6B_W11A_ONE_VECTOR_BYTES = M6B_GLOBAL_ROWS * 16
+M6B_W11A_PHYSICAL_WORK_BYTES = M6B_M6A_RETAINED_WORK_BYTES
+M6B_W11A_FIXED_RESERVE_BYTES = M6B_FIXED_RUNTIME_RESERVE_BYTES
+M6B_W11A_PREDICTED_LIVE_SET_BYTES = (
+    M6B_W11A_PRODUCTION_BASE_PEAK_BYTES
+    + 3 * M6B_W11A_ONE_VECTOR_BYTES
+    + M6B_W11A_PHYSICAL_WORK_BYTES
+    + M6B_W11A_FIXED_RESERVE_BYTES
+)
+M6B_W11A_M6A_ACTION_SOURCE_SHA = "2a9dabaa13365373864814d7146ee9399395ed51"
+M6B_W11A_M3Y_MANIFEST_RELATIVE_PATH = (
+    "benchmarks/artifacts/task037_extra_development/"
+    "m3y_404f6c6_run1/factor_store/manifest.json"
+)
 M6B_W6A_EVENTS = (
     "authority_validated",
     "mesh_ready",
@@ -4529,6 +4551,575 @@ def _m6b_w10a_basis_authority(w5_raw_dir: Path, compact_record: Mapping[str, Any
         "historical_producer_hash_available": False,
         "compact_core_audit": dict(basis_audit),
     }
+
+
+def _m6b_w11a_scope() -> dict[str, Any]:
+    return {
+        "schema": M6B_W11A_SCHEMA,
+        "phase": M6B_W11A_PHASE,
+        "solver": "offline_one_vector_coarse_diagnostic",
+        "beta": 1.0,
+        "fine_space": "uncondensed_fullspace",
+        "operator": "M6B physical volume action + matrix-free DtN80",
+        "b0": "M4Y packed B0 PC, fixed FGMRES escalation 20_then_100",
+        "q_source": "frozen_W5_iter200_full_explicit_residual",
+        "target_source": "untouched_W7_cumulative400_full_explicit_residual",
+        "target_used_for_construction": False,
+        "global_matrix_materialized": False,
+        "augmented_matrix_materialized": False,
+        "static_condensation": False,
+        "trace_slab_pc_used": False,
+        "physical_ksp_used": False,
+        "pde_used": False,
+        "parameter_scan": False,
+        "official_rta": False,
+        "resource_limits": {
+            "predicted_live_set_bytes": M6B_W11A_PREDICTED_LIVE_SET_LIMIT_BYTES,
+            "formal_process_peak_bytes": M6B_W11A_FORMAL_RSS_LIMIT_BYTES,
+            "watchdog_rss_bytes": M6B_W11A_WATCHDOG_RSS_LIMIT_BYTES,
+            "swap_bytes": M6B_SWAP_LIMIT_BYTES,
+            "timeout_seconds": M6B_W11A_TIMEOUT_SECONDS,
+        },
+    }
+
+
+def _m6b_w11a_predicted_live_set() -> dict[str, Any]:
+    total = int(M6B_W11A_PREDICTED_LIVE_SET_BYTES)
+    return {
+        "bytes": total,
+        "limit_bytes": M6B_W11A_PREDICTED_LIVE_SET_LIMIT_BYTES,
+        "gate": total <= M6B_W11A_PREDICTED_LIVE_SET_LIMIT_BYTES,
+        "derived_not_measured": True,
+        "components": {
+            "m5_online_calibrated_peak_bytes": M6B_W11A_PRODUCTION_BASE_PEAK_BYTES,
+            "retained_q_z_p_bytes": 3 * M6B_W11A_ONE_VECTOR_BYTES,
+            "m6a_physical_action_work_bytes": M6B_W11A_PHYSICAL_WORK_BYTES,
+            "fixed_runtime_reserve_bytes": M6B_W11A_FIXED_RESERVE_BYTES,
+        },
+        "basis": (
+            "M5 online process-tree calibration already includes the M3Y packed "
+            "B0 store; only the W11A q/z/p vectors and M6A work are additive."
+        ),
+    }
+
+
+def _m6b_w11a_load_authorities(
+    w5_compact: Path,
+    w5_raw_dir: Path,
+    w7_compact: Path,
+    w7_raw_dir: Path,
+    expected_source_sha: str,
+) -> dict[str, Any]:
+    import numpy as np
+
+    h2b = __import__("benchmarks.run_task037_extra_h2b", fromlist=["*"])
+    m3y_source_sha = h2b.H2B_M4Y_M3Y_SOURCE_SHA
+    m3y_manifest_sha = h2b.H2B_M4Y_M3Y_MANIFEST_SHA
+    m3y_evidence_sha = h2b.H2B_M4Y_M3Y_EVIDENCE_SHA
+    w5 = _m6b_w7_s1_load_w5_authority(w5_compact, w5_raw_dir)
+    w7_authority = _m6b_w8a_w7_compact_authority(w7_compact)
+    w7_record = w7_authority["sample"].get("artifacts", {}).get("residual")
+    if not isinstance(w7_record, Mapping) or not isinstance(w7_record.get("path"), str):
+        raise ValueError("W11A W7 cumulative-400 residual authority is missing")
+    target, target_artifact = _m6b_w9a_load_array(
+        w7_raw_dir, w7_record, w7_record["path"]
+    )
+    q_residual = np.asarray(w5["frozen_residual"], dtype=np.complex128)
+    q_norm = float(np.linalg.norm(q_residual))
+    if not np.isfinite(q_norm) or q_norm <= 0.0:
+        raise ValueError("W11A frozen W5 residual norm is invalid")
+    q = np.ascontiguousarray(q_residual / q_norm, dtype=np.complex128)
+    target = np.ascontiguousarray(target, dtype=np.complex128)
+    q_record = w5["samples"]["200"]["residual"]
+    authority = {
+        "source_sha": expected_source_sha,
+        "q": {
+            "role": "frozen_W5_iter200_full_explicit_residual_normalized",
+            "rows": M6B_GLOBAL_ROWS,
+            "shape": list(q.shape),
+            "dtype": "complex128",
+            "array_sha256": _m6b_w6a_w5_legacy_raw_array_sha256(q),
+            "source_array_sha256": q_record["array_sha256"],
+            "file_sha256": q_record["file_sha256"],
+            "raw_path": str(Path(w5_raw_dir).resolve() / q_record["path"]),
+            "normalization": "q=frozen_residual/||frozen_residual||",
+        },
+        "target": {
+            "role": "untouched_W7_cumulative400_full_explicit_residual",
+            "rows": M6B_GLOBAL_ROWS,
+            "shape": list(target.shape),
+            "dtype": "complex128",
+            "array_sha256": target_artifact["array_sha256"],
+            "file_sha256": target_artifact["file_sha256"],
+            "raw_path": str(Path(w7_raw_dir).resolve() / target_artifact["path"]),
+        },
+        "m3y": {
+            "source_sha256": m3y_source_sha,
+            "manifest_sha256": m3y_manifest_sha,
+            "evidence_sha256": m3y_evidence_sha,
+        },
+        "m6a": {
+            "source_sha256": M6B_W11A_M6A_ACTION_SOURCE_SHA,
+            "operator": "matrix-free full-space volume + DtN80",
+        },
+        "layout": {"rows": M6B_GLOBAL_ROWS, "dtype": "complex128", "mpi_size": 1},
+        "mpc": {
+            "owner_local": True,
+            "homogenized": True,
+            "packing": "fullspace_mpc",
+        },
+        "w5_compact": w5["compact"],
+        "w7_compact": {
+            "path": str(w7_compact.resolve()),
+            "file_sha256": w7_authority["artifact"]["sha256"],
+            "producer_source_sha": M6B_W8A_W7_SOURCE_SHA,
+        },
+    }
+    from src.solvers.persistent_residual_one_vector import validate_w11a_authorities
+
+    if not validate_w11a_authorities(authority):
+        raise ValueError("W11A q/target authority identity is not closed")
+    return {"q": q, "target": target, "authority": authority}
+
+
+def _run_m6b_w11a_diagnostic(
+    run_dir: Path,
+    w5_compact: Path,
+    w5_raw_dir: Path,
+    w7_compact: Path,
+    w7_raw_dir: Path,
+    m3y_manifest: Path,
+    jit_cache_source: Path,
+    expected_source_sha: str,
+) -> int:
+    """Run the fixed W11A one-vector diagnostic without a physical solve."""
+
+    import gc
+    import shutil
+    import time
+
+    import numpy as np
+    from mpi4py import MPI
+    from petsc4py import PETSc
+
+    h2b = __import__("benchmarks.run_task037_extra_h2b", fromlist=["*"])
+    h2a = h2b._lazy_h2a()
+    m6a = __import__("benchmarks.run_task037_extra_m6", fromlist=["*"])
+    from src.solvers.hcurl_fullspace_dtn import (
+        build_fullspace_dtn_action,
+        build_fullspace_dtn_carrier_from_surface,
+    )
+    from src.solvers.hcurl_h2b_m4y_packed_patch_pc import (
+        build_h2b_m4y_packed_patch_pc,
+    )
+    from src.solvers.hcurl_h2b_m5_coercive import (
+        M5M4YPCContext,
+        build_m5_b0_mat,
+        solve_m5_b0_fixed,
+    )
+    from src.solvers.hcurl_h2b_m6b_shifted_patch_pc import (
+        M6BNumpyOuterActionBridge,
+        build_m6b_outer_mat,
+        build_m6b_volume_form,
+    )
+    from src.solvers.hcurl_h2b_packed_patch_store import (
+        load_h2b_m3y_packed_patch_store,
+    )
+    from src.solvers.hcurl_rank_one_mpc_action import (
+        build_task037_extra_h1r2_mpc_action,
+    )
+    from src.solvers.persistent_residual_one_vector import (
+        run_persistent_residual_diagnostic,
+        validate_w11a_architecture,
+    )
+
+    run_dir = Path(run_dir).resolve()
+    w5_compact = Path(w5_compact).resolve()
+    w5_raw_dir = Path(w5_raw_dir).resolve()
+    w7_compact = Path(w7_compact).resolve()
+    w7_raw_dir = Path(w7_raw_dir).resolve()
+    m3y_manifest = Path(m3y_manifest).resolve()
+    jit_cache_source = Path(jit_cache_source).resolve()
+    if run_dir.exists():
+        raise FileExistsError(f"W11A run directory already exists: {run_dir}")
+    if MPI.COMM_WORLD.size != 1:
+        raise RuntimeError("W11A is fixed to MPI1")
+    if not _m6b_w2_source_sha_valid(expected_source_sha):
+        raise ValueError("W11A expected source SHA is invalid")
+    source_start = h2b._light_source()
+    if not _m6b_w6a_source_valid(source_start) or source_start.get(
+        "source_commit_full_sha"
+    ) != expected_source_sha:
+        raise RuntimeError("W11A source is not the expected clean source")
+    w5_authority = _m6b_w6a_w5_compact_authority()
+    frozen_compiler = w5_authority["factor_compiler"]
+    runtime = _m6b_runtime_identity(
+        h2b,
+        h2a,
+        MPI.COMM_WORLD,
+        compiler_probe=False,
+        compiler=frozen_compiler,
+    )
+    if not _m6b_w6a_runtime_valid(runtime, frozen_compiler=frozen_compiler):
+        raise RuntimeError("W11A qualified runtime identity is not closed")
+    expected_m3y_manifest = (
+        ROOT / M6B_W11A_M3Y_MANIFEST_RELATIVE_PATH
+    ).resolve()
+    if m3y_manifest != expected_m3y_manifest or not m3y_manifest.is_file():
+        raise ValueError("W11A M3Y manifest path is not the frozen authority")
+    m3y_record = h2b._read_json(m3y_manifest)
+    if not (
+        h2b._sha256_file(m3y_manifest) == h2b.H2B_M4Y_M3Y_MANIFEST_SHA
+        and m3y_record.get("evidence_sha256") == h2b.H2B_M4Y_M3Y_EVIDENCE_SHA
+        and m3y_record.get("metadata", {})
+        .get("identity", {})
+        .get("source_identity", {})
+        .get("source_commit_full_sha")
+        == h2b.H2B_M4Y_M3Y_SOURCE_SHA
+    ):
+        raise ValueError("W11A M3Y manifest authority differs")
+    authorities = _m6b_w11a_load_authorities(
+        w5_compact,
+        w5_raw_dir,
+        w7_compact,
+        w7_raw_dir,
+        expected_source_sha,
+    )
+    predicted = _m6b_w11a_predicted_live_set()
+    if predicted["gate"] is not True:
+        raise ValueError("W11A predicted live set exceeds the fixed limit")
+
+    run_dir.mkdir(parents=True)
+    cache_dir = run_dir / "jit_cache"
+    shutil.copytree(jit_cache_source, cache_dir)
+    source_cache = _m6b_w6a_cache_record(h2b, jit_cache_source)
+    target_cache = _m6b_w6a_cache_record(h2b, cache_dir)
+    if (
+        source_cache["inventory_sha256"] != M6B_W6A_JIT_INVENTORY_SHA256
+        or source_cache != target_cache
+    ):
+        raise ValueError("W11A copied JIT cache differs from authority")
+
+    progress_path = run_dir / "m6b_w11a_progress.jsonl"
+    summary_path = run_dir / "m6b_w11a_summary.json"
+    started = time.perf_counter()
+    architecture: dict[str, Any] = {}
+    action_audit: dict[str, Any] | None = None
+    p6: dict[str, Any] | None = None
+    core_result: dict[str, Any] | None = None
+    error: str | None = None
+    b0_action = b0_pc = b0_matrix = b0_source_vec = None
+    physical_action = dtn_action = outer_mat = outer_context = None
+    outer_bridge = template = None
+    store = None
+    physical_call_count = 0
+    b0_pc_apply_count = 0
+    source_cache_final: dict[str, Any] | None = None
+    target_cache_final: dict[str, Any] | None = None
+
+    def emit(event: str, **fields: Any) -> None:
+        payload = {
+            "schema": f"{M6B_W11A_SCHEMA}.progress.v1",
+            "phase": M6B_W11A_PHASE,
+            "event": event,
+            "elapsed_wall_seconds": float(time.perf_counter() - started),
+            **fields,
+        }
+        with progress_path.open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n")
+            stream.flush()
+        print(json.dumps(payload, sort_keys=True), flush=True)
+
+    def release_b0() -> None:
+        nonlocal b0_action, b0_pc, b0_matrix, b0_source_vec, store
+        if b0_matrix is not None:
+            b0_matrix.destroy()
+            b0_matrix = None
+        if b0_source_vec is not None:
+            b0_source_vec.destroy()
+            b0_source_vec = None
+        if b0_action is not None:
+            b0_action.destroy()
+            b0_action = None
+        b0_pc = None
+        store = None
+
+    def ensure_physical_action() -> None:
+        nonlocal physical_action, dtn_action, outer_mat, outer_context
+        nonlocal outer_bridge, template, architecture
+        if outer_bridge is not None:
+            return
+        physical_ufl, _epsilon, _abs_epsilon, _beta, tag_coverage = build_m6b_volume_form(
+            function_space, mesh_data, cfg, beta=0.0
+        )
+        physical_action = build_task037_extra_h1r2_mpc_action(
+            physical_ufl,
+            floquet.mpc,
+            task037_extra_h1r2=True,
+            jit_options=h2b._expected_jit_options(cache_dir),
+        )
+        surface_assemblers = m6a._surface_assemblers(
+            function_space, mesh_data, cfg, modes, cache_dir
+        )
+        dtn_carrier = build_fullspace_dtn_carrier_from_surface(
+            modes,
+            surface_assemblers,
+            floquet.mpc,
+            cfg,
+            expected_mode_count=80,
+        )
+        dtn_action = build_fullspace_dtn_action(dtn_carrier, comm=MPI.COMM_WORLD)
+        outer_mat, outer_context = build_m6b_outer_mat(
+            physical_action,
+            dtn_action,
+            owned_rows=M6B_GLOBAL_ROWS,
+            global_rows=M6B_GLOBAL_ROWS,
+            comm=MPI.COMM_WORLD,
+        )
+        template = outer_mat.createVecRight()
+        outer_bridge = M6BNumpyOuterActionBridge(outer_context, template)
+        physical_audit = h2a._jsonable(physical_action.audit)
+        outer_audit = h2a._jsonable(outer_context.audit)
+        dtn_audit = h2a._jsonable(dtn_action.audit)
+        architecture = {
+            "fine_space": dtn_audit["fine_space"],
+            "global_matrix_materialized": physical_audit["global_matrix_materialized"],
+            "augmented_matrix_materialized": outer_audit["augmented_matrix"],
+            "condensation": dtn_audit["condensation"],
+            "static_condensed_operator_used": dtn_audit["static_condensed_operator_used"],
+            "trace_slab_pc_used": dtn_audit["trace_slab_pc_used"],
+            "physical_ksp_used": physical_audit["ksp_created"],
+            "pde_used": False,
+        }
+        if not validate_w11a_architecture(architecture):
+            raise ValueError("W11A physical architecture is not closed")
+        action_audit.update({
+            "physical": physical_audit,
+            "outer": outer_audit,
+            "dtn": dtn_audit,
+            "tag_coverage": h2a._jsonable(tag_coverage),
+            "bridge": outer_bridge.audit,
+        })
+        emit("physical_action_ready", dtn_modes=dtn_audit["mode_count"])
+
+    def b0_exact_action(values: np.ndarray, target: np.ndarray) -> None:
+        if b0_source_vec is None or b0_action is None:
+            raise RuntimeError("W11A B0 action is not alive")
+        with b0_source_vec.localForm() as local:
+            local.set(0.0)
+            local.array_w[: values.size] = values
+        b0_source_vec.ghostUpdate(
+            addv=PETSc.InsertMode.INSERT_VALUES,
+            mode=PETSc.ScatterMode.FORWARD,
+        )
+        result = b0_action.mult(b0_source_vec)
+        observed = np.asarray(result.getArray(readonly=True), dtype=np.complex128)
+        if observed.shape != target.shape or not np.all(np.isfinite(observed)):
+            raise ValueError("W11A B0 exact action returned invalid values")
+        np.copyto(target, observed)
+
+    def b0_apply(values: np.ndarray) -> np.ndarray:
+        nonlocal b0_pc_apply_count
+        if b0_pc is None:
+            raise RuntimeError("W11A B0 PC is not alive")
+        result = np.asarray(b0_pc.apply(values), dtype=np.complex128)
+        if result.shape != values.shape or not np.all(np.isfinite(result)):
+            raise ValueError("W11A B0 PC returned invalid values")
+        b0_pc_apply_count += 1
+        emit("q0_ready", b0_pc_apply_count=b0_pc_apply_count)
+        return np.ascontiguousarray(result)
+
+    def b0_solve(max_it: int) -> Mapping[str, Any]:
+        nonlocal b0_pc_apply_count
+        if b0_action is None or b0_pc is None:
+            raise RuntimeError("W11A B0 solve objects are not alive")
+        operator, operator_context = build_m5_b0_mat(
+            b0_action,
+            owned_rows=M6B_GLOBAL_ROWS,
+            global_rows=M6B_GLOBAL_ROWS,
+            comm=MPI.COMM_WORLD,
+        )
+        rhs_vec = b0_action.output_vector.duplicate()
+        q_values = authorities["q"]
+        with rhs_vec.localForm() as local:
+            local.set(0.0)
+            local.array_w[: q_values.size] = q_values
+        rhs_vec.ghostUpdate(
+            addv=PETSc.InsertMode.INSERT_VALUES,
+            mode=PETSc.ScatterMode.FORWARD,
+        )
+        pc_context = M5M4YPCContext(b0_pc, global_rows=M6B_GLOBAL_ROWS)
+        try:
+            result = solve_m5_b0_fixed(
+                operator,
+                rhs_vec,
+                pc_context=pc_context,
+                max_it=max_it,
+                operator_context=operator_context,
+            )
+            b0_pc_apply_count += int(pc_context.apply_count)
+            emit(
+                f"q1_{max_it}_ready",
+                true_residual=result["true_residual"],
+                iterations=result["iterations"],
+            )
+            return result
+        finally:
+            rhs_vec.destroy()
+            operator.destroy()
+
+    def physical_numpy(values: np.ndarray) -> np.ndarray:
+        nonlocal physical_call_count
+        physical_call_count += 1
+        if physical_call_count > 1:
+            release_b0()
+        ensure_physical_action()
+        result = outer_bridge.apply(values)
+        if result.shape != values.shape or not np.all(np.isfinite(result)):
+            raise FloatingPointError("W11A physical action returned invalid values")
+        return result
+
+    try:
+        authority = authorities["authority"]
+        emit("authority_validated", authority=authority)
+        cfg, mesh_data, function_space, floquet, modes = m6a._production_objects(
+            run_dir, mesh_name="m6b_w11a_mesh"
+        )
+        p6 = _m6b_p6_identity(mesh_data, function_space, floquet)
+        if not _m6b_expected_p6(p6):
+            raise ValueError("W11A p6/h10 identity differs")
+        emit("mesh_ready", p6=p6)
+        emit("space_ready", global_rows=p6["global_rows"])
+        emit("floquet_mpc_ready", constraint_count=p6["constraint_count"])
+        emit("cache_ready", inventory_sha256=target_cache["inventory_sha256"])
+        store = load_h2b_m3y_packed_patch_store(
+            m3y_manifest, task037_extra_h2b=True
+        )
+        b0_ufl, _epsilon = h2b._build_b0_form(function_space, mesh_data, cfg)
+        b0_action = build_task037_extra_h1r2_mpc_action(
+            b0_ufl,
+            floquet.mpc,
+            task037_extra_h1r2=True,
+            jit_options=h2b._expected_jit_options(cache_dir),
+        )
+        b0_source_vec = b0_action.output_vector.duplicate()
+        b0_pc = build_h2b_m4y_packed_patch_pc(
+            store,
+            global_row_count=M6B_GLOBAL_ROWS,
+            exact_action=b0_exact_action,
+            slave_identity_rows=np.asarray(floquet.mpc.slaves, dtype=np.int64),
+            task037_extra_h2b=True,
+        )
+        action_audit = {
+            "b0": h2a._jsonable(b0_action.audit),
+            "b0_pc": b0_pc.audit,
+            "m3y_store": store.audit_jsonable(),
+        }
+        emit("b0_ready", factor_count=M6B_FACTOR_COUNT)
+        core_result = run_persistent_residual_diagnostic(
+            authorities["q"],
+            authorities["target"],
+            b0_apply=b0_apply,
+            physical_action=physical_numpy,
+            b0_solve=b0_solve,
+            architecture=architecture,
+            predicted_live_set_bytes=M6B_W11A_PREDICTED_LIVE_SET_BYTES,
+            counters={"b0_solver_restart": 20, "physical_ksp_used": False},
+            block_size=M6B_W11A_BLOCK_SIZE,
+        )
+        source_cache_final = _m6b_w6a_cache_record(h2b, jit_cache_source)
+        target_cache_final = _m6b_w6a_cache_record(h2b, cache_dir)
+        if source_cache_final != source_cache or target_cache_final != target_cache:
+            raise ValueError("W11A physical construction changed the frozen JIT cache")
+        emit(
+            "measurement_ready",
+            selected_level=core_result.get("selected_level"),
+            classification=core_result.get("classification"),
+        )
+    except h2b._worker_error_types() + (FloatingPointError,) as exc:
+        error = f"{type(exc).__name__}: {exc}"
+    finally:
+        if action_audit is not None:
+            if b0_action is not None:
+                action_audit["b0"] = h2a._jsonable(b0_action.audit)
+            if b0_pc is not None:
+                b0_pc_audit = h2a._jsonable(b0_pc.audit)
+                b0_pc_audit["apply_count"] = b0_pc_apply_count
+                action_audit["b0_pc"] = b0_pc_audit
+            if physical_action is not None:
+                action_audit["physical"] = h2a._jsonable(physical_action.audit)
+            if outer_context is not None:
+                action_audit["outer"] = h2a._jsonable(outer_context.audit)
+            if dtn_action is not None:
+                action_audit["dtn"] = h2a._jsonable(dtn_action.audit)
+            if outer_bridge is not None:
+                action_audit["bridge"] = h2a._jsonable(outer_bridge.audit)
+        if outer_bridge is not None:
+            outer_bridge.destroy()
+        if outer_context is not None:
+            outer_context.destroy()
+        if outer_mat is not None:
+            outer_mat.destroy()
+        if template is not None:
+            template.destroy()
+        if dtn_action is not None:
+            dtn_action.destroy()
+        if physical_action is not None:
+            physical_action.destroy()
+        release_b0()
+        if "floquet" in locals() and floquet is not None:
+            h2a.clear_floquet_topology_cache()
+        gc.collect()
+    source_end = h2b._light_source()
+    if core_result is not None:
+        status = core_result["status"]
+        classification = core_result["classification"]
+        checks = core_result["checks"]
+        w11a_pass = all(checks.values())
+    else:
+        status = "gate_failed"
+        classification = "W11A_EXECUTION_FAIL"
+        checks = {"authority_or_runtime": False}
+        w11a_pass = False
+    payload = {
+        "schema": M6B_W11A_SCHEMA,
+        "phase": M6B_W11A_PHASE,
+        "status": status,
+        "classification": classification,
+        "w11a_pass": bool(w11a_pass),
+        "formal_pass": False,
+        "pde_pass": False,
+        "official_rta": False,
+        "scope": _m6b_w11a_scope(),
+        "authority": authorities["authority"],
+        "runtime_identity": runtime,
+        "p6": p6,
+        "jit_cache": {
+            "source": source_cache,
+            "target": target_cache,
+            "source_final": source_cache_final,
+            "target_final": target_cache_final,
+            "unchanged": bool(
+                source_cache == target_cache
+                and source_cache_final == source_cache
+                and target_cache_final == target_cache
+            ),
+        },
+        "predicted_live_set": predicted,
+        "architecture": architecture,
+        "action_audit": action_audit,
+        "core": core_result,
+        "checks": checks,
+        "problems": [] if core_result is None else core_result["problems"],
+        "physical_action_count": physical_call_count,
+        "error": error,
+        "source_at_start": source_start,
+        "source_at_end": source_end,
+        "elapsed_wall_seconds": float(time.perf_counter() - started),
+    }
+    payload = h2a._jsonable(payload)
+    _write_json(summary_path, _attach_evidence(payload))
+    return 0 if w11a_pass else 1
 
 
 def _m6b_w10a_measurement_record(
@@ -12839,6 +13430,17 @@ def _parser() -> argparse.ArgumentParser:
     w10a.add_argument(
         "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
     )
+    w11a = sub.add_parser("m6b-w11a-diagnostic")
+    w11a.add_argument("--run-dir", required=True)
+    w11a.add_argument("--w5-compact", required=True)
+    w11a.add_argument("--w5-raw-dir", required=True)
+    w11a.add_argument("--w7-compact", required=True)
+    w11a.add_argument("--w7-raw-dir", required=True)
+    w11a.add_argument("--m3y-manifest", required=True)
+    w11a.add_argument("--jit-cache-source", required=True)
+    w11a.add_argument(
+        "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
+    )
     return parser
 
 
@@ -12934,6 +13536,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             Path(args.w7_raw_dir).resolve(),
             Path(args.w7_compact).resolve(),
             Path(args.output).resolve(),
+            args.expected_source_sha,
+        )
+    if args.command == "m6b-w11a-diagnostic":
+        return _run_m6b_w11a_diagnostic(
+            Path(args.run_dir).resolve(),
+            Path(args.w5_compact).resolve(),
+            Path(args.w5_raw_dir).resolve(),
+            Path(args.w7_compact).resolve(),
+            Path(args.w7_raw_dir).resolve(),
+            Path(args.m3y_manifest).resolve(),
+            Path(args.jit_cache_source).resolve(),
             args.expected_source_sha,
         )
     run_dir = Path(args.run_dir).resolve()

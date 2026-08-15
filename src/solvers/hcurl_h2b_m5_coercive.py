@@ -27,6 +27,7 @@ __all__ = (
     "M5ResidualCheckpointWriter",
     "build_m5_b0_mat",
     "evaluate_m5_screen_gate",
+    "solve_m5_b0_fixed",
     "run_m5_right_fgmres_screen",
 )
 
@@ -397,5 +398,83 @@ def run_m5_right_fgmres_screen(
         ksp.destroy()
         solution.destroy()
         monitor_solution.destroy()
+        action_work.destroy()
+        residual_work.destroy()
+
+
+def solve_m5_b0_fixed(
+    operator: PETSc.Mat,
+    rhs: PETSc.Vec,
+    *,
+    pc_context: M5M4YPCContext,
+    max_it: int,
+    operator_context: M5B0MatPythonContext | None = None,
+) -> dict[str, Any]:
+    """Solve one fixed 20- or 100-step B0 cycle and audit its true residual.
+
+    This is the narrow continuation hook for W11A.  The existing M5 screen
+    keeps its original checkpoints and default behavior; this helper only
+    exposes a final solution for the predeclared Q1 escalation.
+    """
+
+    if max_it not in (20, 100):
+        raise ValueError("W11A B0 solve max_it must be 20 or 100")
+    if rhs.getComm().getSize() != 1:
+        raise ValueError("W11A B0 solve is fixed to MPI1")
+    rows = int(rhs.getSize())
+    if operator.getSize() != (rows, rows):
+        raise ValueError("W11A B0 operator and RHS sizes differ")
+    solution = operator.createVecRight()
+    action_work = operator.createVecLeft()
+    residual_work = rhs.duplicate()
+    rhs_values = _copy_owned_array(rhs, "W11A B0 RHS")
+    rhs_norm = float(np.linalg.norm(rhs_values))
+    if not np.isfinite(rhs_norm) or rhs_norm <= 0.0:
+        solution.destroy()
+        action_work.destroy()
+        residual_work.destroy()
+        raise ValueError("W11A B0 RHS norm must be positive and finite")
+    ksp = PETSc.KSP().create(rhs.getComm())
+    try:
+        solution.set(0.0)
+        ksp.setOperators(operator)
+        ksp.setType("fgmres")
+        ksp.setGMRESRestart(M5_FIXED_RESTART)
+        ksp.setPCSide(PETSc.PC.Side.RIGHT)
+        ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED)
+        ksp.setTolerances(rtol=0.0, atol=0.0, max_it=max_it)
+        pc = ksp.getPC()
+        pc.setType(PETSc.PC.Type.PYTHON)
+        pc.setPythonContext(pc_context)
+        ksp.setUp()
+        ksp.solve(rhs, solution)
+        operator.mult(solution, action_work)
+        residual_work.waxpy(PETSc.ScalarType(-1.0), action_work, rhs)
+        residual_values = _copy_owned_array(residual_work, "W11A B0 residual")
+        true_residual = float(np.linalg.norm(residual_values) / rhs_norm)
+        if not np.isfinite(true_residual):
+            raise FloatingPointError("W11A B0 true residual is non-finite")
+        return {
+            "max_it": int(max_it),
+            "iterations": int(ksp.getIterationNumber()),
+            "converged_reason": int(ksp.getConvergedReason()),
+            "true_residual": true_residual,
+            "solution": _copy_owned_array(solution, "W11A B0 solution"),
+            "pc_apply_count": int(pc_context.apply_count),
+            "operator_apply_count": (
+                None
+                if operator_context is None
+                else int(operator_context.apply_count)
+            ),
+            "finite": True,
+            "restart": M5_FIXED_RESTART,
+            "pc_side": "right",
+            "norm_type": "unpreconditioned",
+            "rtol": 0.0,
+            "atol": 0.0,
+        }
+    finally:
+        ksp.destroy()
+        solution.destroy()
         action_work.destroy()
         residual_work.destroy()
