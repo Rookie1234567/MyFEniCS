@@ -68,6 +68,36 @@ def _inventory() -> dict[str, object]:
     }
 
 
+def _inventory_v3() -> dict[str, object]:
+    keys: list[dict[str, object]] = []
+    for side, spatial_count in (("bottom", 148), ("top", 152)):
+        for polarization in ("s", "p"):
+            keys.extend(
+                {
+                    "side": side,
+                    "m": index,
+                    "n": 0,
+                    "polarization": polarization,
+                }
+                for index in range(spatial_count)
+            )
+    return {
+        "keys": keys,
+        "modes": [
+            {"key": key, "propagating": True, "rayleigh_warning": False} for key in keys
+        ],
+        "counts": {
+            "total": 600,
+            "per_side": {"bottom": 296, "top": 304},
+            "spatial": 300,
+            "polarization": {"P": 300, "S": 300},
+            "propagating": 598,
+            "nonpropagating": 2,
+            "rayleigh_warning": 0,
+        },
+    }
+
+
 def _orders(inventory: dict[str, object]) -> list[dict[str, object]]:
     rows = []
     for index, key in enumerate(inventory["keys"]):
@@ -93,11 +123,12 @@ def _arrays() -> dict[str, np.ndarray]:
 
 
 def _payload(numeric_dir: Path, inventory: dict[str, object]) -> dict[str, object]:
+    side_counts = inventory["counts"]["per_side"]
     arrays = {
         **_arrays(),
         "modal_amplitudes": np.arange(4, dtype=np.float64).astype(np.complex128),
-        "bottom_q": np.ones(300, dtype=np.complex128),
-        "top_q": np.ones(304, dtype=np.complex128),
+        "bottom_q": np.ones(side_counts["bottom"], dtype=np.complex128),
+        "top_q": np.ones(side_counts["top"], dtype=np.complex128),
     }
     path = numeric_dir / "task039_direct_payload.npz"
     np.savez(path, **arrays)
@@ -150,7 +181,15 @@ def _canonical_role(numeric_dir: Path, side: str, role: str) -> dict[str, object
     }
 
 
-def _write_hybrid(root: Path, inventory: dict[str, object], mode: int) -> None:
+def _write_hybrid(
+    root: Path,
+    inventory: dict[str, object],
+    mode: int,
+    *,
+    model_id: str | None = None,
+    h_nm: float = 10.0,
+    incident_grazing_deg: float = 10.0,
+) -> None:
     numeric_dir = root / "numerical_output"
     numeric_dir.mkdir(parents=True)
     payload_descriptor = _payload(numeric_dir, inventory)
@@ -168,9 +207,9 @@ def _write_hybrid(root: Path, inventory: dict[str, object], mode: int) -> None:
             "requested_modes_per_direction": mode,
             "wavelength_nm": 5.0,
             "degree": 6,
-            "h_nm": 10.0,
+            "h_nm": h_nm,
             "polarization_kind": "s",
-            "incident_grazing_deg": 10.0,
+            "incident_grazing_deg": incident_grazing_deg,
         },
         "mpi_size": 8,
         "external_mode_inventory": inventory,
@@ -257,7 +296,7 @@ def _write_hybrid(root: Path, inventory: dict[str, object], mode: int) -> None:
         "physical_model_sha256": "d" * 64,
         "mpi_size": 8,
         "method": "hybrid_direct",
-        "model_id": f"task039_5nm_hybrid_direct_m{mode}",
+        "model_id": model_id or f"task039_5nm_hybrid_direct_m{mode}",
         "resolved_method_adapter": "task039.hybrid_direct",
         "external_mode_inventory": inventory,
     }
@@ -466,3 +505,27 @@ def test_cli_reports_blocked_diagnostic_without_writing_run(
     output = json.loads(capsys.readouterr().out)
     assert output["production_validation_allowed"] is False
     assert output["comparisons"]["full3d_diagnostic"]["pass"] is True
+
+
+def test_v3_model_identity_accepts_and_near_miss_rejects(tmp_path: Path) -> None:
+    root = tmp_path / "hybrid_v3"
+    _write_hybrid(
+        root,
+        _inventory_v3(),
+        480,
+        model_id="task039_5nm_v3_1deg_s5_hybrid_direct_m480",
+        h_nm=5.0,
+        incident_grazing_deg=1.0,
+    )
+    accepted = check_hybrid_direct_identity(root)
+    assert accepted["pass"] is True
+    assert accepted["own"]["model_id"] == ("task039_5nm_v3_1deg_s5_hybrid_direct_m480")
+    assert accepted["own"]["inventory"]["count"] == 600
+
+    manifest_path = root / "run_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["model_id"] = "task039_5nm_v3_1deg_s5_hybrid_direct_m240"
+    _write_json(manifest_path, manifest)
+    rejected = check_hybrid_direct_identity(root)
+    assert rejected["pass"] is False
+    assert rejected["classification"] == "HYBRID_DIRECT_OWN_AUTHORITY_FAIL"

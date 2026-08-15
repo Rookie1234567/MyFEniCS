@@ -22,7 +22,8 @@ from benchmarks.canonical_vector_artifacts import read_canonical_manifest
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _SOURCE_SHA = re.compile(r"^[0-9a-f]{40}$")
-_MODEL_ID = re.compile(r"^task039_5nm_hybrid_direct_m(120|240|480|960)$")
+_HISTORICAL_MODEL_ID = re.compile(r"^task039_5nm_hybrid_direct_m(120|240|480|960)$")
+_V3_MODEL_ID = re.compile(r"^task039_5nm_v3_1deg_s5_hybrid_direct_m480$")
 _PLANES = (10.0, 30.0, 60.0, 90.0, 110.0)
 _PAYLOAD_KEYS = (
     "x_nm",
@@ -127,15 +128,40 @@ def _key_sha(keys: Sequence[tuple[str, int, int, str]]) -> str:
     ).hexdigest()
 
 
-def _parse_inventory(value: Any, label: str) -> dict[str, Any]:
+def _model_contract(value: Any) -> dict[str, Any] | None:
+    if not isinstance(value, str):
+        return None
+    historical = _HISTORICAL_MODEL_ID.fullmatch(value)
+    if historical is not None:
+        return {
+            "model_id": value,
+            "requested_modes": int(historical.group(1)),
+            "h_nm": 10.0,
+            "incident_grazing_deg": 10.0,
+            "inventory_count": 604,
+        }
+    if _V3_MODEL_ID.fullmatch(value) is not None:
+        return {
+            "model_id": value,
+            "requested_modes": 480,
+            "h_nm": 5.0,
+            "incident_grazing_deg": 1.0,
+            "inventory_count": 600,
+        }
+    return None
+
+
+def _parse_inventory(
+    value: Any, label: str, *, expected_count: int = 604
+) -> dict[str, Any]:
     if not isinstance(value, Mapping) or not isinstance(value.get("keys"), list):
         _fail(f"{label} external_mode_inventory is missing")
     keys = tuple(
         _mode_key(item, f"{label}.keys[{index}]")
         for index, item in enumerate(value["keys"])
     )
-    if len(keys) != 604 or len(set(keys)) != 604:
-        _fail(f"{label} external inventory must contain 604 unique keys")
+    if len(keys) != expected_count or len(set(keys)) != expected_count:
+        _fail(f"{label} external inventory must contain {expected_count} unique keys")
     return {
         "value": dict(value),
         "keys": keys,
@@ -147,10 +173,10 @@ def _parse_inventory(value: Any, label: str) -> dict[str, Any]:
 
 
 def _parse_orders(
-    rows: Any, label: str
+    rows: Any, label: str, *, expected_count: int = 604
 ) -> dict[tuple[str, int, int, str], dict[str, Any]]:
-    if not isinstance(rows, list) or len(rows) != 604:
-        _fail(f"{label} must contain 604 diffraction-order rows")
+    if not isinstance(rows, list) or len(rows) != expected_count:
+        _fail(f"{label} must contain {expected_count} diffraction-order rows")
     result: dict[tuple[str, int, int, str], dict[str, Any]] = {}
     for index, row in enumerate(rows):
         if not isinstance(row, Mapping):
@@ -528,7 +554,9 @@ def _mode_metrics(
     }
 
 
-def _load_hybrid(run_dir: str | Path, *, expected_h_nm: float = 10.0) -> dict[str, Any]:
+def _load_hybrid(
+    run_dir: str | Path, *, expected_h_nm: float | None = None
+) -> dict[str, Any]:
     root = Path(run_dir).resolve()
     numeric_dir = root / "numerical_output"
     manifest_path, outer_path, numeric_path = (
@@ -550,8 +578,8 @@ def _load_hybrid(run_dir: str | Path, *, expected_h_nm: float = 10.0) -> dict[st
     ):
         _fail("run is not the Task39 Hybrid-direct adapter")
     model = manifest.get("model_id")
-    model_match = _MODEL_ID.fullmatch(model) if isinstance(model, str) else None
-    if model_match is None:
+    contract = _model_contract(model)
+    if contract is None:
         _fail("Hybrid model_id is not a finite Task39 M identity")
     requested_modes = (
         numeric.get("case", {}).get("requested_modes_per_direction")
@@ -561,7 +589,7 @@ def _load_hybrid(run_dir: str | Path, *, expected_h_nm: float = 10.0) -> dict[st
     if (
         isinstance(requested_modes, bool)
         or not isinstance(requested_modes, int)
-        or requested_modes != int(model_match.group(1))
+        or requested_modes != contract["requested_modes"]
     ):
         _fail("numeric.case.requested_modes_per_direction does not match model M")
     if manifest.get("mpi_size") != 8 or numeric.get("mpi_size", 8) != 8:
@@ -579,22 +607,27 @@ def _load_hybrid(run_dir: str | Path, *, expected_h_nm: float = 10.0) -> dict[st
     case = numeric.get("case")
     if not isinstance(case, Mapping):
         _fail("numeric.case is missing")
+    expected_h = contract["h_nm"] if expected_h_nm is None else expected_h_nm
     for key, expected in (
         ("wavelength_nm", 5.0),
         ("degree", 6),
-        ("h_nm", expected_h_nm),
+        ("h_nm", expected_h),
         ("polarization_kind", "s"),
-        ("incident_grazing_deg", 10.0),
+        ("incident_grazing_deg", contract["incident_grazing_deg"]),
     ):
         if case.get(key) != expected:
-            _fail(
-                f"numeric.case.{key} does not match p6/h{expected_h_nm:g} Task39 contract"
-            )
-    inventory = _parse_inventory(manifest.get("external_mode_inventory"), "manifest")
+            _fail(f"numeric.case.{key} does not match {contract['model_id']} contract")
+    inventory = _parse_inventory(
+        manifest.get("external_mode_inventory"),
+        "manifest",
+        expected_count=contract["inventory_count"],
+    )
     numeric_inventory = numeric.get("external_mode_inventory")
     numeric_inventory_exact: bool | str = "not_applicable"
     if numeric_inventory is not None:
-        parsed_numeric = _parse_inventory(numeric_inventory, "numeric")
+        parsed_numeric = _parse_inventory(
+            numeric_inventory, "numeric", expected_count=inventory["count"]
+        )
         numeric_inventory_exact = parsed_numeric["value"] == inventory["value"]
         if not numeric_inventory_exact:
             _fail("numeric and manifest external inventories differ")
@@ -604,8 +637,9 @@ def _load_hybrid(run_dir: str | Path, *, expected_h_nm: float = 10.0) -> dict[st
         if isinstance(numeric.get("validation"), Mapping)
         else None,
         "validation.external_diffraction_orders",
+        expected_count=inventory["count"],
     )
-    if len(orders) != 604 or set(orders) != set(inventory["keys"]):
+    if len(orders) != inventory["count"] or set(orders) != set(inventory["keys"]):
         _fail("Hybrid diffraction-order keys do not exactly match dynamic inventory")
     canonical = _canonical_entries(numeric_dir, numeric)
     resource = _resource_authority(outer)
@@ -685,6 +719,7 @@ def _load_hybrid(run_dir: str | Path, *, expected_h_nm: float = 10.0) -> dict[st
         "inventory": inventory,
         "numeric_inventory_exact": numeric_inventory_exact,
         "requested_modes": requested_modes,
+        "contract": contract,
         "orders": orders,
         "payload": payload,
         "canonical": canonical,
@@ -701,7 +736,9 @@ def _load_hybrid(run_dir: str | Path, *, expected_h_nm: float = 10.0) -> dict[st
     }
 
 
-def _raw_full3d(run_dir: str | Path) -> dict[str, Any]:
+def _raw_full3d(
+    run_dir: str | Path, *, expected_inventory_count: int | None = None
+) -> dict[str, Any]:
     from benchmarks.task039_full3d_identity import _load_run
 
     raw = _load_run(run_dir, "direct", expected_mesh_target_size=None)
@@ -711,9 +748,18 @@ def _raw_full3d(run_dir: str | Path) -> dict[str, Any]:
     )
     orders = raw["orders"]["rows"]
     inventory_keys = set(raw["inventory"]["keys"])
+    inventory_count = len(inventory_keys)
+    if (
+        expected_inventory_count is not None
+        and inventory_count != expected_inventory_count
+    ):
+        _fail(
+            "Full3D inventory count does not match Hybrid inventory contract "
+            f"({inventory_count} != {expected_inventory_count})"
+        )
     if (
         not isinstance(orders, Mapping)
-        or len(orders) != 604
+        or len(orders) != inventory_count
         or set(orders) != inventory_keys
     ):
         _fail("Full3D diffraction-order mapping does not exactly match its inventory")
@@ -1034,9 +1080,16 @@ def _v2_normal_flux(arrays: Mapping[str, Any], label: str) -> np.ndarray:
 
 
 def _v2_order_comparison(
-    left: Mapping[Any, Any], right: Mapping[Any, Any]
+    left: Mapping[Any, Any],
+    right: Mapping[Any, Any],
+    *,
+    expected_count: int = 604,
 ) -> dict[str, Any]:
-    keys_exact = set(left) == set(right) and len(left) == 604
+    keys_exact = (
+        set(left) == set(right)
+        and len(left) == expected_count
+        and len(right) == expected_count
+    )
     if not keys_exact:
         return {
             "keys_exact": False,
@@ -1128,12 +1181,14 @@ def _compare_h5_hybrid_full3d_data(
 ) -> dict[str, Any]:
     hybrid_keys = set(hybrid["inventory"]["keys"])
     full_keys = set(full["inventory"]["keys"])
+    expected_count = len(hybrid_keys)
     inventory = {
+        "expected_count": expected_count,
         "hybrid_count": len(hybrid_keys),
         "full3d_count": len(full_keys),
         "hybrid_key_sha256": _key_sha(tuple(hybrid_keys)),
         "full3d_key_sha256": _key_sha(tuple(full_keys)),
-        "pass": len(hybrid_keys) == 604 and hybrid_keys == full_keys,
+        "pass": expected_count in (600, 604) and full_keys == hybrid_keys,
     }
     observables = _compare_observables(
         hybrid["observables"], full["observables"], 1.0e-5
@@ -1171,7 +1226,9 @@ def _compare_h5_hybrid_full3d_data(
         "limit": 1.0e-4,
         "pass": flux_relative <= 1.0e-4,
     }
-    orders = _v2_order_comparison(hybrid["orders"], full["orders"])
+    orders = _v2_order_comparison(
+        hybrid["orders"], full["orders"], expected_count=expected_count
+    )
     primary_pass = (
         all(
             item["pass"]
@@ -1223,7 +1280,10 @@ def compare_h5_hybrid_direct_full3d(
     """Compare the frozen h5 Hybrid M480 and Full3D runs offline only."""
 
     hybrid = _load_hybrid(hybrid_run_dir, expected_h_nm=5.0)
-    full = _raw_full3d(full3d_run_dir)
+    full = _raw_full3d(
+        full3d_run_dir,
+        expected_inventory_count=hybrid["inventory"]["count"],
+    )
     result = _compare_h5_hybrid_full3d_data(hybrid, full)
     physical = _v2_physical_model_identity(hybrid, full)
     result["physical_model_identity"] = physical
