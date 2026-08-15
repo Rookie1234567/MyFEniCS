@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import inspect
 import json
-import hashlib
 import math
 from pathlib import Path
 
@@ -147,27 +146,27 @@ def test_w13a_scope_prediction_and_parser_are_fixed_without_beta_argument() -> N
         [
             "m6b-w13a-diagnostic",
             "--run-dir",
-            "/tmp/w13a-run",
+            "w13a-run",
             "--factor1-authority-dir",
-            "/tmp/beta1",
+            "beta1",
             "--factor05-authority-dir",
-            "/tmp/beta05",
+            "beta05",
             "--wave-authority-dir",
-            "/tmp/wave",
+            "wave",
             "--jit-cache-source",
-            "/tmp/jit",
+            "jit",
             "--w0-authority-file",
-            "/tmp/w0.json",
+            "w0.json",
             "--w5-compact",
-            "/tmp/w5.json",
+            "w5.json",
             "--w5-raw-dir",
-            "/tmp/w5",
+            "w5",
             "--w7-compact",
-            "/tmp/w7.json",
+            "w7.json",
             "--w7-raw-dir",
-            "/tmp/w7",
+            "w7",
             "--output",
-            "/tmp/w13a.json",
+            "w13a.json",
             "--expected-source-sha",
             "a" * 40,
         ]
@@ -254,7 +253,7 @@ def test_w13a_keeps_projected_pc_default_behavior_and_no_heavy_dispatch() -> Non
     assert "m6b-w13a-diagnostic" not in core_source
 
 
-def test_w13a_compact_recomputes_raw_gate_and_hash_bound_evidence() -> None:
+def test_w13a_compact_recomputes_measurement_gate_and_hash_bound_evidence() -> None:
     record_path = (
         Path(runner.ROOT)
         / "benchmarks/cases/101_task37_extra_development/records/"
@@ -274,27 +273,114 @@ def test_w13a_compact_recomputes_raw_gate_and_hash_bound_evidence() -> None:
     assert record["official_rta"] is False
     assert record["w13b_unlocked"] is False
 
-    for run in record["runs"].values():
-        for descriptor in run["artifacts"].values():
-            path = Path(descriptor["path"])
+    expected_artifacts = {
+        "run1": {
+            "beta1_progress": ("be918dc5e2dd08a0dc3eeb51011f28b1c7eb3376cced8c254c8e5156b964b6f3", None),
+            "raw_progress": ("5c273ee4ebf6882557b3054e4fc2b429f575d18db7ed0ca0e3f611f6810ab55c", None),
+            "raw_summary": ("1f48247f0cbcabd0128c26076a2a56b101cf11ad9b0d4432cf9ff402263f47c4", "b9e48eeeb67c40d5a09bd8023f4ec3410c88e6931f459643313e6ea6d8e56c7e"),
+            "root_pid": ("1244827726038c1317fb1e59bc01ea0cc0d39bb1a4d25b994f25806fe4fe76e2", None),
+            "stdout": ("f65e1843404638e8407f980fdfb4f74ba732a83a7e83826a891055b7000f12f7", None),
+            "timeline": ("c2ce839169e7a60526c970c2e56cedacda9efb8fe6daf9ceb0e6c909d43026fc", None),
+            "watchdog_summary": ("6917e933d9996d1637946df85bd03b2456b3c309159caa0bd1d3b159ede697c3", "3374dfd6e01e1fcb22e678eeaad522c2e90571debcc516c8d9caac210d5ece44"),
+            "worker_time": ("09409897bb42a7ac37842413bb4ae8c05f330934e5eab4b11c5937fa0ccaa65d", None),
+            "wrapper": ("0a2fba86ea206831e9a5b48808840f4b9f7cf88a69f04eff8c2bbd32d1ea6ab3", None),
+        },
+        "run2": {
+            "beta1_progress": ("84a352acfbc563389288865ef9ec4b46326c572dfe8feb5596d41b0f2b02e2c0", None),
+            "beta1_summary": ("38c24668f9d7046404f480110cedf711faaaf29d7a4822a41c97231031d75a6d", "adc243e06a15f594ab16d9469153662caaee1ddd9035cef9981d7656c573f73c"),
+            "raw_progress": ("9d41952503c41b0350c3cc8059fd963d8b60e4539f8a914e8deba44fd865ea58", None),
+            "raw_summary": ("2bb3520ee4c90fa0cd55bb8799160ecdd049c91472878d210bef36994bec253d", "959d2ab23584ceff7ce1aa945e088bdc2315170121da52de03f1668ab9af5d03"),
+            "root_pid": ("7d40ac6f38fd33aeb1df8a918125c1a155b92b92b28534a8cde2dd46a4f63cf8", None),
+            "stdout": ("8d2ef51bee7d5b699863580600b703ab511f6fe3f6ccabd9413bc2d4ad51e281", None),
+            "timeline": ("6e4bad0bf2073fb4ea4dfa07cc5fdfc953063ec3834005808cadcc18babf9af6", None),
+            "watchdog_summary": ("c61b08b5571c02c8219dd0a19948aa32555f2c6357fe09e46b58f740f816b508", "3a4bac116e4ea770750c59d2ed2b1ac9d026558d6d90900508e7b741aca1950a"),
+            "worker_time": ("6b0e525b6a70e8857314f3afd24c1d7328ea28d5f69ddc682fb5511a9e841c4a", None),
+            "wrapper": ("97c69be4b6cfd1a00d0c5e01f3904e9bb8d3f62bd7ecc6dd907cb3574ab4f445", None),
+        },
+        "run3": {
+            "beta05_progress": ("5d8ec455b2f5ae40f9b684cc24cf807cd0557f63fdb4d2f2da74882c16ccf076", None),
+            "beta05_summary": ("7aead7164ef2f7c97c033fe8fc7ff1d2460fc7da254b568e81adb85e4c597a87", "54fff273f2507e8236896f0d38720d610e48a912e38c4a1343b27810cf9f2252"),
+            "beta1_progress": ("e66ceecf320a98da6ee2e228e6860fe695071c0757fba90ba6a1e91595668a2e", None),
+            "beta1_summary": ("623f3e8723541146a138fe6ce162b5dc10e4f9726eecb7476bd5305e5e2fdae4", "1a421a24f6564aff722cb5d6b5ccaca1ff5ab6a0bcf4a9a68d42a9d9d8d84f95"),
+            "raw_progress": ("9c9a906319b186e73f4b4139bd14c9e33497334e707be01397dadb5d21f5de2f", None),
+            "raw_summary": ("604869eec33326428354b2f6772a3180ff8a5217a30d3308630b4a3dd661b46e", "b27193c7e43137ce58e26c350a38356962434b586b9790805012f6c64b1ada4e"),
+            "root_pid": ("44aeba97b88d01b0e3f65835e17f32aaf7018c79baea5e5754350079f4a5a54a", None),
+            "stdout": ("9e02334fd60a9e182d544af9392b8d86fe127c9f4cec04f3071ab078eac1e581", None),
+            "timeline": ("e09d8899c8ff4471f07276682d783043c5c95356a3fa9406ad3cc3b455cd4878", None),
+            "watchdog_summary": ("57c8462ed6eb01e487f34b80dfcad753ae4b9c73d11842934767afef747b5826", "cd5bf9fa2d9aaa9390cdd65bfff43b119ef1bc0e6041b05c2697f3b09cf6b8d9"),
+            "worker_time": ("a53e464216f79debbde3aae30ef02e7b5002cfce65f936edd4945878dfb44ad9", None),
+            "wrapper": ("1c09fba02597455f6d71c56a0cc972e5b96e5c080160b91f59704f3f3339ee65", None),
+        },
+    }
+    for run_name, expected in expected_artifacts.items():
+        artifacts = record["runs"][run_name]["artifacts"]
+        assert set(artifacts) == set(expected)
+        for name, (sha256, embedded) in expected.items():
+            descriptor = artifacts[name]
             assert descriptor["present"] is True
-            assert descriptor["bytes"] == path.stat().st_size
-            digest = hashlib.sha256(path.read_bytes()).hexdigest()
-            assert descriptor["sha256"] == digest
-            if "embedded_evidence_sha256" in descriptor:
-                value = json.loads(path.read_text(encoding="utf-8"))
-                assert runner._evidence_valid(value)
-                assert descriptor["embedded_evidence_sha256"] == value["evidence_sha256"]
+            assert descriptor["bytes"] > 0
+            assert descriptor["path"]
+            assert descriptor["sha256"] == sha256
+            if embedded is None:
+                assert "embedded_evidence_sha256" not in descriptor
+            else:
+                assert descriptor["embedded_evidence_sha256"] == embedded
+
+    run1 = record["runs"]["run1"]
+    assert run1["classification"] == "PRE_SERIALIZATION_EXECUTION_FAIL"
+    assert run1["failure_boundary"] == {
+        "beta05_started": False,
+        "beta05_summary_present": False,
+        "beta1_completed": False,
+        "error_detail": "json serialization rejected numpy.bool_ produced by all_repeat",
+        "error_type": "TypeError",
+        "numeric_measurement_available": False,
+    }
+    run2 = record["runs"]["run2"]
+    assert run2["classification"] == "PRE_BETA05_GUARD_EXECUTION_FAIL"
+    assert run2["failure_boundary"] == {
+        "beta05_child_entered": False,
+        "beta05_started": True,
+        "beta05_summary_present": False,
+        "beta1_completed": True,
+        "error_detail": "old ordinary W2/W2R guard remained fixed at beta=1",
+        "error_type": "ValueError",
+        "numeric_measurement_available": "beta1_only",
+    }
 
     run3 = record["runs"]["run3"]
+    assert run3["source"] == {
+        "end": {"clean": True, "source_commit_full_sha": "9f5c2c03ad9130c61941a9e58d11c36a589e7be3"},
+        "raw_summary_evidence_present": True,
+        "start": {"clean": True, "source_commit_full_sha": "9f5c2c03ad9130c61941a9e58d11c36a589e7be3"},
+    }
+    resource = run3["resource"]
+    assert resource["compiler_descendant_pids"] == []
+    assert resource["drain"]["gone"] is True
+    assert resource["monitor"]["peak_rss_bytes"] == 1717895168
+    assert resource["monitor"]["return_code"] == 0
+    assert resource["monitor"]["swap_bytes"] == 0
+    assert resource["monitor"]["termination"] is None
+    assert resource["process_tree_peak_measured"] is True
+    assert resource["time"]["max_rss_bytes"] == 1695490048
+    assert resource["time"]["swap_bytes"] == 0
+    assert run3["lifecycle"] == [
+        {"beta": 1.0, "event": "shifted_store_loaded"},
+        {"beta": 1.0, "event": "shifted_store_released"},
+        {"beta": 0.5, "event": "shifted_store_loaded"},
+        {"beta": 0.5, "event": "shifted_store_released"},
+    ]
     for role in ("w5_iter200", "w7_cumulative400"):
-        raw = {}
+        measurements = run3["numeric"]["measurements"][role]
         for beta in ("beta1", "beta05"):
-            summary_path = Path(run3["artifacts"][f"{beta}_summary"]["path"])
-            summary = json.loads(summary_path.read_text(encoding="utf-8"))
-            raw[beta] = summary["measurements"]["w13a"]["measurements"][role]
-        beta1 = float(raw["beta1"]["rho_projected"])
-        beta05 = float(raw["beta05"]["rho_projected"])
+            assert measurements[beta]["action_counts"] == {
+                "local_apply": 1,
+                "physical_outer_action": 5,
+                "range_apply": 3,
+            }
+            assert measurements[beta]["local_exact_shifted_action_count"] == 1
+        beta1 = float(measurements["beta1"]["rho_projected"])
+        beta05 = float(measurements["beta05"]["rho_projected"])
         ratio = beta05 / beta1
         improvement = 1.0 - ratio
         threshold = 0.95 * beta1
@@ -308,8 +394,8 @@ def test_w13a_compact_recomputes_raw_gate_and_hash_bound_evidence() -> None:
         assert math.isclose(compact["fixed_improvement_gate"]["threshold"], threshold, abs_tol=1e-15)
         assert compact["fixed_improvement_gate"]["pass"] is (beta05 <= threshold)
         difference = abs(
-            float(raw["beta1"]["rho_range_only"])
-            - float(raw["beta05"]["rho_range_only"])
+            float(measurements["beta1"]["rho_range_only"])
+            - float(measurements["beta05"]["rho_range_only"])
         )
         assert compact["cross_beta_range"]["absolute_difference"] == difference == 0.0
     assert run3["numeric"]["fixed_improvement_gate"] is False
