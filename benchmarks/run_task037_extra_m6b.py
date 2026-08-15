@@ -8879,7 +8879,7 @@ def _m6b_w7_s1_check_command(
             "w7_s1_restart_disk_fgmres_screen_timeline.jsonl": "timeline",
         }
         watchdog_inventory = {
-            name: reported_artifacts.get(label)
+            name: _artifact(watchdog_dir, name)
             for name, label in watchdog_artifact_labels.items()
         }
         artifact_inventory = {
