@@ -1609,6 +1609,8 @@ def build_frozen_m10_setup(
     exact_one_cell_work_dir: Path | None = None,
     cfg_override: Any | None = None,
     modal_cfg_override: Any | None = None,
+    detail_stage_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+    post_destroy_cleanup: Callable[[], Mapping[str, Any]] | None = None,
 ) -> FrozenM10Setup:
     """Build the frozen physical/QEP/endcap/coupling bundle only.
 
@@ -1773,6 +1775,8 @@ def build_frozen_m10_setup(
         propagation_model=profile.internal_propagation_model,
         modal_traction_model=profile.internal_traction_model,
         exact_one_cell_work_dir=exact_one_cell_work_dir,
+        stage_callback=detail_stage_callback,
+        post_destroy_cleanup=post_destroy_cleanup,
         log=log,
     )
     timings["internal_modal_coupling"] = _max_elapsed(comm, started)
@@ -1974,8 +1978,13 @@ def load_authority_bindings(
     return result
 
 
-def _ensure_output_paths(args: argparse.Namespace, comm: MPI.Intracomm) -> None:
-    paths = (args.output, args.run_dir, args.memory_stages)
+def _ensure_output_paths(
+    args: argparse.Namespace,
+    comm: MPI.Intracomm,
+    *,
+    detail_marker_path: Path | None = None,
+) -> None:
+    paths = (args.output, args.run_dir, args.memory_stages, detail_marker_path)
     if comm.rank == 0:
         for path in paths:
             if path is not None and path.exists():
@@ -1990,7 +1999,9 @@ class LifecycleTrace:
     stages: list[str] = field(default_factory=list)
     timestamps: list[dict[str, Any]] = field(default_factory=list)
     memory_stages: Path | None = None
+    detail_marker_path: Path | None = None
     comm: MPI.Intracomm | None = None
+    detail_started: float = field(default_factory=time.perf_counter, repr=False)
 
     def record(self, stage: str) -> None:
         if stage not in M10_LIFECYCLE_ORDER:
@@ -2024,6 +2035,25 @@ class LifecycleTrace:
                 stream.flush()
             print(f"M10 heartbeat stage={stage}", flush=True)
 
+    def detail(self, name: str, detail: Mapping[str, Any]) -> None:
+        if self.detail_marker_path is None or (
+            self.comm is not None and self.comm.rank != 0
+        ):
+            return
+        payload = {
+            "schema": "task039.v3-memory-detail-marker.v2",
+            "marker_type": "memory_detail",
+            "name": name,
+            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+            "elapsed_seconds": time.perf_counter() - self.detail_started,
+            "elapsed_origin": "worker_lifecycle_detail_started_perf_counter",
+            "detail": dict(detail),
+        }
+        self.detail_marker_path.parent.mkdir(parents=True, exist_ok=True)
+        with self.detail_marker_path.open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(payload) + "\n")
+            stream.flush()
+
     def as_dict(self) -> dict[str, Any]:
         return {
             "schema_version": "task037b.m10-lifecycle.v1",
@@ -2032,6 +2062,11 @@ class LifecycleTrace:
             "timestamps": list(self.timestamps),
             "memory_stages": (
                 None if self.memory_stages is None else _record_path(self.memory_stages)
+            ),
+            "memory_detail_markers": (
+                None
+                if self.detail_marker_path is None
+                else _record_path(self.detail_marker_path)
             ),
             "pass": self.stages == list(M10_LIFECYCLE_ORDER),
         }
@@ -2471,8 +2506,23 @@ def run_frozen_m10(
         raise RuntimeError(
             f"profile formal identity requires MPI{profile.mpi_size}, got MPI{comm.size}"
         )
-    _ensure_output_paths(args, comm)
-    lifecycle = LifecycleTrace(memory_stages=args.memory_stages, comm=comm)
+    detail_marker_path = None
+    if (
+        str(profile.profile_id).startswith("task039.")
+        and args.memory_stages is not None
+    ):
+        detail_marker_path = args.memory_stages.with_name(
+            "memory_detail_markers.raw.jsonl"
+        )
+    _ensure_output_paths(args, comm, detail_marker_path=detail_marker_path)
+    if comm.rank == 0 and detail_marker_path is not None:
+        detail_marker_path.parent.mkdir(parents=True, exist_ok=True)
+        detail_marker_path.unlink(missing_ok=True)
+    lifecycle = LifecycleTrace(
+        memory_stages=args.memory_stages,
+        detail_marker_path=detail_marker_path,
+        comm=comm,
+    )
     source_before: dict[str, Any] = {"status": "not_recorded"}
     source_after: dict[str, Any] = {"status": "not_recorded"}
     authority_bindings: dict[str, Any] = {}
@@ -2514,6 +2564,12 @@ def run_frozen_m10(
             exact_one_cell_work_dir=_exact_one_cell_work_dir(profile, args.run_dir),
             cfg_override=cfg_override,
             modal_cfg_override=modal_cfg_override,
+            detail_stage_callback=lifecycle.detail,
+            post_destroy_cleanup=(
+                (lambda: collective_heap_cleanup(comm))
+                if detail_marker_path is not None
+                else None
+            ),
         )
         lifecycle.record("solve")
         linear = solve_frozen_m10_linear(setup, log=rank0_log)

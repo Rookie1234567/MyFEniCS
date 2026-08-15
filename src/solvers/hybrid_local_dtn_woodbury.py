@@ -260,11 +260,11 @@ class HybridLocalDtnWoodburyFixedAction:
         residual_operator: PETSc.Mat | None = None,
         residual_correction_steps: int = 1,
     ) -> None:
-        if residual_correction_steps not in (1, 2):
-            raise ValueError("Residual correction steps must be 1 or 2")
-        if residual_correction_steps == 2 and residual_operator is None:
+        if residual_correction_steps not in (1, 2, 4, 8):
+            raise ValueError("Residual correction steps must be one of 1, 2, 4, or 8")
+        if residual_correction_steps > 1 and residual_operator is None:
             raise ValueError(
-                "Two-pass correction requires a borrowed residual operator"
+                "Multi-pass correction requires a borrowed residual operator"
             )
         if residual_correction_steps == 1 and residual_operator is not None:
             raise ValueError(
@@ -276,7 +276,11 @@ class HybridLocalDtnWoodburyFixedAction:
         self.operator_identity = (
             "whole_endcap_ilu0_woodbury_fixed_action_two_pass_residual_correction"
             if residual_correction_steps == 2
-            else self.operator_identity
+            else (
+                f"whole_endcap_ilu0_woodbury_fixed_action_{residual_correction_steps}_pass_residual_correction"
+                if residual_correction_steps > 2
+                else self.operator_identity
+            )
         )
         self.residual_operator = residual_operator
         self._residual_operator_borrowed = residual_operator is not None
@@ -310,7 +314,7 @@ class HybridLocalDtnWoodburyFixedAction:
             components,
             base_identity=base_identity,
         )
-        if self.residual_correction_steps == 2:
+        if self.residual_correction_steps > 1:
             self._residual = self.operator.createVecLeft()
             self._correction = self.operator.createVecLeft()
         self._destroyed = False
@@ -329,7 +333,7 @@ class HybridLocalDtnWoodburyFixedAction:
         if self._destroyed:
             raise RuntimeError("Fixed Woodbury action has been destroyed")
         self.woodbury.apply(source, target)
-        if self.residual_correction_steps == 2:
+        for _ in range(self.residual_correction_steps - 1):
             self.residual_operator.mult(target, self._residual)
             self._residual.scale(PETSc.ScalarType(-1.0))
             self._residual.axpy(PETSc.ScalarType(1.0), source)

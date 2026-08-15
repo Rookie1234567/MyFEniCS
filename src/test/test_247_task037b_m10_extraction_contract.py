@@ -1,14 +1,21 @@
 from __future__ import annotations
 
 import ast
+from datetime import datetime
 import json
 import inspect
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from mpi4py import MPI
 
 from benchmarks import run_task037b_hybrid_iterative as runner
+from src.coupling.hybrid_one_cell_exact_traction_builder import (
+    _apply_columns_marker_detail,
+    _replicated_array_marker_detail,
+    build_exact_one_cell_traction_matrices,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -106,6 +113,54 @@ def test_lifecycle_trace_writes_one_flushed_line_per_stage(tmp_path: Path) -> No
     assert [row["stage"] for row in rows] == list(runner.M10_LIFECYCLE_ORDER)
     assert len(rows) == len(runner.M10_LIFECYCLE_ORDER)
     assert all("residual" not in row for row in rows)
+
+
+def test_task039_detail_marker_has_utc_origin_and_rank0_writer(tmp_path: Path) -> None:
+    path = tmp_path / "memory_detail_markers.raw.jsonl"
+    trace = runner.LifecycleTrace(
+        detail_marker_path=path,
+        comm=MPI.COMM_WORLD,
+    )
+    trace.detail("one_cell_factor_ready", {"rows": 12})
+    MPI.COMM_WORLD.Barrier()
+    rows = None
+    if MPI.COMM_WORLD.rank == 0:
+        rows = [json.loads(line) for line in path.read_text().splitlines()]
+    rows = MPI.COMM_WORLD.bcast(rows, root=0)
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["schema"] == "task039.v3-memory-detail-marker.v2"
+    assert row["marker_type"] == "memory_detail"
+    assert datetime.fromisoformat(row["timestamp_utc"]).tzinfo is not None
+    assert row["elapsed_origin"] == "worker_lifecycle_detail_started_perf_counter"
+    assert row["detail"] == {"rows": 12}
+
+
+def test_task039_memory_marker_byte_fields_keep_array_scopes_separate() -> None:
+    setup_parameters = inspect.signature(runner.build_frozen_m10_setup).parameters
+    assert setup_parameters["detail_stage_callback"].default is None
+    assert setup_parameters["post_destroy_cleanup"].default is None
+    builder_parameters = inspect.signature(
+        build_exact_one_cell_traction_matrices
+    ).parameters
+    assert builder_parameters["stage_callback"].default is None
+    assert builder_parameters["post_destroy_cleanup"].default is None
+
+    lift = _replicated_array_marker_detail(
+        12, 8, 4, array_scope="replicated_lift_input_output"
+    )
+    assert "distributed_petsc_5mat_payload_lower_bound_bytes" not in lift
+    assert lift["replicated_numpy_array_bytes_per_rank"] == 12 * 8 * 16
+    assert lift["replicated_numpy_array_bytes_process_tree"] == 4 * 12 * 8 * 16
+
+    apply = _apply_columns_marker_detail(12, 30, 8, 4, direction="forward")
+    assert (
+        apply["distributed_petsc_5mat_payload_lower_bound_bytes"]
+        == (3 * 12 + 2 * 30) * 8 * 16
+    )
+    assert apply["replicated_input_numpy_bytes_per_rank"] == 12 * 8 * 16
+    assert apply["replicated_output_numpy_bytes_per_rank"] == 12 * 8 * 16
+    assert "replicated_numpy_array_bytes_per_rank" not in apply
 
 
 def test_runner_does_not_import_historical_task_runners() -> None:

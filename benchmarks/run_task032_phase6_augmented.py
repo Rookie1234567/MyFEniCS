@@ -1479,9 +1479,15 @@ def main(
     formal_stage_marker_path = (
         None if task039_stage_marker_path is None else Path(task039_stage_marker_path)
     )
+    detail_marker_path = (
+        None
+        if formal_stage_marker_path is None
+        else formal_stage_marker_path.with_name("memory_detail_markers.raw.jsonl")
+    )
     if comm.rank == 0 and formal_stage_marker_path is not None:
         formal_stage_marker_path.parent.mkdir(parents=True, exist_ok=True)
         formal_stage_marker_path.unlink(missing_ok=True)
+        detail_marker_path.unlink(missing_ok=True)
     comm.barrier()
 
     def mark_stage(stage: str) -> None:
@@ -1496,6 +1502,27 @@ def main(
                 stream.write(json.dumps(payload, ensure_ascii=False) + "\n")
 
     task039_e10_events: list[dict[str, Any]] = []
+
+    def task039_memory_detail_marker(name: str, detail: Mapping[str, Any]) -> None:
+        if detail_marker_path is None or comm.rank != 0:
+            return
+        payload = {
+            "schema": "task039.v3-memory-detail-marker.v2",
+            "marker_type": "memory_detail",
+            "name": name,
+            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+            "elapsed_seconds": time.perf_counter() - total_started,
+            "elapsed_origin": "worker_run_task032_total_started_perf_counter",
+            "detail": dict(detail),
+        }
+        with detail_marker_path.open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(payload, ensure_ascii=False) + "\n")
+            stream.flush()
+
+    def task039_post_destroy_cleanup() -> Mapping[str, Any]:
+        from benchmarks.run_task037b_hybrid_iterative import collective_heap_cleanup
+
+        return collective_heap_cleanup(comm)
 
     def task039_mark_stage(
         stage: str, *, detail: Mapping[str, Any] | None = None
@@ -2065,6 +2092,12 @@ def main(
             exact_one_cell_work_dir=exact_one_cell_work_dir,
             canonical_trace_gate_policy=canonical_trace_gate_policy,
             canonical_trace_family_sha256=canonical_trace_family_sha256,
+            stage_callback=(
+                task039_memory_detail_marker if detail_marker_path is not None else None
+            ),
+            post_destroy_cleanup=(
+                task039_post_destroy_cleanup if detail_marker_path is not None else None
+            ),
             log=progress,
         )
         timings["internal_modal_coupling"] = _max_elapsed(comm, started)
@@ -3282,6 +3315,10 @@ def main(
 
     if record is not None and external_mode_inventory is not None:
         record["external_mode_inventory"] = dict(external_mode_inventory)
+    if record is not None and detail_marker_path is not None:
+        record.setdefault("telemetry", {})["memory_detail_markers_path"] = str(
+            detail_marker_path
+        )
     if (
         canonical_export_prefix == "task039_direct"
         and comm.rank == 0

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
 from dolfinx import fem, mesh
@@ -33,6 +33,65 @@ class ExactOneCellMatrixBuild:
 
     matrices: dict[str, tuple[PETSc.Mat, PETSc.Mat]]
     audit: dict[str, Any]
+
+
+def _replicated_array_marker_detail(
+    rows: int,
+    nrhs: int,
+    mpi_size: int,
+    *,
+    array_scope: str,
+) -> dict[str, Any]:
+    """Describe a replicated NumPy lift/projection array, without PETSc payload."""
+
+    per_rank = int(rows) * int(nrhs) * 16
+    return {
+        "rows": int(rows),
+        "nrhs": int(nrhs),
+        "column_blocks": 1,
+        "replicated_numpy_array_bytes_per_rank": per_rank,
+        "replicated_numpy_array_bytes_process_tree": per_rank * int(mpi_size),
+        "replicated_array_formula": (
+            "rows*nrhs*16 bytes per rank; process-tree value multiplies by MPI size"
+        ),
+        "array_scope": array_scope,
+        "classification": "derived_complex128_dense_buffer",
+    }
+
+
+def _apply_columns_marker_detail(
+    port_rows: int,
+    interior_rows: int,
+    nrhs: int,
+    mpi_size: int,
+    *,
+    direction: str,
+) -> dict[str, Any]:
+    """Describe the five PETSc dense payloads and separate NumPy I/O arrays."""
+
+    input_per_rank = int(port_rows) * int(nrhs) * 16
+    output_per_rank = input_per_rank
+    return {
+        "rows": int(port_rows),
+        "port_rows": int(port_rows),
+        "interior_rows": int(interior_rows),
+        "nrhs": int(nrhs),
+        "column_blocks": 1,
+        "direction": direction,
+        "distributed_petsc_5mat_payload_lower_bound_bytes": int(
+            (3 * int(port_rows) + 2 * int(interior_rows)) * int(nrhs) * 16
+        ),
+        "replicated_input_numpy_bytes_per_rank": input_per_rank,
+        "replicated_input_numpy_bytes_process_tree": input_per_rank * int(mpi_size),
+        "replicated_output_numpy_bytes_per_rank": output_per_rank,
+        "replicated_output_numpy_bytes_process_tree": output_per_rank * int(mpi_size),
+        "dense_buffer_formula": (
+            "five PETSc dense payloads use (3*port_rows + 2*interior_rows)*nrhs*16; "
+            "input and output each use port_rows*nrhs*16 per rank and multiply by "
+            "MPI size for process-tree estimates"
+        ),
+        "classification": "derived_complex128_dense_buffer",
+    }
 
 
 def _one_cell_config(cfg, comm_size: int):
@@ -147,6 +206,8 @@ def build_exact_one_cell_traction_matrices(
     work_dir: Path,
     coupling_propagation_length_nm: float,
     log=None,
+    stage_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+    post_destroy_cleanup: Callable[[], Mapping[str, Any]] | None = None,
 ) -> ExactOneCellMatrixBuild:
     """Construct exact one-cell blocks from live modes and local systems."""
 
@@ -212,7 +273,28 @@ def build_exact_one_cell_traction_matrices(
             right_facets=right_facets,
         )
         action = build_one_cell_two_port_schur_action(condensed.matrix, one_rows)
+        if stage_callback is not None:
+            stage_callback(
+                "one_cell_factor_ready",
+                {
+                    "rows": int(action.port_rows),
+                    "port_rows": int(action.port_rows),
+                    "interior_rows": int(action.interior_rows),
+                    "nrhs": 0,
+                    "column_blocks": 0,
+                    "factor_count": 1,
+                    "classification": "measured_from_worker_record",
+                },
+            )
         sources = (*projection.right_traces, *raw_negative_traces)
+        lift_detail = _replicated_array_marker_detail(
+            action.port_rows,
+            2 * mode_count,
+            comm.size,
+            array_scope="replicated_lift_input_output",
+        )
+        if stage_callback is not None:
+            stage_callback("one_cell_lift_columns_begin", lift_detail)
         one_left, one_right = lifted_endpoint_columns(
             sources,
             EndpointModeLifter(V, max(one_cfg.period_x, one_cfg.period_y)),
@@ -220,6 +302,8 @@ def build_exact_one_cell_traction_matrices(
             one_rows,
             mpc=floquet.mpc,
         )
+        if stage_callback is not None:
+            stage_callback("one_cell_lift_columns_end", lift_detail)
         pos_left = one_left[:, :mode_count]
         pos_right = one_right[:, :mode_count]
         neg_left = one_left[:, mode_count:]
@@ -228,12 +312,55 @@ def build_exact_one_cell_traction_matrices(
         mu = np.asarray(cell_propagation.backward.factors, dtype=np.complex128)
         if lam.shape != (mode_count,) or mu.shape != (mode_count,):
             raise RuntimeError("Cell propagation factors do not match the modes.")
+        if stage_callback is not None:
+            stage_callback(
+                "one_cell_apply_columns_begin",
+                _apply_columns_marker_detail(
+                    action.port_rows,
+                    action.interior_rows,
+                    mode_count,
+                    comm.size,
+                    direction="forward",
+                ),
+            )
         exact_forward = action.apply_columns(
             np.vstack((pos_left, pos_right * lam[None, :]))
         )
+        if stage_callback is not None:
+            stage_callback(
+                "one_cell_apply_columns_end",
+                _apply_columns_marker_detail(
+                    action.port_rows,
+                    action.interior_rows,
+                    mode_count,
+                    comm.size,
+                    direction="forward",
+                ),
+            )
+            stage_callback(
+                "one_cell_apply_columns_begin",
+                _apply_columns_marker_detail(
+                    action.port_rows,
+                    action.interior_rows,
+                    mode_count,
+                    comm.size,
+                    direction="backward",
+                ),
+            )
         exact_backward = action.apply_columns(
             np.vstack((neg_left * mu[None, :], neg_right))
         )
+        if stage_callback is not None:
+            stage_callback(
+                "one_cell_apply_columns_end",
+                _apply_columns_marker_detail(
+                    action.port_rows,
+                    action.interior_rows,
+                    mode_count,
+                    comm.size,
+                    direction="backward",
+                ),
+            )
         exact_blocks = split_exact_local_amplitude_blocks(
             exact_forward,
             exact_backward,
@@ -244,6 +371,14 @@ def build_exact_one_cell_traction_matrices(
         )
         bottom_rows = _local_interface_active_rows(bottom_system)
         top_rows = _local_interface_active_rows(top_system)
+        bottom_projection_detail = _replicated_array_marker_detail(
+            len(bottom_rows),
+            2 * mode_count,
+            comm.size,
+            array_scope="replicated_bottom_projection_array",
+        )
+        if stage_callback is not None:
+            stage_callback("bottom_projection_columns_begin", bottom_projection_detail)
         bottom_pos = _lift_port_columns(
             bottom_system.V,
             bottom_system.floquet_data.mpc,
@@ -252,6 +387,16 @@ def build_exact_one_cell_traction_matrices(
             sources,
             max(cfg.period_x, cfg.period_y),
         )
+        if stage_callback is not None:
+            stage_callback("bottom_projection_columns_end", bottom_projection_detail)
+        top_projection_detail = _replicated_array_marker_detail(
+            len(top_rows),
+            2 * mode_count,
+            comm.size,
+            array_scope="replicated_top_projection_array",
+        )
+        if stage_callback is not None:
+            stage_callback("top_projection_columns_begin", top_projection_detail)
         top_pos = _lift_port_columns(
             top_system.V,
             top_system.floquet_data.mpc,
@@ -260,6 +405,8 @@ def build_exact_one_cell_traction_matrices(
             sources,
             max(cfg.period_x, cfg.period_y),
         )
+        if stage_callback is not None:
+            stage_callback("top_projection_columns_end", top_projection_detail)
         bottom_pos_transferred_all, bottom_positive_transfer_audit = (
             transfer_congruent_endpoint_columns(
                 one_left,
@@ -455,10 +602,46 @@ def build_exact_one_cell_traction_matrices(
                 matrix.destroy()
         raise
     finally:
+        cleanup_detail = None
+        if action is not None:
+            cleanup_detail = {
+                "rows": int(action.port_rows),
+                "port_rows": int(action.port_rows),
+                "interior_rows": int(action.interior_rows),
+                "nrhs": int(2 * mode_count),
+                "column_blocks": 1,
+                "classification": "measured_from_worker_record",
+            }
         if action is not None:
             action.destroy()
         if condensed is not None:
             condensed.destroy()
+        cleanup_result = (
+            post_destroy_cleanup() if post_destroy_cleanup is not None else None
+        )
+        if stage_callback is not None:
+            cleanup_attempted = post_destroy_cleanup is not None
+            cleanup_completed = bool(
+                isinstance(cleanup_result, Mapping)
+                and cleanup_result.get("collective_call_completed") is True
+            )
+            cleanup_status = (
+                "completed"
+                if cleanup_completed
+                else "attempted_incomplete"
+                if cleanup_attempted
+                else "not_run"
+            )
+            stage_callback(
+                "one_cell_factor_destroyed",
+                {
+                    **(cleanup_detail or {}),
+                    "cleanup_attempted": cleanup_attempted,
+                    "cleanup_completed": cleanup_completed,
+                    "cleanup_status": cleanup_status,
+                    "cleanup_result": cleanup_result,
+                },
+            )
 
 
 __all__ = ["ExactOneCellMatrixBuild", "build_exact_one_cell_traction_matrices"]

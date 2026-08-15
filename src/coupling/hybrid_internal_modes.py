@@ -7,7 +7,7 @@ dense modal arrays are not a scalable production API for the 0.7 nm target.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Sequence
+from typing import Callable, Mapping, Sequence
 
 import numpy as np
 import ufl
@@ -1505,6 +1505,8 @@ def build_hybrid_internal_mode_coupling(
     exact_one_cell_work_dir=None,
     canonical_trace_gate_policy: str | None = None,
     canonical_trace_family_sha256: str | None = None,
+    stage_callback: Callable[[str, Mapping[str, object]], None] | None = None,
+    post_destroy_cleanup: Callable[[], Mapping[str, object]] | None = None,
     log=None,
 ) -> HybridInternalModeCoupling:
     """Build sparse internal-interface blocks without assembling the full solve."""
@@ -1628,6 +1630,8 @@ def build_hybrid_internal_mode_coupling(
                 work_dir=exact_one_cell_work_dir,
                 coupling_propagation_length_nm=float(length_nm),
                 log=log,
+                stage_callback=stage_callback,
+                post_destroy_cleanup=post_destroy_cleanup,
             )
             exact_traction_overrides = exact_build.matrices
             pending_exact_overrides = dict(exact_traction_overrides)

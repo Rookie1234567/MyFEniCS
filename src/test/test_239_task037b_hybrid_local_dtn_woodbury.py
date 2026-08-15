@@ -422,3 +422,63 @@ def test_two_pass_residual_correction_matches_stationary_formula_and_releases_sc
         D.destroy()
         H.destroy()
         assert residual_context.destroyed is True
+
+
+@pytest.mark.parametrize("passes", [1, 2, 4, 8])
+def test_fixed_action_supports_reviewed_correction_passes(passes: int) -> None:
+    rows = 6
+    base_dense = np.eye(rows, dtype=np.complex128) * 2.0
+    residual_dense = np.eye(rows, dtype=np.complex128) * 1.2
+    F = _matrix_from_dense(base_dense)
+    C = _matrix_from_dense(np.zeros((rows, 1), dtype=np.complex128))
+    D = _matrix_from_dense(np.zeros((1, rows), dtype=np.complex128))
+    H = _matrix_from_dense(np.eye(1, dtype=np.complex128))
+    residual_operator = (
+        _python_matrix_from_dense(residual_dense) if passes > 1 else None
+    )
+    components = SimpleNamespace(F=F, C=C, D=D, H=H)
+    fixed = HybridLocalDtnWoodburyFixedAction(
+        _FixedBaseAction(_DenseBaseInverse(2.0)),
+        components,
+        residual_operator=residual_operator,
+        residual_correction_steps=passes,
+    )
+    source_template = F.createVecRight()
+    source = _random_vector(source_template, 517 + passes)
+    source_template.destroy()
+    actual = F.createVecLeft()
+    repeat = F.createVecLeft()
+    try:
+        fixed.apply(source, actual)
+        start, end = (int(value) for value in source.getOwnershipRange())
+        local = np.asarray(source.getArray(readonly=True), dtype=np.complex128).copy()
+        rhs = np.empty(rows, dtype=np.complex128)
+        for first, last, packet in MPI.COMM_WORLD.allgather((start, end, local)):
+            rhs[first:last] = packet
+        expected = rhs / 2.0
+        for _ in range(passes - 1):
+            expected = expected + (rhs - residual_dense @ expected) / 2.0
+        expected_vec = F.createVecLeft()
+        expected_vec.getArray()[:] = expected[start:end]
+        try:
+            assert _relative_error(actual, expected_vec) <= 1.0e-12
+        finally:
+            expected_vec.destroy()
+        diagnostics = fixed.diagnostics
+        assert diagnostics["residual_correction_steps"] == passes
+        assert diagnostics["logical_apply_count"] == 1
+        assert diagnostics["raw_apply_count"] == passes
+        assert diagnostics["woodbury"]["apply_count"] == passes
+        fixed.apply(source, repeat)
+        assert _global_vec_digest(actual) == _global_vec_digest(repeat)
+    finally:
+        repeat.destroy()
+        actual.destroy()
+        source.destroy()
+        fixed.destroy()
+        if residual_operator is not None:
+            residual_operator.destroy()
+        F.destroy()
+        C.destroy()
+        D.destroy()
+        H.destroy()
