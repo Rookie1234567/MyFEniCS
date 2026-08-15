@@ -1,0 +1,215 @@
+{
+  "schema_version": "task039.v3-2d-te-q8-extension.v1",
+  "record_id": "task039_v3_2d_te_q8_extension_v1",
+  "classification": "Q8_P1_ESTABLISHED",
+  "scope": {
+    "research_only": true,
+    "model_id": "task039_5nm_v3_1deg_s5",
+    "comparison_group": "task039_v3_1deg_p8_s_m480",
+    "method": "2d_port",
+    "dimension": 2,
+    "mpi_size": 1,
+    "wavelength_nm": 5.0,
+    "grazing_angle_deg": 1.0,
+    "phi_deg": 0.0,
+    "polarization": "TE/S",
+    "dtn_order_bound_N": 21,
+    "total_order_rows": 43,
+    "propagating_orders": {
+      "top": "-19..0",
+      "bottom": "-19..-1"
+    }
+  },
+  "source_identity": {
+    "capability_commit_sha": "13d0d555173be794ff57d1351ddc7f4334236331",
+    "formal_source_sha": "13d0d555173be794ff57d1351ddc7f4334236331",
+    "source_sha_equal_across_cases": true,
+    "resolved_method": "2d_port",
+    "dtn_assembly": "explicit",
+    "vertical_boundary": "dtn",
+    "use_pml": false,
+    "element_family": "Lagrange",
+    "cell": "quadrilateral",
+    "degree": 8,
+    "variant": "gll_warped",
+    "space_dimension": 81,
+    "selected_field_shape": [7, 40]
+  },
+  "cases": [
+    {
+      "id": "h3",
+      "mesh_target_nm": 3.0,
+      "run_root": "results/task039_5nm_v3_1deg_s5/task039_v3_2d_te_p8h3_direct_mpi1__2d_port__mpi1__Mna/20260815T024421.466781Z",
+      "input": "input/official/task039/5nm_1deg_2d_te_p8h3_direct_mpi1.dat",
+      "input_sha256": "3cb1a69a1726d8c3e9e6992ac65c80286fe14c4ed7ac32370a561be78cfccf9b",
+      "resolved_config_sha256": "a141908bad755e96cab97aa42713b964aa85fc0a515c7430565b63606298127a",
+      "physical_model_sha256": "429d920556fe2a66fe0a595b250c0e2068b506e70a637e98677c258af84fa794",
+      "artifacts": {
+        "numerical_run_summary_sha256": "ce65c69de48e1d2b3c1e588da91fd50d7fe03da179379536769bb9470dc3608a",
+        "reference_sha256": "bd849b192eb832673fc3ec3f1ddb4de6023a598bb3a9c72a068f29594202081e",
+        "dtn_power_sha256": "9cc567c1d6a95ff1173f5a2c015f1c2d8f56a5f278979d587b0b43991618e0c1",
+        "dtn_orders_sha256": "5cab71a47bc5f39ac67e60ff329de69d5b1b7c1d69b54dfff5c93cd94f5c0d81",
+        "selected_fields_json_sha256": "feb282e69471b728b620d3d7f2fad6db2f0541834971f61c4b4514b873c2f32a",
+        "selected_fields_npz_sha256": "1b5c5bc3371fa4781f6ed16cbeb7160d6a15d6b48ced797a863e79b6bac0bee7"
+      },
+      "exit_status": 0,
+      "result_classification": "worker_exit0",
+      "own_pass": true,
+      "observables": {
+        "R": 0.7325886853565682,
+        "T": 0.000222932229630672,
+        "A_balance": 0.26718838241380116,
+        "A_volume": 0.267188379118235,
+        "closure": -3.295566153305174e-09
+      },
+      "gates": {
+        "residual": {"actual": 1.9039289887430547e-12, "limit": 1e-09, "pass": true},
+        "closure_abs": {"actual": 3.295566153305174e-09, "limit": 1e-08, "pass": true},
+        "orders": {"actual": "43 rows; top -19..0; bottom -19..-1", "pass": true},
+        "selected_fields": {"shape": [7, 40], "finite": true, "pass": true}
+      },
+      "element": {"family": "Lagrange", "cell": "quadrilateral", "degree": 8, "variant": "gll_warped", "space_dimension": 81, "global_dofs": 56985},
+      "mesh_and_matrix": {"cells": 882, "scalar_dofs": 56985, "reduced_dofs": 56592, "rows": 56985, "linear_nnz": 5689329, "reduced_nnz": 5684832},
+      "timing_seconds": 37.55113976501161,
+      "resources": {"rss_mib": 1302.12890625, "pss_mib": 1275.556640625, "uss_mib": 1262.83203125, "swap_mib": 0.0, "samples": 152}
+    },
+    {
+      "id": "h2",
+      "mesh_target_nm": 2.0,
+      "run_root": "results/task039_5nm_v3_1deg_s5/task039_v3_2d_te_p8h2_direct_mpi1__2d_port__mpi1__Mna/20260815T024555.983359Z",
+      "input": "input/official/task039/5nm_1deg_2d_te_p8h2_direct_mpi1.dat",
+      "input_sha256": "60d3cf453245aa6ed0e2a3c750516dbbcb0627044a5c5eea45ad8737b30a485e",
+      "resolved_config_sha256": "2e3eea2619f83b0f498e9a41c3743bf01b641619d2edd8ebd7d8fea64210fddb",
+      "physical_model_sha256": "8f01f45688f4c903b4e0a5d349a52387c056c421244f5fc22c78650027904d5d",
+      "artifacts": {
+        "numerical_run_summary_sha256": "827b4b578f788f57a6ac72fdfb5c5b5df648d0ece5176d79d27ff1d816b5f1eb",
+        "reference_sha256": "8dae4c3998d94a68b91a234810e05e5160be0358d981755528a8df835c4ee513",
+        "dtn_power_sha256": "27fd78d1a9b0c808512fe1b651963a843f9e8d71e72638969200e3d5feaafc62",
+        "dtn_orders_sha256": "b3a4e1991df7ee29a92d2f29bd5e0f04f35a323a8bba2ae46200686f8da197e3",
+        "selected_fields_json_sha256": "9bcd63febd90cb0164ee373594a8e9755ed107f9a937069c269cca71a2cd4f39",
+        "selected_fields_npz_sha256": "4777b42b5ca9dbdf41482e5f93df785f13db37dc479fae8071c60bf46c34dc2c"
+      },
+      "exit_status": 0,
+      "result_classification": "worker_exit0",
+      "own_pass": true,
+      "observables": {
+        "R": 0.7325886665947923,
+        "T": 0.00022293224360818984,
+        "A_balance": 0.26718840116159953,
+        "A_volume": 0.2671883978659727,
+        "closure": -3.295626882504621e-09
+      },
+      "gates": {
+        "residual": {"actual": 3.4130105587241303e-12, "limit": 1e-09, "pass": true},
+        "closure_abs": {"actual": 3.295626882504621e-09, "limit": 1e-08, "pass": true},
+        "orders": {"actual": "43 rows; top -19..0; bottom -19..-1", "pass": true},
+        "selected_fields": {"shape": [7, 40], "finite": true, "pass": true}
+      },
+      "element": {"family": "Lagrange", "cell": "quadrilateral", "degree": 8, "variant": "gll_warped", "space_dimension": 81, "global_dofs": 121737},
+      "mesh_and_matrix": {"cells": 1890, "scalar_dofs": 121737, "reduced_dofs": 121176, "rows": 121737, "linear_nnz": 12193617, "reduced_nnz": 12187152},
+      "timing_seconds": 39.04500243200164,
+      "resources": {"rss_mib": 2738.890625, "pss_mib": 2717.5751953125, "uss_mib": 2705.203125, "swap_mib": 0.0, "samples": 155}
+    },
+    {
+      "id": "h1.5",
+      "mesh_target_nm": 1.5,
+      "run_root": "results/task039_5nm_v3_1deg_s5/task039_v3_2d_te_p8h1p5_direct_mpi1__2d_port__mpi1__Mna/20260815T024719.871186Z",
+      "input": "input/official/task039/5nm_1deg_2d_te_p8h1p5_direct_mpi1.dat",
+      "input_sha256": "0bb8e7f080550b257c1043bbaf4cbd2144409beff660fe8a8602f0ca8e454e6f",
+      "resolved_config_sha256": "21a081022d14a37dbddbb8ebc16a2199e953775d19bc121b784b187390306a5d",
+      "physical_model_sha256": "092f9eb0d4306aff49ee4b651f4d5cc8779b4e27c8cd7b2ba148f23ac3e6a4d2",
+      "artifacts": {
+        "numerical_run_summary_sha256": "bf536d71ba15b5a6c46f57050ca0c642ad586f89a25743a56fa43c59e7ce4220",
+        "reference_sha256": "137bb4e7c407e9d1eed78fff9ae3c8db4e2504e8bab281a91e455d4208f895cc",
+        "dtn_power_sha256": "d6cf39e4399630a3e1fd4d1cf8eead2b3dc683c12e95731f9a976c4a0a4339dd",
+        "dtn_orders_sha256": "39a2f1d4a3304b6b19ced99133fbe4858113508d69741c2529cb9bb136d18c95",
+        "selected_fields_json_sha256": "3c8a07de858cb4363985b8d4b717fc950d56b4e16712b85b2ae3f08eb34954e6",
+        "selected_fields_npz_sha256": "6f8de2828d6201078b95125e8664937d3a27675a992c2074cc2011f140cb26d0"
+      },
+      "exit_status": 0,
+      "result_classification": "worker_exit0",
+      "own_pass": true,
+      "observables": {
+        "R": 0.7325886665680106,
+        "T": 0.0002229322436290485,
+        "A_balance": 0.26718840118836035,
+        "A_volume": 0.2671883978918967,
+        "closure": -3.2964637686205833e-09
+      },
+      "gates": {
+        "residual": {"actual": 1.3094650595570094e-11, "limit": 1e-09, "pass": true},
+        "closure_abs": {"actual": 3.2964637686205833e-09, "limit": 1e-08, "pass": true},
+        "orders": {"actual": "43 rows; top -19..0; bottom -19..-1", "pass": true},
+        "selected_fields": {"shape": [7, 40], "finite": true, "pass": true}
+      },
+      "element": {"family": "Lagrange", "cell": "quadrilateral", "degree": 8, "variant": "gll_warped", "space_dimension": 81, "global_dofs": 219929},
+      "mesh_and_matrix": {"cells": 3420, "scalar_dofs": 219929, "reduced_dofs": 219168, "rows": 219929, "linear_nnz": 22059761, "reduced_nnz": 22051008},
+      "timing_seconds": 108.99444486499124,
+      "resources": {"rss_mib": 5394.76953125, "pss_mib": 5381.69140625, "uss_mib": 5372.7734375, "swap_mib": 0.0, "samples": 398}
+    }
+  ],
+  "pair_comparisons": [
+    {
+      "id": "h3_vs_h2",
+      "raw_path": "results/task039_5nm_v3_1deg_s5/pair_convergence_q8_h3_h2.json",
+      "raw_sha256": "da985bdf0da360fb984646c24011fb721227d79039f0e0520275263e30f3692f",
+      "coordinates_exact": true,
+      "primary_rows": 11,
+      "gates": {
+        "scalar_observables_max_abs": {"actual": 1.8761775910647316e-08, "limit": 1e-06, "pass": true},
+        "closure_max_abs": {"actual": 3.295626882504621e-09, "limit": 1e-08, "pass": true},
+        "primary_power_max_relative": {"actual": 6.359657905030497e-08, "limit": 1e-04, "pass": true},
+        "all_order_weighted_power": {"actual": 2.57204510107402e-08, "limit": 1e-05, "pass": true},
+        "electric_y_relative_l2": {"actual": 1.6732408058145198e-06, "limit": 1e-03, "pass": true},
+        "magnetic_concat_relative_l2": {"actual": 9.818930356581117e-06, "limit": 2e-03, "pass": true}
+      },
+      "pass": true
+    },
+    {
+      "id": "h2_vs_h1.5",
+      "raw_path": "results/task039_5nm_v3_1deg_s5/pair_convergence_q8_h2_h1p5.json",
+      "raw_sha256": "ded7d9e9aced4df07eaac8bd1143d0a91930676068518a74e3bf165ec4c72fe7",
+      "coordinates_exact": true,
+      "primary_rows": 11,
+      "gates": {
+        "scalar_observables_max_abs": {"actual": 2.6781687978427726e-11, "limit": 1e-06, "pass": true},
+        "closure_max_abs": {"actual": 3.2964637686205833e-09, "limit": 1e-08, "pass": true},
+        "primary_power_max_relative": {"actual": 1.3026820660064913e-09, "limit": 1e-04, "pass": true},
+        "all_order_weighted_power": {"actual": 3.6864611532191884e-11, "limit": 1e-05, "pass": true},
+        "electric_y_relative_l2": {"actual": 4.15831530707754e-08, "limit": 1e-03, "pass": true},
+        "magnetic_concat_relative_l2": {"actual": 4.130741582060669e-07, "limit": 2e-03, "pass": true}
+      },
+      "pass": true
+    }
+  ],
+  "gate_definitions": {
+    "scalar_observables": "max absolute delta of R, T, A_balance, A_volume <= 1e-6",
+    "closure": "abs(R + T + A_volume - 1) <= 1e-8 on each side",
+    "primary_power": "11 rows with max(left_power,right_power) >= 1e-6; relative delta <= 1e-4",
+    "all_order_weighted_power": "sum(abs(delta power))/max(sum(max(pair powers)),1e-30) <= 1e-5",
+    "electric_field": "relative L2 of selected Ey <= 1e-3",
+    "magnetic_field": "relative L2 of concatenated Hx,Hz <= 2e-3",
+    "weak_orders": "diagnosed by the same checker; no separate weak failure occurred in these passing pairs"
+  },
+  "q6_diagnostic": {
+    "source_record": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v3_2d_te_reference_funnel_v1.json",
+    "finest_case": "h1.5",
+    "q6_degree": 6,
+    "q6_own_pass": true,
+    "q6_p1_established": false,
+    "q6_h1p5": {"global_dofs": 123907, "nnz": 7976689, "elapsed_seconds": 31.45525377499871, "rss_mib": 2420.51171875, "pss_mib": 2399.1337890625, "uss_mib": 2386.7578125},
+    "q8_h1p5": {"global_dofs": 219929, "nnz": 22059761, "elapsed_seconds": 108.99444486499124, "rss_mib": 5394.76953125, "pss_mib": 5381.69140625, "uss_mib": 5372.7734375},
+    "observables": {
+      "q6": {"R": 0.7325886918393777, "T": 0.00022293222459536006, "A_balance": 0.26718837593602696, "A_volume": 0.2671883726404462},
+      "q8": {"R": 0.7325886665680106, "T": 0.0002229322436290485, "A_balance": 0.26718840118836035, "A_volume": 0.2671883978918967},
+      "absolute_delta_q8_minus_q6": {"R": 2.5271367110057952e-08, "T": 1.9033688443718597e-11, "A_balance": 2.5252333391012627e-08, "A_volume": 2.5251450486152294e-08},
+      "diagnostic_only_not_a_gate": true
+    },
+    "q8_to_q6_ratio": {"global_dofs": 1.7749521818783442, "nnz": 2.765528529443733, "elapsed_seconds": 3.4650632814675393, "rss": 2.228772325066852}
+  },
+  "limitations": {
+    "q6_outcome_preserved": true,
+    "q8_reference_scope": "degree-8 adjacent-mesh convergence only; no claim that Q8 replaces the historical Q6 record",
+    "raw_artifacts": "formal run and pair artifacts remain ignored and are bound by path and SHA256"
+  }
+}
