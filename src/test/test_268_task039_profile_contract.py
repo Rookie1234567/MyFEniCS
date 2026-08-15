@@ -23,6 +23,7 @@ from src.io.input_validation import (
     task039_air_side_external_mode_inventory,
     task039_dynamic_external_mode_inventory,
     task039_profile_errors,
+    task039_v3_3d_profile_errors,
     load_and_resolve,
     simulation_config_3d_from_normalized,
 )
@@ -50,7 +51,7 @@ TASK039_INPUTS = tuple(sorted(TASK039.glob("*.dat")))
 def test_task039_inputs_are_numeric_finite_profiles_and_share_physics():
     specs = [load_and_resolve(path) for path in TASK039_INPUTS]
 
-    assert len(specs) == 25
+    assert len(specs) == 26
     assert {spec.method["kind"] for spec in specs} == {
         "2d_port",
         "full3d_direct",
@@ -89,7 +90,11 @@ def test_task039_inputs_are_numeric_finite_profiles_and_share_physics():
         if spec.identity["model_id"] == "task039_5nm_v3_1deg_s5_full3d"
     ]
     assert len({spec.physical_model_sha256 for spec in legacy_grid}) == 3
-    assert {spec.discretization["mesh_target_nm"] for spec in v3_grid} == {4.0, 5.0}
+    assert {spec.discretization["mesh_target_nm"] for spec in v3_grid} == {
+        4.0,
+        4.5,
+        5.0,
+    }
     h5_hybrid = next(
         spec
         for spec in specs
@@ -170,6 +175,26 @@ def test_task039_inputs_are_numeric_finite_profiles_and_share_physics():
         assert spec.derived["stage4_assembly_backend_audit"]["qualification"]
 
         assert spec.output["export_canonical_vectors"] is True
+
+
+def test_task039_v3_h4p5_full3d_profile_identity_and_dry_run():
+    specification = load_and_resolve(
+        TASK039 / "5nm_p6h4p5_v3_1deg_full3d_direct_mpi8.dat"
+    )
+    assert specification.identity["model_id"] == "task039_5nm_v3_1deg_s5_full3d"
+    assert specification.identity["run_id"] == (
+        "task039_v3_3d_p6h4p5_full3d_direct_mpi8"
+    )
+    assert specification.discretization["mesh_target_nm"] == 4.5
+    assert specification.method["kind"] == "full3d_direct"
+    assert specification.execution["mpi_size"] == 8
+    assert specification.execution["absolute_terminate_memory_bytes"] == (
+        224_000_000_000
+    )
+    assert not task039_v3_3d_profile_errors(specification.as_jsonable())
+    assert dry_run_payload(specification)["resolved_method_adapter"]["identity"] == (
+        "task038.full3d_direct"
+    )
 
 
 def test_task039_material_provenance_is_not_added_to_ordinary_inputs():
