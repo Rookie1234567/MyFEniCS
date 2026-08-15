@@ -347,6 +347,14 @@ M6B_W8A_W7_COMPACT_SHA256 = (
 M6B_W8A_W7_SOURCE_SHA = "7febc1e3aeb52613d098fd2aadede3b288c69b5b"
 M6B_W8B_SCHEMA = "task037.extra.m6b.w8b.offline-projection.v1"
 M6B_W8B_PHASE = "w8b_offline_range_projection"
+M6B_W9A_CHECK_SCHEMA = "task037.extra.m6b.w9a.checkpoint-recycle.check.v1"
+M6B_W9A_PHASE = "w9a_checkpoint_recycle"
+M6B_W9A_CHECKPOINTS = (20, 100, 150, 200)
+M6B_W9A_NORMAL_CLOSURE_LIMIT = 1.0e-11
+M6B_W9A_TARGET_RHO_LIMIT = 0.90
+M6B_W9A_CONTROL_RHO_LOWER = 1.0 - 1.0e-10
+M6B_W9A_CONTROL_RHO_UPPER = 1.0 + 1.0e-10
+M6B_W9A_CONTROL_CAPTURED_ENERGY_LIMIT = 2.0e-10
 M6B_W6A_EVENTS = (
     "authority_validated",
     "mesh_ready",
@@ -4275,6 +4283,214 @@ def _m6b_w8b_load_residual(raw_dir: Path, record: Mapping[str, Any], *, array_ha
     if actual.get("sha256") != record.get("sha256") or values.dtype != np.dtype(np.complex128) or values.shape != (M6B_GLOBAL_ROWS,) or not np.all(np.isfinite(values)) or array_hash(values) != record.get("array_sha256"):
         raise ValueError("W8B residual authority differs")
     return values
+
+
+def _m6b_w9a_load_array(raw_dir: Path, record: Mapping[str, Any], name: str) -> tuple[Any, dict[str, Any]]:
+    import numpy as np
+
+    if not isinstance(record, Mapping) or record.get("path") != name:
+        raise ValueError(f"W9A artifact path is invalid: {name}")
+    actual = _artifact(Path(raw_dir), name)
+    values = np.load(Path(raw_dir) / name, allow_pickle=False, mmap_mode="r")
+    if not (
+        actual.get("present") is True
+        and type(actual.get("bytes")) is int
+        and record.get("bytes") == actual["bytes"]
+        and record.get("sha256") == actual.get("sha256")
+        and values.dtype == np.dtype(np.complex128)
+        and values.shape == (M6B_GLOBAL_ROWS,)
+        and np.all(np.isfinite(values))
+        and record.get("array_sha256") == _m6b_w6a_w5_legacy_raw_array_sha256(values)
+    ):
+        raise ValueError(f"W9A artifact differs: {name}")
+    return values, {
+        "path": name,
+        "bytes": actual["bytes"],
+        "file_sha256": actual["sha256"],
+        "array_sha256": record["array_sha256"],
+    }
+
+
+def _m6b_w9a_load_w5(compact_path: Path, raw_dir: Path) -> dict[str, Any]:
+    authority = _m6b_w6a_w5_compact_authority()
+    compact_path = Path(compact_path).resolve()
+    if compact_path != Path(authority["path"]).resolve():
+        raise ValueError("W9A W5 compact path is not the frozen authority")
+    samples = authority["record"].get("screen", {}).get("samples")
+    if not isinstance(samples, Mapping) or set(samples) != {str(i) for i in M6B_W9A_CHECKPOINTS}:
+        raise ValueError("W9A W5 checkpoint authority is incomplete")
+    checkpoints: dict[int, dict[str, Any]] = {}
+    artifacts: dict[str, Any] = {}
+    for iteration in M6B_W9A_CHECKPOINTS:
+        item = samples[str(iteration)]
+        records = item.get("artifacts") if isinstance(item, Mapping) else None
+        if not isinstance(records, Mapping):
+            raise ValueError(f"W9A W5 artifacts are missing: {iteration}")
+        checkpoints[iteration] = {}
+        artifacts[str(iteration)] = {}
+        for name in ("solution", "outer_action"):
+            file_name = f"m6b_iter{iteration}_{name}.npy"
+            values, artifact = _m6b_w9a_load_array(raw_dir, records.get(name), file_name)
+            checkpoints[iteration][name] = values
+            artifacts[str(iteration)][name] = artifact
+    records_200 = samples["200"].get("artifacts")
+    residual, residual_artifact = _m6b_w9a_load_array(
+        raw_dir, records_200.get("residual"), "m6b_iter200_residual.npy"
+    )
+    return {
+        "compact": {"path": authority["path"], "file_sha256": authority["file_sha256"], "producer_source_sha": M6B_W6A_W5_SOURCE_SHA},
+        "raw_dir": str(Path(raw_dir).resolve()),
+        "checkpoints": checkpoints,
+        "artifacts": artifacts,
+        "residual": residual,
+        "residual_artifact": residual_artifact,
+    }
+
+
+def _m6b_w9a_load_w7(compact_path: Path, raw_dir: Path) -> dict[str, Any]:
+    authority = _m6b_w8a_w7_compact_authority(compact_path)
+    sample = authority["sample"]
+    if sample.get("cumulative_iteration") != 400:
+        raise ValueError("W9A W7 cumulative-400 authority is missing")
+    records = sample.get("artifacts")
+    if not isinstance(records, Mapping):
+        raise ValueError("W9A W7 residual authority is missing")
+    record = records.get("residual")
+    if not isinstance(record, Mapping) or not isinstance(record.get("path"), str):
+        raise ValueError("W9A W7 residual authority is incomplete")
+    residual, artifact = _m6b_w9a_load_array(raw_dir, record, record["path"])
+    return {
+        "compact": {
+            "path": str(compact_path),
+            "file_sha256": authority["artifact"]["sha256"],
+            "producer_source_sha": M6B_W8A_W7_SOURCE_SHA,
+        },
+        "raw_dir": str(Path(raw_dir).resolve()),
+        "residual": residual,
+        "residual_artifact": artifact,
+        "cumulative_iteration": 400,
+    }
+
+
+def _m6b_w9a_result(value: Mapping[str, Any], *, role: str, residual_hash: str, repeat: Mapping[str, Any]) -> dict[str, Any]:
+    result = dict(value)
+    result["singular_values"] = [float(item) for item in value["singular_values"]]
+    coefficients = value["coefficients"]
+    result["coefficients"] = None if coefficients is None else [[float(item.real), float(item.imag)] for item in coefficients]
+    result.update({"role": role, "residual_array_sha256": residual_hash, "repeat_exact": bool(repeat["repeat_exact"])})
+    return result
+
+
+def _m6b_w9a_measurement(recycle: Any, delta_action: Any, residual: Any, *, role: str, residual_hash: str) -> dict[str, Any]:
+    import numpy as np
+
+    first = recycle.project_residual(delta_action, residual)
+    second = recycle.project_residual(delta_action, residual)
+    repeat = {
+        "repeat_exact": bool(
+            np.array_equal(first["singular_values"], second["singular_values"])
+            and np.array_equal(first["coefficients"], second["coefficients"])
+            and first["rho"] == second["rho"]
+            and first["normal_closure"] == second["normal_closure"]
+        )
+    }
+    return _m6b_w9a_result(first, role=role, residual_hash=residual_hash, repeat=repeat)
+
+
+def _m6b_w9a_numeric_gate(measurements: Any) -> dict[str, Any]:
+    required = {"control_w5_iter200", "target_w7_cumulative400"}
+    checks = {"measurement_set": False, "rank": False, "finite_deterministic": False, "projection_closure": False, "control_sanity": False, "target_rho": False}
+    problems: list[str] = []
+    if not isinstance(measurements, Mapping) or set(measurements) != required:
+        problems.append("measurement_set")
+        return {"checks": checks, "pass": False, "problems": problems}
+    if not all(isinstance(measurements[label], Mapping) for label in required):
+        checks["measurement_set"] = False
+        return {"checks": checks, "pass": False, "problems": ["measurement_type"]}
+    checks["measurement_set"] = True
+    values = [measurements[label] for label in sorted(required)]
+    checks["rank"] = all(item.get("rank") == 4 and item.get("column_count") == 4 for item in values)
+    checks["finite_deterministic"] = all(item.get("finite") is True and item.get("repeat_exact") is True and _finite_number(item.get("rho")) for item in values)
+    checks["projection_closure"] = all(_finite_number(item.get("normal_closure")) and item["normal_closure"] <= M6B_W9A_NORMAL_CLOSURE_LIMIT for item in values)
+    control = measurements["control_w5_iter200"]
+    target = measurements["target_w7_cumulative400"]
+    checks["control_sanity"] = bool(
+        _finite_number(control.get("rho"))
+        and M6B_W9A_CONTROL_RHO_LOWER <= control["rho"] <= M6B_W9A_CONTROL_RHO_UPPER
+        and _finite_number(control.get("captured_energy_ratio"))
+        and control["captured_energy_ratio"] <= M6B_W9A_CONTROL_CAPTURED_ENERGY_LIMIT
+    )
+    checks["target_rho"] = _finite_number(target.get("rho")) and target["rho"] <= M6B_W9A_TARGET_RHO_LIMIT
+    for name, passed in checks.items():
+        if not passed:
+            problems.append(name)
+    return {"checks": checks, "pass": all(checks.values()), "problems": sorted(set(problems))}
+
+
+def _run_m6b_w9a_check(
+    w5_raw_dir: Path,
+    w5_compact: Path,
+    w7_raw_dir: Path,
+    w7_compact: Path,
+    output: Path,
+    expected_source_sha: str,
+) -> int:
+    import time
+
+    if output.exists():
+        raise FileExistsError(f"W9A output exists: {output}")
+    started = time.perf_counter()
+    h2b = __import__("benchmarks.run_task037_extra_h2b", fromlist=["*"])
+    source_start = h2b._light_source()
+    if not (_m6b_w6a_source_valid(source_start) and source_start.get("source_commit_full_sha") == expected_source_sha):
+        raise RuntimeError("W9A checker source is not clean or expected")
+    w5 = _m6b_w9a_load_w5(w5_compact, w5_raw_dir)
+    w7 = _m6b_w9a_load_w7(w7_compact, w7_raw_dir)
+    recycle = __import__("src.solvers.checkpoint_recycle", fromlist=["*"])
+    increments = recycle.build_checkpoint_increments(w5["checkpoints"])
+    control = _m6b_w9a_measurement(recycle, increments["dAX"], w5["residual"], role="control_w5_iter200", residual_hash=w5["residual_artifact"]["array_sha256"])
+    target = _m6b_w9a_measurement(recycle, increments["dAX"], w7["residual"], role="target_w7_cumulative400", residual_hash=w7["residual_artifact"]["array_sha256"])
+    measurements = {"control_w5_iter200": control, "target_w7_cumulative400": target}
+    numeric_gate = _m6b_w9a_numeric_gate(measurements)
+    source_end = h2b._light_source()
+    source_ok = _m6b_w6a_source_valid(source_end) and source_end.get("source_commit_full_sha") == expected_source_sha
+    checks = dict(numeric_gate["checks"])
+    checks["source"] = source_ok
+    passed = bool(numeric_gate["pass"] and source_ok)
+    result = {
+        "schema": M6B_W9A_CHECK_SCHEMA,
+        "phase": M6B_W9A_PHASE,
+        "status": "diagnostic_complete" if passed else "gate_failed",
+        "classification": "W9A_QUALIFIED" if passed else "W9A_NUMERIC_OR_AUTHORITY_FAIL",
+        "diagnostic_only": True,
+        "w9a_pass": passed,
+        "formal_pass": False,
+        "pde_pass": False,
+        "official_rta": False,
+        "expected_source_sha": expected_source_sha,
+        "source_at_start": source_start,
+        "source_at_end": source_end,
+        "authorities": {"w5": w5["compact"], "w7": w7["compact"], "w5_raw_dir": w5["raw_dir"], "w7_raw_dir": w7["raw_dir"]},
+        "checkpoint_artifacts": w5["artifacts"],
+        "w5_residual_artifact": w5["residual_artifact"],
+        "w7_residual_artifact": w7["residual_artifact"],
+        "increment_identity": {"checkpoint_iterations": list(increments["checkpoint_iterations"]), "dX_array_sha256": _m6b_w2_array_sha256(increments["dX"]), "dAX_array_sha256": _m6b_w2_array_sha256(increments["dAX"])},
+        "measurements": measurements,
+        "numeric_gate": numeric_gate,
+        "limits": {
+            "target_rho": M6B_W9A_TARGET_RHO_LIMIT,
+            "control_rho": [M6B_W9A_CONTROL_RHO_LOWER, M6B_W9A_CONTROL_RHO_UPPER],
+            "control_captured_energy_ratio": M6B_W9A_CONTROL_CAPTURED_ENERGY_LIMIT,
+            "normal_closure": M6B_W9A_NORMAL_CLOSURE_LIMIT,
+        },
+        "checks": checks,
+        "pass": passed,
+        "problems": sorted(set(numeric_gate["problems"] + ([] if source_ok else ["source"]))),
+        "scope": {"algorithm": "fixed four-checkpoint recycle projection", "checkpoint_axis": "20/100/150/200", "action_calls": 0, "pde_calls": 0, "scalable_pc": False},
+        "elapsed_seconds": time.perf_counter() - started,
+    }
+    _write_json(output, _attach_evidence(result))
+    return 0 if passed else 1
 
 
 def _m6b_w8a_w8b_authority_valid(
@@ -12286,6 +12502,15 @@ def _parser() -> argparse.ArgumentParser:
     w8b_s0.add_argument(
         "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
     )
+    w9a = sub.add_parser("m6b-w9a-check")
+    w9a.add_argument("--w5-raw-dir", required=True)
+    w9a.add_argument("--w5-compact", required=True)
+    w9a.add_argument("--w7-raw-dir", required=True)
+    w9a.add_argument("--w7-compact", required=True)
+    w9a.add_argument("--output", required=True)
+    w9a.add_argument(
+        "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
+    )
     return parser
 
 
@@ -12361,6 +12586,15 @@ def main(argv: Sequence[str] | None = None) -> int:
             Path(args.w5_raw_dir).resolve(),
             Path(args.w7_raw_dir).resolve(),
             Path(args.w5_compact).resolve(),
+            Path(args.w7_compact).resolve(),
+            Path(args.output).resolve(),
+            args.expected_source_sha,
+        )
+    if args.command == "m6b-w9a-check":
+        return _run_m6b_w9a_check(
+            Path(args.w5_raw_dir).resolve(),
+            Path(args.w5_compact).resolve(),
+            Path(args.w7_raw_dir).resolve(),
             Path(args.w7_compact).resolve(),
             Path(args.output).resolve(),
             args.expected_source_sha,
