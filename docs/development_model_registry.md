@@ -1408,3 +1408,18 @@ outcomes。完整证据固定在
 3. COMSOL 参考只计算零级；非零衍射级不能写 0。
 4. 不同物理配置、偏振、网格和软件之间的数值只能做标注清楚的横向参考，不能混成单一收敛序列。
 5. 新任务不得以未填写占位词收口；历史缺口必须说明“历史未记录”，当前未运行项必须写 `not_run`。
+
+## 5.1 Task037-extra W8–W12 时谐迭代研究收口
+
+这些阶段都使用 p6/h10、252 cells、173,802 full-space rows、MPI1 和 matrix-free DtN；它们是残差方向/范围的研究诊断，不是 official PDE 或 R/T/A 模型。
+
+| Model ID | 方法与目的 | 关键数值 | 资源 | 状态 | evidence |
+|---|---|---|---|---|---|
+| M6B-W8B | 固定 530 列 range 离线投影，判断 W6A 390 列加 140 个 bubble 列是否足够 | W7 cumulative400 `rho390=0.977537441982527`，`rho530=0.9280021437706651`，改善 `0.050673555901245226` | 只读 offline；不写 PDE 场 | `W8B_NUMERIC_OR_AUTHORITY_FAIL` | consolidated compact record |
+| M6B-W9A | 用四个 W5 checkpoint 增量构造固定 4D recycle span | target rho `0.9982181470553635`，captured energy `0.0035605308893762767` | action/KSP/PDE 未运行 | `W9A_NUMERIC_OR_AUTHORITY_FAIL` | consolidated compact record |
+| M6B-W10A | 用 W5 201 列 V 空间给出旧周期可回收量的乐观上限 | target optimistic rho `0.9793601827912443`，rank `201` | V 为 mmap scratch；不是 retained payload | `W10A_OPTIMISTIC_TARGET_RHO_FAIL` | consolidated compact record |
+| M6B-W11A | 固定一向量 persistent-residual preimage，先 B0 再 physical action | Q1/100 B0 residual `2.8285584503326906e-06`；q/target rho `0.9261490705957542/0.9390855969756224` | peak `1,134,559,232 B`，swap `0` | `W11A_PERSISTENT_DIRECTION_FAIL` | consolidated compact record |
+| M6B-W11B | 固定 200 步 B0 trajectory 的 exact-proxy 单方向 | B0 residual `4.233006159940796e-09`；q/target rho `0.8914688323899443/0.9101959562746206` | peak `1,103,822,848 B`，swap `0` | `W11B_PROJECTION_FAIL` | consolidated compact record |
+| M6B-W12 | 固定 20/100/150/200 四点构造 4D range | B0 residual `4.233006159940796e-09`；q/target rho `0.8857084974811911/0.9050305821821468` | peak `1,116,065,792 B`，swap `0` | `W12_TRAJECTORY_RANGE_FAIL`；不是 timeout/OOM | consolidated compact record |
+
+W12 的预测 live set 是 derived/predicted，不能替代上述实测 process-tree peak。所有阶段的 full time-harmonic PDE、official field/RTA、direct-authority physics comparison 和最终 `<2,000,000,000 B` PDE Gate 仍为 `not_run`。W8–W12 的 source、summary/watchdog 和离线 JSON SHA 见 [`m6b_w8_w12_consolidated_closeout.json`](../benchmarks/cases/101_task37_extra_development/records/m6b_w8_w12_consolidated_closeout.json)。下一阶段 W13A 仅比较新的 ProjectedRangePC 组合中的 beta=1.0 与 beta=0.5；正式屏幕尚未运行。

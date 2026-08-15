@@ -1,0 +1,108 @@
+{
+  "schema": "task037.extra.m6b.w8-w12.consolidated-closeout.v1",
+  "phase": "w8_w12_evidence_closeout",
+  "status": "closed_negative_with_unrun_pde_boundary",
+  "classification": "RESEARCH_NEGATIVE_CLOSEOUT",
+  "source_snapshot": "bbb4f6ca5d0c5d51d505ba10c950dcaa3f0fe19f",
+  "formal_pass": false,
+  "pde_pass": false,
+  "official_rta": false,
+  "full_pde_rta_direct_comparison": "not_run",
+  "evidence_sha256": "70ddc2c5b21ed5332bc84bac6fb836bd9b382df3ab278b5897f52008ab9d9ae1",
+  "lanes": {
+    "w8": {
+      "status": "numeric_fail_after_recovered_w8a_evidence",
+      "w8a_recovery": {
+        "classification": "RECOVERED_QUALIFIED_FOR_W8B",
+        "old_builder_source_sha": "86c74a2b0339817a2c7756c9fde778be1f36f2e3",
+        "recovery_source_sha": "9d434a134e6af3818b06d9fedb1eb56817b257f4",
+        "old_watchdog_status": "gate_failed",
+        "store_rank": 530,
+        "store_normal_closure": 7.940098636138116e-16,
+        "new_action_count": 143,
+        "recovery_file": {
+          "path": "/tmp/task037_m6b_w8a_recovery_9d434a1_run2.json",
+          "bytes": 5335261,
+          "sha256": "a36559ae4d5c49a56afd82144bba74ff6fc1a1713b7ba004ba3ae245dfcbc93e"
+        },
+        "semantics": "old builder RC1 and lost process-local audit fields remain unavailable; recovery does not rewrite the old run"
+      },
+      "w8b": {
+        "classification": "W8B_NUMERIC_OR_AUTHORITY_FAIL",
+        "w5_iter200": {"rho390": 0.9764446942793938, "rho530": 0.9266004470461771, "relative_improvement": 0.05104666708235972},
+        "w7_cumulative400": {"rho390": 0.977537441982527, "rho530": 0.9280021437706651, "relative_improvement": 0.050673555901245226},
+        "normal_closure_max": 4.786530893634545e-15,
+        "file": {"path": "/tmp/task037_m6b_w8b_9d434a1_run2.json", "bytes": 3929, "sha256": "1ea68bcc6c07093c0884fbc4f82ee6f9dcf8724e1d737181cba953688e6193df"}
+      },
+      "authority_files": [
+        {"path": "benchmarks/artifacts/task037_extra_development/m6b_w8a_companion_9d434a1_run1/w8a_companion_summary.json", "bytes": 103757, "sha256": "85df9366f276936a79e1df5049cf1ec7ee8c2c7fd494e2d85cb6017bbfbe2ac2"},
+        {"path": "benchmarks/artifacts/task037_extra_development/m6b_w8a_86c74a2_builder_run1/w8a_progress.jsonl", "bytes": 31756, "sha256": "e702f68c94fc286f1e185a7908d8fc8dfcfb8aedf334fc7f504ae22bb0ef2cc5"}
+      ]
+    },
+    "w9": {
+      "status": "numeric_fail",
+      "classification": "W9A_NUMERIC_OR_AUTHORITY_FAIL",
+      "control_rho": 0.9999999999999999,
+      "target_rho": 0.9982181470553635,
+      "target_captured_energy_ratio": 0.0035605308893762767,
+      "normal_closure_max": 1.8130563481880924e-15,
+      "rank": 4,
+      "file": {"path": "/tmp/task037_m6b_w9a_checkpoint_recycle_ba056c3_run3.json", "bytes": 6692, "sha256": "37e87f3171407c6321f13c3b35541dd0601ec3ff1b0c2d36d0f53ebd685c15e8"},
+      "gate": "target_rho <= 0.90 failed; control sanity and closure passed"
+    },
+    "w10": {
+      "status": "route_closed_by_optimistic_bound",
+      "classification": "W10A_OPTIMISTIC_TARGET_RHO_FAIL",
+      "basis_columns": 201,
+      "basis_rank": 201,
+      "control_direct_rho": 1.1668961235322719e-11,
+      "target_rho_optimistic": 0.9793601827912443,
+      "target_gate": 0.90,
+      "historical_producer_hash_available": false,
+      "file": {"path": "/tmp/task037_m6b_w10a_krylov_span_2cdef3d_run3.json", "bytes": 11117, "sha256": "73119829a9483b4d5697b27c82940bdf769d67dd008c19e7fcf03e323b5d9a36"},
+      "gate": "even the optimistic old-V-space bound is above 0.90; old Hessenberg/operator mapping is closed"
+    },
+    "w11a": {
+      "status": "numeric_fail",
+      "classification": "W11A_PERSISTENT_DIRECTION_FAIL",
+      "b0_20_true_residual": 0.004729049530494584,
+      "b0_100_true_residual": 2.8285584503326906e-06,
+      "q_rho": 0.9261490705957542,
+      "target_rho": 0.9390855969756224,
+      "process_peak_bytes": 1134559232,
+      "swap_bytes": 0,
+      "file": {"path": "benchmarks/artifacts/task037_extra_development/m6b_w11a_c3f969c_formal_run2/m6b_w11a_summary.json", "bytes": 53775, "sha256": "797a4b767518b1acceb86df0f43982aa54f94499c1824cfa54301aa7a6fcf575"},
+      "watchdog_file": {"path": "/tmp/task037_m6b_w11a_c3f969c_watchdog_run2/w11a_r1_watchdog_summary.json", "bytes": 21539, "sha256": "4a47753d3aea0692b1491a6b1abd8bd762afe47bae7165ae3cce3781ef03c0ca"},
+      "gate": "B0 fixed escalation did not reach 1e-8 at 100 steps; no physical candidate qualification"
+    },
+    "w11b": {
+      "status": "numeric_fail",
+      "classification": "W11B_PROJECTION_FAIL",
+      "b0_200_true_residual": 4.233006159940796e-09,
+      "q_rho": 0.8914688323899443,
+      "target_rho": 0.9101959562746206,
+      "process_peak_bytes": 1103822848,
+      "swap_bytes": 0,
+      "file": {"path": "benchmarks/artifacts/task037_extra_development/m6b_w11b_a701946_formal_run1/m6b_w11b_summary.json", "bytes": 50597, "sha256": "476f75522600662454191e6fe623e1cf4480de7f9ccb6b5b7044c8f6e85549e3"},
+      "watchdog_file": {"path": "/tmp/task037_m6b_w11b_a701946_watchdog_run1/w11b_r1_watchdog_summary.json", "bytes": 21506, "sha256": "d181eb56d2d2b258515641b4c433340b3ce27f9a69c5e7d6c47548833a7f5f0c"},
+      "gate": "B0 passed; both fixed projection thresholds failed; no candidate artifacts were written"
+    },
+    "w12": {
+      "status": "numeric_fail",
+      "classification": "W12_TRAJECTORY_RANGE_FAIL",
+      "b0_200_true_residual": 4.233006159940796e-09,
+      "q_rho": 0.8857084974811911,
+      "target_rho": 0.9050305821821468,
+      "process_peak_bytes": 1116065792,
+      "swap_bytes": 0,
+      "physical_action_count": 4,
+      "checkpoint_iterations": [20, 100, 150, 200],
+      "lifecycle": ["b0_constructed", "b0_released", "physical_constructed", "physical_released"],
+      "file": {"path": "benchmarks/artifacts/task037_extra_development/m6b_w12_bbb4f6c_formal_run1/m6b_w12_summary.json", "bytes": 50129, "sha256": "c44f37e133cf81cfda7e28e3e753c5db9b438c68148c4e122d58197791934eb6"},
+      "watchdog_file": {"path": "/tmp/task037_m6b_w12_bbb4f6c_watchdog_run1/w12_r1_watchdog_summary.json", "bytes": 22498, "sha256": "fa9d0c8386d4f05af133e2108736da70d18add202bf95d4e605b54e29101d9c4"},
+      "gate": "numeric range Gate only: q rho <= 0.70 and target rho <= 0.90 both failed; execution/resource/architecture passed"
+    }
+  },
+  "unrun": ["W8C", "new W9B", "new W10 mapping", "new W11/W12 continuation", "full time-harmonic PDE", "official field/RTA", "direct-authority physics comparison", "final PDE process-tree RSS < 2000000000 B"],
+  "old_evidence_policy": "All listed raw, watchdog, temporary JSON and prior compact records are read-only and remain unchanged. Predictions are labeled derived/not measured; no negative result is upgraded to PASS."
+}

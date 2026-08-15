@@ -104,3 +104,20 @@ W7-S1 从冻结 W5 iter200 的解开始，把它作为新的初始猜测，然�
 W7-S1 compact：`benchmarks/cases/101_task37_extra_development/records/m6b_w7_s1_restart_disk_fgmres_screen.json`，file SHA `3fcabe2dbc753017158b7f587f025a73a4e5f2eb5b7539d264cd3984846a192d`，embedded evidence `6c92da32f39e4a82ab8cffc851a437e5adb804fa62ebffc13d4068d3c83b9f6b`。producer source 为 `7febc1e3aeb52613d098fd2aadede3b288c69b5b`，checker source 为 `5e72e45673b05dac3c2c15c7c7e1b7fb4dfdee39`；旧 W5/W6 负结果及 W7 run1/run2 受控失败保持不变。
 
 本轮仍未运行 full PDE、official RTA、field/direct-authority physics comparison 或最终 PDE `<2,000,000,000 B` Gate；没有放宽 residual、swap、内存或物理一致性要求。
+
+## W8–W12 研究收口
+
+这一组路线都围绕同一个问题：在不改变 p6/h10 全空间物理算子、matrix-free DtN 和 residual Gate 的前提下，能否从已有残差或 Krylov 方向中找到足够强的低内存修正。结果均保持研究性和负结论，不能当作 PDE/RTA 通过。
+
+| 阶段 | 方法的通俗含义 | 关键实测 | 状态 |
+|---|---|---|---|
+| W8A/W8B | 在冻结 W6A 390 列上加入固定 140 个 z-bubble 列，再离线比较 530 列对残差的投影 | W7 cumulative400：`rho390=0.977537441982527`，`rho530=0.9280021437706651`，改善 `0.050673555901245226` | `W8B_NUMERIC_OR_AUTHORITY_FAIL`；不进入 W8C |
+| W9A | 用 W5 四个 checkpoint 的解增量构造固定 4D 修正空间 | target rho `0.9982181470553635`，captured energy `0.0035605308893762767` | target Gate `rho<=0.90` 失败 |
+| W10A | 把 W5 完整 201 列 Arnoldi V 空间当作“最好可能”的回收上限 | target optimistic rho `0.9793601827912443` | 即使乐观上限也失败；旧空间 mapping 路线关闭 |
+| W11A | 用一个新 preimage 方向尝试直接消除 persistent residual | Q1 100 步 B0 residual `2.8285584503326906e-06`；q/target rho `0.9261490705957542/0.9390855969756224` | `W11A_PERSISTENT_DIRECTION_FAIL` |
+| W11B | 固定 200 步 B0 FGMRES 后只做一个 exact-proxy 方向 | B0 residual `4.233006159940796e-09`；q/target rho `0.8914688323899443/0.9101959562746206` | `W11B_PROJECTION_FAIL` |
+| W12 | 保留同一固定 200 步 B0 轨迹的四个解，形成 4D range 修正 | B0 residual `4.233006159940796e-09`；q rho `0.8857084974811911`、target rho `0.9050305821821468`；peak `1,116,065,792 B`、swap `0` | `W12_TRAJECTORY_RANGE_FAIL`；数值失败，不是执行/资源失败 |
+
+W12 的四个 checkpoint 是 `20/100/150/200`，physical action count 为 4；实际生命周期为 B0 构造、释放后才构造 physical action，再释放 physical action。两个投影阈值分别为 q `<=0.70` 和 target `<=0.90`，实际值均超限，所以没有写出 candidate `dX/dAX` 文件。它没有运行 full PDE、official field/RTA 或 direct-authority physics comparison；预测 live set 仍标为 derived/predicted，不能用来替代 process-tree 峰值。
+
+W8–W12 的 consolidated hash-bound evidence 见 [`m6b_w8_w12_consolidated_closeout.json`](../../benchmarks/cases/101_task37_extra_development/records/m6b_w8_w12_consolidated_closeout.json)，旧 raw、watchdog、临时 JSON 和既有 compact 均保持只读。完整 W8C、新 W9B、新 W10 mapping、后续 physical FGMRES 和最终 PDE `<2,000,000,000 B` 目标均为 `not_run`。
