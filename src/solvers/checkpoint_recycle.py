@@ -51,7 +51,7 @@ def build_checkpoint_increments(
 
 
 def project_residual(delta_action: Any, residual: Any) -> dict[str, Any]:
-    """Project one residual with fixed SVD rank rule and no reduced-rank fallback."""
+    """Project one residual with fixed SVD and scale-normalized normal closure."""
 
     matrix = np.asarray(delta_action)
     if (
@@ -92,9 +92,11 @@ def project_residual(delta_action: Any, residual: Any) -> dict[str, Any]:
     remaining = vector - projected
     vector_norm = float(np.linalg.norm(vector))
     remaining_norm = float(np.linalg.norm(remaining))
-    normal_rhs = matrix.conj().T @ vector
     normal_error = matrix.conj().T @ (projected - vector)
-    closure = float(np.linalg.norm(normal_error) / max(np.linalg.norm(normal_rhs), np.finfo(float).tiny))
+    closure = float(
+        np.linalg.norm(normal_error)
+        / max(sigma_max * vector_norm, np.finfo(float).tiny)
+    )
     rho = float(remaining_norm / max(vector_norm, np.finfo(float).tiny))
     captured = float(np.vdot(projected, projected).real / max(vector_norm * vector_norm, np.finfo(float).tiny))
     finite = bool(finite and np.all(np.isfinite(coefficients)) and np.isfinite(closure) and np.isfinite(rho) and np.isfinite(captured))

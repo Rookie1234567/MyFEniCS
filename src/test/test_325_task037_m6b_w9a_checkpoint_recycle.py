@@ -60,6 +60,22 @@ def test_w9a_fixed_increments_complex_projection_and_span_closure():
     assert result["normal_closure"] <= 1.0e-11
     assert result["rho"] <= 1.0e-11
 
+    near_orthogonal = np.asarray(
+        [0, 0, 0, 0, 1.0 + 0.2j, -0.3j], dtype=np.complex128
+    ) + 1.0e-12 * (built["dAX"] @ coefficients)
+    near_result = recycle.project_residual(built["dAX"], near_orthogonal)
+    projected = built["dAX"] @ near_result["coefficients"]
+    expected_closure = np.linalg.norm(
+        built["dAX"].conj().T @ (projected - near_orthogonal)
+    ) / max(
+        np.linalg.norm(built["dAX"], 2) * np.linalg.norm(near_orthogonal),
+        np.finfo(float).tiny,
+    )
+    assert near_result["normal_closure"] == pytest.approx(
+        expected_closure, rel=0.0, abs=1.0e-15
+    )
+    assert near_result["normal_closure"] <= 1.0e-11
+
     control = _measurement("control_w5_iter200", built["dAX"], np.asarray([0, 0, 0, 0, 1, 0], dtype=np.complex128))
     target = _measurement("target_w7_cumulative400", built["dAX"], built["dAX"] @ coefficients + np.asarray([0, 0, 0, 0, 0.2, 0.1j]))
     gate = runner._m6b_w9a_numeric_gate({control["role"]: control, target["role"]: target})
