@@ -1,0 +1,123 @@
+{
+  "schema_version": "task039.v3-3.h4-full3d-supplement.v1",
+  "record_id": "task039_v3_h4_full3d_direct_supplement_v1",
+  "classification": "FULL3D_1DEG_H4_RESOURCE_CONTROLLED_STOP_AFTER_LINEAR_RTA",
+  "status": "controlled_stop",
+  "scope": {
+    "physical_model": "5 nm / 1 degree grazing / phi=0 / S",
+    "method": "full3d_direct",
+    "nedelec_degree": 6,
+    "mesh_target_nm": 4.0,
+    "mpi_size": 8,
+    "interfaces_nm": [10.0, 110.0],
+    "external_mode_count": 600,
+    "h3_status": "cancelled_by_user_not_run"
+  },
+  "identity": {
+    "run_root": "results/task039_5nm_v3_1deg_s5_full3d/task039_v3_3d_p6h4_full3d_direct_mpi8__full3d_direct__mpi8__Mna/20260815T133448.298413Z",
+    "source_commit_sha": "f86ea114c24b7675195a2f839373310a0799c1a0",
+    "input_sha256": "6bb3690aff440670101d59c64dada5a961f48541254623cd648a1a05a8c8c9bc",
+    "resolved_config_sha256": "60a7d25fa486277b8ae3b7cf14a8d6020eec2430f6d329f687e5b6848ac73625",
+    "physical_model_sha256": "8391d46139646440d869aa43abe6a68bc921fc1972a10030c64be81dffdd527c",
+    "run_manifest_sha256": "caac16a1e4aae4339006cbac9ee7da29d81702090576a15b23b1256817353dc3",
+    "run_summary_sha256": "d956635f43efd202f171643af8a7acc6f58da6de7534a1363e8a19abf1f7ea30"
+  },
+  "termination": {
+    "exit_status": 1,
+    "result_classification": "memory_terminate",
+    "termination_requested": true,
+    "process_group_exited": true,
+    "sigkill_required": false,
+    "reason": "process-tree memory watchdog during solver_objects_retained_for_postprocess"
+  },
+  "linear_and_port_observations": {
+    "matrix_rows": 756600,
+    "matrix_cols": 756600,
+    "matrix_nnz_used": 634515048,
+    "matrix_nnz_allocated": 660585840,
+    "estimated_aij_memory_bytes": 15234413960,
+    "full_fe_dofs": 2514372,
+    "floquet_constraints": 57372,
+    "mesh_cells": 3780,
+    "mesh_cells_requested": [13, 7, 35],
+    "mesh_cells_resolved": [15, 7, 36],
+    "factor_solver_type": "mumps",
+    "ksp_type": "preonly",
+    "pc_type": "lu",
+    "ksp_reason": "CONVERGED_ITS",
+    "ksp_iterations": 1,
+    "true_relative_residual": 3.5718033073581125e-10,
+    "factor_nnz_corrected": 7118000000,
+    "factor_nnz_note": "MUMPS raw INFOG/int32 telemetry overflow correction; telemetry only",
+    "R_total": 0.7331834795712868,
+    "T_total": 0.00022243948649826534,
+    "A_balance": 0.26659408094221493,
+    "A_volume": "not_available",
+    "closure": "not_available",
+    "port_order_inventory": {
+      "auxiliary_rows": 600,
+      "propagating_rows": 598,
+      "top_rows": 304,
+      "bottom_rows": 296,
+      "source": "dtn_port_diffraction_orders_3d.json"
+    },
+    "field_and_final_authority": {
+      "full_own_gate": false,
+      "selected_E_H": "not_available",
+      "canonical_exports": "not_available",
+      "final_604_key_gate": "not_available",
+      "reason": "controlled stop before postprocess/recovery package completed"
+    }
+  },
+  "timing_seconds": {
+    "worker_progress_elapsed_before_stop": 18364.045997234003,
+    "launcher_wall_elapsed": 18823.360849,
+    "ksp_setup": 17928.080346632007,
+    "ksp_solve": 7.6902454999799374,
+    "stage4_dtn_assembly_and_solve": 18358.902976776997,
+    "mesh_build": 1.809,
+    "function_space_setup": 1.742,
+    "floquet_constraint_setup": 6.116
+  },
+  "resource_authority": {
+    "peak_rss_mib": 214091.234375,
+    "peak_pss_mib": 212744.140625,
+    "peak_uss_mib": 212535.75390625,
+    "peak_rss_gib": 209.07347106933594,
+    "peak_pss_gib": 207.75794982910156,
+    "peak_uss_gib": 207.55444717407227,
+    "swap_mib": 0.0,
+    "sample_count": 17448,
+    "smaps_complete_sample_count": 17448,
+    "warning_gib": 170.0,
+    "critical_checkpoint_gib": 195.0,
+    "critical_checkpoint_first_bytes": 210049396736,
+    "absolute_terminate_memory_bytes": 224000000000,
+    "absolute_terminate_memory_gib": 208.6162567138672,
+    "poll_interval_seconds": 0.25,
+    "warning_triggered": true,
+    "critical_checkpoint_crossed": true,
+    "telemetry_status": "measured",
+    "peak_semantics": "independent simultaneous process-tree metric peaks; not one common sample"
+  },
+  "artifacts": {
+    "dtn_power_metrics_sha256": "fb3aa891154aeb4203340a2c505e31e86c0a5da74256ee4a828ff110a775eabc",
+    "dtn_orders_sha256": "73e0127d1d1d604d5ff7a1a00c3eacf9c071d268b9d5dad7c23d4b789c926df5",
+    "dtn_auxiliary_amplitudes_sha256": "8a5847216d79b01304ce7c1b81c7669ba6230467d08a026034081938fb50869f",
+    "port_power_sha256": "b57b97840fae721813469fccfbf4fecba773dc66b8ecd46b4e731933255b4f0e",
+    "progress_jsonl_sha256": "0ac606e8126644eb931bc627ba3ad4b0e5243a9bc99ef70927b2e4db57acad20",
+    "worker_stdout_sha256": "189b9b227336d42f7a4ee4bda2328faae2d25969e7467697116a2d08360368fe"
+  },
+  "limitations": [
+    "A_volume and independent closure were not produced before controlled termination.",
+    "Selected fields, canonical packets, and final exact 604-key authority package were not produced.",
+    "Named process_tree_samples.jsonl, memory_stages.jsonl, and memory_object_ledger.json were not present; launcher resource_authority is the measured resource evidence.",
+    "This is supplementary h4 solver-stress evidence and does not alter the h5 anchor or establish 1-degree physical qualification."
+  ],
+  "provenance": {
+    "raw_artifacts_ignored": true,
+    "h5_anchor_unchanged": true,
+    "h3_not_run": true,
+    "next_stage": "return to h5 Hybrid V3-7 algebra/telemetry diagnosis; formal model remains MPI8"
+  }
+}

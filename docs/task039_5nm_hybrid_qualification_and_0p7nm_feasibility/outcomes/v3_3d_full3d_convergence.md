@@ -87,3 +87,46 @@ V3-3/V3-4 至此受控收口：h5 选为 best available solver-stress anchor，P
 这不阻止 Review 授权的 V3-5 h5 Hybrid direct algebra/solver-stress 诊断，但不提升
 Hybrid 的物理资格。V3-5 本轮只做 input/profile/adapter 与 focused tests 准备；正式
 Hybrid PDE、V3-6 及以后均 `not_run`。
+
+## h4 补充：Full3D direct 受控内存停止
+
+上文的 h4 `not_run_by_resource_policy` 是启动前的历史决策快照；h4 后来在用户
+明确允许的补充网格取证中只运行了一次，当前结果以本节和
+[h4 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v3_h4_full3d_direct_supplement_v1.json)
+为准。它不改变 h5 的 solver-stress anchor，也不恢复 h3。
+
+| 项目 | h4 实测/状态 | 口径 |
+| --- | ---: | --- |
+| linear solve | `CONVERGED_ITS`, 1 iteration | true relative residual `3.5718033073581125e-10` |
+| matrix / NNZ | `756600` rows; `634515048 / 660585840` | used / allocated |
+| factor NNZ | `7118000000` corrected | MUMPS raw int32/INFOG overflow telemetry only |
+| port R / T | `0.7331834795712868 / 0.00022243948649826534` | DtN modal output obtained before stop |
+| A_balance | `0.26659408094221493` | `1-R-T`; not volume absorption |
+| A_volume / closure | `not_available / not_available` | postprocess package did not complete |
+| fields / canonical / final 604 gate | `not_available` | controlled stop before final authority package |
+
+Watchdog authority measured independent process-tree peaks of RSS/PSS/USS
+`214091.234375 / 212744.140625 / 212535.75390625 MiB` (`209.0735 / 207.7579 /
+207.5544 GiB`), with `17448` complete smaps samples and swap `0`. The contract remained
+warning `170 GiB`, critical checkpoint `195 GiB`, absolute hard
+`224000000000 bytes = 208.6162567138672 GiB`, and sampling `0.25 s`. The critical
+checkpoint was crossed at `210049396736` bytes; the launcher classified the result as
+`memory_terminate` and exited the complete process group cleanly. This is a resource
+controlled stop after a usable linear/R/T observation, not a numerical full-run pass or
+a numerical method failure.
+
+The h4 raw had `600` auxiliary rows (`598` propagating; top/bottom `304/296`) and reached
+the post-solve `solver_objects_retained_for_postprocess` boundary. It did not produce
+selected E/H, canonical packets, final exact-key authority, A_volume, or independent
+closure. The named stage/object JSONL telemetry files were absent; the measured launcher
+resource authority and `progress_3d.jsonl` remain the evidence. h3 remains explicitly
+cancelled/not_run.
+
+## Return to V3-7
+
+The next scope is the fixed h5 / 5 nm / 1-degree / phi=0 / S / p6 / M480 / MPI8 Hybrid
+solver-stress line. First perform exact assembled/eliminated versus matrix-free action
+identity, then test fixed residual-correction passes `1/2/4/8` (these are correction
+counts, not MPI runs), and only then inspect the research-only exact-side-LU oracle.
+No new heavy case is started by this h4 evidence update; ordinary defaults and the
+previous Q6/Q8 and P2 negative conclusions remain unchanged.

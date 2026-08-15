@@ -291,3 +291,21 @@ V3-3/V3-4 的 raw 仍在 ignored results，compact 数值与 SHA 见
 [V3 Full3D outcome](v3_3d_full3d_convergence.md) 和
 [V3 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v3_3d_full3d_convergence_v1.json)。
 原有 V3-2 Q8 二维 reference 和所有 V2/T3–T10 negative 结论不改写。
+
+### Review V3 h4 supplementary Full3D result
+
+The earlier h4 `not_run` row was a pre-launch decision snapshot. The later user-authorized
+single h4 run is now a measured resource-controlled stop: the direct linear solve converged
+in one iteration with true relative residual `3.5718033073581125e-10`, and DtN modal
+`R/T/A_balance` were `0.7331834795712868 / 0.00022243948649826534 /
+0.26659408094221493`. `A_volume`, independent closure, final field/canonical package and
+final 604-key authority are `not_available` because the process was stopped during
+`solver_objects_retained_for_postprocess`.
+
+The resource authority measured RSS/PSS/USS peaks `214091.234375 / 212744.140625 /
+212535.75390625 MiB`, swap `0`, and `17448` complete samples. The warning/critical/hard
+contract was `170 GiB / 195 GiB / 224000000000 bytes (208.6162567138672 GiB)` at `0.25 s`;
+classification is `memory_terminate`, not a numerical failure or full own-pass. h3 remains
+cancelled/not_run. See the [h4 supplementary record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v3_h4_full3d_direct_supplement_v1.json)
+and [full h4 outcome](v3_3d_full3d_convergence.md); the Task39 main line returns to the h5
+Hybrid V3-7 algebra/telemetry diagnosis with formal MPI8 only.
