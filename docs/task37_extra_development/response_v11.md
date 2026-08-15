@@ -338,6 +338,34 @@ W5 把 Krylov 基向量放入外部 scratch 文件，避免这些大向量长期
 
 因此 W5 的 disk-backed 实现通过了资源与证据边界，但没有通过最终屏幕数值 Gate。full PDE、official RTA、direct comparison 和最终 PDE 内存目标仍未运行。用户已明确授权继续研究具体收敛问题，但 2GB/swap、true residual 和 physics Gate 均保持不变；本段不改写任何旧 raw 或历史负结果。
 
+## W7-S1：从 W5 iter200 继续的固定重启屏幕
+
+W7-S1 不是把 W5 的 200 个方向延长成一个 400 维 Krylov 基，而是把 W5 的 iter200 解作为新的初始猜测，再重新建立一个最多 200 步的 disk-backed right FGMRES cycle。它检验从已有近似解继续是否改善后段收敛，同时保持 beta=1、p6/h10、MPI1、matrix-free DtN、ProjectedRangePC 和物理算子不变。
+
+独立 checker 判定执行证据与资源证据完整，但数值屏幕未通过。local checkpoint 20/100/150/200 对应 cumulative 220/300/350/400：
+
+| local checkpoint | cumulative identity | true relative residual | Gate |
+| ---: | ---: | ---: | --- |
+| 20 | 220 | `0.12661146396748116` | 记录 |
+| 100 | 300 | `0.1253957238823895` | 记录 |
+| 150 | 350 | `0.12438973880901087` | 记录 |
+| 200 | 400 | `0.12141751388827249` | `<=0.08`，FAIL |
+| 350→400 | — | `0.023894454230681927`（约 2.389%） | 诊断项，低于 15% |
+
+W7-S1 分类为 `NUMERIC_FAIL`，唯一 hard numeric problem 是 cumulative400 residual；不能写成 screen/PDE 通过。两次 precheck action 将初始解与冻结 W5 iter200 action/residual 绑定，初始 rho 为 `0.12750559935416836`，证明本轮确实从冻结解继续。
+
+process-tree peak 为 `1,611,878,400 B`、swap 为 `0`、进程完整清理；预测 live set `1,666,871,296 B` 是 derived/not measured，不是 PDE 峰值。disk scratch 只承载 Krylov basis，不计作 RSS。
+
+| W7-S1 evidence | 路径 / SHA |
+| --- | --- |
+| producer / checker source | `7febc1e3aeb52613d098fd2aadede3b288c69b5b` / `5e72e45673b05dac3c2c15c7c7e1b7fb4dfdee39` |
+| raw worker summary | `b7b8db53e45c4c791c251438bf5e1efce27e907197fc1007dfc5316ced0fbc37` |
+| watchdog summary / timeline | `56f8dcee71670331ec420a37e53ad3f7d3aaa04bbeb9ec1fb3c26b2c9c5e0b84` / `25743c3d3011a1a4e2122f8eeb43b9367c8479277b9db672501f2f8412b4` |
+| checker / embedded evidence | `b9c4e3753310a928127d6df73adbaebeab56af776e84f3d0ecb1033756cd5d2e` / `c8305c8552e1eb0d54a28dfaaf6937626bb3cf3527b5c80d24fbd4fc8d6bebee` |
+| tracked compact / embedded evidence | `3fcabe2dbc753017158b7f587f025a73a4e5f2eb5b7539d264cd3984846a192d` / `6c92da32f39e4a82ab8cffc851a437e5adb804fa62ebffc13d4068d3c83b9f6b` |
+
+W7 run1 的 `PRE_SOURCE_FIX_CONTROLLED_STOP` 与 run2 的 `PRE_NUMERIC_EXECUTION_FAIL` 均保留；full PDE、official field/RTA、direct-authority physics comparison 和最终 PDE RSS 仍未运行，也没有放宽 2GB、swap=0、true residual 或物理 Gate。
+
 ## W6B-S0：固定多衍射阶次的离线谱诊断
 
 W6B-S0 不是新的 PDE 或外层屏幕，而是对 W6A 已经写入磁盘的 `AZ` 列做一次只读分析。它逐列读取 390 个 `AZ` 结果，计算冻结 W5 四个残差在不同固定列集合上的最小二乘投影；因此不重新调用有限元、DtN 或物理 action，也不把 390 列 dense 数组装进进程内存。这个诊断回答的是“现有固定基空间能捕获多少残差”，不能替代正式 builder 或 screen Gate。
