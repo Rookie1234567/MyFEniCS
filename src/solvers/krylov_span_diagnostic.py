@@ -25,7 +25,14 @@ def _vector(value: Any, rows: int, label: str) -> np.ndarray:
     return array
 
 
-def _projection(gram_h: np.ndarray, h: np.ndarray, vector_norm: float, sigma_max: float) -> dict[str, Any]:
+def _projection(
+    gram_h: np.ndarray,
+    h: np.ndarray,
+    vector_norm: float,
+    sigma_max: float,
+    *,
+    include_coefficients: bool = False,
+) -> dict[str, Any]:
     coefficients = np.linalg.solve(gram_h, h)
     normal_error = gram_h @ coefficients - h
     closure = float(
@@ -36,25 +43,64 @@ def _projection(gram_h: np.ndarray, h: np.ndarray, vector_norm: float, sigma_max
     captured = float(np.real(np.vdot(h, coefficients)))
     captured_ratio_raw = captured / max(norm_squared, np.finfo(float).tiny)
     if not np.isfinite(captured_ratio_raw) or not -1.0e-11 <= captured_ratio_raw <= 1.0 + 1.0e-11:
-        return {
+        result = {
             "finite": False,
             "normal_closure": closure,
             "captured_energy": captured,
             "captured_energy_ratio": captured_ratio_raw,
             "captured_energy_ratio_raw": captured_ratio_raw,
-            "rho_full": float("nan"),
+            "rho_full_energy_derived": float("nan"),
             "coefficient_norm": float(np.linalg.norm(coefficients)),
             "problems": ["captured_energy_range"],
         }
+        if include_coefficients:
+            result["_coefficients"] = coefficients
+        return result
     captured_ratio = float(np.clip(captured_ratio_raw, 0.0, 1.0))
-    return {
+    result = {
         "finite": bool(np.isfinite(closure) and np.isfinite(captured) and np.isfinite(captured_ratio)),
         "normal_closure": closure,
         "captured_energy": captured_ratio * norm_squared,
         "captured_energy_ratio": captured_ratio,
         "captured_energy_ratio_raw": captured_ratio_raw,
-        "rho_full": float(np.sqrt(1.0 - captured_ratio)),
+        "rho_full_energy_derived": float(np.sqrt(1.0 - captured_ratio)),
         "coefficient_norm": float(np.linalg.norm(coefficients)),
+    }
+    if include_coefficients:
+        result["_coefficients"] = coefficients
+    return result
+
+
+def _stream_projection_residual(
+    basis: np.ndarray,
+    residuals: Mapping[str, np.ndarray],
+    coefficients: Mapping[str, np.ndarray],
+    *,
+    rows: int,
+    columns: int,
+    row_block: int,
+) -> dict[str, Any]:
+    """Compute direct ``||r - Vc||`` values with one bounded basis pass."""
+
+    squared = {name: 0.0 for name in residuals}
+    block_count = 0
+    column_read_count = 0
+    for start in range(0, rows, row_block):
+        stop = min(start + row_block, rows)
+        block = np.array(basis[:, start:stop], dtype=np.complex128, order="C", copy=True)
+        if not np.all(np.isfinite(block)):
+            raise ValueError("basis block is not finite")
+        for name, vector in residuals.items():
+            projected = coefficients[name] @ block
+            remainder = vector[start:stop] - projected
+            squared[name] += float(np.vdot(remainder, remainder).real)
+        block_count += 1
+        column_read_count += columns
+    return {
+        "squared": squared,
+        "block_count": block_count,
+        "column_read_count": column_read_count,
+        "explicit_vector_temp_bytes": int(2 * row_block * np.dtype(np.complex128).itemsize),
     }
 
 
@@ -98,8 +144,7 @@ def analyze_v_basis(
             h[name] += block.conj() @ vector[start:stop]
         block_count += 1
         column_read_count += columns
-    del basis, block
-
+    del block
     hermitian_defect = float(
         np.linalg.norm(gram - gram.conj().T)
         / max(np.linalg.norm(gram), np.finfo(float).tiny)
@@ -134,6 +179,9 @@ def analyze_v_basis(
         "explicit_copied_block_bytes": columns * row_block * 16,
         "explicit_copied_block_scope": "row-block copy only; conjugate and BLAS temporaries excluded",
         "block_count": block_count,
+        "gram_column_read_count": column_read_count,
+        "direct_projection_pass_count": 0,
+        "basis_pass_count": 1,
         "column_read_count": column_read_count,
         "mmap": True,
         "basis_in_memory": False,
@@ -181,13 +229,75 @@ def analyze_v_basis(
         result["problems"] = ["gram"]
         return result
     if rank != columns:
+        del basis
         result["problems"] = ["rank"]
         return result
+    coefficients = {}
     for name, vector in vectors.items():
-        item = _projection(gram_hermitian, h[name], float(np.linalg.norm(vector)), sigma_max)
+        item = _projection(
+            gram_hermitian,
+            h[name],
+            float(np.linalg.norm(vector)),
+            sigma_max,
+            include_coefficients=True,
+        )
+        coefficients[name] = item.pop("_coefficients")
         result["measurements"][name] = item
+    direct_first = _stream_projection_residual(
+        basis, vectors, coefficients, rows=rows, columns=columns, row_block=row_block
+    )
+    direct_second = _stream_projection_residual(
+        basis, vectors, coefficients, rows=rows, columns=columns, row_block=row_block
+    )
+    direct_exact = True
+    for name, vector in vectors.items():
+        norm = float(np.linalg.norm(vector))
+        denominator = max(norm, np.finfo(float).tiny)
+        first_squared = direct_first["squared"][name]
+        second_squared = direct_second["squared"][name]
+        first_rho = float(np.sqrt(max(first_squared, 0.0)) / denominator)
+        second_rho = float(np.sqrt(max(second_squared, 0.0)) / denominator)
+        exact = bool(
+            np.array_equal(first_squared, second_squared)
+            and np.array_equal(first_rho, second_rho)
+        )
+        direct_exact = direct_exact and exact
+        item = result["measurements"][name]
+        item.update(
+            rho_full=first_rho,
+            direct_residual_squared=first_squared,
+            direct_repeat_rho_full=second_rho,
+            direct_repeat_residual_squared=second_squared,
+            direct_repeat_exact=exact,
+        )
+        item["finite"] = bool(
+            item["finite"]
+            and np.isfinite(first_squared)
+            and np.isfinite(second_squared)
+            and np.isfinite(first_rho)
+            and np.isfinite(second_rho)
+            and first_squared >= 0.0
+            and second_squared >= 0.0
+        )
+    del basis
+    result["audit"].update(
+        basis_pass_count=3,
+        direct_projection_pass_count=2,
+        direct_column_read_count=direct_first["column_read_count"] + direct_second["column_read_count"],
+        column_read_count=(
+            result["audit"]["gram_column_read_count"]
+            + direct_first["column_read_count"]
+            + direct_second["column_read_count"]
+        ),
+        direct_projection_block_count=direct_first["block_count"],
+        explicit_direct_vector_temp_bytes=direct_first["explicit_vector_temp_bytes"],
+        explicit_direct_vector_temp_scope=(
+            "one projected/remainder vector per residual and row block; conjugate and BLAS temporaries excluded"
+        ),
+    )
     result["pass"] = bool(
-        all(item["finite"] and item["normal_closure"] <= NORMAL_CLOSURE_LIMIT for item in result["measurements"].values())
+        direct_exact
+        and all(item["finite"] and item["normal_closure"] <= NORMAL_CLOSURE_LIMIT for item in result["measurements"].values())
         and hermitian_defect <= NORMAL_CLOSURE_LIMIT
     )
     if not result["pass"]:

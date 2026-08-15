@@ -4546,6 +4546,10 @@ def _m6b_w10a_measurement_record(
         "captured_energy_ratio",
         "captured_energy_ratio_raw",
         "rho_full",
+        "rho_full_energy_derived",
+        "direct_residual_squared",
+        "direct_repeat_rho_full",
+        "direct_repeat_residual_squared",
         "coefficient_norm",
     )
     result = {
@@ -4556,6 +4560,7 @@ def _m6b_w10a_measurement_record(
     result["finite"] = core_measurement["finite"] is True
     result["q_overlap_energy_ratio"] = float(q_overlap_energy)
     result["actionable_available"] = bool(allow_actionable)
+    result["direct_repeat_exact"] = bool(core_measurement.get("direct_repeat_exact") is True)
     if allow_actionable:
         actionable = span.add_actionable_projection(core_measurement, q_overlap_energy)
         result["captured_actionable_energy_ratio"] = float(actionable["captured_actionable_energy_ratio"])
@@ -4600,6 +4605,8 @@ def _m6b_w10a_numeric_gate(analysis: Mapping[str, Any], measurements: Mapping[st
             and analysis["eig_min"] >= -analysis["negative_eigenvalue_limit"]
         ),
         "finite_deterministic": analysis.get("finite") is True and repeat_exact,
+        "direct_projection": False,
+        "direct_repeat": False,
         "measurement_set": isinstance(measurements, Mapping) and set(measurements) == {"control_w5_iter200", "target_w7_cumulative400"},
         "captured_ratios": False,
         "projection_closure": False,
@@ -4611,6 +4618,23 @@ def _m6b_w10a_numeric_gate(analysis: Mapping[str, Any], measurements: Mapping[st
         control = measurements["control_w5_iter200"]
         target = measurements["target_w7_cumulative400"]
         values = (control, target)
+        audit = analysis.get("audit")
+        read_fields = ("gram_column_read_count", "direct_column_read_count", "column_read_count")
+        checks["direct_projection"] = (
+            isinstance(audit, Mapping)
+            and audit.get("basis_pass_count") == 3
+            and audit.get("direct_projection_pass_count") == 2
+            and all(type(audit.get(key)) is int for key in read_fields)
+            and audit["gram_column_read_count"] + audit["direct_column_read_count"] == audit["column_read_count"]
+            and _finite_number(audit.get("explicit_direct_vector_temp_bytes"))
+        )
+        checks["direct_repeat"] = all(
+            isinstance(item, Mapping)
+            and item.get("direct_repeat_exact") is True
+            and _finite_number(item.get("direct_repeat_rho_full"))
+            and _finite_number(item.get("direct_repeat_residual_squared"))
+            for item in values
+        )
         checks["captured_ratios"] = all(
             isinstance(item, Mapping)
             and _m6b_w10a_ratio_valid(item.get("captured_energy_ratio"))
@@ -4692,22 +4716,16 @@ def _run_m6b_w10a_check(
             span,
             allow_actionable=bool(control_span_ready and core_measurement.get("finite") is True),
         )
-    repeat_measurements = {
-        name: span.project_from_gram(
-            first["gram_hermitian"], first["h"][name],
-            float(np.linalg.norm(residuals[name])), float(first["singular_values"][-1])
-        ) for name in residuals
-    } if first.get("gram_valid") is True and first.get("rank") == M6B_W10A_COLUMNS else {}
+    audit = first.get("audit")
     repeat_exact = bool(
         set(core_measurements) == set(residuals)
-        and set(repeat_measurements) == set(residuals)
+        and isinstance(audit, Mapping)
+        and audit.get("basis_pass_count") == 3
+        and audit.get("direct_projection_pass_count") == 2
         and all(
-            all(
-                core_measurements[name].get(key) == repeat_measurements[name].get(key)
-                for key in ("finite", "normal_closure", "captured_energy_ratio", "rho_full", "coefficient_norm")
-            )
+            isinstance(core_measurements.get(name), Mapping)
+            and core_measurements[name].get("direct_repeat_exact") is True
             for name in residuals
-            if isinstance(core_measurements.get(name), Mapping)
         )
     )
     numeric_gate = _m6b_w10a_numeric_gate(first, measurements, repeat_exact)
