@@ -8605,11 +8605,26 @@ def _m6b_w7_s1_progress_valid(path: Path, screen: Any) -> dict[str, Any]:
         ]
     except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
         return {"pass": False, "problems": [f"progress_read:{type(exc).__name__}"]}
-    observed = [
-        (record.get("iteration"), record.get("cumulative_iteration"))
-        for record in records
-        if isinstance(record, Mapping) and record.get("event") == "checkpoint_ready"
-    ]
+    samples = screen.get("samples") if isinstance(screen, Mapping) else None
+    observed = []
+    for record in records:
+        if not isinstance(record, Mapping) or record.get("event") != "checkpoint_ready":
+            continue
+        iteration = record.get("iteration")
+        if "cumulative_iteration" in record:
+            cumulative = record["cumulative_iteration"]
+        else:
+            sample = (
+                samples.get(str(iteration))
+                if isinstance(samples, Mapping)
+                else None
+            )
+            cumulative = (
+                sample.get("cumulative_iteration")
+                if isinstance(sample, Mapping)
+                else None
+            )
+        observed.append((iteration, cumulative))
     expected = list(
         zip(M6B_W7_S1_LOCAL_ITERATIONS, M6B_W7_S1_CUMULATIVE_ITERATIONS)
     )
@@ -8850,6 +8865,10 @@ def _m6b_w7_s1_check_command(
     artifact_inventory = None
     artifact_inventory_ok = False
     if isinstance(reported_artifacts, Mapping):
+        raw_artifact_labels = {
+            "m6b_w7_s1_summary.json": "worker_summary",
+            "m6b_w7_s1_progress.jsonl": "progress",
+        }
         raw_inventory = {
             name: _artifact(raw_dir, name)
             for name in M6B_W7_S1_RAW_ARTIFACT_NAMES
@@ -8867,11 +8886,34 @@ def _m6b_w7_s1_check_command(
             "raw": raw_inventory,
             "watchdog": watchdog_inventory,
         }
+        reported_raw_ok = True
+        for name, label in raw_artifact_labels.items():
+            actual = raw_inventory[name]
+            reported = reported_artifacts.get(label)
+            reported_raw_ok = reported_raw_ok and bool(
+                isinstance(reported, Mapping)
+                and reported.get("present") is True
+                and isinstance(reported.get("path"), str)
+                and Path(reported["path"]).resolve() == (raw_dir / name).resolve()
+                and reported.get("bytes") == actual.get("bytes")
+                and reported.get("sha256") == actual.get("sha256")
+            )
+        reported_watchdog_ok = True
+        for name, label in watchdog_artifact_labels.items():
+            actual = _artifact(watchdog_dir, name)
+            reported = reported_artifacts.get(label)
+            reported_watchdog_ok = reported_watchdog_ok and bool(
+                isinstance(reported, Mapping)
+                and reported.get("present") is True
+                and isinstance(reported.get("path"), str)
+                and Path(reported["path"]).resolve()
+                == (watchdog_dir / name).resolve()
+                and reported.get("bytes") == actual.get("bytes")
+                and reported.get("sha256") == actual.get("sha256")
+            )
         artifact_inventory_ok = bool(
-            reported_artifacts.get("worker_summary")
-            == raw_inventory["m6b_w7_s1_summary.json"]
-            and reported_artifacts.get("progress")
-            == raw_inventory["m6b_w7_s1_progress.jsonl"]
+            reported_raw_ok
+            and reported_watchdog_ok
             and _m6b_w7_s1_artifact_inventory_valid(
                 artifact_inventory, raw_dir, watchdog_dir
             )
