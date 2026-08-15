@@ -4969,6 +4969,61 @@ def _m6b_w13a_scope() -> dict[str, Any]:
     }
 
 
+def _m6b_w13a_beta05_mode_allowed(
+    *,
+    w13a_residuals: Mapping[str, Any] | None,
+    projected: bool,
+    screen: bool,
+    shifted_beta: float,
+) -> bool:
+    """Allow beta=.5 only for the fixed W13A action-only child mode."""
+
+    return bool(
+        isinstance(w13a_residuals, Mapping)
+        and tuple(w13a_residuals) == ("w5_iter200", "w7_cumulative400")
+        and projected is True
+        and screen is False
+        and shifted_beta == M6B_W3_BETA05
+    )
+
+
+def _m6b_w13a_beta05_mode_guard(
+    *,
+    w13a_residuals: Mapping[str, Any] | None,
+    projected: bool,
+    screen: bool,
+    shifted_beta: float,
+) -> None:
+    if (
+        not screen
+        and shifted_beta != M6B_W2_SHIFTED_BETA
+        and not _m6b_w13a_beta05_mode_allowed(
+            w13a_residuals=w13a_residuals,
+            projected=projected,
+            screen=screen,
+            shifted_beta=shifted_beta,
+        )
+    ):
+        raise ValueError("M6B W2 and W2R remain fixed at beta=1")
+
+
+def _m6b_w13a_child_scope(*, shifted_beta: float) -> dict[str, Any]:
+    scope = _m6b_w13a_scope()
+    scope.update(
+        {
+            "parent_phase": M6B_W13A_PHASE,
+            "shifted_beta": float(shifted_beta),
+            "action_only": True,
+            "projected": True,
+            "screen": False,
+            "two_frozen_residuals": ["w5_iter200", "w7_cumulative400"],
+            "parameter_scan": False,
+            "old_beta05_bare_pc": "frozen_failure_not_reopened",
+        }
+    )
+    return scope
+
+
 def _m6b_w13a_predicted_live_set() -> dict[str, Any]:
     total = int(M6B_W13A_PREDICTED_LIVE_SET_BYTES)
     return {
@@ -10853,8 +10908,12 @@ def _run_m6b_w2_diagnostic(
         raise ValueError("M6B W3 screen requires the projected range PC")
     if shifted_beta not in (M6B_W2_SHIFTED_BETA, M6B_W3_BETA05):
         raise ValueError("M6B shifted screen beta is not fixed")
-    if not screen and shifted_beta != M6B_W2_SHIFTED_BETA:
-        raise ValueError("M6B W2 and W2R remain fixed at beta=1")
+    _m6b_w13a_beta05_mode_guard(
+        w13a_residuals=w13a_residuals,
+        projected=projected,
+        screen=screen,
+        shifted_beta=shifted_beta,
+    )
     if run_dir.exists():
         raise FileExistsError(f"M6B W2 refuses an existing run directory: {run_dir}")
     if MPI.COMM_WORLD.size != 1:
@@ -11574,7 +11633,13 @@ def _run_m6b_w2_diagnostic(
             if screen and solver == "fbcgs"
             else _m6b_w3_scope(phase=phase_name, shifted_beta=shifted_beta)
             if screen
-            else (_m6b_w2r_scope() if projected else _m6b_w2_scope())
+            else (
+                _m6b_w13a_child_scope(shifted_beta=shifted_beta)
+                if w13a_residuals is not None
+                else _m6b_w2r_scope()
+                if projected
+                else _m6b_w2_scope()
+            )
         ),
         "expected_source_sha": expected_source_sha,
         "source_at_start": source_start,
@@ -11610,7 +11675,8 @@ def _run_m6b_w2_diagnostic(
             if screen and solver == "fbcgs"
             else _m6b_w3_predicted_live_set()
             if screen
-            else (_m6b_w2r_predicted_live_set() if projected else {
+            else (_m6b_w13a_predicted_live_set() if w13a_residuals is not None
+            else _m6b_w2r_predicted_live_set() if projected else {
             "base_bytes": M6B_W2_BASE_PREDICTED_LIVE_SET_BYTES,
             "external_residual_bytes": M6B_W2_EXTERNAL_RESIDUAL_BYTES,
             "composition_incremental_bytes": M6B_W2_COMPOSITION_INCREMENTAL_BYTES,

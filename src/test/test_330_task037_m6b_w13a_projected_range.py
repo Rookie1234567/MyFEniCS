@@ -173,6 +173,75 @@ def test_w13a_scope_prediction_and_parser_are_fixed_without_beta_argument() -> N
     assert not hasattr(args, "beta")
 
 
+def test_w13a_beta05_child_mode_is_narrow_and_scope_is_bound() -> None:
+    residuals = {
+        "w5_iter200": np.ones(2, dtype=np.complex128),
+        "w7_cumulative400": np.ones(2, dtype=np.complex128),
+    }
+    allowed = runner._m6b_w13a_beta05_mode_allowed
+    assert allowed(
+        w13a_residuals=residuals,
+        projected=True,
+        screen=False,
+        shifted_beta=0.5,
+    ) is True
+    assert allowed(
+        w13a_residuals=None,
+        projected=True,
+        screen=False,
+        shifted_beta=0.5,
+    ) is False
+    assert allowed(
+        w13a_residuals=residuals,
+        projected=False,
+        screen=False,
+        shifted_beta=0.5,
+    ) is False
+    assert allowed(
+        w13a_residuals=residuals,
+        projected=True,
+        screen=True,
+        shifted_beta=0.5,
+    ) is False
+    assert allowed(
+        w13a_residuals=residuals,
+        projected=True,
+        screen=False,
+        shifted_beta=0.25,
+    ) is False
+    with pytest.raises(ValueError, match="remain fixed at beta=1"):
+        runner._m6b_w13a_beta05_mode_guard(
+            w13a_residuals=None,
+            projected=True,
+            screen=False,
+            shifted_beta=0.5,
+        )
+    runner._m6b_w13a_beta05_mode_guard(
+        w13a_residuals=residuals,
+        projected=True,
+        screen=False,
+        shifted_beta=0.5,
+    )
+    source = inspect.getsource(runner._run_m6b_w2_diagnostic)
+    assert "_m6b_w13a_beta05_mode_guard" in source
+
+    child05 = runner._m6b_w13a_child_scope(shifted_beta=0.5)
+    assert child05["phase"] == runner.M6B_W13A_PHASE
+    assert child05["parent_phase"] == runner.M6B_W13A_PHASE
+    assert child05["shifted_beta"] == 0.5
+    assert child05["action_only"] is True
+    assert child05["projected"] is True
+    assert child05["screen"] is False
+    assert child05["two_frozen_residuals"] == list(residuals)
+    assert child05["parameter_scan"] is False
+    assert child05["old_beta05_bare_pc"] == "frozen_failure_not_reopened"
+    assert runner._m6b_w13a_predicted_live_set()["bytes"] == 1_726_081_915
+
+    child1 = runner._m6b_w13a_child_scope(shifted_beta=1.0)
+    assert child1["shifted_beta"] == 1.0
+    assert child1["two_frozen_residuals"] == list(residuals)
+
+
 def test_w13a_keeps_projected_pc_default_behavior_and_no_heavy_dispatch() -> None:
     signature = inspect.signature(H2BM6BProjectedRangePC.__init__)
     assert signature.parameters["record_local_omega"].default is False
