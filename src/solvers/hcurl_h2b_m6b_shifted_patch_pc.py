@@ -749,6 +749,7 @@ class H2BM6BProjectedRangePC:
         global_row_count: int,
         task037_extra_m6b: bool = False,
         expected_local_beta: float = 1.0,
+        record_local_omega: bool = False,
     ) -> None:
         if task037_extra_m6b is not True:
             raise ValueError("M6B W2R requires explicit research opt-in")
@@ -778,6 +779,7 @@ class H2BM6BProjectedRangePC:
         self._range_carrier = range_carrier
         self._physical_outer_action = physical_outer_action
         self._global_row_count = global_row_count
+        self._record_local_omega = bool(record_local_omega)
         self._apply_count = 0
         self._audit = self._make_audit(local_audit, range_audit)
 
@@ -895,9 +897,23 @@ class H2BM6BProjectedRangePC:
         self, rhs: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
         residual_rhs = _finite_vector(rhs, self._global_row_count, "W2R RHS")
-        local = np.ascontiguousarray(
-            self._local_pc.apply(residual_rhs), dtype=np.complex128
-        )
+        if self._record_local_omega:
+            local, local_measurement = self._local_pc.apply_with_measurement(
+                residual_rhs
+            )
+            local_omega = local_measurement.get("omega")
+            if not isinstance(local_omega, (list, tuple)) or len(local_omega) != 2:
+                raise ValueError("W13A local omega measurement is missing")
+            local_exact_shifted_action_count = local_measurement.get(
+                "exact_shifted_action_count"
+            )
+            if local_exact_shifted_action_count != 1:
+                raise ValueError("W13A local shifted action count is not fixed")
+        else:
+            local = self._local_pc.apply(residual_rhs)
+            local_omega = None
+            local_exact_shifted_action_count = None
+        local = np.ascontiguousarray(local, dtype=np.complex128)
         local = _finite_vector(local, self._global_row_count, "W2R local correction")
         local_action = self._physical_action(local)
         range_rhs = np.ascontiguousarray(
@@ -942,6 +958,8 @@ class H2BM6BProjectedRangePC:
             "r_perp": r_perp,
             "p_perp": p_perp,
             "rhs": residual_rhs,
+            "local_omega": local_omega,
+            "local_exact_shifted_action_count": local_exact_shifted_action_count,
         }
         return correction, represented, core
 
@@ -1011,6 +1029,16 @@ class H2BM6BProjectedRangePC:
             ),
             "complement_optimality": optimality,
             "alpha": [float(core["alpha"].real), float(core["alpha"].imag)],
+            **(
+                {"omega": [float(core["local_omega"][0]), float(core["local_omega"][1])]}
+                if core["local_omega"] is not None
+                else {}
+            ),
+            **(
+                {"local_exact_shifted_action_count": int(core["local_exact_shifted_action_count"])}
+                if core["local_exact_shifted_action_count"] is not None
+                else {}
+            ),
             "projection_denominator": [
                 float(core["denominator"].real),
                 float(core["denominator"].imag),

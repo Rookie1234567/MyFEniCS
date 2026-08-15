@@ -435,6 +435,27 @@ M6B_W12_PREDICTED_LIVE_SET_BYTES = (
     + M6B_W12_FIXED_RESERVE_BYTES
 )
 M6B_W12_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_500_000_000
+M6B_W13A_SCHEMA = "task037.extra.m6b.w13a.projected-range-composition.v1"
+M6B_W13A_PHASE = "w13a_projected_range_composition"
+M6B_W13A_BETAS = (1.0, 0.5)
+M6B_W13A_PREDICTED_LIVE_SET_BYTES = (
+    M6B_W2R_BASE_PREDICTED_LIVE_SET_BYTES
+    + 2 * M6B_W2R_EXTERNAL_RESIDUAL_BYTES
+    + M6B_W2R_PROJECTED_INCREMENTAL_BYTES
+)
+M6B_W13A_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_750_000_000
+M6B_W13A_BETA1_FACTOR_RELATIVE_PATH = (
+    "benchmarks/artifacts/task037_extra_development/m6b_d98254f_formal_run5"
+)
+M6B_W13A_BETA05_FACTOR_RELATIVE_PATH = (
+    "benchmarks/artifacts/task037_extra_development/m6b_beta05_2a0c279_formal_run2"
+)
+M6B_W13A_WAVE_RELATIVE_PATH = (
+    "benchmarks/artifacts/task037_extra_development/m6b_w1a_e2f99a3_builder_run1"
+)
+M6B_W13A_JIT_RELATIVE_PATH = (
+    "benchmarks/artifacts/task037_extra_development/m6b_w1a_e2f99a3_builder_run1/jit_cache"
+)
 M6B_W6A_EVENTS = (
     "authority_validated",
     "mesh_ready",
@@ -4913,6 +4934,63 @@ def _m6b_w12_predicted_live_set() -> dict[str, Any]:
             "process-tree calibration plus at most 16 FE-sized trajectory, "
             "action, and increment vectors, 16,673,350 B M6A work, and a "
             "64,000,000 B reserve; predicted, not a measured process peak."
+        ),
+    }
+
+
+def _m6b_w13a_scope() -> dict[str, Any]:
+    return {
+        "schema": M6B_W13A_SCHEMA,
+        "phase": M6B_W13A_PHASE,
+        "solver": "projected_range_action_only",
+        "betas": list(M6B_W13A_BETAS),
+        "fixed_range_columns": 75,
+        "residual_roles": ["w5_iter200", "w7_cumulative400"],
+        "fine_space": "uncondensed_fullspace",
+        "operator": "physical beta=0 volume action + matrix-free DtN80",
+        "projected_pc": "current W5 ProjectedRangePC composition",
+        "global_matrix": False,
+        "augmented_matrix": False,
+        "static_condensation": False,
+        "trace_slab_pc": False,
+        "slab_factors": 0,
+        "physical_ksp": False,
+        "pde": False,
+        "official_rta": False,
+        "parameter_scan": False,
+        "old_beta05_bare_pc": "frozen_failure_not_reopened",
+        "factor_store_lifecycle": "beta1_then_release_then_beta05",
+        "resource_limits": {
+            "predicted_live_set_bytes": M6B_W13A_PREDICTED_LIVE_SET_BYTES,
+            "predicted_live_set_limit_bytes": M6B_W13A_PREDICTED_LIVE_SET_LIMIT_BYTES,
+            "formal_process_peak_bytes": 1_900_000_000,
+            "swap_bytes": M6B_SWAP_LIMIT_BYTES,
+        },
+    }
+
+
+def _m6b_w13a_predicted_live_set() -> dict[str, Any]:
+    total = int(M6B_W13A_PREDICTED_LIVE_SET_BYTES)
+    return {
+        "bytes": total,
+        "limit_bytes": M6B_W13A_PREDICTED_LIVE_SET_LIMIT_BYTES,
+        "gate": total <= M6B_W13A_PREDICTED_LIVE_SET_LIMIT_BYTES,
+        "derived_not_measured": True,
+        "assumptions": {
+            "one_shifted_store_at_a_time": True,
+            "current_w5_projected_range_composition": True,
+            "runtime_compiler_process_count": 0,
+            "swap_bytes": M6B_SWAP_LIMIT_BYTES,
+        },
+        "components": {
+            "existing_w2r_conservative_base_bytes": M6B_W2R_BASE_PREDICTED_LIVE_SET_BYTES,
+            "two_residual_input_bytes": 2 * M6B_W2R_EXTERNAL_RESIDUAL_BYTES,
+            "projected_composition_increment_bytes": M6B_W2R_PROJECTED_INCREMENTAL_BYTES,
+        },
+        "basis": (
+            "Derived W13A bound reuses the W2R conservative action-only base; "
+            "only one approximately 1.047 GB shifted store is resident at a "
+            "time. It is not a measured process-tree peak."
         ),
     }
 
@@ -10696,6 +10774,7 @@ def _run_m6b_w2_diagnostic(
     solver: str = "fgmres",
     initial_solution: Any | None = None,
     continuation_authority: Mapping[str, Any] | None = None,
+    w13a_residuals: Mapping[str, Any] | None = None,
 ) -> int:
     import gc
     import shutil
@@ -10746,6 +10825,13 @@ def _run_m6b_w2_diagnostic(
     w0_authority_file = Path(w0_authority_file).resolve()
     if solver not in {"fgmres", "fbcgs", "disk_fgmres", "disk_fgmres_restart"}:
         raise ValueError("M6B screen solver is not fixed")
+    if w13a_residuals is not None and (screen or not projected):
+        raise ValueError("W13A residual mode is projected action-only")
+    if w13a_residuals is not None and tuple(w13a_residuals) != (
+        "w5_iter200",
+        "w7_cumulative400",
+    ):
+        raise ValueError("W13A residual order is fixed")
     if solver == "fbcgs" and (
         not screen or not projected or shifted_beta != M6B_W4_BETA
     ):
@@ -11015,6 +11101,7 @@ def _run_m6b_w2_diagnostic(
                 global_row_count=M6B_GLOBAL_ROWS,
                 task037_extra_m6b=True,
                 expected_local_beta=shifted_beta,
+                record_local_omega=w13a_residuals is not None,
             )
         else:
             w2_pc = H2BM6BShiftedRangePC(
@@ -11340,48 +11427,61 @@ def _run_m6b_w2_diagnostic(
             status = "screen_complete" if gate["pass"] else "gate_failed"
             emit("screen_ready", gate=gate, iterations=screen_result["iterations"])
         else:
-            for key in ("20", "100", "150", "200"):
-                residual_path = factor_authority_dir / f"m6b_iter{key}_residual.npy"
-                residual = np.load(residual_path, allow_pickle=False)
-                if (
-                    residual.dtype != np.dtype(np.complex128)
-                    or residual.shape != (M6B_GLOBAL_ROWS,)
-                    or not np.all(np.isfinite(residual))
-                    or _m6b_w2_array_sha256(residual) != M6B_W2_RESIDUAL_ARRAY_SHAS[key]
-                ):
-                    raise ValueError(f"M6B W2 residual authority is invalid: {key}")
-                first, first_measurement = w2_pc.apply_with_measurement(residual)
-                second, second_measurement = w2_pc.apply_with_measurement(residual)
-                record = dict(first_measurement)
-                record.update(
-                    {
-                        "iteration": int(key),
-                        "residual_array_sha256": M6B_W2_RESIDUAL_ARRAY_SHAS[key],
-                        "residual_artifact": {
-                            **_artifact(
-                                factor_authority_dir,
-                                f"m6b_iter{key}_residual.npy",
-                            ),
-                            "absolute_path": str(residual_path),
-                        },
-                        "correction_sha256": first_measurement["final_correction_sha256"],
-                        "repeat_correction_sha256": second_measurement[
-                            "final_correction_sha256"
-                        ],
-                        "repeat_identical": bool(
-                            np.array_equal(first, second)
-                            and first_measurement == second_measurement
-                        ),
-                    }
+            if w13a_residuals is not None:
+                from src.solvers.hcurl_m6b_w13a_projected_range import (
+                    run_w13a_projected_range_measurements,
                 )
-                measurements[key] = record
-                del residual, first, second, first_measurement, second_measurement
-                event_values = {"rho_range_only": record["rho_range_only"]}
-                event_values["rho_projected" if projected else "rho_composed"] = record[
-                    "rho_projected" if projected else "rho_composed"
-                ]
-                emit("residual_complete", iteration=int(key), **event_values)
-            gate = _m6b_w2r_gate(measurements) if projected else _m6b_w2_gate(measurements)
+
+                measurements["w13a"] = run_w13a_projected_range_measurements(
+                    w13a_residuals,
+                    w2_pc.apply_with_measurement,
+                    beta=shifted_beta,
+                )
+                gate = measurements["w13a"]["gate"]
+            else:
+                for key in ("20", "100", "150", "200"):
+                    residual_path = factor_authority_dir / f"m6b_iter{key}_residual.npy"
+                    residual = np.load(residual_path, allow_pickle=False)
+                    if (
+                        residual.dtype != np.dtype(np.complex128)
+                        or residual.shape != (M6B_GLOBAL_ROWS,)
+                        or not np.all(np.isfinite(residual))
+                        or _m6b_w2_array_sha256(residual)
+                        != M6B_W2_RESIDUAL_ARRAY_SHAS[key]
+                    ):
+                        raise ValueError(f"M6B W2 residual authority is invalid: {key}")
+                    first, first_measurement = w2_pc.apply_with_measurement(residual)
+                    second, second_measurement = w2_pc.apply_with_measurement(residual)
+                    record = dict(first_measurement)
+                    record.update(
+                        {
+                            "iteration": int(key),
+                            "residual_array_sha256": M6B_W2_RESIDUAL_ARRAY_SHAS[key],
+                            "residual_artifact": {
+                                **_artifact(
+                                    factor_authority_dir,
+                                    f"m6b_iter{key}_residual.npy",
+                                ),
+                                "absolute_path": str(residual_path),
+                            },
+                            "correction_sha256": first_measurement["final_correction_sha256"],
+                            "repeat_correction_sha256": second_measurement[
+                                "final_correction_sha256"
+                            ],
+                            "repeat_identical": bool(
+                                np.array_equal(first, second)
+                                and first_measurement == second_measurement
+                            ),
+                        }
+                    )
+                    measurements[key] = record
+                    del residual, first, second, first_measurement, second_measurement
+                    event_values = {"rho_range_only": record["rho_range_only"]}
+                    event_values["rho_projected" if projected else "rho_composed"] = record[
+                        "rho_projected" if projected else "rho_composed"
+                    ]
+                    emit("residual_complete", iteration=int(key), **event_values)
+                gate = _m6b_w2r_gate(measurements) if projected else _m6b_w2_gate(measurements)
         cache_final = _m6b_w2_cache_record(h2b, cache_dir)
         source_cache_final = _m6b_w2_cache_record(h2b, jit_cache_source)
         if (
@@ -11442,7 +11542,11 @@ def _run_m6b_w2_diagnostic(
                 screen_result.get("samples") if isinstance(screen_result, Mapping) else None
             )
             if screen
-            else (_m6b_w2r_gate(measurements) if projected else _m6b_w2_gate(measurements))
+            else (
+                measurements["w13a"]["gate"]
+                if w13a_residuals is not None
+                else (_m6b_w2r_gate(measurements) if projected else _m6b_w2_gate(measurements))
+            )
         )
         if error is None
         else {
@@ -11730,6 +11834,241 @@ def _run_m6b_w7_s1_screen(
         )
     finally:
         del initial_solution
+
+
+def _run_m6b_w13a_diagnostic(
+    run_dir: Path,
+    beta1_factor_authority_dir: Path,
+    beta05_factor_authority_dir: Path,
+    wave_authority_dir: Path,
+    jit_cache_source: Path,
+    w0_authority_file: Path,
+    w5_compact_path: Path,
+    w5_raw_dir: Path,
+    w7_compact_path: Path,
+    w7_raw_dir: Path,
+    output: Path,
+    expected_source_sha: str,
+) -> int:
+    """Run the fixed beta pair without KSP, PDE, or field/RTA production."""
+
+    import gc
+    import time
+
+    import numpy as np
+
+    h2b = __import__("benchmarks.run_task037_extra_h2b", fromlist=["*"])
+    run_dir = Path(run_dir).resolve()
+    output = Path(output).resolve()
+    expected_paths = {
+        "beta1": (ROOT / M6B_W13A_BETA1_FACTOR_RELATIVE_PATH).resolve(),
+        "beta05": (ROOT / M6B_W13A_BETA05_FACTOR_RELATIVE_PATH).resolve(),
+        "wave": (ROOT / M6B_W13A_WAVE_RELATIVE_PATH).resolve(),
+        "jit": (ROOT / M6B_W13A_JIT_RELATIVE_PATH).resolve(),
+    }
+    supplied_paths = {
+        "beta1": Path(beta1_factor_authority_dir).resolve(),
+        "beta05": Path(beta05_factor_authority_dir).resolve(),
+        "wave": Path(wave_authority_dir).resolve(),
+        "jit": Path(jit_cache_source).resolve(),
+    }
+    if run_dir.exists() or output.exists():
+        raise FileExistsError("W13A refuses an existing output path")
+    if supplied_paths != expected_paths:
+        raise ValueError("W13A authority paths are not the fixed identities")
+    if not _m6b_w2_source_sha_valid(expected_source_sha):
+        raise ValueError("W13A expected source SHA is invalid")
+    source_start = h2b._light_source()
+    if not _m6b_w2_source_identity_valid(source_start, expected_source_sha):
+        raise ValueError("W13A source is not the expected clean source")
+    prediction = _m6b_w13a_predicted_live_set()
+    if prediction["gate"] is not True:
+        raise ValueError("W13A predicted live-set Gate failed before beta runs")
+
+    w5 = _m6b_w7_s1_load_w5_authority(w5_compact_path, w5_raw_dir)
+    w7 = _m6b_w9a_load_w7(w7_compact_path, w7_raw_dir)
+    residuals = {
+        "w5_iter200": np.asarray(w5["frozen_residual"], dtype=np.complex128),
+        "w7_cumulative400": np.asarray(w7["residual"], dtype=np.complex128),
+    }
+    residual_authority = {
+        "w5_iter200": {
+            "role": "frozen_W5_iter200_q_residual",
+            "compact": w5["compact"],
+            "raw_dir": w5["raw_dir"],
+            "artifact": w5["samples"]["200"]["residual"],
+        },
+        "w7_cumulative400": {
+            "role": "untouched_W7_cumulative400_target_residual",
+            "compact": w7["compact"],
+            "raw_dir": w7["raw_dir"],
+            "artifact": w7["residual_artifact"],
+        },
+    }
+    run_dir.mkdir(parents=True)
+    progress_path = run_dir / "m6b_w13a_progress.jsonl"
+    started = time.perf_counter()
+
+    def emit(event: str, **extra: Any) -> None:
+        payload = {
+            "schema": f"{M6B_W13A_SCHEMA}.progress.v1",
+            "phase": M6B_W13A_PHASE,
+            "event": event,
+            "elapsed_wall_seconds": float(time.perf_counter() - started),
+            **extra,
+        }
+        with progress_path.open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n")
+            stream.flush()
+        print(json.dumps(payload, sort_keys=True), flush=True)
+
+    emit("authority_validated", residual_roles=list(residuals))
+    beta_runs: dict[str, dict[str, Any]] = {}
+    lifecycle: list[dict[str, Any]] = []
+    errors: list[str] = []
+    for beta, key, factor_manifest_sha, factor_source_sha in (
+        (
+            1.0,
+            "beta1",
+            M6B_W2_FACTOR_MANIFEST_SHA256,
+            M6B_W2_RESIDUAL_SOURCE_SHA,
+        ),
+        (
+            0.5,
+            "beta05",
+            M6B_W3_BETA05_FACTOR_MANIFEST_SHA256,
+            M6B_W3_BETA05_FACTOR_SOURCE_SHA,
+        ),
+    ):
+        emit("beta_start", beta=beta, factor_store=key)
+        lifecycle.append({"beta": beta, "event": "shifted_store_loaded"})
+        child_dir = run_dir / key
+        beta_started = time.perf_counter()
+        try:
+            rc = _run_m6b_w2_diagnostic(
+                child_dir,
+                supplied_paths["beta1"] if beta == 1.0 else supplied_paths["beta05"],
+                supplied_paths["wave"],
+                supplied_paths["jit"],
+                expected_source_sha,
+                w0_authority_file,
+                projected=True,
+                shifted_beta=beta,
+                factor_manifest_sha256=factor_manifest_sha,
+                factor_source_sha=factor_source_sha,
+                w13a_residuals=residuals,
+            )
+            child_summary_path = child_dir / "m6b_w2r_summary.json"
+            child_summary = _read_json(child_summary_path)
+            child_measurement = child_summary.get("measurements", {}).get("w13a")
+            if (
+                rc != 0
+                or not _evidence_valid(child_summary)
+                or not isinstance(child_measurement, Mapping)
+                or child_measurement.get("gate", {}).get("pass") is not True
+            ):
+                raise RuntimeError(f"W13A {key} measurement did not close")
+            beta_runs[key] = {
+                "beta": beta,
+                "summary": _artifact(child_dir, "m6b_w2r_summary.json"),
+                "progress": _artifact(child_dir, "m6b_w2r_progress.jsonl"),
+                "factor_authority": child_summary["authority"],
+                "jit_cache": child_summary["jit_cache"],
+                "pc_audit": child_summary["pc_audit"],
+                "range_store_audit": child_summary["range_store_audit"],
+                "measurement": child_measurement,
+                "beta_wall_seconds": float(time.perf_counter() - beta_started),
+            }
+            emit(
+                "beta_complete",
+                beta=beta,
+                measurement_pass=True,
+                wall_seconds=beta_runs[key]["beta_wall_seconds"],
+            )
+        except Exception as exc:
+            errors.append(f"{key}:{type(exc).__name__}: {exc}")
+            break
+        finally:
+            lifecycle.append({"beta": beta, "event": "shifted_store_released"})
+            gc.collect()
+
+    source_end = h2b._light_source()
+    source_ok = _m6b_w2_source_identity_valid(source_end, expected_source_sha)
+    architecture = {
+        "fine_space": "uncondensed_fullspace",
+        "global_matrix": False,
+        "augmented_matrix": False,
+        "static_condensation": False,
+        "trace_slab_pc": False,
+        "slab_factors": 0,
+        "physical_ksp": False,
+        "pde": False,
+        "official_rta": False,
+    }
+    beta_checks = {
+        key: bool(value["measurement"]["gate"]["pass"])
+        for key, value in beta_runs.items()
+    }
+    checks = {
+        "source": source_ok,
+        "residual_authority": set(beta_runs) == {"beta1", "beta05"},
+        "fixed_betas": tuple(value["beta"] for value in beta_runs.values())
+        == M6B_W13A_BETAS,
+        "sequential_store_lifecycle": lifecycle
+        == [
+            {"beta": 1.0, "event": "shifted_store_loaded"},
+            {"beta": 1.0, "event": "shifted_store_released"},
+            {"beta": 0.5, "event": "shifted_store_loaded"},
+            {"beta": 0.5, "event": "shifted_store_released"},
+        ],
+        "prediction": bool(prediction["gate"]),
+        "architecture": all(value is False for value in (
+            architecture["global_matrix"],
+            architecture["augmented_matrix"],
+            architecture["static_condensation"],
+            architecture["trace_slab_pc"],
+            architecture["physical_ksp"],
+            architecture["pde"],
+            architecture["official_rta"],
+        )),
+        **beta_checks,
+    }
+    passed = bool(not errors and all(checks.values()))
+    if passed:
+        emit("summary_ready", classification="W13A_DIAGNOSTIC_COMPLETE")
+    result = {
+        "schema": M6B_W13A_SCHEMA,
+        "phase": M6B_W13A_PHASE,
+        "status": "diagnostic_complete" if passed else "gate_failed",
+        "classification": (
+            "W13A_DIAGNOSTIC_COMPLETE" if passed else "W13A_EXECUTION_OR_AUTHORITY_FAIL"
+        ),
+        "diagnostic_only": True,
+        "formal_pass": False,
+        "pde_pass": False,
+        "official_rta": False,
+        "scope": _m6b_w13a_scope(),
+        "predicted_live_set": prediction,
+        "source_at_start": source_start,
+        "source_at_end": source_end,
+        "expected_source_sha": expected_source_sha,
+        "residual_authority": residual_authority,
+        "beta_runs": beta_runs,
+        "factor_store_lifecycle": lifecycle,
+        "max_simultaneous_shifted_stores": 1,
+        "checks": checks,
+        "errors": errors,
+        "architecture": architecture,
+        "old_beta05_bare_pc": {
+            "status": "frozen_failure",
+            "reopened": False,
+            "meaning": "W13A measures projected-range composition only",
+        },
+        "progress": _artifact(run_dir, "m6b_w13a_progress.jsonl"),
+        "elapsed_wall_seconds": float(time.perf_counter() - started),
+    }
+    _write_json(output, _attach_evidence(result))
+    return 0 if passed else 1
 
 
 def _m6b_command(command: str, run_dir: Path) -> list[str]:
@@ -14415,6 +14754,21 @@ def _parser() -> argparse.ArgumentParser:
     w12.add_argument(
         "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
     )
+    w13a = sub.add_parser("m6b-w13a-diagnostic")
+    w13a.add_argument("--run-dir", required=True)
+    w13a.add_argument("--factor1-authority-dir", required=True)
+    w13a.add_argument("--factor05-authority-dir", required=True)
+    w13a.add_argument("--wave-authority-dir", required=True)
+    w13a.add_argument("--jit-cache-source", required=True)
+    w13a.add_argument("--w0-authority-file", required=True)
+    w13a.add_argument("--w5-compact", required=True)
+    w13a.add_argument("--w5-raw-dir", required=True)
+    w13a.add_argument("--w7-compact", required=True)
+    w13a.add_argument("--w7-raw-dir", required=True)
+    w13a.add_argument("--output", required=True)
+    w13a.add_argument(
+        "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
+    )
     return parser
 
 
@@ -14546,6 +14900,21 @@ def main(argv: Sequence[str] | None = None) -> int:
             Path(args.m3y_manifest).resolve(),
             Path(args.jit_cache_source).resolve(),
             Path(args.b0_jit_cache_source).resolve(),
+            args.expected_source_sha,
+        )
+    if args.command == "m6b-w13a-diagnostic":
+        return _run_m6b_w13a_diagnostic(
+            Path(args.run_dir).resolve(),
+            Path(args.factor1_authority_dir).resolve(),
+            Path(args.factor05_authority_dir).resolve(),
+            Path(args.wave_authority_dir).resolve(),
+            Path(args.jit_cache_source).resolve(),
+            Path(args.w0_authority_file).resolve(),
+            Path(args.w5_compact).resolve(),
+            Path(args.w5_raw_dir).resolve(),
+            Path(args.w7_compact).resolve(),
+            Path(args.w7_raw_dir).resolve(),
+            Path(args.output).resolve(),
             args.expected_source_sha,
         )
     run_dir = Path(args.run_dir).resolve()
