@@ -1,0 +1,69 @@
+schema_version = 1
+model_id = "task039_5nm_v3_1deg_s5"
+run_id = "task039_v3_2d_te_p6h5_direct_mpi1"
+comparison_group = "task039_v3_1deg_p6_s_m480"
+dimension = 2
+
+[geometry]
+geometry_kind = "euv_grating_2d"
+period_x_nm = 50.0
+air_height_nm = 130.0
+substrate_thickness_nm = 10.0
+grating_width_x_nm = 17.0
+grating_height_nm = 120.0
+
+[materials]
+n_air = [1.0, 0.0]
+mu_r = [1.0, 0.0]
+substrate_name = "Task39 5nm material"
+n_substrate = [0.99396854453, 0.00435380777]
+grating_name = "Task39 5nm material"
+n_grating = [0.99396854453, 0.00435380777]
+
+[incidence]
+wavelength_nm = 5.0
+grazing_angle_deg = 1.0
+polarization = "te"
+electric_amplitude = 1.0
+
+[discretization]
+nedelec_degree = 6
+visualization_degree = 6
+mesh_target_nm = 5.0
+mesh_cell_type = "quadrilateral"
+lock_near_field_template = true
+near_field_margin_x_nm = 5.0
+near_field_air_top_nm = 20.0
+near_field_sub_depth_nm = 10.0
+
+[boundary]
+use_floquet_x = true
+vertical_boundary = "dtn"
+scattering_background = "layered"
+dtn_order_policy = "auto_propagating"
+dtn_assembly = "explicit"
+use_pml = false
+
+[method]
+kind = "2d_port"
+constraint_backend = "manual"
+
+[solver]
+linear_solver = "direct"
+
+[execution]
+mpi_size = 1
+warning_memory_gib = 8.0
+terminate_memory_gib = 10.0
+timeout_seconds = 21600
+require_zero_swap = true
+
+[output]
+results_root = "results"
+unique_output = true
+export_fields = true
+export_diffraction_orders = true
+compute_power_metrics = true
+power_probe_num_points = 2048
+generate_png_plots = false
+diffraction_order_max_m = 64

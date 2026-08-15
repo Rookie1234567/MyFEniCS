@@ -374,8 +374,8 @@ FIELD_SPECS: Final = (
         "incidence.grazing_angle_deg",
         "float",
         "degree",
-        ("3d",),
-        "相对表面的掠射角",
+        _ANY_2D_3D,
+        "相对表面的掠射角；二维 TE 也用它与三维统一入射角",
         "incident_theta_deg = 90 - grazing_angle_deg",
         "1.0",
         constraints=(
@@ -415,7 +415,7 @@ FIELD_SPECS: Final = (
         "二维相对向下 y 轴的显式倾角；代码使用 kx=sin(theta), ky=-cos(theta)",
         "incident_angle_deg",
         "0.0",
-        required=True,
+        required=False,
         constraints=("finite; 2D convention only",),
     ),
     _f(
@@ -701,9 +701,10 @@ FIELD_SPECS: Final = (
         constraints=(
             "required only when vertical_boundary is dtn or dtn_port; 2D port maps "
             "to port_use_diffraction_orders; explicit 2D port accepts zero_order "
-            "or auto_propagating; TE with a 2D dtn boundary currently accepts only "
-            "zero_order; legacy manual order selection is internal because it mixed "
-            "output fields into PDE selection",
+            "or auto_propagating; ordinary TE with a 2D dtn boundary uses "
+            "zero_order, while the explicit Task39 V3 TE profile opts into "
+            "auto_propagating; legacy manual order selection is internal because "
+            "it mixed output fields into PDE selection",
         ),
     ),
     _f(

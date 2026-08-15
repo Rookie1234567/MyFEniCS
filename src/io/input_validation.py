@@ -250,11 +250,15 @@ TASK039_E7_TRACE_FAMILY_SHA256 = (
     "5fd8351050fb4849b87084de9465b218745805ecda7e4a83109bcd7a472aaedd"
 )
 _TASK039_MODEL_ID_PATTERNS = {
-    "full3d_direct": r"task039_5nm_full3d_direct",
+    "2d_port": r"task039_5nm_v3_1deg_s5",
+    "full3d_direct": r"task039_(?:5nm_full3d_direct|5nm_v3_1deg_s5_full3d)",
     "full3d_iterative": r"task039_5nm_full3d_iterative",
     "hybrid_direct": r"task039_5nm_hybrid_direct_m(120|240|480|960)",
     "hybrid_iterative": r"task039_5nm_hybrid_iterative_m(120|240|480|960)_candidate",
 }
+_TASK039_V3_2D_MODEL_ID = "task039_5nm_v3_1deg_s5"
+_TASK039_V3_3D_MODEL_ID = "task039_5nm_v3_1deg_s5_full3d"
+_TASK039_V3_2D_MESH_TARGETS = (5.0, 4.0, 3.0, 2.0, 1.5)
 
 
 def task039_model_id_matches(
@@ -273,6 +277,65 @@ def task039_model_id_matches(
     if str(method).startswith("hybrid_") and requested_modes is not None:
         return int(match.group(1)) == int(requested_modes)
     return True
+
+
+def task039_incidence_identity(config: Mapping[str, Any]) -> dict[str, Any]:
+    """Return the shared 1° angle/plane-wave identity for 2D and 3D.
+
+    A 2D TE scalar uses its out-of-plane field as the 3D S-polarized ``E_y``
+    component.  The two-dimensional vertical coordinate is the 3D z axis, so
+    both paths use the same ``theta = 90 - grazing`` convention.
+    """
+
+    incidence = config.get("incidence")
+    if not isinstance(incidence, Mapping):
+        raise ValueError("incidence identity requires an incidence mapping")
+    if "grazing_angle_deg" in incidence:
+        grazing = float(incidence["grazing_angle_deg"])
+    elif "tilt_from_downward_y_deg" in incidence:
+        grazing = 90.0 - float(incidence["tilt_from_downward_y_deg"])
+    else:
+        raise ValueError("incidence identity requires grazing or downward tilt")
+    theta = 90.0 - grazing
+    phi = float(incidence.get("azimuth_deg", 0.0))
+    theta_rad = np.deg2rad(theta)
+    phi_rad = np.deg2rad(phi)
+    return {
+        "grazing_angle_deg": grazing,
+        "theta_from_downward_axis_deg": theta,
+        "azimuth_deg": phi,
+        "direction_2d_xz": [float(np.sin(theta_rad)), float(-np.cos(theta_rad))],
+        "direction_3d_xyz": [
+            float(np.sin(theta_rad) * np.cos(phi_rad)),
+            float(np.sin(theta_rad) * np.sin(phi_rad)),
+            float(-np.cos(theta_rad)),
+        ],
+        "two_d_scalar_component": "E_out_of_plane",
+        "three_d_s_component": "E_y",
+        "field_component_identity": "2d_TE_scalar_to_3d_S_Ey",
+        "coordinate_mapping": "2d_(x,y)_to_3d_(x,z)",
+        "magnetic_field_mapping": {
+            "source_2d": (
+                "Hx_scaled=d_y(Ez)/i; Hy_scaled=-d_x(Ez)/i; "
+                "H_scaled=(Hx_scaled,Hy_scaled)"
+            ),
+            "source_3d": "H=(k_cross_E)/k0",
+            "H3D_x": "-H2D_x_scaled/k0",
+            "H3D_z": "-H2D_y_scaled/k0",
+        },
+        "incident_power_mapping": (
+            "P2D_weighted=P3D_weighted*k0/period_y_nm; "
+            "2D uses 0.5*Re(beta)*period_x and 3D uses "
+            "0.5*Re(beta/k0)*period_x*period_y"
+        ),
+    }
+
+
+def _task039_v3_identity_enabled(config: Mapping[str, Any]) -> bool:
+    return config.get("model_id") in {
+        _TASK039_V3_2D_MODEL_ID,
+        _TASK039_V3_3D_MODEL_ID,
+    }
 
 
 def _is_task039_5nm(config: Mapping[str, Any]) -> bool:
@@ -816,6 +879,143 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
     return errors
 
 
+def task039_v3_2d_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
+    """Validate the explicit V3 1° TE reference inputs only."""
+
+    if config.get("model_id") != _TASK039_V3_2D_MODEL_ID:
+        return [("model_id", f"V3 2D model_id must be {_TASK039_V3_2D_MODEL_ID!r}")]
+    expected = (
+        ("geometry", "geometry_kind", "euv_grating_2d"),
+        ("geometry", "period_x_nm", 50.0),
+        ("geometry", "air_height_nm", 130.0),
+        ("geometry", "substrate_thickness_nm", 10.0),
+        ("geometry", "grating_width_x_nm", 17.0),
+        ("geometry", "grating_height_nm", 120.0),
+        ("materials", "n_air", (1.0, 0.0)),
+        ("materials", "n_substrate", _TASK039_N),
+        ("materials", "n_grating", _TASK039_N),
+        ("materials", "substrate_name", "Task39 5nm material"),
+        ("materials", "grating_name", "Task39 5nm material"),
+        ("incidence", "wavelength_nm", 5.0),
+        ("incidence", "grazing_angle_deg", 1.0),
+        ("incidence", "polarization", "te"),
+        ("discretization", "nedelec_degree", 6),
+        ("discretization", "visualization_degree", 6),
+        ("discretization", "mesh_cell_type", "quadrilateral"),
+        ("boundary", "use_floquet_x", True),
+        ("boundary", "vertical_boundary", "dtn"),
+        ("boundary", "scattering_background", "layered"),
+        ("boundary", "dtn_order_policy", "auto_propagating"),
+        ("boundary", "dtn_assembly", "explicit"),
+        ("boundary", "use_pml", False),
+        ("method", "kind", "2d_port"),
+        ("method", "constraint_backend", "manual"),
+        ("solver", "linear_solver", "direct"),
+        ("execution", "mpi_size", 1),
+        ("execution", "require_zero_swap", True),
+        ("output", "export_fields", True),
+        ("output", "export_diffraction_orders", True),
+        ("output", "compute_power_metrics", True),
+    )
+    errors: list[tuple[str, str]] = []
+    for section, key, expected_value in expected:
+        if not _same_profile_value(config[section].get(key), expected_value):
+            errors.append((f"{section}.{key}", f"V3 2D TE requires {expected_value!r}"))
+    mesh_target_nm = config["discretization"].get("mesh_target_nm")
+    if not any(
+        isinstance(mesh_target_nm, (int, float))
+        and isclose(mesh_target_nm, target, rel_tol=0.0, abs_tol=1.0e-12)
+        for target in _TASK039_V3_2D_MESH_TARGETS
+    ):
+        errors.append(
+            ("discretization.mesh_target_nm", "V3 2D TE allows h=5,4,3,2,1.5 nm")
+        )
+    if "tilt_from_downward_y_deg" in config["incidence"]:
+        errors.append(
+            (
+                "incidence.tilt_from_downward_y_deg",
+                "V3 2D TE must use grazing_angle_deg for shared 1° identity",
+            )
+        )
+    if config["execution"].get("mpi_size") != 1:
+        errors.append(("execution.mpi_size", "V3 2D TE reference requires MPI1"))
+    return errors
+
+
+def task039_v3_2d_auto_dtn_order_count(config: Mapping[str, Any]) -> int:
+    """Return a conservative symmetric m bound containing both port media."""
+
+    if config.get("model_id") != _TASK039_V3_2D_MODEL_ID:
+        raise ValueError("V3 2D DtN order count requires the Task39 V3 model")
+    geometry = config["geometry"]
+    materials = config["materials"]
+    incidence = config["incidence"]
+    period = float(geometry["period_x_nm"])
+    wavelength = float(incidence["wavelength_nm"])
+    theta = np.deg2rad(90.0 - float(incidence["grazing_angle_deg"]))
+    k0 = 2.0 * np.pi / wavelength
+    n_air = _complex(materials["n_air"])
+    n_substrate = _complex(materials["n_substrate"])
+    kx_abs = abs(k0 * n_air * np.sin(theta))
+    medium_bound = max(abs(k0 * n_air), abs(k0 * n_substrate))
+    reciprocal = 2.0 * np.pi / period
+    return int(np.ceil((kx_abs + medium_bound) / reciprocal)) + 1
+
+
+def task039_v3_3d_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
+    """Validate the reserved 1° S-polarized, y-invariant 3D identity."""
+
+    expected = (
+        (None, "dimension", 3),
+        ("geometry", "geometry_kind", "rectangular_block_grating"),
+        ("geometry", "period_x_nm", 50.0),
+        ("geometry", "period_y_nm", 25.0),
+        ("geometry", "z_min_nm", -10.0),
+        ("geometry", "z_max_nm", 130.0),
+        ("geometry", "air_height_nm", 130.0),
+        ("geometry", "substrate_thickness_nm", 10.0),
+        ("geometry", "grating_width_x_nm", 17.0),
+        ("geometry", "grating_height_nm", 120.0),
+        ("geometry", "grating_width_y_nm", 25.0),
+        ("materials", "n_air", (1.0, 0.0)),
+        ("materials", "n_substrate", _TASK039_N),
+        ("materials", "n_grating", _TASK039_N),
+        ("incidence", "wavelength_nm", 5.0),
+        ("incidence", "grazing_angle_deg", 1.0),
+        ("incidence", "azimuth_deg", 0.0),
+        ("incidence", "polarization", "s"),
+        ("discretization", "nedelec_degree", 6),
+        ("boundary", "use_floquet_x", True),
+        ("boundary", "use_floquet_y", True),
+        ("boundary", "vertical_boundary", "dtn_port"),
+        ("boundary", "dtn_order_policy", "auto_propagating"),
+        ("boundary", "dtn_assembly", "auxiliary"),
+        ("boundary", "use_pml", False),
+        ("method", "kind", "full3d_direct"),
+        ("solver", "linear_solver", "direct"),
+        ("execution", "mpi_size", 8),
+    )
+    errors: list[tuple[str, str]] = []
+    for section, key, expected_value in expected:
+        actual = config[key] if section is None else config[section].get(key)
+        if not _same_profile_value(actual, expected_value):
+            path = key if section is None else f"{section}.{key}"
+            errors.append((path, f"V3 3D requires {expected_value!r}"))
+    mesh_target_nm = config["discretization"].get("mesh_target_nm")
+    if not any(
+        isinstance(mesh_target_nm, (int, float))
+        and isclose(float(mesh_target_nm), target, rel_tol=0.0, abs_tol=1.0e-12)
+        for target in (5.0, 4.5, 4.0)
+    ):
+        errors.append(
+            (
+                "discretization.mesh_target_nm",
+                "V3 3D direct allows h=5,4.5,4 nm",
+            )
+        )
+    return errors
+
+
 def task038_hybrid_iterative_profile_errors(
     config: Mapping[str, Any],
 ) -> list[tuple[str, str]]:
@@ -1005,6 +1205,21 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
             )
         if incidence["polarization"] not in {"tm", "te"}:
             raise _error("incidence.polarization", "2D allows only tm or te")
+        grazing = "grazing_angle_deg" in incidence
+        downward_tilt = "tilt_from_downward_y_deg" in incidence
+        if grazing == downward_tilt:
+            raise _error(
+                "incidence",
+                "2D inputs must provide exactly one of grazing_angle_deg or "
+                "tilt_from_downward_y_deg",
+            )
+        angle = (
+            incidence["grazing_angle_deg"]
+            if grazing
+            else incidence["tilt_from_downward_y_deg"]
+        )
+        if not 0.0 <= angle <= 90.0:
+            raise _error("incidence", "2D incident angle must be in [0, 90] degrees")
         if boundary.get("use_floquet_x") is not True:
             raise _error(
                 "boundary.use_floquet_x",
@@ -1048,6 +1263,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 if (
                     incidence["polarization"] == "te"
                     and boundary.get("dtn_order_policy") != "zero_order"
+                    and model_id != _TASK039_V3_2D_MODEL_ID
                 ):
                     raise _error(
                         "boundary.dtn_order_policy",
@@ -1068,6 +1284,11 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 )
         if solver["linear_solver"] != "direct":
             raise _error("solver.linear_solver", "2D public paths use direct")
+        if model_id == _TASK039_V3_2D_MODEL_ID:
+            profile_errors = task039_v3_2d_profile_errors(config)
+            if profile_errors:
+                path, message = profile_errors[0]
+                raise _error(path, message)
     else:
         if kind in {"2d_scattered", "2d_port"}:
             raise _error("method.kind", "3D inputs require a 3D method")
@@ -1135,7 +1356,11 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
         if kind == "full3d_direct" and solver["linear_solver"] != "direct":
             raise _error("solver.linear_solver", "full3d_direct requires direct")
         if kind == "full3d_direct" and _is_task039_candidate(config):
-            profile_errors = task039_profile_errors(config)
+            profile_errors = (
+                task039_v3_3d_profile_errors(config)
+                if model_id == _TASK039_V3_3D_MODEL_ID
+                else task039_profile_errors(config)
+            )
             if profile_errors:
                 path, message = profile_errors[0]
                 raise _error(path, message)
@@ -1396,7 +1621,11 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
         raise _error(
             "incidence.custom_polarization", "allowed only with polarization=custom"
         )
-    if dimension == 2 and not isfinite(incidence["tilt_from_downward_y_deg"]):
+    if (
+        dimension == 2
+        and "tilt_from_downward_y_deg" in incidence
+        and not isfinite(incidence["tilt_from_downward_y_deg"])
+    ):
         raise _error("incidence.tilt_from_downward_y_deg", "must be finite")
     if incidence["wavelength_nm"] <= 0.0:
         raise _error("incidence.wavelength_nm", "must be positive")
@@ -1748,7 +1977,11 @@ def simulation_config_2d_from_normalized(config: Mapping[str, Any]):
         grating_width=g.get("grating_width_x_nm", 0.0),
         grating_height=g.get("grating_height_nm", 0.0),
         lambda0=i["wavelength_nm"],
-        incident_angle_deg=i["tilt_from_downward_y_deg"],
+        incident_angle_deg=(
+            90.0 - i["grazing_angle_deg"]
+            if "grazing_angle_deg" in i
+            else i["tilt_from_downward_y_deg"]
+        ),
         n_air=_complex(m["n_air"]),
         n_substrate=(
             None if m.get("n_substrate") is None else _complex(m["n_substrate"])
@@ -1758,7 +1991,12 @@ def simulation_config_2d_from_normalized(config: Mapping[str, Any]):
         port_use_pml=pml if is_port else False,
         port_incident_amplitude=complex(i["electric_amplitude"], 0.0),
         incident_e0_v_per_m=i["electric_amplitude"],
-        port_dtn_order_count=0,
+        port_dtn_order_count=(
+            task039_v3_2d_auto_dtn_order_count(config)
+            if config.get("model_id") == _TASK039_V3_2D_MODEL_ID
+            and b.get("dtn_order_policy") == "auto_propagating"
+            else 0
+        ),
         port_dtn_assembly=b.get("dtn_assembly", "auxiliary"),
         port_use_diffraction_orders=b.get("dtn_order_policy") == "auto_propagating",
         unique_output=out["unique_output"],
@@ -1781,7 +2019,7 @@ def simulation_config_2d_from_normalized(config: Mapping[str, Any]):
 
 def _build_2d_config(config: Mapping[str, Any]) -> dict[str, Any]:
     cfg = simulation_config_2d_from_normalized(config)
-    return {
+    derived = {
         "internal": {"incident_theta_deg": cfg.incident_angle_deg},
         "k0": cfg.k0,
         "omega": cfg.omega,
@@ -1800,6 +2038,15 @@ def _build_2d_config(config: Mapping[str, Any]) -> dict[str, Any]:
             "eps_grating": _complex_json(cfg.eps_grating),
         },
     }
+    if _task039_v3_identity_enabled(config):
+        derived["angle_identity"] = task039_incidence_identity(config)
+    if config.get("model_id") == _TASK039_V3_2D_MODEL_ID:
+        derived["port_dtn_order_count"] = cfg.port_dtn_order_count
+        derived["port_dtn_order_policy"] = config["boundary"]["dtn_order_policy"]
+        material_provenance = task039_material_provenance(config)
+        if material_provenance is not None:
+            derived["material_provenance"] = material_provenance
+    return derived
 
 
 def simulation_config_3d_from_normalized(
@@ -1996,6 +2243,8 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
         "nedelec_trace_degree_resolved": trace_degree_resolved,
         "floquet_constraint_mode_requested": floquet_mode,
     }
+    if _task039_v3_identity_enabled(config):
+        derived["angle_identity"] = task039_incidence_identity(config)
     material_provenance = task039_material_provenance(config)
     if material_provenance is not None:
         derived["material_provenance"] = material_provenance
@@ -2071,6 +2320,10 @@ __all__ = [
     "task039_air_side_external_mode_inventory",
     "task039_dynamic_external_mode_inventory",
     "task039_material_provenance",
+    "task039_incidence_identity",
     "task039_model_id_matches",
     "task039_profile_errors",
+    "task039_v3_2d_auto_dtn_order_count",
+    "task039_v3_2d_profile_errors",
+    "task039_v3_3d_profile_errors",
 ]
