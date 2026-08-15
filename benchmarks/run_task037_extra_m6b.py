@@ -355,6 +355,14 @@ M6B_W9A_TARGET_RHO_LIMIT = 0.90
 M6B_W9A_CONTROL_RHO_LOWER = 1.0 - 1.0e-10
 M6B_W9A_CONTROL_RHO_UPPER = 1.0 + 1.0e-10
 M6B_W9A_CONTROL_CAPTURED_ENERGY_LIMIT = 2.0e-10
+M6B_W10A_CHECK_SCHEMA = "task037.extra.m6b.w10a.krylov-span.check.v1"
+M6B_W10A_PHASE = "w10a_krylov_span_recycle"
+M6B_W10A_COLUMNS = 201
+M6B_W10A_ROW_BLOCK = 4096
+M6B_W10A_BASIS_RELATIVE_PATH = "krylov_scratch/v_basis.bin"
+M6B_W10A_BASIS_BYTES = 558_947_232
+M6B_W10A_TARGET_RHO_LIMIT = 0.90
+M6B_W10A_CONTROL_RHO_LOWER = 1.0 - 1.0e-10
 M6B_W6A_EVENTS = (
     "authority_validated",
     "mesh_ready",
@@ -4487,6 +4495,256 @@ def _run_m6b_w9a_check(
         "pass": passed,
         "problems": sorted(set(numeric_gate["problems"] + ([] if source_ok else ["source"]))),
         "scope": {"algorithm": "fixed four-checkpoint recycle projection", "checkpoint_axis": "20/100/150/200", "action_calls": 0, "pde_calls": 0, "scalable_pc": False},
+        "elapsed_seconds": time.perf_counter() - started,
+    }
+    _write_json(output, _attach_evidence(result))
+    return 0 if passed else 1
+
+
+def _m6b_w10a_basis_authority(w5_raw_dir: Path, compact_record: Mapping[str, Any]) -> dict[str, Any]:
+    basis = (Path(w5_raw_dir).resolve() / M6B_W10A_BASIS_RELATIVE_PATH).resolve()
+    core = compact_record.get("screen", {}).get("core_audit") if isinstance(compact_record, Mapping) else None
+    basis_audit = core.get("v_basis") if isinstance(core, Mapping) else None
+    required = {
+        "rows": M6B_GLOBAL_ROWS,
+        "capacity": M6B_W10A_COLUMNS,
+        "written_count": M6B_W10A_COLUMNS,
+        "allocated_bytes": M6B_W10A_BASIS_BYTES,
+        "dtype": "complex128",
+        "path": str(basis),
+    }
+    if not isinstance(basis_audit, Mapping) or any(basis_audit.get(key) != value for key, value in required.items()):
+        raise ValueError("W10A compact v_basis audit is not closed")
+    artifact = _artifact(Path(w5_raw_dir).resolve(), M6B_W10A_BASIS_RELATIVE_PATH)
+    if artifact.get("present") is not True or artifact.get("bytes") != M6B_W10A_BASIS_BYTES:
+        raise ValueError("W10A v_basis scratch file differs")
+    stat = basis.stat()
+    return {
+        "path": str(basis),
+        "bytes": int(stat.st_size),
+        "sha256": artifact["sha256"],
+        "mode": stat.st_mode,
+        "mtime_ns": stat.st_mtime_ns,
+        "current_scratch_hash_bound": True,
+        "historical_producer_hash_available": False,
+        "compact_core_audit": dict(basis_audit),
+    }
+
+
+def _m6b_w10a_measurement_record(
+    core_measurement: Mapping[str, Any],
+    q_overlap_energy: float,
+    span: Any,
+    *,
+    allow_actionable: bool = True,
+) -> dict[str, Any]:
+    import numpy as np
+
+    result = {
+        key: float(core_measurement[key])
+        for key in (
+            "normal_closure",
+            "captured_energy",
+            "captured_energy_ratio",
+            "captured_energy_ratio_raw",
+            "rho_full",
+            "coefficient_norm",
+        )
+    }
+    result["finite"] = core_measurement["finite"] is True
+    result["q_overlap_energy_ratio"] = float(q_overlap_energy)
+    result["actionable_available"] = bool(allow_actionable)
+    if allow_actionable:
+        actionable = span.add_actionable_projection(core_measurement, q_overlap_energy)
+        result["captured_actionable_energy_ratio"] = float(actionable["captured_actionable_energy_ratio"])
+        result["rho_optimistic"] = float(actionable["rho_optimistic"])
+    result["finite"] = bool(result["finite"] and all(np.isfinite(value) for value in result.values()))
+    return result
+
+
+def _m6b_w10a_ratio_valid(value: Any) -> bool:
+    return _finite_number(value) and -1.0e-11 <= float(value) <= 1.0 + 1.0e-11
+
+
+def _m6b_w10a_numeric_gate(analysis: Mapping[str, Any], measurements: Mapping[str, Any], repeat_exact: bool) -> dict[str, Any]:
+    checks = {
+        "rank": analysis.get("rank") == M6B_W10A_COLUMNS,
+        "gram_hermitian": _finite_number(analysis.get("gram_hermitian_defect")) and analysis["gram_hermitian_defect"] <= 1.0e-11,
+        "gram_eigenvalues": (
+            analysis.get("gram_valid") is True
+            and _finite_number(analysis.get("eig_min"))
+            and _finite_number(analysis.get("eig_max"))
+            and _finite_number(analysis.get("negative_eigenvalue_limit"))
+            and analysis["eig_min"] >= -analysis["negative_eigenvalue_limit"]
+        ),
+        "finite_deterministic": analysis.get("finite") is True and repeat_exact,
+        "measurement_set": isinstance(measurements, Mapping) and set(measurements) == {"control_w5_iter200", "target_w7_cumulative400"},
+        "captured_ratios": False,
+        "projection_closure": False,
+        "r5_in_span": False,
+        "control_sanity": False,
+        "target_rho": False,
+    }
+    if checks["measurement_set"]:
+        control = measurements["control_w5_iter200"]
+        target = measurements["target_w7_cumulative400"]
+        values = (control, target)
+        checks["captured_ratios"] = all(
+            isinstance(item, Mapping)
+            and _m6b_w10a_ratio_valid(item.get("captured_energy_ratio"))
+            and _m6b_w10a_ratio_valid(item.get("captured_actionable_energy_ratio"))
+            for item in values
+        )
+        checks["projection_closure"] = all(
+            isinstance(item, Mapping)
+            and item.get("finite") is True
+            and _finite_number(item.get("normal_closure"))
+            and item["normal_closure"] <= 1.0e-11
+            for item in values
+        )
+        checks["r5_in_span"] = _finite_number(control.get("rho_full")) and control["rho_full"] <= 1.0e-10
+        checks["control_sanity"] = _finite_number(control.get("rho_optimistic")) and control["rho_optimistic"] >= M6B_W10A_CONTROL_RHO_LOWER
+        checks["target_rho"] = _finite_number(target.get("rho_optimistic")) and target["rho_optimistic"] <= M6B_W10A_TARGET_RHO_LIMIT
+    problems = sorted(name for name, passed in checks.items() if not passed)
+    return {"checks": checks, "pass": not problems, "problems": problems}
+
+
+def _run_m6b_w10a_check(
+    w5_raw_dir: Path,
+    w5_compact: Path,
+    w7_raw_dir: Path,
+    w7_compact: Path,
+    output: Path,
+    expected_source_sha: str,
+) -> int:
+    import time
+    import numpy as np
+
+    if output.exists():
+        raise FileExistsError(f"W10A output exists: {output}")
+    started = time.perf_counter()
+    h2b = __import__("benchmarks.run_task037_extra_h2b", fromlist=["*"])
+    source_start = h2b._light_source()
+    if not (_m6b_w6a_source_valid(source_start) and source_start.get("source_commit_full_sha") == expected_source_sha):
+        raise RuntimeError("W10A checker source is not clean or expected")
+    w5_authority = _m6b_w6a_w5_compact_authority()
+    if Path(w5_compact).resolve() != Path(w5_authority["path"]).resolve():
+        raise ValueError("W10A W5 compact path is not the frozen authority")
+    w5 = _m6b_w7_s1_load_w5_authority(w5_compact, w5_raw_dir)
+    basis = _m6b_w10a_basis_authority(w5_raw_dir, w5_authority["record"])
+    w7_authority = _m6b_w8a_w7_compact_authority(w7_compact)
+    w7_record = w7_authority["sample"]["artifacts"]["residual"]
+    w7_residual, w7_residual_artifact = _m6b_w9a_load_array(w7_raw_dir, w7_record, w7_record["path"])
+    residuals = {
+        "control_w5_iter200": w5["frozen_residual"],
+        "target_w7_cumulative400": w7_residual,
+    }
+    span = __import__("src.solvers.krylov_span_diagnostic", fromlist=["*"])
+    first = span.analyze_v_basis(
+        Path(basis["path"]), residuals, rows=M6B_GLOBAL_ROWS,
+        columns=M6B_W10A_COLUMNS, row_block=M6B_W10A_ROW_BLOCK,
+    )
+    q = w5["frozen_residual"] / np.linalg.norm(w5["frozen_residual"])
+    control_core = first["measurements"]["control_w5_iter200"]
+    control_span_ready = bool(
+        first.get("gram_valid") is True
+        and first.get("rank") == M6B_W10A_COLUMNS
+        and control_core.get("finite") is True
+        and _finite_number(control_core.get("normal_closure"))
+        and control_core.get("normal_closure") <= 1.0e-11
+        and _finite_number(control_core.get("rho_full"))
+        and control_core.get("rho_full") <= 1.0e-10
+    )
+    measurements = {}
+    for name in residuals:
+        measurements[name] = _m6b_w10a_measurement_record(
+            first["measurements"][name],
+            float(abs(np.vdot(q, residuals[name])) ** 2 / np.linalg.norm(residuals[name]) ** 2),
+            span,
+            allow_actionable=name == "control_w5_iter200" or control_span_ready,
+        )
+    repeat_measurements = {
+        name: span.project_from_gram(
+            first["gram_hermitian"],
+            first["h"][name],
+            float(np.linalg.norm(residuals[name])),
+            float(first["singular_values"][-1]),
+        )
+        for name in residuals
+    }
+    repeat_exact = bool(
+        all(
+            all(
+                first["measurements"][name].get(key) == repeat_measurements[name].get(key)
+                for key in ("finite", "normal_closure", "captured_energy_ratio", "rho_full", "coefficient_norm")
+            )
+            for name in residuals
+        )
+    )
+    numeric_gate = _m6b_w10a_numeric_gate(first, measurements, repeat_exact)
+    source_end = h2b._light_source()
+    source_ok = _m6b_w6a_source_valid(source_end) and source_end.get("source_commit_full_sha") == expected_source_sha
+    checks = dict(numeric_gate["checks"])
+    checks.update({"authority": True, "scratch": True, "source": source_ok})
+    passed = bool(numeric_gate["pass"] and source_ok)
+    classification = "W10A_QUALIFIED_FOR_MAPPING" if passed else "W10A_OPTIMISTIC_TARGET_RHO_FAIL" if checks["target_rho"] is False and all(checks[name] for name in ("rank", "gram_hermitian", "finite_deterministic", "measurement_set", "projection_closure", "r5_in_span", "control_sanity", "authority", "scratch", "source")) else "W10A_AUTHORITY_OR_NUMERIC_FAIL"
+    result = {
+        "schema": M6B_W10A_CHECK_SCHEMA,
+        "phase": M6B_W10A_PHASE,
+        "status": "diagnostic_complete" if passed else "gate_failed",
+        "classification": classification,
+        "diagnostic_only": True,
+        "w10a_pass": passed,
+        "qualified_for_operator_mapping": passed,
+        "formal_pass": False,
+        "pde_pass": False,
+        "official_rta": False,
+        "current_scratch_hash_bound": True,
+        "historical_producer_hash_available": False,
+        "expected_source_sha": expected_source_sha,
+        "source_at_start": source_start,
+        "source_at_end": source_end,
+        "authorities": {
+            "w5_compact": {"path": w5_authority["path"], "file_sha256": w5_authority["file_sha256"], "producer_source_sha": M6B_W6A_W5_SOURCE_SHA},
+            "w7_compact": {"path": str(Path(w7_compact).resolve()), "file_sha256": w7_authority["artifact"]["sha256"], "producer_source_sha": M6B_W8A_W7_SOURCE_SHA},
+            "w5_raw_dir": str(Path(w5_raw_dir).resolve()),
+            "w7_raw_dir": str(Path(w7_raw_dir).resolve()),
+        },
+        "basis_current": basis,
+        "w5_residual_artifact": w5["samples"]["200"]["residual"],
+        "w7_residual_artifact": w7_residual_artifact,
+        "analysis": {
+            "finite": first["finite"],
+            "rank": first["rank"],
+            "columns": first["columns"],
+            "singular_values": [float(value) for value in first["singular_values"]],
+            "rank_threshold": float(first["rank_threshold"]),
+            "condition_number": float(first["condition_number"]),
+            "gram_hermitian_defect": float(first["gram_hermitian_defect"]),
+            "eig_min": float(first["eig_min"]),
+            "eig_max": float(first["eig_max"]),
+            "negative_eigenvalue_limit": float(first["negative_eigenvalue_limit"]),
+            "gram_valid": first["gram_valid"],
+            "audit": first["audit"],
+            "pass": first["pass"],
+            "problems": first["problems"],
+        },
+        "measurements": measurements,
+        "repeat_exact": repeat_exact,
+        "numeric_gate": numeric_gate,
+        "checks": checks,
+        "problems": numeric_gate["problems"] + ([] if source_ok else ["source"]),
+        "limits": {"rank": M6B_W10A_COLUMNS, "normal_closure": 1.0e-11, "r5_full_rho": 1.0e-10, "control_rho_optimistic": M6B_W10A_CONTROL_RHO_LOWER, "target_rho_optimistic": M6B_W10A_TARGET_RHO_LIMIT},
+        "memory": {
+            "basis_memmap": True,
+            "basis_in_memory": False,
+            "retained_heap_basis_bytes": 0,
+            "mapped_file_bytes": basis["bytes"],
+            "stream_block_max_bytes": first["audit"]["row_block_bytes"],
+            "gram_bytes": first["audit"]["gram_bytes"],
+            "mapped_pages_count_toward_process_rss": True,
+        },
+        "scope": {"algorithm": "optimistic W5 V-span recycle upper bound", "basis_columns": M6B_W10A_COLUMNS, "row_block": M6B_W10A_ROW_BLOCK, "operator_mapping_available": False, "action_calls": 0, "ksp_calls": 0, "pde_calls": 0},
         "elapsed_seconds": time.perf_counter() - started,
     }
     _write_json(output, _attach_evidence(result))
@@ -12511,6 +12769,15 @@ def _parser() -> argparse.ArgumentParser:
     w9a.add_argument(
         "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
     )
+    w10a = sub.add_parser("m6b-w10a-check")
+    w10a.add_argument("--w5-raw-dir", required=True)
+    w10a.add_argument("--w5-compact", required=True)
+    w10a.add_argument("--w7-raw-dir", required=True)
+    w10a.add_argument("--w7-compact", required=True)
+    w10a.add_argument("--output", required=True)
+    w10a.add_argument(
+        "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
+    )
     return parser
 
 
@@ -12592,6 +12859,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.command == "m6b-w9a-check":
         return _run_m6b_w9a_check(
+            Path(args.w5_raw_dir).resolve(),
+            Path(args.w5_compact).resolve(),
+            Path(args.w7_raw_dir).resolve(),
+            Path(args.w7_compact).resolve(),
+            Path(args.output).resolve(),
+            args.expected_source_sha,
+        )
+    if args.command == "m6b-w10a-check":
+        return _run_m6b_w10a_check(
             Path(args.w5_raw_dir).resolve(),
             Path(args.w5_compact).resolve(),
             Path(args.w7_raw_dir).resolve(),
