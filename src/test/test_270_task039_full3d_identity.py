@@ -14,7 +14,7 @@ from benchmarks.canonical_vector_artifacts import (
     write_canonical_manifest,
     write_canonical_packet_shard,
 )
-from benchmarks.task039_full3d_identity import check_full3d_identity, main
+from benchmarks.task039_full3d_identity import check_full3d_identity, main, _load_run
 
 
 def _inventory() -> dict[str, object]:
@@ -278,6 +278,38 @@ def test_full3d_identity_positive_fixture(run_pair: tuple[Path, Path]) -> None:
     assert result["comparisons"]["selected_reference"]["H_A_per_m"]["pass"] is True
     assert result["comparisons"]["canonical"]["active_trace"]["pass"] is True
     assert result["comparisons"]["canonical"]["full_fe"]["pass"] is True
+
+
+def test_v3_1deg_profile_uses_dynamic_inventory_without_relaxing_legacy(
+    run_pair: tuple[Path, Path],
+) -> None:
+    direct, _iterative = run_pair
+    manifest_path = direct / "run_manifest.json"
+    manifest = _read(manifest_path)
+    manifest["model_id"] = "task039_5nm_v3_1deg_s5_full3d"
+    manifest["external_mode_inventory"]["keys"] = manifest["external_mode_inventory"][
+        "keys"
+    ][:-1]
+    _write(manifest_path, manifest)
+    numeric_path = direct / "numerical_output/run_summary.json"
+    numeric = _read(numeric_path)
+    numeric["incident_theta_deg"] = 89.0
+    numeric["mesh_target_size"] = 5.0
+    numeric["dtn_port_mode_count"] = 603
+    _write(numeric_path, numeric)
+    orders_path = direct / "numerical_output/dtn_port_diffraction_orders_3d.json"
+    orders = _read(orders_path)
+    orders["orders"] = orders["orders"][:-1]
+    _write(orders_path, orders)
+    loaded = _load_run(
+        direct,
+        "direct",
+        expected_mesh_target_size=5.0,
+        profile="v3_1deg",
+    )
+    assert loaded["profile"] == "v3_1deg"
+    assert loaded["manifest"]["model_id"] == "task039_5nm_v3_1deg_s5_full3d"
+    assert loaded["inventory"]["count"] == 603
 
 
 def _read(path: Path) -> dict[str, object]:

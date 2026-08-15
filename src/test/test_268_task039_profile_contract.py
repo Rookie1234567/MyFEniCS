@@ -50,7 +50,7 @@ TASK039_INPUTS = tuple(sorted(TASK039.glob("*.dat")))
 def test_task039_inputs_are_numeric_finite_profiles_and_share_physics():
     specs = [load_and_resolve(path) for path in TASK039_INPUTS]
 
-    assert len(specs) == 23
+    assert len(specs) == 25
     assert {spec.method["kind"] for spec in specs} == {
         "2d_port",
         "full3d_direct",
@@ -78,7 +78,18 @@ def test_task039_inputs_are_numeric_finite_profiles_and_share_physics():
     ]
     assert len({spec.physical_model_sha256 for spec in h10}) == 1
     assert {spec.method["kind"] for spec in grid} == {"full3d_direct"}
-    assert len({spec.physical_model_sha256 for spec in grid}) == 3
+    legacy_grid = [
+        spec
+        for spec in grid
+        if spec.identity["model_id"] == "task039_5nm_full3d_direct"
+    ]
+    v3_grid = [
+        spec
+        for spec in grid
+        if spec.identity["model_id"] == "task039_5nm_v3_1deg_s5_full3d"
+    ]
+    assert len({spec.physical_model_sha256 for spec in legacy_grid}) == 3
+    assert {spec.discretization["mesh_target_nm"] for spec in v3_grid} == {4.0, 5.0}
     h5_hybrid = next(
         spec
         for spec in specs
@@ -146,6 +157,13 @@ def test_task039_inputs_are_numeric_finite_profiles_and_share_physics():
             )
             continue
         assert spec.incidence["azimuth_deg"] == 0.0
+        if spec.identity["model_id"] == "task039_5nm_v3_1deg_s5_full3d":
+            assert spec.incidence["grazing_angle_deg"] == 1.0
+            assert spec.derived["internal"]["incident_theta_deg"] == 89.0
+            assert spec.derived["angle_identity"]["field_component_identity"] == (
+                "2d_TE_scalar_to_3d_S_Ey"
+            )
+            continue
         assert spec.incidence["grazing_angle_deg"] == 10.0
         assert spec.derived["internal"]["incident_theta_deg"] == 80.0
         assert spec.incidence["polarization"] == "s"

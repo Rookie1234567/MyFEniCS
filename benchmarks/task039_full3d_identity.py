@@ -119,7 +119,9 @@ def _key_sha(keys: Sequence[tuple[str, int, int, str]]) -> str:
     return hashlib.sha256(canonical_json_bytes([list(key) for key in keys])).hexdigest()
 
 
-def _parse_inventory(value: Any, label: str) -> dict[str, Any]:
+def _parse_inventory(
+    value: Any, label: str, expected_count: int | None = 604
+) -> dict[str, Any]:
     if not isinstance(value, Mapping):
         _fail(f"{label} external_mode_inventory is missing")
     inventory = dict(value)
@@ -129,8 +131,10 @@ def _parse_inventory(value: Any, label: str) -> dict[str, Any]:
     keys = tuple(
         _mode_key(item, f"{label}.keys[{i}]") for i, item in enumerate(raw_keys)
     )
-    if len(keys) != 604 or len(set(keys)) != 604:
-        _fail("external mode inventory must contain 604 unique keys")
+    if not keys or len(set(keys)) != len(keys):
+        _fail("external mode inventory must contain non-empty unique keys")
+    if expected_count is not None and len(keys) != expected_count:
+        _fail(f"external mode inventory must contain {expected_count} unique keys")
     return {
         "value": inventory,
         "keys": keys,
@@ -142,14 +146,18 @@ def _parse_inventory(value: Any, label: str) -> dict[str, Any]:
 
 
 def _inventory(
-    manifest: Mapping[str, Any], numeric: Mapping[str, Any]
+    manifest: Mapping[str, Any],
+    numeric: Mapping[str, Any],
+    expected_count: int | None = 604,
 ) -> dict[str, Any]:
     manifest_inventory = _parse_inventory(
-        manifest.get("external_mode_inventory"), "manifest"
+        manifest.get("external_mode_inventory"), "manifest", expected_count
     )
     numeric_value = numeric.get("external_mode_inventory")
     numeric_inventory = (
-        None if numeric_value is None else _parse_inventory(numeric_value, "numeric")
+        None
+        if numeric_value is None
+        else _parse_inventory(numeric_value, "numeric", expected_count)
     )
     exact: bool | str = (
         "not_applicable"
@@ -249,13 +257,17 @@ def _load_reference(numeric_dir: Path) -> dict[str, Any]:
 
 
 def _load_orders(
-    numeric_dir: Path, expected_keys: set[tuple[str, int, int, str]]
+    numeric_dir: Path,
+    expected_keys: set[tuple[str, int, int, str]],
+    expected_count: int | None = 604,
 ) -> dict[str, Any]:
     path = numeric_dir / "dtn_port_diffraction_orders_3d.json"
     payload = _json(path)
     rows = payload.get("orders")
-    if not isinstance(rows, list) or len(rows) != 604:
-        _fail("diffraction order artifact does not contain 604 rows")
+    if not isinstance(rows, list) or not rows:
+        _fail("diffraction order artifact does not contain non-empty rows")
+    if expected_count is not None and len(rows) != expected_count:
+        _fail(f"diffraction order artifact does not contain {expected_count} rows")
     by_key: dict[tuple[str, int, int, str], dict[str, Any]] = {}
     for index, row in enumerate(rows):
         if not isinstance(row, Mapping):
@@ -347,7 +359,13 @@ def _load_run(
     role: str,
     *,
     expected_mesh_target_size: float | None = 10.0,
+    profile: str = "legacy_10deg",
 ) -> dict[str, Any]:
+    if profile not in {"legacy_10deg", "v3_1deg"}:
+        _fail(f"unsupported Full3D identity profile: {profile}")
+    dynamic_inventory = profile == "v3_1deg"
+    if dynamic_inventory and role != "direct":
+        _fail("v3_1deg Full3D identity is direct-only")
     root = Path(run_dir).resolve()
     numeric_dir = root / "numerical_output"
     manifest_path, outer_path, numeric_path = (
@@ -370,7 +388,12 @@ def _load_run(
     _exact(numeric.get("official_result"), True, "numerical official_result")
     method = "full3d_direct" if role == "direct" else "full3d_iterative"
     _exact(manifest.get("method"), method, "manifest.method")
-    _exact(manifest.get("model_id"), f"task039_5nm_{method}", "manifest.model_id")
+    expected_model_id = (
+        "task039_5nm_v3_1deg_s5_full3d"
+        if dynamic_inventory
+        else f"task039_5nm_{method}"
+    )
+    _exact(manifest.get("model_id"), expected_model_id, "manifest.model_id")
     _exact(
         manifest.get("resolved_method_adapter"),
         "task038.full3d_direct" if role == "direct" else "task039.full3d_iterative",
@@ -392,18 +415,26 @@ def _load_run(
         "lambda0_nm": 5.0,
         "nedelec_degree": 6,
         "polarization_kind": "s",
-        "incident_theta_deg": 80.0,
+        "incident_theta_deg": 89.0 if dynamic_inventory else 80.0,
         "incident_phi_deg": 0.0,
         "stage4_full3d_assembly_backend_actual": "assembly_time_static_condensed",
         "stage4_dtn_order_policy": "auto_propagating",
-        "dtn_port_mode_count": 604,
     }
+    if not dynamic_inventory:
+        expected_numerical["dtn_port_mode_count"] = 604
     if expected_mesh_target_size is not None:
         expected_numerical["mesh_target_size"] = expected_mesh_target_size
     for key, expected in expected_numerical.items():
         _exact(numeric.get(key), expected, f"numerical.{key}")
-    inventory = _inventory(manifest, numeric)
-    orders = _load_orders(numeric_dir, set(inventory["keys"]))
+    expected_inventory_count = None if dynamic_inventory else 604
+    inventory = _inventory(manifest, numeric, expected_inventory_count)
+    if dynamic_inventory:
+        _exact(
+            numeric.get("dtn_port_mode_count"),
+            inventory["count"],
+            "numerical.dtn_port_mode_count",
+        )
+    orders = _load_orders(numeric_dir, set(inventory["keys"]), int(inventory["count"]))
     reference = _load_reference(numeric_dir)
     canonical = _load_canonical(numeric_dir, numeric, role)
     resource = outer.get("resource_authority")
@@ -423,6 +454,7 @@ def _load_run(
     }
     return {
         "root": root,
+        "profile": profile,
         "manifest": manifest,
         "numeric": numeric,
         "inventory": inventory,
