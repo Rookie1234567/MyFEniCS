@@ -741,7 +741,10 @@ def _raw_full3d(
 ) -> dict[str, Any]:
     from benchmarks.task039_full3d_identity import _load_run
 
-    raw = _load_run(run_dir, "direct", expected_mesh_target_size=None)
+    load_kwargs: dict[str, Any] = {"expected_mesh_target_size": None}
+    if expected_inventory_count == 600:
+        load_kwargs["profile"] = "v3_1deg"
+    raw = _load_run(run_dir, "direct", **load_kwargs)
     numeric = raw["numeric"]
     mesh_target_size = _finite(
         numeric.get("mesh_target_size"), "Full3D mesh_target_size"
