@@ -52,14 +52,14 @@ def test_w10a_streaming_projection_and_q_removed_actionable_formula(tmp_path):
         "dtype": "complex128",
         "layout": "C-order columns-contiguous",
         "row_block": 3,
-        "row_block_bytes": 192,
         "block_count": 2,
         "column_read_count": 8,
         "mmap": True,
         "basis_in_memory": False,
         "retained_heap_basis_bytes": 0,
         "mapped_file_bytes": 4 * 6 * 16,
-        "stream_block_max_bytes": 4 * 3 * 16,
+        "explicit_copied_block_bytes": 4 * 3 * 16,
+        "explicit_copied_block_scope": "row-block copy only; conjugate and BLAS temporaries excluded",
         "gram_bytes": 4 * 4 * 16,
     }
     assert np.array_equal(first["gram"], second["gram"])
@@ -75,7 +75,7 @@ def test_w10a_streaming_projection_and_q_removed_actionable_formula(tmp_path):
     assert first["measurements"]["control_w5_iter200"]["rho_full"] <= 1.0e-10
 
 
-def test_w10a_rank_file_layout_and_non_solver_scope_fail_closed(tmp_path):
+def test_w10a_rank_file_layout_and_non_solver_scope_fail_closed(tmp_path, monkeypatch):
     path, _ = _basis_fixture(tmp_path, deficient=True)
     values = np.ones(6, dtype=np.complex128)
     result = span.analyze_v_basis(
@@ -87,6 +87,16 @@ def test_w10a_rank_file_layout_and_non_solver_scope_fail_closed(tmp_path):
     )
     assert result["pass"] is False
     assert result["rank"] < 4
+    monkeypatch.setattr(span.np.linalg, "eigvalsh", lambda _gram: np.asarray([-1.0, 1.0, 2.0, 3.0]))
+    negative = span.analyze_v_basis(
+        path,
+        {"control_w5_iter200": values, "target_w7_cumulative400": values},
+        rows=6,
+        columns=4,
+        row_block=3,
+    )
+    assert negative["pass"] is False
+    assert negative["problems"] == ["negative_eigenvalue"]
     with pytest.raises(ValueError):
         span.analyze_v_basis(
             path,
@@ -99,6 +109,23 @@ def test_w10a_rank_file_layout_and_non_solver_scope_fail_closed(tmp_path):
     assert all(token not in source for token in ("dolfinx", "PETSc", "MPI", "build_m6b_outer_mat"))
     assert source.count("analyze_v_basis(") == 1
     assert "project_from_gram" in source
+
+    invalid_analysis = {
+        "rank": 0,
+        "gram_valid": False,
+        "gram_hermitian_defect": 0.0,
+        "eig_min": -1.0,
+        "eig_max": 1.0,
+        "negative_eigenvalue_limit": 1.0e-12,
+        "finite": True,
+    }
+    unavailable = {
+        "control_w5_iter200": {"available": False, "actionable_available": False, "finite": False},
+        "target_w7_cumulative400": {"available": False, "actionable_available": False, "finite": False},
+    }
+    gate = runner._m6b_w10a_numeric_gate(invalid_analysis, unavailable, False)
+    assert gate["pass"] is False
+    assert "target_rho" in gate["problems"]
 
 
 def test_w10a_scratch_hash_path_and_compact_audit_fail_closed(tmp_path, monkeypatch):
@@ -145,14 +172,37 @@ def test_w10a_parser_and_target_gate_do_not_trust_top_level_pass(tmp_path):
         ]
     )
     assert args.command == "m6b-w10a-check"
-    analysis = {"rank": 201, "gram_hermitian_defect": 0.0, "finite": True}
+    analysis = {
+        "rank": 201,
+        "gram_hermitian_defect": 0.0,
+        "gram_valid": True,
+        "eig_min": 0.5,
+        "eig_max": 1.0,
+        "negative_eigenvalue_limit": 1.0e-12,
+        "finite": True,
+    }
     measurements = {
-        "control_w5_iter200": {"finite": True, "normal_closure": 0.0, "rho_full": 0.0, "rho_optimistic": 1.0},
-        "target_w7_cumulative400": {"finite": True, "normal_closure": 0.0, "rho_full": 0.99, "rho_optimistic": 0.95, "pass": True},
+        "control_w5_iter200": {
+            "finite": True,
+            "normal_closure": 0.0,
+            "captured_energy_ratio": 1.0,
+            "captured_actionable_energy_ratio": 0.0,
+            "rho_full": 0.0,
+            "rho_optimistic": 1.0,
+        },
+        "target_w7_cumulative400": {
+            "finite": True,
+            "normal_closure": 0.0,
+            "captured_energy_ratio": 0.05,
+            "captured_actionable_energy_ratio": 0.05,
+            "rho_full": 0.99,
+            "rho_optimistic": 0.95,
+            "pass": True,
+        },
     }
     gate = runner._m6b_w10a_numeric_gate(analysis, measurements, True)
     assert gate["pass"] is False
-    assert "target_rho" in gate["problems"]
+    assert gate["problems"] == ["target_rho"]
 
 
 def test_w10a_captured_energy_range_is_fail_closed():
@@ -170,3 +220,25 @@ def test_w10a_captured_energy_range_is_fail_closed():
     measurement["captured_energy_ratio"] = 1.1
     with pytest.raises(ValueError):
         span.add_actionable_projection(measurement, 0.0)
+
+
+def test_w10a_invalid_projection_record_is_json_safe_and_not_actionable():
+    record = runner._m6b_w10a_measurement_record(
+        {
+            "finite": False,
+            "normal_closure": float("nan"),
+            "captured_energy": float("nan"),
+            "captured_energy_ratio": float("nan"),
+            "captured_energy_ratio_raw": float("nan"),
+            "rho_full": float("nan"),
+            "coefficient_norm": float("nan"),
+        },
+        0.0,
+        span,
+        allow_actionable=False,
+    )
+    assert record["finite"] is False
+    assert record["actionable_available"] is False
+    assert all(value is None for key, value in record.items() if key in {
+        "normal_closure", "captured_energy", "captured_energy_ratio", "rho_full", "coefficient_norm"
+    })

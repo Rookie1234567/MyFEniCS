@@ -4540,17 +4540,19 @@ def _m6b_w10a_measurement_record(
 ) -> dict[str, Any]:
     import numpy as np
 
+    scalar_keys = (
+        "normal_closure",
+        "captured_energy",
+        "captured_energy_ratio",
+        "captured_energy_ratio_raw",
+        "rho_full",
+        "coefficient_norm",
+    )
     result = {
-        key: float(core_measurement[key])
-        for key in (
-            "normal_closure",
-            "captured_energy",
-            "captured_energy_ratio",
-            "captured_energy_ratio_raw",
-            "rho_full",
-            "coefficient_norm",
-        )
+        key: float(core_measurement[key]) if _finite_number(core_measurement.get(key)) else None
+        for key in scalar_keys
     }
+    result["available"] = True
     result["finite"] = core_measurement["finite"] is True
     result["q_overlap_energy_ratio"] = float(q_overlap_energy)
     result["actionable_available"] = bool(allow_actionable)
@@ -4558,12 +4560,32 @@ def _m6b_w10a_measurement_record(
         actionable = span.add_actionable_projection(core_measurement, q_overlap_energy)
         result["captured_actionable_energy_ratio"] = float(actionable["captured_actionable_energy_ratio"])
         result["rho_optimistic"] = float(actionable["rho_optimistic"])
-    result["finite"] = bool(result["finite"] and all(np.isfinite(value) for value in result.values()))
+    result["finite"] = bool(
+        result["finite"]
+        and all(result[key] is not None for key in scalar_keys)
+        and np.isfinite(result["q_overlap_energy_ratio"])
+        and (
+            not allow_actionable
+            or (
+                np.isfinite(result["captured_actionable_energy_ratio"])
+                and np.isfinite(result["rho_optimistic"])
+            )
+        )
+    )
     return result
 
 
 def _m6b_w10a_ratio_valid(value: Any) -> bool:
     return _finite_number(value) and -1.0e-11 <= float(value) <= 1.0 + 1.0e-11
+
+
+def _m6b_w10a_unavailable_measurement(problem: str) -> dict[str, Any]:
+    return {
+        "available": False,
+        "actionable_available": False,
+        "finite": False,
+        "problems": [problem],
+    }
 
 
 def _m6b_w10a_numeric_gate(analysis: Mapping[str, Any], measurements: Mapping[str, Any], repeat_exact: bool) -> dict[str, Any]:
@@ -4645,40 +4667,47 @@ def _run_m6b_w10a_check(
         columns=M6B_W10A_COLUMNS, row_block=M6B_W10A_ROW_BLOCK,
     )
     q = w5["frozen_residual"] / np.linalg.norm(w5["frozen_residual"])
-    control_core = first["measurements"]["control_w5_iter200"]
+    core_measurements = first.get("measurements", {})
+    control_core = core_measurements.get("control_w5_iter200")
     control_span_ready = bool(
         first.get("gram_valid") is True
         and first.get("rank") == M6B_W10A_COLUMNS
+        and isinstance(control_core, Mapping)
         and control_core.get("finite") is True
         and _finite_number(control_core.get("normal_closure"))
-        and control_core.get("normal_closure") <= 1.0e-11
+        and control_core["normal_closure"] <= 1.0e-11
         and _finite_number(control_core.get("rho_full"))
-        and control_core.get("rho_full") <= 1.0e-10
+        and control_core["rho_full"] <= 1.0e-10
     )
     measurements = {}
     for name in residuals:
+        core_measurement = core_measurements.get(name)
+        if not isinstance(core_measurement, Mapping):
+            measurements[name] = _m6b_w10a_unavailable_measurement("projection_unavailable")
+            continue
+        q_overlap_energy = float(abs(np.vdot(q, residuals[name])) ** 2 / np.linalg.norm(residuals[name]) ** 2)
         measurements[name] = _m6b_w10a_measurement_record(
-            first["measurements"][name],
-            float(abs(np.vdot(q, residuals[name])) ** 2 / np.linalg.norm(residuals[name]) ** 2),
+            core_measurement,
+            q_overlap_energy,
             span,
-            allow_actionable=name == "control_w5_iter200" or control_span_ready,
+            allow_actionable=bool(control_span_ready and core_measurement.get("finite") is True),
         )
     repeat_measurements = {
         name: span.project_from_gram(
-            first["gram_hermitian"],
-            first["h"][name],
-            float(np.linalg.norm(residuals[name])),
-            float(first["singular_values"][-1]),
-        )
-        for name in residuals
-    }
+            first["gram_hermitian"], first["h"][name],
+            float(np.linalg.norm(residuals[name])), float(first["singular_values"][-1])
+        ) for name in residuals
+    } if first.get("gram_valid") is True and first.get("rank") == M6B_W10A_COLUMNS else {}
     repeat_exact = bool(
-        all(
+        set(core_measurements) == set(residuals)
+        and set(repeat_measurements) == set(residuals)
+        and all(
             all(
-                first["measurements"][name].get(key) == repeat_measurements[name].get(key)
+                core_measurements[name].get(key) == repeat_measurements[name].get(key)
                 for key in ("finite", "normal_closure", "captured_energy_ratio", "rho_full", "coefficient_norm")
             )
             for name in residuals
+            if isinstance(core_measurements.get(name), Mapping)
         )
     )
     numeric_gate = _m6b_w10a_numeric_gate(first, measurements, repeat_exact)
@@ -4687,7 +4716,14 @@ def _run_m6b_w10a_check(
     checks = dict(numeric_gate["checks"])
     checks.update({"authority": True, "scratch": True, "source": source_ok})
     passed = bool(numeric_gate["pass"] and source_ok)
-    classification = "W10A_QUALIFIED_FOR_MAPPING" if passed else "W10A_OPTIMISTIC_TARGET_RHO_FAIL" if checks["target_rho"] is False and all(checks[name] for name in ("rank", "gram_hermitian", "finite_deterministic", "measurement_set", "projection_closure", "r5_in_span", "control_sanity", "authority", "scratch", "source")) else "W10A_AUTHORITY_OR_NUMERIC_FAIL"
+    non_target_checks_pass = all(value for name, value in checks.items() if name != "target_rho")
+    classification = (
+        "W10A_QUALIFIED_FOR_MAPPING"
+        if passed
+        else "W10A_OPTIMISTIC_TARGET_RHO_FAIL"
+        if checks.get("target_rho") is False and non_target_checks_pass
+        else "W10A_AUTHORITY_OR_NUMERIC_FAIL"
+    )
     result = {
         "schema": M6B_W10A_CHECK_SCHEMA,
         "phase": M6B_W10A_PHASE,
@@ -4717,13 +4753,17 @@ def _run_m6b_w10a_check(
             "finite": first["finite"],
             "rank": first["rank"],
             "columns": first["columns"],
-            "singular_values": [float(value) for value in first["singular_values"]],
-            "rank_threshold": float(first["rank_threshold"]),
-            "condition_number": float(first["condition_number"]),
+            "singular_values": (
+                [float(value) for value in first["singular_values"]]
+                if all(_finite_number(value) for value in first["singular_values"])
+                else []
+            ),
+            "rank_threshold": float(first["rank_threshold"]) if _finite_number(first["rank_threshold"]) else None,
+            "condition_number": float(first["condition_number"]) if _finite_number(first["condition_number"]) else None,
             "gram_hermitian_defect": float(first["gram_hermitian_defect"]),
-            "eig_min": float(first["eig_min"]),
-            "eig_max": float(first["eig_max"]),
-            "negative_eigenvalue_limit": float(first["negative_eigenvalue_limit"]),
+            "eig_min": float(first["eig_min"]) if _finite_number(first["eig_min"]) else None,
+            "eig_max": float(first["eig_max"]) if _finite_number(first["eig_max"]) else None,
+            "negative_eigenvalue_limit": float(first["negative_eigenvalue_limit"]) if _finite_number(first["negative_eigenvalue_limit"]) else None,
             "gram_valid": first["gram_valid"],
             "audit": first["audit"],
             "pass": first["pass"],
@@ -4740,7 +4780,10 @@ def _run_m6b_w10a_check(
             "basis_in_memory": False,
             "retained_heap_basis_bytes": 0,
             "mapped_file_bytes": basis["bytes"],
-            "stream_block_max_bytes": first["audit"]["row_block_bytes"],
+            "explicit_copied_block_bytes": first["audit"]["explicit_copied_block_bytes"],
+            "explicit_copied_block_scope": first["audit"]["explicit_copied_block_scope"],
+            "conjugate_blas_temporaries_included": False,
+            "process_tree_peak_source": "external measurement; not measured by W10A",
             "gram_bytes": first["audit"]["gram_bytes"],
             "mapped_pages_count_toward_process_rss": True,
         },

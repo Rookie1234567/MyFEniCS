@@ -131,14 +131,14 @@ def analyze_v_basis(
         "dtype": "complex128",
         "layout": "C-order columns-contiguous",
         "row_block": row_block,
-        "row_block_bytes": columns * row_block * 16,
+        "explicit_copied_block_bytes": columns * row_block * 16,
+        "explicit_copied_block_scope": "row-block copy only; conjugate and BLAS temporaries excluded",
         "block_count": block_count,
         "column_read_count": column_read_count,
         "mmap": True,
         "basis_in_memory": False,
         "retained_heap_basis_bytes": 0,
         "mapped_file_bytes": int(expected_bytes),
-        "stream_block_max_bytes": columns * row_block * 16,
         "gram_bytes": int(gram.nbytes),
     }
     result: dict[str, Any] = {
