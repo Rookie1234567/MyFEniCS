@@ -8128,6 +8128,9 @@ def _m6b_w5_check_command(
         and source_ok(worker.get("source_at_end"))
     )
     screen = worker.get("screen") if isinstance(worker, Mapping) else None
+    screen_samples = (
+        screen.get("samples") if isinstance(screen, Mapping) else None
+    )
     screen_ok = _m6b_w5_screen_metadata_valid(screen)
     recompute = _m6b_checkpoint_recompute(
         raw_dir, screen.get("samples") if isinstance(screen, Mapping) else None
@@ -8773,18 +8776,16 @@ def _m6b_w7_s1_check_command(
             and initial_check.get("rho_absolute_error") <= 1.0e-12
         ),
     }
-    recompute = _m6b_checkpoint_recompute(
-        raw_dir, screen if isinstance(screen, Mapping) else None
-    )
+    recompute = _m6b_checkpoint_recompute(raw_dir, screen_samples)
     numeric = _m6b_w7_s1_numeric_gate(
-        screen,
+        screen_samples,
         recomputed_residuals=recompute.get("residuals")
         if isinstance(recompute, Mapping) and recompute.get("pass") is True
         else None,
     )
     execution_checks["checkpoint_recompute"] = recompute.get("pass") is True
     execution_checks["progress"] = _m6b_w5_progress_valid(
-        raw_dir / "m6b_w7_s1_progress.jsonl", screen
+        raw_dir / "m6b_w7_s1_progress.jsonl", screen_samples
     ).get("pass") is True
     jit = worker.get("jit_cache") if isinstance(worker, Mapping) else None
     jit_identity_ok = False
@@ -8817,9 +8818,17 @@ def _m6b_w7_s1_check_command(
             checker_source_end = checker_h2b._light_source()
         except (OSError, RuntimeError, TypeError, ValueError):
             checker_source_end = None
+    checker_source_sha = (
+        checker_source_start.get("source_commit_full_sha")
+        if isinstance(checker_source_start, Mapping)
+        else None
+    )
     execution_checks["checker_source"] = bool(
-        _m6b_w2_source_identity_valid(checker_source_start, expected_source_sha)
-        and _m6b_w2_source_identity_valid(checker_source_end, expected_source_sha)
+        isinstance(checker_source_sha, str)
+        and _m6b_w2_source_identity_valid(
+            checker_source_start, checker_source_sha
+        )
+        and _m6b_w2_source_identity_valid(checker_source_end, checker_source_sha)
     )
     execution_evidence_ok = all(execution_checks.values())
 
@@ -8831,14 +8840,35 @@ def _m6b_w7_s1_check_command(
         timeline_name="w7_s1_restart_disk_fgmres_screen_timeline.jsonl",
         expected_peak=None,
     )
+    reported_artifacts = (
+        watchdog.get("artifacts") if isinstance(watchdog, Mapping) else None
+    )
+    artifact_inventory = None
+    artifact_inventory_ok = False
+    if isinstance(reported_artifacts, Mapping):
+        raw_inventory = {
+            name: _artifact(raw_dir, name)
+            for name in M6B_W7_S1_RAW_ARTIFACT_NAMES
+        }
+        watchdog_inventory = {
+            name: reported_artifacts.get(name)
+            for name in M6B_W7_S1_WATCHDOG_ARTIFACT_NAMES
+        }
+        artifact_inventory = {
+            "raw": raw_inventory,
+            "watchdog": watchdog_inventory,
+        }
+        artifact_inventory_ok = bool(
+            reported_artifacts.get("worker_summary")
+            == raw_inventory["m6b_w7_s1_summary.json"]
+            and reported_artifacts.get("progress")
+            == raw_inventory["m6b_w7_s1_progress.jsonl"]
+            and _m6b_w7_s1_artifact_inventory_valid(
+                artifact_inventory, raw_dir, watchdog_dir
+            )
+        )
     resource_checks = {
-        "artifact_inventory": _m6b_w7_s1_artifact_inventory_valid(
-            watchdog.get("artifact_inventory")
-            if isinstance(watchdog, Mapping)
-            else None,
-            raw_dir,
-            watchdog_dir,
-        ),
+        "artifact_inventory": artifact_inventory_ok,
         "process": bool(
             isinstance(process, Mapping)
             and process.get("return_code") in (0, 1)
@@ -8924,9 +8954,7 @@ def _m6b_w7_s1_check_command(
         "raw_worker_artifact": _artifact(raw_dir, "m6b_w7_s1_summary.json"),
         "raw_progress_artifact": _artifact(raw_dir, "m6b_w7_s1_progress.jsonl"),
         "watchdog_artifact": _artifact(watchdog_dir, watchdog_path.name),
-        "artifact_inventory": watchdog.get("artifact_inventory")
-        if isinstance(watchdog, Mapping)
-        else None,
+        "artifact_inventory": artifact_inventory,
         "formal_pass": False,
         "w7_s1_pass": classification == "PASS",
         "pde_pass": False,
