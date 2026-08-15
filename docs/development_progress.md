@@ -2288,12 +2288,6 @@ Task031 的收益不是来自单一“神奇 PC”。solve 阶段不常驻 assem
 
 > Task031 在 clean MPI4 frozen target 上以 assembled-F-free public MPC form action、16 slabs overlap0.125 与 compact lifecycle 实现 h5/h3/h2 全部 true-residual + official-RTA 通过；h2 1977 步，external simultaneous / legacy internal 为 7.897675 / 8.176441 GiB，保守工程范围约 8.0–8.2 GiB，达到 `strong_memory_success_slow_but_memory_efficient`，但 solve 约 5.01x，ordinary default 未改变；Review V1 数值/内存通过，文档加固见 response_v1。
 
-# 47. Task037-extra W8–W12 证据收口
-
-W8–W12 将已有残差、Krylov 空间和固定 B0 trajectory 逐步作为离线或 action-only 诊断，目的是判断低内存修正方向是否值得进入下一轮 full PDE。W8B、W9A、W10A、W11A、W11B 和 W12 均保留真实负结果；W12 的 B0 residual `4.233006159940796e-09` 和 process-tree peak `1,116,065,792 B` 通过各自 Gate，但 q rho `0.8857084974811911 > 0.70`、target rho `0.9050305821821468 > 0.90`，所以分类为数值 range Gate 失败，而不是执行失败、timeout 或内存失败。full PDE、official field/RTA 和 direct-authority physics comparison 仍为 `not_run`。hash-bound 证据入口为 `benchmarks/cases/101_task37_extra_development/records/m6b_w8_w12_consolidated_closeout.json`；下一步 W13A 尚只做代码与 targeted tests，不启动 formal screen。
-
----
-
 # 47. Task035 Phase C/D：estimator 与 mesh-backend bake-off
 
 Review V3 接受 B1/B2 real-FE minimum Gate 后，Phase C/D 在同一执行分支连续完成。Phase C
@@ -2323,3 +2317,9 @@ phase_e_unlocked = false
 ```
 
 未运行 Phase E/F、目标 adaptive cycle、p4/h5 heavy 或 ordinary-default change。
+
+---
+
+# 48. Task037-extra W8–W12 证据收口
+
+W8–W12 将已有残差、Krylov 空间和固定 B0 trajectory 逐步作为离线或 action-only 诊断，目的是判断低内存修正方向是否值得进入下一轮 full PDE。W8B、W9A、W10A、W11A、W11B 和 W12 均保留真实负结果；W12 的 B0 residual `4.233006159940796e-09` 和 process-tree peak `1,116,065,792 B` 通过各自 Gate，但 q rho `0.8857084974811911 > 0.70`、target rho `0.9050305821821468 > 0.90`，所以分类为数值 range Gate 失败，而不是执行失败、timeout 或内存失败。full PDE、official field/RTA 和 direct-authority physics comparison 仍为 `not_run`。hash-bound 证据入口为 `benchmarks/cases/101_task37_extra_development/records/m6b_w8_w12_consolidated_closeout.json`；下一步 W13A 尚只做代码与 targeted tests，不启动 formal screen。
