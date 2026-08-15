@@ -28,6 +28,7 @@ from ..postprocessing.power_metrics import (
     compute_power_metrics,
     compute_te_dtn_port_power_metrics,
 )
+from ..postprocessing.te_reference import write_v3_2d_selected_fields
 from .solve_port_maxwell import (
     CompressedTraceBank,
     _add_compressed_trace_to_rhs,
@@ -618,6 +619,9 @@ def run_te_port_case(
                 "R_plus_T_port_minus_probe": dtn_port_power_metrics["R_plus_T"]
                 - power_metrics["R_plus_T"],
             }
+    v3_selected_fields = None
+    if cfg.case_name == "task039_5nm_v3_1deg_s5":
+        v3_selected_fields = write_v3_2d_selected_fields(cfg, E_total, out_dir)
 
     floquet_mismatch_total = (
         dof_trace_mismatch(E_total.x.array, constraints)
@@ -666,6 +670,8 @@ def run_te_port_case(
         "port_modes": port_modes,
         "te_field_model": "scalar Ez; physical electric field E=(0,0,Ez)",
     }
+    if v3_selected_fields is not None:
+        summary["v3_selected_fields"] = v3_selected_fields
     if solver_info["reduced_linear_residual"] is not None:
         log(f"reduced residual = {solver_info['reduced_linear_residual']:.3e}")
     log(f"max |E_inc| = {field_metrics['max_abs_E_inc']:.6e}")

@@ -27,6 +27,7 @@ from benchmarks.task039_memory_telemetry import (
     task039_h5_hybrid_direct_formal_profile,
     task039_h5_hybrid_iterative_formal_profile,
     task039_read_new_markers,
+    task039_v3_2d_formal_profile,
 )
 
 from src.io.execution_plan import (
@@ -394,6 +395,8 @@ def _run_worker(
         specification.as_jsonable()
     )
     formal_v2_h5 = formal_direct_v2_h5 or formal_iterative_v2_h5
+    formal_v3_2d = task039_v3_2d_formal_profile(specification.as_jsonable())
+    formal_telemetry = formal_v2_h5 or formal_v3_2d
     if task039_model_id_matches(method, model_id, requested_modes):
         task039_budget = _task039_memory_budget(execution)
         warning_limit = float(task039_budget["configured_warning_memory_gib"]) * 1024**3
@@ -514,7 +517,7 @@ def _run_worker(
 
     started = monotonic()
     stdout_path = run_directory / "worker_stdout.txt"
-    if formal_v2_h5:
+    if formal_telemetry:
         formal_samples_path.parent.mkdir(parents=True, exist_ok=True)
         formal_samples_path.unlink(missing_ok=True)
         formal_sample_stream = formal_samples_path.open("a", encoding="utf-8")
@@ -534,7 +537,7 @@ def _run_worker(
             )
             while True:
                 authority = sample_factory(process.pid)
-                if formal_v2_h5:
+                if formal_telemetry:
                     formal_written_sample_count += 1
                     formal_last_sample = _formal_sample(
                         authority, monotonic() - started
@@ -676,6 +679,17 @@ def _run_worker(
                 "worker_existing_memory_stages"
                 if formal_iterative_v2_h5
                 else "launcher_marker_alignment"
+            ),
+        }
+    if formal_v3_2d:
+        resource_authority["v3_2d_formal_telemetry"] = {
+            "process_tree_samples_path": str(formal_samples_path),
+            "sample_count": sample_count,
+            "process_tree_sample_count": formal_written_sample_count,
+            "stage_aligned_status": "not_applicable_2d_reference",
+            "sample_semantics": (
+                "launcher-owned process-tree RSS/PSS/USS/swap samples; "
+                "the V3 2D reference has no stage marker contract"
             ),
         }
     return {

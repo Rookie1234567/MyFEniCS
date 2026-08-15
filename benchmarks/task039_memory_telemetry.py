@@ -117,6 +117,34 @@ def task039_h5_hybrid_iterative_formal_profile(
     )
 
 
+def task039_v3_2d_formal_profile(payload: Mapping[str, Any]) -> bool:
+    """Return true only for the V3 1-degree TE reference inputs."""
+
+    method = payload.get("method")
+    discretization = payload.get("discretization")
+    execution = payload.get("execution")
+    identity = payload.get("identity", payload)
+    model_id = identity.get("model_id") if isinstance(identity, Mapping) else None
+    mesh_target = (
+        discretization.get("mesh_target_nm")
+        if isinstance(discretization, Mapping)
+        else None
+    )
+    return bool(
+        isinstance(method, Mapping)
+        and method.get("kind") == "2d_port"
+        and model_id == "task039_5nm_v3_1deg_s5"
+        and isinstance(execution, Mapping)
+        and execution.get("mpi_size") == 1
+        and isinstance(discretization, Mapping)
+        and any(
+            isinstance(mesh_target, (int, float))
+            and abs(float(mesh_target) - target) <= 1.0e-12
+            for target in (5.0, 4.0, 3.0, 2.0, 1.5)
+        )
+    )
+
+
 def task039_v2_h5_stage_event(
     stage: str,
     *,
@@ -388,6 +416,7 @@ __all__ = [
     "task039_h5_memory_object_ledger",
     "task039_read_new_markers",
     "task039_stage_target",
+    "task039_v3_2d_formal_profile",
     "task039_v2_h5_stage_name",
     "task039_v2_h5_stage_event",
     "task039_write_memory_object_ledger",
