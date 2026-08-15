@@ -69,24 +69,6 @@ W5 将 Krylov 基向量放到外部 scratch 文件，减少常驻进程内存；
 W5 compact checker 为 RC1 的预期负结果，记录在
 `benchmarks/cases/101_task37_extra_development/records/m6b_w5_disk_fgmres_screen.json`。full time-harmonic PDE、official RTA、direct-authority physics comparison 和最终 PDE `<2,000,000,000 B` 目标本轮均未运行。用户已授权继续针对具体收敛问题研究，但没有放宽 2GB、swap=0、true residual 或物理一致性 Gate；冻结的 W5 raw/watchdog 和更早负结果均保持不变。
 
-## W7-S1 固定重启 continuation：正式数值负结果
-
-W7-S1 从冻结 W5 iter200 的解开始，把它作为新的初始猜测，然后重新建立一个最多 200 步的 disk-backed right FGMRES cycle；它不是把旧 Krylov 基扩展到 400 维。固定 local checkpoint 20/100/150/200 分别对应累计 identity 220/300/350/400。
-
-| local / cumulative | true relative residual | 结论 |
-| ---: | ---: | --- |
-| 20 / 220 | `0.12661146396748116` | 记录 |
-| 100 / 300 | `0.1253957238823895` | 记录 |
-| 150 / 350 | `0.12438973880901087` | 记录 |
-| 200 / 400 | `0.12141751388827249` | `<=0.08` 失败 |
-| 350→400 improvement | `0.023894454230681927`（约 2.389%） | 诊断项，低于 15% |
-
-独立 checker 分类为 `NUMERIC_FAIL`，但 `execution_evidence_ok=true`、`resource_evidence_ok=true`；唯一 hard numeric problem 是 cumulative400 residual。进程树峰值 `1,611,878,400 B`、swap `0`、进程已清理。预测 live set `1,666,871,296 B` 是 derived/not measured；外存 Krylov scratch 是磁盘占用，不能当作 RSS 或 PDE 通过。
-
-W7-S1 compact：`benchmarks/cases/101_task37_extra_development/records/m6b_w7_s1_restart_disk_fgmres_screen.json`，file SHA `3fcabe2dbc753017158b7f587f025a73a4e5f2eb5b7539d264cd3984846a192d`，embedded evidence `6c92da32f39e4a82ab8cffc851a437e5adb804fa62ebffc13d4068d3c83b9f6b`。producer source 为 `7febc1e3aeb52613d098fd2aadede3b288c69b5b`，checker source 为 `5e72e45673b05dac3c2c15c7c7e1b7fb4dfdee39`；旧 W5/W6 负结果及 W7 run1/run2 受控失败保持不变。
-
-本轮仍未运行 full PDE、official RTA、field/direct-authority physics comparison 或最终 PDE `<2,000,000,000 B` Gate；没有放宽 residual、swap、内存或物理一致性要求。
-
 ## W6B-S0 固定多阶基的离线诊断
 
 W6B-S0 只读取 W6A 的 390 列 `AZ` 磁盘 scratch 和四个冻结 W5 residual，比较旧 75 列与固定追加的 `n=0, m=-7..-1` 列集合。它没有重新生成 FE 函数、调用 physical/DtN action、运行 KSP 或 PDE；因此这里只能说明残差与已生成列空间的关系，不能称为 formal W6A Gate 或 PDE 结果。
@@ -104,3 +86,21 @@ W6A 正式数值 Gate 已经给出 `rho390@200=0.9764446942793935`、相对改�
 
 compact 证据为
 `benchmarks/cases/101_task37_extra_development/records/m6b_w6b_s0_5c34906_spectral_diagnostic.json`，file SHA `1a4e34e4f50d633986ef68c88222edab3a4f3bb1d247033a3389e98cc4be2a90`，embedded evidence `333d2dfb0822b21d24fc97ec0b7dc63325179051d14a7c977a674944acecf280`。W6B raw 和 watchdog 只读绑定，旧 W5/W6A 负结果保持不变；full PDE、field/RTA、direct comparison 和最终 PDE 内存目标仍未运行。
+
+## W7-S1 固定重启 continuation：正式数值负结果
+
+W7-S1 从冻结 W5 iter200 的解开始，把它作为新的初始猜测，然后重新建立一个最多 200 步的 disk-backed right FGMRES cycle；它不是把旧 Krylov 基扩展到 400 维。固定 local checkpoint 20/100/150/200 分别对应累计 identity 220/300/350/400。
+
+| local / cumulative | true relative residual | 结论 |
+| ---: | ---: | --- |
+| 20 / 220 | `0.12661146396748116` | 记录 |
+| 100 / 300 | `0.1253957238823895` | 记录 |
+| 150 / 350 | `0.12438973880901087` | 记录 |
+| 200 / 400 | `0.12141751388827249` | `<=0.08` 失败 |
+| 350→400 improvement | `0.023894454230681927`（约 2.389%） | 诊断项，低于 15% |
+
+独立 checker 分类为 `NUMERIC_FAIL`，但 `execution_evidence_ok=true`、`resource_evidence_ok=true`；唯一 hard numeric problem 是 cumulative400 residual。进程树峰值 `1,611,878,400 B`、swap `0`、进程已清理。预测 live set `1,666,871,296 B` 是 derived/not measured；外存 Krylov scratch 是磁盘占用，不能当作 RSS 或 PDE 通过。
+
+W7-S1 compact：`benchmarks/cases/101_task37_extra_development/records/m6b_w7_s1_restart_disk_fgmres_screen.json`，file SHA `3fcabe2dbc753017158b7f587f025a73a4e5f2eb5b7539d264cd3984846a192d`，embedded evidence `6c92da32f39e4a82ab8cffc851a437e5adb804fa62ebffc13d4068d3c83b9f6b`。producer source 为 `7febc1e3aeb52613d098fd2aadede3b288c69b5b`，checker source 为 `5e72e45673b05dac3c2c15c7c7e1b7fb4dfdee39`；旧 W5/W6 负结果及 W7 run1/run2 受控失败保持不变。
+
+本轮仍未运行 full PDE、official RTA、field/direct-authority physics comparison 或最终 PDE `<2,000,000,000 B` Gate；没有放宽 residual、swap、内存或物理一致性要求。
