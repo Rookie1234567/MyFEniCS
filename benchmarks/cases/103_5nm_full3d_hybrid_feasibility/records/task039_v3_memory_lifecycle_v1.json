@@ -1,0 +1,199 @@
+{
+  "schema_version": "task039.v3-6-memory-lifecycle.v1",
+  "record_id": "task039_v3_memory_lifecycle_v1",
+  "classification": "TASK039_V3_MEMORY_LIFECYCLE_PARTIAL_LOCAL_RESOLUTION",
+  "source_identity": {
+    "parser_source_commit_sha": "e30a26080ab1f1ae814e949351e962aeaf591dd8",
+    "branch": "codex/20260812-task39-5nm-hybrid-0p7nm-feasibility",
+    "historical_10deg_p6h5_hybrid_direct": {
+      "run_root": "results/task039_5nm_hybrid_direct_m480/task039_5nm_hybrid_direct_p6h5_mpi8__hybrid_direct__mpi8__M480/20260814T113034.312872Z",
+      "source_sha": "e58dfc6cc8d01c39e83f20cafdb52669809d50a9",
+      "input_sha256": "576e2631615330565e28eef6637264e4fdd539a558157405f252ae230f084fa4",
+      "resolved_config_sha256": "c367a4ee9f8a459dce64ba1dd38235e1cd6e4d65893031e884777cbddbe11a60",
+      "physical_model_sha256": "e35907c72ab97069d9ab66958fd00787f98dea08dce1aa6f64c053b7bda46cdb",
+      "outer_run_summary_sha256": "753a2e92184d1a978a537bf380ff40e2993b762161727d3277263515c09a8a02",
+      "numerical_run_summary_sha256": "9773ab62ed209c7d2faf98f82b688eee449fb0cfe38871d04afa9c0f7a924ea1",
+      "memory_stages_sha256": "b856bb44300c6716e35baadfb8aec0dbd566d7a8c6d8df51b68eb59f879ce20a",
+      "process_tree_samples_sha256": "cd2df1b8d00e88283f1f893efe2e080899604934a2410b5873aee7fe58c7f37b",
+      "memory_object_ledger_sha256": "2292ef233c9594592a6188b7f76646ad982fe0075a33e4d3c33e7094becbd948",
+      "compact_anchor": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v2_h5_hybrid_full3d_same_grid_v1.json",
+      "compact_anchor_sha256": "73ec0f6332866bd4bbdec50188fe18db87780761e1f9dd60c920203c6998a654"
+    },
+    "current_1deg_p6h5_hybrid_direct": {
+      "run_root": "results/task039_5nm_v3_1deg_s5_hybrid_direct_m480/task039_v3_hybrid_direct_p6h5_m480_mpi8__hybrid_direct__mpi8__M480/20260815T111156.797076Z",
+      "source_sha": "5bfab734a9ca053b69fa1f3f20d907aacbf8b07f",
+      "input_sha256": "fc51536fefa7341a5264266a95fc56ba79d0b1056a2d819323bfdb51f3568e85",
+      "resolved_config_sha256": "078d89d05d6108ed7e8ac563faa9d23ff93ed8d91650b3d7f9ffa27d8b320828",
+      "run_manifest_sha256": "4a8ab8efb81f3494adc543ff2713b4bd4fed95de27b4b62d7d602e11cdf0acc1",
+      "physical_model_sha256": "0462c9806f1eb0c525c3ab50fcd71e212c6d05337de49c76e7946a336ccd576d",
+      "outer_run_summary_sha256": "cbda1181ca152264c80722f8b3d041b84bd7eb1fd63460fdaee37a3a0e57cbc3",
+      "numerical_run_summary_sha256": "f908b4263e5e8015dba55b8f0c0ea6dbd4102157e93c2a568e41d21b8a536066",
+      "memory_stages_sha256": "1d14655fd599d6b49e2032d7ccfaaed1f99a3c396c86047f352338e3ecaebc8b",
+      "process_tree_samples_sha256": "c0db00f278dd43e41436cb1fc4e728d389712e4579adc41273cece4c3b72cb96",
+      "memory_object_ledger_sha256": "d8e83fe350b79ae263394a42047c1989bcf085cb19e796921311b9c2f62f1a04"
+    },
+    "full3d_h5_resource_anchor": {
+      "run_root": "results/task039_5nm_v3_1deg_s5_full3d/task039_v3_3d_p6h5_full3d_direct_mpi8__full3d_direct__mpi8__Mna/20260815T055152.423656Z",
+      "source_sha": "5872cda24e47c750d654fa7b06d81057af5bf9fc",
+      "physical_model_sha256": "0462c9806f1eb0c525c3ab50fcd71e212c6d05337de49c76e7946a336ccd576d",
+      "outer_run_summary_sha256": "44f57be46207232dad99ac66d09325104f4f9996d4d445a635265b17a2030586",
+      "numerical_run_summary_sha256": "b12bb053b54b4494550cbacdb89d99a22373a3173be9c5ef02b7fc043a3bc13a",
+      "compact_anchor": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v3_3d_full3d_convergence_v1.json",
+      "compact_anchor_sha256": "9b5f0af9ebf12739935df5bc89f4a1f935c65e29bdfa3c43b98b4d4928e1721c"
+    }
+  },
+  "evidence": {
+    "parser": "benchmarks.task039_memory_telemetry.task039_parse_memory_lifecycle",
+    "historical_discovery": "correct p6/h5/M480 root and all three telemetry files are readable in the canonical clone",
+    "timebase": "relative monotonic elapsed seconds; stage markers aligned to process-tree samples",
+    "units": "bytes; MiB=bytes/2^20; GiB=bytes/2^30; decimal GB=bytes/1e9",
+    "historical_telemetry": {
+      "stage_count": 18,
+      "ordered_unique": true,
+      "sample_count": 8968,
+      "valid_sample_count": 8968,
+      "invalid_sample_count": 0,
+      "smaps_attempted": 8968,
+      "smaps_complete": 8964,
+      "elapsed_first_seconds": 0.004958940000506118,
+      "telemetry_span_seconds": 3560.9153867349996,
+      "monotonic": true,
+      "poll_interval_seconds": 0.25,
+      "collision_stages": ["mesh_spaces_ready", "qep_matrices_ready", "canonical_traces_ready", "projection_matrices_ready", "traction_matrices_ready", "hybrid_augmented_matrix_ready", "mumps_numeric_factor_ready", "modal_qep_temporaries_released"]
+    },
+    "current_telemetry": {
+      "stage_count": 18,
+      "ordered_unique": true,
+      "sample_count": 8842,
+      "valid_sample_count": 8842,
+      "invalid_sample_count": 0,
+      "smaps_attempted": 8842,
+      "smaps_complete": 8837,
+      "elapsed_first_seconds": 0.004988082000636496,
+      "telemetry_span_seconds": 3773.4715124369977,
+      "monotonic": true,
+      "poll_interval_seconds": 0.25,
+      "collision_stages": ["mesh_spaces_ready", "qep_matrices_ready", "canonical_traces_ready", "projection_matrices_ready", "traction_matrices_ready", "hybrid_augmented_matrix_ready", "mumps_numeric_factor_ready", "modal_qep_temporaries_released"]
+    }
+  },
+  "measurements": {
+    "historical_10deg_p6h5_hybrid_direct": {
+      "rss_mib": 86744.54296875,
+      "pss_mib": 85040.2392578125,
+      "uss_mib": 84748.19921875,
+      "rss_gib": 84.71146774291992,
+      "swap_mib": 0.0,
+      "telemetry_span_seconds": 3560.9153867349996,
+      "solver_elapsed_seconds": "not_available",
+      "peak_stage": "field_reconstruction_peak",
+      "peak_stage_rss_mib": 86744.54296875,
+      "classification": "measured_process_tree_global_and_stage_peak"
+    },
+    "current_1deg_p6h5_hybrid_direct": {
+      "rss_mib": 87064.125,
+      "pss_mib": 85404.1533203125,
+      "uss_mib": 85125.4296875,
+      "rss_gib": 85.0235595703125,
+      "swap_mib": 0.0,
+      "telemetry_span_seconds": 3773.4715124369977,
+      "solver_elapsed_seconds": "not_available",
+      "peak_stage": "field_reconstruction_peak",
+      "peak_stage_rss_mib": 87064.125,
+      "classification": "measured_process_tree_global_and_stage_peak"
+    },
+    "full3d_h5": {
+      "rss_mib": 96151.16796875,
+      "pss_mib": 94117.4697265625,
+      "uss_mib": 93793.1796875,
+      "rss_gib": 93.89762878417969,
+      "swap_mib": 0.0,
+      "classification": "measured_global_peak_from_v3_compact_anchor"
+    }
+  },
+  "stage_summary": {
+    "historical_key_stages": {
+      "selected_biorthogonal_bases_ready": {"status": "measured", "peak_rss_mib": 83836.828125, "peak_pss_mib": 82692.39453125, "peak_uss_mib": 82493.078125},
+      "mumps_analysis_ready_when_available": {"status": "measured", "peak_rss_mib": 86430.71484375, "peak_pss_mib": 84990.013671875, "peak_uss_mib": 84747.48046875},
+      "solution_ready": {"status": "measured", "peak_rss_mib": 86452.0, "peak_pss_mib": 84990.5517578125, "peak_uss_mib": 84747.55859375},
+      "field_reconstruction_peak": {"status": "measured", "peak_rss_mib": 86744.54296875, "peak_pss_mib": 85040.2392578125, "peak_uss_mib": 84748.19921875},
+      "selected_bases_fraction_of_peak": 0.96648,
+      "selected_bases_to_mumps_analysis_delta_rss_mib": 2593.88671875,
+      "mumps_analysis_to_field_peak_delta_rss_mib": 313.828125,
+      "modal_qep_temporaries_released": {"status": "not_available_by_collision", "entry_rss_mib": 31068.6640625, "after_destroy": true},
+      "final_cleanup": {"status": "measured", "peak_rss_mib": 31068.6640625, "peak_pss_mib": 29411.8818359375, "peak_uss_mib": 29119.80859375}
+    },
+    "current_key_stages": {
+      "selected_biorthogonal_bases_ready": {"status": "measured", "peak_rss_mib": 83918.9765625, "peak_pss_mib": 82817.931640625, "peak_uss_mib": 82631.9140625},
+      "mumps_analysis_ready_when_available": {"status": "measured", "peak_rss_mib": 86751.1640625, "peak_pss_mib": 85353.9033203125, "peak_uss_mib": 85124.6328125},
+      "solution_ready": {"status": "measured", "peak_rss_mib": 86754.47265625, "peak_pss_mib": 85354.416015625, "peak_uss_mib": 85124.76171875},
+      "field_reconstruction_peak": {"status": "measured", "peak_rss_mib": 87064.125, "peak_pss_mib": 85404.1533203125, "peak_uss_mib": 85125.4296875},
+      "selected_bases_fraction_of_peak": 0.963875,
+      "selected_bases_to_mumps_analysis_delta_rss_mib": 2832.1875,
+      "mumps_analysis_to_field_peak_delta_rss_mib": 312.9609375,
+      "modal_qep_temporaries_released": {"status": "not_available_by_collision", "entry_rss_mib": 37090.43359375, "after_destroy": true},
+      "final_cleanup": {"status": "measured", "peak_rss_mib": 37090.43359375, "peak_pss_mib": "not_available", "peak_uss_mib": "not_available"}
+    }
+  },
+  "derived": {
+    "historical_to_current_rss": {
+      "formula": "(current_1deg_rss_mib - historical_10deg_rss_mib) / historical_10deg_rss_mib",
+      "absolute_delta_mib": 319.58203125,
+      "relative_delta": 0.003684174477,
+      "relative_delta_percent": 0.368417447729,
+      "classification": "derived_from_two_measured_p6h5_process_tree_peaks"
+    },
+    "current_hybrid_vs_full3d_rss": {
+      "formula": "(full3d_h5_rss_mib - current_1deg_hybrid_rss_mib) / full3d_h5_rss_mib",
+      "absolute_saving_mib": 9087.04296875,
+      "absolute_saving_gib": 8.876995086669922,
+      "saving_fraction": 0.094507879215,
+      "saving_percent": 9.450787921477,
+      "classification": "derived_from_two_measured_global_peaks"
+    },
+    "iterative_memory_target": {
+      "baseline": "current 1-degree Hybrid direct RSS",
+      "formula": "0.8 * 87064.125 MiB",
+      "target_rss_mib": 69651.3,
+      "target_rss_gib": 68.01884765625,
+      "additional_reduction_needed_mib": 17412.825,
+      "additional_reduction_needed_gib": 17.004711914062,
+      "status": "not_evaluated; no iterative qualification run in V3-6",
+      "classification": "derived_target_not_measured"
+    },
+    "late_release_observation": {
+      "current_1deg_final_cleanup_rss_drop_mib": 49973.69140625,
+      "historical_10deg_final_cleanup_rss_drop_mib": 55675.87890625,
+      "classification": "measured_rss_retention_diagnostic_not_object_causality",
+      "interpretation": "large late RSS release is real, but occurs after the existing peak and therefore does not lower the measured peak"
+    }
+  },
+  "attribution": {
+    "M-A_explicit_lifecycle_release": {
+      "status": "priority_candidate_not_implemented_in_V3-6",
+      "evidence": "selected_biorthogonal_bases_ready already accounts for 96.3875% of the current 1-degree peak and 96.648% of the historical 10-degree peak; measured RSS then grows by 2832.19/2593.89 MiB to MUMPS analysis and by only 312.96/313.83 MiB to field peak. This is a measurement-based priority signal, not object-level causal decomposition",
+      "next_step": "after selected bases form, measure and release EPS/ST/KSP, QEP matrices, raw/unselected candidates, and other no-longer-needed full-mode temporaries; do not assume the full observed gap is reclaimable"
+    },
+    "M-B_qep_solve_process_split": {"status": "not_run", "reason": "no process split was implemented or tested in this offline phase"},
+    "M-C_streaming_PT_assembly": {"status": "not_run", "reason": "the target 68.01884765625 GiB is already exceeded at selected bases, before the later coupling stages; streaming P/T is therefore not the first candidate, without claiming it cannot help"},
+    "safe_taxonomy": "UNATTRIBUTED_RUNTIME_OR_ALLOCATOR_HIGH_WATER",
+    "lifecycle_overlap": "hypothesis_not_established",
+    "allocator_measurement": "not_available"
+  },
+  "gates": {
+    "historical_telemetry_files": "pass",
+    "current_telemetry_files": "pass",
+    "both_stage_order_and_sample_clock": "pass",
+    "stage_local_resolution": "partial; same-anchor intervals are explicitly not_available",
+    "allocator_high_water": "not_available; RSS retention only",
+    "V3_6_attribution": "partial",
+    "PDE_or_MPI_started": false
+  },
+  "provenance": {
+    "object_bytes_are_not_added_to_process_tree_peaks": true,
+    "metric_peaks_are_independent": true,
+    "raw_artifacts": "ignored and not committed",
+    "review_scope": "V3-6 offline memory lifecycle evidence only",
+    "next_review_gate": "stop before V3-7"
+    ,"telemetry_span_not_solver_elapsed": true
+  }
+}
