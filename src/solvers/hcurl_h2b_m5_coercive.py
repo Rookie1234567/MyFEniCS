@@ -410,15 +410,15 @@ def solve_m5_b0_fixed(
     max_it: int,
     operator_context: M5B0MatPythonContext | None = None,
 ) -> dict[str, Any]:
-    """Solve one fixed 20- or 100-step B0 cycle and audit its true residual.
+    """Solve one fixed 20-, 100-, or 200-step B0 cycle and audit its true residual.
 
     This is the narrow continuation hook for W11A.  The existing M5 screen
     keeps its original checkpoints and default behavior; this helper only
-    exposes a final solution for the predeclared Q1 escalation.
+    exposes a final solution for the predeclared Q1 escalation or W11B.
     """
 
-    if max_it not in (20, 100):
-        raise ValueError("W11A B0 solve max_it must be 20 or 100")
+    if max_it not in (20, 100, 200):
+        raise ValueError("B0 solve max_it must be one of fixed 20, 100, or 200")
     if rhs.getComm().getSize() != 1:
         raise ValueError("W11A B0 solve is fixed to MPI1")
     rows = int(rhs.getSize())
@@ -454,7 +454,7 @@ def solve_m5_b0_fixed(
         true_residual = float(np.linalg.norm(residual_values) / rhs_norm)
         if not np.isfinite(true_residual):
             raise FloatingPointError("W11A B0 true residual is non-finite")
-        return {
+        result = {
             "max_it": int(max_it),
             "iterations": int(ksp.getIterationNumber()),
             "converged_reason": int(ksp.getConvergedReason()),
@@ -473,6 +473,9 @@ def solve_m5_b0_fixed(
             "rtol": 0.0,
             "atol": 0.0,
         }
+        if max_it == 200:
+            result.update({"ksp_type": "fgmres", "initial_solution": "zero_start"})
+        return result
     finally:
         ksp.destroy()
         solution.destroy()

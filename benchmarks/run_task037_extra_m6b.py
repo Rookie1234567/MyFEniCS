@@ -413,6 +413,11 @@ M6B_W11A_B0_JIT_FILE_NAMES = (
     "libffcx_forms_f923c8b68cb5c67ea2df49cae4ee8265a28adb11.cpython-312-x86_64-linux-gnu.so",
     "libffcx_forms_f923c8b68cb5c67ea2df49cae4ee8265a28adb11.o",
 )
+M6B_W11B_SCHEMA = "task037.extra.m6b.w11b.fixed-200-exact-proxy.v1"
+M6B_W11B_PHASE = "w11b_fixed_200_exact_proxy"
+M6B_W11B_FIXED_MAX_IT = 200
+M6B_W11B_PROGRESS_FILENAME = "m6b_w11b_progress.jsonl"
+M6B_W11B_SUMMARY_FILENAME = "m6b_w11b_summary.json"
 M6B_W6A_EVENTS = (
     "authority_validated",
     "mesh_ready",
@@ -4788,6 +4793,47 @@ def _m6b_w11a_predicted_live_set() -> dict[str, Any]:
     }
 
 
+def _m6b_w11b_scope() -> dict[str, Any]:
+    return {
+        "schema": M6B_W11B_SCHEMA,
+        "phase": M6B_W11B_PHASE,
+        "solver": "fixed_200_exact_proxy",
+        "beta": 0.0,
+        "shifted_pc_used": False,
+        "warm_precompiled_union": True,
+        "jit_union_file_count": M6B_W11A_UNION_JIT_FILE_COUNT,
+        "runtime_compile_allowed": False,
+        "formal_compiler_descendants_must_be_empty": True,
+        "fine_space": "uncondensed_fullspace",
+        "operator": "M6B physical volume action + matrix-free DtN80",
+        "b0": "M4Y packed B0 PC, fixed right FGMRES restart20 max_it200",
+        "q_source": "frozen_W5_iter200_full_explicit_residual_normalized",
+        "target_source": "untouched_W7_cumulative400_full_explicit_residual",
+        "target_used_for_construction": False,
+        "global_matrix_materialized": False,
+        "augmented_matrix_materialized": False,
+        "static_condensation": False,
+        "trace_slab_pc_used": False,
+        "physical_ksp_used": False,
+        "pde_used": False,
+        "official_rta": False,
+        "parameter_scan": False,
+        "resource_limits": {
+            "predicted_live_set_bytes": M6B_W11A_PREDICTED_LIVE_SET_LIMIT_BYTES,
+            "formal_process_peak_bytes": M6B_W11A_FORMAL_RSS_LIMIT_BYTES,
+            "watchdog_rss_bytes": M6B_W11A_WATCHDOG_RSS_LIMIT_BYTES,
+            "swap_bytes": M6B_SWAP_LIMIT_BYTES,
+            "timeout_seconds": M6B_W11A_TIMEOUT_SECONDS,
+        },
+    }
+
+
+def _m6b_w11b_predicted_live_set() -> dict[str, Any]:
+    prediction = _m6b_w11a_predicted_live_set()
+    prediction["basis"] = prediction["basis"].replace("W11A", "W11B")
+    return prediction
+
+
 def _m6b_w11a_load_authorities(
     w5_compact: Path,
     w5_raw_dir: Path,
@@ -4907,6 +4953,126 @@ def _m6b_w11a_finalize_status(
     )
 
 
+def _m6b_w11b_finalize_status(
+    core_result: Mapping[str, Any] | None,
+    error: str | None,
+    jit_cache_final_error: str | None,
+) -> tuple[str, str, dict[str, Any], bool, list[str]]:
+    execution_ok = error is None and jit_cache_final_error is None
+    if core_result is None:
+        return (
+            "gate_failed",
+            "W11B_EXECUTION_FAIL",
+            {
+                "authority_or_runtime": False,
+                "jit_cache": jit_cache_final_error is None,
+                "execution": False,
+            },
+            False,
+            ["authority_or_runtime"],
+        )
+    checks = dict(core_result["checks"])
+    checks["jit_cache"] = jit_cache_final_error is None
+    checks["execution"] = execution_ok
+    problems = list(core_result["problems"])
+    if not execution_ok:
+        if "execution" not in problems:
+            problems.append("execution")
+        return (
+            "gate_failed",
+            "W11B_EXECUTION_FAIL_AFTER_NUMERIC",
+            checks,
+            False,
+            problems,
+        )
+    return (
+        core_result["status"],
+        core_result["classification"],
+        checks,
+        all(checks.values()),
+        problems,
+    )
+
+
+def _m6b_w11b_write_candidate_vectors(
+    run_dir: Path, vectors: Mapping[str, Any]
+) -> dict[str, Any]:
+    import numpy as np
+
+    filenames = {
+        "preimage": "w11b_q1_200_preimage.npy",
+        "physical_image": "w11b_q1_200_physical_image.npy",
+    }
+    if not Path(run_dir).is_dir() or set(vectors) != set(filenames):
+        raise ValueError("W11B candidate vector directory or payload is invalid")
+    written: list[Path] = []
+    records: dict[str, Any] = {}
+    try:
+        for role, filename in filenames.items():
+            value = np.asarray(vectors[role])
+            if (
+                value.dtype != np.dtype(np.complex128)
+                or value.ndim != 1
+                or not value.flags.c_contiguous
+                or not np.all(np.isfinite(value))
+            ):
+                raise ValueError(f"W11B candidate {role} is invalid")
+            path = Path(run_dir) / filename
+            if path.exists():
+                raise FileExistsError(f"W11B candidate already exists: {path}")
+            array_sha256 = _m6b_w2_array_sha256(value)
+            written.append(path)
+            with path.open("wb") as stream:
+                np.save(stream, value, allow_pickle=False)
+            artifact = _artifact(Path(run_dir), filename)
+            if artifact.get("present") is not True or artifact.get("bytes", 0) <= 0:
+                raise OSError(f"W11B candidate write is incomplete: {path}")
+            records[role] = {
+                "role": role,
+                "path": str(path.resolve()),
+                "bytes": int(artifact["bytes"]),
+                "dtype": str(value.dtype),
+                "shape": list(value.shape),
+                "array_sha256": array_sha256,
+                "file_sha256": artifact["sha256"],
+            }
+    except (OSError, KeyError, TypeError, ValueError):
+        for path in written:
+            path.unlink(missing_ok=True)
+        raise
+    return records
+
+
+def _m6b_w11b_promote_candidate_vectors(
+    run_dir: Path,
+    core_result: dict[str, Any] | None,
+    *,
+    error: str | None,
+    jit_cache_final_error: str | None,
+    lifecycle_ok: bool,
+) -> dict[str, Any] | None:
+    """Promote W11B vectors only after every final execution check passes."""
+
+    if core_result is None:
+        return None
+    candidate_vectors = core_result.pop("_candidate_vectors", None)
+    promote = (
+        core_result.get("classification") == "W11B_PASS"
+        and error is None
+        and jit_cache_final_error is None
+        and lifecycle_ok
+        and bool(core_result.get("checks"))
+        and all(core_result["checks"].values())
+    )
+    if not promote:
+        return None
+    if not isinstance(candidate_vectors, Mapping):
+        raise RuntimeError("W11B passing core did not retain candidate vectors")
+    records = _m6b_w11b_write_candidate_vectors(run_dir, candidate_vectors)
+    core_result["candidate_artifacts"] = records
+    return records
+
+
 def _run_m6b_w11a_diagnostic(
     run_dir: Path,
     w5_compact: Path,
@@ -4917,8 +5083,22 @@ def _run_m6b_w11a_diagnostic(
     jit_cache_source: Path,
     b0_jit_cache_source: Path,
     expected_source_sha: str,
+    *,
+    mode: str = "w11a",
 ) -> int:
-    """Run the fixed W11A one-vector diagnostic without a physical solve."""
+    """Run the fixed W11A/W11B one-vector diagnostic without a PDE solve."""
+
+    if mode not in {"w11a", "w11b"}:
+        raise ValueError("W11 diagnostic mode is not fixed")
+    is_w11b = mode == "w11b"
+    result_schema = M6B_W11B_SCHEMA if is_w11b else M6B_W11A_SCHEMA
+    result_phase = M6B_W11B_PHASE if is_w11b else M6B_W11A_PHASE
+    progress_filename = (
+        M6B_W11B_PROGRESS_FILENAME if is_w11b else "m6b_w11a_progress.jsonl"
+    )
+    summary_filename = (
+        M6B_W11B_SUMMARY_FILENAME if is_w11b else "m6b_w11a_summary.json"
+    )
 
     import gc
     import time
@@ -4955,6 +5135,7 @@ def _run_m6b_w11a_diagnostic(
     )
     from src.solvers.persistent_residual_one_vector import (
         run_persistent_residual_diagnostic,
+        run_w11b_fixed_200_exact_proxy,
         validate_w11a_architecture,
     )
 
@@ -5011,7 +5192,7 @@ def _run_m6b_w11a_diagnostic(
         w7_raw_dir,
         expected_source_sha,
     )
-    predicted = _m6b_w11a_predicted_live_set()
+    predicted = _m6b_w11b_predicted_live_set() if is_w11b else _m6b_w11a_predicted_live_set()
     if predicted["gate"] is not True:
         raise ValueError("W11A predicted live set exceeds the fixed limit")
 
@@ -5030,14 +5211,16 @@ def _run_m6b_w11a_diagnostic(
         )
     )
 
-    progress_path = run_dir / "m6b_w11a_progress.jsonl"
-    summary_path = run_dir / "m6b_w11a_summary.json"
+    progress_path = run_dir / progress_filename
+    summary_path = run_dir / summary_filename
     started = time.perf_counter()
     architecture: dict[str, Any] = {}
     action_audit: dict[str, Any] = {
         "b0_instances": [],
         "physical_instances": [],
     }
+    if is_w11b:
+        action_audit["lifecycle_events"] = []
     p6: dict[str, Any] | None = None
     core_result: dict[str, Any] | None = None
     error: str | None = None
@@ -5048,11 +5231,13 @@ def _run_m6b_w11a_diagnostic(
     physical_call_count = 0
     b0_pc_apply_count = 0
     jit_cache_final_error: str | None = None
+    candidate_artifacts: dict[str, Any] | None = None
+    lifecycle_ok = False
 
     def emit(event: str, **fields: Any) -> None:
         payload = {
-            "schema": f"{M6B_W11A_SCHEMA}.progress.v1",
-            "phase": M6B_W11A_PHASE,
+            "schema": f"{result_schema}.progress.v1",
+            "phase": result_phase,
             "event": event,
             "elapsed_wall_seconds": float(time.perf_counter() - started),
             **fields,
@@ -5076,6 +5261,9 @@ def _run_m6b_w11a_diagnostic(
 
     def release_b0() -> None:
         nonlocal b0_action, b0_pc, b0_matrix, b0_source_vec, store
+        had_b0 = any(
+            item is not None for item in (b0_action, b0_pc, b0_matrix, b0_source_vec, store)
+        )
         record_b0_stage()
         if b0_matrix is not None:
             b0_matrix.destroy()
@@ -5088,6 +5276,8 @@ def _run_m6b_w11a_diagnostic(
             b0_action = None
         b0_pc = None
         store = None
+        if is_w11b and had_b0:
+            action_audit["lifecycle_events"].append("b0_released")
 
     def record_physical_stage() -> None:
         if outer_bridge is None:
@@ -5105,6 +5295,10 @@ def _run_m6b_w11a_diagnostic(
     def release_physical() -> None:
         nonlocal physical_action, dtn_action, outer_mat, outer_context
         nonlocal outer_bridge, template
+        had_physical = any(
+            item is not None
+            for item in (physical_action, dtn_action, outer_mat, outer_context, outer_bridge, template)
+        )
         record_physical_stage()
         if outer_bridge is not None:
             outer_bridge.destroy()
@@ -5124,6 +5318,8 @@ def _run_m6b_w11a_diagnostic(
         if physical_action is not None:
             physical_action.destroy()
             physical_action = None
+        if is_w11b and had_physical:
+            action_audit["lifecycle_events"].append("physical_released")
 
     def ensure_physical_action() -> None:
         nonlocal physical_action, dtn_action, outer_mat, outer_context
@@ -5184,6 +5380,8 @@ def _run_m6b_w11a_diagnostic(
             "tag_coverage": h2a._jsonable(tag_coverage),
             "bridge": outer_bridge.audit,
         })
+        if is_w11b:
+            action_audit["lifecycle_events"].append("physical_constructed")
         jit_cache_audit["verification_stages"].append(
             _m6b_w11a_verify_dual_jit_cache(
                 h2b,
@@ -5224,6 +5422,8 @@ def _run_m6b_w11a_diagnostic(
                 "m3y_store": store.audit_jsonable(),
             }
         )
+        if is_w11b:
+            action_audit["lifecycle_events"].append("b0_constructed")
         jit_cache_audit["verification_stages"].append(
             _m6b_w11a_verify_dual_jit_cache(
                 h2b,
@@ -5298,11 +5498,18 @@ def _run_m6b_w11a_diagnostic(
                 operator_context=operator_context,
             )
             b0_pc_apply_count += int(pc_context.apply_count)
-            emit(
-                f"q1_{max_it}_ready",
-                true_residual=result["true_residual"],
-                iterations=result["iterations"],
-            )
+            if is_w11b:
+                emit(
+                    "b0_200_ready",
+                    true_residual=result["true_residual"],
+                    iterations=result["iterations"],
+                )
+            else:
+                emit(
+                    f"q1_{max_it}_ready",
+                    true_residual=result["true_residual"],
+                    iterations=result["iterations"],
+                )
             return result
         finally:
             rhs_vec.destroy()
@@ -5345,17 +5552,33 @@ def _run_m6b_w11a_diagnostic(
             file_count=jit_cache_audit["union_file_count"],
         )
         ensure_b0()
-        core_result = run_persistent_residual_diagnostic(
-            authorities["q"],
-            authorities["target"],
-            b0_apply=b0_apply,
-            physical_action=physical_numpy,
-            b0_solve=b0_solve,
-            architecture=architecture,
-            predicted_live_set_bytes=M6B_W11A_PREDICTED_LIVE_SET_BYTES,
-            counters={"b0_solver_restart": 20, "physical_ksp_used": False},
-            block_size=M6B_W11A_BLOCK_SIZE,
-        )
+        if is_w11b:
+            core_result = run_w11b_fixed_200_exact_proxy(
+                authorities["q"],
+                authorities["target"],
+                b0_solve=lambda: b0_solve(M6B_W11B_FIXED_MAX_IT),
+                physical_action=physical_numpy,
+                architecture=architecture,
+                predicted_live_set_bytes=M6B_W11A_PREDICTED_LIVE_SET_BYTES,
+                counters={
+                    "b0_solver_restart": 20,
+                    "b0_solver_max_it": M6B_W11B_FIXED_MAX_IT,
+                    "physical_ksp_used": False,
+                },
+                block_size=M6B_W11A_BLOCK_SIZE,
+            )
+        else:
+            core_result = run_persistent_residual_diagnostic(
+                authorities["q"],
+                authorities["target"],
+                b0_apply=b0_apply,
+                physical_action=physical_numpy,
+                b0_solve=b0_solve,
+                architecture=architecture,
+                predicted_live_set_bytes=M6B_W11A_PREDICTED_LIVE_SET_BYTES,
+                counters={"b0_solver_restart": 20, "physical_ksp_used": False},
+                block_size=M6B_W11A_BLOCK_SIZE,
+            )
         jit_cache_audit["verification_stages"].append(
             _m6b_w11a_verify_dual_jit_cache(
                 h2b,
@@ -5399,21 +5622,47 @@ def _run_m6b_w11a_diagnostic(
     if jit_cache_final_error is not None and error is None:
         error = f"jit_cache verification: {jit_cache_final_error}"
     source_end = h2b._light_source()
-    status, classification, checks, w11a_pass, problems = (
-        _m6b_w11a_finalize_status(
-            core_result, error, jit_cache_final_error
+    if is_w11b and core_result is not None:
+        expected_lifecycle = ["b0_constructed", "b0_released"]
+        if core_result.get("classification") != "W11B_B0_SOLVE_FAIL":
+            expected_lifecycle += ["physical_constructed", "physical_released"]
+        lifecycle_ok = action_audit.get("lifecycle_events") == expected_lifecycle
+        core_result["checks"]["lifecycle"] = lifecycle_ok
+        if not lifecycle_ok:
+            core_result["problems"].append("lifecycle")
+            if error is None:
+                error = "W11B B0 and physical heavy-object lifetime contract failed"
+    if is_w11b:
+        try:
+            candidate_artifacts = _m6b_w11b_promote_candidate_vectors(
+                run_dir,
+                core_result,
+                error=error,
+                jit_cache_final_error=jit_cache_final_error,
+                lifecycle_ok=lifecycle_ok,
+            )
+        except h2b._worker_error_types() + (FloatingPointError,) as exc:
+            candidate_artifacts = None
+            error = f"W11B candidate artifact write: {type(exc).__name__}: {exc}"
+    if is_w11b:
+        status, classification, checks, diagnostic_pass, problems = (
+            _m6b_w11b_finalize_status(core_result, error, jit_cache_final_error)
         )
-    )
+    else:
+        status, classification, checks, diagnostic_pass, problems = (
+            _m6b_w11a_finalize_status(core_result, error, jit_cache_final_error)
+        )
+    pass_key = "w11b_pass" if is_w11b else "w11a_pass"
     payload = {
-        "schema": M6B_W11A_SCHEMA,
-        "phase": M6B_W11A_PHASE,
+        "schema": result_schema,
+        "phase": result_phase,
         "status": status,
         "classification": classification,
-        "w11a_pass": bool(w11a_pass),
+        pass_key: bool(diagnostic_pass),
         "formal_pass": False,
         "pde_pass": False,
         "official_rta": False,
-        "scope": _m6b_w11a_scope(),
+        "scope": _m6b_w11b_scope() if is_w11b else _m6b_w11a_scope(),
         "authority": authorities["authority"],
         "runtime_identity": runtime,
         "p6": p6,
@@ -5435,9 +5684,38 @@ def _run_m6b_w11a_diagnostic(
         "source_at_end": source_end,
         "elapsed_wall_seconds": float(time.perf_counter() - started),
     }
+    if is_w11b:
+        payload["candidate_artifacts"] = candidate_artifacts
     payload = h2a._jsonable(payload)
     _write_json(summary_path, _attach_evidence(payload))
-    return 0 if w11a_pass else 1
+    return 0 if diagnostic_pass else 1
+
+
+def _run_m6b_w11b_diagnostic(
+    run_dir: Path,
+    w5_compact: Path,
+    w5_raw_dir: Path,
+    w7_compact: Path,
+    w7_raw_dir: Path,
+    m3y_manifest: Path,
+    jit_cache_source: Path,
+    b0_jit_cache_source: Path,
+    expected_source_sha: str,
+) -> int:
+    """Run W11B through the shared, already-qualified W11A setup."""
+
+    return _run_m6b_w11a_diagnostic(
+        run_dir,
+        w5_compact,
+        w5_raw_dir,
+        w7_compact,
+        w7_raw_dir,
+        m3y_manifest,
+        jit_cache_source,
+        b0_jit_cache_source,
+        expected_source_sha,
+        mode="w11b",
+    )
 
 
 def _m6b_w10a_measurement_record(
@@ -13760,6 +14038,18 @@ def _parser() -> argparse.ArgumentParser:
     w11a.add_argument(
         "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
     )
+    w11b = sub.add_parser("m6b-w11b-diagnostic")
+    w11b.add_argument("--run-dir", required=True)
+    w11b.add_argument("--w5-compact", required=True)
+    w11b.add_argument("--w5-raw-dir", required=True)
+    w11b.add_argument("--w7-compact", required=True)
+    w11b.add_argument("--w7-raw-dir", required=True)
+    w11b.add_argument("--m3y-manifest", required=True)
+    w11b.add_argument("--jit-cache-source", required=True)
+    w11b.add_argument("--b0-jit-cache-source", required=True)
+    w11b.add_argument(
+        "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
+    )
     return parser
 
 
@@ -13859,6 +14149,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.command == "m6b-w11a-diagnostic":
         return _run_m6b_w11a_diagnostic(
+            Path(args.run_dir).resolve(),
+            Path(args.w5_compact).resolve(),
+            Path(args.w5_raw_dir).resolve(),
+            Path(args.w7_compact).resolve(),
+            Path(args.w7_raw_dir).resolve(),
+            Path(args.m3y_manifest).resolve(),
+            Path(args.jit_cache_source).resolve(),
+            Path(args.b0_jit_cache_source).resolve(),
+            args.expected_source_sha,
+        )
+    if args.command == "m6b-w11b-diagnostic":
+        return _run_m6b_w11b_diagnostic(
             Path(args.run_dir).resolve(),
             Path(args.w5_compact).resolve(),
             Path(args.w5_raw_dir).resolve(),

@@ -16,6 +16,7 @@ import numpy as np
 
 __all__ = (
     "W11A_SCHEMA",
+    "W11B_SCHEMA",
     "W11A_Q_RHO_LIMIT",
     "W11A_TARGET_RHO_LIMIT",
     "W11A_B0_20_RESIDUAL_LIMIT",
@@ -26,12 +27,14 @@ __all__ = (
     "measure_rank_one_projection",
     "repeat_rank_one_projection",
     "run_persistent_residual_diagnostic",
+    "run_w11b_fixed_200_exact_proxy",
     "validate_w11a_authorities",
     "validate_w11a_architecture",
 )
 
 
 W11A_SCHEMA = "task037.extra.h2b.w11a.persistent-residual-one-vector.v1"
+W11B_SCHEMA = "task037.extra.h2b.w11b.fixed-200-exact-proxy.v1"
 W11A_Q_RHO_LIMIT = 0.70
 W11A_TARGET_RHO_LIMIT = 0.90
 W11A_B0_20_RESIDUAL_LIMIT = 1.0e-3
@@ -155,6 +158,7 @@ def repeat_rank_one_projection(
     direction: np.ndarray,
     *,
     block_size: int = _DEFAULT_BLOCK_SIZE,
+    schema: str = W11A_SCHEMA,
 ) -> dict[str, Any]:
     """Run the fixed direct measurement twice and retain scalar repeat evidence."""
 
@@ -171,6 +175,8 @@ def repeat_rank_one_projection(
         "passes": 2,
     }
     result["repeat_exact"] = repeat_exact
+    if schema != W11A_SCHEMA:
+        result["schema"] = schema
     return result
 
 
@@ -188,11 +194,12 @@ class OneVectorCoarseCarrier:
         architecture: Mapping[str, Any],
         predicted_live_set_bytes: int,
         block_size: int = _DEFAULT_BLOCK_SIZE,
+        schema: str = W11A_SCHEMA,
     ) -> None:
         self.q = _vector(q, "q")
         self.preimage = _vector(preimage, "preimage", size=self.q.size)
         self.image = _vector(image, "physical image", size=self.q.size)
-        if level not in {"Q0", "Q1_20", "Q1_100"}:
+        if level not in {"Q0", "Q1_20", "Q1_100", "Q1_200"}:
             raise ValueError("W11A carrier level is not fixed")
         if type(predicted_live_set_bytes) is not int or predicted_live_set_bytes < 0:
             raise ValueError("W11A predicted live set is invalid")
@@ -206,8 +213,9 @@ class OneVectorCoarseCarrier:
         self.architecture = dict(architecture)
         self.predicted_live_set_bytes = predicted_live_set_bytes
         self.block_size = _block_size(block_size)
+        self.schema = schema
         self._audit = {
-            "schema": W11A_SCHEMA,
+            "schema": schema,
             "level": level,
             "rows": int(self.q.size),
             "retained_payload_bytes": payload,
@@ -228,10 +236,10 @@ class OneVectorCoarseCarrier:
     def measure(self, target: np.ndarray) -> dict[str, Any]:
         target_value = _vector(target, "target", size=self.q.size)
         q_measurement = repeat_rank_one_projection(
-            self.q, self.image, block_size=self.block_size
+            self.q, self.image, block_size=self.block_size, schema=self.schema
         )
         target_measurement = repeat_rank_one_projection(
-            target_value, self.image, block_size=self.block_size
+            target_value, self.image, block_size=self.block_size, schema=self.schema
         )
         return {
             "q": q_measurement,
@@ -436,3 +444,115 @@ def run_persistent_residual_diagnostic(
         "pde_pass": False,
         "official_rta": False,
     }
+
+
+def run_w11b_fixed_200_exact_proxy(
+    q: np.ndarray,
+    target: np.ndarray,
+    *,
+    b0_solve: Callable[[], Mapping[str, Any]],
+    physical_action: Callable[[np.ndarray], np.ndarray],
+    architecture: Mapping[str, Any],
+    predicted_live_set_bytes: int,
+    counters: Mapping[str, Any] | None = None,
+    block_size: int = _DEFAULT_BLOCK_SIZE,
+) -> dict[str, Any]:
+    """Run the single fixed-200 W11B B0 solve and exact proxy measurement.
+
+    The callback must perform the zero-start right-FGMRES solve with the
+    fixed restart-20/max-it-200 contract.  The physical callback is reached
+    only after its explicit true residual passes ``1e-8``.
+    """
+
+    q_value = _vector(q, "q")
+    target_value = _vector(target, "target", size=q_value.size)
+    solve = dict(b0_solve())
+    solve_evidence = {key: value for key, value in solve.items() if key != "solution"}
+    fixed_contract = (
+        solve.get("max_it") == 200
+        and solve.get("ksp_type") == "fgmres"
+        and solve.get("initial_solution") == "zero_start"
+        and solve.get("iterations") == 200
+        and solve.get("converged_reason") == -3
+        and solve.get("pc_apply_count") == 200
+        and solve.get("restart") == 20
+        and solve.get("pc_side") == "right"
+        and solve.get("norm_type") == "unpreconditioned"
+        and solve.get("rtol") == 0.0
+        and solve.get("atol") == 0.0
+        and solve.get("finite") is True
+    )
+    b0_pass = fixed_contract and _b0_gate(solve, W11A_B0_100_RESIDUAL_LIMIT)
+    if not b0_pass:
+        failed = {
+            "b0_configuration": fixed_contract,
+            "b0_solve": _b0_gate(solve, W11A_B0_100_RESIDUAL_LIMIT),
+        }
+        return {
+            "schema": W11B_SCHEMA,
+            "status": "gate_failed",
+            "classification": "W11B_B0_SOLVE_FAIL",
+            "selected_level": None,
+            "b0": {"solve200": solve_evidence},
+            "checks": failed,
+            "problems": [name for name, passed in failed.items() if not passed],
+            "formal_pass": False,
+            "pde_pass": False,
+            "official_rta": False,
+        }
+    z = _vector(solve.get("solution"), "Q1_200 preimage", size=q_value.size)
+    p = _vector(physical_action(z), "Q1_200 physical image", size=q_value.size)
+    base_counters = dict(counters or {})
+    carrier = OneVectorCoarseCarrier(
+        q_value,
+        z,
+        p,
+        level="Q1_200",
+        counters={
+            **base_counters,
+            "b0_solve_max_it": 200,
+            "q1_physical_action_count": 1,
+            "physical_action_count": 1,
+        },
+        architecture=architecture,
+        predicted_live_set_bytes=predicted_live_set_bytes,
+        block_size=block_size,
+        schema=W11B_SCHEMA,
+    )
+    measurement = carrier.measure(target_value)
+    checks = {
+        "b0_configuration": True,
+        "b0_solve": True,
+        "q_projection": (
+            _projection_gate(measurement["q"])
+            and measurement["q"]["rho"] <= W11A_Q_RHO_LIMIT
+        ),
+        "target_projection": (
+            _projection_gate(measurement["target"])
+            and measurement["target"]["rho"] <= W11A_TARGET_RHO_LIMIT
+        ),
+        "finite_deterministic": measurement["finite"] and measurement["repeat_exact"],
+        "architecture": validate_w11a_architecture(architecture),
+        "payload": carrier.audit["retained_payload_bytes"] <= W11A_RETAINED_PAYLOAD_LIMIT_BYTES,
+        "predicted_live_set": predicted_live_set_bytes <= W11A_PREDICTED_LIVE_SET_LIMIT_BYTES,
+    }
+    problems = sorted(name for name, passed in checks.items() if not passed)
+    passed = not problems
+    result = {
+        "schema": W11B_SCHEMA,
+        "status": "diagnostic_complete" if passed else "gate_failed",
+        "classification": "W11B_PASS" if passed else "W11B_PROJECTION_FAIL",
+        "selected_level": "Q1_200" if passed else None,
+        "candidate_level": "Q1_200",
+        "b0": {"solve200": solve_evidence},
+        "measurement": measurement,
+        "carrier_audit": carrier.audit,
+        "checks": checks,
+        "problems": problems,
+        "formal_pass": False,
+        "pde_pass": False,
+        "official_rta": False,
+    }
+    if passed:
+        result["_candidate_vectors"] = {"preimage": z, "physical_image": p}
+    return result
