@@ -7914,7 +7914,7 @@ def _m6b_w5_timeline_valid(
         "compiler_descendant_pids": None,
     }
     try:
-        record = watchdog["watchdog_artifacts"][timeline_name]
+        record = watchdog["artifacts"][timeline_name]
         timeline_path = Path(record["path"])
         if not timeline_path.is_absolute():
             timeline_path = watchdog_dir / timeline_path
