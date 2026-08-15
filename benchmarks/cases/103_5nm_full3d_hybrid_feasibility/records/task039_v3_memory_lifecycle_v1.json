@@ -193,7 +193,7 @@
     "metric_peaks_are_independent": true,
     "raw_artifacts": "ignored and not committed",
     "review_scope": "V3-6 offline memory lifecycle evidence only",
-    "next_review_gate": "stop before V3-7"
-    ,"telemetry_span_not_solver_elapsed": true
+    "next_review_gate": "stop before V3-7",
+    "telemetry_span_not_solver_elapsed": true
   }
 }
