@@ -370,7 +370,7 @@ M6B_W11A_TIMEOUT_SECONDS = 7_200.0
 M6B_W11A_WATCHDOG_RSS_LIMIT_BYTES = 1_950_000_000
 M6B_W11A_FORMAL_RSS_LIMIT_BYTES = 1_500_000_000
 M6B_W11A_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_500_000_000
-M6B_W11A_PRODUCTION_BASE_PEAK_BYTES = 978_083_840
+M6B_W11A_PRODUCTION_BASE_PEAK_BYTES = 1_183_698_944
 M6B_W11A_ONE_VECTOR_BYTES = M6B_GLOBAL_ROWS * 16
 M6B_W11A_PHYSICAL_WORK_BYTES = M6B_M6A_RETAINED_WORK_BYTES
 M6B_W11A_FIXED_RESERVE_BYTES = M6B_FIXED_RUNTIME_RESERVE_BYTES
@@ -4558,7 +4558,8 @@ def _m6b_w11a_scope() -> dict[str, Any]:
         "schema": M6B_W11A_SCHEMA,
         "phase": M6B_W11A_PHASE,
         "solver": "offline_one_vector_coarse_diagnostic",
-        "beta": 1.0,
+        "beta": 0.0,
+        "shifted_pc_beta": 1.0,
         "fine_space": "uncondensed_fullspace",
         "operator": "M6B physical volume action + matrix-free DtN80",
         "b0": "M4Y packed B0 PC, fixed FGMRES escalation 20_then_100",
@@ -4591,14 +4592,15 @@ def _m6b_w11a_predicted_live_set() -> dict[str, Any]:
         "gate": total <= M6B_W11A_PREDICTED_LIVE_SET_LIMIT_BYTES,
         "derived_not_measured": True,
         "components": {
-            "m5_online_calibrated_peak_bytes": M6B_W11A_PRODUCTION_BASE_PEAK_BYTES,
+            "m5_process_tree_calibrated_peak_bytes": M6B_W11A_PRODUCTION_BASE_PEAK_BYTES,
             "retained_q_z_p_bytes": 3 * M6B_W11A_ONE_VECTOR_BYTES,
             "m6a_physical_action_work_bytes": M6B_W11A_PHYSICAL_WORK_BYTES,
             "fixed_runtime_reserve_bytes": M6B_W11A_FIXED_RESERVE_BYTES,
         },
         "basis": (
-            "M5 online process-tree calibration already includes the M3Y packed "
-            "B0 store; only the W11A q/z/p vectors and M6A work are additive."
+            "M5 maximum stage/process-tree calibration (1,183,698,944 B) "
+            "already includes the M3Y packed B0 store; only the W11A q/z/p "
+            "vectors, M6A work, and fixed reserve are additive."
         ),
     }
 
@@ -4804,7 +4806,10 @@ def _run_m6b_w11a_diagnostic(
     summary_path = run_dir / "m6b_w11a_summary.json"
     started = time.perf_counter()
     architecture: dict[str, Any] = {}
-    action_audit: dict[str, Any] | None = None
+    action_audit: dict[str, Any] = {
+        "b0_instances": [],
+        "physical_instances": [],
+    }
     p6: dict[str, Any] | None = None
     core_result: dict[str, Any] | None = None
     error: str | None = None
@@ -4830,8 +4835,21 @@ def _run_m6b_w11a_diagnostic(
             stream.flush()
         print(json.dumps(payload, sort_keys=True), flush=True)
 
+    def record_b0_stage() -> None:
+        if b0_action is None:
+            return
+        action_audit["b0_instances"].append(
+            {
+                "action": h2a._jsonable(b0_action.audit),
+                "pc": h2a._jsonable(b0_pc.audit) if b0_pc is not None else None,
+                "store": store.audit_jsonable() if store is not None else None,
+                "total_pc_apply_count": int(b0_pc_apply_count),
+            }
+        )
+
     def release_b0() -> None:
         nonlocal b0_action, b0_pc, b0_matrix, b0_source_vec, store
+        record_b0_stage()
         if b0_matrix is not None:
             b0_matrix.destroy()
             b0_matrix = None
@@ -4844,9 +4862,45 @@ def _run_m6b_w11a_diagnostic(
         b0_pc = None
         store = None
 
+    def record_physical_stage() -> None:
+        if outer_bridge is None:
+            return
+        action_audit["physical_instances"].append(
+            {
+                "physical": h2a._jsonable(physical_action.audit),
+                "outer": h2a._jsonable(outer_context.audit),
+                "dtn": h2a._jsonable(dtn_action.audit),
+                "bridge": h2a._jsonable(outer_bridge.audit),
+                "total_physical_action_count": int(physical_call_count),
+            }
+        )
+
+    def release_physical() -> None:
+        nonlocal physical_action, dtn_action, outer_mat, outer_context
+        nonlocal outer_bridge, template
+        record_physical_stage()
+        if outer_bridge is not None:
+            outer_bridge.destroy()
+            outer_bridge = None
+        if outer_context is not None:
+            outer_context.destroy()
+            outer_context = None
+        if outer_mat is not None:
+            outer_mat.destroy()
+            outer_mat = None
+        if template is not None:
+            template.destroy()
+            template = None
+        if dtn_action is not None:
+            dtn_action.destroy()
+            dtn_action = None
+        if physical_action is not None:
+            physical_action.destroy()
+            physical_action = None
+
     def ensure_physical_action() -> None:
         nonlocal physical_action, dtn_action, outer_mat, outer_context
-        nonlocal outer_bridge, template, architecture
+        nonlocal outer_bridge, template
         if outer_bridge is not None:
             return
         physical_ufl, _epsilon, _abs_epsilon, _beta, tag_coverage = build_m6b_volume_form(
@@ -4881,16 +4935,19 @@ def _run_m6b_w11a_diagnostic(
         physical_audit = h2a._jsonable(physical_action.audit)
         outer_audit = h2a._jsonable(outer_context.audit)
         dtn_audit = h2a._jsonable(dtn_action.audit)
-        architecture = {
-            "fine_space": dtn_audit["fine_space"],
-            "global_matrix_materialized": physical_audit["global_matrix_materialized"],
-            "augmented_matrix_materialized": outer_audit["augmented_matrix"],
-            "condensation": dtn_audit["condensation"],
-            "static_condensed_operator_used": dtn_audit["static_condensed_operator_used"],
-            "trace_slab_pc_used": dtn_audit["trace_slab_pc_used"],
-            "physical_ksp_used": physical_audit["ksp_created"],
-            "pde_used": False,
-        }
+        architecture.clear()
+        architecture.update(
+            {
+                "fine_space": dtn_audit["fine_space"],
+                "global_matrix_materialized": physical_audit["global_matrix_materialized"],
+                "augmented_matrix_materialized": outer_audit["augmented_matrix"],
+                "condensation": dtn_audit["condensation"],
+                "static_condensed_operator_used": dtn_audit["static_condensed_operator_used"],
+                "trace_slab_pc_used": dtn_audit["trace_slab_pc_used"],
+                "physical_ksp_used": physical_audit["ksp_created"],
+                "pde_used": False,
+            }
+        )
         if not validate_w11a_architecture(architecture):
             raise ValueError("W11A physical architecture is not closed")
         action_audit.update({
@@ -4901,6 +4958,37 @@ def _run_m6b_w11a_diagnostic(
             "bridge": outer_bridge.audit,
         })
         emit("physical_action_ready", dtn_modes=dtn_audit["mode_count"])
+
+    def ensure_b0() -> None:
+        nonlocal b0_action, b0_pc, b0_source_vec, store
+        if b0_action is not None:
+            return
+        store = load_h2b_m3y_packed_patch_store(
+            m3y_manifest, task037_extra_h2b=True
+        )
+        b0_ufl, _epsilon = h2b._build_b0_form(function_space, mesh_data, cfg)
+        b0_action = build_task037_extra_h1r2_mpc_action(
+            b0_ufl,
+            floquet.mpc,
+            task037_extra_h1r2=True,
+            jit_options=h2b._expected_jit_options(cache_dir),
+        )
+        b0_source_vec = b0_action.output_vector.duplicate()
+        b0_pc = build_h2b_m4y_packed_patch_pc(
+            store,
+            global_row_count=M6B_GLOBAL_ROWS,
+            exact_action=b0_exact_action,
+            slave_identity_rows=np.asarray(floquet.mpc.slaves, dtype=np.int64),
+            task037_extra_h2b=True,
+        )
+        action_audit.update(
+            {
+                "b0": h2a._jsonable(b0_action.audit),
+                "b0_pc": h2a._jsonable(b0_pc.audit),
+                "m3y_store": store.audit_jsonable(),
+            }
+        )
+        emit("b0_ready", factor_count=M6B_FACTOR_COUNT)
 
     def b0_exact_action(values: np.ndarray, target: np.ndarray) -> None:
         if b0_source_vec is None or b0_action is None:
@@ -4920,6 +5008,10 @@ def _run_m6b_w11a_diagnostic(
 
     def b0_apply(values: np.ndarray) -> np.ndarray:
         nonlocal b0_pc_apply_count
+        if outer_bridge is not None:
+            release_physical()
+            gc.collect()
+        ensure_b0()
         if b0_pc is None:
             raise RuntimeError("W11A B0 PC is not alive")
         result = np.asarray(b0_pc.apply(values), dtype=np.complex128)
@@ -4931,6 +5023,9 @@ def _run_m6b_w11a_diagnostic(
 
     def b0_solve(max_it: int) -> Mapping[str, Any]:
         nonlocal b0_pc_apply_count
+        release_physical()
+        gc.collect()
+        ensure_b0()
         if b0_action is None or b0_pc is None:
             raise RuntimeError("W11A B0 solve objects are not alive")
         operator, operator_context = build_m5_b0_mat(
@@ -4971,8 +5066,8 @@ def _run_m6b_w11a_diagnostic(
     def physical_numpy(values: np.ndarray) -> np.ndarray:
         nonlocal physical_call_count
         physical_call_count += 1
-        if physical_call_count > 1:
-            release_b0()
+        release_b0()
+        gc.collect()
         ensure_physical_action()
         result = outer_bridge.apply(values)
         if result.shape != values.shape or not np.all(np.isfinite(result)):
@@ -4992,30 +5087,7 @@ def _run_m6b_w11a_diagnostic(
         emit("space_ready", global_rows=p6["global_rows"])
         emit("floquet_mpc_ready", constraint_count=p6["constraint_count"])
         emit("cache_ready", inventory_sha256=target_cache["inventory_sha256"])
-        store = load_h2b_m3y_packed_patch_store(
-            m3y_manifest, task037_extra_h2b=True
-        )
-        b0_ufl, _epsilon = h2b._build_b0_form(function_space, mesh_data, cfg)
-        b0_action = build_task037_extra_h1r2_mpc_action(
-            b0_ufl,
-            floquet.mpc,
-            task037_extra_h1r2=True,
-            jit_options=h2b._expected_jit_options(cache_dir),
-        )
-        b0_source_vec = b0_action.output_vector.duplicate()
-        b0_pc = build_h2b_m4y_packed_patch_pc(
-            store,
-            global_row_count=M6B_GLOBAL_ROWS,
-            exact_action=b0_exact_action,
-            slave_identity_rows=np.asarray(floquet.mpc.slaves, dtype=np.int64),
-            task037_extra_h2b=True,
-        )
-        action_audit = {
-            "b0": h2a._jsonable(b0_action.audit),
-            "b0_pc": b0_pc.audit,
-            "m3y_store": store.audit_jsonable(),
-        }
-        emit("b0_ready", factor_count=M6B_FACTOR_COUNT)
+        ensure_b0()
         core_result = run_persistent_residual_diagnostic(
             authorities["q"],
             authorities["target"],
@@ -5039,33 +5111,7 @@ def _run_m6b_w11a_diagnostic(
     except h2b._worker_error_types() + (FloatingPointError,) as exc:
         error = f"{type(exc).__name__}: {exc}"
     finally:
-        if action_audit is not None:
-            if b0_action is not None:
-                action_audit["b0"] = h2a._jsonable(b0_action.audit)
-            if b0_pc is not None:
-                b0_pc_audit = h2a._jsonable(b0_pc.audit)
-                b0_pc_audit["apply_count"] = b0_pc_apply_count
-                action_audit["b0_pc"] = b0_pc_audit
-            if physical_action is not None:
-                action_audit["physical"] = h2a._jsonable(physical_action.audit)
-            if outer_context is not None:
-                action_audit["outer"] = h2a._jsonable(outer_context.audit)
-            if dtn_action is not None:
-                action_audit["dtn"] = h2a._jsonable(dtn_action.audit)
-            if outer_bridge is not None:
-                action_audit["bridge"] = h2a._jsonable(outer_bridge.audit)
-        if outer_bridge is not None:
-            outer_bridge.destroy()
-        if outer_context is not None:
-            outer_context.destroy()
-        if outer_mat is not None:
-            outer_mat.destroy()
-        if template is not None:
-            template.destroy()
-        if dtn_action is not None:
-            dtn_action.destroy()
-        if physical_action is not None:
-            physical_action.destroy()
+        release_physical()
         release_b0()
         if "floquet" in locals() and floquet is not None:
             h2a.clear_floquet_topology_cache()
@@ -5110,7 +5156,11 @@ def _run_m6b_w11a_diagnostic(
         "action_audit": action_audit,
         "core": core_result,
         "checks": checks,
-        "problems": [] if core_result is None else core_result["problems"],
+        "problems": (
+            ["authority_or_runtime"]
+            if core_result is None
+            else core_result["problems"]
+        ),
         "physical_action_count": physical_call_count,
         "error": error,
         "source_at_start": source_start,

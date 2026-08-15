@@ -221,6 +221,66 @@ def test_w11a_q1_100_is_only_fixed_escalation_and_failure_is_controlled() -> Non
     assert result["problems"] == ["b0_solve_residual"]
 
 
+def test_w11a_mock_lifecycle_never_overlaps_b0_and_physical_stages() -> None:
+    q = np.array([1, 0, 0, 0], dtype=np.complex128)
+    architecture_source = inspect.getsource(runner._run_m6b_w11a_diagnostic)
+    assert "architecture.clear()" in architecture_source
+    assert "release_physical()" in architecture_source
+    assert '"authority_or_runtime"' in architecture_source
+
+    def run_case(q0_pass: bool) -> list[str]:
+        active: str | None = None
+        events: list[str] = []
+        shared_architecture: dict[str, object] = {}
+
+        def b0_apply(_value: np.ndarray) -> np.ndarray:
+            nonlocal active
+            assert active in (None, "b0")
+            active = "b0"
+            events.append("b0_apply")
+            return q.copy() if q0_pass else np.array([0, 1, 0, 0], dtype=np.complex128)
+
+        def b0_solve(max_it: int) -> dict[str, object]:
+            nonlocal active
+            assert active == "physical"
+            events.extend(("release_physical", f"b0_solve_{max_it}"))
+            active = "b0"
+            return {"true_residual": 1.0e-4, "solution": q.copy()}
+
+        def physical(value: np.ndarray) -> np.ndarray:
+            nonlocal active
+            assert active == "b0"
+            events.append("release_b0")
+            active = "physical"
+            shared_architecture.clear()
+            shared_architecture.update(_architecture())
+            events.append("physical")
+            return value.copy()
+
+        result = run_persistent_residual_diagnostic(
+            q,
+            q,
+            b0_apply=b0_apply,
+            physical_action=physical,
+            b0_solve=b0_solve,
+            architecture=shared_architecture,
+            predicted_live_set_bytes=1_000_000_000,
+        )
+        assert result["checks"]["architecture"] is True
+        return events
+
+    assert run_case(True) == ["b0_apply", "release_b0", "physical"]
+    assert run_case(False) == [
+        "b0_apply",
+        "release_b0",
+        "physical",
+        "release_physical",
+        "b0_solve_20",
+        "release_b0",
+        "physical",
+    ]
+
+
 def test_w11a_parser_dispatch_has_no_action_or_pde_side_effect(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     observed: dict[str, object] = {}
     runner_source = inspect.getsource(runner._run_m6b_w11a_diagnostic)
@@ -253,8 +313,12 @@ def test_w11a_parser_dispatch_has_no_action_or_pde_side_effect(monkeypatch: pyte
 def test_w11a_scope_and_prediction_are_derived_not_formal() -> None:
     scope = runner._m6b_w11a_scope()
     prediction = runner._m6b_w11a_predicted_live_set()
+    assert scope["beta"] == 0.0
+    assert scope["shifted_pc_beta"] == 1.0
     assert scope["target_used_for_construction"] is False
     assert scope["parameter_scan"] is False
     assert prediction["derived_not_measured"] is True
+    assert prediction["components"]["m5_process_tree_calibrated_peak_bytes"] == 1_183_698_944
+    assert prediction["bytes"] == 1_272_714_790
     assert prediction["bytes"] == runner.M6B_W11A_PREDICTED_LIVE_SET_BYTES
     assert prediction["gate"] is True
