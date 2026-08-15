@@ -291,7 +291,7 @@ def build_exact_one_cell_traction_matrices(
             action.port_rows,
             2 * mode_count,
             comm.size,
-            array_scope="replicated_lift_input_output",
+            array_scope="replicated_lift_output_combined_left_right",
         )
         if stage_callback is not None:
             stage_callback("one_cell_lift_columns_begin", lift_detail)

@@ -147,7 +147,7 @@ def test_task039_memory_marker_byte_fields_keep_array_scopes_separate() -> None:
     assert builder_parameters["post_destroy_cleanup"].default is None
 
     lift = _replicated_array_marker_detail(
-        12, 8, 4, array_scope="replicated_lift_input_output"
+        12, 8, 4, array_scope="replicated_lift_output_combined_left_right"
     )
     assert "distributed_petsc_5mat_payload_lower_bound_bytes" not in lift
     assert lift["replicated_numpy_array_bytes_per_rank"] == 12 * 8 * 16
