@@ -1,4 +1,4 @@
-"""Research-only V3-7 side-oracle and direct-solution wiring helpers.
+"""V3-7 side-oracle and explicit case-qualification wiring helpers.
 
 The module deliberately owns no runner lifecycle and never creates a global
 Hybrid direct factor.  It consumes one already-built MPI setup and returns
@@ -34,6 +34,9 @@ from src.solvers.condensed_dtn import (
 from src.solvers.static_local_schur_action import (
     materialize_research_explicit_fine_matrix,
 )
+
+
+TASK039_CASE_QUALIFICATION_SCOPE = "task039_v3_p6h5_m480_1deg_s"
 
 
 def select_current_full_fe_shard(
@@ -708,8 +711,15 @@ def run_exact_side_lu_oracle(
     solution_consumer: Callable[[PETSc.Vec, Mapping[str, Any]], Any] | None = None,
     reference: Any | None = None,
     explicit_components: ResearchExplicitSideComponents | None = None,
+    qualification_scope: str | None = None,
+    explicit_opt_in: bool = False,
 ) -> dict[str, Any]:
     """Run one exact-side oracle and consume the solution before cleanup."""
+
+    if explicit_opt_in and qualification_scope != TASK039_CASE_QUALIFICATION_SCOPE:
+        raise ValueError(
+            "case-qualified exact-side scope is not the fixed Task39 scope"
+        )
 
     bottom_components = None
     top_components = None
@@ -772,11 +782,15 @@ def run_exact_side_lu_oracle(
             bottom_explicit,
             bottom_components,
             factor_solver_type=factor_solver_type,
+            qualification_scope=qualification_scope,
+            explicit_opt_in=explicit_opt_in,
         )
         top_action = create_research_exact_side_lu_action(
             top_explicit,
             top_components,
             factor_solver_type=factor_solver_type,
+            qualification_scope=qualification_scope,
+            explicit_opt_in=explicit_opt_in,
         )
         operator, operator_context = create_hybrid_assembled_block_action(
             bottom_system,
@@ -791,6 +805,8 @@ def run_exact_side_lu_oracle(
             bottom_action,
             top_action,
             matrix_repeat_tolerance=matrix_repeat_tolerance,
+            qualification_scope=qualification_scope,
+            explicit_opt_in=explicit_opt_in,
         )
         result = solve_hybrid_block_ldu_iterative(
             operator,
@@ -829,8 +845,20 @@ def run_exact_side_lu_oracle(
             and inventory.get("top_ilu_factor_count") == 0
             and inventory.get("global_hybrid_direct_factor_count") == 0
         )
+        if explicit_opt_in:
+            inventory_pass = bool(
+                inventory_pass
+                and inventory.get("qualification_scope") == qualification_scope
+                and inventory.get("explicit_opt_in") is True
+                and inventory.get("case_qualification_opt_in") is True
+                and inventory.get("general_production") is False
+                and inventory.get("ordinary_default") is False
+                and inventory.get("ordinary_default_changed") is False
+                and inventory.get("nested_iterative_ksp_count") == 0
+                and inventory.get("local_direct_preonly_ksp_count") == 2
+            )
         report = {
-            "research_only": True,
+            "research_only": not explicit_opt_in,
             "numerical_pass": numerical_pass,
             "inventory_pass": inventory_pass,
             "pass": bool(numerical_pass and inventory_pass),
@@ -860,6 +888,25 @@ def run_exact_side_lu_oracle(
             ),
             "matrix_repeat_tolerance": float(matrix_repeat_tolerance),
         }
+        if explicit_opt_in:
+            action_diagnostics = {
+                "bottom": dict(bottom_action.diagnostics),
+                "top": dict(top_action.diagnostics),
+            }
+            report.update(
+                {
+                    "qualification_scope": qualification_scope,
+                    "explicit_opt_in": True,
+                    "case_qualification_opt_in": True,
+                    "case_qualification_attempt": True,
+                    "general_production": False,
+                    "ordinary_default": False,
+                    "ordinary_default_changed": False,
+                    "nested_iterative_ksp_count": 0,
+                    "local_direct_preonly_ksp_count": 2,
+                    "side_action_diagnostics": action_diagnostics,
+                }
+            )
         if numerical_pass and inventory_pass and solution_consumer is not None:
             solution_consumer(result.solution, report)
             report["solution_handoff"] = "callback_consumed_before_cleanup"

@@ -681,6 +681,17 @@ def test_v3_8_candidate_b_plan_is_opt_in_and_checkpoint_is_hash_bound(tmp_path) 
     assert candidate_d["worker_contract"]["method"] == (
         "USER_AUTHORIZED_EXPERIMENTAL_HYBRIDIZED_DIRECT_SIDE_CANDIDATE_D"
     )
+    candidate_d_qualified = watchdog.v3_7_execution_dry_run(
+        INPUT,
+        tmp_path / "candidate-d-qualified",
+        source_sha="a" * 40,
+        python_executable=sys.executable,
+        candidate_d_qualified=True,
+    )
+    assert "--candidate-d-qualified" in candidate_d_qualified["argv"]
+    assert candidate_d_qualified["worker_contract"]["method"] == (
+        "hybrid_iterative_exact_side_case_qualification"
+    )
     with pytest.raises(ValueError, match="routes are exclusive"):
         watchdog.v3_7_execution_dry_run(
             INPUT,
@@ -698,6 +709,15 @@ def test_v3_8_candidate_b_plan_is_opt_in_and_checkpoint_is_hash_bound(tmp_path) 
             python_executable=sys.executable,
             candidate_b_only=True,
             candidate_d_only=True,
+        )
+    with pytest.raises(ValueError, match="routes are exclusive"):
+        watchdog.v3_7_execution_dry_run(
+            INPUT,
+            tmp_path / "candidate-dd",
+            source_sha="a" * 40,
+            python_executable=sys.executable,
+            candidate_d_only=True,
+            candidate_d_qualified=True,
         )
     payload = load_v3_7_official_payload(INPUT)
     checkpoint_root = tmp_path / "checkpoint"
@@ -1034,8 +1054,9 @@ def test_v3_8_candidate_b_branch_skips_v3_7_reference_oracle_recovery(
     assert ledger["objects"]["correction_wrappers"]["destroyed"] is True
 
 
+@pytest.mark.parametrize("qualified", [False, True], ids=["historical", "qualified"])
 def test_v3_8_candidate_d_branch_skips_direct_reference_and_identity(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch, qualified
 ) -> None:
     payload = load_v3_7_official_payload(INPUT)
     called: list[str] = []
@@ -1066,7 +1087,50 @@ def test_v3_8_candidate_d_branch_skips_direct_reference_and_identity(
         marker_callback = kwargs["marker_callback"]
         marker_callback("candidate_d_explicit_components_ready", {})
         marker_callback("candidate_d_explicit_components_destroyed", {})
-        return {"status": "measured", "pass": False}, checkpoint
+        classification = (
+            "hybrid_iterative_exact_side_case_qualification"
+            if qualified
+            else orchestration.V3_8_CANDIDATE_D_CLASSIFICATION
+        )
+        report = {
+            "status": "attempted" if qualified else "measured",
+            "classification": classification,
+            "pass": False,
+        }
+        if qualified:
+            report["qualification"] = {
+                "qualification_target": "TASK039_V3_CASE_QUALIFIED_EXPLICIT_OPT_IN_HYBRID_ITERATIVE_EXACT_SIDE_PASS",
+                "final_qualification_status": "pending_parent_resource_gate",
+                "case_qualification_opt_in": True,
+                "case_qualification_attempt": True,
+                "qualification_scope": "task039_v3_p6h5_m480_1deg_s",
+                "cleanup_local_direct_factor_count": {"bottom": 0, "top": 0},
+            }
+        orchestration._write_v3_8_candidate_d_checkpoint(
+            kwargs["run_directory"],
+            source_sha=kwargs["source_sha"],
+            resolved_payload=kwargs["resolved_payload"],
+            producer=kwargs["producer"],
+            oracle={
+                "pass": False,
+                "inventory": {
+                    "global_hybrid_direct_factor_count": 0,
+                    "bottom_direct_factor_count": 1,
+                    "top_direct_factor_count": 1,
+                },
+            },
+            recovery=None,
+            cleanup={
+                "pass": False,
+                "bottom_direct_factor_count_after_cleanup": 0,
+                "top_direct_factor_count_after_cleanup": 0,
+            },
+            comm=kwargs["comm"],
+            classification=classification,
+            qualification=report.get("qualification"),
+            status=report["status"],
+        )
+        return report, checkpoint
 
     def forbidden(name):
         def fail(*_args, **_kwargs):
@@ -1092,12 +1156,56 @@ def test_v3_8_candidate_d_branch_skips_direct_reference_and_identity(
         identity_runner=forbidden("identity_runner"),
         oracle_runner=forbidden("oracle_runner"),
         recovery_runner=None,
-        candidate_d_only=True,
+        candidate_d_only=not qualified,
+        candidate_d_qualified=qualified,
     )
     assert called == ["candidate_d", "rhs_destroy"]
-    assert result["schema"] == "task039.v3-8-candidate-d-only.v1"
+    assert result["schema"] == (
+        "task039.v3-8-candidate-d-qualified.v1"
+        if qualified
+        else "task039.v3-8-candidate-d-only.v1"
+    )
     assert result["direct_reference_payload_loaded"] is False
     assert result["candidate_d"]["pass"] is False
+    assert result["candidate_d"]["classification"] == (
+        "hybrid_iterative_exact_side_case_qualification"
+        if qualified
+        else orchestration.V3_8_CANDIDATE_D_CLASSIFICATION
+    )
+    if qualified:
+        assert result["candidate_d"]["status"] == "attempted"
+        assert result["candidate_d"]["classification"] == (
+            "hybrid_iterative_exact_side_case_qualification"
+        )
+        assert (
+            result["candidate_d"]["qualification"]["case_qualification_attempt"] is True
+        )
+        assert result["candidate_d"]["qualification"]["qualification_target"] == (
+            "TASK039_V3_CASE_QUALIFIED_EXPLICIT_OPT_IN_HYBRID_ITERATIVE_EXACT_SIDE_PASS"
+        )
+        assert result["candidate_d"]["qualification"]["final_qualification_status"] == (
+            "pending_parent_resource_gate"
+        )
+        assert "case_qualified" not in result["candidate_d"]["qualification"]
+        saved = json.loads(checkpoint.read_text(encoding="utf-8"))
+        assert saved["schema"] == "task039.v3-8-candidate-d-qualified-checkpoint.v1"
+        assert saved["status"] == "attempted"
+        assert saved["pass"] is False
+        assert saved["qualification"]["final_qualification_status"] == (
+            "pending_parent_resource_gate"
+        )
+        assert (
+            saved["release_contract"]["cleanup"][
+                "bottom_direct_factor_count_after_cleanup"
+            ]
+            == 0
+        )
+        assert (
+            saved["release_contract"]["cleanup"][
+                "top_direct_factor_count_after_cleanup"
+            ]
+            == 0
+        )
     ledger = json.loads(
         (run_directory / "numerical_output" / "memory_object_ledger.json").read_text(
             encoding="utf-8"

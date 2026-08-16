@@ -333,7 +333,7 @@ class ResearchExactFactorInverse:
 
 
 class ResearchExactSideLuAction:
-    """Research-only exact F inverse plus the existing DtN Woodbury correction."""
+    """Exact-side LU plus DtN Woodbury; qualification is explicit and opt-in."""
 
     def __init__(
         self,
@@ -341,6 +341,8 @@ class ResearchExactSideLuAction:
         components: Any,
         *,
         factor_solver_type: str | None = "mumps",
+        qualification_scope: str | None = None,
+        explicit_opt_in: bool = False,
     ) -> None:
         if getattr(components, "F", None) is not explicit_f:
             raise ValueError("Research exact-side action must use components.F itself")
@@ -359,6 +361,8 @@ class ResearchExactSideLuAction:
             raise
         self.operator = components.F
         self.components = components
+        self.qualification_scope = qualification_scope
+        self.explicit_opt_in = bool(explicit_opt_in)
         self._destroyed = False
 
     def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
@@ -373,8 +377,8 @@ class ResearchExactSideLuAction:
     def diagnostics(self) -> dict[str, Any]:
         factor = self.factor.diagnostics
         woodbury = self.woodbury.diagnostics
-        return {
-            "research_only": True,
+        diagnostics = {
+            "research_only": not self.explicit_opt_in,
             "operator_identity": "research_exact_side_lu_woodbury",
             "factor_solver_type": factor["factor_solver_type"],
             "ksp_created": True,
@@ -386,6 +390,22 @@ class ResearchExactSideLuAction:
             "apply_count": int(woodbury["apply_count"]),
             "destroyed": bool(self._destroyed),
         }
+        if self.explicit_opt_in:
+            diagnostics.update(
+                {
+                    "qualification_scope": self.qualification_scope,
+                    "explicit_opt_in": True,
+                    "case_qualification_opt_in": True,
+                    "general_production": False,
+                    "ordinary_default": False,
+                    "ordinary_default_changed": False,
+                    "nested_iterative_ksp_count": 0,
+                    "local_direct_preonly_ksp_count": 1,
+                    "local_direct_solve_count": int(factor["solve_count"]),
+                    "local_ksp_role": "preonly_lu_direct_factor",
+                }
+            )
+        return diagnostics
 
     def destroy(self) -> None:
         if self._destroyed:
@@ -400,8 +420,14 @@ def create_research_exact_side_lu_action(
     components: Any,
     *,
     factor_solver_type: str | None = "mumps",
+    qualification_scope: str | None = None,
+    explicit_opt_in: bool = False,
 ) -> ResearchExactSideLuAction:
-    """Create one exact-side LU plus DtN Woodbury action for research only."""
+    """Create the historical research action or an explicit case qualification.
+
+    Without a qualification scope the action retains its research-only
+    diagnostics and behavior.
+    """
 
     if getattr(components, "F", None) is not explicit_f:
         raise ValueError("Research exact-side factor must use components.F itself")
@@ -409,6 +435,8 @@ def create_research_exact_side_lu_action(
         explicit_f,
         components,
         factor_solver_type=factor_solver_type,
+        qualification_scope=qualification_scope,
+        explicit_opt_in=explicit_opt_in,
     )
 
 

@@ -1,11 +1,13 @@
-"""Thin, research-only Task39 V3-7 orchestration and explicit worker.
+"""Thin Task39 V3-7 orchestration and explicit worker.
 
 The numerical builders remain in ``src`` and the reviewed Task37b setup and
-recovery remain the only production path.  This module only sequences the
-identity audit, the side-action microbenchmark, and the exact-side oracle;
-The parent entry point delegates process-tree sampling to Task38's launcher;
-the ``--worker`` entry point performs one authenticated MPI8 diagnostic and
-never creates a global direct factor.
+recovery remain the only ordinary production path.  Historical candidate
+routes are research-only; the explicit h5 qualification route is a narrow
+case opt-in.  This module only sequences the identity audit, side-action
+microbenchmarks, and exact-side oracle.  The parent entry point delegates
+process-tree sampling to Task38's launcher; the ``--worker`` entry point
+performs one authenticated MPI8 diagnostic and never creates a global direct
+factor.
 """
 
 from __future__ import annotations
@@ -49,6 +51,7 @@ from benchmarks.task039_v3_side_oracle import (
     build_research_explicit_side_components,
     rebuild_hybrid_augmented_vector,
     run_exact_side_lu_oracle,
+    TASK039_CASE_QUALIFICATION_SCOPE,
 )
 from src.common.config_3d import ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
 from src.io.input_validation import (
@@ -99,6 +102,11 @@ V3_8_CANDIDATE_E_TRAINING_SEEDS = (809, 811, 821, 823, 827, 829, 839, 853)
 V3_8_CANDIDATE_D_CLASSIFICATION = (
     "USER_AUTHORIZED_EXPERIMENTAL_HYBRIDIZED_DIRECT_SIDE_CANDIDATE_D"
 )
+V3_8_CANDIDATE_D_QUALIFIED_CLASSIFICATION = (
+    "TASK039_V3_CASE_QUALIFIED_EXPLICIT_OPT_IN_HYBRID_ITERATIVE_EXACT_SIDE_PASS"
+)
+V3_8_CANDIDATE_D_QUALIFIED_METHOD = "hybrid_iterative_exact_side_case_qualification"
+V3_8_CANDIDATE_D_QUALIFICATION_SCOPE = TASK039_CASE_QUALIFICATION_SCOPE
 V3_7_WARNING_GIB = 170.0
 V3_7_CRITICAL_GIB = 195.0
 V3_7_ABSOLUTE_HARD_BYTES = 224_000_000_000
@@ -266,6 +274,7 @@ def build_v3_7_execution_plan(
     candidate_b_only: bool = False,
     candidate_c_only: bool = False,
     candidate_d_only: bool = False,
+    candidate_d_qualified: bool = False,
     candidate_e_side_only: bool = False,
 ) -> dict[str, Any]:
     """Describe the opt-in worker command consumed by the existing watchdog."""
@@ -278,13 +287,14 @@ def build_v3_7_execution_plan(
                 bool(candidate_b_only),
                 bool(candidate_c_only),
                 bool(candidate_d_only),
+                bool(candidate_d_qualified),
                 bool(candidate_e_side_only),
             )
         )
         > 1
     ):
         raise ValueError(
-            "Candidate-B-only, Candidate-C-only, Candidate-D-only, and Candidate-E-side-only routes are exclusive"
+            "Candidate-B-only, Candidate-C-only, Candidate-D-only, Candidate-D-qualified, and Candidate-E-side-only routes are exclusive"
         )
     executable = str(Path(os.path.abspath(python_executable or sys.executable)))
     mpiexec = mpiexec_command or shutil.which("mpiexec") or "mpiexec"
@@ -310,9 +320,13 @@ def build_v3_7_execution_plan(
         argv.append("--candidate-c-only")
     if candidate_d_only:
         argv.append("--candidate-d-only")
+    if candidate_d_qualified:
+        argv.append("--candidate-d-qualified")
     if candidate_e_side_only:
         argv.append("--candidate-e-side-only")
-    if candidate_d_only:
+    if candidate_d_qualified:
+        method = V3_8_CANDIDATE_D_QUALIFIED_METHOD
+    elif candidate_d_only:
         method = V3_8_CANDIDATE_D_CLASSIFICATION
     elif candidate_e_side_only:
         method = "hybrid_iterative_candidate_e_side_only"
@@ -347,6 +361,7 @@ def v3_7_execution_dry_run(
     candidate_b_only: bool = False,
     candidate_c_only: bool = False,
     candidate_d_only: bool = False,
+    candidate_d_qualified: bool = False,
     candidate_e_side_only: bool = False,
 ) -> dict[str, Any]:
     """Return the non-mutating pre-heavy command and watchdog contract."""
@@ -359,6 +374,7 @@ def v3_7_execution_dry_run(
         candidate_b_only=candidate_b_only,
         candidate_c_only=candidate_c_only,
         candidate_d_only=candidate_d_only,
+        candidate_d_qualified=candidate_d_qualified,
         candidate_e_side_only=candidate_e_side_only,
     )
     argv = plan["argv"]
@@ -382,6 +398,7 @@ def launch_v3_7_with_task038_watchdog(
     candidate_b_only: bool = False,
     candidate_c_only: bool = False,
     candidate_d_only: bool = False,
+    candidate_d_qualified: bool = False,
     candidate_e_side_only: bool = False,
 ) -> dict[str, Any]:
     """Run the opt-in child through Task38's existing process-tree watchdog."""
@@ -395,7 +412,7 @@ def launch_v3_7_with_task038_watchdog(
         character not in "0123456789abcdef" for character in source_sha.lower()
     ):
         raise ValueError("V3-7 source_sha must be a full hexadecimal commit SHA")
-    if not candidate_d_only:
+    if not candidate_d_only and not candidate_d_qualified:
         load_v3_7_direct_inventory(payload, V3_7_DIRECT_RUN_ROOT)
     specification = load_and_resolve(input_path)
     plan_payload = build_v3_7_execution_plan(
@@ -407,6 +424,7 @@ def launch_v3_7_with_task038_watchdog(
         candidate_b_only=candidate_b_only,
         candidate_c_only=candidate_c_only,
         candidate_d_only=candidate_d_only,
+        candidate_d_qualified=candidate_d_qualified,
         candidate_e_side_only=candidate_e_side_only,
     )
     run_dir = Path(run_directory).resolve()
@@ -2559,6 +2577,9 @@ def _write_v3_8_candidate_d_checkpoint(
     recovery: Mapping[str, Any] | None,
     cleanup: Mapping[str, Any],
     comm: MPI.Intracomm,
+    classification: str = V3_8_CANDIDATE_D_CLASSIFICATION,
+    qualification: Mapping[str, Any] | None = None,
+    status: str = "measured",
 ) -> Path:
     provenance = resolved_payload["provenance"]
     resolved_config = run_directory / "resolved_config.json"
@@ -2567,10 +2588,14 @@ def _write_v3_8_candidate_d_checkpoint(
     oracle_pass = bool(oracle.get("pass") is True)
     cleanup_pass = bool(cleanup.get("pass") is True)
     checkpoint = {
-        "schema": "task039.v3-8-candidate-d-checkpoint.v1",
-        "status": "measured",
+        "schema": (
+            "task039.v3-8-candidate-d-qualified-checkpoint.v1"
+            if qualification is not None
+            else "task039.v3-8-candidate-d-checkpoint.v1"
+        ),
+        "status": status,
         "candidate": "D",
-        "classification": V3_8_CANDIDATE_D_CLASSIFICATION,
+        "classification": classification,
         "pass": bool(oracle_pass and cleanup_pass and recovery_pass),
         "source_identity": {
             "consumer_source_sha": source_sha,
@@ -2602,6 +2627,8 @@ def _write_v3_8_candidate_d_checkpoint(
             ),
         },
     }
+    if qualification is not None:
+        checkpoint["qualification"] = dict(qualification)
     path = run_directory / "numerical_output" / "v3_8_candidate_d_checkpoint.json"
     if comm.rank == 0:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -2631,6 +2658,7 @@ def _run_v3_8_candidate_d_campaign(
         [Any, Any, Any, Path, Mapping[str, Any]], Mapping[str, Any]
     ]
     | None,
+    case_qualified: bool = False,
 ) -> tuple[dict[str, Any], Path]:
     """Run the explicit online Candidate-D side-factor path without direct payloads."""
 
@@ -2666,20 +2694,25 @@ def _run_v3_8_candidate_d_campaign(
             direct_reference_payload_loaded=False,
         )
         _emit_marker(marker_callback, "exact_side_oracle_begin", candidate="D")
+        oracle_kwargs = {
+            "reference": None,
+            "explicit_components": components,
+            "max_it": V3_7_MAX_IT,
+            "restart": 90,
+            "threshold": V3_7_RESIDUAL_TOLERANCE,
+            "matrix_repeat_tolerance": V3_7_MATRIX_REPEAT_TOLERANCE,
+            "solution_consumer": consume_solution,
+        }
+        if case_qualified:
+            oracle_kwargs.update(
+                {
+                    "qualification_scope": V3_8_CANDIDATE_D_QUALIFICATION_SCOPE,
+                    "explicit_opt_in": True,
+                }
+            )
         oracle_report = dict(
             oracle_runner(
-                layout,
-                setup.bottom,
-                setup.top,
-                setup.coupling,
-                rhs,
-                reference=None,
-                explicit_components=components,
-                max_it=V3_7_MAX_IT,
-                restart=90,
-                threshold=V3_7_RESIDUAL_TOLERANCE,
-                matrix_repeat_tolerance=V3_7_MATRIX_REPEAT_TOLERANCE,
-                solution_consumer=consume_solution,
+                layout, setup.bottom, setup.top, setup.coupling, rhs, **oracle_kwargs
             )
         )
         _emit_marker(
@@ -2765,8 +2798,12 @@ def _run_v3_8_candidate_d_campaign(
             snapshot = None
             _emit_marker(marker_callback, "solution_snapshot_destroyed", candidate="D")
         report = {
-            "status": "measured",
-            "classification": V3_8_CANDIDATE_D_CLASSIFICATION,
+            "status": "attempted" if case_qualified else "measured",
+            "classification": (
+                V3_8_CANDIDATE_D_QUALIFIED_METHOD
+                if case_qualified
+                else V3_8_CANDIDATE_D_CLASSIFICATION
+            ),
             "pass": bool(
                 oracle_report.get("pass") is True
                 and cleanup.get("pass") is True
@@ -2781,6 +2818,40 @@ def _run_v3_8_candidate_d_campaign(
             "cleanup": cleanup,
             "recovery": recovery_result if recovery_result is not None else "not_run",
         }
+        qualification = None
+        if case_qualified:
+            side_actions = oracle_report["side_action_diagnostics"]
+            qualification = {
+                "qualification_scope": V3_8_CANDIDATE_D_QUALIFICATION_SCOPE,
+                "explicit_opt_in": True,
+                "case_qualification_opt_in": True,
+                "case_qualification_attempt": True,
+                "general_production": False,
+                "ordinary_default": False,
+                "ordinary_default_changed": False,
+                "classification": V3_8_CANDIDATE_D_QUALIFIED_METHOD,
+                "qualification_target": V3_8_CANDIDATE_D_QUALIFIED_CLASSIFICATION,
+                "final_qualification_status": "pending_parent_resource_gate",
+                "status": "attempted",
+                "local_direct_factor_count": {
+                    side: side_actions[side]["direct_factor_count"]
+                    for side in ("bottom", "top")
+                },
+                "global_hybrid_direct_factor_count": oracle_report["inventory"][
+                    "global_hybrid_direct_factor_count"
+                ],
+                "nested_iterative_ksp_count": oracle_report[
+                    "nested_iterative_ksp_count"
+                ],
+                "local_direct_preonly_ksp_count": oracle_report[
+                    "local_direct_preonly_ksp_count"
+                ],
+                "cleanup_local_direct_factor_count": {
+                    "bottom": lifecycle["bottom_direct_factor_count_after_cleanup"],
+                    "top": lifecycle["top_direct_factor_count_after_cleanup"],
+                },
+            }
+            report["qualification"] = qualification
         checkpoint = _write_v3_8_candidate_d_checkpoint(
             run_directory,
             source_sha=source_sha,
@@ -2790,6 +2861,9 @@ def _run_v3_8_candidate_d_campaign(
             recovery=recovery_result,
             cleanup=cleanup,
             comm=comm,
+            classification=report["classification"],
+            qualification=qualification,
+            status=report["status"],
         )
         return report, checkpoint
     except Exception:
@@ -3021,6 +3095,7 @@ def run_task039_v3_7_diagnostic(
     candidate_b_only: bool = False,
     candidate_c_only: bool = False,
     candidate_d_only: bool = False,
+    candidate_d_qualified: bool = False,
     candidate_e_side_only: bool = False,
 ) -> dict[str, Any]:
     """Prepare the V3-7 campaign or an explicit research candidate branch."""
@@ -3105,13 +3180,14 @@ def run_task039_v3_7_diagnostic(
             and not candidate_b_only
             and not candidate_c_only
             and not candidate_d_only
+            and not candidate_d_qualified
             and not candidate_e_side_only
         ):
             raise ValueError(
                 "V3-7 requires an injected recovery_runner(setup, layout, snapshot, "
                 "run_dir, producer)"
             )
-        if candidate_d_only:
+        if candidate_d_only or candidate_d_qualified:
             producer = _candidate_d_producer_metadata(
                 resolved_payload, source_sha, marker_callback
             )
@@ -3161,13 +3237,14 @@ def run_task039_v3_7_diagnostic(
                     bool(candidate_b_only),
                     bool(candidate_c_only),
                     bool(candidate_d_only),
+                    bool(candidate_d_qualified),
                     bool(candidate_e_side_only),
                 )
             )
             > 1
         ):
             raise ValueError(
-                "Candidate-B-only, Candidate-C-only, Candidate-D-only, and Candidate-E-side-only routes are exclusive"
+                "Candidate-B-only, Candidate-C-only, Candidate-D-only, Candidate-D-qualified, and Candidate-E-side-only routes are exclusive"
             )
 
         if candidate_b_only:
@@ -3314,7 +3391,7 @@ def run_task039_v3_7_diagnostic(
             normal_return = True
             return result
 
-        if candidate_d_only:
+        if candidate_d_only or candidate_d_qualified:
             candidate_report, candidate_checkpoint = _run_v3_8_candidate_d_campaign(
                 setup,
                 layout,
@@ -3327,11 +3404,16 @@ def run_task039_v3_7_diagnostic(
                 marker_callback=marker_callback,
                 oracle_runner=oracle_runner,
                 recovery_runner=recovery_runner,
+                case_qualified=candidate_d_qualified,
             )
             result = {
-                "schema": "task039.v3-8-candidate-d-only.v1",
+                "schema": (
+                    "task039.v3-8-candidate-d-qualified.v1"
+                    if candidate_d_qualified
+                    else "task039.v3-8-candidate-d-only.v1"
+                ),
                 "status": "completed",
-                "classification": V3_8_CANDIDATE_D_CLASSIFICATION,
+                "classification": candidate_report["classification"],
                 "candidate_d": candidate_report,
                 "checkpoint": str(
                     candidate_checkpoint.relative_to(Path(run_directory).resolve())
@@ -3361,12 +3443,27 @@ def run_task039_v3_7_diagnostic(
                     },
                 },
                 "formal_run": {
-                    "status": "measured_candidate_d_only",
-                    "classification": V3_8_CANDIDATE_D_CLASSIFICATION,
+                    "status": (
+                        "attempted_candidate_d_qualified"
+                        if candidate_d_qualified
+                        else "measured_candidate_d_only"
+                    ),
+                    "classification": candidate_report["classification"],
                     "direct_reference_payload_loaded": False,
                 },
                 "run_directory": str(Path(run_directory).resolve()),
             }
+            if candidate_d_qualified:
+                result["qualification"] = candidate_report["qualification"]
+                result["formal_run"] = {
+                    "status": "attempted_candidate_d_qualified",
+                    "classification": V3_8_CANDIDATE_D_QUALIFIED_METHOD,
+                    "qualification_target": V3_8_CANDIDATE_D_QUALIFIED_CLASSIFICATION,
+                    "direct_reference_payload_loaded": False,
+                    "qualification_scope": V3_8_CANDIDATE_D_QUALIFICATION_SCOPE,
+                    "explicit_opt_in": True,
+                    "ordinary_default_changed": False,
+                }
             normal_return = True
             return result
 
@@ -3788,6 +3885,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--candidate-b-only", action="store_true")
     parser.add_argument("--candidate-c-only", action="store_true")
     parser.add_argument("--candidate-d-only", action="store_true")
+    parser.add_argument("--candidate-d-qualified", action="store_true")
     parser.add_argument("--candidate-e-side-only", action="store_true")
     parser.add_argument("--input", required=True, dest="input_path")
     parser.add_argument("--run-directory", required=True)
@@ -3801,13 +3899,14 @@ def main(argv: list[str] | None = None) -> int:
                 bool(args.candidate_b_only),
                 bool(args.candidate_c_only),
                 bool(args.candidate_d_only),
+                bool(args.candidate_d_qualified),
                 bool(args.candidate_e_side_only),
             )
         )
         > 1
     ):
         parser.error(
-            "--candidate-b-only, --candidate-c-only, --candidate-d-only, and --candidate-e-side-only are mutually exclusive"
+            "--candidate-b-only, --candidate-c-only, --candidate-d-only, --candidate-d-qualified, and --candidate-e-side-only are mutually exclusive"
         )
     if args.dry_run:
         plan = v3_7_execution_dry_run(
@@ -3817,6 +3916,7 @@ def main(argv: list[str] | None = None) -> int:
             candidate_b_only=args.candidate_b_only,
             candidate_c_only=args.candidate_c_only,
             candidate_d_only=args.candidate_d_only,
+            candidate_d_qualified=args.candidate_d_qualified,
             candidate_e_side_only=args.candidate_e_side_only,
         )
         print(json.dumps(_json_safe(plan), ensure_ascii=False, sort_keys=True))
@@ -3850,6 +3950,7 @@ def main(argv: list[str] | None = None) -> int:
             candidate_b_only=args.candidate_b_only,
             candidate_c_only=args.candidate_c_only,
             candidate_d_only=args.candidate_d_only,
+            candidate_d_qualified=args.candidate_d_qualified,
             candidate_e_side_only=args.candidate_e_side_only,
             record_path=(
                 Path(args.run_directory).resolve()
@@ -3887,6 +3988,9 @@ __all__ = [
     "V3_8_CANDIDATE_E_WORST_LIMIT",
     "V3_8_CANDIDATE_E_TRAINING_SEEDS",
     "V3_8_CANDIDATE_D_CLASSIFICATION",
+    "V3_8_CANDIDATE_D_QUALIFIED_CLASSIFICATION",
+    "V3_8_CANDIDATE_D_QUALIFIED_METHOD",
+    "V3_8_CANDIDATE_D_QUALIFICATION_SCOPE",
     "build_v3_7_execution_plan",
     "check_v3_7_integrated_physics",
     "compare_v3_7_hybrid_candidate_to_direct",

@@ -44,7 +44,9 @@ V3_7_QEP_ONLY_WORKER_MODULE = "benchmarks.task039_qep_only"
 V3_7_CANDIDATE_B_FLAG = "--candidate-b-only"
 V3_7_CANDIDATE_C_FLAG = "--candidate-c-only"
 V3_7_CANDIDATE_D_FLAG = "--candidate-d-only"
+V3_7_CANDIDATE_D_QUALIFIED_FLAG = "--candidate-d-qualified"
 V3_7_CANDIDATE_E_FLAG = "--candidate-e-side-only"
+V3_8_CANDIDATE_D_QUALIFIED_METHOD = "hybrid_iterative_exact_side_case_qualification"
 
 
 def _validate_resolved_identity(payload: Mapping[str, Any]) -> None:
@@ -145,6 +147,7 @@ def build_v3_7_execution_plan(
     candidate_b_only: bool = False,
     candidate_c_only: bool = False,
     candidate_d_only: bool = False,
+    candidate_d_qualified: bool = False,
     candidate_e_side_only: bool = False,
 ) -> dict[str, Any]:
     """Build the explicit MPI8 child argv without importing the worker."""
@@ -160,13 +163,14 @@ def build_v3_7_execution_plan(
                 bool(candidate_b_only),
                 bool(candidate_c_only),
                 bool(candidate_d_only),
+                bool(candidate_d_qualified),
                 bool(candidate_e_side_only),
             )
         )
         > 1
     ):
         raise ValueError(
-            "QEP-only, Candidate-B-only, Candidate-C-only, Candidate-D-only, and Candidate-E-side-only routes are exclusive"
+            "QEP-only, Candidate-B-only, Candidate-C-only, Candidate-D-only, Candidate-D-qualified, and Candidate-E-side-only routes are exclusive"
         )
     worker_module = (
         V3_7_QEP_ONLY_WORKER_MODULE
@@ -195,9 +199,13 @@ def build_v3_7_execution_plan(
         argv.append(V3_7_CANDIDATE_C_FLAG)
     if candidate_d_only:
         argv.append(V3_7_CANDIDATE_D_FLAG)
+    if candidate_d_qualified:
+        argv.append(V3_7_CANDIDATE_D_QUALIFIED_FLAG)
     if candidate_e_side_only:
         argv.append(V3_7_CANDIDATE_E_FLAG)
-    if candidate_d_only:
+    if candidate_d_qualified:
+        method = V3_8_CANDIDATE_D_QUALIFIED_METHOD
+    elif candidate_d_only:
         method = "USER_AUTHORIZED_EXPERIMENTAL_HYBRIDIZED_DIRECT_SIDE_CANDIDATE_D"
     elif candidate_e_side_only:
         method = "hybrid_iterative_candidate_e_side_only"
@@ -235,6 +243,7 @@ def v3_7_execution_dry_run(
     candidate_b_only: bool = False,
     candidate_c_only: bool = False,
     candidate_d_only: bool = False,
+    candidate_d_qualified: bool = False,
     candidate_e_side_only: bool = False,
 ) -> dict[str, Any]:
     plan = build_v3_7_execution_plan(
@@ -246,6 +255,7 @@ def v3_7_execution_dry_run(
         candidate_b_only=candidate_b_only,
         candidate_c_only=candidate_c_only,
         candidate_d_only=candidate_d_only,
+        candidate_d_qualified=candidate_d_qualified,
         candidate_e_side_only=candidate_e_side_only,
     )
     if plan["argv"][1:3] != ["-n", "8"]:
@@ -267,6 +277,7 @@ def launch_v3_7_with_task038_watchdog(
     candidate_b_only: bool = False,
     candidate_c_only: bool = False,
     candidate_d_only: bool = False,
+    candidate_d_qualified: bool = False,
     candidate_e_side_only: bool = False,
 ) -> dict[str, Any]:
     """Run one authenticated V3-7 child through Task38's watchdog."""
@@ -288,6 +299,7 @@ def launch_v3_7_with_task038_watchdog(
         candidate_b_only=candidate_b_only,
         candidate_c_only=candidate_c_only,
         candidate_d_only=candidate_d_only,
+        candidate_d_qualified=candidate_d_qualified,
         candidate_e_side_only=candidate_e_side_only,
     )
     run_dir = Path(run_directory).resolve()
@@ -369,6 +381,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--candidate-b-only", action="store_true")
     parser.add_argument("--candidate-c-only", action="store_true")
     parser.add_argument("--candidate-d-only", action="store_true")
+    parser.add_argument("--candidate-d-qualified", action="store_true")
     parser.add_argument("--candidate-e-side-only", action="store_true")
     args = parser.parse_args(argv)
     if args.dry_run:
@@ -383,6 +396,7 @@ def main(argv: list[str] | None = None) -> int:
                     candidate_b_only=args.candidate_b_only,
                     candidate_c_only=args.candidate_c_only,
                     candidate_d_only=args.candidate_d_only,
+                    candidate_d_qualified=args.candidate_d_qualified,
                     candidate_e_side_only=args.candidate_e_side_only,
                 ),
                 ensure_ascii=False,
@@ -400,6 +414,7 @@ def main(argv: list[str] | None = None) -> int:
         candidate_b_only=args.candidate_b_only,
         candidate_c_only=args.candidate_c_only,
         candidate_d_only=args.candidate_d_only,
+        candidate_d_qualified=args.candidate_d_qualified,
         candidate_e_side_only=args.candidate_e_side_only,
     )
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
@@ -415,8 +430,10 @@ __all__ = [
     "V3_7_DIRECT_RUN_ROOT",
     "V3_7_CANDIDATE_C_FLAG",
     "V3_7_CANDIDATE_D_FLAG",
+    "V3_7_CANDIDATE_D_QUALIFIED_FLAG",
     "V3_7_CANDIDATE_E_FLAG",
     "V3_7_QEP_ONLY_WORKER_MODULE",
+    "V3_8_CANDIDATE_D_QUALIFIED_METHOD",
     "build_v3_7_execution_plan",
     "launch_v3_7_with_task038_watchdog",
     "load_v3_7_official_payload",

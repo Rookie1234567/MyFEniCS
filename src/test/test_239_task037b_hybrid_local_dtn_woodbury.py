@@ -642,7 +642,10 @@ def test_fixed_budget_zero_rhs_exact_and_nonzero_complex_is_finite():
         assert operator_context.destroyed is True
 
 
-def test_research_exact_side_action_matches_explicit_schur_and_releases_factor():
+@pytest.mark.parametrize("qualified", [False, True], ids=["historical", "qualified"])
+def test_research_exact_side_action_matches_explicit_schur_and_releases_factor(
+    qualified,
+):
     rows = 4
     modes = 2
     rng = np.random.default_rng(283)
@@ -669,7 +672,17 @@ def test_research_exact_side_action_matches_explicit_schur_and_releases_factor()
     D = _matrix_from_dense(D_dense)
     H = _matrix_from_dense(H_dense)
     components = SimpleNamespace(F=F, C=C, D=D, H=H)
-    action = ResearchExactSideLuAction(F, components, factor_solver_type=None)
+    action_kwargs = (
+        {
+            "qualification_scope": "task039_v3_p6h5_m480_1deg_s",
+            "explicit_opt_in": True,
+        }
+        if qualified
+        else {}
+    )
+    action = ResearchExactSideLuAction(
+        F, components, factor_solver_type=None, **action_kwargs
+    )
     source_template = F.createVecRight()
     source = _random_vector(source_template, 284)
     source_template.destroy()
@@ -691,6 +704,15 @@ def test_research_exact_side_action_matches_explicit_schur_and_releases_factor()
         finally:
             expected_vec.destroy()
         diagnostics = action.diagnostics
+        assert diagnostics["research_only"] is (not qualified)
+        if qualified:
+            assert diagnostics["case_qualification_opt_in"] is True
+            assert diagnostics["general_production"] is False
+            assert diagnostics["ordinary_default"] is False
+            assert diagnostics["nested_iterative_ksp_count"] == 0
+            assert diagnostics["local_direct_preonly_ksp_count"] == 1
+        else:
+            assert "case_qualification_opt_in" not in diagnostics
         assert diagnostics["direct_factor_count"] == 1
         assert diagnostics["direct_factor_count_owned"] == 1
         assert diagnostics["ilu_factor_count"] == 0

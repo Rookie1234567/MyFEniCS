@@ -603,13 +603,21 @@ def create_research_exact_side_lu_block_ldu_preconditioner(
     top_action: Any,
     *,
     matrix_repeat_tolerance: float = 1.0e-13,
+    qualification_scope: str | None = None,
+    explicit_opt_in: bool = False,
 ) -> HybridBlockLduPreconditioner:
-    """Build a research-only LDU context around one exact factor per side."""
+    """Build historical research LDU or an explicit case-qualified context.
+
+    The default remains research-only; a fixed qualification scope and
+    explicit opt-in are required for the case-qualified context.
+    """
 
     actions = {"bottom": bottom_action, "top": top_action}
     for side, action in actions.items():
         diagnostics = _action_diagnostics(action)
-        if diagnostics.get("research_only") is not True:
+        if diagnostics.get("research_only") is not True and not (
+            explicit_opt_in and diagnostics.get("case_qualification_opt_in") is True
+        ):
             raise ValueError(f"Research exact-side {side} action is not opted in")
         if _direct_factor_count(diagnostics) != 1:
             raise ValueError(
@@ -617,12 +625,41 @@ def create_research_exact_side_lu_block_ldu_preconditioner(
             )
         if diagnostics.get("global_hybrid_direct_factor_count") != 0:
             raise ValueError("Research exact-side action cannot own a global factor")
+        if explicit_opt_in and (
+            diagnostics.get("qualification_scope") != qualification_scope
+            or diagnostics.get("explicit_opt_in") is not True
+            or diagnostics.get("case_qualification_opt_in") is not True
+            or diagnostics.get("general_production") is not False
+            or diagnostics.get("ordinary_default") is not False
+            or diagnostics.get("ordinary_default_changed") is not False
+            or diagnostics.get("nested_iterative_ksp_count") != 0
+            or diagnostics.get("local_direct_preonly_ksp_count") != 1
+        ):
+            raise ValueError("Case-qualified exact-side action diagnostics are invalid")
     modal_schur = build_hybrid_action_modal_schur(
         coupling,
         bottom_action,
         top_action,
         matrix_repeat_tolerance=matrix_repeat_tolerance,
     )
+    research_inventory = {
+        "global_hybrid_direct_factor_count": 0,
+    }
+    if not explicit_opt_in:
+        research_inventory["research_only_exact_side_lu"] = True
+    if explicit_opt_in:
+        research_inventory.update(
+            {
+                "qualification_scope": qualification_scope,
+                "explicit_opt_in": True,
+                "case_qualification_opt_in": True,
+                "ordinary_default": False,
+                "ordinary_default_changed": False,
+                "general_production": False,
+                "nested_iterative_ksp_count": 0,
+                "local_direct_preonly_ksp_count": 2,
+            }
+        )
     try:
         return HybridBlockLduPreconditioner(
             layout,
@@ -632,10 +669,7 @@ def create_research_exact_side_lu_block_ldu_preconditioner(
             bottom_action,
             top_action,
             modal_schur,
-            research_inventory={
-                "research_only_exact_side_lu": True,
-                "global_hybrid_direct_factor_count": 0,
-            },
+            research_inventory=research_inventory,
         )
     except Exception:
         modal_schur.destroy()

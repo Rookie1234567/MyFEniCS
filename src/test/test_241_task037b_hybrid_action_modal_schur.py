@@ -609,7 +609,10 @@ def test_action_block_apply_is_linear_and_owns_no_side_factor():
         _destroy_fixture(fixture)
 
 
-def test_research_exact_side_factory_keeps_direct_and_ilu_inventories_separate():
+@pytest.mark.parametrize("qualified", [False, True], ids=["historical", "qualified"])
+def test_research_exact_side_factory_keeps_direct_and_ilu_inventories_separate(
+    qualified,
+):
     fixture = _tiny_fixture()
     components = []
     actions = []
@@ -624,6 +627,10 @@ def test_research_exact_side_factory_keeps_direct_and_ilu_inventories_separate()
                     system.A,
                     component,
                     factor_solver_type=None,
+                    qualification_scope=(
+                        "task039_v3_p6h5_m480_1deg_s" if qualified else None
+                    ),
+                    explicit_opt_in=qualified,
                 )
             )
         with pytest.raises(ValueError, match="zero borrowed direct factors"):
@@ -642,9 +649,20 @@ def test_research_exact_side_factory_keeps_direct_and_ilu_inventories_separate()
             fixture["coupling"],
             actions[0],
             actions[1],
+            qualification_scope=("task039_v3_p6h5_m480_1deg_s" if qualified else None),
+            explicit_opt_in=qualified,
         )
         inventory = context.inventory
-        assert inventory["research_only_exact_side_lu"] is True
+        if qualified:
+            assert "research_only_exact_side_lu" not in inventory
+            assert inventory["qualification_scope"] == ("task039_v3_p6h5_m480_1deg_s")
+            assert inventory["explicit_opt_in"] is True
+            assert inventory["case_qualification_opt_in"] is True
+            assert inventory["local_direct_preonly_ksp_count"] == 2
+            assert inventory["nested_iterative_ksp_count"] == 0
+        else:
+            assert inventory["research_only_exact_side_lu"] is True
+            assert "case_qualification_opt_in" not in inventory
         assert inventory["bottom_direct_factor_count"] == 1
         assert inventory["top_direct_factor_count"] == 1
         assert inventory["borrowed_ilu_factor_count"] == 0
