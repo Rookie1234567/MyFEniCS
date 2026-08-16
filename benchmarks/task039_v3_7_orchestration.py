@@ -541,32 +541,55 @@ def _side_vector_identity(vector: PETSc.Vec, source: str) -> dict[str, Any]:
 
 
 def _short_side_ksp_residual(
-    system: Any, *, max_it: int, source: str
+    system: Any, rhs: PETSc.Vec, *, max_it: int, source: str
 ) -> tuple[PETSc.Vec, dict[str, Any]]:
-    """Create one actual one-step side-KSP residual Vec for the survey."""
+    """Create one explicit ``rhs - A * x`` residual for a side probe."""
 
+    rhs_norm = float(rhs.norm())
+    if not np.isfinite(rhs_norm) or rhs_norm <= 1.0e-30:
+        raise ValueError("side-KSP probe RHS must be finite and nonzero")
     ksp = PETSc.KSP().create(system.A.getComm())
     solution = system.A.createVecRight()
     residual = system.A.createVecLeft()
+    applied = system.A.createVecLeft()
     try:
         ksp.setOperators(system.A)
         ksp.setType("gmres")
         ksp.getPC().setType("none")
         ksp.setInitialGuessNonzero(False)
         ksp.setTolerances(rtol=1.0e-14, atol=0.0, max_it=max_it)
-        ksp.solve(system.b, solution)
-        if ksp.getIterationNumber() <= 0:
+        ksp.solve(rhs, solution)
+        iterations = int(ksp.getIterationNumber())
+        reason = int(ksp.getConvergedReason())
+        if iterations <= 0:
             raise RuntimeError("side GMRES produced no residual iteration")
-        built_residual = ksp.buildResidual()
-        built_residual.copy(residual)
-        built_residual.destroy()
+        expected_nonconverged = int(PETSc.KSP.ConvergedReason.DIVERGED_MAX_IT)
+        if reason == 0 or (reason < 0 and reason != expected_nonconverged):
+            raise RuntimeError(
+                f"side GMRES returned an unexpected failure reason: {reason}"
+            )
+        system.A.mult(solution, applied)
+        rhs.copy(residual)
+        residual.axpy(PETSc.ScalarType(-1.0), applied)
+        solution_norm = float(solution.norm())
+        residual_norm = float(residual.norm())
+        if not np.isfinite(solution_norm) or not np.isfinite(residual_norm):
+            raise RuntimeError("side GMRES produced a non-finite solution/residual")
         return residual, {
             "source": source,
             "max_it": int(max_it),
-            "ksp_iterations": int(ksp.getIterationNumber()),
-            "ksp_reason": int(ksp.getConvergedReason()),
+            "rhs_source": source,
+            "rhs_norm": rhs_norm,
+            "solution_norm": solution_norm,
+            "explicit_residual_norm": residual_norm,
+            "explicit_residual_relative": residual_norm / rhs_norm,
+            "residual_source": "explicit_b_minus_Ax",
+            "ksp_iterations": iterations,
+            "ksp_reason": reason,
+            "expected_nonconverged_reason": expected_nonconverged,
         }
     finally:
+        applied.destroy()
         solution.destroy()
         ksp.destroy()
 
@@ -597,10 +620,16 @@ def _side_survey_vectors(
         owned.append(vector)
     for max_it in (1, 3):
         label = f"early_krylov_residual_it{max_it}"
+        probe = vectors["global_index_seed_739"]
         krylov, krylov_meta = _short_side_ksp_residual(
             system,
+            probe,
             max_it=max_it,
             source=f"side_unpreconditioned_gmres_it{max_it}",
+        )
+        krylov_meta["probe_source"] = "global_index_seed_739"
+        krylov_meta["probe_identity"] = _side_vector_identity(
+            probe, "global_index_seed_739"
         )
         vectors[label] = krylov
         owned.append(krylov)
@@ -627,21 +656,44 @@ def _side_correction_probe(
             residual.axpy(PETSc.ScalarType(-1.0), source)
             source_norm = float(source.norm())
             residual_norm = float(residual.norm())
-            rho = residual_norm / max(source_norm, 1.0e-30)
-            if np.isfinite(rho):
-                rho_values.append(rho)
-            reports[label] = {
-                "rho": float(rho),
-                "denominator": "max(norm(side_rhs_or_probe),1e-30)",
-                "finite": bool(np.isfinite(rho)),
-                "vector": _side_vector_identity(source, label),
-            }
+            finite = bool(np.isfinite(source_norm) and np.isfinite(residual_norm))
+            if source_norm <= 1.0e-30 and finite:
+                reports[label] = {
+                    "rho": None,
+                    "denominator": "max(norm(side_rhs_or_probe),1e-30)",
+                    "finite": True,
+                    "informative": False,
+                    "status": "degenerate_uninformative",
+                    "source_norm": source_norm,
+                    "residual_norm": residual_norm,
+                    "vector": _side_vector_identity(source, label),
+                }
+            else:
+                rho = residual_norm / source_norm if finite else float("nan")
+                if np.isfinite(rho):
+                    rho_values.append(rho)
+                reports[label] = {
+                    "rho": float(rho) if np.isfinite(rho) else None,
+                    "denominator": "max(norm(side_rhs_or_probe),1e-30)",
+                    "finite": bool(np.isfinite(rho)),
+                    "informative": bool(np.isfinite(rho)),
+                    "status": "measured" if np.isfinite(rho) else "nonfinite",
+                    "source_norm": source_norm,
+                    "residual_norm": residual_norm,
+                    "vector": _side_vector_identity(source, label),
+                }
         finally:
             residual.destroy()
             target.destroy()
     complete = len(reports) == len(vectors) and all(
         item["finite"] for item in reports.values()
     )
+    informative_labels = [
+        label for label, item in reports.items() if item["informative"]
+    ]
+    excluded_labels = [
+        label for label, item in reports.items() if not item["informative"]
+    ]
     return {
         "pass": complete,
         "correction_passes": int(pass_count),
@@ -649,6 +701,10 @@ def _side_correction_probe(
         "vector_inventory": {
             "count": len(reports),
             "sources": sorted(reports),
+            "informative_labels": informative_labels,
+            "excluded_labels": excluded_labels,
+            "informative_count": len(informative_labels),
+            "excluded_count": len(excluded_labels),
             "metadata": dict(vector_metadata),
         },
         "rho_summary": {
@@ -1049,6 +1105,48 @@ def _write_v3_7_object_ledger(
         comm.barrier()
 
 
+def _write_v3_7_identity_checkpoint(
+    run_directory: Path,
+    *,
+    source_sha: str,
+    producer: Mapping[str, Any],
+    identity: Mapping[str, Any],
+    comm: MPI.Intracomm,
+) -> Path:
+    """Persist the completed identity audit before the next stage can fail."""
+
+    path = run_directory / "numerical_output" / "v3_7_identity_checkpoint.json"
+    checkpoint = {
+        "schema": "task039.v3-7-identity-checkpoint.v1",
+        "source_sha": source_sha,
+        "physical_identity": {
+            "producer_source_sha": producer.get("producer_source_sha"),
+            "physical_model_sha256": producer.get("physical_model_sha256"),
+            "model_id": producer.get("model_id"),
+            "requested_modes": producer.get("requested_modes"),
+            "mpi_size": producer.get("mpi_size"),
+            "external_keys_exact": producer.get("external_keys_exact"),
+        },
+        "pass": bool(identity.get("pass") is True),
+        "relative_limit": V3_7_RHS_TOLERANCE,
+        "vector_count": identity.get("vector_count"),
+        "vectors": identity.get("vectors", {}),
+        "rhs_equality": identity.get("rhs_equality", {}),
+        "coupling_isolation": identity.get("coupling_isolation", {}),
+        "direct_solution_residual": identity.get("direct_solution_residual"),
+    }
+    if comm.rank == 0:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+        temporary.write_text(
+            json.dumps(_json_safe(checkpoint), ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        temporary.replace(path)
+    comm.barrier()
+    return path
+
+
 def _record_v3_7_marker(
     ledger: dict[str, Any], marker: str, detail: Mapping[str, Any]
 ) -> None:
@@ -1431,6 +1529,21 @@ def run_task039_v3_7_diagnostic(
                     "denominator": "max(norm(physical_rhs),1e-30)",
                     "source": "canonical direct payload reconstructed on current layout",
                 }
+                identity_checkpoint = _write_v3_7_identity_checkpoint(
+                    Path(run_directory).resolve(),
+                    source_sha=source_sha,
+                    producer=producer,
+                    identity=result,
+                    comm=comm,
+                )
+                _emit_marker(
+                    marker_callback,
+                    "identity_audit_complete",
+                    path=str(
+                        identity_checkpoint.relative_to(Path(run_directory).resolve())
+                    ),
+                    **{"pass": bool(result.get("pass") is True)},
+                )
                 return result
             finally:
                 for vector in isolated.values():

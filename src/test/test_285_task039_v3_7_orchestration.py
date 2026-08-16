@@ -11,6 +11,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 from mpi4py import MPI
+from petsc4py import PETSc
 
 import benchmarks.task039_v3_7_orchestration as orchestration
 from benchmarks import run_task037b_hybrid_iterative as frozen_runner
@@ -38,6 +39,18 @@ from src.modes.mode_classification import _near_degenerate_partition_audit
 
 
 INPUT = Path("input/official/task039/5nm_p6h5_v3_1deg_hybrid_direct_m480_mpi8.dat")
+
+
+def _tiny_side_system(rhs_values=(0.0, 0.0)):
+    matrix = PETSc.Mat().createAIJ(size=(2, 2), nnz=1, comm=PETSc.COMM_SELF)
+    matrix.setValue(0, 0, 1.0)
+    matrix.setValue(1, 1, 1.0)
+    matrix.assemble()
+    rhs = matrix.createVecRight()
+    for index, value in enumerate(rhs_values):
+        rhs.setValue(index, PETSc.ScalarType(value))
+    rhs.assemble()
+    return SimpleNamespace(A=matrix, b=rhs), matrix, rhs
 
 
 def test_v3_7_profile_is_derived_from_official_one_degree_s_input() -> None:
@@ -441,3 +454,178 @@ def test_v3_7_one_cell_cleanup_does_not_invent_unseen_arrays() -> None:
         assert ledger["objects"][name]["created"] is False
         assert ledger["objects"][name]["destroyed"] is False
         assert ledger["objects"][name]["status"] == "not_available"
+
+
+def test_v3_7_side_probe_uses_nonzero_seed_and_preserves_probe_identity() -> None:
+    system, matrix, rhs = _tiny_side_system()
+    probe = matrix.createVecRight()
+    try:
+        probe.setValue(0, PETSc.ScalarType(1.0 + 0.5j))
+        probe.setValue(1, PETSc.ScalarType(-0.25 + 0.75j))
+        probe.assemble()
+        before = orchestration._side_vector_identity(probe, "probe")
+        residual, metadata = orchestration._short_side_ksp_residual(
+            system,
+            probe,
+            max_it=1,
+            source="side_unpreconditioned_gmres_it1",
+        )
+        try:
+            after = orchestration._side_vector_identity(probe, "probe")
+            assert before["global_sha256"] == after["global_sha256"]
+            assert before["source_norm"] == pytest.approx(after["source_norm"])
+            assert metadata["rhs_norm"] > 1.0e-30
+            assert metadata["residual_source"] == "explicit_b_minus_Ax"
+            assert metadata["explicit_residual_relative"] == pytest.approx(0.0)
+        finally:
+            residual.destroy()
+
+        vectors, owned, vector_metadata = orchestration._side_survey_vectors(
+            system, "bottom", None
+        )
+        try:
+            assert vectors["physical_side_rhs"].norm() == pytest.approx(0.0)
+            for label in ("early_krylov_residual_it1", "early_krylov_residual_it3"):
+                assert vector_metadata[label]["probe_source"] == (
+                    "global_index_seed_739"
+                )
+                assert vector_metadata[label]["probe_identity"]["source_norm"] > 1.0e-30
+                assert vector_metadata[label]["residual_source"] == (
+                    "explicit_b_minus_Ax"
+                )
+        finally:
+            for vector in owned:
+                vector.destroy()
+    finally:
+        probe.destroy()
+        rhs.destroy()
+        matrix.destroy()
+
+
+def test_v3_7_zero_iteration_side_probe_fails_closed() -> None:
+    system, matrix, rhs = _tiny_side_system()
+    probe = matrix.createVecRight()
+    try:
+        probe.setValue(0, PETSc.ScalarType(1.0))
+        probe.setValue(1, PETSc.ScalarType(2.0))
+        probe.assemble()
+        with pytest.raises(RuntimeError, match="no residual iteration"):
+            orchestration._short_side_ksp_residual(
+                system,
+                probe,
+                max_it=0,
+                source="side_unpreconditioned_gmres_it0",
+            )
+    finally:
+        probe.destroy()
+        rhs.destroy()
+        matrix.destroy()
+
+
+def test_v3_7_side_probe_excludes_zero_rhs_from_rho_aggregate() -> None:
+    system, matrix, rhs = _tiny_side_system()
+    nonzero = matrix.createVecRight()
+    try:
+        nonzero.setValue(0, PETSc.ScalarType(1.0))
+        nonzero.setValue(1, PETSc.ScalarType(-1.0))
+        nonzero.assemble()
+
+        class CopyAction:
+            def apply(self, source, target) -> None:
+                source.copy(target)
+
+        report = orchestration._side_correction_probe(
+            system,
+            CopyAction(),
+            1,
+            {"physical_side_rhs": rhs, "seed": nonzero},
+            {},
+        )
+        zero = report["vectors"]["physical_side_rhs"]
+        assert zero["rho"] is None
+        assert zero["status"] == "degenerate_uninformative"
+        assert zero["informative"] is False
+        assert report["vector_inventory"]["excluded_count"] == 1
+        assert report["vector_inventory"]["informative_count"] == 1
+        assert report["rho_summary"]["median"] == pytest.approx(0.0)
+        assert report["rho_summary"]["worst"] == pytest.approx(0.0)
+    finally:
+        nonzero.destroy()
+        rhs.destroy()
+        matrix.destroy()
+
+
+def test_v3_7_identity_checkpoint_survives_correction_exception(tmp_path) -> None:
+    run_directory = tmp_path / "identity-checkpoint"
+    producer = {
+        "producer_source_sha": "p" * 40,
+        "physical_model_sha256": "m" * 64,
+        "model_id": "task039-test",
+        "requested_modes": 480,
+        "mpi_size": 8,
+        "external_keys_exact": True,
+    }
+    identity = {
+        "pass": True,
+        "vector_count": 1,
+        "vectors": {
+            "seed": {
+                "relative_error": 2.0e-12,
+                "limit": 1.0e-10,
+                "blocks": {"bottom": {"relative_error": 1.0e-12, "limit": 1.0e-10}},
+            }
+        },
+        "rhs_equality": {"pass": True},
+        "coupling_isolation": {"pass": True},
+        "direct_solution_residual": {
+            "relative_error": 7.5e-10,
+            "denominator": "max(norm(physical_rhs),1e-30)",
+        },
+    }
+    marker_events: list[tuple[str, dict]] = []
+
+    def identity_stage():
+        checkpoint = orchestration._write_v3_7_identity_checkpoint(
+            run_directory,
+            source_sha="c" * 40,
+            producer=producer,
+            identity=identity,
+            comm=MPI.COMM_SELF,
+        )
+        orchestration._emit_marker(
+            lambda marker, detail: marker_events.append((marker, dict(detail))),
+            "identity_audit_complete",
+            path="numerical_output/v3_7_identity_checkpoint.json",
+            **{"pass": True},
+        )
+        assert checkpoint.is_file()
+        return identity
+
+    with pytest.raises(RuntimeError, match="correction sentinel"):
+        run_v3_7_stage_sequence(
+            identity_stage=identity_stage,
+            correction_stage=lambda: (_ for _ in ()).throw(
+                RuntimeError("correction sentinel")
+            ),
+            oracle_stage=lambda _consume: {"pass": False},
+        )
+
+    checkpoint = json.loads(
+        (
+            run_directory / "numerical_output" / "v3_7_identity_checkpoint.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert checkpoint["source_sha"] == "c" * 40
+    assert checkpoint["pass"] is True
+    assert checkpoint["direct_solution_residual"]["relative_error"] == pytest.approx(
+        7.5e-10
+    )
+    assert marker_events == [
+        (
+            "identity_audit_complete",
+            {
+                "path": "numerical_output/v3_7_identity_checkpoint.json",
+                "pass": True,
+            },
+        )
+    ]
