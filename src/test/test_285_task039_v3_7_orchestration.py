@@ -452,6 +452,34 @@ def test_v3_8_candidate_b_budget_order_and_single_wrapper(
     assert any(marker.endswith("_top_end") for marker in events)
 
 
+def test_v3_8_candidate_b_zero_probe_is_excluded_before_action() -> None:
+    system, matrix, source = _tiny_side_system()
+
+    class NoApply:
+        diagnostics = {}
+
+        def apply(self, *_args):
+            raise AssertionError("zero Candidate-B probe must not call the action")
+
+    try:
+        report = orchestration._candidate_b_side_probe(
+            system,
+            NoApply(),
+            8,
+            {"physical_side_rhs": source},
+            {},
+        )
+        item = report["vectors"]["physical_side_rhs"]
+        assert item["status"] == "degenerate_uninformative"
+        assert item["informative"] is False
+        assert item["rho"] is None
+        assert report["rho_summary"]["median"] is None
+        assert report["rho_summary"]["worst"] is None
+    finally:
+        source.destroy()
+        matrix.destroy()
+
+
 def test_v3_8_candidate_b_plan_is_opt_in_and_checkpoint_is_hash_bound(tmp_path) -> None:
     default = watchdog.v3_7_execution_dry_run(
         INPUT,
@@ -518,6 +546,32 @@ def test_v3_8_candidate_b_plan_is_opt_in_and_checkpoint_is_hash_bound(tmp_path) 
     assert checkpoint["physical_identity"]["producer_input_sha256"] == "i" * 64
     assert checkpoint["physical_identity"]["direct_payload_sha256"] == "d" * 64
     assert checkpoint["budgets_run"] == [8, 16, 32]
+
+    failure = ValueError("array must not contain infs or NaNs")
+    failure.candidate_b_progress = {"budget": 8, "side": "bottom"}
+    failure.finite_audit = {
+        "stage": "woodbury_apply_lu_solve",
+        "vector": "lu_solve_input",
+        "finite": False,
+    }
+    failure_path = orchestration._write_v3_8_candidate_b_failure_checkpoint(
+        checkpoint_root,
+        source_sha="c" * 40,
+        resolved_payload=payload,
+        producer=producer,
+        error=failure,
+        comm=MPI.COMM_SELF,
+    )
+    failure_checkpoint = json.loads(failure_path.read_text(encoding="utf-8"))
+    assert failure_checkpoint["status"] == "candidate_b_implementation_failure"
+    assert failure_checkpoint["pass"] is None
+    assert failure_checkpoint["budgets_run"] == []
+    assert failure_checkpoint["failure"]["attempted_budget"] == 8
+    assert failure_checkpoint["failure"]["attempted_side"] == "bottom"
+    assert failure_checkpoint["failure"]["finite_audit"]["stage"] == (
+        "woodbury_apply_lu_solve"
+    )
+    assert "rho" in failure_checkpoint["failure"]["unmeasured"]
 
 
 def test_v3_8_candidate_b_branch_skips_v3_7_reference_oracle_recovery(

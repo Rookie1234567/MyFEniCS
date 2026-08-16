@@ -752,10 +752,33 @@ def _candidate_b_side_probe(
         target = system.A.createVecLeft()
         residual = system.A.createVecLeft()
         try:
+            source_norm = float(source.norm())
+            if not np.isfinite(source_norm):
+                error = ValueError(
+                    f"Candidate-B probe source norm is non-finite: label={label}"
+                )
+                error.finite_audit = {
+                    "stage": "candidate_b_probe_source_norm",
+                    "vector": label,
+                    "finite": False,
+                    "source_norm": source_norm,
+                }
+                raise error
+            if source_norm <= 1.0e-30:
+                reports[label] = {
+                    "source": label,
+                    "vector": _side_vector_identity(source, label),
+                    "source_norm": source_norm,
+                    "residual_norm": None,
+                    "finite": True,
+                    "rho": None,
+                    "informative": False,
+                    "status": "degenerate_uninformative",
+                }
+                continue
             action.apply(source, target)
             system.A.mult(target, residual)
             residual.axpy(PETSc.ScalarType(-1.0), source)
-            source_norm = float(source.norm())
             residual_norm = float(residual.norm())
             finite = bool(np.isfinite(source_norm) and np.isfinite(residual_norm))
             action_diagnostics = dict(action.diagnostics)
@@ -779,25 +802,16 @@ def _candidate_b_side_probe(
                 "finite": finite,
                 "apply": apply_diagnostics,
             }
-            if source_norm <= 1.0e-30 and finite:
-                item.update(
-                    {
-                        "rho": None,
-                        "informative": False,
-                        "status": "degenerate_uninformative",
-                    }
-                )
-            else:
-                rho = residual_norm / source_norm if finite else float("nan")
-                if np.isfinite(rho):
-                    rho_values.append(float(rho))
-                item.update(
-                    {
-                        "rho": float(rho) if np.isfinite(rho) else None,
-                        "informative": bool(np.isfinite(rho)),
-                        "status": "measured" if np.isfinite(rho) else "nonfinite",
-                    }
-                )
+            rho = residual_norm / source_norm if finite else float("nan")
+            if np.isfinite(rho):
+                rho_values.append(float(rho))
+            item.update(
+                {
+                    "rho": float(rho) if np.isfinite(rho) else None,
+                    "informative": bool(np.isfinite(rho)),
+                    "status": "measured" if np.isfinite(rho) else "nonfinite",
+                }
+            )
             reports[label] = item
         finally:
             residual.destroy()
@@ -896,6 +910,12 @@ def _run_v3_8_candidate_b_budget(
                     "right_preconditioner_identity"
                 ],
             }
+        except Exception as error:
+            error.candidate_b_progress = {
+                "budget": int(budget),
+                "side": side,
+            }
+            raise
         finally:
             if action is not None:
                 action.destroy()
@@ -1507,6 +1527,8 @@ def _write_v3_8_candidate_b_checkpoint(
         "factor_inventory": report.get("factor_inventory", {}),
         "budget_reports": report.get("budget_reports", []),
     }
+    if report.get("failure") is not None:
+        checkpoint["failure"] = report["failure"]
     path = run_directory / "numerical_output" / "v3_8_candidate_b_checkpoint.json"
     if comm.rank == 0:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -1518,6 +1540,60 @@ def _write_v3_8_candidate_b_checkpoint(
         temporary.replace(path)
     comm.barrier()
     return path
+
+
+def _write_v3_8_candidate_b_failure_checkpoint(
+    run_directory: Path,
+    *,
+    source_sha: str,
+    resolved_payload: Mapping[str, Any],
+    producer: Mapping[str, Any],
+    error: Exception,
+    comm: MPI.Intracomm,
+) -> Path:
+    progress = getattr(error, "candidate_b_progress", {})
+    finite_audit = getattr(error, "finite_audit", None)
+    report = {
+        "status": "candidate_b_implementation_failure",
+        "pass": None,
+        "selected_budget": None,
+        "budgets_run": [],
+        "gate": {
+            "median_limit": V3_8_CANDIDATE_B_MEDIAN_LIMIT,
+            "worst_limit": V3_8_CANDIDATE_B_WORST_LIMIT,
+            "formula": "rho=norm(b-Ax)/max(norm(b),1e-30)",
+        },
+        "factor_inventory": {
+            "per_budget": [],
+            "simultaneous_total_base_factor_count": "not_available",
+            "simultaneous_total_direct_factor_count": "not_available",
+            "simultaneous_total_global_hybrid_direct_factor_count": "not_available",
+        },
+        "budget_reports": [],
+        "failure": {
+            "type": type(error).__name__,
+            "message": str(error),
+            "attempted_budget": progress.get("budget", "not_available"),
+            "attempted_side": progress.get("side", "not_available"),
+            "finite_audit": finite_audit or "not_available",
+            "unmeasured": [
+                "candidate_b_gate",
+                "rho",
+                "median",
+                "worst",
+                "factor_inventory",
+                "remaining_budgets",
+            ],
+        },
+    }
+    return _write_v3_8_candidate_b_checkpoint(
+        run_directory,
+        source_sha=source_sha,
+        resolved_payload=resolved_payload,
+        producer=producer,
+        report=report,
+        comm=comm,
+    )
 
 
 def _run_v3_8_candidate_b_campaign(
@@ -1609,16 +1685,33 @@ def _run_v3_8_candidate_b_campaign(
             base_actions_live=2,
             fixed_actions_live=2,
         )
-        report = run_v3_8_candidate_b_budget_sequence(
-            {"bottom": setup.bottom, "top": setup.top},
-            fixed_actions,
-            {
-                "bottom": survey_side_vectors["bottom"],
-                "top": survey_side_vectors["top"],
-            },
-            vector_metadata,
-            marker_callback=marker_callback,
-        )
+        try:
+            report = run_v3_8_candidate_b_budget_sequence(
+                {"bottom": setup.bottom, "top": setup.top},
+                fixed_actions,
+                {
+                    "bottom": survey_side_vectors["bottom"],
+                    "top": survey_side_vectors["top"],
+                },
+                vector_metadata,
+                marker_callback=marker_callback,
+            )
+        except Exception as error:
+            checkpoint = _write_v3_8_candidate_b_failure_checkpoint(
+                run_directory,
+                source_sha=source_sha,
+                resolved_payload=resolved_payload,
+                producer=producer,
+                error=error,
+                comm=comm,
+            )
+            _emit_marker(
+                marker_callback,
+                "candidate_b_failure_checkpoint",
+                path=str(checkpoint),
+                failure_type=type(error).__name__,
+            )
+            raise
         checkpoint = _write_v3_8_candidate_b_checkpoint(
             run_directory,
             source_sha=source_sha,

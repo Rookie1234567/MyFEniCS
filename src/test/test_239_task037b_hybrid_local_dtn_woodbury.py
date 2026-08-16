@@ -574,6 +574,65 @@ def test_fixed_budget_krylov_action_is_deterministic_and_borrowing(budget: int):
         H.destroy()
 
 
+def test_fixed_budget_zero_rhs_exact_and_nonzero_complex_is_finite():
+    comm = MPI.COMM_WORLD
+    if comm.size not in (1, 2, 4):
+        return
+    operator_dense = np.asarray(
+        [[2.0 + 0.1j, 0.2 - 0.05j], [0.1 + 0.02j, 1.8 - 0.2j]],
+        dtype=np.complex128,
+    )
+    operator = _python_matrix_from_dense(operator_dense)
+    operator_context = operator.getPythonContext()
+    rows = operator_dense.shape[0]
+    C = _matrix_from_dense(np.zeros((rows, 1), dtype=np.complex128))
+    D = _matrix_from_dense(np.zeros((1, rows), dtype=np.complex128))
+    H = _matrix_from_dense(np.eye(1, dtype=np.complex128))
+    components = SimpleNamespace(F=operator, C=C, D=D, H=H)
+    fixed = HybridLocalDtnWoodburyFixedAction(
+        _FixedBaseAction(_DenseBaseInverse(2.0)), components
+    )
+    action = HybridLocalDtnWoodburyFixedBudgetKrylovAction(operator, fixed, budget=8)
+    zero = operator.createVecRight()
+    zero.set(0.0)
+    zero_target = operator.createVecLeft()
+    source = _vector_from_values(
+        operator, np.asarray([1.0 + 0.4j, -0.3 + 0.2j], dtype=np.complex128)
+    )
+    source_digest = _global_vec_digest(source)
+    target = operator.createVecLeft()
+    try:
+        zero_target.set(13.0)
+        action.apply(zero, zero_target)
+        zero_diagnostics = action.diagnostics
+        assert float(zero_target.norm()) == 0.0
+        assert zero_diagnostics["last_inner_iterations"] == 0
+        assert zero_diagnostics["last_converged_reason"] is None
+        assert zero_diagnostics["last_converged_reason_label"] == "zero_rhs_exact"
+        assert zero_diagnostics["zero_rhs_exact"] is True
+
+        action.apply(source, target)
+        diagnostics = action.diagnostics
+        assert _global_vec_digest(source) == source_digest
+        assert np.isfinite(target.norm())
+        assert 0 < diagnostics["last_inner_iterations"] <= 8
+        assert diagnostics["last_converged_reason_label"] == "petsc_ksp"
+        assert diagnostics["zero_rhs_exact"] is False
+    finally:
+        target.destroy()
+        source.destroy()
+        zero_target.destroy()
+        zero.destroy()
+        action.destroy()
+        fixed.destroy()
+        assert operator_context.destroyed is False
+        operator.destroy()
+        C.destroy()
+        D.destroy()
+        H.destroy()
+        assert operator_context.destroyed is True
+
+
 def test_research_exact_side_action_matches_explicit_schur_and_releases_factor():
     rows = 4
     modes = 2

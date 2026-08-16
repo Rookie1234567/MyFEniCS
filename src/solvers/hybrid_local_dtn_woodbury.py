@@ -86,6 +86,7 @@ class HybridLocalDtnWoodburyOracle:
         self._K_rank: int | None = None
         self._K_condition: float | None = None
         self._arrays_finite = False
+        self._last_failure_audit: dict[str, Any] | None = None
         self._setup_seconds = 0.0
         self._apply_seconds = 0.0
         self.apply_count = 0
@@ -174,7 +175,35 @@ class HybridLocalDtnWoodburyOracle:
         self.base_inverse.solve(source, self._z)
         self.D.mult(self._z, self._d_work)
         d_values = _gather_owned_small_vector(self._d_work)
-        q = lu_solve((self._lu, self._piv), d_values, check_finite=True)
+        try:
+            q = lu_solve((self._lu, self._piv), d_values, check_finite=True)
+        except ValueError as error:
+            if "infs or NaNs" not in str(error):
+                raise
+            local_flags = 0
+            if np.all(np.isfinite(self._z.getArray(readonly=True))):
+                local_flags |= 1
+            if np.all(np.isfinite(self._d_work.getArray(readonly=True))):
+                local_flags |= 2
+            if np.all(np.isfinite(d_values)):
+                local_flags |= 4
+            global_flags = int(self.comm.allreduce(local_flags, op=MPI.BAND))
+            audit = {
+                "stage": "woodbury_apply_lu_solve",
+                "vector": "lu_solve_input",
+                "finite": False,
+                "base_inverse_solution_finite": bool(global_flags & 1),
+                "modal_work_finite": bool(global_flags & 2),
+                "gathered_modal_rhs_finite": bool(global_flags & 4),
+                "error": str(error),
+            }
+            self._last_failure_audit = audit
+            enriched = ValueError(
+                "Woodbury finite audit failed at "
+                f"stage={audit['stage']}, vector={audit['vector']}: {error}"
+            )
+            enriched.finite_audit = audit
+            raise enriched from error
         self._z.copy(target)
         target.getArray()[:] += self._W_local @ q
         local_apply_finite = bool(
@@ -210,6 +239,7 @@ class HybridLocalDtnWoodburyOracle:
             "K_rank": self._K_rank,
             "K_condition_number": self._K_condition,
             "arrays_finite": bool(self._arrays_finite),
+            "last_failure_audit": self._last_failure_audit,
             "LU_shape": None if lu is None else list(lu.shape),
             "LU_nbytes": (
                 None if lu is None or piv is None else int(lu.nbytes + piv.nbytes)
@@ -629,6 +659,8 @@ class HybridLocalDtnWoodburyFixedBudgetKrylovAction:
         self._total_iterations = 0
         self._last_iterations: int | None = None
         self._last_reason: int | None = None
+        self._last_reason_label: str | None = None
+        self._last_zero_rhs_exact = False
         self._last_seconds: float | None = None
         self._total_seconds = 0.0
         self._inner_ksp_destroyed = False
@@ -643,7 +675,28 @@ class HybridLocalDtnWoodburyFixedBudgetKrylovAction:
         if target.getSize() != self.operator.getSize()[0]:
             raise ValueError("Fixed-budget side Krylov target has the wrong size")
         target.set(0.0)
+        source_norm = float(source.norm())
+        if not np.isfinite(source_norm):
+            error = ValueError("Fixed-budget side Krylov source norm is non-finite")
+            error.finite_audit = {
+                "stage": "fixed_budget_apply_input",
+                "vector": "source",
+                "finite": False,
+                "source_norm": source_norm,
+            }
+            raise error
+        exact_zero = source_norm == 0.0
         started = perf_counter()
+        if exact_zero:
+            elapsed = _max_over_comm(self._comm, perf_counter() - started)
+            self._apply_count += 1
+            self._last_iterations = 0
+            self._last_reason = None
+            self._last_reason_label = "zero_rhs_exact"
+            self._last_zero_rhs_exact = True
+            self._last_seconds = float(elapsed)
+            self._total_seconds += float(elapsed)
+            return
         self._inner_ksp.solve(source, target)
         elapsed = _max_over_comm(self._comm, perf_counter() - started)
         iterations = int(self._inner_ksp.getIterationNumber())
@@ -652,6 +705,8 @@ class HybridLocalDtnWoodburyFixedBudgetKrylovAction:
         self._total_iterations += iterations
         self._last_iterations = iterations
         self._last_reason = reason
+        self._last_reason_label = "petsc_ksp"
+        self._last_zero_rhs_exact = False
         self._last_seconds = float(elapsed)
         self._total_seconds += float(elapsed)
 
@@ -674,6 +729,8 @@ class HybridLocalDtnWoodburyFixedBudgetKrylovAction:
             "total_inner_iterations": int(self._total_iterations),
             "last_inner_iterations": self._last_iterations,
             "last_converged_reason": self._last_reason,
+            "last_converged_reason_label": self._last_reason_label,
+            "zero_rhs_exact": bool(self._last_zero_rhs_exact),
             "last_apply_seconds": self._last_seconds,
             "total_apply_seconds": float(self._total_seconds),
             "inner_ksp_created": True,
