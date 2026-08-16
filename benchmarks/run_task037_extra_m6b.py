@@ -581,6 +581,49 @@ M6B_W15A_EVENTS = (
     "measurement_ready",
     "summary_ready",
 )
+M6B_W16A_SCHEMA = "task037.extra.h2b.w16a.global-shifted-inner.v1"
+M6B_W16A_PHASE = "w16a_global_shifted_inner"
+M6B_W16A_PROGRESS_FILENAME = "m6b_w16a_progress.jsonl"
+M6B_W16A_SUMMARY_FILENAME = "m6b_w16a_summary.json"
+M6B_W16A_SHIFTED_FACTOR_MANIFEST_RELATIVE_PATH = (
+    "benchmarks/artifacts/task037_extra_development/"
+    "m6b_d98254f_formal_run5/shifted_lu_store/manifest.json"
+)
+M6B_W16A_SHIFTED_FACTOR_MANIFEST_SHA256 = M6B_W2_FACTOR_MANIFEST_SHA256
+M6B_W16A_SHIFTED_FACTOR_SOURCE_SHA = M6B_W2_RESIDUAL_SOURCE_SHA
+M6B_W16A_JIT_RELATIVE_PATH = M6B_W13A_JIT_RELATIVE_PATH
+M6B_W16A_W7_RAW_RELATIVE_PATH = (
+    "benchmarks/artifacts/task037_extra_development/"
+    "m6b_w7_s1_7febc1e_restart_run3"
+)
+M6B_W16A_PREDICTED_LIVE_SET_BYTES = 1_739_986_075
+M6B_W16A_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_750_000_000
+M6B_W16A_WATCHDOG_LIMIT_BYTES = 1_950_000_000
+M6B_W16A_SCRATCH_PER_RUN_BYTES = 114_014_112
+M6B_W16A_SCRATCH_TWO_RUN_TOTAL_BYTES = 228_028_224
+M6B_W16A_EVENTS = (
+    "authority_validated",
+    "mesh_ready",
+    "space_ready",
+    "floquet_mpc_ready",
+    "cache_ready",
+    "auxiliary_constructed",
+    "inner_checkpoint_1_ready",
+    "inner_checkpoint_2_ready",
+    "auxiliary_released",
+    "physical_constructed",
+    "physical_apply_1_ready",
+    "physical_apply_2_ready",
+    "physical_released",
+    "measurement_ready",
+    "summary_ready",
+)
+M6B_W16A_WATCHDOG_SCHEMA = "task037.extra.h2b.w16a.watchdog.v1"
+M6B_W16A_CHECK_SCHEMA = "task037.extra.h2b.w16a.formal-resource-check.v1"
+M6B_W16A_WATCHDOG_SUMMARY_FILENAME = "w16a_watchdog_summary.json"
+M6B_W16A_TIMEOUT_SECONDS = 3_600.0
+M6B_W16A_WATCHDOG_RSS_LIMIT_BYTES = 1_950_000_000
+M6B_W16A_FORMAL_RSS_LIMIT_BYTES = 1_950_000_000
 M6B_W6A_EVENTS = (
     "authority_validated",
     "mesh_ready",
@@ -3897,6 +3940,34 @@ def _m6b_w14a_worker_command(
     ]
 
 
+def _m6b_w16a_worker_command(
+    run_dir: Path,
+    w7_compact: Path,
+    w7_raw_dir: Path,
+    shifted_factor_manifest: Path,
+    jit_cache_source: Path,
+    expected_source_sha: str,
+) -> list[str]:
+    return [
+        sys.executable,
+        "-m",
+        "benchmarks.run_task037_extra_m6b",
+        "m6b-w16a-global-shifted-inner-diagnostic",
+        "--run-dir",
+        str(Path(run_dir).resolve()),
+        "--w7-compact",
+        str(Path(w7_compact).resolve()),
+        "--w7-raw-dir",
+        str(Path(w7_raw_dir).resolve()),
+        "--shifted-factor-manifest",
+        str(Path(shifted_factor_manifest).resolve()),
+        "--jit-cache-source",
+        str(Path(jit_cache_source).resolve()),
+        "--expected-source-sha",
+        expected_source_sha,
+    ]
+
+
 def _m6b_w14b_worker_command(
     run_dir: Path,
     w5_compact: Path,
@@ -4394,6 +4465,148 @@ def _run_m6b_w15a_watchdog(
     }
     _write_json(
         watchdog_dir / M6B_W15A_WATCHDOG_SUMMARY_FILENAME,
+        _attach_evidence(payload),
+    )
+    return 0 if worker_completed else 1
+
+
+def _m6b_w16a_raw_artifacts(run_dir: Path) -> list[dict[str, Any]]:
+    return [
+        _artifact(run_dir, M6B_W16A_SUMMARY_FILENAME),
+        _artifact(run_dir, M6B_W16A_PROGRESS_FILENAME),
+    ]
+
+
+def _m6b_w16a_watchdog_artifacts(watchdog_dir: Path) -> list[dict[str, Any]]:
+    return [
+        _artifact(watchdog_dir, f"{M6B_W16A_PHASE}_timeline.jsonl"),
+        _artifact(watchdog_dir, f"{M6B_W16A_PHASE}_stdout.txt"),
+        _artifact(watchdog_dir, f"{M6B_W16A_PHASE}_root_pid.json"),
+    ]
+
+
+def _m6b_w16a_progress_valid(path: Path) -> dict[str, Any]:
+    try:
+        records = [
+            json.loads(line)
+            for line in Path(path).read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        if not all(isinstance(record, Mapping) for record in records):
+            return {"pass": False, "record_count": len(records), "events": []}
+        events = [record.get("event") for record in records]
+        passed = bool(
+            len(records) == len(M6B_W16A_EVENTS)
+            and all(
+                record.get("schema") == f"{M6B_W16A_SCHEMA}.progress.v1"
+                and record.get("phase") == M6B_W16A_PHASE
+                for record in records
+            )
+            and events == list(M6B_W16A_EVENTS)
+        )
+        return {"pass": passed, "record_count": len(records), "events": events}
+    except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        return {"pass": False, "record_count": 0, "problems": [type(exc).__name__]}
+
+
+def _run_m6b_w16a_watchdog(
+    run_dir: Path,
+    watchdog_dir: Path,
+    w7_compact: Path,
+    w7_raw_dir: Path,
+    shifted_factor_manifest: Path,
+    jit_cache_source: Path,
+    expected_source_sha: str,
+) -> int:
+    """Run the fixed W16A worker once under the shared process monitor."""
+
+    import time
+
+    h2b = __import__("benchmarks.run_task037_extra_h2b", fromlist=["*"])
+    run_dir = Path(run_dir).resolve()
+    watchdog_dir = Path(watchdog_dir).resolve()
+    authority_paths = tuple(
+        Path(path).resolve()
+        for path in (w7_compact, w7_raw_dir, shifted_factor_manifest, jit_cache_source)
+    )
+    if run_dir.exists() or watchdog_dir.exists():
+        raise FileExistsError("W16A watchdog refuses existing paths")
+    if any(not path.exists() for path in authority_paths):
+        raise FileNotFoundError("W16A watchdog authority path is missing")
+    _m6b_w16a_factor_authority(Path(shifted_factor_manifest))
+    _m6b_w9a_load_w7(Path(w7_compact), Path(w7_raw_dir))
+    source_start = h2b._light_source()
+    if (
+        source_start.get("source_commit_full_sha") != expected_source_sha
+        or not _m6b_w6a_source_valid(source_start)
+    ):
+        raise RuntimeError("W16A watchdog source identity is not clean or expected")
+
+    watchdog_dir.mkdir(parents=True)
+    command = _m6b_w16a_worker_command(
+        run_dir,
+        w7_compact,
+        w7_raw_dir,
+        shifted_factor_manifest,
+        jit_cache_source,
+        expected_source_sha,
+    )
+    started = time.perf_counter()
+    process = h2b._monitor_phase(
+        watchdog_dir,
+        M6B_W16A_PHASE,
+        command,
+        M6B_W16A_TIMEOUT_SECONDS,
+        M6B_W16A_WATCHDOG_RSS_LIMIT_BYTES,
+    )
+    drain = h2b._bounded_process_drain(process)
+    source_end = h2b._light_source()
+    timeline_name = f"{M6B_W16A_PHASE}_timeline.jsonl"
+    timeline = _m6b_w8a_timeline_valid(
+        watchdog_dir / timeline_name, phase=M6B_W16A_PHASE
+    )
+    worker_completed = bool(
+        type(process.get("return_code")) is int
+        and process["return_code"] in (0, 1)
+        and process.get("termination") is None
+        and isinstance(drain, Mapping)
+        and drain.get("gone") is True
+    )
+    payload = {
+        "schema": M6B_W16A_WATCHDOG_SCHEMA,
+        "phase": M6B_W16A_PHASE,
+        "status": "measurement_complete" if worker_completed else "gate_failed",
+        "process": process,
+        "drain": drain,
+        "source_at_start": source_start,
+        "source_at_end": source_end,
+        "source_end_clean": bool(
+            _m6b_w6a_source_valid(source_end)
+            and source_end.get("source_commit_full_sha") == expected_source_sha
+        ),
+        "resource_limits": {
+            "timeout_seconds": M6B_W16A_TIMEOUT_SECONDS,
+            "watchdog_rss_bytes": M6B_W16A_WATCHDOG_RSS_LIMIT_BYTES,
+            "completion_peak_rss_bytes": M6B_W16A_FORMAL_RSS_LIMIT_BYTES,
+            "swap_bytes": M6B_SWAP_LIMIT_BYTES,
+        },
+        "raw_dir": str(run_dir),
+        "watchdog_dir": str(watchdog_dir),
+        "command": command,
+        "artifact_inventory": {
+            "raw": _m6b_w16a_raw_artifacts(run_dir),
+            "watchdog": _m6b_w16a_watchdog_artifacts(watchdog_dir),
+        },
+        "worker_summary": _artifact(run_dir, M6B_W16A_SUMMARY_FILENAME),
+        "timeline": timeline,
+        "formal_pass": False,
+        "pde_pass": False,
+        "official_rta": False,
+        "w16b_unlocked": False,
+        "elapsed_wall_seconds": float(time.perf_counter() - started),
+    }
+    _write_json(
+        watchdog_dir / M6B_W16A_WATCHDOG_SUMMARY_FILENAME,
         _attach_evidence(payload),
     )
     return 0 if worker_completed else 1
@@ -5940,6 +6153,851 @@ def _m6b_w15a_formal_gate(
         "checkpoint_authority": frozen_authority,
         "checker_source": checker_source,
     }
+
+
+def _m6b_w16a_array_artifact_valid(
+    raw_dir: Path, base_dir: Path, value: Any, expected_name: str | None = None
+) -> bool:
+    import numpy as np
+
+    if not isinstance(value, Mapping) or not isinstance(value.get("path"), str):
+        return False
+    declared_path = Path(value["path"])
+    path = declared_path if declared_path.is_absolute() else base_dir / declared_path
+    path = path.resolve()
+    try:
+        path.relative_to(Path(raw_dir).resolve())
+    except ValueError:
+        return False
+    file_sha = value.get("file_sha256", value.get("sha256"))
+    if (
+        expected_name is not None
+        and declared_path.name != expected_name
+        or not path.is_file()
+        or type(value.get("bytes")) is not int
+        or value["bytes"] != path.stat().st_size
+        or not _m6b_w6a_valid_sha(file_sha)
+        or _sha256_file(path) != file_sha
+        or value.get("dtype") != "complex128"
+        or value.get("shape") != [M6B_GLOBAL_ROWS]
+        or not _m6b_w6a_valid_sha(value.get("array_sha256"))
+    ):
+        return False
+    try:
+        array = np.load(path, allow_pickle=False, mmap_mode="r")
+        observed = _m6b_w6a_w5_legacy_raw_array_sha256(array)
+        return bool(
+            array.dtype == np.dtype(np.complex128)
+            and list(array.shape) == [M6B_GLOBAL_ROWS]
+            and np.all(np.isfinite(array))
+            and observed == value["array_sha256"]
+        )
+    except (OSError, TypeError, ValueError):
+        return False
+
+
+def _m6b_w16a_scratch_valid(raw_dir: Path, core: Any) -> bool:
+    if not isinstance(core, Mapping):
+        return False
+    try:
+        audits = core["inner_audits"]
+        if not isinstance(audits, Sequence) or len(audits) != 2:
+            return False
+        paths: list[Path] = []
+        for audit in audits:
+            scratch_paths = audit["scratch_paths"]
+            for role in ("v_basis", "z_basis"):
+                path = Path(scratch_paths[role]).resolve()
+                path.relative_to(Path(raw_dir).resolve())
+                expected = audit[role]["allocated_bytes"]
+                if type(expected) is not int or not path.is_file():
+                    return False
+                if path.stat().st_size != expected:
+                    return False
+                paths.append(path)
+            if audit["scratch_bytes"] != M6B_W16A_SCRATCH_PER_RUN_BYTES:
+                return False
+        return len(set(paths)) == 4
+    except (KeyError, IndexError, TypeError, ValueError, OSError):
+        return False
+
+
+def _m6b_w16a_checkpoint_artifacts_valid(raw_dir: Path, core: Any) -> bool:
+    if not isinstance(core, Mapping):
+        return False
+    try:
+        artifacts = core["artifacts"]
+        checkpoints = artifacts["inner_checkpoints"]
+        physical = artifacts["physical_action_outputs"]
+        if not isinstance(checkpoints, Sequence) or len(checkpoints) != 2:
+            return False
+        if not isinstance(physical, Mapping) or set(physical) != {"p1", "p2"}:
+            return False
+        observed_runs: list[int] = []
+        for item in checkpoints:
+            run_index = item["run_index"]
+            if type(run_index) is not int or run_index not in (1, 2):
+                return False
+            if set(item["artifacts"]) != {
+                "solution",
+                "outer_action",
+                "residual",
+                "rhs",
+            }:
+                return False
+            base = Path(raw_dir) / "inner_checkpoints" / f"run{run_index}"
+            for name, descriptor in item["artifacts"].items():
+                if not _m6b_w16a_array_artifact_valid(
+                    raw_dir,
+                    base,
+                    descriptor,
+                    f"m6b_iter20_{name}.npy",
+                ):
+                    return False
+            observed_runs.append(run_index)
+        if observed_runs != [1, 2]:
+            return False
+        return all(
+            _m6b_w16a_array_artifact_valid(
+                raw_dir,
+                Path(raw_dir),
+                descriptor,
+                f"w16a_physical_{name}.npy",
+            )
+            for name, descriptor in physical.items()
+        )
+    except (KeyError, IndexError, TypeError, ValueError, OSError):
+        return False
+
+
+def _m6b_w16a_vector_evidence_valid(
+    raw_dir: Path, core: Any, expected_w7: Mapping[str, Any]
+) -> bool:
+    """Close W16A scalar evidence over the frozen and recorded vectors."""
+
+    import numpy as np
+
+    if not isinstance(core, Mapping) or not isinstance(expected_w7, Mapping):
+        return False
+
+    def load_array(
+        base_dir: Path, descriptor: Mapping[str, Any], expected_name: str
+    ) -> Any:
+        if not _m6b_w16a_array_artifact_valid(
+            raw_dir, base_dir, descriptor, expected_name
+        ):
+            raise ValueError("W16A vector artifact is invalid")
+        declared = Path(descriptor["path"])
+        path = declared if declared.is_absolute() else base_dir / declared
+        return np.load(path.resolve(), allow_pickle=False, mmap_mode="r")
+
+    def equal_value(left: Any, right: Any) -> bool:
+        if isinstance(left, bool):
+            return right is left
+        if isinstance(left, (list, tuple)):
+            return (
+                isinstance(right, (list, tuple))
+                and len(left) == len(right)
+                and all(equal_value(a, b) for a, b in zip(left, right))
+            )
+        if isinstance(left, (int, float)) and not isinstance(left, bool):
+            try:
+                return math.isclose(
+                    float(left), float(right), rel_tol=1.0e-12, abs_tol=1.0e-12
+                )
+            except (TypeError, ValueError):
+                return False
+        return left == right
+
+    try:
+        frozen_artifact = expected_w7["residual_artifact"]
+        residual_evidence = core["residual"]
+        if not (
+            residual_evidence["role"]
+            == "untouched_W7_cumulative400_full_explicit_residual"
+            and residual_evidence["authority"] == expected_w7["compact"]
+            and residual_evidence["artifact"] == frozen_artifact
+        ):
+            return False
+        expected_rhs_sha = frozen_artifact["array_sha256"]
+        if not _m6b_w6a_valid_sha(expected_rhs_sha):
+            return False
+
+        checkpoints = core["artifacts"]["inner_checkpoints"]
+        records = core["inner_records"]
+        if not (
+            isinstance(checkpoints, Sequence)
+            and isinstance(records, Sequence)
+            and len(checkpoints) == len(records) == 2
+            and [item["run_index"] for item in checkpoints] == [1, 2]
+            and [item["run_index"] for item in records] == [1, 2]
+        ):
+            return False
+
+        rhs_values: list[Any] = []
+        for checkpoint, record in zip(checkpoints, records):
+            artifacts = checkpoint["artifacts"]
+            rhs_descriptor = artifacts["rhs"]
+            solution_descriptor = artifacts["solution"]
+            if not (
+                rhs_descriptor["array_sha256"] == expected_rhs_sha
+                and record["rhs_sha256"] == expected_rhs_sha
+                and record["solution_sha256"]
+                == solution_descriptor["array_sha256"]
+            ):
+                return False
+            base_dir = Path(raw_dir) / "inner_checkpoints" / f"run{checkpoint['run_index']}"
+            solution = load_array(
+                base_dir, solution_descriptor, "m6b_iter20_solution.npy"
+            )
+            rhs = load_array(base_dir, rhs_descriptor, "m6b_iter20_rhs.npy")
+            outer_action = load_array(
+                base_dir,
+                artifacts["outer_action"],
+                "m6b_iter20_outer_action.npy",
+            )
+            residual = load_array(
+                base_dir, artifacts["residual"], "m6b_iter20_residual.npy"
+            )
+            if _m6b_w6a_w5_legacy_raw_array_sha256(rhs) != expected_rhs_sha:
+                return False
+            relative = float(
+                np.linalg.norm(residual)
+                / max(float(np.linalg.norm(rhs)), np.finfo(float).tiny)
+            )
+            closure = float(
+                np.linalg.norm(rhs - outer_action - residual)
+                / max(
+                    float(np.linalg.norm(rhs)),
+                    float(np.linalg.norm(residual)),
+                    np.finfo(float).tiny,
+                )
+            )
+            if not (
+                np.isfinite(relative)
+                and np.isfinite(closure)
+                and closure <= 1.0e-12
+                and equal_value(relative, checkpoint["true_relative_residual"])
+                and equal_value(relative, record["true_residual"])
+            ):
+                return False
+            rhs_values.append(rhs)
+
+        if not np.array_equal(rhs_values[0], rhs_values[1]):
+            return False
+        z_identity = core["z_identity"]
+        if not (
+            z_identity["first_sha256"]
+            == records[0]["solution_sha256"]
+            == z_identity["second_sha256"]
+            == records[1]["solution_sha256"]
+        ):
+            return False
+
+        physical = core["artifacts"]["physical_action_outputs"]
+        p_values = [
+            load_array(
+                Path(raw_dir),
+                physical[f"p{index}"],
+                f"w16a_physical_p{index}.npy",
+            )
+            for index in (1, 2)
+        ]
+        p_identity = core["p_identity"]
+        if not (
+            p_identity["first_sha256"] == physical["p1"]["array_sha256"]
+            and p_identity["second_sha256"] == physical["p2"]["array_sha256"]
+            and physical["p1"]["array_sha256"]
+            == physical["p2"]["array_sha256"]
+            and np.array_equal(p_values[0], p_values[1])
+        ):
+            return False
+
+        from src.solvers.persistent_residual_one_vector import (
+            repeat_rank_one_projection,
+        )
+
+        measurements = core["measurements"]
+        frozen_residual = np.asarray(expected_w7["residual"])
+        if (
+            frozen_residual.dtype != np.dtype(np.complex128)
+            or frozen_residual.ndim != 1
+            or _m6b_w6a_w5_legacy_raw_array_sha256(frozen_residual)
+            != expected_rhs_sha
+        ):
+            return False
+        measurement_keys = (
+            "schema",
+            "finite",
+            "repeat_exact",
+            "alpha",
+            "denominator",
+            "numerator",
+            "residual_norm",
+            "corrected_residual_norm",
+            "rho",
+            "projection_orthogonality",
+            "normal_closure",
+            "block_size",
+            "block_count",
+        )
+        repeat_keys = (
+            "rho",
+            "alpha",
+            "normal_closure",
+            "projection_orthogonality",
+            "repeat_exact",
+            "passes",
+        )
+        if not isinstance(measurements, Sequence) or len(measurements) != 2:
+            return False
+        for measured, direction in zip(measurements, p_values):
+            recomputed = repeat_rank_one_projection(
+                frozen_residual,
+                direction,
+                block_size=M6B_W11A_BLOCK_SIZE,
+                schema=M6B_W16A_SCHEMA,
+            )
+            if not all(
+                equal_value(recomputed[key], measured[key])
+                for key in measurement_keys
+            ):
+                return False
+            if not isinstance(measured.get("repeat"), Mapping):
+                return False
+            if not all(
+                equal_value(recomputed["repeat"][key], measured["repeat"][key])
+                for key in repeat_keys
+            ):
+                return False
+        return True
+    except (FloatingPointError, KeyError, IndexError, OSError, TypeError, ValueError):
+        return False
+
+
+def _m6b_w16a_action_audit_valid(value: Any) -> bool:
+    if not isinstance(value, Mapping):
+        return False
+    try:
+        construction = value["auxiliary_construction"]
+        final_counts = value["auxiliary_final_counts"]
+        instances = value["physical_instances"]
+        instance = instances[0]
+        physical = instance["physical"]
+        outer = instance["outer"]
+        dtn = instance["dtn"]
+        bridge = instance["bridge"]
+        return bool(
+            value["retained_authority_vector_roles"] == ["w7_target_residual"]
+            and value["lifecycle_events"] == [
+                "auxiliary_constructed",
+                "inner_apply_1",
+                "inner_apply_2",
+                "auxiliary_released",
+                "physical_constructed",
+                "physical_apply_1",
+                "physical_apply_2",
+                "physical_released",
+            ]
+            and value["global_shifted_action_count"] == 42
+            and value["local_pc_apply_count"] == 40
+            and value["local_exact_shifted_volume_action_count"] == 40
+            and value["shifted_action_total_count"] == 82
+            and value["physical_action_count"] == 2
+            and value["physical_dtn_action_count"] == 2
+            and len(instances) == 1
+            and construction["shifted_action"]["apply_count"] == 0
+            and final_counts["shifted_action_audit"]["apply_count"] == 82
+            and final_counts["global_shifted_action_count"] == 42
+            and final_counts["local_pc_apply_count"] == 40
+            and final_counts["local_exact_shifted_volume_action_count"] == 40
+            and physical["apply_count"] == 2
+            and outer["apply_count"] == 2
+            and dtn["apply_count"] == 2
+            and bridge["forward_apply_count"] == 2
+            and outer["matrix_type"] == "python_action_only"
+            and outer["global_matrix"] is False
+            and outer["augmented_matrix"] is False
+            and outer["static_condensation"] is False
+            and outer["trace_slab"] is False
+            and outer["explicit_C_materialized_count"] == 0
+            and outer["explicit_D_materialized_count"] == 0
+            and physical["global_matrix_materialized"] is False
+            and physical["global_constraint_matrix_materialized"] is False
+            and physical["global_condensed_schur_materialized"] is False
+            and physical["cell_schur_matrix_materialized"] is False
+            and physical["slab_matrix_materialized"] is False
+            and physical["retained_dense_cell_tensor_count"] == 0
+            and physical["dense_cell_tensor_materialized_per_apply"] is False
+            and physical["factor_count"] == 0
+            and physical["ksp_created"] is False
+            and physical["cell_schur_matrix_nnz"] == 0
+            and physical["slab_matrix_nnz"] == 0
+            and physical["explicit_C_materialized_count"] == 0
+            and physical["explicit_D_materialized_count"] == 0
+            and physical["ordinary_default_changed"] is False
+            and dtn["mode_count"] == 80
+            and dtn["fine_space"] == "uncondensed_fullspace"
+            and dtn["condensation"] is False
+            and dtn["static_condensed_operator_used"] is False
+            and dtn["trace_slab_pc_used"] is False
+            and dtn["global_matrix_materialized"] is False
+            and dtn["augmented_matrix_materialized"] is False
+            and dtn["explicit_C_materialized_count"] == 0
+            and dtn["explicit_D_materialized_count"] == 0
+            and dtn["fe_sized_allgather"] is False
+            and dtn["modal_allreduce_count_per_apply"] == 1
+            and dtn["modal_allreduce_count_per_hermitian_apply"] == 1
+            and bridge["fixed_work_vectors"] == 2
+            and bridge["per_apply_vec_creation"] == 0
+        )
+    except (KeyError, IndexError, TypeError, ValueError):
+        return False
+
+
+def _m6b_w16a_jit_valid(summary: Mapping[str, Any], raw_dir: Path, h2b: Any) -> bool:
+    try:
+        value = summary["jit_cache"]
+        source = (ROOT / M6B_W16A_JIT_RELATIVE_PATH).resolve()
+        target = (Path(raw_dir) / "jit_cache").resolve()
+        source_record = _m6b_w2_cache_record(h2b, source)
+        target_record = _m6b_w2_cache_record(h2b, target)
+        return bool(
+            value["source"] == str(source)
+            and value["target"] == str(target)
+            and value["source_before"] == source_record
+            and value["source_final"] == source_record
+            and value["target_before"] == target_record
+            and value["target_final"] == target_record
+            and source_record == target_record
+            and source_record["inventory_sha256"] == M6B_W2_JIT_INVENTORY_SHA256
+            and value["source_unchanged"] is True
+            and value["target_unchanged"] is True
+            and value["target_matches_source"] is True
+            and value["warm_precompiled"] is True
+            and value["runtime_compile_allowed"] is False
+        )
+    except (OSError, KeyError, TypeError, ValueError):
+        return False
+
+
+def _m6b_w16a_measured_summary(
+    summary: Mapping[str, Any], timeline: Mapping[str, Any]
+) -> dict[str, Any]:
+    core = summary.get("core", {})
+    records = core.get("inner_records", []) if isinstance(core, Mapping) else []
+    measurements = core.get("measurements", []) if isinstance(core, Mapping) else []
+    audit = summary.get("action_audit", {})
+    prediction = summary.get("predicted_live_set", {})
+
+    def scalar(value: Any, key: str) -> Any:
+        item = value.get(key) if isinstance(value, Mapping) else None
+        return item if type(item) in (bool, int, float, str) else None
+
+    return {
+        "inner_true_residuals": [
+            scalar(record, "true_residual") for record in records
+        ],
+        "z_relative_difference": scalar(core.get("z_identity", {}), "relative_difference")
+        if isinstance(core, Mapping)
+        else None,
+        "p_relative_difference": scalar(core.get("p_identity", {}), "relative_difference")
+        if isinstance(core, Mapping)
+        else None,
+        "rho": [scalar(item, "rho") for item in measurements],
+        "normal_closure": [
+            scalar(item, "normal_closure") for item in measurements
+        ],
+        "projection_orthogonality": [
+            scalar(item, "projection_orthogonality") for item in measurements
+        ],
+        "global_shifted_action_count": scalar(
+            audit, "global_shifted_action_count"
+        ),
+        "local_pc_apply_count": scalar(audit, "local_pc_apply_count"),
+        "local_exact_shifted_volume_action_count": scalar(
+            audit, "local_exact_shifted_volume_action_count"
+        ),
+        "shifted_action_total_count": scalar(
+            audit, "shifted_action_total_count"
+        ),
+        "physical_action_count": scalar(audit, "physical_action_count"),
+        "physical_dtn_action_count": scalar(audit, "physical_dtn_action_count"),
+        "predicted_live_set_bytes": scalar(prediction, "bytes"),
+        "measured_peak_rss_bytes": scalar(timeline, "peak_rss_bytes"),
+        "measured_swap_bytes": scalar(timeline, "swap_bytes"),
+    }
+
+
+def _m6b_w16a_formal_gate(
+    raw_dir: Path, watchdog_summary_path: Path, expected_source_sha: str
+) -> dict[str, Any]:
+    """Independently recheck W16A worker evidence and resource closeout."""
+
+    h2b = __import__("benchmarks.run_task037_extra_h2b", fromlist=["*"])
+    raw_dir = Path(raw_dir).resolve()
+    watchdog_summary_path = Path(watchdog_summary_path).resolve()
+    watchdog_dir = watchdog_summary_path.parent
+    try:
+        summary: Mapping[str, Any] = _read_json(
+            raw_dir / M6B_W16A_SUMMARY_FILENAME
+        )
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        summary = {}
+    try:
+        watchdog: Mapping[str, Any] = _read_json(watchdog_summary_path)
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        watchdog = {}
+    checks: dict[str, bool] = {
+        "worker_evidence": False,
+        "worker_semantics": False,
+        "progress": False,
+        "w7_authority": False,
+        "factor_authority": False,
+        "scope": False,
+        "p6": False,
+        "prediction": False,
+        "source": False,
+        "runtime": False,
+        "jit": False,
+        "action_audit": False,
+        "worker_action_gate": False,
+        "artifacts": False,
+        "vector_evidence": False,
+        "scratch": False,
+        "watchdog_evidence": False,
+        "execution_semantics": False,
+        "command": False,
+        "resource": False,
+        "checker_source": False,
+    }
+    worker_checks: dict[str, bool] = {}
+    independent_worker_pass: bool | None = None
+    worker_numeric_only = False
+    try:
+        checks["worker_evidence"] = bool(
+            _evidence_valid(summary)
+            and summary["schema"] == M6B_W16A_SCHEMA
+            and summary["phase"] == M6B_W16A_PHASE
+            and summary["formal_pass"] is False
+            and summary["pde_pass"] is False
+            and summary["official_rta"] is False
+            and summary["w16b_locked"] is True
+            and type(summary["w16b_action_candidate"]) is bool
+        )
+        checks["progress"] = _m6b_w16a_progress_valid(
+            raw_dir / M6B_W16A_PROGRESS_FILENAME
+        )["pass"] is True
+        expected_w7 = _m6b_w9a_load_w7(
+            ROOT / M6B_W8A_W7_COMPACT_RELATIVE_PATH,
+            ROOT / M6B_W16A_W7_RAW_RELATIVE_PATH,
+        )
+        factor = _m6b_w16a_factor_authority(
+            ROOT / M6B_W16A_SHIFTED_FACTOR_MANIFEST_RELATIVE_PATH
+        )
+        authority = summary["authority"]
+        checks["w7_authority"] = bool(
+            authority["w7"] == expected_w7["compact"]
+            and authority["w7_raw_dir"] == expected_w7["raw_dir"]
+            and authority["w7_residual_artifact"] == expected_w7["residual_artifact"]
+        )
+        checks["factor_authority"] = authority["factor_manifest"] == factor
+        checks["scope"] = summary["scope"] == _m6b_w16a_scope()
+        checks["p6"] = _m6b_expected_p6(summary["p6"])
+        checks["prediction"] = (
+            summary["predicted_live_set"] == _m6b_w16a_predicted_live_set()
+        )
+        source_start = summary["source_at_start"]
+        source_end = summary["source_at_end"]
+        checks["source"] = bool(
+            _m6b_w6a_source_valid(source_start)
+            and _m6b_w6a_source_valid(source_end)
+            and source_start["source_commit_full_sha"] == expected_source_sha
+            and source_end["source_commit_full_sha"] == expected_source_sha
+        )
+        checks["runtime"] = bool(
+            _m6b_w6a_runtime_valid(
+                summary["runtime_identity"],
+                frozen_compiler=factor["factor_compiler"],
+            )
+            and summary["runtime_identity"]["compiler"]
+            == factor["factor_compiler"]
+        )
+        checks["jit"] = _m6b_w16a_jit_valid(summary, raw_dir, h2b)
+        checks["action_audit"] = _m6b_w16a_action_audit_valid(
+            summary["action_audit"]
+        )
+        core = summary["core"]
+        from src.solvers.hcurl_m6b_w16_global_shifted_inner_pc import (
+            evaluate_w16a_global_shifted_gate,
+        )
+
+        report = evaluate_w16a_global_shifted_gate(core)
+        worker_checks = dict(report["checks"])
+        independent_worker_pass = bool(
+            worker_checks
+            and all(type(value) is bool for value in worker_checks.values())
+            and all(worker_checks.values())
+        )
+        failed_numeric = {
+            name for name, passed in worker_checks.items() if not passed
+        }
+        worker_numeric_only = bool(
+            failed_numeric
+            and failed_numeric.issubset({"inner_residual", "measurements"})
+        )
+        checks["worker_action_gate"] = independent_worker_pass is True
+        pass_semantics = (
+            summary["status"] == "action_gate_pass"
+            and summary["classification"] == "W16A_GLOBAL_SHIFTED_INNER_PASS"
+            and summary["w16a_pass"] is True
+            and summary["w16b_action_candidate"] is True
+        )
+        fail_semantics = (
+            summary["status"] == "gate_failed"
+            and summary["classification"] == "W16A_GLOBAL_SHIFTED_INNER_NUMERIC_FAIL"
+            and summary["w16a_pass"] is False
+            and summary["w16b_action_candidate"] is False
+        )
+        checks["worker_semantics"] = bool(
+            (
+                independent_worker_pass is True
+                and pass_semantics
+            )
+            or (
+                independent_worker_pass is False
+                and worker_numeric_only
+                and fail_semantics
+            )
+        ) and bool(
+            summary["formal_pass"] is False
+            and summary["pde_pass"] is False
+            and summary["official_rta"] is False
+            and summary["w16b_locked"] is True
+        )
+        checks["artifacts"] = _m6b_w16a_checkpoint_artifacts_valid(
+            raw_dir, core
+        )
+        checks["vector_evidence"] = _m6b_w16a_vector_evidence_valid(
+            raw_dir, core, expected_w7
+        )
+        checks["scratch"] = _m6b_w16a_scratch_valid(raw_dir, core)
+    except (OSError, TypeError, ValueError, KeyError, IndexError, ImportError):
+        independent_worker_pass = None
+
+    try:
+        expected_command = _m6b_w16a_worker_command(
+            raw_dir,
+            ROOT / M6B_W8A_W7_COMPACT_RELATIVE_PATH,
+            ROOT / M6B_W16A_W7_RAW_RELATIVE_PATH,
+            ROOT / M6B_W16A_SHIFTED_FACTOR_MANIFEST_RELATIVE_PATH,
+            ROOT / M6B_W16A_JIT_RELATIVE_PATH,
+            expected_source_sha,
+        )
+        checks["command"] = watchdog["command"] == expected_command
+    except (TypeError, ValueError, KeyError):
+        checks["command"] = False
+
+    timeline = _m6b_w8a_timeline_valid(
+        watchdog_dir / f"{M6B_W16A_PHASE}_timeline.jsonl",
+        phase=M6B_W16A_PHASE,
+    )
+    try:
+        expected_raw = _m6b_w16a_raw_artifacts(raw_dir)
+        expected_watchdog = _m6b_w16a_watchdog_artifacts(watchdog_dir)
+        inventory = watchdog["artifact_inventory"]
+        checks["watchdog_evidence"] = bool(
+            _evidence_valid(watchdog)
+            and watchdog["schema"] == M6B_W16A_WATCHDOG_SCHEMA
+            and watchdog["phase"] == M6B_W16A_PHASE
+            and watchdog["raw_dir"] == str(raw_dir)
+            and watchdog["watchdog_dir"] == str(watchdog_dir)
+            and watchdog["source_end_clean"] is True
+            and _m6b_w6a_source_valid(watchdog["source_at_start"])
+            and _m6b_w6a_source_valid(watchdog["source_at_end"])
+            and watchdog["source_at_start"]["source_commit_full_sha"]
+            == expected_source_sha
+            and watchdog["source_at_end"]["source_commit_full_sha"]
+            == expected_source_sha
+            and watchdog["formal_pass"] is False
+            and watchdog["pde_pass"] is False
+            and watchdog["official_rta"] is False
+            and watchdog["w16b_unlocked"] is False
+            and watchdog["resource_limits"] == {
+                "timeout_seconds": M6B_W16A_TIMEOUT_SECONDS,
+                "watchdog_rss_bytes": M6B_W16A_WATCHDOG_RSS_LIMIT_BYTES,
+                "completion_peak_rss_bytes": M6B_W16A_FORMAL_RSS_LIMIT_BYTES,
+                "swap_bytes": M6B_SWAP_LIMIT_BYTES,
+            }
+            and watchdog["worker_summary"] == expected_raw[0]
+            and inventory["raw"] == expected_raw
+            and inventory["watchdog"] == expected_watchdog
+            and all(
+                item.get("present") is True
+                and type(item.get("bytes")) is int
+                and item["bytes"] > 0
+                and _m6b_w6a_valid_sha(item.get("sha256"))
+                for item in expected_raw + expected_watchdog
+            )
+        )
+        process = watchdog["process"]
+        drain = watchdog["drain"]
+        process_return_code = process["return_code"]
+        checks["execution_semantics"] = bool(
+            (
+                independent_worker_pass is True
+                and type(process_return_code) is int
+                and process_return_code == 0
+                and watchdog["status"] == "measurement_complete"
+                and process["termination"] is None
+            )
+            or (
+                independent_worker_pass is False
+                and worker_numeric_only
+                and type(process_return_code) is int
+                and process_return_code == 1
+                and watchdog["status"] == "measurement_complete"
+                and process["termination"] is None
+            )
+        )
+        checks["resource"] = bool(
+            process["termination"] is None
+            and drain["gone"] is True
+            and type(process["peak_rss_bytes"]) is int
+            and process["peak_rss_bytes"] < M6B_W16A_FORMAL_RSS_LIMIT_BYTES
+            and type(process["swap_bytes"]) is int
+            and process["swap_bytes"] == 0
+            and timeline["pass"] is True
+            and timeline["peak_rss_bytes"] == process["peak_rss_bytes"]
+            and timeline["swap_bytes"] == 0
+            and type(timeline["compiler_descendant_pids"]) is list
+            and timeline["compiler_descendant_pids"] == []
+            and watchdog["timeline"] == timeline
+        )
+    except (KeyError, TypeError, ValueError):
+        checks["watchdog_evidence"] = False
+        checks["execution_semantics"] = False
+        checks["resource"] = False
+
+    try:
+        checker_source = h2b._light_source()
+        checks["checker_source"] = bool(
+            _m6b_w6a_source_valid(checker_source)
+            and checker_source["source_commit_full_sha"] == expected_source_sha
+        )
+    except (OSError, RuntimeError, TypeError, ValueError):
+        checker_source = {}
+
+    evidence_keys = tuple(
+        name for name in checks if name != "worker_action_gate"
+    )
+    resource_failure = bool(
+        not checks["resource"]
+        and isinstance(watchdog.get("process"), Mapping)
+        and (
+            (
+                type(watchdog["process"].get("peak_rss_bytes")) is int
+                and watchdog["process"]["peak_rss_bytes"]
+                >= M6B_W16A_FORMAL_RSS_LIMIT_BYTES
+            )
+            or (
+                type(watchdog["process"].get("swap_bytes")) is int
+                and watchdog["process"]["swap_bytes"] != 0
+            )
+            or (
+                isinstance(timeline.get("compiler_descendant_pids"), list)
+                and bool(timeline["compiler_descendant_pids"])
+            )
+            or (
+                isinstance(watchdog.get("drain"), Mapping)
+                and watchdog["drain"].get("gone") is False
+            )
+        )
+    )
+    numeric_failure = bool(
+        not checks["worker_action_gate"]
+        and checks["worker_semantics"]
+        and worker_numeric_only
+        and all(checks[name] for name in evidence_keys)
+    )
+    overall = bool(all(checks.values()))
+    if overall:
+        classification = "W16A_FORMAL_ACTION_GATE_PASS"
+    elif resource_failure:
+        classification = "W16A_RESOURCE_FAIL"
+    elif numeric_failure:
+        classification = "W16A_GLOBAL_SHIFTED_INNER_NUMERIC_FAIL"
+    else:
+        classification = "W16A_EXECUTION_OR_EVIDENCE_FAIL"
+    return {
+        "pass": overall,
+        "classification": classification,
+        "checks": checks,
+        "problems": sorted(name for name, passed in checks.items() if not passed),
+        "worker_checks": worker_checks,
+        "authority": summary.get("authority", {}),
+        "checker_source": checker_source,
+        "timeline": {
+            key: timeline.get(key)
+            for key in (
+                "pass",
+                "record_count",
+                "peak_rss_bytes",
+                "swap_bytes",
+                "compiler_descendant_pids",
+            )
+            if key in timeline
+        },
+        "measured": _m6b_w16a_measured_summary(summary, timeline),
+    }
+
+
+def _run_m6b_w16a_check(
+    raw_dir: Path,
+    watchdog_summary_path: Path,
+    output: Path,
+    expected_source_sha: str,
+) -> int:
+    if output.exists():
+        raise FileExistsError(f"W16A formal output exists: {output}")
+    gate = _m6b_w16a_formal_gate(
+        Path(raw_dir), Path(watchdog_summary_path), expected_source_sha
+    )
+    overall = bool(gate["pass"])
+    raw_dir = Path(raw_dir).resolve()
+    watchdog_summary_path = Path(watchdog_summary_path).resolve()
+    result = {
+        "schema": M6B_W16A_CHECK_SCHEMA,
+        "phase": M6B_W16A_PHASE,
+        "status": "pass" if overall else "gate_failed",
+        "classification": gate["classification"],
+        "formal_pass": overall,
+        "pde_pass": False,
+        "official_rta": False,
+        "w16b_unlocked": overall,
+        "w16b_locked": not overall,
+        "producer_source_sha": expected_source_sha,
+        "raw_dir": str(raw_dir),
+        "worker_summary": _artifact(raw_dir, M6B_W16A_SUMMARY_FILENAME),
+        "watchdog_summary": _artifact(
+            watchdog_summary_path.parent, watchdog_summary_path.name
+        ),
+        "checks": gate["checks"],
+        "problems": gate["problems"],
+        "worker_checks": gate["worker_checks"],
+        "authority": gate["authority"],
+        "checker_source": gate["checker_source"],
+        "timeline": gate["timeline"],
+        "measured": gate["measured"],
+        "artifact_inventory": {
+            "raw": _m6b_w16a_raw_artifacts(raw_dir),
+            "watchdog": _m6b_w16a_watchdog_artifacts(
+                watchdog_summary_path.parent
+            ),
+        },
+    }
+    _write_json(output, _attach_evidence(result))
+    return 0 if overall else 1
 
 
 def _m6b_w15a_measured_summary(gate: Mapping[str, Any]) -> dict[str, Any]:
@@ -7546,6 +8604,212 @@ def _m6b_w15a_predicted_live_set() -> dict[str, Any]:
             "it is not a measured process-tree peak."
         ),
     }
+
+
+def _m6b_w16a_scope() -> dict[str, Any]:
+    return {
+        "schema": M6B_W16A_SCHEMA,
+        "phase": M6B_W16A_PHASE,
+        "solver": "two_fixed20_disk_backed_right_fgmres_cycles",
+        "residual_role": "untouched_W7_cumulative400_full_explicit_residual",
+        "auxiliary_operator": "beta=1 shifted volume-only",
+        "auxiliary_beta": 1.0,
+        "auxiliary_pc": "direct_beta1_shifted_row_complete_local_patch",
+        "auxiliary_dtn_used": False,
+        "projected_range_used": False,
+        "b0_used": False,
+        "m3y_used": False,
+        "range_store_used": False,
+        "physical_operator": "beta=0 volume + matrix-free DtN80",
+        "inner_cycles": 2,
+        "inner_max_steps": 20,
+        "inner_checkpoints": [20],
+        "zero_start": True,
+        "rtol": 0.0,
+        "atol": 0.0,
+        "no_retry_or_scan": True,
+        "auxiliary_physical_overlap": False,
+        "fine_space": "uncondensed_fullspace",
+        "global_matrix": False,
+        "augmented_matrix": False,
+        "condensation": False,
+        "static_condensation": False,
+        "trace_slab": False,
+        "slab_factors": 0,
+        "physical_ksp": False,
+        "pde": False,
+        "official_rta": False,
+        "w16b_locked_until_action_gate": True,
+        "resource_limits": {
+            "predicted_live_set_bytes": M6B_W16A_PREDICTED_LIVE_SET_BYTES,
+            "predicted_live_set_limit_bytes": M6B_W16A_PREDICTED_LIVE_SET_LIMIT_BYTES,
+            "watchdog_rss_bytes": M6B_W16A_WATCHDOG_LIMIT_BYTES,
+            "swap_bytes": M6B_SWAP_LIMIT_BYTES,
+        },
+    }
+
+
+def _m6b_w16a_predicted_live_set() -> dict[str, Any]:
+    total = int(M6B_W16A_PREDICTED_LIVE_SET_BYTES)
+    return {
+        "bytes": total,
+        "limit_bytes": M6B_W16A_PREDICTED_LIVE_SET_LIMIT_BYTES,
+        "watchdog_limit_bytes": M6B_W16A_WATCHDOG_LIMIT_BYTES,
+        "gate": total <= M6B_W16A_PREDICTED_LIVE_SET_LIMIT_BYTES,
+        "derived_not_measured": True,
+        "per_run_scratch_bytes": M6B_W16A_SCRATCH_PER_RUN_BYTES,
+        "two_run_scratch_bytes": M6B_W16A_SCRATCH_TWO_RUN_TOTAL_BYTES,
+        "scratch_is_disk_not_rss": True,
+        "swap_bytes": M6B_SWAP_LIMIT_BYTES,
+        "assumptions": {
+            "warm_beta1_jit_cache": True,
+            "one_shifted_factor_store": True,
+            "auxiliary_and_physical_are_sequential": True,
+            "runtime_compiler_process_count": 0,
+        },
+        "components": {
+            "calibrated_base_bytes": 1_698_273_595,
+            "auxiliary_vector_bytes": 41_712_480,
+            "disk_scratch_bytes_not_rss": M6B_W16A_SCRATCH_TWO_RUN_TOTAL_BYTES,
+        },
+        "basis": (
+            "Derived W16A bound: calibrated fixed beta=1 shifted-store/action "
+            "base plus the fixed auxiliary vector allowance. The two disk "
+            "scratch runs are recorded separately and are not RSS; this is "
+            "not a measured process-tree peak."
+        ),
+    }
+
+
+def _m6b_w16a_factor_authority(manifest_path: Path) -> dict[str, Any]:
+    manifest_path = Path(manifest_path).resolve()
+    expected = (ROOT / M6B_W16A_SHIFTED_FACTOR_MANIFEST_RELATIVE_PATH).resolve()
+    factor_root = expected.parent.parent
+    builder_summary_path = factor_root / "m6b_builder_summary.json"
+    if (
+        manifest_path != expected
+        or not manifest_path.is_file()
+        or not builder_summary_path.is_file()
+    ):
+        raise ValueError("W16A shifted factor manifest path is not frozen")
+    if _sha256_file(manifest_path) != M6B_W16A_SHIFTED_FACTOR_MANIFEST_SHA256:
+        raise ValueError("W16A shifted factor manifest SHA differs")
+    manifest = _read_json(manifest_path)
+    builder = _read_json(builder_summary_path)
+    audit = manifest["audit"]
+    identity = manifest["identity"]
+    source = identity["source_identity"]
+    materialization = manifest["materialization_identity"]
+    builder_start = builder["source_at_start"]
+    builder_end = builder["source_at_end"]
+    builder_runtime = builder["runtime_identity"]
+    factor_compiler = builder_runtime["compiler"]
+    builder_factor_store = builder["factor_store"]
+    if not (
+        manifest["schema"] == "task037.extra.h2b.m6b.shifted-lu-store.v1"
+        and manifest["beta"] == 1.0
+        and audit["beta"] == 1.0
+        and audit["cell_count"] == 252
+        and audit["factor_count"] == 84
+        and audit["factor_order"] == 882
+        and audit["finite"] is True
+        and audit["retained_total_gate"] is True
+        and audit["full_dense_patch_matrix_retained"] is False
+        and audit["ordinary_default_changed"] is False
+        and identity["beta"] == 1.0
+        and identity["operator"]
+        == "B_beta=Kcurl-k0^2*M_epsilon+i*k0^2*M_abs_epsilon"
+        and source["source_commit_full_sha"] == M6B_W16A_SHIFTED_FACTOR_SOURCE_SHA
+        and source["source_worktree_dirty"] is False
+        and source["tracked_source_dirty"] is False
+        and all(value is False for value in materialization.values())
+        and builder["schema"] == "task037.extra.h2b.m6b.v1.builder"
+        and builder["status"] == "measurement_complete"
+        and _evidence_valid(builder)
+        and isinstance(builder_start, Mapping)
+        and isinstance(builder_end, Mapping)
+        and builder_start["source_commit_full_sha"]
+        == M6B_W16A_SHIFTED_FACTOR_SOURCE_SHA
+        and builder_end["source_commit_full_sha"]
+        == M6B_W16A_SHIFTED_FACTOR_SOURCE_SHA
+        and builder_start["tracked_source_dirty"] is False
+        and builder_end["tracked_source_dirty"] is False
+        and builder_start["source_worktree_dirty"] is False
+        and builder_end["source_worktree_dirty"] is False
+        and isinstance(factor_compiler, Mapping)
+        and bool(factor_compiler)
+        and isinstance(builder_factor_store, Mapping)
+        and builder_factor_store["path"] == "shifted_lu_store/manifest.json"
+        and builder_factor_store["present"] is True
+        and builder_factor_store["sha256"]
+        == M6B_W16A_SHIFTED_FACTOR_MANIFEST_SHA256
+    ):
+        raise ValueError("W16A shifted factor manifest identity is not closed")
+    return {
+        "path": str(manifest_path),
+        "present": True,
+        "bytes": int(manifest_path.stat().st_size),
+        "sha256": M6B_W16A_SHIFTED_FACTOR_MANIFEST_SHA256,
+        "source_commit_full_sha": M6B_W16A_SHIFTED_FACTOR_SOURCE_SHA,
+        "beta": 1.0,
+        "audit": {
+            "cell_count": 252,
+            "factor_count": 84,
+            "factor_order": 882,
+            "retained_total_bytes": int(audit["retained_total_bytes"]),
+        },
+        "builder_summary": _artifact(factor_root, "m6b_builder_summary.json"),
+        "builder_evidence_sha256": builder["evidence_sha256"],
+        "factor_compiler": dict(factor_compiler),
+    }
+
+
+def _m6b_w16a_final_status(
+    checks: Mapping[str, Any], error: str | None
+) -> tuple[bool, str, str]:
+    """Classify W16A only after numeric and nonnumeric checks are separated."""
+    if not isinstance(checks, Mapping) or any(
+        type(value) is not bool for value in checks.values()
+    ):
+        return False, "gate_failed", "W16A_EXECUTION_OR_EVIDENCE_FAIL"
+    numeric_keys = {"inner_residual", "measurements"}
+    required_keys = {
+        "schema",
+        "fixed_identity",
+        "inner_audits",
+        "inner_records",
+        "inner_residual",
+        "z_identity",
+        "p_identity",
+        "measurements",
+        "action_counts",
+        "architecture",
+        "lifecycle",
+        "prediction",
+        "source",
+        "cache",
+        "execution",
+    }
+    if not required_keys.issubset(checks):
+        return False, "gate_failed", "W16A_EXECUTION_OR_EVIDENCE_FAIL"
+    diagnostic_pass = bool(all(checks.values()))
+    if diagnostic_pass:
+        return True, "action_gate_pass", "W16A_GLOBAL_SHIFTED_INNER_PASS"
+    numeric_failure = bool(
+        error is None
+        and all(
+            checks[name]
+            for name in checks
+            if name not in numeric_keys
+        )
+        and any(not checks[name] for name in numeric_keys)
+    )
+    classification = (
+        "W16A_GLOBAL_SHIFTED_INNER_NUMERIC_FAIL"
+        if numeric_failure
+        else "W16A_EXECUTION_OR_EVIDENCE_FAIL"
+    )
+    return False, "gate_failed", classification
 
 
 def _m6b_w14b_merge_gate_checks(
@@ -9589,6 +10853,695 @@ def _run_m6b_w15a_diagnostic(
         w15a_w14b_compact=w14b_compact,
         w15a_w14b_raw_dir=w14b_raw_dir,
     )
+
+
+def _run_m6b_w16a_diagnostic(
+    run_dir: Path,
+    w7_compact: Path,
+    w7_raw_dir: Path,
+    factor_manifest: Path,
+    jit_cache_source: Path,
+    expected_source_sha: str,
+) -> int:
+    """Run the fixed beta=1 auxiliary and later physical rank-one screen."""
+
+    import gc
+    import shutil
+    import time
+
+    import numpy as np
+    from mpi4py import MPI
+    from petsc4py import PETSc
+
+    h2b = __import__("benchmarks.run_task037_extra_h2b", fromlist=["*"])
+    h2a = h2b._lazy_h2a()
+    m6a = __import__("benchmarks.run_task037_extra_m6", fromlist=["*"])
+    from src.solvers.hcurl_fullspace_dtn import (
+        build_fullspace_dtn_action,
+        build_fullspace_dtn_carrier_from_surface,
+    )
+    from src.solvers.hcurl_h2b_m6b_shifted_lu_store import (
+        load_h2b_m6b_shifted_lu_patch_store,
+    )
+    from src.solvers.hcurl_h2b_m6b_shifted_patch_pc import (
+        H2BM6BShiftedPatchPC,
+        M6BNumpyOuterActionBridge,
+        M6BScreenCheckpointWriter,
+        build_m6b_outer_mat,
+        build_m6b_volume_form,
+    )
+    from src.solvers.hcurl_h2b_m5_coercive import _array_sha256
+    from src.solvers.hcurl_rank_one_mpc_action import (
+        build_task037_extra_h1r2_mpc_action,
+    )
+    from src.solvers.persistent_residual_one_vector import (
+        repeat_rank_one_projection,
+    )
+    from src.solvers.hcurl_m6b_w16_global_shifted_inner_pc import (
+        W16A_INNER_SCHEMA,
+        evaluate_w16a_global_shifted_gate,
+        run_w16a_fixed20,
+    )
+
+    run_dir = Path(run_dir).resolve()
+    w7_compact = Path(w7_compact).resolve()
+    w7_raw_dir = Path(w7_raw_dir).resolve()
+    factor_manifest = Path(factor_manifest).resolve()
+    jit_cache_source = Path(jit_cache_source).resolve()
+    if run_dir.exists():
+        raise FileExistsError(f"W16A run directory already exists: {run_dir}")
+    if MPI.COMM_WORLD.size != 1:
+        raise RuntimeError("W16A worker is fixed to MPI1")
+    if not _m6b_w2_source_sha_valid(expected_source_sha):
+        raise ValueError("W16A expected source SHA is invalid")
+    source_start = h2b._light_source()
+    if not (
+        _m6b_w6a_source_valid(source_start)
+        and source_start.get("source_commit_full_sha") == expected_source_sha
+    ):
+        raise RuntimeError("W16A source is not the expected clean source")
+    factor_authority = _m6b_w16a_factor_authority(factor_manifest)
+    w7_authority = _m6b_w9a_load_w7(w7_compact, w7_raw_dir)
+    frozen_compiler = factor_authority["factor_compiler"]
+    runtime = _m6b_runtime_identity(
+        h2b,
+        h2a,
+        MPI.COMM_WORLD,
+        compiler_probe=False,
+        compiler=frozen_compiler,
+    )
+    if not _m6b_w6a_runtime_valid(runtime, frozen_compiler=frozen_compiler):
+        raise RuntimeError("W16A runtime identity differs from frozen factor compiler")
+    expected_jit = (ROOT / M6B_W16A_JIT_RELATIVE_PATH).resolve()
+    if jit_cache_source != expected_jit or not jit_cache_source.is_dir():
+        raise ValueError("W16A JIT source is not the frozen beta=1 cache")
+    source_cache_before = _m6b_w2_cache_record(h2b, jit_cache_source)
+    if source_cache_before["inventory_sha256"] != M6B_W2_JIT_INVENTORY_SHA256:
+        raise ValueError("W16A JIT inventory differs from the frozen authority")
+
+    run_dir.mkdir(parents=True)
+    progress_path = run_dir / M6B_W16A_PROGRESS_FILENAME
+    summary_path = run_dir / M6B_W16A_SUMMARY_FILENAME
+    cache_dir = run_dir / "jit_cache"
+    shutil.copytree(jit_cache_source, cache_dir)
+    cache_before = _m6b_w2_cache_record(h2b, cache_dir)
+    if cache_before != source_cache_before:
+        raise ValueError("W16A copied JIT cache differs from source")
+    predicted = _m6b_w16a_predicted_live_set()
+    if predicted["gate"] is not True:
+        raise ValueError("W16A predicted live set exceeds its fixed limit")
+
+    started = time.perf_counter()
+    architecture: dict[str, Any] = {}
+    action_audit: dict[str, Any] = {
+        "lifecycle_events": [],
+        "retained_authority_vector_roles": ["w7_target_residual"],
+        "global_shifted_action_count": 0,
+        "local_pc_apply_count": 0,
+        "local_exact_shifted_volume_action_count": 0,
+        "shifted_action_total_count": 0,
+        "physical_action_count": 0,
+        "physical_dtn_action_count": 0,
+        "physical_instances": [],
+    }
+    p6: dict[str, Any] | None = None
+    core_result: dict[str, Any] | None = None
+    error: str | None = None
+    source_end = None
+    source_ok = False
+    cache_ok = False
+    source_cache_final: dict[str, Any] | None = None
+    cache_final: dict[str, Any] | None = None
+    shifted_action = shifted_vec = store = local_pc = None
+    physical_action = dtn_action = outer_mat = outer_context = None
+    outer_bridge = template = None
+    shifted_action_count = 0
+    physical_call_count = 0
+    z_values: list[np.ndarray] = []
+    p_artifacts: dict[str, Any] = {}
+    inner_audits: list[dict[str, Any]] = []
+    inner_records: list[dict[str, Any]] = []
+    checkpoint_artifacts: list[dict[str, Any]] = []
+    measurements: list[dict[str, Any]] = []
+
+    def emit(event: str, **fields: Any) -> None:
+        payload = {
+            "schema": f"{M6B_W16A_SCHEMA}.progress.v1",
+            "phase": M6B_W16A_PHASE,
+            "event": event,
+            "elapsed_wall_seconds": float(time.perf_counter() - started),
+            **fields,
+        }
+        with progress_path.open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n")
+            stream.flush()
+        print(json.dumps(payload, sort_keys=True), flush=True)
+
+    def identity(first: np.ndarray, second: np.ndarray) -> dict[str, Any]:
+        denominator = max(
+            float(np.linalg.norm(first)),
+            float(np.linalg.norm(second)),
+            np.finfo(float).tiny,
+        )
+        first_hash = _array_sha256(first)
+        second_hash = _array_sha256(second)
+        return {
+            "shape": list(first.shape),
+            "shape_equal": first.shape == second.shape,
+            "dtype": str(first.dtype),
+            "finite": bool(
+                np.all(np.isfinite(first)) and np.all(np.isfinite(second))
+            ),
+            "first_sha256": first_hash,
+            "second_sha256": second_hash,
+            "sha256_equal": first_hash == second_hash,
+            "relative_difference": float(
+                np.linalg.norm(first - second) / denominator
+            ),
+        }
+
+    def write_vector(name: str, values: np.ndarray) -> dict[str, Any]:
+        array = np.ascontiguousarray(values, dtype=np.complex128)
+        path = run_dir / name
+        with path.open("wb") as stream:
+            np.save(stream, array, allow_pickle=False)
+        artifact = _artifact(run_dir, name)
+        return {
+            "path": str(path.resolve()),
+            "bytes": int(artifact["bytes"]),
+            "dtype": str(array.dtype),
+            "shape": list(array.shape),
+            "array_sha256": _array_sha256(array),
+            "file_sha256": artifact["sha256"],
+        }
+
+    try:
+        with progress_path.open("w", encoding="utf-8"):
+            emit(
+                "authority_validated",
+                w7=w7_authority["compact"],
+                w7_residual=w7_authority["residual_artifact"],
+                factor_manifest=factor_authority,
+            )
+            cfg, mesh_data, function_space, floquet, modes = m6a._production_objects(
+                run_dir, mesh_name="m6b_w16a_mesh"
+            )
+            p6 = _m6b_p6_identity(mesh_data, function_space, floquet)
+            if not _m6b_expected_p6(p6):
+                raise ValueError("W16A p6/h10 identity differs")
+            emit("mesh_ready", p6=p6)
+            emit("space_ready", global_rows=p6["global_rows"])
+            emit("floquet_mpc_ready", constraint_count=p6["constraint_count"])
+            emit(
+                "cache_ready",
+                source_inventory_sha256=source_cache_before["inventory_sha256"],
+                target_inventory_sha256=cache_before["inventory_sha256"],
+                file_count=len(cache_before["entries"]),
+                runtime_compile_allowed=False,
+            )
+
+            (
+                shifted_ufl,
+                shifted_epsilon,
+                shifted_abs_epsilon,
+                shifted_beta,
+                shifted_tags,
+            ) = build_m6b_volume_form(
+                function_space, mesh_data, cfg, beta=1.0
+            )
+            shifted_action = build_task037_extra_h1r2_mpc_action(
+                shifted_ufl,
+                floquet.mpc,
+                task037_extra_h1r2=True,
+                jit_options=h2b._expected_jit_options(cache_dir),
+            )
+            shifted_vec = shifted_action.output_vector.duplicate()
+
+            def shifted_numpy(values: np.ndarray) -> np.ndarray:
+                nonlocal shifted_action_count
+                with shifted_vec.localForm() as local:
+                    local.set(0.0)
+                    local.array_w[: values.size] = values
+                shifted_vec.ghostUpdate(
+                    addv=PETSc.InsertMode.INSERT_VALUES,
+                    mode=PETSc.ScatterMode.FORWARD,
+                )
+                result = shifted_action.mult(shifted_vec)
+                shifted_action_count += 1
+                observed = np.array(
+                    result.getArray(readonly=True), dtype=np.complex128, copy=True
+                )
+                del result
+                return observed
+
+            store = load_h2b_m6b_shifted_lu_patch_store(
+                factor_manifest, task037_extra_m6b=True
+            )
+            local_pc = H2BM6BShiftedPatchPC(
+                store,
+                global_row_count=M6B_GLOBAL_ROWS,
+                shifted_action=shifted_numpy,
+                slave_identity_rows=np.asarray(floquet.mpc.slaves, dtype=np.int64),
+                task037_extra_m6b=True,
+            )
+            action_audit["auxiliary_construction"] = {
+                "shifted_action": h2a._jsonable(shifted_action.audit),
+                "local_pc": h2a._jsonable(local_pc.audit),
+                "factor_store": store.audit_jsonable(),
+            }
+            action_audit["lifecycle_events"].append("auxiliary_constructed")
+            emit(
+                "auxiliary_constructed",
+                operator="shifted_volume_only",
+                beta=1.0,
+                right_pc="direct_beta1_shifted_row_complete_local_patch",
+            )
+
+            target = np.array(w7_authority["residual"], dtype=np.complex128, copy=True)
+            rhs_sha256 = _array_sha256(target)
+            (run_dir / "scratch").mkdir()
+            for run_index in (1, 2):
+                writer = M6BScreenCheckpointWriter(
+                    run_dir / "inner_checkpoints" / f"run{run_index}",
+                    allowed_iterations=(20,),
+                )
+                checkpoint_record: dict[str, Any] | None = None
+
+                def checkpoint_observer(
+                    event: Mapping[str, Any],
+                    *,
+                    _writer=writer,
+                    _run_index=run_index,
+                ) -> None:
+                    nonlocal checkpoint_record
+                    checkpoint_record = _writer.write_numpy_checkpoint(
+                        int(event["iteration"]),
+                        solution=event["solution"],
+                        outer_action=event["action"],
+                        residual=event["residual"],
+                        rhs=event["rhs"],
+                    )
+
+                result = run_w16a_fixed20(
+                    shifted_numpy,
+                    local_pc.apply,
+                    target,
+                    run_dir / "scratch" / f"run{run_index}",
+                    observer=checkpoint_observer,
+                )
+                if checkpoint_record is None:
+                    raise RuntimeError("W16A fixed20 checkpoint was not written")
+                audit = h2a._jsonable(result.audit)
+                solution = np.array(result.solution, dtype=np.complex128, copy=True)
+                inner_audits.append(audit)
+                inner_records.append(
+                    {
+                        "schema": W16A_INNER_SCHEMA,
+                        "algorithm": "fgmres_right_shifted_beta1_fixed20",
+                        "run_index": run_index,
+                        "iterations": int(result.iterations),
+                        "checkpoint_iteration": 20,
+                        "action_count": int(audit["action_count"]),
+                        "pc_apply_count_delta": int(audit["pc_count"]),
+                        "observer_count": int(audit["observer_count"]),
+                        "initial_action_count": int(audit["initial_action_count"]),
+                        "true_residual": float(result.final_relative_residual),
+                        "finite": bool(
+                            np.all(np.isfinite(solution))
+                            and np.isfinite(result.final_relative_residual)
+                        ),
+                        "solution_sha256": _array_sha256(solution),
+                        "rhs_sha256": rhs_sha256,
+                    }
+                )
+                checkpoint_artifacts.append(
+                    {"run_index": run_index, **checkpoint_record}
+                )
+                z_values.append(solution)
+                action_audit["lifecycle_events"].append(f"inner_apply_{run_index}")
+                emit(
+                    f"inner_checkpoint_{run_index}_ready",
+                    iterations=int(result.iterations),
+                    true_residual=float(result.final_relative_residual),
+                    checkpoint_artifacts=checkpoint_record["artifacts"],
+                )
+                del result, solution, writer, checkpoint_record
+
+            action_audit["global_shifted_action_count"] = int(
+                sum(item["action_count"] for item in inner_records)
+            )
+            action_audit["local_pc_apply_count"] = int(
+                sum(item["pc_apply_count_delta"] for item in inner_records)
+            )
+            action_audit["shifted_action_total_count"] = int(shifted_action_count)
+            shifted_action_final_audit = h2a._jsonable(shifted_action.audit)
+            global_shifted_count = action_audit["global_shifted_action_count"]
+            local_pc_count = action_audit["local_pc_apply_count"]
+            local_exact_shifted_count = (
+                action_audit["shifted_action_total_count"] - global_shifted_count
+            )
+            action_audit["local_exact_shifted_volume_action_count"] = int(
+                local_exact_shifted_count
+            )
+            action_audit["auxiliary_final_counts"] = {
+                "global_shifted_action_count": global_shifted_count,
+                "local_pc_apply_count": local_pc_count,
+                "local_exact_shifted_volume_action_count": local_exact_shifted_count,
+                "shifted_action_total_count": action_audit[
+                    "shifted_action_total_count"
+                ],
+                "shifted_action_audit": shifted_action_final_audit,
+            }
+            if not (
+                global_shifted_count == 42
+                and local_pc_count == 40
+                and local_exact_shifted_count == 40
+                and shifted_action_final_audit["apply_count"] == 82
+                and action_audit["shifted_action_total_count"]
+                == global_shifted_count + local_pc_count
+            ):
+                raise RuntimeError("W16A shifted action count closure failed")
+            shifted_vec.destroy()
+            shifted_vec = None
+            shifted_action.destroy()
+            shifted_action = None
+            local_pc = None
+            store = None
+            del (
+                shifted_ufl,
+                shifted_epsilon,
+                shifted_abs_epsilon,
+                shifted_beta,
+                shifted_tags,
+                target,
+            )
+            gc.collect()
+            action_audit["lifecycle_events"].append("auxiliary_released")
+            emit("auxiliary_released")
+
+            (
+                physical_ufl,
+                physical_epsilon,
+                physical_abs_epsilon,
+                physical_beta,
+                physical_tags,
+            ) = build_m6b_volume_form(
+                function_space, mesh_data, cfg, beta=0.0
+            )
+            physical_action = build_task037_extra_h1r2_mpc_action(
+                physical_ufl,
+                floquet.mpc,
+                task037_extra_h1r2=True,
+                jit_options=h2b._expected_jit_options(cache_dir),
+            )
+            surface_assemblers = m6a._surface_assemblers(
+                function_space, mesh_data, cfg, modes, cache_dir
+            )
+            dtn_carrier = build_fullspace_dtn_carrier_from_surface(
+                modes,
+                surface_assemblers,
+                floquet.mpc,
+                cfg,
+                expected_mode_count=80,
+            )
+            dtn_action = build_fullspace_dtn_action(dtn_carrier, comm=MPI.COMM_WORLD)
+            outer_mat, outer_context = build_m6b_outer_mat(
+                physical_action,
+                dtn_action,
+                owned_rows=M6B_GLOBAL_ROWS,
+                global_rows=M6B_GLOBAL_ROWS,
+                comm=MPI.COMM_WORLD,
+            )
+            template = outer_mat.createVecRight()
+            outer_bridge = M6BNumpyOuterActionBridge(outer_context, template)
+            outer_audit = h2a._jsonable(outer_context.audit)
+            dtn_audit = h2a._jsonable(dtn_action.audit)
+            action_audit["lifecycle_events"].append("physical_constructed")
+            emit("physical_constructed", dtn_mode_count=dtn_audit["mode_count"])
+
+            for index, z_value in enumerate(z_values, start=1):
+                physical_call_count += 1
+                p_value = np.ascontiguousarray(outer_bridge.apply(z_value), dtype=np.complex128)
+                if p_value.shape != z_value.shape or not np.all(np.isfinite(p_value)):
+                    raise FloatingPointError("W16A physical action returned invalid values")
+                p_artifacts[f"p{index}"] = write_vector(
+                    f"w16a_physical_p{index}.npy", p_value
+                )
+                if index == 1:
+                    p_values = [p_value]
+                    action_audit["lifecycle_events"].append("physical_apply_1")
+                    emit("physical_apply_1_ready", physical_action_count=1)
+                else:
+                    p_values.append(p_value)
+                    action_audit["lifecycle_events"].append("physical_apply_2")
+                    emit("physical_apply_2_ready", physical_action_count=2)
+
+            measurements = [
+                repeat_rank_one_projection(
+                    np.array(w7_authority["residual"], dtype=np.complex128, copy=False),
+                    p_value,
+                    block_size=M6B_W11A_BLOCK_SIZE,
+                    schema=M6B_W16A_SCHEMA,
+                )
+                for p_value in p_values
+            ]
+            physical_audit = h2a._jsonable(physical_action.audit)
+            outer_audit = h2a._jsonable(outer_context.audit)
+            dtn_audit = h2a._jsonable(dtn_action.audit)
+            bridge_audit = h2a._jsonable(outer_bridge.audit)
+            if not (
+                physical_audit["apply_count"] == 2
+                and outer_audit["apply_count"] == 2
+                and dtn_audit["apply_count"] == 2
+                and bridge_audit["forward_apply_count"] == 2
+            ):
+                raise RuntimeError("W16A final physical action audit count is not 2")
+            architecture = {
+                "fine_space": dtn_audit["fine_space"],
+                "physical_operator": "beta0_volume_plus_matrix_free_dtn80",
+                "auxiliary_dtn_used": False,
+                "global_matrix_materialized": physical_audit[
+                    "global_matrix_materialized"
+                ],
+                "augmented_matrix_materialized": outer_audit["augmented_matrix"],
+                "condensation": dtn_audit["condensation"],
+                "static_condensation": dtn_audit["static_condensed_operator_used"],
+                "trace_slab": dtn_audit["trace_slab_pc_used"],
+                "slab_factors": 0,
+                "physical_ksp_used": physical_audit["ksp_created"],
+                "pde_used": False,
+                "official_rta": False,
+                "tag_coverage": h2a._jsonable(physical_tags),
+            }
+            action_audit["physical_action_count"] = int(physical_call_count)
+            action_audit["physical_dtn_action_count"] = int(dtn_audit["apply_count"])
+            action_audit["physical_instances"].append(
+                {
+                    "physical": physical_audit,
+                    "outer": outer_audit,
+                    "dtn": dtn_audit,
+                    "bridge": bridge_audit,
+                    "physical_action_count": physical_call_count,
+                }
+            )
+            z_identity = identity(z_values[0], z_values[1])
+            p_identity = identity(p_values[0], p_values[1])
+            if outer_bridge is not None:
+                outer_bridge.destroy()
+                outer_bridge = None
+            if outer_context is not None:
+                outer_context.destroy()
+                outer_context = None
+            if outer_mat is not None:
+                outer_mat.destroy()
+                outer_mat = None
+            if template is not None:
+                template.destroy()
+                template = None
+            if dtn_action is not None:
+                dtn_action.destroy()
+                dtn_action = None
+            if physical_action is not None:
+                physical_action.destroy()
+                physical_action = None
+            del (
+                physical_ufl,
+                surface_assemblers,
+                dtn_carrier,
+                physical_epsilon,
+                physical_abs_epsilon,
+                physical_beta,
+                physical_tags,
+            )
+            del p_values
+            del z_values[:]
+            del p_value
+            gc.collect()
+            action_audit["lifecycle_events"].append("physical_released")
+            emit("physical_released", physical_action_count=physical_call_count)
+            core_result = {
+                "schema": M6B_W16A_SCHEMA,
+                "residual": {
+                    "role": "untouched_W7_cumulative400_full_explicit_residual",
+                    "authority": w7_authority["compact"],
+                    "artifact": w7_authority["residual_artifact"],
+                },
+                "fixed_identity": {
+                    "operator": "shifted_volume_only",
+                    "beta": 1.0,
+                    "right_pc": "direct_beta1_shifted_row_complete_local_patch",
+                    "auxiliary_dtn_used": False,
+                    "projected_range_used": False,
+                    "b0_used": False,
+                    "m3y_used": False,
+                    "range_store_used": False,
+                },
+                "inner_audits": inner_audits,
+                "inner_records": inner_records,
+                "z_identity": z_identity,
+                "p_identity": p_identity,
+                "measurements": measurements,
+                "action_audit": action_audit,
+                "architecture": architecture,
+                "lifecycle": {
+                    "events": list(action_audit["lifecycle_events"]),
+                    "auxiliary_physical_overlap": False,
+                    "release_between_inner_runs": False,
+                },
+                "prediction": predicted,
+                "artifacts": {
+                    "inner_checkpoints": checkpoint_artifacts,
+                    "physical_action_outputs": p_artifacts,
+                },
+                "checks": {},
+                "problems": [],
+            }
+    except (OSError, RuntimeError, ValueError, TypeError, KeyError, FloatingPointError) as exc:
+        error = f"{type(exc).__name__}: {exc}"
+    finally:
+        if outer_bridge is not None:
+            outer_bridge.destroy()
+        if outer_context is not None:
+            outer_context.destroy()
+        if outer_mat is not None:
+            outer_mat.destroy()
+        if template is not None:
+            template.destroy()
+        if dtn_action is not None:
+            dtn_action.destroy()
+        if physical_action is not None:
+            physical_action.destroy()
+        if shifted_vec is not None:
+            shifted_vec.destroy()
+        if shifted_action is not None:
+            shifted_action.destroy()
+        del local_pc, store
+        gc.collect()
+
+    try:
+        source_end = h2b._light_source()
+        source_ok = bool(
+            _m6b_w6a_source_valid(source_end)
+            and source_end.get("source_commit_full_sha") == expected_source_sha
+        )
+        source_cache_final = _m6b_w2_cache_record(h2b, jit_cache_source)
+        cache_final = _m6b_w2_cache_record(h2b, cache_dir)
+        jit_source_unchanged = source_cache_final == source_cache_before
+        jit_target_unchanged = (
+            cache_final == cache_before == source_cache_final
+        )
+        cache_ok = bool(jit_source_unchanged and jit_target_unchanged)
+        if not source_ok and error is None:
+            error = "W16A source identity changed at worker end"
+        if not cache_ok and error is None:
+            error = "W16A JIT target changed during worker"
+    except (OSError, TypeError, ValueError, KeyError) as exc:
+        source_ok = False
+        cache_ok = False
+        source_cache_final = None
+        cache_final = None
+        if error is None:
+            error = f"W16A final cache/source check: {type(exc).__name__}: {exc}"
+
+    if core_result is not None:
+        report = evaluate_w16a_global_shifted_gate(core_result)
+        checks = dict(report["checks"])
+        checks["source"] = bool(source_ok)
+        checks["cache"] = bool(cache_ok)
+        checks["execution"] = error is None
+        core_result["checks"] = checks
+        core_result["problems"] = sorted(
+            name for name, passed in checks.items() if not passed
+        )
+        diagnostic_pass, status, classification = _m6b_w16a_final_status(
+            checks, error
+        )
+    else:
+        checks = {"authority_or_runtime": False, "execution": False}
+        diagnostic_pass = False
+        status = "gate_failed"
+        classification = "W16A_EXECUTION_OR_EVIDENCE_FAIL"
+        core_result = None
+
+    action_audit["lifecycle_events"] = list(action_audit["lifecycle_events"])
+    if source_end is None:
+        source_end = h2b._light_source()
+    payload = {
+        "schema": M6B_W16A_SCHEMA,
+        "phase": M6B_W16A_PHASE,
+        "status": status,
+        "classification": classification,
+        "w16a_pass": bool(diagnostic_pass),
+        "formal_pass": False,
+        "pde_pass": False,
+        "official_rta": False,
+        "w16b_locked": True,
+        "w16b_action_candidate": bool(diagnostic_pass),
+        "scope": _m6b_w16a_scope(),
+        "authority": {
+            "w7": w7_authority["compact"],
+            "w7_raw_dir": w7_authority["raw_dir"],
+            "w7_residual_artifact": w7_authority["residual_artifact"],
+            "factor_manifest": factor_authority,
+        },
+        "runtime_identity": runtime,
+        "p6": p6,
+        "jit_cache": {
+            "source": str(jit_cache_source),
+            "target": str(cache_dir.resolve()),
+            "source_before": source_cache_before,
+            "source_final": source_cache_final,
+            "target_before": cache_before,
+            "target_final": cache_final,
+            "source_unchanged": bool(
+                source_cache_final is not None
+                and source_cache_final == source_cache_before
+            ),
+            "target_unchanged": bool(
+                cache_final is not None
+                and cache_final == cache_before == source_cache_final
+            ),
+            "source_git_unchanged": bool(source_ok),
+            "target_matches_source": bool(cache_ok),
+            "warm_precompiled": True,
+            "runtime_compile_allowed": False,
+        },
+        "predicted_live_set": predicted,
+        "architecture": architecture,
+        "action_audit": action_audit,
+        "core": core_result,
+        "checks": checks,
+        "problems": sorted(name for name, passed in checks.items() if not passed),
+        "error": error,
+        "source_at_start": source_start,
+        "source_at_end": source_end,
+        "elapsed_wall_seconds": float(time.perf_counter() - started),
+    }
+    emit("measurement_ready", classification=classification)
+    emit("summary_ready", classification=classification, w16a_pass=diagnostic_pass)
+    payload = h2a._jsonable(payload)
+    _write_json(summary_path, _attach_evidence(payload))
+    return 0 if diagnostic_pass else 1
 
 
 def _m6b_w10a_measurement_record(
@@ -18261,6 +20214,25 @@ def _parser() -> argparse.ArgumentParser:
     w15a.add_argument(
         "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
     )
+    w16a = sub.add_parser("m6b-w16a-global-shifted-inner-diagnostic")
+    w16a.add_argument("--run-dir", required=True)
+    w16a.add_argument("--w7-compact", required=True)
+    w16a.add_argument("--w7-raw-dir", required=True)
+    w16a.add_argument("--shifted-factor-manifest", required=True)
+    w16a.add_argument("--jit-cache-source", required=True)
+    w16a.add_argument(
+        "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
+    )
+    w16a_watchdog = sub.add_parser("m6b-w16a-watchdog")
+    w16a_watchdog.add_argument("--run-dir", required=True)
+    w16a_watchdog.add_argument("--watchdog-dir", required=True)
+    w16a_watchdog.add_argument("--w7-compact", required=True)
+    w16a_watchdog.add_argument("--w7-raw-dir", required=True)
+    w16a_watchdog.add_argument("--shifted-factor-manifest", required=True)
+    w16a_watchdog.add_argument("--jit-cache-source", required=True)
+    w16a_watchdog.add_argument(
+        "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
+    )
     w15a_watchdog = sub.add_parser("m6b-w15a-watchdog")
     w15a_watchdog.add_argument("--run-dir", required=True)
     w15a_watchdog.add_argument("--watchdog-dir", required=True)
@@ -18322,6 +20294,13 @@ def _parser() -> argparse.ArgumentParser:
     w15a_check.add_argument("--watchdog-summary", required=True)
     w15a_check.add_argument("--output", required=True)
     w15a_check.add_argument(
+        "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
+    )
+    w16a_check = sub.add_parser("m6b-w16a-check")
+    w16a_check.add_argument("--raw-dir", required=True)
+    w16a_check.add_argument("--watchdog-summary", required=True)
+    w16a_check.add_argument("--output", required=True)
+    w16a_check.add_argument(
         "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
     )
     return parser
@@ -18511,6 +20490,15 @@ def main(argv: Sequence[str] | None = None) -> int:
             Path(args.w14b_raw_dir).resolve(),
             args.expected_source_sha,
         )
+    if args.command == "m6b-w16a-global-shifted-inner-diagnostic":
+        return _run_m6b_w16a_diagnostic(
+            Path(args.run_dir).resolve(),
+            Path(args.w7_compact).resolve(),
+            Path(args.w7_raw_dir).resolve(),
+            Path(args.shifted_factor_manifest).resolve(),
+            Path(args.jit_cache_source).resolve(),
+            args.expected_source_sha,
+        )
     if args.command == "m6b-w15a-watchdog":
         return _run_m6b_w15a_watchdog(
             Path(args.run_dir).resolve(),
@@ -18524,6 +20512,16 @@ def main(argv: Sequence[str] | None = None) -> int:
             Path(args.b0_jit_cache_source).resolve(),
             Path(args.w14b_compact).resolve(),
             Path(args.w14b_raw_dir).resolve(),
+            args.expected_source_sha,
+        )
+    if args.command == "m6b-w16a-watchdog":
+        return _run_m6b_w16a_watchdog(
+            Path(args.run_dir).resolve(),
+            Path(args.watchdog_dir).resolve(),
+            Path(args.w7_compact).resolve(),
+            Path(args.w7_raw_dir).resolve(),
+            Path(args.shifted_factor_manifest).resolve(),
+            Path(args.jit_cache_source).resolve(),
             args.expected_source_sha,
         )
     if args.command == "m6b-w14a-watchdog":
@@ -18569,6 +20567,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.command == "m6b-w15a-check":
         return _run_m6b_w15a_check(
+            Path(args.raw_dir).resolve(),
+            Path(args.watchdog_summary).resolve(),
+            Path(args.output).resolve(),
+            args.expected_source_sha,
+        )
+    if args.command == "m6b-w16a-check":
+        return _run_m6b_w16a_check(
             Path(args.raw_dir).resolve(),
             Path(args.watchdog_summary).resolve(),
             Path(args.output).resolve(),
