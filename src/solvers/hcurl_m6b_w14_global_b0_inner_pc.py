@@ -155,6 +155,11 @@ class W14GlobalB0InnerPC:
     def audit(self) -> dict[str, Any]:
         """Return scalar/hash records without retaining any full-space vector."""
 
+        rhs_vec_destroyed = self._rhs_vec is None
+        rhs_vec_count = 0 if rhs_vec_destroyed else 1
+        rhs_vec_bytes = (
+            0 if rhs_vec_destroyed else self._rows * np.dtype(np.complex128).itemsize
+        )
         return {
             "schema": _W14_SCHEMA,
             "algorithm": {
@@ -168,9 +173,20 @@ class W14GlobalB0InnerPC:
                 "mpi_size": 1,
             },
             "rows": self._rows,
-            "rhs_vec_owned": True,
-            "rhs_vec_destroyed": self._rhs_vec is None,
-            "retained_full_vector_count": 0,
+            "rhs_vec_owned": not rhs_vec_destroyed,
+            "rhs_vec_destroyed": rhs_vec_destroyed,
+            "wrapper_owned_full_vector_count": rhs_vec_count,
+            "wrapper_owned_full_vector_bytes": rhs_vec_bytes,
+            "retained_full_vector_count": rhs_vec_count,
+            "retained_full_vector_bytes": rhs_vec_bytes,
+            "application_records_full_vector_count": 0,
+            "application_records_full_vector_bytes": 0,
+            "ownership": {
+                "rhs_work_vec": "owned",
+                "operator": "borrowed",
+                "contexts": "borrowed",
+                "factor_store": "borrowed",
+            },
             "applications": [dict(record) for record in self._records],
             "underlying_operator": dict(self._operator_context.audit),
             "underlying_pc": dict(self._pc_context.audit),

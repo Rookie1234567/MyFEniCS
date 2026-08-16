@@ -74,7 +74,25 @@ def test_w14_fixed_inner_pc_applies_and_keeps_only_scalar_hash_audit():
         assert audit["applications"][0]["true_residual"] <= 1.0e-2
         assert audit["applications"][0]["operator_apply_count_delta"] > 0
         assert audit["applications"][0]["pc_apply_count_delta"] > 0
-        assert audit["retained_full_vector_count"] == 0
+        expected_rhs_bytes = rhs.size * np.dtype(np.complex128).itemsize
+        assert audit["rhs_vec_owned"] is True
+        assert audit["rhs_vec_destroyed"] is False
+        assert audit["wrapper_owned_full_vector_count"] == 1
+        assert audit["wrapper_owned_full_vector_bytes"] == expected_rhs_bytes
+        assert audit["retained_full_vector_count"] == 1
+        assert audit["retained_full_vector_bytes"] == expected_rhs_bytes
+        assert audit["application_records_full_vector_count"] == 0
+        assert audit["application_records_full_vector_bytes"] == 0
+        assert audit["ownership"] == {
+            "rhs_work_vec": "owned",
+            "operator": "borrowed",
+            "contexts": "borrowed",
+            "factor_store": "borrowed",
+        }
+        assert not any(
+            isinstance(value, np.ndarray)
+            for value in audit["applications"][0].values()
+        )
         assert audit["architecture"] == {
             "fine_space": "uncondensed_fullspace",
             "global_matrix": False,
@@ -85,6 +103,13 @@ def test_w14_fixed_inner_pc_applies_and_keeps_only_scalar_hash_audit():
         json.dumps(audit, allow_nan=False)
     finally:
         wrapper.destroy()
+        destroyed_audit = wrapper.audit
+        assert destroyed_audit["rhs_vec_owned"] is False
+        assert destroyed_audit["rhs_vec_destroyed"] is True
+        assert destroyed_audit["wrapper_owned_full_vector_count"] == 0
+        assert destroyed_audit["wrapper_owned_full_vector_bytes"] == 0
+        assert destroyed_audit["retained_full_vector_count"] == 0
+        assert destroyed_audit["retained_full_vector_bytes"] == 0
         assert matrix_context.audit["global_matrix_materialized"] is False
         matrix.destroy()
         action.destroy()
@@ -140,7 +165,13 @@ def test_w14_destroy_only_releases_owned_rhs_vec():
     try:
         wrapper.destroy()
         wrapper.destroy()
-        assert wrapper.audit["rhs_vec_destroyed"] is True
+        audit = wrapper.audit
+        assert audit["rhs_vec_owned"] is False
+        assert audit["rhs_vec_destroyed"] is True
+        assert audit["wrapper_owned_full_vector_count"] == 0
+        assert audit["wrapper_owned_full_vector_bytes"] == 0
+        assert audit["retained_full_vector_count"] == 0
+        assert audit["retained_full_vector_bytes"] == 0
         assert matrix_context.audit["apply_count"] == 0
         source = _vec(np.asarray([1.0 + 0.0j, 0.5 + 0.0j]))
         target = source.duplicate()
