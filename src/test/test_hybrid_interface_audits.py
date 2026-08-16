@@ -117,6 +117,7 @@ class HybridInterfaceAuditTests(unittest.TestCase):
         ) as caught:
             raise NearDegenerateBlockPartitionSplitError(audit)
         self.assertEqual(caught.exception.audit, audit)
+        self.assertFalse(_retained_subspace_dual_rotation_eligible(audit, enabled=True))
 
     def test_joint_groups_rotate_coupled_near_degenerate_modes(self):
         betas = (1.0 + 0.0j, 1.0 + 1.580086e-6j, 2.0 + 0.0j)
@@ -369,7 +370,7 @@ class HybridInterfaceAuditTests(unittest.TestCase):
             block_rotation_tolerance=1.0e-6,
         )
         self.assertEqual(audit["status"], "cross_block_biorthogonality_failure")
-        self.assertFalse(_retained_subspace_dual_rotation_eligible(audit, enabled=True))
+        self.assertTrue(_retained_subspace_dual_rotation_eligible(audit, enabled=True))
 
 
 if __name__ == "__main__":

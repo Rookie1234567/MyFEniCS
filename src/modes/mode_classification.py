@@ -516,14 +516,19 @@ def _linear_combination(
 def _retained_subspace_dual_rotation_eligible(
     audit: Mapping[str, object], *, enabled: bool
 ) -> bool:
-    """Allow the research rotation only for the accumulated-row failure case."""
+    """Allow opt-in dual repair for finite partition leakage only."""
 
+    if (
+        not enabled
+        or bool(audit.get("pass", False))
+        or bool(audit["biorthogonality_identity_row_norm_within_tolerance"])
+    ):
+        return False
+    if audit.get("status") == "biorthogonality_identity_row_norm_failure":
+        return bool(audit["max_cross_block_overlap_within_tolerance"])
     return bool(
-        enabled
-        and not bool(audit.get("pass", False))
-        and audit.get("status") == "biorthogonality_identity_row_norm_failure"
-        and not bool(audit["biorthogonality_identity_row_norm_within_tolerance"])
-        and bool(audit["max_cross_block_overlap_within_tolerance"])
+        audit.get("status") == "cross_block_biorthogonality_failure"
+        and not bool(audit["worst_cross_block_is_near_degenerate_candidate"])
     )
 
 
