@@ -268,6 +268,28 @@ def test_physical_setup_contract_is_frozen_and_releases_qep_early() -> None:
     )
     assert release_calls[0].lineno < release_assignment.lineno
 
+    pair_position = setup_source.index("reciprocal_pairs = pair_reciprocal_mode_bases")
+    release_position = setup_source.index(
+        "qep_release = release_frozen_m10_qep_operators"
+    )
+    bottom_position = setup_source.index(
+        "bottom = assemble_hybrid_local_dtn_action_system"
+    )
+    top_position = setup_source.index("top = assemble_hybrid_local_dtn_action_system")
+    coupling_position = setup_source.index(
+        "coupling = build_hybrid_internal_mode_coupling"
+    )
+    assert pair_position < release_position < bottom_position < top_position
+    assert top_position < coupling_position
+    assert "qep_matrices_ready" in setup_source
+    assert "modal_qep_temporaries_released" in setup_source
+    assert not any(
+        isinstance(node, ast.Name)
+        and node.id == "operators"
+        and node.lineno > release_assignment.lineno
+        for node in ast.walk(setup_tree)
+    )
+
 
 def test_linear_stage_is_single_public_frozen_chain_with_ordered_release() -> None:
     source = inspect.getsource(runner.solve_frozen_m10_linear)

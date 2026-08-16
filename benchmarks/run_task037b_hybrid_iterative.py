@@ -1695,8 +1695,9 @@ def build_frozen_m10_setup(
     """Build the frozen physical/QEP/endcap/coupling bundle only.
 
     The returned objects remain owned by the caller for the next solve and
-    recovery stages.  QEP coefficient matrices are released only after both
-    local action systems and the internal coupling are complete.
+    recovery stages.  QEP coefficient matrices are released immediately
+    after reciprocal pairing, before local action-system and coupling
+    assembly.
 
     The default remains requested_modes=FROZEN_M10.candidate_modes,
     near_degenerate_tolerance=FROZEN_M10.near_degenerate_tolerance, and
@@ -1755,6 +1756,14 @@ def build_frozen_m10_setup(
     )
     target = analytic_homogeneous_beta(modal_cfg, modal_cfg.n_air)
     timings["cross_section_qep_assembly"] = _max_elapsed(comm, started)
+    if detail_stage_callback is not None:
+        detail_stage_callback(
+            "qep_matrices_ready",
+            {
+                "source": "assemble_quadratic_beta_operators",
+                "status": "measured",
+            },
+        )
 
     started = time.perf_counter()
     positive_right, positive_report = solve_quadratic_beta_modes(
@@ -1841,6 +1850,33 @@ def build_frozen_m10_setup(
         raise RuntimeError("Frozen M10 reciprocal QEP pairing is incomplete.")
     timings["qep_solve_and_biorthogonal_bases"] = _max_elapsed(comm, started)
 
+    qep_release = release_frozen_m10_qep_operators(operators, comm)
+    if detail_stage_callback is not None:
+        cleanup = qep_release["cleanup"]
+        detail_stage_callback(
+            "modal_qep_temporaries_released",
+            {
+                "source": "release_frozen_m10_qep_operators",
+                "release_pass": qep_release["release_pass"],
+                "cleanup": {
+                    "collective_call_completed": cleanup["collective_call_completed"],
+                    "petsc_garbage_cleanup_called": cleanup[
+                        "petsc_garbage_cleanup_called"
+                    ],
+                    "max_rss_before_mb": cleanup["max_rss_before_mb"],
+                    "max_rss_after_mb": cleanup["max_rss_after_mb"],
+                },
+            },
+        )
+    operators = None
+    if not qep_release["release_pass"]:
+        raise RuntimeError(
+            "Frozen M10 early QEP release did not complete collectively."
+        )
+    timings["early_qep_release"] = float(
+        qep_release["cleanup"]["elapsed_seconds_max_rank"]
+    )
+
     started = time.perf_counter()
     bottom = assemble_hybrid_local_dtn_action_system(
         cfg,
@@ -1877,16 +1913,6 @@ def build_frozen_m10_setup(
         log=log,
     )
     timings["internal_modal_coupling"] = _max_elapsed(comm, started)
-
-    qep_release = release_frozen_m10_qep_operators(operators, comm)
-    operators = None
-    if not qep_release["release_pass"]:
-        raise RuntimeError(
-            "Frozen M10 early QEP release did not complete collectively."
-        )
-    timings["early_qep_release"] = float(
-        qep_release["cleanup"]["elapsed_seconds_max_rank"]
-    )
 
     return FrozenM10Setup(
         cfg=cfg,

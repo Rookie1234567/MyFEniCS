@@ -324,6 +324,12 @@ def test_v3_7_ledger_is_atomic_noncollective_and_tracks_cleanup_boundary(
             raise AssertionError("marker checkpoint must not enter a barrier")
 
     ledger = _v3_7_object_ledger()
+    _record_v3_7_marker(ledger, "qep_matrices_ready", {})
+    _record_v3_7_marker(
+        ledger,
+        "modal_qep_temporaries_released",
+        {"release_pass": True},
+    )
     for marker in (
         "lift_columns_begin",
         "apply_columns_begin",
@@ -340,6 +346,8 @@ def test_v3_7_ledger_is_atomic_noncollective_and_tracks_cleanup_boundary(
     _write_v3_7_object_ledger(path, ledger, NoBarrierComm(), synchronize=False)
     loaded = json.loads(path.read_text(encoding="utf-8"))
     assert loaded["objects"]["one_cell_factor"]["destroyed"] is True
+    assert loaded["objects"]["qep_matrices"]["created"] is True
+    assert loaded["objects"]["qep_matrices"]["destroyed"] is True
     assert loaded["objects"]["side_base_ilu"]["destroyed"] is True
     assert loaded["objects"]["independent_reference"]["destroyed"] is True
     for name in (
