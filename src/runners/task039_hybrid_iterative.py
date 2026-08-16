@@ -50,7 +50,7 @@ class Task39HybridIterativeProfile(Task37cProfile):
     preconditioner_identity: str = (
         "fixed_whole_endcap_ilu0_plus_dynamic_dtn_woodbury_two_pass_residual_correction"
     )
-    qep_solver_tolerance: float = 1.0e-12
+    qep_solver_tolerance: float = 1.0e-13
     max_it: int = 6000
     mpi_size: int = 8
     side_residual_correction_steps: int = 2

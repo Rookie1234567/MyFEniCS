@@ -67,7 +67,7 @@ def test_qep_tolerance_is_explicit_and_profile_selected() -> None:
     assert frozen_runner.FROZEN_M10.qep_solver_tolerance == 1.0e-10
     assert Task37cProfile().qep_solver_tolerance == 1.0e-10
     profile = v3_7_profile_from_resolved(load_v3_7_official_payload(INPUT))
-    assert profile.qep_solver_tolerance == 1.0e-12
+    assert profile.qep_solver_tolerance == 1.0e-13
     source = inspect.getsource(frozen_runner.build_frozen_m10_setup)
     assert source.count("\n        tolerance=profile.qep_solver_tolerance") == 2
     assert (
