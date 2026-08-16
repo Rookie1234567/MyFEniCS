@@ -1716,6 +1716,18 @@ def _candidate_c_side_gate(report: Mapping[str, Any]) -> bool:
     )
 
 
+def _candidate_c_cleanup_fields(
+    fixed_diagnostics: Mapping[str, Any], base_diagnostics: Mapping[str, Any]
+) -> dict[str, Any]:
+    lifecycle = base_diagnostics["lifecycle"]
+    return {
+        "fixed_destroyed": fixed_diagnostics["destroyed"],
+        "base_destroyed": base_diagnostics["destroyed"],
+        "base_factor_count_after_destroy": lifecycle["factor_count_after_destroy"],
+        "base_factors_released": lifecycle["factors_released"],
+    }
+
+
 def _run_v3_8_candidate_b_campaign(
     setup: Any,
     layout: Any,
@@ -2058,16 +2070,11 @@ def _run_v3_8_candidate_c_campaign(
             if side in components:
                 components[side].destroy()
             if report is not None and side in factor_inventory:
-                fixed_diagnostics = fixed_actions[side].diagnostics
-                base_diagnostics = base_actions[side].diagnostics
                 factor_inventory[side].update(
-                    {
-                        "fixed_destroyed": fixed_diagnostics["destroyed"],
-                        "base_destroyed": base_diagnostics["destroyed"],
-                        "base_factor_count_after_destroy": base_diagnostics[
-                            "factor_count_after_destroy"
-                        ],
-                    }
+                    _candidate_c_cleanup_fields(
+                        fixed_actions[side].diagnostics,
+                        base_actions[side].diagnostics,
+                    )
                 )
         _emit_marker(marker_callback, "candidate_c_side_fixed_cleanup_end")
         _destroy(direct_residual)

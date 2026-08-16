@@ -796,6 +796,20 @@ def test_v3_8_candidate_c_normal_return_finalizes_ledger(tmp_path, monkeypatch) 
     assert ledger["objects"]["correction_wrappers"]["destroyed"] is True
 
 
+def test_v3_8_candidate_c_cleanup_fields_use_nested_lifecycle() -> None:
+    fields = orchestration._candidate_c_cleanup_fields(
+        {"destroyed": True},
+        {
+            "destroyed": True,
+            "lifecycle": {"factor_count_after_destroy": 0, "factors_released": True},
+        },
+    )
+    assert fields["fixed_destroyed"] is True
+    assert fields["base_destroyed"] is True
+    assert fields["base_factor_count_after_destroy"] == 0
+    assert fields["base_factors_released"] is True
+
+
 def test_v3_7_boot_markers_bound_setup_sentinel_failure(tmp_path) -> None:
     payload = load_v3_7_official_payload(INPUT)
     run_directory = tmp_path / "setup-sentinel"
