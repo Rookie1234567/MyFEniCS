@@ -47,6 +47,13 @@ __all__ = (
     "W14B_SCHEMA",
     "evaluate_w14b_fixed4_gate",
     "run_w14b_fixed4_cycle",
+    "W15A_CUMULATIVE_RHO_LIMIT",
+    "W15A_PREDICTED_LIVE_SET_BYTES",
+    "W15A_PREDICTED_LIVE_SET_LIMIT_BYTES",
+    "W15A_RESTART1_SCHEMA",
+    "W15A_RHO1_AUTHORITY",
+    "W15A_RHO_LIMIT",
+    "evaluate_w15a_restart1_gate",
 )
 
 
@@ -69,6 +76,12 @@ W14B_RHO4_LIMIT = 0.75
 W14B_MONOTONICITY_TOLERANCE = 1.0e-13
 W14B_PREDICTED_LIVE_SET_BYTES = 1_348_166_150
 W14B_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_500_000_000
+W15A_RESTART1_SCHEMA = "task037.extra.h2b.w15a.restarted-rank1.v1"
+W15A_RHO1_AUTHORITY = 0.8943645606070647
+W15A_RHO_LIMIT = 0.90
+W15A_CUMULATIVE_RHO_LIMIT = 0.81
+W15A_PREDICTED_LIVE_SET_BYTES = W14A_PREDICTED_LIVE_SET_BYTES
+W15A_PREDICTED_LIVE_SET_LIMIT_BYTES = W14A_PREDICTED_LIVE_SET_LIMIT_BYTES
 
 
 def _finite_bounded(value: Any, limit: float | None = None) -> bool:
@@ -311,6 +324,65 @@ def evaluate_w14b_fixed4_gate(
         "checks": checks,
         "problems": sorted(name for name, passed in checks.items() if not passed),
         "rho": rho_values,
+    }
+
+
+def evaluate_w15a_restart1_gate(
+    *,
+    inner_audit: Mapping[str, Any],
+    z_identity: Mapping[str, Any],
+    p_identity: Mapping[str, Any],
+    measurement: Mapping[str, Any],
+    p2_measurement: Mapping[str, Any],
+    cumulative_rho: float,
+    physical_action_count: int,
+    architecture: Mapping[str, Any],
+    lifecycle_events: Sequence[str],
+    predicted_live_set: Mapping[str, Any],
+    checkpoint_authority_ok: bool,
+    source_ok: bool,
+    cache_ok: bool,
+) -> dict[str, Any]:
+    """Recompute W14A's contract plus the fixed restart-1 rho gates."""
+
+    base = evaluate_w14a_action_gate(
+        inner_audit=inner_audit,
+        z_identity=z_identity,
+        p_identity=p_identity,
+        measurement=measurement,
+        p2_measurement=p2_measurement,
+        physical_action_count=physical_action_count,
+        architecture=architecture,
+        lifecycle_events=lifecycle_events,
+        predicted_live_set=predicted_live_set,
+        source_ok=source_ok,
+        cache_ok=cache_ok,
+    )
+    checks = dict(base)
+    checks.update(
+        {
+            "checkpoint_authority": bool(checkpoint_authority_ok is True),
+            "local_rho": False,
+            "cumulative_rho": False,
+        }
+    )
+    try:
+        local_rho = float(measurement["rho"])
+        expected_cumulative = W15A_RHO1_AUTHORITY * local_rho
+        checks["local_rho"] = _finite_bounded(local_rho, W15A_RHO_LIMIT)
+        checks["cumulative_rho"] = (
+            _finite_bounded(cumulative_rho, W15A_CUMULATIVE_RHO_LIMIT)
+            and abs(float(cumulative_rho) - expected_cumulative) <= 1.0e-12
+        )
+    except (KeyError, TypeError, ValueError):
+        pass
+    return {
+        "pass": bool(all(checks.values())),
+        "checks": checks,
+        "problems": sorted(name for name, passed in checks.items() if not passed),
+        "cumulative_rho": float(cumulative_rho)
+        if isinstance(cumulative_rho, (int, float))
+        else None,
     }
 
 
