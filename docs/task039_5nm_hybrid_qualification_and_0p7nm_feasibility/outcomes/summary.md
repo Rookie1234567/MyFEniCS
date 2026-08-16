@@ -358,4 +358,37 @@ Full3D 的逐通道严格幅度比较仍仅作 diagnostic-only。
 
 完整 hash-bound 记录见
 [`task039_v3_11_candidate_d_inter_side_cleanup_formal_v1.json`](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v3_11_candidate_d_inter_side_cleanup_formal_v1.json)。
-Candidate E 尚未运行。
+Candidate E 见下节。
+
+### V3-8 Candidate E：固定误差子空间 side-capacity negative
+
+Candidate E 用通俗意义上的“误差方向学习”增强现有 ILU(0)+动态 DtN Woodbury：先用
+8 个固定且不与验证探针重叠的 global-index seed，经过 16 层 block-Arnoldi/MGS 建立
+一个小的 retained error subspace，再用固定线性动作校正 side residual。它不使用
+physical RHS、direct residual 或 validation probes 训练，也没有运行 global outer。
+
+| 项目 | measured result | 结论 |
+| --- | ---: | --- |
+| classification | `USER_AUTHORIZED_CANDIDATE_E_NUMERICAL_NEGATIVE` | 数值负结果；非 implementation/resource failure |
+| bottom median / worst rho | `6.767346265947249 / 7.752279149310453` | `median<=0.1, worst<=0.3` fail |
+| top median / worst rho | `9.429046770914342 / 10.4485053168248` | `median<=0.1, worst<=0.3` fail |
+| retained rank / layers | `32 / 16`（两侧） | rank cap `128` 内；未扫描 |
+| R condition | `12.404244482859818 / 11.33900546651523` | bottom / top finite |
+| QR reconstruction / Q orthogonality | `3.4844e-16 / 3.5224e-16`；`3.9968e-15 / 2.8866e-15` | bottom / top |
+| factors | base `1+1`，local/global direct `0/0`，cleanup 后 `0` | lifecycle closed |
+| worker / resource | exit `0`；peak `51101.28515625 MiB`；swap `0` | resource subGate pass |
+
+Candidate E 比 C1 的 contraction 明显改善，但明显差于 Candidate B 32-step 的约
+`0.9486/0.9618`（bottom）和 `0.9699/0.9792`（top）。因此不进入 global outer，
+也不通过增加 seed、rank 或 depth 扫描来改变本次结论。
+
+全过程 peak 位于 `post_coupling_heap_cleanup` 之前的 internal-coupling setup transient；
+Candidate-E side-online 区间另有 `17618.02734375 MiB` peak。两者不能混称。相对
+Hybrid direct `87064.125 MiB` 节省 `35962.83984375 MiB / 41.306152038798984%`，
+相对 Full3D direct `96151.16796875 MiB` 节省 `45049.8828125 MiB / 46.85318313256644%`；
+资源数字不改变 Candidate E 的数值负分类。
+
+本次为重建 `x*` 和 direct-solution-side-residual 读取了 hash-bound direct payload，
+但没有物化 independent reference、global KSP、recovery 或 field/RTA。完整身份、逐 probe
+rho、训练/QR、factor/lifecycle、stage peak 与 artifact hash 见
+[`task039_v3_8_candidate_e_side_capacity_formal_v1.json`](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v3_8_candidate_e_side_capacity_formal_v1.json)。

@@ -160,3 +160,34 @@ collective call 均完成。这个结果支持“跨 side 构造时的 allocator
 Gate 通过。它仍不是 production iterative PC：两侧 exact sparse factor 的成本、适用性和
 所有 normal/default 路径尚未被普遍验证；V3-11 的 integrated physics 通过也不改变
 Full3D strict channel 的 diagnostic-only 边界。详见 V3-11 compact record。
+
+## 7. Candidate E：side-capacity 与 setup transient 分离
+
+Candidate E 只测 side-capacity，不运行 global outer、recovery 或 field/RTA。它在 ILU(0)
++动态 DtN Woodbury 上增加固定的残差误差子空间校正；训练使用 8 个冻结 seed、16 层
+block-Arnoldi/MGS，最终两侧 retained rank 均为 `32`。因此训练 rank 和验证 side-online
+对象不能与全过程 setup peak 混为一个容量数字。
+
+| marker 区间 | process-tree RSS peak (MiB) | 口径 |
+| --- | ---: | --- |
+| QEP setup/release | `8923.5859375` | raw samples 对应 marker 区间 |
+| one-cell factor/lift/apply/projection | `20338.609375` | raw samples 对应 marker 区间 |
+| internal coupling tail → post-coupling cleanup | `51101.28515625` | 全过程 peak |
+| direct payload reconstruction | `11697.34375` | hash-bound `x*`/side residual |
+| Candidate-E side setup | `17550.17578125` | side setup |
+| Candidate-E training | `17613.4921875` | training retained rank |
+| Candidate-E validation/cleanup | `17618.02734375` | side-online peak |
+
+全过程 peak 为 `53583581184 bytes = 51101.28515625 MiB = 49.90359878540039 GiB`，
+UTC `2026-08-16T21:40:34.984616Z`，swap=`0`；它发生在
+`post_coupling_heap_cleanup` marker 之前的 setup transient。side-online peak 为
+`17618.02734375 MiB`，不能用它替代全过程资源资格。相对同物理 Hybrid direct
+`87064.125 MiB` 节省 `35962.83984375 MiB = 41.306152038798984%`；相对 Full3D direct
+`96151.16796875 MiB` 节省 `45049.8828125 MiB = 46.85318313256644%`。这只是本次
+side-capacity 资源测量；Candidate E 正式分类为
+`USER_AUTHORIZED_CANDIDATE_E_NUMERICAL_NEGATIVE`，contraction Gate 仍失败。
+
+Candidate E 的 base factor 为 bottom/top 各 `1`，同时为 `2`；local direct/global
+direct factor 为 `0/0`，cleanup 后 base factor count 为 `0`。相关 cleanup marker 均为
+`collective_call_completed=true`。完整 compact record 见
+[`task039_v3_8_candidate_e_side_capacity_formal_v1.json`](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v3_8_candidate_e_side_capacity_formal_v1.json)。
