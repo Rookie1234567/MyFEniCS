@@ -1,9 +1,9 @@
-"""Research-only fixed beta=1 shifted inner cycles for W16A/W16R/W16B.
+"""Research-only fixed beta=1 shifted inner cycles for W16A/W16R/W16B/W17A.
 
-The auxiliary operator is the existing shifted volume-only beta=1 operator.
-The physical beta=0 volume-plus-DtN measurement belongs to the later worker;
-this module only wraps the existing disk-backed flexible-GMRES implementation
-and evaluates its small scalar/hash contract.
+The W16 auxiliary operator is shifted volume-only; W17A adds the shared
+matrix-free DtN80 action while retaining the same disk-backed flexible-GMRES
+implementation.  This module only wraps that solver and evaluates scalar/hash
+contracts; it does not implement a second Krylov method.
 """
 
 from __future__ import annotations
@@ -72,15 +72,28 @@ __all__ = (
     "W16B_TOTAL_PHYSICAL_ACTION_COUNT",
     "W16B_TOTAL_OUTER_PC_COUNT",
     "W16B_TOTAL_LOCAL_EXACT_SHIFTED_ACTION_COUNT",
+    "W17A_SCHEMA",
+    "W17A_INNER_SCHEMA",
+    "W17A_AUXILIARY_OPERATOR",
+    "W17A_AUXILIARY_PC",
+    "W17A_AUXILIARY_BETA",
+    "W17A_PHYSICAL_OPERATOR",
+    "W17A_INNER_ALGORITHM",
+    "W17A_RHO_LIMIT",
+    "W17A_PREDICTED_LIVE_SET_BYTES",
+    "W17A_PREDICTION_COMPONENTS",
+    "W17A_SCRATCH_TWO_RUN_TOTAL_BYTES",
     "W16BFixed40Result",
     "W16BFixed40ComposedPC",
     "run_w16b_fixed40",
+    "run_w17a_fixed40",
     "run_w16b_outer2",
     "evaluate_w16b_outer2_gate",
     "evaluate_w16r_restart20_gate",
     "evaluate_w16a_global_shifted_gate",
     "run_w16r_fixed20",
     "run_w16a_fixed20",
+    "evaluate_w17a_global_physical_shifted_gate",
 )
 
 
@@ -158,6 +171,25 @@ W16B_PHYSICAL_RETAINED_PAYLOAD_BYTES = 6_151_120
 W16B_PHYSICAL_PER_APPLY_TEMP_BYTES = 3_564_288
 W16B_DTN_RETAINED_WORK_BYTES = 16_673_350
 W16B_OUTER_BOUNDED_VECTOR_BYTES = 33_369_984
+
+W17A_SCHEMA = "task037.extra.h2b.w17a.global-physical-shifted.v1"
+W17A_INNER_SCHEMA = "task037.extra.h2b.w17a.inner-physical-shifted-fixed40.v1"
+W17A_AUXILIARY_OPERATOR = "beta1_volume_plus_matrix_free_dtn80"
+W17A_AUXILIARY_PC = W16A_AUXILIARY_PC
+W17A_AUXILIARY_BETA = 1.0
+W17A_PHYSICAL_OPERATOR = "beta0_volume_plus_matrix_free_dtn80"
+W17A_INNER_ALGORITHM = "fgmres_right_beta1_volume_dtn80_composed_fixed20_plus20"
+W17A_RHO_LIMIT = 0.85
+W17A_PREDICTED_LIVE_SET_BYTES = 1_701_623_030
+W17A_PREDICTION_COMPONENTS = {
+    "calibrated_w16r_measured_process_tree_peak_bytes": 1_398_456_320,
+    "physical_retained_numeric_payload_bytes": 6_151_120,
+    "physical_per_apply_temporary_bytes": 3_564_288,
+    "shared_dtn_retained_and_work_bytes": 16_673_350,
+    "one_action_bridge_and_template_bytes": 8_342_496,
+    "coexistence_uncertainty_margin_bytes": 268_435_456,
+}
+W17A_SCRATCH_TWO_RUN_TOTAL_BYTES = 2 * W16B_SCRATCH_PER_APPLY_BYTES
 
 
 def _w16b_array_sha256(values: np.ndarray) -> str:
@@ -325,6 +357,35 @@ def run_w16b_fixed40(
     )
 
 
+def run_w17a_fixed40(
+    action: Callable[[np.ndarray], np.ndarray],
+    pc: Callable[[np.ndarray], np.ndarray],
+    rhs: np.ndarray,
+    scratch_dir: str | Path,
+) -> W16BFixed40Result:
+    """Run the fixed W17A auxiliary cycle through the shared W16B solver."""
+
+    result = run_w16b_fixed40(action, pc, rhs, scratch_dir)
+    audit = dict(result.audit)
+    audit.update(
+        {
+            "schema": W17A_INNER_SCHEMA,
+            "algorithm": W17A_INNER_ALGORITHM,
+            "auxiliary_operator": W17A_AUXILIARY_OPERATOR,
+            "right_pc": W17A_AUXILIARY_PC,
+            "auxiliary_dtn_used": True,
+            "auxiliary_dtn_action_count": 43,
+        }
+    )
+    return W16BFixed40Result(
+        solution=result.solution,
+        cycle20_audit=result.cycle20_audit,
+        cycle40_audit=result.cycle40_audit,
+        final_relative_residual=result.final_relative_residual,
+        audit=audit,
+    )
+
+
 class W16BFixed40ComposedPC:
     """Borrowed-action/PC wrapper with one fresh scratch root per apply."""
 
@@ -443,16 +504,21 @@ def _w16b_outer_audit_valid(audit: Any) -> bool:
         return False
 
 
-def _w16b_fixed40_audit_valid(record: Any) -> bool:
+def _fixed40_audit_valid(
+    record: Any,
+    *,
+    schema: str = W16B_INNER_SCHEMA,
+    algorithm: str = "fgmres_right_shifted_beta1_composed_fixed20_plus20",
+    auxiliary_dtn_action_count: int | None = None,
+) -> bool:
     if not isinstance(record, Mapping):
         return False
     try:
         cycle20 = record["cycle20"]
         cycle40 = record["cycle40"]
         return bool(
-            record["schema"] == W16B_INNER_SCHEMA
-            and record["algorithm"]
-            == "fgmres_right_shifted_beta1_composed_fixed20_plus20"
+            record["schema"] == schema
+            and record["algorithm"] == algorithm
             and record["initial_solution_provided"] is False
             and record["initial_action_count"] == 0
             and _fixed20_inner_audit(cycle20, expected_observer_count=0)
@@ -462,6 +528,10 @@ def _w16b_fixed40_audit_valid(record: Any) -> bool:
             and record["global_action_count"] == W16B_FIXED40_GLOBAL_ACTION_COUNT
             and record["pc_apply_count"] == W16B_FIXED40_PC_COUNT
             and record["shifted_action_count"] == W16B_FIXED40_SHIFTED_ACTION_COUNT
+            and (
+                auxiliary_dtn_action_count is None
+                or record["auxiliary_dtn_action_count"] == auxiliary_dtn_action_count
+            )
             and isinstance(record["solution_sha256"], str)
             and bool(record["solution_sha256"])
             and isinstance(record["solution_artifact"], Mapping)
@@ -477,6 +547,10 @@ def _w16b_fixed40_audit_valid(record: Any) -> bool:
         )
     except (KeyError, TypeError, ValueError):
         return False
+
+
+def _w16b_fixed40_audit_valid(record: Any) -> bool:
+    return _fixed40_audit_valid(record)
 
 
 def evaluate_w16b_outer2_gate(summary: Mapping[str, Any]) -> dict[str, Any]:
@@ -844,7 +918,10 @@ def _identity_gate(identity: Mapping[str, Any]) -> bool:
 
 
 def _measurement_gate(
-    measurement: Mapping[str, Any], *, expected_schema: str = W16A_SCHEMA
+    measurement: Mapping[str, Any],
+    *,
+    expected_schema: str = W16A_SCHEMA,
+    rho_limit: float = W16A_RHO_LIMIT,
 ) -> bool:
     if not isinstance(measurement, Mapping):
         return False
@@ -853,7 +930,7 @@ def _measurement_gate(
             measurement["schema"] == expected_schema
             and measurement["finite"] is True
             and measurement["repeat_exact"] is True
-            and _finite_bounded(measurement["rho"], W16A_RHO_LIMIT)
+            and _finite_bounded(measurement["rho"], rho_limit)
             and _finite_bounded(
                 measurement["normal_closure"], W16A_CLOSURE_LIMIT
             )
@@ -863,6 +940,195 @@ def _measurement_gate(
         )
     except (KeyError, TypeError, ValueError):
         return False
+
+
+def evaluate_w17a_global_physical_shifted_gate(
+    summary: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Recompute the W17A core-only identity and measurement Gate."""
+
+    names = (
+        "schema",
+        "fixed_identity",
+        "inner_audits",
+        "inner_residual",
+        "z_identity",
+        "p_identity",
+        "measurements",
+        "action_counts",
+        "architecture",
+        "lifecycle",
+        "prediction",
+    )
+    checks = {name: False for name in names}
+    if not isinstance(summary, Mapping):
+        return {"pass": False, "checks": checks, "problems": list(names)}
+    try:
+        checks["schema"] = summary["schema"] == W17A_SCHEMA
+
+        def mapping_matches(
+            value: Any, expected: Mapping[str, Any]
+        ) -> bool:
+            return isinstance(value, Mapping) and all(
+                value[key] == expected_value
+                for key, expected_value in expected.items()
+            )
+
+        identity = summary["fixed_identity"]
+        checks["fixed_identity"] = mapping_matches(
+            identity,
+            {
+                "operator": W17A_AUXILIARY_OPERATOR,
+                "beta": W17A_AUXILIARY_BETA,
+                "right_pc": W17A_AUXILIARY_PC,
+                "auxiliary_dtn_used": True,
+                "physical_operator": W17A_PHYSICAL_OPERATOR,
+                "projected_range_used": False,
+                "b0_used": False,
+                "m3y_used": False,
+                "range_store_used": False,
+            },
+        ) and type(identity["beta"]) is float
+        audits = summary["inner_audits"]
+
+        def valid_audit(item: Any) -> bool:
+            return _fixed40_audit_valid(
+                item,
+                schema=W17A_INNER_SCHEMA,
+                algorithm=W17A_INNER_ALGORITHM,
+                auxiliary_dtn_action_count=43,
+            ) and mapping_matches(
+                item,
+                {
+                    "auxiliary_operator": W17A_AUXILIARY_OPERATOR,
+                    "right_pc": W17A_AUXILIARY_PC,
+                    "auxiliary_dtn_used": True,
+                },
+            )
+
+        checks["inner_audits"] = (
+            isinstance(audits, Sequence)
+            and not isinstance(audits, (str, bytes))
+            and len(audits) == 2
+            and [item["run_index"] for item in audits] == [1, 2]
+            and all(valid_audit(item) for item in audits)
+            and audits[0]["scratch_paths"] != audits[1]["scratch_paths"]
+        )
+        checks["inner_residual"] = bool(
+            checks["inner_audits"]
+            and all(
+                _finite_bounded(
+                    item["final_relative_residual"],
+                    W16A_INNER_TRUE_RESIDUAL_LIMIT,
+                )
+                for item in audits
+            )
+        )
+        z_identity = summary["z_identity"]
+        checks["z_identity"] = (
+            _identity_gate(z_identity)
+            and z_identity["first_sha256"] == audits[0]["solution_sha256"]
+            and z_identity["second_sha256"] == audits[1]["solution_sha256"]
+            and z_identity["first_sha256"] == z_identity["second_sha256"]
+        )
+        p_identity = summary["p_identity"]
+        checks["p_identity"] = (
+            _identity_gate(p_identity)
+            and p_identity["first_sha256"] == p_identity["second_sha256"]
+        )
+        measurements = summary["measurements"]
+        checks["measurements"] = (
+            isinstance(measurements, Sequence)
+            and not isinstance(measurements, (str, bytes))
+            and len(measurements) == 2
+            and all(
+                _measurement_gate(
+                    item,
+                    expected_schema=W17A_SCHEMA,
+                    rho_limit=W17A_RHO_LIMIT,
+                )
+                for item in measurements
+            )
+        )
+        action = summary["action_counts"]
+        checks["action_counts"] = mapping_matches(
+            action,
+            {
+                "global_auxiliary_action_count": 86,
+                "local_pc_apply_count": 80,
+                "local_exact_shifted_volume_action_count": 80,
+                "shifted_action_count": 166,
+                "auxiliary_dtn_action_count": 86,
+                "physical_volume_action_count": 2,
+                "physical_dtn_action_count": 2,
+                "total_dtn_action_count": 88,
+            },
+        )
+        architecture = summary["architecture"]
+        checks["architecture"] = mapping_matches(
+            architecture,
+            {
+                "fine_space": "uncondensed_fullspace",
+                "auxiliary_operator": W17A_AUXILIARY_OPERATOR,
+                "physical_operator": W17A_PHYSICAL_OPERATOR,
+                "local_pc_callback": W16A_AUXILIARY_OPERATOR,
+                "auxiliary_dtn_used": True,
+                "global_matrix_materialized": False,
+                "global_condensed_schur_materialized": False,
+                "augmented_matrix_materialized": False,
+                "condensation": False,
+                "static_condensation": False,
+                "static_condensed_operator_used": False,
+                "trace_slab": False,
+                "trace_slab_pc_used": False,
+                "slab_factors": 0,
+                "factor_store": "beta1_direct_local_patch_only",
+                "physical_ksp_used": False,
+                "pde_used": False,
+                "official_rta": False,
+            },
+        )
+        lifecycle = summary["lifecycle"]
+        checks["lifecycle"] = mapping_matches(
+            lifecycle,
+            {
+                "shared_dtn_reused": True,
+                "shared_dtn_instance_count": 1,
+                "auxiliary_physical_context_overlap": False,
+                "release_between_inner_runs": False,
+            },
+        )
+        checks["lifecycle"] = checks["lifecycle"] and lifecycle["events"] == (
+            "dtn_constructed auxiliary_constructed auxiliary_run_1 "
+            "auxiliary_run_2 auxiliary_released physical_constructed "
+            "physical_apply_1 physical_apply_2 physical_released dtn_released"
+        ).split()
+        prediction = summary["prediction"]
+        checks["prediction"] = (
+            mapping_matches(
+                prediction,
+                {
+                    "bytes": W17A_PREDICTED_LIVE_SET_BYTES,
+                    "limit_bytes": 1_750_000_000,
+                    "watchdog_limit_bytes": 1_950_000_000,
+                    "derived_not_measured": True,
+                    "scratch_is_disk_not_rss": True,
+                    "scratch_two_run_total_bytes": (
+                        W17A_SCRATCH_TWO_RUN_TOTAL_BYTES
+                    ),
+                    "components": W17A_PREDICTION_COMPONENTS,
+                },
+            )
+            and sum(prediction["components"].values()) == prediction["bytes"]
+            and prediction["bytes"] <= prediction["limit_bytes"]
+        )
+    except (KeyError, IndexError, TypeError, ValueError):
+        pass
+    return {
+        "pass": bool(all(checks.values())),
+        "checks": checks,
+        "problems": sorted(name for name, passed in checks.items() if not passed),
+    }
 
 
 def evaluate_w16a_global_shifted_gate(
