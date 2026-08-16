@@ -10,6 +10,7 @@ from petsc4py import PETSc
 
 from src.solvers.hybrid_local_dtn_woodbury import (
     HYBRID_DTN_WOODBURY_MODE_COUNT,
+    HybridLocalDtnWoodburyFixedBudgetKrylovAction,
     HybridLocalDtnWoodburyFixedAction,
     HybridLocalDtnWoodburyOracle,
     ResearchExactSideLuAction,
@@ -480,6 +481,94 @@ def test_fixed_action_supports_reviewed_correction_passes(passes: int) -> None:
         if residual_operator is not None:
             residual_operator.destroy()
         F.destroy()
+        C.destroy()
+        D.destroy()
+        H.destroy()
+
+
+@pytest.mark.parametrize("budget", [8, 16, 32])
+def test_fixed_budget_krylov_action_is_deterministic_and_borrowing(budget: int):
+    comm = MPI.COMM_WORLD
+    if comm.size not in (1, 2, 4):
+        return
+    rows = 6
+    operator_dense = np.asarray(
+        [
+            [2.0, 0.3, 0.0, 0.0, 0.0, 0.0],
+            [0.1, 2.4, 0.2, 0.0, 0.0, 0.0],
+            [0.0, 0.2, 2.1, 0.3, 0.0, 0.0],
+            [0.0, 0.0, 0.1, 2.6, 0.2, 0.0],
+            [0.0, 0.0, 0.0, 0.2, 2.2, 0.3],
+            [0.0, 0.0, 0.0, 0.0, 0.1, 2.5],
+        ],
+        dtype=np.complex128,
+    )
+    operator = _python_matrix_from_dense(operator_dense)
+    operator_context = operator.getPythonContext()
+    C = _matrix_from_dense(np.zeros((rows, 1), dtype=np.complex128))
+    D = _matrix_from_dense(np.zeros((1, rows), dtype=np.complex128))
+    H = _matrix_from_dense(np.eye(1, dtype=np.complex128))
+    components = SimpleNamespace(F=operator, C=C, D=D, H=H)
+    fixed = HybridLocalDtnWoodburyFixedAction(
+        _FixedBaseAction(_DenseBaseInverse(2.0)), components
+    )
+    action = HybridLocalDtnWoodburyFixedBudgetKrylovAction(
+        operator, fixed, budget=budget
+    )
+    template = operator.createVecRight()
+    source = _random_vector(template, 239 + budget)
+    template.destroy()
+    first = operator.createVecLeft()
+    repeat = operator.createVecLeft()
+    applied = operator.createVecLeft()
+    residual = operator.createVecLeft()
+    try:
+        first.set(17.0)
+        action.apply(source, first)
+        operator.mult(first, applied)
+        source.copy(residual)
+        residual.axpy(PETSc.ScalarType(-1.0), applied)
+        initial_norm = float(source.norm())
+        assert float(residual.norm()) / initial_norm < 1.0e-10
+        first_digest = _global_vec_digest(first)
+
+        repeat.set(-23.0)
+        action.apply(source, repeat)
+        assert _global_vec_digest(repeat) == first_digest
+        diagnostics = action.diagnostics
+        assert diagnostics["requested_budget"] == budget
+        assert diagnostics["restart"] == budget
+        assert diagnostics["pc_side"] == "right"
+        assert diagnostics["zero_initial_guess"] is True
+        assert diagnostics["right_preconditioner_borrowed"] is True
+        assert diagnostics["direct_factor_count"] == 0
+        assert diagnostics["global_hybrid_direct_factor_count"] == 0
+        assert diagnostics["apply_count"] == 2
+        assert 0 < diagnostics["last_inner_iterations"] <= budget
+        assert diagnostics["last_converged_reason"] != 0
+    finally:
+        residual.destroy()
+        applied.destroy()
+        repeat.destroy()
+        first.destroy()
+        source.destroy()
+        action.destroy()
+        assert action.diagnostics["inner_ksp_destroyed"] is True
+        assert action.diagnostics["pc_context_destroyed"] is True
+        assert action.diagnostics["destroyed"] is True
+        assert operator_context.destroyed is False
+        borrowed_target = operator.createVecLeft()
+        borrowed_template = operator.createVecRight()
+        borrowed_source = _random_vector(borrowed_template, 240 + budget)
+        borrowed_template.destroy()
+        try:
+            fixed.apply(borrowed_source, borrowed_target)
+        finally:
+            borrowed_source.destroy()
+            borrowed_target.destroy()
+        fixed.destroy()
+        operator.destroy()
+        assert operator_context.destroyed is True
         C.destroy()
         D.destroy()
         H.destroy()

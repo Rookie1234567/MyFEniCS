@@ -22,6 +22,7 @@ __all__ = (
     "ResearchExactFactorInverse",
     "ResearchExactSideLuAction",
     "create_research_exact_side_lu_action",
+    "HybridLocalDtnWoodburyFixedBudgetKrylovAction",
 )
 
 
@@ -513,6 +514,7 @@ class HybridLocalDtnWoodburyFixedAction:
             "base_factor_borrowed": True,
             "local_direct_factor_count": 0,
             "local_direct_factor_count_owned": 0,
+            "global_hybrid_direct_factor_count": 0,
             "nested_ksp_created": bool(self._base_qualification["ksp_created"]),
             "base_diagnostics": base_diagnostics,
             "apply_count": int(self._logical_apply_count),
@@ -536,4 +538,158 @@ class HybridLocalDtnWoodburyFixedAction:
             self._correction.destroy()
             self._correction = None
         self.residual_operator = None
+        self._destroyed = True
+
+
+class _FixedBudgetPythonPcContext:
+    """Borrow one fixed side action as a PETSc Python right-preconditioner."""
+
+    def __init__(self, action: Any) -> None:
+        self.action: Any | None = action
+
+    def apply(self, _pc: PETSc.PC, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        if self.action is None:
+            raise RuntimeError("fixed-budget Python PC has been destroyed")
+        self.action.apply(source, target)
+
+    def destroy(self, _pc: PETSc.PC) -> None:
+        self.action = None
+
+
+class HybridLocalDtnWoodburyFixedBudgetKrylovAction:
+    """Apply a fixed-budget side Krylov inverse with a borrowed one-pass PC.
+
+    This research-only action owns only its inner KSP and Python-PC context.
+    The side operator and the fixed Woodbury action are borrowed.  The returned
+    vector is intentionally judged by an external true residual; this class
+    records the KSP outcome but does not turn it into a convergence claim.
+    """
+
+    _ALLOWED_BUDGETS = (8, 16, 32)
+    operator_identity = "fixed_budget_side_fgmres_right_fixed_woodbury"
+
+    def __init__(
+        self,
+        operator: PETSc.Mat,
+        right_preconditioner: Any,
+        *,
+        budget: int,
+    ) -> None:
+        if budget not in self._ALLOWED_BUDGETS:
+            raise ValueError("Fixed-budget side Krylov budget must be 8, 16, or 32")
+        if (
+            not isinstance(operator, PETSc.Mat)
+            or str(operator.getType()).lower() != "python"
+        ):
+            raise TypeError(
+                "Fixed-budget side Krylov requires a matrix-free MatPython operator"
+            )
+        if not isinstance(right_preconditioner, HybridLocalDtnWoodburyFixedAction):
+            raise TypeError(
+                "Fixed-budget side Krylov requires HybridLocalDtnWoodburyFixedAction"
+            )
+        right_diagnostics = right_preconditioner.diagnostics
+        if (
+            right_diagnostics.get("residual_correction_steps") != 1
+            or right_diagnostics.get("local_direct_factor_count") != 0
+            or right_diagnostics.get("global_hybrid_direct_factor_count") != 0
+        ):
+            raise ValueError(
+                "Fixed-budget side Krylov requires one-pass factor-free right PC"
+            )
+
+        self.operator = operator
+        self.right_preconditioner = right_preconditioner
+        self.budget = int(budget)
+        self._right_diagnostics = dict(right_diagnostics)
+        self._direct_factor_count = int(right_diagnostics["local_direct_factor_count"])
+        self._global_direct_factor_count = int(
+            right_diagnostics["global_hybrid_direct_factor_count"]
+        )
+        self._comm = operator.getComm().tompi4py()
+        self._right_preconditioner_identity = str(
+            self._right_diagnostics.get(
+                "operator_identity", type(right_preconditioner).__name__
+            )
+        )
+        self._pc_context = _FixedBudgetPythonPcContext(right_preconditioner)
+        self._inner_ksp = PETSc.KSP().create(operator.getComm())
+        self._inner_ksp.setOperators(operator)
+        self._inner_ksp.setType("fgmres")
+        self._inner_ksp.setPCSide(PETSc.PC.Side.RIGHT)
+        self._inner_ksp.setGMRESRestart(self.budget)
+        self._inner_ksp.setNormType(PETSc.KSP.NormType.NONE)
+        self._inner_ksp.setInitialGuessNonzero(False)
+        self._inner_ksp.setTolerances(max_it=self.budget)
+        pc = self._inner_ksp.getPC()
+        pc.setType("python")
+        pc.setPythonContext(self._pc_context)
+        self._inner_ksp.setUp()
+        self._apply_count = 0
+        self._total_iterations = 0
+        self._last_iterations: int | None = None
+        self._last_reason: int | None = None
+        self._last_seconds: float | None = None
+        self._total_seconds = 0.0
+        self._inner_ksp_destroyed = False
+        self._pc_context_destroyed = False
+        self._destroyed = False
+
+    def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        if self._destroyed:
+            raise RuntimeError("Fixed-budget side Krylov action has been destroyed")
+        if source.getSize() != self.operator.getSize()[1]:
+            raise ValueError("Fixed-budget side Krylov source has the wrong size")
+        if target.getSize() != self.operator.getSize()[0]:
+            raise ValueError("Fixed-budget side Krylov target has the wrong size")
+        target.set(0.0)
+        started = perf_counter()
+        self._inner_ksp.solve(source, target)
+        elapsed = _max_over_comm(self._comm, perf_counter() - started)
+        iterations = int(self._inner_ksp.getIterationNumber())
+        reason = int(self._inner_ksp.getConvergedReason())
+        self._apply_count += 1
+        self._total_iterations += iterations
+        self._last_iterations = iterations
+        self._last_reason = reason
+        self._last_seconds = float(elapsed)
+        self._total_seconds += float(elapsed)
+
+    @property
+    def diagnostics(self) -> dict[str, Any]:
+        return {
+            "research_only": True,
+            "operator_identity": self.operator_identity,
+            "requested_budget": int(self.budget),
+            "ksp_type": "fgmres",
+            "pc_side": "right",
+            "restart": int(self.budget),
+            "norm_type": "none",
+            "zero_initial_guess": True,
+            "right_preconditioner_identity": self._right_preconditioner_identity,
+            "right_preconditioner_borrowed": True,
+            "direct_factor_count": self._direct_factor_count,
+            "global_hybrid_direct_factor_count": self._global_direct_factor_count,
+            "apply_count": int(self._apply_count),
+            "total_inner_iterations": int(self._total_iterations),
+            "last_inner_iterations": self._last_iterations,
+            "last_converged_reason": self._last_reason,
+            "last_apply_seconds": self._last_seconds,
+            "total_apply_seconds": float(self._total_seconds),
+            "inner_ksp_created": True,
+            "inner_ksp_destroyed": bool(self._inner_ksp_destroyed),
+            "pc_context_destroyed": bool(self._pc_context_destroyed),
+            "destroyed": bool(self._destroyed),
+        }
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self._inner_ksp.destroy()
+        self._inner_ksp = None
+        self._inner_ksp_destroyed = True
+        self._pc_context = None
+        self._pc_context_destroyed = True
+        self.right_preconditioner = None
+        self.operator = None
         self._destroyed = True
