@@ -70,6 +70,7 @@ def qep_only_contract() -> dict[str, Any]:
             "near_degenerate_tolerance": QEP_ONLY_NEAR_TOLERANCE,
             "block_rotation_tolerance": QEP_ONLY_BLOCK_TOLERANCE,
             "near_degenerate_candidate_envelope_factor": 10.0,
+            "retained_subspace_dual_rotation": True,
             "problem_type": "GENERAL",
             "type": "TOAR",
             "which": "TARGET_MAGNITUDE",
@@ -328,6 +329,7 @@ def run_positive_qep_only(
                 qep_solver_tolerance=QEP_ONLY_TOLERANCE,
                 near_degenerate_tolerance=QEP_ONLY_NEAR_TOLERANCE,
                 block_rotation_tolerance=QEP_ONLY_BLOCK_TOLERANCE,
+                retained_subspace_dual_rotation=True,
                 poynting_evaluator=evaluator,
             )
         except Exception:
@@ -338,9 +340,15 @@ def run_positive_qep_only(
         if audit is None:
             raise RuntimeError("positive QEP partition audit was not emitted")
         passed = bool(audit.get("pass"))
+        left_residual_max = max(
+            (mode.left_polynomial_relative_residual for mode in basis.modes),
+            default=float("inf"),
+        )
+        left_residual_pass = left_residual_max <= 1.0e-8
+        overall_pass = passed and left_residual_pass
         record = {
             "schema_version": 1,
-            "status": "pass" if passed else "fail",
+            "status": "pass" if overall_pass else "fail",
             "mode": contract["mode"],
             "provenance": provenance,
             "contract": contract,
@@ -355,6 +363,9 @@ def run_positive_qep_only(
                     basis, selection.selected_candidate_indices
                 ),
                 "partition_audit": audit,
+                "retained_subspace_dual_rotation": (
+                    basis.retained_subspace_dual_rotation_audit
+                ),
             },
             "gate": {
                 "selected_480": selection.selected_modes == QEP_ONLY_REQUESTED_MODES,
@@ -363,7 +374,9 @@ def run_positive_qep_only(
                 <= QEP_ONLY_BLOCK_TOLERANCE,
                 "cross_block_max_le_1e-6": audit["max_cross_block_overlap"]
                 <= QEP_ONLY_BLOCK_TOLERANCE,
-                "overall_pass": passed,
+                "left_polynomial_relative_residual_max": left_residual_max,
+                "left_polynomial_residual_max_le_1e-8": left_residual_pass,
+                "overall_pass": overall_pass,
             },
             "timestamp_utc": datetime.now(timezone.utc).isoformat(),
             "elapsed_seconds": time.perf_counter() - started,

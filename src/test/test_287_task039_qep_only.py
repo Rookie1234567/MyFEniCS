@@ -63,6 +63,7 @@ def test_qep_only_contract_freezes_profile_and_evidence_schema():
     assert contract["qep"]["near_degenerate_tolerance"] == 1.0e-6
     assert contract["qep"]["block_rotation_tolerance"] == 1.0e-6
     assert contract["qep"]["near_degenerate_candidate_envelope_factor"] == 10.0
+    assert contract["qep"]["retained_subspace_dual_rotation"] is True
     assert contract["qep"]["runtime_readback"] == "not_available"
     assert contract["provenance_fields"] == [
         "input_sha256",

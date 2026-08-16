@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal, Sequence
+from typing import Literal, Mapping, Sequence
 
 import numpy as np
 import ufl
@@ -122,6 +122,7 @@ class BiorthogonalModeBasis:
     left_pair_relative_errors: tuple[float, ...]
     full_vector_gathered: bool = False
     near_degenerate_partition_audit: dict[str, object] | None = None
+    retained_subspace_dual_rotation_audit: dict[str, object] | None = None
 
     def destroy(self) -> None:
         for mode in self.modes:
@@ -512,6 +513,164 @@ def _linear_combination(
     return result
 
 
+def _retained_subspace_dual_rotation_eligible(
+    audit: Mapping[str, object], *, enabled: bool
+) -> bool:
+    """Allow the research rotation only for the accumulated-row failure case."""
+
+    return bool(
+        enabled
+        and not bool(audit.get("pass", False))
+        and audit.get("status") == "biorthogonality_identity_row_norm_failure"
+        and not bool(audit["biorthogonality_identity_row_norm_within_tolerance"])
+        and bool(audit["max_cross_block_overlap_within_tolerance"])
+    )
+
+
+def _retained_subspace_dual_rotation(
+    overlap: np.ndarray,
+    left_reduced: Sequence[PETSc.Vec],
+    left_full: Sequence[PETSc.Vec],
+    left_betas: Sequence[complex],
+    right_betas: Sequence[complex],
+    right_reduced: Sequence[PETSc.Vec],
+    groups: Sequence[Sequence[int]],
+    *,
+    operators: QuadraticBetaOperators,
+    adjoints: tuple[PETSc.Mat, PETSc.Mat, PETSc.Mat],
+    pre_audit: Mapping[str, object],
+    near_degenerate_tolerance: float,
+    block_rotation_tolerance: float,
+    maximum_overlap_condition: float,
+    directions: Sequence[str] | None = None,
+    left_candidates: Sequence[QuadraticBetaMode] | None = None,
+) -> tuple[
+    list[PETSc.Vec],
+    list[PETSc.Vec],
+    np.ndarray,
+    dict[str, object],
+    dict[str, object],
+    tuple[float, ...],
+]:
+    """Rotate one retained left subspace with the direct dual ``B^{-H}`` solve.
+
+    This is a research-only continuation of the already completed grouping and
+    normalization.  The old vectors remain owned until the transformed overlap
+    passes the unchanged partition audit; the caller's candidate owners are
+    updated before the old vectors are destroyed.
+    """
+
+    values = np.asarray(overlap, dtype=np.complex128)
+    span = len(left_reduced)
+    if (
+        values.shape != (span, span)
+        or len(left_full) != span
+        or len(left_betas) != span
+        or len(right_betas) != span
+        or len(right_reduced) != span
+    ):
+        raise ValueError("Retained dual rotation dimensions do not agree.")
+    if not np.isfinite(values).all():
+        raise ValueError("Retained dual rotation overlap is not finite.")
+    condition = float(np.linalg.cond(values))
+    if not np.isfinite(condition) or condition > float(maximum_overlap_condition):
+        raise RuntimeError(
+            "Retained-subspace overlap is singular or ill-conditioned: "
+            f"condition={condition:.6e}."
+        )
+
+    # B^{-H} is obtained by a direct solve, not by normal equations or an
+    # explicitly formed inverse.
+    transform = np.linalg.solve(
+        np.conjugate(values.T), np.eye(span, dtype=np.complex128)
+    )
+    new_reduced: list[PETSc.Vec] = []
+    new_full: list[PETSc.Vec] = []
+    ownership_transferred = False
+    try:
+        for column in range(span):
+            new_reduced.append(_linear_combination(left_reduced, transform[:, column]))
+            new_full.append(_linear_combination(left_full, transform[:, column]))
+        post_values = _qep_overlap_matrix(
+            operators,
+            left_betas,
+            right_betas,
+            new_reduced,
+            right_reduced,
+        )
+        post_audit = _near_degenerate_partition_audit(
+            right_betas,
+            groups,
+            post_values,
+            near_degenerate_tolerance=near_degenerate_tolerance,
+            block_rotation_tolerance=block_rotation_tolerance,
+            directions=directions,
+        )
+        post_left_residuals = tuple(
+            _left_relative_residual(adjoints, beta, vector)
+            for beta, vector in zip(right_betas, new_reduced)
+        )
+        post_left_residual_max = max(post_left_residuals, default=float("inf"))
+        partition_pass = bool(post_audit["pass"])
+        left_residual_pass = post_left_residual_max <= 1.0e-8
+        report = {
+            "enabled": True,
+            "pre_identity_row_norm": float(
+                pre_audit["biorthogonality_identity_row_norm"]
+            ),
+            "pre_identity_max_entry": float(
+                pre_audit["biorthogonality_identity_max_entry"]
+            ),
+            "pre_max_cross_block_overlap": float(pre_audit["max_cross_block_overlap"]),
+            "post_identity_row_norm": float(
+                post_audit["biorthogonality_identity_row_norm"]
+            ),
+            "post_identity_max_entry": float(
+                post_audit["biorthogonality_identity_max_entry"]
+            ),
+            "post_max_cross_block_overlap": float(
+                post_audit["max_cross_block_overlap"]
+            ),
+            "condition_number": condition,
+            "t_minus_identity_inf_norm": float(
+                np.linalg.norm(transform - np.eye(span), ord=np.inf)
+            ),
+            "t_minus_identity_max_abs": float(np.max(np.abs(transform - np.eye(span)))),
+            "left_span_dimension": span,
+            "right_vectors_unchanged": True,
+            "betas_unchanged": True,
+            "post_max_left_polynomial_relative_residual": post_left_residual_max,
+            "partition_pass": partition_pass,
+            "left_residual_pass": left_residual_pass,
+            "overall_pass": partition_pass and left_residual_pass,
+        }
+        if not partition_pass:
+            post_audit = dict(post_audit)
+            post_audit["retained_subspace_dual_rotation"] = report
+            raise NearDegenerateBlockPartitionSplitError(post_audit)
+
+        if left_candidates is not None:
+            for candidate, reduced, full in zip(left_candidates, new_reduced, new_full):
+                candidate.right_reduced = reduced
+                candidate.right_full = full
+        ownership_transferred = True
+        for vector in [*left_reduced, *left_full]:
+            vector.destroy()
+        return (
+            new_reduced,
+            new_full,
+            post_values,
+            post_audit,
+            report,
+            post_left_residuals,
+        )
+    except Exception:
+        if not ownership_transferred:
+            for vector in [*new_reduced, *new_full]:
+                vector.destroy()
+        raise
+
+
 def _identity_error_metrics(matrix: np.ndarray) -> tuple[float, float]:
     """Return induced-infinity and componentwise identity errors."""
 
@@ -776,6 +935,7 @@ def build_biorthogonal_mode_basis(
     block_rotation_tolerance: float = 1.0e-6,
     maximum_overlap_condition: float = 1.0e12,
     maximum_left_pair_relative_error: float = 1.0e-7,
+    retained_subspace_dual_rotation: bool = False,
     poynting_evaluator: PoyntingFluxEvaluator | None = None,
     log=None,
 ) -> BiorthogonalModeBasis:
@@ -824,6 +984,7 @@ def build_biorthogonal_mode_basis(
         quadrature_policy=operators.quadrature_policy,
     )
     left_candidates: list[QuadraticBetaMode] = []
+    retained_subspace_dual_rotation_audit: dict[str, object] | None = None
     try:
         left_candidates, adjoint_report = solve_quadratic_beta_modes(
             adjoint_operators,
@@ -1063,6 +1224,37 @@ def build_biorthogonal_mode_basis(
             block_rotation_tolerance=block_rotation_tolerance,
             directions=[str(classification[1]) for classification in classifications],
         )
+        retained_left_polynomial_residuals: tuple[float, ...] | None = None
+        if _retained_subspace_dual_rotation_eligible(
+            partition_audit,
+            enabled=retained_subspace_dual_rotation,
+        ):
+            (
+                left_reduced,
+                left_full,
+                biorthogonality,
+                partition_audit,
+                retained_subspace_dual_rotation_audit,
+                retained_left_polynomial_residuals,
+            ) = _retained_subspace_dual_rotation(
+                biorthogonality,
+                left_reduced,
+                left_full,
+                left_betas,
+                betas,
+                [mode.right_reduced for mode in right_modes],
+                joint_group_indices,
+                operators=operators,
+                adjoints=adjoints,
+                pre_audit=partition_audit,
+                near_degenerate_tolerance=near_degenerate_tolerance,
+                block_rotation_tolerance=block_rotation_tolerance,
+                maximum_overlap_condition=maximum_overlap_condition,
+                directions=[
+                    str(classification[1]) for classification in classifications
+                ],
+                left_candidates=left_candidates,
+            )
         if not partition_audit["pass"]:
             raise NearDegenerateBlockPartitionSplitError(partition_audit)
         groups: list[NearDegenerateGroup] = []
@@ -1090,6 +1282,11 @@ def build_biorthogonal_mode_basis(
         ) in enumerate(zip(right_modes, left_candidates, flux_before, classifications)):
             kind, direction, classification_basis, passive = classification
             poynting_after = flux_evaluator.evaluate(right.right_full, right.beta)
+            left_residual = (
+                retained_left_polynomial_residuals[index]
+                if retained_left_polynomial_residuals is not None
+                else _left_relative_residual(adjoints, right.beta, left_reduced[index])
+            )
             classified.append(
                 ClassifiedBiorthogonalMode(
                     beta=complex(right.beta),
@@ -1097,9 +1294,7 @@ def build_biorthogonal_mode_basis(
                     left_reduced=left_reduced[index],
                     left_full=left_full[index],
                     left_adjoint_beta=complex(left_candidate.beta),
-                    left_polynomial_relative_residual=_left_relative_residual(
-                        adjoints, right.beta, left_reduced[index]
-                    ),
+                    left_polynomial_relative_residual=left_residual,
                     poynting_z_before_normalization=poynting_before,
                     poynting_z_after_normalization=poynting_after,
                     flux_tolerance=flux_tolerance,
@@ -1127,6 +1322,9 @@ def build_biorthogonal_mode_basis(
             adjoint_solver_report=adjoint_report,
             left_pair_relative_errors=left_pair_errors,
             near_degenerate_partition_audit=partition_audit,
+            retained_subspace_dual_rotation_audit=(
+                retained_subspace_dual_rotation_audit
+            ),
         )
     except Exception:
         for mode in right_modes:
