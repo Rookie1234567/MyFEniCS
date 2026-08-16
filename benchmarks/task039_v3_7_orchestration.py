@@ -69,7 +69,10 @@ from src.solvers.hybrid_fem_modal_iterative import (
 from src.solvers.hybrid_local_dtn_action import (
     create_hybrid_local_dtn_action_components,
 )
-from src.solvers.hybrid_local_dtn_woodbury import HybridLocalDtnWoodburyFixedAction
+from src.solvers.hybrid_local_dtn_woodbury import (
+    HybridLocalDtnWoodburyFixedAction,
+    HybridLocalDtnWoodburyFixedBudgetKrylovAction,
+)
 from src.solvers.hybrid_whole_endcap_fixed_smoother import (
     build_hybrid_whole_endcap_fixed_smoother_action,
 )
@@ -81,6 +84,9 @@ V3_7_ORACLE_MAX_IT = 100
 V3_7_RHS_TOLERANCE = 1.0e-10
 V3_7_MATRIX_REPEAT_TOLERANCE = V3_7_RHS_TOLERANCE
 V3_7_RESIDUAL_TOLERANCE = 5.0e-9
+V3_8_CANDIDATE_B_BUDGETS = (8, 16, 32)
+V3_8_CANDIDATE_B_MEDIAN_LIMIT = 0.1
+V3_8_CANDIDATE_B_WORST_LIMIT = 0.3
 V3_7_WARNING_GIB = 170.0
 V3_7_CRITICAL_GIB = 195.0
 V3_7_ABSOLUTE_HARD_BYTES = 224_000_000_000
@@ -245,6 +251,7 @@ def build_v3_7_execution_plan(
     source_sha: str,
     python_executable: str | Path | None = None,
     mpiexec_command: str | None = None,
+    candidate_b_only: bool = False,
 ) -> dict[str, Any]:
     """Describe the opt-in worker command consumed by the existing watchdog."""
 
@@ -268,6 +275,8 @@ def build_v3_7_execution_plan(
         source_sha,
         V3_7_WATCHDOG_AUTH_FLAG,
     ]
+    if candidate_b_only:
+        argv.append("--candidate-b-only")
     return {
         "argv": argv,
         "shell": False,
@@ -276,7 +285,11 @@ def build_v3_7_execution_plan(
         "worker_contract": {
             "mpi_size": 8,
             "profile_id": V3_7_PROFILE_ID,
-            "method": "hybrid_iterative_v3_7_diagnostic",
+            "method": (
+                "hybrid_iterative_candidate_b_only"
+                if candidate_b_only
+                else "hybrid_iterative_v3_7_diagnostic"
+            ),
             "hard_stop_authority": "process_tree_rss_bytes",
             "critical_checkpoint_only": True,
             "swap_policy": "immediate_complete_process_tree_termination",
@@ -290,6 +303,7 @@ def v3_7_execution_dry_run(
     *,
     source_sha: str,
     python_executable: str | Path | None = None,
+    candidate_b_only: bool = False,
 ) -> dict[str, Any]:
     """Return the non-mutating pre-heavy command and watchdog contract."""
 
@@ -298,6 +312,7 @@ def v3_7_execution_dry_run(
         run_directory,
         source_sha=source_sha,
         python_executable=python_executable,
+        candidate_b_only=candidate_b_only,
     )
     argv = plan["argv"]
     if argv[1:3] != ["-n", "8"] or plan["watchdog"]["critical_action"] != (
@@ -317,6 +332,7 @@ def launch_v3_7_with_task038_watchdog(
     popen_factory: Callable[..., Any] | None = None,
     sample_factory: Callable[[int], dict[str, Any]] | None = None,
     terminate_factory: Callable[[Any], dict[str, Any]] | None = None,
+    candidate_b_only: bool = False,
 ) -> dict[str, Any]:
     """Run the opt-in child through Task38's existing process-tree watchdog."""
 
@@ -337,6 +353,7 @@ def launch_v3_7_with_task038_watchdog(
         source_sha=source_sha,
         python_executable=python_executable,
         mpiexec_command=mpiexec_command,
+        candidate_b_only=candidate_b_only,
     )
     run_dir = Path(run_directory).resolve()
     if run_dir.exists():
@@ -364,7 +381,7 @@ def launch_v3_7_with_task038_watchdog(
         shell=False,
         executable=executable,
         worker_module="benchmarks.task039_v3_7_orchestration",
-        method="hybrid_iterative_v3_7_diagnostic",
+        method=plan_payload["worker_contract"]["method"],
         mpi_size=8,
         requested_modes=480,
         physical_model_sha256=specification.physical_model_sha256,
@@ -715,6 +732,245 @@ def _side_correction_probe(
                 rho_values
                 and float(np.median(rho_values)) <= 0.2
                 and float(max(rho_values)) <= 0.5
+            ),
+        },
+    }
+
+
+def _candidate_b_side_probe(
+    system: Any,
+    action: Any,
+    budget: int,
+    vectors: Mapping[str, PETSc.Vec],
+    vector_metadata: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Measure Candidate-B true residuals and retain per-apply KSP facts."""
+
+    reports: dict[str, Any] = {}
+    rho_values: list[float] = []
+    for label, source in vectors.items():
+        target = system.A.createVecLeft()
+        residual = system.A.createVecLeft()
+        try:
+            action.apply(source, target)
+            system.A.mult(target, residual)
+            residual.axpy(PETSc.ScalarType(-1.0), source)
+            source_norm = float(source.norm())
+            residual_norm = float(residual.norm())
+            finite = bool(np.isfinite(source_norm) and np.isfinite(residual_norm))
+            action_diagnostics = dict(action.diagnostics)
+            apply_diagnostics = {
+                key: action_diagnostics.get(key)
+                for key in (
+                    "requested_budget",
+                    "last_inner_iterations",
+                    "last_converged_reason",
+                    "apply_count",
+                    "last_apply_seconds",
+                    "total_inner_iterations",
+                    "total_apply_seconds",
+                )
+            }
+            item = {
+                "source": label,
+                "vector": _side_vector_identity(source, label),
+                "source_norm": source_norm,
+                "residual_norm": residual_norm,
+                "finite": finite,
+                "apply": apply_diagnostics,
+            }
+            if source_norm <= 1.0e-30 and finite:
+                item.update(
+                    {
+                        "rho": None,
+                        "informative": False,
+                        "status": "degenerate_uninformative",
+                    }
+                )
+            else:
+                rho = residual_norm / source_norm if finite else float("nan")
+                if np.isfinite(rho):
+                    rho_values.append(float(rho))
+                item.update(
+                    {
+                        "rho": float(rho) if np.isfinite(rho) else None,
+                        "informative": bool(np.isfinite(rho)),
+                        "status": "measured" if np.isfinite(rho) else "nonfinite",
+                    }
+                )
+            reports[label] = item
+        finally:
+            residual.destroy()
+            target.destroy()
+    informative_labels = [
+        label for label, item in reports.items() if item["informative"]
+    ]
+    excluded_labels = [
+        label for label, item in reports.items() if not item["informative"]
+    ]
+    median = float(np.median(rho_values)) if rho_values else None
+    worst = float(max(rho_values)) if rho_values else None
+    complete = len(reports) == len(vectors) and all(
+        item["finite"] for item in reports.values()
+    )
+    return {
+        "status": "measured",
+        "pass": complete,
+        "budget": int(budget),
+        "vectors": reports,
+        "vector_inventory": {
+            "count": len(reports),
+            "informative_labels": informative_labels,
+            "excluded_labels": excluded_labels,
+            "informative_count": len(informative_labels),
+            "excluded_count": len(excluded_labels),
+            "metadata": dict(vector_metadata),
+        },
+        "rho_summary": {
+            "median": median,
+            "worst": worst,
+            "median_limit": V3_8_CANDIDATE_B_MEDIAN_LIMIT,
+            "worst_limit": V3_8_CANDIDATE_B_WORST_LIMIT,
+            "candidate_B_pass": bool(
+                complete
+                and rho_values
+                and median is not None
+                and worst is not None
+                and median <= V3_8_CANDIDATE_B_MEDIAN_LIMIT
+                and worst <= V3_8_CANDIDATE_B_WORST_LIMIT
+            ),
+        },
+    }
+
+
+def _run_v3_8_candidate_b_budget(
+    budget: int,
+    side_systems: Mapping[str, Any],
+    fixed_actions: Mapping[str, Any],
+    survey_vectors: Mapping[str, Mapping[str, PETSc.Vec]],
+    vector_metadata: Mapping[str, Mapping[str, Any]],
+    *,
+    marker_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+) -> dict[str, Any]:
+    """Run one budget with at most one live Krylov wrapper at a time."""
+
+    side_reports: dict[str, Any] = {}
+    factor_inventory: dict[str, Any] = {}
+    for side in ("bottom", "top"):
+        action = None
+        _emit_marker(
+            marker_callback,
+            f"candidate_b_budget_{budget}_{side}_begin",
+            budget=budget,
+            side=side,
+        )
+        try:
+            action = HybridLocalDtnWoodburyFixedBudgetKrylovAction(
+                side_systems[side].A,
+                fixed_actions[side],
+                budget=budget,
+            )
+            _emit_marker(
+                marker_callback,
+                f"candidate_b_budget_{budget}_{side}_ready",
+                budget=budget,
+                side=side,
+                wrappers_live=1,
+            )
+            side_reports[side] = _candidate_b_side_probe(
+                side_systems[side],
+                action,
+                budget,
+                survey_vectors[side],
+                vector_metadata[side],
+            )
+            action_diagnostics = action.diagnostics
+            base_diagnostics = action.right_preconditioner.diagnostics
+            factor_inventory[side] = {
+                "base_factor_count": base_diagnostics["base_factor_count"],
+                "direct_factor_count": action_diagnostics["direct_factor_count"],
+                "global_hybrid_direct_factor_count": action_diagnostics[
+                    "global_hybrid_direct_factor_count"
+                ],
+                "right_preconditioner_identity": action_diagnostics[
+                    "right_preconditioner_identity"
+                ],
+            }
+        finally:
+            if action is not None:
+                action.destroy()
+            _emit_marker(
+                marker_callback,
+                f"candidate_b_budget_{budget}_{side}_end",
+                budget=budget,
+                side=side,
+                wrappers_live=0,
+            )
+    return {
+        "budget": int(budget),
+        "bottom": side_reports["bottom"],
+        "top": side_reports["top"],
+        "pass": bool(
+            side_reports["bottom"]["rho_summary"]["candidate_B_pass"]
+            and side_reports["top"]["rho_summary"]["candidate_B_pass"]
+        ),
+        "factor_inventory": factor_inventory,
+        "max_live_wrapper_count": 1,
+    }
+
+
+def run_v3_8_candidate_b_budget_sequence(
+    side_systems: Mapping[str, Any],
+    fixed_actions: Mapping[str, Any],
+    survey_vectors: Mapping[str, Mapping[str, PETSc.Vec]],
+    vector_metadata: Mapping[str, Mapping[str, Any]],
+    *,
+    marker_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+) -> dict[str, Any]:
+    """Run the smallest budget that passes both side Gates."""
+
+    reports: list[dict[str, Any]] = []
+    for budget in V3_8_CANDIDATE_B_BUDGETS:
+        report = _run_v3_8_candidate_b_budget(
+            budget,
+            side_systems,
+            fixed_actions,
+            survey_vectors,
+            vector_metadata,
+            marker_callback=marker_callback,
+        )
+        reports.append(report)
+        if report["pass"]:
+            break
+    selected = next((item["budget"] for item in reports if item["pass"] is True), None)
+
+    def simultaneous_total(field: str) -> int:
+        return max(
+            sum(int(side[field]) for side in item["factor_inventory"].values())
+            for item in reports
+        )
+
+    return {
+        "status": "measured",
+        "pass": selected is not None,
+        "selected_budget": selected,
+        "budgets_run": [item["budget"] for item in reports],
+        "budget_reports": reports,
+        "gate": {
+            "median_limit": V3_8_CANDIDATE_B_MEDIAN_LIMIT,
+            "worst_limit": V3_8_CANDIDATE_B_WORST_LIMIT,
+            "formula": "rho=norm(b-Ax)/max(norm(b),1e-30)",
+        },
+        "factor_inventory": {
+            "per_budget": [item["factor_inventory"] for item in reports],
+            "simultaneous_total_base_factor_count": simultaneous_total(
+                "base_factor_count"
+            ),
+            "simultaneous_total_direct_factor_count": simultaneous_total(
+                "direct_factor_count"
+            ),
+            "simultaneous_total_global_hybrid_direct_factor_count": simultaneous_total(
+                "global_hybrid_direct_factor_count"
             ),
         },
     }
@@ -1210,6 +1466,188 @@ def _write_v3_7_side_survey_checkpoint(
     return path
 
 
+def _write_v3_8_candidate_b_checkpoint(
+    run_directory: Path,
+    *,
+    source_sha: str,
+    resolved_payload: Mapping[str, Any],
+    producer: Mapping[str, Any],
+    report: Mapping[str, Any],
+    comm: MPI.Intracomm,
+) -> Path:
+    """Persist the compact Candidate-B budget evidence before teardown."""
+
+    provenance = resolved_payload["provenance"]
+    inventory = producer["inventory"]
+    resolved_config_path = run_directory / "resolved_config.json"
+    resolved_config_sha = hashlib.sha256(resolved_config_path.read_bytes()).hexdigest()
+    checkpoint = {
+        "schema": "task039.v3-8-candidate-b-checkpoint.v1",
+        "source_sha": source_sha,
+        "physical_identity": {
+            "consumer_input_sha256": provenance["input_sha256"],
+            "consumer_resolved_config_sha256": resolved_config_sha,
+            "consumer_physical_model_sha256": provenance["physical_model_sha256"],
+            "producer_source_sha": inventory["source_sha"],
+            "producer_input_sha256": inventory["input_sha256"],
+            "producer_resolved_config_sha256": inventory["resolved_config_sha256"],
+            "producer_physical_model_sha256": inventory["physical_model_sha256"],
+            "direct_payload_sha256": inventory["payload"]["artifact"]["sha256"],
+            "verified_shard_count": inventory["verified_shard_count"],
+            "model_id": producer["model_id"],
+            "requested_modes": producer["requested_modes"],
+            "mpi_size": producer["mpi_size"],
+            "external_keys_exact": producer["external_keys_exact"],
+        },
+        "status": report.get("status"),
+        "pass": report.get("pass"),
+        "selected_budget": report.get("selected_budget"),
+        "budgets_run": report.get("budgets_run", []),
+        "gate": report.get("gate", {}),
+        "factor_inventory": report.get("factor_inventory", {}),
+        "budget_reports": report.get("budget_reports", []),
+    }
+    path = run_directory / "numerical_output" / "v3_8_candidate_b_checkpoint.json"
+    if comm.rank == 0:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+        temporary.write_text(
+            json.dumps(_json_safe(checkpoint), ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        temporary.replace(path)
+    comm.barrier()
+    return path
+
+
+def _run_v3_8_candidate_b_campaign(
+    setup: Any,
+    layout: Any,
+    rhs: PETSc.Vec,
+    *,
+    resolved_payload: Mapping[str, Any],
+    producer: Mapping[str, Any],
+    modal_amplitudes: np.ndarray,
+    run_directory: Path,
+    source_sha: str,
+    comm: MPI.Intracomm,
+    survey_side_vectors: dict[str, dict[str, PETSc.Vec]],
+    marker_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+) -> tuple[dict[str, Any], Path]:
+    """Run only Candidate B after common setup and before V3-7 identity."""
+
+    production_operator, production_context = create_hybrid_assembled_block_action(
+        setup.bottom, setup.top, setup.coupling
+    )
+    x_star = None
+    direct_residual = None
+    components: dict[str, Any] = {}
+    base_actions: dict[str, Any] = {}
+    fixed_actions: dict[str, Any] = {}
+    vector_metadata: dict[str, dict[str, Any]] = {}
+    try:
+        _emit_marker(marker_callback, "candidate_b_direct_payload_begin")
+        x_star, mapping = rebuild_hybrid_augmented_vector(
+            producer["inventory"],
+            setup.bottom,
+            setup.top,
+            layout,
+            modal_amplitudes,
+        )
+        direct_residual = production_operator.createVecLeft()
+        production_operator.mult(x_star, direct_residual)
+        direct_residual.scale(PETSc.ScalarType(-1.0))
+        direct_residual.axpy(PETSc.ScalarType(1.0), rhs)
+        _emit_marker(
+            marker_callback,
+            "candidate_b_direct_payload_end",
+            mapping_status=mapping.get("mapping_status"),
+            direct_residual_norm=float(direct_residual.norm()),
+        )
+        for side, system, block_slice in (
+            ("bottom", setup.bottom, layout.local_bottom_slice),
+            ("top", setup.top, layout.local_top_slice),
+        ):
+            side_residual = system.A.createVecLeft()
+            try:
+                values = side_residual.getArray()
+                source_values = direct_residual.getArray(readonly=True)[block_slice]
+                if values.size != source_values.size:
+                    raise ValueError(
+                        f"{side} direct residual ownership does not match layout"
+                    )
+                values[:] = source_values
+                side_residual.assemble()
+                vectors, _owned, metadata = _side_survey_vectors(
+                    system,
+                    side,
+                    {"direct_solution_side_residual": side_residual},
+                )
+                survey_side_vectors[side] = vectors
+                vector_metadata[side] = metadata
+            finally:
+                side_residual.destroy()
+        _emit_marker(marker_callback, "candidate_b_side_fixed_setup_begin")
+        components = {
+            "bottom": create_hybrid_local_dtn_action_components(setup.bottom),
+            "top": create_hybrid_local_dtn_action_components(setup.top),
+        }
+        base_actions = {
+            "bottom": build_hybrid_whole_endcap_fixed_smoother_action(setup.bottom),
+            "top": build_hybrid_whole_endcap_fixed_smoother_action(setup.top),
+        }
+        for side in ("bottom", "top"):
+            fixed_actions[side] = HybridLocalDtnWoodburyFixedAction(
+                base_actions[side],
+                components[side],
+                residual_correction_steps=1,
+            )
+        _emit_marker(
+            marker_callback,
+            "candidate_b_side_fixed_setup_end",
+            components_live=2,
+            base_actions_live=2,
+            fixed_actions_live=2,
+        )
+        report = run_v3_8_candidate_b_budget_sequence(
+            {"bottom": setup.bottom, "top": setup.top},
+            fixed_actions,
+            {
+                "bottom": survey_side_vectors["bottom"],
+                "top": survey_side_vectors["top"],
+            },
+            vector_metadata,
+            marker_callback=marker_callback,
+        )
+        checkpoint = _write_v3_8_candidate_b_checkpoint(
+            run_directory,
+            source_sha=source_sha,
+            resolved_payload=resolved_payload,
+            producer=producer,
+            report=report,
+            comm=comm,
+        )
+        report["direct_solution"] = {
+            "mapping": mapping,
+            "residual_norm": float(direct_residual.norm()),
+            "source": "hash-bound direct payload reconstructed on current layout",
+        }
+        return report, checkpoint
+    finally:
+        for side in ("top", "bottom"):
+            if side in fixed_actions:
+                fixed_actions[side].destroy()
+            if side in base_actions:
+                base_actions[side].destroy()
+            if side in components:
+                components[side].destroy()
+        _emit_marker(marker_callback, "candidate_b_side_fixed_cleanup_end")
+        _destroy(direct_residual)
+        _destroy(x_star)
+        production_context.destroy()
+        production_operator.destroy()
+
+
 def _record_v3_7_marker(
     ledger: dict[str, Any], marker: str, detail: Mapping[str, Any]
 ) -> None:
@@ -1237,13 +1675,23 @@ def _record_v3_7_marker(
         mark("independent_reference", created=True, completed=True)
     elif marker == "borrowed_reference_cleanup_end":
         mark("independent_reference", destroyed=True)
-    elif marker == "side_fixed_components_setup_end":
+    elif marker in {
+        "side_fixed_components_setup_end",
+        "candidate_b_side_fixed_setup_end",
+    }:
         mark("side_base_ilu", created=True, completed=True)
     elif marker.startswith("side_correction_") and marker.endswith("_ready"):
         mark("correction_wrappers", created=True, completed=True)
     elif marker.startswith("side_correction_") and marker.endswith("_end"):
         mark("correction_wrappers", destroyed=True)
-    elif marker == "side_survey_cleanup_end":
+    elif marker.startswith("candidate_b_budget_") and marker.endswith("_ready"):
+        mark("correction_wrappers", created=True, completed=True)
+    elif marker.startswith("candidate_b_budget_") and marker.endswith("_end"):
+        mark("correction_wrappers", destroyed=True)
+    elif marker in {
+        "side_survey_cleanup_end",
+        "candidate_b_side_fixed_cleanup_end",
+    }:
         if objects["side_base_ilu"]["created"]:
             mark("side_base_ilu", destroyed=True)
     elif marker == "exact_side_oracle_begin":
@@ -1394,8 +1842,9 @@ def run_task039_v3_7_diagnostic(
     ]
     | None = None,
     record_path: str | Path | None = None,
+    candidate_b_only: bool = False,
 ) -> dict[str, Any]:
-    """Prepare one V3-7 diagnostic campaign; never dispatches MPI itself."""
+    """Prepare the V3-7 campaign or the explicit Candidate-B-only branch."""
 
     setup = None
     reference_holder: dict[str, Any] = {}
@@ -1472,7 +1921,7 @@ def run_task039_v3_7_diagnostic(
             "watchdog_ready",
             absolute_terminate_memory_bytes=V3_7_ABSOLUTE_HARD_BYTES,
         )
-        if recovery_runner is None:
+        if recovery_runner is None and not candidate_b_only:
             raise ValueError(
                 "V3-7 requires an injected recovery_runner(setup, layout, snapshot, "
                 "run_dir, producer)"
@@ -1511,6 +1960,106 @@ def run_task039_v3_7_diagnostic(
             setup.coupling.internal_unknown_count,
         )
         rhs = _default_rhs(setup, layout)
+
+        if candidate_b_only:
+            candidate_report, candidate_checkpoint = _run_v3_8_candidate_b_campaign(
+                setup,
+                layout,
+                rhs,
+                resolved_payload=resolved_payload,
+                producer=producer,
+                modal_amplitudes=modal_amplitudes,
+                run_directory=Path(run_directory).resolve(),
+                source_sha=source_sha,
+                comm=comm,
+                survey_side_vectors=survey_side_vectors,
+                marker_callback=marker_callback,
+            )
+            consumer_provenance = resolved_payload["provenance"]
+            consumer_resolved_config_sha = hashlib.sha256(
+                (Path(run_directory).resolve() / "resolved_config.json").read_bytes()
+            ).hexdigest()
+            direct_inventory = producer["inventory"]
+            result = {
+                "schema": "task039.v3-8-candidate-b-only.v1",
+                "status": "completed",
+                "source_identity": {
+                    "consumer_source_sha": source_sha,
+                    "producer_source_sha": direct_inventory["source_sha"],
+                    "consumer_input_sha256": consumer_provenance["input_sha256"],
+                    "consumer_resolved_config_sha256": consumer_resolved_config_sha,
+                    "consumer_physical_model_sha256": consumer_provenance[
+                        "physical_model_sha256"
+                    ],
+                    "producer_input_sha256": direct_inventory["input_sha256"],
+                    "producer_resolved_config_sha256": direct_inventory[
+                        "resolved_config_sha256"
+                    ],
+                    "producer_physical_model_sha256": direct_inventory[
+                        "physical_model_sha256"
+                    ],
+                    "direct_payload_sha256": direct_inventory["payload"]["artifact"][
+                        "sha256"
+                    ],
+                    "model_id": producer["model_id"],
+                    "requested_modes": producer["requested_modes"],
+                    "mpi_size": producer["mpi_size"],
+                    "external_keys_exact": producer["external_keys_exact"],
+                },
+                "profile": {
+                    "profile_id": profile.profile_id,
+                    "incident_grazing_deg": profile.incident_grazing_deg,
+                    "incident_phi_deg": profile.incident_phi_deg,
+                    "polarization": profile.polarization_kind,
+                    "h_nm": profile.h_nm,
+                    "requested_modes": profile.requested_modes,
+                    "candidate_modes": profile.candidate_modes,
+                    "max_it": profile.max_it,
+                },
+                "watchdog": watchdog,
+                "candidate_b": candidate_report,
+                "telemetry": {
+                    "process_tree_samples": {
+                        "path": "numerical_output/process_tree_samples.jsonl",
+                        "writer": "parent_task038_launcher",
+                        "status": "expected_from_parent_launcher",
+                    },
+                    "memory_stages": {
+                        "path": "numerical_output/memory_stages.jsonl",
+                        "writer": "parent_task038_launcher_marker_alignment",
+                        "status": "expected_from_parent_launcher",
+                    },
+                    "memory_stage_markers": {
+                        "path": "numerical_output/memory_stage_markers.raw.jsonl",
+                        "writer": "v3_7_worker",
+                        "status": "measured_worker_marker_stream",
+                    },
+                    "memory_object_ledger": {
+                        "path": "numerical_output/memory_object_ledger.json",
+                        "schema": object_ledger["schema"],
+                        "status": "finalized_in_worker_finalizer",
+                    },
+                    "candidate_b_checkpoint": {
+                        "path": str(
+                            candidate_checkpoint.relative_to(
+                                Path(run_directory).resolve()
+                            )
+                        ),
+                        "status": "written_after_budget_sequence",
+                    },
+                    "stage_callback_connected": stage_callback is not None,
+                },
+                "formal_run": {
+                    "status": "measured_candidate_b_only",
+                    "classification": "measured_candidate_b_only",
+                    "identity_reference": "not_run_by_candidate_b_contract",
+                    "oracle": "not_run_by_candidate_b_contract",
+                    "recovery": "not_run_by_candidate_b_contract",
+                },
+                "run_directory": str(Path(run_directory).resolve()),
+            }
+            normal_return = True
+            return result
 
         def identity_stage() -> Mapping[str, Any]:
             production_operator, production_context = (
@@ -1880,6 +2429,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--worker", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--launched-by-task038-watchdog", action="store_true")
+    parser.add_argument("--candidate-b-only", action="store_true")
     parser.add_argument("--input", required=True, dest="input_path")
     parser.add_argument("--run-directory", required=True)
     parser.add_argument("--source-sha", required=True)
@@ -1891,6 +2441,7 @@ def main(argv: list[str] | None = None) -> int:
             args.input_path,
             args.run_directory,
             source_sha=args.source_sha,
+            candidate_b_only=args.candidate_b_only,
         )
         print(json.dumps(_json_safe(plan), ensure_ascii=False, sort_keys=True))
         return 0
@@ -1913,7 +2464,10 @@ def main(argv: list[str] | None = None) -> int:
             args.run_directory,
             source_sha=args.source_sha,
             direct_run_dir=V3_7_DIRECT_RUN_ROOT,
-            recovery_runner=run_v3_7_recovery_runner,
+            recovery_runner=(
+                None if args.candidate_b_only else run_v3_7_recovery_runner
+            ),
+            candidate_b_only=args.candidate_b_only,
             record_path=(
                 Path(args.run_directory).resolve()
                 / "numerical_output"
@@ -1941,6 +2495,9 @@ __all__ = [
     "V3_7_MAX_IT",
     "V3_7_MATRIX_REPEAT_TOLERANCE",
     "V3_7_PROFILE_ID",
+    "V3_8_CANDIDATE_B_BUDGETS",
+    "V3_8_CANDIDATE_B_MEDIAN_LIMIT",
+    "V3_8_CANDIDATE_B_WORST_LIMIT",
     "build_v3_7_execution_plan",
     "check_v3_7_integrated_physics",
     "compare_v3_7_hybrid_candidate_to_direct",
@@ -1949,6 +2506,7 @@ __all__ = [
     "load_v3_7_official_payload",
     "run_task039_v3_7_side_correction_survey",
     "run_task039_v3_7_diagnostic",
+    "run_v3_8_candidate_b_budget_sequence",
     "run_v3_7_recovery_runner",
     "run_v3_7_stage_sequence",
     "v3_7_execution_dry_run",

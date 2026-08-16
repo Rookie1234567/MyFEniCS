@@ -41,6 +41,7 @@ V3_7_CRITICAL_GIB = 195.0
 V3_7_ABSOLUTE_HARD_BYTES = 224_000_000_000
 V3_7_POLL_SECONDS = 0.25
 V3_7_QEP_ONLY_WORKER_MODULE = "benchmarks.task039_qep_only"
+V3_7_CANDIDATE_B_FLAG = "--candidate-b-only"
 
 
 def _validate_resolved_identity(payload: Mapping[str, Any]) -> None:
@@ -138,6 +139,7 @@ def build_v3_7_execution_plan(
     python_executable: str | Path | None = None,
     mpiexec_command: str | None = None,
     qep_only: bool = False,
+    candidate_b_only: bool = False,
 ) -> dict[str, Any]:
     """Build the explicit MPI8 child argv without importing the worker."""
 
@@ -145,6 +147,8 @@ def build_v3_7_execution_plan(
     policy = _watchdog_policy(payload)
     executable = str(Path(os.path.abspath(python_executable or sys.executable)))
     mpiexec = mpiexec_command or shutil.which("mpiexec") or "mpiexec"
+    if qep_only and candidate_b_only:
+        raise ValueError("QEP-only and Candidate-B-only routes are exclusive")
     worker_module = (
         V3_7_QEP_ONLY_WORKER_MODULE
         if qep_only
@@ -166,6 +170,8 @@ def build_v3_7_execution_plan(
         source_sha,
         V3_7_WATCHDOG_AUTH_FLAG,
     ]
+    if candidate_b_only:
+        argv.append(V3_7_CANDIDATE_B_FLAG)
     return {
         "argv": argv,
         "shell": False,
@@ -177,7 +183,11 @@ def build_v3_7_execution_plan(
             "method": (
                 "positive_branch_qep_only"
                 if qep_only
-                else "hybrid_iterative_v3_7_diagnostic"
+                else (
+                    "hybrid_iterative_candidate_b_only"
+                    if candidate_b_only
+                    else "hybrid_iterative_v3_7_diagnostic"
+                )
             ),
             "hard_stop_authority": "process_tree_rss_bytes",
             "critical_checkpoint_only": True,
@@ -193,6 +203,7 @@ def v3_7_execution_dry_run(
     source_sha: str,
     python_executable: str | Path | None = None,
     qep_only: bool = False,
+    candidate_b_only: bool = False,
 ) -> dict[str, Any]:
     plan = build_v3_7_execution_plan(
         input_path,
@@ -200,6 +211,7 @@ def v3_7_execution_dry_run(
         source_sha=source_sha,
         python_executable=python_executable,
         qep_only=qep_only,
+        candidate_b_only=candidate_b_only,
     )
     if plan["argv"][1:3] != ["-n", "8"]:
         raise ValueError("V3-7 execution plan is not fixed to MPI8")
@@ -217,6 +229,7 @@ def launch_v3_7_with_task038_watchdog(
     sample_factory: Callable[[int], dict[str, Any]] = resource_authority_sample,
     terminate_factory: Callable[[Any], dict[str, Any]] = terminate_process_tree,
     qep_only: bool = False,
+    candidate_b_only: bool = False,
 ) -> dict[str, Any]:
     """Run one authenticated V3-7 child through Task38's watchdog."""
 
@@ -234,6 +247,7 @@ def launch_v3_7_with_task038_watchdog(
         python_executable=python_executable,
         mpiexec_command=mpiexec_command,
         qep_only=qep_only,
+        candidate_b_only=candidate_b_only,
     )
     run_dir = Path(run_directory).resolve()
     if run_dir.exists():
@@ -311,6 +325,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--mpiexec-command")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--qep-only", action="store_true")
+    parser.add_argument("--candidate-b-only", action="store_true")
     args = parser.parse_args(argv)
     if args.dry_run:
         print(
@@ -321,6 +336,7 @@ def main(argv: list[str] | None = None) -> int:
                     source_sha=args.source_sha,
                     python_executable=args.python_executable,
                     qep_only=args.qep_only,
+                    candidate_b_only=args.candidate_b_only,
                 ),
                 ensure_ascii=False,
                 sort_keys=True,
@@ -334,6 +350,7 @@ def main(argv: list[str] | None = None) -> int:
         python_executable=args.python_executable,
         mpiexec_command=args.mpiexec_command,
         qep_only=args.qep_only,
+        candidate_b_only=args.candidate_b_only,
     )
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return 0 if result.get("exit_status") == 0 else 3

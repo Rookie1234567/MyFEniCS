@@ -7,6 +7,7 @@ import inspect
 import json
 from pathlib import Path
 from types import SimpleNamespace
+import sys
 
 import numpy as np
 import pytest
@@ -14,6 +15,7 @@ from mpi4py import MPI
 from petsc4py import PETSc
 
 import benchmarks.task039_v3_7_orchestration as orchestration
+import benchmarks.task039_v3_7_watchdog as watchdog
 from benchmarks import run_task037b_hybrid_iterative as frozen_runner
 from benchmarks.task037c_robustness import Task37cProfile
 from benchmarks.task039_v3_7_orchestration import (
@@ -376,6 +378,239 @@ def test_v3_7_dry_run_freezes_mpi8_worker_and_byte_watchdog(tmp_path) -> None:
     assert "--launched-by-task038-watchdog" in plan["argv"]
     assert plan["watchdog"]["absolute_terminate_memory_bytes"] == 224000000000
     assert plan["watchdog"]["critical_action"] == "record_checkpoint_only"
+
+
+@pytest.mark.parametrize(
+    ("pass_budget", "expected_budgets"),
+    ((8, [8]), (16, [8, 16]), (None, [8, 16, 32])),
+)
+def test_v3_8_candidate_b_budget_order_and_single_wrapper(
+    monkeypatch, pass_budget, expected_budgets
+) -> None:
+    created: list[int] = []
+    destroyed: list[int] = []
+
+    class Fixed:
+        diagnostics = {
+            "base_factor_count": 1,
+            "local_direct_factor_count": 0,
+            "global_hybrid_direct_factor_count": 0,
+        }
+
+    class Action:
+        def __init__(self, _operator, fixed, *, budget):
+            self.budget = budget
+            self.right_preconditioner = fixed
+            created.append(budget)
+
+        @property
+        def diagnostics(self):
+            return {
+                "direct_factor_count": 0,
+                "global_hybrid_direct_factor_count": 0,
+                "right_preconditioner_identity": "fake_fixed",
+            }
+
+        def destroy(self):
+            destroyed.append(self.budget)
+
+    def probe(_system, action, budget, _vectors, _metadata):
+        passed = pass_budget is not None and budget >= pass_budget
+        return {"rho_summary": {"candidate_B_pass": passed}}
+
+    monkeypatch.setattr(
+        orchestration, "HybridLocalDtnWoodburyFixedBudgetKrylovAction", Action
+    )
+    monkeypatch.setattr(orchestration, "_candidate_b_side_probe", probe)
+    systems = {
+        "bottom": SimpleNamespace(A=object()),
+        "top": SimpleNamespace(A=object()),
+    }
+    fixed = {"bottom": Fixed(), "top": Fixed()}
+    events: list[str] = []
+    report = orchestration.run_v3_8_candidate_b_budget_sequence(
+        systems,
+        fixed,
+        {"bottom": {}, "top": {}},
+        {"bottom": {}, "top": {}},
+        marker_callback=lambda marker, _detail: events.append(marker),
+    )
+    assert report["budgets_run"] == expected_budgets
+    assert created == [budget for budget in expected_budgets for _ in (0, 1)]
+    assert destroyed == created
+    assert report["selected_budget"] == pass_budget
+    assert report["factor_inventory"]["per_budget"]
+    assert report["factor_inventory"]["simultaneous_total_base_factor_count"] == 2
+    assert report["factor_inventory"]["simultaneous_total_direct_factor_count"] == 0
+    assert (
+        report["factor_inventory"][
+            "simultaneous_total_global_hybrid_direct_factor_count"
+        ]
+        == 0
+    )
+    assert any(marker.endswith("_bottom_begin") for marker in events)
+    assert any(marker.endswith("_top_end") for marker in events)
+
+
+def test_v3_8_candidate_b_plan_is_opt_in_and_checkpoint_is_hash_bound(tmp_path) -> None:
+    default = watchdog.v3_7_execution_dry_run(
+        INPUT,
+        tmp_path / "default",
+        source_sha="a" * 40,
+        python_executable=sys.executable,
+    )
+    candidate = watchdog.v3_7_execution_dry_run(
+        INPUT,
+        tmp_path / "candidate",
+        source_sha="a" * 40,
+        python_executable=sys.executable,
+        candidate_b_only=True,
+    )
+    assert "--candidate-b-only" not in default["argv"]
+    assert "--candidate-b-only" in candidate["argv"]
+    assert candidate["worker_contract"]["method"] == (
+        "hybrid_iterative_candidate_b_only"
+    )
+    payload = load_v3_7_official_payload(INPUT)
+    checkpoint_root = tmp_path / "checkpoint"
+    checkpoint_root.mkdir()
+    resolved_config = checkpoint_root / "resolved_config.json"
+    resolved_config.write_text("{}\n", encoding="utf-8")
+    producer = {
+        "producer_source_sha": "p" * 40,
+        "physical_model_sha256": "m" * 64,
+        "model_id": "task039-test",
+        "requested_modes": 480,
+        "mpi_size": 8,
+        "external_keys_exact": True,
+        "verified_shard_count": 32,
+        "inventory": {
+            "source_sha": "p" * 40,
+            "input_sha256": "i" * 64,
+            "resolved_config_sha256": "r" * 64,
+            "physical_model_sha256": "m" * 64,
+            "verified_shard_count": 32,
+            "payload": {"artifact": {"sha256": "d" * 64}},
+        },
+    }
+    report = {
+        "status": "measured",
+        "pass": False,
+        "selected_budget": None,
+        "budgets_run": [8, 16, 32],
+        "gate": {"median_limit": 0.1, "worst_limit": 0.3},
+        "factor_inventory": {"per_budget": []},
+        "budget_reports": [],
+    }
+    path = orchestration._write_v3_8_candidate_b_checkpoint(
+        checkpoint_root,
+        source_sha="c" * 40,
+        resolved_payload=payload,
+        producer=producer,
+        report=report,
+        comm=MPI.COMM_SELF,
+    )
+    checkpoint = json.loads(path.read_text(encoding="utf-8"))
+    assert (
+        checkpoint["physical_identity"]["consumer_input_sha256"]
+        == payload["provenance"]["input_sha256"]
+    )
+    assert checkpoint["physical_identity"]["producer_input_sha256"] == "i" * 64
+    assert checkpoint["physical_identity"]["direct_payload_sha256"] == "d" * 64
+    assert checkpoint["budgets_run"] == [8, 16, 32]
+
+
+def test_v3_8_candidate_b_branch_skips_v3_7_reference_oracle_recovery(
+    tmp_path, monkeypatch
+) -> None:
+    payload = load_v3_7_official_payload(INPUT)
+    called: list[str] = []
+
+    class Layout:
+        comm = MPI.COMM_SELF
+
+        @classmethod
+        def build(cls, *_args):
+            return cls()
+
+    class Rhs:
+        def destroy(self):
+            called.append("rhs_destroy")
+
+    setup = SimpleNamespace(
+        bottom=SimpleNamespace(),
+        top=SimpleNamespace(),
+        coupling=SimpleNamespace(internal_unknown_count=0),
+    )
+    run_directory = tmp_path / "run"
+    run_directory.mkdir()
+    (run_directory / "resolved_config.json").write_text("{}\n", encoding="utf-8")
+    checkpoint = run_directory / "numerical_output" / "v3_8_candidate_b_checkpoint.json"
+
+    def campaign(*_args, **kwargs):
+        called.append("candidate_b")
+        marker_callback = kwargs["marker_callback"]
+        marker_callback("candidate_b_side_fixed_setup_end", {})
+        for side in ("bottom", "top"):
+            marker_callback(f"candidate_b_budget_8_{side}_ready", {})
+            marker_callback(f"candidate_b_budget_8_{side}_end", {})
+        marker_callback("candidate_b_side_fixed_cleanup_end", {})
+        return {"status": "measured", "pass": False}, checkpoint
+
+    monkeypatch.setattr(orchestration, "HybridAugmentedLayout", Layout)
+    monkeypatch.setattr(orchestration, "_default_rhs", lambda *_args: Rhs())
+    monkeypatch.setattr(
+        orchestration, "release_frozen_m10_objects", lambda *_args: None
+    )
+    monkeypatch.setattr(orchestration, "_run_v3_8_candidate_b_campaign", campaign)
+
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError("V3-7 identity/oracle/recovery path was entered")
+
+    result = orchestration.run_task039_v3_7_diagnostic(
+        payload,
+        run_directory,
+        source_sha="a" * 40,
+        comm=MPI.COMM_SELF,
+        setup_builder=lambda *_args, **_kwargs: setup,
+        inventory_loader=lambda *_args, **_kwargs: (
+            {
+                "producer_source_sha": "p" * 40,
+                "physical_model_sha256": "m" * 64,
+                "model_id": "task039-test",
+                "requested_modes": 480,
+                "mpi_size": 8,
+                "external_keys_exact": True,
+                "inventory": {
+                    "source_sha": "p" * 40,
+                    "input_sha256": "i" * 64,
+                    "resolved_config_sha256": "r" * 64,
+                    "physical_model_sha256": "m" * 64,
+                    "payload": {"artifact": {"sha256": "d" * 64}},
+                },
+            },
+            np.zeros(960, dtype=np.complex128),
+        ),
+        reference_builder=forbidden,
+        identity_runner=forbidden,
+        oracle_runner=forbidden,
+        recovery_runner=None,
+        candidate_b_only=True,
+    )
+    assert called == ["candidate_b", "rhs_destroy"]
+    assert result["schema"] == "task039.v3-8-candidate-b-only.v1"
+    assert result["formal_run"]["oracle"] == "not_run_by_candidate_b_contract"
+    ledger = json.loads(
+        (run_directory / "numerical_output" / "memory_object_ledger.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert ledger["objects"]["side_base_ilu"]["created"] is True
+    assert ledger["objects"]["side_base_ilu"]["completed"] is True
+    assert ledger["objects"]["side_base_ilu"]["destroyed"] is True
+    assert ledger["objects"]["correction_wrappers"]["created"] is True
+    assert ledger["objects"]["correction_wrappers"]["completed"] is True
+    assert ledger["objects"]["correction_wrappers"]["destroyed"] is True
 
 
 def test_v3_7_boot_markers_bound_setup_sentinel_failure(tmp_path) -> None:
