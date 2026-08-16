@@ -40,6 +40,7 @@ V3_7_WARNING_GIB = 170.0
 V3_7_CRITICAL_GIB = 195.0
 V3_7_ABSOLUTE_HARD_BYTES = 224_000_000_000
 V3_7_POLL_SECONDS = 0.25
+V3_7_QEP_ONLY_WORKER_MODULE = "benchmarks.task039_qep_only"
 
 
 def _validate_resolved_identity(payload: Mapping[str, Any]) -> None:
@@ -136,6 +137,7 @@ def build_v3_7_execution_plan(
     source_sha: str,
     python_executable: str | Path | None = None,
     mpiexec_command: str | None = None,
+    qep_only: bool = False,
 ) -> dict[str, Any]:
     """Build the explicit MPI8 child argv without importing the worker."""
 
@@ -143,13 +145,18 @@ def build_v3_7_execution_plan(
     policy = _watchdog_policy(payload)
     executable = str(Path(os.path.abspath(python_executable or sys.executable)))
     mpiexec = mpiexec_command or shutil.which("mpiexec") or "mpiexec"
+    worker_module = (
+        V3_7_QEP_ONLY_WORKER_MODULE
+        if qep_only
+        else "benchmarks.task039_v3_7_orchestration"
+    )
     argv = [
         str(mpiexec),
         "-n",
         "8",
         executable,
         "-m",
-        "benchmarks.task039_v3_7_orchestration",
+        worker_module,
         "--worker",
         "--input",
         str(Path(input_path).resolve()),
@@ -167,7 +174,11 @@ def build_v3_7_execution_plan(
         "worker_contract": {
             "mpi_size": 8,
             "profile_id": V3_7_PROFILE_ID,
-            "method": "hybrid_iterative_v3_7_diagnostic",
+            "method": (
+                "positive_branch_qep_only"
+                if qep_only
+                else "hybrid_iterative_v3_7_diagnostic"
+            ),
             "hard_stop_authority": "process_tree_rss_bytes",
             "critical_checkpoint_only": True,
             "swap_policy": "immediate_complete_process_tree_termination",
@@ -181,12 +192,14 @@ def v3_7_execution_dry_run(
     *,
     source_sha: str,
     python_executable: str | Path | None = None,
+    qep_only: bool = False,
 ) -> dict[str, Any]:
     plan = build_v3_7_execution_plan(
         input_path,
         run_directory,
         source_sha=source_sha,
         python_executable=python_executable,
+        qep_only=qep_only,
     )
     if plan["argv"][1:3] != ["-n", "8"]:
         raise ValueError("V3-7 execution plan is not fixed to MPI8")
@@ -203,6 +216,7 @@ def launch_v3_7_with_task038_watchdog(
     popen_factory: Callable[..., Any] = subprocess.Popen,
     sample_factory: Callable[[int], dict[str, Any]] = resource_authority_sample,
     terminate_factory: Callable[[Any], dict[str, Any]] = terminate_process_tree,
+    qep_only: bool = False,
 ) -> dict[str, Any]:
     """Run one authenticated V3-7 child through Task38's watchdog."""
 
@@ -219,6 +233,7 @@ def launch_v3_7_with_task038_watchdog(
         source_sha=source_sha,
         python_executable=python_executable,
         mpiexec_command=mpiexec_command,
+        qep_only=qep_only,
     )
     run_dir = Path(run_directory).resolve()
     if run_dir.exists():
@@ -237,8 +252,8 @@ def launch_v3_7_with_task038_watchdog(
         argv=tuple(plan_payload["argv"]),
         shell=False,
         executable=executable,
-        worker_module="benchmarks.task039_v3_7_orchestration",
-        method="hybrid_iterative_v3_7_diagnostic",
+        worker_module=plan_payload["argv"][5],
+        method=plan_payload["worker_contract"]["method"],
         mpi_size=8,
         requested_modes=480,
         physical_model_sha256=specification.physical_model_sha256,
@@ -295,6 +310,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--python-executable")
     parser.add_argument("--mpiexec-command")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--qep-only", action="store_true")
     args = parser.parse_args(argv)
     if args.dry_run:
         print(
@@ -304,6 +320,7 @@ def main(argv: list[str] | None = None) -> int:
                     args.run_directory,
                     source_sha=args.source_sha,
                     python_executable=args.python_executable,
+                    qep_only=args.qep_only,
                 ),
                 ensure_ascii=False,
                 sort_keys=True,
@@ -316,6 +333,7 @@ def main(argv: list[str] | None = None) -> int:
         source_sha=args.source_sha,
         python_executable=args.python_executable,
         mpiexec_command=args.mpiexec_command,
+        qep_only=args.qep_only,
     )
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return 0 if result.get("exit_status") == 0 else 3
@@ -328,6 +346,7 @@ if __name__ == "__main__":
 __all__ = [
     "V3_7_ABSOLUTE_HARD_BYTES",
     "V3_7_DIRECT_RUN_ROOT",
+    "V3_7_QEP_ONLY_WORKER_MODULE",
     "build_v3_7_execution_plan",
     "launch_v3_7_with_task038_watchdog",
     "load_v3_7_official_payload",
