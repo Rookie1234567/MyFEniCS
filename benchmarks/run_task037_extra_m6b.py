@@ -694,10 +694,14 @@ M6B_W16B_EVENTS = (
     "measurement_ready",
     "summary_ready",
 )
+M6B_W17A_SCHEMA = "task037.extra.h2b.w17a.global-physical-shifted.v1"
+M6B_W17A_PHASE = "w17a_global_physical_shifted"
+M6B_W17A_PROGRESS_FILENAME = "m6b_w17a_progress.jsonl"
+M6B_W17A_SUMMARY_FILENAME = "m6b_w17a_summary.json"
 
 
 class _W16BCoreReady(Exception):
-    """Internal branch escape after W16B has finalized its core mapping."""
+    """Internal branch escape after a W16B/W17A core mapping is ready."""
 M6B_W6A_EVENTS = (
     "authority_validated",
     "mesh_ready",
@@ -9915,6 +9919,22 @@ def _m6b_w16b_scope() -> dict[str, Any]:
     }
 
 
+def _m6b_w17a_scope() -> dict[str, Any]:
+    return {
+        "schema": M6B_W17A_SCHEMA,
+        "phase": M6B_W17A_PHASE,
+        "residual_role": "untouched_W7_cumulative400_full_explicit_residual",
+        "auxiliary_operator": "beta1_volume_plus_matrix_free_dtn80",
+        "auxiliary_pc": "direct_beta1_shifted_row_complete_local_patch",
+        "local_pc_callback": "shifted_volume_only",
+        "physical_operator": "beta0_volume_plus_matrix_free_dtn80",
+        "inner_max_steps": 20,
+        "inner_cumulative_steps": 40,
+        "shared_dtn_instance_count": 1,
+        "fine_space": "uncondensed_fullspace",
+    }
+
+
 def _m6b_w16a_predicted_live_set() -> dict[str, Any]:
     total = int(M6B_W16A_PREDICTED_LIVE_SET_BYTES)
     return {
@@ -12203,6 +12223,25 @@ def _m6b_w16b_predicted_live_set() -> dict[str, Any]:
     }
 
 
+def _m6b_w17a_predicted_live_set() -> dict[str, Any]:
+    from src.solvers.hcurl_m6b_w16_global_shifted_inner_pc import (
+        W17A_PREDICTION_COMPONENTS,
+        W17A_PREDICTED_LIVE_SET_BYTES,
+        W17A_SCRATCH_TWO_RUN_TOTAL_BYTES,
+    )
+
+    return {
+        "bytes": W17A_PREDICTED_LIVE_SET_BYTES,
+        "limit_bytes": 1_750_000_000,
+        "watchdog_limit_bytes": 1_950_000_000,
+        "gate": W17A_PREDICTED_LIVE_SET_BYTES <= 1_750_000_000,
+        "derived_not_measured": True,
+        "scratch_is_disk_not_rss": True,
+        "scratch_two_run_total_bytes": W17A_SCRATCH_TWO_RUN_TOTAL_BYTES,
+        "components": dict(W17A_PREDICTION_COMPONENTS),
+    }
+
+
 def _m6b_w16r_w16a_authority(
     compact_path: Path, raw_dir: Path
 ) -> dict[str, Any]:
@@ -12412,6 +12451,48 @@ def _m6b_w16b_final_status(
     return False, "gate_failed", "W16B_EXECUTION_OR_EVIDENCE_FAIL"
 
 
+def _m6b_w17a_final_status(
+    checks: Mapping[str, Any], error: str | None
+) -> tuple[bool, str, str]:
+    required = {
+        "schema",
+        "fixed_identity",
+        "inner_audits",
+        "inner_residual",
+        "z_identity",
+        "p_identity",
+        "measurements",
+        "action_counts",
+        "architecture",
+        "lifecycle",
+        "prediction",
+        "source",
+        "cache",
+        "execution",
+    }
+    if (
+        not isinstance(checks, Mapping)
+        or not required.issubset(checks)
+        or any(type(value) is not bool for value in checks.values())
+    ):
+        return False, "gate_failed", "W17A_EXECUTION_OR_EVIDENCE_FAIL"
+    if error is None and all(checks.values()):
+        return True, "action_gate_pass", "W17A_GLOBAL_PHYSICAL_SHIFTED_PASS"
+    numeric = {"inner_residual", "measurements"}
+    numeric_failure = bool(
+        error is None
+        and all(checks[name] for name in checks if name not in numeric)
+        and any(not checks[name] for name in numeric)
+    )
+    return (
+        False,
+        "gate_failed",
+        "W17A_GLOBAL_PHYSICAL_SHIFTED_NUMERIC_FAIL"
+        if numeric_failure
+        else "W17A_EXECUTION_OR_EVIDENCE_FAIL",
+    )
+
+
 def _run_m6b_w16r_diagnostic(
     run_dir: Path,
     w7_compact: Path,
@@ -12460,6 +12541,27 @@ def _run_m6b_w16b_diagnostic(
     )
 
 
+def _run_m6b_w17a_diagnostic(
+    run_dir: Path,
+    w7_compact: Path,
+    w7_raw_dir: Path,
+    shifted_factor_manifest: Path,
+    jit_cache_source: Path,
+    expected_source_sha: str,
+) -> int:
+    """Run W17A's shared-DtN fixed40 action-only diagnostic."""
+
+    return _run_m6b_w16a_diagnostic(
+        run_dir,
+        w7_compact,
+        w7_raw_dir,
+        shifted_factor_manifest,
+        jit_cache_source,
+        expected_source_sha,
+        mode="w17a",
+    )
+
+
 def _run_m6b_w16a_diagnostic(
     run_dir: Path,
     w7_compact: Path,
@@ -12473,7 +12575,7 @@ def _run_m6b_w16a_diagnostic(
     w16a_raw_dir: Path | None = None,
     w16r_compact: Path | None = None,
 ) -> int:
-    """Run the fixed W16A/W16R/W16B action-only screen."""
+    """Run the fixed W16A/W16R/W16B/W17A action-only screen."""
 
     import gc
     import shutil
@@ -12510,17 +12612,23 @@ def _run_m6b_w16a_diagnostic(
     from src.solvers.hcurl_m6b_w16_global_shifted_inner_pc import (
         W16A_INNER_SCHEMA,
         W16R_INNER_SCHEMA,
+        W17A_AUXILIARY_OPERATOR,
+        W17A_AUXILIARY_PC,
+        W17A_PHYSICAL_OPERATOR,
         evaluate_w16b_outer2_gate,
         evaluate_w16a_global_shifted_gate,
         evaluate_w16r_restart20_gate,
+        evaluate_w17a_global_physical_shifted_gate,
         run_w16b_outer2,
         run_w16r_fixed20,
         run_w16a_fixed20,
+        run_w17a_fixed40,
     )
 
     is_w16r = mode == "w16r"
     is_w16b = mode == "w16b"
-    if mode not in {"w16a", "w16r", "w16b"}:
+    is_w17a = mode == "w17a"
+    if mode not in {"w16a", "w16r", "w16b", "w17a"}:
         raise ValueError("unsupported W16 mode")
     if is_w16r and (w16a_compact is None or w16a_raw_dir is None):
         raise ValueError("W16R requires the frozen W16A compact and raw directory")
@@ -12529,22 +12637,38 @@ def _run_m6b_w16a_diagnostic(
     worker_schema = (
         M6B_W16R_SCHEMA
         if is_w16r
-        else M6B_W16B_SCHEMA if is_w16b else M6B_W16A_SCHEMA
+        else M6B_W16B_SCHEMA
+        if is_w16b
+        else M6B_W17A_SCHEMA
+        if is_w17a
+        else M6B_W16A_SCHEMA
     )
     worker_phase = (
         M6B_W16R_PHASE
         if is_w16r
-        else M6B_W16B_PHASE if is_w16b else M6B_W16A_PHASE
+        else M6B_W16B_PHASE
+        if is_w16b
+        else M6B_W17A_PHASE
+        if is_w17a
+        else M6B_W16A_PHASE
     )
     worker_progress_filename = (
         M6B_W16R_PROGRESS_FILENAME
         if is_w16r
-        else M6B_W16B_PROGRESS_FILENAME if is_w16b else M6B_W16A_PROGRESS_FILENAME
+        else M6B_W16B_PROGRESS_FILENAME
+        if is_w16b
+        else M6B_W17A_PROGRESS_FILENAME
+        if is_w17a
+        else M6B_W16A_PROGRESS_FILENAME
     )
     worker_summary_filename = (
         M6B_W16R_SUMMARY_FILENAME
         if is_w16r
-        else M6B_W16B_SUMMARY_FILENAME if is_w16b else M6B_W16A_SUMMARY_FILENAME
+        else M6B_W16B_SUMMARY_FILENAME
+        if is_w16b
+        else M6B_W17A_SUMMARY_FILENAME
+        if is_w17a
+        else M6B_W16A_SUMMARY_FILENAME
     )
 
     run_dir = Path(run_dir).resolve()
@@ -12614,6 +12738,8 @@ def _run_m6b_w16a_diagnostic(
         if is_w16r
         else _m6b_w16b_predicted_live_set()
         if is_w16b
+        else _m6b_w17a_predicted_live_set()
+        if is_w17a
         else _m6b_w16a_predicted_live_set()
     )
     if predicted["gate"] is not True:
@@ -12646,9 +12772,11 @@ def _run_m6b_w16a_diagnostic(
     shifted_action = shifted_vec = store = local_pc = None
     physical_action = dtn_action = outer_mat = outer_context = None
     outer_bridge = template = None
+    surface_assemblers = dtn_carrier = None
     shifted_action_count = 0
     physical_call_count = 0
     z_values: list[np.ndarray] = []
+    z_artifacts: list[dict[str, Any]] = []
     p_artifacts: dict[str, Any] = {}
     inner_audits: list[dict[str, Any]] = []
     inner_records: list[dict[str, Any]] = []
@@ -12726,7 +12854,11 @@ def _run_m6b_w16a_diagnostic(
                 mesh_name=(
                     "m6b_w16r_mesh"
                     if is_w16r
-                    else "m6b_w16b_mesh" if is_w16b else "m6b_w16a_mesh"
+                    else "m6b_w16b_mesh"
+                    if is_w16b
+                    else "m6b_w17a_mesh"
+                    if is_w17a
+                    else "m6b_w16a_mesh"
                 ),
             )
             p6 = _m6b_p6_identity(mesh_data, function_space, floquet)
@@ -12805,6 +12937,308 @@ def _run_m6b_w16a_diagnostic(
             rhs_sha256 = _array_sha256(target)
             if not is_w16b:
                 (run_dir / "scratch").mkdir()
+            if is_w17a:
+                def build_outer(action: Any) -> None:
+                    nonlocal outer_bridge, outer_context, outer_mat, template
+                    outer_mat, outer_context = build_m6b_outer_mat(
+                        action,
+                        dtn_action,
+                        owned_rows=M6B_GLOBAL_ROWS,
+                        global_rows=M6B_GLOBAL_ROWS,
+                        comm=MPI.COMM_WORLD,
+                    )
+                    template = outer_mat.createVecRight()
+                    outer_bridge = M6BNumpyOuterActionBridge(outer_context, template)
+
+                surface_assemblers = m6a._surface_assemblers(
+                    function_space, mesh_data, cfg, modes, cache_dir
+                )
+                dtn_carrier = build_fullspace_dtn_carrier_from_surface(
+                    modes,
+                    surface_assemblers,
+                    floquet.mpc,
+                    cfg,
+                    expected_mode_count=80,
+                )
+                dtn_action = build_fullspace_dtn_action(
+                    dtn_carrier, comm=MPI.COMM_WORLD
+                )
+                action_audit["lifecycle_events"].append("dtn_constructed")
+                emit("dtn_constructed")
+                build_outer(shifted_action)
+                action_audit["lifecycle_events"].append("auxiliary_constructed")
+                emit("auxiliary_constructed")
+                for run_index in (1, 2):
+                    (run_dir / "scratch" / f"run{run_index}").mkdir()
+                    result = run_w17a_fixed40(
+                        outer_bridge.apply,
+                        local_pc.apply,
+                        target,
+                        run_dir / "scratch" / f"run{run_index}",
+                    )
+                    solution = np.array(
+                        result.solution, dtype=np.complex128, copy=True
+                    )
+                    artifact = write_vector(f"w17a_z{run_index}.npy", solution)
+                    audit = h2a._jsonable(result.audit)
+                    if audit["solution_sha256"] != artifact["array_sha256"]:
+                        raise RuntimeError(
+                            f"{worker_schema} solution hash changed while writing"
+                        )
+                    audit.update(
+                        {
+                            "run_index": run_index,
+                            "solution_artifact": artifact,
+                        }
+                    )
+                    inner_audits.append(audit)
+                    z_artifacts.append(artifact)
+                    z_values.append(solution)
+                    action_audit["lifecycle_events"].append(
+                        f"auxiliary_run_{run_index}"
+                    )
+                    emit(
+                        f"inner_run_{run_index}_ready",
+                        final_relative_residual=audit["final_relative_residual"],
+                    )
+                    del result
+
+                aux_outer = h2a._jsonable(outer_context.audit)
+                aux_dtn = h2a._jsonable(dtn_action.audit)
+                aux_bridge = h2a._jsonable(outer_bridge.audit)
+                shifted_final = h2a._jsonable(shifted_action.audit)
+                global_count = sum(item["global_action_count"] for item in inner_audits)
+                local_count = sum(item["pc_apply_count"] for item in inner_audits)
+                shifted_total = shifted_final["apply_count"]
+                local_exact = shifted_total - global_count
+                aux_dtn_count = aux_dtn["apply_count"]
+                if not (
+                    global_count == 86
+                    and local_count == 80
+                    and local_exact == 80
+                    and shifted_total == 166
+                    and aux_outer["apply_count"] == 86
+                    and aux_bridge["forward_apply_count"] == 86
+                    and aux_dtn_count == 86
+                ):
+                    raise RuntimeError(f"{worker_schema} auxiliary count closure failed")
+                action_counts = {
+                    "global_auxiliary_action_count": global_count,
+                    "global_shifted_action_count": global_count,
+                    "local_pc_apply_count": local_count,
+                    "local_exact_shifted_volume_action_count": local_exact,
+                    "shifted_action_count": shifted_total,
+                    "shifted_action_total_count": shifted_total,
+                    "auxiliary_dtn_action_count": aux_dtn_count,
+                }
+                action_audit["auxiliary_final_counts"] = {
+                    "outer": aux_outer,
+                    "dtn": aux_dtn,
+                    "bridge": aux_bridge,
+                    "shifted_action": shifted_final,
+                }
+                outer_bridge.destroy()
+                outer_bridge = None
+                outer_context.destroy()
+                outer_context = None
+                outer_mat.destroy()
+                outer_mat = None
+                template.destroy()
+                template = None
+                shifted_vec.destroy()
+                shifted_vec = None
+                shifted_action.destroy()
+                shifted_action = None
+                local_pc = None
+                store = None
+                del (
+                    shifted_ufl,
+                    shifted_epsilon,
+                    shifted_abs_epsilon,
+                    shifted_beta,
+                    shifted_tags,
+                )
+                gc.collect()
+                action_audit["lifecycle_events"].append(
+                    "auxiliary_released"
+                )
+                emit("auxiliary_released")
+
+                (
+                    physical_ufl,
+                    physical_epsilon,
+                    physical_abs_epsilon,
+                    physical_beta,
+                    physical_tags,
+                ) = build_m6b_volume_form(
+                    function_space, mesh_data, cfg, beta=0.0
+                )
+                physical_action = build_task037_extra_h1r2_mpc_action(
+                    physical_ufl,
+                    floquet.mpc,
+                    task037_extra_h1r2=True,
+                    jit_options=h2b._expected_jit_options(cache_dir),
+                )
+                build_outer(physical_action)
+                action_audit["lifecycle_events"].append(
+                    "physical_constructed"
+                )
+                emit("physical_constructed")
+                p_values: list[np.ndarray] = []
+                for index, z_value in enumerate(z_values, start=1):
+                    p_value = np.ascontiguousarray(
+                        outer_bridge.apply(z_value), dtype=np.complex128
+                    )
+                    if p_value.shape != z_value.shape or not np.all(np.isfinite(p_value)):
+                        raise FloatingPointError(
+                            f"{worker_schema} physical action returned invalid values"
+                        )
+                    p_values.append(p_value)
+                    p_artifacts[f"p{index}"] = write_vector(
+                        f"w17a_p{index}.npy", p_value
+                    )
+                    action_audit["lifecycle_events"].append(
+                        f"physical_apply_{index}"
+                    )
+                    emit(f"physical_apply_{index}_ready", physical_action_count=index)
+                measurements = [
+                    repeat_rank_one_projection(
+                        target,
+                        value,
+                        block_size=M6B_W11A_BLOCK_SIZE,
+                        schema=M6B_W17A_SCHEMA,
+                    )
+                    for value in p_values
+                ]
+                physical_snapshot = h2a._jsonable(physical_action.audit)
+                physical_outer = h2a._jsonable(outer_context.audit)
+                final_dtn = h2a._jsonable(dtn_action.audit)
+                physical_bridge = h2a._jsonable(outer_bridge.audit)
+                physical_dtn_count = final_dtn["apply_count"] - aux_dtn_count
+                if not (
+                    physical_snapshot["apply_count"] == 2
+                    and physical_outer["apply_count"] == 2
+                    and physical_dtn_count == 2
+                    and physical_bridge["forward_apply_count"] == 2
+                ):
+                    raise RuntimeError(f"{worker_schema} physical count closure failed")
+                action_counts.update(
+                    {
+                        "physical_volume_action_count": physical_snapshot["apply_count"],
+                        "physical_dtn_action_count": physical_dtn_count,
+                        "total_dtn_action_count": final_dtn["apply_count"],
+                        "physical_action_count": physical_snapshot["apply_count"],
+                    }
+                )
+                action_audit["physical_instances"] = [
+                    {
+                        "physical": physical_snapshot,
+                        "outer": physical_outer,
+                        "dtn": final_dtn,
+                        "bridge": physical_bridge,
+                    }
+                ]
+                action_audit.update(action_counts)
+                architecture = {
+                    "fine_space": final_dtn["fine_space"],
+                    "auxiliary_operator": W17A_AUXILIARY_OPERATOR,
+                    "physical_operator": W17A_PHYSICAL_OPERATOR,
+                    "local_pc_callback": "shifted_volume_only",
+                    "auxiliary_dtn_used": True,
+                    "global_matrix_materialized": physical_snapshot[
+                        "global_matrix_materialized"
+                    ],
+                    "global_condensed_schur_materialized": physical_snapshot[
+                        "global_condensed_schur_materialized"
+                    ],
+                    "augmented_matrix_materialized": physical_outer["augmented_matrix"],
+                    "condensation": final_dtn["condensation"],
+                    "static_condensation": final_dtn["static_condensed_operator_used"],
+                    "static_condensed_operator_used": final_dtn[
+                        "static_condensed_operator_used"
+                    ],
+                    "trace_slab": final_dtn["trace_slab_pc_used"],
+                    "trace_slab_pc_used": final_dtn["trace_slab_pc_used"],
+                    "slab_factors": 0,
+                    "factor_store": "beta1_direct_local_patch_only",
+                    "physical_ksp_used": physical_snapshot["ksp_created"],
+                    "pde_used": False,
+                    "official_rta": False,
+                }
+                z_identity = identity(z_values[0], z_values[1])
+                p_identity = identity(p_values[0], p_values[1])
+                outer_bridge.destroy()
+                outer_bridge = None
+                outer_context.destroy()
+                outer_context = None
+                outer_mat.destroy()
+                outer_mat = None
+                template.destroy()
+                template = None
+                physical_action.destroy()
+                physical_action = None
+                del (
+                    physical_ufl,
+                    physical_epsilon,
+                    physical_abs_epsilon,
+                    physical_beta,
+                    physical_tags,
+                    p_values,
+                    z_values[:],
+                )
+                gc.collect()
+                action_audit["lifecycle_events"].append(
+                    "physical_released"
+                )
+                emit("physical_released", physical_action_count=2)
+                dtn_action.destroy()
+                dtn_action = None
+                del dtn_carrier, surface_assemblers
+                dtn_carrier = surface_assemblers = None
+                gc.collect()
+                action_audit["lifecycle_events"].append("dtn_released")
+                emit("dtn_released")
+                core_result = {
+                    "schema": M6B_W17A_SCHEMA,
+                    "residual": {
+                        "role": "untouched_W7_cumulative400_full_explicit_residual",
+                        "authority": w7_authority["compact"],
+                        "artifact": w7_authority["residual_artifact"],
+                    },
+                    "fixed_identity": {
+                        "operator": W17A_AUXILIARY_OPERATOR,
+                        "beta": 1.0,
+                        "right_pc": W17A_AUXILIARY_PC,
+                        "auxiliary_dtn_used": True,
+                        "physical_operator": W17A_PHYSICAL_OPERATOR,
+                        "projected_range_used": False,
+                        "b0_used": False,
+                        "m3y_used": False,
+                        "range_store_used": False,
+                    },
+                    "inner_audits": inner_audits,
+                    "z_identity": z_identity,
+                    "p_identity": p_identity,
+                    "measurements": measurements,
+                    "action_counts": action_counts,
+                    "action_audit": action_audit,
+                    "architecture": architecture,
+                    "lifecycle": {
+                        "events": list(action_audit["lifecycle_events"]),
+                        "shared_dtn_reused": True,
+                        "shared_dtn_instance_count": 1,
+                        "auxiliary_physical_context_overlap": False,
+                        "release_between_inner_runs": False,
+                    },
+                    "prediction": predicted,
+                    "artifacts": {
+                        "z": z_artifacts,
+                        "p": p_artifacts,
+                    },
+                    "checks": {},
+                    "problems": [],
+                }
+                raise _W16BCoreReady()
             if is_w16b:
                 screen_runs: list[dict[str, Any]] = []
                 outer_checkpoint_artifacts: list[dict[str, Any]] = []
@@ -13508,6 +13942,12 @@ def _run_m6b_w16a_diagnostic(
             shifted_vec.destroy()
         if shifted_action is not None:
             shifted_action.destroy()
+        if dtn_carrier is not None:
+            del dtn_carrier
+            dtn_carrier = None
+        if surface_assemblers is not None:
+            del surface_assemblers
+            surface_assemblers = None
         if restart_z20 is not None:
             del restart_z20
             restart_z20 = None
@@ -13548,6 +13988,8 @@ def _run_m6b_w16a_diagnostic(
             if is_w16r
             else evaluate_w16b_outer2_gate(core_result)
             if is_w16b
+            else evaluate_w17a_global_physical_shifted_gate(core_result)
+            if is_w17a
             else evaluate_w16a_global_shifted_gate(core_result)
         )
         checks = dict(report["checks"])
@@ -13563,6 +14005,8 @@ def _run_m6b_w16a_diagnostic(
             if is_w16r
             else _m6b_w16b_final_status(checks, error)
             if is_w16b
+            else _m6b_w17a_final_status(checks, error)
+            if is_w17a
             else _m6b_w16a_final_status(checks, error)
         )
     else:
@@ -13574,6 +14018,8 @@ def _run_m6b_w16a_diagnostic(
             if is_w16r
             else "W16B_EXECUTION_OR_EVIDENCE_FAIL"
             if is_w16b
+            else "W17A_EXECUTION_OR_EVIDENCE_FAIL"
+            if is_w17a
             else "W16A_EXECUTION_OR_EVIDENCE_FAIL"
         )
         core_result = None
@@ -13581,7 +14027,15 @@ def _run_m6b_w16a_diagnostic(
     action_audit["lifecycle_events"] = list(action_audit["lifecycle_events"])
     if source_end is None:
         source_end = h2b._light_source()
-    pass_key = "w16r_pass" if is_w16r else "w16b_pass" if is_w16b else "w16a_pass"
+    pass_key = (
+        "w16r_pass"
+        if is_w16r
+        else "w16b_pass"
+        if is_w16b
+        else "w17a_pass"
+        if is_w17a
+        else "w16a_pass"
+    )
     payload = {
         "schema": worker_schema,
         "phase": worker_phase,
@@ -13594,6 +14048,8 @@ def _run_m6b_w16a_diagnostic(
         **(
             {"w16c_locked": True, "w16c_unlocked": False}
             if is_w16b
+            else {"w17b_locked": True, "w17b_action_candidate": bool(diagnostic_pass)}
+            if is_w17a
             else {
                 "w16b_locked": True,
                 "w16b_action_candidate": bool(diagnostic_pass),
@@ -13602,7 +14058,11 @@ def _run_m6b_w16a_diagnostic(
         "scope": (
             _m6b_w16r_scope()
             if is_w16r
-            else _m6b_w16b_scope() if is_w16b else _m6b_w16a_scope()
+            else _m6b_w16b_scope()
+            if is_w16b
+            else _m6b_w17a_scope()
+            if is_w17a
+            else _m6b_w16a_scope()
         ),
         "authority": {
             "w7": w7_authority["compact"],
@@ -22341,6 +22801,15 @@ def _parser() -> argparse.ArgumentParser:
     w16a.add_argument(
         "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
     )
+    w17a = sub.add_parser("m6b-w17a-global-physical-shifted-diagnostic")
+    w17a.add_argument("--run-dir", required=True)
+    w17a.add_argument("--w7-compact", required=True)
+    w17a.add_argument("--w7-raw-dir", required=True)
+    w17a.add_argument("--shifted-factor-manifest", required=True)
+    w17a.add_argument("--jit-cache-source", required=True)
+    w17a.add_argument(
+        "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
+    )
     w16r = sub.add_parser("m6b-w16r-restart20-diagnostic")
     w16r.add_argument("--run-dir", required=True)
     w16r.add_argument("--w7-compact", required=True)
@@ -22668,6 +23137,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.command == "m6b-w16a-global-shifted-inner-diagnostic":
         return _run_m6b_w16a_diagnostic(
+            Path(args.run_dir).resolve(),
+            Path(args.w7_compact).resolve(),
+            Path(args.w7_raw_dir).resolve(),
+            Path(args.shifted_factor_manifest).resolve(),
+            Path(args.jit_cache_source).resolve(),
+            args.expected_source_sha,
+        )
+    if args.command == "m6b-w17a-global-physical-shifted-diagnostic":
+        return _run_m6b_w17a_diagnostic(
             Path(args.run_dir).resolve(),
             Path(args.w7_compact).resolve(),
             Path(args.w7_raw_dir).resolve(),

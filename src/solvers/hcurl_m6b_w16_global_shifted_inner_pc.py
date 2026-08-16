@@ -510,6 +510,7 @@ def _fixed40_audit_valid(
     schema: str = W16B_INNER_SCHEMA,
     algorithm: str = "fgmres_right_shifted_beta1_composed_fixed20_plus20",
     auxiliary_dtn_action_count: int | None = None,
+    final_residual_limit: float | None = W16A_INNER_TRUE_RESIDUAL_LIMIT,
 ) -> bool:
     if not isinstance(record, Mapping):
         return False
@@ -541,7 +542,7 @@ def _fixed40_audit_valid(
             and _finite_bounded(record["cycle20_relative_residual"])
             and _finite_bounded(record["cycle40_relative_residual"])
             and _finite_bounded(
-                record["final_relative_residual"], W16A_INNER_TRUE_RESIDUAL_LIMIT
+                record["final_relative_residual"], final_residual_limit
             )
             and isinstance(record["scratch_paths"], Mapping)
         )
@@ -997,6 +998,7 @@ def evaluate_w17a_global_physical_shifted_gate(
                 schema=W17A_INNER_SCHEMA,
                 algorithm=W17A_INNER_ALGORITHM,
                 auxiliary_dtn_action_count=43,
+                final_residual_limit=None,
             ) and mapping_matches(
                 item,
                 {

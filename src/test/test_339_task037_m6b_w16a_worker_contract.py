@@ -91,7 +91,16 @@ def test_w16a_worker_emits_fixed_lifecycle_and_writes_scalar_artifacts_only():
     literal_events = tuple(
         event for event in events if not event.startswith("inner_checkpoint_")
     )
-    positions = [source.index(f'"{event}"') for event in literal_events]
+    legacy_start = source.index(
+        'action_audit["lifecycle_events"].append("auxiliary_constructed")',
+        source.index("core_result = w16b_result"),
+    )
+    legacy = source[legacy_start:]
+    positions = [source.index(f'"{event}"') for event in literal_events[:5]]
+    positions.extend(
+        legacy_start + legacy.index(f'"{event}"')
+        for event in literal_events[5:]
+    )
     assert positions == sorted(positions)
     assert 'f"inner_checkpoint_{run_index}_ready"' in source
     assert 'action_audit["lifecycle_events"].append("auxiliary_released")' in source
@@ -104,11 +113,8 @@ def test_w16a_worker_emits_fixed_lifecycle_and_writes_scalar_artifacts_only():
     assert "p_artifacts" in source
     assert "_attach_evidence" in source
 
-    auxiliary = source[
-        source.index('"auxiliary_constructed"') : source.index(
-            '"auxiliary_released"'
-        )
-    ]
+    auxiliary_end = legacy.index('"auxiliary_released"')
+    auxiliary = legacy[:auxiliary_end]
     assert "build_fullspace_dtn" not in auxiliary
     assert "build_m6b_outer_mat" not in auxiliary
     assert "beta=0.0" not in auxiliary
@@ -122,7 +128,12 @@ def test_w16a_worker_uses_frozen_w7_loader_and_final_release_before_summary():
     assert "_m6b_w9a_load_w7(" in source
     assert "w7_authority[\"residual\"]" in source
     assert "build_fullspace_dtn_action" in source
-    assert source.index('"physical_released"') < source.index(
+    legacy_start = source.index(
+        'action_audit["lifecycle_events"].append("auxiliary_constructed")',
+        source.index("core_result = w16b_result"),
+    )
+    legacy = source[legacy_start:]
+    assert legacy.index('"physical_released"') < legacy.index(
         'core_result = {'
     )
     assert "shifted_action_total_count" in source
@@ -254,6 +265,11 @@ def test_w16a_factor_authority_rejects_builder_binding_tamper(
 
 def test_w16a_worker_binds_runtime_cache_refresh_and_final_audits():
     source = inspect.getsource(runner._run_m6b_w16a_diagnostic)
+    legacy_start = source.index(
+        'action_audit["lifecycle_events"].append("auxiliary_constructed")',
+        source.index("core_result = w16b_result"),
+    )
+    legacy = source[legacy_start:]
     assert 'factor_authority["factor_compiler"]' in source
     assert "_m6b_w6a_runtime_valid(runtime, frozen_compiler=frozen_compiler)" in source
     assert "runtime: dict[str, Any] | None = None" not in source
@@ -262,12 +278,12 @@ def test_w16a_worker_binds_runtime_cache_refresh_and_final_audits():
     assert "source_cache_final = _m6b_w2_cache_record(h2b, jit_cache_source)" in source
     assert '"target_final": cache_final' in source
     assert "source_git_unchanged" in source
-    assert source.index(
+    assert legacy.index(
         "physical_audit = h2a._jsonable(physical_action.audit)"
-    ) > source.index("measurements = [")
+    ) > legacy.index("measurements = [")
     assert 'bridge_audit["forward_apply_count"] == 2' in source
     assert 'shifted_action_final_audit["apply_count"] == 82' in source
-    assert source.index("shifted_action_final_audit =") < source.index(
+    assert legacy.index("shifted_action_final_audit =") < legacy.index(
         "shifted_action.destroy()"
     )
     assert 'action_audit["shifted_action_total_count"]' in source
@@ -275,10 +291,10 @@ def test_w16a_worker_binds_runtime_cache_refresh_and_final_audits():
     assert "global_shifted_count + local_pc_count" in source
     assert "shifted_epsilon" in source
     assert "physical_epsilon" in source
-    assert source.index("shifted_epsilon,") < source.index(
+    assert legacy.index("shifted_epsilon,") < legacy.index(
         'emit("auxiliary_released")'
     )
-    assert source.index("physical_epsilon,") < source.index(
+    assert legacy.index("physical_epsilon,") < legacy.index(
         'action_audit["lifecycle_events"].append("physical_released")'
     )
     assert "W16A_EXECUTION_OR_EVIDENCE_FAIL" in source

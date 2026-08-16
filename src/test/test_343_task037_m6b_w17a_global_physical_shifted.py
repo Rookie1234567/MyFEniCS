@@ -7,6 +7,7 @@ from copy import deepcopy
 import numpy as np
 import pytest
 
+from benchmarks import run_task037_extra_m6b as runner
 from src.solvers import hcurl_m6b_w16_global_shifted_inner_pc as core
 from src.test.test_342_task037_m6b_w16b_outer2 import (
     _fixed40_record,
@@ -158,6 +159,19 @@ def test_w17a_evaluator_accepts_core_fixture() -> None:
     report = core.evaluate_w17a_global_physical_shifted_gate(_w17a_summary())
     assert report["pass"] is True
     assert all(type(value) is bool and value for value in report["checks"].values())
+
+
+def test_w17a_residual_failure_remains_a_numeric_gate() -> None:
+    summary = _w17a_summary()
+    summary["inner_audits"][0]["final_relative_residual"] = 0.010001
+    summary["inner_audits"][0]["cycle40_relative_residual"] = 0.010001
+    report = core.evaluate_w17a_global_physical_shifted_gate(summary)
+    assert report["checks"]["inner_audits"] is True
+    assert report["checks"]["inner_residual"] is False
+    checks = dict(report["checks"])
+    checks.update(source=True, cache=True, execution=True)
+    status = runner._m6b_w17a_final_status(checks, None)
+    assert status[2] == "W17A_GLOBAL_PHYSICAL_SHIFTED_NUMERIC_FAIL"
 
 
 @pytest.mark.parametrize(
