@@ -723,6 +723,48 @@ M6B_W17A_EVENTS = (
     "measurement_ready",
     "summary_ready",
 )
+M6B_W18A_SCHEMA = "task037.extra.h2b.w18a.nested-auxiliary.v1"
+M6B_W18A_PHASE = "w18a_nested_auxiliary"
+M6B_W18A_PROGRESS_FILENAME = "m6b_w18a_progress.jsonl"
+M6B_W18A_SUMMARY_FILENAME = "m6b_w18a_summary.json"
+M6B_W18A_EVENTS = (
+    "authority_validated",
+    "mesh_ready",
+    "space_ready",
+    "floquet_mpc_ready",
+    "cache_ready",
+    "dtn_constructed",
+    "auxiliary_constructed",
+    "auxiliary_repeat_1_ready",
+    "auxiliary_repeat_2_ready",
+    "auxiliary_released",
+    "physical_constructed",
+    "physical_apply_1_ready",
+    "physical_apply_2_ready",
+    "physical_apply_3_ready",
+    "physical_apply_4_ready",
+    "physical_released",
+    "dtn_released",
+    "measurement_ready",
+    "summary_ready",
+)
+M6B_W18A_TIMEOUT_SECONDS = 3_600.0
+M6B_W18A_WATCHDOG_RSS_LIMIT_BYTES = 1_950_000_000
+M6B_W18A_FORMAL_RSS_LIMIT_BYTES = 1_950_000_000
+M6B_W18A_PREDICTED_LIVE_SET_BYTES = 1_734_993_014
+M6B_W18A_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_750_000_000
+M6B_W18A_ACTION_COUNTS = {
+    "outer_auxiliary_action_count": 8,
+    "outer_pc_apply_count": 4,
+    "inner_global_shifted_action_count": 172,
+    "local_pc_apply_count": 160,
+    "local_exact_shifted_action_count": 160,
+    "shifted_action_total_count": 340,
+    "auxiliary_dtn_action_count": 8,
+    "physical_volume_action_count": 4,
+    "physical_dtn_action_count": 4,
+    "total_dtn_action_count": 12,
+}
 
 
 class _W16BCoreReady(Exception):
@@ -4164,6 +4206,34 @@ def _m6b_w17a_worker_command(
     ]
 
 
+def _m6b_w18a_worker_command(
+    run_dir: Path,
+    w7_compact: Path,
+    w7_raw_dir: Path,
+    shifted_factor_manifest: Path,
+    jit_cache_source: Path,
+    expected_source_sha: str,
+) -> list[str]:
+    return [
+        sys.executable,
+        "-m",
+        "benchmarks.run_task037_extra_m6b",
+        "m6b-w18a-nested-auxiliary-diagnostic",
+        "--run-dir",
+        str(Path(run_dir).resolve()),
+        "--w7-compact",
+        str(Path(w7_compact).resolve()),
+        "--w7-raw-dir",
+        str(Path(w7_raw_dir).resolve()),
+        "--shifted-factor-manifest",
+        str(Path(shifted_factor_manifest).resolve()),
+        "--jit-cache-source",
+        str(Path(jit_cache_source).resolve()),
+        "--expected-source-sha",
+        expected_source_sha,
+    ]
+
+
 def _m6b_w14b_worker_command(
     run_dir: Path,
     w5_compact: Path,
@@ -4672,6 +4742,42 @@ def _m6b_w16a_raw_artifacts(
     is_w16r = mode == "w16r"
     is_w16b = mode == "w16b"
     is_w17a = mode == "w17a"
+    is_w18a = mode == "w18a"
+    if is_w18a:
+        names = [M6B_W18A_SUMMARY_FILENAME, M6B_W18A_PROGRESS_FILENAME]
+        for repeat_index in (1, 2):
+            for iteration in (1, 2):
+                for field in ("solution", "outer_action", "residual", "rhs"):
+                    names.append(
+                        "outer_checkpoints/"
+                        f"repeat{repeat_index}/m6b_iter{iteration}_{field}.npy"
+                    )
+        names.extend(
+            f"w18a_p_repeat{repeat_index}_checkpoint{iteration}.npy"
+            for repeat_index in (1, 2)
+            for iteration in (1, 2)
+        )
+        for repeat_index in (1, 2):
+            names.extend(
+                (
+                    f"outer_scratch/repeat{repeat_index}/v_basis.bin",
+                    f"outer_scratch/repeat{repeat_index}/z_basis.bin",
+                )
+            )
+            for apply_index in (1, 2):
+                apply_root = (
+                    f"outer_scratch/repeat{repeat_index}/inner/"
+                    f"apply_{apply_index:02d}"
+                )
+                names.append(f"{apply_root}/solution.npy")
+                for cycle in ("cycle20", "cycle40"):
+                    names.extend(
+                        (
+                            f"{apply_root}/{cycle}/v_basis.bin",
+                            f"{apply_root}/{cycle}/z_basis.bin",
+                        )
+                    )
+        return [_artifact(run_dir, name) for name in names]
     if is_w17a:
         names = [M6B_W17A_SUMMARY_FILENAME, M6B_W17A_PROGRESS_FILENAME]
         names.extend(
@@ -4760,6 +4866,7 @@ def _m6b_w16a_progress_valid(
     is_w16r = mode == "w16r"
     is_w16b = mode == "w16b"
     is_w17a = mode == "w17a"
+    is_w18a = mode == "w18a"
     schema = (
         M6B_W16R_SCHEMA
         if is_w16r
@@ -4767,6 +4874,8 @@ def _m6b_w16a_progress_valid(
         if is_w16b
         else M6B_W17A_SCHEMA
         if is_w17a
+        else M6B_W18A_SCHEMA
+        if is_w18a
         else M6B_W16A_SCHEMA
     )
     phase = (
@@ -4776,6 +4885,8 @@ def _m6b_w16a_progress_valid(
         if is_w16b
         else M6B_W17A_PHASE
         if is_w17a
+        else M6B_W18A_PHASE
+        if is_w18a
         else M6B_W16A_PHASE
     )
     expected_events = (
@@ -4785,6 +4896,8 @@ def _m6b_w16a_progress_valid(
         if is_w16b
         else M6B_W17A_EVENTS
         if is_w17a
+        else M6B_W18A_EVENTS
+        if is_w18a
         else M6B_W16A_EVENTS
     )
     try:
@@ -10992,6 +11105,44 @@ def _m6b_w17a_scope() -> dict[str, Any]:
     }
 
 
+def _m6b_w18a_scope() -> dict[str, Any]:
+    return {
+        "schema": M6B_W18A_SCHEMA,
+        "phase": M6B_W18A_PHASE,
+        "solver": "outer2_disk_backed_right_fgmres_with_fixed40_composed_pc",
+        "outer_operator": "beta1_shifted_volume_plus_matrix_free_dtn80",
+        "inner_operator": "beta1_shifted_volume_only",
+        "inner_pc": "direct_beta1_shifted_row_complete_local_patch",
+        "physical_operator": "beta0_volume_plus_matrix_free_dtn80",
+        "repeats": 2,
+        "outer_steps": 2,
+        "outer_checkpoints": [1, 2],
+        "inner_cumulative_steps": 40,
+        "auxiliary_dtn_used": True,
+        "shared_dtn_instance_count": 1,
+        "auxiliary_physical_overlap": False,
+        "checkpoint_vectors_disk_backed": True,
+        "fine_space": "uncondensed_fullspace",
+        "global_matrix": False,
+        "augmented_matrix": False,
+        "condensation": False,
+        "static_condensation": False,
+        "trace_slab": False,
+        "slab_factors": 0,
+        "physical_ksp": False,
+        "pde": False,
+        "official_rta": False,
+        "no_retry_or_scan": True,
+        "resource_limits": {
+            "predicted_live_set_bytes": M6B_W18A_PREDICTED_LIVE_SET_BYTES,
+            "predicted_live_set_limit_bytes": M6B_W18A_PREDICTED_LIVE_SET_LIMIT_BYTES,
+            "watchdog_rss_bytes": M6B_W18A_WATCHDOG_RSS_LIMIT_BYTES,
+            "swap_bytes": M6B_SWAP_LIMIT_BYTES,
+        },
+        "action_counts": dict(M6B_W18A_ACTION_COUNTS),
+    }
+
+
 def _m6b_w16a_predicted_live_set() -> dict[str, Any]:
     total = int(M6B_W16A_PREDICTED_LIVE_SET_BYTES)
     return {
@@ -13299,6 +13450,86 @@ def _m6b_w17a_predicted_live_set() -> dict[str, Any]:
     }
 
 
+def _m6b_w18a_predicted_live_set() -> dict[str, Any]:
+    components = {
+        "w16r_measured_process_tree_peak_bytes": 1_398_456_320,
+        "physical_retained_numeric_payload_bytes": 6_151_120,
+        "physical_per_apply_temporary_bytes": 3_564_288,
+        "shared_dtn_retained_and_work_bytes": 16_673_350,
+        "one_action_bridge_and_template_bytes": 8_342_496,
+        "outer_solver_bounded_vector_bytes": 33_369_984,
+        "coexistence_uncertainty_margin_bytes": 268_435_456,
+    }
+    assert sum(components.values()) == M6B_W18A_PREDICTED_LIVE_SET_BYTES
+    return {
+        "bytes": M6B_W18A_PREDICTED_LIVE_SET_BYTES,
+        "limit_bytes": M6B_W18A_PREDICTED_LIVE_SET_LIMIT_BYTES,
+        "watchdog_limit_bytes": M6B_W18A_WATCHDOG_RSS_LIMIT_BYTES,
+        "gate": M6B_W18A_PREDICTED_LIVE_SET_BYTES
+        <= M6B_W18A_PREDICTED_LIVE_SET_LIMIT_BYTES,
+        "derived_not_measured": True,
+        "scratch_is_disk_not_rss": True,
+        "scratch_is_non_rss": True,
+        "scratch_components": {
+            "inner_per_apply_bytes": 228_028_224,
+            "inner_per_repeat_bytes": 456_056_448,
+            "outer_per_repeat_bytes": 13_904_160,
+            "total_per_repeat_bytes": 469_960_608,
+            "two_repeat_total_bytes": 939_921_216,
+        },
+        "swap_bytes": M6B_SWAP_LIMIT_BYTES,
+        "sequential_heavy_objects": True,
+        "components": components,
+        "basis": (
+            "Conservative derived estimate from the frozen W16R measured "
+            "process-tree peak plus explicit physical, DtN, bridge, and "
+            "outer-vector allowances and a 256 MiB uncertainty margin; disk "
+            "scratch is not RSS, and the W18 total itself is not measured."
+        ),
+    }
+
+
+def _m6b_w18a_disk_relative_difference(
+    first_path: Path, second_path: Path
+) -> float:
+    import numpy as np
+
+    first = np.load(first_path, allow_pickle=False, mmap_mode="r")
+    second = np.load(second_path, allow_pickle=False, mmap_mode="r")
+    if (
+        first.shape != second.shape
+        or first.dtype != np.dtype(np.complex128)
+        or second.dtype != np.dtype(np.complex128)
+        or first.ndim != 1
+    ):
+        raise ValueError(
+            "W18A checkpoint arrays are not matching complex128 vectors"
+        )
+    diff_squared = 0.0
+    first_squared = 0.0
+    second_squared = 0.0
+    flat_first = first.reshape(-1)
+    flat_second = second.reshape(-1)
+    block_size = 1 << 16
+    for start in range(0, flat_first.size, block_size):
+        stop = min(start + block_size, flat_first.size)
+        first_block = np.asarray(flat_first[start:stop])
+        second_block = np.asarray(flat_second[start:stop])
+        if not (
+            np.all(np.isfinite(first_block))
+            and np.all(np.isfinite(second_block))
+        ):
+            raise ValueError("W18A checkpoint arrays contain non-finite values")
+        delta = first_block - second_block
+        diff_squared += float(np.vdot(delta, delta).real)
+        first_squared += float(np.vdot(first_block, first_block).real)
+        second_squared += float(np.vdot(second_block, second_block).real)
+    denominator = max(
+        math.sqrt(first_squared), math.sqrt(second_squared), np.finfo(float).tiny
+    )
+    return math.sqrt(diff_squared) / denominator
+
+
 def _m6b_w16r_w16a_authority(
     compact_path: Path, raw_dir: Path
 ) -> dict[str, Any]:
@@ -13550,6 +13781,53 @@ def _m6b_w17a_final_status(
     )
 
 
+def _m6b_w18a_final_status(
+    checks: Mapping[str, Any], error: str | None
+) -> tuple[bool, str, str]:
+    required = {
+        "schema",
+        "fixed_identity",
+        "outer_audits",
+        "inner_residual",
+        "outer_auxiliary_residual",
+        "finite",
+        "repeat_identity",
+        "measurements",
+        "action_counts",
+        "architecture",
+        "lifecycle",
+        "prediction",
+        "source",
+        "cache",
+        "execution",
+    }
+    if (
+        not isinstance(checks, Mapping)
+        or not required.issubset(checks)
+        or any(type(value) is not bool for value in checks.values())
+    ):
+        return False, "gate_failed", "W18A_EXECUTION_OR_EVIDENCE_FAIL"
+    if error is None and all(checks.values()):
+        return True, "action_gate_pass", "W18A_NESTED_AUXILIARY_PASS"
+    numeric = {
+        "inner_residual",
+        "outer_auxiliary_residual",
+        "measurements",
+    }
+    numeric_failure = bool(
+        error is None
+        and all(checks[name] for name in checks if name not in numeric)
+        and any(not checks[name] for name in numeric)
+    )
+    return (
+        False,
+        "gate_failed",
+        "W18A_NESTED_AUXILIARY_NUMERIC_FAIL"
+        if numeric_failure
+        else "W18A_EXECUTION_OR_EVIDENCE_FAIL",
+    )
+
+
 def _run_m6b_w16r_diagnostic(
     run_dir: Path,
     w7_compact: Path,
@@ -13619,6 +13897,27 @@ def _run_m6b_w17a_diagnostic(
     )
 
 
+def _run_m6b_w18a_diagnostic(
+    run_dir: Path,
+    w7_compact: Path,
+    w7_raw_dir: Path,
+    shifted_factor_manifest: Path,
+    jit_cache_source: Path,
+    expected_source_sha: str,
+) -> int:
+    """Run W18A's fixed nested-auxiliary action-only diagnostic."""
+
+    return _run_m6b_w16a_diagnostic(
+        run_dir,
+        w7_compact,
+        w7_raw_dir,
+        shifted_factor_manifest,
+        jit_cache_source,
+        expected_source_sha,
+        mode="w18a",
+    )
+
+
 def _run_m6b_w16a_diagnostic(
     run_dir: Path,
     w7_compact: Path,
@@ -13632,7 +13931,7 @@ def _run_m6b_w16a_diagnostic(
     w16a_raw_dir: Path | None = None,
     w16r_compact: Path | None = None,
 ) -> int:
-    """Run the fixed W16A/W16R/W16B/W17A action-only screen."""
+    """Run the fixed W16A/W16R/W16B/W17A/W18A action-only screen."""
 
     import gc
     import shutil
@@ -13681,11 +13980,19 @@ def _run_m6b_w16a_diagnostic(
         run_w16a_fixed20,
         run_w17a_fixed40,
     )
+    from src.solvers.hcurl_m6b_w18_nested_auxiliary_pc import (
+        W18A_ARCHITECTURE,
+        W18A_FIXED_IDENTITY,
+        W18A_LIFECYCLE,
+        evaluate_w18a_action_gate,
+        run_w18a_outer2,
+    )
 
     is_w16r = mode == "w16r"
     is_w16b = mode == "w16b"
     is_w17a = mode == "w17a"
-    if mode not in {"w16a", "w16r", "w16b", "w17a"}:
+    is_w18a = mode == "w18a"
+    if mode not in {"w16a", "w16r", "w16b", "w17a", "w18a"}:
         raise ValueError("unsupported W16 mode")
     if is_w16r and (w16a_compact is None or w16a_raw_dir is None):
         raise ValueError("W16R requires the frozen W16A compact and raw directory")
@@ -13698,6 +14005,8 @@ def _run_m6b_w16a_diagnostic(
         if is_w16b
         else M6B_W17A_SCHEMA
         if is_w17a
+        else M6B_W18A_SCHEMA
+        if is_w18a
         else M6B_W16A_SCHEMA
     )
     worker_phase = (
@@ -13707,6 +14016,8 @@ def _run_m6b_w16a_diagnostic(
         if is_w16b
         else M6B_W17A_PHASE
         if is_w17a
+        else M6B_W18A_PHASE
+        if is_w18a
         else M6B_W16A_PHASE
     )
     worker_progress_filename = (
@@ -13716,6 +14027,8 @@ def _run_m6b_w16a_diagnostic(
         if is_w16b
         else M6B_W17A_PROGRESS_FILENAME
         if is_w17a
+        else M6B_W18A_PROGRESS_FILENAME
+        if is_w18a
         else M6B_W16A_PROGRESS_FILENAME
     )
     worker_summary_filename = (
@@ -13725,6 +14038,8 @@ def _run_m6b_w16a_diagnostic(
         if is_w16b
         else M6B_W17A_SUMMARY_FILENAME
         if is_w17a
+        else M6B_W18A_SUMMARY_FILENAME
+        if is_w18a
         else M6B_W16A_SUMMARY_FILENAME
     )
 
@@ -13797,6 +14112,8 @@ def _run_m6b_w16a_diagnostic(
         if is_w16b
         else _m6b_w17a_predicted_live_set()
         if is_w17a
+        else _m6b_w18a_predicted_live_set()
+        if is_w18a
         else _m6b_w16a_predicted_live_set()
     )
     if predicted["gate"] is not True:
@@ -13827,7 +14144,8 @@ def _run_m6b_w16a_diagnostic(
     source_cache_final: dict[str, Any] | None = None
     cache_final: dict[str, Any] | None = None
     shifted_action = shifted_vec = store = local_pc = None
-    physical_action = dtn_action = outer_mat = outer_context = None
+    physical_action = dtn_action = dtn_source = dtn_target = None
+    outer_mat = outer_context = None
     outer_bridge = template = None
     surface_assemblers = dtn_carrier = None
     shifted_action_count = 0
@@ -13915,6 +14233,8 @@ def _run_m6b_w16a_diagnostic(
                     if is_w16b
                     else "m6b_w17a_mesh"
                     if is_w17a
+                    else "m6b_w18a_mesh"
+                    if is_w18a
                     else "m6b_w16a_mesh"
                 ),
             )
@@ -13992,8 +14312,462 @@ def _run_m6b_w16a_diagnostic(
 
             target = np.array(w7_authority["residual"], dtype=np.complex128, copy=True)
             rhs_sha256 = _array_sha256(target)
-            if not is_w16b:
+            if not is_w16b and not is_w18a:
                 (run_dir / "scratch").mkdir()
+            if is_w18a:
+                surface_assemblers = m6a._surface_assemblers(
+                    function_space, mesh_data, cfg, modes, cache_dir
+                )
+                dtn_carrier = build_fullspace_dtn_carrier_from_surface(
+                    modes,
+                    surface_assemblers,
+                    floquet.mpc,
+                    cfg,
+                    expected_mode_count=80,
+                )
+                dtn_action = build_fullspace_dtn_action(
+                    dtn_carrier, comm=MPI.COMM_WORLD
+                )
+                dtn_source = dtn_action.matrix.createVecRight()
+                dtn_target = dtn_action.matrix.createVecLeft()
+
+                def dtn_numpy(values: np.ndarray) -> np.ndarray:
+                    source_values = dtn_source.getArray()
+                    np.copyto(
+                        source_values,
+                        np.asarray(values, dtype=np.complex128),
+                    )
+                    dtn_action.apply(dtn_source, dtn_target)
+                    observed = np.array(
+                        dtn_target.getArray(readonly=True),
+                        dtype=np.complex128,
+                        copy=True,
+                    )
+                    return observed
+
+                action_audit["lifecycle_events"].append("dtn_constructed")
+                emit("dtn_constructed")
+                action_audit["lifecycle_events"].append("auxiliary_constructed")
+                emit("auxiliary_constructed")
+                repeats: list[dict[str, Any]] = []
+                for repeat_index in (1, 2):
+                    checkpoint_dir = (
+                        run_dir / "outer_checkpoints" / f"repeat{repeat_index}"
+                    )
+                    writer = M6BScreenCheckpointWriter(
+                        checkpoint_dir,
+                        allowed_iterations=(1, 2),
+                    )
+                    checkpoint_records: list[dict[str, Any]] = []
+
+                    def outer_observer(
+                        event: Mapping[str, Any], *, _writer=writer
+                    ) -> None:
+                        record = _writer.write_numpy_checkpoint(
+                            int(event["iteration"]),
+                            solution=event["solution"],
+                            outer_action=event["action"],
+                            residual=event["residual"],
+                            rhs=event["rhs"],
+                        )
+                        artifacts = record["artifacts"]
+                        residual = np.asarray(event["residual"])
+                        rhs = np.asarray(event["rhs"])
+                        action = np.asarray(event["action"])
+                        record.update(
+                            {
+                                "finite": True,
+                                "solution_sha256": artifacts["solution"][
+                                    "array_sha256"
+                                ],
+                                "action_sha256": artifacts["outer_action"][
+                                    "array_sha256"
+                                ],
+                                "solution_relative_difference": 0.0,
+                                "action_relative_difference": 0.0,
+                                "residual_closure": float(
+                                    np.linalg.norm(residual - (rhs - action))
+                                    / max(
+                                        float(np.linalg.norm(rhs)),
+                                        np.finfo(float).tiny,
+                                    )
+                                ),
+                            }
+                        )
+                        checkpoint_records.append(record)
+
+                    outer_result, composed_pc = run_w18a_outer2(
+                        shifted_numpy,
+                        dtn_numpy,
+                        local_pc.apply,
+                        target,
+                        run_dir / "outer_scratch" / f"repeat{repeat_index}",
+                        observer=outer_observer,
+                    )
+                    if len(checkpoint_records) != 2:
+                        raise RuntimeError(
+                            f"{worker_schema} outer checkpoints are incomplete"
+                        )
+                    outer_audit = h2a._jsonable(outer_result.audit)
+                    inner_records_for_repeat = []
+                    for apply_index, record in enumerate(
+                        composed_pc.records, start=1
+                    ):
+                        inner_record = dict(record)
+                        inner_record["apply_index"] = apply_index
+                        inner_records_for_repeat.append(inner_record)
+                    if len(inner_records_for_repeat) != 2:
+                        raise RuntimeError(
+                            f"{worker_schema} composed inner records are incomplete"
+                        )
+                    repeats.append(
+                        {
+                            "repeat_index": repeat_index,
+                            "outer_audit": outer_audit,
+                            "inner_records": inner_records_for_repeat,
+                            "checkpoints": {
+                                str(record["iteration"]): record
+                                for record in checkpoint_records
+                            },
+                            "measurements": {},
+                        }
+                    )
+                    action_audit["lifecycle_events"].append(
+                        f"auxiliary_repeat_{repeat_index}"
+                    )
+                    emit(
+                        f"auxiliary_repeat_{repeat_index}_ready",
+                        outer_action_count=outer_audit["action_count"],
+                    )
+                    del outer_result, composed_pc, writer, checkpoint_records
+
+                for iteration in (1, 2):
+                    first = repeats[0]["checkpoints"][str(iteration)]
+                    second = repeats[1]["checkpoints"][str(iteration)]
+                    first_solution = (
+                        run_dir
+                        / "outer_checkpoints"
+                        / "repeat1"
+                        / first["artifacts"]["solution"]["path"]
+                    )
+                    second_solution = (
+                        run_dir
+                        / "outer_checkpoints"
+                        / "repeat2"
+                        / second["artifacts"]["solution"]["path"]
+                    )
+                    first_action = (
+                        run_dir
+                        / "outer_checkpoints"
+                        / "repeat1"
+                        / first["artifacts"]["outer_action"]["path"]
+                    )
+                    second_action = (
+                        run_dir
+                        / "outer_checkpoints"
+                        / "repeat2"
+                        / second["artifacts"]["outer_action"]["path"]
+                    )
+                    solution_difference = _m6b_w18a_disk_relative_difference(
+                        first_solution, second_solution
+                    )
+                    action_difference = _m6b_w18a_disk_relative_difference(
+                        first_action, second_action
+                    )
+                    first["solution_relative_difference"] = solution_difference
+                    second["solution_relative_difference"] = solution_difference
+                    first["action_relative_difference"] = action_difference
+                    second["action_relative_difference"] = action_difference
+
+                outer_audits = [run["outer_audit"] for run in repeats]
+                global_count = sum(
+                    record["global_action_count"]
+                    for run in repeats
+                    for record in run["inner_records"]
+                )
+                local_count = sum(
+                    record["pc_apply_count"]
+                    for run in repeats
+                    for record in run["inner_records"]
+                )
+                outer_count = sum(
+                    audit["action_count"] for audit in outer_audits
+                )
+                outer_pc_count = sum(audit["pc_count"] for audit in outer_audits)
+                shifted_total = int(shifted_action.audit["apply_count"])
+                local_exact = shifted_total - global_count - outer_count
+                aux_dtn = h2a._jsonable(dtn_action.audit)
+                shifted_final = h2a._jsonable(shifted_action.audit)
+                action_counts = {
+                    "outer_auxiliary_action_count": outer_count,
+                    "outer_pc_apply_count": outer_pc_count,
+                    "inner_global_shifted_action_count": global_count,
+                    "global_auxiliary_action_count": global_count,
+                    "global_shifted_action_count": global_count,
+                    "local_pc_apply_count": local_count,
+                    "local_exact_shifted_action_count": local_exact,
+                    "local_exact_shifted_volume_action_count": local_exact,
+                    "shifted_action_total_count": shifted_total,
+                    "shifted_action_count": shifted_total,
+                    "auxiliary_dtn_action_count": aux_dtn["apply_count"],
+                }
+                action_audit["auxiliary_final_counts"] = {
+                    "outer": outer_audits,
+                    "dtn": aux_dtn,
+                    "shifted_action": shifted_final,
+                }
+                if not (
+                    action_counts["outer_auxiliary_action_count"] == 8
+                    and action_counts["outer_pc_apply_count"] == 4
+                    and global_count == 172
+                    and local_count == 160
+                    and local_exact == 160
+                    and shifted_total == 340
+                    and aux_dtn["apply_count"] == 8
+                ):
+                    raise RuntimeError(
+                        f"{worker_schema} auxiliary count closure failed"
+                    )
+                if dtn_source is not None:
+                    dtn_source.destroy()
+                    dtn_source = None
+                if dtn_target is not None:
+                    dtn_target.destroy()
+                    dtn_target = None
+                shifted_vec.destroy()
+                shifted_vec = None
+                shifted_action.destroy()
+                shifted_action = None
+                local_pc = None
+                store = None
+                del (
+                    shifted_ufl,
+                    shifted_epsilon,
+                    shifted_abs_epsilon,
+                    shifted_beta,
+                    shifted_tags,
+                )
+                gc.collect()
+                action_audit["lifecycle_events"].append("auxiliary_released")
+                emit("auxiliary_released")
+
+                (
+                    physical_ufl,
+                    physical_epsilon,
+                    physical_abs_epsilon,
+                    physical_beta,
+                    physical_tags,
+                ) = build_m6b_volume_form(
+                    function_space, mesh_data, cfg, beta=0.0
+                )
+                physical_action = build_task037_extra_h1r2_mpc_action(
+                    physical_ufl,
+                    floquet.mpc,
+                    task037_extra_h1r2=True,
+                    jit_options=h2b._expected_jit_options(cache_dir),
+                )
+                outer_mat, outer_context = build_m6b_outer_mat(
+                    physical_action,
+                    dtn_action,
+                    owned_rows=M6B_GLOBAL_ROWS,
+                    global_rows=M6B_GLOBAL_ROWS,
+                    comm=MPI.COMM_WORLD,
+                )
+                template = outer_mat.createVecRight()
+                outer_bridge = M6BNumpyOuterActionBridge(outer_context, template)
+                action_audit["lifecycle_events"].append("physical_constructed")
+                emit("physical_constructed")
+                p_paths: dict[tuple[int, int], Path] = {}
+                p_artifacts: dict[str, Any] = {}
+                for repeat_index, repeat in enumerate(repeats, start=1):
+                    for iteration in (1, 2):
+                        checkpoint = repeat["checkpoints"][str(iteration)]
+                        solution_path = (
+                            run_dir
+                            / "outer_checkpoints"
+                            / f"repeat{repeat_index}"
+                            / checkpoint["artifacts"]["solution"]["path"]
+                        )
+                        z_value = np.load(
+                            solution_path, allow_pickle=False, mmap_mode="r"
+                        )
+                        p_value = np.ascontiguousarray(
+                            outer_bridge.apply(z_value), dtype=np.complex128
+                        )
+                        if p_value.shape != z_value.shape or not np.all(
+                            np.isfinite(p_value)
+                        ):
+                            raise FloatingPointError(
+                                f"{worker_schema} physical action returned invalid values"
+                            )
+                        output_name = (
+                            f"w18a_p_repeat{repeat_index}_checkpoint{iteration}.npy"
+                        )
+                        p_artifact = write_vector(output_name, p_value)
+                        p_path = run_dir / output_name
+                        p_paths[(repeat_index, iteration)] = p_path
+                        p_artifacts[f"repeat{repeat_index}_checkpoint{iteration}"] = (
+                            p_artifact
+                        )
+                        measurement = repeat_rank_one_projection(
+                            target,
+                            p_value,
+                            block_size=M6B_W11A_BLOCK_SIZE,
+                            schema=M6B_W18A_SCHEMA,
+                        )
+                        measurement["checkpoint"] = iteration
+                        repeat["measurements"][str(iteration)] = measurement
+                        physical_call_count += 1
+                        action_audit["lifecycle_events"].append(
+                            f"physical_apply_{physical_call_count}"
+                        )
+                        emit(
+                            f"physical_apply_{physical_call_count}_ready",
+                            physical_action_count=physical_call_count,
+                        )
+                        del z_value, p_value
+                physical_snapshot = h2a._jsonable(physical_action.audit)
+                physical_outer = h2a._jsonable(outer_context.audit)
+                final_dtn = h2a._jsonable(dtn_action.audit)
+                physical_bridge = h2a._jsonable(outer_bridge.audit)
+                physical_dtn_count = final_dtn["apply_count"] - aux_dtn["apply_count"]
+                if not (
+                    physical_snapshot["apply_count"] == 4
+                    and physical_outer["apply_count"] == 4
+                    and physical_bridge["forward_apply_count"] == 4
+                    and physical_dtn_count == 4
+                    and final_dtn["apply_count"] == 12
+                ):
+                    raise RuntimeError(f"{worker_schema} physical count closure failed")
+                action_counts.update(
+                    {
+                        "physical_action_count": physical_snapshot[
+                            "apply_count"
+                        ],
+                        "physical_volume_action_count": physical_snapshot[
+                            "apply_count"
+                        ],
+                        "physical_dtn_action_count": physical_dtn_count,
+                        "total_dtn_action_count": final_dtn["apply_count"],
+                    }
+                )
+                action_audit.update(action_counts)
+                action_audit["physical_instances"] = [
+                    {
+                        "physical": physical_snapshot,
+                        "outer": physical_outer,
+                        "dtn": final_dtn,
+                        "bridge": physical_bridge,
+                    }
+                ]
+                physical_identity: dict[str, Any] = {}
+                for iteration in (1, 2):
+                    first_path = p_paths[(1, iteration)]
+                    second_path = p_paths[(2, iteration)]
+                    first_artifact = p_artifacts[
+                        f"repeat1_checkpoint{iteration}"
+                    ]
+                    second_artifact = p_artifacts[
+                        f"repeat2_checkpoint{iteration}"
+                    ]
+                    physical_identity[str(iteration)] = {
+                        "first_sha256": first_artifact["array_sha256"],
+                        "second_sha256": second_artifact["array_sha256"],
+                        "sha256_equal": first_artifact["array_sha256"]
+                        == second_artifact["array_sha256"],
+                        "relative_difference": _m6b_w18a_disk_relative_difference(
+                            first_path, second_path
+                        ),
+                    }
+                architecture = dict(W18A_ARCHITECTURE)
+                architecture.update(
+                    {
+                        "global_matrix_materialized": physical_snapshot[
+                            "global_matrix_materialized"
+                        ],
+                        "global_condensed_schur_materialized": physical_snapshot[
+                            "global_condensed_schur_materialized"
+                        ],
+                        "augmented_matrix_materialized": physical_outer[
+                            "augmented_matrix"
+                        ],
+                        "static_condensation": final_dtn["condensation"],
+                        "static_condensed_operator_used": final_dtn[
+                            "static_condensed_operator_used"
+                        ],
+                        "trace_slab": final_dtn["trace_slab_pc_used"],
+                        "trace_slab_pc_used": final_dtn["trace_slab_pc_used"],
+                        "physical_ksp_used": physical_snapshot["ksp_created"],
+                    }
+                )
+                lifecycle = dict(W18A_LIFECYCLE)
+                lifecycle.update(
+                    {
+                        "events": list(action_audit["lifecycle_events"]),
+                        "auxiliary_physical_context_overlap": False,
+                        "release_between_repeats": False,
+                    }
+                )
+                if outer_bridge is not None:
+                    outer_bridge.destroy()
+                    outer_bridge = None
+                if outer_context is not None:
+                    outer_context.destroy()
+                    outer_context = None
+                if outer_mat is not None:
+                    outer_mat.destroy()
+                    outer_mat = None
+                if template is not None:
+                    template.destroy()
+                    template = None
+                if physical_action is not None:
+                    physical_action.destroy()
+                    physical_action = None
+                del (
+                    physical_ufl,
+                    physical_epsilon,
+                    physical_abs_epsilon,
+                    physical_beta,
+                    physical_tags,
+                    p_paths,
+                )
+                gc.collect()
+                action_audit["lifecycle_events"].append("physical_released")
+                emit("physical_released", physical_action_count=4)
+                if dtn_action is not None:
+                    dtn_action.destroy()
+                    dtn_action = None
+                del dtn_carrier, surface_assemblers
+                dtn_carrier = surface_assemblers = None
+                gc.collect()
+                action_audit["lifecycle_events"].append("dtn_released")
+                emit("dtn_released")
+                lifecycle["events"] = list(action_audit["lifecycle_events"])
+                core_result = {
+                    "schema": M6B_W18A_SCHEMA,
+                    "fixed_identity": dict(W18A_FIXED_IDENTITY),
+                    "repeats": repeats,
+                    "action_counts": action_counts,
+                    "architecture": architecture,
+                    "lifecycle": lifecycle,
+                    "prediction": predicted,
+                    "physical_identity": physical_identity,
+                    "artifacts": {
+                        "outer_checkpoints": [
+                            {
+                                "repeat_index": repeat["repeat_index"],
+                                "checkpoints": repeat["checkpoints"],
+                            }
+                            for repeat in repeats
+                        ],
+                        "physical_outputs": p_artifacts,
+                    },
+                    "action_audit": action_audit,
+                    "checks": {},
+                    "problems": [],
+                }
+                del target
+                raise _W16BCoreReady()
             if is_w17a:
                 def build_outer(action: Any) -> None:
                     nonlocal outer_bridge, outer_context, outer_mat, template
@@ -14991,6 +15765,10 @@ def _run_m6b_w16a_diagnostic(
             outer_mat.destroy()
         if template is not None:
             template.destroy()
+        if dtn_source is not None:
+            dtn_source.destroy()
+        if dtn_target is not None:
+            dtn_target.destroy()
         if dtn_action is not None:
             dtn_action.destroy()
         if physical_action is not None:
@@ -15045,6 +15823,8 @@ def _run_m6b_w16a_diagnostic(
             if is_w16r
             else evaluate_w16b_outer2_gate(core_result)
             if is_w16b
+            else evaluate_w18a_action_gate(core_result)
+            if is_w18a
             else evaluate_w17a_global_physical_shifted_gate(core_result)
             if is_w17a
             else evaluate_w16a_global_shifted_gate(core_result)
@@ -15062,6 +15842,8 @@ def _run_m6b_w16a_diagnostic(
             if is_w16r
             else _m6b_w16b_final_status(checks, error)
             if is_w16b
+            else _m6b_w18a_final_status(checks, error)
+            if is_w18a
             else _m6b_w17a_final_status(checks, error)
             if is_w17a
             else _m6b_w16a_final_status(checks, error)
@@ -15075,6 +15857,8 @@ def _run_m6b_w16a_diagnostic(
             if is_w16r
             else "W16B_EXECUTION_OR_EVIDENCE_FAIL"
             if is_w16b
+            else "W18A_EXECUTION_OR_EVIDENCE_FAIL"
+            if is_w18a
             else "W17A_EXECUTION_OR_EVIDENCE_FAIL"
             if is_w17a
             else "W16A_EXECUTION_OR_EVIDENCE_FAIL"
@@ -15089,6 +15873,8 @@ def _run_m6b_w16a_diagnostic(
         if is_w16r
         else "w16b_pass"
         if is_w16b
+        else "w18a_pass"
+        if is_w18a
         else "w17a_pass"
         if is_w17a
         else "w16a_pass"
@@ -15105,6 +15891,12 @@ def _run_m6b_w16a_diagnostic(
         **(
             {"w16c_locked": True, "w16c_unlocked": False}
             if is_w16b
+            else {
+                "w18a_formal_candidate": bool(diagnostic_pass),
+                "physical_screen_locked": True,
+                "physical_screen_candidate": False,
+            }
+            if is_w18a
             else {"w17b_locked": True, "w17b_action_candidate": bool(diagnostic_pass)}
             if is_w17a
             else {
@@ -15117,6 +15909,8 @@ def _run_m6b_w16a_diagnostic(
             if is_w16r
             else _m6b_w16b_scope()
             if is_w16b
+            else _m6b_w18a_scope()
+            if is_w18a
             else _m6b_w17a_scope()
             if is_w17a
             else _m6b_w16a_scope()
@@ -23867,6 +24661,15 @@ def _parser() -> argparse.ArgumentParser:
     w17a.add_argument(
         "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
     )
+    w18a = sub.add_parser("m6b-w18a-nested-auxiliary-diagnostic")
+    w18a.add_argument("--run-dir", required=True)
+    w18a.add_argument("--w7-compact", required=True)
+    w18a.add_argument("--w7-raw-dir", required=True)
+    w18a.add_argument("--shifted-factor-manifest", required=True)
+    w18a.add_argument("--jit-cache-source", required=True)
+    w18a.add_argument(
+        "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
+    )
     w16r = sub.add_parser("m6b-w16r-restart20-diagnostic")
     w16r.add_argument("--run-dir", required=True)
     w16r.add_argument("--w7-compact", required=True)
@@ -24220,6 +25023,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.command == "m6b-w17a-global-physical-shifted-diagnostic":
         return _run_m6b_w17a_diagnostic(
+            Path(args.run_dir).resolve(),
+            Path(args.w7_compact).resolve(),
+            Path(args.w7_raw_dir).resolve(),
+            Path(args.shifted_factor_manifest).resolve(),
+            Path(args.jit_cache_source).resolve(),
+            args.expected_source_sha,
+        )
+    if args.command == "m6b-w18a-nested-auxiliary-diagnostic":
+        return _run_m6b_w18a_diagnostic(
             Path(args.run_dir).resolve(),
             Path(args.w7_compact).resolve(),
             Path(args.w7_raw_dir).resolve(),
