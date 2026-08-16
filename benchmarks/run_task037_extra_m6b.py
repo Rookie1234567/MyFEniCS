@@ -624,6 +624,35 @@ M6B_W16A_WATCHDOG_SUMMARY_FILENAME = "w16a_watchdog_summary.json"
 M6B_W16A_TIMEOUT_SECONDS = 3_600.0
 M6B_W16A_WATCHDOG_RSS_LIMIT_BYTES = 1_950_000_000
 M6B_W16A_FORMAL_RSS_LIMIT_BYTES = 1_950_000_000
+M6B_W16R_SCHEMA = "task037.extra.h2b.w16r.restart20.v1"
+M6B_W16R_PHASE = "w16r_restart20"
+M6B_W16R_PROGRESS_FILENAME = "m6b_w16r_progress.jsonl"
+M6B_W16R_SUMMARY_FILENAME = "m6b_w16r_summary.json"
+M6B_W16R_WATCHDOG_SCHEMA = "task037.extra.h2b.w16r.watchdog.v1"
+M6B_W16R_CHECK_SCHEMA = "task037.extra.h2b.w16r.formal-resource-check.v1"
+M6B_W16R_WATCHDOG_SUMMARY_FILENAME = "w16r_watchdog_summary.json"
+M6B_W16R_TIMEOUT_SECONDS = M6B_W16A_TIMEOUT_SECONDS
+M6B_W16R_WATCHDOG_RSS_LIMIT_BYTES = M6B_W16A_WATCHDOG_RSS_LIMIT_BYTES
+M6B_W16R_FORMAL_RSS_LIMIT_BYTES = M6B_W16A_FORMAL_RSS_LIMIT_BYTES
+M6B_W16R_W16A_COMPACT_RELATIVE_PATH = (
+    "benchmarks/cases/101_task37_extra_development/records/"
+    "m6b_w16a_d5460ef_formal_resource_closeout_v1.json"
+)
+M6B_W16R_W16A_COMPACT_FILE_SHA256 = (
+    "85b3fccbe2e7a2ce70d3c6b004c57ba06bd66abf6cb335c35f1f4e0a2a7d65e0"
+)
+M6B_W16R_W16A_COMPACT_EVIDENCE_SHA256 = (
+    "57bc3666584e883ba54bbdb9ff1d497e878b8c38e47d3b08f656876cb3a12959"
+)
+M6B_W16R_W16A_RAW_RELATIVE_PATH = (
+    "benchmarks/artifacts/task037_extra_development/"
+    "m6b_w16a_d5460ef_formal_run1"
+)
+M6B_W16R_W16A_SOURCE_SHA = (
+    "d5460ef75433de22b16859719d6fc3e45e30444b"
+)
+M6B_W16R_PREDICTED_LIVE_SET_BYTES = 1_742_766_907
+M6B_W16R_EVENTS = M6B_W16A_EVENTS
 M6B_W6A_EVENTS = (
     "authority_validated",
     "mesh_ready",
@@ -3968,6 +3997,40 @@ def _m6b_w16a_worker_command(
     ]
 
 
+def _m6b_w16r_worker_command(
+    run_dir: Path,
+    w7_compact: Path,
+    w7_raw_dir: Path,
+    shifted_factor_manifest: Path,
+    jit_cache_source: Path,
+    w16a_compact: Path,
+    w16a_raw_dir: Path,
+    expected_source_sha: str,
+) -> list[str]:
+    return [
+        sys.executable,
+        "-m",
+        "benchmarks.run_task037_extra_m6b",
+        "m6b-w16r-restart20-diagnostic",
+        "--run-dir",
+        str(Path(run_dir).resolve()),
+        "--w7-compact",
+        str(Path(w7_compact).resolve()),
+        "--w7-raw-dir",
+        str(Path(w7_raw_dir).resolve()),
+        "--shifted-factor-manifest",
+        str(Path(shifted_factor_manifest).resolve()),
+        "--jit-cache-source",
+        str(Path(jit_cache_source).resolve()),
+        "--w16a-compact",
+        str(Path(w16a_compact).resolve()),
+        "--w16a-raw-dir",
+        str(Path(w16a_raw_dir).resolve()),
+        "--expected-source-sha",
+        expected_source_sha,
+    ]
+
+
 def _m6b_w14b_worker_command(
     run_dir: Path,
     w5_compact: Path,
@@ -4470,22 +4533,37 @@ def _run_m6b_w15a_watchdog(
     return 0 if worker_completed else 1
 
 
-def _m6b_w16a_raw_artifacts(run_dir: Path) -> list[dict[str, Any]]:
+def _m6b_w16a_raw_artifacts(
+    run_dir: Path, *, mode: str = "w16a"
+) -> list[dict[str, Any]]:
+    is_w16r = mode == "w16r"
     return [
-        _artifact(run_dir, M6B_W16A_SUMMARY_FILENAME),
-        _artifact(run_dir, M6B_W16A_PROGRESS_FILENAME),
+        _artifact(run_dir, M6B_W16R_SUMMARY_FILENAME if is_w16r else M6B_W16A_SUMMARY_FILENAME),
+        _artifact(run_dir, M6B_W16R_PROGRESS_FILENAME if is_w16r else M6B_W16A_PROGRESS_FILENAME),
     ]
 
 
-def _m6b_w16a_watchdog_artifacts(watchdog_dir: Path) -> list[dict[str, Any]]:
+def _m6b_w16a_watchdog_artifacts(
+    watchdog_dir: Path, *, mode: str = "w16a"
+) -> list[dict[str, Any]]:
+    phase = M6B_W16R_PHASE if mode == "w16r" else M6B_W16A_PHASE
     return [
-        _artifact(watchdog_dir, f"{M6B_W16A_PHASE}_timeline.jsonl"),
-        _artifact(watchdog_dir, f"{M6B_W16A_PHASE}_stdout.txt"),
-        _artifact(watchdog_dir, f"{M6B_W16A_PHASE}_root_pid.json"),
+        _artifact(watchdog_dir, f"{phase}_timeline.jsonl"),
+        _artifact(watchdog_dir, f"{phase}_stdout.txt"),
+        _artifact(watchdog_dir, f"{phase}_root_pid.json"),
     ]
 
 
-def _m6b_w16a_progress_valid(path: Path) -> dict[str, Any]:
+def _m6b_w16a_progress_valid(
+    path: Path,
+    *,
+    mode: str = "w16a",
+    expected_restart_authority: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    is_w16r = mode == "w16r"
+    schema = M6B_W16R_SCHEMA if is_w16r else M6B_W16A_SCHEMA
+    phase = M6B_W16R_PHASE if is_w16r else M6B_W16A_PHASE
+    expected_events = M6B_W16R_EVENTS if is_w16r else M6B_W16A_EVENTS
     try:
         records = [
             json.loads(line)
@@ -4496,14 +4574,30 @@ def _m6b_w16a_progress_valid(path: Path) -> dict[str, Any]:
             return {"pass": False, "record_count": len(records), "events": []}
         events = [record.get("event") for record in records]
         passed = bool(
-            len(records) == len(M6B_W16A_EVENTS)
+            len(records) == len(expected_events)
             and all(
-                record.get("schema") == f"{M6B_W16A_SCHEMA}.progress.v1"
-                and record.get("phase") == M6B_W16A_PHASE
+                record.get("schema") == f"{schema}.progress.v1"
+                and record.get("phase") == phase
                 for record in records
             )
-            and events == list(M6B_W16A_EVENTS)
+            and events == list(expected_events)
         )
+        if is_w16r:
+            marker_records = {
+                record.get("event"): record
+                for record in records
+                if record.get("event") in {"authority_validated", "summary_ready"}
+            }
+            passed = bool(
+                passed
+                and isinstance(expected_restart_authority, Mapping)
+                and len(marker_records) == 2
+                and all(
+                    marker_records[event].get("w16a_restart")
+                    == expected_restart_authority
+                    for event in ("authority_validated", "summary_ready")
+                )
+            )
         return {"pass": passed, "record_count": len(records), "events": events}
     except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
         return {"pass": False, "record_count": 0, "problems": [type(exc).__name__]}
@@ -4517,18 +4611,48 @@ def _run_m6b_w16a_watchdog(
     shifted_factor_manifest: Path,
     jit_cache_source: Path,
     expected_source_sha: str,
+    *,
+    mode: str = "w16a",
+    w16a_compact: Path | None = None,
+    w16a_raw_dir: Path | None = None,
 ) -> int:
-    """Run the fixed W16A worker once under the shared process monitor."""
+    """Run the fixed W16A/W16R worker once under the shared monitor."""
 
     import time
 
     h2b = __import__("benchmarks.run_task037_extra_h2b", fromlist=["*"])
+    is_w16r = mode == "w16r"
+    if mode not in {"w16a", "w16r"}:
+        raise ValueError("unsupported W16 watchdog mode")
+    if is_w16r and (w16a_compact is None or w16a_raw_dir is None):
+        raise ValueError("W16R watchdog requires W16A authority")
+    worker_phase = M6B_W16R_PHASE if is_w16r else M6B_W16A_PHASE
+    watchdog_schema = (
+        M6B_W16R_WATCHDOG_SCHEMA if is_w16r else M6B_W16A_WATCHDOG_SCHEMA
+    )
+    watchdog_filename = (
+        M6B_W16R_WATCHDOG_SUMMARY_FILENAME
+        if is_w16r
+        else M6B_W16A_WATCHDOG_SUMMARY_FILENAME
+    )
+    timeout_seconds = M6B_W16R_TIMEOUT_SECONDS if is_w16r else M6B_W16A_TIMEOUT_SECONDS
+    watchdog_limit = (
+        M6B_W16R_WATCHDOG_RSS_LIMIT_BYTES
+        if is_w16r
+        else M6B_W16A_WATCHDOG_RSS_LIMIT_BYTES
+    )
+    formal_limit = M6B_W16R_FORMAL_RSS_LIMIT_BYTES if is_w16r else M6B_W16A_FORMAL_RSS_LIMIT_BYTES
     run_dir = Path(run_dir).resolve()
     watchdog_dir = Path(watchdog_dir).resolve()
     authority_paths = tuple(
         Path(path).resolve()
         for path in (w7_compact, w7_raw_dir, shifted_factor_manifest, jit_cache_source)
     )
+    if is_w16r:
+        authority_paths += (
+            Path(w16a_compact).resolve(),
+            Path(w16a_raw_dir).resolve(),
+        )
     if run_dir.exists() or watchdog_dir.exists():
         raise FileExistsError("W16A watchdog refuses existing paths")
     if any(not path.exists() for path in authority_paths):
@@ -4542,28 +4666,51 @@ def _run_m6b_w16a_watchdog(
     ):
         raise RuntimeError("W16A watchdog source identity is not clean or expected")
 
+    restart_metadata = None
+    if is_w16r:
+        frozen_restart = _m6b_w16r_w16a_authority(
+            Path(w16a_compact), Path(w16a_raw_dir)
+        )
+        restart_metadata = {
+            key: value for key, value in frozen_restart.items() if key != "z20"
+        }
+        del frozen_restart
+
     watchdog_dir.mkdir(parents=True)
-    command = _m6b_w16a_worker_command(
-        run_dir,
-        w7_compact,
-        w7_raw_dir,
-        shifted_factor_manifest,
-        jit_cache_source,
-        expected_source_sha,
+    command = (
+        _m6b_w16r_worker_command(
+            run_dir,
+            w7_compact,
+            w7_raw_dir,
+            shifted_factor_manifest,
+            jit_cache_source,
+            w16a_compact,
+            w16a_raw_dir,
+            expected_source_sha,
+        )
+        if is_w16r
+        else _m6b_w16a_worker_command(
+            run_dir,
+            w7_compact,
+            w7_raw_dir,
+            shifted_factor_manifest,
+            jit_cache_source,
+            expected_source_sha,
+        )
     )
     started = time.perf_counter()
     process = h2b._monitor_phase(
         watchdog_dir,
-        M6B_W16A_PHASE,
+        worker_phase,
         command,
-        M6B_W16A_TIMEOUT_SECONDS,
-        M6B_W16A_WATCHDOG_RSS_LIMIT_BYTES,
+        timeout_seconds,
+        watchdog_limit,
     )
     drain = h2b._bounded_process_drain(process)
     source_end = h2b._light_source()
-    timeline_name = f"{M6B_W16A_PHASE}_timeline.jsonl"
+    timeline_name = f"{worker_phase}_timeline.jsonl"
     timeline = _m6b_w8a_timeline_valid(
-        watchdog_dir / timeline_name, phase=M6B_W16A_PHASE
+        watchdog_dir / timeline_name, phase=worker_phase
     )
     worker_completed = bool(
         type(process.get("return_code")) is int
@@ -4573,9 +4720,13 @@ def _run_m6b_w16a_watchdog(
         and drain.get("gone") is True
     )
     payload = {
-        "schema": M6B_W16A_WATCHDOG_SCHEMA,
-        "phase": M6B_W16A_PHASE,
-        "status": "measurement_complete" if worker_completed else "gate_failed",
+        "schema": watchdog_schema,
+        "phase": worker_phase,
+        "status": (
+            "gate_failed"
+            if not worker_completed or (is_w16r and process.get("return_code") == 1)
+            else "measurement_complete"
+        ),
         "process": process,
         "drain": drain,
         "source_at_start": source_start,
@@ -4585,31 +4736,68 @@ def _run_m6b_w16a_watchdog(
             and source_end.get("source_commit_full_sha") == expected_source_sha
         ),
         "resource_limits": {
-            "timeout_seconds": M6B_W16A_TIMEOUT_SECONDS,
-            "watchdog_rss_bytes": M6B_W16A_WATCHDOG_RSS_LIMIT_BYTES,
-            "completion_peak_rss_bytes": M6B_W16A_FORMAL_RSS_LIMIT_BYTES,
+            "timeout_seconds": timeout_seconds,
+            "watchdog_rss_bytes": watchdog_limit,
+            "completion_peak_rss_bytes": formal_limit,
             "swap_bytes": M6B_SWAP_LIMIT_BYTES,
         },
         "raw_dir": str(run_dir),
         "watchdog_dir": str(watchdog_dir),
         "command": command,
         "artifact_inventory": {
-            "raw": _m6b_w16a_raw_artifacts(run_dir),
-            "watchdog": _m6b_w16a_watchdog_artifacts(watchdog_dir),
+            "raw": _m6b_w16a_raw_artifacts(run_dir, mode=mode),
+            "watchdog": _m6b_w16a_watchdog_artifacts(watchdog_dir, mode=mode),
         },
-        "worker_summary": _artifact(run_dir, M6B_W16A_SUMMARY_FILENAME),
+        "worker_summary": _artifact(
+            run_dir,
+            M6B_W16R_SUMMARY_FILENAME if is_w16r else M6B_W16A_SUMMARY_FILENAME,
+        ),
         "timeline": timeline,
         "formal_pass": False,
         "pde_pass": False,
         "official_rta": False,
         "w16b_unlocked": False,
+        **(
+            {
+                "w16a_restart_authority": restart_metadata,
+            }
+            if is_w16r
+            else {}
+        ),
         "elapsed_wall_seconds": float(time.perf_counter() - started),
     }
     _write_json(
-        watchdog_dir / M6B_W16A_WATCHDOG_SUMMARY_FILENAME,
+        watchdog_dir / watchdog_filename,
         _attach_evidence(payload),
     )
     return 0 if worker_completed else 1
+
+
+def _run_m6b_w16r_watchdog(
+    run_dir: Path,
+    watchdog_dir: Path,
+    w7_compact: Path,
+    w7_raw_dir: Path,
+    shifted_factor_manifest: Path,
+    jit_cache_source: Path,
+    w16a_compact: Path,
+    w16a_raw_dir: Path,
+    expected_source_sha: str,
+) -> int:
+    """Run W16R once through the shared W16A process-tree monitor."""
+
+    return _run_m6b_w16a_watchdog(
+        run_dir,
+        watchdog_dir,
+        w7_compact,
+        w7_raw_dir,
+        shifted_factor_manifest,
+        jit_cache_source,
+        expected_source_sha,
+        mode="w16r",
+        w16a_compact=w16a_compact,
+        w16a_raw_dir=w16a_raw_dir,
+    )
 
 
 def _m6b_w14a_progress_valid(path: Path) -> dict[str, Any]:
@@ -6222,7 +6410,9 @@ def _m6b_w16a_scratch_valid(raw_dir: Path, core: Any) -> bool:
         return False
 
 
-def _m6b_w16a_checkpoint_artifacts_valid(raw_dir: Path, core: Any) -> bool:
+def _m6b_w16a_checkpoint_artifacts_valid(
+    raw_dir: Path, core: Any, *, mode: str = "w16a"
+) -> bool:
     if not isinstance(core, Mapping):
         return False
     try:
@@ -6257,12 +6447,13 @@ def _m6b_w16a_checkpoint_artifacts_valid(raw_dir: Path, core: Any) -> bool:
             observed_runs.append(run_index)
         if observed_runs != [1, 2]:
             return False
+        physical_prefix = "w16r" if mode == "w16r" else "w16a"
         return all(
             _m6b_w16a_array_artifact_valid(
                 raw_dir,
                 Path(raw_dir),
                 descriptor,
-                f"w16a_physical_{name}.npy",
+                f"{physical_prefix}_physical_{name}.npy",
             )
             for name, descriptor in physical.items()
         )
@@ -6271,7 +6462,12 @@ def _m6b_w16a_checkpoint_artifacts_valid(raw_dir: Path, core: Any) -> bool:
 
 
 def _m6b_w16a_vector_evidence_valid(
-    raw_dir: Path, core: Any, expected_w7: Mapping[str, Any]
+    raw_dir: Path,
+    core: Any,
+    expected_w7: Mapping[str, Any],
+    *,
+    mode: str = "w16a",
+    restart_authority: Mapping[str, Any] | None = None,
 ) -> bool:
     """Close W16A scalar evidence over the frozen and recorded vectors."""
 
@@ -6385,7 +6581,7 @@ def _m6b_w16a_vector_evidence_valid(
 
         if not np.array_equal(rhs_values[0], rhs_values[1]):
             return False
-        z_identity = core["z_identity"]
+        z_identity = core["z40_identity" if mode == "w16r" else "z_identity"]
         if not (
             z_identity["first_sha256"]
             == records[0]["solution_sha256"]
@@ -6395,11 +6591,12 @@ def _m6b_w16a_vector_evidence_valid(
             return False
 
         physical = core["artifacts"]["physical_action_outputs"]
+        physical_prefix = "w16r" if mode == "w16r" else "w16a"
         p_values = [
             load_array(
                 Path(raw_dir),
                 physical[f"p{index}"],
-                f"w16a_physical_p{index}.npy",
+                f"{physical_prefix}_physical_p{index}.npy",
             )
             for index in (1, 2)
         ]
@@ -6418,6 +6615,22 @@ def _m6b_w16a_vector_evidence_valid(
         )
 
         measurements = core["measurements"]
+        if mode == "w16r":
+            authority = core["restart_authority"]
+            if not isinstance(restart_authority, Mapping) or not isinstance(
+                authority, Mapping
+            ):
+                return False
+            if authority["z20_sha256"] != restart_authority["z20_sha256"]:
+                return False
+            if not all(
+                record["initial_solution_sha256"] == restart_authority["z20_sha256"]
+                and record["initial_cumulative_iteration"] == 20
+                and record["additional_iterations"] == 20
+                and record["cumulative_iteration"] == 40
+                for record in records
+            ):
+                return False
         frozen_residual = np.asarray(expected_w7["residual"])
         if (
             frozen_residual.dtype != np.dtype(np.complex128)
@@ -6456,7 +6669,7 @@ def _m6b_w16a_vector_evidence_valid(
                 frozen_residual,
                 direction,
                 block_size=M6B_W11A_BLOCK_SIZE,
-                schema=M6B_W16A_SCHEMA,
+                schema=(M6B_W16R_SCHEMA if mode == "w16r" else M6B_W16A_SCHEMA),
             )
             if not all(
                 equal_value(recomputed[key], measured[key])
@@ -6475,7 +6688,9 @@ def _m6b_w16a_vector_evidence_valid(
         return False
 
 
-def _m6b_w16a_action_audit_valid(value: Any) -> bool:
+def _m6b_w16a_action_audit_valid(
+    value: Any, *, mode: str = "w16a"
+) -> bool:
     if not isinstance(value, Mapping):
         return False
     try:
@@ -6487,8 +6702,15 @@ def _m6b_w16a_action_audit_valid(value: Any) -> bool:
         outer = instance["outer"]
         dtn = instance["dtn"]
         bridge = instance["bridge"]
+        expected_global = 44 if mode == "w16r" else 42
+        expected_shifted = 84 if mode == "w16r" else 82
+        expected_roles = (
+            ["w7_target_residual", "w16a_z20_restart_authority"]
+            if mode == "w16r"
+            else ["w7_target_residual"]
+        )
         return bool(
-            value["retained_authority_vector_roles"] == ["w7_target_residual"]
+            value["retained_authority_vector_roles"] == expected_roles
             and value["lifecycle_events"] == [
                 "auxiliary_constructed",
                 "inner_apply_1",
@@ -6499,16 +6721,16 @@ def _m6b_w16a_action_audit_valid(value: Any) -> bool:
                 "physical_apply_2",
                 "physical_released",
             ]
-            and value["global_shifted_action_count"] == 42
+            and value["global_shifted_action_count"] == expected_global
             and value["local_pc_apply_count"] == 40
             and value["local_exact_shifted_volume_action_count"] == 40
-            and value["shifted_action_total_count"] == 82
+            and value["shifted_action_total_count"] == expected_shifted
             and value["physical_action_count"] == 2
             and value["physical_dtn_action_count"] == 2
             and len(instances) == 1
             and construction["shifted_action"]["apply_count"] == 0
-            and final_counts["shifted_action_audit"]["apply_count"] == 82
-            and final_counts["global_shifted_action_count"] == 42
+            and final_counts["shifted_action_audit"]["apply_count"] == expected_shifted
+            and final_counts["global_shifted_action_count"] == expected_global
             and final_counts["local_pc_apply_count"] == 40
             and final_counts["local_exact_shifted_volume_action_count"] == 40
             and physical["apply_count"] == 2
@@ -6582,7 +6804,7 @@ def _m6b_w16a_jit_valid(summary: Mapping[str, Any], raw_dir: Path, h2b: Any) -> 
 
 
 def _m6b_w16a_measured_summary(
-    summary: Mapping[str, Any], timeline: Mapping[str, Any]
+    summary: Mapping[str, Any], timeline: Mapping[str, Any], *, mode: str = "w16a"
 ) -> dict[str, Any]:
     core = summary.get("core", {})
     records = core.get("inner_records", []) if isinstance(core, Mapping) else []
@@ -6598,7 +6820,10 @@ def _m6b_w16a_measured_summary(
         "inner_true_residuals": [
             scalar(record, "true_residual") for record in records
         ],
-        "z_relative_difference": scalar(core.get("z_identity", {}), "relative_difference")
+        "z_relative_difference": scalar(
+            core.get("z40_identity" if mode == "w16r" else "z_identity", {}),
+            "relative_difference",
+        )
         if isinstance(core, Mapping)
         else None,
         "p_relative_difference": scalar(core.get("p_identity", {}), "relative_difference")
@@ -6630,17 +6855,40 @@ def _m6b_w16a_measured_summary(
 
 
 def _m6b_w16a_formal_gate(
-    raw_dir: Path, watchdog_summary_path: Path, expected_source_sha: str
+    raw_dir: Path,
+    watchdog_summary_path: Path,
+    expected_source_sha: str,
+    *,
+    mode: str = "w16a",
 ) -> dict[str, Any]:
-    """Independently recheck W16A worker evidence and resource closeout."""
+    """Independently recheck W16A or W16R worker evidence and resources."""
 
     h2b = __import__("benchmarks.run_task037_extra_h2b", fromlist=["*"])
+    is_w16r = mode == "w16r"
+    if mode not in {"w16a", "w16r"}:
+        raise ValueError("unsupported W16 formal mode")
+    worker_schema = M6B_W16R_SCHEMA if is_w16r else M6B_W16A_SCHEMA
+    worker_phase = M6B_W16R_PHASE if is_w16r else M6B_W16A_PHASE
+    worker_summary_filename = (
+        M6B_W16R_SUMMARY_FILENAME if is_w16r else M6B_W16A_SUMMARY_FILENAME
+    )
+    worker_progress_filename = (
+        M6B_W16R_PROGRESS_FILENAME if is_w16r else M6B_W16A_PROGRESS_FILENAME
+    )
+    watchdog_schema = (
+        M6B_W16R_WATCHDOG_SCHEMA if is_w16r else M6B_W16A_WATCHDOG_SCHEMA
+    )
+    formal_limit = (
+        M6B_W16R_FORMAL_RSS_LIMIT_BYTES
+        if is_w16r
+        else M6B_W16A_FORMAL_RSS_LIMIT_BYTES
+    )
     raw_dir = Path(raw_dir).resolve()
     watchdog_summary_path = Path(watchdog_summary_path).resolve()
     watchdog_dir = watchdog_summary_path.parent
     try:
         summary: Mapping[str, Any] = _read_json(
-            raw_dir / M6B_W16A_SUMMARY_FILENAME
+            raw_dir / worker_summary_filename
         )
     except (OSError, TypeError, ValueError, json.JSONDecodeError):
         summary = {}
@@ -6674,19 +6922,38 @@ def _m6b_w16a_formal_gate(
     worker_checks: dict[str, bool] = {}
     independent_worker_pass: bool | None = None
     worker_numeric_only = False
+    frozen_restart: Mapping[str, Any] | None = None
+    frozen_restart_metadata: Mapping[str, Any] | None = None
     try:
         checks["worker_evidence"] = bool(
             _evidence_valid(summary)
-            and summary["schema"] == M6B_W16A_SCHEMA
-            and summary["phase"] == M6B_W16A_PHASE
+            and summary["schema"] == worker_schema
+            and summary["phase"] == worker_phase
             and summary["formal_pass"] is False
             and summary["pde_pass"] is False
             and summary["official_rta"] is False
             and summary["w16b_locked"] is True
             and type(summary["w16b_action_candidate"]) is bool
+            and (
+                type(summary["w16r_pass"]) is bool
+                if is_w16r
+                else type(summary["w16a_pass"]) is bool
+            )
         )
+        if is_w16r:
+            frozen_restart = _m6b_w16r_w16a_authority(
+                ROOT / M6B_W16R_W16A_COMPACT_RELATIVE_PATH,
+                ROOT / M6B_W16R_W16A_RAW_RELATIVE_PATH,
+            )
+            frozen_restart_metadata = {
+                key: value
+                for key, value in frozen_restart.items()
+                if key != "z20"
+            }
         checks["progress"] = _m6b_w16a_progress_valid(
-            raw_dir / M6B_W16A_PROGRESS_FILENAME
+            raw_dir / worker_progress_filename,
+            mode=mode,
+            expected_restart_authority=frozen_restart_metadata,
         )["pass"] is True
         expected_w7 = _m6b_w9a_load_w7(
             ROOT / M6B_W8A_W7_COMPACT_RELATIVE_PATH,
@@ -6702,10 +6969,17 @@ def _m6b_w16a_formal_gate(
             and authority["w7_residual_artifact"] == expected_w7["residual_artifact"]
         )
         checks["factor_authority"] = authority["factor_manifest"] == factor
-        checks["scope"] = summary["scope"] == _m6b_w16a_scope()
+        checks["scope"] = summary["scope"] == (
+            _m6b_w16r_scope() if is_w16r else _m6b_w16a_scope()
+        )
         checks["p6"] = _m6b_expected_p6(summary["p6"])
         checks["prediction"] = (
-            summary["predicted_live_set"] == _m6b_w16a_predicted_live_set()
+            summary["predicted_live_set"]
+            == (
+                _m6b_w16r_predicted_live_set()
+                if is_w16r
+                else _m6b_w16a_predicted_live_set()
+            )
         )
         source_start = summary["source_at_start"]
         source_end = summary["source_at_end"]
@@ -6725,14 +6999,25 @@ def _m6b_w16a_formal_gate(
         )
         checks["jit"] = _m6b_w16a_jit_valid(summary, raw_dir, h2b)
         checks["action_audit"] = _m6b_w16a_action_audit_valid(
-            summary["action_audit"]
+            summary["action_audit"], mode=mode
         )
         core = summary["core"]
+        if is_w16r:
+            checks["restart_authority"] = bool(
+                summary["authority"]["w16a_restart"]
+                == frozen_restart_metadata
+                and core["restart_authority"] == frozen_restart_metadata
+            )
         from src.solvers.hcurl_m6b_w16_global_shifted_inner_pc import (
             evaluate_w16a_global_shifted_gate,
+            evaluate_w16r_restart20_gate,
         )
 
-        report = evaluate_w16a_global_shifted_gate(core)
+        report = (
+            evaluate_w16r_restart20_gate(core)
+            if is_w16r
+            else evaluate_w16a_global_shifted_gate(core)
+        )
         worker_checks = dict(report["checks"])
         independent_worker_pass = bool(
             worker_checks
@@ -6749,14 +7034,20 @@ def _m6b_w16a_formal_gate(
         checks["worker_action_gate"] = independent_worker_pass is True
         pass_semantics = (
             summary["status"] == "action_gate_pass"
-            and summary["classification"] == "W16A_GLOBAL_SHIFTED_INNER_PASS"
-            and summary["w16a_pass"] is True
+            and summary["classification"]
+            == ("W16R_RESTART20_PASS" if is_w16r else "W16A_GLOBAL_SHIFTED_INNER_PASS")
+            and summary["w16r_pass" if is_w16r else "w16a_pass"] is True
             and summary["w16b_action_candidate"] is True
         )
         fail_semantics = (
             summary["status"] == "gate_failed"
-            and summary["classification"] == "W16A_GLOBAL_SHIFTED_INNER_NUMERIC_FAIL"
-            and summary["w16a_pass"] is False
+            and summary["classification"]
+            == (
+                "W16R_RESTART20_NUMERIC_FAIL"
+                if is_w16r
+                else "W16A_GLOBAL_SHIFTED_INNER_NUMERIC_FAIL"
+            )
+            and summary["w16r_pass" if is_w16r else "w16a_pass"] is False
             and summary["w16b_action_candidate"] is False
         )
         checks["worker_semantics"] = bool(
@@ -6776,40 +7067,59 @@ def _m6b_w16a_formal_gate(
             and summary["w16b_locked"] is True
         )
         checks["artifacts"] = _m6b_w16a_checkpoint_artifacts_valid(
-            raw_dir, core
+            raw_dir, core, mode=mode
         )
         checks["vector_evidence"] = _m6b_w16a_vector_evidence_valid(
-            raw_dir, core, expected_w7
+            raw_dir,
+            core,
+            expected_w7,
+            mode=mode,
+            restart_authority=frozen_restart,
         )
         checks["scratch"] = _m6b_w16a_scratch_valid(raw_dir, core)
     except (OSError, TypeError, ValueError, KeyError, IndexError, ImportError):
         independent_worker_pass = None
 
     try:
-        expected_command = _m6b_w16a_worker_command(
-            raw_dir,
-            ROOT / M6B_W8A_W7_COMPACT_RELATIVE_PATH,
-            ROOT / M6B_W16A_W7_RAW_RELATIVE_PATH,
-            ROOT / M6B_W16A_SHIFTED_FACTOR_MANIFEST_RELATIVE_PATH,
-            ROOT / M6B_W16A_JIT_RELATIVE_PATH,
-            expected_source_sha,
+        expected_command = (
+            _m6b_w16r_worker_command(
+                raw_dir,
+                ROOT / M6B_W8A_W7_COMPACT_RELATIVE_PATH,
+                ROOT / M6B_W16A_W7_RAW_RELATIVE_PATH,
+                ROOT / M6B_W16A_SHIFTED_FACTOR_MANIFEST_RELATIVE_PATH,
+                ROOT / M6B_W16A_JIT_RELATIVE_PATH,
+                ROOT / M6B_W16R_W16A_COMPACT_RELATIVE_PATH,
+                ROOT / M6B_W16R_W16A_RAW_RELATIVE_PATH,
+                expected_source_sha,
+            )
+            if is_w16r
+            else _m6b_w16a_worker_command(
+                raw_dir,
+                ROOT / M6B_W8A_W7_COMPACT_RELATIVE_PATH,
+                ROOT / M6B_W16A_W7_RAW_RELATIVE_PATH,
+                ROOT / M6B_W16A_SHIFTED_FACTOR_MANIFEST_RELATIVE_PATH,
+                ROOT / M6B_W16A_JIT_RELATIVE_PATH,
+                expected_source_sha,
+            )
         )
         checks["command"] = watchdog["command"] == expected_command
     except (TypeError, ValueError, KeyError):
         checks["command"] = False
 
     timeline = _m6b_w8a_timeline_valid(
-        watchdog_dir / f"{M6B_W16A_PHASE}_timeline.jsonl",
-        phase=M6B_W16A_PHASE,
+        watchdog_dir / f"{worker_phase}_timeline.jsonl",
+        phase=worker_phase,
     )
     try:
-        expected_raw = _m6b_w16a_raw_artifacts(raw_dir)
-        expected_watchdog = _m6b_w16a_watchdog_artifacts(watchdog_dir)
+        expected_raw = _m6b_w16a_raw_artifacts(raw_dir, mode=mode)
+        expected_watchdog = _m6b_w16a_watchdog_artifacts(
+            watchdog_dir, mode=mode
+        )
         inventory = watchdog["artifact_inventory"]
         checks["watchdog_evidence"] = bool(
             _evidence_valid(watchdog)
-            and watchdog["schema"] == M6B_W16A_WATCHDOG_SCHEMA
-            and watchdog["phase"] == M6B_W16A_PHASE
+            and watchdog["schema"] == watchdog_schema
+            and watchdog["phase"] == worker_phase
             and watchdog["raw_dir"] == str(raw_dir)
             and watchdog["watchdog_dir"] == str(watchdog_dir)
             and watchdog["source_end_clean"] is True
@@ -6823,10 +7133,23 @@ def _m6b_w16a_formal_gate(
             and watchdog["pde_pass"] is False
             and watchdog["official_rta"] is False
             and watchdog["w16b_unlocked"] is False
+            and (
+                not is_w16r
+                or watchdog["w16a_restart_authority"]
+                == summary["authority"]["w16a_restart"]
+            )
             and watchdog["resource_limits"] == {
-                "timeout_seconds": M6B_W16A_TIMEOUT_SECONDS,
-                "watchdog_rss_bytes": M6B_W16A_WATCHDOG_RSS_LIMIT_BYTES,
-                "completion_peak_rss_bytes": M6B_W16A_FORMAL_RSS_LIMIT_BYTES,
+                "timeout_seconds": (
+                    M6B_W16R_TIMEOUT_SECONDS
+                    if is_w16r
+                    else M6B_W16A_TIMEOUT_SECONDS
+                ),
+                "watchdog_rss_bytes": (
+                    M6B_W16R_WATCHDOG_RSS_LIMIT_BYTES
+                    if is_w16r
+                    else M6B_W16A_WATCHDOG_RSS_LIMIT_BYTES
+                ),
+                "completion_peak_rss_bytes": formal_limit,
                 "swap_bytes": M6B_SWAP_LIMIT_BYTES,
             }
             and watchdog["worker_summary"] == expected_raw[0]
@@ -6856,7 +7179,8 @@ def _m6b_w16a_formal_gate(
                 and worker_numeric_only
                 and type(process_return_code) is int
                 and process_return_code == 1
-                and watchdog["status"] == "measurement_complete"
+                and watchdog["status"]
+                == ("gate_failed" if is_w16r else "measurement_complete")
                 and process["termination"] is None
             )
         )
@@ -6864,7 +7188,7 @@ def _m6b_w16a_formal_gate(
             process["termination"] is None
             and drain["gone"] is True
             and type(process["peak_rss_bytes"]) is int
-            and process["peak_rss_bytes"] < M6B_W16A_FORMAL_RSS_LIMIT_BYTES
+            and process["peak_rss_bytes"] < formal_limit
             and type(process["swap_bytes"]) is int
             and process["swap_bytes"] == 0
             and timeline["pass"] is True
@@ -6897,8 +7221,7 @@ def _m6b_w16a_formal_gate(
         and (
             (
                 type(watchdog["process"].get("peak_rss_bytes")) is int
-                and watchdog["process"]["peak_rss_bytes"]
-                >= M6B_W16A_FORMAL_RSS_LIMIT_BYTES
+                and watchdog["process"]["peak_rss_bytes"] >= formal_limit
             )
             or (
                 type(watchdog["process"].get("swap_bytes")) is int
@@ -6922,13 +7245,25 @@ def _m6b_w16a_formal_gate(
     )
     overall = bool(all(checks.values()))
     if overall:
-        classification = "W16A_FORMAL_ACTION_GATE_PASS"
+        classification = (
+            "W16R_FORMAL_ACTION_GATE_PASS"
+            if is_w16r
+            else "W16A_FORMAL_ACTION_GATE_PASS"
+        )
     elif resource_failure:
-        classification = "W16A_RESOURCE_FAIL"
+        classification = "W16R_RESOURCE_FAIL" if is_w16r else "W16A_RESOURCE_FAIL"
     elif numeric_failure:
-        classification = "W16A_GLOBAL_SHIFTED_INNER_NUMERIC_FAIL"
+        classification = (
+            "W16R_RESTART20_NUMERIC_FAIL"
+            if is_w16r
+            else "W16A_GLOBAL_SHIFTED_INNER_NUMERIC_FAIL"
+        )
     else:
-        classification = "W16A_EXECUTION_OR_EVIDENCE_FAIL"
+        classification = (
+            "W16R_EXECUTION_OR_EVIDENCE_FAIL"
+            if is_w16r
+            else "W16A_EXECUTION_OR_EVIDENCE_FAIL"
+        )
     return {
         "pass": overall,
         "classification": classification,
@@ -6948,8 +7283,32 @@ def _m6b_w16a_formal_gate(
             )
             if key in timeline
         },
-        "measured": _m6b_w16a_measured_summary(summary, timeline),
+        "measured": _m6b_w16a_measured_summary(
+            summary, timeline, mode=mode
+        ),
+        "restart_authority": (
+            {
+                key: value
+                for key, value in frozen_restart.items()
+                if key != "z20"
+            }
+            if isinstance(frozen_restart, Mapping)
+            else None
+        ),
     }
+
+
+def _m6b_w16r_formal_gate(
+    raw_dir: Path, watchdog_summary_path: Path, expected_source_sha: str
+) -> dict[str, Any]:
+    """Apply the shared formal gate in the fixed W16R mode."""
+
+    return _m6b_w16a_formal_gate(
+        raw_dir,
+        watchdog_summary_path,
+        expected_source_sha,
+        mode="w16r",
+    )
 
 
 def _run_m6b_w16a_check(
@@ -6993,6 +7352,57 @@ def _run_m6b_w16a_check(
             "raw": _m6b_w16a_raw_artifacts(raw_dir),
             "watchdog": _m6b_w16a_watchdog_artifacts(
                 watchdog_summary_path.parent
+            ),
+        },
+    }
+    _write_json(output, _attach_evidence(result))
+    return 0 if overall else 1
+
+
+def _run_m6b_w16r_check(
+    raw_dir: Path,
+    watchdog_summary_path: Path,
+    output: Path,
+    expected_source_sha: str,
+) -> int:
+    """Write the W16R formal-resource closeout from independent evidence."""
+
+    if output.exists():
+        raise FileExistsError(f"W16R formal output exists: {output}")
+    gate = _m6b_w16r_formal_gate(
+        Path(raw_dir), Path(watchdog_summary_path), expected_source_sha
+    )
+    overall = bool(gate["pass"])
+    raw_dir = Path(raw_dir).resolve()
+    watchdog_summary_path = Path(watchdog_summary_path).resolve()
+    result = {
+        "schema": M6B_W16R_CHECK_SCHEMA,
+        "phase": M6B_W16R_PHASE,
+        "status": "pass" if overall else "gate_failed",
+        "classification": gate["classification"],
+        "formal_pass": overall,
+        "pde_pass": False,
+        "official_rta": False,
+        "w16b_unlocked": overall,
+        "w16b_locked": not overall,
+        "producer_source_sha": expected_source_sha,
+        "raw_dir": str(raw_dir),
+        "worker_summary": _artifact(raw_dir, M6B_W16R_SUMMARY_FILENAME),
+        "watchdog_summary": _artifact(
+            watchdog_summary_path.parent, watchdog_summary_path.name
+        ),
+        "checks": gate["checks"],
+        "problems": gate["problems"],
+        "worker_checks": gate["worker_checks"],
+        "authority": gate["authority"],
+        "restart_authority": gate["restart_authority"],
+        "checker_source": gate["checker_source"],
+        "timeline": gate["timeline"],
+        "measured": gate["measured"],
+        "artifact_inventory": {
+            "raw": _m6b_w16a_raw_artifacts(raw_dir, mode="w16r"),
+            "watchdog": _m6b_w16a_watchdog_artifacts(
+                watchdog_summary_path.parent, mode="w16r"
             ),
         },
     }
@@ -8645,6 +9055,60 @@ def _m6b_w16a_scope() -> dict[str, Any]:
             "predicted_live_set_limit_bytes": M6B_W16A_PREDICTED_LIVE_SET_LIMIT_BYTES,
             "watchdog_rss_bytes": M6B_W16A_WATCHDOG_LIMIT_BYTES,
             "swap_bytes": M6B_SWAP_LIMIT_BYTES,
+        },
+    }
+
+
+def _m6b_w16r_scope() -> dict[str, Any]:
+    return {
+        "schema": M6B_W16R_SCHEMA,
+        "phase": M6B_W16R_PHASE,
+        "solver": "fixed_additional20_disk_backed_right_fgmres",
+        "residual_role": "untouched_W7_cumulative400_full_explicit_residual",
+        "initial_solution_role": "W16A_run1_run2_z20",
+        "initial_solution_provided": True,
+        "initial_cumulative_iteration": 20,
+        "additional_iterations": 20,
+        "cumulative_iteration": 40,
+        "auxiliary_operator": "beta=1 shifted volume-only",
+        "auxiliary_beta": 1.0,
+        "auxiliary_pc": "direct_beta1_shifted_row_complete_local_patch",
+        "auxiliary_dtn_used": False,
+        "projected_range_used": False,
+        "b0_used": False,
+        "m3y_used": False,
+        "range_store_used": False,
+        "physical_operator": "beta=0 volume + matrix-free DtN80",
+        "inner_cycles": 2,
+        "inner_additional_steps": 20,
+        "inner_checkpoints": [20],
+        "zero_start_for_additional_cycle": False,
+        "fresh_initial_action": True,
+        "fresh_initial_residual": True,
+        "initial_action_count_per_cycle": 1,
+        "rtol": 0.0,
+        "atol": 0.0,
+        "no_retry_or_scan": True,
+        "auxiliary_physical_overlap": False,
+        "fine_space": "uncondensed_fullspace",
+        "global_matrix": False,
+        "augmented_matrix": False,
+        "condensation": False,
+        "static_condensation": False,
+        "trace_slab": False,
+        "slab_factors": 0,
+        "physical_ksp": False,
+        "pde": False,
+        "official_rta": False,
+        "w16b_locked_until_action_gate": True,
+        "resource_limits": {
+            "predicted_live_set_bytes": M6B_W16R_PREDICTED_LIVE_SET_BYTES,
+            "predicted_live_set_limit_bytes": M6B_W16A_PREDICTED_LIVE_SET_LIMIT_BYTES,
+            "watchdog_rss_bytes": M6B_W16A_WATCHDOG_LIMIT_BYTES,
+            "swap_bytes": M6B_SWAP_LIMIT_BYTES,
+            "scratch_is_disk_not_rss": True,
+            "per_run_scratch_bytes": M6B_W16A_SCRATCH_PER_RUN_BYTES,
+            "two_run_scratch_bytes": M6B_W16A_SCRATCH_TWO_RUN_TOTAL_BYTES,
         },
     }
 
@@ -10855,6 +11319,219 @@ def _run_m6b_w15a_diagnostic(
     )
 
 
+def _m6b_w16r_predicted_live_set() -> dict[str, Any]:
+    return {
+        "bytes": M6B_W16R_PREDICTED_LIVE_SET_BYTES,
+        "limit_bytes": M6B_W16A_PREDICTED_LIVE_SET_LIMIT_BYTES,
+        "watchdog_limit_bytes": M6B_W16A_WATCHDOG_LIMIT_BYTES,
+        "frozen_z20_vector_bytes": 173_802 * 16,
+        "derived_not_measured": True,
+        "scratch_is_disk_not_rss": True,
+        "per_run_scratch_bytes": M6B_W16A_SCRATCH_PER_RUN_BYTES,
+        "two_run_scratch_bytes": M6B_W16A_SCRATCH_TWO_RUN_TOTAL_BYTES,
+        "swap_bytes": 0,
+        "assumptions": {
+            "reuses_w16a_calibrated_bound": True,
+            "one_frozen_z20_vector": True,
+            "auxiliary_physical_sequential": True,
+            "warm_cache_compiler_process_count": 0,
+            "disk_scratch_not_rss": True,
+        },
+        "components": {
+            "w16a_calibrated_bound_bytes": M6B_W16A_PREDICTED_LIVE_SET_BYTES,
+            "frozen_z20_vector_bytes": 173_802 * 16,
+            "disk_scratch_bytes_not_rss": M6B_W16A_SCRATCH_TWO_RUN_TOTAL_BYTES,
+        },
+        "basis": (
+            "W16R derived bound = W16A calibrated bound + one frozen z20 "
+            "vector; auxiliary and physical lifetimes are sequential; warm "
+            "cache assumes zero compiler processes; disk scratch is not RSS "
+            "and bytes are not measured."
+        ),
+        "gate": M6B_W16R_PREDICTED_LIVE_SET_BYTES
+        <= M6B_W16A_PREDICTED_LIVE_SET_LIMIT_BYTES,
+    }
+
+
+def _m6b_w16r_w16a_authority(
+    compact_path: Path, raw_dir: Path
+) -> dict[str, Any]:
+    """Load only the frozen W16A z20 authority needed by W16R."""
+
+    import numpy as np
+
+    compact_path = Path(compact_path).resolve()
+    raw_dir = Path(raw_dir).resolve()
+    expected_compact = (ROOT / M6B_W16R_W16A_COMPACT_RELATIVE_PATH).resolve()
+    if compact_path != expected_compact or not compact_path.is_file():
+        raise ValueError("W16R W16A compact path is not frozen")
+    if _sha256_file(compact_path) != M6B_W16R_W16A_COMPACT_FILE_SHA256:
+        raise ValueError("W16R W16A compact file SHA differs")
+    compact = _read_json(compact_path)
+    compact_checks = compact.get("checks")
+    if not (
+        _evidence_valid(compact)
+        and isinstance(compact_checks, Mapping)
+        and compact.get("evidence_sha256") == M6B_W16R_W16A_COMPACT_EVIDENCE_SHA256
+        and compact.get("classification")
+        == "W16A_GLOBAL_SHIFTED_INNER_NUMERIC_FAIL"
+        and compact_checks.get("worker_action_gate") is False
+        and compact_checks.get("resource") is True
+        and compact_checks.get("vector_evidence") is True
+        and all(
+            value is True
+            for key, value in compact_checks.items()
+            if key != "worker_action_gate"
+        )
+    ):
+        raise ValueError("W16R W16A compact authority is not the frozen negative")
+    expected_raw = (ROOT / M6B_W16R_W16A_RAW_RELATIVE_PATH).resolve()
+    if raw_dir != expected_raw:
+        raise ValueError("W16R W16A raw path is not frozen")
+    summary_path = raw_dir / M6B_W16A_SUMMARY_FILENAME
+    summary = _read_json(summary_path)
+    compact_worker_summary = compact.get("worker_summary")
+    raw_worker_summary = _artifact(raw_dir, M6B_W16A_SUMMARY_FILENAME)
+    if not (
+        _evidence_valid(summary)
+        and isinstance(compact_worker_summary, Mapping)
+        and compact_worker_summary["path"] == M6B_W16A_SUMMARY_FILENAME
+        and raw_worker_summary["present"] is True
+        and raw_worker_summary["bytes"] == compact_worker_summary["bytes"]
+        and raw_worker_summary["sha256"] == compact_worker_summary["sha256"]
+        and summary.get("classification")
+        == "W16A_GLOBAL_SHIFTED_INNER_NUMERIC_FAIL"
+        and summary.get("source_at_start", {}).get("source_commit_full_sha")
+        == M6B_W16R_W16A_SOURCE_SHA
+        and summary.get("source_at_end", {}).get("source_commit_full_sha")
+        == M6B_W16R_W16A_SOURCE_SHA
+        and isinstance(summary.get("checks"), Mapping)
+        and summary["checks"]["inner_residual"] is False
+        and all(
+            value is True
+            for key, value in summary["checks"].items()
+            if key != "inner_residual"
+        )
+        and isinstance(summary.get("core"), Mapping)
+        and isinstance(summary["core"].get("checks"), Mapping)
+        and summary["core"]["checks"]["inner_residual"] is False
+        and all(
+            value is True
+            for key, value in summary["core"]["checks"].items()
+            if key != "inner_residual"
+        )
+    ):
+        raise ValueError("W16R W16A raw summary identity is not frozen")
+    checkpoints = summary["core"]["artifacts"]["inner_checkpoints"]
+    if not isinstance(checkpoints, list) or [item["run_index"] for item in checkpoints] != [1, 2]:
+        raise ValueError("W16R W16A checkpoint set is incomplete")
+    expected_rhs = "feb46a2c6b53ebf300dac782a6e349ef2a5db038bc789bc50c4e5bba9fe14339"
+    expected_residual = "9aaac043d2d4c05a620d112d175dddf189e2c2c9072b9a1ed7b97d7d5299933d"
+    expected_z = "02e44123f77c5ae911bc2ab13b116f1524f6c57402cb0e6160d55aa327769d8f"
+    z20: np.ndarray | None = None
+    for item in checkpoints:
+        base = raw_dir / "inner_checkpoints" / f"run{item['run_index']}"
+        descriptors = item["artifacts"]
+        if not (
+            descriptors["rhs"]["array_sha256"] == expected_rhs
+            and descriptors["residual"]["array_sha256"] == expected_residual
+            and descriptors["solution"]["array_sha256"] == expected_z
+            and _m6b_w16a_array_artifact_valid(
+                raw_dir, base, descriptors["rhs"], "m6b_iter20_rhs.npy"
+            )
+            and _m6b_w16a_array_artifact_valid(
+                raw_dir, base, descriptors["residual"], "m6b_iter20_residual.npy"
+            )
+            and _m6b_w16a_array_artifact_valid(
+                raw_dir, base, descriptors["solution"], "m6b_iter20_solution.npy"
+            )
+        ):
+            raise ValueError("W16R W16A checkpoint hash/array authority differs")
+        if item["run_index"] == 1:
+            z20 = np.array(
+                np.load(base / "m6b_iter20_solution.npy", allow_pickle=False),
+                dtype=np.complex128,
+                order="C",
+                copy=True,
+            )
+    assert z20 is not None
+    return {
+        "compact_path": str(compact_path),
+        "compact_file_sha256": M6B_W16R_W16A_COMPACT_FILE_SHA256,
+        "compact_evidence_sha256": M6B_W16R_W16A_COMPACT_EVIDENCE_SHA256,
+        "raw_dir": str(raw_dir),
+        "raw_summary_path": str(summary_path),
+        "raw_summary_sha256": raw_worker_summary["sha256"],
+        "raw_summary_bytes": raw_worker_summary["bytes"],
+        "z20": z20,
+        "z20_sha256": expected_z,
+        "rhs_sha256": expected_rhs,
+        "residual_sha256": expected_residual,
+        "source_sha": M6B_W16R_W16A_SOURCE_SHA,
+        "initial_solution_provided": True,
+        "initial_solution_role": "W16A_run1_run2_z20",
+        "w16a_numeric_fail_only_worker_action_gate": True,
+    }
+
+
+def _m6b_w16r_final_status(
+    checks: Mapping[str, Any], error: str | None
+) -> tuple[bool, str, str]:
+    if not isinstance(checks, Mapping) or any(
+        type(value) is not bool for value in checks.values()
+    ):
+        return False, "gate_failed", "W16R_EXECUTION_OR_EVIDENCE_FAIL"
+    required = {
+        "schema", "restart_authority", "inner_audits", "inner_records",
+        "inner_residual", "z_identity", "p_identity", "measurements",
+        "action_counts", "architecture", "lifecycle", "prediction",
+        "source", "cache", "execution",
+    }
+    if not required.issubset(checks):
+        return False, "gate_failed", "W16R_EXECUTION_OR_EVIDENCE_FAIL"
+    passed = bool(all(checks.values()))
+    if passed:
+        return True, "action_gate_pass", "W16R_RESTART20_PASS"
+    numeric = {"inner_residual", "measurements"}
+    numeric_failure = bool(
+        error is None
+        and all(checks[name] for name in checks if name not in numeric)
+        and any(not checks[name] for name in numeric)
+    )
+    return (
+        False,
+        "gate_failed",
+        "W16R_RESTART20_NUMERIC_FAIL"
+        if numeric_failure
+        else "W16R_EXECUTION_OR_EVIDENCE_FAIL",
+    )
+
+
+def _run_m6b_w16r_diagnostic(
+    run_dir: Path,
+    w7_compact: Path,
+    w7_raw_dir: Path,
+    shifted_factor_manifest: Path,
+    jit_cache_source: Path,
+    w16a_compact: Path,
+    w16a_raw_dir: Path,
+    expected_source_sha: str,
+) -> int:
+    """Run W16R's fixed additional-20-step action-only diagnostic."""
+
+    return _run_m6b_w16a_diagnostic(
+        run_dir,
+        w7_compact,
+        w7_raw_dir,
+        shifted_factor_manifest,
+        jit_cache_source,
+        expected_source_sha,
+        mode="w16r",
+        w16a_compact=w16a_compact,
+        w16a_raw_dir=w16a_raw_dir,
+    )
+
+
 def _run_m6b_w16a_diagnostic(
     run_dir: Path,
     w7_compact: Path,
@@ -10862,6 +11539,10 @@ def _run_m6b_w16a_diagnostic(
     factor_manifest: Path,
     jit_cache_source: Path,
     expected_source_sha: str,
+    *,
+    mode: str = "w16a",
+    w16a_compact: Path | None = None,
+    w16a_raw_dir: Path | None = None,
 ) -> int:
     """Run the fixed beta=1 auxiliary and later physical rank-one screen."""
 
@@ -10899,8 +11580,25 @@ def _run_m6b_w16a_diagnostic(
     )
     from src.solvers.hcurl_m6b_w16_global_shifted_inner_pc import (
         W16A_INNER_SCHEMA,
+        W16R_INNER_SCHEMA,
         evaluate_w16a_global_shifted_gate,
+        evaluate_w16r_restart20_gate,
+        run_w16r_fixed20,
         run_w16a_fixed20,
+    )
+
+    is_w16r = mode == "w16r"
+    if mode not in {"w16a", "w16r"}:
+        raise ValueError("unsupported W16 mode")
+    if is_w16r and (w16a_compact is None or w16a_raw_dir is None):
+        raise ValueError("W16R requires the frozen W16A compact and raw directory")
+    worker_schema = M6B_W16R_SCHEMA if is_w16r else M6B_W16A_SCHEMA
+    worker_phase = M6B_W16R_PHASE if is_w16r else M6B_W16A_PHASE
+    worker_progress_filename = (
+        M6B_W16R_PROGRESS_FILENAME if is_w16r else M6B_W16A_PROGRESS_FILENAME
+    )
+    worker_summary_filename = (
+        M6B_W16R_SUMMARY_FILENAME if is_w16r else M6B_W16A_SUMMARY_FILENAME
     )
 
     run_dir = Path(run_dir).resolve()
@@ -10909,19 +11607,30 @@ def _run_m6b_w16a_diagnostic(
     factor_manifest = Path(factor_manifest).resolve()
     jit_cache_source = Path(jit_cache_source).resolve()
     if run_dir.exists():
-        raise FileExistsError(f"W16A run directory already exists: {run_dir}")
+        raise FileExistsError(f"{worker_schema} run directory already exists: {run_dir}")
     if MPI.COMM_WORLD.size != 1:
-        raise RuntimeError("W16A worker is fixed to MPI1")
+        raise RuntimeError(f"{worker_schema} worker is fixed to MPI1")
     if not _m6b_w2_source_sha_valid(expected_source_sha):
-        raise ValueError("W16A expected source SHA is invalid")
+        raise ValueError(f"{worker_schema} expected source SHA is invalid")
     source_start = h2b._light_source()
     if not (
         _m6b_w6a_source_valid(source_start)
         and source_start.get("source_commit_full_sha") == expected_source_sha
     ):
-        raise RuntimeError("W16A source is not the expected clean source")
+        raise RuntimeError(f"{worker_schema} source is not the expected clean source")
     factor_authority = _m6b_w16a_factor_authority(factor_manifest)
     w7_authority = _m6b_w9a_load_w7(w7_compact, w7_raw_dir)
+    restart_authority = (
+        _m6b_w16r_w16a_authority(w16a_compact, w16a_raw_dir)
+        if is_w16r
+        else None
+    )
+    restart_z20: np.ndarray | None = None
+    restart_z20_sha: str | None = None
+    if is_w16r:
+        assert restart_authority is not None
+        restart_z20 = restart_authority.pop("z20")
+        restart_z20_sha = restart_authority["z20_sha256"]
     frozen_compiler = factor_authority["factor_compiler"]
     runtime = _m6b_runtime_identity(
         h2b,
@@ -10931,31 +11640,40 @@ def _run_m6b_w16a_diagnostic(
         compiler=frozen_compiler,
     )
     if not _m6b_w6a_runtime_valid(runtime, frozen_compiler=frozen_compiler):
-        raise RuntimeError("W16A runtime identity differs from frozen factor compiler")
+        raise RuntimeError(
+            f"{worker_schema} runtime identity differs from frozen factor compiler"
+        )
     expected_jit = (ROOT / M6B_W16A_JIT_RELATIVE_PATH).resolve()
     if jit_cache_source != expected_jit or not jit_cache_source.is_dir():
-        raise ValueError("W16A JIT source is not the frozen beta=1 cache")
+        raise ValueError(f"{worker_schema} JIT source is not the frozen beta=1 cache")
     source_cache_before = _m6b_w2_cache_record(h2b, jit_cache_source)
     if source_cache_before["inventory_sha256"] != M6B_W2_JIT_INVENTORY_SHA256:
-        raise ValueError("W16A JIT inventory differs from the frozen authority")
+        raise ValueError(f"{worker_schema} JIT inventory differs from the frozen authority")
 
     run_dir.mkdir(parents=True)
-    progress_path = run_dir / M6B_W16A_PROGRESS_FILENAME
-    summary_path = run_dir / M6B_W16A_SUMMARY_FILENAME
+    progress_path = run_dir / worker_progress_filename
+    summary_path = run_dir / worker_summary_filename
     cache_dir = run_dir / "jit_cache"
     shutil.copytree(jit_cache_source, cache_dir)
     cache_before = _m6b_w2_cache_record(h2b, cache_dir)
     if cache_before != source_cache_before:
-        raise ValueError("W16A copied JIT cache differs from source")
-    predicted = _m6b_w16a_predicted_live_set()
+        raise ValueError(f"{worker_schema} copied JIT cache differs from source")
+    predicted = (
+        _m6b_w16r_predicted_live_set()
+        if is_w16r
+        else _m6b_w16a_predicted_live_set()
+    )
     if predicted["gate"] is not True:
-        raise ValueError("W16A predicted live set exceeds its fixed limit")
+        raise ValueError(f"{worker_schema} predicted live set exceeds its fixed limit")
 
     started = time.perf_counter()
     architecture: dict[str, Any] = {}
     action_audit: dict[str, Any] = {
         "lifecycle_events": [],
-        "retained_authority_vector_roles": ["w7_target_residual"],
+        "retained_authority_vector_roles": [
+            "w7_target_residual",
+            *(["w16a_z20_restart_authority"] if is_w16r else []),
+        ],
         "global_shifted_action_count": 0,
         "local_pc_apply_count": 0,
         "local_exact_shifted_volume_action_count": 0,
@@ -10986,8 +11704,8 @@ def _run_m6b_w16a_diagnostic(
 
     def emit(event: str, **fields: Any) -> None:
         payload = {
-            "schema": f"{M6B_W16A_SCHEMA}.progress.v1",
-            "phase": M6B_W16A_PHASE,
+            "schema": f"{worker_schema}.progress.v1",
+            "phase": worker_phase,
             "event": event,
             "elapsed_wall_seconds": float(time.perf_counter() - started),
             **fields,
@@ -11042,13 +11760,15 @@ def _run_m6b_w16a_diagnostic(
                 w7=w7_authority["compact"],
                 w7_residual=w7_authority["residual_artifact"],
                 factor_manifest=factor_authority,
+                **({"w16a_restart": restart_authority} if is_w16r else {}),
             )
             cfg, mesh_data, function_space, floquet, modes = m6a._production_objects(
-                run_dir, mesh_name="m6b_w16a_mesh"
+                run_dir,
+                mesh_name="m6b_w16r_mesh" if is_w16r else "m6b_w16a_mesh",
             )
             p6 = _m6b_p6_identity(mesh_data, function_space, floquet)
             if not _m6b_expected_p6(p6):
-                raise ValueError("W16A p6/h10 identity differs")
+                raise ValueError(f"{worker_schema} p6/h10 identity differs")
             emit("mesh_ready", p6=p6)
             emit("space_ready", global_rows=p6["global_rows"])
             emit("floquet_mpc_ready", constraint_count=p6["constraint_count"])
@@ -11142,22 +11862,36 @@ def _run_m6b_w16a_diagnostic(
                         rhs=event["rhs"],
                     )
 
-                result = run_w16a_fixed20(
-                    shifted_numpy,
-                    local_pc.apply,
-                    target,
-                    run_dir / "scratch" / f"run{run_index}",
-                    observer=checkpoint_observer,
-                )
+                if is_w16r:
+                    result = run_w16r_fixed20(
+                        shifted_numpy,
+                        local_pc.apply,
+                        target,
+                        restart_z20,
+                        run_dir / "scratch" / f"run{run_index}",
+                        observer=checkpoint_observer,
+                    )
+                else:
+                    result = run_w16a_fixed20(
+                        shifted_numpy,
+                        local_pc.apply,
+                        target,
+                        run_dir / "scratch" / f"run{run_index}",
+                        observer=checkpoint_observer,
+                    )
                 if checkpoint_record is None:
-                    raise RuntimeError("W16A fixed20 checkpoint was not written")
+                    raise RuntimeError(f"{worker_schema} fixed20 checkpoint was not written")
                 audit = h2a._jsonable(result.audit)
                 solution = np.array(result.solution, dtype=np.complex128, copy=True)
                 inner_audits.append(audit)
                 inner_records.append(
                     {
-                        "schema": W16A_INNER_SCHEMA,
-                        "algorithm": "fgmres_right_shifted_beta1_fixed20",
+                        "schema": W16R_INNER_SCHEMA if is_w16r else W16A_INNER_SCHEMA,
+                        "algorithm": (
+                            "fgmres_right_shifted_beta1_restart20"
+                            if is_w16r
+                            else "fgmres_right_shifted_beta1_fixed20"
+                        ),
                         "run_index": run_index,
                         "iterations": int(result.iterations),
                         "checkpoint_iteration": 20,
@@ -11172,6 +11906,17 @@ def _run_m6b_w16a_diagnostic(
                         ),
                         "solution_sha256": _array_sha256(solution),
                         "rhs_sha256": rhs_sha256,
+                        **(
+                            {
+                                "initial_solution_provided": True,
+                                "initial_solution_sha256": restart_z20_sha,
+                                "initial_cumulative_iteration": 20,
+                                "additional_iterations": 20,
+                                "cumulative_iteration": 40,
+                            }
+                            if is_w16r
+                            else {}
+                        ),
                     }
                 )
                 checkpoint_artifacts.append(
@@ -11212,15 +11957,20 @@ def _run_m6b_w16a_diagnostic(
                 ],
                 "shifted_action_audit": shifted_action_final_audit,
             }
+            shifted_count_ok = (
+                shifted_action_final_audit["apply_count"] == 84
+                if is_w16r
+                else shifted_action_final_audit["apply_count"] == 82
+            )
             if not (
-                global_shifted_count == 42
+                global_shifted_count == (44 if is_w16r else 42)
                 and local_pc_count == 40
                 and local_exact_shifted_count == 40
-                and shifted_action_final_audit["apply_count"] == 82
+                and shifted_count_ok
                 and action_audit["shifted_action_total_count"]
                 == global_shifted_count + local_pc_count
             ):
-                raise RuntimeError("W16A shifted action count closure failed")
+                raise RuntimeError(f"{worker_schema} shifted action count closure failed")
             shifted_vec.destroy()
             shifted_vec = None
             shifted_action.destroy()
@@ -11235,6 +11985,9 @@ def _run_m6b_w16a_diagnostic(
                 shifted_tags,
                 target,
             )
+            if restart_z20 is not None:
+                del restart_z20
+                restart_z20 = None
             gc.collect()
             action_audit["lifecycle_events"].append("auxiliary_released")
             emit("auxiliary_released")
@@ -11283,10 +12036,15 @@ def _run_m6b_w16a_diagnostic(
                 physical_call_count += 1
                 p_value = np.ascontiguousarray(outer_bridge.apply(z_value), dtype=np.complex128)
                 if p_value.shape != z_value.shape or not np.all(np.isfinite(p_value)):
-                    raise FloatingPointError("W16A physical action returned invalid values")
-                p_artifacts[f"p{index}"] = write_vector(
-                    f"w16a_physical_p{index}.npy", p_value
+                    raise FloatingPointError(
+                        f"{worker_schema} physical action returned invalid values"
+                    )
+                vector_name = (
+                    f"w16r_physical_p{index}.npy"
+                    if is_w16r
+                    else f"w16a_physical_p{index}.npy"
                 )
+                p_artifacts[f"p{index}"] = write_vector(vector_name, p_value)
                 if index == 1:
                     p_values = [p_value]
                     action_audit["lifecycle_events"].append("physical_apply_1")
@@ -11301,7 +12059,7 @@ def _run_m6b_w16a_diagnostic(
                     np.array(w7_authority["residual"], dtype=np.complex128, copy=False),
                     p_value,
                     block_size=M6B_W11A_BLOCK_SIZE,
-                    schema=M6B_W16A_SCHEMA,
+                    schema=worker_schema,
                 )
                 for p_value in p_values
             ]
@@ -11315,7 +12073,9 @@ def _run_m6b_w16a_diagnostic(
                 and dtn_audit["apply_count"] == 2
                 and bridge_audit["forward_apply_count"] == 2
             ):
-                raise RuntimeError("W16A final physical action audit count is not 2")
+                raise RuntimeError(
+                    f"{worker_schema} final physical action audit count is not 2"
+                )
             architecture = {
                 "fine_space": dtn_audit["fine_space"],
                 "physical_operator": "beta0_volume_plus_matrix_free_dtn80",
@@ -11380,7 +12140,7 @@ def _run_m6b_w16a_diagnostic(
             action_audit["lifecycle_events"].append("physical_released")
             emit("physical_released", physical_action_count=physical_call_count)
             core_result = {
-                "schema": M6B_W16A_SCHEMA,
+                "schema": worker_schema,
                 "residual": {
                     "role": "untouched_W7_cumulative400_full_explicit_residual",
                     "authority": w7_authority["compact"],
@@ -11398,7 +12158,14 @@ def _run_m6b_w16a_diagnostic(
                 },
                 "inner_audits": inner_audits,
                 "inner_records": inner_records,
-                "z_identity": z_identity,
+                **(
+                    {
+                        "restart_authority": dict(restart_authority),
+                        "z40_identity": z_identity,
+                    }
+                    if is_w16r
+                    else {"z_identity": z_identity}
+                ),
                 "p_identity": p_identity,
                 "measurements": measurements,
                 "action_audit": action_audit,
@@ -11435,6 +12202,9 @@ def _run_m6b_w16a_diagnostic(
             shifted_vec.destroy()
         if shifted_action is not None:
             shifted_action.destroy()
+        if restart_z20 is not None:
+            del restart_z20
+            restart_z20 = None
         del local_pc, store
         gc.collect()
 
@@ -11452,19 +12222,26 @@ def _run_m6b_w16a_diagnostic(
         )
         cache_ok = bool(jit_source_unchanged and jit_target_unchanged)
         if not source_ok and error is None:
-            error = "W16A source identity changed at worker end"
+            error = f"{worker_schema} source identity changed at worker end"
         if not cache_ok and error is None:
-            error = "W16A JIT target changed during worker"
+            error = f"{worker_schema} JIT target changed during worker"
     except (OSError, TypeError, ValueError, KeyError) as exc:
         source_ok = False
         cache_ok = False
         source_cache_final = None
         cache_final = None
         if error is None:
-            error = f"W16A final cache/source check: {type(exc).__name__}: {exc}"
+            error = (
+                f"{worker_schema} final cache/source check: "
+                f"{type(exc).__name__}: {exc}"
+            )
 
     if core_result is not None:
-        report = evaluate_w16a_global_shifted_gate(core_result)
+        report = (
+            evaluate_w16r_restart20_gate(core_result)
+            if is_w16r
+            else evaluate_w16a_global_shifted_gate(core_result)
+        )
         checks = dict(report["checks"])
         checks["source"] = bool(source_ok)
         checks["cache"] = bool(cache_ok)
@@ -11473,36 +12250,44 @@ def _run_m6b_w16a_diagnostic(
         core_result["problems"] = sorted(
             name for name, passed in checks.items() if not passed
         )
-        diagnostic_pass, status, classification = _m6b_w16a_final_status(
-            checks, error
+        diagnostic_pass, status, classification = (
+            _m6b_w16r_final_status(checks, error)
+            if is_w16r
+            else _m6b_w16a_final_status(checks, error)
         )
     else:
         checks = {"authority_or_runtime": False, "execution": False}
         diagnostic_pass = False
         status = "gate_failed"
-        classification = "W16A_EXECUTION_OR_EVIDENCE_FAIL"
+        classification = (
+            "W16R_EXECUTION_OR_EVIDENCE_FAIL"
+            if is_w16r
+            else "W16A_EXECUTION_OR_EVIDENCE_FAIL"
+        )
         core_result = None
 
     action_audit["lifecycle_events"] = list(action_audit["lifecycle_events"])
     if source_end is None:
         source_end = h2b._light_source()
+    pass_key = "w16r_pass" if is_w16r else "w16a_pass"
     payload = {
-        "schema": M6B_W16A_SCHEMA,
-        "phase": M6B_W16A_PHASE,
+        "schema": worker_schema,
+        "phase": worker_phase,
         "status": status,
         "classification": classification,
-        "w16a_pass": bool(diagnostic_pass),
+        pass_key: bool(diagnostic_pass),
         "formal_pass": False,
         "pde_pass": False,
         "official_rta": False,
         "w16b_locked": True,
         "w16b_action_candidate": bool(diagnostic_pass),
-        "scope": _m6b_w16a_scope(),
+        "scope": _m6b_w16r_scope() if is_w16r else _m6b_w16a_scope(),
         "authority": {
             "w7": w7_authority["compact"],
             "w7_raw_dir": w7_authority["raw_dir"],
             "w7_residual_artifact": w7_authority["residual_artifact"],
             "factor_manifest": factor_authority,
+            **({"w16a_restart": restart_authority} if is_w16r else {}),
         },
         "runtime_identity": runtime,
         "p6": p6,
@@ -11538,7 +12323,10 @@ def _run_m6b_w16a_diagnostic(
         "elapsed_wall_seconds": float(time.perf_counter() - started),
     }
     emit("measurement_ready", classification=classification)
-    emit("summary_ready", classification=classification, w16a_pass=diagnostic_pass)
+    summary_fields = {pass_key: diagnostic_pass}
+    if is_w16r:
+        summary_fields["w16a_restart"] = restart_authority
+    emit("summary_ready", classification=classification, **summary_fields)
     payload = h2a._jsonable(payload)
     _write_json(summary_path, _attach_evidence(payload))
     return 0 if diagnostic_pass else 1
@@ -20223,6 +21011,17 @@ def _parser() -> argparse.ArgumentParser:
     w16a.add_argument(
         "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
     )
+    w16r = sub.add_parser("m6b-w16r-restart20-diagnostic")
+    w16r.add_argument("--run-dir", required=True)
+    w16r.add_argument("--w7-compact", required=True)
+    w16r.add_argument("--w7-raw-dir", required=True)
+    w16r.add_argument("--shifted-factor-manifest", required=True)
+    w16r.add_argument("--jit-cache-source", required=True)
+    w16r.add_argument("--w16a-compact", required=True)
+    w16r.add_argument("--w16a-raw-dir", required=True)
+    w16r.add_argument(
+        "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
+    )
     w16a_watchdog = sub.add_parser("m6b-w16a-watchdog")
     w16a_watchdog.add_argument("--run-dir", required=True)
     w16a_watchdog.add_argument("--watchdog-dir", required=True)
@@ -20231,6 +21030,18 @@ def _parser() -> argparse.ArgumentParser:
     w16a_watchdog.add_argument("--shifted-factor-manifest", required=True)
     w16a_watchdog.add_argument("--jit-cache-source", required=True)
     w16a_watchdog.add_argument(
+        "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
+    )
+    w16r_watchdog = sub.add_parser("m6b-w16r-watchdog")
+    w16r_watchdog.add_argument("--run-dir", required=True)
+    w16r_watchdog.add_argument("--watchdog-dir", required=True)
+    w16r_watchdog.add_argument("--w7-compact", required=True)
+    w16r_watchdog.add_argument("--w7-raw-dir", required=True)
+    w16r_watchdog.add_argument("--shifted-factor-manifest", required=True)
+    w16r_watchdog.add_argument("--jit-cache-source", required=True)
+    w16r_watchdog.add_argument("--w16a-compact", required=True)
+    w16r_watchdog.add_argument("--w16a-raw-dir", required=True)
+    w16r_watchdog.add_argument(
         "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
     )
     w15a_watchdog = sub.add_parser("m6b-w15a-watchdog")
@@ -20301,6 +21112,13 @@ def _parser() -> argparse.ArgumentParser:
     w16a_check.add_argument("--watchdog-summary", required=True)
     w16a_check.add_argument("--output", required=True)
     w16a_check.add_argument(
+        "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
+    )
+    w16r_check = sub.add_parser("m6b-w16r-check")
+    w16r_check.add_argument("--raw-dir", required=True)
+    w16r_check.add_argument("--watchdog-summary", required=True)
+    w16r_check.add_argument("--output", required=True)
+    w16r_check.add_argument(
         "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
     )
     return parser
@@ -20499,6 +21317,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             Path(args.jit_cache_source).resolve(),
             args.expected_source_sha,
         )
+    if args.command == "m6b-w16r-restart20-diagnostic":
+        return _run_m6b_w16r_diagnostic(
+            Path(args.run_dir).resolve(),
+            Path(args.w7_compact).resolve(),
+            Path(args.w7_raw_dir).resolve(),
+            Path(args.shifted_factor_manifest).resolve(),
+            Path(args.jit_cache_source).resolve(),
+            Path(args.w16a_compact).resolve(),
+            Path(args.w16a_raw_dir).resolve(),
+            args.expected_source_sha,
+        )
     if args.command == "m6b-w15a-watchdog":
         return _run_m6b_w15a_watchdog(
             Path(args.run_dir).resolve(),
@@ -20522,6 +21351,18 @@ def main(argv: Sequence[str] | None = None) -> int:
             Path(args.w7_raw_dir).resolve(),
             Path(args.shifted_factor_manifest).resolve(),
             Path(args.jit_cache_source).resolve(),
+            args.expected_source_sha,
+        )
+    if args.command == "m6b-w16r-watchdog":
+        return _run_m6b_w16r_watchdog(
+            Path(args.run_dir).resolve(),
+            Path(args.watchdog_dir).resolve(),
+            Path(args.w7_compact).resolve(),
+            Path(args.w7_raw_dir).resolve(),
+            Path(args.shifted_factor_manifest).resolve(),
+            Path(args.jit_cache_source).resolve(),
+            Path(args.w16a_compact).resolve(),
+            Path(args.w16a_raw_dir).resolve(),
             args.expected_source_sha,
         )
     if args.command == "m6b-w14a-watchdog":
@@ -20574,6 +21415,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.command == "m6b-w16a-check":
         return _run_m6b_w16a_check(
+            Path(args.raw_dir).resolve(),
+            Path(args.watchdog_summary).resolve(),
+            Path(args.output).resolve(),
+            args.expected_source_sha,
+        )
+    if args.command == "m6b-w16r-check":
+        return _run_m6b_w16r_check(
             Path(args.raw_dir).resolve(),
             Path(args.watchdog_summary).resolve(),
             Path(args.output).resolve(),
