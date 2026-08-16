@@ -1704,6 +1704,26 @@ def build_hybrid_internal_mode_coupling(
         )
         if exact_traction_overrides is not None:
             pending_exact_overrides.pop("bottom")
+            if post_destroy_cleanup is not None:
+                bottom_cleanup = post_destroy_cleanup()
+                if stage_callback is not None:
+                    stage_callback(
+                        "bottom_interface_blocks_heap_cleanup",
+                        {
+                            "source": "bottom_interface_blocks",
+                            "collective_call_completed": bottom_cleanup[
+                                "collective_call_completed"
+                            ],
+                            "max_rss_before_mb": bottom_cleanup["max_rss_before_mb"],
+                            "max_rss_after_mb": bottom_cleanup["max_rss_after_mb"],
+                            "max_rss_released_mb": bottom_cleanup[
+                                "max_rss_released_mb"
+                            ],
+                            "elapsed_seconds_max_rank": bottom_cleanup[
+                                "elapsed_seconds_max_rank"
+                            ],
+                        },
+                    )
         top_override = (
             None if exact_traction_overrides is None else pending_exact_overrides["top"]
         )

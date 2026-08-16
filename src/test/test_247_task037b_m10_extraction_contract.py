@@ -11,6 +11,7 @@ import pytest
 from mpi4py import MPI
 
 from benchmarks import run_task037b_hybrid_iterative as runner
+from src.coupling.hybrid_internal_modes import build_hybrid_internal_mode_coupling
 from src.coupling.hybrid_one_cell_exact_traction_builder import (
     _apply_columns_marker_detail,
     _replicated_array_marker_detail,
@@ -305,6 +306,33 @@ def test_physical_setup_contract_is_frozen_and_releases_qep_early() -> None:
         and node.lineno > release_assignment.lineno
         for node in ast.walk(setup_tree)
     )
+
+
+def test_exact_bottom_blocks_trim_before_top_blocks() -> None:
+    source = inspect.getsource(build_hybrid_internal_mode_coupling)
+    bottom_position = source.index("bottom = _build_interface_blocks")
+    exact_gate_position = source.index("if exact_traction_overrides is not None:")
+    transfer_position = source.index('pending_exact_overrides.pop("bottom")')
+    cleanup_position = source.index('"bottom_interface_blocks_heap_cleanup"')
+    top_override_position = source.index("top_override =")
+    top_position = source.index("top = _build_interface_blocks")
+    assert bottom_position < exact_gate_position < transfer_position < cleanup_position
+    assert cleanup_position < top_override_position < top_position
+    assert source.count("post_destroy_cleanup()") == 1
+    assert (
+        "if post_destroy_cleanup is not None:"
+        in source[transfer_position:cleanup_position]
+    )
+    cleanup_source = source[cleanup_position:top_position]
+    assert ".destroy(" not in cleanup_source
+    for field in (
+        '"collective_call_completed"',
+        '"max_rss_before_mb"',
+        '"max_rss_after_mb"',
+        '"max_rss_released_mb"',
+        '"elapsed_seconds_max_rank"',
+    ):
+        assert field in cleanup_source
 
 
 def test_linear_stage_is_single_public_frozen_chain_with_ordered_release() -> None:
