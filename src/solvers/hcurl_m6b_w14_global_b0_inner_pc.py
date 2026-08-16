@@ -551,7 +551,13 @@ class W14GlobalB0InnerPC:
         self._records: list[dict[str, Any]] = []
 
     def apply(self, rhs: np.ndarray) -> np.ndarray:
-        """Apply fixed zero-start B0 FGMRES and enforce the true-residual gate."""
+        """Apply fixed B0 FGMRES and record, but do not enforce, qualification.
+
+        A finite solution whose true residual exceeds the fixed qualification
+        limit remains mathematically usable by the outer flexible-GMRES cycle;
+        the W14 evaluator consumes ``gate_pass`` and fails qualification
+        closed.  Non-finite output is still an immediate execution failure.
+        """
 
         if self._rhs_vec is None:
             raise RuntimeError("W14 inner PC has been destroyed")
@@ -601,9 +607,9 @@ class W14GlobalB0InnerPC:
             "gate_pass": gate_pass,
         }
         self._records.append(record)
-        if not gate_pass:
+        if not finite:
             del solution
-            raise RuntimeError("W14 B0 inner true-residual gate failed")
+            raise RuntimeError("W14 B0 inner solve produced non-finite output")
         returned = np.array(solution, dtype=np.complex128, copy=True)
         del solution
         return returned

@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 
 import numpy as np
-import pytest
 from petsc4py import PETSc
 
 from src.solvers.hcurl_h2b_m5_coercive import (
@@ -136,16 +135,17 @@ def test_w14_same_rhs_is_deterministic_and_records_two_audits():
         action.destroy()
 
 
-def test_w14_failed_true_residual_is_audited_before_fail_closed():
+def test_w14_nonqualifying_true_residual_is_audited_and_returned():
     diagonal = np.asarray([1.0 + 0.0j, 2.0 + 0.0j])
     action, matrix, _pc_context, _matrix_context, wrapper = _build(
         diagonal, lambda _self, values: np.asarray([values[0], 0.0j])
     )
     rhs = np.asarray([1.0 + 0.0j, 1.0 + 0.0j], dtype=np.complex128)
     try:
-        with pytest.raises(RuntimeError, match="true-residual gate"):
-            wrapper.apply(rhs)
+        result = wrapper.apply(rhs)
         record = wrapper.audit["applications"][-1]
+        assert result.dtype == np.dtype(np.complex128)
+        assert np.all(np.isfinite(result))
         assert record["finite"] is True
         assert record["gate_pass"] is False
         assert record["true_residual"] > 1.0e-2
