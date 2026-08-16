@@ -751,6 +751,8 @@ M6B_W18A_EVENTS = (
 M6B_W18A_TIMEOUT_SECONDS = 3_600.0
 M6B_W18A_WATCHDOG_RSS_LIMIT_BYTES = 1_950_000_000
 M6B_W18A_FORMAL_RSS_LIMIT_BYTES = 1_950_000_000
+M6B_W18A_WATCHDOG_SCHEMA = "task037.extra.h2b.w18a.watchdog.v1"
+M6B_W18A_WATCHDOG_SUMMARY_FILENAME = "w18a_watchdog_summary.json"
 M6B_W18A_PREDICTED_LIVE_SET_BYTES = 1_734_993_014
 M6B_W18A_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_750_000_000
 M6B_W18A_ACTION_COUNTS = {
@@ -4847,6 +4849,8 @@ def _m6b_w16a_watchdog_artifacts(
         if mode == "w16b"
         else M6B_W17A_PHASE
         if mode == "w17a"
+        else M6B_W18A_PHASE
+        if mode == "w18a"
         else M6B_W16A_PHASE
     )
     return [
@@ -4969,7 +4973,7 @@ def _run_m6b_w16a_watchdog(
     w16a_raw_dir: Path | None = None,
     w16r_compact: Path | None = None,
 ) -> int:
-    """Run the fixed W16A/W16R worker once under the shared monitor."""
+    """Run the fixed W16A/W16R/W16B/W17A/W18A worker under the monitor."""
 
     import time
 
@@ -4977,7 +4981,8 @@ def _run_m6b_w16a_watchdog(
     is_w16r = mode == "w16r"
     is_w16b = mode == "w16b"
     is_w17a = mode == "w17a"
-    if mode not in {"w16a", "w16r", "w16b", "w17a"}:
+    is_w18a = mode == "w18a"
+    if mode not in {"w16a", "w16r", "w16b", "w17a", "w18a"}:
         raise ValueError("unsupported W16 watchdog mode")
     if is_w16r and (w16a_compact is None or w16a_raw_dir is None):
         raise ValueError("W16R watchdog requires W16A authority")
@@ -4985,6 +4990,8 @@ def _run_m6b_w16a_watchdog(
         raise ValueError("W16B watchdog requires W16R compact authority")
     if is_w17a and _m6b_w17a_predicted_live_set()["gate"] is not True:
         raise ValueError("W17A predicted live set is over its fixed limit")
+    if is_w18a and _m6b_w18a_predicted_live_set()["gate"] is not True:
+        raise ValueError("W18A predicted live set is over its fixed limit")
     worker_phase = (
         M6B_W16R_PHASE
         if is_w16r
@@ -4992,6 +4999,8 @@ def _run_m6b_w16a_watchdog(
         if is_w16b
         else M6B_W17A_PHASE
         if is_w17a
+        else M6B_W18A_PHASE
+        if is_w18a
         else M6B_W16A_PHASE
     )
     watchdog_schema = (
@@ -5001,6 +5010,8 @@ def _run_m6b_w16a_watchdog(
         if is_w16b
         else M6B_W17A_WATCHDOG_SCHEMA
         if is_w17a
+        else M6B_W18A_WATCHDOG_SCHEMA
+        if is_w18a
         else M6B_W16A_WATCHDOG_SCHEMA
     )
     watchdog_filename = (
@@ -5010,6 +5021,8 @@ def _run_m6b_w16a_watchdog(
         if is_w16b
         else M6B_W17A_WATCHDOG_SUMMARY_FILENAME
         if is_w17a
+        else M6B_W18A_WATCHDOG_SUMMARY_FILENAME
+        if is_w18a
         else M6B_W16A_WATCHDOG_SUMMARY_FILENAME
     )
     timeout_seconds = (
@@ -5019,6 +5032,8 @@ def _run_m6b_w16a_watchdog(
         if is_w16b
         else M6B_W17A_TIMEOUT_SECONDS
         if is_w17a
+        else M6B_W18A_TIMEOUT_SECONDS
+        if is_w18a
         else M6B_W16A_TIMEOUT_SECONDS
     )
     watchdog_limit = (
@@ -5028,6 +5043,8 @@ def _run_m6b_w16a_watchdog(
         if is_w16b
         else M6B_W17A_WATCHDOG_RSS_LIMIT_BYTES
         if is_w17a
+        else M6B_W18A_WATCHDOG_RSS_LIMIT_BYTES
+        if is_w18a
         else M6B_W16A_WATCHDOG_RSS_LIMIT_BYTES
     )
     formal_limit = (
@@ -5037,6 +5054,8 @@ def _run_m6b_w16a_watchdog(
         if is_w16b
         else M6B_W17A_FORMAL_RSS_LIMIT_BYTES
         if is_w17a
+        else M6B_W18A_FORMAL_RSS_LIMIT_BYTES
+        if is_w18a
         else M6B_W16A_FORMAL_RSS_LIMIT_BYTES
     )
     run_dir = Path(run_dir).resolve()
@@ -5110,6 +5129,15 @@ def _run_m6b_w16a_watchdog(
             expected_source_sha,
         )
         if is_w17a
+        else _m6b_w18a_worker_command(
+            run_dir,
+            w7_compact,
+            w7_raw_dir,
+            shifted_factor_manifest,
+            jit_cache_source,
+            expected_source_sha,
+        )
+        if is_w18a
         else _m6b_w16a_worker_command(
             run_dir,
             w7_compact,
@@ -5146,7 +5174,10 @@ def _run_m6b_w16a_watchdog(
         "status": (
             "gate_failed"
             if not worker_completed
-            or ((is_w16r or is_w16b or is_w17a) and process.get("return_code") == 1)
+            or (
+                (is_w16r or is_w16b or is_w17a or is_w18a)
+                and process.get("return_code") == 1
+            )
             else "measurement_complete"
         ),
         "process": process,
@@ -5178,6 +5209,8 @@ def _run_m6b_w16a_watchdog(
             if is_w16b
             else M6B_W17A_SUMMARY_FILENAME
             if is_w17a
+            else M6B_W18A_SUMMARY_FILENAME
+            if is_w18a
             else M6B_W16A_SUMMARY_FILENAME,
         ),
         "timeline": timeline,
@@ -5189,6 +5222,11 @@ def _run_m6b_w16a_watchdog(
             if is_w16b
             else {"w17b_unlocked": False, "w17b_locked": True}
             if is_w17a
+            else {
+                "physical_screen_unlocked": False,
+                "physical_screen_locked": True,
+            }
+            if is_w18a
             else {"w16b_unlocked": False}
         ),
         **(
@@ -5281,6 +5319,29 @@ def _run_m6b_w17a_watchdog(
         jit_cache_source,
         expected_source_sha,
         mode="w17a",
+    )
+
+
+def _run_m6b_w18a_watchdog(
+    run_dir: Path,
+    watchdog_dir: Path,
+    w7_compact: Path,
+    w7_raw_dir: Path,
+    shifted_factor_manifest: Path,
+    jit_cache_source: Path,
+    expected_source_sha: str,
+) -> int:
+    """Run W18A once through the shared W16 process-tree monitor."""
+
+    return _run_m6b_w16a_watchdog(
+        run_dir,
+        watchdog_dir,
+        w7_compact,
+        w7_raw_dir,
+        shifted_factor_manifest,
+        jit_cache_source,
+        expected_source_sha,
+        mode="w18a",
     )
 
 
@@ -24734,6 +24795,16 @@ def _parser() -> argparse.ArgumentParser:
     w17a_watchdog.add_argument(
         "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
     )
+    w18a_watchdog = sub.add_parser("m6b-w18a-watchdog")
+    w18a_watchdog.add_argument("--run-dir", required=True)
+    w18a_watchdog.add_argument("--watchdog-dir", required=True)
+    w18a_watchdog.add_argument("--w7-compact", required=True)
+    w18a_watchdog.add_argument("--w7-raw-dir", required=True)
+    w18a_watchdog.add_argument("--shifted-factor-manifest", required=True)
+    w18a_watchdog.add_argument("--jit-cache-source", required=True)
+    w18a_watchdog.add_argument(
+        "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
+    )
     w15a_watchdog = sub.add_parser("m6b-w15a-watchdog")
     w15a_watchdog.add_argument("--run-dir", required=True)
     w15a_watchdog.add_argument("--watchdog-dir", required=True)
@@ -25110,6 +25181,16 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.command == "m6b-w17a-watchdog":
         return _run_m6b_w17a_watchdog(
+            Path(args.run_dir).resolve(),
+            Path(args.watchdog_dir).resolve(),
+            Path(args.w7_compact).resolve(),
+            Path(args.w7_raw_dir).resolve(),
+            Path(args.shifted_factor_manifest).resolve(),
+            Path(args.jit_cache_source).resolve(),
+            args.expected_source_sha,
+        )
+    if args.command == "m6b-w18a-watchdog":
+        return _run_m6b_w18a_watchdog(
             Path(args.run_dir).resolve(),
             Path(args.watchdog_dir).resolve(),
             Path(args.w7_compact).resolve(),
