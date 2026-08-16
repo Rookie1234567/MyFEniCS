@@ -1581,12 +1581,13 @@ class DistributedPhysicalSlabSmoother:
     ) -> DistributedPhysicalSlabSmoother:
         """Build the fixed M2b factor-only smoother without a global matrix."""
 
-        if int(ilu_levels) != 0:
-            raise ValueError("owner-local M2b setup requires ILU(0)")
+        if int(ilu_levels) not in {0, 1}:
+            raise ValueError("owner-local M2b setup supports ILU(0) or ILU(1)")
         smoother = cls.__new__(cls)
         smoother._initialize_owner_local_plan(
             condensed,
             plan,
+            ilu_levels=int(ilu_levels),
             interpolation=interpolation,
             precomputed_diagonal_shift=precomputed_diagonal_shift,
             two_step_action_operator=two_step_action_operator,
@@ -1600,6 +1601,7 @@ class DistributedPhysicalSlabSmoother:
         condensed: Any,
         plan: OwnerLocalSlabPlan,
         *,
+        ilu_levels: int,
         interpolation: str,
         precomputed_diagonal_shift: PETSc.Vec | None,
         two_step_action_operator: PETSc.Mat | None,
@@ -1612,7 +1614,7 @@ class DistributedPhysicalSlabSmoother:
         self.rank = int(self.comm.rank)
         self.comm_size = int(self.comm.size)
         self.global_size = int(condensed.active_rows)
-        self.ilu_levels = 0
+        self.ilu_levels = int(ilu_levels)
         if interpolation not in {"basic", "partition"}:
             raise ValueError("interpolation must be 'basic' or 'partition'")
         self.interpolation = interpolation
@@ -1857,6 +1859,7 @@ class DistributedPhysicalSlabSmoother:
             "smoother_iterations": self.smoother_iterations,
             "smoother_ksp_type": self.smoother_ksp_type,
             "subdomain_local_diagonal_shift": self.subdomain_local_diagonal_shift,
+            "ilu_levels": int(self.ilu_levels),
             "factor_only_storage": self.factor_only_storage,
             "local_solver_types": list(self.local_solver_types),
             "local_solver_type_counts": {

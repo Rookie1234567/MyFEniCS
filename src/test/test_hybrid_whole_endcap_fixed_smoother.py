@@ -150,6 +150,7 @@ def test_fixed_whole_endcap_smoother_and_woodbury_lifecycle():
         },
     )
     fixed_smoother = None
+    ilu1_smoother = None
     fixed_woodbury = None
     vectors: list[PETSc.Vec] = []
     auxiliary_matrices = None
@@ -162,6 +163,7 @@ def test_fixed_whole_endcap_smoother_and_woodbury_lifecycle():
         assert WHOLE_ENDCAP_OVERLAP_FRACTION == 0.0
         diagnostics = fixed_smoother.diagnostics
         assert diagnostics["operator_identity"] == "whole_endcap_ilu0_fixed_smoother"
+        assert diagnostics["ilu_levels"] == 0
         assert diagnostics["preconditioner_profile"] == (
             WHOLE_ENDCAP_PRECONDITIONER_PROFILE
         )
@@ -245,11 +247,32 @@ def test_fixed_whole_endcap_smoother_and_woodbury_lifecycle():
         with pytest.raises(RuntimeError, match="destroyed"):
             fixed_smoother.apply(rhs, borrowed_target)
         assert action.getType() == "python"
+
+        ilu1_smoother = build_hybrid_whole_endcap_fixed_smoother_action(
+            action_carrier,
+            ilu_levels=1,
+        )
+        ilu1_diagnostics = ilu1_smoother.diagnostics
+        assert (
+            ilu1_diagnostics["operator_identity"] == "whole_endcap_ilu1_fixed_smoother"
+        )
+        assert ilu1_diagnostics["preconditioner_profile"] == "whole_endcap_ilu1"
+        assert ilu1_diagnostics["ilu_levels"] == 1
+        assert ilu1_diagnostics["factor_nnz"] >= diagnostics["factor_nnz"]
+        ilu1_target = action.createVecLeft()
+        vectors.append(ilu1_target)
+        ilu1_smoother.apply(rhs, ilu1_target)
+        assert np.isfinite(float(ilu1_target.norm()))
+        ilu1_smoother.destroy()
+        assert ilu1_smoother.diagnostics["destroyed"] is True
+        assert ilu1_smoother.factor_count_after_destroy == 0
     finally:
         if fixed_woodbury is not None:
             fixed_woodbury.destroy()
         if fixed_smoother is not None:
             fixed_smoother.destroy()
+        if ilu1_smoother is not None:
+            ilu1_smoother.destroy()
         for vector in vectors:
             vector.destroy()
         rhs.destroy()

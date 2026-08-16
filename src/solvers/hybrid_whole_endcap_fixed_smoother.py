@@ -1,4 +1,4 @@
-"""Fixed whole-endcap ILU(0) action for the Hybrid local operator."""
+"""Fixed whole-endcap ILU action for the Hybrid local operator."""
 
 from __future__ import annotations
 
@@ -68,6 +68,7 @@ def _axis_interval(mesh: Any, coordinate_axis: int) -> tuple[float, float]:
 def _build_profile_smoother(
     action_system: HybridLocalDtnActionSystem,
     condensed: Any,
+    ilu_levels: int,
 ) -> tuple[Any, DistributedPhysicalSlabSmoother]:
     axis_min, axis_max = _axis_interval(
         action_system.local_mesh.mesh,
@@ -84,7 +85,7 @@ def _build_profile_smoother(
     smoother = DistributedPhysicalSlabSmoother.from_owner_local_plan(
         condensed,
         plan,
-        ilu_levels=WHOLE_ENDCAP_ILU_LEVELS,
+        ilu_levels=ilu_levels,
         interpolation=WHOLE_ENDCAP_INTERPOLATION,
         two_step_action_operator=None,
     )
@@ -92,12 +93,22 @@ def _build_profile_smoother(
 
 
 class HybridWholeEndcapFixedSmootherAction:
-    """One fixed whole-endcap ILU(0) action without a PETSc KSP."""
+    """One fixed whole-endcap ILU action without a PETSc KSP."""
 
     operator_identity = "whole_endcap_ilu0_fixed_smoother"
     preconditioner_profile = WHOLE_ENDCAP_PRECONDITIONER_PROFILE
 
-    def __init__(self, action_system: HybridLocalDtnActionSystem) -> None:
+    def __init__(
+        self,
+        action_system: HybridLocalDtnActionSystem,
+        *,
+        ilu_levels: int = WHOLE_ENDCAP_ILU_LEVELS,
+    ) -> None:
+        if int(ilu_levels) not in {0, 1}:
+            raise ValueError("whole-endcap fixed smoother supports ILU(0) or ILU(1)")
+        self.ilu_levels = int(ilu_levels)
+        self.operator_identity = f"whole_endcap_ilu{self.ilu_levels}_fixed_smoother"
+        self.preconditioner_profile = f"whole_endcap_ilu{self.ilu_levels}"
         self.action_system = action_system
         self.operator = action_system.A
         if self.operator.getType() != "python":
@@ -115,6 +126,7 @@ class HybridWholeEndcapFixedSmootherAction:
         self.plan, self.smoother = _build_profile_smoother(
             action_system,
             self.condensed,
+            self.ilu_levels,
         )
         self.setup_seconds = _max_over_comm(
             self.operator.getComm().tompi4py(),
@@ -150,6 +162,7 @@ class HybridWholeEndcapFixedSmootherAction:
         return {
             "operator_identity": self.operator_identity,
             "preconditioner_profile": self.preconditioner_profile,
+            "ilu_levels": self.ilu_levels,
             "base_factor_count": factor_count,
             "factor_count": factor_count,
             "factor_rows": factor_rows,
@@ -194,7 +207,12 @@ class HybridWholeEndcapFixedSmootherAction:
 
 def build_hybrid_whole_endcap_fixed_smoother_action(
     action_system: HybridLocalDtnActionSystem,
+    *,
+    ilu_levels: int = WHOLE_ENDCAP_ILU_LEVELS,
 ) -> HybridWholeEndcapFixedSmootherAction:
-    """Build the non-KSP whole-endcap fixed smoother action."""
+    """Build the non-KSP whole-endcap fixed ILU action."""
 
-    return HybridWholeEndcapFixedSmootherAction(action_system)
+    return HybridWholeEndcapFixedSmootherAction(
+        action_system,
+        ilu_levels=ilu_levels,
+    )
