@@ -752,6 +752,7 @@ M6B_W18A_TIMEOUT_SECONDS = 3_600.0
 M6B_W18A_WATCHDOG_RSS_LIMIT_BYTES = 1_950_000_000
 M6B_W18A_FORMAL_RSS_LIMIT_BYTES = 1_950_000_000
 M6B_W18A_WATCHDOG_SCHEMA = "task037.extra.h2b.w18a.watchdog.v1"
+M6B_W18A_CHECK_SCHEMA = "task037.extra.h2b.w18a.formal-resource-check.v1"
 M6B_W18A_WATCHDOG_SUMMARY_FILENAME = "w18a_watchdog_summary.json"
 M6B_W18A_PREDICTED_LIVE_SET_BYTES = 1_734_993_014
 M6B_W18A_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_750_000_000
@@ -8651,6 +8652,1104 @@ def _m6b_w17a_formal_gate(
         "vector_evidence": vector_evidence,
         "checker_source": checker_source,
     }
+
+
+def _m6b_w18a_action_audit_valid(
+    value: Any, factor_authority: Mapping[str, Any] | None = None
+) -> bool:
+    if not isinstance(value, Mapping):
+        return False
+    materialization_keys = {
+        "global_constraint_matrix",
+        "global_matrix",
+        "patch_matrices",
+        "per_cell_factor",
+        "schur",
+        "slab_factor",
+        "static_condensation",
+        "trace_slab",
+    }
+    lifecycle = [
+        "dtn_constructed",
+        "auxiliary_constructed",
+        "auxiliary_repeat_1",
+        "auxiliary_repeat_2",
+        "auxiliary_released",
+        "physical_constructed",
+        "physical_apply_1",
+        "physical_apply_2",
+        "physical_apply_3",
+        "physical_apply_4",
+        "physical_released",
+        "dtn_released",
+    ]
+
+    def no_materialization(audit: Any) -> bool:
+        return bool(
+            isinstance(audit, Mapping)
+            and set(audit.get("materialization_identity", {}))
+            == materialization_keys
+            and all(
+                audit["materialization_identity"][key] is False
+                for key in materialization_keys
+            )
+        )
+
+    def shifted(audit: Any, count: int) -> bool:
+        return bool(
+            isinstance(audit, Mapping)
+            and audit["apply_count"] == count
+            and audit["global_matrix_materialized"] is False
+            and audit["global_constraint_matrix_materialized"] is False
+            and audit["global_condensed_schur_materialized"] is False
+            and audit["cell_schur_matrix_materialized"] is False
+            and audit["slab_matrix_materialized"] is False
+            and audit["retained_dense_cell_tensor_count"] == 0
+            and audit["dense_cell_tensor_materialized_per_apply"] is False
+            and audit["cell_schur_matrix_nnz"] == 0
+            and audit["slab_matrix_nnz"] == 0
+            and audit["explicit_C_materialized_count"] == 0
+            and audit["explicit_D_materialized_count"] == 0
+            and audit["factor_count"] == 0
+            and audit["ksp_created"] is False
+            and audit["ordinary_default_changed"] is False
+            and no_materialization(audit)
+        )
+
+    def auxiliary_outer(audit: Any) -> bool:
+        return bool(
+            isinstance(audit, Mapping)
+            and audit["algorithm"] == "right_flexible_gmres"
+            and audit["rows"] == M6B_GLOBAL_ROWS
+            and audit["dtype"] == "complex128"
+            and audit["max_steps"] == 2
+            and audit["iterations"] == 2
+            and audit["checkpoint_iterations"] == [1, 2]
+            and audit["checkpoint_count"] == 2
+            and audit["observer_count"] == 2
+            and audit["action_count"] == 4
+            and audit["pc_count"] == 2
+            and audit["initial_action_count"] == 0
+            and audit["orthogonalization_passes"] == 2
+            and audit["checkpoint_set_complete"] is True
+            and audit["basis_in_memory"] is False
+            and audit["mmap"] is False
+            and audit["scratch_mmap"] is False
+            and audit["scratch_basis_in_memory"] is False
+            and audit["bounded_full_vector_gate"] is True
+            and audit["retained_full_vector_count"] == 1
+            and audit["retained_full_vector_bytes"] == M6B_GLOBAL_ROWS * 16
+            and audit["bounded_full_vector_bytes"] == 12 * M6B_GLOBAL_ROWS * 16
+            and audit["bounded_full_vector_buffer_count"] == 12
+            and audit["scratch_bytes"]
+            == audit["v_basis"]["allocated_bytes"]
+            + audit["z_basis"]["allocated_bytes"]
+            and audit["v_basis"]["rows"] == M6B_GLOBAL_ROWS
+            and audit["v_basis"]["dtype"] == "complex128"
+            and audit["v_basis"]["capacity"] == 3
+            and audit["v_basis"]["written_count"] == 3
+            and audit["v_basis"]["read_count"] == 6
+            and audit["v_basis"]["write_count"] == 3
+            and audit["v_basis"]["allocated_bytes"] == 3 * M6B_GLOBAL_ROWS * 16
+            and audit["v_basis"]["bytes_read"] == 6 * M6B_GLOBAL_ROWS * 16
+            and audit["v_basis"]["bytes_written"] == 3 * M6B_GLOBAL_ROWS * 16
+            and audit["v_basis"]["mmap"] is False
+            and audit["z_basis"]["rows"] == M6B_GLOBAL_ROWS
+            and audit["z_basis"]["dtype"] == "complex128"
+            and audit["z_basis"]["capacity"] == 2
+            and audit["z_basis"]["written_count"] == 2
+            and audit["z_basis"]["read_count"] == 3
+            and audit["z_basis"]["write_count"] == 2
+            and audit["z_basis"]["allocated_bytes"] == 2 * M6B_GLOBAL_ROWS * 16
+            and audit["z_basis"]["bytes_read"] == 3 * M6B_GLOBAL_ROWS * 16
+            and audit["z_basis"]["bytes_written"] == 2 * M6B_GLOBAL_ROWS * 16
+            and audit["z_basis"]["mmap"] is False
+        )
+
+    def physical_outer(audit: Any) -> bool:
+        return bool(
+            isinstance(audit, Mapping)
+            and audit["apply_count"] == 4
+            and audit["matrix_type"] == "python_action_only"
+            and audit["global_matrix"] is False
+            and audit["augmented_matrix"] is False
+            and audit["static_condensation"] is False
+            and audit["trace_slab"] is False
+            and audit["explicit_C_materialized_count"] == 0
+            and audit["explicit_D_materialized_count"] == 0
+        )
+
+    def dtn(audit: Any, count: int) -> bool:
+        return bool(
+            isinstance(audit, Mapping)
+            and audit["apply_count"] == count
+            and audit["mode_count"] == 80
+            and audit["fine_space"] == "uncondensed_fullspace"
+            and audit["ordinary_default"] is False
+            and audit["condensation"] is False
+            and audit["static_condensed_operator_used"] is False
+            and audit["trace_slab_pc_used"] is False
+            and audit["global_matrix_materialized"] is False
+            and audit["augmented_matrix_materialized"] is False
+            and audit["explicit_C_materialized_count"] == 0
+            and audit["explicit_D_materialized_count"] == 0
+            and audit["fe_sized_allgather"] is False
+            and audit["modal_allreduce_count_per_apply"] == 1
+            and audit["modal_allreduce_count_per_hermitian_apply"] == 1
+        )
+
+    def bridge(audit: Any, count: int) -> bool:
+        return bool(
+            isinstance(audit, Mapping)
+            and audit["forward_apply_count"] == count
+            and audit["fixed_work_vectors"] == 2
+            and audit["per_apply_vec_creation"] == 0
+        )
+
+    try:
+        construction = value["auxiliary_construction"]
+        final = value["auxiliary_final_counts"]
+        instances = value["physical_instances"]
+        counts = {
+            key: value[key]
+            for key in M6B_W18A_ACTION_COUNTS
+        }
+        if counts != M6B_W18A_ACTION_COUNTS:
+            return False
+        if (
+            value["global_auxiliary_action_count"] != 172
+            or value["global_shifted_action_count"] != 172
+        ):
+            return False
+        if value["retained_authority_vector_roles"] != ["w7_target_residual"]:
+            return False
+        if value["lifecycle_events"] != lifecycle:
+            return False
+        if not isinstance(instances, list) or len(instances) != 1:
+            return False
+        outer_audits = final["outer"]
+        if not (
+            isinstance(outer_audits, list)
+            and len(outer_audits) == 2
+            and all(auxiliary_outer(item) for item in outer_audits)
+        ):
+            return False
+        if set(final) != {"outer", "dtn", "shifted_action"}:
+            return False
+        if not (
+            shifted(construction["shifted_action"], 0)
+            and shifted(final["shifted_action"], 340)
+            and dtn(final["dtn"], 8)
+        ):
+            return False
+        static_shifted_construction = {
+            key: item
+            for key, item in construction["shifted_action"].items()
+            if key != "apply_count"
+        }
+        static_shifted_final = {
+            key: item
+            for key, item in final["shifted_action"].items()
+            if key != "apply_count"
+        }
+        if static_shifted_construction != static_shifted_final:
+            return False
+        local_pc = construction["local_pc"]
+        factor_store = construction["factor_store"]
+        if not isinstance(factor_authority, Mapping):
+            return False
+        expected_payload = factor_authority["factor_payload_bytes"]
+        expected_retained = factor_authority["retained_total_bytes"]
+        if not (
+            local_pc["beta"] == 1.0
+            and local_pc["unique_factor_count"] == 84
+            and local_pc["fine_space"] == "uncondensed_fullspace"
+            and local_pc["ordinary_default_changed"] is False
+            and no_materialization(local_pc)
+            and factor_store["beta"] == 1.0
+            and factor_store["factor_count"] == 84
+            and factor_store["factor_payload_bytes"] == expected_payload
+            and factor_store["retained_total_bytes"] == expected_retained
+            and factor_store["ordinary_default_changed"] is False
+            and no_materialization(factor_store)
+        ):
+            return False
+        instance = instances[0]
+        if not (
+            shifted(instance["physical"], 4)
+            and physical_outer(instance["outer"])
+            and dtn(instance["dtn"], 12)
+            and bridge(instance["bridge"], 4)
+        ):
+            return False
+        static_aux = {key: item for key, item in final["dtn"].items() if key != "apply_count"}
+        static_final = {key: item for key, item in instance["dtn"].items() if key != "apply_count"}
+        return static_aux == static_final
+    except (KeyError, TypeError, ValueError):
+        return False
+
+
+def _m6b_w18a_scratch_valid(raw_dir: Path, core: Mapping[str, Any]) -> bool:
+    try:
+        raw_dir = Path(raw_dir).resolve()
+        repeats = core["repeats"]
+        if not isinstance(repeats, Sequence) or len(repeats) != 2:
+            return False
+        paths: set[Path] = set()
+        for repeat_index, repeat in enumerate(repeats, 1):
+            outer_audit = repeat["outer_audit"]
+            outer_scratch = raw_dir / "outer_scratch" / f"repeat{repeat_index}"
+            scratch = outer_audit["scratch_paths"]
+            for role in ("v_basis", "z_basis"):
+                path = Path(scratch[role]).resolve()
+                path.relative_to(raw_dir)
+                expected = outer_scratch / f"{role}.bin"
+                if path != expected.resolve() or not path.is_file():
+                    return False
+                if path.stat().st_size != outer_audit[role]["allocated_bytes"]:
+                    return False
+                paths.add(path)
+            for apply_index, record in enumerate(repeat["inner_records"], 1):
+                apply_root = outer_scratch / "inner" / f"apply_{apply_index:02d}"
+                solution = Path(record["solution_artifact"]["path"]).resolve()
+                solution.relative_to(raw_dir)
+                if solution != (apply_root / "solution.npy").resolve():
+                    return False
+                if not solution.is_file():
+                    return False
+                for cycle in ("cycle20", "cycle40"):
+                    cycle_paths = record["scratch_paths"][cycle]
+                    if cycle_paths != record[cycle]["scratch_paths"]:
+                        return False
+                    for role in ("v_basis", "z_basis"):
+                        path = Path(cycle_paths[role]).resolve()
+                        path.relative_to(raw_dir)
+                        expected = apply_root / cycle / f"{role}.bin"
+                        if path != expected.resolve() or not path.is_file():
+                            return False
+                        if path.stat().st_size != record[cycle][role]["allocated_bytes"]:
+                            return False
+                        paths.add(path)
+        return len(paths) == 20
+    except (KeyError, IndexError, OSError, TypeError, ValueError):
+        return False
+
+
+def _m6b_w18a_vector_evidence_valid(
+    raw_dir: Path, core: Mapping[str, Any], expected_w7: Mapping[str, Any]
+) -> dict[str, Any]:
+    import numpy as np
+
+    from src.solvers.hcurl_h2b_m5_coercive import _array_sha256
+    from src.solvers.persistent_residual_one_vector import (
+        repeat_rank_one_projection,
+    )
+
+    empty = {"pass": False, "artifact_hashes": {}}
+    if not isinstance(core, Mapping) or not isinstance(expected_w7, Mapping):
+        return empty
+
+    def load(base: Path, descriptor: Mapping[str, Any], name: str) -> Any:
+        if not _m6b_w16a_array_artifact_valid(raw_dir, base, descriptor, name):
+            raise ValueError("W18A vector descriptor is invalid")
+        path = Path(descriptor["path"])
+        if not path.is_absolute():
+            path = base / path
+        return np.load(path.resolve(), allow_pickle=False, mmap_mode="r")
+
+    def close(rhs: Any, action: Any, residual: Any) -> tuple[float, float]:
+        rhs_sq = residual_sq = closure_sq = 0.0
+        for start in range(0, rhs.size, 1 << 16):
+            stop = min(start + (1 << 16), rhs.size)
+            rhs_part = rhs[start:stop]
+            action_part = action[start:stop]
+            residual_part = residual[start:stop]
+            rhs_sq += float(np.vdot(rhs_part, rhs_part).real)
+            residual_sq += float(np.vdot(residual_part, residual_part).real)
+            closure_part = rhs_part - action_part - residual_part
+            closure_sq += float(np.vdot(closure_part, closure_part).real)
+        scale = max(rhs_sq, np.finfo(float).tiny)
+        return math.sqrt(residual_sq / max(rhs_sq, np.finfo(float).tiny)), math.sqrt(
+            closure_sq / scale
+        )
+
+    def same_scalar(left: Any, right: Any) -> bool:
+        if isinstance(left, bool):
+            return right is left
+        if isinstance(left, (list, tuple)):
+            return isinstance(right, (list, tuple)) and len(left) == len(right) and all(
+                same_scalar(a, b) for a, b in zip(left, right)
+            )
+        if isinstance(left, (int, float)) and not isinstance(left, bool):
+            return math.isclose(float(left), float(right), rel_tol=1e-12, abs_tol=1e-12)
+        return left == right
+
+    try:
+        residual = np.asarray(expected_w7["residual"])
+        residual_artifact = expected_w7["residual_artifact"]
+        expected_rhs_sha = residual_artifact["array_sha256"]
+        if not (
+            residual.dtype == np.dtype(np.complex128)
+            and residual.ndim == 1
+            and residual.flags.c_contiguous
+            and np.all(np.isfinite(residual))
+            and _array_sha256(residual) == expected_rhs_sha
+        ):
+            return empty
+        repeats = core["repeats"]
+        artifacts = core["artifacts"]
+        checkpoint_artifacts = artifacts["outer_checkpoints"]
+        if not (
+            isinstance(repeats, Sequence)
+            and len(repeats) == 2
+            and isinstance(checkpoint_artifacts, Sequence)
+            and len(checkpoint_artifacts) == 2
+        ):
+            return empty
+        artifact_hashes: dict[str, Any] = {"rhs_array_sha256": expected_rhs_sha}
+        loaded: dict[tuple[int, int, str], Any] = {}
+        for repeat_index, repeat in enumerate(repeats, 1):
+            outer_entry = checkpoint_artifacts[repeat_index - 1]
+            if outer_entry["repeat_index"] != repeat_index:
+                return empty
+            for iteration in (1, 2):
+                record = repeat["checkpoints"][str(iteration)]
+                descriptors = outer_entry["checkpoints"][str(iteration)]["artifacts"]
+                if descriptors != record["artifacts"]:
+                    return empty
+                base = raw_dir / "outer_checkpoints" / f"repeat{repeat_index}"
+                arrays = {
+                    field: load(
+                        base,
+                        descriptors[field],
+                        f"m6b_iter{iteration}_{field}.npy",
+                    )
+                    for field in ("solution", "outer_action", "residual", "rhs")
+                }
+                if descriptors["rhs"]["array_sha256"] != expected_rhs_sha:
+                    return empty
+                relative, closure = close(
+                    arrays["rhs"], arrays["outer_action"], arrays["residual"]
+                )
+                if not (
+                    math.isclose(
+                        relative,
+                        record["true_relative_residual"],
+                        rel_tol=1e-12,
+                        abs_tol=1e-12,
+                    )
+                    and math.isclose(
+                        closure,
+                        record["residual_closure"],
+                        rel_tol=1e-12,
+                        abs_tol=1e-12,
+                    )
+                    and closure <= 1e-12
+                    and record["solution_sha256"] == descriptors["solution"]["array_sha256"]
+                    and record["action_sha256"] == descriptors["outer_action"]["array_sha256"]
+                    and record["solution_relative_difference"] <= 1.0e-13
+                    and record["action_relative_difference"] <= 1.0e-13
+                ):
+                    return empty
+                loaded[(repeat_index, iteration, "solution")] = arrays["solution"]
+                loaded[(repeat_index, iteration, "action")] = arrays["outer_action"]
+                artifact_hashes[f"repeat{repeat_index}_checkpoint{iteration}"] = {
+                    field: {
+                        key: descriptors[field][key]
+                        for key in ("path", "bytes", "file_sha256", "array_sha256")
+                    }
+                    for field in ("solution", "outer_action", "residual", "rhs")
+                }
+            for apply_index, record in enumerate(repeat["inner_records"], 1):
+                descriptor = record["solution_artifact"]
+                solution = load(raw_dir, descriptor, "solution.npy")
+                if record["solution_sha256"] != descriptor["array_sha256"]:
+                    return empty
+                artifact_hashes[
+                    f"repeat{repeat_index}_inner_apply{apply_index}"
+                ] = {
+                    key: descriptor[key]
+                    for key in ("path", "bytes", "file_sha256", "array_sha256")
+                }
+        solution_differences: list[float] = []
+        action_differences: list[float] = []
+        physical_differences: list[float] = []
+        for iteration in (1, 2):
+            first = loaded[(1, iteration, "solution")]
+            second = loaded[(2, iteration, "solution")]
+            first_action = loaded[(1, iteration, "action")]
+            second_action = loaded[(2, iteration, "action")]
+            if (
+                _array_sha256(first) != _array_sha256(second)
+                or _array_sha256(first_action) != _array_sha256(second_action)
+            ):
+                return empty
+            if not all(
+                repeats[index]["checkpoints"][str(iteration)][field] <= 1.0e-13
+                for index in (0, 1)
+                for field in ("solution_relative_difference", "action_relative_difference")
+            ):
+                return empty
+            for field, difference_key in (
+                ("solution", "solution_relative_difference"),
+                ("outer_action", "action_relative_difference"),
+            ):
+                first_descriptor = repeats[0]["checkpoints"][str(iteration)][
+                    "artifacts"
+                ][field]
+                second_descriptor = repeats[1]["checkpoints"][str(iteration)][
+                    "artifacts"
+                ][field]
+                first_path = Path(first_descriptor["path"])
+                second_path = Path(second_descriptor["path"])
+                if not first_path.is_absolute():
+                    first_path = (
+                        raw_dir
+                        / "outer_checkpoints"
+                        / "repeat1"
+                        / first_path
+                    )
+                if not second_path.is_absolute():
+                    second_path = (
+                        raw_dir
+                        / "outer_checkpoints"
+                        / "repeat2"
+                        / second_path
+                    )
+                actual_difference = _m6b_w18a_disk_relative_difference(
+                    first_path, second_path
+                )
+                if difference_key == "solution_relative_difference":
+                    solution_differences.append(actual_difference)
+                else:
+                    action_differences.append(actual_difference)
+                if not all(
+                    math.isclose(
+                        repeats[index]["checkpoints"][str(iteration)][
+                            difference_key
+                        ],
+                        actual_difference,
+                        rel_tol=1.0e-12,
+                        abs_tol=1.0e-12,
+                    )
+                    for index in (0, 1)
+                ):
+                    return empty
+            identity = core["physical_identity"][str(iteration)]
+            p_first = core["artifacts"]["physical_outputs"][
+                f"repeat1_checkpoint{iteration}"
+            ]
+            p_second = core["artifacts"]["physical_outputs"][
+                f"repeat2_checkpoint{iteration}"
+            ]
+            if not (
+                identity["first_sha256"] == identity["second_sha256"]
+                and identity["first_sha256"] == p_first["array_sha256"]
+                and identity["second_sha256"] == p_second["array_sha256"]
+                and identity["sha256_equal"] is True
+                and identity["relative_difference"] <= 1.0e-13
+                and math.isclose(
+                    float(identity["relative_difference"]),
+                    _m6b_w18a_disk_relative_difference(
+                        Path(p_first["path"]), Path(p_second["path"])
+                    ),
+                    rel_tol=1.0e-12,
+                    abs_tol=1.0e-12,
+                )
+            ):
+                return empty
+            p_difference = _m6b_w18a_disk_relative_difference(
+                Path(p_first["path"]), Path(p_second["path"])
+            )
+            physical_differences.append(p_difference)
+        measurements = []
+        for repeat_index, repeat in enumerate(repeats, 1):
+            for iteration in (1, 2):
+                key = f"repeat{repeat_index}_checkpoint{iteration}"
+                descriptor = artifacts["physical_outputs"][key]
+                p_value = load(
+                    raw_dir,
+                    descriptor,
+                    f"w18a_p_repeat{repeat_index}_checkpoint{iteration}.npy",
+                )
+                measured = repeat["measurements"][str(iteration)]
+                recomputed = repeat_rank_one_projection(
+                    residual,
+                    p_value,
+                    block_size=M6B_W11A_BLOCK_SIZE,
+                    schema=M6B_W18A_SCHEMA,
+                )
+                if measured.get("checkpoint") != iteration:
+                    return empty
+                for field in (
+                    "schema", "alpha", "denominator", "numerator",
+                    "residual_norm", "corrected_residual_norm", "rho",
+                    "projection_orthogonality", "normal_closure", "block_size",
+                    "block_count", "finite", "repeat_exact", "repeat",
+                ):
+                    if not same_scalar(recomputed[field], measured[field]):
+                        return empty
+                measurements.append(float(recomputed["rho"]))
+                artifact_hashes[f"physical_{key}"] = {
+                    name: descriptor[name]
+                    for name in ("path", "bytes", "file_sha256", "array_sha256")
+                }
+        return {
+            "pass": True,
+            "artifact_hashes": artifact_hashes,
+            "z_relative_differences": solution_differences,
+            "outer_action_relative_differences": action_differences,
+            "physical_relative_differences": physical_differences,
+            "rho": measurements,
+        }
+    except (FloatingPointError, KeyError, IndexError, OSError, TypeError, ValueError):
+        return empty
+
+
+def _m6b_w18a_formal_gate(
+    raw_dir: Path, watchdog_summary_path: Path, expected_source_sha: str
+) -> dict[str, Any]:
+    """Independently close W18A worker, raw vectors, and resource evidence."""
+
+    h2b = __import__("benchmarks.run_task037_extra_h2b", fromlist=["*"])
+    raw_dir = Path(raw_dir).resolve()
+    watchdog_summary_path = Path(watchdog_summary_path).resolve()
+    watchdog_dir = watchdog_summary_path.parent
+    names = (
+        "worker_evidence",
+        "worker_semantics",
+        "progress",
+        "w7_authority",
+        "factor_authority",
+        "scope",
+        "p6",
+        "prediction",
+        "source",
+        "runtime",
+        "cache",
+        "jit",
+        "execution",
+        "action_audit",
+        "worker_action_gate",
+        "artifacts",
+        "vector_evidence",
+        "scratch",
+        "watchdog_evidence",
+        "execution_semantics",
+        "command",
+        "resource",
+        "checker_source",
+    )
+    checks = {name: False for name in names}
+    summary: Mapping[str, Any] = {}
+    watchdog: Mapping[str, Any] = {}
+    expected_w7: Mapping[str, Any] = {}
+    factor: Mapping[str, Any] = {}
+    worker_checks: dict[str, bool] = {}
+    vector_evidence: dict[str, Any] = {"pass": False, "artifact_hashes": {}}
+    worker_pass = False
+    worker_numeric_only = False
+    try:
+        summary = _read_json(raw_dir / M6B_W18A_SUMMARY_FILENAME)
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        pass
+    try:
+        watchdog = _read_json(watchdog_summary_path)
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        pass
+    try:
+        expected_w7 = _m6b_w9a_load_w7(
+            ROOT / M6B_W8A_W7_COMPACT_RELATIVE_PATH,
+            ROOT / M6B_W16A_W7_RAW_RELATIVE_PATH,
+        )
+        factor = _m6b_w16a_factor_authority(
+            ROOT / M6B_W16A_SHIFTED_FACTOR_MANIFEST_RELATIVE_PATH
+        )
+        factor_manifest = _read_json(Path(factor["path"]))
+        factor_audit = factor_manifest["audit"]
+        core = summary["core"]
+        authority = summary["authority"]
+        checks["worker_evidence"] = bool(
+            _evidence_valid(summary)
+            and summary["schema"] == M6B_W18A_SCHEMA
+            and summary["phase"] == M6B_W18A_PHASE
+            and summary["formal_pass"] is False
+            and summary["pde_pass"] is False
+            and summary["official_rta"] is False
+            and summary["physical_screen_locked"] is True
+            and summary["physical_screen_candidate"] is False
+            and type(summary["w18a_formal_candidate"]) is bool
+            and type(summary["w18a_pass"]) is bool
+        )
+        checks["progress"] = _m6b_w16a_progress_valid(
+            raw_dir / M6B_W18A_PROGRESS_FILENAME, mode="w18a"
+        )["pass"] is True
+        checks["w7_authority"] = bool(
+            authority["w7"] == expected_w7["compact"]
+            and authority["w7_raw_dir"] == expected_w7["raw_dir"]
+            and authority["w7_residual_artifact"]
+            == expected_w7["residual_artifact"]
+        )
+        checks["factor_authority"] = authority["factor_manifest"] == factor
+        checks["scope"] = summary["scope"] == _m6b_w18a_scope()
+        checks["p6"] = _m6b_expected_p6(summary["p6"])
+        predicted = _m6b_w18a_predicted_live_set()
+        checks["prediction"] = bool(
+            summary["predicted_live_set"] == predicted
+            and predicted["gate"] is True
+            and predicted["bytes"] <= predicted["limit_bytes"]
+        )
+        source_start = summary["source_at_start"]
+        source_end = summary["source_at_end"]
+        checks["source"] = bool(
+            _m6b_w6a_source_valid(source_start)
+            and _m6b_w6a_source_valid(source_end)
+            and source_start["source_commit_full_sha"] == expected_source_sha
+            and source_end["source_commit_full_sha"] == expected_source_sha
+            and source_start["tracked_source_dirty"] is False
+            and source_end["tracked_source_dirty"] is False
+        )
+        checks["runtime"] = bool(
+            _m6b_w6a_runtime_valid(
+                summary["runtime_identity"],
+                frozen_compiler=factor["factor_compiler"],
+            )
+            and summary["runtime_identity"]["compiler"]
+            == factor["factor_compiler"]
+        )
+        checks["jit"] = _m6b_w16a_jit_valid(summary, raw_dir, h2b)
+        checks["cache"] = checks["jit"]
+        checks["execution"] = summary["error"] is None
+        action_audit = summary["action_audit"]
+
+        def repeat_action_counts_valid(
+            repeats: Any, audit: Mapping[str, Any]
+        ) -> bool:
+            if not isinstance(repeats, Sequence) or len(repeats) != 2:
+                return False
+            if [run["repeat_index"] for run in repeats] != [1, 2]:
+                return False
+            records: list[Mapping[str, Any]] = []
+            outer_audits: list[Mapping[str, Any]] = []
+            for run in repeats:
+                inner_records = run["inner_records"]
+                if not isinstance(inner_records, Sequence) or len(inner_records) != 2:
+                    return False
+                if [record["apply_index"] for record in inner_records] != [1, 2]:
+                    return False
+                records.extend(inner_records)
+                outer_audits.append(run["outer_audit"])
+            inner_global = sum(record["global_action_count"] for record in records)
+            inner_pc = sum(record["pc_apply_count"] for record in records)
+            inner_shifted = [record["shifted_action_count"] for record in records]
+            outer_actions = sum(item["action_count"] for item in outer_audits)
+            outer_pc = sum(item["pc_count"] for item in outer_audits)
+            expected = M6B_W18A_ACTION_COUNTS
+            return bool(
+                all(count == 83 for count in inner_shifted)
+                and sum(inner_shifted) == 332
+                and inner_global == expected["inner_global_shifted_action_count"]
+                and inner_global == audit["global_shifted_action_count"]
+                and inner_pc == expected["local_pc_apply_count"]
+                and inner_pc == audit["local_pc_apply_count"]
+                and outer_actions == expected["outer_auxiliary_action_count"]
+                and outer_actions == audit["outer_auxiliary_action_count"]
+                and outer_pc == expected["outer_pc_apply_count"]
+                and outer_pc == audit["outer_pc_apply_count"]
+                and sum(inner_shifted) + outer_actions
+                == expected["shifted_action_total_count"]
+                == audit["shifted_action_total_count"]
+            )
+
+        checks["action_audit"] = bool(
+            core["action_audit"] == action_audit
+            and summary["architecture"] == core["architecture"]
+            and action_audit["auxiliary_final_counts"]["outer"]
+            == [run["outer_audit"] for run in core["repeats"]]
+            and repeat_action_counts_valid(core["repeats"], action_audit)
+            and _m6b_w18a_action_audit_valid(
+                action_audit, factor_authority=factor_audit
+            )
+        )
+        from src.solvers.hcurl_m6b_w18_nested_auxiliary_pc import (
+            evaluate_w18a_action_gate,
+        )
+
+        report = evaluate_w18a_action_gate(core)
+        worker_checks = dict(report["checks"])
+        worker_pass = bool(
+            report["pass"] is True
+            and worker_checks
+            and all(worker_checks.values())
+        )
+        failed = {name for name, value in worker_checks.items() if value is False}
+        worker_numeric_only = bool(
+            failed
+            and failed.issubset(
+                {"inner_residual", "outer_auxiliary_residual", "measurements"}
+            )
+        )
+        evaluator_names = set(worker_checks)
+        summary_checks = summary["checks"]
+        required = evaluator_names | {"source", "cache", "execution"}
+        checks["worker_evidence"] = bool(
+            checks["worker_evidence"]
+            and isinstance(core["checks"], Mapping)
+            and core["checks"] == summary_checks
+            and required <= set(summary_checks)
+            and all(type(value) is bool for value in summary_checks.values())
+            and all(
+                summary_checks[name] is worker_checks[name]
+                for name in evaluator_names
+            )
+            and summary_checks["source"] is checks["source"]
+            and summary_checks["cache"] is checks["cache"]
+            and summary_checks["execution"] is checks["execution"]
+        )
+        checks["worker_action_gate"] = worker_pass
+        pass_semantics = bool(
+            worker_pass
+            and summary["status"] == "action_gate_pass"
+            and summary["classification"] == "W18A_NESTED_AUXILIARY_PASS"
+            and summary["w18a_pass"] is True
+            and summary["w18a_formal_candidate"] is True
+        )
+        fail_semantics = bool(
+            not worker_pass
+            and worker_numeric_only
+            and summary["status"] == "gate_failed"
+            and summary["classification"]
+            == "W18A_NESTED_AUXILIARY_NUMERIC_FAIL"
+            and summary["w18a_pass"] is False
+            and summary["w18a_formal_candidate"] is False
+        )
+        checks["worker_semantics"] = bool(
+            (pass_semantics or fail_semantics)
+            and summary["formal_pass"] is False
+            and summary["pde_pass"] is False
+            and summary["official_rta"] is False
+            and summary["physical_screen_locked"] is True
+        )
+        expected_raw = _m6b_w16a_raw_artifacts(raw_dir, mode="w18a")
+        checks["artifacts"] = bool(
+            summary.get("artifacts") is None
+            and len(expected_raw) == 46
+            and all(
+                item.get("present") is True
+                and type(item.get("bytes")) is int
+                and item["bytes"] > 0
+                and _m6b_w6a_valid_sha(item.get("sha256"))
+                for item in expected_raw
+            )
+        )
+        vector_evidence = _m6b_w18a_vector_evidence_valid(
+            raw_dir, core, expected_w7
+        )
+        checks["vector_evidence"] = vector_evidence["pass"] is True
+        checks["scratch"] = _m6b_w18a_scratch_valid(raw_dir, core)
+    except (
+        FloatingPointError,
+        ImportError,
+        KeyError,
+        OSError,
+        TypeError,
+        ValueError,
+    ):
+        for name in (
+            "worker_evidence",
+            "worker_semantics",
+            "action_audit",
+            "worker_action_gate",
+            "artifacts",
+            "vector_evidence",
+            "scratch",
+        ):
+            checks[name] = False
+
+    try:
+        expected_command = _m6b_w18a_worker_command(
+            raw_dir,
+            ROOT / M6B_W8A_W7_COMPACT_RELATIVE_PATH,
+            ROOT / M6B_W16A_W7_RAW_RELATIVE_PATH,
+            ROOT / M6B_W16A_SHIFTED_FACTOR_MANIFEST_RELATIVE_PATH,
+            ROOT / M6B_W16A_JIT_RELATIVE_PATH,
+            expected_source_sha,
+        )
+        checks["command"] = watchdog["command"] == expected_command
+    except (KeyError, TypeError, ValueError):
+        pass
+
+    worker_phase = M6B_W18A_PHASE
+    timeline = _m6b_w8a_timeline_valid(
+        watchdog_dir / f"{worker_phase}_timeline.jsonl", phase=worker_phase
+    )
+    try:
+        expected_raw = _m6b_w16a_raw_artifacts(raw_dir, mode="w18a")
+        expected_watchdog = _m6b_w16a_watchdog_artifacts(
+            watchdog_dir, mode="w18a"
+        )
+        inventory = watchdog["artifact_inventory"]
+        process = watchdog["process"]
+        drain = watchdog["drain"]
+        checks["watchdog_evidence"] = bool(
+            _evidence_valid(watchdog)
+            and watchdog["schema"] == M6B_W18A_WATCHDOG_SCHEMA
+            and watchdog["phase"] == M6B_W18A_PHASE
+            and watchdog["raw_dir"] == str(raw_dir)
+            and watchdog["watchdog_dir"] == str(watchdog_dir)
+            and watchdog["source_end_clean"] is True
+            and _m6b_w6a_source_valid(watchdog["source_at_start"])
+            and _m6b_w6a_source_valid(watchdog["source_at_end"])
+            and watchdog["source_at_start"]["source_commit_full_sha"]
+            == expected_source_sha
+            and watchdog["source_at_end"]["source_commit_full_sha"]
+            == expected_source_sha
+            and watchdog["formal_pass"] is False
+            and watchdog["pde_pass"] is False
+            and watchdog["official_rta"] is False
+            and watchdog["physical_screen_unlocked"] is False
+            and watchdog["physical_screen_locked"] is True
+            and watchdog["resource_limits"] == {
+                "timeout_seconds": M6B_W18A_TIMEOUT_SECONDS,
+                "watchdog_rss_bytes": M6B_W18A_WATCHDOG_RSS_LIMIT_BYTES,
+                "completion_peak_rss_bytes": M6B_W18A_FORMAL_RSS_LIMIT_BYTES,
+                "swap_bytes": M6B_SWAP_LIMIT_BYTES,
+            }
+            and watchdog["worker_summary"] == expected_raw[0]
+            and inventory["raw"] == expected_raw
+            and inventory["watchdog"] == expected_watchdog
+            and len(expected_raw) == 46
+            and len(expected_watchdog) == 3
+            and all(
+                item.get("present") is True
+                and type(item.get("bytes")) is int
+                and item["bytes"] > 0
+                and _m6b_w6a_valid_sha(item.get("sha256"))
+                for item in expected_raw + expected_watchdog
+            )
+        )
+        process_return_code = process["return_code"]
+        checks["execution_semantics"] = bool(
+            (
+                worker_pass
+                and type(process_return_code) is int
+                and process_return_code == 0
+                and watchdog["status"] == "measurement_complete"
+                and process["termination"] is None
+            )
+            or (
+                not worker_pass
+                and worker_numeric_only
+                and type(process_return_code) is int
+                and process_return_code == 1
+                and watchdog["status"] == "gate_failed"
+                and process["termination"] is None
+            )
+        )
+        checks["resource"] = bool(
+            process["termination"] is None
+            and drain["gone"] is True
+            and type(process["peak_rss_bytes"]) is int
+            and process["peak_rss_bytes"] < M6B_W18A_FORMAL_RSS_LIMIT_BYTES
+            and type(process["swap_bytes"]) is int
+            and process["swap_bytes"] == 0
+            and timeline["pass"] is True
+            and timeline["peak_rss_bytes"] == process["peak_rss_bytes"]
+            and timeline["swap_bytes"] == 0
+            and timeline["compiler_descendant_pids"] == []
+            and watchdog["timeline"] == timeline
+        )
+    except (KeyError, TypeError, ValueError):
+        pass
+
+    try:
+        checker_source = h2b._light_source()
+        checks["checker_source"] = bool(
+            _m6b_w6a_source_valid(checker_source)
+            and checker_source["source_commit_full_sha"] == expected_source_sha
+        )
+    except (OSError, RuntimeError, TypeError, ValueError):
+        checker_source = {}
+
+    process = watchdog.get("process", {})
+    resource_failure = bool(
+        not checks["resource"]
+        and isinstance(process, Mapping)
+        and (
+            (
+                type(process.get("peak_rss_bytes")) is int
+                and process["peak_rss_bytes"] >= M6B_W18A_FORMAL_RSS_LIMIT_BYTES
+            )
+            or (
+                type(process.get("swap_bytes")) is int
+                and process["swap_bytes"] != 0
+            )
+            or process.get("termination") is not None
+            or (
+                isinstance(timeline.get("compiler_descendant_pids"), list)
+                and bool(timeline["compiler_descendant_pids"])
+            )
+            or (
+                isinstance(watchdog.get("drain"), Mapping)
+                and watchdog["drain"].get("gone") is False
+            )
+        )
+    )
+    evidence_keys = tuple(name for name in checks if name != "worker_action_gate")
+    numeric_failure = bool(
+        not checks["worker_action_gate"]
+        and worker_numeric_only
+        and checks["worker_semantics"]
+        and all(checks[name] for name in evidence_keys)
+    )
+    overall = bool(all(checks.values()))
+    if overall:
+        classification = "W18A_FORMAL_ACTION_GATE_PASS"
+    elif resource_failure:
+        classification = "W18A_RESOURCE_FAIL"
+    elif numeric_failure:
+        classification = "W18A_NESTED_AUXILIARY_NUMERIC_FAIL"
+    else:
+        classification = "W18A_EXECUTION_OR_EVIDENCE_FAIL"
+    return {
+        "pass": overall,
+        "classification": classification,
+        "checks": checks,
+        "problems": sorted(name for name, value in checks.items() if not value),
+        "summary": summary,
+        "watchdog": watchdog,
+        "timeline": {
+            key: timeline.get(key)
+            for key in (
+                "pass",
+                "record_count",
+                "peak_rss_bytes",
+                "swap_bytes",
+                "compiler_descendant_pids",
+            )
+        },
+        "worker_checks": worker_checks,
+        "vector_evidence": vector_evidence,
+        "checker_source": checker_source,
+    }
+
+
+def _m6b_w18a_measured_summary(gate: Mapping[str, Any]) -> dict[str, Any]:
+    summary = gate.get("summary", {})
+    core = summary.get("core", {}) if isinstance(summary, Mapping) else {}
+    repeats = core.get("repeats", []) if isinstance(core, Mapping) else []
+    vector = gate.get("vector_evidence", {})
+    inner = [
+        record.get("final_relative_residual")
+        for repeat in repeats
+        if isinstance(repeat, Mapping)
+        for record in repeat.get("inner_records", [])
+        if isinstance(record, Mapping)
+    ]
+    outer = [
+        repeat.get("checkpoints", {}).get("2", {}).get(
+            "true_relative_residual"
+        )
+        for repeat in repeats
+        if isinstance(repeat, Mapping)
+    ]
+    measurements = [
+        measurement
+        for repeat in repeats
+        if isinstance(repeat, Mapping)
+        for measurement in repeat.get("measurements", {}).values()
+        if isinstance(measurement, Mapping)
+    ]
+    timeline = gate.get("timeline", {})
+    return {
+        "inner_true_residuals": inner,
+        "outer_auxiliary_true_residuals": outer,
+        "rho": [item.get("rho") for item in measurements],
+        "normal_closure": [item.get("normal_closure") for item in measurements],
+        "projection_orthogonality": [
+            item.get("projection_orthogonality") for item in measurements
+        ],
+        "z_relative_differences": vector.get("z_relative_differences", []),
+        "outer_action_relative_differences": vector.get(
+            "outer_action_relative_differences", []
+        ),
+        "physical_relative_differences": vector.get(
+            "physical_relative_differences", []
+        ),
+        "action_counts": {
+            key: core.get("action_counts", {}).get(key)
+            for key in M6B_W18A_ACTION_COUNTS
+        },
+        "predicted_live_set_bytes": core.get("prediction", {}).get("bytes"),
+        "measured_peak_rss_bytes": timeline.get("peak_rss_bytes"),
+        "measured_swap_bytes": timeline.get("swap_bytes"),
+        "artifact_hashes": vector.get("artifact_hashes", {}),
+    }
+
+
+def _run_m6b_w18a_check(
+    raw_dir: Path,
+    watchdog_summary_path: Path,
+    output: Path,
+    expected_source_sha: str,
+) -> int:
+    output = Path(output).resolve()
+    if output.exists():
+        raise FileExistsError(f"W18A checker refuses existing output: {output}")
+    gate = _m6b_w18a_formal_gate(
+        Path(raw_dir).resolve(), Path(watchdog_summary_path).resolve(), expected_source_sha
+    )
+    passed = gate["pass"] is True
+    summary = gate.get("summary", {})
+    watchdog = gate.get("watchdog", {})
+    raw_inventory = (
+        watchdog.get("artifact_inventory", {}).get("raw", [])
+        if isinstance(watchdog, Mapping)
+        else []
+    )
+    watchdog_inventory = (
+        watchdog.get("artifact_inventory", {}).get("watchdog", [])
+        if isinstance(watchdog, Mapping)
+        else []
+    )
+    result = {
+        "schema": M6B_W18A_CHECK_SCHEMA,
+        "phase": M6B_W18A_PHASE,
+        "status": "pass" if passed else "gate_failed",
+        "pass": passed,
+        "classification": gate["classification"],
+        "checks": gate["checks"],
+        "problems": gate["problems"],
+        "formal_pass": passed,
+        "pde_pass": False,
+        "official_rta": False,
+        "physical_screen_unlocked": passed,
+        "physical_screen_locked": not passed,
+        "producer_source_sha": expected_source_sha,
+        "raw_dir": str(Path(raw_dir).resolve()),
+        "worker_summary": raw_inventory[0] if raw_inventory else {},
+        "watchdog_summary": _artifact(
+            Path(watchdog_summary_path).parent,
+            Path(watchdog_summary_path).name,
+        ),
+        "worker_checks": gate.get("worker_checks", {}),
+        "measured": _m6b_w18a_measured_summary(gate),
+        "vector_evidence": gate.get("vector_evidence", {}),
+        "predicted_live_set": (
+            summary.get("predicted_live_set")
+            if isinstance(summary, Mapping)
+            else None
+        ),
+        "timeline": gate.get("timeline", {}),
+        "artifact_inventory": {
+            "raw": raw_inventory,
+            "watchdog": watchdog_inventory,
+        },
+        "watchdog": gate.get("timeline", {}),
+        "checker_source": gate.get("checker_source", {}),
+    }
+    _write_json(output, _attach_evidence(result))
+    return 0 if passed else 1
 
 
 def _m6b_w16b_action_audit_valid(value: Any) -> bool:
@@ -24805,6 +25904,13 @@ def _parser() -> argparse.ArgumentParser:
     w18a_watchdog.add_argument(
         "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
     )
+    w18a_check = sub.add_parser("m6b-w18a-check")
+    w18a_check.add_argument("--raw-dir", required=True)
+    w18a_check.add_argument("--watchdog-summary", required=True)
+    w18a_check.add_argument("--output", required=True)
+    w18a_check.add_argument(
+        "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
+    )
     w15a_watchdog = sub.add_parser("m6b-w15a-watchdog")
     w15a_watchdog.add_argument("--run-dir", required=True)
     w15a_watchdog.add_argument("--watchdog-dir", required=True)
@@ -25270,6 +26376,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.command == "m6b-w17a-check":
         return _run_m6b_w17a_check(
+            Path(args.raw_dir).resolve(),
+            Path(args.watchdog_summary).resolve(),
+            Path(args.output).resolve(),
+            args.expected_source_sha,
+        )
+    if args.command == "m6b-w18a-check":
+        return _run_m6b_w18a_check(
             Path(args.raw_dir).resolve(),
             Path(args.watchdog_summary).resolve(),
             Path(args.output).resolve(),
