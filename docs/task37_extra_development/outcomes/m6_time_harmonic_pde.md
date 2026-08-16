@@ -7,7 +7,7 @@ M6A 的作用是验证冻结的 80 模式端口 DtN（Dirichlet-to-Neumann，给
 | 路线 | 状态 | 边界 |
 | --- | --- | --- |
 | M6A matrix-free full-space DtN | `PASS / QUALIFIED` | 仅 action/DtN authority；checker 15/15，通过 MPI1/MPI2 对照 |
-| M6B/time-harmonic screen | `not_run_yet` | 未运行 |
+| W14A–W16B action-only diagnostics | `completed / negative where stated` | 只完成 action、数值和资源 Gate；不是 PDE/RTA |
 | full time-harmonic PDE / RTA / field recovery | `not_run_yet` | 未运行 |
 | 最终 PDE `<2,000,000,000 B` process-tree 目标 | `not_run_yet` | 未测量，不能由 M6A peak 代替 |
 
@@ -138,3 +138,26 @@ W13B 的固定资格门是 beta=0.5 的 projected rho 必须不超过 beta=1.0 �
 两组 beta 的 range-only rho 差都是 `0.0`，通过 `<=1e-12` 的 cross-beta identity；child 的 finite、repeat、closure 和计数也通过。但两组 residual 的改善都只有约千分之五到千分之六，远低于预声明的 5% 门，因此 W13B_FIXED_200_STEP_SCREEN 锁定，不应继续花费一次 200 步 screen。W13A 的 action-only 峰值不能冒充 full PDE 资源证据；full time-harmonic PDE、official field/RTA、direct-authority physics comparison 和最终 `<2,000,000,000 B` PDE 测量仍为 `not_run`。
 
 W13A 的独立 compact 证据为 [`m6b_w13a_projected_range_composition.json`](../../benchmarks/cases/101_task37_extra_development/records/m6b_w13a_projected_range_composition.json)，保留旧 raw/watchdog 只读并逐文件绑定 SHA。
+
+## W14A–W16B：统一 action-only 收口
+
+W14A–W16B 都是“先构造一个候选修正方向，再用物理 action 检查它是否真正降低冻结残差”的诊断。它们没有求解完整时谐方程：没有 physical KSP、没有 PDE、没有场恢复，也没有 official R/T/A。辅助内层 residual 小，只能说明辅助方程近似解得较好；最终是否有用仍由 physical `rho` 和预声明 Gate 决定。
+
+| 路线 | 方法与关键实测 | 状态和边界 |
+|---|---|---|
+| W14A | 两次 global coercive B0 inner-PC；physical rho `0.8943645606070599`；prediction `1,281,057,286 B`；peak `1,158,553,600 B`；swap `0` | action/resource closeout 通过；不是 PDE/RTA |
+| W14B | fixed4 rho `0.8943645606070647 → 0.869374076266045 → 0.8681485457234316`；inner4 residual `0.01751006766159766 > 0.01`；peak `1,185,300,480 B`；swap `0` | `W14B_FIXED4_CORRECTION_FAIL`；W14C locked |
+| W15A | inner residual `0.00499608724120203`；local/cumulative rho `0.9993168124994211 / 0.8937535419182971`；peak `1,162,047,488 B`；swap `0` | `W15A_RESTART1_NUMERIC_FAIL`；W15B locked |
+| W16A | shifted volume-only beta=1 inner residual `0.061153888358888554 > 0.01`；physical rho `0.8806019129260008`；peak `1,395,236,864 B`；swap `0` | inner Gate 失败；W16B 只作为后续候选 |
+| W16R | fixed restart20+20；两次 inner residual `0.008234328428613968`；physical rho `0.8814092210776835`；peak `1,398,456,320 B`；swap `0` | action-only 通过，解锁 W16B screen；不是 PDE |
+| W16B | 两次 outer-2 screen；rho1 `0.8814092210776882`，rho2 `0.8796856414991869`；inner final `0.008234328428613734 / 0.003015056986064362`；peak `1,557,839,872 B`；swap `0` | rho1 anchor 通过，但 rho2 `>0.8660254037844386`，数值 Gate 失败 |
+
+W16B 的唯一正式 run 自然完成，repeat identity 通过，资源侧 peak 和 swap 也通过；但历史 v1 compact 的正式分类仍原样为 `W16B_EXECUTION_OR_EVIDENCE_FAIL`。原因是旧 checker 对 W16B 错误期待 `observer_count=1`，而 raw 中四个 cycle 的真实值都是 `0`。当前窄修复只是让共享 fixed-20 audit 接受显式的 `expected_observer_count`：W16A/W16R 保持默认 `1`，W16B 传 `0`；没有改变数值路径，也没有重写 compact v1。compact 当前 file SHA 为 `1f59bdca7abc09ce6385f25b145f97a41f2b3e995b377855267d326bac37056d`。这个 checker 分类问题不能掩盖 rho2 的明确失败，因此 W16C 和 outer4 都不运行。
+
+W16B raw 的离线几何为 `||r0||/||r1||/||r2|| = 1.6023954272 / 1.4123661053 / 1.4096042493`。第一步下降约 `11.8591%`，第二步仅下降 `0.19555%`，`r1/r2` alignment 为 `0.9980445183`。若要求 outer4 达到 `rho4<=0.75`，后两步的累计 reduction factor 必须 `<=0.8525772897`，等效每步至少下降 `7.6649%`；按当前第二步趋势，rho4 约为 `0.8762485870`。因此不盲跑 outer4；这只是读取已保存 NPY 的离线几何诊断，没有生成新的物理 action。
+
+## W17A：proposed / not_run
+
+W17A 只保留为下一候选设计，尚未运行，因而没有正式结果或资格结论。它拟把辅助算子固定为 `beta=1.0` shifted volume 加同一个 matrix-free DtN80，使用固定 40 步（zero-start 20 + restart 20）和 direct beta=1 shifted row-complete local patch PC；随后对一个方向做 physical action，并做一次独立重复。唯一预声明 Gate 是：inner true residual `<=1e-2`、finite/deterministic/hash identity、physical `rho<=0.85`、normal closure/orthogonality `<=1e-11`、derived prediction `<=1.75 GB`、formal watchdog `<1.95 GB`、swap `0` 且 compiler descendants 为空。任一 Gate 失败即停止，不进入 W17B；本轮没有运行 W17A。
+
+full time-harmonic PDE、official field/RTA、direct-authority physics comparison 和最终 `<2,000,000,000 B` 的 PDE process-tree 测量仍为 `not_run`。action-only peak、derived prediction 和历史 checker 分类都不能替代这些未完成的 PDE 证据。

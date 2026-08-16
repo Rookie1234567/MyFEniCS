@@ -45,7 +45,9 @@ def _basis(capacity: int) -> dict[str, object]:
     }
 
 
-def _inner_audit(initial: bool, suffix: str) -> dict[str, object]:
+def _inner_audit(
+    initial: bool, suffix: str, *, observer_count: int = 1
+) -> dict[str, object]:
     return {
         "algorithm": "right_flexible_gmres",
         "rows": core.W16A_VECTOR_BYTES // 16,
@@ -54,7 +56,7 @@ def _inner_audit(initial: bool, suffix: str) -> dict[str, object]:
         "iterations": 20,
         "checkpoint_iterations": [20],
         "checkpoint_count": 1,
-        "observer_count": 1,
+        "observer_count": observer_count,
         "action_count": 22 if initial else 21,
         "pc_count": 20,
         "initial_action_count": 1 if initial else 0,
@@ -85,8 +87,8 @@ def _fixed40_record(apply_index: int, screen: int) -> dict[str, object]:
         "algorithm": "fgmres_right_shifted_beta1_composed_fixed20_plus20",
         "initial_solution_provided": False,
         "initial_action_count": 0,
-        "cycle20": _inner_audit(False, f"{prefix}/cycle20"),
-        "cycle40": _inner_audit(True, f"{prefix}/cycle40"),
+        "cycle20": _inner_audit(False, f"{prefix}/cycle20", observer_count=0),
+        "cycle40": _inner_audit(True, f"{prefix}/cycle40", observer_count=0),
         "global_action_count": core.W16B_FIXED40_GLOBAL_ACTION_COUNT,
         "pc_apply_count": core.W16B_FIXED40_PC_COUNT,
         "shifted_action_count": core.W16B_FIXED40_SHIFTED_ACTION_COUNT,
@@ -101,8 +103,12 @@ def _fixed40_record(apply_index: int, screen: int) -> dict[str, object]:
         "cycle40_relative_residual": 0.008,
         "final_relative_residual": 0.008,
         "scratch_paths": {
-            "cycle20": _inner_audit(False, f"{prefix}/cycle20")["scratch_paths"],
-            "cycle40": _inner_audit(True, f"{prefix}/cycle40")["scratch_paths"],
+            "cycle20": _inner_audit(
+                False, f"{prefix}/cycle20", observer_count=0
+            )["scratch_paths"],
+            "cycle40": _inner_audit(
+                True, f"{prefix}/cycle40", observer_count=0
+            )["scratch_paths"],
         },
     }
 
@@ -716,6 +722,42 @@ def test_outer2_evaluator_accepts_fixed_p6_contract_fixture() -> None:
     report = core.evaluate_w16b_outer2_gate(_synthetic_summary())
     assert report["pass"] is True
     assert all(type(value) is bool and value for value in report["checks"].values())
+
+
+def test_outer2_rho_failure_keeps_non_rho_audits_qualified() -> None:
+    summary = _synthetic_summary()
+    failed_rho = core.W16B_RHO2_LIMIT + 1.0e-3
+    for run in summary["screen_runs"]:
+        run["rho2"] = failed_rho
+        run["checkpoints"][1]["true_relative_residual"] = failed_rho
+
+    report = core.evaluate_w16b_outer2_gate(summary)
+    assert report["checks"]["rho"] is False
+    assert all(
+        passed for name, passed in report["checks"].items() if name != "rho"
+    )
+    assert runner._m6b_w16b_final_status(report["checks"], None) == (
+        False,
+        "gate_failed",
+        "W16B_OUTER2_NUMERIC_FAIL",
+    )
+
+
+def test_outer2_observer_count_is_zero_for_w16b_and_wrong_count_fails() -> None:
+    summary = _synthetic_summary()
+    assert all(
+        record[cycle]["observer_count"] == 0
+        for run in summary["screen_runs"]
+        for record in run["inner_records"]
+        for cycle in ("cycle20", "cycle40")
+    )
+
+    summary["screen_runs"][0]["inner_records"][0]["cycle20"][
+        "observer_count"
+    ] = 1
+    report = core.evaluate_w16b_outer2_gate(summary)
+    assert report["pass"] is False
+    assert report["checks"]["screen_runs"] is False
 
 
 def test_prediction_ledger_and_disk_scratch_semantics() -> None:

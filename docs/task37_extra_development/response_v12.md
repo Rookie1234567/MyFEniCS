@@ -1,6 +1,6 @@
-# Task037-extra Response V12：W8–W13A 证据收口
+# Task037-extra Response V12：W8–W16B 证据收口
 
-本轮只收口已经完成的 W8–W12 研究证据，并保留所有旧 raw、watchdog、临时 JSON 和既有 compact。这里的“投影”是把残差在一个已经生成的候选方向集合上做最小二乘修正；它可以判断方向是否有用，但不能替代完整时谐 PDE、场恢复或 official R/T/A。
+本轮在保留 W8–W13A 研究证据的基础上，补充 W14A–W16B 的 action-only 结果，并保留所有旧 raw、watchdog、临时 JSON 和既有 compact。这里的“投影”是把残差在一个已经生成的候选方向集合上做最小二乘修正；它可以判断方向是否有用，但不能替代完整时谐 PDE、场恢复或 official R/T/A。
 
 ## 一页结论
 
@@ -48,3 +48,28 @@ W13B 的固定解锁门要求 beta=0.5 的 projected rho 至少比 beta=1.0 低 
 两组 beta 的 range-only rho 差均为 `0.0`，通过 `<=1e-12` 的身份检查；各 child 的 finite、重复、closure 和 action counts 也通过。可是两个 residual 都远低于 5% 改善门，所以 W13B_FIXED_200_STEP_SCREEN 被锁定，不应继续花费一次 200 步 screen。W13A 的 action-only peak 不是 full PDE peak；full time-harmonic PDE、official field/RTA、direct-authority physics comparison 和最终 `<2,000,000,000 B` PDE 测量仍为 `not_run`。
 
 新的 hash-bound compact 是 [`m6b_w13a_projected_range_composition.json`](../../benchmarks/cases/101_task37_extra_development/records/m6b_w13a_projected_range_composition.json)。它保留 run1/run2 的执行边界、run3 的 top/child/watchdog/timeline/stdout/time/wrapper SHA，并从 raw numeric fields 独立重算上述 ratio、改善率和 Gate。
+
+## W14A–W16B：统一 action-only 结果与边界
+
+这些阶段都只把一个冻结残差送入若干已经定义好的算子，观察“修正方向是否真的能降低残差”。它们没有启动完整的物理方程求解：没有 physical KSP、没有 PDE、没有场恢复、没有 R/T/A。表中的 `rho` 越小表示修正后的残差越小；`inner residual` 只表示辅助内层方程解得怎样，不能代替最终 physical rho。
+
+| 路线 | 固定动作 | 真实数值与资源 | 状态/边界 |
+|---|---|---|---|
+| W14A | 两次固定 global coercive B0 inner-PC，再做 physical action | physical rho `0.8943645606070599`；prediction `1,281,057,286 B`；peak `1,158,553,600 B`；swap `0` | action/resource closeout 通过；不是 PDE/RTA |
+| W14B | 固定 4-step physical correction | rho `0.8943645606070647 → 0.869374076266045 → 0.8681485457234316`；inner4 residual `0.01751006766159766 > 0.01`；peak `1,185,300,480 B`；swap `0` | `W14B_FIXED4_CORRECTION_FAIL`；W14C locked |
+| W15A | 用 W14B checkpoint1 residual 重做固定 rank-one correction | inner residual `0.00499608724120203`；local rho `0.9993168124994211`；cumulative rho `0.8937535419182971`；peak `1,162,047,488 B`；swap `0` | `W15A_RESTART1_NUMERIC_FAIL`；W15B locked |
+| W16A | beta=1 shifted volume-only auxiliary，固定20 inner，physical rank-one | inner residual `0.061153888358888554 > 0.01`；physical rho `0.8806019129260008`；peak `1,395,236,864 B`；swap `0` | `W16A_GLOBAL_SHIFTED_INNER_NUMERIC_FAIL`；W16B 仅作为后续候选 |
+| W16R | W16A 的 z20 作为初值，再固定追加 20 步至 40 步 | 两次 inner residual `0.008234328428613968`；physical rho `0.8814092210776835`；peak `1,398,456,320 B`；swap `0` | `W16R` 通过并解锁 W16B screen；仍不是 PDE |
+| W16B | 两次完整 outer-2 screen，每个 outer PC 都是 fresh 20+20 inner | rho1 `0.8814092210776882`（anchor 通过）；rho2 `0.8796856414991869`；inner final `0.008234328428613734 / 0.003015056986064362`；peak `1,557,839,872 B`；swap `0` | rho2 `> sqrt(0.75)=0.8660254037844386`，所以数值 Gate 失败；历史 v1 compact 分类仍为 `W16B_EXECUTION_OR_EVIDENCE_FAIL` |
+
+W16B 的历史分类必须与数值结论同时保留，不能择一叙述。唯一正式 run 自然完成，两次 screen 的数组 identity、资源和大部分证据闭合；但旧 checker 复用了 observer_count=1 的契约，而真实 W16B 四个 cycle 的 `observer_count` 都是 `0`，因此 v1 compact 被标成 execution/evidence fail。当前窄修复只给共享 fixed-20 audit 增加显式 `expected_observer_count`：W16A/W16R 仍默认 `1`，W16B 明确传 `0`；它不改变 action、solver 或数值 Gate，也不改写 compact v1（当前 file SHA：`1f59bdca7abc09ce6385f25b145f97a41f2b3e995b377855267d326bac37056d`）。即使修正这个分类缺陷，W16B 的 rho2 仍明确超过数值门，不能被写成 PASS；W16C 和 outer4 均未运行。
+
+离线几何诊断进一步说明为什么不能盲跑 outer4。保存的残差范数为 `||r0||/||r1||/||r2|| = 1.6023954272 / 1.4123661053 / 1.4096042493`；第一步下降约 `11.8591%`，第二步只下降 `0.19555%`，`r1/r2` alignment 为 `0.9980445183`。要让后两步达到 `rho4<=0.75`，它们的累计因子必须不超过 `0.8525772897`，等效每步至少下降 `7.6649%`；按当前第二步趋势外推 `rho4≈0.8762485870`。这不是新运行或新物理 action，只是对现有 raw NPY 的离线检查。
+
+### W17A：唯一 proposed、尚未运行的候选
+
+W17A 只作为 proposed/not_run 记录：辅助算子改为 `beta=1.0` 的 shifted volume 加同一个 matrix-free DtN80，再用固定 40 步（zero-start 20 + restart 20）产生一个方向，随后做一次 physical action 并独立重复一次。它仍使用 direct beta=1 shifted row-complete local patch PC，不扫描 beta、步数或其他参数。预声明资格门为：每次 inner true residual `<=1e-2`、finite/deterministic/hash identity、physical `rho<=0.85`、normal closure/orthogonality `<=1e-11`，以及 derived prediction `<=1.75 GB`、formal watchdog `<1.95 GB`、swap `0`、compiler descendants 为空。任一门失败就停止，不进入 W17B；W17A 尚未运行，因而没有正式结果或资格结论，也不是 PDE/RTA 通过。
+
+full time-harmonic PDE、official field/RTA、direct-authority physics comparison 和最终 `<2,000,000,000 B` 的 PDE process-tree 测量仍未完成。此前及本轮所有 action-only peak、derived prediction 和 checker 分类都不能替代这些未运行项目。
+
+当前窄修复验证：test342 `26 passed`；tests338–342 `76 passed`；compileall、AST duplicate-key、diff-check 均通过；Ruff unavailable；没有 heavy rerun。

@@ -455,8 +455,10 @@ def _w16b_fixed40_audit_valid(record: Any) -> bool:
             == "fgmres_right_shifted_beta1_composed_fixed20_plus20"
             and record["initial_solution_provided"] is False
             and record["initial_action_count"] == 0
-            and _fixed20_inner_audit(cycle20)
-            and _fixed20_inner_audit(cycle40, initial_solution_provided=True)
+            and _fixed20_inner_audit(cycle20, expected_observer_count=0)
+            and _fixed20_inner_audit(
+                cycle40, initial_solution_provided=True, expected_observer_count=0
+            )
             and record["global_action_count"] == W16B_FIXED40_GLOBAL_ACTION_COUNT
             and record["pc_apply_count"] == W16B_FIXED40_PC_COUNT
             and record["shifted_action_count"] == W16B_FIXED40_SHIFTED_ACTION_COUNT
@@ -720,7 +722,10 @@ def _finite_bounded(value: Any, limit: float | None = None) -> bool:
 
 
 def _fixed20_inner_audit(
-    audit: Mapping[str, Any], *, initial_solution_provided: bool = False
+    audit: Mapping[str, Any],
+    *,
+    initial_solution_provided: bool = False,
+    expected_observer_count: int = 1,
 ) -> bool:
     if not isinstance(audit, Mapping):
         return False
@@ -745,7 +750,7 @@ def _fixed20_inner_audit(
             and audit["iterations"] == W16A_MAX_STEPS
             and audit["checkpoint_iterations"] == [20]
             and audit["checkpoint_count"] == 1
-            and audit["observer_count"] == 1
+            and audit["observer_count"] == expected_observer_count
             and audit["action_count"] == expected_action_count
             and audit["pc_count"] == 20
             and audit["initial_action_count"] == expected_initial_action_count
