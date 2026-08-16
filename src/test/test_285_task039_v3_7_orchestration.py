@@ -510,6 +510,17 @@ def test_v3_8_candidate_b_plan_is_opt_in_and_checkpoint_is_hash_bound(tmp_path) 
     assert candidate_c["worker_contract"]["method"] == (
         "hybrid_iterative_candidate_c1_only"
     )
+    candidate_d = watchdog.v3_7_execution_dry_run(
+        INPUT,
+        tmp_path / "candidate-d",
+        source_sha="a" * 40,
+        python_executable=sys.executable,
+        candidate_d_only=True,
+    )
+    assert "--candidate-d-only" in candidate_d["argv"]
+    assert candidate_d["worker_contract"]["method"] == (
+        "USER_AUTHORIZED_EXPERIMENTAL_HYBRIDIZED_DIRECT_SIDE_CANDIDATE_D"
+    )
     with pytest.raises(ValueError, match="routes are exclusive"):
         watchdog.v3_7_execution_dry_run(
             INPUT,
@@ -518,6 +529,15 @@ def test_v3_8_candidate_b_plan_is_opt_in_and_checkpoint_is_hash_bound(tmp_path) 
             python_executable=sys.executable,
             candidate_b_only=True,
             candidate_c_only=True,
+        )
+    with pytest.raises(ValueError, match="routes are exclusive"):
+        watchdog.v3_7_execution_dry_run(
+            INPUT,
+            tmp_path / "candidate-bd",
+            source_sha="a" * 40,
+            python_executable=sys.executable,
+            candidate_b_only=True,
+            candidate_d_only=True,
         )
     payload = load_v3_7_official_payload(INPUT)
     checkpoint_root = tmp_path / "checkpoint"
@@ -612,6 +632,153 @@ def test_v3_8_candidate_c_side_gate_uses_frozen_limits() -> None:
     failed = {"pass": True, "rho_summary": {"median": 0.15, "worst": 0.2}}
     assert orchestration._candidate_c_side_gate(passed) is True
     assert orchestration._candidate_c_side_gate(failed) is False
+
+
+def test_v3_8_candidate_d_releases_side_components_before_recovery(
+    tmp_path, monkeypatch
+) -> None:
+    payload = load_v3_7_official_payload(INPUT)
+    events: list[str] = []
+
+    class Components:
+        def __init__(self):
+            self.bottom = object()
+            self.top = object()
+            self._destroyed = False
+
+        @property
+        def destroyed(self):
+            return self._destroyed
+
+        def destroy(self):
+            events.append("components_destroy")
+            self._destroyed = True
+
+    components = Components()
+    active_components = [components]
+    monkeypatch.setattr(
+        orchestration,
+        "build_research_explicit_side_components",
+        lambda *_args: active_components[0],
+    )
+
+    def heap_cleanup(_comm):
+        events.append("collective_cleanup")
+        return {"collective_call_completed": True}
+
+    monkeypatch.setattr(orchestration, "collective_heap_cleanup", heap_cleanup)
+
+    class Vec:
+        def duplicate(self):
+            events.append("snapshot_duplicate")
+            return Vec()
+
+        def copy(self, _destination):
+            events.append("snapshot_copy")
+
+        def destroy(self):
+            events.append("snapshot_destroy")
+
+    def oracle_runner(*_args, **kwargs):
+        assert kwargs["reference"] is None
+        assert kwargs["explicit_components"] is active_components[0]
+        kwargs["solution_consumer"](Vec(), {})
+        events.append("oracle_cleanup")
+        return {
+            "pass": True,
+            "numerical_pass": True,
+            "inventory_pass": True,
+            "inventory": {
+                "bottom_direct_factor_count": 1,
+                "top_direct_factor_count": 1,
+                "global_hybrid_direct_factor_count": 0,
+            },
+            "lifecycle": {
+                "bottom_action_destroyed": True,
+                "top_action_destroyed": True,
+                "bottom_direct_factor_count_after_cleanup": 0,
+                "top_direct_factor_count_after_cleanup": 0,
+                "explicit_components_destroyed_by_oracle": False,
+            },
+        }
+
+    def recovery_runner(*_args):
+        assert components.destroyed is True
+        events.append("recovery")
+        return {"pass": True, "physics": "measured"}
+
+    run_directory = tmp_path / "candidate-d"
+    (run_directory / "numerical_output").mkdir(parents=True)
+    (run_directory / "resolved_config.json").write_text("{}\n", encoding="utf-8")
+    producer = orchestration._candidate_d_producer_metadata(
+        payload, "c" * 40, lambda *_args: None
+    )
+    report, checkpoint = orchestration._run_v3_8_candidate_d_campaign(
+        SimpleNamespace(
+            bottom=SimpleNamespace(),
+            top=SimpleNamespace(),
+            coupling=SimpleNamespace(),
+        ),
+        SimpleNamespace(),
+        None,
+        resolved_payload=payload,
+        producer=producer,
+        run_directory=run_directory,
+        source_sha="c" * 40,
+        comm=MPI.COMM_SELF,
+        marker_callback=lambda *_args: None,
+        oracle_runner=oracle_runner,
+        recovery_runner=recovery_runner,
+    )
+    assert report["pass"] is True
+    assert events.index("oracle_cleanup") < events.index("components_destroy")
+    assert events.index("components_destroy") < events.index("collective_cleanup")
+    assert events.index("collective_cleanup") < events.index("recovery")
+    assert events.index("recovery") < events.index("snapshot_destroy")
+    saved = json.loads(checkpoint.read_text(encoding="utf-8"))
+    assert saved["direct_reference_payload_loaded"] is False
+    assert saved["exact_side_components_materialized"] is True
+    assert saved["release_contract"]["exact_side_cleanup_before_recovery"] is True
+    assert (
+        saved["release_contract"]["cleanup"]["collective_heap_cleanup"][
+            "collective_call_completed"
+        ]
+        is True
+    )
+
+    failed_components = Components()
+    active_components[0] = failed_components
+    monkeypatch.setattr(
+        orchestration,
+        "collective_heap_cleanup",
+        lambda _comm: {"collective_call_completed": False},
+    )
+    failed_directory = tmp_path / "candidate-d-cleanup-failure"
+    (failed_directory / "numerical_output").mkdir(parents=True)
+    (failed_directory / "resolved_config.json").write_text("{}\n", encoding="utf-8")
+    recovery_count_before = events.count("recovery")
+    with pytest.raises(ValueError, match="exact-side cleanup failed"):
+        orchestration._run_v3_8_candidate_d_campaign(
+            SimpleNamespace(
+                bottom=SimpleNamespace(),
+                top=SimpleNamespace(),
+                coupling=SimpleNamespace(),
+            ),
+            SimpleNamespace(),
+            None,
+            resolved_payload=payload,
+            producer=producer,
+            run_directory=failed_directory,
+            source_sha="c" * 40,
+            comm=MPI.COMM_SELF,
+            marker_callback=lambda *_args: None,
+            oracle_runner=oracle_runner,
+            recovery_runner=recovery_runner,
+        )
+    assert events.count("recovery") == recovery_count_before
+    assert not (
+        failed_directory / "numerical_output" / "v3_8_candidate_d_checkpoint.json"
+    ).exists()
 
 
 def test_v3_8_candidate_b_branch_skips_v3_7_reference_oracle_recovery(

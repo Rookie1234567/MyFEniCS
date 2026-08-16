@@ -387,6 +387,32 @@ def test_research_explicit_f_and_oracle_lifecycle(monkeypatch):
         assert report["external_mode_count"] == {"bottom": 2, "top": 2}
         assert report["lifecycle"]["solution_consumer_synchronous"] is True
         assert captured["solution"].shape == (fixture["layout"].local_size,)
+        explicit_components = SimpleNamespace(
+            bottom=reference.bottom,
+            top=reference.top,
+        )
+        explicit_report = run_exact_side_lu_oracle(
+            fixture["layout"],
+            fixture["bottom"],
+            fixture["top"],
+            fixture["coupling"],
+            rhs,
+            explicit_components=explicit_components,
+            factor_solver_type=None,
+        )
+        assert explicit_report["pass"] is True
+        assert explicit_report["reference_ownership"] == "borrowed_explicit_components"
+        assert (
+            explicit_report["lifecycle"]["explicit_components_destroyed_by_oracle"]
+            is False
+        )
+        assert (
+            explicit_report["lifecycle"]["bottom_direct_factor_count_after_cleanup"]
+            == 0
+        )
+        assert (
+            explicit_report["lifecycle"]["top_direct_factor_count_after_cleanup"] == 0
+        )
     finally:
         if reference is not None:
             reference.destroy()

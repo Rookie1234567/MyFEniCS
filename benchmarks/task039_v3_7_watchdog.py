@@ -43,6 +43,7 @@ V3_7_POLL_SECONDS = 0.25
 V3_7_QEP_ONLY_WORKER_MODULE = "benchmarks.task039_qep_only"
 V3_7_CANDIDATE_B_FLAG = "--candidate-b-only"
 V3_7_CANDIDATE_C_FLAG = "--candidate-c-only"
+V3_7_CANDIDATE_D_FLAG = "--candidate-d-only"
 
 
 def _validate_resolved_identity(payload: Mapping[str, Any]) -> None:
@@ -142,6 +143,7 @@ def build_v3_7_execution_plan(
     qep_only: bool = False,
     candidate_b_only: bool = False,
     candidate_c_only: bool = False,
+    candidate_d_only: bool = False,
 ) -> dict[str, Any]:
     """Build the explicit MPI8 child argv without importing the worker."""
 
@@ -149,9 +151,19 @@ def build_v3_7_execution_plan(
     policy = _watchdog_policy(payload)
     executable = str(Path(os.path.abspath(python_executable or sys.executable)))
     mpiexec = mpiexec_command or shutil.which("mpiexec") or "mpiexec"
-    if sum((bool(qep_only), bool(candidate_b_only), bool(candidate_c_only))) > 1:
+    if (
+        sum(
+            (
+                bool(qep_only),
+                bool(candidate_b_only),
+                bool(candidate_c_only),
+                bool(candidate_d_only),
+            )
+        )
+        > 1
+    ):
         raise ValueError(
-            "QEP-only, Candidate-B-only, and Candidate-C-only routes are exclusive"
+            "QEP-only, Candidate-B-only, Candidate-C-only, and Candidate-D-only routes are exclusive"
         )
     worker_module = (
         V3_7_QEP_ONLY_WORKER_MODULE
@@ -178,7 +190,11 @@ def build_v3_7_execution_plan(
         argv.append(V3_7_CANDIDATE_B_FLAG)
     if candidate_c_only:
         argv.append(V3_7_CANDIDATE_C_FLAG)
-    if candidate_c_only:
+    if candidate_d_only:
+        argv.append(V3_7_CANDIDATE_D_FLAG)
+    if candidate_d_only:
+        method = "USER_AUTHORIZED_EXPERIMENTAL_HYBRIDIZED_DIRECT_SIDE_CANDIDATE_D"
+    elif candidate_c_only:
         method = "hybrid_iterative_candidate_c1_only"
     elif candidate_b_only:
         method = "hybrid_iterative_candidate_b_only"
@@ -211,6 +227,7 @@ def v3_7_execution_dry_run(
     qep_only: bool = False,
     candidate_b_only: bool = False,
     candidate_c_only: bool = False,
+    candidate_d_only: bool = False,
 ) -> dict[str, Any]:
     plan = build_v3_7_execution_plan(
         input_path,
@@ -220,6 +237,7 @@ def v3_7_execution_dry_run(
         qep_only=qep_only,
         candidate_b_only=candidate_b_only,
         candidate_c_only=candidate_c_only,
+        candidate_d_only=candidate_d_only,
     )
     if plan["argv"][1:3] != ["-n", "8"]:
         raise ValueError("V3-7 execution plan is not fixed to MPI8")
@@ -239,6 +257,7 @@ def launch_v3_7_with_task038_watchdog(
     qep_only: bool = False,
     candidate_b_only: bool = False,
     candidate_c_only: bool = False,
+    candidate_d_only: bool = False,
 ) -> dict[str, Any]:
     """Run one authenticated V3-7 child through Task38's watchdog."""
 
@@ -258,6 +277,7 @@ def launch_v3_7_with_task038_watchdog(
         qep_only=qep_only,
         candidate_b_only=candidate_b_only,
         candidate_c_only=candidate_c_only,
+        candidate_d_only=candidate_d_only,
     )
     run_dir = Path(run_directory).resolve()
     if run_dir.exists():
@@ -337,6 +357,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--qep-only", action="store_true")
     parser.add_argument("--candidate-b-only", action="store_true")
     parser.add_argument("--candidate-c-only", action="store_true")
+    parser.add_argument("--candidate-d-only", action="store_true")
     args = parser.parse_args(argv)
     if args.dry_run:
         print(
@@ -349,6 +370,7 @@ def main(argv: list[str] | None = None) -> int:
                     qep_only=args.qep_only,
                     candidate_b_only=args.candidate_b_only,
                     candidate_c_only=args.candidate_c_only,
+                    candidate_d_only=args.candidate_d_only,
                 ),
                 ensure_ascii=False,
                 sort_keys=True,
@@ -364,6 +386,7 @@ def main(argv: list[str] | None = None) -> int:
         qep_only=args.qep_only,
         candidate_b_only=args.candidate_b_only,
         candidate_c_only=args.candidate_c_only,
+        candidate_d_only=args.candidate_d_only,
     )
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return 0 if result.get("exit_status") == 0 else 3
@@ -377,6 +400,7 @@ __all__ = [
     "V3_7_ABSOLUTE_HARD_BYTES",
     "V3_7_DIRECT_RUN_ROOT",
     "V3_7_CANDIDATE_C_FLAG",
+    "V3_7_CANDIDATE_D_FLAG",
     "V3_7_QEP_ONLY_WORKER_MODULE",
     "build_v3_7_execution_plan",
     "launch_v3_7_with_task038_watchdog",

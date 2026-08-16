@@ -519,6 +519,79 @@ class ResearchHybridReference:
         self._destroyed = True
 
 
+class ResearchExplicitSideComponents:
+    """Own side F/C/D/H matrices; the oracle borrows them without destroying."""
+
+    def __init__(self, bottom: Any, top: Any) -> None:
+        self.bottom = bottom
+        self.top = top
+        self._destroyed = False
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        for side in (self.top, self.bottom):
+            side.H.destroy()
+            side.D.destroy()
+            side.C.destroy()
+            side.F.destroy()
+        self._destroyed = True
+
+    @property
+    def destroyed(self) -> bool:
+        return bool(self._destroyed)
+
+
+def _build_research_explicit_side_components(system: Any) -> Any:
+    fine = None
+    dtn = None
+    try:
+        fine = materialize_research_explicit_fine_matrix(
+            system.static_condensation.condensed
+        )
+        dtn = materialize_research_explicit_dtn_blocks(system.blocks)
+        side = SimpleNamespace(
+            F=fine,
+            C=dtn.C,
+            D=dtn.D,
+            H=dtn.H,
+            inventory={"research_explicit_dtn": dict(dtn.audit)},
+        )
+        fine = None
+        dtn = None
+        return side
+    except Exception:
+        if dtn is not None:
+            dtn.destroy()
+        if fine is not None:
+            fine.destroy()
+        raise
+
+
+def build_research_explicit_side_components(
+    bottom_system: Any, top_system: Any
+) -> ResearchExplicitSideComponents:
+    """Materialize only the two side F/C/D/H sets; no global reference action."""
+
+    bottom = None
+    top = None
+    try:
+        bottom = _build_research_explicit_side_components(bottom_system)
+        top = _build_research_explicit_side_components(top_system)
+        result = ResearchExplicitSideComponents(bottom, top)
+        bottom = None
+        top = None
+        return result
+    except Exception:
+        if top is not None:
+            for matrix in (top.H, top.D, top.C, top.F):
+                matrix.destroy()
+        if bottom is not None:
+            for matrix in (bottom.H, bottom.D, bottom.C, bottom.F):
+                matrix.destroy()
+        raise
+
+
 def _build_research_eliminated_side(system: Any) -> _ResearchEliminatedSide:
     fine = None
     dtn = None
@@ -634,6 +707,7 @@ def run_exact_side_lu_oracle(
     matrix_repeat_tolerance: float = 1.0e-13,
     solution_consumer: Callable[[PETSc.Vec, Mapping[str, Any]], Any] | None = None,
     reference: Any | None = None,
+    explicit_components: ResearchExplicitSideComponents | None = None,
 ) -> dict[str, Any]:
     """Run one exact-side oracle and consume the solution before cleanup."""
 
@@ -647,16 +721,24 @@ def run_exact_side_lu_oracle(
     result = None
     report = None
     reference_destroyed = False
-    reference_owned = reference is None
+    if reference is not None and explicit_components is not None:
+        raise ValueError(
+            "exact-side oracle accepts reference or explicit components, not both"
+        )
+    reference_owned = reference is None and explicit_components is None
     try:
-        if reference is None:
+        if reference is None and explicit_components is None:
             reference = build_research_independent_hybrid_reference(
                 bottom_system,
                 top_system,
                 coupling,
             )
-        bottom_reference = reference.bottom
-        top_reference = reference.top
+        if explicit_components is not None:
+            bottom_reference = explicit_components.bottom
+            top_reference = explicit_components.top
+        else:
+            bottom_reference = reference.bottom
+            top_reference = reference.top
         bottom_explicit = bottom_reference.F
         top_explicit = top_reference.F
         bottom_components = SimpleNamespace(
@@ -766,7 +848,16 @@ def run_exact_side_lu_oracle(
                 "top": dict(top_reference.inventory["research_explicit_dtn"]),
             },
             "solution_handoff": "not_requested",
-            "reference_ownership": "owned" if reference_owned else "borrowed",
+            "reference_ownership": (
+                "borrowed_explicit_components"
+                if explicit_components is not None
+                else "owned"
+                if reference_owned
+                else "borrowed"
+            ),
+            "explicit_components_ownership": (
+                "borrowed" if explicit_components is not None else "not_used"
+            ),
             "matrix_repeat_tolerance": float(matrix_repeat_tolerance),
         }
         if numerical_pass and inventory_pass and solution_consumer is not None:
@@ -790,6 +881,10 @@ def run_exact_side_lu_oracle(
             reference.destroy()
             reference_destroyed = True
         if report is not None:
+            bottom_diagnostics = (
+                bottom_action.diagnostics if bottom_action is not None else {}
+            )
+            top_diagnostics = top_action.diagnostics if top_action is not None else {}
             report["lifecycle"] = {
                 "bottom_action_destroyed": bool(
                     bottom_action is not None
@@ -800,6 +895,13 @@ def run_exact_side_lu_oracle(
                     and top_action.diagnostics.get("destroyed") is True
                 ),
                 "explicit_reference_destroyed": bool(reference_destroyed),
+                "bottom_direct_factor_count_after_cleanup": bottom_diagnostics.get(
+                    "direct_factor_count"
+                ),
+                "top_direct_factor_count_after_cleanup": top_diagnostics.get(
+                    "direct_factor_count"
+                ),
+                "explicit_components_destroyed_by_oracle": False,
                 "borrowed_reference_destroyed_by_oracle": bool(
                     not reference_owned and reference_destroyed
                 ),

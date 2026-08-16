@@ -46,6 +46,7 @@ from benchmarks.task039_hybrid_direct_identity import (
 from benchmarks.task039_v3_side_oracle import (
     audit_hybrid_operator_identity,
     build_research_independent_hybrid_reference,
+    build_research_explicit_side_components,
     rebuild_hybrid_augmented_vector,
     run_exact_side_lu_oracle,
 )
@@ -89,6 +90,9 @@ V3_8_CANDIDATE_B_MEDIAN_LIMIT = 0.1
 V3_8_CANDIDATE_B_WORST_LIMIT = 0.3
 V3_8_CANDIDATE_C_MEDIAN_LIMIT = 0.1
 V3_8_CANDIDATE_C_WORST_LIMIT = 0.3
+V3_8_CANDIDATE_D_CLASSIFICATION = (
+    "USER_AUTHORIZED_EXPERIMENTAL_HYBRIDIZED_DIRECT_SIDE_CANDIDATE_D"
+)
 V3_7_WARNING_GIB = 170.0
 V3_7_CRITICAL_GIB = 195.0
 V3_7_ABSOLUTE_HARD_BYTES = 224_000_000_000
@@ -255,13 +259,19 @@ def build_v3_7_execution_plan(
     mpiexec_command: str | None = None,
     candidate_b_only: bool = False,
     candidate_c_only: bool = False,
+    candidate_d_only: bool = False,
 ) -> dict[str, Any]:
     """Describe the opt-in worker command consumed by the existing watchdog."""
 
     payload = load_v3_7_official_payload(input_path)
     policy = v3_7_watchdog_policy(payload)
-    if candidate_b_only and candidate_c_only:
-        raise ValueError("Candidate-B-only and Candidate-C-only routes are exclusive")
+    if (
+        sum((bool(candidate_b_only), bool(candidate_c_only), bool(candidate_d_only)))
+        > 1
+    ):
+        raise ValueError(
+            "Candidate-B-only, Candidate-C-only, and Candidate-D-only routes are exclusive"
+        )
     executable = str(Path(os.path.abspath(python_executable or sys.executable)))
     mpiexec = mpiexec_command or shutil.which("mpiexec") or "mpiexec"
     argv = [
@@ -284,7 +294,11 @@ def build_v3_7_execution_plan(
         argv.append("--candidate-b-only")
     if candidate_c_only:
         argv.append("--candidate-c-only")
-    if candidate_c_only:
+    if candidate_d_only:
+        argv.append("--candidate-d-only")
+    if candidate_d_only:
+        method = V3_8_CANDIDATE_D_CLASSIFICATION
+    elif candidate_c_only:
         method = "hybrid_iterative_candidate_c1_only"
     elif candidate_b_only:
         method = "hybrid_iterative_candidate_b_only"
@@ -314,6 +328,7 @@ def v3_7_execution_dry_run(
     python_executable: str | Path | None = None,
     candidate_b_only: bool = False,
     candidate_c_only: bool = False,
+    candidate_d_only: bool = False,
 ) -> dict[str, Any]:
     """Return the non-mutating pre-heavy command and watchdog contract."""
 
@@ -324,6 +339,7 @@ def v3_7_execution_dry_run(
         python_executable=python_executable,
         candidate_b_only=candidate_b_only,
         candidate_c_only=candidate_c_only,
+        candidate_d_only=candidate_d_only,
     )
     argv = plan["argv"]
     if argv[1:3] != ["-n", "8"] or plan["watchdog"]["critical_action"] != (
@@ -345,6 +361,7 @@ def launch_v3_7_with_task038_watchdog(
     terminate_factory: Callable[[Any], dict[str, Any]] | None = None,
     candidate_b_only: bool = False,
     candidate_c_only: bool = False,
+    candidate_d_only: bool = False,
 ) -> dict[str, Any]:
     """Run the opt-in child through Task38's existing process-tree watchdog."""
 
@@ -357,7 +374,8 @@ def launch_v3_7_with_task038_watchdog(
         character not in "0123456789abcdef" for character in source_sha.lower()
     ):
         raise ValueError("V3-7 source_sha must be a full hexadecimal commit SHA")
-    load_v3_7_direct_inventory(payload, V3_7_DIRECT_RUN_ROOT)
+    if not candidate_d_only:
+        load_v3_7_direct_inventory(payload, V3_7_DIRECT_RUN_ROOT)
     specification = load_and_resolve(input_path)
     plan_payload = build_v3_7_execution_plan(
         input_path,
@@ -367,6 +385,7 @@ def launch_v3_7_with_task038_watchdog(
         mpiexec_command=mpiexec_command,
         candidate_b_only=candidate_b_only,
         candidate_c_only=candidate_c_only,
+        candidate_d_only=candidate_d_only,
     )
     run_dir = Path(run_directory).resolve()
     if run_dir.exists():
@@ -1352,6 +1371,7 @@ def _v3_7_object_ledger() -> dict[str, Any]:
         "independent_reference",
         "side_base_ilu",
         "correction_wrappers",
+        "candidate_d_explicit_components",
         "exact_side_action",
         "exact_side_factors",
         "solution_snapshot",
@@ -2104,6 +2124,277 @@ def _run_v3_8_candidate_c_campaign(
     return report, checkpoint
 
 
+def _candidate_d_producer_metadata(
+    resolved_payload: Mapping[str, Any],
+    source_sha: str,
+    marker_callback: Callable[[str, Mapping[str, Any]], None],
+) -> dict[str, Any]:
+    provenance = resolved_payload["provenance"]
+    inventory = resolved_payload["derived"]["external_mode_inventory"]
+    return {
+        "producer_source_sha": V3_7_DIRECT_PRODUCER_SHA,
+        "consumer_source_sha": source_sha,
+        "physical_model_sha256": provenance["physical_model_sha256"],
+        "model_id": resolved_payload["model_id"],
+        "requested_modes": 480,
+        "mpi_size": 8,
+        "external_keys_exact": len(inventory["keys"]) == 600,
+        "direct_reference_payload_loaded": False,
+        "_stage_callback": marker_callback,
+    }
+
+
+def _write_v3_8_candidate_d_checkpoint(
+    run_directory: Path,
+    *,
+    source_sha: str,
+    resolved_payload: Mapping[str, Any],
+    producer: Mapping[str, Any],
+    oracle: Mapping[str, Any],
+    recovery: Mapping[str, Any] | None,
+    cleanup: Mapping[str, Any],
+    comm: MPI.Intracomm,
+) -> Path:
+    provenance = resolved_payload["provenance"]
+    resolved_config = run_directory / "resolved_config.json"
+    resolved_config_sha = hashlib.sha256(resolved_config.read_bytes()).hexdigest()
+    recovery_pass = bool(isinstance(recovery, Mapping) and recovery.get("pass") is True)
+    oracle_pass = bool(oracle.get("pass") is True)
+    cleanup_pass = bool(cleanup.get("pass") is True)
+    checkpoint = {
+        "schema": "task039.v3-8-candidate-d-checkpoint.v1",
+        "status": "measured",
+        "candidate": "D",
+        "classification": V3_8_CANDIDATE_D_CLASSIFICATION,
+        "pass": bool(oracle_pass and cleanup_pass and recovery_pass),
+        "source_identity": {
+            "consumer_source_sha": source_sha,
+            "producer_source_sha": producer["producer_source_sha"],
+            "consumer_input_sha256": provenance["input_sha256"],
+            "consumer_resolved_config_sha256": resolved_config_sha,
+            "consumer_physical_model_sha256": provenance["physical_model_sha256"],
+            "model_id": producer["model_id"],
+            "requested_modes": producer["requested_modes"],
+            "mpi_size": producer["mpi_size"],
+            "external_keys_exact": producer["external_keys_exact"],
+        },
+        "direct_reference_payload_loaded": False,
+        "identity_reference_materialization": "not_run",
+        "exact_side_components_materialized": True,
+        "oracle": dict(oracle),
+        "recovery": dict(recovery) if isinstance(recovery, Mapping) else "not_run",
+        "release_contract": {
+            "exact_side_cleanup_before_recovery": bool(cleanup.get("pass") is True),
+            "cleanup": dict(cleanup),
+            "global_hybrid_direct_factor_count": oracle.get("inventory", {}).get(
+                "global_hybrid_direct_factor_count"
+            ),
+            "bottom_direct_factor_count": oracle.get("inventory", {}).get(
+                "bottom_direct_factor_count"
+            ),
+            "top_direct_factor_count": oracle.get("inventory", {}).get(
+                "top_direct_factor_count"
+            ),
+        },
+    }
+    path = run_directory / "numerical_output" / "v3_8_candidate_d_checkpoint.json"
+    if comm.rank == 0:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+        temporary.write_text(
+            json.dumps(_json_safe(checkpoint), ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        temporary.replace(path)
+    comm.barrier()
+    return path
+
+
+def _run_v3_8_candidate_d_campaign(
+    setup: Any,
+    layout: Any,
+    rhs: PETSc.Vec,
+    *,
+    resolved_payload: Mapping[str, Any],
+    producer: Mapping[str, Any],
+    run_directory: Path,
+    source_sha: str,
+    comm: MPI.Intracomm,
+    marker_callback: Callable[[str, Mapping[str, Any]], None],
+    oracle_runner: Callable[..., Mapping[str, Any]],
+    recovery_runner: Callable[
+        [Any, Any, Any, Path, Mapping[str, Any]], Mapping[str, Any]
+    ]
+    | None,
+) -> tuple[dict[str, Any], Path]:
+    """Run the explicit online Candidate-D side-factor path without direct payloads."""
+
+    snapshot = None
+    components = None
+    oracle_report = None
+    recovery_result = None
+    _emit_marker(
+        marker_callback,
+        "candidate_d_online_begin",
+        direct_reference_payload_loaded=False,
+        identity_reference_materialization=False,
+        global_direct_factor_count=0,
+    )
+
+    def consume_solution(solution: PETSc.Vec, _oracle: Mapping[str, Any]) -> None:
+        nonlocal snapshot
+        snapshot = solution.duplicate()
+        solution.copy(snapshot)
+        _emit_marker(
+            marker_callback,
+            "solution_snapshot_created",
+            source="candidate_d_exact_side_oracle",
+        )
+
+    try:
+        components = build_research_explicit_side_components(setup.bottom, setup.top)
+        _emit_marker(
+            marker_callback,
+            "candidate_d_explicit_components_ready",
+            materialized_components="F/C/D/H",
+            global_reference_operator=False,
+            direct_reference_payload_loaded=False,
+        )
+        _emit_marker(marker_callback, "exact_side_oracle_begin", candidate="D")
+        oracle_report = dict(
+            oracle_runner(
+                layout,
+                setup.bottom,
+                setup.top,
+                setup.coupling,
+                rhs,
+                reference=None,
+                explicit_components=components,
+                max_it=V3_7_MAX_IT,
+                restart=90,
+                threshold=V3_7_RESIDUAL_TOLERANCE,
+                matrix_repeat_tolerance=V3_7_MATRIX_REPEAT_TOLERANCE,
+                solution_consumer=consume_solution,
+            )
+        )
+        _emit_marker(
+            marker_callback,
+            "exact_side_oracle_end",
+            candidate="D",
+            numerical_pass=oracle_report.get("numerical_pass"),
+            inventory_pass=oracle_report.get("inventory_pass"),
+            lifecycle=oracle_report.get("lifecycle", {}),
+        )
+        lifecycle = oracle_report.get("lifecycle", {})
+        factor_cleanup_pass = bool(
+            lifecycle.get("bottom_action_destroyed") is True
+            and lifecycle.get("top_action_destroyed") is True
+            and lifecycle.get("bottom_direct_factor_count_after_cleanup") == 0
+            and lifecycle.get("top_direct_factor_count_after_cleanup") == 0
+            and lifecycle.get("explicit_components_destroyed_by_oracle") is False
+        )
+        components.destroy()
+        components_released = components.destroyed
+        components = None
+        collective_cleanup = collective_heap_cleanup(comm)
+        collective_cleanup_completed = bool(
+            collective_cleanup.get("collective_call_completed") is True
+        )
+        _emit_marker(
+            marker_callback,
+            "candidate_d_explicit_components_destroyed",
+            factors_released=factor_cleanup_pass,
+            components_released=components_released,
+        )
+        _emit_marker(
+            marker_callback,
+            "candidate_d_collective_heap_cleanup",
+            **dict(collective_cleanup),
+        )
+        cleanup = {
+            "pass": bool(
+                factor_cleanup_pass
+                and components_released
+                and collective_cleanup_completed
+            ),
+            "factor_cleanup_pass": factor_cleanup_pass,
+            "bottom_direct_factor_count_after_cleanup": lifecycle.get(
+                "bottom_direct_factor_count_after_cleanup"
+            ),
+            "top_direct_factor_count_after_cleanup": lifecycle.get(
+                "top_direct_factor_count_after_cleanup"
+            ),
+            "explicit_components_released": components_released,
+            "collective_heap_cleanup": dict(collective_cleanup),
+            "collective_cleanup_completed": collective_cleanup_completed,
+        }
+        if cleanup["pass"] is not True:
+            raise ValueError(f"Candidate-D exact-side cleanup failed: {cleanup}")
+        if oracle_report.get("pass") is True:
+            if recovery_runner is None:
+                raise ValueError(
+                    "Candidate-D recovery_runner is required after oracle pass"
+                )
+            if snapshot is None:
+                raise ValueError(
+                    "Candidate-D oracle pass did not produce a solution snapshot"
+                )
+            _emit_marker(marker_callback, "recovery_physics_begin", candidate="D")
+            recovery_result = dict(
+                recovery_runner(
+                    setup,
+                    layout,
+                    snapshot,
+                    run_directory,
+                    producer,
+                )
+            )
+            _emit_marker(
+                marker_callback,
+                "recovery_physics_end",
+                candidate="D",
+                **{"pass": recovery_result.get("pass")},
+            )
+        if snapshot is not None:
+            snapshot.destroy()
+            snapshot = None
+            _emit_marker(marker_callback, "solution_snapshot_destroyed", candidate="D")
+        report = {
+            "status": "measured",
+            "classification": V3_8_CANDIDATE_D_CLASSIFICATION,
+            "pass": bool(
+                oracle_report.get("pass") is True
+                and cleanup.get("pass") is True
+                and isinstance(recovery_result, Mapping)
+                and recovery_result.get("pass") is True
+            ),
+            "direct_reference_payload_loaded": False,
+            "identity_reference_materialization": "not_run",
+            "exact_side_components_materialized": True,
+            "exact_side_components_released_before_recovery": True,
+            "oracle": oracle_report,
+            "cleanup": cleanup,
+            "recovery": recovery_result if recovery_result is not None else "not_run",
+        }
+        checkpoint = _write_v3_8_candidate_d_checkpoint(
+            run_directory,
+            source_sha=source_sha,
+            resolved_payload=resolved_payload,
+            producer=producer,
+            oracle=oracle_report,
+            recovery=recovery_result,
+            cleanup=cleanup,
+            comm=comm,
+        )
+        return report, checkpoint
+    except Exception:
+        if components is not None:
+            components.destroy()
+        if snapshot is not None:
+            snapshot.destroy()
+        raise
+
+
 def _record_v3_7_marker(
     ledger: dict[str, Any], marker: str, detail: Mapping[str, Any]
 ) -> None:
@@ -2161,6 +2452,16 @@ def _record_v3_7_marker(
         mark("exact_side_action", created=True)
     elif marker == "exact_side_oracle_end":
         mark("exact_side_action", completed=True, destroyed=True)
+        lifecycle = detail.get("lifecycle", {})
+        if (
+            lifecycle.get("bottom_direct_factor_count_after_cleanup") == 0
+            and lifecycle.get("top_direct_factor_count_after_cleanup") == 0
+        ):
+            mark("exact_side_factors", created=True, completed=True, destroyed=True)
+    elif marker == "candidate_d_explicit_components_ready":
+        mark("candidate_d_explicit_components", created=True, completed=True)
+    elif marker == "candidate_d_explicit_components_destroyed":
+        mark("candidate_d_explicit_components", destroyed=True)
     elif marker == "solution_snapshot_created":
         mark("solution_snapshot", created=True, completed=True)
     elif marker == "solution_snapshot_destroyed":
@@ -2307,8 +2608,9 @@ def run_task039_v3_7_diagnostic(
     record_path: str | Path | None = None,
     candidate_b_only: bool = False,
     candidate_c_only: bool = False,
+    candidate_d_only: bool = False,
 ) -> dict[str, Any]:
-    """Prepare the V3-7 campaign or the explicit Candidate-B-only branch."""
+    """Prepare the V3-7 campaign or an explicit research candidate branch."""
 
     setup = None
     reference_holder: dict[str, Any] = {}
@@ -2385,20 +2687,34 @@ def run_task039_v3_7_diagnostic(
             "watchdog_ready",
             absolute_terminate_memory_bytes=V3_7_ABSOLUTE_HARD_BYTES,
         )
-        if recovery_runner is None and not candidate_b_only and not candidate_c_only:
+        if (
+            recovery_runner is None
+            and not candidate_b_only
+            and not candidate_c_only
+            and not candidate_d_only
+        ):
             raise ValueError(
                 "V3-7 requires an injected recovery_runner(setup, layout, snapshot, "
                 "run_dir, producer)"
             )
-        producer, modal_amplitudes = inventory_loader(
-            resolved_payload,
-            direct_run_dir,
-        )
-        producer["consumer_source_sha"] = source_sha
+        if candidate_d_only:
+            producer = _candidate_d_producer_metadata(
+                resolved_payload, source_sha, marker_callback
+            )
+            modal_amplitudes = None
+        else:
+            producer, modal_amplitudes = inventory_loader(
+                resolved_payload,
+                direct_run_dir,
+            )
+            producer["consumer_source_sha"] = source_sha
         _emit_marker(
             marker_callback,
             "inventory_ready",
             producer_source_sha=producer.get("producer_source_sha"),
+            direct_reference_payload_loaded=bool(
+                producer.get("direct_reference_payload_loaded", True)
+            ),
         )
         cfg = simulation_config_3d_from_normalized(resolved_payload)
         modal_cfg = deepcopy(cfg)
@@ -2425,9 +2741,14 @@ def run_task039_v3_7_diagnostic(
         )
         rhs = _default_rhs(setup, layout)
 
-        if candidate_b_only and candidate_c_only:
+        if (
+            sum(
+                (bool(candidate_b_only), bool(candidate_c_only), bool(candidate_d_only))
+            )
+            > 1
+        ):
             raise ValueError(
-                "Candidate-B-only and Candidate-C-only routes are exclusive"
+                "Candidate-B-only, Candidate-C-only, and Candidate-D-only routes are exclusive"
             )
 
         if candidate_b_only:
@@ -2568,6 +2889,62 @@ def run_task039_v3_7_diagnostic(
                     "identity_reference": "not_run_by_candidate_c1_contract",
                     "oracle": "not_run_by_candidate_c1_contract",
                     "recovery": "not_run_by_candidate_c1_contract",
+                },
+                "run_directory": str(Path(run_directory).resolve()),
+            }
+            normal_return = True
+            return result
+
+        if candidate_d_only:
+            candidate_report, candidate_checkpoint = _run_v3_8_candidate_d_campaign(
+                setup,
+                layout,
+                rhs,
+                resolved_payload=resolved_payload,
+                producer=producer,
+                run_directory=Path(run_directory).resolve(),
+                source_sha=source_sha,
+                comm=comm,
+                marker_callback=marker_callback,
+                oracle_runner=oracle_runner,
+                recovery_runner=recovery_runner,
+            )
+            result = {
+                "schema": "task039.v3-8-candidate-d-only.v1",
+                "status": "completed",
+                "classification": V3_8_CANDIDATE_D_CLASSIFICATION,
+                "candidate_d": candidate_report,
+                "checkpoint": str(
+                    candidate_checkpoint.relative_to(Path(run_directory).resolve())
+                ),
+                "direct_reference_payload_loaded": False,
+                "watchdog": watchdog,
+                "telemetry": {
+                    "process_tree_samples": {
+                        "path": "numerical_output/process_tree_samples.jsonl",
+                        "writer": "parent_task038_launcher",
+                        "status": "expected_from_parent_launcher",
+                    },
+                    "memory_stages": {
+                        "path": "numerical_output/memory_stages.jsonl",
+                        "writer": "parent_task038_launcher_marker_alignment",
+                        "status": "expected_from_parent_launcher",
+                    },
+                    "memory_stage_markers": {
+                        "path": "numerical_output/memory_stage_markers.raw.jsonl",
+                        "writer": "v3_7_worker",
+                        "status": "measured_worker_marker_stream",
+                    },
+                    "memory_object_ledger": {
+                        "path": "numerical_output/memory_object_ledger.json",
+                        "schema": object_ledger["schema"],
+                        "status": "finalized_in_worker_finalizer",
+                    },
+                },
+                "formal_run": {
+                    "status": "measured_candidate_d_only",
+                    "classification": V3_8_CANDIDATE_D_CLASSIFICATION,
+                    "direct_reference_payload_loaded": False,
                 },
                 "run_directory": str(Path(run_directory).resolve()),
             }
@@ -2944,14 +3321,26 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--launched-by-task038-watchdog", action="store_true")
     parser.add_argument("--candidate-b-only", action="store_true")
     parser.add_argument("--candidate-c-only", action="store_true")
+    parser.add_argument("--candidate-d-only", action="store_true")
     parser.add_argument("--input", required=True, dest="input_path")
     parser.add_argument("--run-directory", required=True)
     parser.add_argument("--source-sha", required=True)
     args = parser.parse_args(argv)
     if args.worker == args.dry_run:
         parser.error("choose exactly one of --worker or --dry-run")
-    if args.candidate_b_only and args.candidate_c_only:
-        parser.error("--candidate-b-only and --candidate-c-only are mutually exclusive")
+    if (
+        sum(
+            (
+                bool(args.candidate_b_only),
+                bool(args.candidate_c_only),
+                bool(args.candidate_d_only),
+            )
+        )
+        > 1
+    ):
+        parser.error(
+            "--candidate-b-only, --candidate-c-only, and --candidate-d-only are mutually exclusive"
+        )
     if args.dry_run:
         plan = v3_7_execution_dry_run(
             args.input_path,
@@ -2959,6 +3348,7 @@ def main(argv: list[str] | None = None) -> int:
             source_sha=args.source_sha,
             candidate_b_only=args.candidate_b_only,
             candidate_c_only=args.candidate_c_only,
+            candidate_d_only=args.candidate_d_only,
         )
         print(json.dumps(_json_safe(plan), ensure_ascii=False, sort_keys=True))
         return 0
@@ -2988,6 +3378,7 @@ def main(argv: list[str] | None = None) -> int:
             ),
             candidate_b_only=args.candidate_b_only,
             candidate_c_only=args.candidate_c_only,
+            candidate_d_only=args.candidate_d_only,
             record_path=(
                 Path(args.run_directory).resolve()
                 / "numerical_output"
@@ -3020,6 +3411,7 @@ __all__ = [
     "V3_8_CANDIDATE_B_WORST_LIMIT",
     "V3_8_CANDIDATE_C_MEDIAN_LIMIT",
     "V3_8_CANDIDATE_C_WORST_LIMIT",
+    "V3_8_CANDIDATE_D_CLASSIFICATION",
     "build_v3_7_execution_plan",
     "check_v3_7_integrated_physics",
     "compare_v3_7_hybrid_candidate_to_direct",
@@ -3029,6 +3421,7 @@ __all__ = [
     "run_task039_v3_7_side_correction_survey",
     "run_task039_v3_7_diagnostic",
     "run_v3_8_candidate_b_budget_sequence",
+    "_run_v3_8_candidate_d_campaign",
     "run_v3_7_recovery_runner",
     "run_v3_7_stage_sequence",
     "v3_7_execution_dry_run",
