@@ -309,3 +309,22 @@ classification is `memory_terminate`, not a numerical failure or full own-pass. 
 cancelled/not_run. See the [h4 supplementary record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v3_h4_full3d_direct_supplement_v1.json)
 and [full h4 outcome](v3_3d_full3d_convergence.md); the Task39 main line returns to the h5
 Hybrid V3-7 algebra/telemetry diagnosis with formal MPI8 only.
+
+### V3-8 side-PC funnel: C1 closeout
+
+The user-authorized C1 microbenchmark completed normally and was a numerical negative, not an
+implementation or resource failure. The authority is `rho_summary.candidate_C_pass`, while a
+side report's `pass=true` only says that its finite measurements completed.
+
+| candidate | bottom median / worst | top median / worst | total RSS peak | side-online peak | classification |
+| --- | ---: | ---: | ---: | ---: | --- |
+| C1 ILU(1) + dynamic DtN Woodbury | `26018.790046350907 / 34401.291596737974` | `1307.8809666185202 / 1921.6148166351625` | `82360.7890625 MiB` | `18627.58984375 MiB` | `USER_AUTHORIZED_CANDIDATE_C1_NUMERICAL_NEGATIVE` |
+
+Both sides measured factor rows `51840`, source NNZ `40154400`, factor NNZ `85706136`, and
+CSR payload estimate `1714330144 bytes`; cleanup left factor count `0` with
+`factors_released=true`. The total peak is the research direct-payload transient and is kept
+separate from the side-online interval peak. The B checkpoint did not contain comparable
+ILU(0) source/factor NNZ or bytes, so the ratio is `not_recorded`, not inferred. C2/ILUT and
+other global candidates are not run: the measured ILU(1) factor expansion and very poor
+contraction do not justify another heavy candidate, and no controlled ILUT/drop interface was
+available. See [the side-PC funnel](v3_pc_candidate_funnel.md) and [C1 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v3_8_candidate_c1_ilu1_formal_v1.json).

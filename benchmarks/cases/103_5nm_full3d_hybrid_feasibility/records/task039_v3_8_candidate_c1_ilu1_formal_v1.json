@@ -1,0 +1,115 @@
+{
+  "schema_version": "task039.v3-8-candidate-c1-compact.v1",
+  "record_id": "task039_v3_8_candidate_c1_ilu1_formal_v1",
+  "classification": "USER_AUTHORIZED_CANDIDATE_C1_NUMERICAL_NEGATIVE",
+  "status": "measured",
+  "scope": {
+    "physical_model": "5 nm / 1 degree grazing / phi=0 / S",
+    "method": "whole-endcap ILU(1) + one-pass dynamic DtN Woodbury side microbenchmark",
+    "nedelec_degree": 6,
+    "mesh_target_nm": 5.0,
+    "requested_modes": 480,
+    "candidate_modes": 960,
+    "mpi_size": 8,
+    "external_key_count": 600,
+    "verified_shard_count": 32,
+    "global_outer": "not_run",
+    "recovery": "not_run",
+    "c2_ilut": "cancelled_by_supervision_decision"
+  },
+  "identity": {
+    "run_root": "results/task039_v3_8_candidate_c1_ilu1_formal_mpi8_after_lifecycle_fix",
+    "source_commit_sha": "5f924c896f5dd6715cba2d3d269f7c98aac7b54d",
+    "producer_source_sha": "5bfab734a9ca053b69fa1f3f20d907aacbf8b07f",
+    "input_sha256": "fc51536fefa7341a5264266a95fc56ba79d0b1056a2d819323bfdb51f3568e85",
+    "resolved_config_sha256": "078d89d05d6108ed7e8ac563faa9d23ff93ed8d91650b3d7f9ffa27d8b320828",
+    "physical_model_sha256": "0462c9806f1eb0c525c3ab50fcd71e212c6d05337de49c76e7946a336ccd576d",
+    "direct_payload_sha256": "d0fa9f55c3ffac591815e4893ecd98e30e1b7f6be58692fee4a6cd0863c0b56b",
+    "checkpoint_sha256": "966c28c5a67daafabd1d285b347aa07cef8c3182d6fd6eedb0fba1c87860d8f5",
+    "ledger_sha256": "de1af40369c77238cfe1cbacb79a25eba484e3efa4ba6d82710cf353353ec9ae",
+    "memory_stage_markers_sha256": "87b8ebe4087071c7c69e4d3567dfd40cbc11aca29e49cfe72ad1810a40af1d8b",
+    "memory_stages_sha256": "4fefc621ec99027240800ec42c526578bfd5c8acefd2fd920773471d5b3ac519",
+    "process_tree_samples_sha256": "015a1c3ebfd42a4a305eeef2f065a981bcf88ea7d9e032d8cbf52f58766257f1"
+  },
+  "gate": {
+    "median_limit": 0.1,
+    "worst_limit": 0.3,
+    "bottom": {
+      "candidate_C_pass": false,
+      "median": 26018.790046350907,
+      "worst": 34401.291596737974
+    },
+    "top": {
+      "candidate_C_pass": false,
+      "median": 1307.8809666185202,
+      "worst": 1921.6148166351625
+    },
+    "overall_pass": false,
+    "side_report_pass_semantics": "finite_measurement_only"
+  },
+  "factor_inventory": {
+    "per_side": {
+      "bottom": {
+        "factor_rows": 51840,
+        "source_matrix_nnz": 40154400,
+        "factor_nnz": 85706136,
+        "factor_csr_payload_estimate_bytes": 1714330144,
+        "base_factor_count": 1,
+        "direct_factor_count": 0,
+        "global_hybrid_direct_factor_count": 0,
+        "after_destroy_factor_count": 0,
+        "factors_released": true
+      },
+      "top": {
+        "factor_rows": 51840,
+        "source_matrix_nnz": 40154400,
+        "factor_nnz": 85706136,
+        "factor_csr_payload_estimate_bytes": 1714330144,
+        "base_factor_count": 1,
+        "direct_factor_count": 0,
+        "global_hybrid_direct_factor_count": 0,
+        "after_destroy_factor_count": 0,
+        "factors_released": true
+      },
+      "simultaneous_total_base_factor_count": 2,
+      "simultaneous_total_direct_factor_count": 0,
+      "simultaneous_total_global_hybrid_direct_factor_count": 0,
+      "baseline_ilu0_factor_nnz_bytes": "not_recorded"
+    }
+  },
+  "timing_seconds": {
+    "bottom_base_setup": 155.37785963297938,
+    "bottom_base_apply_total": 0.3720561439140989,
+    "bottom_woodbury_setup": 111.4961871120031,
+    "bottom_woodbury_apply_total": 3.0250315020093694,
+    "top_base_setup": 152.0614144319843,
+    "top_base_apply_total": 0.3659934163028643,
+    "top_woodbury_setup": 114.39432664299966,
+    "top_woodbury_apply_total": 3.0379629030358046,
+    "telemetry_span_seconds": 3318.4105
+  },
+  "resource_authority": {
+    "peak_rss_mib": 82360.7890625,
+    "peak_semantics": "research_direct_payload_transient",
+    "side_online_peak_rss_mib": 18627.58984375,
+    "side_online_peak_semantics": "raw_process_tree_samples_between_candidate_c_side_fixed_setup_begin_and_cleanup_end",
+    "swap_mib": 0.0,
+    "absolute_terminate_memory_bytes": 224000000000,
+    "absolute_terminate_memory_gib": 208.6162567138672,
+    "warning_gib": 170.0,
+    "critical_checkpoint_gib": 195.0,
+    "hard_stop_triggered": false
+  },
+  "artifacts": {
+    "checkpoint": "results/task039_v3_8_candidate_c1_ilu1_formal_mpi8_after_lifecycle_fix/numerical_output/v3_8_candidate_c1_checkpoint.json",
+    "process_tree_samples": "results/task039_v3_8_candidate_c1_ilu1_formal_mpi8_after_lifecycle_fix/numerical_output/process_tree_samples.jsonl",
+    "memory_stages": "results/task039_v3_8_candidate_c1_ilu1_formal_mpi8_after_lifecycle_fix/numerical_output/memory_stages.jsonl",
+    "memory_object_ledger": "results/task039_v3_8_candidate_c1_ilu1_formal_mpi8_after_lifecycle_fix/numerical_output/memory_object_ledger.json"
+  },
+  "decision": {
+    "c2_ilut": "not_run",
+    "reason": "ILU1 factor NNZ is about 2.13x source NNZ while both side contraction Gating values are far above 0.1/0.3; controlled ILUT/drop API was not available in this PETSc environment.",
+    "initial_cleanup_failure_preserved": true,
+    "continuum_or_physical_qualification": false
+  }
+}
