@@ -227,6 +227,9 @@ def test_fixed_woodbury_action_is_one_apply_nonowning_and_fail_closed(mode_count
     try:
         diagnostics = fixed.diagnostics
         assert diagnostics["nested_ksp_created"] is False
+        assert diagnostics["operator_identity"] == (
+            "whole_endcap_ilu0_woodbury_fixed_action"
+        )
         assert diagnostics["base_factor_count"] == 1
         assert diagnostics["base_diagnostics"]["identity"] == "tiny_fixed_non_ksp_base"
         assert diagnostics["local_direct_factor_count"] == 0
@@ -350,6 +353,8 @@ def test_two_pass_residual_correction_matches_stationary_formula_and_releases_sc
     fixed = HybridLocalDtnWoodburyFixedAction(
         base_action,
         components,
+        operator_identity="whole_endcap_ilu1_woodbury_fixed_action",
+        ilu_levels=1,
         residual_operator=residual_operator,
         residual_correction_steps=2,
     )
@@ -378,6 +383,10 @@ def test_two_pass_residual_correction_matches_stationary_formula_and_releases_sc
         expected.getArray()[:] = expected_values[start:end]
         assert _relative_error(actual, expected) <= 1.0e-12
         diagnostics = fixed.diagnostics
+        assert diagnostics["operator_identity"].startswith(
+            "whole_endcap_ilu1_woodbury_fixed_action"
+        )
+        assert diagnostics["ilu_levels"] == 1
         assert diagnostics["operator_identity"].endswith("two_pass_residual_correction")
         assert diagnostics["residual_correction_steps"] == 2
         assert diagnostics["correction_operator_matrix_free"] is True

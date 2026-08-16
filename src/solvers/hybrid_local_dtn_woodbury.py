@@ -437,6 +437,8 @@ class HybridLocalDtnWoodburyFixedAction:
         components: Any,
         *,
         base_identity: str = "whole_endcap_ilu0_fixed_smoother",
+        operator_identity: str | None = None,
+        ilu_levels: int | None = None,
         residual_operator: PETSc.Mat | None = None,
         residual_correction_steps: int = 1,
     ) -> None:
@@ -453,13 +455,17 @@ class HybridLocalDtnWoodburyFixedAction:
         self.base_action = base_action
         self.components = components
         self.operator = components.F
+        if ilu_levels is not None and int(ilu_levels) not in {0, 1}:
+            raise ValueError("Fixed Woodbury action supports ILU(0) or ILU(1)")
+        self.ilu_levels = None if ilu_levels is None else int(ilu_levels)
+        self._base_operator_identity = operator_identity or self.operator_identity
         self.operator_identity = (
-            "whole_endcap_ilu0_woodbury_fixed_action_two_pass_residual_correction"
+            f"{self._base_operator_identity}_two_pass_residual_correction"
             if residual_correction_steps == 2
             else (
-                f"whole_endcap_ilu0_woodbury_fixed_action_{residual_correction_steps}_pass_residual_correction"
+                f"{self._base_operator_identity}_{residual_correction_steps}_pass_residual_correction"
                 if residual_correction_steps > 2
-                else self.operator_identity
+                else self._base_operator_identity
             )
         )
         self.residual_operator = residual_operator
@@ -533,7 +539,7 @@ class HybridLocalDtnWoodburyFixedAction:
             if self._base_pre_destroy_diagnostics is not None
             else self._base_diagnostics_now()
         )
-        return {
+        diagnostics = {
             "operator_identity": self.operator_identity,
             "residual_correction_steps": int(self.residual_correction_steps),
             "residual_correction_operator_borrowed": self._residual_operator_borrowed,
@@ -554,6 +560,9 @@ class HybridLocalDtnWoodburyFixedAction:
             "owned_action_data_released": bool(self._destroyed),
             "destroyed": bool(self._destroyed),
         }
+        if self.ilu_levels is not None:
+            diagnostics["ilu_levels"] = int(self.ilu_levels)
+        return diagnostics
 
     def destroy(self) -> None:
         if self._destroyed:

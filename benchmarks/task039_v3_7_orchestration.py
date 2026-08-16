@@ -87,6 +87,8 @@ V3_7_RESIDUAL_TOLERANCE = 5.0e-9
 V3_8_CANDIDATE_B_BUDGETS = (8, 16, 32)
 V3_8_CANDIDATE_B_MEDIAN_LIMIT = 0.1
 V3_8_CANDIDATE_B_WORST_LIMIT = 0.3
+V3_8_CANDIDATE_C_MEDIAN_LIMIT = 0.1
+V3_8_CANDIDATE_C_WORST_LIMIT = 0.3
 V3_7_WARNING_GIB = 170.0
 V3_7_CRITICAL_GIB = 195.0
 V3_7_ABSOLUTE_HARD_BYTES = 224_000_000_000
@@ -252,11 +254,14 @@ def build_v3_7_execution_plan(
     python_executable: str | Path | None = None,
     mpiexec_command: str | None = None,
     candidate_b_only: bool = False,
+    candidate_c_only: bool = False,
 ) -> dict[str, Any]:
     """Describe the opt-in worker command consumed by the existing watchdog."""
 
     payload = load_v3_7_official_payload(input_path)
     policy = v3_7_watchdog_policy(payload)
+    if candidate_b_only and candidate_c_only:
+        raise ValueError("Candidate-B-only and Candidate-C-only routes are exclusive")
     executable = str(Path(os.path.abspath(python_executable or sys.executable)))
     mpiexec = mpiexec_command or shutil.which("mpiexec") or "mpiexec"
     argv = [
@@ -277,6 +282,14 @@ def build_v3_7_execution_plan(
     ]
     if candidate_b_only:
         argv.append("--candidate-b-only")
+    if candidate_c_only:
+        argv.append("--candidate-c-only")
+    if candidate_c_only:
+        method = "hybrid_iterative_candidate_c1_only"
+    elif candidate_b_only:
+        method = "hybrid_iterative_candidate_b_only"
+    else:
+        method = "hybrid_iterative_v3_7_diagnostic"
     return {
         "argv": argv,
         "shell": False,
@@ -285,11 +298,7 @@ def build_v3_7_execution_plan(
         "worker_contract": {
             "mpi_size": 8,
             "profile_id": V3_7_PROFILE_ID,
-            "method": (
-                "hybrid_iterative_candidate_b_only"
-                if candidate_b_only
-                else "hybrid_iterative_v3_7_diagnostic"
-            ),
+            "method": method,
             "hard_stop_authority": "process_tree_rss_bytes",
             "critical_checkpoint_only": True,
             "swap_policy": "immediate_complete_process_tree_termination",
@@ -304,6 +313,7 @@ def v3_7_execution_dry_run(
     source_sha: str,
     python_executable: str | Path | None = None,
     candidate_b_only: bool = False,
+    candidate_c_only: bool = False,
 ) -> dict[str, Any]:
     """Return the non-mutating pre-heavy command and watchdog contract."""
 
@@ -313,6 +323,7 @@ def v3_7_execution_dry_run(
         source_sha=source_sha,
         python_executable=python_executable,
         candidate_b_only=candidate_b_only,
+        candidate_c_only=candidate_c_only,
     )
     argv = plan["argv"]
     if argv[1:3] != ["-n", "8"] or plan["watchdog"]["critical_action"] != (
@@ -333,6 +344,7 @@ def launch_v3_7_with_task038_watchdog(
     sample_factory: Callable[[int], dict[str, Any]] | None = None,
     terminate_factory: Callable[[Any], dict[str, Any]] | None = None,
     candidate_b_only: bool = False,
+    candidate_c_only: bool = False,
 ) -> dict[str, Any]:
     """Run the opt-in child through Task38's existing process-tree watchdog."""
 
@@ -354,6 +366,7 @@ def launch_v3_7_with_task038_watchdog(
         python_executable=python_executable,
         mpiexec_command=mpiexec_command,
         candidate_b_only=candidate_b_only,
+        candidate_c_only=candidate_c_only,
     )
     run_dir = Path(run_directory).resolve()
     if run_dir.exists():
@@ -1596,6 +1609,113 @@ def _write_v3_8_candidate_b_failure_checkpoint(
     )
 
 
+def _write_v3_8_candidate_c_checkpoint(
+    run_directory: Path,
+    *,
+    source_sha: str,
+    resolved_payload: Mapping[str, Any],
+    producer: Mapping[str, Any],
+    report: Mapping[str, Any],
+    comm: MPI.Intracomm,
+) -> Path:
+    """Persist the independent C1 one-pass ILU(1) side evidence."""
+
+    provenance = resolved_payload["provenance"]
+    inventory = producer["inventory"]
+    resolved_config_sha = hashlib.sha256(
+        (run_directory / "resolved_config.json").read_bytes()
+    ).hexdigest()
+    checkpoint = {
+        "schema": "task039.v3-8-candidate-c1-checkpoint.v1",
+        "candidate": "C1",
+        "sequence": "whole_endcap_ilu1_dynamic_dtn_woodbury_one_pass",
+        "source_sha": source_sha,
+        "physical_identity": {
+            "consumer_input_sha256": provenance["input_sha256"],
+            "consumer_resolved_config_sha256": resolved_config_sha,
+            "consumer_physical_model_sha256": provenance["physical_model_sha256"],
+            "producer_source_sha": inventory["source_sha"],
+            "producer_input_sha256": inventory["input_sha256"],
+            "producer_resolved_config_sha256": inventory["resolved_config_sha256"],
+            "producer_physical_model_sha256": inventory["physical_model_sha256"],
+            "direct_payload_sha256": inventory["payload"]["artifact"]["sha256"],
+            "verified_shard_count": inventory["verified_shard_count"],
+            "model_id": producer["model_id"],
+            "requested_modes": producer["requested_modes"],
+            "mpi_size": producer["mpi_size"],
+            "external_keys_exact": producer["external_keys_exact"],
+        },
+        "status": report.get("status"),
+        "pass": report.get("pass"),
+        "gate": report.get("gate", {}),
+        "side_reports": report.get("side_reports", {}),
+        "factor_inventory": report.get("factor_inventory", {}),
+        "direct_solution": report.get("direct_solution", {}),
+    }
+    if report.get("failure") is not None:
+        checkpoint["failure"] = report["failure"]
+    path = run_directory / "numerical_output" / "v3_8_candidate_c1_checkpoint.json"
+    if comm.rank == 0:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+        temporary.write_text(
+            json.dumps(_json_safe(checkpoint), ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        temporary.replace(path)
+    comm.barrier()
+    return path
+
+
+def _write_v3_8_candidate_c_failure_checkpoint(
+    run_directory: Path,
+    *,
+    source_sha: str,
+    resolved_payload: Mapping[str, Any],
+    producer: Mapping[str, Any],
+    error: Exception,
+    comm: MPI.Intracomm,
+) -> Path:
+    progress = getattr(error, "candidate_c_progress", {})
+    report = {
+        "status": "candidate_c1_implementation_failure",
+        "pass": None,
+        "gate": {
+            "median_limit": V3_8_CANDIDATE_C_MEDIAN_LIMIT,
+            "worst_limit": V3_8_CANDIDATE_C_WORST_LIMIT,
+            "classification": "review_derived_conservative_production_side_gate",
+            "formula": "rho=norm(b-Ax)/max(norm(b),1e-30)",
+        },
+        "side_reports": {},
+        "factor_inventory": {},
+        "failure": {
+            "type": type(error).__name__,
+            "message": str(error),
+            "attempted_side": progress.get("side", "not_available"),
+            "unmeasured": ["side_reports", "rho", "factor_inventory"],
+        },
+    }
+    return _write_v3_8_candidate_c_checkpoint(
+        run_directory,
+        source_sha=source_sha,
+        resolved_payload=resolved_payload,
+        producer=producer,
+        report=report,
+        comm=comm,
+    )
+
+
+def _candidate_c_side_gate(report: Mapping[str, Any]) -> bool:
+    summary = report["rho_summary"]
+    return bool(
+        report.get("pass") is True
+        and summary.get("median") is not None
+        and summary.get("worst") is not None
+        and summary["median"] <= V3_8_CANDIDATE_C_MEDIAN_LIMIT
+        and summary["worst"] <= V3_8_CANDIDATE_C_WORST_LIMIT
+    )
+
+
 def _run_v3_8_candidate_b_campaign(
     setup: Any,
     layout: Any,
@@ -1741,6 +1861,242 @@ def _run_v3_8_candidate_b_campaign(
         production_operator.destroy()
 
 
+def _run_v3_8_candidate_c_campaign(
+    setup: Any,
+    layout: Any,
+    rhs: PETSc.Vec,
+    *,
+    resolved_payload: Mapping[str, Any],
+    producer: Mapping[str, Any],
+    modal_amplitudes: np.ndarray,
+    run_directory: Path,
+    source_sha: str,
+    comm: MPI.Intracomm,
+    survey_side_vectors: dict[str, dict[str, PETSc.Vec]],
+    marker_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+) -> tuple[dict[str, Any], Path]:
+    """Run only C1: ILU(1) plus the existing one-pass Woodbury action."""
+
+    production_operator, production_context = create_hybrid_assembled_block_action(
+        setup.bottom, setup.top, setup.coupling
+    )
+    x_star = None
+    direct_residual = None
+    components: dict[str, Any] = {}
+    base_actions: dict[str, Any] = {}
+    fixed_actions: dict[str, Any] = {}
+    vector_metadata: dict[str, dict[str, Any]] = {}
+    report: dict[str, Any] | None = None
+    failure: Exception | None = None
+    current_side = "not_started"
+    try:
+        _emit_marker(marker_callback, "candidate_c_direct_payload_begin")
+        x_star, mapping = rebuild_hybrid_augmented_vector(
+            producer["inventory"],
+            setup.bottom,
+            setup.top,
+            layout,
+            modal_amplitudes,
+        )
+        direct_residual = production_operator.createVecLeft()
+        production_operator.mult(x_star, direct_residual)
+        direct_residual.scale(PETSc.ScalarType(-1.0))
+        direct_residual.axpy(PETSc.ScalarType(1.0), rhs)
+        _emit_marker(
+            marker_callback,
+            "candidate_c_direct_payload_end",
+            mapping_status=mapping.get("mapping_status"),
+            direct_residual_norm=float(direct_residual.norm()),
+        )
+        for side, system, block_slice in (
+            ("bottom", setup.bottom, layout.local_bottom_slice),
+            ("top", setup.top, layout.local_top_slice),
+        ):
+            side_residual = system.A.createVecLeft()
+            try:
+                values = side_residual.getArray()
+                source_values = direct_residual.getArray(readonly=True)[block_slice]
+                if values.size != source_values.size:
+                    raise ValueError(
+                        f"{side} direct residual ownership does not match layout"
+                    )
+                values[:] = source_values
+                side_residual.assemble()
+                vectors, _owned, metadata = _side_survey_vectors(
+                    system,
+                    side,
+                    {"direct_solution_side_residual": side_residual},
+                )
+                survey_side_vectors[side] = vectors
+                vector_metadata[side] = metadata
+            finally:
+                side_residual.destroy()
+
+        _emit_marker(marker_callback, "candidate_c_side_fixed_setup_begin")
+        for side, system in (("bottom", setup.bottom), ("top", setup.top)):
+            components[side] = create_hybrid_local_dtn_action_components(system)
+            base_actions[side] = build_hybrid_whole_endcap_fixed_smoother_action(
+                system, ilu_levels=1
+            )
+        for side in ("bottom", "top"):
+            fixed_actions[side] = HybridLocalDtnWoodburyFixedAction(
+                base_actions[side],
+                components[side],
+                base_identity="whole_endcap_ilu1_fixed_smoother",
+                operator_identity="whole_endcap_ilu1_woodbury_fixed_action",
+                ilu_levels=1,
+                residual_correction_steps=1,
+            )
+        _emit_marker(
+            marker_callback,
+            "candidate_c_side_fixed_setup_end",
+            components_live=2,
+            base_actions_live=2,
+            fixed_actions_live=2,
+            ilu_levels=1,
+        )
+
+        side_reports: dict[str, Any] = {}
+        factor_inventory: dict[str, Any] = {}
+        for side in ("bottom", "top"):
+            current_side = side
+            _emit_marker(
+                marker_callback,
+                f"candidate_c_side_{side}_begin",
+                side=side,
+                correction_passes=1,
+            )
+            side_report = _side_correction_probe(
+                setup.bottom if side == "bottom" else setup.top,
+                fixed_actions[side],
+                1,
+                survey_side_vectors[side],
+                vector_metadata[side],
+            )
+            summary = side_report["rho_summary"]
+            summary["median_limit"] = V3_8_CANDIDATE_C_MEDIAN_LIMIT
+            summary["worst_limit"] = V3_8_CANDIDATE_C_WORST_LIMIT
+            summary["candidate_C_pass"] = _candidate_c_side_gate(side_report)
+            side_reports[side] = side_report
+            action_diagnostics = fixed_actions[side].diagnostics
+            base_diagnostics = action_diagnostics["base_diagnostics"]
+            smoother_diagnostics = base_diagnostics["smoother"]
+            woodbury_diagnostics = action_diagnostics["woodbury"]
+            factor_inventory[side] = {
+                "base_identity": action_diagnostics["base_identity"],
+                "operator_identity": action_diagnostics["operator_identity"],
+                "ilu_levels": action_diagnostics["ilu_levels"],
+                "factor_rows": base_diagnostics["factor_rows"],
+                "source_matrix_nnz": base_diagnostics["source_matrix_nnz"],
+                "factor_nnz": base_diagnostics["factor_nnz"],
+                "factor_csr_payload_estimate_bytes": base_diagnostics[
+                    "factor_csr_payload_estimate_bytes"
+                ],
+                "base_setup_seconds": base_diagnostics["setup_seconds"],
+                "base_apply_seconds": smoother_diagnostics["one_level_mean_apply_s"],
+                "base_apply_count": base_diagnostics["apply_count"],
+                "woodbury_setup_seconds": woodbury_diagnostics["setup_seconds"],
+                "woodbury_apply_seconds": woodbury_diagnostics["apply_seconds"],
+                "woodbury_apply_count": woodbury_diagnostics["apply_count"],
+                "base_factor_count": action_diagnostics["base_factor_count"],
+                "direct_factor_count": action_diagnostics["local_direct_factor_count"],
+                "global_hybrid_direct_factor_count": action_diagnostics[
+                    "global_hybrid_direct_factor_count"
+                ],
+                "fixed_destroyed": False,
+                "base_destroyed": False,
+                "base_factor_count_after_destroy": None,
+            }
+            _emit_marker(
+                marker_callback,
+                f"candidate_c_side_{side}_end",
+                side=side,
+                candidate_C_pass=summary["candidate_C_pass"],
+            )
+        report = {
+            "status": "measured",
+            "pass": bool(
+                side_reports["bottom"]["rho_summary"]["candidate_C_pass"]
+                and side_reports["top"]["rho_summary"]["candidate_C_pass"]
+            ),
+            "gate": {
+                "median_limit": V3_8_CANDIDATE_C_MEDIAN_LIMIT,
+                "worst_limit": V3_8_CANDIDATE_C_WORST_LIMIT,
+                "classification": ("review_derived_conservative_production_side_gate"),
+                "formula": "rho=norm(b-Ax)/max(norm(b),1e-30)",
+            },
+            "side_reports": side_reports,
+            "factor_inventory": {
+                "per_side": factor_inventory,
+                "simultaneous_total_base_factor_count": sum(
+                    int(item["base_factor_count"]) for item in factor_inventory.values()
+                ),
+                "simultaneous_total_direct_factor_count": sum(
+                    int(item["direct_factor_count"])
+                    for item in factor_inventory.values()
+                ),
+                "simultaneous_total_global_hybrid_direct_factor_count": sum(
+                    int(item["global_hybrid_direct_factor_count"])
+                    for item in factor_inventory.values()
+                ),
+            },
+            "direct_solution": {
+                "mapping": mapping,
+                "residual_norm": float(direct_residual.norm()),
+                "source": "hash-bound direct payload reconstructed on current layout",
+            },
+        }
+    except Exception as error:
+        error.candidate_c_progress = {"side": current_side}
+        failure = error
+    finally:
+        for side in ("top", "bottom"):
+            if side in fixed_actions:
+                fixed_actions[side].destroy()
+            if side in base_actions:
+                base_actions[side].destroy()
+            if side in components:
+                components[side].destroy()
+            if report is not None and side in factor_inventory:
+                fixed_diagnostics = fixed_actions[side].diagnostics
+                base_diagnostics = base_actions[side].diagnostics
+                factor_inventory[side].update(
+                    {
+                        "fixed_destroyed": fixed_diagnostics["destroyed"],
+                        "base_destroyed": base_diagnostics["destroyed"],
+                        "base_factor_count_after_destroy": base_diagnostics[
+                            "factor_count_after_destroy"
+                        ],
+                    }
+                )
+        _emit_marker(marker_callback, "candidate_c_side_fixed_cleanup_end")
+        _destroy(direct_residual)
+        _destroy(x_star)
+        production_context.destroy()
+        production_operator.destroy()
+
+    if failure is not None:
+        _write_v3_8_candidate_c_failure_checkpoint(
+            run_directory,
+            source_sha=source_sha,
+            resolved_payload=resolved_payload,
+            producer=producer,
+            error=failure,
+            comm=comm,
+        )
+        raise failure
+    assert report is not None
+    checkpoint = _write_v3_8_candidate_c_checkpoint(
+        run_directory,
+        source_sha=source_sha,
+        resolved_payload=resolved_payload,
+        producer=producer,
+        report=report,
+        comm=comm,
+    )
+    return report, checkpoint
+
+
 def _record_v3_7_marker(
     ledger: dict[str, Any], marker: str, detail: Mapping[str, Any]
 ) -> None:
@@ -1771,8 +2127,11 @@ def _record_v3_7_marker(
     elif marker in {
         "side_fixed_components_setup_end",
         "candidate_b_side_fixed_setup_end",
+        "candidate_c_side_fixed_setup_end",
     }:
         mark("side_base_ilu", created=True, completed=True)
+        if marker == "candidate_c_side_fixed_setup_end":
+            mark("correction_wrappers", created=True, completed=True)
     elif marker.startswith("side_correction_") and marker.endswith("_ready"):
         mark("correction_wrappers", created=True, completed=True)
     elif marker.startswith("side_correction_") and marker.endswith("_end"):
@@ -1784,9 +2143,13 @@ def _record_v3_7_marker(
     elif marker in {
         "side_survey_cleanup_end",
         "candidate_b_side_fixed_cleanup_end",
+        "candidate_c_side_fixed_cleanup_end",
     }:
         if objects["side_base_ilu"]["created"]:
             mark("side_base_ilu", destroyed=True)
+        if marker == "candidate_c_side_fixed_cleanup_end":
+            if objects["correction_wrappers"]["created"]:
+                mark("correction_wrappers", destroyed=True)
     elif marker == "exact_side_oracle_begin":
         mark("exact_side_action", created=True)
     elif marker == "exact_side_oracle_end":
@@ -1936,6 +2299,7 @@ def run_task039_v3_7_diagnostic(
     | None = None,
     record_path: str | Path | None = None,
     candidate_b_only: bool = False,
+    candidate_c_only: bool = False,
 ) -> dict[str, Any]:
     """Prepare the V3-7 campaign or the explicit Candidate-B-only branch."""
 
@@ -2014,7 +2378,7 @@ def run_task039_v3_7_diagnostic(
             "watchdog_ready",
             absolute_terminate_memory_bytes=V3_7_ABSOLUTE_HARD_BYTES,
         )
-        if recovery_runner is None and not candidate_b_only:
+        if recovery_runner is None and not candidate_b_only and not candidate_c_only:
             raise ValueError(
                 "V3-7 requires an injected recovery_runner(setup, layout, snapshot, "
                 "run_dir, producer)"
@@ -2053,6 +2417,11 @@ def run_task039_v3_7_diagnostic(
             setup.coupling.internal_unknown_count,
         )
         rhs = _default_rhs(setup, layout)
+
+        if candidate_b_only and candidate_c_only:
+            raise ValueError(
+                "Candidate-B-only and Candidate-C-only routes are exclusive"
+            )
 
         if candidate_b_only:
             candidate_report, candidate_checkpoint = _run_v3_8_candidate_b_campaign(
@@ -2148,6 +2517,50 @@ def run_task039_v3_7_diagnostic(
                     "identity_reference": "not_run_by_candidate_b_contract",
                     "oracle": "not_run_by_candidate_b_contract",
                     "recovery": "not_run_by_candidate_b_contract",
+                },
+                "run_directory": str(Path(run_directory).resolve()),
+            }
+            normal_return = True
+            return result
+
+        if candidate_c_only:
+            candidate_report, candidate_checkpoint = _run_v3_8_candidate_c_campaign(
+                setup,
+                layout,
+                rhs,
+                resolved_payload=resolved_payload,
+                producer=producer,
+                modal_amplitudes=modal_amplitudes,
+                run_directory=Path(run_directory).resolve(),
+                source_sha=source_sha,
+                comm=comm,
+                survey_side_vectors=survey_side_vectors,
+                marker_callback=marker_callback,
+            )
+            result = {
+                "schema": "task039.v3-8-candidate-c1-only.v1",
+                "status": "completed",
+                "watchdog": watchdog,
+                "candidate_c": candidate_report,
+                "checkpoint": str(
+                    candidate_checkpoint.relative_to(Path(run_directory).resolve())
+                ),
+                "telemetry": {
+                    "process_tree_samples": "numerical_output/process_tree_samples.jsonl",
+                    "memory_stages": "numerical_output/memory_stages.jsonl",
+                    "memory_stage_markers": "numerical_output/memory_stage_markers.raw.jsonl",
+                    "memory_object_ledger": {
+                        "path": "numerical_output/memory_object_ledger.json",
+                        "schema": object_ledger["schema"],
+                        "status": "finalized_in_worker_finalizer",
+                    },
+                },
+                "formal_run": {
+                    "status": "measured_candidate_c1_only",
+                    "classification": "measured_candidate_c1_only",
+                    "identity_reference": "not_run_by_candidate_c1_contract",
+                    "oracle": "not_run_by_candidate_c1_contract",
+                    "recovery": "not_run_by_candidate_c1_contract",
                 },
                 "run_directory": str(Path(run_directory).resolve()),
             }
@@ -2523,18 +2936,22 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--launched-by-task038-watchdog", action="store_true")
     parser.add_argument("--candidate-b-only", action="store_true")
+    parser.add_argument("--candidate-c-only", action="store_true")
     parser.add_argument("--input", required=True, dest="input_path")
     parser.add_argument("--run-directory", required=True)
     parser.add_argument("--source-sha", required=True)
     args = parser.parse_args(argv)
     if args.worker == args.dry_run:
         parser.error("choose exactly one of --worker or --dry-run")
+    if args.candidate_b_only and args.candidate_c_only:
+        parser.error("--candidate-b-only and --candidate-c-only are mutually exclusive")
     if args.dry_run:
         plan = v3_7_execution_dry_run(
             args.input_path,
             args.run_directory,
             source_sha=args.source_sha,
             candidate_b_only=args.candidate_b_only,
+            candidate_c_only=args.candidate_c_only,
         )
         print(json.dumps(_json_safe(plan), ensure_ascii=False, sort_keys=True))
         return 0
@@ -2558,9 +2975,12 @@ def main(argv: list[str] | None = None) -> int:
             source_sha=args.source_sha,
             direct_run_dir=V3_7_DIRECT_RUN_ROOT,
             recovery_runner=(
-                None if args.candidate_b_only else run_v3_7_recovery_runner
+                None
+                if args.candidate_b_only or args.candidate_c_only
+                else run_v3_7_recovery_runner
             ),
             candidate_b_only=args.candidate_b_only,
+            candidate_c_only=args.candidate_c_only,
             record_path=(
                 Path(args.run_directory).resolve()
                 / "numerical_output"
@@ -2591,6 +3011,8 @@ __all__ = [
     "V3_8_CANDIDATE_B_BUDGETS",
     "V3_8_CANDIDATE_B_MEDIAN_LIMIT",
     "V3_8_CANDIDATE_B_WORST_LIMIT",
+    "V3_8_CANDIDATE_C_MEDIAN_LIMIT",
+    "V3_8_CANDIDATE_C_WORST_LIMIT",
     "build_v3_7_execution_plan",
     "check_v3_7_integrated_physics",
     "compare_v3_7_hybrid_candidate_to_direct",

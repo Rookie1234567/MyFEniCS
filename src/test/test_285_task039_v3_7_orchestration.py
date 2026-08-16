@@ -499,6 +499,26 @@ def test_v3_8_candidate_b_plan_is_opt_in_and_checkpoint_is_hash_bound(tmp_path) 
     assert candidate["worker_contract"]["method"] == (
         "hybrid_iterative_candidate_b_only"
     )
+    candidate_c = watchdog.v3_7_execution_dry_run(
+        INPUT,
+        tmp_path / "candidate-c",
+        source_sha="a" * 40,
+        python_executable=sys.executable,
+        candidate_c_only=True,
+    )
+    assert "--candidate-c-only" in candidate_c["argv"]
+    assert candidate_c["worker_contract"]["method"] == (
+        "hybrid_iterative_candidate_c1_only"
+    )
+    with pytest.raises(ValueError, match="routes are exclusive"):
+        watchdog.v3_7_execution_dry_run(
+            INPUT,
+            tmp_path / "candidate-bc",
+            source_sha="a" * 40,
+            python_executable=sys.executable,
+            candidate_b_only=True,
+            candidate_c_only=True,
+        )
     payload = load_v3_7_official_payload(INPUT)
     checkpoint_root = tmp_path / "checkpoint"
     checkpoint_root.mkdir()
@@ -572,6 +592,26 @@ def test_v3_8_candidate_b_plan_is_opt_in_and_checkpoint_is_hash_bound(tmp_path) 
         "woodbury_apply_lu_solve"
     )
     assert "rho" in failure_checkpoint["failure"]["unmeasured"]
+    failure.candidate_c_progress = {"side": "bottom"}
+    c_failure_path = orchestration._write_v3_8_candidate_c_failure_checkpoint(
+        checkpoint_root,
+        source_sha="c" * 40,
+        resolved_payload=payload,
+        producer=producer,
+        error=failure,
+        comm=MPI.COMM_SELF,
+    )
+    c_failure_checkpoint = json.loads(c_failure_path.read_text(encoding="utf-8"))
+    assert c_failure_checkpoint["status"] == "candidate_c1_implementation_failure"
+    assert c_failure_checkpoint["pass"] is None
+    assert c_failure_checkpoint["failure"]["attempted_side"] == "bottom"
+
+
+def test_v3_8_candidate_c_side_gate_uses_frozen_limits() -> None:
+    passed = {"pass": True, "rho_summary": {"median": 0.05, "worst": 0.2}}
+    failed = {"pass": True, "rho_summary": {"median": 0.15, "worst": 0.2}}
+    assert orchestration._candidate_c_side_gate(passed) is True
+    assert orchestration._candidate_c_side_gate(failed) is False
 
 
 def test_v3_8_candidate_b_branch_skips_v3_7_reference_oracle_recovery(
@@ -661,6 +701,95 @@ def test_v3_8_candidate_b_branch_skips_v3_7_reference_oracle_recovery(
     )
     assert ledger["objects"]["side_base_ilu"]["created"] is True
     assert ledger["objects"]["side_base_ilu"]["completed"] is True
+    assert ledger["objects"]["side_base_ilu"]["destroyed"] is True
+    assert ledger["objects"]["correction_wrappers"]["created"] is True
+    assert ledger["objects"]["correction_wrappers"]["completed"] is True
+    assert ledger["objects"]["correction_wrappers"]["destroyed"] is True
+
+
+def test_v3_8_candidate_c_normal_return_finalizes_ledger(tmp_path, monkeypatch) -> None:
+    payload = load_v3_7_official_payload(INPUT)
+    called: list[str] = []
+
+    class Layout:
+        comm = MPI.COMM_SELF
+
+        @classmethod
+        def build(cls, *_args):
+            return cls()
+
+    class Rhs:
+        def destroy(self):
+            called.append("rhs_destroy")
+
+    setup = SimpleNamespace(
+        bottom=SimpleNamespace(),
+        top=SimpleNamespace(),
+        coupling=SimpleNamespace(internal_unknown_count=0),
+    )
+    run_directory = tmp_path / "run"
+    run_directory.mkdir()
+    (run_directory / "resolved_config.json").write_text("{}\n", encoding="utf-8")
+    checkpoint = (
+        run_directory / "numerical_output" / "v3_8_candidate_c1_checkpoint.json"
+    )
+
+    def campaign(*_args, **kwargs):
+        called.append("candidate_c")
+        marker_callback = kwargs["marker_callback"]
+        marker_callback("candidate_c_side_fixed_setup_end", {})
+        marker_callback("candidate_c_side_fixed_cleanup_end", {})
+        return {"status": "measured", "pass": False}, checkpoint
+
+    monkeypatch.setattr(orchestration, "HybridAugmentedLayout", Layout)
+    monkeypatch.setattr(orchestration, "_default_rhs", lambda *_args: Rhs())
+    monkeypatch.setattr(
+        orchestration, "release_frozen_m10_objects", lambda *_args: None
+    )
+    monkeypatch.setattr(orchestration, "_run_v3_8_candidate_c_campaign", campaign)
+
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError("V3-7 identity/oracle/recovery path was entered")
+
+    result = orchestration.run_task039_v3_7_diagnostic(
+        payload,
+        run_directory,
+        source_sha="a" * 40,
+        comm=MPI.COMM_SELF,
+        setup_builder=lambda *_args, **_kwargs: setup,
+        inventory_loader=lambda *_args, **_kwargs: (
+            {
+                "producer_source_sha": "p" * 40,
+                "physical_model_sha256": "m" * 64,
+                "model_id": "task039-test",
+                "requested_modes": 480,
+                "mpi_size": 8,
+                "external_keys_exact": True,
+                "inventory": {
+                    "source_sha": "p" * 40,
+                    "input_sha256": "i" * 64,
+                    "resolved_config_sha256": "r" * 64,
+                    "physical_model_sha256": "m" * 64,
+                    "payload": {"artifact": {"sha256": "d" * 64}},
+                },
+            },
+            np.zeros(960, dtype=np.complex128),
+        ),
+        reference_builder=forbidden,
+        identity_runner=forbidden,
+        oracle_runner=forbidden,
+        recovery_runner=None,
+        candidate_c_only=True,
+    )
+    assert called == ["candidate_c", "rhs_destroy"]
+    assert result["schema"] == "task039.v3-8-candidate-c1-only.v1"
+    ledger_ref = result["telemetry"]["memory_object_ledger"]
+    assert ledger_ref["path"] == "numerical_output/memory_object_ledger.json"
+    assert ledger_ref["schema"] == "task039.v3-7-memory-object-ledger.v1"
+    assert ledger_ref["status"] == "completed"
+    ledger = json.loads(
+        (run_directory / ledger_ref["path"]).read_text(encoding="utf-8")
+    )
     assert ledger["objects"]["side_base_ilu"]["destroyed"] is True
     assert ledger["objects"]["correction_wrappers"]["created"] is True
     assert ledger["objects"]["correction_wrappers"]["completed"] is True
