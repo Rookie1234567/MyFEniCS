@@ -488,8 +488,14 @@ M6B_W14A_EVENTS = (
 )
 M6B_W14B_SCHEMA = "task037.extra.h2b.w14b.fixed4-physical-correction.v1"
 M6B_W14B_PHASE = "w14b_fixed4_physical_correction"
+M6B_W14B_WATCHDOG_SCHEMA = "task037.extra.h2b.w14b.watchdog.v1"
+M6B_W14B_CHECK_SCHEMA = "task037.extra.h2b.w14b.formal-resource-check.v1"
 M6B_W14B_PROGRESS_FILENAME = "m6b_w14b_progress.jsonl"
 M6B_W14B_SUMMARY_FILENAME = "m6b_w14b_summary.json"
+M6B_W14B_WATCHDOG_SUMMARY_FILENAME = "w14b_watchdog_summary.json"
+M6B_W14B_TIMEOUT_SECONDS = 3_600.0
+M6B_W14B_WATCHDOG_RSS_LIMIT_BYTES = 1_950_000_000
+M6B_W14B_FORMAL_RSS_LIMIT_BYTES = 1_500_000_000
 M6B_W14B_W14A_COMPACT_RELATIVE_PATH = (
     "benchmarks/cases/101_task37_extra_development/records/"
     "m6b_w14a_4450f4e_formal_resource_closeout.json"
@@ -3837,6 +3843,46 @@ def _m6b_w14a_worker_command(
     ]
 
 
+def _m6b_w14b_worker_command(
+    run_dir: Path,
+    w5_compact: Path,
+    w5_raw_dir: Path,
+    w7_compact: Path,
+    w7_raw_dir: Path,
+    m3y_manifest: Path,
+    jit_cache_source: Path,
+    b0_jit_cache_source: Path,
+    w14a_compact: Path,
+    expected_source_sha: str,
+) -> list[str]:
+    return [
+        sys.executable,
+        "-m",
+        "benchmarks.run_task037_extra_m6b",
+        "m6b-w14b-correction-diagnostic",
+        "--run-dir",
+        str(Path(run_dir).resolve()),
+        "--w5-compact",
+        str(Path(w5_compact).resolve()),
+        "--w5-raw-dir",
+        str(Path(w5_raw_dir).resolve()),
+        "--w7-compact",
+        str(Path(w7_compact).resolve()),
+        "--w7-raw-dir",
+        str(Path(w7_raw_dir).resolve()),
+        "--m3y-manifest",
+        str(Path(m3y_manifest).resolve()),
+        "--jit-cache-source",
+        str(Path(jit_cache_source).resolve()),
+        "--b0-jit-cache-source",
+        str(Path(b0_jit_cache_source).resolve()),
+        "--w14a-compact",
+        str(Path(w14a_compact).resolve()),
+        "--expected-source-sha",
+        expected_source_sha,
+    ]
+
+
 def _run_m6b_w14a_watchdog(
     run_dir: Path,
     watchdog_dir: Path,
@@ -3959,6 +4005,153 @@ def _run_m6b_w14a_watchdog(
     return 0 if process_ok else 1
 
 
+def _m6b_w14b_raw_artifact_names() -> tuple[str, ...]:
+    names = [M6B_W14B_SUMMARY_FILENAME, M6B_W14B_PROGRESS_FILENAME]
+    names.extend(
+        f"outer_checkpoints/m6b_iter{iteration}_{kind}.npy"
+        for iteration in (1, 2, 4)
+        for kind in ("solution", "outer_action", "residual", "rhs")
+    )
+    names.extend(("outer_scratch/v_basis.bin", "outer_scratch/z_basis.bin"))
+    return tuple(names)
+
+
+def _m6b_w14b_watchdog_artifact_names() -> tuple[str, ...]:
+    return (
+        f"{M6B_W14B_PHASE}_timeline.jsonl",
+        f"{M6B_W14B_PHASE}_stdout.txt",
+        f"{M6B_W14B_PHASE}_root_pid.json",
+    )
+
+
+def _m6b_w14b_raw_artifacts(run_dir: Path) -> list[dict[str, Any]]:
+    return [_artifact(run_dir, name) for name in _m6b_w14b_raw_artifact_names()]
+
+
+def _m6b_w14b_watchdog_artifacts(watchdog_dir: Path) -> list[dict[str, Any]]:
+    return [_artifact(watchdog_dir, name) for name in _m6b_w14b_watchdog_artifact_names()]
+
+
+def _run_m6b_w14b_watchdog(
+    run_dir: Path,
+    watchdog_dir: Path,
+    w5_compact: Path,
+    w5_raw_dir: Path,
+    w7_compact: Path,
+    w7_raw_dir: Path,
+    m3y_manifest: Path,
+    jit_cache_source: Path,
+    b0_jit_cache_source: Path,
+    w14a_compact: Path,
+    expected_source_sha: str,
+) -> int:
+    """Run the submitted W14B worker under the shared process monitor."""
+
+    import time
+
+    h2b = __import__("benchmarks.run_task037_extra_h2b", fromlist=["*"])
+    run_dir = Path(run_dir).resolve()
+    watchdog_dir = Path(watchdog_dir).resolve()
+    w14a_compact = Path(w14a_compact).resolve()
+    authority_paths = tuple(
+        Path(path).resolve()
+        for path in (
+            w5_compact,
+            w5_raw_dir,
+            w7_compact,
+            w7_raw_dir,
+            m3y_manifest,
+            jit_cache_source,
+            b0_jit_cache_source,
+            w14a_compact,
+        )
+    )
+    if run_dir.exists() or watchdog_dir.exists():
+        raise FileExistsError("W14B watchdog refuses existing paths")
+    if any(not path.exists() for path in authority_paths):
+        raise FileNotFoundError("W14B watchdog authority path is missing")
+    w14a_authority = _m6b_w14b_w14a_compact_authority(w14a_compact)
+    source_start = h2b._light_source()
+    if (
+        source_start.get("source_commit_full_sha") != expected_source_sha
+        or not _m6b_w6a_source_valid(source_start)
+    ):
+        raise RuntimeError("W14B watchdog source identity is not clean or expected")
+
+    watchdog_dir.mkdir(parents=True)
+    command = _m6b_w14b_worker_command(
+        run_dir,
+        w5_compact,
+        w5_raw_dir,
+        w7_compact,
+        w7_raw_dir,
+        m3y_manifest,
+        jit_cache_source,
+        b0_jit_cache_source,
+        w14a_compact,
+        expected_source_sha,
+    )
+    started = time.perf_counter()
+    process = h2b._monitor_phase(
+        watchdog_dir,
+        M6B_W14B_PHASE,
+        command,
+        M6B_W14B_TIMEOUT_SECONDS,
+        M6B_W14B_WATCHDOG_RSS_LIMIT_BYTES,
+    )
+    drain = h2b._bounded_process_drain(process)
+    source_end = h2b._light_source()
+    timeline_name = f"{M6B_W14B_PHASE}_timeline.jsonl"
+    timeline = _m6b_w8a_timeline_valid(
+        watchdog_dir / timeline_name, phase=M6B_W14B_PHASE
+    )
+    process_ok = (
+        process.get("return_code") == 0
+        and process.get("termination") is None
+        and isinstance(drain, Mapping)
+        and drain.get("gone") is True
+    )
+    payload = {
+        "schema": M6B_W14B_WATCHDOG_SCHEMA,
+        "phase": M6B_W14B_PHASE,
+        "status": "measurement_complete" if process_ok else "gate_failed",
+        "process": process,
+        "drain": drain,
+        "source_at_start": source_start,
+        "source_at_end": source_end,
+        "source_end_clean": bool(
+            _m6b_w6a_source_valid(source_end)
+            and source_end.get("source_commit_full_sha") == expected_source_sha
+        ),
+        "resource_limits": {
+            "timeout_seconds": M6B_W14B_TIMEOUT_SECONDS,
+            "watchdog_rss_bytes": M6B_W14B_WATCHDOG_RSS_LIMIT_BYTES,
+            "completion_peak_rss_bytes": M6B_W14B_FORMAL_RSS_LIMIT_BYTES,
+            "swap_bytes": M6B_SWAP_LIMIT_BYTES,
+        },
+        "raw_dir": str(run_dir),
+        "watchdog_dir": str(watchdog_dir),
+        "command": command,
+        "w14a_compact_authority": w14a_authority,
+        "artifact_inventory": {
+            "raw": _m6b_w14b_raw_artifacts(run_dir),
+            "watchdog": _m6b_w14b_watchdog_artifacts(watchdog_dir),
+        },
+        "worker_summary": _artifact(run_dir, M6B_W14B_SUMMARY_FILENAME),
+        "timeline": timeline,
+        "formal_pass": False,
+        "pde_pass": False,
+        "official_rta": False,
+        "w14c_unlocked": False,
+        "elapsed_wall_seconds": float(time.perf_counter() - started),
+    }
+    _write_json(
+        watchdog_dir / M6B_W14B_WATCHDOG_SUMMARY_FILENAME,
+        _attach_evidence(payload),
+    )
+    return 0 if process_ok else 1
+
+
 def _m6b_w14a_progress_valid(path: Path) -> dict[str, Any]:
     try:
         records = [
@@ -3978,6 +4171,30 @@ def _m6b_w14a_progress_valid(path: Path) -> dict[str, Any]:
                 for record in records
             )
             and events == list(M6B_W14A_EVENTS)
+        )
+        return {"pass": passed, "record_count": len(records), "events": events}
+    except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        return {"pass": False, "record_count": 0, "problems": [type(exc).__name__]}
+
+
+def _m6b_w14b_progress_valid(path: Path) -> dict[str, Any]:
+    try:
+        records = [
+            json.loads(line)
+            for line in Path(path).read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        if not all(isinstance(record, Mapping) for record in records):
+            return {"pass": False, "record_count": len(records), "events": []}
+        events = [record.get("event") for record in records]
+        passed = bool(
+            len(records) == len(M6B_W14B_EVENTS)
+            and all(
+                record.get("schema") == f"{M6B_W14B_SCHEMA}.progress.v1"
+                and record.get("phase") == M6B_W14B_PHASE
+                for record in records
+            )
+            and events == list(M6B_W14B_EVENTS)
         )
         return {"pass": passed, "record_count": len(records), "events": events}
     except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
@@ -4535,6 +4752,576 @@ def _run_m6b_w14a_check(
         "checker_source": gate["checker_source"],
         "producer_source_sha": expected_source_sha,
         "measured": _m6b_w14a_measured_summary(gate),
+    }
+    _write_json(output, _attach_evidence(result))
+    return 0 if overall else 1
+
+
+def _m6b_w14b_checkpoint_artifacts_valid(
+    raw_dir: Path, summary: Mapping[str, Any]
+) -> dict[str, Any]:
+    import numpy as np
+
+    results: dict[str, dict[str, Any]] = {}
+    artifact_hashes: list[dict[str, Any]] = []
+    try:
+        samples = summary["core"]["samples"]
+        if not isinstance(samples, Mapping) or set(samples) != {"1", "2", "4"}:
+            raise ValueError("W14B checkpoint sample set is incomplete")
+        for iteration in (1, 2, 4):
+            sample = samples[str(iteration)]
+            artifacts = sample["artifacts"]
+            if not isinstance(artifacts, Mapping) or set(artifacts) != {
+                "solution", "outer_action", "residual", "rhs"
+            }:
+                raise ValueError("W14B checkpoint artifact set is incomplete")
+            arrays: dict[str, Any] = {}
+            for name in ("solution", "outer_action", "residual", "rhs"):
+                record = artifacts[name]
+                file_name = f"m6b_iter{iteration}_{name}.npy"
+                relative = f"outer_checkpoints/{file_name}"
+                if not isinstance(record, Mapping) or record["path"] != file_name:
+                    raise ValueError(f"W14B checkpoint path is invalid: {relative}")
+                actual = _artifact(raw_dir, relative)
+                path = raw_dir / relative
+                values = np.load(path, allow_pickle=False, mmap_mode="r")
+                if not (
+                    actual.get("present") is True
+                    and actual.get("bytes") == record["bytes"]
+                    and actual.get("sha256") == record["sha256"]
+                    and values.dtype == np.dtype(np.complex128)
+                    and values.shape == (M6B_GLOBAL_ROWS,)
+                    and bool(values.flags.c_contiguous)
+                    and np.all(np.isfinite(values))
+                    and record["shape"] == list(values.shape)
+                    and record["dtype"] == str(values.dtype)
+                    and record["array_sha256"]
+                    == _m6b_w6a_w5_legacy_raw_array_sha256(values)
+                ):
+                    raise ValueError(f"W14B checkpoint artifact differs: {relative}")
+                arrays[name] = values
+                artifact_hashes.append(
+                    {
+                        "path": relative,
+                        "bytes": int(actual["bytes"]),
+                        "sha256": actual["sha256"],
+                        "array_sha256": record["array_sha256"],
+                    }
+                )
+            rhs = arrays["rhs"]
+            residual = arrays["residual"]
+            reconstructed = rhs - arrays["outer_action"]
+            denominator = max(float(np.linalg.norm(rhs)), np.finfo(float).tiny)
+            residual_closure = float(
+                np.linalg.norm(residual - reconstructed) / denominator
+            )
+            rho = float(np.linalg.norm(residual) / denominator)
+            sample_rho = float(sample["true_relative_residual"])
+            if not (
+                np.isfinite(residual_closure)
+                and np.isfinite(rho)
+                and np.isfinite(sample_rho)
+                and residual_closure <= 1.0e-12
+                and abs(rho - sample_rho) <= 1.0e-12
+            ):
+                raise ValueError(f"W14B checkpoint residual closure failed: {iteration}")
+            results[str(iteration)] = {
+                "iteration": iteration,
+                "rho": rho,
+                "sample_rho": sample_rho,
+                "residual_closure": residual_closure,
+                "sample_match": True,
+                "finite": True,
+            }
+            del arrays, reconstructed
+        return {
+            "pass": True,
+            "results": results,
+            "artifact_hashes": artifact_hashes,
+        }
+    except (OSError, TypeError, ValueError, KeyError, json.JSONDecodeError) as exc:
+        return {
+            "pass": False,
+            "results": results,
+            "artifact_hashes": artifact_hashes,
+            "problems": [f"{type(exc).__name__}:{exc}"],
+        }
+
+
+def _m6b_w14b_scratch_valid(
+    raw_dir: Path, outer_audit: Mapping[str, Any]
+) -> dict[str, Any]:
+    vector_bytes = M6B_GLOBAL_ROWS * 16
+    expected = {
+        "outer_scratch/v_basis.bin": vector_bytes * 5,
+        "outer_scratch/z_basis.bin": vector_bytes * 4,
+    }
+    artifacts = [_artifact(raw_dir, name) for name in expected]
+    expected_paths = {
+        "v_basis": str((raw_dir / "outer_scratch/v_basis.bin").resolve()),
+        "z_basis": str((raw_dir / "outer_scratch/z_basis.bin").resolve()),
+    }
+    v_expected = {
+        "path": expected_paths["v_basis"],
+        "rows": M6B_GLOBAL_ROWS,
+        "dtype": "complex128",
+        "capacity": 5,
+        "written_count": 5,
+        "write_count": 5,
+        "allocated_bytes": vector_bytes * 5,
+        "read_count": 20,
+        "bytes_read": vector_bytes * 20,
+        "bytes_written": vector_bytes * 5,
+        "mmap": False,
+    }
+    z_expected = {
+        "path": expected_paths["z_basis"],
+        "rows": M6B_GLOBAL_ROWS,
+        "dtype": "complex128",
+        "capacity": 4,
+        "written_count": 4,
+        "write_count": 4,
+        "allocated_bytes": vector_bytes * 4,
+        "read_count": 7,
+        "bytes_read": vector_bytes * 7,
+        "bytes_written": vector_bytes * 4,
+        "mmap": False,
+    }
+    passed = bool(
+        all(
+            item.get("present") is True
+            and item.get("bytes") == expected[item["path"]]
+            and _m6b_w6a_valid_sha(item.get("sha256"))
+            for item in artifacts
+        )
+        and sum(item.get("bytes", 0) for item in artifacts) == M6B_W14B_SCRATCH_BYTES
+        and outer_audit["scratch_paths"] == expected_paths
+        and outer_audit["scratch_bytes"] == M6B_W14B_SCRATCH_BYTES
+        and outer_audit["scratch_mmap"] is False
+        and outer_audit["scratch_basis_in_memory"] is False
+        and outer_audit["basis_in_memory"] is False
+        and outer_audit["mmap"] is False
+        and outer_audit["v_basis"] == v_expected
+        and outer_audit["z_basis"] == z_expected
+    )
+    return {
+        "pass": passed,
+        "bytes": sum(item.get("bytes", 0) for item in artifacts),
+        "artifacts": artifacts,
+    }
+
+
+def _m6b_w14b_formal_gate(
+    raw_dir: Path, watchdog_summary_path: Path, expected_source_sha: str
+) -> dict[str, Any]:
+    h2b = __import__("benchmarks.run_task037_extra_h2b", fromlist=["*"])
+    raw_dir = Path(raw_dir).resolve()
+    watchdog_summary_path = Path(watchdog_summary_path).resolve()
+    watchdog_dir = watchdog_summary_path.parent
+    try:
+        summary: Mapping[str, Any] = _read_json(raw_dir / M6B_W14B_SUMMARY_FILENAME)
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        summary = {}
+    try:
+        watchdog: Mapping[str, Any] = _read_json(watchdog_summary_path)
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        watchdog = {}
+
+    checks: dict[str, bool] = {
+        "worker_evidence": False,
+        "worker_semantics": False,
+        "progress": False,
+        "scope": False,
+        "p6": False,
+        "prediction": False,
+        "source": False,
+        "w14a_authority": False,
+        "jit": False,
+        "worker_action_gate": False,
+        "checkpoint_artifacts": False,
+        "scratch": False,
+        "watchdog_evidence": False,
+        "execution_semantics": False,
+        "command": False,
+        "artifacts": False,
+        "resource": False,
+        "checker_source": False,
+    }
+    worker_checks: dict[str, bool] = {}
+    independent_worker_pass: bool | None = None
+    checkpoint = {"pass": False, "results": {}, "artifact_hashes": []}
+    scratch = {"pass": False, "bytes": 0, "artifacts": []}
+    timeline = _m6b_w8a_timeline_valid(
+        watchdog_dir / f"{M6B_W14B_PHASE}_timeline.jsonl",
+        phase=M6B_W14B_PHASE,
+    )
+    w14a_authority: dict[str, Any] = {}
+    try:
+        w14a_authority = _m6b_w14b_w14a_compact_authority(
+            ROOT / M6B_W14B_W14A_COMPACT_RELATIVE_PATH
+        )
+        checks["w14a_authority"] = (
+            summary["authority"]["w14a_compact"] == w14a_authority
+        )
+    except (OSError, TypeError, ValueError, KeyError, json.JSONDecodeError):
+        checks["w14a_authority"] = False
+    try:
+        checks["worker_evidence"] = bool(
+            _evidence_valid(summary)
+            and summary["schema"] == M6B_W14B_SCHEMA
+            and summary["phase"] == M6B_W14B_PHASE
+        )
+        checks["progress"] = _m6b_w14b_progress_valid(
+            raw_dir / M6B_W14B_PROGRESS_FILENAME
+        )["pass"] is True
+        checks["scope"] = summary["scope"] == _m6b_w14b_scope()
+        checks["p6"] = _m6b_expected_p6(summary["p6"])
+        checks["prediction"] = (
+            summary["predicted_live_set"] == _m6b_w14b_predicted_live_set()
+        )
+        source_start = summary["source_at_start"]
+        source_end = summary["source_at_end"]
+        checks["source"] = bool(
+            _m6b_w6a_source_valid(source_start)
+            and _m6b_w6a_source_valid(source_end)
+            and source_start["source_commit_full_sha"] == expected_source_sha
+            and source_end["source_commit_full_sha"] == expected_source_sha
+        )
+        jit = summary["jit_cache"]
+        checks["jit"] = _m6b_w14a_jit_closeout_valid(jit, h2b)
+        from src.solvers.hcurl_m6b_w14_global_b0_inner_pc import (
+            evaluate_w14b_fixed4_gate,
+        )
+        core = summary["core"]
+        worker_report = evaluate_w14b_fixed4_gate(
+            outer_audit=core["outer_audit"],
+            inner_audit=core["inner_audit"],
+            samples=core["samples"],
+            action_audit=summary["action_audit"],
+            architecture=summary["architecture"],
+            predicted_live_set=summary["predicted_live_set"],
+            w14a_authority_ok=checks["w14a_authority"],
+            source_ok=checks["source"],
+            cache_ok=checks["jit"],
+        )
+        worker_checks = worker_report["checks"]
+        computed_worker_pass = bool(
+            isinstance(worker_checks, Mapping)
+            and worker_checks
+            and all(type(value) is bool for value in worker_checks.values())
+            and all(worker_checks.values())
+        )
+        checks["worker_action_gate"] = computed_worker_pass
+        if (
+            type(worker_report.get("pass")) is bool
+            and worker_report["pass"] == computed_worker_pass
+        ):
+            independent_worker_pass = computed_worker_pass
+        pass_semantics = (
+            summary.get("status") == "correction_gate_pass"
+            and summary.get("classification") == "W14B_FIXED4_CORRECTION_PASS"
+            and summary.get("w14b_pass") is True
+            and summary.get("formal_pass") is False
+            and summary.get("pde_pass") is False
+            and summary.get("official_rta") is False
+            and summary.get("formal_resource_closeout_pending") is True
+            and summary.get("w14c_locked") is True
+        )
+        fail_semantics = (
+            summary.get("status") == "gate_failed"
+            and summary.get("classification") == "W14B_FIXED4_CORRECTION_FAIL"
+            and summary.get("w14b_pass") is False
+            and summary.get("formal_pass") is False
+            and summary.get("pde_pass") is False
+            and summary.get("official_rta") is False
+            and summary.get("formal_resource_closeout_pending") is False
+            and summary.get("w14c_locked") is True
+        )
+        checks["worker_semantics"] = bool(
+            (independent_worker_pass is True and pass_semantics)
+            or (independent_worker_pass is False and fail_semantics)
+        )
+        checkpoint = _m6b_w14b_checkpoint_artifacts_valid(raw_dir, summary)
+        checks["checkpoint_artifacts"] = checkpoint["pass"] is True
+        scratch = _m6b_w14b_scratch_valid(
+            raw_dir, core["outer_audit"]
+        )
+        checks["scratch"] = scratch["pass"] is True
+    except (OSError, TypeError, ValueError, KeyError, IndexError, ImportError):
+        worker_checks = {"exception": False}
+
+    try:
+        authority = summary["authority"]
+        jit = summary["jit_cache"]
+        expected_command = _m6b_w14b_worker_command(
+            raw_dir,
+            ROOT / M6B_W6A_W5_COMPACT_RELATIVE_PATH,
+            Path(authority["q"]["raw_path"]).parent,
+            ROOT / M6B_W8A_W7_COMPACT_RELATIVE_PATH,
+            Path(authority["target"]["raw_path"]).parent,
+            ROOT / M6B_W11A_M3Y_MANIFEST_RELATIVE_PATH,
+            Path(jit["physical_source"]),
+            Path(jit["b0_source"]),
+            ROOT / M6B_W14B_W14A_COMPACT_RELATIVE_PATH,
+            expected_source_sha,
+        )
+        checks["command"] = watchdog["command"] == expected_command
+    except (TypeError, ValueError, KeyError):
+        checks["command"] = False
+
+    try:
+        expected_raw = _m6b_w14b_raw_artifacts(raw_dir)
+        expected_watchdog = _m6b_w14b_watchdog_artifacts(watchdog_dir)
+        inventory = watchdog["artifact_inventory"]
+        checks["artifacts"] = bool(
+            watchdog["worker_summary"] == expected_raw[0]
+            and inventory["raw"] == expected_raw
+            and inventory["watchdog"] == expected_watchdog
+            and all(
+                item.get("present") is True
+                and type(item.get("bytes")) is int
+                and item["bytes"] > 0
+                and _m6b_w6a_valid_sha(item.get("sha256"))
+                for item in expected_raw + expected_watchdog
+            )
+        )
+    except (OSError, TypeError, ValueError, KeyError):
+        checks["artifacts"] = False
+
+    try:
+        process = watchdog["process"]
+        drain = watchdog["drain"]
+        checks["watchdog_evidence"] = bool(
+            _evidence_valid(watchdog)
+            and watchdog["schema"] == M6B_W14B_WATCHDOG_SCHEMA
+            and watchdog["phase"] == M6B_W14B_PHASE
+            and watchdog["raw_dir"] == str(raw_dir)
+            and watchdog["watchdog_dir"] == str(watchdog_dir)
+            and watchdog["w14a_compact_authority"] == w14a_authority
+            and watchdog["w14c_unlocked"] is False
+            and _m6b_w6a_source_valid(watchdog["source_at_start"])
+            and _m6b_w6a_source_valid(watchdog["source_at_end"])
+            and watchdog["source_at_start"]["source_commit_full_sha"] == expected_source_sha
+            and watchdog["source_at_end"]["source_commit_full_sha"] == expected_source_sha
+            and watchdog["source_end_clean"] is True
+            and watchdog["formal_pass"] is False
+            and watchdog["pde_pass"] is False
+            and watchdog["official_rta"] is False
+            and watchdog["resource_limits"] == {
+                "timeout_seconds": M6B_W14B_TIMEOUT_SECONDS,
+                "watchdog_rss_bytes": M6B_W14B_WATCHDOG_RSS_LIMIT_BYTES,
+                "completion_peak_rss_bytes": M6B_W14B_FORMAL_RSS_LIMIT_BYTES,
+                "swap_bytes": M6B_SWAP_LIMIT_BYTES,
+            }
+        )
+        process_return_code = process.get("return_code")
+        checks["execution_semantics"] = bool(
+            (
+                independent_worker_pass is True
+                and type(process_return_code) is int
+                and process_return_code == 0
+                and watchdog.get("status") == "measurement_complete"
+                and process.get("termination") is None
+            )
+            or (
+                independent_worker_pass is False
+                and type(process_return_code) is int
+                and process_return_code == 1
+                and watchdog.get("status") == "gate_failed"
+                and process.get("termination") is None
+            )
+        )
+        checks["resource"] = bool(
+            process["termination"] is None
+            and drain["gone"] is True
+            and type(process["peak_rss_bytes"]) is int
+            and process["peak_rss_bytes"] < M6B_W14B_FORMAL_RSS_LIMIT_BYTES
+            and type(process["swap_bytes"]) is int
+            and process["swap_bytes"] == 0
+            and timeline["pass"] is True
+            and timeline["peak_rss_bytes"] == process["peak_rss_bytes"]
+            and timeline["swap_bytes"] == 0
+            and type(timeline["compiler_descendant_pids"]) is list
+            and timeline["compiler_descendant_pids"] == []
+            and watchdog["timeline"] == timeline
+        )
+    except (KeyError, TypeError, ValueError):
+        checks["watchdog_evidence"] = False
+        checks["execution_semantics"] = False
+        checks["resource"] = False
+
+    try:
+        checker_source = h2b._light_source()
+        checks["checker_source"] = bool(
+            _m6b_w6a_source_valid(checker_source)
+            and checker_source["source_commit_full_sha"] == expected_source_sha
+        )
+    except (OSError, RuntimeError, TypeError, ValueError):
+        checker_source = {}
+
+    timeline_summary = {
+        key: timeline.get(key)
+        for key in (
+            "pass",
+            "record_count",
+            "peak_rss_bytes",
+            "swap_bytes",
+            "compiler_descendant_pids",
+        )
+        if key in timeline
+    }
+    overall = bool(all(checks.values()))
+    process = watchdog.get("process")
+    drain = watchdog.get("drain")
+    resource_failure = bool(
+        not checks["resource"]
+        and (
+            isinstance(process, Mapping)
+            and (
+                (
+                    type(process.get("peak_rss_bytes")) is int
+                    and process["peak_rss_bytes"] >= M6B_W14B_FORMAL_RSS_LIMIT_BYTES
+                )
+                or (
+                    type(process.get("swap_bytes")) is int
+                    and process["swap_bytes"] != 0
+                )
+            )
+            or (
+                type(timeline.get("compiler_descendant_pids")) is list
+                and bool(timeline["compiler_descendant_pids"])
+            )
+            or (
+                isinstance(drain, Mapping)
+                and drain.get("gone") is False
+            )
+        )
+    )
+    numeric_evidence_keys = (
+        "worker_evidence",
+        "worker_semantics",
+        "progress",
+        "scope",
+        "p6",
+        "prediction",
+        "source",
+        "w14a_authority",
+        "jit",
+        "checkpoint_artifacts",
+        "scratch",
+        "watchdog_evidence",
+        "command",
+        "artifacts",
+        "resource",
+        "execution_semantics",
+        "checker_source",
+    )
+    numeric_failure = bool(
+        not checks["worker_action_gate"]
+        and all(checks[key] for key in numeric_evidence_keys)
+    )
+    if overall:
+        classification = "W14B_FORMAL_RESOURCE_CLOSEOUT_PASS"
+    elif resource_failure:
+        classification = "W14B_RESOURCE_FAIL"
+    elif numeric_failure:
+        classification = "W14B_FIXED4_CORRECTION_FAIL"
+    else:
+        classification = "W14B_EXECUTION_OR_EVIDENCE_FAIL"
+    return {
+        "pass": overall,
+        "classification": classification,
+        "checks": checks,
+        "problems": sorted(name for name, passed in checks.items() if not passed),
+        "summary": summary,
+        "watchdog": watchdog,
+        "timeline": timeline_summary,
+        "worker_checks": worker_checks,
+        "checkpoint": checkpoint,
+        "scratch": scratch,
+        "checker_source": checker_source,
+    }
+
+
+def _m6b_w14b_measured_summary(gate: Mapping[str, Any]) -> dict[str, Any]:
+    summary = gate.get("summary", {})
+    core = summary.get("core", {}) if isinstance(summary, Mapping) else {}
+    inner = core.get("inner_audit", {}) if isinstance(core, Mapping) else {}
+    applications = inner.get("applications", []) if isinstance(inner, Mapping) else []
+    timeline = gate.get("timeline", {})
+    checkpoint = gate.get("checkpoint", {})
+    return {
+        "checkpoint_measurements": checkpoint.get("results", {}),
+        "inner_true_residuals": [
+            record.get("true_residual")
+            for record in applications
+            if isinstance(record, Mapping)
+        ],
+        "inner_pc_apply_count": (
+            inner.get("underlying_pc", {}).get("apply_count")
+            if isinstance(inner, Mapping)
+            and isinstance(inner.get("underlying_pc"), Mapping)
+            else None
+        ),
+        "physical_action_count": core.get("physical_action_count")
+        if isinstance(core, Mapping)
+        else None,
+        "predicted_live_set_bytes": (
+            summary.get("predicted_live_set", {}).get("bytes")
+            if isinstance(summary, Mapping)
+            and isinstance(summary.get("predicted_live_set"), Mapping)
+            else None
+        ),
+        "measured_peak_rss_bytes": timeline.get("peak_rss_bytes"),
+        "measured_swap_bytes": timeline.get("swap_bytes"),
+        "scratch_bytes": gate.get("scratch", {}).get("bytes"),
+    }
+
+
+def _run_m6b_w14b_check(
+    raw_dir: Path,
+    watchdog_summary_path: Path,
+    output: Path,
+    expected_source_sha: str,
+) -> int:
+    if output.exists():
+        raise FileExistsError(f"W14B formal output exists: {output}")
+    gate = _m6b_w14b_formal_gate(
+        Path(raw_dir), Path(watchdog_summary_path), expected_source_sha
+    )
+    overall = bool(gate["pass"])
+    result = {
+        "schema": M6B_W14B_CHECK_SCHEMA,
+        "phase": M6B_W14B_PHASE,
+        "status": "pass" if overall else "gate_failed",
+        "classification": gate["classification"],
+        "formal_pass": overall,
+        "pde_pass": False,
+        "official_rta": False,
+        "w14c_unlocked": overall,
+        "w14c_locked": not overall,
+        "producer_source_sha": expected_source_sha,
+        "raw_dir": str(Path(raw_dir).resolve()),
+        "worker_summary": _artifact(
+            Path(raw_dir), M6B_W14B_SUMMARY_FILENAME
+        ),
+        "watchdog_summary": _artifact(
+            Path(watchdog_summary_path).parent, Path(watchdog_summary_path).name
+        ),
+        "checks": gate["checks"],
+        "problems": gate["problems"],
+        "timeline": gate["timeline"],
+        "worker_checks": gate["worker_checks"],
+        "measured": _m6b_w14b_measured_summary(gate),
+        "checkpoint_artifacts": gate["checkpoint"].get("artifact_hashes", []),
+        "scratch_artifacts": gate["scratch"].get("artifacts", []),
+        "artifact_inventory": {
+            "raw": _m6b_w14b_raw_artifacts(Path(raw_dir).resolve()),
+            "watchdog": _m6b_w14b_watchdog_artifacts(
+                Path(watchdog_summary_path).parent.resolve()
+            ),
+        },
+        "checker_source": gate["checker_source"],
     }
     _write_json(output, _attach_evidence(result))
     return 0 if overall else 1
@@ -16400,11 +17187,32 @@ def _parser() -> argparse.ArgumentParser:
     w14a_watchdog.add_argument(
         "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
     )
+    w14b_watchdog = sub.add_parser("m6b-w14b-watchdog")
+    w14b_watchdog.add_argument("--run-dir", required=True)
+    w14b_watchdog.add_argument("--watchdog-dir", required=True)
+    w14b_watchdog.add_argument("--w5-compact", required=True)
+    w14b_watchdog.add_argument("--w5-raw-dir", required=True)
+    w14b_watchdog.add_argument("--w7-compact", required=True)
+    w14b_watchdog.add_argument("--w7-raw-dir", required=True)
+    w14b_watchdog.add_argument("--m3y-manifest", required=True)
+    w14b_watchdog.add_argument("--jit-cache-source", required=True)
+    w14b_watchdog.add_argument("--b0-jit-cache-source", required=True)
+    w14b_watchdog.add_argument("--w14a-compact", required=True)
+    w14b_watchdog.add_argument(
+        "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
+    )
     w14a_check = sub.add_parser("m6b-w14a-check")
     w14a_check.add_argument("--raw-dir", required=True)
     w14a_check.add_argument("--watchdog-summary", required=True)
     w14a_check.add_argument("--output", required=True)
     w14a_check.add_argument(
+        "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
+    )
+    w14b_check = sub.add_parser("m6b-w14b-check")
+    w14b_check.add_argument("--raw-dir", required=True)
+    w14b_check.add_argument("--watchdog-summary", required=True)
+    w14b_check.add_argument("--output", required=True)
+    w14b_check.add_argument(
         "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
     )
     return parser
@@ -16593,8 +17401,29 @@ def main(argv: Sequence[str] | None = None) -> int:
             Path(args.b0_jit_cache_source).resolve(),
             args.expected_source_sha,
         )
+    if args.command == "m6b-w14b-watchdog":
+        return _run_m6b_w14b_watchdog(
+            Path(args.run_dir).resolve(),
+            Path(args.watchdog_dir).resolve(),
+            Path(args.w5_compact).resolve(),
+            Path(args.w5_raw_dir).resolve(),
+            Path(args.w7_compact).resolve(),
+            Path(args.w7_raw_dir).resolve(),
+            Path(args.m3y_manifest).resolve(),
+            Path(args.jit_cache_source).resolve(),
+            Path(args.b0_jit_cache_source).resolve(),
+            Path(args.w14a_compact).resolve(),
+            args.expected_source_sha,
+        )
     if args.command == "m6b-w14a-check":
         return _run_m6b_w14a_check(
+            Path(args.raw_dir).resolve(),
+            Path(args.watchdog_summary).resolve(),
+            Path(args.output).resolve(),
+            args.expected_source_sha,
+        )
+    if args.command == "m6b-w14b-check":
+        return _run_m6b_w14b_check(
             Path(args.raw_dir).resolve(),
             Path(args.watchdog_summary).resolve(),
             Path(args.output).resolve(),
