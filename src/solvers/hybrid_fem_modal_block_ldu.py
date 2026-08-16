@@ -96,6 +96,7 @@ class HybridActionModalSchurSystem:
     matrix_repeat_error: float
     lu_repeat_solve_error: float
     build_apply_count: dict[str, int]
+    repeat_diagnostics: dict[str, Any] = field(default_factory=dict)
     _destroyed: bool = field(default=False, init=False, repr=False)
 
     def __post_init__(self) -> None:
@@ -143,6 +144,7 @@ class HybridActionModalSchurSystem:
             "normal_equations": False,
             "matrix_repeat_error": float(self.matrix_repeat_error),
             "lu_repeat_solve_error": float(self.lu_repeat_solve_error),
+            "repeat_diagnostics": dict(self.repeat_diagnostics),
             "build_apply_count": dict(self.build_apply_count),
             **self._array_bytes,
             "destroyed": bool(self._destroyed),
@@ -201,9 +203,16 @@ def build_hybrid_action_modal_schur(
     coupling: HybridInternalModeCoupling,
     bottom_action: Any,
     top_action: Any,
+    *,
+    matrix_repeat_tolerance: float = 1.0e-13,
 ) -> HybridActionModalSchurSystem:
     """Build two complete action modal Schur matrices and one LU."""
 
+    if (
+        not np.isfinite(float(matrix_repeat_tolerance))
+        or float(matrix_repeat_tolerance) <= 0.0
+    ):
+        raise ValueError("Modal-Schur repeat tolerance must be finite and positive.")
     modal_count = int(coupling.mode_count_per_direction)
     internal_count = 2 * modal_count
     constraint = np.asarray(
@@ -231,17 +240,36 @@ def build_hybrid_action_modal_schur(
     expected = 2 * internal_count
     if any(value != expected for value in build_apply_count.values()):
         raise RuntimeError("Action modal Schur build count is not exactly two builds.")
-    matrix_repeat_error = float(
-        np.linalg.norm(first - second) / max(float(np.linalg.norm(first)), _TINY)
-    )
     expected_shape = (internal_count, internal_count)
     for matrix in (constraint, first, second):
         if matrix.shape != expected_shape or matrix.dtype != np.dtype(np.complex128):
             raise ValueError("Action modal Schur has an unexpected shape or dtype.")
         if not np.all(np.isfinite(matrix)):
             raise ValueError("Action modal Schur contains non-finite values.")
-    if not np.isfinite(matrix_repeat_error) or matrix_repeat_error > 1.0e-13:
-        raise ValueError("Action modal Schur repeat error exceeds 1e-13.")
+    matrix_difference = first - second
+    matrix_reference_norm = float(np.linalg.norm(first))
+    matrix_difference_norm = float(np.linalg.norm(matrix_difference))
+    matrix_repeat_error = matrix_difference_norm / max(matrix_reference_norm, _TINY)
+    matrix_repeat_diagnostics = {
+        "relative_error": float(matrix_repeat_error),
+        "limit": float(matrix_repeat_tolerance),
+        "reference_norm": matrix_reference_norm,
+        "difference_norm": matrix_difference_norm,
+        "max_abs": float(np.max(np.abs(matrix_difference))),
+        "pass": bool(
+            np.isfinite(matrix_repeat_error)
+            and matrix_repeat_error <= float(matrix_repeat_tolerance)
+        ),
+    }
+    if not matrix_repeat_diagnostics["pass"]:
+        raise ValueError(
+            "Action modal Schur matrix repeat error exceeds tolerance: "
+            f"actual={matrix_repeat_error:.6e}, "
+            f"limit={float(matrix_repeat_tolerance):.6e}, "
+            f"reference_norm={matrix_reference_norm:.6e}, "
+            f"difference_norm={matrix_difference_norm:.6e}, "
+            f"max_abs={matrix_repeat_diagnostics['max_abs']:.6e}."
+        )
     singular_values = np.linalg.svd(first, compute_uv=False)
     rank_scale = (
         np.finfo(float).eps * max(first.shape) * float(singular_values[0])
@@ -258,12 +286,29 @@ def build_hybrid_action_modal_schur(
     test_rhs = np.arange(1, internal_count + 1, dtype=np.complex128)
     first_solution = lu_solve((lu, pivots), test_rhs, check_finite=True)
     second_solution = lu_solve((lu, pivots), test_rhs, check_finite=True)
-    lu_repeat_solve_error = float(
-        np.linalg.norm(first_solution - second_solution)
-        / max(float(np.linalg.norm(first_solution)), _TINY)
-    )
-    if not np.isfinite(lu_repeat_solve_error) or lu_repeat_solve_error > 1.0e-13:
-        raise ValueError("Action modal Schur LU repeat error exceeds 1e-13.")
+    lu_difference = first_solution - second_solution
+    lu_reference_norm = float(np.linalg.norm(first_solution))
+    lu_difference_norm = float(np.linalg.norm(lu_difference))
+    lu_repeat_solve_error = lu_difference_norm / max(lu_reference_norm, _TINY)
+    lu_repeat_diagnostics = {
+        "relative_error": float(lu_repeat_solve_error),
+        "limit": 1.0e-13,
+        "reference_norm": lu_reference_norm,
+        "difference_norm": lu_difference_norm,
+        "max_abs": float(np.max(np.abs(lu_difference))),
+        "pass": bool(
+            np.isfinite(lu_repeat_solve_error) and lu_repeat_solve_error <= 1.0e-13
+        ),
+    }
+    if not lu_repeat_diagnostics["pass"]:
+        raise ValueError(
+            "Action modal Schur LU repeat error exceeds tolerance: "
+            f"actual={lu_repeat_solve_error:.6e}, "
+            "limit=1.000000e-13, "
+            f"reference_norm={lu_reference_norm:.6e}, "
+            f"difference_norm={lu_difference_norm:.6e}, "
+            f"max_abs={lu_repeat_diagnostics['max_abs']:.6e}."
+        )
     return HybridActionModalSchurSystem(
         modal_schur=first,
         modal_constraint=constraint,
@@ -274,6 +319,10 @@ def build_hybrid_action_modal_schur(
         matrix_repeat_error=matrix_repeat_error,
         lu_repeat_solve_error=lu_repeat_solve_error,
         build_apply_count=build_apply_count,
+        repeat_diagnostics={
+            "matrix": matrix_repeat_diagnostics,
+            "lu_solve": lu_repeat_diagnostics,
+        },
     )
 
 
@@ -552,6 +601,8 @@ def create_research_exact_side_lu_block_ldu_preconditioner(
     coupling: HybridInternalModeCoupling,
     bottom_action: Any,
     top_action: Any,
+    *,
+    matrix_repeat_tolerance: float = 1.0e-13,
 ) -> HybridBlockLduPreconditioner:
     """Build a research-only LDU context around one exact factor per side."""
 
@@ -566,7 +617,12 @@ def create_research_exact_side_lu_block_ldu_preconditioner(
             )
         if diagnostics.get("global_hybrid_direct_factor_count") != 0:
             raise ValueError("Research exact-side action cannot own a global factor")
-    modal_schur = build_hybrid_action_modal_schur(coupling, bottom_action, top_action)
+    modal_schur = build_hybrid_action_modal_schur(
+        coupling,
+        bottom_action,
+        top_action,
+        matrix_repeat_tolerance=matrix_repeat_tolerance,
+    )
     try:
         return HybridBlockLduPreconditioner(
             layout,

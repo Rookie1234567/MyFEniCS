@@ -79,6 +79,7 @@ V3_7_PROFILE_ID = "task039.v3_7.hybrid_iterative.p6-h5.v1"
 V3_7_MAX_IT = 4000
 V3_7_ORACLE_MAX_IT = 100
 V3_7_RHS_TOLERANCE = 1.0e-10
+V3_7_MATRIX_REPEAT_TOLERANCE = V3_7_RHS_TOLERANCE
 V3_7_RESIDUAL_TOLERANCE = 5.0e-9
 V3_7_WARNING_GIB = 170.0
 V3_7_CRITICAL_GIB = 195.0
@@ -1147,6 +1148,68 @@ def _write_v3_7_identity_checkpoint(
     return path
 
 
+def _write_v3_7_side_survey_checkpoint(
+    run_directory: Path,
+    *,
+    source_sha: str,
+    producer: Mapping[str, Any],
+    correction: Mapping[str, Any],
+    comm: MPI.Intracomm,
+) -> Path:
+    """Persist the completed side survey before exact-oracle construction."""
+
+    path = run_directory / "numerical_output" / "v3_7_side_survey_checkpoint.json"
+    passes = []
+    for item in correction.get("passes", ()):
+        side_reports = {}
+        for side in ("bottom", "top"):
+            report = item.get(side, {})
+            inventory = report.get("vector_inventory", {})
+            summary = report.get("rho_summary", {})
+            side_reports[side] = {
+                "informative_labels": list(inventory.get("informative_labels", ())),
+                "excluded_labels": list(inventory.get("excluded_labels", ())),
+                "informative_count": inventory.get("informative_count"),
+                "excluded_count": inventory.get("excluded_count"),
+                "median": summary.get("median"),
+                "worst": summary.get("worst"),
+                "candidate_A_pass": summary.get("candidate_A_pass"),
+            }
+        passes.append(
+            {
+                "correction_passes": item.get("correction_passes"),
+                "pass": item.get("pass"),
+                **side_reports,
+            }
+        )
+    checkpoint = {
+        "schema": "task039.v3-7-side-survey-checkpoint.v1",
+        "source_sha": source_sha,
+        "physical_identity": {
+            "producer_source_sha": producer.get("producer_source_sha"),
+            "consumer_source_sha": producer.get("consumer_source_sha"),
+            "physical_model_sha256": producer.get("physical_model_sha256"),
+            "model_id": producer.get("model_id"),
+            "requested_modes": producer.get("requested_modes"),
+            "mpi_size": producer.get("mpi_size"),
+            "external_keys_exact": producer.get("external_keys_exact"),
+        },
+        "survey_status": correction.get("status"),
+        "survey_pass": correction.get("pass"),
+        "passes": passes,
+    }
+    if comm.rank == 0:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+        temporary.write_text(
+            json.dumps(_json_safe(checkpoint), ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        temporary.replace(path)
+    comm.barrier()
+    return path
+
+
 def _record_v3_7_marker(
     ledger: dict[str, Any], marker: str, detail: Mapping[str, Any]
 ) -> None:
@@ -1357,6 +1420,7 @@ def run_task039_v3_7_diagnostic(
     modal_amplitudes = None
     cfg = None
     modal_cfg = None
+    side_checkpoint_path: Path | None = None
     if comm.rank == 0:
         marker_path.parent.mkdir(parents=True, exist_ok=True)
         marker_stream = marker_path.open("a", encoding="utf-8")
@@ -1557,14 +1621,24 @@ def run_task039_v3_7_diagnostic(
                 production_operator.destroy()
 
         def correction_stage() -> Mapping[str, Any]:
+            nonlocal side_checkpoint_path
             if correction_runner is not None:
-                return correction_runner(setup, stage_callback=stage_callback)
-            return run_task039_v3_7_side_correction_survey(
-                setup,
-                side_vectors=survey_side_vectors,
-                stage_callback=stage_callback,
-                marker_callback=marker_callback,
+                correction = correction_runner(setup, stage_callback=stage_callback)
+            else:
+                correction = run_task039_v3_7_side_correction_survey(
+                    setup,
+                    side_vectors=survey_side_vectors,
+                    stage_callback=stage_callback,
+                    marker_callback=marker_callback,
+                )
+            side_checkpoint_path = _write_v3_7_side_survey_checkpoint(
+                Path(run_directory).resolve(),
+                source_sha=source_sha,
+                producer=producer,
+                correction=correction,
+                comm=comm,
             )
+            return correction
 
         def oracle_stage(
             consumer: Callable[[Any, Mapping[str, Any]], None],
@@ -1584,6 +1658,7 @@ def run_task039_v3_7_diagnostic(
                     max_it=V3_7_ORACLE_MAX_IT,
                     restart=90,
                     threshold=V3_7_RESIDUAL_TOLERANCE,
+                    matrix_repeat_tolerance=V3_7_MATRIX_REPEAT_TOLERANCE,
                     solution_consumer=consumer,
                 )
             )
@@ -1690,6 +1765,7 @@ def run_task039_v3_7_diagnostic(
                 "candidate_modes": profile.candidate_modes,
                 "max_it": profile.max_it,
                 "oracle_max_it": V3_7_ORACLE_MAX_IT,
+                "matrix_repeat_tolerance": V3_7_MATRIX_REPEAT_TOLERANCE,
             },
             "qep_basis_audit": getattr(setup, "qep_audit", {}),
             "watchdog": watchdog,
@@ -1713,6 +1789,22 @@ def run_task039_v3_7_diagnostic(
                     "path": "numerical_output/memory_object_ledger.json",
                     "schema": object_ledger["schema"],
                     "status": "finalized_in_worker_finalizer",
+                },
+                "side_survey_checkpoint": {
+                    "path": (
+                        str(
+                            side_checkpoint_path.relative_to(
+                                Path(run_directory).resolve()
+                            )
+                        )
+                        if side_checkpoint_path is not None
+                        else "not_available"
+                    ),
+                    "status": (
+                        "written_before_oracle"
+                        if side_checkpoint_path is not None
+                        else "not_available"
+                    ),
                 },
                 "stage_callback_connected": stage_callback is not None,
             },
@@ -1847,6 +1939,7 @@ __all__ = [
     "V3_7_DIRECT_PRODUCER_SHA",
     "V3_7_DIRECT_RUN_ROOT",
     "V3_7_MAX_IT",
+    "V3_7_MATRIX_REPEAT_TOLERANCE",
     "V3_7_PROFILE_ID",
     "build_v3_7_execution_plan",
     "check_v3_7_integrated_physics",

@@ -25,6 +25,7 @@ from benchmarks.task039_v3_7_orchestration import (
     _v3_7_object_ledger,
     _write_v3_7_candidate_authority,
     _write_v3_7_object_ledger,
+    _write_v3_7_side_survey_checkpoint,
     load_v3_7_official_payload,
     load_v3_7_direct_inventory,
     run_v3_7_stage_sequence,
@@ -629,3 +630,96 @@ def test_v3_7_identity_checkpoint_survives_correction_exception(tmp_path) -> Non
             },
         )
     ]
+
+
+def test_v3_7_side_survey_checkpoint_survives_oracle_exception(tmp_path) -> None:
+    run_directory = tmp_path / "side-checkpoint"
+    producer = {
+        "producer_source_sha": "p" * 40,
+        "consumer_source_sha": "c" * 40,
+        "physical_model_sha256": "m" * 64,
+        "model_id": "task039-test",
+        "requested_modes": 480,
+        "mpi_size": 8,
+        "external_keys_exact": True,
+    }
+    passes = []
+    for correction_passes in (1, 2, 4, 8):
+        passes.append(
+            {
+                "correction_passes": correction_passes,
+                "pass": True,
+                "bottom": {
+                    "vector_inventory": {
+                        "informative_labels": ["seed"],
+                        "excluded_labels": ["physical_side_rhs"],
+                        "informative_count": 1,
+                        "excluded_count": 1,
+                    },
+                    "rho_summary": {
+                        "median": 0.1,
+                        "worst": 0.2,
+                        "candidate_A_pass": True,
+                    },
+                },
+                "top": {
+                    "vector_inventory": {
+                        "informative_labels": ["seed"],
+                        "excluded_labels": [],
+                        "informative_count": 1,
+                        "excluded_count": 0,
+                    },
+                    "rho_summary": {
+                        "median": 0.11,
+                        "worst": 0.21,
+                        "candidate_A_pass": True,
+                    },
+                },
+            }
+        )
+    correction = {"status": "measured", "pass": True, "passes": passes}
+    checkpoint_holder = {}
+
+    def correction_stage():
+        checkpoint_holder["path"] = _write_v3_7_side_survey_checkpoint(
+            run_directory,
+            source_sha="s" * 40,
+            producer=producer,
+            correction=correction,
+            comm=MPI.COMM_SELF,
+        )
+        return correction
+
+    with pytest.raises(RuntimeError, match="oracle sentinel"):
+        run_v3_7_stage_sequence(
+            identity_stage=lambda: {"pass": True},
+            correction_stage=correction_stage,
+            oracle_stage=lambda _consume: (_ for _ in ()).throw(
+                RuntimeError("oracle sentinel")
+            ),
+        )
+    checkpoint = checkpoint_holder["path"]
+    assert checkpoint.is_file()
+    saved = json.loads(checkpoint.read_text(encoding="utf-8"))
+    assert saved["source_sha"] == "s" * 40
+    assert saved["physical_identity"] == {
+        "producer_source_sha": "p" * 40,
+        "consumer_source_sha": "c" * 40,
+        "physical_model_sha256": "m" * 64,
+        "model_id": "task039-test",
+        "requested_modes": 480,
+        "mpi_size": 8,
+        "external_keys_exact": True,
+    }
+    assert saved["survey_pass"] is True
+    assert [item["correction_passes"] for item in saved["passes"]] == [1, 2, 4, 8]
+    for item in saved["passes"]:
+        assert item["bottom"]["informative_labels"] == ["seed"]
+        assert item["bottom"]["excluded_labels"] == ["physical_side_rhs"]
+        assert item["bottom"]["median"] == pytest.approx(0.1)
+        assert item["bottom"]["worst"] == pytest.approx(0.2)
+        assert item["bottom"]["candidate_A_pass"] is True
+        assert item["top"]["informative_labels"] == ["seed"]
+        assert item["top"]["median"] == pytest.approx(0.11)
+        assert item["top"]["worst"] == pytest.approx(0.21)
+        assert item["top"]["candidate_A_pass"] is True

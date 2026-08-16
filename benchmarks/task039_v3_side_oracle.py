@@ -631,6 +631,7 @@ def run_exact_side_lu_oracle(
     max_it: int = 100,
     restart: int = 90,
     threshold: float = 5.0e-9,
+    matrix_repeat_tolerance: float = 1.0e-13,
     solution_consumer: Callable[[PETSc.Vec, Mapping[str, Any]], Any] | None = None,
     reference: Any | None = None,
 ) -> dict[str, Any]:
@@ -707,6 +708,7 @@ def run_exact_side_lu_oracle(
             coupling,
             bottom_action,
             top_action,
+            matrix_repeat_tolerance=matrix_repeat_tolerance,
         )
         result = solve_hybrid_block_ldu_iterative(
             operator,
@@ -765,6 +767,7 @@ def run_exact_side_lu_oracle(
             },
             "solution_handoff": "not_requested",
             "reference_ownership": "owned" if reference_owned else "borrowed",
+            "matrix_repeat_tolerance": float(matrix_repeat_tolerance),
         }
         if numerical_pass and inventory_pass and solution_consumer is not None:
             solution_consumer(result.solution, report)

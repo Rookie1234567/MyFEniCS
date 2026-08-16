@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from types import SimpleNamespace
 
 import numpy as np
@@ -7,6 +8,7 @@ import pytest
 from mpi4py import MPI
 from petsc4py import PETSc
 
+import src.solvers.hybrid_fem_modal_block_ldu as block_ldu
 from src.solvers.hybrid_fem_modal_augmented_direct import (
     HybridAugmentedLayout,
     build_hybrid_augmented_direct_system,
@@ -282,6 +284,163 @@ def test_action_modal_schur_is_repeated_and_borrowed():
     finally:
         bottom.destroy()
         top.destroy()
+        _destroy_fixture(fixture)
+
+
+def test_research_matrix_repeat_tolerance_does_not_change_lu_gate(monkeypatch):
+    parameter = inspect.signature(build_hybrid_action_modal_schur).parameters[
+        "matrix_repeat_tolerance"
+    ]
+    assert parameter.default == 1.0e-13
+
+    fixture = _tiny_fixture()
+    bottom, top = _actions(fixture)
+    modal = None
+    try:
+        baseline = build_hybrid_action_modal_schur(fixture["coupling"], bottom, top)
+        baseline_norm = float(np.linalg.norm(baseline.modal_schur))
+        baseline.destroy()
+        original = block_ldu._build_action_modal_contribution
+        calls = {"count": 0}
+
+        def perturbed(side, coupling, action, modal_count):
+            value = original(side, coupling, action, modal_count)
+            calls["count"] += 1
+            if calls["count"] == 3:
+                value = value.copy()
+                value[0, 0] += 5.0e-11 * baseline_norm
+            return value
+
+        monkeypatch.setattr(block_ldu, "_build_action_modal_contribution", perturbed)
+        with pytest.raises(
+            ValueError,
+            match=r"actual=.*limit=1\.000000e-13.*reference_norm=.*max_abs=",
+        ):
+            build_hybrid_action_modal_schur(fixture["coupling"], bottom, top)
+
+        calls["count"] = 0
+        modal = build_hybrid_action_modal_schur(
+            fixture["coupling"],
+            bottom,
+            top,
+            matrix_repeat_tolerance=1.0e-10,
+        )
+        diagnostics = modal.diagnostics["repeat_diagnostics"]
+        assert diagnostics["matrix"]["relative_error"] <= 1.0e-10
+        assert diagnostics["matrix"]["limit"] == 1.0e-10
+        assert diagnostics["lu_solve"]["limit"] == 1.0e-13
+        modal.destroy()
+        modal = None
+
+        calls["count"] = 0
+
+        def strongly_perturbed(side, coupling, action, modal_count):
+            value = original(side, coupling, action, modal_count)
+            calls["count"] += 1
+            if calls["count"] == 3:
+                value = value.copy()
+                value[0, 0] += 2.0e-10 * baseline_norm
+            return value
+
+        monkeypatch.setattr(
+            block_ldu, "_build_action_modal_contribution", strongly_perturbed
+        )
+        with pytest.raises(
+            ValueError,
+            match=r"actual=.*limit=1\.000000e-10.*reference_norm=.*max_abs=",
+        ):
+            build_hybrid_action_modal_schur(
+                fixture["coupling"],
+                bottom,
+                top,
+                matrix_repeat_tolerance=1.0e-10,
+            )
+    finally:
+        if modal is not None:
+            modal.destroy()
+        bottom.destroy()
+        top.destroy()
+        _destroy_fixture(fixture)
+
+
+def test_research_exact_side_action_nonzero_dtn_is_linear_and_finite():
+    fixture = _tiny_fixture()
+    system = fixture["bottom"]
+    components = _zero_research_components(fixture, system)
+    row = system.A.createVecLeft()
+    column = system.A.createVecRight()
+    modal = fixture["coupling"].bottom.positive_traction.createVecRight()
+    action = None
+    source = target = repeat = scaled_source = scaled_target = None
+    try:
+        components.C.destroy()
+        components.D.destroy()
+        components.H.destroy()
+        components.C = _matrix_from_dense(
+            row,
+            modal,
+            np.asarray(
+                [[0.10, 0.02], [0.03, -0.04], [0.02, 0.01], [-0.01, 0.05]],
+                dtype=np.complex128,
+            ),
+        )
+        components.D = _matrix_from_dense(
+            modal,
+            column,
+            np.asarray(
+                [[0.04, 0.01, -0.02, 0.03], [0.02, -0.03, 0.01, 0.02]],
+                dtype=np.complex128,
+            ),
+        )
+        components.H = _matrix_from_dense(
+            modal,
+            modal,
+            np.diag([2.0 + 0.1j, 2.4 - 0.2j]),
+        )
+        action = ResearchExactSideLuAction(
+            system.A,
+            components,
+            factor_solver_type=None,
+        )
+        source = system.A.createVecRight()
+        target = system.A.createVecLeft()
+        repeat = system.A.createVecLeft()
+        source.set(PETSc.ScalarType(0.75 - 0.2j))
+        action.apply(source, target)
+        action.apply(source, repeat)
+        assert (
+            _relative_array_error(_gather_vector(repeat), _gather_vector(target))
+            <= 1.0e-10
+        )
+        scaled_source = source.duplicate()
+        source.copy(scaled_source)
+        scaled_source.scale(PETSc.ScalarType(2.0))
+        scaled_target = system.A.createVecLeft()
+        action.apply(scaled_source, scaled_target)
+        assert (
+            _relative_array_error(
+                _gather_vector(scaled_target), 2.0 * _gather_vector(target)
+            )
+            <= 1.0e-10
+        )
+        diagnostics = action.diagnostics
+        assert diagnostics["direct_factor_count"] == 1
+        assert diagnostics["ilu_factor_count"] == 0
+        assert diagnostics["global_hybrid_direct_factor_count"] == 0
+        assert diagnostics["woodbury"]["n_aux"] == 2
+        assert diagnostics["woodbury"]["arrays_finite"] is True
+    finally:
+        if action is not None:
+            action.destroy()
+        for vector in (scaled_target, scaled_source, repeat, target, source):
+            if vector is not None:
+                vector.destroy()
+        row.destroy()
+        column.destroy()
+        modal.destroy()
+        components.C.destroy()
+        components.D.destroy()
+        components.H.destroy()
         _destroy_fixture(fixture)
 
 
