@@ -153,7 +153,7 @@ class W14GlobalB0InnerPC:
 
     @property
     def audit(self) -> dict[str, Any]:
-        """Return scalar/hash records without retaining any full-space vector."""
+        """Application records keep no full-space vectors; the wrapper-owned reusable RHS Vec is counted separately."""
 
         rhs_vec_destroyed = self._rhs_vec is None
         rhs_vec_count = 0 if rhs_vec_destroyed else 1
