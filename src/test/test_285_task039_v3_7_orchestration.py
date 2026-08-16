@@ -388,6 +388,158 @@ def test_v3_7_dry_run_freezes_mpi8_worker_and_byte_watchdog(tmp_path) -> None:
     assert plan["watchdog"]["critical_action"] == "record_checkpoint_only"
 
 
+def test_v3_8_candidate_e_dry_run_and_route_exclusivity(tmp_path) -> None:
+    plan = watchdog.v3_7_execution_dry_run(
+        INPUT,
+        tmp_path / "candidate-e",
+        source_sha="a" * 40,
+        candidate_e_side_only=True,
+    )
+    assert "--candidate-e-side-only" in plan["argv"]
+    assert plan["worker_contract"]["method"] == (
+        "hybrid_iterative_candidate_e_side_only"
+    )
+    with pytest.raises(ValueError, match="QEP-only"):
+        watchdog.v3_7_execution_dry_run(
+            INPUT,
+            tmp_path / "candidate-e-conflict",
+            source_sha="a" * 40,
+            candidate_b_only=True,
+            candidate_e_side_only=True,
+        )
+
+
+@pytest.mark.parametrize(
+    ("median", "worst", "complete", "expected"),
+    (
+        (0.1, 0.3, True, True),
+        (0.100001, 0.3, True, False),
+        (0.1, 0.300001, True, False),
+        (0.1, 0.3, False, False),
+    ),
+)
+def test_v3_8_candidate_e_side_gate(median, worst, complete, expected) -> None:
+    assert (
+        orchestration._candidate_e_side_gate(
+            {
+                "pass": complete,
+                "rho_summary": {"median": median, "worst": worst},
+            }
+        )
+        is expected
+    )
+
+
+def test_v3_8_candidate_e_branch_skips_global_stages_and_closes_ledger(
+    tmp_path, monkeypatch
+) -> None:
+    payload = load_v3_7_official_payload(INPUT)
+    called: list[str] = []
+
+    class Layout:
+        comm = MPI.COMM_SELF
+
+        @classmethod
+        def build(cls, *_args):
+            return cls()
+
+    class Rhs:
+        def destroy(self):
+            called.append("rhs_destroy")
+
+    setup = SimpleNamespace(
+        bottom=SimpleNamespace(),
+        top=SimpleNamespace(),
+        coupling=SimpleNamespace(internal_unknown_count=0),
+    )
+    run_directory = tmp_path / "candidate-e"
+    run_directory.mkdir()
+    (run_directory / "resolved_config.json").write_text("{}\n", encoding="utf-8")
+    checkpoint = (
+        run_directory / "numerical_output" / "v3_8_candidate_e_side_checkpoint.json"
+    )
+
+    def campaign(*_args, **kwargs):
+        called.append("candidate_e")
+        marker_callback = kwargs["marker_callback"]
+        marker_callback("candidate_e_side_fixed_setup_end", {})
+        marker_callback("candidate_e_correction_actions_ready", {"live": 2})
+        marker_callback("candidate_e_side_fixed_cleanup_end", {})
+        return {
+            "status": "measured",
+            "pass": False,
+            "training": {
+                side: {"seed_ids": list(orchestration.V3_8_CANDIDATE_E_TRAINING_SEEDS)}
+                for side in ("bottom", "top")
+            },
+            "side_reports": {
+                side: {"rho_summary": {"median": 0.2, "worst": 0.4}}
+                for side in ("bottom", "top")
+            },
+            "factor_inventory": {
+                "per_side": {
+                    side: {
+                        "base_factor_count": 1,
+                        "local_direct_factor_count": 0,
+                        "global_hybrid_direct_factor_count": 0,
+                    }
+                    for side in ("bottom", "top")
+                }
+            },
+        }, checkpoint
+
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError("identity/oracle/recovery path was entered")
+
+    monkeypatch.setattr(orchestration, "HybridAugmentedLayout", Layout)
+    monkeypatch.setattr(orchestration, "_default_rhs", lambda *_args: Rhs())
+    monkeypatch.setattr(
+        orchestration, "release_frozen_m10_objects", lambda *_args: None
+    )
+    monkeypatch.setattr(orchestration, "_run_v3_8_candidate_e_side_campaign", campaign)
+    result = orchestration.run_task039_v3_7_diagnostic(
+        payload,
+        run_directory,
+        source_sha="a" * 40,
+        comm=MPI.COMM_SELF,
+        setup_builder=lambda *_args, **_kwargs: setup,
+        inventory_loader=lambda *_args, **_kwargs: (
+            {
+                "producer_source_sha": "p" * 40,
+                "physical_model_sha256": "m" * 64,
+                "model_id": "task039-test",
+                "requested_modes": 480,
+                "mpi_size": 8,
+                "external_keys_exact": True,
+                "inventory": {},
+            },
+            np.zeros(960, dtype=np.complex128),
+        ),
+        reference_builder=forbidden,
+        identity_runner=forbidden,
+        oracle_runner=forbidden,
+        recovery_runner=None,
+        candidate_e_side_only=True,
+    )
+    assert called == ["candidate_e", "rhs_destroy"]
+    assert result["schema"] == "task039.v3-8-candidate-e-side-only.v1"
+    assert result["direct_reference_payload_loaded"] is True
+    assert result["candidate_e"]["training"]["bottom"]["seed_ids"] == list(
+        orchestration.V3_8_CANDIDATE_E_TRAINING_SEEDS
+    )
+    for side in ("bottom", "top"):
+        inventory = result["candidate_e"]["factor_inventory"]["per_side"][side]
+        assert inventory["local_direct_factor_count"] == 0
+        assert inventory["global_hybrid_direct_factor_count"] == 0
+    ledger = json.loads(
+        (run_directory / "numerical_output" / "memory_object_ledger.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert ledger["objects"]["side_base_ilu"]["destroyed"] is True
+    assert ledger["objects"]["correction_wrappers"]["destroyed"] is True
+
+
 @pytest.mark.parametrize(
     ("pass_budget", "expected_budgets"),
     ((8, [8]), (16, [8, 16]), (None, [8, 16, 32])),

@@ -74,6 +74,9 @@ from src.solvers.hybrid_local_dtn_woodbury import (
     HybridLocalDtnWoodburyFixedAction,
     HybridLocalDtnWoodburyFixedBudgetKrylovAction,
 )
+from src.solvers.hybrid_side_subspace_correction import (
+    build_fixed_side_error_subspace_correction_action,
+)
 from src.solvers.hybrid_whole_endcap_fixed_smoother import (
     build_hybrid_whole_endcap_fixed_smoother_action,
 )
@@ -90,6 +93,9 @@ V3_8_CANDIDATE_B_MEDIAN_LIMIT = 0.1
 V3_8_CANDIDATE_B_WORST_LIMIT = 0.3
 V3_8_CANDIDATE_C_MEDIAN_LIMIT = 0.1
 V3_8_CANDIDATE_C_WORST_LIMIT = 0.3
+V3_8_CANDIDATE_E_MEDIAN_LIMIT = 0.1
+V3_8_CANDIDATE_E_WORST_LIMIT = 0.3
+V3_8_CANDIDATE_E_TRAINING_SEEDS = (809, 811, 821, 823, 827, 829, 839, 853)
 V3_8_CANDIDATE_D_CLASSIFICATION = (
     "USER_AUTHORIZED_EXPERIMENTAL_HYBRIDIZED_DIRECT_SIDE_CANDIDATE_D"
 )
@@ -260,17 +266,25 @@ def build_v3_7_execution_plan(
     candidate_b_only: bool = False,
     candidate_c_only: bool = False,
     candidate_d_only: bool = False,
+    candidate_e_side_only: bool = False,
 ) -> dict[str, Any]:
     """Describe the opt-in worker command consumed by the existing watchdog."""
 
     payload = load_v3_7_official_payload(input_path)
     policy = v3_7_watchdog_policy(payload)
     if (
-        sum((bool(candidate_b_only), bool(candidate_c_only), bool(candidate_d_only)))
+        sum(
+            (
+                bool(candidate_b_only),
+                bool(candidate_c_only),
+                bool(candidate_d_only),
+                bool(candidate_e_side_only),
+            )
+        )
         > 1
     ):
         raise ValueError(
-            "Candidate-B-only, Candidate-C-only, and Candidate-D-only routes are exclusive"
+            "Candidate-B-only, Candidate-C-only, Candidate-D-only, and Candidate-E-side-only routes are exclusive"
         )
     executable = str(Path(os.path.abspath(python_executable or sys.executable)))
     mpiexec = mpiexec_command or shutil.which("mpiexec") or "mpiexec"
@@ -296,8 +310,12 @@ def build_v3_7_execution_plan(
         argv.append("--candidate-c-only")
     if candidate_d_only:
         argv.append("--candidate-d-only")
+    if candidate_e_side_only:
+        argv.append("--candidate-e-side-only")
     if candidate_d_only:
         method = V3_8_CANDIDATE_D_CLASSIFICATION
+    elif candidate_e_side_only:
+        method = "hybrid_iterative_candidate_e_side_only"
     elif candidate_c_only:
         method = "hybrid_iterative_candidate_c1_only"
     elif candidate_b_only:
@@ -329,6 +347,7 @@ def v3_7_execution_dry_run(
     candidate_b_only: bool = False,
     candidate_c_only: bool = False,
     candidate_d_only: bool = False,
+    candidate_e_side_only: bool = False,
 ) -> dict[str, Any]:
     """Return the non-mutating pre-heavy command and watchdog contract."""
 
@@ -340,6 +359,7 @@ def v3_7_execution_dry_run(
         candidate_b_only=candidate_b_only,
         candidate_c_only=candidate_c_only,
         candidate_d_only=candidate_d_only,
+        candidate_e_side_only=candidate_e_side_only,
     )
     argv = plan["argv"]
     if argv[1:3] != ["-n", "8"] or plan["watchdog"]["critical_action"] != (
@@ -362,6 +382,7 @@ def launch_v3_7_with_task038_watchdog(
     candidate_b_only: bool = False,
     candidate_c_only: bool = False,
     candidate_d_only: bool = False,
+    candidate_e_side_only: bool = False,
 ) -> dict[str, Any]:
     """Run the opt-in child through Task38's existing process-tree watchdog."""
 
@@ -386,6 +407,7 @@ def launch_v3_7_with_task038_watchdog(
         candidate_b_only=candidate_b_only,
         candidate_c_only=candidate_c_only,
         candidate_d_only=candidate_d_only,
+        candidate_e_side_only=candidate_e_side_only,
     )
     run_dir = Path(run_directory).resolve()
     if run_dir.exists():
@@ -1748,6 +1770,389 @@ def _candidate_c_cleanup_fields(
     }
 
 
+def _candidate_e_side_gate(report: Mapping[str, Any]) -> bool:
+    summary = report["rho_summary"]
+    return bool(
+        report.get("pass") is True
+        and summary.get("median") is not None
+        and summary.get("worst") is not None
+        and summary["median"] <= V3_8_CANDIDATE_E_MEDIAN_LIMIT
+        and summary["worst"] <= V3_8_CANDIDATE_E_WORST_LIMIT
+    )
+
+
+def _candidate_e_training_vectors(
+    system: Any,
+) -> tuple[list[PETSc.Vec], list[dict[str, Any]]]:
+    vectors: list[PETSc.Vec] = []
+    identities: list[dict[str, Any]] = []
+    for seed in V3_8_CANDIDATE_E_TRAINING_SEEDS:
+        vector = system.A.createVecRight()
+        first, last = (int(value) for value in vector.getOwnershipRange())
+        index = np.arange(first, last, dtype=np.float64)
+        vector.getArray()[:] = np.asarray(
+            np.sin(index * 0.001 + seed) + 1j * np.cos(index * 0.0007 - seed),
+            dtype=PETSc.ScalarType,
+        )
+        vector.assemble()
+        vectors.append(vector)
+        identities.append(_side_vector_identity(vector, f"candidate_e_training_{seed}"))
+    return vectors, identities
+
+
+def _write_v3_8_candidate_e_checkpoint(
+    run_directory: Path,
+    *,
+    source_sha: str,
+    resolved_payload: Mapping[str, Any],
+    producer: Mapping[str, Any],
+    report: Mapping[str, Any],
+    comm: MPI.Intracomm,
+) -> Path:
+    provenance = resolved_payload["provenance"]
+    inventory = producer["inventory"]
+    resolved_config_sha = hashlib.sha256(
+        (run_directory / "resolved_config.json").read_bytes()
+    ).hexdigest()
+    checkpoint = {
+        "schema": "task039.v3-8-candidate-e-side-only.v1",
+        "candidate": "E",
+        "status": report.get("status"),
+        "pass": report.get("pass"),
+        "source_identity": {
+            "consumer_source_sha": source_sha,
+            "producer_source_sha": inventory["source_sha"],
+            "consumer_input_sha256": provenance["input_sha256"],
+            "consumer_resolved_config_sha256": resolved_config_sha,
+            "consumer_physical_model_sha256": provenance["physical_model_sha256"],
+            "producer_input_sha256": inventory["input_sha256"],
+            "producer_resolved_config_sha256": inventory["resolved_config_sha256"],
+            "producer_physical_model_sha256": inventory["physical_model_sha256"],
+            "direct_payload_sha256": inventory["payload"]["artifact"]["sha256"],
+            "verified_shard_count": inventory["verified_shard_count"],
+            "model_id": producer["model_id"],
+            "requested_modes": producer["requested_modes"],
+            "mpi_size": producer["mpi_size"],
+            "external_keys_exact": producer["external_keys_exact"],
+        },
+        "training": report.get("training", {}),
+        "validation": report.get("side_reports", {}),
+        "gate": report.get("gate", {}),
+        "factor_inventory": report.get("factor_inventory", {}),
+        "direct_solution": report.get("direct_solution", {}),
+    }
+    if report.get("failure") is not None:
+        checkpoint["failure"] = report["failure"]
+    path = run_directory / "numerical_output" / "v3_8_candidate_e_side_checkpoint.json"
+    if comm.rank == 0:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+        temporary.write_text(
+            json.dumps(_json_safe(checkpoint), ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        temporary.replace(path)
+    comm.barrier()
+    return path
+
+
+def _run_v3_8_candidate_e_side_campaign(
+    setup: Any,
+    layout: Any,
+    rhs: PETSc.Vec,
+    *,
+    resolved_payload: Mapping[str, Any],
+    producer: Mapping[str, Any],
+    modal_amplitudes: np.ndarray,
+    run_directory: Path,
+    source_sha: str,
+    comm: MPI.Intracomm,
+    survey_side_vectors: dict[str, dict[str, PETSc.Vec]],
+    marker_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+) -> tuple[dict[str, Any], Path]:
+    """Measure Candidate E on both condensed side operators only."""
+
+    production_operator, production_context = create_hybrid_assembled_block_action(
+        setup.bottom, setup.top, setup.coupling
+    )
+    x_star = None
+    direct_residual = None
+    components: dict[str, Any] = {}
+    base_actions: dict[str, Any] = {}
+    fixed_actions: dict[str, Any] = {}
+    correction_actions: dict[str, Any] = {}
+    training: dict[str, Any] = {}
+    vector_metadata: dict[str, dict[str, Any]] = {}
+    factor_inventory: dict[str, Any] = {}
+    side_reports: dict[str, Any] = {}
+    current_side = "not_started"
+    direct_residual_norm = None
+    failure: Exception | None = None
+
+    try:
+        _emit_marker(marker_callback, "candidate_e_direct_payload_begin")
+        x_star, mapping = rebuild_hybrid_augmented_vector(
+            producer["inventory"],
+            setup.bottom,
+            setup.top,
+            layout,
+            modal_amplitudes,
+        )
+        direct_residual = production_operator.createVecLeft()
+        production_operator.mult(x_star, direct_residual)
+        direct_residual.scale(PETSc.ScalarType(-1.0))
+        direct_residual.axpy(PETSc.ScalarType(1.0), rhs)
+        direct_residual_norm = float(direct_residual.norm())
+        _emit_marker(
+            marker_callback,
+            "candidate_e_direct_payload_end",
+            mapping_status=mapping.get("mapping_status"),
+            direct_residual_norm=direct_residual_norm,
+        )
+        for side, system, block_slice in (
+            ("bottom", setup.bottom, layout.local_bottom_slice),
+            ("top", setup.top, layout.local_top_slice),
+        ):
+            side_residual = system.A.createVecLeft()
+            try:
+                values = side_residual.getArray()
+                source_values = direct_residual.getArray(readonly=True)[block_slice]
+                if values.size != source_values.size:
+                    raise ValueError(
+                        f"{side} direct residual ownership does not match layout"
+                    )
+                values[:] = source_values
+                side_residual.assemble()
+                vectors, _owned, metadata = _side_survey_vectors(
+                    system,
+                    side,
+                    {"direct_solution_side_residual": side_residual},
+                )
+                survey_side_vectors[side] = vectors
+                vector_metadata[side] = metadata
+            finally:
+                side_residual.destroy()
+
+        _emit_marker(marker_callback, "candidate_e_side_fixed_setup_begin")
+        for side, system in (("bottom", setup.bottom), ("top", setup.top)):
+            components[side] = create_hybrid_local_dtn_action_components(system)
+            base_actions[side] = build_hybrid_whole_endcap_fixed_smoother_action(system)
+            fixed_actions[side] = HybridLocalDtnWoodburyFixedAction(
+                base_actions[side], components[side], residual_correction_steps=1
+            )
+        _emit_marker(
+            marker_callback,
+            "candidate_e_side_fixed_setup_end",
+            components_live=2,
+            base_actions_live=2,
+            fixed_actions_live=2,
+            correction_steps=1,
+        )
+
+        for side, system in (("bottom", setup.bottom), ("top", setup.top)):
+            current_side = side
+            _emit_marker(marker_callback, "candidate_e_training_begin", side=side)
+            seeds, identities = _candidate_e_training_vectors(system)
+            try:
+                correction_actions[side] = (
+                    build_fixed_side_error_subspace_correction_action(
+                        system.A, fixed_actions[side], seeds
+                    )
+                )
+                diagnostics = correction_actions[side].diagnostics
+                training[side] = {
+                    "seed_ids": list(V3_8_CANDIDATE_E_TRAINING_SEEDS),
+                    "seed_identities": identities,
+                    "seed_count": diagnostics["seed_count"],
+                    "layers_completed": diagnostics["layers_completed"],
+                    "seed_block_is_layer_one": diagnostics["seed_block_is_layer_one"],
+                    "rank": diagnostics["rank"],
+                    "rank_cap": diagnostics["rank_cap"],
+                    "R_shape": diagnostics["R_shape"],
+                    "R_condition_number": diagnostics["R_condition_number"],
+                    "qr_reconstruction_relative_error": diagnostics[
+                        "qr_reconstruction_relative_error"
+                    ],
+                    "q_orthogonality_error": diagnostics["q_orthogonality_error"],
+                    "setup_seconds": diagnostics["setup_seconds"],
+                    "setup_operator_apply_count": diagnostics[
+                        "setup_operator_apply_count"
+                    ],
+                    "setup_base_apply_count": diagnostics["setup_base_apply_count"],
+                }
+            finally:
+                for seed in seeds:
+                    seed.destroy()
+            _emit_marker(
+                marker_callback,
+                "candidate_e_training_end",
+                side=side,
+                rank=training[side]["rank"],
+            )
+        _emit_marker(
+            marker_callback,
+            "candidate_e_correction_actions_ready",
+            live=2,
+        )
+
+        for side, system in (("bottom", setup.bottom), ("top", setup.top)):
+            current_side = side
+            _emit_marker(marker_callback, f"candidate_e_side_{side}_begin", side=side)
+            side_report = _side_correction_probe(
+                system,
+                correction_actions[side],
+                1,
+                survey_side_vectors[side],
+                vector_metadata[side],
+            )
+            summary = side_report["rho_summary"]
+            summary.pop("candidate_A_pass", None)
+            summary["median_limit"] = V3_8_CANDIDATE_E_MEDIAN_LIMIT
+            summary["worst_limit"] = V3_8_CANDIDATE_E_WORST_LIMIT
+            summary["candidate_E_pass"] = _candidate_e_side_gate(side_report)
+            side_reports[side] = side_report
+            e_diagnostics = correction_actions[side].diagnostics
+            fixed_diagnostics = fixed_actions[side].diagnostics
+            base_diagnostics = fixed_diagnostics["base_diagnostics"]
+            factor_inventory[side] = {
+                "base_identity": fixed_diagnostics["base_identity"],
+                "operator_identity": e_diagnostics["operator_identity"],
+                "base_factor_count": e_diagnostics["base_ilu_factor_count"],
+                "nested_ksp_created": e_diagnostics["base_nested_ksp_created"],
+                "local_direct_factor_count": e_diagnostics["direct_factor_count"],
+                "global_hybrid_direct_factor_count": e_diagnostics[
+                    "global_hybrid_direct_factor_count"
+                ],
+                "factor_rows": base_diagnostics["factor_rows"],
+                "source_matrix_nnz": base_diagnostics["source_matrix_nnz"],
+                "factor_nnz": base_diagnostics["factor_nnz"],
+                "factor_csr_payload_estimate_bytes": base_diagnostics[
+                    "factor_csr_payload_estimate_bytes"
+                ],
+                "base_setup_seconds": base_diagnostics["setup_seconds"],
+                "base_apply_count": base_diagnostics["apply_count"],
+                "correction_setup_seconds": e_diagnostics["setup_seconds"],
+                "correction_apply_count": e_diagnostics["apply_count"],
+                "fixed_destroyed": False,
+                "base_destroyed": False,
+                "correction_destroyed": False,
+            }
+            _emit_marker(
+                marker_callback,
+                f"candidate_e_side_{side}_end",
+                side=side,
+                candidate_E_pass=summary["candidate_E_pass"],
+            )
+    except Exception as error:
+        error.candidate_e_progress = {"side": current_side}
+        failure = error
+    finally:
+        for side in ("top", "bottom"):
+            if side in correction_actions:
+                correction_actions[side].destroy()
+                if side in factor_inventory:
+                    factor_inventory[side]["correction_destroyed"] = True
+            if side in fixed_actions:
+                fixed_actions[side].destroy()
+                if side in factor_inventory:
+                    factor_inventory[side]["fixed_destroyed"] = True
+            if side in base_actions:
+                base_actions[side].destroy()
+                if side in factor_inventory:
+                    base_diagnostics = base_actions[side].diagnostics
+                    lifecycle = base_diagnostics["lifecycle"]
+                    factor_inventory[side].update(
+                        {
+                            "base_destroyed": True,
+                            "base_factor_count_after_destroy": lifecycle[
+                                "factor_count_after_destroy"
+                            ],
+                            "factors_released": lifecycle["factors_released"],
+                        }
+                    )
+            if side in components:
+                components[side].destroy()
+        _emit_marker(marker_callback, "candidate_e_side_fixed_cleanup_end")
+        _destroy(direct_residual)
+        _destroy(x_star)
+        production_context.destroy()
+        production_operator.destroy()
+
+    if failure is not None:
+        report = {
+            "status": "candidate_e_implementation_failure",
+            "pass": None,
+            "gate": {
+                "median_limit": V3_8_CANDIDATE_E_MEDIAN_LIMIT,
+                "worst_limit": V3_8_CANDIDATE_E_WORST_LIMIT,
+                "formula": "rho=norm(b-Ax)/max(norm(b),1e-30)",
+            },
+            "training": training,
+            "side_reports": side_reports,
+            "factor_inventory": factor_inventory,
+            "failure": {
+                "type": type(failure).__name__,
+                "message": str(failure),
+                "attempted_side": getattr(failure, "candidate_e_progress", {}).get(
+                    "side", "not_available"
+                ),
+                "unmeasured": ["candidate_E_gate", "remaining_side_reports"],
+            },
+        }
+        _write_v3_8_candidate_e_checkpoint(
+            run_directory,
+            source_sha=source_sha,
+            resolved_payload=resolved_payload,
+            producer=producer,
+            report=report,
+            comm=comm,
+        )
+        raise failure
+
+    report = {
+        "status": "measured",
+        "pass": bool(
+            side_reports["bottom"]["rho_summary"]["candidate_E_pass"]
+            and side_reports["top"]["rho_summary"]["candidate_E_pass"]
+        ),
+        "gate": {
+            "median_limit": V3_8_CANDIDATE_E_MEDIAN_LIMIT,
+            "worst_limit": V3_8_CANDIDATE_E_WORST_LIMIT,
+            "formula": "rho=norm(b-Ax)/max(norm(b),1e-30)",
+        },
+        "training": training,
+        "side_reports": side_reports,
+        "factor_inventory": {
+            "per_side": factor_inventory,
+            "simultaneous_total_base_factor_count": sum(
+                int(item["base_factor_count"]) for item in factor_inventory.values()
+            ),
+            "simultaneous_total_local_direct_factor_count": sum(
+                int(item["local_direct_factor_count"])
+                for item in factor_inventory.values()
+            ),
+            "simultaneous_total_global_hybrid_direct_factor_count": sum(
+                int(item["global_hybrid_direct_factor_count"])
+                for item in factor_inventory.values()
+            ),
+        },
+        "direct_solution": {
+            "mapping": mapping,
+            "residual_norm": direct_residual_norm,
+            "source": "hash-bound direct payload reconstructed on current layout",
+        },
+    }
+    checkpoint = _write_v3_8_candidate_e_checkpoint(
+        run_directory,
+        source_sha=source_sha,
+        resolved_payload=resolved_payload,
+        producer=producer,
+        report=report,
+        comm=comm,
+    )
+    return report, checkpoint
+
+
 def _run_v3_8_candidate_b_campaign(
     setup: Any,
     layout: Any,
@@ -2426,10 +2831,13 @@ def _record_v3_7_marker(
         "side_fixed_components_setup_end",
         "candidate_b_side_fixed_setup_end",
         "candidate_c_side_fixed_setup_end",
+        "candidate_e_side_fixed_setup_end",
     }:
         mark("side_base_ilu", created=True, completed=True)
         if marker == "candidate_c_side_fixed_setup_end":
             mark("correction_wrappers", created=True, completed=True)
+    elif marker == "candidate_e_correction_actions_ready":
+        mark("correction_wrappers", created=True, completed=True)
     elif marker.startswith("side_correction_") and marker.endswith("_ready"):
         mark("correction_wrappers", created=True, completed=True)
     elif marker.startswith("side_correction_") and marker.endswith("_end"):
@@ -2442,10 +2850,14 @@ def _record_v3_7_marker(
         "side_survey_cleanup_end",
         "candidate_b_side_fixed_cleanup_end",
         "candidate_c_side_fixed_cleanup_end",
+        "candidate_e_side_fixed_cleanup_end",
     }:
         if objects["side_base_ilu"]["created"]:
             mark("side_base_ilu", destroyed=True)
-        if marker == "candidate_c_side_fixed_cleanup_end":
+        if marker in {
+            "candidate_c_side_fixed_cleanup_end",
+            "candidate_e_side_fixed_cleanup_end",
+        }:
             if objects["correction_wrappers"]["created"]:
                 mark("correction_wrappers", destroyed=True)
     elif marker == "exact_side_oracle_begin":
@@ -2609,6 +3021,7 @@ def run_task039_v3_7_diagnostic(
     candidate_b_only: bool = False,
     candidate_c_only: bool = False,
     candidate_d_only: bool = False,
+    candidate_e_side_only: bool = False,
 ) -> dict[str, Any]:
     """Prepare the V3-7 campaign or an explicit research candidate branch."""
 
@@ -2692,6 +3105,7 @@ def run_task039_v3_7_diagnostic(
             and not candidate_b_only
             and not candidate_c_only
             and not candidate_d_only
+            and not candidate_e_side_only
         ):
             raise ValueError(
                 "V3-7 requires an injected recovery_runner(setup, layout, snapshot, "
@@ -2743,12 +3157,17 @@ def run_task039_v3_7_diagnostic(
 
         if (
             sum(
-                (bool(candidate_b_only), bool(candidate_c_only), bool(candidate_d_only))
+                (
+                    bool(candidate_b_only),
+                    bool(candidate_c_only),
+                    bool(candidate_d_only),
+                    bool(candidate_e_side_only),
+                )
             )
             > 1
         ):
             raise ValueError(
-                "Candidate-B-only, Candidate-C-only, and Candidate-D-only routes are exclusive"
+                "Candidate-B-only, Candidate-C-only, Candidate-D-only, and Candidate-E-side-only routes are exclusive"
             )
 
         if candidate_b_only:
@@ -2945,6 +3364,53 @@ def run_task039_v3_7_diagnostic(
                     "status": "measured_candidate_d_only",
                     "classification": V3_8_CANDIDATE_D_CLASSIFICATION,
                     "direct_reference_payload_loaded": False,
+                },
+                "run_directory": str(Path(run_directory).resolve()),
+            }
+            normal_return = True
+            return result
+
+        if candidate_e_side_only:
+            candidate_report, candidate_checkpoint = (
+                _run_v3_8_candidate_e_side_campaign(
+                    setup,
+                    layout,
+                    rhs,
+                    resolved_payload=resolved_payload,
+                    producer=producer,
+                    modal_amplitudes=modal_amplitudes,
+                    run_directory=Path(run_directory).resolve(),
+                    source_sha=source_sha,
+                    comm=comm,
+                    survey_side_vectors=survey_side_vectors,
+                    marker_callback=marker_callback,
+                )
+            )
+            result = {
+                "schema": "task039.v3-8-candidate-e-side-only.v1",
+                "status": "completed",
+                "candidate_e": candidate_report,
+                "checkpoint": str(
+                    candidate_checkpoint.relative_to(Path(run_directory).resolve())
+                ),
+                "direct_reference_payload_loaded": True,
+                "watchdog": watchdog,
+                "telemetry": {
+                    "process_tree_samples": "numerical_output/process_tree_samples.jsonl",
+                    "memory_stages": "numerical_output/memory_stages.jsonl",
+                    "memory_stage_markers": "numerical_output/memory_stage_markers.raw.jsonl",
+                    "memory_object_ledger": {
+                        "path": "numerical_output/memory_object_ledger.json",
+                        "schema": object_ledger["schema"],
+                        "status": "finalized_in_worker_finalizer",
+                    },
+                },
+                "formal_run": {
+                    "status": "measured_candidate_e_side_only",
+                    "classification": "measured_candidate_e_side_only",
+                    "identity_reference": "not_run_by_candidate_e_contract",
+                    "oracle": "not_run_by_candidate_e_contract",
+                    "recovery": "not_run_by_candidate_e_contract",
                 },
                 "run_directory": str(Path(run_directory).resolve()),
             }
@@ -3322,6 +3788,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--candidate-b-only", action="store_true")
     parser.add_argument("--candidate-c-only", action="store_true")
     parser.add_argument("--candidate-d-only", action="store_true")
+    parser.add_argument("--candidate-e-side-only", action="store_true")
     parser.add_argument("--input", required=True, dest="input_path")
     parser.add_argument("--run-directory", required=True)
     parser.add_argument("--source-sha", required=True)
@@ -3334,12 +3801,13 @@ def main(argv: list[str] | None = None) -> int:
                 bool(args.candidate_b_only),
                 bool(args.candidate_c_only),
                 bool(args.candidate_d_only),
+                bool(args.candidate_e_side_only),
             )
         )
         > 1
     ):
         parser.error(
-            "--candidate-b-only, --candidate-c-only, and --candidate-d-only are mutually exclusive"
+            "--candidate-b-only, --candidate-c-only, --candidate-d-only, and --candidate-e-side-only are mutually exclusive"
         )
     if args.dry_run:
         plan = v3_7_execution_dry_run(
@@ -3349,6 +3817,7 @@ def main(argv: list[str] | None = None) -> int:
             candidate_b_only=args.candidate_b_only,
             candidate_c_only=args.candidate_c_only,
             candidate_d_only=args.candidate_d_only,
+            candidate_e_side_only=args.candidate_e_side_only,
         )
         print(json.dumps(_json_safe(plan), ensure_ascii=False, sort_keys=True))
         return 0
@@ -3373,12 +3842,15 @@ def main(argv: list[str] | None = None) -> int:
             direct_run_dir=V3_7_DIRECT_RUN_ROOT,
             recovery_runner=(
                 None
-                if args.candidate_b_only or args.candidate_c_only
+                if args.candidate_b_only
+                or args.candidate_c_only
+                or args.candidate_e_side_only
                 else run_v3_7_recovery_runner
             ),
             candidate_b_only=args.candidate_b_only,
             candidate_c_only=args.candidate_c_only,
             candidate_d_only=args.candidate_d_only,
+            candidate_e_side_only=args.candidate_e_side_only,
             record_path=(
                 Path(args.run_directory).resolve()
                 / "numerical_output"
@@ -3411,6 +3883,9 @@ __all__ = [
     "V3_8_CANDIDATE_B_WORST_LIMIT",
     "V3_8_CANDIDATE_C_MEDIAN_LIMIT",
     "V3_8_CANDIDATE_C_WORST_LIMIT",
+    "V3_8_CANDIDATE_E_MEDIAN_LIMIT",
+    "V3_8_CANDIDATE_E_WORST_LIMIT",
+    "V3_8_CANDIDATE_E_TRAINING_SEEDS",
     "V3_8_CANDIDATE_D_CLASSIFICATION",
     "build_v3_7_execution_plan",
     "check_v3_7_integrated_physics",
@@ -3422,6 +3897,7 @@ __all__ = [
     "run_task039_v3_7_diagnostic",
     "run_v3_8_candidate_b_budget_sequence",
     "_run_v3_8_candidate_d_campaign",
+    "_run_v3_8_candidate_e_side_campaign",
     "run_v3_7_recovery_runner",
     "run_v3_7_stage_sequence",
     "v3_7_execution_dry_run",
