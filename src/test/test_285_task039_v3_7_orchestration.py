@@ -34,7 +34,10 @@ from benchmarks.task039_v3_7_orchestration import (
     v3_7_watchdog_policy,
     validate_v3_7_resolved_identity,
 )
-from benchmarks.task039_hybrid_direct_identity import _parse_orders
+from benchmarks.task039_hybrid_direct_identity import (
+    _parse_orders,
+    _same_external_key_set,
+)
 from src.io.input_validation import task039_dynamic_external_mode_inventory
 from src.modes.mode_classification import _near_degenerate_partition_audit
 
@@ -297,6 +300,16 @@ def test_v3_7_candidate_authority_serializes_complex_orders_for_parser(
     parsed = _parse_orders(authority["external_orders"], "candidate", expected_count=1)
     assert parsed[("bottom", 0, 0, "s")]["outgoing_amplitude"] == 1.0 + 2.0j
     assert _json_safe(np.asarray([1.0 + 2.0j])) == [[1.0, 2.0]]
+
+
+def test_v3_7_external_key_gate_compares_sets_not_enumeration_order() -> None:
+    keys = (
+        ("bottom", 0, 0, "s"),
+        ("top", 1, 0, "s"),
+    )
+    assert _same_external_key_set(keys, tuple(reversed(keys))) is True
+    assert _same_external_key_set(keys, (keys[0], ("top", 2, 0, "s"))) is False
+    assert _same_external_key_set(keys, keys[:1]) is False
 
 
 def test_v3_7_ledger_is_atomic_noncollective_and_tracks_cleanup_boundary(

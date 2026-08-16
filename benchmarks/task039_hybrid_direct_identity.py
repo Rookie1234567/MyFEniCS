@@ -128,6 +128,13 @@ def _key_sha(keys: Sequence[tuple[str, int, int, str]]) -> str:
     ).hexdigest()
 
 
+def _same_external_key_set(
+    candidate_keys: Sequence[tuple[str, int, int, str]],
+    reference_keys: Sequence[tuple[str, int, int, str]],
+) -> bool:
+    return set(candidate_keys) == set(reference_keys)
+
+
 def _model_contract(value: Any) -> dict[str, Any] | None:
     if not isinstance(value, str):
         return None
@@ -1694,7 +1701,9 @@ def _compare_v3_authority_views(
         "reference_count": reference["inventory"]["count"],
         "candidate_key_sha256": candidate["inventory"]["key_sha256"],
         "reference_key_sha256": reference["inventory"]["key_sha256"],
-        "pass": candidate["inventory"]["keys"] == reference["inventory"]["keys"],
+        "pass": _same_external_key_set(
+            candidate["inventory"]["keys"], reference["inventory"]["keys"]
+        ),
     }
     observables = _compare_observables(
         candidate["observables"], reference["observables"], 1.0e-4
