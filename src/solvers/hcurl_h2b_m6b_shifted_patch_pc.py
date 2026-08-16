@@ -1346,10 +1346,21 @@ def recover_m6b_auxiliary(dtn_action: Any, volume_solution: PETSc.Vec) -> np.nda
 
 
 class M6BScreenCheckpointWriter:
-    """Write only the four fixed true-residual checkpoint vectors."""
+    """Write only the caller's fixed true-residual checkpoint vectors."""
 
-    def __init__(self, run_dir: Path) -> None:
+    def __init__(
+        self,
+        run_dir: Path,
+        *,
+        allowed_iterations: tuple[int, ...] = M6B_FIXED_SCREEN_ITERATIONS,
+    ) -> None:
         self._run_dir = Path(run_dir)
+        self._allowed_iterations = tuple(allowed_iterations)
+        if not self._allowed_iterations or any(
+            not isinstance(iteration, int) or iteration <= 0
+            for iteration in self._allowed_iterations
+        ) or len(set(self._allowed_iterations)) != len(self._allowed_iterations):
+            raise ValueError("M6B checkpoint iterations are not fixed")
         self._run_dir.mkdir(parents=True, exist_ok=True)
 
     def _write(self, path: Path, values: np.ndarray) -> dict[str, Any]:
@@ -1367,7 +1378,7 @@ class M6BScreenCheckpointWriter:
     def _write_arrays(
         self, iteration: int, arrays: Mapping[str, np.ndarray]
     ) -> dict[str, Any]:
-        if iteration not in M6B_FIXED_SCREEN_ITERATIONS:
+        if iteration not in self._allowed_iterations:
             raise ValueError("M6B checkpoint iteration is not fixed")
         required = {"solution", "outer_action", "residual", "rhs"}
         if set(arrays) != required:

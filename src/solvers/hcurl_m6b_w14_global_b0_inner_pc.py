@@ -8,8 +8,9 @@ records a scalar/hash audit and enforces its inner true-residual gate.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 import math
+from pathlib import Path
 import time
 from typing import Any
 
@@ -22,6 +23,10 @@ from .hcurl_h2b_m5_coercive import (
     _array_sha256,
     solve_m5_b0_fixed,
 )
+from .disk_backed_flexible_gmres import (
+    DiskBackedFlexibleGMRES,
+    DiskBackedFlexibleGMRESResult,
+)
 
 
 __all__ = (
@@ -33,6 +38,15 @@ __all__ = (
     "W14A_RHO_LIMIT",
     "W14GlobalB0InnerPC",
     "evaluate_w14a_action_gate",
+    "W14B_CHECKPOINTS",
+    "W14B_FIXED_MAX_STEPS",
+    "W14B_PREDICTED_LIVE_SET_BYTES",
+    "W14B_PREDICTED_LIVE_SET_LIMIT_BYTES",
+    "W14B_RHO1_ANCHOR",
+    "W14B_RHO4_LIMIT",
+    "W14B_SCHEMA",
+    "evaluate_w14b_fixed4_gate",
+    "run_w14b_fixed4_cycle",
 )
 
 
@@ -46,6 +60,15 @@ W14A_CLOSURE_LIMIT = 1.0e-11
 W14A_RELATIVE_IDENTITY_LIMIT = 1.0e-13
 W14A_PREDICTED_LIVE_SET_BYTES = 1_281_057_286
 W14A_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_500_000_000
+W14B_SCHEMA = "task037.extra.h2b.w14b.fixed4-physical-correction.v1"
+W14B_FIXED_MAX_STEPS = 4
+W14B_CHECKPOINTS = (1, 2, 4)
+W14B_RHO1_ANCHOR = 0.8943645606070599
+W14B_RHO1_LIMIT = 1.0e-12
+W14B_RHO4_LIMIT = 0.75
+W14B_MONOTONICITY_TOLERANCE = 1.0e-13
+W14B_PREDICTED_LIVE_SET_BYTES = 1_348_166_150
+W14B_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_500_000_000
 
 
 def _finite_bounded(value: Any, limit: float | None = None) -> bool:
@@ -56,6 +79,239 @@ def _finite_bounded(value: Any, limit: float | None = None) -> bool:
     except (TypeError, ValueError):
         return False
     return math.isfinite(number) and number >= 0.0 and (limit is None or number <= limit)
+
+
+def run_w14b_fixed4_cycle(
+    rhs: np.ndarray,
+    *,
+    action: Callable[[np.ndarray], np.ndarray],
+    pc: Callable[[np.ndarray], np.ndarray],
+    scratch_dir: str | Path,
+    observer: Callable[[Mapping[str, Any]], None] | None = None,
+) -> DiskBackedFlexibleGMRESResult:
+    """Run the fixed four-step right flexible-GMRES correction cycle.
+
+    The existing disk-backed solver owns the Arnoldi/MGS implementation.  No
+    W14B caller can change its iteration, restart, initial-guess, or
+    tolerance contract through this thin fixed configuration.
+    """
+
+    solver = DiskBackedFlexibleGMRES(
+        action,
+        pc,
+        max_steps=W14B_FIXED_MAX_STEPS,
+        checkpoints=W14B_CHECKPOINTS,
+    )
+    return solver.solve(rhs, scratch_dir=scratch_dir, observer=observer)
+
+
+def evaluate_w14b_fixed4_gate(
+    *,
+    outer_audit: Mapping[str, Any],
+    inner_audit: Mapping[str, Any],
+    samples: Mapping[str, Mapping[str, Any]],
+    action_audit: Mapping[str, Any],
+    architecture: Mapping[str, Any],
+    predicted_live_set: Mapping[str, Any],
+    w14a_authority_ok: bool,
+    source_ok: bool,
+    cache_ok: bool,
+) -> dict[str, Any]:
+    """Recompute the fixed W14B Gate from scalar and checkpoint evidence."""
+
+    checks = {
+        "w14a_authority": bool(w14a_authority_ok is True),
+        "outer": False,
+        "checkpoints": False,
+        "inner": False,
+        "action_audit": False,
+        "architecture": False,
+        "lifecycle": False,
+        "prediction": False,
+        "rho1_anchor": False,
+        "rho_monotone": False,
+        "rho4": False,
+        "source": bool(source_ok is True),
+        "cache": bool(cache_ok is True),
+    }
+    rho_values: dict[str, float] = {}
+    try:
+        checks["outer"] = (
+            outer_audit["algorithm"] == "right_flexible_gmres"
+            and outer_audit["max_steps"] == W14B_FIXED_MAX_STEPS
+            and outer_audit["iterations"] == W14B_FIXED_MAX_STEPS
+            and outer_audit["checkpoint_iterations"] == list(W14B_CHECKPOINTS)
+            and outer_audit["checkpoint_count"] == len(W14B_CHECKPOINTS)
+            and outer_audit["checkpoint_set_complete"] is True
+            and outer_audit["observer_count"] == 3
+            and outer_audit["action_count"] == 7
+            and outer_audit["pc_count"] == 4
+            and outer_audit["initial_action_count"] == 0
+            and outer_audit["orthogonalization_passes"] == 2
+            and outer_audit["basis_in_memory"] is False
+            and outer_audit["mmap"] is False
+            and outer_audit["scratch_bytes"] == 25_027_488
+            and outer_audit["scratch_mmap"] is False
+            and outer_audit["scratch_basis_in_memory"] is False
+            and outer_audit["bounded_full_vector_bytes"] <= 64 * 1024 * 1024
+            and outer_audit["bounded_full_vector_gate"] is True
+        )
+        checks["checkpoints"] = (
+            set(samples) == {str(value) for value in W14B_CHECKPOINTS}
+            and all(
+                isinstance(samples[str(iteration)]["iteration"], int)
+                and samples[str(iteration)]["iteration"] == iteration
+                and samples[str(iteration)]["finite"] is True
+                and _finite_bounded(
+                    samples[str(iteration)]["true_relative_residual"]
+                )
+                for iteration in W14B_CHECKPOINTS
+            )
+        )
+        for iteration in W14B_CHECKPOINTS:
+            rho_values[str(iteration)] = float(
+                samples[str(iteration)]["true_relative_residual"]
+            )
+        algorithm = inner_audit["algorithm"]
+        records = inner_audit["applications"]
+        checks["inner"] = (
+            algorithm["solver"] == "fgmres"
+            and algorithm["restart"] == 20
+            and algorithm["max_it"] == 20
+            and algorithm["zero_start"] is True
+            and algorithm["rtol"] == 0.0
+            and algorithm["atol"] == 0.0
+            and algorithm["pc_side"] == "right"
+            and algorithm["mpi_size"] == 1
+            and isinstance(records, Sequence)
+            and not isinstance(records, (str, bytes))
+            and len(records) == 4
+            and all(
+                record["algorithm"] == "fgmres_right_b0_fixed20"
+                and record["iterations"] == 20
+                and record["converged_reason"] == -3
+                and record["pc_apply_count_delta"] == 20
+                and record["finite"] is True
+                and record["gate_pass"] is True
+                and _finite_bounded(record["true_residual"], _W14_TRUE_RESIDUAL_LIMIT)
+                for record in records
+            )
+            and inner_audit["underlying_pc"]["apply_count"] == 80
+        )
+        physical_instances = action_audit["physical_instances"]
+        b0_instances = action_audit["b0_instances"]
+        construction_outer = action_audit["outer"]
+        construction_physical = action_audit["physical"]
+        construction_dtn = action_audit["dtn"]
+        construction_bridge = action_audit["bridge"]
+        final_physical = physical_instances[0]
+        b0 = b0_instances[0]
+        final_outer = final_physical["outer"]
+        final_physical_action = final_physical["physical"]
+        final_dtn = final_physical["dtn"]
+        final_bridge = final_physical["bridge"]
+        checks["action_audit"] = (
+            construction_outer["apply_count"] == 0
+            and construction_physical["apply_count"] == 0
+            and construction_dtn["apply_count"] == 0
+            and construction_bridge["forward_apply_count"] == 0
+            and len(physical_instances) == 1
+            and len(b0_instances) == 1
+            and b0["total_pc_apply_count"] == 80
+            and b0["inner_pc"]["underlying_pc"]["apply_count"] == 80
+            and final_physical["total_physical_action_count"] == 7
+            and final_outer["apply_count"] == 7
+            and final_outer["matrix_type"] == "python_action_only"
+            and final_outer["global_matrix"] is False
+            and final_outer["augmented_matrix"] is False
+            and final_outer["static_condensation"] is False
+            and final_outer["trace_slab"] is False
+            and final_outer["explicit_C_materialized_count"] == 0
+            and final_outer["explicit_D_materialized_count"] == 0
+            and final_physical_action["apply_count"] == 7
+            and final_physical_action["global_matrix_materialized"] is False
+            and final_physical_action["global_constraint_matrix_materialized"] is False
+            and final_physical_action["global_condensed_schur_materialized"] is False
+            and final_physical_action["cell_schur_matrix_materialized"] is False
+            and final_physical_action["slab_matrix_materialized"] is False
+            and final_physical_action["retained_dense_cell_tensor_count"] == 0
+            and final_physical_action["dense_cell_tensor_materialized_per_apply"] is False
+            and final_physical_action["factor_count"] == 0
+            and final_physical_action["ksp_created"] is False
+            and final_physical_action["cell_schur_matrix_nnz"] == 0
+            and final_physical_action["slab_matrix_nnz"] == 0
+            and final_physical_action["explicit_C_materialized_count"] == 0
+            and final_physical_action["explicit_D_materialized_count"] == 0
+            and final_physical_action["ordinary_default_changed"] is False
+            and final_dtn["apply_count"] == 7
+            and final_dtn["mode_count"] == 80
+            and final_dtn["fine_space"] == "uncondensed_fullspace"
+            and final_dtn["condensation"] is False
+            and final_dtn["static_condensed_operator_used"] is False
+            and final_dtn["trace_slab_pc_used"] is False
+            and final_dtn["global_matrix_materialized"] is False
+            and final_dtn["augmented_matrix_materialized"] is False
+            and final_dtn["explicit_C_materialized_count"] == 0
+            and final_dtn["explicit_D_materialized_count"] == 0
+            and final_dtn["fe_sized_allgather"] is False
+            and final_dtn["modal_allreduce_count_per_apply"] == 1
+            and final_dtn["modal_allreduce_count_per_hermitian_apply"] == 1
+            and final_bridge["forward_apply_count"] == 7
+            and final_bridge["vector_create_count"] == 2
+            and final_bridge["fixed_work_vectors"] == 2
+            and final_bridge["per_apply_vec_creation"] == 0
+            and action_audit["authority_vector_retention"] == {
+                "q_vector_retained": False,
+                "retained_authority_vector_roles": ["target"],
+            }
+        )
+        checks["architecture"] = (
+            architecture["fine_space"] == "uncondensed_fullspace"
+            and architecture["global_matrix_materialized"] is False
+            and architecture["augmented_matrix_materialized"] is False
+            and architecture["condensation"] is False
+            and architecture["static_condensed_operator_used"] is False
+            and architecture["trace_slab_pc_used"] is False
+            and architecture["slab_factors"] == 0
+            and architecture["shifted_pc_used"] is False
+            and architecture["physical_ksp_used"] is False
+            and architecture["pde_used"] is False
+            and architecture["official_rta"] is False
+        )
+        checks["lifecycle"] = action_audit["lifecycle_events"] == [
+            "b0_constructed",
+            "physical_constructed",
+            "coexistence_ready",
+            "physical_released",
+            "b0_released",
+        ] and action_audit["coexistence"] == {
+            "b0_live": True,
+            "physical_live": True,
+            "release_between_operations": False,
+        }
+        checks["prediction"] = (
+            predicted_live_set["bytes"] == W14B_PREDICTED_LIVE_SET_BYTES
+            and predicted_live_set["limit_bytes"] == W14B_PREDICTED_LIVE_SET_LIMIT_BYTES
+            and predicted_live_set["gate"] is True
+            and predicted_live_set["derived_not_measured"] is True
+            and predicted_live_set["scratch_bytes"] == 25_027_488
+        )
+        checks["rho1_anchor"] = abs(
+            rho_values["1"] - W14B_RHO1_ANCHOR
+        ) <= W14B_RHO1_LIMIT
+        checks["rho_monotone"] = (
+            rho_values["1"] >= rho_values["2"] - W14B_MONOTONICITY_TOLERANCE
+            and rho_values["2"] >= rho_values["4"] - W14B_MONOTONICITY_TOLERANCE
+        )
+        checks["rho4"] = rho_values["4"] <= W14B_RHO4_LIMIT
+    except (KeyError, IndexError, TypeError, ValueError):
+        pass
+    return {
+        "pass": bool(all(checks.values())),
+        "checks": checks,
+        "problems": sorted(name for name, passed in checks.items() if not passed),
+        "rho": rho_values,
+    }
 
 
 def evaluate_w14a_action_gate(
