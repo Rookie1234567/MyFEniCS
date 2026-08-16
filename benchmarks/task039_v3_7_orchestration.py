@@ -1578,6 +1578,7 @@ def run_task039_v3_7_diagnostic(
                 "max_it": profile.max_it,
                 "oracle_max_it": V3_7_ORACLE_MAX_IT,
             },
+            "qep_basis_audit": getattr(setup, "qep_audit", {}),
             "watchdog": watchdog,
             "telemetry": {
                 "process_tree_samples": {

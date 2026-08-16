@@ -6,6 +6,7 @@ import hashlib
 import inspect
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -68,11 +69,61 @@ def test_qep_tolerance_is_explicit_and_profile_selected() -> None:
     assert Task37cProfile().qep_solver_tolerance == 1.0e-10
     profile = v3_7_profile_from_resolved(load_v3_7_official_payload(INPUT))
     assert profile.qep_solver_tolerance == 1.0e-13
+    assert profile.retained_subspace_dual_rotation is True
+    assert (
+        getattr(frozen_runner.FROZEN_M10, "retained_subspace_dual_rotation", False)
+        is False
+    )
+    assert getattr(Task37cProfile(), "retained_subspace_dual_rotation", False) is False
     source = inspect.getsource(frozen_runner.build_frozen_m10_setup)
     assert source.count("\n        tolerance=profile.qep_solver_tolerance") == 2
     assert (
         source.count("\n        qep_solver_tolerance=profile.qep_solver_tolerance") == 2
     )
+    assert (
+        source.count(
+            "\n        retained_subspace_dual_rotation=bool(\n"
+            '            getattr(profile, "retained_subspace_dual_rotation", False)\n'
+            "        ),"
+        )
+        == 2
+    )
+
+
+def test_task039_qep_basis_audit_is_compact_and_fail_closed() -> None:
+    basis = SimpleNamespace(
+        near_degenerate_partition_audit={
+            "status": "near_degenerate_block_partition_pass",
+            "pass": True,
+            "biorthogonality_identity_row_norm": 1.0e-9,
+            "biorthogonality_identity_max_entry": 1.0e-10,
+            "max_cross_block_overlap": 1.0e-10,
+            "near_degenerate_tolerance": 1.0e-6,
+            "block_rotation_tolerance": 1.0e-6,
+            "group_members": list(range(480)),
+        },
+        retained_subspace_dual_rotation_audit=None,
+        modes=[SimpleNamespace(left_polynomial_relative_residual=2.0e-15)],
+    )
+    report = frozen_runner._task039_qep_basis_audit(basis, side="forward")
+    assert report["overall_pass"] is True
+    assert "group_members" not in report["partition_audit"]
+
+    failing_rotation = SimpleNamespace(
+        near_degenerate_partition_audit={"pass": True},
+        retained_subspace_dual_rotation_audit={"overall_pass": False},
+        modes=[SimpleNamespace(left_polynomial_relative_residual=2.0e-15)],
+    )
+    with pytest.raises(RuntimeError, match="backward QEP basis audit failed"):
+        frozen_runner._task039_qep_basis_audit(failing_rotation, side="backward")
+
+    failing_residual = SimpleNamespace(
+        near_degenerate_partition_audit={"pass": True},
+        retained_subspace_dual_rotation_audit=None,
+        modes=[SimpleNamespace(left_polynomial_relative_residual=1.0e-7)],
+    )
+    with pytest.raises(RuntimeError, match="forward QEP basis audit failed"):
+        frozen_runner._task039_qep_basis_audit(failing_residual, side="forward")
 
 
 def test_v3_7_partition_fixture_stays_outside_near_degenerate_envelope() -> None:

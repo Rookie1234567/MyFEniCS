@@ -181,6 +181,7 @@ class FrozenM10Setup:
     mode_selection: dict[str, dict[str, int]]
     timings: dict[str, float]
     qep_release: dict[str, Any]
+    qep_audit: dict[str, Any] = field(default_factory=dict)
     profile: FrozenM10Profile | Task37cProfile = FROZEN_M10
     _final_release_done: bool = field(default=False, init=False, repr=False)
     _final_release_state: dict[str, bool] = field(
@@ -1605,6 +1606,81 @@ def release_frozen_m10_qep_operators(
     }
 
 
+def _task039_qep_basis_audit(basis: Any, *, side: str) -> dict[str, Any]:
+    """Check and compact one opt-in Task39 basis audit."""
+
+    partition = basis.near_degenerate_partition_audit
+    partition_pass = isinstance(partition, Mapping) and partition.get("pass") is True
+    compact_partition = None
+    if isinstance(partition, Mapping):
+        compact_partition = {
+            key: partition[key]
+            for key in (
+                "status",
+                "pass",
+                "biorthogonality_identity_row_norm",
+                "biorthogonality_identity_max_entry",
+                "max_cross_block_overlap",
+                "near_degenerate_tolerance",
+                "block_rotation_tolerance",
+            )
+            if key in partition
+        }
+
+    rotation = basis.retained_subspace_dual_rotation_audit
+    rotation_pass = rotation is None or (
+        isinstance(rotation, Mapping) and rotation.get("overall_pass") is True
+    )
+    compact_rotation = None
+    if isinstance(rotation, Mapping):
+        compact_rotation = {
+            key: rotation[key]
+            for key in (
+                "enabled",
+                "overall_pass",
+                "partition_pass",
+                "left_residual_pass",
+                "pre_identity_row_norm",
+                "pre_identity_max_entry",
+                "pre_max_cross_block_overlap",
+                "post_identity_row_norm",
+                "post_identity_max_entry",
+                "post_max_cross_block_overlap",
+                "condition_number",
+                "t_minus_identity_inf_norm",
+                "t_minus_identity_max_abs",
+                "left_span_dimension",
+                "betas_unchanged",
+                "right_vectors_unchanged",
+                "post_max_left_polynomial_relative_residual",
+            )
+            if key in rotation
+        }
+
+    left_residuals = [
+        float(mode.left_polynomial_relative_residual) for mode in basis.modes
+    ]
+    max_left_residual = max(left_residuals, default=0.0)
+    left_residual_pass = bool(
+        np.isfinite(max_left_residual) and max_left_residual <= 1.0e-8
+    )
+    report = {
+        "side": side,
+        "rotation_triggered": rotation is not None,
+        "partition_audit": compact_partition,
+        "rotation_audit": compact_rotation,
+        "max_left_polynomial_relative_residual": max_left_residual,
+        "left_polynomial_residual_limit": 1.0e-8,
+        "partition_pass": partition_pass,
+        "rotation_pass": rotation_pass,
+        "left_residual_pass": left_residual_pass,
+        "overall_pass": partition_pass and rotation_pass and left_residual_pass,
+    }
+    if not report["overall_pass"]:
+        raise RuntimeError(f"Task39 {side} QEP basis audit failed: {report}")
+    return report
+
+
 def build_frozen_m10_setup(
     comm: MPI.Intracomm = MPI.COMM_WORLD,
     *,
@@ -1709,11 +1785,17 @@ def build_frozen_m10_setup(
         adjoint_target=np.conj(target),
         requested_left_modes=profile.candidate_modes,
         qep_solver_tolerance=profile.qep_solver_tolerance,
+        retained_subspace_dual_rotation=bool(
+            getattr(profile, "retained_subspace_dual_rotation", False)
+        ),
         near_degenerate_tolerance=profile.near_degenerate_tolerance,
         block_rotation_tolerance=profile.block_rotation_tolerance,
         poynting_evaluator=poynting_evaluator,
         log=log,
     )
+    qep_audit: dict[str, Any] = {}
+    if bool(getattr(profile, "retained_subspace_dual_rotation", False)):
+        qep_audit["forward"] = _task039_qep_basis_audit(positive, side="forward")
     negative_right, negative_report = solve_quadratic_beta_modes(
         operators,
         target=-target,
@@ -1742,11 +1824,18 @@ def build_frozen_m10_setup(
         adjoint_target=-np.conj(target),
         requested_left_modes=profile.candidate_modes,
         qep_solver_tolerance=profile.qep_solver_tolerance,
+        retained_subspace_dual_rotation=bool(
+            getattr(profile, "retained_subspace_dual_rotation", False)
+        ),
         near_degenerate_tolerance=profile.near_degenerate_tolerance,
         block_rotation_tolerance=profile.block_rotation_tolerance,
         poynting_evaluator=poynting_evaluator,
         log=log,
     )
+    if bool(getattr(profile, "retained_subspace_dual_rotation", False)):
+        qep_audit["backward"] = _task039_qep_basis_audit(negative, side="backward")
+        if detail_stage_callback is not None:
+            detail_stage_callback("qep_basis_audit", qep_audit)
     reciprocal_pairs = pair_reciprocal_mode_bases(operators, positive, negative)
     if len(reciprocal_pairs) != profile.requested_modes:
         raise RuntimeError("Frozen M10 reciprocal QEP pairing is incomplete.")
@@ -1826,6 +1915,7 @@ def build_frozen_m10_setup(
         },
         timings=timings,
         qep_release=qep_release,
+        qep_audit=qep_audit,
         profile=profile,
     )
 
