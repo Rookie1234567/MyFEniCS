@@ -874,6 +874,81 @@ def test_v3_8_candidate_b_branch_skips_v3_7_reference_oracle_recovery(
     assert ledger["objects"]["correction_wrappers"]["destroyed"] is True
 
 
+def test_v3_8_candidate_d_branch_skips_direct_reference_and_identity(
+    tmp_path, monkeypatch
+) -> None:
+    payload = load_v3_7_official_payload(INPUT)
+    called: list[str] = []
+
+    class Layout:
+        comm = MPI.COMM_SELF
+
+        @classmethod
+        def build(cls, *_args):
+            return cls()
+
+    class Rhs:
+        def destroy(self):
+            called.append("rhs_destroy")
+
+    setup = SimpleNamespace(
+        bottom=SimpleNamespace(),
+        top=SimpleNamespace(),
+        coupling=SimpleNamespace(internal_unknown_count=0),
+    )
+    run_directory = tmp_path / "run"
+    run_directory.mkdir()
+    (run_directory / "resolved_config.json").write_text("{}\n", encoding="utf-8")
+    checkpoint = run_directory / "numerical_output" / "v3_8_candidate_d_checkpoint.json"
+
+    def campaign(*_args, **kwargs):
+        called.append("candidate_d")
+        marker_callback = kwargs["marker_callback"]
+        marker_callback("candidate_d_explicit_components_ready", {})
+        marker_callback("candidate_d_explicit_components_destroyed", {})
+        return {"status": "measured", "pass": False}, checkpoint
+
+    def forbidden(name):
+        def fail(*_args, **_kwargs):
+            raise AssertionError(f"{name} was called")
+
+        return fail
+
+    monkeypatch.setattr(orchestration, "HybridAugmentedLayout", Layout)
+    monkeypatch.setattr(orchestration, "_default_rhs", lambda *_args: Rhs())
+    monkeypatch.setattr(
+        orchestration, "release_frozen_m10_objects", lambda *_args: None
+    )
+    monkeypatch.setattr(orchestration, "_run_v3_8_candidate_d_campaign", campaign)
+
+    result = orchestration.run_task039_v3_7_diagnostic(
+        payload,
+        run_directory,
+        source_sha="a" * 40,
+        comm=MPI.COMM_SELF,
+        setup_builder=lambda *_args, **_kwargs: setup,
+        inventory_loader=forbidden("inventory_loader"),
+        reference_builder=forbidden("reference_builder"),
+        identity_runner=forbidden("identity_runner"),
+        oracle_runner=forbidden("oracle_runner"),
+        recovery_runner=None,
+        candidate_d_only=True,
+    )
+    assert called == ["candidate_d", "rhs_destroy"]
+    assert result["schema"] == "task039.v3-8-candidate-d-only.v1"
+    assert result["direct_reference_payload_loaded"] is False
+    assert result["candidate_d"]["pass"] is False
+    ledger = json.loads(
+        (run_directory / "numerical_output" / "memory_object_ledger.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert ledger["status"] == "completed"
+    assert ledger["objects"]["setup"]["destroyed"] is True
+    assert ledger["objects"]["candidate_d_explicit_components"]["destroyed"] is True
+    assert ledger["objects"]["independent_reference"]["created"] is False
+
+
 def test_v3_8_candidate_c_normal_return_finalizes_ledger(tmp_path, monkeypatch) -> None:
     payload = load_v3_7_official_payload(INPUT)
     called: list[str] = []
