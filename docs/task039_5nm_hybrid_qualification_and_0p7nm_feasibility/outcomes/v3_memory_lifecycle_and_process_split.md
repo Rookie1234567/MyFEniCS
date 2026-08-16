@@ -140,3 +140,23 @@ Review 的 20% 目标要求 iterative RSS 不超过当前 direct 的 80%：
 
 本轮未改变 ordinary defaults、solver、物理阈值或 raw。V3-7 及后续 PC/iterative
 工作在 V3-6 受控停止，等待审阅；没有启动 PDE/MPI。
+
+## 6. V3-11 M-A：两侧 interface 构造之间的生命周期边界
+
+V3-11 在同一 5 nm、1°、p6/h5、M480、MPI8 Candidate D 诊断中保留了 QEP
+operator 的提前释放，并在 bottom interface blocks 完成 ownership transfer 后、开始
+top blocks 前增加了一次已有的 collective heap cleanup。这个清理只回收已经离开 helper
+作用域的 PETSc/allocator 临时量，不销毁 bottom final block、top block、basis 或 endcap。
+
+实测全过程峰值为 `53634355200 bytes = 51149.70703125 MiB = 49.95088577270508 GiB`，
+swap=`0`，峰值位于 coupling 尾部、`post_coupling_heap_cleanup` 之前。bottom cleanup
+从 `11334.00390625 MB` 降到 `1498.953125 MB`，释放 `9881.578125 MB`；post-coupling
+cleanup 从 `11388.359375 MB` 降到 `1434.8203125 MB`，释放 `10099.8359375 MB`，两次
+collective call 均完成。这个结果支持“跨 side 构造时的 allocator high-water 会叠加”的
+生命周期假设，但不把每个字节归因给某个单独矩阵对象。
+
+相对 1° Hybrid direct `87064.125 MiB` 节省 `41.250535704287%`，相对 Full3D direct
+`96151.16796875 MiB` 节省 `46.802822979879%`，因此本次 research oracle 的 resource
+Gate 通过。它仍不是 production iterative PC：两侧 exact sparse factor 的成本、适用性和
+所有 normal/default 路径尚未被普遍验证；V3-11 的 integrated physics 通过也不改变
+Full3D strict channel 的 diagnostic-only 边界。详见 V3-11 compact record。

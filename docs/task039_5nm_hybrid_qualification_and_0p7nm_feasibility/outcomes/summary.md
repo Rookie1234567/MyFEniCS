@@ -328,3 +328,34 @@ ILU(0) source/factor NNZ or bytes, so the ratio is `not_recorded`, not inferred.
 other global candidates are not run: the measured ILU(1) factor expansion and very poor
 contraction do not justify another heavy candidate, and no controlled ILUT/drop interface was
 available. See [the side-PC funnel](v3_pc_candidate_funnel.md) and [C1 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v3_8_candidate_c1_ilu1_formal_v1.json).
+
+### V3-11 Candidate D：两侧 exact-side 研究 oracle与双边界内存清理
+
+Candidate D 使用两侧各一个稀疏 exact-side factor，并用动态 DtN Woodbury/block-LDU
+作为全局 matrix-free Hybrid operator 的右侧动作。它验证的是“side inverse 足够准确时，
+全局外层是否能收敛”，不是把一个可复用的 production PC 交付为默认 solver；因此仍分类为
+`USER_AUTHORIZED_EXPERIMENTAL_HYBRIDIZED_DIRECT_SIDE_CANDIDATE_D` / `research_only`。
+
+| 项目 | measured result | 结论 |
+| --- | ---: | --- |
+| V3-11 source / run | `a6e3f6965e84b9e4594942d4ef372f1eff475e36` / `task039_v3_11_candidate_d_inter_side_cleanup_formal_mpi8` | MPI8，5 nm、1°、phi=0、S、p6/h5、M480 |
+| outer solve | 1 iteration；reported/global/bottom/top/modal `2.10121e-10 / 2.10122e-10 / 9.06975e-12 / 1.95048e-10 / 4.33722e-11` | numerical pass |
+| physics | R/T/A/A_volume `0.7397405131 / 0.0002157492 / 0.2600437378 / 0.2600443739`；traction、projection、Hybrid-direct integrated checker pass | physics pass |
+| resource | peak `49.9509 GiB`，swap `0`；低于 `69651.3 MiB` 目标 | resource pass |
+
+这里的 exact-side 是指只对 bottom/top 两个局部端口矩阵做精确稀疏分解；全局 Hybrid
+矩阵仍以 matrix-free 方式施加，外层一次 FGMRES 更新就达到残差限值。一次迭代说明
+局部逆在这个诊断上很强，但不能据此证明它的内存生命周期、通用性或 ordinary production
+默认都已解决。正式运行没有加载 direct-solution reference payload，global Hybrid direct
+factor count 为 `0`，两侧 cleanup 后 direct factor count 为 `0/0`。
+
+process-tree 峰值为 `53634355200 bytes = 51149.70703125 MiB = 49.95088577270508 GiB`，
+发生在 coupling 尾部、`post_coupling_heap_cleanup` 前；与同物理 Hybrid direct 的
+`87064.125 MiB` 相比节省 `35914.41796875 MiB / 41.250535704287%`，与 Full3D direct
+的 `96151.16796875 MiB` 相比节省 `45001.4609375 MiB / 46.802822979879%`。这些是
+research oracle 的实测资源证据，不是 Hybrid iterative production qualification；
+Full3D 的逐通道严格幅度比较仍仅作 diagnostic-only。
+
+完整 hash-bound 记录见
+[`task039_v3_11_candidate_d_inter_side_cleanup_formal_v1.json`](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v3_11_candidate_d_inter_side_cleanup_formal_v1.json)。
+Candidate E 尚未运行。

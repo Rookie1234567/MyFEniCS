@@ -41,3 +41,22 @@ C2/ILUT，也不运行任何同类 global candidate。下一步若继续，只�
 完整逐 probe、factor timing、lifecycle、checkpoint 和三份 telemetry 保存在 ignored
 run root；tracked compact record 为
 [`task039_v3_8_candidate_c1_ilu1_formal_v1.json`](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v3_8_candidate_c1_ilu1_formal_v1.json)。
+
+## Candidate D：exact-side 研究 oracle（V3-11）
+
+Candidate D 不是普通生产 PC，而是用户授权的实验性 hybridized direct-side block-LDU
+oracle。它对 bottom/top 各保留一个 exact sparse factor，配合同一动态 DtN Woodbury
+动作；全局 Hybrid direct factor 为 `0`，outer 在零初值 FGMRES 下 1 次迭代达到五项
+残差限值。这个结果证明局部 side inverse 的数值强度，但 exact factor 的构造成本、
+生命周期和通用 production 接线仍需另行资格化，所以不能改写为 production success。
+
+| 指标 | V3-11 measured |
+| --- | ---: |
+| reported/global/bottom/top/modal residual | `2.10121e-10 / 2.10122e-10 / 9.06975e-12 / 1.95048e-10 / 4.33722e-11` |
+| process-tree peak | `51149.70703125 MiB = 49.95088577270508 GiB`，swap `0` |
+| 相对 Hybrid direct / Full3D direct 节省 | `41.250535704287% / 46.802822979879%` |
+| cleanup 后 factors | bottom/top/global `0/0/0`；explicit components released，collective cleanup completed |
+
+峰值发生在 coupling 尾部的 `post_coupling_heap_cleanup` 之前。Full3D strict channel
+comparison 仍为 diagnostic-only；Hybrid-direct integrated checker 与 selected E/H
+通过。Candidate E 尚未运行。
