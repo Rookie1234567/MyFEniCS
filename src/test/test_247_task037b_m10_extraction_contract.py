@@ -279,10 +279,26 @@ def test_physical_setup_contract_is_frozen_and_releases_qep_early() -> None:
     coupling_position = setup_source.index(
         "coupling = build_hybrid_internal_mode_coupling"
     )
+    coupling_timing_position = setup_source.index(
+        'timings["internal_modal_coupling"] = _max_elapsed(comm, started)'
+    )
+    post_cleanup_position = setup_source.index(
+        "post_coupling_cleanup = collective_heap_cleanup(comm)"
+    )
+    return_position = setup_source.index("return FrozenM10Setup(")
     assert pair_position < release_position < bottom_position < top_position
-    assert top_position < coupling_position
+    assert top_position < coupling_position < coupling_timing_position
+    assert coupling_timing_position < post_cleanup_position < return_position
+    assert setup_source.count("collective_heap_cleanup(comm)") == 1
+    assert setup_source.count('"post_coupling_heap_cleanup",') == 1
+    post_cleanup_source = setup_source[post_cleanup_position:return_position]
+    assert ".destroy(" not in post_cleanup_source
     assert "qep_matrices_ready" in setup_source
     assert "modal_qep_temporaries_released" in setup_source
+    assert "collective_call_completed" in post_cleanup_source
+    assert "max_rss_before_mb" in post_cleanup_source
+    assert "max_rss_after_mb" in post_cleanup_source
+    assert "max_rss_released_mb" in post_cleanup_source
     assert not any(
         isinstance(node, ast.Name)
         and node.id == "operators"

@@ -1913,6 +1913,26 @@ def build_frozen_m10_setup(
         log=log,
     )
     timings["internal_modal_coupling"] = _max_elapsed(comm, started)
+    post_coupling_cleanup = collective_heap_cleanup(comm)
+    if detail_stage_callback is not None:
+        detail_stage_callback(
+            "post_coupling_heap_cleanup",
+            {
+                "source": "collective_heap_cleanup",
+                "collective_call_completed": post_coupling_cleanup[
+                    "collective_call_completed"
+                ],
+                "max_rss_before_mb": post_coupling_cleanup["max_rss_before_mb"],
+                "max_rss_after_mb": post_coupling_cleanup["max_rss_after_mb"],
+                "max_rss_released_mb": post_coupling_cleanup["max_rss_released_mb"],
+                "elapsed_seconds_max_rank": post_coupling_cleanup[
+                    "elapsed_seconds_max_rank"
+                ],
+            },
+        )
+    timings["post_coupling_heap_cleanup"] = float(
+        post_coupling_cleanup["elapsed_seconds_max_rank"]
+    )
 
     return FrozenM10Setup(
         cfg=cfg,
