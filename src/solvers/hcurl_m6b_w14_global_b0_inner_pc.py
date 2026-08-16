@@ -8,7 +8,8 @@ records a scalar/hash audit and enforces its inner true-residual gate.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
+import math
 import time
 from typing import Any
 
@@ -23,13 +24,213 @@ from .hcurl_h2b_m5_coercive import (
 )
 
 
-__all__ = ("W14GlobalB0InnerPC",)
+__all__ = (
+    "W14A_ACTION_SCHEMA",
+    "W14A_CLOSURE_LIMIT",
+    "W14A_PREDICTED_LIVE_SET_BYTES",
+    "W14A_PREDICTED_LIVE_SET_LIMIT_BYTES",
+    "W14A_RELATIVE_IDENTITY_LIMIT",
+    "W14A_RHO_LIMIT",
+    "W14GlobalB0InnerPC",
+    "evaluate_w14a_action_gate",
+)
 
 
 _W14_SCHEMA = "task037.extra.h2b.w14.global-b0-inner-pc.v1"
 _W14_MAX_IT = 20
 _W14_RESTART = 20
 _W14_TRUE_RESIDUAL_LIMIT = 1.0e-2
+W14A_ACTION_SCHEMA = "task037.extra.h2b.w14a.action-only.global-b0.v1"
+W14A_RHO_LIMIT = 0.95
+W14A_CLOSURE_LIMIT = 1.0e-11
+W14A_RELATIVE_IDENTITY_LIMIT = 1.0e-13
+W14A_PREDICTED_LIVE_SET_BYTES = 1_281_057_286
+W14A_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_500_000_000
+
+
+def _finite_bounded(value: Any, limit: float | None = None) -> bool:
+    if isinstance(value, bool):
+        return False
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return False
+    return math.isfinite(number) and number >= 0.0 and (limit is None or number <= limit)
+
+
+def evaluate_w14a_action_gate(
+    *,
+    inner_audit: Mapping[str, Any],
+    z_identity: Mapping[str, Any],
+    p_identity: Mapping[str, Any],
+    measurement: Mapping[str, Any],
+    p2_measurement: Mapping[str, Any],
+    physical_action_count: int,
+    architecture: Mapping[str, Any],
+    lifecycle_events: Sequence[str],
+    predicted_live_set: Mapping[str, Any],
+    source_ok: bool,
+    cache_ok: bool,
+) -> dict[str, bool]:
+    """Evaluate the fixed W14.1 action-only Gate from scalar evidence.
+
+    This intentionally accepts only already-recorded scalar/hash audits.  A
+    missing field makes the corresponding check false; no numeric fallback or
+    alternate action path is introduced.
+    """
+
+    checks = {
+        "inner_records": False,
+        "inner_algorithm": False,
+        "inner_residual": False,
+        "inner_work_vector": False,
+        "z_identity": False,
+        "p_identity": False,
+        "physical_action_count": False,
+        "measurement": False,
+        "measurement_repeat": False,
+        "p2_measurement": False,
+        "architecture": False,
+        "coexistence_lifecycle": False,
+        "prediction": False,
+        "source": bool(source_ok is True),
+        "cache": bool(cache_ok is True),
+    }
+    if not all(
+        isinstance(value, Mapping)
+        for value in (
+            inner_audit,
+            z_identity,
+            p_identity,
+            measurement,
+            p2_measurement,
+            architecture,
+            predicted_live_set,
+        )
+    ):
+        return checks
+    try:
+        algorithm = inner_audit["algorithm"]
+        checks["inner_algorithm"] = (
+            isinstance(algorithm, Mapping)
+            and algorithm["solver"] == "fgmres"
+            and algorithm["restart"] == 20
+            and algorithm["max_it"] == 20
+            and algorithm["zero_start"] is True
+            and algorithm["rtol"] == 0.0
+            and algorithm["atol"] == 0.0
+            and algorithm["pc_side"] == "right"
+            and algorithm["mpi_size"] == 1
+        )
+        records = inner_audit["applications"]
+        if isinstance(records, Sequence) and not isinstance(records, (str, bytes)):
+            checks["inner_records"] = len(records) == 2
+            checks["inner_algorithm"] = checks["inner_algorithm"] and all(
+                record["algorithm"] == "fgmres_right_b0_fixed20"
+                and record["iterations"] == 20
+                and record["converged_reason"] == -3
+                and record["pc_apply_count_delta"] == record["iterations"]
+                and record["operator_apply_count_delta"] > 0
+                for record in records
+            )
+            checks["inner_algorithm"] = checks["inner_algorithm"] and (
+                isinstance(inner_audit["underlying_pc"], Mapping)
+                and inner_audit["underlying_pc"]["apply_count"]
+                == sum(record["pc_apply_count_delta"] for record in records)
+            )
+            checks["inner_residual"] = all(
+                record["finite"] is True
+                and record["gate_pass"] is True
+                and _finite_bounded(record["true_residual"], _W14_TRUE_RESIDUAL_LIMIT)
+                for record in records
+            )
+            checks["inner_records"] = checks["inner_records"] and all(
+                record["rhs_sha256"] == records[0]["rhs_sha256"] for record in records
+            )
+        checks["inner_work_vector"] = (
+            inner_audit["rhs_vec_owned"] is True
+            and inner_audit["rhs_vec_destroyed"] is False
+            and inner_audit["rows"] > 0
+            and inner_audit["retained_full_vector_count"] == 1
+            and inner_audit["retained_full_vector_bytes"]
+            == inner_audit["rows"] * np.dtype(np.complex128).itemsize
+            and inner_audit["wrapper_owned_full_vector_count"] == 1
+            and inner_audit["wrapper_owned_full_vector_bytes"]
+            == inner_audit["rows"] * np.dtype(np.complex128).itemsize
+            and inner_audit["application_records_full_vector_count"] == 0
+            and inner_audit["application_records_full_vector_bytes"] == 0
+        )
+        checks["z_identity"] = (
+            z_identity["finite"] is True
+            and z_identity["dtype"] == "complex128"
+            and z_identity["shape_equal"] is True
+            and z_identity["sha256_equal"] is True
+            and _finite_bounded(
+                z_identity["relative_difference"], W14A_RELATIVE_IDENTITY_LIMIT
+            )
+        )
+        checks["p_identity"] = (
+            p_identity["finite"] is True
+            and p_identity["dtype"] == "complex128"
+            and p_identity["shape_equal"] is True
+            and p_identity["sha256_equal"] is True
+            and _finite_bounded(
+                p_identity["relative_difference"], W14A_RELATIVE_IDENTITY_LIMIT
+            )
+        )
+        checks["physical_action_count"] = physical_action_count == 2
+        checks["measurement"] = (
+            measurement["schema"] == W14A_ACTION_SCHEMA
+            and measurement["finite"] is True
+            and _finite_bounded(measurement["rho"], W14A_RHO_LIMIT)
+            and _finite_bounded(measurement["normal_closure"], W14A_CLOSURE_LIMIT)
+            and _finite_bounded(
+                measurement["projection_orthogonality"], W14A_CLOSURE_LIMIT
+            )
+        )
+        checks["measurement_repeat"] = (
+            measurement["repeat_exact"] is True
+            and measurement["repeat"]["repeat_exact"] is True
+            and measurement["repeat"]["passes"] == 2
+        )
+        checks["p2_measurement"] = (
+            p2_measurement["schema"] == W14A_ACTION_SCHEMA
+            and p2_measurement["finite"] is True
+            and _finite_bounded(p2_measurement["rho"], W14A_RHO_LIMIT)
+            and _finite_bounded(p2_measurement["normal_closure"], W14A_CLOSURE_LIMIT)
+            and _finite_bounded(
+                p2_measurement["projection_orthogonality"], W14A_CLOSURE_LIMIT
+            )
+        )
+        checks["architecture"] = (
+            architecture["fine_space"] == "uncondensed_fullspace"
+            and architecture["global_matrix_materialized"] is False
+            and architecture["augmented_matrix_materialized"] is False
+            and architecture["condensation"] is False
+            and architecture["static_condensed_operator_used"] is False
+            and architecture["trace_slab_pc_used"] is False
+            and architecture["slab_factors"] == 0
+            and architecture["shifted_pc_used"] is False
+            and architecture["physical_ksp_used"] is False
+            and architecture["pde_used"] is False
+            and architecture["official_rta"] is False
+        )
+        checks["coexistence_lifecycle"] = list(lifecycle_events) == [
+            "b0_constructed",
+            "physical_constructed",
+            "coexistence_ready",
+            "physical_released",
+            "b0_released",
+        ]
+        checks["prediction"] = (
+            predicted_live_set["bytes"] == W14A_PREDICTED_LIVE_SET_BYTES
+            and predicted_live_set["limit_bytes"] == W14A_PREDICTED_LIVE_SET_LIMIT_BYTES
+            and predicted_live_set["gate"] is True
+            and predicted_live_set["derived_not_measured"] is True
+        )
+    except (KeyError, IndexError, TypeError, ValueError):
+        return checks
+    return checks
 
 
 def _require_context_audits(

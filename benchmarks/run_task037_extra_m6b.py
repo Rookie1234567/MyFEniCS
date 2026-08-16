@@ -456,6 +456,16 @@ M6B_W13A_WAVE_RELATIVE_PATH = (
 M6B_W13A_JIT_RELATIVE_PATH = (
     "benchmarks/artifacts/task037_extra_development/m6b_w1a_e2f99a3_builder_run1/jit_cache"
 )
+M6B_W14A_SCHEMA = "task037.extra.h2b.w14a.action-only.global-b0.v1"
+M6B_W14A_PHASE = "w14a_action_only_global_b0"
+M6B_W14A_PROGRESS_FILENAME = "m6b_w14a_progress.jsonl"
+M6B_W14A_SUMMARY_FILENAME = "m6b_w14a_summary.json"
+M6B_W14A_TIMEOUT_SECONDS = 3_600.0
+M6B_W14A_WATCHDOG_RSS_LIMIT_BYTES = 1_950_000_000
+M6B_W14A_FORMAL_RSS_LIMIT_BYTES = 1_500_000_000
+M6B_W14A_VECTOR_BYTES = M6B_GLOBAL_ROWS * 16
+M6B_W14A_PREDICTED_LIVE_SET_BYTES = 1_281_057_286
+M6B_W14A_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_500_000_000
 M6B_W6A_EVENTS = (
     "authority_validated",
     "mesh_ready",
@@ -5050,6 +5060,80 @@ def _m6b_w13a_predicted_live_set() -> dict[str, Any]:
     }
 
 
+def _m6b_w14a_scope() -> dict[str, Any]:
+    return {
+        "schema": M6B_W14A_SCHEMA,
+        "phase": M6B_W14A_PHASE,
+        "solver": "global_b0_inner_pc_action_only",
+        "residual_role": "untouched_W7_cumulative400_full_explicit_residual",
+        "w5_q_used_for_construction": False,
+        "fine_space": "uncondensed_fullspace",
+        "physical_operator": "beta=0 volume + matrix-free DtN80",
+        "inner_pc": "global coercive B0, right FGMRES restart20 max_it20",
+        "zero_start": True,
+        "rtol": 0.0,
+        "atol": 0.0,
+        "shifted_pc_used": False,
+        "simultaneous_b0_physical_residency": True,
+        "global_matrix": False,
+        "augmented_matrix": False,
+        "condensation": False,
+        "static_condensed": False,
+        "trace_slab": False,
+        "slab_factors": 0,
+        "physical_ksp": False,
+        "pde": False,
+        "official_rta": False,
+        "parameter_scan": False,
+        "w14_2_locked_until_resource_closeout": True,
+        "resource_limits": {
+            "predicted_live_set_bytes": M6B_W14A_PREDICTED_LIVE_SET_BYTES,
+            "predicted_live_set_limit_bytes": M6B_W14A_PREDICTED_LIVE_SET_LIMIT_BYTES,
+            "formal_process_peak_bytes": M6B_W14A_FORMAL_RSS_LIMIT_BYTES,
+            "watchdog_rss_bytes": M6B_W14A_WATCHDOG_RSS_LIMIT_BYTES,
+            "swap_bytes": M6B_SWAP_LIMIT_BYTES,
+            "timeout_seconds": M6B_W14A_TIMEOUT_SECONDS,
+        },
+    }
+
+
+def _m6b_w14a_predicted_live_set() -> dict[str, Any]:
+    total = int(M6B_W14A_PREDICTED_LIVE_SET_BYTES)
+    return {
+        "bytes": total,
+        "limit_bytes": M6B_W14A_PREDICTED_LIVE_SET_LIMIT_BYTES,
+        "gate": total <= M6B_W14A_PREDICTED_LIVE_SET_LIMIT_BYTES,
+        "derived_not_measured": True,
+        "assumptions": {
+            "m5_calibrated_peak_is_max_stage_process_tree": True,
+            "b0_and_physical_heavy_objects_coexist": True,
+            "warm_union_runtime_compiler_process_count": 0,
+            "swap_bytes": M6B_SWAP_LIMIT_BYTES,
+        },
+        "components": {
+            "m5_calibrated_peak_bytes": 1_183_698_944,
+            "m6a_work_bytes": M6B_M6A_RETAINED_WORK_BYTES,
+            "six_full_space_vectors_bytes": 6 * M6B_W14A_VECTOR_BYTES,
+            "fixed_runtime_reserve_bytes": 64_000_000,
+        },
+        "basis": (
+            "Derived W14.1 coexistence bound: M5 calibrated maximum-stage "
+            "process-tree peak + M6A work + target, wrapper RHS, z1, z2, "
+            "p1, and p2 full-space vectors + fixed reserve. It is not a "
+            "measured process-tree peak."
+        ),
+    }
+
+
+def _m6b_w14a_resource_closeout_flags(diagnostic_pass: bool) -> dict[str, bool]:
+    passed = bool(diagnostic_pass)
+    return {
+        "formal_resource_closeout_unlocked": passed,
+        "formal_resource_closeout_pending": passed,
+        "formal_resource_closeout_locked": bool(not passed),
+    }
+
+
 def _m6b_w11a_load_authorities(
     w5_compact: Path,
     w5_raw_dir: Path,
@@ -5419,33 +5503,42 @@ def _run_m6b_w11a_diagnostic(
 ) -> int:
     """Run the fixed W11A/W11B/W12 diagnostic without a PDE solve."""
 
-    if mode not in {"w11a", "w11b", "w12"}:
-        raise ValueError("W11/W12 diagnostic mode is not fixed")
+    if mode not in {"w11a", "w11b", "w12", "w14a"}:
+        raise ValueError("W11/W12/W14A diagnostic mode is not fixed")
     is_w11b = mode == "w11b"
     is_w12 = mode == "w12"
+    is_w14a = mode == "w14a"
     result_schema = (
-        M6B_W12_SCHEMA
+        M6B_W14A_SCHEMA
+        if is_w14a
+        else M6B_W12_SCHEMA
         if is_w12
         else M6B_W11B_SCHEMA
         if is_w11b
         else M6B_W11A_SCHEMA
     )
     result_phase = (
-        M6B_W12_PHASE
+        M6B_W14A_PHASE
+        if is_w14a
+        else M6B_W12_PHASE
         if is_w12
         else M6B_W11B_PHASE
         if is_w11b
         else M6B_W11A_PHASE
     )
     progress_filename = (
-        M6B_W12_PROGRESS_FILENAME
+        M6B_W14A_PROGRESS_FILENAME
+        if is_w14a
+        else M6B_W12_PROGRESS_FILENAME
         if is_w12
         else M6B_W11B_PROGRESS_FILENAME
         if is_w11b
         else "m6b_w11a_progress.jsonl"
     )
     summary_filename = (
-        M6B_W12_SUMMARY_FILENAME
+        M6B_W14A_SUMMARY_FILENAME
+        if is_w14a
+        else M6B_W12_SUMMARY_FILENAME
         if is_w12
         else M6B_W11B_SUMMARY_FILENAME
         if is_w11b
@@ -5471,8 +5564,13 @@ def _run_m6b_w11a_diagnostic(
     )
     from src.solvers.hcurl_h2b_m5_coercive import (
         M5M4YPCContext,
+        _array_sha256,
         build_m5_b0_mat,
         solve_m5_b0_fixed,
+    )
+    from src.solvers.hcurl_m6b_w14_global_b0_inner_pc import (
+        W14GlobalB0InnerPC,
+        evaluate_w14a_action_gate,
     )
     from src.solvers.hcurl_h2b_m6b_shifted_patch_pc import (
         M6BNumpyOuterActionBridge,
@@ -5486,8 +5584,10 @@ def _run_m6b_w11a_diagnostic(
         build_task037_extra_h1r2_mpc_action,
     )
     from src.solvers.persistent_residual_one_vector import (
+        measure_rank_one_projection,
         run_persistent_residual_diagnostic,
         run_w11b_fixed_200_exact_proxy,
+        repeat_rank_one_projection,
         validate_w11a_architecture,
     )
     from src.solvers.checkpoint_recycle import (
@@ -5548,8 +5648,12 @@ def _run_m6b_w11a_diagnostic(
         w7_raw_dir,
         expected_source_sha,
     )
+    if is_w14a:
+        del authorities["q"]
     predicted = (
-        _m6b_w12_predicted_live_set()
+        _m6b_w14a_predicted_live_set()
+        if is_w14a
+        else _m6b_w12_predicted_live_set()
         if is_w12
         else _m6b_w11b_predicted_live_set()
         if is_w11b
@@ -5581,12 +5685,18 @@ def _run_m6b_w11a_diagnostic(
         "b0_instances": [],
         "physical_instances": [],
     }
-    if is_w11b or is_w12:
+    if is_w11b or is_w12 or is_w14a:
         action_audit["lifecycle_events"] = []
+    if is_w14a:
+        action_audit["authority_vector_retention"] = {
+            "q_vector_retained": False,
+            "retained_authority_vector_roles": ["target"],
+        }
     p6: dict[str, Any] | None = None
     core_result: dict[str, Any] | None = None
     error: str | None = None
     b0_action = b0_pc = b0_matrix = b0_source_vec = None
+    b0_matrix_context = w14_pc_context = w14_inner = None
     physical_action = dtn_action = outer_mat = outer_context = None
     outer_bridge = template = None
     store = None
@@ -5595,6 +5705,7 @@ def _run_m6b_w11a_diagnostic(
     jit_cache_final_error: str | None = None
     candidate_artifacts: dict[str, Any] | None = None
     lifecycle_ok = False
+    source_end_ok = False
 
     def emit(event: str, **fields: Any) -> None:
         payload = {
@@ -5612,21 +5723,37 @@ def _run_m6b_w11a_diagnostic(
     def record_b0_stage() -> None:
         if b0_action is None:
             return
-        action_audit["b0_instances"].append(
-            {
-                "action": h2a._jsonable(b0_action.audit),
-                "pc": h2a._jsonable(b0_pc.audit) if b0_pc is not None else None,
-                "store": store.audit_jsonable() if store is not None else None,
-                "total_pc_apply_count": int(b0_pc_apply_count),
-            }
-        )
+        record = {
+            "action": h2a._jsonable(b0_action.audit),
+            "pc": h2a._jsonable(b0_pc.audit) if b0_pc is not None else None,
+            "store": store.audit_jsonable() if store is not None else None,
+            "total_pc_apply_count": int(
+                w14_pc_context.apply_count
+                if is_w14a and w14_pc_context is not None
+                else b0_pc_apply_count
+            ),
+        }
+        if is_w14a:
+            record["matrix"] = (
+                h2a._jsonable(b0_matrix_context.audit)
+                if b0_matrix_context is not None
+                else None
+            )
+            record["inner_pc"] = (
+                h2a._jsonable(w14_inner.audit) if w14_inner is not None else None
+            )
+        action_audit["b0_instances"].append(record)
 
     def release_b0() -> None:
         nonlocal b0_action, b0_pc, b0_matrix, b0_source_vec, store
+        nonlocal b0_matrix_context, w14_pc_context, w14_inner
         had_b0 = any(
             item is not None for item in (b0_action, b0_pc, b0_matrix, b0_source_vec, store)
         )
         record_b0_stage()
+        if w14_inner is not None:
+            w14_inner.destroy()
+            w14_inner = None
         if b0_matrix is not None:
             b0_matrix.destroy()
             b0_matrix = None
@@ -5637,8 +5764,10 @@ def _run_m6b_w11a_diagnostic(
             b0_action.destroy()
             b0_action = None
         b0_pc = None
+        b0_matrix_context = None
+        w14_pc_context = None
         store = None
-        if (is_w11b or is_w12) and had_b0:
+        if (is_w11b or is_w12 or is_w14a) and had_b0:
             action_audit["lifecycle_events"].append("b0_released")
 
     def record_physical_stage() -> None:
@@ -5680,7 +5809,7 @@ def _run_m6b_w11a_diagnostic(
         if physical_action is not None:
             physical_action.destroy()
             physical_action = None
-        if (is_w11b or is_w12) and had_physical:
+        if (is_w11b or is_w12 or is_w14a) and had_physical:
             action_audit["lifecycle_events"].append("physical_released")
 
     def ensure_physical_action() -> None:
@@ -5733,6 +5862,14 @@ def _run_m6b_w11a_diagnostic(
                 "pde_used": False,
             }
         )
+        if is_w14a:
+            architecture.update(
+                {
+                    "shifted_pc_used": False,
+                    "slab_factors": 0,
+                    "official_rta": False,
+                }
+            )
         if not validate_w11a_architecture(architecture):
             raise ValueError("W11A physical architecture is not closed")
         action_audit.update({
@@ -5742,7 +5879,7 @@ def _run_m6b_w11a_diagnostic(
             "tag_coverage": h2a._jsonable(tag_coverage),
             "bridge": outer_bridge.audit,
         })
-        if is_w11b or is_w12:
+        if is_w11b or is_w12 or is_w14a:
             action_audit["lifecycle_events"].append("physical_constructed")
         jit_cache_audit["verification_stages"].append(
             _m6b_w11a_verify_dual_jit_cache(
@@ -5784,7 +5921,7 @@ def _run_m6b_w11a_diagnostic(
                 "m3y_store": store.audit_jsonable(),
             }
         )
-        if is_w11b or is_w12:
+        if is_w11b or is_w12 or is_w14a:
             action_audit["lifecycle_events"].append("b0_constructed")
         jit_cache_audit["verification_stages"].append(
             _m6b_w11a_verify_dual_jit_cache(
@@ -5895,6 +6032,16 @@ def _run_m6b_w11a_diagnostic(
             raise FloatingPointError("W11A physical action returned invalid values")
         return result
 
+    def w14_physical_numpy(values: np.ndarray) -> np.ndarray:
+        nonlocal physical_call_count
+        if w14_inner is None or outer_bridge is None:
+            raise RuntimeError("W14A coexistence objects are not alive")
+        physical_call_count += 1
+        result = outer_bridge.apply(values)
+        if result.shape != values.shape or not np.all(np.isfinite(result)):
+            raise FloatingPointError("W14A physical action returned invalid values")
+        return np.ascontiguousarray(result)
+
     try:
         authority = authorities["authority"]
         emit("authority_validated", authority=authority)
@@ -5921,7 +6068,117 @@ def _run_m6b_w11a_diagnostic(
             file_count=jit_cache_audit["union_file_count"],
         )
         ensure_b0()
-        if is_w11b:
+        if is_w14a:
+            if b0_action is None or b0_pc is None:
+                raise RuntimeError("W14A B0 action or PC is not alive")
+            b0_matrix, b0_matrix_context = build_m5_b0_mat(
+                b0_action,
+                owned_rows=M6B_GLOBAL_ROWS,
+                global_rows=M6B_GLOBAL_ROWS,
+                comm=MPI.COMM_WORLD,
+            )
+            w14_pc_context = M5M4YPCContext(
+                b0_pc, global_rows=M6B_GLOBAL_ROWS
+            )
+            w14_inner = W14GlobalB0InnerPC(
+                b0_matrix,
+                w14_pc_context,
+                b0_matrix_context,
+            )
+            emit(
+                "inner_pc_ready",
+                algorithm=w14_inner.audit["algorithm"],
+                rhs_vec_owned=w14_inner.audit["rhs_vec_owned"],
+            )
+            ensure_physical_action()
+            if w14_inner is None or outer_bridge is None:
+                raise RuntimeError("W14A B0 and physical objects did not coexist")
+            action_audit["coexistence"] = {
+                "b0_live": True,
+                "physical_live": True,
+                "release_between_operations": False,
+            }
+            action_audit["lifecycle_events"].append("coexistence_ready")
+            emit(
+                "coexistence_ready",
+                b0_live=True,
+                physical_live=True,
+                release_between_operations=False,
+            )
+            target_values = np.ascontiguousarray(
+                authorities["target"], dtype=np.complex128
+            )
+            z1 = w14_inner.apply(target_values)
+            emit(
+                "inner_apply_1_ready",
+                true_residual=w14_inner.audit["applications"][0]["true_residual"],
+            )
+            z2 = w14_inner.apply(target_values)
+            emit(
+                "inner_apply_2_ready",
+                true_residual=w14_inner.audit["applications"][1]["true_residual"],
+            )
+            p1 = w14_physical_numpy(z1)
+            emit("physical_apply_1_ready", physical_action_count=1)
+            p2 = w14_physical_numpy(z2)
+            emit("physical_apply_2_ready", physical_action_count=2)
+
+            def _w14a_identity(first: np.ndarray, second: np.ndarray) -> dict[str, Any]:
+                denominator = max(
+                    float(np.linalg.norm(first)),
+                    float(np.linalg.norm(second)),
+                    np.finfo(float).tiny,
+                )
+                return {
+                    "shape": list(first.shape),
+                    "shape_equal": first.shape == second.shape,
+                    "dtype": str(first.dtype),
+                    "finite": bool(
+                        np.all(np.isfinite(first)) and np.all(np.isfinite(second))
+                    ),
+                    "first_sha256": _array_sha256(first),
+                    "second_sha256": _array_sha256(second),
+                    "sha256_equal": _array_sha256(first) == _array_sha256(second),
+                    "relative_difference": float(
+                        np.linalg.norm(first - second) / denominator
+                    ),
+                }
+
+            measurement = repeat_rank_one_projection(
+                target_values,
+                p1,
+                block_size=M6B_W11A_BLOCK_SIZE,
+                schema=M6B_W14A_SCHEMA,
+            )
+            p2_measurement = measure_rank_one_projection(
+                target_values,
+                p2,
+                block_size=M6B_W11A_BLOCK_SIZE,
+            )
+            p2_measurement["schema"] = M6B_W14A_SCHEMA
+            core_result = {
+                "schema": M6B_W14A_SCHEMA,
+                "residual": {
+                    "role": "untouched_W7_cumulative400_full_explicit_residual",
+                    "authority": authorities["authority"]["target"],
+                },
+                "inner_audit": w14_inner.audit,
+                "z_identity": _w14a_identity(z1, z2),
+                "p_identity": _w14a_identity(p1, p2),
+                "measurement": measurement,
+                "p2_measurement": p2_measurement,
+                "physical_action_count": int(physical_call_count),
+                "checks": {},
+                "problems": [],
+            }
+            emit(
+                "measurement_ready",
+                rho=measurement["rho"],
+                p2_rho=p2_measurement["rho"],
+                physical_action_count=physical_call_count,
+            )
+            del z1, z2, p1, p2, target_values
+        elif is_w11b:
             core_result = run_w11b_fixed_200_exact_proxy(
                 authorities["q"],
                 authorities["target"],
@@ -6001,14 +6258,15 @@ def _run_m6b_w11a_diagnostic(
                 "after_measurement",
             )
         )
-        measurement_fields = {
-            "classification": core_result.get("classification"),
-        }
-        if is_w12:
-            measurement_fields["selected_range"] = core_result.get("selected_range")
-        else:
-            measurement_fields["selected_level"] = core_result.get("selected_level")
-        emit("measurement_ready", **measurement_fields)
+        if not is_w14a:
+            measurement_fields = {
+                "classification": core_result.get("classification"),
+            }
+            if is_w12:
+                measurement_fields["selected_range"] = core_result.get("selected_range")
+            else:
+                measurement_fields["selected_level"] = core_result.get("selected_level")
+            emit("measurement_ready", **measurement_fields)
     except h2b._worker_error_types() + (FloatingPointError,) as exc:
         error = f"{type(exc).__name__}: {exc}"
     finally:
@@ -6038,14 +6296,14 @@ def _run_m6b_w11a_diagnostic(
     if jit_cache_final_error is not None and error is None:
         error = f"jit_cache verification: {jit_cache_final_error}"
     source_end = h2b._light_source()
-    if is_w12 and core_result is not None:
+    if (is_w12 or is_w14a) and core_result is not None:
         source_end_ok = bool(
             _m6b_w6a_source_valid(source_end)
             and source_end.get("source_commit_full_sha") == expected_source_sha
         )
         core_result["checks"]["source_end"] = source_end_ok
         if not source_end_ok and error is None:
-            error = "W12 source end identity is not clean or expected"
+            error = f"{result_phase} source end identity is not clean or expected"
     if (is_w11b or is_w12) and core_result is not None:
         expected_lifecycle = ["b0_constructed", "b0_released"]
         b0_failed_classifications = {
@@ -6060,6 +6318,47 @@ def _run_m6b_w11a_diagnostic(
             core_result["problems"].append("lifecycle")
             if error is None:
                 error = "W11/W12 B0 and physical heavy-object lifetime contract failed"
+    elif is_w14a and core_result is not None:
+        lifecycle_ok = action_audit.get("lifecycle_events") == [
+            "b0_constructed",
+            "physical_constructed",
+            "coexistence_ready",
+            "physical_released",
+            "b0_released",
+        ]
+    if is_w14a:
+        if core_result is not None:
+            core_checks = evaluate_w14a_action_gate(
+                inner_audit=core_result["inner_audit"],
+                z_identity=core_result["z_identity"],
+                p_identity=core_result["p_identity"],
+                measurement=core_result["measurement"],
+                p2_measurement=core_result["p2_measurement"],
+                physical_action_count=core_result["physical_action_count"],
+                architecture=architecture,
+                lifecycle_events=action_audit.get("lifecycle_events", []),
+                predicted_live_set=predicted,
+                source_ok=source_end_ok,
+                cache_ok=jit_cache_final_error is None,
+            )
+            core_checks["execution"] = error is None
+            core_result["checks"] = core_checks
+            core_result["problems"] = sorted(
+                name for name, passed in core_checks.items() if not passed
+            )
+            core_result["status"] = (
+                "action_gate_pass" if all(core_checks.values()) else "gate_failed"
+            )
+            core_result["classification"] = (
+                "W14A_ACTION_GATE_PASS"
+                if all(core_checks.values())
+                else (
+                    "W14A_ACTION_NUMERIC_FAIL"
+                    if error is None
+                    else "W14A_ACTION_EXECUTION_FAIL"
+                )
+            )
+            core_result["w14a_pass"] = bool(all(core_checks.values()))
     if is_w11b:
         try:
             candidate_artifacts = _m6b_w11b_promote_candidate_vectors(
@@ -6099,11 +6398,41 @@ def _run_m6b_w11a_diagnostic(
         status, classification, checks, diagnostic_pass, problems = (
             _m6b_w12_finalize_status(core_result, error, jit_cache_final_error)
         )
+    elif is_w14a:
+        if core_result is None:
+            status = "gate_failed"
+            classification = "W14A_ACTION_EXECUTION_FAIL"
+            checks = {
+                "authority_or_runtime": False,
+                "execution": False,
+            }
+            diagnostic_pass = False
+            problems = ["authority_or_runtime"]
+        else:
+            status = core_result["status"]
+            classification = core_result["classification"]
+            checks = dict(core_result["checks"])
+            diagnostic_pass = bool(core_result["w14a_pass"])
+            problems = list(core_result["problems"])
     else:
         status, classification, checks, diagnostic_pass, problems = (
             _m6b_w11a_finalize_status(core_result, error, jit_cache_final_error)
         )
-    pass_key = "w12_pass" if is_w12 else "w11b_pass" if is_w11b else "w11a_pass"
+    pass_key = (
+        "w14a_pass"
+        if is_w14a
+        else "w12_pass"
+        if is_w12
+        else "w11b_pass"
+        if is_w11b
+        else "w11a_pass"
+    )
+    if is_w14a:
+        emit(
+            "summary_ready",
+            classification=classification,
+            w14a_pass=bool(diagnostic_pass),
+        )
     payload = {
         "schema": result_schema,
         "phase": result_phase,
@@ -6114,7 +6443,9 @@ def _run_m6b_w11a_diagnostic(
         "pde_pass": False,
         "official_rta": False,
         "scope": (
-            _m6b_w12_scope()
+            _m6b_w14a_scope()
+            if is_w14a
+            else _m6b_w12_scope()
             if is_w12
             else _m6b_w11b_scope()
             if is_w11b
@@ -6141,6 +6472,9 @@ def _run_m6b_w11a_diagnostic(
         "source_at_end": source_end,
         "elapsed_wall_seconds": float(time.perf_counter() - started),
     }
+    if is_w14a:
+        payload.update(_m6b_w14a_resource_closeout_flags(diagnostic_pass))
+        payload["w14_2_locked"] = True
     if is_w11b:
         payload["candidate_artifacts"] = candidate_artifacts
     elif is_w12:
@@ -6201,6 +6535,33 @@ def _run_m6b_w12_diagnostic(
         b0_jit_cache_source,
         expected_source_sha,
         mode="w12",
+    )
+
+
+def _run_m6b_w14a_diagnostic(
+    run_dir: Path,
+    w5_compact: Path,
+    w5_raw_dir: Path,
+    w7_compact: Path,
+    w7_raw_dir: Path,
+    m3y_manifest: Path,
+    jit_cache_source: Path,
+    b0_jit_cache_source: Path,
+    expected_source_sha: str,
+) -> int:
+    """Run W14.1 with persistent B0 and physical action coexistence."""
+
+    return _run_m6b_w11a_diagnostic(
+        run_dir,
+        w5_compact,
+        w5_raw_dir,
+        w7_compact,
+        w7_raw_dir,
+        m3y_manifest,
+        jit_cache_source,
+        b0_jit_cache_source,
+        expected_source_sha,
+        mode="w14a",
     )
 
 
@@ -14835,6 +15196,18 @@ def _parser() -> argparse.ArgumentParser:
     w13a.add_argument(
         "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
     )
+    w14a = sub.add_parser("m6b-w14a-action-diagnostic")
+    w14a.add_argument("--run-dir", required=True)
+    w14a.add_argument("--w5-compact", required=True)
+    w14a.add_argument("--w5-raw-dir", required=True)
+    w14a.add_argument("--w7-compact", required=True)
+    w14a.add_argument("--w7-raw-dir", required=True)
+    w14a.add_argument("--m3y-manifest", required=True)
+    w14a.add_argument("--jit-cache-source", required=True)
+    w14a.add_argument("--b0-jit-cache-source", required=True)
+    w14a.add_argument(
+        "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
+    )
     return parser
 
 
@@ -14981,6 +15354,18 @@ def main(argv: Sequence[str] | None = None) -> int:
             Path(args.w7_compact).resolve(),
             Path(args.w7_raw_dir).resolve(),
             Path(args.output).resolve(),
+            args.expected_source_sha,
+        )
+    if args.command == "m6b-w14a-action-diagnostic":
+        return _run_m6b_w14a_diagnostic(
+            Path(args.run_dir).resolve(),
+            Path(args.w5_compact).resolve(),
+            Path(args.w5_raw_dir).resolve(),
+            Path(args.w7_compact).resolve(),
+            Path(args.w7_raw_dir).resolve(),
+            Path(args.m3y_manifest).resolve(),
+            Path(args.jit_cache_source).resolve(),
+            Path(args.b0_jit_cache_source).resolve(),
             args.expected_source_sha,
         )
     run_dir = Path(args.run_dir).resolve()
