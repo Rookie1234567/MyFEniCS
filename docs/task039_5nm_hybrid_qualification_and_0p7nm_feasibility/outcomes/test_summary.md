@@ -167,3 +167,19 @@ solver qualification：
 | `git diff --check` | pass |
 | Python Ruff/compileall | not_run；本轮无 Python 修改 |
 | repository full pytest | cancelled / not_run |
+
+## DQ1 fixed-case qualification closeout
+
+| 检查 | 结果 | 口径 |
+| --- | --- | --- |
+| Task39 scoped serial suite | 64 passed | test239=15、test241=6、test284=4、test285=39；本轮资格接线相关 serial evidence |
+| MPI2 tiny evidence | 2 passed；另 test241 MPI2 attempt 无有效 Gate | test239 compatible fixture=2 passed；test241 受 pre-existing MPIAIJ nonlocal getValues fixture limitation 影响，不能概括为 MPI2 全 pass |
+| formal DQ1 MPI8 worker | exit 0 | 5 nm、1°、phi=0、S、p6/h5、M480；数值、recovery、primary Hybrid-direct checker pass |
+| parent resource authority | pass | process-tree RSS 51019.37890625 MiB，swap 0，<=69651.3 MiB |
+| Ruff / changed-file format-check / compileall / git diff-check | pass | 代码阶段已通过；本 turn 是 docs-only closeout |
+| compact JSON / document checks | pass | 本次 docs/evidence closeout；未运行 Python 或 PDE |
+| repository full pytest | cancelled / not_run | 没有声称 full pytest 通过 |
+
+worker checkpoint 的 final_qualification_status 仍为 pending_parent_resource_gate；最终
+case 分类只在 compact record 中由 worker checkpoint 与 parent run_summary 合并得到。
+Full3D strict channel 继续保留为 diagnostic pending，旧 B/C/C1/D/E 负结果未被覆盖。

@@ -2375,3 +2375,21 @@ Task038 用一个显式 `.dat` 文件统一描述 geometry、materials、inciden
 | T6 resource boundary | RSS `6585.01953125 MiB`；数值 Gate 通过，但 preferred resource boundary 未满足；这不是数值失败。 |
 | 尚未运行项 | current-same-SHA Hybrid iterative MPI1 formal = `not_run`；T4/T5 selected-field capability = `not_run_by_capability`。 |
 | 详细入口 | [`Task038 outcomes summary`](task038_input_driven_configuration/outcomes/summary.md)、[`response_v1`](task038_input_driven_configuration/response_v1.md)、[`Review V1`](task038_input_driven_configuration/review_report_v1.md)。 |
+
+# 49. Task039 当前结论
+
+Task039 当前固定为 5 nm、1° grazing、phi=0、S、p6/h5、M480、MPI8；本项目级回顾只
+索引已经完成的 fixed-case evidence，不改变历史章节编号或把 case 结果推广为通用 solver。
+
+| 项目 | 当前结论 |
+|---|---|
+| Full3D direct baseline | 93.8976 GiB process-tree RSS |
+| Hybrid direct baseline | 85.0236 GiB process-tree RSS |
+| DQ1 exact-side explicit opt-in | 49.8236 GiB、4888 s、outer=1 |
+| DQ1 局部工作量 | bottom/top action applies=1922/1922；local direct solves=2218/2226 |
+| 数值/物理 | 五项 residual Gate 通过；Hybrid-direct integrated checker 通过 |
+| Full3D strict channel | 已实测未通过；保留为 nonblocking diagnostic，不否决 Hybrid primary |
+| 资格边界 | case-specific explicit opt-in；not general production |
+| 全仓测试 | full pytest = `not_run` |
+| 详细证据 | [`Task039 summary`](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/summary.md)、[`v3 final outcome`](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v3_final_iterative_result.md) |
+| 响应与 case | [`response_v4`](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/response_v4.md)、[`case README`](../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/README.md) |

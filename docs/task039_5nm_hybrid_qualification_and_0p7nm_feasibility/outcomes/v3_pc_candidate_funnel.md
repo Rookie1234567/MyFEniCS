@@ -97,3 +97,35 @@ Candidate E 为验证 `x*` 的 side residual 按合同读取了 hash-bound direc
 加载 independent reference，也没有运行 identity reference、global KSP、recovery 或
 field/RTA。完整 compact evidence 见
 [`task039_v3_8_candidate_e_side_capacity_formal_v1.json`](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v3_8_candidate_e_side_capacity_formal_v1.json)。
+
+## DQ1：h5 fixed-case exact-side qualification
+
+DQ1 是一个明确的 case qualification，而不是把 Candidate D 的历史 research oracle
+悄悄改名为通用 production PC。它固定在 5 nm、1° grazing、phi=0、S、p6/h5、M480、
+MPI8，并通过显式 opt-in route 运行：全局仍是 matrix-free Hybrid/right FGMRES，
+bottom/top 各一个 local exact-side sparse direct factor，动态 DtN Woodbury 负责外部
+模态耦合，global Hybrid direct factor 为 0。
+
+| Gate | measured result | status |
+| --- | ---: | --- |
+| outer / reason | 1 / 2 | pass |
+| reported/global/bottom/top/modal residual | 1.889629917504017e-10 / 1.8896319646868032e-10 / 1.52870527709288e-11 / 1.7545984733553013e-10 / 3.374854317881879e-11 | pass, all <=5e-9 |
+| projection / traction | 3.374854345267127e-11 / 1.52870527709288e-11, 1.7545984733553013e-10 | pass |
+| direct factors before/after cleanup | bottom/top 1/1 -> 0/0; global 0 -> 0 | pass |
+| recovery / Hybrid-direct integrated checker | pass / pass | primary physics pass |
+| process-tree RSS / swap | 51019.37890625 MiB / 0 | resource pass |
+
+The worker checkpoint remains raw and says pending_parent_resource_gate. The final
+classification below is derived only by merging that worker checkpoint with the parent
+run_summary resource authority:
+
+TASK039_V3_CASE_QUALIFIED_EXPLICIT_OPT_IN_HYBRID_ITERATIVE_EXACT_SIDE_PASS
+
+This does not overwrite the earlier B, C, C1, D research-oracle, or E numerical-negative
+entries. It also does not establish general production coverage. Full3D strict per-channel
+comparison has been measured and failed: primary_channel_pass=false,
+weak_channel_pass=false, full_channel_pass=false, while power_weighted_pass=true; repair
+remains deferred/pending. It is nonblocking and does not overturn the primary
+Hybrid-direct integrated checker. See the
+[DQ1 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v3_h5_exact_side_case_qualification_v1.json)
+and [final fixed-case outcome](v3_final_iterative_result.md).

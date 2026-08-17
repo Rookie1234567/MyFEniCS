@@ -1,0 +1,250 @@
+{
+  "schema": "task039.v3-h5-exact-side-case-qualification.v1",
+  "status": "derived",
+  "classification": "TASK039_V3_CASE_QUALIFIED_EXPLICIT_OPT_IN_HYBRID_ITERATIVE_EXACT_SIDE_PASS",
+  "derivation": {
+    "basis": [
+      "results/task039_v3_case_qualified_exact_side_formal_mpi8/numerical_output/v3_8_candidate_d_checkpoint.json",
+      "results/task039_v3_case_qualified_exact_side_formal_mpi8/run_summary.json"
+    ],
+    "worker_checkpoint_status": "attempted",
+    "worker_checkpoint_classification": "hybrid_iterative_exact_side_case_qualification",
+    "worker_pass": true,
+    "worker_final_qualification_status": "pending_parent_resource_gate",
+    "parent_resource_gate": true,
+    "derived_gate": {
+      "numerical": true,
+      "inventory": true,
+      "cleanup": true,
+      "recovery_physics": true,
+      "rss_mib_le_69651_3": true,
+      "swap_zero": true
+    },
+    "method": "worker and parent evidence merged by this compact record; raw files were not edited"
+  },
+  "identity": {
+    "source_sha": "3d4d8b54cbbdf2f67e5084790c4222a5f77a888d",
+    "producer_source_sha": "5bfab734a9ca053b69fa1f3f20d907aacbf8b07f",
+    "input_sha256": "fc51536fefa7341a5264266a95fc56ba79d0b1056a2d819323bfdb51f3568e85",
+    "resolved_config_sha256": "078d89d05d6108ed7e8ac563faa9d23ff93ed8d91650b3d7f9ffa27d8b320828",
+    "physical_model_sha256": "0462c9806f1eb0c525c3ab50fcd71e212c6d05337de49c76e7946a336ccd576d",
+    "model_id": "task039_5nm_v3_1deg_s5_hybrid_direct_m480",
+    "wavelength_nm": 5,
+    "grazing_angle_deg": 1,
+    "azimuth_deg": 0,
+    "polarization": "S",
+    "mesh": "p6/h5",
+    "requested_modes": 480,
+    "mpi_size": 8,
+    "external_key_count": 600,
+    "external_keys_exact": true
+  },
+  "run": {
+    "run_root": "results/task039_v3_case_qualified_exact_side_formal_mpi8",
+    "official_input": "input/official/task039/5nm_p6h5_v3_1deg_hybrid_direct_m480_mpi8.dat",
+    "route": "candidate-d-qualified",
+    "method": "hybrid_iterative_exact_side_case_qualification",
+    "exit_status": 0,
+    "result_classification": "worker_exit0",
+    "elapsed_seconds": 4888.064315,
+    "start_utc": "2026-08-16T22:36:33.166744+00:00",
+    "end_utc": "2026-08-16T23:58:01.231059+00:00",
+    "argv": [
+      "/usr/bin/mpiexec",
+      "-n",
+      "8",
+      "/home/Projects/MyFEniCS/.venv/bin/python",
+      "-m",
+      "benchmarks.task039_v3_7_orchestration",
+      "--worker",
+      "--input",
+      "/home/Projects/MyFEniCS/input/official/task039/5nm_p6h5_v3_1deg_hybrid_direct_m480_mpi8.dat",
+      "--run-directory",
+      "/home/Projects/MyFEniCS/results/task039_v3_case_qualified_exact_side_formal_mpi8",
+      "--source-sha",
+      "3d4d8b54cbbdf2f67e5084790c4222a5f77a888d",
+      "--launched-by-task038-watchdog",
+      "--candidate-d-qualified"
+    ],
+    "direct_reference_payload_loaded": false,
+    "identity_reference_materialization": "not_run"
+  },
+  "artifacts": {
+    "run_manifest.json": "9ddde339b64ec5a8452becb010ee191135d84d732a36a7173365e983567c26dc",
+    "run_summary.json": "2d917033d50c5a43c2a87c5e2c883df578413c813530915f845e7b760f0b3e20",
+    "resolved_config.json": "078d89d05d6108ed7e8ac563faa9d23ff93ed8d91650b3d7f9ffa27d8b320828",
+    "input_original.dat": "fc51536fefa7341a5264266a95fc56ba79d0b1056a2d819323bfdb51f3568e85",
+    "source_sha.txt": "e153fe67ab9df2895b727554180039102f2d7b71315438c96b4b1f3ee6ff6f6e",
+    "physical_model_sha256.txt": "22c29bdc8caa4a934fd28bacd99373aa9947a427942a6342c4aefb8a4e50bc1e",
+    "numerical_output/v3_8_candidate_d_checkpoint.json": "6cd7f0d42e07fd359ba14f9a7374a491d19e95e2e753a568a696a7e9cc0eb4a9",
+    "numerical_output/v3_v7_diagnostic.json": "2f4dd6a0098eeb470572eb8318453a5dec5b24748a2cda11f714f0c60fcc24fd",
+    "numerical_output/v3_7_hybrid_authority.json": "eb1d14fd933685194c30b88bc9a014f8b939dde469f5c2f82e4150035b4eae64",
+    "numerical_output/memory_object_ledger.json": "d6a37aadd51dd179c7babc1e8f8be7656c810a5166f64013d3af5e7da8aff936",
+    "numerical_output/memory_stage_markers.raw.jsonl": "6a0902de818f7e18e9e6e5c6ad135c15ca599cd001fa5595d2deaf8f97efa84a",
+    "numerical_output/memory_stages.jsonl": "8f3887f7fe15ed9f3e3abbe1f6c7fdbd6c2a03c3b95a1a088c15e079c2fbcfb9",
+    "numerical_output/process_tree_samples.jsonl": "5a0fdf1b86b2ab1fcd280b8e840aebe809d0f6d9e6c34bca007aee0e5d74c5db"
+  },
+  "numerical": {
+    "operator": "exact monolithic matrix-free Hybrid",
+    "outer_solver": "right FGMRES",
+    "restart": 90,
+    "max_it": 4000,
+    "initial_guess": "zero",
+    "iterations": 1,
+    "reason": 2,
+    "residual_limit": 5e-9,
+    "residuals": {
+      "reported": 1.889629917504017e-10,
+      "global": 1.8896319646868032e-10,
+      "bottom": 1.52870527709288e-11,
+      "top": 1.7545984733553013e-10,
+      "modal": 3.374854317881879e-11
+    },
+    "matrix_repeat_relative": 4.4034688168209445e-12,
+    "matrix_repeat_limit": 1e-10,
+    "lu_repeat_relative": 0,
+    "lu_repeat_limit": 1e-13,
+    "explicit_f_action_errors": {
+      "bottom": 9.23531879879505e-16,
+      "top": 9.276891634808285e-16,
+      "limit": 1e-12
+    },
+    "modal_schur_condition": 17.519313648014673,
+    "dynamic_external_modes": {
+      "bottom": 296,
+      "top": 304
+    }
+  },
+  "factor_inventory": {
+    "before_cleanup": {
+      "bottom_direct_factor_count": 1,
+      "top_direct_factor_count": 1,
+      "global_hybrid_direct_factor_count": 0,
+      "local_direct_preonly_ksp_count": 2,
+      "nested_iterative_ksp_count": 0,
+      "bottom_action_apply_count": 1922,
+      "top_action_apply_count": 1922,
+      "bottom_local_direct_solve_count": 2218,
+      "top_local_direct_solve_count": 2226
+    },
+    "after_cleanup": {
+      "bottom_direct_factor_count": 0,
+      "top_direct_factor_count": 0,
+      "global_hybrid_direct_factor_count": 0,
+      "explicit_components_released": true,
+      "collective_cleanup_completed": true
+    },
+    "solution_handoff": "callback_consumed_before_cleanup",
+    "modal_schur_evidence_boundary": "checkpoint inventory is captured before result.destroy; code-path release_deferred_action_modal_schur, final ledger and RSS drop support release, but no explicit post-cleanup modal field exists in the raw checkpoint"
+  },
+  "physics": {
+    "R_total": 0.7397405130788051,
+    "T_total": 0.00021574916967427902,
+    "A_balance": 0.2600437377515207,
+    "A_volume": 0.2600443738595666,
+    "closure": 6.361080457928381e-7,
+    "traction_relative_residual": {
+      "bottom": 1.52870527709288e-11,
+      "top": 1.7545984733553013e-10,
+      "limit": 1e-8
+    },
+    "interface_projection": 3.374854345267127e-11,
+    "interface_projection_limit": 1e-8,
+    "external_orders": {
+      "count": 600,
+      "bottom": 296,
+      "top": 304,
+      "key_set_exact": true,
+      "key_sha256": "f1fb4a697a5f61ac425288f82c9aec41ed093577b63b72c60648f90b945513d0"
+    },
+    "selected_E_H": {
+      "E_relative_l2": 1.9876971434199388e-11,
+      "E_absolute_l2": 1.1260056625672672e-10,
+      "H_relative_l2": 1.9808943154711087e-11,
+      "H_absolute_l2": 2.986453081219064e-13,
+      "status": "pass"
+    },
+    "external_q_gate": {
+      "limit": 1e-10,
+      "actual": "not_separately_persisted",
+      "status": "pass_via_recovery_contract",
+      "evidence_boundary": "frozen recovery requires bottom/top external_q.pass; raw checkpoint persists recovery_pass=true but no external_q scalar"
+    },
+    "hybrid_direct_integrated_checker": {
+      "pass": true,
+      "primary": true,
+      "power_weighted_pass": true,
+      "keys_exact": true,
+      "classification": "TASK039_V3_HYBRID_INTEGRATED_PHYSICS_PASS_CHANNEL_DIAGNOSTIC_PENDING"
+    },
+    "full3d_secondary_checker": {
+      "integrated_nonblocking_pass": true,
+      "power_weighted_pass": true,
+      "primary_channel_pass": false,
+      "weak_channel_pass": false,
+      "full_channel_pass": false,
+      "strict_channel_role": "diagnostic_only",
+      "repair_status": "pending_deferred",
+      "power_weighted_value": 8.44651574411334e-06
+    }
+  },
+  "resource": {
+    "peak_bytes": 53497696256,
+    "peak_mib": 51019.37890625,
+    "peak_gib": 49.823612213134766,
+    "peak_utc": "2026-08-16T23:23:40.886481+00:00",
+    "peak_watchdog_elapsed_seconds": 2827.6796175279887,
+    "peak_stage": "setup/internal-coupling tail immediately before post_coupling_heap_cleanup",
+    "swap_mib": 0,
+    "process_tree_sample_count": 19203,
+    "rss_limit_mib": 69651.3,
+    "resource_gate": true,
+    "hard_stop_bytes": 224000000000,
+    "pss_uss": "not_measured"
+  },
+  "cleanup_stages": {
+    "bottom_interface_blocks": {
+      "before_mib": 11490.2734375,
+      "after_mib": 1498.44921875,
+      "released_mib": 10030.1953125,
+      "elapsed_seconds_max_rank": 0.8726768789929338
+    },
+    "post_coupling": {
+      "before_mib": 11393.8515625,
+      "after_mib": 1434.22265625,
+      "released_mib": 10087.90625,
+      "elapsed_seconds_max_rank": 0.9485901780135464
+    },
+    "explicit_components": {
+      "before_mib": 5410.84375,
+      "after_mib": 1449.83984375,
+      "released_mib": 4159.3046875,
+      "elapsed_seconds_max_rank": 0.5041210449999198
+    }
+  },
+  "stage_times_seconds": {
+    "qep_basis_audit": 730.5373,
+    "modal_qep_temporaries_released": 1105.324,
+    "one_cell_factor_ready": 1526.6361,
+    "one_cell_factor_destroyed": 2320.9427,
+    "bottom_interface_blocks_cleanup": 2571.3009,
+    "post_coupling_cleanup": 2825.4297,
+    "candidate_online_begin": 2825.4315,
+    "explicit_components_ready": 2828.2351,
+    "exact_side_oracle_begin": 2828.2363,
+    "solution_snapshot_oracle_end": 4717.5592,
+    "explicit_components_destroyed": 4718.0637,
+    "collective_cleanup": 4718.0647,
+    "recovery_begin": 4718.0658,
+    "recovery_end": 4882.8007,
+    "snapshot_destroyed": 4882.8019
+  },
+  "baseline_savings": {
+    "hybrid_direct_peak_mib": 87064.125,
+    "vs_hybrid_direct_absolute_mib": 36044.74609375,
+    "vs_hybrid_direct_percent": 41.400227813407646,
+    "full3d_direct_peak_mib": 96151.16796875,
+    "vs_full3d_direct_absolute_mib": 45131.7890625,
+    "vs_full3d_direct_percent": 46.93836800523135
+  }
+}

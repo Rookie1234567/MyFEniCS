@@ -191,3 +191,37 @@ Candidate E 的 base factor 为 bottom/top 各 `1`，同时为 `2`；local direc
 direct factor 为 `0/0`，cleanup 后 base factor count 为 `0`。相关 cleanup marker 均为
 `collective_call_completed=true`。完整 compact record 见
 [`task039_v3_8_candidate_e_side_capacity_formal_v1.json`](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v3_8_candidate_e_side_capacity_formal_v1.json)。
+
+## DQ1 fixed-case qualification：两侧 exact-side 与全过程内存
+
+DQ1 在同一 5 nm、1° grazing、phi=0、S、p6/h5、M480、MPI8 上使用显式
+case-qualification opt-in。全局矩阵仍 matrix-free，外层为 right FGMRES；只在 bottom/top
+各保留一个 exact-side sparse direct factor，并用动态 DtN Woodbury 处理外部模态。
+这不是 global direct，也不改变 ordinary ILU0/two-pass 默认路径。
+
+全过程 process-tree RSS peak 为 53497696256 bytes =
+51019.37890625 MiB = 49.8236122131 GiB，swap=0；相对 Hybrid direct
+87064.125 MiB 节省 41.4002278%，相对 Full3D direct 96151.16796875 MiB 节省
+46.9383680%。RSS 目标 69651.3 MiB 通过，hard stop 224000000000 bytes 未触发。
+峰值 UTC 为 2026-08-16T23:23:40.886481+00:00，位于
+post_coupling_heap_cleanup 前的 setup/internal-coupling tail。相邻样本先升至
+53496946688 bytes，峰值后立即降至 39370313728 bytes，因此是实测 setup transient，
+不是退出或 telemetry 假峰。
+
+| lifecycle boundary | before / after / released (MiB) | max-rank elapsed |
+| --- | ---: | ---: |
+| bottom interface blocks cleanup | 11490.2734375 / 1498.44921875 / 10030.1953125 | 0.8726768789929338 s |
+| post-coupling cleanup | 11393.8515625 / 1434.22265625 / 10087.90625 | 0.9485901780135464 s |
+| explicit components cleanup | 5410.84375 / 1449.83984375 / 4159.3046875 | 0.5041210449999198 s |
+
+清理前 bottom/top direct factor 为 1/1、global factor 为 0，local preonly KSP 为 2，
+nested iterative KSP 为 0；recovery 之前释放 explicit components 和 factors，最终 ledger
+给出 bottom/top/global factor 0/0/0。modal Schur 的 checkpoint 字段仍是
+result.destroy 前 inventory 快照；代码路径中的 deferred release、最终 ledger 和 RSS
+下降支持它已释放，但 raw checkpoint 没有独立 post-cleanup modal 字段。这里保留这个
+证据边界，不把时序快照写成不存在的字段。
+
+worker checkpoint 仍保留 pending_parent_resource_gate；最终分类由 compact record
+把 worker numerical/lifecycle/recovery evidence 与 parent resource authority 合并得到。
+完整 hash-bound 证据见
+[DQ1 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v3_h5_exact_side_case_qualification_v1.json)。

@@ -392,3 +392,36 @@ Hybrid direct `87064.125 MiB` 节省 `35962.83984375 MiB / 41.306152038798984%`�
 但没有物化 independent reference、global KSP、recovery 或 field/RTA。完整身份、逐 probe
 rho、训练/QR、factor/lifecycle、stage peak 与 artifact hash 见
 [`task039_v3_8_candidate_e_side_capacity_formal_v1.json`](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v3_8_candidate_e_side_capacity_formal_v1.json)。
+
+### DQ1：固定 h5 case 的 exact-side Hybrid iterative qualification
+
+DQ1 是固定 5 nm、1° grazing、phi=0、S、p6/h5、M480、MPI8 的显式 opt-in case
+qualification。它使用全局 matrix-free Hybrid/right FGMRES，并让 bottom/top 各自拥有一个
+local exact-side sparse direct factor；动态 DtN Woodbury 只负责外部模态耦合。它不是
+global Hybrid direct，也不改变 ordinary ILU0/two-pass defaults。
+
+| 路径 | peak RSS | elapsed | 结果 |
+| --- | ---: | ---: | --- |
+| Full3D direct p6/h5 | 96151.16796875 MiB | not_available | direct reference |
+| Hybrid direct p6/h5 M480 | 87064.125 MiB | not_available | direct baseline |
+| 旧 ILU0 Hybrid iterative（10°历史 case） | 83155.31640625 MiB | 17187.881117 s | 6000 / DIVERGED_MAX_IT；数值负；匹配10° Hybrid direct 86744.54296875 MiB，节省4.1376972771%，不与本次1°跨物理比较 |
+| DQ1 exact-side explicit opt-in | 51019.37890625 MiB = 49.8236122131 GiB | 4888.064315 s | 1 iteration；numerical/physics/resource pass |
+
+DQ1 相对 Hybrid direct 节省 41.4002278%，相对 Full3D direct 节省 46.9383680%，
+swap=0，低于 69651.3 MiB 资源线。reported/global/bottom/top/modal residual 为
+1.889629917504017e-10、1.8896319646868032e-10、1.52870527709288e-11、
+1.7545984733553013e-10、3.374854317881879e-11，均通过 5e-9 Gate；projection、
+traction、recovery 和 primary Hybrid-direct integrated checker 也通过。
+
+worker raw checkpoint 原样保留 pending_parent_resource_gate；本行结果是把 worker
+numerical/inventory/cleanup/recovery evidence 与 parent process-tree RSS/swap authority
+独立合并后的派生分类：
+
+TASK039_V3_CASE_QUALIFIED_EXPLICIT_OPT_IN_HYBRID_ITERATIVE_EXACT_SIDE_PASS
+
+这不是 general production 或 P4 qualification。Full3D strict channel 已实测但未通过：
+primary/weak/full channel pass 均为 false，power-weighted pass 为 true；修复仍
+deferred/pending，且它是 nonblocking diagnostic，不否决 Hybrid-direct primary authority。
+h4 仅保留已完成的补充参考，没有继续 h3/h4。完整身份和证据边界见
+[DQ1 fixed-case outcome](v3_final_iterative_result.md) 与
+[DQ1 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v3_h5_exact_side_case_qualification_v1.json)。

@@ -44,3 +44,12 @@ T4 已有一次正式 Full3D iterative MPI8 运行，但残差在 4000 步上限
 `worker_nonzero` 科学分类。官方 R/T/A、场、canonical 和 direct-vs-iterative
 比较均为 not_run。这个负结果阻断 T7/T8 的 Full3D iterative Phase B 扩展；T5
 Hybrid direct 仍可作为独立容量诊断，不能被标成 Full3D-validated。
+
+## DQ1 fixed-case qualification
+
+DQ1 的 hash-bound compact evidence 已索引如下：
+[task039_v3_h5_exact_side_case_qualification_v1.json](records/task039_v3_h5_exact_side_case_qualification_v1.json)。
+它只记录 5 nm、1°、phi=0、S、p6/h5、M480、MPI8 的显式 exact-side case
+qualification；完整 process-tree、marker、ledger 和 worker raw 仍留在 ignored run root，
+没有把 raw artifact 纳入 case scaffold。worker checkpoint 的 pending_parent_resource_gate
+与 parent resource authority 的派生合并关系见该 compact record。
