@@ -81,6 +81,7 @@ from src.postprocessing.hybrid_field_reconstruction import (
 from src.solvers.hybrid_fem_modal_augmented_direct import (
     build_hybrid_augmented_direct_system,
     evaluate_hybrid_augmented_solution,
+    recover_deferred_hybrid_static_solution,
     solve_hybrid_augmented_direct,
 )
 from src.solvers.hybrid_fem_modal_schur_direct import (
@@ -1760,11 +1761,15 @@ def main(
     system = None
     solution = None
     packet_consumer_bundle = None
+    packet_direct_lifecycle = args.selected_mode_packet_consumer_manifest is not None
     task039_packet_consumer_record = None
     packet_qep_authority = None
     task039_direct_release = None
     task039_factor_inventory_before_release = None
     task039_system_snapshot = None
+    task039_packet_modes_released_before_factor = None
+    task039_packet_post_factor_rehydrate = None
+    task039_full_vector_size = None
     schur_system = None
     schur_solution = None
     primary_schur_system = None
@@ -2012,6 +2017,7 @@ def main(
             }
             positive = packet_consumer_bundle.positive_basis
             negative = packet_consumer_bundle.negative_basis
+            task039_full_vector_size = int(positive.modes[0].right.right_full.getSize())
             positive_authority = positive.packet_authority
             negative_authority = negative.packet_authority
             target = analytic_homogeneous_beta(modal_cfg, modal_cfg.n_air)
@@ -2422,13 +2428,58 @@ def main(
                 "marker_emitted_at_ordered_coupling_boundary": True,
             },
         )
+        if packet_direct_lifecycle:
+            first_packet_diagnostics = (
+                packet_consumer_bundle.packet_consumer_diagnostics
+            )
+            coupling.detach_mode_bases()
+            packet_consumer_bundle.destroy()
+            first_cleanup = task039_post_destroy_cleanup()
+            packet_bundle_destroyed = bool(first_packet_diagnostics["destroyed"])
+            vector_count_after_destroy = int(
+                first_packet_diagnostics["vector_count_after_destroy"]
+            )
+            modal_bases_detached = (
+                coupling.positive_basis is None and coupling.negative_basis is None
+            )
+            factor_created_before_release = system is not None
+            factor_modes_overlap = not (
+                packet_bundle_destroyed
+                and vector_count_after_destroy == 0
+                and modal_bases_detached
+                and not factor_created_before_release
+            )
+            task039_packet_modes_released_before_factor = {
+                "factor_modes_overlap": factor_modes_overlap,
+                "packet_bundle_destroyed": packet_bundle_destroyed,
+                "vector_count_after_destroy": vector_count_after_destroy,
+                "modal_bases_detached": modal_bases_detached,
+                "factor_created_before_release": factor_created_before_release,
+                "cleanup": dict(first_cleanup),
+                "collective_cleanup_completed": bool(
+                    first_cleanup["collective_call_completed"]
+                ),
+            }
+            if not task039_packet_modes_released_before_factor[
+                "collective_cleanup_completed"
+            ]:
+                raise RuntimeError(
+                    "Task039 packet mode release cleanup did not complete collectively."
+                )
+            packet_consumer_bundle = None
+            positive = None
+            negative = None
+            task039_mark_stage(
+                "selected_mode_packet_modes_released_before_factor",
+                detail=task039_packet_modes_released_before_factor,
+            )
         started = time.perf_counter()
         if args.solver_path == "augmented":
             mark_stage("augmented_matrix_and_factor")
             system = build_hybrid_augmented_direct_system(bottom, top, coupling)
             timings["primary_system_build"] = _max_elapsed(comm, started)
             timings["monolithic_assembly"] = timings["primary_system_build"]
-            if packet_consumer_bundle is not None:
+            if packet_direct_lifecycle:
                 task039_system_snapshot = {
                     "matrix_size": list(system.A.getSize()),
                     "matrix_stats": dict(system.matrix_stats),
@@ -2455,40 +2506,9 @@ def main(
                 bottom,
                 top,
                 coupling,
+                defer_static_recovery=packet_direct_lifecycle,
             )
-            if packet_consumer_bundle is not None:
-                pre_release_factor_inventory = _petsc_factor_inventory(solution.ksp)
-                task039_mark_stage(
-                    "direct_factor_or_iterative_side_factors_ready",
-                    detail={
-                        "source": "solution_ksp_holds_factor",
-                        "factor_inventory": pre_release_factor_inventory,
-                    },
-                )
-                task039_mark_stage(
-                    "solution_ready",
-                    detail={
-                        "source": "solve_before_direct_factor_release",
-                        "converged_reason": int(solution.converged_reason),
-                        "true_relative_residual": float(solution.relative_residual),
-                    },
-                )
-                task039_direct_release = (
-                    _release_task039_direct_factor_before_postprocess(
-                        solution,
-                        system,
-                        task039_post_destroy_cleanup,
-                        pre_release_factor_inventory,
-                    )
-                )
-                task039_factor_inventory_before_release = task039_direct_release[
-                    "factor_inventory_before_release"
-                ]
-                task039_mark_stage(
-                    "direct_factor_released_before_postprocess",
-                    detail=task039_direct_release,
-                )
-            else:
+            if not packet_direct_lifecycle:
                 task039_mark_stage(
                     "direct_factor_or_iterative_side_factors_ready",
                     detail={"source": "solution_ksp_holds_factor"},
@@ -2522,6 +2542,90 @@ def main(
             cfg, bottom, top, coupling, solution
         )
         port_power = validation["port_power"]
+        if packet_direct_lifecycle:
+            pre_release_factor_inventory = _petsc_factor_inventory(solution.ksp)
+            task039_mark_stage(
+                "direct_factor_or_iterative_side_factors_ready",
+                detail={
+                    "source": "solution_ksp_holds_factor",
+                    "factor_inventory": pre_release_factor_inventory,
+                },
+            )
+            task039_mark_stage(
+                "solution_ready",
+                detail={
+                    "source": "solve_before_direct_factor_release",
+                    "converged_reason": int(solution.converged_reason),
+                    "true_relative_residual": float(solution.relative_residual),
+                },
+            )
+            task039_direct_release = _release_task039_direct_factor_before_postprocess(
+                solution,
+                system,
+                task039_post_destroy_cleanup,
+                pre_release_factor_inventory,
+            )
+            task039_factor_inventory_before_release = task039_direct_release[
+                "factor_inventory_before_release"
+            ]
+            task039_mark_stage(
+                "direct_factor_released_before_postprocess",
+                detail=task039_direct_release,
+            )
+            packet_consumer_bundle = consume_task039_v4_selected_mode_packet(
+                args.selected_mode_packet_consumer_manifest,
+                identity=packet_identity,
+                expected_manifest_sha256=(
+                    args.selected_mode_packet_consumer_manifest_sha256
+                ),
+                consumer_kind="direct",
+                comm=comm,
+            )
+            post_packet_diagnostics = packet_consumer_bundle.packet_consumer_diagnostics
+            if (
+                post_packet_diagnostics["manifest_sha256"]
+                != task039_packet_consumer_record["manifest_sha256"]
+                or post_packet_diagnostics["identity_sha256"]
+                != task039_packet_consumer_record["identity_sha256"]
+                or post_packet_diagnostics["qep_calls"] != 0
+            ):
+                raise RuntimeError(
+                    "Task039 post-factor packet rehydrate identity/QEP contract failed."
+                )
+            positive = packet_consumer_bundle.positive_basis
+            negative = packet_consumer_bundle.negative_basis
+            coupling.attach_mode_bases(positive, negative)
+            task039_packet_post_factor_rehydrate = {
+                "manifest": post_packet_diagnostics["manifest_path"],
+                "manifest_sha256": post_packet_diagnostics["manifest_sha256"],
+                "identity_sha256": post_packet_diagnostics["identity_sha256"],
+                "consumer_kind": post_packet_diagnostics["consumer_kind"],
+                "qep_calls": post_packet_diagnostics["qep_calls"],
+                "read_seconds_max_rank": post_packet_diagnostics[
+                    "read_seconds_max_rank"
+                ],
+                "hydrate_seconds_max_rank": post_packet_diagnostics[
+                    "hydrate_seconds_max_rank"
+                ],
+                "mmap_released": post_packet_diagnostics["packet_mmap_released"],
+                "packet_references_released": post_packet_diagnostics[
+                    "packet_references_released"
+                ],
+                "factor_modes_overlap": False,
+                "recovery_after_factor_system_release": True,
+            }
+            task039_packet_consumer_record["modes_released_before_factor"] = (
+                task039_packet_modes_released_before_factor
+            )
+            task039_packet_consumer_record["post_factor_rehydrate"] = (
+                task039_packet_post_factor_rehydrate
+            )
+            recover_deferred_hybrid_static_solution(
+                solution,
+                bottom,
+                top,
+                coupling,
+            )
         modal_schur_comparison = None
         if args.compare_modal_schur:
             started = time.perf_counter()
@@ -3161,8 +3265,12 @@ def main(
             if system is not None
             else primary_schur_system.factor_inventory
         )
-        full_vector_size = int(positive.modes[0].right.right_full.getSize())
-        if packet_consumer_bundle is not None:
+        full_vector_size = (
+            int(task039_full_vector_size)
+            if packet_direct_lifecycle
+            else int(positive.modes[0].right.right_full.getSize())
+        )
+        if packet_direct_lifecycle:
             reduced_vector_size = None
             eigenvector_bytes = int(
                 4
@@ -3205,7 +3313,7 @@ def main(
             "storage_complexity_contract": "O(N_interface*M)+O(M^2)",
             "dense_interface_square_formed": False,
         }
-        if packet_consumer_bundle is not None:
+        if packet_direct_lifecycle:
             object_payload_ledger.update(
                 {
                     "selected_mode_vector_layout": "positive_negative_full_right_left",
@@ -3694,6 +3802,13 @@ def main(
             primary_schur_system.destroy()
         if system is not None:
             system.destroy()
+        if (
+            packet_direct_lifecycle
+            and task039_packet_post_factor_rehydrate is not None
+            and packet_consumer_bundle is not None
+            and coupling is not None
+        ):
+            coupling.detach_mode_bases()
         if coupling is not None:
             coupling.destroy()
         for local_system in (bottom, top):

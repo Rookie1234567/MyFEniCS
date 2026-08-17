@@ -22,6 +22,8 @@ from src.modes.selected_mode_packet import (
 )
 import src.modes.selected_mode_packet as selected_mode_packet
 from src.modes.stable_propagation import build_two_sided_propagation
+from src.coupling.hybrid_internal_modes import HybridInternalModeCoupling
+import src.solvers.hybrid_fem_modal_augmented_direct as direct_solver
 import benchmarks.run_task032_phase6_augmented as direct_runner
 import benchmarks.run_task037b_hybrid_iterative as hybrid_runner
 
@@ -253,6 +255,88 @@ def test_task039_packet_gate_metrics_use_authority_without_hydrated_qep_attrs() 
     }
 
 
+def test_task039_deferred_recovery_and_mode_basis_lifecycle(monkeypatch) -> None:
+    comm = MPI.COMM_SELF
+    branches, ownership = _branches(comm)
+    positive = _fake_basis(branches["positive"], ownership)
+    negative = _fake_basis(branches["negative"], ownership)
+    coupling = HybridInternalModeCoupling(
+        projection=SimpleNamespace(),
+        bottom=SimpleNamespace(),
+        top=SimpleNamespace(),
+        propagation=SimpleNamespace(),
+        modal_traction_model="continuous_qep_beta",
+        positive_traction_beta_per_nm=(),
+        negative_traction_beta_per_nm=(),
+        negative_trace_to_positive=np.zeros((480, 480), dtype=np.complex128),
+        positive_projection_identity_error=0.0,
+        mode_count_per_direction=480,
+        interface_quadrature_degree=1,
+        spaces=SimpleNamespace(),
+        positive_basis=positive,
+        negative_basis=negative,
+    )
+    detached = coupling.detach_mode_bases()
+    assert detached == (positive, negative)
+    assert coupling.positive_basis is None
+    assert coupling.negative_basis is None
+    coupling.attach_mode_bases(*detached)
+    assert coupling.positive_basis is positive
+    assert coupling.negative_basis is negative
+
+    recovery_calls = []
+    monkeypatch.setattr(
+        direct_solver,
+        "recover_hybrid_static_local_field",
+        lambda system, *_args: recovery_calls.append(system.side) or system.side,
+    )
+    solution = SimpleNamespace(
+        bottom="bottom_solution",
+        top="top_solution",
+        modal_amplitudes=np.zeros(960, dtype=np.complex128),
+        bottom_recovered=None,
+        top_recovered=None,
+        ksp=None,
+    )
+    bottom_system = SimpleNamespace(side="bottom", static_condensation=object())
+    top_system = SimpleNamespace(side="top", static_condensation=object())
+    with pytest.raises(RuntimeError, match="factor to be released"):
+        direct_solver.recover_deferred_hybrid_static_solution(
+            SimpleNamespace(
+                bottom="bottom_solution",
+                top="top_solution",
+                modal_amplitudes=np.zeros(960, dtype=np.complex128),
+                bottom_recovered=None,
+                top_recovered=None,
+                ksp=object(),
+            ),
+            bottom_system,
+            top_system,
+            coupling,
+        )
+    direct_solver.recover_deferred_hybrid_static_solution(
+        solution, bottom_system, top_system, coupling
+    )
+    assert recovery_calls == ["bottom", "top"]
+    assert solution.bottom_recovered == "bottom"
+    assert solution.top_recovered == "top"
+    coupling.detach_mode_bases()
+    with pytest.raises(RuntimeError, match="attached modal bases"):
+        direct_solver.recover_deferred_hybrid_static_solution(
+            SimpleNamespace(
+                bottom="bottom_solution",
+                top="top_solution",
+                modal_amplitudes=np.zeros(960, dtype=np.complex128),
+                bottom_recovered=None,
+                top_recovered=None,
+                ksp=None,
+            ),
+            bottom_system,
+            top_system,
+            coupling,
+        )
+
+
 def test_task039_direct_factor_release_rejects_incomplete_cleanup() -> None:
     solution = SimpleNamespace(converged_reason=1, relative_residual=0.0, ksp=object())
     system = SimpleNamespace(_destroyed=False)
@@ -397,6 +481,29 @@ def test_task039_direct_packet_main_skips_qep_and_uses_augmented_chain(
         identity_path.write_text(json.dumps(_identity(comm)), encoding="utf-8")
     comm.barrier()
     events: list[str] = []
+    import benchmarks.task039_v4_selected_mode_packet as packet_adapter
+
+    real_consume = packet_adapter.consume_task039_v4_selected_mode_packet
+    consumed_diagnostics = []
+
+    def tracked_consume(*args, **kwargs):
+        bundle = real_consume(*args, **kwargs)
+        events.append("packet_hydrate")
+        consumed_diagnostics.append(bundle.packet_consumer_diagnostics)
+        destroy = bundle.destroy
+
+        def tracked_destroy() -> None:
+            events.append("packet_destroy")
+            destroy()
+
+        bundle.destroy = tracked_destroy
+        return bundle
+
+    monkeypatch.setattr(
+        packet_adapter,
+        "consume_task039_v4_selected_mode_packet",
+        tracked_consume,
+    )
 
     monkeypatch.setattr(
         direct_runner,
@@ -451,7 +558,33 @@ def test_task039_direct_packet_main_skips_qep_and_uses_augmented_chain(
         return value
 
     monkeypatch.setattr(direct_runner, "assemble_hybrid_local_dtn_system", fake_local)
-    coupling = SimpleNamespace(_destroyed=False)
+    coupling = SimpleNamespace(
+        _destroyed=False,
+        bases_attached=True,
+        positive_basis=object(),
+        negative_basis=object(),
+    )
+    detached_states = []
+
+    def detach_mode_bases():
+        events.append("packet_detach")
+        coupling.bases_attached = False
+        detached = (coupling.positive_basis, coupling.negative_basis)
+        coupling.positive_basis = None
+        coupling.negative_basis = None
+        detached_states.append(
+            (coupling.positive_basis is None, coupling.negative_basis is None)
+        )
+        return detached
+
+    def attach_mode_bases(positive_basis, negative_basis):
+        events.append("packet_attach")
+        coupling.bases_attached = True
+        coupling.positive_basis = positive_basis
+        coupling.negative_basis = negative_basis
+
+    coupling.detach_mode_bases = detach_mode_bases
+    coupling.attach_mode_bases = attach_mode_bases
 
     def destroy_coupling() -> None:
         if not coupling._destroyed:
@@ -505,13 +638,15 @@ def test_task039_direct_packet_main_skips_qep_and_uses_augmented_chain(
             events.append("heap_cleanup") or {"collective_call_completed": True}
         ),
     )
-    monkeypatch.setattr(
-        direct_runner,
-        "solve_hybrid_augmented_direct",
-        lambda *args, **kwargs: events.append("solve") or solution,
-    )
 
-    class _StopAfterDirectEvaluate(RuntimeError):
+    def fake_solve(*args, **kwargs):
+        assert kwargs["defer_static_recovery"] is True
+        events.append("solve")
+        return solution
+
+    monkeypatch.setattr(direct_runner, "solve_hybrid_augmented_direct", fake_solve)
+
+    class _StopAfterDirectLifecycle(RuntimeError):
         pass
 
     monkeypatch.setattr(
@@ -519,7 +654,22 @@ def test_task039_direct_packet_main_skips_qep_and_uses_augmented_chain(
         "evaluate_hybrid_augmented_solution",
         lambda *args, **kwargs: (
             events.append("evaluate")
-            or (_ for _ in ()).throw(_StopAfterDirectEvaluate())
+            or {
+                "port_power": {
+                    "R_total": 0.0,
+                    "T_total": 0.0,
+                    "A_balance": 0.0,
+                    "R_plus_T": 0.0,
+                }
+            }
+        ),
+    )
+    monkeypatch.setattr(
+        direct_runner,
+        "recover_deferred_hybrid_static_solution",
+        lambda *args, **kwargs: (
+            events.append("deferred_recovery")
+            or (_ for _ in ()).throw(_StopAfterDirectLifecycle())
         ),
     )
     cfg = SimpleNamespace(
@@ -563,26 +713,36 @@ def test_task039_direct_packet_main_skips_qep_and_uses_augmented_chain(
         "--selected-mode-packet-consumer-manifest-sha256",
         packet["manifest_sha256"],
     ]
-    with pytest.raises(_StopAfterDirectEvaluate):
+    with pytest.raises(_StopAfterDirectLifecycle):
         direct_runner.main(
             args,
             config_override=cfg,
             canonical_export_prefix="task039_direct",
         )
-    assert events[:9] == [
+    assert events[:16] == [
+        "packet_hydrate",
         "bottom_local_build",
         "top_local_build",
         "coupling_build",
+        "packet_detach",
+        "packet_destroy",
+        "heap_cleanup",
         "augmented_build",
         "solve",
+        "evaluate",
         "factor_release",
         "augmented_destroy",
         "heap_cleanup",
-        "evaluate",
+        "packet_hydrate",
+        "packet_attach",
+        "deferred_recovery",
     ]
     assert "qep" not in events
     assert solution.ksp is None
     assert system._destroyed is True
+    assert consumed_diagnostics[0]["destroyed"] is True
+    assert consumed_diagnostics[0]["vector_count_after_destroy"] == 0
+    assert detached_states[0] == (True, True)
     comm.barrier()
 
 

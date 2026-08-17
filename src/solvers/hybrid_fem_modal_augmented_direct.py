@@ -556,8 +556,14 @@ def solve_hybrid_augmented_direct(
     bottom_system: HybridLocalDtnSystem,
     top_system: HybridLocalDtnSystem,
     coupling: HybridInternalModeCoupling | None = None,
+    *,
+    defer_static_recovery: bool = False,
 ) -> HybridAugmentedDirectSolution:
-    """Factor and solve the assembled hybrid system with direct MUMPS LU."""
+    """Factor and solve the assembled hybrid system with direct MUMPS LU.
+
+    ``defer_static_recovery`` is an explicit packet-direct opt-in.  Its default
+    keeps the historical recovery-before-return behavior unchanged.
+    """
 
     comm = system.layout.comm
     ksp = PETSc.KSP().create(comm)
@@ -592,7 +598,7 @@ def solve_hybrid_augmented_direct(
         bottom_system.static_condensation is not None
         or top_system.static_condensation is not None
     )
-    if static_requested:
+    if static_requested and not defer_static_recovery:
         if (
             bottom_system.static_condensation is None
             or top_system.static_condensation is None
@@ -634,6 +640,45 @@ def solve_hybrid_augmented_direct(
         converged_reason=int(ksp.getConvergedReason()),
         bottom_recovered=bottom_recovered,
         top_recovered=top_recovered,
+    )
+
+
+def recover_deferred_hybrid_static_solution(
+    solution: HybridAugmentedDirectSolution,
+    bottom_system: HybridLocalDtnSystem,
+    top_system: HybridLocalDtnSystem,
+    coupling: HybridInternalModeCoupling,
+) -> None:
+    """Recover both condensed local fields after explicit factor release."""
+
+    if solution.ksp is not None:
+        raise RuntimeError(
+            "Deferred Hybrid static recovery requires the direct factor to be released."
+        )
+    if solution.bottom_recovered is not None or solution.top_recovered is not None:
+        raise ValueError("Hybrid static recovery has already been performed.")
+    if (
+        bottom_system.static_condensation is None
+        or top_system.static_condensation is None
+    ):
+        raise ValueError(
+            "Deferred Hybrid static recovery requires both condensed systems."
+        )
+    if coupling.positive_basis is None or coupling.negative_basis is None:
+        raise RuntimeError(
+            "Deferred Hybrid static recovery requires attached modal bases."
+        )
+    solution.bottom_recovered = recover_hybrid_static_local_field(
+        bottom_system,
+        coupling,
+        solution.bottom,
+        solution.modal_amplitudes,
+    )
+    solution.top_recovered = recover_hybrid_static_local_field(
+        top_system,
+        coupling,
+        solution.top,
+        solution.modal_amplitudes,
     )
 
 

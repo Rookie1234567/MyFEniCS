@@ -100,8 +100,8 @@ class HybridInternalModeCoupling:
     mode_count_per_direction: int
     interface_quadrature_degree: int
     spaces: CrossSectionSpaces
-    positive_basis: BiorthogonalModeBasis
-    negative_basis: BiorthogonalModeBasis
+    positive_basis: BiorthogonalModeBasis | None
+    negative_basis: BiorthogonalModeBasis | None
     full_field_or_mode_gathered: bool = False
     dense_interface_square_formed: bool = False
     interface_quadrature_coefficient_degree: int = 0
@@ -115,6 +115,36 @@ class HybridInternalModeCoupling:
     @property
     def internal_equation_count(self) -> int:
         return 2 * self.mode_count_per_direction
+
+    def detach_mode_bases(
+        self,
+    ) -> tuple[BiorthogonalModeBasis, BiorthogonalModeBasis]:
+        """Detach modal basis references while retaining assembled coupling blocks."""
+
+        if self.positive_basis is None or self.negative_basis is None:
+            raise RuntimeError("Hybrid coupling mode bases are already detached.")
+        bases = self.positive_basis, self.negative_basis
+        self.positive_basis = None
+        self.negative_basis = None
+        return bases
+
+    def attach_mode_bases(
+        self,
+        positive_basis: BiorthogonalModeBasis,
+        negative_basis: BiorthogonalModeBasis,
+    ) -> None:
+        """Attach matching forward/backward bases for deferred static recovery."""
+
+        if len(positive_basis.modes) != self.mode_count_per_direction:
+            raise ValueError("Positive basis size does not match hybrid coupling.")
+        if len(negative_basis.modes) != self.mode_count_per_direction:
+            raise ValueError("Negative basis size does not match hybrid coupling.")
+        if any(mode.direction != "forward" for mode in positive_basis.modes):
+            raise ValueError("Attached positive basis must contain forward modes.")
+        if any(mode.direction != "backward" for mode in negative_basis.modes):
+            raise ValueError("Attached negative basis must contain backward modes.")
+        self.positive_basis = positive_basis
+        self.negative_basis = negative_basis
 
     def destroy(self) -> None:
         self.bottom.destroy()
