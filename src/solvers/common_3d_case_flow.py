@@ -4,7 +4,7 @@ import gc
 import json
 import time
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Mapping
 
 import numpy as np
 from mpi4py import MPI
@@ -774,6 +774,8 @@ def run_prepared_3d_case_flow(
     matrix_free_dtn: bool = False,
     matrix_free_dtn_probe: bool = False,
     canonical_vector_export: bool = False,
+    pre_recovery_packet_directory: Path | None = None,
+    pre_recovery_packet_identity: Mapping[str, Any] | None = None,
     mesh_data_override: AirBox3DMesh | None = None,
 ) -> dict[str, object]:
     """Run one explicit 3D Maxwell case after the stage file chooses the recipe.
@@ -804,6 +806,8 @@ def run_prepared_3d_case_flow(
             bool(static_retain_local_schur_for_matrix_free),
             bool(matrix_free_dtn),
             bool(matrix_free_dtn_probe),
+            pre_recovery_packet_directory is not None,
+            pre_recovery_packet_identity is not None,
         )
     )
     if len(set(live_observer_flags)) != 1:
@@ -1299,6 +1303,8 @@ def run_prepared_3d_case_flow(
                 matrix_free_dtn=matrix_free_dtn,
                 matrix_free_dtn_probe=matrix_free_dtn_probe,
                 canonical_vector_export=canonical_vector_export,
+                pre_recovery_packet_directory=pre_recovery_packet_directory,
+                pre_recovery_packet_identity=pre_recovery_packet_identity,
             )
         except DirectSolveFailure as failure:
             _finish_timed_stage(
@@ -1457,6 +1463,9 @@ def run_prepared_3d_case_flow(
     external_solver_snapshot = bool(
         dtn_solver_info and dtn_solver_info.get("external_linear_solver_port")
     )
+    pre_recovery_solver_snapshot = bool(
+        dtn_solver_info and dtn_solver_info.get("factor_destroyed_before_recovery")
+    )
     dtn_base_matrix_stats = (
         None
         if dtn_solver_info is None
@@ -1556,7 +1565,11 @@ def run_prepared_3d_case_flow(
         reason_name = "MATRIX_FREE_DTN_COMPONENT_ONLY"
         iterations = 0
         residual_norm = None
-    elif external_solver_snapshot or live_observer_primal_snapshot:
+    elif (
+        external_solver_snapshot
+        or live_observer_primal_snapshot
+        or pre_recovery_solver_snapshot
+    ):
         reason = int(dtn_solver_info["ksp_converged_reason"])
         reason_name = _ksp_reason_name(reason)
         iterations = int(dtn_solver_info["ksp_iterations"])
@@ -1570,7 +1583,11 @@ def run_prepared_3d_case_flow(
         reason_name = _ksp_reason_name(reason)
         iterations = int(system_ksp.getIterationNumber())
         residual_norm = float(system_ksp.getResidualNorm())
-    if external_solver_snapshot or live_observer_primal_snapshot:
+    if (
+        external_solver_snapshot
+        or live_observer_primal_snapshot
+        or pre_recovery_solver_snapshot
+    ):
         ksp_type = dtn_solver_info["actual_ksp_type"]
         pc_type = dtn_solver_info["actual_pc_type"]
         pc_factor_solver_type = dtn_solver_info["actual_pc_factor_solver_type"]
@@ -1973,6 +1990,12 @@ def run_prepared_3d_case_flow(
             solver_objects_released_before_postprocess
         ),
         "solver_release_audit": solver_release_audit,
+        "pre_recovery_factor_destroyed_before_recovery": pre_recovery_solver_snapshot,
+        "pre_recovery_lifecycle": (
+            None
+            if dtn_solver_info is None
+            else dtn_solver_info.get("pre_recovery_lifecycle")
+        ),
         "cell_static_condensation": None
         if dtn_solver_info is None
         else dtn_solver_info.get("cell_static_condensation"),

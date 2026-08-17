@@ -351,3 +351,54 @@ def test_tiny_dtn_port_uses_never_materialized_action_path(monkeypatch, tmp_path
             assert left is None and right is None
         else:
             assert right == pytest.approx(left, abs=1.0e-8)
+
+
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 1,
+    reason="serial tiny real-KSP lifecycle equivalence fixture",
+)
+def test_tiny_real_ksp_pre_recovery_release_preserves_full3d_result(tmp_path):
+    cfg = replace(
+        target_stage4_config(degree=2, h_nm=100.0),
+        case_name="task039_v4_tiny_pre_recovery",
+        matrix_diagnostics_assemble_only=False,
+        matrix_diagnostics_factorization_only=False,
+        stage4_full3d_assembly_backend=ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
+        direct_release_solver_before_postprocess=True,
+        unique_output=False,
+    )
+    old = run_stage4b_block_grating_3d_case(cfg, tmp_path / "old")
+    qualified = run_stage4b_block_grating_3d_case(
+        cfg,
+        tmp_path / "qualified",
+        pre_recovery_packet_directory=tmp_path / "qualified" / "packet",
+        pre_recovery_packet_identity={"source_sha": "tiny", "physical_sha256": "tiny"},
+    )
+    assert old["case_status"] == qualified["case_status"] == "completed"
+    assert old["official_result"] is qualified["official_result"] is True
+    for key in (
+        "linear_system_relative_residual",
+        "R_total",
+        "T_total",
+        "A_balance",
+    ):
+        assert qualified[key] == pytest.approx(old[key], abs=1.0e-8)
+    assert qualified["pre_recovery_factor_destroyed_before_recovery"] is True
+    assert qualified["actual_pc_factor_solver_type"] is not None
+    assert (
+        qualified["pre_recovery_lifecycle"]["factor_destroyed_before_recovery"] is True
+    )
+    assert (tmp_path / "qualified" / "packet" / "manifest.json").exists()
+    progress = [
+        json.loads(line)
+        for line in (tmp_path / "qualified" / "progress_3d.jsonl")
+        .read_text()
+        .splitlines()
+    ]
+    marks = [(event["stage"], event["status"]) for event in progress]
+    assert marks.index(("pre_recovery_packet", "end")) < marks.index(
+        ("factor_destroy", "begin")
+    )
+    assert marks.index(("factor_destroy", "end")) < marks.index(
+        ("full_field_recovery", "begin")
+    )

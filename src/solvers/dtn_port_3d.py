@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import csv
 from dataclasses import dataclass
+import gc
 import hashlib
 import json
 import time
@@ -45,7 +46,8 @@ from .condensed_dtn import (
     combine_petsc_augmented_solution,
     create_matrix_free_augmented_operator,
 )
-from .common_3d_utils import _write_progress_event
+from .common_3d_utils import _trim_process_heap, _write_progress_event
+from .full3d_lifecycle_packet import write_packet
 from .hcurl_cell_static_condensation import (
     build_explicit_cell_static_condensation,
     build_floquet_independent_trace_system,
@@ -2421,25 +2423,191 @@ def _gather_auxiliary_values(
 def _linear_residual(
     A: PETSc.Mat, b: PETSc.Vec, x: PETSc.Vec
 ) -> dict[str, float | None]:
+    residual = None
     try:
         residual = b.duplicate()
         A.mult(x, residual)
         residual.axpy(PETSc.ScalarType(-1.0), b)
         rhs_norm = float(b.norm())
         residual_norm = float(residual.norm())
-        return {
+        result = {
             "linear_system_rhs_norm": rhs_norm,
             "linear_system_solution_norm": float(x.norm()),
             "linear_system_residual_norm": residual_norm,
             "linear_system_relative_residual": residual_norm / max(rhs_norm, 1.0e-30),
         }
     except Exception:
-        return {
+        result = {
             "linear_system_rhs_norm": None,
             "linear_system_solution_norm": None,
             "linear_system_residual_norm": None,
             "linear_system_relative_residual": None,
         }
+    finally:
+        if residual is not None:
+            residual.destroy()
+    return result
+
+
+def _pre_recovery_solver_telemetry(
+    ksp: PETSc.KSP,
+    ksp_telemetry: Mapping[str, Any],
+) -> dict[str, Any]:
+    pc = ksp.getPC()
+    factor_solver_type = None
+    try:
+        factor_solver_type = pc.getFactorSolverType()
+    except PETSc.Error:
+        pass
+    return {
+        "converged_reason": int(ksp.getConvergedReason()),
+        "iterations": int(ksp.getIterationNumber()),
+        "residual_norm": float(ksp.getResidualNorm()),
+        "ksp_type": ksp.getType(),
+        "pc_type": pc.getType(),
+        "pc_factor_solver_type": factor_solver_type,
+        "factor_inventory": _petsc_factor_inventory(ksp),
+        **dict(ksp_telemetry),
+    }
+
+
+def _pre_recovery_mode_keys(modes: list[PortMode3D]) -> list[dict[str, Any]]:
+    return [
+        {
+            "side": str(mode.side),
+            "m": int(mode.m),
+            "n": int(mode.n),
+            "polarization": str(mode.polarization),
+        }
+        for mode in modes
+    ]
+
+
+def _run_pre_recovery_lifecycle(
+    *,
+    solve_A: PETSc.Mat,
+    solve_b: PETSc.Vec,
+    solve_x: PETSc.Vec,
+    ksp: PETSc.KSP,
+    ksp_telemetry: Mapping[str, Any],
+    n_fe: int,
+    n_aux: int,
+    modes: list[PortMode3D],
+    comm: MPI.Intracomm,
+    out_dir: Path,
+    started: float | None,
+    petsc_options: Mapping[str, Any],
+    packet_directory: Path,
+    packet_identity: Mapping[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Freeze the solve evidence, write the packet, then release its factor."""
+
+    residual = _linear_residual(solve_A, solve_b, solve_x)
+    relative_residual = residual["linear_system_relative_residual"]
+    frozen_solver = _pre_recovery_solver_telemetry(ksp, ksp_telemetry)
+    direct_solve_gate = not (
+        int(frozen_solver["converged_reason"]) <= 0
+        or relative_residual is None
+        or not np.isfinite(float(relative_residual))
+        or float(relative_residual) > 1.0e-9
+    )
+    if not bool(comm.allreduce(direct_solve_gate, op=MPI.LAND)):
+        raise RuntimeError(
+            "pre-recovery direct solve gate failed: "
+            f"reason={frozen_solver['converged_reason']}, "
+            f"relative_residual={relative_residual}"
+        )
+    external_q = _gather_auxiliary_values(solve_x, n_fe, n_aux, comm)
+    external_q_record = [[float(value.real), float(value.imag)] for value in external_q]
+    metadata = {
+        "external_q": external_q_record,
+        "external_keys": _pre_recovery_mode_keys(modes),
+        "residual": residual,
+        "solver_telemetry": frozen_solver,
+    }
+    packet_started = time.perf_counter()
+    packet = write_packet(
+        packet_directory,
+        np.asarray(solve_x.getArray(readonly=True), dtype=np.complex128).copy(),
+        np.asarray(solve_b.getArray(readonly=True), dtype=np.complex128).copy(),
+        identity=packet_identity,
+        metadata=metadata,
+        ownership_range=solve_x.getOwnershipRange(),
+        comm=comm,
+    )
+    packet_write_seconds = float(
+        comm.allreduce(time.perf_counter() - packet_started, op=MPI.MAX)
+    )
+    if not bool(packet["pass"]):
+        raise RuntimeError("pre-recovery packet/residual gate failed")
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="pre_recovery_packet",
+        status="end",
+        started=started,
+        petsc_options=petsc_options,
+        extra={
+            "packet": packet,
+            "residual": residual,
+            "packet_write_seconds_max_rank": packet_write_seconds,
+        },
+    )
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="factor_destroy",
+        status="begin",
+        started=started,
+        petsc_options=petsc_options,
+        extra={"factor_destroyed_before_recovery": False},
+    )
+    factor_started = time.perf_counter()
+    ksp.destroy()
+    factor_destroy_seconds = float(
+        comm.allreduce(time.perf_counter() - factor_started, op=MPI.MAX)
+    )
+    cleanup_started = time.perf_counter()
+    gc.collect()
+    PETSc.garbage_cleanup(comm)
+    gc.collect()
+    heap_audit = _trim_process_heap()
+    cleanup = {
+        "collective_call_completed": bool(
+            comm.allreduce(bool(heap_audit["call_completed"]), op=MPI.LAND)
+        ),
+        "rss_before_mb_by_rank": comm.allgather(heap_audit["rss_before_mb"]),
+        "rss_after_mb_by_rank": comm.allgather(heap_audit["rss_after_mb"]),
+        "rss_released_mb_by_rank": comm.allgather(heap_audit["rss_released_mb"]),
+        "cleanup_seconds_max_rank": float(
+            comm.allreduce(time.perf_counter() - cleanup_started, op=MPI.MAX)
+        ),
+    }
+    _write_progress_event(
+        out_dir,
+        comm,
+        stage="factor_destroy",
+        status="end",
+        started=started,
+        petsc_options=petsc_options,
+        extra={
+            "factor_destroyed_before_recovery": True,
+            "cleanup": cleanup,
+            "factor_destroy_seconds_max_rank": factor_destroy_seconds,
+        },
+    )
+    return {
+        "packet": packet,
+        "residual": residual,
+        "external_q": external_q_record,
+        "external_keys": metadata["external_keys"],
+        "solver_telemetry": frozen_solver,
+        "cleanup": cleanup,
+        "factor_destroyed_before_recovery": True,
+        "packet_write_seconds_max_rank": packet_write_seconds,
+        "factor_destroy_seconds_max_rank": factor_destroy_seconds,
+        "cleanup_seconds_max_rank": cleanup["cleanup_seconds_max_rank"],
+    }, frozen_solver
 
 
 def _write_port_outputs(
@@ -2735,6 +2903,8 @@ def _solve_stage4_dtn_port_total_field_impl(
     matrix_free_dtn: bool = False,
     matrix_free_dtn_probe: bool = False,
     canonical_vector_export: bool = False,
+    pre_recovery_packet_directory: Path | None = None,
+    pre_recovery_packet_identity: Mapping[str, Any] | None = None,
     _recovery_cleanup_sink: list[VariablePRecoveredSolution],
 ) -> dict[str, Any]:
     """Solve the Stage-4 total-field problem with 3D Fourier-DtN ports.
@@ -3020,6 +3190,16 @@ def _solve_stage4_dtn_port_total_field_impl(
     assembly_time_active = (
         assembly_time_system is not None or variable_p_reduction is not None
     )
+    if pre_recovery_packet_directory is not None and assembly_time_system is None:
+        raise ValueError(
+            "pre-recovery lifecycle requires assembly-time static condensation"
+        )
+    if (pre_recovery_packet_directory is None) != (
+        pre_recovery_packet_identity is None
+    ):
+        raise ValueError(
+            "pre-recovery packet directory and identity must be provided together"
+        )
 
     def reduce_assembly_time_vector(
         vector: PETSc.Vec,
@@ -4278,6 +4458,11 @@ def _solve_stage4_dtn_port_total_field_impl(
         external_snapshot is not None
         and external_snapshot.assembled_matrix_released_before_solve
     )
+    if (
+        cfg.matrix_diagnostics_factorization_only
+        and pre_recovery_packet_directory is not None
+    ):
+        raise ValueError("pre-recovery lifecycle requires a completed solve")
     if cfg.matrix_diagnostics_factorization_only:
         timing_details["stage4_dtn_factorization_seconds"] = setup_and_solve_seconds
         E_total = fem.Function(floquet_data.mpc.function_space, name="E_total")
@@ -4330,6 +4515,46 @@ def _solve_stage4_dtn_port_total_field_impl(
             },
         }
     timing_details["stage4_dtn_linear_solve_seconds"] = setup_and_solve_seconds
+
+    pre_recovery_lifecycle = None
+    pre_recovery_linear_residual = None
+    pre_recovery_solver_telemetry = None
+    if pre_recovery_packet_directory is not None:
+        if external_snapshot is not None or ksp is None:
+            raise ValueError(
+                "pre-recovery lifecycle requires the direct PETSc KSP path"
+            )
+        (
+            pre_recovery_lifecycle,
+            pre_recovery_solver_telemetry,
+        ) = _run_pre_recovery_lifecycle(
+            solve_A=solve_A,
+            solve_b=solve_b,
+            solve_x=solve_x,
+            ksp=ksp,
+            ksp_telemetry=ksp_telemetry,
+            n_fe=n_fe,
+            n_aux=n_aux,
+            modes=modes,
+            comm=comm,
+            out_dir=out_dir,
+            started=started,
+            petsc_options=petsc_options,
+            packet_directory=pre_recovery_packet_directory,
+            packet_identity=pre_recovery_packet_identity,
+        )
+        pre_recovery_linear_residual = pre_recovery_lifecycle["residual"]
+        ksp = None
+
+        _write_progress_event(
+            out_dir,
+            comm,
+            stage="full_field_recovery",
+            status="begin",
+            started=started,
+            petsc_options=petsc_options,
+            extra={"factor_destroyed_before_recovery": True},
+        )
 
     assembly_time_field = None
     embedded_fe_solution = None
@@ -4405,6 +4630,17 @@ def _solve_stage4_dtn_port_total_field_impl(
         )
     else:
         x_aug = solve_x
+
+    if pre_recovery_lifecycle is not None:
+        _write_progress_event(
+            out_dir,
+            comm,
+            stage="full_field_recovery",
+            status="end",
+            started=started,
+            petsc_options=petsc_options,
+            extra={"factor_destroyed_before_recovery": True},
+        )
 
     if variable_p_reduction is not None and variable_p_recovered is not None:
         residual_started = time.perf_counter()
@@ -4505,6 +4741,11 @@ def _solve_stage4_dtn_port_total_field_impl(
         dofs=int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs),
         constraints=floquet_data.num_constraints,
         petsc_options=petsc_options,
+        extra=(
+            {"factor_destroyed_before_recovery": True}
+            if pre_recovery_lifecycle is not None
+            else None
+        ),
     )
     _write_progress_event(
         out_dir,
@@ -4666,11 +4907,20 @@ def _solve_stage4_dtn_port_total_field_impl(
             "ordinary_default_changed": False,
         }
     if external_snapshot is None:
-        solver_converged_reason = int(ksp.getConvergedReason())
-        solver_iterations = int(ksp.getIterationNumber())
-        solver_residual_norm = float(ksp.getResidualNorm())
-        solver_ksp_type = ksp.getType()
-        solver_pc_type = ksp.getPC().getType()
+        if pre_recovery_solver_telemetry is None:
+            solver_converged_reason = int(ksp.getConvergedReason())
+            solver_iterations = int(ksp.getIterationNumber())
+            solver_residual_norm = float(ksp.getResidualNorm())
+            solver_ksp_type = ksp.getType()
+            solver_pc_type = ksp.getPC().getType()
+        else:
+            solver_converged_reason = int(
+                pre_recovery_solver_telemetry["converged_reason"]
+            )
+            solver_iterations = int(pre_recovery_solver_telemetry["iterations"])
+            solver_residual_norm = pre_recovery_solver_telemetry.get("residual_norm")
+            solver_ksp_type = pre_recovery_solver_telemetry["ksp_type"]
+            solver_pc_type = pre_recovery_solver_telemetry["pc_type"]
     else:
         solver_converged_reason = int(external_snapshot.converged_reason)
         solver_iterations = int(external_snapshot.iterations)
@@ -4773,6 +5023,12 @@ def _solve_stage4_dtn_port_total_field_impl(
         "dtn_trace_alias_preflight": trace_alias_preflight,
         "explicit_chac_constructed": False,
         "dtn_auxiliary_dense_block_constructed": False,
+        "pre_recovery_lifecycle_requested": bool(
+            pre_recovery_packet_directory is not None
+        ),
+        "pre_recovery_lifecycle": pre_recovery_lifecycle,
+        "pre_recovery_linear_residual": pre_recovery_linear_residual,
+        "factor_destroyed_before_recovery": bool(pre_recovery_lifecycle is not None),
         **ksp_telemetry,
         **timing_details,
         **linear_residual,
@@ -4798,13 +5054,17 @@ def _solve_stage4_dtn_port_total_field_impl(
                 "reduced_residual_norm": external_snapshot.reduced_residual_norm,
             }
         )
-    if external_snapshot is None:
+    if external_snapshot is None and pre_recovery_solver_telemetry is None:
         try:
             solver_info["actual_pc_factor_solver_type"] = (
                 ksp.getPC().getFactorSolverType()
             )
         except Exception:
             solver_info["actual_pc_factor_solver_type"] = None
+    elif pre_recovery_solver_telemetry is not None:
+        solver_info["actual_pc_factor_solver_type"] = pre_recovery_solver_telemetry[
+            "pc_factor_solver_type"
+        ]
 
     if condensed_system is not None:
         if independent_trace_system is not None:
@@ -5000,6 +5260,8 @@ def solve_stage4_dtn_port_total_field(
     matrix_free_dtn: bool = False,
     matrix_free_dtn_probe: bool = False,
     canonical_vector_export: bool = False,
+    pre_recovery_packet_directory: Path | None = None,
+    pre_recovery_packet_identity: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run the DtN solver with exception-safe recovered-vector ownership."""
 
@@ -5018,6 +5280,8 @@ def solve_stage4_dtn_port_total_field(
             bool(matrix_free_dtn),
             bool(matrix_free_dtn_probe),
             bool(canonical_vector_export),
+            pre_recovery_packet_directory is not None,
+            pre_recovery_packet_identity is not None,
         )
     )
     if len(set(observer_flags)) != 1:
@@ -5050,6 +5314,8 @@ def solve_stage4_dtn_port_total_field(
             matrix_free_dtn=matrix_free_dtn,
             matrix_free_dtn_probe=matrix_free_dtn_probe,
             canonical_vector_export=canonical_vector_export,
+            pre_recovery_packet_directory=pre_recovery_packet_directory,
+            pre_recovery_packet_identity=pre_recovery_packet_identity,
             _recovery_cleanup_sink=recovered_cleanup,
         )
     except BaseException:
