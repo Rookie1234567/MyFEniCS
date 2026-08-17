@@ -234,6 +234,7 @@ def test_w18a_offline_fixture_authority_and_output_contract(tmp_path, monkeypatc
     assert saved["checker_source_sha"] == checker_sha
     assert saved["checker_source_at_start"]["source_commit_full_sha"] == checker_sha
     assert saved["checker_source_at_end"]["source_commit_full_sha"] == checker_sha
+    assert saved["span_lane_decided"] is True
     assert "rhs" not in saved
     with pytest.raises(FileExistsError):
         runner._run_m6b_w18a_offline_span(
@@ -280,6 +281,11 @@ def test_w18a_offline_checker_identity_fails_closed(
     failure = json.loads(output.read_text(encoding="utf-8"))
     assert failure["pass"] is False
     assert failure["problems"] == ["input_evidence"]
+    assert failure["status"] == "evidence_failed"
+    assert failure["classification"] == "W18A_OFFLINE_INPUT_EVIDENCE_FAIL"
+    assert failure["qualified_for_bounded_followup"] is False
+    assert failure["close_w18a_nested_span_lane"] is False
+    assert failure["span_lane_decided"] is False
     assert failure["producer_source_sha"] == "a" * 40
     assert failure["checker_source_sha"] == expected
 
@@ -342,3 +348,19 @@ def test_w18a_parser_dispatch_and_offline_path_has_no_action_stack(tmp_path, mon
         token not in source
         for token in ("dolfinx", "PETSc", "MPI", "build_m6b", "_run_m6b_w18a_diagnostic")
     )
+
+
+def test_w18a_frozen_v2_authority_evidence_sha_is_complete():
+    root = Path(__file__).resolve().parents[2]
+    compact_path = root / (
+        "benchmarks/cases/101_task37_extra_development/records/"
+        "m6b_w18a_839ce67_formal_resource_closeout_v2.json"
+    )
+    compact = runner._read_json(compact_path)
+    expected_file_sha = "3d9110cf7127333b676e96c5e7dd5cace23ecadc30127063d7f87171d510eb61"
+    expected_evidence_sha = "2132d54aacd70f38ea93e8c0886f7d2a5b86b8da6748d322edfc1d85afebc45f"
+
+    assert runner._sha256_file(compact_path) == expected_file_sha
+    assert compact["evidence_sha256"] == expected_evidence_sha
+    assert len(compact["evidence_sha256"]) == 64
+    assert runner.M6B_W18A_OFFLINE_SPAN_AUTHORITY_EVIDENCE_SHA256 == expected_evidence_sha

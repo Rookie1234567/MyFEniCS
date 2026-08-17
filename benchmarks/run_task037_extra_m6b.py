@@ -763,7 +763,7 @@ M6B_W18A_OFFLINE_SPAN_AUTHORITY_COMPACT_SHA256 = (
     "3d9110cf7127333b676e96c5e7dd5cace23ecadc30127063d7f87171d510eb61"
 )
 M6B_W18A_OFFLINE_SPAN_AUTHORITY_EVIDENCE_SHA256 = (
-    "2132d54aacd70f38ea93e8c0886f7d2a5b86b8da6748d322edfc1d85afebc45"
+    "2132d54aacd70f38ea93e8c0886f7d2a5b86b8da6748d322edfc1d85afebc45f"
 )
 M6B_W18A_ACTION_COUNTS = {
     "outer_auxiliary_action_count": 8,
@@ -10156,6 +10156,7 @@ def _m6b_w18a_offline_span_report(
         "pde_call_count": 0,
         "qualified_for_bounded_followup": passed,
         "close_w18a_nested_span_lane": not passed,
+        "span_lane_decided": True,
         "producer_source_sha": expected_producer_source_sha,
         "checker_source_sha": expected_checker_source_sha,
         "checker_source_at_start": dict(checker_source_start),
@@ -10221,9 +10222,9 @@ def _run_m6b_w18a_offline_span(
         report = {
             "schema": M6B_W18A_OFFLINE_SPAN_SCHEMA,
             "phase": M6B_W18A_OFFLINE_SPAN_PHASE,
-            "status": "gate_failed",
+            "status": "evidence_failed",
             "pass": False,
-            "classification": "W18A_OFFLINE_SPAN_FAIL",
+            "classification": "W18A_OFFLINE_INPUT_EVIDENCE_FAIL",
             "problems": ["input_evidence"],
             "error": str(exc),
             "derived": True,
@@ -10237,7 +10238,8 @@ def _run_m6b_w18a_offline_span(
             "ksp_call_count": 0,
             "pde_call_count": 0,
             "qualified_for_bounded_followup": False,
-            "close_w18a_nested_span_lane": True,
+            "close_w18a_nested_span_lane": False,
+            "span_lane_decided": False,
             "producer_source_sha": expected_producer_source_sha,
             "checker_source_sha": expected_checker_source_sha,
             "checker_source_at_start": checker_source_start,
