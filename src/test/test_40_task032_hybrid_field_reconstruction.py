@@ -111,8 +111,21 @@ class TestTask032HybridFieldReconstruction(unittest.TestCase):
         self.assertIn("distance_from_interface_nm", top)
         with self.assertRaises(ValueError):
             element_safe_middle_offsets(
-                SimpleNamespace(z_values=np.asarray([0.0, 12.0, 40.0, 110.0, 120.0]))
+                SimpleNamespace(z_values=np.asarray([0.0, 12.0, 40.0, 110.0, 120.0])),
+                bottom_z_nm=110.0,
+                top_z_nm=10.0,
             )
+
+    def test_element_safe_offsets_support_non_aligned_interfaces(self) -> None:
+        axis_plan = SimpleNamespace(z_values=np.asarray([0.0, 12.0, 108.0, 120.0]))
+        bottom, top = element_safe_middle_offsets(axis_plan)
+        self.assertEqual((bottom["z_nm"], top["z_nm"]), (11.0, 109.0))
+        self.assertEqual((bottom["element_id"], top["element_id"]), (0, 2))
+        self.assertEqual((bottom["slab_index"], top["slab_index"]), (0, 2))
+        self.assertTrue(10.0 < bottom["z_nm"] < 110.0)
+        self.assertTrue(10.0 < top["z_nm"] < 110.0)
+        self.assertEqual(bottom["source"], "nonaligned_interface_subinterval")
+        self.assertEqual(top["source"], "nonaligned_interface_subinterval")
 
     def test_sampled_flux_and_energy_use_physical_field_values(self) -> None:
         electric = np.asarray([[[[2.0, 0.0, 0.0]]]], dtype=np.complex128)

@@ -2,20 +2,25 @@
 
 from __future__ import annotations
 
-import json
 import hashlib
-from pathlib import Path
+import json
 import subprocess
 import sys
+from pathlib import Path
 
+import numpy as np
 import pytest
 
 from benchmarks import task039_v4_h4_hybrid_direct as v4
+from src.geometry.mesh_builder_3d import stage4_axis_plan
 from src.io.execution_plan import dry_run_payload, method_adapter_identity
 from src.io.input_loader import InputError
-from src.io.input_validation import load_and_resolve
+from src.io.input_validation import (
+    load_and_resolve,
+    simulation_config_3d_from_normalized,
+)
+from src.postprocessing.hybrid_field_reconstruction import element_safe_middle_offsets
 from src.runners import task039_hybrid_direct as direct_adapter
-
 
 ROOT = Path(__file__).resolve().parents[2]
 INPUT = ROOT / v4.TASK039_V4_H4_HYBRID_DIRECT_INPUT
@@ -62,6 +67,29 @@ def test_v4_h4_input_profile_and_dynamic_inventory_are_exact():
     assert method_adapter_identity("hybrid_direct", payload["model_id"]) == (
         "task039.hybrid_direct"
     )
+
+
+def test_v4_h4_resolved_axis_supports_non_aligned_offsets_without_pde():
+    specification = _spec()
+    cfg = simulation_config_3d_from_normalized(specification.as_jsonable())
+    axis_plan = stage4_axis_plan(cfg, 8)
+    bottom, top = element_safe_middle_offsets(
+        axis_plan,
+        bottom_z_nm=specification.method["bottom_interface_nm"],
+        top_z_nm=specification.method["top_interface_nm"],
+    )
+    assert (bottom["z_nm"], top["z_nm"]) == (11.0, 109.0)
+    assert bottom["z_nm"] < top["z_nm"]
+    assert 10.0 < bottom["z_nm"] < 110.0
+    assert 10.0 < top["z_nm"] < 110.0
+    assert not np.any(np.isclose(axis_plan.z_values, 10.0))
+    assert not np.any(np.isclose(axis_plan.z_values, 110.0))
+    assert (bottom["element_id"], top["element_id"]) == (
+        np.searchsorted(axis_plan.z_values, 10.0, side="right") - 1,
+        np.searchsorted(axis_plan.z_values, 110.0, side="right") - 1,
+    )
+    assert bottom["source"] == "nonaligned_interface_subinterval"
+    assert top["source"] == "nonaligned_interface_subinterval"
 
 
 @pytest.mark.parametrize(

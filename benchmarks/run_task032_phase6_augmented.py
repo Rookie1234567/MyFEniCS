@@ -2583,6 +2583,9 @@ def main(
                 task039_post_destroy_cleanup,
                 pre_release_factor_inventory,
             )
+            task039_memory_detail_marker(
+                "direct_factor_released_before_postprocess", task039_direct_release
+            )
             task039_factor_inventory_before_release = task039_direct_release[
                 "factor_inventory_before_release"
             ]

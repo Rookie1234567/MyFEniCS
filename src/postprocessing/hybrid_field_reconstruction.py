@@ -111,7 +111,7 @@ def element_safe_middle_offsets(
     bottom_z_nm: float = 10.0,
     top_z_nm: float = 110.0,
 ) -> tuple[dict[str, object], dict[str, object]]:
-    """Return midpoint samples from the first and last real middle-z cells."""
+    """Return safe samples adjacent to the two middle-region interfaces."""
 
     z_values = np.asarray(getattr(axis_plan, "z_values"), dtype=np.float64)
     if (
@@ -126,35 +126,76 @@ def element_safe_middle_offsets(
     if not bottom < top:
         raise ValueError("The middle-z interval must have positive length.")
     atol = 1.0e-10 * max(abs(bottom), abs(top), 1.0)
-    bottom_matches = np.flatnonzero(np.isclose(z_values, bottom, rtol=0.0, atol=atol))
-    top_matches = np.flatnonzero(np.isclose(z_values, top, rtol=0.0, atol=atol))
-    if len(bottom_matches) != 1 or len(top_matches) != 1:
-        raise ValueError("Both interfaces must occur exactly once on the z axis.")
-    bottom_cell = int(bottom_matches[0])
-    top_cell = int(top_matches[0]) - 1
-    if (
-        bottom_cell >= len(z_values) - 1
-        or top_cell < 0
-        or bottom_cell >= top_cell
-        or z_values[bottom_cell + 1] > top + atol
-        or z_values[top_cell] < bottom - atol
-    ):
-        raise ValueError("The interface-adjacent middle z cells are unavailable.")
 
-    def sample(cell_index: int, role: str, interface: float) -> dict[str, object]:
-        z_nm = float(0.5 * (z_values[cell_index] + z_values[cell_index + 1]))
+    def bracket_cell(interface: float) -> int:
+        cell_index = int(np.searchsorted(z_values, interface, side="right") - 1)
+        if not (
+            0 <= cell_index < len(z_values) - 1
+            and z_values[cell_index] < interface < z_values[cell_index + 1]
+        ):
+            raise ValueError("The interface is outside the available z cells.")
+        return cell_index
+
+    def sample(
+        cell_index: int,
+        role: str,
+        interface: float,
+        z_nm: float,
+        source: str,
+    ) -> dict[str, object]:
         return {
-            "z_nm": z_nm,
+            "z_nm": float(z_nm),
             "role": role,
             "element_id": int(cell_index),
             "slab_index": int(cell_index),
             "distance_from_interface_nm": float(abs(z_nm - interface)),
-            "source": "mesh_element_interior_midpoint",
+            "source": source,
         }
 
+    bottom_matches = np.flatnonzero(np.isclose(z_values, bottom, rtol=0.0, atol=atol))
+    if len(bottom_matches) == 1:
+        bottom_cell = int(bottom_matches[0])
+        if bottom_cell >= len(z_values) - 1:
+            raise ValueError("The bottom interface has no middle-side cell.")
+        bottom_sample = 0.5 * (z_values[bottom_cell] + z_values[bottom_cell + 1])
+        bottom_source = "mesh_element_interior_midpoint"
+    elif len(bottom_matches) == 0:
+        bottom_cell = bracket_cell(bottom)
+        bottom_sample = 0.5 * (bottom + z_values[bottom_cell + 1])
+        bottom_source = "nonaligned_interface_subinterval"
+    else:
+        raise ValueError("The bottom interface is not uniquely located on the z axis.")
+
+    top_matches = np.flatnonzero(np.isclose(z_values, top, rtol=0.0, atol=atol))
+    if len(top_matches) == 1:
+        top_cell = int(top_matches[0]) - 1
+        if top_cell < 0:
+            raise ValueError("The top interface has no middle-side cell.")
+        top_sample = 0.5 * (z_values[top_cell] + z_values[top_cell + 1])
+        top_source = "mesh_element_interior_midpoint"
+    elif len(top_matches) == 0:
+        top_cell = bracket_cell(top)
+        top_sample = 0.5 * (z_values[top_cell] + top)
+        top_source = "nonaligned_interface_subinterval"
+    else:
+        raise ValueError("The top interface is not uniquely located on the z axis.")
+
+    if not (
+        bottom < bottom_sample < top
+        and bottom < top_sample < top
+        and bottom_sample < top_sample
+    ):
+        raise ValueError("The interface-adjacent middle z cells are unavailable.")
+
     return (
-        sample(bottom_cell, "bottom_element_safe_offset", bottom),
-        sample(top_cell, "top_element_safe_offset", top),
+        sample(
+            bottom_cell,
+            "bottom_element_safe_offset",
+            bottom,
+            bottom_sample,
+            bottom_source,
+        ),
+        sample(top_cell, "top_element_safe_offset", top, top_sample, top_source),
     )
 
 
