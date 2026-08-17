@@ -7,7 +7,7 @@ M6A 的作用是验证冻结的 80 模式端口 DtN（Dirichlet-to-Neumann，给
 | 路线 | 状态 | 边界 |
 | --- | --- | --- |
 | M6A matrix-free full-space DtN | `PASS / QUALIFIED` | 仅 action/DtN authority；checker 15/15，通过 MPI1/MPI2 对照 |
-| W14A–W17A action-only diagnostics | `completed / negative where stated` | 只完成 action、数值和资源 Gate；不是 PDE/RTA |
+| W14A–W18A action-only diagnostics | `completed / negative where stated` | 只完成 action、数值和资源 Gate；不是 PDE/RTA |
 | full time-harmonic PDE / RTA / field recovery | `not_run_yet` | 未运行 |
 | 最终 PDE `<2,000,000,000 B` process-tree 目标 | `not_run_yet` | 未测量，不能由 M6A peak 代替 |
 
@@ -139,9 +139,9 @@ W13B 的固定资格门是 beta=0.5 的 projected rho 必须不超过 beta=1.0 �
 
 W13A 的独立 compact 证据为 [`m6b_w13a_projected_range_composition.json`](../../benchmarks/cases/101_task37_extra_development/records/m6b_w13a_projected_range_composition.json)，保留旧 raw/watchdog 只读并逐文件绑定 SHA。
 
-## W14A–W17A：统一 action-only 收口
+## W14A–W18A：统一 action-only 收口
 
-W14A–W17A 都是“先构造一个候选修正方向，再用物理 action 检查它是否真正降低冻结残差”的诊断。它们没有求解完整时谐方程：没有 physical KSP、没有 PDE、没有场恢复，也没有 official R/T/A。辅助内层 residual 小，只能说明辅助方程近似解得较好；最终是否有用仍由 physical `rho` 和预声明 Gate 决定。
+W14A–W18A 都是“先构造一个候选修正方向，再用物理 action 检查它是否真正降低冻结残差”的诊断。它们没有求解完整时谐方程：没有 physical KSP、没有 PDE、没有场恢复，也没有 official R/T/A。辅助内层 residual 小，只能说明辅助方程近似解得较好；最终是否有用仍由 physical `rho` 和预声明 Gate 决定。
 
 | 路线 | 方法与关键实测 | 状态和边界 |
 |---|---|---|
@@ -152,6 +152,7 @@ W14A–W17A 都是“先构造一个候选修正方向，再用物理 action 检
 | W16R | fixed restart20+20；两次 inner residual `0.008234328428613968`；physical rho `0.8814092210776835`；peak `1,398,456,320 B`；swap `0` | action-only 通过，解锁 W16B screen；不是 PDE |
 | W16B | 两次 outer-2 screen；rho1 `0.8814092210776882`，rho2 `0.8796856414991869`；inner final `0.008234328428613734 / 0.003015056986064362`；peak `1,557,839,872 B`；swap `0` | rho1 anchor 通过，但 rho2 `>0.8660254037844386`，数值 Gate 失败 |
 | W17A | beta=1 shifted volume + 同一 matrix-free DtN80；两次 fixed40 重复；physical action 两次 | cycle20 `0.21437006185665625`；cycle40 `0.12567225369307264`；physical rho `0.8917790380896942`；peak `1,524,117,504 B`；swap `0` | `W17A_GLOBAL_PHYSICAL_SHIFTED_NUMERIC_FAIL`；W17B locked |
+| W18A | `B=S(beta1)+T` 的 nested auxiliary outer-2；每个 PC 为 fixed40；physical `A=beta0+T` | inner finals `0.008234328428613734 / 0.012917460577236278`；outer residuals `0.09956749409891383 / 0.03857856488992854`；rho `0.8814092210776835 / 0.8918283239976347`；peak `1,546,248,192 B`；swap `0` | `W18A_NESTED_AUXILIARY_NUMERIC_FAIL`；physical screen locked |
 
 W16B 的唯一正式 run 自然完成，repeat identity 通过，资源侧 peak 和 swap 也通过；但历史 v1 compact 的正式分类仍原样为 `W16B_EXECUTION_OR_EVIDENCE_FAIL`。原因是旧 checker 对 W16B 错误期待 `observer_count=1`，而 raw 中四个 cycle 的真实值都是 `0`。当前窄修复只是让共享 fixed-20 audit 接受显式的 `expected_observer_count`：W16A/W16R 保持默认 `1`，W16B 传 `0`；没有改变数值路径，也没有重写 compact v1。compact 当前 file SHA 为 `1f59bdca7abc09ce6385f25b145f97a41f2b3e995b377855267d326bac37056d`。这个 checker 分类问题不能掩盖 rho2 的明确失败，因此 W16C 和 outer4 都不运行。正式 raw/compact 的 W16B rho `0.8796856414991869` 与本轮 dense-vdot 离线重算 `0.8796856414991874` 的绝对差小于 `1e-15`，是浮点累加/运算顺序差异，不是两次实验。
 
@@ -168,3 +169,32 @@ W17A 的 raw summary SHA 为 `7cfe7e7f176b3332b9a4fb52e62d58ba71b75eca04c990d558
 W16B 的 `r0/r1/r2` 范数为 `1.6023954272 / 1.4123661053 / 1.4096042493`；第二步只下降约 `0.19555%`。要靠后两步达到 `rho4<=0.75`，剩余累计因子必须 `<=0.8525772897`，等效每步至少下降约 `7.6649%`；按当前趋势外推 rho4 约 `0.8762485870`，因此不盲跑 outer4。完整 hash-bound derived 记录见 [`m6b_w17a_w16b_span_diagnostic_v1.json`](../../benchmarks/cases/101_task37_extra_development/records/m6b_w17a_w16b_span_diagnostic_v1.json)，明确标记 `derived/offline_diagnostic/not_PDE/not_action_run`；文件 SHA 为 `cd21be1be0ee5c1847501e9ba10b520ad7254b81bbb71663ea25920b9c78c827`，embedded evidence SHA 为 `b9e25a9a1ef198694d95dc88d5eb761a548aedd143399dd0482d2066c890978d`。
 
 full time-harmonic PDE、official field/RTA、direct-authority physics comparison 和最终 `<2,000,000,000 B` 的 PDE process-tree 测量仍为 `not_run`。action-only peak、derived prediction 和历史 checker 分类都不能替代这些未完成的 PDE 证据。
+
+## W18A：nested auxiliary action-only 正式负结果
+
+W18A 的 nested auxiliary 是一种两层方向测试：外层每一步先调用固定的辅助近似逆，再把方向交给物理 action 检查。它不求解完整 PDE。辅助算子固定为 `B=S(beta1)+T`，其中 `S` 为 beta=1 shifted volume action，`T` 为共享 matrix-free DtN80；每个辅助调用为 fixed40。物理检查使用 `A=beta0 volume+T`。本路线没有 physical KSP、场恢复、R/T/A 或 physical screen。
+
+| 项目 | W18A 结果 | 结论 |
+|---|---:|---|
+| producer / checker source | `839ce6733db2dc737f5c8bfb6347633f53161d82` / `26ea955690b1541c2bd43856799508bc85ffe1e6` | 同一 raw 的独立 checker v2 |
+| classification | `W18A_NESTED_AUXILIARY_NUMERIC_FAIL` | `problems` 仅 `worker_action_gate` |
+| inner finals | `0.008234328428613734 / 0.012917460577236278` | 第二个 `>1e-2` |
+| outer residuals | `0.09956749409891383 / 0.03857856488992854` | 均未达 `<=1e-2` |
+| physical rho | `0.8814092210776835 / 0.8918283239976347` | rho2 `>0.85` 且比 rho1 更差 |
+| repeat / closure | z、outer action、p exact；relative `0`；normal closure `0` | 重复与闭合通过 |
+| orthogonality | finite，约 `4.66e-16 / 3.73e-16` | 通过 |
+| measured peak / swap | `1,546,248,192 B / 0` | 仅 action-only 资源证据 |
+| prediction | `1,734,993,014 B`，derived | 不是 PDE 实测峰值 |
+
+v2 顶层共 23 项 checks，其中 22 项为 true，唯一失败为 `worker_action_gate`；worker 的 `inner_residual`、`outer_auxiliary_residual` 和 `measurements` 是实际数值失败，其余证据、执行和资源 checks 通过。精确 action 账本为 `outer_auxiliary/outer_pc/inner_global_shifted/local_pc/local_exact/shifted_total/auxiliary_DtN/physical_volume/physical_DtN/total_DtN = 8/4/172/160/160/340/8/4/4/12`。
+
+v1 因 checker 对真实 production audit 的动态字段和 descriptor 形状作了错误假设而误判，原文件完整保留但不作为权威结论；v2 重新绑定同一 raw/watchdog 并独立复核真实数组、audit、scratch 和资源，因此 v2 是 W18A 权威结果。v1/v2 证据如下：
+
+| 证据 | 路径 | SHA |
+|---|---|---|
+| raw summary | `benchmarks/artifacts/task037_extra_development/m6b_w18a_839ce67_formal_run1/m6b_w18a_summary.json` | `a82fb01c60b48575c2df59649375e3d330f85ba3edf43f1bd59c84bb2b29a4b5` |
+| watchdog summary | `benchmarks/artifacts/task037_extra_development/m6b_w18a_839ce67_formal_watchdog_run1/w18a_watchdog_summary.json` | `a32275d426cfe826f80be46dc8fbeba481e5bd8047589454f77b77b7c7a953eb` |
+| v1 compact | `benchmarks/cases/101_task37_extra_development/records/m6b_w18a_839ce67_formal_resource_closeout_v1.json` | `0c86b687fd76f366bd9148fec734794fdf21b2a3d0bf300fc502981cb48c210f` |
+| v2 compact | `benchmarks/cases/101_task37_extra_development/records/m6b_w18a_839ce67_formal_resource_closeout_v2.json` | `3d9110cf7127333b676e96c5e7dd5cace23ecadc30127063d7f87171d510eb61` |
+
+本轮主要根因边界是：`B` 的 nested solve 显著改善了辅助 residual，但产生的方向与 physical `A` 的校正不充分对齐。当前证据不支持把失败归因于 timeout，也不支持仅靠增加同一路线步数解决；这不是 modal decomposition 的数学证明。PDE、RTA 和 physical screen 继续锁定。下一步只允许先对已保存的 W18A `p1/p2` 做离线二维 span 诊断（0 action、0 PDE），不盲目重跑或延长 fixed40；该诊断尚未运行。
