@@ -617,7 +617,14 @@ def test_task039_direct_packet_main_skips_qep_and_uses_augmented_chain(
         "build_hybrid_augmented_direct_system",
         lambda *args, **kwargs: events.append("augmented_build") or system,
     )
-    solution = SimpleNamespace(relative_residual=0.0, converged_reason=1, ksp=object())
+    solution = SimpleNamespace(
+        relative_residual=0.0,
+        converged_reason=1,
+        ksp=object(),
+        mumps_icntl_14_requested_percent=100,
+        mumps_icntl_14_observed_percent=100,
+        mumps_workspace_relaxation_verified=True,
+    )
 
     def release_solution() -> dict[str, object]:
         events.append("factor_release")
@@ -641,6 +648,7 @@ def test_task039_direct_packet_main_skips_qep_and_uses_augmented_chain(
 
     def fake_solve(*args, **kwargs):
         assert kwargs["defer_static_recovery"] is True
+        assert kwargs["mumps_workspace_relaxation_percent"] == 100
         events.append("solve")
         return solution
 

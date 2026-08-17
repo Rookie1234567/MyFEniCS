@@ -2536,6 +2536,9 @@ def main(
                 top,
                 coupling,
                 defer_static_recovery=packet_direct_lifecycle,
+                mumps_workspace_relaxation_percent=(
+                    100 if packet_direct_lifecycle else None
+                ),
             )
             if not packet_direct_lifecycle:
                 task039_mark_stage(
@@ -2573,6 +2576,19 @@ def main(
         port_power = validation["port_power"]
         if packet_direct_lifecycle:
             pre_release_factor_inventory = _petsc_factor_inventory(solution.ksp)
+            pre_release_factor_inventory.update(
+                {
+                    "mumps_icntl_14_requested_percent": (
+                        solution.mumps_icntl_14_requested_percent
+                    ),
+                    "mumps_icntl_14_observed_percent": (
+                        solution.mumps_icntl_14_observed_percent
+                    ),
+                    "mumps_workspace_relaxation_verified": (
+                        solution.mumps_workspace_relaxation_verified
+                    ),
+                }
+            )
             task039_mark_stage(
                 "direct_factor_or_iterative_side_factors_ready",
                 detail={

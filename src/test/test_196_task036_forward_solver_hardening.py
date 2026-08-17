@@ -30,6 +30,7 @@ from src.solvers.hcurl_variable_p_assembly import (
 )
 from src.solvers.hybrid_fem_modal_augmented_direct import (
     HybridAugmentedDirectSolution,
+    _configure_mumps_workspace_relaxation,
 )
 
 
@@ -175,6 +176,22 @@ class Task036ForwardSolverHardeningTests(unittest.TestCase):
         solution.destroy()
         bottom.destroy.assert_called_once()
         top.destroy.assert_called_once()
+
+    def test_packet_direct_mumps_workspace_relaxation_default_off_and_sets_icntl14(
+        self,
+    ) -> None:
+        pc = mock.Mock()
+        factor = pc.getFactorMatrix.return_value
+        self.assertEqual(_configure_mumps_workspace_relaxation(pc, None), (None, None))
+        pc.setFactorSetUpSolverType.assert_not_called()
+        pc.getFactorMatrix.assert_not_called()
+        configured, percent = _configure_mumps_workspace_relaxation(pc, 100)
+        self.assertIs(configured, factor)
+        self.assertEqual(percent, 100)
+        pc.setFactorSetUpSolverType.assert_called_once_with()
+        factor.setMumpsIcntl.assert_called_once_with(14, 100)
+        with self.assertRaisesRegex(ValueError, "non-negative integer"):
+            _configure_mumps_workspace_relaxation(pc, -1)
 
     def test_condensed_system_destroy_methods_are_idempotent(self) -> None:
         assembly = object.__new__(AssemblyTimeCondensedSystem)

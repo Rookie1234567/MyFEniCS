@@ -378,6 +378,9 @@ class HybridAugmentedDirectSolution:
     solve_seconds: float
     converged_reason: int
     factor_solver: str = "mumps"
+    mumps_icntl_14_requested_percent: int | None = None
+    mumps_icntl_14_observed_percent: int | None = None
+    mumps_workspace_relaxation_verified: bool = False
     bottom_recovered: HybridStaticRecoveredLocalField | None = None
     top_recovered: HybridStaticRecoveredLocalField | None = None
     _factorization_released: bool = field(
@@ -551,6 +554,26 @@ def build_hybrid_augmented_direct_system(
     )
 
 
+def _configure_mumps_workspace_relaxation(
+    pc: PETSc.PC, percent: int | None
+) -> tuple[PETSc.Mat | None, int | None]:
+    if percent is None:
+        return None, None
+    if isinstance(percent, bool) or not isinstance(percent, (int, np.integer)):
+        raise ValueError(
+            "MUMPS workspace relaxation percent must be a non-negative integer."
+        )
+    normalized = int(percent)
+    if normalized < 0:
+        raise ValueError(
+            "MUMPS workspace relaxation percent must be a non-negative integer."
+        )
+    pc.setFactorSetUpSolverType()
+    factor = pc.getFactorMatrix()
+    factor.setMumpsIcntl(14, normalized)
+    return factor, normalized
+
+
 def solve_hybrid_augmented_direct(
     system: HybridAugmentedDirectSystem,
     bottom_system: HybridLocalDtnSystem,
@@ -558,11 +581,15 @@ def solve_hybrid_augmented_direct(
     coupling: HybridInternalModeCoupling | None = None,
     *,
     defer_static_recovery: bool = False,
+    mumps_workspace_relaxation_percent: int | None = None,
 ) -> HybridAugmentedDirectSolution:
     """Factor and solve the assembled hybrid system with direct MUMPS LU.
 
     ``defer_static_recovery`` is an explicit packet-direct opt-in.  Its default
     keeps the historical recovery-before-return behavior unchanged.
+
+    ``mumps_workspace_relaxation_percent`` is also default-off.  The Task039
+    packet-direct path uses it to set MUMPS ICNTL(14) before factor setup.
     """
 
     comm = system.layout.comm
@@ -573,8 +600,18 @@ def solve_hybrid_augmented_direct(
     pc.setType(PETSc.PC.Type.LU)
     pc.setFactorSolverType("mumps")
     ksp.setOperators(system.A)
+    mumps_factor, mumps_workspace_relaxation_percent = (
+        _configure_mumps_workspace_relaxation(pc, mumps_workspace_relaxation_percent)
+    )
     setup_started = time.perf_counter()
     ksp.setUp()
+    mumps_icntl_14_observed_percent = None
+    mumps_workspace_relaxation_verified = False
+    if mumps_factor is not None:
+        mumps_icntl_14_observed_percent = int(mumps_factor.getMumpsIcntl(14))
+        mumps_workspace_relaxation_verified = (
+            mumps_icntl_14_observed_percent == mumps_workspace_relaxation_percent
+        )
     setup_seconds = float(
         comm.allreduce(time.perf_counter() - setup_started, op=MPI.MAX)
     )
@@ -638,6 +675,9 @@ def solve_hybrid_augmented_direct(
         setup_seconds=setup_seconds,
         solve_seconds=solve_seconds,
         converged_reason=int(ksp.getConvergedReason()),
+        mumps_icntl_14_requested_percent=mumps_workspace_relaxation_percent,
+        mumps_icntl_14_observed_percent=mumps_icntl_14_observed_percent,
+        mumps_workspace_relaxation_verified=mumps_workspace_relaxation_verified,
         bottom_recovered=bottom_recovered,
         top_recovered=top_recovered,
     )
