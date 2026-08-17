@@ -174,6 +174,7 @@ def test_v4_phases_share_identity_and_direct_packet_contract(tmp_path):
     assert identity["scope"] == v4.TASK039_V4_H4_MODE_SCOPE
     assert identity_sha == hashlib.sha256(identity_path.read_bytes()).hexdigest()
     assert "--manifest-sha256" in consumer.argv
+    assert "--retained-subspace-dual-rotation" not in consumer.argv
 
 
 def test_direct_adapter_passes_optional_packet_identity_without_qep(
@@ -264,6 +265,13 @@ def test_mode_prep_worker_enters_existing_task032_producer(monkeypatch, tmp_path
     assert result["status"] == "controlled_stop_packet_written"
     assert "--selected-mode-packet-producer-dir" in captured["argv"]
     assert "--selected-mode-packet-identity-json" in captured["argv"]
+    assert "--retained-subspace-dual-rotation" in captured["argv"]
+    assert (
+        task032._parse_args(
+            captured["argv"], allow_task039=True
+        ).retained_subspace_dual_rotation
+        is True
+    )
     assert captured["kwargs"]["canonical_export_prefix"] == "task039_v4_mode_prep"
     assert captured["kwargs"]["task039_stage_marker_path"].name == (
         "memory_stage_markers.raw.jsonl"

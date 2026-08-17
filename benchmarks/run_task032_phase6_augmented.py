@@ -1175,6 +1175,11 @@ def _parse_args(
     )
     parser.add_argument("--near-degenerate-tolerance", type=float, default=1.0e-6)
     parser.add_argument("--block-rotation-tolerance", type=float, default=1.0e-6)
+    parser.add_argument(
+        "--retained-subspace-dual-rotation",
+        action="store_true",
+        help="Enable the existing strict retained-subspace dual repair.",
+    )
     parser.add_argument("--verified-clean-sha")
     parser.add_argument("--allow-dirty-research", action="store_true")
     parser.add_argument(
@@ -2144,6 +2149,9 @@ def main(
                 qep_solver_tolerance=qep_solver_tolerance,
                 near_degenerate_tolerance=args.near_degenerate_tolerance,
                 block_rotation_tolerance=args.block_rotation_tolerance,
+                retained_subspace_dual_rotation=bool(
+                    getattr(args, "retained_subspace_dual_rotation", False)
+                ),
                 poynting_evaluator=poynting_evaluator,
                 log=progress,
             )
@@ -2197,6 +2205,9 @@ def main(
                 qep_solver_tolerance=qep_solver_tolerance,
                 near_degenerate_tolerance=args.near_degenerate_tolerance,
                 block_rotation_tolerance=args.block_rotation_tolerance,
+                retained_subspace_dual_rotation=bool(
+                    getattr(args, "retained_subspace_dual_rotation", False)
+                ),
                 poynting_evaluator=poynting_evaluator,
                 log=progress,
             )

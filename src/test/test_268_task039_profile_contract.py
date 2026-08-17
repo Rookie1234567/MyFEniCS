@@ -892,6 +892,30 @@ def test_task039_h_diagnostic_non_m480_guard_is_writer_free():
     assert id(writer_calls[0]) in guarded_ids
 
 
+def test_task032_retained_dual_rotation_is_default_off_and_forwarded_both_branches():
+    from benchmarks import run_task032_phase6_augmented as benchmark
+
+    assert _parse_args([]).retained_subspace_dual_rotation is False
+    tree = ast.parse(inspect.getsource(benchmark.main))
+    calls = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "build_biorthogonal_mode_basis"
+    ]
+    assert len(calls) == 2
+    for call in calls:
+        keyword = next(
+            item
+            for item in call.keywords
+            if item.arg == "retained_subspace_dual_rotation"
+        )
+        assert ast.unparse(keyword.value) == (
+            "bool(getattr(args, 'retained_subspace_dual_rotation', False))"
+        )
+
+
 def _task039_direct_record(inventory, payload, internal_unknown_count: int = 240):
     orders = [
         {

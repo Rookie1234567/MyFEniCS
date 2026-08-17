@@ -193,6 +193,7 @@ def _phase_argv(
                 str(Path(packet_directory).resolve()),
                 "--selected-mode-packet-identity-json",
                 str(Path(identity_json).resolve()),
+                "--retained-subspace-dual-rotation",
             ]
         )
     elif phase == "direct-consumer":
