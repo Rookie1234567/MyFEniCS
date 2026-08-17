@@ -183,6 +183,7 @@ class FrozenM10Setup:
     qep_release: dict[str, Any]
     qep_audit: dict[str, Any] = field(default_factory=dict)
     profile: FrozenM10Profile | Task37cProfile = FROZEN_M10
+    packet_consumer_bundle: Any | None = field(default=None, repr=False)
     _final_release_done: bool = field(default=False, init=False, repr=False)
     _final_release_state: dict[str, bool] = field(
         default_factory=dict, init=False, repr=False
@@ -1681,6 +1682,161 @@ def _task039_qep_basis_audit(basis: Any, *, side: str) -> dict[str, Any]:
     return report
 
 
+def _build_frozen_m10_setup_from_selected_mode_packet(
+    comm: MPI.Intracomm,
+    *,
+    cfg: Any,
+    modal_cfg: Any,
+    profile: FrozenM10Profile | Task37cProfile,
+    manifest: Path,
+    identity: Mapping[str, Any],
+    expected_manifest_sha256: str | None,
+    consumer_kind: str,
+    exact_one_cell_work_dir: Path | None,
+    log: Callable[[str], None] | None,
+    detail_stage_callback: Callable[[str, Mapping[str, Any]], None] | None,
+    post_destroy_cleanup: Callable[[], Mapping[str, Any]] | None,
+) -> FrozenM10Setup:
+    """Build the ordinary tail from a solver-free selected-mode packet."""
+
+    from benchmarks.task039_v4_selected_mode_packet import (
+        consume_task039_v4_selected_mode_packet,
+    )
+
+    packet_bundle = consume_task039_v4_selected_mode_packet(
+        manifest,
+        identity=identity,
+        expected_manifest_sha256=expected_manifest_sha256,
+        consumer_kind=consumer_kind,
+        comm=comm,
+    )
+    consumer_diagnostics = packet_bundle.packet_consumer_diagnostics
+    read_seconds = consumer_diagnostics["read_seconds_max_rank"]
+
+    cross_section = build_matching_cross_section(modal_cfg, "stage4_xy")
+    spaces = build_cross_section_spaces(
+        cross_section,
+        transverse_degree=profile.modal_degree,
+    )
+    qep_release = {
+        "status": "selected_mode_packet_consumer",
+        "qep_calls": consumer_diagnostics["qep_calls"],
+        "consumer_qep_required": consumer_diagnostics["consumer_qep_required"],
+        "consumer_kind": consumer_diagnostics["consumer_kind"],
+        "packet_manifest": consumer_diagnostics["manifest_path"],
+        "packet_manifest_sha256": consumer_diagnostics["manifest_sha256"],
+        "packet_identity_sha256": consumer_diagnostics["identity_sha256"],
+        "packet_read_seconds_max_rank": read_seconds,
+        "packet_hydrate_seconds_max_rank": consumer_diagnostics[
+            "hydrate_seconds_max_rank"
+        ],
+        "packet_mmap_released": consumer_diagnostics["packet_mmap_released"],
+        "packet_references_released": consumer_diagnostics[
+            "packet_references_released"
+        ],
+    }
+    qep_audit = {
+        "forward": packet_bundle.positive_basis.packet_authority["basis_audit"],
+        "backward": packet_bundle.negative_basis.packet_authority["basis_audit"],
+        "source": "selected_mode_packet_authority",
+    }
+    mode_count = len(packet_bundle.positive_basis.modes)
+    mode_selection: dict[str, Any] = {}
+    for branch_name, direction in (("positive", "forward"), ("negative", "backward")):
+        selection = getattr(packet_bundle, f"{branch_name}_basis").packet_authority[
+            "selection_diagnostics"
+        ]
+        mode_selection[direction] = {
+            "candidate_modes": int(
+                selection.get(
+                    "candidate_modes", selection.get("candidate_count", mode_count)
+                )
+            ),
+            "selected_modes": int(
+                selection.get(
+                    "selected_modes", selection.get("selected_count", mode_count)
+                )
+            ),
+        }
+    if detail_stage_callback is not None:
+        detail_stage_callback(
+            "selected_mode_packet_consumed",
+            {
+                "qep_calls": consumer_diagnostics["qep_calls"],
+                "consumer_kind": consumer_diagnostics["consumer_kind"],
+                "manifest": consumer_diagnostics["manifest_path"],
+                "manifest_sha256": consumer_diagnostics["manifest_sha256"],
+                "identity_sha256": consumer_diagnostics["identity_sha256"],
+                "packet_mmap_released": consumer_diagnostics["packet_mmap_released"],
+                "hydrate_seconds_max_rank": consumer_diagnostics[
+                    "hydrate_seconds_max_rank"
+                ],
+            },
+        )
+
+    started = time.perf_counter()
+    bottom = assemble_hybrid_local_dtn_action_system(
+        cfg,
+        "bottom",
+        bottom_interface_z_nm=profile.bottom_interface_nm,
+        top_interface_z_nm=profile.top_interface_nm,
+        comm=comm,
+        log=log,
+    )
+    top = assemble_hybrid_local_dtn_action_system(
+        cfg,
+        "top",
+        bottom_interface_z_nm=profile.bottom_interface_nm,
+        top_interface_z_nm=profile.top_interface_nm,
+        comm=comm,
+        log=log,
+    )
+    mode_selection["external_modes"] = {
+        "bottom": len(bottom.external_modes),
+        "top": len(top.external_modes),
+    }
+    timings = {
+        "packet_read": float(qep_release["packet_read_seconds_max_rank"]),
+        "packet_hydrate": float(qep_release["packet_hydrate_seconds_max_rank"]),
+        "bottom_top_action_dtn_systems": _max_elapsed(comm, started),
+    }
+    started = time.perf_counter()
+    coupling = build_hybrid_internal_mode_coupling(
+        cfg,
+        spaces,
+        packet_bundle.positive_basis,
+        packet_bundle.negative_basis,
+        bottom,
+        top,
+        length_nm=profile.top_interface_nm - profile.bottom_interface_nm,
+        propagation_model=profile.internal_propagation_model,
+        modal_traction_model=profile.internal_traction_model,
+        exact_one_cell_work_dir=exact_one_cell_work_dir,
+        stage_callback=detail_stage_callback,
+        post_destroy_cleanup=post_destroy_cleanup,
+        log=log,
+    )
+    timings["internal_modal_coupling"] = _max_elapsed(comm, started)
+    return FrozenM10Setup(
+        cfg=cfg,
+        modal_cfg=modal_cfg,
+        cross_section=cross_section,
+        spaces=spaces,
+        positive=packet_bundle.positive_basis,
+        negative=packet_bundle.negative_basis,
+        bottom=bottom,
+        top=top,
+        coupling=coupling,
+        reciprocal_pairs=tuple(),
+        mode_selection=mode_selection,
+        timings=timings,
+        qep_release=qep_release,
+        qep_audit=qep_audit,
+        profile=profile,
+        packet_consumer_bundle=packet_bundle,
+    )
+
+
 def build_frozen_m10_setup(
     comm: MPI.Intracomm = MPI.COMM_WORLD,
     *,
@@ -1691,6 +1847,9 @@ def build_frozen_m10_setup(
     modal_cfg_override: Any | None = None,
     detail_stage_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     post_destroy_cleanup: Callable[[], Mapping[str, Any]] | None = None,
+    selected_mode_packet_manifest: Path | None = None,
+    selected_mode_packet_identity: Mapping[str, Any] | None = None,
+    selected_mode_packet_manifest_sha256: str | None = None,
 ) -> FrozenM10Setup:
     """Build the frozen physical/QEP/endcap/coupling bundle only.
 
@@ -1735,6 +1894,26 @@ def build_frozen_m10_setup(
         modal_cfg.incident_theta_deg = 90.0 - profile.incident_grazing_deg
         modal_cfg.incident_phi_deg = getattr(profile, "incident_phi_deg", 0.0)
         modal_cfg.polarization_kind = profile.polarization_kind
+
+    if selected_mode_packet_manifest is not None:
+        if selected_mode_packet_identity is None:
+            raise ValueError(
+                "selected-mode packet consumer requires an identity mapping"
+            )
+        return _build_frozen_m10_setup_from_selected_mode_packet(
+            comm,
+            cfg=cfg,
+            modal_cfg=modal_cfg,
+            profile=profile,
+            manifest=Path(selected_mode_packet_manifest),
+            identity=selected_mode_packet_identity,
+            expected_manifest_sha256=selected_mode_packet_manifest_sha256,
+            consumer_kind="iterative",
+            exact_one_cell_work_dir=exact_one_cell_work_dir,
+            log=log,
+            detail_stage_callback=detail_stage_callback,
+            post_destroy_cleanup=post_destroy_cleanup,
+        )
 
     timings: dict[str, float] = {}
     started = time.perf_counter()
@@ -2298,14 +2477,23 @@ def release_frozen_m10_objects(
     if not setup.top._destroyed:
         setup.top.destroy()
         order.append("top")
-    if not setup._final_release_state.get("positive", False):
-        setup.positive.destroy()
-        setup._final_release_state["positive"] = True
-        order.append("positive")
-    if not setup._final_release_state.get("negative", False):
-        setup.negative.destroy()
-        setup._final_release_state["negative"] = True
-        order.append("negative")
+    packet_consumer_bundle = getattr(setup, "packet_consumer_bundle", None)
+    if packet_consumer_bundle is not None:
+        if not setup._final_release_state.get("packet_bundle", False):
+            packet_consumer_bundle.destroy()
+            setup._final_release_state["packet_bundle"] = True
+            setup._final_release_state["positive"] = True
+            setup._final_release_state["negative"] = True
+            order.append("packet_bundle")
+    else:
+        if not setup._final_release_state.get("positive", False):
+            setup.positive.destroy()
+            setup._final_release_state["positive"] = True
+            order.append("positive")
+        if not setup._final_release_state.get("negative", False):
+            setup.negative.destroy()
+            setup._final_release_state["negative"] = True
+            order.append("negative")
     cleanup = collective_heap_cleanup(comm)
     checks = {
         "recovery_destroyed": recovery is None or recovery._destroyed,

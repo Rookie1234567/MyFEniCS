@@ -13,7 +13,7 @@ import subprocess
 import sys
 import time
 from types import SimpleNamespace
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 from mpi4py import MPI
 import numpy as np
@@ -408,6 +408,80 @@ def _directional_selection_summary(report) -> dict[str, Any]:
             if report.first_rejected_numerical_infinity_beta is None
             else _complex_json(report.first_rejected_numerical_infinity_beta)
         ),
+    }
+
+
+def _task039_packet_gate_metrics(
+    packet_qep_authority: Mapping[str, Any],
+) -> dict[str, float]:
+    """Read direct-consumer QEP Gates from packet authority, not hydrated objects."""
+
+    gram = (
+        packet_qep_authority["positive"]["gram"],
+        packet_qep_authority["negative"]["gram"],
+    )
+    modes = (
+        packet_qep_authority["positive"]["mode_diagnostics"]
+        + packet_qep_authority["negative"]["mode_diagnostics"]
+    )
+    return {
+        "biorthogonality_error": max(
+            float(item["max_identity_error"]) for item in gram
+        ),
+        "qep_residual": max(
+            max(
+                float(item["right_polynomial_relative_residual"]),
+                float(item["left_polynomial_relative_residual"]),
+            )
+            for item in modes
+        ),
+    }
+
+
+def _release_task039_direct_factor_before_postprocess(
+    solution: Any,
+    system: Any,
+    cleanup: Callable[[], Mapping[str, Any]],
+    factor_inventory: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Release the explicit packet-direct factor after solve residual, before postprocess."""
+
+    if (
+        int(solution.converged_reason) <= 0
+        or not np.isfinite(float(solution.relative_residual))
+        or float(solution.relative_residual) > 1.0e-9
+    ):
+        raise RuntimeError(
+            "Task039 direct factor release requires a converged solve with "
+            "true relative residual <= 1e-9."
+        )
+    factor_inventory = (
+        _petsc_factor_inventory(solution.ksp)
+        if factor_inventory is None
+        else dict(factor_inventory)
+    )
+    release = solution.release_factorization()
+    system.destroy()
+    cleanup_result = cleanup()
+    factor_destroyed = solution.ksp is None
+    system_destroyed = bool(getattr(system, "_destroyed", False))
+    cleanup_completed = bool(cleanup_result["collective_call_completed"])
+    lifecycle_pass = factor_destroyed and system_destroyed and cleanup_completed
+    if not lifecycle_pass:
+        raise RuntimeError(
+            "Task039 direct factor lifecycle failed before postprocess: "
+            f"factor_destroyed={factor_destroyed}, "
+            f"system_destroyed={system_destroyed}, "
+            f"cleanup_collective_call_completed={cleanup_completed}."
+        )
+    return {
+        "factor_inventory_before_release": factor_inventory,
+        "factorization_release": release,
+        "system_destroyed_before_postprocess": system_destroyed,
+        "cleanup": dict(cleanup_result),
+        "factor_destroyed_before_postprocess": factor_destroyed,
+        "cleanup_collective_call_completed": cleanup_completed,
+        "pass": lifecycle_pass,
     }
 
 
@@ -1141,7 +1215,73 @@ def _parse_args(
         "--host-environment-id",
         default=os.environ.get("TASK032_HOST_ENVIRONMENT_ID", "SK-20260601OSDE"),
     )
+    parser.add_argument(
+        "--selected-mode-packet-producer-dir",
+        type=Path,
+        help=(
+            "Explicit V4 producer stop: write the selected QEP bases and exit "
+            "before local DtN/coupling assembly."
+        ),
+    )
+    parser.add_argument(
+        "--selected-mode-packet-identity-json",
+        type=Path,
+        help="Hash-bound identity mapping consumed by the explicit packet producer.",
+    )
+    parser.add_argument(
+        "--selected-mode-packet-consumer-manifest",
+        type=Path,
+        help=(
+            "Explicit V4 direct consumer manifest; skips QEP and continues the "
+            "augmented direct chain."
+        ),
+    )
+    parser.add_argument(
+        "--selected-mode-packet-consumer-identity-json",
+        type=Path,
+        help="Hash-bound identity mapping for the explicit V4 direct consumer.",
+    )
+    parser.add_argument("--selected-mode-packet-consumer-manifest-sha256")
     args = parser.parse_args(argv)
+    consumer_values = (
+        args.selected_mode_packet_consumer_manifest,
+        args.selected_mode_packet_consumer_identity_json,
+        args.selected_mode_packet_consumer_manifest_sha256,
+    )
+    if any(value is not None for value in consumer_values) and not all(
+        value is not None for value in consumer_values
+    ):
+        parser.error(
+            "The selected-mode packet direct consumer requires manifest, identity "
+            "JSON, and manifest SHA256."
+        )
+    if args.selected_mode_packet_producer_dir is not None:
+        if args.selected_mode_packet_identity_json is None:
+            parser.error(
+                "--selected-mode-packet-producer-dir requires "
+                "--selected-mode-packet-identity-json"
+            )
+        if args.requested_modes != 480:
+            parser.error(
+                "The V4 selected-mode producer requires --requested-modes 480."
+            )
+    if (
+        args.selected_mode_packet_producer_dir is not None
+        and args.selected_mode_packet_consumer_manifest is not None
+    ):
+        parser.error(
+            "selected-mode packet producer and consumer are mutually exclusive"
+        )
+    if args.selected_mode_packet_consumer_manifest is not None:
+        if args.requested_modes != 480 or args.solver_path != "augmented":
+            parser.error(
+                "The V4 direct packet consumer requires requested-modes=480 and "
+                "solver-path=augmented."
+            )
+        if not valid_hex_digest(args.selected_mode_packet_consumer_manifest_sha256, 64):
+            parser.error(
+                "The V4 direct consumer manifest SHA256 must be 64 hex digits."
+            )
     if (
         args.internal_traction_model == "full3d_one_cell_exact_schur"
         and not allow_task039
@@ -1619,6 +1759,12 @@ def main(
     coupling = None
     system = None
     solution = None
+    packet_consumer_bundle = None
+    task039_packet_consumer_record = None
+    packet_qep_authority = None
+    task039_direct_release = None
+    task039_factor_inventory_before_release = None
+    task039_system_snapshot = None
     schur_system = None
     schur_solution = None
     primary_schur_system = None
@@ -1826,144 +1972,299 @@ def main(
         spaces = build_cross_section_spaces(
             cross_section, transverse_degree=modal_degree
         )
-        operators = assemble_quadratic_beta_operators(modal_cfg, cross_section, spaces)
-        task039_mark_stage("mesh_spaces_ready")
-        task039_mark_stage("qep_matrices_ready")
-        poynting_evaluator = PoyntingFluxEvaluator(modal_cfg, cross_section, spaces)
-        target = analytic_homogeneous_beta(modal_cfg, modal_cfg.n_air)
-        timings["cross_section_and_qep_assembly"] = _max_elapsed(comm, started)
-        progress("Task32 Phase6: cross-section QEP assembled")
+        if args.selected_mode_packet_consumer_manifest is not None:
+            from benchmarks.task039_v4_selected_mode_packet import (
+                consume_task039_v4_selected_mode_packet,
+            )
 
-        mark_stage("cross_section_eigen_solve")
-        started = time.perf_counter()
-        task039_mark_stage(
-            "positive_qep_solve_peak",
-            detail={
-                "marker_semantics": (
-                    "solve interval boundary; peak is derived from subsequent "
-                    "watchdog interval samples, not this marker"
+            packet_identity = json.loads(
+                args.selected_mode_packet_consumer_identity_json.read_text(
+                    encoding="utf-8"
                 )
-            },
-        )
-        positive_right, positive_report = solve_quadratic_beta_modes(
-            operators,
-            target=target,
-            requested_modes=candidate_modes,
-            tolerance=qep_solver_tolerance,
-        )
-        progress("Task32 Phase6: positive right QEP modes complete")
-        positive_right, positive_selection = select_passive_direction_modes(
-            positive_right,
-            desired_direction="forward",
-            requested_modes=args.requested_modes,
-            poynting_evaluator=poynting_evaluator,
-            maximum_abs_beta=(NUMERICAL_INFINITY_BETA_H_CUTOFF / modal_h_nm),
-        )
-        if len(positive_right) != args.requested_modes:
-            for mode in positive_right:
-                mode.destroy()
-            if positive_selection.numerically_infinite_candidate_count:
-                record = finite_spectrum_capacity_record(
-                    direction="positive",
-                    selection=positive_selection,
-                    solver_report=positive_report,
-                )
-                raise _ModalBasisCapacityStop
-            raise RuntimeError(
-                "Positive finite candidate pool did not deliver enough passive "
-                f"forward modes: {positive_selection.direction_counts}."
             )
-        mark_stage("mode_classification")
-        positive = build_biorthogonal_mode_basis(
-            modal_cfg,
-            cross_section,
-            spaces,
-            operators,
-            positive_right,
-            adjoint_target=np.conj(target),
-            requested_left_modes=candidate_modes,
-            qep_solver_tolerance=qep_solver_tolerance,
-            near_degenerate_tolerance=args.near_degenerate_tolerance,
-            block_rotation_tolerance=args.block_rotation_tolerance,
-            poynting_evaluator=poynting_evaluator,
-            log=progress,
-        )
-        progress("Task32 Phase6: positive adjoint basis complete")
-        task039_mark_stage(
-            "negative_qep_solve_peak",
-            detail={
-                "marker_semantics": (
-                    "solve interval boundary; peak is derived from subsequent "
-                    "watchdog interval samples, not this marker"
-                )
-            },
-        )
-        negative_right, negative_report = solve_quadratic_beta_modes(
-            operators,
-            target=-target,
-            requested_modes=candidate_modes,
-            tolerance=qep_solver_tolerance,
-        )
-        progress("Task32 Phase6: negative right QEP modes complete")
-        negative_right, negative_selection = select_passive_direction_modes(
-            negative_right,
-            desired_direction="backward",
-            requested_modes=args.requested_modes,
-            poynting_evaluator=poynting_evaluator,
-            maximum_abs_beta=(NUMERICAL_INFINITY_BETA_H_CUTOFF / modal_h_nm),
-        )
-        if len(negative_right) != args.requested_modes:
-            for mode in negative_right:
-                mode.destroy()
-            if negative_selection.numerically_infinite_candidate_count:
-                record = finite_spectrum_capacity_record(
-                    direction="negative",
-                    selection=negative_selection,
-                    solver_report=negative_report,
-                )
-                raise _ModalBasisCapacityStop
-            raise RuntimeError(
-                "Negative finite candidate pool did not deliver enough passive "
-                f"backward modes: {negative_selection.direction_counts}."
+            if not isinstance(packet_identity, Mapping):
+                raise ValueError("selected-mode packet identity must be a JSON object")
+            packet_consumer_bundle = consume_task039_v4_selected_mode_packet(
+                args.selected_mode_packet_consumer_manifest,
+                identity=packet_identity,
+                expected_manifest_sha256=(
+                    args.selected_mode_packet_consumer_manifest_sha256
+                ),
+                consumer_kind="direct",
+                comm=comm,
             )
-        task039_mark_stage("raw_candidate_eigenvectors_ready")
-        negative = build_biorthogonal_mode_basis(
-            modal_cfg,
-            cross_section,
-            spaces,
-            operators,
-            negative_right,
-            adjoint_target=-np.conj(target),
-            requested_left_modes=candidate_modes,
-            qep_solver_tolerance=qep_solver_tolerance,
-            near_degenerate_tolerance=args.near_degenerate_tolerance,
-            block_rotation_tolerance=args.block_rotation_tolerance,
-            poynting_evaluator=poynting_evaluator,
-            log=progress,
-        )
-        task039_mark_stage("selected_biorthogonal_bases_ready")
-        progress("Task32 Phase6: negative adjoint basis complete")
-        progress(
-            "Task32 Phase6: delivered basis counts "
-            f"positive={len(positive.modes)}/{positive_report.converged_modes}, "
-            f"negative={len(negative.modes)}/{negative_report.converged_modes}"
-        )
-        preview_count = min(len(positive.modes), 12)
-        progress(
-            "Task32 Phase6: positive beta preview "
-            f"{[complex(mode.beta) for mode in positive.modes[:preview_count]]} "
-            f"(showing {preview_count}/{len(positive.modes)})"
-        )
-        progress(
-            "Task32 Phase6: positive near-degenerate group count "
-            f"{len(positive.groups)}; first groups="
-            f"{[group.indices for group in positive.groups[:8]]}"
-        )
-        pairs = pair_reciprocal_mode_bases(operators, positive, negative)
-        timings["positive_and_negative_biorthogonal_bases"] = _max_elapsed(
-            comm, started
-        )
-        progress("Task32 Phase6: real positive/negative QEP bases complete")
+            packet_diagnostics = packet_consumer_bundle.packet_consumer_diagnostics
+            task039_packet_consumer_record = {
+                "manifest": packet_diagnostics["manifest_path"],
+                "manifest_sha256": packet_diagnostics["manifest_sha256"],
+                "identity_sha256": packet_diagnostics["identity_sha256"],
+                "consumer_kind": packet_diagnostics["consumer_kind"],
+                "qep_calls": packet_diagnostics["qep_calls"],
+                "consumer_qep_required": packet_diagnostics["consumer_qep_required"],
+                "read_seconds_max_rank": packet_diagnostics["read_seconds_max_rank"],
+                "hydrate_seconds_max_rank": packet_diagnostics[
+                    "hydrate_seconds_max_rank"
+                ],
+                "mmap_released": packet_diagnostics["packet_mmap_released"],
+                "packet_references_released": packet_diagnostics[
+                    "packet_references_released"
+                ],
+            }
+            positive = packet_consumer_bundle.positive_basis
+            negative = packet_consumer_bundle.negative_basis
+            positive_authority = positive.packet_authority
+            negative_authority = negative.packet_authority
+            target = analytic_homogeneous_beta(modal_cfg, modal_cfg.n_air)
+            packet_target = positive_authority["target_beta_per_nm"]
+            if packet_target is None or len(packet_target) != 2:
+                raise ValueError("selected-mode packet lacks target beta authority")
+            target_from_packet = complex(
+                float(packet_target[0]), float(packet_target[1])
+            )
+            if not np.isclose(target_from_packet, target):
+                raise ValueError("selected-mode packet target beta mismatch")
+            packet_reciprocal = positive_authority["reciprocal_pairing"]
+            if packet_reciprocal != negative_authority["reciprocal_pairing"]:
+                raise ValueError("selected-mode packet reciprocal authority mismatch")
+            packet_qep_authority = {
+                "authority_source": "selected_mode_packet",
+                "target_beta_per_nm": packet_target,
+                "operator": positive_authority["operator_authority"],
+                "positive": {
+                    "solver": positive_authority["qep_diagnostics"],
+                    "selection": positive_authority["selection_diagnostics"],
+                    "gram": positive_authority["gram_authority"],
+                    "basis_audit": positive_authority["basis_audit"],
+                    "mode_diagnostics": positive_authority["mode_diagnostics"],
+                },
+                "negative": {
+                    "solver": negative_authority["qep_diagnostics"],
+                    "selection": negative_authority["selection_diagnostics"],
+                    "gram": negative_authority["gram_authority"],
+                    "basis_audit": negative_authority["basis_audit"],
+                    "mode_diagnostics": negative_authority["mode_diagnostics"],
+                },
+                "reciprocal_pairing": packet_reciprocal,
+            }
+            pairs = tuple()
+            timings["packet_read"] = float(
+                packet_consumer_bundle.packet_consumer_diagnostics[
+                    "read_seconds_max_rank"
+                ]
+            )
+            timings["packet_hydrate"] = float(
+                packet_consumer_bundle.packet_consumer_diagnostics[
+                    "hydrate_seconds_max_rank"
+                ]
+            )
+            progress("Task32 Phase6: selected-mode packet bases hydrated")
+        else:
+            operators = assemble_quadratic_beta_operators(
+                modal_cfg, cross_section, spaces
+            )
+            task039_mark_stage("mesh_spaces_ready")
+            task039_mark_stage("qep_matrices_ready")
+            poynting_evaluator = PoyntingFluxEvaluator(modal_cfg, cross_section, spaces)
+            target = analytic_homogeneous_beta(modal_cfg, modal_cfg.n_air)
+            timings["cross_section_and_qep_assembly"] = _max_elapsed(comm, started)
+            progress("Task32 Phase6: cross-section QEP assembled")
+
+            mark_stage("cross_section_eigen_solve")
+            started = time.perf_counter()
+            task039_mark_stage(
+                "positive_qep_solve_peak",
+                detail={
+                    "marker_semantics": (
+                        "solve interval boundary; peak is derived from subsequent "
+                        "watchdog interval samples, not this marker"
+                    )
+                },
+            )
+            positive_right, positive_report = solve_quadratic_beta_modes(
+                operators,
+                target=target,
+                requested_modes=candidate_modes,
+                tolerance=qep_solver_tolerance,
+            )
+            progress("Task32 Phase6: positive right QEP modes complete")
+            positive_right, positive_selection = select_passive_direction_modes(
+                positive_right,
+                desired_direction="forward",
+                requested_modes=args.requested_modes,
+                poynting_evaluator=poynting_evaluator,
+                maximum_abs_beta=(NUMERICAL_INFINITY_BETA_H_CUTOFF / modal_h_nm),
+            )
+            if len(positive_right) != args.requested_modes:
+                for mode in positive_right:
+                    mode.destroy()
+                if positive_selection.numerically_infinite_candidate_count:
+                    record = finite_spectrum_capacity_record(
+                        direction="positive",
+                        selection=positive_selection,
+                        solver_report=positive_report,
+                    )
+                    raise _ModalBasisCapacityStop
+                raise RuntimeError(
+                    "Positive finite candidate pool did not deliver enough passive "
+                    f"forward modes: {positive_selection.direction_counts}."
+                )
+            mark_stage("mode_classification")
+            positive = build_biorthogonal_mode_basis(
+                modal_cfg,
+                cross_section,
+                spaces,
+                operators,
+                positive_right,
+                adjoint_target=np.conj(target),
+                requested_left_modes=candidate_modes,
+                qep_solver_tolerance=qep_solver_tolerance,
+                near_degenerate_tolerance=args.near_degenerate_tolerance,
+                block_rotation_tolerance=args.block_rotation_tolerance,
+                poynting_evaluator=poynting_evaluator,
+                log=progress,
+            )
+            progress("Task32 Phase6: positive adjoint basis complete")
+            task039_mark_stage(
+                "negative_qep_solve_peak",
+                detail={
+                    "marker_semantics": (
+                        "solve interval boundary; peak is derived from subsequent "
+                        "watchdog interval samples, not this marker"
+                    )
+                },
+            )
+            negative_right, negative_report = solve_quadratic_beta_modes(
+                operators,
+                target=-target,
+                requested_modes=candidate_modes,
+                tolerance=qep_solver_tolerance,
+            )
+            progress("Task32 Phase6: negative right QEP modes complete")
+            negative_right, negative_selection = select_passive_direction_modes(
+                negative_right,
+                desired_direction="backward",
+                requested_modes=args.requested_modes,
+                poynting_evaluator=poynting_evaluator,
+                maximum_abs_beta=(NUMERICAL_INFINITY_BETA_H_CUTOFF / modal_h_nm),
+            )
+            if len(negative_right) != args.requested_modes:
+                for mode in negative_right:
+                    mode.destroy()
+                if negative_selection.numerically_infinite_candidate_count:
+                    record = finite_spectrum_capacity_record(
+                        direction="negative",
+                        selection=negative_selection,
+                        solver_report=negative_report,
+                    )
+                    raise _ModalBasisCapacityStop
+                raise RuntimeError(
+                    "Negative finite candidate pool did not deliver enough passive "
+                    f"backward modes: {negative_selection.direction_counts}."
+                )
+            task039_mark_stage("raw_candidate_eigenvectors_ready")
+            negative = build_biorthogonal_mode_basis(
+                modal_cfg,
+                cross_section,
+                spaces,
+                operators,
+                negative_right,
+                adjoint_target=-np.conj(target),
+                requested_left_modes=candidate_modes,
+                qep_solver_tolerance=qep_solver_tolerance,
+                near_degenerate_tolerance=args.near_degenerate_tolerance,
+                block_rotation_tolerance=args.block_rotation_tolerance,
+                poynting_evaluator=poynting_evaluator,
+                log=progress,
+            )
+            task039_mark_stage("selected_biorthogonal_bases_ready")
+            progress("Task32 Phase6: negative adjoint basis complete")
+            progress(
+                "Task32 Phase6: delivered basis counts "
+                f"positive={len(positive.modes)}/{positive_report.converged_modes}, "
+                f"negative={len(negative.modes)}/{negative_report.converged_modes}"
+            )
+            preview_count = min(len(positive.modes), 12)
+            progress(
+                "Task32 Phase6: positive beta preview "
+                f"{[complex(mode.beta) for mode in positive.modes[:preview_count]]} "
+                f"(showing {preview_count}/{len(positive.modes)})"
+            )
+            progress(
+                "Task32 Phase6: positive near-degenerate group count "
+                f"{len(positive.groups)}; first groups="
+                f"{[group.indices for group in positive.groups[:8]]}"
+            )
+            pairs = pair_reciprocal_mode_bases(operators, positive, negative)
+            timings["positive_and_negative_biorthogonal_bases"] = _max_elapsed(
+                comm, started
+            )
+            progress("Task32 Phase6: real positive/negative QEP bases complete")
+
+        if args.selected_mode_packet_producer_dir is not None:
+            from benchmarks.task039_v4_selected_mode_packet import (
+                build_task039_v4_packet_metadata,
+                write_task039_v4_selected_mode_packet,
+            )
+
+            packet_identity = json.loads(
+                args.selected_mode_packet_identity_json.read_text(encoding="utf-8")
+            )
+            if not isinstance(packet_identity, Mapping):
+                raise ValueError("selected-mode packet identity must be a JSON object")
+            external_mode_counts = None
+            external_keys = packet_identity.get("external_keys")
+            if isinstance(external_keys, Mapping):
+                counts = external_keys.get("counts")
+                if isinstance(counts, Mapping) and isinstance(
+                    counts.get("per_side"), Mapping
+                ):
+                    external_mode_counts = dict(counts["per_side"])
+            packet_metadata = build_task039_v4_packet_metadata(
+                positive_basis=positive,
+                negative_basis=negative,
+                positive_qep_report=positive_report,
+                negative_qep_report=negative_report,
+                positive_selection=positive_selection,
+                negative_selection=negative_selection,
+                reciprocal_pairs=pairs,
+                target_beta_per_nm=target,
+                operator_authority={
+                    "full_shape": list(operators.full_shape),
+                    "reduced_shape": list(operators.reduced_shape),
+                    "field_degree": operators.field_degree,
+                    "geometry_degree": operators.geometry_degree,
+                    "coefficient_degree": operators.coefficient_degree,
+                    "quadrature_degree": operators.quadrature_degree,
+                    "quadrature_policy": operators.quadrature_policy,
+                },
+                external_mode_counts=external_mode_counts,
+            )
+            packet = write_task039_v4_selected_mode_packet(
+                args.selected_mode_packet_producer_dir,
+                positive_basis=positive,
+                negative_basis=negative,
+                identity=packet_identity,
+                metadata=packet_metadata,
+                comm=comm,
+            )
+            raise _Task039TraceAuditStop(
+                {
+                    "schema": "task039.v4-selected-mode-packet-producer.v1",
+                    "status": "controlled_stop_packet_written",
+                    "source": provenance,
+                    "packet": packet,
+                    "producer_qep": packet_metadata["qep_diagnostics"],
+                    "packet_write": {
+                        "manifest": packet["manifest"],
+                        "manifest_sha256": packet["manifest_sha256"],
+                        "write_seconds_max_rank": packet["write_seconds_max_rank"],
+                        "consumer_qep_required": False,
+                    },
+                    "selection": packet_metadata["selection_diagnostics"],
+                    "local_systems_and_coupling": "not_run",
+                    "consumer_qep_required": False,
+                }
+            )
 
         mark_stage("local_fem_dtn_assembly")
         started = time.perf_counter()
@@ -2127,6 +2428,18 @@ def main(
             system = build_hybrid_augmented_direct_system(bottom, top, coupling)
             timings["primary_system_build"] = _max_elapsed(comm, started)
             timings["monolithic_assembly"] = timings["primary_system_build"]
+            if packet_consumer_bundle is not None:
+                task039_system_snapshot = {
+                    "matrix_size": list(system.A.getSize()),
+                    "matrix_stats": dict(system.matrix_stats),
+                    "block_shapes": {
+                        name: list(shape) for name, shape in system.block_shapes.items()
+                    },
+                    "inserted_nnz_by_block": dict(system.inserted_nnz_by_block),
+                    "dense_interface_square_formed": bool(
+                        system.dense_interface_square_formed
+                    ),
+                }
             task039_mark_stage("hybrid_augmented_operator_ready")
             task039_mark_stage(
                 "mumps_analysis_ready_when_available",
@@ -2143,11 +2456,44 @@ def main(
                 top,
                 coupling,
             )
-            task039_mark_stage(
-                "direct_factor_or_iterative_side_factors_ready",
-                detail={"source": "solution_ksp_holds_factor"},
-            )
-            task039_mark_stage("solution_ready")
+            if packet_consumer_bundle is not None:
+                pre_release_factor_inventory = _petsc_factor_inventory(solution.ksp)
+                task039_mark_stage(
+                    "direct_factor_or_iterative_side_factors_ready",
+                    detail={
+                        "source": "solution_ksp_holds_factor",
+                        "factor_inventory": pre_release_factor_inventory,
+                    },
+                )
+                task039_mark_stage(
+                    "solution_ready",
+                    detail={
+                        "source": "solve_before_direct_factor_release",
+                        "converged_reason": int(solution.converged_reason),
+                        "true_relative_residual": float(solution.relative_residual),
+                    },
+                )
+                task039_direct_release = (
+                    _release_task039_direct_factor_before_postprocess(
+                        solution,
+                        system,
+                        task039_post_destroy_cleanup,
+                        pre_release_factor_inventory,
+                    )
+                )
+                task039_factor_inventory_before_release = task039_direct_release[
+                    "factor_inventory_before_release"
+                ]
+                task039_mark_stage(
+                    "direct_factor_released_before_postprocess",
+                    detail=task039_direct_release,
+                )
+            else:
+                task039_mark_stage(
+                    "direct_factor_or_iterative_side_factors_ready",
+                    detail={"source": "solution_ksp_holds_factor"},
+                )
+                task039_mark_stage("solution_ready")
         else:
             builder = (
                 build_hybrid_modal_schur_direct_system
@@ -2564,9 +2910,21 @@ def main(
             and all(mode.passive_branch_valid for mode in positive.modes)
             and all(mode.passive_branch_valid for mode in negative.modes)
         )
-        reciprocal_valid = len(pairs) == args.requested_modes and all(
-            pair.opposite_direction and pair.passive_branches_valid for pair in pairs
-        )
+        if packet_qep_authority is not None:
+            reciprocal_authority = packet_qep_authority["reciprocal_pairing"]
+            reciprocal_valid = bool(
+                reciprocal_authority["complete"]
+                and reciprocal_authority["count"] == args.requested_modes
+                and all(
+                    pair["opposite_direction"] and pair["passive_branches_valid"]
+                    for pair in reciprocal_authority["pairs"]
+                )
+            )
+        else:
+            reciprocal_valid = len(pairs) == args.requested_modes and all(
+                pair.opposite_direction and pair.passive_branches_valid
+                for pair in pairs
+            )
         forward_factors = np.asarray(
             coupling.propagation.forward.factors, dtype=np.complex128
         )
@@ -2577,6 +2935,20 @@ def main(
             np.isfinite(port_power[key])
             for key in ("R_total", "T_total", "A_balance", "R_plus_T")
         )
+        if packet_qep_authority is not None:
+            packet_gate_metrics = _task039_packet_gate_metrics(packet_qep_authority)
+            biorthogonality_error = packet_gate_metrics["biorthogonality_error"]
+            qep_residual = packet_gate_metrics["qep_residual"]
+        else:
+            biorthogonality_error = max(
+                positive.max_identity_error, negative.max_identity_error
+            )
+            qep_residual = max(
+                *(mode.right.polynomial_relative_residual for mode in positive.modes),
+                *(mode.right.polynomial_relative_residual for mode in negative.modes),
+                *(mode.left_polynomial_relative_residual for mode in positive.modes),
+                *(mode.left_polynomial_relative_residual for mode in negative.modes),
+            )
         gates = {
             "exact_requested_mode_count_delivered": (
                 len(positive.modes) == args.requested_modes
@@ -2584,30 +2956,8 @@ def main(
             ),
             "requested_forward_and_backward_passive_bases": directions_valid,
             "reciprocal_pairing_complete": reciprocal_valid,
-            "biorthogonality_identity_error_le_1e-6": (
-                max(positive.max_identity_error, negative.max_identity_error) <= 1.0e-6
-            ),
-            "right_and_left_qep_residuals_le_1e-8": (
-                max(
-                    *(
-                        mode.right.polynomial_relative_residual
-                        for mode in positive.modes
-                    ),
-                    *(
-                        mode.right.polynomial_relative_residual
-                        for mode in negative.modes
-                    ),
-                    *(
-                        mode.left_polynomial_relative_residual
-                        for mode in positive.modes
-                    ),
-                    *(
-                        mode.left_polynomial_relative_residual
-                        for mode in negative.modes
-                    ),
-                )
-                <= 1.0e-8
-            ),
+            "biorthogonality_identity_error_le_1e-6": biorthogonality_error <= 1.0e-6,
+            "right_and_left_qep_residuals_le_1e-8": qep_residual <= 1.0e-8,
             "stable_propagation_no_growing_factor": bool(
                 max(
                     np.max(np.abs(forward_factors), initial=0.0),
@@ -2638,6 +2988,23 @@ def main(
             ),
             "external_port_rta_finite": finite_rta,
         }
+        if task039_direct_release is not None:
+            gates.update(
+                {
+                    "task039_factor_destroyed_before_postprocess": bool(
+                        task039_direct_release["factor_destroyed_before_postprocess"]
+                    ),
+                    "task039_system_destroyed_before_postprocess": bool(
+                        task039_direct_release["system_destroyed_before_postprocess"]
+                    ),
+                    "task039_cleanup_collective_completed": bool(
+                        task039_direct_release["cleanup_collective_call_completed"]
+                    ),
+                    "task039_direct_factor_lifecycle_pass": bool(
+                        task039_direct_release["pass"]
+                    ),
+                }
+            )
         if solution.bottom_recovered is not None:
             if solution.top_recovered is None:
                 raise RuntimeError(
@@ -2784,19 +3151,34 @@ def main(
             "top": _petsc_matrix_stats(coupling.top.projection, assemble=False),
         }
         factor_inventory = (
-            {"augmented": _petsc_factor_inventory(solution.ksp)}
+            {
+                "augmented": (
+                    task039_factor_inventory_before_release
+                    if task039_factor_inventory_before_release is not None
+                    else _petsc_factor_inventory(solution.ksp)
+                )
+            }
             if system is not None
             else primary_schur_system.factor_inventory
         )
         full_vector_size = int(positive.modes[0].right.right_full.getSize())
-        reduced_vector_size = int(positive.modes[0].right.right_reduced.getSize())
-        eigenvector_bytes = int(
-            2
-            * args.requested_modes
-            * 2
-            * (full_vector_size + reduced_vector_size)
-            * np.dtype(PETSc.ScalarType).itemsize
-        )
+        if packet_consumer_bundle is not None:
+            reduced_vector_size = None
+            eigenvector_bytes = int(
+                4
+                * args.requested_modes
+                * full_vector_size
+                * np.dtype(PETSc.ScalarType).itemsize
+            )
+        else:
+            reduced_vector_size = int(positive.modes[0].right.right_reduced.getSize())
+            eigenvector_bytes = int(
+                2
+                * args.requested_modes
+                * 2
+                * (full_vector_size + reduced_vector_size)
+                * np.dtype(PETSc.ScalarType).itemsize
+            )
         active_column_counts = {
             "bottom": distributed_active_column_count(coupling.bottom.projection),
             "top": distributed_active_column_count(coupling.top.projection),
@@ -2823,6 +3205,14 @@ def main(
             "storage_complexity_contract": "O(N_interface*M)+O(M^2)",
             "dense_interface_square_formed": False,
         }
+        if packet_consumer_bundle is not None:
+            object_payload_ledger.update(
+                {
+                    "selected_mode_vector_layout": "positive_negative_full_right_left",
+                    "reduced_vectors": "not_persisted",
+                    "qep_workspace_bytes": 0,
+                }
+            )
         _verify_source_stable_at_end(
             comm,
             provenance,
@@ -2937,46 +3327,66 @@ def main(
                     graded_plan.to_record() if graded_plan is not None else None
                 ),
             },
-            "qep": {
-                "target_beta_per_nm": _complex_json(target),
-                "full_shape": list(operators.full_shape),
-                "reduced_shape": list(operators.reduced_shape),
-                "field_degree": operators.field_degree,
-                "geometry_degree": operators.geometry_degree,
-                "coefficient_degree": operators.coefficient_degree,
-                "quadrature_degree": operators.quadrature_degree,
-                "quadrature_policy": operators.quadrature_policy,
-                "positive_solver_converged_modes": (positive_report.converged_modes),
-                "negative_solver_converged_modes": (negative_report.converged_modes),
-                "positive_directional_selection": (
-                    _directional_selection_summary(positive_selection)
-                ),
-                "negative_directional_selection": (
-                    _directional_selection_summary(negative_selection)
-                ),
-                "positive": _basis_summary(positive),
-                "negative": _basis_summary(negative),
-                "reciprocal_pairs": [
-                    {
-                        "positive_index": pair.positive_index,
-                        "negative_index": pair.negative_index,
-                        "relative_beta_error": pair.relative_beta_error,
-                        "electric_mass_overlap": pair.electric_mass_overlap,
-                        "opposite_direction": pair.opposite_direction,
-                        "passive_branches_valid": (pair.passive_branches_valid),
-                    }
-                    for pair in pairs
-                ],
-            },
+            "qep": (
+                packet_qep_authority
+                if packet_qep_authority is not None
+                else {
+                    "target_beta_per_nm": _complex_json(target),
+                    "full_shape": list(operators.full_shape),
+                    "reduced_shape": list(operators.reduced_shape),
+                    "field_degree": operators.field_degree,
+                    "geometry_degree": operators.geometry_degree,
+                    "coefficient_degree": operators.coefficient_degree,
+                    "quadrature_degree": operators.quadrature_degree,
+                    "quadrature_policy": operators.quadrature_policy,
+                    "positive_solver_converged_modes": (
+                        positive_report.converged_modes
+                    ),
+                    "negative_solver_converged_modes": (
+                        negative_report.converged_modes
+                    ),
+                    "positive_directional_selection": (
+                        _directional_selection_summary(positive_selection)
+                    ),
+                    "negative_directional_selection": (
+                        _directional_selection_summary(negative_selection)
+                    ),
+                    "positive": _basis_summary(positive),
+                    "negative": _basis_summary(negative),
+                    "reciprocal_pairs": [
+                        {
+                            "positive_index": pair.positive_index,
+                            "negative_index": pair.negative_index,
+                            "relative_beta_error": pair.relative_beta_error,
+                            "electric_mass_overlap": pair.electric_mass_overlap,
+                            "opposite_direction": pair.opposite_direction,
+                            "passive_branches_valid": (pair.passive_branches_valid),
+                        }
+                        for pair in pairs
+                    ],
+                }
+            ),
             "hybrid_system": {
                 "primary_solver_path": args.solver_path,
                 "matrix_size": (
-                    list(system.A.getSize()) if system is not None else None
+                    task039_system_snapshot["matrix_size"]
+                    if task039_system_snapshot is not None
+                    else (list(system.A.getSize()) if system is not None else None)
                 ),
-                "matrix_stats": (system.matrix_stats if system is not None else None),
-                "block_shapes": (system.block_shapes if system is not None else None),
+                "matrix_stats": (
+                    task039_system_snapshot["matrix_stats"]
+                    if task039_system_snapshot is not None
+                    else (system.matrix_stats if system is not None else None)
+                ),
+                "block_shapes": (
+                    task039_system_snapshot["block_shapes"]
+                    if task039_system_snapshot is not None
+                    else (system.block_shapes if system is not None else None)
+                ),
                 "inserted_nnz_by_block": (
-                    system.inserted_nnz_by_block if system is not None else None
+                    task039_system_snapshot["inserted_nnz_by_block"]
+                    if task039_system_snapshot is not None
+                    else (system.inserted_nnz_by_block if system is not None else None)
                 ),
                 "bottom_global_size": bottom.global_size,
                 "top_global_size": top.global_size,
@@ -3120,9 +3530,13 @@ def main(
                     or coupling.top.full_surface_mode_vectors_retained
                 ),
                 "dense_interface_square_formed": (
-                    system.dense_interface_square_formed
-                    if system is not None
-                    else primary_schur_system.dense_interface_square_formed
+                    task039_system_snapshot["dense_interface_square_formed"]
+                    if task039_system_snapshot is not None
+                    else (
+                        system.dense_interface_square_formed
+                        if system is not None
+                        else primary_schur_system.dense_interface_square_formed
+                    )
                 ),
                 "full_field_or_mode_gathered": (coupling.full_field_or_mode_gathered),
                 "modal_schur": (
@@ -3183,6 +3597,7 @@ def main(
                     }
                 ),
             },
+            "task039_direct_lifecycle": task039_direct_release,
             "validation": validation,
             "physical_field_reconstruction": physical_fields,
             "modal_schur_comparison": modal_schur_comparison,
@@ -3256,6 +3671,8 @@ def main(
                 "per-rank ru_maxrss historical peaks; not simultaneous RSS"
             ),
         }
+        if task039_packet_consumer_record is not None:
+            record["selected_mode_packet_consumer"] = task039_packet_consumer_record
         if canonical_trace_gate_policy is not None:
             record["canonical_trace_gate"] = _task039_canonical_trace_gate_record(
                 coupling, canonical_trace_gate_policy, canonical_trace_family_sha256
@@ -3282,10 +3699,12 @@ def main(
         for local_system in (bottom, top):
             if local_system is not None:
                 local_system.destroy()
-        if positive is not None:
+        if positive is not None and packet_consumer_bundle is None:
             positive.destroy()
-        if negative is not None:
+        if negative is not None and packet_consumer_bundle is None:
             negative.destroy()
+        if packet_consumer_bundle is not None:
+            packet_consumer_bundle.destroy()
         if operators is not None:
             operators.destroy()
         if record is not None and any(
