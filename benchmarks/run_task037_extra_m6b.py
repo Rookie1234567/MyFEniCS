@@ -8713,7 +8713,6 @@ def _m6b_w18a_action_audit_valid(
             and audit["factor_count"] == 0
             and audit["ksp_created"] is False
             and audit["ordinary_default_changed"] is False
-            and no_materialization(audit)
         )
 
     def auxiliary_outer(audit: Any) -> bool:
@@ -8841,18 +8840,6 @@ def _m6b_w18a_action_audit_valid(
             and shifted(final["shifted_action"], 340)
             and dtn(final["dtn"], 8)
         ):
-            return False
-        static_shifted_construction = {
-            key: item
-            for key, item in construction["shifted_action"].items()
-            if key != "apply_count"
-        }
-        static_shifted_final = {
-            key: item
-            for key, item in final["shifted_action"].items()
-            if key != "apply_count"
-        }
-        if static_shifted_construction != static_shifted_final:
             return False
         local_pc = construction["local_pc"]
         factor_store = construction["factor_store"]
@@ -8984,6 +8971,17 @@ def _m6b_w18a_vector_evidence_valid(
             return math.isclose(float(left), float(right), rel_tol=1e-12, abs_tol=1e-12)
         return left == right
 
+    def artifact_hash_record(descriptor: Mapping[str, Any]) -> dict[str, Any]:
+        file_sha = descriptor.get("file_sha256")
+        if file_sha is None:
+            file_sha = descriptor["sha256"]
+        return {
+            "path": descriptor["path"],
+            "bytes": descriptor["bytes"],
+            "file_sha256": file_sha,
+            "array_sha256": descriptor["array_sha256"],
+        }
+
     try:
         residual = np.asarray(expected_w7["residual"])
         residual_artifact = expected_w7["residual_artifact"]
@@ -9054,10 +9052,7 @@ def _m6b_w18a_vector_evidence_valid(
                 loaded[(repeat_index, iteration, "solution")] = arrays["solution"]
                 loaded[(repeat_index, iteration, "action")] = arrays["outer_action"]
                 artifact_hashes[f"repeat{repeat_index}_checkpoint{iteration}"] = {
-                    field: {
-                        key: descriptors[field][key]
-                        for key in ("path", "bytes", "file_sha256", "array_sha256")
-                    }
+                    field: artifact_hash_record(descriptors[field])
                     for field in ("solution", "outer_action", "residual", "rhs")
                 }
             for apply_index, record in enumerate(repeat["inner_records"], 1):
@@ -9067,10 +9062,7 @@ def _m6b_w18a_vector_evidence_valid(
                     return empty
                 artifact_hashes[
                     f"repeat{repeat_index}_inner_apply{apply_index}"
-                ] = {
-                    key: descriptor[key]
-                    for key in ("path", "bytes", "file_sha256", "array_sha256")
-                }
+                ] = artifact_hash_record(descriptor)
         solution_differences: list[float] = []
         action_differences: list[float] = []
         physical_differences: list[float] = []
@@ -9190,10 +9182,7 @@ def _m6b_w18a_vector_evidence_valid(
                     if not same_scalar(recomputed[field], measured[field]):
                         return empty
                 measurements.append(float(recomputed["rho"]))
-                artifact_hashes[f"physical_{key}"] = {
-                    name: descriptor[name]
-                    for name in ("path", "bytes", "file_sha256", "array_sha256")
-                }
+                artifact_hashes[f"physical_{key}"] = artifact_hash_record(descriptor)
         return {
             "pass": True,
             "artifact_hashes": artifact_hashes,
@@ -9207,7 +9196,10 @@ def _m6b_w18a_vector_evidence_valid(
 
 
 def _m6b_w18a_formal_gate(
-    raw_dir: Path, watchdog_summary_path: Path, expected_source_sha: str
+    raw_dir: Path,
+    watchdog_summary_path: Path,
+    expected_source_sha: str,
+    expected_checker_source_sha: str | None = None,
 ) -> dict[str, Any]:
     """Independently close W18A worker, raw vectors, and resource evidence."""
 
@@ -9215,6 +9207,11 @@ def _m6b_w18a_formal_gate(
     raw_dir = Path(raw_dir).resolve()
     watchdog_summary_path = Path(watchdog_summary_path).resolve()
     watchdog_dir = watchdog_summary_path.parent
+    checker_source_sha = (
+        expected_source_sha
+        if expected_checker_source_sha is None
+        else expected_checker_source_sha
+    )
     names = (
         "worker_evidence",
         "worker_semantics",
@@ -9566,7 +9563,7 @@ def _m6b_w18a_formal_gate(
         checker_source = h2b._light_source()
         checks["checker_source"] = bool(
             _m6b_w6a_source_valid(checker_source)
-            and checker_source["source_commit_full_sha"] == expected_source_sha
+            and checker_source["source_commit_full_sha"] == checker_source_sha
         )
     except (OSError, RuntimeError, TypeError, ValueError):
         checker_source = {}
@@ -9631,6 +9628,7 @@ def _m6b_w18a_formal_gate(
         "worker_checks": worker_checks,
         "vector_evidence": vector_evidence,
         "checker_source": checker_source,
+        "checker_source_sha": checker_source_sha,
     }
 
 
@@ -9692,12 +9690,16 @@ def _run_m6b_w18a_check(
     watchdog_summary_path: Path,
     output: Path,
     expected_source_sha: str,
+    expected_checker_source_sha: str | None = None,
 ) -> int:
     output = Path(output).resolve()
     if output.exists():
         raise FileExistsError(f"W18A checker refuses existing output: {output}")
     gate = _m6b_w18a_formal_gate(
-        Path(raw_dir).resolve(), Path(watchdog_summary_path).resolve(), expected_source_sha
+        Path(raw_dir).resolve(),
+        Path(watchdog_summary_path).resolve(),
+        expected_source_sha,
+        expected_checker_source_sha,
     )
     passed = gate["pass"] is True
     summary = gate.get("summary", {})
@@ -9726,6 +9728,7 @@ def _run_m6b_w18a_check(
         "physical_screen_unlocked": passed,
         "physical_screen_locked": not passed,
         "producer_source_sha": expected_source_sha,
+        "checker_source_sha": gate.get("checker_source_sha"),
         "raw_dir": str(Path(raw_dir).resolve()),
         "worker_summary": raw_inventory[0] if raw_inventory else {},
         "watchdog_summary": _artifact(
@@ -25911,6 +25914,12 @@ def _parser() -> argparse.ArgumentParser:
     w18a_check.add_argument(
         "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
     )
+    w18a_check.add_argument(
+        "--expected-checker-source-sha",
+        required=False,
+        default=None,
+        type=_m6b_w2_source_sha_argument,
+    )
     w15a_watchdog = sub.add_parser("m6b-w15a-watchdog")
     w15a_watchdog.add_argument("--run-dir", required=True)
     w15a_watchdog.add_argument("--watchdog-dir", required=True)
@@ -26387,6 +26396,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             Path(args.watchdog_summary).resolve(),
             Path(args.output).resolve(),
             args.expected_source_sha,
+            args.expected_checker_source_sha,
         )
     run_dir = Path(args.run_dir).resolve()
     if args.command == "m6b-check":

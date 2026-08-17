@@ -30,6 +30,7 @@ from src.test.test_345_task037_m6b_w17a_resource_closeout import (
 
 
 EXPECTED_SOURCE_SHA = "a" * 40
+CHECKER_SOURCE_SHA = "e" * 40
 
 
 def test_w18a_watchdog_constants_command_and_inventory() -> None:
@@ -355,15 +356,37 @@ def _w18a_action_audit(
             "physical_action_count": 4,
         }
     )
-    audit["auxiliary_construction"]["shifted_action"] = _shifted(0)
+    construction_shifted = _shifted(0)
+    construction_shifted.pop("materialization_identity")
+    audit["auxiliary_construction"]["shifted_action"] = construction_shifted
+    audit["auxiliary_construction"]["shifted_action"].update(
+        {
+            "last_packed_coefficient_bytes": 0,
+            "last_packed_coefficient_entry_count": 0,
+            "last_packed_coefficient_shapes": [],
+            "per_apply_bounded_temporary_bytes": 0,
+        }
+    )
+    shifted_final = _shifted(340)
+    shifted_final.pop("materialization_identity")
+    shifted_final.update(
+        {
+            "last_packed_coefficient_bytes": 3_564_288,
+            "last_packed_coefficient_entry_count": 222_768,
+            "last_packed_coefficient_shapes": [[252, 884]],
+            "per_apply_bounded_temporary_bytes": 3_564_288,
+        }
+    )
     audit["auxiliary_final_counts"] = {
         "outer": [deepcopy(run["outer_audit"]) for run in repeats],
         "dtn": _dtn(8),
-        "shifted_action": _shifted(340),
+        "shifted_action": shifted_final,
     }
+    physical = _physical()
+    physical.pop("materialization_identity")
     audit["physical_instances"] = [
         {
-            "physical": _physical() | {"apply_count": 4},
+            "physical": physical | {"apply_count": 4},
             "outer": _outer(4),
             "dtn": _dtn(12),
             "bridge": {"forward_apply_count": 4, "fixed_work_vectors": 2,
@@ -466,6 +489,8 @@ def _w18a_formal_fixture(
                     base / f"m6b_iter{iteration}_rhs.npy", residual
                 ),
             }
+            for descriptor in descriptors.values():
+                descriptor["sha256"] = descriptor.pop("file_sha256")
             checkpoint = {
                 "iteration": iteration,
                 "finite": True,
@@ -747,6 +772,16 @@ def test_w18a_formal_gate_passes_and_checker_unlocks(
         fixture["raw"], fixture["watchdog_summary"], EXPECTED_SOURCE_SHA
     )
     assert gate["pass"] is True, gate["checks"]
+    summary = json.loads(fixture["summary_path"].read_text(encoding="utf-8"))
+    action_audit = summary["action_audit"]
+    shifted_construction = action_audit["auxiliary_construction"]["shifted_action"]
+    shifted_final = action_audit["auxiliary_final_counts"]["shifted_action"]
+    assert shifted_construction["last_packed_coefficient_bytes"] == 0
+    assert shifted_construction["last_packed_coefficient_entry_count"] == 0
+    assert shifted_construction["last_packed_coefficient_shapes"] == []
+    assert shifted_final["last_packed_coefficient_bytes"] == 3_564_288
+    assert shifted_final["last_packed_coefficient_entry_count"] == 222_768
+    assert shifted_final["last_packed_coefficient_shapes"] == [[252, 884]]
     output = tmp_path / "closeout.json"
     assert (
         runner._run_m6b_w18a_check(
@@ -762,6 +797,50 @@ def test_w18a_formal_gate_passes_and_checker_unlocks(
         runner._run_m6b_w18a_check(
             fixture["raw"], fixture["watchdog_summary"], output, EXPECTED_SOURCE_SHA
         )
+
+
+def test_w18a_checker_source_sha_is_separate_from_producer(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import benchmarks.run_task037_extra_h2b as h2b
+
+    fixture = _w18a_formal_fixture(tmp_path, monkeypatch)
+    checker_source = {
+        "source_commit_full_sha": CHECKER_SOURCE_SHA,
+        "tracked_source_dirty": False,
+    }
+    monkeypatch.setattr(h2b, "_light_source", lambda: deepcopy(checker_source))
+    gate = runner._m6b_w18a_formal_gate(
+        fixture["raw"],
+        fixture["watchdog_summary"],
+        EXPECTED_SOURCE_SHA,
+        CHECKER_SOURCE_SHA,
+    )
+    assert gate["checks"]["source"] is True
+    assert gate["checks"]["checker_source"] is True
+    assert gate["checker_source_sha"] == CHECKER_SOURCE_SHA
+    output = tmp_path / "source-bound-closeout.json"
+    assert (
+        runner._run_m6b_w18a_check(
+            fixture["raw"],
+            fixture["watchdog_summary"],
+            output,
+            EXPECTED_SOURCE_SHA,
+            CHECKER_SOURCE_SHA,
+        )
+        == 0
+    )
+    record = json.loads(output.read_text(encoding="utf-8"))
+    assert record["producer_source_sha"] == EXPECTED_SOURCE_SHA
+    assert record["checker_source_sha"] == CHECKER_SOURCE_SHA
+    assert (
+        record["checker_source"]["source_commit_full_sha"]
+        == CHECKER_SOURCE_SHA
+    )
+    default_gate = runner._m6b_w18a_formal_gate(
+        fixture["raw"], fixture["watchdog_summary"], EXPECTED_SOURCE_SHA
+    )
+    assert default_gate["checks"]["checker_source"] is False
 
 
 @pytest.mark.parametrize("resource_tamper", ["peak", "swap", "termination"])
@@ -848,6 +927,7 @@ def test_w18a_numeric_only_and_resource_priority(
         ("closure", "vector_evidence"),
         ("dtn", "action_audit"),
         ("materialization", "action_audit"),
+        ("shifted_materialization", "action_audit"),
         ("outer_buffer", "action_audit"),
         ("factor_payload", "action_audit"),
         ("inner_action", "action_audit"),
@@ -879,6 +959,11 @@ def test_w18a_formal_gate_high_value_tamper_cases(
         summary["action_audit"]["auxiliary_construction"]["local_pc"][
             "materialization_identity"
         ] = {}
+        summary["core"]["action_audit"] = deepcopy(summary["action_audit"])
+    elif tamper == "shifted_materialization":
+        summary["action_audit"]["auxiliary_final_counts"]["shifted_action"][
+            "global_matrix_materialized"
+        ] = True
         summary["core"]["action_audit"] = deepcopy(summary["action_audit"])
     elif tamper == "outer_buffer":
         summary["action_audit"]["auxiliary_final_counts"]["outer"][0][
@@ -963,8 +1048,12 @@ def test_w18a_malformed_summary_and_parser_dispatch(
                 str(output),
                 "--expected-source-sha",
                 EXPECTED_SOURCE_SHA,
+                "--expected-checker-source-sha",
+                CHECKER_SOURCE_SHA,
             ]
         )
         == 19
     )
     assert observed
+    assert len(observed[0]) == 5
+    assert observed[0][-1] == CHECKER_SOURCE_SHA
