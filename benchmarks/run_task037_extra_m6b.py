@@ -756,6 +756,15 @@ M6B_W18A_CHECK_SCHEMA = "task037.extra.h2b.w18a.formal-resource-check.v1"
 M6B_W18A_WATCHDOG_SUMMARY_FILENAME = "w18a_watchdog_summary.json"
 M6B_W18A_PREDICTED_LIVE_SET_BYTES = 1_734_993_014
 M6B_W18A_PREDICTED_LIVE_SET_LIMIT_BYTES = 1_750_000_000
+M6B_W18A_OFFLINE_SPAN_SCHEMA = "task037.extra.h2b.w18a.offline-span.v1"
+M6B_W18A_OFFLINE_SPAN_PHASE = "w18a_offline_span"
+M6B_W18A_OFFLINE_SPAN_RHO_LIMIT = 0.85
+M6B_W18A_OFFLINE_SPAN_AUTHORITY_COMPACT_SHA256 = (
+    "3d9110cf7127333b676e96c5e7dd5cace23ecadc30127063d7f87171d510eb61"
+)
+M6B_W18A_OFFLINE_SPAN_AUTHORITY_EVIDENCE_SHA256 = (
+    "2132d54aacd70f38ea93e8c0886f7d2a5b86b8da6748d322edfc1d85afebc45"
+)
 M6B_W18A_ACTION_COUNTS = {
     "outer_auxiliary_action_count": 8,
     "outer_pc_apply_count": 4,
@@ -9753,6 +9762,454 @@ def _run_m6b_w18a_check(
     }
     _write_json(output, _attach_evidence(result))
     return 0 if passed else 1
+
+
+def _m6b_w18a_offline_array(
+    raw_dir: Path,
+    base_dir: Path,
+    descriptor: Any,
+    expected_name: str,
+) -> tuple[Any, dict[str, Any]]:
+    import numpy as np
+
+    if not isinstance(descriptor, Mapping) or not isinstance(descriptor.get("path"), str):
+        raise ValueError("W18A offline array descriptor is incomplete")
+    declared = Path(descriptor["path"])
+    path = (declared if declared.is_absolute() else base_dir / declared).resolve()
+    raw_root = Path(raw_dir).resolve()
+    try:
+        path.relative_to(raw_root)
+    except ValueError as exc:
+        raise ValueError("W18A offline array escapes raw directory") from exc
+    file_sha = descriptor.get("file_sha256", descriptor.get("sha256"))
+    if (
+        declared.name != expected_name
+        or type(descriptor.get("bytes")) is not int
+        or not path.is_file()
+        or descriptor["bytes"] != path.stat().st_size
+        or not isinstance(file_sha, str)
+        or len(file_sha) != 64
+        or _sha256_file(path) != file_sha
+        or descriptor.get("dtype") != "complex128"
+        or descriptor.get("shape") != [M6B_GLOBAL_ROWS]
+        or not isinstance(descriptor.get("array_sha256"), str)
+        or len(descriptor["array_sha256"]) != 64
+    ):
+        raise ValueError("W18A offline array descriptor does not match its file")
+    try:
+        array = np.load(path, allow_pickle=False, mmap_mode="r")
+        observed_array_sha = _m6b_w6a_w5_legacy_raw_array_sha256(array)
+    except (OSError, TypeError, ValueError) as exc:
+        raise ValueError("W18A offline array cannot be loaded") from exc
+    if (
+        array.dtype != np.dtype(np.complex128)
+        or list(array.shape) != [M6B_GLOBAL_ROWS]
+        or not np.all(np.isfinite(array))
+        or observed_array_sha != descriptor["array_sha256"]
+    ):
+        raise ValueError("W18A offline array values do not match their descriptor")
+    normalized = {
+        "path": str(path.relative_to(raw_root)),
+        "bytes": int(descriptor["bytes"]),
+        "file_sha256": file_sha,
+        "array_sha256": descriptor["array_sha256"],
+        "dtype": "complex128",
+        "shape": [M6B_GLOBAL_ROWS],
+    }
+    return array, normalized
+
+
+def _m6b_w18a_offline_authority(
+    raw_dir: Path, compact_path: Path, expected_source_sha: str
+) -> tuple[dict[str, Any], dict[str, Any], list[float]]:
+    raw_dir = Path(raw_dir).resolve()
+    compact_path = Path(compact_path).resolve()
+    if _sha256_file(compact_path) != M6B_W18A_OFFLINE_SPAN_AUTHORITY_COMPACT_SHA256:
+        raise ValueError("W18A offline authority compact SHA differs")
+    compact = _read_json(compact_path)
+    if not (
+        _evidence_valid(compact)
+        and compact.get("evidence_sha256") == M6B_W18A_OFFLINE_SPAN_AUTHORITY_EVIDENCE_SHA256
+        and compact.get("schema") == M6B_W18A_CHECK_SCHEMA
+        and compact.get("phase") == M6B_W18A_PHASE
+        and compact.get("classification") == "W18A_NESTED_AUXILIARY_NUMERIC_FAIL"
+        and compact.get("problems") == ["worker_action_gate"]
+        and compact.get("producer_source_sha") == expected_source_sha
+        and compact.get("formal_pass") is False
+        and compact.get("pde_pass") is False
+        and compact.get("official_rta") is False
+        and compact.get("physical_screen_locked") is True
+        and compact.get("physical_screen_unlocked") is False
+        and Path(compact.get("raw_dir", "")).resolve() == raw_dir
+    ):
+        raise ValueError("W18A offline authority compact is not the frozen v2 evidence")
+    summary_artifact = _artifact(raw_dir, M6B_W18A_SUMMARY_FILENAME)
+    worker_summary = compact.get("worker_summary")
+    if not (
+        isinstance(worker_summary, Mapping)
+        and worker_summary.get("path") == M6B_W18A_SUMMARY_FILENAME
+        and worker_summary.get("present") is True
+        and worker_summary.get("bytes") == summary_artifact.get("bytes")
+        and worker_summary.get("sha256") == summary_artifact.get("sha256")
+    ):
+        raise ValueError("W18A offline raw summary authority is not bound")
+    summary = _read_json(raw_dir / M6B_W18A_SUMMARY_FILENAME)
+    for source in (summary.get("source_at_start"), summary.get("source_at_end")):
+        if not (
+            isinstance(source, Mapping)
+            and source.get("source_commit_full_sha") == expected_source_sha
+            and source.get("tracked_source_dirty") is False
+            and source.get("source_worktree_dirty") is False
+            and source.get("worktree_status_porcelain") == []
+        ):
+            raise ValueError("W18A offline source authority is not clean")
+    measured = compact.get("measured")
+    rhos = measured.get("rho") if isinstance(measured, Mapping) else None
+    if not (
+        isinstance(rhos, list)
+        and len(rhos) == 4
+        and rhos[0] == rhos[2]
+        and rhos[1] == rhos[3]
+        and all(isinstance(value, (int, float)) and math.isfinite(value) for value in rhos)
+    ):
+        raise ValueError("W18A offline formal rho authority is incomplete")
+    return summary, compact, [float(rhos[0]), float(rhos[1])]
+
+
+def _m6b_w18a_offline_complex(value: Any) -> list[list[float]]:
+    import numpy as np
+
+    array = np.asarray(value)
+    return [
+        [float(item.real), float(item.imag)]
+        for item in array.reshape(-1)
+    ]
+
+
+def _m6b_w18a_offline_float(value: Any) -> float | None:
+    if value is None:
+        return None
+    value = float(value)
+    return value if math.isfinite(value) else None
+
+
+def _m6b_w18a_offline_analysis(value: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "finite": value.get("finite") is True,
+        "rows": value.get("rows"),
+        "columns": value.get("columns"),
+        "gram": _m6b_w18a_offline_complex(value["gram"]),
+        "h": _m6b_w18a_offline_complex(value["h"]),
+        "singular_values": [
+            _m6b_w18a_offline_float(item) for item in value["singular_values"]
+        ],
+        "rank": value.get("rank"),
+        "condition_number": _m6b_w18a_offline_float(value.get("condition_number")),
+        "hermitian_defect": _m6b_w18a_offline_float(value.get("hermitian_defect")),
+        "normal_closure": _m6b_w18a_offline_float(value.get("normal_closure")),
+        "coefficients": (
+            _m6b_w18a_offline_complex(value["coefficients"])
+            if value.get("coefficients") is not None
+            else None
+        ),
+        "direct_rho": _m6b_w18a_offline_float(value.get("direct_rho")),
+        "energy_rho": _m6b_w18a_offline_float(value.get("energy_rho")),
+        "direct_vs_energy_difference": _m6b_w18a_offline_float(
+            value.get("direct_vs_energy_difference")
+        ),
+        "single_column_rho": [
+            _m6b_w18a_offline_float(item) for item in value.get("single_column_rho", [])
+        ],
+        "solution_combination_norm": _m6b_w18a_offline_float(
+            value.get("solution_combination_norm")
+        ),
+        "image_combination_norm": _m6b_w18a_offline_float(
+            value.get("image_combination_norm")
+        ),
+        "pass": value.get("pass") is True,
+        "problems": list(value.get("problems", [])),
+    }
+
+
+def _m6b_w18a_offline_span_report(
+    raw_dir: Path, compact_path: Path, expected_source_sha: str
+) -> dict[str, Any]:
+    import numpy as np
+
+    from src.solvers.krylov_span_diagnostic import analyze_two_column_span
+
+    summary, compact, formal_rhos = _m6b_w18a_offline_authority(
+        raw_dir, compact_path, expected_source_sha
+    )
+    core = summary.get("core")
+    if not isinstance(core, Mapping):
+        raise ValueError("W18A offline core mapping is missing")
+    repeats = core.get("repeats")
+    artifacts = core.get("artifacts")
+    if not (
+        isinstance(repeats, list)
+        and len(repeats) == 2
+        and isinstance(artifacts, Mapping)
+        and isinstance(artifacts.get("outer_checkpoints"), list)
+        and len(artifacts["outer_checkpoints"]) == 2
+        and set(artifacts.get("physical_outputs", {}))
+        == {
+            "repeat1_checkpoint1",
+            "repeat1_checkpoint2",
+            "repeat2_checkpoint1",
+            "repeat2_checkpoint2",
+        }
+    ):
+        raise ValueError("W18A offline repeat artifact structure is incomplete")
+    rhs_values: list[list[Any]] = []
+    solution_values: list[list[Any]] = []
+    image_values: list[list[Any]] = []
+    artifact_hashes: dict[str, Any] = {}
+    for repeat_index, repeat in enumerate(repeats, start=1):
+        repeat_artifacts = artifacts["outer_checkpoints"][repeat_index - 1]
+        if (
+            not isinstance(repeat, Mapping)
+            or repeat.get("repeat_index") != repeat_index
+            or repeat_artifacts.get("repeat_index") != repeat_index
+            or repeat.get("checkpoints") != repeat_artifacts.get("checkpoints")
+        ):
+            raise ValueError("W18A offline repeat descriptors are not bound")
+        repeat_rhs: list[Any] = []
+        repeat_solutions: list[Any] = []
+        repeat_images: list[Any] = []
+        for checkpoint in (1, 2):
+            checkpoint_record = repeat["checkpoints"].get(str(checkpoint))
+            checkpoint_artifacts = checkpoint_record.get("artifacts")
+            base_dir = Path(raw_dir) / "outer_checkpoints" / f"repeat{repeat_index}"
+            rhs, rhs_descriptor = _m6b_w18a_offline_array(
+                raw_dir,
+                base_dir,
+                checkpoint_artifacts["rhs"],
+                f"m6b_iter{checkpoint}_rhs.npy",
+            )
+            solution, solution_descriptor = _m6b_w18a_offline_array(
+                raw_dir,
+                base_dir,
+                checkpoint_artifacts["solution"],
+                f"m6b_iter{checkpoint}_solution.npy",
+            )
+            image_key = f"repeat{repeat_index}_checkpoint{checkpoint}"
+            image, image_descriptor = _m6b_w18a_offline_array(
+                raw_dir,
+                Path(raw_dir),
+                artifacts["physical_outputs"][image_key],
+                f"w18a_p_repeat{repeat_index}_checkpoint{checkpoint}.npy",
+            )
+            repeat_rhs.append(rhs)
+            repeat_solutions.append(solution)
+            repeat_images.append(image)
+            artifact_hashes[image_key] = {
+                "rhs": rhs_descriptor,
+                "solution": solution_descriptor,
+                "physical": image_descriptor,
+            }
+        rhs_values.append(repeat_rhs)
+        solution_values.append(repeat_solutions)
+        image_values.append(repeat_images)
+    rhs_identity = bool(
+        all(
+            np.array_equal(rhs_values[0][checkpoint], rhs_values[repeat][checkpoint])
+            for repeat in range(2)
+            for checkpoint in (0, 1)
+        )
+        and np.array_equal(rhs_values[0][0], rhs_values[0][1])
+    )
+    solution_differences = [
+        float(
+            np.linalg.norm(solution_values[0][checkpoint] - solution_values[1][checkpoint])
+            / max(np.linalg.norm(solution_values[0][checkpoint]), np.finfo(float).tiny)
+        )
+        for checkpoint in (0, 1)
+    ]
+    image_differences = [
+        float(
+            np.linalg.norm(image_values[0][checkpoint] - image_values[1][checkpoint])
+            / max(np.linalg.norm(image_values[0][checkpoint]), np.finfo(float).tiny)
+        )
+        for checkpoint in (0, 1)
+    ]
+    solution_exact = all(
+        np.array_equal(solution_values[0][checkpoint], solution_values[1][checkpoint])
+        for checkpoint in (0, 1)
+    )
+    image_exact = all(
+        np.array_equal(image_values[0][checkpoint], image_values[1][checkpoint])
+        for checkpoint in (0, 1)
+    )
+    analyses = [
+        analyze_two_column_span(
+            rhs_values[repeat][0],
+            image_values[repeat][0],
+            image_values[repeat][1],
+            solution_values[repeat][0],
+            solution_values[repeat][1],
+        )
+        for repeat in range(2)
+    ]
+    analysis_identity = bool(
+        analyses[0]["pass"] == analyses[1]["pass"]
+        and np.array_equal(analyses[0]["gram"], analyses[1]["gram"])
+        and np.array_equal(analyses[0]["h"], analyses[1]["h"])
+        and np.array_equal(analyses[0]["coefficients"], analyses[1]["coefficients"])
+        and np.array_equal(
+            analyses[0]["singular_values"], analyses[1]["singular_values"]
+        )
+        and analyses[0]["normal_closure"] == analyses[1]["normal_closure"]
+        and analyses[0]["energy_rho"] == analyses[1]["energy_rho"]
+        and analyses[0]["direct_rho"] == analyses[1]["direct_rho"]
+        and analyses[0]["single_column_rho"] == analyses[1]["single_column_rho"]
+    )
+    finite = all(item.get("finite") is True for item in analyses)
+    gram_hermitian = all(
+        item.get("hermitian_defect") is not None
+        and item["hermitian_defect"] <= 1.0e-11
+        for item in analyses
+    )
+    rank = all(item.get("rank") == 2 for item in analyses)
+    normal_closure = all(
+        item.get("normal_closure") is not None
+        and item["normal_closure"] <= 1.0e-11
+        for item in analyses
+    )
+    direct_energy = all(
+        item.get("direct_vs_energy_difference") is not None
+        and item["direct_vs_energy_difference"] <= 1.0e-11
+        for item in analyses
+    )
+    single_rho_authority = all(
+        len(item.get("single_column_rho", [])) == 2
+        and all(
+            abs(item["single_column_rho"][index] - formal_rhos[index]) <= 1.0e-12
+            for index in (0, 1)
+        )
+        for item in analyses
+    )
+    span_rho = all(
+        item.get("direct_rho") is not None
+        and item["direct_rho"] <= M6B_W18A_OFFLINE_SPAN_RHO_LIMIT
+        for item in analyses
+    )
+    checks = {
+        "input_identity": rhs_identity,
+        "repeat_identity": bool(
+            solution_exact
+            and image_exact
+            and max(solution_differences, default=math.inf) <= 1.0e-13
+            and max(image_differences, default=math.inf) <= 1.0e-13
+            and analysis_identity
+        ),
+        "finite": finite,
+        "gram_hermitian": gram_hermitian,
+        "rank": rank,
+        "normal_closure": normal_closure,
+        "direct_residual_recompute": all(
+            item.get("direct_rho") is not None for item in analyses
+        ),
+        "direct_energy_identity": direct_energy,
+        "single_rho_authority": single_rho_authority,
+        "span_rho": span_rho,
+    }
+    passed = all(checks.values())
+    return {
+        "schema": M6B_W18A_OFFLINE_SPAN_SCHEMA,
+        "phase": M6B_W18A_OFFLINE_SPAN_PHASE,
+        "status": "pass" if passed else "gate_failed",
+        "pass": passed,
+        "classification": (
+            "W18A_OFFLINE_SPAN_PASS" if passed else "W18A_OFFLINE_SPAN_FAIL"
+        ),
+        "problems": sorted(name for name, value in checks.items() if not value),
+        "checks": checks,
+        "derived": True,
+        "offline_diagnostic": True,
+        "not_PDE": True,
+        "not_action_run": True,
+        "formal_pass": False,
+        "pde_pass": False,
+        "official_rta": False,
+        "action_run_count": 0,
+        "ksp_call_count": 0,
+        "pde_call_count": 0,
+        "qualified_for_bounded_followup": passed,
+        "close_w18a_nested_span_lane": not passed,
+        "source_at_start": summary["source_at_start"],
+        "source_at_end": summary["source_at_end"],
+        "expected_source_sha": expected_source_sha,
+        "input_authority": {
+            "compact_path": str(Path(compact_path).resolve()),
+            "compact_file_sha256": _sha256_file(Path(compact_path)),
+            "compact_evidence_sha256": compact["evidence_sha256"],
+            "raw_dir": str(Path(raw_dir).resolve()),
+            "raw_summary": _artifact(Path(raw_dir), M6B_W18A_SUMMARY_FILENAME),
+            "formal_single_column_rho": formal_rhos,
+        },
+        "repeat_identity": {
+            "rhs_array_sha256": artifact_hashes["repeat1_checkpoint1"]["rhs"][
+                "array_sha256"
+            ],
+            "solution_relative_differences": solution_differences,
+            "physical_relative_differences": image_differences,
+            "solution_exact": solution_exact,
+            "physical_exact": image_exact,
+            "exact": checks["repeat_identity"],
+        },
+        "analysis_repeats": [_m6b_w18a_offline_analysis(item) for item in analyses],
+        "artifact_hashes": artifact_hashes,
+        "formal_rho": formal_rhos,
+        "span_rho": [item.get("direct_rho") for item in analyses],
+        "solution_combination": [
+            {
+                "coefficients": _m6b_w18a_offline_complex(item["coefficients"])
+                if item.get("coefficients") is not None
+                else None,
+                "solution_norm": item.get("solution_combination_norm"),
+                "image_norm": item.get("image_combination_norm"),
+            }
+            for item in analyses
+        ],
+    }
+
+
+def _run_m6b_w18a_offline_span(
+    raw_dir: Path, compact_path: Path, output: Path, expected_source_sha: str
+) -> int:
+    output = Path(output).resolve()
+    if output.exists():
+        raise FileExistsError(f"W18A offline span refuses existing output: {output}")
+    try:
+        report = _m6b_w18a_offline_span_report(
+            Path(raw_dir).resolve(), Path(compact_path).resolve(), expected_source_sha
+        )
+    except (KeyError, OSError, TypeError, ValueError) as exc:
+        report = {
+            "schema": M6B_W18A_OFFLINE_SPAN_SCHEMA,
+            "phase": M6B_W18A_OFFLINE_SPAN_PHASE,
+            "status": "gate_failed",
+            "pass": False,
+            "classification": "W18A_OFFLINE_SPAN_FAIL",
+            "problems": ["input_evidence"],
+            "error": str(exc),
+            "derived": True,
+            "offline_diagnostic": True,
+            "not_PDE": True,
+            "not_action_run": True,
+            "formal_pass": False,
+            "pde_pass": False,
+            "official_rta": False,
+            "action_run_count": 0,
+            "ksp_call_count": 0,
+            "pde_call_count": 0,
+            "qualified_for_bounded_followup": False,
+            "close_w18a_nested_span_lane": True,
+            "expected_source_sha": expected_source_sha,
+        }
+    _write_json(output, _attach_evidence(report))
+    return 0 if report["pass"] is True else 1
 
 
 def _m6b_w16b_action_audit_valid(value: Any) -> bool:
@@ -25920,6 +26377,13 @@ def _parser() -> argparse.ArgumentParser:
         default=None,
         type=_m6b_w2_source_sha_argument,
     )
+    w18a_span = sub.add_parser("m6b-w18a-offline-span")
+    w18a_span.add_argument("--raw-dir", required=True)
+    w18a_span.add_argument("--w18a-compact", required=True)
+    w18a_span.add_argument("--output", required=True)
+    w18a_span.add_argument(
+        "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
+    )
     w15a_watchdog = sub.add_parser("m6b-w15a-watchdog")
     w15a_watchdog.add_argument("--run-dir", required=True)
     w15a_watchdog.add_argument("--watchdog-dir", required=True)
@@ -26397,6 +26861,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             Path(args.output).resolve(),
             args.expected_source_sha,
             args.expected_checker_source_sha,
+        )
+    if args.command == "m6b-w18a-offline-span":
+        return _run_m6b_w18a_offline_span(
+            Path(args.raw_dir).resolve(),
+            Path(args.w18a_compact).resolve(),
+            Path(args.output).resolve(),
+            args.expected_source_sha,
         )
     run_dir = Path(args.run_dir).resolve()
     if args.command == "m6b-check":

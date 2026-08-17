@@ -11,6 +11,7 @@ BASIS_COLUMNS = 201
 ROW_BLOCK = 4096
 RANK_THRESHOLD_MULTIPLIER = 128.0
 NORMAL_CLOSURE_LIMIT = 1.0e-11
+W18A_SPAN_RHO_LIMIT = 0.85
 
 
 def _vector(value: Any, rows: int, label: str) -> np.ndarray:
@@ -345,4 +346,156 @@ def add_actionable_projection(measurement: Mapping[str, Any], q_overlap_energy: 
         captured_actionable_energy_ratio=captured_actionable_ratio,
         rho_optimistic=rho_optimistic,
     )
+    return result
+
+
+def analyze_two_column_span(
+    rhs: Any,
+    first_image: Any,
+    second_image: Any,
+    first_solution: Any,
+    second_solution: Any,
+) -> dict[str, Any]:
+    """Analyze the fixed two-image W18A span without applying an operator."""
+
+    rhs_array = np.asarray(rhs)
+    if rhs_array.ndim != 1 or rhs_array.shape[0] <= 0:
+        raise ValueError("rhs must be a non-empty one-dimensional vector")
+    rows = rhs_array.shape[0]
+    vectors = {
+        "rhs": _vector(rhs_array, rows, "rhs"),
+        "first_image": _vector(first_image, rows, "first_image"),
+        "second_image": _vector(second_image, rows, "second_image"),
+        "first_solution": _vector(first_solution, rows, "first_solution"),
+        "second_solution": _vector(second_solution, rows, "second_solution"),
+    }
+    rhs_vector = vectors["rhs"]
+    basis = np.column_stack((vectors["first_image"], vectors["second_image"]))
+    gram = basis.conj().T @ basis
+    h = basis.conj().T @ rhs_vector
+    hermitian_defect = float(
+        np.linalg.norm(gram - gram.conj().T)
+        / max(np.linalg.norm(gram), np.finfo(float).tiny)
+    )
+    hermitian_gram = (gram + gram.conj().T) * 0.5
+    try:
+        eigenvalues = np.linalg.eigvalsh(hermitian_gram)
+    except np.linalg.LinAlgError:
+        eigenvalues = np.full(2, np.nan, dtype=float)
+    finite = bool(
+        np.all(np.isfinite(gram))
+        and np.all(np.isfinite(h))
+        and np.all(np.isfinite(eigenvalues))
+        and np.isfinite(hermitian_defect)
+    )
+    if finite:
+        singular_values = np.sqrt(np.maximum(eigenvalues, 0.0))
+        sigma_max = float(singular_values[-1])
+        rank_threshold = 128.0 * np.finfo(float).eps * max(1.0, sigma_max)
+        rank = int(np.count_nonzero(singular_values > rank_threshold))
+        condition_number = (
+            float(sigma_max / singular_values[0])
+            if singular_values[0] > 0.0
+            else None
+        )
+    else:
+        singular_values = np.full(2, np.nan, dtype=float)
+        rank_threshold = float("nan")
+        rank = 0
+        condition_number = None
+    result: dict[str, Any] = {
+        "finite": finite,
+        "rows": rows,
+        "columns": 2,
+        "gram": gram,
+        "h": h,
+        "singular_values": singular_values,
+        "rank": rank,
+        "rank_threshold": rank_threshold,
+        "condition_number": condition_number,
+        "hermitian_defect": hermitian_defect,
+        "normal_closure": None,
+        "coefficients": None,
+        "direct_rho": None,
+        "energy_rho": None,
+        "direct_vs_energy_difference": None,
+        "single_column_rho": [],
+        "solution_combination_norm": None,
+        "image_combination_norm": None,
+        "pass": False,
+        "problems": [],
+    }
+    if not finite:
+        result["problems"] = ["finite"]
+        return result
+    if hermitian_defect > NORMAL_CLOSURE_LIMIT:
+        result["problems"].append("gram_hermitian")
+    if eigenvalues[0] < -128.0 * np.finfo(float).eps * max(1.0, eigenvalues[-1]):
+        result["problems"].append("gram_negative")
+    if rank != 2:
+        result["problems"].append("rank")
+    if result["problems"]:
+        return result
+    try:
+        coefficients = np.linalg.solve(hermitian_gram, h)
+    except np.linalg.LinAlgError:
+        result["problems"] = ["solve"]
+        return result
+    normal_closure = float(
+        np.linalg.norm(hermitian_gram @ coefficients - h)
+        / max(
+            np.linalg.norm(hermitian_gram) * np.linalg.norm(coefficients)
+            + np.linalg.norm(h),
+            np.finfo(float).tiny,
+        )
+    )
+    image = basis @ coefficients
+    remainder = rhs_vector - image
+    rhs_norm = float(np.linalg.norm(rhs_vector))
+    direct_rho = float(np.linalg.norm(remainder) / max(rhs_norm, np.finfo(float).tiny))
+    captured_ratio = float(
+        np.real(np.vdot(h, coefficients))
+        / max(rhs_norm * rhs_norm, np.finfo(float).tiny)
+    )
+    energy_rho = float(np.sqrt(max(1.0 - captured_ratio, 0.0)))
+    single_rho: list[float] = []
+    for column in (vectors["first_image"], vectors["second_image"]):
+        column_norm_squared = float(np.vdot(column, column).real)
+        if column_norm_squared <= 0.0:
+            result["problems"].append("single_column")
+            continue
+        one_coefficient = np.vdot(column, rhs_vector) / column_norm_squared
+        single_rho.append(
+            float(
+                np.linalg.norm(rhs_vector - one_coefficient * column)
+                / max(rhs_norm, np.finfo(float).tiny)
+            )
+        )
+    solution_combination = (
+        coefficients[0] * vectors["first_solution"]
+        + coefficients[1] * vectors["second_solution"]
+    )
+    result.update(
+        coefficients=coefficients,
+        normal_closure=normal_closure,
+        direct_rho=direct_rho,
+        energy_rho=energy_rho,
+        direct_vs_energy_difference=abs(direct_rho - energy_rho),
+        single_column_rho=single_rho,
+        solution_combination_norm=float(np.linalg.norm(solution_combination)),
+        image_combination_norm=float(np.linalg.norm(image)),
+    )
+    if (
+        not np.all(np.isfinite(coefficients))
+        or not np.isfinite(normal_closure)
+        or not np.isfinite(direct_rho)
+        or not np.isfinite(energy_rho)
+        or not np.isfinite(result["direct_vs_energy_difference"])
+        or len(single_rho) != 2
+        or normal_closure > NORMAL_CLOSURE_LIMIT
+        or result["direct_vs_energy_difference"] > NORMAL_CLOSURE_LIMIT
+        or direct_rho > W18A_SPAN_RHO_LIMIT
+    ):
+        result["problems"].append("projection")
+    result["pass"] = not result["problems"]
     return result
