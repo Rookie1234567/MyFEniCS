@@ -18,7 +18,6 @@ import time
 from pathlib import Path
 from typing import Any, Mapping
 
-from benchmarks.run_task032_phase6_augmented import main as run_task032_main
 from src.io.execution_plan import ExecutionPlan
 from src.io.input_loader import InputError
 from src.io.input_validation import (
@@ -395,6 +394,8 @@ def run_v4_h4_worker(
             raise InputError("direct-consumer requires manifest and manifest SHA256")
         validate_v4_h4_packet_manifest(manifest, manifest_sha256)
     if phase == "mode-prep":
+        from benchmarks.run_task032_phase6_augmented import main as run_task032_main
+
         argv = _phase_argv(
             specification,
             output_directory,

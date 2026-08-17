@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 import hashlib
 from pathlib import Path
+import subprocess
+import sys
 
 import pytest
 
@@ -22,6 +24,27 @@ SOURCE_SHA = "a" * 40
 
 def _spec():
     return load_and_resolve(INPUT)
+
+
+def test_v4_h4_module_import_does_not_load_solver_runtime():
+    probe = (
+        "import sys; "
+        "import benchmarks.task039_v4_h4_hybrid_direct; "
+        "assert not any(name == 'mpi4py' or name.startswith('mpi4py.') "
+        "for name in sys.modules); "
+        "assert not any(name == 'petsc4py' or name.startswith('petsc4py.') "
+        "for name in sys.modules); "
+        "assert not any(name == 'dolfinx' or name.startswith('dolfinx.') "
+        "for name in sys.modules)"
+    )
+    completed = subprocess.run(
+        [sys.executable, "-c", probe],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
 
 
 def test_v4_h4_input_profile_and_dynamic_inventory_are_exact():
@@ -198,7 +221,9 @@ def test_mode_prep_worker_enters_existing_task032_producer(monkeypatch, tmp_path
         captured["kwargs"] = kwargs
         return {"status": "controlled_stop_packet_written"}
 
-    monkeypatch.setattr(v4, "run_task032_main", fake_task032)
+    from benchmarks import run_task032_phase6_augmented as task032
+
+    monkeypatch.setattr(task032, "main", fake_task032)
     result = v4.run_v4_h4_worker(
         resolved,
         tmp_path / "producer",
