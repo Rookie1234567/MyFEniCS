@@ -425,3 +425,18 @@ deferred/pending，且它是 nonblocking diagnostic，不否决 Hybrid-direct pr
 h4 仅保留已完成的补充参考，没有继续 h3/h4。完整身份和证据边界见
 [DQ1 fixed-case outcome](v3_final_iterative_result.md) 与
 [DQ1 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v3_h5_exact_side_case_qualification_v1.json)。
+
+### V4-2/V4-3：正式 Full3D h4 在 factor setup 中 timeout
+
+新的正式 h4 run（5 nm、1°、phi=0、S、p6/h4、MPI8；Full3D 自身没有 Hybrid
+internal M，Hybrid M480 仅是比较目标）在组装完成后进入 MUMPS factor setup，运行至
+配置的 21600 s timeout。factorization 未返回、没有 factor-ready marker，solve 未开始；
+因此 Full3D factor Gate 是 `not_completed`，不是数值负结果。实测完整 process-tree
+peak 为 `223676952576 B = 213314.96484375 MiB`，swap=0，距 `224000000000 B`
+absolute hard stop 尚有 `323047424 B`；该停止原因是 timeout，不是 hard-memory stop。
+该结果不能证明 post-factor lifecycle release 能降低 factor setup 峰值。
+证据入口为 [`v4_full3d_h4_lifecycle.md`](v4_full3d_h4_lifecycle.md) 与
+[`task039_v4_full3d_h4_lifecycle_timeout_v1.json`](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v4_full3d_h4_lifecycle_timeout_v1.json)。
+UTC wall-clock 与 monotonic watchdog 的 507.82493455498487 s observed discrepancy
+也保留在 compact record 中，未猜测其原因。旧 h4 partial 与 2D Q8 仍只作
+historical/incomplete diagnostic，不补写为本轮 Full3D authority。

@@ -1,0 +1,111 @@
+{
+  "schema": "task039.v4.full3d_h4_lifecycle_timeout.v1",
+  "classification": "TASK039_V4_FULL3D_H4_TIMEOUT_DURING_FACTOR_SETUP_BEFORE_SOLVE",
+  "status": "formal_gate_not_completed",
+  "scope": {
+    "wavelength_nm": 5.0,
+    "grazing_deg": 1.0,
+    "phi_deg": 0.0,
+    "polarization": "S",
+    "mesh": "p6/h4",
+    "mpi": 8,
+    "method": "full3d_direct",
+    "internal_mode_count": "not_applicable",
+    "comparison_target_hybrid_mode_count": 480
+  },
+  "identity": {
+    "source_sha": "8bcbee81d809f8135e81ccc8e906191aabb8d60f",
+    "input_sha256": "e96cf2373618002137c28620963eea7b31de2e99c8f9b4a7b587527b09457937",
+    "resolved_sha256": "6554db8fc4a502714c0423d2891929173d1411fddaafac2e2f67177a09d5cd66",
+    "physical_sha256": "8391d46139646440d869aa43abe6a68bc921fc1972a10030c64be81dffdd527c",
+    "model_id": "task039_5nm_v4_1deg_s5_full3d",
+    "run_id": "task039_v4_1deg_p6h4_full3d_direct_mpi8",
+    "resolved_method_adapter": "task038.full3d_direct",
+    "external_keys": {
+      "count": 600,
+      "unique_count": 600,
+      "bottom_count": 296,
+      "top_count": 304,
+      "keys_sha256": "ba431ec6683f2123e53e8f9f3fb13fd35ae22a6a8f9c0ed2d85aa1f1cb15b04a"
+    }
+  },
+  "run": {
+    "run_root": "results/task039_5nm_v4_1deg_s5_full3d/task039_v4_1deg_p6h4_full3d_direct_mpi8__full3d_direct__mpi8__Mna/20260817T042337.993251Z",
+    "start_time_utc": "2026-08-17T04:23:37.993502+00:00",
+    "end_time_utc": "2026-08-17T10:15:10.204600+00:00",
+    "wall_elapsed_seconds": 21092.211098,
+    "watchdog_elapsed_seconds": 21600.036032554985,
+    "clock_discrepancy_seconds": 507.82493455498487,
+    "clock_discrepancy_classification": "observed_clock_discrepancy",
+    "configured_timeout_seconds": 21600.0,
+    "exit_status": 1,
+    "result_classification": "timeout",
+    "termination": {
+      "requested": true,
+      "method": "POSIX process group SIGTERM then SIGKILL",
+      "process_group_exited": true,
+      "sigkill_required": false,
+      "worker_exited": true
+    }
+  },
+  "progress": {
+    "aligned_stage_count": 31,
+    "last_stage": "during_ksp_setup_peak",
+    "last_status": "active",
+    "last_marker_elapsed_seconds": 418.5145864440128,
+    "last_sample_elapsed_seconds": 21600.036032554985,
+    "matrix_rows": 756600,
+    "matrix_nnz_used": 634515048,
+    "matrix_nnz_allocated": 660585840,
+    "factor_setup_started": true,
+    "factor_ready": false,
+    "solve_started": false
+  },
+  "resource": {
+    "peak": {
+      "timestamp_utc": "2026-08-17T10:13:38.194943+00:00",
+      "stage": "during_ksp_setup_peak",
+      "rss_bytes": 223676952576,
+      "rss_mib": 213314.96484375,
+      "rss_gib": 208.3153953552246,
+      "pss_mib": 212270.60546875,
+      "uss_mib": 212106.3203125
+    },
+    "swap_bytes": 0,
+    "sample_count": 19619,
+    "poll_interval_seconds": 0.25,
+    "warning_gib": 170.0,
+    "critical_checkpoint_gib": 195.0,
+    "critical_checkpoint_crossed": true,
+    "hard_stop_bytes": 224000000000,
+    "hard_stop_reached": false,
+    "hard_stop_margin_bytes": 323047424,
+    "termination_reason": "configured_timeout_before_absolute_memory_hard_stop"
+  },
+  "gates": {
+    "full3d_own_gate": "not_completed",
+    "factor": "not_completed",
+    "solve": "not_run",
+    "packet": "not_run",
+    "factor_destroy": "not_run",
+    "recovery": "not_run",
+    "a_volume": "not_run",
+    "closure": "not_run",
+    "selected_e_h": "not_run",
+    "canonical": "not_run",
+    "physics": "not_run"
+  },
+  "artifacts": {
+    "raw_artifacts_ignored": true,
+    "sha256": {
+      "run_summary.json": "9fe000bc376805b246f23f41e8ffcc3fd92e6587427610cd506d59cb158b368b",
+      "run_manifest.json": "4f662e7c7d4345400d88d8c038f68b046b72fdd196f6894de1d8fdacab0a811d",
+      "numerical_output/progress_3d.jsonl": "23c8e8b14a7c174c1690779843e6e1ffd4eec04962b96e915ad344d51ffc7055",
+      "numerical_output/process_tree_samples.jsonl": "8a7d6bff0b7142b83e818e619a61718f83b87be0339afa3a54f63d813cde8b71",
+      "numerical_output/memory_stages.jsonl": "11fc01b1ae530bb2f2bf94e45fe6a1597c0669da336be6e986ed0d628e3c5caa",
+      "worker_stdout.txt": "78ad3c98f9ba7bdf2623853a5f04ec75ac3fb70972c196212c9b22ffc4e6383c"
+    },
+    "memory_object_ledger": "worker_did_not_persist_record"
+  },
+  "evidence_boundary": "This is a measured Full3D h4 timeout with factor setup started but not completed, classified DURING_FACTOR_SETUP_BEFORE_SOLVE; it is not a numerical method result and not an absolute-memory hard-stop result. Historical h4 partial records and 2D Q8 evidence remain diagnostic only."
+}

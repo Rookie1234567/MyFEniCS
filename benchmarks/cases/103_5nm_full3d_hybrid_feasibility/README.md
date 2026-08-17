@@ -53,3 +53,15 @@ DQ1 的 hash-bound compact evidence 已索引如下：
 qualification；完整 process-tree、marker、ledger 和 worker raw 仍留在 ignored run root，
 没有把 raw artifact 纳入 case scaffold。worker checkpoint 的 pending_parent_resource_gate
 与 parent resource authority 的派生合并关系见该 compact record。
+
+## V4-2/V4-3 Full3D h4 boundary
+
+正式 5 nm、1°、phi=0、S、p6/h4、MPI8 Full3D run（Full3D 无 internal Hybrid M，
+Hybrid M480 仅为比较目标）在组装完成后进入 MUMPS factor setup，运行满 21600 s
+timeout；factorization 未返回、solve/recovery 未开始；完整 process-tree peak 为 `213314.96484375 MiB`，
+swap=0，未达到 `224000000000 B` hard stop。该结果分类为
+`TASK039_V4_FULL3D_H4_TIMEOUT_DURING_FACTOR_SETUP_BEFORE_SOLVE`，不是数值方法负结果或 OOM。
+它不能证明 post-factor lifecycle release 能降低 setup 峰值。
+见 [V4 h4 lifecycle outcome](../../../docs/task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v4_full3d_h4_lifecycle.md)
+和 [compact record](records/task039_v4_full3d_h4_lifecycle_timeout_v1.json)。旧 h4 partial
+与 2D Q8 仍保留为历史/不完整诊断。
