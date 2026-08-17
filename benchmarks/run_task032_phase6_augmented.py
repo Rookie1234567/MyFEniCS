@@ -1313,6 +1313,11 @@ def _parse_args(
                     and np.isclose(args.modal_h_nm, 5.0)
                     and args.requested_modes == 480
                 )
+                or (
+                    np.isclose(args.h_nm, 4.0)
+                    and np.isclose(args.modal_h_nm, 4.0)
+                    and args.requested_modes == 480
+                )
             )
             and args.candidate_modes == 2 * args.requested_modes
             and args.solver_path == "augmented"
@@ -1330,6 +1335,12 @@ def _parse_args(
                     and args.requested_modes == 480
                     and np.isclose(args.incident_grazing_deg, 1.0)
                 )
+                or (
+                    np.isclose(args.h_nm, 4.0)
+                    and np.isclose(args.modal_h_nm, 4.0)
+                    and args.requested_modes == 480
+                    and np.isclose(args.incident_grazing_deg, 1.0)
+                )
             )
             and args.polarization_kind == "s"
             and args.internal_propagation_model == "full3d_uniform_cg"
@@ -1343,8 +1354,8 @@ def _parse_args(
         if not scoped:
             parser.error(
                 "Task39 Hybrid direct is restricted to historical p6/h10 with "
-                "modal h10 and numeric M120/240/480/960, or formal p6/h5 with "
-                "modal h5 and M480 at 10 or 1 degree; both require 2M "
+                "modal h10 and numeric M120/240/480/960, or formal p6/h5 or "
+                "p6/h4 with modal h equal to mesh and M480 at 1 degree; both require 2M "
                 "candidates, static-condensed full3d_uniform_cg, exact one-cell "
                 "traction, 10/110 interfaces, and a clean verified source."
             )
@@ -1668,7 +1679,14 @@ def main(
     def task039_mark_stage(
         stage: str, *, detail: Mapping[str, Any] | None = None
     ) -> None:
-        if canonical_export_prefix != "task039_direct" or comm.rank != 0:
+        if (
+            canonical_export_prefix
+            not in {
+                "task039_direct",
+                "task039_v4_mode_prep",
+            }
+            or comm.rank != 0
+        ):
             return
         elapsed = time.perf_counter() - total_started
         target_stage = task039_stage_target(
@@ -3879,7 +3897,10 @@ def main(
         print(f"Task32 Phase6 record: {args.output}", flush=True)
         print(f"Task32 Phase6 status: {record['status']}", flush=True)
     comm.barrier()
-    if record.get("status") == "controlled_stop":
+    if record.get("status") in {
+        "controlled_stop",
+        "controlled_stop_packet_written",
+    }:
         return record
     if not record["qualification"]["integration_pass"]:
         raise SystemExit(2)

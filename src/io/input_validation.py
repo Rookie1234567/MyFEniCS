@@ -253,13 +253,14 @@ _TASK039_MODEL_ID_PATTERNS = {
     "2d_port": r"task039_5nm_v3_1deg_s5",
     "full3d_direct": r"task039_(?:5nm_full3d_direct|5nm_v3_1deg_s5_full3d|5nm_v4_1deg_s5_full3d)",
     "full3d_iterative": r"task039_5nm_full3d_iterative",
-    "hybrid_direct": r"task039_5nm_(?:hybrid_direct|v3_1deg_s5_hybrid_direct)_m(120|240|480|960)",
+    "hybrid_direct": r"task039_5nm_(?:hybrid_direct|v3_1deg_s5_hybrid_direct|v4_1deg_s5_hybrid_direct)_m(120|240|480|960)",
     "hybrid_iterative": r"task039_5nm_hybrid_iterative_m(120|240|480|960)_candidate",
 }
 _TASK039_V3_2D_MODEL_ID = "task039_5nm_v3_1deg_s5"
 _TASK039_V3_3D_MODEL_ID = "task039_5nm_v3_1deg_s5_full3d"
 _TASK039_V3_HYBRID_DIRECT_MODEL_ID = "task039_5nm_v3_1deg_s5_hybrid_direct_m480"
 _TASK039_V4_H4_FULL3D_MODEL_ID = "task039_5nm_v4_1deg_s5_full3d"
+_TASK039_V4_H4_HYBRID_DIRECT_MODEL_ID = "task039_5nm_v4_1deg_s5_hybrid_direct_m480"
 _TASK039_V3_2D_MESH_TARGETS = (5.0, 4.0, 3.0, 2.0, 1.5)
 _TASK039_V3_2D_DEGREES = (6, 8)
 
@@ -271,12 +272,14 @@ def task039_model_id_matches(
 ) -> bool:
     """Match one finite Task39 model identity and, for Hybrid, its M."""
 
-    if str(method) == "hybrid_direct" and str(model_id).startswith(
-        "task039_5nm_v3_1deg_s5_hybrid_direct_"
+    if str(method) == "hybrid_direct" and (
+        str(model_id).startswith("task039_5nm_v3_1deg_s5_hybrid_direct_")
+        or str(model_id).startswith("task039_5nm_v4_1deg_s5_hybrid_direct_")
     ):
-        return str(model_id) == _TASK039_V3_HYBRID_DIRECT_MODEL_ID and (
-            requested_modes is None or int(requested_modes) == 480
-        )
+        return str(model_id) in {
+            _TASK039_V3_HYBRID_DIRECT_MODEL_ID,
+            _TASK039_V4_H4_HYBRID_DIRECT_MODEL_ID,
+        } and (requested_modes is None or int(requested_modes) == 480)
     pattern = _TASK039_MODEL_ID_PATTERNS.get(str(method))
     if pattern is None:
         return False
@@ -346,6 +349,7 @@ def _task039_v3_identity_enabled(config: Mapping[str, Any]) -> bool:
         _TASK039_V3_3D_MODEL_ID,
         _TASK039_V3_HYBRID_DIRECT_MODEL_ID,
         _TASK039_V4_H4_FULL3D_MODEL_ID,
+        _TASK039_V4_H4_HYBRID_DIRECT_MODEL_ID,
     }
 
 
@@ -606,7 +610,11 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
             "grazing_angle_deg",
             1.0
             if model_id
-            in {_TASK039_V3_HYBRID_DIRECT_MODEL_ID, _TASK039_V4_H4_FULL3D_MODEL_ID}
+            in {
+                _TASK039_V3_HYBRID_DIRECT_MODEL_ID,
+                _TASK039_V4_H4_FULL3D_MODEL_ID,
+                _TASK039_V4_H4_HYBRID_DIRECT_MODEL_ID,
+            }
             else 10.0,
         ),
         ("incidence", "azimuth_deg", 0.0),
@@ -649,7 +657,11 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
     mesh_target_nm = config["discretization"].get("mesh_target_nm")
     allowed_mesh_targets = (
         (4.0,)
-        if model_id == _TASK039_V4_H4_FULL3D_MODEL_ID
+        if model_id
+        in {
+            _TASK039_V4_H4_FULL3D_MODEL_ID,
+            _TASK039_V4_H4_HYBRID_DIRECT_MODEL_ID,
+        }
         else (10.0, 7.5, 6.0, 5.0)
         if kind == "full3d_direct"
         else (10.0, 5.0)
@@ -677,6 +689,12 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
         and isinstance(mesh_target_nm, (int, float))
         and isclose(float(mesh_target_nm), 5.0, rel_tol=0.0, abs_tol=1.0e-12)
     )
+    h4_hybrid_direct = (
+        model_id == _TASK039_V4_H4_HYBRID_DIRECT_MODEL_ID
+        and kind == "hybrid_direct"
+        and isinstance(mesh_target_nm, (int, float))
+        and isclose(float(mesh_target_nm), 4.0, rel_tol=0.0, abs_tol=1.0e-12)
+    )
     h5_iterative = (
         kind == "hybrid_iterative"
         and isinstance(mesh_target_nm, (int, float))
@@ -684,13 +702,13 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
     )
     if (
         kind == "hybrid_direct"
-        and h5_direct
+        and (h5_direct or h4_hybrid_direct)
         and method.get("requested_modes_per_direction") != 480
     ):
         errors.append(
             (
                 "method.requested_modes_per_direction",
-                "Task39 h5 Hybrid direct requires M=480",
+                "Task39 h4/h5 Hybrid direct requires M=480",
             )
         )
     if h5_iterative:
@@ -712,7 +730,10 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
         "absolute_terminate_memory_bytes"
     )
     absolute_byte_profile = (
-        h5_direct or h5_iterative or model_id == _TASK039_V4_H4_FULL3D_MODEL_ID
+        h5_direct
+        or h5_iterative
+        or h4_hybrid_direct
+        or model_id == _TASK039_V4_H4_FULL3D_MODEL_ID
     )
     if absolute_byte_profile and absolute_terminate_memory_bytes != 224_000_000_000:
         errors.append(

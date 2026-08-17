@@ -23,6 +23,7 @@ from src.runners.task038_hybrid_direct import (
     _argv_for_payload,
 )
 from benchmarks.task039_memory_telemetry import (
+    task039_v4_h4_hybrid_direct_formal_profile,
     task039_h5_hybrid_direct_formal_profile,
 )
 
@@ -426,6 +427,9 @@ def run_task039_hybrid_direct(
     source_sha: str | None = None,
     trace_audit_capture_dir: str | Path | None = None,
     trace_audit_metadata: Mapping[str, Any] | None = None,
+    selected_mode_packet_consumer_manifest: str | Path | None = None,
+    selected_mode_packet_consumer_identity_json: str | Path | None = None,
+    selected_mode_packet_consumer_manifest_sha256: str | None = None,
 ) -> dict[str, Any]:
     """Run one finite Task39 Hybrid-direct profile."""
 
@@ -457,6 +461,17 @@ def run_task039_hybrid_direct(
         or canonical_trace_family_sha256 != TASK039_E7_TRACE_FAMILY_SHA256
     ):
         raise ValueError("Task039 canonical trace Gate provenance is not approved.")
+    packet_values = (
+        selected_mode_packet_consumer_manifest,
+        selected_mode_packet_consumer_identity_json,
+        selected_mode_packet_consumer_manifest_sha256,
+    )
+    if any(value is not None for value in packet_values) and not all(
+        value is not None for value in packet_values
+    ):
+        raise ValueError(
+            "Task039 packet consumer requires manifest, identity JSON, and SHA256"
+        )
     cfg = simulation_config_3d_from_normalized(resolved_payload)
     if cfg.stage_case != "stage4_block_grating" or not cfg.use_floquet_xy:
         raise ValueError("Task39 Hybrid direct requires the Stage4 dual-Floquet config")
@@ -465,8 +480,9 @@ def run_task039_hybrid_direct(
     numerical_output = Path(run_directory).resolve() / "numerical_output"
     output_record = numerical_output / "run_summary.json"
     formal_stage_marker_path = None
-    if trace_audit_capture_dir is None and task039_h5_hybrid_direct_formal_profile(
-        resolved_payload
+    if trace_audit_capture_dir is None and (
+        task039_h5_hybrid_direct_formal_profile(resolved_payload)
+        or task039_v4_h4_hybrid_direct_formal_profile(resolved_payload)
     ):
         formal_stage_marker_path = numerical_output / "memory_stage_markers.raw.jsonl"
     argv = _append_source_attestation(
@@ -477,6 +493,17 @@ def run_task039_hybrid_direct(
             [
                 "--memory-stages",
                 str(numerical_output / "task039_trace_audit_stages.jsonl"),
+            ]
+        )
+    if selected_mode_packet_consumer_manifest is not None:
+        argv.extend(
+            [
+                "--selected-mode-packet-consumer-manifest",
+                str(selected_mode_packet_consumer_manifest),
+                "--selected-mode-packet-consumer-identity-json",
+                str(selected_mode_packet_consumer_identity_json),
+                "--selected-mode-packet-consumer-manifest-sha256",
+                str(selected_mode_packet_consumer_manifest_sha256),
             ]
         )
     if runner is None:

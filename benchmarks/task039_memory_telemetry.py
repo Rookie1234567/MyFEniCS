@@ -100,6 +100,28 @@ def task039_h5_hybrid_direct_formal_profile(
     )
 
 
+def task039_v4_h4_hybrid_direct_formal_profile(
+    payload: Mapping[str, Any],
+) -> bool:
+    """Return true only for the explicit V4 h4 Hybrid-direct profile."""
+
+    method = payload.get("method")
+    discretization = payload.get("discretization")
+    execution = payload.get("execution")
+    identity = payload.get("identity", payload)
+    model_id = identity.get("model_id") if isinstance(identity, Mapping) else None
+    return bool(
+        isinstance(method, Mapping)
+        and method.get("kind") == "hybrid_direct"
+        and method.get("requested_modes_per_direction") == 480
+        and model_id == "task039_5nm_v4_1deg_s5_hybrid_direct_m480"
+        and isinstance(discretization, Mapping)
+        and float(discretization.get("mesh_target_nm", float("nan"))) == 4.0
+        and isinstance(execution, Mapping)
+        and execution.get("mpi_size") == 8
+    )
+
+
 def task039_h5_hybrid_iterative_formal_profile(
     payload: Mapping[str, Any],
 ) -> bool:
@@ -791,6 +813,7 @@ __all__ = [
     "task039_e10_stage_event",
     "task039_h5_hybrid_direct_formal_profile",
     "task039_h5_hybrid_iterative_formal_profile",
+    "task039_v4_h4_hybrid_direct_formal_profile",
     "task039_h5_memory_object_ledger",
     "task039_parse_memory_lifecycle",
     "task039_read_new_markers",

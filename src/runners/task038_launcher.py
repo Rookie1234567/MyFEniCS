@@ -28,6 +28,7 @@ from benchmarks.task039_memory_telemetry import (
     task039_h5_hybrid_iterative_formal_profile,
     task039_read_new_markers,
     task039_v3_2d_formal_profile,
+    task039_v4_h4_hybrid_direct_formal_profile,
 )
 
 from src.io.execution_plan import (
@@ -400,7 +401,12 @@ def _run_worker(
         method == "full3d_direct"
         and solver_payload.get("direct_factor_lifecycle") == "release_before_recovery"
     )
-    formal_telemetry = formal_v2_h5 or formal_v3_2d or formal_v4_h4
+    formal_v4_h4_hybrid = task039_v4_h4_hybrid_direct_formal_profile(
+        specification_payload
+    )
+    formal_telemetry = (
+        formal_v2_h5 or formal_v3_2d or formal_v4_h4 or formal_v4_h4_hybrid
+    )
     if task039_model_id_matches(method, model_id, requested_modes):
         task039_budget = _task039_memory_budget(execution)
         warning_limit = float(task039_budget["configured_warning_memory_gib"]) * 1024**3
@@ -486,7 +492,10 @@ def _run_worker(
 
     def _align_formal_markers(sample: dict[str, Any] | None) -> None:
         nonlocal formal_marker_offset, formal_aligned_stage_count
-        if not (formal_direct_v2_h5 or formal_v4_h4) or formal_stage_stream is None:
+        if (
+            not (formal_direct_v2_h5 or formal_v4_h4 or formal_v4_h4_hybrid)
+            or formal_stage_stream is None
+        ):
             return
         marker_source = formal_progress_path if formal_v4_h4 else formal_markers_path
         markers, formal_marker_offset = task039_read_new_markers(
@@ -531,7 +540,7 @@ def _run_worker(
         formal_samples_path.parent.mkdir(parents=True, exist_ok=True)
         formal_samples_path.unlink(missing_ok=True)
         formal_sample_stream = formal_samples_path.open("a", encoding="utf-8")
-        if formal_direct_v2_h5 or formal_v4_h4:
+        if formal_direct_v2_h5 or formal_v4_h4 or formal_v4_h4_hybrid:
             formal_stages_path.unlink(missing_ok=True)
             formal_stage_stream = formal_stages_path.open("a", encoding="utf-8")
     try:
@@ -609,7 +618,9 @@ def _run_worker(
             formal_sample_stream.close()
         if formal_stage_stream is not None:
             formal_stage_stream.close()
-    if (formal_v2_h5 or formal_v4_h4) and not formal_object_ledger_path.exists():
+    if (
+        formal_v2_h5 or formal_v4_h4 or formal_v4_h4_hybrid
+    ) and not formal_object_ledger_path.exists():
         _write_json(
             formal_object_ledger_path,
             {
@@ -695,6 +706,17 @@ def _run_worker(
         resource_authority["v4_h4_formal_telemetry"] = {
             "raw_marker_path": str(formal_progress_path),
             "progress_path": str(formal_progress_path),
+            "process_tree_samples_path": str(formal_samples_path),
+            "memory_stages_path": str(formal_stages_path),
+            "memory_object_ledger_path": str(formal_object_ledger_path),
+            "sample_count": sample_count,
+            "process_tree_sample_count": formal_written_sample_count,
+            "aligned_stage_count": formal_aligned_stage_count,
+            "stage_source": "launcher_marker_alignment",
+        }
+    if formal_v4_h4_hybrid:
+        resource_authority["v4_h4_hybrid_direct_formal_telemetry"] = {
+            "raw_marker_path": str(formal_markers_path),
             "process_tree_samples_path": str(formal_samples_path),
             "memory_stages_path": str(formal_stages_path),
             "memory_object_ledger_path": str(formal_object_ledger_path),

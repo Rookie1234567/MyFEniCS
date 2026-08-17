@@ -52,7 +52,7 @@ TASK039_INPUTS = tuple(sorted(TASK039.glob("*.dat")))
 def test_task039_inputs_are_numeric_finite_profiles_and_share_physics():
     specs = [load_and_resolve(path) for path in TASK039_INPUTS]
 
-    assert len(specs) == 28
+    assert len(specs) == 29
     assert {spec.method["kind"] for spec in specs} == {
         "2d_port",
         "full3d_direct",
@@ -179,6 +179,7 @@ def test_task039_inputs_are_numeric_finite_profiles_and_share_physics():
             "task039_5nm_v3_1deg_s5_full3d",
             "task039_5nm_v3_1deg_s5_hybrid_direct_m480",
             "task039_5nm_v4_1deg_s5_full3d",
+            "task039_5nm_v4_1deg_s5_hybrid_direct_m480",
         }:
             assert spec.incidence["grazing_angle_deg"] == 1.0
             assert spec.derived["internal"]["incident_theta_deg"] == 89.0
