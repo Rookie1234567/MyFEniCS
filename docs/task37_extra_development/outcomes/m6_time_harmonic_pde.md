@@ -197,7 +197,7 @@ v1 因 checker 对真实 production audit 的动态字段和 descriptor 形状�
 | v1 compact | `benchmarks/cases/101_task37_extra_development/records/m6b_w18a_839ce67_formal_resource_closeout_v1.json` | `0c86b687fd76f366bd9148fec734794fdf21b2a3d0bf300fc502981cb48c210f` |
 | v2 compact | `benchmarks/cases/101_task37_extra_development/records/m6b_w18a_839ce67_formal_resource_closeout_v2.json` | `3d9110cf7127333b676e96c5e7dd5cace23ecadc30127063d7f87171d510eb61` |
 
-本轮主要根因边界是：`B` 的 nested solve 显著改善了辅助 residual，但产生的方向与 physical `A` 的校正不充分对齐。当前证据不支持把失败归因于 timeout，也不支持仅靠增加同一路线步数解决；这不是 modal decomposition 的数学证明。PDE、RTA 和 physical screen 继续锁定。下一步只允许先对已保存的 W18A `p1/p2` 做离线二维 span 诊断（0 action、0 PDE），不盲目重跑或延长 fixed40；该诊断尚未运行。
+本轮主要根因边界是：`B` 的 nested solve 显著改善了辅助 residual，但产生的方向与 physical `A` 的校正不充分对齐。当前证据不支持把失败归因于 timeout，也不支持仅靠增加同一路线步数解决；这不是 modal decomposition 的数学证明。PDE、RTA 和 physical screen 继续锁定。当时下一步仅允许先对已保存的 W18A `p1/p2` 做离线二维 span 诊断（0 action、0 PDE）；现已由下节 S1C 的唯一 recovery 完成，且 full physical PDE/RTA 仍未运行，不盲目重跑或延长 fixed40。
 
 ## W18A-S1C：冻结 p1/p2 的离线二维 span recovery
 
