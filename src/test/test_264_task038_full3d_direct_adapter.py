@@ -154,6 +154,38 @@ def test_adapter_passes_exact_cfg_output_and_canonical_export(tmp_path):
     assert seen["cfg"].stage_case == "stage4_block_grating"
 
 
+def test_v4_adapter_binds_packet_identity_and_run_relative_directory(tmp_path):
+    payload = _payload(
+        ROOT / "input/official/task039/5nm_p6h4_v4_1deg_full3d_direct_mpi8.dat"
+    )
+    seen = {}
+
+    def fake_solver(cfg, output_directory, **kwargs):
+        seen.update(cfg=cfg, output_directory=output_directory, kwargs=kwargs)
+        return _summary(canonical_root=output_directory)
+
+    result = run_full3d_direct(
+        payload,
+        tmp_path,
+        source_sha="a" * 40,
+        resolved_config_sha256="b" * 64,
+        solver_runner=fake_solver,
+    )
+    assert result["passed"] is True
+    assert seen["cfg"].direct_release_solver_before_postprocess is True
+    packet_directory = seen["kwargs"]["pre_recovery_packet_directory"]
+    assert (
+        packet_directory
+        == tmp_path.resolve() / "numerical_output" / "pre_recovery_packet"
+    )
+    identity = seen["kwargs"]["pre_recovery_packet_identity"]
+    inventory = identity["external_mode_inventory"]
+    assert identity["source_sha"] == "a" * 40
+    assert identity["resolved_config_sha256"] == "b" * 64
+    assert inventory["count"] == len(inventory["keys"])
+    assert len({str(dict(key)) for key in inventory["keys"]}) == inventory["count"]
+
+
 def test_canonical_observer_maps_reviewed_key_to_generic_full3d_key(
     monkeypatch, tmp_path
 ):

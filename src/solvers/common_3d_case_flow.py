@@ -67,6 +67,7 @@ from .common_3d_solve import (
 )
 from .common_3d_utils import (
     _clear_official_field_outputs,
+    _complete_rank_max,
     _complete_rank_sum,
     _finish_timed_stage,
     _gather_optional_rank_floats,
@@ -1673,22 +1674,33 @@ def run_prepared_3d_case_flow(
         and system_A is not None
     )
     solver_release_audit = None
+    retain_solution_for_canonical = False
     if solver_objects_released_before_postprocess:
-        released_objects = ["system Mat", "RHS Vec", "solution Vec"]
+        retain_solution_for_canonical = bool(
+            pre_recovery_solver_snapshot
+            and canonical_vector_export
+            and solution_observer is not None
+        )
+        released_objects = ["system Mat", "RHS Vec"]
+        if not retain_solution_for_canonical:
+            released_objects.append("solution Vec")
         if system_ksp is not None:
             system_ksp.destroy()
             released_objects.insert(0, "KSP/MUMPS factor")
-        system_x.destroy()
+        if not retain_solution_for_canonical:
+            system_x.destroy()
         system_b.destroy()
         system_A.destroy()
         system_A = None
         system_b = None
-        system_x = None
+        if not retain_solution_for_canonical:
+            system_x = None
         system_ksp = None
         if dtn_result is not None:
             dtn_result["A"] = None
             dtn_result["b"] = None
-            dtn_result["x"] = None
+            if not retain_solution_for_canonical:
+                dtn_result["x"] = None
             dtn_result["ksp"] = None
         gc.collect()
         PETSc.garbage_cleanup(comm)
@@ -1762,6 +1774,14 @@ def run_prepared_3d_case_flow(
             extra={
                 "released_objects": released_objects,
                 "ordinary_default_changed": False,
+                "canonical_solution_retained": retain_solution_for_canonical,
+                "lifecycle_note": (
+                    "pre-recovery factor was already released; system Mat/RHS were "
+                    "released before postprocess and solution Vec is retained only "
+                    "until the canonical observer"
+                    if retain_solution_for_canonical
+                    else "ordinary solver objects were released before postprocess"
+                ),
                 **solver_release_audit,
             },
         )
@@ -2548,20 +2568,76 @@ def run_prepared_3d_case_flow(
         summary["postprocess_skip_reason"] = None
 
     if solution_observer is not None:
-        solution_observer(
-            field=E_total,
-            mesh_data=mesh_data,
-            config=cfg,
-            floquet_data=floquet_data,
-            summary=summary,
-            linear_system={
-                "A": system_A,
-                "b": system_b,
-                "x": system_x,
-                "ksp": system_ksp,
-            },
-            dtn_result=dtn_result,
-        )
+        try:
+            solution_observer(
+                field=E_total,
+                mesh_data=mesh_data,
+                config=cfg,
+                floquet_data=floquet_data,
+                summary=summary,
+                linear_system={
+                    "A": system_A,
+                    "b": system_b,
+                    "x": system_x,
+                    "ksp": system_ksp,
+                },
+                dtn_result=dtn_result,
+            )
+        finally:
+            if retain_solution_for_canonical:
+                if system_x is not None:
+                    system_x.destroy()
+                    system_x = None
+                if dtn_result is not None:
+                    dtn_result["x"] = None
+                    canonical_context = dtn_result.pop("canonical_vector_context", None)
+                    assembly_time_system = canonical_context["assembly_time_system"]
+                    assembly_time_system.matrix = None
+                    assembly_time_system.destroy()
+                    del assembly_time_system, canonical_context
+                gc.collect()
+                PETSc.garbage_cleanup(comm)
+                gc.collect()
+                final_heap_trim = _trim_process_heap()
+                final_before = _complete_rank_max(
+                    _gather_optional_rank_floats(
+                        comm, final_heap_trim.get("rss_before_mb")
+                    )
+                )
+                final_after = _complete_rank_max(
+                    _gather_optional_rank_floats(
+                        comm, final_heap_trim.get("rss_after_mb")
+                    )
+                )
+                final_released = _complete_rank_max(
+                    _gather_optional_rank_floats(
+                        comm, final_heap_trim.get("rss_released_mb")
+                    )
+                )
+                _write_progress_event(
+                    out_dir,
+                    comm,
+                    stage="canonical_objects_released",
+                    status="end",
+                    started=started,
+                    dofs=num_dofs,
+                    constraints=(
+                        None if floquet_data is None else floquet_data.num_constraints
+                    ),
+                    matrix_stats=matrix_stats,
+                    petsc_options=petsc_options,
+                    extra={
+                        "solution_vec_released_after_canonical": True,
+                        "condensation_context_released_after_canonical": True,
+                        "final_heap_cleanup": {
+                            "max_rss_before_mb": final_before,
+                            "max_rss_after_mb": final_after,
+                            "max_rss_released_mb": final_released,
+                            "call_completed": bool(final_heap_trim["call_completed"]),
+                        },
+                        "ordinary_default_changed": False,
+                    },
+                )
 
     if summary.get("case_status") == "completed":
         summary["mumps_ooc_runtime"] = {

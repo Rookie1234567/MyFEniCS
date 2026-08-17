@@ -77,6 +77,46 @@ def _observe_solution(observation, **kwargs):
         kwargs["floquet_data"],
     )
     packets = _collect_packets(packets, field.function_space.mesh.comm)
+    canonical_context = kwargs["dtn_result"].get("canonical_vector_context")
+    if canonical_context is not None:
+        condensed = canonical_context["assembly_time_system"]
+        x = kwargs["linear_system"]["x"]
+        active = condensed.create_active_vector()
+        active_start, active_end = map(int, active.getOwnershipRange())
+        x_start, x_end = map(int, x.getOwnershipRange())
+        assert x_start == active_start
+        local_active = active_end - active_start
+        x_values = np.asarray(x.getArray(readonly=True), dtype=np.complex128)
+        assert x_end - x_start >= local_active
+        active.getArray()[:] = x_values[:local_active]
+        active.assemble()
+        active_packets, _audit = extract_canonical_active_trace_packets(
+            condensed,
+            field.function_space,
+            kwargs["floquet_data"],
+            active,
+        )
+        active.destroy()
+        active_packets = _collect_packets(
+            active_packets, field.function_space.mesh.comm
+        )
+        if "assembled_active_packets" not in observation:
+            observation["assembled_active_packets"] = active_packets
+        else:
+            active_comparison = compare_canonical_packets(
+                active_packets,
+                observation["assembled_active_packets"],
+                relative_tolerance=1.0e-8,
+            )
+            observation["active_packet_comparison"] = active_comparison
+            assert active_comparison["pass"]
+            assert active_comparison["relative_coefficient_l2"] <= 1.0e-8
+    if kwargs["summary"].get("pre_recovery_factor_destroyed_before_recovery"):
+        assert kwargs["linear_system"]["A"] is None
+        assert kwargs["linear_system"]["b"] is None
+        assert kwargs["linear_system"]["ksp"] is None
+        assert kwargs["linear_system"]["x"] is not None
+        observation["pre_recovery_observer_contract"] = True
     if "assembled_full_packets" not in observation:
         observation["assembled_full_packets"] = packets
         comparison = compare_canonical_packets(
@@ -367,10 +407,23 @@ def test_tiny_real_ksp_pre_recovery_release_preserves_full3d_result(tmp_path):
         direct_release_solver_before_postprocess=True,
         unique_output=False,
     )
-    old = run_stage4b_block_grating_3d_case(cfg, tmp_path / "old")
+    old_cfg = replace(cfg, direct_release_solver_before_postprocess=False)
+    observation = {}
+
+    def observer(**kwargs):
+        _observe_solution(observation, **kwargs)
+
+    old = run_stage4b_block_grating_3d_case(
+        old_cfg,
+        tmp_path / "old",
+        solution_observer=observer,
+        canonical_vector_export=True,
+    )
     qualified = run_stage4b_block_grating_3d_case(
         cfg,
         tmp_path / "qualified",
+        solution_observer=observer,
+        canonical_vector_export=True,
         pre_recovery_packet_directory=tmp_path / "qualified" / "packet",
         pre_recovery_packet_identity={"source_sha": "tiny", "physical_sha256": "tiny"},
     )
@@ -388,6 +441,8 @@ def test_tiny_real_ksp_pre_recovery_release_preserves_full3d_result(tmp_path):
     assert (
         qualified["pre_recovery_lifecycle"]["factor_destroyed_before_recovery"] is True
     )
+    assert observation["pre_recovery_observer_contract"] is True
+    assert observation["active_packet_comparison"]["pass"]
     assert (tmp_path / "qualified" / "packet" / "manifest.json").exists()
     progress = [
         json.loads(line)
@@ -401,4 +456,7 @@ def test_tiny_real_ksp_pre_recovery_release_preserves_full3d_result(tmp_path):
     )
     assert marks.index(("factor_destroy", "end")) < marks.index(
         ("full_field_recovery", "begin")
+    )
+    assert marks.index(("full_field_recovery", "end")) < marks.index(
+        ("canonical_objects_released", "end")
     )

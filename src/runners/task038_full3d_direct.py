@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 import hashlib
+import json
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
@@ -16,6 +17,8 @@ def _run_solver(
     *,
     canonical_vector_export: bool,
     solution_observer=None,
+    pre_recovery_packet_directory: Path | None = None,
+    pre_recovery_packet_identity: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     if cfg.stage_case == "stage1_airbox":
         from src.solvers.solve_maxwell_3d_stage_1_airbox import (
@@ -57,6 +60,8 @@ def _run_solver(
             numerical_output,
             solution_observer=solution_observer,
             canonical_vector_export=canonical_vector_export,
+            pre_recovery_packet_directory=pre_recovery_packet_directory,
+            pre_recovery_packet_identity=pre_recovery_packet_identity,
         )
     raise ValueError(f"unsupported Full3D direct stage {cfg.stage_case!r}")
 
@@ -113,6 +118,66 @@ def _canonical_solution_observer(run_directory: Path):
     return observe
 
 
+def _pre_recovery_packet_identity(
+    payload: Mapping[str, Any],
+    *,
+    source_sha: str | None,
+    resolved_config_sha256: str | None,
+) -> dict[str, Any]:
+    """Build the small identity consumed by the pre-recovery packet writer."""
+
+    if not isinstance(source_sha, str) or len(source_sha) != 40:
+        raise ValueError("pre-recovery lifecycle requires the complete source SHA")
+    if not isinstance(resolved_config_sha256, str) or len(resolved_config_sha256) != 64:
+        raise ValueError("pre-recovery lifecycle requires the resolved-config SHA")
+    provenance = payload.get("provenance")
+    derived = payload.get("derived")
+    inventory = (
+        derived.get("external_mode_inventory") if isinstance(derived, Mapping) else None
+    )
+    keys = inventory.get("keys") if isinstance(inventory, Mapping) else None
+    if not isinstance(keys, list) or not isinstance(inventory.get("count"), int):
+        raise ValueError(
+            "pre-recovery lifecycle requires the resolved external inventory"
+        )
+    normalized_keys = [dict(key) for key in keys]
+    encoded_keys = [
+        json.dumps(key, sort_keys=True, separators=(",", ":"))
+        for key in normalized_keys
+    ]
+    if inventory["count"] != len(normalized_keys) or len(set(encoded_keys)) != len(
+        normalized_keys
+    ):
+        raise ValueError("resolved external inventory must be exact and unique")
+    if not isinstance(provenance, Mapping):
+        raise ValueError("pre-recovery lifecycle requires resolved provenance")
+    execution = payload["execution"]
+    incidence = payload["incidence"]
+    discretization = payload["discretization"]
+    return {
+        "schema": "task039.v4.pre_recovery.identity.v1",
+        "source_sha": source_sha,
+        "input_sha256": provenance["input_sha256"],
+        "physical_model_sha256": provenance["physical_model_sha256"],
+        "resolved_config_sha256": resolved_config_sha256,
+        "model_id": payload["model_id"],
+        "run_id": payload["run_id"],
+        "dimension": payload["dimension"],
+        "method": payload["method"]["kind"],
+        "mpi_size": execution["mpi_size"],
+        "wavelength_nm": incidence["wavelength_nm"],
+        "grazing_angle_deg": incidence.get("grazing_angle_deg"),
+        "azimuth_deg": incidence.get("azimuth_deg"),
+        "polarization": incidence["polarization"],
+        "nedelec_degree": discretization["nedelec_degree"],
+        "mesh_target_nm": discretization["mesh_target_nm"],
+        "external_mode_inventory": {
+            "count": len(normalized_keys),
+            "keys": normalized_keys,
+        },
+    }
+
+
 def _canonical_authority_errors(summary: Mapping[str, Any]) -> list[str]:
     from benchmarks.canonical_vector_artifacts import MANIFEST_SCHEMA
 
@@ -159,6 +224,8 @@ def run_full3d_direct(
     run_directory: str | Path,
     *,
     solver_runner: Callable[..., dict[str, Any]] | None = None,
+    source_sha: str | None = None,
+    resolved_config_sha256: str | None = None,
 ) -> dict[str, Any]:
     """Run one connected Full3D direct stage and inspect its returned summary."""
 
@@ -184,6 +251,30 @@ def run_full3d_direct(
         raise ValueError("full3d_direct requires a supported 3D geometry")
 
     cfg = simulation_config_3d_from_normalized(resolved_payload)
+    lifecycle = resolved_payload.get("solver", {}).get(
+        "direct_factor_lifecycle", "retain_until_postprocess"
+    )
+    packet_directory = None
+    packet_identity = None
+    if lifecycle == "release_before_recovery":
+        if not (
+            resolved_payload.get("model_id") == "task039_5nm_v4_1deg_s5_full3d"
+            and cfg.stage_case == "stage4_block_grating"
+            and cfg.stage4_full3d_assembly_backend == "assembly_time_static_condensed"
+        ):
+            raise ValueError(
+                "release_before_recovery is limited to the Task39 V4 Stage4 profile"
+            )
+        packet_directory = (
+            Path(run_directory).resolve() / "numerical_output" / "pre_recovery_packet"
+        )
+        packet_identity = _pre_recovery_packet_identity(
+            resolved_payload,
+            source_sha=source_sha,
+            resolved_config_sha256=resolved_config_sha256,
+        )
+    elif lifecycle != "retain_until_postprocess":
+        raise ValueError(f"unsupported direct_factor_lifecycle={lifecycle!r}")
     if cfg.stage_case not in {
         "stage1_airbox",
         "floquet_airbox",
@@ -220,6 +311,13 @@ def run_full3d_direct(
     }
     if canonical_vector_export:
         runner_kwargs["solution_observer"] = solution_observer
+    if packet_directory is not None:
+        runner_kwargs.update(
+            {
+                "pre_recovery_packet_directory": packet_directory,
+                "pre_recovery_packet_identity": packet_identity,
+            }
+        )
     summary = runner(
         cfg,
         numerical_output,

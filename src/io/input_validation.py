@@ -251,7 +251,7 @@ TASK039_E7_TRACE_FAMILY_SHA256 = (
 )
 _TASK039_MODEL_ID_PATTERNS = {
     "2d_port": r"task039_5nm_v3_1deg_s5",
-    "full3d_direct": r"task039_(?:5nm_full3d_direct|5nm_v3_1deg_s5_full3d)",
+    "full3d_direct": r"task039_(?:5nm_full3d_direct|5nm_v3_1deg_s5_full3d|5nm_v4_1deg_s5_full3d)",
     "full3d_iterative": r"task039_5nm_full3d_iterative",
     "hybrid_direct": r"task039_5nm_(?:hybrid_direct|v3_1deg_s5_hybrid_direct)_m(120|240|480|960)",
     "hybrid_iterative": r"task039_5nm_hybrid_iterative_m(120|240|480|960)_candidate",
@@ -259,6 +259,7 @@ _TASK039_MODEL_ID_PATTERNS = {
 _TASK039_V3_2D_MODEL_ID = "task039_5nm_v3_1deg_s5"
 _TASK039_V3_3D_MODEL_ID = "task039_5nm_v3_1deg_s5_full3d"
 _TASK039_V3_HYBRID_DIRECT_MODEL_ID = "task039_5nm_v3_1deg_s5_hybrid_direct_m480"
+_TASK039_V4_H4_FULL3D_MODEL_ID = "task039_5nm_v4_1deg_s5_full3d"
 _TASK039_V3_2D_MESH_TARGETS = (5.0, 4.0, 3.0, 2.0, 1.5)
 _TASK039_V3_2D_DEGREES = (6, 8)
 
@@ -344,6 +345,7 @@ def _task039_v3_identity_enabled(config: Mapping[str, Any]) -> bool:
         _TASK039_V3_2D_MODEL_ID,
         _TASK039_V3_3D_MODEL_ID,
         _TASK039_V3_HYBRID_DIRECT_MODEL_ID,
+        _TASK039_V4_H4_FULL3D_MODEL_ID,
     }
 
 
@@ -602,7 +604,10 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
         (
             "incidence",
             "grazing_angle_deg",
-            1.0 if model_id == _TASK039_V3_HYBRID_DIRECT_MODEL_ID else 10.0,
+            1.0
+            if model_id
+            in {_TASK039_V3_HYBRID_DIRECT_MODEL_ID, _TASK039_V4_H4_FULL3D_MODEL_ID}
+            else 10.0,
         ),
         ("incidence", "azimuth_deg", 0.0),
         ("incidence", "polarization", "s"),
@@ -643,7 +648,9 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
             errors.append((f"{section}.{key}", f"Task39 requires {expected_value!r}"))
     mesh_target_nm = config["discretization"].get("mesh_target_nm")
     allowed_mesh_targets = (
-        (10.0, 7.5, 6.0, 5.0)
+        (4.0,)
+        if model_id == _TASK039_V4_H4_FULL3D_MODEL_ID
+        else (10.0, 7.5, 6.0, 5.0)
         if kind == "full3d_direct"
         else (10.0, 5.0)
         if kind in {"hybrid_direct", "hybrid_iterative"}
@@ -704,15 +711,17 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
     absolute_terminate_memory_bytes = config["execution"].get(
         "absolute_terminate_memory_bytes"
     )
-    h5_absolute_profile = h5_direct or h5_iterative
-    if h5_absolute_profile and absolute_terminate_memory_bytes != 224_000_000_000:
+    absolute_byte_profile = (
+        h5_direct or h5_iterative or model_id == _TASK039_V4_H4_FULL3D_MODEL_ID
+    )
+    if absolute_byte_profile and absolute_terminate_memory_bytes != 224_000_000_000:
         errors.append(
             (
                 "execution.absolute_terminate_memory_bytes",
                 "Task39 p6/h5 direct or Hybrid iterative requires exact 224000000000",
             )
         )
-    elif not h5_absolute_profile and absolute_terminate_memory_bytes is not None:
+    elif not absolute_byte_profile and absolute_terminate_memory_bytes is not None:
         errors.append(
             (
                 "execution.absolute_terminate_memory_bytes",
@@ -725,7 +734,7 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
         and method.get("requested_modes_per_direction") == 480
         and not h5_iterative
     )
-    review_direct_budget = grid_direct or h5_absolute_profile
+    review_direct_budget = grid_direct or absolute_byte_profile
     expected_warning = (
         45.0 if m480_mpi1_solver_only else 170.0 if review_direct_budget else 180.0
     )
@@ -775,6 +784,22 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
             )
         if solver.get("linear_solver") != "direct":
             errors.append(("solver.linear_solver", "Task39 direct requires direct"))
+        lifecycle = solver.get("direct_factor_lifecycle", "retain_until_postprocess")
+        if model_id == _TASK039_V4_H4_FULL3D_MODEL_ID:
+            if lifecycle != "release_before_recovery":
+                errors.append(
+                    (
+                        "solver.direct_factor_lifecycle",
+                        "V4 h4 Full3D requires release_before_recovery",
+                    )
+                )
+        elif lifecycle != "retain_until_postprocess":
+            errors.append(
+                (
+                    "solver.direct_factor_lifecycle",
+                    "release_before_recovery is reserved for the V4 h4 Full3D profile",
+                )
+            )
     elif kind == "full3d_iterative":
         if config["execution"]["mpi_size"] != 8:
             errors.append(
@@ -1194,6 +1219,23 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
     kind = method["kind"]
     geometry_kind = geometry["geometry_kind"]
     model_id = str(config.get("model_id", ""))
+    lifecycle = solver.get("direct_factor_lifecycle", "retain_until_postprocess")
+    release_allowed = (
+        kind == "full3d_direct"
+        and model_id == _TASK039_V4_H4_FULL3D_MODEL_ID
+        and dimension == 3
+        and geometry_kind == "rectangular_block_grating"
+        and discretization.get("nedelec_degree") == 6
+        and discretization.get("mesh_target_nm") == 4.0
+        and discretization.get("assembly_backend") == "assembly_time_static_condensed"
+        and solver.get("linear_solver") == "direct"
+        and execution.get("mpi_size") == 8
+    )
+    if lifecycle == "release_before_recovery" and not release_allowed:
+        raise _error(
+            "solver.direct_factor_lifecycle",
+            "release_before_recovery is limited to the exact Task39 V4 p6/h4 Stage4 direct/MPI8 profile",
+        )
     if (
         method.get("canonical_trace_gate_policy") is not None
         or method.get("canonical_trace_family_sha256") is not None
@@ -2189,6 +2231,10 @@ def simulation_config_3d_from_normalized(
         full3d_reference_sample_count_x=out["sample_count_x"],
         full3d_reference_sample_count_y=out["sample_count_y"],
         petsc_direct_solver_profile=solver.get("direct_solver_profile", "default"),
+        direct_release_solver_before_postprocess=(
+            solver.get("direct_factor_lifecycle", "retain_until_postprocess")
+            == "release_before_recovery"
+        ),
         stage4_full3d_assembly_backend=d.get("assembly_backend", "standard_full"),
         unique_output=out["unique_output"],
     )

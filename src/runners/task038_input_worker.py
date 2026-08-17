@@ -209,7 +209,18 @@ def _dispatch_resolved_payload(
     elif expected_method == "full3d_direct":
         from src.runners.task038_full3d_direct import run_full3d_direct
 
-        adapter = run_full3d_direct
+        def adapter(payload, directory):
+            if payload.get("solver", {}).get("direct_factor_lifecycle") == (
+                "release_before_recovery"
+            ):
+                return run_full3d_direct(
+                    payload,
+                    directory,
+                    source_sha=expected_source_sha,
+                    resolved_config_sha256=expected_resolved_config_sha256,
+                )
+            return run_full3d_direct(payload, directory)
+
         label = "Full3D direct"
     elif expected_method == "full3d_iterative":
         from src.runners.task039_full3d_iterative import run_full3d_iterative

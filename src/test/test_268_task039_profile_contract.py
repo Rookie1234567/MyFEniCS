@@ -2,6 +2,7 @@
 
 import ast
 import hashlib
+import json
 from copy import deepcopy
 from pathlib import Path
 from math import isclose, pi
@@ -51,7 +52,7 @@ TASK039_INPUTS = tuple(sorted(TASK039.glob("*.dat")))
 def test_task039_inputs_are_numeric_finite_profiles_and_share_physics():
     specs = [load_and_resolve(path) for path in TASK039_INPUTS]
 
-    assert len(specs) == 27
+    assert len(specs) == 28
     assert {spec.method["kind"] for spec in specs} == {
         "2d_port",
         "full3d_direct",
@@ -177,6 +178,7 @@ def test_task039_inputs_are_numeric_finite_profiles_and_share_physics():
         if spec.identity["model_id"] in {
             "task039_5nm_v3_1deg_s5_full3d",
             "task039_5nm_v3_1deg_s5_hybrid_direct_m480",
+            "task039_5nm_v4_1deg_s5_full3d",
         }:
             assert spec.incidence["grazing_angle_deg"] == 1.0
             assert spec.derived["internal"]["incident_theta_deg"] == 89.0
@@ -210,6 +212,54 @@ def test_task039_v3_h4p5_full3d_profile_identity_and_dry_run():
     assert dry_run_payload(specification)["resolved_method_adapter"]["identity"] == (
         "task038.full3d_direct"
     )
+
+
+def test_task039_v4_h4_release_profile_is_dynamic_and_default_off():
+    specification = load_and_resolve(
+        TASK039 / "5nm_p6h4_v4_1deg_full3d_direct_mpi8.dat"
+    )
+    assert specification.identity["model_id"] == "task039_5nm_v4_1deg_s5_full3d"
+    assert specification.discretization["nedelec_degree"] == 6
+    old_h4 = load_and_resolve(TASK039 / "5nm_p6h4_v3_1deg_full3d_direct_mpi8.dat")
+    assert specification.physical_model_sha256 == old_h4.physical_model_sha256
+    assert specification.solver["direct_factor_lifecycle"] == (
+        "release_before_recovery"
+    )
+    inventory = specification.derived["external_mode_inventory"]
+    keys = inventory["keys"]
+    assert inventory["count"] == len(keys)
+    assert len({json.dumps(dict(key), sort_keys=True) for key in keys}) == len(keys)
+    cfg = simulation_config_3d_from_normalized(specification.as_jsonable())
+    assert cfg.direct_release_solver_before_postprocess is True
+    assert dry_run_payload(specification)["resolved_method_adapter"]["identity"] == (
+        "task038.full3d_direct"
+    )
+
+    ordinary = load_and_resolve(ROOT / "input/templates/full3d_direct_example.dat")
+    assert "direct_factor_lifecycle" not in ordinary.solver
+    assert (
+        simulation_config_3d_from_normalized(
+            ordinary.as_jsonable()
+        ).direct_release_solver_before_postprocess
+        is False
+    )
+
+
+def test_task039_release_profile_is_rejected_outside_exact_v4_scope(tmp_path: Path):
+    source = (TASK039 / "5nm_p6h4p5_v3_1deg_full3d_direct_mpi8.dat").read_text(
+        encoding="utf-8"
+    )
+    path = tmp_path / "task039-v4-release-outside-scope.dat"
+    path.write_text(
+        source.replace(
+            'direct_solver_profile = "default"\n',
+            'direct_solver_profile = "default"\n'
+            'direct_factor_lifecycle = "release_before_recovery"\n',
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(InputError, match="exact Task39 V4"):
+        load_and_resolve(path)
 
 
 def test_task039_material_provenance_is_not_added_to_ordinary_inputs():

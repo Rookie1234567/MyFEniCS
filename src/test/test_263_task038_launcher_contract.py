@@ -32,6 +32,9 @@ ROOT = Path(__file__).resolve().parents[2]
 TEMPLATE = ROOT / "input/templates/full3d_direct_example.dat"
 TASK039_DIRECT = ROOT / "input/official/task039/5nm_p6h10_full3d_direct_mpi8.dat"
 TASK039_H5_DIRECT = ROOT / "input/official/task039/5nm_p6h5_full3d_direct_mpi8.dat"
+TASK039_V4_H4_DIRECT = (
+    ROOT / "input/official/task039/5nm_p6h4_v4_1deg_full3d_direct_mpi8.dat"
+)
 SOURCE_SHA = "a" * 40
 REQUIRED_FILES = {
     "input_original.dat",
@@ -134,6 +137,13 @@ def _authority_with_smaps(*, rss=1024, pss=1024, uss=512, complete=True):
 def _task039_spec(tmp_path):
     return replace(
         load_and_resolve(TASK039_DIRECT),
+        expected_output_parent=tmp_path / "results",
+    )
+
+
+def _task039_v4_h4_spec(tmp_path):
+    return replace(
+        load_and_resolve(TASK039_V4_H4_DIRECT),
         expected_output_parent=tmp_path / "results",
     )
 
@@ -715,6 +725,64 @@ def test_task039_launcher_tracks_independent_smaps_peaks(monkeypatch, tmp_path):
     assert authority["smaps_complete_sample_count"] == 2
     assert authority["telemetry_status"] == "measured"
     assert "different samples" in authority["peak_semantics"]
+
+
+def test_task039_v4_h4_aligns_progress_status_and_order(tmp_path):
+    specification = _task039_v4_h4_spec(tmp_path)
+
+    def popen(argv, **_kwargs):
+        output_directory = Path(argv[argv.index("--expected-output-directory") + 1])
+        progress = output_directory / "numerical_output" / "progress_3d.jsonl"
+        progress.parent.mkdir(parents=True, exist_ok=True)
+        progress.write_text(
+            "".join(
+                json.dumps(
+                    {"stage": stage, "status": status, "elapsed_seconds": elapsed}
+                )
+                + "\n"
+                for stage, status, elapsed in (
+                    ("factor_destroy", "begin", 1.0),
+                    ("factor_destroy", "end", 2.0),
+                )
+            ),
+            encoding="utf-8",
+        )
+        return _FakeProcess(0)
+
+    result = launch_specification(
+        specification,
+        source_sha=SOURCE_SHA,
+        timestamp="20260812T000000.000000Z",
+        contract_probe=True,
+        mpiexec_command="/opt/mpiexec",
+        python_executable="/opt/python",
+        popen_factory=popen,
+        sample_factory=lambda _pid: _authority(),
+        sleep=lambda _seconds: None,
+        poll_interval=0.0,
+    )
+    telemetry = result["resource_authority"]["v4_h4_formal_telemetry"]
+    assert telemetry["raw_marker_path"].endswith("numerical_output/progress_3d.jsonl")
+    assert telemetry["progress_path"] == telemetry["raw_marker_path"]
+    assert telemetry["memory_stages_path"].endswith("memory_stages.jsonl")
+    assert telemetry["aligned_stage_count"] == 2
+    budget = result["resource_authority"]["task039_memory_budget"]
+    assert budget["configured_warning_memory_gib"] == 170.0
+    assert budget["configured_critical_memory_gib"] == 195.0
+    assert result["resource_authority"]["critical_checkpoint_crossed"] is False
+    assert (
+        result["resource_authority"]["absolute_terminate_memory_bytes"]
+        == 224_000_000_000
+    )
+    assert result["resource_authority"]["require_zero_swap"] is True
+    rows = [
+        json.loads(line)
+        for line in Path(telemetry["memory_stages_path"]).read_text().splitlines()
+    ]
+    assert [(row["stage"], row["status"], row["stage_index"]) for row in rows] == [
+        ("factor_destroy", "begin", 0),
+        ("factor_destroy", "end", 1),
+    ]
 
 
 def test_task039_pss_uss_do_not_trigger_memory_termination(monkeypatch, tmp_path):

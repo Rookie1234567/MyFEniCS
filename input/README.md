@@ -90,7 +90,7 @@ python scripts/run_case.py input/path/to/case.dat --dry-run
 | `materials.grating_name` | `string` | `none` | no | `—` | — | 2d/3d | grating 材料名称 | `grating_material_label` | optional descriptive label | `"Si / silicon"` |
 | `materials.n_grating` | `complex_pair` | `relative index` | no | `—` | — | 2d/3d | grating 复折射率 [实部, 虚部] | `n_grating` | required for 2D and rectangular block-grating; optional for airbox, Fresnel and flat-layer | `[0.999002304859, 0.00182649365]` |
 | `incidence.wavelength_nm` | `float` | `nm` | yes | `—` | — | 2d/3d | 真空波长 | `lambda0` | > 0 | `13.5` |
-| `incidence.grazing_angle_deg` | `float` | `degree` | no | `—` | — | 3d | 相对表面的掠射角 | `incident_theta_deg = 90 - grazing_angle_deg` | required for Stage4 grating; 0 < value <= 90; mutually exclusive with tilt_from_downward_z_deg | `1.0` |
+| `incidence.grazing_angle_deg` | `float` | `degree` | no | `—` | — | 2d/3d | 相对表面的掠射角 | `incident_theta_deg = 90 - grazing_angle_deg` | required for Stage4 grating; 0 < value <= 90; mutually exclusive with tilt_from_downward_z_deg | `1.0` |
 | `incidence.tilt_from_downward_z_deg` | `float` | `degree` | no | `—` | — | 3d | Stage1/airbox/Fresnel 使用的、相对向下 z 轴的倾角 | `incident_theta_deg` | finite; use for Stage1/Stage2 airbox/Fresnel, mutually exclusive with grazing_angle_deg | `10.0` |
 | `incidence.azimuth_deg` | `float` | `degree` | yes | `—` | — | 3d | 入射方位角 | `incident_phi_deg` | finite; method-specific range | `0.0` |
 | `incidence.tilt_from_downward_y_deg` | `float` | `degree` | yes | `—` | — | 2d | 二维相对向下 y 轴的显式倾角；代码使用 kx=sin(theta), ky=-cos(theta) | `incident_angle_deg` | finite; 2D convention only | `0.0` |
@@ -129,7 +129,10 @@ python scripts/run_case.py input/path/to/case.dat --dry-run
 | `method.requested_modes_per_direction` | `integer` | `modes/direction` | yes | `—` | — | hybrid_direct/hybrid_iterative | 用户请求的每方向模态数 | `requested_modes` | required for Hybrid; candidate pool is derived | `120` |
 | `method.propagation_model` | `enum` | `none` | yes | `—` | continuous_beta, full3d_uniform_cg | hybrid_direct/hybrid_iterative | Hybrid 内部传播模型 | `internal_propagation_model` | — | `"full3d_uniform_cg"` |
 | `method.traction_model` | `enum` | `none` | yes | `—` | continuous_qep_beta, scalar_cg_discrete_derivative, full3d_one_cell_exact_schur | hybrid_direct/hybrid_iterative | Hybrid 接口 traction 模型 | `internal_traction_model` | — | `"full3d_one_cell_exact_schur"` |
+| `method.canonical_trace_gate_policy` | `enum` | `none` | no | `—` | task039_m960_backward_stable_v1 | hybrid_direct/hybrid_iterative | Task39 M960 canonical trace research Gate | `canonical_trace_gate_policy` | only the audited M960 trace family | `"task039_m960_backward_stable_v1"` |
+| `method.canonical_trace_family_sha256` | `string` | `sha256` | no | `—` | — | hybrid_direct/hybrid_iterative | audited trace family SHA256 | `canonical_trace_family_sha256` | 64 lowercase hex characters | `"<64 hex characters>"` |
 | `solver.direct_solver_profile` | `enum` | `none` | yes | `—` | default, mumps_ooc, mumps_blr | full3d_direct/hybrid_direct | 有限 direct solver profile | `petsc_direct_solver_profile` | — | `"default"` |
+| `solver.direct_factor_lifecycle` | `enum` | `none` | no | `—` | retain_until_postprocess, release_before_recovery | full3d_direct | Full3D direct factor lifecycle policy | `direct_release_solver_before_postprocess` | only full3d_direct; release_before_recovery requires the qualified Task39 Stage4 assembly-time profile | `"release_before_recovery"` |
 | `solver.linear_solver` | `enum` | `none` | yes | `—` | direct, fgmres | 2d_scattered/2d_port/full3d_direct/full3d_iterative/hybrid_direct/hybrid_iterative | 线性求解器类型 | `linear_solver` | direct methods require direct; full3d_iterative/hybrid_iterative require fgmres | `"fgmres"` |
 | `solver.preconditioner` | `enum` | `none` | yes | `—` | full3d_m3a_physical_slab_two_level, hybrid_block_ldu_ilu0_dtn_woodbury | full3d_iterative/hybrid_iterative | 公开 preconditioner identity | `preconditioner` | per-method identity is checked explicitly; no cross-method substitution | `"hybrid_block_ldu_ilu0_dtn_woodbury"` |
 | `solver.restart` | `integer` | `iterations` | yes | `—` | — | full3d_iterative/hybrid_iterative | GMRES/FGMRES restart 长度 | `restart` | only iterative methods; > 0 | `90` |
@@ -145,6 +148,7 @@ python scripts/run_case.py input/path/to/case.dat --dry-run
 | `execution.mpi_size` | `integer` | `MPI ranks` | yes | `—` | — | 2d/3d | 外层 launcher 使用的 MPI 数 | `execution.mpi_size / MPI.COMM_WORLD.size check` | >= 1; worker size must match | `8` |
 | `execution.warning_memory_gib` | `float` | `GiB` | yes | `—` | — | 2d/3d | 用户资源警告线 | `watchdog warning threshold` | > 0; generic policy, not authority hard gate | `10.0` |
 | `execution.terminate_memory_gib` | `float` | `GiB` | yes | `—` | — | 2d/3d | 用户资源终止线 | `watchdog terminate threshold` | > warning_memory_gib | `14.0` |
+| `execution.absolute_terminate_memory_bytes` | `integer` | `bytes` | no | `—` | — | full3d_direct/hybrid_direct/hybrid_iterative | explicit process-tree byte termination ceiling | `absolute_terminate_memory_bytes` | > 0; optional byte-based termination policy | `224000000000` |
 | `execution.timeout_seconds` | `integer` | `seconds` | yes | `—` | — | 2d/3d | 单次运行时间上限 | `watchdog timeout` | > 0; generic policy, not authority hard gate | `7200` |
 | `execution.require_zero_swap` | `boolean` | `none` | yes | `—` | — | 2d/3d | 是否要求 swap 为零 | `swap policy` | — | `true` |
 | `output.results_root` | `path` | `filesystem path` | yes | `—` | — | 2d/3d | 结果根目录 | `results_root` | must not overwrite an existing run | `"results"` |
@@ -195,7 +199,7 @@ The following marker block is intentionally outside the table so GitHub keeps al
 <!-- schema-field {"key":"materials.grating_name","unit":"none","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"materials.n_grating","unit":"relative index","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"incidence.wavelength_nm","unit":"nm","applicability":["2d","3d"]} -->
-<!-- schema-field {"key":"incidence.grazing_angle_deg","unit":"degree","applicability":["3d"]} -->
+<!-- schema-field {"key":"incidence.grazing_angle_deg","unit":"degree","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"incidence.tilt_from_downward_z_deg","unit":"degree","applicability":["3d"]} -->
 <!-- schema-field {"key":"incidence.azimuth_deg","unit":"degree","applicability":["3d"]} -->
 <!-- schema-field {"key":"incidence.tilt_from_downward_y_deg","unit":"degree","applicability":["2d"]} -->
@@ -234,7 +238,10 @@ The following marker block is intentionally outside the table so GitHub keeps al
 <!-- schema-field {"key":"method.requested_modes_per_direction","unit":"modes/direction","applicability":["hybrid_direct","hybrid_iterative"]} -->
 <!-- schema-field {"key":"method.propagation_model","unit":"none","applicability":["hybrid_direct","hybrid_iterative"]} -->
 <!-- schema-field {"key":"method.traction_model","unit":"none","applicability":["hybrid_direct","hybrid_iterative"]} -->
+<!-- schema-field {"key":"method.canonical_trace_gate_policy","unit":"none","applicability":["hybrid_direct","hybrid_iterative"]} -->
+<!-- schema-field {"key":"method.canonical_trace_family_sha256","unit":"sha256","applicability":["hybrid_direct","hybrid_iterative"]} -->
 <!-- schema-field {"key":"solver.direct_solver_profile","unit":"none","applicability":["full3d_direct","hybrid_direct"]} -->
+<!-- schema-field {"key":"solver.direct_factor_lifecycle","unit":"none","applicability":["full3d_direct"]} -->
 <!-- schema-field {"key":"solver.linear_solver","unit":"none","applicability":["2d_scattered","2d_port","full3d_direct","full3d_iterative","hybrid_direct","hybrid_iterative"]} -->
 <!-- schema-field {"key":"solver.preconditioner","unit":"none","applicability":["full3d_iterative","hybrid_iterative"]} -->
 <!-- schema-field {"key":"solver.restart","unit":"iterations","applicability":["full3d_iterative","hybrid_iterative"]} -->
@@ -250,6 +257,7 @@ The following marker block is intentionally outside the table so GitHub keeps al
 <!-- schema-field {"key":"execution.mpi_size","unit":"MPI ranks","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"execution.warning_memory_gib","unit":"GiB","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"execution.terminate_memory_gib","unit":"GiB","applicability":["2d","3d"]} -->
+<!-- schema-field {"key":"execution.absolute_terminate_memory_bytes","unit":"bytes","applicability":["full3d_direct","hybrid_direct","hybrid_iterative"]} -->
 <!-- schema-field {"key":"execution.timeout_seconds","unit":"seconds","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"execution.require_zero_swap","unit":"none","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"output.results_root","unit":"filesystem path","applicability":["2d","3d"]} -->
