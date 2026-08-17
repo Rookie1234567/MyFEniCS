@@ -1,0 +1,170 @@
+{
+  "schema": "task039.v4-h4-hybrid-direct-packet-consumer.v1",
+  "status": "derived_from_raw_run",
+  "classification": "TASK039_V4_HYBRID_DIRECT_OWN_GATE_PASS_INTEGRATED_COMPARISON_NOT_AVAILABLE",
+  "scope": {
+    "wavelength_nm": 5.0,
+    "grazing_deg": 1.0,
+    "phi_deg": 0.0,
+    "polarization": "S",
+    "mesh": "p6/h4",
+    "mpi": 8,
+    "method": "hybrid_direct",
+    "requested_modes_per_direction": 480,
+    "assembly_backend": "assembly_time_static_condensed",
+    "propagation_model": "full3d_uniform_cg",
+    "traction_model": "full3d_one_cell_exact_schur"
+  },
+  "identity": {
+    "consumer_source_sha": "1515f09575a94484116938d3749f151841e3cdb8",
+    "packet_producer_source_sha": "eaad0f942f014b65474ac57e3d5e561316489f20",
+    "input_sha256": "dd7c945c1696b4f9da3e35c295071a24b796a10d164d2a819b4abe68f72f44ca",
+    "resolved_config_sha256": "db947c7d9bb68decbb27583b0f1e04729518ccf1bb3be697e67aed47195a1e54",
+    "physical_model_sha256": "8391d46139646440d869aa43abe6a68bc921fc1972a10030c64be81dffdd527c",
+    "model_id": "task039_5nm_v4_1deg_s5_hybrid_direct_m480",
+    "run_id": "task039_v4_hybrid_direct_p6h4_m480_mpi8"
+  },
+  "external_modes": {
+    "count": 600,
+    "unique_count": 600,
+    "bottom_top_count": [296, 304],
+    "keys_sha256": "ba431ec6683f2123e53e8f9f3fb13fd35ae22a6a8f9c0ed2d85aa1f1cb15b04a",
+    "raw_run_key_order_matches_packet_identity": true
+  },
+  "selected_mode_packet": {
+    "directory": "results/task039_v4_h4_m480_shared_packet_eaad0f94",
+    "manifest": "results/task039_v4_h4_m480_shared_packet_eaad0f94/manifest.json",
+    "manifest_sha256": "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067",
+    "identity_sha256": "cfd5704b48bff980fa2d819f4deee9a59bb9a3db39bc24a70c53f42f067d39e9",
+    "consumer_kind": "direct",
+    "consumer_qep_required": false,
+    "qep_calls": 0,
+    "read_seconds_max_rank": 0.8070760400150903,
+    "hydrate_seconds_max_rank": 0.07595701399259269,
+    "post_factor_read_seconds_max_rank": 0.21305874601239339,
+    "post_factor_hydrate_seconds_max_rank": 0.09234077297151089,
+    "mmap_released": true,
+    "packet_references_released": true,
+    "same_manifest_and_identity_after_factor_release": true
+  },
+  "numerics": {
+    "converged_reason": 4,
+    "true_relative_residual": 3.7053063181108737e-10,
+    "interface_projection_relative_residual": {
+      "bottom": 3.4769692899430483e-12,
+      "top": 8.252657999159727e-11,
+      "combined": 8.229846170461895e-11
+    },
+    "exact_variational_traction_relative_residual": {
+      "bottom": 8.660439882115594e-11,
+      "top": 3.434237062556144e-10
+    },
+    "R_T_A_balance_A_volume_closure": [
+      0.7331842736908196,
+      0.0002200986949369512,
+      0.26659562761424344,
+      0.26659627261424806,
+      6.450000047397708e-7
+    ],
+    "physical_field_gates_pass": true,
+    "nonblocking_sampled_traction_proxy_pass": false,
+    "nonblocking_sampled_traction_proxy_role": "diagnostic_only",
+    "generic_legacy_mode_convergence_status": "pending_without_M_sweep",
+    "generic_legacy_official_record": false
+  },
+  "payloads_and_canonical": {
+    "direct_payload": {
+      "path": "numerical_output/task039_direct_payload.npz",
+      "sha256": "2cee09c0bd8f1d0b53fa1b6dbff1c6b1a23bcd3f752a4cc72cbf15fbdaf4c376",
+      "bytes": 411476,
+      "finite": true,
+      "E_shape": [5, 20, 40, 3],
+      "H_shape": [5, 20, 40, 3],
+      "E_sha256": "bbe2d2c9f7375986ac8f3ee102bd729abce9a535920c10e914bf297e8c7b8690",
+      "H_sha256": "8cc64a3b34f6e447bf5d66bf487a3166f656a4924ba7b4edc009346fdd4586f3"
+    },
+    "h_diagnostic_payload": {
+      "path": "numerical_output/task039_h_diagnostic_payload.npz",
+      "sha256": "59a46f765f43fd7c6aa31781a941753b1c4b0c462c82add332c001e9df3f3045",
+      "bytes": 1078774,
+      "finite": true,
+      "native_E_shape": [7, 20, 40, 3],
+      "native_H_shape": [7, 20, 40, 3],
+      "curlE_E_shape": [7, 20, 40, 3],
+      "curlE_H_shape": [7, 20, 40, 3]
+    },
+    "canonical_manifests": {
+      "bottom_active": {"pass": true, "packet_count": 141972, "duplicates": 0, "sha256": "8f158e4e06f8dd4bfc1ad11eec209625136c0828d536f8967398a4c3330b03b4"},
+      "bottom_full_fe": {"pass": true, "packet_count": 425472, "duplicates": 0, "sha256": "09607940079e364a357d0a07ef1cc8206fb0a18894b8a8c99c739c5cffc2df51"},
+      "top_active": {"pass": true, "packet_count": 141972, "duplicates": 0, "sha256": "8f24caee54a70b1443a5d7054d7cbda598b48913c7b80487dd9eec53e96872a9"},
+      "top_full_fe": {"pass": true, "packet_count": 425472, "duplicates": 0, "sha256": "d4316f29dd21deda67a2a795afb4bd9b74c200d34d67d99d30e2e1048d90cb13"}
+    },
+    "twelve_plus_twelve_channel_checker_counts": "not_separately_persisted_in_worker_record"
+  },
+  "lifecycle": {
+    "mumps_solver": "mumps",
+    "mumps_icntl14_requested_observed_verified": [100, 100, true],
+    "factor_matrix_rows": 266160,
+    "factor_matrix_nnz": 1976107424,
+    "factor_info_g": {"1": 0, "2": 0, "8": -1, "9": 1976107424},
+    "factor_destroyed_before_postprocess": true,
+    "system_destroyed_before_postprocess": true,
+    "collective_cleanup_completed": true,
+    "modes_released_before_factor": true,
+    "factor_modes_overlap": false,
+    "post_factor_recovery": true,
+    "post_factor_cleanup_max_rss_mb": [16535.79296875, 2577.9765625, 14199.6640625]
+  },
+  "stage_alignment": {
+    "taxonomy_stage_count": 18,
+    "consumer_raw_marker_count": 12,
+    "consumer_aligned_marker_count": 12,
+    "consumer_taxonomy_indices": [0, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
+    "not_emitted_consumer_boundary_indices": [1, 2, 3, 4, 5, 6],
+    "alignment_source": "launcher_marker_alignment",
+    "mumps_analysis_independent_snapshot": "not_available"
+  },
+  "resource": {
+    "run_root": "results/task039_v4_h4_hybrid_direct_formal_mpi8_icntl14_1515f095",
+    "exit_status": 0,
+    "worker_status": "physical_integration_pass_mode_convergence_pending",
+    "process_tree_peak_bytes": 100262797312,
+    "process_tree_peak_mib": 95618.0546875,
+    "process_tree_peak_gib": 93.37700653076172,
+    "peak_utc": "2026-08-17T22:30:19.815000+00:00",
+    "peak_elapsed_seconds": 7023.345766295039,
+    "peak_stage": "MUMPS numeric factor/solution retained before release",
+    "swap_bytes": 0,
+    "warning_triggered": false,
+    "critical_checkpoint_crossed": false,
+    "absolute_hard_stop_bytes": 224000000000,
+    "timing_seconds_max_rank": {
+      "packet_read": 0.8070760400150903,
+      "packet_hydrate": 0.07595701399259269,
+      "two_local_fem_dtn_systems": 387.86823651200393,
+      "internal_modal_coupling": 3194.1688997440506,
+      "primary_system_build": 35.4941218830063,
+      "setup": 3394.103840555006,
+      "solve": 1.9525350429466926,
+      "physical_field_reconstruction": 83.35377941501793,
+      "worker_total": 7131.113596254028,
+      "run_manifest_wall": 6771.478625
+    }
+  },
+  "comparison": {
+    "full3d_h4_integrated_status": "not_available",
+    "full3d_h4_reason": "formal Full3D run timed out during MUMPS factor setup before solve",
+    "same_grid_RTA_or_field_comparison": "not_run",
+    "hybrid_direct_own_gate_is_independent": true
+  },
+  "raw_artifact_sha256": {
+    "run_manifest.json": "5f77b5a7c2c0bfe48f66394e94e837b59c8522f20bc5148226b0358e557af006",
+    "run_summary.json": "3f19ead55f507e084488e2df77e352e2f650bcfe4fc2e1f85b42fbddc09b4a72",
+    "numerical_output/run_summary.json": "90aecff69b43e0b009f662771f7b3a695ef3a838b0ed9a4bf7fa8dd230b5aa0e",
+    "numerical_output/memory_stage_markers.raw.jsonl": "e32953ebd61d7844cf4c1f0c0554baaf108a074fb8b6db0bdf67427624671a4a",
+    "numerical_output/memory_stages.jsonl": "90720ed524c3c52918901d871c7eceac742fbb76fa3b324889b3b83f544044aa",
+    "numerical_output/process_tree_samples.jsonl": "aeb2c7c2ddfa9dd7291966a2ae2be93d4b7d7bb25fb830ad05dce49f6852b87d",
+    "numerical_output/memory_object_ledger.json": "51ef489b4cd80469bd9c09b14245696616694fa5e2c96e7c71967c406c86b7c7",
+    "numerical_output/memory_detail_markers.raw.jsonl": "b08a262be15ec9a41ca1dc86d8eab89f3225e17eaa43523eda5ebe7308214389"
+  }
+}

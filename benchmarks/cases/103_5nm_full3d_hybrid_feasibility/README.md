@@ -65,3 +65,14 @@ swap=0，未达到 `224000000000 B` hard stop。该结果分类为
 见 [V4 h4 lifecycle outcome](../../../docs/task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v4_full3d_h4_lifecycle.md)
 和 [compact record](records/task039_v4_full3d_h4_lifecycle_timeout_v1.json)。旧 h4 partial
 与 2D Q8 仍保留为历史/不完整诊断。
+
+## V4-5 Hybrid direct h4/M480
+
+正式 Hybrid direct consumer 已在固定 5 nm、1°、phi=0、S、p6/h4、M480、MPI8 上
+复用 shared selected-mode packet，own Gate 通过；Full3D h4 同网格比较因 MUMPS
+factor setup timeout 仍不可用。18-stage taxonomy 中 consumer 实际对齐 12 个 marker，
+stage `1–6` 属于未执行的 mesh/QEP/packet-prep 边界；`12+12` checker counts 未在
+worker record 单独持久化。
+
+见 [V4-5 outcome](../../../docs/task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v4_hybrid_direct_h4_lifecycle.md)
+和 [compact record](records/task039_v4_h4_hybrid_direct_packet_consumer_v1.json)。

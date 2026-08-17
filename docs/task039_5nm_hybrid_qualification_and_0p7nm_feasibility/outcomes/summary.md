@@ -440,3 +440,21 @@ absolute hard stop 尚有 `323047424 B`；该停止原因是 timeout，不是 ha
 UTC wall-clock 与 monotonic watchdog 的 507.82493455498487 s observed discrepancy
 也保留在 compact record 中，未猜测其原因。旧 h4 partial 与 2D Q8 仍只作
 historical/incomplete diagnostic，不补写为本轮 Full3D authority。
+
+### V4-5：h4/M480 Hybrid direct shared-packet own Gate
+
+本次 Hybrid direct 在固定 5 nm、1° grazing、phi=0、S、p6/h4、M480、MPI8 上消费
+已独立生成的 shared selected-mode packet；它不是 Full3D direct，也没有重跑 QEP。
+全局增广 MUMPS solve 的 true residual 为 `3.7053063181108737e-10`，projection、
+exact variational traction、field/canonical 和能量 closure 均通过 own Gate；factor、
+global system 和 collective cleanup 在 postprocess 前完成，峰值为
+`95618.0546875 MiB`，swap=0。Full3D h4 同网格 integrated comparison 仍为
+`not_available`，因为其正式 run 在 MUMPS factor setup 阶段 timeout。
+
+18-stage taxonomy 中该 consumer 实际发出并对齐 12 个 marker（stage `0` 及 `7–17`）；
+stage `1–6` 是未在 consumer 进程执行的 mesh/QEP/packet-prep 边界，不是缺失样本。
+MUMPS analysis 独立快照为 `not_available`；worker record 也没有单独持久化 `12+12`
+power/amplitude checker counts，不能写成 `12/12` 通过。
+
+详细结果见 [V4-5 outcome](v4_hybrid_direct_h4_lifecycle.md) 和
+[V4-5 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v4_h4_hybrid_direct_packet_consumer_v1.json)。
