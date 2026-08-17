@@ -198,3 +198,54 @@ v1 因 checker 对真实 production audit 的动态字段和 descriptor 形状�
 | v2 compact | `benchmarks/cases/101_task37_extra_development/records/m6b_w18a_839ce67_formal_resource_closeout_v2.json` | `3d9110cf7127333b676e96c5e7dd5cace23ecadc30127063d7f87171d510eb61` |
 
 本轮主要根因边界是：`B` 的 nested solve 显著改善了辅助 residual，但产生的方向与 physical `A` 的校正不充分对齐。当前证据不支持把失败归因于 timeout，也不支持仅靠增加同一路线步数解决；这不是 modal decomposition 的数学证明。PDE、RTA 和 physical screen 继续锁定。下一步只允许先对已保存的 W18A `p1/p2` 做离线二维 span 诊断（0 action、0 PDE），不盲目重跑或延长 fixed40；该诊断尚未运行。
+
+## W18A-S1C：冻结 p1/p2 的离线二维 span recovery
+
+“离线二维 span”是一个很小的上限检查：只读取已经保存的两条物理方向 `p1/p2` 及其对应的冻结残差，不再调用物理算子、求解器或 MPI；然后在这两个方向的二维线性组合里求理论上最好的复数系数和剩余残差。它只能回答“这两条已经保存的方向合起来最多能做到什么”，不代表其他新方向或未来方法不可能成功。
+
+W18A-S1C 是对 S1A 首次运行的 recovery，不是第二次数值 action。S1A 的 v1 在读取数值数组前因 checker 内嵌 evidence SHA 少一位而停在 input-evidence Gate；它没有决定 span lane。v1 文件及其原始 classification `W18A_OFFLINE_SPAN_FAIL` 完整保留、不改写。修复 checker 后，S1C 唯一 recovery 通过 authority Gate，才进入真实二维数值计算。
+
+| 项目 | S1C 结果 | 结论 |
+|---|---:|---|
+| status / classification | `gate_failed` / `W18A_OFFLINE_SPAN_FAIL` | 唯一问题是 `span_rho` |
+| 两次 direct span rho | `0.8732812469280545 / 0.8732812469280545` | 均 `>0.85`，数值 Gate fail |
+| 两次 energy rho | `0.8732812469280448 / 0.8732812469280448` | 与 direct 差 `9.769962616701378e-15` |
+| single-column rho | `[0.8814092210776882, 0.8918283239976346]` | 两次完全一致 |
+| rank / condition | `2 / 14.49840974928392` | Gram 为满秩 |
+| normal closure / Hermitian defect | `5.1709203794237836e-17 / 0` | 通过 `1e-11` 闭合门 |
+| repeat identity | solution、physical image 相对差均 `[0, 0]` | exact identity 通过 |
+| action / KSP / PDE / RTA | `0 / 0 / 0 / false` | 纯离线诊断 |
+
+两次 repeat 的复系数均为
+`[0.5993370638203415-0.422505007282305i, -0.3479971248183352+0.3174952090480066i]`。
+二维 Gram 与 `h=P^H r` 为：
+
+```text
+G = [[8.287408046061365,
+      8.433761195521047+0.08592376617149038i],
+     [8.433761195521047-0.08592376617149038i,
+      8.748616651004214]]
+h = [2.004745773458913-0.8536938466009105i,
+     1.973869009746229-0.8371597605689928i]
+singular_values = [0.2840097038250844, 4.117689058828843]
+rank_threshold = 1.1703176195478712e-13
+```
+
+solution/image combination norm 为 `1.4962119379374437 / 0.7807134026632232`，均 finite。`span_lane_decided=true`、`qualified_for_bounded_followup=false`、`close_w18a_nested_span_lane=true`：这只关闭 W18 已保存 `p1/p2` 的二维 span lane，不是 PDE 失败，也不解锁任何后续 PDE/RTA。
+
+下一步不得盲目延长同一 nested auxiliary 的 outer steps。任何新机制都必须先经监督审核，具有明确且有限的边界，并先完成资源 preflight；本记录不授权新的 action 或 heavy run。
+
+### S1C 证据索引
+
+| 证据 | 路径 | SHA |
+|---|---|---|
+| S1C v2 record | `benchmarks/cases/101_task37_extra_development/records/m6b_w18a_p1_p2_span_diagnostic_v2.json` | `0b1418c1cb4e58173519b2e249a9a85f2f1674228fc49943119f7bc9019d5451` |
+| S1C embedded evidence | 同上 | `6da0b3c7e747b2ef7030d8e27196f659b8e12d13f9e35ab7b4d91d80ed9786bf` |
+| S1A v1 record | `benchmarks/cases/101_task37_extra_development/records/m6b_w18a_p1_p2_span_diagnostic_v1.json` | `7431ec84d2f5324c0fe9079a519e7c87196fd75d74d4ce40ccb04e8cd01601b0` |
+| W18A formal v2 | `benchmarks/cases/101_task37_extra_development/records/m6b_w18a_839ce67_formal_resource_closeout_v2.json` | `3d9110cf7127333b676e96c5e7dd5cace23ecadc30127063d7f87171d510eb61` |
+| W18A formal v2 evidence | 同上 | `2132d54aacd70f38ea93e8c0886f7d2a5b86b8da6748d322edfc1d85afebc45f` |
+| W18A raw summary | `benchmarks/artifacts/task037_extra_development/m6b_w18a_839ce67_formal_run1/m6b_w18a_summary.json` | `a82fb01c60b48575c2df59649375e3d330f85ba3edf43f1bd59c84bb2b29a4b5` |
+| W18A watchdog summary | `benchmarks/artifacts/task037_extra_development/m6b_w18a_839ce67_formal_watchdog_run1/w18a_watchdog_summary.json` | `a32275d426cfe826f80be46dc8fbeba481e5bd8047589454f77b77b7c7a953eb` |
+| producer / checker source | W18A formal producer / S1C checker | `839ce6733db2dc737f5c8bfb6347633f53161d82` / `282a329d29b2819a64131607ef626cd611404d8b` |
+
+S1C 没有改变 W18A formal raw、watchdog、v1/v2 compact，也没有运行 full time-harmonic PDE、official field/RTA、direct-authority physics comparison 或最终 `<2,000,000,000 B` PDE process-tree 测量。
