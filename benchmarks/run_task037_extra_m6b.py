@@ -9819,8 +9819,20 @@ def _m6b_w18a_offline_array(
     return array, normalized
 
 
+def _m6b_w18a_checker_source(expected_checker_source_sha: str) -> dict[str, Any]:
+    import benchmarks.run_task037_extra_h2b as h2b
+
+    source = h2b._light_source()
+    if not (
+        _m6b_w6a_source_valid(source)
+        and source["source_commit_full_sha"] == expected_checker_source_sha
+    ):
+        raise ValueError("W18A offline checker source is not clean or expected")
+    return dict(source)
+
+
 def _m6b_w18a_offline_authority(
-    raw_dir: Path, compact_path: Path, expected_source_sha: str
+    raw_dir: Path, compact_path: Path, expected_producer_source_sha: str
 ) -> tuple[dict[str, Any], dict[str, Any], list[float]]:
     raw_dir = Path(raw_dir).resolve()
     compact_path = Path(compact_path).resolve()
@@ -9834,7 +9846,7 @@ def _m6b_w18a_offline_authority(
         and compact.get("phase") == M6B_W18A_PHASE
         and compact.get("classification") == "W18A_NESTED_AUXILIARY_NUMERIC_FAIL"
         and compact.get("problems") == ["worker_action_gate"]
-        and compact.get("producer_source_sha") == expected_source_sha
+        and compact.get("producer_source_sha") == expected_producer_source_sha
         and compact.get("formal_pass") is False
         and compact.get("pde_pass") is False
         and compact.get("official_rta") is False
@@ -9857,7 +9869,7 @@ def _m6b_w18a_offline_authority(
     for source in (summary.get("source_at_start"), summary.get("source_at_end")):
         if not (
             isinstance(source, Mapping)
-            and source.get("source_commit_full_sha") == expected_source_sha
+            and source.get("source_commit_full_sha") == expected_producer_source_sha
             and source.get("tracked_source_dirty") is False
             and source.get("source_worktree_dirty") is False
             and source.get("worktree_status_porcelain") == []
@@ -9880,9 +9892,11 @@ def _m6b_w18a_offline_complex(value: Any) -> list[list[float]]:
     import numpy as np
 
     array = np.asarray(value)
+    if array.ndim == 1:
+        return [[float(item.real), float(item.imag)] for item in array]
     return [
-        [float(item.real), float(item.imag)]
-        for item in array.reshape(-1)
+        [[float(item.real), float(item.imag)] for item in row]
+        for row in array
     ]
 
 
@@ -9903,6 +9917,7 @@ def _m6b_w18a_offline_analysis(value: Mapping[str, Any]) -> dict[str, Any]:
         "singular_values": [
             _m6b_w18a_offline_float(item) for item in value["singular_values"]
         ],
+        "rank_threshold": _m6b_w18a_offline_float(value.get("rank_threshold")),
         "rank": value.get("rank"),
         "condition_number": _m6b_w18a_offline_float(value.get("condition_number")),
         "hermitian_defect": _m6b_w18a_offline_float(value.get("hermitian_defect")),
@@ -9932,14 +9947,18 @@ def _m6b_w18a_offline_analysis(value: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _m6b_w18a_offline_span_report(
-    raw_dir: Path, compact_path: Path, expected_source_sha: str
+    raw_dir: Path,
+    compact_path: Path,
+    expected_producer_source_sha: str,
+    expected_checker_source_sha: str,
+    checker_source_start: Mapping[str, Any],
 ) -> dict[str, Any]:
     import numpy as np
 
     from src.solvers.krylov_span_diagnostic import analyze_two_column_span
 
     summary, compact, formal_rhos = _m6b_w18a_offline_authority(
-        raw_dir, compact_path, expected_source_sha
+        raw_dir, compact_path, expected_producer_source_sha
     )
     core = summary.get("core")
     if not isinstance(core, Mapping):
@@ -10137,9 +10156,9 @@ def _m6b_w18a_offline_span_report(
         "pde_call_count": 0,
         "qualified_for_bounded_followup": passed,
         "close_w18a_nested_span_lane": not passed,
-        "source_at_start": summary["source_at_start"],
-        "source_at_end": summary["source_at_end"],
-        "expected_source_sha": expected_source_sha,
+        "producer_source_sha": expected_producer_source_sha,
+        "checker_source_sha": expected_checker_source_sha,
+        "checker_source_at_start": dict(checker_source_start),
         "input_authority": {
             "compact_path": str(Path(compact_path).resolve()),
             "compact_file_sha256": _sha256_file(Path(compact_path)),
@@ -10176,16 +10195,29 @@ def _m6b_w18a_offline_span_report(
 
 
 def _run_m6b_w18a_offline_span(
-    raw_dir: Path, compact_path: Path, output: Path, expected_source_sha: str
+    raw_dir: Path,
+    compact_path: Path,
+    output: Path,
+    expected_producer_source_sha: str,
+    expected_checker_source_sha: str,
 ) -> int:
     output = Path(output).resolve()
     if output.exists():
         raise FileExistsError(f"W18A offline span refuses existing output: {output}")
+    checker_source_start = None
     try:
+        checker_source_start = _m6b_w18a_checker_source(expected_checker_source_sha)
         report = _m6b_w18a_offline_span_report(
-            Path(raw_dir).resolve(), Path(compact_path).resolve(), expected_source_sha
+            Path(raw_dir).resolve(),
+            Path(compact_path).resolve(),
+            expected_producer_source_sha,
+            expected_checker_source_sha,
+            checker_source_start,
         )
-    except (KeyError, OSError, TypeError, ValueError) as exc:
+        report["checker_source_at_end"] = _m6b_w18a_checker_source(
+            expected_checker_source_sha
+        )
+    except (ImportError, KeyError, OSError, TypeError, ValueError) as exc:
         report = {
             "schema": M6B_W18A_OFFLINE_SPAN_SCHEMA,
             "phase": M6B_W18A_OFFLINE_SPAN_PHASE,
@@ -10206,7 +10238,10 @@ def _run_m6b_w18a_offline_span(
             "pde_call_count": 0,
             "qualified_for_bounded_followup": False,
             "close_w18a_nested_span_lane": True,
-            "expected_source_sha": expected_source_sha,
+            "producer_source_sha": expected_producer_source_sha,
+            "checker_source_sha": expected_checker_source_sha,
+            "checker_source_at_start": checker_source_start,
+            "checker_source_at_end": None,
         }
     _write_json(output, _attach_evidence(report))
     return 0 if report["pass"] is True else 1
@@ -26382,7 +26417,14 @@ def _parser() -> argparse.ArgumentParser:
     w18a_span.add_argument("--w18a-compact", required=True)
     w18a_span.add_argument("--output", required=True)
     w18a_span.add_argument(
-        "--expected-source-sha", required=True, type=_m6b_w2_source_sha_argument
+        "--expected-producer-source-sha",
+        required=True,
+        type=_m6b_w2_source_sha_argument,
+    )
+    w18a_span.add_argument(
+        "--expected-checker-source-sha",
+        required=True,
+        type=_m6b_w2_source_sha_argument,
     )
     w15a_watchdog = sub.add_parser("m6b-w15a-watchdog")
     w15a_watchdog.add_argument("--run-dir", required=True)
@@ -26867,7 +26909,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             Path(args.raw_dir).resolve(),
             Path(args.w18a_compact).resolve(),
             Path(args.output).resolve(),
-            args.expected_source_sha,
+            args.expected_producer_source_sha,
+            args.expected_checker_source_sha,
         )
     run_dir = Path(args.run_dir).resolve()
     if args.command == "m6b-check":

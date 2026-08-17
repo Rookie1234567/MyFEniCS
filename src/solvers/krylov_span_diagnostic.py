@@ -491,6 +491,8 @@ def analyze_two_column_span(
         or not np.isfinite(direct_rho)
         or not np.isfinite(energy_rho)
         or not np.isfinite(result["direct_vs_energy_difference"])
+        or not np.isfinite(result["solution_combination_norm"])
+        or not np.isfinite(result["image_combination_norm"])
         or len(single_rho) != 2
         or normal_closure > NORMAL_CLOSURE_LIMIT
         or result["direct_vs_energy_difference"] > NORMAL_CLOSURE_LIMIT

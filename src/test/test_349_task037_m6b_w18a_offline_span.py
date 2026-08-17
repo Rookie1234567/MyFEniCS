@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+import benchmarks.run_task037_extra_h2b as h2b
 import benchmarks.run_task037_extra_m6b as runner
 from src.solvers import krylov_span_diagnostic as span
 
@@ -134,6 +135,20 @@ def _fixture(
     return raw, compact_path, tmp_path / "span.json"
 
 
+def _patch_checker_source(
+    monkeypatch: pytest.MonkeyPatch, source_sha: str, *, dirty: bool = False
+) -> None:
+    source = {
+        "source_commit_full_sha": source_sha,
+        "tracked_source_dirty": dirty,
+        "source_worktree_dirty": dirty,
+        "nonignored_untracked_paths": ["dirty"] if dirty else [],
+        "worktree_status_porcelain": ["M dirty"] if dirty else [],
+        "git_error": None,
+    }
+    monkeypatch.setattr(h2b, "_light_source", lambda: dict(source))
+
+
 def test_w18a_two_column_complex_span_passes_and_records_combination():
     rhs = np.asarray([1.0 + 0.2j, 2.0 - 0.1j, 0.1j, 0.2], dtype=np.complex128)
     first = np.asarray([1.0 + 0.1j, 0.0, 0.0, 0.0], dtype=np.complex128)
@@ -159,6 +174,20 @@ def test_w18a_rank_deficient_span_fails_closed():
     assert "rank" in result["problems"]
 
 
+def test_w18a_span_rejects_nonfinite_combination_norm():
+    rhs = np.asarray([1.0 + 0.2j, 2.0 - 0.1j, 0.1j, 0.2], dtype=np.complex128)
+    first = np.asarray([1.0 + 0.1j, 0.0, 0.0, 0.0], dtype=np.complex128)
+    second = np.asarray([0.0, 1.0 - 0.1j, 0.0, 0.0], dtype=np.complex128)
+    huge = np.full(4, 1.0e308 + 0.0j, dtype=np.complex128)
+
+    with np.errstate(over="ignore"):
+        result = span.analyze_two_column_span(rhs, first, second, huge, huge)
+
+    assert result["solution_combination_norm"] == np.inf
+    assert result["pass"] is False
+    assert "projection" in result["problems"]
+
+
 def test_w18a_span_gate_rejects_weak_two_column_image():
     rhs = np.asarray([0.0, 0.0, 1.0, 1.0], dtype=np.complex128)
     first = np.asarray([1.0, 0.0, 0.0, 0.0], dtype=np.complex128)
@@ -172,7 +201,12 @@ def test_w18a_span_gate_rejects_weak_two_column_image():
 def test_w18a_offline_fixture_authority_and_output_contract(tmp_path, monkeypatch):
     monkeypatch.setattr(runner, "M6B_GLOBAL_ROWS", 4)
     raw, compact, output = _fixture(tmp_path, "a" * 40, monkeypatch)
-    report = runner._m6b_w18a_offline_span_report(raw, compact, "a" * 40)
+    checker_sha = "c" * 40
+    _patch_checker_source(monkeypatch, checker_sha)
+    checker_start = runner._m6b_w18a_checker_source(checker_sha)
+    report = runner._m6b_w18a_offline_span_report(
+        raw, compact, "a" * 40, checker_sha, checker_start
+    )
 
     assert report["pass"] is True
     assert report["derived"] is True
@@ -181,6 +215,10 @@ def test_w18a_offline_fixture_authority_and_output_contract(tmp_path, monkeypatc
     assert report["checks"]["repeat_identity"] is True
     assert len(report["artifact_hashes"]) == 4
     assert report["analysis_repeats"][0]["rows"] == 4
+    gram = report["analysis_repeats"][0]["gram"]
+    assert len(gram) == 2 and len(gram[0]) == 2 and len(gram[0][0]) == 2
+    assert len(report["analysis_repeats"][0]["h"]) == 2
+    assert "rank_threshold" in report["analysis_repeats"][0]
     assert all(
         descriptor["shape"] == [4]
         for item in report["artifact_hashes"].values()
@@ -188,19 +226,27 @@ def test_w18a_offline_fixture_authority_and_output_contract(tmp_path, monkeypatc
     )
 
     assert runner._run_m6b_w18a_offline_span(
-        raw, compact, output, "a" * 40
+        raw, compact, output, "a" * 40, checker_sha
     ) == 0
     saved = json.loads(output.read_text(encoding="utf-8"))
     assert saved["qualified_for_bounded_followup"] is True
+    assert saved["producer_source_sha"] == "a" * 40
+    assert saved["checker_source_sha"] == checker_sha
+    assert saved["checker_source_at_start"]["source_commit_full_sha"] == checker_sha
+    assert saved["checker_source_at_end"]["source_commit_full_sha"] == checker_sha
     assert "rhs" not in saved
     with pytest.raises(FileExistsError):
-        runner._run_m6b_w18a_offline_span(raw, compact, output, "a" * 40)
+        runner._run_m6b_w18a_offline_span(
+            raw, compact, output, "a" * 40, checker_sha
+        )
 
 
 @pytest.mark.parametrize("tamper", ["descriptor", "source"])
 def test_w18a_offline_tampered_authority_fails_closed(tmp_path, monkeypatch, tamper):
     monkeypatch.setattr(runner, "M6B_GLOBAL_ROWS", 4)
     raw, compact, output = _fixture(tmp_path, "a" * 40, monkeypatch)
+    checker_sha = "c" * 40
+    _patch_checker_source(monkeypatch, checker_sha)
     summary_path = raw / runner.M6B_W18A_SUMMARY_FILENAME
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
     if tamper == "descriptor":
@@ -212,11 +258,30 @@ def test_w18a_offline_tampered_authority_fails_closed(tmp_path, monkeypatch, tam
     summary_path.write_text(json.dumps(summary, sort_keys=True), encoding="utf-8")
 
     assert runner._run_m6b_w18a_offline_span(
-        raw, compact, output, "a" * 40
+        raw, compact, output, "a" * 40, checker_sha
     ) == 1
     failure = json.loads(output.read_text(encoding="utf-8"))
     assert failure["pass"] is False
     assert failure["problems"] == ["input_evidence"]
+
+
+@pytest.mark.parametrize("dirty, expected", [(False, "d" * 40), (True, "c" * 40)])
+def test_w18a_offline_checker_identity_fails_closed(
+    tmp_path, monkeypatch, dirty, expected
+):
+    monkeypatch.setattr(runner, "M6B_GLOBAL_ROWS", 4)
+    raw, compact, output = _fixture(tmp_path, "a" * 40, monkeypatch)
+    checker_sha = "c" * 40
+    _patch_checker_source(monkeypatch, checker_sha, dirty=dirty)
+
+    assert runner._run_m6b_w18a_offline_span(
+        raw, compact, output, "a" * 40, expected
+    ) == 1
+    failure = json.loads(output.read_text(encoding="utf-8"))
+    assert failure["pass"] is False
+    assert failure["problems"] == ["input_evidence"]
+    assert failure["producer_source_sha"] == "a" * 40
+    assert failure["checker_source_sha"] == expected
 
 
 def test_w18a_parser_dispatch_and_offline_path_has_no_action_stack(tmp_path, monkeypatch):
@@ -229,19 +294,28 @@ def test_w18a_parser_dispatch_and_offline_path_has_no_action_stack(tmp_path, mon
             str(tmp_path / "v2.json"),
             "--output",
             str(tmp_path / "out.json"),
-            "--expected-source-sha",
+            "--expected-producer-source-sha",
             "a" * 40,
+            "--expected-checker-source-sha",
+            "c" * 40,
         ]
     )
     assert args.command == "m6b-w18a-offline-span"
     seen = {}
 
-    def fake(raw_dir, compact_path, output, expected_source_sha):
+    def fake(
+        raw_dir,
+        compact_path,
+        output,
+        expected_producer_source_sha,
+        expected_checker_source_sha,
+    ):
         seen.update(
             raw_dir=raw_dir,
             compact_path=compact_path,
             output=output,
-            expected_source_sha=expected_source_sha,
+            expected_producer_source_sha=expected_producer_source_sha,
+            expected_checker_source_sha=expected_checker_source_sha,
         )
         return 17
 
@@ -255,11 +329,14 @@ def test_w18a_parser_dispatch_and_offline_path_has_no_action_stack(tmp_path, mon
             str(tmp_path / "v2.json"),
             "--output",
             str(tmp_path / "out.json"),
-            "--expected-source-sha",
+            "--expected-producer-source-sha",
             "a" * 40,
+            "--expected-checker-source-sha",
+            "c" * 40,
         ]
     ) == 17
-    assert seen["expected_source_sha"] == "a" * 40
+    assert seen["expected_producer_source_sha"] == "a" * 40
+    assert seen["expected_checker_source_sha"] == "c" * 40
     source = inspect.getsource(runner._m6b_w18a_offline_span_report)
     assert all(
         token not in source
