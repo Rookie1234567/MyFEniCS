@@ -40,7 +40,7 @@ def _shared_directory(tmp_path: Path) -> tuple[Path, MPI.Intracomm]:
     return directory, comm
 
 
-def _identity(comm: MPI.Intracomm) -> dict[str, object]:
+def _identity(comm: MPI.Intracomm, scope: str = V4_PACKET_SCOPE) -> dict[str, object]:
     return {
         "source_sha": "0123456789abcdef0123456789abcdef01234567",
         "input_sha256": "input-sha",
@@ -48,6 +48,7 @@ def _identity(comm: MPI.Intracomm) -> dict[str, object]:
         "physical_sha256": "physical-sha",
         "mesh": "mesh-sha",
         "mode_count": 480,
+        "scope": scope,
         "external_keys": "external-key-set-sha",
         "mpi": comm.size,
     }
@@ -859,6 +860,46 @@ def test_task039_v4_streaming_roundtrip_hydrates_two_bases_and_collective_gram(
     iterative_hydrated.destroy()
     del hydrated, loaded, result
     gc.collect()
+    comm.barrier()
+
+
+def test_task039_v5_h5_packet_scope_keeps_consumer_qep_zero_and_release(
+    tmp_path: Path,
+) -> None:
+    directory, comm = _shared_directory(tmp_path)
+    branches, ownership = _branches(comm)
+    identity = _identity(comm, scope="task039_v5_h5_m480")
+    bases = {
+        name: _fake_basis(branches[name], ownership)
+        for name in ("positive", "negative")
+    }
+    result = write_task039_v4_selected_mode_packet(
+        directory,
+        positive_basis=bases["positive"],
+        negative_basis=bases["negative"],
+        identity=identity,
+        metadata=_metadata(),
+        comm=comm,
+    )
+    loaded = load_task039_v4_selected_mode_packet(
+        directory / "manifest.json",
+        identity=identity,
+        expected_manifest_sha256=result["manifest_sha256"],
+        comm=comm,
+    )
+    assert loaded["scope"] == "task039_v5_h5_m480"
+    consumed = consume_task039_v4_selected_mode_packet(
+        directory / "manifest.json",
+        identity=identity,
+        expected_manifest_sha256=result["manifest_sha256"],
+        consumer_kind="direct",
+        comm=comm,
+    )
+    assert consumed.packet_consumer_diagnostics["qep_calls"] == 0
+    assert consumed.packet_consumer_diagnostics["consumer_qep_required"] is False
+    consumed.destroy()
+    assert consumed.packet_consumer_diagnostics["vector_count_after_destroy"] == 0
+    del loaded, consumed
     comm.barrier()
 
 

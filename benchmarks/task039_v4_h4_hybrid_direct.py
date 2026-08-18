@@ -57,6 +57,14 @@ TASK039_V4_H4_QUALIFICATION_METHOD = "task039_v4_h4_exact_side_case_qualificatio
 TASK039_V4_H4_QUALIFICATION_TARGET = (
     "TASK039_V4_CASE_QUALIFIED_EXPLICIT_OPT_IN_HYBRID_ITERATIVE_EXACT_SIDE_PASS"
 )
+TASK039_V5_H5_HYBRID_DIRECT_INPUT = Path(
+    "input/official/task039/5nm_p6h5_v3_1deg_hybrid_direct_m480_mpi8.dat"
+)
+TASK039_V5_H5_HYBRID_DIRECT_MODEL_ID = "task039_5nm_v3_1deg_s5_hybrid_direct_m480"
+TASK039_V5_H5_MODE_SCOPE = "task039_v5_h5_m480"
+TASK039_V5_H5_MPI_SIZE = 8
+TASK039_V5_H5_MODE_COUNT = 480
+TASK039_V5_H5_ADAPTER_IDENTITY = "task039.v5.h5.hybrid_direct"
 
 
 def _sha256_json(value: Any) -> str:
@@ -151,18 +159,92 @@ def validate_v4_h4_specification(
     return payload
 
 
+def validate_v5_h5_specification(
+    specification: RunSpecification,
+) -> dict[str, Any]:
+    """Validate the fixed V5-S h5 current-lifecycle sidecar profile."""
+
+    payload = specification.as_jsonable()
+    method = payload.get("method", {})
+    incidence = payload.get("incidence", {})
+    discretization = payload.get("discretization", {})
+    execution = payload.get("execution", {})
+    if payload.get("model_id") != TASK039_V5_H5_HYBRID_DIRECT_MODEL_ID:
+        raise InputError("V5-S h5 requires the existing 1-degree h5 direct identity")
+    if method.get("kind") != "hybrid_direct" or not task039_model_id_matches(
+        "hybrid_direct",
+        payload["model_id"],
+        method.get("requested_modes_per_direction"),
+    ):
+        raise InputError("V5-S h5 requires a direct M480 model identity")
+    errors = task039_profile_errors(payload)
+    if errors:
+        path, message = errors[0]
+        raise InputError(f"{path}: {message}")
+    fixed = (
+        (payload.get("dimension"), 3, "dimension=3"),
+        (incidence.get("wavelength_nm"), 5.0, "wavelength=5nm"),
+        (incidence.get("grazing_angle_deg"), 1.0, "grazing=1 degree"),
+        (incidence.get("azimuth_deg"), 0.0, "azimuth=0"),
+        (incidence.get("polarization"), "s", "polarization=s"),
+        (discretization.get("mesh_target_nm"), 5.0, "mesh=h5"),
+        (discretization.get("nedelec_degree"), 6, "p6"),
+        (method.get("bottom_interface_nm"), 10.0, "bottom interface=10nm"),
+        (method.get("top_interface_nm"), 110.0, "top interface=110nm"),
+        (method.get("requested_modes_per_direction"), 480, "M=480"),
+        (execution.get("mpi_size"), TASK039_V5_H5_MPI_SIZE, "MPI8"),
+        (execution.get("warning_memory_gib"), 170.0, "warning=170GiB"),
+        (execution.get("terminate_memory_gib"), 195.0, "critical=195GiB"),
+        (execution.get("absolute_terminate_memory_bytes"), 224000000000, "hard=224e9"),
+        (execution.get("timeout_seconds"), 21600, "timeout=21600s"),
+        (execution.get("require_zero_swap"), True, "swap=0"),
+    )
+    for actual, expected, label in fixed:
+        if actual != expected:
+            raise InputError(f"V5-S h5 requires {label}")
+    inventory = task039_dynamic_external_mode_inventory(payload)
+    keys = inventory.get("keys")
+    if not isinstance(keys, list) or not keys:
+        raise InputError("V5-S h5 external inventory must be non-empty")
+    if len({json.dumps(key, sort_keys=True) for key in keys}) != len(keys):
+        raise InputError("V5-S h5 external inventory keys must be unique")
+    return payload
+
+
+def _validate_v5_h5_phase_method(specification: RunSpecification, phase: str) -> None:
+    if phase not in {"mode-prep", "direct-consumer"}:
+        raise InputError("V5-S h5 supports only mode-prep and direct-consumer")
+    if specification.method.get("kind") != "hybrid_direct":
+        raise InputError("V5-S h5 phases require method.kind=hybrid_direct")
+
+
 def build_v4_h4_mode_identity(
     specification: RunSpecification,
     source_sha: str,
+    *,
+    profile: str = "v4-h4",
 ) -> dict[str, Any]:
     """Build producer authority shared unchanged by both V4 consumers."""
 
-    payload = validate_v4_h4_specification(specification)
+    if profile == "v5-h5":
+        payload = validate_v5_h5_specification(specification)
+        scope = TASK039_V5_H5_MODE_SCOPE
+        schema = "task039.v5.h5.mode-identity.v1"
+        mode_count = TASK039_V5_H5_MODE_COUNT
+        mpi_size = TASK039_V5_H5_MPI_SIZE
+    elif profile == "v4-h4":
+        payload = validate_v4_h4_specification(specification)
+        scope = TASK039_V4_H4_MODE_SCOPE
+        schema = "task039.v4.h4.mode-identity.v1"
+        mode_count = TASK039_V4_H4_MODE_COUNT
+        mpi_size = TASK039_V4_H4_MPI_SIZE
+    else:
+        raise InputError(f"unknown Task39 profile {profile!r}")
     source = _validate_source_sha(source_sha)
     inventory = task039_dynamic_external_mode_inventory(payload)
     return {
-        "schema": "task039.v4.h4.mode-identity.v1",
-        "scope": TASK039_V4_H4_MODE_SCOPE,
+        "schema": schema,
+        "scope": scope,
         "method_independent": True,
         "source_sha": source,
         "input_sha256": specification.input_sha256,
@@ -176,8 +258,8 @@ def build_v4_h4_mode_identity(
             "nedelec_degree": payload["discretization"]["nedelec_degree"],
             "cell_type": payload["discretization"]["mesh_cell_type"],
         },
-        "mode_count": TASK039_V4_H4_MODE_COUNT,
-        "mpi_size": TASK039_V4_H4_MPI_SIZE,
+        "mode_count": mode_count,
+        "mpi_size": mpi_size,
         "external_keys": {
             "count": len(inventory["keys"]),
             "sha256": _sha256_json(inventory["keys"]),
@@ -189,10 +271,12 @@ def write_v4_h4_mode_identity(
     specification: RunSpecification,
     source_sha: str,
     target: str | Path,
+    *,
+    profile: str = "v4-h4",
 ) -> tuple[dict[str, Any], str]:
     """Write the shared identity JSON and return it with its file SHA256."""
 
-    identity = build_v4_h4_mode_identity(specification, source_sha)
+    identity = build_v4_h4_mode_identity(specification, source_sha, profile=profile)
     path = Path(target)
     path.parent.mkdir(parents=True, exist_ok=True)
     data = (
@@ -205,8 +289,26 @@ def write_v4_h4_mode_identity(
     return identity, hashlib.sha256(data).hexdigest()
 
 
+def build_v5_h5_mode_identity(
+    specification: RunSpecification,
+    source_sha: str,
+) -> dict[str, Any]:
+    return build_v4_h4_mode_identity(specification, source_sha, profile="v5-h5")
+
+
+def write_v5_h5_mode_identity(
+    specification: RunSpecification,
+    source_sha: str,
+    target: str | Path,
+) -> tuple[dict[str, Any], str]:
+    return write_v4_h4_mode_identity(specification, source_sha, target, profile="v5-h5")
+
+
 def _validate_shared_h4_mode_identity(
-    identity: Mapping[str, Any], payload: Mapping[str, Any]
+    identity: Mapping[str, Any],
+    payload: Mapping[str, Any],
+    *,
+    profile: str = "v4-h4",
 ) -> None:
     """Check the method-independent packet authority against h4 input facts."""
 
@@ -219,18 +321,32 @@ def _validate_shared_h4_mode_identity(
         if isinstance(provenance, Mapping)
         else None
     )
-    if identity.get("scope") != TASK039_V4_H4_MODE_SCOPE:
-        raise InputError("V4 h4 packet identity scope is not the fixed h4 scope")
+    if profile == "v5-h5":
+        expected_scope, expected_mesh, expected_mpi = (
+            TASK039_V5_H5_MODE_SCOPE,
+            5.0,
+            TASK039_V5_H5_MPI_SIZE,
+        )
+    elif profile == "v4-h4":
+        expected_scope, expected_mesh, expected_mpi = (
+            TASK039_V4_H4_MODE_SCOPE,
+            4.0,
+            TASK039_V4_H4_MPI_SIZE,
+        )
+    else:
+        raise InputError(f"unknown Task39 profile {profile!r}")
+    if identity.get("scope") != expected_scope:
+        raise InputError("Task39 packet identity scope does not match profile")
     if identity.get("method_independent") is not True:
         raise InputError("V4 h4 packet identity must be method-independent")
     if identity.get("physical_sha256") != physical_sha:
         raise InputError("V4 h4 packet physical identity does not match input")
-    if not isinstance(mesh, Mapping) or mesh.get("target_nm") != 4.0:
-        raise InputError("V4 h4 packet mesh identity is not h4")
+    if not isinstance(mesh, Mapping) or mesh.get("target_nm") != expected_mesh:
+        raise InputError("Task39 packet mesh identity does not match profile")
     if identity.get("mode_count") != TASK039_V4_H4_MODE_COUNT:
-        raise InputError("V4 h4 packet identity requires M=480")
-    if identity.get("mpi_size") != TASK039_V4_H4_MPI_SIZE:
-        raise InputError("V4 h4 packet identity requires MPI8")
+        raise InputError("Task39 packet identity requires M=480")
+    if identity.get("mpi_size") != expected_mpi:
+        raise InputError("Task39 packet identity requires MPI8")
     if not isinstance(external, Mapping) or (
         external.get("count") != len(inventory["keys"])
         or external.get("sha256") != _sha256_json(inventory["keys"])
@@ -246,8 +362,14 @@ def _phase_argv(
     *,
     identity_json: str | Path,
     packet_directory: str | Path | None = None,
+    profile: str = "v4-h4",
 ) -> list[str]:
-    payload = validate_v4_h4_specification(specification)
+    if profile == "v5-h5":
+        payload = validate_v5_h5_specification(specification)
+    elif profile == "v4-h4":
+        payload = validate_v4_h4_specification(specification)
+    else:
+        raise InputError(f"unknown Task39 profile {profile!r}")
     output = Path(output_directory).resolve() / "numerical_output" / "run_summary.json"
     if phase != "mode-prep":
         raise InputError("V4 phase argv is only used by the mode-prep worker")
@@ -278,11 +400,28 @@ def build_v4_h4_phase_plan(
     manifest_sha256: str | None = None,
     python_executable: str | Path | None = None,
     mpiexec_command: str | None = None,
+    profile: str = "v4-h4",
 ) -> ExecutionPlan:
     """Build the separate MPI8 worker command without starting it."""
 
-    validate_v4_h4_specification(specification)
-    _validate_v4_h4_phase_method(specification, phase)
+    if profile == "v5-h5":
+        validate_v5_h5_specification(specification)
+        _validate_v5_h5_phase_method(specification, phase)
+        profile_mpi_size = TASK039_V5_H5_MPI_SIZE
+        profile_mode_count = TASK039_V5_H5_MODE_COUNT
+        profile_adapter = TASK039_V5_H5_ADAPTER_IDENTITY
+    elif profile == "v4-h4":
+        validate_v4_h4_specification(specification)
+        _validate_v4_h4_phase_method(specification, phase)
+        profile_mpi_size = TASK039_V4_H4_MPI_SIZE
+        profile_mode_count = TASK039_V4_H4_MODE_COUNT
+        profile_adapter = (
+            TASK039_V4_H4_ITERATIVE_ADAPTER_IDENTITY
+            if phase == "iterative-consumer"
+            else TASK039_V4_H4_ADAPTER_IDENTITY
+        )
+    else:
+        raise InputError(f"unknown Task39 profile {profile!r}")
     if phase == "mode-prep" and packet_directory is None:
         raise InputError("mode-prep requires a packet directory")
     if phase in {"direct-consumer", "iterative-consumer"} and (
@@ -300,7 +439,7 @@ def build_v4_h4_phase_plan(
     worker_argv = [
         str(mpiexec),
         "-n",
-        str(TASK039_V4_H4_MPI_SIZE),
+        str(profile_mpi_size),
         str(executable),
         "-m",
         "benchmarks.task039_v4_h4_hybrid_direct",
@@ -316,6 +455,8 @@ def build_v4_h4_phase_plan(
         "--identity-json",
         str(Path(identity_json).resolve()),
     ]
+    if profile != "v4-h4":
+        worker_argv.extend(["--profile", profile])
     if packet_directory is not None:
         worker_argv.extend(
             ["--packet-directory", str(Path(packet_directory).resolve())]
@@ -332,16 +473,12 @@ def build_v4_h4_phase_plan(
         method=(
             "hybrid_iterative" if phase == "iterative-consumer" else "hybrid_direct"
         ),
-        mpi_size=TASK039_V4_H4_MPI_SIZE,
-        requested_modes=TASK039_V4_H4_MODE_COUNT,
+        mpi_size=profile_mpi_size,
+        requested_modes=profile_mode_count,
         physical_model_sha256=specification.physical_model_sha256,
         input_sha256=specification.input_sha256,
         source_sha=source,
-        adapter_identity=(
-            TASK039_V4_H4_ITERATIVE_ADAPTER_IDENTITY
-            if phase == "iterative-consumer"
-            else TASK039_V4_H4_ADAPTER_IDENTITY
-        ),
+        adapter_identity=profile_adapter,
         adapter_available=True,
         contract_probe=False,
         task039_trace_audit=False,
@@ -364,6 +501,7 @@ def launch_v4_h4_phase(
     python_executable: str | Path | None = None,
     mpiexec_command: str | None = None,
     poll_interval: float = TASK039_V4_H4_POLL_SECONDS,
+    profile: str = "v4-h4",
 ) -> dict[str, Any]:
     """Launch one phase through the existing Task38 process-tree watchdog."""
 
@@ -379,15 +517,19 @@ def launch_v4_h4_phase(
     if run_path.exists():
         raise InputError(f"V4 h4 run directory already exists: {run_path}")
     run_path.mkdir(parents=True)
+    if profile == "v5-h5":
+        profile_adapter = TASK039_V5_H5_ADAPTER_IDENTITY
+    else:
+        profile_adapter = (
+            TASK039_V4_H4_ITERATIVE_ADAPTER_IDENTITY
+            if phase == "iterative-consumer"
+            else TASK039_V4_H4_ADAPTER_IDENTITY
+        )
     manifest_value, resolved_sha = _write_bootstrap(
         specification,
         run_path,
         source_sha=_validate_source_sha(source_sha),
-        adapter_identity=(
-            TASK039_V4_H4_ITERATIVE_ADAPTER_IDENTITY
-            if phase == "iterative-consumer"
-            else TASK039_V4_H4_ADAPTER_IDENTITY
-        ),
+        adapter_identity=profile_adapter,
         start_time=_now(),
     )
     plan = build_v4_h4_phase_plan(
@@ -401,6 +543,7 @@ def launch_v4_h4_phase(
         manifest_sha256=manifest_sha256,
         python_executable=python_executable,
         mpiexec_command=mpiexec_command,
+        profile=profile,
     )
     result = _run_worker(
         plan,
@@ -601,13 +744,24 @@ def run_v4_h4_worker(
     packet_directory: str | Path | None = None,
     manifest: str | Path | None = None,
     manifest_sha256: str | None = None,
+    profile: str = "v4-h4",
 ) -> Mapping[str, Any]:
     """Execute one already-planned phase inside the MPI worker."""
 
     payload = json.loads(Path(resolved_config).read_text(encoding="utf-8"))
     specification = load_and_resolve(payload["provenance"]["source_path"])
-    validate_v4_h4_specification(specification)
-    _validate_v4_h4_phase_method(specification, phase)
+    if profile == "v5-h5":
+        validate_v5_h5_specification(specification)
+        _validate_v5_h5_phase_method(specification, phase)
+        identity = json.loads(Path(identity_json).read_text(encoding="utf-8"))
+        if not isinstance(identity, Mapping):
+            raise InputError("V5-S h5 mode identity must be a JSON object")
+        _validate_shared_h4_mode_identity(identity, payload, profile="v5-h5")
+    elif profile == "v4-h4":
+        validate_v4_h4_specification(specification)
+        _validate_v4_h4_phase_method(specification, phase)
+    else:
+        raise InputError(f"unknown Task39 profile {profile!r}")
     if phase in {"direct-consumer", "iterative-consumer"}:
         if manifest is None or manifest_sha256 is None:
             raise InputError(f"{phase} requires manifest and manifest SHA256")
@@ -622,12 +776,17 @@ def run_v4_h4_worker(
             phase,
             identity_json=identity_json,
             packet_directory=packet_directory,
+            profile=profile,
         )
         return run_task032_main(
             argv,
             config_override=simulation_config_3d_from_normalized(payload),
             use_case080_reference=False,
-            canonical_export_prefix="task039_v4_mode_prep",
+            canonical_export_prefix=(
+                "task039_v5_h5_mode_prep"
+                if profile == "v5-h5"
+                else "task039_v4_mode_prep"
+            ),
             external_mode_inventory=task039_dynamic_external_mode_inventory(payload),
             exact_one_cell_work_dir=Path(output_directory)
             / "numerical_output"
@@ -646,6 +805,8 @@ def run_v4_h4_worker(
             selected_mode_packet_consumer_manifest_sha256=manifest_sha256,
         )
     if phase == "iterative-consumer":
+        if profile != "v4-h4":
+            raise InputError("V5-S h5 does not support iterative consumption")
         return _run_v4_h4_iterative_consumer(
             payload,
             output_directory,
@@ -672,6 +833,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--packet-directory", type=Path)
     parser.add_argument("--manifest", type=Path)
     parser.add_argument("--manifest-sha256")
+    parser.add_argument("--profile", choices=("v4-h4", "v5-h5"), default="v4-h4")
     return parser
 
 
@@ -691,14 +853,13 @@ def main(argv: list[str] | None = None) -> int:
             packet_directory=args.packet_directory,
             manifest=args.manifest,
             manifest_sha256=args.manifest_sha256,
+            profile=args.profile,
         )
         failed = not isinstance(result, Mapping) or result.get("passed") is False
     except Exception as exc:
         failed = True
         if MPI.COMM_WORLD.rank == 0:
-            print(
-                f"Task039 V4 h4 worker failed: {type(exc).__name__}: {exc}", flush=True
-            )
+            print(f"Task039 worker failed: {type(exc).__name__}: {exc}", flush=True)
     return 4 if MPI.COMM_WORLD.allreduce(failed, op=MPI.LOR) else 0
 
 
@@ -710,14 +871,20 @@ __all__ = [
     "TASK039_V4_H4_MODE_SCOPE",
     "TASK039_V4_H4_QUALIFICATION_METHOD",
     "TASK039_V4_H4_QUALIFICATION_TARGET",
+    "TASK039_V5_H5_HYBRID_DIRECT_INPUT",
+    "TASK039_V5_H5_HYBRID_DIRECT_MODEL_ID",
+    "TASK039_V5_H5_MODE_SCOPE",
     "build_v4_h4_mode_identity",
     "build_v4_h4_phase_plan",
+    "build_v5_h5_mode_identity",
     "launch_v4_h4_phase",
     "main",
     "run_v4_h4_worker",
     "validate_v4_h4_packet_manifest",
     "validate_v4_h4_specification",
+    "validate_v5_h5_specification",
     "write_v4_h4_mode_identity",
+    "write_v5_h5_mode_identity",
 ]
 
 

@@ -25,6 +25,7 @@ from src.modes.selected_mode_packet import (
 
 
 TASK039_V4_SELECTED_MODE_SCOPE = "task039_v4_h4_m480"
+TASK039_V5_H5_SELECTED_MODE_SCOPE = "task039_v5_h5_m480"
 TASK039_V4_SELECTED_MODE_COUNT = 480
 _BRANCHES = ("positive", "negative")
 _BRANCH_AUTHORITY = ("gram_authority", "qep_diagnostics", "selection_diagnostics")
@@ -203,7 +204,20 @@ def build_task039_v4_packet_metadata(
 
 def _require_task039_identity(identity: Mapping[str, Any]) -> None:
     if int(identity.get("mode_count", -1)) != TASK039_V4_SELECTED_MODE_COUNT:
-        raise ValueError("Task039 V4 selected-mode packet requires mode_count=480")
+        raise ValueError("Task039 selected-mode packet requires mode_count=480")
+    scope = identity.get("scope", TASK039_V4_SELECTED_MODE_SCOPE)
+    if scope not in {
+        TASK039_V4_SELECTED_MODE_SCOPE,
+        TASK039_V5_H5_SELECTED_MODE_SCOPE,
+    }:
+        raise ValueError("Task039 selected-mode packet scope is not approved")
+
+
+def _identity_scope(identity: Mapping[str, Any] | None) -> str:
+    if identity is None:
+        return TASK039_V4_SELECTED_MODE_SCOPE
+    _require_task039_identity(identity)
+    return str(identity.get("scope", TASK039_V4_SELECTED_MODE_SCOPE))
 
 
 def _require_branch_authority(metadata: Mapping[str, Any]) -> None:
@@ -224,14 +238,14 @@ def write_task039_v4_selected_mode_packet(
 ) -> dict[str, Any]:
     """Write the explicit V4 h4/M480 packet from live selected mode bases."""
 
-    _require_task039_identity(identity)
+    scope = _identity_scope(identity)
     _require_branch_authority(metadata)
     return write_selected_mode_packet(
         directory,
         {"positive": positive_basis, "negative": negative_basis},
         identity=identity,
         metadata=metadata,
-        scope=TASK039_V4_SELECTED_MODE_SCOPE,
+        scope=scope,
         comm=comm,
     )
 
@@ -245,17 +259,18 @@ def load_task039_v4_selected_mode_packet(
 ) -> dict[str, Any]:
     """Load the V4 packet as read-only mode-major mmap arrays."""
 
-    if identity is not None:
-        _require_task039_identity(identity)
+    scope = _identity_scope(identity)
     packet = load_selected_mode_packet(
         manifest_path,
         identity=identity,
         expected_manifest_sha256=expected_manifest_sha256,
-        scope=TASK039_V4_SELECTED_MODE_SCOPE,
+        scope=scope,
         comm=comm,
     )
     if packet["mode_count"] != TASK039_V4_SELECTED_MODE_COUNT:
-        raise ValueError("Task039 V4 selected-mode packet mode count mismatch")
+        raise ValueError("Task039 selected-mode packet mode count mismatch")
+    if packet["scope"] != scope:
+        raise ValueError("Task039 selected-mode packet identity scope mismatch")
     local_size = packet["ownership_range"][1] - packet["ownership_range"][0]
     for branch in _BRANCHES:
         for side in ("right_full", "left_full"):
@@ -263,7 +278,7 @@ def load_task039_v4_selected_mode_packet(
                 TASK039_V4_SELECTED_MODE_COUNT,
                 local_size,
             ):
-                raise ValueError("Task039 V4 selected-mode packet layout mismatch")
+                raise ValueError("Task039 selected-mode packet layout mismatch")
     _require_branch_authority(packet["metadata"])
     return packet
 
@@ -275,10 +290,13 @@ def hydrate_task039_v4_selected_mode_packet(
 ) -> SimpleNamespace:
     """Hydrate two independent lightweight bases from mode-major mmap arrays."""
 
-    if packet["scope"] != TASK039_V4_SELECTED_MODE_SCOPE:
-        raise ValueError("Task039 V4 selected-mode scope mismatch")
+    if packet["scope"] not in {
+        TASK039_V4_SELECTED_MODE_SCOPE,
+        TASK039_V5_H5_SELECTED_MODE_SCOPE,
+    }:
+        raise ValueError("Task039 selected-mode scope mismatch")
     if int(packet["mode_count"]) != TASK039_V4_SELECTED_MODE_COUNT:
-        raise ValueError("Task039 V4 selected-mode packet mode count mismatch")
+        raise ValueError("Task039 selected-mode packet mode count mismatch")
     _require_branch_authority(packet["metadata"])
     start, end = (int(value) for value in packet["ownership_range"])
     local_size = end - start
@@ -324,7 +342,7 @@ def hydrate_task039_v4_selected_mode_packet(
         raise
 
     shared_diagnostics = {
-        "scope": TASK039_V4_SELECTED_MODE_SCOPE,
+        "scope": packet["scope"],
         "mode_count": TASK039_V4_SELECTED_MODE_COUNT,
         "ownership_range": (start, end),
         "global_size": global_size,

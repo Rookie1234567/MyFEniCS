@@ -1689,6 +1689,7 @@ def main(
             not in {
                 "task039_direct",
                 "task039_v4_mode_prep",
+                "task039_v5_h5_mode_prep",
             }
             or comm.rank != 0
         ):

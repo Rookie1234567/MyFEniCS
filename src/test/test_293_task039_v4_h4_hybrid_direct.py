@@ -38,6 +38,10 @@ def _iterative_spec():
     return load_and_resolve(ROOT / v4.TASK039_V4_H4_HYBRID_ITERATIVE_INPUT)
 
 
+def _h5_spec():
+    return load_and_resolve(ROOT / v4.TASK039_V5_H5_HYBRID_DIRECT_INPUT)
+
+
 def test_v4_h4_module_import_does_not_load_solver_runtime():
     probe = (
         "import sys; "
@@ -74,6 +78,93 @@ def test_v4_h4_input_profile_and_dynamic_inventory_are_exact():
     assert method_adapter_identity("hybrid_direct", payload["model_id"]) == (
         "task039.hybrid_direct"
     )
+
+
+def test_v5_h5_identity_and_phase_plan_are_current_direct_only(tmp_path):
+    specification = _h5_spec()
+    payload = v4.validate_v5_h5_specification(specification)
+    identity_path = tmp_path / "h5_identity.json"
+    identity, identity_sha = v4.write_v5_h5_mode_identity(
+        specification, SOURCE_SHA, identity_path
+    )
+    v4._validate_shared_h4_mode_identity(identity, payload, profile="v5-h5")
+    producer = v4.build_v4_h4_phase_plan(
+        specification,
+        tmp_path / "producer",
+        SOURCE_SHA,
+        phase="mode-prep",
+        identity_json=identity_path,
+        packet_directory=tmp_path / "packet",
+        mpiexec_command="mpiexec",
+        profile="v5-h5",
+    )
+    manifest = tmp_path / "packet" / "manifest.json"
+    manifest.parent.mkdir()
+    manifest.write_bytes(b"manifest")
+    manifest_sha = hashlib.sha256(manifest.read_bytes()).hexdigest()
+    consumer = v4.build_v4_h4_phase_plan(
+        specification,
+        tmp_path / "consumer",
+        SOURCE_SHA,
+        phase="direct-consumer",
+        identity_json=identity_path,
+        manifest=manifest,
+        manifest_sha256=manifest_sha,
+        mpiexec_command="mpiexec",
+        profile="v5-h5",
+    )
+    assert payload["discretization"]["mesh_target_nm"] == 5.0
+    assert identity["scope"] == v4.TASK039_V5_H5_MODE_SCOPE
+    assert identity_sha == hashlib.sha256(identity_path.read_bytes()).hexdigest()
+    assert producer.mpi_size == consumer.mpi_size == 8
+    assert producer.adapter_identity == v4.TASK039_V5_H5_ADAPTER_IDENTITY
+    assert "--profile" in producer.argv
+    assert producer.argv[producer.argv.index("--profile") + 1] == "v5-h5"
+    with pytest.raises(InputError):
+        v4.build_v4_h4_phase_plan(
+            specification,
+            tmp_path / "iterative",
+            SOURCE_SHA,
+            phase="iterative-consumer",
+            identity_json=identity_path,
+            manifest=manifest,
+            manifest_sha256=manifest_sha,
+            profile="v5-h5",
+        )
+    with pytest.raises(InputError):
+        v4.validate_v5_h5_specification(_spec())
+
+
+def test_v5_h5_mode_prep_worker_uses_existing_task032_producer(monkeypatch, tmp_path):
+    specification = _h5_spec()
+    resolved = tmp_path / "resolved_config.json"
+    resolved.write_text(json.dumps(specification.as_jsonable()), encoding="utf-8")
+    identity = tmp_path / "identity.json"
+    v4.write_v5_h5_mode_identity(specification, SOURCE_SHA, identity)
+    captured = {}
+
+    def fake_task032(argv, **kwargs):
+        captured.update(argv=argv, kwargs=kwargs)
+        return {"status": "controlled_stop_packet_written"}
+
+    from benchmarks import run_task032_phase6_augmented as task032
+
+    monkeypatch.setattr(task032, "main", fake_task032)
+    result = v4.run_v4_h4_worker(
+        resolved,
+        tmp_path / "producer",
+        SOURCE_SHA,
+        phase="mode-prep",
+        identity_json=identity,
+        packet_directory=tmp_path / "packet",
+        profile="v5-h5",
+    )
+    assert result["status"] == "controlled_stop_packet_written"
+    assert "--selected-mode-packet-producer-dir" in captured["argv"]
+    parsed = task032._parse_args(captured["argv"], allow_task039=True)
+    assert parsed.requested_modes == 480
+    assert parsed.retained_subspace_dual_rotation is True
+    assert captured["kwargs"]["canonical_export_prefix"] == "task039_v5_h5_mode_prep"
 
 
 def test_shared_mode_identity_reads_resolved_provenance_physical_sha():
