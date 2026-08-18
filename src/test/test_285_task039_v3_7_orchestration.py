@@ -1029,6 +1029,43 @@ def test_v5_h4_setup_only_plan_passes_identity_and_packet_args(tmp_path) -> None
     )
 
 
+def test_v5_h4_blr_watchdog_main_dry_run_parses_real_flag(tmp_path, capsys) -> None:
+    h4_input = Path(
+        "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
+    )
+    packet_root = Path("results/task039_v4_h4_m480_shared_packet_eaad0f94")
+    run_directory = tmp_path / "v5-blr-main-dry-run"
+    assert (
+        watchdog.main(
+            [
+                "--dry-run",
+                "--input",
+                str(h4_input),
+                "--run-directory",
+                str(run_directory),
+                "--source-sha",
+                "a" * 40,
+                "--v5-h4-blr-side-component",
+                "--selected-mode-packet-manifest",
+                str(packet_root / "manifest.json"),
+                "--selected-mode-packet-identity",
+                str(packet_root / "identity.json"),
+                "--selected-mode-packet-manifest-sha256",
+                "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067",
+            ]
+        )
+        == 0
+    )
+    plan = json.loads(capsys.readouterr().out)
+    assert plan["argv"][1:3] == ["-n", "8"]
+    assert plan["argv"].count("--v5-h4-blr-side-component") == 1
+    assert "--v5-h4-setup-only" not in plan["argv"]
+    assert plan["worker_contract"]["method"] == (
+        "task039_v5_h4_mumps_blr_side_component"
+    )
+    assert not run_directory.exists()
+
+
 def test_v5_h4_blr_parent_peak_uses_closed_parent_sample_interval(tmp_path) -> None:
     stages = tmp_path / "memory_stages.jsonl"
     samples = tmp_path / "process_tree_samples.jsonl"
