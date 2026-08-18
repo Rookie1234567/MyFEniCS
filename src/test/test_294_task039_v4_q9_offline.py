@@ -6,6 +6,10 @@ import numpy as np
 import pytest
 
 from benchmarks.task039_v4_q9_offline_audit import audit_q_a
+from benchmarks.task039_v4_q9_qb_component import (
+    _pair_targets,
+    audit_qep_sign_involution,
+)
 
 
 def _sha256(path: Path) -> str:
@@ -228,3 +232,34 @@ def test_q_a_rejects_null_pss_without_exact_status(tmp_path: Path) -> None:
     case = _write_case(tmp_path, summary_status="measured")
     with pytest.raises(ValueError, match="null resource field"):
         _audit(case)
+
+
+def test_q_b_sign_involution_and_left_right_convention() -> None:
+    sign = np.array([1.0, 1.0, -1.0, -1.0])
+    k0 = np.diag([2.0, 3.0, 5.0, 7.0]).astype(np.complex128)
+    k1 = np.array(
+        [
+            [0.0, 0.0, 1.0 + 2.0j, -0.5j],
+            [0.0, 0.0, 0.25 - 1.0j, 2.0],
+            [1.0 - 2.0j, 0.25 + 1.0j, 0.0, 0.0],
+            [0.5j, 2.0, 0.0, 0.0],
+        ],
+        dtype=np.complex128,
+    )
+    k2 = np.diag([11.0, 13.0, 0.0, 0.0]).astype(np.complex128)
+    audit = audit_qep_sign_involution(k0, k1, k2, sign)
+    assert audit["pass"] is True
+    assert audit["right_map"] == "S"
+    assert audit["left_map"] == "S"
+    assert audit["additional_conjugation"] is False
+
+
+def test_q_b_pair_targets_preserve_complete_negative_groups() -> None:
+    pairs = [
+        {"positive_index": index, "negative_index": index, "relative_beta_error": 0.0}
+        for index in range(4)
+    ]
+    blocks = [(0, 1), (2, 3)]
+    assert _pair_targets(pairs, 4, [7, 7, 8, 8], blocks) == ((0, 1, 2, 3), 0.0)
+    with pytest.raises(ValueError, match="complete negative group"):
+        _pair_targets(pairs, 4, [7, 7, 7, 8], blocks)
