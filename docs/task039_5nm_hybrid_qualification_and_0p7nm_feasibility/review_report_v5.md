@@ -758,7 +758,7 @@ pending 0.7 nm substrate/material authority
 1. explicit W 是否已从正式候选中消除；
 2. full side exact factor 在 0.7 nm 是否仍会超过工程预算；
 3. factor-light candidate 的 local/coarse problem 是否有上界；
-4. M 和 external channels 墀长时，modal Schur/K-LU 时间是否成为新 blocker；
+4. M 和 external channels 增长时，modal Schur/K-LU 时间是否成为新 blocker；
 5. 哪些结论是 measured，哪些只是 conditional prediction。
 
 输出：
