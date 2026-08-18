@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from benchmarks.task039_v4_q9_offline_audit import audit_q_a
+from benchmarks.task039_v4_q9_qd_feasibility_audit import audit_qd
 from benchmarks.task039_v4_q9_qb_component import (
     _pair_targets,
     _json_default,
@@ -281,3 +282,74 @@ def test_q_c_beta_matching_is_one_to_one() -> None:
     assert missing["extra_count"] == 1
     duplicate = match_beta_sets([1.0 + 0j, 2.0 + 0j], [1.0 + 0j, 1.0 + 0j])
     assert duplicate["observed_duplicate_count"] == 2
+
+
+def test_q_d_json_fixture_keeps_groups_and_gates_unestablished(tmp_path: Path) -> None:
+    case = _write_case(tmp_path)
+    manifest = json.loads(case["manifest"].read_text())
+    manifest["mode_count"] = 480
+    identity_path = case["manifest"].with_name("identity.json")
+    identity = json.loads(identity_path.read_text())
+    identity["mode_count"] = 480
+    identity["external_keys"] = {"count": 0, "sha256": "tiny"}
+    identity_path.write_text(json.dumps(identity))
+    for shard in manifest["shards"]:
+        for descriptor in shard["files"].values():
+            path = case["manifest"].parent / descriptor["path"]
+            rows = shard["rows"]
+            np.save(path, np.zeros((480, rows), dtype=np.complex128))
+            descriptor["shape"] = [480, rows]
+            descriptor["sha256"] = _sha256(path)
+            descriptor["bytes"] = path.stat().st_size
+    manifest["selection"] = {
+        branch: {
+            "beta": [[0.1, 0.01]] * 480,
+            "mode_keys": [{"kind": "lossy_propagating", "direction": direction}] * 480,
+            "groups": [0] * 240 + [1] * 240,
+            "passive_branch_valid": [True] * 480,
+            "sign": sign,
+        }
+        for branch, direction, sign in (
+            ("positive", "forward", 1),
+            ("negative", "backward", -1),
+        )
+    }
+    manifest["identity"] = identity
+    manifest["identity_sha256"] = hashlib.sha256(
+        json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    case["manifest"].write_text(json.dumps(manifest))
+    summary = {
+        "case": {"middle_length_nm": 100.0},
+        "physical_field_reconstruction": {
+            "task039_direct_payload": {
+                "path": "payload.npz",
+                "sha256": "payload-sha",
+                "keys": ["E_V_per_m", "H_A_per_m"],
+                "arrays": {},
+            }
+        },
+        "object_payload_ledger": {
+            "reduced_vectors": "not_persisted",
+            "qep_workspace_bytes": 0,
+        },
+    }
+    summary_path = tmp_path / "direct_summary.json"
+    summary_path.write_text(json.dumps(summary))
+    result = audit_qd(case["manifest"], identity_path, summary_path)
+    for branch in ("positive", "negative"):
+        assert (
+            result["authority"]["branches"][branch]["group_boundaries"]["240"][
+                "group_complete"
+            ]
+            is True
+        )
+        assert (
+            result["authority"]["branches"][branch]["group_boundaries"]["320"][
+                "group_complete"
+            ]
+            is False
+        )
+    assert result["storage_capacity_proxy"]["status"] == "derived_not_rss"
+    assert all(gate["status"] == "NOT_ESTABLISHED" for gate in result["gates"].values())
+    assert all(gate["pass"] is None for gate in result["gates"].values())
