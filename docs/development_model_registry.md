@@ -1406,6 +1406,26 @@ V2-6 的 `H5_M480_HYBRID_MODEL_FAIL` 原样保留；h10 仍是
 `historical_underresolved_stress_anchor_only`，不是 Full3D/Hybrid accuracy authority
 或 0.7 nm scaling anchor。MPI1、M960、M>480、新 PC 和完整 0.7 nm PDE 均未运行。
 
+## 3.42 Task039 Review V5-S：当前生命周期 h5 Hybrid direct sidecar
+
+V5-S 是固定 5 nm、1°、phi=0、S、p6/h5、M480、MPI8 的 nonblocking sidecar。它使用
+当前 shared packet consumer，并在 postprocess 前释放 direct factor/system；它只回答当前
+生命周期的资源事实，不是网格收敛或一般 production qualification。
+
+| Model ID | 身份/算法 | 规模与资源 | 数值/生命周期 | 结论/status | evidence |
+|---|---|---|---|---|---|
+| `task039_5nm_v3_1deg_s5_hybrid_direct_m480`（V5-S current） | source `57184ea97775f623c1b8c04b144546e99712a9c9`；profile `v5-h5`；owner-row M480 packet；consumer QEP=0 | Hybrid direct；MPI8；packet producer RSS `9098.5625 MiB` / `1111.204334 s`；consumer process-tree RSS `51564.7890625 MiB` / reuse/consumer-only wall `2636.955775 s`；串行 cold total `3748.160109 s`；swap 0 | true residual `8.82695244e-10`；projection/ exact conormal dual、R/T/A、closure、canonical、packet/lifecycle均通过；top condensed full-operator `1.05016910e-9 > 1e-9`；diagnostic traction proxy bottom `0.0346819 > 1e-2` | `TASK039_V5_H5_CURRENT_DIRECT_BORDERLINE_CONTROLLED_NEGATIVE`；不是 `...RESOURCE_SIDECAR_MEASURED`；V5-S nonblocking | [V5-S outcome](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v5_h5_current_hybrid_direct_sidecar.md)、[compact record](../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v5_h5_current_hybrid_direct_sidecar_v1.json) |
+
+V5-S 的 selected E/H 已由 direct payload `task039_direct_payload.npz` 持久化：E/H 均为
+`[5,20,40,3]`、`complex128`、finite；h diagnostic 的 native/curlE E/H 为
+`[7,20,40,3]`、`complex128`、finite。完整路径与 SHA 绑定见 compact record。
+
+旧当前 h5 direct 的 `87064.125 MiB` 与本 sidecar 的 RSS 差异只能登记为
+lifecycle/implementation comparison；cold-start 总 wall 相对旧整体 wall 只派生降低
+`0.6707723473%`。consumer-only wall 相对旧整体的 `30.1185721%` 是非同口径补充，不能
+替代 cold-start 结论。与 h4 current direct 的数值只作同架构容量比较，不能写成 h5/h4
+网格收敛。
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。

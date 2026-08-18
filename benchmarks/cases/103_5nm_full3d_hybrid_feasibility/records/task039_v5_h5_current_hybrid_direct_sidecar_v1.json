@@ -1,0 +1,250 @@
+{
+  "schema": "task039.v5.h5.current_hybrid_direct_sidecar.v1",
+  "classification": "TASK039_V5_H5_CURRENT_DIRECT_BORDERLINE_CONTROLLED_NEGATIVE",
+  "status": {
+    "formal_exit_status": 2,
+    "run_status": "physical_integration_failed",
+    "resource_status": "pass",
+    "own_gate_status": "controlled_negative",
+    "official_record": false,
+    "nonblocking_v5_sidecar": true,
+    "reason": "top_condensed_full_operator_residual_exceeded_1e-9",
+    "forbidden_classification": "TASK039_V5_H5_CURRENT_DIRECT_RESOURCE_SIDECAR_MEASURED"
+  },
+  "scope": {
+    "wavelength_nm": 5.0,
+    "grazing_deg": 1.0,
+    "phi_deg": 0.0,
+    "polarization": "S",
+    "mesh": "p6/h5",
+    "mode_count_per_direction": 480,
+    "mpi": 8,
+    "method": "hybrid_direct",
+    "profile": "v5-h5",
+    "resolved_method_adapter": "task039.v5.h5.hybrid_direct",
+    "ordinary_defaults_unchanged": true,
+    "full3d_h4_comparison": "capacity_comparison_only_not_grid_convergence"
+  },
+  "provenance": {
+    "source_sha": "57184ea97775f623c1b8c04b144546e99712a9c9",
+    "branch": "codex/20260812-task39-5nm-hybrid-0p7nm-feasibility",
+    "source_clean": true,
+    "input_sha256": "fc51536fefa7341a5264266a95fc56ba79d0b1056a2d819323bfdb51f3568e85",
+    "resolved_config_sha256": "078d89d05d6108ed7e8ac563faa9d23ff93ed8d91650b3d7f9ffa27d8b320828",
+    "physical_model_sha256": "0462c9806f1eb0c525c3ab50fcd71e212c6d05337de49c76e7946a336ccd576d",
+    "model_id": "task039_5nm_v3_1deg_s5_hybrid_direct_m480",
+    "input_path": "input/official/task039/5nm_p6h5_v3_1deg_hybrid_direct_m480_mpi8.dat"
+  },
+  "shared_packet": {
+    "directory": "results/task039_v5_h5_m480_shared_packet_57184ea9",
+    "manifest": "results/task039_v5_h5_m480_shared_packet_57184ea9/manifest.json",
+    "manifest_sha256": "31c26876eef22fb3673152f504e636e1486379f5e54190f8954111ceec122d76",
+    "identity": "results/task039_v5_h5_m480_shared_packet_57184ea9/identity.json",
+    "identity_file_sha256": "595823995690549aa7266c1fc151a879da5397207893bdca43abbdd198107f58",
+    "identity_canonical_sha256": "176a3ada097136a77da7cb390b7eb4b5cdc3c8736f383e1d4c1a943a5a770c89",
+    "scope": "task039_v5_h5_m480",
+    "global_size": 6685,
+    "rank_count": 8,
+    "mode_count": 480,
+    "ownership_contiguous": true,
+    "shards": 32,
+    "all_shard_hashes_match": true,
+    "layout": "mode_major",
+    "dtype": "complex128",
+    "array_payload_bytes": 205363200,
+    "external_keys": {
+      "count": 600,
+      "sha256": "ba431ec6683f2123e53e8f9f3fb13fd35ae22a6a8f9c0ed2d85aa1f1cb15b04a"
+    },
+    "consumer_qep_required": false,
+    "qep_calls": 0,
+    "qep_workspace_persisted": false
+  },
+  "producer": {
+    "run_directory": "results/task039_v5_h5_m480_mode_prep_mpi8_57184ea9",
+    "run_manifest_sha256": "f5a65e9cf12c95875fe8373132a910cf739e282571005e3c2e390486b722230c",
+    "run_summary_sha256": "607ce99218d492674f43c55359c832519b72b42e098b7b8abc5c116baf273a77",
+    "worker_summary_sha256": "4a66f85c4aded04f07ccac5c41f734fbe7de2a4d0c909bc4fac3136b8486c79d",
+    "worker_stdout_sha256": "0771d4b2d0cd064bdcf2bbe940bd27f10b308ba72158b2a4c8e4b07d7feef0da",
+    "status": "controlled_stop_packet_written",
+    "exit_status": 0,
+    "elapsed_seconds_launcher": 1111.204334,
+    "packet_write_seconds_max_rank": 0.7689520620042458,
+    "process_tree_peak_rss_mib": 9098.5625,
+    "process_tree_peak_pss_mib": "not_measured",
+    "process_tree_peak_uss_mib": "not_measured",
+    "swap_bytes": 0,
+    "producer_count": 1
+  },
+  "consumer": {
+    "run_directory": "results/task039_v5_h5_hybrid_direct_sidecar_mpi8_57184ea9",
+    "run_manifest_sha256": "535367968fbfb8ba29e4fed26523e3548397bc1a4e731ccfed2a75bd2abc87c7",
+    "launcher_summary_sha256": "3d42e65202796c011515aaa8e0b7db26cde3be236fbf49d7f06f75e85f89cc41",
+    "worker_summary_sha256": "aad169797239fe320e7239603afcf0a2808c799aaaddcb084c930827593c7b23",
+    "worker_stdout_sha256": "5394ceeb43b582630cb432c80b8056ef256fc53813659ad60aa1494427abd00f",
+    "process_tree_samples_sha256": "bd7524a041c94e275abfd8e4346966df473c1286239982ee937a2e72e33e90da",
+    "memory_stages_sha256": "422cfed000de5d07396dde5259565004fec6d902815c97bc90c6cc4ee65d2823",
+    "exit_status": 2,
+    "launcher_elapsed_seconds": 2636.955775,
+    "worker_numerical_total_seconds": 2633.7597418600344,
+    "process_tree_peak_rss_mib": 51564.7890625,
+    "process_tree_peak_rss_gib": 50.356239318847656,
+    "process_tree_peak_pss_mib": "not_measured",
+    "process_tree_peak_uss_mib": "not_measured",
+    "swap_bytes": 0,
+    "warning_triggered": false,
+    "critical_checkpoint_crossed": false,
+    "hard_stop_reached": false,
+    "sample_count": 10367,
+    "poll_interval_seconds": 0.25
+  },
+  "numerics": {
+    "linear_true_residual": {
+      "value": 8.826952439936801e-10,
+      "limit": 1e-9,
+      "pass": true
+    },
+    "condensed_full_operator_relative_residual": {
+      "bottom": 1.4055939377955027e-11,
+      "top": 1.0501690969564719e-9,
+      "limit": 1e-9,
+      "bottom_pass": true,
+      "top_pass": false,
+      "pass": false
+    },
+    "interface_projection_relative_residual": {
+      "bottom": 4.877646532102722e-12,
+      "top": 1.6752247529843916e-11,
+      "combined": 1.6709272916412763e-11,
+      "limit": 1e-8,
+      "pass": true
+    },
+    "exact_variational_conormal_dual_relative_residual": {
+      "bottom": 1.1695975695119714e-11,
+      "top": 8.203525622996925e-10,
+      "limit": 1e-8,
+      "pass": true
+    },
+    "diagnostic_sampled_traction_density_l2_proxy": {
+      "bottom": 0.03468188087579325,
+      "top": 0.004658939379198405,
+      "limit": 1e-2,
+      "pass": false,
+      "formal_role": "diagnostic_only_not_exact_variational_dual"
+    },
+    "port_power": {
+      "R_total": 0.7397405130774248,
+      "T_total": 0.00021574916967190004,
+      "A_balance": 0.2600437377529033,
+      "A_volume": 0.2600443738590044,
+      "closure": 6.361061011261882e-7,
+      "closure_limit": 1e-5,
+      "finite": true,
+      "pass": true
+    },
+    "external_inventory": {
+      "count": 600,
+      "bottom_count": 296,
+      "top_count": 304,
+      "propagating": 598,
+      "nonpropagating": 2,
+      "keys_exact_and_hash_bound": true
+    },
+    "canonical_exports": {
+      "bottom_active_trace": {"pass": true, "manifest_sha256": "94d22e25ec3a115cba0fc76dcc311403e4fc062a103e0da77ae7d66441513514"},
+      "bottom_full_fe": {"pass": true, "manifest_sha256": "29499b5be59c6b730eae73c66d7425162cacf77176fe9409a536f80d22f7aa06"},
+      "top_active_trace": {"pass": true, "manifest_sha256": "81e074ac7f8c7258da4730c40ecb06a747f6a1c659c1daac1e38a1192307c154"},
+      "top_full_fe": {"pass": true, "manifest_sha256": "2144b94641e5d589f7f64ef89e52d281f499f24483d7b18217207786c161b2bf"}
+    },
+    "selected_E_H": {
+      "status": "measured_persisted",
+      "direct_payload": {
+        "path": "results/task039_v5_h5_hybrid_direct_sidecar_mpi8_57184ea9/numerical_output/task039_direct_payload.npz",
+        "sha256": "de518fc1c3194f52d712e179051b8ab3fd86e47d6188bc63c6c2b94febf7446e",
+        "E_V_per_m": {
+          "shape": [5, 20, 40, 3],
+          "dtype": "complex128",
+          "finite": true,
+          "sha256": "66740359b705f22a939bb4136e644d857296e1f7f372fcb4ec8ad5c00f576e72"
+        },
+        "H_A_per_m": {
+          "shape": [5, 20, 40, 3],
+          "dtype": "complex128",
+          "finite": true,
+          "sha256": "7b780cc1a9b5e5aca9826896bd78bff9605a2ce6cf07e386fbb8703a21c01b43"
+        }
+      },
+      "h_diagnostic_payload": {
+        "path": "results/task039_v5_h5_hybrid_direct_sidecar_mpi8_57184ea9/numerical_output/task039_h_diagnostic_payload.npz",
+        "sha256": "68365ad95cc338084cc44bc59e38df1b2a4c8b7747398e53cadf7bc2d7ec4fd4",
+        "native_E_V_per_m_sha256": "22b409d59f8d8444eea096f35666a4a7c4080fd645333fa805ebf3da5cba8022",
+        "native_H_A_per_m_sha256": "8669d2343aa15d1f5d9420971fccbfce05e4b0349f609146cc72463608d2dd02",
+        "curlE_E_V_per_m_sha256": "22b409d59f8d8444eea096f35666a4a7c4080fd645333fa805ebf3da5cba8022",
+        "curlE_H_A_per_m_sha256": "60fe30796a23af56fedd08df10e6948e53971b3cf3cf01955623c089e7e56623",
+        "shape": [7, 20, 40, 3],
+        "dtype": "complex128",
+        "finite": true
+      }
+    },
+    "physical_field_gates_pass": true
+  },
+  "lifecycle": {
+    "factor_solver": "mumps",
+    "matrix_rows": 105240,
+    "matrix_nnz_used": 697946744,
+    "mumps_infog_1": 0,
+    "mumps_infog_2": 0,
+    "mumps_infog_9": 697949552,
+    "mumps_icntl_14_requested_percent": 100,
+    "mumps_icntl_14_observed_percent": 100,
+    "mumps_workspace_relaxation_verified": true,
+    "packet_qep_calls": 0,
+    "packet_mmap_released": true,
+    "packet_references_released": true,
+    "modes_released_before_factor": true,
+    "factor_destroyed_before_postprocess": true,
+    "system_destroyed_before_postprocess": true,
+    "recovery_after_factor_system_release": true,
+    "collective_cleanup_completed": true,
+    "pass": true
+  },
+  "historical_comparison": {
+    "old_current_h5_direct": {
+      "source_sha": "5bfab734a9ca053b69fa1f3f20d907aacbf8b07f",
+      "record": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v3_memory_lifecycle_v1.json",
+      "record_sha256": "2206d4d28b950a0e8ce26175d71b7f7faf555898dd27b6507c5f22dd2aade352",
+      "peak_rss_mib": 87064.125,
+      "wall_seconds": 3773.471512437,
+      "comparison_role": "historical_lifecycle_implementation_only"
+    },
+    "current_sidecar": {
+      "peak_rss_mib": 51564.7890625,
+      "consumer_only_wall_seconds": 2636.955775,
+      "cold_start_serial_total_seconds": 3748.160109,
+      "cold_start_components": {
+        "packet_producer_seconds": 1111.204334,
+        "consumer_only_seconds": 2636.955775
+      }
+    },
+    "derived_rss_reduction_percent": 40.773781322100234,
+    "derived_cold_start_wall_reduction_percent": 0.6707723473,
+    "derived_consumer_only_vs_old_end_to_end_wall_reduction_percent": 30.118572081203034,
+    "consumer_only_wall_comparison_role": "non_like_for_like_supplementary_only",
+    "dq1_exact_side_historical_peak_gib": 49.8236122131,
+    "dq1_role": "historical_exact_side_precedent_not_direct_reference",
+    "comparison_boundary": "not_grid_convergence"
+  },
+  "h4_capacity_comparison": {
+    "h4_hybrid_direct_peak_rss_mib": 95618.0546875,
+    "h5_current_sidecar_peak_rss_mib": 51564.7890625,
+    "derived_h5_lower_than_h4_percent": 46.07212076105854,
+    "classification": "capacity_comparison_only_not_grid_convergence"
+  },
+  "artifacts": {
+    "direct_payload_sha256": "de518fc1c3194f52d712e179051b8ab3fd86e47d6188bc63c6c2b94febf7446e",
+    "h_diagnostic_payload_sha256": "68365ad95cc338084cc44bc59e38df1b2a4c8b7747398e53cadf7bc2d7ec4fd4",
+    "memory_object_ledger_sha256": "6c5dd7641b52bed9f4248ef281f98a33e7c67dc93e88e54e1f5f4342877cdcc0",
+    "raw_artifacts_ignored": true
+  },
+  "evidence_boundary": "The h5 sidecar completed packet consumption, solve, recovery and lifecycle cleanup but failed the strict top condensed full-operator residual Gate and the diagnostic sampled traction-density proxy. It is a measured controlled-negative, not a resource qualification. No second heavy run was made; V5-S remains nonblocking and does not alter the h4 main line."
+}

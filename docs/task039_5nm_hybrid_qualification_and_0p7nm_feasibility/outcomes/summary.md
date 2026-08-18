@@ -483,7 +483,7 @@ Iterative 五项 residual 为 `5.1673119e-10 / 5.1673072e-10 / 3.2985246e-10 /
 0.2665962726139155`，closure `6.4499816e-7`。bottom/top exact-side factor 为 1/1，
 global factor=0，nested KSP=0，清理后 local factors=0/0。与 direct 的 R/T/A/A_volume
 差约 `1.50e-12 / 1.15e-14 / 1.51e-12 / 3.33e-13`，canonical/selected E/H/channel
-comparison pass；独立 12+12 count 未单独持久化，保持 `not_separately_persisted`。
+comparison pass；独立 12+12 count 未单独持久化，但不影响已绑定的 selected E/H payload。
 
 Q-A owner-only packet 已成立；Q-B trace subspace `4.77e-7`–`7.60e-6` 超过 `1e-10`；
 Q-C beta 等价约 `8.41e-14`、wall `-8.6204%` 但 RSS 未测；Q-D M240/320/400 group
@@ -494,3 +494,33 @@ complete/nested，但 operator/RHS/reconstruction/observable map 缺失，所有
 完整 V4 入口见 [Full3D lifecycle](v4_full3d_h4_lifecycle.md)、[Hybrid direct](v4_hybrid_direct_h4_lifecycle.md)、
 [Hybrid iterative](v4_hybrid_iterative_h4_exact_side.md)、[三方法比较](v4_three_method_comparison.md)、
 [QEP/memory study](v4_qep_m_memory_study.md) 和 [response v5](../response_v5.md)。
+
+## V5-S：当前生命周期 p6/h5 Hybrid direct sidecar
+
+V5-S 只做 nonblocking 的当前生命周期测量：固定 5 nm、1°、phi=0、S、p6/h5、M480、MPI8，
+先生成并校验匹配的 h5 owner-row packet，再由 direct consumer 以 `qep_calls=0` 消费。它不
+改变 h4 主线，也不是网格收敛实验。
+
+| 项目 | measured result | 分类 |
+|---|---:|---|
+| packet producer | exit 0；RSS `9098.5625 MiB`；`1111.204334 s`；swap 0 | packet/lifecycle input pass |
+| direct consumer | exit 2；RSS `51564.7890625 MiB = 50.3562393188 GiB`；reuse/consumer-only wall `2636.955775 s`；swap 0 | resource measured；数值 controlled-negative |
+| linear true residual | `8.826952439936801e-10 <= 1e-9` | pass |
+| top condensed full-operator residual | `1.0501690969564719e-9 > 1e-9` | strict Gate fail；borderline |
+| exact variational conormal dual | bottom/top `1.16960e-11 / 8.20353e-10` | pass；不等于 sampled proxy |
+| R/T/A/A_volume/closure | `0.7397405131 / 0.0002157492 / 0.2600437378 / 0.2600443739 / 6.36106101e-7` | finite/closure pass |
+| packet/lifecycle | qep=0；factor/system before postprocess释放；cleanup collective；canonical 四项 pass | pass |
+| selected E/H | direct payload `task039_direct_payload.npz`；E/H `[5,20,40,3]` complex128、finite；hash-bound；h diagnostic native/curlE `[7,20,40,3]` 亦已持久化 | measured/persisted |
+
+串行 cold-start 总时间为 producer `1111.204334 s` + consumer-only `2636.955775 s` =
+`3748.160109 s`；因两个阶段严格串行，RSS 取阶段最大值而不相加。相对旧 h5 direct
+整体 wall `3773.471512437 s`，cold-start 派生降低 `0.6707723473%`。consumer-only
+相对旧整体 wall 的 `30.1185721%` 仅作非同口径补充，不作为主结论。
+
+另有 diagnostic sampled traction-density proxy bottom=`0.0346819 > 1e-2`；它不是 exact
+variational dual。故最终分类为
+`TASK039_V5_H5_CURRENT_DIRECT_BORDERLINE_CONTROLLED_NEGATIVE`，不能写成
+`TASK039_V5_H5_CURRENT_DIRECT_RESOURCE_SIDECAR_MEASURED`。旧 h5 direct `87064.125 MiB`
+与新 sidecar 的差异只作 lifecycle/implementation comparison；与 h4 direct 的 `95618.0546875 MiB`
+只作容量比较，不能称网格收敛。详见 [V5-S outcome](v5_h5_current_hybrid_direct_sidecar.md)
+和 [compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v5_h5_current_hybrid_direct_sidecar_v1.json)。
