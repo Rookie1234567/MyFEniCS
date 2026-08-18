@@ -1,0 +1,156 @@
+{
+  "record_type": "task039_v4_q9_offline_audit_v1",
+  "classification": "Q_A_PACKET_OWNERSHIP_STORAGE_LIFETIME_AUDIT",
+  "status": "pass_with_not_measured_fields",
+  "provenance": {
+    "audit_source_sha": "dd00e359376298be3ba68ac0664fc390de0588f1",
+    "git_clean": true,
+    "raw_audit_path": "results/task039_v4_q9_offline_audit_dd00e359/q_a_raw.json",
+    "raw_audit_sha256": "0883574827d1c2d73149c23ce9641f545358758335a3d75afe8234fff131921a",
+    "raw_status": "pass_with_not_measured_fields"
+  },
+  "inputs": {
+    "manifest": {
+      "path": "results/task039_v4_h4_m480_shared_packet_eaad0f94/manifest.json",
+      "sha256": "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067"
+    },
+    "mode_prep_summary": {
+      "path": "results/task039_v4_h4_mode_prep_mpi8_eaad0f94/run_summary.json",
+      "sha256": "f7ce6d1888db6a5f9856ebf0c78c30b97024940a3dc2864f690fd44f9790e7b0"
+    },
+    "mode_prep_worker_summary": {
+      "path": "results/task039_v4_h4_mode_prep_mpi8_eaad0f94/numerical_output/run_summary.json",
+      "sha256": "54c1536fc39909240f19293148ca14d46c79cdb700ecebd9e577c75589fc75e6"
+    },
+    "direct_summary": {
+      "path": "results/task039_v4_h4_hybrid_direct_formal_mpi8_icntl14_1515f095/run_summary.json",
+      "sha256": "3f19ead55f507e084488e2df77e352e2f650bcfe4fc2e1f85b42fbddc09b4a72"
+    },
+    "direct_worker_summary": {
+      "path": "results/task039_v4_h4_hybrid_direct_formal_mpi8_icntl14_1515f095/numerical_output/run_summary.json",
+      "sha256": "90aecff69b43e0b009f662771f7b3a695ef3a838b0ed9a4bf7fa8dd230b5aa0e"
+    },
+    "direct_telemetry": {
+      "path": "results/task039_v4_h4_hybrid_direct_formal_mpi8_icntl14_1515f095/numerical_output/memory_detail_markers.raw.jsonl",
+      "sha256": "b08a262be15ec9a41ca1dc86d8eab89f3225e17eaa43523eda5ebe7308214389"
+    },
+    "iterative_summary": {
+      "path": "results/task039_v4_h4_hybrid_iterative_exact_side_formal_mpi8_c2829b7e/run_summary.json",
+      "sha256": "8878167d282d4a750f2c1431da991c86adeb91eb6d125819e4ccb516d825a5d3"
+    },
+    "iterative_worker_summary": {
+      "path": "results/task039_v4_h4_hybrid_iterative_exact_side_formal_mpi8_c2829b7e/numerical_output/v4_h4_iterative_consumer.json",
+      "sha256": "96411440c380b12e1b774168af09cadb63710542a956dbe8691cf15a6eb19313"
+    },
+    "iterative_telemetry": {
+      "path": "results/task039_v4_h4_hybrid_iterative_exact_side_formal_mpi8_c2829b7e/numerical_output/memory_stage_markers.raw.jsonl",
+      "sha256": "33c430fac62acd6d55e8c712b8253118f5455be1f7e502092414efe272936ab4"
+    }
+  },
+  "scope": {
+    "packet_scope": "task039_v4_h4_m480",
+    "q_a_only": true,
+    "owner_only_packet": true,
+    "qep_workspace_persisted": false
+  },
+  "packet": {
+    "schema": "myfenics.modes.selected_mode_packet.v1",
+    "manifest_sha256": "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067",
+    "identity_sha256": "cfd5704b48bff980fa2d819f4deee9a59bb9a3db39bc24a70c53f42f067d39e9",
+    "rank_count": 8,
+    "global_size": 11605,
+    "mode_count": 480,
+    "array_names": ["positive_right", "positive_left", "negative_right", "negative_left"],
+    "dtype": "complex128",
+    "layout": "mode_major",
+    "validated_file_count": 32,
+    "npy_total_bytes": 356509696,
+    "total_persisted_bytes": 357128866,
+    "ownership_ranges": [
+      {"rank": 0, "start": 0, "end": 1438, "rows": 1438, "four_array_bytes": 44175872},
+      {"rank": 1, "start": 1438, "end": 2841, "rows": 1403, "four_array_bytes": 43100672},
+      {"rank": 2, "start": 2841, "end": 4329, "rows": 1488, "four_array_bytes": 45711872},
+      {"rank": 3, "start": 4329, "end": 5757, "rows": 1428, "four_array_bytes": 43868672},
+      {"rank": 4, "start": 5757, "end": 7209, "rows": 1452, "four_array_bytes": 44605952},
+      {"rank": 5, "start": 7209, "end": 8658, "rows": 1449, "four_array_bytes": 44513792},
+      {"rank": 6, "start": 8658, "end": 10044, "rows": 1386, "four_array_bytes": 42578432},
+      {"rank": 7, "start": 10044, "end": 11605, "rows": 1561, "four_array_bytes": 47954432}
+    ],
+    "per_rank_four_array_bytes_min": 42578432,
+    "per_rank_four_array_bytes_max": 47954432
+  },
+  "mode_prep": {
+    "worker_status": "controlled_stop_packet_written",
+    "consumer_qep_required": false,
+    "packet_write_seconds_max_rank": 1.2715304819867015,
+    "producer_qep": {
+      "positive": {"requested_modes": 960, "converged_modes": 979, "iteration_count": 6, "convergence_reason": 1},
+      "negative": {"requested_modes": 960, "converged_modes": 979, "iteration_count": 6, "convergence_reason": 1}
+    },
+    "selection": {
+      "positive": {"candidate_modes": 960, "selected_modes": 480},
+      "negative": {"candidate_modes": 960, "selected_modes": 480}
+    },
+    "status": "measured"
+  },
+  "resources": {
+    "mode_prep": {"rss_mib": 9706.1640625, "swap_mib": 0.0, "rss_status": "measured", "pss": "not_measured", "uss": "not_measured"},
+    "direct": {"rss_mib": 95618.0546875, "swap_mib": 0.0, "rss_status": "measured", "pss": "not_measured", "uss": "not_measured"},
+    "iterative": {"rss_mib": 106838.58984375, "swap_mib": 0.0, "rss_status": "measured", "pss": "not_measured", "uss": "not_measured"}
+  },
+  "lifetime": {
+    "direct_packet_release": {
+      "status": "measured",
+      "first_bundle_destroyed": true,
+      "vector_count_after_destroy": 0,
+      "modal_bases_detached": true,
+      "factor_modes_overlap": false,
+      "post_factor_rehydrate": true,
+      "retained_right_left_eigenvector_bytes": 356505600
+    },
+    "iterative_full_basis": {
+      "status": "not_measured",
+      "value": null,
+      "reason": "formal iterative record has no trusted resident full-basis byte/lifetime field"
+    },
+    "trace_copies": {
+      "status": "source_contract",
+      "source": {
+        "path": "src/coupling/hybrid_internal_modes.py",
+        "functions": ["ModalTraceProjection", "build_hybrid_internal_mode_coupling"]
+      },
+      "entries": {
+        "positive_right_trace": {"count": 480, "status": "source_contract"},
+        "positive_left_trace": {"count": 480, "status": "source_contract"},
+        "negative_right_raw": {"count": 480, "status": "source_contract"},
+        "negative_right_canonical": {"count": 480, "status": "source_contract"},
+        "negative_left_trace": {"count": 0, "status": "source_contract", "note": "not_materialized"}
+      }
+    }
+  },
+  "derived_buffer_accounting": {
+    "status": "derived_not_rss",
+    "source": "results/task039_v4_h4_hybrid_direct_formal_mpi8_icntl14_1515f095/numerical_output/memory_detail_markers.raw.jsonl",
+    "dense_lift_bytes_per_rank": 232243200,
+    "dense_lift_bytes_process_tree": 1857945600,
+    "apply_payload_lower_bound_bytes_process_tree": 551577600,
+    "projection_bytes_per_rank": 116121600,
+    "projection_bytes_process_tree": 928972800
+  },
+  "remaining_replication_direction": {
+    "status": "source_contract",
+    "description": "dense lift/projection and coupling-side buffers remain replicated derived arrays; persisted selected modes are owner-row distributed"
+  },
+  "source_contracts": [
+    {"path": "src/modes/selected_mode_packet.py", "functions": ["write_selected_mode_packet", "load_selected_mode_packet"]},
+    {"path": "benchmarks/task039_v4_selected_mode_packet.py", "functions": ["write_task039_v4_selected_mode_packet", "hydrate_task039_v4_selected_mode_packet"]},
+    {"path": "src/coupling/hybrid_internal_modes.py", "functions": ["ModalTraceProjection", "build_hybrid_internal_mode_coupling"]}
+  ],
+  "not_measured": [
+    "mode-prep/direct/iterative process-tree PSS and USS",
+    "iterative full-basis resident byte/lifetime field",
+    "Q-B algebraic symmetry and observable preservation",
+    "Q-C batched QEP feasibility",
+    "Q-D reduced-M re-solve"
+  ]
+}
