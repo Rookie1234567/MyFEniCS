@@ -10,6 +10,7 @@ from petsc4py import PETSc
 
 from src.solvers.hybrid_local_dtn_woodbury import (
     HYBRID_DTN_WOODBURY_MODE_COUNT,
+    MUMPS_BLR_V5_H4_PROFILE,
     HybridLocalDtnWoodburyFixedBudgetKrylovAction,
     HybridLocalDtnWoodburyFixedAction,
     HybridLocalDtnWoodburyOracle,
@@ -736,7 +737,10 @@ def test_research_exact_side_action_matches_explicit_schur_and_releases_factor(
         F.destroy()
 
 
-def test_research_exact_side_factor_only_mumps_releases_borrowed_components():
+@pytest.mark.parametrize("compressed_factor_profile", [None, MUMPS_BLR_V5_H4_PROFILE])
+def test_research_exact_side_factor_only_mumps_releases_borrowed_components(
+    compressed_factor_profile,
+):
     if MPI.COMM_WORLD.size not in (1, 2, 4):
         return
     rows = 4
@@ -771,6 +775,7 @@ def test_research_exact_side_factor_only_mumps_releases_borrowed_components():
             qualification_scope="task039_v5_factor_only_test",
             explicit_opt_in=True,
             factor_only_storage=True,
+            compressed_factor_profile=compressed_factor_profile,
         )
         diagnostics = action.diagnostics
         assert diagnostics["factor_only_storage"] is True
@@ -779,6 +784,30 @@ def test_research_exact_side_factor_only_mumps_releases_borrowed_components():
         assert diagnostics["woodbury"]["K_released"] is True
         assert diagnostics["woodbury"]["F_C_H_references_released"] is True
         assert diagnostics["woodbury"]["F_C_H_matrices_released"] is False
+        if compressed_factor_profile is None:
+            assert "mumps_controls_requested" not in diagnostics
+            assert diagnostics["direct_factor_count"] == 1
+            assert action.factor.diagnostics["exact_factor_count"] == 1
+            assert action.factor.diagnostics["compressed_factor_count"] == 0
+        else:
+            assert diagnostics["operator_identity"] == (
+                "research_mumps_blr_compressed_side_lu_woodbury"
+            )
+            assert diagnostics["exact_factor_count"] == 0
+            assert diagnostics["compressed_factor_count"] == 1
+            assert diagnostics["direct_factor_count"] == 1
+            assert diagnostics["direct_factor_count_owned"] == 1
+            assert diagnostics["global_direct_factor_count"] == 0
+            assert diagnostics["research_only"] is True
+            assert diagnostics["component_candidate"] is True
+            assert diagnostics["general_production"] is False
+            assert diagnostics["case_qualification_opt_in"] is False
+            assert diagnostics["mumps_controls_verified"] is True
+            assert diagnostics["mumps_controls_observed"] == {
+                "icntl_35": 1,
+                "cntl_7": 1.0e-5,
+                "icntl_14": 80,
+            }
         F.destroy()
         C.destroy()
         H.destroy()
@@ -832,11 +861,36 @@ def test_research_exact_side_factor_only_mumps_releases_borrowed_components():
             assert action.components is None
             assert action.factor.diagnostics["factor_matrix_alive"] is False
             assert action.diagnostics["direct_factor_count"] == 0
+            if compressed_factor_profile is not None:
+                assert action.diagnostics["compressed_factor_count"] == 0
         D.destroy()
         if not components_released:
             F.destroy()
             C.destroy()
             H.destroy()
+
+
+def test_research_blr_profile_rejects_non_mumps_factor_solver():
+    F = _matrix_from_dense(np.eye(2, dtype=np.complex128))
+    C = _matrix_from_dense(np.ones((2, 1), dtype=np.complex128) * 0.02)
+    D = _matrix_from_dense(np.ones((1, 2), dtype=np.complex128) * 0.03)
+    H = _matrix_from_dense(np.eye(1, dtype=np.complex128) * 2.0)
+    components = SimpleNamespace(F=F, C=C, D=D, H=H)
+    try:
+        with pytest.raises(ValueError, match="factor_solver_type='mumps'"):
+            ResearchExactSideLuAction(
+                F,
+                components,
+                factor_solver_type=None,
+                explicit_opt_in=True,
+                factor_only_storage=True,
+                compressed_factor_profile=MUMPS_BLR_V5_H4_PROFILE,
+            )
+    finally:
+        F.destroy()
+        C.destroy()
+        D.destroy()
+        H.destroy()
 
 
 @pytest.mark.parametrize("batch_size", [8, 16, 32])

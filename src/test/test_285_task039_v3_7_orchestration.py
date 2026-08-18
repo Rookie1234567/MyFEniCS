@@ -16,6 +16,7 @@ from petsc4py import PETSc
 
 import benchmarks.task039_v3_7_orchestration as orchestration
 import benchmarks.task039_v3_7_watchdog as watchdog
+from src.runners import task038_launcher
 from benchmarks import run_task037b_hybrid_iterative as frozen_runner
 from benchmarks.task037c_robustness import Task37cProfile
 from benchmarks.task039_v3_7_orchestration import (
@@ -24,6 +25,7 @@ from benchmarks.task039_v3_7_orchestration import (
     V5_H4_SETUP_ONLY_MARKERS,
     _json_safe,
     _record_v3_7_marker,
+    _v5_blr_rhs_vector,
     _v3_7_cleanup_callback,
     _v3_7_object_ledger,
     _write_v3_7_candidate_authority,
@@ -967,6 +969,17 @@ def test_v5_h4_setup_only_plan_passes_identity_and_packet_args(tmp_path) -> None
             selected_mode_packet_identity=identity,
             selected_mode_packet_manifest_sha256=sha,
         )
+    with pytest.raises(ValueError, match="exclusive"):
+        watchdog.v3_7_execution_dry_run(
+            h4_input,
+            tmp_path / "both-v5-components",
+            source_sha="a" * 40,
+            v5_h4_setup_only=True,
+            v5_h4_blr_side_only=True,
+            selected_mode_packet_manifest=manifest,
+            selected_mode_packet_identity=identity,
+            selected_mode_packet_manifest_sha256=sha,
+        )
     with pytest.raises(ValueError):
         watchdog.v3_7_execution_dry_run(
             INPUT,
@@ -979,6 +992,7 @@ def test_v5_h4_setup_only_plan_passes_identity_and_packet_args(tmp_path) -> None
         )
     parameters = inspect.signature(orchestration.run_task039_v3_7_diagnostic).parameters
     assert parameters["v5_h4_setup_only"].default is False
+    assert parameters["v5_h4_blr_side_only"].default is False
     assert parameters["selected_mode_packet_manifest"].default is None
     assert parameters["selected_mode_packet_identity"].default is None
     assert parameters["selected_mode_packet_manifest_sha256"].default is None
@@ -988,6 +1002,383 @@ def test_v5_h4_setup_only_plan_passes_identity_and_packet_args(tmp_path) -> None
     ).parameters
     assert setup_parameters["streaming_w_batch_size"].default is None
     assert '"setup_only_completed"' in inspect.getsource(orchestration.main)
+
+    blr_plan = watchdog.v3_7_execution_dry_run(
+        h4_input,
+        tmp_path / "v5-blr-plan",
+        source_sha="a" * 40,
+        v5_h4_blr_side_only=True,
+        selected_mode_packet_manifest=manifest,
+        selected_mode_packet_identity=identity,
+        selected_mode_packet_manifest_sha256=sha,
+    )
+    assert "--v5-h4-blr-side-component" in blr_plan["argv"]
+    assert "--v5-h4-setup-only" not in blr_plan["argv"]
+    assert blr_plan["worker_contract"]["method"] == (
+        "task039_v5_h4_mumps_blr_side_component"
+    )
+    assert "task039_v5_h4_mumps_blr_side_component" in inspect.getsource(
+        task038_launcher._run_worker
+    )
+    route_source = inspect.getsource(orchestration.run_v5_h4_mumps_blr_side_component)
+    assert route_source.index("exact_diagnostics = exact_action.diagnostics") < (
+        route_source.index("v5_blr_exact_reference_{side}_ready")
+    )
+    assert route_source.index("candidate_setup_diagnostics = action.diagnostics") < (
+        route_source.index("v5_blr_candidate_{side}_ready")
+    )
+
+
+def test_v5_h4_blr_parent_peak_uses_closed_parent_sample_interval(tmp_path) -> None:
+    stages = tmp_path / "memory_stages.jsonl"
+    samples = tmp_path / "process_tree_samples.jsonl"
+    stages.write_text(
+        "\n".join(
+            json.dumps(
+                {
+                    "stage": stage,
+                    "sample_elapsed_seconds": elapsed,
+                    "sample_status": "measured",
+                }
+            )
+            for stage, elapsed in (
+                ("v5_blr_candidate_bottom_setup_begin", 10.0),
+                ("v5_blr_candidate_bottom_setup_end", 20.0),
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    samples.write_text(
+        "\n".join(
+            json.dumps(
+                {
+                    "elapsed_seconds": elapsed,
+                    "rss_bytes": rss,
+                    "sample_status": sample_status,
+                }
+            )
+            for elapsed, rss, sample_status in (
+                (9.0, 100 * 1024**3, "not_available"),
+                (10.0, 4 * 1024**3, "measured"),
+                (15.0, 100 * 1024**3, "not_available"),
+                (16.0, 6 * 1024**3, "measured"),
+                (20.0, 5 * 1024**3, "measured"),
+                (21.0, 100 * 1024**3, "not_available"),
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    result = task038_launcher._v5_h4_blr_candidate_interval_peak(
+        stages, samples, "bottom"
+    )
+    assert result["status"] == "measured"
+    assert result["peak_process_tree_rss_gib"] == 6.0
+    assert result["time_basis"] == "parent_process_tree_sample_elapsed_seconds"
+
+
+def test_v5_h4_blr_parent_peak_missing_evidence_fails_closed(tmp_path) -> None:
+    result = task038_launcher._v5_h4_blr_candidate_interval_peak(
+        tmp_path / "missing-stages.jsonl",
+        tmp_path / "missing-samples.jsonl",
+        "bottom",
+    )
+    assert result["status"] == "not_available"
+    assert result["peak_process_tree_rss_gib"] is None
+    assert result["pass"] is False
+
+
+def test_v5_h4_blr_parent_peak_without_interval_sample_fails_closed(tmp_path) -> None:
+    stages = tmp_path / "memory_stages.jsonl"
+    samples = tmp_path / "process_tree_samples.jsonl"
+    stages.write_text(
+        "\n".join(
+            json.dumps(
+                {
+                    "stage": stage,
+                    "sample_elapsed_seconds": elapsed,
+                    "sample_status": "measured",
+                }
+            )
+            for stage, elapsed in (
+                ("v5_blr_candidate_top_setup_begin", 10.0),
+                ("v5_blr_candidate_top_setup_end", 20.0),
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    samples.write_text(
+        json.dumps({"elapsed_seconds": 9.0, "rss_bytes": 4 * 1024**3}) + "\n",
+        encoding="utf-8",
+    )
+    result = task038_launcher._v5_h4_blr_candidate_interval_peak(stages, samples, "top")
+    assert result["status"] == "not_available"
+    assert result["peak_process_tree_rss_gib"] is None
+    assert result["pass"] is False
+
+
+def test_v5_blr_reference_spool_hash_excludes_self_and_is_verified(tmp_path) -> None:
+    _, matrix, vector = _tiny_side_system((1.0, 2.0))
+    try:
+        record = orchestration._write_v5_blr_reference_spool(
+            tmp_path,
+            "bottom",
+            "probe",
+            vector,
+            "rhs",
+            {"source": "fixture"},
+        )
+        assert "metadata_payload_sha256_excluding_self" in record
+        loaded = orchestration._load_v5_blr_reference_spool(record, vector)
+        loaded.destroy()
+        metadata_path = Path(record["metadata_path"])
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        metadata["source_identity"]["tampered"] = True
+        metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
+        with pytest.raises(ValueError, match="metadata payload hash"):
+            orchestration._load_v5_blr_reference_spool(record, vector)
+    finally:
+        vector.destroy()
+        matrix.destroy()
+
+
+def test_v5_h4_blr_rhs_identity_is_deterministic_and_column_bounded() -> None:
+    comm = PETSc.COMM_WORLD
+    F = PETSc.Mat().createAIJ([4, 4], nnz=2, comm=comm)
+    C = PETSc.Mat().createAIJ([4, 3], nnz=1, comm=comm)
+    F.setUp()
+    C.setUp()
+    first, last = (int(value) for value in F.getOwnershipRange())
+    for row in range(first, last):
+        F.setValue(row, row, 2.0)
+        C.setValue(row, row % 3, 1.0 + 0.1 * row)
+    F.assemble()
+    C.assemble()
+    rhs_base = F.createVecLeft()
+    rhs_base.set(1.0)
+    rhs_base.assemble()
+    system = SimpleNamespace(A=F, b=rhs_base)
+    components = SimpleNamespace(F=F, C=C)
+    coupling = SimpleNamespace(positive_traction=C, negative_traction=C)
+    first_rhs = second_rhs = third_rhs = None
+    try:
+        first_rhs, first_meta = _v5_blr_rhs_vector(
+            ("external_dtn_coupling", "C", 7), system, coupling, components
+        )
+        second_rhs, second_meta = _v5_blr_rhs_vector(
+            ("external_dtn_coupling", "C", 7), system, coupling, components
+        )
+        third_rhs, third_meta = _v5_blr_rhs_vector(
+            ("external_dtn_coupling", "C", 8), system, coupling, components
+        )
+        assert first_meta["resolved_column"] == 1
+        assert third_meta["resolved_column"] == 2
+        assert 0 <= first_meta["resolved_column"] < first_meta["column_count"]
+        assert (
+            first_meta["identity"]["global_sha256"]
+            == second_meta["identity"]["global_sha256"]
+        )
+        assert first_meta["identity"]["global_size"] == 4
+    finally:
+        for vector in (first_rhs, second_rhs, third_rhs, rhs_base):
+            if vector is not None:
+                vector.destroy()
+        C.destroy()
+        F.destroy()
+
+
+@pytest.mark.parametrize(
+    ("exact_cleanup_counts", "expected_error"),
+    [
+        ({"exact": 0, "compressed": 0, "global": 0}, None),
+        ({"exact": 1, "compressed": 0, "global": 0}, "did not release all factors"),
+    ],
+)
+def test_v5_h4_blr_injected_route_keeps_exact_candidate_lifecycle(
+    tmp_path, monkeypatch, exact_cleanup_counts, expected_error
+) -> None:
+    class FakeVec:
+        def destroy(self):
+            return None
+
+    class FakeAction:
+        def __init__(self, compressed):
+            self.compressed = compressed
+            self.operator = object()
+            self.woodbury = SimpleNamespace(
+                mark_borrowed_matrices_released=lambda: None
+            )
+            self.diagnostics = {
+                "exact_factor_count": 0 if compressed else 1,
+                "compressed_factor_count": 1 if compressed else 0,
+                "direct_factor_count": 1,
+                "global_direct_factor_count": 0,
+                "mumps_controls_verified": True,
+            }
+
+        def destroy(self):
+            return None
+
+    class FakeComponents:
+        F = C = D = H = object()
+
+    setup = SimpleNamespace(
+        bottom=SimpleNamespace(),
+        top=SimpleNamespace(),
+        coupling=SimpleNamespace(bottom=SimpleNamespace(), top=SimpleNamespace()),
+    )
+    markers = []
+    marker_details = {}
+    factory_kinds = []
+    destroy_calls = 0
+
+    def fake_components(_system):
+        return FakeComponents()
+
+    def fake_action(*_args, compressed_factor_profile=None, **_kwargs):
+        factory_kinds.append(compressed_factor_profile)
+        return FakeAction(compressed_factor_profile is not None)
+
+    def fake_rhs(spec, *_args):
+        return FakeVec(), {
+            "label": spec[0],
+            "source": spec[1],
+            "seed": spec[2],
+            "identity": {"global_sha256": spec[0]},
+            "degenerate_uninformative": False,
+        }
+
+    def fake_probe(_action, _system, _rhs, metadata, reference_vector=None, **kwargs):
+        candidate = reference_vector is not None
+        report = {
+            **metadata,
+            "finite": True,
+            "true_residual_relative": 1.0e-4,
+            "reference_relative_error": 1.0e-12 if candidate else None,
+            "repeat_relative_error": 1.0e-12 if candidate else None,
+            "linearity_relative_error": (
+                1.0e-12
+                if candidate and metadata["label"] == "fixed_random_repeat_0"
+                else None
+            ),
+            "output": {"global_sha256": metadata["label"]},
+        }
+        return report, (FakeVec() if kwargs.get("retain_output") else None)
+
+    monkeypatch.setattr(
+        orchestration, "_build_research_explicit_side_components", fake_components
+    )
+    monkeypatch.setattr(
+        orchestration, "create_research_exact_side_lu_action", fake_action
+    )
+    monkeypatch.setattr(orchestration, "_v5_blr_rhs_vector", fake_rhs)
+    monkeypatch.setattr(orchestration, "_v5_blr_probe", fake_probe)
+    monkeypatch.setattr(
+        orchestration,
+        "_write_v5_blr_reference_spool",
+        lambda *_args, **_kwargs: {
+            "role": _args[4],
+            "source_identity": _args[5],
+        },
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "_load_v5_blr_reference_spool",
+        lambda *_args, **_kwargs: FakeVec(),
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "_destroy_v5_side_components",
+        lambda *_args, **_kwargs: {
+            "F": True,
+            "C": True,
+            "H": True,
+            "D": True,
+        },
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "_v5_blr_destroy_side",
+        lambda *_args, **_kwargs: _fake_v5_blr_destroy_side(),
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "collective_heap_cleanup",
+        lambda _comm: {"collective_call_completed": True},
+    )
+
+    def _fake_v5_blr_destroy_side():
+        nonlocal destroy_calls
+        destroy_calls += 1
+        counts = (
+            exact_cleanup_counts
+            if destroy_calls == 1
+            else {
+                "exact": 0,
+                "compressed": 0,
+                "global": 0,
+            }
+        )
+        return {
+            "action": {
+                "exact_factor_count": 0,
+                "compressed_factor_count": 0,
+                "direct_factor_count": 0,
+                "global_direct_factor_count": 0,
+            },
+            "factor_count_after_cleanup": counts,
+        }
+
+    def _record_marker(marker, detail):
+        markers.append(marker)
+        marker_details[marker] = detail
+
+    if expected_error is not None:
+        with pytest.raises(RuntimeError, match=expected_error):
+            orchestration.run_v5_h4_mumps_blr_side_component(
+                setup,
+                comm=MPI.COMM_SELF,
+                marker_callback=_record_marker,
+                run_directory=tmp_path,
+                source_identity={"packet_identity": {"model_id": "h4"}},
+            )
+        assert "v5_blr_candidate_bottom_setup_begin" not in markers
+        return
+
+    result = orchestration.run_v5_h4_mumps_blr_side_component(
+        setup,
+        comm=MPI.COMM_SELF,
+        marker_callback=_record_marker,
+        run_directory=tmp_path,
+        source_identity={"packet_identity": {"model_id": "h4"}},
+    )
+    assert factory_kinds == [
+        None,
+        orchestration.MUMPS_BLR_V5_H4_PROFILE,
+        None,
+        orchestration.MUMPS_BLR_V5_H4_PROFILE,
+    ]
+    bottom_exact_cleanup = markers.index("v5_blr_exact_reference_bottom_cleanup")
+    bottom_candidate_begin = markers.index("v5_blr_candidate_bottom_setup_begin")
+    bottom_candidate_end = markers.index("v5_blr_candidate_bottom_setup_end")
+    bottom_candidate_cleanup = markers.index("v5_blr_candidate_bottom_cleanup")
+    assert bottom_exact_cleanup < bottom_candidate_begin < bottom_candidate_end
+    assert bottom_candidate_end < bottom_candidate_cleanup
+    assert (
+        marker_details["v5_blr_exact_reference_bottom_cleanup"]["cleanup"][
+            "factor_count_after_cleanup"
+        ]
+        == exact_cleanup_counts
+    )
+    assert result["status"] == "component_completed"
+    assert result["gates"]["numerical_pass"] is True
+    assert result["gates"]["resource_pass"] is None
+    assert result["gates"]["advancement_pass"] is None
+    assert result["packet_identity"] == {"model_id": "h4"}
+    assert result["outer"] == "not_run"
+    assert result["recovery"] == "not_run"
 
 
 def test_v3_8_candidate_e_dry_run_and_route_exclusivity(tmp_path) -> None:

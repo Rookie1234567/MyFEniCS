@@ -46,6 +46,83 @@ from src.io.run_specification import RunSpecification
 PopenFactory = Callable[..., Any]
 SampleFactory = Callable[[int], dict[str, Any]]
 TerminateFactory = Callable[[Any], dict[str, Any]]
+V5_H4_BLR_SIDE_SETUP_PEAK_LIMIT_GIB = 59.7638938904
+
+
+def _v5_h4_blr_candidate_interval_peak(
+    memory_stages_path: Path,
+    process_samples_path: Path,
+    side: str,
+) -> dict[str, Any]:
+    begin_stage = f"v5_blr_candidate_{side}_setup_begin"
+    end_stage = f"v5_blr_candidate_{side}_setup_end"
+    stage_rows: dict[str, dict[str, Any]] = {}
+    if not memory_stages_path.is_file() or not process_samples_path.is_file():
+        return {
+            "status": "not_available",
+            "peak_process_tree_rss_gib": None,
+            "limit_gib": V5_H4_BLR_SIDE_SETUP_PEAK_LIMIT_GIB,
+            "pass": False,
+            "reason": "missing_stage_or_process_tree_samples",
+        }
+    with memory_stages_path.open(encoding="utf-8") as stream:
+        for line in stream:
+            row = json.loads(line)
+            stage = row.get("stage")
+            if stage in (begin_stage, end_stage):
+                stage_rows[stage] = row
+    begin = stage_rows.get(begin_stage, {}).get("sample_elapsed_seconds")
+    end = stage_rows.get(end_stage, {}).get("sample_elapsed_seconds")
+    if (
+        not isinstance(begin, (int, float))
+        or not isinstance(end, (int, float))
+        or float(end) < float(begin)
+        or stage_rows[begin_stage].get("sample_status") != "measured"
+        or stage_rows[end_stage].get("sample_status") != "measured"
+    ):
+        return {
+            "status": "not_available",
+            "peak_process_tree_rss_gib": None,
+            "limit_gib": V5_H4_BLR_SIDE_SETUP_PEAK_LIMIT_GIB,
+            "pass": False,
+            "reason": "begin_or_end_sample_elapsed_missing",
+        }
+    samples = []
+    with process_samples_path.open(encoding="utf-8") as stream:
+        for line in stream:
+            row = json.loads(line)
+            elapsed = row.get("elapsed_seconds")
+            rss = row.get("rss_bytes")
+            if (
+                isinstance(elapsed, (int, float))
+                and isinstance(rss, int)
+                and row.get("sample_status") == "measured"
+                and float(begin) <= float(elapsed) <= float(end)
+            ):
+                samples.append(row)
+    if not samples:
+        return {
+            "status": "not_available",
+            "peak_process_tree_rss_gib": None,
+            "limit_gib": V5_H4_BLR_SIDE_SETUP_PEAK_LIMIT_GIB,
+            "pass": False,
+            "reason": "no_process_tree_sample_in_closed_interval",
+            "begin_sample_elapsed_seconds": float(begin),
+            "end_sample_elapsed_seconds": float(end),
+        }
+    peak_bytes = max(int(row["rss_bytes"]) for row in samples)
+    peak_gib = peak_bytes / 1024**3
+    return {
+        "status": "measured",
+        "begin_sample_elapsed_seconds": float(begin),
+        "end_sample_elapsed_seconds": float(end),
+        "sample_count": len(samples),
+        "peak_process_tree_rss_bytes": peak_bytes,
+        "peak_process_tree_rss_gib": peak_gib,
+        "limit_gib": V5_H4_BLR_SIDE_SETUP_PEAK_LIMIT_GIB,
+        "pass": bool(peak_gib <= V5_H4_BLR_SIDE_SETUP_PEAK_LIMIT_GIB),
+        "time_basis": "parent_process_tree_sample_elapsed_seconds",
+    }
 
 
 def task039_resource_ledger(
@@ -407,12 +484,16 @@ def _run_worker(
     formal_v5_h4_setup = (
         getattr(plan, "method", "") == "task039_v5_h4_exact_side_setup_only"
     )
+    formal_v5_h4_blr = (
+        getattr(plan, "method", "") == "task039_v5_h4_mumps_blr_side_component"
+    )
     formal_telemetry = (
         formal_v2_h5
         or formal_v3_2d
         or formal_v4_h4
         or formal_v4_h4_hybrid
         or formal_v5_h4_setup
+        or formal_v5_h4_blr
     )
     if task039_model_id_matches(method, model_id, requested_modes):
         task039_budget = _task039_memory_budget(execution)
@@ -505,6 +586,7 @@ def _run_worker(
                 or formal_v4_h4
                 or formal_v4_h4_hybrid
                 or formal_v5_h4_setup
+                or formal_v5_h4_blr
             )
             or formal_stage_stream is None
         ):
@@ -515,7 +597,9 @@ def _run_worker(
         )
         for marker in markers:
             stage_index = marker.get("stage_index")
-            if (formal_v4_h4 or formal_v5_h4_setup) and stage_index is None:
+            if (
+                formal_v4_h4 or formal_v5_h4_setup or formal_v5_h4_blr
+            ) and stage_index is None:
                 stage_index = formal_aligned_stage_count
             row = {
                 "schema": "task039.v2-memory-stage-alignment.v1",
@@ -557,6 +641,7 @@ def _run_worker(
             or formal_v4_h4
             or formal_v4_h4_hybrid
             or formal_v5_h4_setup
+            or formal_v5_h4_blr
         ):
             formal_stages_path.unlink(missing_ok=True)
             formal_stage_stream = formal_stages_path.open("a", encoding="utf-8")
@@ -636,7 +721,11 @@ def _run_worker(
         if formal_stage_stream is not None:
             formal_stage_stream.close()
     if (
-        formal_v2_h5 or formal_v4_h4 or formal_v4_h4_hybrid or formal_v5_h4_setup
+        formal_v2_h5
+        or formal_v4_h4
+        or formal_v4_h4_hybrid
+        or formal_v5_h4_setup
+        or formal_v5_h4_blr
     ) and not formal_object_ledger_path.exists():
         _write_json(
             formal_object_ledger_path,
@@ -655,6 +744,31 @@ def _run_worker(
             classification = "task039_trace_capture_complete"
         else:
             classification = "worker_exit0" if exit_status == 0 else "worker_nonzero"
+    blr_intervals = None
+    if formal_v5_h4_blr:
+        blr_intervals = {
+            side: _v5_h4_blr_candidate_interval_peak(
+                formal_stages_path, formal_samples_path, side
+            )
+            for side in ("bottom", "top")
+        }
+        measured = [
+            item for item in blr_intervals.values() if item.get("status") == "measured"
+        ]
+        overall = {
+            "status": "measured" if len(measured) == 2 else "not_available",
+            "peak_process_tree_rss_gib": (
+                max(item["peak_process_tree_rss_gib"] for item in measured)
+                if len(measured) == 2
+                else None
+            ),
+            "limit_gib": V5_H4_BLR_SIDE_SETUP_PEAK_LIMIT_GIB,
+            "pass": (
+                all(item["pass"] for item in measured) if len(measured) == 2 else False
+            ),
+            "time_basis": "parent_process_tree_sample_elapsed_seconds",
+        }
+        blr_intervals["overall"] = overall
     resource_authority = {
         "status": "measured" if sample_count else "not_available",
         "sample_count": sample_count,
@@ -752,6 +866,21 @@ def _run_worker(
             "process_tree_sample_count": formal_written_sample_count,
             "aligned_stage_count": formal_aligned_stage_count,
             "stage_source": "launcher_marker_alignment",
+        }
+    if formal_v5_h4_blr:
+        resource_authority["v5_h4_blr_side_component_telemetry"] = {
+            "raw_marker_path": str(formal_markers_path),
+            "process_tree_samples_path": str(formal_samples_path),
+            "memory_stages_path": str(formal_stages_path),
+            "memory_object_ledger_path": str(formal_object_ledger_path),
+            "sample_count": sample_count,
+            "process_tree_sample_count": formal_written_sample_count,
+            "aligned_stage_count": formal_aligned_stage_count,
+            "stage_source": "launcher_marker_alignment",
+        }
+        resource_authority["v5_h4_blr_side_component_resource_authority"] = {
+            "candidate_setup_intervals": blr_intervals,
+            "gate_basis": "closed_begin_end_parent_sample_interval",
         }
     if formal_v3_2d:
         resource_authority["v3_2d_formal_telemetry"] = {

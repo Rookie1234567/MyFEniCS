@@ -15,9 +15,11 @@ from .common_3d_solve import _petsc_factor_inventory, _petsc_matrix_stats
 
 
 HYBRID_DTN_WOODBURY_MODE_COUNT = 40
+MUMPS_BLR_V5_H4_PROFILE = "mumps_blr_v5_h4"
 
 __all__ = (
     "HYBRID_DTN_WOODBURY_MODE_COUNT",
+    "MUMPS_BLR_V5_H4_PROFILE",
     "HybridLocalDtnWoodburyOracle",
     "HybridLocalDtnWoodburyFixedAction",
     "ResearchExactFactorInverse",
@@ -50,6 +52,22 @@ def _gather_owned_small_vector(vector: PETSc.Vec) -> np.ndarray:
 def _set_owned_small_vector(vector: PETSc.Vec, values: np.ndarray) -> None:
     first, last = (int(value) for value in vector.getOwnershipRange())
     vector.getArray()[:] = np.asarray(values[first:last], dtype=PETSc.ScalarType)
+
+
+def _configure_v5_blr_factor(pc: PETSc.PC, profile: str | None) -> PETSc.Mat | None:
+    if profile is None:
+        return None
+    if profile != MUMPS_BLR_V5_H4_PROFILE:
+        raise ValueError(
+            "Unsupported compressed factor profile; only the fixed V5 h4 BLR "
+            "profile is allowed"
+        )
+    pc.setFactorSetUpSolverType()
+    factor = pc.getFactorMatrix()
+    factor.setMumpsIcntl(35, 1)
+    factor.setMumpsCntl(7, 1.0e-5)
+    factor.setMumpsIcntl(14, 80)
+    return factor
 
 
 class HybridLocalDtnWoodburyOracle:
@@ -526,6 +544,7 @@ class ResearchExactFactorInverse:
         *,
         factor_solver_type: str | None = "mumps",
         factor_only_storage: bool = False,
+        compressed_factor_profile: str | None = None,
         lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     ) -> None:
         if not isinstance(matrix, PETSc.Mat):
@@ -537,11 +556,18 @@ class ResearchExactFactorInverse:
         self.matrix = matrix
         self.factor_solver_type = factor_solver_type
         self._factor_only_storage = bool(factor_only_storage)
+        if compressed_factor_profile is not None and not self._factor_only_storage:
+            raise ValueError("Compressed factor storage requires factor-only storage")
+        if compressed_factor_profile is not None and factor_solver_type != "mumps":
+            raise ValueError("V5 h4 BLR profile requires factor_solver_type='mumps'")
+        self.compressed_factor_profile = compressed_factor_profile
         self.factor_matrix: PETSc.Mat | None = None
         self._factor_matrix_stats: dict[str, Any] | None = None
         self._factor_matrix_owned = False
         self._ksp_destroyed = False
         self._lifecycle_callback = lifecycle_callback
+        self._mumps_controls_observed: dict[str, Any] | None = None
+        self._mumps_controls_verified: bool | None = None
         self.ksp = PETSc.KSP().create(matrix.getComm())
         self.ksp.setOperators(matrix)
         self.ksp.setType("preonly")
@@ -557,7 +583,27 @@ class ResearchExactFactorInverse:
                     "matrix_stats": _petsc_matrix_stats(matrix, assemble=False),
                 },
             )
-        self.ksp.setUp()
+        try:
+            configured_factor = _configure_v5_blr_factor(pc, compressed_factor_profile)
+            self.ksp.setUp()
+            if configured_factor is not None:
+                self._mumps_controls_observed = {
+                    "icntl_35": configured_factor.getMumpsIcntl(35),
+                    "cntl_7": configured_factor.getMumpsCntl(7),
+                    "icntl_14": configured_factor.getMumpsIcntl(14),
+                }
+                self._mumps_controls_verified = bool(
+                    self._mumps_controls_observed
+                    == {"icntl_35": 1, "cntl_7": 1.0e-5, "icntl_14": 80}
+                )
+                if not self._mumps_controls_verified:
+                    raise RuntimeError(
+                        "V5 h4 BLR MUMPS controls were not read back exactly"
+                    )
+        except Exception:
+            self.ksp.destroy()
+            self.ksp = None
+            raise
         self._destroyed = False
         self._solve_count = 0
         factor_inventory = _petsc_factor_inventory(self.ksp)
@@ -578,6 +624,9 @@ class ResearchExactFactorInverse:
                     "factor_solver_type": factor_solver_type,
                     "factor_inventory": factor_inventory,
                     "factor_only_storage": self._factor_only_storage,
+                    "compressed_factor_profile": compressed_factor_profile,
+                    "mumps_controls_observed": self._mumps_controls_observed,
+                    "mumps_controls_verified": self._mumps_controls_verified,
                     "ksp_destroyed": self._ksp_destroyed,
                     "factor_matrix_owned": self._factor_matrix_owned,
                 },
@@ -622,9 +671,17 @@ class ResearchExactFactorInverse:
 
     @property
     def diagnostics(self) -> dict[str, Any]:
-        return {
+        compressed = self.compressed_factor_profile is not None
+        direct_factor_count = 0 if self._destroyed else 1
+        exact_factor_count = 0 if self._destroyed or compressed else 1
+        compressed_factor_count = 0 if self._destroyed else int(compressed)
+        diagnostics = {
             "research_only": True,
-            "operator_identity": "research_exact_side_lu",
+            "operator_identity": (
+                "research_mumps_blr_compressed_side_factor"
+                if compressed
+                else "research_exact_side_lu"
+            ),
             "factor_solver_type": self.factor_solver_type,
             "ksp_created": True,
             "ksp_destroyed": bool(self._ksp_destroyed),
@@ -633,12 +690,29 @@ class ResearchExactFactorInverse:
             "factor_matrix_alive": self.factor_matrix is not None,
             "factor_matrix_stats": self._factor_matrix_stats,
             "borrowed_matrix_released": self.matrix is None,
-            "direct_factor_count": 0 if self._destroyed else 1,
-            "direct_factor_count_owned": 0 if self._destroyed else 1,
+            "direct_factor_count": direct_factor_count,
+            "direct_factor_count_owned": direct_factor_count,
+            "exact_factor_count": exact_factor_count,
+            "compressed_factor_count": compressed_factor_count,
             "global_hybrid_direct_factor_count": 0,
             "solve_count": int(self._solve_count),
             "factor_destroyed": bool(self._destroyed),
         }
+
+        if compressed:
+            return {
+                **diagnostics,
+                "compressed_factor_profile": self.compressed_factor_profile,
+                "mumps_controls_requested": {
+                    "icntl_35": 1,
+                    "cntl_7": 1.0e-5,
+                    "icntl_14": 80,
+                },
+                "mumps_controls_observed": self._mumps_controls_observed,
+                "mumps_controls_verified": self._mumps_controls_verified,
+                "true_residual_authority": "external_full_explicit_side_residual",
+            }
+        return diagnostics
 
     def destroy(self) -> None:
         if self._destroyed:
@@ -655,7 +729,7 @@ class ResearchExactFactorInverse:
 
 
 class ResearchExactSideLuAction:
-    """Exact-side LU plus DtN Woodbury; qualification is explicit and opt-in."""
+    """Default exact-side LU plus an optional frozen BLR candidate profile."""
 
     def __init__(
         self,
@@ -666,6 +740,7 @@ class ResearchExactSideLuAction:
         qualification_scope: str | None = None,
         explicit_opt_in: bool = False,
         factor_only_storage: bool = False,
+        compressed_factor_profile: str | None = None,
         streaming_w_batch_size: int | None = None,
         lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     ) -> None:
@@ -673,17 +748,24 @@ class ResearchExactSideLuAction:
             raise ValueError("Research exact-side action must use components.F itself")
         if streaming_w_batch_size is not None and not explicit_opt_in:
             raise ValueError("Streaming-W storage requires explicit opt-in")
+        if compressed_factor_profile is not None and not explicit_opt_in:
+            raise ValueError("Compressed factor storage requires explicit opt-in")
         self.factor = ResearchExactFactorInverse(
             explicit_f,
             factor_solver_type=factor_solver_type,
             factor_only_storage=factor_only_storage,
+            compressed_factor_profile=compressed_factor_profile,
             lifecycle_callback=lifecycle_callback,
         )
         try:
             self.woodbury = HybridLocalDtnWoodburyOracle(
                 self.factor,
                 components,
-                base_identity="research_exact_F_direct",
+                base_identity=(
+                    "research_mumps_blr_compressed_side_factor"
+                    if compressed_factor_profile is not None
+                    else "research_exact_F_direct"
+                ),
                 compact_storage=factor_only_storage,
                 streaming_w_batch_size=streaming_w_batch_size,
             )
@@ -715,7 +797,11 @@ class ResearchExactSideLuAction:
         woodbury = self.woodbury.diagnostics
         diagnostics = {
             "research_only": not self.explicit_opt_in,
-            "operator_identity": "research_exact_side_lu_woodbury",
+            "operator_identity": (
+                "research_mumps_blr_compressed_side_lu_woodbury"
+                if self.factor.compressed_factor_profile is not None
+                else "research_exact_side_lu_woodbury"
+            ),
             "factor_solver_type": factor["factor_solver_type"],
             "ksp_created": True,
             "ksp_destroyed": factor["ksp_destroyed"],
@@ -729,6 +815,22 @@ class ResearchExactSideLuAction:
             "apply_count": int(woodbury["apply_count"]),
             "destroyed": bool(self._destroyed),
         }
+        if self.factor.compressed_factor_profile is not None:
+            diagnostics.update(
+                {
+                    "compressed_factor_profile": self.factor.compressed_factor_profile,
+                    "exact_factor_count": factor["exact_factor_count"],
+                    "compressed_factor_count": factor["compressed_factor_count"],
+                    "direct_factor_count": factor["direct_factor_count"],
+                    "direct_factor_count_owned": factor["direct_factor_count_owned"],
+                    "global_direct_factor_count": 0,
+                    "mumps_controls_requested": factor["mumps_controls_requested"],
+                    "mumps_controls_observed": factor["mumps_controls_observed"],
+                    "mumps_controls_verified": factor["mumps_controls_verified"],
+                    "general_production": False,
+                    "true_residual_authority": "external_full_explicit_side_residual",
+                }
+            )
         if self.explicit_opt_in:
             diagnostics.update(
                 {
@@ -742,6 +844,15 @@ class ResearchExactSideLuAction:
                     "local_direct_preonly_ksp_count": 1,
                     "local_direct_solve_count": int(factor["solve_count"]),
                     "local_ksp_role": "preonly_lu_direct_factor",
+                }
+            )
+        if self.factor.compressed_factor_profile is not None:
+            diagnostics.update(
+                {
+                    "research_only": True,
+                    "component_candidate": True,
+                    "general_production": False,
+                    "case_qualification_opt_in": False,
                 }
             )
         return diagnostics
@@ -765,6 +876,7 @@ def create_research_exact_side_lu_action(
     qualification_scope: str | None = None,
     explicit_opt_in: bool = False,
     factor_only_storage: bool = False,
+    compressed_factor_profile: str | None = None,
     streaming_w_batch_size: int | None = None,
     lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
 ) -> ResearchExactSideLuAction:
@@ -783,6 +895,7 @@ def create_research_exact_side_lu_action(
         qualification_scope=qualification_scope,
         explicit_opt_in=explicit_opt_in,
         factor_only_storage=factor_only_storage,
+        compressed_factor_profile=compressed_factor_profile,
         streaming_w_batch_size=streaming_w_batch_size,
         lifecycle_callback=lifecycle_callback,
     )
