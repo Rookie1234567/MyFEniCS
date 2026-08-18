@@ -1,0 +1,162 @@
+{
+  "schema": "task039.v4-h4-hybrid-iterative-exact-side.v1",
+  "classification": "HYBRID_ITERATIVE_H4_EXACT_SIDE_NUMERICAL_PHYSICS_PASS_RESOURCE_FAIL",
+  "status": {
+    "formal_outer_exit_status": 4,
+    "formal_outer_interpretation": "resource objective not met; not a numerical failure",
+    "numerical_pass": true,
+    "recovery_pass": true,
+    "physics_pass": true,
+    "integrated_checker_pass": true,
+    "resource_objective_pass": false,
+    "full3d_integrated_comparison": "not_available_full3d_incomplete"
+  },
+  "scope": {
+    "wavelength_nm": 5.0,
+    "grazing_deg": 1.0,
+    "phi_deg": 0.0,
+    "polarization": "S",
+    "mesh": "p6/h4",
+    "mode_count": 480,
+    "mpi": 8,
+    "qualification_scope": "task039_v4_p6h4_m480_1deg_s",
+    "explicit_opt_in": true,
+    "general_production": false,
+    "ordinary_default_changed": false
+  },
+  "provenance": {
+    "consumer_source_sha": "c2829b7e95ea995adcafc115836def1e915f1666",
+    "packet_producer_source_sha": "eaad0f942f014b65474ac57e3d5e561316489f20",
+    "posthoc_checker_source_sha": "8c053a986e229cdc653a0e4fd851044463a084b7",
+    "posthoc_checker_git_clean": true,
+    "formal_run": {
+      "path": "results/task039_v4_h4_hybrid_iterative_exact_side_formal_mpi8_c2829b7e",
+      "run_manifest_sha256": "b446a43dcdc45ce7bc4b3eb3fbd46b9ab9685d29f4e9e31184baeac979c3d7c9",
+      "run_summary_sha256": "8878167d282d4a750f2c1431da991c86adeb91eb6d125819e4ccb516d825a5d3",
+      "consumer_record_sha256": "96411440c380b12e1b774168af09cadb63710542a956dbe8691cf15a6eb19313",
+      "checkpoint_sha256": "edeae9afc48bd869974a62969ccccf2573e7b4ac5f7949f2b5dc27de0aea97c9"
+    },
+    "posthoc_comparison": {
+      "path": "results/task039_v4_h4_hybrid_iterative_posthoc_8c053a98/comparison.json",
+      "sha256": "2ecd04299524731f8f355b2c2fe28abd6da55355c7137a9e94a15593c43fe858"
+    }
+  },
+  "shared_packet": {
+    "manifest": "results/task039_v4_h4_m480_shared_packet_eaad0f94/manifest.json",
+    "manifest_sha256": "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067",
+    "identity": "results/task039_v4_h4_m480_shared_packet_eaad0f94/identity.json",
+    "identity_file_sha256": "b3bb870fe6fa17cb262b6161f7317cc1950944755c9270d4628dd5c79e950690",
+    "identity_canonical_sha256": "cfd5704b48bff980fa2d819f4deee9a59bb9a3db39bc24a70c53f42f067d39e9",
+    "external_keys": {
+      "count": 600,
+      "sha256": "ba431ec6683f2123e53e8f9f3fb13fd35ae22a6a8f9c0ed2d85aa1f1cb15b04a",
+      "comparison_exact": true
+    },
+    "consumer_qep_required": false,
+    "qep_calls": 0,
+    "packet_mmap_released": true,
+    "packet_references_released": true
+  },
+  "numerics": {
+    "iterations": 1,
+    "reported_relative_residual": 5.167311862586623e-10,
+    "five_residuals": {
+      "global": 5.167307217512327e-10,
+      "bottom": 3.298524570486451e-10,
+      "top": 4.762985375200616e-10,
+      "modal": 2.575878208245249e-10,
+      "reported": 5.167311862586623e-10
+    },
+    "all_five_residuals_le_5e-9": true,
+    "R_total": 0.733184273689319,
+    "T_total": 0.00022009869492546226,
+    "A_balance": 0.2665956276157555,
+    "A_volume": 0.2665962726139155,
+    "closure": 6.449981599931931e-7,
+    "projection_relative_l2": 2.5758782080264814e-10,
+    "exact_traction_relative_l2": {
+      "bottom": 3.298524570486451e-10,
+      "top": 4.762985375200616e-10
+    }
+  },
+  "factor_inventory": {
+    "global_direct_factor_count": 0,
+    "bottom_top_exact_side_direct_factor_count": {"bottom": 1, "top": 1},
+    "nested_iterative_ksp_count": 0,
+    "local_direct_preonly_ksp_count": 2,
+    "cleanup_bottom_top_direct_factor_count": {"bottom": 0, "top": 0},
+    "collective_cleanup_completed": true
+  },
+  "comparison_to_hybrid_direct": {
+    "direct_source_sha": "1515f09575a94484116938d3749f151841e3cdb8",
+    "direct_summary_sha256": "3f19ead55f507e084488e2df77e352e2f650bcfe4fc2e1f85b42fbddc09b4a72",
+    "direct_R_T_A_A_volume": [0.7331842736908196, 0.0002200986949369512, 0.26659562761424344, 0.26659627261424806],
+    "iterative_R_T_A_A_volume": [0.733184273689319, 0.00022009869492546226, 0.2665956276157555, 0.2665962726139155],
+    "absolute_deltas": {
+      "R_total": 1.5005774400833616e-12,
+      "T_total": 1.1488938056122833e-14,
+      "A_balance": 1.512068248388232e-12,
+      "A_volume": 3.3256730702646564e-13
+    },
+    "selected_E_H_relative_l2": {
+      "E": 6.095466959160456e-11,
+      "H": 6.060588566749499e-11
+    },
+    "normal_flux_relative_delta": 2.225073448926312e-12,
+    "channel_power_weighted_relative_delta": 2.2212709557602863e-12,
+    "canonical_relative_l2": {
+      "bottom_active_trace": 1.0794234783957431e-9,
+      "bottom_full_fe": 1.0688892149725834e-9,
+      "top_active_trace": 1.833497322055699e-11,
+      "top_full_fe": 1.8121254253593185e-11,
+      "limit": 1e-5,
+      "pass": true
+    },
+    "channel_checker": {
+      "keys_exact": true,
+      "power_weighted_pass": true,
+      "full_channel_pass": true,
+      "independent_12_plus_12_count": "not_separately_persisted",
+      "600_channel_checker_pass": true
+    }
+  },
+  "resource_and_timing": {
+    "packet_prep_wall_seconds": 1659.082228,
+    "packet_prep_peak_gib": 9.478675842,
+    "reuse_wall_seconds": {
+      "hybrid_direct": 6771.478625,
+      "hybrid_iterative": 12357.484926,
+      "iterative_delta_percent": 82.4932
+    },
+    "cold_wall_seconds": {
+      "hybrid_direct": 8430.560853,
+      "hybrid_iterative": 14016.567154,
+      "iterative_delta_percent": 66.259
+    },
+    "process_tree_peak_rss_mib": {
+      "hybrid_direct": 95618.0546875,
+      "hybrid_iterative": 106838.58984375,
+      "iterative_delta_percent": 11.734745,
+      "iterative_saving_percent": -11.734745
+    },
+    "iterative_swap_mib": 0,
+    "iterative_pss_uss": "not_measured",
+    "cold_peak_semantics": "serial stage maximum; packet preparation peak is not added to consumer peak",
+    "resource_objective": "fail: iterative RSS is above the Hybrid-direct baseline; no swap or hard-stop event"
+  },
+  "full3d_boundary": {
+    "classification": "FULL3D lifecycle NOT_COMPLETED_TIMEOUT_DURING_FACTOR_SETUP",
+    "same_grid_integrated_comparison": "not_available",
+    "observed_stop_peak_lower_bound_only": {
+      "direct_less_than_observed_full3d_percent": 55.175177,
+      "iterative_less_than_observed_full3d_percent": 49.915099,
+      "interpretation": "diagnostic lower bounds, not completed method-to-method savings"
+    }
+  },
+  "boundary": {
+    "fixed_case_only": true,
+    "production_qualification": "not_general_production",
+    "ordinary_defaults": "unchanged",
+    "full_pytest": "not_run"
+  }
+}
