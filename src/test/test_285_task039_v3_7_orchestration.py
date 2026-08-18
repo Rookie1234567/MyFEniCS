@@ -268,6 +268,8 @@ def test_v5_setup_only_emits_unique_pre_cleanup_markers_and_no_solve(
 ):
     events: list[str] = []
     marker_details: dict[str, dict] = {}
+    action_kwargs_seen: list[dict] = []
+    timeline: list[str] = []
 
     class Resource:
         def __init__(self, name):
@@ -286,6 +288,13 @@ def test_v5_setup_only_emits_unique_pre_cleanup_markers_and_no_solve(
     class Action:
         def __init__(self):
             self.destroyed = False
+            self.matrices_released = False
+            self.woodbury = SimpleNamespace(
+                mark_borrowed_matrices_released=lambda: (
+                    events.append("matrices_released")
+                    or setattr(self, "matrices_released", True)
+                )
+            )
 
         @property
         def diagnostics(self):
@@ -293,6 +302,12 @@ def test_v5_setup_only_emits_unique_pre_cleanup_markers_and_no_solve(
                 "direct_factor_count": 0 if self.destroyed else 1,
                 "global_hybrid_direct_factor_count": 0,
                 "destroyed": self.destroyed,
+                "factor_only_storage": True,
+                "woodbury": {
+                    "F_C_H_matrices_released": self.matrices_released,
+                    "K_released": True,
+                    "D_retained": True,
+                },
             }
 
         def destroy(self):
@@ -370,7 +385,8 @@ def test_v5_setup_only_emits_unique_pre_cleanup_markers_and_no_solve(
         orchestration,
         "create_research_exact_side_lu_action",
         lambda _f, _components, **kwargs: (
-            kwargs["lifecycle_callback"]("factor_setup_begin", {})
+            action_kwargs_seen.append(kwargs)
+            or kwargs["lifecycle_callback"]("factor_setup_begin", {})
             or kwargs["lifecycle_callback"]("factor_ready", {})
             or Action()
         ),
@@ -388,7 +404,10 @@ def test_v5_setup_only_emits_unique_pre_cleanup_markers_and_no_solve(
     monkeypatch.setattr(
         orchestration,
         "collective_heap_cleanup",
-        lambda _comm: {"collective_call_completed": True},
+        lambda _comm: (
+            timeline.append("collective_heap_cleanup")
+            or {"collective_call_completed": True}
+        ),
     )
     coupling_blocks = SimpleNamespace(
         projection=object(), positive_traction=object(), negative_traction=object()
@@ -399,23 +418,64 @@ def test_v5_setup_only_emits_unique_pre_cleanup_markers_and_no_solve(
         coupling=SimpleNamespace(bottom=coupling_blocks, top=coupling_blocks),
     )
     markers: list[str] = []
+
+    def record_marker(marker, detail):
+        timeline.append(marker)
+        markers.append(marker)
+        marker_details.setdefault(marker, dict(detail))
+
     result = run_v5_h4_exact_side_setup_only(
         setup,
         SimpleNamespace(),
         comm=MPI.COMM_SELF,
-        marker_callback=lambda marker, detail: (
-            markers.append(marker) or marker_details.setdefault(marker, dict(detail))
-        ),
+        marker_callback=record_marker,
     )
     assert result["status"] == "setup_only_completed"
     assert result["markers"] == list(V5_H4_SETUP_ONLY_MARKERS)
     assert markers == list(V5_H4_SETUP_ONLY_MARKERS[:-1])
     assert len(markers) == len(set(markers))
+    assert timeline[0] == "collective_heap_cleanup"
+    assert timeline.index("collective_heap_cleanup", 1) < timeline.index("top_F_ready")
+    assert timeline.index("bottom_construction_cleanup") < timeline.index("top_F_ready")
+    assert [item["factor_only_storage"] for item in action_kwargs_seen] == [
+        True,
+        True,
+    ]
+    assert marker_details["bottom_F_ready"]["retained_through_woodbury_build"] is True
+    assert (
+        marker_details["bottom_F_ready"]["original_F_retained_for_modal_schur"] is False
+    )
+    assert marker_details["bottom_construction_cleanup"]["component_release"] == {
+        "H": True,
+        "C": True,
+        "F": True,
+        "D": False,
+        "D_retained": True,
+    }
+    assert marker_details["bottom_construction_cleanup"]["retained_objects"] == {
+        "side_action": True,
+        "factor_matrix": True,
+        "D": True,
+        "W": True,
+    }
+    assert marker_details["bottom_construction_cleanup"]["action_diagnostics"] == {
+        "direct_factor_count": 1,
+        "global_hybrid_direct_factor_count": 0,
+        "destroyed": False,
+        "factor_only_storage": True,
+        "woodbury": {
+            "F_C_H_matrices_released": True,
+            "K_released": True,
+            "D_retained": True,
+        },
+    }
     assert result["solve"] == result["recovery"] == result["field_export"] == "not_run"
     assert result["setup_only_internal_cleanup"]["factor_count_after_cleanup"] == {
         "bottom": 0,
         "top": 0,
     }
+    assert result["setup_only_internal_cleanup"]["exact_side_objects_destroyed"] is True
+    assert events.count("matrices_released") == 2
     telemetry = result["telemetry"]
     assert all(
         telemetry[name]["path"] and telemetry[name]["status"]
@@ -468,7 +528,16 @@ def test_v5_diagnostic_final_cleanup_marker_follows_setup_release(
         lambda *_args, **_kwargs: {
             "status": "setup_only_completed",
             "setup_only_internal_cleanup": {
-                "factor_count_after_cleanup": {"bottom": 0, "top": 0}
+                "factor_count_after_cleanup": {"bottom": 0, "top": 0},
+                "side_component_cleanup": {
+                    "bottom": {"F": True, "C": True, "H": True, "D": True},
+                    "top": {"F": True, "C": True, "H": True, "D": True},
+                },
+                "exact_side_objects_destroyed": True,
+            },
+            "side_actions": {
+                "bottom": {"factor_only_storage": True},
+                "top": {"factor_only_storage": True},
             },
             "telemetry": {"memory_object_ledger": {}},
         },
@@ -518,6 +587,12 @@ def test_v5_diagnostic_final_cleanup_marker_follows_setup_release(
     }
     assert events.index("setup_release") < events.index("all_setup_objects_cleanup")
     assert events.index("all_setup_objects_cleanup") < events.index("wait")
+    ledger = json.loads(
+        (run_directory / "numerical_output/memory_object_ledger.json").read_text()
+    )
+    for name in ("exact_side_action", "exact_side_factors"):
+        assert ledger["objects"][name]["destroyed"] is True
+        assert ledger["objects"][name]["details"]["factor_only_storage"] is True
 
 
 def test_v5_setup_release_error_does_not_emit_success_cleanup_marker(

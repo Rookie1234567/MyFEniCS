@@ -56,6 +56,7 @@ class HybridLocalDtnWoodburyOracle:
         components: Any,
         *,
         base_identity: str = "exact_F_direct",
+        compact_storage: bool = False,
     ) -> None:
         self.base_inverse = base_inverse
         self.components = components
@@ -64,7 +65,14 @@ class HybridLocalDtnWoodburyOracle:
         self.D = components.D
         self.H = components.H
         self.base_identity = str(base_identity)
+        self._compact_storage = bool(compact_storage)
+        self._factor_only_storage = bool(
+            getattr(base_inverse, "factor_only_storage", False)
+        )
         self.comm = self.F.getComm().tompi4py()
+        self._source_size = int(self.F.getSize()[1])
+        self._target_size = int(self.F.getSize()[0])
+        self._operator = self.F
         self.n_aux = int(self.H.getSize()[0])
         if self.n_aux <= 0 or self.H.getSize() != (self.n_aux, self.n_aux):
             raise ValueError("Woodbury oracle requires a non-empty square modal block")
@@ -86,6 +94,17 @@ class HybridLocalDtnWoodburyOracle:
         self._piv: np.ndarray | None = None
         self._K_rank: int | None = None
         self._K_condition: float | None = None
+        self._K_shape: list[int] | None = None
+        self._K_nbytes: int | None = None
+        self._K_dtype = "complex128"
+        self._lu_shape: list[int] | None = None
+        self._piv_shape: list[int] | None = None
+        self._lu_nbytes: int | None = None
+        self._piv_nbytes: int | None = None
+        self._K_released = False
+        self._F_C_H_references_released = False
+        self._F_C_H_matrices_released = False
+        self._D_retained = True
         self._arrays_finite = False
         self._last_failure_audit: dict[str, Any] | None = None
         self._setup_seconds = 0.0
@@ -153,14 +172,38 @@ class HybridLocalDtnWoodburyOracle:
         )
         self._W_local = W_local
         self._K = K
+        self._K_shape = list(K.shape)
+        self._K_nbytes = int(K.nbytes)
         self._lu = np.asarray(lu, dtype=np.complex128)
         self._piv = np.asarray(piv, dtype=np.int32)
+        self._lu_shape = list(self._lu.shape)
+        self._piv_shape = list(self._piv.shape)
+        self._lu_nbytes = int(self._lu.nbytes)
+        self._piv_nbytes = int(self._piv.nbytes)
         self._K_rank = rank
         self._K_condition = condition
         self._setup_seconds = _max_over_comm(
             self.comm,
             perf_counter() - started,
         )
+        if self._compact_storage:
+            self._operator = getattr(self.base_inverse, "operator", None)
+            if self._operator is None:
+                raise ValueError(
+                    "Compact Woodbury storage requires a retained factor operator"
+                )
+            self._K = None
+            self.F = None
+            self.C = None
+            self.H = None
+            self.components = None
+            self._K_released = True
+            self._F_C_H_references_released = True
+
+    def mark_borrowed_matrices_released(self) -> None:
+        if not self._compact_storage:
+            raise ValueError("Only compact storage has detached borrowed matrices")
+        self._F_C_H_matrices_released = True
 
     def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         """Apply the exact Woodbury inverse without touching borrowed objects."""
@@ -168,8 +211,8 @@ class HybridLocalDtnWoodburyOracle:
         if self._destroyed:
             raise RuntimeError("Woodbury oracle has been destroyed")
         if (
-            source.getSize() != self.F.getSize()[1]
-            or target.getSize() != self.F.getSize()[0]
+            source.getSize() != self._source_size
+            or target.getSize() != self._target_size
         ):
             raise ValueError("Woodbury source/target size does not match F")
         started = perf_counter()
@@ -228,23 +271,69 @@ class HybridLocalDtnWoodburyOracle:
         K = self._K
         lu = self._lu
         piv = self._piv
+        k_shape = (
+            self._K_shape
+            if K is None and self._compact_storage
+            else (None if K is None else list(K.shape))
+        )
+        k_dtype = (
+            self._K_dtype
+            if K is None and self._compact_storage
+            else (None if K is None else str(K.dtype))
+        )
+        k_nbytes = (
+            self._K_nbytes
+            if K is None and self._compact_storage
+            else (None if K is None else int(K.nbytes))
+        )
+        lu_shape = (
+            self._lu_shape
+            if lu is None and self._compact_storage
+            else (None if lu is None else list(lu.shape))
+        )
+        lu_nbytes = (
+            self._lu_nbytes
+            if lu is None and self._compact_storage
+            else (None if lu is None else int(lu.nbytes))
+        )
+        piv_shape = (
+            self._piv_shape
+            if piv is None and self._compact_storage
+            else (None if piv is None else list(piv.shape))
+        )
+        piv_nbytes = (
+            self._piv_nbytes
+            if piv is None and self._compact_storage
+            else (None if piv is None else int(piv.nbytes))
+        )
         return {
             "base_identity": self.base_identity,
             "n_aux": self.n_aux,
             "normal_equations": False,
             "W_local_shape": None if W_local is None else list(W_local.shape),
             "W_local_nbytes": None if W_local is None else int(W_local.nbytes),
-            "K_shape": None if K is None else list(K.shape),
-            "K_dtype": None if K is None else str(K.dtype),
-            "K_nbytes": None if K is None else int(K.nbytes),
+            "K_shape": k_shape,
+            "K_dtype": k_dtype,
+            "K_nbytes": k_nbytes,
             "K_rank": self._K_rank,
             "K_condition_number": self._K_condition,
             "arrays_finite": bool(self._arrays_finite),
             "last_failure_audit": self._last_failure_audit,
-            "LU_shape": None if lu is None else list(lu.shape),
+            "LU_shape": lu_shape,
             "LU_nbytes": (
-                None if lu is None or piv is None else int(lu.nbytes + piv.nbytes)
+                None
+                if lu_nbytes is None or piv_nbytes is None
+                else int(lu_nbytes + piv_nbytes)
             ),
+            "LU_array_nbytes": lu_nbytes,
+            "pivots_shape": piv_shape,
+            "pivots_nbytes": piv_nbytes,
+            "compact_storage": bool(self._compact_storage),
+            "factor_only_storage": bool(self._factor_only_storage),
+            "K_released": bool(self._K_released),
+            "F_C_H_references_released": bool(self._F_C_H_references_released),
+            "F_C_H_matrices_released": bool(self._F_C_H_matrices_released),
+            "D_retained": bool(self._D_retained),
             "setup_seconds": float(self._setup_seconds),
             "apply_count": int(self.apply_count),
             "apply_seconds": float(self._apply_seconds),
@@ -256,14 +345,20 @@ class HybridLocalDtnWoodburyOracle:
 
         if self._destroyed:
             return
-        self._z.destroy()
-        self._d_work.destroy()
+        if self._z is not None:
+            self._z.destroy()
+        if self._d_work is not None:
+            self._d_work.destroy()
         self._z = None
         self._d_work = None
         self._W_local = None
         self._K = None
         self._lu = None
         self._piv = None
+        self.D = None
+        self.base_inverse = None
+        self._operator = None
+        self._D_retained = False
         self._destroyed = True
 
 
@@ -275,6 +370,7 @@ class ResearchExactFactorInverse:
         matrix: PETSc.Mat,
         *,
         factor_solver_type: str | None = "mumps",
+        factor_only_storage: bool = False,
         lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     ) -> None:
         if not isinstance(matrix, PETSc.Mat):
@@ -285,6 +381,11 @@ class ResearchExactFactorInverse:
             raise ValueError("Exact research factor requires square F")
         self.matrix = matrix
         self.factor_solver_type = factor_solver_type
+        self._factor_only_storage = bool(factor_only_storage)
+        self.factor_matrix: PETSc.Mat | None = None
+        self._factor_matrix_stats: dict[str, Any] | None = None
+        self._factor_matrix_owned = False
+        self._ksp_destroyed = False
         self._lifecycle_callback = lifecycle_callback
         self.ksp = PETSc.KSP().create(matrix.getComm())
         self.ksp.setOperators(matrix)
@@ -302,28 +403,63 @@ class ResearchExactFactorInverse:
                 },
             )
         self.ksp.setUp()
+        self._destroyed = False
+        self._solve_count = 0
+        factor_inventory = _petsc_factor_inventory(self.ksp)
+        if self._factor_only_storage:
+            self.factor_matrix = pc.getFactorMatrix()
+            self.factor_matrix.incRef()
+            self._factor_matrix_owned = True
+            self._factor_matrix_stats = _petsc_matrix_stats(
+                self.factor_matrix, assemble=False
+            )
+            self.ksp.destroy()
+            self.ksp = None
+            self._ksp_destroyed = True
         if lifecycle_callback is not None:
             lifecycle_callback(
                 "factor_ready",
                 {
                     "factor_solver_type": factor_solver_type,
-                    "factor_inventory": _petsc_factor_inventory(self.ksp),
+                    "factor_inventory": factor_inventory,
+                    "factor_only_storage": self._factor_only_storage,
+                    "ksp_destroyed": self._ksp_destroyed,
+                    "factor_matrix_owned": self._factor_matrix_owned,
                 },
             )
-        self._destroyed = False
-        self._solve_count = 0
+
+    @property
+    def factor_only_storage(self) -> bool:
+        return self._factor_only_storage
+
+    @property
+    def operator(self) -> PETSc.Mat | None:
+        return self.factor_matrix if self._factor_only_storage else self.matrix
+
+    def release_borrowed_matrix(self) -> None:
+        if not self._factor_only_storage:
+            raise ValueError("Only factor-only storage can release its borrowed matrix")
+        self.matrix = None
 
     def solve(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         if self._destroyed:
             raise RuntimeError("Exact research factor has been destroyed")
-        if source.getSize() != self.matrix.getSize()[1]:
+        operator = self.operator
+        if operator is None:
+            raise RuntimeError("Exact research factor has no solve operator")
+        if source.getSize() != operator.getSize()[1]:
             raise ValueError("Exact research factor source has the wrong size")
-        if target.getSize() != self.matrix.getSize()[0]:
+        if target.getSize() != operator.getSize()[0]:
             raise ValueError("Exact research factor target has the wrong size")
-        self.ksp.solve(source, target)
-        reason = int(self.ksp.getConvergedReason())
-        if reason < 0:
-            raise RuntimeError(f"Exact research LU solve failed with reason {reason}")
+        if self._factor_only_storage:
+            self.factor_matrix.solve(source, target)
+        else:
+            self.ksp.solve(source, target)
+            reason = int(self.ksp.getConvergedReason())
+            if reason < 0:
+                raise RuntimeError(
+                    f"Exact research LU solve failed with reason {reason}"
+                )
         self._solve_count += 1
 
     def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
@@ -336,6 +472,12 @@ class ResearchExactFactorInverse:
             "operator_identity": "research_exact_side_lu",
             "factor_solver_type": self.factor_solver_type,
             "ksp_created": True,
+            "ksp_destroyed": bool(self._ksp_destroyed),
+            "factor_only_storage": bool(self._factor_only_storage),
+            "factor_matrix_owned": bool(self._factor_matrix_owned),
+            "factor_matrix_alive": self.factor_matrix is not None,
+            "factor_matrix_stats": self._factor_matrix_stats,
+            "borrowed_matrix_released": self.matrix is None,
             "direct_factor_count": 0 if self._destroyed else 1,
             "direct_factor_count_owned": 0 if self._destroyed else 1,
             "global_hybrid_direct_factor_count": 0,
@@ -346,8 +488,14 @@ class ResearchExactFactorInverse:
     def destroy(self) -> None:
         if self._destroyed:
             return
-        self.ksp.destroy()
-        self.ksp = None
+        if self._factor_only_storage:
+            if self.factor_matrix is not None:
+                self.factor_matrix.destroy()
+                self.factor_matrix = None
+        else:
+            self.ksp.destroy()
+            self.ksp = None
+        self.matrix = None if self._factor_only_storage else self.matrix
         self._destroyed = True
 
 
@@ -362,6 +510,7 @@ class ResearchExactSideLuAction:
         factor_solver_type: str | None = "mumps",
         qualification_scope: str | None = None,
         explicit_opt_in: bool = False,
+        factor_only_storage: bool = False,
         lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     ) -> None:
         if getattr(components, "F", None) is not explicit_f:
@@ -369,6 +518,7 @@ class ResearchExactSideLuAction:
         self.factor = ResearchExactFactorInverse(
             explicit_f,
             factor_solver_type=factor_solver_type,
+            factor_only_storage=factor_only_storage,
             lifecycle_callback=lifecycle_callback,
         )
         try:
@@ -376,12 +526,18 @@ class ResearchExactSideLuAction:
                 self.factor,
                 components,
                 base_identity="research_exact_F_direct",
+                compact_storage=factor_only_storage,
             )
         except Exception:
             self.factor.destroy()
             raise
-        self.operator = components.F
-        self.components = components
+        if factor_only_storage:
+            self.factor.release_borrowed_matrix()
+            self.operator = self.factor.operator
+            self.components = None
+        else:
+            self.operator = components.F
+            self.components = components
         self.qualification_scope = qualification_scope
         self.explicit_opt_in = bool(explicit_opt_in)
         self._destroyed = False
@@ -403,6 +559,9 @@ class ResearchExactSideLuAction:
             "operator_identity": "research_exact_side_lu_woodbury",
             "factor_solver_type": factor["factor_solver_type"],
             "ksp_created": True,
+            "ksp_destroyed": factor["ksp_destroyed"],
+            "factor_only_storage": factor["factor_only_storage"],
+            "factor_matrix_owned": factor["factor_matrix_owned"],
             "direct_factor_count": factor["direct_factor_count"],
             "direct_factor_count_owned": factor["direct_factor_count_owned"],
             "ilu_factor_count": 0,
@@ -433,6 +592,9 @@ class ResearchExactSideLuAction:
             return
         self.woodbury.destroy()
         self.factor.destroy()
+        if self.factor.factor_only_storage:
+            self.operator = None
+            self.components = None
         self._destroyed = True
 
 
@@ -443,6 +605,7 @@ def create_research_exact_side_lu_action(
     factor_solver_type: str | None = "mumps",
     qualification_scope: str | None = None,
     explicit_opt_in: bool = False,
+    factor_only_storage: bool = False,
     lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
 ) -> ResearchExactSideLuAction:
     """Create the historical research action or an explicit case qualification.
@@ -459,6 +622,7 @@ def create_research_exact_side_lu_action(
         factor_solver_type=factor_solver_type,
         qualification_scope=qualification_scope,
         explicit_opt_in=explicit_opt_in,
+        factor_only_storage=factor_only_storage,
         lifecycle_callback=lifecycle_callback,
     )
 

@@ -1528,11 +1528,27 @@ def _v5_side_matrix_inventory(side: Any) -> dict[str, Any]:
     }
 
 
-def _destroy_v5_side_components(side: Any) -> None:
-    for name in ("H", "D", "C", "F"):
+def _destroy_v5_side_components(
+    side: Any,
+    *,
+    retain_d: bool = False,
+) -> dict[str, bool]:
+    released: dict[str, bool] = {}
+    for name in ("H", "C", "F"):
         matrix = getattr(side, name, None)
+        released[name] = matrix is None
         if matrix is not None:
             matrix.destroy()
+            setattr(side, name, None)
+            released[name] = True
+    matrix = getattr(side, "D", None)
+    released["D"] = matrix is None
+    if not retain_d and matrix is not None:
+        matrix.destroy()
+        setattr(side, "D", None)
+        released["D"] = True
+    released["D_retained"] = bool(retain_d and matrix is not None)
+    return released
 
 
 def run_v5_h4_exact_side_setup_only(
@@ -1555,6 +1571,7 @@ def run_v5_h4_exact_side_setup_only(
     result: dict[str, Any] | None = None
     internal_cleanup: dict[str, Any] = {"status": "not_run"}
     try:
+        post_coupling_cleanup = collective_heap_cleanup(comm)
         for side, system in (("bottom", setup.bottom), ("top", setup.top)):
             side_components = _build_research_explicit_side_components(system)
             components[side] = side_components
@@ -1563,7 +1580,9 @@ def run_v5_h4_exact_side_setup_only(
                 f"{side}_F_ready",
                 source="research_explicit_side_components",
                 matrices=_v5_side_matrix_inventory(side_components),
-                retained_for_action_and_modal_schur=True,
+                retained_through_woodbury_build=True,
+                original_F_retained_for_modal_schur=False,
+                post_coupling_cleanup=post_coupling_cleanup,
             )
 
             def lifecycle(event: str, detail: Mapping[str, Any], *, _side=side):
@@ -1579,6 +1598,7 @@ def run_v5_h4_exact_side_setup_only(
                 side_components,
                 qualification_scope=qualification_scope,
                 explicit_opt_in=True,
+                factor_only_storage=True,
                 lifecycle_callback=lifecycle,
             )
             _emit_marker(
@@ -1587,13 +1607,24 @@ def run_v5_h4_exact_side_setup_only(
                 source="HybridLocalDtnWoodburyOracle",
                 diagnostics=actions[side].diagnostics,
             )
+            released = _destroy_v5_side_components(side_components, retain_d=True)
+            if all(released[name] for name in ("H", "C", "F")):
+                actions[side].woodbury.mark_borrowed_matrices_released()
             cleanup = collective_heap_cleanup(comm)
             _emit_marker(
                 marker_callback,
                 f"{side}_construction_cleanup",
                 source="collective_heap_cleanup",
                 cleanup=cleanup,
-                retained_for_modal_schur=True,
+                component_release=released,
+                action_diagnostics=actions[side].diagnostics,
+                retained_objects={
+                    "side_action": True,
+                    "factor_matrix": True,
+                    "D": bool(released["D_retained"]),
+                    "W": True,
+                },
+                released_objects={"F": True, "C": True, "H": True},
             )
 
         _emit_marker(
@@ -1708,22 +1739,36 @@ def run_v5_h4_exact_side_setup_only(
             operator_context.destroy()
         if operator is not None:
             operator.destroy()
+        side_cleanup: dict[str, Any] = {}
         for side in ("top", "bottom"):
             action = actions.get(side)
             if action is not None:
                 action.destroy()
             side_components = components.get(side)
             if side_components is not None:
-                _destroy_v5_side_components(side_components)
+                side_cleanup[side] = _destroy_v5_side_components(side_components)
         cleanup = collective_heap_cleanup(comm)
+        factor_counts = {
+            side: int(action.diagnostics.get("direct_factor_count", 0))
+            for side, action in actions.items()
+        }
+        action_destroyed = all(
+            bool(action.diagnostics.get("destroyed")) for action in actions.values()
+        )
         internal_cleanup = {
             "source": "setup_only_internal_finally",
             "cleanup": cleanup,
-            "factor_count_after_cleanup": {
-                side: int(action.diagnostics.get("direct_factor_count", 0))
-                for side, action in actions.items()
-            },
-            "exact_side_objects_destroyed": True,
+            "factor_count_after_cleanup": factor_counts,
+            "side_component_cleanup": side_cleanup,
+            "exact_side_objects_destroyed": bool(
+                completed
+                and action_destroyed
+                and all(count == 0 for count in factor_counts.values())
+                and all(
+                    all(values[name] for name in ("H", "C", "F", "D"))
+                    for values in side_cleanup.values()
+                )
+            ),
             "completed": completed,
         }
         if result is not None:
@@ -4283,8 +4328,39 @@ def run_task039_v3_7_diagnostic(
                 object_ledger["status"] = "controlled_stop"
             else:
                 object_ledger["status"] = "exception"
+            if v5_h4_setup_only and result is not None:
+                internal = result.get("setup_only_internal_cleanup", {})
+                side_actions = result.get("side_actions", {})
+                factor_counts = internal.get("factor_count_after_cleanup", {})
+                cleanup_pass = bool(
+                    internal.get("exact_side_objects_destroyed")
+                    and side_actions
+                    and all(int(count) == 0 for count in factor_counts.values())
+                )
+                details = {
+                    "factor_only_storage": all(
+                        bool(item.get("factor_only_storage"))
+                        for item in side_actions.values()
+                    ),
+                    "lifecycle_pass": cleanup_pass,
+                    "factor_count_after_cleanup": factor_counts,
+                    "side_component_cleanup": internal.get(
+                        "side_component_cleanup", {}
+                    ),
+                }
+                for name in ("exact_side_action", "exact_side_factors"):
+                    object_ledger["objects"][name].update(
+                        {
+                            "created": bool(side_actions),
+                            "completed": result.get("status") == "setup_only_completed",
+                            "destroyed": cleanup_pass,
+                            "status": "measured" if cleanup_pass else "incomplete",
+                            "lifecycle_pass": cleanup_pass,
+                            "details": details,
+                        }
+                    )
             for item in object_ledger["objects"].values():
-                if item["created"]:
+                if item["created"] and item["status"] == "not_available":
                     item["status"] = "measured"
                 elif item["status"] == "not_available":
                     item["status"] = "not_available"

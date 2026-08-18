@@ -705,6 +705,8 @@ def test_research_exact_side_action_matches_explicit_schur_and_releases_factor(
             expected_vec.destroy()
         diagnostics = action.diagnostics
         assert diagnostics["research_only"] is (not qualified)
+        assert diagnostics["factor_only_storage"] is False
+        assert diagnostics["woodbury"]["compact_storage"] is False
         if qualified:
             assert diagnostics["case_qualification_opt_in"] is True
             assert diagnostics["general_production"] is False
@@ -723,11 +725,116 @@ def test_research_exact_side_action_matches_explicit_schur_and_releases_factor(
         source.destroy()
         action.destroy()
         assert action.diagnostics["destroyed"] is True
+        assert action.diagnostics["woodbury"]["K_shape"] is None
+        assert action.diagnostics["woodbury"]["LU_shape"] is None
         assert F.getSize() == (rows, rows)
         C.destroy()
         D.destroy()
         H.destroy()
         F.destroy()
+
+
+def test_research_exact_side_factor_only_mumps_releases_borrowed_components():
+    if MPI.COMM_WORLD.size not in (1, 2, 4):
+        return
+    rows = 4
+    diagonal = np.asarray(
+        [2.0 + 0.1j, 2.4 - 0.2j, 2.8 + 0.15j, 3.1 - 0.05j],
+        dtype=np.complex128,
+    )
+    F_dense = np.diag(diagonal)
+    C_dense = np.asarray(
+        [[0.10 + 0.02j], [0.03 - 0.01j], [0.02 + 0.01j], [-0.01 + 0.04j]],
+        dtype=np.complex128,
+    )
+    D_dense = np.asarray(
+        [[0.04 - 0.01j, 0.01 + 0.02j, -0.02 + 0.01j, 0.03 - 0.02j]],
+        dtype=np.complex128,
+    )
+    H_dense = np.asarray([[2.0 + 0.1j]], dtype=np.complex128)
+    F = _matrix_from_dense(F_dense)
+    C = _matrix_from_dense(C_dense)
+    D = _matrix_from_dense(D_dense)
+    H = _matrix_from_dense(H_dense)
+    effective_dense = F_dense - C_dense @ np.linalg.solve(H_dense, D_dense)
+    components = SimpleNamespace(F=F, C=C, D=D, H=H)
+    action = None
+    components_released = False
+    source = target = repeat = scaled = scaled_target = reference = None
+    try:
+        action = ResearchExactSideLuAction(
+            F,
+            components,
+            factor_solver_type="mumps",
+            qualification_scope="task039_v5_factor_only_test",
+            explicit_opt_in=True,
+            factor_only_storage=True,
+        )
+        diagnostics = action.diagnostics
+        assert diagnostics["factor_only_storage"] is True
+        assert diagnostics["ksp_destroyed"] is True
+        assert diagnostics["factor_matrix_owned"] is True
+        assert diagnostics["woodbury"]["K_released"] is True
+        assert diagnostics["woodbury"]["F_C_H_references_released"] is True
+        assert diagnostics["woodbury"]["F_C_H_matrices_released"] is False
+        F.destroy()
+        C.destroy()
+        H.destroy()
+        components_released = True
+        action.woodbury.mark_borrowed_matrices_released()
+        source = action.operator.createVecRight()
+        target = action.operator.createVecLeft()
+        repeat = action.operator.createVecLeft()
+        source.set(PETSc.ScalarType(0.75 - 0.2j))
+        reference = action.operator.createVecLeft()
+        first, last = (int(value) for value in source.getOwnershipRange())
+        rhs = np.empty(rows, dtype=np.complex128)
+        local_rhs = np.asarray(
+            source.getArray(readonly=True), dtype=np.complex128
+        ).copy()
+        for begin, end, values in MPI.COMM_WORLD.allgather((first, last, local_rhs)):
+            rhs[begin:end] = values
+        reference_values = np.linalg.solve(effective_dense, rhs)
+        reference.getArray()[:] = reference_values[first:last]
+        action.apply(source, target)
+        assert _relative_error(target, reference) <= 1.0e-12
+        action.apply(source, repeat)
+        assert _relative_error(repeat, target) <= 1.0e-12
+        scaled = source.duplicate()
+        source.copy(scaled)
+        scaled.scale(PETSc.ScalarType(2.0))
+        scaled_target = action.operator.createVecLeft()
+        action.apply(scaled, scaled_target)
+        expected_scaled = target.duplicate()
+        target.copy(expected_scaled)
+        expected_scaled.scale(PETSc.ScalarType(2.0))
+        try:
+            assert _relative_error(scaled_target, expected_scaled) <= 1.0e-12
+        finally:
+            expected_scaled.destroy()
+        local_target = np.asarray(
+            target.getArray(readonly=True), dtype=np.complex128
+        ).copy()
+        target_values = np.empty(rows, dtype=np.complex128)
+        for begin, end, values in MPI.COMM_WORLD.allgather((first, last, local_target)):
+            target_values[begin:end] = values
+        residual = effective_dense @ target_values - rhs
+        assert np.linalg.norm(residual) / np.linalg.norm(rhs) <= 1.0e-12
+    finally:
+        for vector in (reference, scaled_target, scaled, repeat, target, source):
+            if vector is not None:
+                vector.destroy()
+        if action is not None:
+            action.destroy()
+            assert action.operator is None
+            assert action.components is None
+            assert action.factor.diagnostics["factor_matrix_alive"] is False
+            assert action.diagnostics["direct_factor_count"] == 0
+        D.destroy()
+        if not components_released:
+            F.destroy()
+            C.destroy()
+            H.destroy()
 
 
 def _vector_from_values(matrix: PETSc.Mat, values: np.ndarray) -> PETSc.Vec:
