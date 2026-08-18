@@ -1,0 +1,214 @@
+{
+  "schema": "task039.v5-5.streaming-woodbury.component.v1",
+  "classification": "TASK039_V5_5_STREAMING_WOODBURY_COMPONENT_MEASURED_MPI1_SYNTHETIC",
+  "status": {
+    "component": "completed",
+    "all_four_cases_completed": true,
+    "formal_h4_resource_conclusion": "not_established",
+    "ordinary_defaults_unchanged": true
+  },
+  "provenance": {
+    "audit_source_sha": "76d374f89452623ed59b525d3a24c0a7348c7d57",
+    "branch": "codex/20260812-task39-5nm-hybrid-0p7nm-feasibility",
+    "git_clean": true,
+    "implementation_commits": {
+      "v5_3_factor_only": "61d3b06f38eea3131d3e5f7a7b82577ace5a9f1f",
+      "v5_4_modal_schur_krylov": "2eab55d70e4bd4f7473c908c88dcfa18e1c94e9b",
+      "v5_5_streaming_action": "9ca332bfa11bce92866ee20e38fc858cf480e6f6",
+      "component_runner": "76d374f89452623ed59b525d3a24c0a7348c7d57"
+    },
+    "abi": {
+      "qualified_activation": true,
+      "python": ".venv/bin/python",
+      "scalar_type": "complex128",
+      "int_type": "int32",
+      "mpi": "Open MPI v4.1.6",
+      "mpi_world_size": 1
+    }
+  },
+  "component_scope": {
+    "kind": "deterministic synthetic exact-side component",
+    "rows": 64,
+    "modes": 32,
+    "rhs_count": 4,
+    "dtype": "complex128",
+    "seed": 5395,
+    "process_tree_scope": "single_process_mpi1_no_children",
+    "production_action": "ResearchExactSideLuAction",
+    "factor_only_storage": true,
+    "normal_equations": false,
+    "output_vectors": "persisted in each raw JSON for offline comparison"
+  },
+  "fixture_hashes": {
+    "F": "8408fea4e2df07a69cf0cecca4cce31a19bc6993c20b194900dc41404719b867",
+    "C": "4e00b32c0462c41c3a4f40533a824222785e93d39614b90427cda9d65eb7e9fa",
+    "D": "915443ccb5226a75d1db3a1909a864add652883fb6a92d47e940feee965cb907",
+    "H": "737910a3588198e888905d70197f11ed9bc2580c96e6ad5aa2f3fd721dfab67e",
+    "rhs": "6e3ab3436d47c2ac787d7f08b76379072255d741f1859e6f5502edf71aa51e05"
+  },
+  "raw_cases": {
+    "retained": {
+      "path": "results/task039_v5_streaming_woodbury_component_76d374f/retained.json",
+      "bytes": 24864,
+      "sha256": "245ac962b6cc395e042a6951107de7591c306002c19f3850f80d39b122b71f58"
+    },
+    "batch8": {
+      "path": "results/task039_v5_streaming_woodbury_component_76d374f/batch8.json",
+      "bytes": 24863,
+      "sha256": "0fc1a13f0c952bf8167d26d8e82c9680d50bcd960add07891a118fb09a34bc3c"
+    },
+    "batch16": {
+      "path": "results/task039_v5_streaming_woodbury_component_76d374f/batch16.json",
+      "bytes": 24866,
+      "sha256": "f57af5efddb62c75809161004299276bf1a149437c9ae236416d4837f26342c4"
+    },
+    "batch32": {
+      "path": "results/task039_v5_streaming_woodbury_component_76d374f/batch32.json",
+      "bytes": 24867,
+      "sha256": "267d5635b1d73dd2d48106e7f09a64aed7e44f48bbabdc7119ec43e923349710"
+    }
+  },
+  "case_results": {
+    "retained": {
+      "storage_case": "retained",
+      "relative_error_to_numpy_max": 4.871279082287947e-16,
+      "relative_error_to_retained_output": 0.0,
+      "K_rank": 32,
+      "K_condition_number": 1.206597999862726,
+      "K_nbytes": 16384,
+      "LU_nbytes": 16512,
+      "W_resident": true,
+      "W_local_nbytes": 32768,
+      "batch_peak_bytes": 0,
+      "batch_peak_scope": "not_applicable",
+      "setup_factor_solves": 32,
+      "setup_D_applies": 32,
+      "apply_base_factor_solves": 4,
+      "apply_D": 4,
+      "apply_C": 0,
+      "factor_total_solves": 36,
+      "internal_wall_seconds": 0.015368460037279874,
+      "ru_maxrss_mib": 954.203125,
+      "current_rss_mib": 120.765625,
+      "swap_bytes": 0,
+      "factor_count_after_destroy": 0,
+      "matrices_released": true
+    },
+    "batch8": {
+      "storage_case": "8",
+      "relative_error_to_numpy_max": 4.871279112970856e-16,
+      "relative_error_to_retained_output": 1.114490187980525e-20,
+      "K_rank": 32,
+      "K_condition_number": 1.206597999862726,
+      "K_nbytes": 16384,
+      "LU_nbytes": 16512,
+      "W_resident": false,
+      "W_local_nbytes": null,
+      "batch_peak_bytes": 8192,
+      "batch_peak_scope": "max_rank_local_dense_response_buffer",
+      "setup_factor_solves": 32,
+      "setup_D_applies": 32,
+      "apply_base_factor_solves": 8,
+      "apply_D": 4,
+      "apply_C": 4,
+      "factor_total_solves": 40,
+      "internal_wall_seconds": 0.016722965054214,
+      "ru_maxrss_mib": 634.38671875,
+      "current_rss_mib": 120.8359375,
+      "swap_bytes": 0,
+      "factor_count_after_destroy": 0,
+      "matrices_released": true,
+      "C_owned_by_action": true
+    },
+    "batch16": {
+      "storage_case": "16",
+      "relative_error_to_numpy_max": 4.871279112970856e-16,
+      "relative_error_to_retained_output": 1.114490187980525e-20,
+      "K_rank": 32,
+      "K_condition_number": 1.206597999862726,
+      "K_nbytes": 16384,
+      "LU_nbytes": 16512,
+      "W_resident": false,
+      "W_local_nbytes": null,
+      "batch_peak_bytes": 16384,
+      "batch_peak_scope": "max_rank_local_dense_response_buffer",
+      "setup_factor_solves": 32,
+      "setup_D_applies": 32,
+      "apply_base_factor_solves": 8,
+      "apply_D": 4,
+      "apply_C": 4,
+      "factor_total_solves": 40,
+      "internal_wall_seconds": 0.01834607101045549,
+      "ru_maxrss_mib": 701.421875,
+      "current_rss_mib": 121.0,
+      "swap_bytes": 0,
+      "factor_count_after_destroy": 0,
+      "matrices_released": true,
+      "C_owned_by_action": true
+    },
+    "batch32": {
+      "storage_case": "32",
+      "relative_error_to_numpy_max": 4.871279112970856e-16,
+      "relative_error_to_retained_output": 1.114490187980525e-20,
+      "K_rank": 32,
+      "K_condition_number": 1.206597999862726,
+      "K_nbytes": 16384,
+      "LU_nbytes": 16512,
+      "W_resident": false,
+      "W_local_nbytes": null,
+      "batch_peak_bytes": 32768,
+      "batch_peak_scope": "max_rank_local_dense_response_buffer",
+      "setup_factor_solves": 32,
+      "setup_D_applies": 32,
+      "apply_base_factor_solves": 8,
+      "apply_D": 4,
+      "apply_C": 4,
+      "factor_total_solves": 40,
+      "internal_wall_seconds": 0.016217764001339674,
+      "ru_maxrss_mib": 823.2734375,
+      "current_rss_mib": 120.734375,
+      "swap_bytes": 0,
+      "factor_count_after_destroy": 0,
+      "matrices_released": true,
+      "C_owned_by_action": true
+    }
+  },
+  "comparison": {
+    "retained_vs_streaming_max_relative_error": 1.114490187980525e-20,
+    "all_numpy_relative_errors_le_1e-10": true,
+    "all_outputs_finite": true,
+    "K_and_LU_identity_across_cases": true,
+    "all_factor_counts_after_destroy_zero": true,
+    "all_matrices_released": true,
+    "all_current_swap_zero": true,
+    "recommendation": "batch8",
+    "recommendation_reason": "smallest deterministic response batch with identical fixture outputs; not selected from RSS noise"
+  },
+  "h4_capacity_implication": {
+    "source": "V5-2 h4 exact-side setup raw and its derived CSR estimates",
+    "W_bytes": {
+      "bottom": 74961408,
+      "top": 83261952,
+      "total": 158223360,
+      "total_mib": 150.8935546875
+    },
+    "streaming_C_action_derived_csr_bytes": {
+      "bottom": 47985008,
+      "top": 49522304,
+      "total": 97507312,
+      "total_mib": 92.99021911621094
+    },
+    "net_retained_object_capacity_reduction": {
+      "bytes": 60716048,
+      "mib": 57.90333557128906,
+      "gib": 0.056546226143836975,
+      "classification": "derived object-capacity comparison, not process-tree RSS"
+    },
+    "batch8_h4_max_rank_response_buffer_bytes": {
+      "bottom": 2025984,
+      "top": 2191104,
+      "construction_order": "bottom side then top side"
+    },
+    "boundary": "does not claim process-tree savings or solve the 10.96 GiB regression"
+  }
+}
