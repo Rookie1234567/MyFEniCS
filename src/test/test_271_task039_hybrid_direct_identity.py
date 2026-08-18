@@ -190,6 +190,7 @@ def _write_hybrid(
     model_id: str | None = None,
     h_nm: float = 10.0,
     incident_grazing_deg: float = 10.0,
+    resolved_method_adapter: str = "task039.hybrid_direct",
 ) -> None:
     numeric_dir = root / "numerical_output"
     numeric_dir.mkdir(parents=True)
@@ -298,7 +299,7 @@ def _write_hybrid(
         "mpi_size": 8,
         "method": "hybrid_direct",
         "model_id": model_id or f"task039_5nm_hybrid_direct_m{mode}",
-        "resolved_method_adapter": "task039.hybrid_direct",
+        "resolved_method_adapter": resolved_method_adapter,
         "external_mode_inventory": inventory,
     }
     _write_json(root / "run_manifest.json", manifest)
@@ -559,6 +560,76 @@ def test_v4_h4_inventory_is_dynamic_while_legacy_contracts_stay_fixed() -> None:
     )
 
 
+def test_hybrid_adapter_is_exactly_bound_to_model_profile(tmp_path: Path) -> None:
+    v4 = tmp_path / "v4"
+    _write_hybrid(
+        v4,
+        _inventory_v3(),
+        480,
+        model_id="task039_5nm_v4_1deg_s5_hybrid_direct_m480",
+        h_nm=4.0,
+        incident_grazing_deg=1.0,
+        resolved_method_adapter="task039.v4.h4.hybrid_direct",
+    )
+    assert hybrid_identity._load_hybrid(v4)["contract"]["profile"] == "v4_h4_1deg"
+
+    manifest_path = v4 / "run_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["resolved_method_adapter"] = "task039.hybrid_direct"
+    _write_json(manifest_path, manifest)
+    with pytest.raises(hybrid_identity.IdentityCheckError):
+        hybrid_identity._load_hybrid(v4)
+
+    historical = tmp_path / "historical"
+    _write_hybrid(
+        historical,
+        _inventory_v3(),
+        480,
+        model_id="task039_5nm_v3_1deg_s5_hybrid_direct_m480",
+        h_nm=5.0,
+        incident_grazing_deg=1.0,
+        resolved_method_adapter="task039.v4.h4.hybrid_direct",
+    )
+    with pytest.raises(hybrid_identity.IdentityCheckError):
+        hybrid_identity._load_hybrid(historical)
+
+
+def test_resource_authority_marks_unmeasured_pss_uss_only_explicitly() -> None:
+    raw = {
+        "process_tree_peak_rss_mb": 10.0,
+        "peak_pss_mb": None,
+        "peak_uss_mb": None,
+        "process_tree_peak_swap_mb": 0.0,
+        "telemetry_status": "not_measured",
+    }
+    result = hybrid_identity._resource_authority({"resource_authority": raw})
+    assert result["pss_mb"] == result["uss_mb"] == "not_measured"
+    for status in (None, "not_available"):
+        invalid = dict(raw)
+        if status is None:
+            invalid.pop("telemetry_status")
+        else:
+            invalid["telemetry_status"] = status
+        with pytest.raises(hybrid_identity.IdentityCheckError):
+            hybrid_identity._resource_authority({"resource_authority": invalid})
+
+
+def test_mode_metrics_honors_declared_packet_selection_schema() -> None:
+    selection = {"requested_modes": 480, "candidate_modes": 960, "selected_modes": 480}
+    numeric = {
+        "qep": {
+            "authority_source": "selected_mode_packet",
+            "positive": {"selection": selection},
+            "negative": {"selection": selection},
+        }
+    }
+    metrics = hybrid_identity._mode_metrics(numeric, _inventory_v3(), 480)
+    assert metrics["mode_counts"]["positive_selected_modes"] == 480
+    broken = {"qep": {**numeric["qep"], "positive": {}}}
+    with pytest.raises(hybrid_identity.IdentityCheckError):
+        hybrid_identity._mode_metrics(broken, _inventory_v3(), 480)
+
+
 def test_v4_integrated_gate_is_strict_and_keeps_v3_default(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -570,6 +641,7 @@ def test_v4_integrated_gate_is_strict_and_keeps_v3_default(
         model_id="task039_5nm_v4_1deg_s5_hybrid_direct_m480",
         h_nm=4.0,
         incident_grazing_deg=1.0,
+        resolved_method_adapter="task039.v4.h4.hybrid_direct",
     )
     loaded = hybrid_identity._hybrid_authority_view(hybrid_identity._load_hybrid(root))
     candidate = dict(loaded)

@@ -438,8 +438,16 @@ def _resource_authority(outer: Mapping[str, Any]) -> dict[str, Any]:
     }
     result: dict[str, Any] = {}
     for output, names in aliases.items():
-        value = next((raw[name] for name in names if name in raw), None)
-        result[output] = _finite(value, f"resource_authority.{output}")
+        name = next((name for name in names if name in raw), None)
+        if name is None:
+            _fail(f"resource_authority.{output} is missing")
+        value = raw[name]
+        if output in {"pss_mb", "uss_mb"} and value is None:
+            if raw.get("telemetry_status") != "not_measured":
+                _fail(f"resource_authority.{output} missing measured value")
+            result[output] = "not_measured"
+        else:
+            result[output] = _finite(value, f"resource_authority.{output}")
     result["swap_pass"] = result["swap_mb"] == 0.0
     result["raw"] = dict(raw)
     return result
@@ -451,8 +459,22 @@ def _mode_metrics(
     qep = numeric.get("qep")
     if not isinstance(qep, Mapping):
         _fail("Hybrid qep record is missing")
-    positive = qep.get("positive_directional_selection")
-    negative = qep.get("negative_directional_selection")
+    if qep.get("authority_source") == "selected_mode_packet":
+        positive_root = qep.get("positive")
+        negative_root = qep.get("negative")
+        positive = (
+            positive_root.get("selection")
+            if isinstance(positive_root, Mapping)
+            else None
+        )
+        negative = (
+            negative_root.get("selection")
+            if isinstance(negative_root, Mapping)
+            else None
+        )
+    else:
+        positive = qep.get("positive_directional_selection")
+        negative = qep.get("negative_directional_selection")
     if not isinstance(positive, Mapping) or not isinstance(negative, Mapping):
         _fail("Hybrid directional mode selection record is missing")
     fields = ("requested_modes", "candidate_modes", "selected_modes")
@@ -636,15 +658,20 @@ def _load_hybrid(
     for source in (manifest, outer):
         if source.get("status") != "finished" or source.get("exit_status") != 0:
             _fail("Hybrid run is not finished with exit_status=0")
-    if (
-        manifest.get("method") != "hybrid_direct"
-        or manifest.get("resolved_method_adapter") != "task039.hybrid_direct"
-    ):
-        _fail("run is not the Task39 Hybrid-direct adapter")
     model = manifest.get("model_id")
     contract = _model_contract(model)
     if contract is None:
         _fail("Hybrid model_id is not a finite Task39 M identity")
+    expected_adapter = {
+        "historical": "task039.hybrid_direct",
+        "v3_1deg": "task039.hybrid_direct",
+        "v4_h4_1deg": "task039.v4.h4.hybrid_direct",
+    }[contract["profile"]]
+    if (
+        manifest.get("method") != "hybrid_direct"
+        or manifest.get("resolved_method_adapter") != expected_adapter
+    ):
+        _fail("run is not the Task39 Hybrid-direct adapter for its model profile")
     requested_modes = (
         numeric.get("case", {}).get("requested_modes_per_direction")
         if isinstance(numeric.get("case"), Mapping)
