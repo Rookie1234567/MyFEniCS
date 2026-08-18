@@ -152,6 +152,8 @@ def test_exact_woodbury_matpython_components_and_lifecycle(mode_count: int):
         assert diagnostics["normal_equations"] is False
         assert diagnostics["K_rank"] == mode_count
         assert np.isfinite(diagnostics["K_condition_number"])
+        assert diagnostics["streaming_w_storage"] is False
+        assert diagnostics["W_resident"] is True
         assert diagnostics["W_local_nbytes"] == F.getLocalSize()[0] * mode_count * 16
         assert diagnostics["K_nbytes"] == mode_count * mode_count * 16
         for seed in (1, 2, 3):
@@ -835,6 +837,151 @@ def test_research_exact_side_factor_only_mumps_releases_borrowed_components():
             F.destroy()
             C.destroy()
             H.destroy()
+
+
+@pytest.mark.parametrize("batch_size", [8, 16, 32])
+def test_research_exact_side_streaming_w_matches_retained_factor_only(batch_size):
+    if MPI.COMM_WORLD.size not in (1, 2, 4):
+        return
+    rows = 8
+    modes = 32
+    rng = np.random.default_rng(2395)
+    F_dense = np.diag(np.asarray(2.0 + 0.1j * np.arange(rows), dtype=np.complex128))
+    C_dense = 0.02 * (
+        rng.standard_normal((rows, modes)) + 1j * rng.standard_normal((rows, modes))
+    )
+    D_dense = 0.02 * (
+        rng.standard_normal((modes, rows)) + 1j * rng.standard_normal((modes, rows))
+    )
+    H_dense = np.diag(np.asarray(3.0 + 0.03j * np.arange(modes), dtype=np.complex128))
+    effective_dense = F_dense - C_dense @ np.linalg.solve(H_dense, D_dense)
+
+    def build(streaming_batch: int | None):
+        F = _matrix_from_dense(F_dense)
+        C = _matrix_from_dense(C_dense)
+        D = _matrix_from_dense(D_dense)
+        H = _matrix_from_dense(H_dense)
+        components = SimpleNamespace(F=F, C=C, D=D, H=H)
+        action = ResearchExactSideLuAction(
+            F,
+            components,
+            factor_solver_type="mumps",
+            qualification_scope="task039_v5_streaming_w_test",
+            explicit_opt_in=True,
+            factor_only_storage=True,
+            streaming_w_batch_size=streaming_batch,
+        )
+        return action, components, (F, C, D, H)
+
+    retained, retained_components, retained_matrices = build(None)
+    streaming, streaming_components, streaming_matrices = build(batch_size)
+    retained_F, retained_C, retained_D, retained_H = retained_matrices
+    streaming_F, _streaming_C, streaming_D, streaming_H = streaming_matrices
+    streaming_local_rows = int(streaming_F.getLocalSize()[0])
+    try:
+        retained_F.destroy()
+        retained_H.destroy()
+        streaming_F.destroy()
+        streaming_H.destroy()
+        streaming.woodbury.mark_borrowed_matrices_released()
+        retained_diagnostics = retained.diagnostics["woodbury"]
+        streaming_diagnostics = streaming.diagnostics["woodbury"]
+        assert retained_diagnostics["streaming_w_storage"] is False
+        assert retained_diagnostics["W_resident"] is True
+        assert streaming_diagnostics["streaming_w_storage"] is True
+        assert streaming_diagnostics["K_shape"] == retained_diagnostics["K_shape"]
+        assert streaming_diagnostics["K_nbytes"] == retained_diagnostics["K_nbytes"]
+        assert streaming_diagnostics["LU_shape"] == retained_diagnostics["LU_shape"]
+        assert (
+            streaming_diagnostics["LU_array_nbytes"]
+            == retained_diagnostics["LU_array_nbytes"]
+        )
+        assert np.isclose(
+            streaming_diagnostics["K_condition_number"],
+            retained_diagnostics["K_condition_number"],
+        )
+        assert streaming_diagnostics["streaming_w_batch_size"] == batch_size
+        assert streaming_diagnostics["W_resident"] is False
+        assert streaming_diagnostics["W_local_nbytes"] in (None, 0)
+        assert streaming_diagnostics["setup_factor_solve_count"] == modes
+        assert streaming_diagnostics["setup_d_apply_count"] == modes
+        assert streaming_diagnostics["setup_batch_count"] == (
+            (modes + batch_size - 1) // batch_size
+        )
+        assert streaming_diagnostics["streaming_w_batch_peak_bytes"] == (
+            streaming_local_rows * min(batch_size, modes) * 16
+        )
+        assert streaming_diagnostics["streaming_w_batch_local_peak_bytes"] == (
+            streaming_local_rows * min(batch_size, modes) * 16
+        )
+        assert (
+            streaming_diagnostics["streaming_w_batch_peak_scope"]
+            == "max_rank_local_dense_response_buffer"
+        )
+        assert streaming_components.C is None
+        assert streaming_diagnostics["C_action_owned"] is True
+        assert streaming_diagnostics["C_action_resident"] is True
+        assert streaming_diagnostics["F_H_matrices_released"] is True
+        assert streaming_diagnostics["F_C_H_matrices_released"] is False
+
+        for seed in (1, 2):
+            rhs = rng.standard_normal(rows) + 1j * rng.standard_normal(rows)
+            source_values = np.asarray(rhs, dtype=np.complex128)
+            source_r = _vector_from_values(retained.operator, source_values)
+            source_s = _vector_from_values(streaming.operator, source_values)
+            target_r = retained.operator.createVecLeft()
+            target_s = streaming.operator.createVecLeft()
+            expected = _vector_from_values(
+                retained.operator,
+                np.linalg.solve(effective_dense, source_values),
+            )
+            try:
+                retained.apply(source_r, target_r)
+                streaming.apply(source_s, target_s)
+                assert _relative_error(target_r, expected) <= 1.0e-10
+                assert _relative_error(target_s, expected) <= 1.0e-10
+                assert _relative_error(target_s, target_r) <= 1.0e-10
+                doubled_source = source_s.duplicate()
+                source_s.copy(doubled_source)
+                doubled_source.scale(PETSc.ScalarType(2.0))
+                doubled_target = streaming.operator.createVecLeft()
+                expected_doubled = target_s.duplicate()
+                target_s.copy(expected_doubled)
+                expected_doubled.scale(PETSc.ScalarType(2.0))
+                try:
+                    streaming.apply(doubled_source, doubled_target)
+                    assert _relative_error(doubled_target, expected_doubled) <= 1.0e-10
+                finally:
+                    expected_doubled.destroy()
+                    doubled_target.destroy()
+                    doubled_source.destroy()
+            finally:
+                expected.destroy()
+                target_s.destroy()
+                target_r.destroy()
+                source_s.destroy()
+                source_r.destroy()
+        assert streaming_diagnostics["apply_base_solve_count_per_apply"] == 2
+        assert streaming.diagnostics["woodbury"]["apply_base_solve_count"] == 8
+        assert streaming.diagnostics["woodbury"]["apply_D_count"] == 4
+        assert streaming.diagnostics["woodbury"]["apply_C_count"] == 4
+    finally:
+        streaming.destroy()
+        retained.destroy()
+        assert streaming.diagnostics["woodbury"]["C_action_released"] is True
+        assert streaming.diagnostics["woodbury"]["F_C_H_matrices_released"] is True
+        assert (
+            streaming.diagnostics["woodbury"]["borrowed_component_handles_released"]
+            is True
+        )
+        retained_C.destroy()
+        retained_D.destroy()
+        retained_components.C = None
+        retained_components.D = None
+        streaming_D.destroy()
+        streaming_components.D = None
+        streaming_components.H = None
+        streaming_components.F = None
 
 
 def _vector_from_values(matrix: PETSc.Mat, values: np.ndarray) -> PETSc.Vec:

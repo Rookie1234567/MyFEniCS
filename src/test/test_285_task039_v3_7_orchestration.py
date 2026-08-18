@@ -287,14 +287,18 @@ def test_v5_setup_only_emits_unique_pre_cleanup_markers_and_no_solve(
             )
 
     class Action:
-        def __init__(self):
+        def __init__(self, streaming):
             self.destroyed = False
+            self.streaming = streaming
             self.matrices_released = False
+
+            def mark_borrowed_matrices_released():
+                events.append("matrices_released")
+                if not self.streaming:
+                    self.matrices_released = True
+
             self.woodbury = SimpleNamespace(
-                mark_borrowed_matrices_released=lambda: (
-                    events.append("matrices_released")
-                    or setattr(self, "matrices_released", True)
-                )
+                mark_borrowed_matrices_released=mark_borrowed_matrices_released
             )
 
         @property
@@ -306,6 +310,14 @@ def test_v5_setup_only_emits_unique_pre_cleanup_markers_and_no_solve(
                 "factor_only_storage": True,
                 "woodbury": {
                     "F_C_H_matrices_released": self.matrices_released,
+                    "F_H_released": True,
+                    "F_H_matrices_released": True,
+                    "borrowed_component_handles_released": True,
+                    "C_action_owned": self.streaming,
+                    "C_action_resident": self.streaming,
+                    "C_action_released": False,
+                    "W_resident": not self.streaming,
+                    "streaming_w_storage": self.streaming,
                     "K_released": True,
                     "D_retained": True,
                 },
@@ -386,15 +398,18 @@ def test_v5_setup_only_emits_unique_pre_cleanup_markers_and_no_solve(
         "_petsc_matrix_stats",
         lambda _matrix, assemble=False: {"status": "measured", "assemble": assemble},
     )
+
+    def make_action(_f, _components, **kwargs):
+        action_kwargs_seen.append(kwargs)
+        streaming = kwargs["streaming_w_batch_size"] is not None
+        if streaming:
+            _components.C = None
+        kwargs["lifecycle_callback"]("factor_setup_begin", {})
+        kwargs["lifecycle_callback"]("factor_ready", {})
+        return Action(streaming)
+
     monkeypatch.setattr(
-        orchestration,
-        "create_research_exact_side_lu_action",
-        lambda _f, _components, **kwargs: (
-            action_kwargs_seen.append(kwargs)
-            or kwargs["lifecycle_callback"]("factor_setup_begin", {})
-            or kwargs["lifecycle_callback"]("factor_ready", {})
-            or Action()
-        ),
+        orchestration, "create_research_exact_side_lu_action", make_action
     )
     monkeypatch.setattr(
         orchestration,
@@ -434,6 +449,7 @@ def test_v5_setup_only_emits_unique_pre_cleanup_markers_and_no_solve(
         SimpleNamespace(),
         comm=MPI.COMM_SELF,
         marker_callback=record_marker,
+        streaming_w_batch_size=16,
     )
     assert result["status"] == "setup_only_completed"
     assert result["markers"] == list(V5_H4_SETUP_ONLY_MARKERS)
@@ -445,6 +461,10 @@ def test_v5_setup_only_emits_unique_pre_cleanup_markers_and_no_solve(
     assert [item["factor_only_storage"] for item in action_kwargs_seen] == [
         True,
         True,
+    ]
+    assert [item["streaming_w_batch_size"] for item in action_kwargs_seen] == [
+        16,
+        16,
     ]
     contract = orchestration._load_v5_h4_sampled_column_contract()
     assert preconditioner_kwargs_seen[0]["sampled_columns"] == contract["columns"]
@@ -461,16 +481,26 @@ def test_v5_setup_only_emits_unique_pre_cleanup_markers_and_no_solve(
     )
     assert marker_details["bottom_construction_cleanup"]["component_release"] == {
         "H": True,
-        "C": True,
+        "C": False,
         "F": True,
         "D": False,
         "D_retained": True,
+        "C_original_carrier_handle_transferred": True,
     }
     assert marker_details["bottom_construction_cleanup"]["retained_objects"] == {
         "side_action": True,
         "factor_matrix": True,
         "D": True,
-        "W": True,
+        "W": False,
+        "C_action": True,
+    }
+    assert marker_details["bottom_construction_cleanup"]["released_objects"] == {
+        "F": True,
+        "H": True,
+        "C_original_carrier_handle_transferred": True,
+        "C_action_resident": True,
+        "C_action_owned": True,
+        "C_matrix_released": False,
     }
     assert marker_details["bottom_construction_cleanup"]["action_diagnostics"] == {
         "direct_factor_count": 1,
@@ -478,7 +508,15 @@ def test_v5_setup_only_emits_unique_pre_cleanup_markers_and_no_solve(
         "destroyed": False,
         "factor_only_storage": True,
         "woodbury": {
-            "F_C_H_matrices_released": True,
+            "F_C_H_matrices_released": False,
+            "F_H_released": True,
+            "F_H_matrices_released": True,
+            "borrowed_component_handles_released": True,
+            "C_action_owned": True,
+            "C_action_resident": True,
+            "C_action_released": False,
+            "W_resident": False,
+            "streaming_w_storage": True,
             "K_released": True,
             "D_retained": True,
         },
@@ -944,6 +982,11 @@ def test_v5_h4_setup_only_plan_passes_identity_and_packet_args(tmp_path) -> None
     assert parameters["selected_mode_packet_manifest"].default is None
     assert parameters["selected_mode_packet_identity"].default is None
     assert parameters["selected_mode_packet_manifest_sha256"].default is None
+    assert parameters["v5_streaming_w_batch_size"].default is None
+    setup_parameters = inspect.signature(
+        orchestration.run_v5_h4_exact_side_setup_only
+    ).parameters
+    assert setup_parameters["streaming_w_batch_size"].default is None
     assert '"setup_only_completed"' in inspect.getsource(orchestration.main)
 
 

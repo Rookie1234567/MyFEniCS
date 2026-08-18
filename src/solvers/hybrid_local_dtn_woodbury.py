@@ -47,6 +47,11 @@ def _gather_owned_small_vector(vector: PETSc.Vec) -> np.ndarray:
     return values
 
 
+def _set_owned_small_vector(vector: PETSc.Vec, values: np.ndarray) -> None:
+    first, last = (int(value) for value in vector.getOwnershipRange())
+    vector.getArray()[:] = np.asarray(values[first:last], dtype=PETSc.ScalarType)
+
+
 class HybridLocalDtnWoodburyOracle:
     """Exact mode-count-preserving Woodbury action over borrowed components."""
 
@@ -57,6 +62,7 @@ class HybridLocalDtnWoodburyOracle:
         *,
         base_identity: str = "exact_F_direct",
         compact_storage: bool = False,
+        streaming_w_batch_size: int | None = None,
     ) -> None:
         self.base_inverse = base_inverse
         self.components = components
@@ -66,6 +72,15 @@ class HybridLocalDtnWoodburyOracle:
         self.H = components.H
         self.base_identity = str(base_identity)
         self._compact_storage = bool(compact_storage)
+        if streaming_w_batch_size is not None:
+            streaming_w_batch_size = int(streaming_w_batch_size)
+            if streaming_w_batch_size not in (8, 16, 32):
+                raise ValueError("Streaming-W batch size must be one of 8, 16, or 32")
+            if not self._compact_storage:
+                raise ValueError(
+                    "Streaming-W storage requires compact factor-only storage"
+                )
+        self._streaming_w_batch_size = streaming_w_batch_size
         self._factor_only_storage = bool(
             getattr(base_inverse, "factor_only_storage", False)
         )
@@ -89,6 +104,11 @@ class HybridLocalDtnWoodburyOracle:
         self._z = self.F.createVecLeft()
         self._d_work = self.D.createVecLeft()
         self._W_local: np.ndarray | None = None
+        self._C_action: PETSc.Mat | None = None
+        self._C_input: PETSc.Vec | None = None
+        self._C_response: PETSc.Vec | None = None
+        self._correction: PETSc.Vec | None = None
+        self._C_action_owned = False
         self._K: np.ndarray | None = None
         self._lu: np.ndarray | None = None
         self._piv: np.ndarray | None = None
@@ -104,10 +124,20 @@ class HybridLocalDtnWoodburyOracle:
         self._K_released = False
         self._F_C_H_references_released = False
         self._F_C_H_matrices_released = False
+        self._F_H_released = False
+        self._F_H_matrices_released = False
+        self._borrowed_component_handles_released = False
         self._D_retained = True
         self._arrays_finite = False
         self._last_failure_audit: dict[str, Any] | None = None
         self._setup_seconds = 0.0
+        self._setup_factor_solve_count = 0
+        self._setup_d_apply_count = 0
+        self._streaming_w_batch_peak_bytes = 0
+        self._streaming_w_batch_local_peak_bytes = 0
+        self._apply_base_solve_count = 0
+        self._apply_d_count = 0
+        self._apply_c_count = 0
         self._apply_seconds = 0.0
         self.apply_count = 0
         self._build()
@@ -116,9 +146,11 @@ class HybridLocalDtnWoodburyOracle:
         started = perf_counter()
         H_dense = np.asarray(gather_small_petsc_matrix(self.H), dtype=np.complex128)
         local_rows = int(self.F.getLocalSize()[0])
-        W_local = np.empty(
-            (local_rows, self.n_aux),
-            dtype=np.complex128,
+        streaming = self._streaming_w_batch_size is not None
+        W_local = (
+            None
+            if streaming
+            else np.empty((local_rows, self.n_aux), dtype=np.complex128)
         )
         D_times_W = np.empty((self.n_aux, self.n_aux), dtype=np.complex128)
         modal_basis = self.C.createVecRight()
@@ -127,19 +159,55 @@ class HybridLocalDtnWoodburyOracle:
         d_column = self.D.createVecLeft()
         try:
             first, last = (int(value) for value in modal_basis.getOwnershipRange())
-            for column in range(self.n_aux):
-                modal_basis.set(0.0)
-                if first <= column < last:
-                    modal_basis.getArray()[column - first] = PETSc.ScalarType(1.0)
-                modal_basis.assemble()
-                self.C.mult(modal_basis, c_column)
-                self.base_inverse.solve(c_column, w_column)
-                W_local[:, column] = np.asarray(
-                    w_column.getArray(readonly=True),
-                    dtype=np.complex128,
+            batch_size = self._streaming_w_batch_size or self.n_aux
+            for batch_start in range(0, self.n_aux, batch_size):
+                batch_width = min(batch_size, self.n_aux - batch_start)
+                response_batch = (
+                    np.empty((local_rows, batch_width), dtype=np.complex128)
+                    if streaming
+                    else None
                 )
-                self.D.mult(w_column, d_column)
-                D_times_W[:, column] = _gather_owned_small_vector(d_column)
+                for offset in range(batch_width):
+                    column = batch_start + offset
+                    modal_basis.set(0.0)
+                    if first <= column < last:
+                        modal_basis.getArray()[column - first] = PETSc.ScalarType(1.0)
+                    modal_basis.assemble()
+                    self.C.mult(modal_basis, c_column)
+                    self.base_inverse.solve(c_column, w_column)
+                    self._setup_factor_solve_count += 1
+                    response = np.asarray(
+                        w_column.getArray(readonly=True), dtype=np.complex128
+                    )
+                    if response_batch is None:
+                        W_local[:, column] = response
+                    else:
+                        response_batch[:, offset] = response
+                    if response_batch is None:
+                        self.D.mult(w_column, d_column)
+                        self._setup_d_apply_count += 1
+                        D_times_W[:, column] = _gather_owned_small_vector(d_column)
+                if response_batch is not None:
+                    for offset in range(batch_width):
+                        w_column.getArray()[:] = response_batch[:, offset]
+                        self.D.mult(w_column, d_column)
+                        self._setup_d_apply_count += 1
+                        D_times_W[:, batch_start + offset] = _gather_owned_small_vector(
+                            d_column
+                        )
+                if response_batch is not None:
+                    self._streaming_w_batch_peak_bytes = max(
+                        self._streaming_w_batch_peak_bytes,
+                        int(response_batch.nbytes),
+                    )
+                    del response_batch
+            if streaming:
+                self._streaming_w_batch_local_peak_bytes = int(
+                    self._streaming_w_batch_peak_bytes
+                )
+                self._streaming_w_batch_peak_bytes = int(
+                    _max_over_comm(self.comm, self._streaming_w_batch_peak_bytes)
+                )
         finally:
             d_column.destroy()
             w_column.destroy()
@@ -161,7 +229,7 @@ class HybridLocalDtnWoodburyOracle:
         lu, piv = lu_factor(K, check_finite=True)
         local_arrays_finite = bool(
             np.all(np.isfinite(H_dense))
-            and np.all(np.isfinite(W_local))
+            and (W_local is None or np.all(np.isfinite(W_local)))
             and np.all(np.isfinite(D_times_W))
             and np.all(np.isfinite(K))
             and np.all(np.isfinite(lu))
@@ -192,18 +260,33 @@ class HybridLocalDtnWoodburyOracle:
                 raise ValueError(
                     "Compact Woodbury storage requires a retained factor operator"
                 )
+            if self._streaming_w_batch_size is not None:
+                if getattr(self.components, "C", None) is not self.C:
+                    raise ValueError(
+                        "Streaming-W storage requires components.C ownership"
+                    )
+                self._C_action = self.C
+                self._C_action_owned = True
+                self.components.C = None
+                self.C = None
+                self._C_input = self._C_action.createVecRight()
+                self._C_response = self._C_action.createVecLeft()
+                self._correction = self._operator.createVecLeft()
             self._K = None
             self.F = None
             self.C = None
             self.H = None
             self.components = None
             self._K_released = True
-            self._F_C_H_references_released = True
+            self._F_H_released = True
+            self._F_C_H_references_released = self._C_action is None
+            self._borrowed_component_handles_released = True
 
     def mark_borrowed_matrices_released(self) -> None:
         if not self._compact_storage:
             raise ValueError("Only compact storage has detached borrowed matrices")
-        self._F_C_H_matrices_released = True
+        self._F_H_matrices_released = True
+        self._F_C_H_matrices_released = self._C_action is None
 
     def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         """Apply the exact Woodbury inverse without touching borrowed objects."""
@@ -217,7 +300,9 @@ class HybridLocalDtnWoodburyOracle:
             raise ValueError("Woodbury source/target size does not match F")
         started = perf_counter()
         self.base_inverse.solve(source, self._z)
+        self._apply_base_solve_count += 1
         self.D.mult(self._z, self._d_work)
+        self._apply_d_count += 1
         d_values = _gather_owned_small_vector(self._d_work)
         try:
             q = lu_solve((self._lu, self._piv), d_values, check_finite=True)
@@ -249,12 +334,31 @@ class HybridLocalDtnWoodburyOracle:
             enriched.finite_audit = audit
             raise enriched from error
         self._z.copy(target)
-        target.getArray()[:] += self._W_local @ q
+        if self._streaming_w_batch_size is None:
+            target.getArray()[:] += self._W_local @ q
+        else:
+            if (
+                self._C_action is None
+                or self._C_input is None
+                or self._C_response is None
+                or self._correction is None
+            ):
+                raise RuntimeError("Streaming-W C action is not available")
+            _set_owned_small_vector(self._C_input, q)
+            self._C_action.mult(self._C_input, self._C_response)
+            self._apply_c_count += 1
+            self.base_inverse.solve(self._C_response, self._correction)
+            self._apply_base_solve_count += 1
+            target.axpy(PETSc.ScalarType(1.0), self._correction)
         local_apply_finite = bool(
             np.all(np.isfinite(self._z.getArray(readonly=True)))
             and np.all(np.isfinite(self._d_work.getArray(readonly=True)))
             and np.all(np.isfinite(q))
             and np.all(np.isfinite(target.getArray(readonly=True)))
+            and (
+                self._correction is None
+                or np.all(np.isfinite(self._correction.getArray(readonly=True)))
+            )
         )
         self._arrays_finite = bool(
             self._arrays_finite and self.comm.allreduce(local_apply_finite, op=MPI.LAND)
@@ -306,12 +410,25 @@ class HybridLocalDtnWoodburyOracle:
             if piv is None and self._compact_storage
             else (None if piv is None else int(piv.nbytes))
         )
+        streaming = self._streaming_w_batch_size is not None
         return {
             "base_identity": self.base_identity,
             "n_aux": self.n_aux,
             "normal_equations": False,
             "W_local_shape": None if W_local is None else list(W_local.shape),
             "W_local_nbytes": None if W_local is None else int(W_local.nbytes),
+            "W_resident": W_local is not None,
+            "streaming_w_storage": streaming,
+            "streaming_w_batch_size": self._streaming_w_batch_size,
+            "streaming_w_batch_peak_bytes": int(self._streaming_w_batch_peak_bytes),
+            "streaming_w_batch_local_peak_bytes": int(
+                self._streaming_w_batch_local_peak_bytes
+            ),
+            "streaming_w_batch_peak_scope": (
+                "max_rank_local_dense_response_buffer"
+                if streaming
+                else "not_applicable"
+            ),
             "K_shape": k_shape,
             "K_dtype": k_dtype,
             "K_nbytes": k_nbytes,
@@ -333,7 +450,34 @@ class HybridLocalDtnWoodburyOracle:
             "K_released": bool(self._K_released),
             "F_C_H_references_released": bool(self._F_C_H_references_released),
             "F_C_H_matrices_released": bool(self._F_C_H_matrices_released),
+            "F_H_released": bool(self._F_H_released),
+            "F_H_matrices_released": bool(self._F_H_matrices_released),
+            "borrowed_component_handles_released": bool(
+                self._borrowed_component_handles_released
+            ),
             "D_retained": bool(self._D_retained),
+            "setup_factor_solve_count": int(self._setup_factor_solve_count),
+            "setup_d_apply_count": int(self._setup_d_apply_count),
+            "setup_batch_count": (
+                0
+                if self._streaming_w_batch_size is None
+                and self._setup_factor_solve_count == 0
+                else (
+                    1
+                    if self._streaming_w_batch_size is None
+                    else int(
+                        (self.n_aux + self._streaming_w_batch_size - 1)
+                        // self._streaming_w_batch_size
+                    )
+                )
+            ),
+            "apply_base_solve_count": int(self._apply_base_solve_count),
+            "apply_base_solve_count_per_apply": (2 if streaming else 1),
+            "apply_D_count": int(self._apply_d_count),
+            "apply_C_count": int(self._apply_c_count),
+            "C_action_owned": bool(self._C_action_owned),
+            "C_action_resident": self._C_action is not None,
+            "C_action_released": bool(self._C_action_owned and self._C_action is None),
             "setup_seconds": float(self._setup_seconds),
             "apply_count": int(self.apply_count),
             "apply_seconds": float(self._apply_seconds),
@@ -349,6 +493,17 @@ class HybridLocalDtnWoodburyOracle:
             self._z.destroy()
         if self._d_work is not None:
             self._d_work.destroy()
+        for vector_name in ("_C_input", "_C_response", "_correction"):
+            vector = getattr(self, vector_name)
+            if vector is not None:
+                vector.destroy()
+                setattr(self, vector_name, None)
+        if self._C_action_owned and self._C_action is not None:
+            self._C_action.destroy()
+            self._C_action = None
+            self._F_C_H_matrices_released = bool(self._F_H_matrices_released)
+            self._F_C_H_references_released = True
+            self._borrowed_component_handles_released = True
         self._z = None
         self._d_work = None
         self._W_local = None
@@ -511,10 +666,13 @@ class ResearchExactSideLuAction:
         qualification_scope: str | None = None,
         explicit_opt_in: bool = False,
         factor_only_storage: bool = False,
+        streaming_w_batch_size: int | None = None,
         lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     ) -> None:
         if getattr(components, "F", None) is not explicit_f:
             raise ValueError("Research exact-side action must use components.F itself")
+        if streaming_w_batch_size is not None and not explicit_opt_in:
+            raise ValueError("Streaming-W storage requires explicit opt-in")
         self.factor = ResearchExactFactorInverse(
             explicit_f,
             factor_solver_type=factor_solver_type,
@@ -527,6 +685,7 @@ class ResearchExactSideLuAction:
                 components,
                 base_identity="research_exact_F_direct",
                 compact_storage=factor_only_storage,
+                streaming_w_batch_size=streaming_w_batch_size,
             )
         except Exception:
             self.factor.destroy()
@@ -606,6 +765,7 @@ def create_research_exact_side_lu_action(
     qualification_scope: str | None = None,
     explicit_opt_in: bool = False,
     factor_only_storage: bool = False,
+    streaming_w_batch_size: int | None = None,
     lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
 ) -> ResearchExactSideLuAction:
     """Create the historical research action or an explicit case qualification.
@@ -623,6 +783,7 @@ def create_research_exact_side_lu_action(
         qualification_scope=qualification_scope,
         explicit_opt_in=explicit_opt_in,
         factor_only_storage=factor_only_storage,
+        streaming_w_batch_size=streaming_w_batch_size,
         lifecycle_callback=lifecycle_callback,
     )
 

@@ -1610,6 +1610,7 @@ def run_v5_h4_exact_side_setup_only(
     marker_callback: Callable[[str, Mapping[str, Any]], None],
     qualification_scope: str = TASK039_V4_H4_CASE_QUALIFICATION_SCOPE,
     sampled_column_contract: Mapping[str, Any] | None = None,
+    streaming_w_batch_size: int | None = None,
 ) -> dict[str, Any]:
     """Build the reviewed h4 exact-side stack, then stop before any solve."""
 
@@ -1656,6 +1657,7 @@ def run_v5_h4_exact_side_setup_only(
                 qualification_scope=qualification_scope,
                 explicit_opt_in=True,
                 factor_only_storage=True,
+                streaming_w_batch_size=streaming_w_batch_size,
                 lifecycle_callback=lifecycle,
             )
             _emit_marker(
@@ -1668,20 +1670,56 @@ def run_v5_h4_exact_side_setup_only(
             if all(released[name] for name in ("H", "C", "F")):
                 actions[side].woodbury.mark_borrowed_matrices_released()
             cleanup = collective_heap_cleanup(comm)
+            woodbury_diagnostics = actions[side].diagnostics["woodbury"]
+            streaming = bool(woodbury_diagnostics.get("streaming_w_storage"))
+            component_release = dict(released)
+            released_objects = {
+                "F": bool(woodbury_diagnostics.get("F_H_matrices_released", False)),
+                "H": bool(woodbury_diagnostics.get("F_H_matrices_released", False)),
+            }
+            if streaming:
+                component_release.update(
+                    {
+                        "C": False,
+                        "C_original_carrier_handle_transferred": True,
+                    }
+                )
+                released_objects.update(
+                    {
+                        "C_original_carrier_handle_transferred": True,
+                        "C_action_resident": bool(
+                            woodbury_diagnostics.get("C_action_resident")
+                        ),
+                        "C_action_owned": bool(
+                            woodbury_diagnostics.get("C_action_owned")
+                        ),
+                        "C_matrix_released": bool(
+                            woodbury_diagnostics.get("C_action_released")
+                        ),
+                    }
+                )
+            else:
+                released_objects["C"] = bool(released["C"])
             _emit_marker(
                 marker_callback,
                 f"{side}_construction_cleanup",
                 source="collective_heap_cleanup",
                 cleanup=cleanup,
-                component_release=released,
+                component_release=component_release,
                 action_diagnostics=actions[side].diagnostics,
                 retained_objects={
                     "side_action": True,
                     "factor_matrix": True,
                     "D": bool(released["D_retained"]),
-                    "W": True,
+                    "W": bool(
+                        actions[side].diagnostics["woodbury"].get("W_resident", True)
+                    ),
+                    "C_action": bool(
+                        woodbury_diagnostics.get("C_action_resident", False)
+                        and woodbury_diagnostics.get("C_action_owned", False)
+                    ),
                 },
-                released_objects={"F": True, "C": True, "H": True},
+                released_objects=released_objects,
             )
 
         _emit_marker(
@@ -3550,6 +3588,7 @@ def run_task039_v3_7_diagnostic(
     selected_mode_packet_identity: Mapping[str, Any] | None = None,
     selected_mode_packet_manifest_sha256: str | None = None,
     v5_sampled_column_contract: Mapping[str, Any] | None = None,
+    v5_streaming_w_batch_size: int | None = None,
 ) -> dict[str, Any]:
     """Prepare the V3-7 campaign or an explicit research candidate branch."""
 
@@ -3742,6 +3781,7 @@ def run_task039_v3_7_diagnostic(
                 comm=comm,
                 marker_callback=marker_callback,
                 sampled_column_contract=v5_sampled_column_contract,
+                streaming_w_batch_size=v5_streaming_w_batch_size,
             )
             result["source_sha"] = source_sha
             result["run_directory"] = str(Path(run_directory).resolve())
