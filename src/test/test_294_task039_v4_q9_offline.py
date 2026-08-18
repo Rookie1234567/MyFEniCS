@@ -8,6 +8,7 @@ import pytest
 from benchmarks.task039_v4_q9_offline_audit import audit_q_a
 from benchmarks.task039_v4_q9_qb_component import (
     _pair_targets,
+    _json_default,
     audit_qep_sign_involution,
 )
 
@@ -263,3 +264,8 @@ def test_q_b_pair_targets_preserve_complete_negative_groups() -> None:
     assert _pair_targets(pairs, 4, [7, 7, 8, 8], blocks) == ((0, 1, 2, 3), 0.0)
     with pytest.raises(ValueError, match="complete negative group"):
         _pair_targets(pairs, 4, [7, 7, 7, 8], blocks)
+
+
+def test_q_b_json_default_normalizes_numpy_scalars() -> None:
+    assert _json_default(np.bool_(True)) is True
+    assert _json_default(np.int64(4)) == 4

@@ -50,6 +50,12 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _json_default(value: Any) -> Any:
+    if isinstance(value, np.generic):
+        return value.item()
+    raise TypeError(f"unsupported Q-B JSON value: {type(value).__name__}")
+
+
 def _relative_norm(value: np.ndarray, reference: np.ndarray) -> float:
     scale = max(float(np.linalg.norm(reference)), 1.0e-30)
     return float(np.linalg.norm(value) / scale)
@@ -833,7 +839,9 @@ def run_component(args: argparse.Namespace) -> dict[str, Any] | None:
     if comm.rank == 0:
         output = Path(args.output)
         output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
+        output.write_text(
+            json.dumps(result, default=_json_default, indent=2, sort_keys=True) + "\n"
+        )
         return result
     return None
 
