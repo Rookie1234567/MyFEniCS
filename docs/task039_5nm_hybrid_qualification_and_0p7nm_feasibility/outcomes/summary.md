@@ -524,3 +524,22 @@ variational dual。故最终分类为
 与新 sidecar 的差异只作 lifecycle/implementation comparison；与 h4 direct 的 `95618.0546875 MiB`
 只作容量比较，不能称网格收敛。详见 [V5-S outcome](v5_h5_current_hybrid_direct_sidecar.md)
 和 [compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v5_h5_current_hybrid_direct_sidecar_v1.json)。
+
+## V5-2：h4 exact-side setup-only 内存归因
+
+V5-2 只执行固定 h4/M480/MPI8 的 setup-only：不调用 outer solve、recovery、field 或
+R/T/A。`setup_only_completed`、exit=0；15 个 marker 唯一且严格有序，全部有 process-tree
+RSS stage alignment，最终 `all_setup_objects_cleanup` 后 setup destroyed=true、bottom/top
+factor count=`0/0`。packet consumer `qep_calls=0`，shared manifest SHA 为
+`2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067`，600 external keys
+hash-bound，swap=0。
+
+| 项目 | V5-2 measured result | 分类 |
+|---|---:|---|
+| process-tree RSS peak | `85.376991272 GiB`（`91672846336 B`） | baseline measured |
+| peak stage | bottom factor ready→bottom Woodbury ready construction interval | factor resident；不作单对象因果断言 |
+| direct / advancement comparison | `-8.567436%` / `+1.591738%` | 当前 setup peak 低于 direct；advancement line 未满足 |
+| PSS / USS | `not_measured` / `not_measured` | 不伪造 |
+| solve/recovery/physics | `not_run` | 不构成完整 iterative qualification |
+
+compact attribution：[V5-2 record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v5_h4_exact_side_memory_attribution_v1.json)。完整阶段、对象容量、invalid preflight invocation 和 generic-ledger coverage gap 见 [V5-2 outcome](v5_h4_exact_side_memory_attribution.md)。

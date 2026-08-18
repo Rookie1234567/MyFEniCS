@@ -2414,3 +2414,22 @@ external-key identity；只有两条 Hybrid 方法使用并共享 M480 packet，
 [`V4 response`](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/response_v5.md)、
 [`三方法比较`](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v4_three_method_comparison.md)
 和 [`iterative compact`](../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v4_h4_hybrid_iterative_exact_side_v1.json)。
+
+## 49.2 Task039 V5-2 h4 exact-side setup-only
+
+V5-2 在固定 5 nm、1°、phi=0、S、p6/h4、M480、MPI8 下完成一次 setup-only 归因；不运行
+outer solve、recovery、R/T/A 或 field/canonical。exit=0、`setup_only_completed`，15 个
+Review marker 全部唯一、有序并与 process-tree RSS 对齐；最终 setup destroyed=true，
+bottom/top factor count=`0/0`，packet consumer `qep_calls=0`、swap=0。
+
+| 项目 | 结果 |
+|---|---|
+| RSS peak | `91672846336 B = 85.376991272 GiB`；位于 bottom Woodbury construction interval |
+| 阈值 | warning/critical/hard 未触发；PSS/USS=`not_measured` |
+| 资源分类 | baseline positive；相对 advancement line `84.039305878 GiB` 高 `1.337685394 GiB`，因此 advancement not met |
+| 边界 | 这是 setup-only memory attribution，不是完整 Hybrid iterative numerical/physics qualification；V5-3 仍具备资格 |
+| 证据 | [`V5-2 outcome`](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v5_h4_exact_side_memory_attribution.md)、[`compact record`](../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v5_h4_exact_side_memory_attribution_v1.json) |
+
+首次错误 packet 路径 run 保留为 `invalid_preflight_invocation`，不计入重型尝试；generic
+memory ledger 未覆盖 exact-side action/factor，专用 15-marker stream 与 diagnostic 才是本
+次对象证据 authority。普通 defaults 未改变。
