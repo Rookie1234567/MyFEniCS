@@ -404,8 +404,15 @@ def _run_worker(
     formal_v4_h4_hybrid = task039_v4_h4_hybrid_direct_formal_profile(
         specification_payload
     )
+    formal_v5_h4_setup = (
+        getattr(plan, "method", "") == "task039_v5_h4_exact_side_setup_only"
+    )
     formal_telemetry = (
-        formal_v2_h5 or formal_v3_2d or formal_v4_h4 or formal_v4_h4_hybrid
+        formal_v2_h5
+        or formal_v3_2d
+        or formal_v4_h4
+        or formal_v4_h4_hybrid
+        or formal_v5_h4_setup
     )
     if task039_model_id_matches(method, model_id, requested_modes):
         task039_budget = _task039_memory_budget(execution)
@@ -493,7 +500,12 @@ def _run_worker(
     def _align_formal_markers(sample: dict[str, Any] | None) -> None:
         nonlocal formal_marker_offset, formal_aligned_stage_count
         if (
-            not (formal_direct_v2_h5 or formal_v4_h4 or formal_v4_h4_hybrid)
+            not (
+                formal_direct_v2_h5
+                or formal_v4_h4
+                or formal_v4_h4_hybrid
+                or formal_v5_h4_setup
+            )
             or formal_stage_stream is None
         ):
             return
@@ -503,7 +515,7 @@ def _run_worker(
         )
         for marker in markers:
             stage_index = marker.get("stage_index")
-            if formal_v4_h4 and stage_index is None:
+            if (formal_v4_h4 or formal_v5_h4_setup) and stage_index is None:
                 stage_index = formal_aligned_stage_count
             row = {
                 "schema": "task039.v2-memory-stage-alignment.v1",
@@ -540,7 +552,12 @@ def _run_worker(
         formal_samples_path.parent.mkdir(parents=True, exist_ok=True)
         formal_samples_path.unlink(missing_ok=True)
         formal_sample_stream = formal_samples_path.open("a", encoding="utf-8")
-        if formal_direct_v2_h5 or formal_v4_h4 or formal_v4_h4_hybrid:
+        if (
+            formal_direct_v2_h5
+            or formal_v4_h4
+            or formal_v4_h4_hybrid
+            or formal_v5_h4_setup
+        ):
             formal_stages_path.unlink(missing_ok=True)
             formal_stage_stream = formal_stages_path.open("a", encoding="utf-8")
     try:
@@ -619,7 +636,7 @@ def _run_worker(
         if formal_stage_stream is not None:
             formal_stage_stream.close()
     if (
-        formal_v2_h5 or formal_v4_h4 or formal_v4_h4_hybrid
+        formal_v2_h5 or formal_v4_h4 or formal_v4_h4_hybrid or formal_v5_h4_setup
     ) and not formal_object_ledger_path.exists():
         _write_json(
             formal_object_ledger_path,
@@ -716,6 +733,17 @@ def _run_worker(
         }
     if formal_v4_h4_hybrid:
         resource_authority["v4_h4_hybrid_direct_formal_telemetry"] = {
+            "raw_marker_path": str(formal_markers_path),
+            "process_tree_samples_path": str(formal_samples_path),
+            "memory_stages_path": str(formal_stages_path),
+            "memory_object_ledger_path": str(formal_object_ledger_path),
+            "sample_count": sample_count,
+            "process_tree_sample_count": formal_written_sample_count,
+            "aligned_stage_count": formal_aligned_stage_count,
+            "stage_source": "launcher_marker_alignment",
+        }
+    if formal_v5_h4_setup:
+        resource_authority["v5_h4_setup_only_telemetry"] = {
             "raw_marker_path": str(formal_markers_path),
             "process_tree_samples_path": str(formal_samples_path),
             "memory_stages_path": str(formal_stages_path),

@@ -47,9 +47,20 @@ V3_7_CANDIDATE_D_FLAG = "--candidate-d-only"
 V3_7_CANDIDATE_D_QUALIFIED_FLAG = "--candidate-d-qualified"
 V3_7_CANDIDATE_E_FLAG = "--candidate-e-side-only"
 V3_8_CANDIDATE_D_QUALIFIED_METHOD = "hybrid_iterative_exact_side_case_qualification"
+V5_H4_SETUP_ONLY_FLAG = "--v5-h4-setup-only"
+V5_H4_SETUP_ONLY_METHOD = "task039_v5_h4_exact_side_setup_only"
 
 
-def _validate_resolved_identity(payload: Mapping[str, Any]) -> None:
+def _validate_resolved_identity(
+    payload: Mapping[str, Any], *, v5_h4_setup_only: bool = False
+) -> None:
+    if v5_h4_setup_only:
+        method = payload.get("method", {})
+        if payload.get("model_id") != "task039_5nm_v4_1deg_s5_hybrid_iterative_m480":
+            raise ValueError("V5 h4 setup-only requires the fixed h4 model")
+        if method.get("kind") != "hybrid_iterative":
+            raise ValueError("V5 h4 setup-only requires hybrid_iterative")
+        return
     if payload.get("dimension") != 3 or payload.get("model_id") != (
         "task039_5nm_v3_1deg_s5_hybrid_direct_m480"
     ):
@@ -94,8 +105,10 @@ def _validate_resolved_identity(payload: Mapping[str, Any]) -> None:
         raise ValueError("V3-7 requires the exact 600-key external inventory")
 
 
-def _watchdog_policy(payload: Mapping[str, Any]) -> dict[str, Any]:
-    _validate_resolved_identity(payload)
+def _watchdog_policy(
+    payload: Mapping[str, Any], *, v5_h4_setup_only: bool = False
+) -> dict[str, Any]:
+    _validate_resolved_identity(payload, v5_h4_setup_only=v5_h4_setup_only)
     return {
         "warning_memory_gib": V3_7_WARNING_GIB,
         "critical_memory_gib": V3_7_CRITICAL_GIB,
@@ -129,10 +142,18 @@ def _check_direct_producer(run_root: Path) -> None:
         )
 
 
-def load_v3_7_official_payload(input_path: str | Path) -> dict[str, Any]:
+def load_v3_7_official_payload(
+    input_path: str | Path, *, v5_h4_setup_only: bool = False
+) -> dict[str, Any]:
     specification = load_and_resolve(input_path)
     payload = specification.as_jsonable()
-    _validate_resolved_identity(payload)
+    if v5_h4_setup_only:
+        from benchmarks.task039_v4_h4_hybrid_direct import (
+            validate_v4_h4_specification,
+        )
+
+        validate_v4_h4_specification(specification)
+    _validate_resolved_identity(payload, v5_h4_setup_only=v5_h4_setup_only)
     return payload
 
 
@@ -149,11 +170,15 @@ def build_v3_7_execution_plan(
     candidate_d_only: bool = False,
     candidate_d_qualified: bool = False,
     candidate_e_side_only: bool = False,
+    v5_h4_setup_only: bool = False,
+    selected_mode_packet_manifest: str | Path | None = None,
+    selected_mode_packet_identity: str | Path | None = None,
+    selected_mode_packet_manifest_sha256: str | None = None,
 ) -> dict[str, Any]:
     """Build the explicit MPI8 child argv without importing the worker."""
 
-    payload = load_v3_7_official_payload(input_path)
-    policy = _watchdog_policy(payload)
+    payload = load_v3_7_official_payload(input_path, v5_h4_setup_only=v5_h4_setup_only)
+    policy = _watchdog_policy(payload, v5_h4_setup_only=v5_h4_setup_only)
     executable = str(Path(os.path.abspath(python_executable or sys.executable)))
     mpiexec = mpiexec_command or shutil.which("mpiexec") or "mpiexec"
     if (
@@ -165,12 +190,13 @@ def build_v3_7_execution_plan(
                 bool(candidate_d_only),
                 bool(candidate_d_qualified),
                 bool(candidate_e_side_only),
+                bool(v5_h4_setup_only),
             )
         )
         > 1
     ):
         raise ValueError(
-            "QEP-only, Candidate-B-only, Candidate-C-only, Candidate-D-only, Candidate-D-qualified, and Candidate-E-side-only routes are exclusive"
+            "QEP-only, Candidate-B-only, Candidate-C-only, Candidate-D-only, Candidate-D-qualified, Candidate-E-side-only, and V5 h4 setup-only routes are exclusive"
         )
     worker_module = (
         V3_7_QEP_ONLY_WORKER_MODULE
@@ -203,12 +229,34 @@ def build_v3_7_execution_plan(
         argv.append(V3_7_CANDIDATE_D_QUALIFIED_FLAG)
     if candidate_e_side_only:
         argv.append(V3_7_CANDIDATE_E_FLAG)
+    if v5_h4_setup_only:
+        if not all(
+            (
+                selected_mode_packet_manifest,
+                selected_mode_packet_identity,
+                selected_mode_packet_manifest_sha256,
+            )
+        ):
+            raise ValueError("V5 h4 setup-only requires the shared packet arguments")
+        argv.extend(
+            [
+                V5_H4_SETUP_ONLY_FLAG,
+                "--selected-mode-packet-manifest",
+                str(Path(selected_mode_packet_manifest).resolve()),
+                "--selected-mode-packet-identity",
+                str(Path(selected_mode_packet_identity).resolve()),
+                "--selected-mode-packet-manifest-sha256",
+                str(selected_mode_packet_manifest_sha256),
+            ]
+        )
     if candidate_d_qualified:
         method = V3_8_CANDIDATE_D_QUALIFIED_METHOD
     elif candidate_d_only:
         method = "USER_AUTHORIZED_EXPERIMENTAL_HYBRIDIZED_DIRECT_SIDE_CANDIDATE_D"
     elif candidate_e_side_only:
         method = "hybrid_iterative_candidate_e_side_only"
+    elif v5_h4_setup_only:
+        method = V5_H4_SETUP_ONLY_METHOD
     elif candidate_c_only:
         method = "hybrid_iterative_candidate_c1_only"
     elif candidate_b_only:
@@ -224,7 +272,11 @@ def build_v3_7_execution_plan(
         "watchdog": policy,
         "worker_contract": {
             "mpi_size": 8,
-            "profile_id": V3_7_PROFILE_ID,
+            "profile_id": (
+                "task039.v5.h4.exact-side.setup-only.v1"
+                if v5_h4_setup_only
+                else V3_7_PROFILE_ID
+            ),
             "method": method,
             "hard_stop_authority": "process_tree_rss_bytes",
             "critical_checkpoint_only": True,
@@ -245,6 +297,10 @@ def v3_7_execution_dry_run(
     candidate_d_only: bool = False,
     candidate_d_qualified: bool = False,
     candidate_e_side_only: bool = False,
+    v5_h4_setup_only: bool = False,
+    selected_mode_packet_manifest: str | Path | None = None,
+    selected_mode_packet_identity: str | Path | None = None,
+    selected_mode_packet_manifest_sha256: str | None = None,
 ) -> dict[str, Any]:
     plan = build_v3_7_execution_plan(
         input_path,
@@ -257,6 +313,10 @@ def v3_7_execution_dry_run(
         candidate_d_only=candidate_d_only,
         candidate_d_qualified=candidate_d_qualified,
         candidate_e_side_only=candidate_e_side_only,
+        v5_h4_setup_only=v5_h4_setup_only,
+        selected_mode_packet_manifest=selected_mode_packet_manifest,
+        selected_mode_packet_identity=selected_mode_packet_identity,
+        selected_mode_packet_manifest_sha256=selected_mode_packet_manifest_sha256,
     )
     if plan["argv"][1:3] != ["-n", "8"]:
         raise ValueError("V3-7 execution plan is not fixed to MPI8")
@@ -279,11 +339,16 @@ def launch_v3_7_with_task038_watchdog(
     candidate_d_only: bool = False,
     candidate_d_qualified: bool = False,
     candidate_e_side_only: bool = False,
+    v5_h4_setup_only: bool = False,
+    selected_mode_packet_manifest: str | Path | None = None,
+    selected_mode_packet_identity: str | Path | None = None,
+    selected_mode_packet_manifest_sha256: str | None = None,
 ) -> dict[str, Any]:
     """Run one authenticated V3-7 child through Task38's watchdog."""
 
-    load_v3_7_official_payload(input_path)
-    _check_direct_producer(V3_7_DIRECT_RUN_ROOT)
+    load_v3_7_official_payload(input_path, v5_h4_setup_only=v5_h4_setup_only)
+    if not v5_h4_setup_only:
+        _check_direct_producer(V3_7_DIRECT_RUN_ROOT)
     if len(source_sha) != 40 or any(
         character not in "0123456789abcdef" for character in source_sha.lower()
     ):
@@ -301,6 +366,10 @@ def launch_v3_7_with_task038_watchdog(
         candidate_d_only=candidate_d_only,
         candidate_d_qualified=candidate_d_qualified,
         candidate_e_side_only=candidate_e_side_only,
+        v5_h4_setup_only=v5_h4_setup_only,
+        selected_mode_packet_manifest=selected_mode_packet_manifest,
+        selected_mode_packet_identity=selected_mode_packet_identity,
+        selected_mode_packet_manifest_sha256=selected_mode_packet_manifest_sha256,
     )
     run_dir = Path(run_directory).resolve()
     if run_dir.exists():
@@ -383,6 +452,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--candidate-d-only", action="store_true")
     parser.add_argument("--candidate-d-qualified", action="store_true")
     parser.add_argument("--candidate-e-side-only", action="store_true")
+    parser.add_argument("--v5-h4-setup-only", action="store_true")
+    parser.add_argument("--selected-mode-packet-manifest")
+    parser.add_argument("--selected-mode-packet-identity")
+    parser.add_argument("--selected-mode-packet-manifest-sha256")
     args = parser.parse_args(argv)
     if args.dry_run:
         print(
@@ -398,6 +471,10 @@ def main(argv: list[str] | None = None) -> int:
                     candidate_d_only=args.candidate_d_only,
                     candidate_d_qualified=args.candidate_d_qualified,
                     candidate_e_side_only=args.candidate_e_side_only,
+                    v5_h4_setup_only=args.v5_h4_setup_only,
+                    selected_mode_packet_manifest=args.selected_mode_packet_manifest,
+                    selected_mode_packet_identity=args.selected_mode_packet_identity,
+                    selected_mode_packet_manifest_sha256=args.selected_mode_packet_manifest_sha256,
                 ),
                 ensure_ascii=False,
                 sort_keys=True,
@@ -416,6 +493,10 @@ def main(argv: list[str] | None = None) -> int:
         candidate_d_only=args.candidate_d_only,
         candidate_d_qualified=args.candidate_d_qualified,
         candidate_e_side_only=args.candidate_e_side_only,
+        v5_h4_setup_only=args.v5_h4_setup_only,
+        selected_mode_packet_manifest=args.selected_mode_packet_manifest,
+        selected_mode_packet_identity=args.selected_mode_packet_identity,
+        selected_mode_packet_manifest_sha256=args.selected_mode_packet_manifest_sha256,
     )
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return 0 if result.get("exit_status") == 0 else 3

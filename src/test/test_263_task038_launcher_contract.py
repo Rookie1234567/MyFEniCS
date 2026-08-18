@@ -35,6 +35,9 @@ TASK039_H5_DIRECT = ROOT / "input/official/task039/5nm_p6h5_full3d_direct_mpi8.d
 TASK039_V4_H4_DIRECT = (
     ROOT / "input/official/task039/5nm_p6h4_v4_1deg_full3d_direct_mpi8.dat"
 )
+TASK039_V4_H4_ITERATIVE = (
+    ROOT / "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
+)
 SOURCE_SHA = "a" * 40
 REQUIRED_FILES = {
     "input_original.dat",
@@ -783,6 +786,73 @@ def test_task039_v4_h4_aligns_progress_status_and_order(tmp_path):
         ("factor_destroy", "begin", 0),
         ("factor_destroy", "end", 1),
     ]
+
+
+def test_task039_v5_setup_only_stream_aligns_all_markers(tmp_path):
+    specification = replace(
+        load_and_resolve(TASK039_V4_H4_ITERATIVE),
+        expected_output_parent=tmp_path / "results",
+    )
+    run_directory = tmp_path / "v5-setup"
+    plan = build_execution_plan(
+        specification,
+        run_directory,
+        source_sha=SOURCE_SHA,
+        mpiexec_command="/opt/mpiexec",
+        python_executable="/opt/python",
+    )
+    plan = replace(plan, method="task039_v5_h4_exact_side_setup_only")
+    markers = (
+        "bottom_F_ready",
+        "bottom_factor_setup_begin",
+        "bottom_factor_ready",
+        "bottom_woodbury_ready",
+        "bottom_construction_cleanup",
+        "top_F_ready",
+        "top_factor_setup_begin",
+        "top_factor_ready",
+        "top_woodbury_ready",
+        "top_construction_cleanup",
+        "both_side_actions_ready",
+        "modal_schur_build_begin",
+        "modal_schur_ready",
+        "outer_ksp_setup_ready",
+        "all_setup_objects_cleanup",
+    )
+
+    def popen(_argv, **_kwargs):
+        marker_path = run_directory / "numerical_output/memory_stage_markers.raw.jsonl"
+        marker_path.parent.mkdir(parents=True, exist_ok=True)
+        marker_path.write_text(
+            "".join(
+                json.dumps({"stage": marker, "status": "end", "elapsed_seconds": index})
+                + "\n"
+                for index, marker in enumerate(markers)
+            ),
+            encoding="utf-8",
+        )
+        return _FakeProcess(0)
+
+    result = _run_worker(
+        plan,
+        specification,
+        run_directory,
+        popen_factory=popen,
+        sample_factory=lambda _pid: _authority(),
+        terminate_factory=lambda _process: {"requested": True},
+        monotonic=lambda: 0.0,
+        sleep=lambda _seconds: None,
+        poll_interval=0.25,
+    )
+    telemetry = result["resource_authority"]["v5_h4_setup_only_telemetry"]
+    rows = [
+        json.loads(line)
+        for line in Path(telemetry["memory_stages_path"]).read_text().splitlines()
+    ]
+    assert telemetry["aligned_stage_count"] == len(markers)
+    assert [row["stage"] for row in rows] == list(markers)
+    assert rows[-1]["stage"] == "all_setup_objects_cleanup"
+    assert rows[-1]["stage_index"] == len(markers) - 1
 
 
 def test_task039_pss_uss_do_not_trigger_memory_termination(monkeypatch, tmp_path):

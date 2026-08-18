@@ -21,6 +21,7 @@ from benchmarks.task037c_robustness import Task37cProfile
 from benchmarks.task039_v3_7_orchestration import (
     V3_7_ABSOLUTE_HARD_BYTES,
     V3_7_PROFILE_ID,
+    V5_H4_SETUP_ONLY_MARKERS,
     _json_safe,
     _record_v3_7_marker,
     _v3_7_cleanup_callback,
@@ -31,6 +32,7 @@ from benchmarks.task039_v3_7_orchestration import (
     load_v3_7_official_payload,
     load_v3_7_direct_inventory,
     run_v3_7_stage_sequence,
+    run_v5_h4_exact_side_setup_only,
     v3_7_execution_dry_run,
     v3_7_profile_from_resolved,
     v3_7_watchdog_policy,
@@ -40,7 +42,10 @@ from benchmarks.task039_hybrid_direct_identity import (
     _parse_orders,
     _same_external_key_set,
 )
-from src.io.input_validation import task039_dynamic_external_mode_inventory
+from src.io.input_validation import (
+    load_and_resolve,
+    task039_dynamic_external_mode_inventory,
+)
 from src.modes.mode_classification import _near_degenerate_partition_audit
 
 
@@ -258,6 +263,318 @@ def test_v3_7_stage_sequence_recovery_failure_is_not_completed() -> None:
     assert report["status"] == "oracle_linear_pass_physics_fail"
 
 
+def test_v5_setup_only_emits_unique_pre_cleanup_markers_and_no_solve(
+    monkeypatch,
+):
+    events: list[str] = []
+    marker_details: dict[str, dict] = {}
+
+    class Resource:
+        def __init__(self, name):
+            self.name = name
+            self.destroyed = False
+
+        def destroy(self):
+            self.destroyed = True
+
+    class Components:
+        def __init__(self):
+            self.F, self.C, self.D, self.H = (
+                Resource(name) for name in ("F", "C", "D", "H")
+            )
+
+    class Action:
+        def __init__(self):
+            self.destroyed = False
+
+        @property
+        def diagnostics(self):
+            return {
+                "direct_factor_count": 0 if self.destroyed else 1,
+                "global_hybrid_direct_factor_count": 0,
+                "destroyed": self.destroyed,
+            }
+
+        def destroy(self):
+            self.destroyed = True
+
+    class Context:
+        inventory = {"modal_schur": {"status": "measured"}}
+
+        def destroy(self):
+            events.append("modal_context_destroy")
+
+    class FakePC:
+        def setType(self, _value):
+            pass
+
+        def setPythonContext(self, _value):
+            pass
+
+    class FakeKSP:
+        Type = SimpleNamespace(FGMRES="fgmres")
+
+        def create(self, _comm):
+            return self
+
+        def setOperators(self, _value):
+            pass
+
+        def setType(self, _value):
+            pass
+
+        def setGMRESRestart(self, _value):
+            pass
+
+        def setPCSide(self, _value):
+            pass
+
+        def getPC(self):
+            return FakePC()
+
+        def setUp(self):
+            events.append("outer_setup")
+
+        def getType(self):
+            return "fgmres"
+
+        def destroy(self):
+            events.append("outer_destroy")
+
+    fake_petsc = SimpleNamespace(
+        KSP=FakeKSP,
+        PC=SimpleNamespace(
+            Side=SimpleNamespace(RIGHT="right"),
+            Type=SimpleNamespace(PYTHON="python"),
+        ),
+    )
+    monkeypatch.setattr(orchestration, "PETSc", fake_petsc)
+    monkeypatch.setattr(
+        orchestration,
+        "_build_research_explicit_side_components",
+        lambda _system: Components(),
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "_v5_side_matrix_inventory",
+        lambda _components: {
+            name: {"status": "measured"} for name in ("F", "C", "D", "H")
+        },
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "_petsc_matrix_stats",
+        lambda _matrix, assemble=False: {"status": "measured", "assemble": assemble},
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "create_research_exact_side_lu_action",
+        lambda _f, _components, **kwargs: (
+            kwargs["lifecycle_callback"]("factor_setup_begin", {})
+            or kwargs["lifecycle_callback"]("factor_ready", {})
+            or Action()
+        ),
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "create_research_exact_side_lu_block_ldu_preconditioner",
+        lambda *_args, **_kwargs: Context(),
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "create_hybrid_assembled_block_action",
+        lambda *_args: (Resource("operator"), Resource("operator_context")),
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "collective_heap_cleanup",
+        lambda _comm: {"collective_call_completed": True},
+    )
+    coupling_blocks = SimpleNamespace(
+        projection=object(), positive_traction=object(), negative_traction=object()
+    )
+    setup = SimpleNamespace(
+        bottom=object(),
+        top=object(),
+        coupling=SimpleNamespace(bottom=coupling_blocks, top=coupling_blocks),
+    )
+    markers: list[str] = []
+    result = run_v5_h4_exact_side_setup_only(
+        setup,
+        SimpleNamespace(),
+        comm=MPI.COMM_SELF,
+        marker_callback=lambda marker, detail: (
+            markers.append(marker) or marker_details.setdefault(marker, dict(detail))
+        ),
+    )
+    assert result["status"] == "setup_only_completed"
+    assert result["markers"] == list(V5_H4_SETUP_ONLY_MARKERS)
+    assert markers == list(V5_H4_SETUP_ONLY_MARKERS[:-1])
+    assert len(markers) == len(set(markers))
+    assert result["solve"] == result["recovery"] == result["field_export"] == "not_run"
+    assert result["setup_only_internal_cleanup"]["factor_count_after_cleanup"] == {
+        "bottom": 0,
+        "top": 0,
+    }
+    telemetry = result["telemetry"]
+    assert all(
+        telemetry[name]["path"] and telemetry[name]["status"]
+        for name in (
+            "process_tree_samples",
+            "memory_stages",
+            "memory_stage_markers",
+        )
+    )
+    assert telemetry["memory_object_ledger"] == {
+        "path": "numerical_output/memory_object_ledger.json",
+        "schema": "task039.v3-7-memory-object-ledger.v1",
+        "status": "finalized_in_worker_finalizer",
+    }
+    assert marker_details["modal_schur_build_begin"]["coupling_matrices"] == {
+        side: {
+            name: {"status": "measured", "assemble": False}
+            for name in ("projection", "positive_traction", "negative_traction")
+        }
+        for side in ("bottom", "top")
+    }
+    assert "outer_setup" in events
+
+
+def test_v5_diagnostic_final_cleanup_marker_follows_setup_release(
+    tmp_path, monkeypatch
+):
+    payload = load_and_resolve(
+        Path("input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat")
+    ).as_jsonable()
+    run_directory = tmp_path / "v5"
+    setup = SimpleNamespace(
+        bottom=SimpleNamespace(),
+        top=SimpleNamespace(),
+        coupling=SimpleNamespace(internal_unknown_count=0),
+    )
+    events: list[str] = []
+
+    monkeypatch.setattr(
+        orchestration, "simulation_config_3d_from_normalized", lambda _payload: {}
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "HybridAugmentedLayout",
+        SimpleNamespace(build=lambda *_args: SimpleNamespace()),
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "run_v5_h4_exact_side_setup_only",
+        lambda *_args, **_kwargs: {
+            "status": "setup_only_completed",
+            "setup_only_internal_cleanup": {
+                "factor_count_after_cleanup": {"bottom": 0, "top": 0}
+            },
+            "telemetry": {"memory_object_ledger": {}},
+        },
+    )
+
+    def release(_setup, _recovery, _comm):
+        events.append("setup_release")
+        return {"pass": True, "cleanup": {"collective_call_completed": True}}
+
+    monkeypatch.setattr(orchestration, "release_frozen_m10_objects", release)
+    monkeypatch.setattr(
+        orchestration,
+        "_record_v3_7_marker",
+        lambda _ledger, marker, _detail: events.append(marker),
+    )
+    monkeypatch.setattr(
+        orchestration.time, "sleep", lambda _seconds: events.append("wait")
+    )
+    identity = {
+        "source_sha": "a" * 40,
+        "physical_sha256": "b" * 64,
+        "model_id": "task039_5nm_v4_1deg_s5_hybrid_iterative_m480",
+    }
+    result = orchestration.run_task039_v3_7_diagnostic(
+        payload,
+        run_directory,
+        source_sha="c" * 40,
+        comm=MPI.COMM_SELF,
+        setup_builder=lambda **_kwargs: setup,
+        v5_h4_setup_only=True,
+        selected_mode_packet_manifest=tmp_path / "manifest.json",
+        selected_mode_packet_identity=identity,
+        selected_mode_packet_manifest_sha256="d" * 64,
+        recovery_runner=lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("V5 setup-only must not call recovery_runner")
+        ),
+    )
+    marker_path = run_directory / "numerical_output/memory_stage_markers.raw.jsonl"
+    rows = [json.loads(line) for line in marker_path.read_text().splitlines()]
+    assert result["status"] == "setup_only_completed"
+    assert [row["stage"] for row in rows].count("all_setup_objects_cleanup") == 1
+    assert rows[-1]["stage"] == "all_setup_objects_cleanup"
+    assert rows[-1]["detail"]["setup_destroyed"] is True
+    assert rows[-1]["detail"]["factor_count_after_cleanup"] == {
+        "bottom": 0,
+        "top": 0,
+    }
+    assert events.index("setup_release") < events.index("all_setup_objects_cleanup")
+    assert events.index("all_setup_objects_cleanup") < events.index("wait")
+
+
+def test_v5_setup_release_error_does_not_emit_success_cleanup_marker(
+    tmp_path, monkeypatch
+):
+    payload = load_and_resolve(
+        Path("input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat")
+    ).as_jsonable()
+    run_directory = tmp_path / "v5-release-error"
+    setup = SimpleNamespace(
+        bottom=SimpleNamespace(),
+        top=SimpleNamespace(),
+        coupling=SimpleNamespace(internal_unknown_count=0),
+    )
+    monkeypatch.setattr(
+        orchestration, "simulation_config_3d_from_normalized", lambda _payload: {}
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "HybridAugmentedLayout",
+        SimpleNamespace(build=lambda *_args: SimpleNamespace()),
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "run_v5_h4_exact_side_setup_only",
+        lambda *_args, **_kwargs: {
+            "status": "setup_only_completed",
+            "telemetry": {"memory_object_ledger": {}},
+        },
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "release_frozen_m10_objects",
+        lambda *_args: (_ for _ in ()).throw(RuntimeError("release sentinel")),
+    )
+    identity = {
+        "source_sha": "a" * 40,
+        "physical_sha256": "b" * 64,
+        "model_id": "task039_5nm_v4_1deg_s5_hybrid_iterative_m480",
+    }
+    with pytest.raises(RuntimeError, match="release sentinel"):
+        orchestration.run_task039_v3_7_diagnostic(
+            payload,
+            run_directory,
+            source_sha="c" * 40,
+            comm=MPI.COMM_SELF,
+            setup_builder=lambda **_kwargs: setup,
+            v5_h4_setup_only=True,
+            selected_mode_packet_manifest=tmp_path / "manifest.json",
+            selected_mode_packet_identity=identity,
+            selected_mode_packet_manifest_sha256="d" * 64,
+        )
+    marker_path = run_directory / "numerical_output/memory_stage_markers.raw.jsonl"
+    rows = [json.loads(line) for line in marker_path.read_text().splitlines()]
+    assert all(row["stage"] != "all_setup_objects_cleanup" for row in rows)
+
+
 def test_v3_7_candidate_authority_serializes_complex_orders_for_parser(
     tmp_path,
 ) -> None:
@@ -471,6 +788,66 @@ def test_v3_7_dry_run_freezes_mpi8_worker_and_byte_watchdog(tmp_path) -> None:
     assert "--launched-by-task038-watchdog" in plan["argv"]
     assert plan["watchdog"]["absolute_terminate_memory_bytes"] == 224000000000
     assert plan["watchdog"]["critical_action"] == "record_checkpoint_only"
+
+
+def test_v5_h4_setup_only_plan_passes_identity_and_packet_args(tmp_path) -> None:
+    h4_input = Path(
+        "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
+    )
+    manifest = tmp_path / "manifest.json"
+    identity = tmp_path / "identity.json"
+    sha = "d" * 64
+    for plan_builder in (watchdog.v3_7_execution_dry_run, v3_7_execution_dry_run):
+        plan = plan_builder(
+            h4_input,
+            tmp_path / "v5-plan",
+            source_sha="a" * 40,
+            v5_h4_setup_only=True,
+            selected_mode_packet_manifest=manifest,
+            selected_mode_packet_identity=identity,
+            selected_mode_packet_manifest_sha256=sha,
+        )
+        assert plan["worker_contract"]["method"] == (
+            "task039_v5_h4_exact_side_setup_only"
+        )
+        argv = plan["argv"]
+        assert "--v5-h4-setup-only" in argv
+        assert str(manifest.resolve()) in argv
+        assert str(identity.resolve()) in argv
+        assert sha in argv
+    legacy = watchdog.v3_7_execution_dry_run(
+        INPUT,
+        tmp_path / "legacy-plan",
+        source_sha="a" * 40,
+    )
+    assert "--v5-h4-setup-only" not in legacy["argv"]
+    with pytest.raises(ValueError, match="exclusive"):
+        watchdog.v3_7_execution_dry_run(
+            h4_input,
+            tmp_path / "conflict",
+            source_sha="a" * 40,
+            candidate_b_only=True,
+            v5_h4_setup_only=True,
+            selected_mode_packet_manifest=manifest,
+            selected_mode_packet_identity=identity,
+            selected_mode_packet_manifest_sha256=sha,
+        )
+    with pytest.raises(ValueError):
+        watchdog.v3_7_execution_dry_run(
+            INPUT,
+            tmp_path / "wrong-identity",
+            source_sha="a" * 40,
+            v5_h4_setup_only=True,
+            selected_mode_packet_manifest=manifest,
+            selected_mode_packet_identity=identity,
+            selected_mode_packet_manifest_sha256=sha,
+        )
+    parameters = inspect.signature(orchestration.run_task039_v3_7_diagnostic).parameters
+    assert parameters["v5_h4_setup_only"].default is False
+    assert parameters["selected_mode_packet_manifest"].default is None
+    assert parameters["selected_mode_packet_identity"].default is None
+    assert parameters["selected_mode_packet_manifest_sha256"].default is None
+    assert '"setup_only_completed"' in inspect.getsource(orchestration.main)
 
 
 def test_v3_8_candidate_e_dry_run_and_route_exclusivity(tmp_path) -> None:

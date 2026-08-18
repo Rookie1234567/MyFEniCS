@@ -49,6 +49,7 @@ from benchmarks.task039_v3_side_oracle import (
     audit_hybrid_operator_identity,
     build_research_independent_hybrid_reference,
     build_research_explicit_side_components,
+    _build_research_explicit_side_components,
     rebuild_hybrid_augmented_vector,
     run_exact_side_lu_oracle,
     TASK039_CASE_QUALIFICATION_SCOPE,
@@ -71,12 +72,17 @@ from src.solvers.hybrid_fem_modal_augmented_direct import (
 from src.solvers.hybrid_fem_modal_iterative import (
     create_hybrid_assembled_block_action,
 )
+from src.solvers.hybrid_fem_modal_block_ldu import (
+    create_research_exact_side_lu_block_ldu_preconditioner,
+)
+from src.solvers.common_3d_solve import _petsc_matrix_stats
 from src.solvers.hybrid_local_dtn_action import (
     create_hybrid_local_dtn_action_components,
 )
 from src.solvers.hybrid_local_dtn_woodbury import (
     HybridLocalDtnWoodburyFixedAction,
     HybridLocalDtnWoodburyFixedBudgetKrylovAction,
+    create_research_exact_side_lu_action,
 )
 from src.solvers.hybrid_side_subspace_correction import (
     build_fixed_side_error_subspace_correction_action,
@@ -124,6 +130,23 @@ V3_7_FULL3D_RUN_ROOT = Path(
     "20260815T055152.423656Z"
 )
 V3_7_WATCHDOG_AUTH_FLAG = "--launched-by-task038-watchdog"
+V5_H4_SETUP_ONLY_MARKERS = (
+    "bottom_F_ready",
+    "bottom_factor_setup_begin",
+    "bottom_factor_ready",
+    "bottom_woodbury_ready",
+    "bottom_construction_cleanup",
+    "top_F_ready",
+    "top_factor_setup_begin",
+    "top_factor_ready",
+    "top_woodbury_ready",
+    "top_construction_cleanup",
+    "both_side_actions_ready",
+    "modal_schur_build_begin",
+    "modal_schur_ready",
+    "outer_ksp_setup_ready",
+    "all_setup_objects_cleanup",
+)
 
 
 def _keys(inventory: Mapping[str, Any]) -> set[tuple[str, int, int, str]]:
@@ -277,10 +300,25 @@ def build_v3_7_execution_plan(
     candidate_d_only: bool = False,
     candidate_d_qualified: bool = False,
     candidate_e_side_only: bool = False,
+    v5_h4_setup_only: bool = False,
+    selected_mode_packet_manifest: str | Path | None = None,
+    selected_mode_packet_identity: str | Path | None = None,
+    selected_mode_packet_manifest_sha256: str | None = None,
 ) -> dict[str, Any]:
     """Describe the opt-in worker command consumed by the existing watchdog."""
 
-    payload = load_v3_7_official_payload(input_path)
+    if v5_h4_setup_only:
+        specification = load_and_resolve(input_path)
+        from benchmarks.task039_v4_h4_hybrid_direct import (
+            validate_v4_h4_specification,
+        )
+
+        validate_v4_h4_specification(specification)
+        if specification.method.get("kind") != "hybrid_iterative":
+            raise ValueError("V5 h4 setup-only requires hybrid_iterative")
+        payload = specification.as_jsonable()
+    else:
+        payload = load_v3_7_official_payload(input_path)
     policy = v3_7_watchdog_policy(payload)
     if (
         sum(
@@ -290,12 +328,13 @@ def build_v3_7_execution_plan(
                 bool(candidate_d_only),
                 bool(candidate_d_qualified),
                 bool(candidate_e_side_only),
+                bool(v5_h4_setup_only),
             )
         )
         > 1
     ):
         raise ValueError(
-            "Candidate-B-only, Candidate-C-only, Candidate-D-only, Candidate-D-qualified, and Candidate-E-side-only routes are exclusive"
+            "Candidate-B-only, Candidate-C-only, Candidate-D-only, Candidate-D-qualified, Candidate-E-side-only, and V5 h4 setup-only routes are exclusive"
         )
     executable = str(Path(os.path.abspath(python_executable or sys.executable)))
     mpiexec = mpiexec_command or shutil.which("mpiexec") or "mpiexec"
@@ -325,7 +364,29 @@ def build_v3_7_execution_plan(
         argv.append("--candidate-d-qualified")
     if candidate_e_side_only:
         argv.append("--candidate-e-side-only")
-    if candidate_d_qualified:
+    if v5_h4_setup_only:
+        if not all(
+            (
+                selected_mode_packet_manifest,
+                selected_mode_packet_identity,
+                selected_mode_packet_manifest_sha256,
+            )
+        ):
+            raise ValueError("V5 h4 setup-only requires the shared packet arguments")
+        argv.extend(
+            [
+                "--v5-h4-setup-only",
+                "--selected-mode-packet-manifest",
+                str(Path(selected_mode_packet_manifest).resolve()),
+                "--selected-mode-packet-identity",
+                str(Path(selected_mode_packet_identity).resolve()),
+                "--selected-mode-packet-manifest-sha256",
+                str(selected_mode_packet_manifest_sha256),
+            ]
+        )
+    if v5_h4_setup_only:
+        method = "task039_v5_h4_exact_side_setup_only"
+    elif candidate_d_qualified:
         method = V3_8_CANDIDATE_D_QUALIFIED_METHOD
     elif candidate_d_only:
         method = V3_8_CANDIDATE_D_CLASSIFICATION
@@ -364,6 +425,10 @@ def v3_7_execution_dry_run(
     candidate_d_only: bool = False,
     candidate_d_qualified: bool = False,
     candidate_e_side_only: bool = False,
+    v5_h4_setup_only: bool = False,
+    selected_mode_packet_manifest: str | Path | None = None,
+    selected_mode_packet_identity: str | Path | None = None,
+    selected_mode_packet_manifest_sha256: str | None = None,
 ) -> dict[str, Any]:
     """Return the non-mutating pre-heavy command and watchdog contract."""
 
@@ -377,6 +442,10 @@ def v3_7_execution_dry_run(
         candidate_d_only=candidate_d_only,
         candidate_d_qualified=candidate_d_qualified,
         candidate_e_side_only=candidate_e_side_only,
+        v5_h4_setup_only=v5_h4_setup_only,
+        selected_mode_packet_manifest=selected_mode_packet_manifest,
+        selected_mode_packet_identity=selected_mode_packet_identity,
+        selected_mode_packet_manifest_sha256=selected_mode_packet_manifest_sha256,
     )
     argv = plan["argv"]
     if argv[1:3] != ["-n", "8"] or plan["watchdog"]["critical_action"] != (
@@ -401,11 +470,24 @@ def launch_v3_7_with_task038_watchdog(
     candidate_d_only: bool = False,
     candidate_d_qualified: bool = False,
     candidate_e_side_only: bool = False,
+    v5_h4_setup_only: bool = False,
+    selected_mode_packet_manifest: str | Path | None = None,
+    selected_mode_packet_identity: str | Path | None = None,
+    selected_mode_packet_manifest_sha256: str | None = None,
 ) -> dict[str, Any]:
     """Run the opt-in child through Task38's existing process-tree watchdog."""
 
-    payload = load_v3_7_official_payload(input_path)
-    if not V3_7_DIRECT_RUN_ROOT.is_dir():
+    if v5_h4_setup_only:
+        specification = load_and_resolve(input_path)
+        from benchmarks.task039_v4_h4_hybrid_direct import (
+            validate_v4_h4_specification,
+        )
+
+        validate_v4_h4_specification(specification)
+        payload = specification.as_jsonable()
+    else:
+        payload = load_v3_7_official_payload(input_path)
+    if not v5_h4_setup_only and not V3_7_DIRECT_RUN_ROOT.is_dir():
         raise ValueError("V3-7 direct producer inventory is unavailable")
     if not callable(compare_v3_7_hybrid_candidate_to_direct):
         raise ValueError("V3-7 integrated checker entry point is unavailable")
@@ -413,7 +495,7 @@ def launch_v3_7_with_task038_watchdog(
         character not in "0123456789abcdef" for character in source_sha.lower()
     ):
         raise ValueError("V3-7 source_sha must be a full hexadecimal commit SHA")
-    if not candidate_d_only and not candidate_d_qualified:
+    if not v5_h4_setup_only and not candidate_d_only and not candidate_d_qualified:
         load_v3_7_direct_inventory(payload, V3_7_DIRECT_RUN_ROOT)
     specification = load_and_resolve(input_path)
     plan_payload = build_v3_7_execution_plan(
@@ -427,6 +509,10 @@ def launch_v3_7_with_task038_watchdog(
         candidate_d_only=candidate_d_only,
         candidate_d_qualified=candidate_d_qualified,
         candidate_e_side_only=candidate_e_side_only,
+        v5_h4_setup_only=v5_h4_setup_only,
+        selected_mode_packet_manifest=selected_mode_packet_manifest,
+        selected_mode_packet_identity=selected_mode_packet_identity,
+        selected_mode_packet_manifest_sha256=selected_mode_packet_manifest_sha256,
     )
     run_dir = Path(run_directory).resolve()
     if run_dir.exists():
@@ -1433,6 +1519,215 @@ def _emit_marker(
 ) -> None:
     if callback is not None:
         callback(marker, detail)
+
+
+def _v5_side_matrix_inventory(side: Any) -> dict[str, Any]:
+    return {
+        name: _petsc_matrix_stats(getattr(side, name), assemble=False)
+        for name in ("F", "C", "D", "H")
+    }
+
+
+def _destroy_v5_side_components(side: Any) -> None:
+    for name in ("H", "D", "C", "F"):
+        matrix = getattr(side, name, None)
+        if matrix is not None:
+            matrix.destroy()
+
+
+def run_v5_h4_exact_side_setup_only(
+    setup: Any,
+    layout: HybridAugmentedLayout,
+    *,
+    comm: MPI.Intracomm,
+    marker_callback: Callable[[str, Mapping[str, Any]], None],
+    qualification_scope: str = TASK039_V4_H4_CASE_QUALIFICATION_SCOPE,
+) -> dict[str, Any]:
+    """Build the reviewed h4 exact-side stack, then stop before any solve."""
+
+    components: dict[str, Any] = {}
+    actions: dict[str, Any] = {}
+    context = None
+    operator = None
+    operator_context = None
+    ksp = None
+    completed = False
+    result: dict[str, Any] | None = None
+    internal_cleanup: dict[str, Any] = {"status": "not_run"}
+    try:
+        for side, system in (("bottom", setup.bottom), ("top", setup.top)):
+            side_components = _build_research_explicit_side_components(system)
+            components[side] = side_components
+            _emit_marker(
+                marker_callback,
+                f"{side}_F_ready",
+                source="research_explicit_side_components",
+                matrices=_v5_side_matrix_inventory(side_components),
+                retained_for_action_and_modal_schur=True,
+            )
+
+            def lifecycle(event: str, detail: Mapping[str, Any], *, _side=side):
+                _emit_marker(
+                    marker_callback,
+                    f"{_side}_{event}",
+                    source="ResearchExactFactorInverse",
+                    **dict(detail),
+                )
+
+            actions[side] = create_research_exact_side_lu_action(
+                side_components.F,
+                side_components,
+                qualification_scope=qualification_scope,
+                explicit_opt_in=True,
+                lifecycle_callback=lifecycle,
+            )
+            _emit_marker(
+                marker_callback,
+                f"{side}_woodbury_ready",
+                source="HybridLocalDtnWoodburyOracle",
+                diagnostics=actions[side].diagnostics,
+            )
+            cleanup = collective_heap_cleanup(comm)
+            _emit_marker(
+                marker_callback,
+                f"{side}_construction_cleanup",
+                source="collective_heap_cleanup",
+                cleanup=cleanup,
+                retained_for_modal_schur=True,
+            )
+
+        _emit_marker(
+            marker_callback,
+            "both_side_actions_ready",
+            actions={side: action.diagnostics for side, action in actions.items()},
+            global_direct_factor_count=0,
+        )
+        _emit_marker(
+            marker_callback,
+            "modal_schur_build_begin",
+            source="create_research_exact_side_lu_block_ldu_preconditioner",
+            coupling_matrices={
+                side: {
+                    name: _petsc_matrix_stats(
+                        getattr(getattr(setup.coupling, side), name),
+                        assemble=False,
+                    )
+                    for name in ("projection", "positive_traction", "negative_traction")
+                }
+                for side in ("bottom", "top")
+            },
+        )
+        context = create_research_exact_side_lu_block_ldu_preconditioner(
+            layout,
+            setup.bottom,
+            setup.top,
+            setup.coupling,
+            actions["bottom"],
+            actions["top"],
+            qualification_scope=qualification_scope,
+            explicit_opt_in=True,
+        )
+        _emit_marker(
+            marker_callback,
+            "modal_schur_ready",
+            source="create_research_exact_side_lu_block_ldu_preconditioner",
+            inventory=context.inventory,
+        )
+        operator, operator_context = create_hybrid_assembled_block_action(
+            setup.bottom, setup.top, setup.coupling
+        )
+        ksp = PETSc.KSP().create(comm)
+        ksp.setOperators(operator)
+        ksp.setType(PETSc.KSP.Type.FGMRES)
+        ksp.setGMRESRestart(90)
+        ksp.setPCSide(PETSc.PC.Side.RIGHT)
+        pc = ksp.getPC()
+        pc.setType(PETSc.PC.Type.PYTHON)
+        pc.setPythonContext(context)
+        ksp.setUp()
+        _emit_marker(
+            marker_callback,
+            "outer_ksp_setup_ready",
+            source="PETSc.KSP.setUp",
+            ksp_type=str(ksp.getType()),
+            restart=90,
+            solve_called=False,
+            krylov_vectors={"status": "not_allocated_before_solve"},
+            preconditioner_inventory=context.inventory,
+        )
+        completed = True
+        result = {
+            "schema": "task039.v5-h4-exact-side-setup-only.v1",
+            "status": "setup_only_completed",
+            "qualification_scope": qualification_scope,
+            "markers": list(V5_H4_SETUP_ONLY_MARKERS),
+            "solve": "not_run",
+            "recovery": "not_run",
+            "field_export": "not_run",
+            "side_actions": {
+                side: action.diagnostics for side, action in actions.items()
+            },
+            "modal_schur": context.inventory.get("modal_schur"),
+            "outer_ksp": {
+                "type": str(ksp.getType()),
+                "restart": 90,
+                "set_up": True,
+                "solve_called": False,
+                "krylov_vectors": "not_allocated_before_solve",
+            },
+            "telemetry": {
+                "process_tree_samples": {
+                    "path": "numerical_output/process_tree_samples.jsonl",
+                    "writer": "parent_task038_launcher",
+                    "status": "expected_from_parent_launcher",
+                },
+                "memory_stages": {
+                    "path": "numerical_output/memory_stages.jsonl",
+                    "writer": "parent_task038_launcher_marker_alignment",
+                    "status": "expected_from_parent_launcher",
+                },
+                "memory_stage_markers": {
+                    "path": "numerical_output/memory_stage_markers.raw.jsonl",
+                    "writer": "v3_7_worker",
+                    "status": "measured_worker_marker_stream",
+                },
+                "memory_object_ledger": {
+                    "path": "numerical_output/memory_object_ledger.json",
+                    "schema": "task039.v3-7-memory-object-ledger.v1",
+                    "status": "finalized_in_worker_finalizer",
+                },
+            },
+        }
+        return result
+    finally:
+        if ksp is not None:
+            ksp.destroy()
+        if context is not None:
+            context.destroy()
+        if operator_context is not None:
+            operator_context.destroy()
+        if operator is not None:
+            operator.destroy()
+        for side in ("top", "bottom"):
+            action = actions.get(side)
+            if action is not None:
+                action.destroy()
+            side_components = components.get(side)
+            if side_components is not None:
+                _destroy_v5_side_components(side_components)
+        cleanup = collective_heap_cleanup(comm)
+        internal_cleanup = {
+            "source": "setup_only_internal_finally",
+            "cleanup": cleanup,
+            "factor_count_after_cleanup": {
+                side: int(action.diagnostics.get("direct_factor_count", 0))
+                for side, action in actions.items()
+            },
+            "exact_side_objects_destroyed": True,
+            "completed": completed,
+        }
+        if result is not None:
+            result["setup_only_internal_cleanup"] = internal_cleanup
 
 
 def _v3_7_object_ledger() -> dict[str, Any]:
@@ -3142,6 +3437,10 @@ def run_task039_v3_7_diagnostic(
     candidate_d_only: bool = False,
     candidate_d_qualified: bool = False,
     candidate_e_side_only: bool = False,
+    v5_h4_setup_only: bool = False,
+    selected_mode_packet_manifest: str | Path | None = None,
+    selected_mode_packet_identity: Mapping[str, Any] | None = None,
+    selected_mode_packet_manifest_sha256: str | None = None,
 ) -> dict[str, Any]:
     """Prepare the V3-7 campaign or an explicit research candidate branch."""
 
@@ -3212,11 +3511,27 @@ def run_task039_v3_7_diagnostic(
 
     try:
         _emit_marker(marker_callback, "diagnostic_entry")
-        profile = (
-            profile_override
-            if profile_override is not None
-            else v3_7_profile_from_resolved(resolved_payload)
-        )
+        profile = None
+        if not v5_h4_setup_only:
+            profile = (
+                profile_override
+                if profile_override is not None
+                else v3_7_profile_from_resolved(resolved_payload)
+            )
+        if v5_h4_setup_only:
+            incidence = resolved_payload["incidence"]
+            profile = replace(
+                make_task039_hybrid_iterative_profile(480, 8, mesh_target_nm=4.0),
+                profile_id="task039.v5.h4.exact-side.setup-only.v1",
+                record_schema="task039.v5.h4.exact-side.setup-only.v1",
+                qualification_schema="task039.v5.h4.exact-side.setup-only.v1",
+                wavelength_nm=float(incidence["wavelength_nm"]),
+                incident_grazing_deg=float(incidence["grazing_angle_deg"]),
+                incident_phi_deg=float(incidence["azimuth_deg"]),
+                polarization_kind=str(incidence["polarization"]).lower(),
+                h_nm=4.0,
+                modal_h_nm=4.0,
+            )
         _emit_marker(marker_callback, "profile_ready", profile_id=profile.profile_id)
         watchdog = v3_7_watchdog_policy(resolved_payload)
         _emit_marker(
@@ -3231,12 +3546,32 @@ def run_task039_v3_7_diagnostic(
             and not candidate_d_only
             and not candidate_d_qualified
             and not candidate_e_side_only
+            and not v5_h4_setup_only
         ):
             raise ValueError(
                 "V3-7 requires an injected recovery_runner(setup, layout, snapshot, "
                 "run_dir, producer)"
             )
-        if candidate_d_only or candidate_d_qualified:
+        if v5_h4_setup_only:
+            if (
+                selected_mode_packet_manifest is None
+                or selected_mode_packet_identity is None
+                or selected_mode_packet_manifest_sha256 is None
+            ):
+                raise ValueError("V5 h4 setup-only requires the shared packet identity")
+            producer = {
+                "producer_source_sha": selected_mode_packet_identity.get("source_sha"),
+                "physical_model_sha256": selected_mode_packet_identity.get(
+                    "physical_sha256"
+                ),
+                "model_id": selected_mode_packet_identity.get("model_id"),
+                "requested_modes": 480,
+                "mpi_size": 8,
+                "external_keys_exact": True,
+                "selected_mode_packet": True,
+            }
+            modal_amplitudes = None
+        elif candidate_d_only or candidate_d_qualified:
             producer = _candidate_d_producer_metadata(
                 resolved_payload, source_sha, marker_callback
             )
@@ -3262,17 +3597,28 @@ def run_task039_v3_7_diagnostic(
         _emit_marker(marker_callback, "config_ready")
         producer["_stage_callback"] = marker_callback
         _emit_marker(marker_callback, "setup_begin")
-        setup = setup_builder(
-            comm,
-            profile=profile,
-            exact_one_cell_work_dir=(
+        setup_kwargs = {
+            "comm": comm,
+            "profile": profile,
+            "exact_one_cell_work_dir": (
                 Path(run_directory).resolve() / "numerical_output" / "exact_one_cell"
             ),
-            cfg_override=cfg,
-            modal_cfg_override=modal_cfg,
-            detail_stage_callback=combined_detail_callback,
-            post_destroy_cleanup=_v3_7_cleanup_callback(comm, post_destroy_cleanup),
-        )
+            "cfg_override": cfg,
+            "modal_cfg_override": modal_cfg,
+            "detail_stage_callback": combined_detail_callback,
+            "post_destroy_cleanup": _v3_7_cleanup_callback(comm, post_destroy_cleanup),
+        }
+        if selected_mode_packet_manifest is not None:
+            setup_kwargs.update(
+                {
+                    "selected_mode_packet_manifest": Path(
+                        selected_mode_packet_manifest
+                    ),
+                    "selected_mode_packet_identity": selected_mode_packet_identity,
+                    "selected_mode_packet_manifest_sha256": selected_mode_packet_manifest_sha256,
+                }
+            )
+        setup = setup_builder(**setup_kwargs)
         object_ledger["objects"]["setup"]["created"] = True
         object_ledger["objects"]["setup"]["status"] = "measured"
         layout = HybridAugmentedLayout.build(
@@ -3280,6 +3626,17 @@ def run_task039_v3_7_diagnostic(
             setup.top,
             setup.coupling.internal_unknown_count,
         )
+        if v5_h4_setup_only:
+            result = run_v5_h4_exact_side_setup_only(
+                setup,
+                layout,
+                comm=comm,
+                marker_callback=marker_callback,
+            )
+            result["source_sha"] = source_sha
+            result["run_directory"] = str(Path(run_directory).resolve())
+            normal_return = True
+            return result
         rhs = _default_rhs(setup, layout)
 
         if (
@@ -3295,7 +3652,7 @@ def run_task039_v3_7_diagnostic(
             > 1
         ):
             raise ValueError(
-                "Candidate-B-only, Candidate-C-only, Candidate-D-only, Candidate-D-qualified, and Candidate-E-side-only routes are exclusive"
+                "Candidate-B-only, Candidate-C-only, Candidate-D-only, Candidate-D-qualified, Candidate-E-side-only, and V5 h4 setup-only routes are exclusive"
             )
 
         if candidate_b_only:
@@ -3874,8 +4231,6 @@ def run_task039_v3_7_diagnostic(
         normal_return = sequence["status"] == "completed"
         return result
     finally:
-        if marker_stream is not None:
-            marker_stream.close()
         _destroy(rhs) if "rhs" in locals() else None
         for side_vectors in survey_side_vectors.values():
             for vector in side_vectors.values():
@@ -3886,13 +4241,40 @@ def run_task039_v3_7_diagnostic(
                 object_ledger["objects"]["independent_reference"]["destroyed"] = True
         try:
             if setup is not None:
-                release_frozen_m10_objects(setup, None, comm)
+                setup_release = release_frozen_m10_objects(setup, None, comm)
                 object_ledger["objects"]["setup"]["destroyed"] = True
                 object_ledger["objects"]["setup"]["completed"] = True
+                if v5_h4_setup_only:
+                    internal = (
+                        result.get("setup_only_internal_cleanup", {})
+                        if result is not None
+                        else {}
+                    )
+                    marker_callback(
+                        "all_setup_objects_cleanup",
+                        {
+                            "source": "release_frozen_m10_objects",
+                            "setup_destroyed": True,
+                            "factor_count_after_cleanup": internal.get(
+                                "factor_count_after_cleanup", {}
+                            ),
+                            "setup_release": setup_release,
+                            "internal_cleanup": internal,
+                            "completed": bool(
+                                result is not None
+                                and result.get("status") == "setup_only_completed"
+                            ),
+                        },
+                    )
+                    comm.barrier()
+                    time.sleep(0.30)
+                    comm.barrier()
         except Exception:
             exception_raised = True
             raise
         finally:
+            if marker_stream is not None:
+                marker_stream.close()
             if exception_raised:
                 object_ledger["status"] = "exception"
             elif normal_return:
@@ -3941,6 +4323,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--candidate-d-only", action="store_true")
     parser.add_argument("--candidate-d-qualified", action="store_true")
     parser.add_argument("--candidate-e-side-only", action="store_true")
+    parser.add_argument("--v5-h4-setup-only", action="store_true")
+    parser.add_argument("--selected-mode-packet-manifest")
+    parser.add_argument("--selected-mode-packet-identity")
+    parser.add_argument("--selected-mode-packet-manifest-sha256")
     parser.add_argument("--input", required=True, dest="input_path")
     parser.add_argument("--run-directory", required=True)
     parser.add_argument("--source-sha", required=True)
@@ -3955,12 +4341,13 @@ def main(argv: list[str] | None = None) -> int:
                 bool(args.candidate_d_only),
                 bool(args.candidate_d_qualified),
                 bool(args.candidate_e_side_only),
+                bool(args.v5_h4_setup_only),
             )
         )
         > 1
     ):
         parser.error(
-            "--candidate-b-only, --candidate-c-only, --candidate-d-only, --candidate-d-qualified, and --candidate-e-side-only are mutually exclusive"
+            "--candidate-b-only, --candidate-c-only, --candidate-d-only, --candidate-d-qualified, --candidate-e-side-only, and --v5-h4-setup-only are mutually exclusive"
         )
     if args.dry_run:
         plan = v3_7_execution_dry_run(
@@ -3972,6 +4359,16 @@ def main(argv: list[str] | None = None) -> int:
             candidate_d_only=args.candidate_d_only,
             candidate_d_qualified=args.candidate_d_qualified,
             candidate_e_side_only=args.candidate_e_side_only,
+            v5_h4_setup_only=args.v5_h4_setup_only,
+            selected_mode_packet_manifest=args.selected_mode_packet_manifest,
+            selected_mode_packet_identity=(
+                args.selected_mode_packet_identity if args.v5_h4_setup_only else None
+            ),
+            selected_mode_packet_manifest_sha256=(
+                args.selected_mode_packet_manifest_sha256
+                if args.v5_h4_setup_only
+                else None
+            ),
         )
         print(json.dumps(_json_safe(plan), ensure_ascii=False, sort_keys=True))
         return 0
@@ -3988,7 +4385,22 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
     try:
-        payload = load_v3_7_official_payload(args.input_path)
+        if args.v5_h4_setup_only:
+            specification = load_and_resolve(args.input_path)
+            payload = specification.as_jsonable()
+            from benchmarks.task039_v4_h4_hybrid_direct import (
+                validate_v4_h4_specification,
+            )
+
+            validate_v4_h4_specification(specification)
+            if specification.method.get("kind") != "hybrid_iterative":
+                raise ValueError("V5 h4 setup-only requires hybrid_iterative")
+            packet_identity = json.loads(
+                Path(args.selected_mode_packet_identity).read_text(encoding="utf-8")
+            )
+        else:
+            payload = load_v3_7_official_payload(args.input_path)
+            packet_identity = None
         result = run_task039_v3_7_diagnostic(
             payload,
             args.run_directory,
@@ -3999,6 +4411,7 @@ def main(argv: list[str] | None = None) -> int:
                 if args.candidate_b_only
                 or args.candidate_c_only
                 or args.candidate_e_side_only
+                or args.v5_h4_setup_only
                 else run_v3_7_recovery_runner
             ),
             candidate_b_only=args.candidate_b_only,
@@ -4006,6 +4419,16 @@ def main(argv: list[str] | None = None) -> int:
             candidate_d_only=args.candidate_d_only,
             candidate_d_qualified=args.candidate_d_qualified,
             candidate_e_side_only=args.candidate_e_side_only,
+            v5_h4_setup_only=args.v5_h4_setup_only,
+            selected_mode_packet_manifest=(
+                args.selected_mode_packet_manifest if args.v5_h4_setup_only else None
+            ),
+            selected_mode_packet_identity=packet_identity,
+            selected_mode_packet_manifest_sha256=(
+                args.selected_mode_packet_manifest_sha256
+                if args.v5_h4_setup_only
+                else None
+            ),
             record_path=(
                 Path(args.run_directory).resolve()
                 / "numerical_output"
@@ -4019,7 +4442,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
     print(json.dumps(_json_safe(result), ensure_ascii=False, sort_keys=True))
-    return 0 if result.get("status") == "completed" else 3
+    return 0 if result.get("status") in {"completed", "setup_only_completed"} else 3
 
 
 if __name__ == "__main__":

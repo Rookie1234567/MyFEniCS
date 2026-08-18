@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from time import perf_counter
-from typing import Any
+from typing import Any, Callable, Mapping
 
 import numpy as np
 from mpi4py import MPI
@@ -11,6 +11,7 @@ from petsc4py import PETSc
 from scipy.linalg import lu_factor, lu_solve
 
 from .condensed_dtn import gather_small_petsc_matrix
+from .common_3d_solve import _petsc_factor_inventory, _petsc_matrix_stats
 
 
 HYBRID_DTN_WOODBURY_MODE_COUNT = 40
@@ -274,6 +275,7 @@ class ResearchExactFactorInverse:
         matrix: PETSc.Mat,
         *,
         factor_solver_type: str | None = "mumps",
+        lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     ) -> None:
         if not isinstance(matrix, PETSc.Mat):
             raise TypeError("Exact research factor requires a PETSc matrix")
@@ -283,6 +285,7 @@ class ResearchExactFactorInverse:
             raise ValueError("Exact research factor requires square F")
         self.matrix = matrix
         self.factor_solver_type = factor_solver_type
+        self._lifecycle_callback = lifecycle_callback
         self.ksp = PETSc.KSP().create(matrix.getComm())
         self.ksp.setOperators(matrix)
         self.ksp.setType("preonly")
@@ -290,7 +293,23 @@ class ResearchExactFactorInverse:
         pc.setType("lu")
         if factor_solver_type is not None:
             pc.setFactorSolverType(str(factor_solver_type))
+        if lifecycle_callback is not None:
+            lifecycle_callback(
+                "factor_setup_begin",
+                {
+                    "factor_solver_type": factor_solver_type,
+                    "matrix_stats": _petsc_matrix_stats(matrix, assemble=False),
+                },
+            )
         self.ksp.setUp()
+        if lifecycle_callback is not None:
+            lifecycle_callback(
+                "factor_ready",
+                {
+                    "factor_solver_type": factor_solver_type,
+                    "factor_inventory": _petsc_factor_inventory(self.ksp),
+                },
+            )
         self._destroyed = False
         self._solve_count = 0
 
@@ -343,12 +362,14 @@ class ResearchExactSideLuAction:
         factor_solver_type: str | None = "mumps",
         qualification_scope: str | None = None,
         explicit_opt_in: bool = False,
+        lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     ) -> None:
         if getattr(components, "F", None) is not explicit_f:
             raise ValueError("Research exact-side action must use components.F itself")
         self.factor = ResearchExactFactorInverse(
             explicit_f,
             factor_solver_type=factor_solver_type,
+            lifecycle_callback=lifecycle_callback,
         )
         try:
             self.woodbury = HybridLocalDtnWoodburyOracle(
@@ -422,6 +443,7 @@ def create_research_exact_side_lu_action(
     factor_solver_type: str | None = "mumps",
     qualification_scope: str | None = None,
     explicit_opt_in: bool = False,
+    lifecycle_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
 ) -> ResearchExactSideLuAction:
     """Create the historical research action or an explicit case qualification.
 
@@ -437,6 +459,7 @@ def create_research_exact_side_lu_action(
         factor_solver_type=factor_solver_type,
         qualification_scope=qualification_scope,
         explicit_opt_in=explicit_opt_in,
+        lifecycle_callback=lifecycle_callback,
     )
 
 
