@@ -25,6 +25,7 @@ from benchmarks.task039_v3_7_orchestration import (
     V5_H4_SETUP_ONLY_MARKERS,
     _json_safe,
     _record_v3_7_marker,
+    _v5_blr_prefreeze_external_rhs,
     _v5_blr_rhs_vector,
     _v3_7_cleanup_callback,
     _v3_7_object_ledger,
@@ -1226,19 +1227,65 @@ def test_v5_h4_blr_rhs_identity_is_deterministic_and_column_bounded() -> None:
         F.destroy()
 
 
+def test_v5_blr_external_rhs_survives_action_c_ownership_transfer() -> None:
+    comm = PETSc.COMM_WORLD
+    F = PETSc.Mat().createAIJ([4, 4], nnz=2, comm=comm)
+    C = PETSc.Mat().createAIJ([4, 3], nnz=1, comm=comm)
+    F.setUp()
+    C.setUp()
+    first, last = (int(value) for value in F.getOwnershipRange())
+    for row in range(first, last):
+        F.setValue(row, row, 2.0)
+        C.setValue(row, row % 3, 1.0 + 0.1 * row)
+    F.assemble()
+    C.assemble()
+    components = SimpleNamespace(F=F, C=C)
+    system = SimpleNamespace(A=F, b=F.createVecLeft())
+    prefrozen = None
+    try:
+        prefrozen = _v5_blr_prefreeze_external_rhs(
+            ("external_dtn_coupling", "C", 7), system, components
+        )
+        components.C = None
+        assert prefrozen[1]["source"] == "pre_action_components.C"
+        assert prefrozen[1]["kind"] == "C"
+        assert prefrozen[1]["prefrozen_before_action_ownership_transfer"] is True
+        assert prefrozen[1]["resolved_column"] == 1
+        assert np.isfinite(float(prefrozen[0].norm()))
+    finally:
+        if prefrozen is not None:
+            prefrozen[0].destroy()
+        system.b.destroy()
+        C.destroy()
+        F.destroy()
+
+
 @pytest.mark.parametrize(
-    ("exact_cleanup_counts", "expected_error"),
+    ("exact_cleanup_counts", "expected_error", "failure_stage"),
     [
-        ({"exact": 0, "compressed": 0, "global": 0}, None),
-        ({"exact": 1, "compressed": 0, "global": 0}, "did not release all factors"),
+        ({"exact": 0, "compressed": 0, "global": 0}, None, None),
+        (
+            {"exact": 1, "compressed": 0, "global": 0},
+            "did not release all factors",
+            None,
+        ),
+        (
+            {"exact": 0, "compressed": 0, "global": 0},
+            "action creation failed",
+            "action",
+        ),
+        ({"exact": 0, "compressed": 0, "global": 0}, "probe failed", "probe"),
     ],
 )
 def test_v5_h4_blr_injected_route_keeps_exact_candidate_lifecycle(
-    tmp_path, monkeypatch, exact_cleanup_counts, expected_error
+    tmp_path, monkeypatch, exact_cleanup_counts, expected_error, failure_stage
 ) -> None:
     class FakeVec:
+        def __init__(self):
+            self.destroyed = False
+
         def destroy(self):
-            return None
+            self.destroyed = True
 
     class FakeAction:
         def __init__(self, compressed):
@@ -1269,6 +1316,8 @@ def test_v5_h4_blr_injected_route_keeps_exact_candidate_lifecycle(
     markers = []
     marker_details = {}
     factory_kinds = []
+    prefrozen_calls = []
+    prefrozen_vectors = []
     destroy_calls = 0
 
     def fake_components(_system):
@@ -1276,6 +1325,9 @@ def test_v5_h4_blr_injected_route_keeps_exact_candidate_lifecycle(
 
     def fake_action(*_args, compressed_factor_profile=None, **_kwargs):
         factory_kinds.append(compressed_factor_profile)
+        _args[1].C = None
+        if failure_stage == "action" and len(factory_kinds) == 1:
+            raise RuntimeError("action creation failed")
         return FakeAction(compressed_factor_profile is not None)
 
     def fake_rhs(spec, *_args):
@@ -1287,7 +1339,29 @@ def test_v5_h4_blr_injected_route_keeps_exact_candidate_lifecycle(
             "degenerate_uninformative": False,
         }
 
+    def fake_prefreeze(spec, *_args):
+        prefrozen_calls.append(spec[0])
+        vector = FakeVec()
+        prefrozen_vectors.append(vector)
+        assert getattr(_args[-1], "C", None) is not None
+        return vector, {
+            "label": spec[0],
+            "kind": spec[1],
+            "source": "pre_action_components.C",
+            "seed": spec[2],
+            "resolved_column": 0,
+            "column_count": 1,
+            "identity": {"global_sha256": spec[0]},
+            "degenerate_uninformative": False,
+        }
+
     def fake_probe(_action, _system, _rhs, metadata, reference_vector=None, **kwargs):
+        if (
+            failure_stage == "probe"
+            and reference_vector is None
+            and metadata["label"] == "external_dtn_coupling"
+        ):
+            raise RuntimeError("probe failed")
         candidate = reference_vector is not None
         report = {
             **metadata,
@@ -1311,6 +1385,7 @@ def test_v5_h4_blr_injected_route_keeps_exact_candidate_lifecycle(
         orchestration, "create_research_exact_side_lu_action", fake_action
     )
     monkeypatch.setattr(orchestration, "_v5_blr_rhs_vector", fake_rhs)
+    monkeypatch.setattr(orchestration, "_v5_blr_prefreeze_external_rhs", fake_prefreeze)
     monkeypatch.setattr(orchestration, "_v5_blr_probe", fake_probe)
     monkeypatch.setattr(
         orchestration,
@@ -1382,6 +1457,9 @@ def test_v5_h4_blr_injected_route_keeps_exact_candidate_lifecycle(
                 source_identity={"packet_identity": {"model_id": "h4"}},
             )
         assert "v5_blr_candidate_bottom_setup_begin" not in markers
+        assert prefrozen_vectors and all(
+            vector.destroyed for vector in prefrozen_vectors
+        )
         return
 
     result = orchestration.run_v5_h4_mumps_blr_side_component(
@@ -1397,6 +1475,23 @@ def test_v5_h4_blr_injected_route_keeps_exact_candidate_lifecycle(
         None,
         orchestration.MUMPS_BLR_V5_H4_PROFILE,
     ]
+    assert prefrozen_calls == ["external_dtn_coupling", "external_dtn_coupling"]
+    assert all(vector.destroyed for vector in prefrozen_vectors)
+    expected_labels = [spec[0] for spec in orchestration.V5_H4_BLR_RHS_SPECS]
+    assert [
+        item["label"] for item in result["sides"]["bottom"]["exact"]["probes"]
+    ] == expected_labels
+    assert [
+        item["label"] for item in result["sides"]["top"]["exact"]["probes"]
+    ] == expected_labels
+    assert (
+        result["sides"]["bottom"]["exact"]["probes"][3]["source"]
+        == "pre_action_components.C"
+    )
+    assert (
+        result["sides"]["top"]["exact"]["probes"][3]["source"]
+        == "pre_action_components.C"
+    )
     bottom_exact_cleanup = markers.index("v5_blr_exact_reference_bottom_cleanup")
     bottom_candidate_begin = markers.index("v5_blr_candidate_bottom_setup_begin")
     bottom_candidate_end = markers.index("v5_blr_candidate_bottom_setup_end")

@@ -1786,6 +1786,28 @@ def _v5_blr_rhs_vector(
     return vector, metadata
 
 
+def _v5_blr_prefreeze_external_rhs(
+    spec: tuple[str, str, int | None],
+    system: Any,
+    components: Any,
+) -> tuple[PETSc.Vec, dict[str, Any]]:
+    """Freeze the one C-column probe before the action takes C ownership."""
+
+    if spec[1] != "C":
+        raise ValueError("Only the external DtN probe may be pre-frozen")
+    if getattr(components, "C", None) is None:
+        raise RuntimeError(
+            "External DtN probe requires components.C before action creation"
+        )
+    vector, metadata = _v5_blr_rhs_vector(spec, system, components, components)
+    metadata = dict(metadata)
+    metadata["kind"] = spec[1]
+    metadata["source"] = "pre_action_components.C"
+    metadata["prefrozen_before_action_ownership_transfer"] = True
+    metadata["identity"] = _side_vector_identity(vector, metadata["source"])
+    return vector, metadata
+
+
 def _v5_blr_true_residual(
     system: Any,
     rhs: PETSc.Vec,
@@ -1924,13 +1946,18 @@ def run_v5_h4_mumps_blr_side_component(
     for side, system in (("bottom", setup.bottom), ("top", setup.top)):
         coupling_side = getattr(setup.coupling, side)
         _emit_marker(marker_callback, f"v5_blr_exact_reference_{side}_begin")
-        exact_components = _build_research_explicit_side_components(system)
+        exact_components = None
         exact_action = None
+        prefrozen_external_rhs = None
         exact_probe_reports: list[dict[str, Any]] = []
         exact_artifacts: dict[str, dict[str, Any]] = {}
         exact_diagnostics: dict[str, Any] = {}
         exact_cleanup: dict[str, Any] = {}
         try:
+            exact_components = _build_research_explicit_side_components(system)
+            prefrozen_external_rhs = _v5_blr_prefreeze_external_rhs(
+                V5_H4_BLR_RHS_SPECS[3], system, exact_components
+            )
             exact_action = create_research_exact_side_lu_action(
                 exact_components.F,
                 exact_components,
@@ -1946,9 +1973,15 @@ def run_v5_h4_mumps_blr_side_component(
                 diagnostics=exact_diagnostics,
             )
             for spec in V5_H4_BLR_RHS_SPECS:
-                rhs, metadata = _v5_blr_rhs_vector(
-                    spec, system, coupling_side, exact_components
-                )
+                if spec[1] == "C":
+                    if prefrozen_external_rhs is None:
+                        raise RuntimeError("External DtN probe was not pre-frozen")
+                    rhs, metadata = prefrozen_external_rhs
+                    prefrozen_external_rhs = None
+                else:
+                    rhs, metadata = _v5_blr_rhs_vector(
+                        spec, system, coupling_side, exact_components
+                    )
                 retained = None
                 try:
                     report, retained = _v5_blr_probe(
@@ -2005,11 +2038,13 @@ def run_v5_h4_mumps_blr_side_component(
                 cleanup=collective_heap_cleanup(comm),
             )
         finally:
+            if prefrozen_external_rhs is not None:
+                prefrozen_external_rhs[0].destroy()
             if exact_action is not None:
                 exact_cleanup = _v5_blr_destroy_side(
                     exact_action, exact_components, comm
                 )
-            else:
+            elif exact_components is not None:
                 exact_cleanup = {
                     "status": "not_created",
                     "components": _destroy_v5_side_components(exact_components),
