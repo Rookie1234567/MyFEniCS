@@ -11,6 +11,7 @@ from benchmarks.task039_v4_q9_qb_component import (
     _json_default,
     audit_qep_sign_involution,
 )
+from benchmarks.task039_v4_q9_qc_component import match_beta_sets
 
 
 def _sha256(path: Path) -> str:
@@ -269,3 +270,14 @@ def test_q_b_pair_targets_preserve_complete_negative_groups() -> None:
 def test_q_b_json_default_normalizes_numpy_scalars() -> None:
     assert _json_default(np.bool_(True)) is True
     assert _json_default(np.int64(4)) == 4
+
+
+def test_q_c_beta_matching_is_one_to_one() -> None:
+    matched = match_beta_sets([1.0 + 0j, 2.0 + 0j], [2.0 + 0j, 1.0 + 0j])
+    assert matched["identity_pass"] is True
+    missing = match_beta_sets([1.0 + 0j, 2.0 + 0j], [1.0 + 0j, 3.0 + 0j])
+    assert missing["identity_pass"] is False
+    assert missing["missing_count"] == 1
+    assert missing["extra_count"] == 1
+    duplicate = match_beta_sets([1.0 + 0j, 2.0 + 0j], [1.0 + 0j, 1.0 + 0j])
+    assert duplicate["observed_duplicate_count"] == 2
