@@ -1,0 +1,101 @@
+{
+  "schema": "task039.v4-9.q-d-feasibility-compact.v1",
+  "classification": "Q_D_FEASIBILITY_NOT_ESTABLISHED",
+  "source": {
+    "source_head": "5187f2b6aed49bbb8013f7045174371d38d32eb6",
+    "git_clean": true,
+    "audit_module": "benchmarks/task039_v4_q9_qd_feasibility_audit.py",
+    "audit_schema": "task039.v4-9-q-d-feasibility-audit.v1"
+  },
+  "raw": {
+    "path": "results/task039_v4_q9_qd_feasibility_audit_5187f2b6/q_d_raw.json",
+    "sha256": "b73cdf4f1c9b7c624ee00a53656b0ffbf777fdce1ab53912fcd105e412a04b4a"
+  },
+  "inputs": {
+    "manifest": {
+      "path": "results/task039_v4_h4_m480_shared_packet_eaad0f94/manifest.json",
+      "sha256": "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067"
+    },
+    "identity": {
+      "path": "results/task039_v4_h4_m480_shared_packet_eaad0f94/identity.json",
+      "sha256": "b3bb870fe6fa17cb262b6161f7317cc1950944755c9270d4628dd5c79e950690"
+    },
+    "direct_summary": {
+      "path": "results/task039_v4_h4_hybrid_direct_formal_mpi8_icntl14_1515f095/numerical_output/run_summary.json",
+      "sha256": "90aecff69b43e0b009f662771f7b3a695ef3a838b0ed9a4bf7fa8dd230b5aa0e"
+    }
+  },
+  "authority": {
+    "scope": "task039_v4_h4_m480",
+    "mode_count": 480,
+    "rank_count": 8,
+    "global_size": 11605,
+    "external_keys": {
+      "count": 600,
+      "sha256": "ba431ec6683f2123e53e8f9f3fb13fd35ae22a6a8f9c0ed2d85aa1f1cb15b04a"
+    },
+    "qep_workspace_persisted": false,
+    "reduced_vectors": "not_persisted",
+    "qep_workspace_bytes": 0
+  },
+  "branches": {
+    "positive": {
+      "all_selected_labeled_lossy_propagating": true,
+      "nested_prefixes": true,
+      "group_boundaries": {
+        "240": {"group_complete": true},
+        "320": {"group_complete": true},
+        "400": {"group_complete": true}
+      },
+      "beta_abs_imag_range": [0.0006154427365170548, 1.0770707665418466],
+      "decay_exponent_range_at_middle_length_nm": [0.061544273651705485, 107.70707665418466],
+      "weak_decay_eta": {"status": "not_selected", "value": null}
+    },
+    "negative": {
+      "all_selected_labeled_lossy_propagating": true,
+      "nested_prefixes": true,
+      "group_boundaries": {
+        "240": {"group_complete": true},
+        "320": {"group_complete": true},
+        "400": {"group_complete": true}
+      },
+      "beta_abs_imag_range": [0.0006154427365085361, 1.077070766541851],
+      "decay_exponent_range_at_middle_length_nm": [0.06154427365085361, 107.7070766541851],
+      "weak_decay_eta": {"status": "not_selected", "value": null}
+    }
+  },
+  "storage_capacity_proxy": {
+    "full_mode_count": 480,
+    "array_file_count": 32,
+    "filesystem_bytes_stat": 356509696,
+    "array_payload_bytes": 356505600,
+    "status": "derived_not_rss",
+    "formula": "filesystem bytes include fixed .npy headers; only shape*complex128 itemsize array payload bytes are scaled linearly by M_eff / 480; not RSS",
+    "M_eff": {
+      "240": {"linear_scaled_array_payload_bytes": 178252800, "status": "derived_not_rss"},
+      "320": {"linear_scaled_array_payload_bytes": 237670400, "status": "derived_not_rss"},
+      "400": {"linear_scaled_array_payload_bytes": 297088000, "status": "derived_not_rss"}
+    }
+  },
+  "missing_authority": {
+    "reduced_linear_residual": "numeric reduced operator and RHS are not persisted",
+    "reduced_R_T_A_A_volume": "no reduced solve or reduced field reconstruction was run",
+    "reduced_selected_E_H": "selected E/H authority is solution-specific M480 output",
+    "reduced_normal_flux_power_channels": "no reduced port projection/channel map is persisted",
+    "reduced_interface_residual": "no reduced trace/traction action is persisted",
+    "reduced_resource_reduction": "no M_eff process-tree RSS measurement exists"
+  },
+  "gates": {
+    "reduced_linear_residual": {"status": "NOT_ESTABLISHED", "pass": null},
+    "reduced_R_T_A_A_volume": {"status": "NOT_ESTABLISHED", "pass": null},
+    "reduced_selected_E_H": {"status": "NOT_ESTABLISHED", "pass": null},
+    "reduced_normal_flux_power_channels": {"status": "NOT_ESTABLISHED", "pass": null},
+    "reduced_interface_residual": {"status": "NOT_ESTABLISHED", "pass": null},
+    "reduced_resource_reduction": {"status": "NOT_ESTABLISHED", "pass": null}
+  },
+  "limits": {
+    "M_eff": [240, 320, 400],
+    "eta": {"status": "not_selected", "value": null},
+    "proxy_is_not_rss": true
+  }
+}
