@@ -1,0 +1,154 @@
+{
+  "schema": "task039.v4-9-q-b-compact.v1",
+  "classification": "Q_B_OPERATOR_PARITY_PASS_PAIRING_TRACE_NUMERICAL_NEGATIVE",
+  "qualification": {
+    "status": "NOT_ESTABLISHED",
+    "pass": false,
+    "reason": "sampled operator parity passed, paired polynomial residuals passed, but all nested trace gates exceeded 1e-10; traction and observables were not run"
+  },
+  "provenance": {
+    "component_source_sha": "73ce4f40bf097d58454843f1c068ff2199a00a0c",
+    "git_clean": true,
+    "input_path": "input/official/task039/5nm_p6h4_v4_1deg_hybrid_direct_m480_mpi8.dat",
+    "input_sha256": "dd7c945c1696b4f9da3e35c295071a24b796a10d164d2a819b4abe68f72f44ca",
+    "manifest_path": "results/task039_v4_h4_m480_shared_packet_eaad0f94/manifest.json",
+    "manifest_sha256": "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067",
+    "identity_path": "results/task039_v4_h4_m480_shared_packet_eaad0f94/identity.json",
+    "identity_file_sha256": "b3bb870fe6fa17cb262b6161f7317cc1950944755c9270d4628dd5c79e950690",
+    "packet_source_sha": "eaad0f942f014b65474ac57e3d5e561316489f20",
+    "mpi": 8,
+    "mode_count": 480,
+    "raw_path": "results/task039_v4_q9_qb_component_73ce4f40/q_b_raw.json",
+    "raw_sha256": "fb8650b5ee70656aeb505f5fdcb52daa4a1ba8d76d951859369ed1ed93fec67b",
+    "raw_stdout_sha256": "4c95bca6a31b4a9a3d81ada43623fe5e87b664373262679ac7ff42a597eb0bbc",
+    "raw_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "exact_transform": {
+    "formula": "Q(beta)=K0+beta*K1+beta^2*K2; S=diag(+I_Et,-I_Ez); S Q(beta) S=Q(-beta)",
+    "right_map": "S",
+    "left_map": "S",
+    "additional_conjugation": false,
+    "sampled_probe_count": 4,
+    "tolerance": 1e-10,
+    "pass": true,
+    "max_errors": {
+      "involution": 0.0,
+      "K0_even": 0.0,
+      "K1_odd": 0.0,
+      "K2_even": 0.0,
+      "Q_beta_to_minus_beta": 0.0
+    }
+  },
+  "nested_pairing": {
+    "residual_tolerance": 1e-10,
+    "trace_tolerance": 1e-10,
+    "metric_space": "distributed_owner_row_coefficient_euclidean",
+    "M120": {
+      "right_residual_max": 3.947173653166042e-17,
+      "left_residual_max": 3.5493965455157944e-17,
+      "right_residual_pass": true,
+      "left_residual_pass": true,
+      "trace_gate_pass": false,
+      "pairing_trace_pass": false,
+      "full_right": {
+        "max_principal_angle_rad": 4.920994270792518e-06,
+        "projector_error": 4.924151790695877e-06,
+        "relative_reconstruction_error": 8.38318646145249e-07
+      },
+      "full_left": {
+        "max_principal_angle_rad": 3.2029525186544786e-06,
+        "projector_error": 3.368717214090328e-06,
+        "relative_reconstruction_error": 4.769376279218402e-07
+      },
+      "trace_right": {
+        "max_principal_angle_rad": 6.3782366130050025e-06,
+        "projector_error": 7.598072722874429e-06,
+        "relative_reconstruction_error": 1.4226627293264602e-06
+      },
+      "trace_left": {
+        "max_principal_angle_rad": 5.706658386202312e-06,
+        "projector_error": 5.708914705169109e-06,
+        "relative_reconstruction_error": 8.703013994866358e-07
+      }
+    },
+    "M240": {
+      "right_residual_max": 8.718966097395276e-15,
+      "left_residual_max": 7.35045223408503e-15,
+      "right_residual_pass": true,
+      "left_residual_pass": true,
+      "trace_gate_pass": false,
+      "pairing_trace_pass": false,
+      "full_right": {
+        "max_principal_angle_rad": 4.920994270792518e-06,
+        "projector_error": 4.924151790695877e-06,
+        "relative_reconstruction_error": 1.623090531353031e-06
+      },
+      "full_left": {
+        "max_principal_angle_rad": 3.2029525186544786e-06,
+        "projector_error": 3.368717214090328e-06,
+        "relative_reconstruction_error": 4.769376279218402e-07
+      },
+      "trace_right": {
+        "max_principal_angle_rad": 6.3782366130050025e-06,
+        "projector_error": 7.598072722874429e-06,
+        "relative_reconstruction_error": 1.4226627293264602e-06
+      },
+      "trace_left": {
+        "max_principal_angle_rad": 5.706658386202312e-06,
+        "projector_error": 5.708914705169109e-06,
+        "relative_reconstruction_error": 8.703013994866358e-07
+      }
+    },
+    "M480": {
+      "right_residual_max": 8.718966097395276e-15,
+      "left_residual_max": 2.599122794457643e-14,
+      "right_residual_pass": true,
+      "left_residual_pass": true,
+      "trace_gate_pass": false,
+      "pairing_trace_pass": false,
+      "full_right": {
+        "max_principal_angle_rad": 4.920994270792518e-06,
+        "projector_error": 4.924151790695877e-06,
+        "relative_reconstruction_error": 1.623090531353031e-06
+      },
+      "full_left": {
+        "max_principal_angle_rad": 5.003729165551321e-06,
+        "projector_error": 5.003729165546101e-06,
+        "relative_reconstruction_error": 1.5715853150491884e-06
+      },
+      "trace_right": {
+        "max_principal_angle_rad": 6.3782366130050025e-06,
+        "projector_error": 7.598072722874429e-06,
+        "relative_reconstruction_error": 1.6581844581046433e-06
+      },
+      "trace_left": {
+        "max_principal_angle_rad": 5.706658386202312e-06,
+        "projector_error": 5.708914705169109e-06,
+        "relative_reconstruction_error": 8.703013994866358e-07
+      }
+    }
+  },
+  "traction": {
+    "status": "NOT_ESTABLISHED",
+    "source_contract": "src/coupling/hybrid_internal_modes.py::_ReusableModeTractionEvaluator",
+    "transform": "Et_partner=Et, Ez_partner=-Ez, beta_partner=-beta",
+    "contractual_result": "traction_partner=-traction",
+    "reason": "traction is not persisted and this component did not reconstruct all 480 traction columns"
+  },
+  "observables": {
+    "status": "NOT_ESTABLISHED",
+    "reason": "no reduced solve or field/observable reconstruction was run"
+  },
+  "resources": {
+    "elapsed_seconds_max_rank": 6.550970350974239,
+    "rank_historical_ru_maxrss_mib": 239.64453125,
+    "process_tree_peak_rss_mib": "not_measured",
+    "swap": "not_measured"
+  },
+  "prior_attempt": {
+    "source_sha": "335d69d6525c41b763118f1c77a01acb378dd2d3",
+    "raw_path": "results/task039_v4_q9_qb_component_335d69d6",
+    "classification": "implementation_failure_json_numpy_bool_serialization",
+    "raw_json_written": false
+  }
+}
