@@ -533,6 +533,125 @@ def test_v3_model_identity_accepts_and_near_miss_rejects(tmp_path: Path) -> None
     assert rejected["classification"] == "HYBRID_DIRECT_OWN_AUTHORITY_FAIL"
 
 
+def test_v4_h4_inventory_is_dynamic_while_legacy_contracts_stay_fixed() -> None:
+    v4_contract = hybrid_identity._model_contract(
+        "task039_5nm_v4_1deg_s5_hybrid_direct_m480"
+    )
+    assert v4_contract["inventory_count"] is None
+    dynamic_keys = _inventory_v3()["keys"][:-1]
+    parsed = hybrid_identity._parse_inventory(
+        {"keys": dynamic_keys}, "v4", expected_count=None
+    )
+    assert parsed["count"] == 599
+    with pytest.raises(hybrid_identity.IdentityCheckError):
+        hybrid_identity._parse_inventory({"keys": []}, "v4", expected_count=None)
+    assert (
+        hybrid_identity._model_contract("task039_5nm_v3_1deg_s5_hybrid_direct_m480")[
+            "inventory_count"
+        ]
+        == 600
+    )
+    assert (
+        hybrid_identity._model_contract("task039_5nm_hybrid_direct_m480")[
+            "inventory_count"
+        ]
+        == 604
+    )
+
+
+def test_v4_integrated_gate_is_strict_and_keeps_v3_default(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "hybrid_v4"
+    _write_hybrid(
+        root,
+        _inventory_v3(),
+        480,
+        model_id="task039_5nm_v4_1deg_s5_hybrid_direct_m480",
+        h_nm=4.0,
+        incident_grazing_deg=1.0,
+    )
+    loaded = hybrid_identity._hybrid_authority_view(hybrid_identity._load_hybrid(root))
+    candidate = dict(loaded)
+    candidate["observables"] = dict(loaded["observables"])
+    candidate["observables"]["R_total"] += 5.0e-5
+    v3_default = hybrid_identity._compare_v3_authority_views(
+        candidate,
+        loaded,
+        reference_label="v3-default",
+    )
+    assert v3_default["pass"] is True
+    assert v3_default["classification"].startswith("TASK039_V3_")
+    v4_strict = hybrid_identity._compare_v3_authority_views(
+        candidate,
+        loaded,
+        reference_label="v4-strict",
+        observable_tolerance=1.0e-6,
+        canonical_tolerance=1.0e-5,
+        qualification_scope="task039_v4_p6h4_m480_1deg_s",
+    )
+    assert v4_strict["pass"] is False
+    assert v4_strict["classification"] == (
+        "TASK039_V4_HYBRID_ITERATIVE_H4_EXACT_SIDE_INTEGRATED_FAIL"
+    )
+    candidate["observables"]["R_total"] = loaded["observables"]["R_total"]
+    monkeypatch.setattr(
+        hybrid_identity,
+        "compare_canonical_manifests",
+        lambda *_args, **_kwargs: {"pass": False},
+    )
+    canonical_fail = hybrid_identity._compare_v3_authority_views(
+        candidate,
+        loaded,
+        reference_label="v4-canonical-fail",
+        observable_tolerance=1.0e-6,
+        canonical_tolerance=1.0e-5,
+        qualification_scope="task039_v4_p6h4_m480_1deg_s",
+    )
+    assert canonical_fail["integrated_gate"]["canonical"]["pass"] is False
+    assert canonical_fail["pass"] is False
+
+
+def test_candidate_direct_pairing_is_bidirectional(monkeypatch) -> None:
+    common = {
+        "payload": {"arrays": {}},
+        "inventory": {"keys": (), "count": 0, "key_sha256": ""},
+        "orders": {},
+        "observables": {},
+        "closure": 0.0,
+        "traction": {},
+        "projection": 0.0,
+        "canonical": None,
+        "physical_model_sha256": "a" * 64,
+    }
+    candidate = dict(
+        common, authority={"model_id": "task039_5nm_v3_1deg_s5_hybrid_iterative_m480"}
+    )
+    direct = {
+        "contract": {
+            "profile": "v4_h4_1deg",
+            "h_nm": 4.0,
+            "model_id": "task039_5nm_v4_1deg_s5_hybrid_direct_m480",
+        }
+    }
+    monkeypatch.setattr(
+        hybrid_identity, "_load_v3_7_candidate_view", lambda _path: candidate
+    )
+    monkeypatch.setattr(hybrid_identity, "_load_hybrid", lambda _path: direct)
+    with pytest.raises(hybrid_identity.IdentityCheckError):
+        hybrid_identity.compare_v3_7_hybrid_candidate_to_direct("candidate", "direct")
+    candidate["authority"] = {
+        "model_id": "task039_5nm_v4_1deg_s5_hybrid_iterative_m480"
+    }
+    direct["contract"] = {
+        "profile": "v3_1deg",
+        "h_nm": 5.0,
+        "model_id": "task039_5nm_v3_1deg_s5_hybrid_direct_m480",
+    }
+    with pytest.raises(hybrid_identity.IdentityCheckError):
+        hybrid_identity.compare_v3_7_hybrid_candidate_to_direct("candidate", "direct")
+
+
 def _v3_full3d_view(hybrid: dict[str, object]) -> dict[str, object]:
     arrays = hybrid["payload"]["arrays"]
     return {

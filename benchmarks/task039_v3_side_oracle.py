@@ -37,6 +37,7 @@ from src.solvers.static_local_schur_action import (
 
 
 TASK039_CASE_QUALIFICATION_SCOPE = "task039_v3_p6h5_m480_1deg_s"
+TASK039_V4_H4_CASE_QUALIFICATION_SCOPE = "task039_v4_p6h4_m480_1deg_s"
 
 
 def select_current_full_fe_shard(
@@ -716,7 +717,10 @@ def run_exact_side_lu_oracle(
 ) -> dict[str, Any]:
     """Run one exact-side oracle and consume the solution before cleanup."""
 
-    if explicit_opt_in and qualification_scope != TASK039_CASE_QUALIFICATION_SCOPE:
+    if explicit_opt_in and qualification_scope not in {
+        TASK039_CASE_QUALIFICATION_SCOPE,
+        TASK039_V4_H4_CASE_QUALIFICATION_SCOPE,
+    }:
         raise ValueError(
             "case-qualified exact-side scope is not the fixed Task39 scope"
         )

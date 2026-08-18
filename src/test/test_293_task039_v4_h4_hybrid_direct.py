@@ -21,6 +21,9 @@ from src.io.input_validation import (
 )
 from src.postprocessing.hybrid_field_reconstruction import element_safe_middle_offsets
 from src.runners import task039_hybrid_direct as direct_adapter
+from src.runners.task039_hybrid_iterative import (
+    make_task039_hybrid_iterative_profile,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 INPUT = ROOT / v4.TASK039_V4_H4_HYBRID_DIRECT_INPUT
@@ -29,6 +32,10 @@ SOURCE_SHA = "a" * 40
 
 def _spec():
     return load_and_resolve(INPUT)
+
+
+def _iterative_spec():
+    return load_and_resolve(ROOT / v4.TASK039_V4_H4_HYBRID_ITERATIVE_INPUT)
 
 
 def test_v4_h4_module_import_does_not_load_solver_runtime():
@@ -67,6 +74,83 @@ def test_v4_h4_input_profile_and_dynamic_inventory_are_exact():
     assert method_adapter_identity("hybrid_direct", payload["model_id"]) == (
         "task039.hybrid_direct"
     )
+
+
+def test_shared_mode_identity_reads_resolved_provenance_physical_sha():
+    specification = _spec()
+    payload = specification.as_jsonable()
+    identity = v4.build_v4_h4_mode_identity(specification, SOURCE_SHA)
+
+    assert "physical_model_sha256" not in payload
+    assert identity["physical_sha256"] == payload["provenance"]["physical_model_sha256"]
+    v4._validate_shared_h4_mode_identity(identity, payload)
+
+
+def test_v4_h4_iterative_profile_and_phase_use_exact_side_contract(tmp_path):
+    direct_specification = _spec()
+    specification = _iterative_spec()
+    payload = v4.validate_v4_h4_specification(specification)
+    profile = make_task039_hybrid_iterative_profile(480, 8, mesh_target_nm=4.0)
+    identity_path = tmp_path / "mode_identity.json"
+    identity, identity_sha = v4.write_v4_h4_mode_identity(
+        direct_specification, SOURCE_SHA, identity_path
+    )
+    v4._validate_shared_h4_mode_identity(identity, payload)
+    manifest = tmp_path / "manifest.json"
+    manifest.write_bytes(b"manifest")
+    manifest_sha = hashlib.sha256(manifest.read_bytes()).hexdigest()
+    plan = v4.build_v4_h4_phase_plan(
+        specification,
+        tmp_path / "iterative-consumer",
+        SOURCE_SHA,
+        phase="iterative-consumer",
+        identity_json=identity_path,
+        manifest=manifest,
+        manifest_sha256=manifest_sha,
+        mpiexec_command="mpiexec",
+    )
+
+    assert payload["model_id"] == v4.TASK039_V4_H4_HYBRID_ITERATIVE_MODEL_ID
+    assert profile.profile_id == "task039.hybrid_iterative.p6-h4.v1"
+    assert profile.max_it == 4000
+    assert profile.preconditioner_identity == (
+        "fixed_exact_side_lu_plus_dynamic_dtn_woodbury"
+    )
+    assert plan.method == "hybrid_iterative"
+    assert plan.adapter_identity == v4.TASK039_V4_H4_ITERATIVE_ADAPTER_IDENTITY
+    assert plan.argv[plan.argv.index("--phase") + 1] == "iterative-consumer"
+    assert identity_sha == hashlib.sha256(identity_path.read_bytes()).hexdigest()
+    assert "--selected-mode-packet-consumer-manifest" not in v4._phase_argv(
+        direct_specification,
+        tmp_path / "mode-prep",
+        SOURCE_SHA,
+        "mode-prep",
+        identity_json=identity_path,
+        packet_directory=tmp_path / "packet",
+    )
+
+
+def test_v4_h4_iterative_packet_gate_requires_measured_release():
+    qep_release = {
+        "qep_calls": 0,
+        "consumer_qep_required": False,
+        "packet_manifest_sha256": "m" * 64,
+        "packet_identity_sha256": "i" * 64,
+        "packet_mmap_released": True,
+        "packet_references_released": True,
+    }
+    assert v4._v4_h4_packet_consumer_gate(
+        qep_release,
+        manifest_sha256="m" * 64,
+        identity_sha256="i" * 64,
+    )
+    for field in ("packet_mmap_released", "packet_references_released"):
+        failed = dict(qep_release, **{field: False})
+        assert not v4._v4_h4_packet_consumer_gate(
+            failed,
+            manifest_sha256="m" * 64,
+            identity_sha256="i" * 64,
+        )
 
 
 def test_v4_h4_resolved_axis_supports_non_aligned_offsets_without_pde():

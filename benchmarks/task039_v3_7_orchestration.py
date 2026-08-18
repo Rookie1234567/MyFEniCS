@@ -52,6 +52,7 @@ from benchmarks.task039_v3_side_oracle import (
     rebuild_hybrid_augmented_vector,
     run_exact_side_lu_oracle,
     TASK039_CASE_QUALIFICATION_SCOPE,
+    TASK039_V4_H4_CASE_QUALIFICATION_SCOPE,
 )
 from src.common.config_3d import ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
 from src.io.input_validation import (
@@ -1190,6 +1191,8 @@ def run_v3_7_recovery_runner(
     snapshot: PETSc.Vec,
     run_directory: Path,
     producer: Mapping[str, Any],
+    *,
+    run_integrated_checker: bool = True,
 ) -> dict[str, Any]:
     """Run existing recovery/physics and the reviewed integrated checker."""
 
@@ -1236,13 +1239,36 @@ def run_v3_7_recovery_runner(
             producer,
             setup.bottom.local_mesh.mesh.comm,
         )
-        integrated_checker = check_v3_7_integrated_physics(
-            run_directory,
-            V3_7_DIRECT_RUN_ROOT,
-            V3_7_FULL3D_RUN_ROOT,
+        if run_integrated_checker:
+            integrated_checker = (
+                check_v3_7_integrated_physics(
+                    run_directory,
+                    producer.get(
+                        "_hybrid_direct_authority_run_directory", V3_7_DIRECT_RUN_ROOT
+                    ),
+                    producer.get(
+                        "_full3d_authority_run_directory", V3_7_FULL3D_RUN_ROOT
+                    ),
+                )
+                if setup.bottom.local_mesh.mesh.comm.rank == 0
+                else None
+            )
+            integrated_checker = setup.bottom.local_mesh.mesh.comm.bcast(
+                integrated_checker, root=0
+            )
+        else:
+            integrated_checker = {
+                "status": "not_available",
+                "pass": False,
+                "role": "full3d_secondary_not_run",
+            }
+        integrated_pass = (
+            not run_integrated_checker or integrated_checker.get("pass") is True
         )
         return {
-            "pass": bool(physics.physics_pass and integrated_checker["pass"]),
+            "pass": bool(
+                physics.physics_pass and recovery.recovery_pass and integrated_pass
+            ),
             "producer_source_sha": producer.get("producer_source_sha"),
             "recovery_pass": bool(recovery.recovery_pass),
             "physics_pass": bool(physics.physics_pass),
@@ -1277,7 +1303,9 @@ def _write_v3_7_candidate_authority(
     authority = {
         "schema": "task039.v3-7-hybrid-authority.v1",
         "status": "measured_candidate_physics",
-        "model_id": "task039_5nm_v3_1deg_s5_hybrid_iterative_m480",
+        "model_id": producer.get(
+            "consumer_model_id", "task039_5nm_v3_1deg_s5_hybrid_iterative_m480"
+        ),
         "source_sha": producer.get("consumer_source_sha"),
         "physical_model_sha256": producer["physical_model_sha256"],
         "mpi_size": 8,
@@ -1299,6 +1327,11 @@ def _write_v3_7_candidate_authority(
         "interface_projection": projection_value,
         "grid_payload": dict(physics.own_grid),
     }
+    qualification_scope = producer.get("qualification_scope")
+    if qualification_scope == TASK039_V4_H4_CASE_QUALIFICATION_SCOPE:
+        authority["qualification_scope"] = qualification_scope
+        authority["qualification_method"] = producer.get("qualification_method")
+        authority["canonical"] = dict(physics.canonical)
     path = run_directory / "numerical_output" / "v3_7_hybrid_authority.json"
     if comm.rank == 0:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -1341,7 +1374,11 @@ def check_v3_7_integrated_physics(
             "pass": False,
             "error": f"{type(exc).__name__}: {exc}",
         }
-    secondary: dict[str, Any] | None = None
+    secondary: dict[str, Any] | None = {
+        "status": "not_available",
+        "pass": False,
+        "role": "full3d_secondary_not_run",
+    }
     if full3d_run_directory is not None:
         full3d = Path(full3d_run_directory)
         if full3d.is_dir():
@@ -2659,6 +2696,9 @@ def _run_v3_8_candidate_d_campaign(
     ]
     | None,
     case_qualified: bool = False,
+    qualification_scope: str = V3_8_CANDIDATE_D_QUALIFICATION_SCOPE,
+    qualification_method: str = V3_8_CANDIDATE_D_QUALIFIED_METHOD,
+    qualification_target: str = V3_8_CANDIDATE_D_QUALIFIED_CLASSIFICATION,
 ) -> tuple[dict[str, Any], Path]:
     """Run the explicit online Candidate-D side-factor path without direct payloads."""
 
@@ -2706,7 +2746,7 @@ def _run_v3_8_candidate_d_campaign(
         if case_qualified:
             oracle_kwargs.update(
                 {
-                    "qualification_scope": V3_8_CANDIDATE_D_QUALIFICATION_SCOPE,
+                    "qualification_scope": qualification_scope,
                     "explicit_opt_in": True,
                 }
             )
@@ -2800,7 +2840,7 @@ def _run_v3_8_candidate_d_campaign(
         report = {
             "status": "attempted" if case_qualified else "measured",
             "classification": (
-                V3_8_CANDIDATE_D_QUALIFIED_METHOD
+                qualification_method
                 if case_qualified
                 else V3_8_CANDIDATE_D_CLASSIFICATION
             ),
@@ -2822,15 +2862,15 @@ def _run_v3_8_candidate_d_campaign(
         if case_qualified:
             side_actions = oracle_report["side_action_diagnostics"]
             qualification = {
-                "qualification_scope": V3_8_CANDIDATE_D_QUALIFICATION_SCOPE,
+                "qualification_scope": qualification_scope,
                 "explicit_opt_in": True,
                 "case_qualification_opt_in": True,
                 "case_qualification_attempt": True,
                 "general_production": False,
                 "ordinary_default": False,
                 "ordinary_default_changed": False,
-                "classification": V3_8_CANDIDATE_D_QUALIFIED_METHOD,
-                "qualification_target": V3_8_CANDIDATE_D_QUALIFIED_CLASSIFICATION,
+                "classification": qualification_method,
+                "qualification_target": qualification_target,
                 "final_qualification_status": "pending_parent_resource_gate",
                 "status": "attempted",
                 "local_direct_factor_count": {
@@ -3091,6 +3131,11 @@ def run_task039_v3_7_diagnostic(
         [Any, Any, Any, Path, Mapping[str, Any]], Mapping[str, Any]
     ]
     | None = None,
+    profile_override: Any | None = None,
+    producer_metadata: Mapping[str, Any] | None = None,
+    qualification_scope: str = V3_8_CANDIDATE_D_QUALIFICATION_SCOPE,
+    qualification_method: str = V3_8_CANDIDATE_D_QUALIFIED_METHOD,
+    qualification_target: str = V3_8_CANDIDATE_D_QUALIFIED_CLASSIFICATION,
     record_path: str | Path | None = None,
     candidate_b_only: bool = False,
     candidate_c_only: bool = False,
@@ -3167,7 +3212,11 @@ def run_task039_v3_7_diagnostic(
 
     try:
         _emit_marker(marker_callback, "diagnostic_entry")
-        profile = v3_7_profile_from_resolved(resolved_payload)
+        profile = (
+            profile_override
+            if profile_override is not None
+            else v3_7_profile_from_resolved(resolved_payload)
+        )
         _emit_marker(marker_callback, "profile_ready", profile_id=profile.profile_id)
         watchdog = v3_7_watchdog_policy(resolved_payload)
         _emit_marker(
@@ -3191,6 +3240,8 @@ def run_task039_v3_7_diagnostic(
             producer = _candidate_d_producer_metadata(
                 resolved_payload, source_sha, marker_callback
             )
+            if producer_metadata is not None:
+                producer.update(dict(producer_metadata))
             modal_amplitudes = None
         else:
             producer, modal_amplitudes = inventory_loader(
@@ -3405,6 +3456,9 @@ def run_task039_v3_7_diagnostic(
                 oracle_runner=oracle_runner,
                 recovery_runner=recovery_runner,
                 case_qualified=candidate_d_qualified,
+                qualification_scope=qualification_scope,
+                qualification_method=qualification_method,
+                qualification_target=qualification_target,
             )
             result = {
                 "schema": (
@@ -3457,10 +3511,10 @@ def run_task039_v3_7_diagnostic(
                 result["qualification"] = candidate_report["qualification"]
                 result["formal_run"] = {
                     "status": "attempted_candidate_d_qualified",
-                    "classification": V3_8_CANDIDATE_D_QUALIFIED_METHOD,
-                    "qualification_target": V3_8_CANDIDATE_D_QUALIFIED_CLASSIFICATION,
+                    "classification": qualification_method,
+                    "qualification_target": qualification_target,
                     "direct_reference_payload_loaded": False,
-                    "qualification_scope": V3_8_CANDIDATE_D_QUALIFICATION_SCOPE,
+                    "qualification_scope": qualification_scope,
                     "explicit_opt_in": True,
                     "ordinary_default_changed": False,
                 }

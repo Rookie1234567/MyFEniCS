@@ -17,13 +17,20 @@ from typing import Any, Mapping, Sequence
 
 import numpy as np
 
-from benchmarks.canonical_vector_artifacts import read_canonical_manifest
+from benchmarks.canonical_vector_artifacts import (
+    compare_canonical_manifests,
+    read_canonical_manifest,
+)
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _SOURCE_SHA = re.compile(r"^[0-9a-f]{40}$")
 _HISTORICAL_MODEL_ID = re.compile(r"^task039_5nm_hybrid_direct_m(120|240|480|960)$")
 _V3_MODEL_ID = re.compile(r"^task039_5nm_v3_1deg_s5_hybrid_direct_m480$")
+_V4_H4_MODEL_ID = re.compile(r"^task039_5nm_v4_1deg_s5_hybrid_direct_m480$")
+_V4_H4_QUALIFICATION_SCOPE = "task039_v4_p6h4_m480_1deg_s"
+_V4_H4_INTEGRATED_PASS = "TASK039_V4_HYBRID_ITERATIVE_H4_EXACT_SIDE_INTEGRATED_PASS"
+_V4_H4_INTEGRATED_FAIL = "TASK039_V4_HYBRID_ITERATIVE_H4_EXACT_SIDE_INTEGRATED_FAIL"
 _PLANES = (10.0, 30.0, 60.0, 90.0, 110.0)
 _PAYLOAD_KEYS = (
     "x_nm",
@@ -157,11 +164,20 @@ def _model_contract(value: Any) -> dict[str, Any] | None:
             "incident_grazing_deg": 1.0,
             "inventory_count": 600,
         }
+    if _V4_H4_MODEL_ID.fullmatch(value) is not None:
+        return {
+            "model_id": value,
+            "profile": "v4_h4_1deg",
+            "requested_modes": 480,
+            "h_nm": 4.0,
+            "incident_grazing_deg": 1.0,
+            "inventory_count": None,
+        }
     return None
 
 
 def _parse_inventory(
-    value: Any, label: str, *, expected_count: int = 604
+    value: Any, label: str, *, expected_count: int | None = 604
 ) -> dict[str, Any]:
     if not isinstance(value, Mapping) or not isinstance(value.get("keys"), list):
         _fail(f"{label} external_mode_inventory is missing")
@@ -169,7 +185,13 @@ def _parse_inventory(
         _mode_key(item, f"{label}.keys[{index}]")
         for index, item in enumerate(value["keys"])
     )
-    if len(keys) != expected_count or len(set(keys)) != expected_count:
+    if (
+        not keys
+        or len(set(keys)) != len(keys)
+        or (expected_count is not None and len(keys) != expected_count)
+    ):
+        if expected_count is None:
+            _fail(f"{label} external inventory must contain non-empty unique keys")
         _fail(f"{label} external inventory must contain {expected_count} unique keys")
     return {
         "value": dict(value),
@@ -1552,8 +1574,22 @@ def _load_v3_7_candidate_view(run_dir: str | Path) -> dict[str, Any]:
     if authority.get("schema") != "task039.v3-7-hybrid-authority.v1":
         _fail("V3-7 candidate authority schema is invalid")
     model_id = authority.get("model_id")
-    if model_id != "task039_5nm_v3_1deg_s5_hybrid_iterative_m480":
-        _fail("V3-7 candidate model identity is not the fixed h5/M480 profile")
+    if model_id not in {
+        "task039_5nm_v3_1deg_s5_hybrid_iterative_m480",
+        "task039_5nm_v4_1deg_s5_hybrid_iterative_m480",
+    }:
+        _fail("candidate model identity is not a fixed h5/h4 M480 profile")
+    v4_candidate = model_id == "task039_5nm_v4_1deg_s5_hybrid_iterative_m480"
+    canonical = None
+    if v4_candidate:
+        if authority.get("qualification_scope") != _V4_H4_QUALIFICATION_SCOPE:
+            _fail("V4 candidate qualification scope is missing or invalid")
+        raw_canonical = authority.get("canonical")
+        if not isinstance(raw_canonical, Mapping):
+            _fail("V4 candidate canonical exports are missing")
+        canonical = _canonical_entries(
+            numeric_dir, {"canonical_exports": raw_canonical}
+        )
     source_sha = authority.get("source_sha")
     physical_sha = authority.get("physical_model_sha256")
     if not isinstance(source_sha, str) or not _SOURCE_SHA.fullmatch(source_sha):
@@ -1659,6 +1695,7 @@ def _load_v3_7_candidate_view(run_dir: str | Path) -> dict[str, Any]:
             "arrays": arrays,
             "artifact": {"path": str(grid_path), "sha256": _sha256(grid_path)},
         },
+        "canonical": canonical,
         "observables": observables,
         "closure": closure,
         "traction": traction,
@@ -1676,6 +1713,7 @@ def _hybrid_authority_view(loaded: Mapping[str, Any]) -> dict[str, Any]:
         "closure": loaded["closure"],
         "traction": loaded.get("traction", {}),
         "projection": loaded.get("projection", "not_available"),
+        "canonical": loaded.get("canonical"),
         "physical_model_sha256": manifest["physical_model_sha256"],
         "source_sha": manifest["source_sha"],
     }
@@ -1687,7 +1725,11 @@ def _compare_v3_authority_views(
     *,
     reference_label: str,
     require_candidate_own: bool = True,
+    observable_tolerance: float = 1.0e-4,
+    canonical_tolerance: float | None = None,
+    qualification_scope: str | None = None,
 ) -> dict[str, Any]:
+    is_v4 = qualification_scope == _V4_H4_QUALIFICATION_SCOPE
     candidate_arrays = candidate["payload"]["arrays"]
     reference_arrays = reference["payload"]["arrays"]
     physical = {
@@ -1706,8 +1748,52 @@ def _compare_v3_authority_views(
         ),
     }
     observables = _compare_observables(
-        candidate["observables"], reference["observables"], 1.0e-4
+        candidate["observables"], reference["observables"], observable_tolerance
     )
+    canonical = {"status": "not_required", "pass": True}
+    if canonical_tolerance is not None:
+        candidate_canonical = candidate.get("canonical")
+        reference_canonical = reference.get("canonical")
+        if not isinstance(candidate_canonical, Mapping) or not isinstance(
+            reference_canonical, Mapping
+        ):
+            canonical = {
+                "status": "missing",
+                "relative_tolerance": canonical_tolerance,
+                "pass": False,
+            }
+        else:
+            comparisons: dict[str, Any] = {}
+            for name in (
+                "bottom.active_trace",
+                "bottom.full_fe",
+                "top.active_trace",
+                "top.full_fe",
+            ):
+                left = candidate_canonical.get(name)
+                right = reference_canonical.get(name)
+                if not isinstance(left, Mapping) or not isinstance(right, Mapping):
+                    comparisons[name] = {"status": "missing", "pass": False}
+                    continue
+                try:
+                    comparisons[name] = compare_canonical_manifests(
+                        Path(left["manifest"]["path"]),
+                        Path(right["manifest"]["path"]),
+                        left_sha256=left["manifest"]["sha256"],
+                        right_sha256=right["manifest"]["sha256"],
+                        relative_tolerance=canonical_tolerance,
+                    )
+                except (OSError, ValueError, KeyError) as exc:
+                    comparisons[name] = {
+                        "status": "checker_error",
+                        "error": f"{type(exc).__name__}: {exc}",
+                        "pass": False,
+                    }
+            canonical = {
+                "relative_tolerance": canonical_tolerance,
+                "comparisons": comparisons,
+                "pass": all(item.get("pass") is True for item in comparisons.values()),
+            }
     closure = {
         "candidate": {
             "actual": candidate["closure"],
@@ -1783,6 +1869,9 @@ def _compare_v3_authority_views(
         "coordinates_exact": coordinates,
         "selected_EH_overall": fields,
         "selected_EH_overall_limits": {"E_V_per_m": 5.0e-3, "H_A_per_m": 1.0e-2},
+        "observable_tolerance": observable_tolerance,
+        "canonical": canonical,
+        "qualification_scope": qualification_scope or "not_applicable",
         "normal_flux": flux,
         "all_channel_power_weighted": all_channel,
         "reference_label": reference_label,
@@ -1807,6 +1896,7 @@ def _compare_v3_authority_views(
         and fields["pass"]
         and flux["pass"]
         and all_channel["pass"]
+        and canonical["pass"]
         and integrated["candidate_interface_projection"]["pass"]
     )
     return {
@@ -1815,9 +1905,13 @@ def _compare_v3_authority_views(
         "channel_resolved_diagnostic": orders,
         "pass": integrated["pass"],
         "classification": (
-            "TASK039_V3_HYBRID_INTEGRATED_PHYSICS_PASS_CHANNEL_DIAGNOSTIC_PENDING"
-            if integrated["pass"]
-            else "TASK039_V3_HYBRID_INTEGRATED_PHYSICS_FAIL"
+            (_V4_H4_INTEGRATED_PASS if integrated["pass"] else _V4_H4_INTEGRATED_FAIL)
+            if is_v4
+            else (
+                "TASK039_V3_HYBRID_INTEGRATED_PHYSICS_PASS_CHANNEL_DIAGNOSTIC_PENDING"
+                if integrated["pass"]
+                else "TASK039_V3_HYBRID_INTEGRATED_PHYSICS_FAIL"
+            )
         ),
     }
 
@@ -1828,13 +1922,41 @@ def compare_v3_7_hybrid_candidate_to_direct(
     """Compare candidate physics with the fixed 1-degree Hybrid-direct authority."""
 
     candidate = _load_v3_7_candidate_view(candidate_run_dir)
-    direct_loaded = _load_hybrid(direct_run_dir, expected_h_nm=5.0)
-    if direct_loaded["contract"].get("profile") != "v3_1deg":
-        _fail("V3-7 direct authority is not the fixed 1-degree profile")
+    direct_loaded = _load_hybrid(direct_run_dir)
+    if direct_loaded["contract"].get("profile") not in {
+        "v3_1deg",
+        "v4_h4_1deg",
+    }:
+        _fail("direct authority is not a fixed 1-degree profile")
+    expected_h_nm = direct_loaded["contract"]["h_nm"]
+    v4_candidate = (
+        candidate["authority"].get("model_id")
+        == "task039_5nm_v4_1deg_s5_hybrid_iterative_m480"
+    )
+    expected_direct_model = (
+        "task039_5nm_v4_1deg_s5_hybrid_direct_m480"
+        if v4_candidate
+        else "task039_5nm_v3_1deg_s5_hybrid_direct_m480"
+    )
+    if (
+        expected_h_nm != (4.0 if v4_candidate else 5.0)
+        or direct_loaded["contract"].get("model_id") != expected_direct_model
+    ):
+        _fail("candidate and Hybrid-direct authorities are not same-profile paired")
+    qualification_scope = (
+        candidate["authority"].get("qualification_scope") if v4_candidate else None
+    )
     return _compare_v3_authority_views(
         candidate,
         _hybrid_authority_view(direct_loaded),
-        reference_label="fixed_1deg_hybrid_direct_authority",
+        reference_label=(
+            "fixed_h4_1deg_hybrid_direct_authority"
+            if expected_h_nm == 4.0
+            else "fixed_1deg_hybrid_direct_authority"
+        ),
+        observable_tolerance=1.0e-6 if v4_candidate else 1.0e-4,
+        canonical_tolerance=1.0e-5 if v4_candidate else None,
+        qualification_scope=qualification_scope,
     )
 
 

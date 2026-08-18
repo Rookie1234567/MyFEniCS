@@ -918,6 +918,7 @@ FIELD_SPECS: Final = (
         allowed=(
             "full3d_m3a_physical_slab_two_level",
             "hybrid_block_ldu_ilu0_dtn_woodbury",
+            "hybrid_block_ldu_exact_side_lu_dtn_woodbury",
         ),
         constraints=("only reviewed iterative identities are public",),
     ),

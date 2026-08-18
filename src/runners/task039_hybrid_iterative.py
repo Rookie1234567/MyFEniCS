@@ -80,6 +80,22 @@ def make_task039_hybrid_iterative_profile(
         raise ValueError(
             f"Task39 Hybrid iterative MPI must be one of {TASK039_HYBRID_ITERATIVE_MPI}"
         )
+    if mesh == 4.0:
+        if modes != 480 or mpi != 8:
+            raise ValueError("Task39 V4 h4 Hybrid iterative requires M480 and MPI8")
+        return replace(
+            TASK039_HYBRID_ITERATIVE_PROFILE,
+            profile_id="task039.hybrid_iterative.p6-h4.v1",
+            requested_modes=modes,
+            candidate_modes=2 * modes,
+            mpi_size=mpi,
+            h_nm=mesh,
+            modal_h_nm=mesh,
+            incident_grazing_deg=1.0,
+            max_it=4000,
+            preconditioner_identity="fixed_exact_side_lu_plus_dynamic_dtn_woodbury",
+            side_residual_correction_steps=1,
+        )
     if mesh not in (10.0, 5.0):
         raise ValueError("Task39 Hybrid iterative mesh must be 10.0 or 5.0 nm")
     if mesh == 5.0 and (modes != 480 or mpi != 8):

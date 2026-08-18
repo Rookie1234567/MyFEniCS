@@ -261,6 +261,9 @@ _TASK039_V3_3D_MODEL_ID = "task039_5nm_v3_1deg_s5_full3d"
 _TASK039_V3_HYBRID_DIRECT_MODEL_ID = "task039_5nm_v3_1deg_s5_hybrid_direct_m480"
 _TASK039_V4_H4_FULL3D_MODEL_ID = "task039_5nm_v4_1deg_s5_full3d"
 _TASK039_V4_H4_HYBRID_DIRECT_MODEL_ID = "task039_5nm_v4_1deg_s5_hybrid_direct_m480"
+_TASK039_V4_H4_HYBRID_ITERATIVE_MODEL_ID = (
+    "task039_5nm_v4_1deg_s5_hybrid_iterative_m480"
+)
 _TASK039_V3_2D_MESH_TARGETS = (5.0, 4.0, 3.0, 2.0, 1.5)
 _TASK039_V3_2D_DEGREES = (6, 8)
 
@@ -280,6 +283,10 @@ def task039_model_id_matches(
             _TASK039_V3_HYBRID_DIRECT_MODEL_ID,
             _TASK039_V4_H4_HYBRID_DIRECT_MODEL_ID,
         } and (requested_modes is None or int(requested_modes) == 480)
+    if str(method) == "hybrid_iterative" and str(model_id) == (
+        _TASK039_V4_H4_HYBRID_ITERATIVE_MODEL_ID
+    ):
+        return requested_modes is None or int(requested_modes) == 480
     pattern = _TASK039_MODEL_ID_PATTERNS.get(str(method))
     if pattern is None:
         return False
@@ -350,6 +357,7 @@ def _task039_v3_identity_enabled(config: Mapping[str, Any]) -> bool:
         _TASK039_V3_HYBRID_DIRECT_MODEL_ID,
         _TASK039_V4_H4_FULL3D_MODEL_ID,
         _TASK039_V4_H4_HYBRID_DIRECT_MODEL_ID,
+        _TASK039_V4_H4_HYBRID_ITERATIVE_MODEL_ID,
     }
 
 
@@ -614,6 +622,7 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
                 _TASK039_V3_HYBRID_DIRECT_MODEL_ID,
                 _TASK039_V4_H4_FULL3D_MODEL_ID,
                 _TASK039_V4_H4_HYBRID_DIRECT_MODEL_ID,
+                _TASK039_V4_H4_HYBRID_ITERATIVE_MODEL_ID,
             }
             else 10.0,
         ),
@@ -661,6 +670,7 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
         in {
             _TASK039_V4_H4_FULL3D_MODEL_ID,
             _TASK039_V4_H4_HYBRID_DIRECT_MODEL_ID,
+            _TASK039_V4_H4_HYBRID_ITERATIVE_MODEL_ID,
         }
         else (10.0, 7.5, 6.0, 5.0)
         if kind == "full3d_direct"
@@ -695,6 +705,12 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
         and isinstance(mesh_target_nm, (int, float))
         and isclose(float(mesh_target_nm), 4.0, rel_tol=0.0, abs_tol=1.0e-12)
     )
+    h4_hybrid_iterative = (
+        model_id == _TASK039_V4_H4_HYBRID_ITERATIVE_MODEL_ID
+        and kind == "hybrid_iterative"
+        and isinstance(mesh_target_nm, (int, float))
+        and isclose(float(mesh_target_nm), 4.0, rel_tol=0.0, abs_tol=1.0e-12)
+    )
     h5_iterative = (
         kind == "hybrid_iterative"
         and isinstance(mesh_target_nm, (int, float))
@@ -726,6 +742,21 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
                     "Task39 h5 Hybrid iterative requires MPI8",
                 )
             )
+    if h4_hybrid_iterative:
+        if method.get("requested_modes_per_direction") != 480:
+            errors.append(
+                (
+                    "method.requested_modes_per_direction",
+                    "Task39 V4 h4 Hybrid iterative requires M=480",
+                )
+            )
+        if config["execution"].get("mpi_size") != 8:
+            errors.append(
+                (
+                    "execution.mpi_size",
+                    "Task39 V4 h4 Hybrid iterative requires MPI8",
+                )
+            )
     absolute_terminate_memory_bytes = config["execution"].get(
         "absolute_terminate_memory_bytes"
     )
@@ -733,20 +764,21 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
         h5_direct
         or h5_iterative
         or h4_hybrid_direct
+        or h4_hybrid_iterative
         or model_id == _TASK039_V4_H4_FULL3D_MODEL_ID
     )
     if absolute_byte_profile and absolute_terminate_memory_bytes != 224_000_000_000:
         errors.append(
             (
                 "execution.absolute_terminate_memory_bytes",
-                "Task39 p6/h5 direct or Hybrid iterative requires exact 224000000000",
+                "Task39 p6/h4 or p6/h5 direct/Hybrid iterative requires exact 224000000000",
             )
         )
     elif not absolute_byte_profile and absolute_terminate_memory_bytes is not None:
         errors.append(
             (
                 "execution.absolute_terminate_memory_bytes",
-                "Task39 absolute byte termination is enabled only for p6/h5 profiles",
+                "Task39 absolute byte termination is enabled only for approved p6 profiles",
             )
         )
     m480_mpi1_solver_only = (
@@ -839,15 +871,20 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
             if config["solver"].get(key) != value:
                 errors.append((f"solver.{key}", f"Task39 requires {value!r}"))
     else:
+        h4_exact_side = h4_hybrid_iterative
         expected_solver = {
             "linear_solver": "direct" if kind == "hybrid_direct" else "fgmres",
             "preconditioner": (
-                "hybrid_block_ldu_ilu0_dtn_woodbury"
+                "hybrid_block_ldu_exact_side_lu_dtn_woodbury"
+                if h4_exact_side
+                else "hybrid_block_ldu_ilu0_dtn_woodbury"
                 if kind == "hybrid_iterative"
                 else None
             ),
             "restart": 90 if kind == "hybrid_iterative" else None,
-            "max_iterations": 6000 if kind == "hybrid_iterative" else None,
+            "max_iterations": (
+                4000 if h4_exact_side else 6000 if kind == "hybrid_iterative" else None
+            ),
             "relative_tolerance": 5.0e-9 if kind == "hybrid_iterative" else None,
             "absolute_tolerance": 0.0 if kind == "hybrid_iterative" else None,
             "initial_guess": "zero" if kind == "hybrid_iterative" else None,
@@ -855,7 +892,9 @@ def task039_profile_errors(config: Mapping[str, Any]) -> list[tuple[str, str]]:
             "ilu_shift": 0.1 if kind == "hybrid_iterative" else None,
             "subdomain_count_per_endcap": 1 if kind == "hybrid_iterative" else None,
             "overlap_fraction": 0.0 if kind == "hybrid_iterative" else None,
-            "side_residual_correction_steps": 2 if kind == "hybrid_iterative" else None,
+            "side_residual_correction_steps": (
+                1 if h4_exact_side else 2 if kind == "hybrid_iterative" else None
+            ),
         }
         for key, value in expected_solver.items():
             if value is not None and config["solver"].get(key) != value:
@@ -1566,10 +1605,29 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
         if kind == "hybrid_iterative":
             if solver["linear_solver"] != "fgmres":
                 raise _error("solver.linear_solver", "hybrid_iterative requires fgmres")
-            if solver["preconditioner"] != "hybrid_block_ldu_ilu0_dtn_woodbury":
+            exact_side_h4 = (
+                config.get("model_id") == _TASK039_V4_H4_HYBRID_ITERATIVE_MODEL_ID
+            )
+            allowed_preconditioners = {
+                "hybrid_block_ldu_ilu0_dtn_woodbury",
+                "hybrid_block_ldu_exact_side_lu_dtn_woodbury",
+            }
+            if (
+                solver["preconditioner"] not in allowed_preconditioners
+                or (
+                    solver["preconditioner"]
+                    == "hybrid_block_ldu_exact_side_lu_dtn_woodbury"
+                    and not exact_side_h4
+                )
+                or (
+                    exact_side_h4
+                    and solver["preconditioner"]
+                    != "hybrid_block_ldu_exact_side_lu_dtn_woodbury"
+                )
+            ):
                 raise _error(
                     "solver.preconditioner",
-                    "only the accepted hybrid block-LDU preconditioner is public",
+                    "only the accepted Task39 Hybrid block-LDU preconditioner is public",
                 )
             if d["assembly_backend"] != "assembly_time_static_condensed":
                 raise _error(

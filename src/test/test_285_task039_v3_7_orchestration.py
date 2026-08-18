@@ -282,6 +282,18 @@ def test_v3_7_candidate_authority_serializes_complex_orders_for_parser(
         }
         traction = {"bottom": {"relative_dual": 0.0}, "top": {"relative_dual": 0.0}}
         interface_e_projection = {"combined_relative_residual": 0.0}
+        canonical = {
+            side: {
+                "roles": {
+                    role: {
+                        "manifest": f"canonical/{side}_{role}.manifest.json",
+                        "manifest_sha256": "c" * 64,
+                    }
+                    for role in ("active_trace", "full_fe")
+                }
+            }
+            for side in ("bottom", "top")
+        }
 
     run_directory = tmp_path / "run"
     _write_v3_7_candidate_authority(
@@ -290,6 +302,8 @@ def test_v3_7_candidate_authority_serializes_complex_orders_for_parser(
         {
             "consumer_source_sha": "a" * 40,
             "physical_model_sha256": "b" * 64,
+            "qualification_scope": "task039_v4_p6h4_m480_1deg_s",
+            "qualification_method": "task039_v4_h4_exact_side_case_qualification",
         },
         MPI.COMM_SELF,
     )
@@ -302,6 +316,77 @@ def test_v3_7_candidate_authority_serializes_complex_orders_for_parser(
     parsed = _parse_orders(authority["external_orders"], "candidate", expected_count=1)
     assert parsed[("bottom", 0, 0, "s")]["outgoing_amplitude"] == 1.0 + 2.0j
     assert _json_safe(np.asarray([1.0 + 2.0j])) == [[1.0, 2.0]]
+    assert authority["qualification_scope"] == "task039_v4_p6h4_m480_1deg_s"
+    assert (
+        authority["canonical"]["bottom"]["roles"]["full_fe"]["manifest_sha256"]
+        == "c" * 64
+    )
+
+
+def test_v3_7_integrated_checker_runs_once_and_broadcasts(monkeypatch) -> None:
+    class Comm:
+        rank = 0
+        shared = None
+
+        def bcast(self, value, root):
+            if value is not None:
+                self.shared = value
+            return self.shared
+
+    comm = Comm()
+    setup = SimpleNamespace(
+        bottom=SimpleNamespace(
+            b=None, local_mesh=SimpleNamespace(mesh=SimpleNamespace(comm=comm))
+        ),
+        top=SimpleNamespace(b=None),
+    )
+    layout = SimpleNamespace(split=lambda *_args: (object(), object(), object()))
+    recovery = SimpleNamespace(
+        recovery_pass=True,
+        bottom_q=object(),
+        top_q=object(),
+        bottom_recovered=object(),
+        top_recovered=object(),
+        bottom_solution=object(),
+        top_solution=object(),
+        modal_solution=object(),
+        destroy=lambda: None,
+    )
+    calls = []
+    checker_outcome = {"pass": True}
+    monkeypatch.setattr(
+        orchestration, "recover_frozen_m10", lambda *_args, **_kwargs: recovery
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "run_frozen_m10_physics",
+        lambda *_args, **_kwargs: SimpleNamespace(physics_pass=True),
+    )
+    monkeypatch.setattr(
+        orchestration, "_write_v3_7_candidate_authority", lambda *_args: None
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "check_v3_7_integrated_physics",
+        lambda *_args: calls.append("checker") or dict(checker_outcome),
+    )
+    first = orchestration.run_v3_7_recovery_runner(
+        setup, layout, object(), Path("run"), {}, run_integrated_checker=True
+    )
+    comm.rank = 1
+    second = orchestration.run_v3_7_recovery_runner(
+        setup, layout, object(), Path("run"), {}, run_integrated_checker=True
+    )
+    assert calls == ["checker"]
+    assert first["integrated_checker"] == second["integrated_checker"] == {"pass": True}
+    comm.shared = None
+    comm.rank = 0
+    checker_outcome["pass"] = False
+    failed = orchestration.run_v3_7_recovery_runner(
+        setup, layout, object(), Path("run"), {}, run_integrated_checker=True
+    )
+    assert calls == ["checker", "checker"]
+    assert failed["pass"] is False
 
 
 def test_v3_7_external_key_gate_compares_sets_not_enumeration_order() -> None:

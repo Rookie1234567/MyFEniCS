@@ -52,7 +52,7 @@ TASK039_INPUTS = tuple(sorted(TASK039.glob("*.dat")))
 def test_task039_inputs_are_numeric_finite_profiles_and_share_physics():
     specs = [load_and_resolve(path) for path in TASK039_INPUTS]
 
-    assert len(specs) == 29
+    assert len(specs) == 30
     assert {spec.method["kind"] for spec in specs} == {
         "2d_port",
         "full3d_direct",
@@ -139,6 +139,21 @@ def test_task039_inputs_are_numeric_finite_profiles_and_share_physics():
     assert h5_iterative.solver["relative_tolerance"] == 5.0e-9
     assert h5_iterative.solver["initial_guess"] == "zero"
     assert h5_iterative.physical_model_sha256 == h5_hybrid.physical_model_sha256
+    h4_iterative = next(
+        spec
+        for spec in specs
+        if spec.identity["model_id"] == "task039_5nm_v4_1deg_s5_hybrid_iterative_m480"
+    )
+    assert h4_iterative.discretization["mesh_target_nm"] == 4.0
+    assert h4_iterative.incidence["grazing_angle_deg"] == 1.0
+    assert h4_iterative.solver["max_iterations"] == 4000
+    assert h4_iterative.solver["preconditioner"] == (
+        "hybrid_block_ldu_exact_side_lu_dtn_woodbury"
+    )
+    h4_direct = load_and_resolve(
+        TASK039 / "5nm_p6h4_v4_1deg_hybrid_direct_m480_mpi8.dat"
+    )
+    assert h4_iterative.physical_model_sha256 == h4_direct.physical_model_sha256
     h10_hybrid = next(
         spec
         for spec in specs
@@ -180,6 +195,7 @@ def test_task039_inputs_are_numeric_finite_profiles_and_share_physics():
             "task039_5nm_v3_1deg_s5_hybrid_direct_m480",
             "task039_5nm_v4_1deg_s5_full3d",
             "task039_5nm_v4_1deg_s5_hybrid_direct_m480",
+            "task039_5nm_v4_1deg_s5_hybrid_iterative_m480",
         }:
             assert spec.incidence["grazing_angle_deg"] == 1.0
             assert spec.derived["internal"]["incident_theta_deg"] == 89.0

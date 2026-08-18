@@ -12,6 +12,7 @@ from benchmarks.task039_v3_side_oracle import (
     rebuild_hybrid_augmented_vector,
     run_exact_side_lu_oracle,
     select_current_full_fe_shard,
+    TASK039_V4_H4_CASE_QUALIFICATION_SCOPE,
 )
 from mpi4py import MPI
 from petsc4py import PETSc
@@ -399,6 +400,8 @@ def test_research_explicit_f_and_oracle_lifecycle(monkeypatch):
             rhs,
             explicit_components=explicit_components,
             factor_solver_type=None,
+            qualification_scope=TASK039_V4_H4_CASE_QUALIFICATION_SCOPE,
+            explicit_opt_in=True,
         )
         assert explicit_report["pass"] is True
         assert explicit_report["reference_ownership"] == "borrowed_explicit_components"
@@ -413,6 +416,13 @@ def test_research_explicit_f_and_oracle_lifecycle(monkeypatch):
         assert (
             explicit_report["lifecycle"]["top_direct_factor_count_after_cleanup"] == 0
         )
+        assert explicit_report["inventory"]["bottom_direct_factor_count"] == 1
+        assert explicit_report["inventory"]["top_direct_factor_count"] == 1
+        assert explicit_report["inventory"]["bottom_ilu_factor_count"] == 0
+        assert explicit_report["inventory"]["top_ilu_factor_count"] == 0
+        assert explicit_report["inventory"]["global_hybrid_direct_factor_count"] == 0
+        assert explicit_report["inventory"]["nested_iterative_ksp_count"] == 0
+        assert explicit_report["inventory"]["local_direct_preonly_ksp_count"] == 2
     finally:
         if reference is not None:
             reference.destroy()
