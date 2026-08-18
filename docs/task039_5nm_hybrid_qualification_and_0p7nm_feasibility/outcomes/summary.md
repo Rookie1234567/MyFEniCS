@@ -458,3 +458,39 @@ power/amplitude checker counts，不能写成 `12/12` 通过。
 
 详细结果见 [V4-5 outcome](v4_hybrid_direct_h4_lifecycle.md) 和
 [V4-5 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v4_h4_hybrid_direct_packet_consumer_v1.json)。
+
+## V4-10：h4 三方法与 QEP/memory 最终收口
+
+本节追加 V4 h4 结果，不覆盖前面的 h5、10°历史结果。三者共享 5 nm、1° grazing、
+phi=0、S、p6/h4、MPI8 的物理、网格与 external-key identity；只有两条 Hybrid 方法
+使用并共享 M480 selected-mode packet，Full3D 的 M/packet 均为 `N/A`。
+
+| 方法/研究 | 最终分类 | peak RSS | reuse/cold wall | 关键 Gate |
+|---|---|---:|---:|---|
+| Full3D direct | `FULL3D lifecycle NOT_COMPLETED_TIMEOUT_DURING_FACTOR_SETUP` | 208.315395 GiB | timeout 21600.036032 s | factor setup started；未 factor-ready/solve/recovery |
+| Hybrid direct | `HYBRID_DIRECT_H4_OWN_PASS` | 93.377006531 GiB | 6771.478625 / 8430.560853 s | own residual/physics/lifecycle pass |
+| Hybrid iterative exact-side | `HYBRID_ITERATIVE_H4_EXACT_SIDE_NUMERICAL_PHYSICS_PASS_RESOURCE_FAIL` | 104.334560394 GiB | 12357.484926 / 14016.567154 s | five residual/physics/direct checker pass；RSS objective fail |
+| 三方法 integrated | `THREE_METHOD_RESOURCE_COMPARISON_NOT_COMPLETE` | — | — | Full3D authority incomplete |
+
+共享 packet preparation measured 为 1659.082228 s、9.478675842 GiB；cold peak 按串行
+阶段最大值计算，不相加。iterative 相对 direct 的 reuse/cold wall 慢 82.4932% /
+66.259%，RSS 多 11.734745%，saving 为 -11.734745%。相对 Full3D observed stop peak
+的 direct/iterative 55.175177% / 49.915099% 只是诊断下界，不是完成方法间节省。
+
+Iterative 五项 residual 为 `5.1673119e-10 / 5.1673072e-10 / 3.2985246e-10 /
+4.7629854e-10 / 2.5758782e-10`；R/T/A/A_volume 为
+`0.733184273689319 / 0.00022009869492546226 / 0.2665956276157555 /
+0.2665962726139155`，closure `6.4499816e-7`。bottom/top exact-side factor 为 1/1，
+global factor=0，nested KSP=0，清理后 local factors=0/0。与 direct 的 R/T/A/A_volume
+差约 `1.50e-12 / 1.15e-14 / 1.51e-12 / 3.33e-13`，canonical/selected E/H/channel
+comparison pass；独立 12+12 count 未单独持久化，保持 `not_separately_persisted`。
+
+Q-A owner-only packet 已成立；Q-B trace subspace `4.77e-7`–`7.60e-6` 超过 `1e-10`；
+Q-C beta 等价约 `8.41e-14`、wall `-8.6204%` 但 RSS 未测；Q-D M240/320/400 group
+complete/nested，但 operator/RHS/reconstruction/observable map 缺失，所有低 M Gate 为
+`NOT_ESTABLISHED/pass:null`。因此 QEP/memory 分类为
+`QEP_MEMORY_DIRECTION_NOT_ESTABLISHED`，不进入新 production solver 或 0.7 nm PDE。
+
+完整 V4 入口见 [Full3D lifecycle](v4_full3d_h4_lifecycle.md)、[Hybrid direct](v4_hybrid_direct_h4_lifecycle.md)、
+[Hybrid iterative](v4_hybrid_iterative_h4_exact_side.md)、[三方法比较](v4_three_method_comparison.md)、
+[QEP/memory study](v4_qep_m_memory_study.md) 和 [response v5](../response_v5.md)。

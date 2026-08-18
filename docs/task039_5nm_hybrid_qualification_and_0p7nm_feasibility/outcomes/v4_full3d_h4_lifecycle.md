@@ -59,3 +59,22 @@ independent V4-4 shared selected-mode packet work. That packet is a separate
 hash-bound data path: a QEP producer may write it and exit, while direct/iterative
 consumers read the same selected M480 modes without starting QEP. It does not
 retroactively turn this incomplete Full3D run into a solved authority.
+
+## V4-10 final classification
+
+本 run 的最终分类为 `FULL3D lifecycle NOT_COMPLETED_TIMEOUT_DURING_FACTOR_SETUP`。
+watchdog 的 monotonic elapsed 为 `21600.036032554985 s`；UTC wall interval 为
+`21092.211098 s`，两者相差 `507.82493455498487 s`，这里只记录 observed clock
+discrepancy，不猜测其原因。
+
+| Gate | 结果 | 解释 |
+|---|---|---|
+| factor setup | `started but not_completed` | MUMPS setup 已进入，但没有 factor-ready |
+| solve | `not_run` | 没有开始 Full3D solve |
+| recovery/postprocess | `not_run` | 没有可用 full-field authority |
+| RSS/PSS/swap | 208.315395 GiB / 约207.2955 GiB / 0 | measured process-tree |
+| hard stop | `not_reached` | timeout 先发生，非 hard-memory stop |
+
+因此该 run 不是数值失败，也不能证明 factor-release lifecycle 能降低 MUMPS setup 峰值。
+旧 h4 partial 和 2D Q8 只保留为 historical/incomplete diagnostic；它们不能填补
+Full3D h4 的 solve、recovery 或三方法 integrated comparison。

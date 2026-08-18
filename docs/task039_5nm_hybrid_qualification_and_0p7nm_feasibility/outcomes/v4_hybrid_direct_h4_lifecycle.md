@@ -21,8 +21,8 @@ own-Gate 运行。Hybrid direct 把两个端口的内部传播模态通过共享
 | process-tree peak | `100262797312 B = 95618.0546875 MiB = 93.37700653076172 GiB` | below `224000000000 B` |
 | swap / warning / critical | `0 / false / false` | pass |
 
-因此本次直接法 own Gate 通过，分类为
-`TASK039_V4_HYBRID_DIRECT_OWN_GATE_PASS_INTEGRATED_COMPARISON_NOT_AVAILABLE`。
+因此本次直接法 own Gate 通过，最终分类为
+`HYBRID_DIRECT_H4_OWN_PASS`。
 这不是同网格三方法完整资格：此前 Full3D h4 在 MUMPS factor setup 阶段 timeout，故
 Full3D integrated comparison、same-grid RTA/field delta 和相对节省均为
 `not_available`/`not_run`，不能用旧 h5 或 partial h4 代替。
@@ -85,3 +85,24 @@ identity，global direct factor 保持 0；不得回到 ordinary ILU0、重新 Q
 完整小型证据见
 [`task039_v4_h4_hybrid_direct_packet_consumer_v1.json`](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v4_h4_hybrid_direct_packet_consumer_v1.json)，
 raw results 保持在 ignored run root。
+
+## V4-10 final comparison boundary
+
+Hybrid direct 的 own 分类保持为 `HYBRID_DIRECT_H4_OWN_PASS`。它与 iterative consumer
+使用同一 M480 packet；iterative 的 R/T/A/A_volume 与本 direct authority 的绝对差分别约
+为 `1.50e-12 / 1.15e-14 / 1.51e-12 / 3.33e-13`，selected E/H、normal flux、
+power-weighted channel 和四类 canonical comparison 也通过后续 8c053a98 posthoc
+checker。这是 direct/iterative 的 integrated comparison，不是 Full3D comparison。
+
+| 资源/时间 | Hybrid direct | Hybrid iterative | 比较 |
+|---|---:|---:|---|
+| reuse wall (s) | 6771.478625 | 12357.484926 | iterative 慢 82.4932% |
+| cold wall (s) | 8430.560853 | 14016.567154 | iterative 慢 66.259% |
+| process-tree RSS | 93.377006531 GiB | 104.334560394 GiB | iterative 多 11.734745% |
+
+共享 packet preparation 为 1659.082228 s、9.478675842 GiB；cold peak 按串行阶段最大
+值计算，不把 packet、direct、iterative 的峰值相加。Full3D h4 仍是
+`FULL3D lifecycle NOT_COMPLETED_TIMEOUT_DURING_FACTOR_SETUP`，所以 direct 相对其
+observed stop peak 的 55.175177% 仅为诊断下界，不能称完成方法间 saving。
+
+direct 不改变 ordinary defaults，也不把固定 case opt-in 提升为 general production。

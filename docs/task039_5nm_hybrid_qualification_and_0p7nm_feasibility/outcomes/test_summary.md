@@ -40,6 +40,26 @@ master，也没有创建其他分支或 worktree。首轮 focused pytest 包装�
 已在 code parent `36c729f7ae197d08f92e044907d0cb723f9fd43c` 上完成。后续最终
 docs-only closeout 不再改变 Python、config 或 schema；本 Gate 对应上述已提交内容。
 
+## V4-10 evidence/docs closeout
+
+本轮只起草/更新 evidence、compact record 和 outcomes 文档，不运行 MPI、PDE、QEP 或
+新的数值 case。Full repository pytest 明确为 `not_run`，没有 CI 声明。
+
+| 检查 | 结果 | 口径/证据 |
+|---|---|---|
+| V4 compact records JSON parse | `pass` | 包括新增 h4 iterative record 与 Q-A/Q-B/Q-C/Q-D records |
+| raw/compact iterative consistency | `pass` | c2829 formal raw、8c053a98 posthoc、packet/direct SHA 对齐 |
+| Markdown links | `pass` | 本轮新增/修改 V4 文档的相对链接存在 |
+| fenced math/table contract | `pass` | 本轮没有新增未围栏 display math；表格列数一致 |
+| git diff --check | `pass` | docs/record-only diff |
+| Python Ruff/format/compileall | `not_run` | 本轮没有 Python 修改；既有代码 Gate 保持原证据 |
+| full repository pytest | `not_run` | 成本审阅边界；不是通过或 CI 结果 |
+
+本轮文档引用的 formal evidence 均为既有 ignored raw；没有重跑 Full3D、Hybrid direct、
+Hybrid iterative 或 QEP component。iterative formal outer exit=4 在文档中保持为 resource
+objective 未满足，posthoc numerical/physics checker pass 作为独立 authority，不改写 raw
+exit status。
+
 ## E6 Review V1 H-field diagnostic closeout
 
 | 检查/证据 | 状态 | 说明 |

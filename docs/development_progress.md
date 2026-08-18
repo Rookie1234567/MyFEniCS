@@ -2393,3 +2393,24 @@ Task039 当前固定为 5 nm、1° grazing、phi=0、S、p6/h5、M480、MPI8；�
 | 全仓测试 | full pytest = `not_run` |
 | 详细证据 | [`Task039 summary`](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/summary.md)、[`v3 final outcome`](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v3_final_iterative_result.md) |
 | 响应与 case | [`response_v4`](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/response_v4.md)、[`case README`](../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/README.md) |
+
+## 49.1 Task039 V4-10 h4 与 QEP/memory 收口
+
+Task039 的 V4 h4 证据共享 5 nm、1°、phi=0、S、p6/h4、MPI8 的物理、网格与
+external-key identity；只有两条 Hybrid 方法使用并共享 M480 packet，Full3D 的 M/packet
+均为 `N/A`。ordinary defaults 未改变，exact-side 仅为 fixed-case explicit opt-in。
+
+| 项目 | 当前结论 |
+|---|---|
+| Full3D direct | 21600.036032 s 在 MUMPS factor setup timeout；208.315395 GiB；未完成 |
+| Hybrid direct | own pass；93.377006531 GiB |
+| Hybrid iterative | 1 outer、104.334560394 GiB；numerical/physics pass，resource fail |
+| iterative 工作量 | reuse/cold 12357.484926 / 14016.567154 s；不能称高速 |
+| Q-A/Q-B/Q-C/Q-D | owner-only 已成立；其余方向未建立完整低 M Gate |
+| 项目决策 | 不宣称三方法完整比较、general production 或 0.7 nm PDE 可行 |
+| full pytest | `not_run` |
+
+详细结果见 [`Task039 summary`](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/summary.md)、
+[`V4 response`](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/response_v5.md)、
+[`三方法比较`](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v4_three_method_comparison.md)
+和 [`iterative compact`](../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v4_h4_hybrid_iterative_exact_side_v1.json)。
