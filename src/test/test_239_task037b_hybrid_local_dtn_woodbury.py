@@ -989,3 +989,17 @@ def _vector_from_values(matrix: PETSc.Mat, values: np.ndarray) -> PETSc.Vec:
     first, last = (int(value) for value in vector.getOwnershipRange())
     vector.getArray()[:] = values[first:last]
     return vector
+
+
+def test_v5_streaming_component_fixture_is_deterministic():
+    from benchmarks.task039_v5_streaming_woodbury_component import (
+        _batch_size,
+        _synthetic_fixture,
+    )
+
+    first = _synthetic_fixture()
+    second = _synthetic_fixture()
+    assert _batch_size("retained") is None
+    assert [_batch_size(value) for value in ("8", "16", "32")] == [8, 16, 32]
+    for name in ("F", "C", "D", "H", "rhs"):
+        np.testing.assert_array_equal(first[name], second[name])
