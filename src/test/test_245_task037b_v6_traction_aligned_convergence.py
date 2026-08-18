@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 from petsc4py import PETSc
 
 from src.solvers.hybrid_fem_modal_block_ldu import (
@@ -25,6 +26,23 @@ def _residuals(value: float) -> dict[str, float]:
         "top_true_relative_residual": value,
         "modal_true_relative_residual": value,
     }
+
+
+def test_outer_ksp_profile_keeps_variable_pc_fgmres_and_allows_fixed_gmres10():
+    default = HybridBlockLduIterativeConfig()
+    assert default.ksp_type == "fgmres"
+    assert default.restart == 90
+    fixed = HybridBlockLduIterativeConfig(
+        ksp_type="gmres", restart=10, fixed_preconditioner=True
+    )
+    assert fixed.ksp_type == "gmres"
+    assert fixed.restart == 10
+    with pytest.raises(ValueError, match="fixed-preconditioner"):
+        HybridBlockLduIterativeConfig(ksp_type="gmres", restart=10)
+    with pytest.raises(ValueError, match="fixed-preconditioner"):
+        HybridBlockLduIterativeConfig(
+            ksp_type="gmres", restart=90, fixed_preconditioner=True
+        )
 
 
 def test_tight_five_residual_decision_is_fail_closed():
@@ -58,7 +76,14 @@ def test_tight_five_residual_decision_is_fail_closed():
     )
 
 
-def test_tiny_right_fgmres_retains_snapshot_and_releases_workspace():
+@pytest.mark.parametrize(
+    "ksp_type,restart,fixed_preconditioner",
+    [("fgmres", 90, False), ("gmres", 10, True)],
+    ids=["default-fgmres90", "fixed-gmres10"],
+)
+def test_tiny_right_ksp_profiles_retain_snapshot_and_release_workspace(
+    ksp_type, restart, fixed_preconditioner
+):
     fixture = _tiny_fixture()
     bottom, top = _actions(fixture)
     operator, operator_context = create_hybrid_assembled_block_action(
@@ -99,10 +124,18 @@ def test_tiny_right_fgmres_retains_snapshot_and_releases_workspace():
             operator,
             rhs,
             preconditioner,
-            config=HybridBlockLduIterativeConfig(),
+            config=HybridBlockLduIterativeConfig(
+                ksp_type=ksp_type,
+                restart=restart,
+                fixed_preconditioner=fixed_preconditioner,
+            ),
             progress_callback=rows.append,
         )
-        assert result.timing["restart"] == 90.0
+        assert result.timing["restart"] == float(restart)
+        assert result.timing["ksp_type"] == ksp_type
+        assert result.postsolve_audit["restart"] == restart
+        assert result.postsolve_audit["ksp_type"] == ksp_type
+        assert result.converged_reason > 0
         assert result.timing["max_it"] == 1000.0
         assert result.timing["threshold"] == 5.0e-9
         assert result.history_evaluation_count == len(result.history)

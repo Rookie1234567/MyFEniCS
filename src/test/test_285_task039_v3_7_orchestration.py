@@ -269,6 +269,7 @@ def test_v5_setup_only_emits_unique_pre_cleanup_markers_and_no_solve(
     events: list[str] = []
     marker_details: dict[str, dict] = {}
     action_kwargs_seen: list[dict] = []
+    preconditioner_kwargs_seen: list[dict] = []
     timeline: list[str] = []
 
     class Resource:
@@ -327,7 +328,11 @@ def test_v5_setup_only_emits_unique_pre_cleanup_markers_and_no_solve(
             pass
 
     class FakeKSP:
-        Type = SimpleNamespace(FGMRES="fgmres")
+        Type = SimpleNamespace(FGMRES="fgmres", GMRES="gmres")
+
+        def __init__(self):
+            self.kind = "unset"
+            self.restart = None
 
         def create(self, _comm):
             return self
@@ -335,11 +340,11 @@ def test_v5_setup_only_emits_unique_pre_cleanup_markers_and_no_solve(
         def setOperators(self, _value):
             pass
 
-        def setType(self, _value):
-            pass
+        def setType(self, value):
+            self.kind = value
 
-        def setGMRESRestart(self, _value):
-            pass
+        def setGMRESRestart(self, value):
+            self.restart = value
 
         def setPCSide(self, _value):
             pass
@@ -351,7 +356,7 @@ def test_v5_setup_only_emits_unique_pre_cleanup_markers_and_no_solve(
             events.append("outer_setup")
 
         def getType(self):
-            return "fgmres"
+            return self.kind
 
         def destroy(self):
             events.append("outer_destroy")
@@ -394,7 +399,7 @@ def test_v5_setup_only_emits_unique_pre_cleanup_markers_and_no_solve(
     monkeypatch.setattr(
         orchestration,
         "create_research_exact_side_lu_block_ldu_preconditioner",
-        lambda *_args, **_kwargs: Context(),
+        lambda *_args, **kwargs: preconditioner_kwargs_seen.append(kwargs) or Context(),
     )
     monkeypatch.setattr(
         orchestration,
@@ -441,6 +446,15 @@ def test_v5_setup_only_emits_unique_pre_cleanup_markers_and_no_solve(
         True,
         True,
     ]
+    contract = orchestration._load_v5_h4_sampled_column_contract()
+    assert preconditioner_kwargs_seen[0]["sampled_columns"] == contract["columns"]
+    assert (
+        preconditioner_kwargs_seen[0]["sampled_column_contract_sha256"]
+        == contract["sha256"]
+    )
+    assert result["sampled_column_contract"]["sha256"] == contract["sha256"]
+    assert result["outer_ksp"]["type"] == "gmres"
+    assert result["outer_ksp"]["restart"] == 10
     assert marker_details["bottom_F_ready"]["retained_through_woodbury_build"] is True
     assert (
         marker_details["bottom_F_ready"]["original_F_retained_for_modal_schur"] is False
@@ -890,6 +904,14 @@ def test_v5_h4_setup_only_plan_passes_identity_and_packet_args(tmp_path) -> None
         assert str(manifest.resolve()) in argv
         assert str(identity.resolve()) in argv
         assert sha in argv
+    frozen_payload = json.loads(
+        orchestration.V5_H4_SAMPLED_COLUMN_CONTRACT_PATH.read_text()
+    )
+    frozen_payload["contract"]["roles"]["extra"] = ["unexpected"]
+    invalid_contract = tmp_path / "invalid-sampled-contract.json"
+    invalid_contract.write_text(json.dumps(frozen_payload))
+    with pytest.raises(ValueError, match="roles must cover"):
+        orchestration._load_v5_h4_sampled_column_contract(invalid_contract)
     legacy = watchdog.v3_7_execution_dry_run(
         INPUT,
         tmp_path / "legacy-plan",

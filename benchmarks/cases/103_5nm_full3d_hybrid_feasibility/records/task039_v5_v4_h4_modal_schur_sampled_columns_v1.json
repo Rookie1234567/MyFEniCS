@@ -1,0 +1,68 @@
+{
+  "schema": "task039.v5-v4-h4.modal-schur-sampled-columns.v1",
+  "source_sha": "61d3b06f38eea3131d3e5f7a7b82577ace5a9f1f",
+  "packet": {
+    "root": "results/task039_v4_h4_m480_shared_packet_eaad0f94",
+    "manifest": "results/task039_v4_h4_m480_shared_packet_eaad0f94/manifest.json",
+    "manifest_sha256": "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067",
+    "identity_sha256": "cfd5704b48bff980fa2d819f4deee9a59bb9a3db39bc24a70c53f42f067d39e9",
+    "selection_sha256": "6d781dd768480913d3d02a2430e9898d28744b515b5af1a53b4a395de807a1c8",
+    "scope": "task039_v4_h4_m480",
+    "mode_count_per_direction": 480,
+    "internal_column_count": 960
+  },
+  "columns": [
+    {"column": 0, "branch": "positive", "mode_index": 0, "roles": ["selection_order_head", "high_priority_proxy", "bottom_positive_unattenuated"]},
+    {"column": 1, "branch": "positive", "mode_index": 1, "roles": ["first_group_neighbor", "bottom_positive_unattenuated"]},
+    {"column": 240, "branch": "positive", "mode_index": 240, "roles": ["interior_selection_order", "bottom_positive_unattenuated"]},
+    {"column": 267, "branch": "positive", "mode_index": 267, "roles": ["basis_l2_norm_proxy", "bottom_positive_unattenuated"]},
+    {"column": 479, "branch": "positive", "mode_index": 479, "roles": ["selection_order_tail", "high_abs_beta_proxy", "bottom_positive_unattenuated"]},
+    {"column": 480, "branch": "negative", "mode_index": 0, "roles": ["selection_order_head", "high_priority_proxy", "top_negative_unattenuated"]},
+    {"column": 481, "branch": "negative", "mode_index": 1, "roles": ["first_group_neighbor", "top_negative_unattenuated"]},
+    {"column": 720, "branch": "negative", "mode_index": 240, "roles": ["interior_selection_order", "top_negative_unattenuated"]},
+    {"column": 746, "branch": "negative", "mode_index": 266, "roles": ["basis_l2_norm_proxy", "top_negative_unattenuated"]},
+    {"column": 959, "branch": "negative", "mode_index": 479, "roles": ["selection_order_tail", "high_abs_beta_proxy", "top_negative_unattenuated"]}
+  ],
+  "selection_algorithm": {
+    "order": "packet selection array order; no post-run column choice",
+    "head_proxy": "index 0 is the selected-order high-priority proxy, not a physical-energy claim",
+    "interior": "index 240 in each selected half",
+    "tail_proxy": "index 479; packet beta norm is the maximum among this frozen selected half",
+    "tail_proxy_verification": {
+      "selection_paths": ["selection.positive.beta", "selection.negative.beta"],
+      "positive_max_mode_index": 479,
+      "positive_max_abs_beta": 1.1204872775091108,
+      "negative_max_mode_index": 479,
+      "negative_max_abs_beta": 1.1204872775090966,
+      "method": "max(abs(complex(beta))) over each frozen 480-entry selection array"
+    },
+    "basis_l2_norm_proxy": {
+      "status": "measured_proxy",
+      "method": "stream each rank-sharded positive_right/negative_right mode-major .npy in blocks and accumulate global L2 norm per mode",
+      "fields": ["shards[*].files.positive_right", "shards[*].files.negative_right"],
+      "manifest_sha256": "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067",
+      "positive": {"mode_index": 267, "global_l2_norm": 165.139614848694},
+      "negative": {"mode_index": 266, "global_l2_norm": 164.2657761898287},
+      "physical_energy_gate": false
+    },
+    "unattenuated_side_convention": "bottom positive and top negative propagation factors are the unit-factor sides in modal_coupling_action",
+    "energy_status": "selection-order, beta, and basis_l2_norm proxies only; no physical-energy Gate"
+  },
+  "contract": {
+    "mode_count_per_direction": 480,
+    "columns": [0, 1, 240, 267, 479, 480, 481, 720, 746, 959],
+    "roles": {
+      "0": ["selection_order_head", "high_priority_proxy", "bottom_positive_unattenuated"],
+      "1": ["first_group_neighbor", "bottom_positive_unattenuated"],
+      "240": ["interior_selection_order", "bottom_positive_unattenuated"],
+      "267": ["basis_l2_norm_proxy", "bottom_positive_unattenuated"],
+      "479": ["selection_order_tail", "high_abs_beta_proxy", "bottom_positive_unattenuated"],
+      "480": ["selection_order_head", "high_priority_proxy", "top_negative_unattenuated"],
+      "481": ["first_group_neighbor", "top_negative_unattenuated"],
+      "720": ["interior_selection_order", "top_negative_unattenuated"],
+      "746": ["basis_l2_norm_proxy", "top_negative_unattenuated"],
+      "959": ["selection_order_tail", "high_abs_beta_proxy", "top_negative_unattenuated"]
+    },
+    "sha256": "8d73d77a47fe0aa614e231eaac1f939eb28cca5b01c024c70fd518a3a592f082"
+  }
+}

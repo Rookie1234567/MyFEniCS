@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
 from petsc4py import PETSc
@@ -97,6 +99,7 @@ class HybridActionModalSchurSystem:
     lu_repeat_solve_error: float
     build_apply_count: dict[str, int]
     repeat_diagnostics: dict[str, Any] = field(default_factory=dict)
+    sampled_column_diagnostics: dict[str, Any] = field(default_factory=dict)
     _destroyed: bool = field(default=False, init=False, repr=False)
 
     def __post_init__(self) -> None:
@@ -145,6 +148,7 @@ class HybridActionModalSchurSystem:
             "matrix_repeat_error": float(self.matrix_repeat_error),
             "lu_repeat_solve_error": float(self.lu_repeat_solve_error),
             "repeat_diagnostics": dict(self.repeat_diagnostics),
+            "sampled_column_diagnostics": dict(self.sampled_column_diagnostics),
             "build_apply_count": dict(self.build_apply_count),
             **self._array_bytes,
             "destroyed": bool(self._destroyed),
@@ -165,12 +169,20 @@ def _build_action_modal_contribution(
     coupling: HybridInternalModeCoupling,
     action: Any,
     modal_count: int,
+    columns: Sequence[int] | None = None,
 ) -> np.ndarray:
     operator = _action_operator(action)
     projection = (
         coupling.bottom.projection if side == "bottom" else coupling.top.projection
     )
-    contribution = np.empty((2 * modal_count, 2 * modal_count), dtype=np.complex128)
+    selected_columns = (
+        tuple(range(2 * modal_count))
+        if columns is None
+        else tuple(int(i) for i in columns)
+    )
+    contribution = np.zeros(
+        (2 * modal_count, len(selected_columns)), dtype=np.complex128
+    )
     row_slice = (
         slice(0, modal_count)
         if side == "bottom"
@@ -181,7 +193,7 @@ def _build_action_modal_contribution(
         if side == "bottom"
         else slice(0, modal_count)
     )
-    for column in range(2 * modal_count):
+    for local_column, column in enumerate(selected_columns):
         modal = np.zeros(2 * modal_count, dtype=np.complex128)
         modal[column] = 1.0
         traction = modal_coupling_action(side, coupling, modal)
@@ -190,13 +202,56 @@ def _build_action_modal_contribution(
         try:
             action.apply(traction, response)
             projection.mult(response, projected)
-            contribution[row_slice, column] = _replicated_modal_values(projected)
-            contribution[other_slice, column] = 0.0
+            contribution[row_slice, local_column] = _replicated_modal_values(projected)
+            contribution[other_slice, local_column] = 0.0
         finally:
             projected.destroy()
             response.destroy()
             traction.destroy()
     return contribution
+
+
+def _sampled_modal_column_contract(
+    sampled_columns: Sequence[int] | None,
+    sampled_column_roles: Mapping[str, Sequence[str]] | None,
+    sampled_column_contract_sha256: str | None,
+    internal_count: int,
+    modal_count: int,
+) -> dict[str, Any] | None:
+    if sampled_columns is None:
+        if (
+            sampled_column_roles is not None
+            or sampled_column_contract_sha256 is not None
+        ):
+            raise ValueError("Sampled modal roles/hash require sampled columns.")
+        return None
+    if sampled_column_roles is None or sampled_column_contract_sha256 is None:
+        raise ValueError("Sampled modal columns require roles and a contract hash.")
+    columns = [int(column) for column in sampled_columns]
+    if not columns or len(columns) != len(set(columns)):
+        raise ValueError("Sampled modal columns must be non-empty and unique.")
+    if any(column < 0 or column >= internal_count for column in columns):
+        raise ValueError("Sampled modal column is outside the internal Schur range.")
+    expected_role_keys = {str(column) for column in columns}
+    if set(sampled_column_roles) != expected_role_keys:
+        raise ValueError("Sampled modal roles must cover exactly the frozen columns.")
+    roles = {
+        str(column): [str(role) for role in sampled_column_roles[str(column)]]
+        for column in columns
+    }
+    contract = {
+        "columns": columns,
+        "mode_count_per_direction": int(modal_count),
+        "roles": roles,
+    }
+    actual_hash = hashlib.sha256(
+        json.dumps(contract, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    if actual_hash != str(sampled_column_contract_sha256):
+        raise ValueError(
+            "Sampled modal column contract hash does not match the frozen contract."
+        )
+    return {**contract, "sha256": actual_hash}
 
 
 def build_hybrid_action_modal_schur(
@@ -205,8 +260,11 @@ def build_hybrid_action_modal_schur(
     top_action: Any,
     *,
     matrix_repeat_tolerance: float = 1.0e-13,
+    sampled_columns: Sequence[int] | None = None,
+    sampled_column_roles: Mapping[str, Sequence[str]] | None = None,
+    sampled_column_contract_sha256: str | None = None,
 ) -> HybridActionModalSchurSystem:
-    """Build two complete action modal Schur matrices and one LU."""
+    """Build the modal Schur, optionally with one frozen sampled reconstruction."""
 
     if (
         not np.isfinite(float(matrix_repeat_tolerance))
@@ -215,6 +273,13 @@ def build_hybrid_action_modal_schur(
         raise ValueError("Modal-Schur repeat tolerance must be finite and positive.")
     modal_count = int(coupling.mode_count_per_direction)
     internal_count = 2 * modal_count
+    sampled_contract = _sampled_modal_column_contract(
+        sampled_columns,
+        sampled_column_roles,
+        sampled_column_contract_sha256,
+        internal_count,
+        modal_count,
+    )
     constraint = np.asarray(
         internal_modal_constraint_matrix(coupling), dtype=np.complex128
     )
@@ -227,28 +292,64 @@ def build_hybrid_action_modal_schur(
         "bottom", coupling, bottom_action, modal_count
     )
     first -= _build_action_modal_contribution("top", coupling, top_action, modal_count)
-    second = constraint.copy()
-    second -= _build_action_modal_contribution(
-        "bottom", coupling, bottom_action, modal_count
-    )
-    second -= _build_action_modal_contribution("top", coupling, top_action, modal_count)
+    if sampled_contract is None:
+        second = constraint.copy()
+        second -= _build_action_modal_contribution(
+            "bottom", coupling, bottom_action, modal_count
+        )
+        second -= _build_action_modal_contribution(
+            "top", coupling, top_action, modal_count
+        )
+    else:
+        second = None
+        sampled = np.asarray(sampled_contract["columns"], dtype=np.int64)
+        sampled_reconstruction = constraint[:, sampled].copy()
+        sampled_reconstruction -= _build_action_modal_contribution(
+            "bottom", coupling, bottom_action, modal_count, columns=sampled
+        )
+        sampled_reconstruction -= _build_action_modal_contribution(
+            "top", coupling, top_action, modal_count, columns=sampled
+        )
     after = {
         "bottom": int(_action_diagnostics(bottom_action).get("apply_count", 0)),
         "top": int(_action_diagnostics(top_action).get("apply_count", 0)),
     }
     build_apply_count = {side: after[side] - before[side] for side in ("bottom", "top")}
-    expected = 2 * internal_count
+    expected = (
+        internal_count + len(sampled_contract["columns"])
+        if sampled_contract is not None
+        else 2 * internal_count
+    )
     if any(value != expected for value in build_apply_count.values()):
-        raise RuntimeError("Action modal Schur build count is not exactly two builds.")
+        raise RuntimeError(
+            "Action modal Schur apply count does not match the selected build mode: "
+            f"expected={expected}, actual={build_apply_count}."
+        )
     expected_shape = (internal_count, internal_count)
-    for matrix in (constraint, first, second):
+    matrices = (constraint, first) if second is None else (constraint, first, second)
+    for matrix in matrices:
         if matrix.shape != expected_shape or matrix.dtype != np.dtype(np.complex128):
             raise ValueError("Action modal Schur has an unexpected shape or dtype.")
         if not np.all(np.isfinite(matrix)):
             raise ValueError("Action modal Schur contains non-finite values.")
-    matrix_difference = first - second
-    matrix_reference_norm = float(np.linalg.norm(first))
-    matrix_difference_norm = float(np.linalg.norm(matrix_difference))
+    if sampled_contract is None:
+        matrix_difference = first - second
+        matrix_reference_norm = float(np.linalg.norm(first))
+        matrix_difference_norm = float(np.linalg.norm(matrix_difference))
+        sampled_column_errors: list[float] = []
+    else:
+        reference = first[:, np.asarray(sampled_contract["columns"], dtype=np.int64)]
+        matrix_difference = reference - sampled_reconstruction
+        matrix_reference_norm = float(np.linalg.norm(reference))
+        matrix_difference_norm = float(np.linalg.norm(matrix_difference))
+        sampled_column_errors = [
+            float(
+                np.linalg.norm(sampled_reconstruction[:, index] - reference[:, index])
+                / max(float(np.linalg.norm(reference[:, index])), _TINY)
+            )
+            for index in range(len(sampled_contract["columns"]))
+        ]
+    max_column_relative_error = max(sampled_column_errors, default=0.0)
     matrix_repeat_error = matrix_difference_norm / max(matrix_reference_norm, _TINY)
     matrix_repeat_diagnostics = {
         "relative_error": float(matrix_repeat_error),
@@ -256,19 +357,27 @@ def build_hybrid_action_modal_schur(
         "reference_norm": matrix_reference_norm,
         "difference_norm": matrix_difference_norm,
         "max_abs": float(np.max(np.abs(matrix_difference))),
+        "max_column_relative_error": float(max_column_relative_error),
+        "mode": (
+            "double_full_build"
+            if sampled_contract is None
+            else "single_full_build_sampled_reconstruction"
+        ),
         "pass": bool(
             np.isfinite(matrix_repeat_error)
             and matrix_repeat_error <= float(matrix_repeat_tolerance)
+            and max_column_relative_error <= float(matrix_repeat_tolerance)
         ),
     }
     if not matrix_repeat_diagnostics["pass"]:
         raise ValueError(
-            "Action modal Schur matrix repeat error exceeds tolerance: "
+            "Action modal Schur repeat error exceeds tolerance: "
             f"actual={matrix_repeat_error:.6e}, "
             f"limit={float(matrix_repeat_tolerance):.6e}, "
             f"reference_norm={matrix_reference_norm:.6e}, "
             f"difference_norm={matrix_difference_norm:.6e}, "
-            f"max_abs={matrix_repeat_diagnostics['max_abs']:.6e}."
+            f"max_abs={matrix_repeat_diagnostics['max_abs']:.6e}, "
+            f"max_column={max_column_relative_error:.6e}."
         )
     singular_values = np.linalg.svd(first, compute_uv=False)
     rank_scale = (
@@ -322,6 +431,31 @@ def build_hybrid_action_modal_schur(
         repeat_diagnostics={
             "matrix": matrix_repeat_diagnostics,
             "lu_solve": lu_repeat_diagnostics,
+        },
+        sampled_column_diagnostics={
+            "single_build": sampled_contract is not None,
+            "columns": []
+            if sampled_contract is None
+            else list(sampled_contract["columns"]),
+            "roles": {}
+            if sampled_contract is None
+            else dict(sampled_contract["roles"]),
+            "contract_sha256": None
+            if sampled_contract is None
+            else sampled_contract["sha256"],
+            "full_build_apply_count": {
+                "bottom": internal_count,
+                "top": internal_count,
+            },
+            "sample_build_apply_count": {
+                "bottom": 0
+                if sampled_contract is None
+                else len(sampled_contract["columns"]),
+                "top": 0
+                if sampled_contract is None
+                else len(sampled_contract["columns"]),
+            },
+            "column_relative_errors": sampled_column_errors,
         },
     )
 
@@ -605,6 +739,9 @@ def create_research_exact_side_lu_block_ldu_preconditioner(
     matrix_repeat_tolerance: float = 1.0e-13,
     qualification_scope: str | None = None,
     explicit_opt_in: bool = False,
+    sampled_columns: Sequence[int] | None = None,
+    sampled_column_roles: Mapping[str, Sequence[str]] | None = None,
+    sampled_column_contract_sha256: str | None = None,
 ) -> HybridBlockLduPreconditioner:
     """Build historical research LDU or an explicit case-qualified context.
 
@@ -641,6 +778,9 @@ def create_research_exact_side_lu_block_ldu_preconditioner(
         bottom_action,
         top_action,
         matrix_repeat_tolerance=matrix_repeat_tolerance,
+        sampled_columns=sampled_columns,
+        sampled_column_roles=sampled_column_roles,
+        sampled_column_contract_sha256=sampled_column_contract_sha256,
     )
     research_inventory = {
         "global_hybrid_direct_factor_count": 0,
@@ -678,12 +818,14 @@ def create_research_exact_side_lu_block_ldu_preconditioner(
 
 @dataclass(frozen=True)
 class HybridBlockLduIterativeConfig:
-    """Frozen right-FGMRES settings for the iterative Hybrid solve."""
+    """Frozen outer-KSP settings; default FGMRES, opt-in fixed GMRES10."""
 
     restart: int = 90
     max_it: int = 1000
     threshold: float = 5.0e-9
     initial_guess: str = "zero"
+    ksp_type: str = "fgmres"
+    fixed_preconditioner: bool = False
 
     def __post_init__(self) -> None:
         if int(self.restart) <= 0 or int(self.max_it) <= 0:
@@ -692,6 +834,13 @@ class HybridBlockLduIterativeConfig:
             raise ValueError("Iterative threshold must be finite and positive.")
         if self.initial_guess != "zero":
             raise ValueError("Only the zero initial guess is supported.")
+        if str(self.ksp_type).lower() not in {"fgmres", "gmres"}:
+            raise ValueError("Only FGMRES and GMRES outer KSP types are supported.")
+        if str(self.ksp_type).lower() == "gmres":
+            if not self.fixed_preconditioner or int(self.restart) != 10:
+                raise ValueError(
+                    "GMRES is reserved for the fixed-preconditioner restart-10 profile."
+                )
 
 
 @dataclass
@@ -708,7 +857,7 @@ class HybridBlockLduIterativeResult:
     postsolve_audit: dict[str, Any]
     release: dict[str, Any]
     inventory: dict[str, Any]
-    timing: dict[str, float]
+    timing: dict[str, Any]
     _preconditioner: HybridBlockLduPreconditioner | None = field(
         default=None, repr=False
     )
@@ -937,7 +1086,11 @@ def solve_hybrid_block_ldu_iterative(
     try:
         snapshot(0, 1.0 if rhs_norm > _TINY else 0.0, None)
         ksp.setOperators(operator)
-        ksp.setType(PETSc.KSP.Type.FGMRES)
+        ksp.setType(
+            PETSc.KSP.Type.GMRES
+            if str(config.ksp_type).lower() == "gmres"
+            else PETSc.KSP.Type.FGMRES
+        )
         ksp.setGMRESRestart(int(config.restart))
         ksp.setPCSide(PETSc.PC.Side.RIGHT)
         ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED)
@@ -949,6 +1102,7 @@ def solve_hybrid_block_ldu_iterative(
         pc.setType(PETSc.PC.Type.PYTHON)
         pc.setPythonContext(context)
         ksp.setUp()
+        actual_ksp_type = str(ksp.getType())
 
         def convergence_test(
             current: PETSc.KSP, iteration: int, residual_norm: float
@@ -984,6 +1138,7 @@ def solve_hybrid_block_ldu_iterative(
         postsolve = {
             **post_values,
             "identity": post_decision["identity"],
+            "ksp_type": actual_ksp_type,
             "threshold": float(config.threshold),
             "restart": int(config.restart),
             "explicit_recomputed_residuals": dict(post_values),
@@ -994,6 +1149,7 @@ def solve_hybrid_block_ldu_iterative(
             "pass": post_pass,
         }
         inventory = dict(context.inventory)
+        inventory.update({"ksp_type": actual_ksp_type, "restart": int(config.restart)})
         release = {
             "ksp_destroyed": False,
             "pc_context_destroyed": False,
@@ -1017,6 +1173,7 @@ def solve_hybrid_block_ldu_iterative(
         )
         timing = {
             "total_seconds": float(time.perf_counter() - started),
+            "ksp_type": actual_ksp_type,
             "restart": float(config.restart),
             "max_it": float(config.max_it),
             "threshold": float(config.threshold),

@@ -147,6 +147,57 @@ V5_H4_SETUP_ONLY_MARKERS = (
     "outer_ksp_setup_ready",
     "all_setup_objects_cleanup",
 )
+V5_H4_SAMPLED_COLUMN_CONTRACT_PATH = Path(
+    "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/"
+    "task039_v5_v4_h4_modal_schur_sampled_columns_v1.json"
+)
+
+
+def _load_v5_h4_sampled_column_contract(
+    path: str | Path = V5_H4_SAMPLED_COLUMN_CONTRACT_PATH,
+) -> dict[str, Any]:
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    packet = payload.get("packet")
+    contract = payload.get("contract")
+    if not isinstance(packet, Mapping) or not isinstance(contract, Mapping):
+        raise ValueError("V5 sampled modal contract has an invalid shape.")
+    if (
+        packet.get("mode_count_per_direction") != 480
+        or contract.get("mode_count_per_direction") != 480
+    ):
+        raise ValueError("V5 sampled modal contract is not fixed to M=480.")
+    columns = [int(column) for column in contract.get("columns", ())]
+    roles = contract.get("roles")
+    if not columns or not isinstance(roles, Mapping):
+        raise ValueError("V5 sampled modal contract has no frozen columns/roles.")
+    expected_role_keys = {str(column) for column in columns}
+    if set(roles) != expected_role_keys:
+        raise ValueError(
+            "V5 sampled modal roles must cover exactly the frozen columns."
+        )
+    canonical = {
+        "columns": columns,
+        "mode_count_per_direction": 480,
+        "roles": {str(column): list(roles[str(column)]) for column in columns},
+    }
+    actual_sha = hashlib.sha256(
+        json.dumps(canonical, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    if contract.get("sha256") != actual_sha:
+        raise ValueError("V5 sampled modal contract hash is invalid.")
+    manifest = Path(str(packet["manifest"]))
+    if not manifest.is_file() or hashlib.sha256(
+        manifest.read_bytes()
+    ).hexdigest() != packet.get("manifest_sha256"):
+        raise ValueError("V5 sampled modal contract packet manifest is not hash-bound.")
+    return {
+        "columns": columns,
+        "roles": {str(column): list(roles[str(column)]) for column in columns},
+        "sha256": actual_sha,
+        "manifest_sha256": packet["manifest_sha256"],
+        "identity_sha256": packet.get("identity_sha256"),
+        "path": str(Path(path)),
+    }
 
 
 def _keys(inventory: Mapping[str, Any]) -> set[tuple[str, int, int, str]]:
@@ -1558,6 +1609,7 @@ def run_v5_h4_exact_side_setup_only(
     comm: MPI.Intracomm,
     marker_callback: Callable[[str, Mapping[str, Any]], None],
     qualification_scope: str = TASK039_V4_H4_CASE_QUALIFICATION_SCOPE,
+    sampled_column_contract: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build the reviewed h4 exact-side stack, then stop before any solve."""
 
@@ -1571,6 +1623,11 @@ def run_v5_h4_exact_side_setup_only(
     result: dict[str, Any] | None = None
     internal_cleanup: dict[str, Any] = {"status": "not_run"}
     try:
+        sampled_column_contract = (
+            _load_v5_h4_sampled_column_contract()
+            if sampled_column_contract is None
+            else dict(sampled_column_contract)
+        )
         post_coupling_cleanup = collective_heap_cleanup(comm)
         for side, system in (("bottom", setup.bottom), ("top", setup.top)):
             side_components = _build_research_explicit_side_components(system)
@@ -1657,6 +1714,9 @@ def run_v5_h4_exact_side_setup_only(
             actions["top"],
             qualification_scope=qualification_scope,
             explicit_opt_in=True,
+            sampled_columns=sampled_column_contract["columns"],
+            sampled_column_roles=sampled_column_contract["roles"],
+            sampled_column_contract_sha256=sampled_column_contract["sha256"],
         )
         _emit_marker(
             marker_callback,
@@ -1669,8 +1729,8 @@ def run_v5_h4_exact_side_setup_only(
         )
         ksp = PETSc.KSP().create(comm)
         ksp.setOperators(operator)
-        ksp.setType(PETSc.KSP.Type.FGMRES)
-        ksp.setGMRESRestart(90)
+        ksp.setType(PETSc.KSP.Type.GMRES)
+        ksp.setGMRESRestart(10)
         ksp.setPCSide(PETSc.PC.Side.RIGHT)
         pc = ksp.getPC()
         pc.setType(PETSc.PC.Type.PYTHON)
@@ -1681,7 +1741,8 @@ def run_v5_h4_exact_side_setup_only(
             "outer_ksp_setup_ready",
             source="PETSc.KSP.setUp",
             ksp_type=str(ksp.getType()),
-            restart=90,
+            restart=10,
+            ksp_profile="v5_exact_side_fixed_pc_gmres10",
             solve_called=False,
             krylov_vectors={"status": "not_allocated_before_solve"},
             preconditioner_inventory=context.inventory,
@@ -1691,6 +1752,7 @@ def run_v5_h4_exact_side_setup_only(
             "schema": "task039.v5-h4-exact-side-setup-only.v1",
             "status": "setup_only_completed",
             "qualification_scope": qualification_scope,
+            "sampled_column_contract": sampled_column_contract,
             "markers": list(V5_H4_SETUP_ONLY_MARKERS),
             "solve": "not_run",
             "recovery": "not_run",
@@ -1701,7 +1763,8 @@ def run_v5_h4_exact_side_setup_only(
             "modal_schur": context.inventory.get("modal_schur"),
             "outer_ksp": {
                 "type": str(ksp.getType()),
-                "restart": 90,
+                "restart": 10,
+                "ksp_profile": "v5_exact_side_fixed_pc_gmres10",
                 "set_up": True,
                 "solve_called": False,
                 "krylov_vectors": "not_allocated_before_solve",
@@ -3486,6 +3549,7 @@ def run_task039_v3_7_diagnostic(
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: Mapping[str, Any] | None = None,
     selected_mode_packet_manifest_sha256: str | None = None,
+    v5_sampled_column_contract: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Prepare the V3-7 campaign or an explicit research candidate branch."""
 
@@ -3677,6 +3741,7 @@ def run_task039_v3_7_diagnostic(
                 layout,
                 comm=comm,
                 marker_callback=marker_callback,
+                sampled_column_contract=v5_sampled_column_contract,
             )
             result["source_sha"] = source_sha
             result["run_directory"] = str(Path(run_directory).resolve())

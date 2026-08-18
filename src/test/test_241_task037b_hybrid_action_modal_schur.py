@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import hashlib
 import inspect
+import json
 from types import SimpleNamespace
 
 import numpy as np
@@ -281,6 +283,131 @@ def test_action_modal_schur_is_repeated_and_borrowed():
         second.destroy()
         assert bottom.diagnostics["destroyed"] is False
         assert top.diagnostics["destroyed"] is False
+    finally:
+        bottom.destroy()
+        top.destroy()
+        _destroy_fixture(fixture)
+
+
+def test_action_modal_schur_single_build_freezes_sampled_columns_and_hash():
+    fixture = _tiny_fixture()
+    bottom, top = _actions(fixture)
+    contract = {
+        "columns": [0, 1, 2, 3],
+        "mode_count_per_direction": 2,
+        "roles": {
+            "0": ["head", "bottom_positive_unattenuated"],
+            "1": ["interior", "bottom_positive_unattenuated"],
+            "2": ["head", "top_negative_unattenuated"],
+            "3": ["tail", "top_negative_unattenuated"],
+        },
+    }
+    contract_sha = hashlib.sha256(
+        json.dumps(contract, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    baseline = None
+    modal = None
+    try:
+        rhs = np.asarray([0.5 - 0.2j, -0.3 + 0.4j, 0.7 + 0.1j, -0.2 - 0.6j])
+        baseline = build_hybrid_action_modal_schur(fixture["coupling"], bottom, top)
+        baseline_matrix = baseline.modal_schur.copy()
+        baseline_solution = baseline.solve(rhs)
+        baseline.destroy()
+        baseline = None
+        bottom.destroy()
+        top.destroy()
+        bottom, top = _actions(fixture)
+        modal = build_hybrid_action_modal_schur(
+            fixture["coupling"],
+            bottom,
+            top,
+            sampled_columns=contract["columns"],
+            sampled_column_roles=contract["roles"],
+            sampled_column_contract_sha256=contract_sha,
+        )
+        expected = _expected_modal_matrix(fixture)
+        assert _relative_array_error(modal.modal_schur, expected) <= 1.0e-13
+        assert _relative_array_error(modal.modal_schur, baseline_matrix) <= 1.0e-13
+        assert _relative_array_error(modal.solve(rhs), baseline_solution) <= 1.0e-13
+        diagnostics = modal.diagnostics
+        sampled = diagnostics["sampled_column_diagnostics"]
+        assert sampled["single_build"] is True
+        assert sampled["contract_sha256"] == contract_sha
+        assert sampled["full_build_apply_count"] == {"bottom": 4, "top": 4}
+        assert sampled["sample_build_apply_count"] == {"bottom": 4, "top": 4}
+        assert diagnostics["build_apply_count"] == {"bottom": 8, "top": 8}
+        assert diagnostics["repeat_diagnostics"]["matrix"]["mode"] == (
+            "single_full_build_sampled_reconstruction"
+        )
+        assert diagnostics["matrix_repeat_error"] <= 1.0e-13
+        assert diagnostics["repeat_diagnostics"]["matrix"][
+            "max_column_relative_error"
+        ] <= (1.0e-13)
+        with pytest.raises(ValueError, match="contract hash"):
+            build_hybrid_action_modal_schur(
+                fixture["coupling"],
+                bottom,
+                top,
+                sampled_columns=contract["columns"],
+                sampled_column_roles=contract["roles"],
+                sampled_column_contract_sha256="0" * 64,
+            )
+        extra_roles = dict(contract["roles"])
+        extra_roles["99"] = ["unexpected"]
+        with pytest.raises(ValueError, match="roles must cover"):
+            build_hybrid_action_modal_schur(
+                fixture["coupling"],
+                bottom,
+                top,
+                sampled_columns=contract["columns"],
+                sampled_column_roles=extra_roles,
+                sampled_column_contract_sha256=contract_sha,
+            )
+    finally:
+        if baseline is not None:
+            baseline.destroy()
+        if modal is not None:
+            modal.destroy()
+        bottom.destroy()
+        top.destroy()
+        _destroy_fixture(fixture)
+
+
+def test_action_modal_schur_single_build_catches_sample_perturbation(monkeypatch):
+    fixture = _tiny_fixture()
+    bottom, top = _actions(fixture)
+    columns = [0, 1, 2, 3]
+    roles = {str(column): ["sample"] for column in columns}
+    contract = {
+        "columns": columns,
+        "mode_count_per_direction": 2,
+        "roles": roles,
+    }
+    contract_sha = hashlib.sha256(
+        json.dumps(contract, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    original = block_ldu._build_action_modal_contribution
+    calls = {"count": 0}
+
+    def perturbed(side, coupling, action, modal_count, columns=None):
+        value = original(side, coupling, action, modal_count, columns=columns)
+        calls["count"] += 1
+        if calls["count"] == 3:
+            value = value.copy()
+            value[0, 0] += 5.0e-11
+        return value
+
+    monkeypatch.setattr(block_ldu, "_build_action_modal_contribution", perturbed)
+    try:
+        with pytest.raises(ValueError, match="max_column=.*e-11"):
+            build_hybrid_action_modal_schur(
+                fixture["coupling"],
+                bottom,
+                top,
+                sampled_columns=columns,
+                sampled_column_roles=roles,
+                sampled_column_contract_sha256=contract_sha,
+            )
     finally:
         bottom.destroy()
         top.destroy()
