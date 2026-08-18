@@ -1,0 +1,171 @@
+{
+  "schema": "task039.v4-9-q-c-compact.v1",
+  "classification": {
+    "status": "NOT_ESTABLISHED",
+    "pass": false,
+    "reason": "Numerical equivalence, polynomial residual, and wall measurements passed; process-tree RSS reduction was not measured."
+  },
+  "provenance": {
+    "component_source_sha": "044592cb46708553c132b039bdfe910193b31c91",
+    "git_clean": true,
+    "implementation": "benchmarks/task039_v4_q9_qc_component.py",
+    "test": "src/test/test_294_task039_v4_q9_offline.py"
+  },
+  "inputs": {
+    "input": {
+      "path": "/home/Projects/MyFEniCS/input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat",
+      "sha256": "4e60924b5997e3ca99e324ea14779f9014efc6a1304a9aa11de9c808353f1811"
+    },
+    "manifest": {
+      "path": "/home/Projects/MyFEniCS/results/task039_v4_h4_m480_shared_packet_eaad0f94/manifest.json",
+      "sha256": "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067"
+    },
+    "identity": {
+      "path": "/home/Projects/MyFEniCS/results/task039_v4_h4_m480_shared_packet_eaad0f94/identity.json",
+      "file_sha256": "b3bb870fe6fa17cb262b6161f7317cc1950944755c9270d4628dd5c79e950690"
+    }
+  },
+  "raw_evidence": {
+    "run_root": "/home/Projects/MyFEniCS/results/task039_v4_q9_qc_component_044592cb",
+    "record": {
+      "path": "/home/Projects/MyFEniCS/results/task039_v4_q9_qc_component_044592cb/q_c_raw.json",
+      "sha256": "d2d8dac8d5bd600d7c5e5bb668c622b90ed35b86e23952df37edb5a6c83c20b0"
+    },
+    "stdout": {
+      "path": "/home/Projects/MyFEniCS/results/task039_v4_q9_qc_component_044592cb/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stderr": {
+      "path": "/home/Projects/MyFEniCS/results/task039_v4_q9_qc_component_044592cb/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "exit_code": 0,
+    "mpi_size": 8,
+    "operator_assembly_count": 1
+  },
+  "fixed_plan": {
+    "mode_count_authority": 480,
+    "requested_modes": {
+      "one_shot": 8,
+      "batch1": 4,
+      "batch2": 4
+    },
+    "target_source": "manifest.selection.positive.beta fixed slices [0:8], [0:4], [4:8]",
+    "one_shot_target": [
+      0.018583809089127278,
+      0.07393485400451924
+    ],
+    "batch1_target": [
+      0.009482510503267115,
+      0.06574400245359178
+    ],
+    "batch2_target": [
+      0.02768510767498744,
+      0.08212570555544671
+    ]
+  },
+  "solve_reports": {
+    "one_shot": {
+      "requested_modes": 8,
+      "returned_modes": 8,
+      "converged_modes": 9,
+      "iteration_count": 5,
+      "convergence_reason": 1,
+      "wall_seconds": 0.771147309045773,
+      "max_polynomial_relative_residual": 4.7725824817168057e-17,
+      "max_slepc_relative_error": 3.630785134178483e-11
+    },
+    "batch1": {
+      "requested_modes": 4,
+      "returned_modes": 4,
+      "converged_modes": 4,
+      "iteration_count": 1,
+      "convergence_reason": 1,
+      "wall_seconds": 0.35101663903333247,
+      "max_polynomial_relative_residual": 4.152952464388433e-18,
+      "max_slepc_relative_error": 4.1017357535204615e-12
+    },
+    "batch2": {
+      "requested_modes": 4,
+      "returned_modes": 4,
+      "converged_modes": 4,
+      "iteration_count": 1,
+      "convergence_reason": 1,
+      "wall_seconds": 0.3536545789684169,
+      "max_polynomial_relative_residual": 1.0447696820827416e-15,
+      "max_slepc_relative_error": 7.94817833746087e-10
+    }
+  },
+  "factor_lifecycle": {
+    "one_shot_factor_lifecycle_count": 1,
+    "two_batch_factor_lifecycle_count": 2,
+    "factor_reuse": false,
+    "source_contract_verified": true,
+    "source": "src/modes/quadratic_beta_eigenproblem.py::solve_quadratic_beta_modes"
+  },
+  "comparisons": {
+    "tolerance": 1e-08,
+    "one_shot_vs_batch": {
+      "identity_pass": true,
+      "max_relative_error": 8.408168361839793e-14,
+      "observed_duplicate_count": 6,
+      "missing_count": 0,
+      "extra_count": 0
+    },
+    "one_shot_vs_authority": {
+      "identity_pass": true,
+      "max_relative_error": 2.3772418556735093e-13,
+      "observed_duplicate_count": 6,
+      "missing_count": 0,
+      "extra_count": 0
+    },
+    "batch_vs_authority": {
+      "identity_pass": true,
+      "max_relative_error": 1.6470780492956007e-13,
+      "observed_duplicate_count": 6,
+      "missing_count": 0,
+      "extra_count": 0
+    }
+  },
+  "gates": {
+    "numerical_equivalent": {
+      "pass": true,
+      "tolerance": 1e-08
+    },
+    "one_shot_polynomial_residual": {
+      "pass": true,
+      "value": 4.7725824817168057e-17,
+      "limit": 1e-10
+    },
+    "two_batch_polynomial_residual": {
+      "pass": true,
+      "value": 1.0447696820827416e-15,
+      "limit": 1e-10
+    },
+    "wall_increase": {
+      "pass": true,
+      "value": -0.08620414058927595,
+      "limit": 0.2
+    },
+    "peak_rss_reduction": {
+      "status": "not_measured",
+      "value": null,
+      "pass": null,
+      "limit": 0.3
+    },
+    "overall": {
+      "status": "NOT_ESTABLISHED",
+      "pass": false
+    }
+  },
+  "resources": {
+    "process_tree_peak_rss_mib": {
+      "status": "not_measured",
+      "value": null
+    },
+    "swap": {
+      "status": "not_measured",
+      "value": null
+    }
+  }
+}
