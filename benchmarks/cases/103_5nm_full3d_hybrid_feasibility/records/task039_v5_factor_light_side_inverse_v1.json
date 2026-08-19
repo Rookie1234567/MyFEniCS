@@ -1,0 +1,261 @@
+{
+  "schema": "task039.v5.7.compressed_factor_family.component_evidence.v1",
+  "classification": "TASK039_V5_7_COMPRESSED_FACTOR_RESOURCE_NEGATIVE_FAMILY_CLOSED",
+  "status": {
+    "profiles_run": 2,
+    "resource_gate": "both_profiles_failed",
+    "numerical_gate": "not_available",
+    "v5_8_blr_allowed": false,
+    "third_profile_allowed": false,
+    "ordinary_defaults_unchanged": true,
+    "full_outer_or_pde": "not_run"
+  },
+  "scope": {
+    "wavelength_nm": 5.0,
+    "grazing_deg": 1.0,
+    "phi_deg": 0.0,
+    "polarization": "S",
+    "mesh": "p6/h4",
+    "mode_count": 480,
+    "mpi": 8,
+    "packet_consumer_qep_calls": 0,
+    "streaming_w_batch_size": 8,
+    "resource_limit_gib": 59.7638938904,
+    "component_only": true,
+    "research_only": true
+  },
+  "provenance": {
+    "evidence_generated_from_head": "7e5d9b57a10b1093f0cb062eaf7bc12797c47e1f",
+    "branch": "codex/20260812-task39-5nm-hybrid-0p7nm-feasibility",
+    "formal_run_preflight_clean": true,
+    "upstream_ahead_behind": "0/0",
+    "packet_root": "results/task039_v4_h4_m480_shared_packet_eaad0f94",
+    "manifest_sha256": "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067",
+    "identity_file_sha256": "b3bb870fe6fa17cb262b6161f7317cc1950944755c9270d4628dd5c79e950690",
+    "identity_canonical_sha256": "cfd5704b48bff980fa2d819f4deee9a59bb9a3db39bc24a70c53f42f067d39e9",
+    "external_keys": {
+      "count": 600,
+      "sha256": "ba431ec6683f2123e53e8f9f3fb13fd35ae22a6a8f9c0ed2d85aa1f1cb15b04a"
+    }
+  },
+  "profiles": [
+    {
+      "profile": "mumps_blr_v5_h4",
+      "formal_run_source_sha": "2f1e65812f25b91cc22f5bd01debe7bd77790c08",
+      "controls": {
+        "icntl_35": 1,
+        "cntl_7": 1e-05,
+        "icntl_14": 80,
+        "readback_verified": true
+      },
+      "run_root": "results/task039_v5_h4_mumps_blr_side_component_mpi8_2f1e6581",
+      "run_summary": {
+        "status": "finished",
+        "exit_status": 2,
+        "classification": "worker_nonzero",
+        "raw_run_summary_sha256": "8fd398f2c002cc3234c0a8cae60a47aacd88019e4f5700c66edf1f562e9e2af6"
+      },
+      "resource": {
+        "bottom_interval_begin_sample_elapsed_seconds": 5456.101827249979,
+        "bottom_interval_end_sample_elapsed_seconds": 6922.822557870997,
+        "bottom_peak_rss_bytes": 81493004288,
+        "bottom_peak_rss_gib": 75.89627456665039,
+        "limit_gib": 59.7638938904,
+        "pass": false,
+        "overall_process_tree_peak_mib": 87717.3203125,
+        "swap_bytes": 0
+      },
+      "factor_and_k": {
+        "compressed_factor_count": 1,
+        "exact_factor_count": 0,
+        "global_direct_factor_count": 0,
+        "k_rank": 296,
+        "k_condition_number": 8.406536759948988,
+        "setup_seconds": 259.3729111700086
+      },
+      "numerical_gate": {
+        "status": "not_available",
+        "pass": null,
+        "reason": "The bottom resource gate already failed. The later worker_nonzero was the subsequently fixed spool Mat-to-Vec implementation bug; it is not a numerical probe failure.",
+        "top": "not_run_due_bottom_resource_gate"
+      },
+      "raw_evidence": {
+        "run_manifest_sha256": "7c2e023b560c12d9e85c40f12aba03e7c58d6a8d99b5da86a5a97fee304a4976",
+        "memory_stages_sha256": "0116f18b9d2c21ba7692adec5980eeec10065057a20e8f4062cabe22312c3c32",
+        "marker_stream_sha256": "fcb4fc8a7c6dcd022e8ef7233218fea9e34fd9f64f95f39fad4ea4c261f9026a",
+        "memory_ledger_sha256": "72b868347e89de7cf9bd33294c2a4733c61fa70277414d1e76d45f59d2e345e0",
+        "process_tree_samples_sha256": "00494ff7a07a5c073b9cd64d1ffae55ca6b394827a91b4b7861dfe1612009a41"
+      }
+    },
+    {
+      "profile": "mumps_blr_v5_h4_1e3",
+      "formal_run_source_sha": "7e5d9b57a10b1093f0cb062eaf7bc12797c47e1f",
+      "controls": {
+        "icntl_35": 1,
+        "cntl_7": 0.001,
+        "icntl_14": 80,
+        "readback_verified": true
+      },
+      "run_root": "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3",
+      "run_summary": {
+        "status": "launching",
+        "exit_status": null,
+        "classification": "controlled_stop_bottom_resource_gate",
+        "parent_session_exit": 130,
+        "raw_run_summary_sha256": "e0f04e112b99d4b96b78e9f083cfa0e8aad0d8d2e7c070a7eb1e1a4030ae9342",
+        "note": "The summary remained launching/null because the authorized stop interrupted the watchdog finalizer; this is not rewritten as a worker success or worker failure."
+      },
+      "resource": {
+        "bottom_interval_begin_sample_elapsed_seconds": 6850.724118696002,
+        "bottom_interval_end_sample_elapsed_seconds": 8073.42587975401,
+        "bottom_interval_measured_sample_count": 4805,
+        "bottom_peak_rss_bytes": 102433193984,
+        "bottom_peak_rss_gib": 95.39834594726562,
+        "limit_gib": 59.7638938904,
+        "limit_excess_gib": 35.634452056865626,
+        "pass": false,
+        "overall_process_tree_peak_rss_bytes": 111036112896,
+        "overall_process_tree_peak_rss_gib": 103.41043853759766,
+        "overall_peak_elapsed_seconds": 8206.352436783025,
+        "last_process_tree_sample_elapsed_seconds": 8213.991193153022,
+        "swap_bytes": 0,
+        "pss": {"status": "not_measured", "value": null},
+        "uss": {"status": "not_measured", "value": null}
+      },
+      "factor_and_k": {
+        "input_matrix_nnz": 105038640,
+        "factor_nnz": 1230486984,
+        "compressed_factor_count_at_ready": 1,
+        "exact_factor_count_at_ready": 0,
+        "global_direct_factor_count_at_ready": 0,
+        "k_rank": 296,
+        "k_condition_number": 66984.51457458506,
+        "k_bytes": 1401856,
+        "lu_plus_pivots_bytes": 1403040,
+        "setup_factor_solve_count": 296,
+        "setup_d_apply_count": 296,
+        "setup_batch_count": 37,
+        "setup_seconds": 243.44643826101674,
+        "apply_count": 13,
+        "apply_base_solve_count": 26,
+        "apply_seconds": 21.315801888122223,
+        "streaming_w_batch_peak_bytes": 2334720,
+        "streaming_w_batch_local_peak_bytes": 1994496,
+        "w_resident": false
+      },
+      "lifecycle": {
+        "exact_reference_bottom_cleanup_factor_counts": {"exact": 0, "compressed": 0, "global": 0},
+        "candidate_bottom_cleanup_factor_counts": {"exact": 0, "compressed": 0, "global": 0},
+        "candidate_ksp_destroyed": true,
+        "candidate_action_destroyed": true,
+        "candidate_f_c_h_matrices_released": true,
+        "candidate_c_action_released": true,
+        "candidate_collective_cleanup_completed": true
+      },
+      "probe_gate": {
+        "reference_status": "six_bottom_rhs_and_exact_output_groups_complete",
+        "candidate_apply_count_observed": 13,
+        "per_probe_finite": "not_available",
+        "per_probe_repeat": "not_available",
+        "per_probe_linearity": "not_available",
+        "per_probe_true_residual": "not_available",
+        "pass": null,
+        "reason": "Candidate applies completed, but the controlled stop occurred before per-probe numerical reports were persisted. No numerical pass/fail is inferred."
+      },
+      "top": "not_run_due_bottom_resource_gate",
+      "raw_evidence": {
+        "run_manifest_sha256": "292a57cf28bf64f3193357c54a57fed08d9e0d116fdd6da1b41d9b5f347400da",
+        "memory_stages_sha256": "85a074096459a82e162fa0b8b63f9365bc6dafed215a00c8f130662c2a4a66c6",
+        "marker_stream_sha256": "a2390feee04b852b6299f50ba49b7c5ecb7e88adfaab14ced5d84b9641475d7a",
+        "memory_ledger_sha256": "adae5e9bb739ccbe0ea7f6dae288ed15a9ee99b288b72ee2543d11c9dbbde42d",
+        "process_tree_samples_sha256": "ef1896483272fcb052ba8bba04e8269f5090b5506666d6a97b335703888c50f5"
+      }
+    }
+  ],
+  "reference_spool": {
+    "run_root": "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3",
+    "side": "bottom",
+    "rank_count": 8,
+    "per_label_rhs_files": 8,
+    "per_label_exact_output_files": 8,
+    "dtype": "complex128",
+    "global_size": 132300,
+    "labels": [
+      {
+        "label": "physical_side_rhs",
+        "status": "degenerate_uninformative",
+        "source": "system.b",
+        "source_norm": 0.0,
+        "rhs_global_sha256": "280c00e1df3df3d2c07d5cd8bf1766a0860a1b895e1dff3e059ac99dd2e4bbae",
+        "exact_output_global_sha256": "af2a2ab51645d9ecc9ced26021d5c9f63145a14e6a828a92a15ee3944f02f96d",
+        "rank0000_rhs_array_sha256": "a175cc7aefcf2db1e1f540011436210a8e54d0014c24f6004fab53710a232379",
+        "rank0000_exact_output_array_sha256": "b087dbfc42338f92f10db41976f3fc62baed8cac185e3e76c4b44e1720cd0335"
+      },
+      {
+        "label": "modal_traction_positive",
+        "status": "mandatory_non_degenerate",
+        "source": "positive_traction",
+        "source_norm": 5.203888364374478,
+        "rhs_global_sha256": "fbb08a8c70a92505f8146b52ef046d568d745f2caf948fbd63eadcdb48295413",
+        "exact_output_global_sha256": "3100fd4f186ba720ef8ef030e4fc45749d6726927e420102884d71016b0fe8cb",
+        "rank0000_rhs_array_sha256": "5149af6f37e21b5756843392e128f184e93d3ec8d93815b81c5465324f5c9fea",
+        "rank0000_exact_output_array_sha256": "88f5b06bfdcf7078c0e3e9f416ed17783feb01065deda16aa0b2ab176fab1f45"
+      },
+      {
+        "label": "modal_traction_negative",
+        "status": "mandatory_non_degenerate",
+        "source": "negative_traction",
+        "source_norm": 4.617843033490231,
+        "rhs_global_sha256": "b9eaee3ee19c1f269eb0498250ae5660fef6d75918942a080d9d319a53618a70",
+        "exact_output_global_sha256": "a7a42879e64d78e3de3f956747806b628f01fa482bece281a8b20bda1bf065e4",
+        "rank0000_rhs_array_sha256": "16c824091e94d479cf4e93c750ec63eae46d449a02c8786f0656eb998be69faf",
+        "rank0000_exact_output_array_sha256": "3fcdcd2567d3bcd0ef2a70cfb73bf4ef8f03a37f0f177327518e8959904323b2"
+      },
+      {
+        "label": "external_dtn_coupling",
+        "status": "mandatory_non_degenerate",
+        "source": "pre_action_components.C",
+        "source_norm": 107.45953654437677,
+        "rhs_global_sha256": "27dcd213b93c08657247b27edd97525b474a425422fef533a7b3a8e701554b1d",
+        "exact_output_global_sha256": "f0f1c970644aebe13a7fe94806205f83c02c5ea90554ccc2987bd5720d7c37f8",
+        "rank0000_rhs_array_sha256": "96b513a998b27e51ef5ed2b71983c21c0414de242d73aa736faacafcb49c59bd",
+        "rank0000_exact_output_array_sha256": "2eb6c6a9a1b5797fd7333d761f849a663f8c13af28ea542e3af533d6323578c3"
+      },
+      {
+        "label": "fixed_random_repeat_0",
+        "status": "mandatory_non_degenerate",
+        "source": "fixed_owner_range_formula",
+        "source_norm": 363.932277457305,
+        "rhs_global_sha256": "5fdd169ff2bb3ee10c3546332c9f81be0f9c4125a1fdc3c82c48538cc1ae3f6e",
+        "exact_output_global_sha256": "5322aabafa153d073e635fd80aa1f729f7e1c9c98dab2032ef3f2a67d6860baa",
+        "rank0000_rhs_array_sha256": "5b9f77d877b9d6f22acd3e1afe6e495b57365ad15ea4ff3e3f1c74438f3b1f64",
+        "rank0000_exact_output_array_sha256": "b2d7a27125930ef68efbed164f45b0e83f6a9a78acbf6eaecffb5a3565703b32"
+      },
+      {
+        "label": "fixed_random_repeat_1",
+        "status": "mandatory_non_degenerate",
+        "source": "fixed_owner_range_formula",
+        "source_norm": 363.3362600209126,
+        "rhs_global_sha256": "bdd51ab7843f1560a6866de738a312cfbd89a01d9eabe794f3e12abbf3097b63",
+        "exact_output_global_sha256": "51429f3bd4db63c6cb870d10b7e6f757ac82255fa8871bb4af9d8449eeaa2c93",
+        "rank0000_rhs_array_sha256": "52b86bfc502142a087ea286d4e39b999b50a6a13a949bffff50e2c27c084a157",
+        "rank0000_exact_output_array_sha256": "821601fcfa403247cb7a01fc1509eee22d273c8f03c3a7293fd54d64783d2ce6"
+      }
+    ]
+  },
+  "decision": {
+    "resource_gate": "FAIL_FOR_BOTH_FROZEN_PROFILES",
+    "numerical_gate": "NOT_AVAILABLE_NOT_A_NUMERICAL_FAILURE",
+    "family_disposition": "CLOSED_NO_THIRD_PROFILE",
+    "v5_8_blr_full_formal": "FORBIDDEN",
+    "reason": "The compressed local side factor remains too large in the measured candidate setup interval; the issue is resident sparse-factor capacity, not resident W storage."
+  },
+  "next_review_family": {
+    "name": "physics-aware-fixed-budget-side-krylov-component",
+    "scope": "Review V5 section 14.1 second family",
+    "status": "design_only",
+    "ordinary_ilu_scan": "forbidden",
+    "parameter_scan": "forbidden",
+    "pde_or_full_outer": "not_run"
+  }
+}
