@@ -2132,14 +2132,14 @@ def run_v5_h4_mumps_blr_side_component(
             for spec in V5_H4_BLR_RHS_SPECS:
                 label = spec[0]
                 artifacts = exact_artifacts[label]
+                template = None
                 rhs = None
                 reference = None
                 try:
-                    rhs = _load_v5_blr_reference_spool(
-                        artifacts["rhs"], action.operator
-                    )
+                    template = action.operator.createVecLeft()
+                    rhs = _load_v5_blr_reference_spool(artifacts["rhs"], template)
                     reference = _load_v5_blr_reference_spool(
-                        artifacts["exact_output"], action.operator
+                        artifacts["exact_output"], template
                     )
                     metadata = dict(
                         artifacts["rhs"]["source_identity"]["probe_metadata"]
@@ -2157,6 +2157,8 @@ def run_v5_h4_mumps_blr_side_component(
                     candidate_reports.append(report)
                     all_reports.append(report)
                 finally:
+                    if template is not None:
+                        template.destroy()
                     if rhs is not None:
                         rhs.destroy()
                     if reference is not None:

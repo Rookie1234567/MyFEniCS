@@ -1287,10 +1287,14 @@ def test_v5_h4_blr_injected_route_keeps_exact_candidate_lifecycle(
         def destroy(self):
             self.destroyed = True
 
+    class FakeOperator:
+        def createVecLeft(self):
+            return FakeVec()
+
     class FakeAction:
         def __init__(self, compressed):
             self.compressed = compressed
-            self.operator = object()
+            self.operator = FakeOperator()
             self.woodbury = SimpleNamespace(
                 mark_borrowed_matrices_released=lambda: None
             )
@@ -1318,6 +1322,7 @@ def test_v5_h4_blr_injected_route_keeps_exact_candidate_lifecycle(
     factory_kinds = []
     prefrozen_calls = []
     prefrozen_vectors = []
+    template_vectors = []
     destroy_calls = 0
 
     def fake_components(_system):
@@ -1398,7 +1403,7 @@ def test_v5_h4_blr_injected_route_keeps_exact_candidate_lifecycle(
     monkeypatch.setattr(
         orchestration,
         "_load_v5_blr_reference_spool",
-        lambda *_args, **_kwargs: FakeVec(),
+        lambda _record, template: (template_vectors.append(template), FakeVec())[1],
     )
     monkeypatch.setattr(
         orchestration,
@@ -1477,6 +1482,8 @@ def test_v5_h4_blr_injected_route_keeps_exact_candidate_lifecycle(
     ]
     assert prefrozen_calls == ["external_dtn_coupling", "external_dtn_coupling"]
     assert all(vector.destroyed for vector in prefrozen_vectors)
+    assert len(template_vectors) == 4 * len(orchestration.V5_H4_BLR_RHS_SPECS)
+    assert all(vector.destroyed for vector in template_vectors)
     expected_labels = [spec[0] for spec in orchestration.V5_H4_BLR_RHS_SPECS]
     assert [
         item["label"] for item in result["sides"]["bottom"]["exact"]["probes"]
