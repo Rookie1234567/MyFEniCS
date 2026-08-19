@@ -1426,6 +1426,24 @@ lifecycle/implementation comparison；cold-start 总 wall 相对旧整体 wall �
 替代 cold-start 结论。与 h4 current direct 的数值只作同架构容量比较，不能写成 h5/h4
 网格收敛。
 
+## 3.43 Task039 Review V6：port/modal bottom resource stop
+
+Task039 V6 在 5 nm、1°、phi=0°、S、p6/h4、M480、MPI8 上验证了两级 side-PC
+路线的最早资源边界。该路线用一次固定 whole-endcap ILU(0)+DtN Woodbury action
+作为便宜基础动作，再计划用物理 port/modal 的 owner-row Petrov correction
+处理困难方向；通俗地说，是希望用小的困难方向修正替代完整 side factor。
+
+| Model ID | source / raw | measured result | status | evidence |
+|---|---|---|---|---|
+| task039_v6_port_modal_bottom_component_initial | aac7e33e；MPI8 | 21.419574737548828 GiB；right-only packet 使 left_full 为 None，exit 2 | implementation failure；not a method result | results/task039_v6_h4_port_modal_bottom_component_mpi8_aac7e33e |
+| task039_v6_port_modal_bottom_component | 52f34262；MPI8 | 23,649,669,120 B = 22.025470733642578 GiB；22 GiB hard line，swap 0；SIGTERM，无 SIGKILL | controlled resource negative；top/full not_run | docs/task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v6_port_modal_two_level_side_pc.md |
+
+fixed Woodbury ready 时 base factor count=1、exact/global direct factor=0/0、
+K rank=296、condition=10.470528383360438、W=81,070,848 B；最终 cleanup 未到达。
+V6 owner/basis、rank ladder、six probes、top、both-side、outer、recovery、R/T/A 和
+0.7 nm PDE 均未运行。ordinary defaults 未改变；V6 research family 关闭，raw 和
+compact record 保留。
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。

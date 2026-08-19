@@ -2448,3 +2448,24 @@ V5 的两个压缩 family 已关闭：两个冻结 BLR profile 均超过 side se
 | 0.7 nm / Full3D new heavy | not_run；capacity仅 derived/predicted conditional envelope |
 
 当前不存在数值合格且节省内存的 h4 Hybrid iterative；ordinary defaults unchanged。入口：[V5 h4 final](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v5_h4_hybrid_iterative_final.md)、[0.7 nm capacity](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v5_0p7nm_hybrid_capacity.md)。
+
+## 2026-08-19：Task039 Review V6 bottom port/modal 结项
+
+V6-1 post-compaction exact-side setup-only 的唯一 run 在
+42.70841979980469 GiB 处超过 42.019652939 GiB setup line，exact-side full formal
+关闭为 oracle-only。随后 V6 主 family 的唯一 bottom port/modal component 使用固定
+whole-endcap ILU(0)+DtN Woodbury base；在 full right/left packet ephemeral ready 后，
+process-tree peak 达到 23,649,669,120 B = 22.025470733642578 GiB，超过 22 GiB
+construction hard line 27,348,992 B，swap=0，SIGTERM 完成且无需 SIGKILL。
+
+| 范围 | 状态 | 证据 |
+| --- | --- | --- |
+| first aac7e33e attempt | implementation failure；right-only left_full 接线错误 | 保留 raw，不作方法结果 |
+| second 52f34262 attempt | authoritative resource controlled stop | [compact record](../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v6_port_modal_bottom_component_v1.json) |
+| owner-row basis / rank64–512 / six probes | not_run | hard stop before owner-ready |
+| top / both-side / outer / recovery / RTA / field | not_run | bottom resource Gate failed |
+| layer graph / sweeping | not_available / not_authorized | bottom_F_ready 未取得 |
+| 0.7 nm PDE / arbitrary-3D qualification | not_run | capacity remains conditional |
+
+该结果关闭 V6 port/modal bottom family；不调参、不重跑、不继续 top。ordinary
+defaults、既有 V5 负结果和两个 raw root 均保留。

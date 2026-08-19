@@ -559,3 +559,29 @@ compact attribution：[V5-2 record](../../../benchmarks/cases/103_5nm_full3d_hyb
 V5-8 full formal、top、outer、recovery、field、canonical、R/T/A 均 `not_run`。因此没有数值合格且节省内存的 h4 Hybrid iterative，20% meaningful target `74.701605225 GiB` 未建立；ordinary defaults、Full3D 新 heavy、0.7 nm PDE 和 arbitrary-3D qualification 均未做。
 
 详见 [h4 V5 final](v5_h4_hybrid_iterative_final.md)、[fixed-budget compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v5_fixed_budget_side_krylov_component_v1.json) 和 [0.7 nm capacity envelope](v5_0p7nm_hybrid_capacity.md)。
+
+## V6 结项：port/modal bottom component
+
+V6-1 post-compaction exact-side setup 已先以 42.70841979980469 GiB 超过
+42.019652939 GiB setup line，exact-side full formal 关闭为 oracle-only。随后唯一的
+port/modal bottom component attempt 在 full ephemeral packet ready 后以
+22.025470733642578 GiB 超过 22 GiB construction hard line，故不进入 owner-row
+basis、top、both-side 或 outer。
+
+| 路径 | 关键实测 | 分类 |
+| --- | --- | --- |
+| V6-1 post-compaction setup | 45,857,816,576 B = 42.70841979980469 GiB | resource controlled stop；exact-side oracle only |
+| V6 port/modal bottom | 23,649,669,120 B = 22.025470733642578 GiB；swap 0 | resource controlled stop；family closed |
+| V6 numerical probes | rank64/128/256/512、六 probe均未开始 | not_run |
+| V6 top/both/outer/recovery/RTA/field | 未启动 | not_run |
+
+本次 V6 port/modal 结果不是“数值通过”，也不是第一轮 right-only 接线错误的重复。
+第一轮是 implementation failure；第二轮是权威 resource stop。construction end marker
+没有落盘，因此 closed-interval peak 仍为 not_available；全过程 authoritative peak
+已足以使 resource Gate=false。完整身份、raw hashes 和 Gate 重算见
+[V6 port/modal outcome](v6_port_modal_two_level_side_pc.md) 与
+[V6 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v6_port_modal_bottom_component_v1.json)。
+
+V6 的 0.7 nm capacity 只保留 derived/conditional envelope；0.7 nm PDE、Full3D
+new heavy、arbitrary-3D qualification 和 top/full Hybrid 均 not_run。详见
+[V6 capacity boundary](v6_0p7nm_hybrid_capacity.md)。

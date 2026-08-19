@@ -188,6 +188,28 @@ solver qualification：
 | Python Ruff/compileall | not_run；本轮无 Python 修改 |
 | repository full pytest | cancelled / not_run |
 
+## V6 closeout evidence
+
+本轮只新增 compact JSON 和文档，不修改 Python、不运行 PDE/MPI/heavy。V6 formal raw
+由 watchdog 以 22 GiB 绝对硬线受控停止；它不是测试失败计数，也不应被写成 numerical
+zero-failure 结果。
+
+| 检查/证据 | 结果 | 口径 |
+| --- | --- | --- |
+| V6 compact JSON parse | pass | 新增 port-modal record；raw 不入 Git |
+| Markdown relative links | pass | 本轮 V6 新 outcome 与 summary/record 链接 |
+| fenced math / table columns | pass | 本轮文档合同检查 |
+| check_benchmarks.py --no-write | pass，302/302 | qualified activation 下 fresh docs/evidence check |
+| git diff --check | pass | docs/record-only diff |
+| V6 formal resource | controlled stop | peak 22.025470733642578 GiB > 22 GiB；swap 0 |
+| V6 formal numerical probes | not_run | owner-ready/rank64 前停止 |
+| focused serial / MPI2 / MPI4 | 沿用 source SHA 52f34262 代码阶段 evidence | 本轮无 Python修改；MPI2 test235 有一次 tmp cleanup warning |
+| Ruff / format / compileall | 沿用 source SHA 52f34262 代码阶段 evidence | 本轮无 Python修改 |
+| full repository pytest / CI | not_run | 不声称 zero failures 或 CI |
+
+V6 第一轮 aac7e33e 是 right-only packet implementation failure；第二轮 52f34262
+才是 resource authority。两者均保留在 compact record 中，不能合并成方法数值失败。
+
 ## DQ1 fixed-case qualification closeout
 
 | 检查 | 结果 | 口径 |

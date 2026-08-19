@@ -1,0 +1,224 @@
+{
+  "schema": "task039.v6.port_modal_bottom_component.v1",
+  "record_type": "research_component_evidence",
+  "classification": "TASK039_V6_PORT_MODAL_BOTTOM_RESOURCE_CONTROLLED_STOP",
+  "provenance": {
+    "branch": "codex/20260812-task39-5nm-hybrid-0p7nm-feasibility",
+    "formal_source_sha": "52f34262232f9fd84d803a5f59fe5e4cb23acc6a",
+    "formal_preflight_clean": true,
+    "input": "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat",
+    "input_sha256": "4e60924b5997e3ca99e324ea14779f9014efc6a1304a9aa11de9c808353f1811",
+    "physical_model_sha256": "8391d46139646440d869aa43abe6a68bc921fc1972a10030c64be81dffdd527c",
+    "packet_root": "results/task039_v4_h4_m480_shared_packet_eaad0f94",
+    "packet_manifest_sha256": "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067",
+    "packet_identity_file_sha256": "b3bb870fe6fa17cb262b6161f7317cc1950944755c9270d4628dd5c79e950690",
+    "consumer_qep_calls": 0,
+    "exact_reference_spool": "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/numerical_output/v5_blr_reference_spool",
+    "exact_reference_spool_source": "7e5d9b57a10b1093f0cb062eaf7bc12797c47e1f",
+    "exact_reference_spool_files": 192,
+    "exact_reference_spool_ranks": 8,
+    "exact_reference_spool_labels": [
+      "bottom_physical_side_rhs",
+      "bottom_modal_traction_positive",
+      "bottom_modal_traction_negative",
+      "bottom_external_dtn_coupling",
+      "bottom_fixed_random_repeat_0",
+      "bottom_fixed_random_repeat_1"
+    ],
+    "exact_reference_spool_catalog_sha256": "a2a7fb6fb01df4f795d31ff94f6ac6adf957ac4fe4a5c1a8d05176e3d64c0384",
+    "exact_reference_spool_catalog_method": "sha256 of sorted relative path, byte count and file SHA256 rows; derived catalog identity"
+  },
+  "scope": {
+    "physical": "5nm/1deg/phi0/S",
+    "profile": "p6/h4",
+    "requested_modes": 480,
+    "mpi_size": 8,
+    "method": "task039_v6_h4_port_modal_bottom_component",
+    "construction_limit_gib": 22.0,
+    "construction_hard_stop_bytes": 23622320128,
+    "retained_limit_gib": 16.0,
+    "checkpoint_ladder": [64, 128, 256, 512],
+    "base_identity": "whole_endcap_ilu0_woodbury_fixed_action",
+    "base_is_fixed_linear": true,
+    "nested_ksp": false,
+    "exact_side_factor_count": 0,
+    "global_direct_factor_count": 0,
+    "top": "not_run",
+    "both_side_setup": "not_run",
+    "outer": "not_run",
+    "recovery": "not_run",
+    "field": "not_run",
+    "rta": "not_run",
+    "ordinary_defaults_unchanged": true
+  },
+  "attempts": [
+    {
+      "attempt_id": "aac7e33e_initial",
+      "source_sha": "aac7e33e7e29511f83a0a168b256145e323d5930",
+      "run_root": "results/task039_v6_h4_port_modal_bottom_component_mpi8_aac7e33e",
+      "classification": "implementation_failure_not_method_result",
+      "exit_status": 2,
+      "run_status": "finished",
+      "peak_process_tree_rss_bytes": 22999093248,
+      "peak_process_tree_rss_gib": 21.419574737548828,
+      "swap_bytes": 0,
+      "last_marker": "v6_port_modal_bottom_side_setup_cleanup",
+      "checkpoint_status": "not_run",
+      "owner_ready": false,
+      "failure": "right-only packet hydration left ModalTraceProjection without left_full; ModalTraceProjection then raised AttributeError on None.getSize",
+      "resource_gate": "not_authoritative_due_to_implementation_failure",
+      "raw_evidence": {
+        "run_summary.json": {
+          "bytes": 4549,
+          "sha256": "f0a122ff237f46a06a2dca91f19d08304de01e0d3ef2dd0e88b48a22e2d01997"
+        },
+        "run_manifest.json": {
+          "bytes": 214395,
+          "sha256": "9e7a19ca495d14ce04c2aaf01efaa6b8800f3822a1d298da88d4d14694524307"
+        },
+        "worker_stdout.txt": {
+          "bytes": 1410,
+          "sha256": "df4658a12531918ad3185ee338e1846229d91186921ce3e3c14b1774846cb5af"
+        },
+        "numerical_output/memory_object_ledger.json": {
+          "bytes": 5930,
+          "sha256": "978dc206e9b8bd35ac65e8521ce931f635810538ec95f0902560a6a74f98e4b2"
+        },
+        "numerical_output/memory_stage_markers.raw.jsonl": {
+          "bytes": 13967,
+          "sha256": "cf52a4766e45527be3a1ecff16c62ffd210a2fa0fd8c63cd45cf2cce7e989830"
+        },
+        "numerical_output/memory_stages.jsonl": {
+          "bytes": 15091,
+          "sha256": "f1e4cccf795687240bd0586139b4ab91cac25d489c1e6b840ac4dcbbd11937cd"
+        },
+        "numerical_output/process_tree_samples.jsonl": {
+          "bytes": 589400,
+          "sha256": "77e49d8c7ff92e035e27cdaa6529d805731816b6372bacb321678232c09f12d4"
+        }
+      }
+    },
+    {
+      "attempt_id": "52f34262_authoritative",
+      "source_sha": "52f34262232f9fd84d803a5f59fe5e4cb23acc6a",
+      "run_root": "results/task039_v6_h4_port_modal_bottom_component_mpi8_52f34262",
+      "classification": "authoritative_resource_controlled_stop",
+      "exit_status": 1,
+      "run_status": "finished",
+      "observed_wall_seconds": 593.59519627603,
+      "peak_process_tree_rss_bytes": 23649669120,
+      "peak_process_tree_rss_gib": 22.025470733642578,
+      "hard_stop_bytes": 23622320128,
+      "hard_stop_gib": 22.0,
+      "overshoot_bytes": 27348992,
+      "overshoot_gib": 0.025470733642578125,
+      "peak_utc": "2026-08-19T13:23:42.714965+00:00",
+      "peak_sample_elapsed_seconds": 593.59519627603,
+      "swap_bytes": 0,
+      "last_marker": "v6_port_modal_bottom_packet_full_ephemeral_ready",
+      "last_marker_elapsed_seconds": 474.0589539189823,
+      "owner_ready": false,
+      "rank64_128_256_512": "not_run",
+      "six_probe_gate": "not_run",
+      "top": "not_run_due_bottom_resource_stop",
+      "termination": {
+        "method": "POSIX process group SIGTERM",
+        "grace_seconds": 5.0,
+        "sigkill_required": false,
+        "process_group_exited": true,
+        "residual_heavy_process": false
+      },
+      "raw_evidence": {
+        "run_summary.json": {
+          "bytes": 4783,
+          "sha256": "f4fcd8db5823e95ec6fa8ecd76e4de7de5751878894d9ae43550eac2a333b9dc"
+        },
+        "run_manifest.json": {
+          "bytes": 214397,
+          "sha256": "a4ecc14c266873cf82117a4d6b8a5fe05c5b5e62de66d92743ecd2bc459684f0"
+        },
+        "worker_stdout.txt": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "numerical_output/memory_object_ledger.json": {
+          "bytes": 5467,
+          "sha256": "9d06e8ce0134753872708821a4cf816211acf634ea88f78b2876e6e77f87e98e"
+        },
+        "numerical_output/memory_stage_markers.raw.jsonl": {
+          "bytes": 9219,
+          "sha256": "4db2f1a110c4b86c959ede13c137f258f602a6b72975f997f134710ce58ea68a"
+        },
+        "numerical_output/memory_stages.jsonl": {
+          "bytes": 10166,
+          "sha256": "3c53ab083dadc62df70604115244535318f24ba58fc5bfa1d86188d528b21626"
+        },
+        "numerical_output/process_tree_samples.jsonl": {
+          "bytes": 709208,
+          "sha256": "fa7ab193b9b9ff08ac84d458d777889a0a1ee46f0109652138fb8f0397f19f39"
+        }
+      }
+    }
+  ],
+  "formal_gate_recomputation": {
+    "resource_authority": {
+      "process_tree_peak": {
+        "status": "measured",
+        "bytes": 23649669120,
+        "gib": 22.025470733642578
+      },
+      "construction_closed_interval": {
+        "status": "not_available",
+        "pass": false,
+        "reason": "memory hard stop occurred before construction_end marker"
+      },
+      "retained_closed_interval": {
+        "status": "not_available",
+        "pass": false,
+        "reason": "retained ready/cleanup markers were not reached"
+      },
+      "resource_gate": false,
+      "resource_gate_reason": "authoritative process-tree peak exceeded the 22 GiB absolute hard line"
+    },
+    "numerical_authority": {
+      "status": "not_run",
+      "reason": "stop occurred after fixed Woodbury and full ephemeral packet readiness, before owner-ready/rank64"
+    },
+    "lifecycle_authority": {
+      "base_factor_at_last_ready": 1,
+      "exact_factor_at_last_ready": 0,
+      "global_direct_factor_at_last_ready": 0,
+      "nested_ksp": false,
+      "woodbury_auxiliary_count": 296,
+      "woodbury_W_bytes": 81070848,
+      "woodbury_K_rank": 296,
+      "woodbury_K_condition": 10.470528383360438,
+      "final_factor_cleanup": "not_available",
+      "final_packet_qep_release": "not_available"
+    },
+    "layer_graph": "not_available"
+  },
+  "all_not_run": [
+    "rank64",
+    "rank128",
+    "rank256",
+    "rank512",
+    "six_probe_numerical_gate",
+    "retained_apply_state_gate",
+    "top",
+    "both_side_setup",
+    "outer_ksp",
+    "recovery",
+    "field",
+    "RTA",
+    "official_result"
+  ],
+  "boundaries": {
+    "exact_side_role": "oracle_only",
+    "port_modal_family": "closed_after_bottom_resource_stop",
+    "third_profile_or_retry": "forbidden",
+    "full3d_new_heavy": "not_run",
+    "zero_point_seven_nm_pde": "not_run",
+    "ordinary_defaults": "unchanged"
+  }
+}
