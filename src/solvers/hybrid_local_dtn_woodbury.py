@@ -16,10 +16,13 @@ from .common_3d_solve import _petsc_factor_inventory, _petsc_matrix_stats
 
 HYBRID_DTN_WOODBURY_MODE_COUNT = 40
 MUMPS_BLR_V5_H4_PROFILE = "mumps_blr_v5_h4"
+MUMPS_BLR_V5_H4_1E3_PROFILE = "mumps_blr_v5_h4_1e3"
 
 __all__ = (
     "HYBRID_DTN_WOODBURY_MODE_COUNT",
     "MUMPS_BLR_V5_H4_PROFILE",
+    "MUMPS_BLR_V5_H4_1E3_PROFILE",
+    "mumps_blr_v5_h4_controls",
     "HybridLocalDtnWoodburyOracle",
     "HybridLocalDtnWoodburyFixedAction",
     "ResearchExactFactorInverse",
@@ -54,19 +57,25 @@ def _set_owned_small_vector(vector: PETSc.Vec, values: np.ndarray) -> None:
     vector.getArray()[:] = np.asarray(values[first:last], dtype=PETSc.ScalarType)
 
 
+def mumps_blr_v5_h4_controls(profile: str) -> dict[str, float | int]:
+    if profile == MUMPS_BLR_V5_H4_PROFILE:
+        cntl_7 = 1.0e-5
+    elif profile == MUMPS_BLR_V5_H4_1E3_PROFILE:
+        cntl_7 = 1.0e-3
+    else:
+        raise ValueError(f"Unsupported compressed factor profile: {profile}")
+    return {"icntl_35": 1, "cntl_7": cntl_7, "icntl_14": 80}
+
+
 def _configure_v5_blr_factor(pc: PETSc.PC, profile: str | None) -> PETSc.Mat | None:
     if profile is None:
         return None
-    if profile != MUMPS_BLR_V5_H4_PROFILE:
-        raise ValueError(
-            "Unsupported compressed factor profile; only the fixed V5 h4 BLR "
-            "profile is allowed"
-        )
+    controls = mumps_blr_v5_h4_controls(profile)
     pc.setFactorSetUpSolverType()
     factor = pc.getFactorMatrix()
-    factor.setMumpsIcntl(35, 1)
-    factor.setMumpsCntl(7, 1.0e-5)
-    factor.setMumpsIcntl(14, 80)
+    factor.setMumpsIcntl(35, controls["icntl_35"])
+    factor.setMumpsCntl(7, controls["cntl_7"])
+    factor.setMumpsIcntl(14, controls["icntl_14"])
     return factor
 
 
@@ -556,6 +565,11 @@ class ResearchExactFactorInverse:
         self.matrix = matrix
         self.factor_solver_type = factor_solver_type
         self._factor_only_storage = bool(factor_only_storage)
+        expected_mumps_controls = None
+        if compressed_factor_profile is not None:
+            expected_mumps_controls = mumps_blr_v5_h4_controls(
+                compressed_factor_profile
+            )
         if compressed_factor_profile is not None and not self._factor_only_storage:
             raise ValueError("Compressed factor storage requires factor-only storage")
         if compressed_factor_profile is not None and factor_solver_type != "mumps":
@@ -593,8 +607,7 @@ class ResearchExactFactorInverse:
                     "icntl_14": configured_factor.getMumpsIcntl(14),
                 }
                 self._mumps_controls_verified = bool(
-                    self._mumps_controls_observed
-                    == {"icntl_35": 1, "cntl_7": 1.0e-5, "icntl_14": 80}
+                    self._mumps_controls_observed == expected_mumps_controls
                 )
                 if not self._mumps_controls_verified:
                     raise RuntimeError(
@@ -703,11 +716,9 @@ class ResearchExactFactorInverse:
             return {
                 **diagnostics,
                 "compressed_factor_profile": self.compressed_factor_profile,
-                "mumps_controls_requested": {
-                    "icntl_35": 1,
-                    "cntl_7": 1.0e-5,
-                    "icntl_14": 80,
-                },
+                "mumps_controls_requested": mumps_blr_v5_h4_controls(
+                    self.compressed_factor_profile
+                ),
                 "mumps_controls_observed": self._mumps_controls_observed,
                 "mumps_controls_verified": self._mumps_controls_verified,
                 "true_residual_authority": "external_full_explicit_side_residual",

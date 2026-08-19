@@ -1009,6 +1009,7 @@ def test_v5_h4_setup_only_plan_passes_identity_and_packet_args(tmp_path) -> None
         tmp_path / "v5-blr-plan",
         source_sha="a" * 40,
         v5_h4_blr_side_only=True,
+        v5_h4_blr_profile=orchestration.MUMPS_BLR_V5_H4_1E3_PROFILE,
         selected_mode_packet_manifest=manifest,
         selected_mode_packet_identity=identity,
         selected_mode_packet_manifest_sha256=sha,
@@ -1018,6 +1019,24 @@ def test_v5_h4_setup_only_plan_passes_identity_and_packet_args(tmp_path) -> None
     assert blr_plan["worker_contract"]["method"] == (
         "task039_v5_h4_mumps_blr_side_component"
     )
+    assert blr_plan["worker_contract"]["mumps_blr_profile"] == (
+        orchestration.MUMPS_BLR_V5_H4_1E3_PROFILE
+    )
+    assert "--v5-h4-blr-profile" in blr_plan["argv"]
+    assert orchestration.MUMPS_BLR_V5_H4_1E3_PROFILE in blr_plan["argv"]
+    default_blr_plan = watchdog.v3_7_execution_dry_run(
+        h4_input,
+        tmp_path / "v5-blr-default-plan",
+        source_sha="a" * 40,
+        v5_h4_blr_side_only=True,
+        selected_mode_packet_manifest=manifest,
+        selected_mode_packet_identity=identity,
+        selected_mode_packet_manifest_sha256=sha,
+    )
+    assert default_blr_plan["worker_contract"]["mumps_blr_profile"] == (
+        orchestration.MUMPS_BLR_V5_H4_PROFILE
+    )
+    assert "--v5-h4-blr-profile" not in default_blr_plan["argv"]
     assert "task039_v5_h4_mumps_blr_side_component" in inspect.getsource(
         task038_launcher._run_worker
     )
@@ -1047,6 +1066,8 @@ def test_v5_h4_blr_watchdog_main_dry_run_parses_real_flag(tmp_path, capsys) -> N
                 "--source-sha",
                 "a" * 40,
                 "--v5-h4-blr-side-component",
+                "--v5-h4-blr-profile",
+                orchestration.MUMPS_BLR_V5_H4_1E3_PROFILE,
                 "--selected-mode-packet-manifest",
                 str(packet_root / "manifest.json"),
                 "--selected-mode-packet-identity",
@@ -1063,6 +1084,9 @@ def test_v5_h4_blr_watchdog_main_dry_run_parses_real_flag(tmp_path, capsys) -> N
     assert "--v5-h4-setup-only" not in plan["argv"]
     assert plan["worker_contract"]["method"] == (
         "task039_v5_h4_mumps_blr_side_component"
+    )
+    assert plan["worker_contract"]["mumps_blr_profile"] == (
+        orchestration.MUMPS_BLR_V5_H4_1E3_PROFILE
     )
     assert not run_directory.exists()
 

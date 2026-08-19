@@ -51,6 +51,12 @@ V5_H4_SETUP_ONLY_FLAG = "--v5-h4-setup-only"
 V5_H4_SETUP_ONLY_METHOD = "task039_v5_h4_exact_side_setup_only"
 V5_H4_BLR_SIDE_COMPONENT_FLAG = "--v5-h4-blr-side-component"
 V5_H4_BLR_SIDE_COMPONENT_METHOD = "task039_v5_h4_mumps_blr_side_component"
+V5_H4_BLR_PROFILE_FLAG = "--v5-h4-blr-profile"
+V5_H4_BLR_DEFAULT_PROFILE = "mumps_blr_v5_h4"
+V5_H4_BLR_PROFILE_CHOICES = (
+    V5_H4_BLR_DEFAULT_PROFILE,
+    "mumps_blr_v5_h4_1e3",
+)
 
 
 def _validate_resolved_identity(
@@ -191,6 +197,7 @@ def build_v3_7_execution_plan(
     candidate_e_side_only: bool = False,
     v5_h4_setup_only: bool = False,
     v5_h4_blr_side_only: bool = False,
+    v5_h4_blr_profile: str = V5_H4_BLR_DEFAULT_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
     selected_mode_packet_manifest_sha256: str | None = None,
@@ -202,6 +209,8 @@ def build_v3_7_execution_plan(
         v5_h4_setup_only=v5_h4_setup_only,
         v5_h4_blr_side_only=v5_h4_blr_side_only,
     )
+    if v5_h4_blr_side_only and v5_h4_blr_profile not in V5_H4_BLR_PROFILE_CHOICES:
+        raise ValueError(f"Unsupported V5 h4 BLR profile: {v5_h4_blr_profile}")
     policy = _watchdog_policy(
         payload,
         v5_h4_setup_only=v5_h4_setup_only,
@@ -300,6 +309,8 @@ def build_v3_7_execution_plan(
                 str(selected_mode_packet_manifest_sha256),
             ]
         )
+        if v5_h4_blr_profile != V5_H4_BLR_DEFAULT_PROFILE:
+            argv.extend([V5_H4_BLR_PROFILE_FLAG, v5_h4_blr_profile])
     if candidate_d_qualified:
         method = V3_8_CANDIDATE_D_QUALIFIED_METHOD
     elif candidate_d_only:
@@ -335,6 +346,7 @@ def build_v3_7_execution_plan(
                 )
             ),
             "method": method,
+            "mumps_blr_profile": (v5_h4_blr_profile if v5_h4_blr_side_only else None),
             "hard_stop_authority": "process_tree_rss_bytes",
             "critical_checkpoint_only": True,
             "swap_policy": "immediate_complete_process_tree_termination",
@@ -356,6 +368,7 @@ def v3_7_execution_dry_run(
     candidate_e_side_only: bool = False,
     v5_h4_setup_only: bool = False,
     v5_h4_blr_side_only: bool = False,
+    v5_h4_blr_profile: str = V5_H4_BLR_DEFAULT_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
     selected_mode_packet_manifest_sha256: str | None = None,
@@ -373,6 +386,7 @@ def v3_7_execution_dry_run(
         candidate_e_side_only=candidate_e_side_only,
         v5_h4_setup_only=v5_h4_setup_only,
         v5_h4_blr_side_only=v5_h4_blr_side_only,
+        v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
         selected_mode_packet_identity=selected_mode_packet_identity,
         selected_mode_packet_manifest_sha256=selected_mode_packet_manifest_sha256,
@@ -400,6 +414,7 @@ def launch_v3_7_with_task038_watchdog(
     candidate_e_side_only: bool = False,
     v5_h4_setup_only: bool = False,
     v5_h4_blr_side_only: bool = False,
+    v5_h4_blr_profile: str = V5_H4_BLR_DEFAULT_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
     selected_mode_packet_manifest_sha256: str | None = None,
@@ -432,6 +447,7 @@ def launch_v3_7_with_task038_watchdog(
         candidate_e_side_only=candidate_e_side_only,
         v5_h4_setup_only=v5_h4_setup_only,
         v5_h4_blr_side_only=v5_h4_blr_side_only,
+        v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
         selected_mode_packet_identity=selected_mode_packet_identity,
         selected_mode_packet_manifest_sha256=selected_mode_packet_manifest_sha256,
@@ -519,6 +535,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--candidate-e-side-only", action="store_true")
     parser.add_argument("--v5-h4-setup-only", action="store_true")
     parser.add_argument(V5_H4_BLR_SIDE_COMPONENT_FLAG, action="store_true")
+    parser.add_argument(
+        V5_H4_BLR_PROFILE_FLAG,
+        choices=V5_H4_BLR_PROFILE_CHOICES,
+        default=V5_H4_BLR_DEFAULT_PROFILE,
+    )
     parser.add_argument("--selected-mode-packet-manifest")
     parser.add_argument("--selected-mode-packet-identity")
     parser.add_argument("--selected-mode-packet-manifest-sha256")
@@ -539,6 +560,7 @@ def main(argv: list[str] | None = None) -> int:
                     candidate_e_side_only=args.candidate_e_side_only,
                     v5_h4_setup_only=args.v5_h4_setup_only,
                     v5_h4_blr_side_only=args.v5_h4_blr_side_component,
+                    v5_h4_blr_profile=args.v5_h4_blr_profile,
                     selected_mode_packet_manifest=args.selected_mode_packet_manifest,
                     selected_mode_packet_identity=args.selected_mode_packet_identity,
                     selected_mode_packet_manifest_sha256=args.selected_mode_packet_manifest_sha256,
@@ -562,6 +584,7 @@ def main(argv: list[str] | None = None) -> int:
         candidate_e_side_only=args.candidate_e_side_only,
         v5_h4_setup_only=args.v5_h4_setup_only,
         v5_h4_blr_side_only=args.v5_h4_blr_side_component,
+        v5_h4_blr_profile=args.v5_h4_blr_profile,
         selected_mode_packet_manifest=args.selected_mode_packet_manifest,
         selected_mode_packet_identity=args.selected_mode_packet_identity,
         selected_mode_packet_manifest_sha256=args.selected_mode_packet_manifest_sha256,
@@ -585,6 +608,9 @@ __all__ = [
     "V3_8_CANDIDATE_D_QUALIFIED_METHOD",
     "V5_H4_BLR_SIDE_COMPONENT_FLAG",
     "V5_H4_BLR_SIDE_COMPONENT_METHOD",
+    "V5_H4_BLR_PROFILE_FLAG",
+    "V5_H4_BLR_DEFAULT_PROFILE",
+    "V5_H4_BLR_PROFILE_CHOICES",
     "build_v3_7_execution_plan",
     "launch_v3_7_with_task038_watchdog",
     "load_v3_7_official_payload",

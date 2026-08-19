@@ -11,10 +11,12 @@ from petsc4py import PETSc
 from src.solvers.hybrid_local_dtn_woodbury import (
     HYBRID_DTN_WOODBURY_MODE_COUNT,
     MUMPS_BLR_V5_H4_PROFILE,
+    MUMPS_BLR_V5_H4_1E3_PROFILE,
     HybridLocalDtnWoodburyFixedBudgetKrylovAction,
     HybridLocalDtnWoodburyFixedAction,
     HybridLocalDtnWoodburyOracle,
     ResearchExactSideLuAction,
+    mumps_blr_v5_h4_controls,
 )
 
 
@@ -737,7 +739,10 @@ def test_research_exact_side_action_matches_explicit_schur_and_releases_factor(
         F.destroy()
 
 
-@pytest.mark.parametrize("compressed_factor_profile", [None, MUMPS_BLR_V5_H4_PROFILE])
+@pytest.mark.parametrize(
+    "compressed_factor_profile",
+    [None, MUMPS_BLR_V5_H4_PROFILE, MUMPS_BLR_V5_H4_1E3_PROFILE],
+)
 def test_research_exact_side_factor_only_mumps_releases_borrowed_components(
     compressed_factor_profile,
 ):
@@ -803,11 +808,9 @@ def test_research_exact_side_factor_only_mumps_releases_borrowed_components(
             assert diagnostics["general_production"] is False
             assert diagnostics["case_qualification_opt_in"] is False
             assert diagnostics["mumps_controls_verified"] is True
-            assert diagnostics["mumps_controls_observed"] == {
-                "icntl_35": 1,
-                "cntl_7": 1.0e-5,
-                "icntl_14": 80,
-            }
+            assert diagnostics["mumps_controls_observed"] == mumps_blr_v5_h4_controls(
+                compressed_factor_profile
+            )
         F.destroy()
         C.destroy()
         H.destroy()
@@ -891,6 +894,21 @@ def test_research_blr_profile_rejects_non_mumps_factor_solver():
         C.destroy()
         D.destroy()
         H.destroy()
+
+
+def test_research_blr_profile_set_is_frozen_and_unknown_fails_closed():
+    assert mumps_blr_v5_h4_controls(MUMPS_BLR_V5_H4_PROFILE) == {
+        "icntl_35": 1,
+        "cntl_7": 1.0e-5,
+        "icntl_14": 80,
+    }
+    assert mumps_blr_v5_h4_controls(MUMPS_BLR_V5_H4_1E3_PROFILE) == {
+        "icntl_35": 1,
+        "cntl_7": 1.0e-3,
+        "icntl_14": 80,
+    }
+    with pytest.raises(ValueError, match="Unsupported compressed factor profile"):
+        mumps_blr_v5_h4_controls("mumps_blr_v5_h4_unknown")
 
 
 @pytest.mark.parametrize("batch_size", [8, 16, 32])

@@ -83,7 +83,9 @@ from src.solvers.hybrid_local_dtn_woodbury import (
     HybridLocalDtnWoodburyFixedAction,
     HybridLocalDtnWoodburyFixedBudgetKrylovAction,
     MUMPS_BLR_V5_H4_PROFILE,
+    MUMPS_BLR_V5_H4_1E3_PROFILE,
     create_research_exact_side_lu_action,
+    mumps_blr_v5_h4_controls,
 )
 from src.solvers.hybrid_side_subspace_correction import (
     build_fixed_side_error_subspace_correction_action,
@@ -154,6 +156,10 @@ V5_H4_SAMPLED_COLUMN_CONTRACT_PATH = Path(
 )
 V5_H4_BLR_SIDE_PROFILE_ID = "task039.v5.h4.mumps_blr.side_component.v1"
 V5_H4_BLR_SIDE_METHOD = "task039_v5_h4_mumps_blr_side_component"
+V5_H4_BLR_PROFILE_CHOICES = (
+    MUMPS_BLR_V5_H4_PROFILE,
+    MUMPS_BLR_V5_H4_1E3_PROFILE,
+)
 V5_H4_BLR_SIDE_SETUP_PEAK_LIMIT_GIB = 59.7638938904
 V5_H4_BLR_RHS_SPECS = (
     ("physical_side_rhs", "system_rhs", None),
@@ -163,6 +169,12 @@ V5_H4_BLR_RHS_SPECS = (
     ("fixed_random_repeat_0", "random", 773),
     ("fixed_random_repeat_1", "random", 779),
 )
+
+
+def _validate_v5_h4_blr_profile(profile: str) -> str:
+    if profile not in V5_H4_BLR_PROFILE_CHOICES:
+        raise ValueError(f"Unsupported V5 h4 BLR profile: {profile}")
+    return profile
 
 
 def _load_v5_h4_sampled_column_contract(
@@ -365,6 +377,7 @@ def build_v3_7_execution_plan(
     candidate_e_side_only: bool = False,
     v5_h4_setup_only: bool = False,
     v5_h4_blr_side_only: bool = False,
+    v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
     selected_mode_packet_manifest_sha256: str | None = None,
@@ -383,6 +396,8 @@ def build_v3_7_execution_plan(
         payload = specification.as_jsonable()
     else:
         payload = load_v3_7_official_payload(input_path)
+    if v5_h4_blr_side_only:
+        v5_h4_blr_profile = _validate_v5_h4_blr_profile(v5_h4_blr_profile)
     policy = v3_7_watchdog_policy(payload)
     if (
         sum(
@@ -453,6 +468,8 @@ def build_v3_7_execution_plan(
                 str(selected_mode_packet_manifest_sha256),
             ]
         )
+        if v5_h4_blr_side_only and v5_h4_blr_profile != MUMPS_BLR_V5_H4_PROFILE:
+            argv.extend(["--v5-h4-blr-profile", v5_h4_blr_profile])
     if v5_h4_setup_only:
         method = "task039_v5_h4_exact_side_setup_only"
     elif v5_h4_blr_side_only:
@@ -486,6 +503,7 @@ def build_v3_7_execution_plan(
                 )
             ),
             "method": method,
+            "mumps_blr_profile": (v5_h4_blr_profile if v5_h4_blr_side_only else None),
             "hard_stop_authority": "process_tree_rss_bytes",
             "critical_checkpoint_only": True,
             "swap_policy": "immediate_complete_process_tree_termination",
@@ -506,6 +524,7 @@ def v3_7_execution_dry_run(
     candidate_e_side_only: bool = False,
     v5_h4_setup_only: bool = False,
     v5_h4_blr_side_only: bool = False,
+    v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
     selected_mode_packet_manifest_sha256: str | None = None,
@@ -524,6 +543,7 @@ def v3_7_execution_dry_run(
         candidate_e_side_only=candidate_e_side_only,
         v5_h4_setup_only=v5_h4_setup_only,
         v5_h4_blr_side_only=v5_h4_blr_side_only,
+        v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
         selected_mode_packet_identity=selected_mode_packet_identity,
         selected_mode_packet_manifest_sha256=selected_mode_packet_manifest_sha256,
@@ -553,6 +573,7 @@ def launch_v3_7_with_task038_watchdog(
     candidate_e_side_only: bool = False,
     v5_h4_setup_only: bool = False,
     v5_h4_blr_side_only: bool = False,
+    v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
     selected_mode_packet_manifest_sha256: str | None = None,
@@ -604,6 +625,7 @@ def launch_v3_7_with_task038_watchdog(
         candidate_e_side_only=candidate_e_side_only,
         v5_h4_setup_only=v5_h4_setup_only,
         v5_h4_blr_side_only=v5_h4_blr_side_only,
+        v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
         selected_mode_packet_identity=selected_mode_packet_identity,
         selected_mode_packet_manifest_sha256=selected_mode_packet_manifest_sha256,
@@ -1926,13 +1948,17 @@ def run_v5_h4_mumps_blr_side_component(
     marker_callback: Callable[[str, Mapping[str, Any]], None],
     run_directory: str | Path,
     source_identity: Mapping[str, Any],
+    compressed_factor_profile: str = MUMPS_BLR_V5_H4_PROFILE,
 ) -> dict[str, Any]:
     """Run the fixed research-only exact-reference/BLR side component."""
 
+    compressed_factor_profile = _validate_v5_h4_blr_profile(compressed_factor_profile)
     side_reports: dict[str, Any] = {}
     all_reports: list[dict[str, Any]] = []
     contract = {
         "profile": V5_H4_BLR_SIDE_PROFILE_ID,
+        "mumps_blr_profile": compressed_factor_profile,
+        "mumps_controls": mumps_blr_v5_h4_controls(compressed_factor_profile),
         "streaming_batch_size": 8,
         "rhs_specs": [
             {"label": label, "kind": kind, "seed": seed}
@@ -2071,7 +2097,7 @@ def run_v5_h4_mumps_blr_side_component(
             f"v5_blr_candidate_{side}_setup_begin",
             candidate_online_exact_factor_count=0,
             candidate_online_compressed_factor_count=0,
-            expected_profile=MUMPS_BLR_V5_H4_PROFILE,
+            expected_profile=compressed_factor_profile,
             reference_outputs_retained=False,
             reference_artifact_count=len(exact_artifacts),
             reference_artifact_root=str(reference_root / "v5_blr_reference_spool"),
@@ -2097,7 +2123,7 @@ def run_v5_h4_mumps_blr_side_component(
                 qualification_scope=V5_H4_BLR_SIDE_PROFILE_ID,
                 explicit_opt_in=True,
                 factor_only_storage=True,
-                compressed_factor_profile=MUMPS_BLR_V5_H4_PROFILE,
+                compressed_factor_profile=compressed_factor_profile,
                 streaming_w_batch_size=8,
                 lifecycle_callback=lifecycle,
             )
@@ -2294,7 +2320,8 @@ def run_v5_h4_mumps_blr_side_component(
         "research_only": True,
         "general_production": False,
         "profile": V5_H4_BLR_SIDE_PROFILE_ID,
-        "mumps_controls": {"icntl_35": 1, "cntl_7": 1.0e-5, "icntl_14": 80},
+        "mumps_blr_profile": compressed_factor_profile,
+        "mumps_controls": mumps_blr_v5_h4_controls(compressed_factor_profile),
         "packet_identity": _json_safe(source_identity.get("packet_identity")),
         "packet_manifest_sha256": source_identity.get("manifest_sha256"),
         "rhs_contract": contract,
@@ -4347,6 +4374,7 @@ def run_task039_v3_7_diagnostic(
     candidate_e_side_only: bool = False,
     v5_h4_setup_only: bool = False,
     v5_h4_blr_side_only: bool = False,
+    v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: Mapping[str, Any] | None = None,
     selected_mode_packet_manifest_sha256: str | None = None,
@@ -4422,6 +4450,8 @@ def run_task039_v3_7_diagnostic(
 
     try:
         _emit_marker(marker_callback, "diagnostic_entry")
+        if v5_h4_blr_side_only:
+            v5_h4_blr_profile = _validate_v5_h4_blr_profile(v5_h4_blr_profile)
         profile = None
         if not v5_h4_setup_only and not v5_h4_blr_side_only:
             profile = (
@@ -4455,7 +4485,12 @@ def run_task039_v3_7_diagnostic(
                 h_nm=4.0,
                 modal_h_nm=4.0,
             )
-        _emit_marker(marker_callback, "profile_ready", profile_id=profile.profile_id)
+        _emit_marker(
+            marker_callback,
+            "profile_ready",
+            profile_id=profile.profile_id,
+            mumps_blr_profile=(v5_h4_blr_profile if v5_h4_blr_side_only else None),
+        )
         watchdog = v3_7_watchdog_policy(resolved_payload)
         _emit_marker(
             marker_callback,
@@ -4597,6 +4632,7 @@ def run_task039_v3_7_diagnostic(
                     "packet_identity": selected_mode_packet_identity,
                     "manifest_sha256": selected_mode_packet_manifest_sha256,
                 },
+                compressed_factor_profile=v5_h4_blr_profile,
             )
             result["source_sha"] = source_sha
             result["run_directory"] = str(Path(run_directory).resolve())
@@ -5327,6 +5363,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--candidate-e-side-only", action="store_true")
     parser.add_argument("--v5-h4-setup-only", action="store_true")
     parser.add_argument("--v5-h4-blr-side-component", action="store_true")
+    parser.add_argument(
+        "--v5-h4-blr-profile",
+        choices=V5_H4_BLR_PROFILE_CHOICES,
+        default=MUMPS_BLR_V5_H4_PROFILE,
+    )
     parser.add_argument("--selected-mode-packet-manifest")
     parser.add_argument("--selected-mode-packet-identity")
     parser.add_argument("--selected-mode-packet-manifest-sha256")
@@ -5365,6 +5406,7 @@ def main(argv: list[str] | None = None) -> int:
             candidate_e_side_only=args.candidate_e_side_only,
             v5_h4_setup_only=args.v5_h4_setup_only,
             v5_h4_blr_side_only=args.v5_h4_blr_side_component,
+            v5_h4_blr_profile=args.v5_h4_blr_profile,
             selected_mode_packet_manifest=args.selected_mode_packet_manifest,
             selected_mode_packet_identity=(
                 args.selected_mode_packet_identity
@@ -5429,6 +5471,7 @@ def main(argv: list[str] | None = None) -> int:
             candidate_e_side_only=args.candidate_e_side_only,
             v5_h4_setup_only=args.v5_h4_setup_only,
             v5_h4_blr_side_only=args.v5_h4_blr_side_component,
+            v5_h4_blr_profile=args.v5_h4_blr_profile,
             selected_mode_packet_manifest=(
                 args.selected_mode_packet_manifest
                 if args.v5_h4_setup_only or args.v5_h4_blr_side_component
