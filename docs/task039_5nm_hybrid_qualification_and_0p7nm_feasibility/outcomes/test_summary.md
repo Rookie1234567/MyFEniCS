@@ -197,9 +197,24 @@ solver qualification：
 | formal DQ1 MPI8 worker | exit 0 | 5 nm、1°、phi=0、S、p6/h5、M480；数值、recovery、primary Hybrid-direct checker pass |
 | parent resource authority | pass | process-tree RSS 51019.37890625 MiB，swap 0，<=69651.3 MiB |
 | Ruff / changed-file format-check / compileall / git diff-check | pass | 代码阶段已通过；本 turn 是 docs-only closeout |
-| compact JSON / document checks | pass | 本次 docs/evidence closeout；未运行 Python 或 PDE |
+| compact JSON / Markdown links / fenced math / table columns / diff-check | fresh pass | 本次 docs/evidence closeout；未运行 Python focused tests 或 PDE |
 | repository full pytest | cancelled / not_run | 没有声称 full pytest 通过 |
 
 worker checkpoint 的 final_qualification_status 仍为 pending_parent_resource_gate；最终
 case 分类只在 compact record 中由 worker checkpoint 与 parent run_summary 合并得到。
 Full3D strict channel 继续保留为 diagnostic pending，旧 B/C/C1/D/E 负结果未被覆盖。
+
+## V5 fixed-budget component evidence
+
+本轮只做 docs/compact-evidence 收口；以下代码阶段证据沿用同一 `ff89f07bc26aecbab6f60f06408c3ab364e9c5f4`，没有因文档修改重跑 Python 或 MPI：
+
+| Gate | 结果 | 边界 |
+| --- | --- | --- |
+| focused serial / MPI2 / MPI4 | 沿用 ff89 代码阶段已通过的 Task39 focused/tiny evidence | 本轮 docs-only，不重复运行 |
+| Ruff / format / compileall | 沿用 ff89 代码阶段通过 | 本轮无 Python 修改 |
+| `check_benchmarks --no-write` | fresh `302/302 pass` | 本次 docs/evidence closeout 在 qualified activation 下实际重跑，无写入 |
+| fixed-budget setup resource | measured `21.677326202393 GiB <= 59.7638938904 GiB` | numerical stop 后不把 partial run 写成完整 resource qualification |
+| mandatory numerical | modal traction +/− fail；external/random `not_run` | fixed-budget family negative |
+| full repository pytest | `not_run` | 不伪造 CI/full regression |
+
+raw/marker/ledger 的 hash 与 `status=launching`、`exit_status=null`、`ledger=in_progress` 见 [fixed-budget record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v5_fixed_budget_side_krylov_component_v1.json)。

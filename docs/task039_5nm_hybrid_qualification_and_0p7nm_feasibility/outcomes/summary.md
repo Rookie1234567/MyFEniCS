@@ -543,3 +543,19 @@ hash-bound，swap=0。
 | solve/recovery/physics | `not_run` | 不构成完整 iterative qualification |
 
 compact attribution：[V5-2 record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v5_h4_exact_side_memory_attribution_v1.json)。完整阶段、对象容量、invalid preflight invocation 和 generic-ledger coverage gap 见 [V5-2 outcome](v5_h4_exact_side_memory_attribution.md)。
+
+## V5 最终收口：h4 两个 family 与 0.7 nm capacity
+
+本节是 V5 的最终边界入口；它不改写前面保留的 V4、V5-S、BLR 和 raw 负结果，只把 fixed-budget raw 的受控停止补进统一裁决。
+
+| 路径 | 数值 | process-tree / resource | 分类 |
+| --- | --- | --- | --- |
+| h4 Hybrid direct | own numerical/physics pass | `93.377006531 GiB` matched reference | `HYBRID_DIRECT_H4_OWN_PASS` |
+| V4 h4 exact-side iterative | five residual `<=5e-9`，recovery/physics/direct comparison pass | `104.334560394 GiB`，resource regression | numerical/physics pass, resource fail |
+| V5-2 exact-side setup | setup-only `85.376991272 GiB` | advancement `84.039305878 GiB` 未满足 | baseline positive, not full qualification |
+| BLR profiles 1e-5 / 1e-3 | numerical未建立 | `75.89627456665039` / `95.39834594726562 GiB`，均超 `59.7638938904 GiB` | resource fail；family closed |
+| fixed-budget bottom Krylov32 | traction residual `0.748109402736452` / `0.737754681505050`，limit `0.01` | setup `21.677326202393 GiB`，但按数值 Gate 停止 | numerical fail, controlled stop |
+
+V5-8 full formal、top、outer、recovery、field、canonical、R/T/A 均 `not_run`。因此没有数值合格且节省内存的 h4 Hybrid iterative，20% meaningful target `74.701605225 GiB` 未建立；ordinary defaults、Full3D 新 heavy、0.7 nm PDE 和 arbitrary-3D qualification 均未做。
+
+详见 [h4 V5 final](v5_h4_hybrid_iterative_final.md)、[fixed-budget compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v5_fixed_budget_side_krylov_component_v1.json) 和 [0.7 nm capacity envelope](v5_0p7nm_hybrid_capacity.md)。

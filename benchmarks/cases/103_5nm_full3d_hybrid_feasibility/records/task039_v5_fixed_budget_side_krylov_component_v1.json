@@ -1,0 +1,204 @@
+{
+  "schema": "task039.v5.fixed_budget_side_krylov.component.v1",
+  "record_type": "research_component_evidence",
+  "classification": "TASK039_V5_FIXED_BUDGET_SIDE_KRYLOV_NUMERICAL_NEGATIVE_CONTROLLED_STOP",
+  "provenance": {
+    "source_sha": "ff89f07bc26aecbab6f60f06408c3ab364e9c5f4",
+    "branch": "codex/20260812-task39-5nm-hybrid-0p7nm-feasibility",
+    "git_clean_before_formal": true,
+    "formal_preflight_clean": true,
+    "input": "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat",
+    "packet_root": "results/task039_v4_h4_m480_shared_packet_eaad0f94",
+    "manifest_sha256": "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067",
+    "exact_reference_spool": "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/numerical_output",
+    "consumer_qep_calls": 0
+  },
+  "scope": {
+    "physical": "5nm/1deg/phi0/S",
+    "profile": "p6/h4",
+    "M": 480,
+    "mpi_size": 8,
+    "side": "bottom",
+    "fixed_budget": 32,
+    "packet_arrays_hydrated": false,
+    "global_F_materialized": false,
+    "no_new_explicit_component_matrix": true,
+    "ordinary_defaults_unchanged": true
+  },
+  "status": {
+    "worker_status": "launching",
+    "exit_status": null,
+    "ledger_status": "in_progress",
+    "last_persisted_marker": "v5_fixed_budget_probe_external_dtn_coupling_begin",
+    "classification_reason": "controlled_stop_numerical_gate_failure",
+    "numerical_components_pass": false,
+    "resource_pass": null,
+    "setup_resource_gate": {
+      "status": "measured",
+      "peak_bytes": 23275851776,
+      "peak_gib": 21.677326202393,
+      "limit_gib": 59.7638938904,
+      "pass": true,
+      "interval_seconds": [184.573611289, 492.894576008]
+    },
+    "online_resource_evidence": {
+      "status": "partial_observed",
+      "peak_bytes": 23301066752,
+      "peak_gib": 21.70080947876,
+      "pass": null,
+      "gate_role": "evidence_only_until_complete"
+    },
+    "top_outer_recovery_field_rta": "not_run"
+  },
+  "raw_evidence": {
+    "run_root": "results/task039_v5_h4_fixed_budget32_bottom_sideonly_component_mpi8_ff89f07b",
+    "run_manifest.json": {
+      "sha256": "4fe92c6d6eeaa3641b5e4f5f9e5d796c2c451fadb0f32f3d535ba0567573a868",
+      "status": "launching",
+      "exit_status": null,
+      "result_classification": "not_run"
+    },
+    "run_summary.json": {
+      "sha256": "3db50c42871854e5f47fb7efa88068e3aad6d0c969affac247e96d0b137eaf12",
+      "status": "launching",
+      "exit_status": null,
+      "result_classification": "not_run"
+    },
+    "memory_object_ledger.json": {
+      "sha256": "194f9d4a9f9ef232ea21cd6590ebf8001297c7e954927f39e6ae6928098dea33",
+      "status": "in_progress"
+    },
+    "memory_stage_markers.raw.jsonl": "0d3247c4059b8f63332a2cd082fecbf13cca4cc66e04f94595545d35d0a0c80f",
+    "memory_stages.jsonl": "64e4716b0f5fdabf684d0147affb277af0efe802b48df62f66b2782bd5680a22",
+    "process_tree_samples.jsonl": "f7bfeeeb23c7f34f0414a16f461fd3291c14ae3ab800ac5214a7ebb7ce7888f8"
+  },
+  "reference_spool": {
+    "status": "validated_before_candidate",
+    "rank_count": 8,
+    "artifact_count": 96,
+    "labels": [
+      "physical_side_rhs",
+      "modal_traction_positive",
+      "modal_traction_negative",
+      "external_dtn_coupling",
+      "fixed_random_repeat_0",
+      "fixed_random_repeat_1"
+    ],
+    "physical_side_rhs_degenerate_uninformative": true,
+    "other_labels_mandatory": true,
+    "reference_outputs_retained_during_candidate_setup": false,
+    "pairing_authority": "same label/role, packet identity, global coverage, ownership metadata and independent array hashes; exact-output metadata historically carries label only"
+  },
+  "observed_probes": [
+    {
+      "label": "physical_side_rhs",
+      "degenerate_uninformative": true,
+      "finite": true,
+      "reference_relative_error": 0.0,
+      "true_residual_relative": 0.0,
+      "repeat_relative_error": 0.0,
+      "numerical_gate": "not_applicable_informational"
+    },
+    {
+      "label": "modal_traction_positive",
+      "degenerate_uninformative": false,
+      "finite": true,
+      "reference_relative_error": 2.4631325237984236,
+      "true_residual_relative": 0.748109402736452,
+      "repeat_relative_error": 0.0,
+      "true_residual_limit": 0.01,
+      "numerical_gate": "fail"
+    },
+    {
+      "label": "modal_traction_negative",
+      "degenerate_uninformative": false,
+      "finite": true,
+      "reference_relative_error": 2.1247964751306436,
+      "true_residual_relative": 0.73775468150505,
+      "repeat_relative_error": 0.0,
+      "true_residual_limit": 0.01,
+      "numerical_gate": "fail"
+    },
+    {
+      "label": "external_dtn_coupling",
+      "status": "begin_marker_only",
+      "numerical_gate": "not_run"
+    },
+    {
+      "label": "fixed_random_repeat_0",
+      "status": "not_run",
+      "numerical_gate": "not_run"
+    },
+    {
+      "label": "fixed_random_repeat_1",
+      "status": "not_run",
+      "numerical_gate": "not_run"
+    }
+  ],
+  "factor_inventory": {
+    "base_factor": {
+      "type": "ILU0",
+      "count": 1,
+      "rows": 132300,
+      "source_nnz": 105038640,
+      "csr_payload_bytes_derived": 2101302064,
+      "setup_seconds": 154.95006559800822,
+      "ksp_created": false
+    },
+    "exact_factor_count": 0,
+    "global_direct_factor_count": 0,
+    "woodbury": {
+      "W_local_nbytes": 80076288,
+      "resident": true,
+      "streaming": false,
+      "K_rank": 296,
+      "K_condition": 8.988237610887287,
+      "K_bytes": 1401856,
+      "LU_array_bytes": 1401856,
+      "pivots_bytes": 1184,
+      "LU_plus_pivots_bytes": 1403040,
+      "setup_factor_solves": 296,
+      "setup_D_applies": 296,
+      "setup_batch_count": 1,
+      "setup_seconds": 153.26140426500933
+    },
+    "ksp": {
+      "type": "FGMRES",
+      "restart": 32,
+      "outer_solve": "not_run",
+      "last_persisted_inner_reason": -3,
+      "last_persisted_inner_iteration": 32
+    }
+  },
+  "lifecycle": {
+    "candidate_persisted_apply_counts": {
+      "physical_side_rhs": 2,
+      "modal_traction_positive": 4,
+      "modal_traction_negative": 6
+    },
+    "candidate_last_persisted_state": {
+      "action_destroyed": false,
+      "inner_ksp_destroyed": false,
+      "pc_context_destroyed": false
+    },
+    "exact_factor_count_after_cleanup": null,
+    "base_factor_count_after_cleanup": null,
+    "global_factor_count_after_cleanup": null,
+    "cleanup_status": "not_available_no_final_cleanup_marker",
+    "cleanup_pass": null,
+    "process_tree_after_stop": "cleared; no residual heavy process"
+  },
+  "comparison_and_boundary": {
+    "matched_h4_direct_process_tree_peak_gib": 93.377006531,
+    "v4_exact_side_iterative_process_tree_peak_gib": 104.334560394,
+    "advancement_line_gib": 84.039305878,
+    "meaningful_20_percent_target_gib": 74.701605225,
+    "resource_interpretation": "setup interval is below the limit, but this is not a completed resource qualification because the run stopped on mandatory numerical failure",
+    "official_rta_a_field": "not_run"
+  },
+  "test_boundary": {
+    "code_sha": "ff89f07bc26aecbab6f60f06408c3ab364e9c5f4",
+    "docs_only_closeout": true,
+    "full_pytest": "not_run"
+  }
+}

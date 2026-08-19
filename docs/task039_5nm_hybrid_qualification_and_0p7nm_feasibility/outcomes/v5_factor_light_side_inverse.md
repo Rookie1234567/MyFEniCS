@@ -129,3 +129,22 @@ Review V5 §14.1 的下一步只保留 physics-aware fixed-budget side Krylov co
 |---|---|---|---|---|
 | `mumps_blr_v5_h4` | `8fd398f2c002cc3234c0a8cae60a47aacd88019e4f5700c66edf1f562e9e2af6` | `0116f18b9d2c21ba7692adec5980eeec10065057a20e8f4062cabe22312c3c32` | `fcb4fc8a7c6dcd022e8ef7233218fea9e34fd9f64f95f39fad4ea4c261f9026a` | `00494ff7a07a5c073b9cd64d1ffae55ca6b394827a91b4b7861dfe1612009a41` |
 | `mumps_blr_v5_h4_1e3` | `e0f04e112b99d4b96b78e9f083cfa0e8aad0d8d2e7c070a7eb1e1a4030ae9342` | `85a074096459a82e162fa0b8b63f9365bc6dafed215a00c8f130662c2a4a66c6` | `a2390feee04b852b6299f50ba49b7c5ecb7e88adfaab14ced5d84b9641475d7a` | `ef1896483272fcb052ba8bba04e8269f5090b5506666d6a97b335703888c50f5` |
+
+## Fixed-budget physics-aware side Krylov family
+
+压缩因子路线的两个冻结 profile 已经耗尽且均未通过资源门；Review V5 §14.1 的第二个、也是最后一个 family 是固定预算的 bottom side Krylov 组件。它只用固定预算 `32` 尝试近似侧逆，不是普通 ILU 扫描，也不是新的 production solver。
+
+正式 raw 为 [`fixed-budget bottom raw`](../../../results/task039_v5_h4_fixed_budget32_bottom_sideonly_component_mpi8_ff89f07b)。该轮在两个非退化 traction probe 上得到真实数值负结果，随后按 numerical Gate 停止；没有把未运行的 probe 或 cleanup 伪写成通过。
+
+| 项目 | measured / derived evidence | 裁决 |
+| --- | --- | --- |
+| fixed budget / scope | `32`, bottom-only, p6/h4, M480, MPI8, packet QEP calls `0` | frozen research component |
+| setup closed interval | `23275851776 B = 21.677326202393 GiB`, interval `[184.573611289,492.894576008] s` | setup resource sample pass；不是完整 run resource qualification |
+| physical RHS | `degenerate_uninformative=true`, residual/repeat `0/0` | informational only |
+| modal traction + | true residual `0.748109402736452`，limit `0.01` | fail |
+| modal traction - | true residual `0.737754681505050`，limit `0.01` | fail |
+| external/random probes | external 只有 begin；两组 random 未运行 | not_run |
+| factor identity | ILU0 base `1`；exact/global direct `0/0` | observed before stop |
+| cleanup | 无 final cleanup marker；factor-after-destroy/action cleanup | not_available |
+
+最终分类为 `TASK039_V5_FIXED_BUDGET_SIDE_KRYLOV_NUMERICAL_NEGATIVE_CONTROLLED_STOP`。这不是资源超限：setup sample 低于 `59.7638938904 GiB`，但 mandatory numerical Gate 已失败，不能进入 top/outer/recovery，也不能生成 official R/T/A。完整字段、raw SHA 与 `status=launching`/`exit_status=null`/`ledger=in_progress` 的边界见 [fixed-budget compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v5_fixed_budget_side_krylov_component_v1.json)。

@@ -2433,3 +2433,18 @@ bottom/top factor count=`0/0`，packet consumer `qep_calls=0`、swap=0。
 首次错误 packet 路径 run 保留为 `invalid_preflight_invocation`，不计入重型尝试；generic
 memory ledger 未覆盖 exact-side action/factor，专用 15-marker stream 与 diagnostic 才是本
 次对象证据 authority。普通 defaults 未改变。
+
+## Task039 Review V5 最终证据收口
+
+V5 的两个压缩 family 已关闭：两个冻结 BLR profile 均超过 side setup resource limit；唯一 fixed-budget=32 bottom side Krylov 的 setup interval 资源样本为 `21.677326202393 GiB`，但 modal traction positive/negative true residual 为 `0.748109402736452` / `0.737754681505050`，远高于 `1e-2`，因此按 numerical Gate controlled-stop。该轮没有 top/outer/recovery/RTA/field，也没有生成 official result。
+
+| 状态 | 结论 |
+| --- | --- |
+| h4 direct | `93.377006531 GiB` matched reference，own numerical/physics pass |
+| V4 exact-side iterative | `104.334560394 GiB`，numerical/physics pass but resource regression |
+| V5 exact-side setup/compaction/streaming | 既有 measured/derived research evidence；无 fresh h4 full-solve RSS |
+| BLR family | resource fail；不得第三 profile或V5-8 BLR full formal |
+| fixed-budget family | resource sample pass、mandatory numerical fail，`controlled_stop_numerical_gate_failure` |
+| 0.7 nm / Full3D new heavy | not_run；capacity仅 derived/predicted conditional envelope |
+
+当前不存在数值合格且节省内存的 h4 Hybrid iterative；ordinary defaults unchanged。入口：[V5 h4 final](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v5_h4_hybrid_iterative_final.md)、[0.7 nm capacity](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v5_0p7nm_hybrid_capacity.md)。
