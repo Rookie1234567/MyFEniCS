@@ -4,6 +4,7 @@ from dataclasses import replace
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 from dolfinx import fem
 from mpi4py import MPI
 from petsc4py import PETSc
@@ -12,7 +13,10 @@ from src.common.config_3d import (
     ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
     target_stage4_config,
 )
-from src.coupling.hybrid_internal_modes import build_hybrid_internal_mode_coupling
+from src.coupling.hybrid_internal_modes import (
+    build_hybrid_internal_mode_coupling,
+    build_single_hybrid_interface_mode_owner,
+)
 from src.modes.cross_section_spaces import (
     build_cross_section_spaces,
     build_matching_cross_section,
@@ -38,6 +42,12 @@ from src.solvers.hybrid_local_dtn import assemble_hybrid_local_dtn_system
 from src.solvers.hybrid_local_dtn_action import (
     assemble_hybrid_local_dtn_action_system,
     create_hybrid_local_dtn_action_components,
+)
+from src.solvers.hybrid_petrov_sources import (
+    build_v6_discrete_gradient_source_provider,
+    build_v6_factor_free_source_vector,
+    v6_port_modal_training_schedule,
+    v6_single_interface_modal_provider,
 )
 
 
@@ -278,6 +288,131 @@ class TestTask037bHybridLocalDtnAction:
                     actual_target.destroy()
                     reference_source.destroy()
                     actual_source.destroy()
+
+    def test_v6_single_bottom_owner_modal_routes_and_reusable_gradient(self):
+        system = self.action["bottom"]
+        owner = build_single_hybrid_interface_mode_owner(
+            system,
+            self.spaces,
+            self.positive,
+            self.negative,
+        )
+        components = create_hybrid_local_dtn_action_components(system)
+        modal_provider = v6_single_interface_modal_provider(owner)
+        gradient_provider = build_v6_discrete_gradient_source_provider(owner)
+        schedule = v6_port_modal_training_schedule(mode_count=2, source_count=512)
+        vectors = []
+        try:
+            assert owner.audit["opposite_side_constructed"] is False
+            assert owner.audit["exact_one_cell"] is False
+            for item, role, family in (
+                (schedule[1], "right", "positive_modal_traction"),
+                (schedule[2], "right", "negative_modal_traction"),
+                (schedule[1], "left", "positive_modal_dual"),
+                (schedule[2], "left", "negative_modal_dual"),
+            ):
+                assert item[f"{role}_family"] == family
+                vector, metadata = build_v6_factor_free_source_vector(
+                    system,
+                    components,
+                    item,
+                    role=role,
+                    modal_provider=modal_provider,
+                    near_null_provider=gradient_provider,
+                )
+                vectors.append(vector)
+                assert metadata["family"] == family
+                assert metadata["factor_free"] is True
+                assert metadata["source"] == "factor_free_modal_provider"
+                selector = item[f"{role}_selector"]
+                column = int(selector["column"])
+                if family == "positive_modal_traction":
+                    expected = owner.blocks.positive_traction.getColumnVector(column)
+                elif family == "negative_modal_traction":
+                    expected = owner.blocks.negative_traction.getColumnVector(column)
+                else:
+                    coefficient = owner.blocks.projection.createVecLeft()
+                    coefficient.set(0.0)
+                    first, last = (
+                        int(value) for value in coefficient.getOwnershipRange()
+                    )
+                    if family == "positive_modal_dual":
+                        values = np.zeros(last - first, dtype=np.complex128)
+                        if first <= column < last:
+                            values[column - first] = 1.0 + 0.0j
+                    else:
+                        values = owner.blocks.negative_trace_to_positive[
+                            first:last, column
+                        ]
+                    coefficient.getArray()[:] = values
+                    coefficient.assemble()
+                    expected = owner.blocks.projection.createVecRight()
+                    adjoint = PETSc.Mat()
+                    owner.blocks.projection.hermitianTranspose(adjoint)
+                    try:
+                        adjoint.mult(coefficient, expected)
+                    finally:
+                        adjoint.destroy()
+                        coefficient.destroy()
+                try:
+                    assert _relative_vector_error(vector, expected) <= 1.0e-12
+                finally:
+                    expected.destroy()
+
+            gradient_item = schedule[4]
+            first, first_audit = gradient_provider(
+                system, gradient_item["right_selector"], "right"
+            )
+            repeat, repeat_audit = gradient_provider(
+                system, gradient_item["right_selector"], "right"
+            )
+            second, second_audit = gradient_provider(
+                system,
+                {
+                    "selector": "cross_section_discrete_gradient_potential",
+                    "potential_ordinal": 1,
+                },
+                "right",
+            )
+            try:
+                assert first_audit["trace_only_verified"] is True
+                assert first_audit["setup_count"] == 1
+                assert repeat_audit["setup_count"] == 1
+                assert second_audit["setup_count"] == 1
+                assert second_audit["apply_count"] == 3
+                assert first_audit["global_l2_norm"] > 1.0e-30
+                assert second_audit["global_l2_norm"] > 1.0e-30
+                assert _relative_vector_error(first, repeat) <= 1.0e-12
+                assert _relative_vector_error(first, second) > 1.0e-8
+            finally:
+                first.destroy()
+                repeat.destroy()
+                second.destroy()
+
+            with pytest.raises(ValueError, match="another system"):
+                modal_provider(
+                    self.action["top"], schedule[1]["right_selector"], "right"
+                )
+            with pytest.raises(ValueError, match="another system"):
+                gradient_provider(
+                    self.action["top"], gradient_item["right_selector"], "right"
+                )
+        finally:
+            gradient_provider.destroy()
+            components.destroy()
+            for vector in vectors:
+                vector.destroy()
+            owner.destroy()
+
+        with pytest.raises(RuntimeError, match="destroyed"):
+            gradient_provider(
+                system,
+                {
+                    "selector": "cross_section_discrete_gradient_potential",
+                    "potential_ordinal": 0,
+                },
+                "right",
+            )
 
     def _assert_global_action(self, source: PETSc.Vec, label: str):
         expected = self.oracle_action.createVecLeft()

@@ -7,7 +7,7 @@ dense modal arrays are not a scalable production API for the 0.7 nm target.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
 import ufl
@@ -82,6 +82,65 @@ class HybridInterfaceModeBlocks:
         self.projection.destroy()
         self.positive_traction.destroy()
         self.negative_traction.destroy()
+
+
+@dataclass
+class SingleHybridInterfaceModeOwner:
+    """Research-only owner for exactly one internal interface."""
+
+    system: HybridLocalDtnSystem
+    spaces: CrossSectionSpaces
+    projection: ModalTraceProjection
+    blocks: HybridInterfaceModeBlocks
+    positive_traction_beta_per_nm: tuple[complex, ...]
+    negative_traction_beta_per_nm: tuple[complex, ...]
+    audit: dict[str, object]
+    surface_load: Any | None = None
+    _destroyed: bool = False
+
+    def assemble_surface_source(
+        self, source: fem.Function, *, role: str
+    ) -> tuple[PETSc.Vec, dict[str, object]]:
+        """Assemble one owned trace-only source through the existing surface path."""
+
+        if self._destroyed or self.surface_load is None:
+            raise RuntimeError("Single interface owner is destroyed")
+        entries = self.surface_load.assemble(source, role=role)
+        if entries.full_vector is not None:
+            entries.full_vector.destroy()
+            raise RuntimeError(
+                "Single interface source requires trace-only surface reduction"
+            )
+        if not entries.tangential_surface_trace_only_verified:
+            raise RuntimeError(
+                "Single interface source lacks verified static trace-only reduction"
+            )
+        target = self.system.A.createVecRight()
+        try:
+            target.set(0.0)
+            target.setValues(
+                np.asarray(entries.matrix_rows, dtype=PETSc.IntType),
+                np.asarray(entries.matrix_values, dtype=PETSc.ScalarType),
+                addv=PETSc.InsertMode.ADD_VALUES,
+            )
+            target.assemble()
+        except Exception:
+            target.destroy()
+            raise
+        return target, {
+            "role": str(role),
+            "queries": int(entries.queries),
+            "trace_only_verified": bool(entries.tangential_surface_trace_only_verified),
+            "surface_load_full_vector": False,
+        }
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self.blocks.destroy()
+        self.projection.destroy()
+        self.surface_load = None
+        self._destroyed = True
 
 
 @dataclass
@@ -1519,6 +1578,130 @@ def _build_interface_blocks(
         ),
         surface_reduction_audits=tuple(surface_load.reduction_audits),
     )
+
+
+def build_single_hybrid_interface_mode_owner(
+    system: HybridLocalDtnSystem,
+    spaces: CrossSectionSpaces,
+    positive_basis: BiorthogonalModeBasis,
+    negative_basis: BiorthogonalModeBasis,
+    *,
+    canonical_trace_gate_policy: str | None = None,
+    canonical_trace_family_sha256: str | None = None,
+    log=None,
+) -> SingleHybridInterfaceModeOwner:
+    """Build one factor-free internal interface without constructing its mate.
+
+    This is a narrow V6 research seam around the existing projection,
+    canonical-trace, scalar-CG beta, and interface-block builders.  It never
+    creates an opposite-side system or enters the exact one-cell path.
+    """
+
+    if system.side not in {"bottom", "top"}:
+        raise ValueError("Single interface owner requires side=bottom or top")
+    if int(system.cfg.nedelec_degree) != int(spaces.transverse_degree):
+        raise ValueError(
+            "Single interface owner requires matching Nedelec and transverse degrees"
+        )
+    mode_count = len(positive_basis.modes)
+    if mode_count == 0 or len(negative_basis.modes) != mode_count:
+        raise ValueError("Single interface owner requires equal nonzero bases")
+    if any(mode.direction != "forward" for mode in positive_basis.modes):
+        raise ValueError("Positive interface basis must be forward")
+    if any(mode.direction != "backward" for mode in negative_basis.modes):
+        raise ValueError("Negative interface basis must be backward")
+
+    projection = ModalTraceProjection(spaces, positive_basis)
+    raw_negative_traces: list[fem.Function] = []
+    canonical_negative_traces: list[fem.Function] = []
+    blocks: HybridInterfaceModeBlocks | None = None
+    surface_load = None
+    try:
+        raw_negative_traces = [
+            _trace_from_full_mode_vector(
+                mode.right.right_full,
+                spaces,
+                name=f"task039_v6_{system.side}_negative_trace_{column}",
+            )
+            for column, mode in enumerate(negative_basis.modes)
+        ]
+        canonical_mapping = np.column_stack(
+            [projection.project(trace) for trace in raw_negative_traces]
+        )
+        canonical_negative_traces = _canonicalized_negative_traces(
+            projection, canonical_mapping
+        )
+        positive_betas = tuple(
+            scalar_cg_discrete_traction_beta(
+                mode.beta,
+                degree=int(system.cfg.nedelec_degree),
+                h_nm=float(system.cfg.mesh_target_size),
+                direction="forward",
+            )
+            for mode in positive_basis.modes
+        )
+        negative_betas = tuple(
+            scalar_cg_discrete_traction_beta(
+                mode.beta,
+                degree=int(system.cfg.nedelec_degree),
+                h_nm=float(system.cfg.mesh_target_size),
+                direction="backward",
+            )
+            for mode in negative_basis.modes
+        )
+        blocks = _build_interface_blocks(
+            system,
+            spaces,
+            projection,
+            positive_basis,
+            negative_basis,
+            raw_negative_traces,
+            canonical_negative_traces,
+            canonical_mapping,
+            _ReusableModeTractionEvaluator(spaces),
+            positive_betas,
+            negative_betas,
+            traction_override=None,
+            log=log,
+            canonical_trace_gate_policy=canonical_trace_gate_policy,
+            canonical_trace_family_sha256=canonical_trace_family_sha256,
+        )
+        surface_load = _ReusableInterfaceSurfaceLoad(system)
+        return SingleHybridInterfaceModeOwner(
+            system=system,
+            spaces=spaces,
+            projection=projection,
+            blocks=blocks,
+            positive_traction_beta_per_nm=positive_betas,
+            negative_traction_beta_per_nm=negative_betas,
+            surface_load=surface_load,
+            audit={
+                "side": system.side,
+                "mode_count_per_direction": mode_count,
+                "modal_traction_model": "scalar_cg_discrete_derivative",
+                "factor_free": True,
+                "exact_one_cell": False,
+                "opposite_side_constructed": False,
+                "projection_identity_error": float(
+                    blocks.positive_projection_identity_error
+                ),
+                "negative_trace_to_positive_shape": list(canonical_mapping.shape),
+                "negative_trace_to_positive_condition": float(
+                    np.linalg.cond(canonical_mapping)
+                ),
+                "negative_trace_to_positive_finite": bool(
+                    np.isfinite(canonical_mapping).all()
+                ),
+            },
+        )
+    except Exception:
+        if blocks is not None:
+            blocks.destroy()
+        projection.destroy()
+        raise
+    finally:
+        raw_negative_traces.clear()
+        canonical_negative_traces.clear()
 
 
 def build_hybrid_internal_mode_coupling(
