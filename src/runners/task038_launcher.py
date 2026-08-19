@@ -47,6 +47,8 @@ PopenFactory = Callable[..., Any]
 SampleFactory = Callable[[int], dict[str, Any]]
 TerminateFactory = Callable[[Any], dict[str, Any]]
 V5_H4_BLR_SIDE_SETUP_PEAK_LIMIT_GIB = 59.7638938904
+V6_H4_POST_COMPACTION_SETUP_PEAK_LIMIT_GIB = 42.019652939
+V6_H4_POST_COMPACTION_SETUP_HARD_STOP_BYTES = 45118258790
 
 
 def _v5_h4_blr_candidate_interval_peak(
@@ -126,6 +128,159 @@ def _v5_h4_blr_candidate_interval_peak(
         "limit_gib": V5_H4_BLR_SIDE_SETUP_PEAK_LIMIT_GIB,
         "pass": bool(peak_gib <= V5_H4_BLR_SIDE_SETUP_PEAK_LIMIT_GIB),
         "time_basis": "parent_process_tree_sample_elapsed_seconds",
+    }
+
+
+def _v6_post_compaction_resource_authority(
+    memory_stages_path: Path,
+    process_samples_path: Path,
+    object_ledger_path: Path,
+    *,
+    input_absolute_terminate_memory_bytes: int | None,
+    effective_absolute_terminate_memory_bytes: int,
+    setup_limit_gib: float,
+    outer_ready_limit_gib: float,
+    poll_interval_seconds: float,
+) -> dict[str, Any]:
+    """Summarize V6 parent samples and finalizer fields without guessing."""
+
+    stage_rows: list[dict[str, Any]] = []
+    samples: list[dict[str, Any]] = []
+    try:
+        with memory_stages_path.open(encoding="utf-8") as stream:
+            stage_rows = [json.loads(line) for line in stream]
+        with process_samples_path.open(encoding="utf-8") as stream:
+            samples = [json.loads(line) for line in stream]
+    except (OSError, json.JSONDecodeError):
+        stage_rows = []
+        samples = []
+
+    measured_samples = [
+        row
+        for row in samples
+        if row.get("sample_status") == "measured"
+        and isinstance(row.get("rss_bytes"), int)
+        and isinstance(row.get("swap_bytes"), int)
+    ]
+    if measured_samples:
+        peak_rss = max(int(row["rss_bytes"]) for row in measured_samples)
+        peak_swap = max(int(row["swap_bytes"]) for row in measured_samples)
+        overall = {
+            "status": "measured",
+            "peak_process_tree_rss_bytes": peak_rss,
+            "peak_process_tree_rss_gib": peak_rss / 1024**3,
+            "peak_swap_bytes": peak_swap,
+            "zero_swap": peak_swap == 0,
+            "pass": bool(peak_rss / 1024**3 <= setup_limit_gib),
+        }
+        swap = {
+            "status": "measured",
+            "peak_swap_bytes": peak_swap,
+            "zero_swap": peak_swap == 0,
+            "pass": peak_swap == 0,
+        }
+    else:
+        overall = {
+            "status": "not_available",
+            "peak_process_tree_rss_bytes": None,
+            "peak_process_tree_rss_gib": None,
+            "peak_swap_bytes": None,
+            "zero_swap": None,
+            "pass": False,
+        }
+        swap = {
+            "status": "not_available",
+            "peak_swap_bytes": None,
+            "zero_swap": None,
+            "pass": False,
+        }
+
+    outer_rows = [
+        row
+        for row in stage_rows
+        if row.get("stage") == "outer_ksp_setup_ready"
+        and row.get("sample_status") == "measured"
+        and isinstance(row.get("rss_bytes"), int)
+    ]
+    if len(outer_rows) == 1:
+        outer_rss = int(outer_rows[0]["rss_bytes"])
+        outer_ready = {
+            "status": "measured",
+            "sample_elapsed_seconds": outer_rows[0].get("sample_elapsed_seconds"),
+            "process_tree_rss_bytes": outer_rss,
+            "process_tree_rss_gib": outer_rss / 1024**3,
+            "limit_gib": outer_ready_limit_gib,
+            "pass": bool(outer_rss / 1024**3 <= outer_ready_limit_gib),
+        }
+    else:
+        outer_ready = {
+            "status": "not_available",
+            "sample_elapsed_seconds": None,
+            "process_tree_rss_bytes": None,
+            "process_tree_rss_gib": None,
+            "limit_gib": outer_ready_limit_gib,
+            "pass": False,
+        }
+
+    lifecycle = {
+        "status": "not_available",
+        "factor_count_after_final_cleanup": None,
+        "packet_qep_refs_released": None,
+        "pass": False,
+    }
+    try:
+        ledger = json.loads(object_ledger_path.read_text(encoding="utf-8"))
+        objects = ledger.get("objects", {})
+        action_details = objects.get("exact_side_factors", {}).get("details", {})
+        counts = action_details.get("factor_count_after_cleanup")
+        qep_released = all(
+            objects.get(name, {}).get("destroyed") is True
+            for name in ("qep_matrices", "selected_basis")
+        )
+        if (
+            isinstance(counts, Mapping)
+            and all(
+                isinstance(counts.get(side), int) and counts.get(side) == 0
+                for side in ("bottom", "top")
+            )
+            and all(name in objects for name in ("qep_matrices", "selected_basis"))
+        ):
+            lifecycle = {
+                "status": "measured",
+                "factor_count_after_final_cleanup": {
+                    side: int(counts[side]) for side in ("bottom", "top")
+                },
+                "packet_qep_refs_released": qep_released,
+                "pass": qep_released,
+                "source": "memory_object_ledger",
+            }
+    except (OSError, json.JSONDecodeError, AttributeError):
+        pass
+
+    complete = all(
+        item["status"] == "measured" for item in (overall, outer_ready, swap, lifecycle)
+    )
+    return {
+        "status": "measured" if complete else "not_available",
+        "input_absolute_terminate_memory_bytes": input_absolute_terminate_memory_bytes,
+        "effective_absolute_terminate_memory_bytes": effective_absolute_terminate_memory_bytes,
+        "effective_hard_stop_memory_gib": effective_absolute_terminate_memory_bytes
+        / 1024**3,
+        "process_tree_termination_enforced": True,
+        "poll_interval_seconds": poll_interval_seconds,
+        "setup_peak_limit_gib": setup_limit_gib,
+        "outer_ready_peak_limit_gib": outer_ready_limit_gib,
+        "overall_process_tree": overall,
+        "outer_ksp_setup_ready": outer_ready,
+        "swap": swap,
+        "final_lifecycle": lifecycle,
+        "resource_pass": bool(
+            complete
+            and overall["pass"]
+            and outer_ready["pass"]
+            and swap["pass"]
+            and lifecycle["pass"]
+        ),
     }
 
 
@@ -494,6 +649,9 @@ def _run_worker(
     formal_v5_h4_fixed_budget = (
         getattr(plan, "method", "") == "task039_v5_h4_fixed_budget_bottom_component"
     )
+    formal_v6_h4_setup = (
+        getattr(plan, "method", "") == "task039_v6_h4_post_compaction_setup_only"
+    )
     formal_telemetry = (
         formal_v2_h5
         or formal_v3_2d
@@ -502,6 +660,7 @@ def _run_worker(
         or formal_v5_h4_setup
         or formal_v5_h4_blr
         or formal_v5_h4_fixed_budget
+        or formal_v6_h4_setup
     )
     if task039_model_id_matches(method, model_id, requested_modes):
         task039_budget = _task039_memory_budget(execution)
@@ -526,6 +685,9 @@ def _run_worker(
     else:
         absolute_terminate_memory_bytes = None
         critical_limit = None
+    if formal_v6_h4_setup:
+        absolute_terminate_memory_bytes = V6_H4_POST_COMPACTION_SETUP_HARD_STOP_BYTES
+        terminate_limit = float(absolute_terminate_memory_bytes)
     timeout = float(execution["timeout_seconds"])
     sample_count = 0
     peak_authority = 0
@@ -596,6 +758,7 @@ def _run_worker(
                 or formal_v5_h4_setup
                 or formal_v5_h4_blr
                 or formal_v5_h4_fixed_budget
+                or formal_v6_h4_setup
             )
             or formal_stage_stream is None
         ):
@@ -611,6 +774,7 @@ def _run_worker(
                 or formal_v5_h4_setup
                 or formal_v5_h4_blr
                 or formal_v5_h4_fixed_budget
+                or formal_v6_h4_setup
             ) and stage_index is None:
                 stage_index = formal_aligned_stage_count
             row = {
@@ -655,6 +819,7 @@ def _run_worker(
             or formal_v5_h4_setup
             or formal_v5_h4_blr
             or formal_v5_h4_fixed_budget
+            or formal_v6_h4_setup
         ):
             formal_stages_path.unlink(missing_ok=True)
             formal_stage_stream = formal_stages_path.open("a", encoding="utf-8")
@@ -740,6 +905,7 @@ def _run_worker(
         or formal_v5_h4_setup
         or formal_v5_h4_blr
         or formal_v5_h4_fixed_budget
+        or formal_v6_h4_setup
     ) and not formal_object_ledger_path.exists():
         _write_json(
             formal_object_ledger_path,
@@ -963,6 +1129,60 @@ def _run_worker(
             "top": "not_run_by_bottom_only_contract",
             "gate_basis": "candidate_setup_interval_only",
             "online_and_overall_role": "evidence_only_not_advancement_gate",
+        }
+    if formal_v6_h4_setup:
+        v6_resource = _v6_post_compaction_resource_authority(
+            formal_stages_path,
+            formal_samples_path,
+            formal_object_ledger_path,
+            input_absolute_terminate_memory_bytes=(
+                None
+                if task039_budget is None
+                else task039_budget.get("absolute_terminate_memory_bytes")
+            ),
+            effective_absolute_terminate_memory_bytes=(
+                int(absolute_terminate_memory_bytes)
+                if absolute_terminate_memory_bytes is not None
+                else V6_H4_POST_COMPACTION_SETUP_HARD_STOP_BYTES
+            ),
+            setup_limit_gib=V6_H4_POST_COMPACTION_SETUP_PEAK_LIMIT_GIB,
+            outer_ready_limit_gib=35.0,
+            poll_interval_seconds=poll_interval,
+        )
+        resource_authority["v6_h4_post_compaction_setup_telemetry"] = {
+            "raw_marker_path": str(formal_markers_path),
+            "process_tree_samples_path": str(formal_samples_path),
+            "memory_stages_path": str(formal_stages_path),
+            "memory_object_ledger_path": str(formal_object_ledger_path),
+            "sample_count": sample_count,
+            "process_tree_sample_count": formal_written_sample_count,
+            "aligned_stage_count": formal_aligned_stage_count,
+            "stage_source": "launcher_marker_alignment",
+            "method_override": {
+                "input_absolute_terminate_memory_bytes": (
+                    v6_resource["input_absolute_terminate_memory_bytes"]
+                ),
+                "effective_absolute_terminate_memory_bytes": (
+                    v6_resource["effective_absolute_terminate_memory_bytes"]
+                ),
+                "effective_hard_stop_memory_gib": (
+                    v6_resource["effective_hard_stop_memory_gib"]
+                ),
+                "process_tree_termination_enforced": True,
+            },
+            "gate_contract": {
+                "setup_peak_limit_gib": V6_H4_POST_COMPACTION_SETUP_PEAK_LIMIT_GIB,
+                "outer_ready_peak_limit_gib": 35.0,
+                "setup_marker_sequence": "V5_H4_SETUP_ONLY_MARKERS",
+                "outer_ready_marker": "outer_ksp_setup_ready",
+                "gate_role": "v6_setup_only",
+            },
+            "absolute_terminate_memory_bytes": (
+                V6_H4_POST_COMPACTION_SETUP_HARD_STOP_BYTES
+            ),
+            "require_zero_swap": True,
+            "poll_interval_seconds": poll_interval,
+            "authority": v6_resource,
         }
     if formal_v3_2d:
         resource_authority["v3_2d_formal_telemetry"] = {

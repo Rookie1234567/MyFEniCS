@@ -183,6 +183,7 @@ V6_H4_POST_COMPACTION_PROFILE_ID = (
 )
 V6_H4_POST_COMPACTION_METHOD = "task039_v6_h4_post_compaction_setup_only"
 V6_H4_SETUP_THRESHOLD_GIB = 42.019652939
+V6_H4_SETUP_THRESHOLD_BYTES = 45118258790
 V6_H4_OUTER_READY_THRESHOLD_GIB = 35.0
 V6_H4_EXACT_SPOOL_ROOT = V5_H4_FIXED_BUDGET_EXACT_SPOOL_ROOT
 
@@ -341,7 +342,10 @@ def validate_v3_7_resolved_identity(payload: Mapping[str, Any]) -> None:
 
 
 def v3_7_watchdog_policy(
-    payload: Mapping[str, Any], *, poll_interval_seconds: float = V3_7_POLL_SECONDS
+    payload: Mapping[str, Any],
+    *,
+    poll_interval_seconds: float = V3_7_POLL_SECONDS,
+    v6_h4_post_compaction_setup_only: bool = False,
 ) -> dict[str, Any]:
     """Return the byte-authoritative policy; 195 GiB is telemetry only."""
 
@@ -358,15 +362,25 @@ def v3_7_watchdog_policy(
         raise ValueError("V3-7 requires zero swap")
     if not np.isfinite(float(poll_interval_seconds)) or poll_interval_seconds > 0.25:
         raise ValueError("V3-7 watchdog polling must be <=0.25 seconds")
+    absolute_bytes = (
+        V6_H4_SETUP_THRESHOLD_BYTES
+        if v6_h4_post_compaction_setup_only
+        else V3_7_ABSOLUTE_HARD_BYTES
+    )
     return {
         "warning_memory_gib": V3_7_WARNING_GIB,
         "critical_memory_gib": V3_7_CRITICAL_GIB,
         "critical_action": "record_checkpoint_only",
-        "absolute_terminate_memory_bytes": V3_7_ABSOLUTE_HARD_BYTES,
+        "absolute_terminate_memory_bytes": absolute_bytes,
         "absolute_hard_stop_action": "terminate_complete_process_tree",
         "require_zero_swap": True,
         "poll_interval_seconds": float(poll_interval_seconds),
-        "hard_stop_gib": V3_7_ABSOLUTE_HARD_BYTES / 2**30,
+        "hard_stop_gib": absolute_bytes / 2**30,
+        "profile": (
+            "v6_h4_post_compaction_setup_only"
+            if v6_h4_post_compaction_setup_only
+            else "v3_7_default"
+        ),
     }
 
 
@@ -395,6 +409,8 @@ def build_v3_7_execution_plan(
     v5_h4_blr_side_only: bool = False,
     v5_h4_fixed_budget_bottom_only: bool = False,
     v5_h4_fixed_budget_exact_spool_root: str | Path | None = None,
+    v6_h4_post_compaction_setup_only: bool = False,
+    v6_h4_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -402,7 +418,12 @@ def build_v3_7_execution_plan(
 ) -> dict[str, Any]:
     """Describe the opt-in worker command consumed by the existing watchdog."""
 
-    if v5_h4_setup_only or v5_h4_blr_side_only or v5_h4_fixed_budget_bottom_only:
+    if (
+        v5_h4_setup_only
+        or v5_h4_blr_side_only
+        or v5_h4_fixed_budget_bottom_only
+        or v6_h4_post_compaction_setup_only
+    ):
         specification = load_and_resolve(input_path)
         from benchmarks.task039_v4_h4_hybrid_direct import (
             validate_v4_h4_specification,
@@ -416,7 +437,9 @@ def build_v3_7_execution_plan(
         payload = load_v3_7_official_payload(input_path)
     if v5_h4_blr_side_only:
         v5_h4_blr_profile = _validate_v5_h4_blr_profile(v5_h4_blr_profile)
-    policy = v3_7_watchdog_policy(payload)
+    policy = v3_7_watchdog_policy(
+        payload, v6_h4_post_compaction_setup_only=v6_h4_post_compaction_setup_only
+    )
     if (
         sum(
             (
@@ -428,6 +451,7 @@ def build_v3_7_execution_plan(
                 bool(v5_h4_setup_only),
                 bool(v5_h4_blr_side_only),
                 bool(v5_h4_fixed_budget_bottom_only),
+                bool(v6_h4_post_compaction_setup_only),
             )
         )
         > 1
@@ -463,7 +487,12 @@ def build_v3_7_execution_plan(
         argv.append("--candidate-d-qualified")
     if candidate_e_side_only:
         argv.append("--candidate-e-side-only")
-    if v5_h4_setup_only or v5_h4_blr_side_only or v5_h4_fixed_budget_bottom_only:
+    if (
+        v5_h4_setup_only
+        or v5_h4_blr_side_only
+        or v5_h4_fixed_budget_bottom_only
+        or v6_h4_post_compaction_setup_only
+    ):
         if not all(
             (
                 selected_mode_packet_manifest,
@@ -475,12 +504,16 @@ def build_v3_7_execution_plan(
         argv.extend(
             [
                 (
-                    "--v5-h4-setup-only"
-                    if v5_h4_setup_only
+                    "--v6-h4-post-compaction-setup-only"
+                    if v6_h4_post_compaction_setup_only
                     else (
-                        "--v5-h4-blr-side-component"
-                        if v5_h4_blr_side_only
-                        else "--v5-h4-fixed-budget-bottom-component"
+                        "--v5-h4-setup-only"
+                        if v5_h4_setup_only
+                        else (
+                            "--v5-h4-blr-side-component"
+                            if v5_h4_blr_side_only
+                            else "--v5-h4-fixed-budget-bottom-component"
+                        )
                     )
                 ),
                 "--selected-mode-packet-manifest",
@@ -493,7 +526,16 @@ def build_v3_7_execution_plan(
         )
         if v5_h4_blr_side_only and v5_h4_blr_profile != MUMPS_BLR_V5_H4_PROFILE:
             argv.extend(["--v5-h4-blr-profile", v5_h4_blr_profile])
-        if v5_h4_fixed_budget_bottom_only:
+        if v6_h4_post_compaction_setup_only:
+            if v6_h4_exact_spool_root is None:
+                raise ValueError("V6 setup requires the exact spool root")
+            argv.extend(
+                [
+                    "--v6-h4-exact-spool-root",
+                    str(Path(v6_h4_exact_spool_root).resolve()),
+                ]
+            )
+        elif v5_h4_fixed_budget_bottom_only:
             if v5_h4_fixed_budget_exact_spool_root is None:
                 raise ValueError("Fixed-budget route requires the exact spool root")
             argv.extend(
@@ -502,7 +544,9 @@ def build_v3_7_execution_plan(
                     str(Path(v5_h4_fixed_budget_exact_spool_root).resolve()),
                 ]
             )
-    if v5_h4_setup_only:
+    if v6_h4_post_compaction_setup_only:
+        method = V6_H4_POST_COMPACTION_METHOD
+    elif v5_h4_setup_only:
         method = "task039_v5_h4_exact_side_setup_only"
     elif v5_h4_blr_side_only:
         method = V5_H4_BLR_SIDE_METHOD
@@ -528,15 +572,19 @@ def build_v3_7_execution_plan(
         "worker_contract": {
             "mpi_size": 8,
             "profile_id": (
-                "task039.v5.h4.exact-side.setup-only.v1"
-                if v5_h4_setup_only
+                V6_H4_POST_COMPACTION_PROFILE_ID
+                if v6_h4_post_compaction_setup_only
                 else (
-                    V5_H4_BLR_SIDE_PROFILE_ID
-                    if v5_h4_blr_side_only
+                    "task039.v5.h4.exact-side.setup-only.v1"
+                    if v5_h4_setup_only
                     else (
-                        V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID
-                        if v5_h4_fixed_budget_bottom_only
-                        else V3_7_PROFILE_ID
+                        V5_H4_BLR_SIDE_PROFILE_ID
+                        if v5_h4_blr_side_only
+                        else (
+                            V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID
+                            if v5_h4_fixed_budget_bottom_only
+                            else V3_7_PROFILE_ID
+                        )
                     )
                 )
             ),
@@ -545,10 +593,19 @@ def build_v3_7_execution_plan(
                 V5_H4_FIXED_BUDGET if v5_h4_fixed_budget_bottom_only else None
             ),
             "exact_spool_root": (
-                None
-                if v5_h4_fixed_budget_exact_spool_root is None
-                else str(Path(v5_h4_fixed_budget_exact_spool_root).resolve())
+                str(Path(v6_h4_exact_spool_root).resolve())
+                if v6_h4_post_compaction_setup_only
+                and v6_h4_exact_spool_root is not None
+                else (
+                    str(Path(v5_h4_fixed_budget_exact_spool_root).resolve())
+                    if v5_h4_fixed_budget_bottom_only
+                    and v5_h4_fixed_budget_exact_spool_root is not None
+                    else None
+                )
             ),
+            "absolute_terminate_memory_bytes": policy[
+                "absolute_terminate_memory_bytes"
+            ],
             "mumps_blr_profile": (v5_h4_blr_profile if v5_h4_blr_side_only else None),
             "hard_stop_authority": "process_tree_rss_bytes",
             "critical_checkpoint_only": True,
@@ -572,6 +629,8 @@ def v3_7_execution_dry_run(
     v5_h4_blr_side_only: bool = False,
     v5_h4_fixed_budget_bottom_only: bool = False,
     v5_h4_fixed_budget_exact_spool_root: str | Path | None = None,
+    v6_h4_post_compaction_setup_only: bool = False,
+    v6_h4_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -593,6 +652,8 @@ def v3_7_execution_dry_run(
         v5_h4_blr_side_only=v5_h4_blr_side_only,
         v5_h4_fixed_budget_bottom_only=v5_h4_fixed_budget_bottom_only,
         v5_h4_fixed_budget_exact_spool_root=v5_h4_fixed_budget_exact_spool_root,
+        v6_h4_post_compaction_setup_only=v6_h4_post_compaction_setup_only,
+        v6_h4_exact_spool_root=v6_h4_exact_spool_root,
         v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
         selected_mode_packet_identity=selected_mode_packet_identity,
@@ -625,6 +686,8 @@ def launch_v3_7_with_task038_watchdog(
     v5_h4_blr_side_only: bool = False,
     v5_h4_fixed_budget_bottom_only: bool = False,
     v5_h4_fixed_budget_exact_spool_root: str | Path | None = None,
+    v6_h4_post_compaction_setup_only: bool = False,
+    v6_h4_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -632,7 +695,12 @@ def launch_v3_7_with_task038_watchdog(
 ) -> dict[str, Any]:
     """Run the opt-in child through Task38's existing process-tree watchdog."""
 
-    if v5_h4_setup_only or v5_h4_blr_side_only or v5_h4_fixed_budget_bottom_only:
+    if (
+        v5_h4_setup_only
+        or v5_h4_blr_side_only
+        or v5_h4_fixed_budget_bottom_only
+        or v6_h4_post_compaction_setup_only
+    ):
         specification = load_and_resolve(input_path)
         from benchmarks.task039_v4_h4_hybrid_direct import (
             validate_v4_h4_specification,
@@ -646,12 +714,14 @@ def launch_v3_7_with_task038_watchdog(
         not v5_h4_setup_only
         and not v5_h4_blr_side_only
         and not v5_h4_fixed_budget_bottom_only
+        and not v6_h4_post_compaction_setup_only
         and not V3_7_DIRECT_RUN_ROOT.is_dir()
     ):
         raise ValueError("V3-7 direct producer inventory is unavailable")
     if (
         not v5_h4_blr_side_only
         and not v5_h4_fixed_budget_bottom_only
+        and not v6_h4_post_compaction_setup_only
         and not callable(compare_v3_7_hybrid_candidate_to_direct)
     ):
         raise ValueError("V3-7 integrated checker entry point is unavailable")
@@ -663,6 +733,7 @@ def launch_v3_7_with_task038_watchdog(
         not v5_h4_setup_only
         and not v5_h4_blr_side_only
         and not v5_h4_fixed_budget_bottom_only
+        and not v6_h4_post_compaction_setup_only
         and not candidate_d_only
         and not candidate_d_qualified
     ):
@@ -683,6 +754,8 @@ def launch_v3_7_with_task038_watchdog(
         v5_h4_blr_side_only=v5_h4_blr_side_only,
         v5_h4_fixed_budget_bottom_only=v5_h4_fixed_budget_bottom_only,
         v5_h4_fixed_budget_exact_spool_root=v5_h4_fixed_budget_exact_spool_root,
+        v6_h4_post_compaction_setup_only=v6_h4_post_compaction_setup_only,
+        v6_h4_exact_spool_root=v6_h4_exact_spool_root,
         v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
         selected_mode_packet_identity=selected_mode_packet_identity,
@@ -2248,17 +2321,19 @@ def _v6_layer_graph_from_csr(
 
 
 def _v6_global_minimum_layer_labels(
-    partial: Mapping[int, int], global_rows: int, comm: MPI.Intracomm
+    local_labels: np.ndarray, global_rows: int, comm: MPI.Intracomm
 ) -> np.ndarray:
-    """Merge assembly-time row labels without gathering matrix values."""
+    """Merge row labels with a fixed-size int32 buffer and ``MPI.MIN``."""
 
-    labels = np.full(int(global_rows), -1, dtype=np.int64)
-    for catalog in comm.allgather({int(key): int(value) for key, value in partial.items()}):
-        for row, layer in catalog.items():
-            if row < 0 or row >= global_rows or layer < 0:
-                raise ValueError("V6 layer label is outside the global row space")
-            labels[row] = layer if labels[row] < 0 else min(labels[row], layer)
-    if np.any(labels < 0):
+    sentinel = np.iinfo(np.int32).max
+    local = np.asarray(local_labels, dtype=np.int32)
+    if local.shape != (int(global_rows),) or not local.flags.c_contiguous:
+        raise ValueError("V6 layer label buffer shape is invalid")
+    if np.any((local < 0) & (local != sentinel)):
+        raise ValueError("V6 layer label is outside the global row space")
+    labels = np.full(int(global_rows), sentinel, dtype=np.int32)
+    comm.Allreduce(local, labels, op=MPI.MIN)
+    if np.any(labels == sentinel):
         raise ValueError("V6 layer graph does not cover every active F row")
     return labels
 
@@ -2326,7 +2401,8 @@ def _v6_layer_graph_audit(matrix: PETSc.Mat, system: Any) -> dict[str, Any]:
     if z_values.ndim != 1 or len(z_values) < 2 or np.any(np.diff(z_values) <= 0):
         raise ValueError("V6 layer graph requires a strictly ordered z axis")
     global_rows = int(matrix.getSize()[0])
-    partial: dict[int, int] = {}
+    sentinel = np.iinfo(np.int32).max
+    partial = np.full(global_rows, sentinel, dtype=np.int32)
     geometry = system.local_mesh.mesh.geometry
     for cell, recovery in enumerate(condensed.cell_recovery_maps):
         geometry_indices = np.asarray(geometry.dofmap[cell], dtype=np.int64)
@@ -2343,7 +2419,7 @@ def _v6_layer_graph_audit(matrix: PETSc.Mat, system: Any) -> dict[str, Any]:
                 active = int(active_id)
                 if active < 0 or active >= global_rows:
                     raise ValueError("V6 active trace row is outside F")
-                partial[active] = min(layer, partial.get(active, layer))
+                partial[active] = min(partial[active], layer)
     comm = matrix.getComm().tompi4py()
     global_layers = _v6_global_minimum_layer_labels(partial, global_rows, comm)
     row_start, row_end = map(int, matrix.getOwnershipRange())
@@ -3426,6 +3502,10 @@ def run_v5_h4_exact_side_setup_only(
     qualification_scope: str = TASK039_V4_H4_CASE_QUALIFICATION_SCOPE,
     sampled_column_contract: Mapping[str, Any] | None = None,
     streaming_w_batch_size: int | None = None,
+    v6_profile: bool = False,
+    exact_spool_root: str | Path | None = None,
+    packet_identity: Mapping[str, Any] | None = None,
+    packet_manifest_sha256: str | None = None,
 ) -> dict[str, Any]:
     """Build the reviewed h4 exact-side stack, then stop before any solve."""
 
@@ -3438,7 +3518,37 @@ def run_v5_h4_exact_side_setup_only(
     completed = False
     result: dict[str, Any] | None = None
     internal_cleanup: dict[str, Any] = {"status": "not_run"}
+    outer_ready_factor_counts: dict[str, int] = {}
+    layer_graph: dict[str, Any] = {}
+    spool_validation: dict[str, Any] | None = None
     try:
+        if v6_profile:
+            if streaming_w_batch_size is not None:
+                raise ValueError("V6 post-compaction setup is frozen to retained-W")
+            if (
+                not exact_spool_root
+                or not packet_identity
+                or not packet_manifest_sha256
+            ):
+                raise ValueError(
+                    "V6 setup requires the authenticated exact-response spool"
+                )
+            spool_records = _load_v5_fixed_budget_spool_shards(
+                exact_spool_root,
+                comm,
+                packet_identity=packet_identity,
+                manifest_sha256=packet_manifest_sha256,
+            )
+            spool_validation = {
+                "status": "measured",
+                "root": str(Path(exact_spool_root).resolve()),
+                "labels": list(spool_records),
+                "artifact_count": 2 * len(spool_records) * int(comm.size),
+                "array_hashes_verified": True,
+                "transient_hash_read": True,
+                "arrays_retained": False,
+                "identity_bound": True,
+            }
         sampled_column_contract = (
             _load_v5_h4_sampled_column_contract()
             if sampled_column_contract is None
@@ -3448,6 +3558,8 @@ def run_v5_h4_exact_side_setup_only(
         for side, system in (("bottom", setup.bottom), ("top", setup.top)):
             side_components = _build_research_explicit_side_components(system)
             components[side] = side_components
+            if v6_profile:
+                layer_graph[side] = _v6_layer_graph_audit(side_components.F, system)
             _emit_marker(
                 marker_callback,
                 f"{side}_F_ready",
@@ -3456,6 +3568,7 @@ def run_v5_h4_exact_side_setup_only(
                 retained_through_woodbury_build=True,
                 original_F_retained_for_modal_schur=False,
                 post_coupling_cleanup=post_coupling_cleanup,
+                layer_graph=layer_graph.get(side) if v6_profile else None,
             )
 
             def lifecycle(event: str, detail: Mapping[str, Any], *, _side=side):
@@ -3542,6 +3655,10 @@ def run_v5_h4_exact_side_setup_only(
             "both_side_actions_ready",
             actions={side: action.diagnostics for side, action in actions.items()},
             global_direct_factor_count=0,
+            factor_count_at_outer_ready={
+                side: int(action.diagnostics.get("direct_factor_count", 0))
+                for side, action in actions.items()
+            },
         )
         _emit_marker(
             marker_callback,
@@ -3589,6 +3706,10 @@ def run_v5_h4_exact_side_setup_only(
         pc.setType(PETSc.PC.Type.PYTHON)
         pc.setPythonContext(context)
         ksp.setUp()
+        outer_ready_factor_counts = {
+            side: int(action.diagnostics.get("direct_factor_count", 0))
+            for side, action in actions.items()
+        }
         _emit_marker(
             marker_callback,
             "outer_ksp_setup_ready",
@@ -3599,10 +3720,15 @@ def run_v5_h4_exact_side_setup_only(
             solve_called=False,
             krylov_vectors={"status": "not_allocated_before_solve"},
             preconditioner_inventory=context.inventory,
+            factor_count_at_outer_ready=outer_ready_factor_counts,
         )
         completed = True
         result = {
-            "schema": "task039.v5-h4-exact-side-setup-only.v1",
+            "schema": (
+                "task039.v6-h4-post-compaction-setup-only.v1"
+                if v6_profile
+                else "task039.v5-h4-exact-side-setup-only.v1"
+            ),
             "status": "setup_only_completed",
             "qualification_scope": qualification_scope,
             "sampled_column_contract": sampled_column_contract,
@@ -3621,6 +3747,7 @@ def run_v5_h4_exact_side_setup_only(
                 "set_up": True,
                 "solve_called": False,
                 "krylov_vectors": "not_allocated_before_solve",
+                "factor_count_at_outer_ready": outer_ready_factor_counts,
             },
             "telemetry": {
                 "process_tree_samples": {
@@ -3645,6 +3772,24 @@ def run_v5_h4_exact_side_setup_only(
                 },
             },
         }
+        if v6_profile:
+            result["v6_profile"] = {
+                "profile_id": V6_H4_POST_COMPACTION_PROFILE_ID,
+                "streaming_w_storage": False,
+                "setup_peak_limit_gib": V6_H4_SETUP_THRESHOLD_GIB,
+                "outer_ready_peak_limit_gib": V6_H4_OUTER_READY_THRESHOLD_GIB,
+                "layer_graph": layer_graph,
+                "exact_response_spool": spool_validation,
+                "resource_gate": {
+                    "process_tree_peak_gib": "pending_parent_sample_alignment",
+                    "outer_ready_peak_gib": "pending_parent_sample_alignment",
+                    "swap": "pending_parent_sample_alignment",
+                    "pass": None,
+                },
+                "factor_count_at_outer_ready": outer_ready_factor_counts,
+                "factor_count_after_final_cleanup": "pending_finalizer",
+                "packet_qep_refs_released": "pending_finalizer",
+            }
         return result
     finally:
         if ksp is not None:
@@ -3686,6 +3831,7 @@ def run_v5_h4_exact_side_setup_only(
                 )
             ),
             "completed": completed,
+            "factor_count_at_outer_ready": dict(outer_ready_factor_counts),
         }
         if result is not None:
             result["setup_only_internal_cleanup"] = internal_cleanup
@@ -5403,6 +5549,8 @@ def run_task039_v3_7_diagnostic(
     v5_h4_blr_side_only: bool = False,
     v5_h4_fixed_budget_bottom_only: bool = False,
     v5_h4_fixed_budget_exact_spool_root: str | Path | None = None,
+    v6_h4_post_compaction_setup_only: bool = False,
+    v6_h4_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: Mapping[str, Any] | None = None,
@@ -5482,17 +5630,23 @@ def run_task039_v3_7_diagnostic(
         if v5_h4_blr_side_only:
             v5_h4_blr_profile = _validate_v5_h4_blr_profile(v5_h4_blr_profile)
         profile = None
-        if (
-            not v5_h4_setup_only
-            and not v5_h4_blr_side_only
-            and not v5_h4_fixed_budget_bottom_only
+        if not (
+            v5_h4_setup_only
+            or v5_h4_blr_side_only
+            or v5_h4_fixed_budget_bottom_only
+            or v6_h4_post_compaction_setup_only
         ):
             profile = (
                 profile_override
                 if profile_override is not None
                 else v3_7_profile_from_resolved(resolved_payload)
             )
-        if v5_h4_setup_only or v5_h4_blr_side_only or v5_h4_fixed_budget_bottom_only:
+        if (
+            v5_h4_setup_only
+            or v5_h4_blr_side_only
+            or v5_h4_fixed_budget_bottom_only
+            or v6_h4_post_compaction_setup_only
+        ):
             incidence = resolved_payload["incidence"]
             profile = replace(
                 make_task039_hybrid_iterative_profile(480, 8, mesh_target_nm=4.0),
@@ -5500,27 +5654,39 @@ def run_task039_v3_7_diagnostic(
                     "task039.v5.h4.exact-side.setup-only.v1"
                     if v5_h4_setup_only
                     else (
-                        V5_H4_BLR_SIDE_PROFILE_ID
-                        if v5_h4_blr_side_only
-                        else V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID
+                        V6_H4_POST_COMPACTION_PROFILE_ID
+                        if v6_h4_post_compaction_setup_only
+                        else (
+                            V5_H4_BLR_SIDE_PROFILE_ID
+                            if v5_h4_blr_side_only
+                            else V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID
+                        )
                     )
                 ),
                 record_schema=(
                     "task039.v5.h4.exact-side.setup-only.v1"
                     if v5_h4_setup_only
                     else (
-                        V5_H4_BLR_SIDE_PROFILE_ID
-                        if v5_h4_blr_side_only
-                        else V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID
+                        V6_H4_POST_COMPACTION_PROFILE_ID
+                        if v6_h4_post_compaction_setup_only
+                        else (
+                            V5_H4_BLR_SIDE_PROFILE_ID
+                            if v5_h4_blr_side_only
+                            else V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID
+                        )
                     )
                 ),
                 qualification_schema=(
                     "task039.v5.h4.exact-side.setup-only.v1"
                     if v5_h4_setup_only
                     else (
-                        V5_H4_BLR_SIDE_PROFILE_ID
-                        if v5_h4_blr_side_only
-                        else V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID
+                        V6_H4_POST_COMPACTION_PROFILE_ID
+                        if v6_h4_post_compaction_setup_only
+                        else (
+                            V5_H4_BLR_SIDE_PROFILE_ID
+                            if v5_h4_blr_side_only
+                            else V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID
+                        )
                     )
                 ),
                 wavelength_nm=float(incidence["wavelength_nm"]),
@@ -5536,11 +5702,14 @@ def run_task039_v3_7_diagnostic(
             profile_id=profile.profile_id,
             mumps_blr_profile=(v5_h4_blr_profile if v5_h4_blr_side_only else None),
         )
-        watchdog = v3_7_watchdog_policy(resolved_payload)
+        watchdog = v3_7_watchdog_policy(
+            resolved_payload,
+            v6_h4_post_compaction_setup_only=v6_h4_post_compaction_setup_only,
+        )
         _emit_marker(
             marker_callback,
             "watchdog_ready",
-            absolute_terminate_memory_bytes=V3_7_ABSOLUTE_HARD_BYTES,
+            absolute_terminate_memory_bytes=watchdog["absolute_terminate_memory_bytes"],
         )
         if (
             recovery_runner is None
@@ -5552,18 +5721,21 @@ def run_task039_v3_7_diagnostic(
             and not v5_h4_setup_only
             and not v5_h4_blr_side_only
             and not v5_h4_fixed_budget_bottom_only
+            and not v6_h4_post_compaction_setup_only
         ):
             raise ValueError(
                 "V3-7 requires an injected recovery_runner(setup, layout, snapshot, "
                 "run_dir, producer)"
             )
-        if v5_h4_setup_only:
+        if v5_h4_setup_only or v6_h4_post_compaction_setup_only:
             if (
                 selected_mode_packet_manifest is None
                 or selected_mode_packet_identity is None
                 or selected_mode_packet_manifest_sha256 is None
             ):
                 raise ValueError("V5 h4 setup-only requires the shared packet identity")
+            if v6_h4_post_compaction_setup_only and v6_h4_exact_spool_root is None:
+                raise ValueError("V6 setup requires the exact-response spool root")
             producer = {
                 "producer_source_sha": selected_mode_packet_identity.get("source_sha"),
                 "physical_model_sha256": selected_mode_packet_identity.get(
@@ -5574,6 +5746,7 @@ def run_task039_v3_7_diagnostic(
                 "mpi_size": 8,
                 "external_keys_exact": True,
                 "selected_mode_packet": True,
+                "v6_post_compaction": bool(v6_h4_post_compaction_setup_only),
             }
             modal_amplitudes = None
         elif v5_h4_blr_side_only:
@@ -5721,7 +5894,7 @@ def run_task039_v3_7_diagnostic(
             setup.top,
             setup.coupling.internal_unknown_count,
         )
-        if v5_h4_setup_only:
+        if v5_h4_setup_only or v6_h4_post_compaction_setup_only:
             result = run_v5_h4_exact_side_setup_only(
                 setup,
                 layout,
@@ -5729,6 +5902,10 @@ def run_task039_v3_7_diagnostic(
                 marker_callback=marker_callback,
                 sampled_column_contract=v5_sampled_column_contract,
                 streaming_w_batch_size=v5_streaming_w_batch_size,
+                v6_profile=v6_h4_post_compaction_setup_only,
+                exact_spool_root=v6_h4_exact_spool_root,
+                packet_identity=selected_mode_packet_identity,
+                packet_manifest_sha256=selected_mode_packet_manifest_sha256,
             )
             result["source_sha"] = source_sha
             result["run_directory"] = str(Path(run_directory).resolve())
@@ -6419,7 +6596,7 @@ def run_task039_v3_7_diagnostic(
                     setup_release = release_frozen_m10_objects(setup, None, comm)
                 object_ledger["objects"]["setup"]["destroyed"] = True
                 object_ledger["objects"]["setup"]["completed"] = True
-                if v5_h4_setup_only:
+                if v5_h4_setup_only or v6_h4_post_compaction_setup_only:
                     internal = (
                         result.get("setup_only_internal_cleanup", {})
                         if result is not None
@@ -6458,7 +6635,9 @@ def run_task039_v3_7_diagnostic(
                 object_ledger["status"] = "controlled_stop"
             else:
                 object_ledger["status"] = "exception"
-            if v5_h4_setup_only and result is not None:
+            if (
+                v5_h4_setup_only or v6_h4_post_compaction_setup_only
+            ) and result is not None:
                 internal = result.get("setup_only_internal_cleanup", {})
                 side_actions = result.get("side_actions", {})
                 factor_counts = internal.get("factor_count_after_cleanup", {})
@@ -6477,6 +6656,9 @@ def run_task039_v3_7_diagnostic(
                     "side_component_cleanup": internal.get(
                         "side_component_cleanup", {}
                     ),
+                    "outer_ready_factor_counts": internal.get(
+                        "factor_count_at_outer_ready", {}
+                    ),
                 }
                 for name in ("exact_side_action", "exact_side_factors"):
                     object_ledger["objects"][name].update(
@@ -6488,6 +6670,37 @@ def run_task039_v3_7_diagnostic(
                             "lifecycle_pass": cleanup_pass,
                             "details": details,
                         }
+                    )
+                if v6_h4_post_compaction_setup_only:
+                    qep_release = getattr(setup, "qep_release", {})
+                    packet_refs_released = bool(
+                        qep_release.get("packet_mmap_released") is True
+                        and qep_release.get("packet_references_released") is True
+                    )
+                    for name in ("qep_matrices", "selected_basis"):
+                        created = bool(object_ledger["objects"][name].get("created"))
+                        object_ledger["objects"][name].update(
+                            {
+                                "created": created,
+                                "completed": bool(
+                                    object_ledger["objects"][name].get("completed")
+                                ),
+                                "released": packet_refs_released,
+                                "destroyed": packet_refs_released,
+                                "status": (
+                                    "measured" if packet_refs_released else "incomplete"
+                                ),
+                                "details": {
+                                    "source": "FrozenM10Setup.qep_release",
+                                    "qep_release": qep_release,
+                                },
+                            }
+                        )
+                    result.setdefault("v6_profile", {})[
+                        "factor_count_after_final_cleanup"
+                    ] = factor_counts
+                    result["v6_profile"]["packet_qep_refs_released"] = (
+                        packet_refs_released
                     )
             for item in object_ledger["objects"].values():
                 if item["created"] and item["status"] == "not_available":
@@ -6530,6 +6743,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--candidate-d-qualified", action="store_true")
     parser.add_argument("--candidate-e-side-only", action="store_true")
     parser.add_argument("--v5-h4-setup-only", action="store_true")
+    parser.add_argument("--v6-h4-post-compaction-setup-only", action="store_true")
+    parser.add_argument("--v6-h4-exact-spool-root")
     parser.add_argument("--v5-h4-blr-side-component", action="store_true")
     parser.add_argument("--v5-h4-fixed-budget-bottom-component", action="store_true")
     parser.add_argument("--v5-h4-fixed-budget-exact-spool-root")
@@ -6556,6 +6771,7 @@ def main(argv: list[str] | None = None) -> int:
                 bool(args.candidate_d_qualified),
                 bool(args.candidate_e_side_only),
                 bool(args.v5_h4_setup_only),
+                bool(args.v6_h4_post_compaction_setup_only),
                 bool(args.v5_h4_blr_side_component),
                 bool(args.v5_h4_fixed_budget_bottom_component),
             )
@@ -6576,6 +6792,8 @@ def main(argv: list[str] | None = None) -> int:
             candidate_d_qualified=args.candidate_d_qualified,
             candidate_e_side_only=args.candidate_e_side_only,
             v5_h4_setup_only=args.v5_h4_setup_only,
+            v6_h4_post_compaction_setup_only=args.v6_h4_post_compaction_setup_only,
+            v6_h4_exact_spool_root=args.v6_h4_exact_spool_root,
             v5_h4_blr_side_only=args.v5_h4_blr_side_component,
             v5_h4_fixed_budget_bottom_only=args.v5_h4_fixed_budget_bottom_component,
             v5_h4_fixed_budget_exact_spool_root=(
@@ -6587,6 +6805,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.selected_mode_packet_identity
                 if (
                     args.v5_h4_setup_only
+                    or args.v6_h4_post_compaction_setup_only
                     or args.v5_h4_blr_side_component
                     or args.v5_h4_fixed_budget_bottom_component
                 )
@@ -6596,6 +6815,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.selected_mode_packet_manifest_sha256
                 if (
                     args.v5_h4_setup_only
+                    or args.v6_h4_post_compaction_setup_only
                     or args.v5_h4_blr_side_component
                     or args.v5_h4_fixed_budget_bottom_component
                 )
@@ -6621,6 +6841,7 @@ def main(argv: list[str] | None = None) -> int:
             args.v5_h4_setup_only
             or args.v5_h4_blr_side_component
             or args.v5_h4_fixed_budget_bottom_component
+            or args.v6_h4_post_compaction_setup_only
         ):
             specification = load_and_resolve(args.input_path)
             payload = specification.as_jsonable()
@@ -6648,6 +6869,7 @@ def main(argv: list[str] | None = None) -> int:
                 or args.candidate_c_only
                 or args.candidate_e_side_only
                 or args.v5_h4_setup_only
+                or args.v6_h4_post_compaction_setup_only
                 or args.v5_h4_blr_side_component
                 or args.v5_h4_fixed_budget_bottom_component
                 else run_v3_7_recovery_runner
@@ -6658,6 +6880,8 @@ def main(argv: list[str] | None = None) -> int:
             candidate_d_qualified=args.candidate_d_qualified,
             candidate_e_side_only=args.candidate_e_side_only,
             v5_h4_setup_only=args.v5_h4_setup_only,
+            v6_h4_post_compaction_setup_only=args.v6_h4_post_compaction_setup_only,
+            v6_h4_exact_spool_root=args.v6_h4_exact_spool_root,
             v5_h4_blr_side_only=args.v5_h4_blr_side_component,
             v5_h4_fixed_budget_bottom_only=args.v5_h4_fixed_budget_bottom_component,
             v5_h4_fixed_budget_exact_spool_root=(
@@ -6668,6 +6892,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.selected_mode_packet_manifest
                 if (
                     args.v5_h4_setup_only
+                    or args.v6_h4_post_compaction_setup_only
                     or args.v5_h4_blr_side_component
                     or args.v5_h4_fixed_budget_bottom_component
                 )
@@ -6678,6 +6903,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.selected_mode_packet_manifest_sha256
                 if (
                     args.v5_h4_setup_only
+                    or args.v6_h4_post_compaction_setup_only
                     or args.v5_h4_blr_side_component
                     or args.v5_h4_fixed_budget_bottom_component
                 )

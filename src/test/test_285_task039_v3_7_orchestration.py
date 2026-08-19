@@ -96,16 +96,19 @@ def test_v6_layer_graph_collective_minimum_and_pair_counts() -> None:
     if comm.size not in (2, 4):
         pytest.skip("run this tiny collective fixture with MPI2 or MPI4")
     global_rows = comm.size
-    partial = {
-        comm.rank: (comm.rank + 2) % 4,
-        (comm.rank + 1) % global_rows: (comm.rank + 3) % 4,
-    }
+    sentinel = np.iinfo(np.int32).max
+    partial = np.full(global_rows, sentinel, dtype=np.int32)
+    partial[comm.rank] = (comm.rank + 2) % 4
+    partial[(comm.rank + 1) % global_rows] = (comm.rank + 3) % 4
     labels = _v6_global_minimum_layer_labels(partial, global_rows, comm)
-    expected = np.full(global_rows, -1, dtype=np.int64)
+    expected = np.full(global_rows, sentinel, dtype=np.int32)
     for catalog in comm.allgather(partial):
-        for row, layer in catalog.items():
-            expected[row] = layer if expected[row] < 0 else min(expected[row], layer)
+        expected = np.minimum(expected, catalog)
     assert np.array_equal(labels, expected)
+    with pytest.raises(ValueError, match="does not cover"):
+        _v6_global_minimum_layer_labels(
+            np.full(global_rows, sentinel, dtype=np.int32), global_rows, comm
+        )
     local = _v6_layer_graph_from_csr(
         np.asarray([0, 2]),
         np.asarray([comm.rank, (comm.rank + 1) % global_rows]),
@@ -126,6 +129,14 @@ def test_v6_layer_graph_collective_minimum_and_pair_counts() -> None:
     assert reduced["block_half_bandwidth"] == max(
         comm.allgather(local["block_half_bandwidth"])
     )
+
+
+def test_v6_layer_graph_rejects_unmapped_dense_label_serial() -> None:
+    sentinel = np.iinfo(np.int32).max
+    with pytest.raises(ValueError, match="does not cover"):
+        _v6_global_minimum_layer_labels(
+            np.asarray([0, sentinel], dtype=np.int32), 2, MPI.COMM_SELF
+        )
 
 
 def test_v3_7_profile_is_derived_from_official_one_degree_s_input() -> None:
@@ -766,6 +777,80 @@ def test_v5_setup_release_error_does_not_emit_success_cleanup_marker(
     assert all(row["stage"] != "all_setup_objects_cleanup" for row in rows)
 
 
+def test_v6_qep_zero_preserves_uncreated_packet_ledger_objects(tmp_path, monkeypatch):
+    payload = load_and_resolve(
+        Path("input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat")
+    ).as_jsonable()
+    setup = SimpleNamespace(
+        bottom=SimpleNamespace(),
+        top=SimpleNamespace(),
+        coupling=SimpleNamespace(internal_unknown_count=0),
+        qep_release={
+            "qep_calls": 0,
+            "packet_mmap_released": True,
+            "packet_references_released": True,
+        },
+    )
+    monkeypatch.setattr(
+        orchestration, "simulation_config_3d_from_normalized", lambda _payload: {}
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "HybridAugmentedLayout",
+        SimpleNamespace(build=lambda *_args: SimpleNamespace()),
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "run_v5_h4_exact_side_setup_only",
+        lambda *_args, **_kwargs: {
+            "status": "setup_only_completed",
+            "setup_only_internal_cleanup": {
+                "factor_count_after_cleanup": {"bottom": 0, "top": 0},
+                "side_component_cleanup": {},
+                "exact_side_objects_destroyed": True,
+            },
+            "side_actions": {
+                "bottom": {"factor_only_storage": True},
+                "top": {"factor_only_storage": True},
+            },
+            "telemetry": {"memory_object_ledger": {}},
+        },
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "release_frozen_m10_objects",
+        lambda *_args: {"pass": True, "cleanup": {"collective_call_completed": True}},
+    )
+    identity = {
+        "source_sha": "a" * 40,
+        "physical_sha256": "b" * 64,
+        "model_id": "task039_5nm_v4_1deg_s5_hybrid_iterative_m480",
+    }
+    result = orchestration.run_task039_v3_7_diagnostic(
+        payload,
+        tmp_path / "v6-qep-zero",
+        source_sha="c" * 40,
+        comm=MPI.COMM_SELF,
+        setup_builder=lambda **_kwargs: setup,
+        v6_h4_post_compaction_setup_only=True,
+        v6_h4_exact_spool_root=tmp_path / "exact-spool",
+        selected_mode_packet_manifest=tmp_path / "manifest.json",
+        selected_mode_packet_identity=identity,
+        selected_mode_packet_manifest_sha256="d" * 64,
+    )
+    ledger = json.loads(
+        (
+            tmp_path / "v6-qep-zero/numerical_output/memory_object_ledger.json"
+        ).read_text()
+    )
+    assert result["v6_profile"]["packet_qep_refs_released"] is True
+    for name in ("qep_matrices", "selected_basis"):
+        assert ledger["objects"][name]["created"] is False
+        assert ledger["objects"][name]["released"] is True
+        assert ledger["objects"][name]["destroyed"] is True
+        assert ledger["objects"][name]["details"]["qep_release"]["qep_calls"] == 0
+
+
 def test_v3_7_candidate_authority_serializes_complex_orders_for_parser(
     tmp_path,
 ) -> None:
@@ -1110,6 +1195,9 @@ def test_v5_h4_setup_only_plan_passes_identity_and_packet_args(tmp_path) -> None
         in launcher_source
     )
     assert '"pass": None' in launcher_source
+    orchestration_main_source = inspect.getsource(orchestration.main)
+    assert "or args.v6_h4_post_compaction_setup_only" in orchestration_main_source
+    assert "packet_identity = json.loads" in orchestration_main_source
     route_source = inspect.getsource(orchestration.run_v5_h4_mumps_blr_side_component)
     assert route_source.index("exact_diagnostics = exact_action.diagnostics") < (
         route_source.index("v5_blr_exact_reference_{side}_ready")
@@ -1273,6 +1361,155 @@ def test_v5_fixed_budget_parent_peak_uses_bottom_marker_alignment(tmp_path) -> N
     assert online["status"] == "measured"
     assert online["peak_process_tree_rss_gib"] == 9.0
     assert online["pass"] is True
+
+
+def test_v6_parent_authority_separates_input_stop_from_effective_and_final_fields(
+    tmp_path,
+) -> None:
+    stages = tmp_path / "memory_stages.jsonl"
+    samples = tmp_path / "process_tree_samples.jsonl"
+    ledger = tmp_path / "memory_object_ledger.json"
+    stages.write_text(
+        json.dumps(
+            {
+                "stage": "outer_ksp_setup_ready",
+                "sample_elapsed_seconds": 4.0,
+                "sample_status": "measured",
+                "rss_bytes": 30 * 1024**3,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    samples.write_text(
+        json.dumps(
+            {
+                "elapsed_seconds": 4.0,
+                "rss_bytes": 40 * 1024**3,
+                "swap_bytes": 0,
+                "sample_status": "measured",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    ledger.write_text(
+        json.dumps(
+            {
+                "objects": {
+                    "exact_side_factors": {
+                        "details": {
+                            "factor_count_after_cleanup": {
+                                "bottom": 0,
+                                "top": 0,
+                            }
+                        }
+                    },
+                    "qep_matrices": {"destroyed": True},
+                    "selected_basis": {"destroyed": True},
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    authority = task038_launcher._v6_post_compaction_resource_authority(
+        stages,
+        samples,
+        ledger,
+        input_absolute_terminate_memory_bytes=224000000000,
+        effective_absolute_terminate_memory_bytes=45118258790,
+        setup_limit_gib=42.019652939,
+        outer_ready_limit_gib=35.0,
+        poll_interval_seconds=0.25,
+    )
+    assert authority["status"] == "measured"
+    assert authority["input_absolute_terminate_memory_bytes"] == 224000000000
+    assert authority["effective_absolute_terminate_memory_bytes"] == 45118258790
+    assert authority["overall_process_tree"]["peak_process_tree_rss_gib"] == 40.0
+    assert authority["outer_ksp_setup_ready"]["process_tree_rss_gib"] == 30.0
+    assert authority["swap"]["zero_swap"] is True
+    assert authority["final_lifecycle"]["factor_count_after_final_cleanup"] == {
+        "bottom": 0,
+        "top": 0,
+    }
+    assert authority["final_lifecycle"]["packet_qep_refs_released"] is True
+    assert authority["resource_pass"] is True
+
+
+def test_v6_run_worker_uses_effective_byte_stop_without_mutating_input(
+    monkeypatch, tmp_path
+) -> None:
+    specification = load_and_resolve(
+        Path("input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat")
+    )
+    input_bytes = 224000000000
+    effective_bytes = 45118258790
+    monkeypatch.setattr(
+        task038_launcher,
+        "_task039_memory_budget",
+        lambda _execution=None: {
+            "configured_warning_memory_gib": 170.0,
+            "configured_critical_memory_gib": 195.0,
+            "absolute_terminate_memory_bytes": input_bytes,
+            "source": {"selected": "fixture"},
+        },
+    )
+
+    class Process:
+        pid = 12345
+
+        def __init__(self):
+            self.returncode = None
+
+        def poll(self):
+            return self.returncode
+
+        def wait(self):
+            return self.returncode
+
+    process = Process()
+    terminated: list[Process] = []
+    plan = SimpleNamespace(
+        argv=("contract-probe",),
+        method="task039_v6_h4_post_compaction_setup_only",
+        contract_probe=False,
+        task039_trace_audit=False,
+    )
+    result = task038_launcher._run_worker(
+        plan,
+        specification,
+        tmp_path,
+        popen_factory=lambda *_args, **_kwargs: process,
+        sample_factory=lambda _pid: {
+            "memory_authority_bytes": effective_bytes,
+            "process_tree": {
+                "root_pid": process.pid,
+                "rss_bytes": effective_bytes,
+                "swap_bytes": 0,
+                "all_status_readable": True,
+                "smaps": {"complete": False},
+            },
+            "job_cgroup": {},
+        },
+        terminate_factory=lambda member: (
+            terminated.append(member) or setattr(member, "returncode", -9) or {}
+        ),
+        monotonic=lambda: 0.0,
+        sleep=lambda _seconds: None,
+        poll_interval=0.25,
+    )
+    assert result["result_classification"] == "memory_terminate"
+    assert terminated == [process]
+    authority = result["resource_authority"]
+    assert authority["task039_memory_budget"]["absolute_terminate_memory_bytes"] == (
+        input_bytes
+    )
+    assert authority["absolute_terminate_memory_bytes"] == effective_bytes
+    v6 = authority["v6_h4_post_compaction_setup_telemetry"]
+    assert v6["method_override"]["input_absolute_terminate_memory_bytes"] == input_bytes
+    assert v6["method_override"]["effective_absolute_terminate_memory_bytes"] == (
+        effective_bytes
+    )
 
 
 def test_v5_h4_blr_parent_peak_missing_evidence_fails_closed(tmp_path) -> None:
