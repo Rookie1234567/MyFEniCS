@@ -178,6 +178,13 @@ V5_H4_FIXED_BUDGET = 32
 V5_H4_FIXED_BUDGET_EXACT_SPOOL_ROOT = Path(
     "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/numerical_output"
 )
+V6_H4_POST_COMPACTION_PROFILE_ID = (
+    "task039.v6.h4.post_compaction.exact_side_setup_only.v1"
+)
+V6_H4_POST_COMPACTION_METHOD = "task039_v6_h4_post_compaction_setup_only"
+V6_H4_SETUP_THRESHOLD_GIB = 42.019652939
+V6_H4_OUTER_READY_THRESHOLD_GIB = 35.0
+V6_H4_EXACT_SPOOL_ROOT = V5_H4_FIXED_BUDGET_EXACT_SPOOL_ROOT
 
 
 def _validate_v5_h4_blr_profile(profile: str) -> str:
@@ -2206,6 +2213,7 @@ def _v6_layer_graph_from_csr(
         raise ValueError("V6 layer graph has unmapped row layers")
     layer_rows = np.bincount(row_layers, minlength=layer_count).astype(np.int64)
     layer_nnz = np.zeros(layer_count, dtype=np.int64)
+    layer_pair_nnz = np.zeros((layer_count, layer_count), dtype=np.int64)
     same = adjacent = long_range = 0
     half_bandwidth = 0
     for local_row, row_layer in enumerate(row_layers):
@@ -2214,6 +2222,7 @@ def _v6_layer_graph_from_csr(
             raise ValueError("V6 layer graph CSR column is outside global rows")
         deltas = np.abs(column_layers[columns] - row_layer)
         layer_nnz[row_layer] += len(columns)
+        np.add.at(layer_pair_nnz[row_layer], column_layers[columns], 1)
         same += int(np.count_nonzero(deltas == 0))
         adjacent += int(np.count_nonzero(deltas == 1))
         long_range += int(np.count_nonzero(deltas > 1))
@@ -2226,6 +2235,7 @@ def _v6_layer_graph_from_csr(
         "layer_count": int(layer_count),
         "rows_by_layer": [int(value) for value in layer_rows],
         "nnz_by_layer": [int(value) for value in layer_nnz],
+        "layer_pair_nnz": layer_pair_nnz.tolist(),
         "nnz_total": total,
         "same_layer_nnz": int(same),
         "adjacent_layer_nnz": int(adjacent),
@@ -2234,6 +2244,69 @@ def _v6_layer_graph_from_csr(
         "adjacent_layer_fraction": float(adjacent / total) if total else None,
         "long_range_fraction": float(long_range / total) if total else None,
         "block_half_bandwidth": int(half_bandwidth),
+    }
+
+
+def _v6_global_minimum_layer_labels(
+    partial: Mapping[int, int], global_rows: int, comm: MPI.Intracomm
+) -> np.ndarray:
+    """Merge assembly-time row labels without gathering matrix values."""
+
+    labels = np.full(int(global_rows), -1, dtype=np.int64)
+    for catalog in comm.allgather({int(key): int(value) for key, value in partial.items()}):
+        for row, layer in catalog.items():
+            if row < 0 or row >= global_rows or layer < 0:
+                raise ValueError("V6 layer label is outside the global row space")
+            labels[row] = layer if labels[row] < 0 else min(labels[row], layer)
+    if np.any(labels < 0):
+        raise ValueError("V6 layer graph does not cover every active F row")
+    return labels
+
+
+def _v6_reduce_layer_graph(
+    local: Mapping[str, Any], comm: MPI.Intracomm, *, global_rows: int
+) -> dict[str, Any]:
+    """Reduce local CSR graph counts to one deterministic global audit."""
+
+    layer_count = int(local["layer_count"])
+    rows = np.asarray(local["rows_by_layer"], dtype=np.int64)
+    nnz = np.asarray(local["nnz_by_layer"], dtype=np.int64)
+    pairs = np.asarray(local["layer_pair_nnz"], dtype=np.int64)
+    classes = np.asarray(
+        [
+            local["same_layer_nnz"],
+            local["adjacent_layer_nnz"],
+            local["long_range_nnz"],
+        ],
+        dtype=np.int64,
+    )
+    if rows.shape != (layer_count,) or nnz.shape != (layer_count,):
+        raise ValueError("V6 layer graph marginal shape is invalid")
+    if pairs.shape != (layer_count, layer_count):
+        raise ValueError("V6 layer graph pair matrix shape is invalid")
+    rows = np.asarray(comm.allreduce(rows, op=MPI.SUM))
+    nnz = np.asarray(comm.allreduce(nnz, op=MPI.SUM))
+    pairs = np.asarray(comm.allreduce(pairs, op=MPI.SUM))
+    classes = np.asarray(comm.allreduce(classes, op=MPI.SUM))
+    bandwidth = int(comm.allreduce(int(local["block_half_bandwidth"]), op=MPI.MAX))
+    total = int(np.sum(pairs))
+    return {
+        "status": "measured",
+        "metric_space": "F_owned_CSR_nonzero_count",
+        "rows_global": int(global_rows),
+        "nnz_global": total,
+        "nnz_total": total,
+        "layer_count": layer_count,
+        "rows_by_layer": [int(value) for value in rows],
+        "nnz_by_layer": [int(value) for value in nnz],
+        "layer_pair_nnz": pairs.tolist(),
+        "same_layer_nnz": int(classes[0]),
+        "adjacent_layer_nnz": int(classes[1]),
+        "long_range_nnz": int(classes[2]),
+        "same_layer_fraction": float(classes[0] / total) if total else None,
+        "adjacent_layer_fraction": float(classes[1] / total) if total else None,
+        "long_range_fraction": float(classes[2] / total) if total else None,
+        "block_half_bandwidth": bandwidth,
     }
 
 
@@ -2272,16 +2345,7 @@ def _v6_layer_graph_audit(matrix: PETSc.Mat, system: Any) -> dict[str, Any]:
                     raise ValueError("V6 active trace row is outside F")
                 partial[active] = min(layer, partial.get(active, layer))
     comm = matrix.getComm().tompi4py()
-    catalogs = comm.allgather(partial)
-    global_layers = np.full(global_rows, -1, dtype=np.int64)
-    for catalog in catalogs:
-        for active, layer in catalog.items():
-            if global_layers[int(active)] < 0:
-                global_layers[int(active)] = int(layer)
-            else:
-                global_layers[int(active)] = min(global_layers[int(active)], int(layer))
-    if np.any(global_layers < 0):
-        raise ValueError("V6 layer graph does not cover every active F row")
+    global_layers = _v6_global_minimum_layer_labels(partial, global_rows, comm)
     row_start, row_end = map(int, matrix.getOwnershipRange())
     row_ptr, columns, _values = matrix.getValuesCSR()
     local_layers = global_layers[row_start:row_end]
@@ -2292,32 +2356,10 @@ def _v6_layer_graph_audit(matrix: PETSc.Mat, system: Any) -> dict[str, Any]:
         global_layers,
         layer_count=len(z_values) - 1,
     )
-    local_rows = np.bincount(local_layers, minlength=len(z_values) - 1)
-    local_nnz = np.asarray(audit["nnz_by_layer"], dtype=np.int64)
-    local_counts = np.asarray(
-        [
-            audit["same_layer_nnz"],
-            audit["adjacent_layer_nnz"],
-            audit["long_range_nnz"],
-        ],
-        dtype=np.int64,
-    )
-    rows_by_layer = np.asarray(comm.allreduce(local_rows, op=MPI.SUM))
-    nnz_by_layer = np.asarray(comm.allreduce(local_nnz, op=MPI.SUM))
-    coupling_counts = np.asarray(comm.allreduce(local_counts, op=MPI.SUM))
-    total = int(np.sum(coupling_counts))
+    reduced = _v6_reduce_layer_graph(audit, comm, global_rows=global_rows)
     audit.update(
         {
-            "rows_global": global_rows,
-            "nnz_global": int(total),
-            "rows_by_layer": [int(value) for value in rows_by_layer],
-            "nnz_by_layer": [int(value) for value in nnz_by_layer],
-            "same_layer_nnz": int(coupling_counts[0]),
-            "adjacent_layer_nnz": int(coupling_counts[1]),
-            "long_range_nnz": int(coupling_counts[2]),
-            "same_layer_fraction": float(coupling_counts[0] / total) if total else None,
-            "adjacent_layer_fraction": float(coupling_counts[1] / total) if total else None,
-            "long_range_fraction": float(coupling_counts[2] / total) if total else None,
+            **reduced,
             "z_layer_boundaries": [float(value) for value in z_values],
             "mapping_source": (
                 "owned_cell_recovery_maps + trace_constraints.expansion_by_original "
@@ -2327,7 +2369,7 @@ def _v6_layer_graph_audit(matrix: PETSc.Mat, system: Any) -> dict[str, Any]:
             "temporary_global_row_layer_tags_released": True,
         }
     )
-    del global_layers, catalogs, row_ptr, columns, _values
+    del global_layers, row_ptr, columns, _values
     return audit
 
 

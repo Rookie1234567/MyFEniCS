@@ -27,7 +27,9 @@ from benchmarks.task039_v3_7_orchestration import (
     _record_v3_7_marker,
     _v5_blr_prefreeze_external_rhs,
     _v5_blr_rhs_vector,
+    _v6_global_minimum_layer_labels,
     _v6_layer_graph_from_csr,
+    _v6_reduce_layer_graph,
     _v3_7_cleanup_callback,
     _v3_7_object_ledger,
     _write_v3_7_candidate_authority,
@@ -81,10 +83,48 @@ def test_v6_layer_graph_counts_use_explicit_layer_labels() -> None:
     assert audit["same_layer_nnz"] == 3
     assert audit["adjacent_layer_nnz"] == 2
     assert audit["long_range_nnz"] == 1
+    assert audit["layer_pair_nnz"] == [[1, 1, 0], [0, 1, 1], [1, 0, 1]]
     assert audit["block_half_bandwidth"] == 2
     assert audit["long_range_fraction"] == pytest.approx(1 / 6)
     assert "owned_cell_recovery_maps" in inspect.getdoc(
         orchestration._v6_layer_graph_audit
+    )
+
+
+def test_v6_layer_graph_collective_minimum_and_pair_counts() -> None:
+    comm = MPI.COMM_WORLD
+    if comm.size not in (2, 4):
+        pytest.skip("run this tiny collective fixture with MPI2 or MPI4")
+    global_rows = comm.size
+    partial = {
+        comm.rank: (comm.rank + 2) % 4,
+        (comm.rank + 1) % global_rows: (comm.rank + 3) % 4,
+    }
+    labels = _v6_global_minimum_layer_labels(partial, global_rows, comm)
+    expected = np.full(global_rows, -1, dtype=np.int64)
+    for catalog in comm.allgather(partial):
+        for row, layer in catalog.items():
+            expected[row] = layer if expected[row] < 0 else min(expected[row], layer)
+    assert np.array_equal(labels, expected)
+    local = _v6_layer_graph_from_csr(
+        np.asarray([0, 2]),
+        np.asarray([comm.rank, (comm.rank + 1) % global_rows]),
+        np.asarray([labels[comm.rank]]),
+        labels,
+        layer_count=4,
+    )
+    reduced = _v6_reduce_layer_graph(local, comm, global_rows=global_rows)
+    assert reduced["nnz_global"] == 2 * comm.size
+    assert reduced["nnz_total"] == 2 * comm.size
+    assert sum(sum(row) for row in reduced["layer_pair_nnz"]) == 2 * comm.size
+    assert (
+        reduced["same_layer_nnz"]
+        + reduced["adjacent_layer_nnz"]
+        + reduced["long_range_nnz"]
+        == reduced["nnz_total"]
+    )
+    assert reduced["block_half_bandwidth"] == max(
+        comm.allgather(local["block_half_bandwidth"])
     )
 
 
