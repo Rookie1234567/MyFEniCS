@@ -1539,6 +1539,17 @@ def test_v6_run_worker_uses_effective_byte_stop_without_mutating_input(
     )
 
 
+def test_v3_7_worker_failure_persists_full_traceback(tmp_path) -> None:
+    try:
+        raise RuntimeError("traceback-contract")
+    except RuntimeError:
+        path = orchestration._write_v3_7_worker_traceback(tmp_path)
+    assert path.exists()
+    text = path.read_text(encoding="utf-8")
+    assert "Traceback (most recent call last)" in text
+    assert "RuntimeError: traceback-contract" in text
+
+
 def test_v6_port_modal_resource_intervals_require_measured_samples(tmp_path) -> None:
     stages = tmp_path / "memory_stages.jsonl"
     samples = tmp_path / "process_tree_samples.jsonl"

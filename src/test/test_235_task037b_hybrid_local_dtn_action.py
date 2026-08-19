@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
@@ -8,6 +9,11 @@ import pytest
 from dolfinx import fem
 from mpi4py import MPI
 from petsc4py import PETSc
+
+from benchmarks.task039_v4_selected_mode_packet import (
+    consume_task039_v4_selected_mode_packet,
+    write_task039_v4_selected_mode_packet,
+)
 
 from src.common.config_3d import (
     ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND,
@@ -413,6 +419,98 @@ class TestTask037bHybridLocalDtnAction:
                 },
                 "right",
             )
+
+    def test_v6_full_packet_hydration_supports_single_owner_then_releases(
+        self, tmp_path
+    ):
+        comm = MPI.COMM_WORLD
+        directory = Path(comm.bcast(str(tmp_path / "full-ephemeral-packet"), root=0))
+
+        def packet_basis(source, direction):
+            modes = []
+            for index in range(480):
+                mode = source.modes[index % len(source.modes)]
+                modes.append(
+                    SimpleNamespace(
+                        beta=mode.beta,
+                        right=SimpleNamespace(right_full=mode.right.right_full),
+                        left_full=mode.left_full,
+                        direction=direction,
+                        kind="propagating",
+                        passive_branch_valid=True,
+                    )
+                )
+            return SimpleNamespace(
+                modes=modes,
+                groups=[SimpleNamespace(indices=tuple(range(480)))],
+            )
+
+        identity = {
+            "source_sha": "0" * 40,
+            "input_sha256": "input-sha",
+            "resolved_sha256": "resolved-sha",
+            "physical_sha256": "physical-sha",
+            "mesh": "mesh-sha",
+            "mode_count": 480,
+            "scope": "task039_v4_h4_m480",
+            "external_keys": "external-keys-sha",
+            "mpi": comm.size,
+        }
+        metadata = {
+            "trace_mapping": {},
+            "canonical_mapping": {},
+            "gram_authority": {"positive": {}, "negative": {}},
+            "qep_diagnostics": {"positive": {}, "negative": {}},
+            "selection_diagnostics": {"positive": {}, "negative": {}},
+            "basis_audits": {"positive": {}, "negative": {}},
+            "reciprocal_pairing": {
+                "complete": True,
+                "count": 480,
+                "pairs": [
+                    {"positive_index": i, "negative_index": i} for i in range(480)
+                ],
+            },
+        }
+        result = write_task039_v4_selected_mode_packet(
+            directory,
+            positive_basis=packet_basis(self.positive, "forward"),
+            negative_basis=packet_basis(self.negative, "backward"),
+            identity=identity,
+            metadata=metadata,
+            comm=comm,
+        )
+        bundle = consume_task039_v4_selected_mode_packet(
+            directory / "manifest.json",
+            identity=identity,
+            expected_manifest_sha256=result["manifest_sha256"],
+            consumer_kind="iterative",
+            comm=comm,
+        )
+        owner = None
+        try:
+            assert all(
+                mode.left_full is not None
+                for basis in (bundle.positive_basis, bundle.negative_basis)
+                for mode in basis.modes
+            )
+            assert (
+                bundle.packet_consumer_diagnostics["vector_count_before_destroy"]
+                == 1920
+            )
+            owner = build_single_hybrid_interface_mode_owner(
+                self.action["bottom"],
+                self.spaces,
+                SimpleNamespace(modes=[bundle.positive_basis.modes[0]]),
+                SimpleNamespace(modes=[bundle.negative_basis.modes[0]]),
+            )
+            bundle.destroy()
+            assert bundle.packet_consumer_diagnostics["vector_count_after_destroy"] == 0
+            assert owner.audit["opposite_side_constructed"] is False
+        finally:
+            if owner is not None:
+                owner.destroy()
+            if not bundle.packet_consumer_diagnostics["destroyed"]:
+                bundle.destroy()
 
     def _assert_global_action(self, source: PETSc.Vec, label: str):
         expected = self.oracle_action.createVecLeft()

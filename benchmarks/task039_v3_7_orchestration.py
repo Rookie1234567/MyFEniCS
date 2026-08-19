@@ -24,6 +24,7 @@ import shutil
 import subprocess
 import sys
 import time
+import traceback
 from types import SimpleNamespace
 from collections.abc import Callable, Mapping
 from typing import Any
@@ -3780,17 +3781,17 @@ def run_v6_h4_port_modal_bottom_component(
             expected_manifest_sha256=packet_manifest_sha256,
             consumer_kind="iterative",
             comm=comm,
-            right_only=True,
         )
         packet_diagnostics = dict(packet_bundle.packet_consumer_diagnostics)
         _emit_marker(
             marker_callback,
-            "v6_port_modal_bottom_packet_right_only_ready",
+            "v6_port_modal_bottom_packet_full_ephemeral_ready",
             packet=packet_diagnostics,
-            right_vectors_before_destroy=packet_diagnostics.get(
+            vectors_before_destroy=packet_diagnostics.get(
                 "vector_count_before_destroy"
             ),
-            left_vectors_hydrated=False,
+            full_ephemeral_hydration=True,
+            left_vectors_hydrated=True,
         )
         cross_section = build_matching_cross_section(system.cfg, "stage4_xy")
         spaces = build_cross_section_spaces(
@@ -3807,7 +3808,7 @@ def run_v6_h4_port_modal_bottom_component(
         packet_bundle = None
         _emit_marker(
             marker_callback,
-            "v6_port_modal_bottom_packet_right_only_released",
+            "v6_port_modal_bottom_packet_full_ephemeral_released",
             packet_vectors_released=(
                 packet_diagnostics.get("vector_count_after_destroy") == 0
             ),
@@ -4028,7 +4029,11 @@ def run_v6_h4_port_modal_bottom_component(
                 "manifest_sha256": packet_manifest_sha256,
                 "identity": _json_safe(packet_identity),
                 "consumer_qep_calls": 0,
-                "right_only_hydration": True,
+                "full_ephemeral_hydration": True,
+                "left_vectors_hydrated": True,
+                "vectors_before_destroy": packet_diagnostics.get(
+                    "vector_count_before_destroy"
+                ),
                 "arrays_retained_after_owner": False,
             },
             "exact_spool_root": str(Path(exact_spool_root).resolve()),
@@ -7422,6 +7427,19 @@ def run_task039_v3_7_diagnostic(
                     comm.barrier()
 
 
+def _write_v3_7_worker_traceback(run_directory: str | Path) -> Path:
+    """Persist the current worker exception traceback beside raw output."""
+
+    path = (
+        Path(run_directory).resolve()
+        / "numerical_output"
+        / f"worker_traceback_rank{MPI.COMM_WORLD.rank:04d}.txt"
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(traceback.format_exc(), encoding="utf-8")
+    return path
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--worker", action="store_true")
@@ -7604,8 +7622,11 @@ def main(argv: list[str] | None = None) -> int:
             ),
         )
     except Exception as exc:
+        traceback_path = _write_v3_7_worker_traceback(args.run_directory)
+        traceback_text = traceback.format_exc()
         print(
-            f"V3-7 worker failed before completion: {type(exc).__name__}: {exc}",
+            f"V3-7 worker failed before completion: {type(exc).__name__}: {exc}\n"
+            f"Full traceback: {traceback_path}\n{traceback_text}",
             file=sys.stderr,
         )
         return 2

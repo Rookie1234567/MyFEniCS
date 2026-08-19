@@ -806,6 +806,12 @@ def test_task039_v4_streaming_roundtrip_hydrates_two_bases_and_collective_gram(
     assert len(hydrated.positive_basis.modes) == 480
     assert len(hydrated.negative_basis.modes) == 480
     assert hydrated.positive_basis is not hydrated.negative_basis
+    assert all(
+        mode.left_full is not None
+        for basis in (hydrated.positive_basis, hydrated.negative_basis)
+        for mode in basis.modes
+    )
+    assert hydrated.packet_consumer_diagnostics["vector_count_before_destroy"] == 1920
     old_propagation = build_two_sided_propagation(
         [*positive_basis.modes, *negative_basis.modes], 1.0
     )
@@ -860,39 +866,6 @@ def test_task039_v4_streaming_roundtrip_hydrates_two_bases_and_collective_gram(
     iterative_hydrated.destroy()
     del hydrated, loaded, result
     gc.collect()
-    comm.barrier()
-
-
-def test_task039_v6_right_only_packet_releases_left_vectors(tmp_path: Path) -> None:
-    directory, comm = _shared_directory(tmp_path)
-    branches, ownership = _branches(comm)
-    bases = {
-        name: _fake_basis(branches[name], ownership)
-        for name in ("positive", "negative")
-    }
-    result = write_task039_v4_selected_mode_packet(
-        directory,
-        positive_basis=bases["positive"],
-        negative_basis=bases["negative"],
-        identity=_identity(comm),
-        metadata=_metadata(),
-        comm=comm,
-    )
-    bundle = consume_task039_v4_selected_mode_packet(
-        directory / "manifest.json",
-        identity=_identity(comm),
-        expected_manifest_sha256=result["manifest_sha256"],
-        consumer_kind="iterative",
-        comm=comm,
-        right_only=True,
-    )
-    assert bundle.packet_consumer_diagnostics["right_only"] is True
-    assert bundle.packet_consumer_diagnostics["packet_mmap_released"] is True
-    assert all(mode.left_full is None for mode in bundle.positive_basis.modes)
-    assert all(mode.left_full is None for mode in bundle.negative_basis.modes)
-    assert bundle.packet_consumer_diagnostics["vector_count_before_destroy"] == 960
-    bundle.destroy()
-    assert bundle.packet_consumer_diagnostics["vector_count_after_destroy"] == 0
     comm.barrier()
 
 
