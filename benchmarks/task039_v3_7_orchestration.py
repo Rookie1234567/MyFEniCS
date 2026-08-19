@@ -169,6 +169,14 @@ V5_H4_BLR_RHS_SPECS = (
     ("fixed_random_repeat_0", "random", 773),
     ("fixed_random_repeat_1", "random", 779),
 )
+V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID = (
+    "task039.v5.h4.fixed_budget.bottom_side_component.v1"
+)
+V5_H4_FIXED_BUDGET_SIDE_METHOD = "task039_v5_h4_fixed_budget_bottom_component"
+V5_H4_FIXED_BUDGET = 32
+V5_H4_FIXED_BUDGET_EXACT_SPOOL_ROOT = Path(
+    "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/numerical_output"
+)
 
 
 def _validate_v5_h4_blr_profile(profile: str) -> str:
@@ -377,6 +385,8 @@ def build_v3_7_execution_plan(
     candidate_e_side_only: bool = False,
     v5_h4_setup_only: bool = False,
     v5_h4_blr_side_only: bool = False,
+    v5_h4_fixed_budget_bottom_only: bool = False,
+    v5_h4_fixed_budget_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -384,7 +394,7 @@ def build_v3_7_execution_plan(
 ) -> dict[str, Any]:
     """Describe the opt-in worker command consumed by the existing watchdog."""
 
-    if v5_h4_setup_only or v5_h4_blr_side_only:
+    if v5_h4_setup_only or v5_h4_blr_side_only or v5_h4_fixed_budget_bottom_only:
         specification = load_and_resolve(input_path)
         from benchmarks.task039_v4_h4_hybrid_direct import (
             validate_v4_h4_specification,
@@ -409,12 +419,13 @@ def build_v3_7_execution_plan(
                 bool(candidate_e_side_only),
                 bool(v5_h4_setup_only),
                 bool(v5_h4_blr_side_only),
+                bool(v5_h4_fixed_budget_bottom_only),
             )
         )
         > 1
     ):
         raise ValueError(
-            "Candidate routes, V5 h4 setup-only, and V5 h4 BLR side routes are exclusive"
+            "Candidate routes, V5 h4 setup-only, BLR, and fixed-budget routes are exclusive"
         )
     executable = str(Path(os.path.abspath(python_executable or sys.executable)))
     mpiexec = mpiexec_command or shutil.which("mpiexec") or "mpiexec"
@@ -444,7 +455,7 @@ def build_v3_7_execution_plan(
         argv.append("--candidate-d-qualified")
     if candidate_e_side_only:
         argv.append("--candidate-e-side-only")
-    if v5_h4_setup_only or v5_h4_blr_side_only:
+    if v5_h4_setup_only or v5_h4_blr_side_only or v5_h4_fixed_budget_bottom_only:
         if not all(
             (
                 selected_mode_packet_manifest,
@@ -458,7 +469,11 @@ def build_v3_7_execution_plan(
                 (
                     "--v5-h4-setup-only"
                     if v5_h4_setup_only
-                    else "--v5-h4-blr-side-component"
+                    else (
+                        "--v5-h4-blr-side-component"
+                        if v5_h4_blr_side_only
+                        else "--v5-h4-fixed-budget-bottom-component"
+                    )
                 ),
                 "--selected-mode-packet-manifest",
                 str(Path(selected_mode_packet_manifest).resolve()),
@@ -470,10 +485,21 @@ def build_v3_7_execution_plan(
         )
         if v5_h4_blr_side_only and v5_h4_blr_profile != MUMPS_BLR_V5_H4_PROFILE:
             argv.extend(["--v5-h4-blr-profile", v5_h4_blr_profile])
+        if v5_h4_fixed_budget_bottom_only:
+            if v5_h4_fixed_budget_exact_spool_root is None:
+                raise ValueError("Fixed-budget route requires the exact spool root")
+            argv.extend(
+                [
+                    "--v5-h4-fixed-budget-exact-spool-root",
+                    str(Path(v5_h4_fixed_budget_exact_spool_root).resolve()),
+                ]
+            )
     if v5_h4_setup_only:
         method = "task039_v5_h4_exact_side_setup_only"
     elif v5_h4_blr_side_only:
         method = V5_H4_BLR_SIDE_METHOD
+    elif v5_h4_fixed_budget_bottom_only:
+        method = V5_H4_FIXED_BUDGET_SIDE_METHOD
     elif candidate_d_qualified:
         method = V3_8_CANDIDATE_D_QUALIFIED_METHOD
     elif candidate_d_only:
@@ -499,10 +525,22 @@ def build_v3_7_execution_plan(
                 else (
                     V5_H4_BLR_SIDE_PROFILE_ID
                     if v5_h4_blr_side_only
-                    else V3_7_PROFILE_ID
+                    else (
+                        V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID
+                        if v5_h4_fixed_budget_bottom_only
+                        else V3_7_PROFILE_ID
+                    )
                 )
             ),
             "method": method,
+            "fixed_budget": (
+                V5_H4_FIXED_BUDGET if v5_h4_fixed_budget_bottom_only else None
+            ),
+            "exact_spool_root": (
+                None
+                if v5_h4_fixed_budget_exact_spool_root is None
+                else str(Path(v5_h4_fixed_budget_exact_spool_root).resolve())
+            ),
             "mumps_blr_profile": (v5_h4_blr_profile if v5_h4_blr_side_only else None),
             "hard_stop_authority": "process_tree_rss_bytes",
             "critical_checkpoint_only": True,
@@ -524,6 +562,8 @@ def v3_7_execution_dry_run(
     candidate_e_side_only: bool = False,
     v5_h4_setup_only: bool = False,
     v5_h4_blr_side_only: bool = False,
+    v5_h4_fixed_budget_bottom_only: bool = False,
+    v5_h4_fixed_budget_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -543,6 +583,8 @@ def v3_7_execution_dry_run(
         candidate_e_side_only=candidate_e_side_only,
         v5_h4_setup_only=v5_h4_setup_only,
         v5_h4_blr_side_only=v5_h4_blr_side_only,
+        v5_h4_fixed_budget_bottom_only=v5_h4_fixed_budget_bottom_only,
+        v5_h4_fixed_budget_exact_spool_root=v5_h4_fixed_budget_exact_spool_root,
         v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
         selected_mode_packet_identity=selected_mode_packet_identity,
@@ -573,6 +615,8 @@ def launch_v3_7_with_task038_watchdog(
     candidate_e_side_only: bool = False,
     v5_h4_setup_only: bool = False,
     v5_h4_blr_side_only: bool = False,
+    v5_h4_fixed_budget_bottom_only: bool = False,
+    v5_h4_fixed_budget_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -580,7 +624,7 @@ def launch_v3_7_with_task038_watchdog(
 ) -> dict[str, Any]:
     """Run the opt-in child through Task38's existing process-tree watchdog."""
 
-    if v5_h4_setup_only or v5_h4_blr_side_only:
+    if v5_h4_setup_only or v5_h4_blr_side_only or v5_h4_fixed_budget_bottom_only:
         specification = load_and_resolve(input_path)
         from benchmarks.task039_v4_h4_hybrid_direct import (
             validate_v4_h4_specification,
@@ -593,11 +637,14 @@ def launch_v3_7_with_task038_watchdog(
     if (
         not v5_h4_setup_only
         and not v5_h4_blr_side_only
+        and not v5_h4_fixed_budget_bottom_only
         and not V3_7_DIRECT_RUN_ROOT.is_dir()
     ):
         raise ValueError("V3-7 direct producer inventory is unavailable")
-    if not v5_h4_blr_side_only and not callable(
-        compare_v3_7_hybrid_candidate_to_direct
+    if (
+        not v5_h4_blr_side_only
+        and not v5_h4_fixed_budget_bottom_only
+        and not callable(compare_v3_7_hybrid_candidate_to_direct)
     ):
         raise ValueError("V3-7 integrated checker entry point is unavailable")
     if len(source_sha) != 40 or any(
@@ -607,6 +654,7 @@ def launch_v3_7_with_task038_watchdog(
     if (
         not v5_h4_setup_only
         and not v5_h4_blr_side_only
+        and not v5_h4_fixed_budget_bottom_only
         and not candidate_d_only
         and not candidate_d_qualified
     ):
@@ -625,6 +673,8 @@ def launch_v3_7_with_task038_watchdog(
         candidate_e_side_only=candidate_e_side_only,
         v5_h4_setup_only=v5_h4_setup_only,
         v5_h4_blr_side_only=v5_h4_blr_side_only,
+        v5_h4_fixed_budget_bottom_only=v5_h4_fixed_budget_bottom_only,
+        v5_h4_fixed_budget_exact_spool_root=v5_h4_fixed_budget_exact_spool_root,
         v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
         selected_mode_packet_identity=selected_mode_packet_identity,
@@ -911,6 +961,65 @@ def _load_v5_blr_reference_spool(
     target.getArray()[:] = values
     target.assemble()
     return target
+
+
+def _load_v5_fixed_budget_spool_records(
+    root: str | Path,
+    comm: MPI.Intracomm,
+    *,
+    packet_identity: Mapping[str, Any],
+    manifest_sha256: str,
+) -> dict[str, dict[str, Any]]:
+    """Read the six frozen bottom probe descriptors for this MPI rank."""
+
+    rank_directory = (
+        Path(root).resolve() / "v5_blr_reference_spool" / f"rank{comm.rank:04d}"
+    )
+    records: dict[str, dict[str, Any]] = {}
+    for label, kind, seed in V5_H4_BLR_RHS_SPECS:
+        artifacts: dict[str, Any] = {}
+        for role in ("rhs", "exact_output"):
+            metadata_path = rank_directory / f"bottom_{label}_{role}.json"
+            if not metadata_path.is_file():
+                raise ValueError(
+                    f"Missing fixed-budget spool metadata: {metadata_path}"
+                )
+            record = json.loads(metadata_path.read_text(encoding="utf-8"))
+            source_identity = record.get("source_identity")
+            packet_wrapper = (
+                source_identity.get("packet_identity")
+                if isinstance(source_identity, Mapping)
+                else None
+            )
+            source_packet = (
+                packet_wrapper.get("packet_identity")
+                if isinstance(packet_wrapper, Mapping)
+                else None
+            )
+            source_manifest = (
+                packet_wrapper.get("manifest_sha256")
+                if isinstance(packet_wrapper, Mapping)
+                else None
+            )
+            if (
+                record.get("side") != "bottom"
+                or record.get("label") != label
+                or record.get("role") != role
+                or source_packet != dict(packet_identity)
+                or source_manifest != manifest_sha256
+            ):
+                raise ValueError(
+                    f"Fixed-budget spool identity mismatch: {metadata_path}"
+                )
+            artifacts[role] = record
+        records[label] = {
+            "label": label,
+            "kind": kind,
+            "seed": seed,
+            "rhs": artifacts["rhs"],
+            "exact_output": artifacts["exact_output"],
+        }
+    return records
 
 
 def _short_side_ksp_residual(
@@ -2381,6 +2490,393 @@ def run_v5_h4_mumps_blr_side_component(
             "memory_stage_markers": {
                 "path": "numerical_output/memory_stage_markers.raw.jsonl",
                 "writer": "v3_7_worker",
+                "status": "measured_worker_marker_stream",
+            },
+            "memory_object_ledger": {
+                "path": "numerical_output/memory_object_ledger.json",
+                "status": "finalized_in_worker_finalizer",
+            },
+        },
+    }
+
+
+def run_v5_h4_fixed_budget_bottom_component(
+    setup: Any,
+    *,
+    comm: MPI.Intracomm,
+    marker_callback: Callable[[str, Mapping[str, Any]], None],
+    exact_spool_root: str | Path,
+    packet_identity: Mapping[str, Any],
+    packet_manifest_sha256: str,
+) -> dict[str, Any]:
+    """Run the single frozen bottom-side fixed-budget research component."""
+
+    spool = _load_v5_fixed_budget_spool_records(
+        exact_spool_root,
+        comm,
+        packet_identity=packet_identity,
+        manifest_sha256=packet_manifest_sha256,
+    )
+    system = setup.bottom
+    components = None
+    base_action = None
+    fixed_action = None
+    krylov_action = None
+    candidate_setup: dict[str, Any] = {}
+    candidate_reports: list[dict[str, Any]] = []
+    cleanup: dict[str, Any] = {}
+    component_inventory = getattr(system, "inventory", None)
+    if not isinstance(component_inventory, Mapping):
+        raise RuntimeError("Fixed-budget route requires side inventory")
+    if component_inventory.get("global_F_materialized") is not False:
+        raise RuntimeError("Fixed-budget route requires matrix-free side inventory")
+    _emit_marker(
+        marker_callback,
+        "v5_fixed_budget_reference_spool_validated",
+        side="bottom",
+        labels=list(spool),
+        exact_factor_count=0,
+        global_direct_factor_count=0,
+    )
+    _emit_marker(
+        marker_callback,
+        "v5_fixed_budget_candidate_bottom_setup_begin",
+        fixed_budget=V5_H4_FIXED_BUDGET,
+        exact_factor_count=0,
+        global_direct_factor_count=0,
+        candidate_online_factor_count_initial=0,
+        reference_outputs_retained=False,
+    )
+    try:
+        components = create_hybrid_local_dtn_action_components(system)
+        base_action = build_hybrid_whole_endcap_fixed_smoother_action(
+            system, ilu_levels=0
+        )
+        _emit_marker(
+            marker_callback,
+            "v5_fixed_budget_candidate_bottom_base_ready",
+            diagnostics=base_action.diagnostics,
+            exact_factor_count=0,
+            global_direct_factor_count=0,
+        )
+        fixed_action = HybridLocalDtnWoodburyFixedAction(
+            base_action,
+            components,
+            base_identity="whole_endcap_ilu0_woodbury_fixed_action",
+            ilu_levels=0,
+        )
+        _emit_marker(
+            marker_callback,
+            "v5_fixed_budget_candidate_bottom_woodbury_ready",
+            diagnostics=fixed_action.diagnostics,
+            exact_factor_count=0,
+            global_direct_factor_count=0,
+        )
+        krylov_action = HybridLocalDtnWoodburyFixedBudgetKrylovAction(
+            system.A,
+            fixed_action,
+            budget=V5_H4_FIXED_BUDGET,
+        )
+        candidate_setup = {
+            "fixed_budget": V5_H4_FIXED_BUDGET,
+            "ksp": krylov_action.diagnostics,
+            "woodbury": fixed_action.diagnostics,
+            "base": base_action.diagnostics,
+            "exact_factor_count": 0,
+            "global_direct_factor_count": 0,
+            "base_factor_count": int(fixed_action.diagnostics["base_factor_count"]),
+            "inventory": {
+                **_json_safe(dict(component_inventory)),
+                "global_F_materialized": False,
+                "no_new_explicit_component_matrix": True,
+            },
+        }
+        _emit_marker(
+            marker_callback,
+            "v5_fixed_budget_candidate_bottom_fixed_budget_ready",
+            diagnostics=candidate_setup,
+        )
+        _emit_marker(
+            marker_callback,
+            "v5_fixed_budget_candidate_bottom_setup_end",
+            diagnostics=candidate_setup,
+            fixed_budget=V5_H4_FIXED_BUDGET,
+            resource_gate="pending_parent_closed_interval",
+        )
+        _emit_marker(
+            marker_callback,
+            "v5_fixed_budget_candidate_bottom_online_begin",
+            fixed_budget=V5_H4_FIXED_BUDGET,
+            resource_gate="evidence_only_not_advancement_gate",
+        )
+        for label, artifact in spool.items():
+            _emit_marker(
+                marker_callback,
+                f"v5_fixed_budget_probe_{label}_begin",
+                side="bottom",
+                fixed_budget=V5_H4_FIXED_BUDGET,
+            )
+            template = rhs = reference = None
+            try:
+                template = system.A.createVecLeft()
+                rhs = _load_v5_blr_reference_spool(artifact["rhs"], template)
+                reference = _load_v5_blr_reference_spool(
+                    artifact["exact_output"], template
+                )
+                metadata = dict(artifact["rhs"]["source_identity"]["probe_metadata"])
+                report, _ = _v5_blr_probe(
+                    krylov_action,
+                    system,
+                    rhs,
+                    metadata,
+                    reference,
+                    repeat=True,
+                    linearity=label == "fixed_random_repeat_0",
+                )
+                report["reference_artifact"] = {
+                    "rhs": artifact["rhs"],
+                    "exact_output": artifact["exact_output"],
+                }
+                candidate_reports.append(report)
+                _emit_marker(
+                    marker_callback,
+                    f"v5_fixed_budget_probe_{label}_end",
+                    report=report,
+                    action_diagnostics=krylov_action.diagnostics,
+                )
+            finally:
+                if template is not None:
+                    template.destroy()
+                if rhs is not None:
+                    rhs.destroy()
+                if reference is not None:
+                    reference.destroy()
+        _emit_marker(
+            marker_callback,
+            "v5_fixed_budget_candidate_bottom_online_end",
+            fixed_budget=V5_H4_FIXED_BUDGET,
+            probe_count=len(candidate_reports),
+            resource_gate="evidence_only_not_advancement_gate",
+        )
+    finally:
+        if krylov_action is not None:
+            krylov_action.destroy()
+        krylov_diagnostics = (
+            None if krylov_action is None else krylov_action.diagnostics
+        )
+        if fixed_action is not None:
+            fixed_action.destroy()
+        fixed_diagnostics = None if fixed_action is None else fixed_action.diagnostics
+        if base_action is not None:
+            base_action.destroy()
+        base_diagnostics = None if base_action is None else base_action.diagnostics
+        if components is not None:
+            components.destroy()
+            component_release = {
+                "carrier_destroyed": bool(getattr(components, "_destroyed", False)),
+                "scratch_released": bool(getattr(components, "_destroyed", False)),
+                "borrowed_matrices_destroyed": False,
+                "borrowed_matrices_retained_by_setup": {
+                    name: True for name in ("F", "C", "D", "H")
+                },
+                "global_F_materialized": False,
+                "no_new_explicit_component_matrix": True,
+            }
+        else:
+            component_release = {
+                "carrier_destroyed": False,
+                "scratch_released": False,
+                "borrowed_matrices_destroyed": False,
+                "borrowed_matrices_retained_by_setup": {
+                    name: False for name in ("F", "C", "D", "H")
+                },
+                "global_F_materialized": False,
+                "no_new_explicit_component_matrix": True,
+            }
+        collective_cleanup = collective_heap_cleanup(comm)
+        cleanup = {
+            "ksp": krylov_diagnostics,
+            "woodbury": fixed_diagnostics,
+            "base": base_diagnostics,
+            "components": component_release,
+            "collective_cleanup": collective_cleanup,
+            "factor_count_after_cleanup": {
+                "exact": 0,
+                "global": 0,
+                "base": (
+                    None
+                    if not isinstance(
+                        (base_diagnostics or {}).get("lifecycle"), Mapping
+                    )
+                    else (base_diagnostics or {})["lifecycle"].get(
+                        "factor_count_after_destroy"
+                    )
+                ),
+            },
+        }
+        _emit_marker(
+            marker_callback,
+            "v5_fixed_budget_candidate_bottom_cleanup",
+            cleanup=cleanup,
+            exact_factor_count=0,
+            global_direct_factor_count=0,
+        )
+
+    if any(
+        not isinstance(report.get("degenerate_uninformative"), bool)
+        for report in candidate_reports
+    ):
+        raise RuntimeError(
+            "Fixed-budget probe metadata missing degenerate_uninformative"
+        )
+    degenerate_labels = [
+        report["label"]
+        for report in candidate_reports
+        if report["degenerate_uninformative"] is True
+    ]
+    mandatory_labels = [
+        report["label"]
+        for report in candidate_reports
+        if report["degenerate_uninformative"] is False
+    ]
+    mandatory = [
+        report
+        for report in candidate_reports
+        if report["degenerate_uninformative"] is False
+    ]
+    finite_pass = bool(
+        len(candidate_reports) == len(V5_H4_BLR_RHS_SPECS)
+        and all(report.get("finite") is True for report in candidate_reports)
+    )
+    true_residual_pass = bool(
+        mandatory
+        and all(
+            report.get("true_residual_relative") is not None
+            and report["true_residual_relative"] <= 1.0e-2
+            for report in mandatory
+        )
+    )
+    repeat_pass = bool(
+        mandatory
+        and all(
+            report.get("repeat_relative_error") is not None
+            and report["repeat_relative_error"] <= 1.0e-10
+            for report in mandatory
+        )
+    )
+    random_linearity = [
+        report for report in mandatory if report["label"] == "fixed_random_repeat_0"
+    ]
+    linearity_pass = bool(
+        random_linearity
+        and all(
+            report.get("linearity_relative_error") is not None
+            and report["linearity_relative_error"] <= 1.0e-10
+            for report in random_linearity
+        )
+    )
+    setup_ksp = candidate_setup.get("ksp", {})
+    factor_identity_pass = bool(
+        candidate_setup.get("fixed_budget") == V5_H4_FIXED_BUDGET
+        and candidate_setup.get("exact_factor_count") == 0
+        and candidate_setup.get("global_direct_factor_count") == 0
+        and setup_ksp.get("direct_factor_count") == 0
+        and setup_ksp.get("global_hybrid_direct_factor_count") == 0
+        and candidate_setup.get("base_factor_count") == 1
+    )
+    factor_cleanup_pass = bool(
+        cleanup.get("factor_count_after_cleanup", {}).get("exact") == 0
+        and cleanup.get("factor_count_after_cleanup", {}).get("global") == 0
+        and cleanup.get("factor_count_after_cleanup", {}).get("base") == 0
+        and cleanup.get("components", {}).get("carrier_destroyed") is True
+        and cleanup.get("components", {}).get("scratch_released") is True
+        and cleanup.get("components", {}).get("borrowed_matrices_destroyed") is False
+        and all(
+            cleanup.get("components", {})
+            .get("borrowed_matrices_retained_by_setup", {})
+            .get(name)
+            is True
+            for name in ("F", "C", "D", "H")
+        )
+    )
+    numerical_components_pass = bool(
+        finite_pass
+        and true_residual_pass
+        and repeat_pass
+        and factor_identity_pass
+        and factor_cleanup_pass
+    )
+    return {
+        "schema": "task039.v5-h4-fixed-budget-bottom-component.v1",
+        "status": "component_completed",
+        "component_candidate": True,
+        "research_only": True,
+        "general_production": False,
+        "profile": V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID,
+        "fixed_budget": V5_H4_FIXED_BUDGET,
+        "packet_identity": _json_safe(packet_identity),
+        "packet_manifest_sha256": packet_manifest_sha256,
+        "component_inventory": candidate_setup.get("inventory"),
+        "exact_spool_root": str(Path(exact_spool_root).resolve()),
+        "mandatory_labels": mandatory_labels,
+        "degenerate_labels": degenerate_labels,
+        "rhs_contract": [
+            {"label": label, "kind": kind, "seed": seed}
+            for label, kind, seed in V5_H4_BLR_RHS_SPECS
+        ],
+        "sides": {
+            "bottom": {
+                "candidate": {
+                    "probes": candidate_reports,
+                    "setup": candidate_setup,
+                    "cleanup": cleanup,
+                }
+            },
+            "top": "not_run_by_bottom_first_contract",
+        },
+        "gates": {
+            "finite_pass": finite_pass,
+            "true_residual_pass": true_residual_pass,
+            "true_residual_limit": 1.0e-2,
+            "repeat_pass": repeat_pass,
+            "repeat_limit": 1.0e-10,
+            "linearity_pass": linearity_pass,
+            "linearity_gate": (
+                "not_applicable_diagnostic_only; future outer must use FGMRES"
+            ),
+            "linearity_limit": 1.0e-10,
+            "factor_identity_pass": factor_identity_pass,
+            "factor_cleanup_pass": factor_cleanup_pass,
+            "numerical_components_pass": numerical_components_pass,
+            "numerical_pass": numerical_components_pass,
+            "resource_pass": None,
+            "advancement_pass": None,
+            "candidate_side_setup_peak": {
+                "status": "pending_parent_resource_gate",
+                "value": None,
+                "limit": V5_H4_BLR_SIDE_SETUP_PEAK_LIMIT_GIB,
+                "pass": None,
+            },
+            "resource_gate_pending": True,
+            "resource_authority": "parent_task038_closed_marker_interval",
+        },
+        "setup": "bottom_side_component_only",
+        "outer": "not_run",
+        "recovery": "not_run",
+        "field": "not_run",
+        "RTA": "not_run",
+        "qualification": "not_run",
+        "telemetry": {
+            "process_tree_samples": {
+                "path": "numerical_output/process_tree_samples.jsonl",
+                "status": "expected_from_parent_launcher",
+            },
+            "memory_stages": {
+                "path": "numerical_output/memory_stages.jsonl",
+                "status": "expected_from_parent_launcher",
+            },
+            "memory_stage_markers": {
+                "path": "numerical_output/memory_stage_markers.raw.jsonl",
                 "status": "measured_worker_marker_stream",
             },
             "memory_object_ledger": {
@@ -4374,6 +4870,8 @@ def run_task039_v3_7_diagnostic(
     candidate_e_side_only: bool = False,
     v5_h4_setup_only: bool = False,
     v5_h4_blr_side_only: bool = False,
+    v5_h4_fixed_budget_bottom_only: bool = False,
+    v5_h4_fixed_budget_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: Mapping[str, Any] | None = None,
@@ -4453,30 +4951,46 @@ def run_task039_v3_7_diagnostic(
         if v5_h4_blr_side_only:
             v5_h4_blr_profile = _validate_v5_h4_blr_profile(v5_h4_blr_profile)
         profile = None
-        if not v5_h4_setup_only and not v5_h4_blr_side_only:
+        if (
+            not v5_h4_setup_only
+            and not v5_h4_blr_side_only
+            and not v5_h4_fixed_budget_bottom_only
+        ):
             profile = (
                 profile_override
                 if profile_override is not None
                 else v3_7_profile_from_resolved(resolved_payload)
             )
-        if v5_h4_setup_only or v5_h4_blr_side_only:
+        if v5_h4_setup_only or v5_h4_blr_side_only or v5_h4_fixed_budget_bottom_only:
             incidence = resolved_payload["incidence"]
             profile = replace(
                 make_task039_hybrid_iterative_profile(480, 8, mesh_target_nm=4.0),
                 profile_id=(
                     "task039.v5.h4.exact-side.setup-only.v1"
                     if v5_h4_setup_only
-                    else V5_H4_BLR_SIDE_PROFILE_ID
+                    else (
+                        V5_H4_BLR_SIDE_PROFILE_ID
+                        if v5_h4_blr_side_only
+                        else V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID
+                    )
                 ),
                 record_schema=(
                     "task039.v5.h4.exact-side.setup-only.v1"
                     if v5_h4_setup_only
-                    else V5_H4_BLR_SIDE_PROFILE_ID
+                    else (
+                        V5_H4_BLR_SIDE_PROFILE_ID
+                        if v5_h4_blr_side_only
+                        else V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID
+                    )
                 ),
                 qualification_schema=(
                     "task039.v5.h4.exact-side.setup-only.v1"
                     if v5_h4_setup_only
-                    else V5_H4_BLR_SIDE_PROFILE_ID
+                    else (
+                        V5_H4_BLR_SIDE_PROFILE_ID
+                        if v5_h4_blr_side_only
+                        else V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID
+                    )
                 ),
                 wavelength_nm=float(incidence["wavelength_nm"]),
                 incident_grazing_deg=float(incidence["grazing_angle_deg"]),
@@ -4506,6 +5020,7 @@ def run_task039_v3_7_diagnostic(
             and not candidate_e_side_only
             and not v5_h4_setup_only
             and not v5_h4_blr_side_only
+            and not v5_h4_fixed_budget_bottom_only
         ):
             raise ValueError(
                 "V3-7 requires an injected recovery_runner(setup, layout, snapshot, "
@@ -4551,6 +5066,32 @@ def run_task039_v3_7_diagnostic(
                 "selected_mode_packet": True,
                 "consumer_qep_calls": 0,
                 "component_candidate": True,
+            }
+            modal_amplitudes = None
+        elif v5_h4_fixed_budget_bottom_only:
+            if (
+                selected_mode_packet_manifest is None
+                or selected_mode_packet_identity is None
+                or selected_mode_packet_manifest_sha256 is None
+                or v5_h4_fixed_budget_exact_spool_root is None
+            ):
+                raise ValueError(
+                    "V5 fixed-budget component requires packet identity and exact spool"
+                )
+            producer = {
+                "producer_source_sha": selected_mode_packet_identity.get("source_sha"),
+                "physical_model_sha256": selected_mode_packet_identity.get(
+                    "physical_sha256"
+                ),
+                "model_id": selected_mode_packet_identity.get("model_id"),
+                "requested_modes": 480,
+                "mpi_size": 8,
+                "external_keys_exact": True,
+                "selected_mode_packet": True,
+                "consumer_qep_calls": 0,
+                "component_candidate": True,
+                "fixed_budget": V5_H4_FIXED_BUDGET,
+                "exact_spool_root": str(Path(v5_h4_fixed_budget_exact_spool_root)),
             }
             modal_amplitudes = None
         elif candidate_d_only or candidate_d_qualified:
@@ -4633,6 +5174,25 @@ def run_task039_v3_7_diagnostic(
                     "manifest_sha256": selected_mode_packet_manifest_sha256,
                 },
                 compressed_factor_profile=v5_h4_blr_profile,
+            )
+            result["source_sha"] = source_sha
+            result["run_directory"] = str(Path(run_directory).resolve())
+            result["packet"] = {
+                "manifest": str(selected_mode_packet_manifest),
+                "identity": _json_safe(selected_mode_packet_identity),
+                "manifest_sha256": selected_mode_packet_manifest_sha256,
+                "consumer_qep_calls": 0,
+            }
+            normal_return = True
+            return result
+        if v5_h4_fixed_budget_bottom_only:
+            result = run_v5_h4_fixed_budget_bottom_component(
+                setup,
+                comm=comm,
+                marker_callback=marker_callback,
+                exact_spool_root=v5_h4_fixed_budget_exact_spool_root,
+                packet_identity=selected_mode_packet_identity,
+                packet_manifest_sha256=selected_mode_packet_manifest_sha256,
             )
             result["source_sha"] = source_sha
             result["run_directory"] = str(Path(run_directory).resolve())
@@ -5363,6 +5923,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--candidate-e-side-only", action="store_true")
     parser.add_argument("--v5-h4-setup-only", action="store_true")
     parser.add_argument("--v5-h4-blr-side-component", action="store_true")
+    parser.add_argument("--v5-h4-fixed-budget-bottom-component", action="store_true")
+    parser.add_argument("--v5-h4-fixed-budget-exact-spool-root")
     parser.add_argument(
         "--v5-h4-blr-profile",
         choices=V5_H4_BLR_PROFILE_CHOICES,
@@ -5387,12 +5949,13 @@ def main(argv: list[str] | None = None) -> int:
                 bool(args.candidate_e_side_only),
                 bool(args.v5_h4_setup_only),
                 bool(args.v5_h4_blr_side_component),
+                bool(args.v5_h4_fixed_budget_bottom_component),
             )
         )
         > 1
     ):
         parser.error(
-            "candidate routes, --v5-h4-setup-only, and --v5-h4-blr-side-component are mutually exclusive"
+            "candidate routes and V5 h4 component routes are mutually exclusive"
         )
     if args.dry_run:
         plan = v3_7_execution_dry_run(
@@ -5406,16 +5969,28 @@ def main(argv: list[str] | None = None) -> int:
             candidate_e_side_only=args.candidate_e_side_only,
             v5_h4_setup_only=args.v5_h4_setup_only,
             v5_h4_blr_side_only=args.v5_h4_blr_side_component,
+            v5_h4_fixed_budget_bottom_only=args.v5_h4_fixed_budget_bottom_component,
+            v5_h4_fixed_budget_exact_spool_root=(
+                args.v5_h4_fixed_budget_exact_spool_root
+            ),
             v5_h4_blr_profile=args.v5_h4_blr_profile,
             selected_mode_packet_manifest=args.selected_mode_packet_manifest,
             selected_mode_packet_identity=(
                 args.selected_mode_packet_identity
-                if args.v5_h4_setup_only or args.v5_h4_blr_side_component
+                if (
+                    args.v5_h4_setup_only
+                    or args.v5_h4_blr_side_component
+                    or args.v5_h4_fixed_budget_bottom_component
+                )
                 else None
             ),
             selected_mode_packet_manifest_sha256=(
                 args.selected_mode_packet_manifest_sha256
-                if args.v5_h4_setup_only or args.v5_h4_blr_side_component
+                if (
+                    args.v5_h4_setup_only
+                    or args.v5_h4_blr_side_component
+                    or args.v5_h4_fixed_budget_bottom_component
+                )
                 else None
             ),
         )
@@ -5434,7 +6009,11 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
     try:
-        if args.v5_h4_setup_only or args.v5_h4_blr_side_component:
+        if (
+            args.v5_h4_setup_only
+            or args.v5_h4_blr_side_component
+            or args.v5_h4_fixed_budget_bottom_component
+        ):
             specification = load_and_resolve(args.input_path)
             payload = specification.as_jsonable()
             from benchmarks.task039_v4_h4_hybrid_direct import (
@@ -5462,6 +6041,7 @@ def main(argv: list[str] | None = None) -> int:
                 or args.candidate_e_side_only
                 or args.v5_h4_setup_only
                 or args.v5_h4_blr_side_component
+                or args.v5_h4_fixed_budget_bottom_component
                 else run_v3_7_recovery_runner
             ),
             candidate_b_only=args.candidate_b_only,
@@ -5471,16 +6051,28 @@ def main(argv: list[str] | None = None) -> int:
             candidate_e_side_only=args.candidate_e_side_only,
             v5_h4_setup_only=args.v5_h4_setup_only,
             v5_h4_blr_side_only=args.v5_h4_blr_side_component,
+            v5_h4_fixed_budget_bottom_only=args.v5_h4_fixed_budget_bottom_component,
+            v5_h4_fixed_budget_exact_spool_root=(
+                args.v5_h4_fixed_budget_exact_spool_root
+            ),
             v5_h4_blr_profile=args.v5_h4_blr_profile,
             selected_mode_packet_manifest=(
                 args.selected_mode_packet_manifest
-                if args.v5_h4_setup_only or args.v5_h4_blr_side_component
+                if (
+                    args.v5_h4_setup_only
+                    or args.v5_h4_blr_side_component
+                    or args.v5_h4_fixed_budget_bottom_component
+                )
                 else None
             ),
             selected_mode_packet_identity=packet_identity,
             selected_mode_packet_manifest_sha256=(
                 args.selected_mode_packet_manifest_sha256
-                if args.v5_h4_setup_only or args.v5_h4_blr_side_component
+                if (
+                    args.v5_h4_setup_only
+                    or args.v5_h4_blr_side_component
+                    or args.v5_h4_fixed_budget_bottom_component
+                )
                 else None
             ),
             record_path=(
@@ -5530,6 +6122,10 @@ __all__ = [
     "V5_H4_BLR_SIDE_METHOD",
     "V5_H4_BLR_SIDE_PROFILE_ID",
     "run_v5_h4_mumps_blr_side_component",
+    "V5_H4_FIXED_BUDGET_SIDE_METHOD",
+    "V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID",
+    "V5_H4_FIXED_BUDGET",
+    "run_v5_h4_fixed_budget_bottom_component",
     "build_v3_7_execution_plan",
     "check_v3_7_integrated_physics",
     "compare_v3_7_hybrid_candidate_to_direct",

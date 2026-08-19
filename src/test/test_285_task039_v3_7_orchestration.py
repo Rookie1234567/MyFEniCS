@@ -1040,6 +1040,15 @@ def test_v5_h4_setup_only_plan_passes_identity_and_packet_args(tmp_path) -> None
     assert "task039_v5_h4_mumps_blr_side_component" in inspect.getsource(
         task038_launcher._run_worker
     )
+    launcher_source = inspect.getsource(task038_launcher._run_worker)
+    assert "formal_v5_h4_fixed_budget" in launcher_source
+    assert "v5_h4_fixed_budget_bottom_component_resource_authority" in launcher_source
+    assert '"gate_basis": "candidate_setup_interval_only"' in launcher_source
+    assert (
+        '"online_and_overall_role": "evidence_only_not_advancement_gate"'
+        in launcher_source
+    )
+    assert '"pass": None' in launcher_source
     route_source = inspect.getsource(orchestration.run_v5_h4_mumps_blr_side_component)
     assert route_source.index("exact_diagnostics = exact_action.diagnostics") < (
         route_source.index("v5_blr_exact_reference_{side}_ready")
@@ -1138,6 +1147,71 @@ def test_v5_h4_blr_parent_peak_uses_closed_parent_sample_interval(tmp_path) -> N
     assert result["status"] == "measured"
     assert result["peak_process_tree_rss_gib"] == 6.0
     assert result["time_basis"] == "parent_process_tree_sample_elapsed_seconds"
+
+
+def test_v5_fixed_budget_parent_peak_uses_bottom_marker_alignment(tmp_path) -> None:
+    stages = tmp_path / "memory_stages.jsonl"
+    samples = tmp_path / "process_tree_samples.jsonl"
+    stages.write_text(
+        "\n".join(
+            json.dumps(
+                {
+                    "stage": stage,
+                    "sample_elapsed_seconds": elapsed,
+                    "sample_status": "measured",
+                }
+            )
+            for stage, elapsed in (
+                ("v5_fixed_budget_candidate_bottom_setup_begin", 3.0),
+                ("v5_fixed_budget_candidate_bottom_setup_end", 7.0),
+                ("v5_fixed_budget_candidate_bottom_online_begin", 8.0),
+                ("v5_fixed_budget_candidate_bottom_online_end", 12.0),
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    samples.write_text(
+        "\n".join(
+            json.dumps(
+                {
+                    "elapsed_seconds": elapsed,
+                    "rss_bytes": rss,
+                    "sample_status": "measured",
+                }
+            )
+            for elapsed, rss in (
+                (3.0, 4 * 1024**3),
+                (5.0, 7 * 1024**3),
+                (7.0, 6 * 1024**3),
+                (8.0, 8 * 1024**3),
+                (10.0, 9 * 1024**3),
+                (12.0, 6 * 1024**3),
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    result = task038_launcher._v5_h4_blr_candidate_interval_peak(
+        stages,
+        samples,
+        "bottom",
+        marker_prefix="v5_fixed_budget_candidate",
+    )
+    assert result["status"] == "measured"
+    assert result["peak_process_tree_rss_gib"] == 7.0
+    assert result["pass"] is True
+    online = task038_launcher._v5_h4_blr_candidate_interval_peak(
+        stages,
+        samples,
+        "bottom",
+        marker_prefix="v5_fixed_budget_candidate",
+        begin_suffix="online_begin",
+        end_suffix="online_end",
+    )
+    assert online["status"] == "measured"
+    assert online["peak_process_tree_rss_gib"] == 9.0
+    assert online["pass"] is True
 
 
 def test_v5_h4_blr_parent_peak_missing_evidence_fails_closed(tmp_path) -> None:
@@ -1538,10 +1612,309 @@ def test_v5_h4_blr_injected_route_keeps_exact_candidate_lifecycle(
     assert result["status"] == "component_completed"
     assert result["gates"]["numerical_pass"] is True
     assert result["gates"]["resource_pass"] is None
+
+
+def test_v5_h4_fixed_budget_plan_freezes_bottom_route_and_spool(tmp_path) -> None:
+    h4_input = Path(
+        "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
+    )
+    manifest = tmp_path / "manifest.json"
+    identity = tmp_path / "identity.json"
+    spool = tmp_path / "exact-spool"
+    plan = watchdog.v3_7_execution_dry_run(
+        h4_input,
+        tmp_path / "fixed-budget-plan",
+        source_sha="a" * 40,
+        v5_h4_fixed_budget_bottom_only=True,
+        v5_h4_fixed_budget_exact_spool_root=spool,
+        selected_mode_packet_manifest=manifest,
+        selected_mode_packet_identity=identity,
+        selected_mode_packet_manifest_sha256="b" * 64,
+    )
+    argv = plan["argv"]
+    assert argv.count("--v5-h4-fixed-budget-bottom-component") == 1
+    assert str(spool.resolve()) in argv
+    assert "--v5-h4-blr-side-component" not in argv
+    assert "--v5-h4-setup-only" not in argv
+    assert "--fixed-budget" not in argv
+    assert plan["worker_contract"]["method"] == (
+        orchestration.V5_H4_FIXED_BUDGET_SIDE_METHOD
+    )
+    assert plan["worker_contract"]["fixed_budget"] == 32
+    with pytest.raises(ValueError, match="exclusive"):
+        watchdog.v3_7_execution_dry_run(
+            h4_input,
+            tmp_path / "fixed-budget-conflict",
+            source_sha="a" * 40,
+            candidate_b_only=True,
+            v5_h4_fixed_budget_bottom_only=True,
+            v5_h4_fixed_budget_exact_spool_root=spool,
+            selected_mode_packet_manifest=manifest,
+            selected_mode_packet_identity=identity,
+            selected_mode_packet_manifest_sha256="b" * 64,
+        )
+
+
+def test_v5_fixed_budget_spool_unwraps_packet_identity_and_manifest(tmp_path) -> None:
+    root = tmp_path / "numerical_output" / "v5_blr_reference_spool" / "rank0000"
+    root.mkdir(parents=True)
+    packet = {"model_id": "task039_h4", "requested_modes": 480}
+    wrapper = {
+        "source_sha": "s" * 40,
+        "packet_identity": packet,
+        "manifest_sha256": "m" * 64,
+    }
+    for label, _kind, _seed in orchestration.V5_H4_BLR_RHS_SPECS:
+        for role in ("rhs", "exact_output"):
+            (root / f"bottom_{label}_{role}.json").write_text(
+                json.dumps(
+                    {
+                        "side": "bottom",
+                        "label": label,
+                        "role": role,
+                        "source_identity": {"packet_identity": wrapper},
+                    }
+                ),
+                encoding="utf-8",
+            )
+    records = orchestration._load_v5_fixed_budget_spool_records(
+        tmp_path / "numerical_output",
+        MPI.COMM_SELF,
+        packet_identity=packet,
+        manifest_sha256="m" * 64,
+    )
+    assert list(records) == [spec[0] for spec in orchestration.V5_H4_BLR_RHS_SPECS]
+    broken = root / "bottom_external_dtn_coupling_rhs.json"
+    broken.write_text(
+        broken.read_text(encoding="utf-8").replace("m" * 64, "x" * 64),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="identity mismatch"):
+        orchestration._load_v5_fixed_budget_spool_records(
+            tmp_path / "numerical_output",
+            MPI.COMM_SELF,
+            packet_identity=packet,
+            manifest_sha256="m" * 64,
+        )
+
+
+def test_v5_h4_fixed_budget_route_is_bottom_only_and_cleans_factors(
+    tmp_path, monkeypatch
+) -> None:
+    class FakeVec:
+        def destroy(self):
+            return None
+
+    class FakeOperator:
+        def createVecLeft(self):
+            return FakeVec()
+
+    class FakeBase:
+        diagnostics = {
+            "factor_count": 1,
+            "ksp_created": False,
+            "lifecycle": {"factor_count_after_destroy": 0},
+        }
+
+        def destroy(self):
+            return None
+
+    class FakeFixed:
+        def __init__(self):
+            self.operator = FakeOperator()
+            self.diagnostics = {
+                "base_factor_count": 1,
+                "local_direct_factor_count": 0,
+                "global_hybrid_direct_factor_count": 0,
+                "residual_correction_steps": 1,
+            }
+
+        def destroy(self):
+            return None
+
+    class FakeKrylov:
+        def __init__(self):
+            self.operator = FakeOperator()
+            self.diagnostics = {
+                "requested_budget": 32,
+                "direct_factor_count": 0,
+                "global_hybrid_direct_factor_count": 0,
+            }
+
+        def destroy(self):
+            return None
+
+    class FakeComponents:
+        def __init__(self):
+            self.F = object()
+            self.C = object()
+            self.D = object()
+            self.H = object()
+            self._destroyed = False
+
+        def destroy(self):
+            self._destroyed = True
+
+    labels = [spec[0] for spec in orchestration.V5_H4_BLR_RHS_SPECS]
+    spool = {
+        label: {
+            "rhs": {
+                "source_identity": {
+                    "probe_metadata": {
+                        "label": label,
+                        "degenerate_uninformative": label == "physical_side_rhs",
+                    }
+                }
+            },
+            "exact_output": {},
+        }
+        for label in labels
+    }
+    markers = []
+    component_factory_calls = []
+    explicit_builder_calls = []
+    monkeypatch.setattr(
+        orchestration,
+        "_load_v5_fixed_budget_spool_records",
+        lambda *_args, **_kwargs: spool,
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "create_hybrid_local_dtn_action_components",
+        lambda system: component_factory_calls.append(system) or FakeComponents(),
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "_build_research_explicit_side_components",
+        lambda system: (
+            explicit_builder_calls.append(system)
+            or pytest.fail("fixed-budget route materialized explicit side components")
+        ),
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "build_hybrid_whole_endcap_fixed_smoother_action",
+        lambda _system, ilu_levels=0: FakeBase(),
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "HybridLocalDtnWoodburyFixedAction",
+        lambda *_args, **_kwargs: FakeFixed(),
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "HybridLocalDtnWoodburyFixedBudgetKrylovAction",
+        lambda *_args, **_kwargs: FakeKrylov(),
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "_load_v5_blr_reference_spool",
+        lambda _record, _template: FakeVec(),
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "_v5_blr_probe",
+        lambda _action, _system, _rhs, metadata, *_args, **_kwargs: (
+            {
+                **metadata,
+                "finite": True,
+                "true_residual_relative": 1.0e-4,
+                "repeat_relative_error": 1.0e-12,
+                "linearity_relative_error": (
+                    1.0e-12 if metadata["label"] == "fixed_random_repeat_0" else None
+                ),
+                "reference_relative_error": 1.0e-12,
+                "output": {"global_sha256": metadata["label"]},
+            },
+            None,
+        ),
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "collective_heap_cleanup",
+        lambda _comm: {"collective_call_completed": True},
+    )
+    setup = SimpleNamespace(
+        bottom=SimpleNamespace(
+            A=FakeOperator(),
+            inventory={"global_F_materialized": False},
+        )
+    )
+
+    def run_component():
+        return orchestration.run_v5_h4_fixed_budget_bottom_component(
+            setup,
+            comm=MPI.COMM_SELF,
+            marker_callback=lambda marker, _detail: markers.append(marker),
+            exact_spool_root=tmp_path,
+            packet_identity={"model_id": "h4"},
+            packet_manifest_sha256="b" * 64,
+        )
+
+    result = run_component()
+    assert result["fixed_budget"] == 32
+    assert result["sides"]["top"] == "not_run_by_bottom_first_contract"
+    assert result["gates"]["numerical_pass"] is True
+    assert result["gates"]["resource_pass"] is None
+    assert markers.index(
+        "v5_fixed_budget_candidate_bottom_setup_begin"
+    ) < markers.index("v5_fixed_budget_candidate_bottom_setup_end")
+    assert markers.index("v5_fixed_budget_candidate_bottom_setup_end") < markers.index(
+        "v5_fixed_budget_candidate_bottom_online_begin"
+    )
+    assert markers.index(
+        "v5_fixed_budget_candidate_bottom_online_begin"
+    ) < markers.index("v5_fixed_budget_candidate_bottom_online_end")
+    assert markers[-1] == "v5_fixed_budget_candidate_bottom_cleanup"
+    assert (
+        result["sides"]["bottom"]["candidate"]["cleanup"]["factor_count_after_cleanup"][
+            "base"
+        ]
+        == 0
+    )
+    components = result["sides"]["bottom"]["candidate"]["cleanup"]["components"]
+    assert components["carrier_destroyed"] is True
+    assert components["scratch_released"] is True
+    assert components["borrowed_matrices_destroyed"] is False
+    assert components["borrowed_matrices_retained_by_setup"] == {
+        "F": True,
+        "C": True,
+        "D": True,
+        "H": True,
+    }
+    assert (
+        result["sides"]["bottom"]["candidate"]["setup"]["inventory"][
+            "global_F_materialized"
+        ]
+        is False
+    )
+    assert (
+        result["sides"]["bottom"]["candidate"]["setup"]["inventory"][
+            "no_new_explicit_component_matrix"
+        ]
+        is True
+    )
+    assert result["sides"]["bottom"]["candidate"]["setup"]["base_factor_count"] == 1
+    assert component_factory_calls == [setup.bottom]
+    assert explicit_builder_calls == []
+    assert result["mandatory_labels"] == [
+        label for label in labels if label != "physical_side_rhs"
+    ]
+    assert result["degenerate_labels"] == ["physical_side_rhs"]
     assert result["gates"]["advancement_pass"] is None
     assert result["packet_identity"] == {"model_id": "h4"}
     assert result["outer"] == "not_run"
     assert result["recovery"] == "not_run"
+
+    spool["physical_side_rhs"]["rhs"]["source_identity"]["probe_metadata"][
+        "degenerate_uninformative"
+    ] = False
+    markers.clear()
+    result_non_degenerate = run_component()
+    assert "physical_side_rhs" in result_non_degenerate["mandatory_labels"]
+    assert result_non_degenerate["degenerate_labels"] == []
+    assert len(result_non_degenerate["mandatory_labels"]) == 6
+    assert len(component_factory_calls) == 2
 
 
 def test_v3_8_candidate_e_dry_run_and_route_exclusivity(tmp_path) -> None:

@@ -53,9 +53,13 @@ def _v5_h4_blr_candidate_interval_peak(
     memory_stages_path: Path,
     process_samples_path: Path,
     side: str,
+    *,
+    marker_prefix: str = "v5_blr_candidate",
+    begin_suffix: str = "setup_begin",
+    end_suffix: str = "setup_end",
 ) -> dict[str, Any]:
-    begin_stage = f"v5_blr_candidate_{side}_setup_begin"
-    end_stage = f"v5_blr_candidate_{side}_setup_end"
+    begin_stage = f"{marker_prefix}_{side}_{begin_suffix}"
+    end_stage = f"{marker_prefix}_{side}_{end_suffix}"
     stage_rows: dict[str, dict[str, Any]] = {}
     if not memory_stages_path.is_file() or not process_samples_path.is_file():
         return {
@@ -487,6 +491,9 @@ def _run_worker(
     formal_v5_h4_blr = (
         getattr(plan, "method", "") == "task039_v5_h4_mumps_blr_side_component"
     )
+    formal_v5_h4_fixed_budget = (
+        getattr(plan, "method", "") == "task039_v5_h4_fixed_budget_bottom_component"
+    )
     formal_telemetry = (
         formal_v2_h5
         or formal_v3_2d
@@ -494,6 +501,7 @@ def _run_worker(
         or formal_v4_h4_hybrid
         or formal_v5_h4_setup
         or formal_v5_h4_blr
+        or formal_v5_h4_fixed_budget
     )
     if task039_model_id_matches(method, model_id, requested_modes):
         task039_budget = _task039_memory_budget(execution)
@@ -587,6 +595,7 @@ def _run_worker(
                 or formal_v4_h4_hybrid
                 or formal_v5_h4_setup
                 or formal_v5_h4_blr
+                or formal_v5_h4_fixed_budget
             )
             or formal_stage_stream is None
         ):
@@ -598,7 +607,10 @@ def _run_worker(
         for marker in markers:
             stage_index = marker.get("stage_index")
             if (
-                formal_v4_h4 or formal_v5_h4_setup or formal_v5_h4_blr
+                formal_v4_h4
+                or formal_v5_h4_setup
+                or formal_v5_h4_blr
+                or formal_v5_h4_fixed_budget
             ) and stage_index is None:
                 stage_index = formal_aligned_stage_count
             row = {
@@ -642,6 +654,7 @@ def _run_worker(
             or formal_v4_h4_hybrid
             or formal_v5_h4_setup
             or formal_v5_h4_blr
+            or formal_v5_h4_fixed_budget
         ):
             formal_stages_path.unlink(missing_ok=True)
             formal_stage_stream = formal_stages_path.open("a", encoding="utf-8")
@@ -726,6 +739,7 @@ def _run_worker(
         or formal_v4_h4_hybrid
         or formal_v5_h4_setup
         or formal_v5_h4_blr
+        or formal_v5_h4_fixed_budget
     ) and not formal_object_ledger_path.exists():
         _write_json(
             formal_object_ledger_path,
@@ -769,6 +783,47 @@ def _run_worker(
             "time_basis": "parent_process_tree_sample_elapsed_seconds",
         }
         blr_intervals["overall"] = overall
+    fixed_budget_intervals = None
+    fixed_budget_overall = None
+    if formal_v5_h4_fixed_budget:
+        setup_interval = _v5_h4_blr_candidate_interval_peak(
+            formal_stages_path,
+            formal_samples_path,
+            "bottom",
+            marker_prefix="v5_fixed_budget_candidate",
+        )
+        online_interval = _v5_h4_blr_candidate_interval_peak(
+            formal_stages_path,
+            formal_samples_path,
+            "bottom",
+            marker_prefix="v5_fixed_budget_candidate",
+            begin_suffix="online_begin",
+            end_suffix="online_end",
+        )
+        online_interval["gate_role"] = "evidence_only_not_advancement_gate"
+        online_interval["limit_gib"] = None
+        online_interval["pass"] = None
+        fixed_budget_intervals = {
+            "setup": setup_interval,
+            "online": online_interval,
+        }
+        measured = [
+            item
+            for item in fixed_budget_intervals.values()
+            if item.get("status") == "measured"
+        ]
+        fixed_budget_overall = {
+            "status": "measured" if len(measured) == 2 else "not_available",
+            "peak_process_tree_rss_gib": (
+                max(item["peak_process_tree_rss_gib"] for item in measured)
+                if len(measured) == 2
+                else None
+            ),
+            "limit_gib": None,
+            "pass": None,
+            "gate_role": "evidence_only_not_advancement_gate",
+            "time_basis": "parent_process_tree_sample_elapsed_seconds",
+        }
     resource_authority = {
         "status": "measured" if sample_count else "not_available",
         "sample_count": sample_count,
@@ -881,6 +936,33 @@ def _run_worker(
         resource_authority["v5_h4_blr_side_component_resource_authority"] = {
             "candidate_setup_intervals": blr_intervals,
             "gate_basis": "closed_begin_end_parent_sample_interval",
+        }
+    if formal_v5_h4_fixed_budget:
+        resource_authority["v5_h4_fixed_budget_bottom_component_telemetry"] = {
+            "raw_marker_path": str(formal_markers_path),
+            "process_tree_samples_path": str(formal_samples_path),
+            "memory_stages_path": str(formal_stages_path),
+            "memory_object_ledger_path": str(formal_object_ledger_path),
+            "sample_count": sample_count,
+            "process_tree_sample_count": formal_written_sample_count,
+            "aligned_stage_count": formal_aligned_stage_count,
+            "stage_source": "launcher_marker_alignment",
+        }
+        resource_authority["v5_h4_fixed_budget_bottom_component_resource_authority"] = {
+            "candidate_setup_interval": (
+                None
+                if fixed_budget_intervals is None
+                else fixed_budget_intervals["setup"]
+            ),
+            "online_interval": (
+                None
+                if fixed_budget_intervals is None
+                else fixed_budget_intervals["online"]
+            ),
+            "overall": fixed_budget_overall,
+            "top": "not_run_by_bottom_only_contract",
+            "gate_basis": "candidate_setup_interval_only",
+            "online_and_overall_role": "evidence_only_not_advancement_gate",
         }
     if formal_v3_2d:
         resource_authority["v3_2d_formal_telemetry"] = {

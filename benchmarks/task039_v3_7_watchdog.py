@@ -57,6 +57,15 @@ V5_H4_BLR_PROFILE_CHOICES = (
     V5_H4_BLR_DEFAULT_PROFILE,
     "mumps_blr_v5_h4_1e3",
 )
+V5_H4_FIXED_BUDGET_BOTTOM_COMPONENT_FLAG = "--v5-h4-fixed-budget-bottom-component"
+V5_H4_FIXED_BUDGET_EXACT_SPOOL_ROOT_FLAG = "--v5-h4-fixed-budget-exact-spool-root"
+V5_H4_FIXED_BUDGET_BOTTOM_COMPONENT_METHOD = (
+    "task039_v5_h4_fixed_budget_bottom_component"
+)
+V5_H4_FIXED_BUDGET_BOTTOM_COMPONENT_PROFILE = (
+    "task039.v5.h4.fixed_budget.bottom_side_component.v1"
+)
+V5_H4_FIXED_BUDGET = 32
 
 
 def _validate_resolved_identity(
@@ -64,8 +73,9 @@ def _validate_resolved_identity(
     *,
     v5_h4_setup_only: bool = False,
     v5_h4_blr_side_only: bool = False,
+    v5_h4_fixed_budget_bottom_only: bool = False,
 ) -> None:
-    if v5_h4_setup_only or v5_h4_blr_side_only:
+    if v5_h4_setup_only or v5_h4_blr_side_only or v5_h4_fixed_budget_bottom_only:
         method = payload.get("method", {})
         if payload.get("model_id") != "task039_5nm_v4_1deg_s5_hybrid_iterative_m480":
             raise ValueError("V5 h4 component requires the fixed h4 model")
@@ -121,11 +131,13 @@ def _watchdog_policy(
     *,
     v5_h4_setup_only: bool = False,
     v5_h4_blr_side_only: bool = False,
+    v5_h4_fixed_budget_bottom_only: bool = False,
 ) -> dict[str, Any]:
     _validate_resolved_identity(
         payload,
         v5_h4_setup_only=v5_h4_setup_only,
         v5_h4_blr_side_only=v5_h4_blr_side_only,
+        v5_h4_fixed_budget_bottom_only=v5_h4_fixed_budget_bottom_only,
     )
     return {
         "warning_memory_gib": V3_7_WARNING_GIB,
@@ -165,10 +177,11 @@ def load_v3_7_official_payload(
     *,
     v5_h4_setup_only: bool = False,
     v5_h4_blr_side_only: bool = False,
+    v5_h4_fixed_budget_bottom_only: bool = False,
 ) -> dict[str, Any]:
     specification = load_and_resolve(input_path)
     payload = specification.as_jsonable()
-    if v5_h4_setup_only or v5_h4_blr_side_only:
+    if v5_h4_setup_only or v5_h4_blr_side_only or v5_h4_fixed_budget_bottom_only:
         from benchmarks.task039_v4_h4_hybrid_direct import (
             validate_v4_h4_specification,
         )
@@ -178,6 +191,7 @@ def load_v3_7_official_payload(
         payload,
         v5_h4_setup_only=v5_h4_setup_only,
         v5_h4_blr_side_only=v5_h4_blr_side_only,
+        v5_h4_fixed_budget_bottom_only=v5_h4_fixed_budget_bottom_only,
     )
     return payload
 
@@ -197,6 +211,8 @@ def build_v3_7_execution_plan(
     candidate_e_side_only: bool = False,
     v5_h4_setup_only: bool = False,
     v5_h4_blr_side_only: bool = False,
+    v5_h4_fixed_budget_bottom_only: bool = False,
+    v5_h4_fixed_budget_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = V5_H4_BLR_DEFAULT_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -208,6 +224,7 @@ def build_v3_7_execution_plan(
         input_path,
         v5_h4_setup_only=v5_h4_setup_only,
         v5_h4_blr_side_only=v5_h4_blr_side_only,
+        v5_h4_fixed_budget_bottom_only=v5_h4_fixed_budget_bottom_only,
     )
     if v5_h4_blr_side_only and v5_h4_blr_profile not in V5_H4_BLR_PROFILE_CHOICES:
         raise ValueError(f"Unsupported V5 h4 BLR profile: {v5_h4_blr_profile}")
@@ -215,6 +232,7 @@ def build_v3_7_execution_plan(
         payload,
         v5_h4_setup_only=v5_h4_setup_only,
         v5_h4_blr_side_only=v5_h4_blr_side_only,
+        v5_h4_fixed_budget_bottom_only=v5_h4_fixed_budget_bottom_only,
     )
     executable = str(Path(os.path.abspath(python_executable or sys.executable)))
     mpiexec = mpiexec_command or shutil.which("mpiexec") or "mpiexec"
@@ -229,12 +247,13 @@ def build_v3_7_execution_plan(
                 bool(candidate_e_side_only),
                 bool(v5_h4_setup_only),
                 bool(v5_h4_blr_side_only),
+                bool(v5_h4_fixed_budget_bottom_only),
             )
         )
         > 1
     ):
         raise ValueError(
-            "QEP-only, candidate, V5 h4 setup-only, and V5 h4 BLR side routes are exclusive"
+            "QEP-only, candidate, and V5 h4 component routes are exclusive"
         )
     worker_module = (
         V3_7_QEP_ONLY_WORKER_MODULE
@@ -311,6 +330,31 @@ def build_v3_7_execution_plan(
         )
         if v5_h4_blr_profile != V5_H4_BLR_DEFAULT_PROFILE:
             argv.extend([V5_H4_BLR_PROFILE_FLAG, v5_h4_blr_profile])
+    elif v5_h4_fixed_budget_bottom_only:
+        if not all(
+            (
+                selected_mode_packet_manifest,
+                selected_mode_packet_identity,
+                selected_mode_packet_manifest_sha256,
+                v5_h4_fixed_budget_exact_spool_root,
+            )
+        ):
+            raise ValueError(
+                "V5 fixed-budget component requires packet and exact spool arguments"
+            )
+        argv.extend(
+            [
+                V5_H4_FIXED_BUDGET_BOTTOM_COMPONENT_FLAG,
+                "--selected-mode-packet-manifest",
+                str(Path(selected_mode_packet_manifest).resolve()),
+                "--selected-mode-packet-identity",
+                str(Path(selected_mode_packet_identity).resolve()),
+                "--selected-mode-packet-manifest-sha256",
+                str(selected_mode_packet_manifest_sha256),
+                V5_H4_FIXED_BUDGET_EXACT_SPOOL_ROOT_FLAG,
+                str(Path(v5_h4_fixed_budget_exact_spool_root).resolve()),
+            ]
+        )
     if candidate_d_qualified:
         method = V3_8_CANDIDATE_D_QUALIFIED_METHOD
     elif candidate_d_only:
@@ -321,6 +365,8 @@ def build_v3_7_execution_plan(
         method = V5_H4_SETUP_ONLY_METHOD
     elif v5_h4_blr_side_only:
         method = V5_H4_BLR_SIDE_COMPONENT_METHOD
+    elif v5_h4_fixed_budget_bottom_only:
+        method = V5_H4_FIXED_BUDGET_BOTTOM_COMPONENT_METHOD
     elif candidate_c_only:
         method = "hybrid_iterative_candidate_c1_only"
     elif candidate_b_only:
@@ -342,11 +388,23 @@ def build_v3_7_execution_plan(
                 else (
                     "task039.v5.h4.mumps_blr.side_component.v1"
                     if v5_h4_blr_side_only
-                    else V3_7_PROFILE_ID
+                    else (
+                        V5_H4_FIXED_BUDGET_BOTTOM_COMPONENT_PROFILE
+                        if v5_h4_fixed_budget_bottom_only
+                        else V3_7_PROFILE_ID
+                    )
                 )
             ),
             "method": method,
             "mumps_blr_profile": (v5_h4_blr_profile if v5_h4_blr_side_only else None),
+            "fixed_budget": (
+                V5_H4_FIXED_BUDGET if v5_h4_fixed_budget_bottom_only else None
+            ),
+            "exact_spool_root": (
+                None
+                if v5_h4_fixed_budget_exact_spool_root is None
+                else str(Path(v5_h4_fixed_budget_exact_spool_root).resolve())
+            ),
             "hard_stop_authority": "process_tree_rss_bytes",
             "critical_checkpoint_only": True,
             "swap_policy": "immediate_complete_process_tree_termination",
@@ -368,6 +426,8 @@ def v3_7_execution_dry_run(
     candidate_e_side_only: bool = False,
     v5_h4_setup_only: bool = False,
     v5_h4_blr_side_only: bool = False,
+    v5_h4_fixed_budget_bottom_only: bool = False,
+    v5_h4_fixed_budget_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = V5_H4_BLR_DEFAULT_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -386,6 +446,8 @@ def v3_7_execution_dry_run(
         candidate_e_side_only=candidate_e_side_only,
         v5_h4_setup_only=v5_h4_setup_only,
         v5_h4_blr_side_only=v5_h4_blr_side_only,
+        v5_h4_fixed_budget_bottom_only=v5_h4_fixed_budget_bottom_only,
+        v5_h4_fixed_budget_exact_spool_root=v5_h4_fixed_budget_exact_spool_root,
         v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
         selected_mode_packet_identity=selected_mode_packet_identity,
@@ -414,6 +476,8 @@ def launch_v3_7_with_task038_watchdog(
     candidate_e_side_only: bool = False,
     v5_h4_setup_only: bool = False,
     v5_h4_blr_side_only: bool = False,
+    v5_h4_fixed_budget_bottom_only: bool = False,
+    v5_h4_fixed_budget_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = V5_H4_BLR_DEFAULT_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -425,8 +489,13 @@ def launch_v3_7_with_task038_watchdog(
         input_path,
         v5_h4_setup_only=v5_h4_setup_only,
         v5_h4_blr_side_only=v5_h4_blr_side_only,
+        v5_h4_fixed_budget_bottom_only=v5_h4_fixed_budget_bottom_only,
     )
-    if not v5_h4_setup_only and not v5_h4_blr_side_only:
+    if (
+        not v5_h4_setup_only
+        and not v5_h4_blr_side_only
+        and not v5_h4_fixed_budget_bottom_only
+    ):
         _check_direct_producer(V3_7_DIRECT_RUN_ROOT)
     if len(source_sha) != 40 or any(
         character not in "0123456789abcdef" for character in source_sha.lower()
@@ -447,6 +516,8 @@ def launch_v3_7_with_task038_watchdog(
         candidate_e_side_only=candidate_e_side_only,
         v5_h4_setup_only=v5_h4_setup_only,
         v5_h4_blr_side_only=v5_h4_blr_side_only,
+        v5_h4_fixed_budget_bottom_only=v5_h4_fixed_budget_bottom_only,
+        v5_h4_fixed_budget_exact_spool_root=v5_h4_fixed_budget_exact_spool_root,
         v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
         selected_mode_packet_identity=selected_mode_packet_identity,
@@ -535,6 +606,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--candidate-e-side-only", action="store_true")
     parser.add_argument("--v5-h4-setup-only", action="store_true")
     parser.add_argument(V5_H4_BLR_SIDE_COMPONENT_FLAG, action="store_true")
+    parser.add_argument(V5_H4_FIXED_BUDGET_BOTTOM_COMPONENT_FLAG, action="store_true")
+    parser.add_argument(V5_H4_FIXED_BUDGET_EXACT_SPOOL_ROOT_FLAG)
     parser.add_argument(
         V5_H4_BLR_PROFILE_FLAG,
         choices=V5_H4_BLR_PROFILE_CHOICES,
@@ -560,6 +633,12 @@ def main(argv: list[str] | None = None) -> int:
                     candidate_e_side_only=args.candidate_e_side_only,
                     v5_h4_setup_only=args.v5_h4_setup_only,
                     v5_h4_blr_side_only=args.v5_h4_blr_side_component,
+                    v5_h4_fixed_budget_bottom_only=(
+                        args.v5_h4_fixed_budget_bottom_component
+                    ),
+                    v5_h4_fixed_budget_exact_spool_root=(
+                        args.v5_h4_fixed_budget_exact_spool_root
+                    ),
                     v5_h4_blr_profile=args.v5_h4_blr_profile,
                     selected_mode_packet_manifest=args.selected_mode_packet_manifest,
                     selected_mode_packet_identity=args.selected_mode_packet_identity,
@@ -584,6 +663,8 @@ def main(argv: list[str] | None = None) -> int:
         candidate_e_side_only=args.candidate_e_side_only,
         v5_h4_setup_only=args.v5_h4_setup_only,
         v5_h4_blr_side_only=args.v5_h4_blr_side_component,
+        v5_h4_fixed_budget_bottom_only=(args.v5_h4_fixed_budget_bottom_component),
+        v5_h4_fixed_budget_exact_spool_root=(args.v5_h4_fixed_budget_exact_spool_root),
         v5_h4_blr_profile=args.v5_h4_blr_profile,
         selected_mode_packet_manifest=args.selected_mode_packet_manifest,
         selected_mode_packet_identity=args.selected_mode_packet_identity,
@@ -611,6 +692,10 @@ __all__ = [
     "V5_H4_BLR_PROFILE_FLAG",
     "V5_H4_BLR_DEFAULT_PROFILE",
     "V5_H4_BLR_PROFILE_CHOICES",
+    "V5_H4_FIXED_BUDGET_BOTTOM_COMPONENT_FLAG",
+    "V5_H4_FIXED_BUDGET_EXACT_SPOOL_ROOT_FLAG",
+    "V5_H4_FIXED_BUDGET_BOTTOM_COMPONENT_METHOD",
+    "V5_H4_FIXED_BUDGET_BOTTOM_COMPONENT_PROFILE",
     "build_v3_7_execution_plan",
     "launch_v3_7_with_task038_watchdog",
     "load_v3_7_official_payload",
