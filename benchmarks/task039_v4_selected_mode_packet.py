@@ -287,8 +287,9 @@ def hydrate_task039_v4_selected_mode_packet(
     packet: Mapping[str, Any],
     *,
     comm: MPI.Intracomm = MPI.COMM_WORLD,
+    right_only: bool = False,
 ) -> SimpleNamespace:
-    """Hydrate two independent lightweight bases from mode-major mmap arrays."""
+    """Hydrate the ordinary bases or a research-only right-vector view."""
 
     if packet["scope"] not in {
         TASK039_V4_SELECTED_MODE_SCOPE,
@@ -321,7 +322,7 @@ def hydrate_task039_v4_selected_mode_packet(
             left_array = packet[branch_name]["left_full"]
             for index, beta in enumerate(descriptor["beta"]):
                 right = make_vector(right_array[index, :])
-                left = make_vector(left_array[index, :])
+                left = None if right_only else make_vector(left_array[index, :])
                 mode_key = descriptor["mode_keys"][index]
                 branch_modes[branch_name].append(
                     SimpleNamespace(
@@ -360,6 +361,7 @@ def hydrate_task039_v4_selected_mode_packet(
         "hydrate_rss_delta_mib": "not_measured",
         "vector_count_before_destroy": len(owned_vectors),
         "vector_count_after_destroy": None,
+        "right_only": bool(right_only),
         "destroyed": False,
     }
     bases = {}
@@ -425,8 +427,9 @@ def consume_task039_v4_selected_mode_packet(
     expected_manifest_sha256: str | None = None,
     consumer_kind: str,
     comm: MPI.Intracomm = MPI.COMM_WORLD,
+    right_only: bool = False,
 ) -> SimpleNamespace:
-    """Load one packet for either explicit direct or iterative consumption."""
+    """Load one ordinary packet or an explicit research-only right-only view."""
 
     if consumer_kind not in {"direct", "iterative"}:
         raise ValueError(
@@ -446,7 +449,9 @@ def consume_task039_v4_selected_mode_packet(
     ):
         raise ValueError("Task039 V4 packet reciprocal authority count mismatch")
     read_seconds = packet["read_seconds_max_rank"]
-    bundle = hydrate_task039_v4_selected_mode_packet(packet, comm=comm)
+    bundle = hydrate_task039_v4_selected_mode_packet(
+        packet, comm=comm, right_only=right_only
+    )
     diagnostics = bundle.packet_consumer_diagnostics
     diagnostics["consumer_kind"] = consumer_kind
     diagnostics["qep_calls"] = 0
@@ -463,4 +468,5 @@ def consume_task039_v4_selected_mode_packet(
     gc.collect()
     diagnostics["packet_mmap_released"] = True
     diagnostics["packet_references_released"] = True
+    diagnostics["right_only"] = bool(right_only)
     return bundle

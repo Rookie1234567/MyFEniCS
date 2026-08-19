@@ -70,6 +70,33 @@ def _tiny_side_system(rhs_values=(0.0, 0.0)):
     return SimpleNamespace(A=matrix, b=rhs), matrix, rhs
 
 
+def _v6_gate_reports(
+    *, preferred_residual=5.0e-4, random_residual=5.0e-3, physical_degenerate=True
+):
+    preferred_labels = orchestration.V6_PORT_MODAL_PREFERRED_LABELS
+    reports = []
+    for label in orchestration.V6_PORT_MODAL_HOLDOUT_LABELS:
+        if label in preferred_labels:
+            residual = preferred_residual
+        elif label.startswith("fixed_random"):
+            residual = random_residual
+        else:
+            residual = 5.0e-3
+        reports.append(
+            {
+                "label": label,
+                "finite": True,
+                "degenerate_uninformative": (
+                    physical_degenerate and label == "physical_side_rhs"
+                ),
+                "repeat_relative_error": 1.0e-12,
+                "linearity_relative_error": 1.0e-12,
+                "true_residual_relative": residual,
+            }
+        )
+    return reports
+
+
 def test_v6_layer_graph_counts_use_explicit_layer_labels() -> None:
     audit = _v6_layer_graph_from_csr(
         np.asarray([0, 2, 4, 6]),
@@ -1512,6 +1539,121 @@ def test_v6_run_worker_uses_effective_byte_stop_without_mutating_input(
     )
 
 
+def test_v6_port_modal_resource_intervals_require_measured_samples(tmp_path) -> None:
+    stages = tmp_path / "memory_stages.jsonl"
+    samples = tmp_path / "process_tree_samples.jsonl"
+    stage_rows = [
+        {
+            "stage": "v6_port_modal_bottom_construction_begin",
+            "sample_elapsed_seconds": 1.0,
+            "sample_status": "measured",
+        },
+        {
+            "stage": "v6_port_modal_bottom_construction_end",
+            "sample_elapsed_seconds": 3.0,
+            "sample_status": "measured",
+        },
+        {
+            "stage": "v6_port_modal_bottom_retained_apply_state_ready",
+            "sample_elapsed_seconds": 4.0,
+            "sample_status": "measured",
+        },
+        {
+            "stage": "v6_port_modal_bottom_cleanup",
+            "sample_elapsed_seconds": 6.0,
+            "sample_status": "measured",
+        },
+    ]
+    stage_rows = "\n".join(json.dumps(row) for row in stage_rows) + "\n"
+    stages.write_text(stage_rows, encoding="utf-8")
+    sample_rows = (
+        "\n".join(
+            json.dumps(
+                {
+                    "elapsed_seconds": elapsed,
+                    "rss_bytes": 10 * 1024**3,
+                    "sample_status": "measured",
+                }
+            )
+            for elapsed in (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
+        )
+        + "\n"
+    )
+    samples.write_text(sample_rows, encoding="utf-8")
+    construction = task038_launcher._v5_h4_blr_candidate_interval_peak(
+        stages,
+        samples,
+        "bottom",
+        begin_stage="v6_port_modal_bottom_construction_begin",
+        end_stage="v6_port_modal_bottom_construction_end",
+        limit_gib=22.0,
+    )
+    retained = task038_launcher._v5_h4_blr_candidate_interval_peak(
+        stages,
+        samples,
+        "bottom",
+        begin_stage="v6_port_modal_bottom_retained_apply_state_ready",
+        end_stage="v6_port_modal_bottom_cleanup",
+        limit_gib=16.0,
+    )
+    for interval, begin, end in (
+        (construction, 1.0, 3.0),
+        (retained, 4.0, 6.0),
+    ):
+        assert interval["status"] == "measured"
+        assert interval["begin_sample_elapsed_seconds"] == begin
+        assert interval["end_sample_elapsed_seconds"] == end
+        assert interval["sample_count"] > 0
+        assert interval["pass"] is True
+
+
+def test_v6_port_modal_holdout_gate_enforces_frozen_degeneracy_and_limits() -> None:
+    reports = _v6_gate_reports()
+    result = orchestration._v6_port_modal_holdout_gate(reports)
+    assert result["pass"] is True
+    assert result["mandatory_labels"] == [
+        "modal_traction_positive",
+        "modal_traction_negative",
+        "external_dtn_coupling",
+        "fixed_random_repeat_0",
+        "fixed_random_repeat_1",
+    ]
+    assert result["degenerate_labels"] == ["physical_side_rhs"]
+    assert result["preferred_residual_is_diagnostic"] is False
+
+    preferred_fail = _v6_gate_reports(preferred_residual=2.0e-3)
+    preferred_result = orchestration._v6_port_modal_holdout_gate(preferred_fail)
+    assert preferred_result["true_residual_pass"] is True
+    assert preferred_result["preferred_residual_pass"] is False
+    assert preferred_result["pass"] is False
+
+    random_fail = _v6_gate_reports(random_residual=2.0e-2)
+    random_result = orchestration._v6_port_modal_holdout_gate(random_fail)
+    assert random_result["true_residual_pass"] is False
+    assert random_result["pass"] is False
+
+    physical_required = _v6_gate_reports(physical_degenerate=False)
+    physical_result = orchestration._v6_port_modal_holdout_gate(physical_required)
+    assert physical_result["pass"] is True
+    assert "physical_side_rhs" in physical_result["mandatory_labels"]
+
+    random_degenerate = _v6_gate_reports()
+    random_degenerate[4]["degenerate_uninformative"] = True
+    with pytest.raises(ValueError, match="Only physical_side_rhs"):
+        orchestration._v6_port_modal_holdout_gate(random_degenerate)
+
+
+def test_v6_port_modal_holdout_gate_rejects_missing_or_duplicate_labels() -> None:
+    missing = _v6_gate_reports()[:-1]
+    with pytest.raises(ValueError, match="frozen six"):
+        orchestration._v6_port_modal_holdout_gate(missing)
+
+    duplicate = _v6_gate_reports()
+    duplicate[1]["label"] = duplicate[0]["label"]
+    with pytest.raises(ValueError, match="unique six"):
+        orchestration._v6_port_modal_holdout_gate(duplicate)
+
+
 def test_v5_h4_blr_parent_peak_missing_evidence_fails_closed(tmp_path) -> None:
     result = task038_launcher._v5_h4_blr_candidate_interval_peak(
         tmp_path / "missing-stages.jsonl",
@@ -2369,6 +2511,87 @@ def test_v5_fixed_budget_diagnostic_uses_side_builder_and_releases_side_system(
     assert len(cleanup_rows) == 1
     assert cleanup_rows[0]["detail"]["bottom_destroyed"] is True
     assert cleanup_rows[0]["detail"]["collective_cleanup_completed"] is True
+
+
+def test_v6_port_modal_worker_route_stops_before_generic_setup(
+    tmp_path, monkeypatch
+) -> None:
+    payload = load_and_resolve(
+        Path("input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat")
+    ).as_jsonable()
+    identity = {
+        "source_sha": "s" * 40,
+        "physical_sha256": "p" * 64,
+        "model_id": "tiny-h4",
+    }
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "rank_count": 1,
+                "consumer_qep_required": False,
+                "qep_workspace_persisted": False,
+                "identity": identity,
+            }
+        ),
+        encoding="utf-8",
+    )
+    side_system = SimpleNamespace(destroyed=False)
+
+    def destroy_side_system():
+        side_system.destroyed = True
+
+    side_system.destroy = destroy_side_system
+
+    def side_builder(**kwargs):
+        assert kwargs["profile"].h_nm == 4.0
+        return SimpleNamespace(bottom=side_system, side_only=True)
+
+    monkeypatch.setattr(
+        orchestration,
+        "run_v6_h4_port_modal_bottom_component",
+        lambda *_args, **_kwargs: {
+            "status": "component_completed",
+            "telemetry": {"memory_object_ledger": {}},
+            "top": "not_run",
+        },
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "collective_heap_cleanup",
+        lambda _comm: {"collective_call_completed": True},
+    )
+    result = orchestration.run_task039_v3_7_diagnostic(
+        payload,
+        tmp_path / "run",
+        source_sha="c" * 40,
+        comm=MPI.COMM_SELF,
+        setup_builder=lambda **_kwargs: pytest.fail("generic setup was called"),
+        side_system_builder=side_builder,
+        v6_h4_port_modal_bottom_only=True,
+        v6_h4_port_modal_exact_spool_root=tmp_path / "spool",
+        selected_mode_packet_manifest=manifest,
+        selected_mode_packet_identity=identity,
+        selected_mode_packet_manifest_sha256=hashlib.sha256(
+            manifest.read_bytes()
+        ).hexdigest(),
+    )
+    assert result["status"] == "component_completed"
+    assert result["top"] == "not_run"
+    assert side_system.destroyed is True
+    marker_rows = [
+        json.loads(line)
+        for line in (
+            tmp_path / "run" / "numerical_output" / "memory_stage_markers.raw.jsonl"
+        )
+        .read_text(encoding="utf-8")
+        .splitlines()
+        if line.strip()
+    ]
+    assert any(
+        row["marker"] == "v6_port_modal_bottom_side_setup_cleanup"
+        for row in marker_rows
+    )
 
 
 def test_v5_h4_fixed_budget_route_is_bottom_only_and_cleans_factors(

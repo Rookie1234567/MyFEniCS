@@ -221,3 +221,54 @@ def test_v6_post_compaction_main_dry_run_freezes_h4_route_and_budget(
     assert plan["worker_contract"]["absolute_terminate_memory_bytes"] == 45118258790
     assert "--v5-h4-exact-spool-root" not in plan["argv"]
     assert not run_directory.exists()
+
+
+def test_v6_port_modal_main_dry_run_freezes_bottom_route_and_budget(
+    tmp_path, capsys
+) -> None:
+    h4_input = Path(
+        "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
+    )
+    packet_root = Path("results/task039_v4_h4_m480_shared_packet_eaad0f94")
+    spool_root = Path(
+        "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/"
+        "numerical_output"
+    )
+    run_directory = tmp_path / "v6-port-modal-main-dry-run"
+    assert (
+        watchdog.main(
+            [
+                "--dry-run",
+                "--input",
+                str(h4_input),
+                "--run-directory",
+                str(run_directory),
+                "--source-sha",
+                "a" * 40,
+                watchdog.V6_H4_PORT_MODAL_BOTTOM_COMPONENT_FLAG,
+                watchdog.V6_H4_PORT_MODAL_EXACT_SPOOL_ROOT_FLAG,
+                str(spool_root),
+                "--selected-mode-packet-manifest",
+                str(packet_root / "manifest.json"),
+                "--selected-mode-packet-identity",
+                str(packet_root / "identity.json"),
+                "--selected-mode-packet-manifest-sha256",
+                "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067",
+            ]
+        )
+        == 0
+    )
+    plan = json.loads(capsys.readouterr().out)
+    assert plan["argv"][1:3] == ["-n", "8"]
+    assert plan["argv"].count(watchdog.V6_H4_PORT_MODAL_BOTTOM_COMPONENT_FLAG) == 1
+    assert watchdog.V6_H4_PORT_MODAL_EXACT_SPOOL_ROOT_FLAG in plan["argv"]
+    assert watchdog.V5_H4_FIXED_BUDGET_BOTTOM_COMPONENT_FLAG not in plan["argv"]
+    assert plan["worker_contract"]["method"] == (
+        watchdog.V6_H4_PORT_MODAL_BOTTOM_COMPONENT_METHOD
+    )
+    assert plan["worker_contract"]["profile_id"] == (
+        watchdog.V6_H4_PORT_MODAL_BOTTOM_COMPONENT_PROFILE
+    )
+    assert plan["worker_contract"]["exact_spool_root"] == str(spool_root.resolve())
+    assert plan["watchdog"]["absolute_terminate_memory_bytes"] == 23622320128
+    assert not run_directory.exists()

@@ -863,6 +863,39 @@ def test_task039_v4_streaming_roundtrip_hydrates_two_bases_and_collective_gram(
     comm.barrier()
 
 
+def test_task039_v6_right_only_packet_releases_left_vectors(tmp_path: Path) -> None:
+    directory, comm = _shared_directory(tmp_path)
+    branches, ownership = _branches(comm)
+    bases = {
+        name: _fake_basis(branches[name], ownership)
+        for name in ("positive", "negative")
+    }
+    result = write_task039_v4_selected_mode_packet(
+        directory,
+        positive_basis=bases["positive"],
+        negative_basis=bases["negative"],
+        identity=_identity(comm),
+        metadata=_metadata(),
+        comm=comm,
+    )
+    bundle = consume_task039_v4_selected_mode_packet(
+        directory / "manifest.json",
+        identity=_identity(comm),
+        expected_manifest_sha256=result["manifest_sha256"],
+        consumer_kind="iterative",
+        comm=comm,
+        right_only=True,
+    )
+    assert bundle.packet_consumer_diagnostics["right_only"] is True
+    assert bundle.packet_consumer_diagnostics["packet_mmap_released"] is True
+    assert all(mode.left_full is None for mode in bundle.positive_basis.modes)
+    assert all(mode.left_full is None for mode in bundle.negative_basis.modes)
+    assert bundle.packet_consumer_diagnostics["vector_count_before_destroy"] == 960
+    bundle.destroy()
+    assert bundle.packet_consumer_diagnostics["vector_count_after_destroy"] == 0
+    comm.barrier()
+
+
 def test_task039_v5_h5_packet_scope_keeps_consumer_qep_zero_and_release(
     tmp_path: Path,
 ) -> None:

@@ -73,6 +73,13 @@ V6_H4_POST_COMPACTION_PROFILE_ID = (
     "task039.v6.h4.post_compaction.exact_side_setup_only.v1"
 )
 V6_H4_SETUP_THRESHOLD_BYTES = 45118258790
+V6_H4_PORT_MODAL_BOTTOM_COMPONENT_FLAG = "--v6-h4-port-modal-bottom-component"
+V6_H4_PORT_MODAL_EXACT_SPOOL_ROOT_FLAG = "--v6-h4-port-modal-exact-spool-root"
+V6_H4_PORT_MODAL_BOTTOM_COMPONENT_METHOD = "task039_v6_h4_port_modal_bottom_component"
+V6_H4_PORT_MODAL_BOTTOM_COMPONENT_PROFILE = (
+    "task039.v6.h4.port_modal.bottom_component.v1"
+)
+V6_H4_PORT_MODAL_CONSTRUCTION_HARD_STOP_BYTES = 23622320128
 
 
 def _validate_resolved_identity(
@@ -82,12 +89,14 @@ def _validate_resolved_identity(
     v5_h4_blr_side_only: bool = False,
     v5_h4_fixed_budget_bottom_only: bool = False,
     v6_h4_post_compaction_setup_only: bool = False,
+    v6_h4_port_modal_bottom_only: bool = False,
 ) -> None:
     if (
         v5_h4_setup_only
         or v5_h4_blr_side_only
         or v5_h4_fixed_budget_bottom_only
         or v6_h4_post_compaction_setup_only
+        or v6_h4_port_modal_bottom_only
     ):
         method = payload.get("method", {})
         if payload.get("model_id") != "task039_5nm_v4_1deg_s5_hybrid_iterative_m480":
@@ -146,6 +155,7 @@ def _watchdog_policy(
     v5_h4_blr_side_only: bool = False,
     v5_h4_fixed_budget_bottom_only: bool = False,
     v6_h4_post_compaction_setup_only: bool = False,
+    v6_h4_port_modal_bottom_only: bool = False,
 ) -> dict[str, Any]:
     _validate_resolved_identity(
         payload,
@@ -153,11 +163,16 @@ def _watchdog_policy(
         v5_h4_blr_side_only=v5_h4_blr_side_only,
         v5_h4_fixed_budget_bottom_only=v5_h4_fixed_budget_bottom_only,
         v6_h4_post_compaction_setup_only=v6_h4_post_compaction_setup_only,
+        v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
     )
     absolute_bytes = (
         V6_H4_SETUP_THRESHOLD_BYTES
         if v6_h4_post_compaction_setup_only
-        else V3_7_ABSOLUTE_HARD_BYTES
+        else (
+            V6_H4_PORT_MODAL_CONSTRUCTION_HARD_STOP_BYTES
+            if v6_h4_port_modal_bottom_only
+            else V3_7_ABSOLUTE_HARD_BYTES
+        )
     )
     return {
         "warning_memory_gib": V3_7_WARNING_GIB,
@@ -199,6 +214,7 @@ def load_v3_7_official_payload(
     v5_h4_blr_side_only: bool = False,
     v5_h4_fixed_budget_bottom_only: bool = False,
     v6_h4_post_compaction_setup_only: bool = False,
+    v6_h4_port_modal_bottom_only: bool = False,
 ) -> dict[str, Any]:
     specification = load_and_resolve(input_path)
     payload = specification.as_jsonable()
@@ -207,6 +223,7 @@ def load_v3_7_official_payload(
         or v5_h4_blr_side_only
         or v5_h4_fixed_budget_bottom_only
         or v6_h4_post_compaction_setup_only
+        or v6_h4_port_modal_bottom_only
     ):
         from benchmarks.task039_v4_h4_hybrid_direct import (
             validate_v4_h4_specification,
@@ -219,6 +236,7 @@ def load_v3_7_official_payload(
         v5_h4_blr_side_only=v5_h4_blr_side_only,
         v5_h4_fixed_budget_bottom_only=v5_h4_fixed_budget_bottom_only,
         v6_h4_post_compaction_setup_only=v6_h4_post_compaction_setup_only,
+        v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
     )
     return payload
 
@@ -242,6 +260,8 @@ def build_v3_7_execution_plan(
     v5_h4_fixed_budget_exact_spool_root: str | Path | None = None,
     v6_h4_post_compaction_setup_only: bool = False,
     v6_h4_exact_spool_root: str | Path | None = None,
+    v6_h4_port_modal_bottom_only: bool = False,
+    v6_h4_port_modal_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = V5_H4_BLR_DEFAULT_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -255,6 +275,7 @@ def build_v3_7_execution_plan(
         v5_h4_blr_side_only=v5_h4_blr_side_only,
         v5_h4_fixed_budget_bottom_only=v5_h4_fixed_budget_bottom_only,
         v6_h4_post_compaction_setup_only=v6_h4_post_compaction_setup_only,
+        v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
     )
     if v5_h4_blr_side_only and v5_h4_blr_profile not in V5_H4_BLR_PROFILE_CHOICES:
         raise ValueError(f"Unsupported V5 h4 BLR profile: {v5_h4_blr_profile}")
@@ -264,6 +285,7 @@ def build_v3_7_execution_plan(
         v5_h4_blr_side_only=v5_h4_blr_side_only,
         v5_h4_fixed_budget_bottom_only=v5_h4_fixed_budget_bottom_only,
         v6_h4_post_compaction_setup_only=v6_h4_post_compaction_setup_only,
+        v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
     )
     executable = str(Path(os.path.abspath(python_executable or sys.executable)))
     mpiexec = mpiexec_command or shutil.which("mpiexec") or "mpiexec"
@@ -280,6 +302,7 @@ def build_v3_7_execution_plan(
                 bool(v5_h4_blr_side_only),
                 bool(v5_h4_fixed_budget_bottom_only),
                 bool(v6_h4_post_compaction_setup_only),
+                bool(v6_h4_port_modal_bottom_only),
             )
         )
         > 1
@@ -410,6 +433,31 @@ def build_v3_7_execution_plan(
                 str(Path(v6_h4_exact_spool_root).resolve()),
             ]
         )
+    elif v6_h4_port_modal_bottom_only:
+        if not all(
+            (
+                selected_mode_packet_manifest,
+                selected_mode_packet_identity,
+                selected_mode_packet_manifest_sha256,
+                v6_h4_port_modal_exact_spool_root,
+            )
+        ):
+            raise ValueError(
+                "V6 port-modal component requires packet and exact spool arguments"
+            )
+        argv.extend(
+            [
+                V6_H4_PORT_MODAL_BOTTOM_COMPONENT_FLAG,
+                "--selected-mode-packet-manifest",
+                str(Path(selected_mode_packet_manifest).resolve()),
+                "--selected-mode-packet-identity",
+                str(Path(selected_mode_packet_identity).resolve()),
+                "--selected-mode-packet-manifest-sha256",
+                str(selected_mode_packet_manifest_sha256),
+                V6_H4_PORT_MODAL_EXACT_SPOOL_ROOT_FLAG,
+                str(Path(v6_h4_port_modal_exact_spool_root).resolve()),
+            ]
+        )
     if candidate_d_qualified:
         method = V3_8_CANDIDATE_D_QUALIFIED_METHOD
     elif candidate_d_only:
@@ -418,6 +466,8 @@ def build_v3_7_execution_plan(
         method = "hybrid_iterative_candidate_e_side_only"
     elif v6_h4_post_compaction_setup_only:
         method = V6_H4_POST_COMPACTION_SETUP_ONLY_METHOD
+    elif v6_h4_port_modal_bottom_only:
+        method = V6_H4_PORT_MODAL_BOTTOM_COMPONENT_METHOD
     elif v5_h4_setup_only:
         method = V5_H4_SETUP_ONLY_METHOD
     elif v5_h4_blr_side_only:
@@ -432,6 +482,29 @@ def build_v3_7_execution_plan(
         method = "positive_branch_qep_only"
     else:
         method = "hybrid_iterative_v3_7_diagnostic"
+    if v6_h4_post_compaction_setup_only:
+        profile_id = V6_H4_POST_COMPACTION_PROFILE_ID
+    elif v6_h4_port_modal_bottom_only:
+        profile_id = V6_H4_PORT_MODAL_BOTTOM_COMPONENT_PROFILE
+    elif v5_h4_setup_only:
+        profile_id = "task039.v5.h4.exact-side.setup-only.v1"
+    elif v5_h4_blr_side_only:
+        profile_id = "task039.v5.h4.mumps_blr.side_component.v1"
+    elif v5_h4_fixed_budget_bottom_only:
+        profile_id = V5_H4_FIXED_BUDGET_BOTTOM_COMPONENT_PROFILE
+    else:
+        profile_id = V3_7_PROFILE_ID
+    if v6_h4_post_compaction_setup_only and v6_h4_exact_spool_root is not None:
+        exact_spool_root = str(Path(v6_h4_exact_spool_root).resolve())
+    elif v6_h4_port_modal_bottom_only and v6_h4_port_modal_exact_spool_root is not None:
+        exact_spool_root = str(Path(v6_h4_port_modal_exact_spool_root).resolve())
+    elif (
+        v5_h4_fixed_budget_bottom_only
+        and v5_h4_fixed_budget_exact_spool_root is not None
+    ):
+        exact_spool_root = str(Path(v5_h4_fixed_budget_exact_spool_root).resolve())
+    else:
+        exact_spool_root = None
     return {
         "argv": argv,
         "shell": False,
@@ -439,39 +512,13 @@ def build_v3_7_execution_plan(
         "watchdog": policy,
         "worker_contract": {
             "mpi_size": 8,
-            "profile_id": (
-                V6_H4_POST_COMPACTION_PROFILE_ID
-                if v6_h4_post_compaction_setup_only
-                else (
-                    "task039.v5.h4.exact-side.setup-only.v1"
-                    if v5_h4_setup_only
-                    else (
-                        "task039.v5.h4.mumps_blr.side_component.v1"
-                        if v5_h4_blr_side_only
-                        else (
-                            V5_H4_FIXED_BUDGET_BOTTOM_COMPONENT_PROFILE
-                            if v5_h4_fixed_budget_bottom_only
-                            else V3_7_PROFILE_ID
-                        )
-                    )
-                )
-            ),
+            "profile_id": profile_id,
             "method": method,
             "mumps_blr_profile": (v5_h4_blr_profile if v5_h4_blr_side_only else None),
             "fixed_budget": (
                 V5_H4_FIXED_BUDGET if v5_h4_fixed_budget_bottom_only else None
             ),
-            "exact_spool_root": (
-                str(Path(v6_h4_exact_spool_root).resolve())
-                if v6_h4_post_compaction_setup_only
-                and v6_h4_exact_spool_root is not None
-                else (
-                    str(Path(v5_h4_fixed_budget_exact_spool_root).resolve())
-                    if v5_h4_fixed_budget_bottom_only
-                    and v5_h4_fixed_budget_exact_spool_root is not None
-                    else None
-                )
-            ),
+            "exact_spool_root": exact_spool_root,
             "absolute_terminate_memory_bytes": policy[
                 "absolute_terminate_memory_bytes"
             ],
@@ -500,6 +547,8 @@ def v3_7_execution_dry_run(
     v5_h4_fixed_budget_exact_spool_root: str | Path | None = None,
     v6_h4_post_compaction_setup_only: bool = False,
     v6_h4_exact_spool_root: str | Path | None = None,
+    v6_h4_port_modal_bottom_only: bool = False,
+    v6_h4_port_modal_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = V5_H4_BLR_DEFAULT_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -522,6 +571,8 @@ def v3_7_execution_dry_run(
         v5_h4_fixed_budget_exact_spool_root=v5_h4_fixed_budget_exact_spool_root,
         v6_h4_post_compaction_setup_only=v6_h4_post_compaction_setup_only,
         v6_h4_exact_spool_root=v6_h4_exact_spool_root,
+        v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
+        v6_h4_port_modal_exact_spool_root=v6_h4_port_modal_exact_spool_root,
         v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
         selected_mode_packet_identity=selected_mode_packet_identity,
@@ -554,6 +605,8 @@ def launch_v3_7_with_task038_watchdog(
     v5_h4_fixed_budget_exact_spool_root: str | Path | None = None,
     v6_h4_post_compaction_setup_only: bool = False,
     v6_h4_exact_spool_root: str | Path | None = None,
+    v6_h4_port_modal_bottom_only: bool = False,
+    v6_h4_port_modal_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = V5_H4_BLR_DEFAULT_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -567,12 +620,14 @@ def launch_v3_7_with_task038_watchdog(
         v5_h4_blr_side_only=v5_h4_blr_side_only,
         v5_h4_fixed_budget_bottom_only=v5_h4_fixed_budget_bottom_only,
         v6_h4_post_compaction_setup_only=v6_h4_post_compaction_setup_only,
+        v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
     )
     if (
         not v5_h4_setup_only
         and not v5_h4_blr_side_only
         and not v5_h4_fixed_budget_bottom_only
         and not v6_h4_post_compaction_setup_only
+        and not v6_h4_port_modal_bottom_only
     ):
         _check_direct_producer(V3_7_DIRECT_RUN_ROOT)
     if len(source_sha) != 40 or any(
@@ -598,6 +653,8 @@ def launch_v3_7_with_task038_watchdog(
         v5_h4_fixed_budget_exact_spool_root=v5_h4_fixed_budget_exact_spool_root,
         v6_h4_post_compaction_setup_only=v6_h4_post_compaction_setup_only,
         v6_h4_exact_spool_root=v6_h4_exact_spool_root,
+        v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
+        v6_h4_port_modal_exact_spool_root=v6_h4_port_modal_exact_spool_root,
         v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
         selected_mode_packet_identity=selected_mode_packet_identity,
@@ -687,6 +744,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--v5-h4-setup-only", action="store_true")
     parser.add_argument(V6_H4_POST_COMPACTION_SETUP_ONLY_FLAG, action="store_true")
     parser.add_argument(V6_H4_EXACT_SPOOL_ROOT_FLAG)
+    parser.add_argument(V6_H4_PORT_MODAL_BOTTOM_COMPONENT_FLAG, action="store_true")
+    parser.add_argument(V6_H4_PORT_MODAL_EXACT_SPOOL_ROOT_FLAG)
     parser.add_argument(V5_H4_BLR_SIDE_COMPONENT_FLAG, action="store_true")
     parser.add_argument(V5_H4_FIXED_BUDGET_BOTTOM_COMPONENT_FLAG, action="store_true")
     parser.add_argument(V5_H4_FIXED_BUDGET_EXACT_SPOOL_ROOT_FLAG)
@@ -725,6 +784,10 @@ def main(argv: list[str] | None = None) -> int:
                         args.v6_h4_post_compaction_setup_only
                     ),
                     v6_h4_exact_spool_root=args.v6_h4_exact_spool_root,
+                    v6_h4_port_modal_bottom_only=args.v6_h4_port_modal_bottom_component,
+                    v6_h4_port_modal_exact_spool_root=(
+                        args.v6_h4_port_modal_exact_spool_root
+                    ),
                     v5_h4_blr_profile=args.v5_h4_blr_profile,
                     selected_mode_packet_manifest=args.selected_mode_packet_manifest,
                     selected_mode_packet_identity=args.selected_mode_packet_identity,
@@ -753,6 +816,8 @@ def main(argv: list[str] | None = None) -> int:
         v5_h4_fixed_budget_exact_spool_root=(args.v5_h4_fixed_budget_exact_spool_root),
         v6_h4_post_compaction_setup_only=args.v6_h4_post_compaction_setup_only,
         v6_h4_exact_spool_root=args.v6_h4_exact_spool_root,
+        v6_h4_port_modal_bottom_only=args.v6_h4_port_modal_bottom_component,
+        v6_h4_port_modal_exact_spool_root=args.v6_h4_port_modal_exact_spool_root,
         v5_h4_blr_profile=args.v5_h4_blr_profile,
         selected_mode_packet_manifest=args.selected_mode_packet_manifest,
         selected_mode_packet_identity=args.selected_mode_packet_identity,
@@ -789,6 +854,11 @@ __all__ = [
     "V6_H4_POST_COMPACTION_SETUP_ONLY_METHOD",
     "V6_H4_POST_COMPACTION_PROFILE_ID",
     "V6_H4_SETUP_THRESHOLD_BYTES",
+    "V6_H4_PORT_MODAL_BOTTOM_COMPONENT_FLAG",
+    "V6_H4_PORT_MODAL_EXACT_SPOOL_ROOT_FLAG",
+    "V6_H4_PORT_MODAL_BOTTOM_COMPONENT_METHOD",
+    "V6_H4_PORT_MODAL_BOTTOM_COMPONENT_PROFILE",
+    "V6_H4_PORT_MODAL_CONSTRUCTION_HARD_STOP_BYTES",
     "build_v3_7_execution_plan",
     "launch_v3_7_with_task038_watchdog",
     "load_v3_7_official_payload",

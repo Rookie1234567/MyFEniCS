@@ -45,6 +45,9 @@ from benchmarks.task039_hybrid_direct_identity import (
     compare_v3_7_hybrid_candidate_to_full3d,
     load_task039_direct_solution_inventory,
 )
+from benchmarks.task039_v4_selected_mode_packet import (
+    consume_task039_v4_selected_mode_packet,
+)
 from benchmarks.task039_v3_side_oracle import (
     audit_hybrid_operator_identity,
     build_research_independent_hybrid_reference,
@@ -56,6 +59,11 @@ from benchmarks.task039_v3_side_oracle import (
     TASK039_V4_H4_CASE_QUALIFICATION_SCOPE,
 )
 from src.common.config_3d import ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
+from src.coupling.hybrid_internal_modes import build_single_hybrid_interface_mode_owner
+from src.modes.cross_section_spaces import (
+    build_cross_section_spaces,
+    build_matching_cross_section,
+)
 from src.io.input_validation import (
     load_and_resolve,
     simulation_config_3d_from_normalized,
@@ -87,6 +95,17 @@ from src.solvers.hybrid_local_dtn_woodbury import (
     MUMPS_BLR_V5_H4_1E3_PROFILE,
     create_research_exact_side_lu_action,
     mumps_blr_v5_h4_controls,
+)
+from src.solvers.hybrid_petrov_galerkin import (
+    FixedLinearOwnerRowPetrovCorrectionAction,
+)
+from src.solvers.hybrid_petrov_sources import (
+    V6_PORT_MODAL_CHECKPOINTS,
+    build_v6_discrete_gradient_source_provider,
+    build_v6_factor_free_source_vector,
+    build_v6_owner_row_basis_checkpoint,
+    v6_port_modal_training_schedule,
+    v6_single_interface_modal_provider,
 )
 from src.solvers.hybrid_side_subspace_correction import (
     build_fixed_side_error_subspace_correction_action,
@@ -186,6 +205,112 @@ V6_H4_SETUP_THRESHOLD_GIB = 42.019652939
 V6_H4_SETUP_THRESHOLD_BYTES = 45118258790
 V6_H4_OUTER_READY_THRESHOLD_GIB = 35.0
 V6_H4_EXACT_SPOOL_ROOT = V5_H4_FIXED_BUDGET_EXACT_SPOOL_ROOT
+V6_H4_PORT_MODAL_BOTTOM_PROFILE_ID = "task039.v6.h4.port_modal.bottom_component.v1"
+V6_H4_PORT_MODAL_BOTTOM_METHOD = "task039_v6_h4_port_modal_bottom_component"
+V6_H4_PORT_MODAL_BOTTOM_CONSTRUCTION_LIMIT_GIB = 22.0
+V6_H4_PORT_MODAL_BOTTOM_RETAINED_LIMIT_GIB = 16.0
+V6_H4_PORT_MODAL_BOTTOM_HARD_STOP_BYTES = 23622320128
+V6_PORT_MODAL_HOLDOUT_LABELS = (
+    "physical_side_rhs",
+    "modal_traction_positive",
+    "modal_traction_negative",
+    "external_dtn_coupling",
+    "fixed_random_repeat_0",
+    "fixed_random_repeat_1",
+)
+V6_PORT_MODAL_PREFERRED_LABELS = frozenset(
+    {
+        "modal_traction_positive",
+        "modal_traction_negative",
+        "external_dtn_coupling",
+    }
+)
+
+
+def _v6_port_modal_holdout_gate(
+    reports: list[Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Apply the frozen V6 port-modal holdout numerical contract."""
+
+    expected_labels = set(V6_PORT_MODAL_HOLDOUT_LABELS)
+    if len(reports) != len(V6_PORT_MODAL_HOLDOUT_LABELS):
+        raise ValueError("V6 holdout report count is not the frozen six")
+    labels = [report.get("label") for report in reports]
+    if any(not isinstance(label, str) for label in labels):
+        raise ValueError("V6 holdout reports must carry string labels")
+    if len(set(labels)) != len(labels) or set(labels) != expected_labels:
+        raise ValueError("V6 holdout labels are not the frozen unique six")
+    physical_label = "physical_side_rhs"
+    for report in reports:
+        if not isinstance(report.get("degenerate_uninformative"), bool):
+            raise ValueError("V6 holdout reports lack degeneracy metadata")
+        if report["label"] != physical_label and report["degenerate_uninformative"]:
+            raise ValueError("Only physical_side_rhs may be degenerate")
+
+    mandatory = [
+        report
+        for report in reports
+        if not (
+            report["label"] == physical_label and report["degenerate_uninformative"]
+        )
+    ]
+    finite_pass = all(report.get("finite") is True for report in reports)
+    repeat_pass = all(
+        report.get("repeat_relative_error") is not None
+        and report["repeat_relative_error"] <= 1.0e-10
+        for report in reports
+    )
+    linearity_pass = all(
+        report.get("linearity_relative_error") is not None
+        and report["linearity_relative_error"] <= 1.0e-10
+        for report in reports
+    )
+    residual_pass = bool(
+        mandatory
+        and all(
+            report.get("true_residual_relative") is not None
+            and report["true_residual_relative"] <= 1.0e-2
+            for report in mandatory
+        )
+    )
+    preferred = [
+        report
+        for report in mandatory
+        if report["label"] in V6_PORT_MODAL_PREFERRED_LABELS
+    ]
+    preferred_pass = bool(
+        len(preferred) == len(V6_PORT_MODAL_PREFERRED_LABELS)
+        and all(
+            report.get("true_residual_relative") is not None
+            and report["true_residual_relative"] <= 1.0e-3
+            for report in preferred
+        )
+    )
+    return {
+        "finite_pass": bool(finite_pass),
+        "repeat_pass": bool(repeat_pass),
+        "linearity_pass": bool(linearity_pass),
+        "true_residual_pass": bool(residual_pass),
+        "true_residual_limit": 1.0e-2,
+        "preferred_residual_max": max(
+            (report.get("true_residual_relative") for report in preferred),
+            default=None,
+        ),
+        "preferred_residual_limit": 1.0e-3,
+        "preferred_residual_pass": bool(preferred_pass),
+        "preferred_residual_is_diagnostic": False,
+        "mandatory_labels": [report["label"] for report in mandatory],
+        "degenerate_labels": [
+            report["label"] for report in reports if report["degenerate_uninformative"]
+        ],
+        "pass": bool(
+            finite_pass
+            and repeat_pass
+            and linearity_pass
+            and residual_pass
+            and preferred_pass
+        ),
+    }
 
 
 def _validate_v5_h4_blr_profile(profile: str) -> str:
@@ -346,6 +471,7 @@ def v3_7_watchdog_policy(
     *,
     poll_interval_seconds: float = V3_7_POLL_SECONDS,
     v6_h4_post_compaction_setup_only: bool = False,
+    v6_h4_port_modal_bottom_only: bool = False,
 ) -> dict[str, Any]:
     """Return the byte-authoritative policy; 195 GiB is telemetry only."""
 
@@ -365,7 +491,11 @@ def v3_7_watchdog_policy(
     absolute_bytes = (
         V6_H4_SETUP_THRESHOLD_BYTES
         if v6_h4_post_compaction_setup_only
-        else V3_7_ABSOLUTE_HARD_BYTES
+        else (
+            V6_H4_PORT_MODAL_BOTTOM_HARD_STOP_BYTES
+            if v6_h4_port_modal_bottom_only
+            else V3_7_ABSOLUTE_HARD_BYTES
+        )
     )
     return {
         "warning_memory_gib": V3_7_WARNING_GIB,
@@ -379,7 +509,11 @@ def v3_7_watchdog_policy(
         "profile": (
             "v6_h4_post_compaction_setup_only"
             if v6_h4_post_compaction_setup_only
-            else "v3_7_default"
+            else (
+                "v6_h4_port_modal_bottom_only"
+                if v6_h4_port_modal_bottom_only
+                else "v3_7_default"
+            )
         ),
     }
 
@@ -411,6 +545,8 @@ def build_v3_7_execution_plan(
     v5_h4_fixed_budget_exact_spool_root: str | Path | None = None,
     v6_h4_post_compaction_setup_only: bool = False,
     v6_h4_exact_spool_root: str | Path | None = None,
+    v6_h4_port_modal_bottom_only: bool = False,
+    v6_h4_port_modal_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -423,6 +559,7 @@ def build_v3_7_execution_plan(
         or v5_h4_blr_side_only
         or v5_h4_fixed_budget_bottom_only
         or v6_h4_post_compaction_setup_only
+        or v6_h4_port_modal_bottom_only
     ):
         specification = load_and_resolve(input_path)
         from benchmarks.task039_v4_h4_hybrid_direct import (
@@ -438,7 +575,9 @@ def build_v3_7_execution_plan(
     if v5_h4_blr_side_only:
         v5_h4_blr_profile = _validate_v5_h4_blr_profile(v5_h4_blr_profile)
     policy = v3_7_watchdog_policy(
-        payload, v6_h4_post_compaction_setup_only=v6_h4_post_compaction_setup_only
+        payload,
+        v6_h4_post_compaction_setup_only=v6_h4_post_compaction_setup_only,
+        v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
     )
     if (
         sum(
@@ -452,6 +591,7 @@ def build_v3_7_execution_plan(
                 bool(v5_h4_blr_side_only),
                 bool(v5_h4_fixed_budget_bottom_only),
                 bool(v6_h4_post_compaction_setup_only),
+                bool(v6_h4_port_modal_bottom_only),
             )
         )
         > 1
@@ -492,6 +632,7 @@ def build_v3_7_execution_plan(
         or v5_h4_blr_side_only
         or v5_h4_fixed_budget_bottom_only
         or v6_h4_post_compaction_setup_only
+        or v6_h4_port_modal_bottom_only
     ):
         if not all(
             (
@@ -501,21 +642,19 @@ def build_v3_7_execution_plan(
             )
         ):
             raise ValueError("V5 h4 setup-only requires the shared packet arguments")
+        if v6_h4_post_compaction_setup_only:
+            component_flag = "--v6-h4-post-compaction-setup-only"
+        elif v6_h4_port_modal_bottom_only:
+            component_flag = "--v6-h4-port-modal-bottom-component"
+        elif v5_h4_setup_only:
+            component_flag = "--v5-h4-setup-only"
+        elif v5_h4_blr_side_only:
+            component_flag = "--v5-h4-blr-side-component"
+        else:
+            component_flag = "--v5-h4-fixed-budget-bottom-component"
         argv.extend(
             [
-                (
-                    "--v6-h4-post-compaction-setup-only"
-                    if v6_h4_post_compaction_setup_only
-                    else (
-                        "--v5-h4-setup-only"
-                        if v5_h4_setup_only
-                        else (
-                            "--v5-h4-blr-side-component"
-                            if v5_h4_blr_side_only
-                            else "--v5-h4-fixed-budget-bottom-component"
-                        )
-                    )
-                ),
+                component_flag,
                 "--selected-mode-packet-manifest",
                 str(Path(selected_mode_packet_manifest).resolve()),
                 "--selected-mode-packet-identity",
@@ -535,6 +674,15 @@ def build_v3_7_execution_plan(
                     str(Path(v6_h4_exact_spool_root).resolve()),
                 ]
             )
+        elif v6_h4_port_modal_bottom_only:
+            if v6_h4_port_modal_exact_spool_root is None:
+                raise ValueError("V6 port-modal route requires the exact spool root")
+            argv.extend(
+                [
+                    "--v6-h4-port-modal-exact-spool-root",
+                    str(Path(v6_h4_port_modal_exact_spool_root).resolve()),
+                ]
+            )
         elif v5_h4_fixed_budget_bottom_only:
             if v5_h4_fixed_budget_exact_spool_root is None:
                 raise ValueError("Fixed-budget route requires the exact spool root")
@@ -546,6 +694,8 @@ def build_v3_7_execution_plan(
             )
     if v6_h4_post_compaction_setup_only:
         method = V6_H4_POST_COMPACTION_METHOD
+    elif v6_h4_port_modal_bottom_only:
+        method = V6_H4_PORT_MODAL_BOTTOM_METHOD
     elif v5_h4_setup_only:
         method = "task039_v5_h4_exact_side_setup_only"
     elif v5_h4_blr_side_only:
@@ -564,6 +714,29 @@ def build_v3_7_execution_plan(
         method = "hybrid_iterative_candidate_b_only"
     else:
         method = "hybrid_iterative_v3_7_diagnostic"
+    if v6_h4_post_compaction_setup_only:
+        profile_id = V6_H4_POST_COMPACTION_PROFILE_ID
+    elif v6_h4_port_modal_bottom_only:
+        profile_id = V6_H4_PORT_MODAL_BOTTOM_PROFILE_ID
+    elif v5_h4_setup_only:
+        profile_id = "task039.v5.h4.exact-side.setup-only.v1"
+    elif v5_h4_blr_side_only:
+        profile_id = V5_H4_BLR_SIDE_PROFILE_ID
+    elif v5_h4_fixed_budget_bottom_only:
+        profile_id = V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID
+    else:
+        profile_id = V3_7_PROFILE_ID
+    if v6_h4_post_compaction_setup_only and v6_h4_exact_spool_root is not None:
+        exact_spool_root = str(Path(v6_h4_exact_spool_root).resolve())
+    elif v6_h4_port_modal_bottom_only and v6_h4_port_modal_exact_spool_root is not None:
+        exact_spool_root = str(Path(v6_h4_port_modal_exact_spool_root).resolve())
+    elif (
+        v5_h4_fixed_budget_bottom_only
+        and v5_h4_fixed_budget_exact_spool_root is not None
+    ):
+        exact_spool_root = str(Path(v5_h4_fixed_budget_exact_spool_root).resolve())
+    else:
+        exact_spool_root = None
     return {
         "argv": argv,
         "shell": False,
@@ -571,38 +744,12 @@ def build_v3_7_execution_plan(
         "watchdog": policy,
         "worker_contract": {
             "mpi_size": 8,
-            "profile_id": (
-                V6_H4_POST_COMPACTION_PROFILE_ID
-                if v6_h4_post_compaction_setup_only
-                else (
-                    "task039.v5.h4.exact-side.setup-only.v1"
-                    if v5_h4_setup_only
-                    else (
-                        V5_H4_BLR_SIDE_PROFILE_ID
-                        if v5_h4_blr_side_only
-                        else (
-                            V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID
-                            if v5_h4_fixed_budget_bottom_only
-                            else V3_7_PROFILE_ID
-                        )
-                    )
-                )
-            ),
+            "profile_id": profile_id,
             "method": method,
             "fixed_budget": (
                 V5_H4_FIXED_BUDGET if v5_h4_fixed_budget_bottom_only else None
             ),
-            "exact_spool_root": (
-                str(Path(v6_h4_exact_spool_root).resolve())
-                if v6_h4_post_compaction_setup_only
-                and v6_h4_exact_spool_root is not None
-                else (
-                    str(Path(v5_h4_fixed_budget_exact_spool_root).resolve())
-                    if v5_h4_fixed_budget_bottom_only
-                    and v5_h4_fixed_budget_exact_spool_root is not None
-                    else None
-                )
-            ),
+            "exact_spool_root": exact_spool_root,
             "absolute_terminate_memory_bytes": policy[
                 "absolute_terminate_memory_bytes"
             ],
@@ -631,6 +778,8 @@ def v3_7_execution_dry_run(
     v5_h4_fixed_budget_exact_spool_root: str | Path | None = None,
     v6_h4_post_compaction_setup_only: bool = False,
     v6_h4_exact_spool_root: str | Path | None = None,
+    v6_h4_port_modal_bottom_only: bool = False,
+    v6_h4_port_modal_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -654,6 +803,8 @@ def v3_7_execution_dry_run(
         v5_h4_fixed_budget_exact_spool_root=v5_h4_fixed_budget_exact_spool_root,
         v6_h4_post_compaction_setup_only=v6_h4_post_compaction_setup_only,
         v6_h4_exact_spool_root=v6_h4_exact_spool_root,
+        v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
+        v6_h4_port_modal_exact_spool_root=v6_h4_port_modal_exact_spool_root,
         v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
         selected_mode_packet_identity=selected_mode_packet_identity,
@@ -688,6 +839,8 @@ def launch_v3_7_with_task038_watchdog(
     v5_h4_fixed_budget_exact_spool_root: str | Path | None = None,
     v6_h4_post_compaction_setup_only: bool = False,
     v6_h4_exact_spool_root: str | Path | None = None,
+    v6_h4_port_modal_bottom_only: bool = False,
+    v6_h4_port_modal_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -700,6 +853,7 @@ def launch_v3_7_with_task038_watchdog(
         or v5_h4_blr_side_only
         or v5_h4_fixed_budget_bottom_only
         or v6_h4_post_compaction_setup_only
+        or v6_h4_port_modal_bottom_only
     ):
         specification = load_and_resolve(input_path)
         from benchmarks.task039_v4_h4_hybrid_direct import (
@@ -715,6 +869,7 @@ def launch_v3_7_with_task038_watchdog(
         and not v5_h4_blr_side_only
         and not v5_h4_fixed_budget_bottom_only
         and not v6_h4_post_compaction_setup_only
+        and not v6_h4_port_modal_bottom_only
         and not V3_7_DIRECT_RUN_ROOT.is_dir()
     ):
         raise ValueError("V3-7 direct producer inventory is unavailable")
@@ -722,6 +877,7 @@ def launch_v3_7_with_task038_watchdog(
         not v5_h4_blr_side_only
         and not v5_h4_fixed_budget_bottom_only
         and not v6_h4_post_compaction_setup_only
+        and not v6_h4_port_modal_bottom_only
         and not callable(compare_v3_7_hybrid_candidate_to_direct)
     ):
         raise ValueError("V3-7 integrated checker entry point is unavailable")
@@ -734,6 +890,7 @@ def launch_v3_7_with_task038_watchdog(
         and not v5_h4_blr_side_only
         and not v5_h4_fixed_budget_bottom_only
         and not v6_h4_post_compaction_setup_only
+        and not v6_h4_port_modal_bottom_only
         and not candidate_d_only
         and not candidate_d_qualified
     ):
@@ -756,6 +913,8 @@ def launch_v3_7_with_task038_watchdog(
         v5_h4_fixed_budget_exact_spool_root=v5_h4_fixed_budget_exact_spool_root,
         v6_h4_post_compaction_setup_only=v6_h4_post_compaction_setup_only,
         v6_h4_exact_spool_root=v6_h4_exact_spool_root,
+        v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
+        v6_h4_port_modal_exact_spool_root=v6_h4_port_modal_exact_spool_root,
         v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
         selected_mode_packet_identity=selected_mode_packet_identity,
@@ -3493,6 +3652,445 @@ def run_v5_h4_fixed_budget_bottom_component(
     }
 
 
+def run_v6_h4_port_modal_bottom_component(
+    setup: Any,
+    *,
+    comm: MPI.Intracomm,
+    marker_callback: Callable[[str, Mapping[str, Any]], None],
+    exact_spool_root: str | Path,
+    packet_manifest: str | Path,
+    packet_identity: Mapping[str, Any],
+    packet_manifest_sha256: str,
+) -> dict[str, Any]:
+    """Run the explicit bottom-only factor-free Petrov component."""
+
+    if not getattr(setup, "side_only", False) or not hasattr(setup, "bottom"):
+        raise ValueError("V6 port-modal route requires a bottom-only setup carrier")
+    system = setup.bottom
+    components = None
+    base_action = None
+    fixed_action = None
+    owner = None
+    packet_bundle = None
+    modal_provider = None
+    gradient_provider = None
+    petrov_action = None
+    z_basis = None
+    y_basis = None
+    spool = None
+    z_columns: list[np.ndarray] = []
+    y_columns: list[np.ndarray] = []
+    checkpoints: list[dict[str, Any]] = []
+    holdout_spool_loaded = False
+    right_source_hash = hashlib.sha256()
+    left_source_hash = hashlib.sha256()
+    z_source_hash = hashlib.sha256()
+    right_source_bytes = 0
+    left_source_bytes = 0
+    z_source_bytes = 0
+    schedule = v6_port_modal_training_schedule(
+        mode_count=480, external_count=296, source_count=512
+    )
+    schedule_sha256 = hashlib.sha256(
+        json.dumps(schedule, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+
+    def training_value_digest() -> list[dict[str, Any]]:
+        row_first, row_last = (int(value) for value in system.A.getOwnershipRange())
+        return comm.allgather(
+            {
+                "ownership_range": [row_first, row_last],
+                "right_source_sha256": right_source_hash.hexdigest(),
+                "left_source_sha256": left_source_hash.hexdigest(),
+                "z_source_sha256": z_source_hash.hexdigest(),
+                "right_source_bytes": int(right_source_bytes),
+                "left_source_bytes": int(left_source_bytes),
+                "z_source_bytes": int(z_source_bytes),
+            }
+        )
+
+    def release_checkpoint() -> None:
+        nonlocal petrov_action, z_basis, y_basis
+        if petrov_action is not None:
+            petrov_action.destroy()
+            petrov_action = None
+        z_basis = None
+        y_basis = None
+
+    _emit_marker(
+        marker_callback,
+        "v6_port_modal_bottom_construction_begin",
+        profile=V6_H4_PORT_MODAL_BOTTOM_PROFILE_ID,
+        construction_peak_limit_gib=V6_H4_PORT_MODAL_BOTTOM_CONSTRUCTION_LIMIT_GIB,
+        retained_peak_limit_gib=V6_H4_PORT_MODAL_BOTTOM_RETAINED_LIMIT_GIB,
+        exact_factor_count=0,
+        global_direct_factor_count=0,
+    )
+    try:
+        components = create_hybrid_local_dtn_action_components(system)
+        base_action = build_hybrid_whole_endcap_fixed_smoother_action(
+            system, ilu_levels=0
+        )
+        fixed_action = HybridLocalDtnWoodburyFixedAction(
+            base_action,
+            components,
+            base_identity="whole_endcap_ilu0_woodbury_fixed_action",
+            ilu_levels=0,
+        )
+        base_diagnostics = dict(fixed_action.diagnostics)
+        woodbury_diagnostics = dict(base_diagnostics["woodbury"])
+        woodbury_n_aux = int(woodbury_diagnostics["n_aux"])
+        woodbury_aux_shape = [int(value) for value in components.H.getSize()]
+        if woodbury_aux_shape != [woodbury_n_aux, woodbury_n_aux]:
+            raise ValueError(
+                "V6 Woodbury auxiliary shape disagrees with diagnostics n_aux"
+            )
+        base_diagnostics.update(
+            {
+                "fixed_linear": True,
+                "nested_ksp": False,
+                "woodbury_auxiliary_count": woodbury_n_aux,
+                "woodbury_auxiliary_shape": woodbury_aux_shape,
+            }
+        )
+        if (
+            base_diagnostics.get("operator_identity")
+            != "whole_endcap_ilu0_woodbury_fixed_action"
+            or base_diagnostics.get("residual_correction_steps") != 1
+            or base_diagnostics.get("local_direct_factor_count") != 0
+            or base_diagnostics.get("global_hybrid_direct_factor_count") != 0
+            or base_diagnostics.get("base_factor_count") != 1
+        ):
+            raise ValueError("V6 base action is not fixed ILU0 plus DtN Woodbury")
+        _emit_marker(
+            marker_callback,
+            "v6_port_modal_bottom_fixed_woodbury_ready",
+            diagnostics=base_diagnostics,
+            nested_ksp=False,
+            exact_factor_count=0,
+            global_direct_factor_count=0,
+            woodbury_auxiliary_count=woodbury_n_aux,
+            woodbury_auxiliary_shape=woodbury_aux_shape,
+            fixed_linear=True,
+        )
+
+        packet_bundle = consume_task039_v4_selected_mode_packet(
+            Path(packet_manifest),
+            identity=packet_identity,
+            expected_manifest_sha256=packet_manifest_sha256,
+            consumer_kind="iterative",
+            comm=comm,
+            right_only=True,
+        )
+        packet_diagnostics = dict(packet_bundle.packet_consumer_diagnostics)
+        _emit_marker(
+            marker_callback,
+            "v6_port_modal_bottom_packet_right_only_ready",
+            packet=packet_diagnostics,
+            right_vectors_before_destroy=packet_diagnostics.get(
+                "vector_count_before_destroy"
+            ),
+            left_vectors_hydrated=False,
+        )
+        cross_section = build_matching_cross_section(system.cfg, "stage4_xy")
+        spaces = build_cross_section_spaces(
+            cross_section, transverse_degree=int(system.cfg.nedelec_degree)
+        )
+        owner = build_single_hybrid_interface_mode_owner(
+            system,
+            spaces,
+            packet_bundle.positive_basis,
+            packet_bundle.negative_basis,
+        )
+        packet_bundle.destroy()
+        packet_diagnostics = dict(packet_bundle.packet_consumer_diagnostics)
+        packet_bundle = None
+        _emit_marker(
+            marker_callback,
+            "v6_port_modal_bottom_packet_right_only_released",
+            packet_vectors_released=(
+                packet_diagnostics.get("vector_count_after_destroy") == 0
+            ),
+            packet_mmap_released=packet_diagnostics.get("packet_mmap_released"),
+            vector_count_after_destroy=packet_diagnostics.get(
+                "vector_count_after_destroy"
+            ),
+        )
+        modal_provider = v6_single_interface_modal_provider(owner)
+        gradient_provider = build_v6_discrete_gradient_source_provider(owner)
+        _emit_marker(
+            marker_callback,
+            "v6_port_modal_bottom_source_owner_ready",
+            owner_audit=owner.audit,
+            system_operator_identity="system.A",
+            global_F_materialized=system.inventory.get("global_F_materialized"),
+            exact_factor_count=0,
+            global_direct_factor_count=0,
+        )
+
+        for schedule_item in schedule:
+            right_source = left_source = z_source = None
+            try:
+                right_source, _right_metadata = build_v6_factor_free_source_vector(
+                    system,
+                    components,
+                    schedule_item,
+                    role="right",
+                    modal_provider=modal_provider,
+                    near_null_provider=gradient_provider,
+                )
+                z_source = system.A.createVecLeft()
+                fixed_action.apply(right_source, z_source)
+                left_source, _left_metadata = build_v6_factor_free_source_vector(
+                    system,
+                    components,
+                    schedule_item,
+                    role="left",
+                    modal_provider=modal_provider,
+                    near_null_provider=gradient_provider,
+                )
+                right_values = np.ascontiguousarray(
+                    right_source.getArray(readonly=True), dtype=np.complex128
+                )
+                left_values = np.ascontiguousarray(
+                    left_source.getArray(readonly=True), dtype=np.complex128
+                )
+                z_values = np.ascontiguousarray(
+                    z_source.getArray(readonly=True), dtype=np.complex128
+                )
+                z_columns.append(z_values.copy())
+                y_columns.append(left_values.copy())
+                right_source_hash.update(right_values.tobytes())
+                left_source_hash.update(left_values.tobytes())
+                z_source_hash.update(z_values.tobytes())
+                right_source_bytes += int(right_values.nbytes)
+                left_source_bytes += int(left_values.nbytes)
+                z_source_bytes += int(z_values.nbytes)
+            finally:
+                if left_source is not None:
+                    left_source.destroy()
+                if z_source is not None:
+                    z_source.destroy()
+                if right_source is not None:
+                    right_source.destroy()
+
+            checkpoint = int(schedule_item["index"]) + 1
+            if checkpoint not in V6_PORT_MODAL_CHECKPOINTS:
+                continue
+            z_candidates = np.column_stack(z_columns)
+            y_candidates = np.column_stack(y_columns)
+            z_basis, y_basis, basis_diagnostics = build_v6_owner_row_basis_checkpoint(
+                z_candidates, y_candidates, checkpoint, comm=comm
+            )
+            _emit_marker(
+                marker_callback,
+                f"v6_port_modal_bottom_basis_sealed_{checkpoint}",
+                checkpoint=checkpoint,
+                schedule_sha256=schedule_sha256,
+                training_value_digest=training_value_digest(),
+                basis_diagnostics=basis_diagnostics,
+                exact_spool_opened=False,
+            )
+            spool_loaded_this_checkpoint = False
+            if spool is None:
+                spool = _load_v5_fixed_budget_spool_shards(
+                    exact_spool_root,
+                    comm,
+                    packet_identity=packet_identity,
+                    manifest_sha256=packet_manifest_sha256,
+                )
+                holdout_spool_loaded = True
+                spool_loaded_this_checkpoint = True
+            petrov_action = FixedLinearOwnerRowPetrovCorrectionAction(
+                fixed_action,
+                system.A,
+                z_basis,
+                y_basis,
+                factor_inventory={
+                    "exact_factor_count": 0,
+                    "global_direct_factor_count": 0,
+                },
+            )
+            del z_candidates, y_candidates
+            z_basis = None
+            y_basis = None
+            reports = []
+            for label, artifact in spool.items():
+                template = rhs = reference = None
+                try:
+                    template = system.A.createVecLeft()
+                    rhs = _load_v5_blr_reference_spool_remapped(
+                        artifact["rhs"], template
+                    )
+                    reference = _load_v5_blr_reference_spool_remapped(
+                        artifact["exact_output"], template
+                    )
+                    report, _ = _v5_blr_probe(
+                        petrov_action,
+                        system,
+                        rhs,
+                        dict(artifact["rhs"]["probe_metadata"]),
+                        reference,
+                        repeat=True,
+                        linearity=True,
+                    )
+                    reports.append(report)
+                finally:
+                    if reference is not None:
+                        reference.destroy()
+                    if rhs is not None:
+                        rhs.destroy()
+                    if template is not None:
+                        template.destroy()
+            checkpoint_record = {
+                "checkpoint": checkpoint,
+                "basis": basis_diagnostics,
+                "petrov": petrov_action.diagnostics,
+                "training_value_digest": training_value_digest(),
+                "reports": reports,
+                "gate": _v6_port_modal_holdout_gate(reports),
+            }
+            spool = None
+            _emit_marker(
+                marker_callback,
+                "v6_port_modal_bottom_holdout_spool_released",
+                checkpoint=checkpoint,
+                descriptor_reference_released=True,
+                arrays_retained=False,
+            )
+            checkpoints.append(checkpoint_record)
+            _emit_marker(
+                marker_callback,
+                f"v6_port_modal_bottom_checkpoint_{checkpoint}_complete",
+                checkpoint=checkpoint,
+                gate=checkpoint_record["gate"],
+                action_diagnostics=petrov_action.diagnostics,
+                exact_spool_opened=spool_loaded_this_checkpoint,
+            )
+            if checkpoint_record["gate"]["pass"]:
+                if gradient_provider is not None:
+                    gradient_provider.destroy()
+                    gradient_provider = None
+                if owner is not None:
+                    owner.destroy()
+                    owner = None
+                modal_provider = None
+                z_columns.clear()
+                y_columns.clear()
+                retained_cleanup = collective_heap_cleanup(comm)
+                _emit_marker(
+                    marker_callback,
+                    "v6_port_modal_bottom_first_passing_checkpoint",
+                    checkpoint=checkpoint,
+                )
+                _emit_marker(
+                    marker_callback,
+                    "v6_port_modal_bottom_retained_apply_state_ready",
+                    checkpoint=checkpoint,
+                    retained_peak_limit_gib=V6_H4_PORT_MODAL_BOTTOM_RETAINED_LIMIT_GIB,
+                    action_diagnostics=petrov_action.diagnostics,
+                    temporary_training_columns_released=True,
+                    collective_cleanup=retained_cleanup,
+                    resource_gate="pending_parent_process_tree_samples",
+                )
+                break
+            release_checkpoint()
+
+        if not checkpoints:
+            raise RuntimeError("V6 port-modal route did not reach checkpoint 64")
+        final = checkpoints[-1]
+        numerical_pass = bool(final["gate"]["pass"])
+        _emit_marker(
+            marker_callback,
+            "v6_port_modal_bottom_construction_end",
+            checkpoint=final["checkpoint"],
+            numerical_pass=numerical_pass,
+            construction_peak_limit_gib=V6_H4_PORT_MODAL_BOTTOM_CONSTRUCTION_LIMIT_GIB,
+            retained_peak_limit_gib=V6_H4_PORT_MODAL_BOTTOM_RETAINED_LIMIT_GIB,
+            resource_gate="pending_parent_process_tree_samples",
+        )
+        return {
+            "schema": "task039.v6-h4-port-modal-bottom-component.v1",
+            "status": "component_completed" if numerical_pass else "component_failed",
+            "component_candidate": True,
+            "research_only": True,
+            "general_production": False,
+            "profile": V6_H4_PORT_MODAL_BOTTOM_PROFILE_ID,
+            "schedule": {
+                "count": len(schedule),
+                "checkpoints": list(V6_PORT_MODAL_CHECKPOINTS),
+                "sha256": schedule_sha256,
+                "training_value_digest": training_value_digest(),
+                "spool_opened_after_basis_seal": holdout_spool_loaded,
+            },
+            "packet": {
+                "manifest": str(Path(packet_manifest).resolve()),
+                "manifest_sha256": packet_manifest_sha256,
+                "identity": _json_safe(packet_identity),
+                "consumer_qep_calls": 0,
+                "right_only_hydration": True,
+                "arrays_retained_after_owner": False,
+            },
+            "exact_spool_root": str(Path(exact_spool_root).resolve()),
+            "base_action": base_diagnostics,
+            "checkpoints": checkpoints,
+            "final_checkpoint": final["checkpoint"],
+            "gates": {
+                **dict(final["gate"]),
+                "numerical_pass": numerical_pass,
+                "resource_pass": None,
+                "construction_resource_pass": None,
+                "retained_resource_pass": None,
+                "resource_authority": "parent_process_tree_marker_samples",
+            },
+            "factor_inventory": {
+                "exact_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "base_factor_count": 1,
+                "nested_ksp": False,
+            },
+            "top": "not_run_by_bottom_only_contract",
+            "outer": "not_run",
+            "recovery": "not_run",
+            "field": "not_run",
+            "RTA": "not_run",
+            "telemetry": {
+                "process_tree_samples": "expected_from_parent_launcher",
+                "construction_peak_limit_gib": V6_H4_PORT_MODAL_BOTTOM_CONSTRUCTION_LIMIT_GIB,
+                "retained_peak_limit_gib": V6_H4_PORT_MODAL_BOTTOM_RETAINED_LIMIT_GIB,
+                "swap": "parent_measured",
+            },
+        }
+    finally:
+        release_checkpoint()
+        spool = None
+        if gradient_provider is not None:
+            gradient_provider.destroy()
+        if owner is not None:
+            owner.destroy()
+        if packet_bundle is not None:
+            packet_bundle.destroy()
+        fixed_diagnostics = None
+        if fixed_action is not None:
+            fixed_action.destroy()
+            fixed_diagnostics = dict(fixed_action.diagnostics)
+        if components is not None:
+            components.destroy()
+        if base_action is not None:
+            base_action.destroy()
+            _emit_marker(
+                marker_callback,
+                "v6_port_modal_bottom_cleanup",
+                fixed_action_diagnostics=fixed_diagnostics,
+                base_factor_count_after_destroy=base_action.diagnostics.get(
+                    "lifecycle", {}
+                ).get("factor_count_after_destroy"),
+                exact_factor_count=0,
+                global_direct_factor_count=0,
+            )
+        collective_heap_cleanup(comm)
+
+
 def run_v5_h4_exact_side_setup_only(
     setup: Any,
     layout: HybridAugmentedLayout,
@@ -5551,6 +6149,8 @@ def run_task039_v3_7_diagnostic(
     v5_h4_fixed_budget_exact_spool_root: str | Path | None = None,
     v6_h4_post_compaction_setup_only: bool = False,
     v6_h4_exact_spool_root: str | Path | None = None,
+    v6_h4_port_modal_bottom_only: bool = False,
+    v6_h4_port_modal_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: Mapping[str, Any] | None = None,
@@ -5635,6 +6235,7 @@ def run_task039_v3_7_diagnostic(
             or v5_h4_blr_side_only
             or v5_h4_fixed_budget_bottom_only
             or v6_h4_post_compaction_setup_only
+            or v6_h4_port_modal_bottom_only
         ):
             profile = (
                 profile_override
@@ -5646,6 +6247,7 @@ def run_task039_v3_7_diagnostic(
             or v5_h4_blr_side_only
             or v5_h4_fixed_budget_bottom_only
             or v6_h4_post_compaction_setup_only
+            or v6_h4_port_modal_bottom_only
         ):
             incidence = resolved_payload["incidence"]
             profile = replace(
@@ -5657,9 +6259,13 @@ def run_task039_v3_7_diagnostic(
                         V6_H4_POST_COMPACTION_PROFILE_ID
                         if v6_h4_post_compaction_setup_only
                         else (
-                            V5_H4_BLR_SIDE_PROFILE_ID
-                            if v5_h4_blr_side_only
-                            else V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID
+                            V6_H4_PORT_MODAL_BOTTOM_PROFILE_ID
+                            if v6_h4_port_modal_bottom_only
+                            else (
+                                V5_H4_BLR_SIDE_PROFILE_ID
+                                if v5_h4_blr_side_only
+                                else V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID
+                            )
                         )
                     )
                 ),
@@ -5670,9 +6276,13 @@ def run_task039_v3_7_diagnostic(
                         V6_H4_POST_COMPACTION_PROFILE_ID
                         if v6_h4_post_compaction_setup_only
                         else (
-                            V5_H4_BLR_SIDE_PROFILE_ID
-                            if v5_h4_blr_side_only
-                            else V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID
+                            V6_H4_PORT_MODAL_BOTTOM_PROFILE_ID
+                            if v6_h4_port_modal_bottom_only
+                            else (
+                                V5_H4_BLR_SIDE_PROFILE_ID
+                                if v5_h4_blr_side_only
+                                else V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID
+                            )
                         )
                     )
                 ),
@@ -5683,9 +6293,13 @@ def run_task039_v3_7_diagnostic(
                         V6_H4_POST_COMPACTION_PROFILE_ID
                         if v6_h4_post_compaction_setup_only
                         else (
-                            V5_H4_BLR_SIDE_PROFILE_ID
-                            if v5_h4_blr_side_only
-                            else V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID
+                            V6_H4_PORT_MODAL_BOTTOM_PROFILE_ID
+                            if v6_h4_port_modal_bottom_only
+                            else (
+                                V5_H4_BLR_SIDE_PROFILE_ID
+                                if v5_h4_blr_side_only
+                                else V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID
+                            )
                         )
                     )
                 ),
@@ -5705,6 +6319,7 @@ def run_task039_v3_7_diagnostic(
         watchdog = v3_7_watchdog_policy(
             resolved_payload,
             v6_h4_post_compaction_setup_only=v6_h4_post_compaction_setup_only,
+            v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
         )
         _emit_marker(
             marker_callback,
@@ -5722,6 +6337,7 @@ def run_task039_v3_7_diagnostic(
             and not v5_h4_blr_side_only
             and not v5_h4_fixed_budget_bottom_only
             and not v6_h4_post_compaction_setup_only
+            and not v6_h4_port_modal_bottom_only
         ):
             raise ValueError(
                 "V3-7 requires an injected recovery_runner(setup, layout, snapshot, "
@@ -5747,6 +6363,34 @@ def run_task039_v3_7_diagnostic(
                 "external_keys_exact": True,
                 "selected_mode_packet": True,
                 "v6_post_compaction": bool(v6_h4_post_compaction_setup_only),
+            }
+            modal_amplitudes = None
+        elif v6_h4_port_modal_bottom_only:
+            if (
+                selected_mode_packet_manifest is None
+                or selected_mode_packet_identity is None
+                or selected_mode_packet_manifest_sha256 is None
+                or v6_h4_port_modal_exact_spool_root is None
+            ):
+                raise ValueError(
+                    "V6 port-modal component requires packet identity and exact spool"
+                )
+            producer = {
+                "producer_source_sha": selected_mode_packet_identity.get("source_sha"),
+                "physical_model_sha256": selected_mode_packet_identity.get(
+                    "physical_sha256"
+                ),
+                "model_id": selected_mode_packet_identity.get("model_id"),
+                "requested_modes": 480,
+                "mpi_size": 8,
+                "external_keys_exact": True,
+                "selected_mode_packet": True,
+                "consumer_qep_calls": 0,
+                "packet_arrays_hydrated": False,
+                "direct_reference_payload_loaded": False,
+                "component_candidate": True,
+                "research_only": True,
+                "exact_spool_root": str(Path(v6_h4_port_modal_exact_spool_root)),
             }
             modal_amplitudes = None
         elif v5_h4_blr_side_only:
@@ -5853,6 +6497,48 @@ def run_task039_v3_7_diagnostic(
                 comm=comm,
                 marker_callback=marker_callback,
                 exact_spool_root=v5_h4_fixed_budget_exact_spool_root,
+                packet_identity=selected_mode_packet_identity,
+                packet_manifest_sha256=selected_mode_packet_manifest_sha256,
+            )
+            result["source_sha"] = source_sha
+            result["run_directory"] = str(Path(run_directory).resolve())
+            result["packet"] = {
+                **packet_contract,
+                "manifest": str(selected_mode_packet_manifest),
+            }
+            normal_return = True
+            return result
+
+        if v6_h4_port_modal_bottom_only:
+            packet_contract = _validate_v5_fixed_budget_packet_manifest(
+                selected_mode_packet_manifest,
+                selected_mode_packet_identity,
+                selected_mode_packet_manifest_sha256,
+                comm=comm,
+            )
+            builder = (
+                side_system_builder
+                if side_system_builder is not None
+                else _build_v5_h4_fixed_budget_bottom_side_setup
+            )
+            setup = builder(
+                cfg=cfg,
+                profile=profile,
+                comm=comm,
+                detail_stage_callback=combined_detail_callback,
+            )
+            if not getattr(setup, "side_only", False) or not hasattr(setup, "bottom"):
+                raise ValueError(
+                    "V6 port-modal builder did not return a bottom-only carrier"
+                )
+            object_ledger["objects"]["setup"]["created"] = True
+            object_ledger["objects"]["setup"]["status"] = "measured"
+            result = run_v6_h4_port_modal_bottom_component(
+                setup,
+                comm=comm,
+                marker_callback=marker_callback,
+                exact_spool_root=v6_h4_port_modal_exact_spool_root,
+                packet_manifest=selected_mode_packet_manifest,
                 packet_identity=selected_mode_packet_identity,
                 packet_manifest_sha256=selected_mode_packet_manifest_sha256,
             )
@@ -6538,9 +7224,9 @@ def run_task039_v3_7_diagnostic(
                 object_ledger["objects"]["independent_reference"]["destroyed"] = True
         try:
             if setup is not None:
-                if v5_h4_fixed_budget_bottom_only and getattr(
-                    setup, "side_only", False
-                ):
+                if (
+                    v5_h4_fixed_budget_bottom_only or v6_h4_port_modal_bottom_only
+                ) and getattr(setup, "side_only", False):
                     side_system = setup.bottom
                     destroy_called = False
                     try:
@@ -6580,7 +7266,11 @@ def run_task039_v3_7_diagnostic(
                                 "factor_count_after_cleanup"
                             )
                     marker_callback(
-                        "v5_fixed_budget_bottom_side_setup_cleanup",
+                        (
+                            "v6_port_modal_bottom_side_setup_cleanup"
+                            if v6_h4_port_modal_bottom_only
+                            else "v5_fixed_budget_bottom_side_setup_cleanup"
+                        ),
                         {
                             "source": "side_only_finalizer",
                             "side": "bottom",
@@ -6745,6 +7435,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--v5-h4-setup-only", action="store_true")
     parser.add_argument("--v6-h4-post-compaction-setup-only", action="store_true")
     parser.add_argument("--v6-h4-exact-spool-root")
+    parser.add_argument("--v6-h4-port-modal-bottom-component", action="store_true")
+    parser.add_argument("--v6-h4-port-modal-exact-spool-root")
     parser.add_argument("--v5-h4-blr-side-component", action="store_true")
     parser.add_argument("--v5-h4-fixed-budget-bottom-component", action="store_true")
     parser.add_argument("--v5-h4-fixed-budget-exact-spool-root")
@@ -6760,6 +7452,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--run-directory", required=True)
     parser.add_argument("--source-sha", required=True)
     args = parser.parse_args(argv)
+    component_route = any(
+        (
+            args.v5_h4_setup_only,
+            args.v6_h4_post_compaction_setup_only,
+            args.v6_h4_port_modal_bottom_component,
+            args.v5_h4_blr_side_component,
+            args.v5_h4_fixed_budget_bottom_component,
+        )
+    )
     if args.worker == args.dry_run:
         parser.error("choose exactly one of --worker or --dry-run")
     if (
@@ -6772,6 +7473,7 @@ def main(argv: list[str] | None = None) -> int:
                 bool(args.candidate_e_side_only),
                 bool(args.v5_h4_setup_only),
                 bool(args.v6_h4_post_compaction_setup_only),
+                bool(args.v6_h4_port_modal_bottom_component),
                 bool(args.v5_h4_blr_side_component),
                 bool(args.v5_h4_fixed_budget_bottom_component),
             )
@@ -6794,6 +7496,8 @@ def main(argv: list[str] | None = None) -> int:
             v5_h4_setup_only=args.v5_h4_setup_only,
             v6_h4_post_compaction_setup_only=args.v6_h4_post_compaction_setup_only,
             v6_h4_exact_spool_root=args.v6_h4_exact_spool_root,
+            v6_h4_port_modal_bottom_only=args.v6_h4_port_modal_bottom_component,
+            v6_h4_port_modal_exact_spool_root=(args.v6_h4_port_modal_exact_spool_root),
             v5_h4_blr_side_only=args.v5_h4_blr_side_component,
             v5_h4_fixed_budget_bottom_only=args.v5_h4_fixed_budget_bottom_component,
             v5_h4_fixed_budget_exact_spool_root=(
@@ -6806,6 +7510,7 @@ def main(argv: list[str] | None = None) -> int:
                 if (
                     args.v5_h4_setup_only
                     or args.v6_h4_post_compaction_setup_only
+                    or args.v6_h4_port_modal_bottom_component
                     or args.v5_h4_blr_side_component
                     or args.v5_h4_fixed_budget_bottom_component
                 )
@@ -6816,6 +7521,7 @@ def main(argv: list[str] | None = None) -> int:
                 if (
                     args.v5_h4_setup_only
                     or args.v6_h4_post_compaction_setup_only
+                    or args.v6_h4_port_modal_bottom_component
                     or args.v5_h4_blr_side_component
                     or args.v5_h4_fixed_budget_bottom_component
                 )
@@ -6837,12 +7543,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
     try:
-        if (
-            args.v5_h4_setup_only
-            or args.v5_h4_blr_side_component
-            or args.v5_h4_fixed_budget_bottom_component
-            or args.v6_h4_post_compaction_setup_only
-        ):
+        if component_route:
             specification = load_and_resolve(args.input_path)
             payload = specification.as_jsonable()
             from benchmarks.task039_v4_h4_hybrid_direct import (
@@ -6865,13 +7566,12 @@ def main(argv: list[str] | None = None) -> int:
             direct_run_dir=V3_7_DIRECT_RUN_ROOT,
             recovery_runner=(
                 None
-                if args.candidate_b_only
-                or args.candidate_c_only
-                or args.candidate_e_side_only
-                or args.v5_h4_setup_only
-                or args.v6_h4_post_compaction_setup_only
-                or args.v5_h4_blr_side_component
-                or args.v5_h4_fixed_budget_bottom_component
+                if (
+                    args.candidate_b_only
+                    or args.candidate_c_only
+                    or args.candidate_e_side_only
+                    or component_route
+                )
                 else run_v3_7_recovery_runner
             ),
             candidate_b_only=args.candidate_b_only,
@@ -6882,6 +7582,8 @@ def main(argv: list[str] | None = None) -> int:
             v5_h4_setup_only=args.v5_h4_setup_only,
             v6_h4_post_compaction_setup_only=args.v6_h4_post_compaction_setup_only,
             v6_h4_exact_spool_root=args.v6_h4_exact_spool_root,
+            v6_h4_port_modal_bottom_only=args.v6_h4_port_modal_bottom_component,
+            v6_h4_port_modal_exact_spool_root=(args.v6_h4_port_modal_exact_spool_root),
             v5_h4_blr_side_only=args.v5_h4_blr_side_component,
             v5_h4_fixed_budget_bottom_only=args.v5_h4_fixed_budget_bottom_component,
             v5_h4_fixed_budget_exact_spool_root=(
@@ -6889,25 +7591,11 @@ def main(argv: list[str] | None = None) -> int:
             ),
             v5_h4_blr_profile=args.v5_h4_blr_profile,
             selected_mode_packet_manifest=(
-                args.selected_mode_packet_manifest
-                if (
-                    args.v5_h4_setup_only
-                    or args.v6_h4_post_compaction_setup_only
-                    or args.v5_h4_blr_side_component
-                    or args.v5_h4_fixed_budget_bottom_component
-                )
-                else None
+                args.selected_mode_packet_manifest if component_route else None
             ),
             selected_mode_packet_identity=packet_identity,
             selected_mode_packet_manifest_sha256=(
-                args.selected_mode_packet_manifest_sha256
-                if (
-                    args.v5_h4_setup_only
-                    or args.v6_h4_post_compaction_setup_only
-                    or args.v5_h4_blr_side_component
-                    or args.v5_h4_fixed_budget_bottom_component
-                )
-                else None
+                args.selected_mode_packet_manifest_sha256 if component_route else None
             ),
             record_path=(
                 Path(args.run_directory).resolve()
@@ -6960,6 +7648,10 @@ __all__ = [
     "V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID",
     "V5_H4_FIXED_BUDGET",
     "run_v5_h4_fixed_budget_bottom_component",
+    "V6_H4_PORT_MODAL_BOTTOM_PROFILE_ID",
+    "V6_H4_PORT_MODAL_BOTTOM_METHOD",
+    "V6_H4_PORT_MODAL_BOTTOM_HARD_STOP_BYTES",
+    "run_v6_h4_port_modal_bottom_component",
     "build_v3_7_execution_plan",
     "check_v3_7_integrated_physics",
     "compare_v3_7_hybrid_candidate_to_direct",

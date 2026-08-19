@@ -49,6 +49,8 @@ TerminateFactory = Callable[[Any], dict[str, Any]]
 V5_H4_BLR_SIDE_SETUP_PEAK_LIMIT_GIB = 59.7638938904
 V6_H4_POST_COMPACTION_SETUP_PEAK_LIMIT_GIB = 42.019652939
 V6_H4_POST_COMPACTION_SETUP_HARD_STOP_BYTES = 45118258790
+V6_H4_PORT_MODAL_CONSTRUCTION_LIMIT_GIB = 22.0
+V6_H4_PORT_MODAL_CONSTRUCTION_HARD_STOP_BYTES = 23622320128
 
 
 def _v5_h4_blr_candidate_interval_peak(
@@ -59,15 +61,24 @@ def _v5_h4_blr_candidate_interval_peak(
     marker_prefix: str = "v5_blr_candidate",
     begin_suffix: str = "setup_begin",
     end_suffix: str = "setup_end",
+    begin_stage: str | None = None,
+    end_stage: str | None = None,
+    limit_gib: float = V5_H4_BLR_SIDE_SETUP_PEAK_LIMIT_GIB,
 ) -> dict[str, Any]:
-    begin_stage = f"{marker_prefix}_{side}_{begin_suffix}"
-    end_stage = f"{marker_prefix}_{side}_{end_suffix}"
+    begin_stage = (
+        begin_stage
+        if begin_stage is not None
+        else f"{marker_prefix}_{side}_{begin_suffix}"
+    )
+    end_stage = (
+        end_stage if end_stage is not None else f"{marker_prefix}_{side}_{end_suffix}"
+    )
     stage_rows: dict[str, dict[str, Any]] = {}
     if not memory_stages_path.is_file() or not process_samples_path.is_file():
         return {
             "status": "not_available",
             "peak_process_tree_rss_gib": None,
-            "limit_gib": V5_H4_BLR_SIDE_SETUP_PEAK_LIMIT_GIB,
+            "limit_gib": limit_gib,
             "pass": False,
             "reason": "missing_stage_or_process_tree_samples",
         }
@@ -89,7 +100,7 @@ def _v5_h4_blr_candidate_interval_peak(
         return {
             "status": "not_available",
             "peak_process_tree_rss_gib": None,
-            "limit_gib": V5_H4_BLR_SIDE_SETUP_PEAK_LIMIT_GIB,
+            "limit_gib": limit_gib,
             "pass": False,
             "reason": "begin_or_end_sample_elapsed_missing",
         }
@@ -110,7 +121,7 @@ def _v5_h4_blr_candidate_interval_peak(
         return {
             "status": "not_available",
             "peak_process_tree_rss_gib": None,
-            "limit_gib": V5_H4_BLR_SIDE_SETUP_PEAK_LIMIT_GIB,
+            "limit_gib": limit_gib,
             "pass": False,
             "reason": "no_process_tree_sample_in_closed_interval",
             "begin_sample_elapsed_seconds": float(begin),
@@ -125,8 +136,8 @@ def _v5_h4_blr_candidate_interval_peak(
         "sample_count": len(samples),
         "peak_process_tree_rss_bytes": peak_bytes,
         "peak_process_tree_rss_gib": peak_gib,
-        "limit_gib": V5_H4_BLR_SIDE_SETUP_PEAK_LIMIT_GIB,
-        "pass": bool(peak_gib <= V5_H4_BLR_SIDE_SETUP_PEAK_LIMIT_GIB),
+        "limit_gib": limit_gib,
+        "pass": bool(peak_gib <= limit_gib),
         "time_basis": "parent_process_tree_sample_elapsed_seconds",
     }
 
@@ -652,6 +663,9 @@ def _run_worker(
     formal_v6_h4_setup = (
         getattr(plan, "method", "") == "task039_v6_h4_post_compaction_setup_only"
     )
+    formal_v6_h4_port_modal = (
+        getattr(plan, "method", "") == "task039_v6_h4_port_modal_bottom_component"
+    )
     formal_telemetry = (
         formal_v2_h5
         or formal_v3_2d
@@ -661,6 +675,7 @@ def _run_worker(
         or formal_v5_h4_blr
         or formal_v5_h4_fixed_budget
         or formal_v6_h4_setup
+        or formal_v6_h4_port_modal
     )
     if task039_model_id_matches(method, model_id, requested_modes):
         task039_budget = _task039_memory_budget(execution)
@@ -687,6 +702,9 @@ def _run_worker(
         critical_limit = None
     if formal_v6_h4_setup:
         absolute_terminate_memory_bytes = V6_H4_POST_COMPACTION_SETUP_HARD_STOP_BYTES
+        terminate_limit = float(absolute_terminate_memory_bytes)
+    if formal_v6_h4_port_modal:
+        absolute_terminate_memory_bytes = V6_H4_PORT_MODAL_CONSTRUCTION_HARD_STOP_BYTES
         terminate_limit = float(absolute_terminate_memory_bytes)
     timeout = float(execution["timeout_seconds"])
     sample_count = 0
@@ -759,6 +777,7 @@ def _run_worker(
                 or formal_v5_h4_blr
                 or formal_v5_h4_fixed_budget
                 or formal_v6_h4_setup
+                or formal_v6_h4_port_modal
             )
             or formal_stage_stream is None
         ):
@@ -775,6 +794,7 @@ def _run_worker(
                 or formal_v5_h4_blr
                 or formal_v5_h4_fixed_budget
                 or formal_v6_h4_setup
+                or formal_v6_h4_port_modal
             ) and stage_index is None:
                 stage_index = formal_aligned_stage_count
             row = {
@@ -820,6 +840,7 @@ def _run_worker(
             or formal_v5_h4_blr
             or formal_v5_h4_fixed_budget
             or formal_v6_h4_setup
+            or formal_v6_h4_port_modal
         ):
             formal_stages_path.unlink(missing_ok=True)
             formal_stage_stream = formal_stages_path.open("a", encoding="utf-8")
@@ -906,6 +927,7 @@ def _run_worker(
         or formal_v5_h4_blr
         or formal_v5_h4_fixed_budget
         or formal_v6_h4_setup
+        or formal_v6_h4_port_modal
     ) and not formal_object_ledger_path.exists():
         _write_json(
             formal_object_ledger_path,
@@ -989,6 +1011,54 @@ def _run_worker(
             "pass": None,
             "gate_role": "evidence_only_not_advancement_gate",
             "time_basis": "parent_process_tree_sample_elapsed_seconds",
+        }
+    port_modal_resource = None
+    if formal_v6_h4_port_modal:
+        construction_interval = _v5_h4_blr_candidate_interval_peak(
+            formal_stages_path,
+            formal_samples_path,
+            "bottom",
+            begin_stage="v6_port_modal_bottom_construction_begin",
+            end_stage="v6_port_modal_bottom_construction_end",
+            limit_gib=V6_H4_PORT_MODAL_CONSTRUCTION_LIMIT_GIB,
+        )
+        retained_interval = _v5_h4_blr_candidate_interval_peak(
+            formal_stages_path,
+            formal_samples_path,
+            "bottom",
+            begin_stage="v6_port_modal_bottom_retained_apply_state_ready",
+            end_stage="v6_port_modal_bottom_cleanup",
+            limit_gib=16.0,
+        )
+        intervals = {
+            "construction": construction_interval,
+            "retained": retained_interval,
+        }
+        measured = [
+            item for item in intervals.values() if item.get("status") == "measured"
+        ]
+        overall = {
+            "status": "measured" if len(measured) == 2 else "not_available",
+            "peak_process_tree_rss_gib": (
+                max(item["peak_process_tree_rss_gib"] for item in measured)
+                if len(measured) == 2
+                else None
+            ),
+            "limit_gib": None,
+            "pass": (
+                all(item["pass"] for item in measured) if len(measured) == 2 else False
+            ),
+            "gate_role": "construction_and_retained_resource_gate",
+            "time_basis": "parent_process_tree_sample_elapsed_seconds",
+        }
+        port_modal_resource = {
+            "construction": construction_interval,
+            "retained": retained_interval,
+            "overall": overall,
+            "gate_basis": "separate_parent_closed_intervals",
+            "construction_limit_gib": V6_H4_PORT_MODAL_CONSTRUCTION_LIMIT_GIB,
+            "retained_limit_gib": 16.0,
+            "effective_hard_stop_bytes": V6_H4_PORT_MODAL_CONSTRUCTION_HARD_STOP_BYTES,
         }
     resource_authority = {
         "status": "measured" if sample_count else "not_available",
@@ -1183,6 +1253,34 @@ def _run_worker(
             "require_zero_swap": True,
             "poll_interval_seconds": poll_interval,
             "authority": v6_resource,
+        }
+    if formal_v6_h4_port_modal:
+        resource_authority["v6_h4_port_modal_bottom_component_telemetry"] = {
+            "raw_marker_path": str(formal_markers_path),
+            "process_tree_samples_path": str(formal_samples_path),
+            "memory_stages_path": str(formal_stages_path),
+            "memory_object_ledger_path": str(formal_object_ledger_path),
+            "sample_count": sample_count,
+            "process_tree_sample_count": formal_written_sample_count,
+            "aligned_stage_count": formal_aligned_stage_count,
+            "stage_source": "launcher_marker_alignment",
+            "method_override": {
+                "input_absolute_terminate_memory_bytes": (
+                    None
+                    if task039_budget is None
+                    else task039_budget.get("absolute_terminate_memory_bytes")
+                ),
+                "effective_absolute_terminate_memory_bytes": (
+                    V6_H4_PORT_MODAL_CONSTRUCTION_HARD_STOP_BYTES
+                ),
+                "effective_hard_stop_memory_gib": (
+                    V6_H4_PORT_MODAL_CONSTRUCTION_LIMIT_GIB
+                ),
+                "process_tree_termination_enforced": True,
+            },
+            "require_zero_swap": True,
+            "poll_interval_seconds": poll_interval,
+            "authority": port_modal_resource,
         }
     if formal_v3_2d:
         resource_authority["v3_2d_formal_telemetry"] = {
