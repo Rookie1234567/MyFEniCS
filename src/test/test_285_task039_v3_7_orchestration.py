@@ -1698,6 +1698,381 @@ def test_v5_fixed_budget_spool_unwraps_packet_identity_and_manifest(tmp_path) ->
         )
 
 
+def test_v5_fixed_budget_spool_remaps_source_shards_to_target_range(tmp_path) -> None:
+    class FakeVec:
+        def __init__(self, start, end, values=None):
+            self.start = start
+            self.end = end
+            self.values = (
+                np.zeros(end - start, dtype=np.complex128) if values is None else values
+            )
+
+        def getOwnershipRange(self):
+            return self.start, self.end
+
+        def getSize(self):
+            return 7
+
+        def duplicate(self):
+            return FakeVec(self.start, self.end)
+
+        def getArray(self):
+            return self.values
+
+        def assemble(self):
+            return None
+
+        def destroy(self):
+            return None
+
+    values = np.arange(7, dtype=np.complex128) + 1j
+    shards = []
+    for start, end in ((0, 3), (3, 7)):
+        path = tmp_path / f"source-{start}.npy"
+        np.save(path, values[start:end])
+        shards.append(
+            {
+                "array_path": str(path),
+                "ownership_range": [start, end],
+                "local_size": end - start,
+                "global_size": 7,
+                "dtype": "complex128",
+            }
+        )
+    loaded = orchestration._load_v5_blr_reference_spool_remapped(
+        {"shards": shards}, FakeVec(2, 7)
+    )
+    np.testing.assert_array_equal(loaded.getArray(), values[2:])
+
+
+def _write_tiny_v5_spool_catalog(
+    tmp_path,
+    *,
+    ownership=(0, 4),
+    partitions=None,
+    global_size=None,
+    packet=None,
+    dtype="complex128",
+    omit_seed=False,
+):
+    packet = {"model_id": "tiny-h4", "mode_count": 480} if packet is None else packet
+    partitions = [ownership] if partitions is None else partitions
+    global_size = partitions[-1][1] if global_size is None else global_size
+    for source_rank, (start, end) in enumerate(partitions):
+        root = tmp_path / "v5_blr_reference_spool" / f"rank{source_rank:04d}"
+        root.mkdir(parents=True)
+        for label, kind, seed in orchestration.V5_H4_BLR_RHS_SPECS:
+            probe = {
+                "label": label,
+                "source": kind,
+                "degenerate_uninformative": label == "physical_side_rhs",
+                "identity": {
+                    "dtype": "complex128",
+                    "global_sha256": "g" * 64,
+                    "global_size": global_size,
+                    "source": kind,
+                    "source_norm": 1.0,
+                    "local_sha256": hashlib.sha256(
+                        f"{source_rank}:{start}:{end}".encode()
+                    ).hexdigest(),
+                    "ownership_range": [start, end],
+                },
+            }
+            if not omit_seed:
+                probe["seed"] = seed
+            for role in ("rhs", "exact_output"):
+                values = np.arange(start, end, dtype=np.complex128)
+                if dtype != "complex128":
+                    values = values.real.astype(np.float64)
+                array_path = root / f"bottom_{label}_{role}.npy"
+                np.save(array_path, values)
+                source_identity = {
+                    "packet_identity": {
+                        "packet_identity": packet,
+                        "manifest_sha256": "m" * 64,
+                        "source_sha": "s" * 40,
+                    },
+                    "probe_metadata": probe if role == "rhs" else {"label": label},
+                }
+                record = {
+                    "side": "bottom",
+                    "label": label,
+                    "role": role,
+                    "source_identity": source_identity,
+                    "ownership_range": [start, end],
+                    "global_size": global_size,
+                    "local_size": end - start,
+                    "dtype": dtype,
+                    "array_path": str(array_path),
+                    "array_sha256": hashlib.sha256(values.tobytes()).hexdigest(),
+                }
+                metadata = dict(record)
+                record["metadata_payload_sha256_excluding_self"] = hashlib.sha256(
+                    json.dumps(
+                        metadata,
+                        sort_keys=True,
+                        separators=(",", ":"),
+                        ensure_ascii=False,
+                    ).encode()
+                ).hexdigest()
+                (root / f"bottom_{label}_{role}.json").write_text(
+                    json.dumps(record, sort_keys=True, separators=(",", ":")),
+                    encoding="utf-8",
+                )
+    return tmp_path / "v5_blr_reference_spool"
+
+
+def test_v5_fixed_budget_spool_catalog_rejects_gap_dtype_and_identity(tmp_path):
+    packet = {"model_id": "tiny-h4", "mode_count": 480}
+    gap_root = _write_tiny_v5_spool_catalog(
+        tmp_path / "gap", ownership=(0, 3), global_size=4, packet=packet
+    )
+    with pytest.raises(ValueError, match="cover global size"):
+        orchestration._load_v5_fixed_budget_spool_shards(
+            gap_root.parent,
+            MPI.COMM_SELF,
+            packet_identity=packet,
+            manifest_sha256="m" * 64,
+        )
+    dtype_root = _write_tiny_v5_spool_catalog(
+        tmp_path / "dtype", packet=packet, dtype="float64"
+    )
+    with pytest.raises(ValueError, match="shape mismatch"):
+        orchestration._load_v5_fixed_budget_spool_shards(
+            dtype_root.parent,
+            MPI.COMM_SELF,
+            packet_identity=packet,
+            manifest_sha256="m" * 64,
+        )
+    identity_root = _write_tiny_v5_spool_catalog(
+        tmp_path / "identity", packet={"model_id": "other", "mode_count": 480}
+    )
+    with pytest.raises(ValueError, match="identity mismatch"):
+        orchestration._load_v5_fixed_budget_spool_shards(
+            identity_root.parent,
+            MPI.COMM_SELF,
+            packet_identity=packet,
+            manifest_sha256="m" * 64,
+        )
+    missing_seed_root = _write_tiny_v5_spool_catalog(
+        tmp_path / "missing-seed", packet=packet, omit_seed=True
+    )
+    with pytest.raises(ValueError, match="seed metadata mismatch"):
+        orchestration._load_v5_fixed_budget_spool_shards(
+            missing_seed_root.parent,
+            MPI.COMM_SELF,
+            packet_identity=packet,
+            manifest_sha256="m" * 64,
+        )
+
+
+@pytest.mark.parametrize(
+    ("mutation", "error_match"),
+    [
+        ("overlap", "gap or overlap"),
+        ("global_size", "ownership coverage mismatch"),
+        ("array_sha", "array hash/shape mismatch"),
+        ("metadata_self_hash", "metadata hash mismatch"),
+    ],
+)
+def test_v5_fixed_budget_spool_catalog_mutations_fail_closed(
+    tmp_path, mutation, error_match
+):
+    comm = MPI.COMM_WORLD
+    if comm.size != 2:
+        pytest.skip("run catalog mutation smoke with MPI2")
+    packet = {"model_id": "tiny-h4", "mode_count": 480}
+    root = tmp_path / mutation
+    if comm.rank == 0:
+        _write_tiny_v5_spool_catalog(root, partitions=[(0, 4), (4, 8)], packet=packet)
+        rank = 1 if mutation in {"overlap", "global_size", "metadata_self_hash"} else 0
+        metadata_path = (
+            root
+            / "v5_blr_reference_spool"
+            / f"rank{rank:04d}"
+            / "bottom_external_dtn_coupling_rhs.json"
+        )
+        record = json.loads(metadata_path.read_text(encoding="utf-8"))
+        refresh_metadata_hash = mutation != "metadata_self_hash"
+        if mutation == "overlap":
+            record["ownership_range"] = [3, 8]
+            record["local_size"] = 5
+        elif mutation == "global_size":
+            record["global_size"] = 9
+        elif mutation == "array_sha":
+            record["array_sha256"] = "0" * 64
+        else:
+            record["global_size"] = 9
+        if refresh_metadata_hash:
+            record.pop("metadata_payload_sha256_excluding_self", None)
+            record["metadata_payload_sha256_excluding_self"] = hashlib.sha256(
+                json.dumps(
+                    record,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    ensure_ascii=False,
+                ).encode()
+            ).hexdigest()
+        metadata_path.write_text(
+            json.dumps(record, sort_keys=True, separators=(",", ":")),
+            encoding="utf-8",
+        )
+    root = Path(comm.bcast(str(root), root=0))
+    with pytest.raises(ValueError, match=error_match):
+        orchestration._load_v5_fixed_budget_spool_shards(
+            root,
+            comm,
+            packet_identity=packet,
+            manifest_sha256="m" * 64,
+        )
+
+
+def test_v5_fixed_budget_spool_catalog_mpi_remaps_target_ownership(tmp_path):
+    comm = MPI.COMM_WORLD
+    if comm.size not in (2, 4):
+        pytest.skip("run this tiny ownership smoke with MPI2 or MPI4")
+    packet = {"model_id": "tiny-h4", "mode_count": 480}
+    partitions = (
+        [(0, 4), (4, 8)] if comm.size == 2 else [(0, 2), (2, 4), (4, 6), (6, 8)]
+    )
+    root = tmp_path / "mpi-catalog"
+    if comm.rank == 0:
+        _write_tiny_v5_spool_catalog(root, partitions=partitions, packet=packet)
+    root = Path(comm.bcast(str(root), root=0))
+    records = orchestration._load_v5_fixed_budget_spool_shards(
+        root,
+        comm,
+        packet_identity=packet,
+        manifest_sha256="m" * 64,
+    )
+    assert records["external_dtn_coupling"]["exact_output"]["probe_metadata"] == {
+        "label": "external_dtn_coupling"
+    }
+    targets = [(0, 3), (3, 8)] if comm.size == 2 else [(0, 1), (1, 3), (3, 6), (6, 8)]
+
+    class TargetVec:
+        def __init__(self, start, end):
+            self.start = start
+            self.end = end
+            self.values = np.zeros(end - start, dtype=np.complex128)
+
+        def getOwnershipRange(self):
+            return self.start, self.end
+
+        def getSize(self):
+            return 8
+
+        def duplicate(self):
+            return TargetVec(self.start, self.end)
+
+        def getArray(self):
+            return self.values
+
+        def assemble(self):
+            return None
+
+        def destroy(self):
+            return None
+
+    start, end = targets[comm.rank]
+    loaded = orchestration._load_v5_blr_reference_spool_remapped(
+        records["external_dtn_coupling"]["rhs"], TargetVec(start, end)
+    )
+    local_pass = np.array_equal(
+        loaded.getArray(), np.arange(start, end, dtype=np.complex128)
+    )
+    assert comm.allreduce(local_pass, op=MPI.LAND)
+
+
+def test_v5_fixed_budget_diagnostic_uses_side_builder_and_releases_side_system(
+    tmp_path, monkeypatch
+):
+    payload = load_and_resolve(
+        Path("input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat")
+    ).as_jsonable()
+    identity = {
+        "source_sha": "s" * 40,
+        "physical_sha256": "p" * 64,
+        "model_id": "tiny-h4",
+    }
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "rank_count": 1,
+                "consumer_qep_required": False,
+                "qep_workspace_persisted": False,
+                "identity": identity,
+            }
+        ),
+        encoding="utf-8",
+    )
+    collective_calls = []
+
+    class SideSystem:
+        _destroyed = False
+
+        def destroy(self):
+            self._destroyed = True
+
+    side_system = SideSystem()
+
+    def side_builder(**kwargs):
+        assert kwargs["profile"].h_nm == 4.0
+        return SimpleNamespace(bottom=side_system, side_only=True)
+
+    monkeypatch.setattr(
+        orchestration,
+        "run_v5_h4_fixed_budget_bottom_component",
+        lambda *_args, **_kwargs: {
+            "status": "component_completed",
+            "telemetry": {"memory_object_ledger": {}},
+        },
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "collective_heap_cleanup",
+        lambda _comm: (
+            collective_calls.append(True) or {"collective_call_completed": True}
+        ),
+    )
+    run_directory = tmp_path / "run"
+    orchestration.run_task039_v3_7_diagnostic(
+        payload,
+        run_directory,
+        source_sha="c" * 40,
+        comm=MPI.COMM_SELF,
+        setup_builder=lambda **_kwargs: pytest.fail("generic setup was called"),
+        side_system_builder=side_builder,
+        v5_h4_fixed_budget_bottom_only=True,
+        v5_h4_fixed_budget_exact_spool_root=tmp_path,
+        selected_mode_packet_manifest=manifest,
+        selected_mode_packet_identity=identity,
+        selected_mode_packet_manifest_sha256=hashlib.sha256(
+            manifest.read_bytes()
+        ).hexdigest(),
+    )
+    assert side_system._destroyed is True
+    assert collective_calls == [True]
+    marker_rows = [
+        json.loads(line)
+        for line in (
+            run_directory / "numerical_output" / "memory_stage_markers.raw.jsonl"
+        )
+        .read_text(encoding="utf-8")
+        .splitlines()
+        if line.strip()
+    ]
+    cleanup_rows = [
+        row
+        for row in marker_rows
+        if row["marker"] == "v5_fixed_budget_bottom_side_setup_cleanup"
+    ]
+    assert len(cleanup_rows) == 1
+    assert cleanup_rows[0]["detail"]["bottom_destroyed"] is True
+    assert cleanup_rows[0]["detail"]["collective_cleanup_completed"] is True
+
+
 def test_v5_h4_fixed_budget_route_is_bottom_only_and_cleans_factors(
     tmp_path, monkeypatch
 ) -> None:
@@ -1756,26 +2131,27 @@ def test_v5_h4_fixed_budget_route_is_bottom_only_and_cleans_factors(
             self._destroyed = True
 
     labels = [spec[0] for spec in orchestration.V5_H4_BLR_RHS_SPECS]
-    spool = {
-        label: {
-            "rhs": {
-                "source_identity": {
-                    "probe_metadata": {
-                        "label": label,
-                        "degenerate_uninformative": label == "physical_side_rhs",
-                    }
-                }
-            },
-            "exact_output": {},
+    spool = {}
+    for label, kind, seed in orchestration.V5_H4_BLR_RHS_SPECS:
+        metadata = {
+            "label": label,
+            "kind": kind,
+            "seed": seed,
+            "degenerate_uninformative": label == "physical_side_rhs",
         }
-        for label in labels
-    }
+        shard = {
+            "source_identity": {"probe_metadata": metadata},
+        }
+        spool[label] = {
+            "rhs": {"shards": [shard], "probe_metadata": metadata},
+            "exact_output": {"shards": [shard], "probe_metadata": metadata},
+        }
     markers = []
     component_factory_calls = []
     explicit_builder_calls = []
     monkeypatch.setattr(
         orchestration,
-        "_load_v5_fixed_budget_spool_records",
+        "_load_v5_fixed_budget_spool_shards",
         lambda *_args, **_kwargs: spool,
     )
     monkeypatch.setattr(
@@ -1808,7 +2184,7 @@ def test_v5_h4_fixed_budget_route_is_bottom_only_and_cleans_factors(
     )
     monkeypatch.setattr(
         orchestration,
-        "_load_v5_blr_reference_spool",
+        "_load_v5_blr_reference_spool_remapped",
         lambda _record, _template: FakeVec(),
     )
     monkeypatch.setattr(
@@ -1906,9 +2282,9 @@ def test_v5_h4_fixed_budget_route_is_bottom_only_and_cleans_factors(
     assert result["outer"] == "not_run"
     assert result["recovery"] == "not_run"
 
-    spool["physical_side_rhs"]["rhs"]["source_identity"]["probe_metadata"][
-        "degenerate_uninformative"
-    ] = False
+    spool["physical_side_rhs"]["rhs"]["probe_metadata"]["degenerate_uninformative"] = (
+        False
+    )
     markers.clear()
     result_non_degenerate = run_component()
     assert "physical_side_rhs" in result_non_degenerate["mandatory_labels"]

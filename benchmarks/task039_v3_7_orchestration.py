@@ -77,6 +77,7 @@ from src.solvers.hybrid_fem_modal_block_ldu import (
 )
 from src.solvers.common_3d_solve import _petsc_matrix_stats
 from src.solvers.hybrid_local_dtn_action import (
+    assemble_hybrid_local_dtn_action_system,
     create_hybrid_local_dtn_action_components,
 )
 from src.solvers.hybrid_local_dtn_woodbury import (
@@ -1020,6 +1021,344 @@ def _load_v5_fixed_budget_spool_records(
             "exact_output": artifacts["exact_output"],
         }
     return records
+
+
+def _validate_v5_fixed_budget_packet_manifest(
+    manifest_path: str | Path,
+    packet_identity: Mapping[str, Any],
+    manifest_sha256: str,
+    *,
+    comm: MPI.Intracomm,
+) -> dict[str, Any]:
+    """Validate only packet identity for the side-only fixed-budget path."""
+
+    path = Path(manifest_path).resolve()
+    if not path.is_file():
+        raise ValueError(f"Fixed-budget packet manifest is missing: {path}")
+    actual_sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
+    if actual_sha256 != manifest_sha256:
+        raise ValueError("Fixed-budget packet manifest hash mismatch")
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    if (
+        manifest.get("rank_count") != int(comm.size)
+        or manifest.get("consumer_qep_required") is not False
+        or manifest.get("qep_workspace_persisted") is not False
+        or manifest.get("identity") != dict(packet_identity)
+    ):
+        raise ValueError("Fixed-budget packet identity contract mismatch")
+    return {
+        "manifest": str(path),
+        "manifest_sha256": actual_sha256,
+        "identity": _json_safe(dict(packet_identity)),
+        "consumer_qep_calls": 0,
+        "consumer_qep_required": False,
+        "arrays_hydrated": False,
+    }
+
+
+def _build_v5_h4_fixed_budget_bottom_side_setup(
+    *,
+    cfg: Any,
+    profile: Any,
+    comm: MPI.Intracomm,
+    detail_stage_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
+) -> Any:
+    """Build only the matrix-free bottom action carrier for V5 fixed budget."""
+
+    system = assemble_hybrid_local_dtn_action_system(
+        cfg,
+        "bottom",
+        bottom_interface_z_nm=profile.bottom_interface_nm,
+        top_interface_z_nm=profile.top_interface_nm,
+        comm=comm,
+        log=None,
+    )
+    if detail_stage_callback is not None:
+        detail_stage_callback(
+            "v5_fixed_budget_bottom_side_system_ready",
+            {
+                "side": "bottom",
+                "global_F_materialized": False,
+                "no_new_explicit_component_matrix": True,
+                "packet_arrays_hydrated": False,
+            },
+        )
+    return SimpleNamespace(bottom=system, side_only=True)
+
+
+def _load_v5_fixed_budget_spool_shards(
+    root: str | Path,
+    comm: MPI.Intracomm,
+    *,
+    packet_identity: Mapping[str, Any],
+    manifest_sha256: str,
+) -> dict[str, dict[str, Any]]:
+    """Validate producer shards and return descriptors for ownership remapping.
+
+    Legacy exact-output metadata contains only ``label``.  RHS/exact pairing
+    is therefore established by the shared label, role, packet identity,
+    per-role contiguous ownership coverage, and each array's own hash.
+    """
+
+    spool_root = Path(root).resolve() / "v5_blr_reference_spool"
+    descriptors: dict[str, dict[str, list[dict[str, Any]]]] | None = None
+    probe_metadata_by_label: dict[str, dict[str, Any]] = {}
+    exact_output_metadata_by_label: dict[str, dict[str, Any]] = {}
+    structure_error: str | None = None
+    try:
+        descriptors = {
+            label: {"rhs": [], "exact_output": []}
+            for label, _kind, _seed in V5_H4_BLR_RHS_SPECS
+        }
+        for source_rank in range(int(comm.size)):
+            rank_directory = spool_root / f"rank{source_rank:04d}"
+            if not rank_directory.is_dir():
+                raise ValueError(
+                    f"Missing fixed-budget spool rank directory: {rank_directory}"
+                )
+            for label, _kind, _seed in V5_H4_BLR_RHS_SPECS:
+                for role in ("rhs", "exact_output"):
+                    metadata_path = rank_directory / f"bottom_{label}_{role}.json"
+                    record = json.loads(metadata_path.read_text(encoding="utf-8"))
+                    source_identity = record.get("source_identity")
+                    packet_wrapper = (
+                        source_identity.get("packet_identity")
+                        if isinstance(source_identity, Mapping)
+                        else None
+                    )
+                    source_packet = (
+                        packet_wrapper.get("packet_identity")
+                        if isinstance(packet_wrapper, Mapping)
+                        else None
+                    )
+                    source_manifest = (
+                        packet_wrapper.get("manifest_sha256")
+                        if isinstance(packet_wrapper, Mapping)
+                        else None
+                    )
+                    if (
+                        record.get("side") != "bottom"
+                        or record.get("label") != label
+                        or record.get("role") != role
+                        or source_packet != dict(packet_identity)
+                        or source_manifest != manifest_sha256
+                    ):
+                        raise ValueError(
+                            f"Fixed-budget spool identity mismatch: {metadata_path}"
+                        )
+                    metadata_hash = record.get("metadata_payload_sha256_excluding_self")
+                    metadata_payload = dict(record)
+                    metadata_payload.pop("metadata_payload_sha256_excluding_self", None)
+                    if (
+                        not isinstance(metadata_hash, str)
+                        or hashlib.sha256(
+                            json.dumps(
+                                metadata_payload,
+                                sort_keys=True,
+                                separators=(",", ":"),
+                                ensure_ascii=False,
+                            ).encode()
+                        ).hexdigest()
+                        != metadata_hash
+                    ):
+                        raise ValueError(
+                            f"Fixed-budget spool metadata hash mismatch: {metadata_path}"
+                        )
+                    ownership = record.get("ownership_range")
+                    if (
+                        not isinstance(ownership, list)
+                        or len(ownership) != 2
+                        or int(ownership[1]) <= int(ownership[0])
+                        or int(record.get("local_size", -1))
+                        != int(ownership[1]) - int(ownership[0])
+                        or str(record.get("dtype")) != "complex128"
+                        or int(record.get("global_size", -1)) <= 0
+                    ):
+                        raise ValueError(
+                            f"Fixed-budget spool descriptor shape mismatch: {metadata_path}"
+                        )
+                    array_path = Path(str(record["array_path"])).resolve()
+                    record = {
+                        **record,
+                        "array_path": str(array_path),
+                        "metadata_path": str(metadata_path.resolve()),
+                        "source_rank": source_rank,
+                    }
+                    descriptors[label][role].append(record)
+        for label in descriptors:
+            spec_kind, spec_seed = next(
+                (kind, seed)
+                for current_label, kind, seed in V5_H4_BLR_RHS_SPECS
+                if current_label == label
+            )
+            probe_metadata: dict[str, Any] | None = None
+            for role in ("rhs", "exact_output"):
+                shards = sorted(
+                    descriptors[label][role], key=lambda item: item["source_rank"]
+                )
+                for shard in shards:
+                    candidate_metadata = shard.get("source_identity", {}).get(
+                        "probe_metadata"
+                    )
+                    if (
+                        not isinstance(candidate_metadata, Mapping)
+                        or candidate_metadata.get("label") != label
+                    ):
+                        raise ValueError("Fixed-budget spool probe metadata mismatch")
+                    if role == "exact_output":
+                        if dict(candidate_metadata) != {"label": label}:
+                            raise ValueError(
+                                "Fixed-budget exact-output legacy metadata mismatch"
+                            )
+                        exact_output_metadata_by_label[label] = dict(candidate_metadata)
+                    if role == "rhs":
+                        expected_degenerate = label == "physical_side_rhs"
+                        if (
+                            candidate_metadata.get("degenerate_uninformative")
+                            is not expected_degenerate
+                        ):
+                            raise ValueError(
+                                "Fixed-budget spool degenerate probe metadata mismatch"
+                            )
+                        if (
+                            spec_seed is not None
+                            and candidate_metadata.get("seed") != spec_seed
+                        ):
+                            raise ValueError(
+                                "Fixed-budget spool probe seed metadata mismatch"
+                            )
+                        identity = candidate_metadata.get("identity")
+                        if not isinstance(identity, Mapping):
+                            raise ValueError(
+                                "Fixed-budget spool probe identity metadata is missing"
+                            )
+                        canonical_metadata = dict(candidate_metadata)
+                        canonical_identity = dict(identity)
+                        canonical_identity.pop("local_sha256", None)
+                        canonical_identity.pop("ownership_range", None)
+                        canonical_metadata["identity"] = canonical_identity
+                        canonical_metadata["kind"] = spec_kind
+                        canonical_metadata["seed"] = spec_seed
+                        if probe_metadata is None:
+                            probe_metadata = canonical_metadata
+                        elif canonical_metadata != probe_metadata:
+                            raise ValueError(
+                                "Fixed-budget spool probe metadata differs by shard"
+                            )
+                ranges = [tuple(map(int, item["ownership_range"])) for item in shards]
+                global_sizes = {int(item["global_size"]) for item in shards}
+                if len(global_sizes) != 1 or not ranges or ranges[0][0] != 0:
+                    raise ValueError("Fixed-budget spool ownership coverage mismatch")
+                previous_end = 0
+                for start, end in ranges:
+                    if start != previous_end:
+                        raise ValueError(
+                            "Fixed-budget spool ownership has a gap or overlap"
+                        )
+                    previous_end = end
+                if previous_end != next(iter(global_sizes)):
+                    raise ValueError(
+                        "Fixed-budget spool ownership does not cover global size"
+                    )
+                descriptors[label][role] = shards
+            if probe_metadata is None:
+                raise ValueError("Fixed-budget spool RHS probe metadata is missing")
+            probe_metadata_by_label[label] = probe_metadata
+    except Exception as exc:
+        structure_error = f"{type(exc).__name__}: {exc}"
+
+    structure_states = comm.allgather(structure_error)
+    if any(state is not None for state in structure_states):
+        raise ValueError(
+            "Fixed-budget spool shard validation failed: "
+            + next(state for state in structure_states if state is not None)
+        )
+    assert descriptors is not None
+
+    local_error: str | None = None
+    try:
+        for label in descriptors:
+            for role in ("rhs", "exact_output"):
+                record = descriptors[label][role][comm.rank]
+                values = np.load(
+                    record["array_path"], allow_pickle=False, mmap_mode="r"
+                )
+                if (
+                    values.shape != (int(record["local_size"]),)
+                    or str(values.dtype) != "complex128"
+                    or hashlib.sha256(values.tobytes()).hexdigest()
+                    != record.get("array_sha256")
+                ):
+                    raise ValueError(
+                        f"Fixed-budget spool array hash/shape mismatch: {record['array_path']}"
+                    )
+                del values
+    except Exception as exc:
+        local_error = f"{type(exc).__name__}: {exc}"
+    array_states = comm.allgather(local_error)
+    if any(state is not None for state in array_states):
+        raise ValueError(
+            "Fixed-budget spool shard array validation failed: "
+            + next(state for state in array_states if state is not None)
+        )
+
+    return {
+        label: {
+            "label": label,
+            "kind": kind,
+            "seed": seed,
+            "rhs": {
+                "shards": descriptors[label]["rhs"],
+                "probe_metadata": probe_metadata_by_label[label],
+            },
+            "exact_output": {
+                "shards": descriptors[label]["exact_output"],
+                "probe_metadata": exact_output_metadata_by_label[label],
+            },
+        }
+        for label, kind, seed in V5_H4_BLR_RHS_SPECS
+    }
+
+
+def _load_v5_blr_reference_spool_remapped(
+    record: Mapping[str, Any], template: PETSc.Vec
+) -> PETSc.Vec:
+    """Load source shards into the current template ownership without replication."""
+
+    shards = record.get("shards")
+    if not isinstance(shards, list) or not shards:
+        raise ValueError("Fixed-budget spool remap requires shard descriptors")
+    target_start, target_end = map(int, template.getOwnershipRange())
+    global_size = int(template.getSize())
+    if target_start < 0 or target_end > global_size or target_start >= target_end:
+        raise ValueError("Fixed-budget target Vec ownership is invalid")
+    target = template.duplicate()
+    local_values = target.getArray()
+    filled = np.zeros(local_values.size, dtype=bool)
+    for shard in shards:
+        source_start, source_end = map(int, shard["ownership_range"])
+        overlap_start = max(target_start, source_start)
+        overlap_end = min(target_end, source_end)
+        if overlap_start >= overlap_end:
+            continue
+        values = np.load(shard["array_path"], allow_pickle=False, mmap_mode="r")
+        if (
+            values.shape != (int(shard["local_size"]),)
+            or str(values.dtype) != "complex128"
+        ):
+            del values
+            target.destroy()
+            raise ValueError("Fixed-budget remap source array shape/dtype mismatch")
+        target_slice = slice(overlap_start - target_start, overlap_end - target_start)
+        source_slice = slice(overlap_start - source_start, overlap_end - source_start)
+        local_values[target_slice] = values[source_slice]
+        filled[target_slice] = True
+        del values
+    if not bool(np.all(filled)):
+        target.destroy()
+        raise ValueError("Fixed-budget remap did not cover target ownership")
+    target.assemble()
+    return target
 
 
 def _short_side_ksp_residual(
@@ -2511,7 +2850,7 @@ def run_v5_h4_fixed_budget_bottom_component(
 ) -> dict[str, Any]:
     """Run the single frozen bottom-side fixed-budget research component."""
 
-    spool = _load_v5_fixed_budget_spool_records(
+    spool = _load_v5_fixed_budget_spool_shards(
         exact_spool_root,
         comm,
         packet_identity=packet_identity,
@@ -2619,11 +2958,11 @@ def run_v5_h4_fixed_budget_bottom_component(
             template = rhs = reference = None
             try:
                 template = system.A.createVecLeft()
-                rhs = _load_v5_blr_reference_spool(artifact["rhs"], template)
-                reference = _load_v5_blr_reference_spool(
+                rhs = _load_v5_blr_reference_spool_remapped(artifact["rhs"], template)
+                reference = _load_v5_blr_reference_spool_remapped(
                     artifact["exact_output"], template
                 )
-                metadata = dict(artifact["rhs"]["source_identity"]["probe_metadata"])
+                metadata = dict(artifact["rhs"]["probe_metadata"])
                 report, _ = _v5_blr_probe(
                     krylov_action,
                     system,
@@ -4844,6 +5183,7 @@ def run_task039_v3_7_diagnostic(
     direct_run_dir: str | Path = V3_7_DIRECT_RUN_ROOT,
     comm: MPI.Intracomm = MPI.COMM_WORLD,
     setup_builder: Callable[..., Any] = build_frozen_m10_setup,
+    side_system_builder: Callable[..., Any] | None = None,
     inventory_loader: Callable[
         ..., tuple[dict[str, Any], np.ndarray]
     ] = load_v3_7_direct_inventory,
@@ -5120,6 +5460,47 @@ def run_task039_v3_7_diagnostic(
         _emit_marker(marker_callback, "config_ready")
         producer["_stage_callback"] = marker_callback
         _emit_marker(marker_callback, "setup_begin")
+        if v5_h4_fixed_budget_bottom_only:
+            packet_contract = _validate_v5_fixed_budget_packet_manifest(
+                selected_mode_packet_manifest,
+                selected_mode_packet_identity,
+                selected_mode_packet_manifest_sha256,
+                comm=comm,
+            )
+            builder = (
+                side_system_builder
+                if side_system_builder is not None
+                else _build_v5_h4_fixed_budget_bottom_side_setup
+            )
+            setup = builder(
+                cfg=cfg,
+                profile=profile,
+                comm=comm,
+                detail_stage_callback=combined_detail_callback,
+            )
+            if not getattr(setup, "side_only", False) or not hasattr(setup, "bottom"):
+                raise ValueError(
+                    "Fixed-budget side builder did not return a bottom-only carrier"
+                )
+            object_ledger["objects"]["setup"]["created"] = True
+            object_ledger["objects"]["setup"]["status"] = "measured"
+            result = run_v5_h4_fixed_budget_bottom_component(
+                setup,
+                comm=comm,
+                marker_callback=marker_callback,
+                exact_spool_root=v5_h4_fixed_budget_exact_spool_root,
+                packet_identity=selected_mode_packet_identity,
+                packet_manifest_sha256=selected_mode_packet_manifest_sha256,
+            )
+            result["source_sha"] = source_sha
+            result["run_directory"] = str(Path(run_directory).resolve())
+            result["packet"] = {
+                **packet_contract,
+                "manifest": str(selected_mode_packet_manifest),
+            }
+            normal_return = True
+            return result
+
         setup_kwargs = {
             "comm": comm,
             "profile": profile,
@@ -5174,25 +5555,6 @@ def run_task039_v3_7_diagnostic(
                     "manifest_sha256": selected_mode_packet_manifest_sha256,
                 },
                 compressed_factor_profile=v5_h4_blr_profile,
-            )
-            result["source_sha"] = source_sha
-            result["run_directory"] = str(Path(run_directory).resolve())
-            result["packet"] = {
-                "manifest": str(selected_mode_packet_manifest),
-                "identity": _json_safe(selected_mode_packet_identity),
-                "manifest_sha256": selected_mode_packet_manifest_sha256,
-                "consumer_qep_calls": 0,
-            }
-            normal_return = True
-            return result
-        if v5_h4_fixed_budget_bottom_only:
-            result = run_v5_h4_fixed_budget_bottom_component(
-                setup,
-                comm=comm,
-                marker_callback=marker_callback,
-                exact_spool_root=v5_h4_fixed_budget_exact_spool_root,
-                packet_identity=selected_mode_packet_identity,
-                packet_manifest_sha256=selected_mode_packet_manifest_sha256,
             )
             result["source_sha"] = source_sha
             result["run_directory"] = str(Path(run_directory).resolve())
@@ -5808,7 +6170,62 @@ def run_task039_v3_7_diagnostic(
                 object_ledger["objects"]["independent_reference"]["destroyed"] = True
         try:
             if setup is not None:
-                setup_release = release_frozen_m10_objects(setup, None, comm)
+                if v5_h4_fixed_budget_bottom_only and getattr(
+                    setup, "side_only", False
+                ):
+                    side_system = setup.bottom
+                    destroy_called = False
+                    try:
+                        if not bool(getattr(side_system, "_destroyed", False)):
+                            side_system.destroy()
+                        destroy_called = True
+                    finally:
+                        side_cleanup = collective_heap_cleanup(comm)
+                    setup_release = {
+                        "order": ["bottom"],
+                        "checks": {
+                            "bottom_destroy_call_completed": destroy_called,
+                            "cleanup_collective_call_completed": bool(
+                                side_cleanup["collective_call_completed"]
+                            ),
+                        },
+                        "cleanup": side_cleanup,
+                        "pass": bool(
+                            destroy_called and side_cleanup["collective_call_completed"]
+                        ),
+                    }
+                    factor_counts = None
+                    if isinstance(result, Mapping):
+                        bottom_result = result.get("sides", {}).get("bottom", {})
+                        candidate_result = (
+                            bottom_result.get("candidate", {})
+                            if isinstance(bottom_result, Mapping)
+                            else {}
+                        )
+                        cleanup_result = (
+                            candidate_result.get("cleanup", {})
+                            if isinstance(candidate_result, Mapping)
+                            else {}
+                        )
+                        if isinstance(cleanup_result, Mapping):
+                            factor_counts = cleanup_result.get(
+                                "factor_count_after_cleanup"
+                            )
+                    marker_callback(
+                        "v5_fixed_budget_bottom_side_setup_cleanup",
+                        {
+                            "source": "side_only_finalizer",
+                            "side": "bottom",
+                            "bottom_destroyed": bool(destroy_called),
+                            "collective_cleanup_completed": bool(
+                                side_cleanup["collective_call_completed"]
+                            ),
+                            "factor_count_after_cleanup": factor_counts,
+                            "completed": bool(setup_release["pass"]),
+                        },
+                    )
+                else:
+                    setup_release = release_frozen_m10_objects(setup, None, comm)
                 object_ledger["objects"]["setup"]["destroyed"] = True
                 object_ledger["objects"]["setup"]["completed"] = True
                 if v5_h4_setup_only:
