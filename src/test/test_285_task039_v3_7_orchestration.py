@@ -27,6 +27,7 @@ from benchmarks.task039_v3_7_orchestration import (
     _record_v3_7_marker,
     _v5_blr_prefreeze_external_rhs,
     _v5_blr_rhs_vector,
+    _v6_layer_graph_from_csr,
     _v3_7_cleanup_callback,
     _v3_7_object_ledger,
     _write_v3_7_candidate_authority,
@@ -65,6 +66,26 @@ def _tiny_side_system(rhs_values=(0.0, 0.0)):
         rhs.setValue(index, PETSc.ScalarType(value))
     rhs.assemble()
     return SimpleNamespace(A=matrix, b=rhs), matrix, rhs
+
+
+def test_v6_layer_graph_counts_use_explicit_layer_labels() -> None:
+    audit = _v6_layer_graph_from_csr(
+        np.asarray([0, 2, 4, 6]),
+        np.asarray([0, 1, 1, 2, 2, 0]),
+        np.asarray([0, 1, 2]),
+        np.asarray([0, 1, 2, 2]),
+        layer_count=3,
+    )
+    assert audit["rows_by_layer"] == [1, 1, 1]
+    assert audit["nnz_by_layer"] == [2, 2, 2]
+    assert audit["same_layer_nnz"] == 3
+    assert audit["adjacent_layer_nnz"] == 2
+    assert audit["long_range_nnz"] == 1
+    assert audit["block_half_bandwidth"] == 2
+    assert audit["long_range_fraction"] == pytest.approx(1 / 6)
+    assert "owned_cell_recovery_maps" in inspect.getdoc(
+        orchestration._v6_layer_graph_audit
+    )
 
 
 def test_v3_7_profile_is_derived_from_official_one_degree_s_input() -> None:

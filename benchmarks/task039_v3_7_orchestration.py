@@ -2182,6 +2182,155 @@ def _v5_side_matrix_inventory(side: Any) -> dict[str, Any]:
     }
 
 
+def _v6_layer_graph_from_csr(
+    row_ptr: np.ndarray,
+    column_indices: np.ndarray,
+    row_layers: np.ndarray,
+    column_layers: np.ndarray,
+    *,
+    layer_count: int,
+) -> dict[str, Any]:
+    """Count F-layer couplings from a real row-layer map and local CSR."""
+
+    row_ptr = np.asarray(row_ptr, dtype=np.int64)
+    column_indices = np.asarray(column_indices, dtype=np.int64)
+    row_layers = np.asarray(row_layers, dtype=np.int64)
+    column_layers = np.asarray(column_layers, dtype=np.int64)
+    if row_ptr.ndim != 1 or len(row_ptr) != len(row_layers) + 1:
+        raise ValueError("V6 layer graph CSR row pointer shape is invalid")
+    if row_ptr[0] != 0 or row_ptr[-1] != len(column_indices):
+        raise ValueError("V6 layer graph CSR row pointer does not close")
+    if len(column_layers) == 0 or np.any(column_layers < 0):
+        raise ValueError("V6 layer graph has unmapped column layers")
+    if np.any(row_layers < 0) or np.any(row_layers >= layer_count):
+        raise ValueError("V6 layer graph has unmapped row layers")
+    layer_rows = np.bincount(row_layers, minlength=layer_count).astype(np.int64)
+    layer_nnz = np.zeros(layer_count, dtype=np.int64)
+    same = adjacent = long_range = 0
+    half_bandwidth = 0
+    for local_row, row_layer in enumerate(row_layers):
+        columns = column_indices[row_ptr[local_row] : row_ptr[local_row + 1]]
+        if np.any(columns < 0) or np.any(columns >= len(column_layers)):
+            raise ValueError("V6 layer graph CSR column is outside global rows")
+        deltas = np.abs(column_layers[columns] - row_layer)
+        layer_nnz[row_layer] += len(columns)
+        same += int(np.count_nonzero(deltas == 0))
+        adjacent += int(np.count_nonzero(deltas == 1))
+        long_range += int(np.count_nonzero(deltas > 1))
+        if len(deltas):
+            half_bandwidth = max(half_bandwidth, int(np.max(deltas)))
+    total = int(len(column_indices))
+    return {
+        "status": "measured",
+        "metric_space": "F_owned_CSR_nonzero_count",
+        "layer_count": int(layer_count),
+        "rows_by_layer": [int(value) for value in layer_rows],
+        "nnz_by_layer": [int(value) for value in layer_nnz],
+        "nnz_total": total,
+        "same_layer_nnz": int(same),
+        "adjacent_layer_nnz": int(adjacent),
+        "long_range_nnz": int(long_range),
+        "same_layer_fraction": float(same / total) if total else None,
+        "adjacent_layer_fraction": float(adjacent / total) if total else None,
+        "long_range_fraction": float(long_range / total) if total else None,
+        "block_half_bandwidth": int(half_bandwidth),
+    }
+
+
+def _v6_layer_graph_audit(matrix: PETSc.Mat, system: Any) -> dict[str, Any]:
+    """Audit F using assembly-time owned-cell/trace ownership metadata.
+
+    A trace row shared by multiple cells is assigned to the smallest incident
+    z-layer index.  This is a deterministic bookkeeping rule, not a physical
+    claim; ``owned_cell_recovery_maps`` and
+    ``trace_constraints.expansion_by_original`` plus cell geometry provide the
+    mapping.
+    """
+
+    condensed = system.static_condensation.condensed
+    constraints = condensed.trace_constraints
+    z_values = np.asarray(system.local_mesh.z_values, dtype=np.float64)
+    if z_values.ndim != 1 or len(z_values) < 2 or np.any(np.diff(z_values) <= 0):
+        raise ValueError("V6 layer graph requires a strictly ordered z axis")
+    global_rows = int(matrix.getSize()[0])
+    partial: dict[int, int] = {}
+    geometry = system.local_mesh.mesh.geometry
+    for cell, recovery in enumerate(condensed.cell_recovery_maps):
+        geometry_indices = np.asarray(geometry.dofmap[cell], dtype=np.int64)
+        centroid_z = float(np.mean(geometry.x[geometry_indices, 2]))
+        layer = int(np.searchsorted(z_values, centroid_z, side="right") - 1)
+        if layer < 0 or layer >= len(z_values) - 1:
+            raise ValueError("V6 cell centroid is outside the real z-layer axis")
+        for original in recovery.trace_original_dofs:
+            expansion = constraints.expansion_by_original.get(int(original))
+            if expansion is None:
+                raise ValueError("V6 trace row has no assembly-time expansion")
+            active_ids = np.asarray(expansion[0], dtype=np.int64)
+            for active_id in active_ids:
+                active = int(active_id)
+                if active < 0 or active >= global_rows:
+                    raise ValueError("V6 active trace row is outside F")
+                partial[active] = min(layer, partial.get(active, layer))
+    comm = matrix.getComm().tompi4py()
+    catalogs = comm.allgather(partial)
+    global_layers = np.full(global_rows, -1, dtype=np.int64)
+    for catalog in catalogs:
+        for active, layer in catalog.items():
+            if global_layers[int(active)] < 0:
+                global_layers[int(active)] = int(layer)
+            else:
+                global_layers[int(active)] = min(global_layers[int(active)], int(layer))
+    if np.any(global_layers < 0):
+        raise ValueError("V6 layer graph does not cover every active F row")
+    row_start, row_end = map(int, matrix.getOwnershipRange())
+    row_ptr, columns, _values = matrix.getValuesCSR()
+    local_layers = global_layers[row_start:row_end]
+    audit = _v6_layer_graph_from_csr(
+        row_ptr,
+        columns,
+        local_layers,
+        global_layers,
+        layer_count=len(z_values) - 1,
+    )
+    local_rows = np.bincount(local_layers, minlength=len(z_values) - 1)
+    local_nnz = np.asarray(audit["nnz_by_layer"], dtype=np.int64)
+    local_counts = np.asarray(
+        [
+            audit["same_layer_nnz"],
+            audit["adjacent_layer_nnz"],
+            audit["long_range_nnz"],
+        ],
+        dtype=np.int64,
+    )
+    rows_by_layer = np.asarray(comm.allreduce(local_rows, op=MPI.SUM))
+    nnz_by_layer = np.asarray(comm.allreduce(local_nnz, op=MPI.SUM))
+    coupling_counts = np.asarray(comm.allreduce(local_counts, op=MPI.SUM))
+    total = int(np.sum(coupling_counts))
+    audit.update(
+        {
+            "rows_global": global_rows,
+            "nnz_global": int(total),
+            "rows_by_layer": [int(value) for value in rows_by_layer],
+            "nnz_by_layer": [int(value) for value in nnz_by_layer],
+            "same_layer_nnz": int(coupling_counts[0]),
+            "adjacent_layer_nnz": int(coupling_counts[1]),
+            "long_range_nnz": int(coupling_counts[2]),
+            "same_layer_fraction": float(coupling_counts[0] / total) if total else None,
+            "adjacent_layer_fraction": float(coupling_counts[1] / total) if total else None,
+            "long_range_fraction": float(coupling_counts[2] / total) if total else None,
+            "z_layer_boundaries": [float(value) for value in z_values],
+            "mapping_source": (
+                "owned_cell_recovery_maps + trace_constraints.expansion_by_original "
+                "+ local_mesh.geometry.z_values"
+            ),
+            "shared_trace_row_rule": "minimum_incident_owned_cell_layer",
+            "temporary_global_row_layer_tags_released": True,
+        }
+    )
+    del global_layers, catalogs, row_ptr, columns, _values
+    return audit
+
+
 def _destroy_v5_side_components(
     side: Any,
     *,
