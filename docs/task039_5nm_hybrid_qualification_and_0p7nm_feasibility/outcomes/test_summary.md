@@ -260,3 +260,22 @@ raw/marker/ledger 的 hash 与 `status=launching`、`exit_status=null`、`ledger
 
 详见 [V7 Lane A outcome](v7_exact_side_limit.md) 与
 [V7 full-formal compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v7_exact_side_full_formal_v1.json)。
+
+## Review V7 final docs/evidence closeout
+
+| 检查 | 结果 | 口径 |
+|---|---|---|
+| Lane C graph focused serial | `2 passed, 1 skipped, 90 deselected` | qualified activation；layer-graph pure/serial fixture |
+| Lane C graph focused MPI2 | `3 passed, 90 deselected` 每 rank | tiny ownership/count fixture；非 PDE |
+| Lane C graph focused MPI4 | `3 passed, 90 deselected` 每 rank | tiny ownership/count fixture；非 PDE |
+| compact JSON parse/hash | `pass` | Lane B consumer 与 Lane C record；raw hash-bound，raw/results ignored |
+| Markdown links/table/fenced math | `pass` | 本轮最终 docs contract |
+| `check_benchmarks --no-write` | `302/302 pass` | qualified activation；无写入 |
+| `git diff --check` | `pass` | docs-only closeout |
+| Ruff / format / compileall | `inherited pass` | 沿用最终代码 SHA 的已通过 evidence；本轮未改 Python |
+| focused serial/MPI2/MPI4 code suite | `inherited evidence` | 本轮无代码变化；不重新触发 heavy |
+| full repository pytest / CI | `not_run` | 不声称 full pytest 或 CI 通过 |
+
+V7 Lane B 的 producer/consumer 与 Lane C 负结果按 raw authority 分开记录；Lane A full
+formal 的 residual/physics pass 也不被 component RSS 取代。首次 implementation failure、V5/V6
+负结果均未被重写。

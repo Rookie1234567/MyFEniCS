@@ -2495,3 +2495,28 @@ V7 setup-only advancement 沿用先前 source
 
 compact evidence：[V7 full-formal record](../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v7_exact_side_full_formal_v1.json)，
 [V7 outcome](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v7_exact_side_limit.md)。
+
+## 2026-08-21：Task039 Review V7 final closeout
+
+V7 Lane A 是唯一完整 workflow 的低于 matched direct 正结果：h4 direct 为
+`93.377006531 GiB`，inherited worker_total `7131.113596 s`；Lane A setup-only 为
+`81.056903839 GiB`、observed `10649.634795 s`（独立 `84.039305878 GiB`
+advancement authority），Lane A full formal 为 `80.025856018 GiB`、`10126.232 s`、
+1 outer iteration，节省 `14.298113646%`，仅属 `5_TO_20_PERCENT`。它没有达到
+20/30/40/50/60% full-workflow tier；旧 `42.019652939 GiB` half-memory line 也未达到。
+
+Lane B streamed producer 的 `11.630760193 GiB/~415.6 s` 和 bottom consumer 的
+`23.038208008 GiB/~632.8 s` 是 component evidence。producer packet/lifecycle/resource
+通过，但 consumer rank64/128/256/512 的 `E=Y^H F Z` condition 均合格，五个 mandatory
+source-family true residual 仍失败，因此 top/both/outer/recovery/RTA/field 未运行。
+
+Lane C 已独立完成 local-F graph-only audit：bottom/top 均测得 6 层、132300 rows、
+105038640 NNZ、same 75327840、adjacent 29710800、long-range 0、half-bandwidth 1；
+wall/RSS/cleanup inventory 为 `not_measured`，不转化为容量或 solver 资格。它只允许后续考虑
+z-sweeping、hierarchical Schur、cyclic reduction，未实现、未重型验证。
+
+V5 BLR/fixed-budget、V6 setup/port-modal、V7 首次 ownership/telemetry failures 和 raw
+artifacts 均保留。0.7 nm PDE、Full3D 新 heavy、第三 BLR、普通 ILU/budget scan、h5 rerun、
+top/both/full Petrov 均 `not_run`；ordinary defaults unchanged，master untouched。
+最终内存—残差—时间表见
+[V7 memory summary](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v7_memory_limit_summary.md)。

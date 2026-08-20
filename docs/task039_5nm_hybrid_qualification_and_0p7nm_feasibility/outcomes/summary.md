@@ -615,3 +615,33 @@ V7 setup-only advancement 是先前 source
 [V7 setup record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v7_exact_side_limit_setup_v1.json)
 和
 [V7 full-formal record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v7_exact_side_full_formal_v1.json)。
+
+## 2026-08-21：Review V7 Lane B/Lane C 与最终内存结论
+
+V7 的统一 Pareto 口径见 [V7 memory summary](v7_memory_limit_summary.md)。完整 workflow 的
+最低合格峰值是 Lane A full formal 的 `80.025856018 GiB`；producer `11.630760193 GiB`
+和 bottom consumer `23.038208008 GiB` 都只是 component，不能冒充完整 workflow。
+
+| 阶段 | 峰值 RSS | 时间 | 结论 |
+|---|---:|---:|---|
+| matched h4 direct full workflow | `93.377006531 GiB` | `7131.113596 s` worker_total | baseline |
+| Lane A setup-only | `81.056903839 GiB` | `10649.634795 s` observed | `84.039305878` advancement pass；不是 full Gate |
+| Lane A exact-side full formal | `80.025856018 GiB` | `10126.232 s` | 1 iter、physics/recovery/checker pass；14.298113646% saving，`5_TO_20_PERCENT` |
+| Lane B streamed producer | `11.630760193 GiB` | `~415.6 s` | component resource/lifecycle pass |
+| Lane B bottom consumer | `23.038208008 GiB` | `~632.8 s` | component resource pass；rank512 source-family residual fail |
+| Lane C graph-only | `not_measured` | `not_measured` | local-F graph measured，非 solver/Pareto |
+
+Lane B 四级 `E=Y^H F Z` condition 均通过（`3.219938404e3`、`6.778370040e3`、
+`5.383690736e4`、`2.788596049e5`），但 preferred residual maxima 为
+`219.375773963`、`210.180979804`、`1143.092533433`、`1521.816092530`，所以
+`NUMERICAL_LIMIT_NOT_REACHED_BY_RANK512`；top/both/outer/recovery/RTA/field 全部 `not_run`。
+
+Lane C 独立 graph-only audit 的 bottom/top measured pattern 均为 6 层、132300 rows、
+105038640 NNZ、same `75327840`、adjacent `29710800`、long-range `0`、half-bandwidth `1`。
+wall/RSS/cleanup inventory 为 `not_measured`，DtN global low-rank coupling 不在 local-F graph
+内。0.7 nm PDE、新 Full3D heavy、sweeping/hierarchical solver 均 `not_run`；相关边界见
+[V7 0.7 nm implications](v7_0p7nm_implications.md) 和
+[V7 Petrov full-result boundary](v7_petrov_full_result.md)。
+
+V5/V6 负结果、V7 首次 ownership/telemetry implementation failures 和所有 raw root 均保留，
+ordinary defaults unchanged，master untouched。
