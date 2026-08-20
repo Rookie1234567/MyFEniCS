@@ -351,6 +351,35 @@ def test_frozen_formal_identity_comes_from_t1_adapter_and_80_modes() -> None:
     )
 
 
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 2,
+    reason="shared output initialization regression runs under MPI2",
+)
+def test_mpi2_shared_raw_initialization_is_rank0_owned(tmp_path: Path) -> None:
+    from benchmarks.run_task038_full3d_t3 import _prepare_raw_dir
+
+    comm = MPI.COMM_WORLD
+    shared_root = Path(
+        comm.bcast(str(tmp_path) if comm.rank == 0 else None, root=0)
+    ) / "shared-output"
+    raw_dir = shared_root / "raw"
+    record_path = shared_root / "record.json"
+    if comm.rank == 0:
+        shared_root.mkdir(parents=True)
+    comm.barrier()
+    _prepare_raw_dir(raw_dir, record_path, comm)
+    assert raw_dir.is_dir()
+    comm.barrier()
+
+    existing_raw = shared_root / "existing-raw"
+    if comm.rank == 0:
+        existing_raw.mkdir()
+    comm.barrier()
+    with pytest.raises(FileExistsError, match="already exists"):
+        _prepare_raw_dir(existing_raw, shared_root / "new-record.json", comm)
+    comm.barrier()
+
+
 @dataclass
 class _IndexMap:
     local_range: tuple[int, int]

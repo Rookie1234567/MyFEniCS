@@ -94,6 +94,28 @@ def _swap_used_bytes() -> int:
     return max(values["SwapTotal"] - values["SwapFree"], 0)
 
 
+def _prepare_raw_dir(raw_dir: Path, record_path: Path, comm: Any) -> None:
+    """Create one shared raw directory once, with rank-synchronized failure."""
+
+    preflight_error: tuple[str, str] | None = None
+    if comm.rank == 0:
+        try:
+            if raw_dir.exists() or record_path.exists():
+                raise FileExistsError("T3 raw directory or record already exists")
+            raw_dir.mkdir(parents=True)
+        except FileExistsError as exc:
+            preflight_error = ("FileExistsError", str(exc))
+        except OSError as exc:
+            preflight_error = ("OSError", str(exc))
+    preflight_error = comm.bcast(preflight_error, root=0)
+    if preflight_error is not None:
+        error_type, message = preflight_error
+        if error_type == "FileExistsError":
+            raise FileExistsError(message)
+        raise OSError(message)
+    comm.barrier()
+
+
 def _jsonable(value: Any) -> Any:
     if isinstance(value, dict):
         return {str(key): _jsonable(item) for key, item in value.items()}
@@ -442,11 +464,7 @@ def _run_case(
     cfg = simulation_config_3d_from_normalized(payload)
     if cfg.stage4_boundary_model != "dtn_port":
         raise RuntimeError("T3 action runner requires the resolved DtN boundary")
-    if raw_dir.exists() or record_path.exists():
-        raise FileExistsError("T3 raw directory or record already exists")
-    if comm.rank == 0:
-        raw_dir.mkdir(parents=True)
-    comm.barrier()
+    _prepare_raw_dir(raw_dir, record_path, comm)
 
     modes, manifest, _manifest_sha = build_dynamic_mode_inventory(cfg)
     benchmark = _frozen_benchmark_identity(
