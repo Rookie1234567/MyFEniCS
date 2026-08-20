@@ -12,7 +12,7 @@ import time
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 import numpy as np
 from mpi4py import MPI
@@ -29,6 +29,95 @@ TASK039_V5_H5_SELECTED_MODE_SCOPE = "task039_v5_h5_m480"
 TASK039_V4_SELECTED_MODE_COUNT = 480
 _BRANCHES = ("positive", "negative")
 _BRANCH_AUTHORITY = ("gram_authority", "qep_diagnostics", "selection_diagnostics")
+
+
+class Task039V4SelectedModeMmapContext:
+    """Hold one validated read-only packet mapping for a streamed producer."""
+
+    def __init__(
+        self,
+        manifest_path: Path,
+        *,
+        identity: Mapping[str, Any],
+        expected_manifest_sha256: str,
+        comm: MPI.Intracomm = MPI.COMM_WORLD,
+    ) -> None:
+        self.manifest_path = Path(manifest_path)
+        self.packet = load_task039_v4_selected_mode_packet(
+            self.manifest_path,
+            identity=identity,
+            expected_manifest_sha256=expected_manifest_sha256,
+            comm=comm,
+        )
+        self._comm = comm
+        self._released = False
+        self._arrays = {
+            (branch, role): self.packet[branch][role]
+            for branch in _BRANCHES
+            for role in ("right_full", "left_full")
+        }
+
+    @property
+    def mode_count(self) -> int:
+        if self._released:
+            raise RuntimeError("Selected-mode mmap context is released")
+        return int(self.packet["mode_count"])
+
+    @property
+    def diagnostics(self) -> dict[str, Any]:
+        return {
+            "released": bool(self._released),
+            "mmap_mapping_count": 0 if self._released else 4,
+            "arrays_retained": not self._released,
+            "full_vec_count": 0,
+            "mode_count": int(self.packet["mode_count"])
+            if not self._released
+            else None,
+        }
+
+    def mode_pair(self, branch: str, index: int) -> dict[str, Any]:
+        if self._released:
+            raise RuntimeError("Selected-mode mmap context is released")
+        if branch not in _BRANCHES:
+            raise ValueError("selected-mode branch is invalid")
+        mode_index = int(index)
+        if mode_index < 0 or mode_index >= self.mode_count:
+            raise ValueError("selected-mode index is out of range")
+        descriptor = self.packet["selection"][branch]
+        return {
+            "branch": branch,
+            "index": mode_index,
+            "right_local": np.array(
+                self._arrays[(branch, "right_full")][mode_index, :],
+                dtype=np.complex128,
+                copy=True,
+            ),
+            "left_local": np.array(
+                self._arrays[(branch, "left_full")][mode_index, :],
+                dtype=np.complex128,
+                copy=True,
+            ),
+            "beta": complex(descriptor["beta"][mode_index]),
+            "mode_key": descriptor["mode_keys"][mode_index],
+            "ownership_range": list(self.packet["ownership_range"]),
+            "global_size": int(self.packet["global_size"]),
+        }
+
+    def release(self) -> None:
+        if self._released:
+            return
+        self._arrays.clear()
+        self.packet = None
+        self._released = True
+        import gc
+
+        gc.collect()
+
+    def __enter__(self) -> "Task039V4SelectedModeMmapContext":
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        self.release()
 
 
 def _authority_json(value: Any) -> Any:
@@ -281,6 +370,64 @@ def load_task039_v4_selected_mode_packet(
                 raise ValueError("Task039 selected-mode packet layout mismatch")
     _require_branch_authority(packet["metadata"])
     return packet
+
+
+def stream_task039_v4_selected_mode_columns(
+    manifest_path: Path,
+    *,
+    identity: Mapping[str, Any],
+    expected_manifest_sha256: str,
+    branch: str,
+    indices: list[int] | tuple[int, ...],
+    callback: Callable[[int, np.ndarray, np.ndarray, Mapping[str, Any]], None],
+    comm: MPI.Intracomm = MPI.COMM_WORLD,
+    batch_size: int = 1,
+) -> dict[str, Any]:
+    """Deliver selected right/left rows one batch at a time from read-only mmap.
+
+    Unlike ``consume_task039_v4_selected_mode_packet``, this adapter never
+    creates PETSc Vecs or mode objects.  The callback owns each copied pair
+    only for the duration of its call; the mmap-backed packet is released on
+    return.
+    """
+
+    if branch not in _BRANCHES:
+        raise ValueError("selected-mode stream branch is invalid")
+    if int(batch_size) != 1:
+        raise ValueError("V7 streamed packet batch size is frozen at one")
+    with Task039V4SelectedModeMmapContext(
+        manifest_path,
+        identity=identity,
+        expected_manifest_sha256=expected_manifest_sha256,
+        comm=comm,
+    ) as context:
+        mode_count = context.mode_count
+        selected = [int(index) for index in indices]
+        if any(index < 0 or index >= mode_count for index in selected):
+            raise ValueError("selected-mode stream index is out of range")
+        for index in selected:
+            pair = context.mode_pair(branch, index)
+            callback(
+                index,
+                pair["right_local"],
+                pair["left_local"],
+                {
+                    "branch": branch,
+                    "mode_key": pair["mode_key"],
+                    "beta": pair["beta"],
+                    "ownership_range": pair["ownership_range"],
+                    "global_size": pair["global_size"],
+                    "batch_size": 1,
+                },
+            )
+        return {
+            "branch": branch,
+            "mode_count": mode_count,
+            "selected_count": len(selected),
+            "batch_size": 1,
+            "arrays_retained": False,
+            "consumer_qep_required": False,
+        }
 
 
 def hydrate_task039_v4_selected_mode_packet(

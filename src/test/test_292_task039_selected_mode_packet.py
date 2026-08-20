@@ -14,6 +14,8 @@ from benchmarks.task039_v4_selected_mode_packet import (
     build_task039_v4_packet_metadata,
     consume_task039_v4_selected_mode_packet,
     load_task039_v4_selected_mode_packet,
+    Task039V4SelectedModeMmapContext,
+    stream_task039_v4_selected_mode_columns,
     write_task039_v4_selected_mode_packet,
 )
 from src.modes.selected_mode_packet import (
@@ -226,6 +228,72 @@ def test_task039_v4_packet_metadata_is_compact_authority() -> None:
     assert metadata["qep_diagnostics"]["positive"]["solver"] == "TOAR"
     assert metadata["trace_mapping"]["persisted"] is False
     assert "biorthogonality_matrix" not in metadata["gram_authority"]["positive"]
+
+
+def test_task039_v4_streams_one_mode_pair_without_vec_hydration(tmp_path):
+    comm = MPI.COMM_WORLD
+    directory, comm = _shared_directory(tmp_path)
+    branches, ownership = _branches(comm)
+    positive = _fake_basis(branches["positive"], ownership)
+    negative = _fake_basis(branches["negative"], ownership)
+    identity = _identity(comm)
+    write_task039_v4_selected_mode_packet(
+        directory,
+        positive_basis=positive,
+        negative_basis=negative,
+        identity=identity,
+        metadata=_metadata(),
+        comm=comm,
+    )
+    manifest = directory / "manifest.json"
+    manifest_sha = selected_mode_packet._sha256_file(manifest)
+    context = Task039V4SelectedModeMmapContext(
+        manifest,
+        identity=identity,
+        expected_manifest_sha256=manifest_sha,
+        comm=comm,
+    )
+    pair = context.mode_pair("positive", 3)
+    assert context.diagnostics == {
+        "released": False,
+        "mmap_mapping_count": 4,
+        "arrays_retained": True,
+        "full_vec_count": 0,
+        "mode_count": 480,
+    }
+    assert pair["right_local"].shape == (ownership[1] - ownership[0],)
+    assert pair["left_local"].shape == (ownership[1] - ownership[0],)
+    context.release()
+    assert context.diagnostics["released"] is True
+    assert context.diagnostics["mmap_mapping_count"] == 0
+    seen = []
+
+    def consume(index, right, left, metadata):
+        seen.append((index, right.copy(), left.copy(), dict(metadata)))
+        assert isinstance(right, np.ndarray)
+        assert isinstance(left, np.ndarray)
+        assert metadata["batch_size"] == 1
+
+    result = stream_task039_v4_selected_mode_columns(
+        manifest,
+        identity=identity,
+        expected_manifest_sha256=manifest_sha,
+        branch="positive",
+        indices=(3, 7),
+        callback=consume,
+        comm=comm,
+    )
+    assert result == {
+        "branch": "positive",
+        "mode_count": 480,
+        "selected_count": 2,
+        "batch_size": 1,
+        "arrays_retained": False,
+        "consumer_qep_required": False,
+    }
+    assert [item[0] for item in seen] == [3, 7]
+    np.testing.assert_array_equal(seen[0][1], branches["positive"]["right_full"][:, 3])
+    np.testing.assert_array_equal(seen[1][2], branches["positive"]["left_full"][:, 7])
 
 
 def test_task039_packet_gate_metrics_use_authority_without_hydrated_qep_attrs() -> None:

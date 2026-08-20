@@ -29,6 +29,14 @@ def _action_diagnostics(action: Any) -> Mapping[str, Any]:
     return diagnostics
 
 
+def _adjoint_matvec_without_matrix_copy(
+    matrix: np.ndarray, vector: np.ndarray
+) -> np.ndarray:
+    """Compute ``matrix^H @ vector`` without conjugating the full matrix."""
+
+    return np.conjugate(matrix.T @ np.conjugate(vector))
+
+
 class FixedLinearOwnerRowPetrovCorrectionAction:
     """Apply a fixed owner-row Petrov correction around a borrowed base action.
 
@@ -49,6 +57,7 @@ class FixedLinearOwnerRowPetrovCorrectionAction:
         *,
         factor_inventory: Mapping[str, Any] | None = None,
         condition_limit: float = PETROV_CONDITION_LIMIT,
+        basis_ownership: str = "copy",
     ) -> None:
         if not hasattr(base_action, "apply"):
             raise TypeError("Base action must expose apply(source, target).")
@@ -58,6 +67,8 @@ class FixedLinearOwnerRowPetrovCorrectionAction:
             raise ValueError(
                 "Petrov condition limit must be finite and greater than one."
             )
+        if basis_ownership not in {"copy", "borrowed_readonly"}:
+            raise ValueError("Petrov basis ownership must be copy or borrowed_readonly")
 
         self.base_action = base_action
         self.operator = f_operator
@@ -85,8 +96,14 @@ class FixedLinearOwnerRowPetrovCorrectionAction:
             raise ValueError(
                 "Petrov side correction requires matching local ownership."
             )
-        z_array = np.array(z_local, dtype=np.complex128, copy=True, order="C")
-        y_array = np.array(y_local, dtype=np.complex128, copy=True, order="C")
+        if basis_ownership == "borrowed_readonly":
+            z_array = np.asarray(z_local, dtype=np.complex128, order="K")
+            y_array = np.asarray(y_local, dtype=np.complex128, order="K")
+            if z_array.flags.writeable or y_array.flags.writeable:
+                raise ValueError("Borrowed Petrov bases must be read-only")
+        else:
+            z_array = np.array(z_local, dtype=np.complex128, copy=True, order="C")
+            y_array = np.array(y_local, dtype=np.complex128, copy=True, order="C")
         if z_array.ndim != 2 or y_array.ndim != 2:
             raise ValueError("Owner-row Petrov bases must be two-dimensional arrays.")
         if z_array.shape != y_array.shape:
@@ -140,6 +157,7 @@ class FixedLinearOwnerRowPetrovCorrectionAction:
         self._coarse_rank = coarse_rank
         self._z_local_nbytes = int(z_array.nbytes)
         self._y_local_nbytes = int(y_array.nbytes)
+        self._basis_ownership = str(basis_ownership)
         self._e_nbytes = int(
             coarse_rank * coarse_rank * np.dtype(np.complex128).itemsize
         )
@@ -176,7 +194,9 @@ class FixedLinearOwnerRowPetrovCorrectionAction:
                 fz_local = np.asarray(
                     fz_vector.getArray(readonly=True), dtype=np.complex128
                 )
-                local_e[:, column] = np.conjugate(self._y_local).T @ fz_local
+                local_e[:, column] = _adjoint_matvec_without_matrix_copy(
+                    self._y_local, fz_local
+                )
             coarse_e = np.empty_like(local_e)
             self._comm.Allreduce(local_e, coarse_e, op=MPI.SUM)
         finally:
@@ -229,7 +249,7 @@ class FixedLinearOwnerRowPetrovCorrectionAction:
         residual_local = np.asarray(
             self._residual_work.getArray(readonly=True), dtype=np.complex128
         )
-        local_rhs = np.conjugate(self._y_local).T @ residual_local
+        local_rhs = _adjoint_matvec_without_matrix_copy(self._y_local, residual_local)
         rhs = np.empty_like(local_rhs)
         self._comm.Allreduce(local_rhs, rhs, op=MPI.SUM)
         coefficients = lu_solve((self._lu, self._pivots), rhs, check_finite=True)
@@ -245,6 +265,9 @@ class FixedLinearOwnerRowPetrovCorrectionAction:
             "operator_identity": self.operator_identity,
             "fixed_linear": True,
             "basis_storage": "owner_row_local",
+            "basis_ownership": self._basis_ownership,
+            "basis_copied": self._basis_ownership == "copy",
+            "borrowed_basis_readonly": self._basis_ownership == "borrowed_readonly",
             "global_basis_materialized": False,
             "global_rows": int(self._global_rows),
             "local_rows": int(self._local_rows),
@@ -271,6 +294,8 @@ class FixedLinearOwnerRowPetrovCorrectionAction:
                 "borrowed_f_operator": True,
                 "coarse_factor_released": self._e is None and self._lu is None,
                 "owned_vectors_released": self._base_work is None,
+                "basis_reference_released": self._z_local is None
+                and self._y_local is None,
             },
         }
 

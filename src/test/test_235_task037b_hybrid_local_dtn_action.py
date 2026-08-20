@@ -23,10 +23,15 @@ from src.coupling.hybrid_internal_modes import (
     build_hybrid_internal_mode_coupling,
     build_single_hybrid_interface_mode_owner,
 )
+from src.coupling.hybrid_streamed_sources import (
+    StreamedPhysicalModalSourceProvider,
+    streamed_source_oracle_report,
+)
 from src.modes.cross_section_spaces import (
     build_cross_section_spaces,
     build_matching_cross_section,
 )
+from src.modes.stable_propagation import scalar_cg_discrete_traction_beta
 from src.solvers.condensed_dtn import (
     build_explicit_condensed_operator,
     combine_petsc_augmented_solution,
@@ -419,6 +424,133 @@ class TestTask037bHybridLocalDtnAction:
                 },
                 "right",
             )
+
+    def test_v7_streamed_modal_traction_uses_mixed_packet_vec_and_discrete_beta(
+        self,
+    ):
+        system = self.action["bottom"]
+        oracle_owner = build_single_hybrid_interface_mode_owner(
+            system,
+            self.spaces,
+            self.positive,
+            self.negative,
+        )
+        provider = StreamedPhysicalModalSourceProvider(system, self.spaces)
+        try:
+            pairs = {}
+            for branch, source in (
+                ("positive", self.positive),
+                ("negative", self.negative),
+            ):
+                mode = source.modes[0]
+                mode_vector = mode.right.right_full
+                first, last = (int(value) for value in mode_vector.getOwnershipRange())
+                pairs[branch] = {
+                    "index": 0,
+                    "beta": mode.beta,
+                    "right_local": np.asarray(
+                        mode_vector.getArray(readonly=True), dtype=np.complex128
+                    ).copy(),
+                    "left_local": np.asarray(
+                        mode.left_full.getArray(readonly=True), dtype=np.complex128
+                    ).copy(),
+                    "ownership_range": [first, last],
+                    "global_size": int(mode_vector.getSize()),
+                }
+            assert pairs["positive"]["global_size"] != int(system.A.getSize()[0])
+
+            for branch, family, matrix in (
+                (
+                    "positive",
+                    "positive_modal_traction",
+                    oracle_owner.blocks.positive_traction,
+                ),
+                (
+                    "negative",
+                    "negative_modal_traction",
+                    oracle_owner.blocks.negative_traction,
+                ),
+            ):
+                actual, metadata = provider(
+                    system,
+                    pairs[branch],
+                    branch=branch,
+                    role="right",
+                    family=family,
+                )
+                expected = matrix.getColumnVector(0)
+                try:
+                    oracle = streamed_source_oracle_report(actual, expected)
+                    assert oracle["finite"] is True
+                    assert oracle["equivalent"] is True
+                    assert oracle["relative_error"] <= oracle["tolerance"]
+                    assert metadata["trace_only_verified"] is True
+                    assert metadata["full_mode_count"] == 0
+                    mode = (
+                        self.positive.modes[0]
+                        if branch == "positive"
+                        else self.negative.modes[0]
+                    )
+                    expected_beta = scalar_cg_discrete_traction_beta(
+                        mode.beta,
+                        degree=int(self.cfg.nedelec_degree),
+                        h_nm=float(self.cfg.mesh_target_size),
+                        direction=("forward" if branch == "positive" else "backward"),
+                    )
+                    assert metadata["discrete_beta"] == expected_beta
+                finally:
+                    expected.destroy()
+                    actual.destroy()
+
+            projection = oracle_owner.blocks.projection
+            mapping = oracle_owner.blocks.negative_trace_to_positive
+            mode_count = int(projection.getSize()[0])
+            positive_values = np.zeros(mode_count, dtype=np.complex128)
+            positive_values[0] = 1.0 + 0.0j
+            for branch, coefficient_values in (
+                ("positive", positive_values),
+                ("negative", np.asarray(mapping[:, 0], dtype=np.complex128)),
+            ):
+                actual, metadata = provider(
+                    system,
+                    pairs[branch],
+                    branch=branch,
+                    role="left",
+                    family="packet_left_surface_dual",
+                )
+                coefficient = projection.createVecLeft()
+                expected = projection.createVecRight()
+                first, last = (int(value) for value in coefficient.getOwnershipRange())
+                coefficient.getArray()[:] = coefficient_values[first:last]
+                coefficient.assemble()
+                adjoint = PETSc.Mat()
+                projection.hermitianTranspose(adjoint)
+                try:
+                    adjoint.mult(coefficient, expected)
+                    oracle = streamed_source_oracle_report(actual, expected)
+                    assert oracle["finite"] is True
+                    assert oracle["equivalent"] == (
+                        oracle["relative_error"] <= oracle["tolerance"]
+                    )
+                    assert metadata["full_owner_p_h_e_equivalence"] == "not_proven"
+                    assert metadata["oracle_required"] is True
+                finally:
+                    adjoint.destroy()
+                    coefficient.destroy()
+                    expected.destroy()
+                    actual.destroy()
+
+            with pytest.raises(RuntimeError, match=r"Full-owner P\^H"):
+                provider(
+                    system,
+                    pairs["positive"],
+                    branch="positive",
+                    role="left",
+                    family="positive_modal_dual",
+                )
+        finally:
+            provider.destroy()
+            oracle_owner.destroy()
 
     def test_v6_full_packet_hydration_supports_single_owner_then_releases(
         self, tmp_path

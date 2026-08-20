@@ -7,6 +7,10 @@ from petsc4py import PETSc
 
 from src.solvers.hybrid_petrov_galerkin import (
     FixedLinearOwnerRowPetrovCorrectionAction,
+    _adjoint_matvec_without_matrix_copy,
+)
+from src.solvers.hybrid_streamed_petrov import (
+    run_streamed_owner_row_petrov_consumer,
 )
 
 
@@ -22,6 +26,7 @@ class _DenseBaseAction:
             "base_factor_count": 1,
             "exact_factor_count": 0,
             "global_direct_factor_count": 0,
+            "nested_ksp_count": 0,
         }
 
     def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
@@ -110,6 +115,111 @@ def _fixture() -> tuple[
     base = _DenseBaseAction(np.diag(f_dense))
     first, last = (int(value) for value in f_operator.getOwnershipRange())
     return f_operator, base, f_dense, z_global[first:last], y_global[first:last]
+
+
+def test_petrov_adjoint_matvec_matches_explicit_complex_formula():
+    rng = np.random.default_rng(2871)
+    matrix = rng.standard_normal((19, 7)) + 1j * rng.standard_normal((19, 7))
+    vector = rng.standard_normal(19) + 1j * rng.standard_normal(19)
+    actual = _adjoint_matvec_without_matrix_copy(matrix, vector)
+    expected = matrix.conj().T @ vector
+    np.testing.assert_allclose(actual, expected, rtol=0.0, atol=1.0e-13)
+
+
+def test_petrov_borrowed_readonly_basis_lifecycle_does_not_destroy_owner():
+    f_operator, base, _f_dense, z_local, y_local = _fixture()
+    z_owner = np.array(z_local, copy=True)
+    y_owner = np.array(y_local, copy=True)
+    z_owner.setflags(write=False)
+    y_owner.setflags(write=False)
+    try:
+        action = FixedLinearOwnerRowPetrovCorrectionAction(
+            base,
+            f_operator,
+            z_owner,
+            y_owner,
+            factor_inventory=base.diagnostics,
+            basis_ownership="borrowed_readonly",
+        )
+        try:
+            assert action.diagnostics["basis_ownership"] == "borrowed_readonly"
+            assert action.diagnostics["basis_copied"] is False
+            assert action.diagnostics["borrowed_basis_readonly"] is True
+            assert np.shares_memory(action._z_local, z_owner)
+            assert np.shares_memory(action._y_local, y_owner)
+            np.testing.assert_array_equal(action._z_local, z_owner)
+        finally:
+            action.destroy()
+        np.testing.assert_array_equal(z_owner, z_local)
+        np.testing.assert_array_equal(y_owner, y_local)
+    finally:
+        f_operator.destroy()
+
+
+@pytest.mark.parametrize("failure_kind", ["rank", "condition"])
+def test_streamed_consumer_records_e_failure_and_stops_at_first_passing_rank(
+    failure_kind,
+):
+    if MPI.COMM_WORLD.size not in (1, 2, 4):
+        pytest.skip("focused streamed consumer fixture supports MPI1/2/4")
+    rows = 128
+    f_dense = np.eye(rows, dtype=np.complex128)
+    f_operator = _dense_mat(f_dense)
+    base = _DenseBaseAction(np.ones(rows, dtype=np.complex128))
+    first, last = (int(value) for value in f_operator.getOwnershipRange())
+    z128 = np.eye(rows, dtype=np.complex128)
+    y128 = z128.copy()
+    y64 = y128[:, :64].copy()
+    if failure_kind == "rank":
+        y64[:, 1] = y64[:, 0]
+    else:
+        y64[:, 63] *= 1.0e-13
+    z64 = z128[:, :64]
+
+    class _Packet:
+        def prefix(self, checkpoint):
+            if checkpoint == 64:
+                z, y = z64[first:last], y64[first:last]
+            elif checkpoint == 128:
+                z, y = z128[first:last], y128[first:last]
+            else:
+                raise AssertionError("the fixture should stop at rank 128")
+            z = np.array(z, copy=True)
+            y = np.array(y, copy=True)
+            z.setflags(write=False)
+            y.setflags(write=False)
+            return z, y, {"checkpoint": checkpoint}
+
+    packet = _Packet()
+    try:
+        result = run_streamed_owner_row_petrov_consumer(
+            packet,
+            f_operator,
+            base,
+            holdout_evaluator=lambda _action, checkpoint: {
+                "gate_pass": checkpoint == 128
+            },
+            factor_inventory=base.diagnostics,
+        )
+        assert result["first_passing_checkpoint"] == 128
+        assert [item["status"] for item in result["reports"]] == [
+            "numerical_e_failure",
+            "completed",
+        ]
+        assert result["reports"][0]["post_destroy_diagnostics"] is None
+        assert result["reports"][0]["correction_action_destroyed"] is True
+        assert result["reports"][0]["e_failure"].startswith(
+            "Petrov coarse E is rank deficient"
+            if failure_kind == "rank"
+            else "Petrov coarse E condition exceeds"
+        )
+        assert result["reports"][0]["factor_inventory"]["exact_factor_count"] == 0
+        assert result["reports"][1]["post_destroy_diagnostics"]["destroyed"] is True
+        assert result["all_corrections_destroyed"] is True
+        assert result["exact_factor_count"] == 0
+        assert result["global_direct_factor_count"] == 0
+    finally:
+        f_operator.destroy()
 
 
 def test_petrov_formula_complex_adjoint_owner_rows_and_lifecycle():
