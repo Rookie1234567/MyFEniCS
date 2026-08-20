@@ -804,7 +804,26 @@ def test_v5_setup_release_error_does_not_emit_success_cleanup_marker(
     assert all(row["stage"] != "all_setup_objects_cleanup" for row in rows)
 
 
-def test_v6_qep_zero_preserves_uncreated_packet_ledger_objects(tmp_path, monkeypatch):
+@pytest.mark.parametrize(
+    ("profile_kwargs", "spool_keyword", "profile_key", "expected_schema"),
+    (
+        (
+            {"v6_h4_post_compaction_setup_only": True},
+            "v6_h4_exact_spool_root",
+            "v6_profile",
+            "task039.v6-h4-post-compaction-setup-only.v1",
+        ),
+        (
+            {"v7_h4_exact_side_limit_setup_only": True},
+            "v7_h4_exact_side_exact_spool_root",
+            "v7_profile",
+            orchestration.V7_H4_EXACT_SIDE_LIMIT_SCHEMA,
+        ),
+    ),
+)
+def test_v6_and_v7_qep_zero_preserve_uncreated_packet_ledger_objects(
+    tmp_path, monkeypatch, profile_kwargs, spool_keyword, profile_key, expected_schema
+):
     payload = load_and_resolve(
         Path("input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat")
     ).as_jsonable()
@@ -826,10 +845,9 @@ def test_v6_qep_zero_preserves_uncreated_packet_ledger_objects(tmp_path, monkeyp
         "HybridAugmentedLayout",
         SimpleNamespace(build=lambda *_args: SimpleNamespace()),
     )
-    monkeypatch.setattr(
-        orchestration,
-        "run_v5_h4_exact_side_setup_only",
-        lambda *_args, **_kwargs: {
+
+    def exact_setup_result(*_args, **kwargs):
+        result = {
             "status": "setup_only_completed",
             "setup_only_internal_cleanup": {
                 "factor_count_after_cleanup": {"bottom": 0, "top": 0},
@@ -841,7 +859,20 @@ def test_v6_qep_zero_preserves_uncreated_packet_ledger_objects(tmp_path, monkeyp
                 "top": {"factor_only_storage": True},
             },
             "telemetry": {"memory_object_ledger": {}},
-        },
+        }
+        if kwargs.get("v6_profile"):
+            result.update(
+                {
+                    "schema": "task039.v6-h4-post-compaction-setup-only.v1",
+                    "v6_profile": {},
+                }
+            )
+        return result
+
+    monkeypatch.setattr(
+        orchestration,
+        "run_v5_h4_exact_side_setup_only",
+        exact_setup_result,
     )
     monkeypatch.setattr(
         orchestration,
@@ -853,24 +884,26 @@ def test_v6_qep_zero_preserves_uncreated_packet_ledger_objects(tmp_path, monkeyp
         "physical_sha256": "b" * 64,
         "model_id": "task039_5nm_v4_1deg_s5_hybrid_iterative_m480",
     }
+    route_kwargs = dict(profile_kwargs)
+    route_kwargs[spool_keyword] = tmp_path / "exact-spool"
     result = orchestration.run_task039_v3_7_diagnostic(
         payload,
         tmp_path / "v6-qep-zero",
         source_sha="c" * 40,
         comm=MPI.COMM_SELF,
         setup_builder=lambda **_kwargs: setup,
-        v6_h4_post_compaction_setup_only=True,
-        v6_h4_exact_spool_root=tmp_path / "exact-spool",
         selected_mode_packet_manifest=tmp_path / "manifest.json",
         selected_mode_packet_identity=identity,
         selected_mode_packet_manifest_sha256="d" * 64,
+        **route_kwargs,
     )
     ledger = json.loads(
         (
             tmp_path / "v6-qep-zero/numerical_output/memory_object_ledger.json"
         ).read_text()
     )
-    assert result["v6_profile"]["packet_qep_refs_released"] is True
+    assert result[profile_key]["packet_qep_refs_released"] is True
+    assert result["schema"] == expected_schema
     for name in ("qep_matrices", "selected_basis"):
         assert ledger["objects"][name]["created"] is False
         assert ledger["objects"][name]["released"] is True
@@ -1463,14 +1496,28 @@ def test_v6_parent_authority_separates_input_stop_from_effective_and_final_field
     assert authority["resource_pass"] is True
 
 
-def test_v6_run_worker_uses_effective_byte_stop_without_mutating_input(
-    monkeypatch, tmp_path
+@pytest.mark.parametrize(
+    ("method", "effective_bytes", "telemetry_key"),
+    (
+        (
+            "task039_v6_h4_post_compaction_setup_only",
+            45118258790,
+            "v6_h4_post_compaction_setup_telemetry",
+        ),
+        (
+            "task039_v7_h4_exact_side_limit_setup_only",
+            90236517581,
+            "v7_h4_exact_side_limit_setup_telemetry",
+        ),
+    ),
+)
+def test_v6_and_v7_run_worker_use_effective_byte_stop_without_mutating_input(
+    monkeypatch, tmp_path, method, effective_bytes, telemetry_key
 ) -> None:
     specification = load_and_resolve(
         Path("input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat")
     )
     input_bytes = 224000000000
-    effective_bytes = 45118258790
     monkeypatch.setattr(
         task038_launcher,
         "_task039_memory_budget",
@@ -1498,7 +1545,7 @@ def test_v6_run_worker_uses_effective_byte_stop_without_mutating_input(
     terminated: list[Process] = []
     plan = SimpleNamespace(
         argv=("contract-probe",),
-        method="task039_v6_h4_post_compaction_setup_only",
+        method=method,
         contract_probe=False,
         task039_trace_audit=False,
     )
@@ -1532,11 +1579,17 @@ def test_v6_run_worker_uses_effective_byte_stop_without_mutating_input(
         input_bytes
     )
     assert authority["absolute_terminate_memory_bytes"] == effective_bytes
-    v6 = authority["v6_h4_post_compaction_setup_telemetry"]
-    assert v6["method_override"]["input_absolute_terminate_memory_bytes"] == input_bytes
-    assert v6["method_override"]["effective_absolute_terminate_memory_bytes"] == (
-        effective_bytes
+    telemetry = authority[telemetry_key]
+    assert (
+        telemetry["method_override"]["input_absolute_terminate_memory_bytes"]
+        == input_bytes
     )
+    assert telemetry["method_override"][
+        "effective_absolute_terminate_memory_bytes"
+    ] == (effective_bytes)
+    if "v7" in telemetry_key:
+        assert telemetry["gate_contract"]["outer_ready_peak_limit_gib"] == 84.039305878
+        assert telemetry["gate_contract"]["outer_ready_peak_limit_gib"] != 35.0
 
 
 def test_v3_7_worker_failure_persists_full_traceback(tmp_path) -> None:

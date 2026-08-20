@@ -73,6 +73,11 @@ V6_H4_POST_COMPACTION_PROFILE_ID = (
     "task039.v6.h4.post_compaction.exact_side_setup_only.v1"
 )
 V6_H4_SETUP_THRESHOLD_BYTES = 45118258790
+V7_H4_EXACT_SIDE_LIMIT_SETUP_ONLY_FLAG = "--v7-h4-exact-side-limit-setup-only"
+V7_H4_EXACT_SIDE_LIMIT_SETUP_ONLY_METHOD = "task039_v7_h4_exact_side_limit_setup_only"
+V7_H4_EXACT_SIDE_LIMIT_PROFILE_ID = "task039.v7.h4.exact_side.limit_setup_only.v1"
+V7_H4_EXACT_SIDE_LIMIT_HARD_STOP_BYTES = 90236517581
+V7_H4_EXACT_SIDE_LIMIT_EXACT_SPOOL_ROOT_FLAG = "--v7-h4-exact-side-exact-spool-root"
 V6_H4_PORT_MODAL_BOTTOM_COMPONENT_FLAG = "--v6-h4-port-modal-bottom-component"
 V6_H4_PORT_MODAL_EXACT_SPOOL_ROOT_FLAG = "--v6-h4-port-modal-exact-spool-root"
 V6_H4_PORT_MODAL_BOTTOM_COMPONENT_METHOD = "task039_v6_h4_port_modal_bottom_component"
@@ -89,6 +94,7 @@ def _validate_resolved_identity(
     v5_h4_blr_side_only: bool = False,
     v5_h4_fixed_budget_bottom_only: bool = False,
     v6_h4_post_compaction_setup_only: bool = False,
+    v7_h4_exact_side_limit_setup_only: bool = False,
     v6_h4_port_modal_bottom_only: bool = False,
 ) -> None:
     if (
@@ -96,6 +102,7 @@ def _validate_resolved_identity(
         or v5_h4_blr_side_only
         or v5_h4_fixed_budget_bottom_only
         or v6_h4_post_compaction_setup_only
+        or v7_h4_exact_side_limit_setup_only
         or v6_h4_port_modal_bottom_only
     ):
         method = payload.get("method", {})
@@ -155,6 +162,7 @@ def _watchdog_policy(
     v5_h4_blr_side_only: bool = False,
     v5_h4_fixed_budget_bottom_only: bool = False,
     v6_h4_post_compaction_setup_only: bool = False,
+    v7_h4_exact_side_limit_setup_only: bool = False,
     v6_h4_port_modal_bottom_only: bool = False,
 ) -> dict[str, Any]:
     _validate_resolved_identity(
@@ -163,17 +171,17 @@ def _watchdog_policy(
         v5_h4_blr_side_only=v5_h4_blr_side_only,
         v5_h4_fixed_budget_bottom_only=v5_h4_fixed_budget_bottom_only,
         v6_h4_post_compaction_setup_only=v6_h4_post_compaction_setup_only,
+        v7_h4_exact_side_limit_setup_only=v7_h4_exact_side_limit_setup_only,
         v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
     )
-    absolute_bytes = (
-        V6_H4_SETUP_THRESHOLD_BYTES
-        if v6_h4_post_compaction_setup_only
-        else (
-            V6_H4_PORT_MODAL_CONSTRUCTION_HARD_STOP_BYTES
-            if v6_h4_port_modal_bottom_only
-            else V3_7_ABSOLUTE_HARD_BYTES
-        )
-    )
+    if v7_h4_exact_side_limit_setup_only:
+        absolute_bytes = V7_H4_EXACT_SIDE_LIMIT_HARD_STOP_BYTES
+    elif v6_h4_post_compaction_setup_only:
+        absolute_bytes = V6_H4_SETUP_THRESHOLD_BYTES
+    elif v6_h4_port_modal_bottom_only:
+        absolute_bytes = V6_H4_PORT_MODAL_CONSTRUCTION_HARD_STOP_BYTES
+    else:
+        absolute_bytes = V3_7_ABSOLUTE_HARD_BYTES
     return {
         "warning_memory_gib": V3_7_WARNING_GIB,
         "critical_memory_gib": V3_7_CRITICAL_GIB,
@@ -214,6 +222,7 @@ def load_v3_7_official_payload(
     v5_h4_blr_side_only: bool = False,
     v5_h4_fixed_budget_bottom_only: bool = False,
     v6_h4_post_compaction_setup_only: bool = False,
+    v7_h4_exact_side_limit_setup_only: bool = False,
     v6_h4_port_modal_bottom_only: bool = False,
 ) -> dict[str, Any]:
     specification = load_and_resolve(input_path)
@@ -223,6 +232,7 @@ def load_v3_7_official_payload(
         or v5_h4_blr_side_only
         or v5_h4_fixed_budget_bottom_only
         or v6_h4_post_compaction_setup_only
+        or v7_h4_exact_side_limit_setup_only
         or v6_h4_port_modal_bottom_only
     ):
         from benchmarks.task039_v4_h4_hybrid_direct import (
@@ -236,6 +246,7 @@ def load_v3_7_official_payload(
         v5_h4_blr_side_only=v5_h4_blr_side_only,
         v5_h4_fixed_budget_bottom_only=v5_h4_fixed_budget_bottom_only,
         v6_h4_post_compaction_setup_only=v6_h4_post_compaction_setup_only,
+        v7_h4_exact_side_limit_setup_only=v7_h4_exact_side_limit_setup_only,
         v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
     )
     return payload
@@ -260,6 +271,8 @@ def build_v3_7_execution_plan(
     v5_h4_fixed_budget_exact_spool_root: str | Path | None = None,
     v6_h4_post_compaction_setup_only: bool = False,
     v6_h4_exact_spool_root: str | Path | None = None,
+    v7_h4_exact_side_limit_setup_only: bool = False,
+    v7_h4_exact_side_exact_spool_root: str | Path | None = None,
     v6_h4_port_modal_bottom_only: bool = False,
     v6_h4_port_modal_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = V5_H4_BLR_DEFAULT_PROFILE,
@@ -275,6 +288,7 @@ def build_v3_7_execution_plan(
         v5_h4_blr_side_only=v5_h4_blr_side_only,
         v5_h4_fixed_budget_bottom_only=v5_h4_fixed_budget_bottom_only,
         v6_h4_post_compaction_setup_only=v6_h4_post_compaction_setup_only,
+        v7_h4_exact_side_limit_setup_only=v7_h4_exact_side_limit_setup_only,
         v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
     )
     if v5_h4_blr_side_only and v5_h4_blr_profile not in V5_H4_BLR_PROFILE_CHOICES:
@@ -285,6 +299,7 @@ def build_v3_7_execution_plan(
         v5_h4_blr_side_only=v5_h4_blr_side_only,
         v5_h4_fixed_budget_bottom_only=v5_h4_fixed_budget_bottom_only,
         v6_h4_post_compaction_setup_only=v6_h4_post_compaction_setup_only,
+        v7_h4_exact_side_limit_setup_only=v7_h4_exact_side_limit_setup_only,
         v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
     )
     executable = str(Path(os.path.abspath(python_executable or sys.executable)))
@@ -302,6 +317,7 @@ def build_v3_7_execution_plan(
                 bool(v5_h4_blr_side_only),
                 bool(v5_h4_fixed_budget_bottom_only),
                 bool(v6_h4_post_compaction_setup_only),
+                bool(v7_h4_exact_side_limit_setup_only),
                 bool(v6_h4_port_modal_bottom_only),
             )
         )
@@ -410,6 +426,31 @@ def build_v3_7_execution_plan(
                 str(Path(v5_h4_fixed_budget_exact_spool_root).resolve()),
             ]
         )
+    elif v7_h4_exact_side_limit_setup_only:
+        if not all(
+            (
+                selected_mode_packet_manifest,
+                selected_mode_packet_identity,
+                selected_mode_packet_manifest_sha256,
+                v7_h4_exact_side_exact_spool_root,
+            )
+        ):
+            raise ValueError(
+                "V7 exact-side setup requires packet and exact spool arguments"
+            )
+        argv.extend(
+            [
+                V7_H4_EXACT_SIDE_LIMIT_SETUP_ONLY_FLAG,
+                "--selected-mode-packet-manifest",
+                str(Path(selected_mode_packet_manifest).resolve()),
+                "--selected-mode-packet-identity",
+                str(Path(selected_mode_packet_identity).resolve()),
+                "--selected-mode-packet-manifest-sha256",
+                str(selected_mode_packet_manifest_sha256),
+                V7_H4_EXACT_SIDE_LIMIT_EXACT_SPOOL_ROOT_FLAG,
+                str(Path(v7_h4_exact_side_exact_spool_root).resolve()),
+            ]
+        )
     elif v6_h4_post_compaction_setup_only:
         if not all(
             (
@@ -464,6 +505,8 @@ def build_v3_7_execution_plan(
         method = "USER_AUTHORIZED_EXPERIMENTAL_HYBRIDIZED_DIRECT_SIDE_CANDIDATE_D"
     elif candidate_e_side_only:
         method = "hybrid_iterative_candidate_e_side_only"
+    elif v7_h4_exact_side_limit_setup_only:
+        method = V7_H4_EXACT_SIDE_LIMIT_SETUP_ONLY_METHOD
     elif v6_h4_post_compaction_setup_only:
         method = V6_H4_POST_COMPACTION_SETUP_ONLY_METHOD
     elif v6_h4_port_modal_bottom_only:
@@ -482,7 +525,9 @@ def build_v3_7_execution_plan(
         method = "positive_branch_qep_only"
     else:
         method = "hybrid_iterative_v3_7_diagnostic"
-    if v6_h4_post_compaction_setup_only:
+    if v7_h4_exact_side_limit_setup_only:
+        profile_id = V7_H4_EXACT_SIDE_LIMIT_PROFILE_ID
+    elif v6_h4_post_compaction_setup_only:
         profile_id = V6_H4_POST_COMPACTION_PROFILE_ID
     elif v6_h4_port_modal_bottom_only:
         profile_id = V6_H4_PORT_MODAL_BOTTOM_COMPONENT_PROFILE
@@ -494,7 +539,12 @@ def build_v3_7_execution_plan(
         profile_id = V5_H4_FIXED_BUDGET_BOTTOM_COMPONENT_PROFILE
     else:
         profile_id = V3_7_PROFILE_ID
-    if v6_h4_post_compaction_setup_only and v6_h4_exact_spool_root is not None:
+    if (
+        v7_h4_exact_side_limit_setup_only
+        and v7_h4_exact_side_exact_spool_root is not None
+    ):
+        exact_spool_root = str(Path(v7_h4_exact_side_exact_spool_root).resolve())
+    elif v6_h4_post_compaction_setup_only and v6_h4_exact_spool_root is not None:
         exact_spool_root = str(Path(v6_h4_exact_spool_root).resolve())
     elif v6_h4_port_modal_bottom_only and v6_h4_port_modal_exact_spool_root is not None:
         exact_spool_root = str(Path(v6_h4_port_modal_exact_spool_root).resolve())
@@ -547,6 +597,8 @@ def v3_7_execution_dry_run(
     v5_h4_fixed_budget_exact_spool_root: str | Path | None = None,
     v6_h4_post_compaction_setup_only: bool = False,
     v6_h4_exact_spool_root: str | Path | None = None,
+    v7_h4_exact_side_limit_setup_only: bool = False,
+    v7_h4_exact_side_exact_spool_root: str | Path | None = None,
     v6_h4_port_modal_bottom_only: bool = False,
     v6_h4_port_modal_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = V5_H4_BLR_DEFAULT_PROFILE,
@@ -571,6 +623,8 @@ def v3_7_execution_dry_run(
         v5_h4_fixed_budget_exact_spool_root=v5_h4_fixed_budget_exact_spool_root,
         v6_h4_post_compaction_setup_only=v6_h4_post_compaction_setup_only,
         v6_h4_exact_spool_root=v6_h4_exact_spool_root,
+        v7_h4_exact_side_limit_setup_only=v7_h4_exact_side_limit_setup_only,
+        v7_h4_exact_side_exact_spool_root=v7_h4_exact_side_exact_spool_root,
         v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
         v6_h4_port_modal_exact_spool_root=v6_h4_port_modal_exact_spool_root,
         v5_h4_blr_profile=v5_h4_blr_profile,
@@ -605,6 +659,8 @@ def launch_v3_7_with_task038_watchdog(
     v5_h4_fixed_budget_exact_spool_root: str | Path | None = None,
     v6_h4_post_compaction_setup_only: bool = False,
     v6_h4_exact_spool_root: str | Path | None = None,
+    v7_h4_exact_side_limit_setup_only: bool = False,
+    v7_h4_exact_side_exact_spool_root: str | Path | None = None,
     v6_h4_port_modal_bottom_only: bool = False,
     v6_h4_port_modal_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = V5_H4_BLR_DEFAULT_PROFILE,
@@ -620,6 +676,7 @@ def launch_v3_7_with_task038_watchdog(
         v5_h4_blr_side_only=v5_h4_blr_side_only,
         v5_h4_fixed_budget_bottom_only=v5_h4_fixed_budget_bottom_only,
         v6_h4_post_compaction_setup_only=v6_h4_post_compaction_setup_only,
+        v7_h4_exact_side_limit_setup_only=v7_h4_exact_side_limit_setup_only,
         v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
     )
     if (
@@ -627,6 +684,7 @@ def launch_v3_7_with_task038_watchdog(
         and not v5_h4_blr_side_only
         and not v5_h4_fixed_budget_bottom_only
         and not v6_h4_post_compaction_setup_only
+        and not v7_h4_exact_side_limit_setup_only
         and not v6_h4_port_modal_bottom_only
     ):
         _check_direct_producer(V3_7_DIRECT_RUN_ROOT)
@@ -653,6 +711,8 @@ def launch_v3_7_with_task038_watchdog(
         v5_h4_fixed_budget_exact_spool_root=v5_h4_fixed_budget_exact_spool_root,
         v6_h4_post_compaction_setup_only=v6_h4_post_compaction_setup_only,
         v6_h4_exact_spool_root=v6_h4_exact_spool_root,
+        v7_h4_exact_side_limit_setup_only=v7_h4_exact_side_limit_setup_only,
+        v7_h4_exact_side_exact_spool_root=v7_h4_exact_side_exact_spool_root,
         v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
         v6_h4_port_modal_exact_spool_root=v6_h4_port_modal_exact_spool_root,
         v5_h4_blr_profile=v5_h4_blr_profile,
@@ -744,6 +804,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--v5-h4-setup-only", action="store_true")
     parser.add_argument(V6_H4_POST_COMPACTION_SETUP_ONLY_FLAG, action="store_true")
     parser.add_argument(V6_H4_EXACT_SPOOL_ROOT_FLAG)
+    parser.add_argument(V7_H4_EXACT_SIDE_LIMIT_SETUP_ONLY_FLAG, action="store_true")
+    parser.add_argument(V7_H4_EXACT_SIDE_LIMIT_EXACT_SPOOL_ROOT_FLAG)
     parser.add_argument(V6_H4_PORT_MODAL_BOTTOM_COMPONENT_FLAG, action="store_true")
     parser.add_argument(V6_H4_PORT_MODAL_EXACT_SPOOL_ROOT_FLAG)
     parser.add_argument(V5_H4_BLR_SIDE_COMPONENT_FLAG, action="store_true")
@@ -784,6 +846,12 @@ def main(argv: list[str] | None = None) -> int:
                         args.v6_h4_post_compaction_setup_only
                     ),
                     v6_h4_exact_spool_root=args.v6_h4_exact_spool_root,
+                    v7_h4_exact_side_limit_setup_only=(
+                        args.v7_h4_exact_side_limit_setup_only
+                    ),
+                    v7_h4_exact_side_exact_spool_root=(
+                        args.v7_h4_exact_side_exact_spool_root
+                    ),
                     v6_h4_port_modal_bottom_only=args.v6_h4_port_modal_bottom_component,
                     v6_h4_port_modal_exact_spool_root=(
                         args.v6_h4_port_modal_exact_spool_root
@@ -816,6 +884,8 @@ def main(argv: list[str] | None = None) -> int:
         v5_h4_fixed_budget_exact_spool_root=(args.v5_h4_fixed_budget_exact_spool_root),
         v6_h4_post_compaction_setup_only=args.v6_h4_post_compaction_setup_only,
         v6_h4_exact_spool_root=args.v6_h4_exact_spool_root,
+        v7_h4_exact_side_limit_setup_only=args.v7_h4_exact_side_limit_setup_only,
+        v7_h4_exact_side_exact_spool_root=args.v7_h4_exact_side_exact_spool_root,
         v6_h4_port_modal_bottom_only=args.v6_h4_port_modal_bottom_component,
         v6_h4_port_modal_exact_spool_root=args.v6_h4_port_modal_exact_spool_root,
         v5_h4_blr_profile=args.v5_h4_blr_profile,
@@ -854,6 +924,11 @@ __all__ = [
     "V6_H4_POST_COMPACTION_SETUP_ONLY_METHOD",
     "V6_H4_POST_COMPACTION_PROFILE_ID",
     "V6_H4_SETUP_THRESHOLD_BYTES",
+    "V7_H4_EXACT_SIDE_LIMIT_SETUP_ONLY_FLAG",
+    "V7_H4_EXACT_SIDE_LIMIT_SETUP_ONLY_METHOD",
+    "V7_H4_EXACT_SIDE_LIMIT_PROFILE_ID",
+    "V7_H4_EXACT_SIDE_LIMIT_HARD_STOP_BYTES",
+    "V7_H4_EXACT_SIDE_LIMIT_EXACT_SPOOL_ROOT_FLAG",
     "V6_H4_PORT_MODAL_BOTTOM_COMPONENT_FLAG",
     "V6_H4_PORT_MODAL_EXACT_SPOOL_ROOT_FLAG",
     "V6_H4_PORT_MODAL_BOTTOM_COMPONENT_METHOD",
