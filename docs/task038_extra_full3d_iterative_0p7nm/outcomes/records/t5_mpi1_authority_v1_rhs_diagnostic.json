@@ -1,0 +1,131 @@
+{
+  "schema": "task038.full3d.iterative.t5.rhs-bridge-diagnostic.v1",
+  "status": "BLOCKED_BY_LONG_TAIL_RESIDUAL_AUTHORITY",
+  "case": {
+    "mpi_size": 1,
+    "profile": "full3d_scalable_v1",
+    "source_sha": "e97db3680ee501350cc40dabe3b0b01d4c756651",
+    "input_template": "input/templates/full3d_iterative_example.dat",
+    "resolved_config_sha256": "78dc49b3a7ae212dec6374fde09eaaa231c131ce64790202da062b3ca2b09aad",
+    "mesh_cells": 252,
+    "global_rows": 173802,
+    "constraint_count": 9210
+  },
+  "old_w5": {
+    "source_sha": "41cbbd454eb8336d9ea5378ed618447acfc60aac",
+    "directory": "benchmarks/artifacts/task037_extra_development/m6b_w5_disk_fgmres_41cbbd4_screen_run1",
+    "rhs_file_sha256": "caf87001775247cb6967d6ebb244c8eb646bcd0d71c6e77410cd091488b1b87f",
+    "rhs_array_sha256": "31384363d498673ab5e30a26d47042581756ecabfc0efe3dba7a956b3600c20f",
+    "residual_file_sha256": "4166665f2e3c302f0645d9581856ec1bc433de4679540e45f98eb1e161093cc6",
+    "residual_array_sha256": "35de8f03a1fdf4c410cff33ceee44a31831df418443c7534650308505114de98",
+    "outer_action_file_sha256": "f2605312bf172f91ad13d3a9855ed006b87419be9392f6dbef24c17b51b41de2",
+    "solution_file_sha256": "d2a5a7e7b94a73d5212bc693d43282cace2883aadd0bb66780a3f8ae7b9e535e",
+    "array_shape": [173802],
+    "dtype": "complex128",
+    "residual_rhs_minus_outer_relative_l2": 1.742722222852365e-20,
+    "exact_mesh_h5_sha256": "ae9755890127023577a4e6b54a6d5b79aec4048a3ccbb48aec6c8c30e891bd13",
+    "exact_mesh_xdmf_sha256": "e40e1b05f3269101fe93e96416481f14bcaa64fb1df5f030381c747b484b9864",
+    "row_manifest_sha256": "fdea361e9c28de6965f78cdaa6960380a0cd1d9e2cb01b7115dcfeaae119a778",
+    "row_shard_sha256": "b6b24adc7e7634b348c8e52c7084ae7b046304f2863021a5d901f8726ce84e42"
+  },
+  "canonical_bridge": {
+    "old_manifest_role": "candidate_physical_rhs_dual",
+    "current_manifest_role": "full_fe_dual",
+    "old_manifest_sha256": "fdea361e9c28de6965f78cdaa6960380a0cd1d9e2cb01b7115dcfeaae119a778",
+    "current_manifest_sha256": "efcde85fc6d5eb4a7d95b73acaf3d4240f0eb62be9b88a39c7b21b51fea05521",
+    "old_shard_sha256": "b6b24adc7e7634b348c8e52c7084ae7b046304f2863021a5d901f8726ce84e42",
+    "current_shard_sha256": "88eda875fc377dd86620fa8b572405e75fdfae8f09477cd4f54e791eaac5ed75",
+    "packet_count_old": 164592,
+    "packet_count_current": 164592,
+    "key_set_equal": true,
+    "duplicate_old": 0,
+    "duplicate_current": 0,
+    "missing_keys": 0,
+    "extra_keys": 0,
+    "finite_bad_packets": 0
+  },
+  "numeric_comparison": {
+    "inner_product": "sum(conj(old_i) * current_i)",
+    "alpha_definition": "argmin_alpha ||current-alpha*old||_2",
+    "old_norm": 13.197399418369045,
+    "current_norm": 1.3253714387502278,
+    "difference_norm_current_minus_old": 14.492586965436216,
+    "relative_difference_to_current": 10.934736136386148,
+    "alpha_current_from_old": [-0.09791253215983536, -0.019929962676216016],
+    "scaled_difference_norm": 0.13293210647187068,
+    "scaled_relative_to_current": 0.10029800143967213,
+    "significant_packet_ratio_summary": {
+      "threshold_old_abs": 1e-8,
+      "count": 414,
+      "ratio_mean": [-0.09949208437964273, -0.02011314013070798],
+      "ratio_median": [-0.09965820764889381, -0.019781784923713346],
+      "ratio_real_range": [-0.10741265865038331, -0.09198452376722195],
+      "ratio_imag_range": [-0.03615215245280989, -0.0027726917217410917]
+    }
+  },
+  "position_groups": {
+    "classification": "top if all edge vertices use z_max; bottom if all use z_min; otherwise side_or_volume",
+    "canonical_z_min": -714285714,
+    "canonical_z_max": 9285714286,
+    "dim_1_top": {"count": 216, "old_norm": 0.01208688253469283, "current_norm": 0.0012977917853108228, "difference_norm": 0.013361553097537709},
+    "dim_1_bottom": {"count": 216, "old_norm": 0.0, "current_norm": 0.0, "difference_norm": 0.0},
+    "dim_1_side_or_volume": {"count": 4320, "old_norm": 4.411323280316609e-30, "current_norm": 2.094391330065458e-31, "difference_norm": 4.60798474624819e-30},
+    "dim_2_top": {"count": 1080, "old_norm": 13.197393883461924, "current_norm": 1.325370803357057, "difference_norm": 14.492580806041088},
+    "dim_2_bottom": {"count": 1080, "old_norm": 0.0, "current_norm": 0.0, "difference_norm": 0.0},
+    "dim_2_side_or_volume": {"count": 44280, "old_norm": 1.7689304699858526e-14, "current_norm": 8.784051979096687e-16, "difference_norm": 1.8551856922041462e-14},
+    "dim_3_side_or_volume": {"count": 113400, "old_norm": 1.0562941532753888e-12, "current_norm": 9.238576434091899e-14, "difference_norm": 1.1433277483896248e-12}
+  },
+  "composition_provenance": {
+    "old_runner": "benchmarks/run_task037_extra_m6b.py",
+    "old_composer": "compose_m6b_physical_rhs -> dtn_action.compose_physical_rhs",
+    "old_expression": "target = base_incident_traction; target[c_rows] += amplitude * c_values",
+    "old_coupling_sign": "old carrier stores c_values = -traction_values",
+    "old_dual_extractor": "iter_canonical_full_fe_dual_packets",
+    "current_runner": "benchmarks/run_task038_full3d_t5.py",
+    "current_composer": "FullspacePhysicalAction.compose_physical_rhs -> dtn_action.compose_physical_rhs",
+    "current_expression": "target = base_incident_traction; target[coupling_rows] += amplitude * coupling_values",
+    "current_coupling_sign": "current carrier combines (-traction[0], -traction[1])",
+    "current_dual_extractor": "extract_canonical_full_fe_dual_packets",
+    "incident_form": "_incident_top_traction_form: i*cross(k_inc,e_inc) crossed with +z and Fourier phase on z_max",
+    "modal_projection": "_incident_projection_onto_top_mode for top m=n=0 using tangential vdot and H denominator",
+    "proven_old_current": [
+      "Both paths explicitly compose base incident traction plus modal coupling.",
+      "Both use the same named incident traction/projection helpers and complex128 dual packet role.",
+      "Old/current exact mesh geometry-connectivity witnesses match and ordered packet keys match."
+    ],
+    "not_proven": [
+      "Current MPC-aware surface assembler coefficients are numerically identical to old exact_component_entries.",
+      "Current dual coefficient values implement the same physical covector normalization and orientation transform as the old W5 run.",
+      "A current independent physical-dual RHS oracle closes the value bridge; residual conversion was correctly not attempted."
+    ],
+    "old_source_blob_sha256": "c68e936b9be94396dc2b2e21008620595f3d868016a5eb2b8890e658d3fe4816",
+    "current_mpc_relation_digest": "73920dca3253b238feba530af3c4dd02c34e40b7f0a47d844ce619f4f4765ad6"
+  },
+  "resource": {
+    "watchdog_status": "measured_pass",
+    "wall_seconds": 34.103594134998275,
+    "process_tree_peak_rss_bytes": 981893120,
+    "memory_authority_peak_bytes": 981893120,
+    "process_tree_swap_bytes": 0,
+    "dedicated_cgroup_peak_swap_bytes": 0,
+    "sample_count": 35,
+    "returncode": 0
+  },
+  "evidence": {
+    "record_sha256": "ec91c5652580bcd6f922c58ee1741ae7b7063dedf9e531d24f701c5bdfa28dd1",
+    "checker_sha256": "ddafbabc9e5e120a09919b5db73ae644adccac8974f54368c9c42251deab8b8b",
+    "watchdog_raw_sha256": "ae42714fb8de07b5a2998a350fd06a5b64c712e38f7e9b839e81493582080f3b",
+    "watchdog_compact_sha256": "226dd35e661e4d00c05c438aab8f6f0cacdc74300e605bb4ab3f9689d0de1ece",
+    "record_relative_path": "benchmarks/artifacts/task038_extra_full3d_iterative_t5_authority_v1/mpi1/record.json",
+    "checker_relative_path": "benchmarks/artifacts/task038_extra_full3d_iterative_t5_authority_v1/mpi1/checker_compact.json",
+    "watchdog_compact_relative_path": "benchmarks/artifacts/task038_extra_full3d_iterative_t5_authority_v1/mpi1/raw/watchdog/resource_compact.json"
+  },
+  "scope": {
+    "residual_action": "not_run_by_gate",
+    "mpi2": "not_run_by_gate",
+    "candidate_a_b_c": "not_run_by_gate",
+    "t6": "not_run_by_gate",
+    "t7_t8_t9": "not_run",
+    "old_w5_negative_evidence_is_not_algorithm_performance_failure": true
+  }
+}

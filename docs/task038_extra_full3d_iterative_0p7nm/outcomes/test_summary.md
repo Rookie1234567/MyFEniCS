@@ -131,4 +131,24 @@ T4 用真实两-slab Full3D fixture 检查 owner-local interface topology 和 ca
 
 Retained numeric payload/work was measured separately: p2/MPI1 `45,696/10,368 B`, p2/MPI2 `30,192/10,368 B` local retained/work, p3/MPI1 `127,296/27,648 B`, and p3/MPI2 `84,936/27,648 B` (global-max retained values are in the compact records). No numeric allgather, global AIJ, dense interface mass/Schur, or slab factor was materialized. The full T4 explanation and artifact hashes are in [`sweep_oracle.md`](sweep_oracle.md).
 
-The first v1 p2/MPI1 checker result is retained as explicit negative evidence: the independent pairing passed, but the runner omitted the action manifest from the evidence registry. The narrow fix closed only that registry assignment; v2 reran all four cases and is the qualifying T4 result. The v1 record/check are [`t4_p2_h50_mpi1_v1_evidence_defect_record.json`](records/t4_p2_h50_mpi1_v1_evidence_defect_record.json) and [`t4_p2_h50_mpi1_v1_evidence_defect_check.json`](records/t4_p2_h50_mpi1_v1_evidence_defect_check.json). T5/T6 and push remain unstarted.
+The first v1 p2/MPI1 checker result is retained as explicit negative evidence: the independent pairing passed, but the runner omitted the action manifest from the evidence registry. The narrow fix closed only that registry assignment; v2 reran all four cases and is the qualifying T4 result. The v1 record/check are [`t4_p2_h50_mpi1_v1_evidence_defect_record.json`](records/t4_p2_h50_mpi1_v1_evidence_defect_record.json) and [`t4_p2_h50_mpi1_v1_evidence_defect_check.json`](records/t4_p2_h50_mpi1_v1_evidence_defect_check.json). T6 and push remain unstarted; T5 is reported below as a hard-stopped authority attempt.
+
+## 9. T5 long-tail authority bridge（hard stop）
+
+T1、T2、T3、T4 的已审查结果保持 PASS。T5 MPI1 只完成 authority bridge 前置步骤，状态为 `BLOCKED_BY_LONG_TAIL_RESIDUAL_AUTHORITY`：old/current physical RHS canonical packet count 都是 `164592`，key set 完全一致，duplicate/missing/extra 都是 `0`，但实际 coefficient relative L2 为 `10.934736136386151`，最大 packet absolute difference 为 `1.2846616424283923`，均不能通过 canonical `1e-12` Gate。
+
+这表示“地址相同，数值不同”。canonical key 像一张不随 MPI 分区变化的门牌清单；它证明两边在谈同一条边/同一个实体，却不证明门牌上写的 load 数值相同。old residual 是物理 dual/load，不是可以只按 row number 搬运的普通数组。若在 value bridge 未闭合时继续使用，它会把不同的物理 forcing 送入当前 action，所以 checker fail-closed，并不把该结果解释成算法性能失败。
+
+旧 W5 文件内部仍有独立的 residual closure：`rhs - outer_action` 的 relative L2 为 `1.742722222852365e-20`，文件/array SHA、shape `[173802]`、`complex128`、exact mesh 和 old source SHA 均记录在 [`sweep_oracle.md`](sweep_oracle.md) 与 [`t5_mpi1_authority_v1_rhs_diagnostic.json`](records/t5_mpi1_authority_v1_rhs_diagnostic.json) 中。这只能证明旧运行自洽，不能证明 old dual convention 与 current T3 compose/extractor 的非零 top modal values 相同。
+
+| T5 item | result |
+|---|---|
+| old/current key/count/duplicate structure | pass / `164592` each / `0` |
+| RHS value bridge | fail; relative `10.934736136386151`, max abs `1.2846616424283923` |
+| resource | measured pass; process-tree RSS `981,893,120 B`, swap `0 B` |
+| residual action/reference and repeat | `not_run_by_gate` |
+| MPI2 residual identity | `not_run_by_gate` |
+| Candidate A/B/C and T6 | `not_run_by_gate` |
+| T7–T9 and 0.7 nm | `not_run` |
+
+The old W5 negative evidence is retained as historical evidence and is not an algorithm-performance result. T5 compact record/checker/watchdog and the read-only norm/alpha/position diagnostic are listed in [`sweep_oracle.md`](sweep_oracle.md). Formal source identity at start was `e97db3680ee501350cc40dabe3b0b01d4c756651`; the current documentation changes are pending and have not been committed or pushed. No CI claim is made; all listed checks are local.
