@@ -255,3 +255,65 @@ def test_production_module_has_no_matrix_or_dense_cell_builder() -> None:
     assert "createAIJ" not in called_attributes
     assert "assemble_matrix" not in called_attributes
     assert "createPython" in called_attributes
+
+
+def test_mpc_metadata_row_closure_and_fail_closed_cases() -> None:
+    class _Masters:
+        def __init__(self, rows):
+            self._rows = rows
+
+        def links(self, row):
+            return np.asarray(self._rows[int(row)], dtype=np.int32)
+
+    class _Metadata:
+        def __init__(self, slaves, offsets, coefficients, is_slave, rows):
+            self.slaves = np.asarray(slaves, dtype=np.int32)
+            self._offsets = np.asarray(offsets, dtype=np.int64)
+            self._coefficients = np.asarray(coefficients, dtype=np.complex128)
+            self.is_slave = np.asarray(is_slave, dtype=bool)
+            self.masters = _Masters(rows)
+
+        def coefficients(self):
+            return self._coefficients, self._offsets
+
+    def prepare(metadata, local_storage):
+        action = action_module.FullspaceMpcFormAction.__new__(
+            action_module.FullspaceMpcFormAction
+        )
+        action._owned_rows = 2
+        action._prepare_mpc_metadata(metadata, local_storage)
+        return action
+
+    imported_master = _Metadata(
+        slaves=[0],
+        offsets=[0, 1, 1],
+        coefficients=[0.5 + 0.25j],
+        is_slave=[True, False],
+        rows={0: [2]},
+    )
+    action = prepare(imported_master, local_storage=3)
+    assert np.array_equal(action._master_indices, np.asarray([2], dtype=np.int32))
+
+    with pytest.raises(RuntimeError, match="coefficient row metadata"):
+        prepare(
+            _Metadata(
+                slaves=[0], offsets=[0], coefficients=[], is_slave=[], rows={0: []}
+            ),
+            local_storage=2,
+        )
+    with pytest.raises(RuntimeError, match="local storage"):
+        prepare(
+            _Metadata(
+                slaves=[2], offsets=[0, 0, 0, 0], coefficients=[],
+                is_slave=[False, False, False], rows={2: []}
+            ),
+            local_storage=2,
+        )
+    with pytest.raises(NotImplementedError, match="chained MPC"):
+        prepare(
+            _Metadata(
+                slaves=[0], offsets=[0, 1, 1], coefficients=[1.0],
+                is_slave=[False, True], rows={0: [1]}
+            ),
+            local_storage=2,
+        )

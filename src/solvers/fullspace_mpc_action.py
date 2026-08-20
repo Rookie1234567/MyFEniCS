@@ -92,6 +92,7 @@ class FullspaceMpcFormAction:
         self._conjugated_master_coefficients = np.empty(
             0, dtype=np.complex128
         )
+        self._row_metadata_size = 0
         if mpc is not None:
             self._prepare_mpc_metadata(mpc, local_storage)
         self._constraint_work = np.empty(
@@ -159,6 +160,7 @@ class FullspaceMpcFormAction:
             "local_owned_rows": self._owned_rows,
             "local_ghost_rows": self._ghost_rows,
             "local_storage_entries": local_storage,
+            "constraint_row_metadata_entries": int(self._row_metadata_size),
             "constraint_count": constraint_count,
             "owned_constraint_count": int(self._owned_slave_indices.size),
             "constraint_nnz": int(self._master_indices.size),
@@ -219,8 +221,19 @@ class FullspaceMpcFormAction:
         coefficients = np.asarray(coefficients, dtype=np.complex128)
         offsets = np.asarray(offsets, dtype=np.int64)
         is_slave = np.asarray(mpc.is_slave, dtype=bool)
-        if offsets.size < local_storage + 1 or is_slave.size < local_storage:
-            raise RuntimeError("MPC row metadata does not close local storage")
+        row_metadata_size = int(offsets.size - 1)
+        # A finalized MPC may add ghost slots for imported masters. Its
+        # offsets/is_slave arrays describe local coefficient/slave rows, so
+        # those extra slots are valid masters but cannot be local slave rows.
+        if (
+            row_metadata_size < 0
+            or row_metadata_size > local_storage
+            or is_slave.size < row_metadata_size
+        ):
+            raise RuntimeError("MPC row metadata does not close coefficient rows")
+        if slaves.size and np.any(slaves >= row_metadata_size):
+            raise RuntimeError("MPC slave metadata exceeds coefficient row metadata")
+        self._row_metadata_size = row_metadata_size
 
         flat_slaves: list[int] = []
         flat_masters: list[int] = []
@@ -239,7 +252,8 @@ class FullspaceMpcFormAction:
                 np.any(masters < 0) or np.any(masters >= local_storage)
             ):
                 raise RuntimeError("MPC master metadata exceeds local storage")
-            if np.any(is_slave[masters]):
+            known_slave_rows = masters < is_slave.size
+            if np.any(is_slave[masters[known_slave_rows]]):
                 raise NotImplementedError("chained MPC rows are unsupported")
             flat_slaves.extend([row] * int(masters.size))
             flat_masters.extend(int(master) for master in masters)
