@@ -240,3 +240,20 @@ Full3D strict channel 继续保留为 diagnostic pending，旧 B/C/C1/D/E 负结
 | full repository pytest | `not_run` | 不伪造 CI/full regression |
 
 raw/marker/ledger 的 hash 与 `status=launching`、`exit_status=null`、`ledger=in_progress` 见 [fixed-budget record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v5_fixed_budget_side_krylov_component_v1.json)。
+
+## V7 Lane A setup-only evidence
+
+| Gate | 结果 | 证据边界 |
+| --- | --- | --- |
+| V7 setup resource | measured `81.056903839 GiB <= 84.039305878 GiB` | `SETUP_ADVANCEMENT_PASS` |
+| outer KSP setup-ready | measured `77.516986847 GiB` | state reached；本次未 solve |
+| swap | `0` | zero-swap pass |
+| bottom/top factor lifecycle | outer-ready `1/1`；final `0/0` | cleanup marker reached |
+| packet/QEP release | `true` | qep_calls=0，packet mmap released |
+| modal Schur | rank960，condition `24.677208593174512`，matrix/LU repeat `0/0` | single-build + 10 sampled columns |
+| exact-side full formal | `FULL_FORMAL_ELIGIBLE` but `not_run` | 等待独立审查与授权 |
+| outer/recovery/field/R/T/A | `not_run` | setup-only boundary |
+| full repository pytest / CI | `not_run` | 不将 setup evidence 写成 full solve |
+
+详见 [V7 Lane A outcome](v7_exact_side_limit.md) 与
+[V7 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v7_exact_side_limit_setup_v1.json)。

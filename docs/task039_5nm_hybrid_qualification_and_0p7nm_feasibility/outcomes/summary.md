@@ -585,3 +585,17 @@ basis、top、both-side 或 outer。
 V6 的 0.7 nm capacity 只保留 derived/conditional envelope；0.7 nm PDE、Full3D
 new heavy、arbitrary-3D qualification 和 top/full Hybrid 均 not_run。详见
 [V6 capacity boundary](v6_0p7nm_hybrid_capacity.md)。
+
+## V7 Lane A：exact-side setup advancement
+
+V7 唯一一次 Lane A setup-only 已在 source `f4073adabb91bffe5c3954b8ae8b63270efa3e15`
+下自然 exit 0。完整 process-tree peak 为 `87,034,187,776 B = 81.056903839 GiB`，低于
+V7 advancement line `84.039305878 GiB`；outer KSP setup-ready 对齐 RSS 为
+`77.516986847 GiB`，swap=0，bottom/top factor 在 outer-ready 为 `1/1`，最终 cleanup 为
+`0/0`，packet/QEP refs released=true。因此分类为 `SETUP_ADVANCEMENT_PASS`，并具备
+`FULL_FORMAL_ELIGIBLE`，但本次没有运行 outer/recovery/field/R/T/A。它仍然高于旧
+`42.019652939 GiB` half-memory line，故同时为 `NOT_HALF_MEMORY_COMPATIBLE`。
+
+详细 marker、modal Schur、layer graph、生命周期和 raw hash 见
+[V7 Lane A outcome](v7_exact_side_limit.md) 与
+[V7 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v7_exact_side_limit_setup_v1.json)。

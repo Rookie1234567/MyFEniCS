@@ -1,0 +1,134 @@
+{
+  "schema": "task039.v7.exact_side_limit_setup.v1",
+  "record_type": "research_component_evidence",
+  "classification": {
+    "setup_advancement": "SETUP_ADVANCEMENT_PASS",
+    "half_memory_compatibility": "NOT_HALF_MEMORY_COMPATIBLE",
+    "full_formal_eligibility": "FULL_FORMAL_ELIGIBLE"
+  },
+  "provenance": {
+    "branch": "codex/20260812-task39-5nm-hybrid-0p7nm-feasibility",
+    "source_sha": "f4073adabb91bffe5c3954b8ae8b63270efa3e15",
+    "formal_preflight_clean": true,
+    "input": "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat",
+    "input_sha256": "4e60924b5997e3ca99e324ea14779f9014efc6a1304a9aa11de9c808353f1811",
+    "packet_root": "results/task039_v4_h4_m480_shared_packet_eaad0f94",
+    "packet_manifest_sha256": "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067",
+    "packet_identity_file_sha256": "b3bb870fe6fa17cb262b6161f7317cc1950944755c9270d4628dd5c79e950690",
+    "packet_runtime_identity_sha256": "cfd5704b48bff980fa2d819f4deee9a59bb9a3db39bc24a70c53f42f067d39e9",
+    "consumer_qep_calls": 0,
+    "exact_reference_spool": "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/numerical_output",
+    "exact_reference_spool_source_sha": "7e5d9b57a10b1093f0cb062eaf7bc12797c47e1f",
+    "exact_reference_spool_labels": [
+      "physical_side_rhs",
+      "modal_traction_positive",
+      "modal_traction_negative",
+      "external_dtn_coupling",
+      "fixed_random_repeat_0",
+      "fixed_random_repeat_1"
+    ],
+    "exact_reference_spool_artifact_count": 96,
+    "exact_reference_spool_arrays_retained": false,
+    "exact_reference_spool_transient_hash_read": true
+  },
+  "scope": {
+    "physical": "5nm/1deg/phi0/S",
+    "profile": "p6/h4",
+    "requested_modes": 480,
+    "mpi_size": 8,
+    "method": "task039_v7_h4_exact_side_limit_setup_only",
+    "factor_only": true,
+    "single_build_modal_schur": true,
+    "fixed_pc": "gmres_restart10",
+    "solve_recovery_field_rta": "not_run",
+    "ordinary_defaults_unchanged": true
+  },
+  "resource_authority": {
+    "status": "measured",
+    "observed_elapsed_seconds": 10649.634795042046,
+    "final_marker_elapsed_seconds": 10644.903731783037,
+    "setup_peak_bytes": 87034187776,
+    "setup_peak_gib": 81.05690383911133,
+    "setup_peak_limit_bytes": 90236517581,
+    "setup_peak_limit_gib": 84.039305878,
+    "setup_peak_pass": true,
+    "peak_sample_elapsed_seconds": 3180.8451122089755,
+    "peak_sample_utc": "2026-08-20T05:03:51.568872+00:00",
+    "peak_stage_window": "bottom_interface_blocks_heap_cleanup_to_bottom_F_ready",
+    "peak_interpretation": "marker-aligned process-tree sample; not an independent single-object attribution",
+    "outer_ksp_setup_ready": {
+      "status": "measured",
+      "rss_bytes": 83233230848,
+      "rss_gib": 77.51698684692383,
+      "sample_elapsed_seconds": 10647.345946001995,
+      "pass_against_setup_limit": true
+    },
+    "swap_bytes_peak": 0,
+    "zero_swap": true,
+    "poll_interval_seconds": 0.25,
+    "effective_hard_stop_bytes": 90236517581,
+    "input_absolute_terminate_memory_bytes": 224000000000
+  },
+  "lifecycle": {
+    "factor_count_at_outer_ready": {"bottom": 1, "top": 1},
+    "factor_count_after_final_cleanup": {"bottom": 0, "top": 0},
+    "setup_destroyed": true,
+    "packet_qep_refs_released": true,
+    "packet_mmap_released": true,
+    "final_cleanup_order": ["coupling", "bottom", "top", "packet_bundle"],
+    "global_direct_factor_count": 0,
+    "nested_iterative_ksp_count": 0,
+    "base_identity": "research_exact_side_lu_woodbury",
+    "side_actions": {
+      "bottom": {"factor_count": 1, "factor_nnz": 1057904352, "K_rank": 296, "K_condition": 8.405950933966242, "W_local_bytes": 81070848, "apply_count": 970, "apply_base_solve_count": 970, "apply_D_count": 970},
+      "top": {"factor_count": 1, "factor_nnz": 991254240, "K_rank": 304, "K_condition": 43.15222733417726, "W_local_bytes": 81131520, "apply_count": 970, "apply_base_solve_count": 970, "apply_D_count": 970}
+    }
+  },
+  "modal_schur": {
+    "rank": 960,
+    "condition": 24.677208593174512,
+    "finite": true,
+    "normal_equations": false,
+    "matrix_repeat_error": 0.0,
+    "lu_repeat_solve_error": 0.0,
+    "single_build": true,
+    "full_build_apply_count": {"bottom": 960, "top": 960},
+    "sample_build_apply_count": {"bottom": 10, "top": 10},
+    "sampled_columns": [0, 1, 240, 267, 479, 480, 481, 720, 746, 959],
+    "sampled_contract_sha256": "8d73d77a47fe0aa614e231eaac1f939eb28cca5b01c024c70fd518a3a592f082"
+  },
+  "layer_graph": {
+    "status": "measured",
+    "sides": ["bottom", "top"],
+    "layer_count": 6,
+    "rows_global": 132300,
+    "nnz_total": 105038640,
+    "rows_by_layer": [28350, 20790, 20790, 20790, 20790, 20790],
+    "nnz_by_layer": [21088620, 17384220, 17384220, 17384220, 17384220, 14413140],
+    "same_layer_nnz": 75327840,
+    "same_layer_fraction": 0.7171440909745214,
+    "adjacent_layer_nnz": 29710800,
+    "adjacent_layer_fraction": 0.28285590902547864,
+    "long_range_nnz": 0,
+    "long_range_fraction": 0.0,
+    "block_half_bandwidth": 1,
+    "layer_pair_nnz": [[18117540, 2971080, 0, 0, 0, 0], [2971080, 11442060, 2971080, 0, 0, 0], [0, 2971080, 11442060, 2971080, 0, 0], [0, 0, 2971080, 11442060, 2971080, 0], [0, 0, 0, 2971080, 11442060, 2971080], [0, 0, 0, 0, 2971080, 11442060]],
+    "mapping_source": "owned_cell_recovery_maps + trace_constraints.expansion_by_original + local_mesh.geometry.z_values",
+    "shared_trace_row_rule": "minimum_incident_owned_cell_layer",
+    "temporary_global_row_layer_tags_released": true
+  },
+  "raw_evidence": {
+    "run_root": "results/task039_v7_h4_exact_side_limit_setup_only_mpi8_f4073ada",
+    "files": [
+      {"path": "run_summary.json", "bytes": 5426, "sha256": "727b28c0408bb261173004fba70309c0d024559dd0d1c906f2a2bfd4738c52c9"},
+      {"path": "run_manifest.json", "bytes": 214393, "sha256": "6ef30ad448e36485d85d63fa334f70c1dc41ef5577a8ad9026ba79bb789fe300"},
+      {"path": "worker_stdout.txt", "bytes": 122144, "sha256": "759c59d50f153a2b25ad5eb2b92ddd5970f89783d717a39a3c48cdf9de5327f4"},
+      {"path": "numerical_output/memory_object_ledger.json", "bytes": 16104, "sha256": "9ad4aa4d35f0d5737e983186ad972aee687e74c862ce8a5a9f083ca1e7ef8206"},
+      {"path": "numerical_output/memory_stage_markers.raw.jsonl", "bytes": 84487, "sha256": "f2a98e5ebd1c7bcdd335f4075b938a14396546dfdcf8af7cfdebfa3647af8ccd"},
+      {"path": "numerical_output/memory_stages.jsonl", "bytes": 87971, "sha256": "23d7d4541377faddfdd1c61fdd177f6f1206f12f9039c30bba9ed5ea32b52547"},
+      {"path": "numerical_output/process_tree_samples.jsonl", "bytes": 12726509, "sha256": "7bacc8d371a4bb4c6361a07365895fc00add32c98e5d5829a5bbd929e2dfa854"}
+    ]
+  },
+  "not_run": ["outer_solve", "recovery", "field", "RTA", "official_result", "exact_side_full_formal"],
+  "next_authority": "full_formal_requires_separate_review_of_existing_outer_route"
+}
