@@ -1,0 +1,76 @@
+# Task038-extra T2 test and evidence summary
+
+## 1. Source and environment identity
+
+| item | value |
+|---|---|
+| branch | `codex/20260820-task38-extra-full3d-iterative-0p7nm` |
+| implementation commit | `5ce75540ff97089f74021660876ab2022ffad1f9` |
+| narrow serialization fix commit | `6d60bb5a9a59e88da98b027efeed8506d5dd7a82` |
+| formal record source SHA | `6d60bb5a9a59e88da98b027efeed8506d5dd7a82` |
+| upstream at formal start | `80c3fa29d54813d0344a93ffa7768108ff15fa76` |
+| branch relation at formal start | ahead 4 / behind 0 |
+| worktree before formal | clean; no nonignored untracked files |
+| activation | `_MYFENICS_WSL_QUALIFIED_ACTIVATION=1` |
+| Python | `/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python` |
+| platform | WSL2 Linux `6.6.114.1-microsoft-standard-WSL2-x86_64` |
+| PETSc scalar / integer | `complex128` / `int32` |
+| MPI world in serial preflight | 1 |
+| MPI/PETSc/DOLFINx stack | qualified complex PETSc/SLEPc 3.19 stack; DOLFINx and Basix from the same activated environment |
+| thread limits | OMP, OpenBLAS and MKL all `1` |
+
+## 2. Commands and outcomes
+
+The implementation and narrow fix were committed before formal execution. Every formal run used the same qualified activation and the exact expected source SHA below. Raw directories are ignored; the record path is inside the corresponding ignored attempt directory.
+
+```bash
+source scripts/activate_myfenics_wsl.sh
+python -m pytest -q src/test/test_270_task038_full3d_t2_runner_contract.py src/test/test_269_task038_fullspace_matrix_free_action.py
+# 18 passed in 1.13s
+
+python -m benchmarks.run_task038_full3d_t2 run --case p2-h50 --raw-dir benchmarks/artifacts/task038_extra_full3d_iterative_t2/p2-h50-mpi1-rerun/raw --record benchmarks/artifacts/task038_extra_full3d_iterative_t2/p2-h50-mpi1-rerun/record.json --expected-source-sha 6d60bb5a9a59e88da98b027efeed8506d5dd7a82 --expected-mpi-size 1
+python -m benchmarks.run_task038_full3d_t2 run --case p3-h50 --raw-dir benchmarks/artifacts/task038_extra_full3d_iterative_t2/p3-h50-mpi1/raw --record benchmarks/artifacts/task038_extra_full3d_iterative_t2/p3-h50-mpi1/record.json --expected-source-sha 6d60bb5a9a59e88da98b027efeed8506d5dd7a82 --expected-mpi-size 1
+python -m benchmarks.run_task038_full3d_t2 run --case p6-h10 --raw-dir benchmarks/artifacts/task038_extra_full3d_iterative_t2/p6-h10-mpi1/raw --record benchmarks/artifacts/task038_extra_full3d_iterative_t2/p6-h10-mpi1/record.json --expected-source-sha 6d60bb5a9a59e88da98b027efeed8506d5dd7a82 --expected-mpi-size 1
+mpiexec -n 2 python -m benchmarks.run_task038_full3d_t2 run --case p6-h10 --raw-dir benchmarks/artifacts/task038_extra_full3d_iterative_t2/p6-h10-mpi2/raw --record benchmarks/artifacts/task038_extra_full3d_iterative_t2/p6-h10-mpi2/record.json --expected-source-sha 6d60bb5a9a59e88da98b027efeed8506d5dd7a82 --expected-mpi-size 2
+python -m benchmarks.run_task038_full3d_t2 run --case p6-h5 --raw-dir benchmarks/artifacts/task038_extra_full3d_iterative_t2/p6-h5-mpi1/raw --record benchmarks/artifacts/task038_extra_full3d_iterative_t2/p6-h5-mpi1/record.json --expected-source-sha 6d60bb5a9a59e88da98b027efeed8506d5dd7a82 --expected-mpi-size 1
+
+python -m benchmarks.run_task038_full3d_t2 aggregate --p2-mpi1-record benchmarks/artifacts/task038_extra_full3d_iterative_t2/p2-h50-mpi1-rerun/record.json --p3-mpi1-record benchmarks/artifacts/task038_extra_full3d_iterative_t2/p3-h50-mpi1/record.json --p6-h10-mpi1-record benchmarks/artifacts/task038_extra_full3d_iterative_t2/p6-h10-mpi1/record.json --p6-h10-mpi2-record benchmarks/artifacts/task038_extra_full3d_iterative_t2/p6-h10-mpi2/record.json --p6-h5-mpi1-record benchmarks/artifacts/task038_extra_full3d_iterative_t2/p6-h5-mpi1/record.json
+```
+
+The actual runner wall times were p2-h50 MPI1 `1.48 s` after the authorized fix, p3-h50 MPI1 `10.47 s`, p6-h10 MPI1 `90.20 s`, p6-h10 MPI2 `19.66 s`, and p6-h5 MPI1 `97.79 s`. The aggregate checker took `73.42 s` and returned `T2_ACTION_PASS` with `exact_five_record_set`, `evidence`, `mpi_canonical_identity`, and `mandatory_h10_to_h5_scaling` all true.
+
+## 3. Tracked compact records and hashes
+
+| compact artifact | SHA-256 |
+|---|---|
+| [`t2_p2_h50_mpi1_v1.json`](records/t2_p2_h50_mpi1_v1.json) | `cda3924e0db671572b043481cda05492747c2935a63af329a8bcf80bb5821554` |
+| [`t2_p3_h50_mpi1_v1.json`](records/t2_p3_h50_mpi1_v1.json) | `e8e7789fe69dc1bdbd6c34228f1332ff1c32352c7c80051de6f7fef7ee235700` |
+| [`t2_p6_h10_mpi1_v1.json`](records/t2_p6_h10_mpi1_v1.json) | `dbf58723adbfd505f5863178c7e012dedd2b393c14b049e149e7e652d7f3dcde` |
+| [`t2_p6_h10_mpi2_v1.json`](records/t2_p6_h10_mpi2_v1.json) | `76f0d3b9c306c1f11a169743c9f54a4d42263e006e7b151066ee45719bde5b1d` |
+| [`t2_p6_h5_mpi1_v1.json`](records/t2_p6_h5_mpi1_v1.json) | `aba248e8d3c7d0a50a2c5b720e523f27dd1262e300a08756308a7d2e677e1f25` |
+| [`t2_aggregate_check_v1.json`](records/t2_aggregate_check_v1.json) | `1b604df72dcaa20a7d23efc1a8dccf3e9564820bbdbf8ad54007f1c6869a7dcd` |
+
+Each compact record retains the absolute ignored raw directory and the source/action/reference artifact SHA-256 descriptors. The raw roots are:
+
+```text
+benchmarks/artifacts/task038_extra_full3d_iterative_t2/p2-h50-mpi1-rerun/raw
+benchmarks/artifacts/task038_extra_full3d_iterative_t2/p3-h50-mpi1/raw
+benchmarks/artifacts/task038_extra_full3d_iterative_t2/p6-h10-mpi1/raw
+benchmarks/artifacts/task038_extra_full3d_iterative_t2/p6-h10-mpi2/raw
+benchmarks/artifacts/task038_extra_full3d_iterative_t2/p6-h5-mpi1/raw
+```
+
+## 4. Test and scope decision
+
+| item | result | identity / evidence |
+|---|---|---|
+| focused test269 + test270 | 18 passed | exact formal source content; rerun after the fix commit |
+| compileall | pass | qualified activation, runner/checker/action modules |
+| `git diff --check` | pass | before formal and before evidence staging |
+| T2 five-case aggregate | pass | compact aggregate record above |
+| process-tree peak | not measured | T2 keeps `not_measured_t2`; no process-tree claim |
+| KSP / PDE / DtN | not run | T2 action-only boundary |
+| T3 | not started | stop for supervision review |
+| T7/T8/T9 | not authorized | unchanged Review V1 boundary |
+
+The first p2-h50 attempt at implementation SHA `5ce75540ff97089f74021660876ab2022ffad1f9` failed only during JSON serialization; its raw mesh and vectors remain ignored and were not deleted. The single narrow fix was committed as `6d60bb5a9a59e88da98b027efeed8506d5dd7a82`; the same p2 case was rerun once and passed. No other formal case was retried.
