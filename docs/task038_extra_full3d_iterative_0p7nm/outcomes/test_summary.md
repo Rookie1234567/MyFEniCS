@@ -74,3 +74,38 @@ benchmarks/artifacts/task038_extra_full3d_iterative_t2/p6-h5-mpi1/raw
 | T7/T8/T9 | not authorized | unchanged Review V1 boundary |
 
 The first p2-h50 attempt at implementation SHA `5ce75540ff97089f74021660876ab2022ffad1f9` failed only during JSON serialization; its raw mesh and vectors remain ignored and were not deleted. The single narrow fix was committed as `6d60bb5a9a59e88da98b027efeed8506d5dd7a82`; the same p2 case was rerun once and passed. No other formal case was retried.
+
+# Task038-extra T3 formal test and evidence summary
+
+## 5. Source and formal identity
+
+| item | result |
+|---|---|
+| T3 implementation source SHA | `b9ec1375d6e0727059b4f3c043561aa00bcf3ffc` |
+| T3 narrow MPI initialization fix / formal source SHA | `691ac261fd62258d356183cb3c0383307605b15e` |
+| upstream | `80c3fa29d54813d0344a93ffa7768108ff15fa76` |
+| branch relation after fix | ahead 7 / behind 0 |
+| frozen input | `input/templates/full3d_iterative_example.dat`, 2119 bytes, SHA `819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41` |
+| resolved config | 4076 bytes, SHA `78dc49b3a7ae212dec6374fde09eaaa231c131ce64790202da062b3ca2b09aad` |
+| physical model | SHA `9142440056196b0c6d4c579f0a1e17e79c1fad7cf0b626206fbd343837804a0f` |
+| formal identity | p6/h10, 13.5 nm, degree 6, h=10 nm, `full3d_scalable_v1`, `dtn_port`, `auto_propagating`, `auxiliary` |
+
+T1 adapter 预检动态发现 80 modes：78 propagating、0 near-cutoff、2 evanescent；ordered manifest SHA 为 `dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2`。生产构造器没有写死 80；80 是本 frozen benchmark 的 authority assertion。
+
+## 6. Checks and results
+
+| check | result |
+|---|---|
+| serial T3 after narrow fix | `10 passed, 1 skipped` |
+| MPI2 shared-directory regression | each rank `1 passed, 10 deselected`, wall `1.32 s` |
+| T2 test269 + test270 regression | `18 passed` |
+| compileall / `git diff --check` | pass |
+| formal T3 MPI1 / MPI2 runner wall | `23.52 s` / `12.12 s` |
+| independent MPI1/MPI2 checkers | both `T3_PASS` |
+| aggregate | `T3_PASS`; canonical source/action/reference relative L2 `0.0`, recovery relative L2 `0.0` |
+
+两条 formal record 都执行 12 次真实 apply，并在每次之后采集 elapsed、rank-max current RSS 与 swap。action error 为 `1.5267729283364925e-16`，recovery error 为 `8.148489733468128e-17`；RSS warm span 为 MPI1 `61440 B`、MPI2 `45056 B`，均低于 `64 MiB`，swap 均为 `0 B`。retained numeric bytes 与固定 batch work 在 [`dynamic_dtn.md`](dynamic_dtn.md) 和 tracked compact records 中分别保留。
+
+## 7. Scope
+
+T3 只完成 action/recovery formal；没有运行 KSP、Maxwell PDE、T4 或 0.7 nm full PDE。process-tree peak 明确为 `not_measured_t3`。MPI2 attempt1 的 TOCTOU traceback、空 raw 残留目录和 failure log 保留在 ignored `t3_formal_v1` artifact 下，未与新 `t3_formal_v2` SHA 混合。
