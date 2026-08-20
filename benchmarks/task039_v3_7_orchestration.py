@@ -47,6 +47,7 @@ from benchmarks.task039_hybrid_direct_identity import (
     load_task039_direct_solution_inventory,
 )
 from benchmarks.task039_v4_selected_mode_packet import (
+    Task039V4SelectedModeMmapContext,
     consume_task039_v4_selected_mode_packet,
 )
 from benchmarks.task039_v3_side_oracle import (
@@ -61,6 +62,7 @@ from benchmarks.task039_v3_side_oracle import (
 )
 from src.common.config_3d import ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
 from src.coupling.hybrid_internal_modes import build_single_hybrid_interface_mode_owner
+from src.coupling.hybrid_streamed_sources import StreamedPhysicalModalSourceProvider
 from src.modes.cross_section_spaces import (
     build_cross_section_spaces,
     build_matching_cross_section,
@@ -110,6 +112,11 @@ from src.solvers.hybrid_petrov_sources import (
     build_v6_owner_row_basis_checkpoint,
     v6_port_modal_training_schedule,
     v6_single_interface_modal_provider,
+)
+from src.solvers.hybrid_streamed_petrov import (
+    V7_STREAMED_PETROV_BATCH_SIZE,
+    V7_STREAMED_PETROV_CHECKPOINTS,
+    run_streamed_owner_row_basis_producer,
 )
 from src.solvers.hybrid_side_subspace_correction import (
     build_fixed_side_error_subspace_correction_action,
@@ -227,6 +234,39 @@ V6_H4_PORT_MODAL_BOTTOM_METHOD = "task039_v6_h4_port_modal_bottom_component"
 V6_H4_PORT_MODAL_BOTTOM_CONSTRUCTION_LIMIT_GIB = 22.0
 V6_H4_PORT_MODAL_BOTTOM_RETAINED_LIMIT_GIB = 16.0
 V6_H4_PORT_MODAL_BOTTOM_HARD_STOP_BYTES = 23622320128
+V7_STREAMED_PETROV_PROFILE_ID = "task039.v7.streamed.bottom_basis_producer.v1"
+V7_STREAMED_PETROV_METHOD = "task039_v7_streamed_bottom_basis_producer"
+V7_STREAMED_PETROV_SCHEMA = "task039.v7.streamed.bottom_basis_producer.v1"
+V7_STREAMED_PETROV_HARD_STOP_BYTES = 100262797312
+V7_STREAMED_PETROV_MINIMUM_LIMIT_GIB = 93.377006531
+V7_STREAMED_PETROV_ROBUST_LIMIT_GIB = 88.708156204
+V7_STREAMED_PETROV_SOURCE_SCHEDULE_IDENTITY = (
+    "task039.v7.streamed.packet_left_surface_dual.v1"
+)
+V7_STREAMED_LEFT_DUAL_ORACLE = {
+    "positive": {
+        "relative_error": 900.298368548294,
+        "finite": True,
+        "tolerance": 1.0e-12,
+        "equivalent": False,
+        "alpha": [867.9431664084565, 242.7894121011002],
+        "aligned_residual": 2.4117285472279123e-16,
+        "vector_equal": False,
+        "direction_equivalent": True,
+        "fixture_scope": "tiny_fixture_oracle_only",
+    },
+    "negative": {
+        "relative_error": 900.298368548294,
+        "finite": True,
+        "tolerance": 1.0e-12,
+        "equivalent": False,
+        "alpha": [867.9431664084565, 242.7894121011002],
+        "aligned_residual": 2.4117285472279123e-16,
+        "vector_equal": False,
+        "direction_equivalent": True,
+        "fixture_scope": "tiny_fixture_oracle_only",
+    },
+}
 V6_PORT_MODAL_HOLDOUT_LABELS = (
     "physical_side_rhs",
     "modal_traction_positive",
@@ -493,6 +533,7 @@ def v3_7_watchdog_policy(
     v7_h4_exact_side_limit_setup_only: bool = False,
     v7_h4_exact_side_full_formal: bool = False,
     v6_h4_port_modal_bottom_only: bool = False,
+    v7_h4_streamed_bottom_producer: bool = False,
 ) -> dict[str, Any]:
     """Return the byte-authoritative policy; 195 GiB is telemetry only."""
 
@@ -517,6 +558,8 @@ def v3_7_watchdog_policy(
         absolute_bytes = V6_H4_SETUP_THRESHOLD_BYTES
     elif v6_h4_port_modal_bottom_only:
         absolute_bytes = V6_H4_PORT_MODAL_BOTTOM_HARD_STOP_BYTES
+    elif v7_h4_streamed_bottom_producer:
+        absolute_bytes = V7_STREAMED_PETROV_HARD_STOP_BYTES
     else:
         absolute_bytes = V3_7_ABSOLUTE_HARD_BYTES
     policy = {
@@ -540,7 +583,11 @@ def v3_7_watchdog_policy(
                     else (
                         "v6_h4_port_modal_bottom_only"
                         if v6_h4_port_modal_bottom_only
-                        else "v3_7_default"
+                        else (
+                            "v7_h4_streamed_bottom_producer"
+                            if v7_h4_streamed_bottom_producer
+                            else "v3_7_default"
+                        )
                     )
                 )
             )
@@ -588,6 +635,7 @@ def build_v3_7_execution_plan(
     v7_h4_exact_side_full_formal: bool = False,
     v6_h4_port_modal_bottom_only: bool = False,
     v6_h4_port_modal_exact_spool_root: str | Path | None = None,
+    v7_h4_streamed_bottom_producer: bool = False,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -603,6 +651,7 @@ def build_v3_7_execution_plan(
         or v7_h4_exact_side_limit_setup_only
         or v7_h4_exact_side_full_formal
         or v6_h4_port_modal_bottom_only
+        or v7_h4_streamed_bottom_producer
     ):
         specification = load_and_resolve(input_path)
         from benchmarks.task039_v4_h4_hybrid_direct import (
@@ -623,6 +672,7 @@ def build_v3_7_execution_plan(
         v7_h4_exact_side_limit_setup_only=v7_h4_exact_side_limit_setup_only,
         v7_h4_exact_side_full_formal=v7_h4_exact_side_full_formal,
         v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
+        v7_h4_streamed_bottom_producer=v7_h4_streamed_bottom_producer,
     )
     if (
         sum(
@@ -639,6 +689,7 @@ def build_v3_7_execution_plan(
                 bool(v7_h4_exact_side_limit_setup_only),
                 bool(v7_h4_exact_side_full_formal),
                 bool(v6_h4_port_modal_bottom_only),
+                bool(v7_h4_streamed_bottom_producer),
             )
         )
         > 1
@@ -682,6 +733,7 @@ def build_v3_7_execution_plan(
         or v7_h4_exact_side_limit_setup_only
         or v7_h4_exact_side_full_formal
         or v6_h4_port_modal_bottom_only
+        or v7_h4_streamed_bottom_producer
     ):
         if not all(
             (
@@ -699,6 +751,8 @@ def build_v3_7_execution_plan(
             component_flag = "--v6-h4-post-compaction-setup-only"
         elif v6_h4_port_modal_bottom_only:
             component_flag = "--v6-h4-port-modal-bottom-component"
+        elif v7_h4_streamed_bottom_producer:
+            component_flag = "--v7-h4-streamed-bottom-producer"
         elif v5_h4_setup_only:
             component_flag = "--v5-h4-setup-only"
         elif v5_h4_blr_side_only:
@@ -762,6 +816,8 @@ def build_v3_7_execution_plan(
         method = V6_H4_POST_COMPACTION_METHOD
     elif v6_h4_port_modal_bottom_only:
         method = V6_H4_PORT_MODAL_BOTTOM_METHOD
+    elif v7_h4_streamed_bottom_producer:
+        method = V7_STREAMED_PETROV_METHOD
     elif v5_h4_setup_only:
         method = "task039_v5_h4_exact_side_setup_only"
     elif v5_h4_blr_side_only:
@@ -788,6 +844,8 @@ def build_v3_7_execution_plan(
         profile_id = V6_H4_POST_COMPACTION_PROFILE_ID
     elif v6_h4_port_modal_bottom_only:
         profile_id = V6_H4_PORT_MODAL_BOTTOM_PROFILE_ID
+    elif v7_h4_streamed_bottom_producer:
+        profile_id = V7_STREAMED_PETROV_PROFILE_ID
     elif v5_h4_setup_only:
         profile_id = "task039.v5.h4.exact-side.setup-only.v1"
     elif v5_h4_blr_side_only:
@@ -857,6 +915,7 @@ def v3_7_execution_dry_run(
     v6_h4_port_modal_bottom_only: bool = False,
     v6_h4_port_modal_exact_spool_root: str | Path | None = None,
     v7_h4_exact_side_full_formal: bool = False,
+    v7_h4_streamed_bottom_producer: bool = False,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -885,6 +944,7 @@ def v3_7_execution_dry_run(
         v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
         v6_h4_port_modal_exact_spool_root=v6_h4_port_modal_exact_spool_root,
         v7_h4_exact_side_full_formal=v7_h4_exact_side_full_formal,
+        v7_h4_streamed_bottom_producer=v7_h4_streamed_bottom_producer,
         v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
         selected_mode_packet_identity=selected_mode_packet_identity,
@@ -924,6 +984,7 @@ def launch_v3_7_with_task038_watchdog(
     v6_h4_port_modal_bottom_only: bool = False,
     v6_h4_port_modal_exact_spool_root: str | Path | None = None,
     v7_h4_exact_side_full_formal: bool = False,
+    v7_h4_streamed_bottom_producer: bool = False,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -939,6 +1000,7 @@ def launch_v3_7_with_task038_watchdog(
         or v7_h4_exact_side_limit_setup_only
         or v7_h4_exact_side_full_formal
         or v6_h4_port_modal_bottom_only
+        or v7_h4_streamed_bottom_producer
     ):
         specification = load_and_resolve(input_path)
         from benchmarks.task039_v4_h4_hybrid_direct import (
@@ -957,6 +1019,7 @@ def launch_v3_7_with_task038_watchdog(
         and not v7_h4_exact_side_limit_setup_only
         and not v7_h4_exact_side_full_formal
         and not v6_h4_port_modal_bottom_only
+        and not v7_h4_streamed_bottom_producer
         and not V3_7_DIRECT_RUN_ROOT.is_dir()
     ):
         raise ValueError("V3-7 direct producer inventory is unavailable")
@@ -967,6 +1030,7 @@ def launch_v3_7_with_task038_watchdog(
         and not v7_h4_exact_side_limit_setup_only
         and not v7_h4_exact_side_full_formal
         and not v6_h4_port_modal_bottom_only
+        and not v7_h4_streamed_bottom_producer
         and not callable(compare_v3_7_hybrid_candidate_to_direct)
     ):
         raise ValueError("V3-7 integrated checker entry point is unavailable")
@@ -982,6 +1046,7 @@ def launch_v3_7_with_task038_watchdog(
         and not v7_h4_exact_side_limit_setup_only
         and not v7_h4_exact_side_full_formal
         and not v6_h4_port_modal_bottom_only
+        and not v7_h4_streamed_bottom_producer
         and not candidate_d_only
         and not candidate_d_qualified
     ):
@@ -1009,6 +1074,7 @@ def launch_v3_7_with_task038_watchdog(
         v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
         v6_h4_port_modal_exact_spool_root=v6_h4_port_modal_exact_spool_root,
         v7_h4_exact_side_full_formal=v7_h4_exact_side_full_formal,
+        v7_h4_streamed_bottom_producer=v7_h4_streamed_bottom_producer,
         v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
         selected_mode_packet_identity=selected_mode_packet_identity,
@@ -1417,6 +1483,323 @@ def _build_v5_h4_fixed_budget_bottom_side_setup(
             },
         )
     return SimpleNamespace(bottom=system, side_only=True)
+
+
+def _v7_streamed_packet_pair(
+    item: Mapping[str, Any], context: Any
+) -> tuple[dict[str, Any], str]:
+    """Resolve one frozen modal pair without constructing a solver object."""
+
+    right_modal = item["right_family"] in {
+        "positive_modal_traction",
+        "negative_modal_traction",
+    }
+    left_modal = item["left_family"] in {
+        "positive_modal_dual",
+        "negative_modal_dual",
+    }
+    if right_modal and left_modal:
+        right_family = str(item["right_family"])
+        left_family = str(item["left_family"])
+        right_branch = "positive" if right_family.startswith("positive") else "negative"
+        left_branch = "positive" if left_family.startswith("positive") else "negative"
+        right_column = int(item["right_selector"]["column"])
+        left_column = int(item["left_selector"]["column"])
+        if right_branch != left_branch or right_column != left_column:
+            raise ValueError(
+                "V7 streamed modal source pair has inconsistent branch/column"
+            )
+        return context.mode_pair(right_branch, right_column), right_branch
+    if right_modal:
+        family = str(item["right_family"])
+        branch = "positive" if family.startswith("positive") else "negative"
+        return context.mode_pair(branch, int(item["right_selector"]["column"])), branch
+    if left_modal:
+        family = str(item["left_family"])
+        branch = "positive" if family.startswith("positive") else "negative"
+        return context.mode_pair(branch, int(item["left_selector"]["column"])), branch
+    return {}, ""
+
+
+def run_v7_h4_streamed_bottom_basis_producer(
+    setup: Any,
+    *,
+    comm: MPI.Intracomm,
+    marker_callback: Callable[[str, Mapping[str, Any]], None],
+    packet_manifest: str | Path,
+    packet_identity: Mapping[str, Any],
+    packet_manifest_sha256: str,
+    output_directory: str | Path,
+) -> dict[str, Any]:
+    """Produce one bottom-only streamed owner-row basis packet.
+
+    This route deliberately owns no base action, H inverse, exact response,
+    holdout spool, QEP, or outer solver.  ``system.blocks`` is the borrowed
+    action-only C/D carrier; the selected-mode context retains four mmap arrays
+    and copies only the current mode pair.
+    """
+
+    if not getattr(setup, "side_only", False) or not hasattr(setup, "bottom"):
+        raise ValueError("V7 streamed producer requires a bottom-only setup carrier")
+    system = setup.bottom
+    packet_context = None
+    modal_provider = None
+    gradient_provider = None
+    schedule = v6_port_modal_training_schedule(
+        mode_count=480, external_count=296, source_count=512
+    )
+    schedule_sha256 = hashlib.sha256(
+        json.dumps(schedule, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    provenance = {
+        "source_schedule_identity": V7_STREAMED_PETROV_SOURCE_SCHEDULE_IDENTITY,
+        "schedule_sha256": schedule_sha256,
+        "training_holdout_disjoint": True,
+        "training_reads_holdout_files": False,
+        "exact_spool_opened": False,
+        "holdout_opened": False,
+        "consumer_qep_calls": 0,
+        "batch_size": V7_STREAMED_PETROV_BATCH_SIZE,
+        "left_dual_authority": "packet_left_surface_dual",
+        "left_dual_oracle": deepcopy(V7_STREAMED_LEFT_DUAL_ORACLE),
+        "left_dual_oracle_fixture_scope": "tiny_fixture_oracle_only",
+    }
+    marker_callback(
+        "v7_streamed_bottom_producer_begin",
+        {
+            "profile": V7_STREAMED_PETROV_PROFILE_ID,
+            "source_schedule_identity": V7_STREAMED_PETROV_SOURCE_SCHEDULE_IDENTITY,
+            "schedule_checkpoints": list(V7_STREAMED_PETROV_CHECKPOINTS),
+            "schedule_count": len(schedule),
+            "batch_size": V7_STREAMED_PETROV_BATCH_SIZE,
+            "holdout_opened": False,
+            "exact_spool_opened": False,
+            "consumer_qep_calls": 0,
+            "global_basis_materialized": False,
+            "source_columns_retained": False,
+            "exact_factor_count": 0,
+            "global_direct_factor_count": 0,
+        },
+    )
+
+    def _owned_values(vector: PETSc.Vec) -> np.ndarray:
+        expected_range = tuple(int(value) for value in system.A.getOwnershipRange())
+        if tuple(int(value) for value in vector.getOwnershipRange()) != expected_range:
+            raise ValueError("V7 streamed source ownership differs from bottom A")
+        return np.array(vector.getArray(readonly=True), dtype=np.complex128, copy=True)
+
+    def _source_builder(
+        item: Mapping[str, Any], context: Any
+    ) -> tuple[np.ndarray, np.ndarray, Mapping[str, Any]]:
+        pair, branch = _v7_streamed_packet_pair(item, context)
+        right_vec = None
+        left_vec = None
+        right_metadata: Mapping[str, Any] = {}
+        left_metadata: Mapping[str, Any] = {}
+        try:
+            right_family = str(item["right_family"])
+            if right_family in {
+                "positive_modal_traction",
+                "negative_modal_traction",
+            }:
+                right_vec, right_metadata = modal_provider(
+                    system,
+                    pair,
+                    branch=branch,
+                    role="right",
+                    family=right_family,
+                )
+            else:
+                right_vec, right_metadata = build_v6_factor_free_source_vector(
+                    system,
+                    system.blocks,
+                    dict(item),
+                    role="right",
+                    modal_provider=None,
+                    near_null_provider=gradient_provider,
+                )
+
+            left_family = str(item["left_family"])
+            if left_family in {"positive_modal_dual", "negative_modal_dual"}:
+                left_vec, left_metadata = modal_provider(
+                    system,
+                    pair,
+                    branch=branch,
+                    role="left",
+                    family="packet_left_surface_dual",
+                )
+            else:
+                left_vec, left_metadata = build_v6_factor_free_source_vector(
+                    system,
+                    system.blocks,
+                    dict(item),
+                    role="left",
+                    modal_provider=None,
+                    near_null_provider=gradient_provider,
+                )
+            source_identity = {
+                "schedule_identity": V7_STREAMED_PETROV_SOURCE_SCHEDULE_IDENTITY,
+                "index": int(item["index"]),
+                "right_family": right_family,
+                "left_family": left_family,
+                "right_metadata": _json_safe(dict(right_metadata)),
+                "left_metadata": _json_safe(dict(left_metadata)),
+                "packet_branch": branch or None,
+                "packet_mode_index": (int(pair["index"]) if pair else None),
+            }
+            return _owned_values(right_vec), _owned_values(left_vec), source_identity
+        finally:
+            if left_vec is not None:
+                left_vec.destroy()
+            if right_vec is not None:
+                right_vec.destroy()
+
+    try:
+        packet_context = Task039V4SelectedModeMmapContext(
+            Path(packet_manifest),
+            identity=packet_identity,
+            expected_manifest_sha256=packet_manifest_sha256,
+            comm=comm,
+        )
+        marker_callback(
+            "v7_streamed_bottom_packet_context_ready",
+            {"packet_context": packet_context.diagnostics},
+        )
+        cross_section = build_matching_cross_section(system.cfg, "stage4_xy")
+        spaces = build_cross_section_spaces(
+            cross_section, transverse_degree=int(system.cfg.nedelec_degree)
+        )
+        modal_provider = StreamedPhysicalModalSourceProvider(system, spaces)
+        gradient_provider = build_v6_discrete_gradient_source_provider(
+            system=system,
+            spaces=spaces,
+            surface_source_assembler=modal_provider.assemble_surface_source,
+        )
+        marker_callback(
+            "v7_streamed_bottom_source_providers_ready",
+            {
+                "modal_provider": modal_provider.diagnostics,
+                "gradient_provider": {
+                    "setup_count": gradient_provider.setup_count,
+                    "apply_count": gradient_provider.apply_count,
+                    "family": "cross_section_discrete_gradient_potential",
+                },
+                "system_operator_identity": "system.A",
+                "external_carrier": "system.blocks.C_D",
+                "explicit_components_created": False,
+                "base_action_created": False,
+                "exact_factor_count": 0,
+                "global_direct_factor_count": 0,
+            },
+        )
+        result = run_streamed_owner_row_basis_producer(
+            packet_context,
+            schedule,
+            _source_builder,
+            output_directory=output_directory,
+            global_rows=int(system.A.getSize()[0]),
+            ownership_range=tuple(int(value) for value in system.A.getOwnershipRange()),
+            schedule_sha256=schedule_sha256,
+            provenance=provenance,
+            comm=comm,
+        )
+        marker_callback(
+            "v7_streamed_bottom_basis_packet_written",
+            {
+                "manifest": result.get("manifest"),
+                "manifest_sha256": result.get("manifest_sha256"),
+                "prefix_checkpoints": result.get("prefix_checkpoints"),
+                "producer_diagnostics": result.get("producer_diagnostics"),
+                "source_columns_retained": False,
+                "global_basis_materialized": False,
+            },
+        )
+        result.update(
+            {
+                "schema": V7_STREAMED_PETROV_SCHEMA,
+                "status": "producer_completed",
+                "component_candidate": True,
+                "research_only": True,
+                "general_production": False,
+                "profile": V7_STREAMED_PETROV_PROFILE_ID,
+                "source_schedule_identity": V7_STREAMED_PETROV_SOURCE_SCHEDULE_IDENTITY,
+                "schedule": {
+                    "count": len(schedule),
+                    "checkpoints": list(V7_STREAMED_PETROV_CHECKPOINTS),
+                    "sha256": schedule_sha256,
+                    "batch_size": V7_STREAMED_PETROV_BATCH_SIZE,
+                },
+                "provenance": provenance,
+                "packet_context": packet_context.diagnostics,
+                "holdout": {
+                    "opened": False,
+                    "exact_spool_opened": False,
+                    "consumer_qep_calls": 0,
+                },
+                "resource": {
+                    "minimum_limit_gib": V7_STREAMED_PETROV_MINIMUM_LIMIT_GIB,
+                    "robust_limit_gib": V7_STREAMED_PETROV_ROBUST_LIMIT_GIB,
+                    "authority": "parent_process_tree_samples",
+                    "pass": None,
+                },
+                "factor_inventory": {
+                    "base_factor_count": 0,
+                    "exact_factor_count": 0,
+                    "global_direct_factor_count": 0,
+                    "nested_ksp": 0,
+                },
+                "top": "not_run_by_bottom_producer_contract",
+                "consumer": "not_run",
+                "outer": "not_run",
+                "recovery": "not_run",
+                "field": "not_run",
+                "RTA": "not_run",
+                "telemetry": {
+                    "process_tree_samples": {
+                        "path": "numerical_output/process_tree_samples.jsonl",
+                        "writer": "parent_task038_launcher",
+                        "status": "expected_from_parent_launcher",
+                    },
+                    "memory_stages": {
+                        "path": "numerical_output/memory_stages.jsonl",
+                        "writer": "parent_task038_launcher_marker_alignment",
+                        "status": "expected_from_parent_launcher",
+                    },
+                    "memory_stage_markers": {
+                        "path": "numerical_output/memory_stage_markers.raw.jsonl",
+                        "writer": "v3_7_worker",
+                        "status": "measured_worker_marker_stream",
+                    },
+                    "memory_object_ledger": {
+                        "path": "numerical_output/memory_object_ledger.json",
+                        "schema": "task039.memory-object-ledger.v1",
+                        "status": "finalized_in_worker_finalizer",
+                    },
+                },
+            }
+        )
+        return result
+    finally:
+        if gradient_provider is not None:
+            gradient_provider.destroy()
+        if modal_provider is not None:
+            modal_provider.destroy()
+        if packet_context is not None and not packet_context.diagnostics.get(
+            "released", False
+        ):
+            packet_context.release()
+        marker_callback(
+            "v7_streamed_bottom_producer_released",
+            {
+                "packet_context_released": bool(
+                    packet_context is None or packet_context.diagnostics["released"]
+                ),
+                "source_columns_retained": False,
+                "holdout_opened": False,
+                "exact_spool_opened": False,
+                "consumer_qep_calls": 0,
+            },
+        )
 
 
 def _load_v5_fixed_budget_spool_shards(
@@ -6502,6 +6885,7 @@ def run_task039_v3_7_diagnostic(
     v7_h4_exact_side_full_formal: bool = False,
     v6_h4_port_modal_bottom_only: bool = False,
     v6_h4_port_modal_exact_spool_root: str | Path | None = None,
+    v7_h4_streamed_bottom_producer: bool = False,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: Mapping[str, Any] | None = None,
@@ -6590,6 +6974,7 @@ def run_task039_v3_7_diagnostic(
             or v7_h4_exact_side_limit_setup_only
             or v7_h4_full_formal
             or v6_h4_port_modal_bottom_only
+            or v7_h4_streamed_bottom_producer
         ):
             profile = (
                 profile_override
@@ -6604,6 +6989,7 @@ def run_task039_v3_7_diagnostic(
             or v7_h4_exact_side_limit_setup_only
             or v7_h4_full_formal
             or v6_h4_port_modal_bottom_only
+            or v7_h4_streamed_bottom_producer
         ):
             incidence = resolved_payload["incidence"]
             if v7_h4_full_formal:
@@ -6618,6 +7004,9 @@ def run_task039_v3_7_diagnostic(
             elif v6_h4_port_modal_bottom_only:
                 route_profile_id = V6_H4_PORT_MODAL_BOTTOM_PROFILE_ID
                 route_schema = V6_H4_PORT_MODAL_BOTTOM_PROFILE_ID
+            elif v7_h4_streamed_bottom_producer:
+                route_profile_id = V7_STREAMED_PETROV_PROFILE_ID
+                route_schema = V7_STREAMED_PETROV_SCHEMA
             elif v5_h4_blr_side_only:
                 route_profile_id = V5_H4_BLR_SIDE_PROFILE_ID
                 route_schema = V5_H4_BLR_SIDE_PROFILE_ID
@@ -6651,6 +7040,7 @@ def run_task039_v3_7_diagnostic(
             v7_h4_exact_side_limit_setup_only=v7_h4_exact_side_limit_setup_only,
             v7_h4_exact_side_full_formal=v7_h4_full_formal,
             v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
+            v7_h4_streamed_bottom_producer=v7_h4_streamed_bottom_producer,
         )
         _emit_marker(
             marker_callback,
@@ -6670,6 +7060,7 @@ def run_task039_v3_7_diagnostic(
             and not v6_h4_post_compaction_setup_only
             and not v7_h4_exact_side_limit_setup_only
             and not v6_h4_port_modal_bottom_only
+            and not v7_h4_streamed_bottom_producer
         ):
             raise ValueError(
                 "V3-7 requires an injected recovery_runner(setup, layout, snapshot, "
@@ -6726,6 +7117,38 @@ def run_task039_v3_7_diagnostic(
                         "_full3d_authority_run_directory": None,
                     }
                 )
+            modal_amplitudes = None
+        elif v7_h4_streamed_bottom_producer:
+            if (
+                selected_mode_packet_manifest is None
+                or selected_mode_packet_identity is None
+                or selected_mode_packet_manifest_sha256 is None
+            ):
+                raise ValueError(
+                    "V7 streamed producer requires the shared packet identity"
+                )
+            producer = {
+                "producer_source_sha": selected_mode_packet_identity.get("source_sha"),
+                "physical_model_sha256": selected_mode_packet_identity.get(
+                    "physical_sha256"
+                ),
+                "model_id": selected_mode_packet_identity.get("model_id"),
+                "requested_modes": 480,
+                "mpi_size": 8,
+                "external_keys_exact": True,
+                "selected_mode_packet": True,
+                "consumer_qep_calls": 0,
+                "packet_arrays_hydrated": False,
+                "exact_spool_opened": False,
+                "holdout_opened": False,
+                "component_candidate": True,
+                "research_only": True,
+                "general_production": False,
+                "source_schedule_identity": V7_STREAMED_PETROV_SOURCE_SCHEDULE_IDENTITY,
+                "batch_size": V7_STREAMED_PETROV_BATCH_SIZE,
+                "exact_factor_count": 0,
+                "global_direct_factor_count": 0,
+            }
             modal_amplitudes = None
         elif v6_h4_port_modal_bottom_only:
             if (
@@ -6903,6 +7326,52 @@ def run_task039_v3_7_diagnostic(
                 packet_manifest=selected_mode_packet_manifest,
                 packet_identity=selected_mode_packet_identity,
                 packet_manifest_sha256=selected_mode_packet_manifest_sha256,
+            )
+            result["source_sha"] = source_sha
+            result["run_directory"] = str(Path(run_directory).resolve())
+            result["packet"] = {
+                **packet_contract,
+                "manifest": str(selected_mode_packet_manifest),
+            }
+            normal_return = True
+            return result
+
+        if v7_h4_streamed_bottom_producer:
+            packet_contract = _validate_v5_fixed_budget_packet_manifest(
+                selected_mode_packet_manifest,
+                selected_mode_packet_identity,
+                selected_mode_packet_manifest_sha256,
+                comm=comm,
+            )
+            builder = (
+                side_system_builder
+                if side_system_builder is not None
+                else _build_v5_h4_fixed_budget_bottom_side_setup
+            )
+            setup = builder(
+                cfg=cfg,
+                profile=profile,
+                comm=comm,
+                detail_stage_callback=combined_detail_callback,
+            )
+            if not getattr(setup, "side_only", False) or not hasattr(setup, "bottom"):
+                raise ValueError(
+                    "V7 streamed producer builder did not return a bottom-only carrier"
+                )
+            object_ledger["objects"]["setup"]["created"] = True
+            object_ledger["objects"]["setup"]["status"] = "measured"
+            result = run_v7_h4_streamed_bottom_basis_producer(
+                setup,
+                comm=comm,
+                marker_callback=marker_callback,
+                packet_manifest=selected_mode_packet_manifest,
+                packet_identity=selected_mode_packet_identity,
+                packet_manifest_sha256=selected_mode_packet_manifest_sha256,
+                output_directory=(
+                    Path(run_directory).resolve()
+                    / "numerical_output"
+                    / "streamed_basis_packet"
+                ),
             )
             result["source_sha"] = source_sha
             result["run_directory"] = str(Path(run_directory).resolve())
@@ -7672,7 +8141,9 @@ def run_task039_v3_7_diagnostic(
         try:
             if setup is not None:
                 if (
-                    v5_h4_fixed_budget_bottom_only or v6_h4_port_modal_bottom_only
+                    v5_h4_fixed_budget_bottom_only
+                    or v6_h4_port_modal_bottom_only
+                    or v7_h4_streamed_bottom_producer
                 ) and getattr(setup, "side_only", False):
                     side_system = setup.bottom
                     destroy_called = False
@@ -7716,7 +8187,11 @@ def run_task039_v3_7_diagnostic(
                         (
                             "v6_port_modal_bottom_side_setup_cleanup"
                             if v6_h4_port_modal_bottom_only
-                            else "v5_fixed_budget_bottom_side_setup_cleanup"
+                            else (
+                                "v7_streamed_bottom_producer_side_setup_cleanup"
+                                if v7_h4_streamed_bottom_producer
+                                else "v5_fixed_budget_bottom_side_setup_cleanup"
+                            )
                         ),
                         {
                             "source": "side_only_finalizer",
@@ -7922,6 +8397,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--v7-h4-exact-side-full-formal", action="store_true")
     parser.add_argument("--v6-h4-port-modal-bottom-component", action="store_true")
     parser.add_argument("--v6-h4-port-modal-exact-spool-root")
+    parser.add_argument("--v7-h4-streamed-bottom-producer", action="store_true")
     parser.add_argument("--v5-h4-blr-side-component", action="store_true")
     parser.add_argument("--v5-h4-fixed-budget-bottom-component", action="store_true")
     parser.add_argument("--v5-h4-fixed-budget-exact-spool-root")
@@ -7944,6 +8420,7 @@ def main(argv: list[str] | None = None) -> int:
             args.v7_h4_exact_side_limit_setup_only,
             args.v7_h4_exact_side_full_formal,
             args.v6_h4_port_modal_bottom_component,
+            args.v7_h4_streamed_bottom_producer,
             args.v5_h4_blr_side_component,
             args.v5_h4_fixed_budget_bottom_component,
         )
@@ -7963,6 +8440,7 @@ def main(argv: list[str] | None = None) -> int:
                 bool(args.v7_h4_exact_side_limit_setup_only),
                 bool(args.v7_h4_exact_side_full_formal),
                 bool(args.v6_h4_port_modal_bottom_component),
+                bool(args.v7_h4_streamed_bottom_producer),
                 bool(args.v5_h4_blr_side_component),
                 bool(args.v5_h4_fixed_budget_bottom_component),
             )
@@ -7990,6 +8468,7 @@ def main(argv: list[str] | None = None) -> int:
             v7_h4_exact_side_full_formal=args.v7_h4_exact_side_full_formal,
             v6_h4_port_modal_bottom_only=args.v6_h4_port_modal_bottom_component,
             v6_h4_port_modal_exact_spool_root=(args.v6_h4_port_modal_exact_spool_root),
+            v7_h4_streamed_bottom_producer=args.v7_h4_streamed_bottom_producer,
             v5_h4_blr_side_only=args.v5_h4_blr_side_component,
             v5_h4_fixed_budget_bottom_only=args.v5_h4_fixed_budget_bottom_component,
             v5_h4_fixed_budget_exact_spool_root=(
@@ -8005,6 +8484,7 @@ def main(argv: list[str] | None = None) -> int:
                     or args.v7_h4_exact_side_limit_setup_only
                     or args.v7_h4_exact_side_full_formal
                     or args.v6_h4_port_modal_bottom_component
+                    or args.v7_h4_streamed_bottom_producer
                     or args.v5_h4_blr_side_component
                     or args.v5_h4_fixed_budget_bottom_component
                 )
@@ -8018,6 +8498,7 @@ def main(argv: list[str] | None = None) -> int:
                     or args.v7_h4_exact_side_limit_setup_only
                     or args.v7_h4_exact_side_full_formal
                     or args.v6_h4_port_modal_bottom_component
+                    or args.v7_h4_streamed_bottom_producer
                     or args.v5_h4_blr_side_component
                     or args.v5_h4_fixed_budget_bottom_component
                 )
@@ -8083,6 +8564,7 @@ def main(argv: list[str] | None = None) -> int:
             v7_h4_exact_side_full_formal=args.v7_h4_exact_side_full_formal,
             v6_h4_port_modal_bottom_only=args.v6_h4_port_modal_bottom_component,
             v6_h4_port_modal_exact_spool_root=(args.v6_h4_port_modal_exact_spool_root),
+            v7_h4_streamed_bottom_producer=args.v7_h4_streamed_bottom_producer,
             v5_h4_blr_side_only=args.v5_h4_blr_side_component,
             v5_h4_fixed_budget_bottom_only=args.v5_h4_fixed_budget_bottom_component,
             v5_h4_fixed_budget_exact_spool_root=(
@@ -8119,6 +8601,7 @@ def main(argv: list[str] | None = None) -> int:
             "completed",
             "setup_only_completed",
             "component_completed",
+            "producer_completed",
             "full_formal_completed",
         }
         else 3

@@ -56,6 +56,7 @@ V7_H4_EXACT_SIDE_FULL_FORMAL_DEFAULT_TIMEOUT_SECONDS = 21600
 V7_H4_EXACT_SIDE_FULL_FORMAL_EXTENSION_TIMEOUT_SECONDS = 28800
 V6_H4_PORT_MODAL_CONSTRUCTION_LIMIT_GIB = 22.0
 V6_H4_PORT_MODAL_CONSTRUCTION_HARD_STOP_BYTES = 23622320128
+V7_STREAMED_PETROV_HARD_STOP_BYTES = 100262797312
 
 
 def _v5_h4_blr_candidate_interval_peak(
@@ -677,6 +678,9 @@ def _run_worker(
     formal_v6_h4_port_modal = (
         getattr(plan, "method", "") == "task039_v6_h4_port_modal_bottom_component"
     )
+    formal_v7_streamed_producer = (
+        getattr(plan, "method", "") == "task039_v7_streamed_bottom_basis_producer"
+    )
     formal_telemetry = (
         formal_v2_h5
         or formal_v3_2d
@@ -689,6 +693,7 @@ def _run_worker(
         or formal_v7_h4_setup
         or formal_v7_h4_full
         or formal_v6_h4_port_modal
+        or formal_v7_streamed_producer
     )
     if task039_model_id_matches(method, model_id, requested_modes):
         task039_budget = _task039_memory_budget(execution)
@@ -724,6 +729,9 @@ def _run_worker(
         terminate_limit = float(absolute_terminate_memory_bytes)
     if formal_v6_h4_port_modal:
         absolute_terminate_memory_bytes = V6_H4_PORT_MODAL_CONSTRUCTION_HARD_STOP_BYTES
+        terminate_limit = float(absolute_terminate_memory_bytes)
+    if formal_v7_streamed_producer:
+        absolute_terminate_memory_bytes = V7_STREAMED_PETROV_HARD_STOP_BYTES
         terminate_limit = float(absolute_terminate_memory_bytes)
     timeout = float(execution["timeout_seconds"])
     if formal_v7_h4_full:
@@ -809,6 +817,7 @@ def _run_worker(
                 or formal_v7_h4_setup
                 or formal_v7_h4_full
                 or formal_v6_h4_port_modal
+                or formal_v7_streamed_producer
             )
             or formal_stage_stream is None
         ):
@@ -856,6 +865,7 @@ def _run_worker(
                 or formal_v7_h4_setup
                 or formal_v7_h4_full
                 or formal_v6_h4_port_modal
+                or formal_v7_streamed_producer
             ) and stage_index is None:
                 stage_index = formal_aligned_stage_count
             row = {
@@ -904,6 +914,7 @@ def _run_worker(
             or formal_v7_h4_setup
             or formal_v7_h4_full
             or formal_v6_h4_port_modal
+            or formal_v7_streamed_producer
         ):
             formal_stages_path.unlink(missing_ok=True)
             formal_stage_stream = formal_stages_path.open("a", encoding="utf-8")
@@ -1063,6 +1074,7 @@ def _run_worker(
         or formal_v7_h4_setup
         or formal_v7_h4_full
         or formal_v6_h4_port_modal
+        or formal_v7_streamed_producer
     ) and not formal_object_ledger_path.exists():
         _write_json(
             formal_object_ledger_path,
@@ -1538,6 +1550,43 @@ def _run_worker(
             "require_zero_swap": True,
             "poll_interval_seconds": poll_interval,
             "authority": port_modal_resource,
+        }
+    if formal_v7_streamed_producer:
+        resource_authority["v7_h4_streamed_bottom_producer_telemetry"] = {
+            "raw_marker_path": str(formal_markers_path),
+            "process_tree_samples_path": str(formal_samples_path),
+            "memory_stages_path": str(formal_stages_path),
+            "memory_object_ledger_path": str(formal_object_ledger_path),
+            "sample_count": sample_count,
+            "process_tree_sample_count": formal_written_sample_count,
+            "aligned_stage_count": formal_aligned_stage_count,
+            "stage_source": "launcher_marker_alignment",
+            "method_override": {
+                "input_absolute_terminate_memory_bytes": (
+                    None
+                    if task039_budget is None
+                    else task039_budget.get("absolute_terminate_memory_bytes")
+                ),
+                "effective_absolute_terminate_memory_bytes": (
+                    V7_STREAMED_PETROV_HARD_STOP_BYTES
+                ),
+                "effective_hard_stop_memory_gib": (
+                    V7_STREAMED_PETROV_HARD_STOP_BYTES / 1024**3
+                ),
+                "process_tree_termination_enforced": True,
+            },
+            "gate_contract": {
+                "peak_process_tree_rss_bytes_strictly_below": (
+                    V7_STREAMED_PETROV_HARD_STOP_BYTES
+                ),
+                "swap_required": 0,
+                "exact_spool_opened": False,
+                "holdout_opened": False,
+            },
+            "absolute_terminate_memory_bytes": V7_STREAMED_PETROV_HARD_STOP_BYTES,
+            "require_zero_swap": True,
+            "poll_interval_seconds": poll_interval,
+            "authority": "parent_process_tree_samples",
         }
     if formal_v3_2d:
         resource_authority["v3_2d_formal_telemetry"] = {

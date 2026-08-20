@@ -382,3 +382,63 @@ def test_v6_port_modal_main_dry_run_freezes_bottom_route_and_budget(
     assert plan["worker_contract"]["exact_spool_root"] == str(spool_root.resolve())
     assert plan["watchdog"]["absolute_terminate_memory_bytes"] == 23622320128
     assert not run_directory.exists()
+
+
+def test_v7_streamed_bottom_producer_main_dry_run_is_packet_only(tmp_path, capsys):
+    h4_input = Path(
+        "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
+    )
+    packet_root = Path("results/task039_v4_h4_m480_shared_packet_eaad0f94")
+    run_directory = tmp_path / "v7-streamed-producer-main-dry-run"
+    assert (
+        watchdog.main(
+            [
+                "--dry-run",
+                "--input",
+                str(h4_input),
+                "--run-directory",
+                str(run_directory),
+                "--source-sha",
+                "a" * 40,
+                watchdog.V7_STREAMED_PETROV_BOTTOM_PRODUCER_FLAG,
+                "--selected-mode-packet-manifest",
+                str(packet_root / "manifest.json"),
+                "--selected-mode-packet-identity",
+                str(packet_root / "identity.json"),
+                "--selected-mode-packet-manifest-sha256",
+                "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067",
+            ]
+        )
+        == 0
+    )
+    plan = json.loads(capsys.readouterr().out)
+    assert plan["argv"][1:3] == ["-n", "8"]
+    assert plan["argv"].count(watchdog.V7_STREAMED_PETROV_BOTTOM_PRODUCER_FLAG) == 1
+    route_flags = (
+        "--candidate-b-only",
+        "--candidate-c-only",
+        "--candidate-d-only",
+        "--candidate-d-qualified",
+        "--candidate-e-side-only",
+        "--v5-h4-setup-only",
+        "--v5-h4-blr-side-component",
+        "--v5-h4-fixed-budget-bottom-component",
+        "--v6-h4-post-compaction-setup-only",
+        "--v6-h4-port-modal-bottom-component",
+        "--v7-h4-exact-side-limit-setup-only",
+        "--v7-h4-exact-side-full-formal",
+        watchdog.V7_STREAMED_PETROV_BOTTOM_PRODUCER_FLAG,
+    )
+    assert sum(flag in plan["argv"] for flag in route_flags) == 1
+    assert plan["worker_contract"]["method"] == (
+        watchdog.V7_STREAMED_PETROV_BOTTOM_PRODUCER_METHOD
+    )
+    assert plan["worker_contract"]["profile_id"] == (
+        watchdog.V7_STREAMED_PETROV_BOTTOM_PRODUCER_PROFILE
+    )
+    assert plan["worker_contract"]["exact_spool_root"] is None
+    assert plan["watchdog"]["absolute_terminate_memory_bytes"] == (
+        watchdog.V7_STREAMED_PETROV_HARD_STOP_BYTES
+    )
+    assert all("spool" not in argument for argument in plan["argv"])
+    assert not run_directory.exists()

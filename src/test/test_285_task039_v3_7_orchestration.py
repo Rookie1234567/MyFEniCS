@@ -30,6 +30,7 @@ from benchmarks.task039_v3_7_orchestration import (
     _v6_global_minimum_layer_labels,
     _v6_layer_graph_from_csr,
     _v6_reduce_layer_graph,
+    _v7_streamed_packet_pair,
     _v3_7_cleanup_callback,
     _v3_7_object_ledger,
     _write_v3_7_candidate_authority,
@@ -68,6 +69,51 @@ def _tiny_side_system(rhs_values=(0.0, 0.0)):
         rhs.setValue(index, PETSc.ScalarType(value))
     rhs.assemble()
     return SimpleNamespace(A=matrix, b=rhs), matrix, rhs
+
+
+def test_v7_streamed_packet_pair_checks_frozen_modal_schedule_without_solver():
+    schedule = orchestration.v6_port_modal_training_schedule(
+        mode_count=480, external_count=296, source_count=512
+    )
+
+    class FakeContext:
+        def __init__(self):
+            self.calls = []
+
+        def mode_pair(self, branch, column):
+            self.calls.append((branch, column))
+            return {"branch": branch, "column": column}
+
+    context = FakeContext()
+    modal_items = []
+    for item in schedule:
+        pair, branch = _v7_streamed_packet_pair(item, context)
+        right_family = item["right_family"]
+        left_family = item["left_family"]
+        if right_family.endswith("modal_traction") and left_family.endswith(
+            "modal_dual"
+        ):
+            modal_items.append(item)
+            assert pair["branch"] == branch
+            assert pair["column"] == item["right_selector"]["column"]
+            assert item["right_selector"]["column"] == item["left_selector"]["column"]
+    assert len(schedule) == 512
+    assert modal_items
+    assert len(context.calls) >= len(modal_items)
+
+    branch_mismatch = json.loads(json.dumps(modal_items[0]))
+    branch_mismatch["left_family"] = (
+        "negative_modal_dual"
+        if branch_mismatch["left_family"] == "positive_modal_dual"
+        else "positive_modal_dual"
+    )
+    with pytest.raises(ValueError, match="inconsistent branch/column"):
+        _v7_streamed_packet_pair(branch_mismatch, context)
+
+    column_mismatch = json.loads(json.dumps(modal_items[0]))
+    column_mismatch["left_selector"]["column"] += 1
+    with pytest.raises(ValueError, match="inconsistent branch/column"):
+        _v7_streamed_packet_pair(column_mismatch, context)
 
 
 def _v6_gate_reports(
@@ -1529,6 +1575,72 @@ def test_v5_h4_setup_only_plan_passes_identity_and_packet_args(tmp_path) -> None
     )
 
 
+def test_v7_streamed_producer_orchestration_plan_forwards_packet_route(
+    tmp_path,
+) -> None:
+    h4_input = Path(
+        "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
+    )
+    packet_root = Path("results/task039_v4_h4_m480_shared_packet_eaad0f94")
+    plan = orchestration.v3_7_execution_dry_run(
+        h4_input,
+        tmp_path / "v7-streamed-plan",
+        source_sha="a" * 40,
+        v7_h4_streamed_bottom_producer=True,
+        selected_mode_packet_manifest=packet_root / "manifest.json",
+        selected_mode_packet_identity=packet_root / "identity.json",
+        selected_mode_packet_manifest_sha256="b" * 64,
+    )
+    argv = plan["argv"]
+    assert argv.count("--v7-h4-streamed-bottom-producer") == 1
+    route_flags = (
+        "--candidate-b-only",
+        "--candidate-c-only",
+        "--candidate-d-only",
+        "--candidate-d-qualified",
+        "--candidate-e-side-only",
+        "--v5-h4-setup-only",
+        "--v5-h4-blr-side-component",
+        "--v5-h4-fixed-budget-bottom-component",
+        "--v6-h4-post-compaction-setup-only",
+        "--v6-h4-port-modal-bottom-component",
+        "--v7-h4-exact-side-limit-setup-only",
+        "--v7-h4-exact-side-full-formal",
+        "--v7-h4-streamed-bottom-producer",
+    )
+    assert sum(flag in argv for flag in route_flags) == 1
+    assert all("exact-spool" not in argument for argument in argv)
+    assert plan["worker_contract"]["method"] == (
+        orchestration.V7_STREAMED_PETROV_METHOD
+    )
+    assert plan["worker_contract"]["profile_id"] == (
+        orchestration.V7_STREAMED_PETROV_PROFILE_ID
+    )
+    assert plan["worker_contract"]["exact_spool_root"] is None
+    assert plan["watchdog"]["absolute_terminate_memory_bytes"] == (
+        orchestration.V7_STREAMED_PETROV_HARD_STOP_BYTES
+    )
+    assert (
+        "v7_h4_streamed_bottom_producer"
+        in inspect.signature(orchestration.v3_7_execution_dry_run).parameters
+    )
+    assert (
+        "v7_h4_streamed_bottom_producer"
+        in inspect.signature(orchestration.launch_v3_7_with_task038_watchdog).parameters
+    )
+    with pytest.raises(ValueError, match="exclusive"):
+        orchestration.v3_7_execution_dry_run(
+            h4_input,
+            tmp_path / "v7-streamed-conflict",
+            source_sha="a" * 40,
+            v5_h4_fixed_budget_bottom_only=True,
+            v7_h4_streamed_bottom_producer=True,
+            selected_mode_packet_manifest=packet_root / "manifest.json",
+            selected_mode_packet_identity=packet_root / "identity.json",
+            selected_mode_packet_manifest_sha256="b" * 64,
+        )
+
+
 def test_v5_h4_blr_watchdog_main_dry_run_parses_real_flag(tmp_path, capsys) -> None:
     h4_input = Path(
         "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
@@ -1771,6 +1883,11 @@ def test_v6_parent_authority_separates_input_stop_from_effective_and_final_field
             90236517581,
             "v7_h4_exact_side_limit_setup_telemetry",
         ),
+        (
+            "task039_v7_streamed_bottom_basis_producer",
+            100262797312,
+            "v7_h4_streamed_bottom_producer_telemetry",
+        ),
     ),
 )
 def test_v6_and_v7_run_worker_use_effective_byte_stop_without_mutating_input(
@@ -1849,9 +1966,14 @@ def test_v6_and_v7_run_worker_use_effective_byte_stop_without_mutating_input(
     assert telemetry["method_override"][
         "effective_absolute_terminate_memory_bytes"
     ] == (effective_bytes)
-    if "v7" in telemetry_key:
+    if telemetry_key == "v7_h4_exact_side_limit_setup_telemetry":
         assert telemetry["gate_contract"]["outer_ready_peak_limit_gib"] == 84.039305878
         assert telemetry["gate_contract"]["outer_ready_peak_limit_gib"] != 35.0
+    if telemetry_key == "v7_h4_streamed_bottom_producer_telemetry":
+        assert telemetry["gate_contract"][
+            "peak_process_tree_rss_bytes_strictly_below"
+        ] == (100262797312)
+        assert telemetry["gate_contract"]["exact_spool_opened"] is False
 
 
 def test_v3_7_worker_failure_persists_full_traceback(tmp_path) -> None:
@@ -2918,6 +3040,106 @@ def test_v6_port_modal_worker_route_stops_before_generic_setup(
         row["marker"] == "v6_port_modal_bottom_side_setup_cleanup"
         for row in marker_rows
     )
+
+
+def test_v7_streamed_worker_route_finalizes_side_setup_once(
+    tmp_path, monkeypatch
+) -> None:
+    payload = load_and_resolve(
+        Path("input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat")
+    ).as_jsonable()
+    identity = {
+        "source_sha": "s" * 40,
+        "physical_sha256": "p" * 64,
+        "model_id": "tiny-h4",
+    }
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "rank_count": 1,
+                "consumer_qep_required": False,
+                "qep_workspace_persisted": False,
+                "identity": identity,
+            }
+        ),
+        encoding="utf-8",
+    )
+    destroy_calls = []
+    collective_calls = []
+
+    class SideSystem:
+        _destroyed = False
+
+        def destroy(self):
+            destroy_calls.append(True)
+            self._destroyed = True
+
+    side_system = SideSystem()
+
+    def side_builder(**kwargs):
+        assert kwargs["profile"].h_nm == 4.0
+        return SimpleNamespace(bottom=side_system, side_only=True)
+
+    monkeypatch.setattr(
+        orchestration,
+        "run_v7_h4_streamed_bottom_basis_producer",
+        lambda *_args, **_kwargs: {
+            "status": "producer_completed",
+            "telemetry": {
+                "memory_object_ledger": {
+                    "path": "numerical_output/memory_object_ledger.json"
+                }
+            },
+        },
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "collective_heap_cleanup",
+        lambda _comm: (
+            collective_calls.append(True) or {"collective_call_completed": True}
+        ),
+    )
+    run_directory = tmp_path / "run"
+    result = orchestration.run_task039_v3_7_diagnostic(
+        payload,
+        run_directory,
+        source_sha="c" * 40,
+        comm=MPI.COMM_SELF,
+        setup_builder=lambda **_kwargs: pytest.fail("generic setup was called"),
+        side_system_builder=side_builder,
+        v7_h4_streamed_bottom_producer=True,
+        selected_mode_packet_manifest=manifest,
+        selected_mode_packet_identity=identity,
+        selected_mode_packet_manifest_sha256=hashlib.sha256(
+            manifest.read_bytes()
+        ).hexdigest(),
+    )
+    assert result["status"] == "producer_completed"
+    assert destroy_calls == [True]
+    assert collective_calls == [True]
+    assert result["telemetry"]["memory_object_ledger"]["sha256"]
+    marker_rows = [
+        json.loads(line)
+        for line in (
+            run_directory / "numerical_output" / "memory_stage_markers.raw.jsonl"
+        )
+        .read_text(encoding="utf-8")
+        .splitlines()
+        if line.strip()
+    ]
+    assert marker_rows[-1]["marker"] == (
+        "v7_streamed_bottom_producer_side_setup_cleanup"
+    )
+    assert marker_rows[-1]["detail"]["bottom_destroyed"] is True
+    assert marker_rows[-1]["detail"]["collective_cleanup_completed"] is True
+    ledger = json.loads(
+        (run_directory / "numerical_output" / "memory_object_ledger.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert ledger["status"] == "completed"
+    assert ledger["objects"]["setup"]["destroyed"] is True
 
 
 def test_v5_h4_fixed_budget_route_is_bottom_only_and_cleans_factors(
