@@ -325,6 +325,11 @@ def test_analytic_field_import_path_is_exercised(monkeypatch: pytest.MonkeyPatch
     assert calls == ["p", "homogenize", "backsubstitution", "scatter"]
 
 
+def test_runner_registers_each_action_manifest() -> None:
+    source = inspect.getsource(runner._run_case)
+    assert 'artifacts[f"{source_name}_{direction}"] = output_manifest' in source
+
+
 def test_record_checker_passes_and_derives_pairing(tmp_path: Path) -> None:
     path = _record(tmp_path, "p2-mpi1")
     result = checker.check_t4_record(path)

@@ -447,6 +447,7 @@ def _run_case(root: Path, args: argparse.Namespace) -> int:
                         finally:
                             observed.destroy()
                     assert output_manifest is not None
+                    artifacts[f"{source_name}_{direction}"] = output_manifest
                     source_actions[direction] = {
                         "oracle_pairing": [float(expected.real), float(expected.imag)],
                         "candidate_pairing": [
