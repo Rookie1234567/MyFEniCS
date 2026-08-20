@@ -1,0 +1,91 @@
+{
+  "schema": "task039.v7.side_layer_graph_only.evidence.v1",
+  "record_type": "research_graph_only_evidence",
+  "classification": "GRAPH_ONLY_LANE_C_MEASURED",
+  "provenance": {
+    "branch": "codex/20260812-task39-5nm-hybrid-0p7nm-feasibility",
+    "source_sha": "95c20aad61414f3586651e960af9f20043462ef2",
+    "input": "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat",
+    "input_sha256": "4e60924b5997e3ca99e324ea14779f9014efc6a1304a9aa11de9c808353f1811",
+    "profile": "p6/h4/M480 input identity; no selected-mode packet hydration",
+    "mpi_size": 1
+  },
+  "execution": {
+    "mode": "serial_bottom_destroy_top_destroy",
+    "action_only_side_system": true,
+    "explicit_f_connectivity_csr_only": true,
+    "f_graph_scope": "local_FE_static_condensation_F_only",
+    "dtn_low_rank_global_coupling_included": false,
+    "selected_mode_packet_hydrated": false,
+    "exact_spool_opened": false,
+    "qep_calls": 0,
+    "factorization": "not_run",
+    "factor_inventory_after_destroy": "not_measured",
+    "outer_solve": "not_run",
+    "recovery": "not_run",
+    "pde_solve": "not_run",
+    "field_rta": "not_run",
+    "sequence_control_flow_completed": [
+      "bottom_build",
+      "bottom_F_CSR_graph_and_destroy",
+      "top_build",
+      "top_F_CSR_graph_and_destroy"
+    ],
+    "cleanup_object_inventory": "not_measured",
+    "telemetry": {
+      "wall_seconds": "not_measured",
+      "peak_rss_bytes": "not_measured",
+      "swap": "not_measured",
+      "informal_host_observation": "approximately 16 minutes and approximately 5.6 GiB; not formal evidence and not part of Pareto"
+    }
+  },
+  "layer_mapping": {
+    "source": "owned_cell_recovery_maps + trace_constraints.expansion_by_original + local_mesh.geometry.z_values",
+    "shared_trace_row_rule": "minimum_incident_owned_cell_layer",
+    "temporary_global_row_layer_tags_released": true,
+    "layer_count": 6,
+    "global_rows": 132300
+  },
+  "reference_pattern": {
+    "nnz_total": 105038640,
+    "same_layer_nnz": 75327840,
+    "same_layer_fraction": 0.7171440909745214,
+    "adjacent_layer_nnz": 29710800,
+    "adjacent_layer_fraction": 0.28285590902547864,
+    "long_range_nnz": 0,
+    "long_range_fraction": 0.0,
+    "block_half_bandwidth": 1,
+    "source": "reviewed expected h4 side-F graph pattern"
+  },
+  "measured_match": {
+    "bottom": "all reference pattern fields matched measured raw values",
+    "top": "all reference pattern fields matched measured raw values",
+    "bottom_equals_top": true
+  },
+  "sides": {
+    "bottom": {
+      "status": "measured",
+      "z_layer_boundaries": [-10.0, -6.666666666666666, -3.333333333333333, 0.0, 4.0, 8.0, 10.0],
+      "rows_by_layer": [28350, 20790, 20790, 20790, 20790, 20790],
+      "nnz_by_layer": [21088620, 17384220, 17384220, 17384220, 17384220, 14413140],
+      "layer_pair_nnz": [[18117540, 2971080, 0, 0, 0, 0], [2971080, 11442060, 2971080, 0, 0, 0], [0, 2971080, 11442060, 2971080, 0, 0], [0, 0, 2971080, 11442060, 2971080, 0], [0, 0, 0, 2971080, 11442060, 2971080], [0, 0, 0, 0, 2971080, 11442060]]
+    },
+    "top": {
+      "status": "measured",
+      "z_layer_boundaries": [110.0, 112.0, 116.0, 120.0, 123.33333333333333, 126.66666666666667, 130.0],
+      "rows_by_layer": [28350, 20790, 20790, 20790, 20790, 20790],
+      "nnz_by_layer": [21088620, 17384220, 17384220, 17384220, 17384220, 14413140],
+      "layer_pair_nnz": [[18117540, 2971080, 0, 0, 0, 0], [2971080, 11442060, 2971080, 0, 0, 0], [0, 2971080, 11442060, 2971080, 0, 0], [0, 0, 2971080, 11442060, 2971080, 0], [0, 0, 0, 2971080, 11442060, 2971080], [0, 0, 0, 0, 2971080, 11442060]]
+    }
+  },
+  "raw_evidence": {
+    "path": "results/task039_v7_side_layer_graph_audit_serial_95c20aad/graph_only_audit.json",
+    "sha256": "aaf845886e37ee711de209e0ecba1c56da7726d77114a0007226f3a0b22a63c5",
+    "artifact_policy": "ignored local raw; no mesh, matrix, field, or factor artifact is tracked"
+  },
+  "boundary": {
+    "independent_lane_c_evidence": true,
+    "sweeping_or_hierarchical_schur": "not_authorized",
+    "0p7nm_or_full3d_qualification": "not_run"
+  }
+}
