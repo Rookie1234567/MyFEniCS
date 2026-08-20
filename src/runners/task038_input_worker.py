@@ -191,6 +191,11 @@ def _dispatch_resolved_payload(
 
         adapter = run_full3d_direct
         label = "Full3D direct"
+    elif expected_method == "full3d_iterative":
+        from src.runners.task038_full3d_iterative import run_full3d_iterative
+
+        adapter = run_full3d_iterative
+        label = "Full3D iterative"
     elif expected_method == "hybrid_direct":
         from src.runners.task038_hybrid_direct import run_hybrid_direct
 

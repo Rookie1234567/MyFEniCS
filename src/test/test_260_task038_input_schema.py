@@ -73,8 +73,8 @@ def test_schema_identity_sections_and_unique_whitelist():
         "output",
     )
     assert len(IDENTITY_FIELD_SPECS) == 5
-    assert len(FIELD_SPECS) == 95
-    assert len(PUBLIC_FIELD_SPECS) == len(PUBLIC_FIELD_KEYS) == 100
+    assert len(FIELD_SPECS) == 97
+    assert len(PUBLIC_FIELD_SPECS) == len(PUBLIC_FIELD_KEYS) == 102
     assert set(FIELD_SPECS_BY_KEY) == set(PUBLIC_FIELD_KEYS)
     assert {name: len(keys) for name, keys in SECTION_FIELD_KEYS.items()} == {
         "geometry": 11,
@@ -83,14 +83,15 @@ def test_schema_identity_sections_and_unique_whitelist():
         "discretization": 15,
         "boundary": 10,
         "method": 7,
-        "solver": 13,
-        "execution": 5,
+        "solver": 14,
+        "execution": 6,
         "output": 20,
     }
     assert METHOD_KINDS == (
         "2d_scattered",
         "2d_port",
         "full3d_direct",
+        "full3d_iterative",
         "hybrid_direct",
         "hybrid_iterative",
     )
@@ -123,8 +124,10 @@ def test_schema_identity_sections_and_unique_whitelist():
     assert FIELD_SPECS_BY_KEY["solver.linear_solver"].allowed == (
         "direct",
         "fgmres",
+        "iterative",
     )
     assert FIELD_SPECS_BY_KEY["solver.preconditioner"].allowed == (
+        "full3d_scalable_v1",
         "hybrid_block_ldu_ilu0_dtn_woodbury",
     )
     for key in (
@@ -152,7 +155,7 @@ def test_readme_markers_and_continuous_table():
     text, rows = _readme_table()
     marker_pattern = re.compile(r"^<!-- schema-field (\{.*\}) -->$", re.MULTILINE)
     markers = [json.loads(match) for match in marker_pattern.findall(text)]
-    assert len(markers) == len(PUBLIC_FIELD_KEYS) == 100
+    assert len(markers) == len(PUBLIC_FIELD_KEYS) == 102
     assert [marker["key"] for marker in markers] == list(PUBLIC_FIELD_KEYS)
     assert len({marker["key"] for marker in markers}) == len(markers)
     for marker in markers:
@@ -192,6 +195,7 @@ def test_templates_parse_and_use_only_public_keys():
     expected = {
         "ordinary_2d_example.dat": "2d_scattered",
         "full3d_direct_example.dat": "full3d_direct",
+        "full3d_iterative_example.dat": "full3d_iterative",
         "hybrid_direct_example.dat": "hybrid_direct",
         "hybrid_iterative_example.dat": "hybrid_iterative",
     }
@@ -244,4 +248,11 @@ def test_templates_parse_and_use_only_public_keys():
         if method == "hybrid_iterative":
             assert "preconditioner" in document["solver"]
             assert "side_residual_correction_steps" in document["solver"]
+        if method == "full3d_iterative":
+            assert document["solver"]["linear_solver"] == "iterative"
+            assert document["solver"]["ksp_type"] == "fgmres"
+            assert document["solver"]["preconditioner"] == "full3d_scalable_v1"
+            assert document["solver"]["restart"] == 20
+            assert document["solver"]["max_iterations"] >= 200
+            assert document["execution"]["memory_limit_gb"] == 2.0
     assert found_methods == set(expected.values())

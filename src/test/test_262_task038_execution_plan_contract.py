@@ -11,6 +11,7 @@ import pytest
 
 from src.io import load_and_resolve
 from src.io.execution_plan import (
+    CONNECTED_METHODS,
     CONTRACT_PROBE_ADAPTER,
     WORKER_MODULE,
     build_execution_plan,
@@ -26,6 +27,7 @@ ROOT = Path(__file__).resolve().parents[2]
 TEMPLATES = {
     "2d_scattered": ROOT / "input/templates/ordinary_2d_example.dat",
     "full3d_direct": ROOT / "input/templates/full3d_direct_example.dat",
+    "full3d_iterative": ROOT / "input/templates/full3d_iterative_example.dat",
     "hybrid_direct": ROOT / "input/templates/hybrid_direct_example.dat",
     "hybrid_iterative": ROOT / "input/templates/hybrid_iterative_example.dat",
 }
@@ -93,13 +95,7 @@ def test_plan_and_dry_run_cover_all_current_methods_with_connection_status(tmp_p
         assert payload["resolved_method_adapter"][
             "identity"
         ] == method_adapter_identity(method)
-        expected_available = method in {
-            "2d_scattered",
-            "2d_port",
-            "full3d_direct",
-            "hybrid_direct",
-            "hybrid_iterative",
-        }
+        expected_available = method in CONNECTED_METHODS
         assert payload["resolved_method_adapter"]["status"] == (
             "connected" if expected_available else "unavailable"
         )

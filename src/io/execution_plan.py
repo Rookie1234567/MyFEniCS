@@ -21,6 +21,7 @@ METHOD_ADAPTERS = {
     "2d_scattered": "task038.2d_scattered",
     "2d_port": "task038.2d_port",
     "full3d_direct": "task038.full3d_direct",
+    "full3d_iterative": "task038.full3d_iterative",
     "hybrid_direct": "task038.hybrid_direct",
     "hybrid_iterative": "task038.hybrid_iterative",
 }

@@ -522,6 +522,60 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
             )
         if kind == "full3d_direct" and solver["linear_solver"] != "direct":
             raise _error("solver.linear_solver", "full3d_direct requires direct")
+        if kind == "full3d_iterative":
+            if dimension != 3:
+                raise _error(
+                    "dimension", "full3d_iterative requires a three-dimensional input"
+                )
+            if solver["linear_solver"] != "iterative":
+                raise _error(
+                    "solver.linear_solver", "full3d_iterative requires iterative"
+                )
+            if solver["ksp_type"] != "fgmres":
+                raise _error(
+                    "solver.ksp_type", "full3d_iterative requires ksp_type=fgmres"
+                )
+            if solver["preconditioner"] != "full3d_scalable_v1":
+                raise _error(
+                    "solver.preconditioner",
+                    "full3d_iterative requires full3d_scalable_v1",
+                )
+            if solver["restart"] != 20:
+                raise _error(
+                    "solver.restart", "full3d_iterative fixes restart=20"
+                )
+            if solver["max_iterations"] < 200:
+                raise _error(
+                    "solver.max_iterations",
+                    "full3d_iterative requires max_iterations>=200",
+                )
+            if incidence["wavelength_nm"] != 13.5:
+                raise _error(
+                    "incidence.wavelength_nm",
+                    "full3d_iterative profile is frozen to 13.5 nm; "
+                    "0.7 nm full-PDE is not authorized",
+                )
+            _require(execution, "memory_limit_gb", "execution.memory_limit_gb")
+            if execution["memory_limit_gb"] <= 0.0:
+                raise _error(
+                    "execution.memory_limit_gb", "must be positive"
+                )
+            if boundary["vertical_boundary"] != "dtn_port":
+                raise _error(
+                    "boundary.vertical_boundary",
+                    "full3d_iterative requires vertical_boundary=dtn_port",
+                )
+            if boundary.get("dtn_assembly") != "auxiliary":
+                raise _error(
+                    "boundary.dtn_assembly",
+                    "full3d_iterative requires auxiliary DtN",
+                )
+            if boundary.get("use_floquet_x") is not True or boundary.get(
+                "use_floquet_y"
+            ) is not True:
+                raise _error(
+                    "boundary", "full3d_iterative requires Floquet x/y constraints"
+                )
         if kind == "hybrid_direct":
             if solver["linear_solver"] != "direct":
                 raise _error("solver.linear_solver", "hybrid_direct requires direct")
@@ -1010,10 +1064,11 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 raise _error(f"output.{key}", "must be positive")
     if "electric_amplitude" in incidence and incidence["electric_amplitude"] < 0.0:
         raise _error("incidence.electric_amplitude", "must be non-negative")
-    if kind == "hybrid_iterative":
+    if kind in {"hybrid_iterative", "full3d_iterative"}:
         for key in ("restart", "max_iterations", "subdomain_count_per_endcap"):
-            if solver[key] <= 0:
+            if key in solver and solver[key] <= 0:
                 raise _error(f"solver.{key}", "must be positive")
+    if kind == "hybrid_iterative":
         if solver["relative_tolerance"] <= 0.0 or solver["absolute_tolerance"] < 0.0:
             raise _error("solver", "tolerances must be relative>0 and absolute>=0")
         if solver["ilu_level"] < 0 or solver["ilu_shift"] < 0.0:
@@ -1288,7 +1343,7 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
         )
     except ValueError as exc:
         raise _error("discretization.assembly_backend", str(exc)) from exc
-    return {
+    result = {
         "internal": {
             "incident_theta_deg": theta,
             "incident_phi_deg": i["azimuth_deg"],
@@ -1329,6 +1384,18 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
         "nedelec_trace_degree_resolved": trace_degree_resolved,
         "floquet_constraint_mode_requested": floquet_mode,
     }
+    if config["method"]["kind"] == "full3d_iterative":
+        result["full3d_iterative_resource_profile"] = {
+            "strategic_memory_limit_gb": config["execution"]["memory_limit_gb"],
+            "watchdog_warning_memory_gib": config["execution"][
+                "warning_memory_gib"
+            ],
+            "watchdog_terminate_memory_gib": config["execution"][
+                "terminate_memory_gib"
+            ],
+            "formal_physics_wavelength_nm": config["incidence"]["wavelength_nm"],
+        }
+    return result
 
 
 def resolve_loaded_input(loaded: LoadedInput) -> RunSpecification:

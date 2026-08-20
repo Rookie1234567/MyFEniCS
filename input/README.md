@@ -122,7 +122,7 @@ python scripts/run_case.py input/path/to/case.dat --dry-run
 | `boundary.pml_top_thickness_nm` | `float` | `nm` | no | `—` | — | 2d/3d | 顶部 PML 厚度 | `pml_top_thickness` | >= 0; required when use_pml | `25.0` |
 | `boundary.pml_bottom_thickness_nm` | `float` | `nm` | no | `—` | — | 2d/3d | 底部 PML 厚度 | `pml_bottom_thickness` | >= 0; required when use_pml | `25.0` |
 | `boundary.pml_alpha` | `float` | `dimensionless` | no | `5.0` | — | 2d/3d | PML 吸收强度 | `pml_alpha` | > 0 when use_pml | `5.0` |
-| `method.kind` | `enum` | `none` | yes | `—` | 2d_scattered, 2d_port, full3d_direct, hybrid_direct, hybrid_iterative | 2d/3d | 求解方法 | `method.kind / runner dispatch` | 2D uses exactly one of 2d_scattered or 2d_port; 3D uses full3d_direct/hybrid_direct/hybrid_iterative; no both/all mode | `"hybrid_iterative"` |
+| `method.kind` | `enum` | `none` | yes | `—` | 2d_scattered, 2d_port, full3d_direct, full3d_iterative, hybrid_direct, hybrid_iterative | 2d/3d | 求解方法 | `method.kind / runner dispatch` | 2D uses exactly one of 2d_scattered or 2d_port; 3D uses full3d_direct/full3d_iterative/hybrid_direct/hybrid_iterative; no both/all mode | `"hybrid_iterative"` |
 | `method.constraint_backend` | `enum` | `none` | yes | `—` | mpc_official, manual, mpc_auto | 2d | 二维约束后端 | `constraint_backend` | one backend only; no both/all compatibility mode | `"mpc_official"` |
 | `method.bottom_interface_nm` | `float` | `nm` | yes | `—` | — | hybrid_direct/hybrid_iterative | Hybrid 底部接口位置 | `bottom_interface_nm` | required for Hybrid; < top_interface_nm | `10.0` |
 | `method.top_interface_nm` | `float` | `nm` | yes | `—` | — | hybrid_direct/hybrid_iterative | Hybrid 顶部接口位置 | `top_interface_nm` | required for Hybrid; > bottom_interface_nm | `110.0` |
@@ -130,10 +130,11 @@ python scripts/run_case.py input/path/to/case.dat --dry-run
 | `method.propagation_model` | `enum` | `none` | yes | `—` | continuous_beta, full3d_uniform_cg | hybrid_direct/hybrid_iterative | Hybrid 内部传播模型 | `internal_propagation_model` | — | `"full3d_uniform_cg"` |
 | `method.traction_model` | `enum` | `none` | yes | `—` | continuous_qep_beta, scalar_cg_discrete_derivative, full3d_one_cell_exact_schur | hybrid_direct/hybrid_iterative | Hybrid 接口 traction 模型 | `internal_traction_model` | — | `"full3d_one_cell_exact_schur"` |
 | `solver.direct_solver_profile` | `enum` | `none` | yes | `—` | default, mumps_ooc, mumps_blr | full3d_direct/hybrid_direct | 有限 direct solver profile | `petsc_direct_solver_profile` | — | `"default"` |
-| `solver.linear_solver` | `enum` | `none` | yes | `—` | direct, fgmres | 2d_scattered/2d_port/full3d_direct/hybrid_direct/hybrid_iterative | 线性求解器类型 | `linear_solver` | direct methods require direct; hybrid_iterative requires fgmres | `"fgmres"` |
-| `solver.preconditioner` | `enum` | `none` | yes | `—` | hybrid_block_ldu_ilu0_dtn_woodbury | hybrid_iterative | 公开 preconditioner identity | `preconditioner` | only reviewed iterative identities are public | `"hybrid_block_ldu_ilu0_dtn_woodbury"` |
-| `solver.restart` | `integer` | `iterations` | yes | `—` | — | hybrid_iterative | GMRES/FGMRES restart 长度 | `restart` | only hybrid_iterative; > 0 | `90` |
-| `solver.max_iterations` | `integer` | `iterations` | yes | `—` | — | hybrid_iterative | 最大迭代步数 | `max_it` | only hybrid_iterative; > 0 | `4500` |
+| `solver.linear_solver` | `enum` | `none` | yes | `—` | direct, fgmres, iterative | 2d_scattered/2d_port/full3d_direct/full3d_iterative/hybrid_direct/hybrid_iterative | 线性求解器类型 | `linear_solver` | direct methods require direct; hybrid_iterative requires fgmres; full3d_iterative requires iterative | `"fgmres"` |
+| `solver.ksp_type` | `enum` | `none` | yes | `—` | fgmres | full3d_iterative | Full3D 迭代求解器类型 | `ksp_type` | full3d_iterative fixed profile only | `"fgmres"` |
+| `solver.preconditioner` | `enum` | `none` | yes | `—` | full3d_scalable_v1, hybrid_block_ldu_ilu0_dtn_woodbury | full3d_iterative/hybrid_iterative | 公开 preconditioner identity | `preconditioner` | only reviewed iterative identities are public | `"hybrid_block_ldu_ilu0_dtn_woodbury"` |
+| `solver.restart` | `integer` | `iterations` | yes | `—` | — | full3d_iterative/hybrid_iterative | GMRES/FGMRES restart 长度 | `restart` | only iterative methods; > 0 | `90` |
+| `solver.max_iterations` | `integer` | `iterations` | yes | `—` | — | full3d_iterative/hybrid_iterative | 最大迭代步数 | `max_it` | only iterative methods; > 0 | `4500` |
 | `solver.relative_tolerance` | `float` | `relative residual` | yes | `—` | — | hybrid_iterative | 相对残差容差 | `rtol` | only hybrid_iterative; > 0 and finite | `5.0e-9` |
 | `solver.absolute_tolerance` | `float` | `absolute residual` | yes | `—` | — | hybrid_iterative | 绝对残差容差 | `atol` | only hybrid_iterative; >= 0 and finite | `0.0` |
 | `solver.initial_guess` | `enum` | `none` | yes | `—` | zero | hybrid_iterative | 初始向量策略 | `initial_guess` | — | `"zero"` |
@@ -146,6 +147,7 @@ python scripts/run_case.py input/path/to/case.dat --dry-run
 | `execution.warning_memory_gib` | `float` | `GiB` | yes | `—` | — | 2d/3d | 用户资源警告线 | `watchdog warning threshold` | > 0; generic policy, not authority hard gate | `10.0` |
 | `execution.terminate_memory_gib` | `float` | `GiB` | yes | `—` | — | 2d/3d | 用户资源终止线 | `watchdog terminate threshold` | > warning_memory_gib | `14.0` |
 | `execution.timeout_seconds` | `integer` | `seconds` | yes | `—` | — | 2d/3d | 单次运行时间上限 | `watchdog timeout` | > 0; generic policy, not authority hard gate | `7200` |
+| `execution.memory_limit_gb` | `float` | `GiB` | no | `—` | — | 3d | Full3D 运行内存上限 | `memory_limit_gb` | > 0; required for full3d_iterative | `2.0` |
 | `execution.require_zero_swap` | `boolean` | `none` | yes | `—` | — | 2d/3d | 是否要求 swap 为零 | `swap policy` | — | `true` |
 | `output.results_root` | `path` | `filesystem path` | yes | `—` | — | 2d/3d | 结果根目录 | `results_root` | must not overwrite an existing run | `"results"` |
 | `output.unique_output` | `boolean` | `none` | no | `true` | — | 2d/3d | 是否创建唯一结果目录 | `unique_output` | — | `true` |
@@ -235,10 +237,11 @@ The following marker block is intentionally outside the table so GitHub keeps al
 <!-- schema-field {"key":"method.propagation_model","unit":"none","applicability":["hybrid_direct","hybrid_iterative"]} -->
 <!-- schema-field {"key":"method.traction_model","unit":"none","applicability":["hybrid_direct","hybrid_iterative"]} -->
 <!-- schema-field {"key":"solver.direct_solver_profile","unit":"none","applicability":["full3d_direct","hybrid_direct"]} -->
-<!-- schema-field {"key":"solver.linear_solver","unit":"none","applicability":["2d_scattered","2d_port","full3d_direct","hybrid_direct","hybrid_iterative"]} -->
-<!-- schema-field {"key":"solver.preconditioner","unit":"none","applicability":["hybrid_iterative"]} -->
-<!-- schema-field {"key":"solver.restart","unit":"iterations","applicability":["hybrid_iterative"]} -->
-<!-- schema-field {"key":"solver.max_iterations","unit":"iterations","applicability":["hybrid_iterative"]} -->
+<!-- schema-field {"key":"solver.linear_solver","unit":"none","applicability":["2d_scattered","2d_port","full3d_direct","full3d_iterative","hybrid_direct","hybrid_iterative"]} -->
+<!-- schema-field {"key":"solver.ksp_type","unit":"none","applicability":["full3d_iterative"]} -->
+<!-- schema-field {"key":"solver.preconditioner","unit":"none","applicability":["full3d_iterative","hybrid_iterative"]} -->
+<!-- schema-field {"key":"solver.restart","unit":"iterations","applicability":["full3d_iterative","hybrid_iterative"]} -->
+<!-- schema-field {"key":"solver.max_iterations","unit":"iterations","applicability":["full3d_iterative","hybrid_iterative"]} -->
 <!-- schema-field {"key":"solver.relative_tolerance","unit":"relative residual","applicability":["hybrid_iterative"]} -->
 <!-- schema-field {"key":"solver.absolute_tolerance","unit":"absolute residual","applicability":["hybrid_iterative"]} -->
 <!-- schema-field {"key":"solver.initial_guess","unit":"none","applicability":["hybrid_iterative"]} -->
@@ -251,6 +254,7 @@ The following marker block is intentionally outside the table so GitHub keeps al
 <!-- schema-field {"key":"execution.warning_memory_gib","unit":"GiB","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"execution.terminate_memory_gib","unit":"GiB","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"execution.timeout_seconds","unit":"seconds","applicability":["2d","3d"]} -->
+<!-- schema-field {"key":"execution.memory_limit_gb","unit":"GiB","applicability":["3d"]} -->
 <!-- schema-field {"key":"execution.require_zero_swap","unit":"none","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"output.results_root","unit":"filesystem path","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"output.unique_output","unit":"none","applicability":["2d","3d"]} -->
@@ -289,12 +293,13 @@ The following marker block is intentionally outside the table so GitHub keeps al
 
 ## 5. 模板、preset 与 legacy 边界
 
-四个模板本身就是完整的、可解析、每文件一 run 的示例；它们不是仅含片段的 skeleton：
+五个模板本身就是完整的、可解析、每文件一 run 的示例；它们不是仅含片段的 skeleton：
 
 | 模板 | 覆盖 | 状态 |
 | --- | --- | --- |
 | [ordinary_2d_example.dat](templates/ordinary_2d_example.dat) | 2D scattered + PML | 已连接ordinary 2D adapter，数值资格以正式 Gate 为准 |
 | [full3d_direct_example.dat](templates/full3d_direct_example.dat) | Full3D direct | 完整 public schema 示例；完整 direct solve 由 capability 决定 |
+| [full3d_iterative_example.dat](templates/full3d_iterative_example.dat) | Full3D iterative | T1 contract-only adapter stub；固定 13.5 nm，数值连接留到 T2 |
 | [hybrid_direct_example.dat](templates/hybrid_direct_example.dat) | Hybrid direct | accepted finite method template |
 | [hybrid_iterative_example.dat](templates/hybrid_iterative_example.dat) | Hybrid iterative、exact one-cell traction、two-pass | accepted research-extension template；不改变 ordinary default |
 
