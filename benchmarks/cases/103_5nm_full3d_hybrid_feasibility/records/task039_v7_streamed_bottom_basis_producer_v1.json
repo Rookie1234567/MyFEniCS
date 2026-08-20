@@ -1,0 +1,172 @@
+{
+  "schema": "task039.v7.streamed.bottom_basis_producer.evidence.v1",
+  "record_type": "research_component_evidence",
+  "classification": {
+    "producer": "PRODUCER_COMPLETED",
+    "resource_gate": "PASS_MINIMUM_AND_ROBUST",
+    "basis_packet": "HASH_BOUND_AND_READABLE",
+    "yh_z_conditioning": "WARNING_ONLY_NOT_COARSE_E_GATE",
+    "consumer_e_gate": "NOT_RUN"
+  },
+  "provenance": {
+    "branch": "codex/20260812-task39-5nm-hybrid-0p7nm-feasibility",
+    "source_sha": "a33c19e7416460b11ceb61c2a7e32ab41fe1c1e7",
+    "input": "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat",
+    "input_sha256": "4e60924b5997e3ca99e324ea14779f9014efc6a1304a9aa11de9c808353f1811",
+    "packet_root": "results/task039_v4_h4_m480_shared_packet_eaad0f94",
+    "packet_manifest_sha256": "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067",
+    "packet_identity_file_sha256": "b3bb870fe6fa17cb262b6161f7317cc1950944755c9270d4628dd5c79e950690",
+    "mpi_size": 8,
+    "method": "v7_h4_streamed_bottom_basis_producer",
+    "formal_command_contract": {
+      "flag": "--v7-h4-streamed-bottom-producer",
+      "timeout_seconds": 21600,
+      "poll_interval_seconds": 0.25,
+      "effective_hard_stop_bytes": 100262797312,
+      "swap_required_bytes": 0,
+      "exact_spool_argument": "absent",
+      "holdout_input": "absent"
+    }
+  },
+  "attempts": [
+    {
+      "label": "predecessor_telemetry_failure",
+      "source_sha": "fb915a7a2fe42b4036b3356ea18764b9c3156656",
+      "run_root": "results/task039_v7_streamed_bottom_basis_producer_mpi8_fb915a7a",
+      "classification": "TELEMETRY_IMPLEMENTATION_FAILURE",
+      "status": "launching",
+      "exit_status": null,
+      "last_marker": "setup_begin",
+      "peak_bytes": 9903783936,
+      "peak_gib": 9.223617553710938,
+      "swap_peak_bytes": 0,
+      "completed": false,
+      "numerical_gate": "not_run",
+      "resource_gate": "not_run",
+      "reason": "V7 inventory metadata omitted direct_reference_payload_loaded; this was an evidence-contract failure, not a producer numerical or resource result.",
+      "raw_evidence": {
+        "run_manifest_sha256": "44302afddcb3431b5560e10f94328f73df3505b166f5ce7f10277c263b409e6b",
+        "run_summary_sha256": "26ff44f9e31926ef48af8afc4e05727ab86b6f5b922f5142bb7192ce955a0530",
+        "markers_sha256": "bca4066967aebcf96cb57d91443a102267c8f44f814836c7aea1360bc7bee959",
+        "stages_sha256": "ead2a81172b88aba40b47986f1770711dea27a9b4ebd597eb76e043d224640df",
+        "samples_sha256": "b32b29e58016bf90c39d2420ec1effa51b8cda35795c84bb6376da4ef0c43785",
+        "ledger_sha256": "215e951527cdcc02b4ad7bc91bf457531f9fdfdd0bf2dd8fb4cc327b4049b961"
+      }
+    },
+    {
+      "label": "formal_telemetry_fix_rerun",
+      "source_sha": "a33c19e7416460b11ceb61c2a7e32ab41fe1c1e7",
+      "run_root": "results/task039_v7_streamed_bottom_basis_producer_mpi8_a33c19e7",
+      "classification": "PRODUCER_COMPLETED_RESOURCE_PASS",
+      "status": "finished",
+      "exit_status": 0,
+      "worker_elapsed_seconds": 413.2611265759915,
+      "parent_last_valid_sample_elapsed_seconds": 415.60005551797803,
+      "peak_bytes": 12488433664,
+      "peak_gib": 11.630760192871094,
+      "minimum_resource_limit_gib": 93.377006531,
+      "robust_resource_limit_gib": 88.708156204,
+      "minimum_resource_pass": true,
+      "robust_resource_pass": true,
+      "swap_peak_bytes": 0,
+      "zero_swap": true,
+      "warning": "Y^H Z is recorded as conditioning evidence only; formal consumer E=Y^H F Z was not formed.",
+      "raw_evidence": {
+        "run_manifest_sha256": "2c0a1cfa8e96013892ae2bb2e72ca18303ceabdca2de4c87e3de52cffb885d1c",
+        "run_summary_sha256": "8d8e526936166064ec7c217c3e90cdb0981a9178fce6d5ee78c78fdfd2d15f60",
+        "diagnostic_sha256": "56e805f85653a561f9e6995ec4c6c9411f29faae1d3f2680aa73d61b70a40908",
+        "markers_sha256": "fe6bb207cc9c8fe94597f558d9712f233618e08b11ad842245ba6434630e39e3",
+        "stages_sha256": "4cf7c9e94ea6473f7d0f5e91ae20c70c7005c411c76469ce368c3691cc950d25",
+        "samples_sha256": "a17645ad7849fcdb26b10ec78883b93eaf0ff895ee4ec55472a9967540d16dcd",
+        "ledger_sha256": "c39c0d92f4e75f056c5837107a1b313d7b3ffba1ed8ce6c38dc6994d3217a396",
+        "basis_manifest_sha256": "44023b8d8d3932e5cf5d0d42a16711f886e7672570e0318cb0339b44b691c44b",
+        "worker_stdout_sha256": "06d41a6f991f6040a411134fa4d47095fe559a206f926a0219a0f2da04c9c657"
+      }
+    }
+  ],
+  "basis_packet": {
+    "schema": "task039.v7.streamed_owner_row_basis.v2",
+    "basis_manifest_sha256": "44023b8d8d3932e5cf5d0d42a16711f886e7672570e0318cb0339b44b691c44b",
+    "rank_shards": 8,
+    "array_artifact_count": 16,
+    "global_rows": 132300,
+    "dtype": "complex128",
+    "prefix_checkpoints": [64, 128, 256, 512],
+    "schedule_count": 512,
+    "schedule_sha256": "6ac80cc56096244f49999c85c0bb8fd3a5543e3efd83f51cd0e0a62e396c6d1d",
+    "hash_layout": "column-major-complex128-chunked-v1",
+    "ownership_ranges": [[0, 16872], [16872, 34098], [34098, 49560], [49560, 67134], [67134, 83976], [83976, 99870], [99870, 116766], [116766, 132300]],
+    "coverage": "continuous_complete_0_to_132300",
+    "shape_dtype_coverage_verified": true,
+    "per_rank_array_hashes_in_manifest": true,
+    "prefix_hashes_in_manifest": true,
+    "source_schedule_identity": "task039.v7.streamed.packet_left_surface_dual.v1",
+    "training_holdout_disjoint": true,
+    "holdout_opened": false,
+    "exact_spool_opened": false,
+    "consumer_qep_calls": 0,
+    "global_basis_materialized": false,
+    "source_columns_retained": false
+  },
+  "checkpoint_diagnostics": [
+    {
+      "checkpoint": 64,
+      "columns": 64,
+      "constructed_basis_rank": 64,
+      "z_orthogonality_error": 5.262744198224549e-15,
+      "y_orthogonality_error": 4.834891674925537e-15,
+      "worker_cross_yh_z_condition": 7.725321704873509e17,
+      "worker_singular_min_max": "not_recorded",
+      "derived_mmap_audit": {"singular_min": 1.4797529579837758e-18, "singular_max": 1.000000000000001, "condition": 6.757884784785578e17, "numerical_rank": 48, "finite": true},
+      "prefix_hashes_recorded": true
+    },
+    {
+      "checkpoint": 128,
+      "columns": 128,
+      "constructed_basis_rank": 128,
+      "z_orthogonality_error": 7.986726755113423e-15,
+      "y_orthogonality_error": 6.732338349797121e-15,
+      "worker_cross_yh_z_condition": 3.887922320019096e18,
+      "worker_singular_min_max": "not_recorded",
+      "derived_mmap_audit": {"singular_min": 1.4259411292965045e-19, "singular_max": 1.0000000000000009, "condition": 7.012912240587071e18, "numerical_rank": 96, "finite": true},
+      "prefix_hashes_recorded": true
+    },
+    {
+      "checkpoint": 256,
+      "columns": 256,
+      "constructed_basis_rank": 256,
+      "z_orthogonality_error": 1.1550301220632395e-14,
+      "y_orthogonality_error": 1.0948170384926398e-14,
+      "worker_cross_yh_z_condition": 7.076323717754604e17,
+      "worker_singular_min_max": "not_recorded",
+      "derived_mmap_audit": {"singular_min": 8.065914610456042e-19, "singular_max": 1.0000000000000009, "condition": 1.2397850067786194e18, "numerical_rank": 192, "finite": true},
+      "prefix_hashes_recorded": true
+    },
+    {
+      "checkpoint": 512,
+      "columns": 512,
+      "constructed_basis_rank": 512,
+      "z_orthogonality_error": 1.864063802043293e-14,
+      "y_orthogonality_error": 1.7993514540040455e-14,
+      "worker_cross_yh_z_condition": 4.990611933068975e19,
+      "worker_singular_min": 2.0037622909001696e-20,
+      "worker_singular_max": 1.0000000000000013,
+      "derived_mmap_audit": {"singular_min": 2.6877346891737097e-21, "singular_max": 1.0000000000000018, "condition": 3.720605326217789e20, "numerical_rank": 384, "finite": true},
+      "prefix_hashes_recorded": true
+    }
+  ],
+  "lifecycle": {
+    "packet_context_before_release": {"mmap_mapping_count": 4, "arrays_retained": true, "full_vec_count": 0, "released": false},
+    "packet_context_after_release": {"mmap_mapping_count": 0, "arrays_retained": false, "full_vec_count": 0, "released": true},
+    "source_columns_retained": false,
+    "global_basis_materialized": false,
+    "factor_inventory": {"base_factor_count": 0, "exact_factor_count": 0, "global_direct_factor_count": 0, "nested_ksp": 0},
+    "finalizer_marker": "v7_streamed_bottom_producer_side_setup_cleanup",
+    "bottom_destroyed": true,
+    "collective_cleanup_completed": true,
+    "factor_count_after_cleanup": null,
+    "factor_count_after_cleanup_status": "not_available_in_marker_do_not_infer"
+  },
+  "not_run": ["consumer", "coarse_E_gate", "six_holdout_probes", "top", "outer", "recovery", "field", "RTA"],
+  "artifact_policy": "All results/.npy/raw evidence remain ignored and are not part of this commit. This JSON binds compact conclusions to their paths and SHA256 values."
+}
