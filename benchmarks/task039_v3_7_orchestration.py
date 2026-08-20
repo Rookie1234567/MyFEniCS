@@ -93,6 +93,10 @@ from src.solvers.hybrid_local_dtn_action import (
     assemble_hybrid_local_dtn_action_system,
     create_hybrid_local_dtn_action_components,
 )
+from src.solvers.hybrid_layer_block import (
+    build_real_layer_labels,
+    minimum_layer_labels,
+)
 from src.solvers.hybrid_local_dtn_woodbury import (
     HybridLocalDtnWoodburyFixedAction,
     HybridLocalDtnWoodburyFixedBudgetKrylovAction,
@@ -3393,19 +3397,9 @@ def _v6_layer_graph_from_csr(
 def _v6_global_minimum_layer_labels(
     local_labels: np.ndarray, global_rows: int, comm: MPI.Intracomm
 ) -> np.ndarray:
-    """Merge row labels with a fixed-size int32 buffer and ``MPI.MIN``."""
+    """Compatibility wrapper over the shared distributed label reduction."""
 
-    sentinel = np.iinfo(np.int32).max
-    local = np.asarray(local_labels, dtype=np.int32)
-    if local.shape != (int(global_rows),) or not local.flags.c_contiguous:
-        raise ValueError("V6 layer label buffer shape is invalid")
-    if np.any((local < 0) & (local != sentinel)):
-        raise ValueError("V6 layer label is outside the global row space")
-    labels = np.full(int(global_rows), sentinel, dtype=np.int32)
-    comm.Allreduce(local, labels, op=MPI.MIN)
-    if np.any(labels == sentinel):
-        raise ValueError("V6 layer graph does not cover every active F row")
-    return labels
+    return minimum_layer_labels(local_labels, global_rows, comm)
 
 
 def _v6_reduce_layer_graph(
@@ -3465,33 +3459,9 @@ def _v6_layer_graph_audit(matrix: PETSc.Mat, system: Any) -> dict[str, Any]:
     mapping.
     """
 
-    condensed = system.static_condensation.condensed
-    constraints = condensed.trace_constraints
-    z_values = np.asarray(system.local_mesh.z_values, dtype=np.float64)
-    if z_values.ndim != 1 or len(z_values) < 2 or np.any(np.diff(z_values) <= 0):
-        raise ValueError("V6 layer graph requires a strictly ordered z axis")
+    global_layers, mapping_metadata = build_real_layer_labels(matrix, system)
     global_rows = int(matrix.getSize()[0])
-    sentinel = np.iinfo(np.int32).max
-    partial = np.full(global_rows, sentinel, dtype=np.int32)
-    geometry = system.local_mesh.mesh.geometry
-    for cell, recovery in enumerate(condensed.cell_recovery_maps):
-        geometry_indices = np.asarray(geometry.dofmap[cell], dtype=np.int64)
-        centroid_z = float(np.mean(geometry.x[geometry_indices, 2]))
-        layer = int(np.searchsorted(z_values, centroid_z, side="right") - 1)
-        if layer < 0 or layer >= len(z_values) - 1:
-            raise ValueError("V6 cell centroid is outside the real z-layer axis")
-        for original in recovery.trace_original_dofs:
-            expansion = constraints.expansion_by_original.get(int(original))
-            if expansion is None:
-                raise ValueError("V6 trace row has no assembly-time expansion")
-            active_ids = np.asarray(expansion[0], dtype=np.int64)
-            for active_id in active_ids:
-                active = int(active_id)
-                if active < 0 or active >= global_rows:
-                    raise ValueError("V6 active trace row is outside F")
-                partial[active] = min(partial[active], layer)
     comm = matrix.getComm().tompi4py()
-    global_layers = _v6_global_minimum_layer_labels(partial, global_rows, comm)
     row_start, row_end = map(int, matrix.getOwnershipRange())
     row_ptr, columns, _values = matrix.getValuesCSR()
     local_layers = global_layers[row_start:row_end]
@@ -3500,18 +3470,13 @@ def _v6_layer_graph_audit(matrix: PETSc.Mat, system: Any) -> dict[str, Any]:
         columns,
         local_layers,
         global_layers,
-        layer_count=len(z_values) - 1,
+        layer_count=len(mapping_metadata["z_layer_boundaries"]) - 1,
     )
     reduced = _v6_reduce_layer_graph(audit, comm, global_rows=global_rows)
     audit.update(
         {
             **reduced,
-            "z_layer_boundaries": [float(value) for value in z_values],
-            "mapping_source": (
-                "owned_cell_recovery_maps + trace_constraints.expansion_by_original "
-                "+ local_mesh.geometry.z_values"
-            ),
-            "shared_trace_row_rule": "minimum_incident_owned_cell_layer",
+            **mapping_metadata,
             "temporary_global_row_layer_tags_released": True,
         }
     )
