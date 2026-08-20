@@ -498,8 +498,12 @@ def _run_case(
             "floquet_phases": {
                 "x": _jsonable(cfg.floquet_phase_x),
                 "y": _jsonable(cfg.floquet_phase_y),
-                "x_nontrivial": abs(cfg.floquet_phase_x - 1.0) > 1.0e-8,
-                "y_nontrivial": abs(cfg.floquet_phase_y - 1.0) > 1.0e-8,
+                "x_nontrivial": bool(
+                    abs(cfg.floquet_phase_x - 1.0) > 1.0e-8
+                ),
+                "y_nontrivial": bool(
+                    abs(cfg.floquet_phase_y - 1.0) > 1.0e-8
+                ),
             },
         }
         record = {
