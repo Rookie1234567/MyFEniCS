@@ -477,6 +477,7 @@ def run_streamed_owner_row_basis_producer(
         ownership_range=(first, last),
         comm=comm,
     )
+    result: dict[str, Any] | None = None
     try:
         for item in schedule:
             right, left, source_identity = source_builder(item, packet_context)
@@ -505,7 +506,11 @@ def run_streamed_owner_row_basis_producer(
         return result
     finally:
         builder.destroy()
+        packet_context_before_release = packet_context.diagnostics
         packet_context.release()
+        if result is not None:
+            result["packet_context_before_release"] = packet_context_before_release
+            result["packet_context_after_release"] = packet_context.diagnostics
 
 
 def run_streamed_owner_row_petrov_consumer(

@@ -182,6 +182,31 @@ class _MatrixFreeDtnBlockState:
         )
         target.getArray()[:] = values if self.comm.rank == self.aux_owner else 0.0
 
+    def c_mult_hermitian(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        source_values = source.getArray(readonly=True)
+        local = np.zeros(self.n_aux, dtype=PETSc.ScalarType)
+        for mode, rows, traction_values, _cols, _ell_values in self.entries:
+            if len(rows):
+                local[mode] += np.dot(
+                    np.conjugate(traction_values),
+                    source_values[rows - self.active_start],
+                )
+        values = np.asarray(
+            self.comm.allreduce(local, op=MPI.SUM),
+            dtype=PETSc.ScalarType,
+        )
+        target.getArray()[:] = values if self.comm.rank == self.aux_owner else 0.0
+
+    def d_mult_hermitian(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        auxiliary = self._aux_values(source)
+        values = target.getArray()
+        values[:] = 0.0
+        for mode, _rows, _traction_values, cols, ell_values in self.entries:
+            if len(cols):
+                values[cols - self.active_start] += (
+                    np.conjugate(ell_values) * auxiliary[mode]
+                )
+
 
 class _MatrixFreeDtnMatContext:
     def __init__(self, state: _MatrixFreeDtnBlockState, kind: str) -> None:
@@ -193,6 +218,14 @@ class _MatrixFreeDtnMatContext:
             self.state.c_mult(source, target)
         else:
             self.state.d_mult(source, target)
+
+    def multHermitian(
+        self, _matrix: PETSc.Mat, source: PETSc.Vec, target: PETSc.Vec
+    ) -> None:
+        if self.kind == "C":
+            self.state.c_mult_hermitian(source, target)
+        else:
+            self.state.d_mult_hermitian(source, target)
 
     def destroy(self, _matrix: PETSc.Mat | None = None) -> None:
         return None

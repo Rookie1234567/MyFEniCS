@@ -17,7 +17,6 @@ import ufl
 from basix.ufl import element
 from dolfinx import default_real_type, fem
 from mpi4py import MPI
-from petsc4py import PETSc
 
 
 V6_PORT_MODAL_CHECKPOINTS = (64, 128, 256, 512)
@@ -514,14 +513,9 @@ def _fill_partition_independent_random(vector: Any, seed: int) -> None:
 
 
 def _mult_hermitian_transpose(matrix: Any, source: Any, target: Any) -> None:
-    """Apply a PETSc complex adjoint through a temporary adjoint Mat."""
+    """Apply a complex adjoint through the matrix's action-only callback."""
 
-    adjoint = PETSc.Mat()
-    matrix.hermitianTranspose(adjoint)
-    try:
-        adjoint.mult(source, target)
-    finally:
-        adjoint.destroy()
+    matrix.multHermitian(source, target)
 
 
 def _splitmix64(values: np.ndarray) -> np.ndarray:
@@ -632,12 +626,30 @@ def v6_single_interface_modal_provider(owner: Any):
 class _V6DiscreteGradientSourceProvider:
     """Reuse one scalar/vector interpolation setup for near-null sources."""
 
-    def __init__(self, owner: Any) -> None:
-        if owner._destroyed or owner.surface_load is None:
-            raise RuntimeError("Single interface owner is destroyed")
+    def __init__(
+        self,
+        owner: Any | None = None,
+        *,
+        system: Any | None = None,
+        spaces: Any | None = None,
+        surface_source_assembler: Any | None = None,
+    ) -> None:
+        if owner is not None:
+            if owner._destroyed or owner.surface_load is None:
+                raise RuntimeError("Single interface owner is destroyed")
+            system = owner.system
+            spaces = owner.spaces
+            surface_source_assembler = owner.assemble_surface_source
+        if system is None or spaces is None or surface_source_assembler is None:
+            raise ValueError(
+                "Discrete-gradient provider needs system, spaces, and a surface assembler"
+            )
         self.owner = owner
-        self.mesh = owner.spaces.transverse.mesh
-        self.degree = int(owner.spaces.transverse_degree)
+        self.system = system
+        self.spaces = spaces
+        self._surface_source_assembler = surface_source_assembler
+        self.mesh = spaces.transverse.mesh
+        self.degree = int(spaces.transverse_degree)
         self.scalar_space = fem.functionspace(
             self.mesh,
             element(
@@ -676,9 +688,9 @@ class _V6DiscreteGradientSourceProvider:
     def __call__(
         self, system: Any, selector: dict[str, Any], role: str
     ) -> tuple[Any, dict[str, Any]]:
-        if self._destroyed or self.owner._destroyed:
+        if self._destroyed or (self.owner is not None and self.owner._destroyed):
             raise RuntimeError("V6 discrete-gradient provider is destroyed")
-        if system is not self.owner.system:
+        if system is not self.system:
             raise ValueError("V6 discrete-gradient provider received another system")
         if selector.get("selector") != "cross_section_discrete_gradient_potential":
             raise ValueError(
@@ -704,7 +716,7 @@ class _V6DiscreteGradientSourceProvider:
         self.potential.interpolate(potential_values)
         self.gradient.interpolate(self.expression)
         self.gradient.x.scatter_forward()
-        source, audit = self.owner.assemble_surface_source(
+        source, audit = self._surface_source_assembler(
             self.gradient, role=f"v6_discrete_gradient_{ordinal}"
         )
         self.apply_count += 1
@@ -746,15 +758,28 @@ class _V6DiscreteGradientSourceProvider:
         self.potential = None
         self.gradient_space = None
         self.scalar_space = None
+        self.owner = None
+        self.system = None
+        self.spaces = None
+        self._surface_source_assembler = None
         self._destroyed = True
 
 
 def build_v6_discrete_gradient_source_provider(
-    owner: Any,
+    owner: Any | None = None,
+    *,
+    system: Any | None = None,
+    spaces: Any | None = None,
+    surface_source_assembler: Any | None = None,
 ) -> _V6DiscreteGradientSourceProvider:
     """Create one reusable cross-section discrete-gradient source provider."""
 
-    return _V6DiscreteGradientSourceProvider(owner)
+    return _V6DiscreteGradientSourceProvider(
+        owner,
+        system=system,
+        spaces=spaces,
+        surface_source_assembler=surface_source_assembler,
+    )
 
 
 def _owner_row_tsqr(

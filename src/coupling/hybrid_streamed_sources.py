@@ -97,6 +97,22 @@ class StreamedPhysicalModalSourceProvider:
             target.destroy()
             raise
 
+    def assemble_surface_source(
+        self, source: fem.Function, *, role: str
+    ) -> tuple[PETSc.Vec, dict[str, Any]]:
+        """Reduce one transient cross-section field to an owned side Vec."""
+
+        if self._destroyed:
+            raise RuntimeError("Streamed physical source provider is destroyed")
+        entries = self._surface_load.assemble(source, role=role)
+        target = self._entries_to_vec(entries, scale=1.0)
+        return target, {
+            "role": str(role),
+            "queries": int(entries.queries),
+            "trace_only_verified": bool(entries.tangential_surface_trace_only_verified),
+            "surface_load_full_vector": False,
+        }
+
     def __call__(
         self,
         system: Any,

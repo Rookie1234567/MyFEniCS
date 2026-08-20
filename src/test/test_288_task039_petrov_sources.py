@@ -324,9 +324,18 @@ def test_v7_streamed_producer_writes_one_nested_packet_and_releases_context(tmp_
     class _Context:
         def __init__(self):
             self.release_count = 0
+            self._released = False
+
+        @property
+        def diagnostics(self):
+            return {
+                "released": self._released,
+                "mmap_mapping_count": 0 if self._released else 4,
+            }
 
         def release(self):
             self.release_count += 1
+            self._released = True
 
     context = _Context()
     schedule = [{"index": index, "holdout": False} for index in range(512)]
@@ -366,6 +375,11 @@ def test_v7_streamed_producer_writes_one_nested_packet_and_releases_context(tmp_
         comm=comm,
     )
     assert context.release_count == 1
+    assert result["packet_context_before_release"]["mmap_mapping_count"] == 4
+    assert result["packet_context_after_release"] == {
+        "released": True,
+        "mmap_mapping_count": 0,
+    }
     assert result["checkpoint"] == 512
     assert result["prefix_checkpoints"] == [64, 128, 256, 512]
     assert result["writer_retained_basis_copy"] is False

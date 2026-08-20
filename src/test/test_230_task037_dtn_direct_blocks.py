@@ -164,6 +164,12 @@ def _vector_error(left: PETSc.Vec, right: PETSc.Vec) -> float:
     return value
 
 
+def _relative_vector_error(left: PETSc.Vec, right: PETSc.Vec) -> tuple[float, float]:
+    absolute = _vector_error(left, right)
+    relative = absolute / max(float(right.norm()), 1.0e-30)
+    return absolute, relative
+
+
 @pytest.mark.skipif(
     MPI.COMM_WORLD.size not in (1, 2, 4),
     reason="M1b direct DtN block fixture supports serial/MPI2/MPI4",
@@ -298,6 +304,25 @@ def test_direct_dtn_blocks_match_extracted_oracle_and_action_only_fine():
             atol=1.0e-12,
             rtol=0.0,
         )
+    c_source = matrix_free.C.createVecRight()
+    if MPI.COMM_WORLD.rank == MPI.COMM_WORLD.size - 1:
+        c_source.getArray()[:] = np.asarray(
+            [0.75 + 0.25j * mode for mode in range(n_aux)],
+            dtype=PETSc.ScalarType,
+        )
+    c_matrix_free = matrix_free.C.createVecLeft()
+    c_research = research.C.createVecLeft()
+    matrix_free.C.mult(c_source, c_matrix_free)
+    research.C.mult(c_source, c_research)
+    c_absolute_error, c_relative_error = _relative_vector_error(
+        c_matrix_free, c_research
+    )
+    assert np.isfinite(c_absolute_error)
+    assert c_relative_error <= 1.0e-12
+    c_source.destroy()
+    c_matrix_free.destroy()
+    c_research.destroy()
+
     d_source = action_only.create_active_vector()
     _fill_active(d_source, 2.75)
     d_matrix_free = matrix_free.D.createVecLeft()
@@ -314,6 +339,81 @@ def test_direct_dtn_blocks_match_extracted_oracle_and_action_only_fine():
     d_research.destroy()
     d_matrix_free.destroy()
     d_source.destroy()
+
+    c_source = matrix_free.C.createVecLeft()
+    _fill_active(c_source, 3.75)
+    c_matrix_free_h = matrix_free.C.createVecRight()
+    c_research_h = research.C.createVecRight()
+    matrix_free.C.multHermitian(c_source, c_matrix_free_h)
+    research.C.multHermitian(c_source, c_research_h)
+    c_h_absolute_error, c_h_relative_error = _relative_vector_error(
+        c_matrix_free_h, c_research_h
+    )
+    assert np.isfinite(c_h_absolute_error)
+    assert c_h_relative_error <= 1.0e-12
+    c_matrix_free_h.destroy()
+    c_research_h.destroy()
+    c_source.destroy()
+
+    d_source = matrix_free.D.createVecLeft()
+    if MPI.COMM_WORLD.rank == MPI.COMM_WORLD.size - 1:
+        d_source.getArray()[:] = np.asarray(
+            [1.25 - 0.5j * mode for mode in range(n_aux)],
+            dtype=PETSc.ScalarType,
+        )
+    d_matrix_free_h = matrix_free.D.createVecRight()
+    d_research_h = research.D.createVecRight()
+    matrix_free.D.multHermitian(d_source, d_matrix_free_h)
+    research.D.multHermitian(d_source, d_research_h)
+    d_h_absolute_error, d_h_relative_error = _relative_vector_error(
+        d_matrix_free_h, d_research_h
+    )
+    assert np.isfinite(d_h_absolute_error)
+    assert d_h_relative_error <= 1.0e-12
+    d_matrix_free_h.destroy()
+    d_research_h.destroy()
+    d_source.destroy()
+
+    c_x = matrix_free.C.createVecRight()
+    if MPI.COMM_WORLD.rank == MPI.COMM_WORLD.size - 1:
+        c_x.getArray()[:] = np.asarray(
+            [0.75 + 0.25j * mode for mode in range(n_aux)],
+            dtype=PETSc.ScalarType,
+        )
+    c_y = matrix_free.C.createVecLeft()
+    _fill_active(c_y, 4.25)
+    c_x_applied = matrix_free.C.createVecLeft()
+    c_y_adjoint = matrix_free.C.createVecRight()
+    matrix_free.C.mult(c_x, c_x_applied)
+    matrix_free.C.multHermitian(c_y, c_y_adjoint)
+    c_lhs = c_x_applied.dot(c_y)
+    c_rhs = c_x.dot(c_y_adjoint)
+    assert abs(c_lhs - c_rhs) / max(abs(c_lhs), abs(c_rhs), 1.0e-30) <= 1.0e-12
+    c_x.destroy()
+    c_y.destroy()
+    c_x_applied.destroy()
+    c_y_adjoint.destroy()
+
+    d_x = matrix_free.D.createVecRight()
+    _fill_active(d_x, 5.25)
+    d_y = matrix_free.D.createVecLeft()
+    if MPI.COMM_WORLD.rank == MPI.COMM_WORLD.size - 1:
+        d_y.getArray()[:] = np.asarray(
+            [0.5 + 0.75j * mode for mode in range(n_aux)],
+            dtype=PETSc.ScalarType,
+        )
+    d_x_applied = matrix_free.D.createVecLeft()
+    d_y_adjoint = matrix_free.D.createVecRight()
+    matrix_free.D.mult(d_x, d_x_applied)
+    matrix_free.D.multHermitian(d_y, d_y_adjoint)
+    d_lhs = d_x_applied.dot(d_y)
+    d_rhs = d_x.dot(d_y_adjoint)
+    assert abs(d_lhs - d_rhs) / max(abs(d_lhs), abs(d_rhs), 1.0e-30) <= 1.0e-12
+    d_x.destroy()
+    d_y.destroy()
+    d_x_applied.destroy()
+    d_y_adjoint.destroy()
+
     assert oracle.b_fe.getOwnershipRange() == direct.b_fe.getOwnershipRange()
     assert oracle.b_aux.getOwnershipRange() == direct.b_aux.getOwnershipRange()
     b_fe_error = _vector_error(oracle.b_fe, direct.b_fe)
