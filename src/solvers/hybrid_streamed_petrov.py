@@ -372,6 +372,9 @@ class StreamedOwnerRowBasisPacket:
         self.manifest_path = manifest_path
         self.shard = dict(shard)
         self._destroyed = False
+        self._ownership_mode = str(
+            self.shard.get("ownership_mode", "producer_owner_rows_mmap")
+        )
 
     def prefix(self, checkpoint: int) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
         if self._destroyed or self.z is None or self.y is None:
@@ -396,11 +399,18 @@ class StreamedOwnerRowBasisPacket:
         if self._destroyed:
             return {"mmap_retained": False, "mmap_released": True}
         return {
-            "mmap_retained": True,
-            "mmap_released": False,
+            "mmap_retained": self._ownership_mode == "producer_owner_rows_mmap",
+            "mmap_released": self._ownership_mode != "producer_owner_rows_mmap",
             "arrays_retained": True,
-            "owned_basis_copy_count": 0,
-            "mmap_mapping_count": 2,
+            "owned_basis_copy_count": int(self.shard.get("owned_basis_copy_count", 0)),
+            "owned_local_basis_copy_count": int(
+                self.shard.get("owned_local_basis_copy_count", 0)
+            ),
+            "mmap_mapping_count": int(self.shard.get("mmap_mapping_count", 2)),
+            "ownership_mode": self._ownership_mode,
+            "producer_ownership_ranges": self.shard.get("producer_ownership_ranges"),
+            "target_ownership_range": self.shard.get("target_ownership_range"),
+            "global_basis_materialized": False,
             "checkpoint": int(self.manifest["checkpoint"]),
             "hash_layout": V7_STREAMED_PETROV_HASH_LAYOUT,
         }
@@ -824,6 +834,7 @@ def load_streamed_owner_row_basis_packet(
     expected_schedule_sha256: str,
     expected_provenance: Mapping[str, Any],
     ownership_range: tuple[int, int],
+    global_size: int,
     comm: MPI.Intracomm = MPI.COMM_WORLD,
 ) -> StreamedOwnerRowBasisPacket:
     """Load mmap-backed owner rows; current prefixes are verified on demand."""
@@ -846,33 +857,147 @@ def load_streamed_owner_row_basis_packet(
     if int(manifest.get("rank_count", -1)) != int(comm.size):
         raise ValueError("Streamed basis rank count mismatch")
     first, last = (int(value) for value in ownership_range)
-    shard = next(
-        (item for item in manifest["shards"] if int(item["rank"]) == comm.rank),
-        None,
-    )
-    if shard is None or tuple(shard["ownership_range"]) != (first, last):
-        raise ValueError("Streamed basis target ownership mismatch")
+    target_global_size = int(global_size)
+    manifest_global_size = int(manifest.get("global_rows", -1))
+    if manifest_global_size != target_global_size:
+        raise ValueError("Streamed basis manifest global size mismatch")
+    if not (0 <= first < last <= target_global_size):
+        raise ValueError("Streamed basis target ownership range mismatch")
+    shards = manifest.get("shards")
+    if not isinstance(shards, list) or len(shards) != int(comm.size):
+        raise ValueError("Streamed basis shard coverage metadata mismatch")
+    ranks = sorted(int(item["rank"]) for item in shards)
+    if ranks != list(range(int(comm.size))):
+        raise ValueError("Streamed basis shard rank metadata mismatch")
+    ordered_shards = sorted(shards, key=lambda item: int(item["ownership_range"][0]))
+    expected_start = 0
+    expected_columns = max(V7_STREAMED_PETROV_CHECKPOINTS)
+    for item in ordered_shards:
+        item_start, item_end = (int(value) for value in item["ownership_range"])
+        if item_start != expected_start or item_end <= item_start:
+            raise ValueError(
+                "Streamed basis manifest ownership coverage has a gap or overlap"
+            )
+        expected_start = item_end
+        rows = item_end - item_start
+        for role in ("z", "y"):
+            info = item.get(role)
+            if not isinstance(info, Mapping):
+                raise ValueError("Streamed basis shard metadata is incomplete")
+            if info.get("dtype") != "complex128":
+                raise ValueError("Streamed basis dtype mismatch")
+            if list(info.get("shape", [])) != [rows, expected_columns]:
+                raise ValueError("Streamed basis shard shape mismatch")
+            if not info.get("path") or not info.get("sha256"):
+                raise ValueError("Streamed basis shard hash metadata is incomplete")
+    if expected_start != target_global_size:
+        raise ValueError(
+            "Streamed basis manifest ownership coverage has a gap or overlap"
+        )
 
-    def read_array(role: str) -> np.ndarray:
-        info = shard[role]
+    shard = next((item for item in shards if int(item["rank"]) == comm.rank), None)
+
+    def read_array(source_shard: Mapping[str, Any], role: str) -> np.ndarray:
+        source_start, source_end = (
+            int(value) for value in source_shard["ownership_range"]
+        )
+        info = source_shard[role]
         if info.get("dtype") != "complex128":
             raise ValueError("Streamed basis dtype mismatch")
         array_path = path.parent / info["path"]
         if _sha256_file(array_path) != info["sha256"]:
             raise ValueError("Streamed basis shard hash mismatch")
         mapped = np.load(array_path, mmap_mode="r", allow_pickle=False)
-        if list(mapped.shape) != list(info["shape"]):
+        if list(mapped.shape) != [source_end - source_start, expected_columns]:
             del mapped
             raise ValueError("Streamed basis shard shape mismatch")
         return mapped
 
-    z = read_array("z")
-    try:
-        y = read_array("y")
-    except Exception:
-        del z
-        raise
+    exact_owner_match = shard is not None and tuple(
+        int(value) for value in shard["ownership_range"]
+    ) == (first, last)
+    if exact_owner_match:
+        z = read_array(shard, "z")
+        try:
+            y = read_array(shard, "y")
+        except Exception:
+            del z
+            raise
+        loaded_shard = dict(shard)
+        loaded_shard["ownership_mode"] = "producer_owner_rows_mmap"
+        loaded_shard["owned_basis_copy_count"] = 0
+        loaded_shard["owned_local_basis_copy_count"] = 0
+        loaded_shard["mmap_mapping_count"] = 2
+        loaded_shard["producer_ownership_ranges"] = [list(shard["ownership_range"])]
+        loaded_shard["target_ownership_range"] = [first, last]
+        loaded_shard["global_basis_materialized"] = False
+    else:
+        overlapping = [
+            item
+            for item in ordered_shards
+            if int(item["ownership_range"][0]) < last
+            and int(item["ownership_range"][1]) > first
+        ]
+        if not overlapping:
+            raise ValueError("Streamed basis target ownership has no source overlap")
+        remapped = {
+            role: np.empty(
+                (last - first, expected_columns), dtype=np.complex128, order="F"
+            )
+            for role in ("z", "y")
+        }
+        filled = np.zeros(last - first, dtype=bool)
+        source_ranges = []
+        source_hashes = {"z": [], "y": []}
+        for source_shard in overlapping:
+            source_start, source_end = (
+                int(value) for value in source_shard["ownership_range"]
+            )
+            overlap_start = max(first, source_start)
+            overlap_end = min(last, source_end)
+            target_slice = slice(overlap_start - first, overlap_end - first)
+            source_slice = slice(
+                overlap_start - source_start, overlap_end - source_start
+            )
+            source_ranges.append([source_start, source_end])
+            for role in ("z", "y"):
+                source_hashes[role].append(str(source_shard[role]["sha256"]))
+                mapped = read_array(source_shard, role)
+                remapped[role][target_slice, :] = mapped[source_slice, :]
+                del mapped
+            filled[target_slice] = True
+        if not bool(np.all(filled)):
+            raise ValueError("Streamed basis target ownership remap has a gap")
+        z = remapped["z"]
+        y = remapped["y"]
+        z.setflags(write=False)
+        y.setflags(write=False)
+        derived_prefixes = []
+        for checkpoint in V7_STREAMED_PETROV_CHECKPOINTS:
+            derived_prefixes.append(
+                {
+                    "checkpoint": checkpoint,
+                    "hash_layout": V7_STREAMED_PETROV_HASH_LAYOUT,
+                    "z_prefix_sha256": _array_sha256(z[:, :checkpoint]),
+                    "y_prefix_sha256": _array_sha256(y[:, :checkpoint]),
+                    "prefix_hash_source": "derived_from_hash_verified_source_slices",
+                    "source_shard_file_hashes": dict(source_hashes),
+                }
+            )
+        loaded_shard = {
+            "rank": comm.rank,
+            "ownership_range": [first, last],
+            "prefixes": derived_prefixes,
+            "ownership_mode": "remapped_owner_rows",
+            "producer_ownership_ranges": source_ranges,
+            "target_ownership_range": [first, last],
+            "owned_local_basis_copy_count": 2,
+            "owned_basis_copy_count": 2,
+            "mmap_mapping_count": 0,
+            "global_basis_materialized": False,
+            "source_shard_file_hashes": source_hashes,
+        }
     if _sha256_file(path) != str(expected_manifest_sha256):
         del z, y
         raise ValueError("Streamed basis manifest changed during read")
-    return StreamedOwnerRowBasisPacket(z, y, manifest, path, shard)
+    return StreamedOwnerRowBasisPacket(z, y, manifest, path, loaded_shard)

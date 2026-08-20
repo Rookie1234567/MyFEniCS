@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -22,6 +24,7 @@ from src.solvers.hybrid_streamed_petrov import (
     V7_STREAMED_PETROV_CHECKPOINTS,
     V7_STREAMED_PETROV_HASH_LAYOUT,
     StreamedOwnerRowBasisBuilder,
+    _array_sha256,
     load_streamed_owner_row_basis_packet,
     run_streamed_owner_row_basis_producer,
     write_streamed_owner_row_basis_packet,
@@ -288,6 +291,7 @@ def test_v7_streamed_owner_row_prefixes_and_hash_bound_packet(tmp_path):
         expected_schedule_sha256="s" * 64,
         expected_provenance=provenance,
         ownership_range=(first, last),
+        global_size=global_rows,
         comm=comm,
     )
     assert loaded.diagnostics["mmap_retained"] is True
@@ -311,6 +315,136 @@ def test_v7_streamed_owner_row_prefixes_and_hash_bound_packet(tmp_path):
     builder.destroy()
     with pytest.raises(RuntimeError, match="destroyed"):
         builder.checkpoint(128)
+
+
+def test_v7_streamed_loader_remaps_cross_shard_owner_rows(tmp_path):
+    if MPI.COMM_WORLD.size not in (2, 4):
+        pytest.skip("focused streamed remap fixture supports MPI2/4")
+    comm = MPI.COMM_WORLD
+    global_rows = 8
+    if comm.size == 2:
+        producer_ranges = [(0, 3), (3, 8)]
+        target_ranges = [(0, 4), (4, 8)]
+    else:
+        producer_ranges = [(0, 1), (1, 3), (3, 6), (6, 8)]
+        target_ranges = [(0, 2), (2, 4), (4, 7), (7, 8)]
+    source_first, source_last = producer_ranges[comm.rank]
+    rows = np.arange(global_rows * 512, dtype=np.float64).reshape(global_rows, 512)
+    z_global = rows + 1j * (rows + 1.0)
+    y_global = 3.0 * rows + 1j * (rows + 2.0)
+    z_local = z_global[source_first:source_last, :]
+    y_local = y_global[source_first:source_last, :]
+    prefix_records = [
+        {
+            "checkpoint": checkpoint,
+            "hash_layout": V7_STREAMED_PETROV_HASH_LAYOUT,
+            "z_prefix_sha256": _array_sha256(z_local[:, :checkpoint]),
+            "y_prefix_sha256": _array_sha256(y_local[:, :checkpoint]),
+            "z_orthogonality_error": 0.0,
+            "y_orthogonality_error": 0.0,
+        }
+        for checkpoint in V7_STREAMED_PETROV_CHECKPOINTS
+    ]
+    directory = Path(comm.bcast(str(tmp_path / "remapped_basis"), root=0))
+    provenance = {"training_holdout_disjoint": True, "tiny_remap": True}
+    packet = write_streamed_owner_row_basis_packet(
+        directory,
+        z_local,
+        y_local,
+        prefix_records=prefix_records,
+        global_rows=global_rows,
+        ownership_range=(source_first, source_last),
+        schedule_sha256="s" * 64,
+        provenance=provenance,
+        comm=comm,
+    )
+    loaded = load_streamed_owner_row_basis_packet(
+        directory / "manifest.json",
+        expected_manifest_sha256=packet["manifest_sha256"],
+        expected_schedule_sha256="s" * 64,
+        expected_provenance=provenance,
+        ownership_range=target_ranges[comm.rank],
+        global_size=global_rows,
+        comm=comm,
+    )
+    diagnostics = loaded.diagnostics
+    assert diagnostics["ownership_mode"] == "remapped_owner_rows"
+    assert diagnostics["owned_local_basis_copy_count"] == 2
+    assert diagnostics["global_basis_materialized"] is False
+    assert diagnostics["mmap_retained"] is False
+    assert diagnostics["mmap_released"] is True
+    assert loaded.z.flags.writeable is False
+    assert loaded.y.flags.writeable is False
+    target_first, target_last = target_ranges[comm.rank]
+    for checkpoint in V7_STREAMED_PETROV_CHECKPOINTS:
+        loaded_z, loaded_y, prefix = loaded.prefix(checkpoint)
+        assert prefix["prefix_hash_source"] == (
+            "derived_from_hash_verified_source_slices"
+        )
+        np.testing.assert_array_equal(
+            loaded_z, z_global[target_first:target_last, :checkpoint]
+        )
+        np.testing.assert_array_equal(
+            loaded_y, y_global[target_first:target_last, :checkpoint]
+        )
+    loaded.destroy()
+    assert loaded.z is None and loaded.y is None
+    comm.barrier()
+
+
+def test_v7_streamed_loader_rejects_global_size_and_coverage(tmp_path):
+    if MPI.COMM_WORLD.size != 1:
+        pytest.skip("manifest failure fixture is serial-only")
+    comm = MPI.COMM_WORLD
+    provenance = {"training_holdout_disjoint": True, "tiny_failure": True}
+    z = np.ones((3, 512), dtype=np.complex128)
+    y = 2.0 * z
+    prefix_records = [
+        {
+            "checkpoint": checkpoint,
+            "hash_layout": V7_STREAMED_PETROV_HASH_LAYOUT,
+            "z_prefix_sha256": _array_sha256(z[:, :checkpoint]),
+            "y_prefix_sha256": _array_sha256(y[:, :checkpoint]),
+        }
+        for checkpoint in V7_STREAMED_PETROV_CHECKPOINTS
+    ]
+    directory = Path(comm.bcast(str(tmp_path / "invalid_basis"), root=0))
+    packet = write_streamed_owner_row_basis_packet(
+        directory,
+        z,
+        y,
+        prefix_records=prefix_records,
+        global_rows=3,
+        ownership_range=(0, 3),
+        schedule_sha256="s" * 64,
+        provenance=provenance,
+        comm=comm,
+    )
+    with pytest.raises(ValueError, match="global size"):
+        load_streamed_owner_row_basis_packet(
+            directory / "manifest.json",
+            expected_manifest_sha256=packet["manifest_sha256"],
+            expected_schedule_sha256="s" * 64,
+            expected_provenance=provenance,
+            ownership_range=(0, 3),
+            global_size=4,
+            comm=comm,
+        )
+    manifest_path = directory / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["global_rows"] = 4
+    manifest_path.write_text(json.dumps(manifest, sort_keys=True) + "\n")
+    manifest_sha256 = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+    with pytest.raises(ValueError, match="gap or overlap"):
+        load_streamed_owner_row_basis_packet(
+            manifest_path,
+            expected_manifest_sha256=manifest_sha256,
+            expected_schedule_sha256="s" * 64,
+            expected_provenance=provenance,
+            ownership_range=(0, 3),
+            global_size=4,
+            comm=comm,
+        )
 
 
 def test_v7_streamed_producer_writes_one_nested_packet_and_releases_context(tmp_path):

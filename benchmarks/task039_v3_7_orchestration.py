@@ -1982,6 +1982,11 @@ def run_v7_h4_streamed_bottom_petrov_consumer(
             raise ValueError(
                 "V7 streamed consumer fixed action violates factor-free inventory"
             )
+        target_ownership_range = tuple(
+            int(value) for value in system.A.getOwnershipRange()
+        )
+        target_ownership_ranges = comm.allgather(list(target_ownership_range))
+        target_global_rows = int(system.A.getSize()[0])
         marker_callback(
             "v7_streamed_bottom_consumer_base_ready",
             {
@@ -1992,6 +1997,9 @@ def run_v7_h4_streamed_bottom_petrov_consumer(
                 "global_direct_factor_count": base_diagnostics.get(
                     "global_direct_factor_count"
                 ),
+                "target_global_rows": target_global_rows,
+                "target_ownership_range": list(target_ownership_range),
+                "target_ownership_ranges": target_ownership_ranges,
                 "fixed_linear": True,
             },
         )
@@ -2000,7 +2008,8 @@ def run_v7_h4_streamed_bottom_petrov_consumer(
             expected_manifest_sha256=basis_manifest_sha256,
             expected_schedule_sha256=schedule_sha256,
             expected_provenance=expected_provenance,
-            ownership_range=tuple(int(value) for value in system.A.getOwnershipRange()),
+            ownership_range=target_ownership_range,
+            global_size=target_global_rows,
             comm=comm,
         )
         marker_callback(

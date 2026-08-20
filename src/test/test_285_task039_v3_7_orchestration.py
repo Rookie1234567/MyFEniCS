@@ -3258,6 +3258,9 @@ def test_v7_streamed_consumer_route_preserves_selected_and_basis_packets(
     consumer_source = inspect.getsource(
         orchestration.run_v7_h4_streamed_bottom_petrov_consumer
     )
+    assert "target_ownership_ranges = comm.allgather" in consumer_source
+    assert '"target_ownership_ranges": target_ownership_ranges' in consumer_source
+    assert "global_size=target_global_rows" in consumer_source
     setup_begin = consumer_source.split("    try:", 1)[0]
     monkeypatch.setattr(
         orchestration,
