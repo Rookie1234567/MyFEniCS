@@ -109,3 +109,26 @@ T1 adapter 预检动态发现 80 modes：78 propagating、0 near-cutoff、2 evan
 ## 7. Scope
 
 T3 只完成 action/recovery formal；没有运行 KSP、Maxwell PDE、T4 或 0.7 nm full PDE。process-tree peak 明确为 `not_measured_t3`。MPI2 attempt1 的 TOCTOU traceback、空 raw 残留目录和 failure log 保留在 ignored `t3_formal_v1` artifact 下，未与新 `t3_formal_v2` SHA 混合。
+
+## 8. T4 formal bounded transmission oracle
+
+T4 用真实两-slab Full3D fixture 检查 owner-local interface topology 和 candidate A 一阶 tangential Robin/impedance transmission action。它只验证边界动作与独立 facet-quadrature oracle 的一致性，不建立 KSP、不解 PDE，也不声称 process-tree 峰值。四个冻结 case 是 p2/MPI1、p2/MPI2、p3/MPI1、p3/MPI2，均使用固定斜入射 s/p source family 和固定 s+p test field。
+
+| item | result |
+|---|---|
+| formal implementation/fix SHA | `88e5cef8a007445270721b9076b0c33453f743f3` |
+| expected/start/end SHA | exact same SHA in all four records |
+| individual checker | 4 × `T4_PASS` |
+| aggregate | `T4_AGGREGATE_PASS`; exact four-case set |
+| max action/oracle relative error | `1.1347e-15` (limit `1e-11`) |
+| max cross-MPI physical canonical relative L2 | `7.1149e-15` (limit `1e-12`) |
+| R/P adjoint and reconstruction | all recorded values 0 |
+| apply telemetry | 8 real applies/case; repeat differences 0 |
+| warm rank-max current RSS span | 1,363,968–1,683,456 B; below 64 MiB |
+| swap | 0 B in all cases; current process `VmSwap` semantics |
+| process-tree | `not_measured_t4` |
+| KSP / PDE / official physics | false / false / `not_run` |
+
+Retained numeric payload/work was measured separately: p2/MPI1 `45,696/10,368 B`, p2/MPI2 `30,192/10,368 B` local retained/work, p3/MPI1 `127,296/27,648 B`, and p3/MPI2 `84,936/27,648 B` (global-max retained values are in the compact records). No numeric allgather, global AIJ, dense interface mass/Schur, or slab factor was materialized. The full T4 explanation and artifact hashes are in [`sweep_oracle.md`](sweep_oracle.md).
+
+The first v1 p2/MPI1 checker result is retained as explicit negative evidence: the independent pairing passed, but the runner omitted the action manifest from the evidence registry. The narrow fix closed only that registry assignment; v2 reran all four cases and is the qualifying T4 result. The v1 record/check are [`t4_p2_h50_mpi1_v1_evidence_defect_record.json`](records/t4_p2_h50_mpi1_v1_evidence_defect_record.json) and [`t4_p2_h50_mpi1_v1_evidence_defect_check.json`](records/t4_p2_h50_mpi1_v1_evidence_defect_check.json). T5/T6 and push remain unstarted.

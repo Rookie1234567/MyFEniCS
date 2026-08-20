@@ -1,0 +1,29 @@
+{
+  "case": "p2-mpi1",
+  "checks": {
+    "action_oracle": false,
+    "canonical_packets": false,
+    "reconstruction": true,
+    "resource_and_scope": true,
+    "schema_case_identity": true,
+    "source_identity": true,
+    "topology_identity": true
+  },
+  "classification": "T4_EXECUTION_OR_EVIDENCE_FAIL",
+  "derived": {
+    "canonical_sha256": "8a325f1de93fbe250235b4a89280007f6bb51a51d9deda80f0698344633f9afa",
+    "global_facet_count": 6,
+    "source_1_backward_relative_error": 8.690178791756615e-16,
+    "source_1_forward_relative_error": 5.225157120006901e-16,
+    "source_2_backward_relative_error": 3.344662658453946e-16,
+    "source_2_forward_relative_error": 3.081600302857964e-16
+  },
+  "passed": false,
+  "problems": [
+    "action canonical descriptor mismatch: source_1/forward",
+    "action canonical descriptor mismatch: source_1/backward",
+    "action canonical descriptor mismatch: source_2/forward",
+    "action canonical descriptor mismatch: source_2/backward"
+  ],
+  "schema": "task038.full3d.iterative.t4.action-check.v1"
+}
