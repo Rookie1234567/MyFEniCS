@@ -17,7 +17,7 @@ import numpy as np
 CanonicalKey = tuple[Any, ...]
 CanonicalPacket = tuple[CanonicalKey, complex]
 
-_ROLES = frozenset({"active_trace", "full_fe"})
+_ROLES = frozenset({"active_trace", "full_fe", "full_fe_dual"})
 
 
 def canonical_key(

@@ -14,6 +14,7 @@ from typing import Any
 import numpy as np
 import ufl
 from dolfinx import cpp, fem
+from dolfinx.la.petsc import create_vector
 from mpi4py import MPI
 from petsc4py import PETSc
 
@@ -39,9 +40,12 @@ from .hcurl_canonical_vector import (
 __all__ = (
     "iter_canonical_active_trace_packets",
     "iter_canonical_full_fe_packets",
+    "iter_canonical_full_fe_dual_packets",
     "extract_canonical_active_trace_packets",
     "extract_canonical_full_fe_packets",
+    "extract_canonical_full_fe_dual_packets",
     "reconstruct_canonical_full_fe_function",
+    "reconstruct_canonical_full_fe_dual_vector",
     "compare_hcurl_fields",
 )
 
@@ -277,6 +281,181 @@ def _packet_audit(
         "trace_mass_norm": "not_qualified",
         "hcurl_norm": "not_qualified",
     }
+
+
+def _mpc_slave_mask(mpc, local_dofs: np.ndarray) -> np.ndarray:
+    """Classify local rows without treating imported masters as slaves."""
+
+    is_slave = np.asarray(mpc.is_slave, dtype=bool)
+    return np.asarray(
+        [
+            int(local_dof) < is_slave.size
+            and bool(is_slave[int(local_dof)])
+            for local_dof in np.asarray(local_dofs, dtype=np.int32)
+        ],
+        dtype=bool,
+    )
+
+
+def iter_canonical_full_fe_dual_packets(
+    function_space,
+    mpc,
+    recovered_vec,
+    *,
+    geometry_tolerance: float | None = None,
+) -> Iterator[CanonicalPacket]:
+    """Stream owner-local full-FE dual packets from a finalized MPC vector.
+
+    Entity blocks use the conjugate-transpose physical transform.  Cell
+    interiors use Basix ``Tt_apply`` directly.  The temporary extended vector
+    is destroyed when iteration exhausts or raises; coefficient values are
+    exchanged only by the ordinary owner-to-ghost update.
+    """
+
+    if mpc is None:
+        raise ValueError("full-FE dual packets require finalized MPC metadata")
+    degree, _trace_positions, interior_positions = _space_data(function_space)
+    topology, cell_info, owned_cells = _topology_data(function_space)
+    tolerance = (
+        mesh_coordinate_tolerance(function_space.mesh)
+        if geometry_tolerance is None
+        else float(geometry_tolerance)
+    )
+    element_data = function_space.element
+    layout = function_space.dofmap.dof_layout
+    vector = (
+        recovered_vec
+        if isinstance(recovered_vec, PETSc.Vec)
+        else recovered_vec.x.petsc_vec
+    )
+    vector_index_map = mpc.function_space.dofmap.index_map
+    owned_size = int(function_space.dofmap.index_map.size_local)
+    if int(vector_index_map.size_local) != owned_size:
+        raise RuntimeError("MPC extended vector changed owned full-FE rows")
+    source_values = np.asarray(vector.getArray(readonly=True))
+    if source_values.size != owned_size:
+        raise RuntimeError("full-FE dual source has an incompatible owned layout")
+
+    extended = create_vector(
+        [
+            (
+                vector_index_map,
+                mpc.function_space.dofmap.index_map_bs,
+            )
+        ]
+    )
+    dimension = int(element_data.space_dimension)
+    stored = np.empty(dimension, dtype=np.complex128)
+    try:
+        with extended.localForm() as local:
+            local.set(0.0)
+            local.array_w[:owned_size] = source_values
+        extended.ghostUpdate(
+            addv=PETSc.InsertMode.INSERT_VALUES,
+            mode=PETSc.ScatterMode.FORWARD,
+        )
+        with extended.localForm() as local:
+            local_values = local.array_r
+            for dimension_index in (1, 2):
+                cell_to_entity = topology.connectivity(topology.dim, dimension_index)
+                for entity, cell in _owned_entity_incidents(
+                    function_space, dimension_index
+                ):
+                    local_entities = np.asarray(
+                        cell_to_entity.links(cell), dtype=np.int32
+                    )
+                    matches = np.flatnonzero(local_entities == int(entity))
+                    if matches.size != 1:
+                        raise RuntimeError("entity incidence is not unique")
+                    positions = np.asarray(
+                        layout.entity_dofs(dimension_index, int(matches[0])),
+                        dtype=np.int32,
+                    )
+                    local_dofs = np.asarray(
+                        function_space.dofmap.cell_dofs(cell), dtype=np.int32
+                    )[positions]
+                    slave_mask = _mpc_slave_mask(mpc, local_dofs)
+                    if np.any(slave_mask) and not np.all(slave_mask):
+                        raise RuntimeError("Floquet entity block is partly constrained")
+                    if np.all(slave_mask):
+                        continue
+                    coordinates = _entity_coordinates(
+                        function_space, dimension_index, entity
+                    )
+                    transform, state = _physical_entity_transform(
+                        coordinates, dimension_index, degree, tolerance
+                    )
+                    canonical_values = transform.conj().T @ local_values[local_dofs]
+                    physical_key = canonical_entity_key(coordinates, tolerance)
+                    for basis, value in enumerate(canonical_values):
+                        yield canonical_packet(
+                            canonical_key(
+                                role="full_fe_dual",
+                                entity_dimension=dimension_index,
+                                physical_entity=physical_key,
+                                entity_local_basis_index=basis,
+                                orientation_state=state,
+                            ),
+                            value,
+                        )
+
+            for cell in range(int(owned_cells[0])):
+                local_dofs = np.asarray(
+                    function_space.dofmap.cell_dofs(cell), dtype=np.int32
+                )
+                slave_mask = _mpc_slave_mask(mpc, local_dofs)
+                stored[:] = local_values[local_dofs]
+                stored[slave_mask] = 0.0
+                element_data.Tt_apply(
+                    stored,
+                    np.asarray([cell_info[cell]], dtype=np.uint32),
+                    1,
+                )
+                physical_key = canonical_entity_key(
+                    _entity_coordinates(function_space, 3, cell), tolerance
+                )
+                for basis, position in enumerate(interior_positions):
+                    local_dof = int(local_dofs[int(position)])
+                    if local_dof < owned_size and not slave_mask[int(position)]:
+                        yield canonical_packet(
+                            canonical_key(
+                                role="full_fe_dual",
+                                entity_dimension=3,
+                                physical_entity=physical_key,
+                                entity_local_basis_index=basis,
+                                orientation_state=("canonical_cell", "Tt_apply"),
+                            ),
+                            stored[int(position)],
+                        )
+    finally:
+        extended.destroy()
+
+
+def extract_canonical_full_fe_dual_packets(
+    function_space,
+    mpc,
+    recovered_vec,
+    *,
+    geometry_tolerance: float | None = None,
+) -> tuple[tuple[CanonicalPacket, ...], dict[str, Any]]:
+    packets = tuple(
+        iter_canonical_full_fe_dual_packets(
+            function_space,
+            mpc,
+            recovered_vec,
+            geometry_tolerance=geometry_tolerance,
+        )
+    )
+    audit = _packet_audit(
+        packets, function_space.mesh.comm, role="full_fe_dual"
+    )
+    audit.update(
+        {
+            "slave_exclusion": True,
+            "numeric_allgather": False,
+        }
+    )
+    return packets, audit
 
 
 def iter_canonical_active_trace_packets(
@@ -515,11 +694,15 @@ def extract_canonical_full_fe_packets(
 
 def _canonical_packet_map(
     packets: Iterable[CanonicalPacket],
+    *,
+    role: str = "full_fe",
 ) -> dict[CanonicalKey, complex]:
     packet_map: dict[CanonicalKey, complex] = {}
     for key, value in packets:
-        if key[0] != "full_fe":
-            raise ValueError("fresh-field reconstruction requires full_fe packets")
+        if key[0] != role:
+            if role == "full_fe":
+                raise ValueError("fresh-field reconstruction requires full_fe packets")
+            raise ValueError(f"reconstruction requires {role} packets")
         if key in packet_map:
             raise ValueError(f"duplicate canonical full-FE key: {key!r}")
         packet_map[key] = canonical_packet(key, value)[1]
@@ -672,6 +855,172 @@ def reconstruct_canonical_full_fe_function(
             raise ValueError(f"unexpected canonical full-FE keys: {len(extra)}")
     field.x.scatter_forward()
     return field
+
+
+def reconstruct_canonical_full_fe_dual_vector(
+    function_space,
+    mpc,
+    packets: Iterable[CanonicalPacket],
+    *,
+    geometry_tolerance: float | None = None,
+) -> PETSc.Vec:
+    """Rebuild a finalized-MPC dual vector from owner-local physical packets.
+
+    The dual entity map solves with ``Tᴴ`` and the dual cell map reverses
+    ``Tt_apply`` with ``T_apply``.  Dual packets intentionally carry no
+    Floquet phase: the input/output vector already uses the finalized MPC
+    convention, so a second phase application would be incorrect.
+    """
+
+    if mpc is None:
+        raise ValueError("full-FE dual reconstruction requires finalized MPC metadata")
+    degree, _trace_positions, interior_positions = _space_data(function_space)
+    packet_map = _canonical_packet_map(packets, role="full_fe_dual")
+    topology, cell_info, owned_cells = _topology_data(function_space)
+    tolerance = (
+        mesh_coordinate_tolerance(function_space.mesh)
+        if geometry_tolerance is None
+        else float(geometry_tolerance)
+    )
+    layout = function_space.dofmap.dof_layout
+    target_space = mpc.function_space
+    target_index_map = target_space.dofmap.index_map
+    owned_size = int(function_space.dofmap.index_map.size_local)
+    if int(target_index_map.size_local) != owned_size:
+        raise RuntimeError("MPC target changed owned full-FE rows")
+    global_to_local = _owned_global_to_local(target_space)
+    expected_local_keys: set[CanonicalKey] = set()
+    target = create_vector(
+        [
+            (
+                target_index_map,
+                target_space.dofmap.index_map_bs,
+            )
+        ]
+    )
+    target_values = target.getArray()
+    target_values[:] = 0.0
+
+    for dimension in (1, 2):
+        cell_to_entity = topology.connectivity(topology.dim, dimension)
+        for entity, cell in _owned_entity_incidents(function_space, dimension):
+            local_entity = int(
+                np.flatnonzero(
+                    np.asarray(cell_to_entity.links(cell), dtype=np.int32)
+                    == int(entity)
+                )[0]
+            )
+            positions = np.asarray(
+                layout.entity_dofs(dimension, local_entity), dtype=np.int32
+            )
+            local_dofs = np.asarray(
+                function_space.dofmap.cell_dofs(cell), dtype=np.int32
+            )[positions]
+            slave_mask = _mpc_slave_mask(mpc, local_dofs)
+            if np.any(slave_mask) and not np.all(slave_mask):
+                target.destroy()
+                raise RuntimeError("Floquet entity block is partly constrained")
+            if np.all(slave_mask):
+                continue
+            coordinates = _entity_coordinates(function_space, dimension, entity)
+            physical_key = canonical_entity_key(coordinates, tolerance)
+            transform, state = _physical_entity_transform(
+                coordinates, dimension, degree, tolerance
+            )
+            keys = tuple(
+                canonical_key(
+                    role="full_fe_dual",
+                    entity_dimension=dimension,
+                    physical_entity=physical_key,
+                    entity_local_basis_index=basis,
+                    orientation_state=state,
+                )
+                for basis in range(len(positions))
+            )
+            expected_local_keys.update(keys)
+            if any(key not in packet_map for key in keys):
+                target.destroy()
+                raise ValueError("missing canonical full-FE dual entity block")
+            canonical_values = np.asarray(
+                [packet_map[key] for key in keys], dtype=np.complex128
+            )
+            if transform.shape != (len(positions), len(positions)):
+                target.destroy()
+                raise ValueError("canonical entity transform has an unexpected shape")
+            stored_values = np.linalg.solve(transform.conj().T, canonical_values)
+            global_dofs = _global_dofs(
+                function_space,
+                np.asarray(function_space.dofmap.cell_dofs(cell))[positions],
+            )
+            for global_id, stored_value in zip(global_dofs, stored_values, strict=True):
+                local_id = global_to_local.get(int(global_id))
+                if local_id is not None:
+                    target_values[local_id] = stored_value
+
+    for cell in range(int(owned_cells[0])):
+        local_dofs = np.asarray(
+            function_space.dofmap.cell_dofs(cell), dtype=np.int32
+        )
+        global_dofs = _global_dofs(function_space, local_dofs)
+        slave_mask = _mpc_slave_mask(mpc, local_dofs)
+        physical_key = canonical_entity_key(
+            _entity_coordinates(function_space, 3, cell), tolerance
+        )
+        keys = tuple(
+            canonical_key(
+                role="full_fe_dual",
+                entity_dimension=3,
+                physical_entity=physical_key,
+                entity_local_basis_index=basis,
+                orientation_state=("canonical_cell", "Tt_apply"),
+            )
+            for basis, position in enumerate(interior_positions)
+            if not slave_mask[int(position)]
+        )
+        expected_local_keys.update(keys)
+        if any(key not in packet_map for key in keys):
+            target.destroy()
+            raise ValueError("missing canonical full-FE dual cell-interior block")
+        canonical_block = np.zeros(
+            int(function_space.element.space_dimension), dtype=np.complex128
+        )
+        for key, position in zip(
+            keys,
+            [
+                int(position)
+                for position in interior_positions
+                if not slave_mask[int(position)]
+            ],
+            strict=True,
+        ):
+            canonical_block[int(position)] = packet_map[key]
+        stored_block = canonical_block.copy()
+        function_space.element.T_apply(
+            stored_block,
+            np.asarray([cell_info[cell]], dtype=np.uint32),
+            1,
+        )
+        for position in interior_positions:
+            if slave_mask[int(position)]:
+                continue
+            local_id = global_to_local.get(int(global_dofs[int(position)]))
+            if local_id is not None:
+                target_values[local_id] = stored_block[int(position)]
+
+    missing = expected_local_keys.difference(packet_map)
+    if missing:
+        target.destroy()
+        raise ValueError(f"missing canonical full-FE dual keys: {len(missing)}")
+    if function_space.mesh.comm.size == 1:
+        extra = set(packet_map).difference(expected_local_keys)
+        if extra:
+            target.destroy()
+            raise ValueError(f"unexpected canonical full-FE dual keys: {len(extra)}")
+    target.ghostUpdate(
+        addv=PETSc.InsertMode.INSERT_VALUES,
+        mode=PETSc.ScatterMode.FORWARD,
+    )
+    return target
 
 
 def _assembled_real(form, comm) -> float:
