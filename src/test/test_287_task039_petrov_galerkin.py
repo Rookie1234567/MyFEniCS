@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import numpy as np
 import pytest
 from mpi4py import MPI
@@ -191,6 +193,7 @@ def test_streamed_consumer_records_e_failure_and_stops_at_first_passing_rank(
             return z, y, {"checkpoint": checkpoint}
 
     packet = _Packet()
+    events: list[tuple[str, int]] = []
     try:
         result = run_streamed_owner_row_petrov_consumer(
             packet,
@@ -199,6 +202,9 @@ def test_streamed_consumer_records_e_failure_and_stops_at_first_passing_rank(
             holdout_evaluator=lambda _action, checkpoint: {
                 "gate_pass": checkpoint == 128
             },
+            checkpoint_callback=lambda event, checkpoint, _detail: events.append(
+                (event, checkpoint)
+            ),
             factor_inventory=base.diagnostics,
         )
         assert result["first_passing_checkpoint"] == 128
@@ -208,13 +214,45 @@ def test_streamed_consumer_records_e_failure_and_stops_at_first_passing_rank(
         ]
         assert result["reports"][0]["post_destroy_diagnostics"] is None
         assert result["reports"][0]["correction_action_destroyed"] is True
+        assert events[:2] == [("setup_begin", 64), ("setup_end", 64)]
+        assert ("holdout_end", 64) not in events
+        assert events[2:] == [
+            ("setup_begin", 128),
+            ("setup_end", 128),
+            ("holdout_end", 128),
+        ]
         assert result["reports"][0]["e_failure"].startswith(
             "Petrov coarse E is rank deficient"
             if failure_kind == "rank"
             else "Petrov coarse E condition exceeds"
         )
+        e_gate = result["reports"][0]["e_gate"]
+        assert e_gate["coarse_rank"] == 64
+        assert e_gate["condition_limit"] == 1.0e12
+        assert isinstance(e_gate["condition_finite"], bool)
+        if e_gate["condition_finite"]:
+            assert np.isfinite(e_gate["condition"])
+            assert e_gate["condition_status"] == "finite"
+        else:
+            assert e_gate["condition"] is None
+            assert e_gate["condition_status"] == "nonfinite"
+        json.dumps(result, allow_nan=False)
+        if failure_kind == "rank":
+            assert e_gate["reason"] == "rank_deficient"
+        else:
+            assert e_gate["reason"] == "condition_exceeded"
+        assert result["reports"][0]["correction_apply_seconds"] == 0.0
+        assert (
+            result["reports"][0]["correction_apply_timing_status"]
+            == "not_run_e_failure"
+        )
         assert result["reports"][0]["factor_inventory"]["exact_factor_count"] == 0
         assert result["reports"][1]["post_destroy_diagnostics"]["destroyed"] is True
+        assert result["reports"][1]["correction_apply_seconds"] == 0.0
+        assert (
+            result["reports"][1]["correction_apply_timing_status"] == "measured_mpi_max"
+        )
+        assert result["reports"][1]["correction_last_apply_seconds"] == 0.0
         assert result["all_corrections_destroyed"] is True
         assert result["exact_factor_count"] == 0
         assert result["global_direct_factor_count"] == 0
@@ -295,6 +333,13 @@ def test_petrov_formula_complex_adjoint_owner_rows_and_lifecycle():
             assert np.isfinite(diagnostics["coarse_e_condition"])
             assert diagnostics["coarse_e_condition"] <= diagnostics["condition_limit"]
             assert diagnostics["apply_count"] == 3
+            assert diagnostics["apply_timing_scope"] == (
+                "local_rank_before_checkpoint_reduce"
+            )
+            assert diagnostics["last_apply_seconds"] >= 0.0
+            assert (
+                diagnostics["total_apply_seconds"] >= diagnostics["last_apply_seconds"]
+            )
             assert diagnostics["base_action_count"] == 3
             assert diagnostics["f_action_count"] == 6
             assert diagnostics["setup_f_action_count"] == 3

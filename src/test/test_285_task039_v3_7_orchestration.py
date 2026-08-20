@@ -1641,6 +1641,64 @@ def test_v7_streamed_producer_orchestration_plan_forwards_packet_route(
         )
 
 
+def test_v7_streamed_consumer_orchestration_plan_forwards_basis_and_spool(
+    tmp_path,
+) -> None:
+    h4_input = Path(
+        "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
+    )
+    packet_root = Path("results/task039_v4_h4_m480_shared_packet_eaad0f94")
+    basis_manifest = tmp_path / "basis-manifest.json"
+    exact_spool = tmp_path / "exact-spool"
+    basis_sha = "b" * 64
+    packet_sha = "c" * 64
+    for plan_builder in (watchdog.v3_7_execution_dry_run, v3_7_execution_dry_run):
+        plan = plan_builder(
+            h4_input,
+            tmp_path / "v7-consumer-plan",
+            source_sha="a" * 40,
+            v7_h4_streamed_bottom_consumer=True,
+            v7_h4_streamed_bottom_consumer_basis_manifest=basis_manifest,
+            v7_h4_streamed_bottom_consumer_basis_manifest_sha256=basis_sha,
+            v7_h4_streamed_bottom_consumer_exact_spool_root=exact_spool,
+            selected_mode_packet_manifest=packet_root / "manifest.json",
+            selected_mode_packet_identity=packet_root / "identity.json",
+            selected_mode_packet_manifest_sha256=packet_sha,
+        )
+        argv = plan["argv"]
+        assert argv.count("--v7-h4-streamed-bottom-consumer") == 1
+        route_flags = (
+            "--candidate-b-only",
+            "--candidate-c-only",
+            "--candidate-d-only",
+            "--candidate-d-qualified",
+            "--candidate-e-side-only",
+            "--v5-h4-setup-only",
+            "--v5-h4-blr-side-component",
+            "--v5-h4-fixed-budget-bottom-component",
+            "--v6-h4-post-compaction-setup-only",
+            "--v6-h4-port-modal-bottom-component",
+            "--v7-h4-exact-side-limit-setup-only",
+            "--v7-h4-exact-side-full-formal",
+            "--v7-h4-streamed-bottom-producer",
+            "--v7-h4-streamed-bottom-consumer",
+        )
+        assert sum(flag in argv for flag in route_flags) == 1
+        assert str(basis_manifest.resolve()) in argv
+        assert basis_sha in argv
+        assert str(exact_spool.resolve()) in argv
+        assert plan["worker_contract"]["method"] == (
+            "task039_v7_streamed_bottom_petrov_consumer"
+        )
+        assert plan["worker_contract"]["profile_id"] == (
+            orchestration.V7_STREAMED_PETROV_CONSUMER_PROFILE_ID
+        )
+        assert plan["worker_contract"]["exact_spool_root"] == str(exact_spool.resolve())
+        assert plan["watchdog"]["absolute_terminate_memory_bytes"] == (
+            orchestration.V7_STREAMED_PETROV_CONSUMER_HARD_STOP_BYTES
+        )
+
+
 def test_v5_h4_blr_watchdog_main_dry_run_parses_real_flag(tmp_path, capsys) -> None:
     h4_input = Path(
         "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
@@ -1888,6 +1946,11 @@ def test_v6_parent_authority_separates_input_stop_from_effective_and_final_field
             100262797312,
             "v7_h4_streamed_bottom_producer_telemetry",
         ),
+        (
+            "task039_v7_streamed_bottom_petrov_consumer",
+            90236517581,
+            "v7_h4_streamed_bottom_consumer_telemetry",
+        ),
     ),
 )
 def test_v6_and_v7_run_worker_use_effective_byte_stop_without_mutating_input(
@@ -1974,6 +2037,14 @@ def test_v6_and_v7_run_worker_use_effective_byte_stop_without_mutating_input(
             "peak_process_tree_rss_bytes_strictly_below"
         ] == (100262797312)
         assert telemetry["gate_contract"]["exact_spool_opened"] is False
+    if telemetry_key == "v7_h4_streamed_bottom_consumer_telemetry":
+        assert telemetry["gate_contract"]["candidate_setup_peak_limit_gib"] == (
+            84.039305878
+        )
+        assert telemetry["gate_contract"]["swap_required"] == 0
+        assert telemetry["gate_contract"]["exact_factor_count"] == 0
+        assert telemetry["gate_contract"]["global_direct_factor_count"] == 0
+        assert telemetry["gate_contract"]["nested_ksp_count"] == 0
 
 
 def test_v3_7_worker_failure_persists_full_traceback(tmp_path) -> None:
@@ -3143,6 +3214,100 @@ def test_v7_streamed_worker_route_finalizes_side_setup_once(
     )
     assert ledger["status"] == "completed"
     assert ledger["objects"]["setup"]["destroyed"] is True
+
+
+def test_v7_streamed_consumer_route_preserves_selected_and_basis_packets(
+    tmp_path, monkeypatch
+) -> None:
+    payload = load_and_resolve(
+        Path("input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat")
+    ).as_jsonable()
+    identity = {
+        "source_sha": "s" * 40,
+        "physical_sha256": "p" * 64,
+        "model_id": "tiny-h4",
+    }
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "rank_count": 1,
+                "consumer_qep_required": False,
+                "qep_workspace_persisted": False,
+                "identity": identity,
+            }
+        ),
+        encoding="utf-8",
+    )
+    basis_manifest = tmp_path / "basis-manifest.json"
+    side_system = SimpleNamespace(destroyed=False)
+    side_system.destroy = lambda: setattr(side_system, "destroyed", True)
+
+    def side_builder(**_kwargs):
+        return SimpleNamespace(bottom=side_system, side_only=True)
+
+    basis_packet = {
+        "basis_manifest": str(basis_manifest),
+        "basis_manifest_sha256": "b" * 64,
+        "basis_packet_schema": "task039.v7.streamed.owner-row-basis.v1",
+        "basis_mmap_retained_until_cleanup": True,
+        "training_holdout_disjoint": True,
+        "holdout_exact_spool_opened_after_basis_load": True,
+        "consumer_qep_calls": 0,
+    }
+    consumer_source = inspect.getsource(
+        orchestration.run_v7_h4_streamed_bottom_petrov_consumer
+    )
+    setup_begin = consumer_source.split("    try:", 1)[0]
+    monkeypatch.setattr(
+        orchestration,
+        "run_v7_h4_streamed_bottom_petrov_consumer",
+        lambda *_args, **_kwargs: {
+            "status": "consumer_completed",
+            "packet": basis_packet,
+            "telemetry": {"memory_object_ledger": {}},
+        },
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "collective_heap_cleanup",
+        lambda _comm: {"collective_call_completed": True},
+    )
+    result = orchestration.run_task039_v3_7_diagnostic(
+        payload,
+        tmp_path / "run",
+        source_sha="c" * 40,
+        comm=MPI.COMM_SELF,
+        setup_builder=lambda **_kwargs: pytest.fail("generic setup was called"),
+        side_system_builder=side_builder,
+        v7_h4_streamed_bottom_consumer=True,
+        v7_h4_streamed_bottom_consumer_basis_manifest=basis_manifest,
+        v7_h4_streamed_bottom_consumer_basis_manifest_sha256="b" * 64,
+        v7_h4_streamed_bottom_consumer_exact_spool_root=tmp_path / "spool",
+        selected_mode_packet_manifest=manifest,
+        selected_mode_packet_identity=identity,
+        selected_mode_packet_manifest_sha256=hashlib.sha256(
+            manifest.read_bytes()
+        ).hexdigest(),
+    )
+    assert result["selected_mode_packet"]["manifest"] == str(manifest)
+    assert result["selected_mode_packet"]["identity"] == identity
+    assert result["packet"] == basis_packet
+    for field in (
+        "basis_packet_schema",
+        "basis_mmap_retained_until_cleanup",
+        "training_holdout_disjoint",
+        "holdout_exact_spool_opened_after_basis_load",
+        "consumer_qep_calls",
+    ):
+        assert result["packet"][field] == basis_packet[field]
+    assert side_system.destroyed is True
+    assert '"required_nested_ksp_count": 0' in setup_begin
+    assert '"required_exact_factor_count": 0' in setup_begin
+    assert '"required_global_direct_factor_count": 0' in setup_begin
+    assert '"nested_ksp_count": 0' not in setup_begin
+    assert '"exact_factor_count": 0' not in setup_begin
+    assert '"global_direct_factor_count": 0' not in setup_begin
 
 
 def test_v5_h4_fixed_budget_route_is_bottom_only_and_cleans_factors(

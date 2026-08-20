@@ -6,6 +6,7 @@ import gc
 import hashlib
 import json
 from pathlib import Path
+from time import perf_counter
 from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
@@ -519,12 +520,18 @@ def run_streamed_owner_row_petrov_consumer(
     base_action: Any,
     *,
     holdout_evaluator: Callable[[Any, int], Mapping[str, Any]],
+    checkpoint_callback: Callable[[str, int, Mapping[str, Any]], None] | None = None,
     factor_inventory: Mapping[str, Any] | None = None,
     condition_limit: float = 1.0e12,
 ) -> dict[str, Any]:
     """Evaluate one mmap basis packet through the frozen rank ladder."""
 
-    from .hybrid_petrov_galerkin import FixedLinearOwnerRowPetrovCorrectionAction
+    from .hybrid_petrov_galerkin import (
+        FixedLinearOwnerRowPetrovCorrectionAction,
+        PetrovCoarseNumericalFailure,
+    )
+
+    comm = f_operator.getComm().tompi4py()
 
     base_diagnostics = getattr(base_action, "diagnostics", {})
     if callable(base_diagnostics):
@@ -539,6 +546,13 @@ def run_streamed_owner_row_petrov_consumer(
     first_passing_checkpoint: int | None = None
     for checkpoint in V7_STREAMED_PETROV_CHECKPOINTS:
         z_local, y_local, prefix_record = packet.prefix(checkpoint)
+        if checkpoint_callback is not None:
+            checkpoint_callback(
+                "setup_begin",
+                int(checkpoint),
+                {"prefix_record": dict(prefix_record)},
+            )
+        setup_started = perf_counter()
         try:
             action = FixedLinearOwnerRowPetrovCorrectionAction(
                 base_action,
@@ -549,13 +563,10 @@ def run_streamed_owner_row_petrov_consumer(
                 condition_limit=condition_limit,
                 basis_ownership="borrowed_readonly",
             )
-        except ValueError as error:
-            message = str(error)
-            if not (
-                message.startswith("Petrov coarse E is rank deficient")
-                or message.startswith("Petrov coarse E condition exceeds")
-            ):
-                raise
+        except PetrovCoarseNumericalFailure as error:
+            setup_seconds = float(
+                comm.allreduce(perf_counter() - setup_started, op=MPI.MAX)
+            )
             reports.append(
                 {
                     "checkpoint": int(checkpoint),
@@ -565,16 +576,35 @@ def run_streamed_owner_row_petrov_consumer(
                     "status": "numerical_e_failure",
                     "gate_pass": False,
                     "implementation_failure": False,
-                    "e_failure": message,
+                    "e_failure": str(error),
+                    "e_gate": dict(error.diagnostics),
                     "correction_action_destroyed": True,
                     "petrov_diagnostics": None,
                     "post_destroy_diagnostics": None,
                     "factor_inventory": dict(verified_factor_inventory),
                     "factor_inventory_source": "verified_base_or_explicit",
+                    "setup_seconds": setup_seconds,
+                    "holdout_seconds": 0.0,
+                    "correction_apply_seconds": 0.0,
+                    "correction_apply_timing_status": "not_run_e_failure",
+                    "timing_status": "holdout_not_run_after_e_failure",
                 }
             )
+            if checkpoint_callback is not None:
+                checkpoint_callback(
+                    "setup_end",
+                    int(checkpoint),
+                    {
+                        "status": "numerical_e_failure",
+                        "setup_seconds": setup_seconds,
+                        "e_gate": dict(error.diagnostics),
+                    },
+                )
             del z_local, y_local
             continue
+        setup_seconds = float(
+            comm.allreduce(perf_counter() - setup_started, op=MPI.MAX)
+        )
         report: dict[str, Any] = {
             "checkpoint": int(checkpoint),
             "prefix_record": dict(prefix_record),
@@ -587,16 +617,66 @@ def run_streamed_owner_row_petrov_consumer(
             "post_destroy_diagnostics": None,
             "factor_inventory": dict(verified_factor_inventory),
             "factor_inventory_source": "verified_base_or_explicit",
+            "setup_seconds": setup_seconds,
+            "holdout_seconds": None,
+            "correction_apply_seconds": None,
+            "correction_apply_timing_status": "pending",
+            "timing_status": "pending",
         }
+        if checkpoint_callback is not None:
+            checkpoint_callback(
+                "setup_end",
+                int(checkpoint),
+                {
+                    "status": "ready",
+                    "setup_seconds": setup_seconds,
+                    "petrov_diagnostics": action.diagnostics,
+                },
+            )
         del z_local, y_local
         try:
+            holdout_started = perf_counter()
             evaluated = dict(holdout_evaluator(action, int(checkpoint)))
+            holdout_seconds = float(
+                comm.allreduce(perf_counter() - holdout_started, op=MPI.MAX)
+            )
             if "gate_pass" not in evaluated:
                 raise ValueError("Streamed holdout evaluator must return gate_pass")
             report.update(evaluated)
+            report["holdout_seconds"] = evaluated.get(
+                "holdout_seconds", holdout_seconds
+            )
+            action_diagnostics = action.diagnostics
+            local_apply_timing = np.asarray(
+                [
+                    float(action_diagnostics["total_apply_seconds"]),
+                    float(action_diagnostics["last_apply_seconds"]),
+                ],
+                dtype=np.float64,
+            )
+            apply_timing = np.empty_like(local_apply_timing)
+            comm.Allreduce(local_apply_timing, apply_timing, op=MPI.MAX)
+            report["correction_apply_seconds"] = float(apply_timing[0])
+            report["correction_last_apply_seconds"] = float(apply_timing[1])
+            report["correction_apply_timing_status"] = "measured_mpi_max"
+            report["timing_status"] = "measured_mpi_max"
             report["status"] = (
                 "completed" if bool(report["gate_pass"]) else "numerical_gate_failed"
             )
+            if checkpoint_callback is not None:
+                checkpoint_callback(
+                    "holdout_end",
+                    int(checkpoint),
+                    {
+                        "holdout_seconds": report["holdout_seconds"],
+                        "correction_apply_seconds": report["correction_apply_seconds"],
+                        "correction_last_apply_seconds": report[
+                            "correction_last_apply_seconds"
+                        ],
+                        "gate": report.get("gate"),
+                        "gate_pass": bool(report["gate_pass"]),
+                    },
+                )
         finally:
             action.destroy()
             report["post_destroy_diagnostics"] = action.diagnostics

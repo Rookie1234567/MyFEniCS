@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from time import perf_counter
 from typing import Any, Mapping
 
 import numpy as np
@@ -16,8 +17,51 @@ PETROV_CONDITION_LIMIT = 1.0e12
 __all__ = (
     "PETROV_COARSE_RANK_LIMIT",
     "PETROV_CONDITION_LIMIT",
+    "PetrovCoarseNumericalFailure",
     "FixedLinearOwnerRowPetrovCorrectionAction",
 )
+
+
+class PetrovCoarseNumericalFailure(ValueError):
+    """Structured numerical failure for one frozen coarse-E checkpoint."""
+
+    def __init__(
+        self,
+        reason: str,
+        *,
+        coarse_rank: int,
+        svd_rank: int,
+        condition: float,
+        condition_limit: float,
+    ) -> None:
+        self.reason = str(reason)
+        self.coarse_rank = int(coarse_rank)
+        self.svd_rank = int(svd_rank)
+        self.condition = float(condition)
+        self.condition_finite = bool(np.isfinite(self.condition))
+        self.condition_limit = float(condition_limit)
+        self.diagnostics = {
+            "reason": self.reason,
+            "coarse_rank": self.coarse_rank,
+            "svd_rank": self.svd_rank,
+            "condition": self.condition if self.condition_finite else None,
+            "condition_finite": self.condition_finite,
+            "condition_status": "finite" if self.condition_finite else "nonfinite",
+            "condition_limit": self.condition_limit,
+        }
+        if self.reason == "rank_deficient":
+            message = (
+                f"Petrov coarse E is rank deficient: {self.svd_rank}/{self.coarse_rank}"
+            )
+        else:
+            condition_text = (
+                f"{self.condition:.6e}" if self.condition_finite else "non-finite"
+            )
+            message = (
+                "Petrov coarse E condition exceeds the fixed limit: "
+                f"{condition_text} > {self.condition_limit:.6e}"
+            )
+        super().__init__(message)
 
 
 def _action_diagnostics(action: Any) -> Mapping[str, Any]:
@@ -75,6 +119,8 @@ class FixedLinearOwnerRowPetrovCorrectionAction:
         self._comm = f_operator.getComm().tompi4py()
         self._destroyed = False
         self._apply_count = 0
+        self._last_apply_seconds = 0.0
+        self._total_apply_seconds = 0.0
         self._base_action_count = 0
         self._f_action_count = 0
         self._setup_f_action_count = 0
@@ -211,13 +257,20 @@ class FixedLinearOwnerRowPetrovCorrectionAction:
             np.inf if singular_value[-1] == 0.0 else scale / singular_value[-1]
         )
         if svd_rank != self._coarse_rank:
-            raise ValueError(
-                f"Petrov coarse E is rank deficient: {svd_rank}/{self._coarse_rank}"
+            raise PetrovCoarseNumericalFailure(
+                "rank_deficient",
+                coarse_rank=self._coarse_rank,
+                svd_rank=svd_rank,
+                condition=condition,
+                condition_limit=self._condition_limit,
             )
         if not np.isfinite(condition) or condition > self._condition_limit:
-            raise ValueError(
-                "Petrov coarse E condition exceeds the fixed limit: "
-                f"{condition:.6e} > {self._condition_limit:.6e}"
+            raise PetrovCoarseNumericalFailure(
+                "condition_exceeded",
+                coarse_rank=self._coarse_rank,
+                svd_rank=svd_rank,
+                condition=condition,
+                condition_limit=self._condition_limit,
             )
         self._e = coarse_e
         self._lu, self._pivots = lu_factor(coarse_e, check_finite=True)
@@ -238,6 +291,7 @@ class FixedLinearOwnerRowPetrovCorrectionAction:
         assert self._z_local is not None
         assert self._y_local is not None
         assert self._lu is not None and self._pivots is not None
+        started = perf_counter()
         self.base_action.apply(source, self._base_work)
         self._base_action_count += 1
         self._apply_f(self._base_work, self._f_work)
@@ -257,7 +311,10 @@ class FixedLinearOwnerRowPetrovCorrectionAction:
             np.asarray(self._base_work.getArray(readonly=True), dtype=np.complex128)
             + self._z_local @ coefficients
         )
+        elapsed = perf_counter() - started
         self._apply_count += 1
+        self._last_apply_seconds = float(elapsed)
+        self._total_apply_seconds += float(elapsed)
 
     @property
     def diagnostics(self) -> dict[str, Any]:
@@ -280,6 +337,9 @@ class FixedLinearOwnerRowPetrovCorrectionAction:
             "coarse_e_condition": float(getattr(self, "_condition", np.nan)),
             "condition_limit": float(self._condition_limit),
             "apply_count": int(self._apply_count),
+            "last_apply_seconds": float(self._last_apply_seconds),
+            "total_apply_seconds": float(self._total_apply_seconds),
+            "apply_timing_scope": "local_rank_before_checkpoint_reduce",
             "base_action_count": int(self._base_action_count),
             "f_action_count": int(self._f_action_count),
             "setup_f_action_count": int(self._setup_f_action_count),
