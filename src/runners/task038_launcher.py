@@ -51,6 +51,9 @@ V6_H4_POST_COMPACTION_SETUP_PEAK_LIMIT_GIB = 42.019652939
 V6_H4_POST_COMPACTION_SETUP_HARD_STOP_BYTES = 45118258790
 V7_H4_EXACT_SIDE_LIMIT_SETUP_PEAK_LIMIT_GIB = 84.039305878
 V7_H4_EXACT_SIDE_LIMIT_SETUP_HARD_STOP_BYTES = 90236517581
+V7_H4_EXACT_SIDE_FULL_FORMAL_HARD_STOP_BYTES = 100262797312
+V7_H4_EXACT_SIDE_FULL_FORMAL_DEFAULT_TIMEOUT_SECONDS = 21600
+V7_H4_EXACT_SIDE_FULL_FORMAL_EXTENSION_TIMEOUT_SECONDS = 28800
 V6_H4_PORT_MODAL_CONSTRUCTION_LIMIT_GIB = 22.0
 V6_H4_PORT_MODAL_CONSTRUCTION_HARD_STOP_BYTES = 23622320128
 
@@ -668,6 +671,9 @@ def _run_worker(
     formal_v7_h4_setup = (
         getattr(plan, "method", "") == "task039_v7_h4_exact_side_limit_setup_only"
     )
+    formal_v7_h4_full = (
+        getattr(plan, "method", "") == "task039_v7_h4_exact_side_full_formal"
+    )
     formal_v6_h4_port_modal = (
         getattr(plan, "method", "") == "task039_v6_h4_port_modal_bottom_component"
     )
@@ -681,6 +687,7 @@ def _run_worker(
         or formal_v5_h4_fixed_budget
         or formal_v6_h4_setup
         or formal_v7_h4_setup
+        or formal_v7_h4_full
         or formal_v6_h4_port_modal
     )
     if task039_model_id_matches(method, model_id, requested_modes):
@@ -712,10 +719,22 @@ def _run_worker(
     if formal_v7_h4_setup:
         absolute_terminate_memory_bytes = V7_H4_EXACT_SIDE_LIMIT_SETUP_HARD_STOP_BYTES
         terminate_limit = float(absolute_terminate_memory_bytes)
+    if formal_v7_h4_full:
+        absolute_terminate_memory_bytes = V7_H4_EXACT_SIDE_FULL_FORMAL_HARD_STOP_BYTES
+        terminate_limit = float(absolute_terminate_memory_bytes)
     if formal_v6_h4_port_modal:
         absolute_terminate_memory_bytes = V6_H4_PORT_MODAL_CONSTRUCTION_HARD_STOP_BYTES
         terminate_limit = float(absolute_terminate_memory_bytes)
     timeout = float(execution["timeout_seconds"])
+    if formal_v7_h4_full:
+        timeout = float(V7_H4_EXACT_SIDE_FULL_FORMAL_DEFAULT_TIMEOUT_SECONDS)
+    full_outer_entered = False
+    full_initial_residual: float | None = None
+    full_min_residual: float | None = None
+    full_extension_used = False
+    full_timeout_decision: dict[str, Any] | None = (
+        {"status": "pending"} if formal_v7_h4_full else None
+    )
     sample_count = 0
     peak_authority = 0
     peak_process_tree = 0
@@ -777,6 +796,7 @@ def _run_worker(
 
     def _align_formal_markers(sample: dict[str, Any] | None) -> None:
         nonlocal formal_marker_offset, formal_aligned_stage_count
+        nonlocal full_outer_entered, full_initial_residual, full_min_residual
         if (
             not (
                 formal_direct_v2_h5
@@ -787,6 +807,7 @@ def _run_worker(
                 or formal_v5_h4_fixed_budget
                 or formal_v6_h4_setup
                 or formal_v7_h4_setup
+                or formal_v7_h4_full
                 or formal_v6_h4_port_modal
             )
             or formal_stage_stream is None
@@ -797,6 +818,34 @@ def _run_worker(
             marker_source, formal_marker_offset
         )
         for marker in markers:
+            if formal_v7_h4_full:
+                marker_stage = marker.get("stage")
+                if marker_stage in {
+                    "outer_solve_begin",
+                    "outer_solve_progress",
+                    "outer_solve_ready",
+                }:
+                    full_outer_entered = True
+                detail = marker.get("detail")
+                details = [detail]
+                if isinstance(detail, Mapping):
+                    details.extend(
+                        detail.get(name) for name in ("solve", "postsolve", "residuals")
+                    )
+                for candidate in details:
+                    if not isinstance(candidate, Mapping):
+                        continue
+                    value = candidate.get("multimetric_max_true_residual")
+                    if isinstance(value, (int, float)) and math.isfinite(float(value)):
+                        residual = float(value)
+                        if full_initial_residual is None:
+                            full_initial_residual = residual
+                        full_min_residual = (
+                            residual
+                            if full_min_residual is None
+                            else min(full_min_residual, residual)
+                        )
+                        break
             stage_index = marker.get("stage_index")
             if (
                 formal_v4_h4
@@ -805,6 +854,7 @@ def _run_worker(
                 or formal_v5_h4_fixed_budget
                 or formal_v6_h4_setup
                 or formal_v7_h4_setup
+                or formal_v7_h4_full
                 or formal_v6_h4_port_modal
             ) and stage_index is None:
                 stage_index = formal_aligned_stage_count
@@ -852,6 +902,7 @@ def _run_worker(
             or formal_v5_h4_fixed_budget
             or formal_v6_h4_setup
             or formal_v7_h4_setup
+            or formal_v7_h4_full
             or formal_v6_h4_port_modal
         ):
             formal_stages_path.unlink(missing_ok=True)
@@ -918,6 +969,58 @@ def _run_worker(
                 if process.poll() is not None:
                     break
                 if monotonic() - started >= timeout:
+                    if formal_v7_h4_full and not full_extension_used:
+                        residual_decreased = bool(
+                            full_initial_residual is not None
+                            and full_min_residual is not None
+                            and full_min_residual < full_initial_residual
+                        )
+                        extension_allowed = bool(
+                            sample_count > 0
+                            and full_outer_entered
+                            and peak_process_tree
+                            < V7_H4_EXACT_SIDE_FULL_FORMAL_HARD_STOP_BYTES
+                            and peak_swap == 0
+                            and residual_decreased
+                        )
+                        if extension_allowed:
+                            timeout = float(
+                                V7_H4_EXACT_SIDE_FULL_FORMAL_EXTENSION_TIMEOUT_SECONDS
+                            )
+                            full_extension_used = True
+                            full_timeout_decision = {
+                                "status": "extended_once",
+                                "default_timeout_seconds": (
+                                    V7_H4_EXACT_SIDE_FULL_FORMAL_DEFAULT_TIMEOUT_SECONDS
+                                ),
+                                "effective_timeout_seconds": int(timeout),
+                                "outer_entered": True,
+                                "peak_process_tree_rss_bytes": peak_process_tree,
+                                "peak_below_direct": True,
+                                "zero_swap": True,
+                                "initial_multimetric_max_true_residual": full_initial_residual,
+                                "minimum_multimetric_max_true_residual": full_min_residual,
+                                "objective_residual_decreased": True,
+                            }
+                            continue
+                        full_timeout_decision = {
+                            "status": "not_extended",
+                            "default_timeout_seconds": (
+                                V7_H4_EXACT_SIDE_FULL_FORMAL_DEFAULT_TIMEOUT_SECONDS
+                            ),
+                            "effective_timeout_seconds": int(timeout),
+                            "outer_entered": full_outer_entered,
+                            "peak_process_tree_rss_bytes": peak_process_tree,
+                            "peak_below_direct": (
+                                peak_process_tree
+                                < V7_H4_EXACT_SIDE_FULL_FORMAL_HARD_STOP_BYTES
+                            ),
+                            "zero_swap": peak_swap == 0,
+                            "initial_multimetric_max_true_residual": full_initial_residual,
+                            "minimum_multimetric_max_true_residual": full_min_residual,
+                            "objective_residual_decreased": residual_decreased,
+                            "reason": "conditional_extension_gate_not_met",
+                        }
                     termination = terminate_factory(process)
                     classification = "timeout"
                     break
@@ -926,6 +1029,24 @@ def _run_worker(
                 process.wait()
             exit_status = process.poll()
         _align_formal_markers(formal_last_sample)
+        if formal_v7_h4_full and full_timeout_decision is not None:
+            if full_timeout_decision.get("status") == "pending":
+                status = (
+                    "not_needed_process_exit"
+                    if classification is None
+                    else f"not_reached_due_to_{classification}"
+                )
+                full_timeout_decision = {
+                    "status": status,
+                    "default_timeout_seconds": (
+                        V7_H4_EXACT_SIDE_FULL_FORMAL_DEFAULT_TIMEOUT_SECONDS
+                    ),
+                    "effective_timeout_seconds": int(timeout),
+                    "classification": classification,
+                    "outer_entered": full_outer_entered,
+                    "initial_multimetric_max_true_residual": full_initial_residual,
+                    "minimum_multimetric_max_true_residual": full_min_residual,
+                }
     finally:
         if formal_sample_stream is not None:
             formal_sample_stream.close()
@@ -940,6 +1061,7 @@ def _run_worker(
         or formal_v5_h4_fixed_budget
         or formal_v6_h4_setup
         or formal_v7_h4_setup
+        or formal_v7_h4_full
         or formal_v6_h4_port_modal
     ) and not formal_object_ledger_path.exists():
         _write_json(
@@ -1318,6 +1440,76 @@ def _run_worker(
             "require_zero_swap": True,
             "poll_interval_seconds": poll_interval,
             "authority": v7_resource,
+        }
+    if formal_v7_h4_full:
+        full_resource = _v6_post_compaction_resource_authority(
+            formal_stages_path,
+            formal_samples_path,
+            formal_object_ledger_path,
+            input_absolute_terminate_memory_bytes=(
+                execution.get("absolute_terminate_memory_bytes")
+                if isinstance(execution.get("absolute_terminate_memory_bytes"), int)
+                else None
+            ),
+            effective_absolute_terminate_memory_bytes=(
+                V7_H4_EXACT_SIDE_FULL_FORMAL_HARD_STOP_BYTES
+            ),
+            setup_limit_gib=V7_H4_EXACT_SIDE_FULL_FORMAL_HARD_STOP_BYTES / 1024**3,
+            outer_ready_limit_gib=V7_H4_EXACT_SIDE_FULL_FORMAL_HARD_STOP_BYTES
+            / 1024**3,
+            poll_interval_seconds=poll_interval,
+        )
+        full_resource["timeout_policy"] = {
+            "default_seconds": V7_H4_EXACT_SIDE_FULL_FORMAL_DEFAULT_TIMEOUT_SECONDS,
+            "conditional_extension_seconds": (
+                V7_H4_EXACT_SIDE_FULL_FORMAL_EXTENSION_TIMEOUT_SECONDS
+            ),
+            "decision": full_timeout_decision,
+            "hard_stop_bytes": V7_H4_EXACT_SIDE_FULL_FORMAL_HARD_STOP_BYTES,
+            "peak_process_tree_rss_bytes": peak_process_tree,
+            "peak_swap_bytes": peak_swap,
+            "zero_swap": bool(sample_count and peak_swap == 0),
+        }
+        full_resource["no_saving_gate"] = {
+            "hard_stop_bytes": V7_H4_EXACT_SIDE_FULL_FORMAL_HARD_STOP_BYTES,
+            "peak_process_tree_rss_bytes": peak_process_tree,
+            "peak_below_direct": bool(
+                peak_process_tree < V7_H4_EXACT_SIDE_FULL_FORMAL_HARD_STOP_BYTES
+            ),
+            "zero_swap": bool(sample_count and peak_swap == 0),
+            "outer_entered": full_outer_entered,
+            "status": "measured" if sample_count else "not_available",
+        }
+        resource_authority["v7_h4_exact_side_full_formal_telemetry"] = {
+            "raw_marker_path": str(formal_markers_path),
+            "process_tree_samples_path": str(formal_samples_path),
+            "memory_stages_path": str(formal_stages_path),
+            "memory_object_ledger_path": str(formal_object_ledger_path),
+            "sample_count": sample_count,
+            "process_tree_sample_count": formal_written_sample_count,
+            "aligned_stage_count": formal_aligned_stage_count,
+            "stage_source": "launcher_marker_alignment",
+            "method_override": {
+                "input_absolute_terminate_memory_bytes": full_resource[
+                    "input_absolute_terminate_memory_bytes"
+                ],
+                "effective_absolute_terminate_memory_bytes": (
+                    V7_H4_EXACT_SIDE_FULL_FORMAL_HARD_STOP_BYTES
+                ),
+                "effective_hard_stop_memory_gib": (
+                    V7_H4_EXACT_SIDE_FULL_FORMAL_HARD_STOP_BYTES / 1024**3
+                ),
+                "process_tree_termination_enforced": True,
+            },
+            "gate_contract": {
+                "matched_direct_hard_stop_bytes": (
+                    V7_H4_EXACT_SIDE_FULL_FORMAL_HARD_STOP_BYTES
+                ),
+                "outer_ready_required": True,
+                "swap_required": 0,
+                "no_saving_gate": "peak_below_direct_before_any_extension",
+            },
+            "authority": full_resource,
         }
     if formal_v6_h4_port_modal:
         resource_authority["v6_h4_port_modal_bottom_component_telemetry"] = {

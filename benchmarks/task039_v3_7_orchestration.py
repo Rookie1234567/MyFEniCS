@@ -82,7 +82,9 @@ from src.solvers.hybrid_fem_modal_iterative import (
     create_hybrid_assembled_block_action,
 )
 from src.solvers.hybrid_fem_modal_block_ldu import (
+    HybridBlockLduIterativeConfig,
     create_research_exact_side_lu_block_ldu_preconditioner,
+    solve_hybrid_block_ldu_iterative,
 )
 from src.solvers.common_3d_solve import _petsc_matrix_stats
 from src.solvers.hybrid_local_dtn_action import (
@@ -97,6 +99,7 @@ from src.solvers.hybrid_local_dtn_woodbury import (
     create_research_exact_side_lu_action,
     mumps_blr_v5_h4_controls,
 )
+
 from src.solvers.hybrid_petrov_galerkin import (
     FixedLinearOwnerRowPetrovCorrectionAction,
 )
@@ -116,6 +119,7 @@ from src.solvers.hybrid_whole_endcap_fixed_smoother import (
 )
 
 
+TASK039_V4_H4_QUALIFICATION_METHOD = "task039_v4_h4_exact_side_case_qualification"
 V3_7_PROFILE_ID = "task039.v3_7.hybrid_iterative.p6-h5.v1"
 V3_7_MAX_IT = 4000
 V3_7_ORACLE_MAX_IT = 100
@@ -212,6 +216,12 @@ V7_H4_EXACT_SIDE_LIMIT_GIB = 84.039305878
 V7_H4_EXACT_SIDE_LIMIT_HARD_STOP_BYTES = 90236517581
 V7_H4_EXACT_SIDE_LIMIT_SCHEMA = "task039.v7-h4-exact-side-limit-setup-only.v1"
 V7_H4_EXACT_SPOOL_ROOT = V5_H4_FIXED_BUDGET_EXACT_SPOOL_ROOT
+V7_H4_EXACT_SIDE_FULL_FORMAL_PROFILE_ID = "task039.v7.h4.exact_side.full_formal.v1"
+V7_H4_EXACT_SIDE_FULL_FORMAL_METHOD = "task039_v7_h4_exact_side_full_formal"
+V7_H4_EXACT_SIDE_FULL_FORMAL_SCHEMA = "task039.v7-h4-exact-side-full-formal.v1"
+V7_H4_EXACT_SIDE_FULL_FORMAL_HARD_STOP_BYTES = 100262797312
+V7_H4_EXACT_SIDE_FULL_FORMAL_DEFAULT_TIMEOUT_SECONDS = 21600
+V7_H4_EXACT_SIDE_FULL_FORMAL_EXTENSION_TIMEOUT_SECONDS = 28800
 V6_H4_PORT_MODAL_BOTTOM_PROFILE_ID = "task039.v6.h4.port_modal.bottom_component.v1"
 V6_H4_PORT_MODAL_BOTTOM_METHOD = "task039_v6_h4_port_modal_bottom_component"
 V6_H4_PORT_MODAL_BOTTOM_CONSTRUCTION_LIMIT_GIB = 22.0
@@ -293,7 +303,7 @@ def _v6_port_modal_holdout_gate(
             for report in preferred
         )
     )
-    return {
+    policy = {
         "finite_pass": bool(finite_pass),
         "repeat_pass": bool(repeat_pass),
         "linearity_pass": bool(linearity_pass),
@@ -318,6 +328,7 @@ def _v6_port_modal_holdout_gate(
             and preferred_pass
         ),
     }
+    return policy
 
 
 def _validate_v5_h4_blr_profile(profile: str) -> str:
@@ -363,7 +374,7 @@ def _load_v5_h4_sampled_column_contract(
         manifest.read_bytes()
     ).hexdigest() != packet.get("manifest_sha256"):
         raise ValueError("V5 sampled modal contract packet manifest is not hash-bound.")
-    return {
+    policy = {
         "columns": columns,
         "roles": {str(column): list(roles[str(column)]) for column in columns},
         "sha256": actual_sha,
@@ -371,6 +382,7 @@ def _load_v5_h4_sampled_column_contract(
         "identity_sha256": packet.get("identity_sha256"),
         "path": str(Path(path)),
     }
+    return policy
 
 
 def _keys(inventory: Mapping[str, Any]) -> set[tuple[str, int, int, str]]:
@@ -479,6 +491,7 @@ def v3_7_watchdog_policy(
     poll_interval_seconds: float = V3_7_POLL_SECONDS,
     v6_h4_post_compaction_setup_only: bool = False,
     v7_h4_exact_side_limit_setup_only: bool = False,
+    v7_h4_exact_side_full_formal: bool = False,
     v6_h4_port_modal_bottom_only: bool = False,
 ) -> dict[str, Any]:
     """Return the byte-authoritative policy; 195 GiB is telemetry only."""
@@ -496,7 +509,9 @@ def v3_7_watchdog_policy(
         raise ValueError("V3-7 requires zero swap")
     if not np.isfinite(float(poll_interval_seconds)) or poll_interval_seconds > 0.25:
         raise ValueError("V3-7 watchdog polling must be <=0.25 seconds")
-    if v7_h4_exact_side_limit_setup_only:
+    if v7_h4_exact_side_full_formal:
+        absolute_bytes = V7_H4_EXACT_SIDE_FULL_FORMAL_HARD_STOP_BYTES
+    elif v7_h4_exact_side_limit_setup_only:
         absolute_bytes = V7_H4_EXACT_SIDE_LIMIT_HARD_STOP_BYTES
     elif v6_h4_post_compaction_setup_only:
         absolute_bytes = V6_H4_SETUP_THRESHOLD_BYTES
@@ -504,7 +519,7 @@ def v3_7_watchdog_policy(
         absolute_bytes = V6_H4_PORT_MODAL_BOTTOM_HARD_STOP_BYTES
     else:
         absolute_bytes = V3_7_ABSOLUTE_HARD_BYTES
-    return {
+    policy = {
         "warning_memory_gib": V3_7_WARNING_GIB,
         "critical_memory_gib": V3_7_CRITICAL_GIB,
         "critical_action": "record_checkpoint_only",
@@ -514,19 +529,31 @@ def v3_7_watchdog_policy(
         "poll_interval_seconds": float(poll_interval_seconds),
         "hard_stop_gib": absolute_bytes / 2**30,
         "profile": (
-            "v7_h4_exact_side_limit_setup_only"
-            if v7_h4_exact_side_limit_setup_only
+            "v7_h4_exact_side_full_formal"
+            if v7_h4_exact_side_full_formal
             else (
-                "v6_h4_post_compaction_setup_only"
-                if v6_h4_post_compaction_setup_only
+                "v7_h4_exact_side_limit_setup_only"
+                if v7_h4_exact_side_limit_setup_only
                 else (
-                    "v6_h4_port_modal_bottom_only"
-                    if v6_h4_port_modal_bottom_only
-                    else "v3_7_default"
+                    "v6_h4_post_compaction_setup_only"
+                    if v6_h4_post_compaction_setup_only
+                    else (
+                        "v6_h4_port_modal_bottom_only"
+                        if v6_h4_port_modal_bottom_only
+                        else "v3_7_default"
+                    )
                 )
             )
         ),
     }
+    if v7_h4_exact_side_full_formal:
+        policy["timeout_policy"] = {
+            "default_seconds": V7_H4_EXACT_SIDE_FULL_FORMAL_DEFAULT_TIMEOUT_SECONDS,
+            "conditional_extension_seconds": V7_H4_EXACT_SIDE_FULL_FORMAL_EXTENSION_TIMEOUT_SECONDS,
+            "extension_requires_outer_and_decreasing_residual": True,
+            "automatic_extension": False,
+        }
+    return policy
 
 
 def load_v3_7_official_payload(input_path: str | Path) -> dict[str, Any]:
@@ -558,6 +585,7 @@ def build_v3_7_execution_plan(
     v6_h4_exact_spool_root: str | Path | None = None,
     v7_h4_exact_side_limit_setup_only: bool = False,
     v7_h4_exact_side_exact_spool_root: str | Path | None = None,
+    v7_h4_exact_side_full_formal: bool = False,
     v6_h4_port_modal_bottom_only: bool = False,
     v6_h4_port_modal_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
@@ -573,6 +601,7 @@ def build_v3_7_execution_plan(
         or v5_h4_fixed_budget_bottom_only
         or v6_h4_post_compaction_setup_only
         or v7_h4_exact_side_limit_setup_only
+        or v7_h4_exact_side_full_formal
         or v6_h4_port_modal_bottom_only
     ):
         specification = load_and_resolve(input_path)
@@ -592,6 +621,7 @@ def build_v3_7_execution_plan(
         payload,
         v6_h4_post_compaction_setup_only=v6_h4_post_compaction_setup_only,
         v7_h4_exact_side_limit_setup_only=v7_h4_exact_side_limit_setup_only,
+        v7_h4_exact_side_full_formal=v7_h4_exact_side_full_formal,
         v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
     )
     if (
@@ -607,6 +637,7 @@ def build_v3_7_execution_plan(
                 bool(v5_h4_fixed_budget_bottom_only),
                 bool(v6_h4_post_compaction_setup_only),
                 bool(v7_h4_exact_side_limit_setup_only),
+                bool(v7_h4_exact_side_full_formal),
                 bool(v6_h4_port_modal_bottom_only),
             )
         )
@@ -649,6 +680,7 @@ def build_v3_7_execution_plan(
         or v5_h4_fixed_budget_bottom_only
         or v6_h4_post_compaction_setup_only
         or v7_h4_exact_side_limit_setup_only
+        or v7_h4_exact_side_full_formal
         or v6_h4_port_modal_bottom_only
     ):
         if not all(
@@ -659,7 +691,9 @@ def build_v3_7_execution_plan(
             )
         ):
             raise ValueError("V5 h4 setup-only requires the shared packet arguments")
-        if v7_h4_exact_side_limit_setup_only:
+        if v7_h4_exact_side_full_formal:
+            component_flag = "--v7-h4-exact-side-full-formal"
+        elif v7_h4_exact_side_limit_setup_only:
             component_flag = "--v7-h4-exact-side-limit-setup-only"
         elif v6_h4_post_compaction_setup_only:
             component_flag = "--v6-h4-post-compaction-setup-only"
@@ -684,7 +718,7 @@ def build_v3_7_execution_plan(
         )
         if v5_h4_blr_side_only and v5_h4_blr_profile != MUMPS_BLR_V5_H4_PROFILE:
             argv.extend(["--v5-h4-blr-profile", v5_h4_blr_profile])
-        if v7_h4_exact_side_limit_setup_only:
+        if v7_h4_exact_side_full_formal or v7_h4_exact_side_limit_setup_only:
             if v7_h4_exact_side_exact_spool_root is None:
                 raise ValueError("V7 exact-side route requires the exact spool root")
             argv.extend(
@@ -720,7 +754,9 @@ def build_v3_7_execution_plan(
                     str(Path(v5_h4_fixed_budget_exact_spool_root).resolve()),
                 ]
             )
-    if v7_h4_exact_side_limit_setup_only:
+    if v7_h4_exact_side_full_formal:
+        method = V7_H4_EXACT_SIDE_FULL_FORMAL_METHOD
+    elif v7_h4_exact_side_limit_setup_only:
         method = V7_H4_EXACT_SIDE_LIMIT_METHOD
     elif v6_h4_post_compaction_setup_only:
         method = V6_H4_POST_COMPACTION_METHOD
@@ -744,7 +780,9 @@ def build_v3_7_execution_plan(
         method = "hybrid_iterative_candidate_b_only"
     else:
         method = "hybrid_iterative_v3_7_diagnostic"
-    if v7_h4_exact_side_limit_setup_only:
+    if v7_h4_exact_side_full_formal:
+        profile_id = V7_H4_EXACT_SIDE_FULL_FORMAL_PROFILE_ID
+    elif v7_h4_exact_side_limit_setup_only:
         profile_id = V7_H4_EXACT_SIDE_LIMIT_PROFILE_ID
     elif v6_h4_post_compaction_setup_only:
         profile_id = V6_H4_POST_COMPACTION_PROFILE_ID
@@ -759,9 +797,8 @@ def build_v3_7_execution_plan(
     else:
         profile_id = V3_7_PROFILE_ID
     if (
-        v7_h4_exact_side_limit_setup_only
-        and v7_h4_exact_side_exact_spool_root is not None
-    ):
+        v7_h4_exact_side_limit_setup_only or v7_h4_exact_side_full_formal
+    ) and v7_h4_exact_side_exact_spool_root is not None:
         exact_spool_root = str(Path(v7_h4_exact_side_exact_spool_root).resolve())
     elif v6_h4_post_compaction_setup_only and v6_h4_exact_spool_root is not None:
         exact_spool_root = str(Path(v6_h4_exact_spool_root).resolve())
@@ -819,6 +856,7 @@ def v3_7_execution_dry_run(
     v7_h4_exact_side_exact_spool_root: str | Path | None = None,
     v6_h4_port_modal_bottom_only: bool = False,
     v6_h4_port_modal_exact_spool_root: str | Path | None = None,
+    v7_h4_exact_side_full_formal: bool = False,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -846,6 +884,7 @@ def v3_7_execution_dry_run(
         v7_h4_exact_side_exact_spool_root=v7_h4_exact_side_exact_spool_root,
         v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
         v6_h4_port_modal_exact_spool_root=v6_h4_port_modal_exact_spool_root,
+        v7_h4_exact_side_full_formal=v7_h4_exact_side_full_formal,
         v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
         selected_mode_packet_identity=selected_mode_packet_identity,
@@ -884,6 +923,7 @@ def launch_v3_7_with_task038_watchdog(
     v7_h4_exact_side_exact_spool_root: str | Path | None = None,
     v6_h4_port_modal_bottom_only: bool = False,
     v6_h4_port_modal_exact_spool_root: str | Path | None = None,
+    v7_h4_exact_side_full_formal: bool = False,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -897,6 +937,7 @@ def launch_v3_7_with_task038_watchdog(
         or v5_h4_fixed_budget_bottom_only
         or v6_h4_post_compaction_setup_only
         or v7_h4_exact_side_limit_setup_only
+        or v7_h4_exact_side_full_formal
         or v6_h4_port_modal_bottom_only
     ):
         specification = load_and_resolve(input_path)
@@ -914,6 +955,7 @@ def launch_v3_7_with_task038_watchdog(
         and not v5_h4_fixed_budget_bottom_only
         and not v6_h4_post_compaction_setup_only
         and not v7_h4_exact_side_limit_setup_only
+        and not v7_h4_exact_side_full_formal
         and not v6_h4_port_modal_bottom_only
         and not V3_7_DIRECT_RUN_ROOT.is_dir()
     ):
@@ -923,6 +965,7 @@ def launch_v3_7_with_task038_watchdog(
         and not v5_h4_fixed_budget_bottom_only
         and not v6_h4_post_compaction_setup_only
         and not v7_h4_exact_side_limit_setup_only
+        and not v7_h4_exact_side_full_formal
         and not v6_h4_port_modal_bottom_only
         and not callable(compare_v3_7_hybrid_candidate_to_direct)
     ):
@@ -937,6 +980,7 @@ def launch_v3_7_with_task038_watchdog(
         and not v5_h4_fixed_budget_bottom_only
         and not v6_h4_post_compaction_setup_only
         and not v7_h4_exact_side_limit_setup_only
+        and not v7_h4_exact_side_full_formal
         and not v6_h4_port_modal_bottom_only
         and not candidate_d_only
         and not candidate_d_qualified
@@ -964,6 +1008,7 @@ def launch_v3_7_with_task038_watchdog(
         v7_h4_exact_side_exact_spool_root=v7_h4_exact_side_exact_spool_root,
         v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
         v6_h4_port_modal_exact_spool_root=v6_h4_port_modal_exact_spool_root,
+        v7_h4_exact_side_full_formal=v7_h4_exact_side_full_formal,
         v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
         selected_mode_packet_identity=selected_mode_packet_identity,
@@ -4144,6 +4189,169 @@ def run_v6_h4_port_modal_bottom_component(
         collective_heap_cleanup(comm)
 
 
+def _run_v7_h4_exact_side_full_formal(
+    setup: Any,
+    layout: HybridAugmentedLayout,
+    *,
+    operator: PETSc.Mat,
+    context: Any,
+    comm: MPI.Intracomm,
+    marker_callback: Callable[[str, Mapping[str, Any]], None],
+    recovery_runner: Callable[
+        [Any, Any, Any, Path, Mapping[str, Any]], Mapping[str, Any]
+    ],
+    producer: Mapping[str, Any],
+    run_directory: str | Path,
+    release_before_recovery: Callable[[], Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Run the explicit V7 outer solve, then the existing recovery authority."""
+
+    rhs = _default_rhs(setup, layout)
+    iterative = None
+    retained_solution = None
+    try:
+        _emit_marker(
+            marker_callback,
+            "outer_solve_begin",
+            source="solve_hybrid_block_ldu_iterative",
+            ksp_type="gmres",
+            restart=10,
+            max_it=V3_7_MAX_IT,
+            threshold=V3_7_RESIDUAL_TOLERANCE,
+            fixed_preconditioner=True,
+            nested_ksp=False,
+        )
+        iterative = solve_hybrid_block_ldu_iterative(
+            operator,
+            rhs,
+            context,
+            config=HybridBlockLduIterativeConfig(
+                restart=10,
+                max_it=V3_7_MAX_IT,
+                threshold=V3_7_RESIDUAL_TOLERANCE,
+                ksp_type="gmres",
+                fixed_preconditioner=True,
+            ),
+            progress_callback=lambda row: _emit_marker(
+                marker_callback,
+                "outer_solve_progress",
+                source="solve_hybrid_block_ldu_iterative",
+                **dict(row),
+            ),
+        )
+        retained_solution = iterative.solution.duplicate()
+        iterative.solution.copy(retained_solution)
+        _emit_marker(
+            marker_callback,
+            "solution_snapshot_created",
+            source="v7_full_formal_outer_solution",
+        )
+        postsolve = dict(iterative.postsolve_audit)
+        solve_report = {
+            "status": "completed" if postsolve.get("pass") is True else "failed",
+            "pass": bool(postsolve.get("pass") is True),
+            "ksp_type": postsolve.get("ksp_type", "gmres"),
+            "restart": int(postsolve.get("restart", 10)),
+            "max_it": V3_7_MAX_IT,
+            "threshold": V3_7_RESIDUAL_TOLERANCE,
+            "converged_reason": int(iterative.converged_reason),
+            "iterations": int(iterative.iterations),
+            "postsolve": postsolve,
+            "block_relative_residuals": dict(iterative.block_relative_residuals),
+            "timing": dict(iterative.timing),
+            "inventory": dict(iterative.inventory),
+        }
+        _emit_marker(
+            marker_callback,
+            "outer_solve_ready",
+            source="solve_hybrid_block_ldu_iterative",
+            solve_report=solve_report,
+        )
+        iterative.destroy()
+        iterative = None
+        release = dict(release_before_recovery())
+        release_pass = bool(
+            release.get("factor_cleanup_pass") is True
+            and release.get("actions_destroyed") is True
+            and release.get("component_cleanup_pass") is True
+            and isinstance(release.get("collective_heap_cleanup"), Mapping)
+            and release["collective_heap_cleanup"].get("collective_call_completed")
+            is True
+            and all(
+                int(value) == 0
+                for value in release.get("factor_count_after_cleanup", {}).values()
+            )
+        )
+        release["pass"] = release_pass
+        _emit_marker(
+            marker_callback,
+            "outer_solve_objects_cleanup",
+            source="v7_full_formal_release_before_recovery",
+            release=release,
+            factor_count_after_cleanup=release.get("factor_count_after_cleanup"),
+        )
+        if not solve_report["pass"]:
+            return {
+                "status": "full_formal_outer_failure",
+                "solve": solve_report,
+                "recovery": "not_run",
+                "release_before_recovery": release,
+            }
+        if not release_pass:
+            return {
+                "status": "full_formal_lifecycle_failure",
+                "solve": solve_report,
+                "recovery": "not_run",
+                "release_before_recovery": release,
+            }
+        _emit_marker(
+            marker_callback,
+            "recovery_physics_begin",
+            source="run_v3_7_recovery_runner",
+        )
+        recovery = dict(
+            recovery_runner(
+                setup,
+                layout,
+                retained_solution,
+                Path(run_directory).resolve(),
+                producer,
+            )
+        )
+        _emit_marker(
+            marker_callback,
+            "recovery_physics_end",
+            source="run_v3_7_recovery_runner",
+            recovery=recovery,
+        )
+        return {
+            "status": (
+                "full_formal_completed"
+                if recovery.get("pass") is True
+                else "full_formal_recovery_failure"
+            ),
+            "solve": solve_report,
+            "recovery": recovery,
+            "release_before_recovery": release,
+            "authority_path": str(
+                Path(run_directory).resolve()
+                / "numerical_output"
+                / "v3_7_hybrid_authority.json"
+            ),
+        }
+    finally:
+        if iterative is not None:
+            iterative.destroy()
+        if retained_solution is not None:
+            retained_solution.destroy()
+            _emit_marker(
+                marker_callback,
+                "solution_snapshot_destroyed",
+                source="v7_full_formal_finalizer",
+            )
+        rhs.destroy()
+
+
 def run_v5_h4_exact_side_setup_only(
     setup: Any,
     layout: HybridAugmentedLayout,
@@ -4157,6 +4365,7 @@ def run_v5_h4_exact_side_setup_only(
     exact_spool_root: str | Path | None = None,
     packet_identity: Mapping[str, Any] | None = None,
     packet_manifest_sha256: str | None = None,
+    full_formal_runner: Callable[..., Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Build the reviewed h4 exact-side stack, then stop before any solve."""
 
@@ -4172,6 +4381,7 @@ def run_v5_h4_exact_side_setup_only(
     outer_ready_factor_counts: dict[str, int] = {}
     layer_graph: dict[str, Any] = {}
     spool_validation: dict[str, Any] | None = None
+    full_formal_result: dict[str, Any] | None = None
     try:
         if v6_profile:
             if streaming_w_batch_size is not None:
@@ -4361,6 +4571,16 @@ def run_v5_h4_exact_side_setup_only(
             side: int(action.diagnostics.get("direct_factor_count", 0))
             for side, action in actions.items()
         }
+        outer_ksp_report = {
+            "type": str(ksp.getType()),
+            "restart": 10,
+            "ksp_profile": "v5_exact_side_fixed_pc_gmres10",
+            "set_up": True,
+            "solve_called": False,
+            "krylov_vectors": "not_allocated_before_solve",
+            "factor_count_at_outer_ready": dict(outer_ready_factor_counts),
+        }
+        outer_context_inventory = deepcopy(context.inventory)
         _emit_marker(
             marker_callback,
             "outer_ksp_setup_ready",
@@ -4373,6 +4593,76 @@ def run_v5_h4_exact_side_setup_only(
             preconditioner_inventory=context.inventory,
             factor_count_at_outer_ready=outer_ready_factor_counts,
         )
+        if full_formal_runner is not None:
+            ksp.destroy()
+            ksp = None
+            _emit_marker(
+                marker_callback,
+                "outer_setup_probe_ksp_released",
+                source="v7_full_formal_setup_probe",
+                ksp_destroyed=True,
+                formal_ksp_profile="gmres_restart10",
+            )
+
+            def release_before_recovery() -> Mapping[str, Any]:
+                nonlocal context, operator_context, operator
+                if context is not None and not bool(
+                    getattr(context, "_destroyed", False)
+                ):
+                    context.destroy()
+                context = None
+                if operator_context is not None:
+                    operator_context.destroy()
+                    operator_context = None
+                if operator is not None:
+                    operator.destroy()
+                    operator = None
+                for action in actions.values():
+                    action.destroy()
+                component_cleanup = {
+                    side: _destroy_v5_side_components(side_components)
+                    for side, side_components in components.items()
+                }
+                cleanup = collective_heap_cleanup(comm)
+                factor_counts = {
+                    side: int(action.diagnostics.get("direct_factor_count", 0))
+                    for side, action in actions.items()
+                }
+                return {
+                    "factor_count_after_cleanup": factor_counts,
+                    "factor_cleanup_pass": bool(
+                        factor_counts
+                        and all(count == 0 for count in factor_counts.values())
+                    ),
+                    "actions_destroyed": all(
+                        bool(action.diagnostics.get("destroyed"))
+                        for action in actions.values()
+                    ),
+                    "component_cleanup": component_cleanup,
+                    "component_cleanup_pass": bool(
+                        component_cleanup
+                        and all(
+                            all(
+                                values.get(name) is True
+                                for name in ("H", "C", "F", "D")
+                            )
+                            for values in component_cleanup.values()
+                        )
+                    ),
+                    "collective_heap_cleanup": cleanup,
+                }
+
+            full_formal_result = dict(
+                full_formal_runner(
+                    setup=setup,
+                    layout=layout,
+                    operator=operator,
+                    context=context,
+                    comm=comm,
+                    marker_callback=marker_callback,
+                    release_before_recovery=release_before_recovery,
+                )
+            )
         completed = True
         result = {
             "schema": (
@@ -4380,26 +4670,31 @@ def run_v5_h4_exact_side_setup_only(
                 if v6_profile
                 else "task039.v5-h4-exact-side-setup-only.v1"
             ),
-            "status": "setup_only_completed",
+            "status": (
+                "setup_only_completed"
+                if full_formal_result is None
+                else str(full_formal_result.get("status"))
+            ),
             "qualification_scope": qualification_scope,
             "sampled_column_contract": sampled_column_contract,
             "markers": list(V5_H4_SETUP_ONLY_MARKERS),
-            "solve": "not_run",
-            "recovery": "not_run",
+            "solve": (
+                "not_run"
+                if full_formal_result is None
+                else full_formal_result.get("solve", "not_run")
+            ),
+            "recovery": (
+                "not_run"
+                if full_formal_result is None
+                else full_formal_result.get("recovery", "not_run")
+            ),
             "field_export": "not_run",
             "side_actions": {
                 side: action.diagnostics for side, action in actions.items()
             },
-            "modal_schur": context.inventory.get("modal_schur"),
-            "outer_ksp": {
-                "type": str(ksp.getType()),
-                "restart": 10,
-                "ksp_profile": "v5_exact_side_fixed_pc_gmres10",
-                "set_up": True,
-                "solve_called": False,
-                "krylov_vectors": "not_allocated_before_solve",
-                "factor_count_at_outer_ready": outer_ready_factor_counts,
-            },
+            "modal_schur": outer_context_inventory.get("modal_schur"),
+            "outer_ksp": outer_ksp_report,
+            "full_formal": full_formal_result,
             "telemetry": {
                 "process_tree_samples": {
                     "path": "numerical_output/process_tree_samples.jsonl",
@@ -6204,6 +6499,7 @@ def run_task039_v3_7_diagnostic(
     v6_h4_exact_spool_root: str | Path | None = None,
     v7_h4_exact_side_limit_setup_only: bool = False,
     v7_h4_exact_side_exact_spool_root: str | Path | None = None,
+    v7_h4_exact_side_full_formal: bool = False,
     v6_h4_port_modal_bottom_only: bool = False,
     v6_h4_port_modal_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
@@ -6215,6 +6511,7 @@ def run_task039_v3_7_diagnostic(
 ) -> dict[str, Any]:
     """Prepare the V3-7 campaign or an explicit research candidate branch."""
 
+    v7_h4_full_formal = bool(v7_h4_exact_side_full_formal)
     setup = None
     reference_holder: dict[str, Any] = {}
     survey_side_vectors: dict[str, dict[str, PETSc.Vec]] = {}
@@ -6291,6 +6588,7 @@ def run_task039_v3_7_diagnostic(
             or v5_h4_fixed_budget_bottom_only
             or v6_h4_post_compaction_setup_only
             or v7_h4_exact_side_limit_setup_only
+            or v7_h4_full_formal
             or v6_h4_port_modal_bottom_only
         ):
             profile = (
@@ -6304,74 +6602,36 @@ def run_task039_v3_7_diagnostic(
             or v5_h4_fixed_budget_bottom_only
             or v6_h4_post_compaction_setup_only
             or v7_h4_exact_side_limit_setup_only
+            or v7_h4_full_formal
             or v6_h4_port_modal_bottom_only
         ):
             incidence = resolved_payload["incidence"]
+            if v7_h4_full_formal:
+                route_profile_id = V7_H4_EXACT_SIDE_FULL_FORMAL_PROFILE_ID
+                route_schema = V7_H4_EXACT_SIDE_FULL_FORMAL_SCHEMA
+            elif v7_h4_exact_side_limit_setup_only:
+                route_profile_id = V7_H4_EXACT_SIDE_LIMIT_PROFILE_ID
+                route_schema = V7_H4_EXACT_SIDE_LIMIT_SCHEMA
+            elif v6_h4_post_compaction_setup_only:
+                route_profile_id = V6_H4_POST_COMPACTION_PROFILE_ID
+                route_schema = V6_H4_POST_COMPACTION_PROFILE_ID
+            elif v6_h4_port_modal_bottom_only:
+                route_profile_id = V6_H4_PORT_MODAL_BOTTOM_PROFILE_ID
+                route_schema = V6_H4_PORT_MODAL_BOTTOM_PROFILE_ID
+            elif v5_h4_blr_side_only:
+                route_profile_id = V5_H4_BLR_SIDE_PROFILE_ID
+                route_schema = V5_H4_BLR_SIDE_PROFILE_ID
+            elif v5_h4_setup_only:
+                route_profile_id = "task039.v5.h4.exact-side.setup-only.v1"
+                route_schema = route_profile_id
+            else:
+                route_profile_id = V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID
+                route_schema = route_profile_id
             profile = replace(
                 make_task039_hybrid_iterative_profile(480, 8, mesh_target_nm=4.0),
-                profile_id=(
-                    "task039.v5.h4.exact-side.setup-only.v1"
-                    if v5_h4_setup_only
-                    else (
-                        V7_H4_EXACT_SIDE_LIMIT_PROFILE_ID
-                        if v7_h4_exact_side_limit_setup_only
-                        else (
-                            V6_H4_POST_COMPACTION_PROFILE_ID
-                            if v6_h4_post_compaction_setup_only
-                            else (
-                                V6_H4_PORT_MODAL_BOTTOM_PROFILE_ID
-                                if v6_h4_port_modal_bottom_only
-                                else (
-                                    V5_H4_BLR_SIDE_PROFILE_ID
-                                    if v5_h4_blr_side_only
-                                    else V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID
-                                )
-                            )
-                        )
-                    )
-                ),
-                record_schema=(
-                    "task039.v5.h4.exact-side.setup-only.v1"
-                    if v5_h4_setup_only
-                    else (
-                        V7_H4_EXACT_SIDE_LIMIT_PROFILE_ID
-                        if v7_h4_exact_side_limit_setup_only
-                        else (
-                            V6_H4_POST_COMPACTION_PROFILE_ID
-                            if v6_h4_post_compaction_setup_only
-                            else (
-                                V6_H4_PORT_MODAL_BOTTOM_PROFILE_ID
-                                if v6_h4_port_modal_bottom_only
-                                else (
-                                    V5_H4_BLR_SIDE_PROFILE_ID
-                                    if v5_h4_blr_side_only
-                                    else V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID
-                                )
-                            )
-                        )
-                    )
-                ),
-                qualification_schema=(
-                    "task039.v5.h4.exact-side.setup-only.v1"
-                    if v5_h4_setup_only
-                    else (
-                        V7_H4_EXACT_SIDE_LIMIT_PROFILE_ID
-                        if v7_h4_exact_side_limit_setup_only
-                        else (
-                            V6_H4_POST_COMPACTION_PROFILE_ID
-                            if v6_h4_post_compaction_setup_only
-                            else (
-                                V6_H4_PORT_MODAL_BOTTOM_PROFILE_ID
-                                if v6_h4_port_modal_bottom_only
-                                else (
-                                    V5_H4_BLR_SIDE_PROFILE_ID
-                                    if v5_h4_blr_side_only
-                                    else V5_H4_FIXED_BUDGET_SIDE_PROFILE_ID
-                                )
-                            )
-                        )
-                    )
-                ),
+                profile_id=route_profile_id,
+                record_schema=route_schema,
+                qualification_schema=route_schema,
                 wavelength_nm=float(incidence["wavelength_nm"]),
                 incident_grazing_deg=float(incidence["grazing_angle_deg"]),
                 incident_phi_deg=float(incidence["azimuth_deg"]),
@@ -6389,6 +6649,7 @@ def run_task039_v3_7_diagnostic(
             resolved_payload,
             v6_h4_post_compaction_setup_only=v6_h4_post_compaction_setup_only,
             v7_h4_exact_side_limit_setup_only=v7_h4_exact_side_limit_setup_only,
+            v7_h4_exact_side_full_formal=v7_h4_full_formal,
             v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
         )
         _emit_marker(
@@ -6418,6 +6679,7 @@ def run_task039_v3_7_diagnostic(
             v5_h4_setup_only
             or v6_h4_post_compaction_setup_only
             or v7_h4_exact_side_limit_setup_only
+            or v7_h4_full_formal
         ):
             if (
                 selected_mode_packet_manifest is None
@@ -6432,6 +6694,10 @@ def run_task039_v3_7_diagnostic(
                 and v7_h4_exact_side_exact_spool_root is None
             ):
                 raise ValueError("V7 setup requires the exact-response spool root")
+            if v7_h4_full_formal and v7_h4_exact_side_exact_spool_root is None:
+                raise ValueError(
+                    "V7 full formal requires the exact-response spool root"
+                )
             producer = {
                 "producer_source_sha": selected_mode_packet_identity.get("source_sha"),
                 "physical_model_sha256": selected_mode_packet_identity.get(
@@ -6444,7 +6710,22 @@ def run_task039_v3_7_diagnostic(
                 "selected_mode_packet": True,
                 "v6_post_compaction": bool(v6_h4_post_compaction_setup_only),
                 "v7_exact_side_limit_setup": bool(v7_h4_exact_side_limit_setup_only),
+                "v7_exact_side_full_formal": bool(v7_h4_full_formal),
             }
+            if v7_h4_full_formal:
+                producer.update(
+                    {
+                        "consumer_source_sha": source_sha,
+                        "consumer_model_id": resolved_payload["model_id"],
+                        "qualification_scope": TASK039_V4_H4_CASE_QUALIFICATION_SCOPE,
+                        "qualification_method": TASK039_V4_H4_QUALIFICATION_METHOD,
+                        "direct_reference_payload_loaded": False,
+                        "_hybrid_direct_authority_run_directory": Path(
+                            "results/task039_v4_h4_hybrid_direct_formal_mpi8_icntl14_1515f095"
+                        ),
+                        "_full3d_authority_run_directory": None,
+                    }
+                )
             modal_amplitudes = None
         elif v6_h4_port_modal_bottom_only:
             if (
@@ -6665,7 +6946,23 @@ def run_task039_v3_7_diagnostic(
             v5_h4_setup_only
             or v6_h4_post_compaction_setup_only
             or v7_h4_exact_side_limit_setup_only
+            or v7_h4_full_formal
         ):
+            full_formal_runner = None
+            if v7_h4_full_formal:
+                if recovery_runner is None:
+                    raise ValueError(
+                        "V7 full formal requires the existing recovery_runner"
+                    )
+
+                def full_formal_runner(**kwargs):
+                    return _run_v7_h4_exact_side_full_formal(
+                        recovery_runner=recovery_runner,
+                        producer=producer,
+                        run_directory=run_directory,
+                        **kwargs,
+                    )
+
             result = run_v5_h4_exact_side_setup_only(
                 setup,
                 layout,
@@ -6676,27 +6973,72 @@ def run_task039_v3_7_diagnostic(
                 v6_profile=(
                     v6_h4_post_compaction_setup_only
                     or v7_h4_exact_side_limit_setup_only
+                    or v7_h4_full_formal
                 ),
                 exact_spool_root=(
                     v7_h4_exact_side_exact_spool_root
-                    if v7_h4_exact_side_limit_setup_only
+                    if (v7_h4_exact_side_limit_setup_only or v7_h4_full_formal)
                     else v6_h4_exact_spool_root
                 ),
                 packet_identity=selected_mode_packet_identity,
                 packet_manifest_sha256=selected_mode_packet_manifest_sha256,
+                full_formal_runner=full_formal_runner,
             )
-            if v7_h4_exact_side_limit_setup_only:
+            if v7_h4_exact_side_limit_setup_only or v7_h4_full_formal:
                 result["schema"] = V7_H4_EXACT_SIDE_LIMIT_SCHEMA
                 result["v7_profile"] = result.pop("v6_profile")
                 result["v7_profile"].update(
                     {
-                        "profile_id": V7_H4_EXACT_SIDE_LIMIT_PROFILE_ID,
-                        "schema": V7_H4_EXACT_SIDE_LIMIT_SCHEMA,
+                        "profile_id": (
+                            V7_H4_EXACT_SIDE_FULL_FORMAL_PROFILE_ID
+                            if v7_h4_full_formal
+                            else V7_H4_EXACT_SIDE_LIMIT_PROFILE_ID
+                        ),
+                        "schema": (
+                            V7_H4_EXACT_SIDE_FULL_FORMAL_SCHEMA
+                            if v7_h4_full_formal
+                            else V7_H4_EXACT_SIDE_LIMIT_SCHEMA
+                        ),
                         "setup_peak_limit_gib": V7_H4_EXACT_SIDE_LIMIT_GIB,
                         "outer_ready_peak_limit_gib": V7_H4_EXACT_SIDE_LIMIT_GIB,
                         "advancement_line_gib": V7_H4_EXACT_SIDE_LIMIT_GIB,
                         "legacy_v6_setup_line_gib": V6_H4_SETUP_THRESHOLD_GIB,
+                        "full_formal": bool(v7_h4_full_formal),
+                        "matched_direct_hard_stop_bytes": (
+                            V7_H4_EXACT_SIDE_FULL_FORMAL_HARD_STOP_BYTES
+                            if v7_h4_full_formal
+                            else None
+                        ),
+                        "setup_only": not v7_h4_full_formal,
+                        "default_timeout_seconds": (
+                            V7_H4_EXACT_SIDE_FULL_FORMAL_DEFAULT_TIMEOUT_SECONDS
+                            if v7_h4_full_formal
+                            else None
+                        ),
+                        "conditional_extension_timeout_seconds": (
+                            V7_H4_EXACT_SIDE_FULL_FORMAL_EXTENSION_TIMEOUT_SECONDS
+                            if v7_h4_full_formal
+                            else None
+                        ),
                     }
+                )
+            if v7_h4_full_formal:
+                full_report = result.get("full_formal", {})
+                result["schema"] = V7_H4_EXACT_SIDE_FULL_FORMAL_SCHEMA
+                result["v7_profile"]["schema"] = V7_H4_EXACT_SIDE_FULL_FORMAL_SCHEMA
+                result["outer_setup_probe"] = dict(result["outer_ksp"])
+                result["outer_ksp"] = {
+                    **dict(result["outer_ksp"]),
+                    "solve_called": True,
+                    "type": full_report.get("solve", {}).get("ksp_type", "gmres"),
+                    "restart": full_report.get("solve", {}).get("restart", 10),
+                    "formal_solve": full_report.get("solve", {}),
+                }
+                result["field_export"] = (
+                    "completed"
+                    if isinstance(result.get("recovery"), Mapping)
+                    and result["recovery"].get("physics_pass") is True
+                    else "not_run"
                 )
             result["source_sha"] = source_sha
             result["run_directory"] = str(Path(run_directory).resolve())
@@ -7395,6 +7737,7 @@ def run_task039_v3_7_diagnostic(
                     v5_h4_setup_only
                     or v6_h4_post_compaction_setup_only
                     or v7_h4_exact_side_limit_setup_only
+                    or v7_h4_full_formal
                 ):
                     internal = (
                         result.get("setup_only_internal_cleanup", {})
@@ -7413,7 +7756,11 @@ def run_task039_v3_7_diagnostic(
                             "internal_cleanup": internal,
                             "completed": bool(
                                 result is not None
-                                and result.get("status") == "setup_only_completed"
+                                and result.get("status")
+                                in {
+                                    "setup_only_completed",
+                                    "full_formal_completed",
+                                }
                             ),
                         },
                     )
@@ -7438,6 +7785,7 @@ def run_task039_v3_7_diagnostic(
                 v5_h4_setup_only
                 or v6_h4_post_compaction_setup_only
                 or v7_h4_exact_side_limit_setup_only
+                or v7_h4_full_formal
             ) and result is not None:
                 internal = result.get("setup_only_internal_cleanup", {})
                 side_actions = result.get("side_actions", {})
@@ -7465,7 +7813,8 @@ def run_task039_v3_7_diagnostic(
                     object_ledger["objects"][name].update(
                         {
                             "created": bool(side_actions),
-                            "completed": result.get("status") == "setup_only_completed",
+                            "completed": result.get("status")
+                            in {"setup_only_completed", "full_formal_completed"},
                             "destroyed": cleanup_pass,
                             "status": "measured" if cleanup_pass else "incomplete",
                             "lifecycle_pass": cleanup_pass,
@@ -7475,6 +7824,7 @@ def run_task039_v3_7_diagnostic(
                 if (
                     v6_h4_post_compaction_setup_only
                     or v7_h4_exact_side_limit_setup_only
+                    or v7_h4_full_formal
                 ):
                     qep_release = getattr(setup, "qep_release", {})
                     packet_refs_released = bool(
@@ -7502,7 +7852,7 @@ def run_task039_v3_7_diagnostic(
                         )
                     profile_key = (
                         "v7_profile"
-                        if v7_h4_exact_side_limit_setup_only
+                        if v7_h4_exact_side_limit_setup_only or v7_h4_full_formal
                         else "v6_profile"
                     )
                     result.setdefault(profile_key, {})[
@@ -7569,6 +7919,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--v6-h4-exact-spool-root")
     parser.add_argument("--v7-h4-exact-side-limit-setup-only", action="store_true")
     parser.add_argument("--v7-h4-exact-side-exact-spool-root")
+    parser.add_argument("--v7-h4-exact-side-full-formal", action="store_true")
     parser.add_argument("--v6-h4-port-modal-bottom-component", action="store_true")
     parser.add_argument("--v6-h4-port-modal-exact-spool-root")
     parser.add_argument("--v5-h4-blr-side-component", action="store_true")
@@ -7591,6 +7942,7 @@ def main(argv: list[str] | None = None) -> int:
             args.v5_h4_setup_only,
             args.v6_h4_post_compaction_setup_only,
             args.v7_h4_exact_side_limit_setup_only,
+            args.v7_h4_exact_side_full_formal,
             args.v6_h4_port_modal_bottom_component,
             args.v5_h4_blr_side_component,
             args.v5_h4_fixed_budget_bottom_component,
@@ -7609,6 +7961,7 @@ def main(argv: list[str] | None = None) -> int:
                 bool(args.v5_h4_setup_only),
                 bool(args.v6_h4_post_compaction_setup_only),
                 bool(args.v7_h4_exact_side_limit_setup_only),
+                bool(args.v7_h4_exact_side_full_formal),
                 bool(args.v6_h4_port_modal_bottom_component),
                 bool(args.v5_h4_blr_side_component),
                 bool(args.v5_h4_fixed_budget_bottom_component),
@@ -7634,6 +7987,7 @@ def main(argv: list[str] | None = None) -> int:
             v6_h4_exact_spool_root=args.v6_h4_exact_spool_root,
             v7_h4_exact_side_limit_setup_only=(args.v7_h4_exact_side_limit_setup_only),
             v7_h4_exact_side_exact_spool_root=(args.v7_h4_exact_side_exact_spool_root),
+            v7_h4_exact_side_full_formal=args.v7_h4_exact_side_full_formal,
             v6_h4_port_modal_bottom_only=args.v6_h4_port_modal_bottom_component,
             v6_h4_port_modal_exact_spool_root=(args.v6_h4_port_modal_exact_spool_root),
             v5_h4_blr_side_only=args.v5_h4_blr_side_component,
@@ -7649,6 +8003,7 @@ def main(argv: list[str] | None = None) -> int:
                     args.v5_h4_setup_only
                     or args.v6_h4_post_compaction_setup_only
                     or args.v7_h4_exact_side_limit_setup_only
+                    or args.v7_h4_exact_side_full_formal
                     or args.v6_h4_port_modal_bottom_component
                     or args.v5_h4_blr_side_component
                     or args.v5_h4_fixed_budget_bottom_component
@@ -7661,6 +8016,7 @@ def main(argv: list[str] | None = None) -> int:
                     args.v5_h4_setup_only
                     or args.v6_h4_post_compaction_setup_only
                     or args.v7_h4_exact_side_limit_setup_only
+                    or args.v7_h4_exact_side_full_formal
                     or args.v6_h4_port_modal_bottom_component
                     or args.v5_h4_blr_side_component
                     or args.v5_h4_fixed_budget_bottom_component
@@ -7710,7 +8066,7 @@ def main(argv: list[str] | None = None) -> int:
                     args.candidate_b_only
                     or args.candidate_c_only
                     or args.candidate_e_side_only
-                    or component_route
+                    or (component_route and not args.v7_h4_exact_side_full_formal)
                 )
                 else run_v3_7_recovery_runner
             ),
@@ -7724,6 +8080,7 @@ def main(argv: list[str] | None = None) -> int:
             v6_h4_exact_spool_root=args.v6_h4_exact_spool_root,
             v7_h4_exact_side_limit_setup_only=(args.v7_h4_exact_side_limit_setup_only),
             v7_h4_exact_side_exact_spool_root=(args.v7_h4_exact_side_exact_spool_root),
+            v7_h4_exact_side_full_formal=args.v7_h4_exact_side_full_formal,
             v6_h4_port_modal_bottom_only=args.v6_h4_port_modal_bottom_component,
             v6_h4_port_modal_exact_spool_root=(args.v6_h4_port_modal_exact_spool_root),
             v5_h4_blr_side_only=args.v5_h4_blr_side_component,
@@ -7758,7 +8115,12 @@ def main(argv: list[str] | None = None) -> int:
     return (
         0
         if result.get("status")
-        in {"completed", "setup_only_completed", "component_completed"}
+        in {
+            "completed",
+            "setup_only_completed",
+            "component_completed",
+            "full_formal_completed",
+        }
         else 3
     )
 

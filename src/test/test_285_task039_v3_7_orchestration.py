@@ -911,6 +911,261 @@ def test_v6_and_v7_qep_zero_preserve_uncreated_packet_ledger_objects(
         assert ledger["objects"][name]["details"]["qep_release"]["qep_calls"] == 0
 
 
+def test_v7_full_formal_uses_matched_h4_direct_authority_only(tmp_path, monkeypatch):
+    payload = load_and_resolve(
+        Path("input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat")
+    ).as_jsonable()
+    setup = SimpleNamespace(
+        bottom=SimpleNamespace(),
+        top=SimpleNamespace(),
+        coupling=SimpleNamespace(internal_unknown_count=0),
+    )
+    captured = {}
+    monkeypatch.setattr(
+        orchestration, "simulation_config_3d_from_normalized", lambda _payload: {}
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "HybridAugmentedLayout",
+        SimpleNamespace(build=lambda *_args: SimpleNamespace()),
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "release_frozen_m10_objects",
+        lambda *_args: {
+            "pass": True,
+            "cleanup": {"collective_call_completed": True},
+        },
+    )
+
+    def fake_full_formal(**kwargs):
+        captured["producer"] = dict(kwargs["producer"])
+        return {
+            "status": "full_formal_completed",
+            "solve": {"ksp_type": "gmres", "restart": 10},
+            "recovery": {"pass": True},
+        }
+
+    monkeypatch.setattr(
+        orchestration, "_run_v7_h4_exact_side_full_formal", fake_full_formal
+    )
+
+    def fake_setup(_setup, _layout, **kwargs):
+        kwargs["full_formal_runner"](
+            setup=_setup,
+            layout=_layout,
+            operator=None,
+            context=None,
+            comm=MPI.COMM_SELF,
+            marker_callback=kwargs["marker_callback"],
+            release_before_recovery=lambda: {
+                "pass": True,
+                "factor_cleanup_pass": True,
+                "actions_destroyed": True,
+                "component_cleanup_pass": True,
+                "factor_count_after_cleanup": {"bottom": 0, "top": 0},
+                "collective_heap_cleanup": {"collective_call_completed": True},
+            },
+        )
+        return {
+            "status": "full_formal_completed",
+            "setup_only_internal_cleanup": {
+                "factor_count_after_cleanup": {"bottom": 0, "top": 0},
+                "side_component_cleanup": {},
+                "exact_side_objects_destroyed": True,
+            },
+            "side_actions": {
+                "bottom": {"factor_only_storage": True},
+                "top": {"factor_only_storage": True},
+            },
+            "telemetry": {"memory_object_ledger": {}},
+            "v6_profile": {},
+            "outer_ksp": {"solve_called": False, "type": "gmres", "restart": 10},
+        }
+
+    monkeypatch.setattr(orchestration, "run_v5_h4_exact_side_setup_only", fake_setup)
+    identity = {
+        "source_sha": "a" * 40,
+        "physical_sha256": "b" * 64,
+        "model_id": "task039_5nm_v4_1deg_s5_hybrid_iterative_m480",
+    }
+    result = orchestration.run_task039_v3_7_diagnostic(
+        payload,
+        tmp_path / "v7-full-identity",
+        source_sha="c" * 40,
+        comm=MPI.COMM_SELF,
+        setup_builder=lambda **_kwargs: setup,
+        v7_h4_exact_side_full_formal=True,
+        v7_h4_exact_side_exact_spool_root=tmp_path / "exact-spool",
+        selected_mode_packet_manifest=tmp_path / "manifest.json",
+        selected_mode_packet_identity=identity,
+        selected_mode_packet_manifest_sha256="d" * 64,
+        recovery_runner=lambda *_args, **_kwargs: {"pass": True},
+    )
+    assert captured["producer"]["_hybrid_direct_authority_run_directory"] == Path(
+        "results/task039_v4_h4_hybrid_direct_formal_mpi8_icntl14_1515f095"
+    )
+    assert captured["producer"]["_full3d_authority_run_directory"] is None
+    assert captured["producer"]["consumer_source_sha"] == "c" * 40
+    assert captured["producer"]["consumer_model_id"] == payload["model_id"]
+    assert captured["producer"]["qualification_scope"] == "task039_v4_p6h4_m480_1deg_s"
+    assert (
+        captured["producer"]["qualification_method"]
+        == "task039_v4_h4_exact_side_case_qualification"
+    )
+    assert captured["producer"]["direct_reference_payload_loaded"] is False
+    assert result["schema"] == orchestration.V7_H4_EXACT_SIDE_FULL_FORMAL_SCHEMA
+    assert result["outer_ksp"]["solve_called"] is True
+
+
+@pytest.mark.parametrize(
+    ("release", "expected_status", "recovery_expected"),
+    (
+        (
+            {
+                "factor_count_after_cleanup": {"bottom": 0, "top": 0},
+                "factor_cleanup_pass": True,
+                "actions_destroyed": True,
+                "component_cleanup_pass": True,
+                "component_cleanup": {
+                    side: {name: True for name in ("H", "C", "F", "D")}
+                    for side in ("bottom", "top")
+                },
+                "collective_heap_cleanup": {"collective_call_completed": True},
+            },
+            "full_formal_completed",
+            True,
+        ),
+        (
+            {
+                "factor_count_after_cleanup": {"bottom": 0, "top": 1},
+                "factor_cleanup_pass": False,
+                "actions_destroyed": True,
+                "component_cleanup_pass": False,
+                "component_cleanup": {
+                    "bottom": {name: True for name in ("H", "C", "F", "D")},
+                    "top": {"H": True, "C": True, "F": True, "D": False},
+                },
+                "collective_heap_cleanup": {"collective_call_completed": False},
+            },
+            "full_formal_lifecycle_failure",
+            False,
+        ),
+    ),
+)
+def test_v7_full_formal_release_gate_controls_recovery(
+    monkeypatch, release, expected_status, recovery_expected
+):
+    snapshots = []
+
+    class Vec:
+        def duplicate(self):
+            snapshot = Vec()
+            snapshots.append(snapshot)
+            return snapshot
+
+        def copy(self, target):
+            target.copied = True
+
+        def destroy(self):
+            self.destroyed = True
+
+    iterative = SimpleNamespace(
+        solution=Vec(),
+        postsolve_audit={"pass": True, "ksp_type": "gmres", "restart": 10},
+        converged_reason=1,
+        iterations=2,
+        block_relative_residuals={},
+        timing={},
+        inventory={"exact_factor_count": 0, "global_direct_factor_count": 0},
+        destroy=lambda: None,
+    )
+    monkeypatch.setattr(orchestration, "_default_rhs", lambda *_args: Vec())
+    monkeypatch.setattr(
+        orchestration,
+        "solve_hybrid_block_ldu_iterative",
+        lambda *_args, **kwargs: (
+            kwargs["progress_callback"]({"multimetric_max_true_residual": 0.5})
+            or iterative
+        ),
+    )
+    recovery_calls = []
+    markers = []
+
+    def marker_callback(stage, _detail):
+        markers.append(stage)
+
+    result = orchestration._run_v7_h4_exact_side_full_formal(
+        SimpleNamespace(),
+        SimpleNamespace(),
+        operator=None,
+        context=None,
+        comm=MPI.COMM_SELF,
+        marker_callback=marker_callback,
+        recovery_runner=lambda *_args: recovery_calls.append(True) or {"pass": True},
+        producer={},
+        run_directory=Path("."),
+        release_before_recovery=lambda: release,
+    )
+    assert result["status"] == expected_status
+    assert bool(recovery_calls) is recovery_expected
+    assert markers.count("solution_snapshot_created") == 1
+    assert markers.count("solution_snapshot_destroyed") == 1
+    assert markers.count("recovery_physics_begin") == int(recovery_expected)
+    assert markers.count("recovery_physics_end") == int(recovery_expected)
+    assert snapshots and snapshots[0].destroyed is True
+    if not recovery_expected:
+        assert result["recovery"] == "not_run"
+
+
+@pytest.mark.parametrize(
+    ("status", "expected_exit"),
+    (
+        ("full_formal_completed", 0),
+        ("full_formal_lifecycle_failure", 3),
+        ("full_formal_recovery_failure", 3),
+    ),
+)
+def test_v7_full_formal_main_exit_codes_are_status_sensitive(
+    tmp_path, monkeypatch, capsys, status, expected_exit
+):
+    identity = tmp_path / "identity.json"
+    identity.write_text(json.dumps({"model_id": "task039-test"}), encoding="utf-8")
+    monkeypatch.setattr(
+        orchestration,
+        "MPI",
+        SimpleNamespace(COMM_WORLD=SimpleNamespace(size=8, rank=0)),
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "run_task039_v3_7_diagnostic",
+        lambda *_args, **_kwargs: {"status": status},
+    )
+    exit_code = orchestration.main(
+        [
+            "--worker",
+            "--launched-by-task038-watchdog",
+            "--input",
+            "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat",
+            "--run-directory",
+            str(tmp_path / "run"),
+            "--source-sha",
+            "a" * 40,
+            "--v7-h4-exact-side-full-formal",
+            "--selected-mode-packet-manifest",
+            str(tmp_path / "manifest.json"),
+            "--selected-mode-packet-identity",
+            str(identity),
+            "--selected-mode-packet-manifest-sha256",
+            "b" * 64,
+            "--v7-h4-exact-side-exact-spool-root",
+            str(tmp_path / "spool"),
+        ]
+    )
+    assert json.loads(capsys.readouterr().out)["status"] == status
+    assert exit_code == expected_exit
+
+
 def test_v3_7_candidate_authority_serializes_complex_orders_for_parser(
     tmp_path,
 ) -> None:
@@ -954,9 +1209,11 @@ def test_v3_7_candidate_authority_serializes_complex_orders_for_parser(
         Physics(),
         {
             "consumer_source_sha": "a" * 40,
+            "consumer_model_id": "task039_5nm_v4_1deg_s5_hybrid_iterative_m480",
             "physical_model_sha256": "b" * 64,
             "qualification_scope": "task039_v4_p6h4_m480_1deg_s",
             "qualification_method": "task039_v4_h4_exact_side_case_qualification",
+            "direct_reference_payload_loaded": False,
         },
         MPI.COMM_SELF,
     )
@@ -969,7 +1226,12 @@ def test_v3_7_candidate_authority_serializes_complex_orders_for_parser(
     parsed = _parse_orders(authority["external_orders"], "candidate", expected_count=1)
     assert parsed[("bottom", 0, 0, "s")]["outgoing_amplitude"] == 1.0 + 2.0j
     assert _json_safe(np.asarray([1.0 + 2.0j])) == [[1.0, 2.0]]
+    assert authority["model_id"] == "task039_5nm_v4_1deg_s5_hybrid_iterative_m480"
     assert authority["qualification_scope"] == "task039_v4_p6h4_m480_1deg_s"
+    assert (
+        authority["qualification_method"]
+        == "task039_v4_h4_exact_side_case_qualification"
+    )
     assert (
         authority["canonical"]["bottom"]["roles"]["full_fe"]["manifest_sha256"]
         == "c" * 64

@@ -527,6 +527,123 @@ def _run_h5_worker(
     return result, terminated
 
 
+def _run_v7_full_worker_with_fake_clock(
+    tmp_path: Path,
+    monkeypatch,
+    clock_values,
+    *,
+    memory=8 * 1024**3,
+):
+    monkeypatch.setattr(
+        launcher,
+        "_task039_memory_budget",
+        lambda _execution: {
+            "configured_warning_memory_gib": 170.0,
+            "configured_critical_memory_gib": 195.0,
+            "effective_terminate_memory_gib": 195.0,
+            "absolute_terminate_memory_bytes": 224_000_000_000,
+        },
+    )
+    specification = replace(
+        load_and_resolve(TASK039_V4_H4_ITERATIVE),
+        expected_output_parent=tmp_path / "results",
+    )
+    run_directory = tmp_path / "v7-full-worker"
+    run_directory.mkdir()
+    process = _FakeProcess()
+    terminated = []
+    plan = SimpleNamespace(
+        argv=("/opt/fake-worker",),
+        method="task039_v7_h4_exact_side_full_formal",
+        contract_probe=False,
+        task039_trace_audit=False,
+    )
+
+    def popen(_argv, **_kwargs):
+        marker_path = (
+            run_directory / "numerical_output" / "memory_stage_markers.raw.jsonl"
+        )
+        marker_path.parent.mkdir(parents=True, exist_ok=True)
+        marker_path.write_text(
+            "".join(
+                json.dumps(marker) + "\n"
+                for marker in (
+                    {
+                        "stage": "outer_solve_begin",
+                        "status": "begin",
+                        "elapsed_seconds": 1.0,
+                    },
+                    {
+                        "stage": "outer_solve_progress",
+                        "status": "running",
+                        "elapsed_seconds": 2.0,
+                        "detail": {"multimetric_max_true_residual": 1.0},
+                    },
+                    {
+                        "stage": "outer_solve_progress",
+                        "status": "running",
+                        "elapsed_seconds": 3.0,
+                        "detail": {"multimetric_max_true_residual": 0.5},
+                    },
+                )
+            ),
+            encoding="utf-8",
+        )
+        return process
+
+    clock = iter(clock_values)
+    result = launcher._run_worker(
+        plan,
+        specification,
+        run_directory,
+        popen_factory=popen,
+        sample_factory=lambda _pid: _authority(memory=memory),
+        terminate_factory=lambda member: (
+            terminated.append(member)
+            or setattr(member, "returncode", -15)
+            or {"requested": True}
+        ),
+        monotonic=lambda: next(clock),
+        sleep=lambda _seconds: None,
+        poll_interval=0.25,
+    )
+    return result, terminated
+
+
+def test_v7_full_timeout_extends_once_after_outer_progress_decreases(
+    tmp_path, monkeypatch
+):
+    result, terminated = _run_v7_full_worker_with_fake_clock(
+        tmp_path,
+        monkeypatch,
+        (0.0, 1.0, 21601.0, 21602.0, 28801.0),
+    )
+    telemetry = result["resource_authority"]["v7_h4_exact_side_full_formal_telemetry"]
+    decision = telemetry["authority"]["timeout_policy"]["decision"]
+    assert result["result_classification"] == "timeout"
+    assert len(terminated) == 1
+    assert decision["status"] == "extended_once"
+    assert decision["effective_timeout_seconds"] == 28800
+    assert telemetry["authority"]["timeout_policy"]["hard_stop_bytes"] == 100262797312
+    assert telemetry["authority"]["timeout_policy"]["peak_swap_bytes"] == 0
+
+
+def test_v7_full_timeout_decision_distinguishes_memory_stop(tmp_path, monkeypatch):
+    result, terminated = _run_v7_full_worker_with_fake_clock(
+        tmp_path,
+        monkeypatch,
+        (0.0, 1.0, 2.0),
+        memory=100262797312,
+    )
+    decision = result["resource_authority"]["v7_h4_exact_side_full_formal_telemetry"][
+        "authority"
+    ]["timeout_policy"]["decision"]
+    assert result["result_classification"] == "memory_terminate"
+    assert len(terminated) == 1
+    assert decision["status"] == "not_reached_due_to_memory_terminate"
+    assert decision["classification"] == "memory_terminate"
+
+
 def test_task039_h5_critical_checkpoint_does_not_stop_before_absolute_hard_stop(
     monkeypatch, tmp_path
 ):
