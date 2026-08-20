@@ -586,16 +586,32 @@ V6 的 0.7 nm capacity 只保留 derived/conditional envelope；0.7 nm PDE、Ful
 new heavy、arbitrary-3D qualification 和 top/full Hybrid 均 not_run。详见
 [V6 capacity boundary](v6_0p7nm_hybrid_capacity.md)。
 
-## V7 Lane A：exact-side setup advancement
+## V7 Lane A：exact-side full formal
 
-V7 唯一一次 Lane A setup-only 已在 source `f4073adabb91bffe5c3954b8ae8b63270efa3e15`
-下自然 exit 0。完整 process-tree peak 为 `87,034,187,776 B = 81.056903839 GiB`，低于
-V7 advancement line `84.039305878 GiB`；outer KSP setup-ready 对齐 RSS 为
-`77.516986847 GiB`，swap=0，bottom/top factor 在 outer-ready 为 `1/1`，最终 cleanup 为
-`0/0`，packet/QEP refs released=true。因此分类为 `SETUP_ADVANCEMENT_PASS`，并具备
-`FULL_FORMAL_ELIGIBLE`，但本次没有运行 outer/recovery/field/R/T/A。它仍然高于旧
-`42.019652939 GiB` half-memory line，故同时为 `NOT_HALF_MEMORY_COMPATIBLE`。
+V7 唯一一次 Lane A setup→full formal 在 source
+`9e31ecf189081afcb8ca27b0374ec89af0094e2d` 下自然 exit 0。完整 process-tree peak 为
+`85,927,108,608 B = 80.025856018 GiB`，低于 matched direct
+`93.377006531 GiB`；outer-ready 为 `76.937850952 GiB`，swap=0。
+GMRES10 一次迭代、true residual、recovery、physics、matched h4 direct checker 和
+最终 factor cleanup 均通过，分类为 `5NM_EXACT_SIDE_LOWER_MEMORY_CASE_RESULT`、
+`V7_TIER_5_TO_20_PERCENT`。相对 direct 节省 `13.351150513 GiB / 14.298113646%`，
+但仍高于旧 `42.019652939 GiB` half-memory line，并保留两侧 full sparse factors，故
+不能称 0.7 nm scalable。
+V7 setup-only advancement 是先前 source
+`f4073adabb91bffe5c3954b8ae8b63270efa3e15` 的独立证据：
+`81.056903839 GiB <= 84.039305878 GiB`；84.039 不是本次 full formal 的资源 Gate。
+
+| V7 Lane A evidence | measured result | classification |
+| --- | ---: | --- |
+| process-tree peak | `80.025856018 GiB` | setup/full resource pass |
+| outer-ready | `76.937850952 GiB` | reached |
+| GMRES / residual | `restart10 / 3.506501655e-10` | numerical pass |
+| factor lifecycle | outer-ready `1/1`；final `0/0` | cleanup pass |
+| recovery/physics/direct checker | all pass；Full3D secondary `not_available` | 5 nm result only |
+| Lane B streamed Petrov | `not_run` | next research family |
 
 详细 marker、modal Schur、layer graph、生命周期和 raw hash 见
-[V7 Lane A outcome](v7_exact_side_limit.md) 与
-[V7 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v7_exact_side_limit_setup_v1.json)。
+[V7 Lane A outcome](v7_exact_side_limit.md)、
+[V7 setup record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v7_exact_side_limit_setup_v1.json)
+和
+[V7 full-formal record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v7_exact_side_full_formal_v1.json)。

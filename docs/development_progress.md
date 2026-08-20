@@ -2469,3 +2469,29 @@ construction hard line 27,348,992 B，swap=0，SIGTERM 完成且无需 SIGKILL�
 
 该结果关闭 V6 port/modal bottom family；不调参、不重跑、不继续 top。ordinary
 defaults、既有 V5 负结果和两个 raw root 均保留。
+
+## 2026-08-20：Task039 Review V7 Lane A exact-side full formal
+
+V7 唯一一次 Lane A setup→full formal 使用 source
+`9e31ecf189081afcb8ca27b0374ec89af0094e2d`，run root 为
+`results/task039_v7_h4_exact_side_full_formal_mpi8_9e31ecf1`。完整 process-tree peak
+`85,927,108,608 B = 80.025856018 GiB`，低于 matched direct
+`93.377006531 GiB`，swap=0；相对 direct 节省
+`13.351150513 GiB / 14.298113646%`，分类为
+`5NM_EXACT_SIDE_LOWER_MEMORY_CASE_RESULT`、`V7_TIER_5_TO_20_PERCENT`。
+V7 setup-only advancement 沿用先前 source
+`f4073adabb91bffe5c3954b8ae8b63270efa3e15` 的 run
+`results/task039_v7_h4_exact_side_limit_setup_only_mpi8_f4073ada`：
+`81.056903839 GiB <= 84.039305878 GiB`；该 Gate 不属于本次 full formal 的正式资源比较。
+
+| Gate | 结果 |
+|---|---|
+| outer-ready | `76.937850952 GiB`，reached |
+| outer solve | fixed `GMRES/restart10`，1 iteration，true residual `3.506501655e-10` |
+| recovery / physics / matched h4 direct checker | pass；Full3D secondary `not_available` |
+| factor lifecycle | outer-ready `1/1`；final `0/0`；packet/QEP released |
+| ordinary defaults / 0.7 nm PDE | unchanged / `not_run` |
+| Lane B streamed owner-row Petrov | `not_run`；待独立实现与 focused Gate |
+
+compact evidence：[V7 full-formal record](../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v7_exact_side_full_formal_v1.json)，
+[V7 outcome](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v7_exact_side_limit.md)。
