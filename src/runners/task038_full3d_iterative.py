@@ -18,7 +18,10 @@ def run_full3d_iterative(
         raise ValueError("full3d_iterative adapter received a mismatched method")
     return {
         "passed": False,
-        "errors": ["full3d_iterative numerical adapter is deferred until T2"],
+        "errors": [
+            "full3d_iterative numerical adapter is not connected in T1; "
+            "T2-T5 qualification is required"
+        ],
         "summary": None,
         "numerical_output_directory": str(Path(run_directory).resolve() / "numerical_output"),
     }

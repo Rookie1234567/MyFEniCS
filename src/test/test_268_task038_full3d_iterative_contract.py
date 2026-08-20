@@ -156,12 +156,13 @@ def test_iterative_stub_and_worker_dispatch_are_explicitly_not_connected(tmp_pat
     payload = load_and_resolve(TEMPLATE).as_jsonable()
     result = run_full3d_iterative(payload, tmp_path)
     assert result["passed"] is False
-    assert "deferred until T2" in result["errors"][0]
+    assert "not connected in T1" in result["errors"][0]
+    assert "T2-T5 qualification is required" in result["errors"][0]
     status, errors = _dispatch_resolved_payload(
         payload, expected_method="full3d_iterative", output_directory=tmp_path
     )
     assert status == 4
-    assert "deferred until T2" in errors[0]
+    assert "not connected in T1" in errors[0]
     plan = build_execution_plan(
         load_and_resolve(TEMPLATE),
         tmp_path / "plan",
