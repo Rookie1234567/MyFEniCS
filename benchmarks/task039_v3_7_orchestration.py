@@ -7141,6 +7141,7 @@ def run_task039_v3_7_diagnostic(
                 "packet_arrays_hydrated": False,
                 "exact_spool_opened": False,
                 "holdout_opened": False,
+                "direct_reference_payload_loaded": False,
                 "component_candidate": True,
                 "research_only": True,
                 "general_production": False,

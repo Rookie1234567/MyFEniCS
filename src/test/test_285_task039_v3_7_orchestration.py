@@ -3128,6 +3128,9 @@ def test_v7_streamed_worker_route_finalizes_side_setup_once(
         .splitlines()
         if line.strip()
     ]
+    inventory_rows = [row for row in marker_rows if row["marker"] == "inventory_ready"]
+    assert len(inventory_rows) == 1
+    assert inventory_rows[0]["detail"]["direct_reference_payload_loaded"] is False
     assert marker_rows[-1]["marker"] == (
         "v7_streamed_bottom_producer_side_setup_cleanup"
     )
