@@ -29,6 +29,7 @@ __all__ = (
     "build_layer_block_operator",
     "build_layer_sweep_action",
     "minimum_layer_labels",
+    "relative_matvec_residual",
 )
 
 
@@ -46,6 +47,26 @@ def minimum_layer_labels(
     if np.any(labels == sentinel):
         raise ValueError("V6 layer graph does not cover every active F row")
     return labels
+
+
+def relative_matvec_residual(
+    operator: Any, rhs: PETSc.Vec, solution: PETSc.Vec
+) -> float:
+    """Return ``||rhs-operator*solution||/||rhs||`` for one real action.
+
+    The caller owns ``rhs`` and ``solution``.  The temporary result vector is
+    local to this measurement, so this helper does not retain an operator or
+    any solver state.  It is used by the V9 bare-F diagnostic to keep the
+    residual definition separate from reference-solution comparison.
+    """
+
+    applied = operator.createVecLeft()
+    try:
+        operator.mult(solution, applied)
+        applied.axpy(PETSc.ScalarType(-1.0), rhs)
+        return float(applied.norm()) / max(float(rhs.norm()), 1.0e-30)
+    finally:
+        applied.destroy()
 
 
 def build_real_layer_labels(
