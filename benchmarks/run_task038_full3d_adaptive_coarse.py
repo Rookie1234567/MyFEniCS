@@ -124,11 +124,11 @@ def _runtime_identity(root: Path) -> dict[str, Any]:
     import slepc4py
 
     marker = os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION", "")
-    executable = Path(sys.executable).resolve()
-    venv = (root / ".venv").resolve()
+    lexical_executable = Path(sys.executable).absolute()
+    qualified_bin_resolved = (root / ".venv" / "bin").resolve()
     if marker != "1":
         raise RuntimeError("D1 requires qualified activation marker=1")
-    if venv not in executable.parents:
+    if lexical_executable.parent.resolve() != qualified_bin_resolved:
         raise RuntimeError("D1 requires the repository .venv interpreter")
     if np.dtype(PETSc.ScalarType) != np.dtype(np.complex128):
         raise RuntimeError("D1 requires PETSc complex128")
@@ -139,7 +139,8 @@ def _runtime_identity(root: Path) -> dict[str, Any]:
     return {
         "qualified_marker": marker,
         "python": sys.version.split()[0],
-        "sys_executable": str(executable),
+        "sys_executable": str(lexical_executable),
+        "qualified_venv_bin_resolved": str(qualified_bin_resolved),
         "mpi_library": MPI.Get_library_version().splitlines()[0],
         "mpi_thread_level": int(MPI.Query_thread()),
         "petsc_scalar_type": str(np.dtype(PETSc.ScalarType)),

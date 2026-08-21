@@ -495,6 +495,13 @@ def _check_runtime(record: dict[str, Any], errors: list[str]) -> None:
     executable = runtime.get("sys_executable")
     if not isinstance(executable, str) or "/.venv/" not in executable:
         errors.append("runtime executable is not repository .venv-bound")
+    qualified_bin = runtime.get("qualified_venv_bin_resolved")
+    if qualified_bin is not None and (
+        not isinstance(qualified_bin, str)
+        or not Path(qualified_bin).is_absolute()
+        or Path(qualified_bin).name != "bin"
+    ):
+        errors.append("qualified venv bin path is invalid")
 
 
 def _check_model(record: dict[str, Any], errors: list[str]) -> None:

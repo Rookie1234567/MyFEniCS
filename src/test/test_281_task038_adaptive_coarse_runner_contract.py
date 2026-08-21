@@ -187,6 +187,7 @@ def _synthetic_record(tmp_path: Path, *, case: str = "p2-mpi2") -> Path:
         "runtime": {
             "qualified_marker": "1",
             "sys_executable": "/repo/.venv/bin/python",
+            "qualified_venv_bin_resolved": "/repo/.venv/bin",
             "petsc_scalar_type": "complex128",
             "petsc_int_type": "int32",
         },
@@ -279,6 +280,14 @@ def test_d1_checker_rejects_dirty_or_missing_required_identity(tmp_path: Path):
     model_result = checker.check_record(model_broken)
     assert model_result["passed"] is False
     assert any("model identity" in item for item in model_result["errors"])
+
+    record = json.loads(record_path.read_text(encoding="utf-8"))
+    record["runtime"]["qualified_venv_bin_resolved"] = "relative/bin"
+    runtime_broken = tmp_path / "runtime-broken.json"
+    runtime_broken.write_text(json.dumps(record), encoding="utf-8")
+    runtime_result = checker.check_record(runtime_broken)
+    assert runtime_result["passed"] is False
+    assert any("qualified venv bin" in item for item in runtime_result["errors"])
 
 
 def test_d1_checker_malformed_serial_npz_fails_closed(tmp_path: Path):
