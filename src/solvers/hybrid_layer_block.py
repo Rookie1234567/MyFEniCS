@@ -19,11 +19,15 @@ import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
 
+from .hybrid_local_dtn_woodbury import ResearchExactFactorInverse
+
 __all__ = (
     "LayerBlockOperator",
+    "LayerSweepAction",
     "audit_layer_block_action",
     "build_real_layer_labels",
     "build_layer_block_operator",
+    "build_layer_sweep_action",
     "minimum_layer_labels",
 )
 
@@ -119,13 +123,15 @@ class _LayerBlock:
     column_layer: int
     rows_owned_local: int
     columns_owned_local: int
-    matrix: PETSc.Mat
+    matrix: PETSc.Mat | None
     local_nnz: int
     csr_bytes: int
     local_hash: str
 
     def destroy(self) -> None:
-        self.matrix.destroy()
+        if self.matrix is not None:
+            self.matrix.destroy()
+            self.matrix = None
 
 
 @dataclass
@@ -441,6 +447,410 @@ class LayerBlockOperator:
         self._diagnostics["qep_count"] = 0
         self._diagnostics["outer_ksp_count"] = 0
         self._destroyed = True
+
+
+class LayerSweepAction:
+    """Fixed layer-triangular sweep with sequential factor-only ownership."""
+
+    _METHODS = ("J1", "F1", "FB1", "FB2", "FB4")
+
+    def __init__(
+        self,
+        *,
+        method: str,
+        factors: list[ResearchExactFactorInverse],
+        lower: dict[int, PETSc.Mat],
+        upper: dict[int, PETSc.Mat],
+        workspaces: list[_LayerWorkspace],
+        parent_template: PETSc.Vec,
+        factor_records: list[dict[str, Any]],
+        fine_action: Any,
+        lifecycle_callback: Any,
+    ) -> None:
+        self._method = method
+        self._factors = factors
+        self._lower = lower
+        self._upper = upper
+        self._workspaces = workspaces
+        self._parent_template = parent_template
+        self._factor_records = factor_records
+        self._current = parent_template.duplicate()
+        self._residual = parent_template.duplicate()
+        self._correction = parent_template.duplicate()
+        self._fine_action = fine_action
+        self._lifecycle_callback = lifecycle_callback
+        self._destroyed = False
+        self._apply_count = 0
+        self._fb_sweep_count = 0
+        self._fine_action_count = 0
+        self._layer_solve_count = [0 for _ in factors]
+        self._diagnostics = {
+            "method": method,
+            "layer_count": len(factors),
+            "layer_factor_count": len(factors),
+            "full_side_exact_factor_count": 0,
+            "global_direct_factor_count": 0,
+            "nested_ksp_count": 0,
+            "fine_action_callback": fine_action is not None,
+            "fine_action_is_explicit_matrix": isinstance(fine_action, PETSc.Mat),
+            "factor_only_storage": True,
+            "retained_explicit_diagonal_count": 0,
+            "retained_lower_block_count": len(lower),
+            "retained_upper_block_count": len(upper),
+            "layer_factor_lifecycle": [
+                {
+                    "layer": layer,
+                    "construction_marker": "completed",
+                    "destroy_marker": "pending",
+                }
+                for layer in range(len(factors))
+            ],
+            "layer_factors": factor_records,
+            "apply_count": 0,
+            "fb_sweep_count": 0,
+            "fine_action_count": 0,
+            "layer_solve_count": [0 for _ in factors],
+            "destroy_marker": "pending",
+        }
+
+    @classmethod
+    def from_matrix(
+        cls,
+        matrix: PETSc.Mat,
+        global_layer_labels: np.ndarray,
+        *,
+        layer_count: int,
+        method: str,
+        fine_action: Any = None,
+        lifecycle_callback: Any = None,
+    ) -> "LayerSweepAction":
+        """Build one fixed sweep and release each explicit diagonal block."""
+
+        if method not in cls._METHODS:
+            raise ValueError(f"Unsupported fixed layer sweep method: {method}")
+        if method in ("FB2", "FB4") and fine_action is None:
+            raise ValueError(f"{method} requires a fine action callback")
+        rows, cols = map(int, matrix.getSize())
+        if rows != cols:
+            raise ValueError("Layer sweep requires a square matrix")
+        labels = np.asarray(global_layer_labels, dtype=np.int32)
+        if (
+            labels.shape != (rows,)
+            or np.any(labels < 0)
+            or np.any(labels >= layer_count)
+        ):
+            raise ValueError("Layer sweep labels do not match the matrix")
+        comm = matrix.getComm()
+        row_start, row_end = map(int, matrix.getOwnershipRange())
+        local_labels = labels[row_start:row_end]
+        row_ids = tuple(
+            np.flatnonzero(local_labels == layer).astype(PETSc.IntType) + row_start
+            for layer in range(layer_count)
+        )
+        layer_is = tuple(PETSc.IS().createGeneral(ids, comm=comm) for ids in row_ids)
+        parent_template = matrix.createVecRight()
+        factors: list[ResearchExactFactorInverse] = []
+        factor_records: list[dict[str, Any]] = []
+        lower: dict[int, PETSc.Mat] = {}
+        upper: dict[int, PETSc.Mat] = {}
+        workspaces: list[_LayerWorkspace] = []
+
+        def cleanup_partial() -> None:
+            for workspace in reversed(workspaces):
+                workspace.destroy()
+            workspaces.clear()
+            for block in reversed(tuple(lower.values())):
+                block.destroy()
+            lower.clear()
+            for block in reversed(tuple(upper.values())):
+                block.destroy()
+            upper.clear()
+            for factor in reversed(factors):
+                factor.destroy()
+            factors.clear()
+            for layer_is_item in layer_is:
+                layer_is_item.destroy()
+            parent_template.destroy()
+
+        try:
+            for layer in range(layer_count - 1):
+                upper[layer] = matrix.createSubMatrix(
+                    layer_is[layer], layer_is[layer + 1]
+                )
+                lower[layer + 1] = matrix.createSubMatrix(
+                    layer_is[layer + 1], layer_is[layer]
+                )
+            for layer in range(layer_count):
+                diagonal = matrix.createSubMatrix(layer_is[layer], layer_is[layer])
+                factor = None
+                try:
+                    if lifecycle_callback is not None:
+                        lifecycle_callback("layer_factor_setup_begin", {"layer": layer})
+                    factor = ResearchExactFactorInverse(
+                        diagonal,
+                        factor_solver_type="mumps",
+                        factor_only_storage=True,
+                    )
+                    factor.release_borrowed_matrix()
+                    factors.append(factor)
+                    factor_diagnostics = factor.diagnostics
+                    local_rows, _ = map(int, diagonal.getLocalSize())
+                    nnz_local = int(diagonal.getInfo()["nz_used"])
+                    nnz_global = int(
+                        matrix.getComm().tompi4py().allreduce(nnz_local, op=MPI.SUM)
+                    )
+                    factor_records.append(
+                        {
+                            "layer": layer,
+                            "rows_owned_local": local_rows,
+                            "rows_global": int(diagonal.getSize()[0]),
+                            "nnz_local": nnz_local,
+                            "nnz_global": nnz_global,
+                            "factor_matrix_stats": factor_diagnostics[
+                                "factor_matrix_stats"
+                            ],
+                            "factor_only_storage": bool(
+                                factor_diagnostics["factor_only_storage"]
+                            ),
+                            "borrowed_matrix_released": bool(
+                                factor_diagnostics["borrowed_matrix_released"]
+                            ),
+                            "factor_matrix_alive": bool(
+                                factor_diagnostics["factor_matrix_alive"]
+                            ),
+                        }
+                    )
+                    if lifecycle_callback is not None:
+                        lifecycle_callback(
+                            "layer_factor_ready",
+                            {"layer": layer, "factor_only_storage": True},
+                        )
+                except Exception:
+                    if factor is not None:
+                        factor.destroy()
+                    raise
+                finally:
+                    diagonal.destroy()
+            for layer, factor in enumerate(factors):
+                factor_matrix = factor.operator
+                if factor_matrix is None:
+                    raise RuntimeError(f"Layer {layer} factor has no retained matrix")
+                x = factor_matrix.createVecRight()
+                y = factor_matrix.createVecLeft()
+                temp = y.duplicate()
+                first, last = map(int, x.getOwnershipRange())
+                positions = PETSc.IS().createStride(
+                    last - first, first=first, step=1, comm=comm
+                )
+                try:
+                    scatter = PETSc.Scatter().create(
+                        parent_template,
+                        layer_is[layer],
+                        x,
+                        positions,
+                    )
+                except Exception:
+                    temp.destroy()
+                    y.destroy()
+                    x.destroy()
+                    raise
+                finally:
+                    positions.destroy()
+                workspaces.append(
+                    _LayerWorkspace(layer=layer, x=x, y=y, temp=temp, scatter=scatter)
+                )
+            action = cls(
+                method=method,
+                factors=factors,
+                lower=lower,
+                upper=upper,
+                workspaces=workspaces,
+                parent_template=parent_template,
+                factor_records=factor_records,
+                fine_action=fine_action,
+                lifecycle_callback=lifecycle_callback,
+            )
+            for layer_is_item in layer_is:
+                layer_is_item.destroy()
+            layer_is = ()
+            return action
+        except Exception:
+            cleanup_partial()
+            raise
+
+    @property
+    def diagnostics(self) -> dict[str, Any]:
+        diagnostics = dict(self._diagnostics)
+        diagnostics["layer_factor_count"] = 0 if self._destroyed else len(self._factors)
+        diagnostics["apply_count"] = self._apply_count
+        diagnostics["fb_sweep_count"] = self._fb_sweep_count
+        diagnostics["fine_action_count"] = self._fine_action_count
+        diagnostics["layer_solve_count"] = list(self._layer_solve_count)
+        diagnostics["layer_factors"] = [
+            {**record, "solve_count": self._layer_solve_count[record["layer"]]}
+            for record in self._factor_records
+        ]
+        diagnostics["destroyed"] = self._destroyed
+        return diagnostics
+
+    @property
+    def destroyed(self) -> bool:
+        return self._destroyed
+
+    @property
+    def factor_only_storage(self) -> bool:
+        """The action retains layer factors, not explicit diagonal matrices."""
+
+        return True
+
+    def _gather(self, source: PETSc.Vec) -> None:
+        for workspace in self._workspaces:
+            workspace.scatter.scatter(
+                source,
+                workspace.x,
+                addv=PETSc.InsertMode.INSERT_VALUES,
+                mode=PETSc.ScatterMode.FORWARD,
+            )
+
+    def _forward(self) -> None:
+        for layer, workspace in enumerate(self._workspaces):
+            if layer:
+                self._lower[layer].mult(self._workspaces[layer - 1].y, workspace.temp)
+                workspace.x.axpy(PETSc.ScalarType(-1.0), workspace.temp)
+            self._solve_layer(layer, workspace.x, workspace.y)
+
+    def _backward(self) -> None:
+        for layer in range(len(self._workspaces) - 1, -1, -1):
+            workspace = self._workspaces[layer]
+            if layer < len(self._workspaces) - 1:
+                self._upper[layer].mult(self._workspaces[layer + 1].y, workspace.temp)
+                workspace.x.axpy(PETSc.ScalarType(-1.0), workspace.temp)
+            self._solve_layer(layer, workspace.x, workspace.y)
+
+    def _solve_layer(self, layer: int, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        self._factors[layer].solve(source, target)
+        self._layer_solve_count[layer] += 1
+
+    def _scatter_solution(self, target: PETSc.Vec) -> None:
+        target.set(0.0)
+        for workspace in self._workspaces:
+            workspace.scatter.scatter(
+                workspace.y,
+                target,
+                addv=PETSc.InsertMode.ADD_VALUES,
+                mode=PETSc.ScatterMode.REVERSE,
+            )
+        target.assemble()
+
+    def _apply_fb1(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        self._gather(source)
+        self._forward()
+        self._backward()
+        self._scatter_solution(target)
+        self._fb_sweep_count += 1
+
+    def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        self.apply_checkpoint(self._method, source, target)
+
+    def solve(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        """Expose the fixed action through the base-inverse solve protocol."""
+
+        self.apply(source, target)
+
+    def apply_checkpoint(
+        self, method: str, source: PETSc.Vec, target: PETSc.Vec
+    ) -> None:
+        if self._destroyed:
+            raise RuntimeError("layer sweep action has been destroyed")
+        if method not in self._METHODS:
+            raise ValueError(f"Unsupported fixed layer sweep method: {method}")
+        if method in ("FB2", "FB4") and self._fine_action is None:
+            raise ValueError(f"{method} requires a fine action callback")
+        expected_size = self._parent_template.getSize()
+        if source.getSize() != expected_size or target.getSize() != expected_size:
+            raise ValueError("layer sweep vector does not match matrix layout")
+        self._apply_count += 1
+        if method == "J1":
+            self._gather(source)
+            for layer, workspace in enumerate(self._workspaces):
+                self._solve_layer(layer, workspace.x, workspace.y)
+            self._scatter_solution(target)
+            return
+        if method == "F1":
+            self._gather(source)
+            self._forward()
+            self._scatter_solution(target)
+            return
+        if method == "FB1":
+            self._apply_fb1(source, target)
+            return
+
+        target.set(0.0)
+        self._current.set(0.0)
+        applications = 2 if method == "FB2" else 4
+        for iteration in range(applications):
+            if iteration == 0:
+                source.copy(self._residual)
+            else:
+                self._fine_action(self._current, self._residual)
+                self._fine_action_count += 1
+                self._residual.scale(PETSc.ScalarType(-1.0))
+                self._residual.axpy(PETSc.ScalarType(1.0), source)
+            self._apply_fb1(self._residual, self._correction)
+            self._current.axpy(PETSc.ScalarType(1.0), self._correction)
+        self._current.copy(target)
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        for vector in (self._correction, self._residual, self._current):
+            vector.destroy()
+        self._correction = None
+        self._residual = None
+        self._current = None
+        for workspace in reversed(self._workspaces):
+            workspace.destroy()
+        self._workspaces.clear()
+        for block in reversed(tuple(self._lower.values())):
+            block.destroy()
+        self._lower.clear()
+        for block in reversed(tuple(self._upper.values())):
+            block.destroy()
+        self._upper.clear()
+        for layer, factor in reversed(tuple(enumerate(self._factors))):
+            factor.destroy()
+            self._diagnostics["layer_factor_lifecycle"][layer]["destroy_marker"] = (
+                "completed"
+            )
+        self._factors.clear()
+        self._parent_template.destroy()
+        self._parent_template = None
+        self._diagnostics["layer_factor_count"] = 0
+        self._diagnostics["destroy_marker"] = "completed"
+        self._destroyed = True
+        if self._lifecycle_callback is not None:
+            self._lifecycle_callback("layer_sweep_destroyed", self.diagnostics)
+
+
+def build_layer_sweep_action(
+    matrix: PETSc.Mat,
+    global_layer_labels: np.ndarray,
+    *,
+    layer_count: int,
+    method: str,
+    fine_action: Any = None,
+    lifecycle_callback: Any = None,
+) -> LayerSweepAction:
+    """Build a fixed J1/F1/FB1/FB2/FB4 factor-only layer action."""
+
+    return LayerSweepAction.from_matrix(
+        matrix,
+        global_layer_labels,
+        layer_count=layer_count,
+        method=method,
+        fine_action=fine_action,
+        lifecycle_callback=lifecycle_callback,
+    )
 
 
 def _relative_vec_error(actual: PETSc.Vec, expected: PETSc.Vec) -> float:
