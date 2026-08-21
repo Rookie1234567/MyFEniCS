@@ -1,0 +1,191 @@
+{
+  "schema": "task038.full3d.iterative.d0.adaptive-coarse-preflight.v1",
+  "stage": "D0",
+  "source_git_sha": "9705e6e84a4b491a7d9fc87b20e12f1938232b07",
+  "base_master_sha": "438caf150439343ee7c4c58ad7e02a3da812a23c",
+  "branch": "codex/20260820-task38-extra-full3d-iterative-0p7nm",
+  "upstream": {
+    "ref": "origin/codex/20260820-task38-extra-full3d-iterative-0p7nm",
+    "source_git_sha": "9705e6e84a4b491a7d9fc87b20e12f1938232b07",
+    "ahead": 0,
+    "behind": 0
+  },
+  "worktree_preflight": {
+    "tracked_status": "clean",
+    "nonignored_untracked_count": 0,
+    "canonical_root": "/home/shenjh/Projects/MyFEniCSx_task37_extra",
+    "git_dir": ".git-codex",
+    "merge_base_438caf": "438caf150439343ee7c4c58ad7e02a3da812a23c",
+    "ignored_artifact_boundary": "benchmarks/artifacts/",
+    "post_write_status": "not_measured"
+  },
+  "startup_preflight": {
+    "activation_script": "scripts/activate_myfenics_wsl.sh",
+    "qualified_activation_marker": "1",
+    "sys_executable": "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+    "repo_venv": "/home/shenjh/Projects/MyFEniCSx_task37_extra/.venv",
+    "repo_venv_realpath": "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv",
+    "executable_via_repo_venv_activation": true,
+    "python": "3.12.3",
+    "mpi": {
+      "library": "Open MPI v4.1.6",
+      "mpi4py": "3.1.5",
+      "size": 1
+    },
+    "petsc": {
+      "version": "3.19.6",
+      "scalar": "complex128",
+      "int": "int32"
+    },
+    "slepc": "3.19.2",
+    "dolfinx": "0.10.0.post2",
+    "basix": "0.10.0",
+    "threads": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1"
+    },
+    "mem_available_bytes": 13541793792,
+    "swap_total_bytes": 42949672960,
+    "swap_free_bytes": 42931998720,
+    "swap_used_bytes": 17674240,
+    "disk_total_bytes": 1081101176832,
+    "disk_used_bytes": 82527698944,
+    "disk_free_bytes": 943581122560
+  },
+  "classification": {
+    "candidate_a": {
+      "classification": "ACCEPTED_NUMERICAL_CONTRACTION_FAIL",
+      "role": "frozen_one_forward_one_backward_smoother_oracle_only",
+      "transmission": "unchanged",
+      "slabs": 2,
+      "local_gmres_restart": 8,
+      "local_gmres_max_it": 8,
+      "production_claim": false
+    },
+    "candidate_b": {
+      "classification": "CLOSED_NOT_APPLICABLE_FOR_CURRENT_INTERFACE",
+      "secondary_classification": "CANDIDATE_B_INTERIOR_MODAL_AUTHORITY_NOT_QUALIFIED",
+      "reason": "mixed_Si-Si_and_Si-air_interior_interface; T3_modal_authority_only_exterior",
+      "rerun": false
+    },
+    "candidate_c": {
+      "classification": "CLOSED_BY_RESOURCE_AND_PROJECT_PRIORITY",
+      "DO_NOT_RERUN": true,
+      "DO_NOT_OPTIMIZE": true,
+      "DO_NOT_MERGE": true,
+      "archive_role": "research_archive_with_source_and_negative_evidence",
+      "mathematical_impossibility_claim": false
+    }
+  },
+  "exact_arithmetic": {
+    "global_fullspace_rows": 173802,
+    "scalar_type": "complex128",
+    "bytes_per_scalar": 16,
+    "full_vector_bytes": 2780832,
+    "z_az_formula": "2 * N * 16 * r = 5,561,664 * r bytes",
+    "rank_ladder": [
+      {"r": 16, "z_az_bytes": 88986624, "decimal_gb": 0.088986624, "mib": 84.8642578125},
+      {"r": 32, "z_az_bytes": 177973248, "decimal_gb": 0.177973248, "mib": 169.728515625},
+      {"r": 48, "z_az_bytes": 266959872, "decimal_gb": 0.266959872, "mib": 254.5927734375},
+      {"r": 64, "z_az_bytes": 355946496, "decimal_gb": 0.355946496, "mib": 339.45703125}
+    ]
+  },
+  "owner_local_layout": {
+    "numeric_storage": "owner-local_sharded_Z_and_AZ",
+    "full_basis_replication_per_rank": "forbidden",
+    "fe_sized_numeric_allgather": "forbidden",
+    "global_aij_schur_sparse_factor": "forbidden",
+    "local_rows_only": true,
+    "bounded_route_metadata": true
+  },
+  "coarse_budget": {
+    "metadata_work_cap_bytes": 64000000,
+    "retained_hard_cap_bytes": 424000000,
+    "minimal_layout": [
+      {"item": "owned row IDs, shard offsets, ghost route", "bytes": 16000000, "classification": "budget"},
+      {"item": "canonical key, digest, class/phase/MPC descriptors", "bytes": 8000000, "classification": "budget"},
+      {"item": "restriction/prolongation support and PoU indices/weights", "bytes": 12000000, "classification": "budget"},
+      {"item": "E/orthogonalization/coarse-oracle workspace, r<=64", "bytes": 4000000, "classification": "budget"},
+      {"item": "fixed source and temporary apply scratch", "bytes": 16000000, "classification": "budget"},
+      {"item": "lifecycle, bounded telemetry, compact manifest buffers", "bytes": 8000000, "classification": "budget"}
+    ],
+    "metadata_work_sum_bytes": 64000000,
+    "rank64_z_az_exact_bytes": 355946496,
+    "rank64_retained_derived_upper_bytes": 419946496,
+    "rank64_headroom_bytes": 4053504,
+    "dense_E_r64_exact_bytes": 65536,
+    "unknown_python_jit_allocator_bytes": "not_measured"
+  },
+  "memory_semantics": {
+    "cold_build_jit_setup": "not_measured",
+    "adaptive_online_apply": "not_measured",
+    "prior_a_gradient_process_tree_peak_bytes": 1323728896,
+    "rank64_z_az_exact_bytes": 355946496,
+    "derived_gradient_plus_rank64_bytes": 1679675392,
+    "derived_gradient_plus_rank64_decimal_gb": 1.679675392,
+    "derived_gradient_plus_rank64_mib": 1601.86328125,
+    "simultaneous_measurement": false,
+    "complete_workflow_pass": false,
+    "prior_a_physical_cold_peak_bytes": 5145784320
+  },
+  "prior_evidence": {
+    "a_physical": {
+      "classification": "FAIL_NUMERIC_CONTRACTION",
+      "rho": 0.8145890334049838,
+      "rho_limit": 0.6,
+      "closure_relative_l2": 1.2458376041083906e-16,
+      "repeat_relative_l2": 0.0,
+      "process_tree_peak_bytes": 5145784320,
+      "swap_bytes": 0,
+      "wall_seconds": 2812.015165732999
+    },
+    "a_gradient": {
+      "classification": "PASS_NUMERIC_CONTRACTION",
+      "rho": 0.8889127715646881,
+      "rho_limit": 0.9,
+      "closure_relative_l2": 1.271047984953834e-19,
+      "repeat_relative_l2": 0.0,
+      "process_tree_peak_bytes": 1323728896,
+      "swap_bytes": 0,
+      "wall_seconds": 2747.751835015006
+    },
+    "candidate_c_watchdog": {
+      "classification": "CONTROLLED_STOP_HARD_12_GIB",
+      "process_tree_peak_bytes": 12942209024,
+      "hard_stop_bytes": 12884901888,
+      "swap_bytes": 0,
+      "returncode": -15,
+      "wall_seconds": 406.7977727999969,
+      "raw_sha256": "cc1bee361712361af52414e1b0d76bb52fd9712b5eecb01b5375b81d2be23ff0",
+      "compact_sha256": "3102995f3d10170bb4a96f4890ac9fb919e140c570535a5fd38fb59447179a08"
+    }
+  },
+  "data_classification": {
+    "exact": "full-vector and Z/AZ byte arithmetic",
+    "measured": "startup ABI/resource observation and prior Candidate A/C evidence explicitly labelled above",
+    "derived": "rank64 retained upper bound and gradient-plus-rank64 sum",
+    "budget": "64,000,000 B metadata/work and itemized layout",
+    "not_measured": "adaptive coarse build/JIT/setup peak, online peak, D1-D4 algebra/contraction, simultaneous retained process-tree peak"
+  },
+  "gates": {
+    "rank_ladder_exact": [16, 32, 48, 64],
+    "rank64_z_az_bytes_le_355946496": true,
+    "metadata_work_bytes_le_64000000": true,
+    "rank64_retained_budget_le_424000000": true,
+    "no_fe_sized_numeric_allgather": "forbidden_by_layout; implementation_gate_not_run",
+    "no_replicated_full_basis_per_rank": "forbidden_by_layout; implementation_gate_not_run",
+    "no_global_sparse_factor": "forbidden_by_layout; implementation_gate_not_run",
+    "swap_zero_formal_gate": "not_run",
+    "adaptive_coarse_online_peak_gate": "not_run",
+    "d1_to_d4": "not_run"
+  },
+  "prohibited_actions": [
+    "delete_or_modify_C_source_or_tests",
+    "rerun_or_optimize_C",
+    "change_candidate_A_default",
+    "start_D1_heavy_test_or_formal_PDE",
+    "commit_or_push_in_D0"
+  ]
+}
