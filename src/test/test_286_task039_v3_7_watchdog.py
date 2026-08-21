@@ -900,6 +900,8 @@ def test_v10_side_response_packet_main_dry_runs_keep_producer_consumer_routes(
         watchdog.V10_H4_J1_INNER_FGMRES_FLAG,
         watchdog.V10_H4_SIDE_RESPONSE_PACKET_PILOT_FLAG,
         watchdog.V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_FLAG,
+        watchdog.V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_FLAG,
+        watchdog.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_FLAG,
     )
     cases = (
         (
@@ -934,6 +936,38 @@ def test_v10_side_response_packet_main_dry_runs_keep_producer_consumer_routes(
             watchdog.V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_PROFILE,
             30 * 2**30,
         ),
+        (
+            "full-producer",
+            [
+                watchdog.V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_FLAG,
+                watchdog.V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_EXACT_SPOOL_ROOT_FLAG,
+                str(spool_root),
+                watchdog.V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_OUTPUT_ROOT_FLAG,
+                str(tmp_path / "full-packet"),
+                "--selected-mode-packet-manifest",
+                str(packet_root / "manifest.json"),
+                "--selected-mode-packet-identity",
+                str(packet_root / "identity.json"),
+                "--selected-mode-packet-manifest-sha256",
+                "b" * 64,
+            ],
+            watchdog.V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_METHOD,
+            watchdog.V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_PROFILE,
+            60 * 2**30,
+        ),
+        (
+            "compression",
+            [
+                watchdog.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_FLAG,
+                watchdog.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_MANIFEST_FLAG,
+                str(tmp_path / "full-packet" / "manifest.json"),
+                watchdog.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_MANIFEST_SHA256_FLAG,
+                "d" * 64,
+            ],
+            watchdog.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD,
+            watchdog.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PROFILE,
+            30 * 2**30,
+        ),
     )
     for name, route_args, method, profile_id, hard_stop in cases:
         run_directory = tmp_path / f"v10-side-response-{name}"
@@ -960,7 +994,7 @@ def test_v10_side_response_packet_main_dry_runs_keep_producer_consumer_routes(
         assert plan["worker_contract"]["profile_id"] == profile_id
         assert plan["watchdog"]["absolute_terminate_memory_bytes"] == hard_stop
         assert plan["watchdog"]["require_zero_swap"] is True
-        if name == "consumer":
+        if name in {"consumer", "compression"}:
             assert not any("selected-mode-packet" in arg for arg in plan["argv"])
         else:
             assert "--selected-mode-packet-manifest" in plan["argv"]

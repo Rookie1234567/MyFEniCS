@@ -112,7 +112,15 @@ from src.solvers.hybrid_side_response_packet import (
     V10_SIDE_RESPONSE_PACKET_CONSUMER_LIMIT_GIB,
     V10_SIDE_RESPONSE_PACKET_PAYLOAD_LIMIT_GIB,
     V10_SIDE_RESPONSE_PACKET_PROJECTED_WALL_LIMIT_SECONDS,
+    V10_SIDE_RESPONSE_PACKET_FULL_SCHEMA,
+    V10_SIDE_RESPONSE_PACKET_FULL_METHOD,
+    V10_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA,
+    V10_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD,
+    V10_SIDE_RESPONSE_PACKET_FULL_HOLDOUT_COLUMNS,
+    OwnerRowResponsePacketWriter,
+    compress_owner_row_response_packet,
     load_exact_side_response_packet,
+    load_full_side_response_packet,
     projected_response_payload_bytes,
     projected_response_wall_seconds,
     validate_exact_side_response_reports,
@@ -364,6 +372,42 @@ V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_SCHEMA = (
     "task039.v10.h4.side_response_packet.consumer.v1"
 )
 V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_HARD_STOP_BYTES = 30 * 2**30
+V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_PROFILE_ID = (
+    "task039.v10.h4.side_response_packet.full_producer.v1"
+)
+V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_METHOD = (
+    "task039_v10_h4_side_response_packet_full_producer"
+)
+V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_SCHEMA = V10_SIDE_RESPONSE_PACKET_FULL_SCHEMA
+V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_FLAG = (
+    "--v10-h4-side-response-packet-full-producer"
+)
+V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_OUTPUT_ROOT_FLAG = (
+    "--v10-h4-side-response-packet-full-producer-output-root"
+)
+V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_EXACT_SPOOL_ROOT_FLAG = (
+    "--v10-h4-side-response-packet-full-producer-exact-spool-root"
+)
+V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_HARD_STOP_BYTES = 60 * 2**30
+V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PROFILE_ID = (
+    "task039.v10.h4.side_response_packet.compression.v1"
+)
+V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD = (
+    V10_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD
+)
+V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA = (
+    V10_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA
+)
+V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_FLAG = (
+    "--v10-h4-side-response-packet-compression"
+)
+V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_MANIFEST_FLAG = (
+    "--v10-h4-side-response-packet-compression-manifest"
+)
+V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_MANIFEST_SHA256_FLAG = (
+    "--v10-h4-side-response-packet-compression-manifest-sha256"
+)
+V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_HARD_STOP_BYTES = 30 * 2**30
 V10_SIDE_RESPONSE_PACKET_FROZEN_SELECTED_COLUMNS = (
     0,
     1,
@@ -652,6 +696,42 @@ def v10_side_response_packet_pilot_schedule(
     return tuple(schedule)
 
 
+def v10_side_response_packet_full_schedule(
+    path: str | Path = V5_H4_SAMPLED_COLUMN_CONTRACT_PATH,
+) -> tuple[dict[str, Any], ...]:
+    """Return the fixed 960-modal plus frozen physical-validation schedule."""
+
+    contract = _load_v5_h4_sampled_column_contract(path)
+    selected = {
+        int(column): list(contract["roles"][str(column)])
+        for column in contract["columns"]
+    }
+    if tuple(sorted(selected)) != tuple(V10_SIDE_RESPONSE_PACKET_FULL_HOLDOUT_COLUMNS):
+        raise ValueError("full response schedule selected columns drifted")
+    schedule = []
+    for column in range(960):
+        schedule.append(
+            {
+                "label": f"modal_response_{column}",
+                "kind": "selected_modal" if column in selected else "training_modal",
+                "column": column,
+                "role": selected.get(column, "training_modal"),
+            }
+        )
+    schedule.append(
+        {
+            "label": "physical_side_rhs",
+            "kind": "physical_side_rhs",
+            "column": 960,
+            "role": "physical_zero_validation",
+            "training_excluded": True,
+        }
+    )
+    if len(schedule) != V10_SIDE_RESPONSE_PACKET_FULL_COLUMNS:
+        raise ValueError("full response schedule must contain 961 columns")
+    return tuple(schedule)
+
+
 def _v10_side_response_resolved_provenance(
     resolved_payload: Mapping[str, Any],
 ) -> tuple[str, str]:
@@ -794,6 +874,8 @@ def v3_7_watchdog_policy(
     v10_h4_side_response_packet_consumer: bool = False,
     v10_h4_side_response_packet_consumer_manifest: str | Path | None = None,
     v10_h4_side_response_packet_consumer_manifest_sha256: str | None = None,
+    v10_h4_side_response_packet_full_producer: bool = False,
+    v10_h4_side_response_packet_compression: bool = False,
 ) -> dict[str, Any]:
     """Return the byte-authoritative policy; 195 GiB is telemetry only."""
 
@@ -838,6 +920,10 @@ def v3_7_watchdog_policy(
         absolute_bytes = V10_H4_SIDE_RESPONSE_PACKET_PILOT_HARD_STOP_BYTES
     elif v10_h4_side_response_packet_consumer:
         absolute_bytes = V10_SIDE_RESPONSE_PACKET_CONSUMER_LIMIT_GIB * 2**30
+    elif v10_h4_side_response_packet_full_producer:
+        absolute_bytes = V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_HARD_STOP_BYTES
+    elif v10_h4_side_response_packet_compression:
+        absolute_bytes = V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_HARD_STOP_BYTES
     else:
         absolute_bytes = V3_7_ABSOLUTE_HARD_BYTES
     if v7_h4_exact_side_full_formal:
@@ -870,6 +956,10 @@ def v3_7_watchdog_policy(
         profile_name = "v10_h4_side_response_packet_pilot"
     elif v10_h4_side_response_packet_consumer:
         profile_name = "v10_h4_side_response_packet_consumer"
+    elif v10_h4_side_response_packet_full_producer:
+        profile_name = V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_PROFILE_ID
+    elif v10_h4_side_response_packet_compression:
+        profile_name = V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PROFILE_ID
     else:
         profile_name = "v3_7_default"
     policy = {
@@ -948,6 +1038,14 @@ def build_v3_7_execution_plan(
     v10_h4_side_response_packet_consumer: bool = False,
     v10_h4_side_response_packet_consumer_manifest: str | Path | None = None,
     v10_h4_side_response_packet_consumer_manifest_sha256: str | None = None,
+    v10_h4_side_response_packet_full_producer: bool = False,
+    v10_h4_side_response_packet_full_producer_exact_spool_root: str
+    | Path
+    | None = None,
+    v10_h4_side_response_packet_full_producer_output_root: str | Path | None = None,
+    v10_h4_side_response_packet_compression: bool = False,
+    v10_h4_side_response_packet_compression_manifest: str | Path | None = None,
+    v10_h4_side_response_packet_compression_manifest_sha256: str | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
@@ -973,8 +1071,12 @@ def build_v3_7_execution_plan(
         or v10_h4_supernode_factor_integrity
         or v10_h4_sn2_j_only
         or v10_h4_j1_inner_fgmres
+        or v10_h4_side_response_packet_full_producer
+        or v10_h4_side_response_packet_compression
         or v10_h4_side_response_packet_pilot
         or v10_h4_side_response_packet_consumer
+        or v10_h4_side_response_packet_full_producer
+        or v10_h4_side_response_packet_compression
     ):
         specification = load_and_resolve(input_path)
         from benchmarks.task039_v4_h4_hybrid_direct import (
@@ -1006,6 +1108,8 @@ def build_v3_7_execution_plan(
         v10_h4_j1_inner_fgmres=v10_h4_j1_inner_fgmres,
         v10_h4_side_response_packet_pilot=v10_h4_side_response_packet_pilot,
         v10_h4_side_response_packet_consumer=v10_h4_side_response_packet_consumer,
+        v10_h4_side_response_packet_full_producer=v10_h4_side_response_packet_full_producer,
+        v10_h4_side_response_packet_compression=v10_h4_side_response_packet_compression,
     )
     if (
         sum(
@@ -1033,6 +1137,8 @@ def build_v3_7_execution_plan(
                 bool(v10_h4_j1_inner_fgmres),
                 bool(v10_h4_side_response_packet_pilot),
                 bool(v10_h4_side_response_packet_consumer),
+                bool(v10_h4_side_response_packet_full_producer),
+                bool(v10_h4_side_response_packet_compression),
             )
         )
         > 1
@@ -1093,6 +1199,8 @@ def build_v3_7_execution_plan(
             and not v10_h4_supernode_factor_integrity
             and not v10_h4_sn2_j_only
             and not v10_h4_j1_inner_fgmres
+            and not v10_h4_side_response_packet_full_producer
+            and not v10_h4_side_response_packet_compression
             and not all(
                 (
                     selected_mode_packet_manifest,
@@ -1128,6 +1236,10 @@ def build_v3_7_execution_plan(
             component_flag = V10_H4_SN2_J_ONLY_FLAG
         elif v10_h4_j1_inner_fgmres:
             component_flag = V10_H4_J1_INNER_FGMRES_FLAG
+        elif v10_h4_side_response_packet_full_producer:
+            component_flag = V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_FLAG
+        elif v10_h4_side_response_packet_compression:
+            component_flag = V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_FLAG
         elif v10_h4_side_response_packet_pilot:
             component_flag = V10_H4_SIDE_RESPONSE_PACKET_PILOT_FLAG
         elif v10_h4_side_response_packet_consumer:
@@ -1148,6 +1260,8 @@ def build_v3_7_execution_plan(
             and not v10_h4_j1_inner_fgmres
             and not v10_h4_side_response_packet_pilot
             and not v10_h4_side_response_packet_consumer
+            and not v10_h4_side_response_packet_full_producer
+            and not v10_h4_side_response_packet_compression
         ):
             argv.extend(
                 [
@@ -1310,6 +1424,46 @@ def build_v3_7_execution_plan(
                     str(v10_h4_side_response_packet_consumer_manifest_sha256),
                 ]
             )
+        elif v10_h4_side_response_packet_full_producer:
+            if (
+                v10_h4_side_response_packet_full_producer_exact_spool_root is None
+                or v10_h4_side_response_packet_full_producer_output_root is None
+            ):
+                raise ValueError(
+                    "V10-6 full producer requires exact spool and output roots"
+                )
+            argv.extend(
+                [
+                    V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_EXACT_SPOOL_ROOT_FLAG,
+                    str(
+                        Path(
+                            v10_h4_side_response_packet_full_producer_exact_spool_root
+                        ).resolve()
+                    ),
+                    V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_OUTPUT_ROOT_FLAG,
+                    str(
+                        Path(
+                            v10_h4_side_response_packet_full_producer_output_root
+                        ).resolve()
+                    ),
+                ]
+            )
+        elif v10_h4_side_response_packet_compression:
+            if (
+                v10_h4_side_response_packet_compression_manifest is None
+                or v10_h4_side_response_packet_compression_manifest_sha256 is None
+            ):
+                raise ValueError("V10-6 compression requires manifest and hash")
+            argv.extend(
+                [
+                    V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_MANIFEST_FLAG,
+                    str(
+                        Path(v10_h4_side_response_packet_compression_manifest).resolve()
+                    ),
+                    V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_MANIFEST_SHA256_FLAG,
+                    str(v10_h4_side_response_packet_compression_manifest_sha256),
+                ]
+            )
     if v7_h4_exact_side_full_formal:
         method = V7_H4_EXACT_SIDE_FULL_FORMAL_METHOD
     elif v7_h4_exact_side_limit_setup_only:
@@ -1336,6 +1490,10 @@ def build_v3_7_execution_plan(
         method = V10_H4_SN2_J_ONLY_METHOD
     elif v10_h4_j1_inner_fgmres:
         method = V10_H4_J1_INNER_FGMRES_METHOD
+    elif v10_h4_side_response_packet_full_producer:
+        method = V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_METHOD
+    elif v10_h4_side_response_packet_compression:
+        method = V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD
     elif v10_h4_side_response_packet_pilot:
         method = V10_H4_SIDE_RESPONSE_PACKET_PILOT_METHOD
     elif v10_h4_side_response_packet_consumer:
@@ -1384,6 +1542,10 @@ def build_v3_7_execution_plan(
         profile_id = V10_H4_SN2_J_ONLY_PROFILE_ID
     elif v10_h4_j1_inner_fgmres:
         profile_id = V10_H4_J1_INNER_FGMRES_PROFILE_ID
+    elif v10_h4_side_response_packet_full_producer:
+        profile_id = V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_PROFILE_ID
+    elif v10_h4_side_response_packet_compression:
+        profile_id = V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PROFILE_ID
     elif v10_h4_side_response_packet_pilot:
         profile_id = V10_H4_SIDE_RESPONSE_PACKET_PILOT_PROFILE_ID
     elif v10_h4_side_response_packet_consumer:
@@ -1443,6 +1605,13 @@ def build_v3_7_execution_plan(
         exact_spool_root = str(
             Path(v10_h4_side_response_packet_pilot_exact_spool_root).resolve()
         )
+    elif (
+        v10_h4_side_response_packet_full_producer
+        and v10_h4_side_response_packet_full_producer_exact_spool_root is not None
+    ):
+        exact_spool_root = str(
+            Path(v10_h4_side_response_packet_full_producer_exact_spool_root).resolve()
+        )
     else:
         exact_spool_root = None
     return {
@@ -1475,6 +1644,34 @@ def build_v3_7_execution_plan(
                 else str(Path(v10_h4_side_response_packet_consumer_manifest).resolve())
             ),
             "response_packet_manifest_sha256": v10_h4_side_response_packet_consumer_manifest_sha256,
+            "response_packet_full_producer_output_root": (
+                None
+                if v10_h4_side_response_packet_full_producer_output_root is None
+                else str(
+                    Path(
+                        v10_h4_side_response_packet_full_producer_output_root
+                    ).resolve()
+                )
+            ),
+            "response_packet_full_producer_exact_spool_root": (
+                None
+                if v10_h4_side_response_packet_full_producer_exact_spool_root is None
+                else str(
+                    Path(
+                        v10_h4_side_response_packet_full_producer_exact_spool_root
+                    ).resolve()
+                )
+            ),
+            "response_packet_compression_manifest": (
+                None
+                if v10_h4_side_response_packet_compression_manifest is None
+                else str(
+                    Path(v10_h4_side_response_packet_compression_manifest).resolve()
+                )
+            ),
+            "response_packet_compression_manifest_sha256": (
+                v10_h4_side_response_packet_compression_manifest_sha256
+            ),
             "absolute_terminate_memory_bytes": policy[
                 "absolute_terminate_memory_bytes"
             ],
@@ -1531,6 +1728,14 @@ def v3_7_execution_dry_run(
     v10_h4_side_response_packet_consumer: bool = False,
     v10_h4_side_response_packet_consumer_manifest: str | Path | None = None,
     v10_h4_side_response_packet_consumer_manifest_sha256: str | None = None,
+    v10_h4_side_response_packet_full_producer: bool = False,
+    v10_h4_side_response_packet_full_producer_exact_spool_root: str
+    | Path
+    | None = None,
+    v10_h4_side_response_packet_full_producer_output_root: str | Path | None = None,
+    v10_h4_side_response_packet_compression: bool = False,
+    v10_h4_side_response_packet_compression_manifest: str | Path | None = None,
+    v10_h4_side_response_packet_compression_manifest_sha256: str | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
@@ -1600,6 +1805,20 @@ def v3_7_execution_dry_run(
         ),
         v10_h4_side_response_packet_consumer_manifest_sha256=(
             v10_h4_side_response_packet_consumer_manifest_sha256
+        ),
+        v10_h4_side_response_packet_full_producer=v10_h4_side_response_packet_full_producer,
+        v10_h4_side_response_packet_full_producer_exact_spool_root=(
+            v10_h4_side_response_packet_full_producer_exact_spool_root
+        ),
+        v10_h4_side_response_packet_full_producer_output_root=(
+            v10_h4_side_response_packet_full_producer_output_root
+        ),
+        v10_h4_side_response_packet_compression=v10_h4_side_response_packet_compression,
+        v10_h4_side_response_packet_compression_manifest=(
+            v10_h4_side_response_packet_compression_manifest
+        ),
+        v10_h4_side_response_packet_compression_manifest_sha256=(
+            v10_h4_side_response_packet_compression_manifest_sha256
         ),
         v8_h4_layer_sweep_exact_spool_root=v8_h4_layer_sweep_exact_spool_root,
         v5_h4_blr_profile=v5_h4_blr_profile,
@@ -5466,6 +5685,9 @@ def _v10_side_response_apply_column(
     target.set(0.0)
     try:
         action.apply(rhs, target)
+        rhs_norm = float(rhs.norm())
+        output_norm = float(target.norm())
+        degenerate_uninformative = bool(np.isfinite(rhs_norm) and rhs_norm <= 1.0e-13)
         residual = _v5_blr_true_residual(system, rhs, target)
         local_values = np.asarray(
             target.getArray(readonly=True), dtype=np.complex128
@@ -5483,6 +5705,14 @@ def _v10_side_response_apply_column(
             "finite": finite,
             "true_residual_relative": (
                 float(residual) if np.isfinite(residual) else None
+            ),
+            "rhs_norm": rhs_norm,
+            "output_norm": output_norm,
+            "degenerate_uninformative": degenerate_uninformative,
+            "zero_map_pass": bool(
+                degenerate_uninformative
+                and np.isfinite(output_norm)
+                and output_norm <= 1.0e-13
             ),
             "wall_seconds": float(time.perf_counter() - started),
             "action_apply_count": int(action.diagnostics.get("apply_count", 0)),
@@ -5519,13 +5749,15 @@ def run_v10_h4_side_response_packet_pilot(
     physical_model_sha256: str,
     side_system_builder: Callable[..., Any] | None = None,
     response_action_builder: Callable[..., Any] | None = None,
+    full_response: bool = False,
 ) -> dict[str, Any]:
-    """Produce the fixed sixteen-column exact-side response pilot.
+    """Produce the fixed exact-side response pilot or full packet.
 
-    The function is a producer-only phase.  It keeps one selected-mode mmap
-    context and one exact side action, writes one owner-row packet, and
-    releases all solver objects before returning.  The consumer is the
-    separate ``run_v10_h4_side_response_packet_consumer`` entry point.
+    Pilot mode writes sixteen fixed columns; full mode streams 960 modal
+    columns plus the physical-zero validation column.  Both are producer-only
+    phases with one selected-mode mmap context and one exact side action; the
+    consumer is the separate ``run_v10_h4_side_response_packet_consumer``
+    entry point.
     """
 
     system = None
@@ -5535,6 +5767,7 @@ def run_v10_h4_side_response_packet_pilot(
     modal_provider = None
     spaces = None
     response_values: np.ndarray | None = None
+    response_writer: OwnerRowResponsePacketWriter | None = None
     reports: list[dict[str, Any]] = []
     packet_result: dict[str, Any] | None = None
     result_payload: dict[str, Any] | None = None
@@ -5544,11 +5777,33 @@ def run_v10_h4_side_response_packet_pilot(
     explicit_components_released_before_columns = False
     producer_started = time.perf_counter()
     setup_wall_seconds = 0.0
+    route_profile_id = (
+        V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_PROFILE_ID
+        if full_response
+        else V10_H4_SIDE_RESPONSE_PACKET_PILOT_PROFILE_ID
+    )
+    route_schema = (
+        V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_SCHEMA
+        if full_response
+        else V10_H4_SIDE_RESPONSE_PACKET_PILOT_SCHEMA
+    )
+    route_method = (
+        V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_METHOD
+        if full_response
+        else V10_H4_SIDE_RESPONSE_PACKET_PILOT_METHOD
+    )
+    producer_marker_prefix = (
+        "v10_side_response_packet_full_producer"
+        if full_response
+        else "v10_side_response_packet_bottom_producer"
+    )
     marker_callback(
-        "v10_side_response_packet_bottom_producer_begin",
+        f"{producer_marker_prefix}_begin",
         {
-            "schema": V10_H4_SIDE_RESPONSE_PACKET_PILOT_SCHEMA,
-            "method": V10_H4_SIDE_RESPONSE_PACKET_PILOT_METHOD,
+            "schema": route_schema,
+            "method": route_method,
+            "profile_id": route_profile_id,
+            "full_response": bool(full_response),
             "producer_limit_gib": V10_SIDE_RESPONSE_PACKET_PRODUCER_LIMIT_GIB,
             "consumer_limit_gib": V10_SIDE_RESPONSE_PACKET_CONSUMER_LIMIT_GIB,
             "payload_limit_gib": V10_SIDE_RESPONSE_PACKET_PAYLOAD_LIMIT_GIB,
@@ -5557,7 +5812,11 @@ def run_v10_h4_side_response_packet_pilot(
         },
     )
     try:
-        schedule = v10_side_response_packet_pilot_schedule()
+        schedule = (
+            v10_side_response_packet_full_schedule()
+            if full_response
+            else v10_side_response_packet_pilot_schedule()
+        )
         if side_system_builder is None:
             system = assemble_hybrid_local_dtn_action_system(
                 cfg,
@@ -5576,7 +5835,7 @@ def run_v10_h4_side_response_packet_pilot(
             action = create_research_exact_side_lu_action(
                 components.F,
                 components,
-                qualification_scope=V10_H4_SIDE_RESPONSE_PACKET_PILOT_PROFILE_ID,
+                qualification_scope=route_profile_id,
                 explicit_opt_in=True,
                 factor_only_storage=True,
             )
@@ -5586,7 +5845,7 @@ def run_v10_h4_side_response_packet_pilot(
             )
         factor_ready = 1
         marker_callback(
-            "v10_side_response_packet_bottom_factor_ready",
+            f"{producer_marker_prefix}_factor_ready",
             {
                 "exact_side_factor_count_ready": factor_ready,
                 "exact_side_factor_count_after_cleanup": "pending_producer_exit",
@@ -5611,7 +5870,7 @@ def run_v10_h4_side_response_packet_pilot(
             action.woodbury.mark_borrowed_matrices_released()
             action_borrowed_matrices_marked = True
         marker_callback(
-            "v10_side_response_packet_bottom_explicit_components_released",
+            f"{producer_marker_prefix}_explicit_components_released",
             {
                 "released": components_release_before_columns,
                 "action_borrowed_matrices_marked": action_borrowed_matrices_marked,
@@ -5643,11 +5902,40 @@ def run_v10_h4_side_response_packet_pilot(
             packet_identity=spool_identity,
             manifest_sha256=spool_manifest_sha,
         )
-        response_values = np.empty(
-            (int(system.A.getLocalSize()[0]), V10_SIDE_RESPONSE_PACKET_COLUMNS),
-            dtype=np.complex128,
-            order="F",
-        )
+        if full_response:
+            response_writer = OwnerRowResponsePacketWriter(
+                output_root,
+                global_rows=int(system.A.getSize()[0]),
+                ownership_range=tuple(
+                    int(value) for value in system.A.getOwnershipRange()
+                ),
+                column_records=list(schedule),
+                source_sha=source_sha,
+                input_sha256=input_sha256,
+                physical_model_sha256=physical_model_sha256,
+                comm=comm,
+                schema=V10_SIDE_RESPONSE_PACKET_FULL_SCHEMA,
+                method=V10_SIDE_RESPONSE_PACKET_FULL_METHOD,
+                zero_column_index=960,
+                holdout_column_indices=V10_SIDE_RESPONSE_PACKET_FULL_HOLDOUT_COLUMNS,
+                identity={
+                    "selected_mode_packet_manifest_sha256": selected_mode_packet_manifest_sha256,
+                    "exact_spool_manifest_sha256": spool_manifest_sha,
+                    "factor_identity": {
+                        "side": "bottom",
+                        "action": "research_exact_side_lu",
+                        "factor_only_storage": True,
+                        "qualification_scope": route_profile_id,
+                        "profile_id": route_profile_id,
+                    },
+                },
+            )
+        else:
+            response_values = np.empty(
+                (int(system.A.getLocalSize()[0]), V10_SIDE_RESPONSE_PACKET_COLUMNS),
+                dtype=np.complex128,
+                order="F",
+            )
         setup_wall_seconds = float(time.perf_counter() - producer_started)
         column_records: list[dict[str, Any]] = []
         for column_index, item in enumerate(schedule):
@@ -5659,7 +5947,11 @@ def run_v10_h4_side_response_packet_pilot(
             rhs = None
             template = None
             try:
-                if item["kind"] in {"selected_modal", "physical_zero_replacement"}:
+                if item["kind"] in {
+                    "selected_modal",
+                    "physical_zero_replacement",
+                    "training_modal",
+                }:
                     selected_column = int(item["column"])
                     branch = "positive" if selected_column < 480 else "negative"
                     mode_index = (
@@ -5679,7 +5971,7 @@ def run_v10_h4_side_response_packet_pilot(
                             else "negative_modal_traction"
                         ),
                     )
-                else:
+                elif item["kind"] in {"holdout", "deterministic_random"}:
                     spool_label = str(item["spool_label"])
                     artifact = spool_records[spool_label]
                     template = system.A.createVecLeft()
@@ -5690,6 +5982,18 @@ def run_v10_h4_side_response_packet_pilot(
                         "source": "frozen_exact_spool_rhs",
                         "spool_label": spool_label,
                         "spool_catalog_sha256": catalog["catalog_sha256"],
+                    }
+                else:
+                    artifact = spool_records["physical_side_rhs"]
+                    template = system.A.createVecLeft()
+                    rhs = _load_v5_blr_reference_spool_remapped(
+                        artifact["rhs"], template
+                    )
+                    source_metadata = {
+                        "source": "frozen_physical_side_rhs",
+                        "spool_label": "physical_side_rhs",
+                        "spool_catalog_sha256": catalog["catalog_sha256"],
+                        "degenerate_uninformative": True,
                     }
                 report, local_values = _v10_side_response_apply_column(
                     action,
@@ -5704,13 +6008,19 @@ def run_v10_h4_side_response_packet_pilot(
                     marker_callback=marker_callback,
                 )
                 reports.append(report)
-                response_values[:, column_index] = local_values
+                if response_writer is not None:
+                    response_writer.write_column(column_index, local_values)
+                else:
+                    response_values[:, column_index] = local_values
                 column_records.append(
                     {
                         **dict(item),
                         "column_index": column_index,
                         "finite": report["finite"],
                         "true_residual_relative": report["true_residual_relative"],
+                        "rhs_norm": report["rhs_norm"],
+                        "output_norm": report["output_norm"],
+                        "degenerate_uninformative": report["degenerate_uninformative"],
                         "wall_seconds": report["wall_seconds"],
                     }
                 )
@@ -5723,18 +6033,79 @@ def run_v10_h4_side_response_packet_pilot(
         pilot_solve_wall_seconds = sum(
             float(report["wall_seconds"]) for report in reports
         )
-        solve_only_projected_wall = projected_response_wall_seconds(
+        solve_only_projected_wall = (
             pilot_solve_wall_seconds
+            if full_response
+            else projected_response_wall_seconds(pilot_solve_wall_seconds)
         )
         projected_wall = (
-            setup_wall_seconds
+            setup_wall_seconds + pilot_solve_wall_seconds
+            if full_response
+            else setup_wall_seconds
             + (pilot_solve_wall_seconds / len(reports))
             * V10_SIDE_RESPONSE_PACKET_FULL_COLUMNS
         )
         projected_payload = projected_response_payload_bytes(
             int(system.A.getSize()[0]), V10_SIDE_RESPONSE_PACKET_FULL_COLUMNS
         )
-        report_gate = validate_exact_side_response_reports(reports)
+        if not full_response:
+            report_gate = validate_exact_side_response_reports(reports)
+        else:
+            response_reports = [
+                report for report in reports if report["label"] != "physical_side_rhs"
+            ]
+            zero_reports = [
+                report for report in reports if report["label"] == "physical_side_rhs"
+            ]
+            zero_report = zero_reports[0] if len(zero_reports) == 1 else None
+            finite_pass = len(response_reports) == 960 and all(
+                bool(report.get("finite")) for report in response_reports
+            )
+            residual_pass = all(
+                report.get("true_residual_relative") is not None
+                and float(report["true_residual_relative"])
+                <= V10_SIDE_RESPONSE_PACKET_EXACT_RESIDUAL_LIMIT
+                for report in response_reports
+            )
+            wall_finite = all(
+                np.isfinite(float(report.get("wall_seconds", np.nan)))
+                for report in reports
+            )
+            zero_map_pass = bool(
+                zero_report is not None
+                and zero_report.get("degenerate_uninformative") is True
+                and zero_report.get("rhs_norm") is not None
+                and np.isfinite(float(zero_report["rhs_norm"]))
+                and float(zero_report["rhs_norm"]) <= 1.0e-13
+                and zero_report.get("zero_map_pass") is True
+            )
+            report_gate = {
+                "complete": len(reports) == V10_SIDE_RESPONSE_PACKET_FULL_COLUMNS,
+                "nonzero_modal_column_count": len(response_reports),
+                "training_column_count": 960
+                - len(V10_SIDE_RESPONSE_PACKET_FULL_HOLDOUT_COLUMNS),
+                "holdout_column_count": len(
+                    V10_SIDE_RESPONSE_PACKET_FULL_HOLDOUT_COLUMNS
+                ),
+                "finite": bool(finite_pass),
+                "residual_pass": bool(residual_pass),
+                "wall_finite": bool(wall_finite),
+                "zero_map_pass": zero_map_pass,
+                "zero_rhs_norm": (
+                    None if zero_report is None else zero_report.get("rhs_norm")
+                ),
+                "zero_output_norm": (
+                    None if zero_report is None else zero_report.get("output_norm")
+                ),
+                "pass": bool(
+                    len(response_reports) == 960
+                    and finite_pass
+                    and residual_pass
+                    and wall_finite
+                    and zero_map_pass
+                ),
+                "residual_limit": V10_SIDE_RESPONSE_PACKET_EXACT_RESIDUAL_LIMIT,
+            }
         report_gate.update(
             {
                 "pilot_solve_wall_seconds": pilot_solve_wall_seconds,
@@ -5756,38 +6127,80 @@ def run_v10_h4_side_response_packet_pilot(
                 ),
             }
         )
-        report_gate["pilot_eligibility_pass"] = bool(
+        if full_response:
+            measured_full_packet_total_wall = (
+                setup_wall_seconds + pilot_solve_wall_seconds
+            )
+            report_gate.update(
+                {
+                    "measured_full_packet_setup_wall_seconds": setup_wall_seconds,
+                    "measured_full_packet_solve_wall_seconds": pilot_solve_wall_seconds,
+                    "measured_full_packet_total_wall_seconds": measured_full_packet_total_wall,
+                    "measured_full_packet_wall_limit_seconds": V10_SIDE_RESPONSE_PACKET_PROJECTED_WALL_LIMIT_SECONDS,
+                    "measured_full_packet_wall_pass": bool(
+                        measured_full_packet_total_wall
+                        <= V10_SIDE_RESPONSE_PACKET_PROJECTED_WALL_LIMIT_SECONDS
+                    ),
+                }
+            )
+        eligibility_key = (
+            "full_packet_eligibility_pass"
+            if full_response
+            else "pilot_eligibility_pass"
+        )
+        report_gate[eligibility_key] = bool(
             report_gate["pass"]
             and report_gate["projected_payload_pass"]
-            and report_gate["projected_wall_pass"]
+            and (
+                report_gate["measured_full_packet_wall_pass"]
+                if full_response
+                else report_gate["projected_wall_pass"]
+            )
         )
-        packet_result = write_exact_side_response_packet(
-            output_root,
-            response_values,
-            global_rows=int(system.A.getSize()[0]),
-            ownership_range=tuple(int(value) for value in system.A.getOwnershipRange()),
-            column_records=column_records,
-            source_sha=source_sha,
-            input_sha256=input_sha256,
-            physical_model_sha256=physical_model_sha256,
-            comm=comm,
-        )
+        if response_writer is not None:
+            response_writer.column_records = [dict(item) for item in column_records]
+            packet_result = response_writer.finalize()
+        else:
+            packet_result = write_exact_side_response_packet(
+                output_root,
+                response_values,
+                global_rows=int(system.A.getSize()[0]),
+                ownership_range=tuple(
+                    int(value) for value in system.A.getOwnershipRange()
+                ),
+                column_records=column_records,
+                source_sha=source_sha,
+                input_sha256=input_sha256,
+                physical_model_sha256=physical_model_sha256,
+                comm=comm,
+            )
         marker_callback(
-            "v10_side_response_packet_bottom_packet_written",
+            f"{producer_marker_prefix}_packet_written",
             {
                 **packet_result,
                 "report_gate": report_gate,
                 "projected_full_packet_wall_seconds": projected_wall,
                 "solve_only_projected_full_packet_wall_seconds": solve_only_projected_wall,
+                "measured_full_packet_setup_wall_seconds": (
+                    setup_wall_seconds if full_response else None
+                ),
+                "measured_full_packet_solve_wall_seconds": (
+                    pilot_solve_wall_seconds if full_response else None
+                ),
+                "measured_full_packet_total_wall_seconds": (
+                    setup_wall_seconds + pilot_solve_wall_seconds
+                    if full_response
+                    else None
+                ),
                 "projected_payload_bytes": projected_payload,
             },
         )
         result_payload = {
-            "schema": V10_H4_SIDE_RESPONSE_PACKET_PILOT_SCHEMA,
-            "method": V10_H4_SIDE_RESPONSE_PACKET_PILOT_METHOD,
-            "profile_id": V10_H4_SIDE_RESPONSE_PACKET_PILOT_PROFILE_ID,
+            "schema": route_schema,
+            "method": route_method,
+            "profile_id": route_profile_id,
             "status": "producer_completed"
-            if report_gate["pilot_eligibility_pass"]
+            if report_gate[eligibility_key]
             else "producer_gate_failed",
             "source_sha": source_sha,
             "input_sha256": input_sha256,
@@ -5795,6 +6208,14 @@ def run_v10_h4_side_response_packet_pilot(
             "column_records": reports,
             "column_count": len(reports),
             "report_gate": report_gate,
+            "pilot_eligibility_pass": (
+                report_gate.get("pilot_eligibility_pass") if not full_response else None
+            ),
+            "full_packet_eligibility_pass": (
+                report_gate.get("full_packet_eligibility_pass")
+                if full_response
+                else None
+            ),
             "packet": packet_result,
             "holdout_provenance": {
                 "producer_source_sha": catalog["producer_source_sha"],
@@ -5815,6 +6236,15 @@ def run_v10_h4_side_response_packet_pilot(
             ),
             "selected_mode_packet_opened": True,
             "exact_spool_opened": True,
+            "physical_zero_validation": (
+                next(
+                    report
+                    for report in reports
+                    if report["label"] == "physical_side_rhs"
+                )
+                if full_response
+                else None
+            ),
             "qep_count": 0,
             "top": "not_run",
             "full_formal": "not_run",
@@ -5822,10 +6252,21 @@ def run_v10_h4_side_response_packet_pilot(
             "projected_payload_bytes": projected_payload,
             "projected_payload_limit_gib": V10_SIDE_RESPONSE_PACKET_PAYLOAD_LIMIT_GIB,
             "projected_full_packet_wall_limit_seconds": V10_SIDE_RESPONSE_PACKET_PROJECTED_WALL_LIMIT_SECONDS,
+            "measured_full_packet_setup_wall_seconds": (
+                setup_wall_seconds if full_response else None
+            ),
+            "measured_full_packet_solve_wall_seconds": (
+                pilot_solve_wall_seconds if full_response else None
+            ),
+            "measured_full_packet_total_wall_seconds": (
+                setup_wall_seconds + pilot_solve_wall_seconds if full_response else None
+            ),
         }
     finally:
         if response_values is not None:
             response_values.fill(0.0)
+        if response_writer is not None:
+            response_writer.close()
         if modal_provider is not None:
             modal_provider.destroy()
         if packet_context is not None:
@@ -5842,7 +6283,7 @@ def run_v10_h4_side_response_packet_pilot(
             system.destroy()
         collective_heap_cleanup(comm)
         marker_callback(
-            "v10_side_response_packet_bottom_producer_cleanup",
+            f"{producer_marker_prefix}_cleanup",
             {
                 "factor_count_ready": factor_ready,
                 "factor_count_after_cleanup": factor_after_cleanup,
@@ -5872,6 +6313,112 @@ def run_v10_h4_side_response_packet_pilot(
     if result_payload is None:
         raise RuntimeError("V10-6 producer returned without a result")
     return result_payload
+
+
+def run_v10_h4_side_response_packet_compression(
+    *,
+    manifest_path: str | Path,
+    manifest_sha256: str,
+    source_sha: str,
+    input_sha256: str,
+    physical_model_sha256: str,
+    comm: MPI.Intracomm,
+    marker_callback: Callable[[str, Mapping[str, Any]], None],
+) -> dict[str, Any]:
+    """Run the separate mmap-only TSQR/SVD compression consumer."""
+
+    compression_started = time.perf_counter()
+    marker_callback(
+        "v10_side_response_packet_compression_begin",
+        {
+            "schema": V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA,
+            "method": V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD,
+            "consumer_factor_count": 0,
+            "global_direct_factor_count": 0,
+            "nested_ksp_count": 0,
+            "selected_mode_packet_opened": False,
+            "exact_spool_opened": False,
+            "system_assembled": False,
+            "qep_count": 0,
+            "sgs_executed": False,
+        },
+    )
+    manifest = json.loads(Path(manifest_path).read_text(encoding="utf-8"))
+    shards = list(manifest.get("shards", ()))
+    shard = next(item for item in shards if int(item.get("rank", -1)) == int(comm.rank))
+    ownership = tuple(int(value) for value in shard["ownership_range"])
+    packet = load_full_side_response_packet(
+        manifest_path,
+        expected_manifest_sha256=manifest_sha256,
+        expected_provenance={
+            "source_sha": source_sha,
+            "input_sha256": input_sha256,
+            "physical_model_sha256": physical_model_sha256,
+            **{
+                key: value
+                for key, value in manifest.get("provenance", {}).items()
+                if key not in {"source_sha", "input_sha256", "physical_model_sha256"}
+            },
+        },
+        global_rows=int(manifest["global_rows"]),
+        ownership_range=ownership,
+        comm=comm,
+    )
+    marker_callback(
+        "v10_side_response_packet_compression_loaded",
+        {
+            **packet.diagnostics,
+            "wall_seconds": time.perf_counter() - compression_started,
+        },
+    )
+    try:
+        compression = compress_owner_row_response_packet(
+            packet,
+            comm=comm,
+            training_column_indices=tuple(
+                int(value) for value in manifest["training_column_indices"]
+            ),
+            holdout_column_indices=tuple(
+                int(value) for value in manifest["holdout_column_indices"]
+            ),
+            zero_column_index=int(manifest["zero_column_index"]),
+        )
+        result = {
+            "schema": V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA,
+            "method": V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD,
+            "status": "compression_completed",
+            "source_sha": source_sha,
+            "manifest_sha256": manifest_sha256,
+            "compression": compression,
+            "wall_seconds": time.perf_counter() - compression_started,
+            "packet": dict(packet.diagnostics),
+            "factor_inventory": {
+                "consumer_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "nested_ksp_count": 0,
+            },
+            "selected_mode_packet_opened": False,
+            "exact_spool_opened": False,
+            "system_assembled": False,
+            "qep_count": 0,
+            "sgs_executed": False,
+            "research_only": True,
+        }
+    finally:
+        packet.destroy()
+        released = dict(packet.diagnostics)
+        marker_callback(
+            "v10_side_response_packet_compression_released",
+            {**released, "wall_seconds": time.perf_counter() - compression_started},
+        )
+    result["packet"] = dict(packet.diagnostics)
+    result["lifecycle"] = {
+        "packet_released": bool(result["packet"].get("released")),
+        "consumer_factor_count_after_cleanup": 0,
+        "system_assembled": False,
+        "compression_completed": True,
+    }
+    return result
 
 
 def run_v10_h4_side_response_packet_consumer(
@@ -11646,6 +12193,14 @@ def run_task039_v3_7_diagnostic(
     v10_h4_side_response_packet_consumer: bool = False,
     v10_h4_side_response_packet_consumer_manifest: str | Path | None = None,
     v10_h4_side_response_packet_consumer_manifest_sha256: str | None = None,
+    v10_h4_side_response_packet_full_producer: bool = False,
+    v10_h4_side_response_packet_full_producer_exact_spool_root: str
+    | Path
+    | None = None,
+    v10_h4_side_response_packet_full_producer_output_root: str | Path | None = None,
+    v10_h4_side_response_packet_compression: bool = False,
+    v10_h4_side_response_packet_compression_manifest: str | Path | None = None,
+    v10_h4_side_response_packet_compression_manifest_sha256: str | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
@@ -11755,6 +12310,8 @@ def run_task039_v3_7_diagnostic(
             or v10_h4_j1_inner_fgmres
             or v10_h4_side_response_packet_pilot
             or v10_h4_side_response_packet_consumer
+            or v10_h4_side_response_packet_full_producer
+            or v10_h4_side_response_packet_compression
         ):
             profile = (
                 profile_override
@@ -11780,6 +12337,8 @@ def run_task039_v3_7_diagnostic(
             or v10_h4_j1_inner_fgmres
             or v10_h4_side_response_packet_pilot
             or v10_h4_side_response_packet_consumer
+            or v10_h4_side_response_packet_full_producer
+            or v10_h4_side_response_packet_compression
         ):
             incidence = resolved_payload["incidence"]
             if v7_h4_full_formal:
@@ -11827,6 +12386,12 @@ def run_task039_v3_7_diagnostic(
             elif v10_h4_side_response_packet_consumer:
                 route_profile_id = V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_PROFILE_ID
                 route_schema = V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_SCHEMA
+            elif v10_h4_side_response_packet_full_producer:
+                route_profile_id = V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_PROFILE_ID
+                route_schema = V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_SCHEMA
+            elif v10_h4_side_response_packet_compression:
+                route_profile_id = V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PROFILE_ID
+                route_schema = V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA
             elif v5_h4_blr_side_only:
                 route_profile_id = V5_H4_BLR_SIDE_PROFILE_ID
                 route_schema = V5_H4_BLR_SIDE_PROFILE_ID
@@ -11871,6 +12436,8 @@ def run_task039_v3_7_diagnostic(
             v10_h4_j1_inner_fgmres=v10_h4_j1_inner_fgmres,
             v10_h4_side_response_packet_pilot=v10_h4_side_response_packet_pilot,
             v10_h4_side_response_packet_consumer=v10_h4_side_response_packet_consumer,
+            v10_h4_side_response_packet_full_producer=v10_h4_side_response_packet_full_producer,
+            v10_h4_side_response_packet_compression=v10_h4_side_response_packet_compression,
         )
         _emit_marker(
             marker_callback,
@@ -11901,6 +12468,8 @@ def run_task039_v3_7_diagnostic(
             and not v10_h4_j1_inner_fgmres
             and not v10_h4_side_response_packet_pilot
             and not v10_h4_side_response_packet_consumer
+            and not v10_h4_side_response_packet_full_producer
+            and not v10_h4_side_response_packet_compression
         ):
             raise ValueError(
                 "V3-7 requires an injected recovery_runner(setup, layout, snapshot, "
@@ -11957,6 +12526,42 @@ def run_task039_v3_7_diagnostic(
                         "_full3d_authority_run_directory": None,
                     }
                 )
+            modal_amplitudes = None
+        elif v10_h4_side_response_packet_compression:
+            if (
+                v10_h4_side_response_packet_compression_manifest is None
+                or v10_h4_side_response_packet_compression_manifest_sha256 is None
+            ):
+                raise ValueError("V10 compression requires packet manifest and hash")
+            v10_input_sha256, v10_physical_model_sha256 = (
+                _v10_side_response_resolved_provenance(resolved_payload)
+            )
+            producer = {
+                "producer_source_sha": None,
+                "consumer_source_sha": source_sha,
+                "input_sha256": v10_input_sha256,
+                "physical_model_sha256": v10_physical_model_sha256,
+                "model_id": resolved_payload.get("model_id"),
+                "requested_modes": 480,
+                "mpi_size": 8,
+                "selected_mode_packet_opened": False,
+                "holdout_opened": False,
+                "exact_spool_opened": False,
+                "qep_count": 0,
+                "sgs_executed": False,
+                "consumer_factor_count": 0,
+                "full_side_exact_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "nested_ksp_count": 0,
+                "component_candidate": True,
+                "research_only": True,
+                "response_packet_manifest": str(
+                    Path(v10_h4_side_response_packet_compression_manifest).resolve()
+                ),
+                "response_packet_manifest_sha256": (
+                    v10_h4_side_response_packet_compression_manifest_sha256
+                ),
+            }
             modal_amplitudes = None
         elif v8_h4_layer_sweep_bottom:
             if (
@@ -12048,6 +12653,52 @@ def run_task039_v3_7_diagnostic(
                 "research_only": True,
                 "exact_spool_root": str(
                     Path(v10_h4_j1_inner_fgmres_exact_spool_root).resolve()
+                ),
+            }
+            modal_amplitudes = None
+        elif v10_h4_side_response_packet_full_producer:
+            if (
+                v10_h4_side_response_packet_full_producer_exact_spool_root is None
+                or v10_h4_side_response_packet_full_producer_output_root is None
+                or selected_mode_packet_manifest is None
+                or selected_mode_packet_identity is None
+                or selected_mode_packet_manifest_sha256 is None
+            ):
+                raise ValueError(
+                    "V10 full producer requires selected packet, exact spool, and output"
+                )
+            v10_input_sha256, v10_physical_model_sha256 = (
+                _v10_side_response_resolved_provenance(resolved_payload)
+            )
+            producer = {
+                "producer_source_sha": selected_mode_packet_identity.get("source_sha"),
+                "consumer_source_sha": source_sha,
+                "input_sha256": v10_input_sha256,
+                "physical_model_sha256": v10_physical_model_sha256,
+                "model_id": resolved_payload.get("model_id"),
+                "requested_modes": 480,
+                "mpi_size": 8,
+                "selected_mode_packet_opened": True,
+                "holdout_opened": True,
+                "exact_spool_opened": True,
+                "qep_count": 0,
+                "sgs_executed": False,
+                "exact_side_factor_count_ready": 1,
+                "full_side_exact_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "nested_ksp_count": 0,
+                "component_candidate": True,
+                "research_only": True,
+                "full_response_packet": True,
+                "exact_spool_root": str(
+                    Path(
+                        v10_h4_side_response_packet_full_producer_exact_spool_root
+                    ).resolve()
+                ),
+                "response_packet_output_root": str(
+                    Path(
+                        v10_h4_side_response_packet_full_producer_output_root
+                    ).resolve()
                 ),
             }
             modal_amplitudes = None
@@ -12405,6 +13056,23 @@ def run_task039_v3_7_diagnostic(
                 producer.get("direct_reference_payload_loaded", True)
             ),
         )
+        if v10_h4_side_response_packet_compression:
+            v10_input_sha256, v10_physical_model_sha256 = (
+                _v10_side_response_resolved_provenance(resolved_payload)
+            )
+            result = run_v10_h4_side_response_packet_compression(
+                manifest_path=v10_h4_side_response_packet_compression_manifest,
+                manifest_sha256=v10_h4_side_response_packet_compression_manifest_sha256,
+                source_sha=source_sha,
+                input_sha256=v10_input_sha256,
+                physical_model_sha256=v10_physical_model_sha256,
+                comm=comm,
+                marker_callback=marker_callback,
+            )
+            attach_v10_finalizer_ledger(result)
+            result["run_directory"] = str(Path(run_directory).resolve())
+            normal_return = result.get("status") == "compression_completed"
+            return result
         cfg = simulation_config_3d_from_normalized(resolved_payload)
         modal_cfg = deepcopy(cfg)
         _emit_marker(marker_callback, "config_ready")
@@ -12456,6 +13124,33 @@ def run_task039_v3_7_diagnostic(
             result["consumer_source_sha"] = source_sha
             result["run_directory"] = str(Path(run_directory).resolve())
             normal_return = result.get("status") == "component_fgmres_completed"
+            return result
+        if v10_h4_side_response_packet_full_producer:
+            v10_input_sha256, v10_physical_model_sha256 = (
+                _v10_side_response_resolved_provenance(resolved_payload)
+            )
+            result = run_v10_h4_side_response_packet_pilot(
+                cfg,
+                profile=profile,
+                comm=comm,
+                marker_callback=marker_callback,
+                exact_spool_root=(
+                    v10_h4_side_response_packet_full_producer_exact_spool_root
+                ),
+                source_sha=source_sha,
+                output_root=v10_h4_side_response_packet_full_producer_output_root,
+                selected_mode_packet_manifest=selected_mode_packet_manifest,
+                selected_mode_packet_identity=selected_mode_packet_identity,
+                selected_mode_packet_manifest_sha256=selected_mode_packet_manifest_sha256,
+                input_sha256=v10_input_sha256,
+                physical_model_sha256=v10_physical_model_sha256,
+                side_system_builder=side_system_builder,
+                full_response=True,
+            )
+            attach_v10_finalizer_ledger(result)
+            result["source_sha"] = source_sha
+            result["run_directory"] = str(Path(run_directory).resolve())
+            normal_return = result.get("status") == "producer_completed"
             return result
         if v10_h4_side_response_packet_pilot:
             v10_input_sha256, v10_physical_model_sha256 = (
@@ -13812,6 +14507,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_MANIFEST_FLAG)
     parser.add_argument(V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_MANIFEST_SHA256_FLAG)
     parser.add_argument(
+        V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_FLAG, action="store_true"
+    )
+    parser.add_argument(V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_EXACT_SPOOL_ROOT_FLAG)
+    parser.add_argument(V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_OUTPUT_ROOT_FLAG)
+    parser.add_argument(
+        V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_FLAG, action="store_true"
+    )
+    parser.add_argument(V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_MANIFEST_FLAG)
+    parser.add_argument(V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_MANIFEST_SHA256_FLAG)
+    parser.add_argument(
         "--v5-h4-blr-profile",
         choices=V5_H4_BLR_PROFILE_CHOICES,
         default=MUMPS_BLR_V5_H4_PROFILE,
@@ -13841,6 +14546,8 @@ def main(argv: list[str] | None = None) -> int:
             args.v10_h4_j1_inner_fgmres,
             args.v10_h4_side_response_packet_pilot,
             args.v10_h4_side_response_packet_consumer,
+            args.v10_h4_side_response_packet_full_producer,
+            args.v10_h4_side_response_packet_compression,
             args.v5_h4_blr_side_component,
             args.v5_h4_fixed_budget_bottom_component,
         )
@@ -13871,6 +14578,8 @@ def main(argv: list[str] | None = None) -> int:
                 bool(args.v10_h4_j1_inner_fgmres),
                 bool(args.v10_h4_side_response_packet_pilot),
                 bool(args.v10_h4_side_response_packet_consumer),
+                bool(args.v10_h4_side_response_packet_full_producer),
+                bool(args.v10_h4_side_response_packet_compression),
                 bool(args.v5_h4_blr_side_component),
                 bool(args.v5_h4_fixed_budget_bottom_component),
             )
@@ -13936,6 +14645,24 @@ def main(argv: list[str] | None = None) -> int:
             v10_h4_side_response_packet_consumer_manifest_sha256=(
                 args.v10_h4_side_response_packet_consumer_manifest_sha256
             ),
+            v10_h4_side_response_packet_full_producer=(
+                args.v10_h4_side_response_packet_full_producer
+            ),
+            v10_h4_side_response_packet_full_producer_exact_spool_root=(
+                args.v10_h4_side_response_packet_full_producer_exact_spool_root
+            ),
+            v10_h4_side_response_packet_full_producer_output_root=(
+                args.v10_h4_side_response_packet_full_producer_output_root
+            ),
+            v10_h4_side_response_packet_compression=(
+                args.v10_h4_side_response_packet_compression
+            ),
+            v10_h4_side_response_packet_compression_manifest=(
+                args.v10_h4_side_response_packet_compression_manifest
+            ),
+            v10_h4_side_response_packet_compression_manifest_sha256=(
+                args.v10_h4_side_response_packet_compression_manifest_sha256
+            ),
             v8_h4_layer_sweep_exact_spool_root=(
                 args.v8_h4_layer_sweep_exact_spool_root
             ),
@@ -13968,6 +14695,7 @@ def main(argv: list[str] | None = None) -> int:
                     or args.v8_h4_layer_sweep_bottom
                     or args.v10_h4_j1_inner_fgmres
                     or args.v10_h4_side_response_packet_pilot
+                    or args.v10_h4_side_response_packet_full_producer
                     or args.v5_h4_blr_side_component
                     or args.v5_h4_fixed_budget_bottom_component
                 )
@@ -13986,6 +14714,7 @@ def main(argv: list[str] | None = None) -> int:
                     or args.v8_h4_layer_sweep_bottom
                     or args.v10_h4_j1_inner_fgmres
                     or args.v10_h4_side_response_packet_pilot
+                    or args.v10_h4_side_response_packet_full_producer
                     or args.v5_h4_blr_side_component
                     or args.v5_h4_fixed_budget_bottom_component
                 )
@@ -14027,6 +14756,7 @@ def main(argv: list[str] | None = None) -> int:
                     or args.v10_h4_sn2_j_only
                     or args.v10_h4_j1_inner_fgmres
                     or args.v10_h4_side_response_packet_consumer
+                    or args.v10_h4_side_response_packet_compression
                 )
                 else json.loads(
                     Path(args.selected_mode_packet_identity).read_text(encoding="utf-8")
@@ -14113,6 +14843,24 @@ def main(argv: list[str] | None = None) -> int:
             v10_h4_side_response_packet_consumer_manifest_sha256=(
                 args.v10_h4_side_response_packet_consumer_manifest_sha256
             ),
+            v10_h4_side_response_packet_full_producer=(
+                args.v10_h4_side_response_packet_full_producer
+            ),
+            v10_h4_side_response_packet_full_producer_exact_spool_root=(
+                args.v10_h4_side_response_packet_full_producer_exact_spool_root
+            ),
+            v10_h4_side_response_packet_full_producer_output_root=(
+                args.v10_h4_side_response_packet_full_producer_output_root
+            ),
+            v10_h4_side_response_packet_compression=(
+                args.v10_h4_side_response_packet_compression
+            ),
+            v10_h4_side_response_packet_compression_manifest=(
+                args.v10_h4_side_response_packet_compression_manifest
+            ),
+            v10_h4_side_response_packet_compression_manifest_sha256=(
+                args.v10_h4_side_response_packet_compression_manifest_sha256
+            ),
             v5_h4_blr_side_only=args.v5_h4_blr_side_component,
             v5_h4_fixed_budget_bottom_only=args.v5_h4_fixed_budget_bottom_component,
             v5_h4_fixed_budget_exact_spool_root=(
@@ -14157,6 +14905,7 @@ def main(argv: list[str] | None = None) -> int:
             "component_forensic_completed",
             "component_sn2_j_stable_resource_pending",
             "component_fgmres_completed",
+            "compression_completed",
         }
         else 3
     )
@@ -14265,11 +15014,26 @@ __all__ = [
     "V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_METHOD",
     "V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_SCHEMA",
     "V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_HARD_STOP_BYTES",
+    "V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_FLAG",
+    "V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_EXACT_SPOOL_ROOT_FLAG",
+    "V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_OUTPUT_ROOT_FLAG",
+    "V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_PROFILE_ID",
+    "V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_METHOD",
+    "V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_SCHEMA",
+    "V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_HARD_STOP_BYTES",
+    "V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_FLAG",
+    "V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_MANIFEST_FLAG",
+    "V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_MANIFEST_SHA256_FLAG",
+    "V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PROFILE_ID",
+    "V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD",
+    "V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA",
+    "V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_HARD_STOP_BYTES",
     "V10_SIDE_RESPONSE_PACKET_FROZEN_SELECTED_COLUMNS",
     "v10_side_response_packet_pilot_schedule",
     "_v10_side_response_resolved_provenance",
     "run_v10_h4_side_response_packet_pilot",
     "run_v10_h4_side_response_packet_consumer",
+    "run_v10_h4_side_response_packet_compression",
     "run_v9_h4_bare_f_side_diagnostic",
     "build_v3_7_execution_plan",
     "check_v3_7_integrated_physics",

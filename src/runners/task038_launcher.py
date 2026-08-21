@@ -103,6 +103,20 @@ V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_METHOD = (
 V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_SCHEMA = (
     "task039.v10.h4.side_response_packet.consumer.v1"
 )
+V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_HARD_STOP_BYTES = 60 * 2**30
+V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_METHOD = (
+    "task039_v10_h4_side_response_packet_full_producer"
+)
+V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_SCHEMA = (
+    "task039.v10.h4.side_response_packet.full_producer.v1"
+)
+V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_HARD_STOP_BYTES = 30 * 2**30
+V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD = (
+    "task039_v10_h4_side_response_packet_compression"
+)
+V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA = (
+    "task039.v10.h4.side_response_packet.compression.v1"
+)
 
 
 def _v5_h4_blr_candidate_interval_peak(
@@ -757,6 +771,12 @@ def _run_worker(
     formal_v10_side_packet_consumer = (
         getattr(plan, "method", "") == V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_METHOD
     )
+    formal_v10_side_packet_full_producer = (
+        getattr(plan, "method", "") == V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_METHOD
+    )
+    formal_v10_side_packet_compression = (
+        getattr(plan, "method", "") == V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD
+    )
     formal_telemetry = (
         formal_v2_h5
         or formal_v3_2d
@@ -780,6 +800,8 @@ def _run_worker(
         or formal_v10_j1_inner_fgmres
         or formal_v10_side_packet_pilot
         or formal_v10_side_packet_consumer
+        or formal_v10_side_packet_full_producer
+        or formal_v10_side_packet_compression
     )
     if task039_model_id_matches(method, model_id, requested_modes):
         task039_budget = _task039_memory_budget(execution)
@@ -850,6 +872,16 @@ def _run_worker(
     if formal_v10_side_packet_consumer:
         absolute_terminate_memory_bytes = (
             V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_HARD_STOP_BYTES
+        )
+        terminate_limit = float(absolute_terminate_memory_bytes)
+    if formal_v10_side_packet_full_producer:
+        absolute_terminate_memory_bytes = (
+            V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_HARD_STOP_BYTES
+        )
+        terminate_limit = float(absolute_terminate_memory_bytes)
+    if formal_v10_side_packet_compression:
+        absolute_terminate_memory_bytes = (
+            V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_HARD_STOP_BYTES
         )
         terminate_limit = float(absolute_terminate_memory_bytes)
     timeout = float(execution["timeout_seconds"])
@@ -947,6 +979,8 @@ def _run_worker(
                 or formal_v10_j1_inner_fgmres
                 or formal_v10_side_packet_pilot
                 or formal_v10_side_packet_consumer
+                or formal_v10_side_packet_full_producer
+                or formal_v10_side_packet_compression
             )
             or formal_stage_stream is None
         ):
@@ -1005,6 +1039,8 @@ def _run_worker(
                 or formal_v10_j1_inner_fgmres
                 or formal_v10_side_packet_pilot
                 or formal_v10_side_packet_consumer
+                or formal_v10_side_packet_full_producer
+                or formal_v10_side_packet_compression
             ) and stage_index is None:
                 stage_index = formal_aligned_stage_count
             row = {
@@ -1064,6 +1100,8 @@ def _run_worker(
             or formal_v10_j1_inner_fgmres
             or formal_v10_side_packet_pilot
             or formal_v10_side_packet_consumer
+            or formal_v10_side_packet_full_producer
+            or formal_v10_side_packet_compression
         ):
             formal_stages_path.unlink(missing_ok=True)
             formal_stage_stream = formal_stages_path.open("a", encoding="utf-8")
@@ -1230,6 +1268,8 @@ def _run_worker(
         or formal_v10_factor_integrity
         or formal_v10_sn2_j_only
         or formal_v10_j1_inner_fgmres
+        or formal_v10_side_packet_full_producer
+        or formal_v10_side_packet_compression
     ) and not formal_object_ledger_path.exists():
         _write_json(
             formal_object_ledger_path,
@@ -3178,6 +3218,193 @@ def _run_worker(
                 V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_HARD_STOP_BYTES
             ),
             "effective_hard_stop_memory_gib": 30.0,
+            "zero_swap_observed": zero_swap_observed if sample_count else None,
+            "overall_process_tree_peak_bytes": peak_process_tree,
+            "overall_process_tree_peak_gib": peak_process_tree / 1024**3,
+            "overall_peak_swap_bytes": peak_swap,
+            "authority": "parent_process_tree_samples",
+        }
+    if formal_v10_side_packet_full_producer or formal_v10_side_packet_compression:
+        full_producer = formal_v10_side_packet_full_producer
+        method_name = (
+            V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_METHOD
+            if full_producer
+            else V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD
+        )
+        schema_name = (
+            V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_SCHEMA
+            if full_producer
+            else V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA
+        )
+        begin_stage = (
+            "v10_side_response_packet_full_producer_begin"
+            if full_producer
+            else "v10_side_response_packet_compression_begin"
+        )
+        end_stage = (
+            "v10_side_response_packet_full_producer_cleanup"
+            if full_producer
+            else "v10_side_response_packet_compression_released"
+        )
+        limit_gib = 60.0 if full_producer else 30.0
+        interval = _v5_h4_blr_candidate_interval_peak(
+            formal_stages_path,
+            formal_samples_path,
+            "bottom",
+            begin_stage=begin_stage,
+            end_stage=end_stage,
+            limit_gib=limit_gib,
+        )
+        worker_record_path = (
+            run_directory / "numerical_output" / "v3_v7_diagnostic.json"
+        )
+        worker_record_status = "not_available"
+        worker_contract_valid = False
+        worker_contract_reason = "not_checked"
+        worker_gate: bool | None = None
+        if worker_record_path.is_file():
+            try:
+                worker_record = json.loads(
+                    worker_record_path.read_text(encoding="utf-8")
+                )
+            except (OSError, json.JSONDecodeError):
+                worker_record_status = "parse_failed"
+                worker_contract_reason = "record_unreadable"
+            else:
+                identity_matches = (
+                    isinstance(worker_record, Mapping)
+                    and worker_record.get("schema") == schema_name
+                    and worker_record.get("method") == method_name
+                    and worker_record.get("source_sha")
+                    == getattr(plan, "source_sha", None)
+                )
+                inventory = worker_record.get("factor_inventory")
+                if full_producer:
+                    lifecycle_contract = (
+                        isinstance(inventory, Mapping)
+                        and inventory.get("exact_side_factor_count_ready") == 1
+                        and inventory.get("factor_count_after_cleanup") == 0
+                        and inventory.get("global_direct_factor_count") == 0
+                        and worker_record.get("selected_mode_packet_opened") is True
+                        and worker_record.get("exact_spool_opened") is True
+                        and worker_record.get("qep_count") == 0
+                    )
+                    worker_gate = worker_record.get("full_packet_eligibility_pass")
+                else:
+                    packet = worker_record.get("packet")
+                    lifecycle_contract = (
+                        isinstance(inventory, Mapping)
+                        and inventory.get("consumer_factor_count") == 0
+                        and inventory.get("global_direct_factor_count") == 0
+                        and inventory.get("nested_ksp_count") == 0
+                        and worker_record.get("selected_mode_packet_opened") is False
+                        and worker_record.get("exact_spool_opened") is False
+                        and worker_record.get("qep_count") == 0
+                        and worker_record.get("sgs_executed") is False
+                        and isinstance(packet, Mapping)
+                        and packet.get("released") is True
+                    )
+                if (
+                    identity_matches
+                    and lifecycle_contract
+                    and (not full_producer or isinstance(worker_gate, bool))
+                ):
+                    worker_record_status = "measured"
+                    worker_contract_valid = True
+                    worker_contract_reason = "validated"
+                else:
+                    worker_record_status = "contract_mismatch"
+                    worker_contract_reason = "identity_factor_packet_or_gate_mismatch"
+        interval_measured = interval.get("status") == "measured"
+        interval_pass = interval_measured and interval.get("pass") is True
+        swap_pass = sample_count > 0 and zero_swap_observed is True and peak_swap == 0
+        if not worker_contract_valid:
+            overall_status = (
+                "contract_mismatch"
+                if worker_record_status == "contract_mismatch"
+                else "not_available"
+            )
+            overall_pass = None
+        elif not interval_measured:
+            overall_status = "resource_interval_not_available"
+            overall_pass = None
+        elif not interval_pass:
+            overall_status = "resource_gate_failed"
+            overall_pass = False
+        elif not swap_pass:
+            overall_status = "swap_gate_failed"
+            overall_pass = False
+        elif full_producer and worker_gate is False:
+            overall_status = "full_packet_eligibility_failed"
+            overall_pass = False
+        else:
+            overall_status = (
+                "pass_full_producer_component"
+                if full_producer
+                else "pass_compression_component"
+            )
+            overall_pass = True
+        resource_authority[
+            "v10_h4_side_response_packet_full_producer_telemetry"
+            if full_producer
+            else "v10_h4_side_response_packet_compression_telemetry"
+        ] = {
+            "raw_marker_path": str(formal_markers_path),
+            "process_tree_samples_path": str(formal_samples_path),
+            "memory_stages_path": str(formal_stages_path),
+            "memory_object_ledger_path": str(formal_object_ledger_path),
+            "sample_count": sample_count,
+            "process_tree_sample_count": formal_written_sample_count,
+            "aligned_stage_count": formal_aligned_stage_count,
+            "stage_source": "launcher_marker_alignment",
+            "method": method_name,
+            "profile": schema_name,
+            "construction_interval_summary": (
+                interval if full_producer else {"status": "not_applicable"}
+            ),
+            "retained_interval_summary": (
+                {"status": "not_applicable"} if full_producer else interval
+            ),
+            "worker_record_path": str(worker_record_path),
+            "worker_record_status": worker_record_status,
+            "worker_record_contract_valid": worker_contract_valid,
+            "worker_record_contract_reason": worker_contract_reason,
+            "full_packet_eligibility_pass": worker_gate if full_producer else None,
+            "overall": {
+                "status": overall_status,
+                "pass": overall_pass,
+                "construction_pass": interval_pass if full_producer else None,
+                "retained_pass": None if full_producer else interval_pass,
+                "swap_pass": swap_pass,
+                "full_packet_eligibility_pass": worker_gate if full_producer else None,
+                "resource_gate": (
+                    "construction_pass_retained_not_applicable"
+                    if full_producer and interval_pass
+                    else "retained_interval_pass"
+                    if not full_producer and interval_pass
+                    else "construction_or_retained_failed_or_not_available"
+                ),
+            },
+            "gate_contract": {
+                "construction_peak_limit_gib": 60.0 if full_producer else None,
+                "retained_peak_limit_gib": None if full_producer else 30.0,
+                "retained_state": "not_applicable" if full_producer else "measured",
+                "swap_required": 0,
+                "exact_side_factor_count_ready": 1 if full_producer else 0,
+                "factor_count_after_cleanup": 0,
+                "consumer_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "nested_ksp_count": 0,
+                "selected_mode_packet_opened": full_producer,
+                "exact_spool_opened": full_producer,
+                "qep_count": 0,
+            },
+            "absolute_terminate_memory_bytes": (
+                V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_HARD_STOP_BYTES
+                if full_producer
+                else V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_HARD_STOP_BYTES
+            ),
+            "effective_hard_stop_memory_gib": limit_gib,
             "zero_swap_observed": zero_swap_observed if sample_count else None,
             "overall_process_tree_peak_bytes": peak_process_tree,
             "overall_process_tree_peak_gib": peak_process_tree / 1024**3,

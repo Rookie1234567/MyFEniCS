@@ -4817,7 +4817,7 @@ def test_v9_layer_supernode_run_task_finalizer_writes_record_and_ledger(
     assert main_record["telemetry"]["memory_object_ledger"]["status"] == ("completed")
 
 
-@pytest.mark.parametrize("route", ("producer", "consumer"))
+@pytest.mark.parametrize("route", ("producer", "consumer", "full", "compression"))
 def test_v10_side_response_routes_run_public_finalizer_with_ledger(
     tmp_path, monkeypatch, route
 ):
@@ -4826,12 +4826,20 @@ def test_v10_side_response_routes_run_public_finalizer_with_ledger(
     ).as_jsonable()
     run_directory = tmp_path / f"v10-{route}-run-task"
     record_path = run_directory / "numerical_output" / "v3_v7_diagnostic.json"
-    if route == "producer":
+    if route in {"producer", "full"}:
 
         def fake_route(*_args, **_kwargs):
             return {
-                "schema": orchestration.V10_H4_SIDE_RESPONSE_PACKET_PILOT_SCHEMA,
-                "method": orchestration.V10_H4_SIDE_RESPONSE_PACKET_PILOT_METHOD,
+                "schema": (
+                    orchestration.V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_SCHEMA
+                    if route == "full"
+                    else orchestration.V10_H4_SIDE_RESPONSE_PACKET_PILOT_SCHEMA
+                ),
+                "method": (
+                    orchestration.V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_METHOD
+                    if route == "full"
+                    else orchestration.V10_H4_SIDE_RESPONSE_PACKET_PILOT_METHOD
+                ),
                 "status": "producer_completed",
             }
 
@@ -4843,13 +4851,21 @@ def test_v10_side_response_routes_run_public_finalizer_with_ledger(
         selected_manifest = tmp_path / "selected-manifest.json"
         selected_manifest.write_text("{}", encoding="utf-8")
         route_kwargs = {
-            "v10_h4_side_response_packet_pilot": True,
-            "v10_h4_side_response_packet_pilot_exact_spool_root": (
-                tmp_path / "exact-spool"
-            ),
-            "v10_h4_side_response_packet_pilot_output_root": (
-                tmp_path / "packet-output"
-            ),
+            (
+                "v10_h4_side_response_packet_full_producer"
+                if route == "full"
+                else "v10_h4_side_response_packet_pilot"
+            ): True,
+            (
+                "v10_h4_side_response_packet_full_producer_exact_spool_root"
+                if route == "full"
+                else "v10_h4_side_response_packet_pilot_exact_spool_root"
+            ): (tmp_path / "exact-spool"),
+            (
+                "v10_h4_side_response_packet_full_producer_output_root"
+                if route == "full"
+                else "v10_h4_side_response_packet_pilot_output_root"
+            ): (tmp_path / "packet-output"),
             "selected_mode_packet_manifest": selected_manifest,
             "selected_mode_packet_identity": {
                 "source_sha": "b" * 40,
@@ -4859,7 +4875,7 @@ def test_v10_side_response_routes_run_public_finalizer_with_ledger(
             "selected_mode_packet_manifest_sha256": "d" * 64,
         }
         expected_status = "producer_completed"
-    else:
+    elif route == "consumer":
 
         def fake_route(*_args, **_kwargs):
             return {
@@ -4891,6 +4907,30 @@ def test_v10_side_response_routes_run_public_finalizer_with_ledger(
             ).hexdigest(),
         }
         expected_status = "consumer_completed"
+    else:
+
+        def fake_route(*_args, **_kwargs):
+            return {
+                "schema": orchestration.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA,
+                "method": orchestration.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD,
+                "status": "compression_completed",
+            }
+
+        monkeypatch.setattr(
+            orchestration,
+            "run_v10_h4_side_response_packet_compression",
+            fake_route,
+        )
+        manifest = tmp_path / "compression-manifest.json"
+        manifest.write_text("{}", encoding="utf-8")
+        route_kwargs = {
+            "v10_h4_side_response_packet_compression": True,
+            "v10_h4_side_response_packet_compression_manifest": manifest,
+            "v10_h4_side_response_packet_compression_manifest_sha256": hashlib.sha256(
+                manifest.read_bytes()
+            ).hexdigest(),
+        }
+        expected_status = "compression_completed"
 
     result = orchestration.run_task039_v3_7_diagnostic(
         payload,
@@ -6277,6 +6317,16 @@ def test_v3_7_boot_markers_bound_setup_sentinel_failure(tmp_path) -> None:
             {"v10_h4_side_response_packet_consumer": True},
             orchestration.V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_PROFILE_ID,
             "V10-6 consumer requires",
+        ),
+        (
+            {"v10_h4_side_response_packet_full_producer": True},
+            orchestration.V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_PROFILE_ID,
+            "V10 full producer requires",
+        ),
+        (
+            {"v10_h4_side_response_packet_compression": True},
+            orchestration.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PROFILE_ID,
+            "V10 compression requires",
         ),
     ),
 )

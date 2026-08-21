@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import shutil
 from pathlib import Path
 
@@ -11,8 +12,12 @@ from mpi4py import MPI
 
 import benchmarks.task039_v3_7_orchestration as orchestration
 from src.solvers.hybrid_side_response_packet import (
+    ExactSideResponsePacket,
     V10_SIDE_RESPONSE_PACKET_COLUMNS,
     V10_SIDE_RESPONSE_PACKET_FULL_COLUMNS,
+    OwnerRowResponsePacketWriter,
+    compress_owner_row_response_packet,
+    load_full_side_response_packet,
     load_exact_side_response_packet,
     projected_response_payload_bytes,
     projected_response_wall_seconds,
@@ -43,6 +48,14 @@ def test_v10_side_response_schedule_and_projection_contract() -> None:
         11, V10_SIDE_RESPONSE_PACKET_FULL_COLUMNS
     ) == (11 * V10_SIDE_RESPONSE_PACKET_FULL_COLUMNS * 16)
     assert projected_response_wall_seconds(16.0) == pytest.approx(961.0)
+    holdout = tuple(orchestration.V10_SIDE_RESPONSE_PACKET_FULL_HOLDOUT_COLUMNS)
+    full_schedule = orchestration.v10_side_response_packet_full_schedule()
+    assert tuple(item["column"] for item in full_schedule) == tuple(range(961))
+    assert (
+        tuple(item["column"] for item in full_schedule if item["column"] in holdout)
+        == holdout
+    )
+    assert full_schedule[-1]["label"] == "physical_side_rhs"
 
 
 def test_v10_side_response_requires_resolved_64_hex_provenance(tmp_path: Path) -> None:
@@ -222,3 +235,167 @@ def test_v10_side_response_consumer_marks_begin_and_returns_released_packet(
     assert result["selected_mode_packet_opened"] is False
     assert result["qep_count"] == 0
     assert result["sgs_executed"] is False
+
+
+def test_v10_side_response_compression_uses_global_tsqr_projection() -> None:
+    comm = MPI.COMM_WORLD
+    local_rows = 4
+    first = comm.rank * local_rows
+    values = np.zeros(
+        (local_rows, V10_SIDE_RESPONSE_PACKET_FULL_COLUMNS),
+        dtype=np.complex128,
+        order="F",
+    )
+    for local_index in range(local_rows):
+        global_index = first + local_index
+        values[local_index, :960] = (global_index + 1.0) + 1j * (global_index + 2.0)
+    train = tuple(
+        index
+        for index in range(960)
+        if index not in {0, 1, 240, 267, 479, 480, 481, 720, 746, 959}
+    )
+    holdout = tuple(index for index in (0, 1, 240, 267, 479, 480, 481, 720, 746, 959))
+    packet = ExactSideResponsePacket(
+        values,
+        {
+            "training_column_indices": list(train),
+            "holdout_column_indices": list(holdout),
+            "zero_column_index": 960,
+        },
+        Path("tiny-full-packet-manifest.json"),
+        {"released": False},
+    )
+    result = compress_owner_row_response_packet(
+        packet,
+        training_column_indices=train,
+        holdout_column_indices=holdout,
+        zero_column_index=960,
+        comm=comm,
+    )
+    assert result["zero_map_pass"] is True
+    assert result["zero_output_norm"] <= 1.0e-13
+    assert result["numerical_rank"] == 1
+    assert result["gram_or_normal_equations_used"] is False
+    assert result["one_tsqr_one_small_r_svd"] is True
+    assert len(result["rank_reports"]) == 4
+    assert all(report["effective_rank"] == 1 for report in result["rank_reports"])
+    assert all(
+        report["holdout_worst_projection_error"] is not None
+        and report["holdout_worst_projection_error"] <= 1.0e-12
+        for report in result["rank_reports"]
+    )
+    assert result["tsqr_reconstruction_error"] <= 1.0e-12
+    assert all(
+        report["training_optimal_frobenius_error"] <= 1.0e-12
+        and report["q_orthogonality_error"] <= 1.0e-12
+        for report in result["rank_reports"]
+    )
+    global_rows = local_rows * comm.size
+    expected_tolerance = (
+        np.finfo(float).eps
+        * max(global_rows, len(train))
+        * max(float(result["singular_values"][0]), 1.0)
+    )
+    assert result["svd_tolerance"] == pytest.approx(expected_tolerance)
+    packet.destroy()
+
+
+def test_v10_full_owner_row_writer_loader_round_trip(tmp_path: Path) -> None:
+    comm = MPI.COMM_WORLD
+    local_rows = 2
+    global_rows = local_rows * comm.size
+    first = local_rows * comm.rank
+    root = Path(comm.bcast(str(tmp_path / f"full-packet-{comm.size}"), root=0))
+    if comm.rank == 0:
+        shutil.rmtree(root, ignore_errors=True)
+    comm.barrier()
+    holdout = tuple(orchestration.V10_SIDE_RESPONSE_PACKET_FULL_HOLDOUT_COLUMNS)
+    train = tuple(index for index in range(960) if index not in holdout)
+    records = [
+        {
+            "label": f"modal_{index}" if index < 960 else "physical_side_rhs",
+            "kind": "selected_modal" if index < 960 else "physical_zero_validation",
+        }
+        for index in range(V10_SIDE_RESPONSE_PACKET_FULL_COLUMNS)
+    ]
+    factor_identity = {
+        "side": "bottom",
+        "action": "research_exact_side_lu",
+        "factor_only_storage": True,
+        "qualification_scope": "tiny_full_response",
+        "profile_id": "tiny_full_response",
+    }
+    values = np.empty(
+        (local_rows, V10_SIDE_RESPONSE_PACKET_FULL_COLUMNS),
+        dtype=np.complex128,
+        order="F",
+    )
+    for row in range(local_rows):
+        global_row = first + row
+        values[row, :] = (
+            global_row
+            + 1.0
+            + 1j * (np.arange(V10_SIDE_RESPONSE_PACKET_FULL_COLUMNS) + 2.0)
+        )
+    values[:, 960] = 0.0
+    expected = values.copy(order="F")
+    writer = OwnerRowResponsePacketWriter(
+        root,
+        global_rows=global_rows,
+        ownership_range=(first, first + local_rows),
+        column_records=records,
+        source_sha="a" * 40,
+        input_sha256="b" * 64,
+        physical_model_sha256="c" * 64,
+        comm=comm,
+        training_column_indices=train,
+        holdout_column_indices=holdout,
+        zero_column_index=960,
+        identity={"factor_identity": factor_identity},
+    )
+    for column in range(V10_SIDE_RESPONSE_PACKET_FULL_COLUMNS):
+        writer.write_column(column, values[:, column])
+    written = writer.finalize()
+    assert writer._closed is True
+    assert writer._finalized is True
+    manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
+    assert len(manifest["training_column_indices"]) == 950
+    assert len(manifest["holdout_column_indices"]) == 10
+    assert manifest["zero_column_index"] == 960
+    assert set(manifest["training_column_indices"]) | set(
+        manifest["holdout_column_indices"]
+    ) == set(range(960))
+    assert set(manifest["training_column_indices"]).isdisjoint(
+        manifest["holdout_column_indices"]
+    )
+    assert manifest["coverage"]["exact"] is True
+    assert manifest["provenance"]["factor_identity"] == factor_identity
+    assert len(manifest["shards"]) == comm.size
+    for shard in manifest["shards"]:
+        assert shard["shape"][1] == V10_SIDE_RESPONSE_PACKET_FULL_COLUMNS
+        assert shard["dtype"] == "complex128"
+        assert len(shard["file_sha256"]) == 64
+    packet = load_full_side_response_packet(
+        written["manifest_path"],
+        expected_manifest_sha256=written["manifest_sha256"],
+        expected_provenance={
+            "source_sha": "a" * 40,
+            "input_sha256": "b" * 64,
+            "physical_model_sha256": "c" * 64,
+            "factor_identity": factor_identity,
+        },
+        global_rows=global_rows,
+        ownership_range=(first, first + local_rows),
+        comm=comm,
+    )
+    np.testing.assert_array_equal(packet.local_values, expected)
+    assert packet.local_values.flags.writeable is False
+    assert packet.manifest["provenance"]["source_sha"] == "a" * 40
+    assert packet.manifest["provenance"]["input_sha256"] == "b" * 64
+    assert packet.diagnostics["owner_row_coverage_exact"] is True
+    assert packet.diagnostics["ownership_mode"] == "producer_owner_rows_mmap"
+    packet.destroy()
+    assert packet.diagnostics["released"] is True
+    comm.barrier()
+    if comm.rank == 0:
+        shutil.rmtree(root, ignore_errors=True)

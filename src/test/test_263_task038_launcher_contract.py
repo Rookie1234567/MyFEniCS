@@ -1578,6 +1578,121 @@ def test_v10_side_response_consumer_uses_retained_interval_authority(tmp_path):
     assert telemetry["gate_contract"]["retained_peak_limit_gib"] == 30.0
 
 
+@pytest.mark.parametrize("route", ("full", "compression"))
+def test_v10_side_response_full_and_compression_launcher_contracts(tmp_path, route):
+    specification = replace(
+        load_and_resolve(TASK039_V4_H4_ITERATIVE),
+        expected_output_parent=tmp_path / "results",
+    )
+    run_directory = tmp_path / f"v10-side-response-{route}"
+    diagnostic_directory = run_directory / "numerical_output"
+    diagnostic_directory.mkdir(parents=True)
+    source_sha = "a" * 40
+    if route == "full":
+        method = launcher.V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_METHOD
+        schema = launcher.V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_SCHEMA
+        record = {
+            "schema": schema,
+            "method": method,
+            "source_sha": source_sha,
+            "full_packet_eligibility_pass": True,
+            "factor_inventory": {
+                "exact_side_factor_count_ready": 1,
+                "factor_count_after_cleanup": 0,
+                "global_direct_factor_count": 0,
+            },
+            "selected_mode_packet_opened": True,
+            "exact_spool_opened": True,
+            "qep_count": 0,
+        }
+        stages = (
+            "v10_side_response_packet_full_producer_begin",
+            "v10_side_response_packet_full_producer_cleanup",
+        )
+    else:
+        method = launcher.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD
+        schema = launcher.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA
+        record = {
+            "schema": schema,
+            "method": method,
+            "source_sha": source_sha,
+            "packet": {"released": True},
+            "factor_inventory": {
+                "consumer_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "nested_ksp_count": 0,
+            },
+            "selected_mode_packet_opened": False,
+            "exact_spool_opened": False,
+            "qep_count": 0,
+            "sgs_executed": False,
+        }
+        stages = (
+            "v10_side_response_packet_compression_begin",
+            "v10_side_response_packet_compression_released",
+        )
+    (diagnostic_directory / "v3_v7_diagnostic.json").write_text(
+        json.dumps(record), encoding="utf-8"
+    )
+    marker_path = diagnostic_directory / "memory_stage_markers.raw.jsonl"
+    sample_calls = 0
+
+    def popen(_argv, **_kwargs):
+        return _SequenceProcess(polls_before_exit=2)
+
+    def sample_factory(_pid):
+        nonlocal sample_calls
+        sample_calls += 1
+        if sample_calls <= len(stages):
+            with marker_path.open("a", encoding="utf-8") as stream:
+                stream.write(
+                    json.dumps(
+                        {
+                            "stage": stages[sample_calls - 1],
+                            "status": "end",
+                            "elapsed_seconds": float(sample_calls),
+                        }
+                    )
+                    + "\n"
+                )
+        return _authority(memory=10 * 2**30, swap=0)
+
+    plan = SimpleNamespace(
+        argv=("/opt/fake-worker",),
+        method=method,
+        source_sha=source_sha,
+        contract_probe=False,
+        task039_trace_audit=False,
+    )
+    result = launcher._run_worker(
+        plan,
+        specification,
+        run_directory,
+        popen_factory=popen,
+        sample_factory=sample_factory,
+        terminate_factory=lambda _process: {"requested": True},
+        monotonic=iter(float(index) for index in range(20)).__next__,
+        sleep=lambda _seconds: None,
+        poll_interval=0.25,
+    )
+    key = (
+        "v10_h4_side_response_packet_full_producer_telemetry"
+        if route == "full"
+        else "v10_h4_side_response_packet_compression_telemetry"
+    )
+    telemetry = result["resource_authority"][key]
+    assert telemetry["worker_record_contract_valid"] is True
+    assert telemetry["overall"]["pass"] is True
+    if route == "full":
+        assert telemetry["construction_interval_summary"]["pass"] is True
+        assert telemetry["retained_interval_summary"]["status"] == "not_applicable"
+        assert telemetry["absolute_terminate_memory_bytes"] == 60 * 2**30
+    else:
+        assert telemetry["construction_interval_summary"]["status"] == "not_applicable"
+        assert telemetry["retained_interval_summary"]["pass"] is True
+        assert telemetry["absolute_terminate_memory_bytes"] == 30 * 2**30
+
+
 def test_task039_h5_critical_checkpoint_does_not_stop_before_absolute_hard_stop(
     monkeypatch, tmp_path
 ):
