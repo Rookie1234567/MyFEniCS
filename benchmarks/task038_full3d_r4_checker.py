@@ -1,4 +1,4 @@
-"""Read-only checker for the compact Candidate-A R4 record.
+"""Read-only checker for compact Candidate-A/C R4 records.
 
 This module reads canonical packet manifests and raw ledger fields only.  It
 does not import the R4 worker, a production solver, PETSc, or MPI.  The
@@ -24,6 +24,9 @@ from benchmarks.canonical_vector_artifacts import (
 
 
 R4_SCHEMA = "task038.full3d.iterative.r4.candidate-a-record.v1"
+R4_C_SCHEMA = "task038.full3d.iterative.r4.candidate-c-record.v1"
+R4_C_TRANSMISSION = "fixed_second_order_local_impedance_v1"
+R4_C_WEAK_FORM = "per_facet_broken_tangential_derivative_action"
 R4_SOURCE_NAMES = (
     "physical_rhs",
     "gradient",
@@ -54,6 +57,7 @@ R4_SOURCE_GENERATION_FORMULAS = {
 EXPECTED_TEMPLATE_SHA256 = "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41"
 EXPECTED_RESOLVED_SHA256 = "78dc49b3a7ae212dec6374fde09eaaa231c131ce64790202da062b3ca2b09aad"
 EXPECTED_MODE_MANIFEST_SHA256 = "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
+EXPECTED_K0 = 2.0 * np.pi / 13.5
 R3_LONG_TAIL_MANIFEST_SHA256 = "62c7824e1032b1a14078d158b0e403b9087dc862bf00386fdce08535e4d76dce"
 R3_LONG_TAIL_SOURCE_SHA = "2c8fca90c7300b85b30021081868b699c0b306d2"
 R3_LONG_TAIL_SOURCE_NAME = "CURRENT_RECOMPUTED_RESIDUAL_AT_HISTORICAL_W5_STATE"
@@ -62,6 +66,15 @@ WATCHDOG_COMPACT_SCHEMA = "task038.t5.external-process-tree-compact.v1"
 WATCHDOG_PROCESS_TREE_CEILING_BYTES = 6 * 1024**3
 R4_PROCESS_TREE_CEILING_BYTES = 6_000_000_000
 WATCHDOG_HARD_STOP_BYTES = 12 * 1024**3
+
+
+def _record_candidate(record: Mapping[str, Any]) -> str | None:
+    schema = record.get("schema")
+    if schema == R4_SCHEMA:
+        return "A"
+    if schema == R4_C_SCHEMA:
+        return "C"
+    return None
 
 
 def _packets(raw_dir: Path, descriptor: Mapping[str, Any]) -> tuple[tuple[Any, ...], ...]:
@@ -257,6 +270,204 @@ def _check_source_binding(record: Mapping[str, Any]) -> list[str]:
     return errors
 
 
+def _complex_pair(value: Any) -> complex | None:
+    if not isinstance(value, (list, tuple)) or len(value) != 2:
+        return None
+    if any(isinstance(item, bool) or not isinstance(item, (int, float)) for item in value):
+        return None
+    result = complex(float(value[0]), float(value[1]))
+    return result if np.isfinite(result.real) and np.isfinite(result.imag) else None
+
+
+def _canonical_class_key(value: Any) -> tuple[float, ...] | None:
+    if not isinstance(value, list) or len(value) != 8:
+        return None
+    if any(isinstance(item, bool) or not isinstance(item, (int, float)) for item in value):
+        return None
+    values = tuple(float(item) for item in value)
+    return values if all(np.isfinite(item) for item in values) else None
+
+
+def _check_candidate_c_audit(record: Mapping[str, Any]) -> list[str]:
+    """Recompute Candidate-C's frozen coefficients from its compact facts."""
+
+    errors: list[str] = []
+    if _record_candidate(record) != "C" or record.get("candidate") != "C":
+        errors.append("Candidate-C record identity is missing")
+    identity = record.get("candidate_identity")
+    if not isinstance(identity, Mapping):
+        return errors + ["Candidate-C identity is missing"]
+    for key, expected in (
+        ("candidate", "C"),
+        ("schema", R4_C_SCHEMA),
+        ("transmission", R4_C_TRANSMISSION),
+    ):
+        if identity.get(key) != expected:
+            errors.append(f"candidate_identity.{key} is not frozen for Candidate C")
+    k0_value = identity.get("k0")
+    try:
+        k0 = float(k0_value)
+    except (TypeError, ValueError):
+        k0 = float("nan")
+    if not np.isfinite(k0) or not np.isclose(k0, EXPECTED_K0, rtol=0.0, atol=1.0e-14):
+        errors.append("candidate_identity.k0 does not match wavelength_nm=13.5")
+
+    transmission = record.get("transmission_audit")
+    candidate_audit = record.get("candidate_audit")
+    if not isinstance(transmission, Mapping):
+        errors.append("Candidate-C transmission_audit is missing")
+        return errors
+    if not isinstance(candidate_audit, Mapping):
+        errors.append("Candidate-C candidate_audit is missing")
+    elif candidate_audit.get("transmission_audit") != transmission:
+        errors.append("Candidate-C sweep and transmission audits differ")
+
+    expected_fields = {
+        "schema": "task038.fullspace-fixed-second-order-impedance.v1",
+        "candidate": "C",
+        "transmission": R4_C_TRANSMISSION,
+        "operator_name": "fixed_second_order_local_impedance",
+        "exact_local_dtn": False,
+        "weak_form": R4_C_WEAK_FORM,
+        "weak_form_support": "interface_facet_dS_material_pair_tags_only",
+        "derivative_semantics": "per_facet_broken_tangential_derivative",
+        "forward_neighbor": "upper",
+        "backward_neighbor": "lower",
+        "parameters_frozen_before_rho": True,
+        "spectral_threshold": "not_used",
+        "local_patch_range": "not_used",
+        "local_krylov_steps": 0,
+        "factor_count": 0,
+        "per_cell_retained_tensor_count": 0,
+        "global_aij_materialized": False,
+        "global_schur_materialized": False,
+        "dense_interface_matrix_materialized": False,
+        "growing_slab_factor_materialized": False,
+        "numeric_allgather": False,
+        "phase_application": "finalized_floquet_mpc_once",
+        "slave_row_identity": False,
+    }
+    for key, expected in expected_fields.items():
+        if transmission.get(key) != expected:
+            errors.append(f"transmission_audit.{key} is not independently qualified")
+
+    action_audits = transmission.get("action_audits")
+    if not isinstance(action_audits, Mapping) or set(action_audits) != {"forward", "backward"}:
+        errors.append("Candidate-C action audits are not exactly forward/backward")
+    else:
+        action_false_fields = (
+            "global_matrix_materialized",
+            "global_constraint_matrix_materialized",
+            "global_condensed_schur_materialized",
+            "cell_schur_matrix_materialized",
+            "slab_matrix_materialized",
+            "numeric_allgather",
+        )
+        for direction, action_audit in action_audits.items():
+            if not isinstance(action_audit, Mapping):
+                errors.append(f"Candidate-C {direction} action audit is not an object")
+                continue
+            if action_audit.get("slave_row_identity") is not False:
+                errors.append(f"Candidate-C {direction} action enables slave identity")
+            if action_audit.get("phase_application") != "finalized_floquet_mpc_once":
+                errors.append(f"Candidate-C {direction} action phase audit is missing")
+            for field in action_false_fields:
+                if action_audit.get(field) is not False:
+                    errors.append(f"Candidate-C {direction} action {field} is not false")
+            if action_audit.get("factor_count") != 0:
+                errors.append(f"Candidate-C {direction} action factor_count is not zero")
+
+    manifest = transmission.get("class_manifest")
+    try:
+        class_count = int(transmission.get("class_count", -1))
+    except (TypeError, ValueError):
+        class_count = -1
+    if class_count != 2 or not isinstance(manifest, list) or len(manifest) != 4:
+        errors.append("Candidate-C manifest is not exactly two classes by two directions")
+        manifest = manifest if isinstance(manifest, list) else []
+    class_keys: set[tuple[float, ...]] = set()
+    classifications = {
+        row.get("classification") for row in manifest if isinstance(row, Mapping)
+    }
+    for row in manifest:
+        if isinstance(row, Mapping):
+            class_key = _canonical_class_key(row.get("class_key"))
+            if class_key is None:
+                errors.append("Candidate-C class_key is not a finite production 8-number list")
+            else:
+                class_keys.add(class_key)
+    if len(class_keys) != 2:
+        errors.append("Candidate-C manifest does not contain two material-pair classes")
+    if classifications != {"homogeneous", "nonhomogeneous"}:
+        errors.append("Candidate-C manifest does not record mixed homogeneous classes")
+    seen: set[tuple[tuple[float, ...], Any]] = set()
+    for row in manifest:
+        if not isinstance(row, Mapping):
+            errors.append("Candidate-C manifest row is not an object")
+            continue
+        class_key = _canonical_class_key(row.get("class_key"))
+        if class_key is not None:
+            key = (class_key, row.get("direction"))
+            if key in seen:
+                errors.append("Candidate-C manifest contains duplicate class/direction rows")
+            seen.add(key)
+        direction = row.get("direction")
+        expected_side = "upper" if direction == "forward" else "lower" if direction == "backward" else None
+        if expected_side is None or row.get("neighbor_side") != expected_side:
+            errors.append("Candidate-C manifest direction/neighbor side is inconsistent")
+        if not isinstance(row.get("lower_material_tag"), int) or isinstance(row.get("lower_material_tag"), bool):
+            errors.append("Candidate-C lower material tag is not an integer")
+        if not isinstance(row.get("upper_material_tag"), int) or isinstance(row.get("upper_material_tag"), bool):
+            errors.append("Candidate-C upper material tag is not an integer")
+        neighbor_n = _complex_pair(row.get("neighbor_n"))
+        if neighbor_n is None or neighbor_n == 0j or not np.isfinite(k0):
+            errors.append("Candidate-C neighbor refractive index is invalid")
+            continue
+        expected_coefficients = (
+            -1j * k0 * neighbor_n,
+            1j * k0 / (2.0 * neighbor_n),
+            -1j * k0 / (2.0 * neighbor_n),
+            -1j * k0 / neighbor_n,
+        )
+        for field, expected in zip(
+            ("y0", "a_s", "a_p", "d"), expected_coefficients, strict=True
+        ):
+            observed = _complex_pair(row.get(field))
+            if observed is None or not np.isclose(
+                observed, expected, rtol=0.0, atol=1.0e-13
+            ):
+                errors.append(f"Candidate-C manifest coefficient {field} is not formula-bound")
+
+    manifest_bytes = json.dumps(
+        manifest, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    if transmission.get("class_manifest_serialized_bytes") != len(manifest_bytes):
+        errors.append("Candidate-C manifest byte count is not raw-derived")
+    if transmission.get("class_manifest_sha256") != hashlib.sha256(manifest_bytes).hexdigest():
+        errors.append("Candidate-C manifest SHA is not raw-derived")
+
+    payload = transmission.get("retained_numeric_payload")
+    expected_count = 2 * 2 * 3
+    if not isinstance(payload, Mapping):
+        errors.append("Candidate-C retained numeric payload is missing")
+    else:
+        if payload.get("fem_constant_complex_scalar_count") != expected_count:
+            errors.append("Candidate-C constant count is not two classes by two directions")
+        if payload.get("fem_constant_complex_scalar_bytes") != 16:
+            errors.append("Candidate-C scalar storage is not complex128")
+        if payload.get("fem_constant_values_bytes") != 192:
+            errors.append("Candidate-C retained scalar payload is not the 192-byte formula")
+        if payload.get("a_p_storage") != "derived_from_a_s_plus_d_not_retained_as_constant":
+            errors.append("Candidate-C a_p retention policy is not explicit")
+        if payload.get("scaling") != "O(material_pair_class_count)":
+            errors.append("Candidate-C payload scaling is not class-bounded")
+    if transmission.get("retained_numeric_payload_bytes") != 192:
+        errors.append("Candidate-C retained numeric payload bytes are not 192")
+    if transmission.get("retained_numeric_payload_scaling") != "O(material_pair_class_count)":
+        errors.append("Candidate-C retained payload scaling is not class-bounded")
+    return errors
+
+
 def _check_watchdog(
     raw_path: Path | None,
     compact_path: Path | None,
@@ -309,6 +520,8 @@ def _check_watchdog(
         "--degree": "6",
         "--expected-mpi-size": str(mpi_size),
     }
+    if _record_candidate(record) == "C":
+        required_options["--candidate"] = "C"
     for option, expected in required_options.items():
         if _command_option_value(command, option) != expected:
             errors.append(f"watchdog command is not bound for {option}")
@@ -410,6 +623,7 @@ def _check_watchdog(
 
 def _check_ledger(record: Mapping[str, Any]) -> list[str]:
     errors: list[str] = []
+    candidate = _record_candidate(record)
     audit = record.get("candidate_audit")
     if not isinstance(audit, Mapping):
         return ["candidate_audit is missing"]
@@ -418,8 +632,12 @@ def _check_ledger(record: Mapping[str, Any]) -> list[str]:
         "slab_count": 2,
         "forward_order": [0, 1],
         "backward_order": [1, 0],
-        "transmission": "first_order_impedance_robin_v1",
-        "transmission_q": "-i*k0*n_side",
+        "transmission": (
+            R4_C_TRANSMISSION if candidate == "C" else "first_order_impedance_robin_v1"
+        ),
+        "transmission_q": (
+            "fixed y0=-i*k0*n_neighbor" if candidate == "C" else "-i*k0*n_side"
+        ),
         "local_ksp_count": 2,
         "local_operator_type": "PETSc.MatShell",
         "global_ksp_created": False,
@@ -632,8 +850,13 @@ def check_record(
 ) -> dict[str, Any]:
     record = json.loads(record_path.read_text(encoding="utf-8"))
     errors: list[str] = []
-    if record.get("schema") != R4_SCHEMA:
+    candidate = _record_candidate(record)
+    if candidate is None:
         errors.append("record schema is unsupported")
+    elif candidate == "C":
+        errors.extend(_check_candidate_c_audit(record))
+    elif record.get("candidate") not in (None, "A"):
+        errors.append("Candidate-A record declares a different candidate")
     source_name = record.get("source_name")
     if source_name not in R4_SOURCE_NAMES:
         errors.append("source_name is not one of the frozen five sources")
@@ -720,7 +943,12 @@ def check_record(
         and arithmetic.get("contraction_pass") is True
     )
     return {
-        "schema": "task038.full3d.iterative.r4.candidate-a-check.v1",
+        "schema": (
+            "task038.full3d.iterative.r4.candidate-c-check.v1"
+            if candidate == "C"
+            else "task038.full3d.iterative.r4.candidate-a-check.v1"
+        ),
+        "candidate": candidate or "unknown",
         "record": str(record_path),
         "source_name": source_name,
         "numeric_pass": numeric_pass,
@@ -746,6 +974,10 @@ def check_pair(
 
     left = json.loads(left_path.read_text(encoding="utf-8"))
     right = json.loads(right_path.read_text(encoding="utf-8"))
+    left_candidate = _record_candidate(left)
+    right_candidate = _record_candidate(right)
+    if left_candidate != right_candidate:
+        return {"status": "FAIL", "errors": ["MPI pair candidates differ"]}
     if left.get("source_name") != right.get("source_name"):
         return {"status": "FAIL", "errors": ["MPI pair source names differ"]}
     if {left.get("mpi_size"), right.get("mpi_size")} != {1, 2}:
@@ -780,7 +1012,12 @@ def check_pair(
         )
     passed = all(item["pass"] for item in comparisons.values())
     return {
-        "schema": "task038.full3d.iterative.r4.candidate-a-pair-check.v1",
+        "schema": (
+            "task038.full3d.iterative.r4.candidate-c-pair-check.v1"
+            if left_candidate == "C"
+            else "task038.full3d.iterative.r4.candidate-a-pair-check.v1"
+        ),
+        "candidate": left_candidate or "unknown",
         "status": "PASS" if passed else "FAIL",
         "comparisons": comparisons,
         "errors": [] if passed else ["one or more canonical MPI comparisons failed"],
@@ -816,9 +1053,18 @@ def check_aggregate(
             "status": "FAIL",
             "errors": ["aggregate requires five MPI1/MPI2 watchdog raw+compact pairs"],
         }
+    left_payloads = [json.loads(path.read_text(encoding="utf-8")) for path in left]
+    right_payloads = [json.loads(path.read_text(encoding="utf-8")) for path in right]
+    candidates = {
+        _record_candidate(payload)
+        for payload in (*left_payloads, *right_payloads)
+    }
     left_names = [json.loads(path.read_text(encoding="utf-8")).get("source_name") for path in left]
     right_names = [json.loads(path.read_text(encoding="utf-8")).get("source_name") for path in right]
     errors: list[str] = []
+    if candidates != {"A"} and candidates != {"C"}:
+        errors.append("aggregate mixes Candidate-A/C or has an unsupported schema")
+    aggregate_candidate = next(iter(candidates)) if len(candidates) == 1 else "unknown"
     if set(left_names) != expected or set(right_names) != expected or len(set(left_names)) != 5 or len(set(right_names)) != 5:
         errors.append("aggregate source inventory is not exactly the frozen five")
     if (
@@ -863,7 +1109,12 @@ def check_aggregate(
             if pair.get("status") != "PASS":
                 errors.append(f"{name} MPI pair check is not PASS")
     return {
-        "schema": "task038.full3d.iterative.r4.candidate-a-aggregate.v1",
+        "schema": (
+            "task038.full3d.iterative.r4.candidate-c-aggregate.v1"
+            if aggregate_candidate == "C"
+            else "task038.full3d.iterative.r4.candidate-a-aggregate.v1"
+        ),
+        "candidate": aggregate_candidate,
         "status": "PASS" if not errors else "FAIL",
         "individuals": individuals,
         "pairs": pairs,

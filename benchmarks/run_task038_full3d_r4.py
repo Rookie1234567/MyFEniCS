@@ -28,6 +28,8 @@ from benchmarks.canonical_vector_artifacts import (
 
 
 R4_SCHEMA = "task038.full3d.iterative.r4.candidate-a-record.v1"
+R4_C_SCHEMA = "task038.full3d.iterative.r4.candidate-c-record.v1"
+R4_C_TRANSMISSION = "fixed_second_order_local_impedance_v1"
 R4_PROFILE = "full3d_scalable_v1"
 R4_SOURCE_NAMES = (
     "physical_rhs",
@@ -279,6 +281,7 @@ def _build_case(root: Path, args: argparse.Namespace):
     )
     from src.solvers.fullspace_sweep import (
         build_candidate_a,
+        build_candidate_c,
         build_fullspace_slab_plan,
         build_slab_volume_actions,
         candidate_a_audit,
@@ -308,9 +311,18 @@ def _build_case(root: Path, args: argparse.Namespace):
         bilinear, raw_space, mpc=floquet_data.mpc
     )
     physical_action = FullspacePhysicalAction(volume_action, dtn_action)
-    transmission = FirstOrderImpedanceTransmission(
-        space, topology, mpc=floquet_data.mpc
-    )
+    if args.candidate == "A":
+        transmission = FirstOrderImpedanceTransmission(
+            space, topology, mpc=floquet_data.mpc
+        )
+    else:
+        from src.solvers.fullspace_second_order_impedance import (
+            FixedSecondOrderLocalImpedance,
+        )
+
+        transmission = FixedSecondOrderLocalImpedance(
+            space, topology, mpc=floquet_data.mpc
+        )
     plan = build_fullspace_slab_plan(topology)
     slab_volume_actions = build_slab_volume_actions(
         plan,
@@ -320,13 +332,22 @@ def _build_case(root: Path, args: argparse.Namespace):
         floquet_data.mpc,
         cfg,
     )
-    sweep = build_candidate_a(
-        plan,
-        slab_volume_actions,
-        dtn_action,
-        transmission,
-        physical_action,
-    )
+    if args.candidate == "A":
+        sweep = build_candidate_a(
+            plan,
+            slab_volume_actions,
+            dtn_action,
+            transmission,
+            physical_action,
+        )
+    else:
+        sweep = build_candidate_c(
+            plan,
+            slab_volume_actions,
+            dtn_action,
+            transmission,
+            physical_action,
+        )
     base = _assemble_mpc_vector(
         _incident_top_traction_form(raw_space, mesh_data, cfg),
         floquet_data.mpc,
@@ -379,7 +400,9 @@ def _build_case(root: Path, args: argparse.Namespace):
         "source": source,
         "source_field": source_field,
         "source_generation_apply_count": source_generation_apply_count,
-        "candidate_audit": candidate_a_audit(),
+        "candidate_audit": candidate_a_audit() if args.candidate == "A" else None,
+        "candidate": args.candidate,
+        "transmission_audit": dict(transmission.audit),
     }
 
 
@@ -425,7 +448,7 @@ def _write_case(root: Path, args: argparse.Namespace) -> dict[str, Any]:
             "repeat_r_new": _write_packet_artifact(args.raw_dir, "repeat_r_new", repeat_packets, repeat_audit, "full_fe_dual", mpi),
         }
         record = {
-            "schema": R4_SCHEMA,
+            "schema": R4_SCHEMA if args.candidate == "A" else R4_C_SCHEMA,
             "source_name": args.source,
             "source": {
                 "name": args.source,
@@ -475,8 +498,27 @@ def _write_case(root: Path, args: argparse.Namespace) -> dict[str, Any]:
                 "rank_max_current_swap_bytes": int(mpi.allreduce(_swap_bytes(), op=__import__("mpi4py").MPI.MAX)),
             },
             "operator_audit": _jsonable(dict(comm["physical_action"].audit)),
-            "candidate_audit": _jsonable(dict(comm["candidate_audit"])),
+            "candidate_audit": _jsonable(
+                dict(comm["candidate_audit"])
+                if args.candidate == "A"
+                else dict(first.audit)
+            ),
         }
+        if args.candidate == "C":
+            record.update(
+                {
+                    "candidate": "C",
+                    "candidate_identity": {
+                        "candidate": "C",
+                        "schema": R4_C_SCHEMA,
+                        "transmission": R4_C_TRANSMISSION,
+                        "k0": float(comm["cfg"].k0),
+                    },
+                    "transmission_audit": _jsonable(
+                        dict(comm["transmission_audit"])
+                    ),
+                }
+            )
         if mpi.rank == 0:
             args.record.write_text(json.dumps(_jsonable(record), indent=2, sort_keys=True) + "\n", encoding="utf-8")
         mpi.barrier()
@@ -499,6 +541,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--raw-dir", type=Path, required=True)
     parser.add_argument("--record", type=Path, required=True)
     parser.add_argument("--source", choices=R4_SOURCE_NAMES, required=True)
+    parser.add_argument("--candidate", choices=("A", "C"), default="A")
     parser.add_argument("--degree", type=int, required=True)
     parser.add_argument("--mesh-target", type=float, required=True)
     parser.add_argument("--long-tail-manifest", type=Path)

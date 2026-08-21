@@ -453,4 +453,4 @@ def test_r4_runner_owns_only_duplicate_vectors() -> None:
     source = Path("benchmarks/run_task038_full3d_r4.py").read_text(encoding="utf-8")
     assert "source_field.x.petsc_vec.destroy()" not in source
     assert "np.zeros_like(sx)" in source
-    assert "build_candidate_a(\n        plan," in source
+    assert "build_candidate_a(" in source

@@ -1,4 +1,4 @@
-"""Bounded two-slab Candidate-A forward/backward sweep.
+"""Two-slab Candidate-A/C forward/backward residual-propagation sweep.
 
 The module is deliberately a small composition layer around the current
 matrix-free volume, DtN, MPC, and facet-transmission actions.  A slab is
@@ -25,6 +25,9 @@ from dolfinx import mesh
 from ..constraints.floquet_3d_high_order import _local_dof_global_info
 from .common_3d_forms import _build_variational_forms
 from .fullspace_mpc_action import build_fullspace_mpc_form_action
+from .fullspace_second_order_impedance import (
+    FIXED_SECOND_ORDER_LOCAL_IMPEDANCE,
+)
 
 
 FULLSPACE_R4_PROFILE = "full3d_scalable_v1"
@@ -32,6 +35,7 @@ FULLSPACE_R4_SLAB_COUNT = 2
 FULLSPACE_R4_FORWARD_ORDER = (0, 1)
 FULLSPACE_R4_BACKWARD_ORDER = (1, 0)
 FULLSPACE_R4_TRANSMISSION = "first_order_impedance_robin_v1"
+FULLSPACE_R4_C_TRANSMISSION = FIXED_SECOND_ORDER_LOCAL_IMPEDANCE
 FULLSPACE_R4_LOCAL_KSP_TYPE = "gmres"
 FULLSPACE_R4_LOCAL_KSP_RESTART = 8
 FULLSPACE_R4_LOCAL_KSP_MAX_IT = 8
@@ -681,8 +685,59 @@ def build_candidate_a(
     )
 
 
+class CandidateCSweep(CandidateASweep):
+    """Reuse the fixed residual-propagation sweep with Candidate C."""
+
+    def __init__(
+        self,
+        plan: FullspaceSlabPlan,
+        volume_actions: tuple[Any, Any],
+        dtn_action: Any,
+        transmission: Any,
+        physical_action: Any,
+    ) -> None:
+        super().__init__(
+            plan,
+            volume_actions,
+            dtn_action,
+            transmission,
+            physical_action,
+        )
+        self._audit = {
+            **self._audit,
+            "candidate": "C",
+            "transmission": FULLSPACE_R4_C_TRANSMISSION,
+            "transmission_q": "fixed y0=-i*k0*n_neighbor",
+            "transmission_sign_oracle": (
+                "fixed second-order; forward=upper, backward=lower"
+            ),
+            "transmission_action_scope": "local_shell_only",
+            "outgoing_definition": "exact_physical_action_of_current_correction",
+            "transmission_audit": dict(transmission.audit),
+        }
+
+
+def build_candidate_c(
+    plan: FullspaceSlabPlan,
+    volume_actions: tuple[Any, Any],
+    dtn_action: Any,
+    transmission: Any,
+    physical_action: Any,
+) -> CandidateCSweep:
+    """Build Candidate C without changing Candidate-A defaults."""
+
+    return CandidateCSweep(
+        plan,
+        volume_actions,
+        dtn_action,
+        transmission,
+        physical_action,
+    )
+
+
 __all__ = [
     "CandidateASweep",
+    "CandidateCSweep",
     "FULLSPACE_R4_BACKWARD_ORDER",
     "FULLSPACE_R4_FORWARD_ORDER",
     "FULLSPACE_R4_LOCAL_KSP_MAX_IT",
@@ -693,10 +748,12 @@ __all__ = [
     "FULLSPACE_R4_POU",
     "FULLSPACE_R4_SLAB_COUNT",
     "FULLSPACE_R4_TRANSMISSION",
+    "FULLSPACE_R4_C_TRANSMISSION",
     "FullspaceSlabPlan",
     "SlabSupport",
     "SweepResult",
     "build_candidate_a",
+    "build_candidate_c",
     "build_fullspace_slab_plan",
     "build_slab_volume_actions",
     "candidate_a_audit",
