@@ -57,3 +57,21 @@ V10 的 45 GiB 是本路线 authority；run summary 里保留的通用 224 GB bu
 ## 边界
 
 这次结果证明的是三组局部 factor integrity 和 SN2-J boundary 可测、可清理、资源低于 45 GiB；它不是 full-side solve，也没有运行 SGS、retained apply、outer/recovery、QEP、selected packet 或 global direct factor。后续是否允许 V10-3，必须另按 Review 的 SN2-J-only Gate 评估，不能把本记录解释为完整物理结果。
+
+## V10-3：固定 SN2-J advancement 与 side-solver diagnostic
+
+V10-3 在同一 5nm / 1° / phi0 / S / p6h4 / M480 / MPI8 身份下，只使用已冻结的 finite J1 layer action，对冻结六个 probe（其中五个 mandatory）执行固定 SN2-J action，另以零输入验证 zero-map；`physical_side_rhs` 输入范数为零，因此只作 degenerate zero-map 边界，不计入 mandatory 最坏值。SN2-J 是固定 layer action/preconditioner candidate，不是 `A_side` 的 side inverse。
+
+| 项目 | 实测值 | 判定 |
+|---|---:|---|
+| worst mandatory `r_F` | `17.0879610640` | advancement PASS，严格小于继承 J1 `50.7689715097` |
+| finite / zero output / repeat / linearity | `true / true / true / true` | advancement PASS |
+| mandatory true-residual `<=1e-2` | 未通过，最坏 `17.0879610640` | side-solver Gate FAIL |
+| modal+/modal−/external `<=1e-3` | `10.0273673969 / 12.0300733969 / 10.1865081692` | side-solver diagnostic FAIL |
+| construction peak | `29,078,593,536 B = 27.0815505981 GiB` | `<=45 GiB` PASS |
+| retained peak | `27,937,304,576 B = 26.0186424255 GiB` | `<=30 GiB` PASS |
+| swap / factors | `0 / 3->0` | PASS |
+
+五个 mandatory RHS 的 `r_F` 依次为 `10.0273673969`、`12.0300733969`、`10.1865081692`、`15.8261844389`、`17.0879610640`；全部 finite，repeat/linearity 均低于 `1e-10`。retained 区间只保留一个 modal-positive RHS，执行一次真实 apply，`r_F=10.0273673969`，随后完成释放；repeat/linearity 在该 retained 单次 probe 中为 `not_run`。
+
+本阶段的 advancement PASS 只说明该固定 action 满足 V10-3 的推进门槛和资源/生命周期合同；它没有通过更严格的 side-solver residual Gate，因此不应写成 side inverse，也不替代后续完整 `A_side` 物理求解。原始 worker record、markers、samples 与 ledger 保存在 ignored local root；compact 唯一数字源为 [task039_v10_sn2_j_only_v1.json](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v10_sn2_j_only_v1.json)。
