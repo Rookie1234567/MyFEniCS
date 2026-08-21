@@ -94,6 +94,8 @@ from src.solvers.hybrid_local_dtn_action import (
     create_hybrid_local_dtn_action_components,
 )
 from src.solvers.hybrid_layer_block import (
+    audit_layer_block_action,
+    build_layer_block_operator,
     build_real_layer_labels,
     minimum_layer_labels,
 )
@@ -254,6 +256,10 @@ V7_STREAMED_PETROV_CONSUMER_METHOD = "task039_v7_streamed_bottom_petrov_consumer
 V7_STREAMED_PETROV_CONSUMER_SCHEMA = "task039.v7.streamed.bottom_petrov_consumer.v1"
 V7_STREAMED_PETROV_CONSUMER_HARD_STOP_BYTES = V7_H4_EXACT_SIDE_LIMIT_HARD_STOP_BYTES
 V7_STREAMED_PETROV_CONSUMER_SETUP_LIMIT_GIB = V7_H4_EXACT_SIDE_LIMIT_GIB
+V8_H4_LAYER_BLOCK_PROFILE_ID = "task039.v8.h4.layer_block_reconstruction.v1"
+V8_H4_LAYER_BLOCK_METHOD = "task039_v8_h4_layer_block_reconstruction"
+V8_H4_LAYER_BLOCK_SCHEMA = "task039.v8.h4.layer_block_reconstruction.v1"
+V8_H4_LAYER_BLOCK_HARD_STOP_BYTES = V3_7_ABSOLUTE_HARD_BYTES
 V7_STREAMED_LEFT_DUAL_ORACLE = {
     "positive": {
         "relative_error": 900.298368548294,
@@ -564,6 +570,7 @@ def v3_7_watchdog_policy(
     v6_h4_port_modal_bottom_only: bool = False,
     v7_h4_streamed_bottom_producer: bool = False,
     v7_h4_streamed_bottom_consumer: bool = False,
+    v8_h4_layer_block_reconstruction: bool = False,
 ) -> dict[str, Any]:
     """Return the byte-authoritative policy; 195 GiB is telemetry only."""
 
@@ -594,6 +601,22 @@ def v3_7_watchdog_policy(
         absolute_bytes = V7_STREAMED_PETROV_CONSUMER_HARD_STOP_BYTES
     else:
         absolute_bytes = V3_7_ABSOLUTE_HARD_BYTES
+    if v7_h4_exact_side_full_formal:
+        profile_name = "v7_h4_exact_side_full_formal"
+    elif v7_h4_exact_side_limit_setup_only:
+        profile_name = "v7_h4_exact_side_limit_setup_only"
+    elif v6_h4_post_compaction_setup_only:
+        profile_name = "v6_h4_post_compaction_setup_only"
+    elif v6_h4_port_modal_bottom_only:
+        profile_name = "v6_h4_port_modal_bottom_only"
+    elif v7_h4_streamed_bottom_producer:
+        profile_name = "v7_h4_streamed_bottom_producer"
+    elif v7_h4_streamed_bottom_consumer:
+        profile_name = "v7_h4_streamed_bottom_consumer"
+    elif v8_h4_layer_block_reconstruction:
+        profile_name = "v8_h4_layer_block_reconstruction"
+    else:
+        profile_name = "v3_7_default"
     policy = {
         "warning_memory_gib": V3_7_WARNING_GIB,
         "critical_memory_gib": V3_7_CRITICAL_GIB,
@@ -603,31 +626,7 @@ def v3_7_watchdog_policy(
         "require_zero_swap": True,
         "poll_interval_seconds": float(poll_interval_seconds),
         "hard_stop_gib": absolute_bytes / 2**30,
-        "profile": (
-            "v7_h4_exact_side_full_formal"
-            if v7_h4_exact_side_full_formal
-            else (
-                "v7_h4_exact_side_limit_setup_only"
-                if v7_h4_exact_side_limit_setup_only
-                else (
-                    "v6_h4_post_compaction_setup_only"
-                    if v6_h4_post_compaction_setup_only
-                    else (
-                        "v6_h4_port_modal_bottom_only"
-                        if v6_h4_port_modal_bottom_only
-                        else (
-                            "v7_h4_streamed_bottom_producer"
-                            if v7_h4_streamed_bottom_producer
-                            else (
-                                "v7_h4_streamed_bottom_consumer"
-                                if v7_h4_streamed_bottom_consumer
-                                else "v3_7_default"
-                            )
-                        )
-                    )
-                )
-            )
-        ),
+        "profile": profile_name,
     }
     if v7_h4_exact_side_full_formal:
         policy["timeout_policy"] = {
@@ -676,6 +675,7 @@ def build_v3_7_execution_plan(
     v7_h4_streamed_bottom_consumer_basis_manifest: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest_sha256: str | None = None,
     v7_h4_streamed_bottom_consumer_exact_spool_root: str | Path | None = None,
+    v8_h4_layer_block_reconstruction: bool = False,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -693,6 +693,7 @@ def build_v3_7_execution_plan(
         or v6_h4_port_modal_bottom_only
         or v7_h4_streamed_bottom_producer
         or v7_h4_streamed_bottom_consumer
+        or v8_h4_layer_block_reconstruction
     ):
         specification = load_and_resolve(input_path)
         from benchmarks.task039_v4_h4_hybrid_direct import (
@@ -715,6 +716,7 @@ def build_v3_7_execution_plan(
         v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
         v7_h4_streamed_bottom_producer=v7_h4_streamed_bottom_producer,
         v7_h4_streamed_bottom_consumer=v7_h4_streamed_bottom_consumer,
+        v8_h4_layer_block_reconstruction=v8_h4_layer_block_reconstruction,
     )
     if (
         sum(
@@ -733,6 +735,7 @@ def build_v3_7_execution_plan(
                 bool(v6_h4_port_modal_bottom_only),
                 bool(v7_h4_streamed_bottom_producer),
                 bool(v7_h4_streamed_bottom_consumer),
+                bool(v8_h4_layer_block_reconstruction),
             )
         )
         > 1
@@ -778,8 +781,9 @@ def build_v3_7_execution_plan(
         or v6_h4_port_modal_bottom_only
         or v7_h4_streamed_bottom_producer
         or v7_h4_streamed_bottom_consumer
+        or v8_h4_layer_block_reconstruction
     ):
-        if not all(
+        if not v8_h4_layer_block_reconstruction and not all(
             (
                 selected_mode_packet_manifest,
                 selected_mode_packet_identity,
@@ -799,23 +803,26 @@ def build_v3_7_execution_plan(
             component_flag = "--v7-h4-streamed-bottom-producer"
         elif v7_h4_streamed_bottom_consumer:
             component_flag = "--v7-h4-streamed-bottom-consumer"
+        elif v8_h4_layer_block_reconstruction:
+            component_flag = "--v8-h4-layer-block-reconstruction"
         elif v5_h4_setup_only:
             component_flag = "--v5-h4-setup-only"
         elif v5_h4_blr_side_only:
             component_flag = "--v5-h4-blr-side-component"
         else:
             component_flag = "--v5-h4-fixed-budget-bottom-component"
-        argv.extend(
-            [
-                component_flag,
-                "--selected-mode-packet-manifest",
-                str(Path(selected_mode_packet_manifest).resolve()),
-                "--selected-mode-packet-identity",
-                str(Path(selected_mode_packet_identity).resolve()),
-                "--selected-mode-packet-manifest-sha256",
-                str(selected_mode_packet_manifest_sha256),
-            ]
-        )
+        argv.append(component_flag)
+        if not v8_h4_layer_block_reconstruction:
+            argv.extend(
+                [
+                    "--selected-mode-packet-manifest",
+                    str(Path(selected_mode_packet_manifest).resolve()),
+                    "--selected-mode-packet-identity",
+                    str(Path(selected_mode_packet_identity).resolve()),
+                    "--selected-mode-packet-manifest-sha256",
+                    str(selected_mode_packet_manifest_sha256),
+                ]
+            )
         if v5_h4_blr_side_only and v5_h4_blr_profile != MUMPS_BLR_V5_H4_PROFILE:
             argv.extend(["--v5-h4-blr-profile", v5_h4_blr_profile])
         if v7_h4_exact_side_full_formal or v7_h4_exact_side_limit_setup_only:
@@ -889,6 +896,8 @@ def build_v3_7_execution_plan(
         method = V7_STREAMED_PETROV_METHOD
     elif v7_h4_streamed_bottom_consumer:
         method = V7_STREAMED_PETROV_CONSUMER_METHOD
+    elif v8_h4_layer_block_reconstruction:
+        method = V8_H4_LAYER_BLOCK_METHOD
     elif v5_h4_setup_only:
         method = "task039_v5_h4_exact_side_setup_only"
     elif v5_h4_blr_side_only:
@@ -919,6 +928,8 @@ def build_v3_7_execution_plan(
         profile_id = V7_STREAMED_PETROV_PROFILE_ID
     elif v7_h4_streamed_bottom_consumer:
         profile_id = V7_STREAMED_PETROV_CONSUMER_PROFILE_ID
+    elif v8_h4_layer_block_reconstruction:
+        profile_id = V8_H4_LAYER_BLOCK_PROFILE_ID
     elif v5_h4_setup_only:
         profile_id = "task039.v5.h4.exact-side.setup-only.v1"
     elif v5_h4_blr_side_only:
@@ -1006,6 +1017,7 @@ def v3_7_execution_dry_run(
     v7_h4_streamed_bottom_consumer_basis_manifest: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest_sha256: str | None = None,
     v7_h4_streamed_bottom_consumer_exact_spool_root: str | Path | None = None,
+    v8_h4_layer_block_reconstruction: bool = False,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -1045,6 +1057,7 @@ def v3_7_execution_dry_run(
         v7_h4_streamed_bottom_consumer_exact_spool_root=(
             v7_h4_streamed_bottom_consumer_exact_spool_root
         ),
+        v8_h4_layer_block_reconstruction=v8_h4_layer_block_reconstruction,
         v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
         selected_mode_packet_identity=selected_mode_packet_identity,
@@ -1089,6 +1102,7 @@ def launch_v3_7_with_task038_watchdog(
     v7_h4_streamed_bottom_consumer_basis_manifest: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest_sha256: str | None = None,
     v7_h4_streamed_bottom_consumer_exact_spool_root: str | Path | None = None,
+    v8_h4_layer_block_reconstruction: bool = False,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -1106,6 +1120,7 @@ def launch_v3_7_with_task038_watchdog(
         or v6_h4_port_modal_bottom_only
         or v7_h4_streamed_bottom_producer
         or v7_h4_streamed_bottom_consumer
+        or v8_h4_layer_block_reconstruction
     ):
         specification = load_and_resolve(input_path)
         from benchmarks.task039_v4_h4_hybrid_direct import (
@@ -1126,6 +1141,7 @@ def launch_v3_7_with_task038_watchdog(
         and not v6_h4_port_modal_bottom_only
         and not v7_h4_streamed_bottom_producer
         and not v7_h4_streamed_bottom_consumer
+        and not v8_h4_layer_block_reconstruction
         and not V3_7_DIRECT_RUN_ROOT.is_dir()
     ):
         raise ValueError("V3-7 direct producer inventory is unavailable")
@@ -1138,6 +1154,7 @@ def launch_v3_7_with_task038_watchdog(
         and not v6_h4_port_modal_bottom_only
         and not v7_h4_streamed_bottom_producer
         and not v7_h4_streamed_bottom_consumer
+        and not v8_h4_layer_block_reconstruction
         and not callable(compare_v3_7_hybrid_candidate_to_direct)
     ):
         raise ValueError("V3-7 integrated checker entry point is unavailable")
@@ -1154,6 +1171,7 @@ def launch_v3_7_with_task038_watchdog(
         and not v7_h4_exact_side_full_formal
         and not v6_h4_port_modal_bottom_only
         and not v7_h4_streamed_bottom_producer
+        and not v8_h4_layer_block_reconstruction
         and not candidate_d_only
         and not candidate_d_qualified
     ):
@@ -1192,6 +1210,7 @@ def launch_v3_7_with_task038_watchdog(
         v7_h4_streamed_bottom_consumer_exact_spool_root=(
             v7_h4_streamed_bottom_consumer_exact_spool_root
         ),
+        v8_h4_layer_block_reconstruction=v8_h4_layer_block_reconstruction,
         v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
         selected_mode_packet_identity=selected_mode_packet_identity,
@@ -1600,6 +1619,250 @@ def _build_v5_h4_fixed_budget_bottom_side_setup(
             },
         )
     return SimpleNamespace(bottom=system, side_only=True)
+
+
+def run_v8_h4_layer_block_reconstruction_component(
+    cfg: Any,
+    *,
+    profile: Any,
+    comm: MPI.Intracomm,
+    marker_callback: Callable[[str, Mapping[str, Any]], None],
+    side_system_builder: Callable[..., Any] | None = None,
+) -> dict[str, Any]:
+    """Audit the real bottom and top explicit ``F`` graphs sequentially.
+
+    This route deliberately materializes only one side's research explicit
+    matrices at a time.  The layer operator borrows ``F``; component and
+    action ownership is released before the next side is assembled.
+    """
+
+    sides: dict[str, Any] = {}
+    for side in ("bottom", "top"):
+        system = None
+        components = None
+        operator = None
+        completed = False
+        try:
+            marker_callback(
+                f"v8_layer_block_{side}_construction_begin",
+                {
+                    "side": side,
+                    "selected_mode_packet_opened": False,
+                    "holdout_opened": False,
+                    "exact_spool_opened": False,
+                    "qep_count": 0,
+                    "factor_count": 0,
+                    "outer_ksp_count": 0,
+                },
+            )
+            if side_system_builder is None:
+                system = assemble_hybrid_local_dtn_action_system(
+                    cfg,
+                    side,
+                    bottom_interface_z_nm=profile.bottom_interface_nm,
+                    top_interface_z_nm=profile.top_interface_nm,
+                    comm=comm,
+                    log=None,
+                )
+            else:
+                system = side_system_builder(
+                    side=side,
+                    cfg=cfg,
+                    profile=profile,
+                    comm=comm,
+                )
+            components = _build_research_explicit_side_components(system)
+            labels, mapping_metadata = build_real_layer_labels(components.F, system)
+            layer_count = len(mapping_metadata["z_layer_boundaries"]) - 1
+            if layer_count != 6:
+                raise ValueError(
+                    f"V8 layer-block route requires exactly six layers, got {layer_count}"
+                )
+            operator = build_layer_block_operator(
+                components.F,
+                labels,
+                layer_count=layer_count,
+                mapping_metadata=mapping_metadata,
+            )
+            ready_diagnostics = deepcopy(operator.diagnostics)
+            marker_callback(
+                f"v8_layer_block_{side}_operator_ready",
+                {
+                    "side": side,
+                    "diagnostics": ready_diagnostics,
+                    "factor_count": 0,
+                    "qep_count": 0,
+                    "outer_ksp_count": 0,
+                    "system_borrowed": True,
+                },
+            )
+            action_audit = audit_layer_block_action(components.F, operator)
+            action_gate = {
+                "action_finite": bool(
+                    all(report["finite"] for report in action_audit["vectors"])
+                ),
+                "action_relative_error_pass": bool(
+                    all(
+                        report["relative_error"] <= 1.0e-12
+                        for report in action_audit["vectors"]
+                    )
+                ),
+                "row_coverage_exact": bool(ready_diagnostics["row_coverage_exact"]),
+                "nnz_partition_exact": bool(
+                    ready_diagnostics["nnz_partition"]["partition_exact"]
+                ),
+                "long_range_zero": bool(ready_diagnostics["long_range_nnz"] == 0),
+                "half_bandwidth_one": bool(
+                    ready_diagnostics["block_half_bandwidth"] == 1
+                ),
+                "repeat_pass": bool(action_audit["repeat_relative_error"] <= 1.0e-13),
+                "linearity_pass": bool(
+                    action_audit["linearity_relative_error"] <= 1.0e-13
+                ),
+            }
+            operator.destroy()
+            operator_diagnostics = deepcopy(operator.diagnostics)
+            operator = None
+            released = _destroy_v5_side_components(components)
+            system_a = getattr(system, "A", None)
+            if system_a is None:
+                system_probe = {"status": "not_available"}
+            else:
+                size = tuple(int(value) for value in system_a.getSize())
+                ownership = tuple(int(value) for value in system_a.getOwnershipRange())
+                system_probe = {
+                    "status": "measured",
+                    "global_size": list(size),
+                    "ownership_range": list(ownership),
+                }
+            destroy_called = False
+            if hasattr(system, "destroy"):
+                system.destroy()
+                destroy_called = True
+            cleanup = collective_heap_cleanup(comm)
+            side_gate = {
+                **action_gate,
+                "operator_destroy_marker_completed": bool(
+                    operator_diagnostics.get("destroy_marker") == "completed"
+                ),
+                "component_release_pass": bool(
+                    all(released.get(name) is True for name in ("H", "C", "F", "D"))
+                ),
+                "collective_cleanup_pass": bool(
+                    cleanup.get("collective_call_completed") is True
+                ),
+                "system_a_probe_measured": bool(
+                    system_probe.get("status") == "measured"
+                ),
+                "factor_counts_zero": bool(
+                    operator_diagnostics.get("factor_count") == 0
+                ),
+                "qep_count_zero": bool(operator_diagnostics.get("qep_count") == 0),
+                "outer_ksp_count_zero": bool(
+                    operator_diagnostics.get("outer_ksp_count") == 0
+                ),
+                "system_destroy_called": destroy_called,
+            }
+            side_gate["pass"] = bool(all(side_gate.values()))
+            marker_callback(
+                f"v8_layer_block_{side}_destroy",
+                {
+                    "side": side,
+                    "operator_destroyed": True,
+                    "component_release": released,
+                    "collective_cleanup": cleanup,
+                    "borrowed_system_probe_after_components": system_probe,
+                    "system_destroy_called": destroy_called,
+                    "factor_count": 0,
+                    "qep_count": 0,
+                    "outer_ksp_count": 0,
+                },
+            )
+            sides[side] = {
+                "operator_diagnostics": operator_diagnostics,
+                "action_audit": action_audit,
+                "gate": side_gate,
+                "lifecycle": {
+                    "operator_destroyed": True,
+                    "component_release": released,
+                    "collective_cleanup": cleanup,
+                    "borrowed_system_probe_after_components": system_probe,
+                    "destroy_called": destroy_called,
+                },
+            }
+            completed = True
+        finally:
+            if not completed:
+                if operator is not None:
+                    operator.destroy()
+                if components is not None:
+                    _destroy_v5_side_components(components)
+                if system is not None and hasattr(system, "destroy"):
+                    system.destroy()
+                collective_heap_cleanup(comm)
+
+    sides_present_exact = set(sides) == {"bottom", "top"}
+    return {
+        "schema": V8_H4_LAYER_BLOCK_SCHEMA,
+        "method": V8_H4_LAYER_BLOCK_METHOD,
+        "profile_id": V8_H4_LAYER_BLOCK_PROFILE_ID,
+        "status": (
+            "component_completed"
+            if sides_present_exact
+            and all(side.get("gate", {}).get("pass") for side in sides.values())
+            else "component_gate_failed"
+        ),
+        "sides": sides,
+        "gate": {
+            "sides_present_exact": sides_present_exact,
+            "bottom_pass": bool(sides.get("bottom", {}).get("gate", {}).get("pass")),
+            "top_pass": bool(sides.get("top", {}).get("gate", {}).get("pass")),
+            "overall_pass": bool(
+                sides_present_exact
+                and all(side.get("gate", {}).get("pass") for side in sides.values())
+            ),
+        },
+        "factor_inventory": {
+            "base_factor_count": 0,
+            "exact_factor_count": 0,
+            "global_direct_factor_count": 0,
+            "nested_ksp_count": 0,
+        },
+        "selected_mode_packet_opened": False,
+        "holdout_opened": False,
+        "exact_spool_opened": False,
+        "qep_count": 0,
+        "modal_schur": "not_run",
+        "outer_ksp": "not_run",
+        "recovery": "not_run",
+        "field": "not_run",
+        "RTA": "not_run",
+        "telemetry": {
+            "process_tree_samples": {
+                "path": "numerical_output/process_tree_samples.jsonl",
+                "writer": "parent_task038_launcher",
+            },
+            "memory_stages": {
+                "path": "numerical_output/memory_stages.jsonl",
+                "writer": "parent_task038_launcher_marker_alignment",
+            },
+            "memory_stage_markers": {
+                "path": "numerical_output/memory_stage_markers.raw.jsonl",
+                "writer": "v3_7_worker",
+            },
+            "memory_object_ledger": {
+                "path": "numerical_output/memory_object_ledger.json",
+                "status": "finalized_in_worker_finalizer",
+            },
+            "gate_contract": {
+                "action_relative_error": 1.0e-12,
+                "repeat_relative_error": 1.0e-13,
+                "linearity_relative_error": 1.0e-13,
+                "swap_required": 0,
+                "no_factor_qep_outer": True,
+            },
+        },
+    }
 
 
 def _v7_streamed_packet_pair(
@@ -7289,6 +7552,7 @@ def run_task039_v3_7_diagnostic(
     v7_h4_streamed_bottom_consumer_basis_manifest: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest_sha256: str | None = None,
     v7_h4_streamed_bottom_consumer_exact_spool_root: str | Path | None = None,
+    v8_h4_layer_block_reconstruction: bool = False,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: Mapping[str, Any] | None = None,
@@ -7379,6 +7643,7 @@ def run_task039_v3_7_diagnostic(
             or v6_h4_port_modal_bottom_only
             or v7_h4_streamed_bottom_producer
             or v7_h4_streamed_bottom_consumer
+            or v8_h4_layer_block_reconstruction
         ):
             profile = (
                 profile_override
@@ -7395,6 +7660,7 @@ def run_task039_v3_7_diagnostic(
             or v6_h4_port_modal_bottom_only
             or v7_h4_streamed_bottom_producer
             or v7_h4_streamed_bottom_consumer
+            or v8_h4_layer_block_reconstruction
         ):
             incidence = resolved_payload["incidence"]
             if v7_h4_full_formal:
@@ -7415,6 +7681,9 @@ def run_task039_v3_7_diagnostic(
             elif v7_h4_streamed_bottom_consumer:
                 route_profile_id = V7_STREAMED_PETROV_CONSUMER_PROFILE_ID
                 route_schema = V7_STREAMED_PETROV_CONSUMER_SCHEMA
+            elif v8_h4_layer_block_reconstruction:
+                route_profile_id = V8_H4_LAYER_BLOCK_PROFILE_ID
+                route_schema = V8_H4_LAYER_BLOCK_SCHEMA
             elif v5_h4_blr_side_only:
                 route_profile_id = V5_H4_BLR_SIDE_PROFILE_ID
                 route_schema = V5_H4_BLR_SIDE_PROFILE_ID
@@ -7450,6 +7719,7 @@ def run_task039_v3_7_diagnostic(
             v6_h4_port_modal_bottom_only=v6_h4_port_modal_bottom_only,
             v7_h4_streamed_bottom_producer=v7_h4_streamed_bottom_producer,
             v7_h4_streamed_bottom_consumer=v7_h4_streamed_bottom_consumer,
+            v8_h4_layer_block_reconstruction=v8_h4_layer_block_reconstruction,
         )
         _emit_marker(
             marker_callback,
@@ -7471,6 +7741,7 @@ def run_task039_v3_7_diagnostic(
             and not v6_h4_port_modal_bottom_only
             and not v7_h4_streamed_bottom_producer
             and not v7_h4_streamed_bottom_consumer
+            and not v8_h4_layer_block_reconstruction
         ):
             raise ValueError(
                 "V3-7 requires an injected recovery_runner(setup, layout, snapshot, "
@@ -7527,6 +7798,27 @@ def run_task039_v3_7_diagnostic(
                         "_full3d_authority_run_directory": None,
                     }
                 )
+            modal_amplitudes = None
+        elif v8_h4_layer_block_reconstruction:
+            producer = {
+                "producer_source_sha": source_sha,
+                "physical_model_sha256": resolved_payload.get("physical_model_sha256"),
+                "model_id": resolved_payload.get("model_id"),
+                "requested_modes": 480,
+                "mpi_size": 8,
+                "external_keys_exact": True,
+                "selected_mode_packet": False,
+                "selected_mode_packet_opened": False,
+                "holdout_opened": False,
+                "exact_spool_opened": False,
+                "direct_reference_payload_loaded": False,
+                "consumer_qep_calls": 0,
+                "exact_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "nested_ksp_count": 0,
+                "research_only": True,
+                "component_candidate": True,
+            }
             modal_amplitudes = None
         elif v7_h4_streamed_bottom_producer:
             if (
@@ -7712,6 +8004,18 @@ def run_task039_v3_7_diagnostic(
         _emit_marker(marker_callback, "config_ready")
         producer["_stage_callback"] = marker_callback
         _emit_marker(marker_callback, "setup_begin")
+        if v8_h4_layer_block_reconstruction:
+            result = run_v8_h4_layer_block_reconstruction_component(
+                cfg,
+                profile=profile,
+                comm=comm,
+                marker_callback=marker_callback,
+                side_system_builder=side_system_builder,
+            )
+            result["source_sha"] = source_sha
+            result["run_directory"] = str(Path(run_directory).resolve())
+            normal_return = result.get("status") == "component_completed"
+            return result
         if v5_h4_fixed_budget_bottom_only:
             packet_contract = _validate_v5_fixed_budget_packet_manifest(
                 selected_mode_packet_manifest,
@@ -8910,6 +9214,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--v6-h4-port-modal-exact-spool-root")
     parser.add_argument("--v7-h4-streamed-bottom-producer", action="store_true")
     parser.add_argument("--v7-h4-streamed-bottom-consumer", action="store_true")
+    parser.add_argument("--v8-h4-layer-block-reconstruction", action="store_true")
     parser.add_argument("--v7-h4-streamed-bottom-consumer-basis-manifest")
     parser.add_argument("--v7-h4-streamed-bottom-consumer-basis-manifest-sha256")
     parser.add_argument("--v7-h4-streamed-bottom-consumer-exact-spool-root")
@@ -8937,6 +9242,7 @@ def main(argv: list[str] | None = None) -> int:
             args.v6_h4_port_modal_bottom_component,
             args.v7_h4_streamed_bottom_producer,
             args.v7_h4_streamed_bottom_consumer,
+            args.v8_h4_layer_block_reconstruction,
             args.v5_h4_blr_side_component,
             args.v5_h4_fixed_budget_bottom_component,
         )
@@ -8958,6 +9264,7 @@ def main(argv: list[str] | None = None) -> int:
                 bool(args.v6_h4_port_modal_bottom_component),
                 bool(args.v7_h4_streamed_bottom_producer),
                 bool(args.v7_h4_streamed_bottom_consumer),
+                bool(args.v8_h4_layer_block_reconstruction),
                 bool(args.v5_h4_blr_side_component),
                 bool(args.v5_h4_fixed_budget_bottom_component),
             )
@@ -8987,6 +9294,7 @@ def main(argv: list[str] | None = None) -> int:
             v6_h4_port_modal_exact_spool_root=(args.v6_h4_port_modal_exact_spool_root),
             v7_h4_streamed_bottom_producer=args.v7_h4_streamed_bottom_producer,
             v7_h4_streamed_bottom_consumer=args.v7_h4_streamed_bottom_consumer,
+            v8_h4_layer_block_reconstruction=args.v8_h4_layer_block_reconstruction,
             v7_h4_streamed_bottom_consumer_basis_manifest=(
                 args.v7_h4_streamed_bottom_consumer_basis_manifest
             ),
@@ -9059,8 +9367,12 @@ def main(argv: list[str] | None = None) -> int:
             validate_v4_h4_specification(specification)
             if specification.method.get("kind") != "hybrid_iterative":
                 raise ValueError("V5 h4 component requires hybrid_iterative")
-            packet_identity = json.loads(
-                Path(args.selected_mode_packet_identity).read_text(encoding="utf-8")
+            packet_identity = (
+                None
+                if args.v8_h4_layer_block_reconstruction
+                else json.loads(
+                    Path(args.selected_mode_packet_identity).read_text(encoding="utf-8")
+                )
             )
         else:
             payload = load_v3_7_official_payload(args.input_path)
@@ -9104,6 +9416,7 @@ def main(argv: list[str] | None = None) -> int:
             v7_h4_streamed_bottom_consumer_exact_spool_root=(
                 args.v7_h4_streamed_bottom_consumer_exact_spool_root
             ),
+            v8_h4_layer_block_reconstruction=args.v8_h4_layer_block_reconstruction,
             v5_h4_blr_side_only=args.v5_h4_blr_side_component,
             v5_h4_fixed_budget_bottom_only=args.v5_h4_fixed_budget_bottom_component,
             v5_h4_fixed_budget_exact_spool_root=(
@@ -9195,6 +9508,11 @@ __all__ = [
     "V7_STREAMED_PETROV_CONSUMER_HARD_STOP_BYTES",
     "run_v7_h4_streamed_bottom_basis_producer",
     "run_v7_h4_streamed_bottom_petrov_consumer",
+    "V8_H4_LAYER_BLOCK_PROFILE_ID",
+    "V8_H4_LAYER_BLOCK_METHOD",
+    "V8_H4_LAYER_BLOCK_SCHEMA",
+    "V8_H4_LAYER_BLOCK_HARD_STOP_BYTES",
+    "run_v8_h4_layer_block_reconstruction_component",
     "build_v3_7_execution_plan",
     "check_v3_7_integrated_physics",
     "compare_v3_7_hybrid_candidate_to_direct",

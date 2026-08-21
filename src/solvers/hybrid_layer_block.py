@@ -21,6 +21,7 @@ from petsc4py import PETSc
 
 __all__ = (
     "LayerBlockOperator",
+    "audit_layer_block_action",
     "build_real_layer_labels",
     "build_layer_block_operator",
     "minimum_layer_labels",
@@ -440,6 +441,139 @@ class LayerBlockOperator:
         self._diagnostics["qep_count"] = 0
         self._diagnostics["outer_ksp_count"] = 0
         self._destroyed = True
+
+
+def _relative_vec_error(actual: PETSc.Vec, expected: PETSc.Vec) -> float:
+    difference = actual.duplicate()
+    expected.copy(difference)
+    difference.axpy(PETSc.ScalarType(-1.0), actual)
+    error = float(difference.norm()) / max(float(expected.norm()), 1.0e-30)
+    difference.destroy()
+    return error
+
+
+def _fill_audit_source(vector: PETSc.Vec, index: int) -> tuple[str, str]:
+    first, last = map(int, vector.getOwnershipRange())
+    rows = np.arange(first, last, dtype=np.float64)
+    values = np.sin(0.013 * rows + 0.17 * index) + 1j * np.cos(
+        0.009 * rows - 0.23 * index
+    )
+    vector.getArray()[:] = np.asarray(values, dtype=PETSc.ScalarType)
+    vector.assemble()
+    local_hash = hashlib.sha256(
+        np.ascontiguousarray(vector.getArray(readonly=True)).view(np.uint8)
+    ).hexdigest()
+    comm = vector.getComm().tompi4py()
+    partition_digest = hashlib.sha256(
+        json.dumps(
+            comm.allgather(
+                {
+                    "ownership_range": [first, last],
+                    "local_hash": local_hash,
+                }
+            ),
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode()
+    ).hexdigest()
+    generator_digest = hashlib.sha256(
+        f"global_row_sin_cos_v1:{index}:{vector.getSize()}:"
+        f"{np.dtype(PETSc.ScalarType).str}".encode("ascii")
+    ).hexdigest()
+    return partition_digest, generator_digest
+
+
+def audit_layer_block_action(
+    matrix: PETSc.Mat, operator: LayerBlockOperator, *, vector_count: int = 8
+) -> dict[str, Any]:
+    """Compare a block action with ``matrix`` on fixed value-hashed vectors.
+
+    The vectors are generated from global row numbers, so their values do not
+    depend on the MPI partition.  Only local PETSc arrays are materialized.
+    This is an audit helper, not a solver or a source of physical fields.
+    """
+
+    if vector_count != 8:
+        raise ValueError("V8 layer action audit requires exactly eight vectors")
+    retained_sources: list[PETSc.Vec] = []
+    retained_actual: list[PETSc.Vec] = []
+    reports: list[dict[str, Any]] = []
+    try:
+        for index in range(vector_count):
+            source = matrix.createVecRight()
+            f_result = matrix.createVecLeft()
+            block_result = matrix.createVecLeft()
+            try:
+                source_hash, generator_hash = _fill_audit_source(source, index)
+                matrix.mult(source, f_result)
+                operator.apply(source, block_result)
+                f_norm = float(f_result.norm())
+                block_norm = float(block_result.norm())
+                relative_error = _relative_vec_error(block_result, f_result)
+                reports.append(
+                    {
+                        "index": index,
+                        "source_value_hash": source_hash,
+                        "generator_contract_sha256": generator_hash,
+                        "hash_scheme": "rank_local_sha256_allgather_v1",
+                        "rank_partition_bound": True,
+                        "f_norm": f_norm,
+                        "block_norm": block_norm,
+                        "relative_error": relative_error,
+                        "finite": bool(
+                            np.isfinite(relative_error)
+                            and np.isfinite(f_norm)
+                            and np.isfinite(block_norm)
+                        ),
+                    }
+                )
+                if index < 2:
+                    retained_sources.append(source)
+                    retained_actual.append(block_result)
+                    source = None
+                    block_result = None
+            finally:
+                f_result.destroy()
+                if source is not None:
+                    source.destroy()
+                if block_result is not None:
+                    block_result.destroy()
+        repeat = retained_actual[0].duplicate()
+        operator.apply(retained_sources[0], repeat)
+        repeat_error = _relative_vec_error(repeat, retained_actual[0])
+        linear_expected = retained_actual[0].duplicate()
+        retained_actual[0].copy(linear_expected)
+        linear_expected.scale(PETSc.ScalarType(1.1 - 0.4j))
+        linear_expected.axpy(PETSc.ScalarType(-0.7 + 0.2j), retained_actual[1])
+        combination = retained_sources[0].duplicate()
+        retained_sources[0].copy(combination)
+        combination.scale(PETSc.ScalarType(1.1 - 0.4j))
+        combination.axpy(PETSc.ScalarType(-0.7 + 0.2j), retained_sources[1])
+        combination_actual = matrix.createVecLeft()
+        operator.apply(combination, combination_actual)
+        linearity_error = _relative_vec_error(combination_actual, linear_expected)
+        repeat.destroy()
+        linear_expected.destroy()
+        combination.destroy()
+        combination_actual.destroy()
+        return {
+            "vector_count": vector_count,
+            "vectors": reports,
+            "max_relative_error": max(
+                float(report["relative_error"]) for report in reports
+            ),
+            "repeat_relative_error": repeat_error,
+            "linearity_relative_error": linearity_error,
+            "relative_error_limit": 1.0e-12,
+            "repeat_limit": 1.0e-13,
+            "linearity_limit": 1.0e-13,
+            "value_hash_bound": True,
+            "source_generator": "global_row_sin_cos_v1",
+            "source_hash_rank_partition_bound": True,
+        }
+    finally:
+        for vector in (*retained_actual, *retained_sources):
+            vector.destroy()
 
 
 def build_layer_block_operator(
