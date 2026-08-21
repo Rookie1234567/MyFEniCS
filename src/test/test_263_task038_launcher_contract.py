@@ -1122,6 +1122,134 @@ def test_v9_layer_supernode_launcher_rejects_worker_contract_mismatch(tmp_path):
     assert telemetry["overall"]["pass"] is None
 
 
+@pytest.mark.parametrize(
+    (
+        "classification",
+        "numerical_gate",
+        "expected_status",
+        "expected_pass",
+        "expected_worker_status",
+    ),
+    [
+        (
+            "SUPERNODE_FACTOR_INTEGRITY_PASS",
+            True,
+            "pass_retained_not_applicable",
+            True,
+            "measured",
+        ),
+        (
+            "SUPERNODE_PRINCIPAL_BLOCK_UNSTABLE",
+            False,
+            "numerical_gate_failed_retained_not_run",
+            False,
+            "measured",
+        ),
+        (
+            "SUPERNODE_PRINCIPAL_BLOCK_UNSTABLE",
+            True,
+            "contract_mismatch",
+            None,
+            "contract_mismatch",
+        ),
+    ],
+)
+def test_v10_factor_integrity_launcher_contract_is_status_independent(
+    tmp_path,
+    classification,
+    numerical_gate,
+    expected_status,
+    expected_pass,
+    expected_worker_status,
+):
+    specification = replace(
+        load_and_resolve(TASK039_V4_H4_ITERATIVE),
+        expected_output_parent=tmp_path / "results",
+    )
+    run_directory = tmp_path / f"v10-factor-integrity-{classification}"
+    diagnostic_directory = run_directory / "numerical_output"
+    diagnostic_directory.mkdir(parents=True)
+    source_sha = "g" * 40
+    (diagnostic_directory / "v3_v7_diagnostic.json").write_text(
+        json.dumps(
+            {
+                "schema": launcher.V10_H4_SUPERNODE_FACTOR_INTEGRITY_SCHEMA,
+                "method": launcher.V10_H4_SUPERNODE_FACTOR_INTEGRITY_METHOD,
+                "source_sha": source_sha,
+                "classification": classification,
+                "gate": {"numerical_gate_pass": numerical_gate},
+                "factor_inventory": {
+                    "factor_count_after_cleanup": 0,
+                    "full_side_exact_factor_count": 0,
+                    "global_direct_factor_count": 0,
+                    "nested_ksp_count": 0,
+                },
+                "selected_mode_packet_opened": False,
+                "exact_spool_opened": True,
+                "qep_count": 0,
+                "sgs_executed": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    marker_path = diagnostic_directory / "memory_stage_markers.raw.jsonl"
+    marker_batches = {
+        1: ["v10_layer_supernode_bottom_construction_begin"],
+        2: ["v10_layer_supernode_bottom_construction_end"],
+    }
+    sample_calls = 0
+
+    def popen(_argv, **_kwargs):
+        return _SequenceProcess(polls_before_exit=2)
+
+    def sample_factory(_pid):
+        nonlocal sample_calls
+        sample_calls += 1
+        for marker in marker_batches.get(sample_calls, ()):
+            with marker_path.open("a", encoding="utf-8") as stream:
+                stream.write(
+                    json.dumps(
+                        {
+                            "stage": marker,
+                            "status": "end",
+                            "elapsed_seconds": float(sample_calls),
+                        }
+                    )
+                    + "\n"
+                )
+        return _authority(memory=10 * 2**30, swap=0)
+
+    plan = SimpleNamespace(
+        argv=("/opt/fake-worker",),
+        method=launcher.V10_H4_SUPERNODE_FACTOR_INTEGRITY_METHOD,
+        source_sha=source_sha,
+        contract_probe=False,
+        task039_trace_audit=False,
+    )
+    result = launcher._run_worker(
+        plan,
+        specification,
+        run_directory,
+        popen_factory=popen,
+        sample_factory=sample_factory,
+        terminate_factory=lambda _process: {"requested": True},
+        monotonic=iter(float(index) for index in range(16)).__next__,
+        sleep=lambda _seconds: None,
+        poll_interval=0.25,
+    )
+    telemetry = result["resource_authority"][
+        "v10_h4_supernode_factor_integrity_telemetry"
+    ]
+    assert telemetry["worker_record_status"] == expected_worker_status
+    assert telemetry["overall"]["status"] == expected_status
+    assert telemetry["overall"]["pass"] is expected_pass
+    assert telemetry["construction_interval_summary"]["pass"] is True
+    assert telemetry["retained_interval_summary"]["status"] == "not_applicable"
+    assert telemetry["retained_interval_summary"]["pass"] is None
+    assert telemetry["absolute_terminate_memory_bytes"] == 45 * 2**30
+    assert telemetry["overall_peak_swap_bytes"] == 0
+
+
 def test_task039_h5_critical_checkpoint_does_not_stop_before_absolute_hard_stop(
     monkeypatch, tmp_path
 ):

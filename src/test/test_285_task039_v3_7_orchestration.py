@@ -3947,6 +3947,59 @@ def test_v9_layer_supernode_plan_is_single_route_and_packet_free(tmp_path):
     assert not (tmp_path / "v9-supernode-plan").exists()
 
 
+def test_v10_factor_integrity_plan_is_single_route_and_packet_free(tmp_path):
+    h4_input = Path(
+        "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
+    )
+    spool_root = Path(
+        "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/"
+        "numerical_output"
+    )
+    plan = orchestration.v3_7_execution_dry_run(
+        h4_input,
+        tmp_path / "v10-factor-integrity-plan",
+        source_sha="d" * 40,
+        v10_h4_supernode_factor_integrity=True,
+        v10_h4_supernode_factor_integrity_exact_spool_root=spool_root,
+    )
+    route_flags = {
+        "--v5-h4-setup-only",
+        "--v5-h4-blr-side-component",
+        "--v5-h4-fixed-budget-bottom-component",
+        "--v6-h4-post-compaction-setup-only",
+        "--v6-h4-port-modal-bottom-component",
+        "--v7-h4-exact-side-limit-setup-only",
+        "--v7-h4-exact-side-full-formal",
+        "--v7-h4-streamed-bottom-producer",
+        "--v7-h4-streamed-bottom-consumer",
+        "--v8-h4-layer-block-reconstruction",
+        "--v8-h4-layer-sweep-bottom",
+        "--v9-h4-bare-f-full-side-diagnostic",
+        orchestration.V9_H4_LAYER_SUPERNODE_BOTTOM_FLAG,
+        orchestration.V10_H4_SUPERNODE_FACTOR_INTEGRITY_FLAG,
+    }
+    assert plan["argv"][1:3] == ["-n", "8"]
+    assert [flag for flag in plan["argv"] if flag in route_flags] == [
+        orchestration.V10_H4_SUPERNODE_FACTOR_INTEGRITY_FLAG
+    ]
+    assert (
+        plan["argv"].count(
+            orchestration.V10_H4_SUPERNODE_FACTOR_INTEGRITY_EXACT_SPOOL_ROOT_FLAG
+        )
+        == 1
+    )
+    assert plan["worker_contract"]["method"] == (
+        orchestration.V10_H4_SUPERNODE_FACTOR_INTEGRITY_METHOD
+    )
+    assert plan["worker_contract"]["profile_id"] == (
+        orchestration.V10_H4_SUPERNODE_FACTOR_INTEGRITY_PROFILE_ID
+    )
+    assert plan["watchdog"]["absolute_terminate_memory_bytes"] == 45 * 2**30
+    assert plan["watchdog"]["require_zero_swap"] is True
+    assert not any("selected-mode-packet" in arg for arg in plan["argv"])
+    assert not (tmp_path / "v10-factor-integrity-plan").exists()
+
+
 def test_v9_layer_supernode_worker_releases_shared_factors_and_runs_retained_probe(
     monkeypatch,
 ):
@@ -4143,6 +4196,140 @@ def test_v9_layer_supernode_worker_releases_shared_factors_and_runs_retained_pro
     }
     assert result["telemetry"]["gate_contract"]["factor_count_ready"] == 3
     assert result["telemetry"]["gate_contract"]["full_side_exact_factor_count"] == 0
+
+
+@pytest.mark.parametrize(
+    ("boundary_case", "expected_classification"),
+    (
+        ("pass", "SUPERNODE_FACTOR_INTEGRITY_PASS"),
+        ("scatter_false", "SUPERNODE_SCATTER_LAYOUT_FAILURE"),
+        ("action_false", "SUPERNODE_ACTION_WORKSPACE_FAILURE"),
+    ),
+)
+def test_v10_factor_integrity_worker_runs_three_groups_and_never_sgs(
+    monkeypatch, boundary_case, expected_classification
+):
+    if MPI.COMM_WORLD.size != 1:
+        pytest.skip("run this fake-side lifecycle contract in serial")
+
+    timeline: list[str] = []
+    matrix = PETSc.Mat().createAIJ(size=(6, 6), nnz=1, comm=PETSc.COMM_SELF)
+    for index in range(6):
+        matrix.setValue(index, index, PETSc.ScalarType(2.0 + 0.1j))
+    matrix.assemble()
+
+    class Resource:
+        def __init__(self, name):
+            self.name = name
+            self.destroyed = False
+
+        def destroy(self):
+            if not self.destroyed:
+                self.destroyed = True
+                timeline.append(f"destroy:{self.name}")
+
+    class System:
+        def __init__(self):
+            self.A = matrix
+            self.destroyed = False
+
+        def destroy(self):
+            self.destroyed = True
+            timeline.append("system_destroy")
+
+    system = System()
+    components = SimpleNamespace(
+        F=matrix,
+        H=Resource("H"),
+        C=Resource("C"),
+        D=Resource("D"),
+    )
+
+    monkeypatch.setattr(
+        orchestration,
+        "_build_research_explicit_side_components",
+        lambda _system: components,
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "build_real_layer_labels",
+        lambda _matrix, _system: (
+            np.arange(6, dtype=np.int32),
+            {"z_layer_boundaries": list(range(7))},
+        ),
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "_load_v5_blr_reference_spool_remapped",
+        lambda _artifact, template: template.duplicate(),
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "collective_heap_cleanup",
+        lambda _comm: (
+            timeline.append("collective_cleanup") or {"collective_call_completed": True}
+        ),
+    )
+
+    def forensic_runner(**_kwargs):
+        timeline.append("forensic_group")
+        return {
+            "paths": {
+                "A_conventional_ksp": {"path_pass": True, "reports": []},
+                "B_factor_only_detached": {"path_pass": True, "reports": []},
+            },
+            "first_nonfinite_stage": None,
+        }
+
+    def boundary_runner(**_kwargs):
+        timeline.append("boundary_SN2-J")
+        scatter_pass = boundary_case != "scatter_false"
+        action_pass = boundary_case != "action_false"
+        return {
+            "status": "measured",
+            "pass": scatter_pass and action_pass,
+            "scatter_pass": scatter_pass,
+            "action_pass": action_pass,
+            "method": "SN2-J",
+            "sgs_executed": False,
+            "first_nonfinite_stage": None,
+        }
+
+    events: list[str] = []
+    result = orchestration.run_v10_h4_supernode_factor_integrity(
+        SimpleNamespace(),
+        profile=SimpleNamespace(bottom_interface_nm=0.0, top_interface_nm=1.0),
+        comm=MPI.COMM_SELF,
+        marker_callback=lambda marker, _detail: events.append(marker),
+        exact_spool_root="unused-spool",
+        source_sha="d" * 40,
+        side_system_builder=lambda **_kwargs: system,
+        holdout_loader=lambda _root, _comm: (
+            {
+                "modal_traction_positive": {"rhs": "unused"},
+                "external_dtn_coupling": {"rhs": "unused"},
+            },
+            {"source": "tiny"},
+        ),
+        forensic_runner=forensic_runner,
+        boundary_runner=boundary_runner,
+    )
+
+    assert result["classification"] == expected_classification
+    assert result["gate"]["numerical_gate_pass"] is (
+        expected_classification == "SUPERNODE_FACTOR_INTEGRITY_PASS"
+    )
+    assert result["sgs_executed"] is False
+    assert timeline.count("forensic_group") == 3
+    assert "boundary_SN2-J" in timeline
+    assert "SN2-SGS" not in events
+    assert result["factor_inventory"]["factor_count_after_cleanup"] == 0
+    assert result["factor_inventory"]["full_side_exact_factor_count"] == 0
+    assert result["factor_inventory"]["global_direct_factor_count"] == 0
+    assert result["exact_spool_opened"] is True
+    assert events[-1] == "v10_layer_supernode_bottom_cleanup"
+    assert timeline[-1] == "collective_cleanup"
+    assert system.destroyed is True
 
 
 def test_v9_layer_supernode_run_task_finalizer_writes_record_and_ledger(

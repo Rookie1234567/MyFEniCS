@@ -130,6 +130,15 @@ V9_H4_LAYER_SUPERNODE_EXACT_SPOOL_ROOT_FLAG = "--v9-h4-layer-supernode-exact-spo
 V9_H4_LAYER_SUPERNODE_METHOD = "task039_v9_h4_layer_supernode_bottom"
 V9_H4_LAYER_SUPERNODE_PROFILE = "task039.v9.h4.layer_supernode.bottom.v1"
 V9_H4_LAYER_SUPERNODE_HARD_STOP_BYTES = 45 * 2**30
+V10_H4_SUPERNODE_FACTOR_INTEGRITY_FLAG = "--v10-h4-supernode-factor-integrity"
+V10_H4_SUPERNODE_FACTOR_INTEGRITY_EXACT_SPOOL_ROOT_FLAG = (
+    "--v10-h4-supernode-factor-integrity-exact-spool-root"
+)
+V10_H4_SUPERNODE_FACTOR_INTEGRITY_METHOD = "task039_v10_h4_supernode_factor_integrity"
+V10_H4_SUPERNODE_FACTOR_INTEGRITY_PROFILE = (
+    "task039.v10.h4.supernode.factor_integrity.v1"
+)
+V10_H4_SUPERNODE_FACTOR_INTEGRITY_HARD_STOP_BYTES = 45 * 2**30
 
 
 def _validate_resolved_identity(
@@ -148,6 +157,7 @@ def _validate_resolved_identity(
     v8_h4_layer_sweep_bottom: bool = False,
     v9_h4_bare_f_side: bool = False,
     v9_h4_layer_supernode_bottom: bool = False,
+    v10_h4_supernode_factor_integrity: bool = False,
 ) -> None:
     if (
         v5_h4_setup_only
@@ -163,6 +173,7 @@ def _validate_resolved_identity(
         or v8_h4_layer_sweep_bottom
         or v9_h4_bare_f_side
         or v9_h4_layer_supernode_bottom
+        or v10_h4_supernode_factor_integrity
     ):
         method = payload.get("method", {})
         if payload.get("model_id") != "task039_5nm_v4_1deg_s5_hybrid_iterative_m480":
@@ -230,6 +241,7 @@ def _watchdog_policy(
     v8_h4_layer_sweep_bottom: bool = False,
     v9_h4_bare_f_side: bool = False,
     v9_h4_layer_supernode_bottom: bool = False,
+    v10_h4_supernode_factor_integrity: bool = False,
 ) -> dict[str, Any]:
     _validate_resolved_identity(
         payload,
@@ -246,6 +258,7 @@ def _watchdog_policy(
         v8_h4_layer_sweep_bottom=v8_h4_layer_sweep_bottom,
         v9_h4_bare_f_side=v9_h4_bare_f_side,
         v9_h4_layer_supernode_bottom=v9_h4_layer_supernode_bottom,
+        v10_h4_supernode_factor_integrity=v10_h4_supernode_factor_integrity,
     )
     if v7_h4_exact_side_full_formal:
         absolute_bytes = V7_H4_EXACT_SIDE_FULL_FORMAL_HARD_STOP_BYTES
@@ -265,6 +278,8 @@ def _watchdog_policy(
         absolute_bytes = V9_H4_BARE_F_SIDE_HARD_STOP_BYTES
     elif v9_h4_layer_supernode_bottom:
         absolute_bytes = V9_H4_LAYER_SUPERNODE_HARD_STOP_BYTES
+    elif v10_h4_supernode_factor_integrity:
+        absolute_bytes = V10_H4_SUPERNODE_FACTOR_INTEGRITY_HARD_STOP_BYTES
     else:
         absolute_bytes = V3_7_ABSOLUTE_HARD_BYTES
     policy = {
@@ -285,6 +300,8 @@ def _watchdog_policy(
         policy["profile"] = V9_H4_BARE_F_SIDE_PROFILE
     if v9_h4_layer_supernode_bottom:
         policy["profile"] = V9_H4_LAYER_SUPERNODE_PROFILE
+    if v10_h4_supernode_factor_integrity:
+        policy["profile"] = V10_H4_SUPERNODE_FACTOR_INTEGRITY_PROFILE
     if v7_h4_exact_side_full_formal:
         policy["timeout_policy"] = {
             "default_seconds": V7_H4_EXACT_SIDE_FULL_FORMAL_DEFAULT_TIMEOUT_SECONDS,
@@ -334,6 +351,7 @@ def load_v3_7_official_payload(
     v8_h4_layer_sweep_bottom: bool = False,
     v9_h4_bare_f_side: bool = False,
     v9_h4_layer_supernode_bottom: bool = False,
+    v10_h4_supernode_factor_integrity: bool = False,
 ) -> dict[str, Any]:
     specification = load_and_resolve(input_path)
     payload = specification.as_jsonable()
@@ -351,6 +369,7 @@ def load_v3_7_official_payload(
         or v8_h4_layer_sweep_bottom
         or v9_h4_bare_f_side
         or v9_h4_layer_supernode_bottom
+        or v10_h4_supernode_factor_integrity
     ):
         from benchmarks.task039_v4_h4_hybrid_direct import (
             validate_v4_h4_specification,
@@ -372,6 +391,7 @@ def load_v3_7_official_payload(
         v8_h4_layer_sweep_bottom=v8_h4_layer_sweep_bottom,
         v9_h4_bare_f_side=v9_h4_bare_f_side,
         v9_h4_layer_supernode_bottom=v9_h4_layer_supernode_bottom,
+        v10_h4_supernode_factor_integrity=v10_h4_supernode_factor_integrity,
     )
     return payload
 
@@ -408,6 +428,8 @@ def build_v3_7_execution_plan(
     v9_h4_bare_f_side_exact_spool_root: str | Path | None = None,
     v9_h4_layer_supernode_bottom: bool = False,
     v9_h4_layer_supernode_exact_spool_root: str | Path | None = None,
+    v10_h4_supernode_factor_integrity: bool = False,
+    v10_h4_supernode_factor_integrity_exact_spool_root: str | Path | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest_sha256: str | None = None,
@@ -434,6 +456,7 @@ def build_v3_7_execution_plan(
         v8_h4_layer_sweep_bottom=v8_h4_layer_sweep_bottom,
         v9_h4_bare_f_side=v9_h4_bare_f_side,
         v9_h4_layer_supernode_bottom=v9_h4_layer_supernode_bottom,
+        v10_h4_supernode_factor_integrity=v10_h4_supernode_factor_integrity,
     )
     if v5_h4_blr_side_only and v5_h4_blr_profile not in V5_H4_BLR_PROFILE_CHOICES:
         raise ValueError(f"Unsupported V5 h4 BLR profile: {v5_h4_blr_profile}")
@@ -452,6 +475,7 @@ def build_v3_7_execution_plan(
         v8_h4_layer_sweep_bottom=v8_h4_layer_sweep_bottom,
         v9_h4_bare_f_side=v9_h4_bare_f_side,
         v9_h4_layer_supernode_bottom=v9_h4_layer_supernode_bottom,
+        v10_h4_supernode_factor_integrity=v10_h4_supernode_factor_integrity,
     )
     executable = str(Path(os.path.abspath(python_executable or sys.executable)))
     mpiexec = mpiexec_command or shutil.which("mpiexec") or "mpiexec"
@@ -477,6 +501,7 @@ def build_v3_7_execution_plan(
                 bool(v8_h4_layer_sweep_bottom),
                 bool(v9_h4_bare_f_side),
                 bool(v9_h4_layer_supernode_bottom),
+                bool(v10_h4_supernode_factor_integrity),
             )
         )
         > 1
@@ -781,6 +806,16 @@ def build_v3_7_execution_plan(
                 str(Path(v9_h4_layer_supernode_exact_spool_root).resolve()),
             ]
         )
+    elif v10_h4_supernode_factor_integrity:
+        if v10_h4_supernode_factor_integrity_exact_spool_root is None:
+            raise ValueError("V10 forensic route requires the exact spool root")
+        argv.extend(
+            [
+                V10_H4_SUPERNODE_FACTOR_INTEGRITY_FLAG,
+                V10_H4_SUPERNODE_FACTOR_INTEGRITY_EXACT_SPOOL_ROOT_FLAG,
+                str(Path(v10_h4_supernode_factor_integrity_exact_spool_root).resolve()),
+            ]
+        )
     if candidate_d_qualified:
         method = V3_8_CANDIDATE_D_QUALIFIED_METHOD
     elif candidate_d_only:
@@ -807,6 +842,8 @@ def build_v3_7_execution_plan(
         method = V9_H4_BARE_F_SIDE_METHOD
     elif v9_h4_layer_supernode_bottom:
         method = V9_H4_LAYER_SUPERNODE_METHOD
+    elif v10_h4_supernode_factor_integrity:
+        method = V10_H4_SUPERNODE_FACTOR_INTEGRITY_METHOD
     elif v5_h4_setup_only:
         method = V5_H4_SETUP_ONLY_METHOD
     elif v5_h4_blr_side_only:
@@ -841,6 +878,8 @@ def build_v3_7_execution_plan(
         profile_id = V9_H4_BARE_F_SIDE_PROFILE
     elif v9_h4_layer_supernode_bottom:
         profile_id = V9_H4_LAYER_SUPERNODE_PROFILE
+    elif v10_h4_supernode_factor_integrity:
+        profile_id = V10_H4_SUPERNODE_FACTOR_INTEGRITY_PROFILE
     elif v5_h4_setup_only:
         profile_id = "task039.v5.h4.exact-side.setup-only.v1"
     elif v5_h4_blr_side_only:
@@ -866,6 +905,13 @@ def build_v3_7_execution_plan(
         and v9_h4_layer_supernode_exact_spool_root is not None
     ):
         exact_spool_root = str(Path(v9_h4_layer_supernode_exact_spool_root).resolve())
+    elif (
+        v10_h4_supernode_factor_integrity
+        and v10_h4_supernode_factor_integrity_exact_spool_root is not None
+    ):
+        exact_spool_root = str(
+            Path(v10_h4_supernode_factor_integrity_exact_spool_root).resolve()
+        )
     elif v7_h4_streamed_bottom_producer:
         exact_spool_root = None
     elif (
@@ -945,6 +991,8 @@ def v3_7_execution_dry_run(
     v9_h4_bare_f_side_exact_spool_root: str | Path | None = None,
     v9_h4_layer_supernode_bottom: bool = False,
     v9_h4_layer_supernode_exact_spool_root: str | Path | None = None,
+    v10_h4_supernode_factor_integrity: bool = False,
+    v10_h4_supernode_factor_integrity_exact_spool_root: str | Path | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest_sha256: str | None = None,
@@ -983,6 +1031,10 @@ def v3_7_execution_dry_run(
         v9_h4_bare_f_side_exact_spool_root=v9_h4_bare_f_side_exact_spool_root,
         v9_h4_layer_supernode_bottom=v9_h4_layer_supernode_bottom,
         v9_h4_layer_supernode_exact_spool_root=(v9_h4_layer_supernode_exact_spool_root),
+        v10_h4_supernode_factor_integrity=v10_h4_supernode_factor_integrity,
+        v10_h4_supernode_factor_integrity_exact_spool_root=(
+            v10_h4_supernode_factor_integrity_exact_spool_root
+        ),
         v7_h4_streamed_bottom_consumer_basis_manifest=(
             v7_h4_streamed_bottom_consumer_basis_manifest
         ),
@@ -1039,6 +1091,8 @@ def launch_v3_7_with_task038_watchdog(
     v9_h4_bare_f_side_exact_spool_root: str | Path | None = None,
     v9_h4_layer_supernode_bottom: bool = False,
     v9_h4_layer_supernode_exact_spool_root: str | Path | None = None,
+    v10_h4_supernode_factor_integrity: bool = False,
+    v10_h4_supernode_factor_integrity_exact_spool_root: str | Path | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest_sha256: str | None = None,
@@ -1065,6 +1119,7 @@ def launch_v3_7_with_task038_watchdog(
         v8_h4_layer_sweep_bottom=v8_h4_layer_sweep_bottom,
         v9_h4_bare_f_side=v9_h4_bare_f_side,
         v9_h4_layer_supernode_bottom=v9_h4_layer_supernode_bottom,
+        v10_h4_supernode_factor_integrity=v10_h4_supernode_factor_integrity,
     )
     if (
         not v5_h4_setup_only
@@ -1080,6 +1135,7 @@ def launch_v3_7_with_task038_watchdog(
         and not v8_h4_layer_sweep_bottom
         and not v9_h4_bare_f_side
         and not v9_h4_layer_supernode_bottom
+        and not v10_h4_supernode_factor_integrity
     ):
         _check_direct_producer(V3_7_DIRECT_RUN_ROOT)
     if len(source_sha) != 40 or any(
@@ -1117,6 +1173,10 @@ def launch_v3_7_with_task038_watchdog(
         v9_h4_bare_f_side_exact_spool_root=v9_h4_bare_f_side_exact_spool_root,
         v9_h4_layer_supernode_bottom=v9_h4_layer_supernode_bottom,
         v9_h4_layer_supernode_exact_spool_root=(v9_h4_layer_supernode_exact_spool_root),
+        v10_h4_supernode_factor_integrity=v10_h4_supernode_factor_integrity,
+        v10_h4_supernode_factor_integrity_exact_spool_root=(
+            v10_h4_supernode_factor_integrity_exact_spool_root
+        ),
         v7_h4_streamed_bottom_consumer_basis_manifest=(
             v7_h4_streamed_bottom_consumer_basis_manifest
         ),
@@ -1238,6 +1298,15 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(V9_H4_LAYER_SUPERNODE_BOTTOM_FLAG, action="store_true")
     parser.add_argument(V9_H4_LAYER_SUPERNODE_EXACT_SPOOL_ROOT_FLAG)
+    parser.add_argument(
+        V10_H4_SUPERNODE_FACTOR_INTEGRITY_FLAG,
+        dest="v10_h4_supernode_factor_integrity",
+        action="store_true",
+    )
+    parser.add_argument(
+        V10_H4_SUPERNODE_FACTOR_INTEGRITY_EXACT_SPOOL_ROOT_FLAG,
+        dest="v10_h4_supernode_factor_integrity_exact_spool_root",
+    )
     parser.add_argument(V7_STREAMED_PETROV_BOTTOM_CONSUMER_BASIS_MANIFEST_FLAG)
     parser.add_argument(V7_STREAMED_PETROV_BOTTOM_CONSUMER_BASIS_MANIFEST_SHA256_FLAG)
     parser.add_argument(V7_STREAMED_PETROV_BOTTOM_CONSUMER_EXACT_SPOOL_ROOT_FLAG)
@@ -1306,6 +1375,12 @@ def main(argv: list[str] | None = None) -> int:
                     v9_h4_layer_supernode_exact_spool_root=(
                         args.v9_h4_layer_supernode_exact_spool_root
                     ),
+                    v10_h4_supernode_factor_integrity=(
+                        args.v10_h4_supernode_factor_integrity
+                    ),
+                    v10_h4_supernode_factor_integrity_exact_spool_root=(
+                        args.v10_h4_supernode_factor_integrity_exact_spool_root
+                    ),
                     v8_h4_layer_sweep_exact_spool_root=(
                         args.v8_h4_layer_sweep_exact_spool_root
                     ),
@@ -1360,6 +1435,10 @@ def main(argv: list[str] | None = None) -> int:
         v9_h4_layer_supernode_bottom=args.v9_h4_layer_supernode_bottom,
         v9_h4_layer_supernode_exact_spool_root=(
             args.v9_h4_layer_supernode_exact_spool_root
+        ),
+        v10_h4_supernode_factor_integrity=args.v10_h4_supernode_factor_integrity,
+        v10_h4_supernode_factor_integrity_exact_spool_root=(
+            args.v10_h4_supernode_factor_integrity_exact_spool_root
         ),
         v8_h4_layer_sweep_exact_spool_root=(args.v8_h4_layer_sweep_exact_spool_root),
         v7_h4_streamed_bottom_consumer_basis_manifest=(
@@ -1450,6 +1529,11 @@ __all__ = [
     "V9_H4_LAYER_SUPERNODE_METHOD",
     "V9_H4_LAYER_SUPERNODE_PROFILE",
     "V9_H4_LAYER_SUPERNODE_HARD_STOP_BYTES",
+    "V10_H4_SUPERNODE_FACTOR_INTEGRITY_FLAG",
+    "V10_H4_SUPERNODE_FACTOR_INTEGRITY_EXACT_SPOOL_ROOT_FLAG",
+    "V10_H4_SUPERNODE_FACTOR_INTEGRITY_METHOD",
+    "V10_H4_SUPERNODE_FACTOR_INTEGRITY_PROFILE",
+    "V10_H4_SUPERNODE_FACTOR_INTEGRITY_HARD_STOP_BYTES",
     "build_v3_7_execution_plan",
     "launch_v3_7_with_task038_watchdog",
     "load_v3_7_official_payload",

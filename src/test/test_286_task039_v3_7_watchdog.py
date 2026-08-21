@@ -684,6 +684,73 @@ def test_v9_layer_supernode_main_dry_run_uses_one_route_and_45gib_stop(
     assert not run_directory.exists()
 
 
+def test_v10_factor_integrity_main_dry_run_uses_one_route_and_45gib_stop(
+    tmp_path, capsys
+):
+    h4_input = Path(
+        "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
+    )
+    spool_root = Path(
+        "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/"
+        "numerical_output"
+    )
+    run_directory = tmp_path / "v10-factor-integrity-main-dry-run"
+    assert (
+        watchdog.main(
+            [
+                "--dry-run",
+                "--input",
+                str(h4_input),
+                "--run-directory",
+                str(run_directory),
+                "--source-sha",
+                "d" * 40,
+                watchdog.V10_H4_SUPERNODE_FACTOR_INTEGRITY_FLAG,
+                watchdog.V10_H4_SUPERNODE_FACTOR_INTEGRITY_EXACT_SPOOL_ROOT_FLAG,
+                str(spool_root),
+            ]
+        )
+        == 0
+    )
+    plan = json.loads(capsys.readouterr().out)
+    route_flags = (
+        watchdog.V5_H4_SETUP_ONLY_FLAG,
+        watchdog.V5_H4_BLR_SIDE_COMPONENT_FLAG,
+        watchdog.V5_H4_FIXED_BUDGET_BOTTOM_COMPONENT_FLAG,
+        watchdog.V6_H4_POST_COMPACTION_SETUP_ONLY_FLAG,
+        watchdog.V6_H4_PORT_MODAL_BOTTOM_COMPONENT_FLAG,
+        watchdog.V7_H4_EXACT_SIDE_LIMIT_SETUP_ONLY_FLAG,
+        watchdog.V7_H4_EXACT_SIDE_FULL_FORMAL_FLAG,
+        watchdog.V7_STREAMED_PETROV_BOTTOM_PRODUCER_FLAG,
+        watchdog.V7_STREAMED_PETROV_BOTTOM_CONSUMER_FLAG,
+        watchdog.V8_H4_LAYER_BLOCK_RECONSTRUCTION_FLAG,
+        watchdog.V8_H4_LAYER_SWEEP_BOTTOM_FLAG,
+        watchdog.V9_H4_BARE_F_SIDE_FLAG,
+        watchdog.V9_H4_LAYER_SUPERNODE_BOTTOM_FLAG,
+        watchdog.V10_H4_SUPERNODE_FACTOR_INTEGRITY_FLAG,
+    )
+    assert plan["argv"][1:3] == ["-n", "8"]
+    assert sum(flag in plan["argv"] for flag in route_flags) == 1
+    assert plan["argv"].count(watchdog.V10_H4_SUPERNODE_FACTOR_INTEGRITY_FLAG) == 1
+    assert (
+        plan["argv"].count(
+            watchdog.V10_H4_SUPERNODE_FACTOR_INTEGRITY_EXACT_SPOOL_ROOT_FLAG
+        )
+        == 1
+    )
+    assert plan["worker_contract"]["method"] == (
+        watchdog.V10_H4_SUPERNODE_FACTOR_INTEGRITY_METHOD
+    )
+    assert plan["worker_contract"]["profile_id"] == (
+        watchdog.V10_H4_SUPERNODE_FACTOR_INTEGRITY_PROFILE
+    )
+    assert plan["watchdog"]["absolute_terminate_memory_bytes"] == 45 * 2**30
+    assert plan["watchdog"]["require_zero_swap"] is True
+    assert plan["worker_contract"]["exact_spool_root"] == str(spool_root.resolve())
+    assert not any("selected-mode-packet" in argument for argument in plan["argv"])
+    assert not run_directory.exists()
+
+
 def test_v9_bare_f_launch_passes_h4_identity_to_worker_dry_run(tmp_path):
     h4_input = Path(
         "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
