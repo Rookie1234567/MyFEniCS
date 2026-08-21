@@ -91,6 +91,18 @@ V10_H4_J1_INNER_FGMRES_CONSTRUCTION_LIMIT_GIB = 45.0
 V10_H4_J1_INNER_FGMRES_RETAINED_LIMIT_GIB = 30.0
 V10_H4_J1_INNER_FGMRES_METHOD = "task039_v10_h4_j1_inner_fgmres"
 V10_H4_J1_INNER_FGMRES_SCHEMA = "task039.v10.h4.j1_inner_fgmres.v1"
+V10_H4_SIDE_RESPONSE_PACKET_PILOT_HARD_STOP_BYTES = 60 * 2**30
+V10_H4_SIDE_RESPONSE_PACKET_PILOT_METHOD = "task039_v10_h4_side_response_packet_pilot"
+V10_H4_SIDE_RESPONSE_PACKET_PILOT_SCHEMA = (
+    "task039.v10.h4.side_response_packet.pilot.v1"
+)
+V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_HARD_STOP_BYTES = 30 * 2**30
+V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_METHOD = (
+    "task039_v10_h4_side_response_packet_consumer"
+)
+V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_SCHEMA = (
+    "task039.v10.h4.side_response_packet.consumer.v1"
+)
 
 
 def _v5_h4_blr_candidate_interval_peak(
@@ -739,6 +751,12 @@ def _run_worker(
     formal_v10_j1_inner_fgmres = (
         getattr(plan, "method", "") == V10_H4_J1_INNER_FGMRES_METHOD
     )
+    formal_v10_side_packet_pilot = (
+        getattr(plan, "method", "") == V10_H4_SIDE_RESPONSE_PACKET_PILOT_METHOD
+    )
+    formal_v10_side_packet_consumer = (
+        getattr(plan, "method", "") == V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_METHOD
+    )
     formal_telemetry = (
         formal_v2_h5
         or formal_v3_2d
@@ -760,6 +778,8 @@ def _run_worker(
         or formal_v10_factor_integrity
         or formal_v10_sn2_j_only
         or formal_v10_j1_inner_fgmres
+        or formal_v10_side_packet_pilot
+        or formal_v10_side_packet_consumer
     )
     if task039_model_id_matches(method, model_id, requested_modes):
         task039_budget = _task039_memory_budget(execution)
@@ -821,6 +841,16 @@ def _run_worker(
         terminate_limit = float(absolute_terminate_memory_bytes)
     if formal_v10_j1_inner_fgmres:
         absolute_terminate_memory_bytes = V10_H4_J1_INNER_FGMRES_HARD_STOP_BYTES
+        terminate_limit = float(absolute_terminate_memory_bytes)
+    if formal_v10_side_packet_pilot:
+        absolute_terminate_memory_bytes = (
+            V10_H4_SIDE_RESPONSE_PACKET_PILOT_HARD_STOP_BYTES
+        )
+        terminate_limit = float(absolute_terminate_memory_bytes)
+    if formal_v10_side_packet_consumer:
+        absolute_terminate_memory_bytes = (
+            V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_HARD_STOP_BYTES
+        )
         terminate_limit = float(absolute_terminate_memory_bytes)
     timeout = float(execution["timeout_seconds"])
     if formal_v7_h4_full:
@@ -915,6 +945,8 @@ def _run_worker(
                 or formal_v10_factor_integrity
                 or formal_v10_sn2_j_only
                 or formal_v10_j1_inner_fgmres
+                or formal_v10_side_packet_pilot
+                or formal_v10_side_packet_consumer
             )
             or formal_stage_stream is None
         ):
@@ -971,6 +1003,8 @@ def _run_worker(
                 or formal_v10_factor_integrity
                 or formal_v10_sn2_j_only
                 or formal_v10_j1_inner_fgmres
+                or formal_v10_side_packet_pilot
+                or formal_v10_side_packet_consumer
             ) and stage_index is None:
                 stage_index = formal_aligned_stage_count
             row = {
@@ -1028,6 +1062,8 @@ def _run_worker(
             or formal_v10_factor_integrity
             or formal_v10_sn2_j_only
             or formal_v10_j1_inner_fgmres
+            or formal_v10_side_packet_pilot
+            or formal_v10_side_packet_consumer
         ):
             formal_stages_path.unlink(missing_ok=True)
             formal_stage_stream = formal_stages_path.open("a", encoding="utf-8")
@@ -2858,6 +2894,290 @@ def _run_worker(
                 V10_H4_J1_INNER_FGMRES_HARD_STOP_BYTES / 1024**3
             ),
             "require_zero_swap": True,
+            "zero_swap_observed": zero_swap_observed if sample_count else None,
+            "overall_process_tree_peak_bytes": peak_process_tree,
+            "overall_process_tree_peak_gib": peak_process_tree / 1024**3,
+            "overall_peak_swap_bytes": peak_swap,
+            "authority": "parent_process_tree_samples",
+        }
+    if formal_v10_side_packet_pilot:
+        construction_interval = _v5_h4_blr_candidate_interval_peak(
+            formal_stages_path,
+            formal_samples_path,
+            "bottom",
+            begin_stage="v10_side_response_packet_bottom_producer_begin",
+            end_stage="v10_side_response_packet_bottom_producer_cleanup",
+            limit_gib=60.0,
+        )
+        worker_record_path = (
+            run_directory / "numerical_output" / "v3_v7_diagnostic.json"
+        )
+        worker_record_status = "not_available"
+        worker_contract_valid = False
+        worker_contract_reason = "not_checked"
+        pilot_gate: bool | None = None
+        if worker_record_path.is_file():
+            try:
+                worker_record = json.loads(
+                    worker_record_path.read_text(encoding="utf-8")
+                )
+            except (OSError, json.JSONDecodeError):
+                worker_record_status = "parse_failed"
+                worker_contract_reason = "record_unreadable"
+            else:
+                identity_matches = (
+                    isinstance(worker_record, Mapping)
+                    and worker_record.get("schema")
+                    == V10_H4_SIDE_RESPONSE_PACKET_PILOT_SCHEMA
+                    and worker_record.get("method")
+                    == V10_H4_SIDE_RESPONSE_PACKET_PILOT_METHOD
+                    and worker_record.get("source_sha")
+                    == getattr(plan, "source_sha", None)
+                )
+                factor_inventory = (
+                    worker_record.get("factor_inventory")
+                    if isinstance(worker_record, Mapping)
+                    else None
+                )
+                packet_contract = (
+                    worker_record.get("selected_mode_packet_opened") is True
+                    and worker_record.get("exact_spool_opened") is True
+                    and worker_record.get("qep_count") == 0
+                    and isinstance(factor_inventory, Mapping)
+                    and factor_inventory.get("exact_side_factor_count_ready") == 1
+                    and factor_inventory.get("factor_count_after_cleanup") == 0
+                    and factor_inventory.get("global_direct_factor_count") == 0
+                )
+                gate = (
+                    worker_record.get("report_gate")
+                    if isinstance(worker_record, Mapping)
+                    else None
+                )
+                pilot_gate = (
+                    gate.get("pilot_eligibility_pass")
+                    if isinstance(gate, Mapping)
+                    else None
+                )
+                if (
+                    identity_matches
+                    and packet_contract
+                    and isinstance(pilot_gate, bool)
+                ):
+                    worker_record_status = "measured"
+                    worker_contract_valid = True
+                    worker_contract_reason = "validated"
+                else:
+                    worker_record_status = "contract_mismatch"
+                    worker_contract_reason = "identity_packet_factor_or_gate_mismatch"
+        construction_measured = construction_interval.get("status") == "measured"
+        construction_pass = (
+            construction_measured and construction_interval.get("pass") is True
+        )
+        swap_pass = sample_count > 0 and zero_swap_observed is True and peak_swap == 0
+        if not worker_contract_valid or pilot_gate is None:
+            overall_status = (
+                "contract_mismatch"
+                if worker_record_status == "contract_mismatch"
+                else "not_available"
+            )
+            overall_pass = None
+        elif not construction_measured:
+            overall_status = "resource_interval_not_available"
+            overall_pass = None
+        elif not construction_pass:
+            overall_status = "resource_gate_failed"
+            overall_pass = False
+        elif not swap_pass:
+            overall_status = "swap_gate_failed"
+            overall_pass = False
+        elif pilot_gate is False:
+            overall_status = "pilot_eligibility_failed"
+            overall_pass = False
+        else:
+            overall_status = "pass_producer_component"
+            overall_pass = True
+        resource_authority["v10_h4_side_response_packet_pilot_telemetry"] = {
+            "raw_marker_path": str(formal_markers_path),
+            "process_tree_samples_path": str(formal_samples_path),
+            "memory_stages_path": str(formal_stages_path),
+            "memory_object_ledger_path": str(formal_object_ledger_path),
+            "sample_count": sample_count,
+            "process_tree_sample_count": formal_written_sample_count,
+            "aligned_stage_count": formal_aligned_stage_count,
+            "stage_source": "launcher_marker_alignment",
+            "method": V10_H4_SIDE_RESPONSE_PACKET_PILOT_METHOD,
+            "profile": V10_H4_SIDE_RESPONSE_PACKET_PILOT_SCHEMA,
+            "construction_interval_summary": construction_interval,
+            "retained_interval_summary": {"status": "not_applicable"},
+            "worker_record_path": str(worker_record_path),
+            "worker_record_status": worker_record_status,
+            "worker_record_contract_valid": worker_contract_valid,
+            "worker_record_contract_reason": worker_contract_reason,
+            "pilot_eligibility_pass": pilot_gate,
+            "overall": {
+                "status": overall_status,
+                "pass": overall_pass,
+                "construction_pass": construction_pass,
+                "retained_pass": None,
+                "pilot_eligibility_pass": pilot_gate,
+                "swap_pass": swap_pass,
+                "resource_gate": (
+                    "construction_pass_retained_not_applicable"
+                    if construction_pass
+                    else "construction_failed_or_not_available"
+                ),
+            },
+            "gate_contract": {
+                "construction_peak_limit_gib": 60.0,
+                "retained_state": "not_applicable",
+                "swap_required": 0,
+                "exact_side_factor_count_ready": 1,
+                "factor_count_after_cleanup": 0,
+                "global_direct_factor_count": 0,
+                "nested_ksp_count": 0,
+                "selected_mode_packet_opened": True,
+                "exact_spool_opened": True,
+                "qep_count": 0,
+            },
+            "absolute_terminate_memory_bytes": (
+                V10_H4_SIDE_RESPONSE_PACKET_PILOT_HARD_STOP_BYTES
+            ),
+            "effective_hard_stop_memory_gib": 60.0,
+            "zero_swap_observed": zero_swap_observed if sample_count else None,
+            "overall_process_tree_peak_bytes": peak_process_tree,
+            "overall_process_tree_peak_gib": peak_process_tree / 1024**3,
+            "overall_peak_swap_bytes": peak_swap,
+            "authority": "parent_process_tree_samples",
+        }
+    if formal_v10_side_packet_consumer:
+        interval = _v5_h4_blr_candidate_interval_peak(
+            formal_stages_path,
+            formal_samples_path,
+            "bottom",
+            begin_stage="v10_side_response_packet_consumer_begin",
+            end_stage="v10_side_response_packet_consumer_released",
+            limit_gib=30.0,
+        )
+        worker_record_path = (
+            run_directory / "numerical_output" / "v3_v7_diagnostic.json"
+        )
+        worker_record_status = "not_available"
+        worker_contract_valid = False
+        worker_contract_reason = "not_checked"
+        if worker_record_path.is_file():
+            try:
+                worker_record = json.loads(
+                    worker_record_path.read_text(encoding="utf-8")
+                )
+            except (OSError, json.JSONDecodeError):
+                worker_record_status = "parse_failed"
+                worker_contract_reason = "record_unreadable"
+            else:
+                identity_matches = (
+                    isinstance(worker_record, Mapping)
+                    and worker_record.get("schema")
+                    == V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_SCHEMA
+                    and worker_record.get("method")
+                    == V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_METHOD
+                    and worker_record.get("source_sha")
+                    == getattr(plan, "source_sha", None)
+                )
+                factor_inventory = (
+                    worker_record.get("factor_inventory")
+                    if isinstance(worker_record, Mapping)
+                    else None
+                )
+                packet = worker_record.get("packet", {})
+                worker_contract_valid = bool(
+                    identity_matches
+                    and worker_record.get("selected_mode_packet_opened") is False
+                    and worker_record.get("qep_count") == 0
+                    and worker_record.get("sgs_executed") is False
+                    and isinstance(factor_inventory, Mapping)
+                    and factor_inventory.get("consumer_factor_count") == 0
+                    and factor_inventory.get("full_side_exact_factor_count") == 0
+                    and factor_inventory.get("global_direct_factor_count") == 0
+                    and factor_inventory.get("nested_ksp_count") == 0
+                    and isinstance(packet, Mapping)
+                    and packet.get("released") is True
+                )
+                if worker_contract_valid:
+                    worker_record_status = "measured"
+                    worker_contract_reason = "validated"
+                else:
+                    worker_record_status = "contract_mismatch"
+                    worker_contract_reason = (
+                        "identity_packet_factor_or_lifecycle_mismatch"
+                    )
+        interval_measured = interval.get("status") == "measured"
+        interval_pass = interval_measured and interval.get("pass") is True
+        swap_pass = sample_count > 0 and zero_swap_observed is True and peak_swap == 0
+        if not worker_contract_valid:
+            overall_status = (
+                "contract_mismatch"
+                if worker_record_status == "contract_mismatch"
+                else "not_available"
+            )
+            overall_pass = None
+        elif not interval_measured:
+            overall_status = "resource_interval_not_available"
+            overall_pass = None
+        elif not interval_pass:
+            overall_status = "resource_gate_failed"
+            overall_pass = False
+        elif not swap_pass:
+            overall_status = "swap_gate_failed"
+            overall_pass = False
+        else:
+            overall_status = "pass_consumer_component"
+            overall_pass = True
+        resource_authority["v10_h4_side_response_packet_consumer_telemetry"] = {
+            "raw_marker_path": str(formal_markers_path),
+            "process_tree_samples_path": str(formal_samples_path),
+            "memory_stages_path": str(formal_stages_path),
+            "memory_object_ledger_path": str(formal_object_ledger_path),
+            "sample_count": sample_count,
+            "process_tree_sample_count": formal_written_sample_count,
+            "aligned_stage_count": formal_aligned_stage_count,
+            "stage_source": "launcher_marker_alignment",
+            "method": V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_METHOD,
+            "profile": V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_SCHEMA,
+            "construction_interval_summary": {"status": "not_applicable"},
+            "retained_interval_summary": interval,
+            "worker_record_path": str(worker_record_path),
+            "worker_record_status": worker_record_status,
+            "worker_record_contract_valid": worker_contract_valid,
+            "worker_record_contract_reason": worker_contract_reason,
+            "overall": {
+                "status": overall_status,
+                "pass": overall_pass,
+                "construction_pass": None,
+                "retained_pass": interval_pass,
+                "swap_pass": swap_pass,
+                "resource_gate": (
+                    "consumer_retained_interval_pass"
+                    if interval_pass
+                    else "consumer_retained_interval_failed_or_not_available"
+                ),
+            },
+            "gate_contract": {
+                "construction_peak_limit_gib": None,
+                "retained_peak_limit_gib": 30.0,
+                "retained_state": (
+                    "measured" if interval_measured else "not_available"
+                ),
+                "swap_required": 0,
+                "consumer_factor_count": 0,
+                "full_side_exact_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "nested_ksp_count": 0,
+                "selected_mode_packet_opened": False,
+                "qep_count": 0,
+            },
+            "absolute_terminate_memory_bytes": (
+                V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_HARD_STOP_BYTES
+            ),
+            "effective_hard_stop_memory_gib": 30.0,
             "zero_swap_observed": zero_swap_observed if sample_count else None,
             "overall_process_tree_peak_bytes": peak_process_tree,
             "overall_process_tree_peak_gib": peak_process_tree / 1024**3,

@@ -870,6 +870,103 @@ def test_v10_j1_inner_fgmres_main_dry_run_preserves_route_contract(tmp_path, cap
     assert not run_directory.exists()
 
 
+def test_v10_side_response_packet_main_dry_runs_keep_producer_consumer_routes(
+    tmp_path, capsys
+):
+    h4_input = Path(
+        "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
+    )
+    spool_root = Path(
+        "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/"
+        "numerical_output"
+    )
+    packet_root = Path("results/task039_v4_h4_m480_shared_packet_eaad0f94")
+    route_flags = (
+        watchdog.V5_H4_SETUP_ONLY_FLAG,
+        watchdog.V5_H4_BLR_SIDE_COMPONENT_FLAG,
+        watchdog.V5_H4_FIXED_BUDGET_BOTTOM_COMPONENT_FLAG,
+        watchdog.V6_H4_POST_COMPACTION_SETUP_ONLY_FLAG,
+        watchdog.V6_H4_PORT_MODAL_BOTTOM_COMPONENT_FLAG,
+        watchdog.V7_H4_EXACT_SIDE_LIMIT_SETUP_ONLY_FLAG,
+        watchdog.V7_H4_EXACT_SIDE_FULL_FORMAL_FLAG,
+        watchdog.V7_STREAMED_PETROV_BOTTOM_PRODUCER_FLAG,
+        watchdog.V7_STREAMED_PETROV_BOTTOM_CONSUMER_FLAG,
+        watchdog.V8_H4_LAYER_BLOCK_RECONSTRUCTION_FLAG,
+        watchdog.V8_H4_LAYER_SWEEP_BOTTOM_FLAG,
+        watchdog.V9_H4_BARE_F_SIDE_FLAG,
+        watchdog.V9_H4_LAYER_SUPERNODE_BOTTOM_FLAG,
+        watchdog.V10_H4_SUPERNODE_FACTOR_INTEGRITY_FLAG,
+        watchdog.V10_H4_SN2_J_ONLY_FLAG,
+        watchdog.V10_H4_J1_INNER_FGMRES_FLAG,
+        watchdog.V10_H4_SIDE_RESPONSE_PACKET_PILOT_FLAG,
+        watchdog.V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_FLAG,
+    )
+    cases = (
+        (
+            "producer",
+            [
+                watchdog.V10_H4_SIDE_RESPONSE_PACKET_PILOT_FLAG,
+                watchdog.V10_H4_SIDE_RESPONSE_PACKET_PILOT_EXACT_SPOOL_ROOT_FLAG,
+                str(spool_root),
+                watchdog.V10_H4_SIDE_RESPONSE_PACKET_PILOT_OUTPUT_ROOT_FLAG,
+                str(tmp_path / "producer-packet"),
+                "--selected-mode-packet-manifest",
+                str(packet_root / "manifest.json"),
+                "--selected-mode-packet-identity",
+                str(packet_root / "identity.json"),
+                "--selected-mode-packet-manifest-sha256",
+                "b" * 64,
+            ],
+            watchdog.V10_H4_SIDE_RESPONSE_PACKET_PILOT_METHOD,
+            watchdog.V10_H4_SIDE_RESPONSE_PACKET_PILOT_PROFILE,
+            60 * 2**30,
+        ),
+        (
+            "consumer",
+            [
+                watchdog.V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_FLAG,
+                watchdog.V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_MANIFEST_FLAG,
+                str(tmp_path / "consumer-manifest.json"),
+                watchdog.V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_MANIFEST_SHA256_FLAG,
+                "c" * 64,
+            ],
+            watchdog.V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_METHOD,
+            watchdog.V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_PROFILE,
+            30 * 2**30,
+        ),
+    )
+    for name, route_args, method, profile_id, hard_stop in cases:
+        run_directory = tmp_path / f"v10-side-response-{name}"
+        assert (
+            watchdog.main(
+                [
+                    "--dry-run",
+                    "--input",
+                    str(h4_input),
+                    "--run-directory",
+                    str(run_directory),
+                    "--source-sha",
+                    "a" * 40,
+                    *route_args,
+                ]
+            )
+            == 0
+        )
+        plan = json.loads(capsys.readouterr().out)
+        assert plan["argv"][1:3] == ["-n", "8"]
+        assert sum(flag in plan["argv"] for flag in route_flags) == 1
+        assert plan["argv"].count(route_args[0]) == 1
+        assert plan["worker_contract"]["method"] == method
+        assert plan["worker_contract"]["profile_id"] == profile_id
+        assert plan["watchdog"]["absolute_terminate_memory_bytes"] == hard_stop
+        assert plan["watchdog"]["require_zero_swap"] is True
+        if name == "consumer":
+            assert not any("selected-mode-packet" in arg for arg in plan["argv"])
+        else:
+            assert "--selected-mode-packet-manifest" in plan["argv"]
+        assert not run_directory.exists()
+
+
 def test_v9_bare_f_launch_passes_h4_identity_to_worker_dry_run(tmp_path):
     h4_input = Path(
         "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"

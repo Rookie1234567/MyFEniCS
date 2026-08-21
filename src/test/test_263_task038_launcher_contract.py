@@ -1491,6 +1491,93 @@ def test_v10_j1_inner_fgmres_launcher_owns_resource_gate(
     assert telemetry["overall_peak_swap_bytes"] == swap
 
 
+def test_v10_side_response_consumer_uses_retained_interval_authority(tmp_path):
+    specification = replace(
+        load_and_resolve(TASK039_V4_H4_ITERATIVE),
+        expected_output_parent=tmp_path / "results",
+    )
+    run_directory = tmp_path / "v10-side-response-consumer"
+    diagnostic_directory = run_directory / "numerical_output"
+    diagnostic_directory.mkdir(parents=True)
+    source_sha = "a" * 40
+    (diagnostic_directory / "v3_v7_diagnostic.json").write_text(
+        json.dumps(
+            {
+                "schema": launcher.V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_SCHEMA,
+                "method": launcher.V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_METHOD,
+                "source_sha": source_sha,
+                "packet": {"released": True},
+                "factor_inventory": {
+                    "consumer_factor_count": 0,
+                    "full_side_exact_factor_count": 0,
+                    "global_direct_factor_count": 0,
+                    "nested_ksp_count": 0,
+                },
+                "selected_mode_packet_opened": False,
+                "qep_count": 0,
+                "sgs_executed": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    marker_path = diagnostic_directory / "memory_stage_markers.raw.jsonl"
+    marker_batches = {
+        1: ["v10_side_response_packet_consumer_begin"],
+        2: ["v10_side_response_packet_consumer_loaded"],
+        3: ["v10_side_response_packet_consumer_released"],
+    }
+    sample_calls = 0
+
+    def popen(_argv, **_kwargs):
+        return _SequenceProcess(polls_before_exit=2)
+
+    def sample_factory(_pid):
+        nonlocal sample_calls
+        sample_calls += 1
+        for marker in marker_batches.get(sample_calls, ()):
+            with marker_path.open("a", encoding="utf-8") as stream:
+                stream.write(
+                    json.dumps(
+                        {
+                            "stage": marker,
+                            "status": "end",
+                            "elapsed_seconds": float(sample_calls),
+                        }
+                    )
+                    + "\n"
+                )
+        return _authority(memory=10 * 2**30, swap=0)
+
+    plan = SimpleNamespace(
+        argv=("/opt/fake-worker",),
+        method=launcher.V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_METHOD,
+        source_sha=source_sha,
+        contract_probe=False,
+        task039_trace_audit=False,
+    )
+    result = launcher._run_worker(
+        plan,
+        specification,
+        run_directory,
+        popen_factory=popen,
+        sample_factory=sample_factory,
+        terminate_factory=lambda _process: {"requested": True},
+        monotonic=iter(float(index) for index in range(20)).__next__,
+        sleep=lambda _seconds: None,
+        poll_interval=0.25,
+    )
+    telemetry = result["resource_authority"][
+        "v10_h4_side_response_packet_consumer_telemetry"
+    ]
+    assert telemetry["construction_interval_summary"]["status"] == "not_applicable"
+    assert telemetry["retained_interval_summary"]["status"] == "measured"
+    assert telemetry["retained_interval_summary"]["pass"] is True
+    assert telemetry["overall"]["construction_pass"] is None
+    assert telemetry["overall"]["retained_pass"] is True
+    assert telemetry["overall"]["pass"] is True
+    assert telemetry["gate_contract"]["retained_peak_limit_gib"] == 30.0
+
+
 def test_task039_h5_critical_checkpoint_does_not_stop_before_absolute_hard_stop(
     monkeypatch, tmp_path
 ):
