@@ -1365,6 +1365,132 @@ def test_v10_sn2_j_only_launcher_records_construction_and_retained_contract(
     assert telemetry["overall_peak_swap_bytes"] == 0
 
 
+@pytest.mark.parametrize(
+    ("retained_memory", "swap", "expected_status", "expected_pass"),
+    (
+        (10 * 2**30, 0, "pass", True),
+        (31 * 2**30, 0, "resource_gate_failed", False),
+        (10 * 2**30, 1, "swap_gate_failed", False),
+    ),
+)
+def test_v10_j1_inner_fgmres_launcher_owns_resource_gate(
+    tmp_path, retained_memory, swap, expected_status, expected_pass
+):
+    specification = replace(
+        load_and_resolve(TASK039_V4_H4_ITERATIVE),
+        expected_output_parent=tmp_path / "results",
+    )
+    run_directory = tmp_path / f"v10-j1-inner-{expected_status}"
+    diagnostic_directory = run_directory / "numerical_output"
+    diagnostic_directory.mkdir(parents=True)
+    source_sha = "a" * 40
+    numerical_gate = True
+    (diagnostic_directory / "v3_v7_diagnostic.json").write_text(
+        json.dumps(
+            {
+                "schema": launcher.V10_H4_J1_INNER_FGMRES_SCHEMA,
+                "method": launcher.V10_H4_J1_INNER_FGMRES_METHOD,
+                "source_sha": source_sha,
+                "gate": {
+                    "numerical_gate_pass": numerical_gate,
+                    "classification": (
+                        "J1_INNER_FGMRES_SIDE_GATE_PASS"
+                        if numerical_gate
+                        else "J1_INNER_FGMRES_NUMERICAL_LIMIT_NOT_REACHED_BY_32"
+                    ),
+                },
+                "factor_inventory": {
+                    "layer_factor_count_ready": 6,
+                    "layer_factor_count_after_cleanup": 0,
+                    "full_side_exact_factor_count": 0,
+                    "global_direct_factor_count": 0,
+                    "nested_ksp_count": 0,
+                    "side_fgmres_ksp_count": 5,
+                    "pc_nested_ksp_count": 0,
+                },
+                "explicit_components_released_before_krylov": True,
+                "lifecycle": {
+                    "retained_state": "released_after_five_rhs",
+                    "system_released": True,
+                },
+                "selected_mode_packet_opened": False,
+                "exact_spool_opened": True,
+                "qep_count": 0,
+                "sgs_executed": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    marker_path = diagnostic_directory / "memory_stage_markers.raw.jsonl"
+    marker_batches = {
+        1: ["v10_j1_inner_fgmres_bottom_construction_begin"],
+        2: ["v10_j1_inner_fgmres_bottom_construction_end"],
+        3: ["v10_j1_inner_fgmres_bottom_retained_apply_state_ready"],
+        4: ["v10_j1_inner_fgmres_bottom_retained_state_release"],
+    }
+    if swap:
+        marker_batches = {
+            1: [stage for stages in marker_batches.values() for stage in stages]
+        }
+    sample_calls = 0
+
+    def popen(_argv, **_kwargs):
+        return _SequenceProcess(polls_before_exit=3)
+
+    def sample_factory(_pid):
+        nonlocal sample_calls
+        sample_calls += 1
+        for marker in marker_batches.get(sample_calls, ()):
+            with marker_path.open("a", encoding="utf-8") as stream:
+                stream.write(
+                    json.dumps(
+                        {
+                            "stage": marker,
+                            "status": "end",
+                            "elapsed_seconds": float(sample_calls),
+                        }
+                    )
+                    + "\n"
+                )
+        memory = retained_memory if sample_calls >= 3 else 10 * 2**30
+        return _authority(memory=memory, swap=swap)
+
+    plan = SimpleNamespace(
+        argv=("/opt/fake-worker",),
+        method=launcher.V10_H4_J1_INNER_FGMRES_METHOD,
+        source_sha=source_sha,
+        contract_probe=False,
+        task039_trace_audit=False,
+    )
+    result = launcher._run_worker(
+        plan,
+        specification,
+        run_directory,
+        popen_factory=popen,
+        sample_factory=sample_factory,
+        terminate_factory=lambda _process: {"requested": True},
+        monotonic=iter(float(index) for index in range(20)).__next__,
+        sleep=lambda _seconds: None,
+        poll_interval=0.25,
+    )
+    telemetry = result["resource_authority"]["v10_h4_j1_inner_fgmres_telemetry"]
+    assert telemetry["worker_record_contract_valid"] is True
+    assert telemetry["overall"]["status"] == expected_status
+    assert telemetry["overall"]["pass"] is expected_pass
+    assert telemetry["construction_interval_summary"]["pass"] is True
+    assert telemetry["retained_interval_summary"]["status"] == "measured"
+    assert telemetry["retained_interval_summary"]["pass"] is (
+        retained_memory <= 30 * 2**30
+    )
+    assert telemetry["overall"]["resource_gate"] == (
+        "construction_and_retained_pass"
+        if retained_memory <= 30 * 2**30
+        else "construction_or_retained_failed"
+    )
+    assert telemetry["absolute_terminate_memory_bytes"] == 45 * 2**30
+    assert telemetry["overall_peak_swap_bytes"] == swap
+
+
 def test_task039_h5_critical_checkpoint_does_not_stop_before_absolute_hard_stop(
     monkeypatch, tmp_path
 ):

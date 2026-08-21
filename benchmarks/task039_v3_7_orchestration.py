@@ -102,6 +102,7 @@ from src.solvers.hybrid_layer_block import (
     audit_supernode_factor_paths,
     minimum_layer_labels,
     relative_matvec_residual,
+    run_v10_right_preconditioned_fgmres_checkpoints,
 )
 from src.solvers.hybrid_local_dtn_woodbury import (
     HybridLocalDtnWoodburyOracle,
@@ -307,6 +308,16 @@ V10_H4_SN2_J_ONLY_HARD_STOP_BYTES = 45 * 2**30
 V10_H4_SN2_J_ONLY_CONSTRUCTION_LIMIT_GIB = 45.0
 V10_H4_SN2_J_ONLY_RETAINED_LIMIT_GIB = 30.0
 V10_H4_SN2_J_ONLY_RESIDUAL_LIMIT = 50.7689715097
+V10_H4_J1_INNER_FGMRES_FLAG = "--v10-h4-j1-inner-fgmres"
+V10_H4_J1_INNER_FGMRES_EXACT_SPOOL_ROOT_FLAG = (
+    "--v10-h4-j1-inner-fgmres-exact-spool-root"
+)
+V10_H4_J1_INNER_FGMRES_PROFILE_ID = "task039.v10.h4.j1_inner_fgmres.v1"
+V10_H4_J1_INNER_FGMRES_METHOD = "task039_v10_h4_j1_inner_fgmres"
+V10_H4_J1_INNER_FGMRES_SCHEMA = "task039.v10.h4.j1_inner_fgmres.v1"
+V10_H4_J1_INNER_FGMRES_HARD_STOP_BYTES = 45 * 2**30
+V10_H4_J1_INNER_FGMRES_CONSTRUCTION_LIMIT_GIB = 45.0
+V10_H4_J1_INNER_FGMRES_RETAINED_LIMIT_GIB = 30.0
 V9_FROZEN_HOLDOUT_PRODUCER_SHA = "7e5d9b57a10b1093f0cb062eaf7bc12797c47e1f"
 V9_FROZEN_HOLDOUT_CATALOG_SHA256 = (
     "a2a7fb6fb01df4f795d31ff94f6ac6adf957ac4fe4a5c1a8d05176e3d64c0384"
@@ -627,6 +638,7 @@ def v3_7_watchdog_policy(
     v9_h4_layer_supernode_bottom: bool = False,
     v10_h4_supernode_factor_integrity: bool = False,
     v10_h4_sn2_j_only: bool = False,
+    v10_h4_j1_inner_fgmres: bool = False,
 ) -> dict[str, Any]:
     """Return the byte-authoritative policy; 195 GiB is telemetry only."""
 
@@ -665,6 +677,8 @@ def v3_7_watchdog_policy(
         absolute_bytes = V10_H4_SUPERNODE_FACTOR_INTEGRITY_HARD_STOP_BYTES
     elif v10_h4_sn2_j_only:
         absolute_bytes = V10_H4_SN2_J_ONLY_HARD_STOP_BYTES
+    elif v10_h4_j1_inner_fgmres:
+        absolute_bytes = V10_H4_J1_INNER_FGMRES_HARD_STOP_BYTES
     else:
         absolute_bytes = V3_7_ABSOLUTE_HARD_BYTES
     if v7_h4_exact_side_full_formal:
@@ -691,6 +705,8 @@ def v3_7_watchdog_policy(
         profile_name = "v10_h4_supernode_factor_integrity"
     elif v10_h4_sn2_j_only:
         profile_name = "v10_h4_sn2_j_only"
+    elif v10_h4_j1_inner_fgmres:
+        profile_name = "v10_h4_j1_inner_fgmres"
     else:
         profile_name = "v3_7_default"
     policy = {
@@ -761,6 +777,8 @@ def build_v3_7_execution_plan(
     v10_h4_supernode_factor_integrity_exact_spool_root: str | Path | None = None,
     v10_h4_sn2_j_only: bool = False,
     v10_h4_sn2_j_only_exact_spool_root: str | Path | None = None,
+    v10_h4_j1_inner_fgmres: bool = False,
+    v10_h4_j1_inner_fgmres_exact_spool_root: str | Path | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
@@ -785,6 +803,7 @@ def build_v3_7_execution_plan(
         or v9_h4_layer_supernode_bottom
         or v10_h4_supernode_factor_integrity
         or v10_h4_sn2_j_only
+        or v10_h4_j1_inner_fgmres
     ):
         specification = load_and_resolve(input_path)
         from benchmarks.task039_v4_h4_hybrid_direct import (
@@ -813,6 +832,7 @@ def build_v3_7_execution_plan(
         v9_h4_layer_supernode_bottom=v9_h4_layer_supernode_bottom,
         v10_h4_supernode_factor_integrity=v10_h4_supernode_factor_integrity,
         v10_h4_sn2_j_only=v10_h4_sn2_j_only,
+        v10_h4_j1_inner_fgmres=v10_h4_j1_inner_fgmres,
     )
     if (
         sum(
@@ -837,6 +857,7 @@ def build_v3_7_execution_plan(
                 bool(v9_h4_layer_supernode_bottom),
                 bool(v10_h4_supernode_factor_integrity),
                 bool(v10_h4_sn2_j_only),
+                bool(v10_h4_j1_inner_fgmres),
             )
         )
         > 1
@@ -888,6 +909,7 @@ def build_v3_7_execution_plan(
         or v9_h4_layer_supernode_bottom
         or v10_h4_supernode_factor_integrity
         or v10_h4_sn2_j_only
+        or v10_h4_j1_inner_fgmres
     ):
         if (
             not v8_h4_layer_block_reconstruction
@@ -895,6 +917,7 @@ def build_v3_7_execution_plan(
             and not v9_h4_layer_supernode_bottom
             and not v10_h4_supernode_factor_integrity
             and not v10_h4_sn2_j_only
+            and not v10_h4_j1_inner_fgmres
             and not all(
                 (
                     selected_mode_packet_manifest,
@@ -928,6 +951,8 @@ def build_v3_7_execution_plan(
             component_flag = V10_H4_SUPERNODE_FACTOR_INTEGRITY_FLAG
         elif v10_h4_sn2_j_only:
             component_flag = V10_H4_SN2_J_ONLY_FLAG
+        elif v10_h4_j1_inner_fgmres:
+            component_flag = V10_H4_J1_INNER_FGMRES_FLAG
         elif v5_h4_setup_only:
             component_flag = "--v5-h4-setup-only"
         elif v5_h4_blr_side_only:
@@ -941,6 +966,7 @@ def build_v3_7_execution_plan(
             and not v9_h4_layer_supernode_bottom
             and not v10_h4_supernode_factor_integrity
             and not v10_h4_sn2_j_only
+            and not v10_h4_j1_inner_fgmres
         ):
             argv.extend(
                 [
@@ -1062,6 +1088,15 @@ def build_v3_7_execution_plan(
                     str(Path(v10_h4_sn2_j_only_exact_spool_root).resolve()),
                 ]
             )
+        elif v10_h4_j1_inner_fgmres:
+            if v10_h4_j1_inner_fgmres_exact_spool_root is None:
+                raise ValueError("V10-4 route requires the exact spool root")
+            argv.extend(
+                [
+                    V10_H4_J1_INNER_FGMRES_EXACT_SPOOL_ROOT_FLAG,
+                    str(Path(v10_h4_j1_inner_fgmres_exact_spool_root).resolve()),
+                ]
+            )
     if v7_h4_exact_side_full_formal:
         method = V7_H4_EXACT_SIDE_FULL_FORMAL_METHOD
     elif v7_h4_exact_side_limit_setup_only:
@@ -1086,6 +1121,8 @@ def build_v3_7_execution_plan(
         method = V10_H4_SUPERNODE_FACTOR_INTEGRITY_METHOD
     elif v10_h4_sn2_j_only:
         method = V10_H4_SN2_J_ONLY_METHOD
+    elif v10_h4_j1_inner_fgmres:
+        method = V10_H4_J1_INNER_FGMRES_METHOD
     elif v5_h4_setup_only:
         method = "task039_v5_h4_exact_side_setup_only"
     elif v5_h4_blr_side_only:
@@ -1128,6 +1165,8 @@ def build_v3_7_execution_plan(
         profile_id = V10_H4_SUPERNODE_FACTOR_INTEGRITY_PROFILE_ID
     elif v10_h4_sn2_j_only:
         profile_id = V10_H4_SN2_J_ONLY_PROFILE_ID
+    elif v10_h4_j1_inner_fgmres:
+        profile_id = V10_H4_J1_INNER_FGMRES_PROFILE_ID
     elif v5_h4_setup_only:
         profile_id = "task039.v5.h4.exact-side.setup-only.v1"
     elif v5_h4_blr_side_only:
@@ -1174,6 +1213,8 @@ def build_v3_7_execution_plan(
         )
     elif v10_h4_sn2_j_only and v10_h4_sn2_j_only_exact_spool_root is not None:
         exact_spool_root = str(Path(v10_h4_sn2_j_only_exact_spool_root).resolve())
+    elif v10_h4_j1_inner_fgmres and v10_h4_j1_inner_fgmres_exact_spool_root is not None:
+        exact_spool_root = str(Path(v10_h4_j1_inner_fgmres_exact_spool_root).resolve())
     else:
         exact_spool_root = None
     return {
@@ -1243,6 +1284,8 @@ def v3_7_execution_dry_run(
     v10_h4_supernode_factor_integrity_exact_spool_root: str | Path | None = None,
     v10_h4_sn2_j_only: bool = False,
     v10_h4_sn2_j_only_exact_spool_root: str | Path | None = None,
+    v10_h4_j1_inner_fgmres: bool = False,
+    v10_h4_j1_inner_fgmres_exact_spool_root: str | Path | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
@@ -1295,6 +1338,10 @@ def v3_7_execution_dry_run(
         ),
         v10_h4_sn2_j_only=v10_h4_sn2_j_only,
         v10_h4_sn2_j_only_exact_spool_root=v10_h4_sn2_j_only_exact_spool_root,
+        v10_h4_j1_inner_fgmres=v10_h4_j1_inner_fgmres,
+        v10_h4_j1_inner_fgmres_exact_spool_root=(
+            v10_h4_j1_inner_fgmres_exact_spool_root
+        ),
         v8_h4_layer_sweep_exact_spool_root=v8_h4_layer_sweep_exact_spool_root,
         v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
@@ -1350,6 +1397,8 @@ def launch_v3_7_with_task038_watchdog(
     v10_h4_supernode_factor_integrity_exact_spool_root: str | Path | None = None,
     v10_h4_sn2_j_only: bool = False,
     v10_h4_sn2_j_only_exact_spool_root: str | Path | None = None,
+    v10_h4_j1_inner_fgmres: bool = False,
+    v10_h4_j1_inner_fgmres_exact_spool_root: str | Path | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
@@ -1399,6 +1448,7 @@ def launch_v3_7_with_task038_watchdog(
         and not v9_h4_layer_supernode_bottom
         and not v10_h4_supernode_factor_integrity
         and not v10_h4_sn2_j_only
+        and not v10_h4_j1_inner_fgmres
         and not V3_7_DIRECT_RUN_ROOT.is_dir()
     ):
         raise ValueError("V3-7 direct producer inventory is unavailable")
@@ -1416,6 +1466,7 @@ def launch_v3_7_with_task038_watchdog(
         and not v9_h4_layer_supernode_bottom
         and not v10_h4_supernode_factor_integrity
         and not v10_h4_sn2_j_only
+        and not v10_h4_j1_inner_fgmres
         and not callable(compare_v3_7_hybrid_candidate_to_direct)
     ):
         raise ValueError("V3-7 integrated checker entry point is unavailable")
@@ -1437,6 +1488,7 @@ def launch_v3_7_with_task038_watchdog(
         and not v9_h4_layer_supernode_bottom
         and not v10_h4_supernode_factor_integrity
         and not v10_h4_sn2_j_only
+        and not v10_h4_j1_inner_fgmres
         and not candidate_d_only
         and not candidate_d_qualified
     ):
@@ -1487,6 +1539,10 @@ def launch_v3_7_with_task038_watchdog(
         ),
         v10_h4_sn2_j_only=v10_h4_sn2_j_only,
         v10_h4_sn2_j_only_exact_spool_root=v10_h4_sn2_j_only_exact_spool_root,
+        v10_h4_j1_inner_fgmres=v10_h4_j1_inner_fgmres,
+        v10_h4_j1_inner_fgmres_exact_spool_root=(
+            v10_h4_j1_inner_fgmres_exact_spool_root
+        ),
         v8_h4_layer_sweep_exact_spool_root=v8_h4_layer_sweep_exact_spool_root,
         v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
@@ -4519,6 +4575,602 @@ def run_v10_h4_sn2_j_only(
             },
         },
     }
+
+
+def _v10_j1_inner_fgmres_aggregate_gate(
+    mandatory_records: list[Mapping[str, Any]],
+    physical_zero_map: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Aggregate V10-4 from one uniform checkpoint, not mixed final solves."""
+
+    preferred_labels = {
+        "modal_traction_positive",
+        "modal_traction_negative",
+        "external_dtn_coupling",
+    }
+    gate_by_checkpoint: dict[str, dict[str, Any]] = {}
+    worst_by_iteration: dict[str, float | None] = {}
+    for iteration in (4, 8, 16, 32):
+        rows: dict[str, float | None] = {}
+        missing_labels: list[str] = []
+        nonfinite_labels: list[str] = []
+        breakdown_labels: list[str] = []
+        for record in mandatory_records:
+            label = str(record["label"])
+            row = record.get("checkpoints", {}).get(str(iteration))
+            value = (
+                row.get("explicit_true_residual") if isinstance(row, Mapping) else None
+            )
+            rows[label] = (
+                float(value)
+                if isinstance(value, (int, float)) and np.isfinite(float(value))
+                else None
+            )
+            if not isinstance(row, Mapping):
+                missing_labels.append(label)
+            elif rows[label] is None or row.get("finite") is not True:
+                nonfinite_labels.append(label)
+            if record.get("ksp_breakdown") is not False:
+                breakdown_labels.append(label)
+        finite_values = [value for value in rows.values() if value is not None]
+        preferred_values = [
+            value
+            for label, value in rows.items()
+            if label in preferred_labels and value is not None
+        ]
+        worst = max(finite_values) if len(finite_values) == 5 else None
+        preferred_max = max(preferred_values) if len(preferred_values) == 3 else None
+        complete = bool(
+            not missing_labels
+            and not nonfinite_labels
+            and not breakdown_labels
+            and worst is not None
+            and preferred_max is not None
+        )
+        gate_by_checkpoint[str(iteration)] = {
+            "complete": complete,
+            "pass": bool(complete and worst <= 1.0e-2 and preferred_max <= 1.0e-3),
+            "values": rows,
+            "worst_mandatory_true_residual": worst,
+            "preferred_residual_max": preferred_max,
+            "mandatory_limit": 1.0e-2,
+            "preferred_limit": 1.0e-3,
+            "missing_labels": missing_labels,
+            "nonfinite_labels": nonfinite_labels,
+            "breakdown_labels": breakdown_labels,
+        }
+        worst_by_iteration[str(iteration)] = worst
+
+    preferred_inner_budget_value = next(
+        (
+            iteration
+            for iteration in (4, 8, 16, 32)
+            if gate_by_checkpoint[str(iteration)]["complete"]
+            and gate_by_checkpoint[str(iteration)]["pass"]
+        ),
+        None,
+    )
+    preferred_checkpoint_pass = preferred_inner_budget_value is not None
+    preferred_inner_budget = (
+        preferred_inner_budget_value if preferred_checkpoint_pass else "not_applicable"
+    )
+    final_values = [
+        record.get("final_independent_true_residual") for record in mandatory_records
+    ]
+    finite_final = [
+        float(value)
+        for value in final_values
+        if isinstance(value, (int, float)) and np.isfinite(float(value))
+    ]
+    worst_final = max(finite_final) if len(finite_final) == 5 else None
+    preferred_final_values = [
+        record.get("final_independent_true_residual")
+        for record in mandatory_records
+        if record["label"] in preferred_labels
+    ]
+    preferred_finite = [
+        float(value)
+        for value in preferred_final_values
+        if isinstance(value, (int, float)) and np.isfinite(float(value))
+    ]
+    preferred_residual_max = (
+        max(preferred_finite) if len(preferred_finite) == 3 else None
+    )
+    all_checkpoint_finite = all(
+        isinstance(row, Mapping)
+        and row.get("finite") is True
+        and isinstance(row.get("explicit_true_residual"), (int, float))
+        and np.isfinite(float(row["explicit_true_residual"]))
+        for record in mandatory_records
+        for row in record.get("checkpoints", {}).values()
+    )
+    all_ksp_breakdown_false = all(
+        record.get("ksp_breakdown") is False for record in mandatory_records
+    )
+    all_final_residuals_consistent = all(
+        record.get("final_residual_consistent") is True for record in mandatory_records
+    )
+    all_final_finite = len(finite_final) == 5
+    no_nonfinite = bool(
+        all_checkpoint_finite
+        and all_final_finite
+        and all(
+            record.get("first_nonfinite_stage") is None for record in mandatory_records
+        )
+    )
+    finite16 = gate_by_checkpoint["16"]["complete"]
+    global_trend_pass = bool(
+        gate_by_checkpoint["4"]["complete"]
+        and gate_by_checkpoint["8"]["complete"]
+        and gate_by_checkpoint["16"]["complete"]
+        and worst_by_iteration["4"] is not None
+        and worst_by_iteration["8"] is not None
+        and worst_by_iteration["16"] is not None
+        and worst_by_iteration["16"] < worst_by_iteration["8"]
+        and worst_by_iteration["16"] <= 0.5 * worst_by_iteration["4"]
+        and all_ksp_breakdown_false
+        and all(
+            record.get("first_nonfinite_stage") is None for record in mandatory_records
+        )
+    )
+    any_unexpected_continuation = bool(
+        any(record.get("continued_to_32") is True for record in mandatory_records)
+        and not global_trend_pass
+    )
+    numerical_gate_pass = bool(
+        physical_zero_map.get("zero_map_pass") is True
+        and preferred_checkpoint_pass
+        and not any_unexpected_continuation
+        and no_nonfinite
+        and all_ksp_breakdown_false
+        and all_final_residuals_consistent
+    )
+    classification = (
+        "J1_INNER_FGMRES_SIDE_GATE_PASS"
+        if numerical_gate_pass
+        else "J1_INNER_FGMRES_NUMERICAL_LIMIT_NOT_REACHED_BY_32"
+    )
+    return {
+        "gate_by_checkpoint": gate_by_checkpoint,
+        "preferred_inner_budget": preferred_inner_budget,
+        "preferred_checkpoint_pass": preferred_checkpoint_pass,
+        "worst_by_iteration": worst_by_iteration,
+        "finite16": finite16,
+        "global_trend_pass": global_trend_pass,
+        "any_unexpected_continuation": any_unexpected_continuation,
+        "conditional32_not_authorized": not global_trend_pass,
+        "conditional_32_authorized": bool(
+            all(record.get("continued_to_32") is True for record in mandatory_records)
+            and global_trend_pass
+        ),
+        "numerical_gate_pass": numerical_gate_pass,
+        "classification": classification,
+        "all_checkpoint_finite": all_checkpoint_finite,
+        "all_ksp_breakdown_false": all_ksp_breakdown_false,
+        "all_final_residuals_consistent": all_final_residuals_consistent,
+        "all_final_finite": all_final_finite,
+        "no_nonfinite": no_nonfinite,
+        "worst_final": worst_final,
+        "preferred_residual_max": preferred_residual_max,
+    }
+
+
+def run_v10_h4_j1_inner_fgmres(
+    cfg: Any,
+    *,
+    profile: Any,
+    comm: MPI.Intracomm,
+    marker_callback: Callable[[str, Mapping[str, Any]], None],
+    exact_spool_root: str | Path,
+    source_sha: str,
+    side_system_builder: Callable[..., Any] | None = None,
+) -> dict[str, Any]:
+    """Run the V10-4 bottom J1-preconditioned FGMRES diagnostic.
+
+    The layer action is borrowed as a right preconditioner only.  The true
+    residuals are always computed with the matrix-free ``system.A``.  Each
+    mandatory RHS owns one zero-initialized KSP solve; the helper may stop that
+    same solve at 16 or let it continue to 32 after its local online trend
+    check.  The parent launcher remains authoritative for resource intervals.
+    """
+
+    system = None
+    components = None
+    sweep = None
+    spool: dict[str, Any] | None = None
+    payload: dict[str, Any] | None = None
+    ready_sweep_diagnostics: dict[str, Any] = {}
+    after_sweep_diagnostics: dict[str, Any] = {}
+    cleanup_detail: dict[str, Any] = {}
+    component_release_before_krylov: Any = "not_run"
+    method_records: dict[str, dict[str, Any]] = {}
+    holdout_provenance: dict[str, Any] = {}
+    marker_callback(
+        "v10_j1_inner_fgmres_bottom_construction_begin",
+        {
+            "construction_peak_limit_gib": V10_H4_J1_INNER_FGMRES_CONSTRUCTION_LIMIT_GIB,
+            "retained_peak_limit_gib": V10_H4_J1_INNER_FGMRES_RETAINED_LIMIT_GIB,
+            "selected_mode_packet_opened": False,
+            "sgs_executed": False,
+            "qep_count": 0,
+        },
+    )
+    try:
+        if side_system_builder is None:
+            system = assemble_hybrid_local_dtn_action_system(
+                cfg,
+                "bottom",
+                bottom_interface_z_nm=profile.bottom_interface_nm,
+                top_interface_z_nm=profile.top_interface_nm,
+                comm=comm,
+                log=None,
+            )
+        else:
+            system = side_system_builder(
+                side="bottom", cfg=cfg, profile=profile, comm=comm
+            )
+        components = _build_research_explicit_side_components(system)
+        labels, mapping_metadata = build_real_layer_labels(components.F, system)
+        layer_count = len(mapping_metadata["z_layer_boundaries"]) - 1
+        if layer_count != 6:
+            raise ValueError(f"V10-4 requires exactly six layers, got {layer_count}")
+        sweep = build_layer_sweep_action(
+            components.F,
+            labels,
+            layer_count=layer_count,
+            method="J1",
+            fine_action=None,
+        )
+        del labels, mapping_metadata
+        marker_callback(
+            "v10_j1_inner_fgmres_bottom_factors_ready",
+            {
+                "layer_factor_count": 6,
+                "full_side_exact_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "nested_ksp_count": 0,
+                "fixed_preconditioner": "J1_layer_action",
+            },
+        )
+        ready_sweep_diagnostics = deepcopy(sweep.diagnostics)
+        component_release_before_krylov = _destroy_v5_side_components(components)
+        cleanup_detail["components_released_before_krylov"] = (
+            component_release_before_krylov
+        )
+        components = None
+        collective_heap_cleanup(comm)
+        marker_callback(
+            "v10_j1_inner_fgmres_bottom_construction_end",
+            {
+                "layer_factor_count": 6,
+                "explicit_f_c_d_h_released_before_krylov": True,
+                "component_release": component_release_before_krylov,
+                "system_A_retained": True,
+                "construction_complete": True,
+            },
+        )
+        identity, manifest_sha256, catalog = _v9_frozen_holdout_identity(
+            exact_spool_root, comm
+        )
+        spool = _load_v5_fixed_budget_spool_shards(
+            exact_spool_root,
+            comm,
+            packet_identity=identity,
+            manifest_sha256=manifest_sha256,
+        )
+        holdout_provenance = {
+            "identity": identity,
+            "manifest_sha256": manifest_sha256,
+            "catalog_authority": catalog,
+        }
+        physical_zero_map = {
+            "label": "physical_side_rhs",
+            "mandatory": False,
+            "degenerate": True,
+            "status": "degenerate_zero_map_checked",
+            "zero_map_limit": 1.0e-13,
+            "zero_map_pass": False,
+            "output_norm": None,
+            "output_finite": False,
+            "first_nonfinite_stage": None,
+        }
+        zero_source = None
+        zero_output = None
+        try:
+            zero_source = system.A.createVecRight()
+            zero_output = system.A.createVecLeft()
+            zero_source.set(0.0)
+            zero_output.set(0.0)
+            sweep.apply(zero_source, zero_output)
+            output_norm = float(zero_output.norm())
+            output_finite = bool(np.isfinite(output_norm))
+            physical_zero_map.update(
+                {
+                    "output_norm": output_norm if output_finite else None,
+                    "output_finite": output_finite,
+                    "zero_map_pass": bool(output_finite and output_norm <= 1.0e-13),
+                    "first_nonfinite_stage": (
+                        None if output_finite else "J1_zero_map_output"
+                    ),
+                }
+            )
+        finally:
+            if zero_source is not None:
+                zero_source.set(0.0)
+                zero_source.destroy()
+            if zero_output is not None:
+                zero_output.set(0.0)
+                zero_output.destroy()
+        method_records["physical_side_rhs"] = physical_zero_map
+        marker_callback(
+            "v10_j1_inner_fgmres_bottom_retained_apply_state_ready",
+            {
+                "fixed_preconditioner": "J1_layer_action",
+                "retained_state": "measured_by_subsequent_ksp_applies",
+                "layer_factor_count": 6,
+            },
+        )
+        marker_callback(
+            "v10_j1_inner_fgmres_bottom_holdout_ready",
+            {
+                "holdout_labels": list(spool),
+                "holdout_opened": True,
+                "exact_spool_opened": True,
+                "selected_mode_packet_opened": False,
+            },
+        )
+        for label, artifact in spool.items():
+            if label == "physical_side_rhs":
+                continue
+            template = None
+            rhs = None
+            rhs_result: dict[str, Any] | None = None
+            marker_callback(
+                f"v10_j1_inner_fgmres_bottom_{label}_begin",
+                {"label": label, "zero_initial_guess": True},
+            )
+            try:
+                template = system.A.createVecLeft()
+                rhs = _load_v5_blr_reference_spool_remapped(artifact["rhs"], template)
+                rhs_result = run_v10_right_preconditioned_fgmres_checkpoints(
+                    system.A,
+                    rhs,
+                    sweep,
+                    label=label,
+                    resource_gate=lambda: True,
+                    checkpoint_callback=(
+                        lambda row, label=label: marker_callback(
+                            f"v10_j1_inner_fgmres_bottom_{label}_checkpoint_{row['iteration']}",
+                            row,
+                        )
+                    ),
+                )
+                rhs_result.update(
+                    {
+                        "mandatory": True,
+                        "degenerate": False,
+                        "r_A_definition": "||b-A_side x||/||b||",
+                        "resource_gate_source": "parent_watchdog_pending",
+                    }
+                )
+                final_iteration = max(
+                    int(iteration) for iteration in rhs_result["checkpoints"]
+                )
+                checkpoint_final = rhs_result["checkpoints"][str(final_iteration)][
+                    "explicit_true_residual"
+                ]
+                rhs_result["final_residual_consistent"] = bool(
+                    np.isfinite(float(rhs_result["final_independent_true_residual"]))
+                    and np.isfinite(float(checkpoint_final))
+                    and abs(
+                        float(rhs_result["final_independent_true_residual"])
+                        - float(checkpoint_final)
+                    )
+                    <= 1.0e-12
+                )
+                method_records[label] = rhs_result
+            finally:
+                if rhs is not None:
+                    rhs.set(0.0)
+                    rhs.destroy()
+                if template is not None:
+                    template.destroy()
+                marker_callback(
+                    f"v10_j1_inner_fgmres_bottom_{label}_end",
+                    {
+                        "label": label,
+                        "iterations": (
+                            None if rhs_result is None else rhs_result.get("iterations")
+                        ),
+                        "first_nonfinite_stage": (
+                            None
+                            if rhs_result is None
+                            else rhs_result.get("first_nonfinite_stage")
+                        ),
+                    },
+                )
+        mandatory_records = [
+            record
+            for record in method_records.values()
+            if record.get("mandatory") is True
+        ]
+        if len(mandatory_records) != 5:
+            raise ValueError("V10-4 requires exactly five mandatory RHS records")
+        aggregate = _v10_j1_inner_fgmres_aggregate_gate(
+            mandatory_records, physical_zero_map
+        )
+        gate_by_checkpoint = aggregate["gate_by_checkpoint"]
+        preferred_inner_budget = aggregate["preferred_inner_budget"]
+        worst_by_iteration = aggregate["worst_by_iteration"]
+        finite16 = aggregate["finite16"]
+        global_trend_pass = aggregate["global_trend_pass"]
+        conditional32_not_authorized = aggregate["conditional32_not_authorized"]
+        numerical_gate_pass = aggregate["numerical_gate_pass"]
+        classification = aggregate["classification"]
+        all_checkpoint_finite = aggregate["all_checkpoint_finite"]
+        all_ksp_breakdown_false = aggregate["all_ksp_breakdown_false"]
+        all_final_residuals_consistent = aggregate["all_final_residuals_consistent"]
+        worst_final = aggregate["worst_final"]
+        preferred_residual_max = aggregate["preferred_residual_max"]
+        actual_max_iteration = max(
+            int(record.get("iterations", 0)) for record in mandatory_records
+        )
+        payload = {
+            "schema": V10_H4_J1_INNER_FGMRES_SCHEMA,
+            "method": V10_H4_J1_INNER_FGMRES_METHOD,
+            "profile_id": V10_H4_J1_INNER_FGMRES_PROFILE_ID,
+            "status": "component_fgmres_completed",
+            "source_sha": source_sha,
+            "method_records": method_records,
+            "mandatory_labels": [record["label"] for record in mandatory_records],
+            "degenerate_labels": ["physical_side_rhs"],
+            "global_trend": {
+                "worst_true_residual_by_iteration": worst_by_iteration,
+                "gate_by_checkpoint": gate_by_checkpoint,
+                "preferred_inner_budget": preferred_inner_budget,
+                "all_rhs_finite_through_16": finite16,
+                "physical_zero_map_pass": physical_zero_map["zero_map_pass"],
+                "global_worst_trend_pass": global_trend_pass,
+                "actual_max_iteration": actual_max_iteration,
+                "conditional32_not_authorized": conditional32_not_authorized,
+                "conditional_32_authorized": aggregate["conditional_32_authorized"],
+                "policy": (
+                    "per_rhs_online_authorization_due_to_sequential_PETSc_KSP; "
+                    "not equivalent to preknown_global_worst synchronized scheduling"
+                ),
+            },
+            "gate": {
+                "numerical_gate_pass": numerical_gate_pass,
+                "physical_zero_map_pass": physical_zero_map["zero_map_pass"],
+                "classification": classification,
+                "all_checkpoint_finite": all_checkpoint_finite,
+                "all_ksp_breakdown_false": all_ksp_breakdown_false,
+                "all_final_residuals_consistent": all_final_residuals_consistent,
+                "all_final_finite": aggregate["all_final_finite"],
+                "no_nonfinite": aggregate["no_nonfinite"],
+                "uniform_checkpoint_pass": aggregate["preferred_checkpoint_pass"],
+                "worst_final_true_residual": worst_final,
+                "true_residual_limit": 1.0e-2,
+                "preferred_residual_max": preferred_residual_max,
+                "preferred_residual_limit": 1.0e-3,
+                "gate_by_checkpoint": gate_by_checkpoint,
+                "preferred_inner_budget": preferred_inner_budget,
+                "resource_gate": "pending_parent_process_tree_samples",
+            },
+            "factor_inventory": {
+                "layer_factor_count_ready": ready_sweep_diagnostics.get(
+                    "layer_factor_count", "not_available"
+                ),
+                "layer_factor_count_after_cleanup": "pending_cleanup",
+                "full_side_exact_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "nested_ksp_count": 0,
+                "side_fgmres_ksp_count": 5,
+                "pc_nested_ksp_count": 0,
+            },
+            "selected_mode_packet_opened": False,
+            "exact_spool_opened": True,
+            "qep_count": 0,
+            "sgs_executed": False,
+            "top": "not_run",
+            "both_side": "not_run",
+            "full_formal": "not_run",
+            "lane_c_activation": not numerical_gate_pass,
+            "next_lane": "v10-5_pending" if numerical_gate_pass else "lane_c_review",
+            "explicit_components_released_before_krylov": True,
+            "component_release_before_krylov": component_release_before_krylov,
+            "holdout_provenance": holdout_provenance,
+            "lifecycle": {
+                "retained_state": "pending_cleanup",
+                "layer_factor_count_ready": ready_sweep_diagnostics.get(
+                    "layer_factor_count", "not_available"
+                ),
+                "layer_factor_count_after_cleanup": "pending_cleanup",
+                "components_released": "pending_cleanup",
+                "system_released": "pending_cleanup",
+            },
+            "telemetry": {
+                "process_tree_samples": {
+                    "path": "numerical_output/process_tree_samples.jsonl",
+                    "writer": "parent_task038_launcher",
+                },
+                "memory_stages": {
+                    "path": "numerical_output/memory_stages.jsonl",
+                    "writer": "parent_task038_launcher_marker_alignment",
+                },
+                "memory_stage_markers": {
+                    "path": "numerical_output/memory_stage_markers.raw.jsonl",
+                    "writer": "v3_7_worker",
+                },
+                "memory_object_ledger": {
+                    "path": "numerical_output/memory_object_ledger.json",
+                    "status": "finalized_in_worker_finalizer",
+                },
+                "gate_contract": {
+                    "construction_peak_limit_gib": V10_H4_J1_INNER_FGMRES_CONSTRUCTION_LIMIT_GIB,
+                    "retained_peak_limit_gib": V10_H4_J1_INNER_FGMRES_RETAINED_LIMIT_GIB,
+                    "swap_required": 0,
+                    "full_side_exact_factor_count": 0,
+                    "global_direct_factor_count": 0,
+                    "nested_ksp_count": 0,
+                    "sgs_executed": False,
+                },
+            },
+        }
+        return payload
+    finally:
+        if spool is not None:
+            spool.clear()
+        if sweep is not None:
+            sweep.destroy()
+            after_sweep_diagnostics = deepcopy(sweep.diagnostics)
+        if components is not None:
+            cleanup_detail["components_released"] = _destroy_v5_side_components(
+                components
+            )
+        if system is not None and hasattr(system, "destroy"):
+            system.destroy()
+            cleanup_detail["system_destroy_called"] = True
+        else:
+            cleanup_detail["system_destroy_called"] = False
+        cleanup_detail["sweep_destroyed"] = bool(
+            after_sweep_diagnostics.get("destroyed") is True
+            or after_sweep_diagnostics.get("layer_factor_count", 0) == 0
+        )
+        collective_heap_cleanup(comm)
+        cleanup_detail["collective_cleanup"] = "completed"
+        marker_callback(
+            "v10_j1_inner_fgmres_bottom_retained_state_release",
+            {
+                "retained_apply_state_released": True,
+                "layer_factor_count_ready": ready_sweep_diagnostics.get(
+                    "layer_factor_count", "not_available"
+                ),
+                "layer_factor_count_after_cleanup": after_sweep_diagnostics.get(
+                    "layer_factor_count", 0
+                ),
+                **cleanup_detail,
+            },
+        )
+        if payload is not None:
+            payload["factor_inventory"]["layer_factor_count_after_cleanup"] = (
+                after_sweep_diagnostics.get("layer_factor_count", 0)
+            )
+            payload["lifecycle"].update(
+                {
+                    "retained_state": "released_after_five_rhs",
+                    "layer_factor_count_after_cleanup": after_sweep_diagnostics.get(
+                        "layer_factor_count", 0
+                    ),
+                    "components_released": cleanup_detail.get(
+                        "components_released_before_krylov", "not_available"
+                    ),
+                    "system_released": cleanup_detail.get(
+                        "system_destroy_called", False
+                    ),
+                    "collective_cleanup": "completed",
+                }
+            )
 
 
 def _v7_streamed_packet_pair(
@@ -10218,6 +10870,8 @@ def run_task039_v3_7_diagnostic(
     v10_h4_supernode_factor_integrity_exact_spool_root: str | Path | None = None,
     v10_h4_sn2_j_only: bool = False,
     v10_h4_sn2_j_only_exact_spool_root: str | Path | None = None,
+    v10_h4_j1_inner_fgmres: bool = False,
+    v10_h4_j1_inner_fgmres_exact_spool_root: str | Path | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
@@ -10315,6 +10969,7 @@ def run_task039_v3_7_diagnostic(
             or v9_h4_layer_supernode_bottom
             or v10_h4_supernode_factor_integrity
             or v10_h4_sn2_j_only
+            or v10_h4_j1_inner_fgmres
         ):
             profile = (
                 profile_override
@@ -10337,6 +10992,7 @@ def run_task039_v3_7_diagnostic(
             or v9_h4_layer_supernode_bottom
             or v10_h4_supernode_factor_integrity
             or v10_h4_sn2_j_only
+            or v10_h4_j1_inner_fgmres
         ):
             incidence = resolved_payload["incidence"]
             if v7_h4_full_formal:
@@ -10375,6 +11031,9 @@ def run_task039_v3_7_diagnostic(
             elif v10_h4_sn2_j_only:
                 route_profile_id = V10_H4_SN2_J_ONLY_PROFILE_ID
                 route_schema = V10_H4_SN2_J_ONLY_SCHEMA
+            elif v10_h4_j1_inner_fgmres:
+                route_profile_id = V10_H4_J1_INNER_FGMRES_PROFILE_ID
+                route_schema = V10_H4_J1_INNER_FGMRES_SCHEMA
             elif v5_h4_blr_side_only:
                 route_profile_id = V5_H4_BLR_SIDE_PROFILE_ID
                 route_schema = V5_H4_BLR_SIDE_PROFILE_ID
@@ -10416,6 +11075,7 @@ def run_task039_v3_7_diagnostic(
             v9_h4_layer_supernode_bottom=v9_h4_layer_supernode_bottom,
             v10_h4_supernode_factor_integrity=v10_h4_supernode_factor_integrity,
             v10_h4_sn2_j_only=v10_h4_sn2_j_only,
+            v10_h4_j1_inner_fgmres=v10_h4_j1_inner_fgmres,
         )
         _emit_marker(
             marker_callback,
@@ -10443,6 +11103,7 @@ def run_task039_v3_7_diagnostic(
             and not v9_h4_layer_supernode_bottom
             and not v10_h4_supernode_factor_integrity
             and not v10_h4_sn2_j_only
+            and not v10_h4_j1_inner_fgmres
         ):
             raise ValueError(
                 "V3-7 requires an injected recovery_runner(setup, layout, snapshot, "
@@ -10561,6 +11222,35 @@ def run_task039_v3_7_diagnostic(
                 "research_only": True,
                 "exact_spool_root": str(
                     Path(v10_h4_sn2_j_only_exact_spool_root).resolve()
+                ),
+            }
+            modal_amplitudes = None
+        elif v10_h4_j1_inner_fgmres:
+            if v10_h4_j1_inner_fgmres_exact_spool_root is None:
+                raise ValueError("V10-4 route requires the exact spool root")
+            producer = {
+                "producer_source_sha": None,
+                "consumer_source_sha": source_sha,
+                "physical_model_sha256": resolved_payload.get("physical_model_sha256"),
+                "model_id": resolved_payload.get("model_id"),
+                "requested_modes": 480,
+                "mpi_size": 8,
+                "selected_mode_packet": False,
+                "selected_mode_packet_opened": False,
+                "holdout_opened": True,
+                "exact_spool_opened": True,
+                "direct_reference_payload_loaded": False,
+                "qep_count": 0,
+                "sgs_executed": False,
+                "full_side_exact_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "nested_ksp_count": 0,
+                "layer_factor_count": 6,
+                "side_fgmres_ksp_count": 5,
+                "component_candidate": True,
+                "research_only": True,
+                "exact_spool_root": str(
+                    Path(v10_h4_j1_inner_fgmres_exact_spool_root).resolve()
                 ),
             }
             modal_amplitudes = None
@@ -10879,6 +11569,21 @@ def run_task039_v3_7_diagnostic(
             normal_return = result.get("status") == (
                 "component_sn2_j_stable_resource_pending"
             )
+            return result
+        if v10_h4_j1_inner_fgmres:
+            result = run_v10_h4_j1_inner_fgmres(
+                cfg,
+                profile=profile,
+                comm=comm,
+                marker_callback=marker_callback,
+                exact_spool_root=v10_h4_j1_inner_fgmres_exact_spool_root,
+                source_sha=source_sha,
+                side_system_builder=side_system_builder,
+            )
+            result["source_sha"] = source_sha
+            result["consumer_source_sha"] = source_sha
+            result["run_directory"] = str(Path(run_directory).resolve())
+            normal_return = result.get("status") == "component_fgmres_completed"
             return result
         if v9_h4_layer_supernode_bottom:
             result = run_v9_h4_layer_supernode_bottom_component(
@@ -12165,6 +12870,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(V10_H4_SUPERNODE_FACTOR_INTEGRITY_EXACT_SPOOL_ROOT_FLAG)
     parser.add_argument(V10_H4_SN2_J_ONLY_FLAG, action="store_true")
     parser.add_argument(V10_H4_SN2_J_ONLY_EXACT_SPOOL_ROOT_FLAG)
+    parser.add_argument(V10_H4_J1_INNER_FGMRES_FLAG, action="store_true")
+    parser.add_argument(V10_H4_J1_INNER_FGMRES_EXACT_SPOOL_ROOT_FLAG)
     parser.add_argument(
         "--v5-h4-blr-profile",
         choices=V5_H4_BLR_PROFILE_CHOICES,
@@ -12192,6 +12899,7 @@ def main(argv: list[str] | None = None) -> int:
             args.v9_h4_layer_supernode_bottom,
             args.v10_h4_supernode_factor_integrity,
             args.v10_h4_sn2_j_only,
+            args.v10_h4_j1_inner_fgmres,
             args.v5_h4_blr_side_component,
             args.v5_h4_fixed_budget_bottom_component,
         )
@@ -12219,6 +12927,7 @@ def main(argv: list[str] | None = None) -> int:
                 bool(args.v9_h4_layer_supernode_bottom),
                 bool(args.v10_h4_supernode_factor_integrity),
                 bool(args.v10_h4_sn2_j_only),
+                bool(args.v10_h4_j1_inner_fgmres),
                 bool(args.v5_h4_blr_side_component),
                 bool(args.v5_h4_fixed_budget_bottom_component),
             )
@@ -12266,6 +12975,10 @@ def main(argv: list[str] | None = None) -> int:
             v10_h4_sn2_j_only_exact_spool_root=(
                 args.v10_h4_sn2_j_only_exact_spool_root
             ),
+            v10_h4_j1_inner_fgmres=args.v10_h4_j1_inner_fgmres,
+            v10_h4_j1_inner_fgmres_exact_spool_root=(
+                args.v10_h4_j1_inner_fgmres_exact_spool_root
+            ),
             v8_h4_layer_sweep_exact_spool_root=(
                 args.v8_h4_layer_sweep_exact_spool_root
             ),
@@ -12296,6 +13009,7 @@ def main(argv: list[str] | None = None) -> int:
                     or args.v7_h4_streamed_bottom_producer
                     or args.v7_h4_streamed_bottom_consumer
                     or args.v8_h4_layer_sweep_bottom
+                    or args.v10_h4_j1_inner_fgmres
                     or args.v5_h4_blr_side_component
                     or args.v5_h4_fixed_budget_bottom_component
                 )
@@ -12312,6 +13026,7 @@ def main(argv: list[str] | None = None) -> int:
                     or args.v7_h4_streamed_bottom_producer
                     or args.v7_h4_streamed_bottom_consumer
                     or args.v8_h4_layer_sweep_bottom
+                    or args.v10_h4_j1_inner_fgmres
                     or args.v5_h4_blr_side_component
                     or args.v5_h4_fixed_budget_bottom_component
                 )
@@ -12351,6 +13066,7 @@ def main(argv: list[str] | None = None) -> int:
                     or args.v9_h4_layer_supernode_bottom
                     or args.v10_h4_supernode_factor_integrity
                     or args.v10_h4_sn2_j_only
+                    or args.v10_h4_j1_inner_fgmres
                 )
                 else json.loads(
                     Path(args.selected_mode_packet_identity).read_text(encoding="utf-8")
@@ -12419,6 +13135,10 @@ def main(argv: list[str] | None = None) -> int:
             v10_h4_sn2_j_only_exact_spool_root=(
                 args.v10_h4_sn2_j_only_exact_spool_root
             ),
+            v10_h4_j1_inner_fgmres=args.v10_h4_j1_inner_fgmres,
+            v10_h4_j1_inner_fgmres_exact_spool_root=(
+                args.v10_h4_j1_inner_fgmres_exact_spool_root
+            ),
             v5_h4_blr_side_only=args.v5_h4_blr_side_component,
             v5_h4_fixed_budget_bottom_only=args.v5_h4_fixed_budget_bottom_component,
             v5_h4_fixed_budget_exact_spool_root=(
@@ -12462,6 +13182,7 @@ def main(argv: list[str] | None = None) -> int:
             "full_formal_completed",
             "component_forensic_completed",
             "component_sn2_j_stable_resource_pending",
+            "component_fgmres_completed",
         }
         else 3
     )
@@ -12549,6 +13270,13 @@ __all__ = [
     "V10_H4_SN2_J_ONLY_SCHEMA",
     "V10_H4_SN2_J_ONLY_HARD_STOP_BYTES",
     "run_v10_h4_sn2_j_only",
+    "V10_H4_J1_INNER_FGMRES_FLAG",
+    "V10_H4_J1_INNER_FGMRES_EXACT_SPOOL_ROOT_FLAG",
+    "V10_H4_J1_INNER_FGMRES_PROFILE_ID",
+    "V10_H4_J1_INNER_FGMRES_METHOD",
+    "V10_H4_J1_INNER_FGMRES_SCHEMA",
+    "V10_H4_J1_INNER_FGMRES_HARD_STOP_BYTES",
+    "run_v10_h4_j1_inner_fgmres",
     "run_v9_h4_bare_f_side_diagnostic",
     "build_v3_7_execution_plan",
     "check_v3_7_integrated_physics",

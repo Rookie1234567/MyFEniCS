@@ -13,6 +13,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
+import time
+from collections.abc import Callable
 from typing import Any, Mapping
 
 import numpy as np
@@ -35,6 +37,7 @@ __all__ = (
     "minimum_layer_labels",
     "relative_matvec_residual",
     "audit_supernode_factor_paths",
+    "run_v10_right_preconditioned_fgmres_checkpoints",
 )
 
 
@@ -72,6 +75,275 @@ def relative_matvec_residual(
         return float(applied.norm()) / max(float(rhs.norm()), 1.0e-30)
     finally:
         applied.destroy()
+
+
+class _V10RightPreconditionerContext:
+    """Borrow one fixed action as the PETSc right-PC context for V10."""
+
+    def __init__(self, action: Any) -> None:
+        self.action: Any | None = action
+        self.apply_count = 0
+
+    def apply(self, _pc: PETSc.PC, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        if self.action is None:
+            raise RuntimeError("V10 right preconditioner has been destroyed")
+        self.action.apply(source, target)
+        self.apply_count += 1
+
+    def destroy(self, _pc: PETSc.PC | None = None) -> None:
+        self.action = None
+
+
+def run_v10_right_preconditioned_fgmres_checkpoints(
+    operator: PETSc.Mat,
+    rhs: PETSc.Vec,
+    right_preconditioner: Any,
+    *,
+    label: str,
+    resource_gate: Callable[[], bool] | None = None,
+    checkpoint_callback: Callable[[Mapping[str, Any]], None] | None = None,
+) -> dict[str, Any]:
+    """Run one V10 right-FGMRES solve with conditional continuation at 16.
+
+    The KSP is created once with restart/max-it 32 and a zero initial guess.
+    At iteration 16 the convergence callback either returns ``DIVERGED_ITS``
+    (the auditable, conservative 16-stop) or lets the same KSP continue to
+    32.  This is deliberately a single-RHS helper; the orchestration layer
+    owns the five-RHS worst-trend decision and evidence aggregation.
+    """
+
+    if not isinstance(operator, PETSc.Mat):
+        raise TypeError("V10 FGMRES requires a PETSc operator matrix")
+    if not callable(getattr(right_preconditioner, "apply", None)):
+        raise TypeError("V10 FGMRES requires a fixed right action")
+    if resource_gate is None:
+
+        def resource_gate() -> bool:
+            return True
+
+    comm = operator.getComm()
+    solution = operator.createVecRight()
+    monitor_solution = operator.createVecRight()
+    residual = operator.createVecLeft()
+    solution.set(0.0)
+    monitor_solution.set(0.0)
+    residual.set(0.0)
+    rhs_norm = float(rhs.norm())
+    if not np.isfinite(rhs_norm) or rhs_norm <= 1.0e-30:
+        solution.destroy()
+        monitor_solution.destroy()
+        residual.destroy()
+        raise ValueError("V10 mandatory FGMRES RHS must be finite and nonzero")
+    denominator = max(rhs_norm, 1.0e-30)
+    started = time.perf_counter()
+    history: list[dict[str, Any]] = []
+    checkpoints: dict[int, dict[str, Any]] = {}
+    state = {
+        "continued_to_32": False,
+        "stop_at_16": False,
+        "first_nonfinite_stage": None,
+        "explicit_true_residual_matvec_count": 0,
+    }
+    reported_history: list[dict[str, Any]] = []
+    pc_context = _V10RightPreconditionerContext(right_preconditioner)
+    ksp = PETSc.KSP().create(comm)
+    result: dict[str, Any] | None = None
+
+    def operator_context_apply_count() -> int | str:
+        try:
+            if str(operator.getType()).lower() != "python":
+                return "not_available"
+            context = operator.getPythonContext()
+        except Exception:
+            return "not_available"
+        value = getattr(context, "apply_count", None)
+        return int(value) if isinstance(value, (int, np.integer)) else "not_available"
+
+    operator_count_before = operator_context_apply_count()
+    bounded_max_it_reason = int(
+        getattr(PETSc.KSP.ConvergedReason, "DIVERGED_MAX_IT", -3)
+    )
+    bounded_its_reason = int(
+        getattr(PETSc.KSP.ConvergedReason, "DIVERGED_ITS", bounded_max_it_reason)
+    )
+
+    def emit(row: Mapping[str, Any]) -> None:
+        row_copy = dict(row)
+        history.append(row_copy)
+        checkpoints[int(row_copy["iteration"])] = row_copy
+        if checkpoint_callback is not None:
+            checkpoint_callback(row_copy)
+
+    def true_residual_row(
+        iteration: int,
+        reported_relative_residual: float,
+        current_solution: PETSc.Vec,
+    ) -> dict[str, Any]:
+        if iteration > 0:
+            residual.set(0.0)
+            operator.mult(current_solution, residual)
+            state["explicit_true_residual_matvec_count"] += 1
+            residual.axpy(PETSc.ScalarType(-1.0), rhs)
+            true_value = float(residual.norm()) / denominator
+        else:
+            true_value = float(rhs_norm) / denominator
+        finite = bool(
+            np.isfinite(float(reported_relative_residual))
+            and np.isfinite(float(true_value))
+        )
+        if not finite and state["first_nonfinite_stage"] is None:
+            state["first_nonfinite_stage"] = f"iteration_{iteration}"
+        return {
+            "label": label,
+            "iteration": int(iteration),
+            "reported_relative_residual": float(reported_relative_residual),
+            "explicit_true_residual": float(true_value),
+            "finite": finite,
+            "j1_apply_count": int(pc_context.apply_count),
+            "a_side_true_residual_matvec_count": int(
+                state["explicit_true_residual_matvec_count"]
+            ),
+            "elapsed_seconds": float(time.perf_counter() - started),
+        }
+
+    try:
+        zero_row = true_residual_row(0, 1.0 if rhs_norm > 1.0e-30 else 0.0, solution)
+        emit(zero_row)
+        ksp.setOperators(operator)
+        ksp.setType(PETSc.KSP.Type.FGMRES)
+        ksp.setPCSide(PETSc.PC.Side.RIGHT)
+        ksp.setGMRESRestart(32)
+        ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED)
+        ksp.setInitialGuessNonzero(False)
+        ksp.setTolerances(rtol=0.0, atol=0.0, max_it=32)
+        pc = ksp.getPC()
+        pc.setType(PETSc.PC.Type.PYTHON)
+        pc.setPythonContext(pc_context)
+        ksp.setUp()
+
+        def convergence_test(
+            current: PETSc.KSP, iteration: int, residual_norm: float
+        ) -> int:
+            reported_history.append(
+                {
+                    "iteration": int(iteration),
+                    "reported_relative_residual": float(residual_norm) / denominator,
+                }
+            )
+            if int(iteration) not in (4, 8, 16, 32):
+                return 0
+            solution_view = current.buildSolution(monitor_solution)
+            if solution_view is None:
+                solution_view = monitor_solution
+            reported = float(residual_norm) / denominator
+            row = true_residual_row(int(iteration), reported, solution_view)
+            if int(iteration) == 16:
+                r4 = checkpoints.get(4, {}).get("explicit_true_residual")
+                r8 = checkpoints.get(8, {}).get("explicit_true_residual")
+                r16 = row["explicit_true_residual"]
+                trend_pass = bool(
+                    row["finite"]
+                    and isinstance(r4, (int, float))
+                    and isinstance(r8, (int, float))
+                    and np.isfinite(float(r4))
+                    and np.isfinite(float(r8))
+                    and np.isfinite(float(r16))
+                    and float(r16) < float(r8)
+                    and float(r16) <= 0.5 * float(r4)
+                )
+                resource_pass = bool(resource_gate())
+                state["continued_to_32"] = bool(trend_pass and resource_pass)
+                row["trend_pass"] = trend_pass
+                row["resource_gate_pass"] = resource_pass
+                row["continue_to_32_authorized"] = state["continued_to_32"]
+            emit(row)
+            if int(iteration) == 16:
+                if not state["continued_to_32"]:
+                    state["stop_at_16"] = True
+                    return bounded_its_reason
+            return 0
+
+        ksp.setConvergenceTest(convergence_test)
+        ksp.solve(rhs, solution)
+        iterations = int(ksp.getIterationNumber())
+        reason = int(ksp.getConvergedReason())
+        if iterations >= 32 and 32 not in checkpoints:
+            row = true_residual_row(
+                32, float(ksp.getResidualNorm()) / denominator, solution
+            )
+            emit(row)
+        solution.copy(monitor_solution)
+        residual.set(0.0)
+        operator.mult(monitor_solution, residual)
+        state["explicit_true_residual_matvec_count"] += 1
+        residual.axpy(PETSc.ScalarType(-1.0), rhs)
+        final_true_residual = float(residual.norm()) / denominator
+        if (
+            not np.isfinite(final_true_residual)
+            and state["first_nonfinite_stage"] is None
+        ):
+            state["first_nonfinite_stage"] = "postsolve_true_residual"
+        operator_count_after = operator_context_apply_count()
+        if isinstance(operator_count_before, int) and isinstance(
+            operator_count_after, int
+        ):
+            total_operator_apply_count: int | str = (
+                operator_count_after - operator_count_before
+            )
+        else:
+            total_operator_apply_count = "not_available"
+        bounded_reasons = {
+            bounded_its_reason,
+            bounded_max_it_reason,
+        }
+        ksp_breakdown = bool(
+            reason < 0 and not state["stop_at_16"] and reason not in bounded_reasons
+        )
+        result = {
+            "label": label,
+            "ksp_type": str(ksp.getType()),
+            "pc_side": "right",
+            "right_pc_identity": type(right_preconditioner).__name__,
+            "restart": 32,
+            "max_it": 32,
+            "zero_initial_guess": True,
+            "zero_initial_guess_count": 1,
+            "ksp_reason": reason,
+            "ksp_breakdown": ksp_breakdown,
+            "iterations": iterations,
+            "reported_residual_history": [dict(row) for row in reported_history],
+            "history": [dict(row) for row in history],
+            "checkpoints": {
+                str(key): dict(value) for key, value in checkpoints.items()
+            },
+            "continued_to_32": bool(state["continued_to_32"]),
+            "stop_at_16": bool(state["stop_at_16"]),
+            "first_nonfinite_stage": state["first_nonfinite_stage"],
+            "j1_apply_count": int(pc_context.apply_count),
+            "a_side_apply_count": total_operator_apply_count,
+            "a_side_true_residual_matvec_count": int(
+                state["explicit_true_residual_matvec_count"]
+            ),
+            "final_independent_true_residual": final_true_residual,
+            "wall_seconds": float(time.perf_counter() - started),
+            "ksp_destroyed": False,
+            "research_only": True,
+        }
+    finally:
+        ksp.destroy()
+        pc_context.destroy()
+        residual.set(0.0)
+        residual.destroy()
+        monitor_solution.set(0.0)
+        monitor_solution.destroy()
+        solution.set(0.0)
+        solution.destroy()
+        if result is not None:
+            result["ksp_destroyed"] = True
+
+    if result is None:
+        raise RuntimeError("V10 FGMRES did not produce a result")
+    return result
 
 
 def _supernode_factor_matrix_evidence(matrix: PETSc.Mat) -> dict[str, Any]:

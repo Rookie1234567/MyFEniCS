@@ -86,6 +86,11 @@ V10_H4_SN2_J_ONLY_CONSTRUCTION_LIMIT_GIB = 45.0
 V10_H4_SN2_J_ONLY_RETAINED_LIMIT_GIB = 30.0
 V10_H4_SN2_J_ONLY_METHOD = "task039_v10_h4_sn2_j_only"
 V10_H4_SN2_J_ONLY_SCHEMA = "task039.v10.h4.sn2_j_only.v1"
+V10_H4_J1_INNER_FGMRES_HARD_STOP_BYTES = 45 * 2**30
+V10_H4_J1_INNER_FGMRES_CONSTRUCTION_LIMIT_GIB = 45.0
+V10_H4_J1_INNER_FGMRES_RETAINED_LIMIT_GIB = 30.0
+V10_H4_J1_INNER_FGMRES_METHOD = "task039_v10_h4_j1_inner_fgmres"
+V10_H4_J1_INNER_FGMRES_SCHEMA = "task039.v10.h4.j1_inner_fgmres.v1"
 
 
 def _v5_h4_blr_candidate_interval_peak(
@@ -731,6 +736,9 @@ def _run_worker(
         getattr(plan, "method", "") == V10_H4_SUPERNODE_FACTOR_INTEGRITY_METHOD
     )
     formal_v10_sn2_j_only = getattr(plan, "method", "") == V10_H4_SN2_J_ONLY_METHOD
+    formal_v10_j1_inner_fgmres = (
+        getattr(plan, "method", "") == V10_H4_J1_INNER_FGMRES_METHOD
+    )
     formal_telemetry = (
         formal_v2_h5
         or formal_v3_2d
@@ -751,6 +759,7 @@ def _run_worker(
         or formal_v9_layer_supernode
         or formal_v10_factor_integrity
         or formal_v10_sn2_j_only
+        or formal_v10_j1_inner_fgmres
     )
     if task039_model_id_matches(method, model_id, requested_modes):
         task039_budget = _task039_memory_budget(execution)
@@ -809,6 +818,9 @@ def _run_worker(
         terminate_limit = float(absolute_terminate_memory_bytes)
     if formal_v10_sn2_j_only:
         absolute_terminate_memory_bytes = V10_H4_SN2_J_ONLY_HARD_STOP_BYTES
+        terminate_limit = float(absolute_terminate_memory_bytes)
+    if formal_v10_j1_inner_fgmres:
+        absolute_terminate_memory_bytes = V10_H4_J1_INNER_FGMRES_HARD_STOP_BYTES
         terminate_limit = float(absolute_terminate_memory_bytes)
     timeout = float(execution["timeout_seconds"])
     if formal_v7_h4_full:
@@ -902,6 +914,7 @@ def _run_worker(
                 or formal_v9_layer_supernode
                 or formal_v10_factor_integrity
                 or formal_v10_sn2_j_only
+                or formal_v10_j1_inner_fgmres
             )
             or formal_stage_stream is None
         ):
@@ -957,6 +970,7 @@ def _run_worker(
                 or formal_v9_layer_supernode
                 or formal_v10_factor_integrity
                 or formal_v10_sn2_j_only
+                or formal_v10_j1_inner_fgmres
             ) and stage_index is None:
                 stage_index = formal_aligned_stage_count
             row = {
@@ -1013,6 +1027,7 @@ def _run_worker(
             or formal_v9_layer_supernode
             or formal_v10_factor_integrity
             or formal_v10_sn2_j_only
+            or formal_v10_j1_inner_fgmres
         ):
             formal_stages_path.unlink(missing_ok=True)
             formal_stage_stream = formal_stages_path.open("a", encoding="utf-8")
@@ -1176,6 +1191,9 @@ def _run_worker(
         or formal_v7_streamed_consumer
         or formal_v8_layer_block
         or formal_v8_layer_sweep
+        or formal_v10_factor_integrity
+        or formal_v10_sn2_j_only
+        or formal_v10_j1_inner_fgmres
     ) and not formal_object_ledger_path.exists():
         _write_json(
             formal_object_ledger_path,
@@ -2637,6 +2655,208 @@ def _run_worker(
             "absolute_terminate_memory_bytes": V10_H4_SN2_J_ONLY_HARD_STOP_BYTES,
             "effective_hard_stop_memory_gib": V10_H4_SN2_J_ONLY_HARD_STOP_BYTES
             / 1024**3,
+            "require_zero_swap": True,
+            "zero_swap_observed": zero_swap_observed if sample_count else None,
+            "overall_process_tree_peak_bytes": peak_process_tree,
+            "overall_process_tree_peak_gib": peak_process_tree / 1024**3,
+            "overall_peak_swap_bytes": peak_swap,
+            "authority": "parent_process_tree_samples",
+        }
+    if formal_v10_j1_inner_fgmres:
+        construction_interval = _v5_h4_blr_candidate_interval_peak(
+            formal_stages_path,
+            formal_samples_path,
+            "bottom",
+            begin_stage="v10_j1_inner_fgmres_bottom_construction_begin",
+            end_stage="v10_j1_inner_fgmres_bottom_construction_end",
+            limit_gib=V10_H4_J1_INNER_FGMRES_CONSTRUCTION_LIMIT_GIB,
+        )
+        retained_interval = _v5_h4_blr_candidate_interval_peak(
+            formal_stages_path,
+            formal_samples_path,
+            "bottom",
+            begin_stage="v10_j1_inner_fgmres_bottom_retained_apply_state_ready",
+            end_stage="v10_j1_inner_fgmres_bottom_retained_state_release",
+            limit_gib=V10_H4_J1_INNER_FGMRES_RETAINED_LIMIT_GIB,
+        )
+        worker_record_path = (
+            run_directory / "numerical_output" / "v3_v7_diagnostic.json"
+        )
+        worker_numerical_gate: bool | None = None
+        worker_numerical_classification: str | None = None
+        worker_record_status = "not_available"
+        worker_contract_valid = False
+        worker_contract_reason = "not_checked"
+        if worker_record_path.is_file():
+            try:
+                worker_record = json.loads(
+                    worker_record_path.read_text(encoding="utf-8")
+                )
+            except (OSError, json.JSONDecodeError):
+                worker_record_status = "parse_failed"
+                worker_contract_reason = "record_unreadable"
+            else:
+                identity_matches = (
+                    isinstance(worker_record, Mapping)
+                    and worker_record.get("schema") == V10_H4_J1_INNER_FGMRES_SCHEMA
+                    and worker_record.get("method") == V10_H4_J1_INNER_FGMRES_METHOD
+                    and worker_record.get("source_sha")
+                    == getattr(plan, "source_sha", None)
+                )
+                if not identity_matches:
+                    worker_record_status = "identity_mismatch"
+                    worker_contract_reason = "schema_method_or_source_mismatch"
+                else:
+                    factor_inventory = worker_record.get("factor_inventory")
+                    factor_contract_matches = (
+                        isinstance(factor_inventory, Mapping)
+                        and factor_inventory.get("layer_factor_count_ready") == 6
+                        and factor_inventory.get("layer_factor_count_after_cleanup")
+                        == 0
+                        and factor_inventory.get("full_side_exact_factor_count") == 0
+                        and factor_inventory.get("global_direct_factor_count") == 0
+                        and factor_inventory.get("nested_ksp_count") == 0
+                        and factor_inventory.get("side_fgmres_ksp_count") == 5
+                        and factor_inventory.get("pc_nested_ksp_count") == 0
+                    )
+                    packet_contract_matches = (
+                        worker_record.get("selected_mode_packet_opened") is False
+                        and worker_record.get("qep_count") == 0
+                        and worker_record.get("sgs_executed") is False
+                        and worker_record.get("exact_spool_opened") is True
+                    )
+                    lifecycle_contract_matches = (
+                        worker_record.get("explicit_components_released_before_krylov")
+                        is True
+                        and isinstance(worker_record.get("lifecycle"), Mapping)
+                        and worker_record["lifecycle"].get("retained_state")
+                        == "released_after_five_rhs"
+                        and worker_record["lifecycle"].get("system_released") is True
+                    )
+                    worker_gate = worker_record.get("gate")
+                    value = (
+                        worker_gate.get("numerical_gate_pass")
+                        if isinstance(worker_gate, Mapping)
+                        else None
+                    )
+                    worker_numerical_classification = (
+                        worker_gate.get("classification")
+                        if isinstance(worker_gate, Mapping)
+                        else None
+                    )
+                    classification_contract_matches = (
+                        worker_numerical_classification
+                        in {
+                            "J1_INNER_FGMRES_SIDE_GATE_PASS",
+                            "J1_INNER_FGMRES_NUMERICAL_LIMIT_NOT_REACHED_BY_32",
+                        }
+                        and value
+                        == (
+                            worker_numerical_classification
+                            == "J1_INNER_FGMRES_SIDE_GATE_PASS"
+                        )
+                    )
+                    if (
+                        isinstance(value, bool)
+                        and factor_contract_matches
+                        and packet_contract_matches
+                        and lifecycle_contract_matches
+                        and classification_contract_matches
+                    ):
+                        worker_numerical_gate = value
+                        worker_record_status = "measured"
+                        worker_contract_valid = True
+                        worker_contract_reason = "validated"
+                    else:
+                        worker_record_status = "contract_mismatch"
+                        worker_contract_reason = "factor_packet_lifecycle_or_numerical_gate_contract_mismatch"
+
+        construction_measured = construction_interval.get("status") == "measured"
+        retained_measured = retained_interval.get("status") == "measured"
+        construction_pass = (
+            construction_measured and construction_interval.get("pass") is True
+        )
+        retained_pass = retained_measured and retained_interval.get("pass") is True
+        swap_pass = sample_count > 0 and zero_swap_observed is True and peak_swap == 0
+        if not construction_measured or not retained_measured:
+            resource_gate_summary = "not_available"
+        elif construction_pass and retained_pass:
+            resource_gate_summary = "construction_and_retained_pass"
+        else:
+            resource_gate_summary = "construction_or_retained_failed"
+        if worker_numerical_gate is None:
+            overall_status = (
+                "contract_mismatch"
+                if worker_record_status == "contract_mismatch"
+                else "not_available"
+            )
+            overall_pass = None
+        elif not construction_measured or not retained_measured:
+            overall_status = "resource_interval_not_available"
+            overall_pass = None
+        elif not construction_pass or not retained_pass:
+            overall_status = "resource_gate_failed"
+            overall_pass = False
+        elif not swap_pass:
+            overall_status = "swap_gate_failed"
+            overall_pass = False
+        elif worker_numerical_gate is False:
+            overall_status = "numerical_gate_failed"
+            overall_pass = False
+        else:
+            overall_status = "pass"
+            overall_pass = True
+        resource_authority["v10_h4_j1_inner_fgmres_telemetry"] = {
+            "raw_marker_path": str(formal_markers_path),
+            "process_tree_samples_path": str(formal_samples_path),
+            "memory_stages_path": str(formal_stages_path),
+            "memory_object_ledger_path": str(formal_object_ledger_path),
+            "sample_count": sample_count,
+            "process_tree_sample_count": formal_written_sample_count,
+            "aligned_stage_count": formal_aligned_stage_count,
+            "stage_source": "launcher_marker_alignment",
+            "method": V10_H4_J1_INNER_FGMRES_METHOD,
+            "profile": V10_H4_J1_INNER_FGMRES_SCHEMA,
+            "construction_interval_summary": construction_interval,
+            "retained_interval_summary": retained_interval,
+            "worker_record_path": str(worker_record_path),
+            "worker_record_status": worker_record_status,
+            "worker_record_contract_valid": worker_contract_valid,
+            "worker_record_contract_reason": worker_contract_reason,
+            "numerical_gate_pass": worker_numerical_gate,
+            "numerical_classification": worker_numerical_classification,
+            "overall": {
+                "status": overall_status,
+                "pass": overall_pass,
+                "construction_pass": construction_pass,
+                "retained_pass": (retained_pass if retained_measured else None),
+                "numerical_gate_pass": worker_numerical_gate,
+                "swap_pass": swap_pass,
+                "resource_gate": resource_gate_summary,
+            },
+            "gate_contract": {
+                "construction_peak_limit_gib": (
+                    V10_H4_J1_INNER_FGMRES_CONSTRUCTION_LIMIT_GIB
+                ),
+                "retained_peak_limit_gib": (V10_H4_J1_INNER_FGMRES_RETAINED_LIMIT_GIB),
+                "retained_state": "measured" if retained_measured else "not_run",
+                "swap_required": 0,
+                "layer_factor_count_ready": 6,
+                "layer_factor_count_after_cleanup": 0,
+                "full_side_exact_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "nested_ksp_count": 0,
+                "side_fgmres_ksp_count": 5,
+                "pc_nested_ksp_count": 0,
+                "selected_mode_packet_opened": False,
+                "exact_spool_opened": True,
+                "qep_count": 0,
+                "sgs_executed": False,
+            },
+            "absolute_terminate_memory_bytes": (V10_H4_J1_INNER_FGMRES_HARD_STOP_BYTES),
+            "effective_hard_stop_memory_gib": (
+                V10_H4_J1_INNER_FGMRES_HARD_STOP_BYTES / 1024**3
+            ),
             "require_zero_swap": True,
             "zero_swap_observed": zero_swap_observed if sample_count else None,
             "overall_process_tree_peak_bytes": peak_process_tree,

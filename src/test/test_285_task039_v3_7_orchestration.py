@@ -4131,6 +4131,75 @@ def test_v10_sn2_j_only_plan_and_advancement_gate_are_strict(tmp_path):
     assert "physical_side_rhs" in nondegenerate_physical["mandatory_labels"]
 
 
+def test_v10_j1_inner_fgmres_uses_uniform_checkpoint_not_mixed_final():
+    labels = [
+        label
+        for label in orchestration.V6_PORT_MODAL_HOLDOUT_LABELS
+        if label != "physical_side_rhs"
+    ]
+    preferred_labels = set(orchestration.V6_PORT_MODAL_PREFERRED_LABELS)
+
+    def make_records(*, mixed_final):
+        records = []
+        omitted_32 = "fixed_random_repeat_0" if mixed_final else None
+        preferred_at_16 = next(iter(preferred_labels & set(labels)))
+        for label in labels:
+            checkpoints = {
+                "4": {"finite": True, "explicit_true_residual": 0.1},
+                "8": {
+                    "finite": True,
+                    "explicit_true_residual": 0.002
+                    if mixed_final and label == preferred_at_16
+                    else 0.005,
+                },
+                "16": {
+                    "finite": True,
+                    "explicit_true_residual": (
+                        0.002 if mixed_final and label == preferred_at_16 else 0.0005
+                    ),
+                },
+            }
+            if not mixed_final or label != omitted_32:
+                checkpoints["32"] = {
+                    "finite": True,
+                    "explicit_true_residual": 0.002 if not mixed_final else 0.0005,
+                }
+            final_checkpoint = "16" if label == omitted_32 else "32"
+            records.append(
+                {
+                    "label": label,
+                    "checkpoints": checkpoints,
+                    "continued_to_32": final_checkpoint == "32",
+                    "ksp_breakdown": False,
+                    "first_nonfinite_stage": None,
+                    "final_independent_true_residual": checkpoints[final_checkpoint][
+                        "explicit_true_residual"
+                    ],
+                    "final_residual_consistent": True,
+                }
+            )
+        return records
+
+    uniform_gate = orchestration._v10_j1_inner_fgmres_aggregate_gate(
+        make_records(mixed_final=False), {"zero_map_pass": True}
+    )
+    assert uniform_gate["preferred_inner_budget"] == 16
+    assert uniform_gate["gate_by_checkpoint"]["16"]["pass"] is True
+    assert uniform_gate["gate_by_checkpoint"]["32"]["pass"] is False
+    assert uniform_gate["numerical_gate_pass"] is True
+    assert uniform_gate["worst_final"] == pytest.approx(0.002)
+
+    mixed_gate = orchestration._v10_j1_inner_fgmres_aggregate_gate(
+        make_records(mixed_final=True), {"zero_map_pass": True}
+    )
+    assert mixed_gate["preferred_inner_budget"] == "not_applicable"
+    assert mixed_gate["gate_by_checkpoint"]["16"]["pass"] is False
+    assert mixed_gate["gate_by_checkpoint"]["32"]["complete"] is False
+    assert mixed_gate["worst_final"] == pytest.approx(0.0005)
+    assert mixed_gate["preferred_residual_max"] == pytest.approx(0.0005)
+    assert mixed_gate["numerical_gate_pass"] is False
+
+
 @pytest.mark.parametrize(
     ("numerical_pass", "expected_retained_status"),
     ((True, "measured"), (False, "not_run")),
@@ -6419,3 +6488,173 @@ def test_v3_7_side_survey_checkpoint_survives_oracle_exception(tmp_path) -> None
         assert item["top"]["median"] == pytest.approx(0.11)
         assert item["top"]["worst"] == pytest.approx(0.21)
         assert item["top"]["candidate_A_pass"] is True
+
+
+def test_v10_j1_inner_fgmres_worker_releases_components_and_records_zero_map(
+    monkeypatch,
+):
+    if MPI.COMM_WORLD.size != 1:
+        pytest.skip("run this fake-side lifecycle contract in serial")
+
+    timeline: list[str] = []
+    markers: list[str] = []
+    mandatory_labels = [
+        label
+        for label in orchestration.V6_PORT_MODAL_HOLDOUT_LABELS
+        if label != "physical_side_rhs"
+    ]
+    spool_holder: list[dict[str, object]] = []
+
+    matrix = PETSc.Mat().createAIJ(size=(2, 2), nnz=1, comm=PETSc.COMM_SELF)
+    matrix.setValue(0, 0, PETSc.ScalarType(2.0 + 0.1j))
+    matrix.setValue(1, 1, PETSc.ScalarType(3.0 - 0.2j))
+    matrix.assemble()
+
+    class System:
+        def __init__(self):
+            self.A = matrix
+            self.destroyed = False
+
+        def destroy(self):
+            timeline.append("system_destroy")
+            self.A.destroy()
+            self.destroyed = True
+
+    class Sweep:
+        def __init__(self):
+            self.destroyed = False
+            self.apply_calls = 0
+
+        @property
+        def diagnostics(self):
+            return {
+                "layer_factor_count": 0 if self.destroyed else 6,
+                "destroyed": self.destroyed,
+            }
+
+        def apply(self, _source, target):
+            self.apply_calls += 1
+            target.set(0.0)
+
+        def destroy(self):
+            timeline.append("sweep_destroy")
+            self.destroyed = True
+
+    system = System()
+    sweep = Sweep()
+    components = SimpleNamespace(F=matrix, C=object(), D=object(), H=object())
+    component_release = {"released": False}
+
+    def marker_callback(marker, _detail):
+        markers.append(marker)
+        if marker.endswith("construction_end"):
+            assert component_release["released"] is True
+            assert "fgmres_call" not in timeline
+        if marker.endswith("retained_state_release"):
+            assert sweep.destroyed is True
+            assert system.destroyed is True
+
+    def fake_component_builder(_system):
+        return components
+
+    def fake_labels(_matrix, _system):
+        return np.zeros(2, dtype=np.int32), {"z_layer_boundaries": list(range(7))}
+
+    def fake_sweep_builder(*_args, **_kwargs):
+        return sweep
+
+    def fake_component_destroy(_components):
+        timeline.append("components_destroy")
+        component_release["released"] = True
+        return {"released": True}
+
+    def fake_identity(_root, _comm):
+        return ({"source": "tiny"}, "m" * 64, {"catalog": "tiny"})
+
+    labels = list(orchestration.V6_PORT_MODAL_HOLDOUT_LABELS)
+    spool = {label: {"rhs": {"label": label}} for label in labels}
+    spool_holder.append(spool)
+
+    def fake_loader(*_args, **_kwargs):
+        return spool
+
+    def fake_remap(_artifact, template):
+        rhs = template.duplicate()
+        rhs.set(1.0)
+        return rhs
+
+    fgmres_calls: list[str] = []
+
+    def fake_fgmres(_operator, _rhs, _pc, *, label, **_kwargs):
+        timeline.append("fgmres_call")
+        fgmres_calls.append(label)
+        return {
+            "label": label,
+            "iterations": 16,
+            "checkpoints": {
+                "4": {"finite": True, "explicit_true_residual": 0.1},
+                "8": {"finite": True, "explicit_true_residual": 0.05},
+                "16": {"finite": True, "explicit_true_residual": 0.02},
+            },
+            "continued_to_32": False,
+            "ksp_breakdown": False,
+            "first_nonfinite_stage": None,
+            "final_independent_true_residual": 0.02,
+        }
+
+    monkeypatch.setattr(
+        orchestration,
+        "_build_research_explicit_side_components",
+        fake_component_builder,
+    )
+    monkeypatch.setattr(orchestration, "build_real_layer_labels", fake_labels)
+    monkeypatch.setattr(orchestration, "build_layer_sweep_action", fake_sweep_builder)
+    monkeypatch.setattr(
+        orchestration, "_destroy_v5_side_components", fake_component_destroy
+    )
+    monkeypatch.setattr(orchestration, "_v9_frozen_holdout_identity", fake_identity)
+    monkeypatch.setattr(
+        orchestration, "_load_v5_fixed_budget_spool_shards", fake_loader
+    )
+    monkeypatch.setattr(
+        orchestration, "_load_v5_blr_reference_spool_remapped", fake_remap
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "run_v10_right_preconditioned_fgmres_checkpoints",
+        fake_fgmres,
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "collective_heap_cleanup",
+        lambda _comm: timeline.append("collective_cleanup"),
+    )
+
+    result = orchestration.run_v10_h4_j1_inner_fgmres(
+        SimpleNamespace(),
+        profile=SimpleNamespace(bottom_interface_nm=0.0, top_interface_nm=1.0),
+        comm=MPI.COMM_SELF,
+        marker_callback=marker_callback,
+        exact_spool_root="tiny-spool",
+        source_sha="a" * 40,
+        side_system_builder=lambda **_kwargs: system,
+    )
+
+    assert fgmres_calls == mandatory_labels
+    assert len(result["mandatory_labels"]) == 5
+    assert result["method_records"]["physical_side_rhs"]["zero_map_pass"] is True
+    assert result["method_records"]["physical_side_rhs"]["mandatory"] is False
+    assert result["gate"]["numerical_gate_pass"] is False
+    assert result["top"] == "not_run"
+    assert result["full_formal"] == "not_run"
+    assert result["factor_inventory"]["layer_factor_count_ready"] == 6
+    assert result["factor_inventory"]["layer_factor_count_after_cleanup"] == 0
+    assert result["lifecycle"]["retained_state"] == "released_after_five_rhs"
+    assert result["lifecycle"]["system_released"] is True
+    assert result["explicit_components_released_before_krylov"] is True
+    assert component_release["released"] is True
+    assert not spool_holder[0]
+    assert sweep.apply_calls == 1
+    assert timeline.index("components_destroy") < timeline.index("fgmres_call")
+    assert "collective_cleanup" in timeline
+    assert markers[-1] == "v10_j1_inner_fgmres_bottom_retained_state_release"

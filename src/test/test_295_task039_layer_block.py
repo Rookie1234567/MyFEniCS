@@ -15,6 +15,7 @@ from src.solvers.hybrid_layer_block import (
     build_layer_block_operator,
     build_layer_sweep_action,
     relative_matvec_residual,
+    run_v10_right_preconditioned_fgmres_checkpoints,
 )
 from src.solvers.hybrid_local_dtn_woodbury import ResearchExactFactorInverse
 
@@ -833,6 +834,75 @@ def test_v10_1_factor_only_matches_conventional_lu_and_zero_rhs() -> None:
     matrix.destroy()
 
 
+@pytest.mark.parametrize("resource_allowed", (False, True))
+def test_v10_fgmres_conditional_16_to_32_uses_one_solve(
+    resource_allowed: bool,
+) -> None:
+    comm = MPI.COMM_WORLD
+    global_rows = 24
+    local_rows = global_rows // comm.size
+    matrix = PETSc.Mat().createAIJ(
+        size=((local_rows, global_rows), (local_rows, global_rows)),
+        nnz=(1, 1),
+        comm=comm,
+    )
+    matrix.setUp()
+    row_start, row_end = matrix.getOwnershipRange()
+    for row in range(row_start, row_end):
+        matrix.setValue(
+            row,
+            row,
+            PETSc.ScalarType(1.0 + 0.03 * (row + 1) + 0.01j * (row + 1)),
+        )
+    matrix.assemble()
+    rhs = matrix.createVecRight()
+    rhs.set(0.0)
+    rhs.getArray()[:] = np.asarray(
+        [1.0 + 0.2j * (row + 1) for row in range(row_start, row_end)],
+        dtype=PETSc.ScalarType,
+    )
+    rhs.assemble()
+
+    class IdentityRightAction:
+        def __init__(self) -> None:
+            self.apply_count = 0
+
+        def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+            source.copy(target)
+            self.apply_count += 1
+
+    action = IdentityRightAction()
+    try:
+        result = run_v10_right_preconditioned_fgmres_checkpoints(
+            matrix,
+            rhs,
+            action,
+            label="tiny_identity_pc",
+            resource_gate=lambda: resource_allowed,
+        )
+        expected_iterations = 32 if resource_allowed else 16
+        assert result["ksp_type"] == "fgmres"
+        assert result["pc_side"] == "right"
+        assert result["restart"] == 32
+        assert result["max_it"] == 32
+        assert result["zero_initial_guess"] is True
+        assert result["zero_initial_guess_count"] == 1
+        assert result["iterations"] == expected_iterations
+        assert result["j1_apply_count"] == expected_iterations
+        assert action.apply_count == expected_iterations
+        assert result["ksp_breakdown"] is False
+        assert result["a_side_apply_count"] == "not_available"
+        assert result["a_side_true_residual_matvec_count"] == (
+            5 if resource_allowed else 4
+        )
+        assert ("32" in result["checkpoints"]) is resource_allowed
+        assert result["continued_to_32"] is resource_allowed
+        assert result["stop_at_16"] is not resource_allowed
+    finally:
+        rhs.destroy()
+        matrix.destroy()
+
+
 def test_v10_1_singular_factor_is_explicitly_classified() -> None:
     matrix = _tiny_singular_matrix()
     rhs_values = np.asarray(
@@ -983,4 +1053,31 @@ def test_v10_matrix_evidence_handles_empty_local_rank() -> None:
         assert evidence["diagonal_abs_min"] == pytest.approx(abs(2.0 + 0.1j))
         assert evidence["diagonal_abs_max"] == pytest.approx(abs(2.0 + 0.1j))
     finally:
+        matrix.destroy()
+
+
+def test_v10_j1_zero_map_is_finite_and_bounded() -> None:
+    matrix, labels = _tiny_block_tridiagonal()
+    sweep = build_layer_sweep_action(
+        matrix,
+        labels,
+        layer_count=6,
+        method="J1",
+        fine_action=None,
+    )
+    source = matrix.createVecRight()
+    output = matrix.createVecLeft()
+    try:
+        source.set(0.0)
+        output.set(0.0)
+        sweep.apply(source, output)
+        output_norm = float(output.norm())
+        assert np.isfinite(output_norm)
+        assert output_norm <= 1.0e-13
+    finally:
+        source.set(0.0)
+        output.set(0.0)
+        source.destroy()
+        output.destroy()
+        sweep.destroy()
         matrix.destroy()

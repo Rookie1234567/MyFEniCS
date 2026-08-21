@@ -144,6 +144,13 @@ V10_H4_SN2_J_ONLY_EXACT_SPOOL_ROOT_FLAG = "--v10-h4-sn2-j-only-exact-spool-root"
 V10_H4_SN2_J_ONLY_METHOD = "task039_v10_h4_sn2_j_only"
 V10_H4_SN2_J_ONLY_PROFILE = "task039.v10.h4.sn2_j_only.v1"
 V10_H4_SN2_J_ONLY_HARD_STOP_BYTES = 45 * 2**30
+V10_H4_J1_INNER_FGMRES_FLAG = "--v10-h4-j1-inner-fgmres"
+V10_H4_J1_INNER_FGMRES_EXACT_SPOOL_ROOT_FLAG = (
+    "--v10-h4-j1-inner-fgmres-exact-spool-root"
+)
+V10_H4_J1_INNER_FGMRES_METHOD = "task039_v10_h4_j1_inner_fgmres"
+V10_H4_J1_INNER_FGMRES_PROFILE = "task039.v10.h4.j1_inner_fgmres.v1"
+V10_H4_J1_INNER_FGMRES_HARD_STOP_BYTES = 45 * 2**30
 
 
 def _validate_resolved_identity(
@@ -164,6 +171,7 @@ def _validate_resolved_identity(
     v9_h4_layer_supernode_bottom: bool = False,
     v10_h4_supernode_factor_integrity: bool = False,
     v10_h4_sn2_j_only: bool = False,
+    v10_h4_j1_inner_fgmres: bool = False,
 ) -> None:
     if (
         v5_h4_setup_only
@@ -181,6 +189,7 @@ def _validate_resolved_identity(
         or v9_h4_layer_supernode_bottom
         or v10_h4_supernode_factor_integrity
         or v10_h4_sn2_j_only
+        or v10_h4_j1_inner_fgmres
     ):
         method = payload.get("method", {})
         if payload.get("model_id") != "task039_5nm_v4_1deg_s5_hybrid_iterative_m480":
@@ -250,6 +259,7 @@ def _watchdog_policy(
     v9_h4_layer_supernode_bottom: bool = False,
     v10_h4_supernode_factor_integrity: bool = False,
     v10_h4_sn2_j_only: bool = False,
+    v10_h4_j1_inner_fgmres: bool = False,
 ) -> dict[str, Any]:
     _validate_resolved_identity(
         payload,
@@ -268,6 +278,7 @@ def _watchdog_policy(
         v9_h4_layer_supernode_bottom=v9_h4_layer_supernode_bottom,
         v10_h4_supernode_factor_integrity=v10_h4_supernode_factor_integrity,
         v10_h4_sn2_j_only=v10_h4_sn2_j_only,
+        v10_h4_j1_inner_fgmres=v10_h4_j1_inner_fgmres,
     )
     if v7_h4_exact_side_full_formal:
         absolute_bytes = V7_H4_EXACT_SIDE_FULL_FORMAL_HARD_STOP_BYTES
@@ -291,6 +302,8 @@ def _watchdog_policy(
         absolute_bytes = V10_H4_SUPERNODE_FACTOR_INTEGRITY_HARD_STOP_BYTES
     elif v10_h4_sn2_j_only:
         absolute_bytes = V10_H4_SN2_J_ONLY_HARD_STOP_BYTES
+    elif v10_h4_j1_inner_fgmres:
+        absolute_bytes = V10_H4_J1_INNER_FGMRES_HARD_STOP_BYTES
     else:
         absolute_bytes = V3_7_ABSOLUTE_HARD_BYTES
     policy = {
@@ -315,6 +328,8 @@ def _watchdog_policy(
         policy["profile"] = V10_H4_SUPERNODE_FACTOR_INTEGRITY_PROFILE
     if v10_h4_sn2_j_only:
         policy["profile"] = V10_H4_SN2_J_ONLY_PROFILE
+    if v10_h4_j1_inner_fgmres:
+        policy["profile"] = V10_H4_J1_INNER_FGMRES_PROFILE
     if v7_h4_exact_side_full_formal:
         policy["timeout_policy"] = {
             "default_seconds": V7_H4_EXACT_SIDE_FULL_FORMAL_DEFAULT_TIMEOUT_SECONDS,
@@ -366,6 +381,7 @@ def load_v3_7_official_payload(
     v9_h4_layer_supernode_bottom: bool = False,
     v10_h4_supernode_factor_integrity: bool = False,
     v10_h4_sn2_j_only: bool = False,
+    v10_h4_j1_inner_fgmres: bool = False,
 ) -> dict[str, Any]:
     specification = load_and_resolve(input_path)
     payload = specification.as_jsonable()
@@ -385,6 +401,7 @@ def load_v3_7_official_payload(
         or v9_h4_layer_supernode_bottom
         or v10_h4_supernode_factor_integrity
         or v10_h4_sn2_j_only
+        or v10_h4_j1_inner_fgmres
     ):
         from benchmarks.task039_v4_h4_hybrid_direct import (
             validate_v4_h4_specification,
@@ -408,6 +425,7 @@ def load_v3_7_official_payload(
         v9_h4_layer_supernode_bottom=v9_h4_layer_supernode_bottom,
         v10_h4_supernode_factor_integrity=v10_h4_supernode_factor_integrity,
         v10_h4_sn2_j_only=v10_h4_sn2_j_only,
+        v10_h4_j1_inner_fgmres=v10_h4_j1_inner_fgmres,
     )
     return payload
 
@@ -448,6 +466,8 @@ def build_v3_7_execution_plan(
     v10_h4_supernode_factor_integrity_exact_spool_root: str | Path | None = None,
     v10_h4_sn2_j_only: bool = False,
     v10_h4_sn2_j_only_exact_spool_root: str | Path | None = None,
+    v10_h4_j1_inner_fgmres: bool = False,
+    v10_h4_j1_inner_fgmres_exact_spool_root: str | Path | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest_sha256: str | None = None,
@@ -476,6 +496,7 @@ def build_v3_7_execution_plan(
         v9_h4_layer_supernode_bottom=v9_h4_layer_supernode_bottom,
         v10_h4_supernode_factor_integrity=v10_h4_supernode_factor_integrity,
         v10_h4_sn2_j_only=v10_h4_sn2_j_only,
+        v10_h4_j1_inner_fgmres=v10_h4_j1_inner_fgmres,
     )
     if v5_h4_blr_side_only and v5_h4_blr_profile not in V5_H4_BLR_PROFILE_CHOICES:
         raise ValueError(f"Unsupported V5 h4 BLR profile: {v5_h4_blr_profile}")
@@ -496,6 +517,7 @@ def build_v3_7_execution_plan(
         v9_h4_layer_supernode_bottom=v9_h4_layer_supernode_bottom,
         v10_h4_supernode_factor_integrity=v10_h4_supernode_factor_integrity,
         v10_h4_sn2_j_only=v10_h4_sn2_j_only,
+        v10_h4_j1_inner_fgmres=v10_h4_j1_inner_fgmres,
     )
     executable = str(Path(os.path.abspath(python_executable or sys.executable)))
     mpiexec = mpiexec_command or shutil.which("mpiexec") or "mpiexec"
@@ -523,6 +545,7 @@ def build_v3_7_execution_plan(
                 bool(v9_h4_layer_supernode_bottom),
                 bool(v10_h4_supernode_factor_integrity),
                 bool(v10_h4_sn2_j_only),
+                bool(v10_h4_j1_inner_fgmres),
             )
         )
         > 1
@@ -847,6 +870,16 @@ def build_v3_7_execution_plan(
                 str(Path(v10_h4_sn2_j_only_exact_spool_root).resolve()),
             ]
         )
+    elif v10_h4_j1_inner_fgmres:
+        if v10_h4_j1_inner_fgmres_exact_spool_root is None:
+            raise ValueError("V10-4 route requires the exact spool root")
+        argv.extend(
+            [
+                V10_H4_J1_INNER_FGMRES_FLAG,
+                V10_H4_J1_INNER_FGMRES_EXACT_SPOOL_ROOT_FLAG,
+                str(Path(v10_h4_j1_inner_fgmres_exact_spool_root).resolve()),
+            ]
+        )
     if candidate_d_qualified:
         method = V3_8_CANDIDATE_D_QUALIFIED_METHOD
     elif candidate_d_only:
@@ -877,6 +910,8 @@ def build_v3_7_execution_plan(
         method = V10_H4_SUPERNODE_FACTOR_INTEGRITY_METHOD
     elif v10_h4_sn2_j_only:
         method = V10_H4_SN2_J_ONLY_METHOD
+    elif v10_h4_j1_inner_fgmres:
+        method = V10_H4_J1_INNER_FGMRES_METHOD
     elif v5_h4_setup_only:
         method = V5_H4_SETUP_ONLY_METHOD
     elif v5_h4_blr_side_only:
@@ -915,6 +950,8 @@ def build_v3_7_execution_plan(
         profile_id = V10_H4_SUPERNODE_FACTOR_INTEGRITY_PROFILE
     elif v10_h4_sn2_j_only:
         profile_id = V10_H4_SN2_J_ONLY_PROFILE
+    elif v10_h4_j1_inner_fgmres:
+        profile_id = V10_H4_J1_INNER_FGMRES_PROFILE
     elif v5_h4_setup_only:
         profile_id = "task039.v5.h4.exact-side.setup-only.v1"
     elif v5_h4_blr_side_only:
@@ -949,6 +986,8 @@ def build_v3_7_execution_plan(
         )
     elif v10_h4_sn2_j_only and v10_h4_sn2_j_only_exact_spool_root is not None:
         exact_spool_root = str(Path(v10_h4_sn2_j_only_exact_spool_root).resolve())
+    elif v10_h4_j1_inner_fgmres and v10_h4_j1_inner_fgmres_exact_spool_root is not None:
+        exact_spool_root = str(Path(v10_h4_j1_inner_fgmres_exact_spool_root).resolve())
     elif v7_h4_streamed_bottom_producer:
         exact_spool_root = None
     elif (
@@ -1032,6 +1071,8 @@ def v3_7_execution_dry_run(
     v10_h4_supernode_factor_integrity_exact_spool_root: str | Path | None = None,
     v10_h4_sn2_j_only: bool = False,
     v10_h4_sn2_j_only_exact_spool_root: str | Path | None = None,
+    v10_h4_j1_inner_fgmres: bool = False,
+    v10_h4_j1_inner_fgmres_exact_spool_root: str | Path | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest_sha256: str | None = None,
@@ -1076,6 +1117,10 @@ def v3_7_execution_dry_run(
         ),
         v10_h4_sn2_j_only=v10_h4_sn2_j_only,
         v10_h4_sn2_j_only_exact_spool_root=v10_h4_sn2_j_only_exact_spool_root,
+        v10_h4_j1_inner_fgmres=v10_h4_j1_inner_fgmres,
+        v10_h4_j1_inner_fgmres_exact_spool_root=(
+            v10_h4_j1_inner_fgmres_exact_spool_root
+        ),
         v7_h4_streamed_bottom_consumer_basis_manifest=(
             v7_h4_streamed_bottom_consumer_basis_manifest
         ),
@@ -1136,6 +1181,8 @@ def launch_v3_7_with_task038_watchdog(
     v10_h4_supernode_factor_integrity_exact_spool_root: str | Path | None = None,
     v10_h4_sn2_j_only: bool = False,
     v10_h4_sn2_j_only_exact_spool_root: str | Path | None = None,
+    v10_h4_j1_inner_fgmres: bool = False,
+    v10_h4_j1_inner_fgmres_exact_spool_root: str | Path | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest_sha256: str | None = None,
@@ -1164,6 +1211,7 @@ def launch_v3_7_with_task038_watchdog(
         v9_h4_layer_supernode_bottom=v9_h4_layer_supernode_bottom,
         v10_h4_supernode_factor_integrity=v10_h4_supernode_factor_integrity,
         v10_h4_sn2_j_only=v10_h4_sn2_j_only,
+        v10_h4_j1_inner_fgmres=v10_h4_j1_inner_fgmres,
     )
     if (
         not v5_h4_setup_only
@@ -1181,6 +1229,7 @@ def launch_v3_7_with_task038_watchdog(
         and not v9_h4_layer_supernode_bottom
         and not v10_h4_supernode_factor_integrity
         and not v10_h4_sn2_j_only
+        and not v10_h4_j1_inner_fgmres
     ):
         _check_direct_producer(V3_7_DIRECT_RUN_ROOT)
     if len(source_sha) != 40 or any(
@@ -1224,6 +1273,10 @@ def launch_v3_7_with_task038_watchdog(
         ),
         v10_h4_sn2_j_only=v10_h4_sn2_j_only,
         v10_h4_sn2_j_only_exact_spool_root=v10_h4_sn2_j_only_exact_spool_root,
+        v10_h4_j1_inner_fgmres=v10_h4_j1_inner_fgmres,
+        v10_h4_j1_inner_fgmres_exact_spool_root=(
+            v10_h4_j1_inner_fgmres_exact_spool_root
+        ),
         v7_h4_streamed_bottom_consumer_basis_manifest=(
             v7_h4_streamed_bottom_consumer_basis_manifest
         ),
@@ -1356,6 +1409,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(V10_H4_SN2_J_ONLY_FLAG, action="store_true")
     parser.add_argument(V10_H4_SN2_J_ONLY_EXACT_SPOOL_ROOT_FLAG)
+    parser.add_argument(V10_H4_J1_INNER_FGMRES_FLAG, action="store_true")
+    parser.add_argument(V10_H4_J1_INNER_FGMRES_EXACT_SPOOL_ROOT_FLAG)
     parser.add_argument(V7_STREAMED_PETROV_BOTTOM_CONSUMER_BASIS_MANIFEST_FLAG)
     parser.add_argument(V7_STREAMED_PETROV_BOTTOM_CONSUMER_BASIS_MANIFEST_SHA256_FLAG)
     parser.add_argument(V7_STREAMED_PETROV_BOTTOM_CONSUMER_EXACT_SPOOL_ROOT_FLAG)
@@ -1434,6 +1489,10 @@ def main(argv: list[str] | None = None) -> int:
                     v10_h4_sn2_j_only_exact_spool_root=(
                         args.v10_h4_sn2_j_only_exact_spool_root
                     ),
+                    v10_h4_j1_inner_fgmres=args.v10_h4_j1_inner_fgmres,
+                    v10_h4_j1_inner_fgmres_exact_spool_root=(
+                        args.v10_h4_j1_inner_fgmres_exact_spool_root
+                    ),
                     v8_h4_layer_sweep_exact_spool_root=(
                         args.v8_h4_layer_sweep_exact_spool_root
                     ),
@@ -1495,6 +1554,10 @@ def main(argv: list[str] | None = None) -> int:
         ),
         v10_h4_sn2_j_only=args.v10_h4_sn2_j_only,
         v10_h4_sn2_j_only_exact_spool_root=(args.v10_h4_sn2_j_only_exact_spool_root),
+        v10_h4_j1_inner_fgmres=args.v10_h4_j1_inner_fgmres,
+        v10_h4_j1_inner_fgmres_exact_spool_root=(
+            args.v10_h4_j1_inner_fgmres_exact_spool_root
+        ),
         v8_h4_layer_sweep_exact_spool_root=(args.v8_h4_layer_sweep_exact_spool_root),
         v7_h4_streamed_bottom_consumer_basis_manifest=(
             args.v7_h4_streamed_bottom_consumer_basis_manifest
@@ -1594,6 +1657,11 @@ __all__ = [
     "V10_H4_SN2_J_ONLY_METHOD",
     "V10_H4_SN2_J_ONLY_PROFILE",
     "V10_H4_SN2_J_ONLY_HARD_STOP_BYTES",
+    "V10_H4_J1_INNER_FGMRES_FLAG",
+    "V10_H4_J1_INNER_FGMRES_EXACT_SPOOL_ROOT_FLAG",
+    "V10_H4_J1_INNER_FGMRES_METHOD",
+    "V10_H4_J1_INNER_FGMRES_PROFILE",
+    "V10_H4_J1_INNER_FGMRES_HARD_STOP_BYTES",
     "build_v3_7_execution_plan",
     "launch_v3_7_with_task038_watchdog",
     "load_v3_7_official_payload",
