@@ -4817,6 +4817,99 @@ def test_v9_layer_supernode_run_task_finalizer_writes_record_and_ledger(
     assert main_record["telemetry"]["memory_object_ledger"]["status"] == ("completed")
 
 
+@pytest.mark.parametrize("route", ("producer", "consumer"))
+def test_v10_side_response_routes_run_public_finalizer_with_ledger(
+    tmp_path, monkeypatch, route
+):
+    payload = load_and_resolve(
+        Path("input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat")
+    ).as_jsonable()
+    run_directory = tmp_path / f"v10-{route}-run-task"
+    record_path = run_directory / "numerical_output" / "v3_v7_diagnostic.json"
+    if route == "producer":
+
+        def fake_route(*_args, **_kwargs):
+            return {
+                "schema": orchestration.V10_H4_SIDE_RESPONSE_PACKET_PILOT_SCHEMA,
+                "method": orchestration.V10_H4_SIDE_RESPONSE_PACKET_PILOT_METHOD,
+                "status": "producer_completed",
+            }
+
+        monkeypatch.setattr(
+            orchestration,
+            "run_v10_h4_side_response_packet_pilot",
+            fake_route,
+        )
+        selected_manifest = tmp_path / "selected-manifest.json"
+        selected_manifest.write_text("{}", encoding="utf-8")
+        route_kwargs = {
+            "v10_h4_side_response_packet_pilot": True,
+            "v10_h4_side_response_packet_pilot_exact_spool_root": (
+                tmp_path / "exact-spool"
+            ),
+            "v10_h4_side_response_packet_pilot_output_root": (
+                tmp_path / "packet-output"
+            ),
+            "selected_mode_packet_manifest": selected_manifest,
+            "selected_mode_packet_identity": {
+                "source_sha": "b" * 40,
+                "physical_sha256": "c" * 64,
+                "model_id": "task039-test",
+            },
+            "selected_mode_packet_manifest_sha256": "d" * 64,
+        }
+        expected_status = "producer_completed"
+    else:
+
+        def fake_route(*_args, **_kwargs):
+            return {
+                "schema": orchestration.V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_SCHEMA,
+                "method": orchestration.V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_METHOD,
+                "status": "consumer_completed",
+            }
+
+        monkeypatch.setattr(
+            orchestration,
+            "run_v10_h4_side_response_packet_consumer",
+            fake_route,
+        )
+        manifest = tmp_path / "consumer-manifest.json"
+        manifest.write_text(
+            json.dumps(
+                {
+                    "global_rows": 1,
+                    "shards": [{"rank": 0, "ownership_range": [0, 1]}],
+                }
+            ),
+            encoding="utf-8",
+        )
+        route_kwargs = {
+            "v10_h4_side_response_packet_consumer": True,
+            "v10_h4_side_response_packet_consumer_manifest": manifest,
+            "v10_h4_side_response_packet_consumer_manifest_sha256": hashlib.sha256(
+                manifest.read_bytes()
+            ).hexdigest(),
+        }
+        expected_status = "consumer_completed"
+
+    result = orchestration.run_task039_v3_7_diagnostic(
+        payload,
+        run_directory,
+        source_sha="a" * 40,
+        comm=MPI.COMM_SELF,
+        record_path=record_path,
+        **route_kwargs,
+    )
+    assert result["status"] == expected_status
+    saved = json.loads(record_path.read_text(encoding="utf-8"))
+    ledger_ref = saved["telemetry"]["memory_object_ledger"]
+    ledger_path = run_directory / ledger_ref["path"]
+    assert ledger_ref["schema"] == "task039.v3-7-memory-object-ledger.v1"
+    assert ledger_ref["status"] == "completed"
+    assert ledger_ref["sha256"] == hashlib.sha256(ledger_path.read_bytes()).hexdigest()
+    assert json.loads(ledger_path.read_text(encoding="utf-8"))["status"] == "completed"
+
+
 def test_v9_frozen_holdout_rejects_wrong_inherited_producer_sha(tmp_path):
     metadata = (
         tmp_path

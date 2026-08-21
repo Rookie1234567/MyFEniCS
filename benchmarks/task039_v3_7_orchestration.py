@@ -11722,6 +11722,15 @@ def run_task039_v3_7_diagnostic(
             stage_callback(stage, detail)
         marker_callback(stage, {"source": "setup_detail_callback", **dict(detail)})
 
+    def attach_v10_finalizer_ledger(route_result: dict[str, Any]) -> None:
+        route_result["telemetry"] = {
+            "memory_object_ledger": {
+                "path": "numerical_output/memory_object_ledger.json",
+                "schema": "task039.v3-7-memory-object-ledger.v1",
+                "status": "finalized_in_worker_finalizer",
+            }
+        }
+
     try:
         _emit_marker(marker_callback, "diagnostic_entry")
         if v5_h4_blr_side_only:
@@ -12467,6 +12476,7 @@ def run_task039_v3_7_diagnostic(
                 physical_model_sha256=v10_physical_model_sha256,
                 side_system_builder=side_system_builder,
             )
+            attach_v10_finalizer_ledger(result)
             result["source_sha"] = source_sha
             result["run_directory"] = str(Path(run_directory).resolve())
             normal_return = result.get("status") == "producer_completed"
@@ -12503,6 +12513,7 @@ def run_task039_v3_7_diagnostic(
                 comm=comm,
                 marker_callback=marker_callback,
             )
+            attach_v10_finalizer_ledger(result)
             result["source_sha"] = source_sha
             result["run_directory"] = str(Path(run_directory).resolve())
             normal_return = result.get("status") == "consumer_completed"
