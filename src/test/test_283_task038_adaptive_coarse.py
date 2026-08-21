@@ -19,6 +19,11 @@ class _MockBasis:
         self._z.flags.writeable = False
         self.comm = MPI.COMM_WORLD
         self._audit = {"construction_workspace_released": True}
+        self.build_calls = 0
+
+    def build(self):
+        self.build_calls += 1
+        raise AssertionError("adaptive coarse must not rebuild the basis")
 
     @property
     def columns(self) -> np.ndarray:
@@ -44,7 +49,7 @@ class _ArrayPhysicalAction:
 class _NonDeterministicPhysicalAction(_ArrayPhysicalAction):
     def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         super().apply(source, target)
-        target.getArray()[:] += self.apply_count * 1.0e-3
+        target.getArray()[:] += self.apply_count * 1.0e-15
 
 
 def _template_factory(size: int):
@@ -57,7 +62,7 @@ def _template_factory(size: int):
     reason="synthetic coarse algebra uses one local PETSc ownership range",
 )
 def test_adaptive_coarse_action_repeat_eigen_algebra_and_lifecycle():
-    z = np.eye(4, 3, dtype=np.complex128)
+    z = np.eye(4, dtype=np.complex128)
     action_array = np.asarray(
         [
             [2.0 + 0.3j, 1.0 + 0.2j, 0.1, 0.0],
@@ -80,6 +85,8 @@ def test_adaptive_coarse_action_repeat_eigen_algebra_and_lifecycle():
         assert np.array_equal(coarse.e, expected_e)
         assert action.apply_count == 2 * z.shape[1] + 1
         audit = coarse.audit
+        assert audit["az_repeat_exact"] is True
+        assert all(audit["az_repeat_exact_by_column"])
         assert audit["z_orthogonality_defect"] <= 1.0e-10
         assert audit["az_repeat_relative_frobenius"] <= 1.0e-11
         assert audit["physical_consistency_relative"] <= 1.0e-11
@@ -111,6 +118,57 @@ def test_adaptive_coarse_action_repeat_eigen_algebra_and_lifecycle():
             )
         )
         assert retained == audit["retained_coarse_bytes_global_sum"]
+        prefixes = coarse._prefix_audits_for((1, 2, 3))
+        assert tuple(item["prefix"] for item in prefixes) == (1, 2, 3)
+        assert action.apply_count == 2 * z.shape[1] + 1 + 3
+        assert audit["physical_action_apply_count"] == action.apply_count
+        assert basis.build_calls == 0
+        assert tuple(item["prefix"] for item in audit["prefix_audits"]) == (
+            1,
+            2,
+            3,
+            4,
+        )
+        for item in prefixes:
+            assert item["finite"] is True
+            assert item["az_repeat_exact"] is True
+            assert item["az_repeat_relative_frobenius"] <= 1.0e-11
+            assert item["e_prefix_leading_relative"] <= 1.0e-12
+            assert item["e_prefix_leading_exact"] is True
+            assert item["e_condition_number"] < 1.0e12
+            assert item["physical_consistency_relative"] <= 1.0e-11
+            prefix = item["prefix"]
+            assert item["logical_prefix_bytes_provenance"] == (
+                "derived_exact_array_size"
+            )
+            assert item["logical_prefix_z_bytes"]["local"] == 4 * prefix * 16
+            assert item["logical_prefix_az_bytes"]["local"] == 4 * prefix * 16
+            assert item["logical_prefix_e_bytes"]["local"] == prefix * prefix * 16
+            assert item["resident_z_bytes"]["local"] == 4 * 4 * 16
+            assert item["resident_az_bytes"]["local"] == 4 * 4 * 16
+            assert item["resident_e_bytes"]["local"] == 4 * 4 * 16
+            assert item["resident_metadata_bytes"]["local"] == 16
+            assert item["resident_work_vector_bytes"]["local"] == 3 * 4 * 16
+            assert item["resident_bytes_provenance"] == (
+                "exact_current_retained_objects"
+            )
+            resident_prefix = sum(
+                item[name]["global_sum"]
+                for name in (
+                    "resident_z_bytes",
+                    "resident_az_bytes",
+                    "resident_e_bytes",
+                    "resident_metadata_bytes",
+                    "resident_work_vector_bytes",
+                )
+            )
+            assert resident_prefix == item[
+                "resident_coarse_total_global_sum"
+            ]
+            assert resident_prefix == item["retained_coarse_bytes_global_sum"]
+            assert item["retained_z_bytes"] == item["resident_z_bytes"]
+            assert item["retained_az_bytes"] == item["resident_az_bytes"]
+        assert coarse.prefix_audit() == ()
     finally:
         coarse.destroy()
         coarse.destroy()
@@ -129,7 +187,7 @@ def test_adaptive_coarse_repeat_gate_rejects_nondeterministic_action():
         factory,
     )
     try:
-        with pytest.raises(RuntimeError, match="repeat identity"):
+        with pytest.raises(RuntimeError, match="repeat exact gate"):
             coarse.build()
     finally:
         coarse.destroy()
@@ -153,7 +211,7 @@ def test_adaptive_coarse_condition_gate_fails_without_regularization():
     template, factory = _template_factory(2)
     coarse = FullspaceAdaptiveCoarse(_MockBasis(z), action, factory)
     try:
-        with pytest.raises(RuntimeError, match="condition number"):
+        with pytest.raises(RuntimeError, match="condition gate.*value=.*limit"):
             coarse.build()
     finally:
         coarse.destroy()
