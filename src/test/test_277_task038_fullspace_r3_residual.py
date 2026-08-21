@@ -29,6 +29,12 @@ def test_r3_path_boundary_and_old_dual_hard_stop_contract() -> None:
     assert "reconstruct_canonical_full_fe_function" in source
     assert "empirical_scaling" in source
     assert runner.R3_SOURCE_NAME in runner.__dict__.values()
+    assert "run_task038_full3d_t3" not in source
+    assert "del historical_field" not in source
+    assert "roundtrip_field is not historical_field" not in source
+    assert "_ReusableSurfaceComponentAssembler" in inspect.getsource(
+        runner._make_surface_assemblers
+    )
     assert "m6b_iter200_residual.npy" in inspect.getsource(
         runner._old_residual_diagnostic
     )

@@ -309,8 +309,6 @@ def _old_residual_diagnostic(
     old_norm = float(np.linalg.norm(old))
     current_norm = float(np.linalg.norm(current))
     difference = old - current
-    alpha = complex(np.vdot(current, old) / max(np.vdot(current, current).real, 1.0e-300))
-    scaled = old - alpha * current
     cosine = abs(np.vdot(old, current)) / max(old_norm * current_norm, 1.0e-300)
     dimension_energy: dict[str, float] = {}
     for key, value in fresh_packets:
@@ -323,12 +321,30 @@ def _old_residual_diagnostic(
         "old_norm": old_norm,
         "fresh_norm": current_norm,
         "difference_norm": float(np.linalg.norm(difference)),
-        "best_global_alpha_old_from_fresh": _jsonable(alpha),
-        "scaled_difference_norm": float(np.linalg.norm(scaled)),
         "cosine_abs": float(cosine),
         "angle_radians": float(np.arccos(np.clip(cosine, 0.0, 1.0))),
         "fresh_canonical_dimension_energy": dimension_energy,
         "old_dimension_energy": "unavailable_without_qualified_old_dual_map",
+    }
+
+
+def _make_surface_assemblers(
+    function_space: Any, mesh_data: Any, cfg: Any, quadrature_degree: int
+) -> dict[tuple[str, int], Any]:
+    """Create the four current production facet assemblers for top/bottom sides."""
+
+    from src.solvers.dtn_port_3d import _ReusableSurfaceComponentAssembler
+
+    return {
+        (side, component): _ReusableSurfaceComponentAssembler(
+            function_space,
+            mesh_data,
+            cfg.tags.z_max if side == "top" else cfg.tags.z_min,
+            component,
+            quadrature_degree=quadrature_degree,
+        )
+        for side in ("top", "bottom")
+        for component in (0, 1)
     }
 
 
@@ -404,10 +420,8 @@ def _run_case(
     floquet_data = build_double_floquet_mpc(raw_space, mesh_data, cfg)
     space = floquet_data.mpc.function_space
     quadrature_degree = _dtn_surface_quadrature_degree(cfg, list(modes))
-    from benchmarks.run_task038_full3d_t3 import _make_surface_assemblers
-
     surface_assemblers = _make_surface_assemblers(
-        raw_space, mesh_data, cfg, modes, quadrature_degree
+        raw_space, mesh_data, cfg, quadrature_degree
     )
     carrier = build_fullspace_dtn_carrier_from_surface(
         modes, surface_assemblers, floquet_data.mpc, cfg
@@ -647,12 +661,6 @@ def _run_case(
             residual.destroy()
         action_repeat.destroy()
         action_first.destroy()
-        if historical_field is not None:
-            del historical_field
-        if roundtrip_field is not None and roundtrip_field is not historical_field:
-            del roundtrip_field
-        if historical_field is not None:
-            del historical_field
         base_incident.destroy()
         current_rhs.destroy()
         physical_action.destroy()
