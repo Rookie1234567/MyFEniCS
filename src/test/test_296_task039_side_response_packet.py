@@ -97,6 +97,8 @@ def test_v10_side_response_packet_exact_and_cross_shard_remap(tmp_path: Path) ->
         .reshape((3, V10_SIDE_RESPONSE_PACKET_COLUMNS), order="C")
         .astype(np.complex128)
     )
+    values = np.asfortranarray(values)
+    expected_values = values.copy(order="F")
     records = [
         {"label": f"column_{index}", "kind": "tiny"}
         for index in range(V10_SIDE_RESPONSE_PACKET_COLUMNS)
@@ -112,6 +114,8 @@ def test_v10_side_response_packet_exact_and_cross_shard_remap(tmp_path: Path) ->
         physical_model_sha256="c" * 64,
         comm=comm,
     )
+    assert values.flags.writeable is True
+    values.fill(0.0)
     exact = load_exact_side_response_packet(
         written["manifest_path"],
         expected_manifest_sha256=written["manifest_sha256"],
@@ -124,7 +128,7 @@ def test_v10_side_response_packet_exact_and_cross_shard_remap(tmp_path: Path) ->
         ownership_range=ownership,
         comm=comm,
     )
-    np.testing.assert_array_equal(exact.local_values, values)
+    np.testing.assert_array_equal(exact.local_values, expected_values)
     assert exact.local_values.flags.writeable is False
     assert exact.diagnostics["ownership_mode"] == "producer_owner_rows_mmap"
     assert exact.diagnostics["source_shard_hash_verified_local"] is True

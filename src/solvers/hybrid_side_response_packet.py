@@ -172,7 +172,6 @@ def write_exact_side_response_packet(
         raise ValueError("response packet local shape does not match ownership")
     if not np.all(np.isfinite(values)):
         raise ValueError("response packet contains a non-finite response")
-    values.setflags(write=False)
     shard_path = output_directory / f"rank{comm.rank:04d}_response.npy"
     np.save(shard_path, values, allow_pickle=False)
     shard = {
