@@ -14,6 +14,7 @@ from src.solvers.hybrid_layer_block import (
     build_layer_sweep_action,
     relative_matvec_residual,
 )
+from src.solvers.hybrid_local_dtn_woodbury import ResearchExactFactorInverse
 
 
 def _tiny_block_tridiagonal() -> tuple[PETSc.Mat, np.ndarray]:
@@ -45,6 +46,24 @@ def _tiny_block_tridiagonal() -> tuple[PETSc.Mat, np.ndarray]:
     matrix.assemble()
     labels = np.repeat(np.arange(6, dtype=np.int32), 4)
     return matrix, labels
+
+
+def _tiny_singular_matrix() -> PETSc.Mat:
+    comm = MPI.COMM_WORLD
+    global_rows = 8
+    local_rows = global_rows // comm.size
+    matrix = PETSc.Mat().createAIJ(
+        size=((local_rows, global_rows), (local_rows, global_rows)),
+        nnz=(2, 2),
+        comm=comm,
+    )
+    matrix.setUp()
+    row_start, row_end = matrix.getOwnershipRange()
+    for row in range(row_start, row_end):
+        if row != 0:
+            matrix.setValue(row, row, PETSc.ScalarType(2.0 + 0.1j))
+    matrix.assemble()
+    return matrix
 
 
 def _relative_error(actual: PETSc.Vec, reference: PETSc.Vec) -> float:
@@ -212,6 +231,47 @@ def _put_values(vector: PETSc.Vec, values: np.ndarray) -> None:
     first, last = map(int, vector.getOwnershipRange())
     vector.getArray()[:] = np.asarray(values[first:last], dtype=PETSc.ScalarType)
     vector.assemble()
+
+
+def _classify_singular_factor_path(
+    matrix: PETSc.Mat,
+    rhs_values: np.ndarray,
+    *,
+    factor_only_storage: bool,
+) -> tuple[str, float | None]:
+    source = matrix.createVecRight()
+    target = matrix.createVecLeft()
+    source.set(0.0)
+    _put_values(source, rhs_values)
+    target.set(0.0)
+    factor = None
+    try:
+        factor = ResearchExactFactorInverse(
+            matrix,
+            factor_solver_type="mumps",
+            factor_only_storage=factor_only_storage,
+        )
+        if factor_only_storage:
+            factor.release_borrowed_matrix()
+        factor.solve(source, target)
+        values = _collect_global_values(target)
+        applied = matrix.createVecLeft()
+        applied.set(0.0)
+        matrix.mult(target, applied)
+        applied.axpy(PETSc.ScalarType(-1.0), source)
+        residual = float(applied.norm()) / max(float(source.norm()), 1.0e-30)
+        applied.destroy()
+        finite = bool(np.all(np.isfinite(values)))
+        if finite and np.isfinite(residual) and residual <= 1.0e-11:
+            return "silent_pass", residual
+        return "nonfinite_or_residual_failure", residual
+    except Exception:
+        return "explicit_factor_failure", None
+    finally:
+        if factor is not None:
+            factor.destroy()
+        target.destroy()
+        source.destroy()
 
 
 def test_v8_layer_block_action_tiny_complex_nonhermitian() -> None:
@@ -663,4 +723,170 @@ def test_v9_2_fixed_two_layer_supernodes_share_three_petsc_factors() -> None:
     assert action.diagnostics["destroy_marker"] == "completed"
     with pytest.raises(RuntimeError, match="destroyed"):
         action.apply_checkpoint("SN2-J", source, actual)
+    matrix.destroy()
+
+
+def test_v10_1_factor_only_matches_conventional_lu_and_zero_rhs() -> None:
+    matrix, _ = _tiny_block_tridiagonal()
+    rhs_values = np.asarray(
+        [1.0 + 0.11j * (index + 1) for index in range(24)],
+        dtype=np.complex128,
+    )
+    source = matrix.createVecRight()
+    conventional_target = matrix.createVecLeft()
+    _put_global_values(source, rhs_values)
+    conventional_target.set(0.0)
+    ownership = MPI.COMM_WORLD.allgather(
+        (source.getOwnershipRange(), conventional_target.getOwnershipRange())
+    )
+    assert all(source_range == target_range for source_range, target_range in ownership)
+
+    conventional = ResearchExactFactorInverse(
+        matrix,
+        factor_solver_type="mumps",
+        factor_only_storage=False,
+    )
+    conventional.solve(source, conventional_target)
+    conventional_values = _collect_global_values(conventional_target)
+    conventional_residual = relative_matvec_residual(
+        matrix, source, conventional_target
+    )
+    assert np.all(np.isfinite(conventional_values))
+    assert conventional_residual <= 1.0e-11
+    assert conventional.diagnostics["factor_only_storage"] is False
+    assert conventional.diagnostics["ksp_destroyed"] is False
+    conventional.destroy()
+    assert conventional.diagnostics["factor_destroyed"] is True
+    assert conventional.diagnostics["direct_factor_count"] == 0
+
+    factor_source = matrix.createVecRight()
+    factor_target = matrix.createVecLeft()
+    _put_global_values(factor_source, rhs_values)
+    factor_target.set(0.0)
+    factor_only = ResearchExactFactorInverse(
+        matrix,
+        factor_solver_type="mumps",
+        factor_only_storage=True,
+    )
+    factor_only.release_borrowed_matrix()
+    ready = factor_only.diagnostics
+    assert ready["factor_only_storage"] is True
+    assert ready["ksp_destroyed"] is True
+    assert ready["borrowed_matrix_released"] is True
+    assert ready["factor_matrix_alive"] is True
+    factor_only.solve(factor_source, factor_target)
+    factor_values = _collect_global_values(factor_target)
+    factor_residual = relative_matvec_residual(matrix, factor_source, factor_target)
+    path_error = np.linalg.norm(factor_values - conventional_values) / max(
+        np.linalg.norm(conventional_values), 1.0e-30
+    )
+    assert np.all(np.isfinite(factor_values))
+    assert factor_residual <= 1.0e-11
+    assert path_error <= 1.0e-11
+
+    zero_source = matrix.createVecRight()
+    zero_target = matrix.createVecLeft()
+    zero_source.set(0.0)
+    zero_target.set(0.0)
+    conventional_zero_source = matrix.createVecRight()
+    conventional_zero_target = matrix.createVecLeft()
+    conventional_zero_source.set(0.0)
+    conventional_zero_target.set(0.0)
+    conventional_zero = ResearchExactFactorInverse(
+        matrix,
+        factor_solver_type="mumps",
+        factor_only_storage=False,
+    )
+    conventional_zero.solve(conventional_zero_source, conventional_zero_target)
+    assert np.all(np.isfinite(_collect_global_values(conventional_zero_target)))
+    assert float(conventional_zero_target.norm()) <= 1.0e-13
+    conventional_zero.destroy()
+    factor_only.solve(zero_source, zero_target)
+    assert np.all(np.isfinite(_collect_global_values(zero_target)))
+    assert float(zero_target.norm()) <= 1.0e-13
+
+    matrix_probe = matrix.createVecLeft()
+    matrix_probe.set(0.0)
+    matrix.mult(factor_source, matrix_probe)
+    assert np.all(np.isfinite(_collect_global_values(matrix_probe)))
+    factor_only.destroy()
+    after = factor_only.diagnostics
+    assert after["factor_matrix_alive"] is False
+    assert after["factor_destroyed"] is True
+    assert after["exact_factor_count"] == 0
+    assert after["global_hybrid_direct_factor_count"] == 0
+    assert matrix.getSize() == (24, 24)
+    for vector in (
+        matrix_probe,
+        zero_target,
+        zero_source,
+        conventional_zero_target,
+        conventional_zero_source,
+        factor_target,
+        factor_source,
+        conventional_target,
+        source,
+    ):
+        vector.destroy()
+    matrix.destroy()
+
+
+def test_v10_1_singular_factor_is_explicitly_classified() -> None:
+    matrix = _tiny_singular_matrix()
+    rhs_values = np.asarray(
+        [1.0 + 0.05j * (index + 1) for index in range(8)],
+        dtype=np.complex128,
+    )
+    classifications = {
+        factor_only_storage: _classify_singular_factor_path(
+            matrix,
+            rhs_values,
+            factor_only_storage=factor_only_storage,
+        )
+        for factor_only_storage in (False, True)
+    }
+    for classification, residual in classifications.values():
+        assert classification in {
+            "explicit_factor_failure",
+            "nonfinite_or_residual_failure",
+        }
+        assert classification != "silent_pass"
+        if residual is not None:
+            assert residual > 1.0e-11 or not np.isfinite(residual)
+    matrix.destroy()
+
+
+def test_v10_1_parent_layer_parent_scatter_round_trip() -> None:
+    matrix, labels = _tiny_block_tridiagonal()
+    operator = build_layer_block_operator(matrix, labels, layer_count=6)
+    parent = matrix.createVecRight()
+    restored = matrix.createVecLeft()
+    values = np.asarray(
+        [0.6 - 0.08j * (index + 1) for index in range(24)],
+        dtype=np.complex128,
+    )
+    _put_global_values(parent, values)
+    restored.set(0.0)
+    for workspace in operator._workspaces:
+        workspace.x.set(0.0)
+        workspace.scatter.scatter(
+            parent,
+            workspace.x,
+            addv=PETSc.InsertMode.INSERT_VALUES,
+            mode=PETSc.ScatterMode.FORWARD,
+        )
+        workspace.scatter.scatter(
+            workspace.x,
+            restored,
+            addv=PETSc.InsertMode.ADD_VALUES,
+            mode=PETSc.ScatterMode.REVERSE,
+        )
+    restored.assemble()
+    assert _relative_error(restored, parent) <= 1.0e-12
+    assert operator.diagnostics["row_coverage_exact"] is True
+    assert parent.getOwnershipRange() == restored.getOwnershipRange()
+    operator.destroy()
+    assert operator.diagnostics["destroy_marker"] == "completed"
+    restored.destroy()
+    parent.destroy()
     matrix.destroy()
