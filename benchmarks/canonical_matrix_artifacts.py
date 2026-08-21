@@ -16,7 +16,6 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-from mpi4py import MPI
 
 from benchmarks.canonical_vector_artifacts import (
     KEY_DIGEST_ALGORITHM,
@@ -280,7 +279,7 @@ def write_canonical_matrix_shard(
     columns: Iterable[Iterable[tuple[tuple[Any, ...], complex]]]
     | Callable[[int], Iterable[tuple[tuple[Any, ...], complex]]],
     extractor_audit: Mapping[str, Any],
-    comm: Any = MPI.COMM_WORLD,
+    comm: Any | None = None,
     manifest_name: str = "matrix.manifest.json",
 ) -> dict[str, Any]:
     """Write one owner-local matrix shard and a root-only descriptor manifest."""
@@ -291,6 +290,10 @@ def write_canonical_matrix_shard(
         raise ValueError("canonical matrix column_count must be in 1..64")
     if not isinstance(extractor_audit, Mapping):
         raise ValueError("canonical matrix extractor audit is required")
+    if comm is None:
+        from mpi4py import MPI
+
+        comm = MPI.COMM_WORLD
     column_count = int(column_count)
     root = Path(root)
     root.mkdir(parents=True, exist_ok=True)
