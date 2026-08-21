@@ -32,14 +32,14 @@
 | supernode | global shape | global NNZ | diagonal NNZ | factor-only matrix rows / NNZ | 空本地 rank |
 |---|---:|---:|---:|---:|---|
 | B0 | 49140×49140 | 35501760 | 49140 | 49140 / 158809032 | observed，collective completed |
-| B1 | 41580×41580 | 28826280 | 41580 | 41580 / 140804928 | observed，collective completed |
+| B1 | 41580×41580 | 28826280 | 41580 | 41580 / 140804928 | none，false |
 | B2 | 41580×41580 | 28826280 | 41580 | 41580 / 153689256 | observed，collective completed |
 
 ## SN2-J 边界与生命周期
 
 独立 boundary 记录显示：parent→group→parent round-trip 相对误差为 `0.0`；SN2-J 的 zero RHS 输出范数 `0.0`，one-group RHS 与 three-group RHS 均 finite，输出范数分别为 `8859.92364491418` 与 `20955.821641970975`。`first_nonfinite_stage=null`，`sgs_executed=false`。本阶段没有 repeat/linearity 试验。
 
-三组 factor 的实际控制流是 `B0 A→destroy → B0 B→destroy → B1 A→destroy → B1 B→destroy → B2 A→destroy → B2 B→destroy`。最终 marker 为 `v10_layer_supernode_bottom_cleanup`，记录 H/C/F/D、system 和 collective cleanup 完成，最终 factor count 为 0。父级没有 retained candidate，因此 retained 是 `not_applicable/not_run`，不是 retained resource pass。
+三组 factor 的实际控制流是 `B0 A→destroy → B0 B→destroy → B1 A→destroy → B1 B→destroy → B2 A→destroy → B2 B→destroy`。空本地 rank 只在 B0 与 B2 观察到；B1 的 ownership ranges 全部非空。最终 marker 为 `v10_layer_supernode_bottom_cleanup`，记录 H/C/F/D、system 和 collective cleanup 完成，最终 factor count 为 0。父级没有 retained candidate，因此 retained 是 `not_applicable/not_run`，不是 retained resource pass。
 
 顶层 raw 的 `factor_count_ready=0` 与三组 path-ready 记录并存；前者是 raw 顶层清理后快照，三组实际 factor 构造由每组 path 的 ready/cleanup 记录证明，最终 cleanup=0。该字段没有被本阶段改写或补猜。
 

@@ -112,21 +112,21 @@
           "factor_after_cleanup": 0,
           "factor_matrix_alive_after_cleanup": false,
           "borrowed_matrix_released": true,
-          "factor_matrix_stats": {"rows": 49140, "nnz": 158809032, "estimated_bytes": 3635083920}
+          "factor_matrix_stats": {"rows": 49140, "nnz": 158809032, "estimated_bytes": 3811809896.0}
         }
       }
     },
     {
       "group": "B1",
       "layers": [2, 3],
-      "local_empty_rank_observed": true,
+      "local_empty_rank_observed": false,
       "paths_strictly_serial": true,
       "matrix_evidence": {
         "global_shape": [41580, 41580],
         "nnz_global": 28826280,
         "diagonal_nnz_global": 41580,
         "finite_values": true,
-        "ownership_empty_rank": true
+        "ownership_empty_rank": false
       },
       "paths": {
         "A_conventional_ksp": {
@@ -155,7 +155,7 @@
           "factor_after_cleanup": 0,
           "factor_matrix_alive_after_cleanup": false,
           "borrowed_matrix_released": true,
-          "factor_matrix_stats": {"rows": 41580, "nnz": 140804928, "estimated_bytes": 3379650920}
+          "factor_matrix_stats": {"rows": 41580, "nnz": 140804928, "estimated_bytes": 3379650920.0}
         }
       }
     },
@@ -198,7 +198,7 @@
           "factor_after_cleanup": 0,
           "factor_matrix_alive_after_cleanup": false,
           "borrowed_matrix_released": true,
-          "factor_matrix_stats": {"rows": 41580, "nnz": 153689256, "estimated_bytes": 3688650144}
+          "factor_matrix_stats": {"rows": 41580, "nnz": 153689256, "estimated_bytes": 3688874792.0}
         }
       }
     }
