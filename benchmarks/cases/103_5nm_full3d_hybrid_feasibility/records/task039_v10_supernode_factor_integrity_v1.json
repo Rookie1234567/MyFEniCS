@@ -1,0 +1,264 @@
+{
+  "schema": "task039.v10.h4.supernode.factor_integrity.evidence.v1",
+  "record_type": "research_component_evidence",
+  "status": "formal_pass",
+  "classification": "SUPERNODE_FACTOR_INTEGRITY_PASS",
+  "failure_domain": null,
+  "interpretation": "three two-layer factor groups passed the V10 forensic solve and SN2-J boundary checks; no retained candidate was run",
+  "provenance": {
+    "branch": "codex/20260812-task39-5nm-hybrid-0p7nm-feasibility",
+    "source_sha": "606ec0d56b79748a5d6dc794a7b8d7260675aad3",
+    "schema": "task039.v10.h4.supernode.factor_integrity.v1",
+    "profile": "task039.v10.h4.supernode.factor_integrity.v1",
+    "method": "task039_v10_h4_supernode_factor_integrity",
+    "model_id": "task039_5nm_v4_1deg_s5_hybrid_iterative_m480",
+    "input": "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat",
+    "input_sha256": "4e60924b5997e3ca99e324ea14779f9014efc6a1304a9aa11de9c808353f1811",
+    "physical_model_sha256": "8391d46139646440d869aa43abe6a68bc921fc1972a10030c64be81dffdd527c",
+    "mpi_size": 8,
+    "threads": 1,
+    "requested_modes": 480,
+    "run_root": "results/task039_v10_h4_supernode_factor_integrity_mpi8_606ec0d5",
+    "run_root_status": "ignored_local_raw_not_submitted",
+    "exact_spool_root": "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/numerical_output",
+    "run_id_non_authoritative": "task039_v4_hybrid_iterative_p6h4_m480_mpi8",
+    "identity_rule": "schema/profile/method/source_sha are route identity; generic run_id is not route authority"
+  },
+  "command_contract": {
+    "timeout_seconds": 21600,
+    "poll_seconds": 0.25,
+    "absolute_terminate_memory_bytes": 48318382080,
+    "effective_hard_stop_gib": 45.0,
+    "require_zero_swap": true,
+    "selected_mode_packet_opened": false,
+    "exact_spool_opened": true,
+    "qep_count": 0,
+    "sgs_executed": false,
+    "full_side_exact_factor_count": 0,
+    "global_direct_factor_count": 0,
+    "nested_ksp_count": 0
+  },
+  "attempt": {
+    "status": "finished",
+    "exit_status": 0,
+    "result_classification": "worker_exit0",
+    "start": "2026-08-21T10:49:21.142355+00:00",
+    "end": "2026-08-21T11:05:33.402111+00:00",
+    "worker_elapsed_seconds": 972.259756,
+    "parent_process_tree_interval_seconds": 967.355468,
+    "parent_termination": null,
+    "parent_warning": false
+  },
+  "gate_contract": {
+    "finite": true,
+    "first_nonfinite_stage": null,
+    "roundtrip_relative_error": 0.0,
+    "zero_output_norm": 0.0,
+    "one_group_finite": true,
+    "three_group_finite": true,
+    "repeat": "not_run",
+    "linearity": "not_run",
+    "numerical_gate_pass": true,
+    "retained_state": "not_run",
+    "preferred_rehydration": false
+  },
+  "factor_inventory": {
+    "factor_set_description": "three two-layer supernode factors, each tested through conventional and detached factor-only paths strictly serially",
+    "group_factor_count": 3,
+    "factor_count_ready_raw_top_level": 0,
+    "factor_count_after_cleanup": 0,
+    "full_side_exact_factor_count": 0,
+    "global_direct_factor_count": 0,
+    "nested_ksp_count": 0,
+    "ready_field_note": "The raw top-level ready field is 0; the three factor groups are evidenced by the per-group path-ready records. The final after-cleanup field is 0."
+  },
+  "group_records": [
+    {
+      "group": "B0",
+      "layers": [0, 1],
+      "local_empty_rank_observed": true,
+      "paths_strictly_serial": true,
+      "matrix_evidence": {
+        "global_shape": [49140, 49140],
+        "nnz_global": 35501760,
+        "diagonal_nnz_global": 49140,
+        "finite_values": true,
+        "ownership_empty_rank": true
+      },
+      "paths": {
+        "A_conventional_ksp": {
+          "path_pass": true,
+          "factor_only_storage": false,
+          "nonzero_rhs_relative_residuals": {
+            "deterministic_random": 3.1708712957072656e-12,
+            "modal_traction_positive": 6.621784476257972e-13,
+            "external_dtn_coupling": 1.4468087208156314e-12
+          },
+          "nonzero_rhs_max_residual": 3.1708712957072656e-12,
+          "zero_rhs": {"finite": true, "output_norm": 0.0, "degenerate": true},
+          "factor_after_cleanup": 0,
+          "factor_matrix_stats": "not_available"
+        },
+        "B_factor_only_detached": {
+          "path_pass": true,
+          "factor_only_storage": true,
+          "nonzero_rhs_relative_residuals": {
+            "deterministic_random": 3.2209079434901434e-12,
+            "modal_traction_positive": 6.83076188555118e-13,
+            "external_dtn_coupling": 1.6914364988699955e-12
+          },
+          "nonzero_rhs_max_residual": 3.2209079434901434e-12,
+          "zero_rhs": {"finite": true, "output_norm": 0.0, "degenerate": true},
+          "factor_after_cleanup": 0,
+          "factor_matrix_alive_after_cleanup": false,
+          "borrowed_matrix_released": true,
+          "factor_matrix_stats": {"rows": 49140, "nnz": 158809032, "estimated_bytes": 3635083920}
+        }
+      }
+    },
+    {
+      "group": "B1",
+      "layers": [2, 3],
+      "local_empty_rank_observed": true,
+      "paths_strictly_serial": true,
+      "matrix_evidence": {
+        "global_shape": [41580, 41580],
+        "nnz_global": 28826280,
+        "diagonal_nnz_global": 41580,
+        "finite_values": true,
+        "ownership_empty_rank": true
+      },
+      "paths": {
+        "A_conventional_ksp": {
+          "path_pass": true,
+          "factor_only_storage": false,
+          "nonzero_rhs_relative_residuals": {
+            "deterministic_random": 4.163001643764572e-12,
+            "modal_traction_positive": 1.7801603326764998e-12,
+            "external_dtn_coupling": 1.5330523843950875e-12
+          },
+          "nonzero_rhs_max_residual": 4.163001643764572e-12,
+          "zero_rhs": {"finite": true, "output_norm": 0.0, "degenerate": true},
+          "factor_after_cleanup": 0,
+          "factor_matrix_stats": "not_available"
+        },
+        "B_factor_only_detached": {
+          "path_pass": true,
+          "factor_only_storage": true,
+          "nonzero_rhs_relative_residuals": {
+            "deterministic_random": 3.875446012580733e-12,
+            "modal_traction_positive": 1.7801603326764998e-12,
+            "external_dtn_coupling": 1.5330523843950875e-12
+          },
+          "nonzero_rhs_max_residual": 3.875446012580733e-12,
+          "zero_rhs": {"finite": true, "output_norm": 0.0, "degenerate": true},
+          "factor_after_cleanup": 0,
+          "factor_matrix_alive_after_cleanup": false,
+          "borrowed_matrix_released": true,
+          "factor_matrix_stats": {"rows": 41580, "nnz": 140804928, "estimated_bytes": 3379650920}
+        }
+      }
+    },
+    {
+      "group": "B2",
+      "layers": [4, 5],
+      "local_empty_rank_observed": true,
+      "paths_strictly_serial": true,
+      "matrix_evidence": {
+        "global_shape": [41580, 41580],
+        "nnz_global": 28826280,
+        "diagonal_nnz_global": 41580,
+        "finite_values": true,
+        "ownership_empty_rank": true
+      },
+      "paths": {
+        "A_conventional_ksp": {
+          "path_pass": true,
+          "factor_only_storage": false,
+          "nonzero_rhs_relative_residuals": {
+            "deterministic_random": 2.665713692988561e-11,
+            "modal_traction_positive": 3.9332808828924484e-11,
+            "external_dtn_coupling": 2.089746149232884e-11
+          },
+          "nonzero_rhs_max_residual": 3.9332808828924484e-11,
+          "zero_rhs": {"finite": true, "output_norm": 0.0, "degenerate": true},
+          "factor_after_cleanup": 0,
+          "factor_matrix_stats": "not_available"
+        },
+        "B_factor_only_detached": {
+          "path_pass": true,
+          "factor_only_storage": true,
+          "nonzero_rhs_relative_residuals": {
+            "deterministic_random": 4.992414830109949e-11,
+            "modal_traction_positive": 4.192410565530178e-11,
+            "external_dtn_coupling": 1.750096180991329e-11
+          },
+          "nonzero_rhs_max_residual": 4.992414830109949e-11,
+          "zero_rhs": {"finite": true, "output_norm": 0.0, "degenerate": true},
+          "factor_after_cleanup": 0,
+          "factor_matrix_alive_after_cleanup": false,
+          "borrowed_matrix_released": true,
+          "factor_matrix_stats": {"rows": 41580, "nnz": 153689256, "estimated_bytes": 3688650144}
+        }
+      }
+    }
+  ],
+  "sn2_j_boundary": {
+    "status": "measured",
+    "method": "SN2-J",
+    "scatter_pass": true,
+    "action_pass": true,
+    "parent_group_parent_roundtrip_relative_error": 0.0,
+    "first_nonfinite_stage": null,
+    "zero_rhs": {"finite": true, "output_norm": 0.0, "pass": true},
+    "one_group_rhs": {"finite": true, "output_norm": 8859.92364491418, "pass": true},
+    "three_group_rhs": {"finite": true, "output_norm": 20955.821641970975, "pass": true},
+    "sgs_executed": false
+  },
+  "lifecycle": {
+    "path_order": ["A_conventional_ksp", "B_factor_only_detached"],
+    "groups_strictly_serial": true,
+    "empty_local_rank_collectives_completed": true,
+    "last_marker": "v10_layer_supernode_bottom_cleanup",
+    "components_released": "released_in_finalizer",
+    "system_released": "destroy_called_in_finalizer",
+    "final_factor_count": 0,
+    "retained_state": "not_run"
+  },
+  "resource_authority": {
+    "authority": "parent_process_tree_samples",
+    "construction_status": "measured",
+    "construction_peak_bytes": 44127375360,
+    "construction_peak_gib": 41.09682083129883,
+    "construction_limit_gib": 45.0,
+    "construction_pass": true,
+    "retained_status": "not_applicable",
+    "retained_peak_gib": null,
+    "retained_pass": null,
+    "overall_process_tree_peak_bytes": 44127375360,
+    "overall_process_tree_peak_gib": 41.09682083129883,
+    "peak_swap_bytes": 0,
+    "zero_swap_observed": true,
+    "process_tree_sample_count": 3816,
+    "peak_pss": "not_measured",
+    "peak_uss": "not_measured",
+    "effective_hard_stop_memory_bytes": 48318382080,
+    "effective_hard_stop_gib": 45.0,
+    "overall": "pass_retained_not_applicable"
+  },
+  "raw_artifacts": {
+    "input_original.dat": {"sha256": "4e60924b5997e3ca99e324ea14779f9014efc6a1304a9aa11de9c808353f1811", "bytes": 2400},
+    "run_manifest.json": {"sha256": "a7419db1a337b8969ded5d17728e3e04a9146b70271cd1482b5a3785fdf29b7b", "bytes": 214393},
+    "run_summary.json": {"sha256": "ba0dec842c78269e6812fa28d596424c94f30412514516aba51b2411a87cb7ab", "bytes": 5574},
+    "resolved_config.json": {"sha256": "f965c38abea08bee0ff83a6603e336ca4823deb932af7064aed3c571f8f63883", "bytes": 116264},
+    "source_sha.txt": {"sha256": "1c6d82f182a3882468ffbfd34ea100e9e4b0ef2d6c3a2c84d8f12b270dd850a8", "bytes": 41},
+    "physical_model_sha256.txt": {"sha256": "2aefe673830f9757f6fe4459942cc123d2d9436f0983b01a97b3ccb62d2314c8", "bytes": 65},
+    "numerical_output/v3_v7_diagnostic.json": {"sha256": "4be9f6326d96e19804b170e88296ff8514859b278a2390dbb1edeff56cc5bb97", "bytes": 45874},
+    "numerical_output/memory_object_ledger.json": {"sha256": "6f5360db3916aee5671e54276d109f07c0c632de25cce64686b76027b9d0b82c", "bytes": 10498},
+    "numerical_output/memory_stage_markers.raw.jsonl": {"sha256": "b35dc2ac5245bb88fad989ba588390f8c7c4c903a2c5a73acb45194717d87707", "bytes": 22983},
+    "numerical_output/memory_stages.jsonl": {"sha256": "1ee36fe04fe74427450b4609084c9dec4e7c711dd92ac7476442b74ea7abb679", "bytes": 25744},
+    "numerical_output/process_tree_samples.jsonl": {"sha256": "8613450f708eedaae53f3ce249e8d13b744afcd9a6a3be0e4b2f8739b9ab49b5", "bytes": 1159244},
+    "worker_stdout.txt": {"sha256": "59374fc738d87e3b5cc97e8a47033a2e06d466adf8336aee995536d18cecbbf4", "bytes": 243554}
+  },
+  "checker_note": "This compact record preserves raw worker and parent authorities. It does not infer repeat or linearity: V10-2 did not run those tests."
+}
