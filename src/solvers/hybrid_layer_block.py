@@ -18,13 +18,17 @@ from typing import Any
 import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
+from scipy.linalg import lu_factor, lu_solve
 
 from .hybrid_local_dtn_woodbury import ResearchExactFactorInverse
 
 __all__ = (
+    "ExactBlockSchurAction",
+    "FixedTwoLayerSupernodeAction",
     "LayerBlockOperator",
     "LayerSweepAction",
     "audit_layer_block_action",
+    "build_fixed_two_layer_supernode_action",
     "build_real_layer_labels",
     "build_layer_block_operator",
     "build_layer_sweep_action",
@@ -468,6 +472,570 @@ class LayerBlockOperator:
         self._diagnostics["qep_count"] = 0
         self._diagnostics["outer_ksp_count"] = 0
         self._destroyed = True
+
+
+def _normalise_tiny_block_chain(
+    diagonal_blocks: Any, lower_blocks: Any, upper_blocks: Any
+) -> tuple[tuple[np.ndarray, ...], tuple[np.ndarray, ...], tuple[np.ndarray, ...]]:
+    diagonal = tuple(
+        np.array(block, dtype=np.complex128, copy=True, order="F")
+        for block in diagonal_blocks
+    )
+    lower = tuple(
+        np.array(block, dtype=np.complex128, copy=True, order="F")
+        for block in lower_blocks
+    )
+    upper = tuple(
+        np.array(block, dtype=np.complex128, copy=True, order="F")
+        for block in upper_blocks
+    )
+    if not diagonal:
+        raise ValueError("At least one diagonal block is required")
+    block_count = len(diagonal)
+    if len(lower) != block_count - 1 or len(upper) != block_count - 1:
+        raise ValueError("Off-diagonal block counts must be block_count - 1")
+    block_size = diagonal[0].shape[0]
+    if any(
+        block.ndim != 2 or block.shape != (block_size, block_size) for block in diagonal
+    ):
+        raise ValueError("Diagonal blocks must be equally sized square matrices")
+    if any(block.shape != (block_size, block_size) for block in (*lower, *upper)):
+        raise ValueError("Off-diagonal blocks must match diagonal block size")
+    return diagonal, lower, upper
+
+
+def _tiny_rhs_blocks(
+    rhs: Any, block_count: int, block_size: int
+) -> tuple[np.ndarray, bool]:
+    values = np.asarray(rhs, dtype=np.complex128)
+    if values.ndim == 1:
+        if values.size != block_count * block_size:
+            raise ValueError("Tiny block RHS has the wrong size")
+        return (
+            np.array(
+                values.reshape(block_count, block_size, 1),
+                dtype=np.complex128,
+                order="F",
+                copy=True,
+            ),
+            True,
+        )
+    if values.ndim == 2 and values.shape[0] == block_count * block_size:
+        return (
+            np.array(
+                values.reshape(block_count, block_size, values.shape[1]),
+                dtype=np.complex128,
+                order="F",
+                copy=True,
+            ),
+            False,
+        )
+    raise ValueError("Tiny block RHS must be a vector or a row-stacked matrix")
+
+
+def _tiny_stack_solution(solution: list[np.ndarray], vector_rhs: bool) -> np.ndarray:
+    stacked = np.vstack(solution)
+    return stacked[:, 0] if vector_rhs else stacked
+
+
+class ExactBlockSchurAction:
+    """Research-only exact block Thomas action for tiny dense algebra.
+
+    The input blocks are copied only for this tiny oracle.  Diagonal blocks are
+    immediately reduced to LU factors and are not retained as explicit
+    diagonal matrices.  This class is intentionally not the h4 distributed
+    route; it provides an independent Schur formula authority for V9-2.
+    """
+
+    def __init__(
+        self,
+        diagonal_blocks: Any,
+        lower_blocks: Any,
+        upper_blocks: Any,
+        *,
+        lifecycle_callback: Any = None,
+    ) -> None:
+        diagonal, lower, upper = _normalise_tiny_block_chain(
+            diagonal_blocks, lower_blocks, upper_blocks
+        )
+        self._block_count = len(diagonal)
+        self._block_size = diagonal[0].shape[0]
+        self._lower = lower
+        self._upper = upper
+        self._factors: list[tuple[np.ndarray, np.ndarray]] = []
+        self._lifecycle_callback = lifecycle_callback
+        self._destroyed = False
+        self._apply_count = 0
+        try:
+            self._factors.append(
+                lu_factor(diagonal[0], overwrite_a=True, check_finite=False)
+            )
+            for index in range(1, self._block_count):
+                previous = self._factors[index - 1]
+                upper_solve = lu_solve(previous, upper[index - 1], check_finite=False)
+                schur = diagonal[index] - lower[index - 1] @ upper_solve
+                self._factors.append(
+                    lu_factor(schur, overwrite_a=True, check_finite=False)
+                )
+                if lifecycle_callback is not None:
+                    lifecycle_callback(
+                        "exact_block_schur_factor_ready", {"block": index}
+                    )
+        except Exception:
+            self._factors.clear()
+            self._lower = ()
+            self._upper = ()
+            raise
+        finally:
+            del diagonal
+
+    @property
+    def diagnostics(self) -> dict[str, Any]:
+        return {
+            "schema": "task039.v9.tiny.exact_block_schur.v1",
+            "kind": "exact_block_thomas_schur",
+            "block_count": self._block_count,
+            "block_size": self._block_size,
+            "factor_count_ready": 0 if self._destroyed else len(self._factors),
+            "factor_count_after_cleanup": 0 if self._destroyed else None,
+            "retained_explicit_diagonal_count": 0,
+            "full_side_exact_factor_count": 0,
+            "global_direct_factor_count": 0,
+            "nested_ksp_count": 0,
+            "apply_count": self._apply_count,
+            "destroy_marker": "completed" if self._destroyed else "pending",
+            "factor_only_storage": True,
+        }
+
+    @property
+    def factor_only_storage(self) -> bool:
+        return True
+
+    def apply(self, rhs: Any) -> np.ndarray:
+        if self._destroyed:
+            raise RuntimeError("exact block Schur action has been destroyed")
+        rhs_blocks, vector_rhs = _tiny_rhs_blocks(
+            rhs, self._block_count, self._block_size
+        )
+        reduced_rhs = [rhs_blocks[0].copy(order="F")]
+        for index in range(1, self._block_count):
+            previous = self._factors[index - 1]
+            previous_solution = lu_solve(
+                previous, reduced_rhs[index - 1], check_finite=False
+            )
+            reduced_rhs.append(
+                rhs_blocks[index] - self._lower[index - 1] @ previous_solution
+            )
+        solution: list[np.ndarray] = [
+            np.empty_like(reduced_rhs[0]) for _ in range(self._block_count)
+        ]
+        solution[-1] = lu_solve(self._factors[-1], reduced_rhs[-1], check_finite=False)
+        for index in range(self._block_count - 2, -1, -1):
+            solution[index] = lu_solve(
+                self._factors[index],
+                reduced_rhs[index] - self._upper[index] @ solution[index + 1],
+                check_finite=False,
+            )
+        self._apply_count += 1
+        return _tiny_stack_solution(solution, vector_rhs)
+
+    def solve(self, rhs: Any) -> np.ndarray:
+        return self.apply(rhs)
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self._factors.clear()
+        self._lower = ()
+        self._upper = ()
+        self._destroyed = True
+        if self._lifecycle_callback is not None:
+            self._lifecycle_callback("exact_block_schur_destroyed", self.diagnostics)
+
+
+@dataclass
+class _SupernodeWorkspace:
+    group: int
+    rhs: PETSc.Vec
+    y: PETSc.Vec
+    temp: PETSc.Vec
+    correction: PETSc.Vec
+    scatter: PETSc.Scatter
+
+    def destroy(self) -> None:
+        self.scatter.destroy()
+        self.correction.destroy()
+        self.temp.destroy()
+        self.y.destroy()
+        self.rhs.destroy()
+
+
+class FixedTwoLayerSupernodeAction:
+    """Distributed fixed SN2-J/SN2-SGS action over the real sparse ``F``.
+
+    The groups are frozen to ``[0, 1]``, ``[2, 3]`` and ``[4, 5]``.  Three
+    parallel PETSc submatrices are factorized once with factor-only storage;
+    the original matrix is borrowed and is never retained by this action.
+    ``SN2-SGS`` is ``(B+U)^-1 B (B+L)^-1`` with sparse cross-supernode
+    couplings only at layer boundaries 1↔2 and 3↔4.
+    """
+
+    GROUPS = ((0, 1), (2, 3), (4, 5))
+    METHODS = ("SN2-J", "SN2-SGS")
+
+    def __init__(
+        self,
+        *,
+        factors: list[ResearchExactFactorInverse],
+        lower: list[PETSc.Mat],
+        upper: list[PETSc.Mat],
+        workspaces: list[_SupernodeWorkspace],
+        group_is: tuple[PETSc.IS, ...],
+        parent_template: PETSc.Vec,
+        factor_records: list[dict[str, Any]],
+        supernode_rows_global: list[int],
+        supernode_row_coverage_exact: bool,
+        lifecycle_callback: Any,
+    ) -> None:
+        self._factors = factors
+        self._lower = lower
+        self._upper = upper
+        self._workspaces = workspaces
+        self._group_is = group_is
+        self._parent_template = parent_template
+        self._factor_records = factor_records
+        self._lifecycle_callback = lifecycle_callback
+        self._destroyed = False
+        self._apply_count = {method: 0 for method in self.METHODS}
+        self._factor_solve_count = {method: 0 for method in self.METHODS}
+        self._diagnostics = {
+            "schema": "task039.v9.fixed_two_layer_supernode.v1",
+            "kind": "fixed_two_layer_supernode",
+            "groups": [list(group) for group in self.GROUPS],
+            "candidate_methods": list(self.METHODS),
+            "supernode_factor_count_ready": len(factors),
+            "factor_count_ready": len(factors),
+            "factor_count_after_cleanup": None,
+            "factor_count": len(factors),
+            "factor_set_build_count": 1,
+            "single_factor_set": True,
+            "factor_records": factor_records,
+            "supernode_rows_global": list(supernode_rows_global),
+            "supernode_row_coverage_exact": bool(supernode_row_coverage_exact),
+            "cross_lower_block_count": len(lower),
+            "cross_upper_block_count": len(upper),
+            "full_side_exact_factor_count": 0,
+            "global_direct_factor_count": 0,
+            "nested_ksp_count": 0,
+            "method_apply_count": dict(self._apply_count),
+            "method_factor_solve_count": dict(self._factor_solve_count),
+            "destroy_marker": "pending",
+        }
+
+    @classmethod
+    def from_matrix(
+        cls,
+        matrix: PETSc.Mat,
+        global_layer_labels: np.ndarray,
+        *,
+        layer_count: int = 6,
+        lifecycle_callback: Any = None,
+    ) -> "FixedTwoLayerSupernodeAction":
+        if layer_count != 6:
+            raise ValueError("V9-2 supernodes require exactly six layers")
+        rows, cols = map(int, matrix.getSize())
+        if rows != cols:
+            raise ValueError("V9-2 supernode action requires a square matrix")
+        labels = np.asarray(global_layer_labels, dtype=np.int32)
+        if labels.shape != (rows,) or np.any(labels < 0) or np.any(labels >= 6):
+            raise ValueError("V9-2 supernode labels do not match the matrix")
+        comm = matrix.getComm()
+        comm4py = comm.tompi4py()
+        row_start, row_end = map(int, matrix.getOwnershipRange())
+        local_labels = labels[row_start:row_end]
+        group_ids = tuple(
+            np.flatnonzero(
+                np.logical_or(
+                    local_labels == first,
+                    local_labels == second,
+                )
+            ).astype(PETSc.IntType)
+            + row_start
+            for first, second in cls.GROUPS
+        )
+        group_is = tuple(PETSc.IS().createGeneral(ids, comm=comm) for ids in group_ids)
+        parent_template = matrix.createVecRight()
+        factors: list[ResearchExactFactorInverse] = []
+        lower: list[PETSc.Mat] = []
+        upper: list[PETSc.Mat] = []
+        workspaces: list[_SupernodeWorkspace] = []
+        factor_records: list[dict[str, Any]] = []
+        supernode_rows_global = [
+            int(comm4py.allreduce(len(ids), op=MPI.SUM)) for ids in group_ids
+        ]
+        supernode_row_coverage_exact = sum(supernode_rows_global) == rows and all(
+            value >= 0 for value in supernode_rows_global
+        )
+
+        def cleanup_partial() -> None:
+            for workspace in reversed(workspaces):
+                workspace.destroy()
+            workspaces.clear()
+            for block in reversed(lower):
+                block.destroy()
+            lower.clear()
+            for block in reversed(upper):
+                block.destroy()
+            upper.clear()
+            for factor in reversed(factors):
+                factor.destroy()
+            factors.clear()
+            for group_is_item in group_is:
+                group_is_item.destroy()
+            parent_template.destroy()
+
+        try:
+            for group, (first, second) in enumerate(cls.GROUPS):
+                if lifecycle_callback is not None:
+                    lifecycle_callback(
+                        "supernode_factor_setup_begin",
+                        {"supernode": group, "layers": [first, second]},
+                    )
+                diagonal = matrix.createSubMatrix(group_is[group], group_is[group])
+                factor = None
+                try:
+                    factor = ResearchExactFactorInverse(
+                        diagonal,
+                        factor_solver_type="mumps",
+                        factor_only_storage=True,
+                    )
+                    factor.release_borrowed_matrix()
+                    factors.append(factor)
+                    local_rows = int(diagonal.getLocalSize()[0])
+                    nnz_local = int(diagonal.getInfo()["nz_used"])
+                    factor_records.append(
+                        {
+                            "supernode": group,
+                            "layers": [first, second],
+                            "rows_owned_local": local_rows,
+                            "rows_global": int(diagonal.getSize()[0]),
+                            "nnz_local": nnz_local,
+                            "nnz_global": int(comm4py.allreduce(nnz_local, op=MPI.SUM)),
+                            "factor_matrix_stats": factor.diagnostics[
+                                "factor_matrix_stats"
+                            ],
+                            "factor_only_storage": True,
+                            "borrowed_matrix_released": True,
+                            "factor_matrix_alive": True,
+                        }
+                    )
+                except Exception:
+                    if factor is not None:
+                        factor.destroy()
+                    raise
+                finally:
+                    diagonal.destroy()
+                if lifecycle_callback is not None:
+                    lifecycle_callback(
+                        "supernode_factor_ready",
+                        {"supernode": group, "factor_only_storage": True},
+                    )
+
+            for group in range(2):
+                lower.append(
+                    matrix.createSubMatrix(group_is[group + 1], group_is[group])
+                )
+                upper.append(
+                    matrix.createSubMatrix(group_is[group], group_is[group + 1])
+                )
+
+            for group, factor in enumerate(factors):
+                factor_matrix = factor.operator
+                if factor_matrix is None:
+                    raise RuntimeError(f"Supernode {group} factor has no operator")
+                rhs = factor_matrix.createVecRight()
+                y = factor_matrix.createVecLeft()
+                temp = y.duplicate()
+                correction = y.duplicate()
+                first, last = map(int, rhs.getOwnershipRange())
+                positions = PETSc.IS().createStride(
+                    last - first,
+                    first=first,
+                    step=1,
+                    comm=comm,
+                )
+                try:
+                    scatter = PETSc.Scatter().create(
+                        parent_template,
+                        group_is[group],
+                        rhs,
+                        positions,
+                    )
+                except Exception:
+                    correction.destroy()
+                    temp.destroy()
+                    y.destroy()
+                    rhs.destroy()
+                    raise
+                finally:
+                    positions.destroy()
+                workspaces.append(
+                    _SupernodeWorkspace(
+                        group=group,
+                        rhs=rhs,
+                        y=y,
+                        temp=temp,
+                        correction=correction,
+                        scatter=scatter,
+                    )
+                )
+            action = cls(
+                factors=factors,
+                lower=lower,
+                upper=upper,
+                workspaces=workspaces,
+                group_is=group_is,
+                parent_template=parent_template,
+                factor_records=factor_records,
+                supernode_rows_global=supernode_rows_global,
+                supernode_row_coverage_exact=supernode_row_coverage_exact,
+                lifecycle_callback=lifecycle_callback,
+            )
+            return action
+        except Exception:
+            cleanup_partial()
+            raise
+
+    @property
+    def diagnostics(self) -> dict[str, Any]:
+        diagnostics = dict(self._diagnostics)
+        diagnostics["factor_count_ready"] = 0 if self._destroyed else len(self._factors)
+        diagnostics["supernode_factor_count_ready"] = diagnostics["factor_count_ready"]
+        diagnostics["factor_count"] = diagnostics["factor_count_ready"]
+        diagnostics["factor_count_after_cleanup"] = 0 if self._destroyed else None
+        diagnostics["method_apply_count"] = dict(self._apply_count)
+        diagnostics["method_factor_solve_count"] = dict(self._factor_solve_count)
+        diagnostics["destroy_marker"] = "completed" if self._destroyed else "pending"
+        return diagnostics
+
+    @property
+    def factor_only_storage(self) -> bool:
+        return True
+
+    def _solve_factor(
+        self, group: int, source: PETSc.Vec, target: PETSc.Vec, method: str
+    ) -> None:
+        self._factors[group].solve(source, target)
+        self._factor_solve_count[method] += 1
+
+    def _gather(self, source: PETSc.Vec) -> None:
+        for workspace in self._workspaces:
+            workspace.scatter.scatter(
+                source,
+                workspace.rhs,
+                addv=PETSc.InsertMode.INSERT_VALUES,
+                mode=PETSc.ScatterMode.FORWARD,
+            )
+
+    def _forward(self, method: str) -> None:
+        for group, workspace in enumerate(self._workspaces):
+            if group:
+                self._lower[group - 1].mult(
+                    self._workspaces[group - 1].y,
+                    workspace.temp,
+                )
+                workspace.rhs.axpy(PETSc.ScalarType(-1.0), workspace.temp)
+            self._solve_factor(group, workspace.rhs, workspace.y, method)
+
+    def _scatter_solution(self, target: PETSc.Vec) -> None:
+        target.set(0.0)
+        for workspace in self._workspaces:
+            workspace.scatter.scatter(
+                workspace.y,
+                target,
+                addv=PETSc.InsertMode.ADD_VALUES,
+                mode=PETSc.ScatterMode.REVERSE,
+            )
+        target.assemble()
+
+    def apply_checkpoint(
+        self,
+        method: str,
+        source: PETSc.Vec,
+        target: PETSc.Vec,
+    ) -> None:
+        if self._destroyed:
+            raise RuntimeError("two-layer supernode action has been destroyed")
+        if method not in self.METHODS:
+            raise ValueError(f"Unsupported V9-2 supernode method: {method}")
+        expected_size = self._parent_template.getSize()
+        if source.getSize() != expected_size or target.getSize() != expected_size:
+            raise ValueError("supernode vector does not match matrix layout")
+        self._gather(source)
+        if method == "SN2-J":
+            for group, workspace in enumerate(self._workspaces):
+                self._solve_factor(group, workspace.rhs, workspace.y, method)
+        else:
+            self._forward(method)
+            for group in (1, 0):
+                workspace = self._workspaces[group]
+                self._upper[group].mult(
+                    self._workspaces[group + 1].y,
+                    workspace.temp,
+                )
+                self._solve_factor(
+                    group,
+                    workspace.temp,
+                    workspace.correction,
+                    method,
+                )
+                workspace.y.axpy(PETSc.ScalarType(-1.0), workspace.correction)
+        self._scatter_solution(target)
+        self._apply_count[method] += 1
+
+    def solve(self, method: str, source: PETSc.Vec, target: PETSc.Vec) -> None:
+        self.apply_checkpoint(method, source, target)
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        for workspace in reversed(self._workspaces):
+            workspace.destroy()
+        self._workspaces.clear()
+        for block in reversed(self._lower):
+            block.destroy()
+        self._lower.clear()
+        for block in reversed(self._upper):
+            block.destroy()
+        self._upper.clear()
+        for factor in reversed(self._factors):
+            factor.destroy()
+        self._factors.clear()
+        for group_is_item in self._group_is:
+            group_is_item.destroy()
+        self._group_is = ()
+        self._parent_template.destroy()
+        self._parent_template = None
+        self._destroyed = True
+        if self._lifecycle_callback is not None:
+            self._lifecycle_callback("supernode_action_destroyed", self.diagnostics)
+
+
+def build_fixed_two_layer_supernode_action(
+    matrix: PETSc.Mat,
+    global_layer_labels: np.ndarray,
+    *,
+    layer_count: int = 6,
+    lifecycle_callback: Any = None,
+) -> FixedTwoLayerSupernodeAction:
+    """Build the fixed distributed V9-2 three-factor supernode action."""
+
+    return FixedTwoLayerSupernodeAction.from_matrix(
+        matrix,
+        global_layer_labels,
+        layer_count=layer_count,
+        lifecycle_callback=lifecycle_callback,
+    )
 
 
 class LayerSweepAction:

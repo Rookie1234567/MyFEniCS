@@ -95,6 +95,7 @@ from src.solvers.hybrid_local_dtn_action import (
 )
 from src.solvers.hybrid_layer_block import (
     audit_layer_block_action,
+    build_fixed_two_layer_supernode_action,
     build_layer_block_operator,
     build_layer_sweep_action,
     build_real_layer_labels,
@@ -275,6 +276,14 @@ V9_H4_BARE_F_SIDE_SCHEMA = "task039.v9.h4.bare_f_full_side.diagnostic.v1"
 V9_H4_BARE_F_SIDE_HARD_STOP_BYTES = 45 * 2**30
 V9_H4_BARE_F_SIDE_CONSTRUCTION_LIMIT_GIB = 45.0
 V9_H4_BARE_F_SIDE_RETAINED_LIMIT_GIB = 30.0
+V9_H4_LAYER_SUPERNODE_BOTTOM_FLAG = "--v9-h4-layer-supernode-bottom"
+V9_H4_LAYER_SUPERNODE_EXACT_SPOOL_ROOT_FLAG = "--v9-h4-layer-supernode-exact-spool-root"
+V9_H4_LAYER_SUPERNODE_PROFILE_ID = "task039.v9.h4.layer_supernode.bottom.v1"
+V9_H4_LAYER_SUPERNODE_METHOD = "task039_v9_h4_layer_supernode_bottom"
+V9_H4_LAYER_SUPERNODE_SCHEMA = "task039.v9.h4.layer_supernode.bottom.v1"
+V9_H4_LAYER_SUPERNODE_HARD_STOP_BYTES = 45 * 2**30
+V9_H4_LAYER_SUPERNODE_CONSTRUCTION_LIMIT_GIB = 45.0
+V9_H4_LAYER_SUPERNODE_RETAINED_LIMIT_GIB = 30.0
 V9_FROZEN_HOLDOUT_PRODUCER_SHA = "7e5d9b57a10b1093f0cb062eaf7bc12797c47e1f"
 V9_FROZEN_HOLDOUT_CATALOG_SHA256 = (
     "a2a7fb6fb01df4f795d31ff94f6ac6adf957ac4fe4a5c1a8d05176e3d64c0384"
@@ -592,6 +601,7 @@ def v3_7_watchdog_policy(
     v8_h4_layer_block_reconstruction: bool = False,
     v8_h4_layer_sweep_bottom: bool = False,
     v9_h4_bare_f_side: bool = False,
+    v9_h4_layer_supernode_bottom: bool = False,
 ) -> dict[str, Any]:
     """Return the byte-authoritative policy; 195 GiB is telemetry only."""
 
@@ -624,6 +634,8 @@ def v3_7_watchdog_policy(
         absolute_bytes = V8_H4_LAYER_SWEEP_HARD_STOP_BYTES
     elif v9_h4_bare_f_side:
         absolute_bytes = V9_H4_BARE_F_SIDE_HARD_STOP_BYTES
+    elif v9_h4_layer_supernode_bottom:
+        absolute_bytes = V9_H4_LAYER_SUPERNODE_HARD_STOP_BYTES
     else:
         absolute_bytes = V3_7_ABSOLUTE_HARD_BYTES
     if v7_h4_exact_side_full_formal:
@@ -644,6 +656,8 @@ def v3_7_watchdog_policy(
         profile_name = "v8_h4_layer_sweep_bottom"
     elif v9_h4_bare_f_side:
         profile_name = "v9_h4_bare_f_side"
+    elif v9_h4_layer_supernode_bottom:
+        profile_name = "v9_h4_layer_supernode_bottom"
     else:
         profile_name = "v3_7_default"
     policy = {
@@ -708,6 +722,8 @@ def build_v3_7_execution_plan(
     v8_h4_layer_sweep_bottom: bool = False,
     v9_h4_bare_f_side: bool = False,
     v9_h4_bare_f_side_exact_spool_root: str | Path | None = None,
+    v9_h4_layer_supernode_bottom: bool = False,
+    v9_h4_layer_supernode_exact_spool_root: str | Path | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
@@ -729,6 +745,7 @@ def build_v3_7_execution_plan(
         or v8_h4_layer_block_reconstruction
         or v8_h4_layer_sweep_bottom
         or v9_h4_bare_f_side
+        or v9_h4_layer_supernode_bottom
     ):
         specification = load_and_resolve(input_path)
         from benchmarks.task039_v4_h4_hybrid_direct import (
@@ -754,6 +771,7 @@ def build_v3_7_execution_plan(
         v8_h4_layer_block_reconstruction=v8_h4_layer_block_reconstruction,
         v8_h4_layer_sweep_bottom=v8_h4_layer_sweep_bottom,
         v9_h4_bare_f_side=v9_h4_bare_f_side,
+        v9_h4_layer_supernode_bottom=v9_h4_layer_supernode_bottom,
     )
     if (
         sum(
@@ -775,6 +793,7 @@ def build_v3_7_execution_plan(
                 bool(v8_h4_layer_block_reconstruction),
                 bool(v8_h4_layer_sweep_bottom),
                 bool(v9_h4_bare_f_side),
+                bool(v9_h4_layer_supernode_bottom),
             )
         )
         > 1
@@ -823,10 +842,12 @@ def build_v3_7_execution_plan(
         or v8_h4_layer_block_reconstruction
         or v8_h4_layer_sweep_bottom
         or v9_h4_bare_f_side
+        or v9_h4_layer_supernode_bottom
     ):
         if (
             not v8_h4_layer_block_reconstruction
             and not v9_h4_bare_f_side
+            and not v9_h4_layer_supernode_bottom
             and not all(
                 (
                     selected_mode_packet_manifest,
@@ -854,6 +875,8 @@ def build_v3_7_execution_plan(
             component_flag = "--v8-h4-layer-sweep-bottom"
         elif v9_h4_bare_f_side:
             component_flag = "--v9-h4-bare-f-full-side-diagnostic"
+        elif v9_h4_layer_supernode_bottom:
+            component_flag = V9_H4_LAYER_SUPERNODE_BOTTOM_FLAG
         elif v5_h4_setup_only:
             component_flag = "--v5-h4-setup-only"
         elif v5_h4_blr_side_only:
@@ -861,7 +884,11 @@ def build_v3_7_execution_plan(
         else:
             component_flag = "--v5-h4-fixed-budget-bottom-component"
         argv.append(component_flag)
-        if not v8_h4_layer_block_reconstruction and not v9_h4_bare_f_side:
+        if (
+            not v8_h4_layer_block_reconstruction
+            and not v9_h4_bare_f_side
+            and not v9_h4_layer_supernode_bottom
+        ):
             argv.extend(
                 [
                     "--selected-mode-packet-manifest",
@@ -951,6 +978,15 @@ def build_v3_7_execution_plan(
                     str(Path(v9_h4_bare_f_side_exact_spool_root).resolve()),
                 ]
             )
+        elif v9_h4_layer_supernode_bottom:
+            if v9_h4_layer_supernode_exact_spool_root is None:
+                raise ValueError("V9-2 route requires the exact spool root")
+            argv.extend(
+                [
+                    V9_H4_LAYER_SUPERNODE_EXACT_SPOOL_ROOT_FLAG,
+                    str(Path(v9_h4_layer_supernode_exact_spool_root).resolve()),
+                ]
+            )
     if v7_h4_exact_side_full_formal:
         method = V7_H4_EXACT_SIDE_FULL_FORMAL_METHOD
     elif v7_h4_exact_side_limit_setup_only:
@@ -969,6 +1005,8 @@ def build_v3_7_execution_plan(
         method = V8_H4_LAYER_SWEEP_METHOD
     elif v9_h4_bare_f_side:
         method = V9_H4_BARE_F_SIDE_METHOD
+    elif v9_h4_layer_supernode_bottom:
+        method = V9_H4_LAYER_SUPERNODE_METHOD
     elif v5_h4_setup_only:
         method = "task039_v5_h4_exact_side_setup_only"
     elif v5_h4_blr_side_only:
@@ -1005,6 +1043,8 @@ def build_v3_7_execution_plan(
         profile_id = V8_H4_LAYER_SWEEP_PROFILE_ID
     elif v9_h4_bare_f_side:
         profile_id = V9_H4_BARE_F_SIDE_PROFILE_ID
+    elif v9_h4_layer_supernode_bottom:
+        profile_id = V9_H4_LAYER_SUPERNODE_PROFILE_ID
     elif v5_h4_setup_only:
         profile_id = "task039.v5.h4.exact-side.setup-only.v1"
     elif v5_h4_blr_side_only:
@@ -1037,6 +1077,11 @@ def build_v3_7_execution_plan(
         exact_spool_root = str(Path(v8_h4_layer_sweep_exact_spool_root).resolve())
     elif v9_h4_bare_f_side and v9_h4_bare_f_side_exact_spool_root is not None:
         exact_spool_root = str(Path(v9_h4_bare_f_side_exact_spool_root).resolve())
+    elif (
+        v9_h4_layer_supernode_bottom
+        and v9_h4_layer_supernode_exact_spool_root is not None
+    ):
+        exact_spool_root = str(Path(v9_h4_layer_supernode_exact_spool_root).resolve())
     else:
         exact_spool_root = None
     return {
@@ -1100,6 +1145,8 @@ def v3_7_execution_dry_run(
     v8_h4_layer_sweep_bottom: bool = False,
     v9_h4_bare_f_side: bool = False,
     v9_h4_bare_f_side_exact_spool_root: str | Path | None = None,
+    v9_h4_layer_supernode_bottom: bool = False,
+    v9_h4_layer_supernode_exact_spool_root: str | Path | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
@@ -1144,6 +1191,8 @@ def v3_7_execution_dry_run(
         v8_h4_layer_sweep_bottom=v8_h4_layer_sweep_bottom,
         v9_h4_bare_f_side=v9_h4_bare_f_side,
         v9_h4_bare_f_side_exact_spool_root=v9_h4_bare_f_side_exact_spool_root,
+        v9_h4_layer_supernode_bottom=v9_h4_layer_supernode_bottom,
+        v9_h4_layer_supernode_exact_spool_root=(v9_h4_layer_supernode_exact_spool_root),
         v8_h4_layer_sweep_exact_spool_root=v8_h4_layer_sweep_exact_spool_root,
         v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
@@ -1193,6 +1242,8 @@ def launch_v3_7_with_task038_watchdog(
     v8_h4_layer_sweep_bottom: bool = False,
     v9_h4_bare_f_side: bool = False,
     v9_h4_bare_f_side_exact_spool_root: str | Path | None = None,
+    v9_h4_layer_supernode_bottom: bool = False,
+    v9_h4_layer_supernode_exact_spool_root: str | Path | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
@@ -1237,6 +1288,7 @@ def launch_v3_7_with_task038_watchdog(
         and not v8_h4_layer_block_reconstruction
         and not v8_h4_layer_sweep_bottom
         and not v9_h4_bare_f_side
+        and not v9_h4_layer_supernode_bottom
         and not V3_7_DIRECT_RUN_ROOT.is_dir()
     ):
         raise ValueError("V3-7 direct producer inventory is unavailable")
@@ -1251,6 +1303,7 @@ def launch_v3_7_with_task038_watchdog(
         and not v7_h4_streamed_bottom_consumer
         and not v8_h4_layer_block_reconstruction
         and not v8_h4_layer_sweep_bottom
+        and not v9_h4_layer_supernode_bottom
         and not callable(compare_v3_7_hybrid_candidate_to_direct)
     ):
         raise ValueError("V3-7 integrated checker entry point is unavailable")
@@ -1269,6 +1322,7 @@ def launch_v3_7_with_task038_watchdog(
         and not v7_h4_streamed_bottom_producer
         and not v8_h4_layer_block_reconstruction
         and not v9_h4_bare_f_side
+        and not v9_h4_layer_supernode_bottom
         and not candidate_d_only
         and not candidate_d_qualified
     ):
@@ -1311,6 +1365,8 @@ def launch_v3_7_with_task038_watchdog(
         v8_h4_layer_sweep_bottom=v8_h4_layer_sweep_bottom,
         v9_h4_bare_f_side=v9_h4_bare_f_side,
         v9_h4_bare_f_side_exact_spool_root=v9_h4_bare_f_side_exact_spool_root,
+        v9_h4_layer_supernode_bottom=v9_h4_layer_supernode_bottom,
+        v9_h4_layer_supernode_exact_spool_root=(v9_h4_layer_supernode_exact_spool_root),
         v8_h4_layer_sweep_exact_spool_root=v8_h4_layer_sweep_exact_spool_root,
         v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
@@ -2913,6 +2969,495 @@ def run_v8_h4_layer_sweep_bottom_component(
                 system.destroy()
             if sweep is not None:
                 sweep.destroy()
+            collective_heap_cleanup(comm)
+
+
+def _v9_layer_supernode_stability_gate(
+    reports: list[Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Select a stable SN2 candidate without making residual a hard stop."""
+
+    expected_labels = set(V6_PORT_MODAL_HOLDOUT_LABELS)
+    labels = [report.get("label") for report in reports]
+    if len(labels) != len(expected_labels) or set(labels) != expected_labels:
+        raise ValueError("V9-2 requires the frozen unique six holdout labels")
+    if len(set(labels)) != len(labels):
+        raise ValueError("V9-2 holdout labels are not unique")
+    physical = "physical_side_rhs"
+    for report in reports:
+        if not isinstance(report.get("degenerate_uninformative"), bool):
+            raise ValueError("V9-2 holdout reports lack degeneracy metadata")
+        if report["label"] != physical and report["degenerate_uninformative"]:
+            raise ValueError("Only physical_side_rhs may be degenerate")
+    mandatory = [
+        report
+        for report in reports
+        if not (report["label"] == physical and report["degenerate_uninformative"])
+    ]
+    residual_values = [
+        report.get("r_F", report.get("true_residual_relative")) for report in mandatory
+    ]
+    residual_finite_pass = bool(
+        residual_values
+        and all(value is not None and np.isfinite(value) for value in residual_values)
+    )
+    finite_pass = all(report.get("finite") is True for report in reports)
+    repeat_pass = all(
+        report.get("repeat_relative_error") is not None
+        and report["repeat_relative_error"] <= 1.0e-10
+        for report in reports
+    )
+    linearity_pass = all(
+        report.get("linearity_relative_error") is not None
+        and report["linearity_relative_error"] <= 1.0e-10
+        for report in reports
+    )
+    worst_residual = (
+        max(float(value) for value in residual_values) if residual_finite_pass else None
+    )
+    residual_pass = bool(
+        residual_finite_pass
+        and all(float(value) <= 1.0e-2 for value in residual_values)
+    )
+    stable = bool(
+        finite_pass and residual_finite_pass and repeat_pass and linearity_pass
+    )
+    return {
+        "finite_pass": bool(finite_pass),
+        "repeat_pass": bool(repeat_pass),
+        "linearity_pass": bool(linearity_pass),
+        "residual_finite_pass": bool(residual_finite_pass),
+        "residual_pass": bool(residual_pass),
+        "residual_limit": 1.0e-2,
+        "worst_mandatory_r_F": worst_residual,
+        "mandatory_labels": [report["label"] for report in mandatory],
+        "degenerate_labels": [
+            report["label"] for report in reports if report["degenerate_uninformative"]
+        ],
+        "numerical_stability_gate_pass": stable,
+        "pass": stable,
+    }
+
+
+def run_v9_h4_layer_supernode_bottom_component(
+    cfg: Any,
+    *,
+    profile: Any,
+    comm: MPI.Intracomm,
+    marker_callback: Callable[[str, Mapping[str, Any]], None],
+    exact_spool_root: str | Path,
+    source_sha: str,
+    side_system_builder: Callable[..., Any] | None = None,
+    holdout_loader: Callable[..., Any] | None = None,
+    holdout_runner: Callable[..., list[dict[str, Any]]] | None = None,
+    retained_runner: Callable[..., Mapping[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Run the V9-2 bottom SN2 candidate contract without a full solve.
+
+    The default path uses the frozen exact-response spool and the real sparse
+    side ``F``.  ``holdout_runner`` and ``retained_runner`` are narrow test
+    seams only; they let lifecycle tests avoid opening h4 artifacts while
+    exercising the same route and ownership order.
+    """
+
+    system = None
+    components = None
+    action = None
+    spool: dict[str, Any] = {}
+    spool_released = False
+    preferred_method: str | None = None
+    method_records: dict[str, dict[str, Any]] = {}
+    retained_probe: Mapping[str, Any] | None = None
+    completed = False
+
+    class _SupernodeProbeView:
+        def __init__(self, candidate: Any, method: str, operator: Any) -> None:
+            self.candidate = candidate
+            self.method = method
+            self.operator = operator
+
+        def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+            self.candidate.apply_checkpoint(self.method, source, target)
+
+    marker_callback(
+        "v9_layer_supernode_bottom_construction_begin",
+        {
+            "construction_peak_limit_gib": V9_H4_LAYER_SUPERNODE_CONSTRUCTION_LIMIT_GIB,
+            "retained_peak_limit_gib": V9_H4_LAYER_SUPERNODE_RETAINED_LIMIT_GIB,
+            "selected_mode_packet_opened": False,
+            "exact_spool_opened": False,
+            "qep_count": 0,
+            "full_side_exact_factor_count": 0,
+            "global_direct_factor_count": 0,
+            "nested_ksp_count": 0,
+        },
+    )
+    try:
+        if side_system_builder is None:
+            system = assemble_hybrid_local_dtn_action_system(
+                cfg,
+                "bottom",
+                bottom_interface_z_nm=profile.bottom_interface_nm,
+                top_interface_z_nm=profile.top_interface_nm,
+                comm=comm,
+                log=None,
+            )
+        else:
+            system = side_system_builder(
+                side="bottom", cfg=cfg, profile=profile, comm=comm
+            )
+        components = _build_research_explicit_side_components(system)
+        labels, mapping_metadata = build_real_layer_labels(components.F, system)
+        layer_count = len(mapping_metadata["z_layer_boundaries"]) - 1
+        if layer_count != 6:
+            raise ValueError(
+                f"V9-2 supernode route requires exactly six layers, got {layer_count}"
+            )
+        action = build_fixed_two_layer_supernode_action(
+            components.F,
+            labels,
+            layer_count=layer_count,
+            lifecycle_callback=marker_callback,
+        )
+        del labels, mapping_metadata
+        marker_callback(
+            "v9_layer_supernode_bottom_factors_ready",
+            {
+                "factor_count": action.diagnostics["factor_count_ready"],
+                "factor_set_build_count": action.diagnostics["factor_set_build_count"],
+                "supernode_row_coverage_exact": action.diagnostics[
+                    "supernode_row_coverage_exact"
+                ],
+                "cross_lower_block_count": action.diagnostics[
+                    "cross_lower_block_count"
+                ],
+                "cross_upper_block_count": action.diagnostics[
+                    "cross_upper_block_count"
+                ],
+                "full_side_exact_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "nested_ksp_count": 0,
+            },
+        )
+
+        if holdout_loader is None:
+            identity, manifest_sha256, catalog = _v9_frozen_holdout_identity(
+                exact_spool_root, comm
+            )
+            spool = _load_v5_fixed_budget_spool_shards(
+                exact_spool_root,
+                comm,
+                packet_identity=identity,
+                manifest_sha256=manifest_sha256,
+            )
+            holdout_provenance = {
+                "identity": identity,
+                "manifest_sha256": manifest_sha256,
+                "catalog_authority": catalog,
+            }
+        else:
+            loaded = holdout_loader(exact_spool_root, comm)
+            spool, holdout_provenance = loaded
+        marker_callback(
+            "v9_layer_supernode_bottom_holdout_ready",
+            {
+                "exact_spool_opened": True,
+                "selected_mode_packet_opened": False,
+                "holdout_labels": list(spool),
+            },
+        )
+
+        def default_runner(method: str) -> list[dict[str, Any]]:
+            view = _SupernodeProbeView(action, method, components.F)
+            bare_f_system = SimpleNamespace(A=components.F)
+            reports: list[dict[str, Any]] = []
+            for label, artifact in spool.items():
+                template = rhs = retained = None
+                try:
+                    template = components.F.createVecLeft()
+                    rhs = _load_v5_blr_reference_spool_remapped(
+                        artifact["rhs"], template
+                    )
+                    report, retained = _v5_blr_probe(
+                        view,
+                        bare_f_system,
+                        rhs,
+                        dict(artifact["rhs"]["probe_metadata"]),
+                        None,
+                        repeat=True,
+                        linearity=True,
+                        retain_output=True,
+                    )
+                    report["label"] = label
+                    report["r_F"] = report["true_residual_relative"]
+                    reports.append(report)
+                finally:
+                    if retained is not None:
+                        retained.destroy()
+                    if rhs is not None:
+                        rhs.destroy()
+                    if template is not None:
+                        template.destroy()
+            return reports
+
+        def default_retained_runner(method: str) -> dict[str, Any]:
+            view = _SupernodeProbeView(action, method, components.F)
+            bare_f_system = SimpleNamespace(A=components.F)
+            for label, artifact in spool.items():
+                metadata = dict(artifact["rhs"]["probe_metadata"])
+                if metadata.get("degenerate_uninformative"):
+                    continue
+                template = rhs = None
+                try:
+                    template = components.F.createVecLeft()
+                    rhs = _load_v5_blr_reference_spool_remapped(
+                        artifact["rhs"], template
+                    )
+                    report, _ = _v5_blr_probe(
+                        view,
+                        bare_f_system,
+                        rhs,
+                        metadata,
+                        None,
+                        repeat=True,
+                        linearity=True,
+                    )
+                    return {
+                        "status": "measured",
+                        "label": label,
+                        "operator": "components.F",
+                        "reference_used": False,
+                        "r_F": report["true_residual_relative"],
+                        "finite": report["finite"],
+                        "repeat_relative_error": report["repeat_relative_error"],
+                        "linearity_relative_error": report["linearity_relative_error"],
+                    }
+                finally:
+                    if rhs is not None:
+                        rhs.destroy()
+                    if template is not None:
+                        template.destroy()
+            raise ValueError("V9-2 retained probe requires a nondegenerate RHS")
+
+        for method in ("SN2-J", "SN2-SGS"):
+            marker_callback(
+                f"v9_layer_supernode_bottom_{method}_begin",
+                {"method": method, "factor_count": 3},
+            )
+            reports = (
+                holdout_runner(
+                    method=method,
+                    action=action,
+                    system=system,
+                    components=components,
+                    spool=spool,
+                )
+                if holdout_runner is not None
+                else default_runner(method)
+            )
+            gate = _v9_layer_supernode_stability_gate(reports)
+            method_records[method] = {
+                "method": method,
+                "reports": reports,
+                "gate": gate,
+                "factor_set_build_count": 1,
+                "factor_count": 3,
+            }
+            marker_callback(
+                f"v9_layer_supernode_bottom_{method}_cleanup",
+                {
+                    "method": method,
+                    "factor_count": 3,
+                    "method_temporaries_released": True,
+                    "factors_retained_for_next_method": True,
+                },
+            )
+            marker_callback(
+                f"v9_layer_supernode_bottom_{method}_complete",
+                {"method": method, "gate": gate},
+            )
+
+        stable_methods = [
+            method
+            for method, record in method_records.items()
+            if record["gate"]["numerical_stability_gate_pass"]
+        ]
+        if stable_methods:
+            preferred_method = min(
+                stable_methods,
+                key=lambda method: method_records[method]["gate"][
+                    "worst_mandatory_r_F"
+                ],
+            )
+        marker_callback(
+            "v9_layer_supernode_bottom_construction_end",
+            {
+                "methods_evaluated": list(method_records),
+                "preferred_method": preferred_method,
+                "factor_count": 3,
+                "construction_temporaries_released": True,
+                "resource_gate": "pending_parent_process_tree_samples",
+            },
+        )
+
+        if preferred_method is not None:
+            marker_callback(
+                "v9_layer_supernode_bottom_retained_apply_state_ready",
+                {
+                    "preferred_method": preferred_method,
+                    "factor_count": 3,
+                    "preferred_action_rehydration": False,
+                    "retained_peak_limit_gib": V9_H4_LAYER_SUPERNODE_RETAINED_LIMIT_GIB,
+                    "retained_apply_state_valid": True,
+                    "resource_gate": "pending_parent_process_tree_samples",
+                },
+            )
+            if retained_runner is None:
+                retained_probe = default_retained_runner(preferred_method)
+            else:
+                retained_probe = retained_runner(
+                    method=preferred_method,
+                    action=action,
+                    system=system,
+                    components=components,
+                    spool=spool,
+                )
+            marker_callback(
+                "v9_layer_supernode_bottom_retained_apply",
+                {
+                    "preferred_method": preferred_method,
+                    "retained_probe": retained_probe,
+                    "factor_count": 3,
+                },
+            )
+        else:
+            marker_callback(
+                "v9_layer_supernode_bottom_retained_apply_state_not_run",
+                {
+                    "preferred_method": None,
+                    "factor_count": 3,
+                    "reason": "no_stable_candidate",
+                    "resource_gate": "not_run_no_stable_candidate",
+                },
+            )
+        spool_released = True
+        spool = {}
+        if action is not None:
+            action.destroy()
+        factor_diagnostics_after_cleanup = action.diagnostics if action else {}
+        released = _destroy_v5_side_components(components)
+        system_probe = {
+            "status": "measured",
+            "global_size": list(map(int, system.A.getSize())),
+            "ownership_range": list(map(int, system.A.getOwnershipRange())),
+        }
+        system.destroy()
+        cleanup = collective_heap_cleanup(comm)
+        marker_callback(
+            "v9_layer_supernode_bottom_retained_state_release",
+            {
+                "preferred_method": preferred_method,
+                "retained_probe": retained_probe,
+                "factor_count_after_cleanup": factor_diagnostics_after_cleanup.get(
+                    "factor_count_after_cleanup", 0
+                ),
+                "components_released": released,
+                "system_probe": system_probe,
+                "collective_cleanup": cleanup,
+            },
+        )
+        completed = True
+        stable_pass = preferred_method is not None
+        telemetry = {
+            "process_tree_samples": {
+                "path": "numerical_output/process_tree_samples.jsonl",
+                "writer": "parent_task038_launcher",
+                "status": "expected_from_parent_launcher",
+            },
+            "memory_stages": {
+                "path": "numerical_output/memory_stages.jsonl",
+                "writer": "parent_task038_launcher_marker_alignment",
+                "status": "expected_from_parent_launcher",
+            },
+            "memory_stage_markers": {
+                "path": "numerical_output/memory_stage_markers.raw.jsonl",
+                "writer": "v3_7_worker",
+                "status": "measured_worker_marker_stream",
+            },
+            "memory_object_ledger": {
+                "path": "numerical_output/memory_object_ledger.json",
+                "schema": "task039.v3-7-memory-object-ledger.v1",
+                "status": "finalized_in_worker_finalizer",
+            },
+            "gate_contract": {
+                "construction_peak_limit_gib": (
+                    V9_H4_LAYER_SUPERNODE_CONSTRUCTION_LIMIT_GIB
+                ),
+                "retained_peak_limit_gib": (V9_H4_LAYER_SUPERNODE_RETAINED_LIMIT_GIB),
+                "factor_count_ready": 3,
+                "factor_count_after_cleanup": 0,
+                "full_side_exact_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "nested_ksp_count": 0,
+                "selected_mode_packet_opened": False,
+                "qep_count": 0,
+                "residual_1e2": "record_only",
+                "resource_gate": "pending_parent_process_tree_samples",
+            },
+        }
+        return {
+            "schema": V9_H4_LAYER_SUPERNODE_SCHEMA,
+            "method": V9_H4_LAYER_SUPERNODE_METHOD,
+            "profile_id": V9_H4_LAYER_SUPERNODE_PROFILE_ID,
+            "status": (
+                "component_stable_preferred_resource_pending"
+                if stable_pass
+                else "component_stability_failed"
+            ),
+            "source_sha": source_sha,
+            "method_records": method_records,
+            "preferred_method": preferred_method,
+            "gate": {
+                "numerical_stability_gate_pass": stable_pass,
+                "residual_1e2_is_record_only": True,
+                "resource_gate": "pending_parent_process_tree_samples",
+                "construction_limit_gib": V9_H4_LAYER_SUPERNODE_CONSTRUCTION_LIMIT_GIB,
+                "retained_limit_gib": V9_H4_LAYER_SUPERNODE_RETAINED_LIMIT_GIB,
+                "pass": None,
+            },
+            "factor_inventory": {
+                "factor_count_ready": 3,
+                "factor_count_after_cleanup": 0,
+                "full_side_exact_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "nested_ksp_count": 0,
+            },
+            "selected_mode_packet_opened": False,
+            "holdout_opened": True,
+            "exact_spool_opened": True,
+            "holdout_provenance": holdout_provenance,
+            "qep_count": 0,
+            "outer_ksp": "not_run",
+            "recovery": "not_run",
+            "field": "not_run",
+            "lifecycle": {
+                "components": released,
+                "system_probe": system_probe,
+                "collective_cleanup": cleanup,
+                "spool_released": spool_released,
+                "factor_diagnostics_after_cleanup": factor_diagnostics_after_cleanup,
+                "retained_probe": retained_probe,
+            },
+            "telemetry": telemetry,
+        }
+    finally:
+        if not completed:
+            if action is not None:
+                action.destroy()
+            if components is not None:
+                _destroy_v5_side_components(components)
+            if system is not None and hasattr(system, "destroy"):
+                system.destroy()
             collective_heap_cleanup(comm)
 
 
@@ -8607,6 +9152,8 @@ def run_task039_v3_7_diagnostic(
     v8_h4_layer_sweep_bottom: bool = False,
     v9_h4_bare_f_side: bool = False,
     v9_h4_bare_f_side_exact_spool_root: str | Path | None = None,
+    v9_h4_layer_supernode_bottom: bool = False,
+    v9_h4_layer_supernode_exact_spool_root: str | Path | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
@@ -8701,6 +9248,7 @@ def run_task039_v3_7_diagnostic(
             or v8_h4_layer_block_reconstruction
             or v8_h4_layer_sweep_bottom
             or v9_h4_bare_f_side
+            or v9_h4_layer_supernode_bottom
         ):
             profile = (
                 profile_override
@@ -8720,6 +9268,7 @@ def run_task039_v3_7_diagnostic(
             or v8_h4_layer_block_reconstruction
             or v8_h4_layer_sweep_bottom
             or v9_h4_bare_f_side
+            or v9_h4_layer_supernode_bottom
         ):
             incidence = resolved_payload["incidence"]
             if v7_h4_full_formal:
@@ -8749,6 +9298,9 @@ def run_task039_v3_7_diagnostic(
             elif v9_h4_bare_f_side:
                 route_profile_id = V9_H4_BARE_F_SIDE_PROFILE_ID
                 route_schema = V9_H4_BARE_F_SIDE_SCHEMA
+            elif v9_h4_layer_supernode_bottom:
+                route_profile_id = V9_H4_LAYER_SUPERNODE_PROFILE_ID
+                route_schema = V9_H4_LAYER_SUPERNODE_SCHEMA
             elif v5_h4_blr_side_only:
                 route_profile_id = V5_H4_BLR_SIDE_PROFILE_ID
                 route_schema = V5_H4_BLR_SIDE_PROFILE_ID
@@ -8787,6 +9339,7 @@ def run_task039_v3_7_diagnostic(
             v8_h4_layer_block_reconstruction=v8_h4_layer_block_reconstruction,
             v8_h4_layer_sweep_bottom=v8_h4_layer_sweep_bottom,
             v9_h4_bare_f_side=v9_h4_bare_f_side,
+            v9_h4_layer_supernode_bottom=v9_h4_layer_supernode_bottom,
         )
         _emit_marker(
             marker_callback,
@@ -8811,6 +9364,7 @@ def run_task039_v3_7_diagnostic(
             and not v8_h4_layer_block_reconstruction
             and not v8_h4_layer_sweep_bottom
             and not v9_h4_bare_f_side
+            and not v9_h4_layer_supernode_bottom
         ):
             raise ValueError(
                 "V3-7 requires an injected recovery_runner(setup, layout, snapshot, "
@@ -8926,6 +9480,33 @@ def run_task039_v3_7_diagnostic(
                 "research_only": True,
                 "exact_spool_root": str(
                     Path(v9_h4_bare_f_side_exact_spool_root).resolve()
+                ),
+            }
+            modal_amplitudes = None
+        elif v9_h4_layer_supernode_bottom:
+            if v9_h4_layer_supernode_exact_spool_root is None:
+                raise ValueError("V9-2 supernode route requires the exact spool root")
+            producer = {
+                "producer_source_sha": None,
+                "consumer_source_sha": source_sha,
+                "physical_model_sha256": resolved_payload.get("physical_model_sha256"),
+                "model_id": resolved_payload.get("model_id"),
+                "requested_modes": 480,
+                "mpi_size": 8,
+                "selected_mode_packet_opened": False,
+                "holdout_opened": True,
+                "exact_spool_opened": True,
+                "direct_reference_payload_loaded": False,
+                "selected_mode_packet": False,
+                "qep_count": 0,
+                "full_side_exact_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "nested_ksp_count": 0,
+                "supernode_factor_count": 3,
+                "component_candidate": True,
+                "research_only": True,
+                "exact_spool_root": str(
+                    Path(v9_h4_layer_supernode_exact_spool_root).resolve()
                 ),
             }
             modal_amplitudes = None
@@ -9134,6 +9715,23 @@ def run_task039_v3_7_diagnostic(
         _emit_marker(marker_callback, "config_ready")
         producer["_stage_callback"] = marker_callback
         _emit_marker(marker_callback, "setup_begin")
+        if v9_h4_layer_supernode_bottom:
+            result = run_v9_h4_layer_supernode_bottom_component(
+                cfg,
+                profile=profile,
+                comm=comm,
+                marker_callback=marker_callback,
+                exact_spool_root=v9_h4_layer_supernode_exact_spool_root,
+                source_sha=source_sha,
+                side_system_builder=side_system_builder,
+            )
+            result["source_sha"] = source_sha
+            result["consumer_source_sha"] = source_sha
+            result["run_directory"] = str(Path(run_directory).resolve())
+            normal_return = result.get("status") == (
+                "component_stable_preferred_resource_pending"
+            )
+            return result
         if v9_h4_bare_f_side:
             result = run_v9_h4_bare_f_side_diagnostic(
                 cfg,
@@ -10396,6 +10994,8 @@ def main(argv: list[str] | None = None) -> int:
         "--v9-h4-bare-f-full-side-exact-spool-root",
         dest="v9_h4_bare_f_side_exact_spool_root",
     )
+    parser.add_argument(V9_H4_LAYER_SUPERNODE_BOTTOM_FLAG, action="store_true")
+    parser.add_argument(V9_H4_LAYER_SUPERNODE_EXACT_SPOOL_ROOT_FLAG)
     parser.add_argument(
         "--v5-h4-blr-profile",
         choices=V5_H4_BLR_PROFILE_CHOICES,
@@ -10420,6 +11020,7 @@ def main(argv: list[str] | None = None) -> int:
             args.v8_h4_layer_block_reconstruction,
             args.v8_h4_layer_sweep_bottom,
             args.v9_h4_bare_f_side,
+            args.v9_h4_layer_supernode_bottom,
             args.v5_h4_blr_side_component,
             args.v5_h4_fixed_budget_bottom_component,
         )
@@ -10444,6 +11045,7 @@ def main(argv: list[str] | None = None) -> int:
                 bool(args.v8_h4_layer_block_reconstruction),
                 bool(args.v8_h4_layer_sweep_bottom),
                 bool(args.v9_h4_bare_f_side),
+                bool(args.v9_h4_layer_supernode_bottom),
                 bool(args.v5_h4_blr_side_component),
                 bool(args.v5_h4_fixed_budget_bottom_component),
             )
@@ -10478,6 +11080,10 @@ def main(argv: list[str] | None = None) -> int:
             v9_h4_bare_f_side=args.v9_h4_bare_f_side,
             v9_h4_bare_f_side_exact_spool_root=(
                 args.v9_h4_bare_f_side_exact_spool_root
+            ),
+            v9_h4_layer_supernode_bottom=args.v9_h4_layer_supernode_bottom,
+            v9_h4_layer_supernode_exact_spool_root=(
+                args.v9_h4_layer_supernode_exact_spool_root
             ),
             v8_h4_layer_sweep_exact_spool_root=(
                 args.v8_h4_layer_sweep_exact_spool_root
@@ -10558,7 +11164,11 @@ def main(argv: list[str] | None = None) -> int:
                 raise ValueError("V5 h4 component requires hybrid_iterative")
             packet_identity = (
                 None
-                if (args.v8_h4_layer_block_reconstruction or args.v9_h4_bare_f_side)
+                if (
+                    args.v8_h4_layer_block_reconstruction
+                    or args.v9_h4_bare_f_side
+                    or args.v9_h4_layer_supernode_bottom
+                )
                 else json.loads(
                     Path(args.selected_mode_packet_identity).read_text(encoding="utf-8")
                 )
@@ -10614,6 +11224,10 @@ def main(argv: list[str] | None = None) -> int:
             v9_h4_bare_f_side_exact_spool_root=(
                 args.v9_h4_bare_f_side_exact_spool_root
             ),
+            v9_h4_layer_supernode_bottom=args.v9_h4_layer_supernode_bottom,
+            v9_h4_layer_supernode_exact_spool_root=(
+                args.v9_h4_layer_supernode_exact_spool_root
+            ),
             v5_h4_blr_side_only=args.v5_h4_blr_side_component,
             v5_h4_fixed_budget_bottom_only=args.v5_h4_fixed_budget_bottom_component,
             v5_h4_fixed_budget_exact_spool_root=(
@@ -10650,6 +11264,7 @@ def main(argv: list[str] | None = None) -> int:
             "completed",
             "setup_only_completed",
             "component_completed",
+            "component_stable_preferred_resource_pending",
             "component_numerical_pass_resource_pending",
             "producer_completed",
             "consumer_completed",
@@ -10720,6 +11335,13 @@ __all__ = [
     "V9_H4_BARE_F_SIDE_METHOD",
     "V9_H4_BARE_F_SIDE_SCHEMA",
     "V9_H4_BARE_F_SIDE_HARD_STOP_BYTES",
+    "V9_H4_LAYER_SUPERNODE_BOTTOM_FLAG",
+    "V9_H4_LAYER_SUPERNODE_EXACT_SPOOL_ROOT_FLAG",
+    "V9_H4_LAYER_SUPERNODE_PROFILE_ID",
+    "V9_H4_LAYER_SUPERNODE_METHOD",
+    "V9_H4_LAYER_SUPERNODE_SCHEMA",
+    "V9_H4_LAYER_SUPERNODE_HARD_STOP_BYTES",
+    "run_v9_h4_layer_supernode_bottom_component",
     "run_v9_h4_bare_f_side_diagnostic",
     "build_v3_7_execution_plan",
     "check_v3_7_integrated_physics",
