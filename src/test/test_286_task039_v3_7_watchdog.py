@@ -119,6 +119,60 @@ def test_light_watchdog_plan_keeps_mpi8_and_byte_hard_stop(tmp_path) -> None:
     assert plan["watchdog"]["absolute_terminate_memory_bytes"] == 224000000000
 
 
+def test_v8_layer_block_main_dry_run_is_packet_free(tmp_path, capsys) -> None:
+    h4_input = Path(
+        "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
+    )
+    run_directory = tmp_path / "v8-layer-block-main-dry-run"
+    assert (
+        watchdog.main(
+            [
+                "--dry-run",
+                "--input",
+                str(h4_input),
+                "--run-directory",
+                str(run_directory),
+                "--source-sha",
+                "a" * 40,
+                watchdog.V8_H4_LAYER_BLOCK_RECONSTRUCTION_FLAG,
+            ]
+        )
+        == 0
+    )
+    plan = json.loads(capsys.readouterr().out)
+    route_flags = {
+        watchdog.V8_H4_LAYER_BLOCK_RECONSTRUCTION_FLAG,
+        "--v5-h4-setup-only",
+        "--v5-h4-blr-side-component",
+        "--v5-h4-fixed-budget-bottom-component",
+        "--v6-h4-post-compaction-setup-only",
+        "--v6-h4-port-modal-bottom-component",
+        "--v7-h4-exact-side-limit-setup-only",
+        "--v7-h4-exact-side-full-formal",
+        "--v7-h4-streamed-bottom-producer",
+        "--v7-h4-streamed-bottom-consumer",
+    }
+    assert [flag for flag in plan["argv"] if flag in route_flags] == [
+        watchdog.V8_H4_LAYER_BLOCK_RECONSTRUCTION_FLAG
+    ]
+    assert plan["argv"][1:3] == ["-n", "8"]
+    assert plan["watchdog"]["absolute_terminate_memory_bytes"] == 224000000000
+    assert plan["watchdog"]["profile"] == (
+        watchdog.V8_H4_LAYER_BLOCK_RECONSTRUCTION_PROFILE
+    )
+    assert plan["worker_contract"]["method"] == (
+        watchdog.V8_H4_LAYER_BLOCK_RECONSTRUCTION_METHOD
+    )
+    assert plan["worker_contract"]["profile_id"] == (
+        watchdog.V8_H4_LAYER_BLOCK_RECONSTRUCTION_PROFILE
+    )
+    assert plan["worker_contract"]["exact_spool_root"] is None
+    assert not any(
+        argument.startswith("--selected-mode-packet-") for argument in plan["argv"]
+    )
+    assert not run_directory.exists()
+
+
 def test_v5_fixed_budget_main_dry_run_freezes_bottom_component(
     tmp_path, capsys
 ) -> None:

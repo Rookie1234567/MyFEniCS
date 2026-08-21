@@ -3216,6 +3216,269 @@ def test_v7_streamed_worker_route_finalizes_side_setup_once(
     assert ledger["objects"]["setup"]["destroyed"] is True
 
 
+def test_v8_layer_block_component_releases_each_side_before_next(
+    tmp_path, monkeypatch
+) -> None:
+    if MPI.COMM_WORLD.size != 1:
+        pytest.skip("run this fake-side lifecycle contract in serial")
+
+    def make_matrix():
+        matrix = PETSc.Mat().createAIJ(size=(6, 6), nnz=3, comm=PETSc.COMM_SELF)
+        for row in range(6):
+            matrix.setValue(row, row, PETSc.ScalarType(2.0 + 0.1j))
+            if row:
+                matrix.setValue(row, row - 1, PETSc.ScalarType(0.2 - 0.1j))
+            if row < 5:
+                matrix.setValue(row, row + 1, PETSc.ScalarType(-0.3 + 0.2j))
+        matrix.assemble()
+        return matrix
+
+    class Resource:
+        def __init__(self):
+            self.destroyed = False
+
+        def destroy(self):
+            self.destroyed = True
+
+    systems = []
+    resources = []
+    timeline = []
+
+    class System:
+        def __init__(self):
+            self.A = make_matrix()
+            self.destroyed = False
+
+        def destroy(self):
+            self.A.destroy()
+            self.destroyed = True
+            timeline.append("system_destroy")
+
+    def side_builder(**_kwargs):
+        system = System()
+        systems.append(system)
+        return system
+
+    def explicit_components(_system):
+        components = SimpleNamespace(
+            H=Resource(), C=Resource(), F=make_matrix(), D=Resource()
+        )
+        resources.append((components.H, components.C, components.D))
+        return components
+
+    monkeypatch.setattr(
+        orchestration, "_build_research_explicit_side_components", explicit_components
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "build_real_layer_labels",
+        lambda _matrix, _system: (
+            np.arange(6, dtype=np.int32),
+            {"z_layer_boundaries": list(range(7))},
+        ),
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "collective_heap_cleanup",
+        lambda _comm: (
+            timeline.append("collective_cleanup") or {"collective_call_completed": True}
+        ),
+    )
+    events = []
+
+    def record_event(marker, detail):
+        if marker.endswith("_destroy"):
+            assert systems[-1].destroyed is True
+            assert detail["system_destroy_called"] is True
+            assert timeline[-2:] == ["system_destroy", "collective_cleanup"]
+        events.append((marker, detail))
+
+    result = orchestration.run_v8_h4_layer_block_reconstruction_component(
+        SimpleNamespace(),
+        profile=SimpleNamespace(bottom_interface_nm=0.0, top_interface_nm=1.0),
+        comm=MPI.COMM_SELF,
+        marker_callback=record_event,
+        side_system_builder=side_builder,
+    )
+
+    assert result["status"] == "component_completed"
+    assert result["gate"]["overall_pass"] is True
+    assert result["gate"]["sides_present_exact"] is True
+    assert [marker for marker, _detail in events] == [
+        "v8_layer_block_bottom_construction_begin",
+        "v8_layer_block_bottom_operator_ready",
+        "v8_layer_block_bottom_destroy",
+        "v8_layer_block_top_construction_begin",
+        "v8_layer_block_top_operator_ready",
+        "v8_layer_block_top_destroy",
+    ]
+    assert all(system.destroyed for system in systems)
+    assert all(
+        resource.destroyed
+        for resource_group in resources
+        for resource in resource_group
+    )
+    for system in systems:
+        system.A = None
+
+
+def test_v8_layer_block_worker_route_finalizes_without_generic_setup(
+    tmp_path, monkeypatch
+) -> None:
+    if MPI.COMM_WORLD.size != 1:
+        pytest.skip("run this fake-side worker contract in serial")
+
+    payload = load_and_resolve(
+        Path("input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat")
+    ).as_jsonable()
+
+    def make_matrix():
+        matrix = PETSc.Mat().createAIJ(size=(6, 6), nnz=3, comm=PETSc.COMM_SELF)
+        for row in range(6):
+            matrix.setValue(row, row, PETSc.ScalarType(2.0 + 0.1j))
+            if row:
+                matrix.setValue(row, row - 1, PETSc.ScalarType(0.2 - 0.1j))
+            if row < 5:
+                matrix.setValue(row, row + 1, PETSc.ScalarType(-0.3 + 0.2j))
+        matrix.assemble()
+        return matrix
+
+    class Resource:
+        def __init__(self):
+            self.destroyed = False
+
+        def destroy(self):
+            self.destroyed = True
+
+    class System:
+        def __init__(self):
+            self.A = make_matrix()
+            self.destroyed = False
+
+        def destroy(self):
+            self.A.destroy()
+            self.destroyed = True
+
+    systems = []
+    resources = []
+
+    def side_builder(**_kwargs):
+        system = System()
+        systems.append(system)
+        return system
+
+    def explicit_components(_system):
+        components = SimpleNamespace(
+            H=Resource(), C=Resource(), F=make_matrix(), D=Resource()
+        )
+        resources.append((components.H, components.C, components.D))
+        return components
+
+    monkeypatch.setattr(
+        orchestration,
+        "simulation_config_3d_from_normalized",
+        lambda _payload: SimpleNamespace(),
+    )
+    monkeypatch.setattr(
+        orchestration, "_build_research_explicit_side_components", explicit_components
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "build_real_layer_labels",
+        lambda _matrix, _system: (
+            np.arange(6, dtype=np.int32),
+            {"z_layer_boundaries": list(range(7))},
+        ),
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "collective_heap_cleanup",
+        lambda _comm: {"collective_call_completed": True},
+    )
+    run_directory = tmp_path / "v8-worker-route"
+    result = orchestration.run_task039_v3_7_diagnostic(
+        payload,
+        run_directory,
+        source_sha="c" * 40,
+        comm=MPI.COMM_SELF,
+        setup_builder=lambda **_kwargs: pytest.fail("generic setup was called"),
+        side_system_builder=side_builder,
+        v8_h4_layer_block_reconstruction=True,
+    )
+
+    assert result["status"] == "component_completed"
+    assert result["gate"]["overall_pass"] is True
+    assert result["selected_mode_packet_opened"] is False
+    assert result["holdout_opened"] is False
+    assert result["exact_spool_opened"] is False
+    assert result["qep_count"] == 0
+    assert result["factor_inventory"]["exact_factor_count"] == 0
+    assert result["factor_inventory"]["global_direct_factor_count"] == 0
+    assert all(system.destroyed for system in systems)
+    assert all(resource.destroyed for group in resources for resource in group)
+    ledger = json.loads(
+        (run_directory / "numerical_output" / "memory_object_ledger.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert ledger["status"] == "completed"
+
+
+def test_v8_layer_block_plan_is_explicit_h4_and_packet_free(tmp_path) -> None:
+    h4_input = Path(
+        "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
+    )
+    plan = orchestration.v3_7_execution_dry_run(
+        h4_input,
+        tmp_path / "v8-plan",
+        source_sha="c" * 40,
+        v8_h4_layer_block_reconstruction=True,
+    )
+    route_flags = {
+        "--v5-h4-setup-only",
+        "--v5-h4-blr-side-component",
+        "--v5-h4-fixed-budget-bottom-component",
+        "--v6-h4-post-compaction-setup-only",
+        "--v6-h4-port-modal-bottom-component",
+        "--v7-h4-exact-side-limit-setup-only",
+        "--v7-h4-exact-side-full-formal",
+        "--v7-h4-streamed-bottom-producer",
+        "--v7-h4-streamed-bottom-consumer",
+        "--v8-h4-layer-block-reconstruction",
+    }
+    assert [flag for flag in plan["argv"] if flag in route_flags] == [
+        "--v8-h4-layer-block-reconstruction"
+    ]
+    assert plan["watchdog"]["absolute_terminate_memory_bytes"] == (
+        V3_7_ABSOLUTE_HARD_BYTES
+    )
+    assert plan["watchdog"]["profile"] == "v8_h4_layer_block_reconstruction"
+    assert plan["worker_contract"]["method"] == orchestration.V8_H4_LAYER_BLOCK_METHOD
+    assert plan["worker_contract"]["profile_id"] == (
+        orchestration.V8_H4_LAYER_BLOCK_PROFILE_ID
+    )
+    assert plan["worker_contract"]["exact_spool_root"] is None
+    assert "--selected-mode-packet-manifest" not in plan["argv"]
+    assert not (tmp_path / "v8-plan").exists()
+
+    with pytest.raises(ValueError, match="exclusive"):
+        orchestration.v3_7_execution_dry_run(
+            h4_input,
+            tmp_path / "v8-conflict",
+            source_sha="c" * 40,
+            v8_h4_layer_block_reconstruction=True,
+            v6_h4_post_compaction_setup_only=True,
+        )
+
+    ordinary = orchestration.v3_7_execution_dry_run(
+        Path("input/official/task039/5nm_p6h5_v3_1deg_hybrid_direct_m480_mpi8.dat"),
+        tmp_path / "ordinary-plan",
+        source_sha="c" * 40,
+    )
+    assert "--v8-h4-layer-block-reconstruction" not in ordinary["argv"]
+    assert ordinary["watchdog"]["profile"] == "v3_7_default"
+
+
 def test_v7_streamed_consumer_route_preserves_selected_and_basis_packets(
     tmp_path, monkeypatch
 ) -> None:

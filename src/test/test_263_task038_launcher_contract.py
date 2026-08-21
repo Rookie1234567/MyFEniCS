@@ -644,6 +644,46 @@ def test_v7_full_timeout_decision_distinguishes_memory_stop(tmp_path, monkeypatc
     assert decision["classification"] == "memory_terminate"
 
 
+def test_v8_layer_block_launcher_emits_explicit_telemetry(tmp_path):
+    specification = replace(
+        load_and_resolve(TASK039_V4_H4_ITERATIVE),
+        expected_output_parent=tmp_path / "results",
+    )
+    run_directory = tmp_path / "v8-layer-block-worker"
+    run_directory.mkdir()
+    plan = SimpleNamespace(
+        argv=("/opt/fake-worker",),
+        method="task039_v8_h4_layer_block_reconstruction",
+        contract_probe=False,
+        task039_trace_audit=False,
+    )
+    result = launcher._run_worker(
+        plan,
+        specification,
+        run_directory,
+        popen_factory=lambda *_args, **_kwargs: _FakeProcess(0),
+        sample_factory=lambda _pid: _authority(memory=1024, swap=0),
+        terminate_factory=lambda _member: {"requested": True},
+        monotonic=lambda: 0.0,
+        sleep=lambda _seconds: None,
+        poll_interval=0.25,
+    )
+    telemetry = result["resource_authority"][
+        "v8_h4_layer_block_reconstruction_telemetry"
+    ]
+    assert telemetry["method"] == "task039_v8_h4_layer_block_reconstruction"
+    assert telemetry["profile"] == "task039.v8.h4.layer_block_reconstruction.v1"
+    assert telemetry["absolute_terminate_memory_bytes"] == 224_000_000_000
+    assert telemetry["method_override"][
+        "effective_absolute_terminate_memory_bytes"
+    ] == (224_000_000_000)
+    assert telemetry["gate_contract"]["exact_factor_count"] == 0
+    assert telemetry["gate_contract"]["global_direct_factor_count"] == 0
+    assert telemetry["gate_contract"]["qep_count"] == 0
+    assert telemetry["gate_contract"]["outer_ksp_count"] == 0
+    assert telemetry["require_zero_swap"] is True
+
+
 def test_task039_h5_critical_checkpoint_does_not_stop_before_absolute_hard_stop(
     monkeypatch, tmp_path
 ):
