@@ -18,7 +18,8 @@ trace-harmonic（界面谐波）粗空间 oracle：把体内自由度固定为�
 | formal cases | p2-MPI1, p2-MPI2, p3-MPI1, p3-MPI2 |
 | individual / aggregate | 4 PASS / aggregate PASS |
 | process-tree peak | `not_measured` |
-| D2/D3/D4 | `not_run` |
+| D2 MPI1 | `controlled_negative`；slab0 fixed interior CG `KSP_DIVERGED_ITS (-3)` |
+| D2 MPI2 / D3 / D4 | `not_run_by_D2_rank64_hard_stop` |
 | Candidate C / transmission family | closed; no source or negative evidence changed |
 
 ## 1. 这项 oracle 在检查什么
@@ -134,6 +135,65 @@ artifact 目录；Git 只保存轻量 compact record。D1 没有测 process-tree
    正式数值。
 
 D1 的结论是 PASS，但只覆盖小 p2/p3 fixture 和 MPI1/MPI2 distributed action identity。
-D2、D3、D4 仍为 `not_run`；Candidate C 和 transmission family 的 closed/research
-archive 状态不变。本文件不授权 p6/h10 coarse build，也不把 D1 dense algebra 当成
-production coarse implementation。
+D2 MPI1 已有一条受控 negative；D2 MPI2、D3、D4 仍为
+`not_run_by_D2_rank64_hard_stop`。Candidate C 和 transmission family 的
+closed/research archive 状态不变。本文件不授权 p6/h10 coarse build，也不把 D1
+dense algebra 当成 production coarse implementation。
+
+## 7. D2 p6/h10 MPI1 controlled negative
+
+D1 的小 fixture 正结论保持不变；本节只追加 D2 的一次正式 MPI1 结果。D2 的
+“adaptive coarse”是从真实界面谐波基构造有界的全局校正空间，目的是补足局部
+ smoother 看不到的长程误差；本次构造在生成 rank-64 `Z` 之前就停止，因此没有
+ 发生 coarse apply 或 contraction 测量。
+
+| 项目 | 实际值与边界 |
+|---|---|
+| formal source SHA | `cc8de60cc3e21b647aafb29ac9c10b46919823e7` |
+| case / attempt | `p6-h10-mpi1`，MPI1，唯一一次 formal attempt |
+| wall / marker monotonic elapsed | `557.385958733 s` / `510.287976466 s` |
+| marker ledger | `preflight → mesh_mpc_topology → trace_basis_build → failure` |
+| failure | `slab 0 interior CG did not converge: -3` |
+| PETSc meaning | `KSP_DIVERGED_ITS`；固定 `max_it=500` 用尽 |
+| process-tree peak | `3,013,468,160 B`，峰值阶段 `trace_basis_build` |
+| process-tree swap | `0 B`；watchdog `process_tree_swap_gate=true` |
+| termination | `natural_exit`，worker return code `1`，未 SIGTERM/SIGKILL |
+| rank-64 Z/AZ/E | 未得到；online AZ/E、canonical evidence 均未运行 |
+| MPI2 / D3 / D4 | `not_run_by_D2_rank64_hard_stop` |
+
+这里的 hard stop 是 Review V3 的算法 Gate 停止：固定 500 步不收敛，不能增加
+inner steps、改变 solver 参数或重跑。它不是 12 GiB、swap 或 OOM 停止；资源样本
+只是证明本次自然失败时没有触发资源硬停止。CG 可以通俗理解为：为每个局部界面
+trace 求一个能量最小的体内延拓，逐步修正线性方程残差；`KSP_DIVERGED_ITS` 表示
+规定的 500 次修正仍未达到要求，不能把未完成的向量当作 coarse basis。
+
+## 8. D2 evidence 索引与资源口径
+
+raw 目录位于 ignored artifact 根，未提交大 mesh/JIT/采样文件；compact worker record
+位于 outcomes 的预定 tracked path。当前文档闭合尚未提交，因此该 record 在本地
+`git status` 中仍显示为 `??`，没有被删除或覆盖。
+
+| artifact | path | SHA-256 |
+|---|---|---|
+| worker negative record | `docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/d2_worker_p6_h10_mpi1_v1.json` | `ef98ba1e7c478b6c6a8297baf599aa34c1849188f3b1668f0cdaf63e4e95635d` |
+| watchdog raw | `benchmarks/artifacts/task038_extra_full3d_iterative_d2/cc8de60/p6_h10_mpi1_v1/watchdog.raw.json` | `4313d5a3112db849a1b80c2ea2adae6fbe3c30f47da554c48ff9771a7c620a10` |
+| watchdog compact | `benchmarks/artifacts/task038_extra_full3d_iterative_d2/cc8de60/p6_h10_mpi1_v1/watchdog.compact.json` | `53d6b314af83fafc8a0d13f14542229072869139914e031573574a262c877d7d` |
+| worker log | `benchmarks/artifacts/task038_extra_full3d_iterative_d2/cc8de60/p6_h10_mpi1_v1/worker.log` | `c5dd34f422162cd4a5dc84a3e01052e71427292d905f5e95f20d2e5b9e9f133b` |
+
+watchdog 共保存 513 个 resource samples。record 的 classification 是
+`controlled_negative`，watchdog 的 `stop_reason=natural_exit`、`worker_returncode=1`。
+独立 `check_worker_record(record, raw, 1)` 返回 `passed=false`，错误为
+`ValueError: record schema or stage is invalid`：失败 backfill 没有成功 worker 所需
+的 case/stage 字段，checker 因而 fail-closed，不能把缺字段解释成 PASS。
+
+D0 的内存数仍只是 derived preflight：`N=173802` 时 rank64 `Z+AZ=355,946,496 B`，
+加上不超过 `64,000,000 B` 的 coarse metadata/work 预算为
+`419,946,496 B`。这不是本次 D2 的 measured retained pass；本次没有 `Z`、`AZ` 或
+`E` 可测量。类似地，3.013 GB 是 construction/JIT 阶段 process-tree 观测，不能
+冒充 D3 online peak，也不能冒充完整 PDE workflow peak 或 `<2 GB` 资格。
+
+按 Review V3 hard stop #7/#12，本轮不进入 MPI2、D3 coarse-only/two-level、D4、T6-S
+或任何 PDE。D2 production core/runner/checker 因 rank64 尚未资格化，保留为
+`research-only / do-not-merge`；D1 p2/p3 oracle 的正证据继续有效。Candidate C 源码
+与其既有负证据同样保留为 `DO_NOT_RERUN / DO_NOT_OPTIMIZE / DO_NOT_MERGE`，本轮没有
+重跑或调参。

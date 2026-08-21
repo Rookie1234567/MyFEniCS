@@ -231,3 +231,33 @@ canonical role/count、cross-MPI relative L2、record/check SHA 和 ignored raw 
 `ModuleNotFoundError` 空 raw）均发生在数值之前，不计为 D1 formal failure；首次空 raw
 目录保留。D1 通过的是小 fixture oracle，不是 p6 production coarse，也没有 process-tree
 资源资格化或 PDE 结果。
+
+## Review V3 D2 controlled negative
+
+本节继续追加，不覆盖前面的 T2–T5、R0–R4 和 D0/D1 历史记录。D2 只执行了
+`p6-h10-mpi1` 一次 formal attempt，源码绑定为
+`cc8de60cc3e21b647aafb29ac9c10b46919823e7`；没有启动 MPI2、D3、D4 或 PDE。
+
+| stage / item | result | classification |
+|---|---|---|
+| D0 memory preflight | rank64 `Z+AZ=355,946,496 B`; derived total `419,946,496 B` | derived/budget only |
+| D1 p2/p3 oracle | 4 cases individual PASS, aggregate PASS | accepted/frozen |
+| D2 MPI1 | `557.385958733 s` wall；marker monotonic `510.287976466 s` | controlled negative |
+| D2 failure | slab 0 interior CG `-3` = `KSP_DIVERGED_ITS`，固定 500 步耗尽 | failed algebra/setup gate |
+| D2 resource | process-tree peak `3,013,468,160 B`；process-tree swap `0 B`；natural exit rc=1 | not resource hard stop |
+| D2 artifacts | marker `preflight→mesh_mpc_topology→trace_basis_build→failure`；无 Z/AZ/E | preserved negative |
+| D2 MPI2 | 未运行 | `not_run_by_D2_rank64_hard_stop` |
+| D3 coarse-only / two-level | 五类 source、rho、online `<2 GB` 均未运行 | `not_run_by_D2_rank64_hard_stop` |
+| D4 / T6-S | 20/100/150/200 checkpoints 未运行 | `not_run_by_D2_rank64_hard_stop` |
+
+本次不是 12 GiB 或 swap stop；固定局部 CG 在规定的 500 次迭代内没有收敛，Review
+V3 hard stop #7/#12 禁止增加步数、调参或重跑。3,013,468,160 B 是 construction/JIT
+阶段的 process-tree 峰值，不是 D3 online 内存测量，也不是完整 PDE 峰值。D2 worker
+record、watchdog raw/compact 和 log 的路径与 SHA 见
+`outcomes/adaptive_coarse_oracle.md`；raw 保持 ignored，compact record 保留在
+预定 outcomes record 路径。独立 checker 对 controlled-negative backfill 返回
+`passed=false`（`record schema or stage is invalid`），没有因为缺少成功字段而 PASS。
+
+Candidate C 源码及负证据保持 `DO_NOT_RERUN / DO_NOT_OPTIMIZE / DO_NOT_MERGE`；D2
+实现、runner、checker 因 rank64 未资格化列为 `research-only / do-not-merge`。D1
+小 fixture 正证据仍可保留。T6-F、EH/RTA、T7–T9 和 full 0.7 nm 均未运行。

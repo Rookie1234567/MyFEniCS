@@ -1,0 +1,117 @@
+{
+  "classification": "controlled_negative",
+  "failure": {
+    "exception_type": "RuntimeError",
+    "message": "trace_basis_build failed: RuntimeError: slab 0 interior CG did not converge: -3"
+  },
+  "last_marker": "failure",
+  "marker_dir": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_d2/cc8de60/p6_h10_mpi1_v1/raw/markers",
+  "marker_ledger": [
+    {
+      "details": {
+        "case": "p6-h10-mpi1",
+        "stage": "preflight"
+      },
+      "marker": "preflight",
+      "monotonic_ns": 111596414661229,
+      "schema": "task038.full3d.adaptive-coarse.d2-marker.v1",
+      "source_git_sha": "cc8de60cc3e21b647aafb29ac9c10b46919823e7",
+      "wall_time_ns": 1787323010654945816
+    },
+    {
+      "details": {},
+      "marker": "mesh_mpc_topology",
+      "monotonic_ns": 111596876121463,
+      "schema": "task038.full3d.adaptive-coarse.d2-marker.v1",
+      "source_git_sha": "cc8de60cc3e21b647aafb29ac9c10b46919823e7",
+      "wall_time_ns": 1787323011116406312
+    },
+    {
+      "details": {
+        "prefixes": [
+          16,
+          32,
+          48,
+          64
+        ],
+        "rank": 64
+      },
+      "marker": "trace_basis_build",
+      "monotonic_ns": 111600486723503,
+      "schema": "task038.full3d.adaptive-coarse.d2-marker.v1",
+      "source_git_sha": "cc8de60cc3e21b647aafb29ac9c10b46919823e7",
+      "wall_time_ns": 1787323014727007890
+    },
+    {
+      "details": {
+        "exception_type": "RuntimeError",
+        "message": "trace_basis_build failed: RuntimeError: slab 0 interior CG did not converge: -3"
+      },
+      "marker": "failure",
+      "monotonic_ns": 112106702637695,
+      "schema": "task038.full3d.adaptive-coarse.d2-marker.v1",
+      "source_git_sha": "cc8de60cc3e21b647aafb29ac9c10b46919823e7",
+      "wall_time_ns": 1787323568040904549
+    }
+  ],
+  "not_run": [
+    "remaining stages after failure"
+  ],
+  "planned": [
+    "mesh_mpc_topology",
+    "trace_basis_build",
+    "online_az_e",
+    "canonical_evidence"
+  ],
+  "raw_dir": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_d2/cc8de60/p6_h10_mpi1_v1/raw",
+  "resource_contract": {
+    "compact_path": "benchmarks/artifacts/task038_extra_full3d_iterative_d2/cc8de60/p6_h10_mpi1_v1/watchdog.compact.json",
+    "compact_sha256": "53d6b314af83fafc8a0d13f14542229072869139914e031573574a262c877d7d",
+    "process_tree_peak_memory_authority_bytes": 3013468160,
+    "process_tree_swap_gate": true,
+    "raw_path": "benchmarks/artifacts/task038_extra_full3d_iterative_d2/cc8de60/p6_h10_mpi1_v1/watchdog.raw.json",
+    "raw_sha256": "4313d5a3112db849a1b80c2ea2adae6fbe3c30f47da554c48ff9771a7c620a10",
+    "status": "measured_controlled_negative",
+    "stop_reason": "natural_exit",
+    "termination": {
+      "method": "natural_exit",
+      "requested": false,
+      "sigkill_required": false
+    },
+    "worker_returncode": 1
+  },
+  "runtime": {
+    "basix": "/usr/lib/python3/dist-packages/basix/__init__.py",
+    "dolfinx": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/dolfinx/__init__.py",
+    "int_dtype": "int32",
+    "mpi4py": "/usr/lib/python3/dist-packages/mpi4py/__init__.py",
+    "mpi_library": "Open MPI v4.1.6, package: Debian OpenMPI, ident: 4.1.6, repo rev: v4.1.6, Sep 30, 2023\u0000",
+    "mpi_size": 1,
+    "petsc4py": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/petsc4py/__init__.py",
+    "petsc_int_type": "<class 'numpy.int32'>",
+    "petsc_scalar_type": "<class 'numpy.complex128'>",
+    "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+    "qualified_activation": "1",
+    "qualified_venv_bin_resolved": "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin",
+    "scalar_dtype": "complex128",
+    "slepc4py": "/usr/lib/slepcdir/slepc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/slepc4py/__init__.py",
+    "source_identity": {
+      "expected_sha": "cc8de60cc3e21b647aafb29ac9c10b46919823e7",
+      "source_git_sha": "cc8de60cc3e21b647aafb29ac9c10b46919823e7",
+      "tracked_status": ""
+    },
+    "sys_executable": "/home/shenjh/Projects/MyFEniCS-Surrogate/.venv/bin/python",
+    "threads": {
+      "MKL_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1"
+    }
+  },
+  "schema": "task038.full3d.adaptive-coarse.d2-record.v1",
+  "source_identity": {
+    "expected_sha": "cc8de60cc3e21b647aafb29ac9c10b46919823e7",
+    "source_git_sha": null,
+    "tracked_status": "not_measured"
+  },
+  "status": "controlled_negative"
+}
