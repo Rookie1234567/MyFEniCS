@@ -1250,6 +1250,121 @@ def test_v10_factor_integrity_launcher_contract_is_status_independent(
     assert telemetry["overall_peak_swap_bytes"] == 0
 
 
+@pytest.mark.parametrize(
+    ("numerical_gate", "expected_status", "expected_pass"),
+    (
+        (True, "pass", True),
+        (False, "numerical_gate_failed_retained_not_run", False),
+    ),
+)
+def test_v10_sn2_j_only_launcher_records_construction_and_retained_contract(
+    tmp_path, numerical_gate, expected_status, expected_pass
+):
+    specification = replace(
+        load_and_resolve(TASK039_V4_H4_ITERATIVE),
+        expected_output_parent=tmp_path / "results",
+    )
+    run_directory = tmp_path / f"v10-sn2-j-{numerical_gate}"
+    diagnostic_directory = run_directory / "numerical_output"
+    diagnostic_directory.mkdir(parents=True)
+    source_sha = "h" * 40
+    record = {
+        "schema": launcher.V10_H4_SN2_J_ONLY_SCHEMA,
+        "method": launcher.V10_H4_SN2_J_ONLY_METHOD,
+        "source_sha": source_sha,
+        "gate": {"numerical_gate_pass": numerical_gate},
+        "factor_inventory": {
+            "factor_count_ready": 3,
+            "factor_count_after_cleanup": 0,
+            "full_side_exact_factor_count": 0,
+            "global_direct_factor_count": 0,
+            "nested_ksp_count": 0,
+        },
+        "selected_mode_packet_opened": False,
+        "exact_spool_opened": True,
+        "qep_count": 0,
+        "sgs_executed": False,
+    }
+    if numerical_gate:
+        record.update(
+            {
+                "preferred_method": "SN2-J",
+                "lifecycle": {"retained_probe": {"status": "measured"}},
+            }
+        )
+    (diagnostic_directory / "v3_v7_diagnostic.json").write_text(
+        json.dumps(record), encoding="utf-8"
+    )
+    marker_path = diagnostic_directory / "memory_stage_markers.raw.jsonl"
+    marker_batches = {
+        1: ["v10_sn2_j_bottom_construction_begin"],
+        2: ["v10_sn2_j_bottom_construction_end"],
+        3: [
+            "v10_sn2_j_bottom_retained_apply_state_ready"
+            if numerical_gate
+            else "v10_sn2_j_bottom_retained_apply_state_not_run"
+        ],
+        4: ["v10_sn2_j_bottom_retained_state_release"],
+    }
+    sample_calls = 0
+
+    def popen(_argv, **_kwargs):
+        return _SequenceProcess(polls_before_exit=3)
+
+    def sample_factory(_pid):
+        nonlocal sample_calls
+        sample_calls += 1
+        for marker in marker_batches.get(sample_calls, ()):
+            with marker_path.open("a", encoding="utf-8") as stream:
+                stream.write(
+                    json.dumps(
+                        {
+                            "stage": marker,
+                            "status": "end",
+                            "elapsed_seconds": float(sample_calls),
+                        }
+                    )
+                    + "\n"
+                )
+        return _authority(memory=10 * 2**30, swap=0)
+
+    plan = SimpleNamespace(
+        argv=("/opt/fake-worker",),
+        method=launcher.V10_H4_SN2_J_ONLY_METHOD,
+        source_sha=source_sha,
+        contract_probe=False,
+        task039_trace_audit=False,
+    )
+    result = launcher._run_worker(
+        plan,
+        specification,
+        run_directory,
+        popen_factory=popen,
+        sample_factory=sample_factory,
+        terminate_factory=lambda _process: {"requested": True},
+        monotonic=iter(float(index) for index in range(20)).__next__,
+        sleep=lambda _seconds: None,
+        poll_interval=0.25,
+    )
+    telemetry = result["resource_authority"]["v10_h4_sn2_j_only_telemetry"]
+    assert telemetry["worker_record_status"] == "measured"
+    assert telemetry["overall"]["status"] == expected_status
+    assert telemetry["overall"]["pass"] is expected_pass
+    assert telemetry["construction_interval_summary"]["pass"] is True
+    if numerical_gate:
+        assert telemetry["retained_interval_summary"]["status"] == "measured"
+        assert telemetry["retained_interval_summary"]["pass"] is True
+    else:
+        assert telemetry["retained_interval_summary"]["status"] == "not_run"
+        assert telemetry["retained_interval_summary"]["pass"] is None
+    assert telemetry["gate_contract"]["factor_count_ready"] == 3
+    assert telemetry["gate_contract"]["factor_count_after_cleanup"] == 0
+    assert telemetry["gate_contract"]["full_side_exact_factor_count"] == 0
+    assert telemetry["gate_contract"]["global_direct_factor_count"] == 0
+    assert telemetry["gate_contract"]["nested_ksp_count"] == 0
+    assert telemetry["overall_peak_swap_bytes"] == 0
+
+
 def test_task039_h5_critical_checkpoint_does_not_stop_before_absolute_hard_stop(
     monkeypatch, tmp_path
 ):

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import hashlib
 import inspect
 import json
@@ -1567,7 +1568,17 @@ def test_v5_h4_setup_only_plan_passes_identity_and_packet_args(tmp_path) -> None
     assert '"pass": None' in launcher_source
     orchestration_main_source = inspect.getsource(orchestration.main)
     assert "or args.v6_h4_post_compaction_setup_only" in orchestration_main_source
-    assert "packet_identity = json.loads" in orchestration_main_source
+    main_tree = ast.parse(orchestration_main_source)
+    assert any(
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id == "json"
+        and node.func.attr == "loads"
+        and node.args
+        and "selected_mode_packet_identity" in ast.unparse(node.args[0])
+        for node in ast.walk(main_tree)
+    )
     route_source = inspect.getsource(orchestration.run_v5_h4_mumps_blr_side_component)
     assert route_source.index("exact_diagnostics = exact_action.diagnostics") < (
         route_source.index("v5_blr_exact_reference_{side}_ready")
@@ -3998,6 +4009,307 @@ def test_v10_factor_integrity_plan_is_single_route_and_packet_free(tmp_path):
     assert plan["watchdog"]["require_zero_swap"] is True
     assert not any("selected-mode-packet" in arg for arg in plan["argv"])
     assert not (tmp_path / "v10-factor-integrity-plan").exists()
+
+
+def test_v10_sn2_j_only_plan_and_advancement_gate_are_strict(tmp_path):
+    h4_input = Path(
+        "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
+    )
+    spool_root = Path(
+        "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/"
+        "numerical_output"
+    )
+    plan = orchestration.v3_7_execution_dry_run(
+        h4_input,
+        tmp_path / "v10-sn2-j-plan",
+        source_sha="f" * 40,
+        v10_h4_sn2_j_only=True,
+        v10_h4_sn2_j_only_exact_spool_root=spool_root,
+    )
+    route_flags = {
+        "--v5-h4-setup-only",
+        "--v5-h4-blr-side-component",
+        "--v5-h4-fixed-budget-bottom-component",
+        "--v6-h4-post-compaction-setup-only",
+        "--v6-h4-port-modal-bottom-component",
+        "--v7-h4-exact-side-limit-setup-only",
+        "--v7-h4-exact-side-full-formal",
+        "--v7-h4-streamed-bottom-producer",
+        "--v7-h4-streamed-bottom-consumer",
+        "--v8-h4-layer-block-reconstruction",
+        "--v8-h4-layer-sweep-bottom",
+        "--v9-h4-bare-f-full-side-diagnostic",
+        orchestration.V9_H4_LAYER_SUPERNODE_BOTTOM_FLAG,
+        orchestration.V10_H4_SUPERNODE_FACTOR_INTEGRITY_FLAG,
+        orchestration.V10_H4_SN2_J_ONLY_FLAG,
+    }
+    assert plan["argv"][1:3] == ["-n", "8"]
+    assert [flag for flag in plan["argv"] if flag in route_flags] == [
+        orchestration.V10_H4_SN2_J_ONLY_FLAG
+    ]
+    assert (
+        plan["argv"].count(orchestration.V10_H4_SN2_J_ONLY_EXACT_SPOOL_ROOT_FLAG) == 1
+    )
+    assert plan["worker_contract"]["method"] == orchestration.V10_H4_SN2_J_ONLY_METHOD
+    assert (
+        plan["worker_contract"]["profile_id"]
+        == orchestration.V10_H4_SN2_J_ONLY_PROFILE_ID
+    )
+    assert plan["worker_contract"]["exact_spool_root"] == str(spool_root.resolve())
+    assert plan["watchdog"]["absolute_terminate_memory_bytes"] == 45 * 2**30
+    assert plan["watchdog"]["require_zero_swap"] is True
+    assert not any("selected-mode-packet" in arg for arg in plan["argv"])
+    assert not (tmp_path / "v10-sn2-j-plan").exists()
+
+    def make_reports(*, residual=0.1, physical_degenerate=True):
+        return [
+            {
+                "label": label,
+                "degenerate_uninformative": (
+                    label == "physical_side_rhs" and physical_degenerate
+                ),
+                "finite": True,
+                "solution_norm": 0.0
+                if label == "physical_side_rhs" and physical_degenerate
+                else 1.0,
+                "zero_output_pass": True,
+                "repeat_relative_error": 1.0e-12,
+                "linearity_relative_error": 2.0e-12,
+                "r_F": 0.0
+                if label == "physical_side_rhs" and physical_degenerate
+                else residual,
+            }
+            for label in orchestration.V6_PORT_MODAL_HOLDOUT_LABELS
+        ]
+
+    reports = make_reports()
+    gate = orchestration._v10_sn2_j_advancement_gate(reports)
+    assert gate["numerical_gate_pass"] is True
+    assert gate["numerical_stability_gate_pass"] is True
+    assert gate["mandatory_labels"] == [
+        label
+        for label in orchestration.V6_PORT_MODAL_HOLDOUT_LABELS
+        if label != "physical_side_rhs"
+    ]
+    assert gate["preferred_residual_max"] == 0.1
+    physical_report = next(
+        report for report in reports if report["label"] == "physical_side_rhs"
+    )
+    physical_report["zero_output_pass"] = False
+    failed_zero_gate = orchestration._v10_sn2_j_advancement_gate(reports)
+    assert failed_zero_gate["numerical_gate_pass"] is False
+    assert failed_zero_gate["numerical_stability_gate_pass"] is False
+
+    equal_gate = orchestration._v10_sn2_j_advancement_gate(
+        make_reports(residual=orchestration.V10_H4_SN2_J_ONLY_RESIDUAL_LIMIT)
+    )
+    assert equal_gate["numerical_gate_pass"] is False
+    below_gate = orchestration._v10_sn2_j_advancement_gate(
+        make_reports(residual=orchestration.V10_H4_SN2_J_ONLY_RESIDUAL_LIMIT - 1.0e-12)
+    )
+    assert below_gate["numerical_gate_pass"] is True
+
+    missing_solution = make_reports()
+    missing_physical = next(
+        report for report in missing_solution if report["label"] == "physical_side_rhs"
+    )
+    missing_physical.pop("solution_norm")
+    missing_solution_gate = orchestration._v10_sn2_j_advancement_gate(missing_solution)
+    assert missing_solution_gate["numerical_gate_pass"] is False
+
+    missing_zero = make_reports()
+    next(
+        report for report in missing_zero if report["label"] == "physical_side_rhs"
+    ).pop("zero_output_pass")
+    missing_zero_gate = orchestration._v10_sn2_j_advancement_gate(missing_zero)
+    assert missing_zero_gate["numerical_gate_pass"] is False
+
+    nondegenerate_physical = orchestration._v10_sn2_j_advancement_gate(
+        make_reports(physical_degenerate=False)
+    )
+    assert nondegenerate_physical["numerical_gate_pass"] is True
+    assert "physical_side_rhs" in nondegenerate_physical["mandatory_labels"]
+
+
+@pytest.mark.parametrize(
+    ("numerical_pass", "expected_retained_status"),
+    ((True, "measured"), (False, "not_run")),
+)
+def test_v10_sn2_j_only_runs_actual_closure_without_sgs(
+    monkeypatch, numerical_pass, expected_retained_status
+):
+    if MPI.COMM_WORLD.size != 1:
+        pytest.skip("run this fake-side lifecycle contract in serial")
+
+    labels = list(orchestration.V6_PORT_MODAL_HOLDOUT_LABELS)
+    timeline: list[str] = []
+    apply_methods: list[str] = []
+    destroyed_vectors: list[str] = []
+    spool_seen_empty = False
+    retained_apply_count = 0
+
+    class Vec:
+        def __init__(self, name):
+            self.name = name
+            self.destroyed = False
+            self.value = 0.0
+
+        def duplicate(self):
+            return Vec(f"{self.name}:duplicate")
+
+        def set(self, value):
+            self.value = value
+
+        def norm(self):
+            return abs(self.value)
+
+        def destroy(self):
+            if not self.destroyed:
+                self.destroyed = True
+                destroyed_vectors.append(self.name)
+
+    class F:
+        def createVecLeft(self):
+            return Vec("F:left")
+
+    class Action:
+        def __init__(self):
+            self.destroyed = False
+
+        def apply_checkpoint(self, method, _source, target):
+            apply_methods.append(method)
+            target.value = 1.0
+
+        def destroy(self):
+            self.destroyed = True
+            timeline.append("action_destroy")
+
+    class Components:
+        def __init__(self):
+            self.F = F()
+            self.destroyed = False
+
+        def destroy(self):
+            self.destroyed = True
+            timeline.append("components_destroy")
+
+    class System:
+        def __init__(self):
+            self.destroyed = False
+
+        def destroy(self):
+            self.destroyed = True
+            timeline.append("system_destroy")
+
+    components = Components()
+    system = System()
+    action = Action()
+    retained_rhs = []
+
+    def fake_remap(_artifact, _template):
+        vector = Vec("rhs")
+        retained_rhs.append(vector)
+        return vector
+
+    def fake_probe(view, _system, rhs, metadata, _reference, *, repeat, linearity):
+        target = Vec("probe-target")
+        view.apply(rhs, target)
+        target.destroy()
+        label = metadata["label"]
+        physical = label == "physical_side_rhs"
+        residual = 0.1
+        if not numerical_pass and label == "fixed_random_repeat_1":
+            residual = orchestration.V10_H4_SN2_J_ONLY_RESIDUAL_LIMIT
+        return (
+            {
+                "finite": True,
+                "degenerate_uninformative": physical,
+                "output": {"source_norm": 0.0 if physical else 1.0},
+                "repeat_relative_error": 1.0e-12,
+                "linearity_relative_error": 2.0e-12,
+                "true_residual_relative": residual,
+            },
+            None,
+        )
+
+    def fake_cleanup(_comm):
+        timeline.append("collective_cleanup")
+        return {"collective_call_completed": True}
+
+    def fake_v9_runner(
+        _cfg, *, holdout_runner, retained_runner, gate_evaluator, **_kwargs
+    ):
+        nonlocal spool_seen_empty, retained_apply_count
+        assert _kwargs["method_names"] == ("SN2-J",)
+        assert gate_evaluator is orchestration._v10_sn2_j_advancement_gate
+        spool = {
+            label: {"rhs": {"probe_metadata": {"label": label}}} for label in labels
+        }
+        reports = holdout_runner(
+            method="SN2-J",
+            action=action,
+            system=system,
+            components=components,
+            spool=spool,
+        )
+        spool_seen_empty = not spool
+        gate = gate_evaluator(reports)
+        retained_probe = None
+        if gate["numerical_gate_pass"]:
+            before = len(apply_methods)
+            retained_probe = retained_runner(
+                method="SN2-J",
+                action=action,
+                system=system,
+                components=components,
+                spool=spool,
+            )
+            retained_apply_count = len(apply_methods) - before
+        action.destroy()
+        components.destroy()
+        system.destroy()
+        timeline.append("final_cleanup")
+        return {
+            "method_records": {"SN2-J": {"gate": gate}},
+            "preferred_method": "SN2-J" if gate["numerical_gate_pass"] else None,
+            "lifecycle": {"retained_probe": retained_probe},
+        }
+
+    monkeypatch.setattr(
+        orchestration, "_load_v5_blr_reference_spool_remapped", fake_remap
+    )
+    monkeypatch.setattr(orchestration, "_v5_blr_probe", fake_probe)
+    monkeypatch.setattr(orchestration, "_v5_blr_true_residual", lambda *_args: 0.1)
+    monkeypatch.setattr(orchestration, "collective_heap_cleanup", fake_cleanup)
+    monkeypatch.setattr(
+        orchestration, "run_v9_h4_layer_supernode_bottom_component", fake_v9_runner
+    )
+
+    result = orchestration.run_v10_h4_sn2_j_only(
+        SimpleNamespace(),
+        profile=SimpleNamespace(bottom_interface_nm=0.0, top_interface_nm=1.0),
+        comm=MPI.COMM_SELF,
+        marker_callback=lambda marker, _detail: timeline.append(marker),
+        exact_spool_root="unused-spool",
+        source_sha="f" * 40,
+    )
+
+    assert set(apply_methods) == {"SN2-J"}
+    assert len(apply_methods) == len(labels) + (1 if numerical_pass else 0)
+    assert retained_apply_count == (1 if numerical_pass else 0)
+    assert spool_seen_empty is True
+    assert result["status"] == (
+        "component_sn2_j_stable_resource_pending"
+        if numerical_pass
+        else "component_sn2_j_numerical_failed"
+    )
+    assert result["lifecycle"]["retained_state"] == expected_retained_status
+    assert action.destroyed is True
+    assert components.destroyed is True
+    assert system.destroyed is True
+    assert retained_rhs and all(vector.destroyed for vector in retained_rhs)
+    assert timeline.count("collective_cleanup") == 1
+    assert "SN2-SGS" not in apply_methods
 
 
 def test_v9_layer_supernode_worker_releases_shared_factors_and_runs_retained_probe(
