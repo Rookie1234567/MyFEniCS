@@ -1017,6 +1017,7 @@ def launch_v3_7_with_task038_watchdog(
         v7_h4_streamed_bottom_consumer=v7_h4_streamed_bottom_consumer,
         v8_h4_layer_block_reconstruction=v8_h4_layer_block_reconstruction,
         v8_h4_layer_sweep_bottom=v8_h4_layer_sweep_bottom,
+        v9_h4_bare_f_side=v9_h4_bare_f_side,
     )
     if (
         not v5_h4_setup_only

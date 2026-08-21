@@ -622,3 +622,46 @@ def test_v9_bare_f_main_dry_run_uses_frozen_spool_and_45gib_stop(tmp_path, capsy
     )
     assert not any("selected-mode-packet" in argument for argument in plan["argv"])
     assert not run_directory.exists()
+
+
+def test_v9_bare_f_launch_passes_h4_identity_to_worker_dry_run(tmp_path):
+    h4_input = Path(
+        "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
+    )
+    spool_root = Path(
+        "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/"
+        "numerical_output"
+    )
+    run_directory = tmp_path / "v9-bare-f-launch-dry-run"
+
+    def dry_run_child(argv, **kwargs):
+        rewritten = list(argv)
+        rewritten[rewritten.index("--worker")] = "--dry-run"
+        return subprocess.Popen(rewritten, **kwargs)
+
+    def sample(_pid):
+        return {
+            "memory_authority_bytes": 0,
+            "process_tree": {
+                "root_pid": _pid,
+                "rss_bytes": 0,
+                "swap_bytes": 0,
+                "all_status_readable": True,
+                "smaps": {"complete": False},
+            },
+            "job_cgroup": {"dedicated_job_cgroup": False},
+        }
+
+    result = watchdog.launch_v3_7_with_task038_watchdog(
+        h4_input,
+        run_directory,
+        source_sha="a" * 40,
+        python_executable=sys.executable,
+        v9_h4_bare_f_side=True,
+        v9_h4_bare_f_side_exact_spool_root=spool_root,
+        popen_factory=dry_run_child,
+        sample_factory=sample,
+    )
+    assert result["exit_status"] == 0, result
+    assert result["result_classification"] == "worker_exit0", result
+    assert (run_directory / "worker_stdout.txt").stat().st_size > 0
