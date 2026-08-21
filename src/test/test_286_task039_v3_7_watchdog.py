@@ -963,6 +963,8 @@ def test_v10_side_response_packet_main_dry_runs_keep_producer_consumer_routes(
                 str(tmp_path / "full-packet" / "manifest.json"),
                 watchdog.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_MANIFEST_SHA256_FLAG,
                 "d" * 64,
+                watchdog.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PRODUCER_SOURCE_SHA_FLAG,
+                "e" * 40,
             ],
             watchdog.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD,
             watchdog.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PROFILE,
@@ -992,6 +994,12 @@ def test_v10_side_response_packet_main_dry_runs_keep_producer_consumer_routes(
         assert plan["argv"].count(route_args[0]) == 1
         assert plan["worker_contract"]["method"] == method
         assert plan["worker_contract"]["profile_id"] == profile_id
+        if name == "compression":
+            assert (
+                watchdog.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PRODUCER_SOURCE_SHA_FLAG
+                in plan["argv"]
+            )
+            assert "e" * 40 in plan["argv"]
         assert plan["watchdog"]["absolute_terminate_memory_bytes"] == hard_stop
         assert plan["watchdog"]["require_zero_swap"] is True
         if name in {"consumer", "compression"}:

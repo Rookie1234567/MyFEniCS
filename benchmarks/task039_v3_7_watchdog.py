@@ -189,6 +189,9 @@ V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_OUTPUT_ROOT_FLAG = (
 V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_METHOD = (
     "task039_v10_h4_side_response_packet_full_producer"
 )
+V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_SCHEMA = (
+    "task039.v10.h4.exact_side_response_packet.full.v1"
+)
 V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_PROFILE = (
     "task039.v10.h4.side_response_packet.full_producer.v1"
 )
@@ -202,8 +205,14 @@ V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_MANIFEST_FLAG = (
 V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_MANIFEST_SHA256_FLAG = (
     "--v10-h4-side-response-packet-compression-manifest-sha256"
 )
+V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PRODUCER_SOURCE_SHA_FLAG = (
+    "--v10-h4-side-response-packet-compression-producer-source-sha"
+)
 V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD = (
     "task039_v10_h4_side_response_packet_compression"
+)
+V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA = (
+    "task039.v10.h4.exact_side_response_packet.compression.v1"
 )
 V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PROFILE = (
     "task039.v10.h4.side_response_packet.compression.v1"
@@ -584,6 +593,7 @@ def build_v3_7_execution_plan(
     v10_h4_side_response_packet_compression: bool = False,
     v10_h4_side_response_packet_compression_manifest: str | Path | None = None,
     v10_h4_side_response_packet_compression_manifest_sha256: str | None = None,
+    v10_h4_side_response_packet_compression_producer_source_sha: str | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest_sha256: str | None = None,
@@ -774,8 +784,11 @@ def build_v3_7_execution_plan(
         if (
             v10_h4_side_response_packet_compression_manifest is None
             or v10_h4_side_response_packet_compression_manifest_sha256 is None
+            or v10_h4_side_response_packet_compression_producer_source_sha is None
         ):
-            raise ValueError("V10 compression requires manifest and hash")
+            raise ValueError(
+                "V10 compression requires manifest, hash, and producer source SHA"
+            )
         argv.extend(
             [
                 V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_FLAG,
@@ -783,6 +796,8 @@ def build_v3_7_execution_plan(
                 str(Path(v10_h4_side_response_packet_compression_manifest).resolve()),
                 V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_MANIFEST_SHA256_FLAG,
                 str(v10_h4_side_response_packet_compression_manifest_sha256),
+                V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PRODUCER_SOURCE_SHA_FLAG,
+                str(v10_h4_side_response_packet_compression_producer_source_sha),
             ]
         )
     elif v5_h4_blr_side_only:
@@ -1299,6 +1314,9 @@ def build_v3_7_execution_plan(
             "response_packet_manifest_sha256": (
                 v10_h4_side_response_packet_compression_manifest_sha256
             ),
+            "response_packet_producer_source_sha": (
+                v10_h4_side_response_packet_compression_producer_source_sha
+            ),
             "absolute_terminate_memory_bytes": policy[
                 "absolute_terminate_memory_bytes"
             ],
@@ -1360,6 +1378,7 @@ def v3_7_execution_dry_run(
     v10_h4_side_response_packet_compression: bool = False,
     v10_h4_side_response_packet_compression_manifest: str | Path | None = None,
     v10_h4_side_response_packet_compression_manifest_sha256: str | None = None,
+    v10_h4_side_response_packet_compression_producer_source_sha: str | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest_sha256: str | None = None,
@@ -1435,6 +1454,9 @@ def v3_7_execution_dry_run(
         ),
         v10_h4_side_response_packet_compression_manifest_sha256=(
             v10_h4_side_response_packet_compression_manifest_sha256
+        ),
+        v10_h4_side_response_packet_compression_producer_source_sha=(
+            v10_h4_side_response_packet_compression_producer_source_sha
         ),
         v7_h4_streamed_bottom_consumer_basis_manifest=(
             v7_h4_streamed_bottom_consumer_basis_manifest
@@ -1512,6 +1534,7 @@ def launch_v3_7_with_task038_watchdog(
     v10_h4_side_response_packet_compression: bool = False,
     v10_h4_side_response_packet_compression_manifest: str | Path | None = None,
     v10_h4_side_response_packet_compression_manifest_sha256: str | None = None,
+    v10_h4_side_response_packet_compression_producer_source_sha: str | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest_sha256: str | None = None,
@@ -1645,6 +1668,9 @@ def launch_v3_7_with_task038_watchdog(
         ),
         v10_h4_side_response_packet_compression_manifest_sha256=(
             v10_h4_side_response_packet_compression_manifest_sha256
+        ),
+        v10_h4_side_response_packet_compression_producer_source_sha=(
+            v10_h4_side_response_packet_compression_producer_source_sha
         ),
         v7_h4_streamed_bottom_consumer_basis_manifest=(
             v7_h4_streamed_bottom_consumer_basis_manifest
@@ -1796,6 +1822,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_MANIFEST_FLAG)
     parser.add_argument(V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_MANIFEST_SHA256_FLAG)
+    parser.add_argument(
+        V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PRODUCER_SOURCE_SHA_FLAG
+    )
     parser.add_argument(V7_STREAMED_PETROV_BOTTOM_CONSUMER_BASIS_MANIFEST_FLAG)
     parser.add_argument(V7_STREAMED_PETROV_BOTTOM_CONSUMER_BASIS_MANIFEST_SHA256_FLAG)
     parser.add_argument(V7_STREAMED_PETROV_BOTTOM_CONSUMER_EXACT_SPOOL_ROOT_FLAG)
@@ -1914,6 +1943,9 @@ def main(argv: list[str] | None = None) -> int:
                     v10_h4_side_response_packet_compression_manifest_sha256=(
                         args.v10_h4_side_response_packet_compression_manifest_sha256
                     ),
+                    v10_h4_side_response_packet_compression_producer_source_sha=(
+                        args.v10_h4_side_response_packet_compression_producer_source_sha
+                    ),
                     v8_h4_layer_sweep_exact_spool_root=(
                         args.v8_h4_layer_sweep_exact_spool_root
                     ),
@@ -2010,6 +2042,9 @@ def main(argv: list[str] | None = None) -> int:
         ),
         v10_h4_side_response_packet_compression_manifest_sha256=(
             args.v10_h4_side_response_packet_compression_manifest_sha256
+        ),
+        v10_h4_side_response_packet_compression_producer_source_sha=(
+            args.v10_h4_side_response_packet_compression_producer_source_sha
         ),
         v8_h4_layer_sweep_exact_spool_root=(args.v8_h4_layer_sweep_exact_spool_root),
         v7_h4_streamed_bottom_consumer_basis_manifest=(
@@ -2131,12 +2166,15 @@ __all__ = [
     "V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_EXACT_SPOOL_ROOT_FLAG",
     "V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_OUTPUT_ROOT_FLAG",
     "V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_METHOD",
+    "V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_SCHEMA",
     "V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_PROFILE",
     "V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_HARD_STOP_BYTES",
     "V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_FLAG",
     "V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_MANIFEST_FLAG",
     "V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_MANIFEST_SHA256_FLAG",
+    "V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PRODUCER_SOURCE_SHA_FLAG",
     "V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD",
+    "V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA",
     "V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PROFILE",
     "V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_HARD_STOP_BYTES",
     "build_v3_7_execution_plan",

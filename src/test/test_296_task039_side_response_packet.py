@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
 from mpi4py import MPI
 
 import benchmarks.task039_v3_7_orchestration as orchestration
+import benchmarks.task039_v3_7_watchdog as watchdog
+from src.runners import task038_launcher as launcher
 from src.solvers.hybrid_side_response_packet import (
     ExactSideResponsePacket,
     V10_SIDE_RESPONSE_PACKET_COLUMNS,
@@ -22,7 +26,269 @@ from src.solvers.hybrid_side_response_packet import (
     projected_response_payload_bytes,
     projected_response_wall_seconds,
     write_exact_side_response_packet,
+    V10_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD,
+    V10_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA,
+    V10_SIDE_RESPONSE_PACKET_FULL_METHOD,
+    V10_SIDE_RESPONSE_PACKET_FULL_SCHEMA,
 )
+
+
+def test_v10_full_and_compression_schema_method_contract_is_canonical() -> None:
+    assert orchestration.V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_SCHEMA == (
+        V10_SIDE_RESPONSE_PACKET_FULL_SCHEMA
+    )
+    assert orchestration.V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_METHOD == (
+        V10_SIDE_RESPONSE_PACKET_FULL_METHOD
+    )
+    assert orchestration.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA == (
+        V10_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA
+    )
+    assert orchestration.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD == (
+        V10_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD
+    )
+    assert launcher.V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_SCHEMA == (
+        V10_SIDE_RESPONSE_PACKET_FULL_SCHEMA
+    )
+    assert launcher.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA == (
+        V10_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA
+    )
+    assert launcher.V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_METHOD == (
+        V10_SIDE_RESPONSE_PACKET_FULL_METHOD
+    )
+    assert launcher.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD == (
+        V10_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD
+    )
+    assert watchdog.V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_SCHEMA == (
+        V10_SIDE_RESPONSE_PACKET_FULL_SCHEMA
+    )
+    assert watchdog.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA == (
+        V10_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA
+    )
+    assert watchdog.V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_METHOD == (
+        V10_SIDE_RESPONSE_PACKET_FULL_METHOD
+    )
+    assert watchdog.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD == (
+        V10_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD
+    )
+
+
+def _write_tiny_full_recheck_fixture(tmp_path: Path) -> tuple[Path, Path]:
+    raw_root = tmp_path / "raw"
+    packet_root = tmp_path / "packet"
+    numerical = raw_root / "numerical_output"
+    numerical.mkdir(parents=True)
+    packet_root.mkdir()
+    source_sha = "a" * 40
+    input_sha = "b" * 64
+    physical_sha = "c" * 64
+    for name, value in (
+        ("source_sha.txt", source_sha),
+        ("input_sha256.txt", input_sha),
+        ("physical_model_sha256.txt", physical_sha),
+    ):
+        (raw_root / name).write_text(value + "\n", encoding="utf-8")
+    records = [
+        {
+            "column_index": index,
+            "label": f"modal_response_{index}",
+            "finite": True,
+            "true_residual_relative": 1.0e-10,
+        }
+        for index in range(960)
+    ]
+    records.append(
+        {
+            "column_index": 960,
+            "label": "physical_side_rhs",
+            "finite": True,
+            "rhs_norm": 0.0,
+            "output_norm": 0.0,
+            "zero_map_pass": True,
+        }
+    )
+    expected_holdout = orchestration.V10_SIDE_RESPONSE_PACKET_FULL_HOLDOUT_COLUMNS
+    training = [index for index in range(960) if index not in expected_holdout]
+    shards = []
+    cursor = 0
+    for rank in range(8):
+        end = 132300 * (rank + 1) // 8
+        filename = f"rank{rank:04d}_response.npy"
+        path = packet_root / filename
+        path.write_bytes(b"tiny-shard")
+        shards.append(
+            {
+                "rank": rank,
+                "path": filename,
+                "ownership_range": [cursor, end],
+                "shape": [end - cursor, 961],
+                "dtype": "complex128",
+                "file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            }
+        )
+        cursor = end
+    manifest = {
+        "schema": V10_SIDE_RESPONSE_PACKET_FULL_SCHEMA,
+        "method": V10_SIDE_RESPONSE_PACKET_FULL_METHOD,
+        "global_rows": 132300,
+        "column_count": 961,
+        "training_column_indices": training,
+        "training_column_count": 950,
+        "holdout_column_indices": list(expected_holdout),
+        "holdout_column_count": 10,
+        "zero_column_index": 960,
+        "shards": shards,
+        "provenance": {
+            "source_sha": source_sha,
+            "input_sha256": input_sha,
+            "physical_model_sha256": physical_sha,
+            "selected_mode_packet_manifest_sha256": (
+                orchestration.V10_SIDE_RESPONSE_PACKET_FROZEN_HOLDOUT_MANIFEST_SHA256
+            ),
+            "exact_spool_manifest_sha256": (
+                orchestration.V10_SIDE_RESPONSE_PACKET_FROZEN_HOLDOUT_MANIFEST_SHA256
+            ),
+            "factor_identity": {
+                "side": "bottom",
+                "action": "research_exact_side_lu",
+                "factor_only_storage": True,
+                "qualification_scope": (
+                    "task039.v10.h4.side_response_packet.full_producer.v1"
+                ),
+                "profile_id": "task039.v10.h4.side_response_packet.full_producer.v1",
+            },
+        },
+    }
+    manifest_path = packet_root / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    manifest_sha = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+    (numerical / "memory_stage_markers.raw.jsonl").write_text(
+        json.dumps(
+            {
+                "stage": "v10_side_response_packet_full_producer_cleanup",
+                "detail": {
+                    "selected_mode_packet_released": True,
+                    "factor_count_after_cleanup": 0,
+                    "qep_count": 0,
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    diagnostic = {
+        "schema": V10_SIDE_RESPONSE_PACKET_FULL_SCHEMA,
+        "method": V10_SIDE_RESPONSE_PACKET_FULL_METHOD,
+        "source_sha": source_sha,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "column_records": records,
+        "packet": {"manifest_sha256": manifest_sha},
+        "holdout_provenance": {
+            "producer_source_sha": orchestration.V9_FROZEN_HOLDOUT_PRODUCER_SHA,
+            "catalog": {
+                "catalog_sha256": orchestration.V9_FROZEN_HOLDOUT_CATALOG_SHA256
+            },
+            "manifest_sha256": (
+                orchestration.V10_SIDE_RESPONSE_PACKET_FROZEN_HOLDOUT_MANIFEST_SHA256
+            ),
+        },
+        "factor_inventory": {
+            "exact_side_factor_count_ready": 1,
+            "exact_side_factor_count_after_cleanup": 0,
+            "global_direct_factor_count": 0,
+            "nested_ksp_count": 0,
+        },
+        "lifecycle": {"producer_cleanup_completed": True},
+        "projected_payload_bytes": 132300 * 961 * 16,
+        "report_gate": {
+            "measured_full_packet_setup_wall_seconds": 1.0,
+            "measured_full_packet_solve_wall_seconds": 2.0,
+            "measured_full_packet_total_wall_seconds": 3.0,
+        },
+    }
+    diagnostic_path = numerical / "v3_v7_diagnostic.json"
+    diagnostic_path.write_text(json.dumps(diagnostic), encoding="utf-8")
+    (raw_root / "run_summary.json").write_text(
+        json.dumps(
+            {
+                "status": "finished",
+                "exit_status": 0,
+                "resource_authority": {
+                    "v10_h4_side_response_packet_full_producer_telemetry": {
+                        "worker_record_status": "contract_mismatch",
+                        "worker_record_contract_reason": "schema_mismatch",
+                        "construction_interval_summary": {
+                            "peak_process_tree_rss_bytes": 54497624064
+                        },
+                        "overall_peak_swap_bytes": 0,
+                        "zero_swap_observed": True,
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    return raw_root, packet_root
+
+
+@pytest.mark.parametrize("mutation", ("pass", "schema", "producer", "shard", "release"))
+def test_v10_full_recheck_tiny_fixture_and_negative_contracts(
+    tmp_path: Path, monkeypatch, mutation: str
+) -> None:
+    raw_root, packet_root = _write_tiny_full_recheck_fixture(tmp_path)
+    expected_source_sha = "a" * 40
+
+    def fake_load(path, **_kwargs):
+        rank = int(Path(path).name[4:8])
+        start = 132300 * rank // 8
+        end = 132300 * (rank + 1) // 8
+        return SimpleNamespace(shape=(end - start, 961), dtype=np.dtype("complex128"))
+
+    monkeypatch.setattr(orchestration.np, "load", fake_load)
+    if mutation == "schema":
+        path = raw_root / "numerical_output" / "v3_v7_diagnostic.json"
+        diagnostic = json.loads(path.read_text(encoding="utf-8"))
+        diagnostic["schema"] = "wrong.schema"
+        path.write_text(json.dumps(diagnostic), encoding="utf-8")
+    elif mutation == "producer":
+        expected_source_sha = "d" * 40
+    elif mutation == "shard":
+        path = packet_root / "manifest.json"
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        manifest["shards"][0]["file_sha256"] = "0" * 64
+        path.write_text(json.dumps(manifest), encoding="utf-8")
+        diagnostic_path = raw_root / "numerical_output" / "v3_v7_diagnostic.json"
+        diagnostic = json.loads(diagnostic_path.read_text(encoding="utf-8"))
+        diagnostic["packet"]["manifest_sha256"] = hashlib.sha256(
+            path.read_bytes()
+        ).hexdigest()
+        diagnostic_path.write_text(json.dumps(diagnostic), encoding="utf-8")
+    elif mutation == "release":
+        path = raw_root / "numerical_output" / "memory_stage_markers.raw.jsonl"
+        marker = json.loads(path.read_text(encoding="utf-8"))
+        marker["detail"]["selected_mode_packet_released"] = False
+        path.write_text(json.dumps(marker) + "\n", encoding="utf-8")
+    result = orchestration.recheck_v10_h4_full_side_response_packet(
+        raw_root,
+        packet_root,
+        expected_producer_source_sha=expected_source_sha,
+        checker_source_sha="e" * 40,
+    )
+    expected = (
+        "FULL_SIDE_RESPONSE_PACKET_RECHECK_PASS"
+        if mutation == "pass"
+        else "FULL_SIDE_RESPONSE_PACKET_RECHECK_FAILED"
+    )
+    assert result["classification"] == expected
+    if mutation == "schema":
+        assert result["checks"]["schema_method"] is False
+    elif mutation == "producer":
+        assert result["checks"]["producer_source_sha"] is False
+        assert result["checks"]["root_identity_files"] is False
+    elif mutation == "shard":
+        assert result["checks"]["shards_hash_shape_dtype"] is False
+    elif mutation == "release":
+        assert result["checks"]["packet_release"] is False
 
 
 def test_v10_side_response_schedule_and_projection_contract() -> None:

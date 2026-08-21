@@ -3492,6 +3492,36 @@ def test_v8_layer_block_plan_is_explicit_h4_and_packet_free(tmp_path) -> None:
     assert ordinary["watchdog"]["profile"] == "v3_7_default"
 
 
+def test_v10_compression_plan_forwards_producer_source_sha(tmp_path) -> None:
+    h4_input = Path(
+        "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
+    )
+    manifest = tmp_path / "compression-manifest.json"
+    manifest.write_text("{}", encoding="utf-8")
+    manifest_sha256 = hashlib.sha256(manifest.read_bytes()).hexdigest()
+    producer_source_sha = "b" * 40
+    plan = orchestration.v3_7_execution_dry_run(
+        h4_input,
+        tmp_path / "v10-compression-plan",
+        source_sha="a" * 40,
+        v10_h4_side_response_packet_compression=True,
+        v10_h4_side_response_packet_compression_manifest=manifest,
+        v10_h4_side_response_packet_compression_manifest_sha256=manifest_sha256,
+        v10_h4_side_response_packet_compression_producer_source_sha=(
+            producer_source_sha
+        ),
+    )
+    flag = (
+        orchestration.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PRODUCER_SOURCE_SHA_FLAG
+    )
+    assert plan["argv"].count(flag) == 1
+    assert plan["argv"][plan["argv"].index(flag) + 1] == producer_source_sha
+    assert (
+        plan["worker_contract"]["response_packet_compression_producer_source_sha"]
+        == producer_source_sha
+    )
+
+
 @pytest.mark.parametrize("holdout_pass", [True, False], ids=["pass", "no-pass"])
 def test_v8_layer_sweep_uses_one_factor_set_and_releases_each_oracle(
     monkeypatch, holdout_pass
@@ -4929,6 +4959,7 @@ def test_v10_side_response_routes_run_public_finalizer_with_ledger(
             "v10_h4_side_response_packet_compression_manifest_sha256": hashlib.sha256(
                 manifest.read_bytes()
             ).hexdigest(),
+            "v10_h4_side_response_packet_compression_producer_source_sha": "b" * 40,
         }
         expected_status = "compression_completed"
 

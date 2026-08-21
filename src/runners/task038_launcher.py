@@ -108,14 +108,14 @@ V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_METHOD = (
     "task039_v10_h4_side_response_packet_full_producer"
 )
 V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_SCHEMA = (
-    "task039.v10.h4.side_response_packet.full_producer.v1"
+    "task039.v10.h4.exact_side_response_packet.full.v1"
 )
 V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_HARD_STOP_BYTES = 30 * 2**30
 V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD = (
     "task039_v10_h4_side_response_packet_compression"
 )
 V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA = (
-    "task039.v10.h4.side_response_packet.compression.v1"
+    "task039.v10.h4.exact_side_response_packet.compression.v1"
 )
 
 
