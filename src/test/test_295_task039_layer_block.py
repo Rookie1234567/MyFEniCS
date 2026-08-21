@@ -9,6 +9,8 @@ from petsc4py import PETSc
 
 from src.solvers.hybrid_layer_block import (
     ExactBlockSchurAction,
+    _supernode_factor_matrix_evidence,
+    audit_supernode_factor_paths,
     build_fixed_two_layer_supernode_action,
     build_layer_block_operator,
     build_layer_sweep_action,
@@ -890,3 +892,95 @@ def test_v10_1_parent_layer_parent_scatter_round_trip() -> None:
     restored.destroy()
     parent.destroy()
     matrix.destroy()
+
+
+def test_v10_factor_forensic_reports_explicit_norms_and_zero_gate() -> None:
+    matrix, _ = _tiny_block_tridiagonal()
+    rhs_vectors = {}
+    try:
+        zero = matrix.createVecRight()
+        zero.set(0.0)
+        rhs_vectors["zero_rhs"] = zero
+        nonzero = matrix.createVecRight()
+        values = np.asarray(
+            [0.4 + 0.03j * (index + 1) for index in range(24)],
+            dtype=np.complex128,
+        )
+        _put_global_values(nonzero, values)
+        rhs_vectors["deterministic_random"] = nonzero
+        events = []
+
+        def lifecycle(event, detail):
+            events.append((event, detail["path"], dict(detail)))
+
+        report = audit_supernode_factor_paths(
+            matrix, rhs_vectors, lifecycle_callback=lifecycle
+        )
+        assert report["path_order"] == [
+            "A_conventional_ksp",
+            "B_factor_only_detached",
+        ]
+        for path in report["path_order"]:
+            path_report = report["paths"][path]
+            assert path_report["path_pass"] is True
+            for rhs_report in path_report["reports"]:
+                assert {
+                    "rhs_norm",
+                    "solution_norm",
+                    "relative_residual",
+                    "norm_amplification",
+                } <= rhs_report.keys()
+                assert rhs_report["finite"] is True
+                if rhs_report["label"] == "zero_rhs":
+                    assert rhs_report["solution_norm"] <= 1.0e-13
+                    assert rhs_report["gate_pass"] is True
+                else:
+                    assert rhs_report["rhs_norm"] > 1.0e-30
+                    assert np.isfinite(rhs_report["norm_amplification"])
+                    assert rhs_report["gate_pass"] is True
+        assert [event for event, _path, _detail in events] == [
+            "factor_forensic_path_begin",
+            "factor_forensic_path_ready",
+            "factor_forensic_path_cleanup",
+            "factor_forensic_path_begin",
+            "factor_forensic_path_ready",
+            "factor_forensic_path_cleanup",
+        ]
+        assert [path for _event, path, _detail in events] == [
+            "A_conventional_ksp",
+            "A_conventional_ksp",
+            "A_conventional_ksp",
+            "B_factor_only_detached",
+            "B_factor_only_detached",
+            "B_factor_only_detached",
+        ]
+        for event, _path, detail in events:
+            if event == "factor_forensic_path_cleanup":
+                assert detail["factor_count_after_cleanup"] == 0
+                assert detail["co_resident_factor_count"] == 0
+    finally:
+        for vector in rhs_vectors.values():
+            vector.destroy()
+        matrix.destroy()
+
+
+def test_v10_matrix_evidence_handles_empty_local_rank() -> None:
+    comm = MPI.COMM_WORLD
+    global_rows = 1
+    local_rows = 1 if comm.rank == 0 else 0
+    matrix = PETSc.Mat().createAIJ(
+        size=((local_rows, global_rows), (local_rows, global_rows)),
+        nnz=(1, 1),
+        comm=comm,
+    )
+    matrix.setUp()
+    if local_rows:
+        matrix.setValue(0, 0, PETSc.ScalarType(2.0 + 0.1j))
+    matrix.assemble()
+    try:
+        evidence = _supernode_factor_matrix_evidence(matrix)
+        assert evidence["ownership_ranges"][0] == [0, 1]
+        assert evidence["diagonal_abs_min"] == pytest.approx(abs(2.0 + 0.1j))
+        assert evidence["diagonal_abs_max"] == pytest.approx(abs(2.0 + 0.1j))
+    finally:
+        matrix.destroy()

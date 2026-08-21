@@ -13,7 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
-from typing import Any
+from typing import Any, Mapping
 
 import numpy as np
 from mpi4py import MPI
@@ -34,6 +34,7 @@ __all__ = (
     "build_layer_sweep_action",
     "minimum_layer_labels",
     "relative_matvec_residual",
+    "audit_supernode_factor_paths",
 )
 
 
@@ -71,6 +72,377 @@ def relative_matvec_residual(
         return float(applied.norm()) / max(float(rhs.norm()), 1.0e-30)
     finally:
         applied.destroy()
+
+
+def _supernode_factor_matrix_evidence(matrix: PETSc.Mat) -> dict[str, Any]:
+    comm = matrix.getComm().tompi4py()
+    row_start, row_end = map(int, matrix.getOwnershipRange())
+    row_ptr, columns, values = matrix.getValuesCSR()
+    row_lengths = np.diff(row_ptr)
+    local_finite = bool(np.all(np.isfinite(values)))
+    local_zero_rows = int(np.count_nonzero(row_lengths == 0))
+    info = matrix.getInfo()
+    ownership_ranges = comm.allgather([row_start, row_end])
+    norm_one: float | str
+    norm_infinity: float | str
+    try:
+        norm_one = float(matrix.norm(PETSc.NormType.NORM_1))
+        norm_infinity = float(matrix.norm(PETSc.NormType.NORM_INFINITY))
+    except Exception:
+        norm_one = "not_available"
+        norm_infinity = "not_available"
+    diagonal_min: float | str = "not_available"
+    diagonal_max: float | str = "not_available"
+    diagonal = None
+    try:
+        diagonal = matrix.createVecLeft()
+        matrix.getDiagonal(diagonal)
+        local_diagonal = np.abs(
+            np.asarray(diagonal.getArray(readonly=True), dtype=np.complex128)
+        )
+        local_diagonal_min = (
+            float(np.min(local_diagonal)) if local_diagonal.size else float("inf")
+        )
+        local_diagonal_max = (
+            float(np.max(local_diagonal)) if local_diagonal.size else float("-inf")
+        )
+        global_diagonal_min = comm.allreduce(local_diagonal_min, op=MPI.MIN)
+        global_diagonal_max = comm.allreduce(local_diagonal_max, op=MPI.MAX)
+        if np.isfinite(global_diagonal_min) and np.isfinite(global_diagonal_max):
+            diagonal_min = float(global_diagonal_min)
+            diagonal_max = float(global_diagonal_max)
+    except Exception:
+        diagonal_min = "not_available"
+        diagonal_max = "not_available"
+    finally:
+        if diagonal is not None:
+            diagonal.destroy()
+    diagonal_nnz_local = int(
+        sum(
+            any(
+                int(column) == row_start + local_row
+                for column in columns[row_ptr[local_row] : row_ptr[local_row + 1]]
+            )
+            for local_row in range(row_end - row_start)
+        )
+    )
+    return {
+        "global_shape": [int(value) for value in matrix.getSize()],
+        "local_shape": [int(value) for value in matrix.getLocalSize()],
+        "ownership_range": [row_start, row_end],
+        "ownership_ranges": ownership_ranges,
+        "nnz_local": int(len(columns)),
+        "nnz_global": int(comm.allreduce(len(columns), op=MPI.SUM)),
+        "diagonal_nnz_local": diagonal_nnz_local,
+        "diagonal_nnz_global": int(comm.allreduce(diagonal_nnz_local, op=MPI.SUM)),
+        "zero_row_count": int(comm.allreduce(local_zero_rows, op=MPI.SUM)),
+        "matrix_norm_1": norm_one,
+        "matrix_norm_infinity": norm_infinity,
+        "finite_values": bool(comm.allreduce(local_finite, op=MPI.LAND)),
+        "diagonal_abs_min": diagonal_min,
+        "diagonal_abs_max": diagonal_max,
+        "csr_nnz_used": int(info.get("nz_used", len(columns))),
+        "mumps_diagnostics": "not_available",
+    }
+
+
+def audit_supernode_factor_paths(
+    matrix: PETSc.Mat,
+    rhs_vectors: dict[str, PETSc.Vec],
+    *,
+    lifecycle_callback: Any = None,
+) -> dict[str, Any]:
+    """Compare conventional and detached factor solves without co-residence.
+
+    The caller owns ``matrix`` and all RHS vectors.  Each path owns one
+    temporary factor at a time; every solution and residual workspace is
+    cleared before use and destroyed before the next RHS/path.
+    """
+
+    if not rhs_vectors:
+        raise ValueError("supernode factor forensic requires at least one RHS")
+    matrix_evidence = _supernode_factor_matrix_evidence(matrix)
+    paths: dict[str, dict[str, Any]] = {}
+    first_nonfinite_stage: dict[str, Any] | None = None
+    for path_name, factor_only_storage in (
+        ("A_conventional_ksp", False),
+        ("B_factor_only_detached", True),
+    ):
+        if lifecycle_callback is not None:
+            lifecycle_callback(
+                "factor_forensic_path_begin",
+                {"path": path_name, "factor_only_storage": factor_only_storage},
+            )
+        factor = None
+        reports: list[dict[str, Any]] = []
+        factor_setup_error: dict[str, Any] | None = None
+        ready_diagnostics: dict[str, Any] | str = "not_available"
+        try:
+            factor = ResearchExactFactorInverse(
+                matrix,
+                factor_solver_type="mumps",
+                factor_only_storage=factor_only_storage,
+            )
+            if factor_only_storage:
+                factor.release_borrowed_matrix()
+            ready_diagnostics = dict(factor.diagnostics)
+            if ready_diagnostics.get("factor_matrix_stats") is None:
+                ready_diagnostics["factor_matrix_stats"] = "not_available"
+            if lifecycle_callback is not None:
+                lifecycle_callback(
+                    "factor_forensic_path_ready",
+                    {
+                        "path": path_name,
+                        "factor_only_storage": factor_only_storage,
+                        "factor_matrix_stats": ready_diagnostics.get(
+                            "factor_matrix_stats"
+                        )
+                        or "not_available",
+                    },
+                )
+            for label, rhs in rhs_vectors.items():
+                solution = matrix.createVecLeft()
+                residual = solution.duplicate()
+                solution.set(0.0)
+                residual.set(0.0)
+                rhs_work = rhs.duplicate()
+                rhs_work.set(0.0)
+                rhs.copy(rhs_work)
+                rhs_norm: float | None = None
+                solution_norm: float | None = None
+                try:
+                    rhs_norm_value = float(rhs_work.norm())
+                    rhs_norm = rhs_norm_value if np.isfinite(rhs_norm_value) else None
+                    if rhs_norm is None:
+                        report = {
+                            "label": label,
+                            "status": "nonfinite_rhs_norm",
+                            "finite": False,
+                            "mandatory": label == "zero_rhs",
+                            "degenerate": False,
+                            "rhs_norm": None,
+                            "solution_norm": None,
+                            "relative_residual": None,
+                            "norm_amplification": None,
+                            "first_nonfinite_stage": "rhs_norm",
+                        }
+                        reports.append(report)
+                        if first_nonfinite_stage is None:
+                            first_nonfinite_stage = {
+                                "path": path_name,
+                                "label": label,
+                                "stage": "rhs_norm",
+                            }
+                        continue
+                    factor.solve(rhs_work, solution)
+                    solution_norm_value = float(solution.norm())
+                    solution_norm = (
+                        solution_norm_value
+                        if np.isfinite(solution_norm_value)
+                        else None
+                    )
+                    local_values = np.asarray(
+                        solution.getArray(readonly=True), dtype=np.complex128
+                    )
+                    solution_values_finite = bool(
+                        matrix.getComm()
+                        .tompi4py()
+                        .allreduce(bool(np.all(np.isfinite(local_values))), op=MPI.LAND)
+                    )
+                    if not solution_values_finite:
+                        report = {
+                            "label": label,
+                            "status": "nonfinite_solution",
+                            "finite": False,
+                            "mandatory": label == "zero_rhs" or rhs_norm != 0.0,
+                            "degenerate": bool(rhs_norm == 0.0),
+                            "rhs_norm": rhs_norm,
+                            "solution_norm": solution_norm,
+                            "relative_residual": None,
+                            "norm_amplification": None,
+                            "first_nonfinite_stage": "solve_output",
+                        }
+                        if first_nonfinite_stage is None:
+                            first_nonfinite_stage = {
+                                "path": path_name,
+                                "label": label,
+                                "stage": "solve_output",
+                            }
+                    elif solution_norm is None:
+                        report = {
+                            "label": label,
+                            "status": "nonfinite_solution_norm",
+                            "finite": False,
+                            "mandatory": label == "zero_rhs" or rhs_norm != 0.0,
+                            "degenerate": bool(rhs_norm == 0.0),
+                            "rhs_norm": rhs_norm,
+                            "solution_norm": None,
+                            "relative_residual": None,
+                            "norm_amplification": None,
+                            "first_nonfinite_stage": "solution_norm",
+                        }
+                        reports.append(report)
+                        if first_nonfinite_stage is None:
+                            first_nonfinite_stage = {
+                                "path": path_name,
+                                "label": label,
+                                "stage": "solution_norm",
+                            }
+                        continue
+                    else:
+                        residual.set(0.0)
+                        matrix.mult(solution, residual)
+                        residual.axpy(PETSc.ScalarType(-1.0), rhs_work)
+                        denominator = max(rhs_norm_value, 1.0e-30)
+                        residual_value = float(residual.norm()) / denominator
+                        amplification = solution_norm_value / denominator
+                        residual_finite = bool(np.isfinite(residual_value))
+                        amplification_finite = bool(np.isfinite(amplification))
+                        finite = bool(
+                            rhs_norm is not None
+                            and solution_norm is not None
+                            and residual_finite
+                            and amplification_finite
+                        )
+                        degenerate = bool(rhs_norm_value <= 1.0e-30)
+                        first_report_nonfinite_stage = None
+                        if not residual_finite:
+                            first_report_nonfinite_stage = "residual"
+                        elif not amplification_finite:
+                            first_report_nonfinite_stage = "amplification"
+                        if (
+                            first_report_nonfinite_stage is not None
+                            and first_nonfinite_stage is None
+                        ):
+                            first_nonfinite_stage = {
+                                "path": path_name,
+                                "label": label,
+                                "stage": first_report_nonfinite_stage,
+                            }
+                        report = {
+                            "label": label,
+                            "status": (
+                                "degenerate_zero_map"
+                                if degenerate and finite
+                                else "measured"
+                                if finite
+                                else f"nonfinite_{first_report_nonfinite_stage}"
+                            ),
+                            "finite": finite,
+                            "mandatory": label == "zero_rhs" or not degenerate,
+                            "degenerate": degenerate,
+                            "rhs_norm": rhs_norm,
+                            "solution_norm": solution_norm,
+                            "relative_residual": (
+                                residual_value if residual_finite else None
+                            ),
+                            "norm_amplification": (
+                                amplification if amplification_finite else None
+                            ),
+                            "first_nonfinite_stage": first_report_nonfinite_stage,
+                        }
+                    reports.append(report)
+                except Exception as exc:
+                    reports.append(
+                        {
+                            "label": label,
+                            "status": "explicit_solve_failure",
+                            "finite": False,
+                            "mandatory": label == "zero_rhs" or rhs_norm != 0.0,
+                            "degenerate": bool(rhs_norm == 0.0),
+                            "rhs_norm": rhs_norm,
+                            "solution_norm": solution_norm,
+                            "relative_residual": None,
+                            "norm_amplification": None,
+                            "first_nonfinite_stage": "solve_exception",
+                            "exception_type": type(exc).__name__,
+                        }
+                    )
+                finally:
+                    residual.destroy()
+                    solution.destroy()
+                    rhs_work.destroy()
+        except Exception as exc:
+            factor_setup_error = {
+                "status": "explicit_factor_setup_failure",
+                "exception_type": type(exc).__name__,
+            }
+            reports = [
+                {
+                    "label": label,
+                    "status": "not_run_factor_setup_failure",
+                    "finite": False,
+                    "mandatory": label == "zero_rhs",
+                    "degenerate": False,
+                    "rhs_norm": None,
+                    "solution_norm": None,
+                    "relative_residual": None,
+                    "norm_amplification": None,
+                    "first_nonfinite_stage": "factor_setup",
+                }
+                for label in rhs_vectors
+            ]
+        finally:
+            after_diagnostics: dict[str, Any] | str = "not_available"
+            if factor is not None:
+                factor.destroy()
+                after_diagnostics = dict(factor.diagnostics)
+                if after_diagnostics.get("factor_matrix_stats") is None:
+                    after_diagnostics["factor_matrix_stats"] = "not_available"
+            if lifecycle_callback is not None:
+                lifecycle_callback(
+                    "factor_forensic_path_cleanup",
+                    {
+                        "path": path_name,
+                        "factor_count_after_cleanup": (
+                            after_diagnostics.get("exact_factor_count", "not_available")
+                            if isinstance(after_diagnostics, dict)
+                            else "not_available"
+                        ),
+                        "co_resident_factor_count": 0,
+                    },
+                )
+        nonzero_reports = [
+            report for report in reports if report["label"] != "zero_rhs"
+        ]
+
+        def _report_pass(report: Mapping[str, Any]) -> bool:
+            if report.get("finite") is not True:
+                return False
+            if report.get("label") == "zero_rhs":
+                solution_norm = report.get("solution_norm")
+                return solution_norm is not None and solution_norm <= 1.0e-13
+            if report.get("degenerate") is True:
+                return True
+            return bool(
+                report.get("norm_amplification") is not None
+                and np.isfinite(report["norm_amplification"])
+                and report.get("relative_residual") is not None
+                and report["relative_residual"] <= 1.0e-9
+            )
+
+        for report in reports:
+            report["gate_pass"] = _report_pass(report)
+        path_pass = bool(all(report["gate_pass"] for report in reports))
+        paths[path_name] = {
+            "factor_only_storage": factor_only_storage,
+            "reports": reports,
+            "path_pass": path_pass,
+            "factor_setup": factor_setup_error or {"status": "measured"},
+            "factor_diagnostics_ready": ready_diagnostics,
+            "factor_diagnostics_after_cleanup": after_diagnostics,
+            "nonzero_report_count": len(nonzero_reports),
+            "factor_count_after_cleanup": 0,
+            "co_resident_factor_count": 0,
+        }
+    return {
+        "matrix_evidence": matrix_evidence,
+        "paths": paths,
+        "path_order": ["A_conventional_ksp", "B_factor_only_detached"],
+        "paths_strictly_serial": True,
+        "first_nonfinite_stage": first_nonfinite_stage,
+        "mumps_info": "not_available",
+    }
 
 
 def build_real_layer_labels(
