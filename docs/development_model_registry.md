@@ -1486,3 +1486,12 @@ compact record 保留。
 3. COMSOL 参考只计算零级；非零衍射级不能写 0。
 4. 不同物理配置、偏振、网格和软件之间的数值只能做标注清楚的横向参考，不能混成单一收敛序列。
 5. 新任务不得以未填写占位词收口；历史缺口必须说明“历史未记录”，当前未运行项必须写 `not_run`。
+
+## Task039 Review V8-3 bottom layer-sweep
+
+| Task / Model ID | 探索目的 | 实际运行到哪一步 | 实际数值 | 未满足的具体物理量/资源 Gate | 直观原因 | status | 下一步或停止理由 | evidence |
+|---|---|---|---|---|---|---|---|---|
+| `task039_v8_layer_sweep_bottom` | 六层 fixed sweep 降低 side action 的 retained factor 压力 | bottom `J1→F1→FB1→FB2→FB4` 全部完成 | construction peak `22.273887634 GiB`；FB4 worst mandatory residual `2025057925864.6484`；preferred max `1147917207920.235` | mandatory `<=1e-2`、preferred `<=1e-3`、repeat/linearity `<=1e-10` 未满足；overall retained `not_run` | layer sweep 的 source/action 数值容量不足，非内存越线 | `controlled_numerical_negative` | 停止 top/both/full/K；保留 raw/compact，不调参重跑 | [V8-3 record](../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v8_layer_sweep_bottom_v1.json) |
+
+V8-3 的五方法和资源边界见 [bottom outcome](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v8_layer_sweep_bottom.md)。该研究路径不改变 ordinary/default solver，
+也不构成 0.7 nm 或 Full3D capacity qualification。

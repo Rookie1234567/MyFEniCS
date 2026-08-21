@@ -2520,3 +2520,17 @@ artifacts 均保留。0.7 nm PDE、Full3D 新 heavy、第三 BLR、普通 ILU/bu
 top/both/full Petrov 均 `not_run`；ordinary defaults unchanged，master untouched。
 最终内存—残差—时间表见
 [V7 memory summary](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v7_memory_limit_summary.md)。
+
+## 2026-08-21：Task039 Review V8-3 bottom layer-sweep
+
+V8-1 的六层 block operator 重构通过真实 F action/graph Gate；V8-3 使用同一 bottom component
+顺序评估 `J1/F1/FB1/FB2/FB4`。construction 全区间 peak 为 `23916404736 B =
+22.273887634 GiB <=45 GiB`，swap=0，六个 layer factors 从 6 清理到 0，full-side/global direct
+factor=0/0；但五个候选的 mandatory residual 与稳定性 Gate 均在 FB4 前后未通过，精确分类为
+`LAYER_SWEEP_NUMERICAL_LIMIT_NOT_REACHED_BY_FB4`。该 worker exit3 是数值 Gate 的受控退出，
+不是父 watchdog 的资源终止；generic 224 GB ledger 字段不属于 V8 authority。
+
+preferred retained rehydration 没有发生，因此 overall retained interval 是 `not_available/not_run`，
+不能使用临时方法 interval 代替 30 GiB Gate。top、both-side、full、matrix-free K、0.7 nm PDE 和
+新的 solver development 均停止/未运行。详见 [V8-3 outcome](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v8_layer_sweep_bottom.md) 和
+[V8 Pareto](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v8_memory_residual_time_pareto.md)。

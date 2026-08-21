@@ -645,3 +645,24 @@ wall/RSS/cleanup inventory 为 `not_measured`，DtN global low-rank coupling 不
 
 V5/V6 负结果、V7 首次 ownership/telemetry implementation failures 和所有 raw root 均保留，
 ordinary defaults unchanged，master untouched。
+
+## Review V8-3：bottom layer-sweep numerical negative
+
+V8-1 的真实六层 local-F block reconstruction 已通过 action/graph Gate；V8-3 随后在同一 h4/M480/MPI8
+bottom component 上按 `J1 → F1 → FB1 → FB2 → FB4` 评估五个固定候选。六个 layer factors 从 ready `6`
+清理到 `0`，full-side/global direct factor 为 `0/0`，但五个 mandatory source 的 true residual
+在 FB4 仍达到 `235173765223.59402`–`2025057925864.6484`，远高于 `1e-2`；FB4 的 repeat/linearity
+也为 `1.8963` / `3.2920`，高于 `1e-10`。正式分类为
+`LAYER_SWEEP_NUMERICAL_LIMIT_NOT_REACHED_BY_FB4`，不是资源 stop。
+
+| V8-3 authority | 结果 |
+|---|---|
+| overall construction | `22.273887634 GiB <=45 GiB`，measured/pass |
+| overall retained | `not_available / not_run`；没有 preferred rehydration，不能写 `<=30 GiB` pass |
+| swap | `0` |
+| top / both / full / matrix-free K / PDE | `not_run` |
+
+generic `task039_memory_budget` 中的 224 GB 不是 V8 authority；本路线使用
+`absolute_terminate_memory_bytes=48318382080`、effective hard stop `45 GiB`。完整五候选表与
+逐 probe 数值见 [V8-3 bottom outcome](v8_layer_sweep_bottom.md)，hash-bound record 见
+[V8-3 record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v8_layer_sweep_bottom_v1.json)。

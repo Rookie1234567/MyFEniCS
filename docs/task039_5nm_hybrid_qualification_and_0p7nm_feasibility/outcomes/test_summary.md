@@ -279,3 +279,18 @@ raw/marker/ledger 的 hash 与 `status=launching`、`exit_status=null`、`ledger
 V7 Lane B 的 producer/consumer 与 Lane C 负结果按 raw authority 分开记录；Lane A full
 formal 的 residual/physics pass 也不被 component RSS 取代。首次 implementation failure、V5/V6
 负结果均未被重写。
+
+## Review V8-3 closeout checks
+
+| 检查/证据 | 结果 | 口径 |
+|---|---|---|
+| V8-3 compact record parse/hash | `pass` | 13 个 raw 文件 hash 重算；5 个 method records 与 raw Gate 字段重算；不信 status |
+| V8-3 method Gate | `numerical negative by FB4` | J1–FB4 五个 authoritative method records；不是 `sweep_diagnostics_after_cleanup.method` |
+| V8-3 resource authority | construction `22.273887634 GiB <=45 GiB`；retained `not_available/not_run` | per-method retained 仅 evidence-only |
+| V8-3 raw ledger | `controlled_stop` | 数值 Gate 受控退出，不是 memory termination；parent termination null |
+| V8-2 tiny layer-sweep action | `serial 2 passed/1.70 s；MPI2 各 rank 2 passed/0.97 s；MPI4 各 rank 2 passed/1.80 s` | qualified `test_295_task039_layer_block.py`；不含 PDE |
+| V8-3 docs/Markdown/table/fence/link | `pass`，12 个 changed Markdown 文件，0.006 s | docs-only Gate |
+| `source scripts/activate_myfenics_wsl.sh && python benchmarks/check_benchmarks.py --no-write` | `exit 0；302/302 passed；0.24 s` | qualified WSL；不写 raw、不启动 PDE |
+| `git diff --check` | `pass；exit 0` | docs/record-only diff |
+| Ruff / format / compileall | `inherited pass; no Python changed` | 本轮不重跑 solver Python |
+| repository full pytest / CI | `not_run` | 不声称 CI 或 full pytest |
