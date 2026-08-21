@@ -1168,6 +1168,8 @@ def test_v7_full_formal_release_gate_controls_recovery(
     ("status", "expected_exit"),
     (
         ("full_formal_completed", 0),
+        ("component_stable_preferred_resource_pending", 0),
+        ("component_stability_failed", 3),
         ("full_formal_lifecycle_failure", 3),
         ("full_formal_recovery_failure", 3),
     ),
@@ -3893,6 +3895,358 @@ def test_v9_bare_f_main_dry_run_uses_parser_dest(tmp_path, capsys):
     )
     assert not any("selected-mode-packet" in argument for argument in plan["argv"])
     assert not run_directory.exists()
+
+
+def test_v9_layer_supernode_plan_is_single_route_and_packet_free(tmp_path):
+    h4_input = Path(
+        "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
+    )
+    spool_root = Path(
+        "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/"
+        "numerical_output"
+    )
+    plan = orchestration.v3_7_execution_dry_run(
+        h4_input,
+        tmp_path / "v9-supernode-plan",
+        source_sha="e" * 40,
+        v9_h4_layer_supernode_bottom=True,
+        v9_h4_layer_supernode_exact_spool_root=spool_root,
+    )
+    route_flags = {
+        "--v5-h4-setup-only",
+        "--v5-h4-blr-side-component",
+        "--v5-h4-fixed-budget-bottom-component",
+        "--v6-h4-post-compaction-setup-only",
+        "--v6-h4-port-modal-bottom-component",
+        "--v7-h4-exact-side-limit-setup-only",
+        "--v7-h4-exact-side-full-formal",
+        "--v7-h4-streamed-bottom-producer",
+        "--v7-h4-streamed-bottom-consumer",
+        "--v8-h4-layer-block-reconstruction",
+        "--v8-h4-layer-sweep-bottom",
+        "--v9-h4-bare-f-full-side-diagnostic",
+        orchestration.V9_H4_LAYER_SUPERNODE_BOTTOM_FLAG,
+    }
+    assert [flag for flag in plan["argv"] if flag in route_flags] == [
+        orchestration.V9_H4_LAYER_SUPERNODE_BOTTOM_FLAG
+    ]
+    assert plan["argv"][1:3] == ["-n", "8"]
+    assert (
+        plan["argv"].count(orchestration.V9_H4_LAYER_SUPERNODE_EXACT_SPOOL_ROOT_FLAG)
+        == 1
+    )
+    assert plan["worker_contract"]["method"] == (
+        orchestration.V9_H4_LAYER_SUPERNODE_METHOD
+    )
+    assert plan["worker_contract"]["profile_id"] == (
+        orchestration.V9_H4_LAYER_SUPERNODE_PROFILE_ID
+    )
+    assert plan["worker_contract"]["exact_spool_root"] == str(spool_root.resolve())
+    assert plan["watchdog"]["absolute_terminate_memory_bytes"] == 45 * 2**30
+    assert not any("selected-mode-packet" in arg for arg in plan["argv"])
+    assert not (tmp_path / "v9-supernode-plan").exists()
+
+
+def test_v9_layer_supernode_worker_releases_shared_factors_and_runs_retained_probe(
+    monkeypatch,
+):
+    if MPI.COMM_WORLD.size != 1:
+        pytest.skip("run this fake-side lifecycle contract in serial")
+
+    timeline: list[str] = []
+    events: list[str] = []
+
+    class Matrix:
+        def getSize(self):
+            return (6, 6)
+
+        def getOwnershipRange(self):
+            return (0, 6)
+
+    class Resource:
+        def __init__(self, name):
+            self.name = name
+            self.destroyed = False
+
+        def destroy(self):
+            self.destroyed = True
+            timeline.append(f"destroy:{self.name}")
+
+    class System:
+        def __init__(self):
+            self.A = Matrix()
+            self.destroyed = False
+
+        def destroy(self):
+            self.destroyed = True
+            timeline.append("system_destroy")
+
+    system = System()
+    components = SimpleNamespace(
+        F=Resource("F"), H=Resource("H"), C=Resource("C"), D=Resource("D")
+    )
+    resource_refs = (components.F, components.H, components.C, components.D)
+
+    class Action:
+        def __init__(self):
+            self.destroyed = False
+            self.apply_calls: list[str] = []
+            self._diagnostics = {
+                "factor_count_ready": 3,
+                "factor_count_after_cleanup": None,
+                "factor_set_build_count": 1,
+                "supernode_row_coverage_exact": True,
+                "cross_lower_block_count": 2,
+                "cross_upper_block_count": 2,
+                "full_side_exact_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "nested_ksp_count": 0,
+            }
+
+        @property
+        def diagnostics(self):
+            result = dict(self._diagnostics)
+            if self.destroyed:
+                result["factor_count_ready"] = 0
+                result["factor_count_after_cleanup"] = 0
+                result["destroy_marker"] = "completed"
+            else:
+                result["destroy_marker"] = "pending"
+            return result
+
+        def apply_checkpoint(self, method, _source, _target):
+            self.apply_calls.append(method)
+
+        def destroy(self):
+            if not self.destroyed:
+                self.destroyed = True
+                timeline.append("action_destroy")
+
+    action = Action()
+
+    def side_builder(**_kwargs):
+        return system
+
+    def explicit_components(_system):
+        return components
+
+    def labels(_matrix, _system):
+        return np.arange(6, dtype=np.int32), {"z_layer_boundaries": list(range(7))}
+
+    monkeypatch.setattr(
+        orchestration, "_build_research_explicit_side_components", explicit_components
+    )
+    monkeypatch.setattr(orchestration, "build_real_layer_labels", labels)
+    monkeypatch.setattr(
+        orchestration,
+        "build_fixed_two_layer_supernode_action",
+        lambda *args, **kwargs: action,
+    )
+
+    def cleanup(_comm):
+        timeline.append("collective_cleanup")
+        return {"collective_call_completed": True}
+
+    monkeypatch.setattr(orchestration, "collective_heap_cleanup", cleanup)
+
+    def marker_callback(marker, detail):
+        del detail
+        events.append(marker)
+        if marker == "v9_layer_supernode_bottom_retained_state_release":
+            assert action.destroyed is True
+            assert system.destroyed is True
+            assert all(resource.destroyed for resource in resource_refs)
+            assert timeline[-1] == "collective_cleanup"
+
+    labels_expected = list(orchestration.V6_PORT_MODAL_HOLDOUT_LABELS)
+
+    def holdout_loader(_root, _comm):
+        return (
+            {label: {} for label in labels_expected},
+            {"source": "tiny-frozen-spool"},
+        )
+
+    def holdout_runner(*, method, action, **_kwargs):
+        action.apply_checkpoint(method, object(), object())
+        residual = 2.0 if method == "SN2-J" else 1.0
+        return [
+            {
+                "label": label,
+                "finite": True,
+                "repeat_relative_error": 1.0e-13,
+                "linearity_relative_error": 2.0e-13,
+                "r_F": 0.0 if label == "physical_side_rhs" else residual,
+                "degenerate_uninformative": label == "physical_side_rhs",
+            }
+            for label in labels_expected
+        ]
+
+    def retained_runner(*, method, action, **_kwargs):
+        action.apply_checkpoint(method, object(), object())
+        action.apply_checkpoint(method, object(), object())
+        return {
+            "status": "measured",
+            "method": method,
+            "r_F": 1.5,
+            "finite": True,
+            "repeat_relative_error": 1.0e-13,
+            "linearity_relative_error": 2.0e-13,
+        }
+
+    result = orchestration.run_v9_h4_layer_supernode_bottom_component(
+        SimpleNamespace(),
+        profile=SimpleNamespace(bottom_interface_nm=0.0, top_interface_nm=1.0),
+        comm=MPI.COMM_SELF,
+        marker_callback=marker_callback,
+        exact_spool_root="unused-spool",
+        source_sha="e" * 40,
+        side_system_builder=side_builder,
+        holdout_loader=holdout_loader,
+        holdout_runner=holdout_runner,
+        retained_runner=retained_runner,
+    )
+
+    assert events[:3] == [
+        "v9_layer_supernode_bottom_construction_begin",
+        "v9_layer_supernode_bottom_factors_ready",
+        "v9_layer_supernode_bottom_holdout_ready",
+    ]
+    assert events.index("v9_layer_supernode_bottom_SN2-J_complete") < events.index(
+        "v9_layer_supernode_bottom_SN2-SGS_begin"
+    )
+    assert events[-2:] == [
+        "v9_layer_supernode_bottom_retained_apply",
+        "v9_layer_supernode_bottom_retained_state_release",
+    ]
+    assert result["preferred_method"] == "SN2-SGS"
+    assert result["status"] == "component_stable_preferred_resource_pending"
+    assert result["gate"]["numerical_stability_gate_pass"] is True
+    assert result["gate"]["residual_1e2_is_record_only"] is True
+    assert result["factor_inventory"]["factor_count_ready"] == 3
+    assert result["factor_inventory"]["factor_count_after_cleanup"] == 0
+    assert action.apply_calls.count("SN2-J") >= 1
+    assert action.apply_calls.count("SN2-SGS") >= 1
+    assert result["lifecycle"]["spool_released"] is True
+    assert result["telemetry"]["process_tree_samples"]["status"] == (
+        "expected_from_parent_launcher"
+    )
+    assert result["telemetry"]["memory_stages"]["status"] == (
+        "expected_from_parent_launcher"
+    )
+    assert result["telemetry"]["memory_stage_markers"]["status"] == (
+        "measured_worker_marker_stream"
+    )
+    assert result["telemetry"]["memory_object_ledger"] == {
+        "path": "numerical_output/memory_object_ledger.json",
+        "schema": "task039.v3-7-memory-object-ledger.v1",
+        "status": "finalized_in_worker_finalizer",
+    }
+    assert result["telemetry"]["gate_contract"]["factor_count_ready"] == 3
+    assert result["telemetry"]["gate_contract"]["full_side_exact_factor_count"] == 0
+
+
+def test_v9_layer_supernode_run_task_finalizer_writes_record_and_ledger(
+    tmp_path, monkeypatch, capsys
+):
+    payload = load_and_resolve(
+        Path("input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat")
+    ).as_jsonable()
+    run_directory = tmp_path / "v9-supernode-run-task"
+    record_path = run_directory / "numerical_output" / "v3_v7_diagnostic.json"
+
+    def fake_component(*_args, **_kwargs):
+        return {
+            "schema": orchestration.V9_H4_LAYER_SUPERNODE_SCHEMA,
+            "method": orchestration.V9_H4_LAYER_SUPERNODE_METHOD,
+            "status": "component_stable_preferred_resource_pending",
+            "preferred_method": "SN2-J",
+            "gate": {"numerical_stability_gate_pass": True},
+            "telemetry": {
+                "process_tree_samples": {
+                    "path": "numerical_output/process_tree_samples.jsonl",
+                    "status": "expected_from_parent_launcher",
+                },
+                "memory_stages": {
+                    "path": "numerical_output/memory_stages.jsonl",
+                    "status": "expected_from_parent_launcher",
+                },
+                "memory_stage_markers": {
+                    "path": "numerical_output/memory_stage_markers.raw.jsonl",
+                    "status": "measured_worker_marker_stream",
+                },
+                "memory_object_ledger": {
+                    "path": "numerical_output/memory_object_ledger.json",
+                    "schema": "task039.v3-7-memory-object-ledger.v1",
+                    "status": "finalized_in_worker_finalizer",
+                },
+                "gate_contract": {
+                    "factor_count_ready": 3,
+                    "factor_count_after_cleanup": 0,
+                    "full_side_exact_factor_count": 0,
+                    "global_direct_factor_count": 0,
+                    "nested_ksp_count": 0,
+                    "selected_mode_packet_opened": False,
+                    "qep_count": 0,
+                },
+            },
+        }
+
+    monkeypatch.setattr(
+        orchestration,
+        "run_v9_h4_layer_supernode_bottom_component",
+        fake_component,
+    )
+    result = orchestration.run_task039_v3_7_diagnostic(
+        payload,
+        run_directory,
+        source_sha="e" * 40,
+        comm=MPI.COMM_SELF,
+        v9_h4_layer_supernode_bottom=True,
+        v9_h4_layer_supernode_exact_spool_root=tmp_path / "exact-spool",
+        record_path=record_path,
+    )
+
+    assert result["status"] == "component_stable_preferred_resource_pending"
+    saved = json.loads(record_path.read_text(encoding="utf-8"))
+    ledger_ref = saved["telemetry"]["memory_object_ledger"]
+    assert ledger_ref["path"] == "numerical_output/memory_object_ledger.json"
+    assert ledger_ref["status"] == "completed"
+    assert len(ledger_ref["sha256"]) == 64
+    ledger = json.loads(
+        (run_directory / ledger_ref["path"]).read_text(encoding="utf-8")
+    )
+    assert ledger["status"] == "completed"
+
+    monkeypatch.setattr(
+        orchestration,
+        "MPI",
+        SimpleNamespace(COMM_WORLD=SimpleNamespace(size=8, rank=0)),
+    )
+    main_run_directory = tmp_path / "v9-supernode-main"
+    exit_code = orchestration.main(
+        [
+            "--worker",
+            "--launched-by-task038-watchdog",
+            "--input",
+            "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat",
+            "--run-directory",
+            str(main_run_directory),
+            "--source-sha",
+            "e" * 40,
+            orchestration.V9_H4_LAYER_SUPERNODE_BOTTOM_FLAG,
+            orchestration.V9_H4_LAYER_SUPERNODE_EXACT_SPOOL_ROOT_FLAG,
+            str(tmp_path / "main-exact-spool"),
+        ]
+    )
+    main_result = json.loads(capsys.readouterr().out)
+    assert exit_code == 0
+    assert main_result["status"] == "component_stable_preferred_resource_pending"
+    main_record = json.loads(
+        (main_run_directory / "numerical_output" / "v3_v7_diagnostic.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert main_record["telemetry"]["memory_object_ledger"]["status"] == ("completed")
 
 
 def test_v9_frozen_holdout_rejects_wrong_inherited_producer_sha(tmp_path):

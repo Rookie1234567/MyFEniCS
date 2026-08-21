@@ -936,6 +936,192 @@ def test_v9_bare_f_launcher_binds_worker_identity_and_retained_not_run(tmp_path)
     assert telemetry["gate_contract"]["nested_ksp_count"] == 0
 
 
+@pytest.mark.parametrize(
+    ("worker_stable", "retained_memory", "expected_status", "expected_pass"),
+    (
+        (True, 10 * 2**30, "pass", True),
+        (True, 31 * 2**30, "resource_gate_failed", False),
+        (False, None, "numerical_stability_failed_retained_not_run", False),
+    ),
+    ids=("resource-pass", "retained-resource-fail", "stability-fail"),
+)
+def test_v9_layer_supernode_launcher_distinguishes_resource_and_stability_gates(
+    tmp_path, worker_stable, retained_memory, expected_status, expected_pass
+):
+    specification = replace(
+        load_and_resolve(TASK039_V4_H4_ITERATIVE),
+        expected_output_parent=tmp_path / "results",
+    )
+    run_directory = tmp_path / f"v9-supernode-{expected_status}"
+    diagnostic_directory = run_directory / "numerical_output"
+    diagnostic_directory.mkdir(parents=True)
+    source_sha = "e" * 40
+    (diagnostic_directory / "v3_v7_diagnostic.json").write_text(
+        json.dumps(
+            {
+                "schema": launcher.V9_H4_LAYER_SUPERNODE_SCHEMA,
+                "method": launcher.V9_H4_LAYER_SUPERNODE_METHOD,
+                "source_sha": source_sha,
+                "gate": {"numerical_stability_gate_pass": worker_stable},
+                "factor_inventory": {
+                    "factor_count_ready": 3,
+                    "factor_count_after_cleanup": 0,
+                    "full_side_exact_factor_count": 0,
+                    "global_direct_factor_count": 0,
+                    "nested_ksp_count": 0,
+                },
+                "selected_mode_packet_opened": False,
+                "qep_count": 0,
+                "preferred_method": "SN2-J" if worker_stable else None,
+                "lifecycle": {
+                    "retained_probe": {
+                        "status": "measured" if worker_stable else "not_run"
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    marker_path = diagnostic_directory / "memory_stage_markers.raw.jsonl"
+    marker_batches = {
+        1: ["v9_layer_supernode_bottom_construction_begin"],
+        2: ["v9_layer_supernode_bottom_SN2-J_begin"],
+        3: [
+            "v9_layer_supernode_bottom_SN2-J_cleanup",
+            "v9_layer_supernode_bottom_SN2-SGS_begin",
+        ],
+        4: [
+            "v9_layer_supernode_bottom_SN2-SGS_cleanup",
+            "v9_layer_supernode_bottom_construction_end",
+        ],
+        5: (
+            ["v9_layer_supernode_bottom_retained_apply_state_ready"]
+            if worker_stable
+            else []
+        ),
+        6: (
+            ["v9_layer_supernode_bottom_retained_state_release"]
+            if worker_stable
+            else []
+        ),
+    }
+    sample_calls = 0
+
+    def popen(_argv, **_kwargs):
+        return _SequenceProcess(polls_before_exit=5)
+
+    def sample_factory(_pid):
+        nonlocal sample_calls
+        sample_calls += 1
+        for marker in marker_batches.get(sample_calls, ()):
+            with marker_path.open("a", encoding="utf-8") as stream:
+                stream.write(
+                    json.dumps(
+                        {
+                            "stage": marker,
+                            "status": "end",
+                            "elapsed_seconds": float(sample_calls),
+                        }
+                    )
+                    + "\n"
+                )
+        if sample_calls in (5, 6) and retained_memory is not None:
+            return _authority(memory=retained_memory, swap=0)
+        return _authority(memory=10 * 2**30, swap=0)
+
+    plan = SimpleNamespace(
+        argv=("/opt/fake-worker",),
+        method=launcher.V9_H4_LAYER_SUPERNODE_METHOD,
+        source_sha=source_sha,
+        contract_probe=False,
+        task039_trace_audit=False,
+    )
+    result = launcher._run_worker(
+        plan,
+        specification,
+        run_directory,
+        popen_factory=popen,
+        sample_factory=sample_factory,
+        terminate_factory=lambda _process: {"requested": True},
+        monotonic=iter(float(index) for index in range(16)).__next__,
+        sleep=lambda _seconds: None,
+        poll_interval=0.25,
+    )
+    telemetry = result["resource_authority"]["v9_h4_layer_supernode_bottom_telemetry"]
+    assert telemetry["worker_record_status"] == "measured"
+    assert telemetry["overall"]["status"] == expected_status
+    assert telemetry["overall"]["pass"] is expected_pass
+    assert telemetry["gate_contract"]["factor_count_ready"] == 3
+    assert telemetry["gate_contract"]["factor_count_after_cleanup"] == 0
+    assert telemetry["gate_contract"]["full_side_exact_factor_count"] == 0
+    assert telemetry["gate_contract"]["global_direct_factor_count"] == 0
+    assert telemetry["gate_contract"]["nested_ksp_count"] == 0
+    if worker_stable:
+        assert telemetry["construction_interval_summary"]["pass"] is True
+        assert telemetry["retained_interval_summary"]["status"] == "measured"
+        assert telemetry["retained_interval_summary"]["pass"] is (
+            expected_status == "pass"
+        )
+    else:
+        assert telemetry["retained_interval_summary"]["status"] == "not_available"
+
+
+def test_v9_layer_supernode_launcher_rejects_worker_contract_mismatch(tmp_path):
+    specification = replace(
+        load_and_resolve(TASK039_V4_H4_ITERATIVE),
+        expected_output_parent=tmp_path / "results",
+    )
+    run_directory = tmp_path / "v9-supernode-contract-mismatch"
+    diagnostic_directory = run_directory / "numerical_output"
+    diagnostic_directory.mkdir(parents=True)
+    source_sha = "f" * 40
+    (diagnostic_directory / "v3_v7_diagnostic.json").write_text(
+        json.dumps(
+            {
+                "schema": launcher.V9_H4_LAYER_SUPERNODE_SCHEMA,
+                "method": launcher.V9_H4_LAYER_SUPERNODE_METHOD,
+                "source_sha": source_sha,
+                "gate": {"numerical_stability_gate_pass": True},
+                "factor_inventory": {
+                    "factor_count_ready": 2,
+                    "factor_count_after_cleanup": 0,
+                    "full_side_exact_factor_count": 0,
+                    "global_direct_factor_count": 0,
+                    "nested_ksp_count": 0,
+                },
+                "selected_mode_packet_opened": False,
+                "qep_count": 0,
+                "preferred_method": "SN2-J",
+                "lifecycle": {"retained_probe": {"status": "measured"}},
+            }
+        ),
+        encoding="utf-8",
+    )
+    plan = SimpleNamespace(
+        argv=("/opt/fake-worker",),
+        method=launcher.V9_H4_LAYER_SUPERNODE_METHOD,
+        source_sha=source_sha,
+        contract_probe=False,
+        task039_trace_audit=False,
+    )
+    result = launcher._run_worker(
+        plan,
+        specification,
+        run_directory,
+        popen_factory=lambda *_args, **_kwargs: _FakeProcess(0),
+        sample_factory=lambda _pid: _authority(memory=1024, swap=0),
+        terminate_factory=lambda _member: {"requested": True},
+        monotonic=lambda: 0.0,
+        sleep=lambda _seconds: None,
+        poll_interval=0.25,
+    )
+    telemetry = result["resource_authority"]["v9_h4_layer_supernode_bottom_telemetry"]
+    assert telemetry["worker_record_status"] == "contract_mismatch"
+    assert telemetry["worker_record_contract_valid"] is False
+    assert telemetry["overall"]["status"] == "contract_mismatch"
+    assert telemetry["overall"]["pass"] is None
+
+
 def test_task039_h5_critical_checkpoint_does_not_stop_before_absolute_hard_stop(
     monkeypatch, tmp_path
 ):

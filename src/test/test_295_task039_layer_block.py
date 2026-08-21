@@ -8,6 +8,8 @@ from mpi4py import MPI
 from petsc4py import PETSc
 
 from src.solvers.hybrid_layer_block import (
+    ExactBlockSchurAction,
+    build_fixed_two_layer_supernode_action,
     build_layer_block_operator,
     build_layer_sweep_action,
     relative_matvec_residual,
@@ -105,6 +107,111 @@ def _collect_global_values(vector: PETSc.Vec) -> np.ndarray:
     local = np.asarray(vector.getArray(readonly=True), dtype=np.complex128).copy()
     pieces = vector.getComm().tompi4py().allgather(local)
     return np.concatenate(pieces)
+
+
+def _tiny_v9_block_chain() -> tuple[tuple[np.ndarray, ...], ...]:
+    diagonal = []
+    lower = []
+    upper = []
+    for index in range(3):
+        diagonal.append(
+            np.asarray(
+                [
+                    [3.1 + 0.15j + 0.2 * index, 0.2 - 0.1j],
+                    [0.1 + 0.05j, 2.7 + 0.2j + 0.1 * index],
+                ],
+                dtype=np.complex128,
+            )
+        )
+    for index in range(2):
+        lower.append(
+            np.asarray(
+                [
+                    [0.14 + 0.03j, -0.05 + 0.02j],
+                    [0.04 - 0.01j, 0.11 + 0.02j],
+                ],
+                dtype=np.complex128,
+            )
+            * (1.0 + 0.1 * index)
+        )
+        upper.append(
+            np.asarray(
+                [
+                    [-0.12 + 0.04j, 0.03 + 0.01j],
+                    [0.02 - 0.03j, -0.09 + 0.02j],
+                ],
+                dtype=np.complex128,
+            )
+            * (1.0 - 0.08 * index)
+        )
+    return tuple(diagonal), tuple(lower), tuple(upper)
+
+
+def _dense_from_block_chain(
+    diagonal: tuple[np.ndarray, ...],
+    lower: tuple[np.ndarray, ...],
+    upper: tuple[np.ndarray, ...],
+) -> np.ndarray:
+    block_size = diagonal[0].shape[0]
+    dense = np.zeros(
+        (len(diagonal) * block_size, len(diagonal) * block_size),
+        dtype=np.complex128,
+    )
+    for index, block in enumerate(diagonal):
+        rows = slice(index * block_size, (index + 1) * block_size)
+        dense[rows, rows] = block
+        if index:
+            dense[rows, slice((index - 1) * block_size, index * block_size)] = lower[
+                index - 1
+            ]
+        if index + 1 < len(diagonal):
+            dense[rows, slice((index + 1) * block_size, (index + 2) * block_size)] = (
+                upper[index]
+            )
+    return dense
+
+
+def _supernode_reference(dense: np.ndarray, rhs: np.ndarray, method: str) -> np.ndarray:
+    layer_size = dense.shape[0] // 6
+    groups = ((0, 1), (2, 3), (4, 5))
+    indices = [
+        np.concatenate(
+            [
+                np.arange(first * layer_size, (first + 1) * layer_size),
+                np.arange(second * layer_size, (second + 1) * layer_size),
+            ]
+        )
+        for first, second in groups
+    ]
+    blocks = [dense[np.ix_(item, item)] for item in indices]
+    rhs_blocks = [rhs[item] for item in indices]
+    lower = [dense[np.ix_(indices[index + 1], indices[index])] for index in range(2)]
+    upper = [dense[np.ix_(indices[index], indices[index + 1])] for index in range(2)]
+    if method == "SN2-J":
+        solution = [
+            np.linalg.solve(block, value) for block, value in zip(blocks, rhs_blocks)
+        ]
+    else:
+        forward = [np.linalg.solve(blocks[0], rhs_blocks[0])]
+        forward.append(
+            np.linalg.solve(blocks[1], rhs_blocks[1] - lower[0] @ forward[0])
+        )
+        forward.append(
+            np.linalg.solve(blocks[2], rhs_blocks[2] - lower[1] @ forward[1])
+        )
+        solution = [None, None, forward[2]]
+        solution[1] = forward[1] - np.linalg.solve(blocks[1], upper[1] @ solution[2])
+        solution[0] = forward[0] - np.linalg.solve(blocks[0], upper[0] @ solution[1])
+    result = np.empty_like(rhs)
+    for item, value in zip(indices, solution):
+        result[item] = value
+    return result
+
+
+def _put_values(vector: PETSc.Vec, values: np.ndarray) -> None:
+    first, last = map(int, vector.getOwnershipRange())
+    vector.getArray()[:] = np.asarray(values[first:last], dtype=PETSc.ScalarType)
+    vector.assemble()
 
 
 def test_v8_layer_block_action_tiny_complex_nonhermitian() -> None:
@@ -407,4 +514,153 @@ def test_v9_bare_f_residual_and_full_side_action_contract(method: str) -> None:
     ):
         vector.destroy()
     action.destroy()
+    matrix.destroy()
+
+
+def test_v9_2_exact_block_schur_tiny_mpi_authority() -> None:
+    diagonal, lower, upper = _tiny_v9_block_chain()
+    dense = _dense_from_block_chain(diagonal, lower, upper)
+    rhs = np.asarray(
+        [1.0 + 0.13j * (index + 1) for index in range(dense.shape[0])],
+        dtype=np.complex128,
+    )
+    second_rhs = np.asarray(
+        [0.7 - 0.09j * (index + 2) for index in range(dense.shape[0])],
+        dtype=np.complex128,
+    )
+    action = ExactBlockSchurAction(diagonal, lower, upper)
+    expected = np.linalg.solve(dense, rhs)
+    actual = action.apply(rhs)
+    assert np.linalg.norm(actual - expected) / np.linalg.norm(expected) <= 1.0e-12
+    assert np.linalg.norm(rhs - dense @ actual) / np.linalg.norm(rhs) <= 1.0e-12
+    repeat = action.apply(rhs)
+    assert np.linalg.norm(repeat - actual) / np.linalg.norm(actual) <= 1.0e-13
+    alpha = 1.2 - 0.4j
+    beta = -0.3 + 0.7j
+    combination = alpha * rhs + beta * second_rhs
+    linear_expected = alpha * action.apply(rhs) + beta * action.apply(second_rhs)
+    assert (
+        np.linalg.norm(action.apply(combination) - linear_expected)
+        / np.linalg.norm(linear_expected)
+        <= 1.0e-12
+    )
+    diagnostics = action.diagnostics
+    assert diagnostics["factor_count_ready"] == 3
+    assert diagnostics["retained_explicit_diagonal_count"] == 0
+    assert diagnostics["full_side_exact_factor_count"] == 0
+    assert diagnostics["global_direct_factor_count"] == 0
+    gathered = MPI.COMM_WORLD.allgather(actual)
+    assert all(np.array_equal(value, actual) for value in gathered)
+    action.destroy()
+    assert action.diagnostics["factor_count_after_cleanup"] == 0
+    assert action.diagnostics["destroy_marker"] == "completed"
+    with pytest.raises(RuntimeError, match="destroyed"):
+        action.apply(rhs)
+
+
+def test_v9_2_fixed_two_layer_supernodes_share_three_petsc_factors() -> None:
+    matrix, labels = _tiny_block_tridiagonal()
+    dense = np.zeros((24, 24), dtype=np.complex128)
+    for row in range(24):
+        dense[row, row] = 3.0 + 0.1j
+        if row >= 4:
+            dense[row, row - 4] = 0.7 + 0.2j
+        if row < 20:
+            dense[row, row + 4] = -0.4 + 0.3j
+    values = np.asarray(
+        [1.0 + 0.11j * (index + 1) for index in range(24)],
+        dtype=np.complex128,
+    )
+    second_values = np.asarray(
+        [0.8 - 0.07j * (index + 2) for index in range(24)],
+        dtype=np.complex128,
+    )
+    alpha = 1.15 - 0.23j
+    beta = -0.4 + 0.52j
+    combination_values = alpha * values + beta * second_values
+    action = build_fixed_two_layer_supernode_action(matrix, labels)
+    factor_refs = tuple(action._factors)
+    diagnostics = action.diagnostics
+    assert diagnostics["groups"] == [[0, 1], [2, 3], [4, 5]]
+    assert diagnostics["factor_count_ready"] == 3
+    assert diagnostics["single_factor_set"] is True
+    assert diagnostics["factor_set_build_count"] == 1
+    assert diagnostics["factor_count"] == 3
+    assert diagnostics["supernode_row_coverage_exact"] is True
+    assert sum(diagnostics["supernode_rows_global"]) == 24
+    assert diagnostics["cross_lower_block_count"] == 2
+    assert diagnostics["cross_upper_block_count"] == 2
+    assert diagnostics["full_side_exact_factor_count"] == 0
+    assert diagnostics["global_direct_factor_count"] == 0
+    assert diagnostics["nested_ksp_count"] == 0
+
+    source = matrix.createVecRight()
+    second_source = matrix.createVecRight()
+    combination = matrix.createVecRight()
+    actual = matrix.createVecLeft()
+    repeat = matrix.createVecLeft()
+    second_actual = matrix.createVecLeft()
+    combination_actual = matrix.createVecLeft()
+    _put_values(source, values)
+    _put_values(second_source, second_values)
+    _put_values(combination, combination_values)
+    for method in ("SN2-J", "SN2-SGS"):
+        action.apply_checkpoint(method, source, actual)
+        actual_values = _collect_global_values(actual)
+        expected_values = _supernode_reference(dense, values, method)
+        assert (
+            np.linalg.norm(actual_values - expected_values)
+            / np.linalg.norm(expected_values)
+            <= 1.0e-12
+        )
+        action.apply_checkpoint(method, source, repeat)
+        assert _relative_error(repeat, actual) <= 1.0e-13
+        action.apply_checkpoint(method, second_source, second_actual)
+        action.apply_checkpoint(method, combination, combination_actual)
+        expected_second = _supernode_reference(dense, second_values, method)
+        expected_combination = _supernode_reference(dense, combination_values, method)
+        assert (
+            np.linalg.norm(_collect_global_values(second_actual) - expected_second)
+            / np.linalg.norm(expected_second)
+            <= 1.0e-12
+        )
+        assert (
+            np.linalg.norm(
+                _collect_global_values(combination_actual) - expected_combination
+            )
+            / np.linalg.norm(expected_combination)
+            <= 1.0e-12
+        )
+        expected_linear = alpha * expected_values + beta * expected_second
+        assert (
+            np.linalg.norm(_collect_global_values(combination_actual) - expected_linear)
+            / np.linalg.norm(expected_linear)
+            <= 1.0e-12
+        )
+        assert all(
+            current is original
+            for current, original in zip(action._factors, factor_refs)
+        )
+
+    diagnostics = action.diagnostics
+    assert diagnostics["method_apply_count"] == {"SN2-J": 4, "SN2-SGS": 4}
+    assert diagnostics["method_factor_solve_count"] == {
+        "SN2-J": 12,
+        "SN2-SGS": 20,
+    }
+    for vector in (
+        combination_actual,
+        second_actual,
+        repeat,
+        actual,
+        combination,
+        second_source,
+        source,
+    ):
+        vector.destroy()
+    action.destroy()
+    assert action.diagnostics["factor_count_after_cleanup"] == 0
+    assert action.diagnostics["destroy_marker"] == "completed"
+    with pytest.raises(RuntimeError, match="destroyed"):
+        action.apply_checkpoint("SN2-J", source, actual)
     matrix.destroy()
