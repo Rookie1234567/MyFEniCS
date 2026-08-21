@@ -690,3 +690,56 @@ ranks16/32/64、top、both、full、10 modal samples 和 0.7 nm PDE 均 `not_run
 
 详见 [V9-2 outcome](v9_supernode_side_preconditioner.md)、[V9-2 Pareto](v9_memory_residual_time_pareto.md)
 和 [V9-2 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v9_supernode_side_preconditioner_v1.json)。
+
+## Review V10-7：response packet execution pass, compressibility negative
+
+V10-6 首先完成了 full bottom response packet：960 个 modal response 列和一个真实
+physical-side-rhs zero validation 列，以 owner-row memmap 流式写入；producer 的 exact
+residual、payload、60 GiB component resource 和 factor cleanup 全部通过。第一次 compression
+因 main 漏传 producer SHA 在算法开始前 exit2，作为 implementation failure 原样保留。
+修复后的独立 compression consumer 执行、资源和 lifecycle 通过，但 rank512 仍有四个
+holdout projection error 约0.9673，所以这是 compressibility/generalization 的正式负结果。
+
+| V10-7 阶段 | measured result | 分类 |
+|---|---|---|
+| full response producer | peak 50.7548675537 GiB；wall 4390.176657 s；payload 2034244800 B；max residual 1.52248376596e-10；factor 1→0；swap0 | PASS |
+| status-independent recheck | 15/15 checks true；原 worker contract_mismatch/raw 保留 | PASS |
+| first compression root | exit2；约1.634716 GiB；算法未开始 | IMPLEMENTATION_FAILURE |
+| repaired compression | worker 236.720152 s；parent 约239.730152 s；15.4776763916 GiB；swap0；one TSQR/SVD；factor/KSP 0 | execution/resource/lifecycle PASS |
+| compression result | rank64/128/256/512 holdout worst 0.9999934115/0.9999772293/0.9676601222/0.9673241512 | GENERALIZATION_NEGATIVE |
+
+### Pilot 与历史接线/生命周期失败
+
+最终 16-column pilot 是独立的 component PASS，不应与 961-column full producer 混称。其
+producer peak 为 `43.20536804199219 GiB`、setup `2361.916216508951 s`、16-column solve
+`21.45196287811268 s`、worst true residual `1.0251447633580063e-10`，实际 packet
+payload `33868800 B`，consumer peak `1.649871826171875 GiB`；两阶段均 swap0，factor
+由1清到0，consumer released=true。projected full wall `3650.374736875594 s` 和 payload
+`2034244800 B` 是 pilot 派生值，不能替代 full producer 的实测结果。
+
+此前四次 pilot 都是 exit2 且没有形成合格 pilot record，但失败阶段不同；不能把四次统一
+写成“算法未开始”。`e353d97d` 在 pre-profile 明确未进入主体；`a7f237ae` 的 spool-remap
+和 `955466b3` 的 response-map-readonly 是否已开始数值算法为 `not_established`；
+`d0353dec` 已完成主体计算/packet 阶段，随后才因 finalizer telemetry KeyError 退出。
+四个 root 的峰值、source SHA、failure stage 和 raw hashes 均在
+[V10-7 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v10_side_response_packet_v1.json)
+中保留，raw artifacts 不入 Git。
+
+| root | peak RSS | failure stage | `algorithm_started` | reason |
+|---|---:|---|---|---|
+| `e353d97d` | 1.6369743347 GiB | pre-profile | `false` | profile None / AttributeError |
+| `a7f237ae` | 42.9734916687 GiB | spool-remap | `not_established` | fixed-budget remap 缺 shard descriptors |
+| `955466b3` | 42.9833679199 GiB | response-map-readonly | `not_established` | assignment destination is read-only |
+| `d0353dec` | 41.9813041687 GiB | finalizer-telemetry | `true` | 主体计算/packet 已运行，finalizer telemetry KeyError |
+
+producer 的 50.7548675537 GiB 是 sequential component envelope，不能冒充完整 workflow
+节省。完整 workflow 仍以 direct 93.377006531 GiB 和 Lane A full 80.025856018 GiB 为
+authority，节省 14.298113646%；20%/50% 未达到。
+
+详细的 producer/recheck/compression provenance、8 shard hash、950 个 singular values 和
+四级 10 列 holdout 数组见
+[V10-7 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v10_side_response_packet_v1.json)
+及 [V10-7 outcome](v10_side_response_packet.md)。
+
+V10-5 modal cost model、top、both-side、full Hybrid、其他扫描和 0.7 nm PDE 均 not_run；
+V7/V8/V9 的历史结果与首次 implementation failures 未覆盖，ordinary defaults 与 master 未动。
