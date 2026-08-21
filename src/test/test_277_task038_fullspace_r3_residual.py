@@ -32,6 +32,7 @@ def test_r3_path_boundary_and_old_dual_hard_stop_contract() -> None:
     assert "run_task038_full3d_t3" not in source
     assert "del historical_field" not in source
     assert "roundtrip_field is not historical_field" not in source
+    assert "residual = current_rhs.copy()" in source
     assert "_ReusableSurfaceComponentAssembler" in inspect.getsource(
         runner._make_surface_assemblers
     )

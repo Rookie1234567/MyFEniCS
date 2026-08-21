@@ -522,7 +522,7 @@ def _run_case(
                     ),
                 }
             )
-        residual = current_rhs.duplicate()
+        residual = current_rhs.copy()
         residual.axpy(PETSc.ScalarType(-1.0), action_first)
 
         rhs_packets, rhs_audit = extract_canonical_full_fe_dual_packets(
