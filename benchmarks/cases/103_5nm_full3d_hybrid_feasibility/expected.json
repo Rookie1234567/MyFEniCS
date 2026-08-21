@@ -62,5 +62,13 @@
     "record": "not_available",
     "reason": "T10 B1 focused/static/documentation gates passed; repository full pytest cancelled/not_run by user cost override on 2026-08-12"
   },
+  "v9": {
+    "status": "completed_negative",
+    "plan": "closed_at_v9_2",
+    "record": "records/task039_v9_supernode_side_preconditioner_v1.json",
+    "classification": "V9_2_FIXED_TWO_LAYER_SUPERNODE_CONTROLLED_NUMERICAL_INSTABILITY",
+    "pde_launched": true,
+    "reason": "SN2-J and SN2-SGS constructed three fixed two-layer factors and then produced nonfinite output for all five mandatory probes; construction resource passed, retained and later V9 stages were not run"
+  },
   "not_run": ["T6", "T7", "T8"]
 }

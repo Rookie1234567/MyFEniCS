@@ -2550,3 +2550,24 @@ direct factor `0/0`，retained candidate `not_run`。physical zero 只作 degene
 compact record 与原始 evidence 绑定见
 [V9-1 record](../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v9_bare_f_full_side_diagnostic_v1.json)
 和 `results/task039_v9_h4_bare_f_full_side_diagnostic_mpi8_2faf2a1a/`（ignored local raw）。
+
+## 2026-08-21：Task039 Review V9-2 fixed two-layer supernode
+
+V9-2 只在 bottom 侧运行固定三组 `[0,1]`、`[2,3]`、`[4,5]`，候选为 `SN2-J` 与
+`SN2-SGS`。同一组三个 sparse factors 成功构造并严格串行清理；三组 rows 为
+`49140/41580/41580`，完整覆盖 `132300` rows，最终 factor inventory `3→0`，
+full-side/global/nested factor `0/0/0`，selected packet `false`，QEP `0`。
+
+两个候选对五个非退化 frozen labels 均输出非有限值：SN2-J 为 `Inf`、SN2-SGS 为 `NaN`；
+physical zero 仅为 degenerate。正式分类为
+`V9_2_FIXED_TWO_LAYER_SUPERNODE_CONTROLLED_NUMERICAL_INSTABILITY`。worker exit3/parent
+`worker_nonzero` 是数值失败后的受控退出，parent termination 为 null，不是资源 stop，也
+没有证据证明通用 factor API 有 bug。
+
+parent construction/overall process-tree peak 为 `24494911488 B = 22.812664031982422 GiB`
+（`<=45 GiB`，swap0），总时长约 `473.941922 s`；retained `not_run/not_available`，
+因为没有稳定 preferred action。V9-3 direct full-side FGMRES、V9-4 ranks16/32/64、top、
+both、full 和 0.7 nm PDE 均 `not_run`。证据入口为
+[V9-2 outcome](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v9_supernode_side_preconditioner.md)、
+[V9-2 compact record](../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v9_supernode_side_preconditioner_v1.json)
+和 ignored raw root `results/task039_v9_h4_layer_supernode_bottom_mpi8_266a1acc/`。

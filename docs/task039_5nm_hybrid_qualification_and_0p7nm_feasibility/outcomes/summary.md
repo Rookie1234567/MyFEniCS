@@ -666,3 +666,27 @@ generic `task039_memory_budget` 中的 224 GB 不是 V8 authority；本路线使
 `absolute_terminate_memory_bytes=48318382080`、effective hard stop `45 GiB`。完整五候选表与
 逐 probe 数值见 [V8-3 bottom outcome](v8_layer_sweep_bottom.md)，hash-bound record 见
 [V8-3 record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v8_layer_sweep_bottom_v1.json)。
+
+## Review V9-2：fixed two-layer supernode controlled numerical negative
+
+V9-2 在同一个 h4/M480/MPI8 bottom component 中固定三组 `[0,1]`、`[2,3]`、`[4,5]`，
+共用同一组三个 sparse factors，依次评估 `SN2-J` 与 `SN2-SGS`。三个 factor 成功构造；
+construction resource 与 lifecycle 释放通过，retained 明确为 `not_run`。parent
+process-tree peak 为 `24494911488 B = 22.812664031982422 GiB <=45 GiB`，swap=0，
+最终 factors `3→0`。但两种 action 对五个非退化 mandatory labels 都产生非有限输出：
+SN2-J 为 `Inf`，SN2-SGS 为 `NaN`；physical zero 仅为 degenerate，不进入 Gate。
+
+| 路线 | 数值结果 | 资源/生命周期 | 分类 |
+|---|---|---|---|
+| V9-1 J1 | worst `r_F=50.7689715097`、`r_A=50.2410648372` | `23.8684272766 GiB`；retained not_run | controlled numerical negative |
+| V9-1 F1 | worst `r_F=367.2128685567`、`r_A=141.0763808200` | construction resource pass；retained not_run | controlled numerical negative |
+| V9-2 SN2-J | 五个 mandatory nonfinite；apply18、factor solves54 | `22.812664031982422 GiB <=45`；retained not_run；factors3→0 | controlled numerical negative |
+| V9-2 SN2-SGS | 五个 mandatory nonfinite；apply18、factor solves90 | 同一 consumer envelope；retained not_run；factors3→0 | controlled numerical negative |
+
+V9-2 的 parent `worker_nonzero/exit3` 是数值失败后的受控退出，parent termination 为 null，
+不是资源 stop，也没有证明通用 factor API 有 bug。V9-3 direct full-side FGMRES、V9-4
+ranks16/32/64、top、both、full、10 modal samples 和 0.7 nm PDE 均 `not_run`，原因是
+没有稳定 preferred action。
+
+详见 [V9-2 outcome](v9_supernode_side_preconditioner.md)、[V9-2 Pareto](v9_memory_residual_time_pareto.md)
+和 [V9-2 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v9_supernode_side_preconditioner_v1.json)。

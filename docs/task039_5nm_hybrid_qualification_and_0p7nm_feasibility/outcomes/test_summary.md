@@ -305,3 +305,37 @@ formal 的 residual/physics pass 也不被 component RSS 取代。首次 impleme
 | V9-1 retained interval | `not_run` | numerical failure 后没有 preferred candidate，不伪造 `30 GiB` pass |
 | V9-1 compact JSON parse/raw hash | `pass` | hash-bound record；raw results ignored |
 | full pytest / CI | `not_run` | 本阶段没有声称 full pytest 或 CI |
+
+## V9-2 source `266a1acc0eb7a4515815e34414f89e183c15e9ef` code-stage Gates
+
+以下是 source SHA `266a1acc` 代码/测试阶段已有日志的真实范围；日志未保留精确 pytest
+通过数的项目只写 `pass`，不补猜测数量。
+
+| Gate | 结果 | 命令/范围 |
+|---|---|---|
+| exact Schur/supernode focused serial | `pass` | qualified tiny exact-Schur/supernode action fixture；count 未在 closeout 日志保留 |
+| exact Schur/supernode focused MPI2 | `pass` | qualified tiny MPI2 ownership/scatter fixture；count 未在 closeout 日志保留 |
+| exact Schur/supernode focused MPI4 | `pass` | qualified tiny MPI4 ownership/scatter fixture；count 未在 closeout 日志保留 |
+| existing `test_295` | `pass` | `src/test/test_295_task039_layer_block.py` 既有 serial/MPI2/MPI4 focused 范围；精确 count 未记录 |
+| orchestration/finalizer | `8 passed` | V9-2 fake worker/main/finalizer route focused；record/telemetry/exit contract |
+| launcher V9 focused | `4 passed` | V9-2 plan/dry-run/45 GiB/30 GiB/flag contract focused |
+| watchdog V9 focused | `1 passed` | V9-2 watchdog dry-run/route contract |
+| Ruff check | `pass` | source `266a1acc` changed-Python target scope |
+| Ruff format-check | `pass` | source `266a1acc` changed-Python target scope |
+| compileall | `pass` | source `266a1acc` changed-Python target scope |
+| git diff --check | `pass` | source code/test staged diff scope |
+| check_benchmarks --no-write | `pass` | qualified command；`302/302`，exit 0 |
+
+## Review V9-2 evidence closeout checks
+
+| 检查/证据 | 结果 | 口径 |
+|---|---|---|
+| V9-2 compact record parse/hash | `pass` | 13/13 ignored raw 文件 hash 重算；worker schema/source/status/factor/resource 字段从 raw 重算，不信 `status` |
+| V9-2 numerical evidence | `controlled numerical negative` | SN2-J/SN2-SGS 五个 mandatory 均 nonfinite；physical zero degenerate |
+| V9-2 construction resource | `22.812664031982422 GiB <=45 GiB；swap 0` | parent process-tree authority |
+| V9-2 retained interval | `not_run / not_available` | 没有 stable preferred；不伪造 `30 GiB` pass |
+| V9-2 lifecycle | `factor 3→0；full/global/nested 0/0/0；packet false；QEP 0` | components/system/sweep/spool released |
+| Markdown/link/table/fence contract | `pass` | 7 个本轮新增/更新 Markdown 文件；相对链接存在、fence 成对、表格行可解析 |
+| check_benchmarks --no-write | `pass` | qualified host；exit 0；302/302 passed；无写入、无 PDE/heavy |
+| Ruff/format/compileall | `inherited pass at 266a1acc; docs-only closeout not rerun` | 本轮没有 Python 修改 |
+| repository full pytest / CI | `not_run` | 不声称 full pytest 或 CI |

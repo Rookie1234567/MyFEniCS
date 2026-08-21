@@ -1,0 +1,229 @@
+{
+  "schema": "task039.v9.h4.layer_supernode.bottom.evidence.v1",
+  "record_type": "research_component_evidence",
+  "classification": "V9_2_FIXED_TWO_LAYER_SUPERNODE_CONTROLLED_NUMERICAL_INSTABILITY",
+  "status": "controlled_numerical_negative",
+  "failure_domain": "fixed_two_layer_supernode_nonfinite_action",
+  "interpretation": "construction_resource_pass_numerical_stability_negative_retained_not_run",
+  "provenance": {
+    "branch": "codex/20260812-task39-5nm-hybrid-0p7nm-feasibility",
+    "source_sha": "266a1acc0eb7a4515815e34414f89e183c15e9ef",
+    "schema": "task039.v9.h4.layer_supernode.bottom.v1",
+    "profile": "task039.v9.h4.layer_supernode.bottom.v1",
+    "method": "task039_v9_h4_layer_supernode_bottom",
+    "model_id": "task039_5nm_v4_1deg_s5_hybrid_iterative_m480",
+    "input": "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat",
+    "input_sha256": "4e60924b5997e3ca99e324ea14779f9014efc6a1304a9aa11de9c808353f1811",
+    "physical_model_sha256": "8391d46139646440d869aa43abe6a68bc921fc1972a10030c64be81dffdd527c",
+    "resolved_config_sha256": "f965c38abea08bee0ff83a6603e336ca4823deb932af7064aed3c571f8f63883",
+    "mpi_size": 8,
+    "threads": 1,
+    "run_root": "results/task039_v9_h4_layer_supernode_bottom_mpi8_266a1acc",
+    "generic_run_id_not_authoritative": "task039_v4_hybrid_iterative_p6h4_m480_mpi8",
+    "identity_rule": "schema/profile/method/source_sha define the V9-2 route; generic run_id is only an observed inherited field",
+    "frozen_exact_bottom_holdout": {
+      "producer_source_sha": "7e5d9b57a10b1093f0cb062eaf7bc12797c47e1f",
+      "catalog_sha256": "a2a7fb6fb01df4f795d31ff94f6ac6adf957ac4fe4a5c1a8d05176e3d64c0384",
+      "producer_rank_count": 8,
+      "label_count": 6,
+      "response_artifact_count": 96,
+      "catalog_method": "sha256 of sorted relative path, byte count and file SHA256 rows",
+      "inherited_authority_record": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v6_port_modal_bottom_component_v1.json",
+      "inherited_authority_record_sha256": "00c8b889d75b7fa0b77a6563d4ffe708a07d00f23133dec06b5929e4cabe3368"
+    },
+    "inherited_v9_1_record": "benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v9_bare_f_full_side_diagnostic_v1.json",
+    "inherited_v9_1_record_sha256": "bbab2d6cf3f222f2883edd5f36ff7caf0b0cfe7a437f9e1f47d164bd7fc8d185"
+  },
+  "command_contract": {
+    "command": "source scripts/activate_myfenics_wsl.sh && python -m benchmarks.task039_v3_7_watchdog --input input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat --run-directory results/task039_v9_h4_layer_supernode_bottom_mpi8_266a1acc --source-sha 266a1acc0eb7a4515815e34414f89e183c15e9ef --v9-h4-layer-supernode-bottom --v9-h4-layer-supernode-exact-spool-root results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/numerical_output",
+    "timeout_seconds": 21600,
+    "poll_seconds": 0.25,
+    "absolute_terminate_memory_bytes": 48318382080,
+    "effective_hard_stop_gib": 45.0,
+    "require_zero_swap": true,
+    "selected_mode_packet_opened": false,
+    "exact_spool_root": "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/numerical_output",
+    "holdout_exact_spool_opened_after_setup": true,
+    "qep_count": 0,
+    "outer_ksp": "not_run",
+    "full_side_exact_factor_count": 0,
+    "global_direct_factor_count": 0,
+    "nested_ksp_count": 0
+  },
+  "attempt": {
+    "status": "finished",
+    "exit_status": 3,
+    "result_classification": "worker_nonzero",
+    "worker_status": "component_stability_failed",
+    "parent_termination": null,
+    "parent_warning": false,
+    "exit_semantics": "controlled exit after numerical stability failure; not a resource stop",
+    "wall_seconds": 473.941922,
+    "worker_wall_seconds": 473.122750178,
+    "parent_sample_count": 1862,
+    "stderr_or_traceback": "not_present; no implementation traceback or factor setup error observed"
+  },
+  "gate_contract": {
+    "finite_required": true,
+    "repeat_limit": 1e-10,
+    "linearity_limit": 1e-10,
+    "mandatory_true_residual_limit": 0.01,
+    "preferred_modal_external_limit": 0.001,
+    "physical_side_rhs": "zero_degenerate_allowed",
+    "stability_gate_pass": false,
+    "methods_evaluated": ["SN2-J", "SN2-SGS"],
+    "preferred_method": null,
+    "methods_not_run": [],
+    "physical_zero_excluded_from_mandatory": true
+  },
+  "inherited_v9_1_comparison": {
+    "J1": {
+      "worst_r_F": 50.7689715097,
+      "worst_r_A": 50.2410648372,
+      "max_repeat": 4.391325039602821e-13,
+      "max_linearity": 6.301545282711249e-13,
+      "status": "controlled_numerical_negative"
+    },
+    "F1": {
+      "worst_r_F": 367.2128685567,
+      "worst_r_A": 141.0763808200,
+      "max_repeat": 3.0761412922759516e-11,
+      "max_linearity": 3.6229046067863325e-11,
+      "status": "controlled_numerical_negative"
+    },
+    "source": "inherited_v9_1_record"
+  },
+  "supernode_inventory": {
+    "groups": [[0, 1], [2, 3], [4, 5]],
+    "row_counts_global": [49140, 41580, 41580],
+    "row_coverage_exact": true,
+    "cross_lower_block_count": 2,
+    "cross_upper_block_count": 2,
+    "factor_set_build_count": 1,
+    "same_factor_set_for_candidates": true,
+    "factor_count_ready": 3,
+    "factor_count_after_cleanup": 0,
+    "full_side_exact_factor_count": 0,
+    "global_direct_factor_count": 0,
+    "nested_ksp_count": 0
+  },
+  "method_records": {
+    "SN2-J": {
+      "method_interval_seconds": 6.18357624101916,
+      "method_apply_count": 18,
+      "method_factor_solve_count": 54,
+      "factor_count": 3,
+      "factor_set_build_count": 1,
+      "same_factor_set": true,
+      "output_nonfinite_observed": "Inf",
+      "gate": {
+        "finite_pass": false,
+        "repeat_pass": false,
+        "linearity_pass": false,
+        "mandatory_residual_pass": false,
+        "worst_mandatory_r_F": null,
+        "preferred_modal_external_max": null,
+        "status": "nonfinite_all_mandatory"
+      },
+      "probes": [
+        {"label": "physical_side_rhs", "mandatory": false, "degenerate": true, "finite": false, "raw_status": "zero_rhs_degenerate_nonfinite_output", "r_F": null, "repeat": null, "linearity": null},
+        {"label": "modal_traction_positive", "seed": 761, "mandatory": true, "degenerate": false, "finite": false, "raw_status": "nonfinite", "r_F": null, "repeat": null, "linearity": null},
+        {"label": "modal_traction_negative", "seed": 763, "mandatory": true, "degenerate": false, "finite": false, "raw_status": "nonfinite", "r_F": null, "repeat": null, "linearity": null},
+        {"label": "external_dtn_coupling", "seed": 769, "mandatory": true, "degenerate": false, "finite": false, "raw_status": "nonfinite", "r_F": null, "repeat": null, "linearity": null},
+        {"label": "fixed_random_repeat_0", "seed": 773, "mandatory": true, "degenerate": false, "finite": false, "raw_status": "nonfinite", "r_F": null, "repeat": null, "linearity": null},
+        {"label": "fixed_random_repeat_1", "seed": 779, "mandatory": true, "degenerate": false, "finite": false, "raw_status": "nonfinite", "r_F": null, "repeat": null, "linearity": null}
+      ]
+    },
+    "SN2-SGS": {
+      "method_interval_seconds": 23.7780067990534,
+      "method_apply_count": 18,
+      "method_factor_solve_count": 90,
+      "factor_count": 3,
+      "factor_set_build_count": 1,
+      "same_factor_set": true,
+      "output_nonfinite_observed": "NaN",
+      "gate": {
+        "finite_pass": false,
+        "repeat_pass": false,
+        "linearity_pass": false,
+        "mandatory_residual_pass": false,
+        "worst_mandatory_r_F": null,
+        "preferred_modal_external_max": null,
+        "status": "nonfinite_all_mandatory"
+      },
+      "probes": [
+        {"label": "physical_side_rhs", "mandatory": false, "degenerate": true, "finite": false, "raw_status": "zero_rhs_degenerate_nonfinite_output", "r_F": null, "repeat": null, "linearity": null},
+        {"label": "modal_traction_positive", "seed": 761, "mandatory": true, "degenerate": false, "finite": false, "raw_status": "nonfinite", "r_F": null, "repeat": null, "linearity": null},
+        {"label": "modal_traction_negative", "seed": 763, "mandatory": true, "degenerate": false, "finite": false, "raw_status": "nonfinite", "r_F": null, "repeat": null, "linearity": null},
+        {"label": "external_dtn_coupling", "seed": 769, "mandatory": true, "degenerate": false, "finite": false, "raw_status": "nonfinite", "r_F": null, "repeat": null, "linearity": null},
+        {"label": "fixed_random_repeat_0", "seed": 773, "mandatory": true, "degenerate": false, "finite": false, "raw_status": "nonfinite", "r_F": null, "repeat": null, "linearity": null},
+        {"label": "fixed_random_repeat_1", "seed": 779, "mandatory": true, "degenerate": false, "finite": false, "raw_status": "nonfinite", "r_F": null, "repeat": null, "linearity": null}
+      ]
+    }
+  },
+  "resource_authority": {
+    "construction": {
+      "status": "measured",
+      "peak_bytes": 24494911488,
+      "peak_gib": 22.812664031982422,
+      "limit_gib": 45.0,
+      "pass": true,
+      "authority": "parent process-tree samples aligned to construction markers"
+    },
+    "overall": {
+      "peak_bytes": 24494911488,
+      "peak_gib": 22.812664031982422,
+      "swap_peak_bytes": 0,
+      "zero_swap_observed": true,
+      "status": "measured"
+    },
+    "retained": {
+      "status": "not_run",
+      "availability": "not_available",
+      "pass": null,
+      "reason": "no stable preferred method; retained probe was not executed"
+    },
+    "generic_budget_field_not_authority": 224000000000
+  },
+  "lifecycle": {
+    "methods_strictly_serial": true,
+    "candidate_temporaries_cleaned_between_methods": true,
+    "collective_cleanup_completed": true,
+    "components_released": true,
+    "system_destroy_called": true,
+    "sweep_destroyed": true,
+    "spool_released": true,
+    "selected_mode_packet_opened": false,
+    "qep_count": 0,
+    "preferred_rehydrated": false,
+    "retained_apply_state_ready": false,
+    "retained_apply_state_not_run": true
+  },
+  "raw_evidence": {
+    "run_summary.json": {"path": "results/task039_v9_h4_layer_supernode_bottom_mpi8_266a1acc/run_summary.json", "sha256": "ac1f57491bafae5484b6dbb3b8f9e26fc686f9fdcf92b515ef7e01543de266ae"},
+    "run_manifest.json": {"path": "results/task039_v9_h4_layer_supernode_bottom_mpi8_266a1acc/run_manifest.json", "sha256": "3a29c43dee37d0b0d8d7cd4a0735cf41857dd8834234b6050cdb8a62204b8e88"},
+    "source_sha.txt": {"path": "results/task039_v9_h4_layer_supernode_bottom_mpi8_266a1acc/source_sha.txt", "sha256": "74dba2ab9d05ace2c4a52135b12e04ff6cafe4a34d425a2315e3570e9911b256"},
+    "input_original.dat": {"path": "results/task039_v9_h4_layer_supernode_bottom_mpi8_266a1acc/input_original.dat", "sha256": "4e60924b5997e3ca99e324ea14779f9014efc6a1304a9aa11de9c808353f1811"},
+    "input_sha256.txt": {"path": "results/task039_v9_h4_layer_supernode_bottom_mpi8_266a1acc/input_sha256.txt", "sha256": "488067f7b03f24d2ede9f830334529411e428052a09de721059ca803cd6ed1da"},
+    "physical_model_sha256.txt": {"path": "results/task039_v9_h4_layer_supernode_bottom_mpi8_266a1acc/physical_model_sha256.txt", "sha256": "2aefe673830f9757f6fe4459942cc123d2d9436f0983b01a97b3ccb62d2314c8"},
+    "resolved_config.json": {"path": "results/task039_v9_h4_layer_supernode_bottom_mpi8_266a1acc/resolved_config.json", "sha256": "f965c38abea08bee0ff83a6603e336ca4823deb932af7064aed3c571f8f63883"},
+    "worker_stdout.txt": {"path": "results/task039_v9_h4_layer_supernode_bottom_mpi8_266a1acc/worker_stdout.txt", "sha256": "3e49486d317e685a9a41e6e26410ff0ce029fac6f303b9d631d41ac34039c59b"},
+    "v3_v7_diagnostic.json": {"path": "results/task039_v9_h4_layer_supernode_bottom_mpi8_266a1acc/numerical_output/v3_v7_diagnostic.json", "sha256": "837881467a2cd073c0fc826499b43e064076c449ec158011ebc953e949f29470"},
+    "memory_object_ledger.json": {"path": "results/task039_v9_h4_layer_supernode_bottom_mpi8_266a1acc/numerical_output/memory_object_ledger.json", "sha256": "9a2c11131611f9df58cd66212c0fbabc51d4cbef8b0e4a64e21835cfdc0d7923"},
+    "memory_stage_markers.raw.jsonl": {"path": "results/task039_v9_h4_layer_supernode_bottom_mpi8_266a1acc/numerical_output/memory_stage_markers.raw.jsonl", "sha256": "7db2beac0c71979ed1bf2b00fe2d5958e157a155d16433c814771a8d499a7aba"},
+    "memory_stages.jsonl": {"path": "results/task039_v9_h4_layer_supernode_bottom_mpi8_266a1acc/numerical_output/memory_stages.jsonl", "sha256": "74e1921aec09a327f8278b35b1715361574c2084921a90d03451fc677b7a3db6"},
+    "process_tree_samples.jsonl": {"path": "results/task039_v9_h4_layer_supernode_bottom_mpi8_266a1acc/numerical_output/process_tree_samples.jsonl", "sha256": "efdce58738657a2cb02e39c98dca604ed50c85a7fd8098da5682f60ab4648df0"}
+  },
+  "not_run": [
+    "V9-3 bottom/top direct full-side FGMRES",
+    "V9-4 ranks16/32/64 compressibility",
+    "10 modal samples",
+    "top",
+    "both-side",
+    "full formal",
+    "recovery",
+    "RTA",
+    "field export",
+    "0.7nm PDE"
+  ]
+}

@@ -1501,3 +1501,13 @@ V8-3 的五方法和资源边界见 [bottom outcome](task039_5nm_hybrid_qualific
 | Task / Model ID | 探索目的 | 实际运行到哪一步 | 实际数值 | 未满足的具体物理量/资源 Gate | 直观原因 | status | 下一步或停止理由 | evidence |
 |---|---|---|---|---|---|---|---|---|
 | `task039_v9_h4_bare_f_full_side_diagnostic` | 分离 single-layer sweep 对 bare `F` 与完整 `A_side` 的误差 | bottom `J1/F1` 五 probe；FB1/2/4 未运行 | J1 worst `r_F=50.7689715097`、`r_A=50.2410648372`；F1 worst `r_F=367.2128685567`、`r_A=141.0763808200`；peak `23.8684272766 GiB` | mandatory `r_A<=1e-2`、preferred `<=1e-3` 未满足；retained `not_run` | single-layer sweep 对 bare `F` 已失效；DtN/Woodbury 缓和但不能修复 | `controlled_numerical_negative` | 不重跑 J1/F1；V9-2 仅做 tiny Schur/supernode algebra | [V9-1 outcome](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v9_bare_f_vs_full_side.md)、[V9-1 record](../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v9_bare_f_full_side_diagnostic_v1.json) |
+
+## Task039 Review V9-2 fixed two-layer supernode
+
+| Model ID | 研究目的 | 实际运行与资源 | 数值 Gate | status | evidence |
+|---|---|---|---|---|---|
+| `task039_v9_h4_layer_supernode_bottom` | 三组固定相邻层 supernode 的 bottom baseline | MPI8；construction/overall `24494911488 B = 22.812664031982422 GiB`；约 `473.941922 s`；swap0 | SN2-J/SN2-SGS 五个 mandatory 全 nonfinite；physical zero degenerate；factor3→0；full/global/nested0 | `controlled_numerical_negative`；不是 resource stop | [V9-2 outcome](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v9_supernode_side_preconditioner.md)、[record](../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v9_supernode_side_preconditioner_v1.json) |
+
+V9-2 是 research-only component evidence。没有 stable preferred method，因此 retained、V9-3
+direct FGMRES、V9-4 rank audit、top/both/full 和 0.7 nm PDE 均 `not_run`；不改变
+ordinary/default solver，也不证明通用 factor API 有 bug。
