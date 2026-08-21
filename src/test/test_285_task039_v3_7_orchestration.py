@@ -4847,6 +4847,57 @@ def test_v9_layer_supernode_run_task_finalizer_writes_record_and_ledger(
     assert main_record["telemetry"]["memory_object_ledger"]["status"] == ("completed")
 
 
+def test_v10_compression_main_forwards_producer_source_sha_without_pde(
+    tmp_path, monkeypatch, capsys
+):
+    captured = {}
+
+    def fake_run(_payload, _run_directory, **kwargs):
+        captured.update(kwargs)
+        return {
+            "status": "compression_completed",
+            "schema": orchestration.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA,
+            "method": orchestration.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD,
+        }
+
+    monkeypatch.setattr(orchestration, "run_task039_v3_7_diagnostic", fake_run)
+    monkeypatch.setattr(
+        orchestration,
+        "MPI",
+        SimpleNamespace(COMM_WORLD=SimpleNamespace(size=8, rank=0)),
+    )
+    manifest = tmp_path / "compression-manifest.json"
+    manifest.write_text("{}", encoding="utf-8")
+    producer_source_sha = "b" * 40
+    exit_code = orchestration.main(
+        [
+            "--worker",
+            "--launched-by-task038-watchdog",
+            "--input",
+            "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat",
+            "--run-directory",
+            str(tmp_path / "compression-run"),
+            "--source-sha",
+            "a" * 40,
+            orchestration.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_FLAG,
+            orchestration.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_MANIFEST_FLAG,
+            str(manifest),
+            orchestration.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_MANIFEST_SHA256_FLAG,
+            hashlib.sha256(manifest.read_bytes()).hexdigest(),
+            orchestration.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PRODUCER_SOURCE_SHA_FLAG,
+            producer_source_sha,
+        ]
+    )
+
+    assert exit_code == 0
+    assert captured["v10_h4_side_response_packet_compression"] is True
+    assert (
+        captured["v10_h4_side_response_packet_compression_producer_source_sha"]
+        == producer_source_sha
+    )
+    assert json.loads(capsys.readouterr().out)["status"] == "compression_completed"
+
+
 @pytest.mark.parametrize("route", ("producer", "consumer", "full", "compression"))
 def test_v10_side_response_routes_run_public_finalizer_with_ledger(
     tmp_path, monkeypatch, route

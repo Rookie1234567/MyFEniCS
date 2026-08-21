@@ -15186,6 +15186,9 @@ def main(argv: list[str] | None = None) -> int:
             v10_h4_side_response_packet_compression_manifest_sha256=(
                 args.v10_h4_side_response_packet_compression_manifest_sha256
             ),
+            v10_h4_side_response_packet_compression_producer_source_sha=(
+                args.v10_h4_side_response_packet_compression_producer_source_sha
+            ),
             v5_h4_blr_side_only=args.v5_h4_blr_side_component,
             v5_h4_fixed_budget_bottom_only=args.v5_h4_fixed_budget_bottom_component,
             v5_h4_fixed_budget_exact_spool_root=(
