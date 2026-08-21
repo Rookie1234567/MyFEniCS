@@ -10,6 +10,7 @@ from petsc4py import PETSc
 from src.solvers.hybrid_layer_block import (
     build_layer_block_operator,
     build_layer_sweep_action,
+    relative_matvec_residual,
 )
 
 
@@ -98,6 +99,12 @@ def _put_global_values(vector: PETSc.Vec, values: np.ndarray) -> None:
     first, last = map(int, vector.getOwnershipRange())
     vector.getArray()[:] = np.asarray(values[first:last], dtype=PETSc.ScalarType)
     vector.assemble()
+
+
+def _collect_global_values(vector: PETSc.Vec) -> np.ndarray:
+    local = np.asarray(vector.getArray(readonly=True), dtype=np.complex128).copy()
+    pieces = vector.getComm().tompi4py().allgather(local)
+    return np.concatenate(pieces)
 
 
 def test_v8_layer_block_action_tiny_complex_nonhermitian() -> None:
@@ -318,4 +325,86 @@ def test_v8_fixed_layer_sweeps_match_frozen_complex_formulas() -> None:
         action.apply(frozen_source, frozen_actual)
     for vector in (frozen_expected, frozen_actual, frozen_solved, frozen_source):
         vector.destroy()
+    matrix.destroy()
+
+
+@pytest.mark.parametrize("method", ("J1", "F1"))
+def test_v9_bare_f_residual_and_full_side_action_contract(method: str) -> None:
+    matrix, labels = _tiny_block_tridiagonal()
+    dense = np.zeros((24, 24), dtype=np.complex128)
+    for row in range(24):
+        dense[row, row] = 3.0 + 0.1j
+        if row >= 4:
+            dense[row, row - 4] = 0.7 + 0.2j
+        if row < 20:
+            dense[row, row + 4] = -0.4 + 0.3j
+    exact_solution = np.asarray(
+        [1.0 + 0.25j * (row + 1) for row in range(24)], dtype=np.complex128
+    )
+    second_solution = np.asarray(
+        [2.0 - 0.1j * (row + 1) for row in range(24)], dtype=np.complex128
+    )
+    rhs_values = dense @ exact_solution
+    second_rhs_values = dense @ second_solution
+    direct_solution = np.linalg.solve(dense, rhs_values)
+    assert (
+        np.linalg.norm(direct_solution - exact_solution)
+        / np.linalg.norm(exact_solution)
+        <= 1.0e-12
+    )
+    direct_residual = np.linalg.norm(
+        rhs_values - dense @ direct_solution
+    ) / np.linalg.norm(rhs_values)
+    assert direct_residual <= 1.0e-12
+
+    action = build_layer_sweep_action(
+        matrix, labels, layer_count=6, method=method, fine_action=matrix.mult
+    )
+    rhs = matrix.createVecRight()
+    second_rhs = matrix.createVecRight()
+    combined_rhs = matrix.createVecRight()
+    actual = matrix.createVecLeft()
+    repeat = matrix.createVecLeft()
+    second_actual = matrix.createVecLeft()
+    combined_actual = matrix.createVecLeft()
+    _put_global_values(rhs, rhs_values)
+    _put_global_values(second_rhs, second_rhs_values)
+    alpha = PETSc.ScalarType(1.2 - 0.3j)
+    beta = PETSc.ScalarType(-0.4 + 0.6j)
+    combined_values = alpha * rhs_values + beta * second_rhs_values
+    _put_global_values(combined_rhs, combined_values)
+    action.apply_checkpoint(method, rhs, actual)
+    action.apply_checkpoint(method, rhs, repeat)
+    action.apply_checkpoint(method, second_rhs, second_actual)
+    action.apply_checkpoint(method, combined_rhs, combined_actual)
+    actual_values = _collect_global_values(actual)
+    expected_values = _sweep_reference(rhs_values, method)
+    assert (
+        np.linalg.norm(actual_values - expected_values)
+        / np.linalg.norm(expected_values)
+        <= 1.0e-12
+    )
+    dense_residual = np.linalg.norm(
+        rhs_values - dense @ actual_values
+    ) / np.linalg.norm(rhs_values)
+    helper_residual = relative_matvec_residual(matrix, rhs, actual)
+    assert abs(helper_residual - dense_residual) <= 1.0e-12
+    assert _relative_error(repeat, actual) <= 1.0e-12
+    expected_linear = actual.duplicate()
+    actual.copy(expected_linear)
+    expected_linear.scale(alpha)
+    expected_linear.axpy(beta, second_actual)
+    assert _relative_error(combined_actual, expected_linear) <= 1.0e-12
+    for vector in (
+        expected_linear,
+        combined_actual,
+        second_actual,
+        repeat,
+        actual,
+        combined_rhs,
+        second_rhs,
+        rhs,
+    ):
+        vector.destroy()
+    action.destroy()
     matrix.destroy()

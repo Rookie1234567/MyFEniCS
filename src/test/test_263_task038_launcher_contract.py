@@ -882,6 +882,60 @@ def test_v8_layer_sweep_launcher_measures_overall_and_method_intervals(
         )
 
 
+def test_v9_bare_f_launcher_binds_worker_identity_and_retained_not_run(tmp_path):
+    specification = replace(
+        load_and_resolve(TASK039_V4_H4_ITERATIVE),
+        expected_output_parent=tmp_path / "results",
+    )
+    run_directory = tmp_path / "v9-bare-f-worker"
+    diagnostic_directory = run_directory / "numerical_output"
+    diagnostic_directory.mkdir(parents=True)
+    source_sha = "d" * 40
+    (diagnostic_directory / "v3_v7_diagnostic.json").write_text(
+        json.dumps(
+            {
+                "schema": launcher.V9_H4_BARE_F_SIDE_SCHEMA,
+                "method": launcher.V9_H4_BARE_F_SIDE_METHOD,
+                "source_sha": source_sha,
+                "gate": {"numerical_holdout_gate_pass": True},
+            }
+        ),
+        encoding="utf-8",
+    )
+    plan = SimpleNamespace(
+        argv=("/opt/fake-worker",),
+        method=launcher.V9_H4_BARE_F_SIDE_METHOD,
+        source_sha=source_sha,
+        contract_probe=False,
+        task039_trace_audit=False,
+    )
+    result = launcher._run_worker(
+        plan,
+        specification,
+        run_directory,
+        popen_factory=lambda *_args, **_kwargs: _FakeProcess(0),
+        sample_factory=lambda _pid: _authority(memory=1024, swap=0),
+        terminate_factory=lambda _member: {"requested": True},
+        monotonic=lambda: 0.0,
+        sleep=lambda _seconds: None,
+        poll_interval=0.25,
+    )
+    telemetry = result["resource_authority"]["v9_h4_bare_f_side_telemetry"]
+    assert telemetry["method"] == launcher.V9_H4_BARE_F_SIDE_METHOD
+    assert telemetry["profile"] == launcher.V9_H4_BARE_F_SIDE_SCHEMA
+    assert telemetry["absolute_terminate_memory_bytes"] == 45 * 2**30
+    assert telemetry["construction_interval_summary"]["status"] == "not_available"
+    assert telemetry["retained_interval_summary"]["status"] == "not_run"
+    assert telemetry["retained_interval_summary"]["pass"] is None
+    assert telemetry["numerical_gate_pass"] is True
+    assert telemetry["overall"]["pass"] is None
+    assert telemetry["overall"]["retained_pass"] is None
+    assert telemetry["overall"]["resource_gate"] == "pending_retained_candidate"
+    assert telemetry["gate_contract"]["full_side_exact_factor_count"] == 0
+    assert telemetry["gate_contract"]["global_direct_factor_count"] == 0
+    assert telemetry["gate_contract"]["nested_ksp_count"] == 0
+
+
 def test_task039_h5_critical_checkpoint_does_not_stop_before_absolute_hard_stop(
     monkeypatch, tmp_path
 ):

@@ -3794,6 +3794,171 @@ def test_v8_layer_sweep_plan_keeps_packet_and_spool_on_worker_contract(tmp_path)
     assert not (tmp_path / "v8-sweep-plan").exists()
 
 
+def test_v9_bare_f_plan_is_explicit_and_has_no_selected_packet(tmp_path):
+    h4_input = Path(
+        "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
+    )
+    spool_root = Path(
+        "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/"
+        "numerical_output"
+    )
+    plan = orchestration.v3_7_execution_dry_run(
+        h4_input,
+        tmp_path / "v9-bare-f-plan",
+        source_sha="d" * 40,
+        v9_h4_bare_f_side=True,
+        v9_h4_bare_f_side_exact_spool_root=spool_root,
+    )
+    route_flags = (
+        "--candidate-b-only",
+        "--candidate-c-only",
+        "--candidate-d-only",
+        "--candidate-d-qualified",
+        "--candidate-e-side-only",
+        "--v5-h4-setup-only",
+        "--v5-h4-blr-side-component",
+        "--v5-h4-fixed-budget-bottom-component",
+        "--v6-h4-post-compaction-setup-only",
+        "--v6-h4-port-modal-bottom-component",
+        "--v7-h4-exact-side-limit-setup-only",
+        "--v7-h4-exact-side-full-formal",
+        "--v7-h4-streamed-bottom-producer",
+        "--v7-h4-streamed-bottom-consumer",
+        "--v8-h4-layer-block-reconstruction",
+        "--v8-h4-layer-sweep-bottom",
+        "--v9-h4-bare-f-full-side-diagnostic",
+    )
+    assert sum(flag in plan["argv"] for flag in route_flags) == 1
+    assert plan["argv"].count("--v9-h4-bare-f-full-side-diagnostic") == 1
+    assert plan["argv"].count("--v9-h4-bare-f-full-side-exact-spool-root") == 1
+    assert plan["worker_contract"]["method"] == (orchestration.V9_H4_BARE_F_SIDE_METHOD)
+    assert plan["worker_contract"]["profile_id"] == (
+        orchestration.V9_H4_BARE_F_SIDE_PROFILE_ID
+    )
+    assert plan["worker_contract"]["exact_spool_root"] == str(spool_root.resolve())
+    assert plan["watchdog"]["absolute_terminate_memory_bytes"] == 45 * 2**30
+    assert not any("selected-mode-packet" in argument for argument in plan["argv"])
+    assert not (tmp_path / "v9-bare-f-plan").exists()
+
+
+def test_v9_bare_f_main_dry_run_uses_parser_dest(tmp_path, capsys):
+    h4_input = Path(
+        "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
+    )
+    spool_root = Path(
+        "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/"
+        "numerical_output"
+    )
+    run_directory = tmp_path / "v9-main-dry-run"
+    exit_code = orchestration.main(
+        [
+            "--dry-run",
+            "--input",
+            str(h4_input),
+            "--run-directory",
+            str(run_directory),
+            "--source-sha",
+            "d" * 40,
+            "--v9-h4-bare-f-full-side-diagnostic",
+            "--v9-h4-bare-f-full-side-exact-spool-root",
+            str(spool_root),
+        ]
+    )
+    assert exit_code == 0
+    plan = json.loads(capsys.readouterr().out)
+    route_flags = (
+        "--candidate-b-only",
+        "--candidate-c-only",
+        "--candidate-d-only",
+        "--candidate-d-qualified",
+        "--candidate-e-side-only",
+        "--v5-h4-setup-only",
+        "--v5-h4-blr-side-component",
+        "--v5-h4-fixed-budget-bottom-component",
+        "--v6-h4-post-compaction-setup-only",
+        "--v6-h4-port-modal-bottom-component",
+        "--v7-h4-exact-side-limit-setup-only",
+        "--v7-h4-exact-side-full-formal",
+        "--v7-h4-streamed-bottom-producer",
+        "--v7-h4-streamed-bottom-consumer",
+        "--v8-h4-layer-block-reconstruction",
+        "--v8-h4-layer-sweep-bottom",
+        "--v9-h4-bare-f-full-side-diagnostic",
+    )
+    assert sum(flag in plan["argv"] for flag in route_flags) == 1
+    assert plan["argv"].count("--v9-h4-bare-f-full-side-diagnostic") == 1
+    assert plan["worker_contract"]["method"] == (orchestration.V9_H4_BARE_F_SIDE_METHOD)
+    assert plan["worker_contract"]["profile_id"] == (
+        orchestration.V9_H4_BARE_F_SIDE_PROFILE_ID
+    )
+    assert not any("selected-mode-packet" in argument for argument in plan["argv"])
+    assert not run_directory.exists()
+
+
+def test_v9_frozen_holdout_rejects_wrong_inherited_producer_sha(tmp_path):
+    metadata = (
+        tmp_path
+        / "v5_blr_reference_spool"
+        / "rank0000"
+        / "bottom_modal_traction_positive_rhs.json"
+    )
+    metadata.parent.mkdir(parents=True)
+    metadata.write_text(
+        json.dumps(
+            {
+                "source_identity": {
+                    "packet_identity": {
+                        "source_sha": "e" * 40,
+                        "packet_identity": {"model_id": "tiny"},
+                        "manifest_sha256": "f" * 64,
+                    },
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="producer source SHA"):
+        orchestration._v9_frozen_holdout_identity(tmp_path, MPI.COMM_SELF)
+
+
+def test_v9_frozen_holdout_identity_reads_wrapper_producer_sha(tmp_path):
+    metadata = (
+        tmp_path
+        / "v5_blr_reference_spool"
+        / "rank0000"
+        / "bottom_modal_traction_positive_rhs.json"
+    )
+    metadata.parent.mkdir(parents=True)
+    packet_identity = {
+        "source_sha": "e" * 40,
+        "model_id": "tiny-inner-packet",
+    }
+    manifest_sha = "f" * 64
+    metadata.write_text(
+        json.dumps(
+            {
+                "source_identity": {
+                    "packet_identity": {
+                        "source_sha": orchestration.V9_FROZEN_HOLDOUT_PRODUCER_SHA,
+                        "packet_identity": packet_identity,
+                        "manifest_sha256": manifest_sha,
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    identity, loaded_manifest_sha, catalog = orchestration._v9_frozen_holdout_identity(
+        tmp_path, MPI.COMM_SELF
+    )
+    assert identity == packet_identity
+    assert loaded_manifest_sha == manifest_sha
+    assert catalog["producer_source_sha"] == (
+        orchestration.V9_FROZEN_HOLDOUT_PRODUCER_SHA
+    )
+    assert catalog["catalog_sha256"] == orchestration.V9_FROZEN_HOLDOUT_CATALOG_SHA256
+
+
 def test_v7_streamed_consumer_route_preserves_selected_and_basis_packets(
     tmp_path, monkeypatch
 ) -> None:
