@@ -6172,6 +6172,44 @@ def test_v3_7_boot_markers_bound_setup_sentinel_failure(tmp_path) -> None:
     assert ledger["status"] == "exception"
 
 
+@pytest.mark.parametrize(
+    ("route_kwargs", "expected_profile", "error_match"),
+    (
+        (
+            {"v10_h4_side_response_packet_pilot": True},
+            orchestration.V10_H4_SIDE_RESPONSE_PACKET_PILOT_PROFILE_ID,
+            "V10-6 producer requires",
+        ),
+        (
+            {"v10_h4_side_response_packet_consumer": True},
+            orchestration.V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_PROFILE_ID,
+            "V10-6 consumer requires",
+        ),
+    ),
+)
+def test_v10_side_response_routes_materialize_profile_before_followup_validation(
+    tmp_path, route_kwargs, expected_profile, error_match
+) -> None:
+    payload = load_and_resolve(
+        Path("input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat")
+    ).as_jsonable()
+    run_directory = tmp_path / "v10-profile"
+    with pytest.raises(ValueError, match=error_match):
+        orchestration.run_task039_v3_7_diagnostic(
+            payload,
+            run_directory,
+            source_sha="a" * 40,
+            comm=MPI.COMM_SELF,
+            **route_kwargs,
+        )
+
+    marker_path = run_directory / "numerical_output/memory_stage_markers.raw.jsonl"
+    rows = [json.loads(line) for line in marker_path.read_text().splitlines()]
+    profile_rows = [row for row in rows if row["stage"] == "profile_ready"]
+    assert profile_rows
+    assert profile_rows[-1]["detail"]["profile_id"] == expected_profile
+
+
 def test_v3_7_direct_authority_is_not_blocked_by_full3d_secondary_error(
     tmp_path, monkeypatch
 ) -> None:

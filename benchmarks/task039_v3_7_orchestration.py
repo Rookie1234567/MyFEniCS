@@ -11769,6 +11769,8 @@ def run_task039_v3_7_diagnostic(
             or v10_h4_supernode_factor_integrity
             or v10_h4_sn2_j_only
             or v10_h4_j1_inner_fgmres
+            or v10_h4_side_response_packet_pilot
+            or v10_h4_side_response_packet_consumer
         ):
             incidence = resolved_payload["incidence"]
             if v7_h4_full_formal:
