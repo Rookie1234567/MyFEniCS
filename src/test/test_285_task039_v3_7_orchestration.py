@@ -3479,6 +3479,321 @@ def test_v8_layer_block_plan_is_explicit_h4_and_packet_free(tmp_path) -> None:
     assert ordinary["watchdog"]["profile"] == "v3_7_default"
 
 
+@pytest.mark.parametrize("holdout_pass", [True, False], ids=["pass", "no-pass"])
+def test_v8_layer_sweep_uses_one_factor_set_and_releases_each_oracle(
+    monkeypatch, holdout_pass
+):
+    if MPI.COMM_WORLD.size != 1:
+        pytest.skip("run this fake-side lifecycle contract in serial")
+
+    timeline: list[str] = []
+    events: list[str] = []
+    woodbury_builds: list[str] = []
+    probe_calls: list[dict[str, object]] = []
+
+    class Vec:
+        def __init__(self):
+            self.destroyed = False
+
+        def destroy(self):
+            self.destroyed = True
+
+    class Matrix:
+        def createVecLeft(self):
+            return Vec()
+
+        def getSize(self):
+            return (6, 6)
+
+        def getOwnershipRange(self):
+            return (0, 6)
+
+    class System:
+        def __init__(self):
+            self.A = Matrix()
+            self.destroyed = False
+
+        def destroy(self):
+            timeline.append("system_destroy")
+            self.destroyed = True
+
+    class Resource:
+        def __init__(self, name):
+            self.name = name
+            self.destroyed = False
+
+        def mult(self, _source, _target):
+            return None
+
+        def destroy(self):
+            self.destroyed = True
+
+    system = System()
+    components = SimpleNamespace(
+        F=Resource("F"),
+        H=Resource("H"),
+        C=Resource("C"),
+        D=Resource("D"),
+    )
+
+    class Sweep:
+        factor_only_storage = True
+
+        def __init__(self):
+            self.destroyed = False
+            self._solves = [0] * 6
+
+        @property
+        def diagnostics(self):
+            return {
+                "layer_factor_count": 0 if self.destroyed else 6,
+                "factor_only_storage": True,
+                "layer_solve_count": list(self._solves),
+                "fine_action_count": 0,
+                "fb_sweep_count": 0,
+                "destroy_marker": "completed" if self.destroyed else "pending",
+            }
+
+        def destroy(self):
+            if not self.destroyed:
+                timeline.append("sweep_destroy")
+                self.destroyed = True
+
+    sweep = Sweep()
+    sweep_builds: list[object] = []
+    woodbury_instances = []
+
+    class Woodbury:
+        def __init__(self, _action, _components, *, base_identity, compact_storage):
+            del compact_storage
+            woodbury_builds.append(base_identity)
+            self.base_identity = base_identity
+            self.destroyed = False
+            self.apply_count = 0
+            woodbury_instances.append(self)
+
+        @property
+        def diagnostics(self):
+            return {"status": "ready", "apply_seconds": 0.001}
+
+        def apply(self, _source, _target):
+            self.apply_count += 1
+
+        def destroy(self):
+            if not self.destroyed:
+                timeline.append(f"woodbury_destroy:{self.base_identity}")
+                self.destroyed = True
+
+    def record_event(marker, detail):
+        events.append(marker)
+        cleanup_markers = {
+            f"v8_layer_sweep_bottom_{method}_cleanup"
+            for method in ("J1", "F1", "FB1", "FB2", "FB4")
+        }
+        if marker in cleanup_markers:
+            method = marker.split("_")[4]
+            assert timeline[-2:] == [
+                f"woodbury_destroy:v8_layer_sweep_{method}_dynamic_woodbury",
+                "collective_cleanup",
+            ]
+        if marker == "v8_layer_sweep_bottom_retained_state_release":
+            assert system.destroyed is True
+            assert sweep.destroyed is True
+            assert timeline[-1] == "collective_cleanup"
+            assert detail["factor_count_after_cleanup"] == 0
+
+    monkeypatch.setattr(
+        orchestration,
+        "assemble_hybrid_local_dtn_action_system",
+        lambda *args, **kwargs: system,
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "_build_research_explicit_side_components",
+        lambda _system: components,
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "build_real_layer_labels",
+        lambda _matrix, _system: (
+            np.arange(6, dtype=np.int32),
+            {"z_layer_boundaries": list(range(7))},
+        ),
+    )
+
+    def build_sweep(*args, **kwargs):
+        del args, kwargs
+        sweep_builds.append(sweep)
+        return sweep
+
+    monkeypatch.setattr(orchestration, "build_layer_sweep_action", build_sweep)
+    monkeypatch.setattr(
+        orchestration,
+        "_load_v5_fixed_budget_spool_shards",
+        lambda *args, **kwargs: {
+            "probe": {"rhs": {"probe_metadata": {}}, "exact_output": {}}
+        },
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "_load_v5_blr_reference_spool_remapped",
+        lambda *args, **kwargs: Vec(),
+    )
+
+    def fake_probe(action, *args, **kwargs):
+        del args
+        probe_calls.append(
+            {
+                "repeat": kwargs.get("repeat"),
+                "linearity": kwargs.get("linearity"),
+            }
+        )
+        action.apply(Vec(), Vec())
+        return {"pass": holdout_pass, "finite": True}, None
+
+    monkeypatch.setattr(orchestration, "_v5_blr_probe", fake_probe)
+    monkeypatch.setattr(
+        orchestration,
+        "_v6_port_modal_holdout_gate",
+        lambda reports: {"pass": bool(reports) and holdout_pass},
+    )
+    monkeypatch.setattr(orchestration, "HybridLocalDtnWoodburyOracle", Woodbury)
+
+    def destroy_components(_components):
+        for resource in (
+            components.F,
+            components.H,
+            components.C,
+            components.D,
+        ):
+            resource.destroy()
+        timeline.append("components_destroy")
+        return {"F": True, "H": True, "C": True, "D": True}
+
+    monkeypatch.setattr(
+        orchestration, "_destroy_v5_side_components", destroy_components
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "collective_heap_cleanup",
+        lambda _comm: (
+            timeline.append("collective_cleanup") or {"collective_call_completed": True}
+        ),
+    )
+
+    result = orchestration.run_v8_h4_layer_sweep_bottom_component(
+        SimpleNamespace(),
+        profile=SimpleNamespace(bottom_interface_nm=0.0, top_interface_nm=1.0),
+        comm=MPI.COMM_SELF,
+        marker_callback=record_event,
+        exact_spool_root="unused-spool",
+        packet_identity={},
+        packet_manifest_sha256="a" * 64,
+    )
+
+    methods = ("J1", "F1", "FB1", "FB2", "FB4")
+    expected_events = [
+        "v8_layer_sweep_bottom_construction_begin",
+        "v8_layer_sweep_bottom_factors_ready",
+        "v8_layer_sweep_bottom_holdout_ready",
+    ]
+    for method in methods:
+        expected_events.extend(
+            [
+                f"v8_layer_sweep_bottom_{method}_woodbury_begin",
+                f"v8_layer_sweep_bottom_{method}_woodbury_ready",
+                f"v8_layer_sweep_bottom_{method}_cleanup",
+                f"v8_layer_sweep_bottom_{method}_complete",
+            ]
+        )
+    expected_events.extend(
+        [
+            "v8_layer_sweep_bottom_construction_end",
+            (
+                "v8_layer_sweep_bottom_retained_apply_state_ready"
+                if holdout_pass
+                else "v8_layer_sweep_bottom_retained_apply_state_not_run"
+            ),
+            "v8_layer_sweep_bottom_retained_state_release",
+        ]
+    )
+    assert events == expected_events
+    for previous, current in zip(methods, methods[1:]):
+        assert events.index(
+            f"v8_layer_sweep_bottom_{previous}_complete"
+        ) < events.index(f"v8_layer_sweep_bottom_{current}_woodbury_begin")
+    assert len(sweep_builds) == 1
+    assert sweep_builds == [sweep]
+    assert len(woodbury_builds) == (6 if holdout_pass else 5)
+    assert woodbury_builds[:5] == [
+        f"v8_layer_sweep_{method}_dynamic_woodbury" for method in methods
+    ]
+    if holdout_pass:
+        assert woodbury_builds[5].endswith("preferred_dynamic_woodbury_rehydration")
+        assert woodbury_instances[5].apply_count >= 1
+        assert events.index(
+            "v8_layer_sweep_bottom_retained_apply_state_ready"
+        ) < events.index("v8_layer_sweep_bottom_retained_state_release")
+        assert result["status"] == "component_numerical_pass_resource_pending"
+    else:
+        assert "v8_layer_sweep_bottom_retained_apply_state_ready" not in events
+        assert "v8_layer_sweep_bottom_retained_apply_state_not_run" in events
+        assert result["status"] == "component_numerical_failed"
+        assert len(woodbury_builds) == 5
+    assert all(instance.apply_count >= 1 for instance in woodbury_instances)
+    assert len(probe_calls) == (6 if holdout_pass else 5)
+    assert all(call["repeat"] is True for call in probe_calls)
+    assert all(call["linearity"] is True for call in probe_calls)
+    assert all(instance.destroyed for instance in woodbury_instances)
+    assert all(
+        resource.destroyed
+        for resource in (components.F, components.H, components.C, components.D)
+    )
+    assert result["gate"]["numerical_holdout_gate_pass"] is holdout_pass
+    assert result["gate"]["pass"] is None
+    assert result["factor_inventory"]["layer_factor_count_ready"] == 6
+    assert result["factor_inventory"]["layer_factor_count_after_cleanup"] == 0
+    assert result["lifecycle"]["sweep_destroyed"] is True
+    assert result["lifecycle"]["spool_released"] is True
+    assert result["telemetry"]["memory_object_ledger"]["status"] == (
+        "finalized_in_worker_finalizer"
+    )
+
+
+def test_v8_layer_sweep_plan_keeps_packet_and_spool_on_worker_contract(tmp_path):
+    h4_input = Path(
+        "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
+    )
+    packet_root = Path("results/task039_v4_h4_m480_shared_packet_eaad0f94")
+    spool_root = Path(
+        "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/"
+        "numerical_output"
+    )
+    plan = orchestration.v3_7_execution_dry_run(
+        h4_input,
+        tmp_path / "v8-sweep-plan",
+        source_sha="c" * 40,
+        v8_h4_layer_sweep_bottom=True,
+        v8_h4_layer_sweep_exact_spool_root=spool_root,
+        selected_mode_packet_manifest=packet_root / "manifest.json",
+        selected_mode_packet_identity=packet_root / "identity.json",
+        selected_mode_packet_manifest_sha256=(
+            "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067"
+        ),
+    )
+    assert plan["watchdog"]["absolute_terminate_memory_bytes"] == 45 * 2**30
+    assert plan["worker_contract"]["method"] == orchestration.V8_H4_LAYER_SWEEP_METHOD
+    assert (
+        plan["worker_contract"]["profile_id"]
+        == orchestration.V8_H4_LAYER_SWEEP_PROFILE_ID
+    )
+    assert plan["worker_contract"]["exact_spool_root"] == str(spool_root.resolve())
+    assert plan["argv"].count("--v8-h4-layer-sweep-bottom") == 1
+    assert "--v8-h4-layer-block-reconstruction" not in plan["argv"]
+    assert plan["argv"].count("--v8-h4-layer-sweep-exact-spool-root") == 1
+    assert not (tmp_path / "v8-sweep-plan").exists()
+
+
 def test_v7_streamed_consumer_route_preserves_selected_and_basis_packets(
     tmp_path, monkeypatch
 ) -> None:

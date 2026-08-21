@@ -173,6 +173,72 @@ def test_v8_layer_block_main_dry_run_is_packet_free(tmp_path, capsys) -> None:
     assert not run_directory.exists()
 
 
+def test_v8_layer_sweep_main_dry_run_freezes_bottom_contract(tmp_path, capsys) -> None:
+    h4_input = Path(
+        "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
+    )
+    packet_root = Path("results/task039_v4_h4_m480_shared_packet_eaad0f94")
+    spool_root = Path(
+        "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/"
+        "numerical_output"
+    )
+    run_directory = tmp_path / "v8-layer-sweep-main-dry-run"
+    assert (
+        watchdog.main(
+            [
+                "--dry-run",
+                "--input",
+                str(h4_input),
+                "--run-directory",
+                str(run_directory),
+                "--source-sha",
+                "a" * 40,
+                watchdog.V8_H4_LAYER_SWEEP_BOTTOM_FLAG,
+                watchdog.V8_H4_LAYER_SWEEP_BOTTOM_EXACT_SPOOL_ROOT_FLAG,
+                str(spool_root),
+                "--selected-mode-packet-manifest",
+                str(packet_root / "manifest.json"),
+                "--selected-mode-packet-identity",
+                str(packet_root / "identity.json"),
+                "--selected-mode-packet-manifest-sha256",
+                "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067",
+            ]
+        )
+        == 0
+    )
+    plan = json.loads(capsys.readouterr().out)
+    route_flags = {
+        watchdog.V8_H4_LAYER_SWEEP_BOTTOM_FLAG,
+        watchdog.V8_H4_LAYER_BLOCK_RECONSTRUCTION_FLAG,
+        "--v5-h4-setup-only",
+        "--v5-h4-blr-side-component",
+        "--v5-h4-fixed-budget-bottom-component",
+        "--v6-h4-post-compaction-setup-only",
+        "--v6-h4-port-modal-bottom-component",
+        "--v7-h4-exact-side-limit-setup-only",
+        "--v7-h4-exact-side-full-formal",
+        "--v7-h4-streamed-bottom-producer",
+        "--v7-h4-streamed-bottom-consumer",
+    }
+    assert [flag for flag in plan["argv"] if flag in route_flags] == [
+        watchdog.V8_H4_LAYER_SWEEP_BOTTOM_FLAG
+    ]
+    assert plan["argv"][1:3] == ["-n", "8"]
+    assert plan["watchdog"]["absolute_terminate_memory_bytes"] == (
+        watchdog.V8_H4_LAYER_SWEEP_BOTTOM_HARD_STOP_BYTES
+    )
+    assert plan["watchdog"]["profile"] == watchdog.V8_H4_LAYER_SWEEP_BOTTOM_PROFILE
+    assert plan["worker_contract"]["method"] == (
+        watchdog.V8_H4_LAYER_SWEEP_BOTTOM_METHOD
+    )
+    assert plan["worker_contract"]["profile_id"] == (
+        watchdog.V8_H4_LAYER_SWEEP_BOTTOM_PROFILE
+    )
+    assert plan["worker_contract"]["exact_spool_root"] == str(spool_root.resolve())
+    assert watchdog.V8_H4_LAYER_SWEEP_BOTTOM_EXACT_SPOOL_ROOT_FLAG in plan["argv"]
+    assert not run_directory.exists()
+
+
 def test_v5_fixed_budget_main_dry_run_freezes_bottom_component(
     tmp_path, capsys
 ) -> None:

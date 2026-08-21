@@ -684,6 +684,204 @@ def test_v8_layer_block_launcher_emits_explicit_telemetry(tmp_path):
     assert telemetry["require_zero_swap"] is True
 
 
+def test_v8_layer_sweep_launcher_keeps_parent_intervals_separate(tmp_path):
+    specification = replace(
+        load_and_resolve(TASK039_V4_H4_ITERATIVE),
+        expected_output_parent=tmp_path / "results",
+    )
+    run_directory = tmp_path / "v8-layer-sweep-worker"
+    run_directory.mkdir()
+    diagnostic_directory = run_directory / "numerical_output"
+    diagnostic_directory.mkdir()
+    (diagnostic_directory / "v3_v7_diagnostic.json").write_text(
+        json.dumps(
+            {
+                "schema": "wrong-schema",
+                "method": "task039_v8_h4_layer_sweep_bottom",
+                "source_sha": "b" * 40,
+                "gate": {"numerical_holdout_gate_pass": True},
+            }
+        ),
+        encoding="utf-8",
+    )
+    plan = SimpleNamespace(
+        argv=("/opt/fake-worker",),
+        method="task039_v8_h4_layer_sweep_bottom",
+        source_sha="a" * 40,
+        contract_probe=False,
+        task039_trace_audit=False,
+    )
+    result = launcher._run_worker(
+        plan,
+        specification,
+        run_directory,
+        popen_factory=lambda *_args, **_kwargs: _FakeProcess(0),
+        sample_factory=lambda _pid: _authority(memory=1024, swap=0),
+        terminate_factory=lambda _member: {"requested": True},
+        monotonic=lambda: 0.0,
+        sleep=lambda _seconds: None,
+        poll_interval=0.25,
+    )
+    telemetry = result["resource_authority"]["v8_h4_layer_sweep_bottom_telemetry"]
+    assert telemetry["absolute_terminate_memory_bytes"] == 45 * 2**30
+    assert telemetry["construction_interval_summary"]["status"] == "not_available"
+    assert telemetry["retained_interval_summary"]["status"] == "not_available"
+    assert telemetry["overall"]["pass"] is False
+    assert telemetry["numerical_status"] == "not_available"
+    assert telemetry["worker_record_status"] == "identity_mismatch"
+    assert telemetry["method_interval_role"] == (
+        "evidence_only_checkpoint; not a substitute for the overall intervals"
+    )
+    assert set(telemetry["method_intervals"]) == {"J1", "F1", "FB1", "FB2", "FB4"}
+    assert all(
+        item["role"] == "evidence_only_checkpoint"
+        for item in telemetry["method_intervals"].values()
+    )
+
+
+@pytest.mark.parametrize(
+    "numerical_pass", [True, False], ids=["pass", "numerical-fail"]
+)
+def test_v8_layer_sweep_launcher_measures_overall_and_method_intervals(
+    tmp_path, numerical_pass
+):
+    specification = replace(
+        load_and_resolve(TASK039_V4_H4_ITERATIVE),
+        expected_output_parent=tmp_path / "results",
+    )
+    run_directory = tmp_path / ("v8-layer-sweep-measured-" + str(numerical_pass))
+    run_directory.mkdir()
+    diagnostic_directory = run_directory / "numerical_output"
+    diagnostic_directory.mkdir()
+    source_sha = "c" * 40
+    methods = ("J1", "F1", "FB1", "FB2", "FB4")
+    (diagnostic_directory / "v3_v7_diagnostic.json").write_text(
+        json.dumps(
+            {
+                "schema": "task039.v8.h4.layer_sweep.bottom_component.v1",
+                "method": "task039_v8_h4_layer_sweep_bottom",
+                "source_sha": source_sha,
+                "gate": {"numerical_holdout_gate_pass": numerical_pass},
+            }
+        ),
+        encoding="utf-8",
+    )
+    marker_path = diagnostic_directory / "memory_stage_markers.raw.jsonl"
+    marker_batches = {
+        1: ["v8_layer_sweep_bottom_construction_begin"],
+        2: [],
+        3: [
+            marker
+            for method in methods
+            for marker in (
+                f"v8_layer_sweep_bottom_{method}_woodbury_begin",
+                f"v8_layer_sweep_bottom_{method}_woodbury_ready",
+            )
+        ],
+        4: [
+            marker
+            for method in methods
+            for marker in (
+                f"v8_layer_sweep_bottom_{method}_cleanup",
+                f"v8_layer_sweep_bottom_{method}_complete",
+            )
+        ]
+        + [
+            "v8_layer_sweep_bottom_construction_end",
+            *(
+                ["v8_layer_sweep_bottom_retained_apply_state_ready"]
+                if numerical_pass
+                else []
+            ),
+        ],
+        5: (["v8_layer_sweep_bottom_retained_state_release"] if numerical_pass else []),
+    }
+    sample_memory = (
+        10 * 2**30,
+        44 * 2**30,
+        20 * 2**30,
+        20 * 2**30,
+        20 * 2**30,
+    )
+    sample_calls = 0
+
+    def popen(_argv, **_kwargs):
+        return _SequenceProcess(polls_before_exit=4)
+
+    def sample_factory(_pid):
+        nonlocal sample_calls
+        sample_calls += 1
+        with marker_path.open("a", encoding="utf-8") as stream:
+            for marker in marker_batches[sample_calls]:
+                stream.write(
+                    json.dumps(
+                        {
+                            "stage": marker,
+                            "status": "end",
+                            "elapsed_seconds": float(sample_calls),
+                        }
+                    )
+                    + "\n"
+                )
+        return _authority(memory=sample_memory[sample_calls - 1], swap=0)
+
+    plan = SimpleNamespace(
+        argv=("/opt/fake-worker",),
+        method="task039_v8_h4_layer_sweep_bottom",
+        source_sha=source_sha,
+        contract_probe=False,
+        task039_trace_audit=False,
+    )
+    result = launcher._run_worker(
+        plan,
+        specification,
+        run_directory,
+        popen_factory=popen,
+        sample_factory=sample_factory,
+        terminate_factory=lambda _process: {"requested": True},
+        monotonic=iter(float(index) for index in range(11)).__next__,
+        sleep=lambda _seconds: None,
+        poll_interval=0.25,
+    )
+    telemetry = result["resource_authority"]["v8_h4_layer_sweep_bottom_telemetry"]
+    assert telemetry["worker_record_status"] == "measured"
+    assert telemetry["numerical_gate_pass"] is numerical_pass
+    assert telemetry["overall"]["numerical_gate_pass"] is numerical_pass
+    assert telemetry["overall"]["construction_pass"] is True
+    assert telemetry["construction_interval_summary"]["status"] == "measured"
+    assert (
+        telemetry["construction_interval_summary"]["peak_process_tree_rss_bytes"]
+        == 44 * 2**30
+    )
+    assert set(telemetry["method_intervals"]) == set(methods)
+    assert all(
+        interval["construction"]["status"] == "measured"
+        and interval["retained"]["status"] == "measured"
+        for interval in telemetry["method_intervals"].values()
+    )
+    method_peaks = [
+        interval["construction"]["peak_process_tree_rss_bytes"]
+        for interval in telemetry["method_intervals"].values()
+    ]
+    assert max(method_peaks) == 20 * 2**30
+    assert telemetry["construction_interval_summary"][
+        "peak_process_tree_rss_bytes"
+    ] > max(method_peaks)
+    assert telemetry["zero_swap_observed"] is True
+    assert telemetry["overall_peak_swap_bytes"] == 0
+    if numerical_pass:
+        assert telemetry["retained_interval_summary"]["status"] == "measured"
+        assert telemetry["retained_interval_summary"]["pass"] is True
+        assert telemetry["overall"]["pass"] is True
+        assert result["result_classification"] == "worker_exit0"
+    else:
+        assert telemetry["retained_interval_summary"]["status"] == "not_available"
+        assert telemetry["overall"]["pass"] is False
+        assert telemetry["overall"]["status"] == (
+            "numerical_gate_failed_retained_not_run"
+        )
+
+
 def test_task039_h5_critical_checkpoint_does_not_stop_before_absolute_hard_stop(
     monkeypatch, tmp_path
 ):
