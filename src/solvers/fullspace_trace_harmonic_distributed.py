@@ -733,7 +733,10 @@ class DistributedTraceHarmonicBasis:
         self._slabs = tuple(slabs)
         self._z: np.ndarray | None = None
         self._candidate_order: tuple[tuple[float, int, int], ...] = ()
-        self._audit: dict[str, Any] = {}
+        self._audit: dict[str, Any] = {
+            "construction_workspace_released": False
+        }
+        self._construction_workspace_released = False
         self._destroyed = False
 
     @property
@@ -774,6 +777,10 @@ class DistributedTraceHarmonicBasis:
         *,
         requested_eigenpairs: int = D2_MAX_EIGENPAIRS,
     ) -> np.ndarray:
+        if self._destroyed:
+            raise RuntimeError("distributed trace basis has been destroyed")
+        if self._construction_workspace_released:
+            raise RuntimeError("cannot build after construction workspace release")
         if int(rank) < 1 or int(rank) > D2_MAX_EIGENPAIRS:
             raise ValueError("basis rank must be in 1..64")
         self._z = None
@@ -863,6 +870,10 @@ class DistributedTraceHarmonicBasis:
                 "trace_eigen_workspace_bytes": "derived_from_SLEPc_ncv_not_measured",
                 "full_vector_transient_count": "not_measured",
                 "unknown_python_jit_bytes": "not_measured",
+                "slab_eigen_audits": tuple(
+                    dict(slab._eigen_audit) for slab in self._slabs
+                ),
+                "construction_workspace_released": False,
             }
             return self.columns
         except Exception:
@@ -875,6 +886,22 @@ class DistributedTraceHarmonicBasis:
                 for vector in vectors:
                     if not any(vector is item for item in slab_vectors.values()):
                         vector.destroy()
+
+    def release_construction_workspace(self) -> None:
+        """Release slab assembly/KSP state while retaining the owner-local Z."""
+
+        if self._destroyed:
+            raise RuntimeError("distributed trace basis has been destroyed")
+        if self._construction_workspace_released:
+            raise RuntimeError("construction workspace has already been released")
+        if self._z is None or len(self._audit["slab_eigen_audits"]) != 2:
+            raise RuntimeError("release requires a successfully built basis")
+        for slab in self._slabs:
+            slab.destroy()
+        self._slabs = ()
+        self._definitions = ()
+        self._construction_workspace_released = True
+        self._audit["construction_workspace_released"] = True
 
     def fill_column(self, index: int, vector: PETSc.Vec) -> None:
         if self._z is None or int(index) < 0 or int(index) >= self._z.shape[1]:
@@ -894,6 +921,8 @@ class DistributedTraceHarmonicBasis:
         self._z = None
         for slab in self._slabs:
             slab.destroy()
+        self._slabs = ()
+        self._definitions = ()
 
 
 def build_distributed_trace_harmonic_basis(

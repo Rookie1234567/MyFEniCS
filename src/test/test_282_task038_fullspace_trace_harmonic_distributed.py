@@ -63,6 +63,14 @@ class _ArrayShell:
             matrix.destroy()
 
 
+class _WorkspaceStub:
+    def __init__(self):
+        self.destroy_count = 0
+
+    def destroy(self):
+        self.destroy_count += 1
+
+
 def _shell_dense(shell: _ArrayShell) -> np.ndarray:
     size = shell.array.shape[0]
     result = np.empty_like(shell.array)
@@ -106,6 +114,47 @@ def test_d2_slab_definitions_are_stably_ordered_by_slab_id():
     reverse = (SimpleNamespace(slab_id=1), SimpleNamespace(slab_id=0))
     ordered = _ordered_slab_definitions(reverse)
     assert tuple(item.slab_id for item in ordered) == (0, 1)
+
+
+def test_d2_basis_release_keeps_z_and_rejects_rebuild():
+    basis = object.__new__(DistributedTraceHarmonicBasis)
+    z = np.asarray(
+        [[1.0 + 0.2j, 0.0], [0.0, 1.0 - 0.1j], [0.5j, 0.25]],
+        dtype=np.complex128,
+    )
+    z.flags.writeable = False
+    slab0 = _WorkspaceStub()
+    slab1 = _WorkspaceStub()
+    basis._definitions = (object(), object())
+    basis.comm = MPI.COMM_WORLD
+    basis._slabs = (slab0, slab1)
+    basis._z = z
+    basis._candidate_order = ((1.0, 0, 0), (2.0, 1, 0))
+    basis._audit = {
+        "construction_workspace_released": False,
+        "slab_eigen_audits": ({"slab": 0}, {"slab": 1}),
+    }
+    basis._construction_workspace_released = False
+    basis._destroyed = False
+    basis.release_construction_workspace()
+    assert basis.audit["construction_workspace_released"] is True
+    assert basis.audit["slab_eigen_audits"] == ({"slab": 0}, {"slab": 1})
+    assert np.shares_memory(basis.columns, z)
+    assert np.array_equal(basis.columns, z)
+    vector = PETSc.Vec().createSeq(3, comm=MPI.COMM_WORLD)
+    try:
+        basis.fill_column(1, vector)
+        assert np.array_equal(vector.getArray(readonly=True), z[:, 1])
+    finally:
+        vector.destroy()
+    with pytest.raises(RuntimeError, match="after construction workspace release"):
+        basis.build(rank=1)
+    with pytest.raises(RuntimeError, match="already been released"):
+        basis.release_construction_workspace()
+    basis.destroy()
+    basis.destroy()
+    assert slab0.destroy_count == 1
+    assert slab1.destroy_count == 1
 
 
 def _real_fixture(tmp_path: Path, degree: int):
