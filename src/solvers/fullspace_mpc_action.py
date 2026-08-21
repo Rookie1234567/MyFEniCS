@@ -37,7 +37,10 @@ class FullspaceMpcFormAction:
     """Matrix-free owner-local action for an uncondensed full-space form.
 
     ``bilinear_form`` is a raw UFL bilinear form; a compiled ``fem.Form`` is
-    retained only by tests as an assembled oracle.
+    retained only by tests as an assembled oracle.  ``slave_row_identity``
+    defaults to ``True`` so the ordinary full-space operator keeps its
+    finalized-MPC constraint identity rows; split physical volume actions may
+    explicitly set it to ``False`` when a surrounding shell owns those rows.
     """
 
     def __init__(
@@ -46,6 +49,7 @@ class FullspaceMpcFormAction:
         function_space: Any,
         *,
         mpc: Any | None = None,
+        slave_row_identity: bool = True,
         jit_options: Mapping[str, Any] | None = None,
     ) -> None:
         if np.dtype(PETSc.ScalarType) != np.dtype(np.complex128):
@@ -67,6 +71,7 @@ class FullspaceMpcFormAction:
 
         self._function_space = function_space
         self._mpc = mpc
+        self._slave_row_identity = bool(slave_row_identity)
         self._coefficient = fem.Function(function_space)
         self._action_ufl = ufl.action(bilinear_form, self._coefficient)
         self._jit_options = None if jit_options is None else dict(jit_options)
@@ -155,6 +160,7 @@ class FullspaceMpcFormAction:
             "matrix_type": self._matrix.getType(),
             "operator": "uncondensed_fullspace_curl_mass_form",
             "mpc_enabled": mpc is not None,
+            "slave_row_identity": self._slave_row_identity,
             "apply_count": 0,
             "global_rows": self._global_rows,
             "local_owned_rows": self._owned_rows,
@@ -332,7 +338,7 @@ class FullspaceMpcFormAction:
             addv=PETSc.InsertMode.ADD_VALUES,
             mode=PETSc.ScatterMode.REVERSE,
         )
-        if self._mpc is not None:
+        if self._mpc is not None and self._slave_row_identity:
             np.take(
                 source_values,
                 self._owned_slave_indices,
@@ -385,16 +391,21 @@ def build_fullspace_mpc_form_action(
     function_space: Any,
     *,
     mpc: Any | None = None,
+    slave_row_identity: bool = True,
     jit_options: Mapping[str, Any] | None = None,
 ) -> FullspaceMpcFormAction:
     """Build from a raw UFL form without retaining an assembled matrix.
 
     The compiled ``fem.Form`` counterpart belongs in oracle tests only.
+    The default ``slave_row_identity=True`` preserves the ordinary action
+    contract; callers must opt out explicitly for a split shell that supplies
+    the constraint identity exactly once.
     """
 
     return FullspaceMpcFormAction(
         bilinear_form,
         function_space,
         mpc=mpc,
+        slave_row_identity=slave_row_identity,
         jit_options=jit_options,
     )

@@ -113,6 +113,7 @@ def test_mpc_action_matches_assembled_oracle_and_repeats(degree: int) -> None:
         audit = action.audit
         assert audit["apply_count"] == 12
         assert audit["mpc_enabled"] is True
+        assert audit["slave_row_identity"] is True
         assert audit["phase_application"] == "finalized_floquet_mpc_once"
         assert audit["constraint_nnz_closes"] is True
         assert audit["global_matrix_materialized"] is False
