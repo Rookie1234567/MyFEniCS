@@ -5637,7 +5637,7 @@ def run_v10_h4_side_response_packet_pilot(
         spool_identity, spool_manifest_sha, catalog = _v9_frozen_holdout_identity(
             exact_spool_root, comm
         )
-        spool_records = _load_v5_fixed_budget_spool_records(
+        spool_records = _load_v5_fixed_budget_spool_shards(
             exact_spool_root,
             comm,
             packet_identity=spool_identity,
