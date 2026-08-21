@@ -1,0 +1,78 @@
+{
+  "schema": "task038.full3d.iterative.t5.physical-identity-compact.v2",
+  "classification": "R1_PASS_HISTORICAL_W5_NOT_SAME_PHYSICAL_RHS",
+  "source": {
+    "source_git_sha": "cd1ca8dfe6fdcc7a526d2794d2963dd6cd81a470",
+    "tracked_status": "",
+    "raw_root": "benchmarks/artifacts/task038_extra_full3d_iterative_t5_authority_v2/r1_clean_cd1ca8d"
+  },
+  "current": {
+    "identity_path": "benchmarks/artifacts/task038_extra_full3d_iterative_t5_authority_v2/r1_clean_cd1ca8d/current_task038_physical_identity.json",
+    "identity_sha256": "563324e8f066beef403cff054f8b72abc5df3973ee2aa6983b245823c49aca37",
+    "identity_bytes": 76966,
+    "wavelength_nm": 13.5,
+    "degree": 6,
+    "mesh_target_nm": 10.0,
+    "profile": "full3d_scalable_v1",
+    "geometry": {
+      "cells_global": 252,
+      "vertices_global": 420,
+      "axis_counts": [7, 4, 15],
+      "canonical_geometry_sha256": "e94ca5e02cf5f3919fde16493ca0ab51d6da97693496b5a9da33d6e433469f0a",
+      "canonical_connectivity_sha256": "d9bc3d6c0ffba47b5a7e6a966f2294607fb91c342b62205f61ae3a558c7f8433"
+    },
+    "mode_count": 80,
+    "mode_manifest_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2",
+    "resolved_config": {
+      "bytes": 4076,
+      "sha256": "78dc49b3a7ae212dec6374fde09eaaa231c131ce64790202da062b3ca2b09aad"
+    },
+    "input_template": {
+      "bytes": 2119,
+      "sha256": "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41"
+    },
+    "mpc": {
+      "global_rows": 173802,
+      "constraint_count": 9210,
+      "relation_digest": "73920dca3253b238feba530af3c4dd02c34e40b7f0a47d844ce619f4f4765ad6",
+      "phase_application": "finalized MPC once"
+    },
+    "rhs_composition": "incident_top_traction + negative_mode_traction, normalized by H"
+  },
+  "historical_w5": {
+    "identity_path": "benchmarks/artifacts/task038_extra_full3d_iterative_t5_authority_v2/r1_clean_cd1ca8d/old_w5_physical_identity.json",
+    "identity_sha256": "4d396ee6e7069aca9704f86a9ebe813ef8f9fe9846da5c8b8c7e1e70cc200ad5",
+    "identity_bytes": 7774,
+    "source_git_sha": "41cbbd454eb8336d9ea5378ed618447acfc60aac",
+    "known_geometry": {
+      "cells_global": 252,
+      "vertices_global": 420,
+      "canonical_geometry_sha256": "e94ca5e02cf5f3919fde16493ca0ab51d6da97693496b5a9da33d6e433469f0a",
+      "canonical_connectivity_sha256": "d9bc3d6c0ffba47b5a7e6a966f2294607fb91c342b62205f61ae3a558c7f8433"
+    },
+    "mandatory_fields_unavailable": [
+      "wavelength_nm",
+      "Floquet phase and ordered relation",
+      "quadrature policy",
+      "structured facet tag/normal",
+      "incident amplitudes",
+      "per-mode H, e-vector and traction",
+      "MPC relation digest"
+    ],
+    "old_mode_count": 80,
+    "old_mode_manifest_sha256": "8d7c396b5251365c6865b2fafefd37e1559794fe39f445ef8bccc3b8ff29cac5"
+  },
+  "comparison": {
+    "geometry_rebuild_exact": true,
+    "current_manifest_complete": true,
+    "old_manifest_complete": true,
+    "key_count_duplicate_structure": "pass",
+    "old_current_same_physics_claim": false,
+    "old_current_rhs_relative_l2": 10.934736136386151,
+    "old_current_max_packet_absolute_difference": 1.2846616424283923
+  },
+  "evidence_hashes": {
+    "r1_record": "9e828db48bef2b4467c8eaf832791902a4272a78cfa5062b44ac8b1efb4c620f",
+    "r1_checker": "3f2232ed14e31c52f02e3ba6d40e5d36519b88899fd8f68081d8f0cbbec14774"
+  }
+}

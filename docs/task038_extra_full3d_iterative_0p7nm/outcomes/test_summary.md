@@ -152,3 +152,43 @@ T1、T2、T3、T4 的已审查结果保持 PASS。T5 MPI1 只完成 authority br
 | T7–T9 and 0.7 nm | `not_run` |
 
 The old W5 negative evidence is retained as historical evidence and is not an algorithm-performance result. T5 compact record/checker/watchdog and the read-only norm/alpha/position diagnostic are listed in [`sweep_oracle.md`](sweep_oracle.md). Formal source identity at start was `e97db3680ee501350cc40dabe3b0b01d4c756651`; the current documentation changes are pending and have not been committed or pushed. No CI claim is made; all listed checks are local.
+
+# Review V2 R0–R4 closure
+
+本节补充当前 Review V2 批次的最终边界；前面的 T2/T3/T4 数值表和 v1 negative evidence 保持不变。`action` 是当前离散物理算子的向量作用，`sweep` 是两 slab 的固定 forward/backward 残差传播，`transmission` 是 slab 间边界数据动作；三者都不能把一次 boundary apply 直接称为完整 PDE 求解。
+
+## Identity and authority
+
+| stage | source/evidence | result |
+|---|---|---|
+| R0 | final pre-formal source `ea7fc96b8c95eca13b5ee8055d7e0762f9ab02dc`; qualified activation; complex128/int32; clean preflight | PASS |
+| R1 | clean source `cd1ca8dfe6fdcc7a526d2794d2963dd6cd81a470`; structured current/old identity records | PASS；`HISTORICAL_W5_NOT_SAME_PHYSICAL_RHS` |
+| R2 | source `09b926428babc2f0a8dd4b4061b7e18d7dd23aba`; p2/p3 MPI1、p6/h10 MPI1+MPI2 component raw/check | PASS；current oracle independent and hash-bound |
+| R3 | source `2c8fca90c7300b85b30021081868b699c0b306d2`; MPI1/MPI2 pair；process-tree watchdog未测 | PASS；`CURRENT_RECOMPUTED_RESIDUAL_AT_HISTORICAL_W5_STATE`，不含 process-tree resource qualification |
+
+R1 old/current RHS key/count/duplicate structure passed with 164,592 packets each, but relative L2 was `10.934736136386151` and maximum packet difference `1.2846616424283923`; this is why old residual was not directly reused. R3 used the old primal solution only, with no empirical scaling: primal roundtrip `1.3336463445521434e-17`, current residual recompute `2.381515544959568e-18`, mapped primal MPI1/MPI2 `1.4389898139779045e-17`, residual cross-MPI `1.145631881739048e-14`, repeat `0`, swap `0 B`. R3 process-tree resource provenance was not measured; only rank-local RSS/VmSwap is present.
+
+## R2 current component oracle
+
+| case | max candidate/direct relative L2 | limit | H max error | all-mode/group recompose | repeat max | status |
+|---|---:|---:|---:|---:|---:|---|
+| p2/h50 MPI1 | `8.692664947436813e-15` | `1e-12` | `0` | `0` | `5.909031086016836e-17` | PASS |
+| p3/h50 MPI1 | `2.5937308039595027e-14` | `1e-12` | `0` | `0` | `7.611020931512763e-17` | PASS |
+| p6/h10 MPI1 | `4.559266389658486e-14` | `1e-11` | `3.2741809263825522e-15` | `0` | `4.8257303460951034e-17` | PASS |
+| p6/h10 MPI2 | `4.559266389658486e-14` | `1e-11` | `3.2741809263825522e-15` | `0` | `4.8257303460951034e-17` | PASS |
+
+## R4 Candidate A/B/C
+
+| candidate | measured result | resource | classification |
+|---|---|---|---|
+| A physical_rhs MPI1 | rho `0.8145890334049838 > 0.60`; closure `1.2458376041083906e-16`; repeat `0` | peak `5,145,784,320 B`; wall `2812.015165732999 s`; swap `0` | numerical contraction FAIL；不是实现失败 |
+| A gradient MPI1 | rho `0.8889127715646881 <= 0.90`; closure `1.271047984953834e-19`; repeat `0` | peak `1,323,728,896 B`; wall `2747.751835015006 s`; swap `0` | PASS |
+| A remaining 8 cases | not started | not applicable | `not_run_by_fail_fast` |
+| B | no rho/resource run | mixed Si–Si/Si-air interior; T3 only exterior authority | `NOT_APPLICABLE / CANDIDATE_B_INTERIOR_MODAL_AUTHORITY_NOT_QUALIFIED` |
+| C physical_rhs MPI1 | focused authority/tests PASS；worker before record | watchdog peak `12,942,209,024 B`; wall `406.7977727999969 s`; swap `0`; return `-15`; `hard_stop_12_gib` | `CONTROLLED_STOP_HARD_12_GIB` |
+
+C 的 decimal 6 GB 和 12 GiB Gate 都失败。由于没有 `record.json`，R4 checker 只产生 fail-closed 的缺失输入结论，未生成标准 `check.json`；C 的 rho、closure、repeat、finite、update counts、class manifest 和 formal payload 都是 `not_run_by_resource_hard_stop`，不能称数值失败。完整 watchdog raw/compact SHA 在 `t5_sweep_candidate_c_v2.json` 和 `sweep_oracle.md` 中。
+
+## Validation boundary
+
+本轮只新增/更新 compact JSON 与文档，没有修改 Python、没有重新启动 formal/PDE。文档内容不能自引用未来 commit；最终提交/push状态由交付报告给出。R4 overall 为 `FAIL / CONTROLLED_STOP_RESOURCE`；R5/T6-S、T6-F/EH/RTA、T7–T9 和 full 0.7 nm 均 `not_run_by_R4_gate` 或 `not_run`。A 的 5.145 GB cold peak 与 1.324 GB gradient warm-like peak 不是完整 PDE 的 `<2 GB` 证明。测试、compileall、AST、JSON 和 Markdown 检查均为本地结果，不声称 CI。

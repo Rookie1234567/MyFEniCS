@@ -1430,3 +1430,20 @@ outcomes。完整证据固定在
 3. COMSOL 参考只计算零级；非零衍射级不能写 0。
 4. 不同物理配置、偏振、网格和软件之间的数值只能做标注清楚的横向参考，不能混成单一收敛序列。
 5. 新任务不得以未填写占位词收口；历史缺口必须说明“历史未记录”，当前未运行项必须写 `not_run`。
+
+---
+
+# Task038-extra Review V2：T5/R4 bounded iterative lane
+
+本条登记的是当前分支上的 authority、sweep 和资源边界，不是完整 Maxwell PDE 结果。`action` 只表示当前离散算子的向量作用；`sweep` 是两个 z-slab 的固定 forward/backward 残差传播；`transmission` 是 slab 间边界数据动作。Candidate C 只替换人工 PC transmission，不改变 exact physical action、材料、Floquet phase 或 Maxwell 弱式。
+
+| Model ID | source / identity | method and scope | measured result | resource / status | evidence |
+|---|---|---|---|---|---|
+| `task038_t5_R1_identity` | clean R1 source `cd1ca8dfe6fdcc7a526d2794d2963dd6cd81a470`; final code/evidence source `ea7fc96b8c95eca13b5ee8055d7e0762f9ab02dc` | current structured physical identity vs historical W5 identity；252 hexahedral cells、p6/h10、13.5 nm | geometry witness exact；old mandatory wavelength/Floquet/orientation/quadrature/H fields unavailable；old/current RHS relative L2 `10.934736136386151` | `PASS` as fail-closed historical classification；not a same-physics claim | `docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/t5_physical_identity_v2.json` |
+| `task038_t5_R2_current_dual_oracle` | source `09b926428babc2f0a8dd4b4061b7e18d7dd23aba` | fresh component/direct oracle；p2/p3 MPI1 and p6/h10 MPI1/MPI2；no PDE | max relative L2 p2 `8.692664947436813e-15`、p3 `2.5937308039595027e-14`、p6 `4.559266389658486e-14`; all-mode/group recompose 0; repeat `<=7.611020931512763e-17` | `PASS`; current dual only | R2 compact records and ignored `r2_09b9264` raw/check |
+| `task038_t5_R3_current_historical_state_residual` | source `2c8fca90c7300b85b30021081868b699c0b306d2`; source name `CURRENT_RECOMPUTED_RESIDUAL_AT_HISTORICAL_W5_STATE` | current `b-A_current x_old` after primal canonical mapping；MPI1/MPI2；no old PC replay/scaling | primal roundtrip `1.3336463445521434e-17`; residual closure `2.381515544959568e-18`; mapped primal pair `1.4389898139779045e-17`; residual pair `1.145631881739048e-14`; repeat 0 | `PASS`; Path A remains not qualified；process-tree watchdog provenance未测，不是 resource qualification | `t5_long_tail_authority_v2.json` and ignored `r3_2c8fca90` |
+| `task038_r4_candidate_A` | formal source `1a4d495a4f7a78bafb389ab9b30d0b49fe7bd5be` | fixed first-order Robin PC; two-slab residual propagation；MPI1 physical/gradient only after fail-fast | physical rho `0.8145890334049838 > 0.60`; gradient rho `0.8889127715646881 <=0.90`; closures `1.2458376041083906e-16` / `1.271047984953834e-19` | physical numerical contraction fail; gradient pass；remaining 8 `not_run_by_fail_fast`; not implementation failure | `t5_sweep_candidate_a_v2.json` |
+| `task038_r4_candidate_B` | final source `ea7fc96…` | intended propagating/near-cutoff interior modal transmission | no numerical value; current interface mixed Si–Si/Si–air and T3 authority only exterior | `NOT_APPLICABLE / CANDIDATE_B_INTERIOR_MODAL_AUTHORITY_NOT_QUALIFIED` | `t5_sweep_candidate_b_v2.json` |
+| `task038_r4_candidate_C` | final source `ea7fc96…` | focused fixed second-order local impedance authority; one p6/h10 physical formal attempt | focused tests pass；formal worker stopped before record | `CONTROLLED_STOP_HARD_12_GIB`; process-tree peak `12,942,209,024 B`, wall `406.7977727999969 s`, swap 0, return `-15`, `hard_stop_12_gib`; rho and formal payload not run | `t5_sweep_candidate_c_v2.json` and ignored watchdog raw/compact |
+
+R4 overall is `FAIL / CONTROLLED_STOP_RESOURCE`; R5/T6-S, T6-F, official E/H/RTA, R/T/A, T7–T9 and full 0.7 nm remain `not_run`. The `<2 GB` strategic target is not met: Candidate A's 5.145 GB and gradient's 1.324 GB are sweep process-tree observations, not full PDE memory certification. `outcomes/summary.md` and `docs/development_progress.md` remain T9-closeout records and are intentionally not rewritten as completed.

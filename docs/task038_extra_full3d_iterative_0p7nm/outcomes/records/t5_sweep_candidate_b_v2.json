@@ -1,0 +1,20 @@
+{
+  "schema": "task038.full3d.iterative.t5.sweep-compact.v2",
+  "candidate": "B",
+  "classification": "CANDIDATE_B_INTERIOR_MODAL_AUTHORITY_NOT_QUALIFIED",
+  "status": "NOT_APPLICABLE",
+  "source_git_sha": "ea7fc96b8c95eca13b5ee8055d7e0762f9ab02dc",
+  "evidence": {
+    "review_v2_path": "docs/task038_extra_full3d_iterative_0p7nm/review_report_v2.md",
+    "review_v2_sha256": "1c521490fdc36a5315ba4033089a4fb91368f7939f23329829dad26ef28eea4e"
+  },
+  "boundary": {
+    "interface": "mixed Si-Si and Si-air interior interface",
+    "available_authority": "T3 exterior top/bottom dynamic DtN only",
+    "required_authority": "interior modal transmission on the mixed interface",
+    "rho": "not_run",
+    "resource": "not_run",
+    "numeric_failure": false
+  },
+  "interpretation": "global Floquet modes cannot be truncated to scattered homogeneous facets and called an analytic interior oracle"
+}

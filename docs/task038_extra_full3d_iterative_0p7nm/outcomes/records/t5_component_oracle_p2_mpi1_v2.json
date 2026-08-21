@@ -1,0 +1,32 @@
+{
+  "schema": "task038.full3d.iterative.t5.component-oracle-compact.v2",
+  "stage": "R2",
+  "classification": "OLD_W5_PHYSICAL_DUAL_NOT_CURRENT_AUTHORITY + CURRENT_DUAL_ORACLE_PASS",
+  "source_git_sha": "09b926428babc2f0a8dd4b4061b7e18d7dd23aba",
+  "case": "p2-h50",
+  "degree": 2,
+  "mesh_target_nm": 50.0,
+  "mpi_size": 1,
+  "profile": "full3d_scalable_v1",
+  "raw_dir": "benchmarks/artifacts/task038_extra_full3d_iterative_t5_authority_v2/r2_09b9264/p2_h50_mpi1/raw",
+  "record_sha256": "53402f2725f3927216442a1263fd1ac2395a7d219f33eeb2ad8e8b23a36d64a7",
+  "checker_sha256": "d187801b13226eb923a4fd3ae46dfd9733073835af6ed43c89e05325ddd653af",
+  "facts": {
+    "mode_inventory_count": 88,
+    "nonzero_incident_count": 1,
+    "component_oracle_limit": 1e-12,
+    "max_recorded_candidate_oracle_relative_l2": 8.692664947436813e-15,
+    "max_recorded_absolute_difference": 4.30010460551607e-14,
+    "max_H_relative_error": 0.0,
+    "max_amplitude_relative_error": 1.2226354687131295e-14,
+    "all_mode_recompose_relative_l2": 0.0,
+    "side_and_polarization_group_recompose_relative_l2": 0.0,
+    "repeat_recompose_max_relative_l2": 5.909031086016836e-17,
+    "finite": true,
+    "duplicate_missing_extra": [0, 0, 0],
+    "normal_and_traction_audit": "passed",
+    "finalized_mpc_phase_once": true,
+    "global_numeric_allgather": false,
+    "pde_run": false
+  }
+}

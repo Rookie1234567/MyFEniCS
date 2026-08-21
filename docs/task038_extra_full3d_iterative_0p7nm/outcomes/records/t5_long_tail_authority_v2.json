@@ -1,0 +1,62 @@
+{
+  "schema": "task038.full3d.iterative.t5.long-tail-compact.v2",
+  "classification": "PATH_A_NOT_QUALIFIED; PATH_B_CURRENT_RECOMPUTED_RESIDUAL_PASS",
+  "source_name": "CURRENT_RECOMPUTED_RESIDUAL_AT_HISTORICAL_W5_STATE",
+  "source_git_sha": "2c8fca90c7300b85b30021081868b699c0b306d2",
+  "case": "p6-h10",
+  "profile": "full3d_scalable_v1",
+  "input": {
+    "template_sha256": "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41",
+    "resolved_config_bytes": 4076,
+    "resolved_config_sha256": "78dc49b3a7ae212dec6374fde09eaaa231c131ce64790202da062b3ca2b09aad",
+    "mode_manifest_sha256": "dee5c3ac0e5fccb8745fcef29ad0e17c8bc31717ea901c098ea1fdd5dee37bf2"
+  },
+  "old_solution": {
+    "file_sha256": "d2a5a7e7b94a73d5212bc693d43282cace2883aadd0bb66780a3f8ae7b9e535e",
+    "array_sha256": "620b5e496536d69c0bc471731b09a15424c29044e6836881ccd85340cbee0c39",
+    "shape": [173802],
+    "dtype": "complex128",
+    "finite": true,
+    "empirical_scaling": false
+  },
+  "mpi1": {
+    "record_sha256": "408210fdad743d82b011c928bbf636223431f2557f6b5f5b047de46518674ea1",
+    "checker_sha256": "6a85e45ef245501cde9db361428082882620c8e534aabdeb25fb7b7f2b68e661",
+    "primal_roundtrip_relative_l2": 1.3336463445521434e-17,
+    "residual_recompute_relative_l2": 2.381515544959568e-18,
+    "action_repeat_relative_l2": 0.0,
+    "apply_count": 2,
+    "rank_max_rss_bytes": 712794112,
+    "swap_bytes": 0,
+    "residual_manifest_sha256": "62c7824e1032b1a14078d158b0e403b9087dc862bf00386fdce08535e4d76dce"
+  },
+  "mpi2": {
+    "record_sha256": "af2d8874bc92a3fd9378513c1c36e20373380725d786fb3c41fec212f3c5e6ac",
+    "checker_sha256": "62d37b10fd849908f1c554a2b9b008ed79e17106f9cf691700c12a0a77991199",
+    "primal_source_from_mpi1_manifest": true,
+    "old_raw_residual_read": false,
+    "residual_recompute_relative_l2": 2.381515544959568e-18,
+    "action_repeat_relative_l2": 0.0,
+    "apply_count": 2,
+    "rank_max_rss_bytes": 777555968,
+    "swap_bytes": 0,
+    "residual_manifest_sha256": "96115d637de5deb8945a47bbc89d8c915b7ac4dad0598be8a90b227fbedeca4c"
+  },
+  "pair": {
+    "check_sha256": "891319892e78efdd8c194641ca11d921211bb6506e1dc17b0b60c863cc5f11fd",
+    "mapped_primal_relative_l2": 1.4389898139779045e-17,
+    "residual_relative_l2": 1.145631881739048e-14,
+    "source_relative_l2": 0.0,
+    "duplicate_missing_extra": [0, 0, 0],
+    "swap_bytes": 0
+  },
+  "old_residual_diagnostic": {
+    "old_residual_file_sha256": "4166665f2e3c302f0645d9581856ec1bc433de4679540e45f98eb1e161093cc6",
+    "old_residual_array_sha256": "35de8f03a1fdf4c410cff33ceee44a31831df418443c7534650308505114de98",
+    "old_residual_norm": 1.6827423227554978,
+    "fresh_current_residual_norm": 387.39250373645797,
+    "angle_radians": 1.5212340930320511,
+    "status": "diagnostic_only_not_authority"
+  },
+  "resource": "process_tree_not_measured_r3; rank-local RSS/VmSwap only"
+}

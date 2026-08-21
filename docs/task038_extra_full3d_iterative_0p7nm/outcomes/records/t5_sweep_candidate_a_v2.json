@@ -1,0 +1,60 @@
+{
+  "schema": "task038.full3d.iterative.t5.sweep-compact.v2",
+  "candidate": "A",
+  "classification": "CANDIDATE_A_NUMERICAL_CONTRACTION_FAIL_FAST",
+  "source_git_sha": "1a4d495a4f7a78bafb389ab9b30d0b49fe7bd5be",
+  "formal_root": "benchmarks/artifacts/task038_extra_full3d_iterative_r4_formal_v1/1a4d495a",
+  "cases_run": [
+    {
+      "source": "physical_rhs",
+      "mpi_size": 1,
+      "status": "FAIL_NUMERIC_CONTRACTION",
+      "rho": 0.8145890334049838,
+      "rho_limit": 0.6,
+      "closure_relative_l2": 1.2458376041083906e-16,
+      "repeat_relative_l2": 0.0,
+      "record_sha256": "8fbf001b9bdef4ca8f05b8762fd1a5e7711bbe22e4a6d3bd76c292e007763dd8",
+      "checker_sha256": "1de7b01d2eb7dc3235e3cda058916bd3dfc20c5c2867ed263a0f57f822741cc0",
+      "watchdog_raw_sha256": "4e464b0df50672009d7a4924ec35c973db1db868d2a1106a5f344391f5a4e0a8",
+      "watchdog_compact_sha256": "4d990736c929aa2be244c56cdd27758748b636aab16cb6373f308240f982d118",
+      "process_tree_peak_rss_bytes": 5145784320,
+      "swap_bytes": 0,
+      "wall_seconds": 2812.015165732999,
+      "resource_gate": "pass"
+    },
+    {
+      "source": "gradient",
+      "mpi_size": 1,
+      "status": "PASS_NUMERIC_CONTRACTION",
+      "rho": 0.8889127715646881,
+      "rho_limit": 0.9,
+      "closure_relative_l2": 1.271047984953834e-19,
+      "repeat_relative_l2": 0.0,
+      "record_sha256": "6214f47da32041588fd6d59bb4d0a115d754d98ba2bfe14edda4d3d346e9fcd1",
+      "checker_sha256": "21c396c8b50724ecada418f08c41449e8d804bf6316e63b039a264dafc106c76",
+      "watchdog_raw_sha256": "92c8e49e8f33a257a750a1360bcc71e9bb4b635dc540765d1adec9b3d33f14c5",
+      "watchdog_compact_sha256": "74f30f55d7eddfd22d09b937675795615be1ab34c265622dbc4abe3e14db4de7",
+      "process_tree_peak_rss_bytes": 1323728896,
+      "swap_bytes": 0,
+      "wall_seconds": 2747.751835015006,
+      "resource_gate": "pass"
+    }
+  ],
+  "common_audit": {
+    "retained_support_metadata_bytes": 3317760,
+    "fixed_gmres_arnoldi_basis_derived_bytes_per_rank": 50054976,
+    "exact_update_apply_count_per_sweep": 5,
+    "forbidden_global_matrix_or_schur": false
+  },
+  "not_run_by_fail_fast": [
+    "curl_mpi1",
+    "checkerboard_mpi1",
+    "r3_qualified_long_tail_mpi1",
+    "physical_rhs_mpi2",
+    "gradient_mpi2",
+    "curl_mpi2",
+    "checkerboard_mpi2",
+    "r3_qualified_long_tail_mpi2"
+  ],
+  "interpretation": "physical_rhs contraction failure is a numerical candidate result, not an implementation defect"
+}

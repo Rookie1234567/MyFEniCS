@@ -1,0 +1,47 @@
+{
+  "schema": "task038.full3d.iterative.t5.sweep-compact.v2",
+  "candidate": "C",
+  "classification": "CONTROLLED_STOP_HARD_12_GIB",
+  "source_git_sha": "ea7fc96b8c95eca13b5ee8055d7e0762f9ab02dc",
+  "formal_case": "p6-h10 physical_rhs MPI1",
+  "formal_root": "benchmarks/artifacts/task038_extra_full3d_iterative_r4_formal_v2/ea7fc96/p6_h10_physical_rhs_mpi1",
+  "focused_authority": "PASS",
+  "resource": {
+    "wall_seconds": 406.7977727999969,
+    "process_tree_peak_rss_bytes": 12942209024,
+    "decimal_6gb_limit_bytes": 6000000000,
+    "hard_stop_12gb_limit_bytes": 12884901888,
+    "process_tree_peak_swap_bytes": 0,
+    "dedicated_cgroup_peak_swap_bytes": 0,
+    "returncode": -15,
+    "stop_reason": "hard_stop_12_gib",
+    "termination_method_recorded": "POSIX process group SIGTERM then SIGKILL",
+    "termination_interpretation": "SIGTERM succeeded; SIGKILL fallback was not invoked",
+    "sigkill_required": false,
+    "worker_record_written": false
+  },
+  "watchdog": {
+    "raw_path": "benchmarks/artifacts/task038_extra_full3d_iterative_r4_formal_v2/ea7fc96/p6_h10_physical_rhs_mpi1/watchdog.raw.json",
+    "raw_bytes": 320388,
+    "raw_sha256": "cc1bee361712361af52414e1b0d76bb52fd9712b5eecb01b5375b81d2be23ff0",
+    "compact_path": "benchmarks/artifacts/task038_extra_full3d_iterative_r4_formal_v2/ea7fc96/p6_h10_physical_rhs_mpi1/watchdog.compact.json",
+    "compact_bytes": 732,
+    "compact_sha256": "3102995f3d10170bb4a96f4890ac9fb919e140c570535a5fd38fb59447179a08",
+    "schema": "task038.t5.external-process-tree-{raw,compact}.v1"
+  },
+  "formal_numeric_fields": {
+    "rho": "not_run_by_resource_hard_stop",
+    "closure": "not_run_by_resource_hard_stop",
+    "repeat": "not_run_by_resource_hard_stop",
+    "finite": "not_run_by_resource_hard_stop",
+    "update_counts": "not_run_by_resource_hard_stop",
+    "class_manifest": "not_run_by_resource_hard_stop",
+    "retained_192B_payload": "not_formally_validated"
+  },
+  "checker": {
+    "attempted": true,
+    "result": "fail_closed_missing_record",
+    "check_json_written": false
+  },
+  "interpretation": "resource hard stop, not a Candidate C numerical failure"
+}

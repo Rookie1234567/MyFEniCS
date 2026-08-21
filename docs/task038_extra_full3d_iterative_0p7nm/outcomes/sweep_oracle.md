@@ -87,7 +87,7 @@ T5 的第一步不是把旧 W5 的残差直接喂给当前算子，而是先证�
 
 ### 7.2 身份、旧 W5 闭合与证据
 
-正式尝试开始时 branch 为 `codex/20260820-task38-extra-full3d-iterative-0p7nm`，Review V1 authority/upstream 为 `80c3fa29d54813d0344a93ffa7768108ff15fa76`，T5 clean source SHA 为 `e97db3680ee501350cc40dabe3b0b01d4c756651`，ahead/behind 为 `14/0`。record 的 expected/start/end SHA 均为该值，tracked worktree start/end 均 clean。Review identity 是上述 V1 authority；本轮文档和 compact records 是待提交修改，尚未产生新的最终 commit，也没有 push。
+正式尝试开始时 branch 为 `codex/20260820-task38-extra-full3d-iterative-0p7nm`，Review V1 authority/upstream 为 `80c3fa29d54813d0344a93ffa7768108ff15fa76`，T5 clean source SHA 为 `e97db3680ee501350cc40dabe3b0b01d4c756651`，ahead/behind 为 `14/0`。record 的 expected/start/end SHA 均为该值，tracked worktree start/end 均 clean。Review identity 是上述 V1 authority；文档内容不能自引用未来 commit，最终提交/push状态由交付报告给出。
 
 旧 W5 的 provenance 保留如下：old source `41cbbd454eb8336d9ea5378ed618447acfc60aac`；exact mesh H5/XDMF SHA 分别为 `ae9755890127023577a4e6b54a6d5b79aec4048a3ccbb48aec6c8c30e891bd13` 与 `e40e1b05f3269101fe93e96416481f14bcaa64fb1df5f030381c747b484b9864`；old RHS file/array SHA 为 `caf87001775247cb6967d6ebb244c8eb646bcd0d71c6e77410cd091488b1b87f` / `31384363d498673ab5e30a26d47042581756ecabfc0efe3dba7a956b3600c20f`；residual file/array SHA 为 `4166665f2e3c302f0645d9581856ec1bc433de4679540e45f98eb1e161093cc6` / `35de8f03a1fdf4c410cff33ceee44a31831df418443c7534650308505114de98`；outer action SHA `f2605312bf172f91ad13d3a9855ed006b87419be9392f6dbef24c17b51b41de2`；solution SHA `d2a5a7e7b94a73d5212bc693d43282cace2883aadd0bb66780a3f8ae7b9e535e`。旧数组均为 shape `[173802]`、`complex128`，并且 `rhs - outer_action` 重现 residual，relative L2 为 `1.742722222852365e-20`。这些事实证明旧 W5 文件内部闭合，但不自动证明旧系数在当前物理 dual convention 下仍可用。
 
@@ -111,7 +111,7 @@ compact evidence：
 | old norm | `13.197399418369045` |
 | current norm | `1.3253714387502278` |
 | `||current-old||_2` | `14.492586965436216` |
-| relative difference to current | `10.934736136386148`（recorded Gate value `10.934736136386151`） |
+| relative difference to current | `10.934736136386151` |
 | best complex alpha | `-0.09791253215983536 - 0.019929962676216016 i` |
 | `||current-alpha old||_2` | `0.13293210647187068` |
 | scaled residual / current norm | `0.10029800143967213` |
@@ -131,3 +131,71 @@ compact evidence：
 外部 watchdog 返回 code `0`，wall `34.103594134998275 s`，sample count `35`，process-tree peak RSS `981,893,120 B`，memory authority peak 同值，process-tree swap 与 dedicated cgroup swap 均为 `0 B`；没有 stop reason，也没有 SIGKILL。该资源 Gate 是实测通过，但不解除 RHS bridge hard stop。
 
 因 bridge 未通过，residual source/action/repeat/reference canonical packets、residual action/reference checker、MPI1→MPI2 residual roundtrip、MPI2 authority、Candidate A/B/C sweep 和 T6 都是 `not_run_by_gate`。本轮不把未运行项写成通过，也不启动 T7–T9 或 0.7 nm PDE。
+
+## 8. Review V2 R4：Candidate A/B/C
+
+这里的 sweep 是把两个 z-slab 依次解一次，再把每个 slab 对当前精确物理算子的作用传播给邻侧，最后用 `r_new = b - A_delta` 检查一次真实残差。它不是把 T4 的单次 Robin 边界动作当成完整求解器。R4 的 contraction `rho` 是 `||r_new||/||r||`，阈值在任何 source 运行前冻结：physical `0.60`、qualified long-tail `0.70`、checkerboard `0.75`、gradient/curl `0.90`。
+
+### 8.1 Candidate A：已完成的两例与 fail-fast
+
+Candidate A formal source SHA 为 `1a4d495a4f7a78bafb389ab9b30d0b49fe7bd5be`。两例都使用 exact current action closure、固定 2 slabs、forward `[0,1]`、backward `[1,0]`、每 sweep 5 次 exact update、fixed local GMRES 8/8、PoU correction；资源由外部 process-tree watchdog 实测。
+
+| case | rho / limit | fresh `b-A_delta` closure | repeat | process-tree peak | wall | swap | status |
+|---|---:|---:|---:|---:|---:|---:|---|
+| physical_rhs MPI1 | `0.8145890334049838 / 0.60` | `1.2458376041083906e-16` | `0` | `5,145,784,320 B` | `2812.015165732999 s` | `0 B` | `FAIL`，仅 contraction 越界 |
+| gradient MPI1 | `0.8889127715646881 / 0.90` | `1.271047984953834e-19` | `0` | `1,323,728,896 B` | `2747.751835015006 s` | `0 B` | `PASS` |
+
+closure、repeat、finite、operator audit 和资源在 physical case 均通过；因此 physical 的负结果是 Candidate A 的数值 contraction 结果，不是 runner/implementation defect。按照 hard Gate fail-fast，以下 8 项没有启动：
+
+```text
+curl MPI1
+checkerboard MPI1
+r3_qualified_long_tail MPI1
+physical_rhs MPI2
+gradient MPI2
+curl MPI2
+checkerboard MPI2
+r3_qualified_long_tail MPI2
+```
+
+A 的两个 compact evidence 记录为 `records/t5_sweep_candidate_a_v2.json`；其中 raw/check/watchdog 的 SHA 指向 ignored 根目录
+`benchmarks/artifacts/task038_extra_full3d_iterative_r4_formal_v1/1a4d495a/`。A 的 retained support metadata 为 `3,317,760 B`，fixed GMRES 字段 `50,054,976 B` 只表示 Arnoldi basis derived bytes，其余 KSP workspace由 process-tree watchdog测量。
+
+### 8.2 Candidate B：不适用，不是数值失败
+
+B 的结论是
+`NOT_APPLICABLE / CANDIDATE_B_INTERIOR_MODAL_AUTHORITY_NOT_QUALIFIED`。当前 `interface_z` 是 mixed Si–Si / Si–air interior interface；T3 authority 只覆盖 exterior top/bottom dynamic DtN。没有把全局 Floquet modes 截到零散 homogeneous facets 后冒充 interior modal oracle，因此 B 没有运行 rho、MPI 或资源 formal，也不能写成“B 数值失败”。
+
+### 8.3 Candidate C：focused pass，formal resource controlled stop
+
+Candidate C 是 fixed second-order local impedance；它改变的是人工 PC transmission，不改变 exact physical action、Maxwell 弱式、材料或 Floquet phase。focused authority/tests 已通过，但唯一正式 C case（p6/h10 physical_rhs MPI1，source SHA `ea7fc96b8c95eca13b5ee8055d7e0762f9ab02dc`）在 worker 写 record 前由 watchdog 停止：
+
+| resource field | measured value |
+|---|---:|
+| wall | `406.7977727999969 s` |
+| process-tree peak RSS | `12,942,209,024 B` |
+| decimal 6 GB Gate | failed |
+| hard 12 GiB Gate | failed (`12,884,901,888 B`) |
+| process-tree/dedicated-authority swap | `0 B` |
+| return / stop | `-15` / `hard_stop_12_gib` |
+| termination | SIGTERM；`sigkill_required=false` |
+
+ignored raw watchdog：
+
+- raw SHA `cc1bee361712361af52414e1b0d76bb52fd9712b5eecb01b5375b81d2be23ff0`，路径 `benchmarks/artifacts/task038_extra_full3d_iterative_r4_formal_v2/ea7fc96/p6_h10_physical_rhs_mpi1/watchdog.raw.json`；
+- compact SHA `3102995f3d10170bb4a96f4890ac9fb919e140c570535a5fd38fb59447179a08`，同目录 `watchdog.compact.json`。
+
+没有 `record.json`，所以 R4 checker 的调用按缺失 record fail-closed，未产生 `check.json`。C 的 rho、closure、repeat、finite、update count、class manifest 和 formal retained payload 全部是 `not_run_by_resource_hard_stop`；不能称 C 数值失败，也不能称 192 B payload 已正式验证。
+
+### 8.4 R4 总结与后续边界
+
+| item | status |
+|---|---|
+| Candidate A | physical contraction fail-fast；gradient pass；不是实现失败 |
+| Candidate B | `NOT_APPLICABLE / CANDIDATE_B_INTERIOR_MODAL_AUTHORITY_NOT_QUALIFIED` |
+| Candidate C | `CONTROLLED_STOP_HARD_12_GIB`，12 GiB watchdog hard stop |
+| R4 overall | `FAIL / CONTROLLED_STOP_RESOURCE` |
+| R5/T6-S | `not_run_by_R4_gate` |
+| T6-F/EH/RTA/T7–T9/full 0.7 nm | `not_run` |
+
+`<2 GB` strategic target 尚未达到；A 的 cold peak 和 gradient 的 warm-like peak 不是完整 PDE 内存证明。下一轮必须先解决 C 的 p6 JIT/process lifecycle hard stop并获得新 Review 授权；不得用预热或绕过 watchdog制造伪 pass。旧 T4/T5 sections、v1 negative evidence和 ignored raw 均保留。
