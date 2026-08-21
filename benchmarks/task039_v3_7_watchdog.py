@@ -115,6 +115,11 @@ V7_STREAMED_PETROV_BOTTOM_CONSUMER_EXACT_SPOOL_ROOT_FLAG = (
 V8_H4_LAYER_BLOCK_RECONSTRUCTION_FLAG = "--v8-h4-layer-block-reconstruction"
 V8_H4_LAYER_BLOCK_RECONSTRUCTION_METHOD = "task039_v8_h4_layer_block_reconstruction"
 V8_H4_LAYER_BLOCK_RECONSTRUCTION_PROFILE = "task039.v8.h4.layer_block_reconstruction.v1"
+V8_H4_LAYER_SWEEP_BOTTOM_FLAG = "--v8-h4-layer-sweep-bottom"
+V8_H4_LAYER_SWEEP_BOTTOM_EXACT_SPOOL_ROOT_FLAG = "--v8-h4-layer-sweep-exact-spool-root"
+V8_H4_LAYER_SWEEP_BOTTOM_METHOD = "task039_v8_h4_layer_sweep_bottom"
+V8_H4_LAYER_SWEEP_BOTTOM_PROFILE = "task039.v8.h4.layer_sweep.bottom_component.v1"
+V8_H4_LAYER_SWEEP_BOTTOM_HARD_STOP_BYTES = 45 * 2**30
 
 
 def _validate_resolved_identity(
@@ -130,6 +135,7 @@ def _validate_resolved_identity(
     v7_h4_streamed_bottom_producer: bool = False,
     v7_h4_streamed_bottom_consumer: bool = False,
     v8_h4_layer_block_reconstruction: bool = False,
+    v8_h4_layer_sweep_bottom: bool = False,
 ) -> None:
     if (
         v5_h4_setup_only
@@ -142,6 +148,7 @@ def _validate_resolved_identity(
         or v7_h4_streamed_bottom_producer
         or v7_h4_streamed_bottom_consumer
         or v8_h4_layer_block_reconstruction
+        or v8_h4_layer_sweep_bottom
     ):
         method = payload.get("method", {})
         if payload.get("model_id") != "task039_5nm_v4_1deg_s5_hybrid_iterative_m480":
@@ -206,6 +213,7 @@ def _watchdog_policy(
     v7_h4_streamed_bottom_producer: bool = False,
     v7_h4_streamed_bottom_consumer: bool = False,
     v8_h4_layer_block_reconstruction: bool = False,
+    v8_h4_layer_sweep_bottom: bool = False,
 ) -> dict[str, Any]:
     _validate_resolved_identity(
         payload,
@@ -219,6 +227,7 @@ def _watchdog_policy(
         v7_h4_streamed_bottom_producer=v7_h4_streamed_bottom_producer,
         v7_h4_streamed_bottom_consumer=v7_h4_streamed_bottom_consumer,
         v8_h4_layer_block_reconstruction=v8_h4_layer_block_reconstruction,
+        v8_h4_layer_sweep_bottom=v8_h4_layer_sweep_bottom,
     )
     if v7_h4_exact_side_full_formal:
         absolute_bytes = V7_H4_EXACT_SIDE_FULL_FORMAL_HARD_STOP_BYTES
@@ -232,6 +241,8 @@ def _watchdog_policy(
         absolute_bytes = V7_STREAMED_PETROV_HARD_STOP_BYTES
     elif v7_h4_streamed_bottom_consumer:
         absolute_bytes = V7_STREAMED_PETROV_BOTTOM_CONSUMER_HARD_STOP_BYTES
+    elif v8_h4_layer_sweep_bottom:
+        absolute_bytes = V8_H4_LAYER_SWEEP_BOTTOM_HARD_STOP_BYTES
     else:
         absolute_bytes = V3_7_ABSOLUTE_HARD_BYTES
     policy = {
@@ -246,6 +257,8 @@ def _watchdog_policy(
     }
     if v8_h4_layer_block_reconstruction:
         policy["profile"] = V8_H4_LAYER_BLOCK_RECONSTRUCTION_PROFILE
+    if v8_h4_layer_sweep_bottom:
+        policy["profile"] = V8_H4_LAYER_SWEEP_BOTTOM_PROFILE
     if v7_h4_exact_side_full_formal:
         policy["timeout_policy"] = {
             "default_seconds": V7_H4_EXACT_SIDE_FULL_FORMAL_DEFAULT_TIMEOUT_SECONDS,
@@ -292,6 +305,7 @@ def load_v3_7_official_payload(
     v7_h4_streamed_bottom_producer: bool = False,
     v7_h4_streamed_bottom_consumer: bool = False,
     v8_h4_layer_block_reconstruction: bool = False,
+    v8_h4_layer_sweep_bottom: bool = False,
 ) -> dict[str, Any]:
     specification = load_and_resolve(input_path)
     payload = specification.as_jsonable()
@@ -306,6 +320,7 @@ def load_v3_7_official_payload(
         or v7_h4_streamed_bottom_producer
         or v7_h4_streamed_bottom_consumer
         or v8_h4_layer_block_reconstruction
+        or v8_h4_layer_sweep_bottom
     ):
         from benchmarks.task039_v4_h4_hybrid_direct import (
             validate_v4_h4_specification,
@@ -324,6 +339,7 @@ def load_v3_7_official_payload(
         v7_h4_streamed_bottom_producer=v7_h4_streamed_bottom_producer,
         v7_h4_streamed_bottom_consumer=v7_h4_streamed_bottom_consumer,
         v8_h4_layer_block_reconstruction=v8_h4_layer_block_reconstruction,
+        v8_h4_layer_sweep_bottom=v8_h4_layer_sweep_bottom,
     )
     return payload
 
@@ -355,6 +371,8 @@ def build_v3_7_execution_plan(
     v7_h4_streamed_bottom_producer: bool = False,
     v7_h4_streamed_bottom_consumer: bool = False,
     v8_h4_layer_block_reconstruction: bool = False,
+    v8_h4_layer_sweep_bottom: bool = False,
+    v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest_sha256: str | None = None,
     v7_h4_streamed_bottom_consumer_exact_spool_root: str | Path | None = None,
@@ -377,6 +395,7 @@ def build_v3_7_execution_plan(
         v7_h4_streamed_bottom_producer=v7_h4_streamed_bottom_producer,
         v7_h4_streamed_bottom_consumer=v7_h4_streamed_bottom_consumer,
         v8_h4_layer_block_reconstruction=v8_h4_layer_block_reconstruction,
+        v8_h4_layer_sweep_bottom=v8_h4_layer_sweep_bottom,
     )
     if v5_h4_blr_side_only and v5_h4_blr_profile not in V5_H4_BLR_PROFILE_CHOICES:
         raise ValueError(f"Unsupported V5 h4 BLR profile: {v5_h4_blr_profile}")
@@ -392,6 +411,7 @@ def build_v3_7_execution_plan(
         v7_h4_streamed_bottom_producer=v7_h4_streamed_bottom_producer,
         v7_h4_streamed_bottom_consumer=v7_h4_streamed_bottom_consumer,
         v8_h4_layer_block_reconstruction=v8_h4_layer_block_reconstruction,
+        v8_h4_layer_sweep_bottom=v8_h4_layer_sweep_bottom,
     )
     executable = str(Path(os.path.abspath(python_executable or sys.executable)))
     mpiexec = mpiexec_command or shutil.which("mpiexec") or "mpiexec"
@@ -414,6 +434,7 @@ def build_v3_7_execution_plan(
                 bool(v7_h4_streamed_bottom_producer),
                 bool(v7_h4_streamed_bottom_consumer),
                 bool(v8_h4_layer_block_reconstruction),
+                bool(v8_h4_layer_sweep_bottom),
             )
         )
         > 1
@@ -673,6 +694,31 @@ def build_v3_7_execution_plan(
         )
     elif v8_h4_layer_block_reconstruction:
         argv.append(V8_H4_LAYER_BLOCK_RECONSTRUCTION_FLAG)
+    elif v8_h4_layer_sweep_bottom:
+        if not all(
+            (
+                selected_mode_packet_manifest,
+                selected_mode_packet_identity,
+                selected_mode_packet_manifest_sha256,
+                v8_h4_layer_sweep_exact_spool_root,
+            )
+        ):
+            raise ValueError(
+                "V8 layer sweep requires packet identity and exact spool arguments"
+            )
+        argv.extend(
+            [
+                V8_H4_LAYER_SWEEP_BOTTOM_FLAG,
+                "--selected-mode-packet-manifest",
+                str(Path(selected_mode_packet_manifest).resolve()),
+                "--selected-mode-packet-identity",
+                str(Path(selected_mode_packet_identity).resolve()),
+                "--selected-mode-packet-manifest-sha256",
+                str(selected_mode_packet_manifest_sha256),
+                V8_H4_LAYER_SWEEP_BOTTOM_EXACT_SPOOL_ROOT_FLAG,
+                str(Path(v8_h4_layer_sweep_exact_spool_root).resolve()),
+            ]
+        )
     if candidate_d_qualified:
         method = V3_8_CANDIDATE_D_QUALIFIED_METHOD
     elif candidate_d_only:
@@ -693,6 +739,8 @@ def build_v3_7_execution_plan(
         method = V7_STREAMED_PETROV_BOTTOM_CONSUMER_METHOD
     elif v8_h4_layer_block_reconstruction:
         method = V8_H4_LAYER_BLOCK_RECONSTRUCTION_METHOD
+    elif v8_h4_layer_sweep_bottom:
+        method = V8_H4_LAYER_SWEEP_BOTTOM_METHOD
     elif v5_h4_setup_only:
         method = V5_H4_SETUP_ONLY_METHOD
     elif v5_h4_blr_side_only:
@@ -721,6 +769,8 @@ def build_v3_7_execution_plan(
         profile_id = V7_STREAMED_PETROV_BOTTOM_CONSUMER_PROFILE
     elif v8_h4_layer_block_reconstruction:
         profile_id = V8_H4_LAYER_BLOCK_RECONSTRUCTION_PROFILE
+    elif v8_h4_layer_sweep_bottom:
+        profile_id = V8_H4_LAYER_SWEEP_BOTTOM_PROFILE
     elif v5_h4_setup_only:
         profile_id = "task039.v5.h4.exact-side.setup-only.v1"
     elif v5_h4_blr_side_only:
@@ -737,6 +787,8 @@ def build_v3_7_execution_plan(
         exact_spool_root = str(Path(v6_h4_exact_spool_root).resolve())
     elif v6_h4_port_modal_bottom_only and v6_h4_port_modal_exact_spool_root is not None:
         exact_spool_root = str(Path(v6_h4_port_modal_exact_spool_root).resolve())
+    elif v8_h4_layer_sweep_bottom and v8_h4_layer_sweep_exact_spool_root is not None:
+        exact_spool_root = str(Path(v8_h4_layer_sweep_exact_spool_root).resolve())
     elif v7_h4_streamed_bottom_producer:
         exact_spool_root = None
     elif (
@@ -811,6 +863,8 @@ def v3_7_execution_dry_run(
     v7_h4_streamed_bottom_producer: bool = False,
     v7_h4_streamed_bottom_consumer: bool = False,
     v8_h4_layer_block_reconstruction: bool = False,
+    v8_h4_layer_sweep_bottom: bool = False,
+    v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest_sha256: str | None = None,
     v7_h4_streamed_bottom_consumer_exact_spool_root: str | Path | None = None,
@@ -853,6 +907,8 @@ def v3_7_execution_dry_run(
         v7_h4_streamed_bottom_consumer_exact_spool_root=(
             v7_h4_streamed_bottom_consumer_exact_spool_root
         ),
+        v8_h4_layer_sweep_bottom=v8_h4_layer_sweep_bottom,
+        v8_h4_layer_sweep_exact_spool_root=v8_h4_layer_sweep_exact_spool_root,
         v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
         selected_mode_packet_identity=selected_mode_packet_identity,
@@ -893,6 +949,8 @@ def launch_v3_7_with_task038_watchdog(
     v7_h4_streamed_bottom_producer: bool = False,
     v7_h4_streamed_bottom_consumer: bool = False,
     v8_h4_layer_block_reconstruction: bool = False,
+    v8_h4_layer_sweep_bottom: bool = False,
+    v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest_sha256: str | None = None,
     v7_h4_streamed_bottom_consumer_exact_spool_root: str | Path | None = None,
@@ -915,6 +973,7 @@ def launch_v3_7_with_task038_watchdog(
         v7_h4_streamed_bottom_producer=v7_h4_streamed_bottom_producer,
         v7_h4_streamed_bottom_consumer=v7_h4_streamed_bottom_consumer,
         v8_h4_layer_block_reconstruction=v8_h4_layer_block_reconstruction,
+        v8_h4_layer_sweep_bottom=v8_h4_layer_sweep_bottom,
     )
     if (
         not v5_h4_setup_only
@@ -927,6 +986,7 @@ def launch_v3_7_with_task038_watchdog(
         and not v7_h4_streamed_bottom_producer
         and not v7_h4_streamed_bottom_consumer
         and not v8_h4_layer_block_reconstruction
+        and not v8_h4_layer_sweep_bottom
     ):
         _check_direct_producer(V3_7_DIRECT_RUN_ROOT)
     if len(source_sha) != 40 or any(
@@ -969,6 +1029,8 @@ def launch_v3_7_with_task038_watchdog(
         v7_h4_streamed_bottom_consumer_exact_spool_root=(
             v7_h4_streamed_bottom_consumer_exact_spool_root
         ),
+        v8_h4_layer_sweep_bottom=v8_h4_layer_sweep_bottom,
+        v8_h4_layer_sweep_exact_spool_root=v8_h4_layer_sweep_exact_spool_root,
         v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
         selected_mode_packet_identity=selected_mode_packet_identity,
@@ -1066,6 +1128,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(V7_STREAMED_PETROV_BOTTOM_PRODUCER_FLAG, action="store_true")
     parser.add_argument(V7_STREAMED_PETROV_BOTTOM_CONSUMER_FLAG, action="store_true")
     parser.add_argument(V8_H4_LAYER_BLOCK_RECONSTRUCTION_FLAG, action="store_true")
+    parser.add_argument(V8_H4_LAYER_SWEEP_BOTTOM_FLAG, action="store_true")
+    parser.add_argument(V8_H4_LAYER_SWEEP_BOTTOM_EXACT_SPOOL_ROOT_FLAG)
     parser.add_argument(V7_STREAMED_PETROV_BOTTOM_CONSUMER_BASIS_MANIFEST_FLAG)
     parser.add_argument(V7_STREAMED_PETROV_BOTTOM_CONSUMER_BASIS_MANIFEST_SHA256_FLAG)
     parser.add_argument(V7_STREAMED_PETROV_BOTTOM_CONSUMER_EXACT_SPOOL_ROOT_FLAG)
@@ -1125,6 +1189,10 @@ def main(argv: list[str] | None = None) -> int:
                     v8_h4_layer_block_reconstruction=(
                         args.v8_h4_layer_block_reconstruction
                     ),
+                    v8_h4_layer_sweep_bottom=args.v8_h4_layer_sweep_bottom,
+                    v8_h4_layer_sweep_exact_spool_root=(
+                        args.v8_h4_layer_sweep_exact_spool_root
+                    ),
                     v7_h4_streamed_bottom_consumer_basis_manifest=(
                         args.v7_h4_streamed_bottom_consumer_basis_manifest
                     ),
@@ -1170,6 +1238,8 @@ def main(argv: list[str] | None = None) -> int:
         v7_h4_streamed_bottom_producer=args.v7_h4_streamed_bottom_producer,
         v7_h4_streamed_bottom_consumer=args.v7_h4_streamed_bottom_consumer,
         v8_h4_layer_block_reconstruction=args.v8_h4_layer_block_reconstruction,
+        v8_h4_layer_sweep_bottom=args.v8_h4_layer_sweep_bottom,
+        v8_h4_layer_sweep_exact_spool_root=(args.v8_h4_layer_sweep_exact_spool_root),
         v7_h4_streamed_bottom_consumer_basis_manifest=(
             args.v7_h4_streamed_bottom_consumer_basis_manifest
         ),
@@ -1243,6 +1313,11 @@ __all__ = [
     "V8_H4_LAYER_BLOCK_RECONSTRUCTION_FLAG",
     "V8_H4_LAYER_BLOCK_RECONSTRUCTION_METHOD",
     "V8_H4_LAYER_BLOCK_RECONSTRUCTION_PROFILE",
+    "V8_H4_LAYER_SWEEP_BOTTOM_FLAG",
+    "V8_H4_LAYER_SWEEP_BOTTOM_EXACT_SPOOL_ROOT_FLAG",
+    "V8_H4_LAYER_SWEEP_BOTTOM_METHOD",
+    "V8_H4_LAYER_SWEEP_BOTTOM_PROFILE",
+    "V8_H4_LAYER_SWEEP_BOTTOM_HARD_STOP_BYTES",
     "build_v3_7_execution_plan",
     "launch_v3_7_with_task038_watchdog",
     "load_v3_7_official_payload",

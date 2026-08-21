@@ -96,10 +96,12 @@ from src.solvers.hybrid_local_dtn_action import (
 from src.solvers.hybrid_layer_block import (
     audit_layer_block_action,
     build_layer_block_operator,
+    build_layer_sweep_action,
     build_real_layer_labels,
     minimum_layer_labels,
 )
 from src.solvers.hybrid_local_dtn_woodbury import (
+    HybridLocalDtnWoodburyOracle,
     HybridLocalDtnWoodburyFixedAction,
     HybridLocalDtnWoodburyFixedBudgetKrylovAction,
     MUMPS_BLR_V5_H4_PROFILE,
@@ -260,6 +262,12 @@ V8_H4_LAYER_BLOCK_PROFILE_ID = "task039.v8.h4.layer_block_reconstruction.v1"
 V8_H4_LAYER_BLOCK_METHOD = "task039_v8_h4_layer_block_reconstruction"
 V8_H4_LAYER_BLOCK_SCHEMA = "task039.v8.h4.layer_block_reconstruction.v1"
 V8_H4_LAYER_BLOCK_HARD_STOP_BYTES = V3_7_ABSOLUTE_HARD_BYTES
+V8_H4_LAYER_SWEEP_PROFILE_ID = "task039.v8.h4.layer_sweep.bottom_component.v1"
+V8_H4_LAYER_SWEEP_METHOD = "task039_v8_h4_layer_sweep_bottom"
+V8_H4_LAYER_SWEEP_SCHEMA = "task039.v8.h4.layer_sweep.bottom_component.v1"
+V8_H4_LAYER_SWEEP_HARD_STOP_BYTES = 45 * 2**30
+V8_H4_LAYER_SWEEP_CONSTRUCTION_LIMIT_GIB = 45.0
+V8_H4_LAYER_SWEEP_RETAINED_LIMIT_GIB = 30.0
 V7_STREAMED_LEFT_DUAL_ORACLE = {
     "positive": {
         "relative_error": 900.298368548294,
@@ -571,6 +579,7 @@ def v3_7_watchdog_policy(
     v7_h4_streamed_bottom_producer: bool = False,
     v7_h4_streamed_bottom_consumer: bool = False,
     v8_h4_layer_block_reconstruction: bool = False,
+    v8_h4_layer_sweep_bottom: bool = False,
 ) -> dict[str, Any]:
     """Return the byte-authoritative policy; 195 GiB is telemetry only."""
 
@@ -599,6 +608,8 @@ def v3_7_watchdog_policy(
         absolute_bytes = V7_STREAMED_PETROV_HARD_STOP_BYTES
     elif v7_h4_streamed_bottom_consumer:
         absolute_bytes = V7_STREAMED_PETROV_CONSUMER_HARD_STOP_BYTES
+    elif v8_h4_layer_sweep_bottom:
+        absolute_bytes = V8_H4_LAYER_SWEEP_HARD_STOP_BYTES
     else:
         absolute_bytes = V3_7_ABSOLUTE_HARD_BYTES
     if v7_h4_exact_side_full_formal:
@@ -615,6 +626,8 @@ def v3_7_watchdog_policy(
         profile_name = "v7_h4_streamed_bottom_consumer"
     elif v8_h4_layer_block_reconstruction:
         profile_name = "v8_h4_layer_block_reconstruction"
+    elif v8_h4_layer_sweep_bottom:
+        profile_name = "v8_h4_layer_sweep_bottom"
     else:
         profile_name = "v3_7_default"
     policy = {
@@ -676,6 +689,8 @@ def build_v3_7_execution_plan(
     v7_h4_streamed_bottom_consumer_basis_manifest_sha256: str | None = None,
     v7_h4_streamed_bottom_consumer_exact_spool_root: str | Path | None = None,
     v8_h4_layer_block_reconstruction: bool = False,
+    v8_h4_layer_sweep_bottom: bool = False,
+    v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -694,6 +709,7 @@ def build_v3_7_execution_plan(
         or v7_h4_streamed_bottom_producer
         or v7_h4_streamed_bottom_consumer
         or v8_h4_layer_block_reconstruction
+        or v8_h4_layer_sweep_bottom
     ):
         specification = load_and_resolve(input_path)
         from benchmarks.task039_v4_h4_hybrid_direct import (
@@ -717,6 +733,7 @@ def build_v3_7_execution_plan(
         v7_h4_streamed_bottom_producer=v7_h4_streamed_bottom_producer,
         v7_h4_streamed_bottom_consumer=v7_h4_streamed_bottom_consumer,
         v8_h4_layer_block_reconstruction=v8_h4_layer_block_reconstruction,
+        v8_h4_layer_sweep_bottom=v8_h4_layer_sweep_bottom,
     )
     if (
         sum(
@@ -736,6 +753,7 @@ def build_v3_7_execution_plan(
                 bool(v7_h4_streamed_bottom_producer),
                 bool(v7_h4_streamed_bottom_consumer),
                 bool(v8_h4_layer_block_reconstruction),
+                bool(v8_h4_layer_sweep_bottom),
             )
         )
         > 1
@@ -782,6 +800,7 @@ def build_v3_7_execution_plan(
         or v7_h4_streamed_bottom_producer
         or v7_h4_streamed_bottom_consumer
         or v8_h4_layer_block_reconstruction
+        or v8_h4_layer_sweep_bottom
     ):
         if not v8_h4_layer_block_reconstruction and not all(
             (
@@ -805,6 +824,8 @@ def build_v3_7_execution_plan(
             component_flag = "--v7-h4-streamed-bottom-consumer"
         elif v8_h4_layer_block_reconstruction:
             component_flag = "--v8-h4-layer-block-reconstruction"
+        elif v8_h4_layer_sweep_bottom:
+            component_flag = "--v8-h4-layer-sweep-bottom"
         elif v5_h4_setup_only:
             component_flag = "--v5-h4-setup-only"
         elif v5_h4_blr_side_only:
@@ -884,6 +905,15 @@ def build_v3_7_execution_plan(
                     ),
                 ]
             )
+        elif v8_h4_layer_sweep_bottom:
+            if v8_h4_layer_sweep_exact_spool_root is None:
+                raise ValueError("V8 layer sweep route requires the exact spool root")
+            argv.extend(
+                [
+                    "--v8-h4-layer-sweep-exact-spool-root",
+                    str(Path(v8_h4_layer_sweep_exact_spool_root).resolve()),
+                ]
+            )
     if v7_h4_exact_side_full_formal:
         method = V7_H4_EXACT_SIDE_FULL_FORMAL_METHOD
     elif v7_h4_exact_side_limit_setup_only:
@@ -898,6 +928,8 @@ def build_v3_7_execution_plan(
         method = V7_STREAMED_PETROV_CONSUMER_METHOD
     elif v8_h4_layer_block_reconstruction:
         method = V8_H4_LAYER_BLOCK_METHOD
+    elif v8_h4_layer_sweep_bottom:
+        method = V8_H4_LAYER_SWEEP_METHOD
     elif v5_h4_setup_only:
         method = "task039_v5_h4_exact_side_setup_only"
     elif v5_h4_blr_side_only:
@@ -930,6 +962,8 @@ def build_v3_7_execution_plan(
         profile_id = V7_STREAMED_PETROV_CONSUMER_PROFILE_ID
     elif v8_h4_layer_block_reconstruction:
         profile_id = V8_H4_LAYER_BLOCK_PROFILE_ID
+    elif v8_h4_layer_sweep_bottom:
+        profile_id = V8_H4_LAYER_SWEEP_PROFILE_ID
     elif v5_h4_setup_only:
         profile_id = "task039.v5.h4.exact-side.setup-only.v1"
     elif v5_h4_blr_side_only:
@@ -958,6 +992,8 @@ def build_v3_7_execution_plan(
         exact_spool_root = str(
             Path(v7_h4_streamed_bottom_consumer_exact_spool_root).resolve()
         )
+    elif v8_h4_layer_sweep_bottom and v8_h4_layer_sweep_exact_spool_root is not None:
+        exact_spool_root = str(Path(v8_h4_layer_sweep_exact_spool_root).resolve())
     else:
         exact_spool_root = None
     return {
@@ -1018,6 +1054,8 @@ def v3_7_execution_dry_run(
     v7_h4_streamed_bottom_consumer_basis_manifest_sha256: str | None = None,
     v7_h4_streamed_bottom_consumer_exact_spool_root: str | Path | None = None,
     v8_h4_layer_block_reconstruction: bool = False,
+    v8_h4_layer_sweep_bottom: bool = False,
+    v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -1058,6 +1096,8 @@ def v3_7_execution_dry_run(
             v7_h4_streamed_bottom_consumer_exact_spool_root
         ),
         v8_h4_layer_block_reconstruction=v8_h4_layer_block_reconstruction,
+        v8_h4_layer_sweep_bottom=v8_h4_layer_sweep_bottom,
+        v8_h4_layer_sweep_exact_spool_root=v8_h4_layer_sweep_exact_spool_root,
         v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
         selected_mode_packet_identity=selected_mode_packet_identity,
@@ -1103,6 +1143,8 @@ def launch_v3_7_with_task038_watchdog(
     v7_h4_streamed_bottom_consumer_basis_manifest_sha256: str | None = None,
     v7_h4_streamed_bottom_consumer_exact_spool_root: str | Path | None = None,
     v8_h4_layer_block_reconstruction: bool = False,
+    v8_h4_layer_sweep_bottom: bool = False,
+    v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: str | Path | None = None,
@@ -1121,6 +1163,7 @@ def launch_v3_7_with_task038_watchdog(
         or v7_h4_streamed_bottom_producer
         or v7_h4_streamed_bottom_consumer
         or v8_h4_layer_block_reconstruction
+        or v8_h4_layer_sweep_bottom
     ):
         specification = load_and_resolve(input_path)
         from benchmarks.task039_v4_h4_hybrid_direct import (
@@ -1142,6 +1185,7 @@ def launch_v3_7_with_task038_watchdog(
         and not v7_h4_streamed_bottom_producer
         and not v7_h4_streamed_bottom_consumer
         and not v8_h4_layer_block_reconstruction
+        and not v8_h4_layer_sweep_bottom
         and not V3_7_DIRECT_RUN_ROOT.is_dir()
     ):
         raise ValueError("V3-7 direct producer inventory is unavailable")
@@ -1155,6 +1199,7 @@ def launch_v3_7_with_task038_watchdog(
         and not v7_h4_streamed_bottom_producer
         and not v7_h4_streamed_bottom_consumer
         and not v8_h4_layer_block_reconstruction
+        and not v8_h4_layer_sweep_bottom
         and not callable(compare_v3_7_hybrid_candidate_to_direct)
     ):
         raise ValueError("V3-7 integrated checker entry point is unavailable")
@@ -1211,6 +1256,8 @@ def launch_v3_7_with_task038_watchdog(
             v7_h4_streamed_bottom_consumer_exact_spool_root
         ),
         v8_h4_layer_block_reconstruction=v8_h4_layer_block_reconstruction,
+        v8_h4_layer_sweep_bottom=v8_h4_layer_sweep_bottom,
+        v8_h4_layer_sweep_exact_spool_root=v8_h4_layer_sweep_exact_spool_root,
         v5_h4_blr_profile=v5_h4_blr_profile,
         selected_mode_packet_manifest=selected_mode_packet_manifest,
         selected_mode_packet_identity=selected_mode_packet_identity,
@@ -1863,6 +1910,455 @@ def run_v8_h4_layer_block_reconstruction_component(
             },
         },
     }
+
+
+def run_v8_h4_layer_sweep_bottom_component(
+    cfg: Any,
+    *,
+    profile: Any,
+    comm: MPI.Intracomm,
+    marker_callback: Callable[[str, Mapping[str, Any]], None],
+    exact_spool_root: str | Path,
+    packet_identity: Mapping[str, Any],
+    packet_manifest_sha256: str,
+    side_system_builder: Callable[..., Any] | None = None,
+) -> dict[str, Any]:
+    """Audit one bottom layer action with the frozen dynamic Woodbury probes."""
+
+    system = None
+    components = None
+    sweep = None
+    spool = None
+    completed = False
+    method_records: dict[str, dict[str, Any]] = {}
+    first_passing_method: str | None = None
+    preferred_woodbury = None
+    preferred_woodbury_diagnostics: dict[str, Any] = {"status": "not_run"}
+    retained_probe: dict[str, Any] | None = None
+    sweep_destroyed = False
+    sweep_diagnostics_after_cleanup: dict[str, Any] = {"status": "not_run"}
+
+    class _SweepMethodView:
+        factor_only_storage = True
+
+        def __init__(self, action: Any, method: str) -> None:
+            self.action = action
+            self.method = method
+
+        def solve(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+            self.action.apply_checkpoint(self.method, source, target)
+
+    class _ProbeActionView:
+        def __init__(self, action: Any, operator: PETSc.Mat) -> None:
+            self.action = action
+            self.operator = operator
+
+        def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
+            self.action.apply(source, target)
+
+    marker_callback(
+        "v8_layer_sweep_bottom_construction_begin",
+        {
+            "construction_peak_limit_gib": V8_H4_LAYER_SWEEP_CONSTRUCTION_LIMIT_GIB,
+            "retained_peak_limit_gib": V8_H4_LAYER_SWEEP_RETAINED_LIMIT_GIB,
+            "side": "bottom",
+            "selected_mode_packet_opened": False,
+            "holdout_opened": False,
+            "exact_spool_opened": False,
+            "qep_count": 0,
+            "full_side_exact_factor_count": 0,
+            "global_direct_factor_count": 0,
+        },
+    )
+    try:
+        if side_system_builder is None:
+            system = assemble_hybrid_local_dtn_action_system(
+                cfg,
+                "bottom",
+                bottom_interface_z_nm=profile.bottom_interface_nm,
+                top_interface_z_nm=profile.top_interface_nm,
+                comm=comm,
+                log=None,
+            )
+        else:
+            system = side_system_builder(
+                side="bottom", cfg=cfg, profile=profile, comm=comm
+            )
+        components = _build_research_explicit_side_components(system)
+        labels, mapping_metadata = build_real_layer_labels(components.F, system)
+        layer_count = len(mapping_metadata["z_layer_boundaries"]) - 1
+        if layer_count != 6:
+            raise ValueError(
+                f"V8 layer sweep route requires exactly six layers, got {layer_count}"
+            )
+        sweep = build_layer_sweep_action(
+            components.F,
+            labels,
+            layer_count=layer_count,
+            method="FB1",
+            fine_action=components.F.mult,
+        )
+        del labels, mapping_metadata
+        marker_callback(
+            "v8_layer_sweep_bottom_factors_ready",
+            {
+                "layer_factor_count": sweep.diagnostics["layer_factor_count"],
+                "factor_only_storage": sweep.factor_only_storage,
+                "full_side_exact_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "nested_ksp_count": 0,
+            },
+        )
+        spool = _load_v5_fixed_budget_spool_shards(
+            exact_spool_root,
+            comm,
+            packet_identity=packet_identity,
+            manifest_sha256=packet_manifest_sha256,
+        )
+        marker_callback(
+            "v8_layer_sweep_bottom_holdout_ready",
+            {
+                "holdout_opened": True,
+                "exact_spool_opened": True,
+                "holdout_labels": list(spool),
+                "selected_mode_packet_opened": False,
+            },
+        )
+
+        for method in ("J1", "F1", "FB1", "FB2", "FB4"):
+            before = sweep.diagnostics
+            marker_callback(
+                f"v8_layer_sweep_bottom_{method}_woodbury_begin",
+                {"method": method, "layer_factor_count": 6},
+            )
+            method_view = _SweepMethodView(sweep, method)
+            woodbury = None
+            reports: list[dict[str, Any]] = []
+            woodbury_diagnostics: dict[str, Any] = {"status": "not_available"}
+            try:
+                woodbury = HybridLocalDtnWoodburyOracle(
+                    method_view,
+                    components,
+                    base_identity=f"v8_layer_sweep_{method}_dynamic_woodbury",
+                    compact_storage=False,
+                )
+                marker_callback(
+                    f"v8_layer_sweep_bottom_{method}_woodbury_ready",
+                    {"method": method, "woodbury": woodbury.diagnostics},
+                )
+                for label, artifact in spool.items():
+                    template = rhs = reference = None
+                    try:
+                        template = system.A.createVecLeft()
+                        rhs = _load_v5_blr_reference_spool_remapped(
+                            artifact["rhs"], template
+                        )
+                        reference = _load_v5_blr_reference_spool_remapped(
+                            artifact["exact_output"], template
+                        )
+                        report, _ = _v5_blr_probe(
+                            _ProbeActionView(woodbury, system.A),
+                            system,
+                            rhs,
+                            dict(artifact["rhs"]["probe_metadata"]),
+                            reference,
+                            repeat=True,
+                            linearity=True,
+                        )
+                        reports.append(report)
+                    finally:
+                        if reference is not None:
+                            reference.destroy()
+                        if rhs is not None:
+                            rhs.destroy()
+                        if template is not None:
+                            template.destroy()
+                gate = _v6_port_modal_holdout_gate(reports)
+                woodbury_diagnostics = deepcopy(woodbury.diagnostics)
+            finally:
+                if woodbury is not None:
+                    woodbury.destroy()
+            method_cleanup = collective_heap_cleanup(comm)
+            marker_callback(
+                f"v8_layer_sweep_bottom_{method}_cleanup",
+                {
+                    "method": method,
+                    "woodbury_destroyed": True,
+                    "collective_cleanup": method_cleanup,
+                },
+            )
+            after = sweep.diagnostics
+            layer_solve_delta = [
+                int(after_count - before_count)
+                for after_count, before_count in zip(
+                    after["layer_solve_count"], before["layer_solve_count"]
+                )
+            ]
+            method_record = {
+                "method": method,
+                "reports": reports,
+                "gate": gate,
+                "woodbury": woodbury_diagnostics,
+                "apply_wall_seconds": woodbury_diagnostics.get(
+                    "apply_seconds", "not_available"
+                ),
+                "layer_solve_count_delta": layer_solve_delta,
+                "layer_solve_count_total": int(sum(layer_solve_delta)),
+                "fine_action_count": int(
+                    after["fine_action_count"] - before["fine_action_count"]
+                ),
+                "fb_sweep_count": int(
+                    after["fb_sweep_count"] - before["fb_sweep_count"]
+                ),
+                "single_sweep_build_count": 1,
+                "same_factor_set": True,
+                "method_cleanup": method_cleanup,
+            }
+            method_records[method] = method_record
+            if first_passing_method is None and gate["pass"]:
+                first_passing_method = method
+            marker_callback(
+                f"v8_layer_sweep_bottom_{method}_complete",
+                {"method": method, "gate": gate, "woodbury": woodbury_diagnostics},
+            )
+
+        if first_passing_method is not None:
+            preferred_view = _SweepMethodView(sweep, first_passing_method)
+            preferred_woodbury = HybridLocalDtnWoodburyOracle(
+                preferred_view,
+                components,
+                base_identity=(
+                    f"v8_layer_sweep_{first_passing_method}_"
+                    "preferred_dynamic_woodbury_rehydration"
+                ),
+                compact_storage=False,
+            )
+            preferred_ready_diagnostics = deepcopy(preferred_woodbury.diagnostics)
+            marker_callback(
+                "v8_layer_sweep_bottom_construction_end",
+                {
+                    "methods_evaluated": list(method_records),
+                    "first_passing_method": first_passing_method,
+                    "woodbury_destroyed_between_methods": True,
+                    "preferred_woodbury_rehydrated": True,
+                    "construction_temporaries_released": True,
+                    "resource_gate": "pending_parent_process_tree_samples",
+                },
+            )
+            marker_callback(
+                "v8_layer_sweep_bottom_retained_apply_state_ready",
+                {
+                    "first_passing_method": first_passing_method,
+                    "preferred_action_rehydration": True,
+                    "same_layer_factor_instance": True,
+                    "preferred_woodbury": preferred_ready_diagnostics,
+                    "explicit_F_released": False,
+                    "retained_explicit_F": True,
+                    "D_retained": True,
+                    "retained_W": True,
+                    "D_i_released": True,
+                    "construction_temporaries_released": True,
+                    "retained_apply_state_valid": True,
+                    "retained_peak_limit_gib": V8_H4_LAYER_SWEEP_RETAINED_LIMIT_GIB,
+                    "resource_gate": "pending_parent_process_tree_samples",
+                },
+            )
+            first_label, first_artifact = next(iter(spool.items()))
+            template = rhs = reference = None
+            try:
+                template = system.A.createVecLeft()
+                rhs = _load_v5_blr_reference_spool_remapped(
+                    first_artifact["rhs"], template
+                )
+                reference = _load_v5_blr_reference_spool_remapped(
+                    first_artifact["exact_output"], template
+                )
+                retained_probe, _ = _v5_blr_probe(
+                    _ProbeActionView(preferred_woodbury, system.A),
+                    system,
+                    rhs,
+                    dict(first_artifact["rhs"]["probe_metadata"]),
+                    reference,
+                    repeat=True,
+                    linearity=True,
+                )
+                retained_probe["label"] = first_label
+                preferred_woodbury_diagnostics = deepcopy(
+                    preferred_woodbury.diagnostics
+                )
+            finally:
+                if reference is not None:
+                    reference.destroy()
+                if rhs is not None:
+                    rhs.destroy()
+                if template is not None:
+                    template.destroy()
+        else:
+            marker_callback(
+                "v8_layer_sweep_bottom_construction_end",
+                {
+                    "methods_evaluated": list(method_records),
+                    "first_passing_method": None,
+                    "woodbury_destroyed_between_methods": True,
+                    "preferred_woodbury_rehydrated": False,
+                    "construction_temporaries_released": True,
+                    "resource_gate": "not_run_numerical_gate_failed",
+                },
+            )
+            marker_callback(
+                "v8_layer_sweep_bottom_retained_apply_state_not_run",
+                {
+                    "first_passing_method": None,
+                    "preferred_action_rehydration": False,
+                    "same_layer_factor_instance": True,
+                    "explicit_F_released": False,
+                    "retained_explicit_F": False,
+                    "D_i_released": True,
+                    "construction_temporaries_released": True,
+                    "retained_peak_limit_gib": V8_H4_LAYER_SWEEP_RETAINED_LIMIT_GIB,
+                    "resource_gate": "not_run_numerical_gate_failed",
+                },
+            )
+        spool_released = spool is not None
+        spool = None
+        preferred_woodbury_destroyed = preferred_woodbury is not None
+        if preferred_woodbury is not None:
+            preferred_woodbury.destroy()
+            preferred_woodbury = None
+        released = _destroy_v5_side_components(components)
+        system_probe = {
+            "status": "not_available",
+            "global_size": None,
+            "ownership_range": None,
+        }
+        if getattr(system, "A", None) is not None:
+            system_probe = {
+                "status": "measured",
+                "global_size": list(map(int, system.A.getSize())),
+                "ownership_range": list(map(int, system.A.getOwnershipRange())),
+            }
+        system_destroy_called = False
+        if hasattr(system, "destroy"):
+            system.destroy()
+            system_destroy_called = True
+        if sweep is not None:
+            sweep.destroy()
+            sweep_destroyed = True
+            sweep_diagnostics_after_cleanup = deepcopy(sweep.diagnostics)
+        cleanup = collective_heap_cleanup(comm)
+        marker_callback(
+            "v8_layer_sweep_bottom_retained_state_release",
+            {
+                "preferred_woodbury_destroyed": preferred_woodbury_destroyed,
+                "retained_probe": retained_probe,
+                "system_destroy_called": system_destroy_called,
+                "factor_count_after_cleanup": int(
+                    sweep_diagnostics_after_cleanup.get("layer_factor_count", 0)
+                ),
+                "sweep_destroyed": sweep_destroyed,
+                "spool_released": spool_released,
+                "collective_cleanup": cleanup,
+            },
+        )
+        numerical_holdout_gate_pass = first_passing_method is not None
+        gate = {
+            "methods": method_records,
+            "first_passing_method": first_passing_method,
+            "full_side_exact_factor_count": 0,
+            "global_direct_factor_count": 0,
+            "nested_ksp_count": 0,
+            "numerical_holdout_gate_pass": numerical_holdout_gate_pass,
+            "resource_gate": "pending_parent_process_tree_samples",
+            "resource_gate_limits_gib": {
+                "construction": V8_H4_LAYER_SWEEP_CONSTRUCTION_LIMIT_GIB,
+                "retained": V8_H4_LAYER_SWEEP_RETAINED_LIMIT_GIB,
+            },
+            "qualification_status": "pending_parent_process_tree_samples",
+            "pass": None,
+        }
+        completed = True
+        return {
+            "schema": V8_H4_LAYER_SWEEP_SCHEMA,
+            "method": V8_H4_LAYER_SWEEP_METHOD,
+            "profile_id": V8_H4_LAYER_SWEEP_PROFILE_ID,
+            "status": (
+                "component_numerical_pass_resource_pending"
+                if numerical_holdout_gate_pass
+                else "component_numerical_failed"
+            ),
+            "side": "bottom",
+            "method_records": method_records,
+            "gate": gate,
+            "factor_inventory": {
+                "layer_factor_count": 6,
+                "layer_factor_count_ready": 6,
+                "layer_factor_count_after_cleanup": 0,
+                "full_side_exact_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "nested_ksp_count": 0,
+            },
+            "selected_mode_packet_opened": False,
+            "holdout_opened": True,
+            "exact_spool_opened": True,
+            "qep_count": 0,
+            "modal_schur": "not_run",
+            "outer_ksp": "not_run",
+            "recovery": "not_run",
+            "field": "not_run",
+            "RTA": "not_run",
+            "lifecycle": {
+                "components": released,
+                "system_probe": system_probe,
+                "collective_cleanup": cleanup,
+                "woodbury_destroyed_between_methods": True,
+                "preferred_woodbury": preferred_woodbury_diagnostics,
+                "retained_probe": retained_probe,
+                "factor_count_ready": 6,
+                "factor_count_after_cleanup": 0,
+                "factor_inventory_ready": 6,
+                "factor_inventory_after_cleanup": 0,
+                "sweep_destroyed": sweep_destroyed,
+                "sweep_diagnostics_after_cleanup": sweep_diagnostics_after_cleanup,
+                "spool_released": spool_released,
+            },
+            "telemetry": {
+                "process_tree_samples": {
+                    "path": "numerical_output/process_tree_samples.jsonl",
+                    "writer": "parent_task038_launcher",
+                },
+                "memory_stages": {
+                    "path": "numerical_output/memory_stages.jsonl",
+                    "writer": "parent_task038_launcher_marker_alignment",
+                },
+                "memory_stage_markers": {
+                    "path": "numerical_output/memory_stage_markers.raw.jsonl",
+                    "writer": "v3_7_worker",
+                },
+                "memory_object_ledger": {
+                    "path": "numerical_output/memory_object_ledger.json",
+                    "status": "finalized_in_worker_finalizer",
+                },
+                "gate_contract": {
+                    "construction_peak_limit_gib": V8_H4_LAYER_SWEEP_CONSTRUCTION_LIMIT_GIB,
+                    "retained_peak_limit_gib": V8_H4_LAYER_SWEEP_RETAINED_LIMIT_GIB,
+                    "swap_required": 0,
+                    "full_side_exact_factor_count": 0,
+                    "global_direct_factor_count": 0,
+                    "nested_ksp_count": 0,
+                },
+            },
+        }
+    finally:
+        if not completed:
+            if preferred_woodbury is not None:
+                preferred_woodbury.destroy()
+            if components is not None:
+                _destroy_v5_side_components(components)
+            if system is not None and hasattr(system, "destroy"):
+                system.destroy()
+            if sweep is not None:
+                sweep.destroy()
+            collective_heap_cleanup(comm)
 
 
 def _v7_streamed_packet_pair(
@@ -7553,6 +8049,8 @@ def run_task039_v3_7_diagnostic(
     v7_h4_streamed_bottom_consumer_basis_manifest_sha256: str | None = None,
     v7_h4_streamed_bottom_consumer_exact_spool_root: str | Path | None = None,
     v8_h4_layer_block_reconstruction: bool = False,
+    v8_h4_layer_sweep_bottom: bool = False,
+    v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
     selected_mode_packet_identity: Mapping[str, Any] | None = None,
@@ -7644,6 +8142,7 @@ def run_task039_v3_7_diagnostic(
             or v7_h4_streamed_bottom_producer
             or v7_h4_streamed_bottom_consumer
             or v8_h4_layer_block_reconstruction
+            or v8_h4_layer_sweep_bottom
         ):
             profile = (
                 profile_override
@@ -7661,6 +8160,7 @@ def run_task039_v3_7_diagnostic(
             or v7_h4_streamed_bottom_producer
             or v7_h4_streamed_bottom_consumer
             or v8_h4_layer_block_reconstruction
+            or v8_h4_layer_sweep_bottom
         ):
             incidence = resolved_payload["incidence"]
             if v7_h4_full_formal:
@@ -7684,6 +8184,9 @@ def run_task039_v3_7_diagnostic(
             elif v8_h4_layer_block_reconstruction:
                 route_profile_id = V8_H4_LAYER_BLOCK_PROFILE_ID
                 route_schema = V8_H4_LAYER_BLOCK_SCHEMA
+            elif v8_h4_layer_sweep_bottom:
+                route_profile_id = V8_H4_LAYER_SWEEP_PROFILE_ID
+                route_schema = V8_H4_LAYER_SWEEP_SCHEMA
             elif v5_h4_blr_side_only:
                 route_profile_id = V5_H4_BLR_SIDE_PROFILE_ID
                 route_schema = V5_H4_BLR_SIDE_PROFILE_ID
@@ -7720,6 +8223,7 @@ def run_task039_v3_7_diagnostic(
             v7_h4_streamed_bottom_producer=v7_h4_streamed_bottom_producer,
             v7_h4_streamed_bottom_consumer=v7_h4_streamed_bottom_consumer,
             v8_h4_layer_block_reconstruction=v8_h4_layer_block_reconstruction,
+            v8_h4_layer_sweep_bottom=v8_h4_layer_sweep_bottom,
         )
         _emit_marker(
             marker_callback,
@@ -7742,6 +8246,7 @@ def run_task039_v3_7_diagnostic(
             and not v7_h4_streamed_bottom_producer
             and not v7_h4_streamed_bottom_consumer
             and not v8_h4_layer_block_reconstruction
+            and not v8_h4_layer_sweep_bottom
         ):
             raise ValueError(
                 "V3-7 requires an injected recovery_runner(setup, layout, snapshot, "
@@ -7798,6 +8303,42 @@ def run_task039_v3_7_diagnostic(
                         "_full3d_authority_run_directory": None,
                     }
                 )
+            modal_amplitudes = None
+        elif v8_h4_layer_sweep_bottom:
+            if (
+                selected_mode_packet_manifest is None
+                or selected_mode_packet_identity is None
+                or selected_mode_packet_manifest_sha256 is None
+                or v8_h4_layer_sweep_exact_spool_root is None
+            ):
+                raise ValueError(
+                    "V8 layer sweep requires packet identity and exact spool"
+                )
+            producer = {
+                "producer_source_sha": selected_mode_packet_identity.get("source_sha"),
+                "physical_model_sha256": selected_mode_packet_identity.get(
+                    "physical_sha256"
+                ),
+                "model_id": selected_mode_packet_identity.get("model_id"),
+                "requested_modes": 480,
+                "mpi_size": 8,
+                "external_keys_exact": True,
+                "selected_mode_packet": False,
+                "selected_mode_packet_opened": False,
+                "holdout_opened": True,
+                "exact_spool_opened": True,
+                "direct_reference_payload_loaded": False,
+                "consumer_qep_calls": 0,
+                "exact_factor_count": 0,
+                "global_direct_factor_count": 0,
+                "nested_ksp_count": 0,
+                "layer_factor_count": 6,
+                "component_candidate": True,
+                "research_only": True,
+                "exact_spool_root": str(
+                    Path(v8_h4_layer_sweep_exact_spool_root).resolve()
+                ),
+            }
             modal_amplitudes = None
         elif v8_h4_layer_block_reconstruction:
             producer = {
@@ -8004,6 +8545,23 @@ def run_task039_v3_7_diagnostic(
         _emit_marker(marker_callback, "config_ready")
         producer["_stage_callback"] = marker_callback
         _emit_marker(marker_callback, "setup_begin")
+        if v8_h4_layer_sweep_bottom:
+            result = run_v8_h4_layer_sweep_bottom_component(
+                cfg,
+                profile=profile,
+                comm=comm,
+                marker_callback=marker_callback,
+                exact_spool_root=v8_h4_layer_sweep_exact_spool_root,
+                packet_identity=selected_mode_packet_identity,
+                packet_manifest_sha256=selected_mode_packet_manifest_sha256,
+                side_system_builder=side_system_builder,
+            )
+            result["source_sha"] = source_sha
+            result["run_directory"] = str(Path(run_directory).resolve())
+            normal_return = result.get("status") == (
+                "component_numerical_pass_resource_pending"
+            )
+            return result
         if v8_h4_layer_block_reconstruction:
             result = run_v8_h4_layer_block_reconstruction_component(
                 cfg,
@@ -9221,6 +9779,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--v5-h4-blr-side-component", action="store_true")
     parser.add_argument("--v5-h4-fixed-budget-bottom-component", action="store_true")
     parser.add_argument("--v5-h4-fixed-budget-exact-spool-root")
+    parser.add_argument("--v8-h4-layer-sweep-bottom", action="store_true")
+    parser.add_argument("--v8-h4-layer-sweep-exact-spool-root")
     parser.add_argument(
         "--v5-h4-blr-profile",
         choices=V5_H4_BLR_PROFILE_CHOICES,
@@ -9243,6 +9803,7 @@ def main(argv: list[str] | None = None) -> int:
             args.v7_h4_streamed_bottom_producer,
             args.v7_h4_streamed_bottom_consumer,
             args.v8_h4_layer_block_reconstruction,
+            args.v8_h4_layer_sweep_bottom,
             args.v5_h4_blr_side_component,
             args.v5_h4_fixed_budget_bottom_component,
         )
@@ -9265,6 +9826,7 @@ def main(argv: list[str] | None = None) -> int:
                 bool(args.v7_h4_streamed_bottom_producer),
                 bool(args.v7_h4_streamed_bottom_consumer),
                 bool(args.v8_h4_layer_block_reconstruction),
+                bool(args.v8_h4_layer_sweep_bottom),
                 bool(args.v5_h4_blr_side_component),
                 bool(args.v5_h4_fixed_budget_bottom_component),
             )
@@ -9295,6 +9857,10 @@ def main(argv: list[str] | None = None) -> int:
             v7_h4_streamed_bottom_producer=args.v7_h4_streamed_bottom_producer,
             v7_h4_streamed_bottom_consumer=args.v7_h4_streamed_bottom_consumer,
             v8_h4_layer_block_reconstruction=args.v8_h4_layer_block_reconstruction,
+            v8_h4_layer_sweep_bottom=args.v8_h4_layer_sweep_bottom,
+            v8_h4_layer_sweep_exact_spool_root=(
+                args.v8_h4_layer_sweep_exact_spool_root
+            ),
             v7_h4_streamed_bottom_consumer_basis_manifest=(
                 args.v7_h4_streamed_bottom_consumer_basis_manifest
             ),
@@ -9321,6 +9887,7 @@ def main(argv: list[str] | None = None) -> int:
                     or args.v6_h4_port_modal_bottom_component
                     or args.v7_h4_streamed_bottom_producer
                     or args.v7_h4_streamed_bottom_consumer
+                    or args.v8_h4_layer_sweep_bottom
                     or args.v5_h4_blr_side_component
                     or args.v5_h4_fixed_budget_bottom_component
                 )
@@ -9336,6 +9903,7 @@ def main(argv: list[str] | None = None) -> int:
                     or args.v6_h4_port_modal_bottom_component
                     or args.v7_h4_streamed_bottom_producer
                     or args.v7_h4_streamed_bottom_consumer
+                    or args.v8_h4_layer_sweep_bottom
                     or args.v5_h4_blr_side_component
                     or args.v5_h4_fixed_budget_bottom_component
                 )
@@ -9417,6 +9985,10 @@ def main(argv: list[str] | None = None) -> int:
                 args.v7_h4_streamed_bottom_consumer_exact_spool_root
             ),
             v8_h4_layer_block_reconstruction=args.v8_h4_layer_block_reconstruction,
+            v8_h4_layer_sweep_bottom=args.v8_h4_layer_sweep_bottom,
+            v8_h4_layer_sweep_exact_spool_root=(
+                args.v8_h4_layer_sweep_exact_spool_root
+            ),
             v5_h4_blr_side_only=args.v5_h4_blr_side_component,
             v5_h4_fixed_budget_bottom_only=args.v5_h4_fixed_budget_bottom_component,
             v5_h4_fixed_budget_exact_spool_root=(
@@ -9453,6 +10025,7 @@ def main(argv: list[str] | None = None) -> int:
             "completed",
             "setup_only_completed",
             "component_completed",
+            "component_numerical_pass_resource_pending",
             "producer_completed",
             "consumer_completed",
             "full_formal_completed",
@@ -9513,6 +10086,11 @@ __all__ = [
     "V8_H4_LAYER_BLOCK_SCHEMA",
     "V8_H4_LAYER_BLOCK_HARD_STOP_BYTES",
     "run_v8_h4_layer_block_reconstruction_component",
+    "V8_H4_LAYER_SWEEP_PROFILE_ID",
+    "V8_H4_LAYER_SWEEP_METHOD",
+    "V8_H4_LAYER_SWEEP_SCHEMA",
+    "V8_H4_LAYER_SWEEP_HARD_STOP_BYTES",
+    "run_v8_h4_layer_sweep_bottom_component",
     "build_v3_7_execution_plan",
     "check_v3_7_integrated_physics",
     "compare_v3_7_hybrid_candidate_to_direct",

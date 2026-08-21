@@ -59,6 +59,11 @@ V6_H4_PORT_MODAL_CONSTRUCTION_HARD_STOP_BYTES = 23622320128
 V7_STREAMED_PETROV_HARD_STOP_BYTES = 100262797312
 V7_STREAMED_PETROV_CONSUMER_HARD_STOP_BYTES = 90236517581
 V8_H4_LAYER_BLOCK_RECONSTRUCTION_HARD_STOP_BYTES = 224000000000
+V8_H4_LAYER_SWEEP_BOTTOM_HARD_STOP_BYTES = 45 * 2**30
+V8_H4_LAYER_SWEEP_BOTTOM_CONSTRUCTION_LIMIT_GIB = 45.0
+V8_H4_LAYER_SWEEP_BOTTOM_RETAINED_LIMIT_GIB = 30.0
+V8_H4_LAYER_SWEEP_BOTTOM_METHOD = "task039_v8_h4_layer_sweep_bottom"
+V8_H4_LAYER_SWEEP_BOTTOM_SCHEMA = "task039.v8.h4.layer_sweep.bottom_component.v1"
 
 
 def _v5_h4_blr_candidate_interval_peak(
@@ -96,14 +101,18 @@ def _v5_h4_blr_candidate_interval_peak(
             stage = row.get("stage")
             if stage in (begin_stage, end_stage):
                 stage_rows[stage] = row
-    begin = stage_rows.get(begin_stage, {}).get("sample_elapsed_seconds")
-    end = stage_rows.get(end_stage, {}).get("sample_elapsed_seconds")
+    begin_row = stage_rows.get(begin_stage)
+    end_row = stage_rows.get(end_stage)
+    begin = None if begin_row is None else begin_row.get("sample_elapsed_seconds")
+    end = None if end_row is None else end_row.get("sample_elapsed_seconds")
     if (
         not isinstance(begin, (int, float))
         or not isinstance(end, (int, float))
         or float(end) < float(begin)
-        or stage_rows[begin_stage].get("sample_status") != "measured"
-        or stage_rows[end_stage].get("sample_status") != "measured"
+        or begin_row is None
+        or end_row is None
+        or begin_row.get("sample_status") != "measured"
+        or end_row.get("sample_status") != "measured"
     ):
         return {
             "status": "not_available",
@@ -689,6 +698,9 @@ def _run_worker(
     formal_v8_layer_block = (
         getattr(plan, "method", "") == "task039_v8_h4_layer_block_reconstruction"
     )
+    formal_v8_layer_sweep = (
+        getattr(plan, "method", "") == "task039_v8_h4_layer_sweep_bottom"
+    )
     formal_telemetry = (
         formal_v2_h5
         or formal_v3_2d
@@ -704,6 +716,7 @@ def _run_worker(
         or formal_v7_streamed_producer
         or formal_v7_streamed_consumer
         or formal_v8_layer_block
+        or formal_v8_layer_sweep
     )
     if task039_model_id_matches(method, model_id, requested_modes):
         task039_budget = _task039_memory_budget(execution)
@@ -745,6 +758,9 @@ def _run_worker(
         terminate_limit = float(absolute_terminate_memory_bytes)
     if formal_v7_streamed_consumer:
         absolute_terminate_memory_bytes = V7_STREAMED_PETROV_CONSUMER_HARD_STOP_BYTES
+        terminate_limit = float(absolute_terminate_memory_bytes)
+    if formal_v8_layer_sweep:
+        absolute_terminate_memory_bytes = V8_H4_LAYER_SWEEP_BOTTOM_HARD_STOP_BYTES
         terminate_limit = float(absolute_terminate_memory_bytes)
     timeout = float(execution["timeout_seconds"])
     if formal_v7_h4_full:
@@ -833,6 +849,7 @@ def _run_worker(
                 or formal_v7_streamed_producer
                 or formal_v7_streamed_consumer
                 or formal_v8_layer_block
+                or formal_v8_layer_sweep
             )
             or formal_stage_stream is None
         ):
@@ -883,6 +900,7 @@ def _run_worker(
                 or formal_v7_streamed_producer
                 or formal_v7_streamed_consumer
                 or formal_v8_layer_block
+                or formal_v8_layer_sweep
             ) and stage_index is None:
                 stage_index = formal_aligned_stage_count
             row = {
@@ -934,6 +952,7 @@ def _run_worker(
             or formal_v7_streamed_producer
             or formal_v7_streamed_consumer
             or formal_v8_layer_block
+            or formal_v8_layer_sweep
         ):
             formal_stages_path.unlink(missing_ok=True)
             formal_stage_stream = formal_stages_path.open("a", encoding="utf-8")
@@ -1096,6 +1115,7 @@ def _run_worker(
         or formal_v7_streamed_producer
         or formal_v7_streamed_consumer
         or formal_v8_layer_block
+        or formal_v8_layer_sweep
     ) and not formal_object_ledger_path.exists():
         _write_json(
             formal_object_ledger_path,
@@ -1703,6 +1723,150 @@ def _run_worker(
             "absolute_terminate_memory_bytes": v8_hard_stop,
             "require_zero_swap": True,
             "poll_interval_seconds": poll_interval,
+            "authority": "parent_process_tree_samples",
+        }
+    if formal_v8_layer_sweep:
+        methods = ("J1", "F1", "FB1", "FB2", "FB4")
+        method_intervals = {}
+        for method_name in methods:
+            construction_interval = _v5_h4_blr_candidate_interval_peak(
+                formal_stages_path,
+                formal_samples_path,
+                "bottom",
+                begin_stage=(f"v8_layer_sweep_bottom_{method_name}_woodbury_begin"),
+                end_stage=f"v8_layer_sweep_bottom_{method_name}_cleanup",
+                limit_gib=V8_H4_LAYER_SWEEP_BOTTOM_CONSTRUCTION_LIMIT_GIB,
+            )
+            retained_interval = _v5_h4_blr_candidate_interval_peak(
+                formal_stages_path,
+                formal_samples_path,
+                "bottom",
+                begin_stage=f"v8_layer_sweep_bottom_{method_name}_woodbury_ready",
+                end_stage=f"v8_layer_sweep_bottom_{method_name}_cleanup",
+                limit_gib=V8_H4_LAYER_SWEEP_BOTTOM_RETAINED_LIMIT_GIB,
+            )
+            method_intervals[method_name] = {
+                "role": "evidence_only_checkpoint",
+                "construction": construction_interval,
+                "retained": retained_interval,
+            }
+        overall_construction_interval = _v5_h4_blr_candidate_interval_peak(
+            formal_stages_path,
+            formal_samples_path,
+            "bottom",
+            begin_stage="v8_layer_sweep_bottom_construction_begin",
+            end_stage="v8_layer_sweep_bottom_construction_end",
+            limit_gib=V8_H4_LAYER_SWEEP_BOTTOM_CONSTRUCTION_LIMIT_GIB,
+        )
+        overall_retained_interval = _v5_h4_blr_candidate_interval_peak(
+            formal_stages_path,
+            formal_samples_path,
+            "bottom",
+            begin_stage="v8_layer_sweep_bottom_retained_apply_state_ready",
+            end_stage="v8_layer_sweep_bottom_retained_state_release",
+            limit_gib=V8_H4_LAYER_SWEEP_BOTTOM_RETAINED_LIMIT_GIB,
+        )
+        construction_pass = (
+            overall_construction_interval.get("status") == "measured"
+            and overall_construction_interval.get("pass") is True
+        )
+        retained_pass = (
+            overall_retained_interval.get("status") == "measured"
+            and overall_retained_interval.get("pass") is True
+        )
+        worker_record_path = (
+            run_directory / "numerical_output" / "v3_v7_diagnostic.json"
+        )
+        worker_numerical_gate: bool | None = None
+        worker_record_status = "not_available"
+        if worker_record_path.is_file():
+            try:
+                worker_record = json.loads(
+                    worker_record_path.read_text(encoding="utf-8")
+                )
+            except (OSError, json.JSONDecodeError):
+                worker_record_status = "parse_failed"
+            else:
+                identity_matches = (
+                    isinstance(worker_record, Mapping)
+                    and worker_record.get("schema") == V8_H4_LAYER_SWEEP_BOTTOM_SCHEMA
+                    and worker_record.get("method") == V8_H4_LAYER_SWEEP_BOTTOM_METHOD
+                    and worker_record.get("source_sha")
+                    == getattr(plan, "source_sha", None)
+                )
+                if not identity_matches:
+                    worker_record_status = "identity_mismatch"
+                else:
+                    worker_gate = worker_record.get("gate")
+                    value = (
+                        worker_gate.get("numerical_holdout_gate_pass")
+                        if isinstance(worker_gate, Mapping)
+                        else None
+                    )
+                    if isinstance(value, bool):
+                        worker_numerical_gate = value
+                        worker_record_status = "measured"
+                    else:
+                        worker_record_status = "field_not_available"
+        swap_pass = sample_count > 0 and zero_swap_observed is True and peak_swap == 0
+        if worker_numerical_gate is False and (
+            overall_retained_interval.get("status") != "measured"
+        ):
+            overall_status = "numerical_gate_failed_retained_not_run"
+        elif worker_numerical_gate is None:
+            overall_status = "not_available"
+        elif not construction_pass or not retained_pass:
+            overall_status = "resource_interval_not_available_or_failed"
+        elif not swap_pass:
+            overall_status = "swap_gate_failed"
+        elif worker_numerical_gate and construction_pass and retained_pass:
+            overall_status = "pass"
+        else:
+            overall_status = "numerical_gate_failed"
+        overall_pass = overall_status == "pass"
+        resource_authority["v8_h4_layer_sweep_bottom_telemetry"] = {
+            "raw_marker_path": str(formal_markers_path),
+            "process_tree_samples_path": str(formal_samples_path),
+            "memory_stages_path": str(formal_stages_path),
+            "memory_object_ledger_path": str(formal_object_ledger_path),
+            "sample_count": sample_count,
+            "process_tree_sample_count": formal_written_sample_count,
+            "aligned_stage_count": formal_aligned_stage_count,
+            "stage_source": "launcher_marker_alignment",
+            "method": "task039_v8_h4_layer_sweep_bottom",
+            "profile": "task039.v8.h4.layer_sweep.bottom_component.v1",
+            "method_intervals": method_intervals,
+            "construction_interval_summary": overall_construction_interval,
+            "retained_interval_summary": overall_retained_interval,
+            "method_interval_role": (
+                "evidence_only_checkpoint; not a substitute for the overall intervals"
+            ),
+            "numerical_status": (
+                "pass"
+                if worker_numerical_gate is True
+                else "failed"
+                if worker_numerical_gate is False
+                else "not_available"
+            ),
+            "numerical_gate_pass": worker_numerical_gate,
+            "worker_record_path": str(worker_record_path),
+            "worker_record_status": worker_record_status,
+            "overall": {
+                "status": overall_status,
+                "pass": overall_pass,
+                "construction_pass": construction_pass,
+                "retained_pass": retained_pass,
+                "numerical_gate_pass": worker_numerical_gate,
+                "swap_pass": swap_pass,
+            },
+            "absolute_terminate_memory_bytes": (
+                V8_H4_LAYER_SWEEP_BOTTOM_HARD_STOP_BYTES
+            ),
+            "require_zero_swap": True,
+            "zero_swap_observed": zero_swap_observed if sample_count else None,
+            "overall_process_tree_peak_bytes": peak_process_tree,
+            "overall_process_tree_peak_gib": peak_process_tree / 1024**3,
+            "overall_peak_swap_bytes": peak_swap,
             "authority": "parent_process_tree_samples",
         }
     if formal_v3_2d:
