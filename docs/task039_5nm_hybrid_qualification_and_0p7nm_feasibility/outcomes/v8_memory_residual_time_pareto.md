@@ -53,3 +53,19 @@ V8-3 只证明 bottom construction 的资源线未触发，不改变 V7 的 full
 full formal、matrix-free K 和 0.7 nm PDE 均 `not_run`。
 
 证据入口：[V8-3 bottom outcome](v8_layer_sweep_bottom.md)、[V8-3 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v8_layer_sweep_bottom_v1.json)。
+
+## V9-1 bare-F 与完整 side 诊断
+
+V9-1 只评估 J1/F1；这里的时间和 RSS 仍是 bottom component 口径，不能与 V7 Lane A full-workflow
+节省率混称。`r_F` 与 `r_A` 都是实际 operator action 的 true residual，physical zero source 只作
+degenerate，FB1/FB2/FB4 未运行。
+
+| 路线 | 范围 | process-tree peak | setup / holdout / apply s | worst mandatory `r_F` | worst mandatory `r_A` | `r_A/r_F`范围 | 结论 |
+|---|---|---:|---:|---:|---:|---:|---|
+| V9-1 J1 | bottom diagnostic component | 23.8684272766 GiB | 78.705259702 / 7.447137749 / 4.981149436 | 50.7689715097 | 50.2410648372 | 0.970–0.990 | numerical negative |
+| V9-1 F1 | bottom diagnostic component | 22.1353225708 GiB | 86.680200840 / 7.970189338 / 5.368767116 | 367.2128685567 | 141.0763808200 | 0.354–0.430 | numerical negative |
+
+J1 对 bare `F` 的残差已约为几十倍，说明 single-layer sweep 本身是主要瓶颈；完整 DtN/Woodbury
+没有放大 J1，F1 还降低了 `r_A`，但仍远高于 `1e-2`。construction resource pass、swap=0；
+retained candidate 因 numerical failure 为 `not_run`。详见 [V9-1 outcome](v9_bare_f_vs_full_side.md)
+和 [V9-1 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v9_bare_f_full_side_diagnostic_v1.json)。

@@ -294,3 +294,14 @@ formal 的 residual/physics pass 也不被 component RSS 取代。首次 impleme
 | `git diff --check` | `pass；exit 0` | docs/record-only diff |
 | Ruff / format / compileall | `inherited pass; no Python changed` | 本轮不重跑 solver Python |
 | repository full pytest / CI | `not_run` | 不声称 CI 或 full pytest |
+
+## Review V9-1 bare-F/full-side diagnostic
+
+| 检查/证据 | 结果 | 口径 |
+|---|---|---|
+| V9-1 J1/F1 formal worker | `finished；exit 3` | controlled numerical negative；不是 resource stop；FB1/2/4 not_run |
+| V9-1 numerical Gate | `false` | 五个非退化 mandatory `r_A` 均远高于 `1e-2`；physical zero 为 degenerate |
+| V9-1 construction resource | `23.8684272766 GiB <=45 GiB；swap 0` | parent process-tree authority pass |
+| V9-1 retained interval | `not_run` | numerical failure 后没有 preferred candidate，不伪造 `30 GiB` pass |
+| V9-1 compact JSON parse/raw hash | `pass` | hash-bound record；raw results ignored |
+| full pytest / CI | `not_run` | 本阶段没有声称 full pytest 或 CI |

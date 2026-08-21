@@ -2534,3 +2534,19 @@ preferred retained rehydration 没有发生，因此 overall retained interval �
 不能使用临时方法 interval 代替 30 GiB Gate。top、both-side、full、matrix-free K、0.7 nm PDE 和
 新的 solver development 均停止/未运行。详见 [V8-3 outcome](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v8_layer_sweep_bottom.md) 和
 [V8 Pareto](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v8_memory_residual_time_pareto.md)。
+
+## 2026-08-21：Task039 Review V9-1 bare-F/full-side diagnostic
+
+V9-1 在修复后的 source `2faf2a1a89a065e2985e46e462c6b7396f72b051` 上只重评 bottom `J1` 与 `F1`，没有重跑旧 V8 候选。
+五个非退化 frozen holdout 的 J1 `r_F` 为 `24.9344 / 30.6816 / 50.7690 / 48.9026 / 50.6202`，`r_A` 为
+`24.5337 / 29.9755 / 50.2411 / 47.4220 / 49.1084`；F1 `r_F` 为
+`202.576 / 304.921 / 328.362 / 351.646 / 367.213`，`r_A` 为 `81.3295 / 119.177 / 141.076 / 127.163 / 129.898`。
+`r_A/r_F` 分别约为 `0.970–0.990` 和 `0.354–0.430`，说明 single-layer sweep 对 bare `F` 本身已严重失效；
+DtN/Woodbury 没有放大 J1，反而缓和 F1，但两者都未达到 `1e-2` residual Gate，J1 优于 F1。
+
+J1 repeat/linearity 约 `1e-13`，F1 最大约 `3.63e-11`，均通过 `1e-10`；K rank `296`、condition `63.9432505898`。
+construction peak 为 `23.8684272766 GiB <=45 GiB`，swap=0；六层 factor 从 `6` 清理到 `0`，full-side/global
+direct factor `0/0`，retained candidate `not_run`。physical zero 只作 degenerate，FB1/2/4 未运行。
+compact record 与原始 evidence 绑定见
+[V9-1 record](../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v9_bare_f_full_side_diagnostic_v1.json)
+和 `results/task039_v9_h4_bare_f_full_side_diagnostic_mpi8_2faf2a1a/`（ignored local raw）。
