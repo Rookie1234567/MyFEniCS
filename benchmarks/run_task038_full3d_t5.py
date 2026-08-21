@@ -45,6 +45,26 @@ OLD_ARRAY_FACTS = {
     },
 }
 
+T5_PHYSICAL_IDENTITY_SCHEMA = "task038.full3d.iterative.t5.physical-identity.v2"
+T5_PHYSICAL_IDENTITY_RECORD_SCHEMA = (
+    "task038.full3d.iterative.t5.physical-identity-record.v2"
+)
+T5_PHYSICAL_IDENTITY_FIELDS = (
+    "wavelength",
+    "geometry",
+    "materials",
+    "incidence",
+    "floquet",
+    "finite_element",
+    "facet_normal",
+    "ordered_modes",
+    "incident_amplitudes",
+    "rhs_composition",
+    "mpc",
+    "raw_config",
+    "source_provenance",
+)
+
 
 def _canonical_json(value: Any) -> bytes:
     return json.dumps(
@@ -115,6 +135,210 @@ def _git_blob_sha(root: Path, commit: str, relative_path: str) -> str:
     if result.returncode:
         raise RuntimeError(result.stderr.decode(errors="replace"))
     return hashlib.sha256(result.stdout).hexdigest()
+
+
+def _identity_available(value: Any, source: str) -> dict[str, Any]:
+    return {"status": "available", "value": _jsonable(value), "source_evidence": source}
+
+
+def _identity_unavailable(reason: str, source: str, known: Any | None = None) -> dict[str, Any]:
+    result = {"status": "unavailable", "reason": reason, "source_evidence": source}
+    if known is not None:
+        result["known"] = _jsonable(known)
+    return result
+
+
+def _identity_file(path: Path) -> dict[str, Any]:
+    path = path.resolve()
+    return {"path": str(path), "bytes": path.stat().st_size, "sha256": _sha256_path(path)}
+
+
+def _mesh_identity_fields(value: Mapping[str, Any]) -> dict[str, Any]:
+    keys = ("cell_type", "cells_global", "vertices_global", "geometry_shape",
+            "canonical_connectivity_sha256", "canonical_geometry_sha256",
+            "axis_counts", "digest_algorithm")
+    return {key: value[key] for key in keys if key in value}
+
+
+def _mode_identity(modes: Iterable[Any], cfg: Any) -> tuple[list[Mapping[str, Any]], list[complex], bytes, str]:
+    from src.solvers.dtn_port_3d import _incident_projection_onto_top_mode
+    from src.solvers.fullspace_dtn_action import build_ordered_mode_manifest
+
+    mode_rows, manifest_bytes, manifest_sha = build_ordered_mode_manifest(
+        tuple(modes), cfg
+    )
+    amplitudes = [
+        _incident_projection_onto_top_mode(mode, cfg) for mode in modes
+    ]
+    return list(mode_rows), amplitudes, manifest_bytes, manifest_sha
+
+
+def _missing_identity_fields(reason: str, source: str) -> dict[str, Any]:
+    return {name: _identity_unavailable(reason, source) for name in T5_PHYSICAL_IDENTITY_FIELDS}
+
+
+def _old_identity_manifest(root: Path, old_dir: Path, summary: Mapping[str, Any], authority: Mapping[str, Any]) -> dict[str, Any]:
+    scope = summary.get("scope", {})
+    screen = summary.get("measurements", {}).get("screen", {})
+    audit = screen.get("dtn_action_audit", {})
+    old_mesh = authority.get("mesh_witnesses", {}).get("old_exact")
+    if not isinstance(old_mesh, Mapping):
+        raise RuntimeError("old exact mesh witness is missing")
+    source_files = {
+        name: {"commit_sha": OLD_SOURCE_SHA, "path": path, "sha256": _git_blob_sha(root, OLD_SOURCE_SHA, path)}
+        for name, path in (("runner", "benchmarks/run_task037_extra_m6b.py"), ("dtn_port", "src/solvers/dtn_port_3d.py"))
+    }
+    raw_paths = {"mesh_h5": old_dir / "m6b_w5_mesh/mesh_3d.h5",
+                 "mesh_xdmf": old_dir / "m6b_w5_mesh/mesh_3d.xdmf",
+                 "dual_manifest": old_dir / "mpi1_candidate_physical_rhs_dual_manifest.json",
+                 "dual_shard": old_dir / "mpi1_candidate_physical_rhs_dual_rank0.jsonl",
+                 "summary": old_dir / "m6b_w5_summary.json"}
+    raw_paths.update({name: old_dir / f"m6b_iter200_{name}.npy" for name in OLD_ARRAY_FACTS})
+    fields = _missing_identity_fields("old field was not emitted as structured evidence", "old W5 summary/source")
+    fields.update({
+        "geometry": _identity_unavailable("physical dimensions are absent", "prior exact old mesh witness", _mesh_identity_fields(old_mesh)),
+        "materials": _identity_unavailable("epsilon/loss values are absent", "old W5 material tag coverage", screen.get("material_tag_coverage")),
+        "finite_element": _identity_unavailable("quadrature identity is absent", "old W5 scope/JIT audit", {"degree": scope.get("degree"), "h_nm": scope.get("h_nm")}),
+        "facet_normal": _identity_unavailable("facet tag/normal was not structured", "old incident top traction source", {"side": "top", "normal": [0.0, 0.0, 1.0]}),
+        "ordered_modes": _identity_unavailable("ordered mode rows were not preserved", "old W5 DTN audit", {"count": audit.get("mode_count"), "sha256": audit.get("mode_manifest_sha256")}),
+        "rhs_composition": _identity_unavailable("component sign/H rows were not emitted", "old W5 rhs_binding", screen.get("rhs_binding")),
+        "mpc": _identity_unavailable("MPC relation digest was not emitted", "old W5 scope", {"global_rows": scope.get("global_rows"), "constraint_count": scope.get("constraint_count")}),
+        "source_provenance": _identity_available({"source_sha": OLD_SOURCE_SHA, "source_files": source_files, "abi": summary.get("runtime_identity")}, "old W5 summary"),
+    })
+    return {"schema": T5_PHYSICAL_IDENTITY_SCHEMA, "role": "historical_w5",
+            "source": {"commit_sha": OLD_SOURCE_SHA, "source_files": source_files, "raw_root": str(old_dir.resolve())},
+            "raw_artifacts": {name: _identity_file(path) for name, path in raw_paths.items()},
+            "physical_identity": fields}
+
+
+def _current_identity_manifest(
+    root: Path,
+    resolved: Mapping[str, Any],
+    cfg: Any,
+    modes: Iterable[Any],
+    mode_path: Path,
+    config_path: Path,
+    authority_path: Path,
+    authority: Mapping[str, Any],
+    source: Mapping[str, Any],
+    input_path: Path,
+    physical_model_sha: str,
+    quadrature_degree: int,
+) -> dict[str, Any]:
+    raw = Path(str(authority["raw_dir"])).resolve()
+    mesh = authority["mesh_witnesses"]["current_generated"]
+    rebuild = authority["mesh_witnesses"]["current_rebuild"]
+    mpc = authority["mpc"]
+    ordered, amplitudes, mode_manifest_bytes, mode_manifest_sha = _mode_identity(
+        modes, cfg
+    )
+    geo, mat, inc, der = resolved["geometry"], resolved["materials"], resolved["incidence"], resolved["derived"]
+    source_files = {
+        name: {
+            "commit_sha": source["commit_sha"],
+            "path": path,
+            "sha256": _git_blob_sha(root, source["commit_sha"], path),
+        }
+        for name, path in (
+            ("input_validation", "src/io/input_validation.py"),
+            ("dtn_port_3d", "src/solvers/dtn_port_3d.py"),
+            ("fullspace_dtn_action", "src/solvers/fullspace_dtn_action.py"),
+            ("fullspace_physical_action", "src/solvers/fullspace_physical_action.py"),
+        )
+    }
+    fields = {
+        "wavelength": _identity_available({"wavelength_nm": inc["wavelength_nm"]}, "T1 resolved config"),
+        "geometry": _identity_available({"dimensions_nm": geo, "mesh_witness": _mesh_identity_fields(mesh), "rebuild": _mesh_identity_fields(rebuild)}, "T1 config and current mesh witnesses"),
+        "materials": _identity_available({"names": [mat["grating_name"], mat["substrate_name"]], "n": [mat["n_air"], mat["n_grating"], mat["n_substrate"]], "epsilon": der["config_properties"], "mu_r": mat["mu_r"]}, "T1 materials/derived config"),
+        "incidence": _identity_available({"wavelength_nm": inc["wavelength_nm"], "grazing_angle_deg": inc["grazing_angle_deg"], "theta_deg": der["internal"]["incident_theta_deg"], "azimuth_deg": inc["azimuth_deg"], "phi_deg": der["internal"]["incident_phi_deg"], "polarization": inc["polarization"], "vector": der["polarization"], "amplitude": inc["electric_amplitude"], "wavevector": der["wavevector"]}, "T1 incidence/derived fields"),
+        "floquet": _identity_available({"kx": der["wavevector"][0], "ky": der["wavevector"][1], "phase_x": der["floquet_phase_x"], "phase_y": der["floquet_phase_y"], "constraint_mode": der["floquet_constraint_mode_requested"]}, "T1 Floquet fields"),
+        "finite_element": _identity_available({"family": "N1E", "map": "covariantPiola", "degree": resolved["discretization"]["nedelec_degree"], "cell_type": resolved["discretization"]["mesh_cell_type"], "quadrature_degree": int(quadrature_degree)}, "T1 discretization/current production DtN policy"),
+        "facet_normal": _identity_available({"side": "top", "tag": "z_max", "normal": [0.0, 0.0, 1.0], "z_nm": geo["z_max_nm"]}, "current incident top traction contract"),
+        "ordered_modes": _identity_available(ordered, "current dynamic mode manifest"),
+        "incident_amplitudes": _identity_available(amplitudes, "current incident projection definition"),
+        "rhs_composition": _identity_available({"base": "incident_top_traction", "coupling": "negative_mode_traction", "normalization": "H", "composition": "base + modal coupling", "phase": "finalized MPC once"}, "current compose_physical_rhs/DtN carrier contract"),
+        "mpc": _identity_available({"global_rows": mpc["global_rows"], "local_owned_rows": mpc["local_owned_rows"], "constraint_count": mpc["constraint_count"], "constraint_mode": mpc["constraint_mode"], "relation_digest": mpc["relation_digest"], "row_witness_sha256": authority["row_layout_witness"]["manifest_sha256"]}, "current finalized MPC/row witness"),
+        "raw_config": _identity_available({"template": _identity_file(input_path), "resolved": _identity_file(config_path), "physical_model_sha256": physical_model_sha}, "T1 load_and_resolve/resolved_config_bytes"),
+        "source_provenance": _identity_available({"head_sha": source["commit_sha"], "tracked_status": source["tracked_status"], "dynamic_mode_manifest_sha256": mode_manifest_sha, "dynamic_mode_manifest_bytes": len(mode_manifest_bytes), "source_files": source_files}, "current production mode/projection/quadrature helpers and T1 adapter"),
+    }
+    paths = {"input_template": input_path, "resolved_config": config_path, "mode_manifest": mode_path,
+             "authority_record": authority_path, "current_rhs_manifest": raw / "canonical/current_rhs.manifest.json",
+             "mesh_h5": raw / "mesh/mesh_3d.h5", "mesh_xdmf": raw / "mesh/mesh_3d.xdmf",
+             "row_layout_manifest": raw / "row_witness/row_layout.manifest.json"}
+    return {"schema": T5_PHYSICAL_IDENTITY_SCHEMA, "role": "current_task038_extra",
+            "source": {"commit_sha": source["commit_sha"], "tracked_status": source["tracked_status"], "raw_root": str(raw)},
+            "raw_artifacts": {name: _identity_file(path) for name, path in paths.items()}, "physical_identity": fields}
+
+
+def _identity_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Generate T5 physical identity manifests")
+    parser.add_argument("--identity", action="store_true")
+    parser.add_argument("--input", type=Path, default=Path("input/templates/full3d_iterative_example.dat"))
+    parser.add_argument("--old-w5-dir", type=Path)
+    parser.add_argument("--current-mode-manifest", type=Path)
+    parser.add_argument("--current-authority-record", type=Path)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--expected-source-sha", required=True)
+    return parser
+
+
+def _identity_main(argv: list[str]) -> int:
+    args = _identity_parser().parse_args(argv)
+    root = Path(__file__).resolve().parents[1]
+    source = _source_identity(root)
+    if source["commit_sha"] != args.expected_source_sha:
+        raise RuntimeError("identity source HEAD does not match expected SHA")
+    output = args.output if args.output.is_absolute() else root / args.output
+    if output.exists():
+        raise FileExistsError(f"identity output root already exists: {output}")
+    output.mkdir(parents=True)
+    def path_or_default(value: Path | None, default: str) -> Path:
+        path = value or Path(default)
+        return path if path.is_absolute() else root / path
+    old_dir = path_or_default(args.old_w5_dir, "benchmarks/artifacts/task037_extra_development/m6b_w5_disk_fgmres_41cbbd4_screen_run1")
+    mode_path = path_or_default(args.current_mode_manifest, "benchmarks/artifacts/task038_extra_full3d_iterative_t3_formal_v2/p6-h10-mpi1/raw/mode_manifest.json")
+    authority_path = path_or_default(args.current_authority_record, "benchmarks/artifacts/task038_extra_full3d_iterative_t5_authority_v1/mpi1/record.json")
+    input_path = path_or_default(args.input, "input/templates/full3d_iterative_example.dat")
+    from src.io import load_and_resolve
+    from src.io.resolved_config import resolved_config_bytes
+    specification = load_and_resolve(input_path)
+    payload = resolved_config_bytes(specification)
+    authority = json.loads(authority_path.read_text(encoding="utf-8"))
+    config_path = Path(str(authority["raw_dir"])) / "benchmark_input/resolved_config.json"
+    if config_path.read_bytes() != payload:
+        raise RuntimeError("current authority resolved config is not byte-equal to T1 adapter output")
+    summary = json.loads((old_dir / "m6b_w5_summary.json").read_text(encoding="utf-8"))
+    from src.io.input_validation import simulation_config_3d_from_normalized
+    from src.solvers.dtn_port_3d import _dtn_surface_quadrature_degree
+    from src.solvers.fullspace_dtn_action import (
+        build_dynamic_mode_inventory,
+        build_ordered_mode_manifest,
+    )
+
+    cfg = simulation_config_3d_from_normalized(json.loads(payload))
+    modes, inventory_rows, inventory_sha = build_dynamic_mode_inventory(cfg)
+    mode_rows, mode_bytes, mode_sha = build_ordered_mode_manifest(modes, cfg)
+    if tuple(inventory_rows) != tuple(mode_rows) or inventory_sha != mode_sha:
+        raise RuntimeError("dynamic mode inventory is not production-manifest closed")
+    if mode_bytes != mode_path.read_bytes():
+        raise RuntimeError("dynamic mode manifest differs from frozen T3 manifest")
+    quadrature_degree = _dtn_surface_quadrature_degree(cfg, list(modes))
+    old = _old_identity_manifest(root, old_dir, summary, authority)
+    current = _current_identity_manifest(root, json.loads(payload), cfg, modes, mode_path, config_path, authority_path, authority, source, input_path, specification.physical_model_sha256, quadrature_degree)
+    old_path, current_path = output / "old_w5_physical_identity.json", output / "current_task038_physical_identity.json"
+    old_path.write_bytes(_canonical_json(old) + b"\n")
+    current_path.write_bytes(_canonical_json(current) + b"\n")
+    old_rhs = old_dir / "mpi1_candidate_physical_rhs_dual_manifest.json"
+    current_rhs = Path(str(authority["raw_dir"])) / "canonical/current_rhs.manifest.json"
+    record = {"schema": T5_PHYSICAL_IDENTITY_RECORD_SCHEMA, "raw_root": str(output.resolve()),
+              "source": {"expected_sha": args.expected_source_sha, "head_sha": source["commit_sha"], "tracked_status": source["tracked_status"]},
+              "manifests": {"old": _identity_file(old_path), "current": _identity_file(current_path)},
+              "rhs_observation": {"old_manifest": _identity_file(old_rhs), "current_manifest": _identity_file(current_rhs), "relative_tolerance": 1.0e-12, "comparison_purpose": "diagnosis only; no residual conversion"},
+              "input": {"template": _identity_file(input_path), "resolved_config_sha256": hashlib.sha256(payload).hexdigest(), "resolved_config_bytes": len(payload)}}
+    record_path = output / "r1_record.json"
+    record_path.write_bytes(_canonical_json(record) + b"\n")
+    print(json.dumps({"record": str(record_path), "mode_count": len(modes), "mode_manifest_sha256": mode_sha}, sort_keys=True))
+    return 0
 
 
 def _rss_bytes() -> int:
@@ -1160,6 +1384,8 @@ def main(argv: list[str] | None = None) -> int:
     selected_argv = list(sys.argv[1:] if argv is None else argv)
     if "--watchdog" in selected_argv:
         return _watchdog_main(selected_argv)
+    if "--identity" in selected_argv:
+        return _identity_main(selected_argv)
     args = _parser().parse_args(selected_argv)
     root = Path(__file__).resolve().parents[1]
     identity = _source_identity(root)

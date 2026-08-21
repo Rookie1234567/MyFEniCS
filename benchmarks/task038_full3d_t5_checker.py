@@ -222,6 +222,370 @@ def _packet_difference(
     }
 
 
+T5_PHYSICAL_IDENTITY_SCHEMA = "task038.full3d.iterative.t5.physical-identity.v2"
+T5_PHYSICAL_IDENTITY_RECORD_SCHEMA = (
+    "task038.full3d.iterative.t5.physical-identity-record.v2"
+)
+T5_PHYSICAL_IDENTITY_FIELDS = (
+    "wavelength",
+    "geometry",
+    "materials",
+    "incidence",
+    "floquet",
+    "finite_element",
+    "facet_normal",
+    "ordered_modes",
+    "incident_amplitudes",
+    "rhs_composition",
+    "mpc",
+    "raw_config",
+    "source_provenance",
+)
+
+
+def _valid_hex(value: Any, length: int) -> bool:
+    return bool(
+        isinstance(value, str)
+        and len(value) == length
+        and all(character in "0123456789abcdef" for character in value)
+    )
+
+
+def _identity_field_errors(
+    role: str, name: str, value: Any
+) -> list[str]:
+    if not isinstance(value, Mapping):
+        return [f"{role}.{name} identity field is missing or not an object"]
+    status = value.get("status")
+    if status == "available":
+        if "value" not in value or not isinstance(value.get("source_evidence"), str):
+            return [f"{role}.{name} available field lacks value/source evidence"]
+        return []
+    if status == "unavailable":
+        if not isinstance(value.get("reason"), str) or not value["reason"]:
+            return [f"{role}.{name} unavailable field lacks a reason"]
+        if not isinstance(value.get("source_evidence"), str) or not value["source_evidence"]:
+            return [f"{role}.{name} unavailable field lacks source evidence"]
+        return []
+    return [f"{role}.{name} identity field has invalid status"]
+
+
+def _identity_file_errors(
+    descriptor: Any, base: Path, label: str
+) -> tuple[list[str], dict[str, Any]]:
+    if not isinstance(descriptor, Mapping):
+        return [f"{label} file descriptor is missing"], {}
+    raw_path = descriptor.get("path")
+    if not isinstance(raw_path, str):
+        return [f"{label} file descriptor path is missing"], {}
+    path = Path(raw_path)
+    if not path.is_absolute():
+        path = (base / path).resolve()
+    else:
+        path = path.resolve()
+    if not path.is_file():
+        return [f"{label} file is missing: {path}"], {}
+    actual_bytes = int(path.stat().st_size)
+    actual_sha = _sha256_path(path)
+    errors: list[str] = []
+    if descriptor.get("bytes") != actual_bytes:
+        errors.append(f"{label} byte count does not match raw file")
+    if descriptor.get("sha256") != actual_sha:
+        errors.append(f"{label} SHA-256 does not match raw file")
+    if not _valid_hex(descriptor.get("sha256"), 64):
+        errors.append(f"{label} SHA-256 is not lowercase hexadecimal")
+    return errors, {
+        "path": str(path),
+        "bytes": actual_bytes,
+        "sha256": actual_sha,
+    }
+
+
+def _check_identity_manifest(
+    path: Path,
+) -> tuple[list[str], dict[str, Any]]:
+    errors: list[str] = []
+    try:
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return [f"identity manifest is unreadable: {exc}"], {}
+    if manifest.get("schema") != T5_PHYSICAL_IDENTITY_SCHEMA:
+        errors.append("identity manifest schema mismatch")
+    role = manifest.get("role")
+    if role not in {"historical_w5", "current_task038_extra"}:
+        errors.append("identity manifest role is invalid")
+    fields = manifest.get("physical_identity")
+    if not isinstance(fields, Mapping):
+        return errors + ["identity manifest physical_identity is missing"], {}
+    for name in T5_PHYSICAL_IDENTITY_FIELDS:
+        errors.extend(_identity_field_errors(str(role), name, fields.get(name)))
+    if set(fields) != set(T5_PHYSICAL_IDENTITY_FIELDS):
+        errors.append("identity manifest mandatory field set is not exact")
+    if role == "current_task038_extra":
+        geometry = fields.get("geometry", {}).get("value")
+        if (
+            not isinstance(geometry, Mapping)
+            or geometry.get("mesh_witness") != geometry.get("rebuild")
+        ):
+            errors.append("current generated/rebuild mesh witness is not identical")
+        modes = fields.get("ordered_modes", {}).get("value")
+        amplitudes = fields.get("incident_amplitudes", {}).get("value")
+        mode_keys = {
+            "schema", "mode_index", "side", "m", "n", "polarization",
+            "alpha", "gamma", "beta", "k_vector", "e_vector", "h_vector",
+            "refractive_index", "vertical_sign", "electric_tangential_norm_sq",
+            "power_per_unit_amplitude", "propagating", "rayleigh_warning",
+            "classification", "rayleigh_tolerance", "projection_denominator",
+            "traction_vector",
+        }
+        if not isinstance(modes, list) or not modes:
+            errors.append("current ordered mode inventory is empty")
+        elif any(
+            not isinstance(mode, Mapping)
+            or not mode_keys.issubset(mode)
+            or mode.get("schema") != "fullspace-dtn.mode.v1"
+            or mode.get("mode_index") != index
+            or not isinstance(mode.get("projection_denominator"), (int, float))
+            or not math.isfinite(float(mode["projection_denominator"]))
+            or float(mode["projection_denominator"]) <= 0.0
+            for index, mode in enumerate(modes)
+        ):
+            errors.append("current ordered mode identity is not closed")
+        if not isinstance(amplitudes, list) or len(amplitudes) != len(modes or ()):
+            errors.append("current incident amplitude inventory does not match modes")
+    source = manifest.get("source")
+    if not isinstance(source, Mapping) or not _valid_hex(source.get("commit_sha"), 40):
+        errors.append("identity manifest source commit SHA is invalid")
+    raw_artifacts = manifest.get("raw_artifacts")
+    if not isinstance(raw_artifacts, Mapping) or not raw_artifacts:
+        errors.append("identity manifest raw artifact descriptors are missing")
+    raw_facts: dict[str, Any] = {}
+    for name, descriptor in (raw_artifacts.items() if isinstance(raw_artifacts, Mapping) else ()):
+        file_errors, facts = _identity_file_errors(
+            descriptor, path.parent, f"{role} raw artifact {name}"
+        )
+        errors.extend(file_errors)
+        raw_facts[str(name)] = facts
+    if role == "current_task038_extra":
+        provenance = fields.get("source_provenance", {})
+        provenance_value = provenance.get("value") if isinstance(provenance, Mapping) else None
+        if not isinstance(provenance_value, Mapping):
+            errors.append("current source provenance value is missing")
+        else:
+            mode_facts = raw_facts.get("mode_manifest", {})
+            dynamic_sha = provenance_value.get("dynamic_mode_manifest_sha256")
+            dynamic_bytes = provenance_value.get("dynamic_mode_manifest_bytes")
+            if dynamic_sha != mode_facts.get("sha256"):
+                errors.append("current dynamic mode manifest SHA is not bound to raw evidence")
+            if dynamic_bytes != mode_facts.get("bytes"):
+                errors.append("current dynamic mode manifest byte count is not bound to raw evidence")
+            source_files = provenance_value.get("source_files")
+            required_files = {
+                "input_validation": "src/io/input_validation.py",
+                "dtn_port_3d": "src/solvers/dtn_port_3d.py",
+                "fullspace_dtn_action": "src/solvers/fullspace_dtn_action.py",
+                "fullspace_physical_action": "src/solvers/fullspace_physical_action.py",
+            }
+            if not isinstance(source_files, Mapping):
+                errors.append("current source defining blobs are missing")
+            else:
+                source_commit = source.get("commit_sha") if isinstance(source, Mapping) else None
+                for name, expected_path in required_files.items():
+                    blob = source_files.get(name)
+                    if (
+                        not isinstance(blob, Mapping)
+                        or blob.get("commit_sha") != source_commit
+                        or blob.get("path") != expected_path
+                        or not _valid_hex(blob.get("sha256"), 64)
+                    ):
+                        errors.append(f"current source defining blob is invalid: {name}")
+    return errors, {
+        "role": role,
+        "fields": fields,
+        "raw_artifacts": raw_facts,
+        "source": source,
+        "path": str(path.resolve()),
+        "manifest_sha256": _sha256_path(path),
+    }
+
+
+def check_physical_identity(record_path: Path) -> dict[str, Any]:
+    """Recompute R1 completeness and the old/current physical diagnosis."""
+
+    errors: list[str] = []
+    try:
+        record = json.loads(record_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return {
+            "schema": T5_PHYSICAL_IDENTITY_RECORD_SCHEMA,
+            "status": "fail",
+            "failures": [f"identity record is unreadable: {exc}"],
+        }
+    if record.get("schema") != T5_PHYSICAL_IDENTITY_RECORD_SCHEMA:
+        errors.append("identity record schema mismatch")
+    source = record.get("source")
+    if not isinstance(source, Mapping):
+        errors.append("identity record source is missing")
+    else:
+        if not _valid_hex(source.get("expected_sha"), 40):
+            errors.append("identity expected source SHA is invalid")
+        if source.get("expected_sha") != source.get("head_sha"):
+            errors.append("identity expected source SHA does not equal HEAD SHA")
+        if source.get("tracked_status") != "":
+            errors.append("identity source worktree is dirty")
+    manifest_descriptors = record.get("manifests")
+    if not isinstance(manifest_descriptors, Mapping):
+        errors.append("identity manifest descriptors are missing")
+        manifest_descriptors = {}
+    manifests: dict[str, dict[str, Any]] = {}
+    for label in ("old", "current"):
+        descriptor = manifest_descriptors.get(label)
+        file_errors, file_facts = _identity_file_errors(
+            descriptor, record_path.parent, f"{label} identity manifest"
+        )
+        errors.extend(file_errors)
+        if file_facts:
+            declared_sha = descriptor.get("sha256") if isinstance(descriptor, Mapping) else None
+            if declared_sha != file_facts["sha256"]:
+                errors.append(f"{label} identity manifest descriptor SHA mismatch")
+            manifest_errors, manifest_facts = _check_identity_manifest(
+                Path(file_facts["path"])
+            )
+            errors.extend(manifest_errors)
+            expected_manifest_source = (
+                OLD_SOURCE_SHA
+                if label == "old"
+                else source.get("head_sha") if isinstance(source, Mapping) else None
+            )
+            if manifest_facts.get("source", {}).get("commit_sha") != expected_manifest_source:
+                errors.append(f"{label} identity source SHA is not bound to the record")
+            manifests[label] = manifest_facts
+    input_block = record.get("input")
+    if not isinstance(input_block, Mapping):
+        errors.append("R1 T1 input/resolved-config binding is missing")
+    else:
+        input_errors, input_facts = _identity_file_errors(
+            input_block.get("template"), record_path.parent, "T1 input template"
+        )
+        errors.extend(input_errors)
+        if input_facts:
+            resolved_facts = manifests.get("current", {}).get("raw_artifacts", {}).get("resolved_config", {})
+            resolved_path = resolved_facts.get("path") if isinstance(resolved_facts, Mapping) else None
+            if input_block.get("resolved_config_bytes") != resolved_facts.get("bytes"):
+                errors.append("R1 resolved-config byte count is not bound to current raw evidence")
+            if not isinstance(resolved_path, str) or input_block.get("resolved_config_sha256") != resolved_facts.get("sha256"):
+                errors.append("R1 resolved-config SHA is not bound to current raw evidence")
+    old_fields = manifests.get("old", {}).get("fields", {})
+    current_fields = manifests.get("current", {}).get("fields", {})
+    field_mismatches: list[str] = []
+    old_unavailable: list[str] = []
+    for name in T5_PHYSICAL_IDENTITY_FIELDS:
+        old_field = old_fields.get(name)
+        current_field = current_fields.get(name)
+        if isinstance(old_field, Mapping) and old_field.get("status") == "unavailable":
+            old_unavailable.append(name)
+        if name == "source_provenance":
+            continue
+        if (
+            isinstance(old_field, Mapping)
+            and isinstance(current_field, Mapping)
+            and old_field.get("status") == "available"
+            and current_field.get("status") == "available"
+            and _canonical_json(old_field.get("value"))
+            != _canonical_json(current_field.get("value"))
+        ):
+            field_mismatches.append(name)
+    rhs = record.get("rhs_observation")
+    rhs_facts: dict[str, Any] = {}
+    if not isinstance(rhs, Mapping):
+        errors.append("R1 RHS observation descriptors are missing")
+    else:
+        old_errors, old_file = _identity_file_errors(
+            rhs.get("old_manifest"), record_path.parent, "old RHS canonical manifest"
+        )
+        current_errors, current_file = _identity_file_errors(
+            rhs.get("current_manifest"), record_path.parent, "current RHS canonical manifest"
+        )
+        errors.extend(old_errors + current_errors)
+        if old_file and current_file:
+            try:
+                old_packets, old_packet_facts = _read_packet_manifest(Path(old_file["path"]))
+                current_packets, current_packet_facts = _read_packet_manifest(
+                    Path(current_file["path"])
+                )
+                difference = _packet_difference(old_packets, current_packets)
+                rhs_facts = {
+                    "old": old_packet_facts,
+                    "current": current_packet_facts,
+                    "comparison": difference,
+                    "relative_tolerance": rhs.get("relative_tolerance"),
+                }
+                if old_packet_facts["duplicate_count"] != 0 or current_packet_facts["duplicate_count"] != 0:
+                    errors.append("R1 RHS canonical packets contain duplicates")
+                if not old_packet_facts["finite"] or not current_packet_facts["finite"]:
+                    errors.append("R1 RHS canonical packets contain non-finite values")
+            except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+                errors.append(f"R1 RHS canonical comparison is unreadable: {exc}")
+    comparison = rhs_facts.get("comparison", {})
+    rhs_relative = float(comparison.get("relative_l2", math.inf))
+    rhs_key_ok = bool(
+        comparison.get("key_set_equal") is True
+        and comparison.get("missing_key_count") == 0
+        and comparison.get("extra_key_count") == 0
+    )
+    same_physics = bool(
+        not old_unavailable
+        and not field_mismatches
+        and rhs_key_ok
+        and rhs_relative <= T5_CANONICAL_LIMIT
+    )
+    if same_physics:
+        classification = "SAME_PHYSICAL_IDENTITY"
+    elif field_mismatches or (rhs_key_ok and rhs_relative > T5_CANONICAL_LIMIT):
+        classification = "HISTORICAL_W5_NOT_SAME_PHYSICAL_RHS"
+    else:
+        classification = "OLD_PHYSICAL_IDENTITY_INCOMPLETE"
+    old_field_contract = bool(
+        old_fields
+        and all(
+            not _identity_field_errors("old", name, old_fields.get(name))
+            for name in T5_PHYSICAL_IDENTITY_FIELDS
+        )
+    )
+    current_field_contract = bool(
+        current_fields
+        and all(
+            not _identity_field_errors("current", name, current_fields.get(name))
+            and current_fields[name].get("status") == "available"
+            for name in T5_PHYSICAL_IDENTITY_FIELDS
+        )
+    )
+    gates = {
+        "old_manifest_completeness": old_field_contract,
+        "current_manifest_completeness": current_field_contract,
+        "raw_hashes": bool(
+            manifests.get("old")
+            and manifests.get("current")
+            and not any("raw artifact" in error for error in errors)
+        ),
+        "rhs_key_structure": rhs_key_ok,
+        "same_physics_claim": same_physics,
+    }
+    return {
+        "schema": T5_PHYSICAL_IDENTITY_RECORD_SCHEMA,
+        "status": "pass" if not errors else "fail",
+        "failures": errors,
+        "classification": classification,
+        "gates": gates,
+        "derived": {
+            "old_unavailable_fields": old_unavailable,
+            "available_field_mismatches": field_mismatches,
+            "rhs": rhs_facts,
+            "same_physics_claim": same_physics,
+        },
+    }
+
+
 def _manifest_ref(value: Any) -> Any:
     if isinstance(value, Mapping):
         return value.get("manifest_relative_path", value.get("manifest_path"))
@@ -952,13 +1316,23 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Check one T5 raw authority record")
     parser.add_argument("--record", type=Path)
+    parser.add_argument("--identity-record", type=Path)
+    parser.add_argument("--output", type=Path)
     parser.add_argument("--mpi1-record", type=Path)
     parser.add_argument("--mpi2-record", type=Path)
     args = parser.parse_args()
-    if args.record is not None:
+    if args.identity_record is not None:
+        result = check_physical_identity(args.identity_record)
+    elif args.record is not None:
         result = check_t5_path(args.record)
     elif args.mpi1_record is not None and args.mpi2_record is not None:
         result = check_t5_pair(args.mpi1_record, args.mpi2_record)
     else:
         parser.error("provide --record or both --mpi1-record and --mpi2-record")
-    print(json.dumps(result, sort_keys=True, indent=2))
+    serialized = json.dumps(result, sort_keys=True, indent=2) + "\n"
+    if args.output is not None:
+        if args.output.exists():
+            parser.error(f"checker output already exists: {args.output}")
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(serialized, encoding="utf-8")
+    print(serialized, end="")

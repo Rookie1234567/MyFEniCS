@@ -434,3 +434,166 @@ def test_composite_apply_accumulates_dtn_and_volume_once():
     assert dtn.applies == volume.applies == 1
     assert action.audit["apply_count"] == 1
     action.destroy()
+
+
+def test_physical_identity_checker_recomputes_history_classification(tmp_path):
+    old_packets = _write_dual_manifest(tmp_path, "old_packets", 2.0 + 0.0j)
+    current_packets = _write_dual_manifest(tmp_path, "current_packets", 1.0 + 0.0j)
+    input_path = tmp_path / "input.dat"
+    input_path.write_bytes(b"resolved-config-contract")
+    resolved_path = tmp_path / "resolved.json"
+    resolved_path.write_bytes(b"resolved-config-contract")
+    mode_path = tmp_path / "mode_manifest.json"
+    mode_path.write_bytes(b"mode-manifest-contract")
+
+    def identity_manifest(path: Path, role: str) -> Path:
+        fields = {}
+        for name in runner.T5_PHYSICAL_IDENTITY_FIELDS:
+            if role == "historical_w5":
+                fields[name] = {
+                    "status": "unavailable",
+                    "reason": "not emitted by the old run",
+                    "source_evidence": "test fixture",
+                }
+            else:
+                value = name
+                if name == "geometry":
+                    value = {"mesh_witness": "same", "rebuild": "same"}
+                if name == "ordered_modes":
+                    value = [
+                        {
+                            "schema": "fullspace-dtn.mode.v1",
+                            "mode_index": 0,
+                            "side": "top",
+                            "m": 0,
+                            "n": 0,
+                            "polarization": "s",
+                            "alpha": 0.0,
+                            "gamma": 0.0,
+                            "beta": 1.0,
+                            "k_vector": [0.0, 0.0, 1.0],
+                            "e_vector": [0.0, 1.0, 0.0],
+                            "h_vector": [1.0, 0.0, 0.0],
+                            "refractive_index": 1.0,
+                            "vertical_sign": 1,
+                            "electric_tangential_norm_sq": 1.0,
+                            "power_per_unit_amplitude": 1.0,
+                            "propagating": True,
+                            "rayleigh_warning": False,
+                            "classification": "propagating",
+                            "rayleigh_tolerance": 1.0e-12,
+                            "projection_denominator": 1.0,
+                            "traction_vector": [0.0, 1.0, 0.0],
+                        }
+                    ]
+                elif name == "incident_amplitudes":
+                    value = [[0.0, 0.0]]
+                elif name == "source_provenance":
+                    value = {
+                        "dynamic_mode_manifest_sha256": runner._identity_file(mode_path)["sha256"],
+                        "dynamic_mode_manifest_bytes": mode_path.stat().st_size,
+                        "source_files": {
+                            key: {
+                                "commit_sha": "b" * 40,
+                                "path": source_path,
+                                "sha256": "c" * 64,
+                            }
+                            for key, source_path in {
+                                "input_validation": "src/io/input_validation.py",
+                                "dtn_port_3d": "src/solvers/dtn_port_3d.py",
+                                "fullspace_dtn_action": "src/solvers/fullspace_dtn_action.py",
+                                "fullspace_physical_action": "src/solvers/fullspace_physical_action.py",
+                            }.items()
+                        },
+                    }
+                fields[name] = {
+                    "status": "available",
+                    "value": value,
+                    "source_evidence": "test fixture",
+                }
+        artifacts = {"packet_manifest": runner._identity_file(path)}
+        if role == "current_task038_extra":
+            artifacts["resolved_config"] = runner._identity_file(resolved_path)
+            artifacts["mode_manifest"] = runner._identity_file(mode_path)
+        payload = {
+            "schema": checker.T5_PHYSICAL_IDENTITY_SCHEMA,
+            "role": role,
+            "source": {
+                "commit_sha": (
+                    "b" * 40
+                    if role == "current_task038_extra"
+                    else runner.OLD_SOURCE_SHA
+                ),
+                "tracked_status": "",
+                "raw_root": str(tmp_path),
+            },
+            "raw_artifacts": artifacts,
+            "physical_identity": fields,
+        }
+        target = tmp_path / f"{role}.identity.json"
+        target.write_bytes(runner._canonical_json(payload) + b"\n")
+        return target
+
+    old_identity = identity_manifest(old_packets, "historical_w5")
+    current_identity = identity_manifest(current_packets, "current_task038_extra")
+    record = {
+        "schema": checker.T5_PHYSICAL_IDENTITY_RECORD_SCHEMA,
+        "source": {
+            "expected_sha": "b" * 40,
+            "head_sha": "b" * 40,
+            "tracked_status": "",
+        },
+        "manifests": {
+            "old": runner._identity_file(old_identity),
+            "current": runner._identity_file(current_identity),
+        },
+        "rhs_observation": {
+            "old_manifest": runner._identity_file(old_packets),
+            "current_manifest": runner._identity_file(current_packets),
+            "relative_tolerance": 1.0e-12,
+        },
+        "input": {
+            "template": runner._identity_file(input_path),
+            "resolved_config_bytes": resolved_path.stat().st_size,
+            "resolved_config_sha256": runner._identity_file(resolved_path)["sha256"],
+        },
+    }
+    record_path = tmp_path / "identity_record.json"
+    record_path.write_bytes(runner._canonical_json(record) + b"\n")
+    checked = checker.check_physical_identity(record_path)
+    assert checked["status"] == "pass"
+    assert checked["classification"] == "HISTORICAL_W5_NOT_SAME_PHYSICAL_RHS"
+    assert checked["gates"]["old_manifest_completeness"] is True
+    assert checked["gates"]["current_manifest_completeness"] is True
+    assert checked["derived"]["rhs"]["comparison"]["key_set_equal"] is True
+    assert checked["derived"]["rhs"]["comparison"]["relative_l2"] > 1.0e-12
+
+    record["source"]["tracked_status"] = " M dirty.py"
+    record_path.write_bytes(runner._canonical_json(record) + b"\n")
+    checked = checker.check_physical_identity(record_path)
+    assert checked["status"] == "fail"
+    assert any("worktree is dirty" in failure for failure in checked["failures"])
+
+    record["source"]["tracked_status"] = ""
+    current_payload = json.loads(current_identity.read_text(encoding="utf-8"))
+    current_payload["physical_identity"]["source_provenance"]["value"][
+        "dynamic_mode_manifest_sha256"
+    ] = "0" * 64
+    current_identity.write_bytes(runner._canonical_json(current_payload) + b"\n")
+    record["manifests"]["current"] = runner._identity_file(current_identity)
+    record_path.write_bytes(runner._canonical_json(record) + b"\n")
+    checked = checker.check_physical_identity(record_path)
+    assert checked["status"] == "fail"
+    assert any("dynamic mode manifest SHA" in failure for failure in checked["failures"])
+
+
+def test_physical_identity_unavailable_field_requires_source_evidence():
+    valid = {
+        "status": "unavailable",
+        "reason": "old field was not emitted",
+        "source_evidence": "old summary",
+    }
+    assert checker._identity_field_errors("old", "wavelength", valid) == []
+    invalid = dict(valid)
+    del invalid["source_evidence"]
+    assert checker._identity_field_errors("old", "wavelength", invalid)
