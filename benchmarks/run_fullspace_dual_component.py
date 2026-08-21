@@ -179,8 +179,9 @@ def _direct_vector_form(
 ) -> Any:
     x = ufl.SpatialCoordinate(mesh_data.mesh)
     phase = _direct_phase(ufl, PETSc, x, wavevector)
+    coefficient = fem.Constant(mesh_data.mesh, PETSc.ScalarType(scalar))
     values = [PETSc.ScalarType(0.0)] * 3
-    values[component] = PETSc.ScalarType(scalar) * phase
+    values[component] = coefficient * phase
     test = ufl.TestFunction(function_space)
     ds = ufl.Measure("ds", domain=mesh_data.mesh, subdomain_data=mesh_data.facet_tags)
     return fem.form(

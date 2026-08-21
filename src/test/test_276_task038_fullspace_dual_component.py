@@ -50,6 +50,53 @@ def test_direct_form_has_one_coordinate_definition() -> None:
     assert len(coordinate_assignments) == 1
 
 
+def test_zero_direct_scalar_keeps_a_linear_form_space() -> None:
+    pytest.importorskip("dolfinx")
+    ufl = pytest.importorskip("ufl")
+    from basix.ufl import element
+    from dolfinx import default_real_type, fem, mesh
+    from dolfinx.fem import petsc as fem_petsc
+    from mpi4py import MPI
+    from petsc4py import PETSc
+
+    domain = mesh.create_unit_cube(
+        MPI.COMM_SELF, 1, 1, 1, cell_type=mesh.CellType.hexahedron
+    )
+    tdim = domain.topology.dim
+    domain.topology.create_connectivity(tdim - 1, tdim)
+    facets = mesh.exterior_facet_indices(domain.topology)
+    facet_tags = mesh.meshtags(
+        domain,
+        tdim - 1,
+        facets,
+        runner.np.ones(facets.size, dtype=runner.np.int32),
+    )
+    space = fem.functionspace(
+        domain,
+        element("N1curl", domain.basix_cell(), 1, dtype=default_real_type),
+    )
+    form = runner._direct_vector_form(
+        fem=fem,
+        ufl=ufl,
+        PETSc=PETSc,
+        function_space=space,
+        mesh_data=SimpleNamespace(mesh=domain, facet_tags=facet_tags),
+        tag=1,
+        component=0,
+        scalar=0.0j,
+        wavevector=(0.0j, 0.0j, 0.0j),
+        quadrature_degree=2,
+    )
+    vector = fem_petsc.assemble_vector(form)
+    try:
+        assert vector.getSize() > 0
+        assert runner.np.allclose(
+            runner.np.asarray(vector.getArray(readonly=True)), 0.0
+        )
+    finally:
+        vector.destroy()
+
+
 def test_parser_requires_source_identity_and_mpi_size() -> None:
     args = runner._parser().parse_args(
         [
