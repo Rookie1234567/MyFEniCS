@@ -192,3 +192,42 @@ C 的 decimal 6 GB 和 12 GiB Gate 都失败。由于没有 `record.json`，R4 c
 ## Validation boundary
 
 本轮只新增/更新 compact JSON 与文档，没有修改 Python、没有重新启动 formal/PDE。文档内容不能自引用未来 commit；最终提交/push状态由交付报告给出。R4 overall 为 `FAIL / CONTROLLED_STOP_RESOURCE`；R5/T6-S、T6-F/EH/RTA、T7–T9 和 full 0.7 nm 均 `not_run_by_R4_gate` 或 `not_run`。A 的 5.145 GB cold peak 与 1.324 GB gradient warm-like peak 不是完整 PDE 的 `<2 GB` 证明。测试、compileall、AST、JSON 和 Markdown 检查均为本地结果，不声称 CI。
+
+# Review V3 D0/D1 closeout
+
+本节追加记录 Review V3 的 D0/D1；前面的 T2、T3、T4、T5 和 Review V2 历史内容不变。
+
+## D0 transmission family 与 coarse preflight
+
+| item | result |
+|---|---|
+| D0 commit | `79b33f86b22ba33a610c1167fe0c2287dc3d7b54` |
+| Candidate A | 仅保留为完全冻结的 one forward+backward smoother oracle；transmission、two slabs、local GMRES 8/8 不变 |
+| Candidate B | `NOT_APPLICABLE / CANDIDATE_B_INTERIOR_MODAL_AUTHORITY_NOT_QUALIFIED`；mixed Si–Si/Si–air interior authority 不足 |
+| Candidate C / transmission family | research archive，`DO_NOT_RERUN / DO_NOT_OPTIMIZE / DO_NOT_MERGE`；保留源码和负证据，不表述为数学永远不可能 |
+| coarse byte preflight | N=173802，complex128 full vector=2,780,832 B；Z+AZ 的 r=16/32/48/64 为 88,986,624 / 177,973,248 / 266,959,872 / 355,946,496 B |
+| budget boundary | coarse metadata/work `<=64,000,000 B`；rank64 retained `<=424,000,000 B`；均为 budget/derived，不是实测 |
+
+D0 明确区分 cold build/JIT/setup 与 online apply，owner-local sharding，不复制每 rank
+完整 basis，不做 FE-sized numeric allgather，不建 global AIJ/Schur/sparse factor。
+
+## D1 formal result
+
+| item | result |
+|---|---|
+| implementation commit | `a650aae08957736eedf7b6c4842cce15c73da708` |
+| formal source SHA | `ddf7801af3285a35ee1a53c728d552a15e8d6983` |
+| cases | p2-MPI1、p2-MPI2、p3-MPI1、p3-MPI2；四个 individual PASS，aggregate PASS |
+| serial algebra | p2/p3 MPI1 assembled oracle only；MPI2 serial algebra按固定 boundary `not_run` |
+| cross-MPI | source/B/MΓ 五组每个 degree 均 `<=1e-12`，missing/extra/duplicate=0 |
+| R/P / repeat / extension | adjoint=0；eigen repeat exact；extension error=0 |
+| resources | rank-max current self RSS；216,186,880 / 114,843,648 / 1,046,962,176 / 120,438,784 B；VmSwap 全为 0 |
+| process-tree | `not_measured` |
+| next stages | D2/D3/D4、T6-F、T7–T9、full 0.7 nm `not_run` |
+
+`adaptive_coarse_oracle.md` 保存完整的 B_i/MΓ/K defect、eigen residual/rank/repeat、
+canonical role/count、cross-MPI relative L2、record/check SHA 和 ignored raw 路径。三次
+启动层事件（sandbox PMIx、venv symlink provenance defect、首次脚本路径
+`ModuleNotFoundError` 空 raw）均发生在数值之前，不计为 D1 formal failure；首次空 raw
+目录保留。D1 通过的是小 fixture oracle，不是 p6 production coarse，也没有 process-tree
+资源资格化或 PDE 结果。
