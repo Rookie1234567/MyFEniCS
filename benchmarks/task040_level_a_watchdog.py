@@ -1,0 +1,316 @@
+"""Thin Task040 Level-A process-tree watchdog."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import subprocess
+import sys
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+from benchmarks.task034_wsl_resources import resource_authority_sample
+from benchmarks.task040_level_a import (
+    TASK040_LEVEL_A_HARD_STOP_BYTES,
+    TASK040_LEVEL_A_MPI_SIZE,
+    TASK040_LEVEL_A_THREADS,
+    TASK040_LEVEL_A_TIMEOUT_SECONDS,
+    build_task040_level_a_plan,
+)
+from benchmarks.watchdog_process_control import (
+    terminate_process_tree,
+    worker_process_group_popen_kwargs,
+)
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SAMPLE_INTERVAL_SECONDS = 0.5
+HEARTBEAT_SECONDS = 60.0
+SWAP_LIMIT_BYTES = 0
+THREAD_ENV = {
+    "OMP_NUM_THREADS": str(TASK040_LEVEL_A_THREADS),
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "VECLIB_MAXIMUM_THREADS": "1",
+    "BLIS_NUM_THREADS": "1",
+    "PYTHONUNBUFFERED": "1",
+}
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _worker_command(plan: dict[str, Any]) -> list[str]:
+    run_directory = Path(plan["run_directory"])
+    worker_directory = Path(plan["worker_run_directory"])
+    return [
+        "mpiexec",
+        "-n",
+        str(TASK040_LEVEL_A_MPI_SIZE),
+        sys.executable,
+        str(ROOT / "benchmarks" / "task040_level_a.py"),
+        "--input",
+        plan["input"],
+        "--exact-spool-root",
+        plan["exact_spool_root"],
+        "--run-directory",
+        str(worker_directory),
+        "--source-sha",
+        plan["source_sha"],
+        "--memory-stages",
+        str(run_directory / "memory_stages.jsonl"),
+        "--memory-markers",
+        str(run_directory / "memory_stage_markers.raw.jsonl"),
+    ]
+
+
+def build_task040_level_a_watchdog_plan(
+    *,
+    input_path: str | Path,
+    exact_spool_root: str | Path,
+    run_directory: str | Path,
+    source_sha: str,
+) -> dict[str, Any]:
+    plan = build_task040_level_a_plan(
+        input_path=input_path,
+        exact_spool_root=exact_spool_root,
+        run_directory=run_directory,
+        source_sha=source_sha,
+    )
+    plan["watchdog"] = {
+        "sample_interval_seconds": SAMPLE_INTERVAL_SECONDS,
+        "heartbeat_seconds": HEARTBEAT_SECONDS,
+        "absolute_terminate_memory_bytes": TASK040_LEVEL_A_HARD_STOP_BYTES,
+        "swap_limit_bytes": SWAP_LIMIT_BYTES,
+        "process_group": True,
+        "terminate_entire_process_group": True,
+        "resource_authority": "task034_wsl_resources.resource_authority_sample",
+    }
+    plan["worker_run_directory"] = str(Path(plan["run_directory"]) / "worker")
+    plan["worker_argv"] = _worker_command(plan)
+    plan["runner_reuse"] = {
+        "task040_worker": "benchmarks/task040_level_a.py",
+        "process_control": "benchmarks.watchdog_process_control",
+        "system_and_source": "Task039 h4 bottom APIs",
+    }
+    return plan
+
+
+def _latest_stage(path: Path) -> tuple[str, str]:
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return "process_start", "waiting_for_progress"
+    for line in reversed(lines):
+        try:
+            payload = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        return str(payload.get("stage", "unknown")), str(
+            payload.get("status", "unknown")
+        )
+    return "process_start", "waiting_for_progress"
+
+
+def _write_jsonl(stream: Any, payload: dict[str, Any]) -> None:
+    stream.write(json.dumps(payload, sort_keys=True) + "\n")
+    stream.flush()
+
+
+def _worker_environment() -> dict[str, str]:
+    environment = os.environ.copy()
+    environment.update(THREAD_ENV)
+    return environment
+
+
+def run_task040_level_a_watchdog(plan: dict[str, Any]) -> int:
+    run_directory = Path(plan["run_directory"])
+    if run_directory.exists():
+        raise FileExistsError(f"Task040 run directory already exists: {run_directory}")
+    run_directory.mkdir(parents=True, exist_ok=False)
+    stages_path = run_directory / "memory_stages.jsonl"
+    markers_path = run_directory / "memory_stage_markers.raw.jsonl"
+    timeline_path = run_directory / "process_tree_samples.jsonl"
+    stdout_path = run_directory / "worker_stdout.txt"
+    summary_path = run_directory / "watchdog_summary.json"
+    worker_directory = Path(plan["worker_run_directory"])
+    if worker_directory.exists():
+        raise FileExistsError(
+            f"Task040 worker output directory already exists: {worker_directory}"
+        )
+    command = list(plan["worker_argv"])
+    started = time.monotonic()
+    sample_count = 0
+    peak_rss_bytes = 0
+    peak_swap_bytes = 0
+    all_status_readable = True
+    dedicated_cgroup_present = False
+    dedicated_cgroup_swap_readable = True
+    peak_dedicated_cgroup_swap_bytes = 0
+    previous_heartbeat = -HEARTBEAT_SECONDS
+    termination_reason = "natural_exit"
+    process_control: dict[str, Any] = {}
+    with (
+        stdout_path.open("w", encoding="utf-8") as stdout,
+        timeline_path.open("w", encoding="utf-8") as timeline,
+    ):
+        process = subprocess.Popen(
+            command,
+            cwd=ROOT,
+            env=_worker_environment(),
+            stdout=stdout,
+            stderr=subprocess.STDOUT,
+            text=True,
+            **worker_process_group_popen_kwargs(),
+        )
+        while True:
+            elapsed = time.monotonic() - started
+            return_code = process.poll()
+            if return_code is not None:
+                termination_reason = "natural_exit"
+                process_control = terminate_process_tree(process)
+                break
+            authority = resource_authority_sample(process.pid, include_smaps=False)
+            process_tree = authority["process_tree"]
+            rss_bytes = int(process_tree["rss_bytes"])
+            swap_bytes = int(process_tree["swap_bytes"])
+            job_cgroup = authority["job_cgroup"]
+            has_cgroup = bool(job_cgroup["dedicated_job_cgroup"])
+            live_sample = bool(process_tree.get("pids"))
+            if live_sample:
+                sample_count += 1
+                peak_rss_bytes = max(peak_rss_bytes, rss_bytes)
+                peak_swap_bytes = max(peak_swap_bytes, swap_bytes)
+                all_status_readable = all_status_readable and bool(
+                    process_tree["all_status_readable"]
+                )
+                dedicated_cgroup_present = dedicated_cgroup_present or has_cgroup
+                if has_cgroup:
+                    dedicated_swap = job_cgroup["swap_current_bytes"]
+                    dedicated_cgroup_swap_readable = (
+                        dedicated_cgroup_swap_readable and dedicated_swap is not None
+                    )
+                    if dedicated_swap is not None:
+                        peak_dedicated_cgroup_swap_bytes = max(
+                            peak_dedicated_cgroup_swap_bytes, int(dedicated_swap)
+                        )
+            stage, status = _latest_stage(stages_path)
+            row = {
+                "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+                "elapsed_seconds": elapsed,
+                "stage": stage,
+                "stage_status": status,
+                "rss_bytes": rss_bytes,
+                "swap_bytes": swap_bytes,
+                "resource_authority": authority,
+            }
+            _write_jsonl(timeline, row)
+            if elapsed - previous_heartbeat >= HEARTBEAT_SECONDS:
+                print(
+                    "Task040 watchdog heartbeat "
+                    f"elapsed={elapsed:.1f}s stage={stage} "
+                    f"rss_gib={rss_bytes / 2**30:.3f} swap_bytes={swap_bytes}",
+                    flush=True,
+                )
+                previous_heartbeat = elapsed
+            return_code = process.poll()
+            if not live_sample and return_code is not None:
+                termination_reason = "natural_exit"
+                process_control = terminate_process_tree(process)
+                break
+            if rss_bytes >= TASK040_LEVEL_A_HARD_STOP_BYTES:
+                termination_reason = "absolute_memory_limit"
+            elif (
+                swap_bytes > SWAP_LIMIT_BYTES
+                or peak_dedicated_cgroup_swap_bytes > SWAP_LIMIT_BYTES
+            ):
+                termination_reason = "swap_detected"
+            elif return_code is not None:
+                termination_reason = "natural_exit"
+            elif elapsed >= TASK040_LEVEL_A_TIMEOUT_SECONDS:
+                termination_reason = "wall_timeout"
+            else:
+                time.sleep(SAMPLE_INTERVAL_SECONDS)
+                continue
+            process_control = terminate_process_tree(process)
+            break
+
+    run_summary = worker_directory / "run_summary.json"
+    swap_authority_readable = all_status_readable and (
+        not dedicated_cgroup_present or dedicated_cgroup_swap_readable
+    )
+    summary = {
+        "schema": "task040.level_a.watchdog.v1",
+        "method": plan["method"],
+        "source_sha": plan["source_sha"],
+        "command": command,
+        "termination_reason": termination_reason,
+        "return_code": process.returncode,
+        "process_control": process_control,
+        "sample_count": sample_count,
+        "peak_rss_bytes": peak_rss_bytes,
+        "peak_swap_bytes": peak_swap_bytes,
+        "peak_dedicated_cgroup_swap_bytes": peak_dedicated_cgroup_swap_bytes,
+        "hard_stop_bytes": TASK040_LEVEL_A_HARD_STOP_BYTES,
+        "timeout_seconds": TASK040_LEVEL_A_TIMEOUT_SECONDS,
+        "all_status_readable": all_status_readable,
+        "dedicated_cgroup_present": dedicated_cgroup_present,
+        "dedicated_cgroup_swap_readable": (
+            dedicated_cgroup_swap_readable if dedicated_cgroup_present else None
+        ),
+        "swap_authority_readable": swap_authority_readable,
+        "run_summary_present": run_summary.is_file(),
+        "run_summary_sha256": _sha256(run_summary) if run_summary.is_file() else None,
+        "artifact_hashes": {
+            path.name: _sha256(path)
+            for path in (stages_path, markers_path, timeline_path, stdout_path)
+            if path.is_file()
+        },
+    }
+    summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
+    return (
+        0
+        if (
+            process.returncode == 0
+            and termination_reason == "natural_exit"
+            and run_summary.is_file()
+            and swap_authority_readable
+            and peak_swap_bytes == SWAP_LIMIT_BYTES
+            and peak_dedicated_cgroup_swap_bytes == SWAP_LIMIT_BYTES
+        )
+        else 2
+    )
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--input", required=True)
+    parser.add_argument("--exact-spool-root", required=True)
+    parser.add_argument("--run-directory", required=True)
+    parser.add_argument("--source-sha", required=True)
+    args = parser.parse_args(argv)
+    plan = build_task040_level_a_watchdog_plan(
+        input_path=args.input,
+        exact_spool_root=args.exact_spool_root,
+        run_directory=args.run_directory,
+        source_sha=args.source_sha,
+    )
+    if args.dry_run:
+        print(json.dumps(plan, indent=2, sort_keys=True))
+        return 0
+    return run_task040_level_a_watchdog(plan)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

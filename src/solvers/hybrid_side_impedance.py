@@ -22,6 +22,7 @@ from mpi4py import MPI
 from petsc4py import PETSc
 
 from ..constraints.cross_section_floquet import reduce_matrix_hermitian
+from .hybrid_local_dtn_woodbury import ResearchExactFactorInverse
 
 __all__ = (
     "TASK040_FORWARD_ORDER",
@@ -34,11 +35,13 @@ __all__ = (
     "build_first_order_tangential_impedance",
     "ArtificialZTraceMass",
     "audit_artificial_z_interface_support",
+    "build_level_a_cell_recovery_group_rows",
     "assemble_reduced_artificial_interface_tangential_mass",
     "build_artificial_z_tangential_trace_mass",
     "build_first_order_petsc_interface_impedance",
     "build_side_impedance_transmission_action",
     "build_petsc_side_impedance_transmission_action",
+    "build_level_a_oracle",
     "audit_petsc_level_a_one_apply",
 )
 
@@ -54,6 +57,117 @@ TASK040_LEVEL_A_SOURCE_LABELS = (
     "fixed_random_repeat_0",
     "fixed_random_repeat_1",
 )
+
+
+def build_level_a_cell_recovery_group_rows(
+    system: Any,
+    matrix: PETSc.Mat,
+    interface_supports: Sequence[Mapping[str, Any]],
+) -> tuple[tuple[np.ndarray, ...], dict[str, Any]]:
+    """Build owned Level-A rows from six-layer cell recovery maps.
+
+    The cell union is the group definition.  Interface supports are used only
+    for a collective identity audit; they are never appended to a group.
+    """
+
+    z_values = np.asarray(system.local_mesh.z_values, dtype=np.float64)
+    comm = matrix.getComm().tompi4py()
+    condensed = system.static_condensation.condensed
+    expansion = condensed.trace_constraints.expansion_by_original
+    first, last = map(int, matrix.getOwnershipRange())
+    global_size = int(matrix.getSize()[0])
+    local_mask = np.zeros(
+        (len(TASK040_LEVEL_A_SUBDOMAINS), global_size), dtype=np.bool_
+    )
+    local_error: str | None = None
+    try:
+        if z_values.shape != (7,) or np.any(np.diff(z_values) <= 0.0):
+            raise ValueError("Task040 cell recovery requires six ordered z layers")
+        geometry = system.local_mesh.mesh.geometry
+        for cell, recovery in enumerate(condensed.cell_recovery_maps):
+            geometry_indices = np.asarray(geometry.dofmap[cell], dtype=np.int64)
+            centroid_z = float(np.mean(geometry.x[geometry_indices, 2]))
+            layer = int(np.searchsorted(z_values, centroid_z, side="right") - 1)
+            if layer < 0 or layer >= 6:
+                raise ValueError(
+                    f"Task040 cell recovery layer {layer} is outside z partition"
+                )
+            group = layer // 2
+            for original in recovery.trace_original_dofs:
+                active_ids, coefficients = expansion[int(original)]
+                for active, coefficient in zip(active_ids, coefficients, strict=True):
+                    if coefficient != 0:
+                        active = int(active)
+                        if active < 0 or active >= global_size:
+                            raise ValueError(
+                                f"active expansion row {active} is outside matrix"
+                            )
+                        local_mask[group, active] = True
+    except Exception as exc:
+        local_error = f"{type(exc).__name__}: {exc}"
+    errors = comm.allgather(local_error)
+    if any(error is not None for error in errors):
+        raise ValueError(
+            "Task040 cell-recovery group construction failed: "
+            + next(error for error in errors if error is not None)
+        )
+
+    global_mask = np.zeros_like(local_mask)
+    comm.Allreduce(local_mask, global_mask, op=MPI.LOR)
+    group_rows = tuple(
+        np.flatnonzero(global_mask[group, first:last]).astype(PETSc.IntType) + first
+        for group in range(len(TASK040_LEVEL_A_SUBDOMAINS))
+    )
+    global_rows = tuple(
+        int(comm.allreduce(len(rows), op=MPI.SUM)) for rows in group_rows
+    )
+    if any(rows == 0 for rows in global_rows):
+        raise ValueError("Task040 cell-recovery group has no global rows")
+
+    coverage: list[dict[str, Any]] = []
+    for interface, support in enumerate(interface_supports):
+        active_support = {int(value) for value in support["active_support"]}
+        counts = []
+        for group in (interface, interface + 1):
+            if active_support and (
+                min(active_support) < 0 or max(active_support) >= global_size
+            ):
+                raise ValueError("Artificial-interface support row is outside matrix")
+            counts.append(
+                int(np.count_nonzero(global_mask[group, list(active_support)]))
+            )
+        expected = len(active_support)
+        coverage.append(
+            {
+                "interface": interface,
+                "active_support_count": expected,
+                "lower_group_count": counts[0],
+                "upper_group_count": counts[1],
+                "lower_complete": counts[0] == expected,
+                "upper_complete": counts[1] == expected,
+            }
+        )
+    if not all(item["lower_complete"] and item["upper_complete"] for item in coverage):
+        raise ValueError("Task040 artificial-interface support is absent from a group")
+
+    group_mask_hashes = [
+        hashlib.sha256(np.ascontiguousarray(global_mask[group]).tobytes()).hexdigest()
+        for group in range(len(TASK040_LEVEL_A_SUBDOMAINS))
+    ]
+    direct_cell_union_hash = hashlib.sha256(
+        repr(tuple(group_mask_hashes)).encode()
+    ).hexdigest()
+    return group_rows, {
+        "group_global_rows": list(global_rows),
+        "group_local_rows": [len(rows) for rows in group_rows],
+        "group_mask_sha256": group_mask_hashes,
+        "direct_cell_union_sha256": direct_cell_union_hash,
+        "interface_support_coverage": coverage,
+        "support_source": "cell_recovery_maps_and_trace_constraints",
+        "mapping_source": "cell_recovery_union_mpi_or",
+        "oracle_only_global_boolean_metadata_collective": True,
+        "oracle_only": True,
+    }
 
 
 def build_first_order_tangential_impedance(
@@ -1267,6 +1381,297 @@ def build_petsc_side_impedance_transmission_action(
     except Exception:
         for workspace in reversed(workspaces):
             workspace.destroy()
+        raise
+
+
+class _LevelAOracleOwner:
+    """Own the Level-A factor-only objects without owning the bare operator."""
+
+    def __init__(
+        self,
+        action: PetscSideImpedanceTransmissionAction,
+        factors: Sequence[Any],
+        parent: PETSc.Vec,
+    ) -> None:
+        self._action = action
+        self._factors = list(factors)
+        self._parent = parent
+        self._destroyed = False
+
+    @property
+    def diagnostics(self) -> dict[str, Any]:
+        return {
+            "factor_count_ready": len(self._factors) if not self._destroyed else 0,
+            "factor_count_after_cleanup": 0 if self._destroyed else None,
+            "action_destroyed": self._action is None,
+            "parent_released": bool(self._destroyed),
+            "destroyed": bool(self._destroyed),
+        }
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        if self._action is not None:
+            self._action.destroy()
+            self._action = None
+        for factor in reversed(self._factors):
+            factor.destroy()
+        self._factors.clear()
+        self._parent.destroy()
+        self._destroyed = True
+
+
+def _make_level_a_pou_weights(
+    group_rows: Sequence[np.ndarray],
+    templates: Sequence[PETSc.Vec],
+) -> list[PETSc.Vec]:
+    membership: dict[int, int] = {}
+    for rows in group_rows:
+        for row in rows:
+            membership[int(row)] = membership.get(int(row), 0) + 1
+    weights: list[PETSc.Vec] = []
+    try:
+        for rows, template in zip(group_rows, templates, strict=True):
+            if int(template.getLocalSize()) != len(rows):
+                raise ValueError("Task040 factor ownership differs from group rows")
+            weight = template.duplicate()
+            weight.array[:] = np.asarray(
+                [1.0 / membership[int(row)] for row in rows],
+                dtype=PETSc.ScalarType,
+            )
+            weights.append(weight)
+        return weights
+    except Exception:
+        for weight in weights:
+            weight.destroy()
+        raise
+
+
+def _make_level_a_group_scatter(
+    parent: PETSc.Vec,
+    group_is: PETSc.IS,
+    template: PETSc.Vec,
+) -> PETSc.Scatter:
+    first, last = map(int, template.getOwnershipRange())
+    positions = PETSc.IS().createStride(
+        last - first,
+        first=first,
+        step=1,
+        comm=parent.getComm(),
+    )
+    try:
+        return PETSc.Scatter().create(parent, group_is, template, positions)
+    finally:
+        positions.destroy()
+
+
+def build_level_a_oracle(
+    *,
+    bare_f: PETSc.Mat,
+    group_rows: Sequence[np.ndarray],
+    interface_masses: Sequence[ArtificialZTraceMass],
+    beta: complex,
+    group_audit: Mapping[str, Any],
+) -> tuple[PetscSideImpedanceTransmissionAction, Any, dict[str, Any]]:
+    """Build the opt-in Level-A PC and its factor-only cleanup owner."""
+
+    if len(group_rows) != 3 or len(interface_masses) != 2:
+        raise ValueError("Task040 Level-A needs three groups and two interfaces")
+    if not isinstance(bare_f, PETSc.Mat) or str(bare_f.getType()).lower() == "python":
+        raise ValueError("Task040 Level-A requires an explicit bare F matrix")
+    comm = bare_f.getComm().tompi4py()
+    group_is: list[PETSc.IS] = []
+    blocks: list[PETSc.Mat] = []
+    factors: list[Any] = []
+    pair_matrices: list[tuple[PETSc.Mat, PETSc.Mat]] = []
+    templates: list[PETSc.Vec] = []
+    weights: list[PETSc.Vec] = []
+    scatters: list[PETSc.Scatter] = []
+    parent = bare_f.createVecRight()
+    action = None
+    owner = None
+    builder_entered = False
+    try:
+        for rows in group_rows:
+            group_is.append(
+                PETSc.IS().createGeneral(
+                    np.asarray(rows, dtype=PETSc.IntType), comm=comm
+                )
+            )
+        for mass in interface_masses:
+            pair_matrices.append(
+                build_first_order_petsc_interface_impedance(mass, beta, (1, -1))
+            )
+        for group_index, index_pairs in enumerate(((0,), (0, 1), (1,))):
+            block = bare_f.createSubMatrix(group_is[group_index], group_is[group_index])
+            blocks.append(block)
+            try:
+                for interface_index in index_pairs:
+                    side_index = 0 if group_index <= interface_index else 1
+                    restricted = pair_matrices[interface_index][
+                        side_index
+                    ].createSubMatrix(group_is[group_index], group_is[group_index])
+                    try:
+                        block.axpy(
+                            PETSc.ScalarType(1.0),
+                            restricted,
+                            structure=PETSc.Mat.Structure.DIFFERENT_NONZERO_PATTERN,
+                        )
+                    finally:
+                        restricted.destroy()
+                block.assemble()
+                factor = ResearchExactFactorInverse(
+                    block,
+                    factor_solver_type="mumps",
+                    factor_only_storage=True,
+                )
+                factors.append(factor)
+                factor.release_borrowed_matrix()
+                templates.append(factor.operator.createVecRight())
+            finally:
+                block.destroy()
+                blocks.pop()
+
+        weights = _make_level_a_pou_weights(group_rows, templates)
+        scatters = [
+            _make_level_a_group_scatter(parent, group_is[index], templates[index])
+            for index in range(3)
+        ]
+        bare_hash = _petsc_matrix_hash(bare_f)
+
+        def restriction_audit() -> float:
+            probe = parent.duplicate()
+            restored = parent.duplicate()
+            local_vectors = [template.duplicate() for template in templates]
+            try:
+                first, last = map(int, probe.getOwnershipRange())
+                probe.array[:] = np.asarray(
+                    1.0 + 0.003 * np.arange(first, last),
+                    dtype=PETSc.ScalarType,
+                )
+                probe.assemble()
+                restored.set(0.0)
+                for index, scatter in enumerate(scatters):
+                    scatter.scatter(
+                        probe,
+                        local_vectors[index],
+                        addv=PETSc.InsertMode.INSERT_VALUES,
+                        mode=PETSc.ScatterMode.FORWARD,
+                    )
+                    local_vectors[index].pointwiseMult(
+                        local_vectors[index], weights[index]
+                    )
+                    scatter.scatter(
+                        local_vectors[index],
+                        restored,
+                        addv=PETSc.InsertMode.ADD_VALUES,
+                        mode=PETSc.ScatterMode.REVERSE,
+                    )
+                restored.assemble()
+                difference = restored.copy()
+                try:
+                    difference.axpy(PETSc.ScalarType(-1.0), probe)
+                    return float(difference.norm()) / max(float(probe.norm()), 1.0e-30)
+                finally:
+                    difference.destroy()
+            finally:
+                for vector in local_vectors:
+                    vector.destroy()
+                restored.destroy()
+                probe.destroy()
+
+        def bare_identity_audit() -> bool:
+            return _petsc_matrix_hash(bare_f) == bare_hash
+
+        builder_entered = True
+        action = build_petsc_side_impedance_transmission_action(
+            parent_template=parent,
+            local_templates=templates,
+            scatters=scatters,
+            local_solve=tuple(factor.solve for factor in factors),
+            coupling_left=(),
+            coupling_right=(),
+            interface_normals=((1, -1), (1, -1)),
+            restriction_prolongation_audit=restriction_audit,
+            bare_operator_identity_audit=bare_identity_audit,
+            prolongation_weights=weights,
+            bare_operator=bare_f,
+            multiplicative_sequence=TASK040_FORWARD_ORDER + TASK040_BACKWARD_ORDER,
+        )
+        weights = []
+        scatters = []
+        for template in templates:
+            template.destroy()
+        templates.clear()
+        for group in group_is:
+            group.destroy()
+        group_is.clear()
+        for pair in pair_matrices:
+            for matrix in pair:
+                matrix.destroy()
+        pair_matrices.clear()
+        factor_records = [
+            {
+                "factor_solver_type": factor.factor_solver_type,
+                "factor_only_storage": bool(factor.factor_only_storage),
+                "direct_factor_count": int(factor.diagnostics["direct_factor_count"]),
+                "ksp_created": bool(factor.diagnostics["ksp_created"]),
+                "ksp_destroyed": bool(factor.diagnostics["ksp_destroyed"]),
+            }
+            for factor in factors
+        ]
+        factor_count_ready = sum(
+            record["direct_factor_count"] for record in factor_records
+        )
+        if factor_count_ready != 3:
+            raise RuntimeError(
+                f"Task040 expected three ready cross-section factors, got {factor_count_ready}"
+            )
+        diagnostics = {
+            "factor_records": factor_records,
+            "factor_count_ready": factor_count_ready,
+            "group_audit": dict(group_audit),
+            "bare_operator_hash": bare_hash,
+            "restriction_prolongation_error": float(
+                action.restriction_prolongation_error
+            ),
+            "factor_owner": "level_a_oracle_owner",
+            "oracle_only": True,
+            "scalable_candidate": False,
+            "cross_section_factor_count_ready": factor_count_ready,
+            "full_side_exact_factor_count": 0,
+            "global_direct_factor_count": 0,
+            "nested_ksp_count": 0,
+        }
+        action_result = action
+        owner = _LevelAOracleOwner(action_result, factors, parent)
+        action = None
+        factors = []
+        parent = None
+        return action_result, owner, diagnostics
+    except Exception:
+        if owner is not None:
+            owner.destroy()
+        elif action is not None:
+            action.destroy()
+        if not builder_entered:
+            for scatter in scatters:
+                scatter.destroy()
+            for weight in weights:
+                weight.destroy()
+        for template in templates:
+            template.destroy()
+        for group in group_is:
+            group.destroy()
+        for pair in pair_matrices:
+            for matrix in pair:
+                matrix.destroy()
+        for block in blocks:
+            block.destroy()
+        for factor in factors:
+            factor.destroy()
+        if parent is not None:
+            parent.destroy()
         raise
 
 

@@ -12,6 +12,7 @@ from mpi4py import MPI
 from petsc4py import PETSc
 
 from src.solvers.hybrid_side_impedance import (
+    ArtificialZTraceMass,
     TASK040_BACKWARD_ORDER,
     TASK040_FORWARD_ORDER,
     TASK040_LEVEL_A_SUBDOMAINS,
@@ -22,8 +23,51 @@ from src.solvers.hybrid_side_impedance import (
     build_first_order_petsc_interface_impedance,
     build_first_order_interface_impedance,
     build_first_order_tangential_impedance,
+    build_level_a_cell_recovery_group_rows,
+    build_level_a_oracle,
     build_side_impedance_transmission_action,
 )
+
+
+def _tiny_level_a_builder():
+    comm = MPI.COMM_WORLD
+    global_rows = 6
+    bare = PETSc.Mat().createAIJ(
+        size=((PETSc.DECIDE, global_rows), (PETSc.DECIDE, global_rows)),
+        nnz=2,
+        comm=comm,
+    )
+    first, last = map(int, bare.getOwnershipRange())
+    for row in range(first, last):
+        bare.setValue(row, row, PETSc.ScalarType(3.0 + 0.2 * row))
+    bare.assemble()
+    masses = []
+    for active_row in (2, 4):
+        matrix = PETSc.Mat().createAIJ(
+            size=((PETSc.DECIDE, global_rows), (PETSc.DECIDE, global_rows)),
+            nnz=1,
+            comm=comm,
+        )
+        if first <= active_row < last:
+            matrix.setValue(active_row, active_row, PETSc.ScalarType(1.0))
+        matrix.assemble()
+        masses.append(
+            ArtificialZTraceMass(
+                matrix,
+                {
+                    "active_support_count": 1,
+                    "support_sha256": f"tiny-{active_row}",
+                },
+            )
+        )
+    groups = tuple(
+        np.asarray(
+            [row for row in rows if first <= row < last],
+            dtype=PETSc.IntType,
+        )
+        for rows in ((0, 1, 2), (2, 3, 4), (4, 5))
+    )
+    return bare, masses, groups
 
 
 def _tiny_artificial_z_fixture():
@@ -846,3 +890,122 @@ def test_task040_petsc_multiplicative_overlap_uses_current_workspace_only() -> N
             vector.destroy()
         parent.destroy()
         bare.destroy()
+
+
+def test_task040_level_a_builder_owns_factors_and_preserves_bare_f() -> None:
+    bare, masses, group_rows = _tiny_level_a_builder()
+    from src.solvers.hybrid_side_impedance import _petsc_matrix_hash
+
+    before_hash = _petsc_matrix_hash(bare)
+    action = owner = None
+    try:
+        action, owner, diagnostics = build_level_a_oracle(
+            bare_f=bare,
+            group_rows=group_rows,
+            interface_masses=masses,
+            beta=0.41 + 0.17j,
+            group_audit={
+                "group_global_rows": [3, 3, 2],
+                "group_local_rows": [len(rows) for rows in group_rows],
+                "interface_support_coverage": [],
+            },
+        )
+        assert diagnostics["cross_section_factor_count_ready"] == 3
+        assert diagnostics["full_side_exact_factor_count"] == 0
+        assert diagnostics["global_direct_factor_count"] == 0
+        assert diagnostics["nested_ksp_count"] == 0
+        assert diagnostics["restriction_prolongation_error"] <= 1.0e-12
+        source = bare.createVecRight()
+        target = bare.createVecLeft()
+        try:
+            first, last = map(int, source.getOwnershipRange())
+            source.array[:] = np.asarray(
+                0.2 + 0.03j * np.arange(first, last), dtype=PETSc.ScalarType
+            )
+            source.assemble()
+            action.apply(source, target)
+            assert np.all(np.isfinite(target.array_r))
+        finally:
+            target.destroy()
+            source.destroy()
+        ready = owner.diagnostics
+        assert ready["factor_count_ready"] == 3
+        assert ready["action_destroyed"] is False
+    finally:
+        if owner is not None:
+            owner.destroy()
+            after = owner.diagnostics
+            assert after["factor_count_after_cleanup"] == 0
+            assert after["factor_count_ready"] == 0
+            assert after["action_destroyed"] is True
+        elif action is not None:
+            action.destroy()
+        assert _petsc_matrix_hash(bare) == before_hash
+        for mass in masses:
+            mass.destroy()
+        bare.destroy()
+
+
+def test_task040_cell_union_mpi_or_recovers_remote_owned_membership() -> None:
+    comm = MPI.COMM_WORLD
+    global_rows = 6
+    matrix = PETSc.Mat().createAIJ(
+        size=((PETSc.DECIDE, global_rows), (PETSc.DECIDE, global_rows)),
+        nnz=1,
+        comm=comm,
+    )
+    first, last = map(int, matrix.getOwnershipRange())
+    for row in range(first, last):
+        matrix.setValue(row, row, PETSc.ScalarType(1.0))
+    matrix.assemble()
+    layers = [layer for layer in range(6) if layer % comm.size == comm.rank]
+    expansion = {
+        0: (np.asarray([0, 5], dtype=PETSc.IntType), np.ones(2)),
+        1: (np.asarray([0], dtype=PETSc.IntType), np.ones(1)),
+        2: (np.asarray([1, 5], dtype=PETSc.IntType), np.ones(2)),
+        3: (np.asarray([1, 2, 4], dtype=PETSc.IntType), np.ones(3)),
+        4: (np.asarray([3, 4], dtype=PETSc.IntType), np.ones(2)),
+        5: (np.asarray([3], dtype=PETSc.IntType), np.ones(1)),
+    }
+    geometry = SimpleNamespace(
+        dofmap=np.arange(len(layers), dtype=np.int64)[:, None],
+        x=np.asarray([[0.0, 0.0, layer + 0.5] for layer in layers]),
+    )
+    system = SimpleNamespace(
+        local_mesh=SimpleNamespace(
+            z_values=np.arange(7.0), mesh=SimpleNamespace(geometry=geometry)
+        ),
+        static_condensation=SimpleNamespace(
+            condensed=SimpleNamespace(
+                trace_constraints=SimpleNamespace(expansion_by_original=expansion),
+                cell_recovery_maps=[
+                    SimpleNamespace(trace_original_dofs=(layer,)) for layer in layers
+                ],
+            )
+        ),
+    )
+    supports = (
+        {"active_support": (5,)},
+        {"active_support": (4,)},
+    )
+    try:
+        rows, audit = build_level_a_cell_recovery_group_rows(system, matrix, supports)
+        assert audit["mapping_source"] == "cell_recovery_union_mpi_or"
+        assert audit["oracle_only_global_boolean_metadata_collective"] is True
+        if comm.rank == comm.size - 1:
+            assert first <= 5 < last
+            assert 5 in rows[0]
+            assert 5 in rows[1]
+        assert comm.allgather(5 in rows[0]) == [
+            rank == comm.size - 1 for rank in range(comm.size)
+        ]
+        assert all(
+            item["lower_complete"] and item["upper_complete"]
+            for item in audit["interface_support_coverage"]
+        )
+        assert comm.allreduce(
+            bool(5 in rows[0] if first <= 5 < last else True), op=MPI.LAND
+        )
+        assert len(set(comm.allgather(tuple(audit["group_mask_sha256"])))) == 1
+    finally:
+        matrix.destroy()
