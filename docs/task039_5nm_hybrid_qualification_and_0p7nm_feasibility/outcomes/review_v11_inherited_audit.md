@@ -34,7 +34,7 @@
 | V10 compression | results/task039_v10_h4_side_response_packet_compression_mpi8_30b40d43 | compression source 30b40d4303a1da90769557aee8d0f493c784591f；worker 236.720152 s、parent 约 239.730152 s、process-tree peak 15.4776763916 GiB、swap0、factor/KSP0；execution/resource/lifecycle pass，但泛化 negative |
 | frozen old holdout carrier | benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v6_port_modal_bottom_component_v1.json | SHA256 00c8b889d75b7fa0b77a6563d4ffe708a07d00f23133dec06b5929e4cabe3368；producer 7e5d9b57a10b1093f0cb062eaf7bc12797c47e1f；catalog SHA256 a2a7fb6fb01df4f795d31ff94f6ac6adf957ac4fe4a5c1a8d05176e3d64c0384 |
 
-旧 holdout catalog 的规则是 sorted relative path、byte count 和 file SHA256 行的 SHA256；覆盖 8 个 producer ranks、6 个 labels 和 96 个 response artifacts。V10 复用的 exact spool 是 results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/numerical_output；selected/exact spool manifest SHA256 为 2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067。
+旧 holdout catalog 的规则是 sorted relative path、byte count 和 file SHA256 行的 SHA256；覆盖 8 个 producer ranks、6 个 labels 和 96 个 response artifacts。selected-mode packet root 是 results/task039_v4_h4_m480_shared_packet_eaad0f94，manifest 是该 root 下的 manifest.json，SHA256 为 2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067。frozen exact-response spool root 是 results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/numerical_output，catalog SHA256 为 a2a7fb6fb01df4f795d31ff94f6ac6adf957ac4fe4a5c1a8d05176e3d64c0384。
 
 V10 full producer 还绑定 input SHA256 4e60924b5997e3ca99e324ea14779f9014efc6a1304a9aa11de9c808353f1811、physical model SHA256 8391d46139646440d869aa43abe6a68bc921fc1972a10030c64be81dffdd527c、resolved config SHA256 f965c38abea08bee0ff83a6603e336ca4823deb932af7064aed3c571f8f63883。factor identity 是 bottom、research exact-side LU、factor-only storage；profile/scope 是 task039.v10.h4.side_response_packet.full_producer.v1。
 
@@ -62,8 +62,9 @@ full iterative 是完整 workflow authority；V10 producer、pilot 和 compressi
 | swap | total 34359738368 B，used 0 B | 当前 host 只读值 |
 | /home/Projects/MyFEniCS 可用磁盘 | 815081861120 B | df 当前值 |
 | CPU count | nproc 48 | 当前 host 只读值 |
-| OMP/MKL/OpenBLAS threads | 当前均未设置 | 未据此推断 formal worker thread 数 |
+| OMP/MKL/OpenBLAS threads | fresh current env 未设置；最近 qualified snapshot 为 1/1/1 | 继承快照记录 all 1；不能把 fresh unset 冒充正式线程证据 |
 | qualified activation | not_remeasured | /tmp 不可用；未安装依赖、未修改 activation、未启动 MPI/PDE |
+| qualified interpreter | /home/Projects/MyFEniCS/.venv/bin/python | inherited qualified snapshot；本轮未启动 qualified Python |
 | MPI/scalar | inherited formal identity 为 MPI8 / complex128 | 来自 hash-bound V10 records，不是本轮 fresh ABI probe |
 | PETSc IntType | not_available | 本轮未启动 qualified Python |
 | formal thread setting | not_recorded | 不能把当前 unset 环境变量冒充正式线程证据 |
@@ -72,9 +73,9 @@ full iterative 是完整 workflow authority；V10 producer、pilot 和 compressi
 
 ## 5. 阶段内存与 V11 resource Gate
 
-V10 packet evidence 中可比较的 process-tree RSS peak 为：full producer 50.7548675537 GiB（54497624064 B）、成功 16-column pilot producer 43.20536804199219 GiB、full compression consumer 15.4776763916 GiB、成功 pilot consumer 1.649871826171875 GiB。它们属于不同顺序阶段；PSS/USS 在这些 compact records 中未测。
+既有 bottom packet 阶段 envelope 中可比较的 process-tree RSS peak 为：full producer 50.7548675537 GiB（54497624064 B）、成功 16-column pilot producer 43.20536804199219 GiB、full compression consumer 15.4776763916 GiB、成功 pilot consumer 1.649871826171875 GiB。它们属于不同顺序阶段；PSS/USS 在这些 compact records 中未测。
 
-三进程或多阶段的 observed maximum 是 50.7548675537 GiB，即四个阶段峰值取最大值而不是求和。该值不能替代完整 V7 workflow 的 80.025856018 GiB，也不能与 direct 的 93.377006531 GiB 相减来宣称 V11 component saving。
+既有 bottom packet 阶段 envelope 的最大值是 50.7548675537 GiB，即四个阶段峰值取最大值而不是求和；真正的 V11 workflow peak 尚未测量。该值不能替代完整 V7 workflow 的 80.025856018 GiB，也不能与 direct 的 93.377006531 GiB 相减来宣称 V11 component saving。
 
 Review V11 后续定义 producer 进程树峰值不超过 60 GiB、factor-free consumer 进程树峰值不超过 79 GiB、swap 为零、producer/consumer 不重叠、payload 不超过 16 GiB、wall 不超过 21600 s。full physics workflow 继续使用 V7 的 residual、field、RTA 和 finite Gate。这些是后续 Gate 定义，不是 V11-0 新运行结果。
 
@@ -124,7 +125,7 @@ V10 bottom full producer 是 component evidence，不是完整 workflow 结果�
 | measured total wall | 4390.176657371572 s |
 | classification | exact response producer component pass；research-only，不是 side inverse |
 
-V10 绑定的 shared selected-mode/exact-spool packet root 是 results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/numerical_output，manifest SHA256 是 2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067。V10 full packet output root 是 results/task039_v10_h4_side_response_packet_full_packet_dbc5e9bf，producer manifest SHA256 是 1f4e8acaf278bde0d0d14a2a096335049ee988cdbc1b406bca4197918ff64a0e。两者身份不能被新阶段静默替换。
+V10 绑定的 selected-mode packet root 是 results/task039_v4_h4_m480_shared_packet_eaad0f94，manifest 是该 root 下的 manifest.json，SHA256 是 2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067。frozen exact-response spool root 是 results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/numerical_output，catalog SHA256 是 a2a7fb6fb01df4f795d31ff94f6ac6adf957ac4fe4a5c1a8d05176e3d64c0384。V10 full packet output root 是 results/task039_v10_h4_side_response_packet_full_packet_dbc5e9bf，producer manifest SHA256 是 1f4e8acaf278bde0d0d14a2a096335049ee988cdbc1b406bca4197918ff64a0e。三者身份不能被新阶段静默替换。
 
 ## 10. Qualified snapshot、tier 和阶段解锁
 
