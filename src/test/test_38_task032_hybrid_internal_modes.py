@@ -368,7 +368,8 @@ class Task032HybridInternalModeTests(unittest.TestCase):
                 places=10,
             )
             self.assertGreater(streamed.audit["canonical_mapping_condition"], 1.0)
-            self.assertEqual(streamed.audit["canonical_trace_retained_count"], 1)
+            self.assertEqual(streamed.audit["canonical_trace_peak_live_count"], 1)
+            self.assertEqual(streamed.audit["canonical_trace_retained_count"], 0)
             self.assertEqual(
                 streamed.audit["canonical_trace_materialization"],
                 "single_reusable",
@@ -553,7 +554,8 @@ class Task032StreamedProjectionFreshLifecycleTests(unittest.TestCase):
         try:
             self.assertGreater(streamed.audit["trace_gram_condition"], 1.0)
             self.assertGreater(streamed.audit["canonical_mapping_condition"], 1.0)
-            self.assertEqual(streamed.audit["canonical_trace_retained_count"], 1)
+            self.assertEqual(streamed.audit["canonical_trace_peak_live_count"], 1)
+            self.assertEqual(streamed.audit["canonical_trace_retained_count"], 0)
             self.assertEqual(
                 streamed.audit["canonical_trace_materialization"],
                 "single_reusable",
