@@ -32,6 +32,11 @@ def test_task040_watchdog_dry_run_is_frozen_and_unique(tmp_path, capsys) -> None
     plan = _plan(tmp_path)
     command = plan["worker_argv"]
     assert not (tmp_path / "run").exists()
+    module_index = command.index("-m")
+    assert command[module_index + 1] == "benchmarks.task040_level_a"
+    assert all(
+        not token.endswith("/benchmarks/task040_level_a.py") for token in command
+    )
     assert plan["method"] == "task040_level_a_bare_f_transmission"
     assert plan["profile"] == "task040.level_a.h4.bottom.v1"
     assert plan["mpi_size"] == 8
