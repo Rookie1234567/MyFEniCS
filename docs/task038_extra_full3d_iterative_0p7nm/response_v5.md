@@ -121,3 +121,34 @@ Raw root：
 `benchmarks/artifacts/task038_extra_full3d_n2_la_v1/4b9ccbc/p6_h10_mpi1/`
 
 本 response 的 docs closure 尚未提交，不能在本文中自引用未来 commit。当前实现测试边界为本地 `test290 + test291 = 27 passed`、compileall pass、AST duplicate-key pass、`git diff --check` pass；没有重跑数值/PDE/full pytest。
+
+## 用户补充授权 continuation / final current status
+
+以下是 V5 审阅后用户明确授权的 marker 修复、LA0/LA1 v3 诊断、Path T production
+修复和 fresh N2 MPI1 attempt。本节由最终 docs closure commit 携带；final docs SHA
+无法自引用，见交付报告。本文追加，不改写前文旧 negative 或启动停止结论。
+
+| # | Review V5 项目 | 当前事实与边界 |
+|---:|---|---|
+| 1 | identity / commits / upstream | frozen master base `438caf150439343ee7c4c58ad7e02a3da812a23c`；Review V5 start `5636cd49b2c385f320b87dc07e9c9eb935ac1e2d`；用户补充授权前 latest HEAD `9b7e0b4d6190957e2d40ca9650e0151383cbe1b9`；formal production source `b20de4960db4210f510195cff6136c72cd990b3f`；pre-doc-closure upstream/ahead `6ce8a2c567b5fb2e138219306f06e5001704af26 / 3/0`；final docs commit/upstream/ahead 见交付报告。 |
+| 2 | old negatives | old N2 v1 `n2_local_spectral_setup_mpi1_v1.json` SHA `d02f416956a560c0837d067636d8f62d253c9d04da4e6bbe3b6194dd10098d40`；第一次 LA0 v1 compact SHA `e0d161d2827b2bed390fe4ab6ef7238891606edc094adb0513a3e0ba4c10a739`；v2 marker compact SHA `9610f69826092a31a69d6c3a7cbcb8cefd69ada0954c767b11953abafed47d44`。均保持不变。 |
+| 3 | v3 failed class | v3 digest `0c6b9830423f8baf83b6714ac178c724b63af1359d01b3ca5badd1d40c070a67`，rows `882`，matrix file SHA `ec6fa132758735531e272532529bc43a0ac6f1cbf8c1e3c3f3656f19383fcbcd`，RHS file SHA `da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983`。 |
+| 4 | v3 linear algebra | Hermitian defect `9.757433025229162e-17`；lambda min/max `0.00045043462322559666 / 25934.54102501312`；kappa2 `57576704.11589122`；factorization residual `8.158904706122267e-16`。 |
+| 5 | v3 S0–S3 | residual `1.0426245523812324e-11 / 9.316208748538303e-12 / 2.544882468429781e-11 / 6.672944399115928e-12`；backward error `9.01854818500637e-19 / 8.058382790658791e-19 / 2.2012856990841358e-18 / 5.771998219478778e-19`；repeat 四条 exact；S3 恰好一次 refinement。 |
+| 6 | decision | v3 independent checker 为 `Path T / PATH_T_DEDICATED_TRIANGULAR_PASS`；这是诊断资格，不是 N2 setup PASS。 |
+| 7 | marker repair | marker allowlist fix commit `6b8f6cc7cf39aec0a6138b7e24329da3f6a69392`；标准 N2 planned markers 未变，`linear_algebra_diagnostic` 只进入显式 diagnostic allowlist。 |
+| 8 | production repair | dedicated `scipy.linalg.solve_triangular` 两次调用提交于 `b20de4960db4210f510195cff6136c72cd990b3f`；无 refinement、fallback、packing/B0/patch/mode/coarse 参数变化。 |
+| 9 | numerical Gate | fixed RHS solve Gate 仍严格为 `<=1e-11`，没有放宽或 class-specific exception。 |
+| 10 | v3 resource/lifecycle | v3 process-tree peak `1,487,138,816 B`，160 samples，约 `160.51165314597893 s`，process-tree swap=0，already_exited/no orphan/no SIGKILL；没有 post-setup sample，不能称完整 N2 resource pass。 |
+| 11 | fresh N2 MPI1 | source `b20de...`；marker `preflight → mesh_space_mpc → JIT → subdomain_inventory → local_factor_build → failure`；residual `1.1089747142000698e-11 > 1e-11`；worker/watchdog/checker rc `1/1/1`；process-tree peak `1,504,804,864 B`，swap=0，no orphan。 |
+| 12 | fresh N2 identity boundary | 本次 standard N2 worker 未记录 failed class digest/representative identity/rows；不得用 v3 digest冒充。它是完整 class registration 的未具名 class，residual 与 v3 值不同，精确 identity unavailable。 |
+| 13 | fresh N2 completeness | failure before complete inventory/post-retained/modes/regional/top/Z/AZ/E/identity；这些均 `not_run_by_numerical_gate`，失败点前 peak 不构成 complete setup memory qualification。 |
+| 14 | later lanes | MPI2、N3、N4、T6-F/EH/RTA、official physics、T7–T9、full 0.7 nm 全部 `not_run_by_gate`；没有 contraction 或 PDE 结果。 |
+| 15 | measured / derived / failed / not_run | measured：marker、rc、watchdog peak/swap/termination 和 v3/v2 raw facts；derived：仅 LA1 array-byte账本；failed：fresh N2 fixed-RHS Gate；not_run：完整 N2、MPI2 及后续 physics。资源只称失败点前 peak，不称 PASS。 |
+| 16 | evidence paths | v3 root `benchmarks/artifacts/task038_extra_full3d_n2_la_v3/6b8f6cc/p6_h10_mpi1/`；fresh N2 v2 root `benchmarks/artifacts/task038_extra_full3d_n2_formal_v2/b20de49/p6_h10_mpi1/`；tracked outputs 分别为 `records/n2_local_factor_la_v3.json` 与 `records/n2_local_spectral_setup_mpi1_v2.json`。两套 raw/watchdog/log 均 ignored。 |
+| 17 | evidence hashes | v3 worker `15,104 B / 87b79b3ab5c582205d3e9117e50905ed941f824260fcdfa01452cd967d7d0168`；raw `225,874 B / d24a7533c97bf7db26e78f70f7dc2301015b630246d1e2d3c7933e5807e220ae`；compact `2,460 B / 61589fa5075750bfb3736f64512a7553448d3652e19f1de2513fb7c080ac0f83`；log `1,833 B / 33403e4227bbb9dac5be84cf74a116be13f2f3d78079ed7ce9715a860b267790`。fresh N2 worker `6,617 B / fa24d8dd1462ee3823fff9f49144bd32fb9172d7cf09720efe7d26da19942d3c`；raw `40,310 B / 7bb37b3765201fb01e6477f36d4adca6a604c09f987a8c53e95a73dde4c0ba5e`；compact `2,353 B / d6283c7c68529dc2e928ad2a371de0e55e83bc541b363448de4622ee0a3c1215`；log `2,532 B / 8b0511e4cd7a8714d2908ec41a80efc9101d43ab3a76f3a5f3ca31e3c3211ee3`；tracked checker `3,521 B / d88330f2c9b038946c8f0b15e22b5850e6812c868366fa50f04e1e9b3962f763`。 |
+| 18 | selective merge / final boundary | marker ownership/allowlist 修复可独立审阅；dedicated triangular repair虽有单-class formal Path T依据，但完整 N2 class set失败，当前不得合入 ordinary production default，只保留执行分支 research candidate，等待 review。LA0/LA1 diagnostic evidence 保持 research-only；旧负证据 `do-not-delete`。未授权 production coarse、MPI2、N3/N4 或 official physics。无 CI 声明。 |
+
+当前结论：`N2_MPI1_CONTROLLED_NEGATIVE_LOCAL_FACTOR_SOLVE_GATE`。三角求解修复解决了
+v3 已诊断 class，但完整 class 集仍未通过固定 RHS Gate；因此不能进入 coarse、contraction
+或 PDE。最终 docs commit SHA 不能由本文自引用，待后续交付报告给出。

@@ -307,3 +307,15 @@ N0 文档与 compact record 的完整算术、引用、生命周期和禁止项�
 N1/源码收口的本地测试记录为 27 passed, 1 skipped，test290 为 12 passed；p2 MPI1/MPI2 small smoke、compileall、AST/diff-check 均通过。这些都是本地非 CI 结果。更早的一次 MPI smoke session 后来被识别为本执行者留下的测试基础设施进程并终止，属于清理动作，不是 formal worker orphan；本次正式 N2 worker 的 watchdog 明确记录 worker 自行返回 rc=1，watchdog 未发 SIGTERM/SIGKILL，随后 already_exited、no orphan、无 SIGKILL。
 
 N2 唯一一次正式 MPI1 setup 的 marker 为 preflight -> mesh_space_mpc -> JIT -> subdomain_inventory -> local_factor_build -> failure；worker marker wall 125.03350535 s，watchdog elapsed 126.7811168670014 s，127 samples，process-tree memory authority peak 1,506,271,232 B，process-tree swap 0 B。失败发生在 local factor build，未得到 post-setup retained、252 inventory最终闭合、modes/regional/top、Z/AZ/E、zero identity或MPI2证据。详情见 local_spectral_setup.md 与 response_v4.md。
+
+## Review V5 continuation：当前 N2 lane
+
+| 阶段 | 结果 | 证据边界 |
+|---|---|---|
+| marker allowlist focused regression | `31 passed`；compileall/AST/diff-check pass | 本地测试，未启动 heavy |
+| LA0/LA1 v3 | LA0 reproduction PASS；independent LA1 Path T | 诊断证据，不是 N2 setup PASS |
+| Path T production repair | commit `b20de496...`；`test287+290+291 = 39 passed, 1 skipped` | formal source commit；最终 push 状态见交付报告 |
+| fresh N2 MPI1 | `CONTROLLED_NEGATIVE_LOCAL_FACTOR_SOLVE_GATE`；residual `1.1089747142000698e-11 > 1e-11` | worker/watchdog/checker `1/1/1`；失败点前 peak `1,504,804,864 B`、swap0；完整 setup 未资格化 |
+| MPI2/N3/N4/T6-F/EH/RTA/T7–T9/full0.7nm | `not_run_by_gate` | 不写成数值或资源通过 |
+
+本节由最终 docs closure commit 携带；final docs SHA 无法自引用，见交付报告；旧 T1–N2 v1 记录不覆盖，未作 CI 声明。

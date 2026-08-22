@@ -1,0 +1,104 @@
+{
+  "coarse": {},
+  "errors": [
+    "record model identity is not frozen p6/h10/full3d_scalable_v1",
+    "model identity is missing",
+    "marker ledger is missing",
+    "basis/operator/coarse audit is missing",
+    "owner-local array descriptors are missing",
+    "N2 setup numeric/inventory audits are missing",
+    "resource_contract.status is 'measured_controlled_negative', expected measured",
+    "watchdog has no post_setup_release sample",
+    "worker did not have natural returncode-zero watchdog termination",
+    "retained component closure is missing"
+  ],
+  "errors_count": 10,
+  "gates": {
+    "arrays": false,
+    "coarse": false,
+    "forbidden": false,
+    "identity": false,
+    "markers": false,
+    "resource": false
+  },
+  "mpi_size": 1,
+  "passed": false,
+  "record": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_n2_formal_v2/b20de49/p6_h10_mpi1/worker.record.json",
+  "schema": "task038.full3d.local-spectral.n2-check.v1",
+  "setup": {},
+  "watchdog": {
+    "authority_complete": true,
+    "authority_samples": 28,
+    "command": [
+      "mpiexec",
+      "-n",
+      "1",
+      "python",
+      "-m",
+      "benchmarks.run_task038_full3d_n2",
+      "--stage",
+      "n2",
+      "--case",
+      "p6-h10-mpi1",
+      "--input",
+      "input/templates/full3d_iterative_example.dat",
+      "--raw-dir",
+      "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_n2_formal_v2/b20de49/p6_h10_mpi1/raw",
+      "--record",
+      "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_n2_formal_v2/b20de49/p6_h10_mpi1/worker.record.json",
+      "--marker-dir",
+      "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_n2_formal_v2/b20de49/p6_h10_mpi1/raw/markers",
+      "--expected-source-sha",
+      "b20de4960db4210f510195cff6136c72cd990b3f",
+      "--expected-mpi-size",
+      "1"
+    ],
+    "hard_stop_bytes": 2000000000,
+    "natural_exit": false,
+    "no_orphan_claim": true,
+    "post_setup_peak_memory_authority_bytes": 0,
+    "post_setup_sample_count": 0,
+    "post_setup_warning_crossed": false,
+    "process_tree_peak_memory_authority_bytes": 1504804864,
+    "process_tree_swap_gate": true,
+    "raw_sha256": "7bb37b3765201fb01e6477f36d4adca6a604c09f987a8c53e95a73dde4c0ba5e",
+    "schema": "task038.full3d.local-spectral.n2-watchdog-compact.v1",
+    "stage_peak_dedicated_cgroup_swap_bytes": {},
+    "stage_peak_memory_authority_bytes": {
+      "failure": 14467072,
+      "local_factor_build": 1504804864,
+      "mesh_space_mpc": 378101760,
+      "startup": 3940352
+    },
+    "stage_peak_process_tree_pss_bytes": {
+      "failure": 11663360,
+      "local_factor_build": 1484893184,
+      "mesh_space_mpc": 358190080,
+      "startup": 2255872
+    },
+    "stage_peak_process_tree_rss_bytes": {
+      "failure": 14467072,
+      "local_factor_build": 1504804864,
+      "mesh_space_mpc": 378101760,
+      "startup": 3940352
+    },
+    "stage_peak_process_tree_uss_bytes": {
+      "failure": 10932224,
+      "local_factor_build": 1470955520,
+      "mesh_space_mpc": 344252416,
+      "startup": 2023424
+    },
+    "stop_reason": "natural_exit",
+    "termination": {
+      "grace_seconds": 5.0,
+      "method": "already_exited",
+      "process_group_exited": true,
+      "requested": true,
+      "sigkill_required": false,
+      "worker_exited": true
+    },
+    "warning_bytes": 1800000000,
+    "warning_crossed": false,
+    "worker_returncode": 1
+  }
+}
