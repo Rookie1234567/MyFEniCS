@@ -28,7 +28,7 @@ half_memory_target_GiB                  = 46.688503266
 J1_inner_FGMRES_family                  = closed at 16-step stagnation
 V9_original_SN2_SGS                     = closed
 raw_load_vector_Petrov_family           = closed
-current_random_holdout_compression      = generalization negative, not global noncompressibility proof
+current_frozen_holdout_compression      = generalization negative, not global noncompressibility proof
 Hybrid_direct_rerun                     = forbidden
 V7_exact_side_full_rerun                = forbidden
 bottom_full_response_producer_rerun     = forbidden unless packet integrity fails and a new review authorizes it
@@ -121,7 +121,8 @@ J1-FGMRES 32/64/128
 把 J1/F1/FB 换名称后原样重跑
 ```
 
-这不否定所有 Krylov side solver，只关闭当前 single-layer J1 family。
+这不否定所有 Krylov side solver，只关闭当前 single-layer J1 family。J1只允许作为 §11
+`M_resp` 中处理 source-space补空间的固定 action，不得再单独形成新的 budget campaign。
 
 ### 1.3 当前 response compression 负结果的正确解释
 
@@ -177,13 +178,16 @@ X_s=A_s^{-1}B_s,
 u_s^0=A_s^{-1}f_s.
 ```
 
-则：
+这里的 `u_s^0` 记为 side physical-response solution。则：
 
 ```math
 u_s=u_s^0-X_s a.
 ```
 
-代回 modal equation 后形成 reduced modal Schur。上式的正负号只是统一记号；正式实现不得根据本文
+为避免符号歧义，正式代码和 evidence 中统一使用变量名 `u_s^0` 与 `u_s`；上面数学块中的普通文本
+`u` 必须按该变量解释，不得另引入 `nu` 变量。
+
+代回 modal equation 后形成 reduced modal Schur。上式正负号只是统一记号；正式实现不得根据本文
 手写符号，而必须从实际 assembled block action、V7 exact-side authority和 sampled column identity
 中推导并验证。任何 sign/order/normalization 不一致都必须在离线 algebra audit 停止，不能通过翻转符号
 凑结果。
