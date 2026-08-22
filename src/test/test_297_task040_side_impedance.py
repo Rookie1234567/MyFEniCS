@@ -11,6 +11,7 @@ from src.solvers.hybrid_side_impedance import (
     TASK040_BACKWARD_ORDER,
     TASK040_FORWARD_ORDER,
     TASK040_LEVEL_A_SUBDOMAINS,
+    audit_petsc_level_a_one_apply,
     build_petsc_side_impedance_transmission_action,
     build_first_order_interface_impedance,
     build_first_order_tangential_impedance,
@@ -492,6 +493,81 @@ def test_task040_petsc_vecscatter_carrier_preserves_owned_identity() -> None:
             zero.destroy()
             repeat.destroy()
             target.destroy()
+
+        audit_bare = PETSc.Mat().createAIJ(
+            size=((12, 12 * size), (12, 12 * size)), nnz=1, comm=comm
+        )
+        audit_bare.setUp()
+        for row in range(comm.rank * 12, (comm.rank + 1) * 12):
+            audit_bare.setValue(row, row, 1.0)
+        audit_bare.assemble()
+        audit_sources = []
+        try:
+            for source_index in range(6):
+                source = parent.duplicate()
+                if source_index == 0:
+                    source.set(0.0)
+                else:
+                    set_owned(
+                        source,
+                        np.asarray(
+                            [
+                                0.1 * source_index + 0.02j * (comm.rank * 12 + index)
+                                for index in range(12)
+                            ],
+                            dtype=np.complex128,
+                        ),
+                    )
+                audit_sources.append(source)
+            audit = audit_petsc_level_a_one_apply(
+                action,
+                audit_bare,
+                dict(
+                    zip(
+                        (
+                            "physical_side_rhs",
+                            "modal_traction_positive",
+                            "modal_traction_negative",
+                            "external_dtn_coupling",
+                            "fixed_random_repeat_0",
+                            "fixed_random_repeat_1",
+                        ),
+                        audit_sources,
+                    )
+                ),
+                {
+                    "observed": True,
+                    "factor_count_ready": 3,
+                    "oracle_only": True,
+                    "scalable_candidate": False,
+                    "full_side_exact_factor_count": 0,
+                    "global_direct_factor_count": 0,
+                    "nested_ksp_count": 0,
+                },
+            )
+            assert audit["gate"]["pass"] is True
+            assert audit["gate"]["zero_map_pass"] is True
+            assert audit["gate"]["action_identity_pass"] is True
+            assert audit["action_identity"]["carrier"] == "petsc_vecscatter"
+            assert audit["action_identity"]["global_numpy_copy"] is False
+            assert audit["action_identity"]["restriction_prolongation_pass"] is True
+            assert audit["action_identity"]["bare_operator_unchanged"] is True
+            assert audit["gate"]["worst_mandatory_rho"] == 0.0
+            assert audit["formal_source_apply_count"] == 6
+            assert audit["repeat_audit_apply_count"] == 6
+            assert audit["linearity_audit_apply_count"] == 1
+            assert audit["action_apply_count_delta"] == 13
+            assert all(
+                "true_residual_norm" in report
+                and "true_residual_relative" in report
+                and "true_residual" not in report
+                for report in audit["reports"]
+            )
+            assert all(report["finite"] for report in audit["reports"])
+        finally:
+            for source in reversed(audit_sources):
+                source.destroy()
+            audit_bare.destroy()
     finally:
         action.destroy()
         for matrix in couplings:

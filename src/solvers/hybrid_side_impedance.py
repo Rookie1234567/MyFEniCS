@@ -9,7 +9,7 @@ the bare ``F_s`` action is never modified by this module.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
 import numpy as np
@@ -20,18 +20,28 @@ __all__ = (
     "TASK040_FORWARD_ORDER",
     "TASK040_LEVEL_A_SUBDOMAINS",
     "TASK040_BACKWARD_ORDER",
+    "TASK040_LEVEL_A_SOURCE_LABELS",
     "SideImpedanceTransmissionAction",
     "PetscSideImpedanceTransmissionAction",
     "build_first_order_interface_impedance",
     "build_first_order_tangential_impedance",
     "build_side_impedance_transmission_action",
     "build_petsc_side_impedance_transmission_action",
+    "audit_petsc_level_a_one_apply",
 )
 
 
 TASK040_LEVEL_A_SUBDOMAINS = ((0, 1), (2, 3), (4, 5))
 TASK040_FORWARD_ORDER = (0, 1, 2)
 TASK040_BACKWARD_ORDER = (2, 1, 0)
+TASK040_LEVEL_A_SOURCE_LABELS = (
+    "physical_side_rhs",
+    "modal_traction_positive",
+    "modal_traction_negative",
+    "external_dtn_coupling",
+    "fixed_random_repeat_0",
+    "fixed_random_repeat_1",
+)
 
 
 def build_first_order_tangential_impedance(
@@ -565,3 +575,200 @@ def build_petsc_side_impedance_transmission_action(
         for workspace in reversed(workspaces):
             workspace.destroy()
         raise
+
+
+def audit_petsc_level_a_one_apply(
+    action: PetscSideImpedanceTransmissionAction,
+    bare_operator: PETSc.Mat,
+    sources: Mapping[str, PETSc.Vec] | Sequence[PETSc.Vec],
+    factor_inventory: Mapping[str, Any],
+    *,
+    labels: Sequence[str] = TASK040_LEVEL_A_SOURCE_LABELS,
+    preferred_labels: Sequence[str] = (
+        "modal_traction_positive",
+        "modal_traction_negative",
+        "external_dtn_coupling",
+    ),
+) -> dict[str, Any]:
+    """Audit one PETSc Level-A action on the frozen six-source family.
+
+    The action and factor inventory are observed by the caller; this helper
+    only computes true bare-F residuals and the zero/repeat/linearity gates.
+    It never assembles or factorizes an operator.
+    """
+
+    labels = tuple(labels)
+    preferred_labels = tuple(preferred_labels)
+    comm = bare_operator.getComm().tompi4py()
+    local_ok = len(labels) == 6 and len(set(labels)) == 6
+    try:
+        if isinstance(sources, Mapping):
+            local_ok = local_ok and tuple(sources) == labels
+            source_list = tuple(sources[label] for label in labels)
+        else:
+            source_list = tuple(sources)
+            local_ok = local_ok and len(source_list) == len(labels)
+        matrix_rows, matrix_cols = bare_operator.getSize()
+        local_ok = local_ok and matrix_rows == matrix_cols
+        local_ok = local_ok and all(
+            isinstance(source, PETSc.Vec) and source.getSize() == matrix_rows
+            for source in source_list
+        )
+    except (KeyError, TypeError, ValueError):
+        source_list = ()
+        local_ok = False
+    if not bool(comm.allreduce(local_ok, op=MPI.LAND)):
+        raise ValueError("Level-A source/operator contract failed collectively.")
+
+    action_diagnostics = action.diagnostics
+    action_identity = {
+        "carrier": action_diagnostics.get("carrier"),
+        "global_numpy_copy": action_diagnostics.get("global_numpy_copy"),
+        "subdomain_vectors_global_numpy_copy": action_diagnostics.get(
+            "subdomain_vectors_global_numpy_copy"
+        ),
+        "restriction_prolongation_pass": action_diagnostics.get(
+            "restriction_prolongation_pass"
+        ),
+        "bare_operator_unchanged": action_diagnostics.get("bare_operator_unchanged"),
+    }
+    action_identity_local = (
+        action_identity["carrier"] == "petsc_vecscatter"
+        and action_identity["global_numpy_copy"] is False
+        and action_identity["subdomain_vectors_global_numpy_copy"] is False
+        and action_identity["restriction_prolongation_pass"] is True
+        and action_identity["bare_operator_unchanged"] is True
+    )
+    action_identity_pass = bool(comm.allreduce(action_identity_local, op=MPI.LAND))
+
+    inventory = dict(factor_inventory)
+    inventory_pass = all(
+        (
+            inventory.get("observed") is True,
+            inventory.get("factor_count_ready") == 3,
+            inventory.get("oracle_only") is True,
+            inventory.get("scalable_candidate") is False,
+            inventory.get("full_side_exact_factor_count") == 0,
+            inventory.get("global_direct_factor_count") == 0,
+            inventory.get("nested_ksp_count") == 0,
+        )
+    )
+    inventory_pass = bool(comm.allreduce(inventory_pass, op=MPI.LAND))
+    outputs: dict[str, PETSc.Vec] = {}
+    reports: list[dict[str, Any]] = []
+    finite_pass = True
+    try:
+        for label, source in zip(labels, source_list):
+            target = source.duplicate()
+            residual = source.duplicate()
+            repeated = source.duplicate()
+            difference = source.duplicate()
+            try:
+                source_finite = bool(np.all(np.isfinite(source.array_r)))
+                source_finite = bool(comm.allreduce(source_finite, op=MPI.LAND))
+                action.apply(source, target)
+                output_finite = bool(np.all(np.isfinite(target.array_r)))
+                output_finite = bool(comm.allreduce(output_finite, op=MPI.LAND))
+                finite_pass = finite_pass and source_finite and output_finite
+                source_norm = float(source.norm())
+                output_norm = float(target.norm())
+                bare_operator.mult(target, residual)
+                residual.axpy(PETSc.ScalarType(-1.0), source)
+                residual_norm = float(residual.norm())
+                rho = residual_norm / source_norm if source_norm > 1.0e-30 else None
+                action.apply(source, repeated)
+                target.copy(difference)
+                difference.axpy(PETSc.ScalarType(-1.0), repeated)
+                repeat_error = float(difference.norm()) / max(output_norm, 1.0e-30)
+                outputs[label] = target.duplicate()
+                target.copy(outputs[label])
+                reports.append(
+                    {
+                        "label": label,
+                        "source_norm": source_norm,
+                        "output_norm": output_norm,
+                        "true_residual_norm": residual_norm,
+                        "true_residual_relative": rho,
+                        "repeat_error": repeat_error,
+                        "finite": source_finite and output_finite,
+                        "physical_zero": label == labels[0] and source_norm <= 1.0e-13,
+                    }
+                )
+            finally:
+                difference.destroy()
+                repeated.destroy()
+                residual.destroy()
+                target.destroy()
+
+        mandatory = [report for report in reports if not report["physical_zero"]]
+        preferred = [
+            report for report in mandatory if report["label"] in preferred_labels
+        ]
+        linear_source = source_list[1].duplicate()
+        linear_source.axpy(PETSc.ScalarType(1.0), source_list[2])
+        linear_target = linear_source.duplicate()
+        expected_linear = outputs[labels[1]].duplicate()
+        try:
+            expected_linear.axpy(PETSc.ScalarType(1.0), outputs[labels[2]])
+            action.apply(linear_source, linear_target)
+            linear_target.axpy(PETSc.ScalarType(-1.0), expected_linear)
+            linearity_error = float(linear_target.norm()) / max(
+                float(expected_linear.norm()), 1.0e-30
+            )
+        finally:
+            expected_linear.destroy()
+            linear_target.destroy()
+            linear_source.destroy()
+
+        physical = reports[0]
+        physical_zero = bool(physical["physical_zero"])
+        zero_map_pass: bool | str = (
+            physical["output_norm"] <= 1.0e-13 if physical_zero else "not_applicable"
+        )
+        worst_rho = max(float(report["true_residual_relative"]) for report in mandatory)
+        all_repeat_pass = all(report["repeat_error"] <= 1.0e-10 for report in reports)
+        mandatory_rho_pass = all(
+            float(report["true_residual_relative"]) < 1.0 for report in mandatory
+        )
+        preferred_rho_pass = all(
+            float(report["true_residual_relative"]) <= 0.90 for report in preferred
+        )
+        gate = {
+            "finite_pass": bool(finite_pass),
+            "zero_map_pass": zero_map_pass,
+            "action_identity_pass": action_identity_pass,
+            "repeat_pass": all_repeat_pass,
+            "linearity_relative_error": linearity_error,
+            "linearity_pass": linearity_error <= 1.0e-10,
+            "mandatory_rho_pass": mandatory_rho_pass,
+            "worst_mandatory_rho": worst_rho,
+            "worst_rho_pass": worst_rho <= 0.95,
+            "preferred_rho_pass": preferred_rho_pass,
+            "factor_inventory_pass": inventory_pass,
+        }
+        gate["pass"] = bool(
+            gate["finite_pass"]
+            and gate["zero_map_pass"] is not False
+            and gate["action_identity_pass"]
+            and gate["repeat_pass"]
+            and gate["linearity_pass"]
+            and gate["mandatory_rho_pass"]
+            and gate["worst_rho_pass"]
+            and gate["preferred_rho_pass"]
+            and gate["factor_inventory_pass"]
+        )
+        return {
+            "source_labels": list(labels),
+            "reports": reports,
+            "factor_inventory": inventory,
+            "action_identity": action_identity,
+            "gate": gate,
+            "action_apply_count_delta": action.diagnostics["apply_count"]
+            - action_diagnostics["apply_count"],
+            "formal_source_apply_count": len(reports),
+            "repeat_audit_apply_count": len(reports),
+            "linearity_audit_apply_count": 1,
+        }
+    finally:
+        for output in outputs.values():
+            output.destroy()
