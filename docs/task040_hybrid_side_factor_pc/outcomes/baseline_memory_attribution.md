@@ -38,3 +38,17 @@ Task40 的 Level A/B candidate 必须保留 swap=0，并在 scalable candidate �
 ## T40-0 结论
 
 当前只完成继承审计。没有新内存测量、没有新 factorization、没有新 response packet、没有新 PDE/MPI heavy。后续若进入正式阶段，必须以新的源码 SHA、阶段 marker 和资源样本绑定结果；历史基线在新阶段中仅作比较，不作自证。
+
+## T40-3 measured component
+
+T40-3 的正式 Level-A bottom bare-F action 只测量一个组件：process-tree peak 为
+30,422,945,792 B，即 28.333576202392578 GiB；process-sample wall 为
+660.6481867840048 s，marker interval 为 658.022411 s，swap 为 0 B。45 GiB
+absolute hard stop 为 48,318,382,080 B。这个组件峰值不能当作完整 bottom/top/full workflow
+峰值，也不能单独宣称相对 93.377006531 GiB direct baseline 的 saving tier。
+
+正式 raw root 为
+`results/task040_level_a_bare_f_mpi8_483275dc`，结果分类为
+`TRANSMISSION_MECHANISM_FAIL`；详情见
+[T40-3 transmission outcome](transmission_mechanism_oracle.md) 和
+[compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_level_a_bare_f_transmission_v1.json)。

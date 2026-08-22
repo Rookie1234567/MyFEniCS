@@ -4,19 +4,19 @@
 
 ## 唯一弱式依据
 
-权威实现是 `src/solvers/dtn_port_3d.py::_zero_order_local_robin_forms`（1837–1865 行）。该函数在 1854–1855 行分别构造 `q_top` 与 `q_bottom`，两者都是 `-1j * beta`；随后在 1861–1865 行把同号系数分别乘到顶、底切向质量积分。其 1840–1844 行说明法向已经由 H(curl) 分部积分的 traction 项承担。
+权威实现是 `src/solvers/dtn_port_3d.py::_zero_order_local_robin_forms`。该函数分别构造 `q_top` 与 `q_bottom`，两者都是 `-1j * beta`，再把同号系数乘到顶、底切向质量积分；函数中的弱式说明法向已经由 H(curl) 分部积分的 traction 项承担。
 
-因此 T40 的实现 `src/solvers/hybrid_side_impedance.py::build_first_order_tangential_impedance`（37–58 行）固定为：
+因此 T40 的实现 `src/solvers/hybrid_side_impedance.py::build_first_order_tangential_impedance` 固定为：
 
 ```math
 q = -i\beta, \qquad Z_t = q M_t.
 ```
 
-`build_first_order_interface_impedance`（61–76 行）只验证两侧法向为 `(+1,-1)` 或 `(-1,+1)`，然后返回两个相同的 `Z_t`。它不扫描 beta，不根据数值结果选择符号。
+`build_first_order_interface_impedance` 只验证两侧法向为 `(+1,-1)` 或 `(-1,+1)`，然后返回两个相同的 `Z_t`。它不扫描 beta，不根据数值结果选择符号。
 
 ## 传输顺序与验证
 
-前向/后向数据的法向符号仍由 traction/coupling 约定携带；传输动作固定为 `0 -> 1 -> 2 -> 1 -> 0`。`src/test/test_297_task040_side_impedance.py` 的符号测试验证：
+前向/后向数据的法向符号仍由 traction/coupling 约定携带；传输动作固定为 forward `0 -> 1 -> 2`、backward `2 -> 1 -> 0`，展开为 `0 -> 1 -> 2 -> 2 -> 1 -> 0`。`src/test/test_297_task040_side_impedance.py` 的符号测试验证：
 
 - 两侧 outward-normal metadata 相反；
 - 两侧 Robin mass 数值相同且等于 `-i beta M`；
@@ -25,3 +25,21 @@ q = -i\beta, \qquad Z_t = q M_t.
 - 局部阻抗只进入 PC，裸 F 的实际 identity audit 仍通过。
 
 该合同绑定仓库现有弱式，不引入单位 Gram、normal-equation 或 beta 扫描。PETSc 的 formal carrier 后续使用 VecScatter 和局部 Mat；本阶段没有启动 formal PDE 或重型运行。
+
+## T40-3 formal result
+
+T40-3 沿用上述唯一阻抗合同：两个人工界面使用同号 q=-i beta，法向只进入 traction/coupling。
+两侧 interface mass/support、bare F identity、finite、zero-map、repeat、linearity 和
+restriction/prolongation 均通过；三个 cross-section exact factor 仅为
+`oracle_only=true`，不是 scalable candidate，cleanup 后 factor count 为 0。
+
+| source | rho | Gate |
+|---|---:|---|
+| modal traction positive | 16.512689191540417 | mandatory `<1`：fail；preferred `<=0.90`：fail |
+| modal traction negative | 14.24201480051629 | mandatory `<1`：fail；preferred `<=0.90`：fail |
+| external DtN coupling | 22.945123935386228 | mandatory `<1`：fail；preferred `<=0.90`：fail |
+| fixed random repeat 0 | 28.316064601533686 | mandatory `<1`：fail；worst `<=0.95`：fail |
+| fixed random repeat 1 | 25.70701839061571 | mandatory `<1`：fail |
+
+因此本次是正式数值负结果 `TRANSMISSION_MECHANISM_FAIL`，不是实现错误或资源停止。
+T40-4 及以后依赖阶段不运行；不调 beta、不翻符号、不改变阻抗或 sweep。

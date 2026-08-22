@@ -61,10 +61,20 @@ The prior response packet is an inherited research artifact. Task40 may reuse it
 
 The candidate must preserve the frozen 5 nm, 1 degree grazing, phi=0, S-polarized, p6h4, M480, MPI8 physical case. No QEP, M, dynamic DtN, global action, recovery, response packet, Full3D, 0.7 nm, direct full-side, V7 exact-side full rerun, J1-alone, SN2, ordinary ILU/BLR, sweep, concurrent heavy job, new branch, worktree, or master write is in scope.
 
-The staged route is conditional. T40-3 Level A uses subdomains [0,1], [2,3], [4,5], first-order tangential impedance, and the fixed forward/backward order 0→1→2→1→0. Cross-section exact factors are oracle-only and cannot be the scalable formal result. Level B is blocked unless the six mandatory bottom sources satisfy the rho and residual/resource gates in task.md. Task40's later Level B, bottom A, top, both-side setup, full Hybrid, and conditional h3 scaling stages remain not_run until their preceding gates pass.
+The staged route is conditional. T40-3 Level A uses subdomains [0,1], [2,3], [4,5], first-order tangential impedance, and the fixed forward order 0→1→2 followed by backward order 2→1→0, expanded as [0,1,2,2,1,0]. Cross-section exact factors are oracle-only and cannot be the scalable formal result. Level B is blocked unless the six mandatory bottom sources satisfy the rho and residual/resource gates in task.md. Task40's later Level B, bottom A, top, both-side setup, full Hybrid, and conditional h3 scaling stages remain not_run until their preceding gates pass.
 
 At every stage, a real numerical, resource, lifecycle, or identity failure is preserved as evidence and classified at the first failed gate. An implementation defect may receive only the minimum local repair and focused regression required by task.md. No parameter, threshold, sign, physical input, or difficult column may be changed to obtain a pass.
 
 ## T40-0 status
 
 T40-0 is complete as a docs-only inherited audit. No new numerical result, code change, input change, configuration change, or raw artifact was created. The next allowed phase is the static T40-1/T40-2 architecture and tiny-oracle implementation work.
+
+## T40-13 closeout update
+
+The inherited audit remains unchanged; the later T40-3 formal run used source SHA
+`483275dcdfa65fbc578bbee510878f2d065e2429` and the frozen identities listed above. It
+reached the Level-A action and completed with finite implementation/lifecycle evidence,
+but all five nonzero-source rho values exceeded the T40-3 transmission Gate. This is a
+controlled numerical negative, so T40-4 through T40-12 are `not_run_by_gate`. No
+response packet, direct side factor, QEP, Full Hybrid, or 0.7 nm PDE was rerun or
+created in this closeout.

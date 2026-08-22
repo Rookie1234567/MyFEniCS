@@ -1,0 +1,187 @@
+{
+  "schema": "task040.level_a.compact.v1",
+  "task": "Task040",
+  "stage": "T40-3",
+  "status": "controlled_numerical_negative",
+  "classification": "TRANSMISSION_MECHANISM_FAIL",
+  "classification_detail": "Level-A exact-subdomain transmission is unstable under the frozen three-group, first-order impedance, and fixed sweep.",
+  "source_sha": "483275dcdfa65fbc578bbee510878f2d065e2429",
+  "formal_root": "results/task040_level_a_bare_f_mpi8_483275dc",
+  "frozen_identity": {
+    "input": "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat",
+    "input_sha256": "4e60924b5997e3ca99e324ea14779f9014efc6a1304a9aa11de9c808353f1811",
+    "physical_model_sha256": "8391d46139646440d869aa43abe6a68bc921fc1972a10030c64be81dffdd527c",
+    "selected_mode_packet_manifest": "results/task039_v4_h4_m480_shared_packet_eaad0f94/manifest.json",
+    "selected_mode_packet_manifest_sha256": "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067",
+    "exact_spool_root": "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/numerical_output",
+    "exact_spool_catalog_sha256": "a2a7fb6fb01df4f795d31ff94f6ac6adf957ac4fe4a5c1a8d05176e3d64c0384",
+    "exact_spool_source_sha": "7e5d9b57a10b1093f0cb062eaf7bc12797c47e1f",
+    "mpi": 8,
+    "threads": 1,
+    "qep_calls": 0,
+    "pde_solve": "not_run",
+    "ordinary_defaults_changed": false
+  },
+  "checker": {
+    "command": "python -m benchmarks.check_task040_level_a --run-root results/task040_level_a_bare_f_mpi8_483275dc",
+    "source": "benchmarks/check_task040_level_a.py",
+    "checker_execution_parent_sha": "483275dcdfa65fbc578bbee510878f2d065e2429",
+    "checker_file_sha256": "7dcd2bd94fbf705d03000b41256373e9688984c005f52d0ba36e50912df1f081",
+    "source_reports_recomputed": true,
+    "worker_gate_status_ignored": true,
+    "formula": "rho = ||b - F_s M_s^-1 b||_2 / ||b||_2",
+    "thresholds": {
+      "mandatory_rho_lt": 1.0,
+      "worst_mandatory_rho_le": 0.95,
+      "preferred_rho_le": 0.90,
+      "zero_map_le": 1e-13,
+      "repeat_le": 1e-10,
+      "linearity_le": 1e-10
+    }
+  },
+  "raw_hashes": {
+    "watchdog_summary.json": "6fd00ae71871f8eaf0db98376607cb0d67c48067a8533bd555e687f0c6b9d43e",
+    "worker/run_summary.json": "3753a64043cc105e947f9f5b756276f00b383e75602fe5c636811a809aa368bc",
+    "memory_stage_markers.raw.jsonl": "a56985fa156964d80ae1bf669a7f805799f15b2d1509123bd663cf75703148ae",
+    "memory_stages.jsonl": "d46d9bc3ec323c3ad6eb97e09e6e1e8357ad9cfc3817cb3d2405dd4c2e8bf8d2",
+    "process_tree_samples.jsonl": "94d08cc3633a293f4ab28e1ed8e0e6fa65f6e8bccf7489b26d6e5712af3fc72d",
+    "worker_stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "one_apply": {
+    "physical_side_rhs": {
+      "source_norm": 0.0,
+      "output_norm": 0.0,
+      "true_residual_relative": null,
+      "zero_map": true
+    },
+    "modal_traction_positive": {
+      "source_norm": 5.203888364374479,
+      "output_norm": 108.73994438408597,
+      "true_residual_norm": 85.9301911483894,
+      "rho": 16.512689191540417,
+      "repeat_error": 2.1047705956293552e-14
+    },
+    "modal_traction_negative": {
+      "source_norm": 4.617843033490231,
+      "output_norm": 94.79133013766143,
+      "true_residual_norm": 65.76738882942891,
+      "rho": 14.24201480051629,
+      "repeat_error": 4.0035225258441935e-15
+    },
+    "external_dtn_coupling": {
+      "source_norm": 107.45953654437675,
+      "output_norm": 2500.2417874123535,
+      "true_residual_norm": 2465.67238404989,
+      "rho": 22.945123935386228,
+      "repeat_error": 5.26171109845213e-15
+    },
+    "fixed_random_repeat_0": {
+      "source_norm": 363.9322774573049,
+      "output_norm": 21824.612680713628,
+      "true_residual_norm": 10305.129879064327,
+      "rho": 28.316064601533686,
+      "repeat_error": 2.3357995680216784e-14
+    },
+    "fixed_random_repeat_1": {
+      "source_norm": 363.33626002091285,
+      "output_norm": 21699.22330147993,
+      "true_residual_norm": 9340.291918335137,
+      "rho": 25.70701839061571,
+      "repeat_error": 0.0
+    },
+    "worst_mandatory_rho": 28.316064601533686,
+    "mandatory_rho_pass": false,
+    "preferred_rho_pass": false
+  },
+  "identity_and_lifecycle": {
+    "all_outputs_finite": true,
+    "repeat_pass": true,
+    "linearity_pass": true,
+    "restriction_prolongation_pass": true,
+    "interface_mass_support_pass": true,
+    "bare_operator_unchanged_pass": true,
+    "interface_z": [-3.333333333333333, 4.0],
+    "outward_normal_signs": [1, -1],
+    "facet_count_global_each": 105,
+    "support_sets_exact_match": true,
+    "group_global_rows": [49140, 49140, 49140],
+    "group_local_rows": [5976, 6054, 5814],
+    "interface_coverage": [true, true],
+    "projection_sequence": [0, 1, 2, 2, 1, 0],
+    "formal_source_apply_count": 6,
+    "action_apply_count_delta": 13,
+    "factor_count_ready": 3,
+    "factor_count_after_cleanup": 0,
+    "full_side_exact_factor_count": 0,
+    "global_direct_factor_count": 0,
+    "nested_ksp_count": 0,
+    "oracle_only": true,
+    "scalable_candidate": false
+  },
+  "resource": {
+    "watchdog_return_code": 0,
+    "termination_reason": "natural_exit",
+    "peak_rss_bytes": 30422945792,
+    "peak_rss_gib": 28.333576202392578,
+    "wall_seconds_process_sample": 660.6481867840048,
+    "wall_seconds_marker_interval": 658.022411,
+    "hard_stop_bytes": 48318382080,
+    "swap_bytes": 0,
+    "sample_count": 1311,
+    "all_status_readable": true,
+    "dedicated_cgroup_present": false
+  },
+  "gate": {
+    "finite": true,
+    "zero_map": true,
+    "repeat": true,
+    "linearity": true,
+    "identity_and_resource": true,
+    "mandatory_rho": false,
+    "worst_rho": false,
+    "preferred_rho": false,
+    "overall": false
+  },
+  "implementation_history": {
+    "failed_root": "results/task040_level_a_bare_f_mpi8_52c88ff3",
+    "failed_root_source_sha": "52c88ff3b86e507dba335fc1c7661b207dad3b79",
+    "failed_root_classification": "implementation_failure",
+    "failed_root_exit": 1,
+    "failed_root_first_error": "ModuleNotFoundError: No module named benchmarks",
+    "repair_commit": "483275dcdfa65fbc578bbee510878f2d065e2429",
+    "failed_root_watchdog_summary_sha256": "f0ca9a3679fc331ff46cdde6cd99e09f88562a70e76f6774b7e62f57eb0b81"
+  },
+  "not_run_by_gate": {
+    "T40-4": "not_run_by_gate: T40-3 mandatory rho failure",
+    "T40-5": "not_run_by_gate: T40-3 mandatory rho failure",
+    "T40-6": "not_run_by_gate: T40-3 mandatory rho failure",
+    "T40-7": "not_run_by_gate: T40-3 mandatory rho failure",
+    "T40-8": "not_run_by_gate: bottom Level-A prerequisite failed",
+    "T40-9": "not_run_by_gate: bottom Level-A prerequisite failed",
+    "T40-10": "not_run_by_gate: bottom Level-A prerequisite failed",
+    "T40-11": "not_run_by_gate: bottom Level-A prerequisite failed",
+    "T40-12": "not_run_by_gate: bottom Level-A prerequisite failed"
+  },
+  "capacity_boundary": {
+    "bounded_local_pc": "not_established",
+    "coarse_information_required": "not_established",
+    "full_hybrid": "not_run",
+    "zero_point_seven_nm_pde": "not_run",
+    "conclusion": "The frozen Level-A transmission mechanism failed; this does not prove that every bounded local PC, a coarse space, the complete Hybrid solver, or 0.7 nm is infeasible."
+  },
+  "tests": {
+    "test_297": "serial 8/8; MPI2 8/8; MPI4 8/8",
+    "test_298": "3 passed after repair",
+    "test_299": "1 passed; hash-valid worker gate/status tamper ignored by recomputation",
+    "ruff_check": "passed",
+    "ruff_format_check": "passed",
+    "compileall": "passed",
+    "git_diff_check": "passed",
+    "benchmark_check": "302/302 passed"
+  },
+  "selective_merge_boundary": {
+    "reusable_candidate": ["watchdog module invocation regression", "interface support/mass audit", "factor ownership/lifecycle contracts"],
+    "research_only": ["three cross-section exact factors", "first-order impedance transmission oracle", "Level-A negative evidence"],
+    "do_not_promote": ["Level-A action as scalable side inverse", "full Hybrid or 0.7 nm conclusions"]
+  }
+}

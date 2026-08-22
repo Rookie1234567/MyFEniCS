@@ -1444,6 +1444,23 @@ V6 owner/basis、rank ladder、six probes、top、both-side、outer、recovery�
 0.7 nm PDE 均未运行。ordinary defaults 未改变；V6 research family 关闭，raw 和
 compact record 保留。
 
+
+## 3.44 Task040 Level-A side-factor transmission oracle
+
+Task040 在冻结 5 nm、1°、phi=0、S、p6h4、M480、MPI8 身份下，只完成了 bottom bare-F
+Level-A transmission oracle。它把问题缩小为三个两层子域之间的人工界面传递：若 rho 不能
+下降，就不能把这条局部 action 当作完整 Hybrid 的 side inverse。正式 source SHA 为
+`483275dcdfa65fbc578bbee510878f2d065e2429`。
+
+| Model ID | 方法/范围 | 数值与资源 | status | evidence |
+|---|---|---|---|---|
+| `task040_level_a_bare_f_transmission_mpi8` | first-order tangential impedance；three cross-section exact oracle factors；fixed 0→1→2→2→1→0 action | rho=`16.512689191540417, 14.24201480051629, 22.945123935386228, 28.316064601533686, 25.70701839061571`；worst=`28.316064601533686`; peak=`28.333576202392578 GiB` component；wall=`660.6481867840048 s`; swap=0; factors ready/cleanup=`3→0`, full/global/nested=`0/0/0` | `controlled_numerical_negative / TRANSMISSION_MECHANISM_FAIL` | [compact](../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_level_a_bare_f_transmission_v1.json)、[outcome](task040_hybrid_side_factor_pc/outcomes/transmission_mechanism_oracle.md) |
+
+T40-4 through T40-12 are `not_run_by_gate` because the T40-3 mandatory rho Gate failed.
+The 28.333576202392578 GiB value is a bottom component, not a full-workflow memory tier. This
+record does not establish bounded local-patch failure, coarse-space necessity, full Hybrid
+failure, or 0.7 nm infeasibility; those questions remain outside the executed evidence.
+
 # 4. 今后新增模型的登记模板
 
 每次正式计算至少新增一行主表，并按可用性新增衍射级和复振幅表。

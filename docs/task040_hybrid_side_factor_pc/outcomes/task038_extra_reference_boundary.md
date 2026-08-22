@@ -39,3 +39,11 @@ Task40 must not import the Task038-extra benchmark runner as a numerical core, c
 An implementation defect may be repaired only locally, with the original root/evidence retained and a focused regression. A real Gate failure must stop the dependent Task40 sequence with its measured residual, rho, factor inventory, resource and swap values. No sign, orientation, source, threshold, hard column, or partition rule may be changed to turn a failure into a pass.
 
 T40-0 therefore records Task038-extra as research-only architecture evidence. It does not authorize T40-1/T40-2 code, Level A/B formal work, top/full Hybrid work, 0.7 nm work, or any heavy run by itself.
+
+## T40-13 boundary
+
+The Task038-extra N2 material remains read-only architecture context. T40-3 used its
+own frozen Task040 implementation, sources, factors, watchdog, and checker; no N2
+residual or packed-factor result was reused as a numerical pass. The T40-3 negative
+therefore does not reclassify Task038-extra, and Task040 provides no new evidence for
+bounded local-patch capacity, coarse-space necessity, full Hybrid feasibility, or 0.7 nm.
