@@ -190,6 +190,10 @@ def test_class_owner_store_reuses_one_factor_per_exact_class():
     assert not hasattr(first, "_factor")
     assert plan.factor_count == 1
     assert plan.factor_bytes == packed_lower_bytes(10)
+    factor_audit = plan.factor_audit(first_digest)
+    assert factor_audit["factorization_relative_error"] <= 1.0e-11
+    assert factor_audit["fixed_rhs_solve_residual"] <= 1.0e-11
+    assert factor_audit["factor_audit_measured_once_per_class"] is True
     second.build()
     assert second.audit["factor_reused"] is True
     assert plan.factor_count == 1
@@ -201,6 +205,45 @@ def test_class_owner_store_reuses_one_factor_per_exact_class():
     first.destroy()
     second.destroy()
     third.destroy()
+
+
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size != 2,
+    reason="representative/non-owner template route requires MPI2",
+)
+def test_class_template_route_representation_nonlocal_to_factor_owner():
+    digest = next(
+        value
+        for value in ("a" * 64, "b" * 64, "c" * 64, "d" * 64)
+        if deterministic_class_owner(value, 2) == 1
+    )
+    plan = ExactClassOwnerPlan((digest,), MPI.COMM_WORLD)
+    matrix = 2.0 * np.eye(4, dtype=np.complex128) if MPI.COMM_WORLD.rank == 0 else None
+    plan.register_class_representative(digest, matrix, slot=0)
+    modes = np.zeros((4, 8), dtype=np.complex128)
+    modes[np.arange(4), np.arange(4)] = 1.0
+    result = plan.register_class_template(
+        digest,
+        tuple(("class", index) for index in range(4))
+        if MPI.COMM_WORLD.rank == 0
+        else None,
+        modes if MPI.COMM_WORLD.rank == 0 else None,
+        slot=0,
+        representative_rank=0,
+        participant_ranks=(0,),
+    )
+    if MPI.COMM_WORLD.rank == 0:
+        assert result is not None
+        assert result[1].shape == (4, 8)
+    else:
+        assert result is None
+        assert plan.factor_count == 1
+        assert plan.factor_audit(digest)["factor_owner_rank"] == 1
+    assert MPI.COMM_WORLD.allreduce(plan.factor_count, op=MPI.SUM) == 1
+    assert MPI.COMM_WORLD.allreduce(
+        len(plan.local_factor_audits), op=MPI.SUM
+    ) == 1
+    plan.destroy()
 
 
 def test_class_template_route_reuses_factor_and_maps_independent_patch_shards():

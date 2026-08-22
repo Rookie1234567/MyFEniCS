@@ -35,10 +35,14 @@ from .fullspace_local_spectral import (
     LocalSpectralPatch,
     N1_LEVELS,
     N1_MODE_CAP,
+    N1_REGIONAL_RANK,
     N1_TOP_RANK,
+    build_owner_local_multilevel_basis,
     build_regional_rayleigh_ritz,
     canonical_vector_digest,
+    deterministic_row_owner,
     map_mode_template_to_patch,
+    top_mixing_coefficient,
 )
 
 
@@ -953,6 +957,27 @@ def _build_reused_class_template_patches(
         for field in gradient_fields:
             del field
 
+    local_factor_audits = {
+        digest: dict(value) for digest, value in plan.local_factor_audits.items()
+    }
+    factor_audit_parts = comm.gather(local_factor_audits, root=0)
+    if comm.rank == 0:
+        global_factor_audits: dict[str, dict[str, Any]] = {}
+        for part in factor_audit_parts:
+            for digest, value in part.items():
+                if digest in global_factor_audits:
+                    raise RuntimeError(
+                        f"exact class {digest} has multiple factor owners"
+                    )
+                global_factor_audits[digest] = dict(value)
+        if set(global_factor_audits) != set(plan.class_digests):
+            raise RuntimeError("factor-owner audit is incomplete")
+    else:
+        global_factor_audits = None
+    global_factor_audits = comm.bcast(global_factor_audits, root=0)
+    for digest in plan.class_digests:
+        template_audits[digest].update(global_factor_audits[digest])
+
     patches: list[LocalSpectralPatch] = []
     for patch_id, metadata in enumerate(context["cell_metadata"]):
         template_keys, template_modes = class_templates[metadata["digest"]]
@@ -1033,6 +1058,7 @@ def _build_reused_class_template_patches(
         "owner_factor_bytes": plan.factor_bytes,
         "global_owner_factor_count": int(comm.allreduce(plan.factor_count, op=MPI.SUM)),
         "global_owner_factor_bytes": int(comm.allreduce(plan.factor_bytes, op=MPI.SUM)),
+        "factor_audits_by_class": global_factor_audits,
         "mode_template_count": len(plan.class_digests),
         "mode_template_bytes_transient_local": int(template_bytes_local),
         "mode_template_bytes_transient_global": int(
@@ -1051,6 +1077,10 @@ def _build_reused_class_template_patches(
         "B0_hermitian_relative_defect": max(
             float(value["B0_hermitian_relative_defect"])
             for value in template_audit_values
+        ),
+        "factorization_relative_error_max": max(
+            float(value["factorization_relative_error"])
+            for value in global_factor_audits.values()
         ),
         "M_local_hermitian_relative_defect": max(
             float(value["M_local_hermitian_relative_defect"])
@@ -1076,8 +1106,7 @@ def _build_reused_class_template_patches(
         "fixed_solve_residual_max": max(
             (
                 float(value["fixed_rhs_solve_residual"])
-                for value in template_audit_values
-                if value["fixed_rhs_solve_residual"] is not None
+                for value in global_factor_audits.values()
             ),
             default=None,
         ),
@@ -1134,13 +1163,61 @@ def _regional_owner(region: Any, active_ranks: tuple[int, ...]) -> int:
     return int(active_ranks[slot])
 
 
+def _route_region_expanded_to_row_owners(
+    comm: Any,
+    owner: int,
+    region: Any,
+    region_slot: int,
+    row_keys: Sequence[Any] | None,
+    expanded: np.ndarray | None,
+) -> tuple[tuple[Any, np.ndarray], ...]:
+    """Route one regional expanded shard to canonical row owners."""
+
+    if comm.rank == owner:
+        assert row_keys is not None and expanded is not None
+        destinations = tuple(
+            sorted(
+                {
+                    deterministic_row_owner(key, comm.size)
+                    for key in row_keys
+                }
+            )
+        )
+    else:
+        destinations = None
+    destinations = tuple(comm.bcast(destinations, root=owner))
+    tag = 8000 + int(region_slot)
+    if comm.rank == owner:
+        by_destination: dict[int, list[tuple[Any, np.ndarray]]] = {
+            rank: [] for rank in destinations
+        }
+        for index, key in enumerate(row_keys):
+            destination = deterministic_row_owner(key, comm.size)
+            by_destination[destination].append(
+                (key, np.ascontiguousarray(expanded[index, :]))
+            )
+        local = tuple(by_destination[owner])
+        for destination in destinations:
+            if destination != owner:
+                comm.send(tuple(by_destination[destination]), dest=destination, tag=tag)
+    elif comm.rank in destinations:
+        local = tuple(comm.recv(source=owner, tag=tag))
+    else:
+        local = ()
+    return local
+
+
 def build_real_local_regional_rayleigh_ritz(
     patches: tuple[LocalSpectralPatch, ...],
     function_space: Any,
     mesh_data: Any,
     floquet_data: Any,
     cfg: Any,
-) -> tuple[Mapping[Any, Mapping[str, Any]], dict[str, Any]]:
+    *,
+    return_multilevel: bool = False,
+) -> tuple[Mapping[Any, Mapping[str, Any]], dict[str, Any]] | tuple[
+    Mapping[Any, Mapping[str, Any]], dict[str, Any], Any
+]:
     """Aggregate fixed two-cell regions through participant-only messages."""
 
     context = _prepare_real_context(function_space, mesh_data, floquet_data, cfg)
@@ -1244,6 +1321,8 @@ def build_real_local_regional_rayleigh_ritz(
     regional_residuals: list[float] = []
     max_candidate_dimension = 0
     max_projected_dimension = 0
+    regional_accumulator: dict[Any, np.ndarray] = {}
+    top_accumulator: dict[Any, np.ndarray] = {}
     for region_slot, region in enumerate(ordered_regions):
         cell_order = inventory[region]
         active_ranks = participants[region]
@@ -1428,14 +1507,64 @@ def build_real_local_regional_rayleigh_ritz(
                     "streamed_one_region_at_a_time": True,
                 }
             )
-            records[region] = MappingProxyType(
-                {**compact, "coefficients": coefficients}
-            )
         else:
             compact = None
-        compact = comm.bcast(compact, root=owner)
-        if comm.rank != owner:
-            records[region] = MappingProxyType(compact)
+        if return_multilevel:
+            if comm.rank == owner:
+                for rank in active_ranks:
+                    if rank != owner:
+                        comm.send(
+                            coefficients,
+                            dest=rank,
+                            tag=7000 + region_slot,
+                        )
+                local_coefficients = coefficients
+            elif comm.rank in active_ranks:
+                local_coefficients = comm.recv(
+                    source=owner,
+                    tag=7000 + region_slot,
+                )
+            else:
+                local_coefficients = None
+            compact = comm.bcast(compact, root=owner)
+            record_payload = dict(compact)
+            if local_coefficients is not None:
+                record_payload["coefficients"] = np.ascontiguousarray(
+                    local_coefficients, dtype=np.complex128
+                )
+            records[region] = MappingProxyType(record_payload)
+            routed_rows = _route_region_expanded_to_row_owners(
+                comm,
+                owner,
+                region,
+                region_slot,
+                row_keys if comm.rank == owner else None,
+                expanded if comm.rank == owner else None,
+            )
+            for key, values in routed_rows:
+                if key not in regional_accumulator:
+                    regional_accumulator[key] = np.zeros(
+                        N1_REGIONAL_RANK, dtype=np.complex128
+                    )
+                    top_accumulator[key] = np.zeros(
+                        32, dtype=np.complex128
+                    )
+                regional_accumulator[key][
+                    : values.size
+                ] += values
+                for mode in range(values.size):
+                    for top_index in range(32):
+                        top_accumulator[key][top_index] += values[mode] * (
+                            top_mixing_coefficient(region, mode, top_index)
+                        )
+        else:
+            compact = comm.bcast(compact, root=owner)
+            if comm.rank == owner:
+                records[region] = MappingProxyType(
+                    {**compact, "coefficients": coefficients}
+                )
+            else:
+                records[region] = MappingProxyType(compact)
         patch_digests[region] = compact["canonical_patch_mode_digest"]
         expanded_digests[region] = compact["regional_expanded_mode_digest"]
         source_action_digests[region] = compact["source_action_digest"]
@@ -1456,6 +1585,26 @@ def build_real_local_regional_rayleigh_ritz(
         elif comm.rank in active_ranks:
             del candidates, local_contributions
         comm.barrier()
+    if return_multilevel:
+        local_row_keys = tuple(sorted(regional_accumulator, key=repr))
+        regional_columns = np.zeros(
+            (len(local_row_keys), 16), dtype=np.complex128
+        )
+        top_raw_columns = np.zeros(
+            (len(local_row_keys), 32), dtype=np.complex128
+        )
+        for row_index, key in enumerate(local_row_keys):
+            regional_columns[row_index, :] = regional_accumulator[key]
+            top_raw_columns[row_index, :] = top_accumulator[key]
+        basis = build_owner_local_multilevel_basis(
+            local_row_keys,
+            regional_columns,
+            top_raw_columns,
+            regional_mode_count=sum(regional_ranks),
+            comm=comm,
+        )
+    else:
+        basis = None
     audit = {
         "schema": "task038.n1.local-regional-rayleigh-ritz.v1",
         "macroregion_rule": "canonical_lower_cell_index_integer_division_by_2",
@@ -1499,12 +1648,28 @@ def build_real_local_regional_rayleigh_ritz(
         "regional_dense_row_operator_materialized": False,
         "participant_only_numeric_route": True,
         "source_independent": True,
-        "top_rank_built": False,
         "contraction_not_run": True,
         "global_numeric_allgather": False,
+        "multilevel_basis_built": return_multilevel,
+        "multilevel_basis_audit": (
+            dict(basis.audit) if basis is not None else None
+        ),
+        "regional_z16_bytes": (
+            basis.audit["regional_z16_bytes"] if basis is not None else None
+        ),
+        "top_z32_bytes": (
+            basis.audit["top_z32_bytes"] if basis is not None else None
+        ),
+        "top_mixing_schema": (
+            basis.audit["top_mixing_schema"] if basis is not None else None
+        ),
+        "top_rank_built": bool(basis is not None),
+        "global_direct_coarse_solve": False,
     }
     del context
-    return MappingProxyType(records), audit
+    if basis is None:
+        return MappingProxyType(records), audit
+    return MappingProxyType(records), audit, basis
 
 
 def _source_value(key: Any) -> complex:
@@ -1536,6 +1701,7 @@ def small_p2p3_local_action_oracle(
         if row not in context["slave_rows"] and key in source_keys
     }
     action_by_key = {key: 0.0j for key in source_by_key}
+    cell_action_by_key: dict[Any, dict[Any, complex]] = {}
     for metadata in context["cell_metadata"]:
         block, _unused, _mass = _cell_operators(metadata, context, with_mass=False)
         x = np.asarray(
@@ -1545,11 +1711,16 @@ def small_p2p3_local_action_oracle(
         values = block @ x
         for key, value in zip(metadata["row_keys"], values, strict=True):
             action_by_key[key] += complex(value)
+        cell_action_by_key[metadata["cell_key"]] = {
+            key: complex(value)
+            for key, value in zip(metadata["row_keys"], values, strict=True)
+        }
         del block, _unused, _mass, x, values
     return {
         "canonical_source": source_by_key,
         "source_by_raw_row": source_by_raw,
         "local_action_by_key": action_by_key,
+        "cell_action_by_key": cell_action_by_key,
         "free_rows_by_canonical_key": tuple(
             sorted(free_raw_rows, key=lambda row: repr(context["raw_to_key"][row]))
         ),
@@ -1673,6 +1844,25 @@ def build_real_local_spectral_patches(
         )
         adjoint_errors.append(patch.restriction_prolongation_adjoint_error(x, c))
 
+    local_factor_audits = {
+        digest: dict(value) for digest, value in plan.local_factor_audits.items()
+    }
+    factor_audit_parts = comm.gather(local_factor_audits, root=0)
+    if comm.rank == 0:
+        global_factor_audits: dict[str, dict[str, Any]] = {}
+        for part in factor_audit_parts:
+            for digest, value in part.items():
+                if digest in global_factor_audits:
+                    raise RuntimeError(
+                        f"exact class {digest} has multiple factor owners"
+                    )
+                global_factor_audits[digest] = dict(value)
+        if set(global_factor_audits) != set(plan.class_digests):
+            raise RuntimeError("factor-owner audit is incomplete")
+    else:
+        global_factor_audits = None
+    global_factor_audits = comm.bcast(global_factor_audits, root=0)
+
     patch_tuple = tuple(patches)
     audit = {
         "schema": "task038.n1.real-local-cell-adapter.v1",
@@ -1692,6 +1882,15 @@ def build_real_local_spectral_patches(
         ),
         "owner_factor_count": plan.factor_count,
         "owner_factor_bytes": plan.factor_bytes,
+        "factor_audits_by_class": global_factor_audits,
+        "factorization_relative_error_max": max(
+            float(value["factorization_relative_error"])
+            for value in global_factor_audits.values()
+        ),
+        "fixed_solve_residual_max": max(
+            float(value["fixed_rhs_solve_residual"])
+            for value in global_factor_audits.values()
+        ),
         "global_owner_factor_count": int(
             comm.allreduce(plan.factor_count, op=MPI.SUM)
         ),
@@ -1703,11 +1902,6 @@ def build_real_local_spectral_patches(
         "gradient_m_gram_relative_defect_max": max(gradient_gram_defects),
         "projected_eigen_residual_max": max(
             patch.audit["generalized_eigen_residual"] for patch in patches
-        ),
-        "fixed_solve_residual_max": max(
-            patch.audit["fixed_rhs_solve_residual"]
-            for patch in patches
-            if patch.audit["fixed_rhs_solve_residual"] is not None
         ),
         "pou_closure_relative_error": _distributed_pou_closure(
             function_space, context, patches, expected

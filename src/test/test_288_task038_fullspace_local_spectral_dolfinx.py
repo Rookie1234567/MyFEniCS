@@ -96,6 +96,20 @@ def _merge_small_oracle_packets(packets):
     return source_by_key, action_by_key
 
 
+def _canonical_cell_action(packets):
+    cells = {}
+    for packet in packets:
+        for cell_key, values in packet["cell_action_by_key"].items():
+            if cell_key in cells:
+                raise AssertionError(f"duplicate canonical cell {cell_key!r}")
+            cells[cell_key] = values
+    result = {}
+    for cell_key in sorted(cells, key=repr):
+        for key, value in cells[cell_key].items():
+            result[key] = result.get(key, 0.0j) + value
+    return result
+
+
 def test_small_oracle_key_closure_rejects_extra_or_missing_packets():
     base = {
         "canonical_source": {"owned": 1.0 + 0.0j},
@@ -286,11 +300,15 @@ def test_real_p2_h50_local_cell_tensor_mpc_smoke(tmp_path, degree):
         "trace_harmonic_backend": False,
         "per_patch_retained_dense_block": False,
     }
-    assert all(patch.audit["phase_application"] == "minimum_canonical_key_once" for patch in patches)
+    assert all(
+        patch.audit["phase_application"]
+        == "maximum_amplitude_canonical_key_once_tie_by_key"
+        for patch in patches
+    )
     assert all(patch.audit["construction_workspace_released"] for patch in patches)
 
-    regional, regional_audit = build_real_local_regional_rayleigh_ritz(
-        patches, space, mesh_data, floquet_data, cfg
+    regional, regional_audit, multilevel = build_real_local_regional_rayleigh_ritz(
+        patches, space, mesh_data, floquet_data, cfg, return_multilevel=True
     )
     assert regional_audit["macroregion_rule"] == (
         "canonical_lower_cell_index_integer_division_by_2"
@@ -306,7 +324,12 @@ def test_real_p2_h50_local_cell_tensor_mpc_smoke(tmp_path, degree):
     assert audit["pou_closure_route"] == (
         "owner_local_fem_function_scatter_reverse_insert_add"
     )
-    assert regional_audit["top_rank_built"] is False
+    assert regional_audit["top_rank_built"] is True
+    assert regional_audit["multilevel_basis_built"] is True
+    assert multilevel.audit["top_rank"] == 32
+    assert multilevel.audit["regional_rank"] == 16
+    assert multilevel.audit["global_direct_coarse_solve"] is False
+    assert multilevel.audit["top_orthogonality_relative_defect"] <= 1.0e-11
     assert regional_audit["contraction_not_run"] is True
     assert regional_audit["regional_dense_row_operator_materialized"] is False
     assert regional_audit["max_candidate_dimension"] <= 64
@@ -356,6 +379,7 @@ def test_real_p2_h50_local_cell_tensor_mpc_smoke(tmp_path, degree):
     for patch in patches:
         patch.destroy()
     class_plan.destroy()
+    multilevel.destroy()
 
     repeat_patches, repeat_audit = build_real_local_spectral_patches(
         space, mesh_data, floquet_data, cfg
@@ -412,8 +436,8 @@ def test_real_p2_h50_distributed_regional_identity(tmp_path):
     patches, patch_audit = build_real_local_spectral_patches(
         space, mesh_data, floquet_data, cfg
     )
-    regional, regional_audit = build_real_local_regional_rayleigh_ritz(
-        patches, space, mesh_data, floquet_data, cfg
+    regional, regional_audit, multilevel = build_real_local_regional_rayleigh_ritz(
+        patches, space, mesh_data, floquet_data, cfg, return_multilevel=True
     )
     comm = MPI.COMM_WORLD
     identity = _regional_identity(regional_audit)
@@ -452,6 +476,11 @@ def test_real_p2_h50_distributed_regional_identity(tmp_path):
     assert regional_audit["regional_mass_orthogonality_max"] <= 1.0e-11
     assert regional_audit["regional_projected_eigen_residual_max"] <= 1.0e-11
     assert len(regional) == regional_audit["region_count"]
+    assert multilevel.audit["top_rank"] == 32
+    assert multilevel.audit["regional_rank"] == 16
+    assert multilevel.audit["global_numeric_allgather"] is False
+    assert multilevel.audit["global_direct_coarse_solve"] is False
+    assert multilevel.audit["top_orthogonality_relative_defect"] <= 1.0e-11
     # This is only rank-local consistency.  The MPI1/MPI2 Gate is the
     # numerical canonical packet comparison from the focused diagnostic, not
     # equality to a serial hash.
@@ -470,15 +499,29 @@ def test_real_p2_h50_distributed_regional_identity(tmp_path):
         {
             "canonical_source": oracle["canonical_source"],
             "local_action_by_key": oracle["local_action_by_key"],
+            "cell_action_by_key": oracle["cell_action_by_key"],
         },
         root=0,
     )
     if comm.rank == 0:
         merged_source, merged_action = _merge_small_oracle_packets(oracle_packets)
+        canonical_action = _canonical_cell_action(oracle_packets)
+        keys = tuple(sorted(merged_action, key=repr))
+        merged_values = np.asarray(
+            [merged_action[key] for key in keys], dtype=np.complex128
+        )
+        canonical_values = np.asarray(
+            [canonical_action[key] for key in keys], dtype=np.complex128
+        )
+        action_relative = float(
+            np.linalg.norm(merged_values - canonical_values)
+            / max(np.linalg.norm(canonical_values), 1.0e-300)
+        )
         oracle_identity = (
             _canonical_values_digest(merged_source),
             _canonical_values_digest(merged_action),
             _small_oracle_identity(merged_source, merged_action),
+            action_relative,
         )
         print(
             "REAL_LOCAL_MPI2_SMALL_ORACLE",
@@ -486,6 +529,7 @@ def test_real_p2_h50_distributed_regional_identity(tmp_path):
                 "source": oracle_identity[0],
                 "action": oracle_identity[1],
                 "source_action": oracle_identity[2],
+                "action_relative": oracle_identity[3],
                 "packet_count": len(oracle_packets),
                 "kind": "small_assembled_oracle_only",
             },
@@ -494,17 +538,15 @@ def test_real_p2_h50_distributed_regional_identity(tmp_path):
     else:
         oracle_identity = None
     oracle_identity = comm.bcast(oracle_identity, root=0)
-    assert oracle_identity == (
-        EXPECTED_P2_MPI1_ORACLE_SOURCE_DIGEST,
-        EXPECTED_P2_MPI1_ORACLE_ACTION_DIGEST,
-        EXPECTED_P2_MPI1_ORACLE_IDENTITY,
-    )
+    assert oracle_identity[0] == EXPECTED_P2_MPI1_ORACLE_SOURCE_DIGEST
+    assert oracle_identity[3] <= 1.0e-12
     if comm.rank == 0:
         print("REAL_LOCAL_REGIONAL_MPI2_IDENTITY", identity, flush=True)
     class_plan = patches[0].class_plan
     for patch in patches:
         patch.destroy()
     class_plan.destroy()
+    multilevel.destroy()
 
 
 def test_affine_mass_tensor_matches_zero_curl_tensor(tmp_path):

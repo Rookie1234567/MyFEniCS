@@ -11,6 +11,13 @@ from mpi4py import MPI
 from petsc4py import PETSc
 
 from src.solvers.fullspace_adaptive_coarse import FullspaceAdaptiveCoarse
+from src.solvers.fullspace_local_spectral import (
+    N1_REGIONAL_RANK,
+    N1_TOP_RANK,
+    build_owner_local_multilevel_basis,
+    deterministic_row_owner,
+    top_mixing_coefficient,
+)
 
 
 class _MockBasis:
@@ -46,6 +53,42 @@ class _ArrayPhysicalAction:
         self.apply_count += 1
 
 
+class _MockLocalForm:
+    def __init__(self, array: np.ndarray):
+        self.array_w = array
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args):
+        return False
+
+    def set(self, value):
+        self.array_w[:] = value
+
+
+class _MockDistributedVec:
+    def __init__(self, size: int):
+        self._array = np.zeros(size, dtype=np.complex128)
+        self.destroyed = False
+
+    def localForm(self):
+        return _MockLocalForm(self._array)
+
+    def ghostUpdate(self, **_kwargs):
+        return None
+
+    def getArray(self, readonly=False):
+        del readonly
+        return self._array
+
+    def duplicate(self):
+        return _MockDistributedVec(self._array.size)
+
+    def destroy(self):
+        self.destroyed = True
+
+
 class _NonDeterministicPhysicalAction(_ArrayPhysicalAction):
     def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         super().apply(source, target)
@@ -55,6 +98,47 @@ class _NonDeterministicPhysicalAction(_ArrayPhysicalAction):
 def _template_factory(size: int):
     template = PETSc.Vec().createSeq(size, comm=MPI.COMM_WORLD)
     return template, template.duplicate
+
+
+def _multilevel_fixture(comm):
+    global_keys = tuple(("row", index) for index in range(64))
+    global_regional = np.asarray(
+        [
+            [
+                complex(
+                    np.sin((row + 1) * (mode + 1) / 17.0),
+                    np.cos((row + 2) * (mode + 3) / 19.0),
+                )
+                for mode in range(32)
+            ]
+            for row in range(64)
+        ],
+        dtype=np.complex128,
+    )
+    global_regional[:, 0] += 2.0
+    global_regional[:, 1] += np.arange(64)
+    regional_columns = np.zeros((0, N1_REGIONAL_RANK), dtype=np.complex128)
+    top_raw = np.zeros((0, N1_TOP_RANK), dtype=np.complex128)
+    local_rows = [
+        index
+        for index, key in enumerate(global_keys)
+        if deterministic_row_owner(key, comm.size) == comm.rank
+    ]
+    regional_values = np.asarray(
+        [global_regional[index, :16] for index in local_rows],
+        dtype=np.complex128,
+    )
+    top_values = np.zeros((len(local_rows), N1_TOP_RANK), dtype=np.complex128)
+    for local_index, row in enumerate(local_rows):
+        for mode in range(32):
+            for top_index in range(N1_TOP_RANK):
+                top_values[local_index, top_index] += (
+                    global_regional[row, mode]
+                    * top_mixing_coefficient(("region", 0), mode, top_index)
+                )
+    regional_columns = regional_values
+    top_raw = top_values
+    return tuple(global_keys[index] for index in local_rows), regional_columns, top_raw
 
 
 @pytest.mark.skipif(
@@ -232,3 +316,50 @@ def test_adaptive_coarse_ast_forbids_full_matrix_and_basis_copies():
     assert "numeric_allgather" in text
     assert "np.empty_like(self._z" in text
     assert ".copy(" not in text
+
+
+@pytest.mark.skipif(
+    MPI.COMM_WORLD.size not in (1, 2),
+    reason="small owner-local multilevel smoke is MPI1/MPI2 only",
+)
+def test_owner_local_multilevel_mock_exact_action_and_retained_layers():
+    comm = MPI.COMM_WORLD
+    row_keys, regional_columns, top_raw = _multilevel_fixture(comm)
+    basis = build_owner_local_multilevel_basis(
+        row_keys,
+        regional_columns,
+        top_raw,
+        regional_mode_count=32,
+        comm=comm,
+    )
+    assert basis.audit["regional_rank"] == 16
+    assert basis.audit["top_rank"] == 32
+    assert basis.audit["global_numeric_allgather"] is False
+    assert basis.audit["global_direct_coarse_solve"] is False
+    assert basis.audit["top_orthogonality_relative_defect"] <= 1.0e-11
+    assert np.shares_memory(basis.columns, basis._columns)
+    assert np.shares_memory(basis.regional_columns, basis._regional_columns)
+    local_rows = len(row_keys)
+    template = _MockDistributedVec(local_rows)
+    action = _ArrayPhysicalAction(np.eye(local_rows, dtype=np.complex128))
+    coarse = FullspaceAdaptiveCoarse(basis, action, template.duplicate)
+    try:
+        coarse.build()
+        assert np.allclose(
+            coarse.e,
+            np.eye(N1_TOP_RANK, dtype=np.complex128),
+            rtol=0.0,
+            atol=1.0e-11,
+        )
+        assert coarse.audit["az_repeat_exact"] is True
+        assert coarse.audit["physical_consistency_relative"] <= 1.0e-11
+        assert basis.regional_columns.shape[1] == N1_REGIONAL_RANK
+        assert (
+            basis.audit["regional_z16_bytes"]["global_sum"]
+            == 64 * N1_REGIONAL_RANK * 16
+        )
+        assert action.apply_count == 2 * N1_TOP_RANK + 1
+    finally:
+        coarse.destroy()
+        template.destroy()
+        basis.destroy()

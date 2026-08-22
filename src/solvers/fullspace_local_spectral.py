@@ -251,6 +251,7 @@ class ExactClassOwnerPlan:
             }
         )
         self._factors: dict[str, tuple[_PackedCholesky, str]] = {}
+        self._factor_audits: dict[str, dict[str, Any]] = {}
 
     def owner(self, class_digest: str) -> int:
         return int(self.owners[_class_digest(class_digest)])
@@ -287,8 +288,40 @@ class ExactClassOwnerPlan:
                 f"packed factor bytes {factor.nbytes} exceed limit "
                 f"{N1_FACTOR_BYTES_LIMIT}"
             )
+        fixed_rhs = np.arange(array.shape[0], dtype=np.float64) + (0.125 + 0.25j)
+        fixed_solution = factor.solve(fixed_rhs)
+        fixed_residual = _relative(array @ fixed_solution - fixed_rhs, fixed_rhs)
+        if not np.isfinite(fixed_residual) or fixed_residual > N1_ALGEBRA_LIMIT:
+            raise RuntimeError(
+                f"fixed local factor solve residual {fixed_residual:.17g} "
+                f"exceeds limit {N1_ALGEBRA_LIMIT:.17g}"
+            )
+        self._factor_audits[digest] = {
+            "factorization_relative_error": float(
+                factor.factorization_relative_error
+            ),
+            "fixed_rhs_solve_residual": float(fixed_residual),
+            "factor_bytes": int(factor.nbytes),
+            "factor_owner_rank": int(self.comm.rank),
+            "factor_audit_measured_once_per_class": True,
+        }
         self._factors[digest] = (factor, operator_digest)
         return factor, False
+
+    def factor_audit(self, class_digest: str) -> Mapping[str, Any] | None:
+        """Return the owner-measured scalar audit for one retained factor."""
+
+        value = self._factor_audits.get(_class_digest(class_digest))
+        return None if value is None else MappingProxyType(dict(value))
+
+    @property
+    def local_factor_audits(self) -> Mapping[str, Mapping[str, Any]]:
+        return MappingProxyType(
+            {
+                digest: MappingProxyType(dict(value))
+                for digest, value in self._factor_audits.items()
+            }
+        )
 
     def register_class_representative(
         self,
@@ -449,6 +482,7 @@ class ExactClassOwnerPlan:
         """Release this shared class-factor store exactly once."""
 
         self._factors.clear()
+        self._factor_audits.clear()
 
     @property
     def audit(self) -> Mapping[str, Any]:
@@ -462,6 +496,10 @@ class ExactClassOwnerPlan:
                 "local_factor_class_count": int(local_owned),
                 "local_factor_count_measured": self.factor_count,
                 "local_factor_bytes_measured": self.factor_bytes,
+                "local_factor_audits": {
+                    digest: dict(value)
+                    for digest, value in self._factor_audits.items()
+                },
                 "one_global_factor_per_class": True,
                 "per_rank_factor_replication": False,
                 "bounded_owner_route_entries": N1_MAX_LOCAL_ROWS,
@@ -544,6 +582,205 @@ class ExactClassOwnerPlan:
             raise RuntimeError(route_error)
         result = self.comm.scatter(solutions, root=owner)
         return np.ascontiguousarray(np.asarray(result, dtype=np.complex128))
+
+
+N2_TOP_MIXING_SCHEMA = "task038.n2.top-mixing.sha256.v1"
+N2_TOP_MIXING_SEED = "task038-extra-fixed-top-seed-20260822"
+
+
+def deterministic_row_owner(row_key: Any, mpi_size: int) -> int:
+    """Choose an owner from a canonical row key, never from a PETSc id."""
+
+    size = int(mpi_size)
+    if size < 1:
+        raise ValueError("mpi_size must be positive")
+    frame = repr(("task038.n2.row-owner.v1", row_key)).encode("utf-8")
+    digest = hashlib.sha256(frame).digest()
+    return int.from_bytes(digest[:8], "big") % size
+
+
+def top_mixing_coefficient(
+    region_key: Any, regional_mode_index: int, top_index: int
+) -> complex:
+    """Return one fixed source-independent SHA256 mixing coefficient."""
+
+    frame = repr(
+        (
+            N2_TOP_MIXING_SCHEMA,
+            N2_TOP_MIXING_SEED,
+            region_key,
+            int(regional_mode_index),
+            int(top_index),
+        )
+    ).encode("utf-8")
+    digest = hashlib.sha256(frame).digest()
+    real = int.from_bytes(digest[:8], "big") / 2.0**64 - 0.5
+    imag = int.from_bytes(digest[8:16], "big") / 2.0**64 - 0.5
+    return complex(real, imag)
+
+
+def _owner_local_byte_stats(comm: Any, local_bytes: int) -> dict[str, int]:
+    value = int(local_bytes)
+    return {
+        "local": value,
+        "global_sum": int(comm.allreduce(value, op=MPI.SUM)),
+        "global_max": int(comm.allreduce(value, op=MPI.MAX)),
+    }
+
+
+class OwnerLocalMultilevelBasis:
+    """Retain regional Z16 and mixed/orthonormal top Z32 by row owner."""
+
+    def __init__(
+        self,
+        row_keys: Sequence[Any],
+        regional_columns: np.ndarray,
+        top_columns: np.ndarray,
+        *,
+        regional_mode_count: int,
+        comm: Any,
+        top_orthogonality_defect: float,
+    ) -> None:
+        keys = tuple(row_keys)
+        regional = np.ascontiguousarray(
+            np.asarray(regional_columns, dtype=np.complex128)
+        )
+        top = np.ascontiguousarray(np.asarray(top_columns, dtype=np.complex128))
+        if len(set(keys)) != len(keys):
+            raise ValueError("owner-local multilevel row keys are duplicated")
+        if regional.ndim != 2 or regional.shape[0] != len(keys):
+            raise ValueError("regional Z16 rows do not match canonical keys")
+        if regional.shape[1] != N1_REGIONAL_RANK:
+            raise ValueError("regional owner-local basis must have rank 16")
+        if top.shape != (len(keys), N1_TOP_RANK):
+            raise ValueError("top owner-local basis must have rank 32")
+        if not np.all(np.isfinite(regional)) or not np.all(np.isfinite(top)):
+            raise ValueError("multilevel basis values must be finite")
+        regional.flags.writeable = False
+        top.flags.writeable = False
+        self.comm = comm
+        self._row_keys = keys
+        self._regional_columns = regional
+        self._columns = top
+        self._audit = MappingProxyType(
+            {
+                "schema": "fullspace.n2.owner-local-multilevel-basis.v1",
+                "regional_rank": N1_REGIONAL_RANK,
+                "top_rank": N1_TOP_RANK,
+                "regional_mode_count": int(regional_mode_count),
+                "regional_z16_bytes": _owner_local_byte_stats(
+                    comm, regional.nbytes
+                ),
+                "top_z32_bytes": _owner_local_byte_stats(comm, top.nbytes),
+                "top_orthogonality_relative_defect": float(
+                    top_orthogonality_defect
+                ),
+                "top_mixing_schema": N2_TOP_MIXING_SCHEMA,
+                "top_mixing_seed": N2_TOP_MIXING_SEED,
+                "top_gram_collective": "32x32_small_numeric_allreduce",
+                "construction_workspace_released": True,
+                "regional_shards_owner_local": True,
+                "global_numeric_allgather": False,
+                "global_aij_materialized": False,
+                "global_schur_materialized": False,
+                "global_factor_materialized": False,
+                "global_direct_coarse_solve": False,
+            }
+        )
+        self._destroyed = False
+
+    @property
+    def columns(self) -> np.ndarray:
+        if self._destroyed:
+            raise RuntimeError("multilevel basis has been destroyed")
+        view = self._columns.view()
+        view.flags.writeable = False
+        return view
+
+    @property
+    def regional_columns(self) -> np.ndarray:
+        if self._destroyed:
+            raise RuntimeError("multilevel basis has been destroyed")
+        view = self._regional_columns.view()
+        view.flags.writeable = False
+        return view
+
+    @property
+    def row_keys(self) -> tuple[Any, ...]:
+        return self._row_keys
+
+    @property
+    def audit(self) -> Mapping[str, Any]:
+        return self._audit
+
+    def destroy(self) -> None:
+        if self._destroyed:
+            return
+        self._destroyed = True
+        self._columns = np.empty((0, N1_TOP_RANK), dtype=np.complex128)
+        self._regional_columns = np.empty(
+            (0, N1_REGIONAL_RANK), dtype=np.complex128
+        )
+
+
+def build_owner_local_multilevel_basis(
+    row_keys: Sequence[Any],
+    regional_columns: np.ndarray,
+    top_raw_columns: np.ndarray,
+    *,
+    regional_mode_count: int,
+    comm: Any = MPI.COMM_WORLD,
+) -> OwnerLocalMultilevelBasis:
+    """Normalize one owner-local regional/top construction without FE gather."""
+
+    keys = tuple(row_keys)
+    regional = np.ascontiguousarray(
+        np.asarray(regional_columns, dtype=np.complex128)
+    )
+    raw_top = np.ascontiguousarray(np.asarray(top_raw_columns, dtype=np.complex128))
+    if regional.shape != (len(keys), N1_REGIONAL_RANK):
+        raise ValueError("regional Z16 shape is not owner-local and fixed")
+    if raw_top.shape != (len(keys), N1_TOP_RANK):
+        raise ValueError("top raw shape is not owner-local and fixed")
+    if int(regional_mode_count) < N1_TOP_RANK:
+        raise RuntimeError(
+            f"top rank {N1_TOP_RANK} requires at least {N1_TOP_RANK} "
+            f"regional modes; value={int(regional_mode_count)}"
+        )
+    gram = np.asarray(
+        comm.allreduce(raw_top.conj().T @ raw_top, op=MPI.SUM),
+        dtype=np.complex128,
+    )
+    if not np.all(np.isfinite(gram)):
+        raise RuntimeError("top Gram is non-finite")
+    factor = np.linalg.cholesky((gram + gram.conj().T) * 0.5)
+    normalization = np.linalg.solve(
+        factor.conj().T, np.eye(N1_TOP_RANK, dtype=np.complex128)
+    )
+    top = np.ascontiguousarray(raw_top @ normalization)
+    top_gram = np.asarray(
+        comm.allreduce(top.conj().T @ top, op=MPI.SUM),
+        dtype=np.complex128,
+    )
+    defect = _relative(
+        top_gram - np.eye(N1_TOP_RANK, dtype=np.complex128),
+        np.eye(N1_TOP_RANK, dtype=np.complex128),
+    )
+    if not np.isfinite(defect) or defect > N1_ALGEBRA_LIMIT:
+        raise RuntimeError(
+            f"top Z32 orthogonality {defect:.17g} exceeds limit "
+            f"{N1_ALGEBRA_LIMIT:.17g}"
+        )
+    basis = OwnerLocalMultilevelBasis(
+        keys,
+        regional,
+        top,
+        regional_mode_count=int(regional_mode_count),
+        comm=comm,
+        top_orthogonality_defect=float(defect),
+    )
+    del gram, factor, normalization, raw_top, top_gram
+    return basis
 
 
 class _PackedCholesky:
@@ -793,7 +1030,7 @@ class LocalSpectralPatch:
             "mode_shard_bytes_retained": int(modes.nbytes),
             "dense_workspace_released": True,
             "construction_workspace_released": True,
-            "phase_application": "minimum_canonical_key_once",
+            "phase_application": "maximum_amplitude_canonical_key_once_tie_by_key",
             "source_independent": True,
             "coarse_levels": N1_LEVELS,
             "regional_rank": N1_REGIONAL_RANK,
@@ -872,13 +1109,13 @@ class LocalSpectralPatch:
 
     def _phase_fix(self, vector: np.ndarray) -> np.ndarray:
         candidates = [
-            (str(self.row_keys[index]), index)
+            (-abs(value), str(self.row_keys[index]), index)
             for index, value in enumerate(vector)
             if abs(value) > N1_PHASE_ZERO
         ]
         if not candidates:
             raise RuntimeError("local mode has no nonzero canonical phase anchor")
-        _key, index = min(candidates)
+        _amplitude, _key, index = min(candidates)
         return vector * np.exp(-1j * np.angle(vector[index]))
 
     def _build_modes(self) -> tuple[np.ndarray, dict[str, Any]]:
@@ -998,7 +1235,7 @@ class LocalSpectralPatch:
             "pou_weight_rule": "one_over_canonical_shared_row_multiplicity",
             "pou_closure_relative_error": None,
             "restriction_prolongation_adjoint_relative_error": None,
-            "phase_application": "minimum_canonical_key_once",
+            "phase_application": "maximum_amplitude_canonical_key_once_tie_by_key",
             "source_independent": True,
             "coarse_levels": N1_LEVELS,
             "regional_rank": N1_REGIONAL_RANK,
@@ -1028,22 +1265,10 @@ class LocalSpectralPatch:
         )
         if owner_local:
             assert factor is not None
-            factor_bytes = factor.nbytes
-            fixed_rhs = np.arange(self._row_count, dtype=np.float64) + (0.125 + 0.25j)
-            fixed_solution = factor.solve(fixed_rhs)
-            fixed_residual = _relative(
-                self.block @ fixed_solution - fixed_rhs, fixed_rhs
-            )
-            if fixed_residual > N1_ALGEBRA_LIMIT:
-                raise RuntimeError(
-                    f"fixed local factor solve residual {fixed_residual} exceeds "
-                    f"limit {N1_ALGEBRA_LIMIT}"
-                )
-            audit["factor_bytes"] = factor_bytes
-            audit["fixed_rhs_solve_residual"] = fixed_residual
-            audit["factorization_relative_error"] = (
-                factor.factorization_relative_error
-            )
+            factor_audit = self.class_plan.factor_audit(self.class_digest)
+            if factor_audit is None:
+                raise RuntimeError("owner factor audit was not measured")
+            audit.update(dict(factor_audit))
             audit["factor_reused"] = factor_reused
         else:
             audit["factor_bytes"] = 0
@@ -1166,6 +1391,7 @@ def map_mode_template_to_patch(
 __all__ = (
     "ExactClassOwnerPlan",
     "LocalSpectralPatch",
+    "OwnerLocalMultilevelBasis",
     "N1_FACTOR_BYTES_LIMIT",
     "N1_DEGENERATE_CLUSTER_ULPS",
     "N1_LEVELS",
@@ -1175,11 +1401,15 @@ __all__ = (
     "N1_PROFILE",
     "N1_REGIONAL_RANK",
     "N1_TOP_RANK",
+    "N2_TOP_MIXING_SCHEMA",
+    "build_owner_local_multilevel_basis",
     "canonical_pou_closure_error",
     "canonicalize_degenerate_eigenvectors",
     "canonical_vector_digest",
     "build_regional_rayleigh_ritz",
     "deterministic_class_owner",
+    "deterministic_row_owner",
     "map_mode_template_to_patch",
     "packed_lower_bytes",
+    "top_mixing_coefficient",
 )
