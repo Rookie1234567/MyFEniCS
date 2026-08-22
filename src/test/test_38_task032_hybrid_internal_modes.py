@@ -338,6 +338,12 @@ class Task032HybridInternalModeTests(unittest.TestCase):
                     "streamed projection eagerly materialized canonical traces"
                 ),
             ),
+            mock.patch(
+                "src.coupling.modal_trace_projection._assemble_trace_mass",
+                side_effect=AssertionError(
+                    "streamed projection materialized trace mass matrix"
+                ),
+            ),
         ):
             streamed = build_streamed_projection_only(
                 self.bottom_system,
@@ -373,6 +379,10 @@ class Task032HybridInternalModeTests(unittest.TestCase):
             self.assertEqual(
                 streamed.audit["canonical_trace_materialization"],
                 "single_reusable",
+            )
+            self.assertFalse(streamed.audit["trace_mass_matrix_materialized"])
+            self.assertEqual(
+                streamed.audit["trace_mass_action"], "reusable_form_action"
             )
             self.assertFalse(streamed.audit["full_mode_vectors_retained"])
             self.assertFalse(streamed.audit["positive_traction_matrix"])
@@ -545,12 +555,18 @@ class Task032StreamedProjectionFreshLifecycleTests(unittest.TestCase):
                 )
             return result
 
-        streamed = build_streamed_projection_only(
-            self.system,
-            self.spaces,
-            mode_pair,
-            mode_count=2,
-        )
+        with mock.patch(
+            "src.coupling.modal_trace_projection._assemble_trace_mass",
+            side_effect=AssertionError(
+                "streamed projection materialized trace mass matrix"
+            ),
+        ):
+            streamed = build_streamed_projection_only(
+                self.system,
+                self.spaces,
+                mode_pair,
+                mode_count=2,
+            )
         try:
             self.assertGreater(streamed.audit["trace_gram_condition"], 1.0)
             self.assertGreater(streamed.audit["canonical_mapping_condition"], 1.0)
@@ -559,6 +575,10 @@ class Task032StreamedProjectionFreshLifecycleTests(unittest.TestCase):
             self.assertEqual(
                 streamed.audit["canonical_trace_materialization"],
                 "single_reusable",
+            )
+            self.assertFalse(streamed.audit["trace_mass_matrix_materialized"])
+            self.assertEqual(
+                streamed.audit["trace_mass_action"], "reusable_form_action"
             )
             self.assertFalse(streamed.audit["positive_traction_matrix"])
             self.assertFalse(streamed.audit["negative_traction_matrix"])

@@ -157,6 +157,91 @@ class StreamedProjectionOnly:
             self._destroyed = True
 
 
+class _StreamedModalTraceProjection:
+    """Factor-free trace projection using reusable mass-form actions."""
+
+    def __init__(
+        self,
+        spaces: CrossSectionSpaces,
+        right_traces: Sequence[fem.Function],
+        left_traces: Sequence[fem.Function],
+        *,
+        condition_limit: float = 1.0e12,
+        quadrature_degree: int | None = None,
+    ) -> None:
+        if not right_traces or len(right_traces) != len(left_traces):
+            raise ValueError("Interface trace pairs must be nonempty and matched.")
+        self.spaces = spaces
+        self.right_traces = tuple(right_traces)
+        self.left_traces = tuple(left_traces)
+        self._coefficient = fem.Function(
+            spaces.transverse, name="task039_streamed_trace_mass_coefficient"
+        )
+        trial = ufl.TrialFunction(spaces.transverse)
+        test = ufl.TestFunction(spaces.transverse)
+        form = ufl.inner(trial, test) * ufl.dx
+        compiler_options = (
+            {}
+            if quadrature_degree is None
+            else {"quadrature_degree": int(quadrature_degree)}
+        )
+        self._action_form = fem.form(
+            ufl.action(form, self._coefficient),
+            form_compiler_options=compiler_options,
+        )
+        self._destroyed = False
+        self.gram = self._overlap_matrix(self.right_traces)
+        self.gram_condition = float(np.linalg.cond(self.gram))
+        if (
+            not np.isfinite(self.gram_condition)
+            or self.gram_condition > condition_limit
+        ):
+            self.destroy()
+            raise RuntimeError(
+                "Interface left/right Gram block is singular or ill-conditioned: "
+                f"cond={self.gram_condition:.6e}."
+            )
+
+    def _mass_action(self, trace: fem.Function) -> PETSc.Vec:
+        if self._destroyed:
+            raise RuntimeError("Streamed trace projection is destroyed")
+        self._coefficient.x.array[:] = trace.x.array
+        self._coefficient.x.scatter_forward()
+        return _assemble_unconstrained_form_vector(self._action_form)
+
+    def _overlap_matrix(self, right_traces: Sequence[fem.Function]) -> np.ndarray:
+        overlap = np.empty(
+            (len(self.left_traces), len(right_traces)), dtype=np.complex128
+        )
+        for column, right in enumerate(right_traces):
+            action = self._mass_action(right)
+            try:
+                for row, left in enumerate(self.left_traces):
+                    overlap[row, column] = complex(action.dot(left.x.petsc_vec))
+            finally:
+                action.destroy()
+        return overlap
+
+    def project(self, trace: fem.Function) -> np.ndarray:
+        if trace.function_space is not self.spaces.transverse:
+            raise ValueError("Trace function is not in the canonical interface space.")
+        action = self._mass_action(trace)
+        try:
+            raw = np.asarray(
+                [complex(action.dot(left.x.petsc_vec)) for left in self.left_traces],
+                dtype=np.complex128,
+            )
+        finally:
+            action.destroy()
+        return np.linalg.solve(self.gram, raw)
+
+    def destroy(self) -> None:
+        if not getattr(self, "_destroyed", False):
+            self._action_form = None
+            self._coefficient = None
+            self._destroyed = True
+
+
 @dataclass
 class HybridInternalModeCoupling:
     """Task32 reflection-free middle-region coupling before monolithic assembly."""
@@ -1479,7 +1564,7 @@ def build_streamed_projection_only(
                     name=f"task039_streamed_negative_right_trace_{index}",
                 )
             )
-        projection = ModalTraceProjection.from_traces(
+        projection = _StreamedModalTraceProjection(
             spaces,
             positive_right,
             positive_left,
@@ -1534,6 +1619,8 @@ def build_streamed_projection_only(
                 "canonical_trace_peak_live_count": 1,
                 "canonical_trace_retained_count": 0,
                 "canonical_trace_materialization": "single_reusable",
+                "trace_mass_matrix_materialized": False,
+                "trace_mass_action": "reusable_form_action",
                 "full_mode_vectors_retained": False,
                 "positive_traction_matrix": False,
                 "negative_traction_matrix": False,
