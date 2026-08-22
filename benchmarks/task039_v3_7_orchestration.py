@@ -97,12 +97,9 @@ from src.solvers.hybrid_local_dtn_action import (
     assemble_hybrid_local_dtn_action_system,
     create_hybrid_local_dtn_action_components,
 )
-from src.solvers.hcurl_assembly_time_condensation import (
-    copy_full_solution_to_active_trace,
-)
 from src.solvers.hcurl_canonical_vector_dolfinx import (
     extract_canonical_active_trace_packets,
-    reconstruct_canonical_full_fe_function,
+    reconstruct_canonical_active_trace_vec,
 )
 from src.solvers.hybrid_layer_block import (
     audit_layer_block_action,
@@ -466,12 +463,8 @@ V11_SELECTED_PACKET_IDENTITY_SHA256 = (
 )
 V11_V7_FULL_FORMAL_ROOT = "results/task039_v7_h4_exact_side_full_formal_mpi8_9e31ecf1"
 V11_V7_MODAL_Q_RELATIVE = "m10_own_grid_EH_modal_q.npz"
-V11_V7_FULL_FE_MANIFEST_RELATIVE = "task037b_m10_bottom_full_fe_canonical_manifest.json"
 V11_V7_ACTIVE_TRACE_MANIFEST_RELATIVE = (
     "task037b_m10_bottom_active_trace_canonical_manifest.json"
-)
-V11_V7_FULL_FE_MANIFEST_SHA256 = (
-    "c0472eb1e4499c61f419d567dc1b31a838af0c909f5a1769b0f85beca092f331"
 )
 V11_V7_ACTIVE_TRACE_MANIFEST_SHA256 = (
     "fae8e3654e5f21ac81f23080de6f1763e99bb2b12ba28d0ddd1814d24e01d765"
@@ -7053,37 +7046,100 @@ def _v11_trace_values_in_order(
     return np.asarray([values_by_key[key] for key in trace_keys], dtype=np.complex128)
 
 
-def _v11_read_owner_canonical_shard(
-    path: Path, expected_sha256: str, comm: MPI.Intracomm
-) -> tuple[dict[str, Any], tuple[Any, ...]]:
-    local_ok = True
+def _v11_read_active_trace_owner_remap(
+    path: Path,
+    expected_sha256: str,
+    expected_local_keys: Sequence[Any],
+    comm: MPI.Intracomm,
+) -> tuple[dict[str, Any], dict[Any, complex]]:
+    """Read V7 trace shards one at a time and retain only fresh-owner keys."""
+
     manifest: dict[str, Any] = {}
-    packets: tuple[Any, ...] = ()
+    values: dict[Any, complex] = {}
+    local_keys = set(expected_local_keys)
+
+    def collective_stage(ok: bool, error: str | None, stage: str) -> None:
+        if bool(comm.allreduce(bool(ok), op=MPI.LAND)):
+            return
+        errors = comm.allgather(error)
+        first_error = next((item for item in errors if item), "unknown error")
+        raise ValueError(f"V11 active-trace {stage} failed: {first_error}")
+
+    manifest_error: str | None = None
     try:
         payload = path.read_bytes()
         if hashlib.sha256(payload).hexdigest() != expected_sha256:
-            raise ValueError("V11 canonical manifest hash mismatch")
+            raise ValueError("V11 active-trace manifest hash mismatch")
         manifest = json.loads(payload.decode("utf-8"))
-        if manifest.get("schema_version") != "task037.canonical-vector-manifest.v1":
-            raise ValueError("V11 canonical manifest schema mismatch")
         shards = list(manifest.get("per_rank_shards", ()))
-        if int(manifest.get("mpi_size", -1)) != comm.size or len(shards) != comm.size:
-            raise ValueError("V11 canonical manifest MPI size mismatch")
-        owned = [item for item in shards if int(item.get("rank", -1)) == comm.rank]
-        if len(owned) != 1:
-            raise ValueError("V11 canonical manifest has no unique local shard")
-        descriptor = owned[0]
-        packets = read_canonical_packet_shard(
-            path.parent / str(descriptor["filename"]),
-            str(descriptor["file_sha256"]),
+        if (
+            manifest.get("schema_version") != "task037.canonical-vector-manifest.v1"
+            or int(manifest.get("mpi_size", -1)) != comm.size
+            or len(shards) != comm.size
+        ):
+            raise ValueError("V11 active-trace manifest ownership is invalid")
+        descriptors = sorted(shards, key=lambda item: int(item["rank"]))
+        if [int(item["rank"]) for item in descriptors] != list(range(comm.size)):
+            raise ValueError("V11 active-trace manifest ranks are not unique")
+        if len(local_keys) != len(expected_local_keys):
+            raise ValueError("V11 fresh active-trace keys contain a duplicate")
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
+        manifest_error = str(error)
+    collective_stage(manifest_error is None, manifest_error, "manifest")
+
+    for descriptor in descriptors:
+        shard_map: dict[Any, complex] = {}
+        shard_error: str | None = None
+        try:
+            shard_packets = read_canonical_packet_shard(
+                path.parent / str(descriptor["filename"]),
+                str(descriptor["file_sha256"]),
+            )
+            shard_map = _v11_packet_value_map(shard_packets)
+            del shard_packets
+        except (
+            OSError,
+            KeyError,
+            TypeError,
+            ValueError,
+            json.JSONDecodeError,
+        ) as error:
+            shard_error = str(error)
+        collective_stage(
+            shard_error is None,
+            shard_error,
+            f"shard rank {int(descriptor['rank'])} read",
         )
-        _v11_packet_value_map(packets)
-    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
-        local_ok = False
-    all_ok = bool(comm.allreduce(local_ok, op=MPI.LAND))
-    if not all_ok or not local_ok:
-        raise ValueError("V11 owner-local canonical shard validation failed")
-    return manifest, packets
+        shard_keys = tuple(shard_map)
+        local_match = np.asarray(
+            [int(key in local_keys) for key in shard_keys], dtype=np.int32
+        )
+        global_match = np.empty_like(local_match)
+        if len(local_match):
+            comm.Allreduce(local_match, global_match, op=MPI.SUM)
+        bad = np.flatnonzero(global_match != 1)
+        match_error = None
+        if len(bad):
+            index = int(bad[0])
+            kind = "extra" if int(global_match[index]) == 0 else "owner overlap"
+            match_error = (
+                f"{kind} key {shard_keys[index]!r} "
+                f"(owner count {int(global_match[index])})"
+            )
+        collective_stage(match_error is None, match_error, "shard ownership")
+        retention_error: str | None = None
+        for key, value in shard_map.items():
+            if key in local_keys:
+                if key in values:
+                    retention_error = f"duplicate owner key {key!r}"
+                    break
+                values[key] = value
+        collective_stage(retention_error is None, retention_error, "shard retention")
+        del shard_map, shard_keys, local_match, global_match
+    missing = sorted(local_keys.difference(values), key=repr)
+    missing_error = None if not missing else f"missing key {missing[0]!r}"
+    collective_stage(missing_error is None, missing_error, "owner coverage")
+    return manifest, values
 
 
 def _v11_release_partial_authority(owned: dict[str, Any]) -> dict[str, Any]:
@@ -7125,6 +7181,7 @@ def _v11_prepare_bottom_authority(
     selected_manifest: Path,
     selected_manifest_sha256: str,
     exact_spool_root: Path,
+    marker_callback: Callable[..., None] | None = None,
     v7_root: Path = Path(V11_V7_FULL_FORMAL_ROOT),
 ) -> dict[str, Any]:
     owned: dict[str, Any] = {}
@@ -7139,6 +7196,7 @@ def _v11_prepare_bottom_authority(
             selected_manifest=selected_manifest,
             selected_manifest_sha256=selected_manifest_sha256,
             exact_spool_root=exact_spool_root,
+            marker_callback=marker_callback,
             v7_root=v7_root,
             owned=owned,
         )
@@ -7158,10 +7216,16 @@ def _v11_prepare_bottom_authority_inner(
     selected_manifest: Path,
     selected_manifest_sha256: str,
     exact_spool_root: Path,
+    marker_callback: Callable[..., None] | None,
     v7_root: Path = Path(V11_V7_FULL_FORMAL_ROOT),
     owned: dict[str, Any],
 ) -> dict[str, Any]:
     """Bind the Task39 V7/V10 artifacts to one fresh action-only system."""
+
+    def mark(stage: str, **detail: Any) -> None:
+        if marker_callback is not None:
+            marker_callback(stage, **detail)
+
     if _v11_sha256(response_manifest) != V11_RESPONSE_PACKET_MANIFEST_SHA256:
         raise ValueError("V11 response manifest hash is not frozen")
     if _v11_sha256(producer_diagnostic) != V11_RESPONSE_PACKET_DIAGNOSTIC_SHA256:
@@ -7208,14 +7272,7 @@ def _v11_prepare_bottom_authority_inner(
         "selected_mode_packet_manifest_sha256": V11_RESPONSE_PACKET_SELECTED_MANIFEST_SHA256,
         "source_sha": V11_RESPONSE_PACKET_PRODUCER_SOURCE_SHA,
     }
-    full_manifest = v7_root / V11_V7_FULL_FE_MANIFEST_RELATIVE
     trace_manifest = v7_root / V11_V7_ACTIVE_TRACE_MANIFEST_RELATIVE
-    full_meta, full_packets = _v11_read_owner_canonical_shard(
-        full_manifest, V11_V7_FULL_FE_MANIFEST_SHA256, comm
-    )
-    trace_meta, trace_packets = _v11_read_owner_canonical_shard(
-        trace_manifest, V11_V7_ACTIVE_TRACE_MANIFEST_SHA256, comm
-    )
     modal_path = v7_root / V11_V7_MODAL_Q_RELATIVE
     amplitudes = _v11_load_modal_amplitudes(
         modal_path,
@@ -7263,43 +7320,108 @@ def _v11_prepare_bottom_authority_inner(
             vec.getArray(readonly=True), dtype=np.complex128, copy=True
         )
         vec.destroy()
+    mark(
+        "v11_h4_bottom_packet_algebra_owner_source_ready",
+        sampled_source_count=len(sources),
+        selected_context_released=False,
+    )
+    selected_temporaries_released: dict[str, bool] = {}
+    for name, method in (("provider", "destroy"), ("context", "release")):
+        value = owned.get(name)
+        if value is not None:
+            getattr(value, method)()
+            owned[name] = None
+            selected_temporaries_released[name] = True
+        else:
+            selected_temporaries_released[name] = False
+    mark(
+        "v11_h4_bottom_packet_algebra_selected_temporaries_released",
+        **selected_temporaries_released,
+    )
     spool_identity, spool_manifest_sha, _catalog = _v9_frozen_holdout_identity(
         exact_spool_root, comm
     )
-    spool = _load_v5_fixed_budget_spool_shards(
-        exact_spool_root,
-        comm,
-        packet_identity=spool_identity,
-        manifest_sha256=spool_manifest_sha,
-    )
-    owned["spool"] = spool
-    template = system.A.createVecLeft()
-    physical_vec = _load_v5_blr_reference_spool_remapped(
-        spool["physical_side_rhs"]["rhs"], template
-    )
-    template.destroy()
+    if spool_manifest_sha != V11_RESPONSE_PACKET_SELECTED_MANIFEST_SHA256:
+        raise ValueError("V11 exact-spool manifest identity is not frozen")
+    physical_vec = system.b.copy()
     physical_rhs = np.array(
         physical_vec.getArray(readonly=True), dtype=np.complex128, copy=True
     )
     physical_vec.destroy()
-    full_field = reconstruct_canonical_full_fe_function(
-        system.V, full_packets, system.floquet_data
+    condensed = system.static_condensation.condensed
+    zero_active = condensed.create_active_vector()
+    zero_active.set(0.0)
+    zero_active.assemble()
+    try:
+        zero_packets, _zero_audit = extract_canonical_active_trace_packets(
+            condensed, system.V, system.floquet_data, zero_active
+        )
+        expected_local_keys = tuple(_v11_packet_value_map(zero_packets))
+    finally:
+        zero_active.destroy()
+    _trace_meta, trace_values = _v11_read_active_trace_owner_remap(
+        trace_manifest,
+        V11_V7_ACTIVE_TRACE_MANIFEST_SHA256,
+        expected_local_keys,
+        comm,
     )
-    active_v7 = copy_full_solution_to_active_trace(
-        system.static_condensation.condensed, full_field
+    active_v7 = reconstruct_canonical_active_trace_vec(
+        condensed,
+        system.V,
+        system.floquet_data,
+        trace_values,
     )
-    d_matrix = owner.blocks.projection
-    d_target = d_matrix.createVecLeft()
-    d_matrix.mult(active_v7, d_target)
-    v7_schur = -np.array(
-        d_target.getArray(readonly=True), dtype=np.complex128, copy=True
+    try:
+        trace_keys = tuple(sorted(trace_values, key=repr))
+        roundtrip_packets, _roundtrip_audit = extract_canonical_active_trace_packets(
+            condensed, system.V, system.floquet_data, active_v7
+        )
+        roundtrip_values = _v11_trace_values_in_order(
+            roundtrip_packets, trace_keys, comm
+        )
+        frozen_values = np.asarray(
+            [trace_values[key] for key in trace_keys], dtype=np.complex128
+        )
+        local_delta = roundtrip_values - frozen_values
+        roundtrip_max = float(
+            comm.allreduce(
+                float(np.max(np.abs(local_delta))) if len(local_delta) else 0.0,
+                op=MPI.MAX,
+            )
+        )
+        local_num = float(np.vdot(local_delta, local_delta).real)
+        local_den = float(np.vdot(frozen_values, frozen_values).real)
+        roundtrip_relative = float(
+            np.sqrt(max(float(comm.allreduce(local_num, op=MPI.SUM)), 0.0))
+            / max(
+                np.sqrt(max(float(comm.allreduce(local_den, op=MPI.SUM)), 0.0)),
+                1.0e-30,
+            )
+        )
+        if roundtrip_max > 5.0e-12 or roundtrip_relative > 5.0e-12:
+            raise ValueError("V11 active-trace canonical round-trip failed")
+        mark(
+            "v11_h4_bottom_packet_algebra_v7_active_trace_ready",
+            local_key_count=len(trace_keys),
+            roundtrip_max_error=roundtrip_max,
+            roundtrip_relative_error=roundtrip_relative,
+        )
+        d_matrix = owner.blocks.projection
+        d_target = d_matrix.createVecLeft()
+        try:
+            d_matrix.mult(active_v7, d_target)
+            v7_schur = -np.array(
+                d_target.getArray(readonly=True),
+                dtype=np.complex128,
+                copy=True,
+            )
+        finally:
+            d_target.destroy()
+    finally:
+        active_v7.destroy()
+    v7_trace = np.asarray(
+        [trace_values[key] for key in trace_keys], dtype=np.complex128
     )
-    d_target.destroy()
-    active_v7.destroy()
-    del full_field
-    trace_map = _v11_packet_value_map(trace_packets)
-    trace_keys = tuple(sorted(trace_map, key=repr))
-    v7_trace = np.asarray([trace_map[key] for key in trace_keys], dtype=np.complex128)
 
     def _local_vec(values: np.ndarray) -> PETSc.Vec:
         vec = system.A.createVecRight()
@@ -7348,7 +7470,9 @@ def _v11_prepare_bottom_authority_inner(
             active.destroy()
 
     def release() -> dict[str, Any]:
-        return _v11_release_partial_authority(owned)
+        released = _v11_release_partial_authority(owned)
+        released["selected_temporaries_released"] = dict(selected_temporaries_released)
+        return released
 
     system_evidence = {
         "observed": True,
@@ -7391,12 +7515,23 @@ def _v11_prepare_bottom_authority_inner(
             },
         },
         "source_columns": sources,
+        "exact_spool_provenance": {
+            "root": str(exact_spool_root),
+            "manifest_sha256": spool_manifest_sha,
+            "identity": spool_identity,
+            "arrays_loaded": False,
+        },
         "v7_schur_authority": {
             "value": v7_schur,
-            "source_path": str(full_manifest),
-            "source_sha256": V11_V7_FULL_FE_MANIFEST_SHA256,
+            "source_path": str(trace_manifest),
+            "source_sha256": V11_V7_ACTIVE_TRACE_MANIFEST_SHA256,
             "derivation": "-D_b*u_v7",
             "D_identity": f"owner.blocks.projection:{d_matrix.getType()}:{d_matrix.getSize()}",
+            "active_trace_roundtrip": {
+                "pass": True,
+                "max_error": roundtrip_max,
+                "relative_error": roundtrip_relative,
+            },
             "modal_amplitudes_path": str(modal_path),
             "modal_amplitudes_sha256": V11_V7_MODAL_AMPLITUDES_SHA256,
         },
@@ -7408,6 +7543,11 @@ def _v11_prepare_bottom_authority_inner(
         "trace_action": trace_action,
         "inventory_evidence": inventory_evidence,
         "system_evidence": system_evidence,
+        "lifecycle": {
+            "selected_temporaries_released": dict(selected_temporaries_released),
+            "full_fe_loaded": False,
+            "spool_arrays_loaded": False,
+        },
         "release": release,
     }
 
@@ -7417,7 +7557,7 @@ def run_v11_h4_bottom_packet_algebra(
     *,
     profile: Any,
     comm: MPI.Intracomm,
-    marker_callback: Callable[[str, Mapping[str, Any]], None],
+    marker_callback: Callable[..., None],
     packet_manifest: str | Path,
     packet_manifest_sha256: str,
     selected_mode_packet_manifest: str | Path,
@@ -7434,6 +7574,7 @@ def run_v11_h4_bottom_packet_algebra(
     cleanup_detail: dict[str, Any] = {}
     packet_destroyed_by_checker = False
     lifecycle: list[str] = []
+    prepared_lifecycle: dict[str, Any] | None = None
 
     def emit(stage: str, **detail: Any) -> None:
         lifecycle.append(stage)
@@ -7458,6 +7599,13 @@ def run_v11_h4_bottom_packet_algebra(
                 log=None,
             )
         )
+        emit(
+            "v11_h4_bottom_packet_algebra_system_ready",
+            matrix_free=getattr(system, "inventory", {}).get("matrix_free"),
+            direct_factor_count=getattr(system, "inventory", {}).get(
+                "direct_factor_count", "not_available"
+            ),
+        )
         ownership = tuple(int(value) for value in system.A.getOwnershipRange())
         packet = load_full_side_response_packet(
             packet_manifest,
@@ -7480,6 +7628,11 @@ def run_v11_h4_bottom_packet_algebra(
             ownership_range=ownership,
             comm=comm,
         )
+        emit(
+            "v11_h4_bottom_packet_algebra_packet_ready",
+            global_rows=int(system.A.getSize()[0]),
+            selected_mode_packet_opened=True,
+        )
         prepared = _v11_prepare_bottom_authority(
             system,
             packet,
@@ -7490,6 +7643,7 @@ def run_v11_h4_bottom_packet_algebra(
             selected_manifest=Path(selected_mode_packet_manifest),
             selected_manifest_sha256=selected_mode_packet_manifest_sha256,
             exact_spool_root=Path(exact_spool_root),
+            marker_callback=emit,
         )
         emit(
             "v11_h4_bottom_packet_algebra_authority_ready",
@@ -7519,6 +7673,7 @@ def run_v11_h4_bottom_packet_algebra(
     finally:
         authority_release = None
         if prepared is not None:
+            prepared_lifecycle = dict(prepared.get("lifecycle", {}))
             authority_release = prepared["release"]()
             prepared = None
         packet_destroyed_by_runner = False
@@ -7559,6 +7714,7 @@ def run_v11_h4_bottom_packet_algebra(
             {
                 "profile": V11_BOTTOM_PACKET_ALGEBRA_PROFILE_ID,
                 "lifecycle": lifecycle,
+                "authority_lifecycle": prepared_lifecycle,
                 "cleanup": cleanup_detail,
                 "pde_solve": "not_run",
             }
@@ -14259,6 +14415,9 @@ def run_task039_v3_7_diagnostic(
                 side_system_builder=side_system_builder,
             )
             result["source_sha"] = source_sha
+            result["schema"] = V11_BOTTOM_PACKET_ALGEBRA_SCHEMA
+            result["checker_method"] = result.get("method")
+            result["method"] = V11_BOTTOM_PACKET_ALGEBRA_METHOD
             result["run_directory"] = str(Path(run_directory).resolve())
             result["status"] = (
                 "component_v11_bottom_packet_algebra_completed"

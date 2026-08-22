@@ -8,7 +8,7 @@ standard physical norm audit are opt-in offline comparator operations.
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Mapping
 from typing import Any
 
 import numpy as np
@@ -40,6 +40,7 @@ __all__ = (
     "iter_canonical_active_trace_packets",
     "iter_canonical_full_fe_packets",
     "extract_canonical_active_trace_packets",
+    "reconstruct_canonical_active_trace_vec",
     "extract_canonical_full_fe_packets",
     "reconstruct_canonical_full_fe_function",
     "compare_hcurl_fields",
@@ -383,6 +384,132 @@ def extract_canonical_active_trace_packets(
     return packets, _packet_audit(
         packets, function_space.mesh.comm, role="active_trace"
     )
+
+
+def reconstruct_canonical_active_trace_vec(
+    condensed: AssemblyTimeCondensedSystem,
+    function_space,
+    floquet_data,
+    values_by_key: Mapping[CanonicalKey, complex],
+) -> PETSc.Vec:
+    """Rebuild a current-owner active Vec from canonical trace values.
+
+    Only owned active original rows are populated in the condensed ordering.
+    No eliminated slave, cell-interior, or full-space Vec value is inferred.
+    Missing, duplicate, extra, or nonfinite values are reported collectively
+    so an MPI rank cannot leave its peers in a mismatched exception path.
+    """
+
+    comm = function_space.mesh.comm
+    degree, _trace_positions, _interior_positions = _space_data(function_space)
+    topology, _cell_info, _owned_cells = _topology_data(function_space)
+    tolerance = mesh_coordinate_tolerance(function_space.mesh)
+    relations = _floquet_relations(floquet_data)
+    layout = function_space.dofmap.dof_layout
+    active_original = np.asarray(
+        condensed.trace_constraints.owned_active_original_dofs,
+        dtype=PETSc.IntType,
+    )
+    active_lookup = {int(value): index for index, value in enumerate(active_original)}
+    active = condensed.create_active_vector()
+    local_error: str | None = None
+    expected_keys: set[CanonicalKey] = set()
+    filled = np.zeros(len(active_original), dtype=np.bool_)
+    try:
+        if int(active.getSize()) != int(condensed.active_rows) or int(
+            active.getLocalSize()
+        ) != len(active_original):
+            raise ValueError("canonical active-trace Vec ownership mismatch")
+        if any(key[0] != "active_trace" for key in values_by_key):
+            raise ValueError("canonical active-trace values have an invalid role")
+        if not all(np.isfinite(complex(value)) for value in values_by_key.values()):
+            raise ValueError("canonical active-trace values contain nonfinite data")
+        active.set(0.0)
+        active_array = active.getArray()
+        for dimension in (1, 2):
+            cell_to_entity = topology.connectivity(topology.dim, dimension)
+            for entity, cell in _owned_entity_incidents(function_space, dimension):
+                local_entity = int(
+                    np.flatnonzero(
+                        np.asarray(cell_to_entity.links(cell), dtype=np.int32)
+                        == int(entity)
+                    )[0]
+                )
+                positions = np.asarray(
+                    layout.entity_dofs(dimension, local_entity), dtype=np.int32
+                )
+                physical_key, master_key, phase, transform, state = (
+                    _fresh_entity_inverse(
+                        function_space,
+                        dimension,
+                        entity,
+                        degree,
+                        tolerance,
+                        relations,
+                    )
+                )
+                keys = tuple(
+                    canonical_key(
+                        role="active_trace",
+                        entity_dimension=dimension,
+                        physical_entity=physical_key,
+                        entity_local_basis_index=basis,
+                        orientation_state=state,
+                        floquet_master=master_key,
+                        floquet_coefficient=phase,
+                    )
+                    for basis in range(len(positions))
+                )
+                expected_keys.update(keys)
+                if any(key not in values_by_key for key in keys):
+                    missing = next(key for key in keys if key not in values_by_key)
+                    raise ValueError(f"missing canonical active-trace key: {missing!r}")
+                canonical_values = np.asarray(
+                    [values_by_key[key] for key in keys], dtype=np.complex128
+                )
+                stored_values = phase * (transform @ canonical_values)
+                global_dofs = _global_dofs(
+                    function_space,
+                    np.asarray(function_space.dofmap.cell_dofs(cell))[positions],
+                )
+                for global_id, stored_value in zip(
+                    global_dofs, stored_values, strict=True
+                ):
+                    active_index = active_lookup.get(int(global_id))
+                    if active_index is None:
+                        continue
+                    if filled[active_index]:
+                        raise ValueError(
+                            f"duplicate canonical active-trace ownership: {global_id}"
+                        )
+                    active_array[active_index] = stored_value
+                    filled[active_index] = True
+        provided_keys = set(values_by_key)
+        if provided_keys != expected_keys:
+            missing = sorted(expected_keys - provided_keys, key=repr)
+            extra = sorted(provided_keys - expected_keys, key=repr)
+            raise ValueError(
+                "canonical active-trace key set mismatch: "
+                f"missing={missing[:1]!r}, extra={extra[:1]!r}"
+            )
+        if not bool(np.all(filled)):
+            missing_rows = np.flatnonzero(~filled)
+            raise ValueError(
+                "canonical active-trace reconstruction missed owned row "
+                f"{active_original[int(missing_rows[0])]!r}"
+            )
+        if not bool(np.isfinite(active_array).all()):
+            raise ValueError("canonical active-trace target is nonfinite")
+    except (KeyError, IndexError, TypeError, ValueError) as error:
+        local_error = str(error)
+    all_ok = bool(comm.allreduce(local_error is None, op=MPI.LAND))
+    if not all_ok:
+        errors = comm.allgather(local_error)
+        first_error = next((error for error in errors if error), "unknown error")
+        active.destroy()
+        raise ValueError(f"canonical active-trace reconstruction failed: {first_error}")
+    active.assemble()
+    return active
 
 
 def iter_canonical_full_fe_packets(

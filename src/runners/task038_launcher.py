@@ -117,6 +117,9 @@ V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD = (
 V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA = (
     "task039.v10.h4.exact_side_response_packet.compression.v1"
 )
+V11_BOTTOM_PACKET_ALGEBRA_HARD_STOP_BYTES = 45 * 2**30
+V11_BOTTOM_PACKET_ALGEBRA_METHOD = "task039_v11_h4_bottom_packet_algebra"
+V11_BOTTOM_PACKET_ALGEBRA_SCHEMA = "task039.v11.h4.bottom_packet_algebra.v1"
 
 
 def _v5_h4_blr_candidate_interval_peak(
@@ -777,6 +780,9 @@ def _run_worker(
     formal_v10_side_packet_compression = (
         getattr(plan, "method", "") == V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD
     )
+    formal_v11_bottom_packet_algebra = (
+        getattr(plan, "method", "") == V11_BOTTOM_PACKET_ALGEBRA_METHOD
+    )
     formal_telemetry = (
         formal_v2_h5
         or formal_v3_2d
@@ -802,6 +808,7 @@ def _run_worker(
         or formal_v10_side_packet_consumer
         or formal_v10_side_packet_full_producer
         or formal_v10_side_packet_compression
+        or formal_v11_bottom_packet_algebra
     )
     if task039_model_id_matches(method, model_id, requested_modes):
         task039_budget = _task039_memory_budget(execution)
@@ -883,6 +890,9 @@ def _run_worker(
         absolute_terminate_memory_bytes = (
             V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_HARD_STOP_BYTES
         )
+        terminate_limit = float(absolute_terminate_memory_bytes)
+    if formal_v11_bottom_packet_algebra:
+        absolute_terminate_memory_bytes = V11_BOTTOM_PACKET_ALGEBRA_HARD_STOP_BYTES
         terminate_limit = float(absolute_terminate_memory_bytes)
     timeout = float(execution["timeout_seconds"])
     if formal_v7_h4_full:
@@ -981,6 +991,7 @@ def _run_worker(
                 or formal_v10_side_packet_consumer
                 or formal_v10_side_packet_full_producer
                 or formal_v10_side_packet_compression
+                or formal_v11_bottom_packet_algebra
             )
             or formal_stage_stream is None
         ):
@@ -1041,6 +1052,7 @@ def _run_worker(
                 or formal_v10_side_packet_consumer
                 or formal_v10_side_packet_full_producer
                 or formal_v10_side_packet_compression
+                or formal_v11_bottom_packet_algebra
             ) and stage_index is None:
                 stage_index = formal_aligned_stage_count
             row = {
@@ -1102,6 +1114,7 @@ def _run_worker(
             or formal_v10_side_packet_consumer
             or formal_v10_side_packet_full_producer
             or formal_v10_side_packet_compression
+            or formal_v11_bottom_packet_algebra
         ):
             formal_stages_path.unlink(missing_ok=True)
             formal_stage_stream = formal_stages_path.open("a", encoding="utf-8")
@@ -1270,6 +1283,7 @@ def _run_worker(
         or formal_v10_j1_inner_fgmres
         or formal_v10_side_packet_full_producer
         or formal_v10_side_packet_compression
+        or formal_v11_bottom_packet_algebra
     ) and not formal_object_ledger_path.exists():
         _write_json(
             formal_object_ledger_path,
@@ -2933,6 +2947,161 @@ def _run_worker(
             "effective_hard_stop_memory_gib": (
                 V10_H4_J1_INNER_FGMRES_HARD_STOP_BYTES / 1024**3
             ),
+            "require_zero_swap": True,
+            "zero_swap_observed": zero_swap_observed if sample_count else None,
+            "overall_process_tree_peak_bytes": peak_process_tree,
+            "overall_process_tree_peak_gib": peak_process_tree / 1024**3,
+            "overall_peak_swap_bytes": peak_swap,
+            "authority": "parent_process_tree_samples",
+        }
+    if formal_v11_bottom_packet_algebra:
+        construction_interval = _v5_h4_blr_candidate_interval_peak(
+            formal_stages_path,
+            formal_samples_path,
+            "bottom",
+            begin_stage="v11_h4_bottom_packet_algebra_construction_begin",
+            end_stage="v11_h4_bottom_packet_algebra_cleanup",
+            limit_gib=45.0,
+        )
+        if construction_interval.get("status") != "measured":
+            construction_interval["pass"] = None
+        retained_interval = {
+            "status": "not_applicable",
+            "pass": None,
+            "peak_process_tree_rss_gib": None,
+            "limit_gib": None,
+            "reason": "action_only_audit_has_no_retained_candidate",
+        }
+        worker_record_path = (
+            run_directory / "numerical_output" / "v3_v7_diagnostic.json"
+        )
+        worker_record_status = "not_available"
+        worker_contract_valid = False
+        worker_contract_reason = "record_not_available"
+        worker_numerical_gate: bool | None = None
+        worker_numerical_classification = None
+        if worker_record_path.is_file():
+            try:
+                worker_record = json.loads(
+                    worker_record_path.read_text(encoding="utf-8")
+                )
+            except (OSError, json.JSONDecodeError):
+                worker_record_status = "parse_failed"
+                worker_contract_reason = "record_unreadable"
+            else:
+                identity_matches = (
+                    isinstance(worker_record, Mapping)
+                    and worker_record.get("schema") == V11_BOTTOM_PACKET_ALGEBRA_SCHEMA
+                    and worker_record.get("method") == V11_BOTTOM_PACKET_ALGEBRA_METHOD
+                    and worker_record.get("source_sha")
+                    == getattr(plan, "source_sha", None)
+                )
+                gate = worker_record.get("gate")
+                inventory = worker_record.get("inventory_evidence")
+                system = worker_record.get("system_evidence")
+                cleanup = worker_record.get("cleanup")
+                contract = (
+                    identity_matches
+                    and isinstance(gate, Mapping)
+                    and isinstance(gate.get("pass"), bool)
+                    and isinstance(inventory, Mapping)
+                    and inventory.get("observed") is True
+                    and inventory.get("ready", {}).get("factor_count") == 0
+                    and inventory.get("ready", {}).get("ksp_count") == 0
+                    and inventory.get("ready", {}).get("qep_count") == 0
+                    and isinstance(system, Mapping)
+                    and system.get("observed") is True
+                    and system.get("mat", {}).get("matrix_free") is True
+                    and isinstance(cleanup, Mapping)
+                    and cleanup.get("packet_destroy_called") is True
+                    and cleanup.get("system_destroy_called") is True
+                    and worker_record.get("pde_solve") == "not_run"
+                )
+                if not identity_matches:
+                    worker_record_status = "identity_mismatch"
+                    worker_contract_reason = "schema_method_or_source_mismatch"
+                elif not contract:
+                    worker_record_status = "contract_mismatch"
+                    worker_contract_reason = "v11_action_only_contract_mismatch"
+                else:
+                    worker_contract_valid = True
+                    worker_record_status = "measured"
+                    worker_contract_reason = "validated"
+                    worker_numerical_gate = bool(gate["pass"])
+                    worker_numerical_classification = gate.get("classification")
+        construction_measured = construction_interval.get("status") == "measured"
+        construction_pass = construction_measured and (
+            construction_interval.get("pass") is True
+        )
+        swap_pass = sample_count > 0 and zero_swap_observed is True and peak_swap == 0
+        if worker_numerical_gate is None:
+            overall_status = (
+                "contract_mismatch"
+                if worker_record_status in {"identity_mismatch", "contract_mismatch"}
+                else "not_available"
+            )
+            overall_pass = None
+        elif not construction_measured:
+            overall_status = "resource_interval_not_available"
+            overall_pass = None
+        elif not construction_pass:
+            overall_status = "resource_gate_failed"
+            overall_pass = False
+        elif not swap_pass:
+            overall_status = "swap_gate_failed"
+            overall_pass = False
+        elif worker_numerical_gate is False:
+            overall_status = "numerical_gate_failed"
+            overall_pass = False
+        else:
+            overall_status = "pass_retained_not_applicable"
+            overall_pass = True
+        resource_authority["v11_h4_bottom_packet_algebra_telemetry"] = {
+            "raw_marker_path": str(formal_markers_path),
+            "process_tree_samples_path": str(formal_samples_path),
+            "memory_stages_path": str(formal_stages_path),
+            "memory_object_ledger_path": str(formal_object_ledger_path),
+            "sample_count": sample_count,
+            "process_tree_sample_count": formal_written_sample_count,
+            "aligned_stage_count": formal_aligned_stage_count,
+            "stage_source": "launcher_marker_alignment",
+            "method": V11_BOTTOM_PACKET_ALGEBRA_METHOD,
+            "profile": V11_BOTTOM_PACKET_ALGEBRA_SCHEMA,
+            "construction_interval_summary": construction_interval,
+            "retained_interval_summary": retained_interval,
+            "worker_record_path": str(worker_record_path),
+            "worker_record_status": worker_record_status,
+            "worker_record_contract_valid": worker_contract_valid,
+            "worker_record_contract_reason": worker_contract_reason,
+            "numerical_gate_pass": worker_numerical_gate,
+            "numerical_classification": worker_numerical_classification,
+            "overall": {
+                "status": overall_status,
+                "pass": overall_pass,
+                "construction_pass": construction_pass,
+                "retained_pass": None,
+                "numerical_gate_pass": worker_numerical_gate,
+                "swap_pass": swap_pass,
+                "resource_gate": (
+                    "construction_pass_retained_not_applicable"
+                    if construction_pass
+                    else "construction_failed_or_not_available"
+                ),
+            },
+            "gate_contract": {
+                "construction_peak_limit_gib": 45.0,
+                "retained_state": "not_applicable",
+                "swap_required": 0,
+                "factor_count_ready": 0,
+                "factor_count_after_cleanup": 0,
+                "global_direct_factor_count": 0,
+                "nested_ksp_count": 0,
+                "qep_count": 0,
+                "selected_mode_packet_opened": True,
+                "exact_spool_opened": False,
+            },
+            "absolute_terminate_memory_bytes": V11_BOTTOM_PACKET_ALGEBRA_HARD_STOP_BYTES,
+            "effective_hard_stop_memory_gib": 45.0,
             "require_zero_swap": True,
             "zero_swap_observed": zero_swap_observed if sample_count else None,
             "overall_process_tree_peak_bytes": peak_process_tree,

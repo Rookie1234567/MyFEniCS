@@ -151,23 +151,23 @@ def test_v11_identity_uses_independent_full_schedule_and_mode_keys():
     assert enriched[2] is not raw[2]
 
 
-def test_v11_owner_local_manifest_hash_and_duplicate_contract(tmp_path):
+def test_v11_active_trace_owner_remap_is_partition_independent(tmp_path):
     comm = MPI.COMM_WORLD
-    root = Path(comm.bcast(str(tmp_path / f"owner-local-{comm.size}"), root=0))
+    root = Path(comm.bcast(str(tmp_path / f"active-trace-remap-{comm.size}"), root=0))
     if comm.rank == 0:
         shutil.rmtree(root, ignore_errors=True)
     comm.barrier()
     root.mkdir(parents=True, exist_ok=True)
     shard_path = root / f"rank{comm.rank}.jsonl"
     shard_meta = write_canonical_packet_shard(
-        shard_path, [(("active_trace", 2), 2.0), (("active_trace", 1), 1.0)]
+        shard_path, [(("active_trace", comm.rank), complex(comm.rank + 1.0))]
     )
-    all_shards = comm.allgather({"rank": comm.rank, **shard_meta})
+    shard_descriptors = comm.allgather({"rank": comm.rank, **shard_meta})
     manifest_path = root / "manifest.json"
     manifest = {
         "schema_version": "task037.canonical-vector-manifest.v1",
         "mpi_size": comm.size,
-        "per_rank_shards": all_shards,
+        "per_rank_shards": shard_descriptors,
     }
     if comm.rank == 0:
         manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
@@ -178,21 +178,25 @@ def test_v11_owner_local_manifest_hash_and_duplicate_contract(tmp_path):
         else None,
         root=0,
     )
-    metadata, packets = orchestration._v11_read_owner_canonical_shard(
-        manifest_path, manifest_sha, comm
+    expected = (("active_trace", (comm.rank + 1) % comm.size),)
+    _metadata, values = orchestration._v11_read_active_trace_owner_remap(
+        manifest_path, manifest_sha, expected, comm
     )
-    assert metadata["mpi_size"] == comm.size
-    assert [key for key, _value in packets] == [
-        ("active_trace", 2),
-        ("active_trace", 1),
-    ]
-    with pytest.raises(ValueError, match="canonical"):
-        orchestration._v11_read_owner_canonical_shard(manifest_path, "0" * 64, comm)
+    assert values[expected[0]] == pytest.approx(((comm.rank + 1) % comm.size) + 1)
+    with pytest.raises(ValueError, match="active-trace"):
+        orchestration._v11_read_active_trace_owner_remap(
+            manifest_path, "0" * 64, expected, comm
+        )
 
-    duplicate_path = root / f"rank{comm.rank}-duplicate.jsonl"
-    duplicate_meta = write_canonical_packet_shard(
-        duplicate_path, [(("active_trace", 1), 1.0), (("active_trace", 1), 2.0)]
-    )
+    duplicate_path = root / "duplicate.jsonl"
+    if comm.rank == 0:
+        duplicate_meta = write_canonical_packet_shard(
+            duplicate_path,
+            [(("active_trace", 0), 1.0), (("active_trace", 0), 2.0)],
+        )
+    else:
+        duplicate_meta = None
+    duplicate_meta = comm.bcast(duplicate_meta, root=0)
     if comm.rank == 0:
         manifest["per_rank_shards"][0] = {"rank": 0, **duplicate_meta}
         manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
@@ -203,18 +207,68 @@ def test_v11_owner_local_manifest_hash_and_duplicate_contract(tmp_path):
         else None,
         root=0,
     )
-    with pytest.raises(ValueError, match="owner-local"):
-        orchestration._v11_read_owner_canonical_shard(
-            manifest_path, duplicate_sha, comm
+    with pytest.raises(ValueError, match="active-trace"):
+        orchestration._v11_read_active_trace_owner_remap(
+            manifest_path, duplicate_sha, expected, comm
         )
 
-    assert (
-        orchestration.V11_V7_MODAL_AMPLITUDES_SHA256
-        == "c386d3f97180de5879006209091a3e2743709857065d3aa4dfffd320f6962ce4"
+    empty_path = root / "empty.jsonl"
+    if comm.rank == 0:
+        empty_meta = write_canonical_packet_shard(empty_path, [])
+    else:
+        empty_meta = None
+    empty_meta = comm.bcast(empty_meta, root=0)
+    if comm.rank == 0:
+        manifest["per_rank_shards"][0] = {"rank": 0, **shard_descriptors[0]}
+        missing_rank = 1 % comm.size
+        manifest["per_rank_shards"][missing_rank] = {
+            "rank": missing_rank,
+            **empty_meta,
+        }
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    comm.barrier()
+    missing_sha = comm.bcast(
+        hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+        if comm.rank == 0
+        else None,
+        root=0,
     )
+    with pytest.raises(ValueError, match="active-trace"):
+        orchestration._v11_read_active_trace_owner_remap(
+            manifest_path,
+            missing_sha,
+            (("active_trace", comm.rank),),
+            comm,
+        )
+
+    if comm.rank == 0:
+        extra_path = root / "extra.jsonl"
+        extra_meta = write_canonical_packet_shard(
+            extra_path, [(("active_trace", ("extra",)), 3.0)]
+        )
+        manifest["per_rank_shards"] = list(shard_descriptors)
+        manifest["per_rank_shards"][0] = {"rank": 0, **extra_meta}
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    comm.barrier()
+    extra_sha = comm.bcast(
+        hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+        if comm.rank == 0
+        else None,
+        root=0,
+    )
+    with pytest.raises(ValueError, match="extra|owner overlap"):
+        orchestration._v11_read_active_trace_owner_remap(
+            manifest_path,
+            extra_sha,
+            (("active_trace", (comm.rank + 1) % comm.size),),
+            comm,
+        )
 
 
 def test_v11_modal_amplitude_loader_checks_file_and_array_hash(tmp_path):
+    assert orchestration.V11_V7_MODAL_AMPLITUDES_SHA256 == (
+        "c386d3f97180de5879006209091a3e2743709857065d3aa4dfffd320f6962ce4"
+    )
     amplitudes = np.arange(960, dtype=np.float64).astype(np.complex128)
     path = tmp_path / "modal.npz"
     np.savez(path, modal_amplitudes=amplitudes)
@@ -307,9 +361,12 @@ def test_v11_bottom_packet_route_uses_fixed_authority_and_releases(
             }
         ),
     }
-    monkeypatch.setattr(
-        orchestration, "_v11_prepare_bottom_authority", lambda *a, **k: prepared
-    )
+
+    def fake_prepare(*_args, **kwargs):
+        kwargs["marker_callback"]("v11_test_prepare_marker", callback_detail=True)
+        return prepared
+
+    monkeypatch.setattr(orchestration, "_v11_prepare_bottom_authority", fake_prepare)
 
     def audit(*_args, **kwargs):
         assert (
@@ -353,6 +410,8 @@ def test_v11_bottom_packet_route_uses_fixed_authority_and_releases(
         result = call()
         assert result["schema"] == orchestration.V11_BOTTOM_PACKET_ALGEBRA_SCHEMA
     assert "authority_release" in timeline
+    assert "v11_test_prepare_marker" in timeline
+    assert marker_details["v11_test_prepare_marker"] == {"callback_detail": True}
     assert timeline.count("packet_destroy") == 1
     assert timeline.index("system_destroy") < timeline.index("cleanup")
     assert timeline[-1] == "v11_h4_bottom_packet_algebra_cleanup"
@@ -3898,6 +3957,13 @@ def test_v11_bottom_packet_algebra_main_dry_run_forwards_frozen_artifacts(
         orchestration.V11_BOTTOM_PACKET_ALGEBRA_HARD_STOP_BYTES
     )
     assert not (tmp_path / "v11-main-dry-run").exists()
+
+
+def test_v11_physical_source_is_fresh_system_rhs_without_spool_arrays():
+    source = inspect.getsource(orchestration._v11_prepare_bottom_authority_inner)
+    assert "physical_vec = system.b.copy()" in source
+    assert "_load_v5_fixed_budget_spool_shards" not in source
+    assert "_load_v5_blr_reference_spool_remapped" not in source
 
 
 @pytest.mark.parametrize("holdout_pass", [True, False], ids=["pass", "no-pass"])

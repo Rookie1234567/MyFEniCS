@@ -21,6 +21,7 @@ from src.solvers.hcurl_canonical_vector import canonical_key, compare_canonical_
 from src.solvers.hcurl_canonical_vector_dolfinx import (
     extract_canonical_active_trace_packets,
     extract_canonical_full_fe_packets,
+    reconstruct_canonical_active_trace_vec,
 )
 from src.test.test_224_task037_static_local_schur_action import _build_fixture
 from src.test.test_46_task033_high_order_floquet_topology import _fixed_target_fixture
@@ -123,6 +124,34 @@ class TestTask037CanonicalVectorDolfinx(unittest.TestCase):
             [field.x.array[int(value)] for value in cell.trace_original_dofs]
         )
         np.testing.assert_allclose(observed, expected, atol=1.0e-13, rtol=0.0)
+        active.destroy()
+        condensed.destroy()
+
+    def test_canonical_active_trace_rebuilds_on_current_partition(self) -> None:
+        _mesh, V, condensed = _static_fixture(MPI.COMM_WORLD)
+        active = condensed.create_active_vector()
+        _set_global_vector_values(active)
+        packets, _audit = extract_canonical_active_trace_packets(
+            condensed, V, None, active
+        )
+        values_by_key = dict(packets)
+        rebuilt = reconstruct_canonical_active_trace_vec(
+            condensed, V, None, values_by_key
+        )
+        rebuilt_packets, rebuilt_audit = extract_canonical_active_trace_packets(
+            condensed, V, None, rebuilt
+        )
+        assert compare_canonical_packets(packets, rebuilt_packets)["pass"]
+        assert rebuilt_audit["local_duplicate_count"] == 0
+        incomplete = dict(values_by_key)
+        if MPI.COMM_WORLD.rank == 0:
+            assert incomplete
+            incomplete.pop(next(iter(incomplete)))
+        with self.assertRaisesRegex(
+            ValueError, "canonical active-trace reconstruction failed"
+        ):
+            reconstruct_canonical_active_trace_vec(condensed, V, None, incomplete)
+        rebuilt.destroy()
         active.destroy()
         condensed.destroy()
 

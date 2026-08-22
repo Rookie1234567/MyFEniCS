@@ -1491,6 +1491,124 @@ def test_v10_j1_inner_fgmres_launcher_owns_resource_gate(
     assert telemetry["overall_peak_swap_bytes"] == swap
 
 
+@pytest.mark.parametrize(
+    ("memory", "expected_status", "expected_pass"),
+    (
+        (10 * 2**30, "pass_retained_not_applicable", True),
+        (46 * 2**30, "resource_interval_not_available", None),
+    ),
+)
+def test_v11_bottom_packet_algebra_launcher_uses_45_gib_authority(
+    tmp_path, memory, expected_status, expected_pass
+):
+    specification = replace(
+        load_and_resolve(TASK039_V4_H4_ITERATIVE),
+        expected_output_parent=tmp_path / "results",
+    )
+    run_directory = tmp_path / f"v11-bottom-{memory}"
+    diagnostic_directory = run_directory / "numerical_output"
+    diagnostic_directory.mkdir(parents=True)
+    source_sha = "a" * 40
+    (diagnostic_directory / "v3_v7_diagnostic.json").write_text(
+        json.dumps(
+            {
+                "schema": launcher.V11_BOTTOM_PACKET_ALGEBRA_SCHEMA,
+                "method": launcher.V11_BOTTOM_PACKET_ALGEBRA_METHOD,
+                "source_sha": source_sha,
+                "gate": {
+                    "pass": True,
+                    "classification": "V11_BOTTOM_PACKET_ALGEBRA_PASS",
+                },
+                "inventory_evidence": {
+                    "observed": True,
+                    "ready": {
+                        "factor_count": 0,
+                        "ksp_count": 0,
+                        "qep_count": 0,
+                    },
+                },
+                "system_evidence": {
+                    "observed": True,
+                    "mat": {"matrix_free": True},
+                },
+                "cleanup": {
+                    "packet_destroy_called": True,
+                    "system_destroy_called": True,
+                },
+                "pde_solve": "not_run",
+            }
+        ),
+        encoding="utf-8",
+    )
+    marker_path = diagnostic_directory / "memory_stage_markers.raw.jsonl"
+    sample_calls = 0
+    terminations = []
+
+    def popen(_argv, **_kwargs):
+        return _SequenceProcess(polls_before_exit=2)
+
+    def sample_factory(_pid):
+        nonlocal sample_calls
+        sample_calls += 1
+        stages = {
+            1: "v11_h4_bottom_packet_algebra_construction_begin",
+            2: "v11_h4_bottom_packet_algebra_cleanup",
+        }
+        if sample_calls in stages:
+            with marker_path.open("a", encoding="utf-8") as stream:
+                stream.write(
+                    json.dumps(
+                        {
+                            "stage": stages[sample_calls],
+                            "status": "end",
+                            "elapsed_seconds": float(sample_calls),
+                        }
+                    )
+                    + "\n"
+                )
+        return _authority(memory=memory, swap=0)
+
+    plan = SimpleNamespace(
+        argv=("/opt/fake-worker",),
+        method=launcher.V11_BOTTOM_PACKET_ALGEBRA_METHOD,
+        source_sha=source_sha,
+        contract_probe=False,
+        task039_trace_audit=False,
+    )
+    result = launcher._run_worker(
+        plan,
+        specification,
+        run_directory,
+        popen_factory=popen,
+        sample_factory=sample_factory,
+        terminate_factory=lambda process: (
+            terminations.append(process.pid) or {"requested": True}
+        ),
+        monotonic=iter(float(index) for index in range(12)).__next__,
+        sleep=lambda _seconds: None,
+        poll_interval=0.0,
+    )
+    telemetry = result["resource_authority"]["v11_h4_bottom_packet_algebra_telemetry"]
+    assert telemetry["worker_record_contract_valid"] is True
+    assert result["resource_authority"]["absolute_terminate_memory_bytes"] == (
+        45 * 2**30
+    )
+    construction = telemetry["construction_interval_summary"]
+    if memory <= 45 * 2**30:
+        assert construction["status"] == "measured"
+        assert construction["pass"] is True
+    else:
+        assert construction["status"] != "measured"
+        assert construction["pass"] is None
+    assert telemetry["retained_interval_summary"]["status"] == "not_applicable"
+    assert telemetry["overall"]["status"] == expected_status
+    assert telemetry["overall"]["pass"] is expected_pass
+    if memory > 45 * 2**30:
+        assert result["result_classification"] == "memory_terminate"
+        assert len(terminations) == 1
+        assert result["termination"]["requested"] is True
+
+
 def test_v10_side_response_consumer_uses_retained_interval_authority(tmp_path):
     specification = replace(
         load_and_resolve(TASK039_V4_H4_ITERATIVE),
