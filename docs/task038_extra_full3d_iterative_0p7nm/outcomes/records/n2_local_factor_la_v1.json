@@ -1,0 +1,143 @@
+{
+  "schema": "task038.full3d.local-spectral.la0-la1-compact.v5",
+  "classification": "CONTROLLED_STOP_LA0_RUNNER_LIFECYCLE_PATH_ALREADY_EXISTS",
+  "scope": "single_formal_attempt_la0_la1",
+  "formal": {
+    "source_git_sha": "4b9ccbcc411ef529a5a1258cc11bddc691d11b95",
+    "branch": "codex/20260820-task38-extra-full3d-iterative-0p7nm",
+    "base_master_sha": "438caf150439343ee7c4c58ad7e02a3da812a23c",
+    "review_v5_start_sha": "5636cd49b2c385f320b87dc07e9c9eb935ac1e2d",
+    "pre_v5_response_v4_head": "8cb3cfd62586f4e050afe41932b54a823ee2f5d8",
+    "upstream_at_source": "5636cd49b2c385f320b87dc07e9c9eb935ac1e2d",
+    "case": "p6-h10-mpi1",
+    "degree": 6,
+    "mesh_target_nm": 10.0,
+    "mpi_size": 1,
+    "input": "input/templates/full3d_iterative_example.dat",
+    "attempt_count": 1,
+    "no_rerun_under_one_formal_attempt_contract": true,
+    "worker_returncode": 1,
+    "watchdog_returncode": 1,
+    "checker_returncode": 1,
+    "command": {
+      "outer": "python -m benchmarks.run_task038_full3d_n2_la0 --watchdog --watchdog-record benchmarks/artifacts/task038_extra_full3d_n2_la_v1/4b9ccbc/p6_h10_mpi1/record.json --watchdog-raw benchmarks/artifacts/task038_extra_full3d_n2_la_v1/4b9ccbc/p6_h10_mpi1/watchdog.raw.json --watchdog-compact benchmarks/artifacts/task038_extra_full3d_n2_la_v1/4b9ccbc/p6_h10_mpi1/watchdog.compact.json --watchdog-log benchmarks/artifacts/task038_extra_full3d_n2_la_v1/4b9ccbc/p6_h10_mpi1/worker.log --watchdog-marker-dir benchmarks/artifacts/task038_extra_full3d_n2_la_v1/4b9ccbc/p6_h10_mpi1/raw/markers --watchdog-poll-seconds 1.0 --watchdog-timeout-seconds 600 --watchdog-command mpiexec -n 1 python -m benchmarks.run_task038_full3d_n2_la0 --stage la0 --case p6-h10-mpi1 --input input/templates/full3d_iterative_example.dat --raw-dir benchmarks/artifacts/task038_extra_full3d_n2_la_v1/4b9ccbc/p6_h10_mpi1/raw --record benchmarks/artifacts/task038_extra_full3d_n2_la_v1/4b9ccbc/p6_h10_mpi1/record.json --marker-dir benchmarks/artifacts/task038_extra_full3d_n2_la_v1/4b9ccbc/p6_h10_mpi1/raw/markers --expected-source-sha 4b9ccbcc411ef529a5a1258cc11bddc691d11b95 --expected-mpi-size 1",
+      "worker": "mpiexec -n 1 python -m benchmarks.run_task038_full3d_n2_la0 --stage la0 --case p6-h10-mpi1 --input input/templates/full3d_iterative_example.dat --raw-dir benchmarks/artifacts/task038_extra_full3d_n2_la_v1/4b9ccbc/p6_h10_mpi1/raw --record benchmarks/artifacts/task038_extra_full3d_n2_la_v1/4b9ccbc/p6_h10_mpi1/record.json --marker-dir benchmarks/artifacts/task038_extra_full3d_n2_la_v1/4b9ccbc/p6_h10_mpi1/raw/markers --expected-source-sha 4b9ccbcc411ef529a5a1258cc11bddc691d11b95 --expected-mpi-size 1"
+    },
+    "source_identity": {
+      "expected_sha_in_watchdog_command": "4b9ccbcc411ef529a5a1258cc11bddc691d11b95",
+      "worker_preflight_reached": false,
+      "backfilled_record_top_level_identity": "not_bound_by_startup_backfill",
+      "runtime_source_identity": "not_available_before_worker_preflight"
+    },
+    "worktree_at_source": "clean",
+    "closure_worktree_after_required_compact": "three untracked closure files: compact record, local_factor_linear_algebra_diagnostic.md, and response_v5.md; no code changes"
+  },
+  "failure": {
+    "phase": "before_worker_preflight_mesh_and_class_extraction",
+    "exception_type": "FileExistsError",
+    "message": "N2 raw, record, or marker path already exists",
+    "root_cause": "The launch command created raw/markers before the worker; _prepare_paths requires raw, record, and marker paths not to exist.",
+    "numerical_work_started": false,
+    "class_capture_started": false,
+    "reproduction_status": "not_run_by_runner_lifecycle_stop"
+  },
+  "markers": {
+    "actual": [],
+    "last_marker": "startup",
+    "worker_preflight": "not_run",
+    "mesh_space_mpc": "not_run",
+    "class_extraction": "not_run"
+  },
+  "old_n2_v1": {
+    "classification": "CONTROLLED_NEGATIVE_LOCAL_FACTOR_SOLVE_GATE",
+    "source_git_sha": "907fe8fb204cffa34a921c6d0cab7ff4dd4831b8",
+    "compact_record_relative_path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/n2_local_spectral_setup_mpi1_v1.json",
+    "compact_record_sha256": "d02f416956a560c0837d067636d8f62d253c9d04da4e6bbe3b6194dd10098d40",
+    "fixed_rhs_solve_residual": 1.0426245523812324e-11,
+    "solve_gate": 1.0e-11,
+    "preserved": true
+  },
+  "la0": {
+    "reproduction": "not_run_by_runner_lifecycle_stop",
+    "failed_class_digest": "not_run",
+    "rows": "not_run",
+    "matrix_sha256": "not_run",
+    "rhs_sha256": "not_run",
+    "la0_gate": 1.0e-11
+  },
+  "la1": {
+    "status": "not_run_by_runner_lifecycle_stop",
+    "hermitian_defect": "not_run",
+    "lambda_min": "not_run",
+    "lambda_max": "not_run",
+    "kappa2": "not_run",
+    "factorization_residual": "not_run",
+    "S0": "not_run",
+    "S1": "not_run",
+    "S2": "not_run",
+    "S3": "not_run",
+    "decision_path": "not_determined",
+    "production_solve_changed": false,
+    "solve_gate_unchanged": true
+  },
+  "resource": {
+    "classification": "startup_process_tree_measurement_only",
+    "process_tree_peak_memory_authority_bytes": 14446592,
+    "process_tree_swap_bytes": 0,
+    "authority_samples": 3,
+    "sampled_elapsed_seconds": 2.0098296020005364,
+    "warning_bytes": 1800000000,
+    "hard_stop_bytes": 2000000000,
+    "diagnostic_resource_status": "not_run_not_qualified_startup_only",
+    "post_setup": "not_run",
+    "stop_reason": "natural_exit",
+    "worker_self_returned_rc": 1,
+    "watchdog_sent_sigterm": false,
+    "watchdog_sent_sigkill": false,
+    "termination_method": "already_exited",
+    "process_group_exited": true,
+    "no_orphan": true,
+    "compact_natural_exit": false
+  },
+  "downstream": {
+    "LA2": "not_run",
+    "LA3": "not_run",
+    "LA4": "not_run",
+    "LA5": "not_run",
+    "N2_complete_setup": "not_run",
+    "N2_MPI2": "not_run",
+    "N3": "not_run",
+    "N4": "not_run",
+    "T6_F": "not_run",
+    "official_physics": "not_run",
+    "T7_T8_T9": "not_run",
+    "full_0p7nm_PDE": "not_run"
+  },
+  "ignored_artifacts": {
+    "worker_backfill_record": {
+      "path": "benchmarks/artifacts/task038_extra_full3d_n2_la_v1/4b9ccbc/p6_h10_mpi1/record.json",
+      "bytes": 1788,
+      "sha256": "dfcbfb751c2bbee41f56a2668944e19dd374275f0482280de8eaec3b26aff77b"
+    },
+    "watchdog_raw": {
+      "path": "benchmarks/artifacts/task038_extra_full3d_n2_la_v1/4b9ccbc/p6_h10_mpi1/watchdog.raw.json",
+      "bytes": 5113,
+      "sha256": "858eab4a3a13218991c9a2c605d3f0bf6298af4962750d4cc45424e912e0e482"
+    },
+    "watchdog_compact": {
+      "path": "benchmarks/artifacts/task038_extra_full3d_n2_la_v1/4b9ccbc/p6_h10_mpi1/watchdog.compact.json",
+      "bytes": 1821,
+      "sha256": "69de7ed21736ad18488dd998f5bc11d9e9e1695efcc01bd2215a7b3073b38238"
+    },
+    "independent_checker": {
+      "path": "benchmarks/artifacts/task038_extra_full3d_n2_la_v1/4b9ccbc/p6_h10_mpi1/check.json",
+      "bytes": 1121,
+      "sha256": "33bfc1b5cb0f9e21073ea30110cdfdaf40625f8ca565f6134efc5b769e3099bd"
+    },
+    "worker_log": {
+      "path": "benchmarks/artifacts/task038_extra_full3d_n2_la_v1/4b9ccbc/p6_h10_mpi1/worker.log",
+      "bytes": 1553,
+      "sha256": "865b1319133ddba30baf7e89b93afe17e87245b10f21294db38648aafc795c2d"
+    }
+  }
+}
