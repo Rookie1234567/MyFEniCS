@@ -301,6 +301,47 @@ class AffineIsotropicMaxwellTensorFactory:
             )
         return np.ascontiguousarray(tensor)
 
+    def mass_tensor(
+        self,
+        *,
+        tag: int,
+        widths: tuple[float, float, float],
+    ) -> np.ndarray:
+        """Return only the volumetric mass part using this factory's Grams.
+
+        This deliberately reuses the same reference ``mass_components`` as
+        :meth:`tensor`; callers do not construct a second six-Gram factory.
+        """
+
+        material_tag = int(tag)
+        if material_tag not in self.spec.mass_coefficient_by_tag:
+            raise ValueError(
+                "affine tensor spec has no mass coefficient for "
+                f"material tag {material_tag}"
+            )
+        h = np.asarray(widths, dtype=np.float64)
+        if (
+            h.shape != (3,)
+            or not np.all(np.isfinite(h))
+            or np.any(h <= 0.0)
+        ):
+            raise ValueError(
+                "axis-aligned cell widths must be three positive values"
+            )
+        determinant = float(np.prod(h))
+        mass_weights = determinant / h**2
+        tensor = np.zeros(
+            (int(self.element.dim), int(self.element.dim)),
+            dtype=np.complex128,
+        )
+        for component in range(3):
+            tensor += (
+                self.spec.mass_coefficient_by_tag[material_tag]
+                * float(mass_weights[component])
+                * self.mass_components[component]
+            )
+        return np.ascontiguousarray(tensor)
+
 
 __all__ = [
     "AffineIsotropicMaxwellTensorFactory",
