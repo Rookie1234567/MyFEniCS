@@ -339,3 +339,20 @@ formal 的 residual/physics pass 也不被 component RSS 取代。首次 impleme
 | check_benchmarks --no-write | `pass` | qualified host；exit 0；302/302 passed；无写入、无 PDE/heavy |
 | Ruff/format/compileall | `inherited pass at 266a1acc; docs-only closeout not rerun` | 本轮没有 Python 修改 |
 | repository full pytest / CI | `not_run` | 不声称 full pytest 或 CI |
+
+## V11-1 formal evidence and docs closeout
+
+| 检查 | 真实结果 | 说明 |
+|---|---|---|
+| V11-1 targeted serial exact/fresh | `2 passed, 7 deselected` | qualified activation；历史 implementation/focused scope |
+| V11-1 targeted MPI2 exact/fresh | `2 passed, 7 deselected` per rank | qualified MPI2 tiny fixtures |
+| V11-1 targeted MPI4 fresh | `1 passed, 8 deselected` per rank | fresh single-build lifecycle fixture |
+| Task039 orchestration V11 selector | `9 passed, 127 deselected` | `test_285 ... -k v11` |
+| Ruff check | `pass` | changed Python scope at `677ab26d` |
+| Ruff format-check | `pass` | changed Python scope |
+| compileall | `pass` | changed Python scope |
+| git diff --check | `pass` | prior implementation Gate |
+| check_benchmarks --no-write | qualified activation `302/302 passed`, exit 0 | no write、no PDE/heavy |
+| docs-only closeout full pytest/CI | `not_run` | no源码重测 |
+
+V11-1 formal raw is hash-bound in [the compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v11_bottom_packet_algebra_v1.json); raw artifacts remain ignored and are not committed.

@@ -2571,3 +2571,9 @@ both、full 和 0.7 nm PDE 均 `not_run`。证据入口为
 [V9-2 outcome](task039_5nm_hybrid_qualification_and_0p7nm_feasibility/outcomes/v9_supernode_side_preconditioner.md)、
 [V9-2 compact record](../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v9_supernode_side_preconditioner_v1.json)
 和 ignored raw root `results/task039_v9_h4_layer_supernode_bottom_mpi8_266a1acc/`。
+
+## 2026-08-22：V11-1 bottom response-packet algebra closeout
+
+V11-1 formal action-only audit 在源码 SHA `677ab26dcfef79f0f754b88f2cfb8832edac4285` 上运行一次并按固定 Gate 结束。960 列 metadata identity/order/provenance/layout、physical zero equation、independent zero-map 和 V7 active-trace round trip 通过；十个 sampled AX residual、960-column Schur/modal action 和 V7 bottom trace Gate 失败，分类为 formal algebra negative / controlled stop。没有 sign flip、packet rerun、factor/KSP/QEP、PDE 或完整 Hybrid solve。
+
+component process-tree peak 为 `12.7808799744 GiB`，swap=0，wall 约 `655.209 s`；此前 `45.277 GiB` projection controlled stop 的 row-flush/streamed 修复使本次 projection 完成，但不能据此证明 packet algebra 或 solver correctness。V11-2 至 V11-7、top/full、consumer、0.7 nm 均 not_run。hash-bound compact record 和 response_v12 是本阶段证据入口；raw 仍 ignored。

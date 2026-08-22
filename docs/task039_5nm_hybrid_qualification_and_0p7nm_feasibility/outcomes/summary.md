@@ -743,3 +743,28 @@ authority，节省 14.298113646%；20%/50% 未达到。
 
 V10-5 modal cost model、top、both-side、full Hybrid、其他扫描和 0.7 nm PDE 均 not_run；
 V7/V8/V9 的历史结果与首次 implementation failures 未覆盖，ordinary defaults 与 master 未动。
+
+## 2026-08-22：V11-1 bottom packet algebra formal negative
+
+V11-1 在固定 5 nm p6/h4、M480、MPI8 action-only 路线上完成了正式 component audit，随后因 algebra Gate 失败 controlled stop。960 列 metadata identity/order/provenance/layout 通过；physical zero equation error=0、independent zero-map output norm=0；但十个 sampled AX=source residual 的最大值为 `700.7944864636039`（限值 `1e-9`），packet Schur/modal action 为 `132.34347758005742`、bottom trace 为 `31.80044571619504`（各限值 `5e-9`）。因此这不是 implementation failure、内存失败或完整 Hybrid solve 失败，也不允许手工翻符号。
+
+| V11-1 证据 | 结果 |
+|---|---|
+| process-tree component peak | `12.7808799744 GiB`，swap 0，45 GiB hard stop 未触发 |
+| wall | 约 `655.209 s` |
+| factor/KSP/QEP/PDE | `0/0/0/not_run` |
+| packet/system/projection cleanup | released |
+| V11-2 至 V11-7、top、full、consumer、0.7 nm | not_run，因为 V11-1 algebra Gate failed |
+
+12.7808799744 GiB 只属于 V11-1 read-only component，不是完整 workflow saving。完整 workflow authority 仍为 direct `93.377006531 GiB`、best full `80.025856018 GiB`、saving `14.298113646%`；本轮没有新 tier。完整 hash-bound 数值、raw 文件 hash 与逐列 residual 见
+[V11-1 compact record](../../../benchmarks/cases/103_5nm_full3d_hybrid_feasibility/records/task039_v11_bottom_packet_algebra_v1.json)
+和 [V11-1 response](../response_v12.md)。
+
+| Review stage | Formal mapping | 状态 |
+|---|---|---|
+| V11-2 | closed-set response compression | not_run |
+| V11-3 | top response-packet pilot | not_run |
+| V11-4 | top full response-packet producer | not_run |
+| V11-5 | factor-free two-side consumer and conditional recovery/physics | not_run |
+| V11-6 | response-interpolatory bottom PC | not_run |
+| V11-7 | structured unseen-mode generalization | not_run |

@@ -1,0 +1,242 @@
+{
+  "schema": "task039.v11.bottom_packet_algebra.v1",
+  "record_type": "formal_component_negative",
+  "classification": "5NM_V11_1_BOTTOM_PACKET_ALGEBRA_CONTROLLED_NEGATIVE",
+  "status": "controlled_stop",
+  "research_only": true,
+  "production_promotion_allowed": false,
+  "source_sha": "677ab26dcfef79f0f754b88f2cfb8832edac4285",
+  "branch": "codex/20260812-task39-5nm-hybrid-0p7nm-feasibility",
+  "git_state_at_run": {
+    "head": "677ab26dcfef79f0f754b88f2cfb8832edac4285",
+    "upstream": "677ab26dcfef79f0f754b88f2cfb8832edac4285",
+    "ahead": 0,
+    "behind": 0,
+    "clean": true
+  },
+  "review": {
+    "path": "docs/task039_5nm_hybrid_qualification_and_0p7nm_feasibility/review_report_v11.md",
+    "sha256": "d2e5550933df45fa3e85d13ac4df726c43dec3cae76d4510d4efa71a794b5797"
+  },
+  "physical_case": {
+    "model": "5nm p6 h4, 1 degree grazing, phi=0, S polarization, M=480, MPI=8",
+    "input": "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat",
+    "input_sha256": "4e60924b5997e3ca99e324ea14779f9014efc6a1304a9aa11de9c808353f1811",
+    "physical_model_sha256": "8391d46139646440d869aa43abe6a68bc921fc1972a10030c64be81dffdd527c"
+  },
+  "frozen_authority": {
+    "selected_mode_packet_manifest": "results/task039_v4_h4_m480_shared_packet_eaad0f94/manifest.json",
+    "selected_mode_packet_manifest_sha256": "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067",
+    "response_packet_manifest": "results/task039_v10_h4_side_response_packet_full_packet_dbc5e9bf/manifest.json",
+    "response_packet_manifest_sha256": "1f4e8acaf278bde0d0d14a2a096335049ee988cdbc1b406bca4197918ff64a0e",
+    "producer_diagnostic": "results/task039_v10_h4_side_response_packet_full_producer_mpi8_dbc5e9bf/numerical_output/v3_v7_diagnostic.json",
+    "producer_source_sha": "dbc5e9bfdf9ad0520881caa168c7a27316d50f10",
+    "exact_spool_root": "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/numerical_output",
+    "exact_spool_catalog_sha256": "a2a7fb6fb01df4f795d31ff94f6ac6adf957ac4fe4a5c1a8d05176e3d64c0384",
+    "v7_authority_root": "results/task039_v7_h4_exact_side_full_formal_mpi8_9e31ecf1",
+    "v7_modal_npz_sha256": "7107e54e47498d7b493076dee3bbab0fc94e06db76f20e67e254fbeb46a8a8c2",
+    "v7_modal_amplitudes_array_sha256": "c386d3f97180de5879006209091a3e2743709857065d3aa4dfffd320f6962ce4",
+    "v7_active_trace_manifest_sha256": "fae8e3654e5f21ac81f23080de6f1763e99bb2b12ba28d0ddd1814d24e01d765"
+  },
+  "formal_run": {
+    "root": "results/task039_v11_h4_bottom_packet_algebra_mpi8_677ab26d",
+    "method": "task039_v11_h4_bottom_packet_algebra",
+    "mpi_size": 8,
+    "threads": 1,
+    "start_utc": "2026-08-22T08:53:06.556420+00:00",
+    "end_utc": "2026-08-22T09:04:01.765301+00:00",
+    "wall_seconds": 655.208881,
+    "outer_exit_status": 3,
+    "outer_classification": "worker_nonzero",
+    "worker_classification": "component_v11_bottom_packet_algebra_failed",
+    "parent_contract_status": "contract_mismatch",
+    "parent_contract_reason": "v11_action_only_contract_mismatch",
+    "interpretation": "The worker reached the algebra Gate and stopped; the parent status is downstream status handling, not a new traceback or an implementation failure."
+  },
+  "gates": {
+    "metadata_identity_960": true,
+    "order_960": true,
+    "source_identity": true,
+    "provenance": true,
+    "provider_identity": true,
+    "layout_hash": true,
+    "owner_row_coverage": true,
+    "physical_rhs_degenerate": true,
+    "physical_equation_relative_error": 0.0,
+    "physical_equation_limit": 1e-09,
+    "physical_equation_pass": true,
+    "independent_zero_map_output_norm": 0.0,
+    "independent_zero_map_pass": true,
+    "sample_equation_max_relative_error": 700.7944864636039,
+    "sample_equation_limit": 1e-09,
+    "sample_equation_pass": false,
+    "schur_relative_error": 132.34347758005742,
+    "modal_amplitude_action_relative_error": 132.34347758005742,
+    "schur_and_modal_limit": 5e-09,
+    "schur_pass": false,
+    "modal_amplitude_action_pass": false,
+    "bottom_trace_relative_error": 31.80044571619504,
+    "bottom_trace_limit": 5e-09,
+    "bottom_trace_pass": false,
+    "sign_contract_pass": true,
+    "action_counts": {
+      "block": 12,
+      "schur": 960,
+      "trace": 1
+    },
+    "overall_pass": false,
+    "failure_reason": "The sampled AX, packet Schur/modal action, and bottom trace comparisons failed their fixed Gates. No sign was flipped and no packet was rerun."
+  },
+  "sampled_columns": {
+    "indices": [0, 1, 240, 267, 479, 480, 481, 720, 746, 959],
+    "source_equation_relative_error": [
+      311.7597565148893,
+      318.0894412830888,
+      254.2009324008069,
+      362.3046447112934,
+      700.7944864636039,
+      312.81546813720075,
+      318.0915956668195,
+      255.4528074577953,
+      365.3019145318697,
+      685.8676762741122
+    ],
+    "reported_as": "Ten sampled columns perform numerical AX=source checks; the other 950 columns are included in the streamed Schur action, not claimed to have individually recomputed source actions."
+  },
+  "projection_audit": {
+    "projection_ready": true,
+    "projection_matrix_assembly": "row_flush_then_final",
+    "trace_mass_matrix_materialized": false,
+    "trace_mass_action": "reusable_form_action",
+    "canonical_trace_materialization": "single_reusable",
+    "canonical_trace_peak_live_count": 1,
+    "canonical_trace_retained_count": 0,
+    "full_mode_vectors_retained": false,
+    "positive_negative_traction_matrices_retained": false,
+    "trace_gram_condition": 111939.76635978222,
+    "projection_identity_error": 7.858642063188356e-09,
+    "canonical_mapping_condition": 22.004383402422413,
+    "canonical_trace_raw_consistency_error": 5.209211029638809e-15,
+    "canonical_trace_representation_error": 4.302968389689899e-15,
+    "query_count": 17287200
+  },
+  "active_trace_and_lifecycle": {
+    "v7_active_trace_roundtrip_max_abs": 3.2616290216610626e-17,
+    "v7_active_trace_roundtrip_relative_error": 2.29546617364909e-16,
+    "packet_released": true,
+    "packet_destroy_called": true,
+    "system_released": true,
+    "projection_released": true,
+    "selected_provider_context_released": true,
+    "owner_bundle": "not_created",
+    "observed_pre_destroy_zero": true,
+    "post_destroy_factor_count": "not_observable",
+    "cleanup_marker_elapsed_seconds": 650.6945106040
+  },
+  "inventory": {
+    "direct_factor_count_ready": 0,
+    "ksp_count": 0,
+    "qep_count": 0,
+    "pde": "not_run",
+    "system_observed": true,
+    "system_source": "system.A/static_condensation/streamed projection-only D",
+    "matrix_type": "python",
+    "matrix_free": true,
+    "system_size": [132300, 132300],
+    "ownership_ranges": [[0, 16884], [16884, 33888], [33888, 49692], [49692, 66528], [66528, 82218], [82218, 100014], [100014, 116802], [116802, 132300]],
+    "nnz_or_matrix_bytes": "not_recorded"
+  },
+  "resource": {
+    "absolute_terminate_memory_bytes": 48318382080,
+    "absolute_terminate_memory_gib": 45.0,
+    "process_tree_peak_bytes": 13723365376,
+    "process_tree_peak_gib": 12.7808799744,
+    "memory_authority_peak_mb": 13087.62109375,
+    "swap_bytes": 0,
+    "memory_termination": false,
+    "component_scope_only": true,
+    "not_a_full_workflow_peak": true
+  },
+  "raw_artifacts": {
+    "diagnostic": {
+      "path": "results/task039_v11_h4_bottom_packet_algebra_mpi8_677ab26d/numerical_output/v3_v7_diagnostic.json",
+      "sha256": "656245488b85bf44d4dde753525397b4adbf3bf03bc80313418076974f3dbda1"
+    },
+    "memory_stage_markers": {
+      "path": "results/task039_v11_h4_bottom_packet_algebra_mpi8_677ab26d/numerical_output/memory_stage_markers.raw.jsonl",
+      "sha256": "e7604113b3c486e59f9dd9290e9443ee9e72ba2d7d1a992efa81667c67fa7b84"
+    },
+    "memory_stages": {
+      "path": "results/task039_v11_h4_bottom_packet_algebra_mpi8_677ab26d/numerical_output/memory_stages.jsonl",
+      "sha256": "f3d375baeb78c83d05d74f712be3a2914bb8ec8cfce8b7a2d3caa47b8c24ab36"
+    },
+    "memory_object_ledger": {
+      "path": "results/task039_v11_h4_bottom_packet_algebra_mpi8_677ab26d/numerical_output/memory_object_ledger.json",
+      "sha256": "8a1e546ff680b003c83a99594956f394378f8bef53a1be5f190d1f788781c26c",
+      "status": "controlled_stop"
+    },
+    "run_summary": {
+      "path": "results/task039_v11_h4_bottom_packet_algebra_mpi8_677ab26d/run_summary.json",
+      "sha256": "0b8eea4dd5b7ae8bed14a41df9e2b6e2e5e1445fb523e4965538fda65f3590b5"
+    },
+    "run_manifest": {
+      "path": "results/task039_v11_h4_bottom_packet_algebra_mpi8_677ab26d/run_manifest.json",
+      "sha256": "65142e5b506b508001094aefb30d1535265837e1ba812216f6ba1422d611e90d"
+    },
+    "process_tree_samples": {
+      "path": "results/task039_v11_h4_bottom_packet_algebra_mpi8_677ab26d/numerical_output/process_tree_samples.jsonl",
+      "sha256": "807055031c0d844726140cde807c7b57c6aa127481b9908c3fdc610a618bf843"
+    },
+    "identity_files": {
+      "source_sha_path": "results/task039_v11_h4_bottom_packet_algebra_mpi8_677ab26d/source_sha.txt",
+      "source_sha_txt_sha256": "49083ea9a573b61661b11512ebccbb9ba26c3447e464dadde84054956c889b39",
+      "input_sha256_path": "results/task039_v11_h4_bottom_packet_algebra_mpi8_677ab26d/input_sha256.txt",
+      "input_sha256_txt_sha256": "488067f7b03f24d2ede9f830334529411e428052a09de721059ca803cd6ed1da",
+      "physical_model_sha256_path": "results/task039_v11_h4_bottom_packet_algebra_mpi8_677ab26d/physical_model_sha256.txt",
+      "physical_model_sha256_txt_sha256": "2aefe673830f9757f6fe4459942cc123d2d9436f0983b01a97b3ccb62d2314c8"
+    },
+    "raw_not_committed": true
+  },
+  "not_run": {
+    "v11_2_closed_set_response_compression": true,
+    "v11_3_top_pilot": true,
+    "v11_4_top_full_producer": true,
+    "v11_5_factor_free_two_side_consumer_recovery_physics": true,
+    "v11_6_response_interpolatory_bottom_pc": true,
+    "v11_7_structured_unseen_mode_generalization": true,
+    "top_pilot": true,
+    "top_full": true,
+    "full_hybrid": true,
+    "zero_point_seven_nm_pde": true,
+    "reason": "V11-1 algebra Gate failed; dependent routes were stopped before execution, not numerically failed.",
+    "human_names": {
+      "v11_2": "closed-set response compression",
+      "v11_3": "top response-packet pilot",
+      "v11_4": "top full response-packet producer",
+      "v11_5": "factor-free two-side consumer and conditional recovery/physics",
+      "v11_6": "response-interpolatory bottom PC",
+      "v11_7": "structured unseen-mode generalization"
+    }
+  },
+  "promotion": {
+    "production_promotion_allowed": false,
+    "v11_2_or_later_allowed": false,
+    "selective_merge": {
+      "reusable_candidate": "row-flush and streamed projection resource/lifecycle fixes require separate review; this record does not promote the packet algebra to production.",
+      "research_only": "V11 action-only runner and this controlled negative evidence.",
+      "do_not_promote": "response packet as a production side solver, top/full Hybrid, or 0.7nm solver."
+    }
+  },
+  "checks": {
+    "targeted_tests": "qualified serial exact/fresh 2 passed, 7 deselected; MPI2 exact/fresh 2 passed per rank, 7 deselected; MPI4 fresh 1 passed per rank, 8 deselected",
+    "test_285_v11": "9 passed, 127 deselected",
+    "ruff_check": "pass",
+    "ruff_format_check": "pass",
+    "compileall": "pass",
+    "git_diff_check": "pass",
+    "check_benchmarks_no_write": "python3 benchmarks/check_benchmarks.py --no-write: 302/302 passed, exit 0",
+    "qualified_activation_check_benchmarks": "pass: source scripts/activate_myfenics_wsl.sh && python benchmarks/check_benchmarks.py --no-write; 302/302 passed, exit 0",
+    "full_pytest": "not_run",
+    "pde_or_heavy_in_docs_closeout": "not_run"
+  }
+}
