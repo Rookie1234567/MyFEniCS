@@ -1434,6 +1434,7 @@ def _build_projection_matrix(
                     (coefficient * np.conj(values)).reshape((1, len(columns))),
                     addv=PETSc.InsertMode.ADD_VALUES,
                 )
+        matrix.assemble(PETSc.Mat.AssemblyType.FLUSH)
     matrix.assemble()
     full_left_vectors = tuple(
         entries.full_vector
@@ -1624,6 +1625,7 @@ def build_streamed_projection_only(
                 "full_mode_vectors_retained": False,
                 "positive_traction_matrix": False,
                 "negative_traction_matrix": False,
+                "projection_matrix_assembly": "row_flush_then_final",
             },
         )
         projection_matrix = None

@@ -12,6 +12,7 @@ from petsc4py import PETSc
 
 from src.common.config_3d import target_stage4_config
 from src.coupling.hybrid_internal_modes import (
+    _build_projection_matrix,
     _ReusableInterfaceLifter,
     _ReusableModeTractionEvaluator,
     _trace_from_streamed_local_values,
@@ -384,6 +385,12 @@ class Task032HybridInternalModeTests(unittest.TestCase):
             self.assertEqual(
                 streamed.audit["trace_mass_action"], "reusable_form_action"
             )
+            self.assertEqual(
+                streamed.audit["projection_matrix_assembly"], "row_flush_then_final"
+            )
+            self.assertIn(
+                "AssemblyType.FLUSH", inspect.getsource(_build_projection_matrix)
+            )
             self.assertFalse(streamed.audit["full_mode_vectors_retained"])
             self.assertFalse(streamed.audit["positive_traction_matrix"])
             self.assertFalse(streamed.audit["negative_traction_matrix"])
@@ -579,6 +586,9 @@ class Task032StreamedProjectionFreshLifecycleTests(unittest.TestCase):
             self.assertFalse(streamed.audit["trace_mass_matrix_materialized"])
             self.assertEqual(
                 streamed.audit["trace_mass_action"], "reusable_form_action"
+            )
+            self.assertEqual(
+                streamed.audit["projection_matrix_assembly"], "row_flush_then_final"
             )
             self.assertFalse(streamed.audit["positive_traction_matrix"])
             self.assertFalse(streamed.audit["negative_traction_matrix"])
