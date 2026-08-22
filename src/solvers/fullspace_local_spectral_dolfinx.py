@@ -888,6 +888,7 @@ def _build_reused_class_template_patches(
 
     class_templates: dict[str, tuple[tuple[Any, ...], np.ndarray]] = {}
     template_audits: dict[str, dict[str, Any]] = {}
+    template_mode_digests: dict[str, str] = {}
     template_bytes_local = 0
     try:
         for slot, digest in enumerate(plan.class_digests):
@@ -906,6 +907,7 @@ def _build_reused_class_template_patches(
             template_keys = None
             template_modes = None
             template_audit = None
+            template_mode_digest = None
             if comm.rank == representative_rank:
                 if representative is None:
                     raise RuntimeError("class representative metadata is unavailable")
@@ -935,12 +937,18 @@ def _build_reused_class_template_patches(
                 )
                 template_patch.build()
                 template_modes = np.ascontiguousarray(template_patch.modes)
+                template_mode_digest = hashlib.sha256(
+                    template_modes.tobytes(order="C")
+                ).hexdigest()
                 template_audit = dict(template_patch.audit)
                 template_bytes_local += int(template_modes.nbytes)
                 template_patch.destroy()
                 del template_patch, block, local_mass, gradients
 
             template_audit = comm.bcast(template_audit, root=representative_rank)
+            template_mode_digest = comm.bcast(
+                template_mode_digest, root=representative_rank
+            )
             routed = plan.register_class_template(
                 digest,
                 template_keys,
@@ -952,6 +960,7 @@ def _build_reused_class_template_patches(
             if routed is not None:
                 class_templates[digest] = routed
             template_audits[digest] = template_audit
+            template_mode_digests[digest] = str(template_mode_digest)
             del template_keys, template_modes, template_audit
     finally:
         for field in gradient_fields:
@@ -1135,6 +1144,10 @@ def _build_reused_class_template_patches(
         "patch_ownership": "owned_cells_only; ghost_cells_metadata_only",
         "class_template_eigensolve": "one canonical representative per exact class",
         "class_factor_count_per_class": 1,
+        "class_template_mode_digests": tuple(
+            (digest, template_mode_digests[digest])
+            for digest in sorted(template_mode_digests)
+        ),
         "regional_setup": "not_built_in_this_setup_block",
         "top_rank": N1_TOP_RANK,
         "coarse_levels": N1_LEVELS,
