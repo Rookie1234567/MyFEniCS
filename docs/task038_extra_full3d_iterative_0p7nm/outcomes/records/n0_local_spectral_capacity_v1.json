@@ -1,0 +1,261 @@
+{
+  "schema": "task038.extra.review-v4.n0.local-spectral-capacity.v1",
+  "review": "V4",
+  "stage": "N0",
+  "source_git_sha": "5aaf5748fb24828c3d0d03411df9ff388b4cc2db",
+  "base_master_git_sha": "438caf150439343ee7c4c58ad7e02a3da812a23c",
+  "branch": "codex/20260820-task38-extra-full3d-iterative-0p7nm",
+  "upstream_git_sha": "5aaf5748fb24828c3d0d03411df9ff388b4cc2db",
+  "ahead_behind": [0, 0],
+  "classification": "BOUNDED_LOCAL_SPECTRAL_MULTILEVEL_CAPACITY_PREFLIGHT_PASS_CONDITIONAL",
+  "scope": "docs_records_only_static_capacity_preflight; no N1/N2/PDE qualification",
+  "worktree": {
+    "canonical": true,
+    "root": "/home/shenjh/Projects/MyFEniCSx_task37_extra",
+    "git_dir": ".git-codex",
+    "tracked_status_at_preflight": "clean",
+    "merge_base": "438caf150439343ee7c4c58ad7e02a3da812a23c"
+  },
+  "preflight": {
+    "qualified_activation": "1",
+    "python_version": "3.12.3",
+    "sys_executable": "/home/shenjh/MyFEniCS-Surrogate/.venv/bin/python",
+    "repo_venv_symlink": "/home/shenjh/Projects/MyFEniCSx_task37_extra/.venv -> /home/shenjh/MyFEniCS-Surrogate/.venv",
+    "qualified_venv_bin_parent_match": true,
+    "mpi": "Open MPI 4.1.6",
+    "mpi4py_linux_path": "/usr/lib/python3/dist-packages/mpi4py/MPI.cpython-312-x86_64-linux-gnu.so",
+    "petsc4py_linux_path": "/usr/lib/petscdir/petsc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/petsc4py/lib/PETSc.cpython-312-x86_64-linux-gnu.so",
+    "slepc4py_linux_path": "/usr/lib/slepcdir/slepc3.19/x86_64-linux-gnu-complex/lib/python3/dist-packages/slepc4py/lib/SLEPc.cpython-312-x86_64-linux-gnu.so",
+    "dolfinx_version": "0.10.0.post2",
+    "basix_version": "0.10.0",
+    "petsc_scalar_type": "numpy.complex128",
+    "petsc_int_type": "numpy.int32",
+    "threads": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1"
+    },
+    "mem_available_bytes": 13482110976,
+    "system_swap_total_bytes": 42949672960,
+    "system_swap_free_bytes": 42932523008,
+    "system_swap_used_bytes": 17149952,
+    "process_vm_swap_bytes": 0,
+    "process_tree_swap_bytes": null,
+    "process_tree_swap_provenance": "not_measured; no worker/process-tree launched in docs-only N0",
+    "cgroup_swap_current_bytes": null,
+    "cgroup_swap_max_bytes": null,
+    "cgroup_swap_provenance": "not_measured; memory.swap.current/max unavailable in light preflight",
+    "disk_available_bytes": 942367264768,
+    "sandbox_probe": "default sandbox PMIx listener socket isolation; controlled non-sandbox light preflight passed; no pytest/PDE started"
+  },
+  "design": {
+    "name": "fixed-cell-block-1x1x1-shared-entity-overlap",
+    "alternative_rejected": "vertex-edge-star-fixed-patches",
+    "cell_core": "one owned hexahedral cell",
+    "owned_active_dof_cap": 882,
+    "overlap": "one shared H(curl) facet/edge/vertex entity layer; shared rows remain in the constrained local block and are combined by PoU",
+    "auxiliary_operator": "B0 = integral(mu_r^-1 curl(u) dot conj(curl(v))) + k0^2 integral(abs(epsilon_r(x)) u dot conj(v))",
+    "tau": 0.0,
+    "local_boundary": "cell-supported full local rows in the constrained auxiliary block; no separate zero-Dirichlet trace rows",
+    "local_solver": "lower-packed complex128 Cholesky direct factor",
+    "per_factor_byte_cap": 6230448,
+    "max_unique_exact_factor_classes": 32,
+    "total_factor_byte_cap": 199374336,
+    "factor_build_dense_transient_bytes": 12446784,
+    "factor_build_dense_transient_count": 1,
+    "max_modes_per_patch": 8,
+    "mode_rule": "three coordinate gradients gx=grad(x), gy=grad(y), gz=grad(z), plus five smallest positive generalized modes in their local-M orthogonal complement",
+    "gradient_direction_count": 3,
+    "positive_spectral_direction_count": 5,
+    "regional_rank": 16,
+    "top_rank": 32,
+    "levels": 2,
+    "regional_correction_shards_retained_online": true,
+    "owner_routing": "cell owner and PETSc shared-row owner; owner-to-ghost route; class RHS/solution route is bounded to 882 entries",
+    "global_class_owner_rule": "deterministic_owner_rank = hash(exact_class_digest) mod mpi_size; one global factor per exact class",
+    "class_factor_replication_per_rank": false,
+    "patch_owner_route_max_entries": 882,
+    "n1_class_owner_mpi_identity_required": true,
+    "exact_class_fields": ["nedelec_element", "geometry", "material", "orientation", "mpc_floquet_pattern", "local_row_order"],
+    "over_limit_behavior": "hard_stop; no class merge, boundary change, mode change, scan, fill increase, rank increase or level increase"
+  },
+  "arithmetic": {
+    "global_rows": 173802,
+    "complex128_bytes": 16,
+    "full_vector_bytes": 2780832,
+    "t2_setup_self_rss_baseline_bytes": 951054336,
+    "t2_baseline_is_process_tree_upper_bound": false,
+    "runtime_process_tree_baseline_uncertainty_reserve_central_bytes": 32000000,
+    "runtime_process_tree_baseline_uncertainty_reserve_hard_bytes": 64000000,
+    "t2_retained_payload_bytes_already_in_baseline": 6151104,
+    "t3_retained_payload_bytes": 2875480,
+    "t3_bounded_batch_work_bytes": 256,
+    "t3_increment_bytes": 2875736,
+    "restart": 20,
+    "right_fgmres_vector_count": 41,
+    "right_fgmres_v_plus_z_bytes": 114014112,
+    "source_residual_solution_plus_three_work_bytes": 16684992,
+    "factor_bytes_per_class": 6230448,
+    "factor_class_count_cap": 32,
+    "factor_total_bytes": 199374336,
+    "factor_total_scope": "global_process_tree_total; one copy per exact class, not per-rank replication",
+    "one_dense_factor_build_transient_bytes": 12446784,
+    "local_mode_payload_bytes": 28449792,
+    "regional_z16_bytes": 44493312,
+    "top_z32_plus_az32_bytes": 177973248,
+    "regional_e16_bytes": 4096,
+    "top_e32_bytes": 16384,
+    "coarse_metadata_work_budget_bytes": 64000000,
+    "two_level_coarse_resident_bytes": 286466560,
+    "legacy_d0_rank64_reference_bytes": 424000000,
+    "legacy_d0_reference_is_v4_gate": false
+  },
+  "memory_ledger": {
+    "isolated_jit_cold_calibration": {
+      "historical_m3y_measured_bytes": 1280749568,
+      "historical_m3y_builder_stage_peak_bytes": 1068343296,
+      "central_bytes": 1344749568,
+      "hard_bytes": 1536749568,
+      "provenance": "historical measured M3Y isolated JIT stage plus explicit 64 MB/256 MB JIT reserve; builder stage peak was 1068343296; cannot replace online runtime baseline"
+    },
+    "factor_build": {
+      "central_bytes": 1226875456,
+      "hard_bytes": 1290875456,
+      "formula": "t2_baseline + global_factor_total + one_dense_class_transient + allocator_reserve + runtime_process_tree_baseline_uncertainty_reserve",
+      "provenance": "derived; global factor total is one copy per class; one dense transient only and released after packed Cholesky write"
+    },
+    "local_mode_regional_top_build": {
+      "central_bytes": 1546030016,
+      "hard_bytes": 1610030016,
+      "formula": "t2_baseline + global_factors + local_modes + two_level_coarse + six_full_vectors + allocator_reserve + runtime_process_tree_baseline_uncertainty_reserve",
+      "provenance": "derived simultaneous construction live set; regional and top payloads remain resident"
+    },
+    "post_setup_online": {
+      "central_bytes": 1698919864,
+      "hard_bytes": 1798919864,
+      "formula": "baseline + global_factors + modes + coarse + right_fgmres + six_vectors + t3_increment + telemetry/recovery/allocator + runtime_process_tree_baseline_uncertainty_reserve",
+      "provenance": "derived simultaneous online live set; T2 retained is not repeated"
+    },
+    "complete_workflow": {
+      "central_bytes": 1698919864,
+      "hard_bytes": 1798919864,
+      "formula": "max(isolated_jit_cold_calibration, factor_build, local_mode_regional_top_build, post_setup_online)",
+      "central_limit_bytes": 1800000000,
+      "hard_limit_bytes": 2000000000,
+      "central_margin_bytes": 101080136,
+      "hard_margin_bytes": 201080136
+    },
+    "provenance_classes": {
+      "measured": ["t2_setup_self_rss_baseline_bytes", "historical_m3y_measured_bytes", "historical_candidate_peaks"],
+      "exact_arithmetic": ["full_vector_bytes", "right_fgmres_v_plus_z_bytes", "source_residual_solution_plus_three_work_bytes", "factor_total_bytes", "one_dense_factor_build_transient_bytes", "local_mode_payload_bytes", "regional_z16_bytes", "top_z32_plus_az32_bytes", "regional_e16_bytes", "top_e32_bytes"],
+      "derived": ["t3_increment_bytes", "two_level_coarse_resident_bytes", "factor_build", "local_mode_regional_top_build", "post_setup_online", "complete_workflow"],
+      "budget": ["coarse_metadata_work_budget_bytes", "telemetry", "recovery_reserve", "allocator_reserve", "runtime_process_tree_baseline_uncertainty_reserve", "jit_reserve"],
+      "not_measured": ["current_n0_process_tree_peak", "cgroup_swap_authority", "new_factor_build_peak", "new_mode_coarse_build_peak"]
+    }
+  },
+  "evidence": [
+    {
+      "path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/t2_p6_h10_mpi1_v1.json",
+      "file_sha256": "dbf58723adbfd505f5863178c7e012dedd2b393c14b049e149e7e652d7f3dcde",
+      "source_git_sha": "6d60bb5a9a59e88da98b027efeed8506d5dd7a82",
+      "identity": "setup_self_rss_bytes=951054336; T2 retained payload=6151104; process-tree not measured"
+    },
+    {
+      "path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/dynamic_dtn.md",
+      "file_sha256": "035ec128f70768a9ffa1258d3fac9495eda1c13905e71ae396b41a7543ffb957",
+      "source_git_sha": "691ac261fd62258d356183cb3c0383307605b15e",
+      "identity": "dynamic 80-mode benchmark identity 78 propagating/0 near-cutoff/2 evanescent; batch8; retained2875480"
+    },
+    {
+      "path": "benchmarks/cases/100_static_condensed_full3d_iterative/records/task37_m3a_mpi_scaling_v1.json",
+      "file_sha256": "12826f33487e85bf26b81fe6a5f6072989fb318f7ac80055bd520724a45b4400",
+      "source_git_sha": "a51c54576655f36078446766f856fcb96431e190",
+      "identity": "old M3a global factor CSR estimate1828829728; MPI8 authority12.593 GiB; historical boundary"
+    },
+    {
+      "path": "origin/codex/20260806-task37-iterative-extra-development:benchmarks/cases/101_task37_extra_development/records/m3y_full_packed_patch_store.json",
+      "branch_tip": "b8785c53ce12986aa5a63300038c80c7d0ad1798",
+      "file_sha256": "f40d6e27c628b946f9ff735027e966cd192748322aa29f752f27ebc4daeab979",
+      "evidence_sha256": "605cb0c19e4e7c49d0304471b4e6844d2047f78abca8d20e7692ba524de5b241",
+      "source_git_sha": "404f6c6a5326219bcf6aca098b332b68214781a3",
+      "identity": "factor_n882; factor_bytes6230448; isolated_jit_stage_peak1280749568; builder_stage_peak1068343296; swap0"
+    },
+    {
+      "path": "origin/codex/20260806-task37-iterative-extra-development:benchmarks/cases/101_task37_extra_development/records/h2b_row_complete_patch_exactclass_v4.json",
+      "branch_tip": "b8785c53ce12986aa5a63300038c80c7d0ad1798",
+      "file_sha256": "2f1862043f9e75002f53230eee86f8c6ee68ac389b319397bd71b3bdd93fc75b",
+      "identity": "882x882 dense reference12446784; packed factor12450312; solve residual3.4228547837843815e-12"
+    },
+    {
+      "path": "origin/codex/20260806-task37-iterative-extra-development:benchmarks/cases/101_task37_extra_development/records/h2b_expanded_neighborhood_factor_v3.json",
+      "branch_tip": "b8785c53ce12986aa5a63300038c80c7d0ad1798",
+      "file_sha256": "2e56bab2a4d2b074bdc8cff4a89a1c23dfe1932c4a0d4bceeff960a7d6eb387f",
+      "identity": "33 unique classes > frozen32; controlled stop"
+    },
+    {
+      "path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/d2_worker_p6_h10_mpi1_v1.json",
+      "file_sha256": "ef98ba1e7c478b6c6a8297baf599aa34c1849188f3b1668f0cdaf63e4e95635d",
+      "source_git_sha": "cc8de60cc3e21b647aafb29ac9c10b46919823e7",
+      "identity": "fixed500-step slab0 CG KSP_DIVERGED_ITS; process-tree peak3013468160; natural rc1"
+    }
+  ],
+  "gates": {
+    "central_complete_workflow_lt_1800000000": {"actual_bytes": 1698919864, "limit_bytes": 1800000000, "pass": true},
+    "hard_complete_workflow_lt_2000000000": {"actual_bytes": 1798919864, "limit_bytes": 2000000000, "pass": true},
+    "major_unknown_components_none": {"actual": 0, "limit": 0, "pass": true, "meaning": "all live-set categories have measured, exact, derived or explicit budget provenance; not resource measured pass"},
+    "local_active_dof_cap_global_n_independent": {"actual": 882, "pass": true},
+    "local_factor_cap_global_n_independent": {"actual_bytes_per_factor": 6230448, "class_count": 32, "total_bytes": 199374336, "total_scope": "global_process_tree_total; one factor per class", "pass": true},
+    "global_class_owner_single_factor": {"actual": true, "rule": "hash(exact_class_digest) mod mpi_size", "pass": true},
+    "mpi2_factor_replication": {"actual": false, "pass": true},
+    "n1_class_owner_mpi_identity_required": {"required": true, "actual": "not_run_before_n1", "pass": null, "status": "required_before_n1"},
+    "levels_le_3": {"actual": 2, "limit": 3, "pass": true},
+    "top_rank_le_64": {"actual": 32, "limit": 64, "pass": true},
+    "regional_correction_retained_and_counted": {"actual": true, "pass": true},
+    "no_global_aij_schur_factor": {"actual": true, "pass": true},
+    "no_fe_sized_numeric_allgather": {"actual": true, "pass": true},
+    "no_per_rank_full_basis_replication": {"actual": true, "pass": true},
+    "no_global_direct_coarse_solve": {"actual": true, "pass": true}
+  },
+  "forbidden_audit": {
+    "global_aij": false,
+    "global_schur": false,
+    "global_factor": false,
+    "fe_sized_numeric_allgather": false,
+    "per_rank_full_coarse_basis_replication": false,
+    "per_rank_factor_replication": false,
+    "global_class_factor_duplicates": false,
+    "class_owner_route_unbounded": false,
+    "global_direct_coarse_solve": false,
+    "growing_slab_factor": false,
+    "per_cell_factor": false,
+    "residual_or_rho_basis_selection": false,
+    "levels_over_3": false,
+    "top_rank_over_64": false,
+    "dense_factor_retained_after_build": false,
+    "zero_trace_and_shared_overlap_conflict": false
+  },
+  "lifecycle": [
+    "qualified_preflight",
+    "mesh_space_mpc_floquet_jit",
+    "fixed_cell_and_exact_class_inventory",
+    "assign_deterministic_global_class_owners_and_deduplicate_factors",
+    "build_one_dense_class_block_then_release_after_packed_cholesky",
+    "route_patch_rhs_solution_through_bounded_882_entry_class_owner_route",
+    "retain_at_most_32_packed_factors",
+    "build_three_coordinate_gradients_and_five_complementary_positive_modes",
+    "retain_regional_z16_correction",
+    "build_and_retain_top_z32_az32_e32",
+    "online_exact_t2_volume_plus_t3_streaming_dtn_with_right_fgmres_restart20",
+    "cleanup_and_watchdog"
+  ],
+  "boundary": {
+    "n1": "not_started",
+    "n2": "not_started",
+    "d2_rerun": "forbidden_by_review_v4",
+    "candidate_c": "do_not_rerun_do_not_optimize_do_not_merge",
+    "current_n0_process_tree_peak": "not_measured",
+    "current_cgroup_swap_authority": "not_measured",
+    "numerical_qualification": "not_run"
+  }
+}

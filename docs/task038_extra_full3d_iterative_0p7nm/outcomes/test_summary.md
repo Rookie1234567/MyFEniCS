@@ -206,7 +206,7 @@ C 的 decimal 6 GB 和 12 GiB Gate 都失败。由于没有 `record.json`，R4 c
 | Candidate B | `NOT_APPLICABLE / CANDIDATE_B_INTERIOR_MODAL_AUTHORITY_NOT_QUALIFIED`；mixed Si–Si/Si–air interior authority 不足 |
 | Candidate C / transmission family | research archive，`DO_NOT_RERUN / DO_NOT_OPTIMIZE / DO_NOT_MERGE`；保留源码和负证据，不表述为数学永远不可能 |
 | coarse byte preflight | N=173802，complex128 full vector=2,780,832 B；Z+AZ 的 r=16/32/48/64 为 88,986,624 / 177,973,248 / 266,959,872 / 355,946,496 B |
-| budget boundary | coarse metadata/work `<=64,000,000 B`；rank64 retained `<=424,000,000 B`；均为 budget/derived，不是实测 |
+| budget boundary | coarse metadata/work `<=64,000,000 B` 是内部 envelope；D0 的 `424,000,000 B` 不是 V4 N0 独立 Gate |
 
 D0 明确区分 cold build/JIT/setup 与 online apply，owner-local sharding，不复制每 rank
 完整 basis，不做 FE-sized numeric allgather，不建 global AIJ/Schur/sparse factor。
@@ -261,3 +261,33 @@ record、watchdog raw/compact 和 log 的路径与 SHA 见
 Candidate C 源码及负证据保持 `DO_NOT_RERUN / DO_NOT_OPTIMIZE / DO_NOT_MERGE`；D2
 实现、runner、checker 因 rank64 未资格化列为 `research-only / do-not-merge`。D1
 小 fixture 正证据仍可保留。T6-F、EH/RTA、T7–T9 和 full 0.7 nm 均未运行。
+
+# Review V4 N0 capacity preflight
+
+本节只追加 N0 的 docs/records-only 阶段矩阵，不覆盖前面的 T2–D2 历史结果。N0
+把“自适应粗空间”冻结为一个固定 cell-block local spectral 设计：每个 hexahedral
+cell 最多 882 个 owned active DoF，最多 32 个 exact local factor classes，每 patch
+固定 8 个局部模式（3个坐标梯度+5个正谱方向）；regional `Z16` 作为 online level-1
+correction 保留，再建立并保留 top rank32 `Z+AZ`。
+
+| stage / gate | result | evidence boundary |
+|---|---|---|
+| N0 ABI/canonical worktree preflight | PASS；qualified marker `1`，complex128/int32，threads=1，canonical `.git-codex` | 轻量 preflight；没有启动 pytest/PDE |
+| N0 central complete-workflow budget | `1,698,919,864 B < 1,800,000,000 B` | T2 current-self RSS baseline + 新增同时存活项 + central `32,000,000 B` runtime/process-tree baseline uncertainty reserve；derived/budget |
+| N0 hard complete-workflow budget | `1,798,919,864 B < 2,000,000,000 B` | 含 factor/mode/coarse/Krylov/telemetry/recovery/allocator hard reserve + hard `64,000,000 B` baseline uncertainty reserve；不是当前实测 |
+| N0 online runtime baseline | `951,054,336 B` | T2 MPI1 setup current-self RSS lower-bound/calibration；T2 retained `6,151,104 B`已包含 |
+| N0 global class-factor ownership | `199,374,336 B` global/process-tree total；每 class 一个 deterministic owner，MPI2不复制32 factors | N1必须验证class-owner MPI identity；patch RHS/solution走bounded `882`-entry route |
+| N0 coarse payload | `286,466,560 B` | regional `Z16=44,493,312` + top `Z32+AZ32=177,973,248` + metadata/work `64,000,000` |
+| N0 regional online correction | `44,493,312 B` 与 top `Z+AZ` 同时计入 | distributed regional coarse level，不能 setup-only 释放 |
+| N0 FGMRES vectors | `114,014,112 B` | right restart20为 `V_(m+1)+Z_m=41` full vectors |
+| N0 D0 retained reference | `424,000,000 B` | 历史 D0 口径，不是 V4 N0 独立 Gate |
+| N0 classification | `BOUNDED_LOCAL_SPECTRAL_MULTILEVEL_CAPACITY_PREFLIGHT_PASS_CONDITIONAL` | 只说明账本闭合；不授权 N1/N2 |
+| N1/N2/D3/D4/T6-F/T7–T9 | `not_run` | 不因 N0 静态预算写成数值或 resource pass |
+
+Preflight 实值：`MemAvailable=13,482,110,976 B`，system swap used
+`17,149,952 B`，current process `VmSwap=0`；cgroup swap authority unavailable，故
+记为 `not_measured`。当前 branch/HEAD 为 `codex/20260820-task38-extra-full3d-iterative-0p7nm` /
+`5aaf5748fb24828c3d0d03411df9ff388b4cc2db`，upstream 同 SHA、ahead/behind `0/0`。
+N0 文档与 compact record 的完整算术、引用、生命周期和禁止项在
+[`local_spectral_multilevel_preflight.md`](local_spectral_multilevel_preflight.md)
+与 [`records/n0_local_spectral_capacity_v1.json`](records/n0_local_spectral_capacity_v1.json)。
