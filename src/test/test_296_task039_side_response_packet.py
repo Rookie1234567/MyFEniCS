@@ -30,6 +30,8 @@ from src.solvers.hybrid_side_response_packet import (
     V10_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA,
     V10_SIDE_RESPONSE_PACKET_FULL_METHOD,
     V10_SIDE_RESPONSE_PACKET_FULL_SCHEMA,
+    V11_BOTTOM_RESPONSE_SAMPLE_INDICES,
+    audit_bottom_response_packet_algebra,
 )
 
 
@@ -665,3 +667,193 @@ def test_v10_full_owner_row_writer_loader_round_trip(tmp_path: Path) -> None:
     comm.barrier()
     if comm.rank == 0:
         shutil.rmtree(root, ignore_errors=True)
+
+
+def test_v11_bottom_packet_algebra_tiny_identity_schur_trace_release() -> None:
+    comm = MPI.COMM_WORLD
+    local_rows = 3
+    first = comm.rank * local_rows
+    global_rows = local_rows * comm.size
+    values = np.empty(
+        (local_rows, V10_SIDE_RESPONSE_PACKET_FULL_COLUMNS),
+        dtype=np.complex128,
+        order="F",
+    )
+    for row in range(local_rows):
+        global_row = first + row
+        for column in range(960):
+            values[row, column] = (
+                global_row
+                + 0.25 * column
+                + 1.0
+                + 1j * (2.0 * global_row - 0.5 * column + 3.0)
+            )
+    values[:, 960] = 0.0
+
+    def source_record(column: int) -> dict[str, object]:
+        if column == 960:
+            return {
+                "column_index": 960,
+                "label": "physical_side_rhs",
+                "source": "frozen_physical_side_rhs",
+                "schedule_kind": "physical_side_rhs",
+            }
+        branch = "positive" if column < 480 else "negative"
+        family = f"{branch}_modal_traction"
+        beta = [0.01 * column, -0.02 * column]
+        return {
+            "column_index": column,
+            "label": f"modal_response_{column}",
+            "source": "streamed_modal_traction_column",
+            "family": family,
+            "branch": branch,
+            "mode_index": column if column < 480 else column - 480,
+            "raw_beta": beta,
+            "discrete_beta": list(beta),
+            "schedule_kind": "selected_modal",
+        }
+
+    expected_identity = [source_record(column) for column in range(961)]
+    actual_identity = [dict(record) for record in expected_identity]
+    provenance = {
+        "source_sha": "a" * 40,
+        "input_sha256": "b" * 64,
+        "physical_model_sha256": "c" * 64,
+        "selected_mode_packet_manifest_sha256": "d" * 64,
+    }
+    shards = [
+        {
+            "rank": rank,
+            "ownership_range": [rank * local_rows, (rank + 1) * local_rows],
+            "shape": [local_rows, V10_SIDE_RESPONSE_PACKET_FULL_COLUMNS],
+            "dtype": "complex128",
+            "order": "F",
+            "file_sha256": "e" * 64,
+        }
+        for rank in range(comm.size)
+    ]
+    manifest = {
+        "schema": V10_SIDE_RESPONSE_PACKET_FULL_SCHEMA,
+        "method": V10_SIDE_RESPONSE_PACKET_FULL_METHOD,
+        "global_rows": global_rows,
+        "column_count": V10_SIDE_RESPONSE_PACKET_FULL_COLUMNS,
+        "dtype": "complex128",
+        "layout": "owner_row_sharded_column_major",
+        "columns": [
+            {"column": column, "label": record["label"]}
+            for column, record in enumerate(expected_identity)
+        ],
+        "provenance": provenance,
+        "shards": shards,
+        "coverage": {"exact": True, "global_range": [0, global_rows]},
+    }
+
+    def make_packet() -> ExactSideResponsePacket:
+        return ExactSideResponsePacket(
+            values.copy(order="F"),
+            manifest,
+            Path("tiny-v11-bottom-manifest.json"),
+            {
+                "owner_row_coverage_exact": True,
+                "source_shard_hash_verified_local": True,
+            },
+        )
+
+    amplitudes = np.asarray(
+        [1.0 + 0.01j * column for column in range(960)],
+        dtype=np.complex128,
+    )
+    source_columns = {
+        column: 2.0 * values[:, column] for column in V11_BOTTOM_RESPONSE_SAMPLE_INDICES
+    }
+
+    def schur_action_reference(value: np.ndarray) -> np.ndarray:
+        return np.asarray([np.sum(value), value[0] - value[-1]], dtype=np.complex128)
+
+    schur_authority = np.zeros(2, dtype=np.complex128)
+    field_authority = np.zeros(local_rows, dtype=np.complex128)
+    for column in range(960):
+        schur_authority += (
+            schur_action_reference(values[:, column]) * amplitudes[column]
+        )
+        field_authority -= values[:, column] * amplitudes[column]
+
+    def run(field_sign: complex = -1.0) -> dict[str, object]:
+        return audit_bottom_response_packet_algebra(
+            make_packet(),
+            actual_source_records=actual_identity,
+            expected_identity_records=expected_identity,
+            expected_provenance=provenance,
+            source_columns=source_columns,
+            v7_schur_authority=schur_authority,
+            v7_modal_amplitudes=amplitudes,
+            v7_bottom_trace=field_authority[:2],
+            physical_rhs=np.zeros(local_rows, dtype=np.complex128),
+            block_action=lambda value: 2.0 * value,
+            schur_action=schur_action_reference,
+            trace_action=lambda value: value[:2],
+            factor_inventory={
+                "factor_count": 0,
+                "ksp_count": 0,
+                "qep_count": 0,
+            },
+            field_response_sign=field_sign,
+            comm=comm,
+            system_assembled=True,
+        )
+
+    result = run()
+    assert result["identity"]["manifest_columns_pass"] is True
+    assert result["identity"]["order_pass"] is True
+    assert result["identity"]["source_identity_pass"] is True
+    assert result["identity"]["all_960_metadata_identity"] is True
+    assert result["identity"]["sampled_numeric_source_identity_count"] == 10
+    assert expected_identity[479]["branch"] == "positive"
+    assert expected_identity[479]["mode_index"] == 479
+    assert expected_identity[480]["branch"] == "negative"
+    assert expected_identity[480]["mode_index"] == 0
+    assert expected_identity[959]["branch"] == "negative"
+    assert expected_identity[959]["mode_index"] == 479
+    assert result["physical_rhs"]["status"] == "degenerate_zero_rhs"
+    assert result["physical_rhs"]["mandatory"] is False
+    assert result["zero_map"]["pass"] is True
+    assert result["action_counters"] == {
+        "block_action_count": 12,
+        "schur_action_count": 960,
+        "trace_action_count": 1,
+    }
+    assert result["modal_reconstruction"]["field_response_sign"] == -1.0
+    assert result["modal_reconstruction"]["schur_contribution_sign"] == 1.0
+    assert result["gate"]["pass"] is True
+    assert result["packet_released"] is True
+
+    wrong_sign = run(field_sign=1.0)
+    assert wrong_sign["gate"]["sign_contract_pass"] is False
+    assert wrong_sign["gate"]["pass"] is False
+    assert wrong_sign["packet_released"] is True
+
+    bad_identity = [dict(record) for record in actual_identity]
+    bad_identity[0]["branch"] = "wrong"
+    bad_packet = make_packet()
+    with pytest.raises(ValueError, match="identity"):
+        audit_bottom_response_packet_algebra(
+            bad_packet,
+            actual_source_records=bad_identity,
+            expected_identity_records=expected_identity,
+            expected_provenance=provenance,
+            source_columns=source_columns,
+            v7_schur_authority=schur_authority,
+            v7_modal_amplitudes=amplitudes,
+            v7_bottom_trace=field_authority[:2],
+            physical_rhs=np.zeros(local_rows, dtype=np.complex128),
+            block_action=lambda value: 2.0 * value,
+            schur_action=schur_action_reference,
+            trace_action=lambda value: value[:2],
+            factor_inventory={
+                "factor_count": 0,
+                "ksp_count": 0,
+                "qep_count": 0,
+            },
+            comm=comm,
+        )
+    assert bad_packet.diagnostics["released"] is True

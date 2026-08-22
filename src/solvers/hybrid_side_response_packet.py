@@ -8,7 +8,7 @@ the manifest and reads only its target owner rows.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 import hashlib
 import json
@@ -49,6 +49,20 @@ V10_SIDE_RESPONSE_PACKET_FULL_HOLDOUT_COLUMNS = (
     746,
     959,
 )
+V11_BOTTOM_RESPONSE_SAMPLE_INDICES = (
+    0,
+    1,
+    240,
+    267,
+    479,
+    480,
+    481,
+    720,
+    746,
+    959,
+)
+V11_BOTTOM_FIELD_RESPONSE_SIGN = -1.0
+V11_BOTTOM_SCHUR_CONTRIBUTION_SIGN = 1.0
 _HEX_DIGITS = frozenset("0123456789abcdefABCDEF")
 
 __all__ = (
@@ -65,6 +79,9 @@ __all__ = (
     "V10_SIDE_RESPONSE_PACKET_FULL_METHOD",
     "V10_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD",
     "V10_SIDE_RESPONSE_PACKET_FULL_HOLDOUT_COLUMNS",
+    "V11_BOTTOM_RESPONSE_SAMPLE_INDICES",
+    "V11_BOTTOM_FIELD_RESPONSE_SIGN",
+    "V11_BOTTOM_SCHUR_CONTRIBUTION_SIGN",
     "ExactSideResponsePacket",
     "write_exact_side_response_packet",
     "load_exact_side_response_packet",
@@ -74,6 +91,7 @@ __all__ = (
     "OwnerRowResponsePacketWriter",
     "load_full_side_response_packet",
     "compress_owner_row_response_packet",
+    "audit_bottom_response_packet_algebra",
 )
 
 
@@ -912,3 +930,440 @@ def compress_owner_row_response_packet(
         "gram_or_normal_equations_used": False,
         "one_tsqr_one_small_r_svd": True,
     }
+
+
+def audit_bottom_response_packet_algebra(
+    packet: ExactSideResponsePacket,
+    *,
+    actual_source_records: Sequence[Mapping[str, Any]],
+    expected_identity_records: Sequence[Mapping[str, Any]],
+    expected_provenance: Mapping[str, Any],
+    source_columns: Mapping[int, np.ndarray],
+    v7_schur_authority: np.ndarray,
+    v7_modal_amplitudes: np.ndarray,
+    v7_bottom_trace: np.ndarray,
+    physical_rhs: np.ndarray,
+    block_action: Callable[[np.ndarray], np.ndarray],
+    schur_action: Callable[[np.ndarray], np.ndarray],
+    trace_action: Callable[[np.ndarray], np.ndarray],
+    factor_inventory: Mapping[str, int],
+    field_response_sign: complex = V11_BOTTOM_FIELD_RESPONSE_SIGN,
+    schur_contribution_sign: complex = V11_BOTTOM_SCHUR_CONTRIBUTION_SIGN,
+    sample_indices: Sequence[int] = V11_BOTTOM_RESPONSE_SAMPLE_INDICES,
+    comm: MPI.Intracomm = MPI.COMM_WORLD,
+    system_assembled: bool = True,
+) -> dict[str, Any]:
+    """Audit packet equations without constructing a solver or factor.
+
+    The expected identities are independently rebuilt from the selected-mode
+    source contract.  Actual producer records are a separate input; manifest
+    columns are used only for column/label coverage.  Field reconstruction
+    uses the fixed minus sign from _recover_local_field, while the Schur
+    contribution uses the fixed positive D X sign before H-D X.
+    """
+
+    def relative_error(actual: Any, expected: Any) -> float:
+        actual = np.asarray(actual, dtype=np.complex128)
+        expected = np.asarray(expected, dtype=np.complex128)
+        if actual.shape != expected.shape:
+            raise ValueError("bottom packet algebra vectors have different shapes")
+        difference = actual - expected
+        difference_sq = float(comm.allreduce(np.vdot(difference, difference).real))
+        expected_sq = float(comm.allreduce(np.vdot(expected, expected).real))
+        if expected_sq <= np.finfo(float).tiny:
+            return 0.0 if difference_sq <= 1.0e-30 else float("inf")
+        return float(np.sqrt(max(difference_sq, 0.0) / expected_sq))
+
+    def identity_view(record: Mapping[str, Any]) -> tuple[Any, ...]:
+        def canonical(value: Any) -> Any:
+            if isinstance(value, Mapping):
+                return tuple(
+                    (str(key), canonical(item)) for key, item in sorted(value.items())
+                )
+            if isinstance(value, (list, tuple)):
+                return tuple(canonical(item) for item in value)
+            return value
+
+        return (
+            int(record.get("column_index", -1)),
+            record.get("label"),
+            record.get("source"),
+            record.get("family"),
+            record.get("branch"),
+            record.get("mode_index"),
+            canonical(record.get("raw_beta")),
+            canonical(record.get("discrete_beta")),
+            record.get("schedule_kind"),
+        )
+
+    packet_result: dict[str, Any] | None = None
+    try:
+        frozen_samples = tuple(int(index) for index in sample_indices)
+        if frozen_samples != V11_BOTTOM_RESPONSE_SAMPLE_INDICES:
+            raise ValueError("V11 bottom sample indices are not frozen")
+        manifest = packet.manifest
+        manifest_columns = list(manifest.get("columns", ()))
+        expected = list(expected_identity_records)
+        actual = list(actual_source_records)
+        if (
+            manifest.get("schema") != V10_SIDE_RESPONSE_PACKET_FULL_SCHEMA
+            or manifest.get("method") != V10_SIDE_RESPONSE_PACKET_FULL_METHOD
+            or len(manifest_columns) != V10_SIDE_RESPONSE_PACKET_FULL_COLUMNS
+            or len(expected) != V10_SIDE_RESPONSE_PACKET_FULL_COLUMNS
+            or len(actual) != V10_SIDE_RESPONSE_PACKET_FULL_COLUMNS
+        ):
+            raise ValueError("V11 bottom packet identity size/schema failed")
+        manifest_view = [
+            (int(record.get("column", -1)), str(record.get("label", "")))
+            for record in manifest_columns
+        ]
+        expected_manifest_view = [
+            (int(record.get("column_index", -1)), str(record.get("label", "")))
+            for record in expected
+        ]
+        manifest_columns_pass = manifest_view == expected_manifest_view
+        order_pass = [
+            int(record.get("column", -1)) for record in manifest_columns
+        ] == list(range(V10_SIDE_RESPONSE_PACKET_FULL_COLUMNS)) and [
+            int(record.get("column_index", -1)) for record in expected
+        ] == list(range(V10_SIDE_RESPONSE_PACKET_FULL_COLUMNS))
+        source_identity_pass = [identity_view(record) for record in actual] == [
+            identity_view(record) for record in expected
+        ]
+        identity_pass = bool(
+            comm.allreduce(
+                bool(manifest_columns_pass and source_identity_pass),
+                op=MPI.LAND,
+            )
+        )
+        order_pass = bool(comm.allreduce(bool(order_pass), op=MPI.LAND))
+        if not identity_pass:
+            raise ValueError("V11 source or manifest identity mismatch")
+        if not order_pass:
+            raise ValueError("V11 source/manifest order contract failed")
+        if (
+            manifest_columns[960].get("column") != 960
+            or manifest_columns[960].get("label") != "physical_side_rhs"
+        ):
+            raise ValueError("V11 physical RHS identity is not separate")
+        provenance_pass = dict(manifest.get("provenance", {})) == dict(
+            expected_provenance
+        )
+        if not provenance_pass:
+            raise ValueError("V11 bottom packet provenance mismatch")
+        local_values = np.asarray(packet.local_values, dtype=np.complex128)
+        if (
+            local_values.ndim != 2
+            or local_values.shape[1] != V10_SIDE_RESPONSE_PACKET_FULL_COLUMNS
+            or not local_values.flags.f_contiguous
+        ):
+            raise ValueError("V11 packet owner-row layout is invalid")
+        local_rows = local_values.shape[0]
+        values_finite = bool(
+            comm.allreduce(bool(np.isfinite(local_values).all()), op=MPI.LAND)
+        )
+        if not values_finite:
+            raise ValueError("V11 packet contains a nonfinite owner-row value")
+        global_rows = int(comm.allreduce(local_rows))
+        if int(manifest.get("global_rows", -1)) != global_rows:
+            raise ValueError("V11 global row size mismatch")
+        if (
+            manifest.get("dtype") != "complex128"
+            or manifest.get("layout") != "owner_row_sharded_column_major"
+        ):
+            raise ValueError("V11 packet dtype/layout mismatch")
+        shards = _validate_manifest_coverage(
+            list(manifest.get("shards", ())), global_rows
+        )
+        local_layout_pass = bool(
+            shards
+            and packet.diagnostics.get("owner_row_coverage_exact") is True
+            and packet.diagnostics.get("source_shard_hash_verified_local") is True
+        )
+        layout_hash_pass = bool(comm.allreduce(local_layout_pass, op=MPI.LAND))
+        required = set(V11_BOTTOM_RESPONSE_SAMPLE_INDICES)
+        required_indices = tuple(V11_BOTTOM_RESPONSE_SAMPLE_INDICES)
+        source_keys_pass = required.issubset(source_columns)
+        if not bool(comm.allreduce(source_keys_pass, op=MPI.LAND)):
+            raise ValueError("V11 sampled source authority is incomplete")
+        amplitudes = np.asarray(v7_modal_amplitudes, dtype=np.complex128)
+        amplitudes_shape_pass = amplitudes.shape == (960,)
+        if not bool(comm.allreduce(amplitudes_shape_pass, op=MPI.LAND)):
+            raise ValueError("V7 modal amplitude authority must contain 960 values")
+        if not bool(comm.allreduce(bool(np.isfinite(amplitudes).all()), op=MPI.LAND)):
+            raise ValueError("V7 modal amplitudes are nonfinite")
+        physical_rhs = np.asarray(physical_rhs, dtype=np.complex128)
+        if not bool(comm.allreduce(physical_rhs.shape == (local_rows,), op=MPI.LAND)):
+            raise ValueError("V7 physical RHS ownership does not match")
+        if not bool(comm.allreduce(bool(np.isfinite(physical_rhs).all()), op=MPI.LAND)):
+            raise ValueError("V7 physical RHS is nonfinite")
+        sample_sources = {
+            column: np.asarray(source_columns[column], dtype=np.complex128)
+            for column in required_indices
+        }
+        sample_inputs_pass = all(
+            value.shape == (local_rows,) and np.isfinite(value).all()
+            for value in sample_sources.values()
+        )
+        if not bool(comm.allreduce(sample_inputs_pass, op=MPI.LAND)):
+            raise ValueError("V11 sampled source input is nonfinite or mis-sized")
+        field_sign = complex(field_response_sign)
+        schur_sign = complex(schur_contribution_sign)
+        allowed_signs = (1.0 + 0.0j, -1.0 + 0.0j)
+        if field_sign not in allowed_signs or schur_sign not in allowed_signs:
+            raise ValueError("V11 response signs must be explicit plus or minus")
+        sample_reports: list[dict[str, Any]] = []
+        counters = {
+            "block_action_count": 0,
+            "schur_action_count": 0,
+            "trace_action_count": 0,
+        }
+        physical_solution = np.array(local_values[:, 960], copy=True, order="F")
+        zero_input = np.zeros(local_rows, dtype=np.complex128)
+        combined = physical_solution.copy(order="F")
+        schur_combined: np.ndarray | None = None
+        for column in range(960):
+            response = np.array(local_values[:, column], copy=True, order="F")
+            counters["schur_action_count"] += 1
+            schur_value = np.asarray(schur_action(response), dtype=np.complex128)
+            if schur_combined is None:
+                schur_combined = np.zeros_like(schur_value)
+            schur_combined += schur_sign * schur_value * amplitudes[column]
+            combined += field_sign * response * amplitudes[column]
+            if column in required:
+                counters["block_action_count"] += 1
+                action_value = np.asarray(block_action(response), dtype=np.complex128)
+                sample_finite = bool(
+                    np.isfinite(action_value).all() and np.isfinite(schur_value).all()
+                )
+                sample_finite = bool(comm.allreduce(sample_finite, op=MPI.LAND))
+                if not sample_finite:
+                    raise ValueError(
+                        f"V11 sampled action is nonfinite at column {column}"
+                    )
+                sample_reports.append(
+                    {
+                        "column": int(column),
+                        "label": str(actual[column].get("label")),
+                        "finite": sample_finite,
+                        "source_equation_relative_error": relative_error(
+                            action_value, sample_sources[column]
+                        ),
+                    }
+                )
+        if schur_combined is None:
+            raise ValueError("V11 Schur action produced no authority")
+        combined_finite = bool(
+            comm.allreduce(bool(np.isfinite(combined).all()), op=MPI.LAND)
+        )
+        schur_finite = bool(
+            comm.allreduce(bool(np.isfinite(schur_combined).all()), op=MPI.LAND)
+        )
+        if not combined_finite or not schur_finite:
+            raise ValueError("V11 streamed packet reconstruction is nonfinite")
+        counters["block_action_count"] += 2
+        physical_action = np.asarray(
+            block_action(physical_solution), dtype=np.complex128
+        )
+        zero_action = np.asarray(block_action(zero_input), dtype=np.complex128)
+        if not bool(
+            comm.allreduce(
+                bool(
+                    physical_action.shape == (local_rows,)
+                    and zero_action.shape == (local_rows,)
+                ),
+                op=MPI.LAND,
+            )
+        ):
+            raise ValueError("V11 physical/zero action ownership does not match")
+        if not bool(
+            comm.allreduce(
+                bool(
+                    np.isfinite(physical_action).all()
+                    and np.isfinite(zero_action).all()
+                ),
+                op=MPI.LAND,
+            )
+        ):
+            raise ValueError("V11 physical/zero action is nonfinite")
+        counters["trace_action_count"] += 1
+        physical_error = relative_error(physical_action, physical_rhs)
+        zero_error = relative_error(zero_action, np.zeros_like(zero_input))
+        trace_value = np.asarray(trace_action(combined), dtype=np.complex128)
+        trace_expected = np.asarray(v7_bottom_trace, dtype=np.complex128)
+        if not bool(
+            comm.allreduce(trace_value.shape == trace_expected.shape, op=MPI.LAND)
+        ):
+            raise ValueError("V11 canonical trace ownership does not match")
+        if not bool(
+            comm.allreduce(
+                bool(
+                    np.isfinite(trace_value).all() and np.isfinite(trace_expected).all()
+                ),
+                op=MPI.LAND,
+            )
+        ):
+            raise ValueError("V11 canonical trace is nonfinite")
+        trace_error = relative_error(trace_value, trace_expected)
+        schur_expected = np.asarray(v7_schur_authority, dtype=np.complex128)
+        if not bool(
+            comm.allreduce(
+                bool(
+                    schur_expected.shape == schur_combined.shape
+                    and np.isfinite(schur_expected).all()
+                ),
+                op=MPI.LAND,
+            )
+        ):
+            raise ValueError("V11 independent Schur authority is invalid")
+        schur_error = relative_error(schur_combined, schur_expected)
+        physical_rhs_norm = float(
+            np.sqrt(
+                max(
+                    float(comm.allreduce(np.vdot(physical_rhs, physical_rhs).real)), 0.0
+                )
+            )
+        )
+        physical_output_norm = float(
+            np.sqrt(
+                max(
+                    float(
+                        comm.allreduce(
+                            np.vdot(physical_solution, physical_solution).real
+                        )
+                    ),
+                    0.0,
+                )
+            )
+        )
+        zero_finite = bool(
+            comm.allreduce(bool(np.isfinite(zero_action).all()), op=MPI.LAND)
+        )
+        zero_output_norm = float(
+            np.sqrt(
+                max(float(comm.allreduce(np.vdot(zero_action, zero_action).real)), 0.0)
+            )
+        )
+        inventory = {key: int(value) for key, value in factor_inventory.items()}
+        if any(
+            key not in inventory for key in ("factor_count", "ksp_count", "qep_count")
+        ):
+            raise ValueError("V11 factor/KSP/QEP inventory is incomplete")
+        packet_result = {
+            "schema": "task039.v11.bottom_packet_algebra.v1",
+            "method": "task039_v11_bottom_packet_algebra_checker",
+            "sample_indices": list(V11_BOTTOM_RESPONSE_SAMPLE_INDICES),
+            "identity": {
+                "manifest_columns_pass": bool(manifest_columns_pass),
+                "order_pass": bool(order_pass),
+                "source_identity_pass": bool(source_identity_pass),
+                "all_960_metadata_identity": bool(identity_pass and order_pass),
+                "sampled_numeric_source_identity_count": len(required_indices),
+                "provider_scale": -1.0,
+                "provider_scale_source": (
+                    "StreamedPhysicalModalSourceProvider._entries_to_vec(scale=-1.0)"
+                ),
+                "normalization_contract_bound": bool(
+                    manifest.get("provenance", {}).get(
+                        "selected_mode_packet_manifest_sha256"
+                    )
+                    and manifest.get("provenance", {}).get("source_sha")
+                ),
+                "physical_rhs_separate": True,
+                "owner_row_coverage_exact": layout_hash_pass,
+                "dtype": manifest["dtype"],
+                "f_order": True,
+            },
+            "provenance_pass": bool(provenance_pass),
+            "physical_rhs": {
+                "status": (
+                    "degenerate_zero_rhs"
+                    if physical_rhs_norm <= 1.0e-13
+                    else "nondegenerate"
+                ),
+                "norm": physical_rhs_norm,
+                "solution_norm": physical_output_norm,
+                "mandatory": bool(physical_rhs_norm > 1.0e-13),
+                "equation_relative_error": physical_error,
+            },
+            "zero_map": {
+                "finite": zero_finite,
+                "input_norm": 0.0,
+                "output_norm": zero_output_norm,
+                "relative_error": zero_error,
+                "pass": bool(zero_finite and zero_output_norm <= 1.0e-13),
+            },
+            "sample_reports": sample_reports,
+            "modal_reconstruction": {
+                "field_response_sign": field_sign,
+                "field_response_sign_source": (
+                    "_recover_local_field: rhs.axpy(-1,coupling)"
+                ),
+                "schur_contribution_sign": schur_sign,
+                "schur_contribution_sign_source": (
+                    "build_hybrid_action_modal_schur: H-DX; compare positive DX"
+                ),
+                "trace_relative_error": trace_error,
+                "schur_relative_error": schur_error,
+            },
+            "system_assembled": bool(system_assembled),
+            "action_counters": counters,
+            "factor_inventory": inventory,
+            "packet_released": False,
+            "pde_solve": "not_run",
+        }
+    finally:
+        packet.destroy()
+    packet_result["packet_released"] = bool(packet.diagnostics.get("released"))
+    sample_pass = bool(
+        len(packet_result["sample_reports"]) == len(required)
+        and all(
+            report["finite"] and report["source_equation_relative_error"] <= 1.0e-9
+            for report in packet_result["sample_reports"]
+        )
+    )
+    inventory_pass = all(
+        packet_result["factor_inventory"][key] == 0
+        for key in ("factor_count", "ksp_count", "qep_count")
+    )
+    packet_result["gate"] = {
+        "manifest_columns_pass": bool(
+            packet_result["identity"]["manifest_columns_pass"]
+        ),
+        "order_pass": bool(packet_result["identity"]["order_pass"]),
+        "all_960_metadata_identity": bool(
+            packet_result["identity"]["all_960_metadata_identity"]
+        ),
+        "source_identity_pass": bool(packet_result["identity"]["source_identity_pass"]),
+        "provenance_pass": bool(packet_result["provenance_pass"]),
+        "layout_hash_pass": bool(packet_result["identity"]["owner_row_coverage_exact"]),
+        "system_assembled_pass": bool(packet_result["system_assembled"]),
+        "physical_pass": bool(
+            np.isfinite(packet_result["physical_rhs"]["equation_relative_error"])
+            and packet_result["physical_rhs"]["equation_relative_error"] <= 1.0e-9
+        ),
+        "zero_map_pass": bool(packet_result["zero_map"]["pass"]),
+        "sample_equation_pass": sample_pass,
+        "modal_trace_pass": bool(
+            np.isfinite(packet_result["modal_reconstruction"]["trace_relative_error"])
+            and packet_result["modal_reconstruction"]["trace_relative_error"] <= 5.0e-9
+        ),
+        "modal_schur_pass": bool(
+            np.isfinite(packet_result["modal_reconstruction"]["schur_relative_error"])
+            and packet_result["modal_reconstruction"]["schur_relative_error"] <= 5.0e-9
+        ),
+        "sign_contract_pass": bool(
+            field_sign == V11_BOTTOM_FIELD_RESPONSE_SIGN
+            and schur_sign == V11_BOTTOM_SCHUR_CONTRIBUTION_SIGN
+            and packet_result["identity"]["normalization_contract_bound"]
+        ),
+        "action_counters_pass": bool(
+            counters["block_action_count"] == 12
+            and counters["schur_action_count"] == 960
+            and counters["trace_action_count"] == 1
+        ),
+        "factor_qep_ksp_pass": bool(inventory_pass),
+        "packet_release_pass": bool(packet_result["packet_released"]),
+    }
+    packet_result["gate"]["pass"] = all(packet_result["gate"].values())
+    return packet_result
