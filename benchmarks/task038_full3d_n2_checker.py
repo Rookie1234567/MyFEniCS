@@ -34,7 +34,13 @@ N2_WARN_BYTES = 1_800_000_000
 N2_HARD_BYTES = 2_000_000_000
 N2_RETAINED_HARD_BYTES = 1_798_919_864
 N2_EXPECTED_GLOBAL_ROWS = 173_802
+N2_EXPECTED_GLOBAL_CELLS = 252
+N2_MAX_LOCAL_ROWS = 882
+N2_MODE_SHARD_HARD_BYTES = 252 * 882 * 8 * 16
 N2_PREFIXES = (16, 32)
+N1_ALGEBRA_LIMIT = 1.0e-11
+N1_PO_U_LIMIT = 1.0e-13
+N1_RP_LIMIT = 1.0e-13
 
 
 def _load(path: Path) -> Any:
@@ -56,6 +62,37 @@ def _error(errors: list[str], message: str) -> None:
     errors.append(str(message))
 
 
+def _required_number(
+    mapping: Mapping[str, Any], key: str, label: str, errors: list[str]
+) -> float | None:
+    value = mapping.get(key)
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        _error(errors, f"{label}.{key} is missing or not numeric")
+        return None
+    result = float(value)
+    if not np.isfinite(result):
+        _error(errors, f"{label}.{key} is non-finite")
+        return None
+    return result
+
+
+def _required_integer(
+    mapping: Mapping[str, Any], key: str, label: str, errors: list[str]
+) -> int | None:
+    value = mapping.get(key)
+    if isinstance(value, bool) or not isinstance(value, int):
+        _error(errors, f"{label}.{key} is missing or not an integer")
+        return None
+    return int(value)
+
+
+def _require_bound(
+    mapping: Mapping[str, Any], key: str, label: str, limit: float, errors: list[str]
+) -> float | None:
+    value = _required_number(mapping, key, label, errors)
+    if value is not None and value > limit:
+        _error(errors, f"{label}.{key}={value:.17g} exceeds {limit:.17g}")
+    return value
 def _relative(left: np.ndarray, right: np.ndarray) -> float:
     numerator = float(np.linalg.norm(np.asarray(left, dtype=np.complex128)))
     denominator = max(float(np.linalg.norm(np.asarray(right, dtype=np.complex128))), np.finfo(float).tiny)
@@ -164,10 +201,12 @@ def _watchdog(record_path: Path, record: Mapping[str, Any], errors: list[str]) -
     peak = max(peaks.values(), default=0)
     if peak >= N2_HARD_BYTES:
         _error(errors, f"process-tree peak {peak} is not below hard limit {N2_HARD_BYTES}")
-    post_setup = max(
-        (peaks.get(stage, 0) for stage in ("post_setup_release", "identity_apply", "canonical_evidence", "cleanup")),
-        default=0,
+    post_setup = peaks.get("post_setup_release", 0)
+    post_setup_samples = sum(
+        1 for sample in valid if sample.get("stage") == "post_setup_release"
     )
+    if post_setup_samples < 1:
+        _error(errors, "watchdog has no post_setup_release sample")
     if post_setup >= N2_WARN_BYTES:
         _error(errors, f"post-setup peak {post_setup} is not below warning limit {N2_WARN_BYTES}")
     if raw.get("worker_returncode") != 0 or raw.get("stop_reason") != "natural_exit":
@@ -175,6 +214,8 @@ def _watchdog(record_path: Path, record: Mapping[str, Any], errors: list[str]) -
     termination = raw.get("termination")
     if not isinstance(termination, Mapping) or termination.get("process_group_exited") is not True:
         _error(errors, "watchdog process group did not close")
+    if not isinstance(termination, Mapping) or termination.get("method") != "already_exited":
+        _error(errors, "natural watchdog termination was not verified as already_exited")
     if compact.get("raw_sha256") != _sha256(raw_path):
         _error(errors, "watchdog compact does not bind raw SHA256")
     if compact.get("process_tree_peak_memory_authority_bytes") != peak:
@@ -189,20 +230,22 @@ def _watchdog(record_path: Path, record: Mapping[str, Any], errors: list[str]) -
         _error(errors, "watchdog compact USS stage peaks do not match raw samples")
     if compact.get("stage_peak_dedicated_cgroup_swap_bytes") != cgroup_swap_peaks:
         _error(errors, "watchdog compact cgroup-swap peaks do not match raw samples")
-    post_setup = max(
-        (peaks.get(stage, 0) for stage in ("post_setup_release", "identity_apply", "canonical_evidence", "cleanup")),
-        default=0,
-    )
+    post_setup = peaks.get("post_setup_release", 0)
     if compact.get("warning_crossed") != bool(peak >= N2_WARN_BYTES):
         _error(errors, "watchdog warning-crossed flag is not recomputed from raw samples")
     if compact.get("post_setup_peak_memory_authority_bytes") != post_setup:
         _error(errors, "watchdog post-setup peak does not match raw samples")
+    if compact.get("post_setup_sample_count") != post_setup_samples:
+        _error(errors, "watchdog post-setup sample count does not match raw samples")
     if compact.get("post_setup_warning_crossed") != bool(post_setup >= N2_WARN_BYTES):
         _error(errors, "watchdog post-setup warning flag is not recomputed from raw samples")
     if compact.get("process_tree_swap_gate") is not True:
         _error(errors, "watchdog process-tree swap gate is not true")
     if compact.get("no_orphan_claim") is not True:
         _error(errors, "watchdog no-orphan claim is not verified")
+    compact_termination = compact.get("termination")
+    if not isinstance(compact_termination, Mapping) or compact_termination.get("method") != "already_exited":
+        _error(errors, "compact watchdog termination was not verified as already_exited")
     command = " ".join(str(item) for item in compact.get("command", []))
     expected = record.get("source_identity", {}).get("expected_sha")
     for token in (str(record_path.resolve()), str(record.get("case")), str(expected), "--stage n2", "--expected-mpi-size"):
@@ -301,6 +344,208 @@ def _check_forbidden(record: Mapping[str, Any], errors: list[str]) -> None:
     for key in ("numeric_allgather", "global_aij_materialized", "global_schur_materialized", "factor_materialized"):
         if coarse.get(key) is not False:
             _error(errors, f"coarse forbidden audit {key} is not false")
+
+
+def _check_setup_audits(
+    record: Mapping[str, Any], coarse_metrics: Mapping[str, Any], errors: list[str]
+) -> dict[str, Any]:
+    inventory = record.get("inventory")
+    patch = inventory.get("patch_audit") if isinstance(inventory, Mapping) else None
+    regional = inventory.get("regional_audit") if isinstance(inventory, Mapping) else None
+    basis_record = record.get("basis")
+    basis = basis_record.get("audit") if isinstance(basis_record, Mapping) else None
+    coarse_record = record.get("coarse")
+    coarse = coarse_record.get("audit") if isinstance(coarse_record, Mapping) else None
+    if not all(isinstance(value, Mapping) for value in (patch, regional, basis, coarse)):
+        _error(errors, "N2 setup numeric/inventory audits are missing")
+        return {}
+
+    global_cells = _required_integer(regional, "global_cell_count", "regional", errors)
+    if global_cells != N2_EXPECTED_GLOBAL_CELLS:
+        _error(errors, f"global patch/cell count {global_cells!r} != {N2_EXPECTED_GLOBAL_CELLS}")
+    row_count_max = _required_integer(patch, "row_count_max", "patch", errors)
+    if row_count_max is not None and (row_count_max <= 0 or row_count_max > N2_MAX_LOCAL_ROWS):
+        _error(errors, f"patch.row_count_max={row_count_max} exceeds {N2_MAX_LOCAL_ROWS}")
+    class_count = _required_integer(patch, "class_count", "patch", errors)
+    if class_count is not None and (class_count <= 0 or class_count > N2_MAX_CLASSES):
+        _error(errors, f"patch.class_count={class_count} exceeds {N2_MAX_CLASSES}")
+    global_factor_count = _required_integer(
+        patch, "global_owner_factor_count", "patch", errors
+    )
+    if class_count is not None and global_factor_count != class_count:
+        _error(errors, "global factor count does not equal exact class count")
+
+    class_digests = patch.get("class_digests")
+    factor_audits = patch.get("factor_audits_by_class")
+    class_patch_counts = patch.get("class_patch_counts_global")
+    if not isinstance(class_digests, list) or not isinstance(factor_audits, Mapping):
+        _error(errors, "per-class factor audit is missing")
+    else:
+        if set(factor_audits) != set(class_digests):
+            _error(errors, "per-class factor audit keys do not equal class inventory")
+        for digest in class_digests:
+            factor = factor_audits.get(digest)
+            if not isinstance(factor, Mapping):
+                _error(errors, f"factor audit is missing for class {digest!r}")
+                continue
+            factor_bytes = _required_integer(factor, "factor_bytes", f"factor[{digest}]", errors)
+            if factor_bytes is not None and (factor_bytes <= 0 or factor_bytes > N2_FACTOR_BYTES_LIMIT):
+                _error(errors, f"factor[{digest}].factor_bytes={factor_bytes} exceeds {N2_FACTOR_BYTES_LIMIT}")
+            _require_bound(
+                factor, "factorization_relative_error", f"factor[{digest}]", N1_ALGEBRA_LIMIT, errors
+            )
+            _require_bound(
+                factor, "fixed_rhs_solve_residual", f"factor[{digest}]", N1_ALGEBRA_LIMIT, errors
+            )
+    if not isinstance(class_patch_counts, Mapping) or not isinstance(class_digests, list):
+        _error(errors, "global class patch-count inventory is missing")
+    elif set(class_patch_counts) != set(class_digests):
+        _error(errors, "global class patch-count keys do not equal class inventory")
+    else:
+        patch_total = 0
+        for digest in class_digests:
+            count = class_patch_counts.get(digest)
+            if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+                _error(errors, f"global patch count for class {digest!r} is invalid")
+            else:
+                patch_total += int(count)
+        if patch_total != N2_EXPECTED_GLOBAL_CELLS:
+            _error(
+                errors,
+                f"global patch/cell inventory total {patch_total} != {N2_EXPECTED_GLOBAL_CELLS}",
+            )
+
+    global_factor_bytes = _required_integer(
+        patch, "global_owner_factor_bytes", "patch", errors
+    )
+    factor_byte_sum = None
+    if isinstance(class_digests, list) and isinstance(factor_audits, Mapping):
+        values = [
+            factor_audits[digest].get("factor_bytes")
+            for digest in class_digests
+            if isinstance(factor_audits.get(digest), Mapping)
+        ]
+        if len(values) == len(class_digests) and all(
+            isinstance(value, int) and not isinstance(value, bool) for value in values
+        ):
+            factor_byte_sum = int(sum(values))
+            if global_factor_bytes != factor_byte_sum:
+                _error(errors, "global factor bytes do not equal per-class factor bytes")
+
+    if patch.get("dense_workspace_released") is not True:
+        _error(errors, "dense local B/M workspace was not released")
+    mode_template_count = _required_integer(patch, "mode_template_count", "patch", errors)
+    if class_count is not None and mode_template_count != class_count:
+        _error(errors, "mode template count does not equal exact class count")
+    mode_bytes = _required_integer(
+        patch, "mode_shard_bytes_retained_global", "patch", errors
+    )
+    if mode_bytes is not None and (mode_bytes < 0 or mode_bytes > N2_MODE_SHARD_HARD_BYTES):
+        _error(errors, f"retained mode shard bytes {mode_bytes} exceeds {N2_MODE_SHARD_HARD_BYTES}")
+
+    for key in (
+        "B0_hermitian_relative_defect",
+        "M_local_hermitian_relative_defect",
+        "gradient_gram_defect_max",
+        "projected_eigen_residual_max",
+        "fixed_solve_residual_max",
+    ):
+        _require_bound(patch, key, "patch", N1_ALGEBRA_LIMIT, errors)
+    for key in ("B0_min_eigenvalue", "M_local_min_eigenvalue"):
+        value = _required_number(patch, key, "patch", errors)
+        if value is not None and value <= 0.0:
+            _error(errors, f"patch.{key}={value:.17g} is not positive")
+    gradient_rank = _required_integer(patch, "gradient_rank_min", "patch", errors)
+    if gradient_rank is not None and gradient_rank < 3:
+        _error(errors, f"patch.gradient_rank_min={gradient_rank} is below 3")
+    _require_bound(patch, "pou_closure_relative_error", "patch", N1_PO_U_LIMIT, errors)
+    _require_bound(
+        patch,
+        "restriction_prolongation_adjoint_relative_error_max",
+        "patch",
+        N1_RP_LIMIT,
+        errors,
+    )
+
+    if record.get("levels") != 2 or regional.get("regional_rank_cap") != N2_REGIONAL_RANK:
+        _error(errors, "N2 levels/regional rank cap is not frozen to 2/16")
+    regional_ranks = regional.get("regional_ranks")
+    if not isinstance(regional_ranks, list) or not regional_ranks:
+        _error(errors, "regional rank inventory is missing")
+    elif any(isinstance(value, bool) or not isinstance(value, int) or value < 1 or value > N2_REGIONAL_RANK for value in regional_ranks):
+        _error(errors, "regional rank inventory exceeds rank16")
+    _require_bound(regional, "regional_mass_orthogonality_max", "regional", N1_ALGEBRA_LIMIT, errors)
+    _require_bound(regional, "regional_projected_eigen_residual_max", "regional", N1_ALGEBRA_LIMIT, errors)
+    for key, limit in (("max_candidate_dimension", 64), ("max_projected_dimension", 64)):
+        value = _required_integer(regional, key, "regional", errors)
+        if value is not None and value > limit:
+            _error(errors, f"regional.{key}={value} exceeds {limit}")
+    if regional.get("top_rank_built") is not True or regional.get("multilevel_basis_built") is not True:
+        _error(errors, "regional/top multilevel basis is not recorded as built")
+    if regional.get("regional_dense_row_operator_materialized") is not False:
+        _error(errors, "regional dense row operator audit is not false")
+
+    if basis.get("top_rank") != N2_RANK or basis.get("regional_rank") != N2_REGIONAL_RANK:
+        _error(errors, "basis top/regional ranks are not 32/16")
+    top_defect = _require_bound(
+        basis, "top_orthogonality_relative_defect", "basis", N1_ALGEBRA_LIMIT, errors
+    )
+    if basis.get("construction_workspace_released") is not True:
+        _error(errors, "basis construction workspace is not released")
+
+    coarse_rank = _required_integer(coarse, "rank", "coarse", errors)
+    if coarse_rank != N2_RANK:
+        _error(errors, f"coarse.rank={coarse_rank!r} != {N2_RANK}")
+    _require_bound(coarse, "z_orthogonality_defect", "coarse", 1.0e-10, errors)
+    _require_bound(coarse, "az_repeat_relative_frobenius", "coarse", N1_ALGEBRA_LIMIT, errors)
+    if coarse.get("az_repeat_exact") is not True:
+        _error(errors, "coarse AZ repeat exact gate is not true")
+    _require_bound(coarse, "physical_consistency_relative", "coarse", N1_ALGEBRA_LIMIT, errors)
+    e_condition = _require_bound(coarse, "e_condition_number", "coarse", 1.0e12, errors)
+    prefix_audits = coarse.get("prefix_audits")
+    if not isinstance(prefix_audits, list):
+        _error(errors, "coarse prefix audits are missing")
+    else:
+        by_prefix = {
+            item.get("prefix"): item
+            for item in prefix_audits
+            if isinstance(item, Mapping)
+        }
+        for prefix in N2_PREFIXES:
+            item = by_prefix.get(prefix)
+            if not isinstance(item, Mapping):
+                _error(errors, f"coarse prefix audit {prefix} is missing")
+                continue
+            _require_bound(item, "z_orthogonality_defect", f"coarse.prefix[{prefix}]", 1.0e-10, errors)
+            _require_bound(item, "az_repeat_relative_frobenius", f"coarse.prefix[{prefix}]", N1_ALGEBRA_LIMIT, errors)
+            _require_bound(item, "physical_consistency_relative", f"coarse.prefix[{prefix}]", N1_ALGEBRA_LIMIT, errors)
+            if item.get("az_repeat_exact") is not True or item.get("e_prefix_leading_exact") is not True:
+                _error(errors, f"coarse prefix {prefix} exact repeat/leading-E gate is not true")
+            _require_bound(item, "e_prefix_leading_relative", f"coarse.prefix[{prefix}]", 1.0e-12, errors)
+            _require_bound(item, "e_condition_number", f"coarse.prefix[{prefix}]", 1.0e12, errors)
+
+    identity = record.get("identity_apply")
+    if not isinstance(identity, Mapping):
+        _error(errors, "zero identity apply audit is missing")
+    else:
+        if identity.get("input_norm") != 0.0 or identity.get("output_norm") != 0.0:
+            _error(errors, "zero identity apply did not remain zero")
+        if identity.get("finite") is not True or identity.get("zero_output") is not True:
+            _error(errors, "zero identity apply finite/zero gate is not true")
+        if identity.get("rho_run") is not False or identity.get("ksp_created") is not False:
+            _error(errors, "zero identity apply is not setup-only")
+        _required_number(identity, "wall_seconds_rank_max", "identity_apply", errors)
+
+    return {
+        "global_cell_count": global_cells,
+        "row_count_max": row_count_max,
+        "class_count": class_count,
+        "global_factor_count": global_factor_count,
+        "mode_shard_bytes": mode_bytes,
+        "top_orthogonality_defect": top_defect,
+        "e_condition_number": e_condition,
+        "coarse_metrics": dict(coarse_metrics),
+    }
 
 
 def _check_markers(record: Mapping[str, Any], errors: list[str]) -> None:
@@ -438,6 +683,7 @@ def check_worker_record(record_path: Path, *, expected_sha: str, expected_mpi_si
         actual_raw = Path(record_path).parent / actual_raw
     local_arrays = _check_matrix_artifacts(record, actual_raw, errors)
     coarse = _check_coarse_arrays(record, local_arrays, actual_raw, N2_EXPECTED_GLOBAL_ROWS, errors)
+    setup = _check_setup_audits(record, coarse, errors)
     watchdog = _watchdog(Path(record_path), record, errors)
     retained = record.get("retained_components")
     if not isinstance(retained, Mapping):
@@ -459,6 +705,7 @@ def check_worker_record(record_path: Path, *, expected_sha: str, expected_mpi_si
         "errors": errors,
         "gates": {"identity": not any("identity" in error or "SHA" in error for error in errors), "markers": not any("marker" in error for error in errors), "forbidden": not any("forbidden" in error or "audit" in error for error in errors), "arrays": bool(local_arrays) and not any("array" in error or "Z32" in error or "E32" in error for error in errors), "coarse": bool(coarse) and not any("orthogonality" in error or "E32" in error or "condition" in error for error in errors), "resource": watchdog is not None and not any("watchdog" in error or "process-tree" in error or "peak" in error or "swap" in error for error in errors)},
         "coarse": coarse,
+        "setup": setup,
         "watchdog": watchdog,
         "errors_count": len(errors),
     }

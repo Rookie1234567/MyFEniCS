@@ -218,6 +218,177 @@ def test_checker_fails_closed_on_missing_identity_and_resource(tmp_path: Path) -
     assert any("source identity" in item or "resource_contract" in item for item in result["errors"])
 
 
+def _synthetic_setup_record() -> dict[str, object]:
+    return {
+        "levels": 2,
+        "inventory": {
+            "patch_audit": {
+                "row_count_max": 882,
+                "class_count": 1,
+                "class_digests": ["class"],
+                "class_patch_counts_global": {"class": 252},
+                "global_owner_factor_count": 1,
+                "global_owner_factor_bytes": 1,
+                "factor_audits_by_class": {
+                    "class": {
+                        "factor_bytes": 1,
+                        "factorization_relative_error": 0.0,
+                        "fixed_rhs_solve_residual": 0.0,
+                    }
+                },
+                "dense_workspace_released": True,
+                "mode_template_count": 1,
+                "mode_shard_bytes_retained_global": 1,
+                "B0_hermitian_relative_defect": 0.0,
+                "M_local_hermitian_relative_defect": 0.0,
+                "B0_min_eigenvalue": 1.0,
+                "M_local_min_eigenvalue": 1.0,
+                "gradient_rank_min": 3,
+                "gradient_gram_defect_max": 0.0,
+                "projected_eigen_residual_max": 0.0,
+                "fixed_solve_residual_max": 0.0,
+                "pou_closure_relative_error": 0.0,
+                "restriction_prolongation_adjoint_relative_error_max": 0.0,
+            },
+            "regional_audit": {
+                "global_cell_count": 252,
+                "regional_rank_cap": 16,
+                "regional_ranks": [16],
+                "regional_mass_orthogonality_max": 0.0,
+                "regional_projected_eigen_residual_max": 0.0,
+                "max_candidate_dimension": 64,
+                "max_projected_dimension": 16,
+                "top_rank_built": True,
+                "multilevel_basis_built": True,
+                "regional_dense_row_operator_materialized": False,
+            },
+        },
+        "basis": {"audit": {
+            "top_rank": 32,
+            "regional_rank": 16,
+            "top_orthogonality_relative_defect": 0.0,
+            "construction_workspace_released": True,
+        }},
+        "coarse": {"audit": {
+            "rank": 32,
+            "z_orthogonality_defect": 0.0,
+            "az_repeat_relative_frobenius": 0.0,
+            "az_repeat_exact": True,
+            "physical_consistency_relative": 0.0,
+            "e_condition_number": 1.0,
+            "prefix_audits": [
+                {
+                    "prefix": prefix,
+                    "z_orthogonality_defect": 0.0,
+                    "az_repeat_relative_frobenius": 0.0,
+                    "az_repeat_exact": True,
+                    "physical_consistency_relative": 0.0,
+                    "e_prefix_leading_relative": 0.0,
+                    "e_prefix_leading_exact": True,
+                    "e_condition_number": 1.0,
+                }
+                for prefix in (16, 32)
+            ],
+        }},
+        "identity_apply": {
+            "input_norm": 0.0,
+            "output_norm": 0.0,
+            "finite": True,
+            "zero_output": True,
+            "rho_run": False,
+            "ksp_created": False,
+            "wall_seconds_rank_max": 0.0,
+        },
+    }
+
+
+def test_checker_setup_inventory_gates_are_independent_and_fail_closed() -> None:
+    record = _synthetic_setup_record()
+    errors: list[str] = []
+    setup = checker._check_setup_audits(record, {}, errors)
+    assert errors == []
+    assert setup["global_cell_count"] == 252
+
+    too_large = json.loads(json.dumps(record))
+    too_large["inventory"]["patch_audit"]["factor_audits_by_class"]["class"]["factor_bytes"] = checker.N2_FACTOR_BYTES_LIMIT + 1
+    errors = []
+    checker._check_setup_audits(too_large, {}, errors)
+    assert any("factor_bytes" in error for error in errors)
+
+    missing = json.loads(json.dumps(record))
+    del missing["inventory"]["patch_audit"]["factor_audits_by_class"]
+    errors = []
+    checker._check_setup_audits(missing, {}, errors)
+    assert any("factor audit" in error for error in errors)
+
+
+def test_checker_requires_post_setup_watchdog_sample(tmp_path: Path) -> None:
+    record_path = tmp_path / "record.json"
+    raw_path = tmp_path / "watchdog.raw.json"
+    compact_path = tmp_path / "watchdog.compact.json"
+    expected_sha = "a" * 40
+    command = (
+        "python",
+        "worker",
+        "--stage",
+        "n2",
+        "--case",
+        "p6-h10-mpi1",
+        "--record",
+        str(record_path.resolve()),
+        "--expected-source-sha",
+        expected_sha,
+        "--expected-mpi-size",
+        "1",
+    )
+    raw = {
+        "schema": checker.N2_WATCHDOG_RAW_SCHEMA,
+        "command": list(command),
+        "samples": [{
+            "stage": "identity_apply",
+            "authority": {
+                "memory_authority_bytes": 100,
+                "process_tree": {
+                    "all_status_readable": True,
+                    "pss_uss_readable": True,
+                    "rss_bytes": 100,
+                    "pss_bytes": 80,
+                    "uss_bytes": 60,
+                    "swap_bytes": 0,
+                },
+            },
+        }],
+        "stop_reason": "natural_exit",
+        "termination": {"method": "already_exited", "process_group_exited": True},
+        "worker_returncode": 0,
+    }
+    raw_path.write_text(json.dumps(raw), encoding="utf-8")
+    compact = runner._watchdog_compact(
+        hashlib.sha256(raw_path.read_bytes()).hexdigest(),
+        command,
+        "natural_exit",
+        0,
+        raw["termination"],
+        raw["samples"],
+    )
+    compact_path.write_text(json.dumps(compact), encoding="utf-8")
+    record = {
+        "case": "p6-h10-mpi1",
+        "source_identity": {"expected_sha": expected_sha},
+        "resource_contract": {
+            "status": "measured",
+            "raw_path": str(raw_path),
+            "raw_sha256": hashlib.sha256(raw_path.read_bytes()).hexdigest(),
+            "compact_path": str(compact_path),
+            "compact_sha256": hashlib.sha256(compact_path.read_bytes()).hexdigest(),
+        },
+    }
+    record_path.write_text(json.dumps(record), encoding="utf-8")
+    errors: list[str] = []
+    checker._watchdog(record_path, record, errors)
+    assert any("post_setup" in error for error in errors)
+
+
 def test_checker_sums_owner_shards_without_numeric_gather(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(checker, "N2_RANK", 2)
     monkeypatch.setattr(checker, "N2_REGIONAL_RANK", 1)

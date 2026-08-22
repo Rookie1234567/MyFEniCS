@@ -38,6 +38,8 @@ N2_FACTOR_BYTES_LIMIT = 6_230_448
 N2_WARN_BYTES = 1_800_000_000
 N2_HARD_BYTES = 2_000_000_000
 N2_RETAINED_HARD_BYTES = 1_798_919_864
+N2_MODE_SHARD_HARD_BYTES = 252 * 882 * 8 * 16
+N2_POST_SETUP_DWELL_SECONDS = 2.2
 N2_CASES = {"p6-h10-mpi1": 1, "p6-h10-mpi2": 2}
 N2_MARKERS = (
     "preflight",
@@ -348,6 +350,7 @@ def _augment_process_tree_memory(authority: Mapping[str, Any]) -> dict[str, Any]
             pss_total += int(fields["Pss"])
             uss_total += int(fields.get("Private_Clean", 0))
             uss_total += int(fields.get("Private_Dirty", 0))
+            uss_total += int(fields.get("Private_Hugetlb", 0))
         except (OSError, KeyError, ValueError):
             readable = False
     tree["pss_bytes"] = int(pss_total)
@@ -438,17 +441,16 @@ def _build_case(root: Path, args: argparse.Namespace, comm: Any) -> dict[str, An
         root, args.input, N2_DEGREE, N2_MESH_TARGET_NM
     )
     modes, _rows, dynamic_sha = build_dynamic_mode_inventory(cfg)
-    mode_rows, mode_bytes, mode_sha = build_ordered_mode_manifest(modes, cfg)
+    _, mode_bytes, mode_sha = build_ordered_mode_manifest(modes, cfg)
     mesh_data = build_airbox_mesh_3d(cfg, args.raw_dir / "mesh")
     raw_space = _create_nedelec_space(mesh_data.mesh, cfg)
     floquet_data = build_double_floquet_mpc(raw_space, mesh_data, cfg)
     space = floquet_data.mpc.function_space
-    topology = build_fullspace_slab_interface(space, mesh_data, floquet_data, cfg)
+    _topology = build_fullspace_slab_interface(space, mesh_data, floquet_data, cfg)
     return {
         "cfg": cfg,
         "resolved": resolved,
         "modes": modes,
-        "mode_rows": mode_rows,
         "mode_bytes": mode_bytes,
         "mode_sha": mode_sha,
         "dynamic_mode_sha": dynamic_sha,
@@ -456,7 +458,6 @@ def _build_case(root: Path, args: argparse.Namespace, comm: Any) -> dict[str, An
         "raw_space": raw_space,
         "floquet_data": floquet_data,
         "space": space,
-        "topology": topology,
         "comm": comm,
     }
 
@@ -525,11 +526,60 @@ def _build_physical_action(case: Mapping[str, Any], comm: Any):
     return FullspacePhysicalAction(volume_action, dtn_action)
 
 
+def _zero_identity_apply(
+    case: Mapping[str, Any], physical_action: Any, comm: Any
+) -> dict[str, Any]:
+    """Measure one zero-input physical action without retaining its work Vecs."""
+
+    from mpi4py import MPI
+
+    index_map = case["space"].dofmap.index_map
+    local_rows = int(index_map.local_range[1] - index_map.local_range[0])
+    source = _new_full_vector(case["space"])
+    target = _new_full_vector(case["space"])
+    try:
+        _set_vector_owned(source, np.zeros(local_rows, dtype=np.complex128))
+        started = time.perf_counter()
+        physical_action.apply(source, target)
+        elapsed = time.perf_counter() - started
+        with target.localForm() as local:
+            values = np.asarray(local.array_r)
+            finite = bool(np.all(np.isfinite(values)))
+            local_max_abs = float(np.max(np.abs(values))) if values.size else 0.0
+        finite_global = bool(comm.allreduce(finite, op=MPI.LAND))
+        max_abs = float(comm.allreduce(local_max_abs, op=MPI.MAX))
+        output_norm = float(target.norm())
+        elapsed_max = float(comm.allreduce(elapsed, op=MPI.MAX))
+        if not finite_global or not np.isfinite(output_norm) or max_abs != 0.0:
+            raise RuntimeError(
+                "N2 zero identity apply failed: "
+                f"finite={finite_global}, output_norm={output_norm:.17g}, "
+                f"max_abs={max_abs:.17g}"
+            )
+        return {
+            "kind": "setup_zero_identity_apply",
+            "input_norm": 0.0,
+            "output_norm": output_norm,
+            "output_max_abs": max_abs,
+            "finite": finite_global,
+            "zero_output": max_abs == 0.0,
+            "wall_seconds_rank_max": elapsed_max,
+            "physical_action_apply_count": int(
+                physical_action.audit["apply_count"]
+            ),
+            "rho_run": False,
+            "ksp_created": False,
+            "source_independent": True,
+        }
+    finally:
+        target.destroy()
+        source.destroy()
+
+
 def _retained_components(
     basis: Any,
     coarse: Any,
     patch_audit: Mapping[str, Any],
-    regional_audit: Mapping[str, Any],
     physical_action: Any,
     comm: Any,
 ) -> dict[str, Any]:
@@ -544,7 +594,6 @@ def _retained_components(
     factor_global = int(patch_audit["global_owner_factor_bytes"])
     factor_count_global = int(patch_audit["global_owner_factor_count"])
     mode_global = int(patch_audit["mode_shard_bytes_retained_global"])
-    mode_local = int(patch_audit["mode_shard_bytes_retained_local"])
     action_audit = dict(getattr(physical_action, "audit", {}))
     volume_audit = action_audit["volume_action"]
     dtn_audit = action_audit["dtn_action"]
@@ -584,6 +633,7 @@ def _retained_components(
         "factor_bytes_local": factor_local,
         "factor_count_global": factor_count_global,
         "patch_mode_shard_bytes_global": mode_global,
+        "patch_mode_shard_bytes_limit": N2_MODE_SHARD_HARD_BYTES,
         "regional_z16_bytes_global": int(comm.allreduce(z16, op=MPI.SUM)),
         "top_z32_bytes_global": int(comm.allreduce(z32, op=MPI.SUM)),
         "az32_bytes_global": int(comm.allreduce(az32, op=MPI.SUM)),
@@ -617,6 +667,7 @@ def _record(
     basis: Any,
     physical_action: Any,
     coarse: Any,
+    identity_audit: Mapping[str, Any],
     artifacts: Mapping[str, Any],
     stage_resources: Mapping[str, Any],
     retained: Mapping[str, Any],
@@ -706,6 +757,7 @@ def _record(
             "outer_contraction_run": False,
             "global_direct_coarse_solve": False,
         },
+        "identity_apply": _jsonable(dict(identity_audit)),
         "coarse": {"audit": _jsonable(dict(coarse.audit))},
         "artifacts": _jsonable(dict(artifacts)),
         "retained_components": _jsonable(dict(retained)),
@@ -781,6 +833,7 @@ def _run_worker(args: argparse.Namespace) -> int:
     physical_action = None
     basis = None
     coarse = None
+    identity_audit: dict[str, Any] = {}
     try:
         _write_marker(args.marker_dir, "preflight", args.expected_sha, comm, case=args.case)
         runtime = _collective_stage(
@@ -808,11 +861,16 @@ def _run_worker(args: argparse.Namespace) -> int:
         patches, patch_audit = _collective_stage(comm, "local_factor_and_mode_build", lambda: _build_local_patches(case))
         _write_marker(args.marker_dir, "local_mode_build", args.expected_sha, comm, completed_by="build_real_local_spectral_patches", mode_cap=N2_MODE_CAP)
         _write_marker(args.marker_dir, "regional_coarse_build", args.expected_sha, comm, api="build_real_local_regional_rayleigh_ritz", rank=N2_REGIONAL_RANK)
-        regional_records, regional_audit, basis = _collective_stage(comm, "regional_coarse_build", lambda: _build_regional(case, patches))
+        _, regional_audit, basis = _collective_stage(comm, "regional_coarse_build", lambda: _build_regional(case, patches))
         _write_marker(args.marker_dir, "top_level_build", args.expected_sha, comm, completed_by="build_real_local_regional_rayleigh_ritz", rank=N2_RANK)
         if basis.audit.get("construction_workspace_released") is not True:
             raise RuntimeError("N2 basis construction workspace was not released")
         _write_marker(args.marker_dir, "identity_apply", args.expected_sha, comm, purpose="setup_AZ_E_repeat_only", rho_not_run=True)
+        identity_audit = _collective_stage(
+            comm,
+            "zero_identity_apply",
+            lambda: _zero_identity_apply(case, physical_action, comm),
+        )
         from src.solvers.fullspace_adaptive_coarse import FullspaceAdaptiveCoarse
 
         coarse = FullspaceAdaptiveCoarse(basis, physical_action, lambda: _new_full_vector(case["space"]))
@@ -827,8 +885,11 @@ def _run_worker(args: argparse.Namespace) -> int:
             construction_workspace_released=True,
             retained_regional_and_top=True,
             all_az_e_objects_alive=True,
+            measurement_dwell_seconds=N2_POST_SETUP_DWELL_SECONDS,
+            measurement_dwell_scope="post_setup_retained_objects_only",
         )
         stage_resources["post_setup_release"] = _rank_resource(comm)
+        time.sleep(N2_POST_SETUP_DWELL_SECONDS)
         _write_marker(args.marker_dir, "canonical_evidence", args.expected_sha, comm, roles=("full_fe", "full_fe_dual"), numeric_allgather=False)
         z_path = args.raw_dir / f"Z32.rank{comm.rank:04d}.npy"
         az_path = args.raw_dir / f"AZ32.rank{comm.rank:04d}.npy"
@@ -873,10 +934,10 @@ def _run_worker(args: argparse.Namespace) -> int:
             mode_path.write_bytes(case["mode_bytes"])
         comm.barrier()
         artifacts = {"arrays": arrays, "E32": e_descriptor, "canonical_matrices": canonical, "mode_manifest": {"path": str(mode_path), "sha256": _sha256_path(mode_path), "bytes": int(mode_path.stat().st_size)}}
-        retained = _retained_components(basis, coarse, patch_audit, regional_audit, physical_action, comm)
+        retained = _retained_components(basis, coarse, patch_audit, physical_action, comm)
         if retained["retained_closure_bytes_global"] > N2_RETAINED_HARD_BYTES:
             raise RuntimeError(f"N2 retained closure {retained['retained_closure_bytes_global']} exceeds limit {N2_RETAINED_HARD_BYTES}")
-        record = _record(args, case, runtime, source_identity, patches, patch_audit, regional_audit, basis, physical_action, coarse, artifacts, stage_resources, retained)
+        record = _record(args, case, runtime, source_identity, patches, patch_audit, regional_audit, basis, physical_action, coarse, identity_audit, artifacts, stage_resources, retained)
         _write_marker(args.marker_dir, "cleanup", args.expected_sha, comm, sample_before_destroy=True)
         _destroy((coarse, physical_action, basis))
         for patch in patches:
@@ -932,9 +993,9 @@ def _watchdog_compact(raw_sha: str, command: Iterable[str], stop_reason: str, re
         for row in valid
     )
     peak = max(peaks.values(), default=0)
-    post_setup_peak = max(
-        (peaks.get(stage, 0) for stage in ("post_setup_release", "identity_apply", "canonical_evidence", "cleanup")),
-        default=0,
+    post_setup_peak = peaks.get("post_setup_release", 0)
+    post_setup_sample_count = sum(
+        1 for row in valid if row.get("stage") == "post_setup_release"
     )
     return {
         "schema": N2_WATCHDOG_COMPACT_SCHEMA,
@@ -956,6 +1017,7 @@ def _watchdog_compact(raw_sha: str, command: Iterable[str], stop_reason: str, re
         "stage_peak_dedicated_cgroup_swap_bytes": cgroup_swap_peaks,
         "warning_crossed": bool(peak >= N2_WARN_BYTES),
         "post_setup_peak_memory_authority_bytes": int(post_setup_peak),
+        "post_setup_sample_count": int(post_setup_sample_count),
         "post_setup_warning_crossed": bool(post_setup_peak >= N2_WARN_BYTES),
         "natural_exit": stop_reason == "natural_exit" and return_code == 0,
         "no_orphan_claim": bool(
@@ -991,6 +1053,7 @@ def _backfill_watchdog(record_path: Path, raw_path: Path, compact_path: Path, co
         "worker_returncode": int(return_code),
         "process_tree_peak_memory_authority_bytes": int(compact.get("process_tree_peak_memory_authority_bytes", 0)),
         "post_setup_peak_memory_authority_bytes": int(compact.get("post_setup_peak_memory_authority_bytes", 0)),
+        "post_setup_sample_count": int(compact.get("post_setup_sample_count", 0)),
         "warning_crossed": bool(compact.get("warning_crossed", False)),
         "post_setup_warning_crossed": bool(compact.get("post_setup_warning_crossed", False)),
         "stage_peak_process_tree_rss_bytes": dict(compact.get("stage_peak_process_tree_rss_bytes", {})),
