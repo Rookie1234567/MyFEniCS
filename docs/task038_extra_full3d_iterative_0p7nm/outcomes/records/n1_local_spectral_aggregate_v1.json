@@ -1,0 +1,403 @@
+{
+  "errors": [],
+  "hard_gate": "canonical full-space source/action <= 1e-12; repeat <= 1e-13",
+  "individual": [
+    {
+      "case": "p2-mpi1",
+      "errors": [],
+      "gates": {
+        "canonical_source_action": true,
+        "forbidden": true,
+        "identity": true,
+        "local_algebra": true,
+        "serial_ufl": true
+      },
+      "mpi_size": 1,
+      "numeric": {
+        "class_count": 27,
+        "errors": [],
+        "maxima": {
+          "B0_hermitian_relative_defect": 4.030190509443927e-17,
+          "M_local_hermitian_relative_defect": 3.998794523488017e-17,
+          "fixed_solve_residual_max": 3.578494639933735e-15,
+          "gradient_m_gram_relative_defect_max": 1.2296432953483298e-15,
+          "pou_closure_relative_error": 0.0,
+          "projected_eigen_residual_max": 2.1987890739899198e-15,
+          "restriction_prolongation_adjoint_relative_error_max": 7.693864544320264e-16
+        },
+        "owner_factor_count": 27,
+        "patch_count": 27,
+        "regional_mass_orthogonality_max": 8.47661578502771e-15,
+        "regional_projected_eigen_residual_max": 1.7592475072253174e-14,
+        "regional_projector_diagnostic": "not a hard Gate"
+      },
+      "raw_dir": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_n1_formal_v1/5ab68c1/p2_mpi1/raw",
+      "record": "/home/shenjh/Projects/MyFEniCSx_task37_extra/docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/n1_local_spectral_p2_mpi1_v1.json",
+      "record_sha256": "76eefcacad98aabb8ecc218a9ba6d47cfaed850b72ea5e9b245b893e106f281c",
+      "regional_projector_gate": "diagnostic_only_not_a_hard_gate",
+      "serial_assembled_oracle": {
+        "relative_error": 1.0014682260391434e-15,
+        "status": "measured"
+      },
+      "source_action": {
+        "action_finite": true,
+        "action_repeat_exact": true,
+        "action_repeat_relative": 0.0,
+        "key_count": 720,
+        "source_finite": true,
+        "source_repeat_relative": 0.0
+      },
+      "status": "PASS"
+    },
+    {
+      "case": "p2-mpi2",
+      "errors": [],
+      "gates": {
+        "canonical_source_action": true,
+        "forbidden": true,
+        "identity": true,
+        "local_algebra": true,
+        "serial_ufl": true
+      },
+      "mpi_size": 2,
+      "numeric": {
+        "class_count": 27,
+        "errors": [],
+        "maxima": {
+          "B0_hermitian_relative_defect": 4.030190509443927e-17,
+          "M_local_hermitian_relative_defect": 4.006216785901444e-17,
+          "fixed_solve_residual_max": 2.7148741560045843e-15,
+          "gradient_m_gram_relative_defect_max": 1.1773433060761766e-15,
+          "pou_closure_relative_error": 0.0,
+          "projected_eigen_residual_max": 2.0873554771368992e-15,
+          "restriction_prolongation_adjoint_relative_error_max": 7.181335680989415e-16
+        },
+        "owner_factor_count": 27,
+        "patch_count": 27,
+        "regional_mass_orthogonality_max": 1.0312327959219853e-14,
+        "regional_projected_eigen_residual_max": 2.324464943678758e-14,
+        "regional_projector_diagnostic": "not a hard Gate"
+      },
+      "raw_dir": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_n1_formal_v1/5ab68c1/p2_mpi2/raw",
+      "record": "/home/shenjh/Projects/MyFEniCSx_task37_extra/docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/n1_local_spectral_p2_mpi2_v1.json",
+      "record_sha256": "9ae784aadc40a736b06420ba12bf2a9eb0216956b3c3ea39476477eff938e8e5",
+      "regional_projector_gate": "diagnostic_only_not_a_hard_gate",
+      "serial_assembled_oracle": {
+        "status": "not_run"
+      },
+      "source_action": {
+        "action_finite": true,
+        "action_repeat_exact": true,
+        "action_repeat_relative": 0.0,
+        "key_count": 720,
+        "source_finite": true,
+        "source_repeat_relative": 0.0
+      },
+      "status": "PASS"
+    },
+    {
+      "case": "p3-mpi1",
+      "errors": [],
+      "gates": {
+        "canonical_source_action": true,
+        "forbidden": true,
+        "identity": true,
+        "local_algebra": true,
+        "serial_ufl": true
+      },
+      "mpi_size": 1,
+      "numeric": {
+        "class_count": 27,
+        "errors": [],
+        "maxima": {
+          "B0_hermitian_relative_defect": 8.304550978561489e-17,
+          "M_local_hermitian_relative_defect": 8.809934971562565e-17,
+          "fixed_solve_residual_max": 6.441478248586372e-15,
+          "gradient_m_gram_relative_defect_max": 1.0213958873013626e-15,
+          "pou_closure_relative_error": 0.0,
+          "projected_eigen_residual_max": 7.087098245728896e-15,
+          "restriction_prolongation_adjoint_relative_error_max": 8.450022252381304e-16
+        },
+        "owner_factor_count": 27,
+        "patch_count": 27,
+        "regional_mass_orthogonality_max": 9.854225961060341e-16,
+        "regional_projected_eigen_residual_max": 2.563543642076944e-15,
+        "regional_projector_diagnostic": "not a hard Gate"
+      },
+      "raw_dir": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_n1_formal_v1/5ab68c1/p3_mpi1/raw",
+      "record": "/home/shenjh/Projects/MyFEniCSx_task37_extra/docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/n1_local_spectral_p3_mpi1_v1.json",
+      "record_sha256": "5564e0737fc4bf0335e1620782cba0779e886924ab84ccbd33dbc93eb717241d",
+      "regional_projector_gate": "diagnostic_only_not_a_hard_gate",
+      "serial_assembled_oracle": {
+        "relative_error": 1.2971226992449333e-15,
+        "status": "measured"
+      },
+      "source_action": {
+        "action_finite": true,
+        "action_repeat_exact": true,
+        "action_repeat_relative": 0.0,
+        "key_count": 2349,
+        "source_finite": true,
+        "source_repeat_relative": 0.0
+      },
+      "status": "PASS"
+    },
+    {
+      "case": "p3-mpi2",
+      "errors": [],
+      "gates": {
+        "canonical_source_action": true,
+        "forbidden": true,
+        "identity": true,
+        "local_algebra": true,
+        "serial_ufl": true
+      },
+      "mpi_size": 2,
+      "numeric": {
+        "class_count": 27,
+        "errors": [],
+        "maxima": {
+          "B0_hermitian_relative_defect": 8.305643583874317e-17,
+          "M_local_hermitian_relative_defect": 8.809414965172093e-17,
+          "fixed_solve_residual_max": 6.309896779017945e-15,
+          "gradient_m_gram_relative_defect_max": 1.0807436253548452e-15,
+          "pou_closure_relative_error": 0.0,
+          "projected_eigen_residual_max": 7.45145315296359e-15,
+          "restriction_prolongation_adjoint_relative_error_max": 1.3836360623955716e-15
+        },
+        "owner_factor_count": 27,
+        "patch_count": 27,
+        "regional_mass_orthogonality_max": 1.1106480242635855e-15,
+        "regional_projected_eigen_residual_max": 4.647475301838004e-15,
+        "regional_projector_diagnostic": "not a hard Gate"
+      },
+      "raw_dir": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_n1_formal_v1/5ab68c1/p3_mpi2/raw",
+      "record": "/home/shenjh/Projects/MyFEniCSx_task37_extra/docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/n1_local_spectral_p3_mpi2_v1.json",
+      "record_sha256": "120e1e591cb1ab3d72667db367ba65c1d39a8a542ef3b9f20085d67b277df476",
+      "regional_projector_gate": "diagnostic_only_not_a_hard_gate",
+      "serial_assembled_oracle": {
+        "status": "not_run"
+      },
+      "source_action": {
+        "action_finite": true,
+        "action_repeat_exact": true,
+        "action_repeat_relative": 0.0,
+        "key_count": 2349,
+        "source_finite": true,
+        "source_repeat_relative": 0.0
+      },
+      "status": "PASS"
+    }
+  ],
+  "pairs": [
+    {
+      "action_relative_error": 1.8605718413098607e-16,
+      "errors": [],
+      "hard_gate": "canonical full-space source/action <= 1e-12",
+      "left": {
+        "case": "p2-mpi1",
+        "errors": [],
+        "gates": {
+          "canonical_source_action": true,
+          "forbidden": true,
+          "identity": true,
+          "local_algebra": true,
+          "serial_ufl": true
+        },
+        "mpi_size": 1,
+        "numeric": {
+          "class_count": 27,
+          "errors": [],
+          "maxima": {
+            "B0_hermitian_relative_defect": 4.030190509443927e-17,
+            "M_local_hermitian_relative_defect": 3.998794523488017e-17,
+            "fixed_solve_residual_max": 3.578494639933735e-15,
+            "gradient_m_gram_relative_defect_max": 1.2296432953483298e-15,
+            "pou_closure_relative_error": 0.0,
+            "projected_eigen_residual_max": 2.1987890739899198e-15,
+            "restriction_prolongation_adjoint_relative_error_max": 7.693864544320264e-16
+          },
+          "owner_factor_count": 27,
+          "patch_count": 27,
+          "regional_mass_orthogonality_max": 8.47661578502771e-15,
+          "regional_projected_eigen_residual_max": 1.7592475072253174e-14,
+          "regional_projector_diagnostic": "not a hard Gate"
+        },
+        "raw_dir": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_n1_formal_v1/5ab68c1/p2_mpi1/raw",
+        "record": "/home/shenjh/Projects/MyFEniCSx_task37_extra/docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/n1_local_spectral_p2_mpi1_v1.json",
+        "record_sha256": "76eefcacad98aabb8ecc218a9ba6d47cfaed850b72ea5e9b245b893e106f281c",
+        "regional_projector_gate": "diagnostic_only_not_a_hard_gate",
+        "serial_assembled_oracle": {
+          "relative_error": 1.0014682260391434e-15,
+          "status": "measured"
+        },
+        "source_action": {
+          "action_finite": true,
+          "action_repeat_exact": true,
+          "action_repeat_relative": 0.0,
+          "key_count": 720,
+          "source_finite": true,
+          "source_repeat_relative": 0.0
+        },
+        "status": "PASS"
+      },
+      "regional_projector_gate": "diagnostic_only_not_a_hard_gate",
+      "right": {
+        "case": "p2-mpi2",
+        "errors": [],
+        "gates": {
+          "canonical_source_action": true,
+          "forbidden": true,
+          "identity": true,
+          "local_algebra": true,
+          "serial_ufl": true
+        },
+        "mpi_size": 2,
+        "numeric": {
+          "class_count": 27,
+          "errors": [],
+          "maxima": {
+            "B0_hermitian_relative_defect": 4.030190509443927e-17,
+            "M_local_hermitian_relative_defect": 4.006216785901444e-17,
+            "fixed_solve_residual_max": 2.7148741560045843e-15,
+            "gradient_m_gram_relative_defect_max": 1.1773433060761766e-15,
+            "pou_closure_relative_error": 0.0,
+            "projected_eigen_residual_max": 2.0873554771368992e-15,
+            "restriction_prolongation_adjoint_relative_error_max": 7.181335680989415e-16
+          },
+          "owner_factor_count": 27,
+          "patch_count": 27,
+          "regional_mass_orthogonality_max": 1.0312327959219853e-14,
+          "regional_projected_eigen_residual_max": 2.324464943678758e-14,
+          "regional_projector_diagnostic": "not a hard Gate"
+        },
+        "raw_dir": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_n1_formal_v1/5ab68c1/p2_mpi2/raw",
+        "record": "/home/shenjh/Projects/MyFEniCSx_task37_extra/docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/n1_local_spectral_p2_mpi2_v1.json",
+        "record_sha256": "9ae784aadc40a736b06420ba12bf2a9eb0216956b3c3ea39476477eff938e8e5",
+        "regional_projector_gate": "diagnostic_only_not_a_hard_gate",
+        "serial_assembled_oracle": {
+          "status": "not_run"
+        },
+        "source_action": {
+          "action_finite": true,
+          "action_repeat_exact": true,
+          "action_repeat_relative": 0.0,
+          "key_count": 720,
+          "source_finite": true,
+          "source_repeat_relative": 0.0
+        },
+        "status": "PASS"
+      },
+      "source_relative_error": 0.0,
+      "status": "PASS"
+    },
+    {
+      "action_relative_error": 2.0089698816204241e-16,
+      "errors": [],
+      "hard_gate": "canonical full-space source/action <= 1e-12",
+      "left": {
+        "case": "p3-mpi1",
+        "errors": [],
+        "gates": {
+          "canonical_source_action": true,
+          "forbidden": true,
+          "identity": true,
+          "local_algebra": true,
+          "serial_ufl": true
+        },
+        "mpi_size": 1,
+        "numeric": {
+          "class_count": 27,
+          "errors": [],
+          "maxima": {
+            "B0_hermitian_relative_defect": 8.304550978561489e-17,
+            "M_local_hermitian_relative_defect": 8.809934971562565e-17,
+            "fixed_solve_residual_max": 6.441478248586372e-15,
+            "gradient_m_gram_relative_defect_max": 1.0213958873013626e-15,
+            "pou_closure_relative_error": 0.0,
+            "projected_eigen_residual_max": 7.087098245728896e-15,
+            "restriction_prolongation_adjoint_relative_error_max": 8.450022252381304e-16
+          },
+          "owner_factor_count": 27,
+          "patch_count": 27,
+          "regional_mass_orthogonality_max": 9.854225961060341e-16,
+          "regional_projected_eigen_residual_max": 2.563543642076944e-15,
+          "regional_projector_diagnostic": "not a hard Gate"
+        },
+        "raw_dir": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_n1_formal_v1/5ab68c1/p3_mpi1/raw",
+        "record": "/home/shenjh/Projects/MyFEniCSx_task37_extra/docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/n1_local_spectral_p3_mpi1_v1.json",
+        "record_sha256": "5564e0737fc4bf0335e1620782cba0779e886924ab84ccbd33dbc93eb717241d",
+        "regional_projector_gate": "diagnostic_only_not_a_hard_gate",
+        "serial_assembled_oracle": {
+          "relative_error": 1.2971226992449333e-15,
+          "status": "measured"
+        },
+        "source_action": {
+          "action_finite": true,
+          "action_repeat_exact": true,
+          "action_repeat_relative": 0.0,
+          "key_count": 2349,
+          "source_finite": true,
+          "source_repeat_relative": 0.0
+        },
+        "status": "PASS"
+      },
+      "regional_projector_gate": "diagnostic_only_not_a_hard_gate",
+      "right": {
+        "case": "p3-mpi2",
+        "errors": [],
+        "gates": {
+          "canonical_source_action": true,
+          "forbidden": true,
+          "identity": true,
+          "local_algebra": true,
+          "serial_ufl": true
+        },
+        "mpi_size": 2,
+        "numeric": {
+          "class_count": 27,
+          "errors": [],
+          "maxima": {
+            "B0_hermitian_relative_defect": 8.305643583874317e-17,
+            "M_local_hermitian_relative_defect": 8.809414965172093e-17,
+            "fixed_solve_residual_max": 6.309896779017945e-15,
+            "gradient_m_gram_relative_defect_max": 1.0807436253548452e-15,
+            "pou_closure_relative_error": 0.0,
+            "projected_eigen_residual_max": 7.45145315296359e-15,
+            "restriction_prolongation_adjoint_relative_error_max": 1.3836360623955716e-15
+          },
+          "owner_factor_count": 27,
+          "patch_count": 27,
+          "regional_mass_orthogonality_max": 1.1106480242635855e-15,
+          "regional_projected_eigen_residual_max": 4.647475301838004e-15,
+          "regional_projector_diagnostic": "not a hard Gate"
+        },
+        "raw_dir": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_n1_formal_v1/5ab68c1/p3_mpi2/raw",
+        "record": "/home/shenjh/Projects/MyFEniCSx_task37_extra/docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/n1_local_spectral_p3_mpi2_v1.json",
+        "record_sha256": "120e1e591cb1ab3d72667db367ba65c1d39a8a542ef3b9f20085d67b277df476",
+        "regional_projector_gate": "diagnostic_only_not_a_hard_gate",
+        "serial_assembled_oracle": {
+          "status": "not_run"
+        },
+        "source_action": {
+          "action_finite": true,
+          "action_repeat_exact": true,
+          "action_repeat_relative": 0.0,
+          "key_count": 2349,
+          "source_finite": true,
+          "source_repeat_relative": 0.0
+        },
+        "status": "PASS"
+      },
+      "source_relative_error": 0.0,
+      "status": "PASS"
+    }
+  ],
+  "regional_diagnostic_debt": {
+    "classification": "measured_diagnostic_debt_not_hard_gate",
+    "packet_relative": 1.66085e-10,
+    "projector_relative": 1.59451e-11
+  },
+  "schema": "task038.n1.local-spectral-aggregate.v1",
+  "status": "PASS"
+}
