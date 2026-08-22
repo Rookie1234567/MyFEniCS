@@ -1050,3 +1050,111 @@ def test_v9_bare_f_launch_passes_h4_identity_to_worker_dry_run(tmp_path):
     assert result["exit_status"] == 0, result
     assert result["result_classification"] == "worker_exit0", result
     assert (run_directory / "worker_stdout.txt").stat().st_size > 0
+
+
+def test_v11_bottom_packet_algebra_launch_forwards_artifacts_once(tmp_path):
+    h4_input = Path(
+        "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
+    )
+    selected_manifest = tmp_path / "selected" / "manifest.json"
+    spool_root = tmp_path / "exact-spool"
+    response_manifest = tmp_path / "response" / "manifest.json"
+    producer_diagnostic = tmp_path / "producer" / "v3_v7_diagnostic.json"
+    run_directory = tmp_path / "v11-bottom-algebra-launch-dry-run"
+    selected_sha = "c" * 64
+    response_sha = "b" * 64
+
+    def dry_run_child(argv, **kwargs):
+        rewritten = list(argv[3:])
+        rewritten[rewritten.index("--worker")] = "--dry-run"
+        return subprocess.Popen(rewritten, **kwargs)
+
+    def sample(pid):
+        return {
+            "memory_authority_bytes": 0,
+            "process_tree": {
+                "root_pid": pid,
+                "rss_bytes": 0,
+                "swap_bytes": 0,
+                "all_status_readable": True,
+                "smaps": {"complete": False},
+            },
+            "job_cgroup": {"dedicated_job_cgroup": False},
+        }
+
+    result = watchdog.launch_v3_7_with_task038_watchdog(
+        h4_input,
+        run_directory,
+        source_sha="b" * 40,
+        python_executable=sys.executable,
+        v11_h4_bottom_packet_algebra=True,
+        v11_h4_bottom_packet_algebra_exact_spool_root=spool_root,
+        v11_h4_bottom_packet_algebra_packet_manifest=response_manifest,
+        v11_h4_bottom_packet_algebra_packet_manifest_sha256=response_sha,
+        v11_h4_bottom_packet_algebra_producer_diagnostic=producer_diagnostic,
+        selected_mode_packet_manifest=selected_manifest,
+        selected_mode_packet_manifest_sha256=selected_sha,
+        popen_factory=dry_run_child,
+        sample_factory=sample,
+    )
+    assert result["exit_status"] == 0, result
+    plan = json.loads((run_directory / "worker_stdout.txt").read_text())
+    worker_argv = plan["argv"]
+    route_flags = (
+        watchdog.V5_H4_SETUP_ONLY_FLAG,
+        watchdog.V5_H4_BLR_SIDE_COMPONENT_FLAG,
+        watchdog.V5_H4_FIXED_BUDGET_BOTTOM_COMPONENT_FLAG,
+        watchdog.V6_H4_POST_COMPACTION_SETUP_ONLY_FLAG,
+        watchdog.V6_H4_PORT_MODAL_BOTTOM_COMPONENT_FLAG,
+        watchdog.V7_H4_EXACT_SIDE_LIMIT_SETUP_ONLY_FLAG,
+        watchdog.V7_H4_EXACT_SIDE_FULL_FORMAL_FLAG,
+        watchdog.V7_STREAMED_PETROV_BOTTOM_PRODUCER_FLAG,
+        watchdog.V7_STREAMED_PETROV_BOTTOM_CONSUMER_FLAG,
+        watchdog.V8_H4_LAYER_BLOCK_RECONSTRUCTION_FLAG,
+        watchdog.V8_H4_LAYER_SWEEP_BOTTOM_FLAG,
+        watchdog.V9_H4_BARE_F_SIDE_FLAG,
+        watchdog.V9_H4_LAYER_SUPERNODE_BOTTOM_FLAG,
+        watchdog.V10_H4_SUPERNODE_FACTOR_INTEGRITY_FLAG,
+        watchdog.V10_H4_SN2_J_ONLY_FLAG,
+        watchdog.V10_H4_J1_INNER_FGMRES_FLAG,
+        watchdog.V10_H4_SIDE_RESPONSE_PACKET_PILOT_FLAG,
+        watchdog.V10_H4_SIDE_RESPONSE_PACKET_CONSUMER_FLAG,
+        watchdog.V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_FLAG,
+        watchdog.V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_FLAG,
+        watchdog.V11_BOTTOM_PACKET_ALGEBRA_FLAG,
+    )
+    assert sum(flag in worker_argv for flag in route_flags) == 1
+    for flag, value in (
+        ("--selected-mode-packet-manifest", selected_manifest.resolve()),
+        ("--selected-mode-packet-manifest-sha256", selected_sha),
+        (
+            watchdog.V11_BOTTOM_PACKET_ALGEBRA_EXACT_SPOOL_ROOT_FLAG,
+            spool_root.resolve(),
+        ),
+        (
+            watchdog.V11_BOTTOM_PACKET_ALGEBRA_PACKET_MANIFEST_FLAG,
+            response_manifest.resolve(),
+        ),
+        (watchdog.V11_BOTTOM_PACKET_ALGEBRA_PACKET_MANIFEST_SHA256_FLAG, response_sha),
+        (
+            watchdog.V11_BOTTOM_PACKET_ALGEBRA_PRODUCER_DIAGNOSTIC_FLAG,
+            producer_diagnostic.resolve(),
+        ),
+    ):
+        flag_index = worker_argv.index(flag)
+        assert worker_argv.count(flag) == 1
+        assert worker_argv[flag_index + 1] == str(value)
+    assert plan["watchdog"]["absolute_terminate_memory_bytes"] == 45 * 2**30
+    assert plan["watchdog"]["require_zero_swap"] is True
+    assert (
+        plan["worker_contract"]["method"] == watchdog.V11_BOTTOM_PACKET_ALGEBRA_METHOD
+    )
+    assert not any(
+        any(token in argument.lower() for token in ("qep", "top", "tsqr", "solve"))
+        for argument in worker_argv
+    )
+    ordinary = watchdog.v3_7_execution_dry_run(
+        INPUT, tmp_path / "ordinary-default", source_sha="a" * 40
+    )
+    assert watchdog.V11_BOTTOM_PACKET_ALGEBRA_FLAG not in ordinary["argv"]
+    assert ordinary["watchdog"]["absolute_terminate_memory_bytes"] == 224000000000

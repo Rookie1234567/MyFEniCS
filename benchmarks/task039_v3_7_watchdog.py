@@ -218,6 +218,22 @@ V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PROFILE = (
     "task039.v10.h4.side_response_packet.compression.v1"
 )
 V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_HARD_STOP_BYTES = 30 * 2**30
+V11_BOTTOM_PACKET_ALGEBRA_FLAG = "--v11-h4-bottom-packet-algebra"
+V11_BOTTOM_PACKET_ALGEBRA_EXACT_SPOOL_ROOT_FLAG = (
+    "--v11-h4-bottom-packet-algebra-exact-spool-root"
+)
+V11_BOTTOM_PACKET_ALGEBRA_PACKET_MANIFEST_FLAG = (
+    "--v11-h4-bottom-packet-algebra-packet-manifest"
+)
+V11_BOTTOM_PACKET_ALGEBRA_PACKET_MANIFEST_SHA256_FLAG = (
+    "--v11-h4-bottom-packet-algebra-packet-manifest-sha256"
+)
+V11_BOTTOM_PACKET_ALGEBRA_PRODUCER_DIAGNOSTIC_FLAG = (
+    "--v11-h4-bottom-packet-algebra-producer-diagnostic"
+)
+V11_BOTTOM_PACKET_ALGEBRA_METHOD = "task039_v11_h4_bottom_packet_algebra"
+V11_BOTTOM_PACKET_ALGEBRA_PROFILE = "task039.v11.h4.bottom_packet_algebra.v1"
+V11_BOTTOM_PACKET_ALGEBRA_HARD_STOP_BYTES = 45 * 2**30
 
 
 def _validate_resolved_identity(
@@ -243,6 +259,7 @@ def _validate_resolved_identity(
     v10_h4_side_response_packet_consumer: bool = False,
     v10_h4_side_response_packet_full_producer: bool = False,
     v10_h4_side_response_packet_compression: bool = False,
+    v11_h4_bottom_packet_algebra: bool = False,
 ) -> None:
     if (
         v5_h4_setup_only
@@ -265,6 +282,7 @@ def _validate_resolved_identity(
         or v10_h4_side_response_packet_consumer
         or v10_h4_side_response_packet_full_producer
         or v10_h4_side_response_packet_compression
+        or v11_h4_bottom_packet_algebra
     ):
         method = payload.get("method", {})
         if payload.get("model_id") != "task039_5nm_v4_1deg_s5_hybrid_iterative_m480":
@@ -339,6 +357,7 @@ def _watchdog_policy(
     v10_h4_side_response_packet_consumer: bool = False,
     v10_h4_side_response_packet_full_producer: bool = False,
     v10_h4_side_response_packet_compression: bool = False,
+    v11_h4_bottom_packet_algebra: bool = False,
 ) -> dict[str, Any]:
     _validate_resolved_identity(
         payload,
@@ -362,6 +381,7 @@ def _watchdog_policy(
         v10_h4_side_response_packet_consumer=v10_h4_side_response_packet_consumer,
         v10_h4_side_response_packet_full_producer=v10_h4_side_response_packet_full_producer,
         v10_h4_side_response_packet_compression=v10_h4_side_response_packet_compression,
+        v11_h4_bottom_packet_algebra=v11_h4_bottom_packet_algebra,
     )
     if v7_h4_exact_side_full_formal:
         absolute_bytes = V7_H4_EXACT_SIDE_FULL_FORMAL_HARD_STOP_BYTES
@@ -395,6 +415,8 @@ def _watchdog_policy(
         absolute_bytes = V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_HARD_STOP_BYTES
     elif v10_h4_side_response_packet_compression:
         absolute_bytes = V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_HARD_STOP_BYTES
+    elif v11_h4_bottom_packet_algebra:
+        absolute_bytes = V11_BOTTOM_PACKET_ALGEBRA_HARD_STOP_BYTES
     else:
         absolute_bytes = V3_7_ABSOLUTE_HARD_BYTES
     policy = {
@@ -429,6 +451,8 @@ def _watchdog_policy(
         policy["profile"] = V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_PROFILE
     if v10_h4_side_response_packet_compression:
         policy["profile"] = V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PROFILE
+    if v11_h4_bottom_packet_algebra:
+        policy["profile"] = V11_BOTTOM_PACKET_ALGEBRA_PROFILE
     if v7_h4_exact_side_full_formal:
         policy["timeout_policy"] = {
             "default_seconds": V7_H4_EXACT_SIDE_FULL_FORMAL_DEFAULT_TIMEOUT_SECONDS,
@@ -485,6 +509,7 @@ def load_v3_7_official_payload(
     v10_h4_side_response_packet_consumer: bool = False,
     v10_h4_side_response_packet_full_producer: bool = False,
     v10_h4_side_response_packet_compression: bool = False,
+    v11_h4_bottom_packet_algebra: bool = False,
 ) -> dict[str, Any]:
     specification = load_and_resolve(input_path)
     payload = specification.as_jsonable()
@@ -509,6 +534,7 @@ def load_v3_7_official_payload(
         or v10_h4_side_response_packet_consumer
         or v10_h4_side_response_packet_full_producer
         or v10_h4_side_response_packet_compression
+        or v11_h4_bottom_packet_algebra
     ):
         from benchmarks.task039_v4_h4_hybrid_direct import (
             validate_v4_h4_specification,
@@ -537,6 +563,7 @@ def load_v3_7_official_payload(
         v10_h4_side_response_packet_consumer=v10_h4_side_response_packet_consumer,
         v10_h4_side_response_packet_full_producer=v10_h4_side_response_packet_full_producer,
         v10_h4_side_response_packet_compression=v10_h4_side_response_packet_compression,
+        v11_h4_bottom_packet_algebra=v11_h4_bottom_packet_algebra,
     )
     return payload
 
@@ -594,6 +621,11 @@ def build_v3_7_execution_plan(
     v10_h4_side_response_packet_compression_manifest: str | Path | None = None,
     v10_h4_side_response_packet_compression_manifest_sha256: str | None = None,
     v10_h4_side_response_packet_compression_producer_source_sha: str | None = None,
+    v11_h4_bottom_packet_algebra: bool = False,
+    v11_h4_bottom_packet_algebra_exact_spool_root: str | Path | None = None,
+    v11_h4_bottom_packet_algebra_packet_manifest: str | Path | None = None,
+    v11_h4_bottom_packet_algebra_packet_manifest_sha256: str | None = None,
+    v11_h4_bottom_packet_algebra_producer_diagnostic: str | Path | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest_sha256: str | None = None,
@@ -627,6 +659,7 @@ def build_v3_7_execution_plan(
         v10_h4_side_response_packet_consumer=v10_h4_side_response_packet_consumer,
         v10_h4_side_response_packet_full_producer=v10_h4_side_response_packet_full_producer,
         v10_h4_side_response_packet_compression=v10_h4_side_response_packet_compression,
+        v11_h4_bottom_packet_algebra=v11_h4_bottom_packet_algebra,
     )
     if v5_h4_blr_side_only and v5_h4_blr_profile not in V5_H4_BLR_PROFILE_CHOICES:
         raise ValueError(f"Unsupported V5 h4 BLR profile: {v5_h4_blr_profile}")
@@ -652,6 +685,7 @@ def build_v3_7_execution_plan(
         v10_h4_side_response_packet_consumer=v10_h4_side_response_packet_consumer,
         v10_h4_side_response_packet_full_producer=v10_h4_side_response_packet_full_producer,
         v10_h4_side_response_packet_compression=v10_h4_side_response_packet_compression,
+        v11_h4_bottom_packet_algebra=v11_h4_bottom_packet_algebra,
     )
     executable = str(Path(os.path.abspath(python_executable or sys.executable)))
     mpiexec = mpiexec_command or shutil.which("mpiexec") or "mpiexec"
@@ -684,6 +718,7 @@ def build_v3_7_execution_plan(
                 bool(v10_h4_side_response_packet_consumer),
                 bool(v10_h4_side_response_packet_full_producer),
                 bool(v10_h4_side_response_packet_compression),
+                bool(v11_h4_bottom_packet_algebra),
             )
         )
         > 1
@@ -798,6 +833,37 @@ def build_v3_7_execution_plan(
                 str(v10_h4_side_response_packet_compression_manifest_sha256),
                 V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PRODUCER_SOURCE_SHA_FLAG,
                 str(v10_h4_side_response_packet_compression_producer_source_sha),
+            ]
+        )
+    elif v11_h4_bottom_packet_algebra:
+        if not all(
+            (
+                selected_mode_packet_manifest,
+                selected_mode_packet_manifest_sha256,
+                v11_h4_bottom_packet_algebra_exact_spool_root,
+                v11_h4_bottom_packet_algebra_packet_manifest,
+                v11_h4_bottom_packet_algebra_packet_manifest_sha256,
+                v11_h4_bottom_packet_algebra_producer_diagnostic,
+            )
+        ):
+            raise ValueError(
+                "V11 bottom algebra requires the frozen artifact arguments"
+            )
+        argv.extend(
+            [
+                V11_BOTTOM_PACKET_ALGEBRA_FLAG,
+                "--selected-mode-packet-manifest",
+                str(Path(selected_mode_packet_manifest).resolve()),
+                "--selected-mode-packet-manifest-sha256",
+                str(selected_mode_packet_manifest_sha256),
+                V11_BOTTOM_PACKET_ALGEBRA_EXACT_SPOOL_ROOT_FLAG,
+                str(Path(v11_h4_bottom_packet_algebra_exact_spool_root).resolve()),
+                V11_BOTTOM_PACKET_ALGEBRA_PACKET_MANIFEST_FLAG,
+                str(Path(v11_h4_bottom_packet_algebra_packet_manifest).resolve()),
+                V11_BOTTOM_PACKET_ALGEBRA_PACKET_MANIFEST_SHA256_FLAG,
+                str(v11_h4_bottom_packet_algebra_packet_manifest_sha256),
+                V11_BOTTOM_PACKET_ALGEBRA_PRODUCER_DIAGNOSTIC_FLAG,
+                str(Path(v11_h4_bottom_packet_algebra_producer_diagnostic).resolve()),
             ]
         )
     elif v5_h4_blr_side_only:
@@ -1161,6 +1227,8 @@ def build_v3_7_execution_plan(
         method = V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_METHOD
     elif v10_h4_side_response_packet_compression:
         method = V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD
+    elif v11_h4_bottom_packet_algebra:
+        method = V11_BOTTOM_PACKET_ALGEBRA_METHOD
     elif v5_h4_setup_only:
         method = V5_H4_SETUP_ONLY_METHOD
     elif v5_h4_blr_side_only:
@@ -1209,6 +1277,8 @@ def build_v3_7_execution_plan(
         profile_id = V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_PROFILE
     elif v10_h4_side_response_packet_compression:
         profile_id = V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PROFILE
+    elif v11_h4_bottom_packet_algebra:
+        profile_id = V11_BOTTOM_PACKET_ALGEBRA_PROFILE
     elif v5_h4_setup_only:
         profile_id = "task039.v5.h4.exact-side.setup-only.v1"
     elif v5_h4_blr_side_only:
@@ -1258,6 +1328,13 @@ def build_v3_7_execution_plan(
     ):
         exact_spool_root = str(
             Path(v10_h4_side_response_packet_full_producer_exact_spool_root).resolve()
+        )
+    elif (
+        v11_h4_bottom_packet_algebra
+        and v11_h4_bottom_packet_algebra_exact_spool_root is not None
+    ):
+        exact_spool_root = str(
+            Path(v11_h4_bottom_packet_algebra_exact_spool_root).resolve()
         )
     elif v7_h4_streamed_bottom_producer:
         exact_spool_root = None
@@ -1316,6 +1393,34 @@ def build_v3_7_execution_plan(
             ),
             "response_packet_producer_source_sha": (
                 v10_h4_side_response_packet_compression_producer_source_sha
+            ),
+            "selected_mode_packet_manifest": (
+                str(Path(selected_mode_packet_manifest).resolve())
+                if v11_h4_bottom_packet_algebra
+                and selected_mode_packet_manifest is not None
+                else None
+            ),
+            "selected_mode_packet_manifest_sha256": (
+                selected_mode_packet_manifest_sha256
+                if v11_h4_bottom_packet_algebra
+                else None
+            ),
+            "v11_response_packet_manifest": (
+                str(Path(v11_h4_bottom_packet_algebra_packet_manifest).resolve())
+                if v11_h4_bottom_packet_algebra
+                and v11_h4_bottom_packet_algebra_packet_manifest is not None
+                else None
+            ),
+            "v11_response_packet_manifest_sha256": (
+                v11_h4_bottom_packet_algebra_packet_manifest_sha256
+                if v11_h4_bottom_packet_algebra
+                else None
+            ),
+            "v11_producer_diagnostic": (
+                str(Path(v11_h4_bottom_packet_algebra_producer_diagnostic).resolve())
+                if v11_h4_bottom_packet_algebra
+                and v11_h4_bottom_packet_algebra_producer_diagnostic is not None
+                else None
             ),
             "absolute_terminate_memory_bytes": policy[
                 "absolute_terminate_memory_bytes"
@@ -1379,6 +1484,11 @@ def v3_7_execution_dry_run(
     v10_h4_side_response_packet_compression_manifest: str | Path | None = None,
     v10_h4_side_response_packet_compression_manifest_sha256: str | None = None,
     v10_h4_side_response_packet_compression_producer_source_sha: str | None = None,
+    v11_h4_bottom_packet_algebra: bool = False,
+    v11_h4_bottom_packet_algebra_exact_spool_root: str | Path | None = None,
+    v11_h4_bottom_packet_algebra_packet_manifest: str | Path | None = None,
+    v11_h4_bottom_packet_algebra_packet_manifest_sha256: str | None = None,
+    v11_h4_bottom_packet_algebra_producer_diagnostic: str | Path | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest_sha256: str | None = None,
@@ -1458,6 +1568,19 @@ def v3_7_execution_dry_run(
         v10_h4_side_response_packet_compression_producer_source_sha=(
             v10_h4_side_response_packet_compression_producer_source_sha
         ),
+        v11_h4_bottom_packet_algebra=v11_h4_bottom_packet_algebra,
+        v11_h4_bottom_packet_algebra_exact_spool_root=(
+            v11_h4_bottom_packet_algebra_exact_spool_root
+        ),
+        v11_h4_bottom_packet_algebra_packet_manifest=(
+            v11_h4_bottom_packet_algebra_packet_manifest
+        ),
+        v11_h4_bottom_packet_algebra_packet_manifest_sha256=(
+            v11_h4_bottom_packet_algebra_packet_manifest_sha256
+        ),
+        v11_h4_bottom_packet_algebra_producer_diagnostic=(
+            v11_h4_bottom_packet_algebra_producer_diagnostic
+        ),
         v7_h4_streamed_bottom_consumer_basis_manifest=(
             v7_h4_streamed_bottom_consumer_basis_manifest
         ),
@@ -1535,6 +1658,11 @@ def launch_v3_7_with_task038_watchdog(
     v10_h4_side_response_packet_compression_manifest: str | Path | None = None,
     v10_h4_side_response_packet_compression_manifest_sha256: str | None = None,
     v10_h4_side_response_packet_compression_producer_source_sha: str | None = None,
+    v11_h4_bottom_packet_algebra: bool = False,
+    v11_h4_bottom_packet_algebra_exact_spool_root: str | Path | None = None,
+    v11_h4_bottom_packet_algebra_packet_manifest: str | Path | None = None,
+    v11_h4_bottom_packet_algebra_packet_manifest_sha256: str | None = None,
+    v11_h4_bottom_packet_algebra_producer_diagnostic: str | Path | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest: str | Path | None = None,
     v7_h4_streamed_bottom_consumer_basis_manifest_sha256: str | None = None,
@@ -1568,6 +1696,7 @@ def launch_v3_7_with_task038_watchdog(
         v10_h4_side_response_packet_consumer=v10_h4_side_response_packet_consumer,
         v10_h4_side_response_packet_full_producer=v10_h4_side_response_packet_full_producer,
         v10_h4_side_response_packet_compression=v10_h4_side_response_packet_compression,
+        v11_h4_bottom_packet_algebra=v11_h4_bottom_packet_algebra,
     )
     if (
         not v5_h4_setup_only
@@ -1590,6 +1719,7 @@ def launch_v3_7_with_task038_watchdog(
         and not v10_h4_side_response_packet_consumer
         and not v10_h4_side_response_packet_full_producer
         and not v10_h4_side_response_packet_compression
+        and not v11_h4_bottom_packet_algebra
     ):
         _check_direct_producer(V3_7_DIRECT_RUN_ROOT)
     if len(source_sha) != 40 or any(
@@ -1671,6 +1801,19 @@ def launch_v3_7_with_task038_watchdog(
         ),
         v10_h4_side_response_packet_compression_producer_source_sha=(
             v10_h4_side_response_packet_compression_producer_source_sha
+        ),
+        v11_h4_bottom_packet_algebra=v11_h4_bottom_packet_algebra,
+        v11_h4_bottom_packet_algebra_exact_spool_root=(
+            v11_h4_bottom_packet_algebra_exact_spool_root
+        ),
+        v11_h4_bottom_packet_algebra_packet_manifest=(
+            v11_h4_bottom_packet_algebra_packet_manifest
+        ),
+        v11_h4_bottom_packet_algebra_packet_manifest_sha256=(
+            v11_h4_bottom_packet_algebra_packet_manifest_sha256
+        ),
+        v11_h4_bottom_packet_algebra_producer_diagnostic=(
+            v11_h4_bottom_packet_algebra_producer_diagnostic
         ),
         v7_h4_streamed_bottom_consumer_basis_manifest=(
             v7_h4_streamed_bottom_consumer_basis_manifest
@@ -1825,6 +1968,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PRODUCER_SOURCE_SHA_FLAG
     )
+    parser.add_argument(V11_BOTTOM_PACKET_ALGEBRA_FLAG, action="store_true")
+    parser.add_argument(V11_BOTTOM_PACKET_ALGEBRA_EXACT_SPOOL_ROOT_FLAG)
+    parser.add_argument(V11_BOTTOM_PACKET_ALGEBRA_PACKET_MANIFEST_FLAG)
+    parser.add_argument(V11_BOTTOM_PACKET_ALGEBRA_PACKET_MANIFEST_SHA256_FLAG)
+    parser.add_argument(V11_BOTTOM_PACKET_ALGEBRA_PRODUCER_DIAGNOSTIC_FLAG)
     parser.add_argument(V7_STREAMED_PETROV_BOTTOM_CONSUMER_BASIS_MANIFEST_FLAG)
     parser.add_argument(V7_STREAMED_PETROV_BOTTOM_CONSUMER_BASIS_MANIFEST_SHA256_FLAG)
     parser.add_argument(V7_STREAMED_PETROV_BOTTOM_CONSUMER_EXACT_SPOOL_ROOT_FLAG)
@@ -1946,6 +2094,19 @@ def main(argv: list[str] | None = None) -> int:
                     v10_h4_side_response_packet_compression_producer_source_sha=(
                         args.v10_h4_side_response_packet_compression_producer_source_sha
                     ),
+                    v11_h4_bottom_packet_algebra=(args.v11_h4_bottom_packet_algebra),
+                    v11_h4_bottom_packet_algebra_exact_spool_root=(
+                        args.v11_h4_bottom_packet_algebra_exact_spool_root
+                    ),
+                    v11_h4_bottom_packet_algebra_packet_manifest=(
+                        args.v11_h4_bottom_packet_algebra_packet_manifest
+                    ),
+                    v11_h4_bottom_packet_algebra_packet_manifest_sha256=(
+                        args.v11_h4_bottom_packet_algebra_packet_manifest_sha256
+                    ),
+                    v11_h4_bottom_packet_algebra_producer_diagnostic=(
+                        args.v11_h4_bottom_packet_algebra_producer_diagnostic
+                    ),
                     v8_h4_layer_sweep_exact_spool_root=(
                         args.v8_h4_layer_sweep_exact_spool_root
                     ),
@@ -2045,6 +2206,19 @@ def main(argv: list[str] | None = None) -> int:
         ),
         v10_h4_side_response_packet_compression_producer_source_sha=(
             args.v10_h4_side_response_packet_compression_producer_source_sha
+        ),
+        v11_h4_bottom_packet_algebra=args.v11_h4_bottom_packet_algebra,
+        v11_h4_bottom_packet_algebra_exact_spool_root=(
+            args.v11_h4_bottom_packet_algebra_exact_spool_root
+        ),
+        v11_h4_bottom_packet_algebra_packet_manifest=(
+            args.v11_h4_bottom_packet_algebra_packet_manifest
+        ),
+        v11_h4_bottom_packet_algebra_packet_manifest_sha256=(
+            args.v11_h4_bottom_packet_algebra_packet_manifest_sha256
+        ),
+        v11_h4_bottom_packet_algebra_producer_diagnostic=(
+            args.v11_h4_bottom_packet_algebra_producer_diagnostic
         ),
         v8_h4_layer_sweep_exact_spool_root=(args.v8_h4_layer_sweep_exact_spool_root),
         v7_h4_streamed_bottom_consumer_basis_manifest=(
@@ -2177,6 +2351,14 @@ __all__ = [
     "V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA",
     "V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PROFILE",
     "V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_HARD_STOP_BYTES",
+    "V11_BOTTOM_PACKET_ALGEBRA_FLAG",
+    "V11_BOTTOM_PACKET_ALGEBRA_EXACT_SPOOL_ROOT_FLAG",
+    "V11_BOTTOM_PACKET_ALGEBRA_PACKET_MANIFEST_FLAG",
+    "V11_BOTTOM_PACKET_ALGEBRA_PACKET_MANIFEST_SHA256_FLAG",
+    "V11_BOTTOM_PACKET_ALGEBRA_PRODUCER_DIAGNOSTIC_FLAG",
+    "V11_BOTTOM_PACKET_ALGEBRA_METHOD",
+    "V11_BOTTOM_PACKET_ALGEBRA_PROFILE",
+    "V11_BOTTOM_PACKET_ALGEBRA_HARD_STOP_BYTES",
     "build_v3_7_execution_plan",
     "launch_v3_7_with_task038_watchdog",
     "load_v3_7_official_payload",

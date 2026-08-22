@@ -3829,6 +3829,77 @@ def test_v11_bottom_packet_algebra_plan_has_one_identity_and_artifact_set(
     assert ordinary["watchdog"]["profile"] == "v3_7_default"
 
 
+def test_v11_bottom_packet_algebra_main_dry_run_forwards_frozen_artifacts(
+    tmp_path, capsys
+) -> None:
+    h4_input = Path(
+        "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
+    )
+    selected_manifest = tmp_path / "selected" / "manifest.json"
+    spool_root = tmp_path / "exact-spool"
+    response_manifest = tmp_path / "response" / "manifest.json"
+    producer_diagnostic = tmp_path / "producer" / "v3_v7_diagnostic.json"
+    selected_sha = "c" * 64
+    response_sha = "b" * 64
+    argv = [
+        "--dry-run",
+        "--input",
+        str(h4_input),
+        "--run-directory",
+        str(tmp_path / "v11-main-dry-run"),
+        "--source-sha",
+        "a" * 40,
+        orchestration.V11_BOTTOM_PACKET_ALGEBRA_FLAG,
+        orchestration.V11_BOTTOM_PACKET_ALGEBRA_EXACT_SPOOL_ROOT_FLAG,
+        str(spool_root),
+        orchestration.V11_BOTTOM_PACKET_ALGEBRA_PACKET_MANIFEST_FLAG,
+        str(response_manifest),
+        orchestration.V11_BOTTOM_PACKET_ALGEBRA_PACKET_MANIFEST_SHA256_FLAG,
+        response_sha,
+        orchestration.V11_BOTTOM_PACKET_ALGEBRA_PRODUCER_DIAGNOSTIC_FLAG,
+        str(producer_diagnostic),
+        "--selected-mode-packet-manifest",
+        str(selected_manifest),
+        "--selected-mode-packet-manifest-sha256",
+        selected_sha,
+    ]
+    assert orchestration.main(argv) == 0
+    plan = json.loads(capsys.readouterr().out)
+    worker_argv = plan["argv"]
+    assert worker_argv[1:3] == ["-n", "8"]
+    for flag, value in (
+        ("--selected-mode-packet-manifest", selected_manifest.resolve()),
+        ("--selected-mode-packet-manifest-sha256", selected_sha),
+        (
+            orchestration.V11_BOTTOM_PACKET_ALGEBRA_EXACT_SPOOL_ROOT_FLAG,
+            spool_root.resolve(),
+        ),
+        (
+            orchestration.V11_BOTTOM_PACKET_ALGEBRA_PACKET_MANIFEST_FLAG,
+            response_manifest.resolve(),
+        ),
+        (
+            orchestration.V11_BOTTOM_PACKET_ALGEBRA_PACKET_MANIFEST_SHA256_FLAG,
+            response_sha,
+        ),
+        (
+            orchestration.V11_BOTTOM_PACKET_ALGEBRA_PRODUCER_DIAGNOSTIC_FLAG,
+            producer_diagnostic.resolve(),
+        ),
+    ):
+        flag_index = worker_argv.index(flag)
+        assert worker_argv.count(flag) == 1
+        assert worker_argv[flag_index + 1] == str(value)
+    assert worker_argv.count(orchestration.V11_BOTTOM_PACKET_ALGEBRA_FLAG) == 1
+    assert plan["worker_contract"]["method"] == (
+        orchestration.V11_BOTTOM_PACKET_ALGEBRA_METHOD
+    )
+    assert plan["watchdog"]["absolute_terminate_memory_bytes"] == (
+        orchestration.V11_BOTTOM_PACKET_ALGEBRA_HARD_STOP_BYTES
+    )
+    assert not (tmp_path / "v11-main-dry-run").exists()
+
+
 @pytest.mark.parametrize("holdout_pass", [True, False], ids=["pass", "no-pass"])
 def test_v8_layer_sweep_uses_one_factor_set_and_releases_each_oracle(
     monkeypatch, holdout_pass

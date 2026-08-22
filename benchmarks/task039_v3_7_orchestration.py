@@ -15886,6 +15886,7 @@ def main(argv: list[str] | None = None) -> int:
                     or args.v10_h4_j1_inner_fgmres
                     or args.v10_h4_side_response_packet_pilot
                     or args.v10_h4_side_response_packet_full_producer
+                    or args.v11_h4_bottom_packet_algebra
                     or args.v5_h4_blr_side_component
                     or args.v5_h4_fixed_budget_bottom_component
                 )
