@@ -4,6 +4,10 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from types import SimpleNamespace
+
+from basix.ufl import element
+from dolfinx import default_real_type, fem, mesh
 from mpi4py import MPI
 from petsc4py import PETSc
 
@@ -11,12 +15,131 @@ from src.solvers.hybrid_side_impedance import (
     TASK040_BACKWARD_ORDER,
     TASK040_FORWARD_ORDER,
     TASK040_LEVEL_A_SUBDOMAINS,
+    assemble_reduced_artificial_interface_tangential_mass,
     audit_petsc_level_a_one_apply,
+    audit_artificial_z_interface_support,
     build_petsc_side_impedance_transmission_action,
+    build_first_order_petsc_interface_impedance,
     build_first_order_interface_impedance,
     build_first_order_tangential_impedance,
     build_side_impedance_transmission_action,
 )
+
+
+def _tiny_artificial_z_fixture():
+    comm = MPI.COMM_WORLD
+    msh = mesh.create_unit_cube(
+        comm,
+        2,
+        2,
+        2,
+        cell_type=mesh.CellType.hexahedron,
+        ghost_mode=mesh.GhostMode.shared_facet,
+    )
+    V = fem.functionspace(
+        msh, element("N1curl", "hexahedron", 1, dtype=default_real_type)
+    )
+    global_rows = int(V.dofmap.index_map.size_global)
+    expansion = {
+        row: (
+            np.asarray([row], dtype=PETSc.IntType),
+            np.asarray([1.0], dtype=np.complex128),
+        )
+        for row in range(global_rows)
+    }
+    local_start, local_stop = map(int, V.dofmap.index_map.local_range)
+    condensed = SimpleNamespace(
+        full_rows=global_rows,
+        active_rows=global_rows,
+        owned_active_rows=local_stop - local_start,
+        trace_constraints=SimpleNamespace(expansion_by_original=expansion),
+    )
+    bare = PETSc.Mat().createAIJ(
+        size=(
+            (local_stop - local_start, global_rows),
+            (local_stop - local_start, global_rows),
+        ),
+        nnz=1,
+        comm=comm,
+    )
+    for row in range(local_start, local_stop):
+        bare.setValue(row, row, PETSc.ScalarType(1.0))
+    bare.assemble()
+    return msh, V, condensed, bare
+
+
+def test_artificial_z_mass_uses_two_sided_support_and_single_trace_integral():
+    _msh, V, condensed, bare = _tiny_artificial_z_fixture()
+    support = audit_artificial_z_interface_support(V, condensed, 0.5)
+    assert support["facet_count_global"] == 4
+    assert support["support_sets_exact_match"] is True
+    assert support["lower_support"] == support["upper_support"]
+    mass = assemble_reduced_artificial_interface_tangential_mass(
+        V, condensed, support, bare_operator=bare
+    )
+    pair = build_first_order_petsc_interface_impedance(mass, 0.41 + 0.17j, (1, -1))
+    q = -1j * (0.41 + 0.17j)
+    probe = mass.matrix.createVecRight()
+    expected = mass.matrix.createVecLeft()
+    observed = mass.matrix.createVecLeft()
+    local_start, local_stop = map(int, V.dofmap.index_map.local_range)
+    try:
+        probe.array[:] = np.asarray(
+            [0.2 + 0.03j * index for index in range(local_start, local_stop)],
+            dtype=PETSc.ScalarType,
+        )
+        probe.assemble()
+        mass.matrix.mult(probe, expected)
+        physical_field = fem.Function(V)
+        physical_field.interpolate(
+            lambda x: np.vstack(
+                (
+                    np.ones(x.shape[1]),
+                    np.zeros(x.shape[1]),
+                    np.zeros(x.shape[1]),
+                )
+            )
+        )
+        physical_field.x.scatter_forward()
+        physical_image = mass.matrix.createVecLeft()
+        try:
+            mass.matrix.mult(physical_field.x.petsc_vec, physical_image)
+            physical_checksum = complex(physical_field.x.petsc_vec.dot(physical_image))
+            assert abs(physical_checksum - 1.0) <= 1.0e-12
+            assert abs(physical_checksum.imag) <= 1.0e-12
+        finally:
+            physical_image.destroy()
+        for matrix in pair:
+            matrix.mult(probe, observed)
+            difference = observed.duplicate()
+            try:
+                observed.copy(difference)
+                difference.axpy(PETSc.ScalarType(-q), expected)
+                assert float(difference.norm()) <= 1.0e-12
+            finally:
+                difference.destroy()
+        audit = mass.audit
+        assert audit["mass_integral_count"] == 1
+        assert audit["trace_side_integrated"] == "+"
+        assert audit["finite"] is True
+        assert audit["hermitian_relative_defect"] <= 1.0e-10
+        assert audit["rayleigh_probe_nonnegative"] is True
+        assert audit["bare_operator_unchanged"] is True
+        assert "raw_support" not in audit
+        assert "active_support" not in audit
+        assert (
+            audit["full_structural_nz_used"] >= audit["full_thresholded_effective_nnz"]
+        )
+        assert audit["reduced_matrix_value_sha256"]
+        assert audit["reduced_matrix_frobenius_norm"] > 0.0
+    finally:
+        observed.destroy()
+        expected.destroy()
+        probe.destroy()
+        for matrix in pair:
+            matrix.destroy()
+        mass.destroy()
+        bare.destroy()
 
 
 def _restriction(start: int, size: int, total: int) -> np.ndarray:

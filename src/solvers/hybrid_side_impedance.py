@@ -10,11 +10,18 @@ the bare ``F_s`` action is never modified by this module.
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass
+import hashlib
 from typing import Any
 
 import numpy as np
+import ufl
+from dolfinx import fem, mesh
+from dolfinx.fem import petsc as fem_petsc
 from mpi4py import MPI
 from petsc4py import PETSc
+
+from ..constraints.cross_section_floquet import reduce_matrix_hermitian
 
 __all__ = (
     "TASK040_FORWARD_ORDER",
@@ -25,6 +32,11 @@ __all__ = (
     "PetscSideImpedanceTransmissionAction",
     "build_first_order_interface_impedance",
     "build_first_order_tangential_impedance",
+    "ArtificialZTraceMass",
+    "audit_artificial_z_interface_support",
+    "assemble_reduced_artificial_interface_tangential_mass",
+    "build_artificial_z_tangential_trace_mass",
+    "build_first_order_petsc_interface_impedance",
     "build_side_impedance_transmission_action",
     "build_petsc_side_impedance_transmission_action",
     "audit_petsc_level_a_one_apply",
@@ -84,6 +96,573 @@ def build_first_order_interface_impedance(
         build_first_order_tangential_impedance(tangential_mass, beta, left),
         build_first_order_tangential_impedance(tangential_mass, beta, right),
     )
+
+
+@dataclass
+class ArtificialZTraceMass:
+    """One reduced sparse tangential mass on an artificial z interface.
+
+    The mass is assembled once on the interior facet with the ``+`` trace and
+    reduced through the existing trace-constraint expansion.  Both adjacent
+    PC blocks use this same matrix; their traction normals remain opposite.
+    """
+
+    matrix: PETSc.Mat
+    audit: dict[str, Any]
+    _destroyed: bool = False
+
+    def build_impedance_pair(
+        self,
+        beta: complex,
+        outward_normal_signs: tuple[int, int],
+    ) -> tuple[PETSc.Mat, PETSc.Mat]:
+        if self._destroyed:
+            raise RuntimeError("Artificial z trace mass is destroyed.")
+        left, right = (int(value) for value in outward_normal_signs)
+        if left != -right or left not in {-1, 1}:
+            raise ValueError("Artificial-interface normals must be opposite +/-1.")
+        if not np.isfinite(complex(beta)):
+            raise ValueError("Artificial-interface beta must be finite.")
+        result = []
+        try:
+            for _normal in outward_normal_signs:
+                matrix = self.matrix.copy()
+                matrix.scale(PETSc.ScalarType(-1j * complex(beta)))
+                result.append(matrix)
+            return result[0], result[1]
+        except Exception:
+            for matrix in result:
+                matrix.destroy()
+            raise
+
+    def destroy(self) -> None:
+        if not self._destroyed:
+            self.matrix.destroy()
+            self._destroyed = True
+
+
+def audit_artificial_z_interface_support(
+    V: Any,
+    condensed: Any,
+    interface_z: float,
+    *,
+    tolerance: float = 1.0e-10,
+) -> dict[str, Any]:
+    """Audit two-sided cell/facet and condensed active support for one z plane."""
+
+    msh = V.mesh
+    comm = msh.comm
+    tdim = msh.topology.dim
+    fdim = tdim - 1
+    if tdim != 3 or str(msh.basix_cell()).split(".")[-1] != "hexahedron":
+        raise ValueError("Artificial z interfaces require a 3D hexahedron mesh.")
+    if int(V.dofmap.index_map_bs) != 1:
+        raise ValueError("Artificial z support requires scalar-blocked H(curl) DoFs.")
+    msh.topology.create_entities(fdim)
+    msh.topology.create_connectivity(fdim, tdim)
+    msh.topology.create_connectivity(tdim, fdim)
+    facet_to_cell = msh.topology.connectivity(fdim, tdim)
+    cell_to_facet = msh.topology.connectivity(tdim, fdim)
+    layout = V.dofmap.dof_layout
+    dofmap = V.dofmap
+    geometry = msh.geometry
+    owned_facet_count = int(msh.topology.index_map(fdim).size_local)
+    located_facets = np.asarray(
+        mesh.locate_entities(
+            msh,
+            fdim,
+            lambda x: np.isclose(x[2], float(interface_z), atol=tolerance, rtol=0.0),
+        ),
+        dtype=np.int32,
+    )
+    located_facets = located_facets[located_facets < owned_facet_count]
+    midpoints = mesh.compute_midpoints(msh, fdim, located_facets)
+    constraints = condensed.trace_constraints
+    local_records: list[dict[str, Any]] = []
+    local_error: str | None = None
+
+    def active_support(raw: tuple[int, ...]) -> tuple[int, ...]:
+        active: set[int] = set()
+        for original in raw:
+            if int(original) not in constraints.expansion_by_original:
+                raise ValueError(f"missing trace constraint expansion for {original}")
+            ids, coefficients = constraints.expansion_by_original[int(original)]
+            active.update(
+                int(value)
+                for value, coefficient in zip(ids, coefficients, strict=True)
+                if coefficient != 0
+            )
+        return tuple(sorted(active))
+
+    try:
+        for facet, midpoint in zip(located_facets, midpoints, strict=True):
+            facet = int(facet)
+            coordinates = np.asarray(midpoint, dtype=np.float64)
+            cells = np.asarray(facet_to_cell.links(facet), dtype=np.int32)
+            if len(cells) != 2:
+                raise ValueError(
+                    f"z={interface_z:g} facet {facet} has {len(cells)} adjacent cells"
+                )
+            centers = np.asarray(
+                [
+                    np.asarray(
+                        geometry.x[np.asarray(geometry.dofmap[int(cell)])],
+                        dtype=np.float64,
+                    )[:, 2].mean()
+                    for cell in cells
+                ]
+            )
+            lower = np.flatnonzero(centers < float(interface_z) - tolerance)
+            upper = np.flatnonzero(centers > float(interface_z) + tolerance)
+            if len(lower) != 1 or len(upper) != 1:
+                raise ValueError(
+                    f"z={interface_z:g} facet {facet} lacks one lower and one upper cell"
+                )
+            side_raw: list[tuple[int, ...]] = []
+            for position in (int(lower[0]), int(upper[0])):
+                cell = int(cells[position])
+                cell_facets = np.asarray(cell_to_facet.links(cell), dtype=np.int32)
+                local_facet = np.flatnonzero(cell_facets == int(facet))
+                if len(local_facet) != 1:
+                    raise ValueError(f"facet {facet} is not unique in cell {cell}")
+                local_dofs = np.asarray(
+                    layout.entity_closure_dofs(fdim, int(local_facet[0])),
+                    dtype=np.int32,
+                )
+                cell_dofs = np.asarray(dofmap.cell_dofs(cell), dtype=np.int32)
+                original = np.asarray(
+                    dofmap.index_map.local_to_global(cell_dofs[local_dofs]),
+                    dtype=np.int64,
+                )
+                side_raw.append(tuple(sorted(set(int(value) for value in original))))
+            if side_raw[0] != side_raw[1]:
+                raise ValueError(f"facet {facet} lower/upper raw support differs")
+            lower_active = active_support(side_raw[0])
+            upper_active = active_support(side_raw[1])
+            if lower_active != upper_active:
+                raise ValueError(f"facet {facet} lower/upper active support differs")
+            key = tuple(round(float(value), 12) for value in coordinates)
+            local_records.append(
+                {
+                    "facet": facet,
+                    "key": key,
+                    "raw": side_raw[0],
+                    "active": lower_active,
+                }
+            )
+    except Exception as exc:
+        local_error = f"{type(exc).__name__}: {exc}"
+
+    errors = comm.allgather(local_error)
+    if any(error is not None for error in errors):
+        first = next(error for error in errors if error is not None)
+        raise ValueError(f"Artificial z interface support audit failed: {first}")
+    local_keys = tuple(record["key"] for record in local_records)
+    all_keys = [key for packet in comm.allgather(local_keys) for key in packet]
+    keys = tuple(all_keys)
+    if not keys:
+        raise ValueError(f"Artificial z interface z={interface_z:g} has no facets")
+    if len(keys) != len(set(keys)):
+        raise ValueError("Artificial z interface facet ownership is duplicated")
+    selected_records = tuple(local_records)
+    local_facets = sorted(int(record["facet"]) for record in selected_records)
+    local_raw_support = tuple(
+        sorted({value for record in selected_records for value in record["raw"]})
+    )
+    local_active_support = tuple(
+        sorted({value for record in selected_records for value in record["active"]})
+    )
+    raw_support = tuple(
+        sorted(
+            {value for packet in comm.allgather(local_raw_support) for value in packet}
+        )
+    )
+    active_support = tuple(
+        sorted(
+            {
+                value
+                for packet in comm.allgather(local_active_support)
+                for value in packet
+            }
+        )
+    )
+    support_hash = hashlib.sha256(
+        repr((tuple(sorted(keys)), raw_support, active_support)).encode()
+    ).hexdigest()
+    tags = mesh.meshtags(
+        msh,
+        fdim,
+        np.asarray(local_facets, dtype=np.int32),
+        np.ones(len(local_facets), dtype=np.int32),
+    )
+    return {
+        "facet_tags": tags,
+        "facet_tag": 1,
+        "interface_z": float(interface_z),
+        "facet_count_global": int(comm.allreduce(len(selected_records), op=MPI.SUM)),
+        "raw_support": raw_support,
+        "active_support": active_support,
+        "lower_support": {
+            "raw_trace_dof_count": len(raw_support),
+            "active_trace_dof_count": len(active_support),
+            "raw_support_nnz": len(raw_support),
+            "active_support_nnz": len(active_support),
+            "support_sha256": support_hash,
+        },
+        "upper_support": {
+            "raw_trace_dof_count": len(raw_support),
+            "active_trace_dof_count": len(active_support),
+            "raw_support_nnz": len(raw_support),
+            "active_support_nnz": len(active_support),
+            "support_sha256": support_hash,
+        },
+        "support_sets_exact_match": True,
+        "outward_normal_signs": [1, -1],
+    }
+
+
+def _distributed_sparse_support(
+    matrix: PETSc.Mat, *, tolerance: float = 1.0e-14
+) -> tuple[set[int], set[int]]:
+    first, last = map(int, matrix.getOwnershipRange())
+    rows: set[int] = set()
+    columns: set[int] = set()
+    for row in range(first, last):
+        cols, values = matrix.getRow(row)
+        nonzero = [
+            int(column) for column, value in zip(cols, values) if abs(value) > tolerance
+        ]
+        if nonzero:
+            rows.add(row)
+            columns.update(nonzero)
+    comm = matrix.getComm().tompi4py()
+    packets = comm.allgather((rows, columns))
+    return (
+        set().union(*(packet[0] for packet in packets)),
+        set().union(*(packet[1] for packet in packets)),
+    )
+
+
+def _petsc_matrix_hash(matrix: PETSc.Mat) -> str:
+    local = hashlib.sha256()
+    first, last = map(int, matrix.getOwnershipRange())
+    for row in range(first, last):
+        columns, values = matrix.getRow(row)
+        local.update(np.asarray([row], dtype=np.int64).tobytes())
+        local.update(np.asarray(columns, dtype=np.int64).tobytes())
+        local.update(np.asarray(values, dtype=np.complex128).tobytes())
+    comm = matrix.getComm().tompi4py()
+    result = hashlib.sha256()
+    for digest in comm.allgather(local.digest()):
+        result.update(digest)
+    return result.hexdigest()
+
+
+def _petsc_matrix_finite(matrix: PETSc.Mat) -> bool:
+    first, last = map(int, matrix.getOwnershipRange())
+    local = True
+    for row in range(first, last):
+        _columns, values = matrix.getRow(row)
+        local = local and bool(np.all(np.isfinite(values)))
+    return bool(matrix.getComm().tompi4py().allreduce(local, op=MPI.LAND))
+
+
+def _petsc_matrix_effective_nnz(
+    matrix: PETSc.Mat, *, tolerance: float = 1.0e-14
+) -> int:
+    first, last = map(int, matrix.getOwnershipRange())
+    local = 0
+    for row in range(first, last):
+        _columns, values = matrix.getRow(row)
+        local += int(np.count_nonzero(np.abs(values) > tolerance))
+    comm = matrix.getComm().tompi4py()
+    return int(comm.allreduce(local, op=MPI.SUM))
+
+
+def _rayleigh_probe_audit(matrix: PETSc.Mat) -> dict[str, Any]:
+    comm = matrix.getComm().tompi4py()
+    first, last = map(int, matrix.getOwnershipRange())
+    real_values: list[float] = []
+    relative_imaginary_values: list[float] = []
+    for probe_index in range(3):
+        vector = matrix.createVecRight()
+        image = matrix.createVecLeft()
+        try:
+            indices = np.arange(first, last, dtype=np.float64)
+            vector.array[:] = np.asarray(
+                (probe_index + 1.0) * (1.0 + 0.13 * indices)
+                + 1j * (0.07 * indices - 0.11 * probe_index),
+                dtype=PETSc.ScalarType,
+            )
+            vector.assemble()
+            vector.scale(PETSc.ScalarType(1.0 / vector.norm()))
+            matrix.mult(vector, image)
+            rayleigh = complex(vector.dot(image))
+            real_values.append(float(rayleigh.real))
+            relative_imaginary_values.append(
+                float(abs(rayleigh.imag) / max(abs(rayleigh), np.finfo(float).tiny))
+            )
+        finally:
+            image.destroy()
+            vector.destroy()
+    minimum_real = float(comm.allreduce(min(real_values), op=MPI.MIN))
+    maximum_relative_imag = float(
+        comm.allreduce(max(relative_imaginary_values), op=MPI.MAX)
+    )
+    return {
+        "rayleigh_probe_min_real": minimum_real,
+        "rayleigh_probe_max_relative_imag": maximum_relative_imag,
+        "rayleigh_probe_nonnegative": bool(
+            np.isfinite(minimum_real)
+            and np.isfinite(maximum_relative_imag)
+            and minimum_real >= -1.0e-10
+            and maximum_relative_imag <= 1.0e-10
+        ),
+    }
+
+
+def _reduce_artificial_z_mass(
+    full: PETSc.Mat,
+    condensed: Any,
+    raw_support: tuple[int, ...],
+) -> PETSc.Mat:
+    comm = full.getComm().tompi4py()
+    support_index = {int(original): index for index, original in enumerate(raw_support)}
+    support_size = len(raw_support)
+    local_start = (support_size * comm.rank) // comm.size
+    local_stop = (support_size * (comm.rank + 1)) // comm.size
+    local_size = local_stop - local_start
+    support_matrix = PETSc.Mat().createAIJ(
+        size=((local_size, support_size), (local_size, support_size)), comm=comm
+    )
+    support_matrix.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR, False)
+    first, last = map(int, full.getOwnershipRange())
+    for row in range(first, last):
+        support_row = support_index.get(row)
+        if support_row is None:
+            continue
+        columns, values = full.getRow(row)
+        selected = [
+            (support_index[int(column)], value)
+            for column, value in zip(columns, values, strict=True)
+            if abs(value) > 1.0e-14
+        ]
+        if selected:
+            support_matrix.setValues(
+                np.asarray([support_row], dtype=PETSc.IntType),
+                np.asarray(
+                    [column for column, _value in selected], dtype=PETSc.IntType
+                ),
+                np.asarray(
+                    [value for _column, value in selected], dtype=PETSc.ScalarType
+                ),
+            )
+    support_matrix.assemble()
+    local_missing = []
+    for row in range(local_start, local_stop):
+        columns, values = support_matrix.getRow(row)
+        if not any(value != 0 for value in values):
+            local_missing.append(row)
+    if not comm.allreduce(not local_missing, op=MPI.LAND):
+        support_matrix.destroy()
+        raise ValueError("Artificial z mass lost a raw trace support row")
+
+    transform = PETSc.Mat().createAIJ(
+        size=(
+            (local_size, support_size),
+            (int(condensed.owned_active_rows), int(condensed.active_rows)),
+        ),
+        comm=comm,
+    )
+    transform.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR, False)
+    expansion = condensed.trace_constraints.expansion_by_original
+    for local_row, original in enumerate(raw_support[local_start:local_stop]):
+        active, coefficients = expansion[int(original)]
+        transform.setValues(
+            np.asarray([local_start + local_row], dtype=PETSc.IntType),
+            np.asarray(active, dtype=PETSc.IntType),
+            np.asarray(coefficients, dtype=PETSc.ScalarType),
+        )
+    transform.assemble()
+    try:
+        reduced = reduce_matrix_hermitian(support_matrix, transform)
+    finally:
+        transform.destroy()
+        support_matrix.destroy()
+    return reduced
+
+
+def assemble_reduced_artificial_interface_tangential_mass(
+    V: Any,
+    condensed: Any,
+    support: Mapping[str, Any],
+    *,
+    quadrature_degree: int | None = None,
+    bare_operator: PETSc.Mat,
+) -> ArtificialZTraceMass:
+    """Assemble one ``dS`` tangential mass and reduce it as ``C^H M C``."""
+
+    comm = V.mesh.comm
+    raw_support = tuple(int(value) for value in support["raw_support"])
+    expected_active = set(int(value) for value in support["active_support"])
+    if not raw_support or not expected_active:
+        raise ValueError("Artificial z support is empty")
+    if bare_operator is None:
+        raise ValueError("Artificial z mass requires a bare-operator identity audit")
+    if int(condensed.full_rows) != int(V.dofmap.index_map.size_global):
+        raise ValueError("Condensed full-row layout does not match H(curl) space")
+    before_hash = _petsc_matrix_hash(bare_operator)
+    dS = ufl.Measure("dS", domain=V.mesh, subdomain_data=support["facet_tags"])
+    trial = ufl.TrialFunction(V)
+    test = ufl.TestFunction(V)
+    normal = ufl.FacetNormal(V.mesh)
+    tangential_trial = ufl.cross(normal("+"), trial("+"))
+    tangential_test = ufl.cross(normal("+"), test("+"))
+    compiler_options = (
+        {}
+        if quadrature_degree is None
+        else {"quadrature_degree": int(quadrature_degree)}
+    )
+    full = fem_petsc.assemble_matrix(
+        fem.form(
+            ufl.inner(tangential_trial, tangential_test)
+            * dS(int(support["facet_tag"])),
+            form_compiler_options=compiler_options,
+        ),
+        bcs=[],
+    )
+    full.assemble()
+    try:
+        full_rows, full_columns = _distributed_sparse_support(full)
+        if full_rows != set(raw_support) or full_columns != set(raw_support):
+            raise ValueError(
+                "Artificial z mass support differs from cell/facet trace support"
+            )
+        full_structural_nz_used = int(
+            comm.allreduce(int(full.getInfo()["nz_used"]), op=MPI.SUM)
+        )
+        full_effective_nnz = _petsc_matrix_effective_nnz(full)
+        reduced = _reduce_artificial_z_mass(full, condensed, raw_support)
+    finally:
+        full.destroy()
+    rows, columns = _distributed_sparse_support(reduced)
+    if rows != expected_active or columns != expected_active:
+        reduced.destroy()
+        raise ValueError(
+            "Reduced artificial z mass support differs from constraint expansion"
+        )
+    hermitian = PETSc.Mat()
+    reduced.hermitianTranspose(hermitian)
+    difference = reduced.copy()
+    difference.axpy(
+        PETSc.ScalarType(-1.0),
+        hermitian,
+        structure=PETSc.Mat.Structure.DIFFERENT_NONZERO_PATTERN,
+    )
+    hermitian_error = float(difference.norm()) / max(float(reduced.norm()), 1.0e-30)
+    difference.destroy()
+    hermitian.destroy()
+    diagonal = reduced.createVecLeft()
+    reduced.getDiagonal(diagonal)
+    values = np.asarray(diagonal.array, dtype=np.complex128)
+    finite = bool(comm.allreduce(bool(np.all(np.isfinite(values))), op=MPI.LAND))
+    minimum_real = float(
+        comm.allreduce(float(np.min(values.real, initial=np.inf)), op=MPI.MIN)
+    )
+    maximum_imag = float(
+        comm.allreduce(float(np.max(np.abs(values.imag), initial=0.0)), op=MPI.MAX)
+    )
+    diagonal.destroy()
+    after_hash = _petsc_matrix_hash(bare_operator)
+    reduced_structural_nz_used = int(
+        comm.allreduce(int(reduced.getInfo()["nz_used"]), op=MPI.SUM)
+    )
+    reduced_effective_nnz = _petsc_matrix_effective_nnz(reduced)
+    reduced_value_hash = _petsc_matrix_hash(reduced)
+    finite = bool(finite and _petsc_matrix_finite(reduced))
+    rayleigh = _rayleigh_probe_audit(reduced)
+    if (
+        not finite
+        or not np.isfinite(hermitian_error)
+        or hermitian_error > 1.0e-10
+        or minimum_real < -1.0e-12
+        or not rayleigh["rayleigh_probe_nonnegative"]
+    ):
+        reduced.destroy()
+        raise ValueError("Artificial z mass failed finite/Hermitian/Rayleigh audit")
+    audit = {
+        "facet_tag": int(support["facet_tag"]),
+        "interface_z": float(support["interface_z"]),
+        "facet_count_global": int(support["facet_count_global"]),
+        "lower_support": support["lower_support"],
+        "upper_support": support["upper_support"],
+        "support_sets_exact_match": bool(support["support_sets_exact_match"]),
+        "outward_normal_signs": list(support["outward_normal_signs"]),
+        "mass_integral_count": 1,
+        "trace_side_integrated": "+",
+        "trace_mass_form": "inner(cross(n(+),u(+)),cross(n(+),v(+))) dS",
+        "full_structural_nz_used": full_structural_nz_used,
+        "full_thresholded_effective_nnz": full_effective_nnz,
+        "reduced_structural_nz_used": reduced_structural_nz_used,
+        "reduced_thresholded_effective_nnz": reduced_effective_nnz,
+        "reduced_matrix_value_sha256": reduced_value_hash,
+        "reduced_matrix_frobenius_norm": float(reduced.norm()),
+        "raw_support_rows": len(raw_support),
+        "reduced_support_rows": len(rows),
+        "reduced_support_columns": len(columns),
+        "reduced_support_sha256": hashlib.sha256(
+            repr((tuple(sorted(rows)), tuple(sorted(columns)))).encode()
+        ).hexdigest(),
+        "hermitian_relative_defect": hermitian_error,
+        "diagonal_real_min": minimum_real,
+        "diagonal_imag_max": maximum_imag,
+        "finite": finite,
+        "real_diagonal_nonnegative": bool(minimum_real >= -1.0e-12),
+        **rayleigh,
+        "bare_operator_hash_before": before_hash,
+        "bare_operator_hash_after": after_hash,
+        "bare_operator_unchanged": before_hash == after_hash,
+    }
+    if not audit["bare_operator_unchanged"]:
+        reduced.destroy()
+        raise ValueError("Artificial z mass changed the bare operator")
+    return ArtificialZTraceMass(matrix=reduced, audit=audit)
+
+
+def build_artificial_z_tangential_trace_mass(
+    system: Any,
+    interface_z: float,
+    *,
+    tolerance: float = 1.0e-10,
+    quadrature_degree: int | None = None,
+    bare_operator: PETSc.Mat,
+) -> ArtificialZTraceMass:
+    """Audit and assemble a real two-sided artificial-z trace mass."""
+
+    condensed = system.static_condensation.condensed
+    support = audit_artificial_z_interface_support(
+        system.V,
+        condensed,
+        interface_z,
+        tolerance=tolerance,
+    )
+    return assemble_reduced_artificial_interface_tangential_mass(
+        system.V,
+        condensed,
+        support,
+        quadrature_degree=quadrature_degree,
+        bare_operator=bare_operator,
+    )
+
+
+def build_first_order_petsc_interface_impedance(
+    mass: ArtificialZTraceMass,
+    beta: complex,
+    outward_normal_signs: tuple[int, int],
+) -> tuple[PETSc.Mat, PETSc.Mat]:
+    """Scale one audited sparse mass with the same ``q=-i beta`` on both sides."""
+
+    return mass.build_impedance_pair(beta, outward_normal_signs)
 
 
 class SideImpedanceTransmissionAction:
