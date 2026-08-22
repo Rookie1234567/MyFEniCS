@@ -974,6 +974,47 @@ def _watchdog_stage(marker_dir: Path) -> str:
     return _last_marker(marker_dir) or "startup"
 
 
+def _extract_worker_owned_paths(
+    command: Iterable[str], cwd: Path
+) -> tuple[Path, Path]:
+    tokens = tuple(command)
+
+    def extract(flag: str) -> Path:
+        positions = tuple(index for index, token in enumerate(tokens) if token == flag)
+        if len(positions) != 1 or positions[0] + 1 >= len(tokens):
+            raise ValueError(f"watchdog command must contain one {flag} value")
+        value = tokens[positions[0] + 1]
+        if not value or value.startswith("-"):
+            raise ValueError(f"watchdog command has an invalid {flag} value")
+        path = Path(value)
+        return (path if path.is_absolute() else cwd / path).resolve(strict=False)
+
+    return extract("--raw-dir"), extract("--marker-dir")
+
+
+def _validate_watchdog_ownership(
+    command: Iterable[str], outputs: Iterable[Path], cwd: Path
+) -> tuple[Path, Path]:
+    worker_paths = _extract_worker_owned_paths(command, cwd)
+    for path in worker_paths:
+        if path.exists():
+            raise FileExistsError(f"worker-owned path already exists: {path}")
+    for output in outputs:
+        resolved = (output if output.is_absolute() else cwd / output).resolve(
+            strict=False
+        )
+        if any(
+            resolved == owned
+            or owned in resolved.parents
+            or resolved in owned.parents
+            for owned in worker_paths
+        ):
+            raise ValueError(
+                f"watchdog output overlaps worker-owned path: {resolved}"
+            )
+    return worker_paths
+
+
 def _watchdog_compact(raw_sha: str, command: Iterable[str], stop_reason: str, return_code: int, termination: Mapping[str, Any], samples: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
     rows = tuple(samples)
     valid = [row for row in rows if isinstance(row.get("authority"), Mapping) and not row.get("authority_error")]
@@ -1093,10 +1134,18 @@ def _watchdog_main(argv: list[str]) -> int:
     command = [item for item in args.watchdog_command if item != "--"]
     if not command or args.watchdog_timeout_seconds < 0.0:
         raise SystemExit("watchdog command/timeout is invalid")
+    worker_paths = _validate_watchdog_ownership(
+        command,
+        (args.watchdog_record, args.watchdog_raw, args.watchdog_compact, args.watchdog_log),
+        Path.cwd(),
+    )
     for path in (args.watchdog_raw, args.watchdog_compact, args.watchdog_log):
         if path.exists():
             raise FileExistsError(f"watchdog artifact already exists: {path}")
         path.parent.mkdir(parents=True, exist_ok=True)
+    for path in worker_paths:
+        if path.exists():
+            raise FileExistsError(f"watchdog created worker-owned path: {path}")
     with args.watchdog_log.open("w", encoding="utf-8") as log:
         process = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT, **worker_process_group_popen_kwargs())
         samples: list[dict[str, Any]] = []
