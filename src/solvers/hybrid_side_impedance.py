@@ -946,14 +946,27 @@ class SideImpedanceTransmissionAction:
 
 
 class _PetscTransmissionWorkspace:
-    def __init__(self, scatter: PETSc.Scatter, template: PETSc.Vec) -> None:
+    def __init__(
+        self,
+        scatter: PETSc.Scatter,
+        template: PETSc.Vec,
+        prolongation_weight: PETSc.Vec | None = None,
+    ) -> None:
         self.scatter = scatter
         self.rhs = template.duplicate()
         self.y = template.duplicate()
         self.temp = template.duplicate()
+        self.prolongation_weight = prolongation_weight
+        self.weighted_y = (
+            template.duplicate() if prolongation_weight is not None else None
+        )
 
     def destroy(self) -> None:
         self.scatter.destroy()
+        if self.weighted_y is not None:
+            self.weighted_y.destroy()
+        if self.prolongation_weight is not None:
+            self.prolongation_weight.destroy()
         self.temp.destroy()
         self.y.destroy()
         self.rhs.destroy()
@@ -981,10 +994,14 @@ class PetscSideImpedanceTransmissionAction:
         interface_normals: Sequence[tuple[int, int]],
         restriction_prolongation_audit: Callable[[], float],
         bare_operator_identity_audit: Callable[[], bool],
+        bare_operator: PETSc.Mat | None = None,
+        multiplicative_sequence: Sequence[int] | None = None,
     ) -> None:
         if len(workspaces) != 3 or len(local_solve) != 3:
             raise ValueError("PETSc transmission requires three local workspaces.")
-        if len(coupling_left) != 2 or len(coupling_right) != 2:
+        if bare_operator is None and (
+            len(coupling_left) != 2 or len(coupling_right) != 2
+        ):
             raise ValueError("PETSc transmission requires two interface couplings.")
         if len(interface_normals) != 2 or any(
             int(left) != -int(right) or int(left) not in {-1, 1}
@@ -1000,6 +1017,33 @@ class PetscSideImpedanceTransmissionAction:
         self._local_solve = tuple(local_solve)
         self._coupling_left = tuple(coupling_left)
         self._coupling_right = tuple(coupling_right)
+        self._bare_operator = bare_operator
+        if self._bare_operator is not None and any(
+            workspace.prolongation_weight is None for workspace in self._workspaces
+        ):
+            raise ValueError("PETSc overlap action requires PoU prolongation weights.")
+        self._multiplicative_sequence = (
+            tuple(int(index) for index in multiplicative_sequence)
+            if multiplicative_sequence is not None
+            else None
+        )
+        if self._bare_operator is not None:
+            if self._bare_operator.getSize() != (
+                self._parent_size,
+                self._parent_size,
+            ):
+                raise ValueError("PETSc overlap action bare F has the wrong size.")
+            if self._multiplicative_sequence != (0, 1, 2, 2, 1, 0):
+                raise ValueError(
+                    "PETSc overlap action needs the frozen six-step order."
+                )
+            self._current = self._bare_operator.createVecRight()
+            self._residual = self._bare_operator.createVecLeft()
+            self._correction = self._bare_operator.createVecLeft()
+        else:
+            self._current = None
+            self._residual = None
+            self._correction = None
         self._interface_normals = tuple(
             (int(left), int(right)) for left, right in interface_normals
         )
@@ -1054,14 +1098,32 @@ class PetscSideImpedanceTransmissionAction:
 
     def _scatter_solution(self, target: PETSc.Vec) -> None:
         target.set(0.0)
-        for workspace in self._workspaces:
-            workspace.scatter.scatter(
-                workspace.y,
-                target,
-                addv=PETSc.InsertMode.ADD_VALUES,
-                mode=PETSc.ScatterMode.REVERSE,
-            )
+        for index in range(len(self._workspaces)):
+            self._scatter_one(index, target, reset=False)
         target.assemble()
+
+    def _scatter_one(
+        self,
+        index: int,
+        target: PETSc.Vec,
+        *,
+        reset: bool = True,
+    ) -> None:
+        if reset:
+            target.set(0.0)
+        workspace = self._workspaces[index]
+        solution = workspace.y
+        if workspace.prolongation_weight is not None:
+            workspace.weighted_y.pointwiseMult(
+                workspace.y, workspace.prolongation_weight
+            )
+            solution = workspace.weighted_y
+        workspace.scatter.scatter(
+            solution,
+            target,
+            addv=PETSc.InsertMode.ADD_VALUES,
+            mode=PETSc.ScatterMode.REVERSE,
+        )
 
     def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         if self._destroyed:
@@ -1071,10 +1133,27 @@ class PetscSideImpedanceTransmissionAction:
             or target.getSize() != self._parent_size
         ):
             raise ValueError("PETSc transmission vector has the wrong global size.")
-        self._gather(source)
-        self._forward()
-        self._backward()
-        self._scatter_solution(target)
+        if self._bare_operator is None:
+            self._gather(source)
+            self._forward()
+            self._backward()
+            self._scatter_solution(target)
+        else:
+            if any(
+                workspace.prolongation_weight is None for workspace in self._workspaces
+            ):
+                raise RuntimeError("Overlap action requires PoU prolongation weights.")
+            self._current.set(0.0)
+            for index in self._multiplicative_sequence:
+                self._bare_operator.mult(self._current, self._residual)
+                self._residual.scale(PETSc.ScalarType(-1.0))
+                self._residual.axpy(PETSc.ScalarType(1.0), source)
+                self._gather(self._residual)
+                self._solve(index)
+                self._scatter_one(index, self._correction)
+                self._correction.assemble()
+                self._current.axpy(PETSc.ScalarType(1.0), self._correction)
+            self._current.copy(target)
         self._apply_count += 1
 
     @property
@@ -1092,6 +1171,20 @@ class PetscSideImpedanceTransmissionAction:
             "restriction_prolongation_pass": self.restriction_prolongation_error
             <= 1.0e-12,
             "impedance_applied_to_pc_only": True,
+            "sweep_mode": (
+                "multiplicative_schwarz"
+                if self._bare_operator is not None
+                else "cumulative_rhs"
+            ),
+            "multiplicative_sequence": (
+                None
+                if self._multiplicative_sequence is None
+                else list(self._multiplicative_sequence)
+            ),
+            "partition_of_unity_weighted_prolongation": any(
+                workspace.prolongation_weight is not None
+                for workspace in self._workspaces
+            ),
             "bare_operator_unchanged": self._bare_operator_identity_pass,
             "bare_operator_identity_audited": True,
             "apply_count": self._apply_count,
@@ -1107,6 +1200,16 @@ class PetscSideImpedanceTransmissionAction:
         self._local_solve = ()
         self._coupling_left = ()
         self._coupling_right = ()
+        if self._correction is not None:
+            self._correction.destroy()
+        if self._residual is not None:
+            self._residual.destroy()
+        if self._current is not None:
+            self._current.destroy()
+        self._correction = None
+        self._residual = None
+        self._current = None
+        self._bare_operator = None
         self._destroyed = True
 
 
@@ -1129,16 +1232,25 @@ def build_petsc_side_impedance_transmission_action(
     interface_normals: Sequence[tuple[int, int]],
     restriction_prolongation_audit: Callable[[], float],
     bare_operator_identity_audit: Callable[[], bool],
+    prolongation_weights: Sequence[PETSc.Vec] | None = None,
+    bare_operator: PETSc.Mat | None = None,
+    multiplicative_sequence: Sequence[int] | None = None,
 ) -> PetscSideImpedanceTransmissionAction:
     """Build the PETSc-owned carrier without copying global arrays."""
 
     if len(local_templates) != 3 or len(scatters) != 3:
         raise ValueError("PETSc transmission needs three templates and scatters.")
+    if prolongation_weights is not None and len(prolongation_weights) != 3:
+        raise ValueError("PETSc transmission needs three PoU weight vectors.")
     workspaces = []
     try:
         workspaces = [
-            _PetscTransmissionWorkspace(scatter, template)
-            for scatter, template in zip(scatters, local_templates)
+            _PetscTransmissionWorkspace(
+                scatter,
+                template,
+                None if prolongation_weights is None else prolongation_weights[index],
+            )
+            for index, (scatter, template) in enumerate(zip(scatters, local_templates))
         ]
         return PetscSideImpedanceTransmissionAction(
             parent_size=int(parent_template.getSize()),
@@ -1149,6 +1261,8 @@ def build_petsc_side_impedance_transmission_action(
             interface_normals=interface_normals,
             restriction_prolongation_audit=restriction_prolongation_audit,
             bare_operator_identity_audit=bare_operator_identity_audit,
+            bare_operator=bare_operator,
+            multiplicative_sequence=multiplicative_sequence,
         )
     except Exception:
         for workspace in reversed(workspaces):

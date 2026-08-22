@@ -698,3 +698,151 @@ def test_task040_petsc_vecscatter_carrier_preserves_owned_identity() -> None:
         for vector in local_templates:
             vector.destroy()
         parent.destroy()
+
+
+def test_task040_petsc_multiplicative_overlap_uses_current_workspace_only() -> None:
+    comm = MPI.COMM_WORLD
+    size = comm.size
+    parent = PETSc.Vec().createMPI((4, 4 * size), comm=comm)
+    bare = PETSc.Mat().createAIJ(size=((4, 4 * size), (4, 4 * size)), nnz=1, comm=comm)
+    local_templates = [
+        PETSc.Vec().createMPI((2, 2 * size), comm=comm) for _ in range(3)
+    ]
+    weights = [PETSc.Vec().createMPI((2, 2 * size), comm=comm) for _ in range(3)]
+    scatters = []
+    group_offsets = ((0, 1), (1, 2), (2, 3))
+    diagonal = ((2.0, 3.0), (5.0, 7.0), (11.0, 13.0))
+    for row in range(4 * comm.rank, 4 * (comm.rank + 1)):
+        bare.setValue(row, row, PETSc.ScalarType(1.0))
+    bare.assemble()
+    for index, offsets in enumerate(group_offsets):
+        base = 4 * comm.rank
+        source_ids = np.asarray(
+            [base + offset for offset in offsets], dtype=PETSc.IntType
+        )
+        target_ids = np.asarray([2 * comm.rank, 2 * comm.rank + 1], dtype=PETSc.IntType)
+        source_is = PETSc.IS().createGeneral(source_ids, comm=comm)
+        target_is = PETSc.IS().createGeneral(target_ids, comm=comm)
+        scatters.append(
+            PETSc.Scatter().create(parent, source_is, local_templates[index], target_is)
+        )
+        source_is.destroy()
+        target_is.destroy()
+    weights[0].array[:] = (1.0, 0.5)
+    weights[1].array[:] = (0.5, 0.5)
+    weights[2].array[:] = (0.5, 1.0)
+
+    def solve(index: int):
+        def _solve(rhs: PETSc.Vec, target: PETSc.Vec) -> None:
+            target.array[:] = rhs.array / np.asarray(
+                diagonal[index], dtype=PETSc.ScalarType
+            )
+
+        return _solve
+
+    def restriction_audit() -> float:
+        probe = parent.duplicate()
+        restored = parent.duplicate()
+        local_values = [template.duplicate() for template in local_templates]
+        try:
+            base = 4 * comm.rank
+            probe.array[:] = np.asarray(
+                [0.2 + 0.03j * (base + index) for index in range(4)],
+                dtype=PETSc.ScalarType,
+            )
+            restored.set(0.0)
+            for index, scatter in enumerate(scatters):
+                scatter.scatter(
+                    probe,
+                    local_values[index],
+                    addv=PETSc.InsertMode.INSERT_VALUES,
+                    mode=PETSc.ScatterMode.FORWARD,
+                )
+                local_values[index].pointwiseMult(local_values[index], weights[index])
+                scatter.scatter(
+                    local_values[index],
+                    restored,
+                    addv=PETSc.InsertMode.ADD_VALUES,
+                    mode=PETSc.ScatterMode.REVERSE,
+                )
+            restored.assemble()
+            difference = restored.duplicate()
+            restored.copy(difference)
+            difference.axpy(PETSc.ScalarType(-1.0), probe)
+            error = float(difference.norm())
+            difference.destroy()
+            return error
+        finally:
+            for vector in reversed(local_values):
+                vector.destroy()
+            restored.destroy()
+            probe.destroy()
+
+    def bare_audit() -> bool:
+        probe = bare.createVecRight()
+        image = bare.createVecLeft()
+        try:
+            probe.array[:] = np.asarray(
+                [0.4 + 0.02j * (4 * comm.rank + index) for index in range(4)],
+                dtype=PETSc.ScalarType,
+            )
+            bare.mult(probe, image)
+            difference = image.duplicate()
+            image.copy(difference)
+            difference.axpy(PETSc.ScalarType(-1.0), probe)
+            passed = difference.norm() <= 1.0e-14
+            difference.destroy()
+            return bool(comm.allreduce(bool(passed), op=MPI.LAND))
+        finally:
+            image.destroy()
+            probe.destroy()
+
+    action = build_petsc_side_impedance_transmission_action(
+        parent_template=parent,
+        local_templates=local_templates,
+        scatters=scatters,
+        local_solve=tuple(solve(index) for index in range(3)),
+        coupling_left=(),
+        coupling_right=(),
+        interface_normals=((1, -1), (1, -1)),
+        restriction_prolongation_audit=restriction_audit,
+        bare_operator_identity_audit=bare_audit,
+        prolongation_weights=weights,
+        bare_operator=bare,
+        multiplicative_sequence=(0, 1, 2, 2, 1, 0),
+    )
+    try:
+        source = parent.duplicate()
+        target = parent.duplicate()
+        try:
+            base = 4 * comm.rank
+            source.array[:] = np.asarray(
+                [0.7 + 0.11j * (base + index) for index in range(4)],
+                dtype=PETSc.ScalarType,
+            )
+            action.apply(source, target)
+            expected = np.zeros(4, dtype=np.complex128)
+            local_source = np.asarray(source.array, dtype=np.complex128)
+            for index in (0, 1, 2, 2, 1, 0):
+                residual = local_source - expected
+                local_delta = residual[list(group_offsets[index])] / np.asarray(
+                    diagonal[index], dtype=np.complex128
+                )
+                expected[list(group_offsets[index])] += (
+                    np.asarray(weights[index].array, dtype=np.complex128) * local_delta
+                )
+            local_error = float(np.max(np.abs(np.asarray(target.array) - expected)))
+            assert comm.allreduce(local_error, op=MPI.MAX) <= 1.0e-12
+            diagnostics = action.diagnostics
+            assert diagnostics["sweep_mode"] == "multiplicative_schwarz"
+            assert diagnostics["multiplicative_sequence"] == [0, 1, 2, 2, 1, 0]
+            assert diagnostics["partition_of_unity_weighted_prolongation"] is True
+        finally:
+            target.destroy()
+            source.destroy()
+    finally:
+        action.destroy()
+        for vector in local_templates:
+            vector.destroy()
+        parent.destroy()
+        bare.destroy()
