@@ -939,19 +939,17 @@ def audit_bottom_response_packet_algebra(
     expected_identity_records: Sequence[Mapping[str, Any]],
     expected_provenance: Mapping[str, Any],
     source_columns: Mapping[int, np.ndarray],
-    v7_schur_authority: np.ndarray,
+    v7_schur_authority: Mapping[str, Any],
     v7_modal_amplitudes: np.ndarray,
     v7_bottom_trace: np.ndarray,
     physical_rhs: np.ndarray,
     block_action: Callable[[np.ndarray], np.ndarray],
     schur_action: Callable[[np.ndarray], np.ndarray],
     trace_action: Callable[[np.ndarray], np.ndarray],
-    factor_inventory: Mapping[str, int],
-    field_response_sign: complex = V11_BOTTOM_FIELD_RESPONSE_SIGN,
-    schur_contribution_sign: complex = V11_BOTTOM_SCHUR_CONTRIBUTION_SIGN,
+    inventory_evidence: Mapping[str, Any],
+    system_evidence: Mapping[str, Any],
     sample_indices: Sequence[int] = V11_BOTTOM_RESPONSE_SAMPLE_INDICES,
     comm: MPI.Intracomm = MPI.COMM_WORLD,
-    system_assembled: bool = True,
 ) -> dict[str, Any]:
     """Audit packet equations without constructing a solver or factor.
 
@@ -993,6 +991,7 @@ def audit_bottom_response_packet_algebra(
             record.get("mode_index"),
             canonical(record.get("raw_beta")),
             canonical(record.get("discrete_beta")),
+            record.get("mode_key"),
             record.get("schedule_kind"),
         )
 
@@ -1046,11 +1045,43 @@ def audit_bottom_response_packet_algebra(
             or manifest_columns[960].get("label") != "physical_side_rhs"
         ):
             raise ValueError("V11 physical RHS identity is not separate")
-        provenance_pass = dict(manifest.get("provenance", {})) == dict(
-            expected_provenance
+        expected_manifest_provenance = dict(expected_provenance.get("manifest", {}))
+        manifest_provenance = dict(manifest.get("provenance", {}))
+        provenance_pass = manifest_provenance == expected_manifest_provenance
+        provider = dict(expected_provenance.get("provider", {}))
+        provider_required = {
+            "implementation": (
+                "src.coupling.hybrid_streamed_sources:"
+                "StreamedPhysicalModalSourceProvider._entries_to_vec"
+            ),
+            "scale": -1.0,
+            "selected_mode_packet_manifest_sha256": manifest_provenance.get(
+                "selected_mode_packet_manifest_sha256"
+            ),
+            "producer_source_sha": manifest_provenance.get("source_sha"),
+        }
+        selected_packet_authority = dict(
+            expected_provenance.get("selected_packet_authority", {})
+        )
+        selected_packet_pass = bool(
+            selected_packet_authority.get("manifest_sha256")
+            == provider_required["selected_mode_packet_manifest_sha256"]
+            and isinstance(selected_packet_authority.get("identity_sha256"), str)
+            and len(selected_packet_authority["identity_sha256"]) == 64
+        )
+        provider_pass = (
+            provider == provider_required
+            and selected_packet_pass
+            and all(
+                isinstance(value, str) and value
+                for key, value in provider_required.items()
+                if key != "scale"
+            )
         )
         if not provenance_pass:
             raise ValueError("V11 bottom packet provenance mismatch")
+        if not provider_pass:
+            raise ValueError("V11 source provider identity contract mismatch")
         local_values = np.asarray(packet.local_values, dtype=np.complex128)
         if (
             local_values.ndim != 2
@@ -1107,11 +1138,8 @@ def audit_bottom_response_packet_algebra(
         )
         if not bool(comm.allreduce(sample_inputs_pass, op=MPI.LAND)):
             raise ValueError("V11 sampled source input is nonfinite or mis-sized")
-        field_sign = complex(field_response_sign)
-        schur_sign = complex(schur_contribution_sign)
-        allowed_signs = (1.0 + 0.0j, -1.0 + 0.0j)
-        if field_sign not in allowed_signs or schur_sign not in allowed_signs:
-            raise ValueError("V11 response signs must be explicit plus or minus")
+        field_sign = complex(V11_BOTTOM_FIELD_RESPONSE_SIGN)
+        schur_sign = complex(V11_BOTTOM_SCHUR_CONTRIBUTION_SIGN)
         sample_reports: list[dict[str, Any]] = []
         counters = {
             "block_action_count": 0,
@@ -1205,7 +1233,17 @@ def audit_bottom_response_packet_algebra(
         ):
             raise ValueError("V11 canonical trace is nonfinite")
         trace_error = relative_error(trace_value, trace_expected)
-        schur_expected = np.asarray(v7_schur_authority, dtype=np.complex128)
+        authority = dict(v7_schur_authority)
+        authority_contract_pass = bool(
+            isinstance(authority.get("source_path"), str)
+            and len(str(authority.get("source_sha256", ""))) == 64
+            and authority.get("derivation") == "-D_b*u_v7"
+            and isinstance(authority.get("D_identity"), str)
+            and bool(authority.get("D_identity"))
+        )
+        if not authority_contract_pass:
+            raise ValueError("V11 V7 Schur authority provenance is incomplete")
+        schur_expected = np.asarray(authority.get("value"), dtype=np.complex128)
         if not bool(
             comm.allreduce(
                 bool(
@@ -1244,11 +1282,36 @@ def audit_bottom_response_packet_algebra(
                 max(float(comm.allreduce(np.vdot(zero_action, zero_action).real)), 0.0)
             )
         )
-        inventory = {key: int(value) for key, value in factor_inventory.items()}
-        if any(
-            key not in inventory for key in ("factor_count", "ksp_count", "qep_count")
-        ):
-            raise ValueError("V11 factor/KSP/QEP inventory is incomplete")
+        inventory = dict(inventory_evidence)
+        ready_inventory = inventory.get("ready", {})
+        inventory_pass = bool(
+            inventory.get("observed") is True
+            and isinstance(inventory.get("source"), str)
+            and bool(inventory.get("source"))
+            and isinstance(ready_inventory, Mapping)
+            and all(
+                int(ready_inventory.get(key, -1)) == 0
+                for key in ("factor_count", "ksp_count", "qep_count")
+            )
+            and inventory.get("ksp_qep_not_created") is True
+        )
+        inventory_pass = bool(comm.allreduce(inventory_pass, op=MPI.LAND))
+        if not inventory_pass:
+            raise ValueError("V11 factor/KSP/QEP observed inventory is invalid")
+        system = dict(system_evidence)
+        system_mat = dict(system.get("mat", {}))
+        system_pass = bool(
+            system.get("observed") is True
+            and isinstance(system.get("source"), str)
+            and bool(system.get("source"))
+            and isinstance(system_mat.get("type"), str)
+            and len(system_mat.get("size", ())) == 2
+            and len(system_mat.get("ownership_ranges", ())) >= 1
+            and system_mat.get("matrix_free") is True
+        )
+        system_pass = bool(comm.allreduce(system_pass, op=MPI.LAND))
+        if not system_pass:
+            raise ValueError("V11 assembled-system evidence is invalid")
         packet_result = {
             "schema": "task039.v11.bottom_packet_algebra.v1",
             "method": "task039_v11_bottom_packet_algebra_checker",
@@ -1258,23 +1321,37 @@ def audit_bottom_response_packet_algebra(
                 "order_pass": bool(order_pass),
                 "source_identity_pass": bool(source_identity_pass),
                 "all_960_metadata_identity": bool(identity_pass and order_pass),
+                "producer_record_fields_exact": [
+                    "column_index",
+                    "label",
+                    "source",
+                    "family",
+                    "branch",
+                    "mode_index",
+                    "raw_beta",
+                    "discrete_beta",
+                    "schedule_kind",
+                ],
+                "mode_key_derived_from_hash_bound_selected_packet": True,
+                "mode_key_derivation": (
+                    "actual branch/mode_index enriched from selected packet context"
+                ),
                 "sampled_numeric_source_identity_count": len(required_indices),
                 "provider_scale": -1.0,
                 "provider_scale_source": (
                     "StreamedPhysicalModalSourceProvider._entries_to_vec(scale=-1.0)"
                 ),
-                "normalization_contract_bound": bool(
-                    manifest.get("provenance", {}).get(
-                        "selected_mode_packet_manifest_sha256"
-                    )
-                    and manifest.get("provenance", {}).get("source_sha")
-                ),
+                "normalization_contract_bound": bool(provider_pass),
+                "provider_implementation": provider_required["implementation"],
+                "selected_packet_authority": selected_packet_authority,
                 "physical_rhs_separate": True,
                 "owner_row_coverage_exact": layout_hash_pass,
                 "dtype": manifest["dtype"],
                 "f_order": True,
             },
-            "provenance_pass": bool(provenance_pass),
+            "provenance_pass": bool(provenance_pass and provider_pass),
+            "inventory_evidence_pass": bool(inventory_pass),
+            "system_evidence_pass": bool(system_pass),
             "physical_rhs": {
                 "status": (
                     "degenerate_zero_rhs"
@@ -1305,8 +1382,13 @@ def audit_bottom_response_packet_algebra(
                 ),
                 "trace_relative_error": trace_error,
                 "schur_relative_error": schur_error,
+                "modal_amplitude_action_relative_error": schur_error,
+                "modal_amplitude_action_alias_of": "schur_relative_error",
+                "modal_amplitude_action_definition": (
+                    "relative error of +D_b sum_j X_j a_v7 versus -D_b*u_v7"
+                ),
             },
-            "system_assembled": bool(system_assembled),
+            "system_evidence": system,
             "action_counters": counters,
             "factor_inventory": inventory,
             "packet_released": False,
@@ -1322,9 +1404,15 @@ def audit_bottom_response_packet_algebra(
             for report in packet_result["sample_reports"]
         )
     )
-    inventory_pass = all(
-        packet_result["factor_inventory"][key] == 0
-        for key in ("factor_count", "ksp_count", "qep_count")
+    inventory_record = packet_result["factor_inventory"]
+    inventory_pass = bool(
+        inventory_record.get("observed") is True
+        and isinstance(inventory_record.get("ready"), Mapping)
+        and all(
+            int(inventory_record["ready"].get(key, -1)) == 0
+            for key in ("factor_count", "ksp_count", "qep_count")
+        )
+        and inventory_record.get("ksp_qep_not_created") is True
     )
     packet_result["gate"] = {
         "manifest_columns_pass": bool(
@@ -1336,8 +1424,11 @@ def audit_bottom_response_packet_algebra(
         ),
         "source_identity_pass": bool(packet_result["identity"]["source_identity_pass"]),
         "provenance_pass": bool(packet_result["provenance_pass"]),
+        "provider_identity_pass": bool(
+            packet_result["identity"]["normalization_contract_bound"]
+        ),
         "layout_hash_pass": bool(packet_result["identity"]["owner_row_coverage_exact"]),
-        "system_assembled_pass": bool(packet_result["system_assembled"]),
+        "system_assembled_pass": bool(packet_result["system_evidence_pass"] is True),
         "physical_pass": bool(
             np.isfinite(packet_result["physical_rhs"]["equation_relative_error"])
             and packet_result["physical_rhs"]["equation_relative_error"] <= 1.0e-9
@@ -1352,6 +1443,18 @@ def audit_bottom_response_packet_algebra(
             np.isfinite(packet_result["modal_reconstruction"]["schur_relative_error"])
             and packet_result["modal_reconstruction"]["schur_relative_error"] <= 5.0e-9
         ),
+        "modal_amplitude_action_pass": bool(
+            np.isfinite(
+                packet_result["modal_reconstruction"][
+                    "modal_amplitude_action_relative_error"
+                ]
+            )
+            and packet_result["modal_reconstruction"][
+                "modal_amplitude_action_relative_error"
+            ]
+            <= 5.0e-9
+            and authority_contract_pass
+        ),
         "sign_contract_pass": bool(
             field_sign == V11_BOTTOM_FIELD_RESPONSE_SIGN
             and schur_sign == V11_BOTTOM_SCHUR_CONTRIBUTION_SIGN
@@ -1365,5 +1468,9 @@ def audit_bottom_response_packet_algebra(
         "factor_qep_ksp_pass": bool(inventory_pass),
         "packet_release_pass": bool(packet_result["packet_released"]),
     }
-    packet_result["gate"]["pass"] = all(packet_result["gate"].values())
+    packet_result["gate"]["pass"] = bool(
+        all(packet_result["gate"].values())
+        and packet_result["inventory_evidence_pass"]
+        and packet_result["system_evidence_pass"]
+    )
     return packet_result

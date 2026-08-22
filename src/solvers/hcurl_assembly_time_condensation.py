@@ -1919,6 +1919,52 @@ def project_mpc_vector_to_active_trace(
     return active_vector
 
 
+def copy_full_solution_to_active_trace(
+    condensed: AssemblyTimeCondensedSystem,
+    full_solution: PETSc.Vec | Any,
+) -> PETSc.Vec:
+    """Copy a reconstructed solution's owned active trace rows.
+
+    This is intentionally a solution-field extractor, not MPC/load
+    condensation: eliminated entries are neither checked nor projected.  The
+    caller must provide the full FE solution Vec (or an object exposing
+    ``x.petsc_vec``); only ``owned_active_original_dofs`` are copied into a
+    fresh active-trace Vec.
+    """
+
+    source = getattr(getattr(full_solution, "x", None), "petsc_vec", full_solution)
+    if not hasattr(source, "getSize") or not hasattr(source, "getOwnershipRange"):
+        raise TypeError("full solution must expose a PETSc Vec")
+    if int(source.getSize()) != int(condensed.full_rows):
+        raise ValueError("full solution size differs from the FE space")
+    first, last = (int(value) for value in source.getOwnershipRange())
+    owned = np.asarray(
+        condensed.trace_constraints.owned_active_original_dofs,
+        dtype=PETSc.IntType,
+    )
+    if len(owned) != int(condensed.owned_active_rows):
+        raise ValueError("active-trace ownership metadata is inconsistent")
+    if len(owned) and (int(owned.min()) < first or int(owned.max()) >= last):
+        raise ValueError("active-trace rows are not locally owned by the solution Vec")
+    local = np.asarray(source.getArray(readonly=True), dtype=PETSc.ScalarType)
+    values = np.array(local[owned - first], dtype=PETSc.ScalarType, copy=True)
+    finite = bool(
+        condensed.comm.allreduce(bool(np.isfinite(values).all()), op=MPI.LAND)
+    )
+    if not finite:
+        raise ValueError("full solution has nonfinite active-trace values")
+    active = condensed.create_active_vector()
+    if int(active.getLocalSize()) != len(values) or int(active.getSize()) != int(
+        condensed.active_rows
+    ):
+        active.destroy()
+        raise ValueError("active-trace Vec ownership differs from condensed metadata")
+    active.set(0)
+    active.getArray()[:] = values
+    active.assemble()
+    return active
+
+
 __all__ = [
     "AssemblyTimeCondensedSystem",
     "CellRecoveryMap",
@@ -1927,6 +1973,7 @@ __all__ = [
     "cell_interior_schur_bilinear",
     "condense_unconstrained_vector_to_active_trace",
     "owned_active_support_groups",
+    "copy_full_solution_to_active_trace",
     "project_mpc_vector_to_active_trace",
     "recover_owned_cell_interiors",
 ]

@@ -26,7 +26,7 @@ import sys
 import time
 import traceback
 from types import SimpleNamespace
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
 from mpi4py import MPI
@@ -50,6 +50,9 @@ from benchmarks.task039_v4_selected_mode_packet import (
     Task039V4SelectedModeMmapContext,
     consume_task039_v4_selected_mode_packet,
 )
+from benchmarks.canonical_vector_artifacts import (
+    read_canonical_packet_shard,
+)
 from benchmarks.task039_v3_side_oracle import (
     audit_hybrid_operator_identity,
     build_research_independent_hybrid_reference,
@@ -63,6 +66,7 @@ from benchmarks.task039_v3_side_oracle import (
 from src.common.config_3d import ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
 from src.coupling.hybrid_internal_modes import build_single_hybrid_interface_mode_owner
 from src.coupling.hybrid_streamed_sources import StreamedPhysicalModalSourceProvider
+from src.modes.stable_propagation import scalar_cg_discrete_traction_beta
 from src.modes.cross_section_spaces import (
     build_cross_section_spaces,
     build_matching_cross_section,
@@ -93,6 +97,13 @@ from src.solvers.hybrid_local_dtn_action import (
     assemble_hybrid_local_dtn_action_system,
     create_hybrid_local_dtn_action_components,
 )
+from src.solvers.hcurl_assembly_time_condensation import (
+    copy_full_solution_to_active_trace,
+)
+from src.solvers.hcurl_canonical_vector_dolfinx import (
+    extract_canonical_active_trace_packets,
+    reconstruct_canonical_full_fe_function,
+)
 from src.solvers.hybrid_layer_block import (
     audit_layer_block_action,
     build_fixed_two_layer_supernode_action,
@@ -117,6 +128,9 @@ from src.solvers.hybrid_side_response_packet import (
     V10_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA,
     V10_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD,
     V10_SIDE_RESPONSE_PACKET_FULL_HOLDOUT_COLUMNS,
+    V11_BOTTOM_RESPONSE_SAMPLE_INDICES,
+    ExactSideResponsePacket,
+    audit_bottom_response_packet_algebra,
     OwnerRowResponsePacketWriter,
     compress_owner_row_response_packet,
     load_exact_side_response_packet,
@@ -414,6 +428,60 @@ V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PRODUCER_SOURCE_SHA_FLAG = (
     "--v10-h4-side-response-packet-compression-producer-source-sha"
 )
 V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_HARD_STOP_BYTES = 30 * 2**30
+V11_BOTTOM_PACKET_ALGEBRA_PROFILE_ID = "task039.v11.h4.bottom_packet_algebra.v1"
+V11_BOTTOM_PACKET_ALGEBRA_SCHEMA = "task039.v11.h4.bottom_packet_algebra.v1"
+V11_BOTTOM_PACKET_ALGEBRA_METHOD = "task039_v11_h4_bottom_packet_algebra"
+V11_BOTTOM_PACKET_ALGEBRA_HARD_STOP_BYTES = 45 * 2**30
+V11_BOTTOM_PACKET_ALGEBRA_FLAG = "--v11-h4-bottom-packet-algebra"
+V11_BOTTOM_PACKET_ALGEBRA_EXACT_SPOOL_ROOT_FLAG = (
+    "--v11-h4-bottom-packet-algebra-exact-spool-root"
+)
+V11_BOTTOM_PACKET_ALGEBRA_PACKET_MANIFEST_FLAG = (
+    "--v11-h4-bottom-packet-algebra-packet-manifest"
+)
+V11_BOTTOM_PACKET_ALGEBRA_PACKET_MANIFEST_SHA256_FLAG = (
+    "--v11-h4-bottom-packet-algebra-packet-manifest-sha256"
+)
+V11_BOTTOM_PACKET_ALGEBRA_PRODUCER_DIAGNOSTIC_FLAG = (
+    "--v11-h4-bottom-packet-algebra-producer-diagnostic"
+)
+V11_RESPONSE_PACKET_MANIFEST_SHA256 = (
+    "1f4e8acaf278bde0d0d14a2a096335049ee988cdbc1b406bca4197918ff64a0e"
+)
+V11_RESPONSE_PACKET_PRODUCER_SOURCE_SHA = "dbc5e9bfdf9ad0520881caa168c7a27316d50f10"
+V11_RESPONSE_PACKET_INPUT_SHA256 = (
+    "4e60924b5997e3ca99e324ea14779f9014efc6a1304a9aa11de9c808353f1811"
+)
+V11_RESPONSE_PACKET_PHYSICAL_MODEL_SHA256 = (
+    "8391d46139646440d869aa43abe6a68bc921fc1972a10030c64be81dffdd527c"
+)
+V11_RESPONSE_PACKET_SELECTED_MANIFEST_SHA256 = (
+    "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067"
+)
+V11_RESPONSE_PACKET_DIAGNOSTIC_SHA256 = (
+    "184ae4bd2d4c5721131d1b735c07ee745c18df1b2cdce87fcb4b4c9d1d527830"
+)
+V11_SELECTED_PACKET_IDENTITY_SHA256 = (
+    "cfd5704b48bff980fa2d819f4deee9a59bb9a3db39bc24a70c53f42f067d39e9"
+)
+V11_V7_FULL_FORMAL_ROOT = "results/task039_v7_h4_exact_side_full_formal_mpi8_9e31ecf1"
+V11_V7_MODAL_Q_RELATIVE = "m10_own_grid_EH_modal_q.npz"
+V11_V7_FULL_FE_MANIFEST_RELATIVE = "task037b_m10_bottom_full_fe_canonical_manifest.json"
+V11_V7_ACTIVE_TRACE_MANIFEST_RELATIVE = (
+    "task037b_m10_bottom_active_trace_canonical_manifest.json"
+)
+V11_V7_FULL_FE_MANIFEST_SHA256 = (
+    "c0472eb1e4499c61f419d567dc1b31a838af0c909f5a1769b0f85beca092f331"
+)
+V11_V7_ACTIVE_TRACE_MANIFEST_SHA256 = (
+    "fae8e3654e5f21ac81f23080de6f1763e99bb2b12ba28d0ddd1814d24e01d765"
+)
+V11_V7_MODAL_Q_SHA256 = (
+    "7107e54e47498d7b493076dee3bbab0fc94e06db76f20e67e254fbeb46a8a8c2"
+)
+V11_V7_MODAL_AMPLITUDES_SHA256 = (
+    "c386d3f97180de5879006209091a3e2743709857065d3aa4dfffd320f6962ce4"
+)
 V10_SIDE_RESPONSE_PACKET_FROZEN_SELECTED_COLUMNS = (
     0,
     1,
@@ -882,6 +950,7 @@ def v3_7_watchdog_policy(
     v10_h4_side_response_packet_consumer_manifest_sha256: str | None = None,
     v10_h4_side_response_packet_full_producer: bool = False,
     v10_h4_side_response_packet_compression: bool = False,
+    v11_h4_bottom_packet_algebra: bool = False,
 ) -> dict[str, Any]:
     """Return the byte-authoritative policy; 195 GiB is telemetry only."""
 
@@ -930,6 +999,8 @@ def v3_7_watchdog_policy(
         absolute_bytes = V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_HARD_STOP_BYTES
     elif v10_h4_side_response_packet_compression:
         absolute_bytes = V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_HARD_STOP_BYTES
+    elif v11_h4_bottom_packet_algebra:
+        absolute_bytes = V11_BOTTOM_PACKET_ALGEBRA_HARD_STOP_BYTES
     else:
         absolute_bytes = V3_7_ABSOLUTE_HARD_BYTES
     if v7_h4_exact_side_full_formal:
@@ -966,6 +1037,8 @@ def v3_7_watchdog_policy(
         profile_name = V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_PROFILE_ID
     elif v10_h4_side_response_packet_compression:
         profile_name = V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PROFILE_ID
+    elif v11_h4_bottom_packet_algebra:
+        profile_name = V11_BOTTOM_PACKET_ALGEBRA_PROFILE_ID
     else:
         profile_name = "v3_7_default"
     policy = {
@@ -1053,6 +1126,11 @@ def build_v3_7_execution_plan(
     v10_h4_side_response_packet_compression_manifest: str | Path | None = None,
     v10_h4_side_response_packet_compression_manifest_sha256: str | None = None,
     v10_h4_side_response_packet_compression_producer_source_sha: str | None = None,
+    v11_h4_bottom_packet_algebra: bool = False,
+    v11_h4_bottom_packet_algebra_exact_spool_root: str | Path | None = None,
+    v11_h4_bottom_packet_algebra_packet_manifest: str | Path | None = None,
+    v11_h4_bottom_packet_algebra_packet_manifest_sha256: str | None = None,
+    v11_h4_bottom_packet_algebra_producer_diagnostic: str | Path | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
@@ -1082,8 +1160,7 @@ def build_v3_7_execution_plan(
         or v10_h4_side_response_packet_compression
         or v10_h4_side_response_packet_pilot
         or v10_h4_side_response_packet_consumer
-        or v10_h4_side_response_packet_full_producer
-        or v10_h4_side_response_packet_compression
+        or v11_h4_bottom_packet_algebra
     ):
         specification = load_and_resolve(input_path)
         from benchmarks.task039_v4_h4_hybrid_direct import (
@@ -1117,6 +1194,7 @@ def build_v3_7_execution_plan(
         v10_h4_side_response_packet_consumer=v10_h4_side_response_packet_consumer,
         v10_h4_side_response_packet_full_producer=v10_h4_side_response_packet_full_producer,
         v10_h4_side_response_packet_compression=v10_h4_side_response_packet_compression,
+        v11_h4_bottom_packet_algebra=v11_h4_bottom_packet_algebra,
     )
     if (
         sum(
@@ -1146,6 +1224,7 @@ def build_v3_7_execution_plan(
                 bool(v10_h4_side_response_packet_consumer),
                 bool(v10_h4_side_response_packet_full_producer),
                 bool(v10_h4_side_response_packet_compression),
+                bool(v11_h4_bottom_packet_algebra),
             )
         )
         > 1
@@ -1199,6 +1278,7 @@ def build_v3_7_execution_plan(
         or v10_h4_sn2_j_only
         or v10_h4_j1_inner_fgmres
         or v10_h4_side_response_packet_compression
+        or v11_h4_bottom_packet_algebra
     ):
         if (
             not v8_h4_layer_block_reconstruction
@@ -1209,6 +1289,7 @@ def build_v3_7_execution_plan(
             and not v10_h4_j1_inner_fgmres
             and not v10_h4_side_response_packet_full_producer
             and not v10_h4_side_response_packet_compression
+            and not v11_h4_bottom_packet_algebra
             and not all(
                 (
                     selected_mode_packet_manifest,
@@ -1248,6 +1329,8 @@ def build_v3_7_execution_plan(
             component_flag = V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_FLAG
         elif v10_h4_side_response_packet_compression:
             component_flag = V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_FLAG
+        elif v11_h4_bottom_packet_algebra:
+            component_flag = V11_BOTTOM_PACKET_ALGEBRA_FLAG
         elif v10_h4_side_response_packet_pilot:
             component_flag = V10_H4_SIDE_RESPONSE_PACKET_PILOT_FLAG
         elif v10_h4_side_response_packet_consumer:
@@ -1270,6 +1353,7 @@ def build_v3_7_execution_plan(
             and not v10_h4_side_response_packet_consumer
             and not v10_h4_side_response_packet_full_producer
             and not v10_h4_side_response_packet_compression
+            and not v11_h4_bottom_packet_algebra
         ):
             argv.extend(
                 [
@@ -1477,6 +1561,36 @@ def build_v3_7_execution_plan(
                     str(v10_h4_side_response_packet_compression_producer_source_sha),
                 ]
             )
+        elif v11_h4_bottom_packet_algebra:
+            if not all(
+                (
+                    selected_mode_packet_manifest,
+                    selected_mode_packet_manifest_sha256,
+                    v11_h4_bottom_packet_algebra_exact_spool_root,
+                    v11_h4_bottom_packet_algebra_packet_manifest,
+                    v11_h4_bottom_packet_algebra_packet_manifest_sha256,
+                    v11_h4_bottom_packet_algebra_producer_diagnostic,
+                )
+            ):
+                raise ValueError("V11 bottom algebra route requires frozen artifacts")
+            argv.extend(
+                [
+                    "--selected-mode-packet-manifest",
+                    str(Path(selected_mode_packet_manifest).resolve()),
+                    "--selected-mode-packet-manifest-sha256",
+                    str(selected_mode_packet_manifest_sha256),
+                    V11_BOTTOM_PACKET_ALGEBRA_EXACT_SPOOL_ROOT_FLAG,
+                    str(Path(v11_h4_bottom_packet_algebra_exact_spool_root).resolve()),
+                    V11_BOTTOM_PACKET_ALGEBRA_PACKET_MANIFEST_FLAG,
+                    str(Path(v11_h4_bottom_packet_algebra_packet_manifest).resolve()),
+                    V11_BOTTOM_PACKET_ALGEBRA_PACKET_MANIFEST_SHA256_FLAG,
+                    str(v11_h4_bottom_packet_algebra_packet_manifest_sha256),
+                    V11_BOTTOM_PACKET_ALGEBRA_PRODUCER_DIAGNOSTIC_FLAG,
+                    str(
+                        Path(v11_h4_bottom_packet_algebra_producer_diagnostic).resolve()
+                    ),
+                ]
+            )
     if v7_h4_exact_side_full_formal:
         method = V7_H4_EXACT_SIDE_FULL_FORMAL_METHOD
     elif v7_h4_exact_side_limit_setup_only:
@@ -1507,6 +1621,8 @@ def build_v3_7_execution_plan(
         method = V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_METHOD
     elif v10_h4_side_response_packet_compression:
         method = V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_METHOD
+    elif v11_h4_bottom_packet_algebra:
+        method = V11_BOTTOM_PACKET_ALGEBRA_METHOD
     elif v10_h4_side_response_packet_pilot:
         method = V10_H4_SIDE_RESPONSE_PACKET_PILOT_METHOD
     elif v10_h4_side_response_packet_consumer:
@@ -1559,6 +1675,8 @@ def build_v3_7_execution_plan(
         profile_id = V10_H4_SIDE_RESPONSE_PACKET_FULL_PRODUCER_PROFILE_ID
     elif v10_h4_side_response_packet_compression:
         profile_id = V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PROFILE_ID
+    elif v11_h4_bottom_packet_algebra:
+        profile_id = V11_BOTTOM_PACKET_ALGEBRA_PROFILE_ID
     elif v10_h4_side_response_packet_pilot:
         profile_id = V10_H4_SIDE_RESPONSE_PACKET_PILOT_PROFILE_ID
     elif v10_h4_side_response_packet_consumer:
@@ -1624,6 +1742,13 @@ def build_v3_7_execution_plan(
     ):
         exact_spool_root = str(
             Path(v10_h4_side_response_packet_full_producer_exact_spool_root).resolve()
+        )
+    elif (
+        v11_h4_bottom_packet_algebra
+        and v11_h4_bottom_packet_algebra_exact_spool_root is not None
+    ):
+        exact_spool_root = str(
+            Path(v11_h4_bottom_packet_algebra_exact_spool_root).resolve()
         )
     else:
         exact_spool_root = None
@@ -1753,6 +1878,11 @@ def v3_7_execution_dry_run(
     v10_h4_side_response_packet_compression_manifest: str | Path | None = None,
     v10_h4_side_response_packet_compression_manifest_sha256: str | None = None,
     v10_h4_side_response_packet_compression_producer_source_sha: str | None = None,
+    v11_h4_bottom_packet_algebra: bool = False,
+    v11_h4_bottom_packet_algebra_exact_spool_root: str | Path | None = None,
+    v11_h4_bottom_packet_algebra_packet_manifest: str | Path | None = None,
+    v11_h4_bottom_packet_algebra_packet_manifest_sha256: str | None = None,
+    v11_h4_bottom_packet_algebra_producer_diagnostic: str | Path | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
@@ -1839,6 +1969,19 @@ def v3_7_execution_dry_run(
         ),
         v10_h4_side_response_packet_compression_producer_source_sha=(
             v10_h4_side_response_packet_compression_producer_source_sha
+        ),
+        v11_h4_bottom_packet_algebra=v11_h4_bottom_packet_algebra,
+        v11_h4_bottom_packet_algebra_exact_spool_root=(
+            v11_h4_bottom_packet_algebra_exact_spool_root
+        ),
+        v11_h4_bottom_packet_algebra_packet_manifest=(
+            v11_h4_bottom_packet_algebra_packet_manifest
+        ),
+        v11_h4_bottom_packet_algebra_packet_manifest_sha256=(
+            v11_h4_bottom_packet_algebra_packet_manifest_sha256
+        ),
+        v11_h4_bottom_packet_algebra_producer_diagnostic=(
+            v11_h4_bottom_packet_algebra_producer_diagnostic
         ),
         v8_h4_layer_sweep_exact_spool_root=v8_h4_layer_sweep_exact_spool_root,
         v5_h4_blr_profile=v5_h4_blr_profile,
@@ -6796,6 +6939,631 @@ def run_v10_h4_side_response_packet_consumer(
         "qep_count": 0,
         "sgs_executed": False,
     }
+
+
+def _v11_sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _v11_load_modal_amplitudes(
+    path: Path, *, expected_file_sha256: str, expected_array_sha256: str
+) -> np.ndarray:
+    if _v11_sha256(path) != expected_file_sha256:
+        raise ValueError("V11 modal amplitude artifact hash mismatch")
+    with np.load(path, allow_pickle=False) as modal_npz:
+        amplitudes = np.array(
+            modal_npz["modal_amplitudes"], dtype=np.complex128, copy=True
+        )
+    if amplitudes.shape != (960,):
+        raise ValueError("V11 modal amplitude authority must contain 960 values")
+    if (
+        hashlib.sha256(np.ascontiguousarray(amplitudes).tobytes(order="C")).hexdigest()
+        != expected_array_sha256
+    ):
+        raise ValueError("V11 modal amplitude array hash mismatch")
+    return amplitudes
+
+
+def _v11_identity_records(
+    raw_records: Sequence[Mapping[str, Any]], context: Any, cfg: Any
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    actual = sorted(
+        (dict(record) for record in raw_records), key=lambda x: int(x["column_index"])
+    )
+    if len(actual) != 961 or [int(item["column_index"]) for item in actual] != list(
+        range(961)
+    ):
+        raise ValueError("V11 raw column_records must cover columns 0..960")
+    schedule = {
+        int(item["column"]): item for item in v10_side_response_packet_full_schedule()
+    }
+    expected: list[dict[str, Any]] = []
+    enriched: list[dict[str, Any]] = []
+    for column, record in enumerate(actual):
+        if column == 960:
+            expected.append(
+                {
+                    "column_index": 960,
+                    "label": "physical_side_rhs",
+                    "source": "frozen_physical_side_rhs",
+                    "family": None,
+                    "branch": None,
+                    "mode_index": None,
+                    "raw_beta": None,
+                    "discrete_beta": None,
+                    "mode_key": None,
+                    "schedule_kind": "physical_side_rhs",
+                }
+            )
+            enriched.append(record)
+            continue
+        branch = "positive" if column < 480 else "negative"
+        mode_index = column if branch == "positive" else column - 480
+        pair = context.mode_pair(branch, mode_index)
+        beta = complex(pair["beta"])
+        discrete = scalar_cg_discrete_traction_beta(
+            beta,
+            degree=int(cfg.nedelec_degree),
+            h_nm=float(cfg.mesh_target_size),
+            direction="forward" if branch == "positive" else "backward",
+        )
+        expected_record = {
+            "column_index": column,
+            "label": str(schedule[column]["label"]),
+            "source": "streamed_modal_traction_column",
+            "family": f"{branch}_modal_traction",
+            "branch": branch,
+            "mode_index": mode_index,
+            "raw_beta": [beta.real, beta.imag],
+            "discrete_beta": [discrete.real, discrete.imag],
+            "mode_key": pair["mode_key"],
+            "schedule_kind": str(schedule[column]["kind"]),
+        }
+        if "mode_key" in record and record["mode_key"] != pair["mode_key"]:
+            raise ValueError(f"V11 selected mode key mismatch at column {column}")
+        record["mode_key"] = pair["mode_key"]
+        expected.append(expected_record)
+        enriched.append(record)
+    return enriched, expected
+
+
+def _v11_packet_value_map(packets: Sequence[tuple[Any, complex]]) -> dict[Any, complex]:
+    result: dict[Any, complex] = {}
+    for key, value in packets:
+        if key in result:
+            raise ValueError("V11 canonical packet contains a duplicate key")
+        result[key] = complex(value)
+    return result
+
+
+def _v11_trace_values_in_order(
+    packets: Sequence[tuple[Any, complex]],
+    trace_keys: Sequence[Any],
+    comm: MPI.Intracomm,
+) -> np.ndarray:
+    local_ok = True
+    values_by_key: dict[Any, complex] = {}
+    try:
+        values_by_key = _v11_packet_value_map(packets)
+        local_ok = bool(set(values_by_key) == set(trace_keys))
+    except (TypeError, ValueError):
+        local_ok = False
+    if not bool(comm.allreduce(local_ok, op=MPI.LAND)):
+        raise ValueError("V11 extracted trace key set does not match frozen V7 trace")
+    return np.asarray([values_by_key[key] for key in trace_keys], dtype=np.complex128)
+
+
+def _v11_read_owner_canonical_shard(
+    path: Path, expected_sha256: str, comm: MPI.Intracomm
+) -> tuple[dict[str, Any], tuple[Any, ...]]:
+    local_ok = True
+    manifest: dict[str, Any] = {}
+    packets: tuple[Any, ...] = ()
+    try:
+        payload = path.read_bytes()
+        if hashlib.sha256(payload).hexdigest() != expected_sha256:
+            raise ValueError("V11 canonical manifest hash mismatch")
+        manifest = json.loads(payload.decode("utf-8"))
+        if manifest.get("schema_version") != "task037.canonical-vector-manifest.v1":
+            raise ValueError("V11 canonical manifest schema mismatch")
+        shards = list(manifest.get("per_rank_shards", ()))
+        if int(manifest.get("mpi_size", -1)) != comm.size or len(shards) != comm.size:
+            raise ValueError("V11 canonical manifest MPI size mismatch")
+        owned = [item for item in shards if int(item.get("rank", -1)) == comm.rank]
+        if len(owned) != 1:
+            raise ValueError("V11 canonical manifest has no unique local shard")
+        descriptor = owned[0]
+        packets = read_canonical_packet_shard(
+            path.parent / str(descriptor["filename"]),
+            str(descriptor["file_sha256"]),
+        )
+        _v11_packet_value_map(packets)
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+        local_ok = False
+    all_ok = bool(comm.allreduce(local_ok, op=MPI.LAND))
+    if not all_ok or not local_ok:
+        raise ValueError("V11 owner-local canonical shard validation failed")
+    return manifest, packets
+
+
+def _v11_release_partial_authority(owned: dict[str, Any]) -> dict[str, Any]:
+    released: dict[str, bool] = {}
+    for name, method in (
+        ("provider", "destroy"),
+        ("context", "release"),
+        ("owner", "destroy"),
+        ("bundle", "destroy"),
+    ):
+        value = owned.get(name)
+        if value is not None:
+            getattr(value, method)()
+            owned[name] = None
+            released[name] = True
+        else:
+            released[name] = False
+    spool = owned.get("spool")
+    if spool is not None:
+        spool.clear()
+        owned["spool"] = None
+        released["spool"] = True
+    else:
+        released["spool"] = False
+    return {
+        "released_objects": released,
+        "all_owned_released": all(value is None for value in owned.values()),
+    }
+
+
+def _v11_prepare_bottom_authority(
+    system: Any,
+    packet: ExactSideResponsePacket,
+    *,
+    cfg: Any,
+    comm: MPI.Intracomm,
+    response_manifest: Path,
+    producer_diagnostic: Path,
+    selected_manifest: Path,
+    selected_manifest_sha256: str,
+    exact_spool_root: Path,
+    v7_root: Path = Path(V11_V7_FULL_FORMAL_ROOT),
+) -> dict[str, Any]:
+    owned: dict[str, Any] = {}
+    try:
+        return _v11_prepare_bottom_authority_inner(
+            system,
+            packet,
+            cfg=cfg,
+            comm=comm,
+            response_manifest=response_manifest,
+            producer_diagnostic=producer_diagnostic,
+            selected_manifest=selected_manifest,
+            selected_manifest_sha256=selected_manifest_sha256,
+            exact_spool_root=exact_spool_root,
+            v7_root=v7_root,
+            owned=owned,
+        )
+    except Exception:
+        _v11_release_partial_authority(owned)
+        raise
+
+
+def _v11_prepare_bottom_authority_inner(
+    system: Any,
+    packet: ExactSideResponsePacket,
+    *,
+    cfg: Any,
+    comm: MPI.Intracomm,
+    response_manifest: Path,
+    producer_diagnostic: Path,
+    selected_manifest: Path,
+    selected_manifest_sha256: str,
+    exact_spool_root: Path,
+    v7_root: Path = Path(V11_V7_FULL_FORMAL_ROOT),
+    owned: dict[str, Any],
+) -> dict[str, Any]:
+    """Bind the Task39 V7/V10 artifacts to one fresh action-only system."""
+    if _v11_sha256(response_manifest) != V11_RESPONSE_PACKET_MANIFEST_SHA256:
+        raise ValueError("V11 response manifest hash is not frozen")
+    if _v11_sha256(producer_diagnostic) != V11_RESPONSE_PACKET_DIAGNOSTIC_SHA256:
+        raise ValueError("V11 producer diagnostic hash is not frozen")
+    selected_payload = json.loads(selected_manifest.read_text(encoding="utf-8"))
+    if _v11_sha256(selected_manifest) != selected_manifest_sha256:
+        raise ValueError("V11 selected packet manifest hash mismatch")
+    if selected_manifest_sha256 != V11_RESPONSE_PACKET_SELECTED_MANIFEST_SHA256:
+        raise ValueError("V11 selected packet manifest is not frozen")
+    if (
+        str(selected_payload.get("identity_sha256"))
+        != V11_SELECTED_PACKET_IDENTITY_SHA256
+    ):
+        raise ValueError("V11 selected packet identity hash mismatch")
+    identity_path = selected_manifest.with_name("identity.json")
+    if (
+        _v11_sha256(identity_path)
+        != "b3bb870fe6fa17cb262b6161f7317cc1950944755c9270d4628dd5c79e950690"
+    ):
+        raise ValueError("V11 selected packet identity artifact hash mismatch")
+    selected_identity = json.loads(identity_path.read_text(encoding="utf-8"))
+    context = Task039V4SelectedModeMmapContext(
+        selected_manifest,
+        identity=selected_identity,
+        expected_manifest_sha256=selected_manifest_sha256,
+        comm=comm,
+    )
+    owned["context"] = context
+    raw = json.loads(producer_diagnostic.read_text(encoding="utf-8"))
+    actual_records, expected_records = _v11_identity_records(
+        raw.get("column_records", ()), context, cfg
+    )
+    response_provenance = {
+        "exact_spool_manifest_sha256": V11_RESPONSE_PACKET_SELECTED_MANIFEST_SHA256,
+        "factor_identity": {
+            "action": "research_exact_side_lu",
+            "factor_only_storage": True,
+            "profile_id": "task039.v10.h4.side_response_packet.full_producer.v1",
+            "qualification_scope": "task039.v10.h4.side_response_packet.full_producer.v1",
+            "side": "bottom",
+        },
+        "input_sha256": V11_RESPONSE_PACKET_INPUT_SHA256,
+        "physical_model_sha256": V11_RESPONSE_PACKET_PHYSICAL_MODEL_SHA256,
+        "selected_mode_packet_manifest_sha256": V11_RESPONSE_PACKET_SELECTED_MANIFEST_SHA256,
+        "source_sha": V11_RESPONSE_PACKET_PRODUCER_SOURCE_SHA,
+    }
+    full_manifest = v7_root / V11_V7_FULL_FE_MANIFEST_RELATIVE
+    trace_manifest = v7_root / V11_V7_ACTIVE_TRACE_MANIFEST_RELATIVE
+    full_meta, full_packets = _v11_read_owner_canonical_shard(
+        full_manifest, V11_V7_FULL_FE_MANIFEST_SHA256, comm
+    )
+    trace_meta, trace_packets = _v11_read_owner_canonical_shard(
+        trace_manifest, V11_V7_ACTIVE_TRACE_MANIFEST_SHA256, comm
+    )
+    modal_path = v7_root / V11_V7_MODAL_Q_RELATIVE
+    amplitudes = _v11_load_modal_amplitudes(
+        modal_path,
+        expected_file_sha256=V11_V7_MODAL_Q_SHA256,
+        expected_array_sha256=V11_V7_MODAL_AMPLITUDES_SHA256,
+    )
+    cross_section = build_matching_cross_section(system.cfg, "stage4_xy")
+    spaces = build_cross_section_spaces(
+        cross_section, transverse_degree=int(system.cfg.nedelec_degree)
+    )
+    bundle = consume_task039_v4_selected_mode_packet(
+        selected_manifest,
+        identity=selected_identity,
+        expected_manifest_sha256=selected_manifest_sha256,
+        consumer_kind="iterative",
+        comm=comm,
+    )
+    owned["bundle"] = bundle
+    owner = build_single_hybrid_interface_mode_owner(
+        system,
+        spaces,
+        bundle.positive_basis,
+        bundle.negative_basis,
+        canonical_trace_family_sha256=selected_payload.get("selection_sha256"),
+    )
+    owned["owner"] = owner
+    bundle.destroy()
+    owned["bundle"] = None
+    provider = StreamedPhysicalModalSourceProvider(system, spaces)
+    owned["provider"] = provider
+    sources: dict[int, np.ndarray] = {}
+    for column in V11_BOTTOM_RESPONSE_SAMPLE_INDICES:
+        branch = "positive" if column < 480 else "negative"
+        pair = context.mode_pair(
+            branch, column if branch == "positive" else column - 480
+        )
+        vec, _metadata = provider(
+            system,
+            pair,
+            branch=branch,
+            role="right",
+            family=f"{branch}_modal_traction",
+        )
+        sources[column] = np.array(
+            vec.getArray(readonly=True), dtype=np.complex128, copy=True
+        )
+        vec.destroy()
+    spool_identity, spool_manifest_sha, _catalog = _v9_frozen_holdout_identity(
+        exact_spool_root, comm
+    )
+    spool = _load_v5_fixed_budget_spool_shards(
+        exact_spool_root,
+        comm,
+        packet_identity=spool_identity,
+        manifest_sha256=spool_manifest_sha,
+    )
+    owned["spool"] = spool
+    template = system.A.createVecLeft()
+    physical_vec = _load_v5_blr_reference_spool_remapped(
+        spool["physical_side_rhs"]["rhs"], template
+    )
+    template.destroy()
+    physical_rhs = np.array(
+        physical_vec.getArray(readonly=True), dtype=np.complex128, copy=True
+    )
+    physical_vec.destroy()
+    full_field = reconstruct_canonical_full_fe_function(
+        system.V, full_packets, system.floquet_data
+    )
+    active_v7 = copy_full_solution_to_active_trace(
+        system.static_condensation.condensed, full_field
+    )
+    d_matrix = owner.blocks.projection
+    d_target = d_matrix.createVecLeft()
+    d_matrix.mult(active_v7, d_target)
+    v7_schur = -np.array(
+        d_target.getArray(readonly=True), dtype=np.complex128, copy=True
+    )
+    d_target.destroy()
+    active_v7.destroy()
+    del full_field
+    trace_map = _v11_packet_value_map(trace_packets)
+    trace_keys = tuple(sorted(trace_map, key=repr))
+    v7_trace = np.asarray([trace_map[key] for key in trace_keys], dtype=np.complex128)
+
+    def _local_vec(values: np.ndarray) -> PETSc.Vec:
+        vec = system.A.createVecRight()
+        vec.set(0.0)
+        vec.getArray()[:] = np.asarray(values, dtype=PETSc.ScalarType)
+        vec.assemble()
+        return vec
+
+    def block_action(values: np.ndarray) -> np.ndarray:
+        source = _local_vec(values)
+        target = system.A.createVecLeft()
+        target.set(0.0)
+        try:
+            system.A.mult(source, target)
+            return np.array(
+                target.getArray(readonly=True), dtype=np.complex128, copy=True
+            )
+        finally:
+            target.destroy()
+            source.destroy()
+
+    def schur_action(values: np.ndarray) -> np.ndarray:
+        source = _local_vec(values)
+        target = d_matrix.createVecLeft()
+        target.set(0.0)
+        try:
+            d_matrix.mult(source, target)
+            return np.array(
+                target.getArray(readonly=True), dtype=np.complex128, copy=True
+            )
+        finally:
+            target.destroy()
+            source.destroy()
+
+    def trace_action(values: np.ndarray) -> np.ndarray:
+        active = _local_vec(values)
+        try:
+            packets, _audit = extract_canonical_active_trace_packets(
+                system.static_condensation.condensed,
+                system.V,
+                system.floquet_data,
+                active,
+            )
+            return _v11_trace_values_in_order(packets, trace_keys, comm)
+        finally:
+            active.destroy()
+
+    def release() -> dict[str, Any]:
+        return _v11_release_partial_authority(owned)
+
+    system_evidence = {
+        "observed": True,
+        "source": "system.A/static_condensation/owner.blocks.projection objects",
+        "mat": {
+            "type": str(system.A.getType()),
+            "size": [int(value) for value in system.A.getSize()],
+            "ownership_ranges": comm.allgather(
+                list(map(int, system.A.getOwnershipRange()))
+            ),
+            "matrix_free": bool(getattr(system, "inventory", {}).get("matrix_free")),
+        },
+    }
+    direct_factor_count = int(
+        getattr(system, "inventory", {}).get("direct_factor_count", -1)
+    )
+    direct_factor_ok = bool(comm.allreduce(direct_factor_count == 0, op=MPI.LAND))
+    if not direct_factor_ok:
+        raise ValueError("V11 action-only system has an unexpected direct factor")
+    inventory_evidence = {
+        "observed": True,
+        "source": "fresh action-only object lifecycle; no factor/KSP/QEP objects created",
+        "ready": {"factor_count": direct_factor_count, "ksp_count": 0, "qep_count": 0},
+        "ksp_qep_not_created": True,
+    }
+    return {
+        "actual_source_records": actual_records,
+        "expected_identity_records": expected_records,
+        "expected_provenance": {
+            "manifest": response_provenance,
+            "provider": {
+                "implementation": "src.coupling.hybrid_streamed_sources:StreamedPhysicalModalSourceProvider._entries_to_vec",
+                "scale": -1.0,
+                "selected_mode_packet_manifest_sha256": V11_RESPONSE_PACKET_SELECTED_MANIFEST_SHA256,
+                "producer_source_sha": V11_RESPONSE_PACKET_PRODUCER_SOURCE_SHA,
+            },
+            "selected_packet_authority": {
+                "manifest_sha256": selected_manifest_sha256,
+                "identity_sha256": selected_payload["identity_sha256"],
+            },
+        },
+        "source_columns": sources,
+        "v7_schur_authority": {
+            "value": v7_schur,
+            "source_path": str(full_manifest),
+            "source_sha256": V11_V7_FULL_FE_MANIFEST_SHA256,
+            "derivation": "-D_b*u_v7",
+            "D_identity": f"owner.blocks.projection:{d_matrix.getType()}:{d_matrix.getSize()}",
+            "modal_amplitudes_path": str(modal_path),
+            "modal_amplitudes_sha256": V11_V7_MODAL_AMPLITUDES_SHA256,
+        },
+        "v7_modal_amplitudes": amplitudes,
+        "v7_bottom_trace": v7_trace,
+        "physical_rhs": physical_rhs,
+        "block_action": block_action,
+        "schur_action": schur_action,
+        "trace_action": trace_action,
+        "inventory_evidence": inventory_evidence,
+        "system_evidence": system_evidence,
+        "release": release,
+    }
+
+
+def run_v11_h4_bottom_packet_algebra(
+    cfg: Any,
+    *,
+    profile: Any,
+    comm: MPI.Intracomm,
+    marker_callback: Callable[[str, Mapping[str, Any]], None],
+    packet_manifest: str | Path,
+    packet_manifest_sha256: str,
+    selected_mode_packet_manifest: str | Path,
+    selected_mode_packet_manifest_sha256: str,
+    producer_diagnostic_path: str | Path,
+    exact_spool_root: str | Path,
+    side_system_builder: Callable[..., Any] | None = None,
+) -> dict[str, Any]:
+    """Run the explicit Task39 V11 bottom packet algebra audit."""
+    system = None
+    prepared = None
+    packet = None
+    result: dict[str, Any] | None = None
+    cleanup_detail: dict[str, Any] = {}
+    packet_destroyed_by_checker = False
+    lifecycle: list[str] = []
+
+    def emit(stage: str, **detail: Any) -> None:
+        lifecycle.append(stage)
+        marker_callback(stage, detail)
+
+    emit(
+        "v11_h4_bottom_packet_algebra_construction_begin",
+        profile_id=V11_BOTTOM_PACKET_ALGEBRA_PROFILE_ID,
+        schema=V11_BOTTOM_PACKET_ALGEBRA_SCHEMA,
+        method=V11_BOTTOM_PACKET_ALGEBRA_METHOD,
+    )
+    try:
+        system = (
+            side_system_builder(side="bottom", cfg=cfg, profile=profile, comm=comm)
+            if side_system_builder is not None
+            else assemble_hybrid_local_dtn_action_system(
+                cfg,
+                "bottom",
+                bottom_interface_z_nm=profile.bottom_interface_nm,
+                top_interface_z_nm=profile.top_interface_nm,
+                comm=comm,
+                log=None,
+            )
+        )
+        ownership = tuple(int(value) for value in system.A.getOwnershipRange())
+        packet = load_full_side_response_packet(
+            packet_manifest,
+            expected_manifest_sha256=packet_manifest_sha256,
+            expected_provenance={
+                "exact_spool_manifest_sha256": V11_RESPONSE_PACKET_SELECTED_MANIFEST_SHA256,
+                "factor_identity": {
+                    "action": "research_exact_side_lu",
+                    "factor_only_storage": True,
+                    "profile_id": "task039.v10.h4.side_response_packet.full_producer.v1",
+                    "qualification_scope": "task039.v10.h4.side_response_packet.full_producer.v1",
+                    "side": "bottom",
+                },
+                "input_sha256": V11_RESPONSE_PACKET_INPUT_SHA256,
+                "physical_model_sha256": V11_RESPONSE_PACKET_PHYSICAL_MODEL_SHA256,
+                "selected_mode_packet_manifest_sha256": V11_RESPONSE_PACKET_SELECTED_MANIFEST_SHA256,
+                "source_sha": V11_RESPONSE_PACKET_PRODUCER_SOURCE_SHA,
+            },
+            global_rows=int(system.A.getSize()[0]),
+            ownership_range=ownership,
+            comm=comm,
+        )
+        prepared = _v11_prepare_bottom_authority(
+            system,
+            packet,
+            cfg=cfg,
+            comm=comm,
+            response_manifest=Path(packet_manifest),
+            producer_diagnostic=Path(producer_diagnostic_path),
+            selected_manifest=Path(selected_mode_packet_manifest),
+            selected_manifest_sha256=selected_mode_packet_manifest_sha256,
+            exact_spool_root=Path(exact_spool_root),
+        )
+        emit(
+            "v11_h4_bottom_packet_algebra_authority_ready",
+            factor_count_ready=prepared["inventory_evidence"]["ready"]["factor_count"],
+        )
+        try:
+            result = audit_bottom_response_packet_algebra(
+                packet,
+                actual_source_records=prepared["actual_source_records"],
+                expected_identity_records=prepared["expected_identity_records"],
+                expected_provenance=prepared["expected_provenance"],
+                source_columns=prepared["source_columns"],
+                v7_schur_authority=prepared["v7_schur_authority"],
+                v7_modal_amplitudes=prepared["v7_modal_amplitudes"],
+                v7_bottom_trace=prepared["v7_bottom_trace"],
+                physical_rhs=prepared["physical_rhs"],
+                block_action=prepared["block_action"],
+                schur_action=prepared["schur_action"],
+                trace_action=prepared["trace_action"],
+                inventory_evidence=prepared["inventory_evidence"],
+                system_evidence=prepared["system_evidence"],
+                comm=comm,
+            )
+        finally:
+            packet_destroyed_by_checker = True
+            packet = None
+    finally:
+        authority_release = None
+        if prepared is not None:
+            authority_release = prepared["release"]()
+            prepared = None
+        packet_destroyed_by_runner = False
+        if packet is not None:
+            packet.destroy()
+            packet = None
+            packet_destroyed_by_runner = True
+        pre_destroy_inventory: dict[str, Any] = {}
+        system_destroy_called = False
+        if system is not None:
+            inventory = getattr(system, "inventory", {})
+            pre_destroy_inventory = {
+                "direct_factor_count": inventory.get(
+                    "direct_factor_count", "not_available"
+                ),
+                "observed_pre_destroy_zero": inventory.get("direct_factor_count") == 0,
+            }
+            system.destroy()
+            system = None
+            system_destroy_called = True
+        collective_heap_cleanup(comm)
+        cleanup_detail = {
+            "authority_release": authority_release,
+            "packet_destroy_called": bool(
+                packet_destroyed_by_runner or packet_destroyed_by_checker
+            ),
+            "system_destroy_called": system_destroy_called,
+            "system_released": system is None,
+            "pre_destroy_inventory": pre_destroy_inventory,
+            "observed_pre_destroy_zero": bool(
+                pre_destroy_inventory.get("observed_pre_destroy_zero", False)
+            ),
+            "factor_count_after_cleanup": "not_observable_after_system_destroy",
+        }
+        emit("v11_h4_bottom_packet_algebra_cleanup", **cleanup_detail)
+    if result is not None:
+        result.update(
+            {
+                "profile": V11_BOTTOM_PACKET_ALGEBRA_PROFILE_ID,
+                "lifecycle": lifecycle,
+                "cleanup": cleanup_detail,
+                "pde_solve": "not_run",
+            }
+        )
+    return result
 
 
 def _v7_streamed_packet_pair(
@@ -12512,6 +13280,11 @@ def run_task039_v3_7_diagnostic(
     v10_h4_side_response_packet_compression_manifest: str | Path | None = None,
     v10_h4_side_response_packet_compression_manifest_sha256: str | None = None,
     v10_h4_side_response_packet_compression_producer_source_sha: str | None = None,
+    v11_h4_bottom_packet_algebra: bool = False,
+    v11_h4_bottom_packet_algebra_exact_spool_root: str | Path | None = None,
+    v11_h4_bottom_packet_algebra_packet_manifest: str | Path | None = None,
+    v11_h4_bottom_packet_algebra_packet_manifest_sha256: str | None = None,
+    v11_h4_bottom_packet_algebra_producer_diagnostic: str | Path | None = None,
     v8_h4_layer_sweep_exact_spool_root: str | Path | None = None,
     v5_h4_blr_profile: str = MUMPS_BLR_V5_H4_PROFILE,
     selected_mode_packet_manifest: str | Path | None = None,
@@ -12623,6 +13396,7 @@ def run_task039_v3_7_diagnostic(
             or v10_h4_side_response_packet_consumer
             or v10_h4_side_response_packet_full_producer
             or v10_h4_side_response_packet_compression
+            or v11_h4_bottom_packet_algebra
         ):
             profile = (
                 profile_override
@@ -12650,6 +13424,7 @@ def run_task039_v3_7_diagnostic(
             or v10_h4_side_response_packet_consumer
             or v10_h4_side_response_packet_full_producer
             or v10_h4_side_response_packet_compression
+            or v11_h4_bottom_packet_algebra
         ):
             incidence = resolved_payload["incidence"]
             if v7_h4_full_formal:
@@ -12703,6 +13478,9 @@ def run_task039_v3_7_diagnostic(
             elif v10_h4_side_response_packet_compression:
                 route_profile_id = V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PROFILE_ID
                 route_schema = V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_SCHEMA
+            elif v11_h4_bottom_packet_algebra:
+                route_profile_id = V11_BOTTOM_PACKET_ALGEBRA_PROFILE_ID
+                route_schema = V11_BOTTOM_PACKET_ALGEBRA_SCHEMA
             elif v5_h4_blr_side_only:
                 route_profile_id = V5_H4_BLR_SIDE_PROFILE_ID
                 route_schema = V5_H4_BLR_SIDE_PROFILE_ID
@@ -12749,6 +13527,7 @@ def run_task039_v3_7_diagnostic(
             v10_h4_side_response_packet_consumer=v10_h4_side_response_packet_consumer,
             v10_h4_side_response_packet_full_producer=v10_h4_side_response_packet_full_producer,
             v10_h4_side_response_packet_compression=v10_h4_side_response_packet_compression,
+            v11_h4_bottom_packet_algebra=v11_h4_bottom_packet_algebra,
         )
         _emit_marker(
             marker_callback,
@@ -12781,6 +13560,7 @@ def run_task039_v3_7_diagnostic(
             and not v10_h4_side_response_packet_consumer
             and not v10_h4_side_response_packet_full_producer
             and not v10_h4_side_response_packet_compression
+            and not v11_h4_bottom_packet_algebra
         ):
             raise ValueError(
                 "V3-7 requires an injected recovery_runner(setup, layout, snapshot, "
@@ -12877,6 +13657,24 @@ def run_task039_v3_7_diagnostic(
                 "response_packet_manifest_sha256": (
                     v10_h4_side_response_packet_compression_manifest_sha256
                 ),
+            }
+            modal_amplitudes = None
+        elif v11_h4_bottom_packet_algebra:
+            if not all(
+                (
+                    v11_h4_bottom_packet_algebra_exact_spool_root,
+                    v11_h4_bottom_packet_algebra_packet_manifest,
+                    v11_h4_bottom_packet_algebra_packet_manifest_sha256,
+                    v11_h4_bottom_packet_algebra_producer_diagnostic,
+                )
+            ):
+                raise ValueError("V11 bottom algebra requires frozen artifact paths")
+            producer = {
+                "producer_source_sha": V11_RESPONSE_PACKET_PRODUCER_SOURCE_SHA,
+                "consumer_source_sha": source_sha,
+                "component_candidate": True,
+                "research_only": True,
+                "pde_solve": "not_run",
             }
             modal_amplitudes = None
         elif v8_h4_layer_sweep_bottom:
@@ -13443,6 +14241,34 @@ def run_task039_v3_7_diagnostic(
             result["consumer_source_sha"] = source_sha
             result["run_directory"] = str(Path(run_directory).resolve())
             normal_return = result.get("status") == "component_fgmres_completed"
+            return result
+        if v11_h4_bottom_packet_algebra:
+            result = run_v11_h4_bottom_packet_algebra(
+                cfg,
+                profile=profile,
+                comm=comm,
+                marker_callback=marker_callback,
+                packet_manifest=v11_h4_bottom_packet_algebra_packet_manifest,
+                packet_manifest_sha256=(
+                    v11_h4_bottom_packet_algebra_packet_manifest_sha256
+                ),
+                selected_mode_packet_manifest=selected_mode_packet_manifest,
+                selected_mode_packet_manifest_sha256=selected_mode_packet_manifest_sha256,
+                producer_diagnostic_path=v11_h4_bottom_packet_algebra_producer_diagnostic,
+                exact_spool_root=v11_h4_bottom_packet_algebra_exact_spool_root,
+                side_system_builder=side_system_builder,
+            )
+            result["source_sha"] = source_sha
+            result["run_directory"] = str(Path(run_directory).resolve())
+            result["status"] = (
+                "component_v11_bottom_packet_algebra_completed"
+                if result.get("gate", {}).get("pass") is True
+                else "component_v11_bottom_packet_algebra_failed"
+            )
+            attach_v10_finalizer_ledger(result)
+            normal_return = result["status"] == (
+                "component_v11_bottom_packet_algebra_completed"
+            )
             return result
         if v10_h4_side_response_packet_full_producer:
             v10_input_sha256, v10_physical_model_sha256 = (
@@ -14838,6 +15664,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         V10_H4_SIDE_RESPONSE_PACKET_COMPRESSION_PRODUCER_SOURCE_SHA_FLAG
     )
+    parser.add_argument(V11_BOTTOM_PACKET_ALGEBRA_FLAG, action="store_true")
+    parser.add_argument(V11_BOTTOM_PACKET_ALGEBRA_EXACT_SPOOL_ROOT_FLAG)
+    parser.add_argument(V11_BOTTOM_PACKET_ALGEBRA_PACKET_MANIFEST_FLAG)
+    parser.add_argument(V11_BOTTOM_PACKET_ALGEBRA_PACKET_MANIFEST_SHA256_FLAG)
+    parser.add_argument(V11_BOTTOM_PACKET_ALGEBRA_PRODUCER_DIAGNOSTIC_FLAG)
     parser.add_argument(
         "--v5-h4-blr-profile",
         choices=V5_H4_BLR_PROFILE_CHOICES,
@@ -14870,6 +15701,7 @@ def main(argv: list[str] | None = None) -> int:
             args.v10_h4_side_response_packet_consumer,
             args.v10_h4_side_response_packet_full_producer,
             args.v10_h4_side_response_packet_compression,
+            args.v11_h4_bottom_packet_algebra,
             args.v5_h4_blr_side_component,
             args.v5_h4_fixed_budget_bottom_component,
         )
@@ -14902,6 +15734,7 @@ def main(argv: list[str] | None = None) -> int:
                 bool(args.v10_h4_side_response_packet_consumer),
                 bool(args.v10_h4_side_response_packet_full_producer),
                 bool(args.v10_h4_side_response_packet_compression),
+                bool(args.v11_h4_bottom_packet_algebra),
                 bool(args.v5_h4_blr_side_component),
                 bool(args.v5_h4_fixed_budget_bottom_component),
             )
@@ -14987,6 +15820,19 @@ def main(argv: list[str] | None = None) -> int:
             ),
             v10_h4_side_response_packet_compression_producer_source_sha=(
                 args.v10_h4_side_response_packet_compression_producer_source_sha
+            ),
+            v11_h4_bottom_packet_algebra=args.v11_h4_bottom_packet_algebra,
+            v11_h4_bottom_packet_algebra_exact_spool_root=(
+                args.v11_h4_bottom_packet_algebra_exact_spool_root
+            ),
+            v11_h4_bottom_packet_algebra_packet_manifest=(
+                args.v11_h4_bottom_packet_algebra_packet_manifest
+            ),
+            v11_h4_bottom_packet_algebra_packet_manifest_sha256=(
+                args.v11_h4_bottom_packet_algebra_packet_manifest_sha256
+            ),
+            v11_h4_bottom_packet_algebra_producer_diagnostic=(
+                args.v11_h4_bottom_packet_algebra_producer_diagnostic
             ),
             v8_h4_layer_sweep_exact_spool_root=(
                 args.v8_h4_layer_sweep_exact_spool_root
@@ -15082,6 +15928,7 @@ def main(argv: list[str] | None = None) -> int:
                     or args.v10_h4_j1_inner_fgmres
                     or args.v10_h4_side_response_packet_consumer
                     or args.v10_h4_side_response_packet_compression
+                    or args.v11_h4_bottom_packet_algebra
                 )
                 else json.loads(
                     Path(args.selected_mode_packet_identity).read_text(encoding="utf-8")
@@ -15189,6 +16036,19 @@ def main(argv: list[str] | None = None) -> int:
             v10_h4_side_response_packet_compression_producer_source_sha=(
                 args.v10_h4_side_response_packet_compression_producer_source_sha
             ),
+            v11_h4_bottom_packet_algebra=args.v11_h4_bottom_packet_algebra,
+            v11_h4_bottom_packet_algebra_exact_spool_root=(
+                args.v11_h4_bottom_packet_algebra_exact_spool_root
+            ),
+            v11_h4_bottom_packet_algebra_packet_manifest=(
+                args.v11_h4_bottom_packet_algebra_packet_manifest
+            ),
+            v11_h4_bottom_packet_algebra_packet_manifest_sha256=(
+                args.v11_h4_bottom_packet_algebra_packet_manifest_sha256
+            ),
+            v11_h4_bottom_packet_algebra_producer_diagnostic=(
+                args.v11_h4_bottom_packet_algebra_producer_diagnostic
+            ),
             v5_h4_blr_side_only=args.v5_h4_blr_side_component,
             v5_h4_fixed_budget_bottom_only=args.v5_h4_fixed_budget_bottom_component,
             v5_h4_fixed_budget_exact_spool_root=(
@@ -15234,6 +16094,7 @@ def main(argv: list[str] | None = None) -> int:
             "component_sn2_j_stable_resource_pending",
             "component_fgmres_completed",
             "compression_completed",
+            "component_v11_bottom_packet_algebra_completed",
         }
         else 3
     )
@@ -15365,6 +16226,16 @@ __all__ = [
     "run_v10_h4_side_response_packet_pilot",
     "run_v10_h4_side_response_packet_consumer",
     "run_v10_h4_side_response_packet_compression",
+    "V11_BOTTOM_PACKET_ALGEBRA_FLAG",
+    "V11_BOTTOM_PACKET_ALGEBRA_EXACT_SPOOL_ROOT_FLAG",
+    "V11_BOTTOM_PACKET_ALGEBRA_PACKET_MANIFEST_FLAG",
+    "V11_BOTTOM_PACKET_ALGEBRA_PACKET_MANIFEST_SHA256_FLAG",
+    "V11_BOTTOM_PACKET_ALGEBRA_PRODUCER_DIAGNOSTIC_FLAG",
+    "V11_BOTTOM_PACKET_ALGEBRA_PROFILE_ID",
+    "V11_BOTTOM_PACKET_ALGEBRA_METHOD",
+    "V11_BOTTOM_PACKET_ALGEBRA_SCHEMA",
+    "V11_V7_MODAL_AMPLITUDES_SHA256",
+    "run_v11_h4_bottom_packet_algebra",
     "recheck_v10_h4_full_side_response_packet",
     "run_v9_h4_bare_f_side_diagnostic",
     "build_v3_7_execution_plan",

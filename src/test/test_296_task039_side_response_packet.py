@@ -11,6 +11,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 from mpi4py import MPI
+from petsc4py import PETSc
 
 import benchmarks.task039_v3_7_orchestration as orchestration
 import benchmarks.task039_v3_7_watchdog as watchdog
@@ -32,6 +33,9 @@ from src.solvers.hybrid_side_response_packet import (
     V10_SIDE_RESPONSE_PACKET_FULL_SCHEMA,
     V11_BOTTOM_RESPONSE_SAMPLE_INDICES,
     audit_bottom_response_packet_algebra,
+)
+from src.solvers.hcurl_assembly_time_condensation import (
+    copy_full_solution_to_active_trace,
 )
 
 
@@ -697,6 +701,7 @@ def test_v11_bottom_packet_algebra_tiny_identity_schur_trace_release() -> None:
                 "label": "physical_side_rhs",
                 "source": "frozen_physical_side_rhs",
                 "schedule_kind": "physical_side_rhs",
+                "mode_key": None,
             }
         branch = "positive" if column < 480 else "negative"
         family = f"{branch}_modal_traction"
@@ -711,6 +716,7 @@ def test_v11_bottom_packet_algebra_tiny_identity_schur_trace_release() -> None:
             "raw_beta": beta,
             "discrete_beta": list(beta),
             "schedule_kind": "selected_modal",
+            "mode_key": f"{branch}:{column if column < 480 else column - 480}",
         }
 
     expected_identity = [source_record(column) for column in range(961)]
@@ -778,28 +784,71 @@ def test_v11_bottom_packet_algebra_tiny_identity_schur_trace_release() -> None:
         )
         field_authority -= values[:, column] * amplitudes[column]
 
-    def run(field_sign: complex = -1.0) -> dict[str, object]:
+    authority = {
+        "value": schur_authority,
+        "source_path": "v7/full_fe/bottom/manifest.json",
+        "source_sha256": "1" * 64,
+        "derivation": "-D_b*u_v7",
+        "D_identity": "tiny-D-b-owner-projection",
+    }
+    expected_provenance = {
+        "manifest": provenance,
+        "provider": {
+            "implementation": (
+                "src.coupling.hybrid_streamed_sources:"
+                "StreamedPhysicalModalSourceProvider._entries_to_vec"
+            ),
+            "scale": -1.0,
+            "selected_mode_packet_manifest_sha256": "d" * 64,
+            "producer_source_sha": "a" * 40,
+        },
+        "selected_packet_authority": {
+            "manifest_sha256": "d" * 64,
+            "identity_sha256": "f" * 64,
+        },
+    }
+    inventory_evidence = {
+        "observed": True,
+        "source": "tiny-object-lifecycle",
+        "ready": {"factor_count": 0, "ksp_count": 0, "qep_count": 0},
+        "ksp_qep_not_created": True,
+    }
+    system_evidence = {
+        "observed": True,
+        "source": "tiny-system.A",
+        "mat": {
+            "type": "python-matrix-free",
+            "size": [global_rows, global_rows],
+            "ownership_ranges": [
+                [rank * local_rows, (rank + 1) * local_rows]
+                for rank in range(comm.size)
+            ],
+            "matrix_free": True,
+        },
+    }
+
+    def run(
+        *,
+        authority_value=authority,
+        inventory=inventory_evidence,
+        system=system_evidence,
+    ) -> dict[str, object]:
         return audit_bottom_response_packet_algebra(
             make_packet(),
             actual_source_records=actual_identity,
             expected_identity_records=expected_identity,
-            expected_provenance=provenance,
+            expected_provenance=expected_provenance,
             source_columns=source_columns,
-            v7_schur_authority=schur_authority,
+            v7_schur_authority=authority_value,
             v7_modal_amplitudes=amplitudes,
             v7_bottom_trace=field_authority[:2],
             physical_rhs=np.zeros(local_rows, dtype=np.complex128),
             block_action=lambda value: 2.0 * value,
             schur_action=schur_action_reference,
             trace_action=lambda value: value[:2],
-            factor_inventory={
-                "factor_count": 0,
-                "ksp_count": 0,
-                "qep_count": 0,
-            },
-            field_response_sign=field_sign,
+            inventory_evidence=inventory,
+            system_evidence=system,
             comm=comm,
-            system_assembled=True,
         )
 
     result = run()
@@ -827,10 +876,55 @@ def test_v11_bottom_packet_algebra_tiny_identity_schur_trace_release() -> None:
     assert result["gate"]["pass"] is True
     assert result["packet_released"] is True
 
-    wrong_sign = run(field_sign=1.0)
-    assert wrong_sign["gate"]["sign_contract_pass"] is False
-    assert wrong_sign["gate"]["pass"] is False
-    assert wrong_sign["packet_released"] is True
+    assert result["gate"]["modal_amplitude_action_pass"] is True
+    assert result["modal_reconstruction"][
+        "modal_amplitude_action_relative_error"
+    ] == pytest.approx(result["modal_reconstruction"]["schur_relative_error"])
+    assert (
+        result["identity"]["mode_key_derived_from_hash_bound_selected_packet"] is True
+    )
+
+    trace_keys = (("trace", 0), ("trace", 1))
+    np.testing.assert_array_equal(
+        orchestration._v11_trace_values_in_order(
+            ((trace_keys[1], 2.0), (trace_keys[0], 1.0)), trace_keys, comm
+        ),
+        np.asarray([1.0, 2.0], dtype=np.complex128),
+    )
+    with pytest.raises(ValueError, match="trace key set"):
+        orchestration._v11_trace_values_in_order(
+            ((trace_keys[0], 1.0), (trace_keys[1], 2.0))
+            if comm.rank != 0
+            else (
+                (trace_keys[0], 1.0),
+                (trace_keys[1], 2.0),
+                (("trace", 2), 3.0),
+            ),
+            trace_keys,
+            comm,
+        )
+
+    wrong_sign_authority = dict(authority)
+    wrong_sign_authority["value"] = -np.asarray(authority["value"])
+    wrong_sign_result = run(authority_value=wrong_sign_authority)
+    assert wrong_sign_result["gate"]["modal_schur_pass"] is False
+    assert wrong_sign_result["gate"]["modal_amplitude_action_pass"] is False
+    assert wrong_sign_result["gate"]["pass"] is False
+    assert wrong_sign_result["packet_released"] is True
+
+    bad_inventory = {
+        **inventory_evidence,
+        "ready": {**inventory_evidence["ready"], "factor_count": 1},
+    }
+    with pytest.raises(ValueError, match="inventory"):
+        run(inventory=bad_inventory)
+
+    bad_system = {
+        **system_evidence,
+        "mat": {**system_evidence["mat"], "matrix_free": False},
+    }
+    with pytest.raises(ValueError, match="assembled-system"):
+        run(system=bad_system)
 
     bad_identity = [dict(record) for record in actual_identity]
     bad_identity[0]["branch"] = "wrong"
@@ -840,20 +934,46 @@ def test_v11_bottom_packet_algebra_tiny_identity_schur_trace_release() -> None:
             bad_packet,
             actual_source_records=bad_identity,
             expected_identity_records=expected_identity,
-            expected_provenance=provenance,
+            expected_provenance=expected_provenance,
             source_columns=source_columns,
-            v7_schur_authority=schur_authority,
+            v7_schur_authority=authority,
             v7_modal_amplitudes=amplitudes,
             v7_bottom_trace=field_authority[:2],
             physical_rhs=np.zeros(local_rows, dtype=np.complex128),
             block_action=lambda value: 2.0 * value,
             schur_action=schur_action_reference,
             trace_action=lambda value: value[:2],
-            factor_inventory={
-                "factor_count": 0,
-                "ksp_count": 0,
-                "qep_count": 0,
-            },
+            inventory_evidence=inventory_evidence,
+            system_evidence=system_evidence,
             comm=comm,
         )
     assert bad_packet.diagnostics["released"] is True
+
+
+def test_v11_solution_to_active_trace_copies_owned_master_rows() -> None:
+    comm = MPI.COMM_WORLD
+    source = PETSc.Vec().createMPI((2, 2 * comm.size), comm=comm)
+    first, last = (int(value) for value in source.getOwnershipRange())
+    source.getArray()[:] = np.asarray(
+        [first + 1.0, first + 2.0], dtype=PETSc.ScalarType
+    )
+    trace_constraints = SimpleNamespace(
+        owned_active_original_dofs=np.asarray([first, last - 1], dtype=PETSc.IntType)
+    )
+    condensed = SimpleNamespace(
+        comm=comm,
+        full_rows=2 * comm.size,
+        owned_active_rows=2,
+        active_rows=2 * comm.size,
+        trace_constraints=trace_constraints,
+        create_active_vector=lambda: PETSc.Vec().createMPI(
+            (2, 2 * comm.size), comm=comm
+        ),
+    )
+    active = copy_full_solution_to_active_trace(condensed, source)
+    np.testing.assert_array_equal(
+        active.getArray(readonly=True),
+        np.asarray([first + 1.0, first + 2.0], dtype=PETSc.ScalarType),
+    )
+    active.destroy()
+    source.destroy()

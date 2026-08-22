@@ -7,6 +7,7 @@ import hashlib
 import inspect
 import json
 from pathlib import Path
+import shutil
 from types import SimpleNamespace
 import sys
 
@@ -17,6 +18,7 @@ from petsc4py import PETSc
 
 import benchmarks.task039_v3_7_orchestration as orchestration
 import benchmarks.task039_v3_7_watchdog as watchdog
+from benchmarks.canonical_vector_artifacts import write_canonical_packet_shard
 from src.runners import task038_launcher
 from benchmarks import run_task037b_hybrid_iterative as frozen_runner
 from benchmarks.task037c_robustness import Task37cProfile
@@ -115,6 +117,252 @@ def test_v7_streamed_packet_pair_checks_frozen_modal_schedule_without_solver():
     column_mismatch["left_selector"]["column"] += 1
     with pytest.raises(ValueError, match="inconsistent branch/column"):
         _v7_streamed_packet_pair(column_mismatch, context)
+
+
+def test_v11_identity_uses_independent_full_schedule_and_mode_keys():
+    class FakeContext:
+        def mode_pair(self, branch, mode_index):
+            return {
+                "beta": complex(mode_index + 1, 0.1 if branch == "positive" else -0.1),
+                "mode_key": f"{branch}:{mode_index}",
+            }
+
+    raw = [{"column_index": column} for column in range(961)]
+    enriched, expected = orchestration._v11_identity_records(
+        raw, FakeContext(), SimpleNamespace(nedelec_degree=1, mesh_target_size=5.0)
+    )
+    assert expected[0]["schedule_kind"] == "selected_modal"
+    assert expected[1]["schedule_kind"] == "selected_modal"
+    assert expected[2]["schedule_kind"] == "training_modal"
+    assert expected[480]["schedule_kind"] == "selected_modal"
+    assert expected[481]["schedule_kind"] == "selected_modal"
+    assert expected[959]["schedule_kind"] == "selected_modal"
+    assert expected[479]["branch"] == "positive"
+    assert expected[479]["mode_index"] == 479
+    assert expected[479]["schedule_kind"] == "selected_modal"
+    assert expected[480]["branch"] == "negative"
+    assert expected[480]["mode_index"] == 0
+    assert expected[480]["schedule_kind"] == "selected_modal"
+    assert expected[959]["branch"] == "negative"
+    assert expected[959]["mode_index"] == 479
+    assert enriched[480]["mode_key"] == "negative:0"
+    assert enriched[2] is not expected[2]
+    assert "mode_key" not in raw[2]
+    assert enriched[2] is not raw[2]
+
+
+def test_v11_owner_local_manifest_hash_and_duplicate_contract(tmp_path):
+    comm = MPI.COMM_WORLD
+    root = Path(comm.bcast(str(tmp_path / f"owner-local-{comm.size}"), root=0))
+    if comm.rank == 0:
+        shutil.rmtree(root, ignore_errors=True)
+    comm.barrier()
+    root.mkdir(parents=True, exist_ok=True)
+    shard_path = root / f"rank{comm.rank}.jsonl"
+    shard_meta = write_canonical_packet_shard(
+        shard_path, [(("active_trace", 2), 2.0), (("active_trace", 1), 1.0)]
+    )
+    all_shards = comm.allgather({"rank": comm.rank, **shard_meta})
+    manifest_path = root / "manifest.json"
+    manifest = {
+        "schema_version": "task037.canonical-vector-manifest.v1",
+        "mpi_size": comm.size,
+        "per_rank_shards": all_shards,
+    }
+    if comm.rank == 0:
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    comm.barrier()
+    manifest_sha = comm.bcast(
+        hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+        if comm.rank == 0
+        else None,
+        root=0,
+    )
+    metadata, packets = orchestration._v11_read_owner_canonical_shard(
+        manifest_path, manifest_sha, comm
+    )
+    assert metadata["mpi_size"] == comm.size
+    assert [key for key, _value in packets] == [
+        ("active_trace", 2),
+        ("active_trace", 1),
+    ]
+    with pytest.raises(ValueError, match="canonical"):
+        orchestration._v11_read_owner_canonical_shard(manifest_path, "0" * 64, comm)
+
+    duplicate_path = root / f"rank{comm.rank}-duplicate.jsonl"
+    duplicate_meta = write_canonical_packet_shard(
+        duplicate_path, [(("active_trace", 1), 1.0), (("active_trace", 1), 2.0)]
+    )
+    if comm.rank == 0:
+        manifest["per_rank_shards"][0] = {"rank": 0, **duplicate_meta}
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    comm.barrier()
+    duplicate_sha = comm.bcast(
+        hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+        if comm.rank == 0
+        else None,
+        root=0,
+    )
+    with pytest.raises(ValueError, match="owner-local"):
+        orchestration._v11_read_owner_canonical_shard(
+            manifest_path, duplicate_sha, comm
+        )
+
+    assert (
+        orchestration.V11_V7_MODAL_AMPLITUDES_SHA256
+        == "c386d3f97180de5879006209091a3e2743709857065d3aa4dfffd320f6962ce4"
+    )
+
+
+def test_v11_modal_amplitude_loader_checks_file_and_array_hash(tmp_path):
+    amplitudes = np.arange(960, dtype=np.float64).astype(np.complex128)
+    path = tmp_path / "modal.npz"
+    np.savez(path, modal_amplitudes=amplitudes)
+    file_sha = orchestration._v11_sha256(path)
+    array_sha = hashlib.sha256(
+        np.ascontiguousarray(amplitudes).tobytes(order="C")
+    ).hexdigest()
+    loaded = orchestration._v11_load_modal_amplitudes(
+        path, expected_file_sha256=file_sha, expected_array_sha256=array_sha
+    )
+    np.testing.assert_array_equal(loaded, amplitudes)
+    with pytest.raises(ValueError, match="artifact hash"):
+        orchestration._v11_load_modal_amplitudes(
+            path, expected_file_sha256="0" * 64, expected_array_sha256=array_sha
+        )
+    with pytest.raises(ValueError, match="array hash"):
+        orchestration._v11_load_modal_amplitudes(
+            path, expected_file_sha256=file_sha, expected_array_sha256="0" * 64
+        )
+
+
+@pytest.mark.parametrize("audit_failure", [False, True])
+def test_v11_bottom_packet_route_uses_fixed_authority_and_releases(
+    monkeypatch, audit_failure
+):
+    timeline = []
+    marker_details = {}
+    matrix = PETSc.Mat().createAIJ(size=(2, 2), nnz=1, comm=MPI.COMM_SELF)
+    matrix.setValue(0, 0, 1.0)
+    matrix.setValue(1, 1, 1.0)
+    matrix.assemble()
+    system = SimpleNamespace(
+        A=matrix,
+        inventory={"direct_factor_count": 0, "matrix_free": True},
+        destroy=lambda: (timeline.append("system_destroy"), matrix.destroy()),
+    )
+    packet = SimpleNamespace(
+        manifest={},
+        local_values=np.zeros((2, 961), dtype=np.complex128, order="F"),
+        diagnostics={"released": False},
+        destroy=lambda: timeline.append("packet_destroy"),
+    )
+    monkeypatch.setattr(
+        orchestration, "load_full_side_response_packet", lambda *a, **k: packet
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "collective_heap_cleanup",
+        lambda _comm: timeline.append("cleanup"),
+    )
+    prepared = {
+        "actual_source_records": [{"column_index": 0}],
+        "expected_identity_records": [{"column_index": 0}],
+        "expected_provenance": {"manifest": {}, "provider": {}},
+        "source_columns": {},
+        "v7_schur_authority": {
+            "value": np.zeros(1),
+            "derivation": "-D_b*u_v7",
+            "source_path": "v7/full-fe.json",
+            "source_sha256": "a" * 64,
+            "D_identity": "owner.blocks.projection",
+        },
+        "v7_modal_amplitudes": np.zeros(960, dtype=np.complex128),
+        "v7_bottom_trace": np.zeros(1, dtype=np.complex128),
+        "physical_rhs": np.zeros(2, dtype=np.complex128),
+        "block_action": lambda value: value,
+        "schur_action": lambda value: value,
+        "trace_action": lambda value: value,
+        "inventory_evidence": {
+            "observed": True,
+            "source": "fake observed lifecycle",
+            "ready": {"factor_count": 0, "ksp_count": 0, "qep_count": 0},
+            "ksp_qep_not_created": True,
+        },
+        "system_evidence": {
+            "observed": True,
+            "source": "fake system",
+            "mat": {
+                "type": "aij",
+                "size": [2, 2],
+                "ownership_ranges": [[0, 2]],
+                "matrix_free": True,
+            },
+        },
+        "release": lambda: (
+            timeline.append("authority_release")
+            or {
+                "released_objects": {"provider": True, "context": True, "owner": True},
+                "all_owned_released": True,
+            }
+        ),
+    }
+    monkeypatch.setattr(
+        orchestration, "_v11_prepare_bottom_authority", lambda *a, **k: prepared
+    )
+
+    def audit(*_args, **kwargs):
+        assert (
+            kwargs["actual_source_records"] is not kwargs["expected_identity_records"]
+        )
+        assert kwargs["v7_schur_authority"]["derivation"] == "-D_b*u_v7"
+        try:
+            if audit_failure:
+                raise ValueError("tiny audit failure")
+            return {
+                "schema": orchestration.V11_BOTTOM_PACKET_ALGEBRA_SCHEMA,
+                "gate": {"pass": True},
+            }
+        finally:
+            _args[0].destroy()
+
+    monkeypatch.setattr(orchestration, "audit_bottom_response_packet_algebra", audit)
+
+    def call():
+        return orchestration.run_v11_h4_bottom_packet_algebra(
+            SimpleNamespace(),
+            profile=SimpleNamespace(bottom_interface_nm=0.0, top_interface_nm=1.0),
+            comm=MPI.COMM_SELF,
+            marker_callback=lambda marker, detail: (
+                timeline.append(marker),
+                marker_details.__setitem__(marker, detail),
+            ),
+            packet_manifest="tiny-manifest",
+            packet_manifest_sha256="a" * 64,
+            selected_mode_packet_manifest="selected-manifest",
+            selected_mode_packet_manifest_sha256="b" * 64,
+            producer_diagnostic_path="producer.json",
+            exact_spool_root="spool",
+            side_system_builder=lambda **_kwargs: system,
+        )
+
+    if audit_failure:
+        with pytest.raises(ValueError, match="tiny audit failure"):
+            call()
+    else:
+        result = call()
+        assert result["schema"] == orchestration.V11_BOTTOM_PACKET_ALGEBRA_SCHEMA
+    assert "authority_release" in timeline
+    assert timeline.count("packet_destroy") == 1
+    assert timeline.index("system_destroy") < timeline.index("cleanup")
+    assert timeline[-1] == "v11_h4_bottom_packet_algebra_cleanup"
+    cleanup = marker_details["v11_h4_bottom_packet_algebra_cleanup"]
+    assert cleanup["packet_destroy_called"] is True
+    assert cleanup["system_destroy_called"] is True
+    assert cleanup["observed_pre_destroy_zero"] is True
+    assert cleanup["factor_count_after_cleanup"] == (
+        "not_observable_after_system_destroy"
+    )
 
 
 def _v6_gate_reports(
@@ -3520,6 +3768,65 @@ def test_v10_compression_plan_forwards_producer_source_sha(tmp_path) -> None:
         plan["worker_contract"]["response_packet_compression_producer_source_sha"]
         == producer_source_sha
     )
+
+
+def test_v11_bottom_packet_algebra_plan_has_one_identity_and_artifact_set(
+    tmp_path,
+) -> None:
+    h4_input = Path(
+        "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat"
+    )
+    selected_manifest = tmp_path / "selected" / "manifest.json"
+    route_kwargs = {
+        "v11_h4_bottom_packet_algebra": True,
+        "v11_h4_bottom_packet_algebra_exact_spool_root": tmp_path / "spool",
+        "v11_h4_bottom_packet_algebra_packet_manifest": tmp_path / "packet.json",
+        "v11_h4_bottom_packet_algebra_packet_manifest_sha256": "b" * 64,
+        "v11_h4_bottom_packet_algebra_producer_diagnostic": tmp_path / "raw.json",
+        "selected_mode_packet_manifest": selected_manifest,
+        "selected_mode_packet_manifest_sha256": "c" * 64,
+    }
+    plan = orchestration.v3_7_execution_dry_run(
+        h4_input, tmp_path / "v11-plan", source_sha="a" * 40, **route_kwargs
+    )
+    argv = plan["argv"]
+    assert argv.count(orchestration.V11_BOTTOM_PACKET_ALGEBRA_FLAG) == 1
+    for flag in (
+        "--selected-mode-packet-manifest",
+        "--selected-mode-packet-manifest-sha256",
+        orchestration.V11_BOTTOM_PACKET_ALGEBRA_EXACT_SPOOL_ROOT_FLAG,
+        orchestration.V11_BOTTOM_PACKET_ALGEBRA_PACKET_MANIFEST_FLAG,
+        orchestration.V11_BOTTOM_PACKET_ALGEBRA_PACKET_MANIFEST_SHA256_FLAG,
+        orchestration.V11_BOTTOM_PACKET_ALGEBRA_PRODUCER_DIAGNOSTIC_FLAG,
+    ):
+        assert argv.count(flag) == 1
+    assert plan["worker_contract"]["method"] == (
+        orchestration.V11_BOTTOM_PACKET_ALGEBRA_METHOD
+    )
+    assert plan["worker_contract"]["profile_id"] == (
+        orchestration.V11_BOTTOM_PACKET_ALGEBRA_PROFILE_ID
+    )
+    assert plan["watchdog"]["absolute_terminate_memory_bytes"] == (
+        orchestration.V11_BOTTOM_PACKET_ALGEBRA_HARD_STOP_BYTES
+    )
+    assert not any(
+        any(token in argument.lower() for token in ("qep", "top", "solve"))
+        for argument in argv
+    )
+    with pytest.raises(ValueError, match="frozen artifacts"):
+        orchestration.v3_7_execution_dry_run(
+            h4_input,
+            tmp_path / "v11-missing-selected",
+            source_sha="a" * 40,
+            **{**route_kwargs, "selected_mode_packet_manifest": None},
+        )
+    ordinary = orchestration.v3_7_execution_dry_run(
+        Path("input/official/task039/5nm_p6h5_v3_1deg_hybrid_direct_m480_mpi8.dat"),
+        tmp_path / "ordinary-plan",
+        source_sha="a" * 40,
+    )
+    assert orchestration.V11_BOTTOM_PACKET_ALGEBRA_FLAG not in ordinary["argv"]
+    assert ordinary["watchdog"]["profile"] == "v3_7_default"
 
 
 @pytest.mark.parametrize("holdout_pass", [True, False], ids=["pass", "no-pass"])
