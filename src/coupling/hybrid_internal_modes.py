@@ -966,10 +966,11 @@ def _assemble_canonical_trace_overlaps(
     system: HybridLocalDtnSystem,
     projection: ModalTraceProjection,
     raw_negative_traces: Sequence[fem.Function],
-    canonical_negative_traces: Sequence[fem.Function],
+    canonical_negative_traces: Sequence[fem.Function] | None,
     surface_load: _ReusableInterfaceSurfaceLoad,
     trace_lifter: _ReusableInterfaceLifter,
     log=None,
+    canonical_negative_mapping: np.ndarray | None = None,
 ) -> tuple[
     list[_InterfaceSurfaceLoadEntries],
     int,
@@ -997,8 +998,27 @@ def _assemble_canonical_trace_overlaps(
             )
         lift_queries = 0
 
-        def raw_overlap_matrix(traces: Sequence[fem.Function]) -> np.ndarray:
+        def overlap_column(trace: fem.Function) -> np.ndarray:
             nonlocal lift_queries
+            field, queries = trace_lifter.lift(trace)
+            lift_queries += queries
+            system.floquet_data.mpc.homogenize(field)
+            field.x.scatter_forward()
+            field_vector = field.x.petsc_vec
+            values = np.empty(len(raw_entries), dtype=np.complex128)
+            for row, entries in enumerate(raw_entries):
+                columns = entries.overlap_rows
+                coefficients = entries.overlap_values
+                local = (
+                    complex(np.vdot(coefficients, field_vector.getValues(columns)))
+                    if len(columns)
+                    else 0.0 + 0.0j
+                )
+                values[row] = complex(comm.allreduce(local, op=MPI.SUM))
+            del field_vector, field
+            return values
+
+        def raw_overlap_matrix(traces: Sequence[fem.Function]) -> np.ndarray:
             values = np.empty((len(raw_entries), len(traces)), dtype=np.complex128)
             for column, trace in enumerate(traces):
                 if log is not None:
@@ -1006,25 +1026,33 @@ def _assemble_canonical_trace_overlaps(
                         f"Task32 {system.side}: lifting projection trace "
                         f"{column + 1}/{len(traces)}"
                     )
-                field, queries = trace_lifter.lift(trace)
-                lift_queries += queries
-                system.floquet_data.mpc.homogenize(field)
-                field.x.scatter_forward()
-                field_vector = field.x.petsc_vec
-                for row, entries in enumerate(raw_entries):
-                    columns = entries.overlap_rows
-                    coefficients = entries.overlap_values
-                    local = (
-                        complex(
-                            np.vdot(
-                                coefficients,
-                                field_vector.getValues(columns),
+                values[:, column] = overlap_column(trace)
+            return values
+
+        def streamed_canonical_overlap_matrix(mapping: np.ndarray) -> np.ndarray:
+            mapping = np.asarray(mapping, dtype=np.complex128)
+            mode_count = len(projection.right_traces)
+            if mapping.shape != (mode_count, mode_count):
+                raise ValueError("Canonical negative trace map has the wrong shape.")
+            values = np.empty((len(raw_entries), mode_count), dtype=np.complex128)
+            trace = fem.Function(
+                projection.right_traces[0].function_space,
+                name="task039_reusable_canonical_negative_trace",
+            )
+            try:
+                for column in range(mode_count):
+                    trace.x.petsc_vec.set(0.0)
+                    for row, source in enumerate(projection.right_traces):
+                        coefficient = complex(mapping[row, column])
+                        if abs(coefficient) > 0.0:
+                            trace.x.petsc_vec.axpy(
+                                PETSc.ScalarType(coefficient),
+                                source.x.petsc_vec,
                             )
-                        )
-                        if len(columns)
-                        else 0.0 + 0.0j
-                    )
-                    values[row, column] = complex(comm.allreduce(local, op=MPI.SUM))
+                    trace.x.scatter_forward()
+                    values[:, column] = overlap_column(trace)
+            finally:
+                del trace
             return values
 
         return (
@@ -1032,7 +1060,11 @@ def _assemble_canonical_trace_overlaps(
             lift_queries,
             raw_overlap_matrix(projection.right_traces),
             raw_overlap_matrix(raw_negative_traces),
-            raw_overlap_matrix(canonical_negative_traces),
+            (
+                raw_overlap_matrix(canonical_negative_traces)
+                if canonical_negative_traces is not None
+                else streamed_canonical_overlap_matrix(canonical_negative_mapping)
+            ),
         )
     except Exception:
         for entries in raw_entries:
@@ -1207,7 +1239,7 @@ def _build_projection_matrix(
     system: HybridLocalDtnSystem,
     projection: ModalTraceProjection,
     raw_negative_traces: Sequence[fem.Function],
-    canonical_negative_traces: Sequence[fem.Function],
+    canonical_negative_traces: Sequence[fem.Function] | None,
     canonical_negative_mapping: np.ndarray,
     surface_load: _ReusableInterfaceSurfaceLoad,
     trace_lifter: _ReusableInterfaceLifter,
@@ -1252,6 +1284,7 @@ def _build_projection_matrix(
             surface_load,
             trace_lifter,
             log,
+            canonical_negative_mapping=canonical_negative_mapping,
         )
     except Exception:
         matrix.destroy()
@@ -1454,9 +1487,6 @@ def build_streamed_projection_only(
         canonical_mapping = np.column_stack(
             [projection.project(trace) for trace in negative_right]
         )
-        canonical_negative_traces = _canonicalized_negative_traces(
-            projection, canonical_mapping
-        )
         surface_load = _ReusableInterfaceSurfaceLoad(system)
         trace_lifter = _ReusableInterfaceLifter(system, target_space=system.V)
         (
@@ -1475,7 +1505,7 @@ def build_streamed_projection_only(
             system,
             projection,
             negative_right,
-            canonical_negative_traces,
+            None,
             canonical_mapping,
             surface_load,
             trace_lifter,
@@ -1489,7 +1519,7 @@ def build_streamed_projection_only(
             projection_matrix.destroy()
             projection_matrix = None
             raise RuntimeError("Streamed projection retained full left vectors")
-        del inverse_gram, surface_load, trace_lifter, canonical_negative_traces
+        del inverse_gram, surface_load, trace_lifter
         result = StreamedProjectionOnly(
             projection=projection_matrix,
             audit={
@@ -1501,6 +1531,8 @@ def build_streamed_projection_only(
                 "canonical_trace_raw_consistency_error": float(raw_consistency_error),
                 "canonical_trace_representation_error": float(representation_error),
                 "canonical_trace_gate": trace_gate,
+                "canonical_trace_retained_count": 1,
+                "canonical_trace_materialization": "single_reusable",
                 "full_mode_vectors_retained": False,
                 "positive_traction_matrix": False,
                 "negative_traction_matrix": False,

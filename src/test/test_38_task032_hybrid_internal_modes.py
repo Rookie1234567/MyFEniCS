@@ -327,9 +327,17 @@ class Task032HybridInternalModeTests(unittest.TestCase):
                 )
             return pair
 
-        with mock.patch(
-            "src.coupling.hybrid_internal_modes._build_traction_matrix",
-            side_effect=AssertionError("streamed projection built traction"),
+        with (
+            mock.patch(
+                "src.coupling.hybrid_internal_modes._build_traction_matrix",
+                side_effect=AssertionError("streamed projection built traction"),
+            ),
+            mock.patch(
+                "src.coupling.hybrid_internal_modes._canonicalized_negative_traces",
+                side_effect=AssertionError(
+                    "streamed projection eagerly materialized canonical traces"
+                ),
+            ),
         ):
             streamed = build_streamed_projection_only(
                 self.bottom_system,
@@ -360,6 +368,11 @@ class Task032HybridInternalModeTests(unittest.TestCase):
                 places=10,
             )
             self.assertGreater(streamed.audit["canonical_mapping_condition"], 1.0)
+            self.assertEqual(streamed.audit["canonical_trace_retained_count"], 1)
+            self.assertEqual(
+                streamed.audit["canonical_trace_materialization"],
+                "single_reusable",
+            )
             self.assertFalse(streamed.audit["full_mode_vectors_retained"])
             self.assertFalse(streamed.audit["positive_traction_matrix"])
             self.assertFalse(streamed.audit["negative_traction_matrix"])
@@ -540,6 +553,11 @@ class Task032StreamedProjectionFreshLifecycleTests(unittest.TestCase):
         try:
             self.assertGreater(streamed.audit["trace_gram_condition"], 1.0)
             self.assertGreater(streamed.audit["canonical_mapping_condition"], 1.0)
+            self.assertEqual(streamed.audit["canonical_trace_retained_count"], 1)
+            self.assertEqual(
+                streamed.audit["canonical_trace_materialization"],
+                "single_reusable",
+            )
             self.assertFalse(streamed.audit["positive_traction_matrix"])
             self.assertFalse(streamed.audit["negative_traction_matrix"])
             for component in range(2):
