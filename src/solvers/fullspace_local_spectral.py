@@ -24,6 +24,7 @@ from typing import Any
 
 import numpy as np
 from mpi4py import MPI
+from scipy.linalg import solve_triangular
 
 
 N1_PROFILE = "bounded_local_spectral_multilevel_v1"
@@ -861,8 +862,18 @@ class _PackedCholesky:
 
     def solve(self, right_hand_side: np.ndarray) -> np.ndarray:
         lower = self.lower()
-        first = np.linalg.solve(lower, np.asarray(right_hand_side))
-        return np.linalg.solve(lower.conj().T, first)
+        first = solve_triangular(
+            lower,
+            np.asarray(right_hand_side),
+            lower=True,
+            check_finite=True,
+        )
+        return solve_triangular(
+            lower.conj().T,
+            first,
+            lower=False,
+            check_finite=True,
+        )
 
     @property
     def nbytes(self) -> int:

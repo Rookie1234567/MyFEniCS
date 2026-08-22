@@ -14,6 +14,7 @@ from src.solvers.fullspace_local_spectral import (
     LocalSpectralPatch,
     N1_FACTOR_BYTES_LIMIT,
     N1_MAX_LOCAL_ROWS,
+    _PackedCholesky,
     build_regional_rayleigh_ritz,
     canonicalize_degenerate_eigenvectors,
     canonical_pou_closure_error,
@@ -158,6 +159,47 @@ def test_fixed_cell_volume_mass_modes_repeat_route_and_pou():
     patch.destroy()
     with pytest.raises(RuntimeError, match="destroyed"):
         patch.build()
+
+
+def test_packed_cholesky_matches_s1_and_has_exactly_two_triangular_solves():
+    matrix = np.asarray(
+        [[5.0 + 0.0j, 1.0 - 0.25j], [1.0 + 0.25j, 3.0 + 0.0j]],
+        dtype=np.complex128,
+    )
+    rhs = np.asarray([1.0 + 0.5j, 2.0 - 0.25j], dtype=np.complex128)
+    factor = _PackedCholesky(matrix)
+    actual = factor.solve(rhs)
+
+    from scipy.linalg import solve_triangular
+
+    lower = factor.lower()
+    first = solve_triangular(lower, rhs, lower=True, check_finite=True)
+    expected = solve_triangular(
+        lower.conj().T, first, lower=False, check_finite=True
+    )
+    assert np.array_equal(actual, expected)
+    assert np.linalg.norm(matrix @ actual - rhs) / np.linalg.norm(rhs) <= 1.0e-11
+
+    source = Path(__file__).parents[1] / "solvers" / "fullspace_local_spectral.py"
+    tree = ast.parse(source.read_text(encoding="utf-8"))
+    class_node = next(
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.ClassDef) and node.name == "_PackedCholesky"
+    )
+    method = next(
+        node
+        for node in class_node.body
+        if isinstance(node, ast.FunctionDef) and node.name == "solve"
+    )
+    assert sum(
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "solve_triangular"
+        for node in ast.walk(method)
+    ) == 2
+    assert "np.linalg.solve" not in ast.unparse(method)
+    assert not any(isinstance(node, (ast.For, ast.While)) for node in ast.walk(method))
 
 
 def test_gradient_dependency_fails_without_fallback():
