@@ -807,6 +807,42 @@ class DocumentationContractTests(unittest.TestCase):
         self.assertRegex(text, r"Stage2B PML \| experimental")
         self.assertRegex(text, r"Stage2C Fresnel \| experimental")
 
+    def test_task038_v7_l0_preflight_hash_and_smoke_contract(self):
+        record_path = (
+            ROOT
+            / "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/"
+            "lor_native_complex_hx_preflight_v1.json"
+        )
+        record = json.loads(record_path.read_text(encoding="utf-8"))
+        sha_pattern = re.compile(r"^[0-9a-f]{64}$")
+
+        def check_sha_fields(value):
+            if isinstance(value, dict):
+                for key, child in value.items():
+                    if key == "sha256" or key.endswith("_sha256"):
+                        self.assertIsInstance(child, str)
+                        self.assertRegex(child, sha_pattern.pattern)
+                    check_sha_fields(child)
+            elif isinstance(value, list):
+                for child in value:
+                    check_sha_fields(child)
+
+        check_sha_fields(record)
+        self.assertEqual(
+            next(
+                item["sha256"]
+                for item in record["historical_evidence"]
+                if item["name"] == "Task024"
+            ),
+            "851e1fd4d86989747a4a571363a8a61760ff6f00799be2c6d1f1c7c2550a62eb",
+        )
+        smoke = record["pcgamg_smoke"]
+        self.assertIn("source scripts/activate_myfenics_wsl.sh", smoke["qualified_command"])
+        self.assertIn("mg_coarse_pc_type=jacobi", smoke["qualified_command"])
+        self.assertEqual(smoke["stdout_raw_bytes"], 2568)
+        self.assertRegex(smoke["stdout_raw_sha256"], sha_pattern.pattern)
+        self.assertEqual(smoke["stdout_fact_line"].split()[-1], "repeat_relative=0")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,262 @@
+{
+  "schema": "task038.extra.lor_native_complex_hx_preflight.v1",
+  "classification": "LOR_NATIVE_COMPLEX_HX_L0_CAPACITY_PASS_CONDITIONAL",
+  "source_identity": {
+    "source_git_sha": "6006034e19c0dcf32a874bf9f074db8d85b868cb",
+    "branch": "codex/20260820-task38-extra-full3d-iterative-0p7nm",
+    "upstream": "origin/codex/20260820-task38-extra-full3d-iterative-0p7nm",
+    "ahead": 0,
+    "behind": 0,
+    "merge_base": "438caf150439343ee7c4c58ad7e02a3da812a23c",
+    "canonical_worktree": "/home/shenjh/Projects/MyFEniCSx_task37_extra",
+    "git_metadata": ".git-codex",
+    "worktree_clean_before_l0": true
+  },
+  "scope": {
+    "lane": "lor_native_complex_hx_v1",
+    "stage": "L0",
+    "pde_started": false,
+    "lor_solver_started": false,
+    "physical_contraction_started": false,
+    "fc3_reopened": false,
+    "candidate_a_b_c": false,
+    "trace_harmonic_or_regional_top_spectral_coarse": false,
+    "migrated_task011_024_code_count": 0,
+    "whole_file_migration": false
+  },
+  "preflight": {
+    "qualified_activation": "1",
+    "python": "/home/shenjh/MyFEniCS-Surrogate/.venv/bin/python",
+    "mpi": "Open MPI 4.1.6",
+    "petsc": "3.19.6",
+    "petsc_scalar": "complex128",
+    "petsc_int": "int32",
+    "petsc4py_slepc4py_dolfinx_basix_scipy": "same Linux qualified complex stack",
+    "dolfinx": "0.10.0.post2",
+    "basix": "0.10.0",
+    "scipy_path": "/usr/lib/python3/dist-packages/scipy",
+    "threads": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1"
+    },
+    "mem_available_kb": 13163592,
+    "system_swap_total_kb": 41943040,
+    "system_swap_free_kb": 41926804,
+    "system_swap_used_kb": 16236,
+    "process_tree_swap": "not_measured_no_worker",
+    "cgroup_swap": "not_measured_unavailable",
+    "disk_free_bytes": 941945712640,
+    "concurrent_heavy_jobs": false,
+    "sandbox_pmix_probe": "known_singleton_listener_failure",
+    "non_sandbox_qualified_retry": "passed"
+  },
+  "pcgamg_smoke": {
+    "matrix": "4x4 scalar SPD PETSc tiny matrix",
+    "qualified_options": {
+      "pc_type": "gamg",
+      "pc_gamg_type": "agg",
+      "mg_coarse_pc_type": "jacobi",
+      "mg_coarse_ksp_type": "preonly"
+    },
+    "setup_apply": "measured_pass",
+    "finite": true,
+    "repeat_relative": 0.0,
+    "pc_type_observed": "gamg",
+    "levels_observed": 2,
+    "coarse_pc_observed": "jacobi",
+    "coarse_ksp_observed": "preonly",
+    "direct_factor_observed": false,
+    "hypre_observed": false,
+    "default_diagnostic": {
+      "coarse_pc_observed": "bjacobi",
+      "sub_pc_observed": "lu",
+      "qualified": false,
+      "not_used_for_lane": true
+    },
+    "qualified_command": "source scripts/activate_myfenics_wsl.sh && python - <<'PY' > /tmp/task038_v7_pcgamg_smoke.stdout 2>&1; inline 4x4 SPD PETSc probe; set v7tiny_pc_type=gamg, v7tiny_pc_gamg_type=agg, v7tiny_mg_coarse_pc_type=jacobi, v7tiny_mg_coarse_ksp_type=preonly; apply twice; print FACTS and pc.view(); destroy; PY",
+    "stdout_raw_path": "/tmp/task038_v7_pcgamg_smoke.stdout",
+    "stdout_raw_bytes": 2568,
+    "stdout_raw_sha256": "0b22b3adf2bc1b47e1d415dadcfe2efdb6f65bd95b1fd4cf1c7469436a2fccc7",
+    "stdout_fact_line": "FACTS scalar=complex128 int=int32 pc_type=gamg gamg_type=agg coarse_pc=jacobi coarse_ksp=preonly finite=True repeat_relative=0",
+    "authority": "qualified explicit no-direct-coarse smoke; not a PDE or convergence result"
+  },
+  "historical_evidence": [
+    {
+      "name": "Task011",
+      "path": "docs/task011_low_memory_ams_hx_iterative_solver/outcomes/summary.md",
+      "sha256": "75d258cbb5efdf4b6dcb1b86d4b4640c08302cdb0f81edb7d3e56231c65af3e9",
+      "boundary": "direct complex hypre AMS negative; not migrated"
+    },
+    {
+      "name": "Task013",
+      "path": "docs/task013_real_split_ams_hx_qualification/outcomes/summary.md",
+      "sha256": "0772fa715062fa952ad5ed1ce5a927fe4d3c28c081aac7560045fe521d0ce8d7",
+      "boundary": "real-split FE-only positive signal; not production route"
+    },
+    {
+      "name": "Task014a",
+      "path": "docs/task014a_real_split_stage4_reduced_block_pc/outcomes/solver_profile_ranking.md",
+      "sha256": "c6ae17fcc591c195f2f4acb789180d112b3c2c236b7d90b8e89462a5bf40e5d8",
+      "boundary": "reduced Stage4 auxiliary result; not migrated"
+    },
+    {
+      "name": "Task023",
+      "path": "docs/task023_petsc_mpi_fe_response_pc/outcomes/summary.md",
+      "sha256": "942a45a64b2b0a62f51e7f4e64c2ed1bb5c230a6016a5c7b635f196b11c4b479",
+      "boundary": "high-order explicit AIJ/ASM resource negative"
+    },
+    {
+      "name": "Task024",
+      "path": "docs/task024_engineering_iterative_solver_fast_track/outcomes/summary.md",
+      "sha256": "851e1fd4d86989747a4a571363a8a61760ff6f00799be2c6d1f1c7c2550a62eb",
+      "boundary": "m=1 full residual remained about 0.15-0.18; not migrated"
+    },
+    {
+      "name": "Task038_FC3",
+      "path": "docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/n2_local_spectral_setup_mpi1_v3.json",
+      "sha256": "5ca647ad42e304a9fc9733bc5271ffa4269bbddf1150ff5211f13a6fea0b00f0",
+      "process_tree_peak_bytes": 2228187136,
+      "hard_stop_bytes": 2000000000,
+      "boundary": "closed resource-negative family; not reopened"
+    }
+  ],
+  "remote_task037_read_only": {
+    "remote_ref": "origin/codex/20260806-task37-iterative-extra-development",
+    "remote_tip": "b8785c53ce12986aa5a63300038c80c7d0ad1798",
+    "records": [
+      {
+        "path": "benchmarks/cases/100_static_condensed_full3d_iterative/records/task37_m3a_mpi_scaling_v1.json",
+        "sha256": "12826f33487e85bf26b81fe6a5f6072989fb318f7ac80055bd520724a45b4400",
+        "fact": "global static-factor CSR estimate 1828829728 B; MPI1/2/4/8 authority 4.600/5.683/8.266/12.593 GiB"
+      },
+      {
+        "path": "benchmarks/cases/101_task37_extra_development/records/h2a_staged_factor_cache.json",
+        "sha256": "2af81d454b89d63e1a5d03916286b527112dd76da34259712e73557918516c9c",
+        "fact": "24 classes/16 unique; retained 201933812 B; peak 717139968 B; solve residual 4.861914019080286e-11"
+      },
+      {
+        "path": "benchmarks/cases/101_task37_extra_development/records/h2b_row_complete_patch_exactclass_v4.json",
+        "sha256": "2f1862043f9e75002f53230eee86f8c6ee68ac389b319397bd71b3bdd93fc75b",
+        "fact": "882 rows; dense block 12446784 B; factor 12450312 B; peak 767352832 B"
+      },
+      {
+        "path": "benchmarks/cases/101_task37_extra_development/records/m3y_full_packed_patch_store.json",
+        "sha256": "f40d6e27c628b946f9ff735027e966cd192748322aa29f752f27ebc4daeab979",
+        "fact": "packed store 523357632 B; isolated JIT peak 1280749568 B; builder peak 1068343296 B"
+      }
+    ],
+    "code_migrated": false
+  },
+  "current_authorities": {
+    "t2_doc_sha256": "b49a0d94f2a3af0a253fbd6896c8d8773ae058d1a707854b49fe23ba2295de55",
+    "t3_doc_sha256": "035ec128f70768a9ffa1258d3fac9495eda1c13905e71ae396b41a7543ffb957",
+    "t2_rows": 173802,
+    "t2_setup_self_rss_bytes": 951054336,
+    "t2_retained_bytes_in_baseline": 6151104,
+    "t3_increment_bytes": 2875736,
+    "t2_action_relative_mpi1": 7.263059324300498e-17,
+    "t3_action_relative": 1.5267729283364925e-16
+  },
+  "lor_topology_exact": {
+    "coarse_grid_cells": [6, 3, 14],
+    "coarse_cell_count": 252,
+    "refinement_per_axis": 6,
+    "vertices": 59755,
+    "edges": 173802,
+    "faces": 170076,
+    "cells": 54432,
+    "edge_aij_nnz": 5461482,
+    "scalar_nodal_aij_nnz": 1516735,
+    "gradient_incidence_entries": 347604,
+    "counts_provenance": "exact arithmetic from structured-grid connectivity; not PETSc allocation measurement"
+  },
+  "exact_arithmetic": {
+    "global_rows": 173802,
+    "complex128_vector_bytes": 2780832,
+    "fgmres_restart": 20,
+    "fgmres_full_vectors": 41,
+    "fgmres_bytes": 114014112,
+    "source_residual_solution_three_work_vectors": 6,
+    "source_residual_solution_three_work_bytes": 16684992,
+    "edge_aij_raw_bytes": 109924852,
+    "scalar_nodal_aij_raw_bytes": 30573724,
+    "gradient_raw_bytes": 7647292,
+    "pi_raw_bytes": 12513756,
+    "pi_formula": "3*(173802*(4+16)+(173802+1)*4)"
+  },
+  "capacity_ledger": [
+    {"id":"t2_baseline","central_bytes":951054336,"hard_upper_bytes":951054336,"provenance":"measured_lower_bound_calibration","stage":"all","note":"includes T2 mesh/space/MPC/runtime and T2 retained; no duplicate T2 payload"},
+    {"id":"t3_increment","central_bytes":2875736,"hard_upper_bytes":2875736,"provenance":"derived","stage":"all","note":"2875480 retained + 256 batch work"},
+    {"id":"runtime_baseline_uncertainty","central_bytes":32000000,"hard_upper_bytes":64000000,"provenance":"budget","stage":"all","note":"current-self is not process-tree upper bound"},
+    {"id":"lor_edge_aij_raw","central_bytes":109924852,"hard_upper_bytes":109924852,"provenance":"exact_arithmetic","stage":"lor_structure"},
+    {"id":"lor_edge_aij_overhead","central_bytes":20000000,"hard_upper_bytes":35000000,"provenance":"budget","stage":"lor_structure"},
+    {"id":"scalar_nodal_aij_raw","central_bytes":30573724,"hard_upper_bytes":30573724,"provenance":"exact_arithmetic","stage":"lor_structure"},
+    {"id":"scalar_nodal_aij_overhead","central_bytes":8000000,"hard_upper_bytes":15000000,"provenance":"budget","stage":"lor_structure"},
+    {"id":"gradient_raw","central_bytes":7647292,"hard_upper_bytes":7647292,"provenance":"exact_arithmetic","stage":"lor_structure"},
+    {"id":"gradient_overhead","central_bytes":4000000,"hard_upper_bytes":8000000,"provenance":"budget","stage":"lor_structure"},
+    {"id":"pi_raw","central_bytes":12513756,"hard_upper_bytes":12513756,"provenance":"exact_arithmetic","stage":"lor_structure"},
+    {"id":"pi_overhead","central_bytes":5000000,"hard_upper_bytes":10000000,"provenance":"budget","stage":"lor_structure"},
+    {"id":"transfer_factors","central_bytes":8000000,"hard_upper_bytes":16000000,"provenance":"budget","stage":"lor_structure"},
+    {"id":"owner_ghost_maps","central_bytes":16000000,"hard_upper_bytes":28000000,"provenance":"budget","stage":"lor_structure"},
+    {"id":"pcgamg_hierarchy_matrices","central_bytes":52000000,"hard_upper_bytes":84000000,"provenance":"budget","stage":"hierarchy"},
+    {"id":"pcgamg_interpolation","central_bytes":28000000,"hard_upper_bytes":48000000,"provenance":"budget","stage":"hierarchy"},
+    {"id":"pcgamg_level_work","central_bytes":20000000,"hard_upper_bytes":28000000,"provenance":"budget","stage":"hierarchy"},
+    {"id":"fgmres_restart20","central_bytes":114014112,"hard_upper_bytes":114014112,"provenance":"exact_arithmetic","stage":"online_krylov"},
+    {"id":"source_residual_solution_work","central_bytes":16684992,"hard_upper_bytes":16684992,"provenance":"exact_arithmetic","stage":"online_krylov"},
+    {"id":"hx_transient_work","central_bytes":18000000,"hard_upper_bytes":30000000,"provenance":"budget","stage":"online_apply"},
+    {"id":"jit_allocator_reserve","central_bytes":120000000,"hard_upper_bytes":180000000,"provenance":"budget","stage":"cold_and_setup"},
+    {"id":"telemetry_recovery","central_bytes":24000000,"hard_upper_bytes":40000000,"provenance":"budget","stage":"all"}
+  ],
+  "stage_ledger": [
+    {"stage":"mesh_space_mpc_cold_jit_lor_structure","central_bytes":1327589696,"hard_upper_bytes":1470589696,"provenance":"derived_from_ledger","process_tree_measured":false},
+    {"stage":"pcgamg_hierarchy_build","central_bytes":1427589696,"hard_upper_bytes":1630589696,"provenance":"derived_from_ledger","process_tree_measured":false},
+    {"stage":"online_fgmres_restart20","central_bytes":1600288800,"hard_upper_bytes":1831288800,"provenance":"derived_from_ledger","process_tree_measured":false},
+    {"stage":"complete_workflow","central_bytes":1600288800,"hard_upper_bytes":1831288800,"provenance":"max_of_simultaneous_stage_envelopes","process_tree_measured":false}
+  ],
+  "gate": {
+    "central_limit_bytes": 1700000000,
+    "hard_upper_limit_bytes": 1900000000,
+    "central_bytes": 1600288800,
+    "hard_upper_bytes": 1831288800,
+    "central_margin_bytes": 99711200,
+    "hard_margin_bytes": 68711200,
+    "major_unknown_components": 0,
+    "passed": true,
+    "qualification_kind": "capacity_preflight_only_not_resource_measurement"
+  },
+  "forbidden_audit": {
+    "high_order_global_aij": false,
+    "real_imag_hierarchy_duplication": false,
+    "global_direct_coarse_factor": false,
+    "global_schur": false,
+    "fe_sized_numeric_allgather": false,
+    "per_rank_full_basis_replication": false,
+    "hypre_ams": false,
+    "candidate_a_b_c": false,
+    "fc3_reopened": false
+  },
+  "lifecycle": [
+    "qualified_preflight",
+    "mesh_space_mpc_floquet_and_cold_jit",
+    "lor_topology_and_positive_sparse_matrices",
+    "owner_ghost_maps_and_local_tensor_transfer",
+    "one_shared_scalar_pcgamg_hierarchy",
+    "one_cycle_native_complex_hx_apply",
+    "conditional_fgmres_restart20_screen",
+    "watchdog_cleanup_and_post_setup_measurement"
+  ],
+  "next_gate": "L1 transfer/de_rham/orientation/floquet/mpc/MPI_identity_oracle",
+  "not_run": [
+    "L1 algebra oracle",
+    "L2 positive auxiliary contraction",
+    "L3 p6/h10 cold setup",
+    "L4 five-source exact-A contraction",
+    "L5 20/100/150/200 screen",
+    "T6-F",
+    "official E/H/RTA",
+    "T7-T9",
+    "full0.7nm PDE"
+  ]
+}
