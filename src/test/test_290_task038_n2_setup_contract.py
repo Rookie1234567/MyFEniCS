@@ -218,6 +218,35 @@ def test_checker_fails_closed_on_missing_identity_and_resource(tmp_path: Path) -
     assert any("source identity" in item or "resource_contract" in item for item in result["errors"])
 
 
+def test_failure_record_copies_runtime_source_identity(tmp_path: Path) -> None:
+    expected_sha = "f" * 40
+    record_path = tmp_path / "failure.json"
+    args = type(
+        "Args",
+        (),
+        {
+            "record": record_path,
+            "expected_sha": expected_sha,
+            "raw_dir": tmp_path / "raw",
+            "marker_dir": tmp_path / "markers",
+            "case": "p6-h10-mpi1",
+        },
+    )()
+    runtime_identity = {
+        "expected_sha": expected_sha,
+        "source_git_sha": expected_sha,
+        "tracked_status": "",
+    }
+    runner._failure_record(
+        args,
+        RuntimeError("synthetic failure"),
+        {"source_identity": runtime_identity},
+        type("Comm", (), {"rank": 0})(),
+    )
+    payload = json.loads(record_path.read_text(encoding="utf-8"))
+    assert payload["source_identity"] == runtime_identity
+
+
 def _synthetic_setup_record() -> dict[str, object]:
     return {
         "levels": 2,

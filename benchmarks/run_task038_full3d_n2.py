@@ -787,12 +787,19 @@ def _write_record(path: Path, record: Mapping[str, Any]) -> None:
 def _failure_record(args: argparse.Namespace, exc: BaseException, runtime: Mapping[str, Any], comm: Any) -> None:
     if comm.rank != 0 or args.record.exists():
         return
+    runtime_identity = runtime.get("source_identity")
+    if not isinstance(runtime_identity, Mapping):
+        runtime_identity = {
+            "expected_sha": args.expected_sha,
+            "source_git_sha": None,
+            "tracked_status": "not_measured",
+        }
     payload = {
         "schema": N2_SCHEMA,
         "classification": "controlled_negative",
         "stage": "n2_setup",
         "case": args.case,
-        "source_identity": {"expected_sha": args.expected_sha, "source_git_sha": None, "tracked_status": "not_measured"},
+        "source_identity": dict(runtime_identity),
         "raw_dir": str(args.raw_dir),
         "marker_dir": str(args.marker_dir),
         "failure": {"exception_type": type(exc).__name__, "message": str(exc)},

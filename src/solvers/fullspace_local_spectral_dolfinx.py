@@ -14,7 +14,7 @@ from collections import Counter
 import hashlib
 import json
 from types import MappingProxyType
-from typing import Any, Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
 from dolfinx import fem, la
@@ -868,6 +868,7 @@ def _class_participation(
 def _build_reused_class_template_patches(
     context: dict[str, Any],
     plan: ExactClassOwnerPlan,
+    diagnostic_hook: Callable[..., None] | None = None,
 ) -> tuple[tuple[LocalSpectralPatch, ...], dict[str, Any]]:
     """Build one dense/eigensolve representative and retain patch shards."""
 
@@ -923,6 +924,14 @@ def _build_reused_class_template_patches(
                 local_mass = np.ascontiguousarray(local_mass[indices])
                 gradients = np.ascontiguousarray(gradients[np.asarray(order), :])
 
+            if diagnostic_hook is not None:
+                diagnostic_hook(
+                    class_digest=digest,
+                    slot=slot,
+                    representative_rank=representative_rank,
+                    metadata=representative,
+                    matrix=block,
+                )
             plan.register_class_representative(digest, block, slot=slot)
             if comm.rank == representative_rank:
                 template_patch = LocalSpectralPatch(
@@ -1906,6 +1915,7 @@ def build_real_local_spectral_patches(
     cfg: Any,
     *,
     reuse_class_templates: bool = False,
+    diagnostic_hook: Callable[..., None] | None = None,
 ) -> tuple[tuple[LocalSpectralPatch, ...], dict[str, Any]]:
     """Build real cell patches, optionally reusing one template per class."""
 
@@ -1913,7 +1923,9 @@ def build_real_local_spectral_patches(
     comm = context["comm"]
     plan = ExactClassOwnerPlan(context["class_digests"], comm)
     if reuse_class_templates:
-        return _build_reused_class_template_patches(context, plan)
+        return _build_reused_class_template_patches(
+            context, plan, diagnostic_hook=diagnostic_hook
+        )
     for slot, digest in enumerate(plan.class_digests):
         representative = next(
             (
