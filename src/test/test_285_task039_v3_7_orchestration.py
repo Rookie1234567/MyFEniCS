@@ -290,6 +290,17 @@ def test_v11_modal_amplitude_loader_checks_file_and_array_hash(tmp_path):
         )
 
 
+def test_v11_preparation_uses_streamed_projection_and_source_ready_marker():
+    source = inspect.getsource(orchestration._v11_prepare_bottom_authority_inner)
+    assert "build_streamed_projection_only" in source
+    assert "canonical_trace_family_sha256=selected_payload.get" in source
+    assert "consume_task039_v4_selected_mode_packet" not in source
+    assert "build_single_hybrid_interface_mode_owner" not in source
+    assert "owner.blocks" not in source
+    assert "v11_h4_bottom_packet_algebra_source_ready" in source
+    assert "v11_h4_bottom_packet_algebra_owner_source_ready" not in source
+
+
 @pytest.mark.parametrize("audit_failure", [False, True])
 def test_v11_bottom_packet_route_uses_fixed_authority_and_releases(
     monkeypatch, audit_failure
@@ -329,7 +340,7 @@ def test_v11_bottom_packet_route_uses_fixed_authority_and_releases(
             "derivation": "-D_b*u_v7",
             "source_path": "v7/full-fe.json",
             "source_sha256": "a" * 64,
-            "D_identity": "owner.blocks.projection",
+            "D_identity": "streamed_projection_only:aij:(1, 2)",
         },
         "v7_modal_amplitudes": np.zeros(960, dtype=np.complex128),
         "v7_bottom_trace": np.zeros(1, dtype=np.complex128),
@@ -356,7 +367,12 @@ def test_v11_bottom_packet_route_uses_fixed_authority_and_releases(
         "release": lambda: (
             timeline.append("authority_release")
             or {
-                "released_objects": {"provider": True, "context": True, "owner": True},
+                "released_objects": {
+                    "provider": True,
+                    "context": True,
+                    "projection": True,
+                },
+                "not_created": ["owner", "bundle"],
                 "all_owned_released": True,
             }
         ),

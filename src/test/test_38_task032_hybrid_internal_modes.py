@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+import inspect
 from unittest import mock
 from types import SimpleNamespace
 
@@ -13,8 +14,11 @@ from src.common.config_3d import target_stage4_config
 from src.coupling.hybrid_internal_modes import (
     _ReusableInterfaceLifter,
     _ReusableModeTractionEvaluator,
+    _trace_from_streamed_local_values,
     build_hybrid_internal_mode_coupling,
+    build_streamed_projection_only,
 )
+from src.coupling.modal_trace_projection import ModalTraceProjection
 from src.modes.cross_section_spaces import (
     build_cross_section_spaces,
     build_matching_cross_section,
@@ -77,9 +81,7 @@ class Task032HybridInternalModeFailureCleanupTests(unittest.TestCase):
             "bottom_system": SimpleNamespace(
                 side="bottom", assembly_backend_actual="test"
             ),
-            "top_system": SimpleNamespace(
-                side="top", assembly_backend_actual="test"
-            ),
+            "top_system": SimpleNamespace(side="top", assembly_backend_actual="test"),
         }
 
     def test_projection_is_destroyed_when_negative_trace_extraction_fails(self):
@@ -146,9 +148,7 @@ class Task032HybridInternalModeTests(unittest.TestCase):
         cls.cfg = target_stage4_config(degree=2, h_nm=10.0)
         cls.cross_section = build_matching_cross_section(cls.cfg, "stage4_xy")
         progress("Task32 test38: cross-section mesh complete")
-        cls.spaces = build_cross_section_spaces(
-            cls.cross_section, transverse_degree=2
-        )
+        cls.spaces = build_cross_section_spaces(cls.cross_section, transverse_degree=2)
         progress("Task32 test38: cross-section spaces complete")
         target = np.sqrt(
             (cls.cfg.k0 * complex(cls.cfg.n_air)) ** 2
@@ -162,9 +162,7 @@ class Task032HybridInternalModeTests(unittest.TestCase):
             trace = fem.Function(cls.spaces.transverse)
 
             def field(x):
-                phase = np.exp(
-                    1j * (cls.cfg.kx * x[0] + cls.cfg.ky * x[1])
-                )
+                phase = np.exp(1j * (cls.cfg.kx * x[0] + cls.cfg.ky * x[1]))
                 values = np.zeros((2, x.shape[1]), dtype=PETSc.ScalarType)
                 values[component, :] = phase
                 return values
@@ -257,12 +255,8 @@ class Task032HybridInternalModeTests(unittest.TestCase):
                 lifted = fem.Function(system.V)
 
                 def field(x, component=column):
-                    phase = np.exp(
-                        1j * (self.cfg.kx * x[0] + self.cfg.ky * x[1])
-                    )
-                    values = np.zeros(
-                        (3, x.shape[1]), dtype=PETSc.ScalarType
-                    )
+                    phase = np.exp(1j * (self.cfg.kx * x[0] + self.cfg.ky * x[1]))
+                    values = np.zeros((3, x.shape[1]), dtype=PETSc.ScalarType)
                     values[component, :] = phase
                     return values
 
@@ -285,6 +279,115 @@ class Task032HybridInternalModeTests(unittest.TestCase):
                 atol=1.0e-10,
                 rtol=1.0e-10,
             )
+
+    def test_streamed_projection_matches_full_owner_without_traction_matrix(self):
+        if MPI.COMM_WORLD.size >= 4:
+            self.skipTest(
+                "Retained full-owner plus second-D exact authority is limited to "
+                "serial/MPI2; MPI4 uses the fresh single-build action/lifecycle test."
+            )
+        self.assertNotIn(
+            ".petsc_vec",
+            inspect.getsource(_trace_from_streamed_local_values),
+        )
+
+        def mode_pair(branch, index):
+            mode = (self.positive if branch == "positive" else self.negative).modes[
+                index
+            ]
+            right = mode.right.right_full
+            left = mode.left_full
+            return {
+                "right_local": np.array(
+                    right.getArray(readonly=True), dtype=np.complex128, copy=True
+                ),
+                "left_local": np.array(
+                    left.getArray(readonly=True), dtype=np.complex128, copy=True
+                ),
+                "ownership_range": list(right.getOwnershipRange()),
+                "global_size": int(right.getSize()),
+            }
+
+        negative_mix = np.asarray([[1.0, 0.25], [-0.5, 1.5]])
+        raw_negative_right = [
+            np.array(
+                mode.right.right_full.getArray(readonly=True),
+                dtype=np.complex128,
+                copy=True,
+            )
+            for mode in self.negative.modes
+        ]
+
+        def mixed_mode_pair(branch, index):
+            pair = mode_pair(branch, index)
+            if branch == "negative":
+                pair["right_local"] = sum(
+                    negative_mix[row, index] * raw_negative_right[row]
+                    for row in range(2)
+                )
+            return pair
+
+        with mock.patch(
+            "src.coupling.hybrid_internal_modes._build_traction_matrix",
+            side_effect=AssertionError("streamed projection built traction"),
+        ):
+            streamed = build_streamed_projection_only(
+                self.bottom_system,
+                self.spaces,
+                mixed_mode_pair,
+                mode_count=2,
+            )
+        source = self.bottom_system.A.createVecRight()
+        streamed_output = streamed.projection.createVecLeft()
+        owner_output = self.coupling.bottom.projection.createVecLeft()
+        difference = streamed_output.duplicate()
+        try:
+            first, last = source.getOwnershipRange()
+            source.set(0.0)
+            source.getArray()[:] = np.arange(first, last) + 0.25j
+            source.assemble()
+            streamed.projection.mult(source, streamed_output)
+            self.coupling.bottom.projection.mult(source, owner_output)
+            streamed_output.copy(difference)
+            difference.axpy(-1.0, owner_output)
+            relative_error = float(difference.norm()) / max(
+                float(owner_output.norm()), 1.0e-30
+            )
+            self.assertLessEqual(relative_error, 1.0e-12)
+            self.assertAlmostEqual(
+                streamed.audit["trace_gram_condition"],
+                self.coupling.bottom.trace_gram_condition,
+                places=10,
+            )
+            self.assertGreater(streamed.audit["canonical_mapping_condition"], 1.0)
+            self.assertFalse(streamed.audit["full_mode_vectors_retained"])
+            self.assertFalse(streamed.audit["positive_traction_matrix"])
+            self.assertFalse(streamed.audit["negative_traction_matrix"])
+
+            base_right = self.coupling.projection.right_traces[0]
+            base_left = self.coupling.projection.left_traces[0]
+            scaled_right = fem.Function(self.spaces.transverse)
+            scaled_left = fem.Function(self.spaces.transverse)
+            scaled_right.x.array[:] = 2.0 * base_right.x.array
+            scaled_left.x.array[:] = base_left.x.array
+            scaled_right.x.scatter_forward()
+            scaled_left.x.scatter_forward()
+            nonunit = ModalTraceProjection.from_traces(
+                self.spaces, [scaled_right], [scaled_left]
+            )
+            try:
+                self.assertFalse(np.allclose(nonunit.gram, np.eye(1)))
+                round_trip = nonunit.round_trip([1.0 + 0.25j])
+                self.assertLessEqual(round_trip.coefficient_relative_error, 1.0e-12)
+                self.assertLessEqual(round_trip.trace_relative_residual, 1.0e-12)
+            finally:
+                nonunit.destroy()
+        finally:
+            difference.destroy()
+            owner_output.destroy()
+            streamed_output.destroy()
+            source.destroy()
+            streamed.destroy()
 
     def test_top_bottom_blocks_encode_explicit_opposite_normals(self):
         bottom = self.coupling.bottom
@@ -343,6 +446,129 @@ class Task032HybridInternalModeTests(unittest.TestCase):
         lifted, query_count = lifter.lift(source)
         self.assertGreater(query_count, 0)
         self.assertGreater(float(np.linalg.norm(lifted.x.array)), 0.0)
+
+
+class Task032StreamedProjectionFreshLifecycleTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.cfg = target_stage4_config(degree=2, h_nm=10.0)
+        cls.cross_section = build_matching_cross_section(cls.cfg, "stage4_xy")
+        cls.spaces = build_cross_section_spaces(
+            cls.cross_section,
+            transverse_degree=2,
+        )
+        cls.system = assemble_hybrid_local_dtn_system(cls.cfg, "bottom")
+
+        target = np.sqrt(
+            (cls.cfg.k0 * complex(cls.cfg.n_air)) ** 2
+            - cls.cfg.kx**2
+            - cls.cfg.ky**2
+            + 0.0j
+        )
+
+        def packet(component: int, beta: complex, direction: str):
+            trace = fem.Function(cls.spaces.transverse)
+
+            def field(x):
+                values = np.zeros((2, x.shape[1]), dtype=PETSc.ScalarType)
+                values[component, :] = np.exp(
+                    1j * (cls.cfg.kx * x[0] + cls.cfg.ky * x[1])
+                )
+                return values
+
+            trace.interpolate(field)
+            trace.x.scatter_forward()
+            mixed = fem.Function(cls.spaces.mixed)
+            mixed.x.array[:] = 0.0
+            mixed.x.array[cls.spaces.transverse_to_mixed] = trace.x.array
+            mixed.x.scatter_forward()
+            index_map = cls.spaces.mixed.dofmap.index_map
+            block_size = int(cls.spaces.mixed.dofmap.index_map_bs)
+            block_start, block_end = map(int, index_map.local_range)
+            owned_size = (block_end - block_start) * block_size
+            values = np.asarray(mixed.x.array[:owned_size]).copy()
+            del mixed, trace
+            return {
+                "right_local": values,
+                "left_local": values.copy(),
+                "ownership_range": (
+                    block_start * block_size,
+                    block_end * block_size,
+                ),
+                "global_size": int(index_map.size_global * block_size),
+                "beta": beta,
+                "direction": direction,
+            }
+
+        cls.positive_packets = [
+            packet(component, target, "forward") for component in range(2)
+        ]
+        for index, scale in enumerate((2.0, 3.0)):
+            cls.positive_packets[index]["left_local"] *= scale
+        cls.negative_packets = [
+            packet(component, -target, "backward") for component in range(2)
+        ]
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.system.A.destroy()
+        cls.system.b.destroy()
+
+    def test_streamed_projection_fresh_single_build_action_identity(self):
+        negative_mix = np.asarray([[1.0, 0.25], [-0.5, 1.5]])
+
+        def mode_pair(branch, index):
+            source = (
+                self.positive_packets[index]
+                if branch == "positive"
+                else self.negative_packets[index]
+            )
+            result = dict(source)
+            if branch == "negative":
+                result["right_local"] = sum(
+                    negative_mix[row, index] * self.negative_packets[row]["right_local"]
+                    for row in range(2)
+                )
+            return result
+
+        streamed = build_streamed_projection_only(
+            self.system,
+            self.spaces,
+            mode_pair,
+            mode_count=2,
+        )
+        try:
+            self.assertGreater(streamed.audit["trace_gram_condition"], 1.0)
+            self.assertGreater(streamed.audit["canonical_mapping_condition"], 1.0)
+            self.assertFalse(streamed.audit["positive_traction_matrix"])
+            self.assertFalse(streamed.audit["negative_traction_matrix"])
+            for component in range(2):
+                lifted = fem.Function(self.system.V)
+
+                def field(x, component=component):
+                    values = np.zeros((3, x.shape[1]), dtype=PETSc.ScalarType)
+                    values[component, :] = np.exp(
+                        1j * (self.cfg.kx * x[0] + self.cfg.ky * x[1])
+                    )
+                    return values
+
+                lifted.interpolate(field)
+                lifted.x.scatter_forward()
+                source = _augmented_local_field_vector(self.system, lifted)
+                output = streamed.projection.createVecLeft()
+                try:
+                    streamed.projection.mult(source, output)
+                    np.testing.assert_allclose(
+                        _small_vector_values(output),
+                        np.eye(2, dtype=np.complex128)[:, component],
+                        atol=1.0e-9,
+                        rtol=1.0e-9,
+                    )
+                finally:
+                    output.destroy()
+                    source.destroy()
+        finally:
+            streamed.destroy()
 
 
 if __name__ == "__main__":

@@ -144,6 +144,20 @@ class SingleHybridInterfaceModeOwner:
 
 
 @dataclass
+class StreamedProjectionOnly:
+    """One factor-free projection matrix built from streamed modal traces."""
+
+    projection: PETSc.Mat
+    audit: dict[str, object]
+    _destroyed: bool = False
+
+    def destroy(self) -> None:
+        if not self._destroyed:
+            self.projection.destroy()
+            self._destroyed = True
+
+
+@dataclass
 class HybridInternalModeCoupling:
     """Task32 reflection-free middle-region coupling before monolithic assembly."""
 
@@ -1346,6 +1360,162 @@ def _build_projection_matrix(
         float(trace_audit["canonical_representation_error"]),
         dict(trace_audit) if canonical_trace_gate_policy is not None else None,
     )
+
+
+def _trace_from_streamed_local_values(
+    values: np.ndarray,
+    spaces: CrossSectionSpaces,
+    ownership_range: Sequence[int],
+    *,
+    name: str,
+) -> fem.Function:
+    """Extract one transverse trace while owning only one temporary full mode."""
+
+    mixed = fem.Function(spaces.mixed)
+    index_map = spaces.mixed.dofmap.index_map
+    block_size = int(spaces.mixed.dofmap.index_map_bs)
+    block_start, block_end = map(int, index_map.local_range)
+    owned_size = (block_end - block_start) * block_size
+    actual_range = (block_start * block_size, block_end * block_size)
+    expected_range = tuple(int(value) for value in ownership_range)
+    local_values = np.asarray(values, dtype=PETSc.ScalarType)
+    if actual_range != expected_range or local_values.shape != (owned_size,):
+        raise ValueError("Streamed mode ownership does not match mixed space")
+    if not np.isfinite(local_values).all():
+        raise ValueError("Streamed mode contains non-finite values")
+    mixed.x.array[:owned_size] = local_values
+    mixed.x.scatter_forward()
+    trace = fem.Function(spaces.transverse, name=name)
+    trace.x.array[:] = mixed.x.array[spaces.transverse_to_mixed]
+    trace.x.scatter_forward()
+    del mixed
+    return trace
+
+
+def build_streamed_projection_only(
+    system: HybridLocalDtnSystem,
+    spaces: CrossSectionSpaces,
+    mode_pair: Callable[[str, int], Mapping[str, Any]],
+    *,
+    mode_count: int,
+    canonical_trace_gate_policy: str | None = None,
+    canonical_trace_family_sha256: str | None = None,
+    log=None,
+) -> StreamedProjectionOnly:
+    """Build only ``D_b`` from one selected-packet mode pair at a time.
+
+    The existing ``ModalTraceProjection`` and ``_build_projection_matrix`` carry
+    the trace mass, non-unit Gram solve, canonical negative mapping, and sparse
+    projection assembly.  This adapter supplies their traces from transient
+    packet rows; it never creates a modal basis, traction matrix, factor, KSP,
+    or QEP object.
+    """
+
+    if int(mode_count) <= 0:
+        raise ValueError("Streamed projection requires a positive mode count")
+    positive_right: list[fem.Function] = []
+    positive_left: list[fem.Function] = []
+    negative_right: list[fem.Function] = []
+    projection = None
+    projection_matrix = None
+    try:
+        for index in range(int(mode_count)):
+            positive = mode_pair("positive", index)
+            negative = mode_pair("negative", index)
+            positive_right.append(
+                _trace_from_streamed_local_values(
+                    positive["right_local"],
+                    spaces,
+                    positive["ownership_range"],
+                    name=f"task039_streamed_positive_right_trace_{index}",
+                )
+            )
+            positive_left.append(
+                _trace_from_streamed_local_values(
+                    positive["left_local"],
+                    spaces,
+                    positive["ownership_range"],
+                    name=f"task039_streamed_positive_left_trace_{index}",
+                )
+            )
+            negative_right.append(
+                _trace_from_streamed_local_values(
+                    negative["right_local"],
+                    spaces,
+                    negative["ownership_range"],
+                    name=f"task039_streamed_negative_right_trace_{index}",
+                )
+            )
+        projection = ModalTraceProjection.from_traces(
+            spaces,
+            positive_right,
+            positive_left,
+        )
+        canonical_mapping = np.column_stack(
+            [projection.project(trace) for trace in negative_right]
+        )
+        canonical_negative_traces = _canonicalized_negative_traces(
+            projection, canonical_mapping
+        )
+        surface_load = _ReusableInterfaceSurfaceLoad(system)
+        trace_lifter = _ReusableInterfaceLifter(system, target_space=system.V)
+        (
+            projection_matrix,
+            query_count,
+            _negative_mapping,
+            gram_condition,
+            projection_identity_error,
+            full_left_vectors,
+            inverse_gram,
+            _modal_rhs_correction,
+            raw_consistency_error,
+            representation_error,
+            trace_gate,
+        ) = _build_projection_matrix(
+            system,
+            projection,
+            negative_right,
+            canonical_negative_traces,
+            canonical_mapping,
+            surface_load,
+            trace_lifter,
+            log,
+            canonical_trace_gate_policy,
+            canonical_trace_family_sha256,
+        )
+        if full_left_vectors:
+            for vector in full_left_vectors:
+                vector.destroy()
+            projection_matrix.destroy()
+            projection_matrix = None
+            raise RuntimeError("Streamed projection retained full left vectors")
+        del inverse_gram, surface_load, trace_lifter, canonical_negative_traces
+        result = StreamedProjectionOnly(
+            projection=projection_matrix,
+            audit={
+                "mode_count": int(mode_count),
+                "query_count": int(query_count),
+                "trace_gram_condition": float(gram_condition),
+                "projection_identity_error": float(projection_identity_error),
+                "canonical_mapping_condition": float(np.linalg.cond(canonical_mapping)),
+                "canonical_trace_raw_consistency_error": float(raw_consistency_error),
+                "canonical_trace_representation_error": float(representation_error),
+                "canonical_trace_gate": trace_gate,
+                "full_mode_vectors_retained": False,
+                "positive_traction_matrix": False,
+                "negative_traction_matrix": False,
+            },
+        )
+        projection_matrix = None
+        return result
+    finally:
+        if projection_matrix is not None:
+            projection_matrix.destroy()
+        if projection is not None:
+            projection.destroy()
+        positive_right.clear()
+        positive_left.clear()
+        negative_right.clear()
 
 
 def _build_traction_matrix(

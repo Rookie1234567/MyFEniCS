@@ -193,9 +193,7 @@ def build_matched_interface_trace(
     if source_mesh.comm.size != cross_section.mesh.comm.size:
         raise ValueError("Source and trace communicators have different sizes.")
 
-    convention = interface_convention(
-        side, bottom_z_nm=bottom_z_nm, top_z_nm=top_z_nm
-    )
+    convention = interface_convention(side, bottom_z_nm=bottom_z_nm, top_z_nm=top_z_nm)
     tolerance = 1.0e-10 * max(cfg.period_x, cfg.period_y, 1.0)
     source_x = _global_coordinate_axis(source_mesh, 0)
     source_y = _global_coordinate_axis(source_mesh, 1)
@@ -216,13 +214,9 @@ def build_matched_interface_trace(
     )
     num_owned_facets = source_mesh.topology.index_map(fdim).size_local
     facets = np.asarray(facets[facets < num_owned_facets], dtype=np.int32)
-    adjacent_cells = _middle_adjacent_owned_cells(
-        source_mesh, convention, tolerance
-    )
+    adjacent_cells = _middle_adjacent_owned_cells(source_mesh, convention, tolerance)
     global_facets = int(source_mesh.comm.allreduce(len(facets), op=MPI.SUM))
-    global_cells = int(
-        source_mesh.comm.allreduce(len(adjacent_cells), op=MPI.SUM)
-    )
+    global_cells = int(source_mesh.comm.allreduce(len(adjacent_cells), op=MPI.SUM))
     expected_cells = int(cross_section.mesh_cells[0] * cross_section.mesh_cells[1])
     if global_facets != expected_cells:
         raise RuntimeError(
@@ -289,7 +283,9 @@ class _DistributedTangentialEvaluator:
         dest_cells = np.asarray(ownership.dest_cells, dtype=np.int32)
         self.unresolved_points += int(np.count_nonzero(src_owner < 0))
         if np.any(src_owner < 0):
-            raise RuntimeError("At least one interface interpolation point is unresolved.")
+            raise RuntimeError(
+                "At least one interface interpolation point is unresolved."
+            )
 
         evaluated = (
             np.asarray(
@@ -304,9 +300,7 @@ class _DistributedTangentialEvaluator:
         self.local_source_evaluations += len(tangential)
 
         comm = self._interface.source_mesh.comm
-        send: list[list[tuple[complex, complex]]] = [
-            [] for _ in range(comm.size)
-        ]
+        send: list[list[tuple[complex, complex]]] = [[] for _ in range(comm.size)]
         for owner, value in zip(dest_owner, tangential):
             send[int(owner)].append((complex(value[0]), complex(value[1])))
         received = comm.alltoall(send)
@@ -332,12 +326,16 @@ class _DistributedTangentialEvaluator:
             owner_index = int(owner)
             offset = int(offsets[owner_index])
             if offset >= len(received[owner_index]):
-                raise RuntimeError("Returned interface values do not match point ownership.")
+                raise RuntimeError(
+                    "Returned interface values do not match point ownership."
+                )
             result[index, :] = received[owner_index][offset]
             offsets[owner_index] += 1
         for rank, values in enumerate(received):
             if int(offsets[rank]) != len(values):
-                raise RuntimeError("Unused returned interface values indicate an ordering error.")
+                raise RuntimeError(
+                    "Unused returned interface values indicate an ordering error."
+                )
         return result.T
 
 
@@ -358,10 +356,8 @@ def extract_tangential_trace(
     padding_value = (
         1.0e-10
         * max(
-            interface.cross_section.x_values[-1]
-            - interface.cross_section.x_values[0],
-            interface.cross_section.y_values[-1]
-            - interface.cross_section.y_values[0],
+            interface.cross_section.x_values[-1] - interface.cross_section.x_values[0],
+            interface.cross_section.y_values[-1] - interface.cross_section.y_values[0],
             1.0,
         )
         if padding is None
@@ -461,9 +457,7 @@ def _overlap_matrix(
             mass.mult(right_field.x.petsc_vec, action)
             for row, left_field in enumerate(left):
                 # PETSc VecDot(x, y) returns y^H x.
-                overlap[row, column] = complex(
-                    action.dot(left_field.x.petsc_vec)
-                )
+                overlap[row, column] = complex(action.dot(left_field.x.petsc_vec))
     finally:
         action.destroy()
     return overlap
@@ -511,9 +505,7 @@ class ModalTraceProjection:
         if min(selected) < 0 or max(selected) >= len(basis.modes):
             raise IndexError("An interface mode index is out of range.")
 
-        self.spaces = spaces
-        self.mode_indices = selected
-        self.right_traces = tuple(
+        right_traces = tuple(
             _trace_from_full_mode_vector(
                 basis.modes[index].right.right_full,
                 spaces,
@@ -521,7 +513,7 @@ class ModalTraceProjection:
             )
             for index in selected
         )
-        self.left_traces = tuple(
+        left_traces = tuple(
             _trace_from_full_mode_vector(
                 basis.modes[index].left_full,
                 spaces,
@@ -529,6 +521,54 @@ class ModalTraceProjection:
             )
             for index in selected
         )
+        self._initialize_from_traces(
+            spaces,
+            right_traces,
+            left_traces,
+            mode_indices=selected,
+            condition_limit=condition_limit,
+            quadrature_degree=quadrature_degree,
+        )
+
+    @classmethod
+    def from_traces(
+        cls,
+        spaces: CrossSectionSpaces,
+        right_traces: Sequence[fem.Function],
+        left_traces: Sequence[fem.Function],
+        *,
+        condition_limit: float = 1.0e12,
+        quadrature_degree: int | None = None,
+    ) -> "ModalTraceProjection":
+        """Build the same projection algebra from already extracted traces."""
+
+        projection = cls.__new__(cls)
+        projection._initialize_from_traces(
+            spaces,
+            right_traces,
+            left_traces,
+            mode_indices=tuple(range(len(right_traces))),
+            condition_limit=condition_limit,
+            quadrature_degree=quadrature_degree,
+        )
+        return projection
+
+    def _initialize_from_traces(
+        self,
+        spaces: CrossSectionSpaces,
+        right_traces: Sequence[fem.Function],
+        left_traces: Sequence[fem.Function],
+        *,
+        mode_indices: Sequence[int],
+        condition_limit: float,
+        quadrature_degree: int | None,
+    ) -> None:
+        if not right_traces or len(right_traces) != len(left_traces):
+            raise ValueError("Interface trace pairs must be nonempty and matched.")
+        self.spaces = spaces
+        self.mode_indices = tuple(int(index) for index in mode_indices)
+        self.right_traces = tuple(right_traces)
+        self.left_traces = tuple(left_traces)
         if quadrature_degree is not None and int(quadrature_degree) < 1:
             raise ValueError("Trace quadrature degree must be positive.")
         self.quadrature_degree = (
@@ -538,19 +578,21 @@ class ModalTraceProjection:
             spaces,
             quadrature_degree=self.quadrature_degree,
         )
-        self.gram = _overlap_matrix(
-            self.mass, self.left_traces, self.right_traces
-        )
+        self.gram = _overlap_matrix(self.mass, self.left_traces, self.right_traces)
         self.gram_condition = float(np.linalg.cond(self.gram))
-        if not np.isfinite(self.gram_condition) or self.gram_condition > condition_limit:
+        if (
+            not np.isfinite(self.gram_condition)
+            or self.gram_condition > condition_limit
+        ):
             self.mass.destroy()
             raise RuntimeError(
                 "Interface left/right Gram block is singular or ill-conditioned: "
                 f"cond={self.gram_condition:.6e}."
             )
         self.global_trace_dofs = int(self.mass.getSize()[0])
-        self.reconstruction_shape = (self.global_trace_dofs, len(selected))
-        self.projection_shape = (len(selected), self.global_trace_dofs)
+        mode_count = len(self.mode_indices)
+        self.reconstruction_shape = (self.global_trace_dofs, mode_count)
+        self.projection_shape = (mode_count, self.global_trace_dofs)
         self.small_dense_shape = tuple(int(value) for value in self.gram.shape)
         self.full_vector_gathered = False
         self.dense_interface_operator_formed = False
@@ -592,9 +634,7 @@ class ModalTraceProjection:
         denominator = _mass_norm(self.mass, trace)
         return float(numerator / max(denominator, 1.0e-30))
 
-    def round_trip(
-        self, coefficients: Sequence[complex]
-    ) -> ModeTraceRoundTripReport:
+    def round_trip(self, coefficients: Sequence[complex]) -> ModeTraceRoundTripReport:
         expected = np.asarray(coefficients, dtype=np.complex128)
         trace = self.reconstruct(expected)
         projected = self.project(trace)
@@ -646,9 +686,7 @@ def trace_subspace_report(
         np.linalg.svd(normalized_cross, compute_uv=False).real, 0.0, 1.0
     )
     angles = np.arccos(singular_values)
-    projector_error = float(
-        np.sqrt(max(len(first) - np.sum(singular_values**2), 0.0))
-    )
+    projector_error = float(np.sqrt(max(len(first) - np.sum(singular_values**2), 0.0)))
     return TraceSubspaceReport(
         dimension=len(first),
         singular_values=tuple(float(value) for value in singular_values),

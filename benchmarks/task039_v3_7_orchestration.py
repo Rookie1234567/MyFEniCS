@@ -65,6 +65,7 @@ from benchmarks.task039_v3_side_oracle import (
 )
 from src.common.config_3d import ASSEMBLY_TIME_STATIC_CONDENSED_BACKEND
 from src.coupling.hybrid_internal_modes import build_single_hybrid_interface_mode_owner
+from src.coupling.hybrid_internal_modes import build_streamed_projection_only
 from src.coupling.hybrid_streamed_sources import StreamedPhysicalModalSourceProvider
 from src.modes.stable_propagation import scalar_cg_discrete_traction_beta
 from src.modes.cross_section_spaces import (
@@ -7144,12 +7145,17 @@ def _v11_read_active_trace_owner_remap(
 
 def _v11_release_partial_authority(owned: dict[str, Any]) -> dict[str, Any]:
     released: dict[str, bool] = {}
+    not_created: list[str] = []
     for name, method in (
         ("provider", "destroy"),
         ("context", "release"),
+        ("projection", "destroy"),
         ("owner", "destroy"),
         ("bundle", "destroy"),
     ):
+        if name not in owned:
+            not_created.append(name)
+            continue
         value = owned.get(name)
         if value is not None:
             getattr(value, method)()
@@ -7166,6 +7172,7 @@ def _v11_release_partial_authority(owned: dict[str, Any]) -> dict[str, Any]:
         released["spool"] = False
     return {
         "released_objects": released,
+        "not_created": not_created,
         "all_owned_released": all(value is None for value in owned.values()),
     }
 
@@ -7283,24 +7290,25 @@ def _v11_prepare_bottom_authority_inner(
     spaces = build_cross_section_spaces(
         cross_section, transverse_degree=int(system.cfg.nedelec_degree)
     )
-    bundle = consume_task039_v4_selected_mode_packet(
-        selected_manifest,
-        identity=selected_identity,
-        expected_manifest_sha256=selected_manifest_sha256,
-        consumer_kind="iterative",
-        comm=comm,
+    mark(
+        "v11_h4_bottom_packet_algebra_projection_begin",
+        mode_count=V10_SIDE_RESPONSE_PACKET_FULL_COLUMNS // 2,
+        full_mode_vectors_retained=False,
+        traction_matrices_created=False,
     )
-    owned["bundle"] = bundle
-    owner = build_single_hybrid_interface_mode_owner(
+    projection = build_streamed_projection_only(
         system,
         spaces,
-        bundle.positive_basis,
-        bundle.negative_basis,
+        context.mode_pair,
+        mode_count=V10_SIDE_RESPONSE_PACKET_FULL_COLUMNS // 2,
         canonical_trace_family_sha256=selected_payload.get("selection_sha256"),
     )
-    owned["owner"] = owner
-    bundle.destroy()
-    owned["bundle"] = None
+    owned["projection"] = projection
+    d_matrix = projection.projection
+    mark(
+        "v11_h4_bottom_packet_algebra_projection_ready",
+        **dict(projection.audit),
+    )
     provider = StreamedPhysicalModalSourceProvider(system, spaces)
     owned["provider"] = provider
     sources: dict[int, np.ndarray] = {}
@@ -7321,7 +7329,7 @@ def _v11_prepare_bottom_authority_inner(
         )
         vec.destroy()
     mark(
-        "v11_h4_bottom_packet_algebra_owner_source_ready",
+        "v11_h4_bottom_packet_algebra_source_ready",
         sampled_source_count=len(sources),
         selected_context_released=False,
     )
@@ -7406,7 +7414,6 @@ def _v11_prepare_bottom_authority_inner(
             roundtrip_max_error=roundtrip_max,
             roundtrip_relative_error=roundtrip_relative,
         )
-        d_matrix = owner.blocks.projection
         d_target = d_matrix.createVecLeft()
         try:
             d_matrix.mult(active_v7, d_target)
@@ -7476,7 +7483,7 @@ def _v11_prepare_bottom_authority_inner(
 
     system_evidence = {
         "observed": True,
-        "source": "system.A/static_condensation/owner.blocks.projection objects",
+        "source": "system.A/static_condensation/streamed projection-only D",
         "mat": {
             "type": str(system.A.getType()),
             "size": [int(value) for value in system.A.getSize()],
@@ -7526,7 +7533,9 @@ def _v11_prepare_bottom_authority_inner(
             "source_path": str(trace_manifest),
             "source_sha256": V11_V7_ACTIVE_TRACE_MANIFEST_SHA256,
             "derivation": "-D_b*u_v7",
-            "D_identity": f"owner.blocks.projection:{d_matrix.getType()}:{d_matrix.getSize()}",
+            "D_identity": (
+                f"streamed_projection_only:{d_matrix.getType()}:{d_matrix.getSize()}"
+            ),
             "active_trace_roundtrip": {
                 "pass": True,
                 "max_error": roundtrip_max,
