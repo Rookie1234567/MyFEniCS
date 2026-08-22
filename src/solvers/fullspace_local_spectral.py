@@ -26,6 +26,11 @@ import numpy as np
 from mpi4py import MPI
 from scipy.linalg import solve_triangular
 
+from .fullspace_local_factor_certification import (
+    CERTIFICATION_SCHEMA as LOCAL_FACTOR_CERTIFICATION_SCHEMA,
+    certify_dense_factor,
+)
+
 
 N1_PROFILE = "bounded_local_spectral_multilevel_v1"
 N1_MAX_LOCAL_ROWS = 882
@@ -45,6 +50,7 @@ N1_REPEAT_LIMIT = 1.0e-13
 N1_DEPENDENCY_TOL = 1.0e-14
 N1_PHASE_ZERO = 64.0 * np.finfo(np.float64).eps
 N1_DEGENERATE_CLUSTER_ULPS = 256.0
+LOCAL_FACTOR_CERTIFICATION_V2 = LOCAL_FACTOR_CERTIFICATION_SCHEMA
 
 
 def _relative(value: np.ndarray, reference: np.ndarray) -> float:
@@ -235,7 +241,13 @@ def build_regional_rayleigh_ritz(
 class ExactClassOwnerPlan:
     """Own one packed factor per exact class and route bounded solves."""
 
-    def __init__(self, class_digests: Iterable[str], comm: Any = MPI.COMM_WORLD):
+    def __init__(
+        self,
+        class_digests: Iterable[str],
+        comm: Any = MPI.COMM_WORLD,
+        *,
+        certification_v2: bool = False,
+    ):
         self.comm = comm
         unique = tuple(sorted({_class_digest(value) for value in class_digests}))
         if not unique:
@@ -251,6 +263,7 @@ class ExactClassOwnerPlan:
                 for digest in unique
             }
         )
+        self.certification_v2 = bool(certification_v2)
         self._factors: dict[str, tuple[_PackedCholesky, str]] = {}
         self._factor_audits: dict[str, dict[str, Any]] = {}
 
@@ -290,14 +303,35 @@ class ExactClassOwnerPlan:
                 f"{N1_FACTOR_BYTES_LIMIT}"
             )
         fixed_rhs = np.arange(array.shape[0], dtype=np.float64) + (0.125 + 0.25j)
-        fixed_solution = factor.solve(fixed_rhs)
-        fixed_residual = _relative(array @ fixed_solution - fixed_rhs, fixed_rhs)
-        if not np.isfinite(fixed_residual) or fixed_residual > N1_ALGEBRA_LIMIT:
-            raise RuntimeError(
-                f"fixed local factor solve residual {fixed_residual:.17g} "
-                f"exceeds limit {N1_ALGEBRA_LIMIT:.17g}"
+        if self.certification_v2:
+            certification = certify_dense_factor(
+                array,
+                factor.solve,
+                packed=factor.packed,
+                lower=factor.lower(),
+                rhs=fixed_rhs,
             )
-        self._factor_audits[digest] = {
+            if certification["gate_pass"] is not True:
+                failed = tuple(
+                    key
+                    for key, value in certification["gates"].items()
+                    if value is not True
+                )
+                raise RuntimeError(
+                    f"{LOCAL_FACTOR_CERTIFICATION_V2} failed for {digest}: "
+                    f"gates={failed}"
+                )
+            fixed_residual = float(certification["ordinary_relative_residual"])
+        else:
+            fixed_solution = factor.solve(fixed_rhs)
+            fixed_residual = _relative(array @ fixed_solution - fixed_rhs, fixed_rhs)
+            if not np.isfinite(fixed_residual) or fixed_residual > N1_ALGEBRA_LIMIT:
+                raise RuntimeError(
+                    f"fixed local factor solve residual {fixed_residual:.17g} "
+                    f"exceeds limit {N1_ALGEBRA_LIMIT:.17g}"
+                )
+            certification = None
+        audit = {
             "factorization_relative_error": float(
                 factor.factorization_relative_error
             ),
@@ -305,7 +339,10 @@ class ExactClassOwnerPlan:
             "factor_bytes": int(factor.nbytes),
             "factor_owner_rank": int(self.comm.rank),
             "factor_audit_measured_once_per_class": True,
+            "certification_v2_schema": LOCAL_FACTOR_CERTIFICATION_V2 if self.certification_v2 else None,
+            "certification_v2": certification,
         }
+        self._factor_audits[digest] = audit
         self._factors[digest] = (factor, operator_digest)
         return factor, False
 
@@ -510,6 +547,9 @@ class ExactClassOwnerPlan:
                 ),
                 "numeric_allgather": False,
                 "mpi_identity_measured_by_caller": True,
+                "certification_v2_enabled": self.certification_v2,
+                "certification_v2_schema": LOCAL_FACTOR_CERTIFICATION_V2 if self.certification_v2 else None,
+                "certification_v2_class_count": len(self._factor_audits),
             }
         )
 

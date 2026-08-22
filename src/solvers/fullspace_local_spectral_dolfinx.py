@@ -32,6 +32,7 @@ from .hcurl_canonical_vector_dolfinx import (
 )
 from .fullspace_local_spectral import (
     ExactClassOwnerPlan,
+    LOCAL_FACTOR_CERTIFICATION_SCHEMA,
     LocalSpectralPatch,
     N1_LEVELS,
     N1_MODE_CAP,
@@ -1077,6 +1078,19 @@ def _build_reused_class_template_patches(
         "global_owner_factor_count": int(comm.allreduce(plan.factor_count, op=MPI.SUM)),
         "global_owner_factor_bytes": int(comm.allreduce(plan.factor_bytes, op=MPI.SUM)),
         "factor_audits_by_class": global_factor_audits,
+        "certification_v2_enabled": plan.certification_v2,
+        "certification_v2_schema": (
+            LOCAL_FACTOR_CERTIFICATION_SCHEMA if plan.certification_v2 else None
+        ),
+        "certification_v2_ordinary_residual_max": max(
+            float(value["certification_v2"]["ordinary_relative_residual"])
+            for value in global_factor_audits.values()
+            if value.get("certification_v2") is not None
+        ) if plan.certification_v2 else None,
+        "certification_v2_all_class_pass": all(
+            value.get("certification_v2", {}).get("gate_pass") is True
+            for value in global_factor_audits.values()
+        ) if plan.certification_v2 else None,
         "mode_template_count": len(plan.class_digests),
         "mode_template_bytes_transient_local": int(template_bytes_local),
         "mode_template_bytes_transient_global": int(
@@ -1915,13 +1929,16 @@ def build_real_local_spectral_patches(
     cfg: Any,
     *,
     reuse_class_templates: bool = False,
+    certification_v2: bool = False,
     diagnostic_hook: Callable[..., None] | None = None,
 ) -> tuple[tuple[LocalSpectralPatch, ...], dict[str, Any]]:
     """Build real cell patches, optionally reusing one template per class."""
 
     context = _prepare_real_context(function_space, mesh_data, floquet_data, cfg)
     comm = context["comm"]
-    plan = ExactClassOwnerPlan(context["class_digests"], comm)
+    plan = ExactClassOwnerPlan(
+        context["class_digests"], comm, certification_v2=certification_v2
+    )
     if reuse_class_templates:
         return _build_reused_class_template_patches(
             context, plan, diagnostic_hook=diagnostic_hook
@@ -2063,6 +2080,19 @@ def build_real_local_spectral_patches(
         "owner_factor_count": plan.factor_count,
         "owner_factor_bytes": plan.factor_bytes,
         "factor_audits_by_class": global_factor_audits,
+        "certification_v2_enabled": plan.certification_v2,
+        "certification_v2_schema": (
+            LOCAL_FACTOR_CERTIFICATION_SCHEMA if plan.certification_v2 else None
+        ),
+        "certification_v2_ordinary_residual_max": max(
+            float(value["certification_v2"]["ordinary_relative_residual"])
+            for value in global_factor_audits.values()
+            if value.get("certification_v2") is not None
+        ) if plan.certification_v2 else None,
+        "certification_v2_all_class_pass": all(
+            value.get("certification_v2", {}).get("gate_pass") is True
+            for value in global_factor_audits.values()
+        ) if plan.certification_v2 else None,
         "factorization_relative_error_max": max(
             float(value["factorization_relative_error"])
             for value in global_factor_audits.values()

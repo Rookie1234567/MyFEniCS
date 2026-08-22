@@ -39,6 +39,11 @@ N2_MAX_LOCAL_ROWS = 882
 N2_MODE_SHARD_HARD_BYTES = 252 * 882 * 8 * 16
 N2_PREFIXES = (16, 32)
 N1_ALGEBRA_LIMIT = 1.0e-11
+LOCAL_FACTOR_CERTIFICATION_SCHEMA = "task038.local-factor-certification-v2"
+LOCAL_FACTOR_CERTIFICATION_ORDINARY_LIMIT = 1.0e-10
+LOCAL_FACTOR_CERTIFICATION_KAPPA_LIMIT = 1.0e8
+LOCAL_FACTOR_CERTIFICATION_FACTOR_BYTES_LIMIT = 6_230_448
+LOCAL_FACTOR_CERTIFICATION_EPS64 = 2.220446049250313e-16
 N1_PO_U_LIMIT = 1.0e-13
 N1_RP_LIMIT = 1.0e-13
 
@@ -93,6 +98,21 @@ def _require_bound(
     if value is not None and value > limit:
         _error(errors, f"{label}.{key}={value:.17g} exceeds {limit:.17g}")
     return value
+
+
+def _local_factor_certification_thresholds(rows: int) -> dict[str, float]:
+    n = int(rows)
+    gamma = n * LOCAL_FACTOR_CERTIFICATION_EPS64 / (
+        1.0 - n * LOCAL_FACTOR_CERTIFICATION_EPS64
+    )
+    return {
+        "hermitian_defect": max(1.0e-13, 8.0 * gamma),
+        "factorization_relative_error": max(1.0e-13, 16.0 * gamma),
+        "normalized_backward_error": max(1.0e-14, 16.0 * gamma),
+        "ordinary_relative_residual": LOCAL_FACTOR_CERTIFICATION_ORDINARY_LIMIT,
+        "kappa2": LOCAL_FACTOR_CERTIFICATION_KAPPA_LIMIT,
+        "factor_bytes": LOCAL_FACTOR_CERTIFICATION_FACTOR_BYTES_LIMIT,
+    }
 def _relative(left: np.ndarray, right: np.ndarray) -> float:
     numerator = float(np.linalg.norm(np.asarray(left, dtype=np.complex128)))
     denominator = max(float(np.linalg.norm(np.asarray(right, dtype=np.complex128))), np.finfo(float).tiny)
@@ -296,6 +316,10 @@ def _check_identity(record: Mapping[str, Any], record_path: Path, expected_sha: 
     for key, value in required.items():
         if model.get(key) != value:
             _error(errors, f"model.{key} is not frozen to {value!r}")
+    if model.get("local_factor_certification_v2") is True and model.get(
+        "local_factor_certification_schema"
+    ) != LOCAL_FACTOR_CERTIFICATION_SCHEMA:
+        _error(errors, "model local-factor certification-v2 schema is not frozen")
     if record.get("no_rho") is not True or record.get("not_n3") is not True:
         _error(errors, "record does not explicitly prove setup-only/no-rho mode")
 
@@ -378,6 +402,12 @@ def _check_setup_audits(
     class_digests = patch.get("class_digests")
     factor_audits = patch.get("factor_audits_by_class")
     class_patch_counts = patch.get("class_patch_counts_global")
+    certification_v2_enabled = patch.get("certification_v2_enabled") is True
+    if certification_v2_enabled:
+        if patch.get("certification_v2_schema") != LOCAL_FACTOR_CERTIFICATION_SCHEMA:
+            _error(errors, "local-factor certification-v2 schema is missing")
+        if patch.get("certification_v2_all_class_pass") is not True:
+            _error(errors, "local-factor certification-v2 all-class Gate is not true")
     if not isinstance(class_digests, list) or not isinstance(factor_audits, Mapping):
         _error(errors, "per-class factor audit is missing")
     else:
@@ -394,9 +424,73 @@ def _check_setup_audits(
             _require_bound(
                 factor, "factorization_relative_error", f"factor[{digest}]", N1_ALGEBRA_LIMIT, errors
             )
-            _require_bound(
-                factor, "fixed_rhs_solve_residual", f"factor[{digest}]", N1_ALGEBRA_LIMIT, errors
-            )
+            if certification_v2_enabled:
+                certificate = factor.get("certification_v2")
+                if not isinstance(certificate, Mapping):
+                    _error(errors, f"factor[{digest}] certification-v2 facts are missing")
+                else:
+                    rows = _required_integer(certificate, "rows", f"factor[{digest}].certification_v2", errors)
+                    if rows is not None:
+                        expected_thresholds = _local_factor_certification_thresholds(rows)
+                        thresholds = certificate.get("thresholds")
+                        if not isinstance(thresholds, Mapping) or set(thresholds) != set(expected_thresholds) or any(
+                            thresholds.get(key) != value for key, value in expected_thresholds.items()
+                        ):
+                            _error(errors, f"factor[{digest}] certification-v2 thresholds do not close")
+                    if certificate.get("schema") != LOCAL_FACTOR_CERTIFICATION_SCHEMA:
+                        _error(errors, f"factor[{digest}] certification-v2 schema does not close")
+                    gates = certificate.get("gates")
+                    if (
+                        certificate.get("gate_pass") is not True
+                        or not isinstance(gates, Mapping)
+                        or any(value is not True for value in gates.values())
+                    ):
+                        _error(errors, f"factor[{digest}] certification-v2 Gate is not true")
+                    thresholds = certificate.get("thresholds")
+                    backward_limit = (
+                        float(thresholds.get("normalized_backward_error", 0.0))
+                        if isinstance(thresholds, Mapping)
+                        else 0.0
+                    )
+                    factorization_limit = (
+                        float(thresholds.get("factorization_relative_error", 0.0))
+                        if isinstance(thresholds, Mapping)
+                        else 0.0
+                    )
+                    _require_bound(
+                        certificate,
+                        "ordinary_relative_residual",
+                        f"factor[{digest}].certification_v2",
+                        LOCAL_FACTOR_CERTIFICATION_ORDINARY_LIMIT,
+                        errors,
+                    )
+                    _require_bound(
+                        certificate,
+                        "normalized_backward_error",
+                        f"factor[{digest}].certification_v2",
+                        backward_limit,
+                        errors,
+                    )
+                    _require_bound(
+                        certificate,
+                        "factorization_relative_error",
+                        f"factor[{digest}].certification_v2",
+                        factorization_limit,
+                        errors,
+                    )
+                    if certificate.get("packed_roundtrip_exact") is not True or certificate.get("triangular_repeat_exact") is not True:
+                        _error(errors, f"factor[{digest}] certification-v2 packing/repeat is not exact")
+                _require_bound(
+                    factor,
+                    "fixed_rhs_solve_residual",
+                    f"factor[{digest}]",
+                    LOCAL_FACTOR_CERTIFICATION_ORDINARY_LIMIT,
+                    errors,
+                )
+            else:
+                _require_bound(
+                    factor, "fixed_rhs_solve_residual", f"factor[{digest}]", N1_ALGEBRA_LIMIT, errors
+                )
     if not isinstance(class_patch_counts, Mapping) or not isinstance(class_digests, list):
         _error(errors, "global class patch-count inventory is missing")
     elif set(class_patch_counts) != set(class_digests):
@@ -450,7 +544,23 @@ def _check_setup_audits(
         "projected_eigen_residual_max",
         "fixed_solve_residual_max",
     ):
-        _require_bound(patch, key, "patch", N1_ALGEBRA_LIMIT, errors)
+        _require_bound(
+            patch,
+            key,
+            "patch",
+            LOCAL_FACTOR_CERTIFICATION_ORDINARY_LIMIT
+            if certification_v2_enabled and key == "fixed_solve_residual_max"
+            else N1_ALGEBRA_LIMIT,
+            errors,
+        )
+    if certification_v2_enabled:
+        _require_bound(
+            patch,
+            "certification_v2_ordinary_residual_max",
+            "patch",
+            LOCAL_FACTOR_CERTIFICATION_ORDINARY_LIMIT,
+            errors,
+        )
     for key in ("B0_min_eigenvalue", "M_local_min_eigenvalue"):
         value = _required_number(patch, key, "patch", errors)
         if value is not None and value <= 0.0:

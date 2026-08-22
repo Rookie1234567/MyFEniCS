@@ -474,6 +474,7 @@ def _build_local_patches(case: dict[str, Any]) -> tuple[tuple[Any, ...], dict[st
         case["floquet_data"],
         case["cfg"],
         reuse_class_templates=True,
+        certification_v2=True,
     )
     return patches, audit
 
@@ -705,6 +706,12 @@ def _record(
             "max_exact_classes": N2_MAX_CLASSES,
             "max_patch_rows": 882,
             "factor_storage": "one_hash_owner_lower_packed_complex128_cholesky",
+            "local_factor_certification_v2": patch_audit.get(
+                "certification_v2_enabled", False
+            ),
+            "local_factor_certification_schema": patch_audit.get(
+                "certification_v2_schema"
+            ),
             "factor_bytes_limit": N2_FACTOR_BYTES_LIMIT,
             "gradient_count": 3,
             "positive_mode_count": 5,

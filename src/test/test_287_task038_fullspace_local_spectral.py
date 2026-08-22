@@ -11,6 +11,7 @@ from mpi4py import MPI
 
 from src.solvers.fullspace_local_spectral import (
     ExactClassOwnerPlan,
+    LOCAL_FACTOR_CERTIFICATION_SCHEMA,
     LocalSpectralPatch,
     N1_FACTOR_BYTES_LIMIT,
     N1_MAX_LOCAL_ROWS,
@@ -399,6 +400,29 @@ def test_class_registration_uses_one_fixed_slot_factor():
     )
     assert plan.factor_count == 1
     assert plan.factor_bytes == packed_lower_bytes(4)
+    plan.destroy()
+
+
+def test_prospective_factor_certification_v2_runs_once_per_registered_class():
+    digest = "1" * 64
+    plan = ExactClassOwnerPlan(
+        (digest,), MPI.COMM_SELF, certification_v2=True
+    )
+    plan.register_class_representative(
+        digest,
+        3.0 * np.eye(4, dtype=np.complex128),
+        slot=0,
+    )
+    audit = plan.factor_audit(digest)
+    assert plan.audit["certification_v2_enabled"] is True
+    assert audit["certification_v2_schema"] == LOCAL_FACTOR_CERTIFICATION_SCHEMA
+    certificate = audit["certification_v2"]
+    assert certificate["schema"] == LOCAL_FACTOR_CERTIFICATION_SCHEMA
+    assert certificate["rows"] == 4
+    assert certificate["gate_pass"] is True
+    assert certificate["triangular_repeat_exact"] is True
+    assert certificate["thresholds"]["ordinary_relative_residual"] == 1.0e-10
+    assert audit["fixed_rhs_solve_residual"] == certificate["ordinary_relative_residual"]
     plan.destroy()
 
 
