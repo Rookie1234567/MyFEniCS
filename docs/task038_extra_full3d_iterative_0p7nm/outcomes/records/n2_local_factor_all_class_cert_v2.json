@@ -1,0 +1,4198 @@
+{
+  "all_class_certificates_pass": true,
+  "all_class_factor_bytes_within_global_limit": true,
+  "all_classes_processed": true,
+  "certification_schema": "task038.local-factor-certification-v2",
+  "class_certificates": [
+    {
+      "digest": "0060a10f08d980ac618497c076b8c6d078d6d1841d3f37d8172bc6e5804f8563",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "356f4788155f33acc085e32c15011487e4b9d0e3ecf1f7be7ebf241914f738cb",
+        "repacked_sha256": "356f4788155f33acc085e32c15011487e4b9d0e3ecf1f7be7ebf241914f738cb"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_000_0060a10f08d980ac_B.npy",
+        "sha256": "61e85401a83d380361ef452dde19835114138e38e90a89bc23891c362604c36b",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 7.833151481279257e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 9.874795740894773e-17,
+        "kappa2": 57576704.02205443,
+        "lambda_max": 25934.54102501303,
+        "lambda_min": 0.0004504346239597,
+        "matrix_norm_2": 25934.54102501309,
+        "normalized_backward_error": 8.891470691725503e-19,
+        "ordinary_relative_residual": 1.1089747142000698e-11,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "356f4788155f33acc085e32c15011487e4b9d0e3ecf1f7be7ebf241914f738cb",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "356f4788155f33acc085e32c15011487e4b9d0e3ecf1f7be7ebf241914f738cb",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "4386896a4308e5a004152e6e1a3397d2344a1123e9b7bff1e568281d12b479ed",
+        "cell_key": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            714285714
+          ],
+          [
+            0,
+            595238095,
+            0
+          ],
+          [
+            0,
+            595238095,
+            714285714
+          ],
+          [
+            589285714,
+            0,
+            0
+          ],
+          [
+            589285714,
+            0,
+            714285714
+          ],
+          [
+            589285714,
+            595238095,
+            0
+          ],
+          [
+            589285714,
+            595238095,
+            714285714
+          ]
+        ],
+        "row_count": 882,
+        "tag": 1,
+        "widths": [
+          8.25,
+          8.333333333333334,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_000_0060a10f08d980ac_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 0,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    },
+    {
+      "digest": "0c6b9830423f8baf83b6714ac178c724b63af1359d01b3ca5badd1d40c070a67",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "5270c74822a740386bb69f2a400ea0a2f3696dd74669c1b21e150cf532046e6d",
+        "repacked_sha256": "5270c74822a740386bb69f2a400ea0a2f3696dd74669c1b21e150cf532046e6d"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_001_0c6b9830423f8baf_B.npy",
+        "sha256": "ec6fa132758735531e272532529bc43a0ac6f1cbf8c1e3c3f3656f19383fcbcd",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 8.158904706122267e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 9.757433025229162e-17,
+        "kappa2": 57576704.11589122,
+        "lambda_max": 25934.54102501312,
+        "lambda_min": 0.00045043462322559666,
+        "matrix_norm_2": 25934.54102501307,
+        "normalized_backward_error": 8.058382790658791e-19,
+        "ordinary_relative_residual": 9.316208748538303e-12,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "5270c74822a740386bb69f2a400ea0a2f3696dd74669c1b21e150cf532046e6d",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "5270c74822a740386bb69f2a400ea0a2f3696dd74669c1b21e150cf532046e6d",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "42ba8d0ec93bc571e43ac2002563ca5bda70f3a73e7fbbbc2d29e716ee991a61",
+        "cell_key": [
+          [
+            2982142857,
+            1190476190,
+            0
+          ],
+          [
+            2982142857,
+            1190476190,
+            714285714
+          ],
+          [
+            2982142857,
+            1785714286,
+            0
+          ],
+          [
+            2982142857,
+            1785714286,
+            714285714
+          ],
+          [
+            3571428571,
+            1190476190,
+            0
+          ],
+          [
+            3571428571,
+            1190476190,
+            714285714
+          ],
+          [
+            3571428571,
+            1785714286,
+            0
+          ],
+          [
+            3571428571,
+            1785714286,
+            714285714
+          ]
+        ],
+        "row_count": 882,
+        "tag": 1,
+        "widths": [
+          8.25,
+          8.333333333333332,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_001_0c6b9830423f8baf_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 1,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    },
+    {
+      "digest": "0ec1232d35fee322c308c9c1fa742ad5d7e213ae4af7c4df840888b9d3661e64",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "5908983f109d08961eec785ad216435863b71d4160831d33021d3bd7b8e2797d",
+        "repacked_sha256": "5908983f109d08961eec785ad216435863b71d4160831d33021d3bd7b8e2797d"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_002_0ec1232d35fee322_B.npy",
+        "sha256": "e210b9fb2600351db110d98f8a5e080b4903060241802a3bda354c69328453f3",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 7.721030155976924e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 9.776187036599817e-17,
+        "kappa2": 55892794.85906069,
+        "lambda_max": 25397.009020234753,
+        "lambda_min": 0.00045438788817549506,
+        "matrix_norm_2": 25397.009020234746,
+        "normalized_backward_error": 8.268918652487071e-19,
+        "ordinary_relative_residual": 9.829548074050571e-12,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "5908983f109d08961eec785ad216435863b71d4160831d33021d3bd7b8e2797d",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "5908983f109d08961eec785ad216435863b71d4160831d33021d3bd7b8e2797d",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "0cba0bb257252d817e82725ef046f89e89b464c8f8bfc7b761913c8ff0962b2c",
+        "cell_key": [
+          [
+            1178571429,
+            1190476190,
+            8571428571
+          ],
+          [
+            1178571429,
+            1190476190,
+            9285714286
+          ],
+          [
+            1178571429,
+            1785714286,
+            8571428571
+          ],
+          [
+            1178571429,
+            1785714286,
+            9285714286
+          ],
+          [
+            1785714286,
+            1190476190,
+            8571428571
+          ],
+          [
+            1785714286,
+            1190476190,
+            9285714286
+          ],
+          [
+            1785714286,
+            1785714286,
+            8571428571
+          ],
+          [
+            1785714286,
+            1785714286,
+            9285714286
+          ]
+        ],
+        "row_count": 882,
+        "tag": 1,
+        "widths": [
+          8.5,
+          8.333333333333332,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_002_0ec1232d35fee322_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 2,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    },
+    {
+      "digest": "0f1e35332b23c88806c0090ca889b14051df0049c8b9a1db4c2ae9b508077c6b",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "26e14479398a8058700665dc5d4f2b20ec69a4d13bb5ac0e3d7e64285fcac21e",
+        "repacked_sha256": "26e14479398a8058700665dc5d4f2b20ec69a4d13bb5ac0e3d7e64285fcac21e"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_003_0f1e35332b23c888_B.npy",
+        "sha256": "6126d135c5ea367cb10745e5143266a63ec5bc33baca441cba38053807ac634c",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 8.274407753765116e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 9.751473307530137e-17,
+        "kappa2": 57576704.15102125,
+        "lambda_max": 25934.54102501308,
+        "lambda_min": 0.0004504346229507664,
+        "matrix_norm_2": 25934.541025013077,
+        "normalized_backward_error": 8.732898269543624e-19,
+        "ordinary_relative_residual": 1.0695283636144443e-11,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "26e14479398a8058700665dc5d4f2b20ec69a4d13bb5ac0e3d7e64285fcac21e",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "26e14479398a8058700665dc5d4f2b20ec69a4d13bb5ac0e3d7e64285fcac21e",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "815c680e1ef1af69d66dcb17bb3f1176ccaf1c1c1c9922758fa73464867595c3",
+        "cell_key": [
+          [
+            589285714,
+            1190476190,
+            0
+          ],
+          [
+            589285714,
+            1190476190,
+            714285714
+          ],
+          [
+            589285714,
+            1785714286,
+            0
+          ],
+          [
+            589285714,
+            1785714286,
+            714285714
+          ],
+          [
+            1178571429,
+            1190476190,
+            0
+          ],
+          [
+            1178571429,
+            1190476190,
+            714285714
+          ],
+          [
+            1178571429,
+            1785714286,
+            0
+          ],
+          [
+            1178571429,
+            1785714286,
+            714285714
+          ]
+        ],
+        "row_count": 882,
+        "tag": 1,
+        "widths": [
+          8.25,
+          8.333333333333332,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_003_0f1e35332b23c888_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 3,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    },
+    {
+      "digest": "13597baf243c7cd52a5080b48e7361b3faa0e45cb4c937aa8a1c140a9e2b0c2a",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "751070a2cfab103c2141165aae31f2429f1281b83fd69af904f5d7a5e9ed5d02",
+        "repacked_sha256": "751070a2cfab103c2141165aae31f2429f1281b83fd69af904f5d7a5e9ed5d02"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_004_13597baf243c7cd5_B.npy",
+        "sha256": "1feebf9610ad380c67a0e7d2e4ebb9c524bbdec26dda3332b363b28605f96143",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 7.899455370799626e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 9.684153062992018e-17,
+        "kappa2": 56001825.21549916,
+        "lambda_max": 25396.174340627833,
+        "lambda_min": 0.00045348833261954366,
+        "matrix_norm_2": 25396.174340627793,
+        "normalized_backward_error": 9.83496351829931e-19,
+        "ordinary_relative_residual": 1.1713789755077614e-11,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "751070a2cfab103c2141165aae31f2429f1281b83fd69af904f5d7a5e9ed5d02",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "751070a2cfab103c2141165aae31f2429f1281b83fd69af904f5d7a5e9ed5d02",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "c5a95d107290e8b2391fcbd92a2d31c0a377c4fad55eb136b1ed2bd9fde12fcd",
+        "cell_key": [
+          [
+            1178571429,
+            1190476190,
+            0
+          ],
+          [
+            1178571429,
+            1190476190,
+            714285714
+          ],
+          [
+            1178571429,
+            1785714286,
+            0
+          ],
+          [
+            1178571429,
+            1785714286,
+            714285714
+          ],
+          [
+            1785714286,
+            1190476190,
+            0
+          ],
+          [
+            1785714286,
+            1190476190,
+            714285714
+          ],
+          [
+            1785714286,
+            1785714286,
+            0
+          ],
+          [
+            1785714286,
+            1785714286,
+            714285714
+          ]
+        ],
+        "row_count": 882,
+        "tag": 3,
+        "widths": [
+          8.5,
+          8.333333333333332,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_004_13597baf243c7cd5_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 4,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    },
+    {
+      "digest": "26f5e7d4b30e79ec96d5d9b395407ae9a3a49739a1ec399b23251f1f32ae6cca",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "5f0bbc59cb6ee6c068f48a286670139582c7d01bc31ab64be74ae2794679e7ea",
+        "repacked_sha256": "5f0bbc59cb6ee6c068f48a286670139582c7d01bc31ab64be74ae2794679e7ea"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_005_26f5e7d4b30e79ec_B.npy",
+        "sha256": "b856dd00fa7b2aa6fee7bcdfcad223a1f63baa80c45cb71fe161d8eac3f3fcc5",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 7.778511118488469e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 9.684153062992018e-17,
+        "kappa2": 56001825.28169917,
+        "lambda_max": 25396.174340627796,
+        "lambda_min": 0.0004534883320834724,
+        "matrix_norm_2": 25396.17434062783,
+        "normalized_backward_error": 8.41127314504802e-19,
+        "ordinary_relative_residual": 1.0018124115082298e-11,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "5f0bbc59cb6ee6c068f48a286670139582c7d01bc31ab64be74ae2794679e7ea",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "5f0bbc59cb6ee6c068f48a286670139582c7d01bc31ab64be74ae2794679e7ea",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "c5a95d107290e8b2391fcbd92a2d31c0a377c4fad55eb136b1ed2bd9fde12fcd",
+        "cell_key": [
+          [
+            1178571429,
+            1190476190,
+            -714285714
+          ],
+          [
+            1178571429,
+            1190476190,
+            0
+          ],
+          [
+            1178571429,
+            1785714286,
+            -714285714
+          ],
+          [
+            1178571429,
+            1785714286,
+            0
+          ],
+          [
+            1785714286,
+            1190476190,
+            -714285714
+          ],
+          [
+            1785714286,
+            1190476190,
+            0
+          ],
+          [
+            1785714286,
+            1785714286,
+            -714285714
+          ],
+          [
+            1785714286,
+            1785714286,
+            0
+          ]
+        ],
+        "row_count": 882,
+        "tag": 2,
+        "widths": [
+          8.5,
+          8.333333333333332,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_005_26f5e7d4b30e79ec_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 5,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    },
+    {
+      "digest": "2c0158caba9c69275ba88a85343a15ccffbef4bdb8d463d0be47ca8d18fec301",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "05e3d3101a1b8a68b526446d59923aed60d0dacd3fafc5849b20fe83fdfbeab5",
+        "repacked_sha256": "05e3d3101a1b8a68b526446d59923aed60d0dacd3fafc5849b20fe83fdfbeab5"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_006_2c0158caba9c6927_B.npy",
+        "sha256": "9a214ff7f29f12658e513e8cb75ab86dc1aa00bdb29db92a30642fb1ecaf4473",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 8.482080350152269e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 1.0016411292444259e-16,
+        "kappa2": 57689063.420882955,
+        "lambda_max": 25933.70703627153,
+        "lambda_min": 0.0004495428682394547,
+        "matrix_norm_2": 25933.707036271557,
+        "normalized_backward_error": 7.917579898727349e-19,
+        "ordinary_relative_residual": 9.894199841610098e-12,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "05e3d3101a1b8a68b526446d59923aed60d0dacd3fafc5849b20fe83fdfbeab5",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "05e3d3101a1b8a68b526446d59923aed60d0dacd3fafc5849b20fe83fdfbeab5",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "8195b7d772785f80d2bcf9f1d326e2ba11ff715a4eb9e4fe577e18c811f0d54b",
+        "cell_key": [
+          [
+            589285714,
+            0,
+            -714285714
+          ],
+          [
+            589285714,
+            0,
+            0
+          ],
+          [
+            589285714,
+            595238095,
+            -714285714
+          ],
+          [
+            589285714,
+            595238095,
+            0
+          ],
+          [
+            1178571429,
+            0,
+            -714285714
+          ],
+          [
+            1178571429,
+            0,
+            0
+          ],
+          [
+            1178571429,
+            595238095,
+            -714285714
+          ],
+          [
+            1178571429,
+            595238095,
+            0
+          ]
+        ],
+        "row_count": 882,
+        "tag": 2,
+        "widths": [
+          8.25,
+          8.333333333333334,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_006_2c0158caba9c6927_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 6,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    },
+    {
+      "digest": "48f903688ffb4d930384ca6f8160e39f5938f71871de27fe8db0538d9b534d04",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "18d78a2a4ae520292c7e1684ff0c3b283b5e68a357a3f23c4e149148804ebf34",
+        "repacked_sha256": "18d78a2a4ae520292c7e1684ff0c3b283b5e68a357a3f23c4e149148804ebf34"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_007_48f903688ffb4d93_B.npy",
+        "sha256": "72c7b56a2a983810fe80dc6f096fcd6aa0e0696de24c79f7af5b9a3aa13ba8f8",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 9.360591063492774e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 9.94025184340881e-17,
+        "kappa2": 57689063.30738975,
+        "lambda_max": 25933.707036271593,
+        "lambda_min": 0.0004495428691238532,
+        "matrix_norm_2": 25933.70703627156,
+        "normalized_backward_error": 7.123634483274257e-19,
+        "ordinary_relative_residual": 8.741294343848852e-12,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "18d78a2a4ae520292c7e1684ff0c3b283b5e68a357a3f23c4e149148804ebf34",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "18d78a2a4ae520292c7e1684ff0c3b283b5e68a357a3f23c4e149148804ebf34",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "815c680e1ef1af69d66dcb17bb3f1176ccaf1c1c1c9922758fa73464867595c3",
+        "cell_key": [
+          [
+            589285714,
+            1190476190,
+            -714285714
+          ],
+          [
+            589285714,
+            1190476190,
+            0
+          ],
+          [
+            589285714,
+            1785714286,
+            -714285714
+          ],
+          [
+            589285714,
+            1785714286,
+            0
+          ],
+          [
+            1178571429,
+            1190476190,
+            -714285714
+          ],
+          [
+            1178571429,
+            1190476190,
+            0
+          ],
+          [
+            1178571429,
+            1785714286,
+            -714285714
+          ],
+          [
+            1178571429,
+            1785714286,
+            0
+          ]
+        ],
+        "row_count": 882,
+        "tag": 2,
+        "widths": [
+          8.25,
+          8.333333333333332,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_007_48f903688ffb4d93_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 7,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    },
+    {
+      "digest": "613c3252d9dbb81dd2292cc3adecd5f93337445139d24264fb4130ffc51d034a",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "44d975d64ab96ac75a39484a01a5632e2e57408798067499d6a011feb71f045a",
+        "repacked_sha256": "44d975d64ab96ac75a39484a01a5632e2e57408798067499d6a011feb71f045a"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_008_613c3252d9dbb81d_B.npy",
+        "sha256": "c242423c7d73b01a9473f5a1365edf9a6886a7e316e97bc9efe44a8b3d940871",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 9.253377029677787e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 9.940251830770575e-17,
+        "kappa2": 57689063.41414109,
+        "lambda_max": 25933.70703627158,
+        "lambda_min": 0.00044954286829199157,
+        "matrix_norm_2": 25933.707036271564,
+        "normalized_backward_error": 8.545103593727874e-19,
+        "ordinary_relative_residual": 1.0485555636919527e-11,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "44d975d64ab96ac75a39484a01a5632e2e57408798067499d6a011feb71f045a",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "44d975d64ab96ac75a39484a01a5632e2e57408798067499d6a011feb71f045a",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "4e132d4ee103dda109cf9ab917d7083b4dd817770360852327c26fdd9b14fe8e",
+        "cell_key": [
+          [
+            0,
+            1190476190,
+            -714285714
+          ],
+          [
+            0,
+            1190476190,
+            0
+          ],
+          [
+            0,
+            1785714286,
+            -714285714
+          ],
+          [
+            0,
+            1785714286,
+            0
+          ],
+          [
+            589285714,
+            1190476190,
+            -714285714
+          ],
+          [
+            589285714,
+            1190476190,
+            0
+          ],
+          [
+            589285714,
+            1785714286,
+            -714285714
+          ],
+          [
+            589285714,
+            1785714286,
+            0
+          ]
+        ],
+        "row_count": 882,
+        "tag": 2,
+        "widths": [
+          8.25,
+          8.333333333333332,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_008_613c3252d9dbb81d_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 8,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    },
+    {
+      "digest": "6931443fa2328165c2b05d5bb43ed968341c8ea0a9b0db35fb5fb69c7481b631",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "26e14479398a8058700665dc5d4f2b20ec69a4d13bb5ac0e3d7e64285fcac21e",
+        "repacked_sha256": "26e14479398a8058700665dc5d4f2b20ec69a4d13bb5ac0e3d7e64285fcac21e"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_009_6931443fa2328165_B.npy",
+        "sha256": "6126d135c5ea367cb10745e5143266a63ec5bc33baca441cba38053807ac634c",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 8.274407753765116e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 9.751473307530137e-17,
+        "kappa2": 57576704.15102125,
+        "lambda_max": 25934.54102501308,
+        "lambda_min": 0.0004504346229507664,
+        "matrix_norm_2": 25934.541025013077,
+        "normalized_backward_error": 8.732898269543624e-19,
+        "ordinary_relative_residual": 1.0695283636144443e-11,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "26e14479398a8058700665dc5d4f2b20ec69a4d13bb5ac0e3d7e64285fcac21e",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "26e14479398a8058700665dc5d4f2b20ec69a4d13bb5ac0e3d7e64285fcac21e",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "feec46441ed89fdfe5fc977607b2f183b8f3efbec4556dc9f80198fdad26684a",
+        "cell_key": [
+          [
+            0,
+            1190476190,
+            714285714
+          ],
+          [
+            0,
+            1190476190,
+            1428571429
+          ],
+          [
+            0,
+            1785714286,
+            714285714
+          ],
+          [
+            0,
+            1785714286,
+            1428571429
+          ],
+          [
+            589285714,
+            1190476190,
+            714285714
+          ],
+          [
+            589285714,
+            1190476190,
+            1428571429
+          ],
+          [
+            589285714,
+            1785714286,
+            714285714
+          ],
+          [
+            589285714,
+            1785714286,
+            1428571429
+          ]
+        ],
+        "row_count": 882,
+        "tag": 1,
+        "widths": [
+          8.25,
+          8.333333333333332,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_009_6931443fa2328165_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 9,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    },
+    {
+      "digest": "7b27560d00033e0738fec6db5f91df20aabf2656310bea4d2d03bb3d5c667ebc",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "26e14479398a8058700665dc5d4f2b20ec69a4d13bb5ac0e3d7e64285fcac21e",
+        "repacked_sha256": "26e14479398a8058700665dc5d4f2b20ec69a4d13bb5ac0e3d7e64285fcac21e"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_010_7b27560d00033e07_B.npy",
+        "sha256": "6126d135c5ea367cb10745e5143266a63ec5bc33baca441cba38053807ac634c",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 8.274407753765116e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 9.751473307530137e-17,
+        "kappa2": 57576704.15102125,
+        "lambda_max": 25934.54102501308,
+        "lambda_min": 0.0004504346229507664,
+        "matrix_norm_2": 25934.541025013077,
+        "normalized_backward_error": 8.732898269543624e-19,
+        "ordinary_relative_residual": 1.0695283636144443e-11,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "26e14479398a8058700665dc5d4f2b20ec69a4d13bb5ac0e3d7e64285fcac21e",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "26e14479398a8058700665dc5d4f2b20ec69a4d13bb5ac0e3d7e64285fcac21e",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "a47951fd3acaab5047130fb149a7074eba6da7462fdbb3d30829a2556e063404",
+        "cell_key": [
+          [
+            589285714,
+            1190476190,
+            714285714
+          ],
+          [
+            589285714,
+            1190476190,
+            1428571429
+          ],
+          [
+            589285714,
+            1785714286,
+            714285714
+          ],
+          [
+            589285714,
+            1785714286,
+            1428571429
+          ],
+          [
+            1178571429,
+            1190476190,
+            714285714
+          ],
+          [
+            1178571429,
+            1190476190,
+            1428571429
+          ],
+          [
+            1178571429,
+            1785714286,
+            714285714
+          ],
+          [
+            1178571429,
+            1785714286,
+            1428571429
+          ]
+        ],
+        "row_count": 882,
+        "tag": 1,
+        "widths": [
+          8.25,
+          8.333333333333332,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_010_7b27560d00033e07_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 10,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    },
+    {
+      "digest": "8893465aef403827e493e75ff4c0a0d78e70acd3e8d100f5bf55ec3731d39a86",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "751070a2cfab103c2141165aae31f2429f1281b83fd69af904f5d7a5e9ed5d02",
+        "repacked_sha256": "751070a2cfab103c2141165aae31f2429f1281b83fd69af904f5d7a5e9ed5d02"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_011_8893465aef403827_B.npy",
+        "sha256": "1feebf9610ad380c67a0e7d2e4ebb9c524bbdec26dda3332b363b28605f96143",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 7.899455370799626e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 9.684153062992018e-17,
+        "kappa2": 56001825.21549916,
+        "lambda_max": 25396.174340627833,
+        "lambda_min": 0.00045348833261954366,
+        "matrix_norm_2": 25396.174340627793,
+        "normalized_backward_error": 9.83496351829931e-19,
+        "ordinary_relative_residual": 1.1713789755077614e-11,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "751070a2cfab103c2141165aae31f2429f1281b83fd69af904f5d7a5e9ed5d02",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "751070a2cfab103c2141165aae31f2429f1281b83fd69af904f5d7a5e9ed5d02",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "bcdb8ce7b440c72d6acc2cd7af659f3d901797799a425a4e61777e06bf734882",
+        "cell_key": [
+          [
+            1178571429,
+            1190476190,
+            714285714
+          ],
+          [
+            1178571429,
+            1190476190,
+            1428571429
+          ],
+          [
+            1178571429,
+            1785714286,
+            714285714
+          ],
+          [
+            1178571429,
+            1785714286,
+            1428571429
+          ],
+          [
+            1785714286,
+            1190476190,
+            714285714
+          ],
+          [
+            1785714286,
+            1190476190,
+            1428571429
+          ],
+          [
+            1785714286,
+            1785714286,
+            714285714
+          ],
+          [
+            1785714286,
+            1785714286,
+            1428571429
+          ]
+        ],
+        "row_count": 882,
+        "tag": 3,
+        "widths": [
+          8.5,
+          8.333333333333332,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_011_8893465aef403827_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 11,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    },
+    {
+      "digest": "9355f4bb4892bde50702e978b70765522adb54b37acd08ee61c51dd4696e53a2",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "a4d684ad46480bb5de9ced055d9142b68e747fbd6cabcdaaa69707619d41258a",
+        "repacked_sha256": "a4d684ad46480bb5de9ced055d9142b68e747fbd6cabcdaaa69707619d41258a"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_012_9355f4bb4892bde5_B.npy",
+        "sha256": "802bbbb8ab727ba8bc4235cae066465d68444e628245d86dac7c6d3b9fd19f92",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 7.759579080950026e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 9.883188741706184e-17,
+        "kappa2": 57576704.13073284,
+        "lambda_max": 25934.541025013117,
+        "lambda_min": 0.00045043462310948745,
+        "matrix_norm_2": 25934.54102501311,
+        "normalized_backward_error": 8.559418071999128e-19,
+        "ordinary_relative_residual": 1.0043643688487772e-11,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "a4d684ad46480bb5de9ced055d9142b68e747fbd6cabcdaaa69707619d41258a",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "a4d684ad46480bb5de9ced055d9142b68e747fbd6cabcdaaa69707619d41258a",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "c6ef5b8acc4da9ec436c0168509f50aa8ad64209cdb13964841204595742420f",
+        "cell_key": [
+          [
+            2982142857,
+            0,
+            714285714
+          ],
+          [
+            2982142857,
+            0,
+            1428571429
+          ],
+          [
+            2982142857,
+            595238095,
+            714285714
+          ],
+          [
+            2982142857,
+            595238095,
+            1428571429
+          ],
+          [
+            3571428571,
+            0,
+            714285714
+          ],
+          [
+            3571428571,
+            0,
+            1428571429
+          ],
+          [
+            3571428571,
+            595238095,
+            714285714
+          ],
+          [
+            3571428571,
+            595238095,
+            1428571429
+          ]
+        ],
+        "row_count": 882,
+        "tag": 1,
+        "widths": [
+          8.25,
+          8.333333333333334,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_012_9355f4bb4892bde5_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 12,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    },
+    {
+      "digest": "97042aaacf6b983def7ed497b63a767425cf9e74dd9c24808ed64cbfdf5117cf",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "a4d684ad46480bb5de9ced055d9142b68e747fbd6cabcdaaa69707619d41258a",
+        "repacked_sha256": "a4d684ad46480bb5de9ced055d9142b68e747fbd6cabcdaaa69707619d41258a"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_013_97042aaacf6b983d_B.npy",
+        "sha256": "802bbbb8ab727ba8bc4235cae066465d68444e628245d86dac7c6d3b9fd19f92",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 7.759579080950026e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 9.883188741706184e-17,
+        "kappa2": 57576704.13073284,
+        "lambda_max": 25934.541025013117,
+        "lambda_min": 0.00045043462310948745,
+        "matrix_norm_2": 25934.54102501311,
+        "normalized_backward_error": 8.559418071999128e-19,
+        "ordinary_relative_residual": 1.0043643688487772e-11,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "a4d684ad46480bb5de9ced055d9142b68e747fbd6cabcdaaa69707619d41258a",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "a4d684ad46480bb5de9ced055d9142b68e747fbd6cabcdaaa69707619d41258a",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "b4d8ed8abcbefba54da4c15844ca208951e9d9eab7709b7eaa503aabd9f7f8fe",
+        "cell_key": [
+          [
+            2982142857,
+            0,
+            0
+          ],
+          [
+            2982142857,
+            0,
+            714285714
+          ],
+          [
+            2982142857,
+            595238095,
+            0
+          ],
+          [
+            2982142857,
+            595238095,
+            714285714
+          ],
+          [
+            3571428571,
+            0,
+            0
+          ],
+          [
+            3571428571,
+            0,
+            714285714
+          ],
+          [
+            3571428571,
+            595238095,
+            0
+          ],
+          [
+            3571428571,
+            595238095,
+            714285714
+          ]
+        ],
+        "row_count": 882,
+        "tag": 1,
+        "widths": [
+          8.25,
+          8.333333333333334,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_013_97042aaacf6b983d_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 13,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    },
+    {
+      "digest": "9a0d14a26cbd4f5272f3d9e3cfbeef1acdf521330034b7f960adb9acbee6e63b",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "abc0ee45a663a793e45dc53a06617e68705b6261f58ef0ba191eb5512dbfddc6",
+        "repacked_sha256": "abc0ee45a663a793e45dc53a06617e68705b6261f58ef0ba191eb5512dbfddc6"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_014_9a0d14a26cbd4f52_B.npy",
+        "sha256": "33985b67cf515469409986f7504d9081bd3f5dea0e367f4766751cc00c3f205a",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 8.733684602771993e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 1.011861373443624e-16,
+        "kappa2": 56001825.27368712,
+        "lambda_max": 25396.174340627775,
+        "lambda_min": 0.0004534883321483516,
+        "matrix_norm_2": 25396.17434062779,
+        "normalized_backward_error": 8.843678172170623e-19,
+        "ordinary_relative_residual": 1.072672068853425e-11,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "abc0ee45a663a793e45dc53a06617e68705b6261f58ef0ba191eb5512dbfddc6",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "abc0ee45a663a793e45dc53a06617e68705b6261f58ef0ba191eb5512dbfddc6",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "c0f5824b51314fa4e6205b71f35b591e6a35b6ef41b7ac845cfd9aeba9121b9c",
+        "cell_key": [
+          [
+            1178571429,
+            0,
+            -714285714
+          ],
+          [
+            1178571429,
+            0,
+            0
+          ],
+          [
+            1178571429,
+            595238095,
+            -714285714
+          ],
+          [
+            1178571429,
+            595238095,
+            0
+          ],
+          [
+            1785714286,
+            0,
+            -714285714
+          ],
+          [
+            1785714286,
+            0,
+            0
+          ],
+          [
+            1785714286,
+            595238095,
+            -714285714
+          ],
+          [
+            1785714286,
+            595238095,
+            0
+          ]
+        ],
+        "row_count": 882,
+        "tag": 2,
+        "widths": [
+          8.5,
+          8.333333333333334,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_014_9a0d14a26cbd4f52_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 14,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    },
+    {
+      "digest": "9eddb044a47b4770f5ed0d77b9ced525b555446caee31dabb464ed36a7de49cf",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "356f4788155f33acc085e32c15011487e4b9d0e3ecf1f7be7ebf241914f738cb",
+        "repacked_sha256": "356f4788155f33acc085e32c15011487e4b9d0e3ecf1f7be7ebf241914f738cb"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_015_9eddb044a47b4770_B.npy",
+        "sha256": "61e85401a83d380361ef452dde19835114138e38e90a89bc23891c362604c36b",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 7.833151481279257e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 9.874795740894773e-17,
+        "kappa2": 57576704.02205443,
+        "lambda_max": 25934.54102501303,
+        "lambda_min": 0.0004504346239597,
+        "matrix_norm_2": 25934.54102501309,
+        "normalized_backward_error": 8.891470691725503e-19,
+        "ordinary_relative_residual": 1.1089747142000698e-11,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "356f4788155f33acc085e32c15011487e4b9d0e3ecf1f7be7ebf241914f738cb",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "356f4788155f33acc085e32c15011487e4b9d0e3ecf1f7be7ebf241914f738cb",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "b32a9b70445340c62c00b4b16efe64b24c9a5ae5debf10af480952d78b8f4460",
+        "cell_key": [
+          [
+            0,
+            0,
+            714285714
+          ],
+          [
+            0,
+            0,
+            1428571429
+          ],
+          [
+            0,
+            595238095,
+            714285714
+          ],
+          [
+            0,
+            595238095,
+            1428571429
+          ],
+          [
+            589285714,
+            0,
+            714285714
+          ],
+          [
+            589285714,
+            0,
+            1428571429
+          ],
+          [
+            589285714,
+            595238095,
+            714285714
+          ],
+          [
+            589285714,
+            595238095,
+            1428571429
+          ]
+        ],
+        "row_count": 882,
+        "tag": 1,
+        "widths": [
+          8.25,
+          8.333333333333334,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_015_9eddb044a47b4770_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 15,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    },
+    {
+      "digest": "a807eb4b287524121d8bd6769bfd0da237975bd38d158fa2882465d41dc7180d",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "3fc277469ba49e6773b34f28d17c8c78c733f44a1216e29ef9d0021dc646c96a",
+        "repacked_sha256": "3fc277469ba49e6773b34f28d17c8c78c733f44a1216e29ef9d0021dc646c96a"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_016_a807eb4b28752412_B.npy",
+        "sha256": "8b1bd5ec8c91b8446f5687d349323a3bb6d999ab5110e40e6e2074ecdff41604",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 7.64416708948163e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 9.874795740894773e-17,
+        "kappa2": 57576703.99854396,
+        "lambda_max": 25934.541025013103,
+        "lambda_min": 0.0004504346241436285,
+        "matrix_norm_2": 25934.54102501309,
+        "normalized_backward_error": 8.861781161681822e-19,
+        "ordinary_relative_residual": 1.1052717342053638e-11,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "3fc277469ba49e6773b34f28d17c8c78c733f44a1216e29ef9d0021dc646c96a",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "3fc277469ba49e6773b34f28d17c8c78c733f44a1216e29ef9d0021dc646c96a",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "777c66fb273aeb6c733166c124d96f12030ba61b0fe0940e11e48f302482ca10",
+        "cell_key": [
+          [
+            589285714,
+            0,
+            714285714
+          ],
+          [
+            589285714,
+            0,
+            1428571429
+          ],
+          [
+            589285714,
+            595238095,
+            714285714
+          ],
+          [
+            589285714,
+            595238095,
+            1428571429
+          ],
+          [
+            1178571429,
+            0,
+            714285714
+          ],
+          [
+            1178571429,
+            0,
+            1428571429
+          ],
+          [
+            1178571429,
+            595238095,
+            714285714
+          ],
+          [
+            1178571429,
+            595238095,
+            1428571429
+          ]
+        ],
+        "row_count": 882,
+        "tag": 1,
+        "widths": [
+          8.25,
+          8.333333333333334,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_016_a807eb4b28752412_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 16,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    },
+    {
+      "digest": "b6e0701a5e8142ceb2fe87829645819c1fa1fd9ef603f220bf9cf088d5c7cfa5",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "079c0d23652f1d61a29d49bbf3d7a313d05cdcdf0c5eb04c82e3fce8fdc80ab8",
+        "repacked_sha256": "079c0d23652f1d61a29d49bbf3d7a313d05cdcdf0c5eb04c82e3fce8fdc80ab8"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_017_b6e0701a5e8142ce_B.npy",
+        "sha256": "08db670d24c5ca43c0efcd298727603e5f798555bd9e74874438051d18a129fe",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 8.898860250631302e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 9.94742056475336e-17,
+        "kappa2": 57689063.40400925,
+        "lambda_max": 25933.70703627151,
+        "lambda_min": 0.0004495428683709429,
+        "matrix_norm_2": 25933.707036271553,
+        "normalized_backward_error": 8.417205192299534e-19,
+        "ordinary_relative_residual": 9.749884442100687e-12,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "079c0d23652f1d61a29d49bbf3d7a313d05cdcdf0c5eb04c82e3fce8fdc80ab8",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "079c0d23652f1d61a29d49bbf3d7a313d05cdcdf0c5eb04c82e3fce8fdc80ab8",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "42ba8d0ec93bc571e43ac2002563ca5bda70f3a73e7fbbbc2d29e716ee991a61",
+        "cell_key": [
+          [
+            2982142857,
+            1190476190,
+            -714285714
+          ],
+          [
+            2982142857,
+            1190476190,
+            0
+          ],
+          [
+            2982142857,
+            1785714286,
+            -714285714
+          ],
+          [
+            2982142857,
+            1785714286,
+            0
+          ],
+          [
+            3571428571,
+            1190476190,
+            -714285714
+          ],
+          [
+            3571428571,
+            1190476190,
+            0
+          ],
+          [
+            3571428571,
+            1785714286,
+            -714285714
+          ],
+          [
+            3571428571,
+            1785714286,
+            0
+          ]
+        ],
+        "row_count": 882,
+        "tag": 2,
+        "widths": [
+          8.25,
+          8.333333333333332,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_017_b6e0701a5e8142ce_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 17,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    },
+    {
+      "digest": "bce17fe83443dffe2ea562ac62b1f95db3a59858d530f542c6c3997f42ec6df7",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "8948ad71cad52f205163daf8f186eb0254f79a7914245d924f6b58dadf3d3d40",
+        "repacked_sha256": "8948ad71cad52f205163daf8f186eb0254f79a7914245d924f6b58dadf3d3d40"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_018_bce17fe83443dffe_B.npy",
+        "sha256": "cd101c3618470a4c6483ea4988368888175454cccf2e3076026c0daf4acebd44",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 8.175240918561128e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 9.783138954292342e-17,
+        "kappa2": 55892794.921108276,
+        "lambda_max": 25397.009020234822,
+        "lambda_min": 0.00045438788767107217,
+        "matrix_norm_2": 25397.009020234746,
+        "normalized_backward_error": 9.28605983463843e-19,
+        "ordinary_relative_residual": 1.1241537448240993e-11,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "8948ad71cad52f205163daf8f186eb0254f79a7914245d924f6b58dadf3d3d40",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "8948ad71cad52f205163daf8f186eb0254f79a7914245d924f6b58dadf3d3d40",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "4cf14c70985f5356266ae772f2872f179fe283e35ec8df29f98bd15ee96d789c",
+        "cell_key": [
+          [
+            1178571429,
+            0,
+            8571428571
+          ],
+          [
+            1178571429,
+            0,
+            9285714286
+          ],
+          [
+            1178571429,
+            595238095,
+            8571428571
+          ],
+          [
+            1178571429,
+            595238095,
+            9285714286
+          ],
+          [
+            1785714286,
+            0,
+            8571428571
+          ],
+          [
+            1785714286,
+            0,
+            9285714286
+          ],
+          [
+            1785714286,
+            595238095,
+            8571428571
+          ],
+          [
+            1785714286,
+            595238095,
+            9285714286
+          ]
+        ],
+        "row_count": 882,
+        "tag": 1,
+        "widths": [
+          8.5,
+          8.333333333333334,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_018_bce17fe83443dffe_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 18,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    },
+    {
+      "digest": "cf6d9b579a31fea76595057c34eb63e0f4b5c03431cf5e7e0f448e0013f5b1ce",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "829484fce79a0bb31e00ea41d9c2f43c4fabd640c70e089e146bdd64da9bd52e",
+        "repacked_sha256": "829484fce79a0bb31e00ea41d9c2f43c4fabd640c70e089e146bdd64da9bd52e"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_019_cf6d9b579a31fea7_B.npy",
+        "sha256": "b73051334cfe55dae665c0bee2403e2615749d9249041fee57c10492bd0ed658",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 8.57459874775171e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 1.001641129243691e-16,
+        "kappa2": 57689063.33682947,
+        "lambda_max": 25933.70703627158,
+        "lambda_min": 0.0004495428688944435,
+        "matrix_norm_2": 25933.707036271553,
+        "normalized_backward_error": 8.599996755680784e-19,
+        "ordinary_relative_residual": 1.0746981732584243e-11,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "829484fce79a0bb31e00ea41d9c2f43c4fabd640c70e089e146bdd64da9bd52e",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "829484fce79a0bb31e00ea41d9c2f43c4fabd640c70e089e146bdd64da9bd52e",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "4386896a4308e5a004152e6e1a3397d2344a1123e9b7bff1e568281d12b479ed",
+        "cell_key": [
+          [
+            0,
+            0,
+            -714285714
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            595238095,
+            -714285714
+          ],
+          [
+            0,
+            595238095,
+            0
+          ],
+          [
+            589285714,
+            0,
+            -714285714
+          ],
+          [
+            589285714,
+            0,
+            0
+          ],
+          [
+            589285714,
+            595238095,
+            -714285714
+          ],
+          [
+            589285714,
+            595238095,
+            0
+          ]
+        ],
+        "row_count": 882,
+        "tag": 2,
+        "widths": [
+          8.25,
+          8.333333333333334,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_019_cf6d9b579a31fea7_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 19,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    },
+    {
+      "digest": "dbcd4f0ca6d29d2a84b9a6432e3d002bc735b10900ea9dd2999fc28faaf4e513",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "26e14479398a8058700665dc5d4f2b20ec69a4d13bb5ac0e3d7e64285fcac21e",
+        "repacked_sha256": "26e14479398a8058700665dc5d4f2b20ec69a4d13bb5ac0e3d7e64285fcac21e"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_020_dbcd4f0ca6d29d2a_B.npy",
+        "sha256": "6126d135c5ea367cb10745e5143266a63ec5bc33baca441cba38053807ac634c",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 8.274407753765116e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 9.751473307530137e-17,
+        "kappa2": 57576704.15102125,
+        "lambda_max": 25934.54102501308,
+        "lambda_min": 0.0004504346229507664,
+        "matrix_norm_2": 25934.541025013077,
+        "normalized_backward_error": 8.732898269543624e-19,
+        "ordinary_relative_residual": 1.0695283636144443e-11,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "26e14479398a8058700665dc5d4f2b20ec69a4d13bb5ac0e3d7e64285fcac21e",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "26e14479398a8058700665dc5d4f2b20ec69a4d13bb5ac0e3d7e64285fcac21e",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "4e132d4ee103dda109cf9ab917d7083b4dd817770360852327c26fdd9b14fe8e",
+        "cell_key": [
+          [
+            0,
+            1190476190,
+            0
+          ],
+          [
+            0,
+            1190476190,
+            714285714
+          ],
+          [
+            0,
+            1785714286,
+            0
+          ],
+          [
+            0,
+            1785714286,
+            714285714
+          ],
+          [
+            589285714,
+            1190476190,
+            0
+          ],
+          [
+            589285714,
+            1190476190,
+            714285714
+          ],
+          [
+            589285714,
+            1785714286,
+            0
+          ],
+          [
+            589285714,
+            1785714286,
+            714285714
+          ]
+        ],
+        "row_count": 882,
+        "tag": 1,
+        "widths": [
+          8.25,
+          8.333333333333332,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_020_dbcd4f0ca6d29d2a_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 20,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    },
+    {
+      "digest": "dcf21545ecba06a3b6728160881de38471de8f3ccdb778f57d9479ecc7d52d30",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "b6dfd0792324b68d78938e098c1c042d78bd23e82eaea029bad397f5654bb391",
+        "repacked_sha256": "b6dfd0792324b68d78938e098c1c042d78bd23e82eaea029bad397f5654bb391"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_021_dcf21545ecba06a3_B.npy",
+        "sha256": "85d61d4d4da9e2e95597c3259e1d7bd647f6df93bc529538e37af2eeb6c8ebe6",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 8.599017830664913e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 1.011861373443624e-16,
+        "kappa2": 56001825.28480838,
+        "lambda_max": 25396.174340627796,
+        "lambda_min": 0.00045348833205829486,
+        "matrix_norm_2": 25396.174340627793,
+        "normalized_backward_error": 8.789445586266936e-19,
+        "ordinary_relative_residual": 1.0660940614917401e-11,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "b6dfd0792324b68d78938e098c1c042d78bd23e82eaea029bad397f5654bb391",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "b6dfd0792324b68d78938e098c1c042d78bd23e82eaea029bad397f5654bb391",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "399fdedda0d2bf867d630f871ee7dd544fed79f81c8b1607acf51cb0510da233",
+        "cell_key": [
+          [
+            1178571429,
+            0,
+            714285714
+          ],
+          [
+            1178571429,
+            0,
+            1428571429
+          ],
+          [
+            1178571429,
+            595238095,
+            714285714
+          ],
+          [
+            1178571429,
+            595238095,
+            1428571429
+          ],
+          [
+            1785714286,
+            0,
+            714285714
+          ],
+          [
+            1785714286,
+            0,
+            1428571429
+          ],
+          [
+            1785714286,
+            595238095,
+            714285714
+          ],
+          [
+            1785714286,
+            595238095,
+            1428571429
+          ]
+        ],
+        "row_count": 882,
+        "tag": 3,
+        "widths": [
+          8.5,
+          8.333333333333334,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_021_dcf21545ecba06a3_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 21,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    },
+    {
+      "digest": "dfb13ad2f1555f6df741ea5e9bf18f9750c4af752d8fc96414a753cc1322fc06",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "3fc277469ba49e6773b34f28d17c8c78c733f44a1216e29ef9d0021dc646c96a",
+        "repacked_sha256": "3fc277469ba49e6773b34f28d17c8c78c733f44a1216e29ef9d0021dc646c96a"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_022_dfb13ad2f1555f6d_B.npy",
+        "sha256": "8b1bd5ec8c91b8446f5687d349323a3bb6d999ab5110e40e6e2074ecdff41604",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 7.64416708948163e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 9.874795740894773e-17,
+        "kappa2": 57576703.99854396,
+        "lambda_max": 25934.541025013103,
+        "lambda_min": 0.0004504346241436285,
+        "matrix_norm_2": 25934.54102501309,
+        "normalized_backward_error": 8.861781161681822e-19,
+        "ordinary_relative_residual": 1.1052717342053638e-11,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "3fc277469ba49e6773b34f28d17c8c78c733f44a1216e29ef9d0021dc646c96a",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "3fc277469ba49e6773b34f28d17c8c78c733f44a1216e29ef9d0021dc646c96a",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "8195b7d772785f80d2bcf9f1d326e2ba11ff715a4eb9e4fe577e18c811f0d54b",
+        "cell_key": [
+          [
+            589285714,
+            0,
+            0
+          ],
+          [
+            589285714,
+            0,
+            714285714
+          ],
+          [
+            589285714,
+            595238095,
+            0
+          ],
+          [
+            589285714,
+            595238095,
+            714285714
+          ],
+          [
+            1178571429,
+            0,
+            0
+          ],
+          [
+            1178571429,
+            0,
+            714285714
+          ],
+          [
+            1178571429,
+            595238095,
+            0
+          ],
+          [
+            1178571429,
+            595238095,
+            714285714
+          ]
+        ],
+        "row_count": 882,
+        "tag": 1,
+        "widths": [
+          8.25,
+          8.333333333333334,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_022_dfb13ad2f1555f6d_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 22,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    },
+    {
+      "digest": "f0f24b5042cce1ddf0bdaa4c680943d67e8e46099a1eabf52d6b68596c1dafe3",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "5270c74822a740386bb69f2a400ea0a2f3696dd74669c1b21e150cf532046e6d",
+        "repacked_sha256": "5270c74822a740386bb69f2a400ea0a2f3696dd74669c1b21e150cf532046e6d"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_023_f0f24b5042cce1dd_B.npy",
+        "sha256": "ec6fa132758735531e272532529bc43a0ac6f1cbf8c1e3c3f3656f19383fcbcd",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 8.158904706122267e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 9.757433025229162e-17,
+        "kappa2": 57576704.11589122,
+        "lambda_max": 25934.54102501312,
+        "lambda_min": 0.00045043462322559666,
+        "matrix_norm_2": 25934.54102501307,
+        "normalized_backward_error": 8.058382790658791e-19,
+        "ordinary_relative_residual": 9.316208748538303e-12,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "5270c74822a740386bb69f2a400ea0a2f3696dd74669c1b21e150cf532046e6d",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "5270c74822a740386bb69f2a400ea0a2f3696dd74669c1b21e150cf532046e6d",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "ff611ca55f6cbb7be4f06de914804b1324608803bce61ffd13e07727f481edd5",
+        "cell_key": [
+          [
+            2982142857,
+            1190476190,
+            714285714
+          ],
+          [
+            2982142857,
+            1190476190,
+            1428571429
+          ],
+          [
+            2982142857,
+            1785714286,
+            714285714
+          ],
+          [
+            2982142857,
+            1785714286,
+            1428571429
+          ],
+          [
+            3571428571,
+            1190476190,
+            714285714
+          ],
+          [
+            3571428571,
+            1190476190,
+            1428571429
+          ],
+          [
+            3571428571,
+            1785714286,
+            714285714
+          ],
+          [
+            3571428571,
+            1785714286,
+            1428571429
+          ]
+        ],
+        "row_count": 882,
+        "tag": 1,
+        "widths": [
+          8.25,
+          8.333333333333332,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_023_f0f24b5042cce1dd_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 23,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    },
+    {
+      "digest": "f10be9911c0cfd0c671b191539bb54442a03fcfbab50e7550a58729f0b7b5a9e",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "b6dfd0792324b68d78938e098c1c042d78bd23e82eaea029bad397f5654bb391",
+        "repacked_sha256": "b6dfd0792324b68d78938e098c1c042d78bd23e82eaea029bad397f5654bb391"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_024_f10be9911c0cfd0c_B.npy",
+        "sha256": "85d61d4d4da9e2e95597c3259e1d7bd647f6df93bc529538e37af2eeb6c8ebe6",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 8.599017830664913e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 1.011861373443624e-16,
+        "kappa2": 56001825.28480838,
+        "lambda_max": 25396.174340627796,
+        "lambda_min": 0.00045348833205829486,
+        "matrix_norm_2": 25396.174340627793,
+        "normalized_backward_error": 8.789445586266936e-19,
+        "ordinary_relative_residual": 1.0660940614917401e-11,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "b6dfd0792324b68d78938e098c1c042d78bd23e82eaea029bad397f5654bb391",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "b6dfd0792324b68d78938e098c1c042d78bd23e82eaea029bad397f5654bb391",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "c0f5824b51314fa4e6205b71f35b591e6a35b6ef41b7ac845cfd9aeba9121b9c",
+        "cell_key": [
+          [
+            1178571429,
+            0,
+            0
+          ],
+          [
+            1178571429,
+            0,
+            714285714
+          ],
+          [
+            1178571429,
+            595238095,
+            0
+          ],
+          [
+            1178571429,
+            595238095,
+            714285714
+          ],
+          [
+            1785714286,
+            0,
+            0
+          ],
+          [
+            1785714286,
+            0,
+            714285714
+          ],
+          [
+            1785714286,
+            595238095,
+            0
+          ],
+          [
+            1785714286,
+            595238095,
+            714285714
+          ]
+        ],
+        "row_count": 882,
+        "tag": 3,
+        "widths": [
+          8.5,
+          8.333333333333334,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_024_f10be9911c0cfd0c_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 24,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    },
+    {
+      "digest": "fdfe5874564d0ad0efcff299cca94efc95fd03d459401de910e9067b8e171d85",
+      "factor": {
+        "bytes": 6230448,
+        "packed_sha256": "5fea404525aa34d6b6497b2d78fcbbfe6b3ddc02af679f62c41c6a5f05f26b47",
+        "repacked_sha256": "5fea404525aa34d6b6497b2d78fcbbfe6b3ddc02af679f62c41c6a5f05f26b47"
+      },
+      "factor_owner_rank": 0,
+      "gates": {
+        "backward": true,
+        "factor_bytes": true,
+        "factorization": true,
+        "finite": true,
+        "hermitian": true,
+        "kappa2": true,
+        "ordinary_residual": true,
+        "packed_identity": true,
+        "positive": true,
+        "rows": true,
+        "triangular_repeat": true
+      },
+      "matrix": {
+        "bytes": 12446912,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_025_fdfe5874564d0ad0_B.npy",
+        "sha256": "0dde3049a2fdf77b2758e7b3817a6e7c84fc2df4eefbf15124c9f267c52d4cde",
+        "shape": [
+          882,
+          882
+        ]
+      },
+      "metrics": {
+        "factorization_relative_error": 8.693224435848071e-16,
+        "finite": true,
+        "gate_pass": true,
+        "gates": {
+          "backward": true,
+          "factor_bytes": true,
+          "factorization": true,
+          "finite": true,
+          "hermitian": true,
+          "kappa2": true,
+          "ordinary_residual": true,
+          "packed_identity": true,
+          "positive": true,
+          "rows": true,
+          "triangular_repeat": true
+        },
+        "hermitian_defect": 1.0026807606129609e-16,
+        "kappa2": 57689063.350750275,
+        "lambda_max": 25933.707036271582,
+        "lambda_min": 0.0004495428687859655,
+        "matrix_norm_2": 25933.707036271568,
+        "normalized_backward_error": 8.524591242857737e-19,
+        "ordinary_relative_residual": 1.0022147724491938e-11,
+        "packed_bytes": 6230448,
+        "packed_factor_sha256": "5fea404525aa34d6b6497b2d78fcbbfe6b3ddc02af679f62c41c6a5f05f26b47",
+        "packed_identity_value": 0.0,
+        "packed_roundtrip_exact": true,
+        "packed_roundtrip_relative": 0.0,
+        "repacked_factor_sha256": "5fea404525aa34d6b6497b2d78fcbbfe6b3ddc02af679f62c41c6a5f05f26b47",
+        "repeat_value": 0.0,
+        "rhs_identity": true,
+        "rhs_norm_2": 15113.505224012397,
+        "rows": 882,
+        "schema": "task038.local-factor-certification-v2",
+        "solution_finite": true,
+        "thresholds": {
+          "factor_bytes": 6230448,
+          "factorization_relative_error": 3.1334934647026553e-12,
+          "hermitian_defect": 1.5667467323513277e-12,
+          "kappa2": 100000000.0,
+          "normalized_backward_error": 3.1334934647026553e-12,
+          "ordinary_relative_residual": 1e-10
+        },
+        "triangular_repeat_exact": true,
+        "triangular_repeat_relative": 0.0
+      },
+      "representative_identity": {
+        "canonical_free_row_descriptor_sha256": "b4d8ed8abcbefba54da4c15844ca208951e9d9eab7709b7eaa503aabd9f7f8fe",
+        "cell_key": [
+          [
+            2982142857,
+            0,
+            -714285714
+          ],
+          [
+            2982142857,
+            0,
+            0
+          ],
+          [
+            2982142857,
+            595238095,
+            -714285714
+          ],
+          [
+            2982142857,
+            595238095,
+            0
+          ],
+          [
+            3571428571,
+            0,
+            -714285714
+          ],
+          [
+            3571428571,
+            0,
+            0
+          ],
+          [
+            3571428571,
+            595238095,
+            -714285714
+          ],
+          [
+            3571428571,
+            595238095,
+            0
+          ]
+        ],
+        "row_count": 882,
+        "tag": 2,
+        "widths": [
+          8.25,
+          8.333333333333334,
+          10.0
+        ]
+      },
+      "representative_rank": 0,
+      "rhs": {
+        "bytes": 14240,
+        "dtype": "complex128",
+        "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/class_025_fdfe5874564d0ad0_rhs.npy",
+        "sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+        "shape": [
+          882
+        ]
+      },
+      "rows": 882,
+      "slot": 25,
+      "thresholds": {
+        "factor_bytes": 6230448,
+        "factorization_relative_error": 3.1334934647026553e-12,
+        "hermitian_defect": 1.5667467323513277e-12,
+        "kappa2": 100000000.0,
+        "normalized_backward_error": 3.1334934647026553e-12,
+        "ordinary_relative_residual": 1e-10
+      }
+    }
+  ],
+  "class_count": 26,
+  "class_order": [
+    "0060a10f08d980ac618497c076b8c6d078d6d1841d3f37d8172bc6e5804f8563",
+    "0c6b9830423f8baf83b6714ac178c724b63af1359d01b3ca5badd1d40c070a67",
+    "0ec1232d35fee322c308c9c1fa742ad5d7e213ae4af7c4df840888b9d3661e64",
+    "0f1e35332b23c88806c0090ca889b14051df0049c8b9a1db4c2ae9b508077c6b",
+    "13597baf243c7cd52a5080b48e7361b3faa0e45cb4c937aa8a1c140a9e2b0c2a",
+    "26f5e7d4b30e79ec96d5d9b395407ae9a3a49739a1ec399b23251f1f32ae6cca",
+    "2c0158caba9c69275ba88a85343a15ccffbef4bdb8d463d0be47ca8d18fec301",
+    "48f903688ffb4d930384ca6f8160e39f5938f71871de27fe8db0538d9b534d04",
+    "613c3252d9dbb81dd2292cc3adecd5f93337445139d24264fb4130ffc51d034a",
+    "6931443fa2328165c2b05d5bb43ed968341c8ea0a9b0db35fb5fb69c7481b631",
+    "7b27560d00033e0738fec6db5f91df20aabf2656310bea4d2d03bb3d5c667ebc",
+    "8893465aef403827e493e75ff4c0a0d78e70acd3e8d100f5bf55ec3731d39a86",
+    "9355f4bb4892bde50702e978b70765522adb54b37acd08ee61c51dd4696e53a2",
+    "97042aaacf6b983def7ed497b63a767425cf9e74dd9c24808ed64cbfdf5117cf",
+    "9a0d14a26cbd4f5272f3d9e3cfbeef1acdf521330034b7f960adb9acbee6e63b",
+    "9eddb044a47b4770f5ed0d77b9ced525b555446caee31dabb464ed36a7de49cf",
+    "a807eb4b287524121d8bd6769bfd0da237975bd38d158fa2882465d41dc7180d",
+    "b6e0701a5e8142ceb2fe87829645819c1fa1fd9ef603f220bf9cf088d5c7cfa5",
+    "bce17fe83443dffe2ea562ac62b1f95db3a59858d530f542c6c3997f42ec6df7",
+    "cf6d9b579a31fea76595057c34eb63e0f4b5c03431cf5e7e0f448e0013f5b1ce",
+    "dbcd4f0ca6d29d2a84b9a6432e3d002bc735b10900ea9dd2999fc28faaf4e513",
+    "dcf21545ecba06a3b6728160881de38471de8f3ccdb778f57d9479ecc7d52d30",
+    "dfb13ad2f1555f6df741ea5e9bf18f9750c4af752d8fc96414a753cc1322fc06",
+    "f0f24b5042cce1ddf0bdaa4c680943d67e8e46099a1eabf52d6b68596c1dafe3",
+    "f10be9911c0cfd0c671b191539bb54442a03fcfbab50e7550a58729f0b7b5a9e",
+    "fdfe5874564d0ad0efcff299cca94efc95fd03d459401de910e9067b8e171d85"
+  ],
+  "class_order_repeat": [
+    "0060a10f08d980ac618497c076b8c6d078d6d1841d3f37d8172bc6e5804f8563",
+    "0c6b9830423f8baf83b6714ac178c724b63af1359d01b3ca5badd1d40c070a67",
+    "0ec1232d35fee322c308c9c1fa742ad5d7e213ae4af7c4df840888b9d3661e64",
+    "0f1e35332b23c88806c0090ca889b14051df0049c8b9a1db4c2ae9b508077c6b",
+    "13597baf243c7cd52a5080b48e7361b3faa0e45cb4c937aa8a1c140a9e2b0c2a",
+    "26f5e7d4b30e79ec96d5d9b395407ae9a3a49739a1ec399b23251f1f32ae6cca",
+    "2c0158caba9c69275ba88a85343a15ccffbef4bdb8d463d0be47ca8d18fec301",
+    "48f903688ffb4d930384ca6f8160e39f5938f71871de27fe8db0538d9b534d04",
+    "613c3252d9dbb81dd2292cc3adecd5f93337445139d24264fb4130ffc51d034a",
+    "6931443fa2328165c2b05d5bb43ed968341c8ea0a9b0db35fb5fb69c7481b631",
+    "7b27560d00033e0738fec6db5f91df20aabf2656310bea4d2d03bb3d5c667ebc",
+    "8893465aef403827e493e75ff4c0a0d78e70acd3e8d100f5bf55ec3731d39a86",
+    "9355f4bb4892bde50702e978b70765522adb54b37acd08ee61c51dd4696e53a2",
+    "97042aaacf6b983def7ed497b63a767425cf9e74dd9c24808ed64cbfdf5117cf",
+    "9a0d14a26cbd4f5272f3d9e3cfbeef1acdf521330034b7f960adb9acbee6e63b",
+    "9eddb044a47b4770f5ed0d77b9ced525b555446caee31dabb464ed36a7de49cf",
+    "a807eb4b287524121d8bd6769bfd0da237975bd38d158fa2882465d41dc7180d",
+    "b6e0701a5e8142ceb2fe87829645819c1fa1fd9ef603f220bf9cf088d5c7cfa5",
+    "bce17fe83443dffe2ea562ac62b1f95db3a59858d530f542c6c3997f42ec6df7",
+    "cf6d9b579a31fea76595057c34eb63e0f4b5c03431cf5e7e0f448e0013f5b1ce",
+    "dbcd4f0ca6d29d2a84b9a6432e3d002bc735b10900ea9dd2999fc28faaf4e513",
+    "dcf21545ecba06a3b6728160881de38471de8f3ccdb778f57d9479ecc7d52d30",
+    "dfb13ad2f1555f6df741ea5e9bf18f9750c4af752d8fc96414a753cc1322fc06",
+    "f0f24b5042cce1ddf0bdaa4c680943d67e8e46099a1eabf52d6b68596c1dafe3",
+    "f10be9911c0cfd0c671b191539bb54442a03fcfbab50e7550a58729f0b7b5a9e",
+    "fdfe5874564d0ad0efcff299cca94efc95fd03d459401de910e9067b8e171d85"
+  ],
+  "class_order_repeat_exact": true,
+  "class_order_repeat_sha256": "a7b649d25c7f843a160816a3c4fe3836243e9639eb7c0ba43dd2901955511028",
+  "class_order_sha256": "a7b649d25c7f843a160816a3c4fe3836243e9639eb7c0ba43dd2901955511028",
+  "duplicate_class_count": 0,
+  "errors": [],
+  "missing_class_count": 0,
+  "overall_gate_pass": true,
+  "owner_closure": {
+    "duplicate_factor_count": 0,
+    "mpi_size": 1,
+    "owner_rank_set": [
+      0
+    ],
+    "owner_rule": "sha256(exact_class_digest) mod mpi_size",
+    "unique_factor_count": 26
+  },
+  "passed": true,
+  "record": "benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/worker.record.json",
+  "schema": "task038.full3d.local-factor-certification-v2.compact.v1",
+  "threshold_contract": {
+    "eps64": 2.220446049250313e-16,
+    "factor_bytes": 6230448,
+    "kappa2": 100000000.0,
+    "ordinary_relative_residual": 1e-10,
+    "total_factor_bytes": 199374336
+  },
+  "total_factor_bytes": 161991648,
+  "total_factor_bytes_limit": 199374336,
+  "worst": {
+    "factor_bytes": {
+      "digest": "0060a10f08d980ac618497c076b8c6d078d6d1841d3f37d8172bc6e5804f8563",
+      "limit": 6230448.0,
+      "rows": 882,
+      "slot": 0,
+      "value": 6230448.0
+    },
+    "factorization_relative_error": {
+      "digest": "48f903688ffb4d930384ca6f8160e39f5938f71871de27fe8db0538d9b534d04",
+      "limit": 3.1334934647026553e-12,
+      "rows": 882,
+      "slot": 7,
+      "value": 9.360591063492774e-16
+    },
+    "hermitian_defect": {
+      "digest": "9a0d14a26cbd4f5272f3d9e3cfbeef1acdf521330034b7f960adb9acbee6e63b",
+      "limit": 1.5667467323513277e-12,
+      "rows": 882,
+      "slot": 14,
+      "value": 1.011861373443624e-16
+    },
+    "kappa2": {
+      "digest": "2c0158caba9c69275ba88a85343a15ccffbef4bdb8d463d0be47ca8d18fec301",
+      "limit": 100000000.0,
+      "rows": 882,
+      "slot": 6,
+      "value": 57689063.420882955
+    },
+    "lambda_min_spd_margin": {
+      "digest": "2c0158caba9c69275ba88a85343a15ccffbef4bdb8d463d0be47ca8d18fec301",
+      "limit": 0.0,
+      "rows": 882,
+      "slot": 6,
+      "value": 0.0004495428682394547
+    },
+    "normalized_backward_error": {
+      "digest": "13597baf243c7cd52a5080b48e7361b3faa0e45cb4c937aa8a1c140a9e2b0c2a",
+      "limit": 3.1334934647026553e-12,
+      "rows": 882,
+      "slot": 4,
+      "value": 9.83496351829931e-19
+    },
+    "ordinary_relative_residual": {
+      "digest": "13597baf243c7cd52a5080b48e7361b3faa0e45cb4c937aa8a1c140a9e2b0c2a",
+      "limit": 1e-10,
+      "rows": 882,
+      "slot": 4,
+      "value": 1.1713789755077614e-11
+    },
+    "packing": {
+      "digest": "0060a10f08d980ac618497c076b8c6d078d6d1841d3f37d8172bc6e5804f8563",
+      "limit": 0.0,
+      "rows": 882,
+      "slot": 0,
+      "value": 0.0
+    },
+    "repeat": {
+      "digest": "0060a10f08d980ac618497c076b8c6d078d6d1841d3f37d8172bc6e5804f8563",
+      "limit": 0.0,
+      "rows": 882,
+      "slot": 0,
+      "value": 0.0
+    }
+  },
+  "classification": "FC1_ALL_CLASS_CERTIFICATION_PASS",
+  "case": "p6-h10-mpi1",
+  "degree": 6,
+  "mesh_target_nm": 10.0,
+  "profile": "full3d_scalable_v1",
+  "source_identity": {
+    "expected_sha": "d9f3c30285e169879891c7bef7896079b5a3babf",
+    "source_git_sha": "d9f3c30285e169879891c7bef7896079b5a3babf",
+    "tracked_status": ""
+  },
+  "input": {
+    "file_sha256": "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41",
+    "path": "/home/shenjh/Projects/MyFEniCSx_task37_extra/input/templates/full3d_iterative_example.dat",
+    "resolved_config_bytes": 4076,
+    "resolved_config_sha256": "78dc49b3a7ae212dec6374fde09eaaa231c131ce64790202da062b3ca2b09aad"
+  },
+  "fixed_rhs": "arange(rows)+(0.125+0.25j), complex128",
+  "command": [
+    "mpiexec",
+    "-n",
+    "1",
+    "python",
+    "-m",
+    "benchmarks.run_task038_full3d_local_factor_certification",
+    "--stage",
+    "fc0",
+    "--case",
+    "p6-h10-mpi1",
+    "--input",
+    "input/templates/full3d_iterative_example.dat",
+    "--raw-dir",
+    "benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw",
+    "--record",
+    "benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/worker.record.json",
+    "--marker-dir",
+    "benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/raw/markers",
+    "--expected-source-sha",
+    "d9f3c30285e169879891c7bef7896079b5a3babf",
+    "--expected-mpi-size",
+    "1"
+  ],
+  "attempt": {
+    "artifact_root": "benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1",
+    "attempt_label": "d9f3c30_attempt2",
+    "attempt1_status": "not_created; initial wrapper invocation rejected by argparse because of an extra -- before the worker command"
+  },
+  "markers": {
+    "sequence": [
+      "preflight",
+      "mesh_space_mpc",
+      "subdomain_inventory",
+      "local_factor_build",
+      "cleanup"
+    ],
+    "source": "raw/markers/*.json and worker marker ledger",
+    "all_source_sha_bound": true
+  },
+  "watchdog": {
+    "schema": "task038.full3d.local-spectral.n2-watchdog-compact.v1",
+    "authority_samples": 127,
+    "process_tree_peak_memory_authority_bytes": 1547800576,
+    "warning_bytes": 1800000000,
+    "hard_stop_bytes": 2000000000,
+    "warning_crossed": false,
+    "process_tree_swap_gate": true,
+    "post_setup_sample_count": 0,
+    "stop_reason": "natural_exit",
+    "worker_returncode": 0,
+    "natural_exit": true,
+    "no_orphan_claim": true,
+    "raw_sha256": "34d2ee5b60a1ebac753a415bd8a6fd2a5dd4cd90c3cd301f4d296949ead669a6",
+    "compact_sha256": "c0313fa5ace4f6a57dd898afe5f87fd6c9ebc5de0c05193b2841eeebb7723cf5"
+  },
+  "artifact_hashes": {
+    "worker_record": {
+      "path": "benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/worker.record.json",
+      "bytes": 113457,
+      "sha256": "f595702f2ba01e08b9702413173a07617a020bb28e6f6b4c74b9d27d90c54cae"
+    },
+    "watchdog_raw": {
+      "path": "benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/watchdog/watchdog.raw.json",
+      "bytes": 178042,
+      "sha256": "34d2ee5b60a1ebac753a415bd8a6fd2a5dd4cd90c3cd301f4d296949ead669a6"
+    },
+    "watchdog_compact": {
+      "path": "benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/watchdog/watchdog.compact.json",
+      "bytes": 1901,
+      "sha256": "c0313fa5ace4f6a57dd898afe5f87fd6c9ebc5de0c05193b2841eeebb7723cf5"
+    },
+    "worker_log": {
+      "path": "benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/watchdog/worker.log",
+      "bytes": 1341,
+      "sha256": "e2f3dc46fe7d33e4173419c77473f788dcb50b473cd3c3a2a4aee490cfa055d9"
+    },
+    "checker_compact": {
+      "path": "benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/checker.compact.json",
+      "bytes": 131002,
+      "sha256": "2d25ba960fdd6939f5d9d5b66b7619c17c1838cc4b9befdb4a9b49cbaa3d8e80"
+    },
+    "checker_stdout": {
+      "path": "benchmarks/artifacts/task038_extra_full3d_iterative_fc1/d9f3c30_attempt2/p6_h10_mpi1/checker.stdout.json",
+      "bytes": 94430,
+      "sha256": "ece0b06bb92ca6a2d768f1d5ffa966a8ea1ef9c2ead3207aea82e1017e27dfb0"
+    }
+  },
+  "family_gate_after_fc3": {
+    "status": "CLOSED_BY_FC3_RESOURCE_HARD_STOP",
+    "fc3_peak_memory_authority_bytes": 2228187136,
+    "fc3_hard_stop_bytes": 2000000000,
+    "fc3_swap_gate": true,
+    "fc4": "not_run_by_fc3_resource_hard_stop",
+    "n3": "not_run_by_fc3_resource_hard_stop",
+    "n4": "not_run_by_fc3_resource_hard_stop"
+  }
+}

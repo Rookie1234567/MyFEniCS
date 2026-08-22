@@ -1,0 +1,291 @@
+{
+  "schema": "task038.full3d.local-spectral.n2-setup-compact.v3",
+  "classification": "FC3_CONTROLLED_RESOURCE_NEGATIVE",
+  "source_identity": {
+    "expected_sha": "d5f86fc14c7f40ec58e3eb75e07146b4eb4cf066",
+    "source_git_sha": "d5f86fc14c7f40ec58e3eb75e07146b4eb4cf066",
+    "tracked_status": "",
+    "authority": "actual raw marker ledger; fallback worker record has null source fields"
+  },
+  "case": "p6-h10-mpi1",
+  "stage": "n2",
+  "degree": 6,
+  "mesh_target_nm": 10.0,
+  "mpi_size": 1,
+  "threads": 1,
+  "input": {
+    "path": "input/templates/full3d_iterative_example.dat",
+    "sha256": "819fc99caea2dbc8ea22546917fbe3898c822a955d079b4582c4a27e34ebba41"
+  },
+  "worker_command": [
+    "mpiexec",
+    "-n",
+    "1",
+    "python",
+    "-m",
+    "benchmarks.run_task038_full3d_n2",
+    "--stage",
+    "n2",
+    "--case",
+    "p6-h10-mpi1",
+    "--input",
+    "input/templates/full3d_iterative_example.dat",
+    "--raw-dir",
+    "benchmarks/artifacts/task038_extra_full3d_iterative_fc3/d5f86fc/p6_h10_mpi1/raw",
+    "--record",
+    "benchmarks/artifacts/task038_extra_full3d_iterative_fc3/d5f86fc/p6_h10_mpi1/worker.record.json",
+    "--marker-dir",
+    "benchmarks/artifacts/task038_extra_full3d_iterative_fc3/d5f86fc/p6_h10_mpi1/raw/markers",
+    "--expected-source-sha",
+    "d5f86fc14c7f40ec58e3eb75e07146b4eb4cf066",
+    "--expected-mpi-size",
+    "1"
+  ],
+  "outer_watchdog": {
+    "mode": "existing task038 N2 watchdog",
+    "poll_seconds": 1.0,
+    "timeout_seconds": 0,
+    "warning_bytes": 1800000000,
+    "hard_stop_bytes": 2000000000,
+    "worker_owned_raw_and_marker_paths_not_precreated": true
+  },
+  "artifact_root": "benchmarks/artifacts/task038_extra_full3d_iterative_fc3/d5f86fc/p6_h10_mpi1",
+  "markers": {
+    "actual_sequence": [
+      "preflight",
+      "mesh_space_mpc",
+      "JIT",
+      "subdomain_inventory",
+      "local_factor_build",
+      "local_mode_build"
+    ],
+    "actual_last_marker": "regional_coarse_build",
+    "authority": "raw/markers JSON and worker.log",
+    "fallback_record_last_marker": "startup",
+    "fallback_record_marker_ledger": [],
+    "fallback_is_not_stage_authority": true,
+    "entries": [
+      {
+        "marker": "preflight",
+        "path": "benchmarks/artifacts/task038_extra_full3d_iterative_fc3/d5f86fc/p6_h10_mpi1/raw/markers/preflight.json",
+        "bytes": 248,
+        "sha256": "d74c7153be05af8861cd0b9aca3daccd016a4dc2c06caa2cd14564f8c1ead2bf",
+        "monotonic_ns": 195169350525068,
+        "source_git_sha": "d5f86fc14c7f40ec58e3eb75e07146b4eb4cf066",
+        "details": {
+          "case": "p6-h10-mpi1"
+        }
+      },
+      {
+        "marker": "mesh_space_mpc",
+        "path": "benchmarks/artifacts/task038_extra_full3d_iterative_fc3/d5f86fc/p6_h10_mpi1/raw/markers/mesh_space_mpc.json",
+        "bytes": 263,
+        "sha256": "3d33355d45d4a63e46c5f07f3a2a8a7a63e98940f749232ec50eaaf14c9e56e9",
+        "monotonic_ns": 195169693174457,
+        "source_git_sha": "d5f86fc14c7f40ec58e3eb75e07146b4eb4cf066",
+        "details": {
+          "profile": "full3d_scalable_v1"
+        }
+      },
+      {
+        "marker": "JIT",
+        "path": "benchmarks/artifacts/task038_extra_full3d_iterative_fc3/d5f86fc/p6_h10_mpi1/raw/markers/JIT.json",
+        "bytes": 307,
+        "sha256": "db49615a1317a6665f78964822b87f935fc8acf8f89b0250a2bb1d3dab588874",
+        "monotonic_ns": 195172603706053,
+        "source_git_sha": "d5f86fc14c7f40ec58e3eb75e07146b4eb4cf066",
+        "details": {
+          "api": "volume_plus_dynamic_DtN_build",
+          "baseline_before_local_spectral_objects": true
+        }
+      },
+      {
+        "marker": "subdomain_inventory",
+        "path": "benchmarks/artifacts/task038_extra_full3d_iterative_fc3/d5f86fc/p6_h10_mpi1/raw/markers/subdomain_inventory.json",
+        "bytes": 320,
+        "sha256": "df9ba22a4693198391ac9ad7486eebf60db9ff19a1328bef3e916010152cdca6",
+        "monotonic_ns": 195172926168844,
+        "source_git_sha": "d5f86fc14c7f40ec58e3eb75e07146b4eb4cf066",
+        "details": {
+          "api": "build_real_local_spectral_patches",
+          "coalesced_factor_and_mode_build": true
+        }
+      },
+      {
+        "marker": "local_factor_build",
+        "path": "benchmarks/artifacts/task038_extra_full3d_iterative_fc3/d5f86fc/p6_h10_mpi1/raw/markers/local_factor_build.json",
+        "bytes": 305,
+        "sha256": "7d4ccf81555e643848a4ad667ed7b63f537255e3e74ec38f8d600a01519b84c0",
+        "monotonic_ns": 195172926515083,
+        "source_git_sha": "d5f86fc14c7f40ec58e3eb75e07146b4eb4cf066",
+        "details": {
+          "api": "build_real_local_spectral_patches",
+          "exact_class_reuse": true
+        }
+      },
+      {
+        "marker": "local_mode_build",
+        "path": "benchmarks/artifacts/task038_extra_full3d_iterative_fc3/d5f86fc/p6_h10_mpi1/raw/markers/local_mode_build.json",
+        "bytes": 300,
+        "sha256": "ae230186ad02cd8b28a95491389f14b95a52f45cabccadcdc80723d241ea3e7f",
+        "monotonic_ns": 197934204751538,
+        "source_git_sha": "d5f86fc14c7f40ec58e3eb75e07146b4eb4cf066",
+        "details": {
+          "completed_by": "build_real_local_spectral_patches",
+          "mode_cap": 8
+        }
+      },
+      {
+        "marker": "regional_coarse_build",
+        "path": "benchmarks/artifacts/task038_extra_full3d_iterative_fc3/d5f86fc/p6_h10_mpi1/raw/markers/regional_coarse_build.json",
+        "bytes": 299,
+        "sha256": "a961af19a22568c982c0da8229cb6133d0fb5846a87446f386182e4002adfc0e",
+        "monotonic_ns": 197934206385434,
+        "source_git_sha": "d5f86fc14c7f40ec58e3eb75e07146b4eb4cf066",
+        "details": {
+          "api": "build_real_local_regional_rayleigh_ritz",
+          "rank": 16
+        }
+      }
+    ]
+  },
+  "watchdog": {
+    "schema": "task038.full3d.local-spectral.n2-watchdog-compact.v1",
+    "authority_samples": 3637,
+    "process_tree_peak_memory_authority_bytes": 2228187136,
+    "warning_bytes": 1800000000,
+    "hard_stop_bytes": 2000000000,
+    "warning_crossed": true,
+    "process_tree_swap_gate": true,
+    "post_setup_sample_count": 0,
+    "stop_reason": "hard_stop_2gb",
+    "worker_returncode": 1,
+    "natural_exit": false,
+    "no_orphan_claim": true,
+    "termination": {
+      "grace_seconds": 5.0,
+      "method": "POSIX process group SIGTERM then SIGKILL",
+      "process_group_exited": true,
+      "process_group_id": 446072,
+      "requested": true,
+      "sigkill_required": false,
+      "worker_exited": true
+    },
+    "stage_peak_memory_authority_bytes": {
+      "startup": 2228187136
+    },
+    "stage_peak_process_tree_rss_bytes": {
+      "startup": 2228187136
+    },
+    "stage_peak_process_tree_pss_bytes": {
+      "startup": 2208204800
+    },
+    "stage_peak_process_tree_uss_bytes": {
+      "startup": 2194190336
+    },
+    "raw_sha256": "1216c79de11fe99bf827e71b8d9cc46114935f5cabbcbf23085ca567761eda99",
+    "compact_sha256": "62172d1e44583168c35ed59fe359282193246eb90d738d529fe044f5a5e3fb0d"
+  },
+  "fallback_worker_record": {
+    "path": "benchmarks/artifacts/task038_extra_full3d_iterative_fc3/d5f86fc/p6_h10_mpi1/worker.record.json",
+    "bytes": 1849,
+    "sha256": "2bcfa6c385e81c4e5a2162707544cee7094adbef94f2e8b4cb891b5afadff3f6",
+    "schema": "task038.full3d.local-spectral.n2-record.v1",
+    "classification": "controlled_negative",
+    "failure": {
+      "exception_type": "ExternalWatchdogStop",
+      "message": "hard_stop_2gb"
+    },
+    "source_identity": {
+      "expected_sha": null,
+      "source_git_sha": null,
+      "tracked_status": "not_measured"
+    }
+  },
+  "progress_boundary": {
+    "completed": [
+      "preflight",
+      "mesh_space_mpc",
+      "JIT",
+      "subdomain_inventory",
+      "local_factor_build",
+      "local_mode_build"
+    ],
+    "started": [
+      "local_factor_build",
+      "local_mode_build",
+      "regional_coarse_build"
+    ],
+    "not_completed": [
+      "regional_coarse_build_completion_and_result",
+      "top_level_build",
+      "post_setup_release",
+      "identity_apply",
+      "canonical_evidence",
+      "cleanup"
+    ],
+    "no_numerical_gate_result": true,
+    "resource_gate_is_valid_despite_startup_stage_fallback": true
+  },
+  "not_run": {
+    "complete_252_patch_inventory": true,
+    "factor_class_closure": true,
+    "retained_post_setup": true,
+    "regional_top_Z_AZ_E": true,
+    "identity_apply": true,
+    "canonical_identity": true,
+    "FC4": true,
+    "N3": true,
+    "N4": true,
+    "T6_F": true,
+    "official_physics": true,
+    "T7_T9": true,
+    "full_0p7nm_PDE": true
+  },
+  "mesh_artifacts": {
+    "mesh_h5": {
+      "path": "benchmarks/artifacts/task038_extra_full3d_iterative_fc3/d5f86fc/p6_h10_mpi1/raw/mesh/mesh_3d.h5",
+      "bytes": 31720,
+      "sha256": "d5cc26c8731ad97b7703bb0bacacd8a4e1d0d0fe83b3ded8a509dd87accb8421"
+    },
+    "mesh_xdmf": {
+      "path": "benchmarks/artifacts/task038_extra_full3d_iterative_fc3/d5f86fc/p6_h10_mpi1/raw/mesh/mesh_3d.xdmf",
+      "bytes": 607,
+      "sha256": "967b0641b2402e74b12bc5c460acd0a9c19cedefbc22953e124fc94395552d5f"
+    },
+    "partition_note": {
+      "path": "benchmarks/artifacts/task038_extra_full3d_iterative_fc3/d5f86fc/p6_h10_mpi1/raw/mesh/mesh_3d_partition_note.txt",
+      "bytes": 1353,
+      "sha256": "0a3e481d76798fa867ac1151dee5b3899920e623606faf36f175ee670c9ed974"
+    }
+  },
+  "artifact_hashes": {
+    "worker_log": {
+      "path": "benchmarks/artifacts/task038_extra_full3d_iterative_fc3/d5f86fc/p6_h10_mpi1/watchdog/worker.log",
+      "bytes": 2042,
+      "sha256": "781c9c56fc57d4f333cec5890cf4173da5c8e4bc96ca235e6d0e0c6ef28dc1a5"
+    },
+    "watchdog_raw": {
+      "path": "benchmarks/artifacts/task038_extra_full3d_iterative_fc3/d5f86fc/p6_h10_mpi1/watchdog/watchdog.raw.json",
+      "bytes": 5072603,
+      "sha256": "1216c79de11fe99bf827e71b8d9cc46114935f5cabbcbf23085ca567761eda99"
+    },
+    "watchdog_compact": {
+      "path": "benchmarks/artifacts/task038_extra_full3d_iterative_fc3/d5f86fc/p6_h10_mpi1/watchdog/watchdog.compact.json",
+      "bytes": 1909,
+      "sha256": "62172d1e44583168c35ed59fe359282193246eb90d738d529fe044f5a5e3fb0d"
+    }
+  },
+  "retained_evidence": {
+    "raw_ignored": true,
+    "raw_not_modified": true,
+    "old_n2_v1_compact_sha256": "d02f416956a560c0837d067636d8f62d253c9d04da4e6bbe3b6194dd10098d40",
+    "old_n2_v2_compact_sha256": "d88330f2c9b038946c8f0b15e22b5850e6812c868366fa50f04e1e9b3962f763"
+  },
+  "closeout": {
+    "family_status": "CLOSED_BY_FC3_RESOURCE_HARD_STOP",
+    "next_stage_authorized": false,
+    "no_rerun": true,
+    "reason": "process-tree peak exceeded the frozen 2,000,000,000 B hard stop"
+  }
+}
