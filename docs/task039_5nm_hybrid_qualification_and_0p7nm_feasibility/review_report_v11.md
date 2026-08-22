@@ -46,7 +46,7 @@ response_required                       = response_v12.md
 本 Review 接受 V10 的主要正负结果：
 
 1. 三个真实 two-layer supernode 的 conventional 与 factor-only solve 均 finite，局部 residual 约为
-   `1e-12` 到 `5e-11`；V9 的历史 `Inf/NaN` 未在 V10 取证路径中复现，根因仍为
+   `1e-12` 到 `5e-11`。V9 的历史 `Inf/NaN` 未在 V10 取证路径中复现，根因仍为
    `not_established`，不得宣称已发现通用 MUMPS 或 factor-only bug。
 2. 修复后的固定 `SN2-J` 比 single-layer `J1` 更强，但最坏 bare-`F` residual 仍为
    `17.0879610640`，不能作为 side inverse。
@@ -55,13 +55,13 @@ response_required                       = response_v12.md
 4. bottom exact-response producer 已准确生成960个 modal response 和一个 zero validation column：
    最大 true residual `1.52248376596e-10`、payload `2034244800 B`、峰值
    `50.7548675537 GiB`、factor 生命周期 `1 -> 0`、swap为0。
-5. 当前950-column training / 10-column holdout 压缩的执行、资源和生命周期通过，但在 rank512
-   仍有索引 `0/1/480/481` 四列约 `0.9673` 的投影误差。该结果证明当前 holdout 泛化失败，
-   **不等价于证明全部960个已知 response 无法压缩**。
+5. 当前950-column training / 10-column holdout压缩的执行、资源和生命周期通过，但在 rank512
+   仍有索引 `0/1/480/481` 四列约 `0.9673` 的投影误差。该结果证明当前 holdout泛化失败，
+   **不等价于证明全部960个已知 response无法压缩**。
 
-V11 的第一优先级不是再设计一个普通 side smoother，而是把已经准确的 response packet 用于完整
+V11 的第一优先级不是再设计普通 side smoother，而是把已经准确的 response packet用于完整
 Hybrid block elimination：bottom producer、top producer和无 factor consumer分属独立进程，任何时刻
-最多保留一个 side factor。这样可以先建立5 nm下更低内存的 exact Hybrid authority，再用正确的
+最多保留一个 side factor。这样先建立5 nm下更低内存的 exact Hybrid authority，再用正确的
 solution-response 数据研究 factor-free coarse correction。
 
 ---
@@ -81,7 +81,7 @@ solution-response 数据研究 factor-free coarse correction。
 | V10 response compression | bottom component | execution/resource pass；holdout generalization fail | `15.4776763916 GiB` | research compression negative |
 
 V10 没有产生 top、both-side、完整 Hybrid consumer、recovery或新的 R/T/A，因此当前完整 workflow
-的最好结果仍是：
+最好结果仍是：
 
 ```text
 Hybrid direct               = 93.377006531 GiB
@@ -113,12 +113,12 @@ random0  = 0.9989785112
 random1  = 0.9989849199
 ```
 
-因此 V11 禁止：
+V11 禁止：
 
 ```text
 J1-FGMRES 32/64/128
 增加 restart 或普通 tolerance 扫描
-把 J1/F1/FB 重新包装成另一名称后重跑
+把 J1/F1/FB 换名称后原样重跑
 ```
 
 这不否定所有 Krylov side solver，只关闭当前 single-layer J1 family。
@@ -129,7 +129,7 @@ J1-FGMRES 32/64/128
 `3.8908212468e-12`，说明训练矩阵本身近似低秩；但 holdout `0/1/480/481` 仍约
 `0.9673`，其余六个 holdout在最大 rank 已达到约 `1e-10` 到 `1e-12`。
 
-因此只能使用：
+只能使用：
 
 ```text
 CURRENT_HOLDOUT_GENERALIZATION_FAIL
@@ -142,7 +142,7 @@ FULL_960_RESPONSE_MATRIX_NOT_COMPRESSIBLE
 ALL_RESPONSE_BASED_PRECONDITIONING_IMPOSSIBLE
 ```
 
-V11 必须将以下两个问题分开：
+V11 必须分开回答：
 
 ```text
 A. 固定 h4/M480 案例的全部已知960列能压到多少 rank；
@@ -188,7 +188,7 @@ u_s=u_s^0-X_s a.
 中推导并验证。任何 sign/order/normalization 不一致都必须在离线 algebra audit 停止，不能通过翻转符号
 凑结果。
 
-V11 的 packet consumer只需要当前固定方程中实际出现的：
+V11 packet consumer只需要当前固定方程中实际出现的：
 
 ```text
 960 个 modal response columns
@@ -245,7 +245,7 @@ payload = 2034244800 B
 residual max = 1.52248376596e-10
 ```
 
-V11 禁止重跑完整 bottom producer。只有 V11-1 发现 packet hash、coverage或代数 identity损坏时才停止并
+V11 禁止重跑完整 bottom producer。若 V11-1 发现 packet hash、coverage或代数 identity损坏，则停止并
 等待新 review；不得自动重算960列。
 
 ### 4.2 Factor-free packet consumer
@@ -292,7 +292,7 @@ normal flux / diffraction orders / powers   = inherited Gate pass
 swap                                        = 0
 ```
 
-由于 packet路线目标是同一 Hybrid 方程的 exact elimination，还必须新增更严格的 algebra Gate：
+packet路线目标是同一 Hybrid 方程的 exact elimination，因此新增 algebra Gate：
 
 ```text
 sampled response equation residual          <= 1e-9
@@ -414,7 +414,7 @@ factor/QEP/PDE                              = 0/0/not_run
 
 ### 7.1 Closed-set compression
 
-只读取现有 bottom packet的960个非零 modal response columns。不得留出 holdout；本阶段回答的是当前固定
+只读取现有 bottom packet的960个非零 modal response columns。不得留出 holdout；本阶段回答当前固定
 h4/M480方程本身可压缩到多少 rank。
 
 只运行一次：
@@ -581,13 +581,13 @@ max(existing bottom producer peak,
 | 分类 | workflow peak |
 |---|---:|
 | no improvement | `>=80.025856018 GiB` |
-| new iterative/full-Hybrid low-memory best | `<80.025856018 GiB` |
+| new full-Hybrid low-memory best | `<80.025856018 GiB` |
 | useful 20% saving | `<=74.701605225 GiB` |
 | strong 30% saving | `<=65.363904572 GiB` |
 | major 40% saving | `<=56.026203919 GiB` |
 | half-memory strategic pass | `<=46.688503266 GiB` |
 
-在不优化既有 bottom producer的前提下，该 exact-packet workflow的当前阶段性峰值下界已受
+在不优化既有 bottom producer的前提下，该 exact-packet workflow的阶段性峰值下界受
 `50.7548675537 GiB`约束；若 top和consumer均不超过它，则相对 direct的派生 saving约为
 `45.645%`。这是条件预测，不是预先通过值，也说明当前 exact-factor producer路线即使成功，仍可能略高于
 50%战略线。
@@ -689,7 +689,7 @@ STRATIFIED_UNSEEN_MODE_GENERALIZATION_*
 
 ## 13. 0.7 nm 含义
 
-V11 的 exact-response workflow即使完整通过，也仍使用每侧一个临时 exact sparse factor producer。因此它的角色是：
+V11 exact-response workflow即使完整通过，也仍使用每侧一个临时 exact sparse factor producer。因此它的角色是：
 
 ```text
 5 nm低内存 exact authority
@@ -731,7 +731,7 @@ measured 5 nm packet/factor/RSS
 
 ```text
 bottom packet source/sign/order identity
-o​​wner-row packet hash/coverage/release
+owner-row packet hash/coverage/release
 physical RHS 与 zero validation 分离
 top pilot/full manifest contract
 streamed modal-Schur contribution
