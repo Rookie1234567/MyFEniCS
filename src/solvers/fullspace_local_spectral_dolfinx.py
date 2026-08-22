@@ -1207,6 +1207,132 @@ def _route_region_expanded_to_row_owners(
     return local
 
 
+def _physical_owned_row_layout(
+    function_space: Any, context: Mapping[str, Any]
+) -> tuple[tuple[Any, ...], tuple[Any, ...], tuple[int, ...]]:
+    """Return the finalized-MPC owned slice in its physical local order.
+
+    ``raw_to_key`` is used only to label the already-owned DOLFINx rows.  The
+    local row number is never part of the canonical identity.  Owned slave
+    rows remain explicit zero slots because the physical action Vec owns the
+    complete finalized-MPC slice; they are excluded from ``active_keys``.
+    """
+
+    owned_count = int(function_space.dofmap.index_map.size_local)
+    slave_rows = {int(row) for row in context["slave_rows"]}
+    raw_to_key = context["raw_to_key"]
+    physical_keys: list[Any] = []
+    active_keys: list[Any] = []
+    active_positions: list[int] = []
+    seen: set[Any] = set()
+    for raw_row in range(owned_count):
+        key = raw_to_key.get(raw_row)
+        if raw_row in slave_rows:
+            physical_keys.append(None)
+            continue
+        if key is None:
+            raise RuntimeError(
+                "owned non-slave physical row has no canonical key: "
+                f"local_row={raw_row}"
+            )
+        if key in seen:
+            raise RuntimeError(
+                f"owned physical row order repeats canonical key: {key!r}"
+            )
+        seen.add(key)
+        physical_keys.append(key)
+        active_keys.append(key)
+        active_positions.append(raw_row)
+    return tuple(physical_keys), tuple(active_keys), tuple(active_positions)
+
+
+def _physical_row_targets(
+    comm: Any, active_keys: Sequence[Any], active_positions: Sequence[int]
+) -> dict[Any, tuple[int, int]]:
+    """Exchange only key/rank/position metadata for hash-owner routing."""
+
+    outgoing: list[list[tuple[Any, int, int]]] = [
+        [] for _ in range(comm.size)
+    ]
+    for key, position in zip(active_keys, active_positions, strict=True):
+        outgoing[deterministic_row_owner(key, comm.size)].append(
+            (key, int(comm.rank), int(position))
+        )
+    incoming = comm.alltoall(outgoing)
+    targets: dict[Any, tuple[int, int]] = {}
+    for packets in incoming:
+        for key, rank, position in packets:
+            target = (int(rank), int(position))
+            old = targets.get(key)
+            if old is not None and old != target:
+                raise RuntimeError(
+                    f"canonical key has multiple physical owners: {key!r}"
+                )
+            targets[key] = target
+    return targets
+
+
+def _scatter_hash_owned_rows_to_physical_order(
+    comm: Any,
+    regional_accumulator: Mapping[Any, np.ndarray],
+    top_accumulator: Mapping[Any, np.ndarray],
+    targets: Mapping[Any, tuple[int, int]],
+    physical_keys: Sequence[Any],
+    active_keys: Sequence[Any],
+    active_positions: Sequence[int],
+) -> tuple[np.ndarray, np.ndarray]:
+    """Scatter hash-owner packets into the DOLFINx owned row order.
+
+    This is a point-to-point owner route, not a numeric allgather: each row's
+    16/32 values are sent once to its physical PETSc owner and never replicated
+    on every rank.
+    """
+
+    outgoing: list[list[tuple[Any, int, np.ndarray, np.ndarray]]] = [
+        [] for _ in range(comm.size)
+    ]
+    for key, regional in regional_accumulator.items():
+        if key not in targets or key not in top_accumulator:
+            raise RuntimeError(
+                f"hash-owned canonical row has no physical target: {key!r}"
+            )
+        rank, position = targets[key]
+        top = np.asarray(top_accumulator[key], dtype=np.complex128)
+        regional = np.asarray(regional, dtype=np.complex128)
+        if regional.shape != (N1_REGIONAL_RANK,) or top.shape != (N1_TOP_RANK,):
+            raise RuntimeError("owner-local multilevel row packet has wrong shape")
+        if not np.all(np.isfinite(regional)) or not np.all(np.isfinite(top)):
+            raise RuntimeError("owner-local multilevel row packet is non-finite")
+        outgoing[int(rank)].append(
+            (key, int(position), np.ascontiguousarray(regional), np.ascontiguousarray(top))
+        )
+    incoming = comm.alltoall(outgoing)
+    expected = {key: int(position) for key, position in zip(active_keys, active_positions, strict=True)}
+    received_keys: set[Any] = set()
+    regional_columns = np.zeros(
+        (len(physical_keys), N1_REGIONAL_RANK), dtype=np.complex128
+    )
+    top_columns = np.zeros((len(physical_keys), N1_TOP_RANK), dtype=np.complex128)
+    for packets in incoming:
+        for key, position, regional, top in packets:
+            if key not in expected or int(position) != expected[key]:
+                raise RuntimeError(
+                    f"physical row packet is not in the local owned order: {key!r}"
+                )
+            if key in received_keys:
+                raise RuntimeError(f"physical row packet is duplicated: {key!r}")
+            received_keys.add(key)
+            regional_columns[int(position), :] = regional
+            top_columns[int(position), :] = top
+    missing = set(expected) - received_keys
+    if missing:
+        raise RuntimeError(
+            "physical owner route is missing canonical rows: "
+            f"count={len(missing)}"
+        )
+    return regional_columns, top_columns
+
+
 def build_real_local_regional_rayleigh_ritz(
     patches: tuple[LocalSpectralPatch, ...],
     function_space: Any,
@@ -1586,22 +1712,30 @@ def build_real_local_regional_rayleigh_ritz(
             del candidates, local_contributions
         comm.barrier()
     if return_multilevel:
-        local_row_keys = tuple(sorted(regional_accumulator, key=repr))
-        regional_columns = np.zeros(
-            (len(local_row_keys), 16), dtype=np.complex128
+        physical_row_keys, active_row_keys, active_row_positions = (
+            _physical_owned_row_layout(function_space, context)
         )
-        top_raw_columns = np.zeros(
-            (len(local_row_keys), 32), dtype=np.complex128
+        physical_targets = _physical_row_targets(
+            comm, active_row_keys, active_row_positions
         )
-        for row_index, key in enumerate(local_row_keys):
-            regional_columns[row_index, :] = regional_accumulator[key]
-            top_raw_columns[row_index, :] = top_accumulator[key]
+        regional_columns, top_raw_columns = _scatter_hash_owned_rows_to_physical_order(
+            comm,
+            regional_accumulator,
+            top_accumulator,
+            physical_targets,
+            physical_row_keys,
+            active_row_keys,
+            active_row_positions,
+        )
         basis = build_owner_local_multilevel_basis(
-            local_row_keys,
+            active_row_keys,
             regional_columns,
             top_raw_columns,
             regional_mode_count=sum(regional_ranks),
             comm=comm,
+            physical_row_keys=physical_row_keys,
+            active_row_positions=active_row_positions,
+            row_order_audit="physical_dofmap_owned_local_order",
         )
     else:
         basis = None
@@ -1654,6 +1788,21 @@ def build_real_local_regional_rayleigh_ritz(
         "multilevel_basis_audit": (
             dict(basis.audit) if basis is not None else None
         ),
+        "physical_owned_row_order": (
+            "dofmap_index_map_size_local_raw_order" if basis is not None else None
+        ),
+        "physical_owned_rows": (
+            basis.audit["physical_owned_rows"] if basis is not None else None
+        ),
+        "physical_active_owned_rows": (
+            basis.audit["active_owned_rows"] if basis is not None else None
+        ),
+        "physical_owned_slave_rows": (
+            basis.audit["owned_slave_rows"] if basis is not None else None
+        ),
+        "canonical_key_scatter_route": (
+            basis.audit["canonical_key_scatter"] if basis is not None else None
+        ),
         "regional_z16_bytes": (
             basis.audit["regional_z16_bytes"] if basis is not None else None
         ),
@@ -1662,6 +1811,12 @@ def build_real_local_regional_rayleigh_ritz(
         ),
         "top_mixing_schema": (
             basis.audit["top_mixing_schema"] if basis is not None else None
+        ),
+        "regional_columns_semantics": (
+            basis.audit["regional_columns_semantics"] if basis is not None else None
+        ),
+        "top_columns_semantics": (
+            basis.audit["top_columns_semantics"] if basis is not None else None
         ),
         "top_rank_built": bool(basis is not None),
         "global_direct_coarse_solve": False,

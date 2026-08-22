@@ -82,6 +82,9 @@ class _MockDistributedVec:
         del readonly
         return self._array
 
+    def getLocalSize(self):
+        return int(self._array.size)
+
     def duplicate(self):
         return _MockDistributedVec(self._array.size)
 

@@ -117,6 +117,17 @@ class FullspaceAdaptiveCoarse:
         self._audit = {}
 
     def _set_owned_values(self, vector: PETSc.Vec, values: np.ndarray) -> None:
+        owned_rows = int(self._z.shape[0])
+        if int(values.size) != owned_rows:
+            raise RuntimeError(
+                "basis column does not match physical Vec owned rows: "
+                f"values={int(values.size)}, owned_rows={owned_rows}"
+            )
+        if int(vector.getLocalSize()) != owned_rows:
+            raise RuntimeError(
+                "physical Vec local size does not match basis row order: "
+                f"vec={int(vector.getLocalSize())}, owned_rows={owned_rows}"
+            )
         with vector.localForm() as local:
             local.set(0.0)
             local.array_w[: values.size] = values
@@ -470,6 +481,12 @@ class FullspaceAdaptiveCoarse:
             self._audit = {
                 "schema": "fullspace.adaptive-coarse.v1",
                 "rank": rank,
+                "basis_row_order": self._basis.audit.get(
+                    "row_order", "canonical_owner_local_order"
+                ),
+                "basis_physical_owned_rows": self._basis.audit.get(
+                    "physical_owned_rows", owned_rows
+                ),
                 "physical_action_apply_count": int(
                     self._physical_action_apply_count
                 ),

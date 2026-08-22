@@ -640,19 +640,36 @@ class OwnerLocalMultilevelBasis:
         regional_mode_count: int,
         comm: Any,
         top_orthogonality_defect: float,
+        physical_row_keys: Sequence[Any] | None = None,
+        active_row_positions: Sequence[int] | None = None,
+        row_order_audit: str = "canonical_owner_local_order",
     ) -> None:
         keys = tuple(row_keys)
+        physical_keys = keys if physical_row_keys is None else tuple(physical_row_keys)
+        positions = (
+            np.arange(len(keys), dtype=np.int64)
+            if active_row_positions is None
+            else np.asarray(active_row_positions, dtype=np.int64)
+        )
         regional = np.ascontiguousarray(
             np.asarray(regional_columns, dtype=np.complex128)
         )
         top = np.ascontiguousarray(np.asarray(top_columns, dtype=np.complex128))
         if len(set(keys)) != len(keys):
             raise ValueError("owner-local multilevel row keys are duplicated")
-        if regional.ndim != 2 or regional.shape[0] != len(keys):
-            raise ValueError("regional Z16 rows do not match canonical keys")
+        if positions.ndim != 1 or positions.size != len(keys):
+            raise ValueError("active physical row positions do not match keys")
+        if np.unique(positions).size != positions.size or np.any(positions < 0):
+            raise ValueError("active physical row positions are not unique")
+        if any(int(position) >= len(physical_keys) for position in positions):
+            raise ValueError("active physical row position is outside owned rows")
+        if tuple(physical_keys[int(position)] for position in positions) != keys:
+            raise ValueError("physical row order does not preserve canonical active keys")
+        if regional.ndim != 2 or regional.shape[0] != len(physical_keys):
+            raise ValueError("regional Z16 rows do not match physical owned rows")
         if regional.shape[1] != N1_REGIONAL_RANK:
             raise ValueError("regional owner-local basis must have rank 16")
-        if top.shape != (len(keys), N1_TOP_RANK):
+        if top.shape != (len(physical_keys), N1_TOP_RANK):
             raise ValueError("top owner-local basis must have rank 32")
         if not np.all(np.isfinite(regional)) or not np.all(np.isfinite(top)):
             raise ValueError("multilevel basis values must be finite")
@@ -660,6 +677,12 @@ class OwnerLocalMultilevelBasis:
         top.flags.writeable = False
         self.comm = comm
         self._row_keys = keys
+        self._physical_row_keys = physical_keys
+        self._active_row_positions = np.ascontiguousarray(positions, dtype=np.int64)
+        self._active_row_positions.flags.writeable = False
+        position_digest = hashlib.sha256(
+            self._active_row_positions.tobytes(order="C")
+        ).hexdigest()
         self._regional_columns = regional
         self._columns = top
         self._audit = MappingProxyType(
@@ -678,6 +701,24 @@ class OwnerLocalMultilevelBasis:
                 "top_mixing_schema": N2_TOP_MIXING_SCHEMA,
                 "top_mixing_seed": N2_TOP_MIXING_SEED,
                 "top_gram_collective": "32x32_small_numeric_allreduce",
+                "regional_columns_semantics": (
+                    "fixed_global_sum_of_same_regional_mode_index_rank16"
+                ),
+                "top_columns_semantics": (
+                    "region_distinguished_fixed_sha256_mix_rank32"
+                ),
+                "row_order": str(row_order_audit),
+                "physical_owned_rows": len(physical_keys),
+                "active_owned_rows": len(keys),
+                "owned_slave_rows": len(physical_keys) - len(keys),
+                "active_row_position_count": int(positions.size),
+                "active_row_positions_sha256": position_digest,
+                "canonical_key_scatter": (
+                    "hash_owner_staging_to_dofmap_owned_local_order"
+                    if row_order_audit == "physical_dofmap_owned_local_order"
+                    else "not_required"
+                ),
+                "canonical_identity_excludes_owned_slave_rows": True,
                 "construction_workspace_released": True,
                 "regional_shards_owner_local": True,
                 "global_numeric_allgather": False,
@@ -710,6 +751,16 @@ class OwnerLocalMultilevelBasis:
         return self._row_keys
 
     @property
+    def physical_row_keys(self) -> tuple[Any, ...]:
+        return self._physical_row_keys
+
+    @property
+    def active_row_positions(self) -> np.ndarray:
+        view = self._active_row_positions.view()
+        view.flags.writeable = False
+        return view
+
+    @property
     def audit(self) -> Mapping[str, Any]:
         return self._audit
 
@@ -730,6 +781,9 @@ def build_owner_local_multilevel_basis(
     *,
     regional_mode_count: int,
     comm: Any = MPI.COMM_WORLD,
+    physical_row_keys: Sequence[Any] | None = None,
+    active_row_positions: Sequence[int] | None = None,
+    row_order_audit: str = "canonical_owner_local_order",
 ) -> OwnerLocalMultilevelBasis:
     """Normalize one owner-local regional/top construction without FE gather."""
 
@@ -738,9 +792,11 @@ def build_owner_local_multilevel_basis(
         np.asarray(regional_columns, dtype=np.complex128)
     )
     raw_top = np.ascontiguousarray(np.asarray(top_raw_columns, dtype=np.complex128))
-    if regional.shape != (len(keys), N1_REGIONAL_RANK):
-        raise ValueError("regional Z16 shape is not owner-local and fixed")
-    if raw_top.shape != (len(keys), N1_TOP_RANK):
+    physical_keys = keys if physical_row_keys is None else tuple(physical_row_keys)
+    expected_rows = len(physical_keys)
+    if regional.shape != (expected_rows, N1_REGIONAL_RANK):
+        raise ValueError("regional Z16 shape is not physical-owner-local and fixed")
+    if raw_top.shape != (expected_rows, N1_TOP_RANK):
         raise ValueError("top raw shape is not owner-local and fixed")
     if int(regional_mode_count) < N1_TOP_RANK:
         raise RuntimeError(
@@ -778,6 +834,9 @@ def build_owner_local_multilevel_basis(
         regional_mode_count=int(regional_mode_count),
         comm=comm,
         top_orthogonality_defect=float(defect),
+        physical_row_keys=physical_keys,
+        active_row_positions=active_row_positions,
+        row_order_audit=row_order_audit,
     )
     del gram, factor, normalization, raw_top, top_gram
     return basis

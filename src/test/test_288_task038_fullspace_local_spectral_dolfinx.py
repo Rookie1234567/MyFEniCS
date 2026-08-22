@@ -10,6 +10,7 @@ from types import SimpleNamespace
 import pytest
 import ufl
 import numpy as np
+from dolfinx import fem
 from mpi4py import MPI
 
 from src.solvers.fullspace_local_spectral_dolfinx import (
@@ -17,6 +18,7 @@ from src.solvers.fullspace_local_spectral_dolfinx import (
     _class_digest,
     _mpc_expansion,
     _prepare_real_context,
+    _relative,
     _relative_canonical_row_descriptor,
     build_real_local_regional_rayleigh_ritz,
     build_real_local_spectral_patches,
@@ -328,8 +330,60 @@ def test_real_p2_h50_local_cell_tensor_mpc_smoke(tmp_path, degree):
     assert regional_audit["multilevel_basis_built"] is True
     assert multilevel.audit["top_rank"] == 32
     assert multilevel.audit["regional_rank"] == 16
+    assert multilevel.audit["regional_columns_semantics"] == (
+        "fixed_global_sum_of_same_regional_mode_index_rank16"
+    )
+    assert multilevel.audit["top_columns_semantics"] == (
+        "region_distinguished_fixed_sha256_mix_rank32"
+    )
     assert multilevel.audit["global_direct_coarse_solve"] is False
     assert multilevel.audit["top_orthogonality_relative_defect"] <= 1.0e-11
+    context = _prepare_real_context(space, mesh_data, floquet_data, cfg)
+    owned_rows = int(space.dofmap.index_map.size_local)
+    assert multilevel.columns.shape[0] == owned_rows
+    assert multilevel.audit["row_order"] == (
+        "physical_dofmap_owned_local_order"
+    )
+    assert multilevel.audit["physical_owned_rows"] == owned_rows
+    assert "active_row_positions" not in multilevel.audit
+    assert multilevel.audit["active_row_position_count"] == len(
+        multilevel.row_keys
+    )
+    assert len(multilevel.audit["active_row_positions_sha256"]) == 64
+    assert multilevel.audit["canonical_key_scatter"] == (
+        "hash_owner_staging_to_dofmap_owned_local_order"
+    )
+    field = fem.Function(space)
+    field.x.array[:owned_rows] = multilevel.columns[:, 0]
+    field.x.scatter_forward()
+    observed = {}
+    for raw_row, key in context["raw_to_key"].items():
+        raw_row = int(raw_row)
+        if raw_row >= owned_rows or raw_row in context["slave_rows"]:
+            continue
+        if key in observed:
+            raise AssertionError(f"canonical key repeated in owned rows: {key!r}")
+        observed[key] = complex(field.x.array[raw_row])
+    expected = {
+        key: complex(multilevel.columns[int(position), 0])
+        for key, position in zip(
+            multilevel.row_keys,
+            multilevel.active_row_positions,
+            strict=True,
+        )
+    }
+    assert tuple(sorted(observed, key=repr)) == tuple(sorted(expected, key=repr))
+    assert _relative(
+        np.asarray(
+            [observed[key] - expected[key] for key in sorted(expected, key=repr)],
+            dtype=np.complex128,
+        ),
+        np.asarray(
+            [expected[key] for key in sorted(expected, key=repr)],
+            dtype=np.complex128,
+        ),
+    ) <= 1.0e-12
+    del field, context
     assert regional_audit["contraction_not_run"] is True
     assert regional_audit["regional_dense_row_operator_materialized"] is False
     assert regional_audit["max_candidate_dimension"] <= 64
@@ -479,8 +533,52 @@ def test_real_p2_h50_distributed_regional_identity(tmp_path):
     assert multilevel.audit["top_rank"] == 32
     assert multilevel.audit["regional_rank"] == 16
     assert multilevel.audit["global_numeric_allgather"] is False
+    assert multilevel.audit["regional_columns_semantics"] == (
+        "fixed_global_sum_of_same_regional_mode_index_rank16"
+    )
+    assert multilevel.audit["top_columns_semantics"] == (
+        "region_distinguished_fixed_sha256_mix_rank32"
+    )
     assert multilevel.audit["global_direct_coarse_solve"] is False
     assert multilevel.audit["top_orthogonality_relative_defect"] <= 1.0e-11
+    context = _prepare_real_context(space, mesh_data, floquet_data, cfg)
+    owned_rows = int(space.dofmap.index_map.size_local)
+    assert multilevel.columns.shape[0] == owned_rows
+    assert multilevel.audit["row_order"] == (
+        "physical_dofmap_owned_local_order"
+    )
+    assert multilevel.audit["physical_owned_rows"] == owned_rows
+    field = fem.Function(space)
+    field.x.array[:owned_rows] = multilevel.columns[:, 0]
+    field.x.scatter_forward()
+    observed = {}
+    for raw_row, key in context["raw_to_key"].items():
+        raw_row = int(raw_row)
+        if raw_row >= owned_rows or raw_row in context["slave_rows"]:
+            continue
+        if key in observed:
+            raise AssertionError(f"canonical key repeated in owned rows: {key!r}")
+        observed[key] = complex(field.x.array[raw_row])
+    expected = {
+        key: complex(multilevel.columns[int(position), 0])
+        for key, position in zip(
+            multilevel.row_keys,
+            multilevel.active_row_positions,
+            strict=True,
+        )
+    }
+    assert tuple(sorted(observed, key=repr)) == tuple(sorted(expected, key=repr))
+    assert _relative(
+        np.asarray(
+            [observed[key] - expected[key] for key in sorted(expected, key=repr)],
+            dtype=np.complex128,
+        ),
+        np.asarray(
+            [expected[key] for key in sorted(expected, key=repr)],
+            dtype=np.complex128,
+        ),
+    ) <= 1.0e-12
+    del field, context
     # This is only rank-local consistency.  The MPI1/MPI2 Gate is the
     # numerical canonical packet comparison from the focused diagnostic, not
     # equality to a serial hash.
