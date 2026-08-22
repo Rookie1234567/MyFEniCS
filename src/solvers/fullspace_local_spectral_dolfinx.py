@@ -14,7 +14,7 @@ from collections import Counter
 import hashlib
 import json
 from types import MappingProxyType
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 import numpy as np
 from dolfinx import fem, la
@@ -33,8 +33,12 @@ from .hcurl_canonical_vector_dolfinx import (
 from .fullspace_local_spectral import (
     ExactClassOwnerPlan,
     LocalSpectralPatch,
+    N1_LEVELS,
+    N1_MODE_CAP,
+    N1_TOP_RANK,
     build_regional_rayleigh_ritz,
     canonical_vector_digest,
+    map_mode_template_to_patch,
 )
 
 
@@ -596,8 +600,8 @@ def _prepare_real_context(
     if str(element.cell_type.name).lower() != "hexahedron":
         raise NotImplementedError("the local-cell adapter requires hexahedra")
     degree = int(element.degree)
-    if degree not in {2, 3}:
-        raise ValueError(f"real local spectral smoke requires p2/p3, got p{degree}")
+    if degree not in {2, 3, 6}:
+        raise ValueError(f"real local spectral adapter supports p2/p3/p6, got p{degree}")
 
     mesh = function_space.mesh
     topology = mesh.topology
@@ -748,6 +752,7 @@ def _prepare_real_context(
     multiplicities = Counter(comm.bcast(multiplicity_payload, root=0))
     return {
         "comm": comm,
+        "function_space": function_space,
         "element": element,
         "dof_element": dof_element,
         "mesh": mesh,
@@ -792,6 +797,320 @@ def _cell_operators(
     local_mass = np.ascontiguousarray(expansion.conj().T @ raw_mass @ expansion)
     del expansion, raw_block, raw_mass
     return block, None, local_mass
+
+
+def _class_relative_template_order(
+    metadata: Mapping[str, Any],
+) -> tuple[tuple[Any, ...], tuple[int, ...]]:
+    """Return deterministic class-relative free-row keys and source order."""
+
+    descriptors = tuple(metadata["canonical_free_row_descriptors"])
+    order = tuple(sorted(range(len(descriptors)), key=lambda index: repr(descriptors[index])))
+    return tuple(descriptors[index] for index in order), order
+
+
+def _metadata_gradient_candidates(
+    metadata: Mapping[str, Any],
+    context: Mapping[str, Any],
+    gradient_fields: tuple[fem.Function, ...],
+) -> np.ndarray:
+    """Read three finalized-MPC gradients in one cell's free raw rows."""
+
+    return np.ascontiguousarray(
+        np.column_stack(
+            [
+                np.asarray(
+                    [
+                        field.x.array[int(row)]
+                        / context["raw_to_scale"][int(row)]
+                        for row in metadata["free_rows"]
+                    ],
+                    dtype=np.complex128,
+                )
+                for field in gradient_fields
+            ]
+        )
+    )
+
+
+def _class_participation(
+    comm: Any,
+    class_digests: Sequence[str],
+    local_class_digests: Sequence[str],
+) -> tuple[dict[str, tuple[int, ...]], dict[str, int]]:
+    """Build bounded class participant/representative metadata."""
+
+    local = tuple(sorted(set(local_class_digests)))
+    parts = comm.gather(local, root=0)
+    if comm.rank == 0:
+        participants = {
+            digest: tuple(
+                rank for rank, part in enumerate(parts) if digest in part
+            )
+            for digest in class_digests
+        }
+        representatives = {
+            digest: min(ranks) for digest, ranks in participants.items()
+        }
+    else:
+        participants = None
+        representatives = None
+    return (
+        comm.bcast(participants, root=0),
+        comm.bcast(representatives, root=0),
+    )
+
+
+def _build_reused_class_template_patches(
+    context: dict[str, Any],
+    plan: ExactClassOwnerPlan,
+) -> tuple[tuple[LocalSpectralPatch, ...], dict[str, Any]]:
+    """Build one dense/eigensolve representative and retain patch shards."""
+
+    comm = context["comm"]
+    participants, representatives = _class_participation(
+        comm,
+        context["class_digests"],
+        context["local_class_digests"],
+    )
+    gradient_fields = tuple(
+        _field_component(context["function_space"], component)
+        for component in range(3)
+    )
+    for field in gradient_fields:
+        context["mpc"].homogenize(field)
+        context["mpc"].backsubstitution(field)
+        field.x.scatter_forward()
+
+    class_templates: dict[str, tuple[tuple[Any, ...], np.ndarray]] = {}
+    template_audits: dict[str, dict[str, Any]] = {}
+    template_bytes_local = 0
+    try:
+        for slot, digest in enumerate(plan.class_digests):
+            representative_rank = int(representatives[digest])
+            representative = next(
+                (
+                    metadata
+                    for metadata in context["cell_metadata"]
+                    if metadata["digest"] == digest
+                ),
+                None,
+            )
+            block = None
+            local_mass = None
+            gradients = None
+            template_keys = None
+            template_modes = None
+            template_audit = None
+            if comm.rank == representative_rank:
+                if representative is None:
+                    raise RuntimeError("class representative metadata is unavailable")
+                block, _unused, local_mass = _cell_operators(
+                    representative, context
+                )
+                gradients = _metadata_gradient_candidates(
+                    representative, context, gradient_fields
+                )
+                template_keys, order = _class_relative_template_order(representative)
+                indices = np.ix_(order, order)
+                block = np.ascontiguousarray(block[indices])
+                local_mass = np.ascontiguousarray(local_mass[indices])
+                gradients = np.ascontiguousarray(gradients[np.asarray(order), :])
+
+            plan.register_class_representative(digest, block, slot=slot)
+            if comm.rank == representative_rank:
+                template_patch = LocalSpectralPatch(
+                    block,
+                    local_mass,
+                    gradients,
+                    patch_id=-1,
+                    exact_class_digest=digest,
+                    row_keys=template_keys,
+                    comm=comm,
+                    class_plan=plan,
+                )
+                template_patch.build()
+                template_modes = np.ascontiguousarray(template_patch.modes)
+                template_audit = dict(template_patch.audit)
+                template_bytes_local += int(template_modes.nbytes)
+                template_patch.destroy()
+                del template_patch, block, local_mass, gradients
+
+            template_audit = comm.bcast(template_audit, root=representative_rank)
+            routed = plan.register_class_template(
+                digest,
+                template_keys,
+                template_modes,
+                slot=slot,
+                representative_rank=representative_rank,
+                participant_ranks=participants[digest],
+            )
+            if routed is not None:
+                class_templates[digest] = routed
+            template_audits[digest] = template_audit
+            del template_keys, template_modes, template_audit
+    finally:
+        for field in gradient_fields:
+            del field
+
+    patches: list[LocalSpectralPatch] = []
+    for patch_id, metadata in enumerate(context["cell_metadata"]):
+        template_keys, template_modes = class_templates[metadata["digest"]]
+        patch_keys = tuple(metadata["canonical_free_row_descriptors"])
+        mode_shard = map_mode_template_to_patch(
+            template_keys,
+            template_modes,
+            patch_keys,
+        )
+        patch = LocalSpectralPatch.from_mode_template(
+            mode_shard,
+            patch_id=patch_id,
+            exact_class_digest=metadata["digest"],
+            row_keys=metadata["row_keys"],
+            shared_row_multiplicity=np.asarray(
+                [context["multiplicities"][key] for key in metadata["row_keys"]],
+                dtype=np.int64,
+            ),
+            comm=comm,
+            class_plan=plan,
+            class_template_row_keys=template_keys,
+        )
+        patches.append(patch)
+        del mode_shard
+    del class_templates
+
+    local_patch_counts = Counter(metadata["digest"] for metadata in context["cell_metadata"])
+    patch_count_parts = comm.gather(dict(local_patch_counts), root=0)
+    if comm.rank == 0:
+        global_patch_counts = Counter()
+        for part in patch_count_parts:
+            global_patch_counts.update(part)
+        global_patch_counts = dict(global_patch_counts)
+    else:
+        global_patch_counts = None
+    global_patch_counts = comm.bcast(global_patch_counts, root=0)
+
+    expected = {
+        key: _source_value(key) for key in context["multiplicities"]
+    }
+    adjoint_errors = []
+    for patch in patches:
+        seed = hashlib.sha256(repr(patch.row_keys).encode("utf-8")).digest()
+        x = np.resize(
+            np.asarray(
+                [complex(value / 17.0, -value / 23.0) for value in seed],
+                dtype=np.complex128,
+            ),
+            len(patch.row_keys),
+        )
+        c = np.asarray(
+            [complex(index + 1.0, -0.5 * index) for index in range(N1_MODE_CAP)],
+            dtype=np.complex128,
+        )
+        adjoint_errors.append(patch.restriction_prolongation_adjoint_error(x, c))
+
+    template_audit_values = tuple(template_audits.values())
+    local_mode_shard_bytes = sum(int(patch.modes.nbytes) for patch in patches)
+    audit = {
+        "schema": "task038.n2.class-template-local-cell-adapter.v1",
+        "fixture": "real_p2_p3_p6_cell_template_setup_only",
+        "degree": context["degree"],
+        "cell_count": context["owned_cells"],
+        "patch_count": len(patches),
+        "row_count_min": min(len(patch.row_keys) for patch in patches),
+        "row_count_max": max(len(patch.row_keys) for patch in patches),
+        "class_count": len(plan.class_digests),
+        "class_digests": tuple(plan.class_digests),
+        "class_owners": dict(plan.owners),
+        "class_participants": dict(participants),
+        "class_representatives": dict(representatives),
+        "class_patch_counts_global": global_patch_counts,
+        "class_inventory": "global_sorted_exact_class_digests",
+        "class_factor_registration": (
+            "fixed_global_class_slots_one_representative_to_hash_owner"
+        ),
+        "owner_factor_count": plan.factor_count,
+        "owner_factor_bytes": plan.factor_bytes,
+        "global_owner_factor_count": int(comm.allreduce(plan.factor_count, op=MPI.SUM)),
+        "global_owner_factor_bytes": int(comm.allreduce(plan.factor_bytes, op=MPI.SUM)),
+        "mode_template_count": len(plan.class_digests),
+        "mode_template_bytes_transient_local": int(template_bytes_local),
+        "mode_template_bytes_transient_global": int(
+            comm.allreduce(template_bytes_local, op=MPI.SUM)
+        ),
+        "mode_shard_bytes_retained_local": int(local_mode_shard_bytes),
+        "mode_shard_bytes_retained_global": int(
+            comm.allreduce(local_mode_shard_bytes, op=MPI.SUM)
+        ),
+        "dense_transient_class_count": len(plan.class_digests),
+        "dense_workspace_released": all(
+            patch.block is None and patch.local_mass is None
+            for patch in patches
+        ),
+        "mode_template_route": "class_relative_keys_to_participant_patch_ranks",
+        "B0_hermitian_relative_defect": max(
+            float(value["B0_hermitian_relative_defect"])
+            for value in template_audit_values
+        ),
+        "M_local_hermitian_relative_defect": max(
+            float(value["M_local_hermitian_relative_defect"])
+            for value in template_audit_values
+        ),
+        "B0_min_eigenvalue": min(
+            float(value["B0_min_eigenvalue"]) for value in template_audit_values
+        ),
+        "M_local_min_eigenvalue": min(
+            float(value["M_local_min_eigenvalue"]) for value in template_audit_values
+        ),
+        "gradient_rank_min": min(
+            int(value["gradient_rank"]) for value in template_audit_values
+        ),
+        "gradient_gram_defect_max": max(
+            float(value["gradient_m_gram_relative_defect"])
+            for value in template_audit_values
+        ),
+        "projected_eigen_residual_max": max(
+            float(value["generalized_eigen_residual"])
+            for value in template_audit_values
+        ),
+        "fixed_solve_residual_max": max(
+            (
+                float(value["fixed_rhs_solve_residual"])
+                for value in template_audit_values
+                if value["fixed_rhs_solve_residual"] is not None
+            ),
+            default=None,
+        ),
+        "pou_closure_relative_error": _distributed_pou_closure(
+            context["function_space"], context, patches, expected
+        ),
+        "pou_closure_route": "owner_local_fem_function_scatter_reverse_insert_add",
+        "restriction_prolongation_adjoint_relative_error_max": max(adjoint_errors),
+        "independent_global_assembled_oracle": None,
+        "production_path_references_oracle": False,
+        "oracle_contract": "small_assembled_oracle_only_p2_p3_test_path",
+        "mode_digest": _mode_digest(
+            tuple(patches),
+            tuple(metadata["cell_key"] for metadata in context["cell_metadata"]),
+        ),
+        "forbidden_objects": {
+            "global_numeric_allgather": False,
+            "global_aij": False,
+            "global_schur": False,
+            "static_condensation": False,
+            "trace_harmonic_backend": False,
+            "per_patch_retained_dense_block": False,
+        },
+        "orientation": "DOLFINx Basix T_apply/Tt_apply cell semantics",
+        "mpc_expansion": "finalized Floquet direct primal coefficients, slaves excluded from free rows",
+        "patch_ownership": "owned_cells_only; ghost_cells_metadata_only",
+        "class_template_eigensolve": "one canonical representative per exact class",
+        "class_factor_count_per_class": 1,
+        "regional_setup": "not_built_in_this_setup_block",
+        "top_rank": N1_TOP_RANK,
+        "coarse_levels": N1_LEVELS,
+    }
+    return tuple(patches), audit
 
 
 def _macroregion_key(
@@ -1246,12 +1565,16 @@ def build_real_local_spectral_patches(
     mesh_data: Any,
     floquet_data: Any,
     cfg: Any,
+    *,
+    reuse_class_templates: bool = False,
 ) -> tuple[tuple[LocalSpectralPatch, ...], dict[str, Any]]:
-    """Build all real p2/p3 serial cell patches from streamed element metadata."""
+    """Build real cell patches, optionally reusing one template per class."""
 
     context = _prepare_real_context(function_space, mesh_data, floquet_data, cfg)
     comm = context["comm"]
     plan = ExactClassOwnerPlan(context["class_digests"], comm)
+    if reuse_class_templates:
+        return _build_reused_class_template_patches(context, plan)
     for slot, digest in enumerate(plan.class_digests):
         representative = next(
             (

@@ -13,11 +13,13 @@ from src.solvers.fullspace_local_spectral import (
     ExactClassOwnerPlan,
     LocalSpectralPatch,
     N1_FACTOR_BYTES_LIMIT,
+    N1_MAX_LOCAL_ROWS,
     build_regional_rayleigh_ritz,
     canonicalize_degenerate_eigenvectors,
     canonical_pou_closure_error,
     canonical_vector_digest,
     deterministic_class_owner,
+    map_mode_template_to_patch,
     packed_lower_bytes,
 )
 
@@ -199,6 +201,93 @@ def test_class_owner_store_reuses_one_factor_per_exact_class():
     first.destroy()
     second.destroy()
     third.destroy()
+
+
+def test_class_template_route_reuses_factor_and_maps_independent_patch_shards():
+    digest = "e" * 64
+    plan = ExactClassOwnerPlan((digest,), MPI.COMM_SELF)
+    first, _block, _mass = _synthetic_patch(plan=plan, digest=digest)
+    first.build()
+    template_keys = first.row_keys
+    routed_keys, routed_modes = plan.register_class_template(
+        digest,
+        template_keys,
+        first.modes,
+        slot=0,
+        representative_rank=0,
+        participant_ranks=(0,),
+    )
+    assert routed_keys == template_keys
+    reordered_keys = tuple(reversed(template_keys))
+    shard = map_mode_template_to_patch(
+        routed_keys, routed_modes, reordered_keys
+    )
+    retained = LocalSpectralPatch.from_mode_template(
+        shard,
+        patch_id=1,
+        exact_class_digest=digest,
+        row_keys=reordered_keys,
+        class_plan=plan,
+        class_template_row_keys=routed_keys,
+    )
+    independent, _independent_block, _independent_mass = _synthetic_patch(
+        plan=plan, digest=digest
+    )
+    independent.build()
+    retained_by_key = {
+        key: value for key, value in zip(retained.row_keys, retained.modes[:, 0], strict=True)
+    }
+    independent_by_key = {
+        key: value
+        for key, value in zip(
+            independent.row_keys, independent.modes[:, 0], strict=True
+        )
+    }
+    difference = np.asarray(
+        [retained_by_key[key] - independent_by_key[key] for key in template_keys]
+    )
+    reference = np.asarray([independent_by_key[key] for key in template_keys])
+    assert np.linalg.norm(difference) / np.linalg.norm(reference) <= 1.0e-11
+    assert plan.factor_count == 1
+    assert plan.factor_bytes == packed_lower_bytes(10)
+    assert retained.audit["mode_template_reused"] is True
+    assert retained.audit["dense_workspace_released"] is True
+    first.destroy()
+    retained.destroy()
+    independent.destroy()
+    plan.destroy()
+
+
+def test_p6_single_cell_template_contract_has_bounded_factor_and_shard():
+    rows = N1_MAX_LOCAL_ROWS
+    digest = "f" * 64
+    plan = ExactClassOwnerPlan((digest,), MPI.COMM_SELF)
+    representative_block = 2.0 * np.eye(rows, dtype=np.complex128)
+    plan.register_class_representative(
+        digest, representative_block, slot=0
+    )
+    del representative_block
+    keys = tuple(("p6-cell-relative", index) for index in range(rows))
+    modes = np.zeros((rows, 8), dtype=np.complex128)
+    modes[np.arange(8), np.arange(8)] = 1.0
+    patch = LocalSpectralPatch.from_mode_template(
+        modes,
+        patch_id=0,
+        exact_class_digest=digest,
+        row_keys=keys,
+        class_plan=plan,
+        class_template_row_keys=keys,
+    )
+    assert len(patch.row_keys) == 882
+    assert patch.modes.shape == (882, 8)
+    assert plan.factor_bytes == 6_230_448
+    assert plan.factor_bytes <= N1_FACTOR_BYTES_LIMIT
+    assert patch.block is None
+    assert patch.local_mass is None
+    assert patch.audit["mode_shard_bytes_retained"] == 882 * 8 * 16
+    assert patch.audit["dense_workspace_released"] is True
+    patch.destroy()
+    plan.destroy()
 
 
 def test_tagged_owner_route_uses_fixed_request_schedule():

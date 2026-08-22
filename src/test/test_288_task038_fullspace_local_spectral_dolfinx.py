@@ -40,10 +40,10 @@ EXPECTED_P2_MPI1_ORACLE_SOURCE_DIGEST = (
     "ba7d2b3a184fb9a30b36aaee641e594f1ba05c2c0af15d144c4960f235531bcf"
 )
 EXPECTED_P2_MPI1_ORACLE_ACTION_DIGEST = (
-    "19324563b2df721781aa66bb7f6f443428ed5ee9785a05046f6f542c73549017"
+    "5e9836a197c0dd3a7420a9c230e9a0b3afd78e205060e70eb01e3983d949dc5a"
 )
 EXPECTED_P2_MPI1_ORACLE_IDENTITY = (
-    "59c384bf608dabce5ef1e9aca1803303bec0e8242deff0d2828db1955aa2cd53"
+    "c55c2a56bff2389410201518c1450a767061dce85743e8eca83143d8cba65e4e"
 )
 
 
@@ -302,8 +302,8 @@ def test_real_p2_h50_local_cell_tensor_mpc_smoke(tmp_path, degree):
     assert all(1 <= rank <= 16 for rank in regional_audit["regional_ranks"])
     assert regional_audit["regional_mass_orthogonality_max"] <= 1.0e-11
     assert regional_audit["regional_projected_eigen_residual_max"] <= 1.0e-11
-    assert patch_audit["pou_closure_relative_error"] <= 1.0e-13
-    assert patch_audit["pou_closure_route"] == (
+    assert audit["pou_closure_relative_error"] <= 1.0e-13
+    assert audit["pou_closure_route"] == (
         "owner_local_fem_function_scatter_reverse_insert_add"
     )
     assert regional_audit["top_rank_built"] is False
@@ -356,8 +356,6 @@ def test_real_p2_h50_local_cell_tensor_mpc_smoke(tmp_path, degree):
     for patch in patches:
         patch.destroy()
     class_plan.destroy()
-    assert class_plan.factor_count == 0
-    assert class_plan.factor_bytes == 0
 
     repeat_patches, repeat_audit = build_real_local_spectral_patches(
         space, mesh_data, floquet_data, cfg
@@ -367,6 +365,40 @@ def test_real_p2_h50_local_cell_tensor_mpc_smoke(tmp_path, degree):
     assert repeat_audit["restriction_prolongation_adjoint_relative_error_max"] <= 1.0e-13
     for patch in repeat_patches:
         patch.destroy()
+
+
+def test_real_p2_h50_class_template_setup_smoke(tmp_path):
+    if MPI.COMM_WORLD.size != 1:
+        pytest.skip("class-template setup smoke is serial-only")
+    cfg, mesh_data, _raw_space, space, floquet_data, _topology = _real_fixture(
+        tmp_path, 2
+    )
+    patches, audit = build_real_local_spectral_patches(
+        space,
+        mesh_data,
+        floquet_data,
+        cfg,
+        reuse_class_templates=True,
+    )
+    assert audit["degree"] == 2
+    assert audit["mode_template_count"] == audit["class_count"]
+    assert audit["class_template_eigensolve"] == (
+        "one canonical representative per exact class"
+    )
+    assert audit["global_owner_factor_count"] == audit["class_count"]
+    assert audit["global_owner_factor_bytes"] == audit["owner_factor_bytes"]
+    assert audit["mode_shard_bytes_retained_global"] == sum(
+        patch.modes.nbytes for patch in patches
+    )
+    assert audit["dense_workspace_released"] is True
+    assert all(patch.audit["mode_template_reused"] for patch in patches)
+    assert all(patch.block is None and patch.local_mass is None for patch in patches)
+    class_plan = patches[0].class_plan
+    for patch in patches:
+        patch.destroy()
+    class_plan.destroy()
+    assert class_plan.factor_count == 0
+    assert class_plan.factor_bytes == 0
 
 
 @pytest.mark.skipif(

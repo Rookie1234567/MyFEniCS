@@ -356,6 +356,86 @@ class ExactClassOwnerPlan:
         if first_error is not None:
             raise RuntimeError(f"class representative registration failed: {first_error}")
 
+    def register_class_template(
+        self,
+        class_digest: str,
+        template_row_keys: Sequence[Any] | None,
+        template_modes: np.ndarray | None,
+        *,
+        slot: int,
+        representative_rank: int,
+        participant_ranks: Sequence[int],
+    ) -> tuple[tuple[Any, ...], np.ndarray] | None:
+        """Route one bounded eight-mode class template to its patch ranks.
+
+        The representative is the only rank that constructs the template.
+        It sends at most ``882 * 8`` complex entries to the deterministic
+        factor owner; that owner forwards the same bounded payload only to
+        ranks that own a patch of this class.  No rank-wide numeric collective
+        or full-space basis replication is used.  The owner may discard the
+        template immediately when it has no local patch.
+        """
+
+        digest = _class_digest(class_digest)
+        if slot < 0 or slot >= len(self.class_digests) or self.class_digests[slot] != digest:
+            raise ValueError("class template slot is not the global class slot")
+        participants = tuple(sorted({int(rank) for rank in participant_ranks}))
+        if not participants or any(rank < 0 or rank >= self.comm.size for rank in participants):
+            raise ValueError("class template participants must be valid non-empty ranks")
+        if int(representative_rank) not in participants:
+            raise ValueError("class template representative must own this class")
+        is_representative = self.comm.rank == int(representative_rank)
+        if is_representative:
+            if template_row_keys is None or template_modes is None:
+                raise ValueError("representative must provide class template data")
+            keys = tuple(template_row_keys)
+            modes = np.ascontiguousarray(np.asarray(template_modes, dtype=np.complex128))
+            if (
+                not keys
+                or len(keys) > N1_MAX_LOCAL_ROWS
+                or len(set(keys)) != len(keys)
+                or modes.shape != (len(keys), N1_MODE_CAP)
+                or not np.all(np.isfinite(modes))
+            ):
+                raise ValueError("class template shape or values exceed bounded contract")
+            payload = (keys, modes)
+        else:
+            payload = None
+
+        owner = self.owner(digest)
+        if self.comm.rank == owner:
+            if owner == int(representative_rank):
+                received = payload
+            else:
+                received = self.comm.recv(source=int(representative_rank), tag=2000 + int(slot))
+            if received is None:
+                raise RuntimeError("class template owner received no representative payload")
+            owner_keys, owner_modes = received
+            for rank in participants:
+                if rank != owner:
+                    self.comm.send((owner_keys, owner_modes), dest=rank, tag=3000 + int(slot))
+            if owner in participants:
+                result = (tuple(owner_keys), np.ascontiguousarray(owner_modes))
+            else:
+                result = None
+        elif is_representative:
+            self.comm.send(payload, dest=owner, tag=2000 + int(slot))
+            result = (
+                tuple(payload[0]),
+                np.ascontiguousarray(payload[1]),
+            ) if owner == int(representative_rank) else self.comm.recv(
+                source=owner, tag=3000 + int(slot)
+            )
+        elif self.comm.rank in participants:
+            result = self.comm.recv(source=owner, tag=3000 + int(slot))
+        else:
+            result = None
+
+        if result is None:
+            return None
+        result_keys, result_modes = result
+        return tuple(result_keys), np.ascontiguousarray(result_modes, dtype=np.complex128)
+
     def owner_solve(self, class_digest: str, right_hand_side: np.ndarray) -> np.ndarray:
         """Solve on the unique class owner using its packed factor."""
 
@@ -669,6 +749,77 @@ class LocalSpectralPatch:
         self._pou_weights = 1.0 / multiplicity.astype(np.float64)
         self._row_count = int(self.block.shape[0])
 
+    @classmethod
+    def from_mode_template(
+        cls,
+        mode_shard: np.ndarray,
+        *,
+        patch_id: int,
+        exact_class_digest: str,
+        row_keys: Iterable[Any],
+        shared_row_multiplicity: np.ndarray | None = None,
+        comm: Any = MPI.COMM_WORLD,
+        class_plan: ExactClassOwnerPlan | None = None,
+        class_template_row_keys: Iterable[Any] | None = None,
+    ) -> "LocalSpectralPatch":
+        """Create a retained patch shard without a second dense eigensolve."""
+
+        modes = np.ascontiguousarray(np.asarray(mode_shard, dtype=np.complex128))
+        keys = tuple(row_keys)
+        if modes.ndim != 2 or modes.shape[1] != N1_MODE_CAP:
+            raise ValueError("retained mode shard must have eight columns")
+        if modes.shape[0] > N1_MAX_LOCAL_ROWS or len(keys) != modes.shape[0]:
+            raise ValueError("retained mode shard exceeds the local row contract")
+        if len(set(keys)) != len(keys) or not np.all(np.isfinite(modes)):
+            raise ValueError("retained mode shard keys or values are invalid")
+        if class_plan is None:
+            class_plan = ExactClassOwnerPlan((exact_class_digest,), comm)
+        obj = cls.__new__(cls)
+        obj.comm = comm
+        obj.patch_id = int(patch_id)
+        obj.class_digest = _class_digest(exact_class_digest)
+        obj.block = None
+        obj.local_mass = None
+        obj.gradient_candidates = None
+        obj.row_keys = keys
+        obj.class_plan = class_plan
+        obj._modes = modes
+        obj._modes.flags.writeable = False
+        obj._audit = {
+            "schema": "fullspace.n1.retained-class-mode-shard.v1",
+            "mode_template_reused": True,
+            "class_template_row_count": len(tuple(class_template_row_keys or keys)),
+            "mode_template_row_count": int(modes.shape[0]),
+            "mode_shard_bytes_retained": int(modes.nbytes),
+            "dense_workspace_released": True,
+            "construction_workspace_released": True,
+            "phase_application": "minimum_canonical_key_once",
+            "source_independent": True,
+            "coarse_levels": N1_LEVELS,
+            "regional_rank": N1_REGIONAL_RANK,
+            "top_rank": N1_TOP_RANK,
+            "global_numeric_allgather": False,
+            "global_aij_materialized": False,
+            "global_schur_materialized": False,
+            "global_factor_matrix_materialized": False,
+            "growing_slab_factor_materialized": False,
+            "per_rank_full_basis_replication": False,
+            "factor_reused": True,
+            "repeat_identity": "caller_measured_class_template_reuse",
+        }
+        if shared_row_multiplicity is None:
+            multiplicity = np.ones(modes.shape[0], dtype=np.int64)
+        else:
+            multiplicity = np.asarray(shared_row_multiplicity, dtype=np.int64).copy()
+        if multiplicity.shape != (modes.shape[0],) or np.any(multiplicity < 1):
+            raise ValueError("row multiplicity must be a positive local vector")
+        obj._row_multiplicity = multiplicity
+        obj._pou_weights = 1.0 / multiplicity.astype(np.float64)
+        obj._row_count = int(modes.shape[0])
+        obj._destroyed = False
+        obj._construction_released = True
+        return obj
+
     def _validate_shapes(self) -> None:
         rows = self.block.shape[0]
         if self.block.ndim != 2 or self.block.shape[1] != rows:
@@ -800,6 +951,11 @@ class LocalSpectralPatch:
         mass_defect = _relative(
             mass_gram - np.eye(N1_MODE_CAP), np.eye(N1_MODE_CAP)
         )
+        gradient_gram_defect = _relative(
+            gradient_matrix.conj().T @ mass @ gradient_matrix
+            - np.eye(N1_GRADIENT_COUNT),
+            np.eye(N1_GRADIENT_COUNT),
+        )
         if mass_defect > N1_ALGEBRA_LIMIT:
             raise RuntimeError(
                 f"selected mode mass orthogonality {mass_defect} exceeds limit "
@@ -819,6 +975,8 @@ class LocalSpectralPatch:
                 max(full_eigen_residual, default=0.0)
             ),
             "selected_mode_mass_orthogonality": mass_defect,
+            "gradient_rank": N1_GRADIENT_COUNT,
+            "gradient_m_gram_relative_defect": gradient_gram_defect,
             "selected_mode_count": int(modes.shape[1]),
             "gradient_candidate_count": N1_GRADIENT_COUNT,
             "positive_spectral_mode_count": N1_POSITIVE_MODE_COUNT,
@@ -978,6 +1136,33 @@ class LocalSpectralPatch:
         self._modes = None
 
 
+def map_mode_template_to_patch(
+    template_row_keys: Sequence[Any],
+    template_modes: np.ndarray,
+    patch_row_keys: Sequence[Any],
+) -> np.ndarray:
+    """Map class-relative template rows into one patch's canonical row order."""
+
+    template_keys = tuple(template_row_keys)
+    patch_keys = tuple(patch_row_keys)
+    modes = np.asarray(template_modes, dtype=np.complex128)
+    if (
+        modes.ndim != 2
+        or modes.shape != (len(template_keys), N1_MODE_CAP)
+        or len(set(template_keys)) != len(template_keys)
+        or len(set(patch_keys)) != len(patch_keys)
+        or set(template_keys) != set(patch_keys)
+    ):
+        raise ValueError("class template and patch row keys do not match")
+    index = {key: position for position, key in enumerate(template_keys)}
+    mapped = np.ascontiguousarray(
+        modes[np.asarray([index[key] for key in patch_keys], dtype=np.int64), :]
+    )
+    if not np.all(np.isfinite(mapped)):
+        raise ValueError("mapped class mode shard is non-finite")
+    return mapped
+
+
 __all__ = (
     "ExactClassOwnerPlan",
     "LocalSpectralPatch",
@@ -995,5 +1180,6 @@ __all__ = (
     "canonical_vector_digest",
     "build_regional_rayleigh_ritz",
     "deterministic_class_owner",
+    "map_mode_template_to_patch",
     "packed_lower_bytes",
 )
