@@ -140,14 +140,14 @@ def _tiny_chain():
             result[rank :: comm.size] = piece
         return result
 
-    def make_restriction(matrix: np.ndarray, start: int):
+    def make_restriction(start: int):
         def restrict(values: np.ndarray) -> np.ndarray:
             global_values = owner_roundtrip(values)
             return np.asarray(global_values[start : start + 2 * layer_size]).copy()
 
         return restrict
 
-    def make_prolongation(matrix: np.ndarray, start: int):
+    def make_prolongation(start: int):
         def prolong(values: np.ndarray) -> np.ndarray:
             local_values = np.asarray(values, dtype=np.complex128)
             global_values = np.zeros(total, dtype=np.complex128)
@@ -163,12 +163,10 @@ def _tiny_chain():
         return prolong
 
     restrictions = tuple(
-        make_restriction(matrix, first * layer_size)
-        for matrix, (first, _) in zip(restriction_matrices, TASK040_LEVEL_A_SUBDOMAINS)
+        make_restriction(first * layer_size) for first, _ in TASK040_LEVEL_A_SUBDOMAINS
     )
     prolongations = tuple(
-        make_prolongation(matrix, first * layer_size)
-        for matrix, (first, _) in zip(prolongation_matrices, TASK040_LEVEL_A_SUBDOMAINS)
+        make_prolongation(first * layer_size) for first, _ in TASK040_LEVEL_A_SUBDOMAINS
     )
 
     def map_audit() -> float:
