@@ -1,0 +1,134 @@
+{
+  "schema": "task038.full3d.local_spectral.n2_compact_negative.v1",
+  "record_kind": "controlled_negative",
+  "classification": "CONTROLLED_NEGATIVE_LOCAL_FACTOR_SOLVE_GATE",
+  "stage": "N2",
+  "case": "p6-h10-mpi1",
+  "mpi_size": 1,
+  "degree": 6,
+  "mesh_target_nm": 10.0,
+  "source": {
+    "source_git_sha": "907fe8fb204cffa34a921c6d0cab7ff4dd4831b8",
+    "expected_source_sha": "907fe8fb204cffa34a921c6d0cab7ff4dd4831b8",
+    "formal_source_head": "907fe8fb204cffa34a921c6d0cab7ff4dd4831b8",
+    "tracked_status": "",
+    "qualified_activation": "1"
+  },
+  "commands": {
+    "outer_watchdog_command": "python -m benchmarks.run_task038_full3d_n2 --watchdog --watchdog-record benchmarks/artifacts/task038_extra_full3d_n2_formal_v1/907fe8f/p6_h10_mpi1/record.json --watchdog-raw benchmarks/artifacts/task038_extra_full3d_n2_formal_v1/907fe8f/p6_h10_mpi1/watchdog.raw.json --watchdog-compact benchmarks/artifacts/task038_extra_full3d_n2_formal_v1/907fe8f/p6_h10_mpi1/watchdog.compact.json --watchdog-log benchmarks/artifacts/task038_extra_full3d_n2_formal_v1/907fe8f/p6_h10_mpi1/worker.log --watchdog-marker-dir benchmarks/artifacts/task038_extra_full3d_n2_formal_v1/907fe8f/p6_h10_mpi1/raw/markers --watchdog-poll-seconds 1.0 --watchdog-timeout-seconds 0 --watchdog-command mpiexec -n 1 python -m benchmarks.run_task038_full3d_n2 --stage n2 --case p6-h10-mpi1 --input input/templates/full3d_iterative_example.dat --raw-dir benchmarks/artifacts/task038_extra_full3d_n2_formal_v1/907fe8f/p6_h10_mpi1/raw --record benchmarks/artifacts/task038_extra_full3d_n2_formal_v1/907fe8f/p6_h10_mpi1/record.json --marker-dir benchmarks/artifacts/task038_extra_full3d_n2_formal_v1/907fe8f/p6_h10_mpi1/raw/markers --expected-source-sha 907fe8fb204cffa34a921c6d0cab7ff4dd4831b8 --expected-mpi-size 1",
+    "worker_command": "mpiexec -n 1 python -m benchmarks.run_task038_full3d_n2 --stage n2 --case p6-h10-mpi1 --input input/templates/full3d_iterative_example.dat --raw-dir benchmarks/artifacts/task038_extra_full3d_n2_formal_v1/907fe8f/p6_h10_mpi1/raw --record benchmarks/artifacts/task038_extra_full3d_n2_formal_v1/907fe8f/p6_h10_mpi1/record.json --marker-dir benchmarks/artifacts/task038_extra_full3d_n2_formal_v1/907fe8f/p6_h10_mpi1/raw/markers --expected-source-sha 907fe8fb204cffa34a921c6d0cab7ff4dd4831b8 --expected-mpi-size 1",
+    "input": "input/templates/full3d_iterative_example.dat",
+    "watchdog_poll_seconds": 1.0,
+    "watchdog_timeout_seconds": 0.0,
+    "hard_stop_bytes": 2000000000
+  },
+  "markers": {
+    "sequence": ["preflight", "mesh_space_mpc", "JIT", "subdomain_inventory", "local_factor_build", "failure"],
+    "last_marker": "failure",
+    "worker_marker_wall_seconds": 125.03350535,
+    "watchdog_sampled_elapsed_seconds": 126.7811168670014,
+    "watchdog_sample_count": 127
+  },
+  "failure": {
+    "exception_type": "RuntimeError",
+    "message": "class representative registration failed: RuntimeError: fixed local factor solve residual 1.0426245523812324e-11 exceeds limit 9.9999999999999994e-12",
+    "fixed_rhs_solve_residual": 1.0426245523812324e-11,
+    "fixed_rhs_solve_limit": 1.0e-11,
+    "absolute_excess": 4.26245523812324e-13,
+    "relative_excess_percent": 4.26245523812324,
+    "failure_stage": "local_factor_build",
+    "not_a_watchdog_stop": true
+  },
+  "watchdog": {
+    "returncode": 1,
+    "stop_reason": "natural_exit",
+    "natural_exit": false,
+    "watchdog_did_not_terminate_worker": true,
+    "termination_method": "already_exited",
+    "process_group_exited": true,
+    "no_orphan_claim": true,
+    "sigkill_required": false,
+    "process_tree_peak_memory_authority_bytes": 1506271232,
+    "process_tree_swap_bytes": 0,
+    "process_tree_swap_gate": true,
+    "warning_bytes": 1800000000,
+    "warning_crossed": false,
+    "hard_stop_bytes": 2000000000,
+    "hard_stop_crossed": false,
+    "authority_samples": 127,
+    "post_setup_sample_count": 0,
+    "complete_setup_resource_gate": "not_run_by_local_factor_failure"
+  },
+  "runtime_source_identity": {
+    "expected_sha": "907fe8fb204cffa34a921c6d0cab7ff4dd4831b8",
+    "source_git_sha": "907fe8fb204cffa34a921c6d0cab7ff4dd4831b8",
+    "tracked_status": "",
+    "mpi_size": 1,
+    "scalar_dtype": "complex128",
+    "int_dtype": "int32"
+  },
+  "worker_record_source_identity_defect": {
+    "top_level_expected_sha": "907fe8fb204cffa34a921c6d0cab7ff4dd4831b8",
+    "top_level_source_git_sha": null,
+    "top_level_tracked_status": "not_measured",
+    "interpretation": "The controlled-negative worker record did not backfill its top-level source_identity fields. The nested runtime.source_identity is authoritative and correct; the old ignored record is preserved unchanged."
+  },
+  "checker": {
+    "passed": false,
+    "exit_code": 1,
+    "errors_count": 12,
+    "fail_closed_success_schema_checks": [
+      "record model identity is not frozen p6/h10/full3d_scalable_v1",
+      "source identity is missing, dirty, or not bound to expected SHA",
+      "runtime.source_identity differs from top-level source identity",
+      "model identity is missing",
+      "marker ledger is missing",
+      "basis/operator/coarse audit is missing",
+      "owner-local array descriptors are missing",
+      "N2 setup numeric/inventory audits are missing",
+      "resource_contract.status is 'measured_controlled_negative', expected measured",
+      "watchdog has no post_setup_release sample",
+      "worker did not have natural returncode-zero watchdog termination",
+      "retained component closure is missing"
+    ],
+    "interpretation": "These are fail-closed success-schema boundaries for a pre-setup negative record, not twelve independent numerical failures."
+  },
+  "artifacts": {
+    "worker_record": {
+      "path": "benchmarks/artifacts/task038_extra_full3d_n2_formal_v1/907fe8f/p6_h10_mpi1/record.json",
+      "bytes": 6573,
+      "sha256": "32b96c90276ab6359bf62ddd6e7ab4e24fb55db82bef4fb04efb83cec22f4fb0"
+    },
+    "checker_output": {
+      "path": "benchmarks/artifacts/task038_extra_full3d_n2_formal_v1/907fe8f/p6_h10_mpi1/check.json",
+      "bytes": 3694,
+      "sha256": "7ee4b9cdc61dbf228df7074e52e06034e857cd0d04ed5ee463461eb0c5481c65"
+    },
+    "watchdog_raw": {
+      "path": "benchmarks/artifacts/task038_extra_full3d_n2_formal_v1/907fe8f/p6_h10_mpi1/watchdog.raw.json",
+      "bytes": 179475,
+      "sha256": "cad5fbba7e76a1f6bec12f0034c6fb2b8469d17330a03dd1790ca4df013dedb0"
+    },
+    "watchdog_compact": {
+      "path": "benchmarks/artifacts/task038_extra_full3d_n2_formal_v1/907fe8f/p6_h10_mpi1/watchdog.compact.json",
+      "bytes": 2392,
+      "sha256": "041cbd05da36a1cc023b8a84e949d9869726202883d35741adc1db621c913a22"
+    },
+    "worker_log": {
+      "path": "benchmarks/artifacts/task038_extra_full3d_n2_formal_v1/907fe8f/p6_h10_mpi1/worker.log",
+      "bytes": 2532,
+      "sha256": "7c8224c3578011d7ceaf0234e5292936cc23bf3af490ca37e9cb48f721818319"
+    },
+    "marker_dir": "benchmarks/artifacts/task038_extra_full3d_n2_formal_v1/907fe8f/p6_h10_mpi1/raw/markers"
+  },
+  "not_run": [
+    "post_setup retained measurement",
+    "252 patch/class inventory closure",
+    "local modes and regional rank16",
+    "top rank32",
+    "Z16/Z32/AZ32/E32",
+    "zero identity apply",
+    "MPI2 setup and cross-MPI identity",
+    "N3 contraction and all official PDE/physics outputs"
+  ]
+}

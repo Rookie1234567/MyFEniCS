@@ -291,3 +291,19 @@ Preflight 实值：`MemAvailable=13,482,110,976 B`，system swap used
 N0 文档与 compact record 的完整算术、引用、生命周期和禁止项在
 [`local_spectral_multilevel_preflight.md`](local_spectral_multilevel_preflight.md)
 与 [`records/n0_local_spectral_capacity_v1.json`](records/n0_local_spectral_capacity_v1.json)。
+
+## Review V4 N2：local spectral setup controlled negative
+
+本节追加在既有 T1–T4、D0/D1 和历史 T5/R4 记录之后，不覆盖旧结论。
+
+|阶段/证据|结果|说明|
+|---|---|---|
+|N0|PASS_CONDITIONAL|docs-only capacity preflight；central 1,698,919,864 B、hard 1,798,919,864 B，不是 p6 setup 实测 pass|
+|N1|PASS|p2/p3 × MPI1/MPI2 四个正式 local spectral oracle case及 aggregate通过|
+|N2 MPI1|CONTROLLED_NEGATIVE_LOCAL_FACTOR_SOLVE_GATE|fixed RHS solve residual 1.0426245523812324e-11 > 1e-11，worker rc=1|
+|N2 MPI2/N3/N4|not_run_by_gate|没有通过 N2 MPI1 local factor Gate|
+|后续 T6-F/EH/RTA/T7–T9/full0.7nm|not_run|无 PDE/official physics|
+
+N1/源码收口的本地测试记录为 27 passed, 1 skipped，test290 为 12 passed；p2 MPI1/MPI2 small smoke、compileall、AST/diff-check 均通过。这些都是本地非 CI 结果。更早的一次 MPI smoke session 后来被识别为本执行者留下的测试基础设施进程并终止，属于清理动作，不是 formal worker orphan；本次正式 N2 worker 的 watchdog 明确记录 worker 自行返回 rc=1，watchdog 未发 SIGTERM/SIGKILL，随后 already_exited、no orphan、无 SIGKILL。
+
+N2 唯一一次正式 MPI1 setup 的 marker 为 preflight -> mesh_space_mpc -> JIT -> subdomain_inventory -> local_factor_build -> failure；worker marker wall 125.03350535 s，watchdog elapsed 126.7811168670014 s，127 samples，process-tree memory authority peak 1,506,271,232 B，process-tree swap 0 B。失败发生在 local factor build，未得到 post-setup retained、252 inventory最终闭合、modes/regional/top、Z/AZ/E、zero identity或MPI2证据。详情见 local_spectral_setup.md 与 response_v4.md。
