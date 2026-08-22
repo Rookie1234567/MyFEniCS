@@ -1,0 +1,105 @@
+{
+  "errors": [
+    "LA0/LA1 watchdog did not record rc=0 natural completion",
+    "LA0/LA1 compact resource/termination Gate is not true",
+    "marker sequence ('preflight', 'mesh_space_mpc', 'subdomain_inventory', 'local_factor_build', 'failure') does not reproduce LA0"
+  ],
+  "facts": {
+    "class_digest": "0c6b9830423f8baf83b6714ac178c724b63af1359d01b3ca5badd1d40c070a67",
+    "la1_decision": {
+      "classification": "PATH_T_DEDICATED_TRIANGULAR_PASS",
+      "path": "T"
+    },
+    "matrix_sha256": "ec6fa132758735531e272532529bc43a0ac6f1cbf8c1e3c3f3656f19383fcbcd",
+    "rhs_sha256": "da2a800306714ebe4218ae03fa09493d782a18351f5aa6c05eec7e15cb300983",
+    "rows": 882,
+    "s0_frozen_v1_relative_agreement": 0.0,
+    "s0_relative_residual": 1.0426245523812324e-11,
+    "s0_reproduction_relative_agreement": 0.0
+  },
+  "la1": {
+    "decision": {
+      "classification": "PATH_T_DEDICATED_TRIANGULAR_PASS",
+      "path": "T"
+    },
+    "factor_finite": true,
+    "factorization_residual": 8.158904706122267e-16,
+    "finite": true,
+    "hermitian_defect": 9.757433025229162e-17,
+    "kappa2": 57576704.11589122,
+    "lambda_max": 25934.54102501312,
+    "lambda_min": 0.00045043462322559666,
+    "matrix_norm_2": 25934.54102501307,
+    "matrix_rhs_identity": true,
+    "norm_definition": "matrix spectral 2-norm; residual and RHS Euclidean 2-norm",
+    "packed_factor_sha256": "5270c74822a740386bb69f2a400ea0a2f3696dd74669c1b21e150cf532046e6d",
+    "packed_reconstruction_hash_equal": true,
+    "packed_roundtrip_exact": true,
+    "packed_roundtrip_relative": 0.0,
+    "pairwise_solution_relative_differences": {
+      "S0|S1": 5.50661841184164e-14,
+      "S0|S2": 1.1076672952087521e-12,
+      "S0|S3": 1.1639072994451218e-13,
+      "S1|S2": 1.135334055192972e-12,
+      "S1|S3": 1.2167290670560742e-13,
+      "S2|S3": 1.1149568053110162e-12
+    },
+    "paths": {
+      "S0": {
+        "finite": true,
+        "normalized_backward_error": 9.01854818500637e-19,
+        "relative_residual": 1.0426245523812324e-11
+      },
+      "S1": {
+        "finite": true,
+        "normalized_backward_error": 8.058382790658791e-19,
+        "relative_residual": 9.316208748538303e-12
+      },
+      "S2": {
+        "finite": true,
+        "normalized_backward_error": 2.2012856990841358e-18,
+        "relative_residual": 2.544882468429781e-11
+      },
+      "S3": {
+        "finite": true,
+        "normalized_backward_error": 5.771998219478778e-19,
+        "relative_residual": 6.672944399115928e-12
+      }
+    },
+    "raw_factor_sha256": "fb4d433e689680dc98d121e5feee85dc8564cb63cf778fda12023e6ddef6e345",
+    "reconstructed_factor_sha256": "fb4d433e689680dc98d121e5feee85dc8564cb63cf778fda12023e6ddef6e345",
+    "repeat": {
+      "S0_exact": true,
+      "S0_relative": 0.0,
+      "S1_exact": true,
+      "S1_relative": 0.0,
+      "S2_exact": true,
+      "S2_relative": 0.0,
+      "S3_exact": true,
+      "S3_relative": 0.0
+    },
+    "rhs_norm_2": 15113.505224012397,
+    "rows": 882,
+    "schema": "task038.full3d.local-spectral.la1-diagnostic.v1",
+    "scipy": {
+      "blas_module": "builtins",
+      "blas_name": "function zgemm",
+      "lapack_module": "builtins",
+      "lapack_name": "function ztrtrs",
+      "scipy_path": "/usr/lib/python3/dist-packages/scipy/__init__.py",
+      "scipy_version": "1.11.4",
+      "solve_triangular": "scipy.linalg.solve_triangular",
+      "solve_triangular_module": "scipy.linalg._basic"
+    },
+    "temporary_bytes": {
+      "derived_array_bytes": 18761904,
+      "one_refinement_work_vectors_bytes": 28224,
+      "packed_factor_bytes": 6230448,
+      "provenance": "derived_explicit_numpy_array_nbytes; library workspace unmeasured",
+      "reconstructed_factor_bytes": 12446784,
+      "solution_vectors_bytes": 56448
+    }
+  },
+  "passed": false,
+  "record": "/home/shenjh/Projects/MyFEniCSx_task37_extra/benchmarks/artifacts/task038_extra_full3d_n2_la_v2/ae59985/p6_h10_mpi1/record.json"
+}
