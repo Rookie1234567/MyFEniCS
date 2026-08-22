@@ -56,6 +56,7 @@ N2_MARKERS = (
     "cleanup",
     "failure",
 )
+N2_DIAGNOSTIC_MARKERS = ("linear_algebra_diagnostic",)
 
 
 def _jsonable(value: Any) -> Any:
@@ -214,7 +215,7 @@ def _prepare_paths(raw_dir: Path, record: Path, marker_dir: Path, comm: Any) -> 
 
 
 def _write_marker(marker_dir: Path, name: str, source_sha: str, comm: Any, **details: Any) -> None:
-    if name not in N2_MARKERS:
+    if name not in N2_MARKERS and name not in N2_DIAGNOSTIC_MARKERS:
         raise ValueError(f"unknown N2 marker: {name}")
     payload = {
         "schema": "task038.full3d.local-spectral.n2-marker.v1",

@@ -215,3 +215,43 @@ def test_watchdog_ownership_contract_is_explicit_and_no_cleanup_reuse_exists(
             (unique_base,),
             ROOT,
         )
+
+
+def test_diagnostic_marker_allowlist_is_narrow_and_writes_payload(tmp_path: Path) -> None:
+    class Comm:
+        rank = 0
+
+        def barrier(self) -> None:
+            return None
+
+    source_sha = "a" * 40
+    runner._write_marker(
+        tmp_path,
+        "linear_algebra_diagnostic",
+        source_sha,
+        Comm(),
+        path="S0",
+    )
+    marker_path = tmp_path / "linear_algebra_diagnostic.json"
+    assert marker_path.is_file()
+    payload = json.loads(marker_path.read_text(encoding="utf-8"))
+    assert payload["marker"] == "linear_algebra_diagnostic"
+    assert payload["source_git_sha"] == source_sha
+    assert runner.N2_MARKERS == (
+        "preflight",
+        "mesh_space_mpc",
+        "JIT",
+        "subdomain_inventory",
+        "local_factor_build",
+        "local_mode_build",
+        "regional_coarse_build",
+        "top_level_build",
+        "identity_apply",
+        "post_setup_release",
+        "canonical_evidence",
+        "cleanup",
+        "failure",
+    )
+    assert runner.N2_DIAGNOSTIC_MARKERS == ("linear_algebra_diagnostic",)
+    with pytest.raises(ValueError, match="unknown N2 marker"):
+        runner._write_marker(tmp_path, "unknown_marker", source_sha, Comm())
