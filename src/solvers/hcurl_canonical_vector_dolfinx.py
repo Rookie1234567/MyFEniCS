@@ -40,6 +40,7 @@ __all__ = (
     "iter_canonical_active_trace_packets",
     "iter_canonical_full_fe_packets",
     "extract_canonical_active_trace_packets",
+    "iter_canonical_active_trace_plane_blocks",
     "reconstruct_canonical_active_trace_vec",
     "extract_canonical_full_fe_packets",
     "reconstruct_canonical_full_fe_function",
@@ -260,6 +261,137 @@ def _canonical_entity_values(
         1.0 + 0.0j,
         _physical_state,
     )
+
+
+def iter_canonical_active_trace_plane_blocks(
+    condensed: AssemblyTimeCondensedSystem,
+    function_space,
+    floquet_data,
+    *,
+    plane_z: float,
+    plane_original_dofs: Iterable[int],
+    gamma_rows_local: Iterable[int],
+) -> Iterator[dict[str, Any]]:
+    """Yield owner-local canonical edge/face blocks for one artificial plane.
+
+    This is a layout-only companion to ``iter_canonical_active_trace_packets``:
+    it reuses the same entity geometry, Basix orientation, and Floquet relation
+    authority but never reads or retains FE coefficient values.  The caller
+    supplies the already-authorized owner-local plane rows and the compressed
+    Gamma order; global key uniqueness remains an independent checker duty.
+    """
+
+    degree, _trace_positions, _interior_positions = _space_data(function_space)
+    topology, _cell_info, _owned = _topology_data(function_space)
+    tolerance = mesh_coordinate_tolerance(function_space.mesh)
+    relations = _floquet_relations(floquet_data)
+    layout = function_space.dofmap.dof_layout
+    tdim = topology.dim
+    cell_to_entity = {
+        dimension: topology.connectivity(tdim, dimension) for dimension in (1, 2)
+    }
+    plane = np.asarray(tuple(plane_original_dofs), dtype=np.int64)
+    gamma = np.asarray(tuple(gamma_rows_local), dtype=np.int64)
+    if plane.ndim != 1 or gamma.ndim != 1 or len(plane) != len(gamma):
+        raise ValueError("plane and Gamma rows must be equally sized vectors")
+    if len(np.unique(plane)) != len(plane) or len(np.unique(gamma)) != len(gamma):
+        raise ValueError("plane and Gamma rows must be unique owner-local rows")
+    original_to_active = {
+        int(key): int(value)
+        for key, value in condensed.trace_constraints.original_to_active.items()
+    }
+    if any(int(row) not in original_to_active for row in plane):
+        raise ValueError("plane row lacks a finalized active identity")
+    if {original_to_active[int(row)] for row in plane} != {int(row) for row in gamma}:
+        raise ValueError("plane active identity differs from Gamma rows")
+    plane_set = {int(row) for row in plane}
+    gamma_set = {int(row) for row in gamma}
+    seen_entities: set[tuple[int, int]] = set()
+    covered_plane: set[int] = set()
+    covered_gamma: set[int] = set()
+    for cell in range(int(_owned[0])):
+        cell_dofs = _cell_local_global_dofs(function_space, cell)
+        for dimension in (1, 2):
+            links = np.asarray(cell_to_entity[dimension].links(cell), dtype=np.int32)
+            for entity in links:
+                entity_id = int(entity)
+                identity = (dimension, entity_id)
+                if identity in seen_entities:
+                    continue
+                seen_entities.add(identity)
+                local_entity_matches = np.flatnonzero(links == entity_id)
+                if len(local_entity_matches) != 1:
+                    raise ValueError("cell entity incidence is not unique")
+                local_entity = int(local_entity_matches[0])
+                positions = np.asarray(
+                    layout.entity_dofs(dimension, local_entity), dtype=np.int32
+                )
+                raw_rows = np.asarray(cell_dofs, dtype=np.int64)[positions]
+                coords = _entity_coordinates(function_space, dimension, entity_id)
+                if not np.allclose(
+                    coords[:, 2], float(plane_z), rtol=0.0, atol=10.0 * tolerance
+                ):
+                    continue
+                raw_set = {int(row) for row in raw_rows}
+                overlap = raw_set & plane_set
+                if not overlap:
+                    continue
+                if overlap != raw_set:
+                    raise ValueError("plane entity block has partial owner coverage")
+                active_rows = tuple(original_to_active[int(row)] for row in raw_rows)
+                if not set(active_rows).issubset(gamma_set):
+                    raise ValueError("plane entity block is outside Gamma support")
+                covered_plane.update(int(row) for row in raw_rows)
+                covered_gamma.update(int(row) for row in active_rows)
+                physical_key = canonical_entity_key(coords, tolerance)
+                transform, orientation_state = _physical_entity_transform(
+                    coords, dimension, degree, tolerance
+                )
+                relation = relations.get((dimension, physical_key))
+                if relation is None:
+                    floquet_master = None
+                    phase = 1.0 + 0.0j
+                else:
+                    floquet_master, phase, _relation_state = relation
+                size = len(raw_rows)
+                identity_matrix = np.eye(size, dtype=np.complex128)
+                raw_to_canonical = np.linalg.solve(transform, identity_matrix) / phase
+                canonical_to_raw = phase * transform
+                canonical_keys = tuple(
+                    {
+                        "role": "active_trace",
+                        "entity_dimension": int(dimension),
+                        "physical_entity": physical_key,
+                        "entity_local_basis_index": int(basis),
+                        "orientation_state": orientation_state,
+                        "floquet_master": floquet_master,
+                        "floquet_coefficient": [
+                            float(np.real(phase)),
+                            float(np.imag(phase)),
+                        ],
+                    }
+                    for basis in range(size)
+                )
+                yield {
+                    "entity_dimension": int(dimension),
+                    "physical_entity": physical_key,
+                    "raw_row_ids": np.asarray(raw_rows, dtype=np.int64),
+                    "active_row_ids": np.asarray(active_rows, dtype=np.int64),
+                    "canonical_keys": canonical_keys,
+                    "orientation_state": orientation_state,
+                    "floquet_master": floquet_master,
+                    "floquet_coefficient": complex(phase),
+                    "raw_to_canonical": np.asarray(
+                        raw_to_canonical, dtype=np.complex128
+                    ),
+                    "canonical_to_raw": np.asarray(
+                        canonical_to_raw, dtype=np.complex128
+                    ),
+                }
+    if covered_plane != plane_set or covered_gamma != gamma_set:
+        raise ValueError(
+            "artificial plane coverage does not match the supplied Gamma rows"
+        )
 
 
 def _packet_audit(

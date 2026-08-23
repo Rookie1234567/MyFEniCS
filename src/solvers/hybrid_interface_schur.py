@@ -718,6 +718,7 @@ class PetscDistributedPetrovAction:
         self._gram_svd: tuple[np.ndarray, np.ndarray, np.ndarray] | None = None
         self._ownership_range = tuple(map(int, layout.getOwnershipRange()))
         self._destroyed = False
+        self._detached = False
         self.apply_count = 0
         self.scalar_apply_count = 0
         self.exact_apply_count = 0
@@ -893,6 +894,41 @@ class PetscDistributedPetrovAction:
             "G": self._gram.copy(),
         }
 
+    def detach_projected_woodbury_factors(self) -> dict[str, np.ndarray]:
+        """Transfer finalized projected factors and release resident carrier state.
+
+        This explicit producer path moves the existing owner-local ``U``
+        storage without copying it.  ``V`` is formed once from the finalized
+        SVD solve, while the small contractions are transferred as the
+        carrier's existing arrays.  After return the action is detached and
+        cannot be applied again; the caller owns the returned arrays.
+        """
+
+        if self._destroyed:
+            raise RuntimeError("distributed Petrov action is destroyed")
+        v_adjoint = self._solve_gram(self._local_y.conj().T)
+        factors = {
+            "U": self._delta_local,
+            "V": v_adjoint.conj().T,
+            "G": self._gram,
+            "projected_scalar": self._projected_scalar,
+            "projected_exact": self._projected_exact,
+        }
+        self._template.destroy()
+        self._scalar_apply = None
+        self._exact_apply = None
+        self._local_z = np.empty((0, 0), dtype=np.complex128)
+        self._local_y = np.empty((0, 0), dtype=np.complex128)
+        self._local_row_ids = None
+        self._delta_local = np.empty((0, 0), dtype=np.complex128)
+        self._gram = np.empty((0, 0), dtype=np.complex128)
+        self._projected_scalar = np.empty((0, 0), dtype=np.complex128)
+        self._projected_exact = np.empty((0, 0), dtype=np.complex128)
+        self._gram_svd = None
+        self._detached = True
+        self._destroyed = True
+        return factors
+
     def apply(self, source: PETSc.Vec, target: PETSc.Vec) -> None:
         if self._destroyed:
             raise RuntimeError("distributed Petrov action is destroyed")
@@ -916,7 +952,12 @@ class PetscDistributedPetrovAction:
     @property
     def diagnostics(self) -> dict[str, Any]:
         if self._destroyed:
-            return {"destroyed": True, "apply_count": self.apply_count}
+            return {
+                "destroyed": True,
+                "detached": self._detached,
+                "resident_local_rows": int(self._local_z.shape[0]),
+                "apply_count": self.apply_count,
+            }
 
         return {
             "schema": "task040.v1_2.distributed_petrov_action.v1",
@@ -942,6 +983,7 @@ class PetscDistributedPetrovAction:
             "scalar_apply_count": self.scalar_apply_count,
             "exact_apply_count": self.exact_apply_count,
             "apply_count": self.apply_count,
+            "detached": self._detached,
             "destroyed": self._destroyed,
         }
 
@@ -956,6 +998,8 @@ class PetscDistributedPetrovAction:
         self._gram = np.empty((0, 0), dtype=np.complex128)
         self._projected_scalar = np.empty((0, 0), dtype=np.complex128)
         self._projected_exact = np.empty((0, 0), dtype=np.complex128)
+        self._scalar_apply = None
+        self._exact_apply = None
         self._destroyed = True
 
 
