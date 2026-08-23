@@ -1687,6 +1687,7 @@ def audit_petsc_level_a_one_apply(
         "modal_traction_negative",
         "external_dtn_coupling",
     ),
+    collect_scalar_contractions: bool = False,
 ) -> dict[str, Any]:
     """Audit one PETSc Level-A action on the frozen six-source family.
 
@@ -1753,6 +1754,8 @@ def audit_petsc_level_a_one_apply(
     )
     inventory_pass = bool(comm.allreduce(inventory_pass, op=MPI.LAND))
     outputs: dict[str, PETSc.Vec] = {}
+    scalar_y_vectors: dict[str, PETSc.Vec] = {}
+    scalar_records: dict[str, dict[str, Any]] = {}
     reports: list[dict[str, Any]] = []
     finite_pass = True
     try:
@@ -1771,9 +1774,34 @@ def audit_petsc_level_a_one_apply(
                 source_norm = float(source.norm())
                 output_norm = float(target.norm())
                 bare_operator.mult(target, residual)
+                if collect_scalar_contractions and label != labels[0]:
+                    scalar_y = residual.duplicate()
+                    residual.copy(scalar_y)
+                    scalar_y_vectors[label] = scalar_y
+                    y_finite = bool(np.all(np.isfinite(scalar_y.array_r)))
+                    y_finite = bool(comm.allreduce(y_finite, op=MPI.LAND))
+                    scalar_records[label] = {
+                        "source_norm": source_norm,
+                        "source_norm_squared": float(
+                            np.real(complex(source.dot(source)))
+                        ),
+                        "x_norm_squared": float(np.real(complex(target.dot(target)))),
+                        "y_norm": float(scalar_y.norm()),
+                        "y_norm_squared": float(
+                            np.real(complex(scalar_y.dot(scalar_y)))
+                        ),
+                    }
                 residual.axpy(PETSc.ScalarType(-1.0), source)
                 residual_norm = float(residual.norm())
                 rho = residual_norm / source_norm if source_norm > 1.0e-30 else None
+                if collect_scalar_contractions and label != labels[0]:
+                    scalar_records[label].update(
+                        {
+                            "true_residual_norm": residual_norm,
+                            "original_rho": rho,
+                            "finite": source_finite and output_finite and y_finite,
+                        }
+                    )
                 action.apply(source, repeated)
                 target.copy(difference)
                 difference.axpy(PETSc.ScalarType(-1.0), repeated)
@@ -1855,7 +1883,7 @@ def audit_petsc_level_a_one_apply(
             and gate["preferred_rho_pass"]
             and gate["factor_inventory_pass"]
         )
-        return {
+        result = {
             "source_labels": list(labels),
             "reports": reports,
             "factor_inventory": inventory,
@@ -1867,6 +1895,41 @@ def audit_petsc_level_a_one_apply(
             "repeat_audit_apply_count": len(reports),
             "linearity_audit_apply_count": 1,
         }
+        if collect_scalar_contractions:
+            nonzero_labels = tuple(labels[1:])
+
+            def pairs(values: np.ndarray) -> list[list[list[float]]]:
+                return [
+                    [[float(np.real(value)), float(np.imag(value))] for value in row]
+                    for row in values
+                ]
+
+            b_vectors = tuple(source_list[1:])
+            y_vectors = tuple(scalar_y_vectors[label] for label in nonzero_labels)
+            bhb = np.empty(
+                (len(nonzero_labels), len(nonzero_labels)), dtype=np.complex128
+            )
+            bhy = np.empty_like(bhb)
+            yhy = np.empty_like(bhb)
+            for row, (b_vector, y_vector) in enumerate(
+                zip(b_vectors, y_vectors, strict=True)
+            ):
+                for column, (other_b, other_y) in enumerate(
+                    zip(b_vectors, y_vectors, strict=True)
+                ):
+                    bhb[row, column] = complex(other_b.dot(b_vector))
+                    bhy[row, column] = complex(other_y.dot(b_vector))
+                    yhy[row, column] = complex(other_y.dot(y_vector))
+            result["scalar_contractions"] = {
+                "labels": list(nonzero_labels),
+                "BHB": pairs(bhb),
+                "BHY": pairs(bhy),
+                "YHY": pairs(yhy),
+                "per_source": scalar_records,
+            }
+        return result
     finally:
         for output in outputs.values():
             output.destroy()
+        for vector in scalar_y_vectors.values():
+            vector.destroy()

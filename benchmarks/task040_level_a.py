@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from collections.abc import Callable, Mapping
 from datetime import datetime, timezone
 from pathlib import Path
@@ -12,6 +13,7 @@ from typing import Any
 from mpi4py import MPI
 from petsc4py import PETSc
 
+from benchmarks.task034_wsl_resources import resource_authority_sample
 from benchmarks.run_task037b_hybrid_iterative import collective_heap_cleanup
 from benchmarks.task039_v3_7_orchestration import (
     _load_v5_blr_reference_spool_remapped,
@@ -25,6 +27,9 @@ from src.io.input_validation import (
 )
 from src.runners.task039_hybrid_iterative import make_task039_hybrid_iterative_profile
 from src.solvers.hybrid_local_dtn_action import assemble_hybrid_local_dtn_action_system
+from src.solvers.hybrid_layer_block import (
+    run_v1_1_right_preconditioned_fgmres_batch,
+)
 from src.solvers.hybrid_side_impedance import (
     TASK040_LEVEL_A_SOURCE_LABELS,
     assemble_reduced_artificial_interface_tangential_mass,
@@ -46,6 +51,10 @@ TASK040_LEVEL_A_SEQUENCE = (0, 1, 2, 2, 1, 0)
 TASK040_LEVEL_A_BETA_AUTHORITY = (
     "src.solvers.dtn_port_3d::_zero_order_local_robin_forms"
 )
+TASK040_V1_1_SCALAR_KRYLOV_FLAG = "--v1-1-scalar-krylov"
+TASK040_V1_1_METHOD = "task040_v1_1_scalar_krylov"
+TASK040_V1_1_SCHEMA = "task040.v1_1.scalar_krylov.v1"
+TASK040_V1_1_PROFILE_ID = "task040.v1_1.h4.bottom.scalar_krylov.v1"
 
 __all__ = (
     "TASK040_LEVEL_A_METHOD",
@@ -53,6 +62,10 @@ __all__ = (
     "TASK040_LEVEL_A_PROFILE_ID",
     "TASK040_LEVEL_A_HARD_STOP_BYTES",
     "TASK040_LEVEL_A_SEQUENCE",
+    "TASK040_V1_1_SCALAR_KRYLOV_FLAG",
+    "TASK040_V1_1_METHOD",
+    "TASK040_V1_1_SCHEMA",
+    "TASK040_V1_1_PROFILE_ID",
     "build_task040_level_a_plan",
     "level_a_bottom_beta",
     "run_task040_level_a",
@@ -71,6 +84,7 @@ def build_task040_level_a_plan(
     exact_spool_root: str | Path,
     run_directory: str | Path,
     source_sha: str,
+    scalar_krylov: bool = False,
 ) -> dict[str, Any]:
     """Build a dry-run contract without creating a result directory."""
 
@@ -82,7 +96,7 @@ def build_task040_level_a_plan(
     run_directory = Path(run_directory).resolve()
     if run_directory.exists():
         raise ValueError(f"Task040 run directory already exists: {run_directory}")
-    return {
+    plan = {
         "schema": TASK040_LEVEL_A_SCHEMA,
         "method": TASK040_LEVEL_A_METHOD,
         "profile": TASK040_LEVEL_A_PROFILE_ID,
@@ -106,6 +120,65 @@ def build_task040_level_a_plan(
             "full_hybrid",
             "response_packet",
         ],
+    }
+    if scalar_krylov:
+        plan.update(
+            {
+                "schema": TASK040_V1_1_SCHEMA,
+                "method": TASK040_V1_1_METHOD,
+                "profile": TASK040_V1_1_PROFILE_ID,
+                "scalar_krylov": True,
+                "research_only": True,
+            }
+        )
+    return plan
+
+
+def _worker_current_resource(comm: MPI.Intracomm) -> dict[str, Any]:
+    authority = resource_authority_sample(os.getpid(), include_smaps=False)
+    process_tree = authority["process_tree"]
+    job_cgroup = authority["job_cgroup"]
+    has_cgroup = bool(job_cgroup["dedicated_job_cgroup"])
+    local_cgroup_memory = int(job_cgroup["memory_current_bytes"] or 0)
+    local_cgroup_swap = int(job_cgroup["swap_current_bytes"] or 0)
+    process_rss_sum = int(comm.allreduce(int(process_tree["rss_bytes"]), op=MPI.SUM))
+    process_swap_sum = int(comm.allreduce(int(process_tree["swap_bytes"]), op=MPI.SUM))
+    has_cgroup_any = bool(comm.allreduce(has_cgroup, op=MPI.LOR))
+    cgroup_memory_max = int(comm.allreduce(local_cgroup_memory, op=MPI.MAX))
+    cgroup_swap_max = int(comm.allreduce(local_cgroup_swap, op=MPI.MAX))
+    rss_bytes = max(process_rss_sum, cgroup_memory_max if has_cgroup_any else 0)
+    swap_bytes = max(process_swap_sum, cgroup_swap_max if has_cgroup_any else 0)
+    readable = bool(
+        process_tree["all_status_readable"]
+        and (
+            not has_cgroup
+            or (
+                job_cgroup["memory_current_bytes"] is not None
+                and job_cgroup["swap_current_bytes"] is not None
+            )
+        )
+    )
+    readable = bool(comm.allreduce(readable, op=MPI.LAND))
+    return {
+        "rss_bytes": rss_bytes,
+        "swap_bytes": swap_bytes,
+        "process_tree_rss_sum_bytes": process_rss_sum,
+        "process_tree_swap_sum_bytes": process_swap_sum,
+        "dedicated_cgroup_memory_current_max_bytes": (
+            cgroup_memory_max if has_cgroup_any else None
+        ),
+        "dedicated_cgroup_swap_current_max_bytes": (
+            cgroup_swap_max if has_cgroup_any else None
+        ),
+        "authority_semantics": (
+            "max(sum(all-rank process-tree RSS), max(dedicated cgroup memory.current)); "
+            "swap uses the same sum/max rule"
+        ),
+        "all_status_readable": readable,
+        "source": "worker_process_tree_and_dedicated_cgroup",
+        "pass": bool(
+            readable and rss_bytes < TASK040_LEVEL_A_HARD_STOP_BYTES and swap_bytes == 0
+        ),
     }
 
 
@@ -173,6 +246,8 @@ def run_task040_level_a(
     source_sha: str,
     marker_callback: Callable[[str, Mapping[str, Any]], None] | None = None,
     side_system_builder: Callable[..., Any] | None = None,
+    scalar_krylov: bool = False,
+    resource_callback: Callable[[], Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Run the six-source Level-A audit; all numerical work stays in src."""
 
@@ -334,7 +409,29 @@ def run_task040_level_a(
             bare_f,
             source_vectors,
             factor_inventory,
+            collect_scalar_contractions=scalar_krylov,
         )
+        scalar_screen = None
+        if scalar_krylov:
+            scalar_labels = tuple(TASK040_LEVEL_A_SOURCE_LABELS[1:])
+            scalar_screen = run_v1_1_right_preconditioned_fgmres_batch(
+                bare_f,
+                {label: source_vectors[label] for label in scalar_labels},
+                action,
+                labels=scalar_labels,
+                resource_callback=resource_callback,
+                checkpoint_callback=lambda row: _emit(
+                    marker_callback, "v1_1_fgmres_checkpoint", **dict(row)
+                ),
+            )
+            _emit(
+                marker_callback,
+                "v1_1_scalar_screen_complete",
+                conditional_32_authorized=scalar_screen["conditional_32_authorized"],
+                ksp_setup_count=scalar_screen["ksp_setup_count"],
+                ksp_destroy_count=scalar_screen["ksp_destroy_count"],
+                right_pc_apply_count=scalar_screen["right_pc_apply_count"],
+            )
         _emit(
             marker_callback,
             "level_a_audit_complete",
@@ -348,9 +445,11 @@ def run_task040_level_a(
             factor_inventory=factor_inventory,
         )
         result = {
-            "schema": TASK040_LEVEL_A_SCHEMA,
-            "method": TASK040_LEVEL_A_METHOD,
-            "profile": TASK040_LEVEL_A_PROFILE_ID,
+            "schema": TASK040_V1_1_SCHEMA if scalar_krylov else TASK040_LEVEL_A_SCHEMA,
+            "method": TASK040_V1_1_METHOD if scalar_krylov else TASK040_LEVEL_A_METHOD,
+            "profile": TASK040_V1_1_PROFILE_ID
+            if scalar_krylov
+            else TASK040_LEVEL_A_PROFILE_ID,
             "source_sha": str(source_sha),
             "beta": {
                 "formula": "cfg.k0 * complex(cfg.substrate_index)",
@@ -379,6 +478,9 @@ def run_task040_level_a(
             "top": "not_run",
             "scalable_candidate": False,
         }
+        if scalar_krylov:
+            result["scalar_krylov"] = True
+            result["scalar_screen"] = scalar_screen
     finally:
         for vector in source_vectors.values():
             vector.destroy()
@@ -420,6 +522,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--exact-spool-root", required=True)
     parser.add_argument("--run-directory", required=True)
     parser.add_argument("--source-sha", required=True)
+    parser.add_argument(TASK040_V1_1_SCALAR_KRYLOV_FLAG, action="store_true")
     parser.add_argument("--memory-stages")
     parser.add_argument("--memory-markers")
     args = parser.parse_args(argv)
@@ -428,6 +531,7 @@ def main(argv: list[str] | None = None) -> int:
         exact_spool_root=args.exact_spool_root,
         run_directory=args.run_directory,
         source_sha=args.source_sha,
+        scalar_krylov=args.v1_1_scalar_krylov,
     )
     if args.dry_run:
         if MPI.COMM_WORLD.rank == 0:
@@ -445,6 +549,14 @@ def main(argv: list[str] | None = None) -> int:
         exact_spool_root=args.exact_spool_root,
         source_sha=args.source_sha,
         marker_callback=marker_callback,
+        scalar_krylov=args.v1_1_scalar_krylov,
+        resource_callback=(
+            lambda: (
+                _worker_current_resource(MPI.COMM_WORLD)
+                if args.v1_1_scalar_krylov
+                else None
+            )
+        ),
     )
     if MPI.COMM_WORLD.rank == 0:
         run_directory = Path(args.run_directory)

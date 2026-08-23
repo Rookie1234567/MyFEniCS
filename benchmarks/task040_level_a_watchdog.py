@@ -19,6 +19,7 @@ from benchmarks.task040_level_a import (
     TASK040_LEVEL_A_MPI_SIZE,
     TASK040_LEVEL_A_THREADS,
     TASK040_LEVEL_A_TIMEOUT_SECONDS,
+    TASK040_V1_1_SCALAR_KRYLOV_FLAG,
     build_task040_level_a_plan,
 )
 from benchmarks.watchdog_process_control import (
@@ -72,7 +73,7 @@ def _worker_command(plan: dict[str, Any]) -> list[str]:
         str(run_directory / "memory_stages.jsonl"),
         "--memory-markers",
         str(run_directory / "memory_stage_markers.raw.jsonl"),
-    ]
+    ] + ([TASK040_V1_1_SCALAR_KRYLOV_FLAG] if plan.get("scalar_krylov") is True else [])
 
 
 def build_task040_level_a_watchdog_plan(
@@ -81,12 +82,14 @@ def build_task040_level_a_watchdog_plan(
     exact_spool_root: str | Path,
     run_directory: str | Path,
     source_sha: str,
+    scalar_krylov: bool = False,
 ) -> dict[str, Any]:
     plan = build_task040_level_a_plan(
         input_path=input_path,
         exact_spool_root=exact_spool_root,
         run_directory=run_directory,
         source_sha=source_sha,
+        scalar_krylov=scalar_krylov,
     )
     plan["watchdog"] = {
         "sample_interval_seconds": SAMPLE_INTERVAL_SECONDS,
@@ -300,12 +303,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--exact-spool-root", required=True)
     parser.add_argument("--run-directory", required=True)
     parser.add_argument("--source-sha", required=True)
+    parser.add_argument(TASK040_V1_1_SCALAR_KRYLOV_FLAG, action="store_true")
     args = parser.parse_args(argv)
     plan = build_task040_level_a_watchdog_plan(
         input_path=args.input,
         exact_spool_root=args.exact_spool_root,
         run_directory=args.run_directory,
         source_sha=args.source_sha,
+        scalar_krylov=args.v1_1_scalar_krylov,
     )
     if args.dry_run:
         print(json.dumps(plan, indent=2, sort_keys=True))

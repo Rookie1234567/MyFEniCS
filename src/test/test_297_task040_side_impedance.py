@@ -15,6 +15,7 @@ from src.solvers.hybrid_side_impedance import (
     ArtificialZTraceMass,
     TASK040_BACKWARD_ORDER,
     TASK040_FORWARD_ORDER,
+    TASK040_LEVEL_A_SOURCE_LABELS,
     TASK040_LEVEL_A_SUBDOMAINS,
     assemble_reduced_artificial_interface_tangential_mass,
     audit_petsc_level_a_one_apply,
@@ -27,6 +28,7 @@ from src.solvers.hybrid_side_impedance import (
     build_level_a_oracle,
     build_side_impedance_transmission_action,
 )
+from src.solvers.hybrid_layer_block import run_v1_1_right_preconditioned_fgmres_batch
 
 
 def _tiny_level_a_builder():
@@ -1009,3 +1011,171 @@ def test_task040_cell_union_mpi_or_recovers_remote_owned_membership() -> None:
         assert len(set(comm.allgather(tuple(audit["group_mask_sha256"])))) == 1
     finally:
         matrix.destroy()
+
+
+def test_task040_v1_1_batch_reuses_one_right_pc_and_zero_initial_guesses() -> None:
+    comm = MPI.COMM_WORLD
+    size = 64
+    operator = PETSc.Mat().createAIJ(
+        size=((PETSc.DECIDE, size), (PETSc.DECIDE, size)),
+        nnz=2,
+        comm=comm,
+    )
+    first, last = map(int, operator.getOwnershipRange())
+    for row in range(first, last):
+        operator.setValue(row, row, PETSc.ScalarType(1.0 + 0.01 * row))
+        if row + 1 < size:
+            operator.setValue(row, row + 1, PETSc.ScalarType(0.03 + 0.001j))
+    operator.assemble()
+
+    class IdentityAction:
+        def apply(self, source, target):
+            source.copy(target)
+
+    labels = (
+        "modal_traction_positive",
+        "modal_traction_negative",
+        "external_dtn_coupling",
+        "fixed_random_repeat_0",
+        "fixed_random_repeat_1",
+    )
+    rhs_by_label = {}
+    for label_index, label in enumerate(labels):
+        rhs = operator.createVecRight()
+        rhs.array[:] = np.asarray(
+            [1.0 + 0.01 * (label_index + row) for row in range(first, last)],
+            dtype=PETSc.ScalarType,
+        )
+        rhs.assemble()
+        rhs_by_label[label] = rhs
+    checkpoint_rows = []
+    try:
+        result = run_v1_1_right_preconditioned_fgmres_batch(
+            operator,
+            rhs_by_label,
+            IdentityAction(),
+            labels=labels,
+            resource_callback=lambda: {
+                "all_status_readable": True,
+                "rss_bytes": 2**20,
+                "swap_bytes": 0,
+                "pass": True,
+            },
+            checkpoint_callback=checkpoint_rows.append,
+        )
+        assert result["ksp_setup_count"] == 1
+        assert result["ksp_destroy_count"] == 1
+        assert result["ksp_destroyed"] is True
+        assert result["zero_initial_guess_all_rhs"] is True
+        assert set(result["phase1"]) == set(labels)
+        assert all(
+            set(record["checkpoints"]) == {"0", "4", "8", "16"}
+            for record in result["phase1"].values()
+        )
+        assert all(
+            record["zero_initial_guess"] is True
+            and record["shared_ksp"] is True
+            and record["true_residual_matvec_count"] == 3
+            for record in result["phase1"].values()
+        )
+        assert result["conditional_32_authorized"] is True
+        assert set(result["phase2"]) == set(labels)
+        assert all(
+            set(record["checkpoints"]) == {"0", "4", "8", "16", "32"}
+            for record in result["phase2"].values()
+        )
+        negative = run_v1_1_right_preconditioned_fgmres_batch(
+            operator,
+            rhs_by_label,
+            IdentityAction(),
+            labels=labels,
+            resource_callback=lambda: {
+                "all_status_readable": True,
+                "rss_bytes": 2**20,
+                "swap_bytes": 0,
+                "pass": False,
+            },
+        )
+        assert negative["conditional_32_authorized"] is False
+        assert negative["phase2"] == {}
+        assert negative["ksp_setup_count"] == 1
+        assert negative["ksp_destroy_count"] == 1
+        assert negative["ksp_destroyed"] is True
+        assert len(checkpoint_rows) >= 15
+    finally:
+        for rhs in rhs_by_label.values():
+            rhs.destroy()
+        operator.destroy()
+
+
+def test_task040_scalar_contractions_use_complex_petsc_dot_direction() -> None:
+    comm = MPI.COMM_WORLD
+    size = 8
+    bare = PETSc.Mat().createAIJ(
+        size=((PETSc.DECIDE, size), (PETSc.DECIDE, size)), nnz=1, comm=comm
+    )
+    first, last = map(int, bare.getOwnershipRange())
+    for row in range(first, last):
+        bare.setValue(row, row, PETSc.ScalarType(1.0))
+    bare.assemble()
+
+    class ComplexScalingAction:
+        def __init__(self):
+            self.diagnostics = {
+                "carrier": "petsc_vecscatter",
+                "global_numpy_copy": False,
+                "subdomain_vectors_global_numpy_copy": False,
+                "restriction_prolongation_pass": True,
+                "bare_operator_unchanged": True,
+                "apply_count": 0,
+            }
+
+        def apply(self, source, target):
+            source.copy(target)
+            target.scale(PETSc.ScalarType(0.7 + 0.4j))
+            self.diagnostics["apply_count"] += 1
+
+    sources = {}
+    for label_index, label in enumerate(TASK040_LEVEL_A_SOURCE_LABELS):
+        source = bare.createVecRight()
+        source.array[:] = np.asarray(
+            0.0
+            if label_index == 0
+            else [1.0 + 0.1j * (label_index + row) for row in range(first, last)],
+            dtype=PETSc.ScalarType,
+        )
+        source.assemble()
+        sources[label] = source
+    factor_inventory = {
+        "observed": True,
+        "factor_count_ready": 3,
+        "cross_section_factor_count_ready": 3,
+        "full_side_exact_factor_count": 0,
+        "global_direct_factor_count": 0,
+        "nested_ksp_count": 0,
+        "oracle_only": True,
+        "scalable_candidate": False,
+    }
+    try:
+        result = audit_petsc_level_a_one_apply(
+            ComplexScalingAction(),
+            bare,
+            sources,
+            factor_inventory,
+            collect_scalar_contractions=True,
+        )
+        contractions = result["scalar_contractions"]
+        gamma = 0.7 + 0.4j
+        for index, label in enumerate(contractions["labels"]):
+            b2 = complex(*contractions["BHB"][index][index])
+            by = complex(*contractions["BHY"][index][index])
+            y2 = complex(*contractions["YHY"][index][index])
+            assert by == pytest.approx(gamma * b2)
+            assert y2 == pytest.approx(abs(gamma) ** 2 * b2)
+            assert contractions["per_source"][label]["x_norm_squared"] == pytest.approx(
+                abs(gamma) ** 2 * b2.real
+            )
+    finally:
+        for source in sources.values():
+            source.destroy()
+        bare.destroy()

@@ -10,6 +10,7 @@ import time
 from benchmarks import task040_level_a_watchdog as watchdog
 from benchmarks.task040_level_a_watchdog import (
     TASK040_LEVEL_A_HARD_STOP_BYTES,
+    TASK040_V1_1_SCALAR_KRYLOV_FLAG,
     build_task040_level_a_watchdog_plan,
     main,
 )
@@ -26,6 +27,35 @@ def _plan(tmp_path):
         run_directory=tmp_path / "run",
         source_sha="a" * 40,
     )
+
+
+def test_task040_v1_1_opt_in_does_not_change_legacy_plan(tmp_path) -> None:
+    legacy = _plan(tmp_path / "legacy")
+    scalar = build_task040_level_a_watchdog_plan(
+        input_path=tmp_path / "scalar" / "input.dat",
+        exact_spool_root=tmp_path / "scalar" / "spool",
+        run_directory=tmp_path / "scalar" / "run",
+        source_sha="b" * 40,
+        scalar_krylov=True,
+    )
+    assert legacy["schema"] == "task040.level_a.bare_f_transmission.v1"
+    assert legacy["method"] == "task040_level_a_bare_f_transmission"
+    assert legacy["profile"] == "task040.level_a.h4.bottom.v1"
+    assert scalar["schema"] == "task040.v1_1.scalar_krylov.v1"
+    assert scalar["method"] == "task040_v1_1_scalar_krylov"
+    assert scalar["profile"] == "task040.v1_1.h4.bottom.scalar_krylov.v1"
+    assert scalar["scalar_krylov"] is True
+    assert scalar["worker_argv"].count(TASK040_V1_1_SCALAR_KRYLOV_FLAG) == 1
+    assert TASK040_V1_1_SCALAR_KRYLOV_FLAG not in legacy["worker_argv"]
+    for key in (
+        "mpi_size",
+        "threads",
+        "timeout_seconds",
+        "absolute_terminate_memory_bytes",
+        "swap_limit_bytes",
+        "forbidden",
+    ):
+        assert scalar[key] == legacy[key]
 
 
 def test_task040_watchdog_dry_run_is_frozen_and_unique(tmp_path, capsys) -> None:

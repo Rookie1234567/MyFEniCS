@@ -14,7 +14,7 @@ from dataclasses import dataclass
 import hashlib
 import json
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from typing import Any, Mapping
 
 import numpy as np
@@ -38,6 +38,7 @@ __all__ = (
     "relative_matvec_residual",
     "audit_supernode_factor_paths",
     "run_v10_right_preconditioned_fgmres_checkpoints",
+    "run_v1_1_right_preconditioned_fgmres_batch",
 )
 
 
@@ -343,6 +344,232 @@ def run_v10_right_preconditioned_fgmres_checkpoints(
 
     if result is None:
         raise RuntimeError("V10 FGMRES did not produce a result")
+    return result
+
+
+def run_v1_1_right_preconditioned_fgmres_batch(
+    operator: PETSc.Mat,
+    rhs_by_label: Mapping[str, PETSc.Vec],
+    right_preconditioner: Any,
+    *,
+    labels: Sequence[str],
+    resource_callback: Callable[[], Mapping[str, Any]] | None = None,
+    checkpoint_callback: Callable[[Mapping[str, Any]], None] | None = None,
+) -> dict[str, Any]:
+    """Run the opt-in V1-1 two-phase batch right-FGMRES screen.
+
+    One KSP/PC setup and one fixed right action are reused for all RHS.  The
+    first phase runs every RHS from zero through checkpoint 16.  Only after a
+    collective trend/resource decision does the same setup run every RHS from
+    zero again through checkpoint 32.  This helper is intentionally separate
+    from the legacy V10 single-RHS ``0.5*r4`` continuation contract.
+    """
+
+    if not isinstance(operator, PETSc.Mat):
+        raise TypeError("V1-1 FGMRES requires a PETSc operator matrix")
+    labels = tuple(labels)
+    if not labels or tuple(rhs_by_label) != labels:
+        raise ValueError("V1-1 RHS labels must be ordered and exact")
+    if not callable(getattr(right_preconditioner, "apply", None)):
+        raise TypeError("V1-1 FGMRES requires a fixed right action")
+    matrix_rows, matrix_cols = operator.getSize()
+    if matrix_rows != matrix_cols or any(
+        not isinstance(rhs_by_label[label], PETSc.Vec)
+        or rhs_by_label[label].getSize() != matrix_rows
+        for label in labels
+    ):
+        raise ValueError("V1-1 RHS/operator layout is invalid")
+
+    comm = operator.getComm().tompi4py()
+    solution = operator.createVecRight()
+    monitor_solution = operator.createVecRight()
+    residual = operator.createVecLeft()
+    pc_context = _V10RightPreconditionerContext(right_preconditioner)
+    ksp = PETSc.KSP().create(comm)
+    phase_one: dict[str, dict[str, Any]] = {}
+    phase_two: dict[str, dict[str, Any]] = {}
+    result: dict[str, Any] | None = None
+    setup_count = 0
+
+    def solve_one(
+        label: str,
+        rhs: PETSc.Vec,
+        *,
+        phase: str,
+        max_it: int,
+    ) -> dict[str, Any]:
+        solution.set(0.0)
+        monitor_solution.set(0.0)
+        residual.set(0.0)
+        rhs_norm = float(rhs.norm())
+        if not np.isfinite(rhs_norm) or rhs_norm <= 1.0e-30:
+            raise ValueError(f"V1-1 mandatory RHS {label} is zero or nonfinite")
+        denominator = max(rhs_norm, 1.0e-30)
+        checkpoints: dict[str, dict[str, Any]] = {
+            "0": {
+                "label": label,
+                "phase": phase,
+                "iteration": 0,
+                "reported_relative_residual": 1.0,
+                "true_residual_relative": 1.0,
+                "finite": True,
+            }
+        }
+        reported_history: list[dict[str, Any]] = []
+        true_residual_matvec_count = 0
+        started_apply_count = pc_context.apply_count
+        first_nonfinite_stage: str | None = None
+
+        def checkpoint_row(
+            iteration: int, reported_relative: float, current_solution: PETSc.Vec
+        ) -> dict[str, Any]:
+            nonlocal true_residual_matvec_count, first_nonfinite_stage
+            residual.set(0.0)
+            operator.mult(current_solution, residual)
+            true_residual_matvec_count += 1
+            residual.axpy(PETSc.ScalarType(-1.0), rhs)
+            true_value = float(residual.norm()) / denominator
+            finite = bool(np.isfinite(reported_relative) and np.isfinite(true_value))
+            if not finite and first_nonfinite_stage is None:
+                first_nonfinite_stage = f"iteration_{iteration}"
+            return {
+                "label": label,
+                "phase": phase,
+                "iteration": int(iteration),
+                "reported_relative_residual": float(reported_relative),
+                "true_residual_relative": true_value,
+                "finite": finite,
+            }
+
+        def convergence_test(
+            current: PETSc.KSP, iteration: int, residual_norm: float
+        ) -> int:
+            reported = float(residual_norm) / denominator
+            reported_history.append(
+                {"iteration": int(iteration), "relative_residual": reported}
+            )
+            if int(iteration) in (4, 8, 16, 32):
+                solution_view = current.buildSolution(monitor_solution)
+                if solution_view is None:
+                    solution_view = monitor_solution
+                row = checkpoint_row(int(iteration), reported, solution_view)
+                checkpoints[str(iteration)] = row
+                if checkpoint_callback is not None:
+                    checkpoint_callback(row)
+            return 0
+
+        ksp.setTolerances(rtol=0.0, atol=0.0, max_it=int(max_it))
+        ksp.setConvergenceTest(convergence_test)
+        ksp.solve(rhs, solution)
+        reason = int(ksp.getConvergedReason())
+        iterations = int(ksp.getIterationNumber())
+        bounded_reasons = {
+            int(getattr(PETSc.KSP.ConvergedReason, "DIVERGED_ITS", -3)),
+            int(getattr(PETSc.KSP.ConvergedReason, "DIVERGED_MAX_IT", -3)),
+        }
+        ksp_breakdown = bool(reason < 0 and reason not in bounded_reasons)
+        return {
+            "label": label,
+            "phase": phase,
+            "ksp_type": str(ksp.getType()),
+            "pc_side": "right",
+            "restart": 32,
+            "max_it": int(max_it),
+            "zero_initial_guess": True,
+            "zero_initial_guess_count": 1,
+            "ksp_reason": reason,
+            "ksp_breakdown": ksp_breakdown,
+            "iterations": iterations,
+            "reported_residual_history": reported_history,
+            "checkpoints": checkpoints,
+            "first_nonfinite_stage": first_nonfinite_stage,
+            "right_pc_apply_count": pc_context.apply_count - started_apply_count,
+            "true_residual_matvec_count": true_residual_matvec_count,
+            "shared_ksp": True,
+            "research_only": True,
+        }
+
+    try:
+        ksp.setOperators(operator)
+        ksp.setType(PETSc.KSP.Type.FGMRES)
+        ksp.setPCSide(PETSc.PC.Side.RIGHT)
+        ksp.setGMRESRestart(32)
+        ksp.setNormType(PETSc.KSP.NormType.UNPRECONDITIONED)
+        ksp.setInitialGuessNonzero(False)
+        pc = ksp.getPC()
+        pc.setType(PETSc.PC.Type.PYTHON)
+        pc.setPythonContext(pc_context)
+        ksp.setTolerances(rtol=0.0, atol=0.0, max_it=16)
+        ksp.setUp()
+        setup_count = 1
+        for label in labels:
+            phase_one[label] = solve_one(
+                label, rhs_by_label[label], phase="phase1_to_16", max_it=16
+            )
+        trend_limit = 10.0 ** (-0.25)
+        phase_one_gate = {}
+        for label in labels:
+            checkpoints = phase_one[label]["checkpoints"]
+            r8 = checkpoints.get("8", {}).get("true_residual_relative")
+            r16 = checkpoints.get("16", {}).get("true_residual_relative")
+            phase_one_gate[label] = bool(
+                all(
+                    checkpoints.get(str(iteration), {}).get("finite") is True
+                    for iteration in (4, 8, 16)
+                )
+                and isinstance(r8, (int, float))
+                and isinstance(r16, (int, float))
+                and np.isfinite(float(r8))
+                and np.isfinite(float(r16))
+                and float(r16) <= trend_limit * float(r8)
+                and not phase_one[label]["ksp_breakdown"]
+            )
+        resource = (
+            dict(resource_callback())
+            if resource_callback is not None
+            else {"status": "not_provided", "pass": False}
+        )
+        resource_pass = bool(resource.get("pass") is True)
+        conditional_32_authorized = bool(all(phase_one_gate.values()) and resource_pass)
+        if conditional_32_authorized:
+            for label in labels:
+                phase_two[label] = solve_one(
+                    label, rhs_by_label[label], phase="phase2_to_32", max_it=32
+                )
+        result = {
+            "schema": "task040.v1_1.right_fgmres_batch.v1",
+            "labels": list(labels),
+            "phase1": phase_one,
+            "phase1_gate": phase_one_gate,
+            "phase1_trend_limit": trend_limit,
+            "resource_at_phase_boundary": resource,
+            "conditional_32_authorized": conditional_32_authorized,
+            "phase2": phase_two,
+            "phase2_not_run_reason": (
+                None
+                if conditional_32_authorized
+                else "phase1_all_source_or_resource_gate_failed"
+            ),
+            "ksp_setup_count": setup_count,
+            "ksp_destroy_count": 0,
+            "ksp_destroyed": False,
+            "right_pc_apply_count": pc_context.apply_count,
+            "single_right_pc_setup": True,
+            "zero_initial_guess_all_rhs": True,
+            "research_only": True,
+        }
+    finally:
+        ksp.destroy()
+        pc_context.destroy()
+        residual.destroy()
+        monitor_solution.destroy()
+        solution.destroy()
+        if result is not None:
+            result["ksp_destroy_count"] = 1
+            result["ksp_destroyed"] = True
+
+    if result is None:
+        raise RuntimeError("V1-1 FGMRES batch did not produce a result")
     return result
 
 
