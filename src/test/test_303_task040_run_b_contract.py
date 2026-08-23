@@ -14,6 +14,7 @@ import benchmarks.check_task040_v1_run_b as run_b_checker
 from benchmarks.check_task040_v1_run_b import recompute_v1_2_gate
 from benchmarks.check_task040_v1_run_b import recompute_v1_2_small_contractions
 from benchmarks.task040_level_a import _v1_2_identity_pass
+from benchmarks.task040_level_a import _v1_2_lower_mode_count
 from benchmarks.task040_level_a import _v1_2_seed_interface_active_row
 
 
@@ -433,6 +434,11 @@ def test_run_b_worker_identity_rejects_wrong_lower_resolved_metadata() -> None:
         manifest=manifest,
         exact_identities=observed["exact_output_identity_sha256"],
     )
+
+
+def test_run_b_lower_mode_count_reads_resolved_per_side_schema() -> None:
+    resolved_modes = {"counts": {"per_side": {"bottom": 296}}}
+    assert _v1_2_lower_mode_count(resolved_modes) == 296
 
 
 def _write_run(root: Path, raw: dict[str, object]) -> None:

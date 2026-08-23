@@ -395,6 +395,12 @@ def _v1_2_load_manifest() -> tuple[Path, dict[str, Any]]:
     return path, json.loads(payload)
 
 
+def _v1_2_lower_mode_count(resolved_modes: Mapping[str, Any]) -> int:
+    """Read the resolved inventory's per-side bottom mode count."""
+
+    return int(resolved_modes["counts"]["per_side"]["bottom"])
+
+
 def _v1_2_local_interface_rows(
     condensed: Any,
     support: Mapping[str, Any],
@@ -1175,7 +1181,7 @@ def _run_v1_2_interface_schur(
         "modes": tuple(
             mode for mode in resolved_modes["modes"] if str(mode["side"]) == "bottom"
         ),
-        "count": int(resolved_modes["counts"]["bottom"]),
+        "count": _v1_2_lower_mode_count(resolved_modes),
         "canonical_key_list_sha256": manifest["lower_fourier_floquet_basis"][
             "canonical_key_list_sha256"
         ],
