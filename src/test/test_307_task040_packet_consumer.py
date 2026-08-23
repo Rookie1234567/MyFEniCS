@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import time
 from copy import deepcopy
+from types import SimpleNamespace
 
+import numpy as np
 import pytest
+from mpi4py import MPI
 
 from benchmarks import check_task040_v2_consumer as consumer_checker
 from benchmarks.task040_level_a import (
@@ -16,11 +20,98 @@ from benchmarks.task040_level_a import (
     TASK040_V2_INTERFACE_PACKET_CONSUMER_SCHEMA,
     TASK040_V2_INTERFACE_PACKET_MANIFEST_SHA256,
     _run_v2_packet_consumer,
+    _v2_collective_stage_error,
+    _v2_group_marker,
     _v2_packet_gamma_rows,
     _v2_packet_provenance,
     build_task040_level_a_plan,
 )
 from benchmarks.task040_level_a_watchdog import build_task040_level_a_watchdog_plan
+from src.solvers.hybrid_interface_packet_dolfinx import (
+    build_gamma_canonical_layout,
+    make_gamma_entity_block,
+    reconstruct_owner_local_basis,
+)
+
+
+def test_v2_group_markers_have_ordered_stage_fields() -> None:
+    layout = SimpleNamespace(audit={"local_row_count": 2}, blocks=(object(), object()))
+    events: list[tuple[str, dict[str, object]]] = []
+
+    def callback(stage, detail):
+        events.append((stage, dict(detail)))
+
+    stages = (
+        "packet_group_load_begin",
+        "packet_group_load_ready",
+        "packet_group_reconstruct_begin",
+        "packet_group_reconstruct_ready",
+        "packet_group_roundtrip_audit_begin",
+        "packet_group_roundtrip_audit_ready",
+        "packet_group_collective_remap_ready",
+    )
+    timed_ready_stages = {
+        "packet_group_load_ready",
+        "packet_group_reconstruct_ready",
+        "packet_group_roundtrip_audit_ready",
+    }
+    for stage in stages:
+        _v2_group_marker(
+            callback,
+            stage,
+            group=1,
+            layout=layout,
+            span_size=4,
+            comm=MPI.COMM_WORLD,
+            started=time.perf_counter() if stage in timed_ready_stages else None,
+        )
+    assert [stage for stage, _detail in events] == list(stages)
+    for stage, detail in events:
+        assert detail["group"] == 1
+        assert detail["local_rows"] == 2
+        assert detail["local_blocks"] == 2
+        assert detail["span_size"] == 4
+        if stage in timed_ready_stages:
+            assert np.isfinite(detail["cross_rank_max_elapsed_seconds"])
+            assert detail["cross_rank_max_elapsed_seconds"] >= 0.0
+        else:
+            assert "cross_rank_max_elapsed_seconds" not in detail
+
+
+def test_v2_packet_reconstruct_mismatch_is_collective() -> None:
+    comm = MPI.COMM_WORLD
+    rows = (100 + 2 * comm.rank, 101 + 2 * comm.rank)
+    block = make_gamma_entity_block(
+        name=f"rank{comm.rank}",
+        entity_dimension=1,
+        physical_entity={"rank": comm.rank},
+        raw_row_ids=rows,
+        canonical_to_raw=np.eye(2, dtype=np.complex128),
+        orientation_state="test",
+    )
+    layout = build_gamma_canonical_layout((block,), rows, plane_identity={"test": True})
+    keys = list(layout.canonical_keys)
+    if comm.rank == 0:
+        keys[0] = '{"corrupt":true}'
+    local_error = None
+    try:
+        reconstruct_owner_local_basis(
+            layout,
+            keys,
+            np.ones((2, 1), dtype=np.complex128),
+            np.ones((2, 1), dtype=np.complex128),
+        )
+    except Exception as exc:
+        local_error = f"{type(exc).__name__}: {exc}"
+    with pytest.raises(
+        ValueError,
+        match=r"packet_group_reconstruct.*first failing rank 0",
+    ):
+        _v2_collective_stage_error(
+            comm,
+            "packet_group_reconstruct",
+            local_error,
+        )
 
 
 def _consumer_checker_manifest() -> dict[str, object]:

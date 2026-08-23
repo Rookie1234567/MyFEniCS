@@ -7,6 +7,7 @@ import hashlib
 import json
 import math
 import os
+import time
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime, timezone
 from pathlib import Path
@@ -443,6 +444,51 @@ def _emit(
 ) -> None:
     if callback is not None:
         callback(stage, detail)
+
+
+def _v2_collective_stage_error(
+    comm: MPI.Intracomm,
+    stage: str,
+    local_error: str | None,
+) -> None:
+    """Propagate one V2 packet-stage error before another collective."""
+
+    errors = comm.allgather(local_error)
+    first = next(
+        ((rank, error) for rank, error in enumerate(errors) if error is not None),
+        None,
+    )
+    if first is not None:
+        rank, error = first
+        raise ValueError(
+            f"V2 packet stage {stage} failed on first failing rank {rank}: {error}"
+        )
+
+
+def _v2_group_marker(
+    callback: Callable[[str, Mapping[str, Any]], None] | None,
+    stage: str,
+    *,
+    group: int,
+    layout: Any,
+    span_size: int | None,
+    comm: MPI.Intracomm,
+    started: float | None = None,
+    **detail: Any,
+) -> None:
+    """Emit one V2 group marker with a cross-rank maximum elapsed time."""
+
+    marker_detail = {
+        "group": int(group),
+        "local_rows": int(layout.audit["local_row_count"]),
+        "local_blocks": int(len(layout.blocks)),
+        "span_size": None if span_size is None else int(span_size),
+    }
+    if started is not None:
+        marker_detail["cross_rank_max_elapsed_seconds"] = float(
+            comm.allreduce(time.perf_counter() - started, op=MPI.MAX)
+        )
+    _emit(callback, stage, **marker_detail, **detail)
 
 
 def _file_marker_callback(
@@ -2324,64 +2370,161 @@ def _run_v2_packet_consumer(
         manifest_group_diagnostics = None
         for group in range(3):
             name = f"group{group}"
-            _emit(marker_callback, "packet_group_load_begin", group=group)
+            layout = packet_layouts[group]
+            load_started = time.perf_counter()
+            _v2_group_marker(
+                marker_callback,
+                "packet_group_load_begin",
+                group=group,
+                layout=layout,
+                span_size=None,
+                comm=comm,
+            )
             loaded = load_packet_shard(
                 packet_root,
                 groups=(name,),
-                expected_manifest_sha256=TASK040_V2_INTERFACE_PACKET_MANIFEST_SHA256,
+                expected_manifest_sha256=(TASK040_V2_INTERFACE_PACKET_MANIFEST_SHA256),
                 comm=comm,
             )
-            if manifest is None:
-                manifest = loaded["manifest"]
-                packet_manifest_sha256 = str(loaded["manifest_sha256"])
-                provenance = _v2_packet_provenance(
-                    manifest,
-                    input_sha256=input_sha256,
-                    physical_model_sha256=physical_model_sha256,
-                )
-                diagnostics_groups = manifest.get("diagnostics", {}).get("groups")
-                if (
-                    not isinstance(diagnostics_groups, list)
-                    or len(diagnostics_groups) != 3
-                ):
-                    raise ValueError(
-                        "V2 packet diagnostics have no three group records"
+            packet_group: PacketGroup | None = None
+            group_descriptor: Mapping[str, Any] | None = None
+            group_diagnostic: Mapping[str, Any] | None = None
+            expected_count = -1
+            span_size: int | None = None
+            local_error: str | None = None
+            try:
+                if manifest is None:
+                    manifest = loaded["manifest"]
+                    packet_manifest_sha256 = str(loaded["manifest_sha256"])
+                    provenance = _v2_packet_provenance(
+                        manifest,
+                        input_sha256=input_sha256,
+                        physical_model_sha256=physical_model_sha256,
                     )
-                manifest_group_diagnostics = tuple(diagnostics_groups)
-            packet_group = loaded["groups"].get(name)
-            if packet_group is None:
-                raise ValueError(f"V2 packet did not load {name}")
-            layout = packet_layouts[group]
-            group_descriptor = manifest["groups"].get(name)
-            group_diagnostic = manifest_group_diagnostics[group]
-            expected_count = int(group_descriptor["global_count"])
-            if int(layout.audit["global_row_count"]) != expected_count:
-                raise ValueError(
-                    f"V2 packet {name} Gamma count differs from current layout"
+                    diagnostics_groups = manifest.get("diagnostics", {}).get("groups")
+                    if (
+                        not isinstance(diagnostics_groups, list)
+                        or len(diagnostics_groups) != 3
+                    ):
+                        raise ValueError(
+                            "V2 packet diagnostics have no three group records"
+                        )
+                    manifest_group_diagnostics = tuple(diagnostics_groups)
+                packet_group = loaded["groups"].get(name)
+                if packet_group is None:
+                    raise ValueError(f"V2 packet did not load {name}")
+                group_descriptor = manifest["groups"].get(name)
+                group_diagnostic = manifest_group_diagnostics[group]
+                expected_count = int(group_descriptor["global_count"])
+                if int(layout.audit["global_row_count"]) != expected_count:
+                    raise ValueError(
+                        f"V2 packet {name} Gamma count differs from current layout"
+                    )
+                span_size = int(packet_group.U.shape[1])
+                if int(group_diagnostic.get("span_size", span_size)) != span_size:
+                    raise ValueError(
+                        f"V2 packet {name} span size differs from manifest"
+                    )
+            except Exception as exc:
+                local_error = f"{type(exc).__name__}: {exc}"
+            _v2_collective_stage_error(comm, "packet_group_descriptor", local_error)
+            assert packet_group is not None
+            assert group_descriptor is not None
+            assert group_diagnostic is not None
+            assert span_size is not None
+            _v2_group_marker(
+                marker_callback,
+                "packet_group_load_ready",
+                group=group,
+                layout=layout,
+                span_size=span_size,
+                comm=comm,
+                started=load_started,
+                global_row_count=expected_count,
+            )
+
+            reconstruct_started = time.perf_counter()
+            _v2_group_marker(
+                marker_callback,
+                "packet_group_reconstruct_begin",
+                group=group,
+                layout=layout,
+                span_size=span_size,
+                comm=comm,
+            )
+            canonical_basis: CanonicalOwnerLocalBasis | None = None
+            raw_basis: Any | None = None
+            local_error = None
+            try:
+                canonical_basis = CanonicalOwnerLocalBasis(
+                    tuple(packet_group.keys), packet_group.U, packet_group.V
                 )
-            span_size = int(packet_group.U.shape[1])
-            if int(group_diagnostic.get("span_size", span_size)) != span_size:
-                raise ValueError(f"V2 packet {name} span size differs from manifest")
-            canonical_basis = CanonicalOwnerLocalBasis(
-                tuple(packet_group.keys), packet_group.U, packet_group.V
+                raw_basis = reconstruct_owner_local_basis(
+                    layout,
+                    canonical_basis.keys,
+                    canonical_basis.U,
+                    canonical_basis.V,
+                )
+            except Exception as exc:
+                local_error = f"{type(exc).__name__}: {exc}"
+            _v2_collective_stage_error(comm, "packet_group_reconstruct", local_error)
+            assert canonical_basis is not None
+            assert raw_basis is not None
+            _v2_group_marker(
+                marker_callback,
+                "packet_group_reconstruct_ready",
+                group=group,
+                layout=layout,
+                span_size=span_size,
+                comm=comm,
+                started=reconstruct_started,
             )
-            raw_basis = reconstruct_owner_local_basis(
-                layout,
-                canonical_basis.keys,
-                canonical_basis.U,
-                canonical_basis.V,
+
+            audit_started = time.perf_counter()
+            _v2_group_marker(
+                marker_callback,
+                "packet_group_roundtrip_audit_begin",
+                group=group,
+                layout=layout,
+                span_size=span_size,
+                comm=comm,
             )
-            audit = audit_owner_local_basis_round_trip(
-                layout,
-                raw_basis.U,
-                raw_basis.V,
-                canonical_basis,
+            audit: dict[str, Any] | None = None
+            local_error = None
+            try:
+                audit = audit_owner_local_basis_round_trip(
+                    layout,
+                    raw_basis.U,
+                    raw_basis.V,
+                    canonical_basis,
+                )
+            except Exception as exc:
+                local_error = f"{type(exc).__name__}: {exc}"
+            _v2_collective_stage_error(
+                comm, "packet_group_roundtrip_audit", local_error
             )
+            assert audit is not None
             global_error = float(
                 comm.allreduce(float(audit["max_relative_error"]), op=MPI.MAX)
             )
-            if global_error > 1.0e-12:
-                raise ValueError(f"V2 packet {name} canonical remap exceeds tolerance")
+            _v2_group_marker(
+                marker_callback,
+                "packet_group_roundtrip_audit_ready",
+                group=group,
+                layout=layout,
+                span_size=span_size,
+                comm=comm,
+                started=audit_started,
+                collective_max_relative_error=global_error,
+            )
+            local_error = None
+            if not bool(audit["pass"]) or global_error > 1.0e-12:
+                local_error = (
+                    f"{name} canonical remap exceeds tolerance ({global_error:.17g})"
+                )
+            _v2_collective_stage_error(
+                comm, "packet_group_collective_remap", local_error
+            )
             remap_reports.append(
                 {
                     "group": group,
@@ -2394,10 +2537,13 @@ def _run_v2_packet_consumer(
                 }
             )
             gamma_factors.append({"U": raw_basis.U, "V": raw_basis.V})
-            _emit(
+            _v2_group_marker(
                 marker_callback,
-                "packet_group_remap_ready",
+                "packet_group_collective_remap_ready",
                 group=group,
+                layout=layout,
+                span_size=span_size,
+                comm=comm,
                 collective_max_relative_error=global_error,
             )
             del raw_basis, canonical_basis, packet_group, loaded
