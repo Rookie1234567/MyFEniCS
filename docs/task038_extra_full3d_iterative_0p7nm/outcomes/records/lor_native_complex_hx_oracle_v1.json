@@ -1,0 +1,82 @@
+{
+  "case_order": [
+    "p2-mpi1",
+    "p2-mpi2",
+    "p3-mpi1",
+    "p3-mpi2"
+  ],
+  "contract_errors": [],
+  "cross_mpi": {},
+  "errors": [
+    "p2-mpi1: random: rho_above_source_fixed_limit rho=1.7348663090876784 limit=0.45"
+  ],
+  "gate_failures": [
+    "p2-mpi1: random: rho_above_source_fixed_limit rho=1.7348663090876784 limit=0.45"
+  ],
+  "hard_stop": true,
+  "later_cases": [
+    "p2-mpi2",
+    "p3-mpi1",
+    "p3-mpi2"
+  ],
+  "later_cases_status": "not_run_by_gate",
+  "passed": false,
+  "records": [
+    {
+      "case": "p2-mpi1",
+      "contract_errors": [],
+      "degree": 2,
+      "errors": [
+        "random: rho_above_source_fixed_limit rho=1.7348663090876784 limit=0.45"
+      ],
+      "gate_failures": [
+        "random: rho_above_source_fixed_limit rho=1.7348663090876784 limit=0.45"
+      ],
+      "mpi_size": 1,
+      "passed": false,
+      "raw_record_sha256": "0a6ccfdb6a28b003167046e3ca3fc5e4de0d40825784786319661901a65389f3",
+      "record": "/home/shenjh/Projects/MyFEniCSx_task37_extra/docs/task038_extra_full3d_iterative_0p7nm/outcomes/records/lor_native_complex_hx_oracle_p2_mpi1_v1.json",
+      "rho_gate_failure": true,
+      "source_metrics": [
+        {
+          "cg_solution_keys": null,
+          "cg_solution_values": null,
+          "gate_reason": "rho_above_source_fixed_limit",
+          "iterations": null,
+          "name": "random",
+          "rho": 1.7348663090876784,
+          "rho_gate_failure": true
+        },
+        {
+          "cg_solution_keys": null,
+          "cg_solution_values": null,
+          "gate_reason": null,
+          "iterations": null,
+          "name": "gradient",
+          "rho": null,
+          "rho_gate_failure": false
+        },
+        {
+          "cg_solution_keys": null,
+          "cg_solution_values": null,
+          "gate_reason": null,
+          "iterations": null,
+          "name": "curl",
+          "rho": null,
+          "rho_gate_failure": false
+        },
+        {
+          "cg_solution_keys": null,
+          "cg_solution_values": null,
+          "gate_reason": null,
+          "iterations": null,
+          "name": "checkerboard",
+          "rho": null,
+          "rho_gate_failure": false
+        }
+      ],
+      "source_sha": "91992c0ac3aa467f74955fa7da944a10da8f0fbb"
+    }
+  ],
+  "schema": "task038.lor-native-complex-hx.l2-check.v1"
+}
