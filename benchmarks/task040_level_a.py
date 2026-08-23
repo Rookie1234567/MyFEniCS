@@ -52,18 +52,25 @@ from src.solvers.hybrid_interface_basis import (
 from src.solvers.hybrid_interface_packet import (
     PacketGroup,
     finalize_manifest,
+    load_packet_shard,
     write_group_shard,
 )
 from src.solvers.hybrid_interface_packet_dolfinx import (
+    CanonicalOwnerLocalBasis,
     build_dolfinx_plane_gamma_layout,
     build_gamma_canonical_layout,
+    audit_owner_local_basis_round_trip,
     canonicalize_owner_local_basis_in_place,
+    reconstruct_owner_local_basis,
 )
 from src.solvers.hybrid_interface_schur import (
     build_petsc_interface_schur_oracle,
     build_distributed_petrov_action,
 )
-from src.solvers.hybrid_interface_run_b import build_v1_3_projected_transmission
+from src.solvers.hybrid_interface_run_b import (
+    build_v1_3_projected_transmission,
+    build_v2_packet_projected_transmission,
+)
 from src.runners.task039_hybrid_iterative import make_task039_hybrid_iterative_profile
 from src.solvers.hybrid_local_dtn_action import assemble_hybrid_local_dtn_action_system
 from src.solvers.hybrid_layer_block import (
@@ -126,6 +133,15 @@ TASK040_V2_INTERFACE_PACKET_SCHEMA = "task040.v2.interface_packet_producer.v1"
 TASK040_V2_INTERFACE_PACKET_PROFILE_ID = "task040.v2.a1.interface_packet_producer.v1"
 TASK040_V2_INTERFACE_PACKET_PREFERRED_BYTES = 45 * 2**30
 TASK040_V2_INTERFACE_PACKET_HARD_STOP_BYTES = 55 * 2**30
+TASK040_V2_INTERFACE_PACKET_CONSUMER_FLAG = "--v2-interface-packet-consumer"
+TASK040_V2_INTERFACE_PACKET_CONSUMER_METHOD = "task040_v2_interface_packet_consumer"
+TASK040_V2_INTERFACE_PACKET_CONSUMER_SCHEMA = "task040.v2.interface_packet_consumer.v1"
+TASK040_V2_INTERFACE_PACKET_CONSUMER_PROFILE_ID = (
+    "task040.v2.b2.interface_packet_consumer.v1"
+)
+TASK040_V2_INTERFACE_PACKET_MANIFEST_SHA256 = (
+    "19de50f3cdb32766bf6f13fc55c9ac498b21a9a00ddc261768d7d55b7c9da8b0"
+)
 
 __all__ = (
     "TASK040_LEVEL_A_METHOD",
@@ -147,6 +163,11 @@ __all__ = (
     "TASK040_V2_INTERFACE_PACKET_PROFILE_ID",
     "TASK040_V2_INTERFACE_PACKET_PREFERRED_BYTES",
     "TASK040_V2_INTERFACE_PACKET_HARD_STOP_BYTES",
+    "TASK040_V2_INTERFACE_PACKET_CONSUMER_FLAG",
+    "TASK040_V2_INTERFACE_PACKET_CONSUMER_METHOD",
+    "TASK040_V2_INTERFACE_PACKET_CONSUMER_SCHEMA",
+    "TASK040_V2_INTERFACE_PACKET_CONSUMER_PROFILE_ID",
+    "TASK040_V2_INTERFACE_PACKET_MANIFEST_SHA256",
     "TASK040_V1_2_PROBE_MANIFEST",
     "TASK040_V1_2_PROBE_MANIFEST_SHA256",
     "TASK040_V1_2_INPUT_SHA256",
@@ -214,6 +235,8 @@ def build_task040_level_a_plan(
     scalar_krylov: bool = False,
     interface_schur: bool = False,
     packet_producer: bool = False,
+    packet_consumer: bool = False,
+    interface_packet_root: str | Path | None = None,
 ) -> dict[str, Any]:
     """Build a dry-run contract without creating a result directory."""
 
@@ -251,7 +274,15 @@ def build_task040_level_a_plan(
         ],
     }
     if (
-        sum(bool(value) for value in (scalar_krylov, interface_schur, packet_producer))
+        sum(
+            bool(value)
+            for value in (
+                scalar_krylov,
+                interface_schur,
+                packet_producer,
+                packet_consumer,
+            )
+        )
         > 1
     ):
         raise ValueError("Task040 research routes are mutually exclusive")
@@ -313,6 +344,39 @@ def build_task040_level_a_plan(
                     "pde_solve",
                     "global_direct_factor",
                     "full_side_factor",
+                ],
+                "packet_complete_required": True,
+            }
+        )
+    if packet_consumer:
+        if interface_packet_root is None:
+            raise ValueError("V2 packet consumer requires interface_packet_root")
+        plan.update(
+            {
+                "schema": TASK040_V2_INTERFACE_PACKET_CONSUMER_SCHEMA,
+                "method": TASK040_V2_INTERFACE_PACKET_CONSUMER_METHOD,
+                "profile": TASK040_V2_INTERFACE_PACKET_CONSUMER_PROFILE_ID,
+                "packet_consumer": True,
+                "research_only": True,
+                "oracle_only": True,
+                "scalable_candidate": False,
+                "pde_solve": "not_run",
+                "qep_calls": 0,
+                "absolute_terminate_memory_bytes": TASK040_LEVEL_A_HARD_STOP_BYTES,
+                "interface_packet_root": str(Path(interface_packet_root).resolve()),
+                "packet_manifest_sha256": TASK040_V2_INTERFACE_PACKET_MANIFEST_SHA256,
+                "forbidden": [
+                    "qep",
+                    "exact_interface_oracle",
+                    "outer_ksp",
+                    "recovery",
+                    "top",
+                    "full_hybrid",
+                    "response_packet",
+                    "exact_output_vector_load",
+                    "global_direct_factor",
+                    "full_side_factor",
+                    "pde_solve",
                 ],
                 "packet_complete_required": True,
             }
@@ -2160,6 +2224,422 @@ def _run_v1_2_interface_schur(
         del spaces, cross_section
 
 
+def _v2_packet_provenance(
+    manifest: Mapping[str, Any],
+    *,
+    input_sha256: str,
+    physical_model_sha256: str,
+) -> dict[str, Any]:
+    """Validate the producer identity without constructing its FEM objects."""
+
+    provenance = manifest.get("provenance")
+    if not isinstance(provenance, dict):
+        raise ValueError("V2 packet manifest has no producer provenance")
+    expected = {
+        "schema": TASK040_V2_INTERFACE_PACKET_SCHEMA,
+        "input_sha256": str(input_sha256),
+        "physical_model_sha256": str(physical_model_sha256),
+        "selected_manifest_sha256": TASK040_V1_2_SELECTED_MANIFEST_SHA256,
+        "exact_spool_catalog_sha256": TASK040_V1_2_EXACT_SPOOL_CATALOG_SHA256,
+        "probe_manifest_sha256": TASK040_V1_2_PROBE_MANIFEST_SHA256,
+        "qep_calls": 0,
+        "pde_solve": "not_run",
+        "v1_3_built": False,
+    }
+    if any(provenance.get(key) != value for key, value in expected.items()):
+        raise ValueError("V2 packet producer provenance is not frozen")
+    producer_source = provenance.get("source_sha")
+    if (
+        not isinstance(producer_source, str)
+        or len(producer_source) != 40
+        or any(character not in "0123456789abcdef" for character in producer_source)
+    ):
+        raise ValueError("V2 packet producer source SHA is invalid")
+    return dict(provenance)
+
+
+def _v2_packet_gamma_rows(
+    supports: Sequence[Mapping[str, Any]],
+    group_rows: Sequence[np.ndarray],
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Select packet Gamma rows from the current owner-local group order."""
+
+    lower = {int(row) for row in supports[0]["active_support"]}
+    upper = {int(row) for row in supports[1]["active_support"]}
+    if lower.intersection(upper):
+        raise ValueError("V2 packet lower/upper Gamma supports overlap")
+    expected = (lower, lower | upper, upper)
+    result: list[np.ndarray] = []
+    for group, rows in enumerate(group_rows):
+        ordered = np.asarray(
+            [int(row) for row in rows if int(row) in expected[group]],
+            dtype=PETSc.IntType,
+        )
+        result.append(ordered)
+    return result[0], result[1], result[2]
+
+
+def _run_v2_packet_consumer(
+    *,
+    system: Any,
+    bare_f: PETSc.Mat,
+    source_sha: str,
+    input_sha256: str,
+    physical_model_sha256: str,
+    group_rows: Sequence[np.ndarray],
+    group_audit: Mapping[str, Any],
+    supports: Sequence[Mapping[str, Any]],
+    masses: Sequence[Any],
+    exact_spool_root: str | Path,
+    beta: complex,
+    packet_root: str | Path,
+    marker_callback: Callable[[str, Mapping[str, Any]], None] | None,
+    resource_callback: Callable[[], Mapping[str, Any]] | None,
+    comm: MPI.Intracomm,
+) -> dict[str, Any]:
+    """Hydrate one reviewed packet into the existing Level-A projected sweep."""
+
+    packet_layouts: tuple[Any, Any, Any] | None = None
+    gamma_factors: list[dict[str, np.ndarray]] = []
+    source_vectors: dict[str, PETSc.Vec] = {}
+    action: Any | None = None
+    owner: Any | None = None
+    owner_transferred = False
+    remap_reports: list[dict[str, Any]] = []
+    manifest: dict[str, Any] | None = None
+    provenance: dict[str, Any] | None = None
+    packet_manifest_sha256: str | None = None
+    try:
+        z_values = system.local_mesh.z_values
+        packet_gamma_rows = _v2_packet_gamma_rows(supports, group_rows)
+        packet_layouts = _v2_build_packet_layouts(
+            system=system,
+            condensed=system.static_condensation.condensed,
+            supports=supports,
+            gamma_rows=packet_gamma_rows,
+            lower_z=float(z_values[2]),
+            upper_z=float(z_values[4]),
+            comm=comm,
+        )
+        manifest_group_diagnostics = None
+        for group in range(3):
+            name = f"group{group}"
+            _emit(marker_callback, "packet_group_load_begin", group=group)
+            loaded = load_packet_shard(
+                packet_root,
+                groups=(name,),
+                expected_manifest_sha256=TASK040_V2_INTERFACE_PACKET_MANIFEST_SHA256,
+                comm=comm,
+            )
+            if manifest is None:
+                manifest = loaded["manifest"]
+                packet_manifest_sha256 = str(loaded["manifest_sha256"])
+                provenance = _v2_packet_provenance(
+                    manifest,
+                    input_sha256=input_sha256,
+                    physical_model_sha256=physical_model_sha256,
+                )
+                diagnostics_groups = manifest.get("diagnostics", {}).get("groups")
+                if (
+                    not isinstance(diagnostics_groups, list)
+                    or len(diagnostics_groups) != 3
+                ):
+                    raise ValueError(
+                        "V2 packet diagnostics have no three group records"
+                    )
+                manifest_group_diagnostics = tuple(diagnostics_groups)
+            packet_group = loaded["groups"].get(name)
+            if packet_group is None:
+                raise ValueError(f"V2 packet did not load {name}")
+            layout = packet_layouts[group]
+            group_descriptor = manifest["groups"].get(name)
+            group_diagnostic = manifest_group_diagnostics[group]
+            expected_count = int(group_descriptor["global_count"])
+            if int(layout.audit["global_row_count"]) != expected_count:
+                raise ValueError(
+                    f"V2 packet {name} Gamma count differs from current layout"
+                )
+            span_size = int(packet_group.U.shape[1])
+            if int(group_diagnostic.get("span_size", span_size)) != span_size:
+                raise ValueError(f"V2 packet {name} span size differs from manifest")
+            canonical_basis = CanonicalOwnerLocalBasis(
+                tuple(packet_group.keys), packet_group.U, packet_group.V
+            )
+            raw_basis = reconstruct_owner_local_basis(
+                layout,
+                canonical_basis.keys,
+                canonical_basis.U,
+                canonical_basis.V,
+            )
+            audit = audit_owner_local_basis_round_trip(
+                layout,
+                raw_basis.U,
+                raw_basis.V,
+                canonical_basis,
+            )
+            global_error = float(
+                comm.allreduce(float(audit["max_relative_error"]), op=MPI.MAX)
+            )
+            if global_error > 1.0e-12:
+                raise ValueError(f"V2 packet {name} canonical remap exceeds tolerance")
+            remap_reports.append(
+                {
+                    "group": group,
+                    "global_row_count": expected_count,
+                    "span_size": span_size,
+                    "local_row_count": int(layout.audit["local_row_count"]),
+                    "local": audit,
+                    "collective_max_relative_error": global_error,
+                    "pass": bool(audit["pass"] and global_error <= 1.0e-12),
+                }
+            )
+            gamma_factors.append({"U": raw_basis.U, "V": raw_basis.V})
+            _emit(
+                marker_callback,
+                "packet_group_remap_ready",
+                group=group,
+                collective_max_relative_error=global_error,
+            )
+            del raw_basis, canonical_basis, packet_group, loaded
+
+        if manifest is None or provenance is None:
+            raise RuntimeError("V2 packet did not provide a manifest")
+        if (
+            manifest.get("basis_global_replicated") is not False
+            or manifest.get("fe_numeric_allgather") is not False
+        ):
+            raise ValueError("V2 packet numeric replication flags are invalid")
+        if packet_manifest_sha256 is None:
+            raise RuntimeError("V2 packet manifest SHA was not observed")
+        packet_layouts = None
+        _emit(marker_callback, "projected_setup_begin", group_count=3)
+        action, owner, projected_diagnostics = build_v2_packet_projected_transmission(
+            bare_f=bare_f,
+            group_rows=list(group_rows),
+            interface_masses=list(masses),
+            beta=beta,
+            group_audit=dict(group_audit),
+            gamma_rows=list(packet_gamma_rows),
+            gamma_factors=gamma_factors,
+        )
+        projected_required = {
+            "projected_factor_count_ready": 3,
+            "exact_interface_oracle_factor_count": 0,
+            "full_side_exact_factor_count": 0,
+            "global_direct_factor_count": 0,
+            "nested_ksp_count": 0,
+            "oracle_only": True,
+            "scalable_candidate": False,
+            "fe_numeric_allgather": False,
+        }
+        if any(
+            projected_diagnostics.get(key) != value
+            for key, value in projected_required.items()
+        ):
+            raise RuntimeError("V2 consumer projected diagnostics failed")
+        _emit(
+            marker_callback,
+            "projected_setup_ready",
+            factor_count_ready=projected_diagnostics["projected_factor_count_ready"],
+        )
+        gamma_factors.clear()
+        ready_owner = dict(owner.diagnostics)
+        factor_inventory = {
+            "observed": True,
+            "factor_count_ready": int(ready_owner.get("factor_count_ready", -1)),
+            "cross_section_factor_count_ready": int(
+                ready_owner.get("factor_count_ready", -1)
+            ),
+            "full_side_exact_factor_count": 0,
+            "global_direct_factor_count": 0,
+            "nested_ksp_count": 0,
+            "exact_interface_oracle_factor_count": 0,
+            "oracle_only": True,
+            "scalable_candidate": False,
+        }
+        if factor_inventory["factor_count_ready"] != 3:
+            raise RuntimeError("V2 consumer projected factor inventory is not three")
+
+        packet_identity, selected_manifest_sha, catalog = _v9_frozen_holdout_identity(
+            exact_spool_root, comm
+        )
+        catalog_sha = _v1_2_validate_spool_identity(
+            selected_manifest_sha256=selected_manifest_sha,
+            catalog=catalog,
+        )
+        spool = _load_v5_fixed_budget_spool_shards(
+            exact_spool_root,
+            comm,
+            packet_identity=packet_identity,
+            manifest_sha256=selected_manifest_sha,
+        )
+        for label in TASK040_LEVEL_A_SOURCE_LABELS:
+            template = bare_f.createVecLeft()
+            try:
+                source_vectors[label] = _load_v5_blr_reference_spool_remapped(
+                    spool[label]["rhs"], template
+                )
+            finally:
+                template.destroy()
+        del spool
+        _emit(
+            marker_callback,
+            "source_ready",
+            labels=list(TASK040_LEVEL_A_SOURCE_LABELS),
+            rhs_vectors_loaded=len(TASK040_LEVEL_A_SOURCE_LABELS),
+            exact_output_vectors_loaded=0,
+            exact_output_metadata_hash_validation_only=True,
+        )
+        one_apply = audit_petsc_level_a_one_apply(
+            action,
+            bare_f,
+            source_vectors,
+            factor_inventory,
+            collect_scalar_contractions=True,
+        )
+        one_apply_gate = one_apply["gate"]
+        implementation_subset_pass = all(
+            (
+                one_apply_gate.get("finite_pass") is True,
+                one_apply_gate.get("zero_map_pass") is True,
+                one_apply_gate.get("action_identity_pass") is True,
+                one_apply_gate.get("repeat_pass") is True,
+                one_apply_gate.get("linearity_pass") is True,
+                one_apply_gate.get("factor_inventory_pass") is True,
+            )
+        )
+        if not implementation_subset_pass:
+            raise RuntimeError(
+                "V2 consumer one-apply implementation subset failed: "
+                f"{one_apply_gate!r}"
+            )
+        one_apply_gate["v2_implementation_subset_pass"] = True
+        scalar_labels = tuple(TASK040_LEVEL_A_SOURCE_LABELS[1:])
+        screen = run_v1_1_right_preconditioned_fgmres_batch(
+            bare_f,
+            {label: source_vectors[label] for label in scalar_labels},
+            action,
+            labels=scalar_labels,
+            resource_callback=resource_callback,
+            stop_on_frozen_gate=True,
+            checkpoint_callback=lambda row: _emit(
+                marker_callback, "v2_consumer_fgmres_checkpoint", **dict(row)
+            ),
+        )
+        first_preferred_checkpoint = None
+        phase = screen["phase1"]
+        for checkpoint in ("4", "8", "16"):
+            values = [
+                phase[label]["checkpoints"]
+                .get(checkpoint, {})
+                .get("true_residual_relative")
+                for label in scalar_labels
+            ]
+            if (
+                values
+                and all(
+                    isinstance(value, (int, float))
+                    and np.isfinite(float(value))
+                    and float(value) <= 1.0e-2
+                    for value in values
+                )
+                and all(float(value) <= 1.0e-3 for value in values[:3])
+            ):
+                first_preferred_checkpoint = int(checkpoint)
+                break
+        if first_preferred_checkpoint is None and screen["phase2"]:
+            values = [
+                screen["phase2"][label]["checkpoints"]
+                .get("32", {})
+                .get("true_residual_relative")
+                for label in scalar_labels
+            ]
+            if (
+                values
+                and all(
+                    isinstance(value, (int, float))
+                    and np.isfinite(float(value))
+                    and float(value) <= 1.0e-2
+                    for value in values
+                )
+                and all(float(value) <= 1.0e-3 for value in values[:3])
+            ):
+                first_preferred_checkpoint = 32
+        _emit(
+            marker_callback,
+            "level_a_audit_complete",
+            first_preferred_checkpoint=first_preferred_checkpoint,
+            factor_count_ready=factor_inventory["factor_count_ready"],
+        )
+        result = {
+            "schema": TASK040_V2_INTERFACE_PACKET_CONSUMER_SCHEMA,
+            "method": TASK040_V2_INTERFACE_PACKET_CONSUMER_METHOD,
+            "profile": TASK040_V2_INTERFACE_PACKET_CONSUMER_PROFILE_ID,
+            "source_sha": str(source_sha),
+            "input_sha256": str(input_sha256),
+            "physical_model_sha256": str(physical_model_sha256),
+            "selected_manifest_sha256": selected_manifest_sha,
+            "exact_spool_catalog_sha256": catalog_sha,
+            "rhs_vectors_loaded": len(TASK040_LEVEL_A_SOURCE_LABELS),
+            "packet_manifest_sha256": packet_manifest_sha256,
+            "packet_producer_source_sha": provenance["source_sha"],
+            "pde_solve": "not_run",
+            "qep_calls": 0,
+            "exact_output_vectors_loaded": 0,
+            "interface_packet_raw": {
+                "packet_consumer": True,
+                "producer_source_sha": provenance["source_sha"],
+                "packet_manifest_sha256": packet_manifest_sha256,
+                "packet_provenance": provenance,
+                "basis_global_replicated": False,
+                "fe_numeric_allgather": False,
+                "groups": remap_reports,
+                "remap_pass": all(item["pass"] for item in remap_reports),
+                "factor_inventory": factor_inventory,
+                "one_apply": one_apply,
+                "fgmres_screen": screen,
+                "first_preferred_checkpoint": first_preferred_checkpoint,
+                "lifecycle": {
+                    "factor_count_ready": 3,
+                    "exact_interface_oracle_factor_count": 0,
+                    "simultaneous_factor_count_max": 3,
+                },
+                "source_loading": {
+                    "labels": list(TASK040_LEVEL_A_SOURCE_LABELS),
+                    "rhs_vectors_loaded": len(TASK040_LEVEL_A_SOURCE_LABELS),
+                    "exact_output_vectors_loaded": 0,
+                    "exact_output_metadata_hash_validation_only": True,
+                },
+                "forbidden_routes": [
+                    "exact_interface_oracle",
+                    "qep",
+                    "pde_solve",
+                    "outer_ksp",
+                    "recovery",
+                    "top",
+                    "full_hybrid",
+                    "response_packet",
+                    "exact_output_vector_load",
+                    "global_direct_factor",
+                    "full_side_factor",
+                ],
+                "projected_diagnostics": dict(projected_diagnostics),
+            },
+        }
+        owner_transferred = True
+        return {"action": action, "owner": owner, "result": result}
+    finally:
+        for vector in source_vectors.values():
+            vector.destroy()
+        if not owner_transferred:
+            if owner is not None:
+                owner.destroy()
+            elif action is not None:
+                action.destroy()
+        packet_layouts = None
+        gamma_factors.clear()
+
+
 def run_task040_level_a(
     cfg: Any,
     profile: Any,
@@ -2174,17 +2654,28 @@ def run_task040_level_a(
     scalar_krylov: bool = False,
     interface_schur: bool = False,
     packet_producer: bool = False,
+    packet_consumer: bool = False,
     packet_root: str | Path | None = None,
     resource_callback: Callable[[], Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Run the six-source Level-A audit; all numerical work stays in src."""
 
     if (
-        sum(bool(value) for value in (scalar_krylov, interface_schur, packet_producer))
+        sum(
+            bool(value)
+            for value in (
+                scalar_krylov,
+                interface_schur,
+                packet_producer,
+                packet_consumer,
+            )
+        )
         > 1
     ):
         raise ValueError("Task040 research routes are mutually exclusive")
-    if interface_schur or packet_producer:
+    if interface_schur or packet_producer or packet_consumer:
+        if packet_consumer and packet_root is None:
+            raise ValueError("V2 packet consumer requires packet_root")
         for name, value in (
             ("input_sha256", input_sha256),
             ("physical_model_sha256", physical_model_sha256),
@@ -2210,6 +2701,8 @@ def run_task040_level_a(
         method=(
             TASK040_V2_INTERFACE_PACKET_METHOD
             if packet_producer
+            else TASK040_V2_INTERFACE_PACKET_CONSUMER_METHOD
+            if packet_consumer
             else TASK040_V1_2_METHOD
             if interface_schur
             else TASK040_LEVEL_A_METHOD
@@ -2283,6 +2776,28 @@ def run_task040_level_a(
             beta=[beta.real, beta.imag],
             q=[(-1j * beta).real, (-1j * beta).imag],
         )
+        if packet_consumer:
+            route = _run_v2_packet_consumer(
+                system=system,
+                bare_f=bare_f,
+                source_sha=source_sha,
+                input_sha256=str(input_sha256),
+                physical_model_sha256=str(physical_model_sha256),
+                group_rows=group_rows,
+                group_audit=group_audit,
+                supports=supports,
+                masses=masses,
+                exact_spool_root=exact_spool_root,
+                beta=beta,
+                packet_root=packet_root,
+                marker_callback=marker_callback,
+                resource_callback=resource_callback,
+                comm=comm,
+            )
+            action = route["action"]
+            owner = route["owner"]
+            result = route["result"]
+            return result
         if interface_schur or packet_producer:
             route = _run_v1_2_interface_schur(
                 cfg=cfg,
@@ -2484,8 +2999,12 @@ def run_task040_level_a(
         _emit(marker_callback, "cleanup", **cleanup)
         if result is not None:
             result["cleanup"] = cleanup
-            if interface_schur or packet_producer:
-                raw = result.get("interface_schur_raw")
+            if interface_schur or packet_producer or packet_consumer:
+                raw = result.get(
+                    "interface_schur_raw"
+                    if not packet_consumer
+                    else "interface_packet_raw"
+                )
                 if isinstance(raw, dict):
                     lifecycle = raw.setdefault("lifecycle", {})
                     lifecycle["worker_cleanup"] = cleanup
@@ -2499,6 +3018,13 @@ def run_task040_level_a(
                     lifecycle["factor_destroyed"] = bool(
                         not factor_owner or after_owner.get("destroyed") is True
                     )
+                    if packet_consumer:
+                        lifecycle["factor_count_after_cleanup"] = after_owner.get(
+                            "factor_count_after_cleanup"
+                        )
+                        lifecycle["projected_inverse_count_after_cleanup"] = (
+                            after_owner.get("auxiliary_owner_count")
+                        )
     if result is None:
         raise RuntimeError("Task040 Level-A did not produce a result")
     return result
@@ -2521,6 +3047,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(TASK040_V1_1_SCALAR_KRYLOV_FLAG, action="store_true")
     parser.add_argument(TASK040_V1_2_INTERFACE_SCHUR_FLAG, action="store_true")
     parser.add_argument(TASK040_V2_INTERFACE_PACKET_PRODUCER_FLAG, action="store_true")
+    parser.add_argument(TASK040_V2_INTERFACE_PACKET_CONSUMER_FLAG, action="store_true")
+    parser.add_argument("--interface-packet-root")
     parser.add_argument("--memory-stages")
     parser.add_argument("--memory-markers")
     args = parser.parse_args(argv)
@@ -2532,6 +3060,8 @@ def main(argv: list[str] | None = None) -> int:
         scalar_krylov=args.v1_1_scalar_krylov,
         interface_schur=args.v1_2_interface_schur,
         packet_producer=args.v2_interface_packet_producer,
+        packet_consumer=args.v2_interface_packet_consumer,
+        interface_packet_root=args.interface_packet_root,
     )
     if args.dry_run:
         if MPI.COMM_WORLD.rank == 0:
@@ -2554,6 +3084,7 @@ def main(argv: list[str] | None = None) -> int:
         scalar_krylov=args.v1_1_scalar_krylov,
         interface_schur=args.v1_2_interface_schur,
         packet_producer=args.v2_interface_packet_producer,
+        packet_consumer=args.v2_interface_packet_consumer,
         resource_callback=(
             lambda: (
                 _worker_current_resource(
@@ -2568,6 +3099,7 @@ def main(argv: list[str] | None = None) -> int:
                     args.v1_1_scalar_krylov
                     or args.v1_2_interface_schur
                     or args.v2_interface_packet_producer
+                    or args.v2_interface_packet_consumer
                 )
                 else None
             )
@@ -2575,6 +3107,8 @@ def main(argv: list[str] | None = None) -> int:
         packet_root=(
             Path(args.run_directory) / "interface_packet"
             if args.v2_interface_packet_producer
+            else args.interface_packet_root
+            if args.v2_interface_packet_consumer
             else None
         ),
     )

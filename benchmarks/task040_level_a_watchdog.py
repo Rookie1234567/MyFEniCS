@@ -21,6 +21,7 @@ from benchmarks.task040_level_a import (
     TASK040_LEVEL_A_TIMEOUT_SECONDS,
     TASK040_V1_1_SCALAR_KRYLOV_FLAG,
     TASK040_V1_2_INTERFACE_SCHUR_FLAG,
+    TASK040_V2_INTERFACE_PACKET_CONSUMER_FLAG,
     TASK040_V2_INTERFACE_PACKET_PRODUCER_FLAG,
     build_task040_level_a_plan,
 )
@@ -83,6 +84,14 @@ def _worker_command(plan: dict[str, Any]) -> list[str]:
         command.append(TASK040_V1_2_INTERFACE_SCHUR_FLAG)
     if plan.get("packet_producer") is True:
         command.append(TASK040_V2_INTERFACE_PACKET_PRODUCER_FLAG)
+    if plan.get("packet_consumer") is True:
+        command.extend(
+            [
+                TASK040_V2_INTERFACE_PACKET_CONSUMER_FLAG,
+                "--interface-packet-root",
+                str(plan["interface_packet_root"]),
+            ]
+        )
     return command
 
 
@@ -95,6 +104,8 @@ def build_task040_level_a_watchdog_plan(
     scalar_krylov: bool = False,
     interface_schur: bool = False,
     packet_producer: bool = False,
+    packet_consumer: bool = False,
+    interface_packet_root: str | Path | None = None,
 ) -> dict[str, Any]:
     plan = build_task040_level_a_plan(
         input_path=input_path,
@@ -104,6 +115,8 @@ def build_task040_level_a_watchdog_plan(
         scalar_krylov=scalar_krylov,
         interface_schur=interface_schur,
         packet_producer=packet_producer,
+        packet_consumer=packet_consumer,
+        interface_packet_root=interface_packet_root,
     )
     worker_directory = Path(plan["run_directory"]) / "worker"
     if packet_producer:
@@ -328,6 +341,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(TASK040_V1_1_SCALAR_KRYLOV_FLAG, action="store_true")
     parser.add_argument(TASK040_V1_2_INTERFACE_SCHUR_FLAG, action="store_true")
     parser.add_argument(TASK040_V2_INTERFACE_PACKET_PRODUCER_FLAG, action="store_true")
+    parser.add_argument(TASK040_V2_INTERFACE_PACKET_CONSUMER_FLAG, action="store_true")
+    parser.add_argument("--interface-packet-root")
     args = parser.parse_args(argv)
     plan = build_task040_level_a_watchdog_plan(
         input_path=args.input,
@@ -337,6 +352,8 @@ def main(argv: list[str] | None = None) -> int:
         scalar_krylov=args.v1_1_scalar_krylov,
         interface_schur=args.v1_2_interface_schur,
         packet_producer=args.v2_interface_packet_producer,
+        packet_consumer=args.v2_interface_packet_consumer,
+        interface_packet_root=args.interface_packet_root,
     )
     if args.dry_run:
         print(json.dumps(plan, indent=2, sort_keys=True))
