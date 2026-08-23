@@ -28,6 +28,35 @@ REPEAT_LIMIT = 1.0e-13
 SPECTRAL_LIMIT = 100.0
 HERMITIAN_LIMIT = 1.0e-12
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
+L2_SCHEMA = "task038.lor-native-complex-hx.l2-record.v1"
+L2_CHECKER_SCHEMA = "task038.lor-native-complex-hx.l2-check.v1"
+L2_CASE_ORDER = ("p2-mpi1", "p2-mpi2", "p3-mpi1", "p3-mpi2")
+L2_SOURCE_NAMES = ("random", "gradient", "curl", "checkerboard")
+L2_SOURCE_FORMULAS = {
+    "random": (
+        "analytic deterministic pseudo-random edge field from fixed "
+        "noninteger trigonometric frequencies and phases"
+    ),
+    "gradient": "grad(sin(2*pi*sx)*sin(2*pi*sy)*sin(2*pi*sz))",
+    "curl": "curl((0,0,sin(2*pi*sx)*sin(2*pi*sy)*sin(2*pi*sz)))",
+    "checkerboard": (
+        "R4 fixed 8-cycle field: "
+        "(high_x*high_y*high_z, high_y*high_z, high_z*high_x)"
+    ),
+}
+L2_PHASE_APPLICATION = "algebraic_slave_zero_action_internal_finalized_mpc_once"
+L2_RHO_LIMITS = {
+    "random": 0.45,
+    "gradient": 0.25,
+    "curl": 0.45,
+    "checkerboard": 0.60,
+}
+L2_CG_KSP_TYPE = "cg"
+L2_CG_RTOL = 1.0e-8
+L2_CG_MAX_IT = 40
+L2_REPEAT_LIMIT = 1.0e-13
+L2_CANONICAL_LIMIT = 1.0e-12
+L2_CG_TRUE_RESIDUAL_LIMIT = 1.0e-8
 REQUIRED_ARRAYS = {
     "nodes",
     "high_to_lor",
@@ -745,12 +774,722 @@ def check_records(record_paths: list[Path]) -> dict[str, Any]:
     }
 
 
+def _l2_artifact_names(source_name: str) -> dict[str, str]:
+    prefix = f"l2_{source_name}"
+    return {
+        "source_before": f"{prefix}_source_before",
+        "source_after": f"{prefix}_source_after",
+        "pc_output": f"{prefix}_pc_output",
+        "pc_repeat": f"{prefix}_pc_repeat",
+        "residual": f"{prefix}_residual",
+        "applied_output": f"{prefix}_applied_output",
+        "true_residual": f"{prefix}_true_residual",
+        "cg_solution": f"{prefix}_cg_solution",
+        "cg_action": f"{prefix}_cg_action",
+        "cg_true_residual": f"{prefix}_cg_true_residual",
+    }
+
+
+def _l2_identity_errors(record: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    case = record.get("case")
+    if record.get("schema") != L2_SCHEMA or record.get("stage") != "l2":
+        errors.append("L2 record schema/stage mismatch")
+    expected = {
+        "p2-mpi1": (2, 1),
+        "p2-mpi2": (2, 2),
+        "p3-mpi1": (3, 1),
+        "p3-mpi2": (3, 2),
+    }
+    if case not in expected:
+        errors.append("L2 case identity is invalid")
+    elif (record.get("degree"), record.get("mpi_size")) != expected[case]:
+        errors.append("L2 degree/MPI identity is invalid")
+
+    source = record.get("source")
+    if not isinstance(source, dict):
+        errors.append("L2 source identity is missing")
+    else:
+        expected_sha = source.get("expected_sha")
+        if not isinstance(expected_sha, str) or not SHA40.fullmatch(expected_sha):
+            errors.append("L2 expected source SHA is not lowercase 40-hex")
+        if source.get("commit_sha_start") != expected_sha or source.get("commit_sha_end") != expected_sha:
+            errors.append("L2 source SHA is not closed at both boundaries")
+        if source.get("branch") != BRANCH:
+            errors.append("L2 source branch mismatch")
+        if source.get("clean_start") is not True or source.get("clean_end") is not True:
+            errors.append("L2 source was not clean at both boundaries")
+
+    runtime = record.get("runtime")
+    if not isinstance(runtime, dict):
+        errors.append("L2 runtime identity is missing")
+    else:
+        if runtime.get("qualified_activation") != "1":
+            errors.append("L2 qualified activation is not 1")
+        if runtime.get("mpi_size") != record.get("mpi_size"):
+            errors.append("L2 runtime MPI size mismatch")
+        if runtime.get("petsc_scalar_type") != "complex128" or runtime.get("petsc_int_type") != "int32":
+            errors.append("L2 PETSc ABI identity mismatch")
+        executable = str(runtime.get("sys_executable", ""))
+        if "/.venv/" not in executable or "/mnt/c/" in executable:
+            errors.append("L2 runtime executable is not qualified Linux .venv")
+
+    rank_facts = record.get("rank_facts")
+    mpi_size = record.get("mpi_size")
+    if not isinstance(rank_facts, list) or not isinstance(mpi_size, int) or len(rank_facts) != mpi_size:
+        errors.append("L2 rank_facts count does not equal MPI size")
+    else:
+        ranks = [fact.get("rank") if isinstance(fact, dict) else None for fact in rank_facts]
+        if any(not isinstance(rank, int) or isinstance(rank, bool) for rank in ranks):
+            errors.append("L2 rank_facts contain a non-integer rank ID")
+        elif sorted(ranks) != list(range(mpi_size)):
+            errors.append("L2 rank_facts are not the complete rank set")
+        for fact in rank_facts:
+            fact_runtime = fact.get("runtime") if isinstance(fact, dict) else None
+            if not isinstance(fact_runtime, dict):
+                errors.append("L2 rank runtime identity is missing")
+                continue
+            if fact_runtime.get("qualified_activation") != "1" or fact_runtime.get("mpi_size") != mpi_size:
+                errors.append("L2 rank runtime activation/MPI identity mismatch")
+            if fact_runtime.get("petsc_scalar_type") != "complex128" or fact_runtime.get("petsc_int_type") != "int32":
+                errors.append("L2 rank PETSc ABI identity mismatch")
+            executable = str(fact_runtime.get("sys_executable", ""))
+            if "/.venv/" not in executable or "/mnt/c/" in executable:
+                errors.append("L2 rank executable is not qualified Linux .venv")
+
+    fixture = record.get("fixture_audit")
+    if not isinstance(fixture, dict):
+        errors.append("L2 fixture audit is missing")
+    else:
+        fixture_contract = {
+            "high_order_matrix_free": True,
+            "high_order_global_aij": False,
+            "global_transfer_matrix": False,
+            "global_numeric_allgather": False,
+            "metadata_allgather": False,
+            "phase_application": "finalized_floquet_mpc_once",
+            "slave_master_complete": True,
+        }
+        for key, value in fixture_contract.items():
+            if fixture.get(key) != value:
+                errors.append(f"L2 fixture {key} is not exactly {value}")
+        hx = fixture.get("hx_audit")
+        if not isinstance(hx, dict):
+            errors.append("L2 HX audit is missing")
+        else:
+            hx_contract = {
+                "edge_jacobi_omega": 2.0 / 3.0,
+                "edge_jacobi_pre": True,
+                "edge_jacobi_post": True,
+                "gradient_correction_count": 1,
+                "vector_correction_order": "x_then_y_then_z",
+                "nodal_correction_count": 4,
+                "one_v_cycle_per_nodal_correction": True,
+                "one_shared_scalar_hierarchy": True,
+                "hierarchy_object_count": 1,
+                "pc_type": "gamg",
+                "pc_gamg_type": "agg",
+                "maximum_levels": 8,
+                "coarse_ksp_type": "preonly",
+                "coarse_pc_type": "jacobi",
+                "global_transfer_matrix": False,
+                "global_numeric_allgather": False,
+                "global_direct_coarse": False,
+                "high_order_aij": False,
+                "real_imag_split": False,
+                "hypre_ams": False,
+            }
+            for key, value in hx_contract.items():
+                if hx.get(key) != value:
+                    errors.append(f"L2 HX {key} is not exactly {value}")
+            observed_levels = hx.get("observed_levels")
+            if not isinstance(observed_levels, int) or not 1 <= observed_levels <= 8:
+                errors.append("L2 HX observed_levels is outside the fixed range")
+
+    forbidden = record.get("forbidden")
+    forbidden_keys = (
+        "physical_action",
+        "dynamic_dtn",
+        "global_numeric_allgather",
+        "high_order_global_aij",
+        "global_transfer_matrix",
+        "global_direct_coarse",
+        "real_imag_split",
+        "hypre_ams",
+    )
+    if not isinstance(forbidden, dict) or any(
+        forbidden.get(key) is not False for key in forbidden_keys
+    ):
+        errors.append("L2 forbidden audit is not explicitly false")
+    production = record.get("production")
+    production_contract = {
+        "positive_auxiliary_only": True,
+        "high_order_matrix_free": True,
+        "numeric_allgather": False,
+        "global_high_order_aij": False,
+        "global_transfer_matrix": False,
+        "global_direct_coarse": False,
+        "physical_action": False,
+        "dynamic_dtn": False,
+    }
+    if not isinstance(production, dict):
+        errors.append("L2 production audit is missing")
+    else:
+        for key, value in production_contract.items():
+            if production.get(key) != value:
+                errors.append(f"L2 production {key} is not exactly {value}")
+
+    roles = record.get("canonical_roles")
+    expected_roles = {
+        "source_before": "full_fe_primal",
+        "source_after": "full_fe_primal",
+        "pc_output": "full_fe_primal",
+        "pc_repeat": "full_fe_primal",
+        "residual": "full_fe_dual",
+        "applied_output": "full_fe_dual",
+        "true_residual": "full_fe_dual",
+        "cg_solution": "full_fe_primal",
+        "cg_action": "full_fe_dual",
+        "cg_true_residual": "full_fe_dual",
+    }
+    if roles != expected_roles:
+        errors.append("L2 canonical role map is not exact")
+    evidence = record.get("canonical_evidence")
+    if not isinstance(evidence, dict) or evidence.get("root_gather_evidence_only") is not True or evidence.get("production_numeric_allgather") is not False:
+        errors.append("L2 canonical evidence boundary is not explicit")
+
+    if record.get("scope") != "l2_positive_auxiliary_one_apply_and_fixed_cg":
+        errors.append("L2 scope is not the fixed positive auxiliary scope")
+    if not isinstance(record.get("control_flow"), dict):
+        errors.append("L2 control_flow facts are missing")
+    sources = record.get("sources")
+    if not isinstance(sources, list) or [item.get("name") if isinstance(item, dict) else None for item in sources] != list(L2_SOURCE_NAMES):
+        errors.append("L2 source order is not the frozen four-source order")
+    elif len(sources) == len(L2_SOURCE_NAMES):
+        allowed_statuses = {
+            "measured",
+            "not_run_by_prior_contraction_gate",
+        }
+        for entry in sources:
+            if not isinstance(entry, dict):
+                errors.append("L2 source entry is not an object")
+                continue
+            name = entry.get("name")
+            if entry.get("artifact_names") != _l2_artifact_names(name):
+                errors.append(f"L2 {name}: artifact_names prefix is not exact")
+            if entry.get("formula") != L2_SOURCE_FORMULAS.get(name):
+                errors.append(f"L2 {name}: source formula is not the frozen helper formula")
+            if entry.get("status") not in allowed_statuses:
+                errors.append(f"L2 {name}: source status is not an allowed frozen status")
+    return errors
+
+
+def _l2_series(
+    arrays: dict[str, np.ndarray], base: str
+) -> tuple[np.ndarray | None, np.ndarray | None, list[str]]:
+    errors: list[str] = []
+    keys = arrays.get(f"{base}_keys")
+    values = arrays.get(f"{base}_values")
+    if keys is None or values is None:
+        return None, None, [f"missing canonical series {base}"]
+    keys = np.asarray(keys)
+    values = np.asarray(values)
+    if keys.dtype != np.dtype("<U64") or keys.ndim != 1:
+        errors.append(f"{base} keys are not a <U64 vector")
+    if values.dtype != np.dtype(np.complex128) or values.ndim != 1:
+        errors.append(f"{base} values are not a complex128 vector")
+    if keys.ndim == 1 and values.ndim == 1 and keys.size != values.size:
+        errors.append(f"{base} key/value lengths differ")
+    if keys.ndim == 1 and not np.array_equal(keys, np.unique(keys)):
+        errors.append(f"{base} keys are not unique and sorted")
+    if values.ndim == 1 and not _finite(values):
+        errors.append(f"{base} values are non-finite")
+    return keys, values, errors
+
+
+def _l2_scalar_relative(observed: Any, expected: float) -> float:
+    try:
+        return float(abs(float(observed) - expected) / max(abs(expected), 1.0e-300))
+    except (TypeError, ValueError):
+        return float("inf")
+
+
+def _l2_json_sequence(value: Any) -> Any:
+    if value is None:
+        return None
+    array = np.asarray(value)
+    if np.iscomplexobj(array):
+        return [[float(item.real), float(item.imag)] for item in array.reshape(-1)]
+    return array.tolist()
+
+
+def _l2_source_check(
+    entry: dict[str, Any], arrays: dict[str, np.ndarray]
+) -> dict[str, Any]:
+    errors: list[str] = []
+    name = entry.get("name")
+    if name not in L2_SOURCE_NAMES:
+        return {
+            "errors": [f"{name}: source name is not in the frozen source order"],
+            "contract_errors": [f"{name}: source name is not in the frozen source order"],
+            "gate_reason": None,
+        }
+    expected_names = _l2_artifact_names(name)
+    if entry.get("artifact_names") != expected_names:
+        errors.append(f"{name}: artifact_names prefix is not exact")
+    if entry.get("formula") != L2_SOURCE_FORMULAS[name]:
+        errors.append(f"{name}: source formula is not the frozen helper formula")
+    if entry.get("status") != "measured":
+        return {"errors": errors, "contract_errors": errors, "gate_reason": None}
+    if entry.get("phase_application") != L2_PHASE_APPLICATION:
+        errors.append(f"{name}: phase_application is not the finalized algebraic source contract")
+    series: dict[str, tuple[np.ndarray, np.ndarray]] = {}
+    for label in (
+        "source_before",
+        "source_after",
+        "pc_output",
+        "pc_repeat",
+        "residual",
+        "applied_output",
+        "true_residual",
+    ):
+        keys, values, local_errors = _l2_series(arrays, expected_names[label])
+        errors.extend(local_errors)
+        if not local_errors:
+            series[label] = (keys, values)
+    if errors:
+        return {"errors": errors, "contract_errors": errors, "gate_reason": None}
+
+    primal_keys = series["source_before"][0]
+    for label in ("source_after", "pc_output", "pc_repeat"):
+        if not np.array_equal(primal_keys, series[label][0]):
+            errors.append(f"{name}: primal canonical keys differ for {label}")
+    dual_keys = series["residual"][0]
+    for label in ("applied_output", "true_residual"):
+        if not np.array_equal(dual_keys, series[label][0]):
+            errors.append(f"{name}: dual canonical keys differ for {label}")
+    if errors:
+        return {"errors": errors, "contract_errors": errors, "gate_reason": None}
+
+    source_before = series["source_before"][1]
+    source_after = series["source_after"][1]
+    pc_output = series["pc_output"][1]
+    pc_repeat = series["pc_repeat"][1]
+    residual = series["residual"][1]
+    applied = series["applied_output"][1]
+    stored_true = series["true_residual"][1]
+    source_identity = _relative(source_after, source_before)
+    repeat_relative = _relative(pc_repeat, pc_output)
+    computed_true = residual - applied
+    true_identity = _relative(stored_true, computed_true)
+    rho = float(np.linalg.norm(computed_true) / max(np.linalg.norm(residual), 1.0e-300))
+    if true_identity > L2_CANONICAL_LIMIT:
+        errors.append(f"{name}: stored true residual differs from residual-applied")
+    if entry.get("rho_limit") != L2_RHO_LIMITS.get(name):
+        errors.append(f"{name}: rho limit is not the frozen source limit")
+    if entry.get("repeat_limit") != L2_REPEAT_LIMIT:
+        errors.append(f"{name}: repeat limit is not 1e-13")
+    if _l2_scalar_relative(entry.get("rho"), rho) > L2_CANONICAL_LIMIT:
+        errors.append(f"{name}: recorded rho does not match raw recomputation")
+    if _l2_scalar_relative(entry.get("repeat_relative"), repeat_relative) > L2_CANONICAL_LIMIT:
+        errors.append(f"{name}: recorded repeat does not match raw recomputation")
+    before_after = entry.get("source_identity")
+    if not isinstance(before_after, dict) or before_after.get("before") != expected_names["source_before"] or before_after.get("after") != expected_names["source_after"]:
+        errors.append(f"{name}: source before/after identity artifacts are not bound")
+
+    gate_reason = None
+    if not all(_finite(series[label][1]) for label in series):
+        gate_reason = "non_finite_source_or_one_apply"
+    elif source_identity > L2_REPEAT_LIMIT:
+        gate_reason = "source_input_changed"
+    elif repeat_relative > L2_REPEAT_LIMIT:
+        gate_reason = "repeat_relative_above_fixed_limit"
+    elif rho > L2_RHO_LIMITS[name]:
+        gate_reason = "rho_above_source_fixed_limit"
+    if entry.get("input_unchanged") is not (gate_reason != "source_input_changed"):
+        errors.append(f"{name}: recorded input_unchanged disagrees with raw identity")
+    if entry.get("finite") is not all(_finite(series[label][1]) for label in series):
+        errors.append(f"{name}: recorded finite fact disagrees with raw arrays")
+    gate_failure = gate_reason is not None
+    return {
+        "errors": errors,
+        "contract_errors": errors,
+        "gate_reason": gate_reason,
+        "rho_gate_failure": gate_reason == "rho_above_source_fixed_limit",
+        "rho": rho,
+        "repeat_relative": repeat_relative,
+        "source_identity_relative": source_identity,
+        "true_identity_relative": true_identity,
+        "gate_failure": gate_failure,
+        "residual_values": residual,
+        "applied_values": applied,
+        "source_keys": primal_keys,
+        "dual_keys": dual_keys,
+    }
+
+
+def _l2_cg_check(
+    entry: dict[str, Any], source_result: dict[str, Any], arrays: dict[str, np.ndarray]
+) -> dict[str, Any]:
+    errors: list[str] = []
+    cg = entry.get("cg")
+    if not isinstance(cg, dict):
+        return {"errors": [f"{entry.get('name')}: CG facts are missing"], "gate_reason": None}
+    if cg.get("status") != "measured":
+        return {"errors": [], "gate_reason": None}
+    name = entry.get("name")
+    if name not in L2_SOURCE_NAMES:
+        return {
+            "errors": [f"{name}: CG source name is not in the frozen source order"],
+            "gate_reason": None,
+        }
+    if (
+        source_result.get("source_keys") is None
+        or source_result.get("dual_keys") is None
+        or source_result.get("residual_values") is None
+    ):
+        return {
+            "errors": [f"{name}: CG cannot be checked because source facts are incomplete"],
+            "gate_reason": None,
+        }
+    names = _l2_artifact_names(name)
+    solution_keys, solution, solution_errors = _l2_series(arrays, names["cg_solution"])
+    action_keys, action, action_errors = _l2_series(arrays, names["cg_action"])
+    true_keys, stored_true, true_errors = _l2_series(arrays, names["cg_true_residual"])
+    errors.extend(solution_errors + action_errors + true_errors)
+    if errors:
+        return {"errors": errors, "gate_reason": None}
+    if not np.array_equal(solution_keys, source_result["source_keys"]):
+        errors.append(f"{name}: CG solution keys differ from primal source keys")
+    if not np.array_equal(action_keys, source_result["dual_keys"]) or not np.array_equal(true_keys, source_result["dual_keys"]):
+        errors.append(f"{name}: CG dual keys differ from residual keys")
+    computed_true = source_result["residual_values"] - action
+    true_identity = _relative(stored_true, computed_true)
+    true_relative = float(np.linalg.norm(computed_true) / max(np.linalg.norm(source_result["residual_values"]), 1.0e-300))
+    reason = cg.get("reason")
+    iterations = cg.get("iterations")
+    if not isinstance(reason, int) or isinstance(reason, bool):
+        errors.append(f"{name}: CG reason is not an integer")
+    if not isinstance(iterations, int) or isinstance(iterations, bool):
+        errors.append(f"{name}: CG iterations is not an integer")
+    if true_identity > L2_CANONICAL_LIMIT:
+        errors.append(f"{name}: CG stored true residual differs from rhs-action")
+    if cg.get("true_residual_limit") != L2_CG_TRUE_RESIDUAL_LIMIT:
+        errors.append(f"{name}: CG true-residual limit is not 1e-8")
+    if cg.get("ksp_type") != L2_CG_KSP_TYPE:
+        errors.append(f"{name}: CG ksp_type is not exactly cg")
+    if cg.get("rtol") != L2_CG_RTOL:
+        errors.append(f"{name}: CG rtol is not exactly 1e-8")
+    if cg.get("max_it") != L2_CG_MAX_IT:
+        errors.append(f"{name}: CG max_it is not exactly 40")
+    if _l2_scalar_relative(cg.get("true_residual_relative"), true_relative) > L2_CANONICAL_LIMIT:
+        errors.append(f"{name}: recorded CG true residual does not match raw recomputation")
+    gate_reason = None
+    if not all(_finite(value) for value in (solution, action, stored_true)):
+        gate_reason = "cg_non_finite"
+    elif not isinstance(reason, int) or isinstance(reason, bool) or reason <= 0:
+        gate_reason = "cg_reason_not_converged"
+    elif not isinstance(iterations, int) or isinstance(iterations, bool) or iterations > 40:
+        gate_reason = "cg_iterations_above_40"
+    elif true_relative > L2_CG_TRUE_RESIDUAL_LIMIT:
+        gate_reason = "cg_true_residual_above_limit"
+    return {
+        "errors": errors,
+        "gate_reason": gate_reason,
+        "true_residual_relative": true_relative,
+        "iterations": iterations,
+        "reason": reason,
+        "cg_solution_keys": solution_keys,
+        "cg_solution_values": solution,
+    }
+
+
+def check_l2_record(record_path: Path) -> dict[str, Any]:
+    try:
+        raw_record_sha256 = _sha256(record_path)
+        record = json.loads(record_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return {
+            "record": str(record_path),
+            "passed": False,
+            "contract_errors": [f"L2 record parse: {type(exc).__name__}: {exc}"],
+            "gate_failures": [],
+            "errors": [f"L2 record parse: {type(exc).__name__}: {exc}"],
+            "raw_record_sha256": locals().get("raw_record_sha256"),
+            "case": None,
+            "rho_gate_failure": False,
+        }
+    contract_errors = _l2_identity_errors(record)
+    source_entries = record.get("sources")
+    required: set[str] = set()
+    if isinstance(source_entries, list):
+        for entry in source_entries:
+            if not isinstance(entry, dict) or entry.get("status") != "measured":
+                continue
+            names = _l2_artifact_names(str(entry.get("name")))
+            required.update(
+                f"{names[label]}_{suffix}"
+                for label in (
+                    "source_before",
+                    "source_after",
+                    "pc_output",
+                    "pc_repeat",
+                    "residual",
+                    "applied_output",
+                    "true_residual",
+                )
+                for suffix in ("keys", "values")
+            )
+            cg = entry.get("cg")
+            if isinstance(cg, dict) and cg.get("status") == "measured":
+                required.update(
+                    f"{names[label]}_{suffix}"
+                    for label in ("cg_solution", "cg_action", "cg_true_residual")
+                    for suffix in ("keys", "values")
+                )
+    try:
+        arrays, artifact_errors = _read_artifacts(record, required)
+    except Exception as exc:
+        arrays, artifact_errors = {}, [f"L2 artifact validation: {type(exc).__name__}: {exc}"]
+    contract_errors.extend(artifact_errors)
+    source_results: list[dict[str, Any]] = []
+    gate_failures: list[str] = []
+    first_source_gate: int | None = None
+    rho_gate_failure = False
+    if isinstance(source_entries, list) and len(source_entries) == len(L2_SOURCE_NAMES):
+        for index, entry in enumerate(source_entries):
+            if not isinstance(entry, dict):
+                contract_errors.append(f"L2 source entry {index} is not an object")
+                source_results.append({"gate_reason": None, "errors": []})
+                continue
+            if entry.get("status") == "measured" and not artifact_errors:
+                result = _l2_source_check(entry, arrays)
+            else:
+                result = {
+                    "errors": [] if entry.get("status") == "not_run_by_prior_contraction_gate" else [f"{entry.get('name')}: invalid source status"],
+                    "gate_reason": None,
+                }
+            contract_errors.extend(result.get("contract_errors", result.get("errors", [])))
+            source_results.append(result)
+            if result.get("gate_reason") is not None and first_source_gate is None:
+                first_source_gate = index
+                gate_failures.append(
+                    f"{entry.get('name')}: {result['gate_reason']} rho={result.get('rho')} limit={L2_RHO_LIMITS.get(entry.get('name'))}"
+                )
+                rho_gate_failure = bool(result.get("rho_gate_failure"))
+            elif first_source_gate is not None and entry.get("status") == "measured":
+                contract_errors.append(f"{entry.get('name')}: measured after prior source Gate failure")
+        if first_source_gate is None:
+            for index, entry in enumerate(source_entries):
+                if isinstance(entry, dict) and entry.get("status") != "measured":
+                    contract_errors.append(f"{entry.get('name')}: not_run without a prior recomputed source Gate failure")
+        else:
+            for index in range(first_source_gate):
+                entry = source_entries[index]
+                if not isinstance(entry, dict) or entry.get("status") != "measured":
+                    contract_errors.append(f"L2 source index {index}: source was not measured before the first source Gate failure")
+            for index in range(first_source_gate + 1, len(source_entries)):
+                entry = source_entries[index]
+                if not isinstance(entry, dict) or entry.get("status") != "not_run_by_prior_contraction_gate":
+                    contract_errors.append(f"L2 source index {index}: later source was not marked not_run_by_prior_contraction_gate")
+
+        if first_source_gate is not None:
+            for entry in source_entries:
+                if isinstance(entry, dict):
+                    cg = entry.get("cg")
+                    if isinstance(cg, dict) and cg.get("status") == "measured":
+                        contract_errors.append(f"{entry.get('name')}: CG measured after source Gate failure")
+        else:
+            first_cg_gate: int | None = None
+            for index, entry in enumerate(source_entries):
+                if not isinstance(entry, dict) or entry.get("status") != "measured":
+                    continue
+                result = _l2_cg_check(entry, source_results[index], arrays) if not artifact_errors else {"errors": [], "gate_reason": None}
+                contract_errors.extend(result.get("errors", []))
+                source_results[index]["cg"] = result
+                if result.get("gate_reason") is not None and first_cg_gate is None:
+                    first_cg_gate = index
+                    gate_failures.append(f"{entry.get('name')}: {result['gate_reason']}")
+                elif first_cg_gate is not None:
+                    if entry.get("cg", {}).get("status") != "not_run_by_prior_cg_gate":
+                        contract_errors.append(f"{entry.get('name')}: CG was not stopped after prior CG Gate failure")
+            if first_cg_gate is None:
+                for entry in source_entries:
+                    if isinstance(entry, dict) and entry.get("status") == "measured" and entry.get("cg", {}).get("status") != "measured":
+                        contract_errors.append(f"{entry.get('name')}: measured source has no measured CG facts")
+            else:
+                for index in range(first_cg_gate):
+                    entry = source_entries[index]
+                    if not isinstance(entry, dict) or entry.get("status") != "measured":
+                        continue
+                    if entry.get("cg", {}).get("status") != "measured":
+                        contract_errors.append(f"{entry.get('name')}: CG was not measured before the first CG Gate failure")
+    source_metrics = [
+        {
+            "name": entry.get("name") if isinstance(entry, dict) else None,
+            "gate_reason": result.get("gate_reason"),
+            "rho": result.get("rho"),
+            "rho_gate_failure": result.get("rho_gate_failure", False),
+            "iterations": (result.get("cg") or {}).get("iterations"),
+            "cg_solution_keys": _l2_json_sequence(
+                (result.get("cg") or {}).get("cg_solution_keys")
+            ),
+            "cg_solution_values": _l2_json_sequence(
+                (result.get("cg") or {}).get("cg_solution_values")
+            ),
+        }
+        for entry, result in zip(source_entries or (), source_results, strict=False)
+    ]
+    return {
+        "record": str(record_path),
+        "raw_record_sha256": raw_record_sha256,
+        "source_sha": record.get("source", {}).get("expected_sha") if isinstance(record.get("source"), dict) else None,
+        "case": record.get("case"),
+        "degree": record.get("degree"),
+        "mpi_size": record.get("mpi_size"),
+        "passed": not contract_errors and not gate_failures,
+        "contract_errors": contract_errors,
+        "gate_failures": gate_failures,
+        "errors": contract_errors + gate_failures,
+        "rho_gate_failure": rho_gate_failure,
+        "source_metrics": source_metrics,
+    }
+
+
+def _l2_compare_pair(left: dict[str, Any], right: dict[str, Any]) -> tuple[dict[str, float], list[str]]:
+    errors: list[str] = []
+    metrics: dict[str, float] = {}
+    left_record = json.loads(Path(left["record"]).read_text(encoding="utf-8"))
+    right_record = json.loads(Path(right["record"]).read_text(encoding="utf-8"))
+    required: set[str] = set()
+    for entry in left_record.get("sources", []):
+        if isinstance(entry, dict) and entry.get("status") == "measured":
+            names = _l2_artifact_names(entry["name"])
+            for label in ("residual", "applied_output", "cg_action", "cg_solution"):
+                required.update({f"{names[label]}_keys", f"{names[label]}_values"})
+    left_arrays, left_errors = _read_artifacts(left_record, required)
+    right_arrays, right_errors = _read_artifacts(right_record, required)
+    errors.extend(f"left canonical artifacts: {error}" for error in left_errors)
+    errors.extend(f"right canonical artifacts: {error}" for error in right_errors)
+    if errors:
+        return metrics, errors
+    for entry in left_record.get("sources", []):
+        if not isinstance(entry, dict) or entry.get("status") != "measured":
+            continue
+        name = entry["name"]
+        left_names = _l2_artifact_names(name)
+        right_entry = next((item for item in right_record.get("sources", []) if item.get("name") == name), None)
+        if not isinstance(right_entry, dict) or right_entry.get("status") != "measured":
+            errors.append(f"{name}: MPI pair source is not measured on both ranks")
+            continue
+        right_names = _l2_artifact_names(name)
+        for label in ("residual", "applied_output", "cg_action", "cg_solution"):
+            left_keys, left_values, left_local_errors = _l2_series(left_arrays, left_names[label])
+            right_keys, right_values, right_local_errors = _l2_series(right_arrays, right_names[label])
+            errors.extend(f"{name} left {label}: {error}" for error in left_local_errors)
+            errors.extend(f"{name} right {label}: {error}" for error in right_local_errors)
+            if left_local_errors or right_local_errors:
+                continue
+            if not np.array_equal(left_keys, right_keys):
+                errors.append(f"{name} {label} MPI key sets differ")
+                continue
+            relative = _relative(left_values, right_values)
+            metrics[f"{name}_{label}_mpi_relative"] = relative
+            if relative > L2_CANONICAL_LIMIT:
+                errors.append(f"{name} {label} MPI relative {relative} exceeds {L2_CANONICAL_LIMIT}")
+    return metrics, errors
+
+
+def check_l2_records(record_paths: list[Path]) -> dict[str, Any]:
+    results = [check_l2_record(path) for path in record_paths]
+    contract_errors: list[str] = []
+    gate_failures: list[str] = []
+    for result in results:
+        contract_errors.extend(f"{result.get('case')}: {error}" for error in result["contract_errors"])
+        gate_failures.extend(f"{result.get('case')}: {error}" for error in result["gate_failures"])
+    case_paths: dict[str, dict[str, Any]] = {}
+    duplicate_cases: set[str] = set()
+    for result in results:
+        case = result.get("case")
+        if not isinstance(case, str):
+            continue
+        if case in case_paths:
+            duplicate_cases.add(case)
+        case_paths[case] = result
+    if duplicate_cases:
+        contract_errors.append(f"L2 aggregate duplicate cases: {sorted(duplicate_cases)}")
+    extra_cases = set(case_paths) - set(L2_CASE_ORDER)
+    if extra_cases:
+        contract_errors.append(f"L2 aggregate unexpected cases: {sorted(extra_cases)}")
+    first = case_paths.get("p2-mpi1")
+    hard_stop = bool(
+        first is not None
+        and first.get("gate_failures")
+        and not first.get("contract_errors")
+    )
+    if hard_stop and any(case != "p2-mpi1" for case in case_paths):
+        contract_errors.append("L2 hard-stop aggregate contains a later case after p2-mpi1 Gate failure")
+    missing_cases = [case for case in L2_CASE_ORDER if case not in case_paths]
+    if missing_cases and not hard_stop:
+        contract_errors.append(f"L2 aggregate missing cases: {missing_cases}")
+    if not hard_stop and len(record_paths) != len(L2_CASE_ORDER):
+        contract_errors.append("L2 aggregate requires exactly four records")
+    if len(record_paths) == len(L2_CASE_ORDER):
+        observed_order = [result.get("case") for result in results]
+        if observed_order != list(L2_CASE_ORDER):
+            contract_errors.append("L2 aggregate case order is not the frozen order")
+
+    cross_mpi: dict[str, Any] = {}
+    if not hard_stop and not contract_errors and all(result.get("passed") for result in results):
+        for degree in (2, 3):
+            left = case_paths[f"p{degree}-mpi1"]
+            right = case_paths[f"p{degree}-mpi2"]
+            metrics, errors = _l2_compare_pair(left, right)
+            cross_mpi[f"p{degree}"] = {"metrics": metrics, "errors": errors, "limit": L2_CANONICAL_LIMIT}
+            gate_failures.extend(f"p{degree} MPI pair: {error}" for error in errors)
+        for mpi in (1, 2):
+            p2_metrics = {
+                item["name"]: item
+                for item in case_paths[f"p2-mpi{mpi}"]["source_metrics"]
+                if item.get("name") in L2_SOURCE_NAMES
+            }
+            p3_metrics = {
+                item["name"]: item
+                for item in case_paths[f"p3-mpi{mpi}"]["source_metrics"]
+                if item.get("name") in L2_SOURCE_NAMES
+            }
+            for name in L2_SOURCE_NAMES:
+                p2_iterations = p2_metrics.get(name, {}).get("iterations")
+                p3_iterations = p3_metrics.get(name, {}).get("iterations")
+                if not isinstance(p2_iterations, int) or isinstance(p2_iterations, bool) or not isinstance(p3_iterations, int) or isinstance(p3_iterations, bool):
+                    contract_errors.append(f"p2/p3-mpi{mpi} {name}: CG iterations are missing for p3<=p2+10")
+                elif p3_iterations > p2_iterations + 10:
+                    gate_failures.append(f"{name}: p3-mpi{mpi} iterations exceed p2-mpi{mpi}+10")
+    return {
+        "schema": L2_CHECKER_SCHEMA,
+        "case_order": list(L2_CASE_ORDER),
+        "records": results,
+        "hard_stop": hard_stop,
+        "later_cases": missing_cases if hard_stop else [],
+        "later_cases_status": "not_run_by_gate" if hard_stop else None,
+        "contract_errors": contract_errors,
+        "gate_failures": gate_failures,
+        "errors": contract_errors + gate_failures,
+        "cross_mpi": cross_mpi,
+        "passed": not contract_errors and not gate_failures and not hard_stop and len(results) == len(L2_CASE_ORDER),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--stage", choices=("l1", "l2"), default="l1")
     parser.add_argument("--record", action="append", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    result = check_records([path.resolve() for path in args.record])
+    if args.stage == "l2":
+        result = check_l2_records([path.resolve() for path in args.record])
+    else:
+        result = check_records([path.resolve() for path in args.record])
     args.output.resolve().parent.mkdir(parents=True, exist_ok=True)
     args.output.resolve().write_bytes(
         (json.dumps(result, sort_keys=True, indent=2, allow_nan=False) + "\n").encode("utf-8")

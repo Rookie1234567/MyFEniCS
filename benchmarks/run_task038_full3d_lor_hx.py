@@ -1,9 +1,10 @@
-"""Thin L1 LOR/HX oracle worker.
+"""Thin L1/L2 LOR/HX oracle worker.
 
 The numerical transfer lives in ``src.solvers.fullspace_lor_transfer``.  This
 entry point only resolves one small oracle case, writes ignored raw arrays and
-records facts for the independent checker.  It is not an N2 setup, PDE solve,
-or contraction runner.
+records facts for the independent checker.  It does not run a
+physical/exact-A/PDE contraction.  The L2 route records only positive-auxiliary
+source, one-apply, and fixed-CG facts for an independent checker.
 """
 
 from __future__ import annotations
@@ -35,6 +36,22 @@ EXPECTED_CASES = {
 TRANSFER_LIMIT = 1.0e-12
 REPEAT_LIMIT = 1.0e-13
 SPECTRAL_LIMIT = 100.0
+L2_SCHEMA = "task038.lor-native-complex-hx.l2-record.v1"
+L2_EXPECTED_CASES = {
+    "p2-mpi1": (2, 1),
+    "p2-mpi2": (2, 2),
+    "p3-mpi1": (3, 1),
+    "p3-mpi2": (3, 2),
+}
+L2_SOURCE_NAMES = ("random", "gradient", "curl", "checkerboard")
+L2_RHO_LIMITS = {
+    "random": 0.45,
+    "gradient": 0.25,
+    "curl": 0.45,
+    "checkerboard": 0.60,
+}
+L2_CG_TRUE_RESIDUAL_LIMIT = 1.0e-8
+L2_REPEAT_LIMIT = 1.0e-13
 
 
 def _jsonable(value: Any) -> Any:
@@ -112,13 +129,13 @@ def _runtime_identity(root: Path, expected_mpi_size: int) -> dict[str, Any]:
     executable = Path(sys.executable).absolute()
     qualified_bin = (root / ".venv" / "bin").resolve()
     if os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION") != "1":
-        raise RuntimeError("L1 requires qualified activation marker=1")
+        raise RuntimeError("LOR/HX requires qualified activation marker=1")
     if executable.parent.resolve() != qualified_bin:
-        raise RuntimeError("L1 requires the repository qualified .venv")
+        raise RuntimeError("LOR/HX requires the repository qualified .venv")
     if np.dtype(PETSc.ScalarType) != np.dtype(np.complex128):
-        raise RuntimeError("L1 requires PETSc complex128")
+        raise RuntimeError("LOR/HX requires PETSc complex128")
     if np.dtype(PETSc.IntType) != np.dtype(np.int32):
-        raise RuntimeError("L1 requires PETSc int32")
+        raise RuntimeError("LOR/HX requires PETSc int32")
     if MPI.COMM_WORLD.size != expected_mpi_size:
         raise RuntimeError("MPI size does not match the case identity")
     return {
@@ -187,14 +204,18 @@ def _merge_lor_packets(
     )
 
 
-def _prepare_paths(raw_dir: Path, record_path: Path, comm: MPI.Comm) -> None:
+def _prepare_paths(
+    raw_dir: Path, record_path: Path, comm: MPI.Comm, stage: str = "l1"
+) -> None:
     failure: tuple[str, str] | None = None
     if comm.rank == 0:
         try:
             raw_dir.parent.mkdir(parents=True, exist_ok=True)
             record_path.parent.mkdir(parents=True, exist_ok=True)
             if raw_dir.exists() or record_path.exists():
-                raise FileExistsError("L1 raw directory or record already exists")
+                raise FileExistsError(
+                    f"{stage.upper()} raw directory or record already exists"
+                )
             raw_dir.mkdir()
         except Exception as exc:  # only path ownership is handled here
             failure = (type(exc).__name__, str(exc))
@@ -536,10 +557,458 @@ def _write_success(
     )
 
 
+def _l2_artifact_names(source_name: str) -> dict[str, str]:
+    prefix = f"l2_{source_name}"
+    return {
+        "source_before": f"{prefix}_source_before",
+        "source_after": f"{prefix}_source_after",
+        "pc_output": f"{prefix}_pc_output",
+        "pc_repeat": f"{prefix}_pc_repeat",
+        "residual": f"{prefix}_residual",
+        "applied_output": f"{prefix}_applied_output",
+        "true_residual": f"{prefix}_true_residual",
+        "cg_solution": f"{prefix}_cg_solution",
+        "cg_action": f"{prefix}_cg_action",
+        "cg_true_residual": f"{prefix}_cg_true_residual",
+    }
+
+
+def _l2_canonical_payload(fixture: Any, vectors: dict[str, tuple[Any, str]]) -> dict[str, Any]:
+    from src.solvers.hcurl_canonical_vector_dolfinx import (
+        extract_canonical_full_fe_dual_packets,
+        extract_canonical_full_fe_packets,
+    )
+
+    payload: dict[str, Any] = {}
+    for label, (vector, role) in vectors.items():
+        if role == "primal":
+            packets = extract_canonical_full_fe_packets(
+                fixture.high_space, vector, fixture.high_floquet
+            )[0]
+        elif role == "dual":
+            packets = extract_canonical_full_fe_dual_packets(
+                fixture.high_space, fixture.high_floquet.mpc, vector
+            )[0]
+        else:
+            raise ValueError(f"unknown L2 canonical role {role!r}")
+        payload[label] = packets
+    return payload
+
+
+def _l2_gather_payload(
+    comm: MPI.Comm, payload: dict[str, Any]
+) -> dict[str, np.ndarray] | None:
+    parts = comm.gather(payload, root=0)
+    if comm.rank != 0:
+        return None
+    arrays: dict[str, np.ndarray] = {}
+    for label in payload:
+        keys, values = _merge_canonical_packets(
+            [part[label] for part in parts]
+        )
+        arrays[f"{label}_keys"] = keys
+        arrays[f"{label}_values"] = values
+    return arrays
+
+
+def _destroy_l2_apply_result(result: dict[str, Any]) -> None:
+    for name in ("true_residual", "applied_output", "output", "residual"):
+        vector = result.get(name)
+        if vector is not None:
+            vector.destroy()
+
+
+def _l2_vector_finite(vector: Any) -> bool:
+    return bool(np.all(np.isfinite(np.asarray(vector.array))))
+
+
+def _l2_source_fact(
+    name: str,
+    status: str,
+    formula: str,
+    artifact_names: dict[str, str],
+    **facts: Any,
+) -> dict[str, Any]:
+    return {
+        "name": name,
+        "status": status,
+        "formula": formula,
+        "artifact_names": artifact_names,
+        **facts,
+    }
+
+
+def _write_l2_record(
+    root: Path,
+    raw_dir: Path,
+    record_path: Path,
+    case: str,
+    degree: int,
+    mpi_size: int,
+    source: dict[str, Any],
+    runtime: dict[str, Any],
+    rank_facts: list[dict[str, Any]],
+    fixture_audit: dict[str, Any],
+    source_facts: list[dict[str, Any]],
+    arrays: dict[str, np.ndarray],
+    control_flow: dict[str, Any],
+) -> None:
+    source_end = _source_identity(root, source["expected_sha"])
+    closed_source = {
+        **source,
+        "commit_sha_end": source_end["commit_sha_end"],
+        "tracked_status_end": source_end["tracked_status_end"],
+        "clean_end": source_end["clean_end"],
+    }
+    artifacts = [
+        _artifact(raw_dir / f"{name}.npy", name, array)
+        for name, array in arrays.items()
+    ]
+    record = {
+        "schema": L2_SCHEMA,
+        "stage": "l2",
+        "scope": "l2_positive_auxiliary_one_apply_and_fixed_cg",
+        "case": case,
+        "degree": int(degree),
+        "mpi_size": int(mpi_size),
+        "raw_dir": str(raw_dir.resolve()),
+        "command": list(sys.argv),
+        "source": closed_source,
+        "runtime": runtime,
+        "rank_facts": rank_facts,
+        "fixture_audit": fixture_audit,
+        "sources": source_facts,
+        "control_flow": control_flow,
+        "canonical_roles": {
+            "source_before": "full_fe_primal",
+            "source_after": "full_fe_primal",
+            "pc_output": "full_fe_primal",
+            "pc_repeat": "full_fe_primal",
+            "residual": "full_fe_dual",
+            "applied_output": "full_fe_dual",
+            "true_residual": "full_fe_dual",
+            "cg_solution": "full_fe_primal",
+            "cg_action": "full_fe_dual",
+            "cg_true_residual": "full_fe_dual",
+        },
+        "canonical_evidence": {
+            "root_gather_evidence_only": True,
+            "production_numeric_allgather": False,
+        },
+        "artifacts": artifacts,
+        "forbidden": {
+            "physical_action": False,
+            "dynamic_dtn": False,
+            "global_numeric_allgather": False,
+            "high_order_global_aij": False,
+            "global_transfer_matrix": False,
+            "global_direct_coarse": False,
+            "real_imag_split": False,
+            "hypre_ams": False,
+        },
+        "production": {
+            "positive_auxiliary_only": True,
+            "high_order_matrix_free": True,
+            "numeric_allgather": False,
+            "global_high_order_aij": False,
+            "global_transfer_matrix": False,
+            "global_direct_coarse": False,
+            "physical_action": False,
+            "dynamic_dtn": False,
+        },
+        "status": "facts_written_not_qualified",
+    }
+    record_path.write_bytes(_json_bytes(record))
+    print(
+        json.dumps(
+            {
+                "record": str(record_path),
+                "case": case,
+                "degree": degree,
+                "mpi_size": mpi_size,
+                "artifact_count": len(artifacts),
+                "status": record["status"],
+            },
+            sort_keys=True,
+        )
+    )
+
+
+def _run_l2(args: argparse.Namespace, root: Path, comm: MPI.Comm) -> int:
+    from petsc4py import PETSc
+    from src.solvers.fullspace_lor_native_hx_fixture import (
+        build_real_l2_positive_hx_fixture,
+        destroy_l2_cg_result,
+        l2_one_apply,
+        l2_source_formula,
+        solve_l2_cg,
+    )
+
+    if args.case not in L2_EXPECTED_CASES:
+        raise ValueError(f"unsupported L2 case {args.case!r}")
+    degree, case_mpi_size = L2_EXPECTED_CASES[args.case]
+    if case_mpi_size != args.expected_mpi_size:
+        raise ValueError("case and expected MPI size do not agree")
+    raw_dir = args.raw_dir.resolve()
+    record_path = args.record.resolve()
+    _prepare_paths(raw_dir, record_path, comm, stage="l2")
+    _append_stage_marker(raw_dir, "paths_ready", comm.rank)
+
+    source_error: tuple[str, str] | None = None
+    source: dict[str, Any] | None = None
+    if comm.rank == 0:
+        try:
+            source = _source_identity(root, args.expected_source_sha)
+        except Exception as exc:
+            source_error = (type(exc).__name__, str(exc))
+    source, source_error = comm.bcast((source, source_error), root=0)
+    if source_error is not None:
+        raise RuntimeError(f"{source_error[0]}: {source_error[1]}")
+    _append_stage_marker(raw_dir, "source_identity_closed", comm.rank)
+    runtime = _runtime_identity(root, args.expected_mpi_size)
+    _append_stage_marker(raw_dir, "runtime_identity", comm.rank)
+
+    fixture = build_real_l2_positive_hx_fixture(degree, comm)
+    _append_stage_marker(raw_dir, "fixture_built", comm.rank)
+    source_facts: list[dict[str, Any]] = []
+    source_rhs: dict[str, Any] = {}
+    arrays: dict[str, np.ndarray] = {}
+    measured_names: list[str] = []
+    control_flow: dict[str, Any] = {
+        "early_stop": False,
+        "stop_reason": None,
+        "first_failed_source": None,
+    }
+    contraction_stopped = False
+
+    for name in L2_SOURCE_NAMES:
+        artifact_names = _l2_artifact_names(name)
+        formula = l2_source_formula(name)
+        if contraction_stopped:
+            source_facts.append(
+                _l2_source_fact(
+                    name,
+                    "not_run_by_prior_contraction_gate",
+                    formula,
+                    artifact_names,
+                    cg={"status": "not_run_by_prior_contraction_gate"},
+                )
+            )
+            continue
+
+        source_vector, source_audit = fixture.build_l2_source(name)
+        source_before = source_vector.copy()
+        first = l2_one_apply(fixture, source_vector)
+        second = l2_one_apply(fixture, source_vector)
+        source_after = source_vector.copy()
+        _append_stage_marker(raw_dir, f"l2_source_{name}", comm.rank)
+        repeat_delta = second["output"].copy()
+        repeat_delta.axpy(PETSc.ScalarType(-1.0), first["output"])
+        repeat_relative = float(
+            repeat_delta.norm()
+            / max(first["output"].norm(), np.finfo(float).tiny)
+        )
+        repeat_delta.destroy()
+        local_finite = all(
+            _l2_vector_finite(first[key])
+            and _l2_vector_finite(second[key])
+            for key in ("residual", "output", "applied_output", "true_residual")
+        ) and _l2_vector_finite(source_vector)
+        rho = float(first["rho"])
+        global_rho = float(comm.allreduce(rho, op=MPI.MAX))
+        global_repeat = float(comm.allreduce(repeat_relative, op=MPI.MAX))
+        global_finite = bool(comm.allreduce(int(local_finite), op=MPI.MIN))
+        input_unchanged = bool(
+            comm.allreduce(
+                int(first["input_unchanged"] and second["input_unchanged"]),
+                op=MPI.MIN,
+            )
+        )
+        payload = _l2_canonical_payload(
+            fixture,
+            {
+                "source_before": (source_before, "primal"),
+                "source_after": (source_after, "primal"),
+                "pc_output": (first["output"], "primal"),
+                "pc_repeat": (second["output"], "primal"),
+                "residual": (first["residual"], "dual"),
+                "applied_output": (first["applied_output"], "dual"),
+                "true_residual": (first["true_residual"], "dual"),
+            },
+        )
+        merged = _l2_gather_payload(comm, payload)
+        _append_stage_marker(raw_dir, "canonical_packets_gathered", comm.rank)
+        if comm.rank == 0 and merged is not None:
+            arrays.update(
+                {
+                    f"{artifact_names[label]}_{suffix}": value
+                    for label in (
+                        "source_before",
+                        "source_after",
+                        "pc_output",
+                        "pc_repeat",
+                        "residual",
+                        "applied_output",
+                        "true_residual",
+                    )
+                    for suffix, value in (
+                        ("keys", merged[f"{label}_keys"]),
+                        ("values", merged[f"{label}_values"]),
+                    )
+                }
+            )
+        comm.barrier()
+        source_rhs[name] = first["residual"].copy()
+        gate_reason = None
+        if not global_finite:
+            gate_reason = "non_finite_source_or_one_apply"
+        elif not input_unchanged:
+            gate_reason = "source_input_changed"
+        elif global_repeat > L2_REPEAT_LIMIT:
+            gate_reason = "repeat_relative_above_fixed_limit"
+        elif global_rho > L2_RHO_LIMITS[name]:
+            gate_reason = "rho_above_source_fixed_limit"
+        source_facts.append(
+            _l2_source_fact(
+                name,
+                "measured",
+                formula,
+                artifact_names,
+                phase_application=source_audit["phase_application"],
+                rho=global_rho,
+                rho_limit=L2_RHO_LIMITS[name],
+                repeat_relative=global_repeat,
+                repeat_limit=L2_REPEAT_LIMIT,
+                input_unchanged=input_unchanged,
+                finite=global_finite,
+                residual_norm=float(first["residual_norm"]),
+                source_identity={
+                    "before": artifact_names["source_before"],
+                    "after": artifact_names["source_after"],
+                    "before_role": "full_fe_primal_input_snapshot",
+                    "after_role": "full_fe_primal_post_apply_snapshot",
+                    "relative_limit": L2_REPEAT_LIMIT,
+                },
+                cg={"status": "not_run_by_prior_contraction_gate"},
+            )
+        )
+        measured_names.append(name)
+        _destroy_l2_apply_result(first)
+        _destroy_l2_apply_result(second)
+        source_before.destroy()
+        source_after.destroy()
+        source_vector.destroy()
+        if gate_reason is not None:
+            contraction_stopped = True
+            control_flow.update(
+                {
+                    "early_stop": True,
+                    "stop_reason": gate_reason,
+                    "first_failed_source": name,
+                }
+            )
+
+    if not contraction_stopped:
+        _append_stage_marker(raw_dir, "l2_sources_complete", comm.rank)
+        for index, name in enumerate(measured_names):
+            cg = solve_l2_cg(fixture, source_rhs[name])
+            local_true_residual = float(cg["true_residual_relative"])
+            true_residual = float(comm.allreduce(local_true_residual, op=MPI.MAX))
+            local_cg_failed = (
+                int(cg["reason"]) <= 0
+                or int(cg["iterations"]) > 40
+                or true_residual > L2_CG_TRUE_RESIDUAL_LIMIT
+            )
+            cg_failed = bool(comm.allreduce(int(local_cg_failed), op=MPI.MAX))
+            artifact_names = source_facts[index]["artifact_names"]
+            cg_payload = _l2_canonical_payload(
+                fixture,
+                {
+                    "cg_solution": (cg["solution"], "primal"),
+                    "cg_action": (cg["action"], "dual"),
+                    "cg_true_residual": (cg["true_residual"], "dual"),
+                },
+            )
+            merged = _l2_gather_payload(comm, cg_payload)
+            _append_stage_marker(raw_dir, "cg_canonical_packets_gathered", comm.rank)
+            if comm.rank == 0 and merged is not None:
+                arrays.update(
+                    {
+                        f"{artifact_names[label]}_{suffix}": value
+                        for label in (
+                            "cg_solution",
+                            "cg_action",
+                            "cg_true_residual",
+                        )
+                        for suffix, value in (
+                            ("keys", merged[f"{label}_keys"]),
+                            ("values", merged[f"{label}_values"]),
+                        )
+                    }
+                )
+            comm.barrier()
+            source_facts[index]["cg"] = {
+                "status": "measured",
+                "reason": int(cg["reason"]),
+                "iterations": int(cg["iterations"]),
+                "ksp_type": "cg",
+                "rtol": 1.0e-8,
+                "max_it": 40,
+                "reported_residual_norm": float(cg["reported_residual_norm"]),
+                "true_residual_relative": true_residual,
+                "true_residual_limit": L2_CG_TRUE_RESIDUAL_LIMIT,
+                "pc_apply_count": int(cg["pc_context"].apply_count),
+            }
+            destroy_l2_cg_result(cg)
+            if cg_failed:
+                control_flow.update(
+                    {
+                        "early_stop": True,
+                        "stop_reason": "cg_fact_observed_outside_fixed_limit",
+                        "first_failed_cg_source": name,
+                    }
+                )
+                for later in source_facts[index + 1 :]:
+                    later["cg"] = {"status": "not_run_by_prior_cg_gate"}
+                break
+
+    for vector in source_rhs.values():
+        vector.destroy()
+    fixture_audit = _jsonable(fixture.audit)
+    rank_facts = comm.gather(
+        {"rank": int(comm.rank), "runtime": runtime},
+        root=0,
+    )
+    if comm.rank == 0:
+        _write_l2_record(
+            root,
+            raw_dir,
+            record_path,
+            args.case,
+            degree,
+            args.expected_mpi_size,
+            source,
+            runtime,
+            rank_facts,
+            fixture_audit,
+            source_facts,
+            arrays,
+            control_flow,
+        )
+    comm.barrier()
+    fixture.destroy()
+    _append_stage_marker(raw_dir, "record_written", comm.rank)
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--stage", choices=("l1",), required=True)
-    parser.add_argument("--case", choices=tuple(EXPECTED_CASES), required=True)
+    parser.add_argument("--stage", choices=("l1", "l2"), required=True)
+    parser.add_argument(
+        "--case",
+        choices=tuple(sorted(set(EXPECTED_CASES) | set(L2_EXPECTED_CASES))),
+        required=True,
+    )
     parser.add_argument("--raw-dir", type=Path, required=True)
     parser.add_argument("--record", type=Path, required=True)
     parser.add_argument("--expected-source-sha", required=True)
@@ -547,6 +1016,8 @@ def main() -> int:
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     comm = MPI.COMM_WORLD
+    if args.stage == "l2":
+        return _run_l2(args, root, comm)
     degree, case_mpi_size = _parse_case(args.case)
     if case_mpi_size != args.expected_mpi_size:
         raise ValueError("case and expected MPI size do not agree")
@@ -557,9 +1028,9 @@ def main() -> int:
     source = None
     runtime = None
     periodic = None
+    source_error: tuple[str, str] | None = None
     setup_error: tuple[str, str] | None = None
     try:
-        source_error: tuple[str, str] | None = None
         if comm.rank == 0:
             try:
                 source = _source_identity(root, args.expected_source_sha)

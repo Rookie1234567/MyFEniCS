@@ -340,3 +340,334 @@ def test_l1_checker_cross_mpi_keys_and_values_are_real_pair_gates(tmp_path: Path
     right_lor_path = _write_record(tmp_path, "right_lor_mutated", right_lor_mutated)
     _metrics, errors = checker._compare_canonical_records(left_path, right_lor_path)
     assert any("owner-LOR canonical MPI relative" in error for error in errors)
+
+
+def _l2_synthetic_arrays(
+    measured_names: tuple[str, ...],
+    applied_fraction: float = 1.0,
+    cg_solution_offset: complex = 0.0j,
+    cg_action_offset: complex = 0.0j,
+) -> dict[str, np.ndarray]:
+    primal_keys = np.asarray(["p0", "p1"], dtype="<U64")
+    dual_keys = np.asarray(["d0", "d1"], dtype="<U64")
+    source = np.asarray([1.0 + 0.5j, -2.0 + 0.25j], dtype=np.complex128)
+    pc_output = np.asarray([0.5 - 0.25j, 1.0 + 0.125j], dtype=np.complex128)
+    residual = np.asarray([2.0 + 1.0j, 4.0 - 0.5j], dtype=np.complex128)
+    applied = applied_fraction * residual
+    true_residual = residual - applied
+    cg_solution = np.asarray([1.0 + 0.25j, 2.0 - 0.5j], dtype=np.complex128)
+    cg_solution += cg_solution_offset
+    cg_action = residual + cg_action_offset
+    cg_true_residual = residual - cg_action
+    arrays: dict[str, np.ndarray] = {}
+    for name in measured_names:
+        names = checker._l2_artifact_names(name)
+        for label, keys, values in (
+            ("source_before", primal_keys, source),
+            ("source_after", primal_keys, source),
+            ("pc_output", primal_keys, pc_output),
+            ("pc_repeat", primal_keys, pc_output),
+            ("residual", dual_keys, residual),
+            ("applied_output", dual_keys, applied),
+            ("true_residual", dual_keys, true_residual),
+            ("cg_solution", primal_keys, cg_solution),
+            ("cg_action", dual_keys, cg_action),
+            ("cg_true_residual", dual_keys, cg_true_residual),
+        ):
+            arrays[f"{names[label]}_keys"] = keys.copy()
+            arrays[f"{names[label]}_values"] = values.copy()
+    return arrays
+
+
+def _l2_synthetic_record(
+    case: str,
+    iterations: int = 4,
+    measured_names: tuple[str, ...] = checker.L2_SOURCE_NAMES,
+    applied_fraction: float = 1.0,
+    cg_solution_offset: complex = 0.0j,
+    cg_action_offset: complex = 0.0j,
+) -> dict:
+    degree = int(case[1])
+    mpi_size = int(case[-1])
+    runtime = {
+        "qualified_activation": "1",
+        "mpi_size": mpi_size,
+        "petsc_scalar_type": "complex128",
+        "petsc_int_type": "int32",
+        "sys_executable": "/repo/.venv/bin/python",
+    }
+    hx_audit = {
+        "edge_jacobi_omega": 2.0 / 3.0,
+        "edge_jacobi_pre": True,
+        "edge_jacobi_post": True,
+        "gradient_correction_count": 1,
+        "vector_correction_order": "x_then_y_then_z",
+        "nodal_correction_count": 4,
+        "one_v_cycle_per_nodal_correction": True,
+        "one_shared_scalar_hierarchy": True,
+        "hierarchy_object_count": 1,
+        "pc_type": "gamg",
+        "pc_gamg_type": "agg",
+        "maximum_levels": 8,
+        "observed_levels": 2,
+        "coarse_ksp_type": "preonly",
+        "coarse_pc_type": "jacobi",
+        "global_transfer_matrix": False,
+        "global_numeric_allgather": False,
+        "global_direct_coarse": False,
+        "high_order_aij": False,
+        "real_imag_split": False,
+        "hypre_ams": False,
+    }
+    source_facts = []
+    synthetic_residual = np.asarray(
+        [2.0 + 1.0j, 4.0 - 0.5j], dtype=np.complex128
+    )
+    synthetic_cg_true = synthetic_residual - (
+        synthetic_residual + cg_action_offset
+    )
+    cg_true_residual_relative = float(
+        np.linalg.norm(synthetic_cg_true) / np.linalg.norm(synthetic_residual)
+    )
+    for name in checker.L2_SOURCE_NAMES:
+        names = checker._l2_artifact_names(name)
+        if name in measured_names:
+            rho = abs(1.0 - applied_fraction)
+            source_facts.append(
+                {
+                    "name": name,
+                    "status": "measured",
+                    "formula": checker.L2_SOURCE_FORMULAS[name],
+                    "artifact_names": names,
+                    "phase_application": checker.L2_PHASE_APPLICATION,
+                    "rho": rho,
+                    "rho_limit": checker.L2_RHO_LIMITS[name],
+                    "repeat_relative": 0.0,
+                    "repeat_limit": checker.L2_REPEAT_LIMIT,
+                    "input_unchanged": True,
+                    "finite": True,
+                    "source_identity": {
+                        "before": names["source_before"],
+                        "after": names["source_after"],
+                    },
+                    "cg": {
+                        "status": "measured"
+                        if len(measured_names) == len(checker.L2_SOURCE_NAMES)
+                        else "not_run_by_prior_contraction_gate",
+                        "reason": 1,
+                        "iterations": iterations,
+                        "ksp_type": checker.L2_CG_KSP_TYPE,
+                        "rtol": checker.L2_CG_RTOL,
+                        "max_it": checker.L2_CG_MAX_IT,
+                        "reported_residual_norm": 0.0,
+                        "true_residual_relative": cg_true_residual_relative,
+                        "true_residual_limit": checker.L2_CG_TRUE_RESIDUAL_LIMIT,
+                    },
+                }
+            )
+        else:
+            source_facts.append(
+                {
+                    "name": name,
+                    "status": "not_run_by_prior_contraction_gate",
+                    "formula": checker.L2_SOURCE_FORMULAS[name],
+                    "artifact_names": names,
+                    "cg": {"status": "not_run_by_prior_contraction_gate"},
+                }
+            )
+    return {
+        "schema": checker.L2_SCHEMA,
+        "stage": "l2",
+        "scope": "l2_positive_auxiliary_one_apply_and_fixed_cg",
+        "case": case,
+        "degree": degree,
+        "mpi_size": mpi_size,
+        "command": ["synthetic-l2"],
+        "source": {
+            "expected_sha": "a" * 40,
+            "commit_sha_start": "a" * 40,
+            "commit_sha_end": "a" * 40,
+            "branch": checker.BRANCH,
+            "clean_start": True,
+            "clean_end": True,
+        },
+        "runtime": runtime,
+        "rank_facts": [
+            {"rank": rank, "runtime": {**runtime}}
+            for rank in range(mpi_size)
+        ],
+        "fixture_audit": {
+            "high_order_matrix_free": True,
+            "high_order_global_aij": False,
+            "global_transfer_matrix": False,
+            "global_numeric_allgather": False,
+            "metadata_allgather": False,
+            "phase_application": "finalized_floquet_mpc_once",
+            "slave_master_complete": True,
+            "hx_audit": hx_audit,
+        },
+        "sources": source_facts,
+        "control_flow": {
+            "early_stop": len(measured_names) != len(checker.L2_SOURCE_NAMES),
+            "stop_reason": "rho_above_source_fixed_limit"
+            if len(measured_names) != len(checker.L2_SOURCE_NAMES)
+            else None,
+        },
+        "canonical_roles": {
+            "source_before": "full_fe_primal",
+            "source_after": "full_fe_primal",
+            "pc_output": "full_fe_primal",
+            "pc_repeat": "full_fe_primal",
+            "residual": "full_fe_dual",
+            "applied_output": "full_fe_dual",
+            "true_residual": "full_fe_dual",
+            "cg_solution": "full_fe_primal",
+            "cg_action": "full_fe_dual",
+            "cg_true_residual": "full_fe_dual",
+        },
+        "canonical_evidence": {
+            "root_gather_evidence_only": True,
+            "production_numeric_allgather": False,
+        },
+        "forbidden": {
+            "physical_action": False,
+            "dynamic_dtn": False,
+            "global_numeric_allgather": False,
+            "high_order_global_aij": False,
+            "global_transfer_matrix": False,
+            "global_direct_coarse": False,
+            "real_imag_split": False,
+            "hypre_ams": False,
+        },
+        "production": {
+            "positive_auxiliary_only": True,
+            "high_order_matrix_free": True,
+            "numeric_allgather": False,
+            "global_high_order_aij": False,
+            "global_transfer_matrix": False,
+            "global_direct_coarse": False,
+            "physical_action": False,
+            "dynamic_dtn": False,
+        },
+        "status": "facts_written_not_qualified",
+        "_arrays": _l2_synthetic_arrays(
+            measured_names,
+            applied_fraction,
+            cg_solution_offset,
+            cg_action_offset,
+        ),
+    }
+
+
+def test_l2_checker_accepts_four_case_synthetic_and_serializes_nested_cg(
+    tmp_path: Path,
+) -> None:
+    configurations = (
+        ("p2-mpi1", 2),
+        ("p2-mpi2", 3),
+        ("p3-mpi1", 4),
+        ("p3-mpi2", 5),
+    )
+    paths = [
+        _write_record(
+            tmp_path,
+            f"l2_{case}",
+            _l2_synthetic_record(case, iterations),
+        )
+        for case, iterations in configurations
+    ]
+    result = checker.check_l2_records(paths)
+    assert result["passed"] is True
+    assert result["hard_stop"] is False
+    for item, (_case, iterations) in zip(result["records"], configurations):
+        assert item["source_metrics"][0]["iterations"] == iterations
+        assert item["source_metrics"][0]["cg_solution_keys"] == ["p0", "p1"]
+        assert item["source_metrics"][0]["cg_solution_values"]
+    json.dumps(result, allow_nan=False)
+
+
+def test_l2_checker_recomputes_raw_gate_and_rejects_formula_phase_mutations(
+    tmp_path: Path,
+) -> None:
+    bad = _l2_synthetic_record(
+        "p2-mpi1", measured_names=("random",), applied_fraction=0.0
+    )
+    bad["status"] = "worker_claimed_pass"
+    bad["sources"][0]["rho"] = 0.0
+    bad_path = _write_record(tmp_path, "l2_bad_raw", bad)
+    checked = checker.check_l2_record(bad_path)
+    assert checked["passed"] is False
+    assert any("rho_above_source_fixed_limit" in error for error in checked["gate_failures"])
+
+    for field in ("formula", "phase_application"):
+        mutated = _l2_synthetic_record("p2-mpi1")
+        mutated["sources"][0][field] = "mutated"
+        path = _write_record(tmp_path, f"l2_bad_{field}", mutated)
+        assert checker.check_l2_record(path)["contract_errors"]
+
+    bad_cg = _l2_synthetic_record("p2-mpi1")
+    bad_cg["sources"][0]["cg"]["rtol"] = 1.0e-7
+    path = _write_record(tmp_path, "l2_bad_cg_contract", bad_cg)
+    assert any("rtol" in error for error in checker.check_l2_record(path)["contract_errors"])
+
+
+def test_l2_checker_accepts_only_single_first_case_contraction_hard_stop(
+    tmp_path: Path,
+) -> None:
+    first = _l2_synthetic_record(
+        "p2-mpi1", measured_names=("random",), applied_fraction=0.0
+    )
+    first_path = _write_record(tmp_path, "l2_hard_stop_first", first)
+    result = checker.check_l2_records([first_path])
+    assert result["hard_stop"] is True
+    assert result["later_cases_status"] == "not_run_by_gate"
+    assert result["later_cases"] == ["p2-mpi2", "p3-mpi1", "p3-mpi2"]
+    assert result["contract_errors"] == []
+
+    later = _l2_synthetic_record("p2-mpi2")
+    later_path = _write_record(tmp_path, "l2_hard_stop_later", later)
+    result = checker.check_l2_records([first_path, later_path])
+    assert any("later case" in error for error in result["contract_errors"])
+
+
+def test_l2_checker_gates_p3_iterations_per_mpi(tmp_path: Path) -> None:
+    configurations = (
+        ("p2-mpi1", 1),
+        ("p2-mpi2", 1),
+        ("p3-mpi1", 12),
+        ("p3-mpi2", 12),
+    )
+    paths = [
+        _write_record(
+            tmp_path,
+            f"l2_iterations_{case}",
+            _l2_synthetic_record(case, iterations),
+        )
+        for case, iterations in configurations
+    ]
+    result = checker.check_l2_records(paths)
+    assert result["passed"] is False
+    assert any("p3-mpi1 iterations" in error for error in result["gate_failures"])
+    assert any("p3-mpi2 iterations" in error for error in result["gate_failures"])
+
+
+def test_l2_checker_gates_cross_mpi_action_and_solution_mutations(
+    tmp_path: Path,
+) -> None:
+    for label, kwargs, expected in (
+        ("action", {"cg_action_offset": 1.0e-10 + 0.0j}, "cg_action"),
+        ("solution", {"cg_solution_offset": 1.0e-3 + 0.0j}, "cg_solution"),
+    ):
+        paths = []
+        for case in checker.L2_CASE_ORDER:
+            options = kwargs if case == "p2-mpi2" else {}
+            paths.append(
+                _write_record(
+                    tmp_path,
+                    f"l2_mutation_{label}_{case}",
+                    _l2_synthetic_record(case, **options),
+                )
+            )
+        result = checker.check_l2_records(paths)
+        assert result["passed"] is False
+        assert any(expected in error for error in result["gate_failures"])
