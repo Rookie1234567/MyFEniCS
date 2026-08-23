@@ -35,7 +35,7 @@ from src.solvers.fullspace_lor_topology import (
     P6_H10_REFERENCE_UNIQUE_EDGE_COUNT,
     _pack_canonical_edges,
     _phase_code,
-    build_canonical_lor_subedge_topology,
+    global_lor_edge_roundtrip,
 )
 from src.solvers.hcurl_canonical_vector_dolfinx import (
     extract_canonical_full_fe_dual_packets,
@@ -144,133 +144,11 @@ def _lor_packet_relative(left, right):
     )
 
 
-def _mesh_hlor_roundtrip(V, floquet, source_field, transfer):
-    """Apply H->LOR->H on every real cell, including DOLFINx orientation."""
-
-    topology = V.mesh.topology
-    cell_count = int(topology.index_map(topology.dim).size_local)
-    cell_info = np.asarray(topology.get_cell_permutation_info(), dtype=np.uint32)
-    roundtrip = fem.Function(V)
-    multiplicity = fem.Function(V)
-    roundtrip.x.array[:] = 0.0
-    multiplicity.x.array[:] = 0.0
-    local_max = 0.0
-    for cell in range(cell_count):
-        local_dofs = np.asarray(V.dofmap.cell_dofs(cell), dtype=np.int32)
-        raw = np.asarray(source_field.x.array[local_dofs], dtype=np.complex128)
-        canonical = raw.copy()
-        V.element.Tt_apply(canonical, np.asarray([cell_info[cell]], dtype=np.uint32), 1)
-        restored = transfer.lor_to_high(transfer.high_to_lor(canonical))
-        stored = restored.copy()
-        V.element.T_apply(stored, np.asarray([cell_info[cell]], dtype=np.uint32), 1)
-        local_max = max(
-            local_max,
-            float(np.linalg.norm(stored - raw) / max(np.linalg.norm(raw), np.finfo(float).tiny)),
-        )
-        roundtrip.x.array[local_dofs] += stored
-        multiplicity.x.array[local_dofs] += 1.0
-    roundtrip.x.petsc_vec.ghostUpdate(
-        addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE
-    )
-    multiplicity.x.petsc_vec.ghostUpdate(
-        addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE
-    )
-    owned = int(V.dofmap.index_map.size_local)
-    if np.any(np.real(multiplicity.x.array[:owned]) <= 0.0):
-        raise AssertionError("real-cell transfer did not cover owned rows")
-    roundtrip.x.array[:owned] /= multiplicity.x.array[:owned]
-    roundtrip.x.petsc_vec.ghostUpdate(
-        addv=PETSc.InsertMode.INSERT_VALUES, mode=PETSc.ScatterMode.FORWARD
-    )
-    floquet.mpc.homogenize(roundtrip)
-    floquet.mpc.backsubstitution(roundtrip)
-    roundtrip.x.scatter_forward()
-    local_max = V.mesh.comm.allreduce(local_max, op=MPI.MAX)
-    del multiplicity
-    return roundtrip, float(local_max)
-
-
-def _global_lor_edge_roundtrip(V, floquet, source_field, transfer):
-    """Route real mesh H/LOR/H data through the production topology API."""
-
-    comm = V.mesh.comm
-    topology = build_canonical_lor_subedge_topology(V, floquet, transfer)
-    local_dofs_by_cell = []
-    local_max_error = 0.0
-    cell_info = np.asarray(V.mesh.topology.get_cell_permutation_info(), dtype=np.uint32)
-    batch_sizes = []
-
-    def cell_chunks():
-        nonlocal local_max_error
-        batch_start = 0
-        canonical_batch = []
-        for cell in range(topology.cell_edge_ids.shape[0]):
-            local_dofs = np.asarray(V.dofmap.cell_dofs(cell), dtype=np.int32)
-            local_dofs_by_cell.append(local_dofs)
-            raw = np.asarray(source_field.x.array[local_dofs], dtype=np.complex128).copy()
-            canonical = raw.copy()
-            V.element.Tt_apply(
-                canonical, np.asarray([cell_info[cell]], dtype=np.uint32), 1
-            )
-            canonical_batch.append(canonical)
-            if len(canonical_batch) == LOR_BATCH_CELL_CAP or cell + 1 == topology.cell_edge_ids.shape[0]:
-                batch = np.asarray(canonical_batch, dtype=np.complex128)
-                lor_batch = transfer.high_to_lor_many(batch)
-                restored_batch = transfer.lor_to_high_many(lor_batch)
-                errors = np.linalg.norm(restored_batch - batch, axis=1) / np.maximum(
-                    np.linalg.norm(batch, axis=1), np.finfo(float).tiny
-                )
-                local_max_error = max(local_max_error, float(np.max(errors)))
-                batch_sizes.append(len(canonical_batch))
-                yield batch_start, lor_batch
-                batch_start = cell + 1
-                canonical_batch = []
-
-    owner_ids, owner_values = topology.route_owner_cell_chunks(cell_chunks())
-    unique_values = topology.pull_owner_unique_values(owner_ids, owner_values)
-
-    roundtrip = fem.Function(V)
-    multiplicity = fem.Function(V)
-    roundtrip.x.array[:] = 0.0
-    multiplicity.x.array[:] = 0.0
-    for cell_start in range(0, len(local_dofs_by_cell), LOR_BATCH_CELL_CAP):
-        cell_end = min(cell_start + LOR_BATCH_CELL_CAP, len(local_dofs_by_cell))
-        pulled_lor = topology.cell_values_from_unique(
-            unique_values, cell_start, cell_end
-        )
-        canonical_batch = transfer.lor_to_high_many(pulled_lor)
-        for offset, cell in enumerate(range(cell_start, cell_end)):
-            local_dofs = local_dofs_by_cell[cell]
-            stored = canonical_batch[offset].copy()
-            V.element.T_apply(stored, np.asarray([cell_info[cell]], dtype=np.uint32), 1)
-            roundtrip.x.array[local_dofs] += stored
-            multiplicity.x.array[local_dofs] += 1.0
-    if len(local_dofs_by_cell) >= 2:
-        assert max(batch_sizes) >= 2
-    roundtrip.x.petsc_vec.ghostUpdate(
-        addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE
-    )
-    multiplicity.x.petsc_vec.ghostUpdate(
-        addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE
-    )
-    owned = int(V.dofmap.index_map.size_local)
-    roundtrip.x.array[:owned] /= multiplicity.x.array[:owned]
-    roundtrip.x.petsc_vec.ghostUpdate(
-        addv=PETSc.InsertMode.INSERT_VALUES, mode=PETSc.ScatterMode.FORWARD
-    )
-    floquet.mpc.homogenize(roundtrip)
-    floquet.mpc.backsubstitution(roundtrip)
-    roundtrip.x.scatter_forward()
-    local_max_error = comm.allreduce(local_max_error, op=MPI.MAX)
-    del multiplicity
-    return roundtrip, (owner_ids, owner_values), float(local_max_error), topology
-
-
 def _canonical_transfer_authority(degree: int, transfer):
     serial = MPI.COMM_SELF
     _cfg, _mesh_data, V, floquet = _periodic_context(serial, degree)
     field = _source_field(V, floquet)
-    roundtrip, lor_packets, local_error, _topology = _global_lor_edge_roundtrip(
+    roundtrip, lor_packets, local_error, _topology = global_lor_edge_roundtrip(
         V, floquet, field, transfer
     )
     action = _positive_action(V, floquet)
@@ -528,7 +406,7 @@ def test_l1_periodic_mpc_canonical_source_action_identity(degree: int) -> None:
     _cfg, _mesh_data, V, floquet = _periodic_context(comm, degree)
     field = _source_field(V, floquet)
     transfer = build_reference_factor_lor_transfer(degree)
-    roundtrip, lor_packets, local_transfer_error, lor_topology = _global_lor_edge_roundtrip(
+    roundtrip, lor_packets, local_transfer_error, lor_topology = global_lor_edge_roundtrip(
         V, floquet, field, transfer
     )
     assert local_transfer_error <= 1.0e-12

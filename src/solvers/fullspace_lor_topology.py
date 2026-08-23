@@ -356,6 +356,113 @@ class CanonicalLORSubedgeTopology:
         return unique_values[positions] * self.cell_orientation[cell_start:cell_end] * phase
 
 
+def global_lor_edge_roundtrip(
+    function_space: Any,
+    floquet_data: Any,
+    source_field: Any,
+    transfer: Any,
+) -> tuple[Any, tuple[np.ndarray, np.ndarray], float, CanonicalLORSubedgeTopology]:
+    """Apply the production batched H-to-LOR-to-H owner route.
+
+    Cell orientation transforms, fixed-size batched transfer, typed owner
+    routing, and finalized MPC backsubstitution are kept in this reusable
+    path so tests and benchmark runners do not carry a second numerical
+    implementation.  Only owner-local LOR values cross MPI; canonical packet
+    gathering, when requested by a caller, remains evidence-only.
+    """
+
+    from dolfinx import fem
+    from petsc4py import PETSc
+
+    comm = function_space.mesh.comm
+    topology = build_canonical_lor_subedge_topology(
+        function_space, floquet_data, transfer
+    )
+    cell_info = np.asarray(
+        function_space.mesh.topology.get_cell_permutation_info(), dtype=np.uint32
+    )
+    local_max_error = 0.0
+    batch_sizes: list[int] = []
+
+    def cell_chunks():
+        nonlocal local_max_error
+        batch_start = 0
+        canonical_batch: list[np.ndarray] = []
+        for cell in range(topology.cell_edge_ids.shape[0]):
+            local_dofs = np.asarray(
+                function_space.dofmap.cell_dofs(cell), dtype=np.int32
+            )
+            raw = np.asarray(
+                source_field.x.array[local_dofs], dtype=np.complex128
+            ).copy()
+            canonical = raw.copy()
+            function_space.element.Tt_apply(
+                canonical, np.asarray([cell_info[cell]], dtype=np.uint32), 1
+            )
+            canonical_batch.append(canonical)
+            if (
+                len(canonical_batch) == LOR_BATCH_CELL_CAP
+                or cell + 1 == topology.cell_edge_ids.shape[0]
+            ):
+                batch = np.asarray(canonical_batch, dtype=np.complex128)
+                lor_batch = transfer.high_to_lor_many(batch)
+                restored_batch = transfer.lor_to_high_many(lor_batch)
+                errors = np.linalg.norm(restored_batch - batch, axis=1) / np.maximum(
+                    np.linalg.norm(batch, axis=1), np.finfo(float).tiny
+                )
+                local_max_error = max(local_max_error, float(np.max(errors)))
+                batch_sizes.append(len(canonical_batch))
+                yield batch_start, lor_batch
+                batch_start = cell + 1
+                canonical_batch = []
+
+    owner_ids, owner_values = topology.route_owner_cell_chunks(cell_chunks())
+    unique_values = topology.pull_owner_unique_values(owner_ids, owner_values)
+    roundtrip = fem.Function(function_space)
+    multiplicity = fem.Function(function_space)
+    roundtrip.x.array[:] = 0.0
+    multiplicity.x.array[:] = 0.0
+    for cell_start in range(0, topology.cell_edge_ids.shape[0], LOR_BATCH_CELL_CAP):
+        cell_end = min(
+            cell_start + LOR_BATCH_CELL_CAP, topology.cell_edge_ids.shape[0]
+        )
+        pulled_lor = topology.cell_values_from_unique(
+            unique_values, cell_start, cell_end
+        )
+        canonical_batch = transfer.lor_to_high_many(pulled_lor)
+        for offset, cell in enumerate(range(cell_start, cell_end)):
+            local_dofs = np.asarray(
+                function_space.dofmap.cell_dofs(cell), dtype=np.int32
+            )
+            stored = canonical_batch[offset].copy()
+            function_space.element.T_apply(
+                stored, np.asarray([cell_info[cell]], dtype=np.uint32), 1
+            )
+            roundtrip.x.array[local_dofs] += stored
+            multiplicity.x.array[local_dofs] += 1.0
+    roundtrip.x.petsc_vec.ghostUpdate(
+        addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE
+    )
+    multiplicity.x.petsc_vec.ghostUpdate(
+        addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE
+    )
+    owned = int(function_space.dofmap.index_map.size_local)
+    if np.any(np.real(multiplicity.x.array[:owned]) <= 0.0):
+        raise AssertionError("real-cell transfer did not cover owned rows")
+    roundtrip.x.array[:owned] /= multiplicity.x.array[:owned]
+    roundtrip.x.petsc_vec.ghostUpdate(
+        addv=PETSc.InsertMode.INSERT_VALUES, mode=PETSc.ScatterMode.FORWARD
+    )
+    floquet_data.mpc.homogenize(roundtrip)
+    floquet_data.mpc.backsubstitution(roundtrip)
+    roundtrip.x.scatter_forward()
+    local_max_error = comm.allreduce(local_max_error, op=MPI.MAX)
+    if topology.cell_edge_ids.shape[0] >= 2:
+        assert max(batch_sizes) >= 2
+    del multiplicity
+    return roundtrip, (owner_ids, owner_values), float(local_max_error), topology
+
+
 def build_canonical_lor_subedge_topology(
     function_space: Any, floquet_data: Any, transfer: Any
 ) -> CanonicalLORSubedgeTopology:
@@ -574,6 +681,11 @@ def build_canonical_lor_subedge_topology(
         "single_endpoint_normal_edge_count": single_endpoint_count,
         "periodic_phase_rule": "both_endpoints_on_upper_slave_plane",
         "phase_application": "once_in_canonical_owner_route",
+        "edge_orientation": "dolfinx_cell_permutation_Tt_then_T",
+        "cell_permutation": "Tt_before_high_to_lor_and_T_after_lor_to_high",
+        "mpc_slave_master": "finalized_mpc_homogenize_backsubstitution",
+        "floquet_phase": "complete_slave_edge_mapped_to_master_once",
+        "slave_master_complete": True,
         "packed_coordinate_bits": PACKED_COORDINATE_BITS,
         "apply_chunk_cell_cap": LOR_BATCH_CELL_CAP,
         "unique_edge_value_bytes": edge_value_bytes,
