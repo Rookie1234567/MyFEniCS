@@ -1,0 +1,18 @@
+{
+  "contract_errors": [],
+  "facts": {
+    "case": "p2-mpi2",
+    "degree": 2,
+    "final_relative": 4.380523556760782e-06,
+    "first_true_pass": null,
+    "mpi_size": 2,
+    "rho": 5.246445407250461,
+    "source": "random"
+  },
+  "gate_failures": [
+    "explicit true residual never reaches the K0 limit"
+  ],
+  "passed": false,
+  "schema": "task038.lor-native-complex-hx.k1-suite-check.v2",
+  "variant": "additive-v2"
+}
