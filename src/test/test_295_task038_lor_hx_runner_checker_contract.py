@@ -286,6 +286,38 @@ def test_l1_checker_gates_hermitian_before_generalized_spectrum() -> None:
     assert "spectral_lambda_min" not in checked
 
 
+def test_l1_checker_recomputes_real_p2_derham_from_raw_gradient() -> None:
+    from src.solvers.fullspace_lor_transfer import build_local_lor_transfer
+
+    local = build_local_lor_transfer(2)
+    edge_count = local.high_to_lor_matrix.shape[0]
+    probe = np.arange(edge_count, dtype=np.float64) + 1j
+    arrays = {
+        "high_to_lor": local.high_to_lor_matrix,
+        "lor_to_high": local.lor_to_high_matrix,
+        "probe": probe,
+        "local_probe_forward_1": local.high_to_lor_matrix @ probe,
+        "local_probe_forward_2": local.high_to_lor_matrix @ probe,
+        "local_probe_roundtrip": local.lor_to_high_matrix @ (local.high_to_lor_matrix @ probe),
+        "high_matrix": local.high_matrix,
+        "lor_matrix": local.lor_matrix,
+        "high_gradient_edge": local.high_gradient_edge,
+        "lor_gradient": local.lor_gradient,
+        "h1_transfer": local.h1_transfer,
+        "lor_curl_incidence": local.lor_curl_incidence,
+        "high_curl_face": local.high_curl_face,
+    }
+    checked = checker._check_local_algebra({"degree": 2}, arrays)
+    assert not checked["errors"]
+    assert checked["de_rham_gradient_commuting_relative"] <= 1.0e-12
+    assert checked["curl_transferred_gradient_relative"] <= 1.0e-12
+
+    mutated = {name: value.copy() for name, value in arrays.items()}
+    mutated["high_gradient_edge"][0] += 1.0e-3
+    checked = checker._check_local_algebra({"degree": 2}, mutated)
+    assert any("gradient commuting error" in error for error in checked["errors"])
+
+
 def test_l1_checker_cross_mpi_keys_and_values_are_real_pair_gates(tmp_path: Path) -> None:
     left = _identity_record("p2-mpi1", "measured")
     left["_arrays"] = _canonical_arrays()

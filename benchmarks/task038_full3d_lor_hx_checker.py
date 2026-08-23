@@ -320,7 +320,9 @@ def _check_local_algebra(record: dict[str, Any], arrays: dict[str, np.ndarray]) 
     condition = float(eigenvalues[-1] / eigenvalues[0])
     if condition > SPECTRAL_LIMIT:
         errors.append(f"spectral condition {condition} exceeds {SPECTRAL_LIMIT}")
-    high_gradient = inverse @ arrays["high_gradient_edge"]
+    # The worker stores the already reconstructed high-space gradient.  The
+    # independent checker must not apply the inverse transfer a second time.
+    high_gradient = arrays["high_gradient_edge"]
     gradient = _relative(
         forward @ high_gradient, arrays["lor_gradient"] @ arrays["h1_transfer"]
     )
