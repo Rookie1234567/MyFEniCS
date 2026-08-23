@@ -524,13 +524,27 @@ def run_v1_1_right_preconditioned_fgmres_batch(
                 and float(r16) <= trend_limit * float(r8)
                 and not phase_one[label]["ksp_breakdown"]
             )
+        phase1_r16_values = [
+            phase_one[label]["checkpoints"].get("16", {}).get("true_residual_relative")
+            for label in labels
+        ]
+        all_five_r16_ge_0p9 = bool(
+            all(
+                isinstance(value, (int, float))
+                and np.isfinite(float(value))
+                and float(value) >= 0.9
+                for value in phase1_r16_values
+            )
+        )
         resource = (
             dict(resource_callback())
             if resource_callback is not None
             else {"status": "not_provided", "pass": False}
         )
         resource_pass = bool(resource.get("pass") is True)
-        conditional_32_authorized = bool(all(phase_one_gate.values()) and resource_pass)
+        conditional_32_authorized = bool(
+            all(phase_one_gate.values()) and resource_pass and not all_five_r16_ge_0p9
+        )
         if conditional_32_authorized:
             for label in labels:
                 phase_two[label] = solve_one(
@@ -542,13 +556,18 @@ def run_v1_1_right_preconditioned_fgmres_batch(
             "phase1": phase_one,
             "phase1_gate": phase_one_gate,
             "phase1_trend_limit": trend_limit,
+            "all_five_r16_ge_0p9": all_five_r16_ge_0p9,
             "resource_at_phase_boundary": resource,
             "conditional_32_authorized": conditional_32_authorized,
             "phase2": phase_two,
             "phase2_not_run_reason": (
                 None
                 if conditional_32_authorized
-                else "phase1_all_source_or_resource_gate_failed"
+                else (
+                    "all_five_r16_ge_0p9"
+                    if all_five_r16_ge_0p9
+                    else "phase1_all_source_or_resource_gate_failed"
+                )
             ),
             "ksp_setup_count": setup_count,
             "ksp_destroy_count": 0,

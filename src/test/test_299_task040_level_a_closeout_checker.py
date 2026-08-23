@@ -307,6 +307,19 @@ def test_scalar_checker_classifies_directional_and_capacity_cases(tmp_path):
     assert directional["classification"] == "SCALAR_TRANSMISSION_DIRECTIONAL_FAIL"
     assert directional["gate_pass"] is False
 
+    high_residual = tmp_path / "high_residual"
+    _write_tiny_scalar_raw(
+        high_residual,
+        phase1_values={"4": 2.0, "8": 1.8, "16": 1.0},
+    )
+    high_residual_result = recompute_scalar_krylov_gate(high_residual)
+    assert high_residual_result["derived"]["all_five_r16_ge_0p9"] is True
+    assert high_residual_result["derived"]["conditional_32_authorized"] is False
+    assert high_residual_result["checks"]["conditional_32_contract"] is True
+    assert (
+        high_residual_result["classification"] == "SCALAR_TRANSMISSION_DIRECTIONAL_FAIL"
+    )
+
     _write_tiny_scalar_raw(
         tmp_path / "capacity",
         phase1_values={"4": 0.02, "8": 0.02, "16": 0.01},

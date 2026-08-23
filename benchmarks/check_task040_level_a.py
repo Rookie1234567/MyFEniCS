@@ -399,6 +399,17 @@ def recompute_scalar_krylov_gate(run_root: str | Path) -> dict[str, Any]:
                 and float(r16) <= trend_limit * float(r8)
                 and record.get("ksp_breakdown") is False
             )
+    phase1_r16_values = [
+        phase_one.get(label, {})
+        .get("checkpoints", {})
+        .get("16", {})
+        .get("true_residual_relative")
+        for label in V1_1_LABELS
+    ]
+    all_five_r16_ge_0p9 = bool(
+        len(phase1_r16_values) == len(V1_1_LABELS)
+        and all(_finite(value) and float(value) >= 0.9 for value in phase1_r16_values)
+    )
     resource = (
         screen.get("resource_at_phase_boundary", {}) if isinstance(screen, dict) else {}
     )
@@ -413,6 +424,7 @@ def recompute_scalar_krylov_gate(run_root: str | Path) -> dict[str, Any]:
         len(phase_one_gate) == len(V1_1_LABELS)
         and all(phase_one_gate.values())
         and resource_pass
+        and not all_five_r16_ge_0p9
     )
 
     def phase_integrity(
@@ -614,6 +626,8 @@ def recompute_scalar_krylov_gate(run_root: str | Path) -> dict[str, Any]:
     core_pass = all(checks[name] for name in core_check_names)
     if not core_pass:
         classification = "IMPLEMENTATION_OR_RESOURCE_FAILURE"
+    elif all_five_r16_ge_0p9:
+        classification = "SCALAR_TRANSMISSION_DIRECTIONAL_FAIL"
     elif early_passing_checkpoint is not None:
         classification = "SCALAR_TRANSMISSION_KRYLOV_PASS"
     elif conditional_32:
@@ -636,6 +650,7 @@ def recompute_scalar_krylov_gate(run_root: str | Path) -> dict[str, Any]:
             "B_vs_Y_normalized_cross_correlation_abs": cross_correlation_abs,
             "phase_one_gate": phase_one_gate,
             "phase_one_trend_pass": phase_one_trend_pass,
+            "all_five_r16_ge_0p9": all_five_r16_ge_0p9,
             "phase1_integrity": phase1_integrity,
             "phase2_integrity": phase2_integrity,
             "pc_apply_count_consistency": pc_apply_count_consistent,
