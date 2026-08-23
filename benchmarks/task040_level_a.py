@@ -401,6 +401,19 @@ def _v1_2_lower_mode_count(resolved_modes: Mapping[str, Any]) -> int:
     return int(resolved_modes["counts"]["per_side"]["bottom"])
 
 
+def _v1_2_validate_spool_identity(
+    *, selected_manifest_sha256: str, catalog: Mapping[str, Any]
+) -> str:
+    """Validate selected-spool manifest and catalog identities separately."""
+
+    if selected_manifest_sha256 != TASK040_V1_2_SELECTED_MANIFEST_SHA256:
+        raise ValueError("V1-2 selected spool manifest is not frozen")
+    catalog_sha256 = str(catalog["catalog_sha256"])
+    if catalog_sha256 != TASK040_V1_2_EXACT_SPOOL_CATALOG_SHA256:
+        raise ValueError("V1-2 exact spool catalog is not frozen")
+    return catalog_sha256
+
+
 def _v1_2_local_interface_rows(
     condensed: Any,
     support: Mapping[str, Any],
@@ -1295,8 +1308,9 @@ def _run_v1_2_interface_schur(
         spool_identity, spool_manifest_sha, catalog = _v9_frozen_holdout_identity(
             exact_spool_root, comm
         )
-        if spool_manifest_sha != TASK040_V1_2_EXACT_SPOOL_CATALOG_SHA256:
-            raise ValueError("V1-2 exact spool catalog is not frozen")
+        spool_catalog_sha256 = _v1_2_validate_spool_identity(
+            selected_manifest_sha256=spool_manifest_sha, catalog=catalog
+        )
         spool = _load_v5_fixed_budget_spool_shards(
             exact_spool_root,
             comm,
@@ -1372,7 +1386,7 @@ def _run_v1_2_interface_schur(
             "resolved_config_sha256": hashlib.sha256(
                 resolved_path.read_bytes()
             ).hexdigest(),
-            "spool_catalog_sha256": spool_manifest_sha,
+            "spool_catalog_sha256": spool_catalog_sha256,
             "exact_output_identity_sha256": dict(observed_exact_ids),
             "upper_mode_key_sha256": upper["mode_key_sha256"],
             "upper_beta_sha256": upper["selected_packet_beta_sha256"],
@@ -1548,7 +1562,7 @@ def _run_v1_2_interface_schur(
                 "input_sha256": str(input_sha256),
                 "physical_model_sha256": str(physical_model_sha256),
                 "selected_manifest_sha256": selected_manifest_sha256,
-                "exact_spool_catalog_sha256": (spool_manifest_sha),
+                "exact_spool_catalog_sha256": spool_catalog_sha256,
                 "sequence": list(TASK040_LEVEL_A_SEQUENCE),
                 "beta": {
                     "formula": "cfg.k0 * complex(cfg.substrate_index)",
@@ -1579,7 +1593,7 @@ def _run_v1_2_interface_schur(
                     },
                     "exact_output_identity_sha256": dict(observed_exact_ids),
                     "exact_output_metadata_hash_validation": True,
-                    "spool_catalog_sha256": spool_manifest_sha,
+                    "spool_catalog_sha256": spool_catalog_sha256,
                     "spool_catalog": catalog,
                     "groups": [
                         {

@@ -16,6 +16,7 @@ from benchmarks.check_task040_v1_run_b import recompute_v1_2_small_contractions
 from benchmarks.task040_level_a import _v1_2_identity_pass
 from benchmarks.task040_level_a import _v1_2_lower_mode_count
 from benchmarks.task040_level_a import _v1_2_seed_interface_active_row
+from benchmarks.task040_level_a import _v1_2_validate_spool_identity
 
 
 @pytest.fixture(autouse=True)
@@ -439,6 +440,30 @@ def test_run_b_worker_identity_rejects_wrong_lower_resolved_metadata() -> None:
 def test_run_b_lower_mode_count_reads_resolved_per_side_schema() -> None:
     resolved_modes = {"counts": {"per_side": {"bottom": 296}}}
     assert _v1_2_lower_mode_count(resolved_modes) == 296
+
+
+def test_run_b_spool_manifest_and_catalog_identities_are_distinct() -> None:
+    selected_manifest_sha256 = (
+        "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067"
+    )
+    catalog_sha256 = "a2a7fb6fb01df4f795d31ff94f6ac6adf957ac4fe4a5c1a8d05176e3d64c0384"
+    assert (
+        _v1_2_validate_spool_identity(
+            selected_manifest_sha256=selected_manifest_sha256,
+            catalog={"catalog_sha256": catalog_sha256},
+        )
+        == catalog_sha256
+    )
+    with pytest.raises(ValueError, match="selected spool manifest"):
+        _v1_2_validate_spool_identity(
+            selected_manifest_sha256=catalog_sha256,
+            catalog={"catalog_sha256": catalog_sha256},
+        )
+    with pytest.raises(ValueError, match="exact spool catalog"):
+        _v1_2_validate_spool_identity(
+            selected_manifest_sha256=selected_manifest_sha256,
+            catalog={"catalog_sha256": selected_manifest_sha256},
+        )
 
 
 def _write_run(root: Path, raw: dict[str, object]) -> None:
