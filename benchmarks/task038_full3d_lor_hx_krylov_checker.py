@@ -940,9 +940,17 @@ def _check_k1_identity(record: dict[str, Any], errors: list[str]) -> None:
                 ):
                     if rank_runtime.get(key) != runtime.get(key):
                         errors.append(f"K1 rank runtime.{key} mismatch")
-            for key in ("matvec_count", "pc_apply_count", "monitor_action_count", "iterations", "reason"):
+            for key in (
+                "matvec_count",
+                "pc_apply_count",
+                "monitor_action_count",
+                "iterations",
+            ):
                 if not isinstance(item.get(key), int) or item[key] < 0:
                     errors.append(f"K1 rank fact {key} is missing or invalid")
+            reason = item.get("reason")
+            if not isinstance(reason, int) or reason == 0:
+                errors.append("K1 rank fact reason is missing or invalid")
         ranges = record.get("count_ranges")
         if not isinstance(ranges, dict):
             errors.append("K1 count_ranges are missing")

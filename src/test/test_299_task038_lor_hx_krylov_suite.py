@@ -17,6 +17,7 @@ from benchmarks.task038_full3d_lor_hx_krylov_checker import (
     K0_GMRES_MAX_IT,
     K0_GMRES_RESTART,
     K0_GMRES_RTOL,
+    K0_FIRST_PASS_MAX_IT,
     K1_CASE_SPECS,
     K1_CHECKER_SCHEMA,
     K1_LINEARITY_STATUS,
@@ -77,6 +78,7 @@ def _synthetic_record(
     source_name: str = "random",
     *,
     iterations: int = 1,
+    reason: int = 2,
     permute_dual: bool = False,
     mutate_final_solution: bool = False,
     mutate_final_action: bool = False,
@@ -181,7 +183,7 @@ def _synthetic_record(
             "pc_apply_count": 2 * iterations,
             "monitor_action_count": iterations + 1,
             "iterations": iterations,
-            "reason": 2,
+            "reason": reason,
         }
         for rank in range(mpi_size)
     ]
@@ -280,11 +282,11 @@ def _synthetic_record(
             "history": history,
             "checkpoints": checkpoint_records,
             "final_artifacts": final_roles,
-            "reason": 2,
+            "reason": reason,
             "iterations": iterations,
             "first_true_pass_iteration": iterations,
             "late_true_pass_iteration": None,
-            "qualification_pass": True,
+            "qualification_pass": iterations <= K0_FIRST_PASS_MAX_IT,
             "reported_final_residual": 0.0,
             "final_true_residual": final_relative,
             "matvec_count": iterations,
@@ -369,6 +371,30 @@ def test_k1_synthetic_record_accepts_nested_final_and_checkpoint_facts(tmp_path:
     result = check_suite_record(_synthetic_record(tmp_path))
     assert result["schema"] == K1_CHECKER_SCHEMA
     assert result["passed"] is True, result
+
+
+def test_k1_accepts_signed_reason_and_rejects_zero_or_negative_count(
+    tmp_path: Path,
+) -> None:
+    late = _synthetic_record(tmp_path, iterations=200, reason=-3)
+    late_result = check_suite_record(late)
+    assert late_result["contract_errors"] == [], late_result
+    assert any("80-step qualification window" in item for item in late_result["gate_failures"])
+
+    zero = _synthetic_record(tmp_path, source_name="curl", reason=0)
+    zero_result = check_suite_record(zero)
+    assert any("rank fact reason" in item for item in zero_result["contract_errors"])
+
+    negative_count = _synthetic_record(
+        tmp_path,
+        source_name="checkerboard",
+        reason=-3,
+    )
+    negative_record = json.loads(negative_count.read_text(encoding="utf-8"))
+    negative_record["rank_facts"][0]["matvec_count"] = -1
+    negative_count.write_text(json.dumps(negative_record), encoding="utf-8")
+    negative_result = check_suite_record(negative_count)
+    assert any("matvec_count" in item for item in negative_result["contract_errors"])
 
 
 def test_k1_checker_rejects_mutated_raw_rho_alpha_and_old_l2(tmp_path: Path) -> None:
