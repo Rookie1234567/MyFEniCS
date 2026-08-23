@@ -11,6 +11,7 @@ Task040 的目标是研究：在保持冻结 Hybrid 方程、裸算子 F、物�
 | T40-0 | inherited audit | completed | branch/identity/ABI/基线已绑定 |
 | T40-1/T40-2 | F/action identity、人工界面阻抗与 MPI tiny identity | completed | fixed `q=-i beta`、两界面 mass/support、bare F unchanged |
 | T40-3 | bottom bare-F one-apply transmission oracle | controlled numerical negative | `TRANSMISSION_MECHANISM_FAIL`；worst rho `28.316064601533686` |
+| V1-1 | fixed scalar transmission right-FGMRES screen | controlled numerical negative | `SCALAR_TRANSMISSION_DIRECTIONAL_FAIL`；all five r16 >= 0.9，32 not run |
 | T40-4 | bounded patch core | not_run_by_gate | T40-3 mandatory rho failure |
 | T40-5 | bottom scalable PC | not_run_by_gate | T40-3 mandatory rho failure |
 | T40-6 | bottom inner FGMRES | not_run_by_gate | T40-3 mandatory rho failure |
@@ -66,3 +67,10 @@ local patch capacity 或 h4→h3 scaling。不能据此判断 coarse information
 
 完整 raw 和日志留在 ignored results；轻量证据见
 [compact record](../../../benchmarks/cases/104_5nm_hybrid_side_factor_pc/records/task040_level_a_bare_f_transmission_v1.json)。
+
+
+## V1-1 scalar Krylov screen
+
+V1-1 formal completed on the frozen MPI8 component. The independent checker classified the five-source scalar screen as SCALAR_TRANSMISSION_DIRECTIONAL_FAIL; all five r16 values remained at least 0.9, so conditional 32 was not run.
+
+Peak was 27.790115356445312 GiB, wall was 669.4473022361053 s, and swap was 0. This is a component peak, not a full-workflow saving tier. The V1-2 mode-aware/interface-Schur route is planned but has not run.

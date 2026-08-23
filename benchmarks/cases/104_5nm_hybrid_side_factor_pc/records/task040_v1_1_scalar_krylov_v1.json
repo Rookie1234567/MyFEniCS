@@ -1,0 +1,159 @@
+{
+  "schema": "task040.v1_1.scalar_krylov.compact.v1",
+  "task": "Task040",
+  "stage": "V1-1",
+  "status": "controlled_numerical_negative",
+  "classification": "SCALAR_TRANSMISSION_DIRECTIONAL_FAIL",
+  "classification_detail": "All five phase-one r16 residuals remain >=0.9 and the fixed scalar trend gate is not met; conditional phase-two 32 was not run.",
+  "source_sha": "bf029cbdccd50538e91dac3d3452f3a3de62b767",
+  "formal_root": "results/task040_v1_1_scalar_krylov_mpi8_bf029cbd",
+  "frozen_identity": {
+    "input": "input/official/task039/5nm_p6h4_v4_1deg_hybrid_iterative_m480_mpi8.dat",
+    "input_sha256": "4e60924b5997e3ca99e324ea14779f9014efc6a1304a9aa11de9c808353f1811",
+    "physical_model_sha256": "8391d46139646440d869aa43abe6a68bc921fc1972a10030c64be81dffdd527c",
+    "selected_mode_packet_manifest": "results/task039_v4_h4_m480_shared_packet_eaad0f94/manifest.json",
+    "selected_mode_packet_manifest_sha256": "2dddaf7a6f8f045adabd840970952517d76305c7c0e03c71258642d856c13067",
+    "exact_spool_root": "results/task039_v5_h4_mumps_blr_side_component_mpi8_7e5d9b57_1e3/numerical_output",
+    "exact_spool_catalog_sha256": "a2a7fb6fb01df4f795d31ff94f6ac6adf957ac4fe4a5c1a8d05176e3d64c0384",
+    "exact_spool_source_sha": "7e5d9b57a10b1093f0cb062eaf7bc12797c47e1f",
+    "mpi": 8,
+    "threads": 1,
+    "qep_calls": 0,
+    "pde_solve": "not_run",
+    "ordinary_defaults_changed": false
+  },
+  "checker": {
+    "command": "python -m benchmarks.check_task040_level_a --run-root results/task040_v1_1_scalar_krylov_mpi8_bf029cbd",
+    "source": "benchmarks/check_task040_level_a.py",
+    "checker_execution_parent_sha": "bf029cbdccd50538e91dac3d3452f3a3de62b767",
+    "checker_file_sha256": "36362f35b8f800899d552eca1c47c62908c7568ed7ade60a0cab78e17870cf9b",
+    "checker_output_sha256": "e2d0acec86c014bfc6a7cc0491c8d84ca3bad7dbab95d79fe60814add0aca584",
+    "source_reports_recomputed": true,
+    "worker_gate_status_ignored": true,
+    "formula": "original_rho = sqrt((b2+y2-2*Re(BHYjj))/b2); alpha_star = conj(BHYjj)/YHYjj; rho_star = ||b-alpha_star*y||/||b||",
+    "thresholds": {
+      "phase1_trend_drop_decades": 0.25,
+      "all_five_r16_ge": 0.9,
+      "mandatory_checkpoint_max": 0.01,
+      "preferred_checkpoint_max": 0.001,
+      "rss_hard_stop_bytes": 48318382080,
+      "swap_bytes": 0
+    }
+  },
+  "raw_hashes": {
+    "watchdog_summary.json": "aae783175f56faca1273cce999f1e24d929f6b4eef89fafc84363eee0429ca54",
+    "worker/run_summary.json": "002a734884812b374d77e3a246d3d380d83110768d62cc1320fe4fa3a5ff9aa9",
+    "memory_stage_markers.raw.jsonl": "b97c72ee507eda32f7d04db1b47e67d026e3e5fd3e03737569dffc46d75f9ea3",
+    "memory_stages.jsonl": "ead671461091786f0bae73745d72a39bd39e0cdb7ae87d1e8b4501af2a9fd2ff",
+    "process_tree_samples.jsonl": "c48f39ef6d9ab9480aa022f49b43e7eb25ad7b825045784cd7f2df74234592a7",
+    "checker_recomputed.json": "e2d0acec86c014bfc6a7cc0491c8d84ca3bad7dbab95d79fe60814add0aca584",
+    "worker_stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "screen": {
+    "labels": [
+      "modal_traction_positive",
+      "modal_traction_negative",
+      "external_dtn_coupling",
+      "fixed_random_repeat_0",
+      "fixed_random_repeat_1"
+    ],
+    "phase1": {
+      "modal_traction_positive": {"r4": 0.9979658618002183, "r8": 0.9962316286627299, "r16": 0.9879466665843744},
+      "modal_traction_negative": {"r4": 0.9977202949485113, "r8": 0.9956117419256832, "r16": 0.9848624636236449},
+      "external_dtn_coupling": {"r4": 0.9986897773778267, "r8": 0.9962299036800422, "r16": 0.9904365341397463},
+      "fixed_random_repeat_0": {"r4": 0.9989148128555043, "r8": 0.997516474863946, "r16": 0.9936472443626956},
+      "fixed_random_repeat_1": {"r4": 0.9988651958887255, "r8": 0.9973661209073308, "r16": 0.9936792642154975}
+    },
+    "phase1_trend_pass": false,
+    "all_five_r16_ge_0p9": true,
+    "conditional_32_authorized": false,
+    "phase2": {},
+    "phase2_not_run_reason": "all_five_r16_ge_0p9",
+    "right_pc_apply_count": 80,
+    "ksp_setup_count": 1,
+    "ksp_destroy_count": 1,
+    "ksp_destroyed": true,
+    "early_passing_checkpoint": null
+  },
+  "one_apply": {
+    "modal_traction_positive": {"original_rho": 20.927172149775153, "rho_star": 0.9989474352667872, "correlation": 0.04586961493088805, "alpha_magnitude": 0.002189570668791183, "alpha_phase_radians": 0.046412258791209325, "x_over_b": 21.83602321819345, "y_over_b": 20.949136552058274},
+    "modal_traction_negative": {"original_rho": 20.882058201142698, "rho_star": 0.9990590420499665, "correlation": 0.043370848483781504, "alpha_magnitude": 0.0020750102424470186, "alpha_phase_radians": 0.0163975756182099, "x_over_b": 21.57825774146584, "y_over_b": 20.901510554779293},
+    "external_dtn_coupling": {"original_rho": 22.72219234750837, "rho_star": 0.9990272919856846, "correlation": 0.04409614345665071, "alpha_magnitude": 0.001938776483714514, "alpha_phase_radians": -0.004904859949048704, "x_over_b": 23.13388746983002, "y_over_b": 22.74431520448744},
+    "fixed_random_repeat_0": {"original_rho": 27.16318768865547, "rho_star": 0.9993421802029867, "correlation": 0.036265780939355854, "alpha_magnitude": 0.0013342345631963007, "alpha_phase_radians": -0.07449140347887952, "x_over_b": 61.51376485883753, "y_over_b": 27.180963482520884},
+    "fixed_random_repeat_1": {"original_rho": 26.589731276457666, "rho_star": 0.9993651460722303, "correlation": 0.03562730436097847, "alpha_magnitude": 0.0013390438084984167, "alpha_phase_radians": -0.050355492706907076, "x_over_b": 61.6355288814672, "y_over_b": 26.606526339814362},
+    "physical_side_rhs": {"source_norm": 0.0, "output_norm": 0.0, "zero_map": true}
+  },
+  "normalized_cross_correlation_abs": [
+    [0.04586961493088806, 0.00963253300567182, 0.0032085458881216575, 0.0028328355654677305, 0.0021873852596424196],
+    [0.008679411493013116, 0.043370848483781504, 0.000737673048457133, 0.001446789240104373, 0.001511423768355151],
+    [0.0016026915335828982, 0.003093213128178473, 0.044096143456650715, 0.005694462149649903, 0.006230148093542309],
+    [0.003570223220841866, 0.0012673955368012644, 0.006638408016063155, 0.03626578093935585, 0.03502012649514586],
+    [0.0030169949275527424, 0.0006567102203865346, 0.006476634909459628, 0.03369545476029033, 0.03562730436097847]
+  ],
+  "alpha_star": {
+    "modal_traction_positive": [0.0021872128174471165, 0.00010158644016656518],
+    "modal_traction_negative": [0.002074731283816264, 0.00003402361259700503],
+    "external_dtn_coupling": [0.0019387531625571462, -0.000009509388996094642],
+    "fixed_random_repeat_0": [0.0013305344614071423, -0.00009929711292695814],
+    "fixed_random_repeat_1": [0.0013373464768138732, -0.0000673997183337197]
+  },
+  "resource": {
+    "watchdog_return_code": 0,
+    "termination_reason": "natural_exit",
+    "peak_rss_bytes": 29839409152,
+    "peak_rss_gib": 27.790115356445312,
+    "wall_seconds_process_sample": 669.4473022361053,
+    "hard_stop_bytes": 48318382080,
+    "swap_bytes": 0,
+    "sample_count": 1328,
+    "all_status_readable": true,
+    "dedicated_cgroup_present": false
+  },
+  "factor_lifecycle": {
+    "cross_section_factor_count_ready": 3,
+    "factor_count_after_cleanup": 0,
+    "full_side_exact_factor_count": 0,
+    "global_direct_factor_count": 0,
+    "nested_ksp_count": 0,
+    "oracle_only": true,
+    "scalable_candidate": false,
+    "pde_solve": "not_run",
+    "qep_calls": 0,
+    "rhs_vectors_loaded": 6,
+    "exact_output_vectors_loaded": 0,
+    "exact_output_metadata_hash_validation_only": true
+  },
+  "checks": {
+    "identity": true,
+    "finite": true,
+    "zero_map": true,
+    "repeat": true,
+    "linearity": true,
+    "restriction_prolongation": true,
+    "interface_mass_support": true,
+    "bare_operator_unchanged": true,
+    "factor_inventory": true,
+    "resource": true,
+    "screen_contract": true,
+    "phase1_integrity": true,
+    "phase2_integrity": true,
+    "pc_apply_count_consistency": true,
+    "conditional_32_contract": true,
+    "checkpoint_gate": false,
+    "overall": false
+  },
+  "not_run_by_gate": {
+    "V1-2": "authorized next research stage; not run in this evidence commit",
+    "V1-3": "not_run_by_gate: V1-2 and its projected oracle are prerequisite",
+    "V1-4": "not_run_by_gate: V1-2/V1-3 prerequisites",
+    "V1-5": "not_run_by_gate: scalar candidate did not pass and mode-aware route was not run",
+    "formal_rerun": "not_run"
+  },
+  "component_resource_boundary": "27.790115356445312 GiB is the V1-1 component peak, not a full-workflow saving tier; inherited full-workflow baselines remain 93.377006531 GiB direct and 80.025856018 GiB exact-side iterative.",
+  "tests": {
+    "targeted_formal_checker": "executed; exit 0; gate_pass=false",
+    "preflight": "qualified activation, complex128, Int32, MPI8 route, frozen hashes passed",
+    "formal_mpi": 8,
+    "full_pytest": "not_run"
+  }
+}
