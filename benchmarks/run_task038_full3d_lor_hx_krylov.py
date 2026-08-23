@@ -91,6 +91,10 @@ def _packet_digest(key: Any) -> str:
     return hashlib.sha256(_json_bytes(key)).hexdigest()
 
 
+def _sort_packets(packets: list[tuple[Any, complex]]) -> list[tuple[Any, complex]]:
+    return sorted(packets, key=lambda item: _packet_digest(item[0]))
+
+
 def _merge_packets(parts: list[list[tuple[Any, complex]]]) -> tuple[np.ndarray, np.ndarray]:
     merged: dict[str, complex] = {}
     for packets in parts:
@@ -227,7 +231,7 @@ def run_worker(
             reconstruct_canonical_full_fe_dual_vector,
         )
 
-        residual_packets = _canonical_packets(fixture, residual, "dual")
+        residual_packets = _sort_packets(_canonical_packets(fixture, residual, "dual"))
         packet_keys = [key for key, _value in residual_packets]
         canonical_keys = np.asarray(
             [_packet_digest(key) for key in packet_keys], dtype="<U64"
@@ -235,7 +239,9 @@ def run_worker(
         residual_values = np.asarray(
             [value for _key, value in residual_packets], dtype=np.complex128
         )
-        output_packets = _canonical_packets(fixture, pc_output, "primal")
+        output_packets = _sort_packets(
+            _canonical_packets(fixture, pc_output, "primal")
+        )
         output_packet_keys = [key for key, _value in output_packets]
         output_canonical_keys = np.asarray(
             [_packet_digest(key) for key in output_packet_keys], dtype="<U64"

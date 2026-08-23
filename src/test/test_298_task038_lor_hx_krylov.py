@@ -20,6 +20,7 @@ from benchmarks.task038_full3d_lor_hx_krylov_checker import (
     OLD_L2_RECORD_SHA,
     check_record,
 )
+from benchmarks.run_task038_full3d_lor_hx_krylov import _sort_packets
 from src.solvers.fullspace_lor_hx_krylov import (
     K0_ALPHA_PRODUCTION_APPLIED,
     K0_DIRECTION_COEFFICIENTS,
@@ -514,3 +515,90 @@ def test_k0_checker_rejects_formula_mutation(tmp_path: Path) -> None:
     phase_result = check_record(phase_record_path)
     assert phase_result["passed"] is False
     assert any("phase application" in item for item in phase_result["contract_errors"])
+
+
+def _rewrite_array(
+    record: dict[str, object],
+    name: str,
+    array: np.ndarray,
+) -> None:
+    descriptors = record["artifacts"]
+    assert isinstance(descriptors, list)
+    raw_dir = Path(str(record["raw_dir"]))
+    path = raw_dir / f"{name}.npy"
+    np.save(path, np.asarray(array), allow_pickle=False)
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    for descriptor in descriptors:
+        assert isinstance(descriptor, dict)
+        if descriptor.get("name") == name:
+            descriptor["bytes"] = path.stat().st_size
+            descriptor["sha256"] = digest
+            return
+    raise AssertionError(f"missing descriptor {name}")
+
+
+def test_k0_checker_aligns_cross_section_residual_key_permutation(
+    tmp_path: Path,
+) -> None:
+    record_path = _synthetic_record(tmp_path)
+    record = json.loads(record_path.read_text(encoding="utf-8"))
+    permutation = np.asarray([3, 2, 1, 0], dtype=np.int32)
+    for role in (
+        "residual_before",
+        "residual_after",
+        "residual",
+        "applied_output",
+        "true_residual",
+    ):
+        names = record["one_apply"]["artifacts"][role]
+        keys = np.load(Path(record["raw_dir"]) / f"{names['keys']}.npy")
+        values = np.load(Path(record["raw_dir"]) / f"{names['values']}.npy")
+        _rewrite_array(record, names["keys"], keys[permutation])
+        _rewrite_array(record, names["values"], values[permutation])
+    for item in record["krylov"]["checkpoints"].values():
+        if item.get("status") != "measured":
+            continue
+        names = item["artifacts"]["action"]
+        values = np.load(Path(record["raw_dir"]) / f"{names['values']}.npy")
+        _rewrite_array(record, names["values"], values[permutation])
+        names = item["artifacts"]["true_residual"]
+        values = np.load(Path(record["raw_dir"]) / f"{names['values']}.npy")
+        _rewrite_array(record, names["values"], values[permutation])
+    record_path.write_text(json.dumps(record), encoding="utf-8")
+    result = check_record(record_path)
+    assert result["passed"] is True, result
+
+
+def test_k0_checker_rejects_cross_section_key_or_value_mismatch(
+    tmp_path: Path,
+) -> None:
+    key_record = _synthetic_record(tmp_path / "keys")
+    record = json.loads(key_record.read_text(encoding="utf-8"))
+    names = record["linearity"]["artifacts"]["r1"]
+    keys = np.load(Path(record["raw_dir"]) / f"{names['keys']}.npy")
+    keys[0] = "not-the-same-key"
+    _rewrite_array(record, names["keys"], keys)
+    key_record.write_text(json.dumps(record), encoding="utf-8")
+    key_result = check_record(key_record)
+    assert key_result["passed"] is False
+    assert any("canonical key" in item for item in key_result["contract_errors"])
+
+    value_record = _synthetic_record(tmp_path / "values")
+    record = json.loads(value_record.read_text(encoding="utf-8"))
+    names = record["linearity"]["artifacts"]["r1"]
+    values = np.load(Path(record["raw_dir"]) / f"{names['values']}.npy")
+    _rewrite_array(record, names["values"], values[::-1])
+    value_record.write_text(json.dumps(record), encoding="utf-8")
+    value_result = check_record(value_record)
+    assert value_result["passed"] is False
+    assert any("linearity" in item for item in value_result["contract_errors"])
+
+
+def test_k0_runner_sorts_packets_by_digest() -> None:
+    packets = [({"row": 2}, 2.0 + 0.0j), ({"row": 1}, 1.0 + 0.0j)]
+    ordered = _sort_packets(packets)
+    from benchmarks.run_task038_full3d_lor_hx_krylov import _packet_digest
+
+    assert [_packet_digest(item[0]) for item in ordered] == sorted(
+        _packet_digest(item[0]) for item in packets
+    )

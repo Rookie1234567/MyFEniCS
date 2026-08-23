@@ -138,10 +138,54 @@ def _same_keys(
 ) -> bool:
     if left is None or right is None:
         return False
+    left_tokens = [str(value) for value in left.tolist()]
+    right_tokens = [str(value) for value in right.tolist()]
+    if len(set(left_tokens)) != len(left_tokens):
+        errors.append(f"canonical keys are duplicated for {label}/left")
+        return False
+    if len(set(right_tokens)) != len(right_tokens):
+        errors.append(f"canonical keys are duplicated for {label}/right")
+        return False
     if not np.array_equal(left, right):
         errors.append(f"canonical key mismatch for {label}")
         return False
     return True
+
+
+def _reorder_values_by_keys(
+    source_keys: np.ndarray | None,
+    source_values: np.ndarray | None,
+    target_keys: np.ndarray | None,
+    label: str,
+    errors: list[str],
+) -> np.ndarray | None:
+    """Align one cross-section packet value array without sorting its values."""
+
+    if source_keys is None or source_values is None or target_keys is None:
+        return None
+    source_tokens = [str(value) for value in source_keys.tolist()]
+    target_tokens = [str(value) for value in target_keys.tolist()]
+    if len(set(source_tokens)) != len(source_tokens):
+        errors.append(f"canonical keys are duplicated for {label}/source")
+        return None
+    if len(set(target_tokens)) != len(target_tokens):
+        errors.append(f"canonical keys are duplicated for {label}/target")
+        return None
+    source_set = set(source_tokens)
+    target_set = set(target_tokens)
+    if source_set != target_set:
+        missing = sorted(target_set - source_set)
+        extra = sorted(source_set - target_set)
+        errors.append(
+            f"canonical key set mismatch for {label}: missing={missing}, extra={extra}"
+        )
+        return None
+    if source_values.ndim != 1 or source_values.shape[0] != len(source_tokens):
+        errors.append(f"canonical values do not align with keys for {label}")
+        return None
+    source_index = {token: index for index, token in enumerate(source_tokens)}
+    indices = [source_index[token] for token in target_tokens]
+    return np.asarray(source_values[indices], dtype=source_values.dtype)
 
 
 def _complex_value(value: Any) -> complex:
@@ -466,7 +510,6 @@ def _check_linearity(
         _same_keys(input_keys, loaded[role][0], f"linearity/input/{role}", errors)
     for role in ("p1", "p2", "pcombined", "pcombined_repeat"):
         _same_keys(output_keys, loaded[role][0], f"linearity/output/{role}", errors)
-    _same_keys(residual_keys, input_keys, "linearity/input/residual", errors)
     if (
         residual is None
         or residual_keys is None
@@ -476,6 +519,15 @@ def _check_linearity(
         value is None for value in values.values()
         )
     ):
+        return
+    aligned_residual = _reorder_values_by_keys(
+        residual_keys,
+        residual,
+        input_keys,
+        "linearity/input/residual",
+        errors,
+    )
+    if aligned_residual is None:
         return
     try:
         direction_mask = _canonical_direction_mask(input_keys)
@@ -497,7 +549,7 @@ def _check_linearity(
         errors.append("linearity direction values do not follow canonical-key mask")
     if min(float(np.linalg.norm(r1)), float(np.linalg.norm(r2))) <= np.finfo(float).tiny:
         errors.append("linearity directions are degenerate")
-    if _relative(r1 + r2, residual) > K0_REPEAT_LIMIT:
+    if _relative(r1 + r2, aligned_residual) > K0_REPEAT_LIMIT:
         errors.append("linearity directions do not reconstruct the residual")
     if _relative(combined, coefficient_a * r1 + coefficient_b * r2) > K0_REPEAT_LIMIT:
         errors.append("linearity combined direction is not the frozen combination")
